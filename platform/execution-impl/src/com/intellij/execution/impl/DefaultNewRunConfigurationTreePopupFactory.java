@@ -41,7 +41,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
   public void initStructure(@NotNull Project project) {
     root = createDescriptor(project, "<invisible-templates-root>", null);
     other = createDescriptor(project, ExecutionBundle.message("add.new.run.configuration.other.types.node.text"), root,
-                             NodeDescriptor.DEFAULT_WEIGHT + 1);
+                             NodeDescriptor.getDefaultWeight() + 1);
     myTypesToShow = new ArrayList<>(
       RunConfigurable.Companion.configurationTypeSorted(project, true,
                                                         ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList(), true));
@@ -53,9 +53,8 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
     myGroups = createGroups(project, myTypesToShow);
   }
 
-  @NotNull
   @Override
-  public NodeDescriptor<?> getRootElement() {
+  public @NotNull NodeDescriptor<?> getRootElement() {
     return root;
   }
 
@@ -96,14 +95,14 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
       if (!myOtherTypes.isEmpty()) {
         list.add(other);
       }
-      return list.toArray(NodeDescriptor.EMPTY_ARRAY);
+      return list.toArray(NodeDescriptor.getEmptyArray());
     }
     else if (nodeDescriptor instanceof GroupDescriptor) {
       ArrayList<NodeDescriptor> list = new ArrayList<>();
       for (ConfigurationType type : ((GroupDescriptor)nodeDescriptor).myTypes) {
         list.add(createDescriptor(project, type, nodeDescriptor));
       }
-      return list.toArray(NodeDescriptor.EMPTY_ARRAY);
+      return list.toArray(NodeDescriptor.getEmptyArray());
     }
     else if (other.equals(nodeDescriptor)) {
       return convertToDescriptors(project, nodeDescriptor, myOtherTypes.toArray());
@@ -114,11 +113,11 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
         return convertToDescriptors(project, nodeDescriptor, factories);
       }
     }
-    return NodeDescriptor.EMPTY_ARRAY;
+    return NodeDescriptor.getEmptyArray();
   }
 
 
-  protected static class GroupDescriptor extends NodeDescriptor<String> {
+  protected static final class GroupDescriptor extends NodeDescriptor<String> {
     private final List<ConfigurationType> myTypes;
 
     public GroupDescriptor(@NotNull Project project,
@@ -144,7 +143,7 @@ public class DefaultNewRunConfigurationTreePopupFactory extends NewRunConfigurat
 
     @Override
     public int getWeight() {
-      return DEFAULT_WEIGHT - 1;
+      return getDefaultWeight() - 1;
     }
   }
 }

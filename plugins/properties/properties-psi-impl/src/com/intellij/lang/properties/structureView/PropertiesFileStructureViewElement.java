@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -24,8 +24,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
   }
 
   @Override
-  @NotNull
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     List<? extends IProperty> properties = getElement().getProperties();
 
     Collection<StructureViewTreeElement> elements = new ArrayList<>(properties.size());
@@ -41,8 +40,7 @@ public class PropertiesFileStructureViewElement extends PsiTreeElementBase<Prope
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new ItemPresentation() {
       @Override
       public String getPresentableText() {

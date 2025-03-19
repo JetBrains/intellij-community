@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.codegen.signature.AsmTypeFactory
 import org.jetbrains.kotlin.codegen.signature.JvmSignatureWriter
 import org.jetbrains.kotlin.codegen.state.isMostPreciseContravariantArgument
 import org.jetbrains.kotlin.codegen.state.isMostPreciseCovariantArgument
-import org.jetbrains.kotlin.codegen.state.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.load.kotlin.TypeMappingConfiguration
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
@@ -113,9 +112,7 @@ object KotlinUastTypeMapper {
 
         for (i in 0 until type.argumentsCount()) {
             val projection = type.getArgument(i)
-            if (projection.isStarProjection()) continue
-
-            val argument = projection.getType()
+            val argument = projection.getType() ?: continue
 
             if (argument.isNullableNothing() ||
                 argument.isNothing() && typeConstructor.getParameter(i).getVariance() != TypeVariance.IN
@@ -183,19 +180,20 @@ object KotlinUastTypeMapper {
         mapType: (KotlinTypeMarker, JvmSignatureWriter, TypeMappingMode) -> Type
     ) {
         for ((parameter, argument) in parameters.zip(arguments)) {
-            if (argument.isStarProjection() ||
+            val argumentType = argument.getType()
+            if (argumentType == null ||
                 // In<Nothing, Foo> == In<*, Foo> -> In<?, Foo>
-                argument.getType().isNothing() && parameter.getVariance() == TypeVariance.IN
+                argumentType.isNothing() && parameter.getVariance() == TypeVariance.IN
             ) {
                 signatureVisitor.writeUnboundedWildcard()
             } else {
-                val argumentMode = mode.updateArgumentModeFromAnnotations(argument.getType(), this)
+                val argumentMode = mode.updateArgumentModeFromAnnotations(argumentType, this)
                 val projectionKind = getVarianceForWildcard(parameter, argument, argumentMode)
 
                 signatureVisitor.writeTypeArgument(projectionKind)
 
                 mapType(
-                    argument.getType(), signatureVisitor,
+                    argumentType, signatureVisitor,
                     argumentMode.toGenericArgumentMode(
                         getEffectiveVariance(parameter.getVariance().convertVariance(), argument.getVariance().convertVariance())
                     )
@@ -221,12 +219,13 @@ object KotlinUastTypeMapper {
         }
 
         if (projectionKind == Variance.INVARIANT || projectionKind == parameterVariance) {
-            if (mode.skipDeclarationSiteWildcardsIfPossible && !projection.isStarProjection()) {
-                if (parameterVariance == Variance.OUT_VARIANCE && isMostPreciseCovariantArgument(projection.getType())) {
+            val type = projection.getType()
+            if (mode.skipDeclarationSiteWildcardsIfPossible && type != null) {
+                if (parameterVariance == Variance.OUT_VARIANCE && isMostPreciseCovariantArgument(type)) {
                     return Variance.INVARIANT
                 }
 
-                if (parameterVariance == Variance.IN_VARIANCE && isMostPreciseContravariantArgument(projection.getType())) {
+                if (parameterVariance == Variance.IN_VARIANCE && isMostPreciseContravariantArgument(type)) {
                     return Variance.INVARIANT
                 }
             }

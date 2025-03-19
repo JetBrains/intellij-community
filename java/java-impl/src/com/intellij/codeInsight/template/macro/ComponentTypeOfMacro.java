@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComponentTypeOfMacro extends Macro {
+public final class ComponentTypeOfMacro extends Macro {
   @Override
   public String getName() {
     return "componentTypeOf";
@@ -35,13 +35,13 @@ public class ComponentTypeOfMacro extends Macro {
       PsiTypeLookupItem lookupItem = element.as(PsiTypeLookupItem.CLASS_CONDITION_KEY);
       if (lookupItem != null) {
         PsiType psiType = lookupItem.getType();
-        if (psiType instanceof PsiArrayType) {
-          result.add(PsiTypeLookupItem.createLookupItem(((PsiArrayType)psiType).getComponentType(), null));
+        if (psiType instanceof PsiArrayType arrayType) {
+          result.add(PsiTypeLookupItem.createLookupItem(arrayType.getComponentType(), null));
         }
       }
     }
 
-    return lookupItems;
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

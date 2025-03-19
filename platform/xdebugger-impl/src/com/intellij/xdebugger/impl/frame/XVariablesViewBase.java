@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.*;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
@@ -38,8 +39,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public abstract class XVariablesViewBase extends XDebugView {
@@ -76,9 +77,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreePanel.getTree();
   }
 
-  protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
+  protected void buildTreeAndRestoreState(final @NotNull XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
+    DebuggerUIUtil.freezePaintingToReduceFlickering(myTreePanel.getContentComponent());
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
     XVariablesView.InlineVariablesInfo.set(getSession(tree), new XVariablesView.InlineVariablesInfo());
@@ -168,8 +170,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     return myTreeRestorer != null ? CompletableFuture.allOf(myTreeRestorer.onFinished(), loaded).thenCompose(v -> loaded) : loaded.copy();
   }
 
-  @NotNull
-  public final XDebuggerTree getTree() {
+  public final @NotNull XDebuggerTree getTree() {
     return myTreePanel.getTree();
   }
 
@@ -211,7 +212,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
 
     @Override
-    public void selectionChanged(@NotNull final SelectionEvent e) {
+    public void selectionChanged(final @NotNull SelectionEvent e) {
       if (!Registry.is("debugger.valueTooltipAutoShowOnSelection") ||
           myEditor.getCaretModel().getCaretCount() > 1 ||
           e.getNewRanges().length != 1 ||
@@ -230,18 +231,19 @@ public abstract class XVariablesViewBase extends XDebugView {
         int offset = range.getStartOffset();
         LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
         Point point = myEditor.logicalPositionToXY(pos);
-        showTooltip(point, info, evaluator, session);
+        showTooltip(point, offset, info, evaluator, session);
       }
     }
 
     private void showTooltip(@NotNull Point point,
+                             int offset,
                              @NotNull ExpressionInfo info,
                              @NotNull XDebuggerEvaluator evaluator,
                              @NotNull XDebugSession session) {
       ALARM.cancelAllRequests();
       ALARM.addRequest(() -> {
         if (DocumentUtil.isValidOffset(info.getTextRange().getEndOffset(), myEditor.getDocument())) {
-          new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, info, evaluator, session, true).invokeHint();
+          new XValueHint(myProject, myEditor, point, ValueHintType.MOUSE_OVER_HINT, offset, info, evaluator, session, true).invokeHint();
         }
       }, EVALUATION_DELAY_MILLIS);
     }

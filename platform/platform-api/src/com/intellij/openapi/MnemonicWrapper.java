@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -62,7 +63,8 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
 
   @Override
   public final void run() {
-    boolean disabled = UISettings.getShadowInstance().getDisableMnemonicsInControls();
+    boolean disabled = !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() ||
+                       UISettings.getShadowInstance().getDisableMnemonicsInControls();
     try {
       myEvent = true;
       if (myTextWithMnemonic == null) {
@@ -143,7 +145,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
   private TextWithMnemonic createTextWithMnemonic() {
     String text = getText();
     if (Strings.isEmpty(text)) return TextWithMnemonic.EMPTY;
-    TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text);
+    TextWithMnemonic mnemonic = TextWithMnemonic.fromMnemonicText(text, false);
     if (mnemonic != null) return mnemonic;
     // assume that it is already set
     int index = getMnemonicIndex();
@@ -222,7 +224,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
     }
   }
 
-  private static abstract class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
+  private abstract static class AbstractButtonWrapper extends MnemonicWrapper<AbstractButton> {
     private AbstractButtonWrapper(AbstractButton component) {
       super(component, "text", "mnemonic", "displayedMnemonicIndex");
     }

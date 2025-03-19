@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render
 
 import com.intellij.debugger.DebuggerManagerEx
@@ -32,16 +32,17 @@ import com.sun.jdi.ArrayType
 import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
+import kotlin.math.min
 
 final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
                                                                                                                                             "arrayFilter") {
   init {
     if (thisType != null) {
-      myExpressionEditor.setDocumentProcessor({ d ->
-                                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
-                                                if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
-                                                d
-                                              })
+      myExpressionEditor.setDocumentProcessor { d ->
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
+        if (psiFile is JavaCodeFragment) psiFile.thisType = thisType
+        d
+      }
     }
     val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer)
     myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
@@ -95,12 +96,9 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
     fun edit(node: XDebuggerTreeNode, temp: Boolean) {
       val javaValue = (node.parent as XValueNodeImpl).valueContainer
       if (javaValue is JavaValue) {
-        val debugProcess = javaValue.evaluationContext.debugProcess
-        debugProcess.managerThread.schedule(
+        javaValue.evaluationContext.managerThread.schedule(
           object : SuspendContextCommandImpl(javaValue.evaluationContext.suspendContext) {
-            override fun getPriority(): PrioritizedTask.Priority {
-              return PrioritizedTask.Priority.NORMAL
-            }
+            override val priority: PrioritizedTask.Priority get() = PrioritizedTask.Priority.NORMAL
 
             override fun contextAction(suspendContext: SuspendContextImpl) {
               var type: String? = null
@@ -112,7 +110,7 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
                 val lastChildrenValue = ExpressionChildrenRenderer.getLastChildrenValue(javaValue.descriptor)
                 if (lastChildrenValue is ArrayReference) {
                   // take first non-null element for now
-                  for (v in lastChildrenValue.getValues(0, Math.min(lastChildrenValue.length(), 100))) {
+                  for (v in lastChildrenValue.getValues(0, min(lastChildrenValue.length(), 100))) {
                     if (v != null) {
                       type = v.type().name()
                       break
@@ -123,11 +121,11 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
               val pair = ReadAction.compute<Pair<PsiElement, PsiType>, Exception> {
                 DebuggerUtilsImpl.getPsiClassAndType(type, javaValue.project)
               }
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, pair.second).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, pair.second).show() }
             }
 
             override fun commandCancelled() {
-              DebuggerUIUtil.invokeLater({ ArrayFilterInplaceEditor(node, temp, null).show() })
+              DebuggerUIUtil.invokeLater { ArrayFilterInplaceEditor(node, temp, null).show() }
             }
           })
       }

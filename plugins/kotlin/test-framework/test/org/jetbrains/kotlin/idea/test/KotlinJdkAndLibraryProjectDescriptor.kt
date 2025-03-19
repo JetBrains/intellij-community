@@ -3,14 +3,17 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.pom.java.LanguageLevel
 import java.io.File
 
-open class KotlinJdkAndLibraryProjectDescriptor(val libraryFiles: List<File>, val librarySourceFiles: List<File> = emptyList()) :
-    KotlinLightProjectDescriptor() {
+open class KotlinJdkAndLibraryProjectDescriptor(
+    val libraryFiles: List<File>,
+    val librarySourceFiles: List<File> = emptyList(),
+    val javaLanguageVersion: LanguageLevel? = null,
+) : KotlinLightProjectDescriptor() {
 
     constructor(libraryFile: File) : this(listOf(libraryFile))
 
@@ -19,8 +22,6 @@ open class KotlinJdkAndLibraryProjectDescriptor(val libraryFiles: List<File>, va
             assert(libraryFile.exists()) { "Library file doesn't exist: " + libraryFile.absolutePath }
         }
     }
-
-    override fun getSdk(): Sdk? = IdeaTestUtil.getMockJdk18()
 
     override fun configureModule(module: Module, model: ModifiableRootModel) {
         ConfigLibraryUtil.addLibrary(model, LIBRARY_NAME) {
@@ -31,6 +32,8 @@ open class KotlinJdkAndLibraryProjectDescriptor(val libraryFiles: List<File>, va
                 addRoot(librarySrcFile, OrderRootType.SOURCES)
             }
         }
+
+        model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(javaLanguageVersion ?: LanguageLevel.HIGHEST);
     }
 
     companion object {

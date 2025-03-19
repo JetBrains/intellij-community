@@ -8,11 +8,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.getConfigurationPossibilitiesForConfigureNotification
 import org.jetbrains.kotlin.idea.configuration.getConfiguratorByName
-import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import javax.swing.event.HyperlinkEvent
 
 data class ConfigureKotlinNotificationState(
@@ -21,12 +21,14 @@ data class ConfigureKotlinNotificationState(
     val notConfiguredModules: Collection<String>
 )
 
+private const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
+
 class ConfigureKotlinNotification(
     project: Project,
     excludeModules: List<Module>,
     val notificationState: ConfigureKotlinNotificationState
 ) : Notification(
-    KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
+    CONFIGURE_NOTIFICATION_GROUP_ID,
     @Suppress("DialogTitleCapitalization") KotlinProjectConfigurationBundle.message("configure.kotlin"),
     notificationState.notificationString,
     NotificationType.WARNING
@@ -37,6 +39,7 @@ class ConfigureKotlinNotification(
                 val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
                 notification.expire()
 
+                KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                 configurator.configure(project, excludeModules)
             }
         })

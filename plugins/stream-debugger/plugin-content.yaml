@@ -1,0 +1,3 @@
+- name: lib/java-debugger-streams.jar
+  modules:
+  - name: intellij.java.debugger.streams

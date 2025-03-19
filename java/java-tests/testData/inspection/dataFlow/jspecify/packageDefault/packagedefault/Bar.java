@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package packagedefault;
 
-import org.jspecify.nullness.Nullable;
+import org.jspecify.annotations.Nullable;
 
 class Bar {
   Object x(@Nullable Object o) {
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:Object? to Object!
     return o;
   }
 }

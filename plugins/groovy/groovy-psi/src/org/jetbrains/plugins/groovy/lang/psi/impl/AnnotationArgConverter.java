@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 public class AnnotationArgConverter {
   private static final Logger LOG = Logger.getInstance(AnnotationArgConverter.class);
 
-  @Nullable
-  public GrAnnotationMemberValue convert(PsiAnnotationMemberValue value) {
+  public @Nullable GrAnnotationMemberValue convert(PsiAnnotationMemberValue value) {
     final StringBuilder buffer = new StringBuilder();
 
     buffer.append("@A(");

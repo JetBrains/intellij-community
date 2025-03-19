@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Base64
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.indexing.IndexedHashesSupport
 import com.intellij.util.indexing.SubstitutedFileType
+import java.util.*
 
 object IndexedFilePaths {
 
@@ -32,10 +32,11 @@ object IndexedFilePaths {
     }
     val (contentHash, indexedHash) = try {
       val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
+      val encoder = Base64.getEncoder()
       runReadAction {
         val contentHash = IndexedHashesSupport.getBinaryContentHash(fileContent.content)
         val indexedHash = IndexedHashesSupport.calculateIndexedHash(fileContent, contentHash)
-        Base64.encode(contentHash) to Base64.encode(indexedHash)
+        encoder.encodeToString(contentHash) to encoder.encodeToString(indexedHash)
       }
     }
     catch (e: FileTooBigException) {
@@ -57,8 +58,8 @@ object IndexedFilePaths {
       fileUrl,
       portableFilePath,
       allPusherValues,
-      indexedHash,
-      contentHash
+      contentHash = contentHash,
+      indexedFileHash = indexedHash
     )
   }
 

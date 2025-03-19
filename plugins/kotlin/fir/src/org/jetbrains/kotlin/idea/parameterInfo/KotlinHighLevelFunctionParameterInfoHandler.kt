@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -6,25 +6,31 @@ import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -37,21 +43,21 @@ class KotlinHighLevelFunctionParameterInfoHandler :
     KotlinHighLevelParameterInfoWithCallHandlerBase<KtValueArgumentList, KtValueArgument>(
         KtValueArgumentList::class, KtValueArgument::class
     ) {
-    override fun getActualParameters(arguments: KtValueArgumentList) = arguments.arguments.toTypedArray()
+    override fun getActualParameters(arguments: KtValueArgumentList): Array<KtValueArgument?> = arguments.arguments.toTypedArray()
 
     override fun getActualParametersRBraceType(): KtSingleValueToken = KtTokens.RPAR
 
-    override fun getArgumentListAllowedParentClasses() = setOf(KtCallElement::class.java)
+    override fun getArgumentListAllowedParentClasses(): Set<Class<KtCallElement>> = setOf(KtCallElement::class.java)
 }
 
 class KotlinHighLevelLambdaParameterInfoHandler :
     KotlinHighLevelParameterInfoWithCallHandlerBase<KtLambdaArgument, KtLambdaArgument>(KtLambdaArgument::class, KtLambdaArgument::class) {
 
-    override fun getActualParameters(lambdaArgument: KtLambdaArgument) = arrayOf(lambdaArgument)
+    override fun getActualParameters(lambdaArgument: KtLambdaArgument): Array<KtLambdaArgument> = arrayOf(lambdaArgument)
 
     override fun getActualParametersRBraceType(): KtSingleValueToken = KtTokens.RBRACE
 
-    override fun getArgumentListAllowedParentClasses() = setOf(KtLambdaArgument::class.java)
+    override fun getArgumentListAllowedParentClasses(): Set<Class<KtLambdaArgument>> = setOf(KtLambdaArgument::class.java)
 
     override fun getCurrentArgumentIndex(context: UpdateParameterInfoContext, argumentList: KtLambdaArgument): Int {
         val size = (argumentList.parent as? KtCallElement)?.valueArguments?.size ?: 1
@@ -62,7 +68,7 @@ class KotlinHighLevelLambdaParameterInfoHandler :
 class KotlinHighLevelArrayAccessParameterInfoHandler :
     KotlinHighLevelParameterInfoWithCallHandlerBase<KtContainerNode, KtExpression>(KtContainerNode::class, KtExpression::class) {
 
-    override fun getArgumentListAllowedParentClasses() = setOf(KtArrayAccessExpression::class.java)
+    override fun getArgumentListAllowedParentClasses(): Set<Class<KtArrayAccessExpression>> = setOf(KtArrayAccessExpression::class.java)
 
     override fun getActualParameters(containerNode: KtContainerNode): Array<out KtExpression> =
         containerNode.allChildren.filterIsInstance<KtExpression>().toList().toTypedArray()
@@ -88,13 +94,18 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             KtContainerNode::class.java,
             KtTypeArgumentList::class.java
         )
+
+        private const val SINGLE_LINE_PARAMETERS_COUNT = 3
+
+        private val ANNOTATION_TARGET_TYPE = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.TYPE.name))
+        private val ANNOTATION_TARGET_VALUE_PARAMETER = CallableId(StandardClassIds.AnnotationTarget, Name.identifier(AnnotationTarget.VALUE_PARAMETER.name))
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
 
     override fun getArgListStopSearchClasses(): Set<Class<out KtElement>> = STOP_SEARCH_CLASSES
 
-    override fun getArgumentListClass() = argumentListClass.java
+    override fun getArgumentListClass(): Class<TArgumentList> = argumentListClass.java
 
     override fun showParameterInfo(element: TArgumentList, context: CreateParameterInfoContext) {
         context.showHint(element, element.textRange.startOffset, this)
@@ -132,7 +143,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
+    @OptIn(KaExperimentalApi::class)
     override fun updateParameterInfo(argumentList: TArgumentList, context: UpdateParameterInfoContext) {
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
@@ -164,14 +175,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val valueParameters = candidateSignature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
 
                 // TODO: When resolvedCall is KtFunctionalTypeVariableCall, the candidate is FunctionN.invoke() and parameter names are "p1", "p2", etc.
-                // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
-                // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
+                // We need to get the type of the target variable, and retrieve the parameter names from the type (KaFunctionType).
+                // The names need to be added to KaFunctionType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
-                val parameterToIndex = buildMap<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
+                val parameterToIndex = buildMap {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }
                 }
 
-                val parameterIndexToText = buildMap<Int, String> {
+                val parameterIndexToText = buildMap {
                     valueParameters.forEachIndexed { index, parameter ->
                         // TODO: Add hasSynthesizedParameterNames to HL API.
                         // See resolveValueParameters() in core/descriptors.jvm/src/org/jetbrains/kotlin/load/java/lazy/descriptors/LazyJavaScope.kt
@@ -199,7 +210,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 val hasTypeMismatchBeforeCurrent = CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(
                     callElement,
                     argumentMapping,
-                    currentArgumentIndex
+                    currentArgumentIndex,
+
+                    // We only want to display the parameter info as "disabled" if the type mismatch can *definitely* be proved. If an
+                    // argument has a type error instead, the parameter info may still be applicable and even help the user fix the error.
+                    subtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.LENIENT,
                 )
 
                 // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
@@ -241,8 +256,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(
-        parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun renderParameter(
+        parameter: KaVariableSignature<KaValueParameterSymbol>,
         includeName: Boolean
     ): String {
         return buildString {
@@ -250,7 +267,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 parameter.symbol.annotations
                     .filter {
                         // For primary constructor parameters, the annotation use site must be "param" or unspecified.
-                        it.useSiteTarget == null || it.useSiteTarget == AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
+                        (it.useSiteTarget == null || it.useSiteTarget == AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER) &&
+                                !it.isAnnotatedWithTypeUseOnly()
                     }
                     .mapNotNull { it.classId?.asSingleFqName() }
                     .filter { it !in NULLABILITY_ANNOTATIONS }
@@ -265,22 +283,38 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 append(": ")
             }
 
-            val returnType = parameter.returnType.takeUnless { it is KtErrorType } ?: parameter.symbol.returnType
-            append(returnType.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
+            val returnType = parameter.returnType.takeUnless { it is KaErrorType } ?: parameter.symbol.returnType
+            append(returnType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
 
             parameter.symbol.defaultValue?.let { defaultValue ->
                 append(" = ")
-                append(KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue))
+                val expressionValue = KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue)
+                if (defaultValue is KtNameReferenceExpression) {
+                    val referencedName = defaultValue.getReferencedName()
+                    if (expressionValue.isConstValue) {
+                        append(referencedName)
+                        append(" = ")
+                    }
+                }
+                append(expressionValue.text)
             }
         }
     }
+
+    context(KaSession)
+    private fun KaAnnotation.isAnnotatedWithTypeUseOnly(): Boolean =
+        (constructorSymbol?.containingSymbol as? KaClassSymbol)
+            ?.hasApplicableAllowedTarget {
+                it.isApplicableTargetSet(ANNOTATION_TARGET_TYPE) &&
+                        !it.isApplicableTargetSet(ANNOTATION_TARGET_VALUE_PARAMETER)
+            } ?: false
 
     private fun calculateHighlightParameterIndex(
         arguments: List<KtExpression?>,
         currentArgumentIndex: Int,
         argumentToParameterIndex: Map<KtExpression, Int>,
-        argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
-        parameterToIndex: Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int>
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
+        parameterToIndex: Map<KaVariableSignature<KaValueParameterSymbol>, Int>
     ): Int? {
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
         val highlightParameterIndex = when {
@@ -366,7 +400,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}"
                 },
                 attachments = {
-                    it.withAttachment("file.kt", callElement.containingFile.text)
+                    it.withPsiAttachment("file.kt", callElement.containingFile)
                     it.withAttachment("info.txt", itemToShow)
                 }
             )
@@ -381,6 +415,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val usedParameterIndices = HashSet<Int>()
             val text = buildString {
                 var argumentIndex = 0
+                val parameterDelimiterIndexes = mutableListOf<Int>()
 
                 fun appendParameter(
                     parameterIndex: Int,
@@ -392,13 +427,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                     if (length > 0) {
                         append(", ")
+                        parameterDelimiterIndexes.add(length)
                         if (markUsedUnusedParameterBorder) {
                             // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
                             // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
 
-                            // Highlight the space after the comma; highlighted text needs to be at least one character long
+                            // Highlight something as bold to show text before as disabled
                             highlightStartOffset = length - 1
-                            highlightEndOffset = length
+                            highlightEndOffset = length - 1
                             isDisabledBeforeHighlight = true
                         }
                     }
@@ -476,6 +512,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 if (length == 0) {
                     append(CodeInsightBundle.message("parameter.info.no.parameters"))
+                } else {
+                    val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info")
+                    if (useMultilineParameters && argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                        parameterDelimiterIndexes.forEach { offset ->
+                            replace(offset - 1, offset, "\n")
+                        }
+                    }
                 }
             }
 

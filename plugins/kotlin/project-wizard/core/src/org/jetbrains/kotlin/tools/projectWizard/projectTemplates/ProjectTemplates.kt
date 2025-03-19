@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.registry.Registry
 import icons.KotlinBaseResourcesIcons

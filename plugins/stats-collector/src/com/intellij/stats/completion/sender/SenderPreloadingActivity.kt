@@ -1,64 +1,72 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.stats.completion.sender
 
+import com.intellij.ide.ApplicationActivity
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.stats.completion.network.status.WebServiceStatusManager
-import com.intellij.util.Alarm
-import com.intellij.util.Time
-import com.intellij.util.containers.forEachLoggingErrors
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.stats.completion.network.service.RequestService
+import com.intellij.stats.completion.network.status.bean.AnalyticsPlatformSettingsDeserializer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.minutes
 
-private fun isSendAllowed(): Boolean {
-  return isCompletionLogsSendAllowed() && StatisticsUploadAssistant.isSendAllowed()
-}
+internal fun isCompletionLogsSendAllowed(): Boolean =
+  ApplicationManager.getApplication().isEAP && System.getProperty("completion.stats.send.logs", "true").toBoolean()
 
-internal fun isCompletionLogsSendAllowed(): Boolean {
-  return ApplicationManager.getApplication().isEAP && java.lang.Boolean.parseBoolean(System.getProperty("completion.stats.send.logs", "true"))
-}
+private const val USE_ANALYTICS_PLATFORM_KEY = "completion.stats.analytics.platform.send"
+private const val ANALYTICS_PLATFORM_URL_KEY = "completion.stats.analytics.platform.url"
 
 private val LOG = logger<SenderPreloadingActivity>()
 
-@Service
-private class StatsCollectorPluginDisposable : Disposable {
-  override fun dispose() {
-  }
-}
+private class SenderPreloadingActivity : ApplicationActivity {
+  private val statusUrl: String
 
-internal class SenderPreloadingActivity : PreloadingActivity() {
-  private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, service<StatsCollectorPluginDisposable>())
-  private val sendInterval = 5 * Time.MINUTE
-
-  override fun preload() {
+  init {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      return
+    if (app.isUnitTestMode || app.isHeadlessEnvironment || !Registry.`is`(USE_ANALYTICS_PLATFORM_KEY, false)) {
+      throw ExtensionNotApplicableException.create()
     }
-
-    if (isSendAllowed()) {
-      alarm.addRequest({ send() }, sendInterval)
-    }
+    statusUrl = Registry.get(ANALYTICS_PLATFORM_URL_KEY).takeIf { it.isChangedFromDefault() }?.asString()
+                ?: "https://resources.jetbrains.com/storage/ap/mlcc/config/v1/${ApplicationInfo.getInstance().build.productCode}.json"
   }
 
-  private fun send() {
-    if (!isSendAllowed()) {
-      return
-    }
-
-    try {
-      WebServiceStatusManager.getAllStatuses().forEachLoggingErrors(LOG) { status ->
-        status.update()
-        if (status.isServerOk()) {
-          service<StatisticSender>().sendStatsData(status.dataServerUrl())
+  override suspend fun execute() {
+    // do not check right after the start - avoid getting UsageStatisticsPersistenceComponent too early
+    delay(5.minutes)
+    while (isCompletionLogsSendAllowed() && StatisticsUploadAssistant.isSendAllowed()) {
+      delay(5.minutes)
+      withContext(Dispatchers.IO) {
+        runCatching {
+          updateAndGetUrl()?.let { url ->
+            service<StatisticSender>().sendStatsData(url)
+          }
+        }.onFailure {
+          LOG.error(it)
         }
       }
     }
-    finally {
-      alarm.addRequest({ send() }, sendInterval)
+  }
+
+  private fun updateAndGetUrl(): String? {
+    val response = service<RequestService>().get(statusUrl)
+    if (response == null || !response.isOK()) return null
+
+    val settings = AnalyticsPlatformSettingsDeserializer.deserialize(response.text) ?: return null
+
+    val satisfyingEndpoints = settings.versions.filter { it.satisfies() && it.endpoint != null }
+    if (satisfyingEndpoints.isEmpty()) {
+      LOG.debug("Analytics Platform completion web service status. No satisfying endpoints.")
+      return null
     }
+    if (satisfyingEndpoints.size > 1) {
+      LOG.error("Analytics Platform completion web service status. More than one satisfying endpoints. First one will be used.")
+    }
+    return satisfyingEndpoints.first().endpoint!!
   }
 }

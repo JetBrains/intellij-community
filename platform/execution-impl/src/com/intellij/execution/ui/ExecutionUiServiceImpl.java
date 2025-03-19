@@ -5,17 +5,18 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.options.SettingsEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
-public class ExecutionUiServiceImpl extends ExecutionUiService {
+@ApiStatus.Internal
+public final class ExecutionUiServiceImpl extends ExecutionUiService {
   @Override
-  @Nullable
-  public RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,
-                                             @NotNull ExecutionEnvironment environment) {
+  public @Nullable RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,
+                                                       @NotNull ExecutionEnvironment environment) {
     return new RunContentBuilder(executionResult, environment).showRunContent(environment.getContentToReuse());
   }
 

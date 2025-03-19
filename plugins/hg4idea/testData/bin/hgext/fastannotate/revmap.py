@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import bisect
 import io
@@ -16,7 +15,6 @@ from mercurial.node import hex
 from mercurial.pycompat import open
 from mercurial import (
     error as hgerror,
-    pycompat,
 )
 from . import error
 
@@ -49,7 +47,7 @@ renameflag = 2
 _hshlen = 20
 
 
-class revmap(object):
+class revmap:
     """trivial hg bin hash - linelog rev bidirectional map
 
     also stores a flag (uint8) for each revision, and track renames.
@@ -166,13 +164,11 @@ class revmap(object):
         if self._lastmaxrev == -1:  # write the entire file
             with open(self.path, b'wb') as f:
                 f.write(self.HEADER)
-                for i in pycompat.xrange(1, len(self._rev2hsh)):
+                for i in range(1, len(self._rev2hsh)):
                     self._writerev(i, f)
         else:  # append incrementally
             with open(self.path, b'ab') as f:
-                for i in pycompat.xrange(
-                    self._lastmaxrev + 1, len(self._rev2hsh)
-                ):
+                for i in range(self._lastmaxrev + 1, len(self._rev2hsh)):
                     self._writerev(i, f)
         self._lastmaxrev = self.maxrev
 

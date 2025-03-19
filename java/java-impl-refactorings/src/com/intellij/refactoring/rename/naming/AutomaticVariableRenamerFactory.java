@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory {
+public final class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof PsiClass && !(element instanceof PsiAnonymousClass);
@@ -33,9 +33,8 @@ public class AutomaticVariableRenamerFactory implements AutomaticRenamerFactory 
     JavaRefactoringSettings.getInstance().setRenameVariables(enabled);
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new AutomaticVariableRenamer((PsiClass)element, newName, usages);
   }
 }

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PySuperClassAttributesCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PySuperClassAttributesCompletionContributor extends CompletionContributor implements DumbAware {
   public PySuperClassAttributesCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement()

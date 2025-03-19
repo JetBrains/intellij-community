@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -13,8 +13,10 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ScrollType;
@@ -30,9 +32,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -40,6 +44,8 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -53,9 +59,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   private final MyBestLocationPointProvider myProvider;
 
+  private Runnable myLateShowHintCallback;
+
   @Override
   protected boolean canBeDisposed() {
-    return !myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isHeadlessEnvironment()
+    return myLateShowHintCallback == null && !myHint.isVisible() && !myKeepOnHintHidden && !ApplicationManager.getApplication().isHeadlessEnvironment()
            || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid();
   }
 
@@ -106,7 +114,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
           @Override
           public void run() {
             if (activeLookup != null) {
-              updateComponent();
+              WriteIntentReadAction.run((Runnable)ParameterInfoController.this::updateComponent);
             }
           }
         });
@@ -177,12 +185,18 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
     hintHint.setShowImmediately(true);
-    hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
-    hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
-    hintHint.setComponentBorder(JBUI.Borders.empty());
+    if (!ExperimentalUI.isNewUI()) {
+      hintHint.setBorderColor(ParameterInfoComponent.BORDER_COLOR);
+      hintHint.setBorderInsets(JBUI.insets(4, 1, 4, 1));
+      hintHint.setComponentBorder(JBUI.Borders.empty());
+    }
+    else {
+      hintHint.setBorderInsets(JBUI.insets(8, 8, 10, 8));
+    }
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
+    int finalFlags = flags;
 
     Editor editorToShow = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
 
@@ -191,7 +205,15 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     // is case of injection we need to calculate position for EditorWindow
     // also we need to show the hint in the main editor because of intention bulb
-    HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
+    Runnable showHintCallback =
+      () -> HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), finalFlags, 0, false, hintHint);
+    if (myComponent.isSetup()) {
+      showHintCallback.run();
+      myLateShowHintCallback = null;
+    }
+    else {
+      myLateShowHintCallback = showHintCallback;
+    }
 
     updateComponent();
   }
@@ -220,10 +242,15 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
           if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
             AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
           }
-          if (!myDisposed && (myHint.isVisible() && !myEditor.isDisposed() &&
+          if (!myDisposed && ((myHint.isVisible() || myLateShowHintCallback != null) && !myEditor.isDisposed() &&
                               (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode()) ||
                               ApplicationManager.getApplication().isHeadlessEnvironment())) {
             Model result = myComponent.update(mySingleParameterInfo);
+            if (myLateShowHintCallback != null) {
+              Runnable showHintCallback = myLateShowHintCallback;
+              myLateShowHintCallback = null;
+              showHintCallback.run();
+            }
             result.project = myProject;
             result.range = myParameterInfoControllerData.getParameterOwner().getTextRange();
             result.editor = myEditor;
@@ -269,9 +296,16 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
             })
               .withDocumentsCommitted(myProject)
               .expireWhen(
-                () -> !myKeepOnHintHidden && !myHint.isVisible() && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
-                      getCurrentOffset() != context.getOffset() ||
-                      !elementForUpdating.isValid())
+                () -> {
+                  try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162829")) {
+                    return !myKeepOnHintHidden &&
+                           !myHint.isVisible() &&
+                           myLateShowHintCallback == null &&
+                           !ApplicationManager.getApplication().isHeadlessEnvironment() ||
+                           getCurrentOffset() != context.getOffset() ||
+                           !elementForUpdating.isValid();
+                  }
+                })
               .expireWith(this),
             element -> {
               if (element != null && continuation != null) {
@@ -465,13 +499,14 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
   @Override
   protected void hideHint() {
+    myLateShowHintCallback = null;
     myHint.hide();
     for (ParameterInfoListener listener : ParameterInfoListener.EP_NAME.getExtensionList()) {
       listener.hintHidden(myProject);
     }
   }
 
-  private static class MyBestLocationPointProvider {
+  private static final class MyBestLocationPointProvider {
     private final Editor myEditor;
     private int previousOffset = -1;
     private Rectangle previousLookupBounds;
@@ -483,12 +518,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
       myEditor = editor;
     }
 
-    @NotNull
-    private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                                    PsiElement list,
-                                                    int offset,
-                                                    VisualPosition pos,
-                                                    short preferredPosition) {
+    private @NotNull Pair<Point, Short> getBestPointPosition(LightweightHint hint,
+                                                             PsiElement list,
+                                                             int offset,
+                                                             VisualPosition pos,
+                                                             short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
@@ -535,10 +569,11 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     }
   }
 
-  static class WrapperPanel extends JPanel {
+  static final class WrapperPanel extends JPanel {
     WrapperPanel() {
       super(new BorderLayout());
       setBorder(JBUI.Borders.empty());
+      setOpaque(!ExperimentalUI.isNewUI());
     }
 
     // foreground/background/font are used to style the popup (HintManagerImpl.createHintHint)
@@ -549,7 +584,7 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
 
     @Override
     public Color getBackground() {
-      return getComponentCount() == 0 ? super.getBackground() : getComponent(0).getBackground();
+      return getComponentCount() == 0 || ExperimentalUI.isNewUI() ? super.getBackground() : getComponent(0).getBackground();
     }
 
     @Override
@@ -561,6 +596,24 @@ public final class ParameterInfoController extends ParameterInfoControllerBase {
     @Override
     public String toString() {
       return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public Accessible getAccessibleParent() {
+            Container parent = getParent();
+            if (parent instanceof Accessible accessible) {
+              return accessible;
+            }
+            return super.getAccessibleParent();
+          }
+        };
+      }
+
+      return accessibleContext;
     }
   }
 }

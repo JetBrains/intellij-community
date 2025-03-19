@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -15,11 +16,9 @@ public abstract class ExternalDependenciesManager {
     return project.getService(ExternalDependenciesManager.class);
   }
 
-  @NotNull
-  public abstract <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass);
+  public abstract @Unmodifiable @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass);
 
-  @NotNull
-  public abstract List<ProjectExternalDependency> getAllDependencies();
+  public abstract @NotNull List<ProjectExternalDependency> getAllDependencies();
 
   public abstract void setAllDependencies(@NotNull List<? extends ProjectExternalDependency> dependencies);
 }

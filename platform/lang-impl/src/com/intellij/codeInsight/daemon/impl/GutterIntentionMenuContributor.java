@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class GutterIntentionMenuContributor implements IntentionMenuContributor {
+public final class GutterIntentionMenuContributor implements IntentionMenuContributor {
   @Override
   public void collectActions(@NotNull Editor hostEditor,
                              @NotNull PsiFile hostFile,
@@ -37,11 +39,14 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     Collection<AnAction> actions = result.stream()
       .map(RangeHighlighter::getGutterIconRenderer)
       .filter(Objects::nonNull)
-      .filter(r -> !DumbService.isDumb(project) || DumbService.isDumbAware(r))
+      .filter(r -> DumbService.getInstance(project).isUsableInCurrentContext(r))
       .flatMap(r -> {
         ActionGroup group = r.getPopupMenuActions();
         List<AnAction> clickActions = Arrays.asList(r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction());
-        return (group == null ? clickActions : ContainerUtil.append(clickActions, group.getChildren(null))).stream();
+        if (group == null) return clickActions.stream();
+        AnAction[] children = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+                              group.getChildren(null);
+        return ContainerUtil.append(clickActions, children).stream();
       })
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedHashSet::new));

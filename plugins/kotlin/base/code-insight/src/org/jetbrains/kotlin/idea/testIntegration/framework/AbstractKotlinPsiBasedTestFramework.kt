@@ -1,20 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.java.library.JavaLibraryUtil
+import com.intellij.util.Processor
+import com.intellij.util.ThreeState
+import com.intellij.util.ThreeState.*
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.KOTLIN_TEST_IGNORE
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework {
-    abstract val markerClassFqn: String
-    abstract val disabledTestAnnotation: String
+    protected abstract val markerClassFqn: String
+    protected abstract val disabledTestAnnotation: String
+    protected abstract val allowTestMethodsInObject: Boolean
 
-    protected fun isFrameworkAvailable(element: KtElement): Boolean {
+    protected open fun isFrameworkAvailable(element: KtElement): Boolean =
+        isFrameworkAvailable(element, markerClassFqn, true)
+
+    protected fun isFrameworkAvailable(element: KtElement, markerClassFqn: String, javaOnly: Boolean): Boolean {
         val module = element.module ?: return false
-        return JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
+        val javaClassExists = JavaLibraryUtil.hasLibraryClass(module, markerClassFqn)
+        if (javaOnly || javaClassExists) return javaClassExists
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        val processor = Processor<Any> { false }
+        return !KotlinFullClassNameIndex.processElements(markerClassFqn, element.project, scope, processor) ||
+                !KotlinTopLevelTypeAliasFqNameIndex.processElements(markerClassFqn, element.project, scope, processor)
     }
 
     override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {
@@ -23,20 +37,26 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         }
 
         return when (declaration) {
-            is KtClassOrObject -> isTestClass(declaration)
-            is KtNamedFunction -> (declaration.containingClassOrObject?.let(::isTestClass) ?: false) && isTestMethod(declaration)
+            is KtClassOrObject -> checkTestClass(declaration) == YES
+            is KtNamedFunction -> (declaration.containingClassOrObject?.let(::checkTestClass) ?: NO) == YES
+                    && isTestMethod(declaration)
+
             else -> false
         }
     }
 
-    override fun isTestClass(declaration: KtClassOrObject): Boolean {
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
+        if (!isFrameworkAvailable(declaration)) {
+            return NO
+        }
         return when {
-            declaration.isPrivate() -> false
-            declaration.isAnnotation() -> false
-            declaration.annotations.isNotEmpty() -> true
-            declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> true
-            declaration.declarations.any { it is KtNamedFunction && it.isPublic } -> true
-            else -> false
+            declaration.isAnnotation() -> NO
+            (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
+            declaration.annotationEntries.isNotEmpty() -> UNSURE
+            declaration.superTypeListEntries.any { it is KtSuperTypeCallEntry } -> UNSURE
+            declaration.declarations.any { it is KtNamedFunction && !it.isPrivate() } -> UNSURE
+            declaration.declarations.any { it is KtClassOrObject && !it.isPrivate() } -> UNSURE
+            else -> NO
         }
     }
 
@@ -47,18 +67,21 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) -> false
             declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD) -> false
             declaration.isExtensionDeclaration() -> false
-            declaration.containingClassOrObject?.isObjectLiteral() == true -> false
-            else -> declaration.containingClass()?.let(::isTestClass) ?: false
+            else -> {
+                val ktClassOrObject =
+                    if (allowTestMethodsInObject) declaration.getStrictParentOfType<KtClassOrObject>() else declaration.containingClass()
+                ktClassOrObject?.let(::checkTestClass) == YES
+            }
         }
     }
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
-        return isAnnotated(declaration, KOTLIN_TEST_IGNORE)
-                || isAnnotated(declaration, disabledTestAnnotation)
+        return (isAnnotated(declaration, KOTLIN_TEST_IGNORE)
+                || isAnnotated(declaration, disabledTestAnnotation)) && isTestMethod(declaration)
     }
 
     protected fun checkNameMatch(file: KtFile, fqNames: Set<String>, shortName: String): Boolean {
-        if ("${file.packageFqName}.$shortName" in fqNames) return true
+        if (shortName in fqNames || "${file.packageFqName}.$shortName" in fqNames) return true
 
         for (importDirective in file.importDirectives) {
             if (!importDirective.isValidImport) {
@@ -86,21 +109,26 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     }
 
     protected fun isAnnotated(element: KtAnnotated, fqNames: Set<String>): Boolean {
+        return findAnnotation(element, fqNames) != null
+    }
+
+    protected fun findAnnotation(element: KtAnnotated, fqNames: Set<String>): KtAnnotationEntry? {
         val annotationEntries = element.annotationEntries
         if (annotationEntries.isEmpty()) {
-            return false
+            return null
         }
 
         val file = element.containingKtFile
 
         for (annotationEntry in annotationEntries) {
             val shortName = annotationEntry.shortName ?: continue
-            if (checkNameMatch(file, fqNames, shortName.asString())) {
-                return true
+            val fqName = annotationEntry.typeReference?.text
+            if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
+                return annotationEntry
             }
         }
 
-        return false
+        return null
     }
 
     protected fun findAnnotatedFunction(classOrObject: KtClassOrObject?, fqNames: Set<String>): KtNamedFunction? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -7,7 +7,10 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.util.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -16,20 +19,22 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallHandler;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -38,7 +43,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
   private static final CallMatcher OPTIONAL_GET =
@@ -73,41 +78,35 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
     );
 
+  private static final List<ChainSimplificationCase<?>> ourCases = List.of(
+    new IfPresentFoldedCase(),
+    new MapUnwrappingCase(),
+    new OrElseNonNullCase(OrElseType.OrElse),
+    new OrElseNonNullCase(OrElseType.OrElseGet),
+    new FlipPresentOrEmptyCase(true),
+    new FlipPresentOrEmptyCase(false),
+    new OrElseReturnCase(OrElseType.OrElse),
+    new OrElseReturnCase(OrElseType.OrElseGet),
+    new RewrappingCase(RewrappingCase.Type.OptionalGet),
+    new RewrappingCase(RewrappingCase.Type.OrElseNull),
+    new MapOrElseCase(OrElseType.OrElseGet),
+    new MapOrElseCase(OrElseType.OrElse),
+    new OptionalOfNullableOrElseNullCase(),
+    new OptionalOfNullableStringCase()
+  );
 
-  private static final CallMapper<OptionalSimplificationFix> ourMapper;
+  private static final CallMapper<OptionalSimplificationFix> ourMapper =
+    StreamEx.of(ourCases).map(theCase -> CallHandler.of(theCase.getMatcher(), theCase)).foldLeft(
+      new CallMapper<>(), CallMapper::register);
 
-  static {
-    List<ChainSimplificationCase<?>> cases = Arrays.asList(
-      new IfPresentFoldedCase(),
-      new MapUnwrappingCase(),
-      new OrElseNonNullCase(OrElseType.OrElse),
-      new OrElseNonNullCase(OrElseType.OrElseGet),
-      new FlipPresentOrEmptyCase(true),
-      new FlipPresentOrEmptyCase(false),
-      new OrElseReturnCase(OrElseType.OrElse),
-      new OrElseReturnCase(OrElseType.OrElseGet),
-      new RewrappingCase(RewrappingCase.Type.OptionalGet),
-      new RewrappingCase(RewrappingCase.Type.OrElseNull),
-      new MapOrElseCase(OrElseType.OrElseGet),
-      new MapOrElseCase(OrElseType.OrElse),
-      new OptionalOfNullableOrElseNullCase(),
-      new OptionalOfNullableStringCase()
-    );
-    ourMapper = new CallMapper<>();
-    for (ChainSimplificationCase<?> theCase : cases) {
-      CallHandler<OptionalSimplificationFix> handler = CallHandler.of(theCase.getMatcher(), theCase);
-      ourMapper.register(handler);
-    }
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
-    if (level.isLessThan(LanguageLevel.JDK_1_8)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
-    return new OptionalChainVisitor(level) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new OptionalChainVisitor(PsiUtil.getLanguageLevel(holder.getFile())) {
       @Override
       protected void handleSimplification(@NotNull PsiMethodCallExpression call, @NotNull OptionalSimplificationFix fix) {
         PsiElement element = call.getMethodExpression().getReferenceNameElement();
@@ -116,8 +115,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  @Nullable
-  private static <T> OptionalSimplificationFix getFix(PsiMethodCallExpression call, ChainSimplificationCase<T> inspection) {
+  private static @Nullable <T> OptionalSimplificationFix getFix(PsiMethodCallExpression call, ChainSimplificationCase<T> inspection) {
     T context = inspection.extractContext(call.getProject(), call);
     if (context == null) return null;
     String name = inspection.getName(context);
@@ -134,8 +132,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiExpression initializer) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiExpression initializer) {
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(initializer);
     if (expression instanceof PsiLambdaExpression lambda) {
       return lambda;
@@ -180,8 +177,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     or
     return optValue == null? "default" : optValue;
      */
-  @Nullable
-  private static PsiExpression extractConditionalDefaultValue(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
+  private static @Nullable PsiExpression extractConditionalDefaultValue(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
     if (statement instanceof PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return null;
@@ -203,8 +199,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static PsiExpression getReturnExpression(@Nullable PsiStatement block) {
+  private static @Nullable PsiExpression getReturnExpression(@Nullable PsiStatement block) {
     if (block == null) return null;
     PsiStatement statement = ControlFlowUtils.stripBraces(block);
     PsiReturnStatement returnStatement = tryCast(statement, PsiReturnStatement.class);
@@ -212,11 +207,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     return returnStatement.getReturnValue();
   }
 
-  @Nullable
-  private static PsiExpression extractConditionalDefaultValue(@NotNull PsiExpression thenExpr,
-                                                              @NotNull PsiExpression elseExpr,
-                                                              @NotNull PsiExpression condition,
-                                                              @NotNull PsiVariable optValue) {
+  private static @Nullable PsiExpression extractConditionalDefaultValue(@NotNull PsiExpression thenExpr,
+                                                                        @NotNull PsiExpression elseExpr,
+                                                                        @NotNull PsiExpression condition,
+                                                                        @NotNull PsiVariable optValue) {
     PsiVariable nullChecked = ExpressionUtils.getVariableFromNullComparison(condition, true);
     boolean inverted = false;
     if (nullChecked == null) {
@@ -267,10 +261,6 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     void apply(@NotNull Project project, @NotNull PsiMethodCallExpression call, @NotNull C context);
 
-    default boolean isAvailable(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
-      return extractContext(project, call) != null;
-    }
-
     @NotNull
     CallMatcher getMatcher();
 
@@ -279,7 +269,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
-  private static abstract class OptionalChainVisitor extends JavaElementVisitor {
+  private abstract static class OptionalChainVisitor extends JavaElementVisitor {
     private final LanguageLevel myLevel;
 
     private OptionalChainVisitor(LanguageLevel level) {
@@ -305,9 +295,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     private MapOrElseCase(OrElseType type) { myType = type; }
 
-    @Nullable
     @Override
-    public StringReplacement extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable StringReplacement extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression falseArg = getOrElseArgument(call, myType);
       if (falseArg == null) return null;
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
@@ -361,15 +350,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       return null;
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       return getMatcherByType(myType);
     }
   }
 
-  static class OptionalSimplificationFix implements LocalQuickFix {
-    @SafeFieldForPreview
+  static class OptionalSimplificationFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull ChainSimplificationCase<?> myInspection;
     private final @IntentionFamilyName String myName;
     private final @InspectionMessage String myDescription;
@@ -382,16 +369,14 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       myDescription = description;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return myName;
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
-      //PsiMethodCallExpression call = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       handleSimplification(myInspection, project, call);
     }
 
@@ -402,15 +387,13 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
   private abstract static class BasicSimplificationInspection
     implements ChainSimplificationCase<BasicSimplificationInspection.StringReplacement> {
-    @NotNull
     @Override
-    public String getName(@NotNull StringReplacement context) {
+    public @NotNull String getName(@NotNull StringReplacement context) {
       return context.myMessage;
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull StringReplacement context) {
+    public @NotNull String getDescription(@NotNull StringReplacement context) {
       return context.myDescription;
     }
 
@@ -450,21 +433,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       }
     }
 
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.name");
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return JavaBundle.message("simplify.optional.chain.inspection.optional.rewrapping.description");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       if (!(parent instanceof PsiExpressionList)) return null;
       PsiMethodCallExpression parentCall = tryCast(parent.getParent(), PsiMethodCallExpression.class);
@@ -492,9 +472,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       if (myType == Type.OptionalGet) {
         return OPTIONAL_GET;
       }
@@ -524,23 +503,20 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     private OrElseReturnCase(OrElseType type) { myType = type; }
 
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       String method = context.myIsSimple ? OR_ELSE : OR_ELSE_GET;
       return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.name", method,
                                 PsiExpressionTrimRenderer.render(context.myDefaultExpression));
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return JavaBundle.message("simplify.optional.chain.inspection.or.else.return.fix.description");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression falseArg = getOrElseArgument(call, myType);
       if (!ExpressionUtils.isNullLiteral(falseArg)) return null;
       PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(call, PsiLocalVariable.class, true);
@@ -575,9 +551,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       if (myType == OrElseType.OrElse) {
         return OPTIONAL_OR_ELSE;
       }
@@ -585,9 +560,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
 
     private static final class Context {
-      @NotNull private final PsiMethodCallExpression myOrElseCall;
-      @NotNull private final PsiExpression myDefaultExpression;
-      @NotNull private final PsiStatement myNextStatement;
+      private final @NotNull PsiMethodCallExpression myOrElseCall;
+      private final @NotNull PsiExpression myDefaultExpression;
+      private final @NotNull PsiStatement myNextStatement;
       private final boolean myIsSimple;
 
       private Context(@NotNull PsiMethodCallExpression call,
@@ -607,21 +582,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     private FlipPresentOrEmptyCase(boolean present) { myIsPresent = present; }
 
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       return CommonQuickFixBundle.message("fix.replace.with.x", context.myReplacement + "()");
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return CommonQuickFixBundle.message("fix.can.replace.with.x", context.myReplacement + "()");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       if (!BoolUtils.isNegated(call)) return null;
       PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
       if (nameElement == null) return null;
@@ -644,9 +616,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       new CommentTracker().replaceAndRestoreComments(negation, call);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       if (myIsPresent) {
         return OPTIONAL_IS_PRESENT;
       }
@@ -665,21 +636,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
 
     private OrElseNonNullCase(OrElseType type) { myType = type; }
 
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.name");
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return JavaBundle.message("simplify.optional.chain.inspection.or.else.non.null.fix.description");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression orElseArgument = getOrElseArgument(call, myType);
       if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
       PsiLocalVariable returnVar = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiLocalVariable.class);
@@ -691,9 +659,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       if (nextStatement == null) return null;
       PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
       if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-      if (!ReferencesSearch.search(returnVar).allMatch(reference ->
-                                                         PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
-                                                         PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) {
+      if (!ContainerUtil.and(VariableAccessUtils.getVariableReferences(returnVar), reference ->
+        PsiTreeUtil.isAncestor(statement, reference, false) ||
+        PsiTreeUtil.isAncestor(nextStatement, reference, false))) {
         return null;
       }
       return new Context(lambdaExpr, nextStatement, statement, returnVar, call);
@@ -710,9 +678,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       return getMatcherByType(myType);
     }
 
@@ -722,8 +689,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
      * System.out.println(optValue);
      * }
      **/
-    @Nullable
-    private static PsiExpression extractMappingExpression(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
+    private static @Nullable PsiExpression extractMappingExpression(@NotNull PsiStatement statement, @NotNull PsiVariable optValue) {
       PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
       if (ifStatement == null) return null;
       if (ifStatement.getElseBranch() != null) return null;
@@ -766,21 +732,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
    * <pre>opt.flatMap(Fra::getOptional).ifPresent(System.out::println);</pre>
    */
   private static class MapUnwrappingCase implements ChainSimplificationCase<MapUnwrappingCase.Context> {
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       return CommonQuickFixBundle.message("fix.replace.x.with.y", "map()", "flatMap()");
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return InspectionGadgetsBundle.message("fix.replace.map.with.flat.map.description");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
       if (lambda == null) return null;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
@@ -811,9 +774,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       return OPTIONAL_MAP;
     }
 
@@ -835,21 +797,18 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   private static class IfPresentFoldedCase implements ChainSimplificationCase<IfPresentFoldedCase.Context> {
-    @NotNull
     @Override
-    public String getName(@NotNull Context context) {
+    public @NotNull String getName(@NotNull Context context) {
       return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.name");
     }
 
-    @NotNull
     @Override
-    public String getDescription(@NotNull Context context) {
+    public @NotNull String getDescription(@NotNull Context context) {
       return InspectionGadgetsBundle.message("fix.eliminate.folded.if.present.description");
     }
 
-    @Nullable
     @Override
-    public Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+    public @Nullable Context extractContext(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
       PsiExpression outerIfPresentQualifier = call.getMethodExpression().getQualifierExpression();
       PsiMethodCallExpression qualifierCall = tryCast(outerIfPresentQualifier, PsiMethodCallExpression.class);
 
@@ -910,9 +869,8 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
 
-    @NotNull
     @Override
-    public CallMatcher getMatcher() {
+    public @NotNull CallMatcher getMatcher() {
       return OPTIONAL_IF_PRESENT;
     }
 

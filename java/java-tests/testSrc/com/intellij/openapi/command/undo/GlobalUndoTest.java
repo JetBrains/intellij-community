@@ -14,9 +14,12 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -26,13 +29,14 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import kotlin.text.Charsets;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -1182,7 +1186,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private static void refreshFileSystem() {
-    VirtualFileManager.getInstance().syncRefresh();
+    VfsTestUtil.syncRefresh();
   }
 
   private void deleteInCommand(final VirtualFile f) {
@@ -1220,7 +1224,12 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     myFile = createFile("Test.java", "abcd efgh ijk");
     myEditor = createEditor(myFile.getVirtualFile());
 
-    myManager.setEditorProvider(() -> TextEditorProvider.getInstance().getTextEditor(myEditor));
+    myManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+      @Override
+      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+        return TextEditorProvider.getInstance().getTextEditor(myEditor);
+      }
+    });
 
     final SelectionModel selectionModel = myEditor.getSelectionModel();
     final CaretModel caretModel = myEditor.getCaretModel();

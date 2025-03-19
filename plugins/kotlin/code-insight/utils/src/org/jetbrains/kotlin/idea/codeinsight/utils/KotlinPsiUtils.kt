@@ -1,12 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
-import com.intellij.psi.PsiElement
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
@@ -16,16 +21,11 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.parsing.*
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
-import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -47,8 +47,9 @@ fun KtContainerNode.getControlFlowElementDescription(): String? {
  * TODO: We place this function in kotlin.code-insight.utils because it looks specific for redundant-getter-inspection.
  *       However, if we find some cases later that need this function for a general-purpose, we should move it to kotlin.base.psi.
  */
-fun KtPropertyAccessor.isRedundantGetter(): Boolean {
+fun KtPropertyAccessor.isRedundantGetter(respectComments: Boolean = true): Boolean {
     if (!isGetter) return false
+    if (respectComments && anyDescendantOfType<PsiComment>()) return false
     val expression = bodyExpression ?: return canBeCompletelyDeleted()
     if (expression.isBackingFieldReferenceTo(property)) return true
     if (expression is KtBlockExpression) {
@@ -95,6 +96,11 @@ fun removeProperty(ktProperty: KtProperty) {
     }
 }
 
+fun renameToUnderscore(declaration: KtCallableDeclaration) {
+    declaration.nameIdentifier?.replace(KtPsiFactory(declaration.project).createIdentifier("_"))
+}
+
+
 /**
  * A function that returns whether this KtParameter is a parameter of a setter or not.
  *
@@ -104,8 +110,9 @@ fun removeProperty(ktProperty: KtProperty) {
 val KtParameter.isSetterParameter: Boolean
     get() = (parent.parent as? KtPropertyAccessor)?.isSetter == true
 
-fun KtPropertyAccessor.isRedundantSetter(): Boolean {
+fun KtPropertyAccessor.isRedundantSetter(respectComments: Boolean = true): Boolean {
     if (!isSetter) return false
+    if (respectComments && anyDescendantOfType<PsiComment>()) return false
     val expression = bodyExpression ?: return canBeCompletelyDeleted()
     if (expression is KtBlockExpression) {
         val statement = expression.statements.singleOrNull() ?: return false
@@ -197,8 +204,11 @@ private fun getNegatedOperatorText(token: IElementType): String {
     return negatedOperator.value
 }
 
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+fun KtQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
+    (receiverExpression as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+
+fun KtExpression.getLeftMostReceiverExpressionOrThis(): KtExpression =
+    (this as? KtQualifiedExpression)?.getLeftMostReceiverExpression() ?: this
 
 fun KtDotQualifiedExpression.replaceFirstReceiver(
     factory: KtPsiFactory,
@@ -232,51 +242,20 @@ fun KtTypeReference.isAnnotatedDeep(): Boolean {
     return this.anyDescendantOfType<KtAnnotationEntry>()
 }
 
-/**
- * A best effort way to get the class id of expression's type without resolve.
- */
-fun KtConstantExpression.getClassId(): ClassId? {
-    val convertedText: Any? = when (elementType) {
-        KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT -> when {
-            hasIllegalUnderscore(text, elementType) -> return null
-            else -> parseNumericLiteral(text, elementType)
-        }
+private fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
+    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression
+        ?: return false
 
-        KtNodeTypes.BOOLEAN_CONSTANT -> parseBoolean(text)
-        else -> null
-    }
-    return when (elementType) {
-        KtNodeTypes.INTEGER_CONSTANT -> when {
-            convertedText !is Long -> null
-            hasUnsignedLongSuffix(text) -> StandardClassIds.ULong
-            hasLongSuffix(text) -> StandardClassIds.Long
-            hasUnsignedSuffix(text) -> if (convertedText.toULong() > UInt.MAX_VALUE || convertedText.toULong() < UInt.MIN_VALUE) {
-                StandardClassIds.ULong
-            } else {
-                StandardClassIds.UInt
-            }
-
-            else -> if (convertedText > Int.MAX_VALUE || convertedText < Int.MIN_VALUE) {
-                StandardClassIds.Long
-            } else {
-                StandardClassIds.Int
-            }
-        }
-
-        KtNodeTypes.FLOAT_CONSTANT -> if (convertedText is Float) StandardClassIds.Float else StandardClassIds.Double
-        KtNodeTypes.CHARACTER_CONSTANT -> StandardClassIds.Char
-        KtNodeTypes.BOOLEAN_CONSTANT -> StandardClassIds.Boolean
-        else -> null
-    }
+    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT
+            && deparenthesized.text.toIntOrNull() == value
 }
 
-fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
-    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression ?: return false
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT && deparenthesized.text.toIntOrNull() == value
-}
+val KtExpression.isZeroIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(0)
 
-fun KtExpression.isZeroIntegerConstant() = isIntegerConstantOfValue(0)
-fun KtExpression.isOneIntegerConstant() = isIntegerConstantOfValue(1)
+
+val KtExpression.isOneIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(1)
 
 fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
     val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
@@ -339,22 +318,107 @@ tailrec fun KtDotQualifiedExpression.expressionWithoutClassInstanceAsReceiver():
     if (hasNoClassInstanceReceiver()) this
     else (receiverExpression as? KtDotQualifiedExpression)?.expressionWithoutClassInstanceAsReceiver()
 
-val ENUM_STATIC_METHODS = listOf(StandardNames.ENUM_VALUES.asString(), StandardNames.ENUM_VALUE_OF.asString())
+fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
+fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
 
-fun KtElement.isReferenceToBuiltInEnumFunction(): Boolean {
-    return when (this) {
-        /**
-         * TODO: Handle [KtTypeReference], [KtCallExpression], and [KtCallableReferenceExpression].
-         *  See [org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumFunction].
-         */
-        is KtQualifiedExpression -> {
-            var target: KtQualifiedExpression = this
-            while (target.callExpression == null) target = target.parent as? KtQualifiedExpression ?: break
-            target.callExpression?.calleeExpression?.text in ENUM_STATIC_METHODS
+context(KaSession)
+fun KtExpression.isSynthesizedFunction(): Boolean {
+    val symbol =
+        resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: mainReference?.resolveToSymbol() ?: return false
+    return symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED
+}
+
+context(KaSession)
+fun KtCallExpression.isCalling(fqNames: Sequence<FqName>): Boolean {
+    val calleeText = calleeExpression?.text ?: return false
+    val targetFqNames = fqNames.filter { it.shortName().asString() == calleeText }
+    if (targetFqNames.none()) return false
+
+    val fqName = resolveToCall()
+        ?.singleFunctionCallOrNull()
+        ?.partiallyAppliedSymbol
+        ?.symbol
+        ?.callableId
+        ?.asSingleFqName()
+        ?: return false
+    return targetFqNames.any { it == fqName }
+}
+
+operator fun FqName.plus(name: Name): FqName = child(name)
+
+operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
+
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Sequence<FqName> = sequenceOf(
+    "enumValues",
+    "enumValueOf",
+).map { StandardNames.BUILT_INS_PACKAGE_FQ_NAME + it }
+
+context(KaSession)
+fun KtTypeReference.isReferenceToBuiltInEnumFunction(): Boolean {
+    val target = (parent.getStrictParentOfType<KtTypeArgumentList>() ?: this)
+        .getParentOfTypes(true, KtCallExpression::class.java, KtCallableDeclaration::class.java)
+    return when (target) {
+        is KtCallExpression -> target.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES)
+        is KtCallableDeclaration -> {
+            target.anyDescendantOfType<KtCallExpression> {
+                it.isCalling(KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES) && it.isUsedAsExpression
+            }
         }
+
         else -> false
     }
 }
 
-fun KtClass.isOpen(): Boolean = hasModifier(KtTokens.OPEN_KEYWORD)
-fun KtClass.isInheritable(): Boolean = isOpen() || isAbstract() || isSealed()
+context(KaSession)
+fun KtCallExpression.isReferenceToBuiltInEnumFunction(): Boolean {
+    val calleeExpression = this.calleeExpression ?: return false
+    return (calleeExpression as? KtSimpleNameExpression)?.getReferencedNameAsName() in ENUM_STATIC_METHOD_NAMES && calleeExpression.isSynthesizedFunction()
+}
+
+context(KaSession)
+fun KtCallableReferenceExpression.isReferenceToBuiltInEnumFunction(): Boolean {
+    return this.canBeReferenceToBuiltInEnumFunction() && this.callableReference.isSynthesizedFunction()
+}
+
+val KtIfExpression.branches: List<KtExpression?>
+    get() {
+        fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {
+            if (this !is KtIfExpression) return listOf(this)
+            return listOf(then) + `else`?.ifBranchesOrThis().orEmpty()
+        }
+
+        return ifBranchesOrThis()
+    }
+
+fun KtClass.isFunInterface(): Boolean = isInterface() && getFunKeyword() != null
+
+fun KtParenthesizedExpression.removeUnnecessaryParentheses() {
+    val commentSaver = CommentSaver(this)
+    val innerExpression = this.expression ?: return
+    val binaryExpressionParent = this.parent as? KtBinaryExpression
+    val ktPsiFactory = KtPsiFactory(this.project)
+
+    val replaced = if (binaryExpressionParent != null &&
+        innerExpression is KtBinaryExpression &&
+        binaryExpressionParent.right == this
+    ) {
+        val newElement = ktPsiFactory.createExpressionByPattern(
+            "$0 $1 $2 $3 $4",
+            binaryExpressionParent.left!!,
+            binaryExpressionParent.operationReference,
+            innerExpression.left!!,
+            innerExpression.operationReference,
+            innerExpression.right!!,
+        )
+        val replace = binaryExpressionParent.replace(newElement)
+        replace.replace(ktPsiFactory.createExpression(replace.text))
+    } else {
+        this.replace(innerExpression)
+    }
+
+    if (innerExpression.firstChild is KtLambdaExpression) {
+        ktPsiFactory.appendSemicolonBeforeLambdaContainingElement(replaced)
+    }
+
+    commentSaver.restore(replaced)
+}

@@ -1,18 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
-import com.pty4j.windows.WinPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
+import com.pty4j.windows.winpty.WinPtyProcess
+import org.jetbrains.annotations.ApiStatus
 import org.jvnet.winp.WinProcess
 import java.io.File
 import java.io.OutputStream
 
+@ApiStatus.Internal
 class ProcessServiceImpl : ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
@@ -34,6 +37,7 @@ class ProcessServiceImpl : ProcessService {
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
       .setUnixOpenTtyToPreserveOutputAfterTermination(unixOpenTtyToPreserveOutputAfterTermination)
+      .setSpawnProcessUsingJdkOnMacIntel(Registry.`is`("run.processes.using.pty.helper.on.mac.intel", true))
     return builder.start()
   }
 

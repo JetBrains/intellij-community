@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
@@ -264,3 +265,10 @@ internal fun getInlineableLambda(expr: KtCallExpression): LambdaAndParameter? {
 }
 
 internal data class LambdaAndParameter(val lambda: KtLambdaExpression, val descriptor: ValueParameterDescriptor)
+
+internal fun RangeKtExpressionType.getRelationType() =
+    when (this) {
+        RangeKtExpressionType.RANGE_TO -> RelationType.GE to RelationType.LE
+        RangeKtExpressionType.RANGE_UNTIL, RangeKtExpressionType.UNTIL -> RelationType.GE to RelationType.LT
+        RangeKtExpressionType.DOWN_TO -> RelationType.LE to RelationType.GE
+    }

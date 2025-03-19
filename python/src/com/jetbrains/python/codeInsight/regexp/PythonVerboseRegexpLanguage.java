@@ -9,7 +9,7 @@ import org.intellij.lang.regexp.RegExpLanguage;
 public class PythonVerboseRegexpLanguage extends Language {
   public static final PythonVerboseRegexpLanguage INSTANCE = new PythonVerboseRegexpLanguage();
 
-  public PythonVerboseRegexpLanguage() {
+  private PythonVerboseRegexpLanguage() {
     super(RegExpLanguage.INSTANCE, PyNames.VERBOSE_REG_EXP_LANGUAGE_ID);
   }
 }

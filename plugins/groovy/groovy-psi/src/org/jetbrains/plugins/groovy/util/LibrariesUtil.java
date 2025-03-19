@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -32,8 +33,8 @@ import java.util.regex.Pattern;
 
 public final class LibrariesUtil {
   public static final String SOME_GROOVY_CLASS = "org.codehaus.groovy.control.CompilationUnit";
-  @NlsSafe private static final String LIB = "lib";
-  @NlsSafe private static final String EMBEDDABLE = "embeddable";
+  private static final @NlsSafe String LIB = "lib";
+  private static final @NlsSafe String EMBEDDABLE = "embeddable";
 
   private LibrariesUtil() {
   }
@@ -78,8 +79,7 @@ public final class LibrariesUtil {
     return libs.toArray(Library.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public static String getGroovyLibraryHome(Library library) {
+  public static @NotNull String getGroovyLibraryHome(Library library) {
     final VirtualFile[] classRoots = library.getFiles(OrderRootType.CLASSES);
     final String home = getGroovyLibraryHome(classRoots);
     return home == null ? "" : home;
@@ -89,8 +89,7 @@ public final class LibrariesUtil {
     return module != null && getGroovyHomePath(module) != null;
   }
 
-  @Nullable
-  public static VirtualFile findJarWithClass(@NotNull Module module, final String classQName) {
+  public static @Nullable VirtualFile findJarWithClass(@NotNull Module module, final String classQName) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     for (PsiClass psiClass : JavaPsiFacade.getInstance(module.getProject()).findClasses(classQName, scope)) {
       VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
@@ -100,6 +99,26 @@ public final class LibrariesUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Finds all JAR files within a given project that contain a specific class.
+   *
+   * @param project the project in which to search for the class.
+   * @param classQName the qualified name of the class to search for.
+   * @return a list of VirtualFile objects representing the JAR files that contain the specified class.
+   */
+  public static @NotNull List<VirtualFile> findAllJarsWithClass(@NotNull Project project, final String classQName) {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    List<VirtualFile> jarList = new ArrayList<>();
+    for (PsiClass psiClass : JavaPsiFacade.getInstance(project).findClasses(classQName, scope)) {
+      VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+      final VirtualFile local = getLocalFor(virtualFile);
+      if (local != null) {
+        jarList.add(local);
+      }
+    }
+    return jarList;
   }
 
   private static VirtualFile getLocalFor(VirtualFile virtualFile) {
@@ -113,8 +132,7 @@ public final class LibrariesUtil {
     return null;
   }
 
-  @Nullable
-  public static String getGroovyHomePath(@NotNull Module module) {
+  public static @Nullable String getGroovyHomePath(@NotNull Module module) {
     if (!DumbService.isDumb(module.getProject())) {
       final VirtualFile local = findJarWithClass(module, SOME_GROOVY_CLASS);
       if (local != null) {
@@ -132,8 +150,7 @@ public final class LibrariesUtil {
     return StringUtil.isEmpty(home) ? null : home;
   }
 
-  @Nullable
-  private static String getGroovySdkHome(VirtualFile[] classRoots) {
+  private static @Nullable String getGroovySdkHome(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       final String name = file.getName();
       if (GroovyConfigUtils.GROOVY_JAR_PATTERN.matcher(name).matches()) {
@@ -153,8 +170,7 @@ public final class LibrariesUtil {
     return null;
   }
 
-  @Nullable
-  private static String getEmbeddableGroovyJar(VirtualFile[] classRoots) {
+  private static @Nullable String getEmbeddableGroovyJar(VirtualFile[] classRoots) {
     for (VirtualFile file : classRoots) {
       final String name = file.getName();
       if (GroovyConfigUtils.matchesGroovyAll(name)) {
@@ -168,8 +184,7 @@ public final class LibrariesUtil {
     return null;
   }
 
-  @Nullable
-  public static String getGroovyLibraryHome(VirtualFile[] classRoots) {
+  public static @Nullable String getGroovyLibraryHome(VirtualFile[] classRoots) {
     final String sdkHome = getGroovySdkHome(classRoots);
     if (sdkHome != null) {
       return sdkHome;
@@ -189,8 +204,7 @@ public final class LibrariesUtil {
     return null;
   }
 
-  @NotNull
-  public static VirtualFile getLocalFile(@NotNull VirtualFile libFile) {
+  public static @NotNull VirtualFile getLocalFile(@NotNull VirtualFile libFile) {
     VirtualFile local = getLocalFor(libFile);
     if (local != null) {
       return local;

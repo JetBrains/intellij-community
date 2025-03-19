@@ -1,15 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CustomisedActionGroup extends ActionGroupWrapper {
+public final class CustomisedActionGroup extends ActionGroupWrapper {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
@@ -35,27 +36,37 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    int currentGroupStamp = !ActionUpdaterInterceptor.Companion.treatDefaultActionGroupAsDynamic() &&
+                            delegate instanceof DefaultActionGroup group ? group.getModificationStamp() : -1;
     if (mySchemeModificationStamp < currentSchemaStamp ||
         myGroupModificationStamp < currentGroupStamp ||
+        currentGroupStamp < 0 ||
         ArrayUtil.isEmpty(myChildren) ||
-        delegate instanceof DynamicActionGroup ||
-        !(delegate instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
+        delegate instanceof DynamicActionGroup) {
+      AnAction[] originalChildren = super.getChildren(e);
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, originalChildren, mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
 
-  @Nullable
-  public AnAction getFirstAction() {
+  @ApiStatus.Internal
+  public AnAction @NotNull [] getDefaultChildrenOrStubs() {
+    ActionGroup delegate = getDelegate();
+    if (!(delegate instanceof DefaultActionGroup g)) return EMPTY_ARRAY;
+    return CustomizationUtil.getReordableChildren(
+      delegate, g.getChildActionsOrStubs(), mySchema, myDefaultGroupName, myRootGroupName);
+  }
+
+  public @Nullable AnAction getFirstAction() {
     AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
 
   /** @deprecated Use {@link #getDelegate()} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ActionGroup getOrigin() { return getDelegate(); }
 
   public void resetChildren() {

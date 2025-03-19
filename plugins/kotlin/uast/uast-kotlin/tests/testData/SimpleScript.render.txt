@@ -6,7 +6,7 @@ public final class SimpleScript {
     }
     public static final fun main(args: java.lang.String[]) : void = UastEmptyExpression
     public final fun getBarOrNull(@org.jetbrains.annotations.NotNull flag: boolean) : SimpleScript.Bar {
-        return if (flag) <init>(42) else null
+        return if (flag) Bar(42) else null
     }
     public static final class Bar {
         @org.jetbrains.annotations.NotNull private final var a: int

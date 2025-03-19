@@ -97,24 +97,30 @@ data class ExtractMethodTemplateBuilder(
       template.setToIndent(false)
       editor.caretModel.moveToOffset(file.textRange.startOffset)
       val templateState = TemplateManager.getInstance(project).runTemplate(editor, template)
-      setupImaginaryInplaceRenamer(templateState, restartHandler)
-      Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
-      DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
-      setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
-      Disposer.register(templateState, disposable)
-      templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
-        override fun templateCancelled(template: Template?) {
-          if (UndoManager.getInstance(project).isUndoOrRedoInProgress) return
-          onBroken.invoke()
-        }
-        override fun templateFinished(template: Template, brokenOff: Boolean) {
-          if (brokenOff){
+      if (templateState.isFinished) {
+        Disposer.dispose(disposable)
+      }
+      else {
+        setupImaginaryInplaceRenamer(templateState, restartHandler)
+        Disposer.register(templateState) { SuggestedRefactoringProvider.getInstance(project).reset() }
+        DaemonCodeAnalyzer.getInstance(project).disableUpdateByTimer(templateState)
+        setTemplateValidator(templateState) { range -> templateFields[templateState.currentVariableNumber].validator.invoke(range) }
+        Disposer.register(templateState, disposable)
+        templateState.addTemplateStateListener(object: TemplateEditingAdapter(){
+          override fun templateCancelled(template: Template?) {
+            if (UndoManager.getInstance(project).isUndoOrRedoInProgress) return
             onBroken.invoke()
-            return
           }
-          onSuccess.invoke()
-        }
-      })
+
+          override fun templateFinished(template: Template, brokenOff: Boolean) {
+            if (brokenOff){
+              onBroken.invoke()
+              return
+            }
+            onSuccess.invoke()
+          }
+        })
+      }
       return@ThrowableComputable templateState
     })
   }
@@ -149,9 +155,9 @@ data class ExtractMethodTemplateBuilder(
     return editorOffsets.all { it in templateRange }
   }
 
-  private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean){
-    val manager = EditorActionManager.getInstance()
+  private fun setTemplateValidator(templateState: TemplateState, validator: (TextRange) -> Boolean) {
     val actionName = IdeActions.ACTION_EDITOR_NEXT_TEMPLATE_VARIABLE
+    val manager = EditorActionManager.getInstance()
     val defaultHandler = manager.getActionHandler(actionName)
     Disposer.register(templateState) { manager.setActionHandler(actionName, defaultHandler) }
     manager.setActionHandler(actionName, object : EditorActionHandler() {

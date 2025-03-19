@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderPreDefinedInnerClassFieldProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
+public final class SuperBuilderPreDefinedInnerClassFieldProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
 
   public SuperBuilderPreDefinedInnerClassFieldProcessor() {
     super(PsiField.class, LombokClassNames.SUPER_BUILDER);

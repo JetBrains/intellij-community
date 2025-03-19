@@ -1,0 +1,368 @@
+NavigationItem:
+    name: Int
+ItemPresentation:
+    presentableText: Int
+    locationString: (kotlin)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public final class Int private constructor() : kotlin.Number, kotlin.Comparable<kotlin.Int> {
+QualifiedName: kotlin.Int
+
+NavigationItem:
+    name: IntArray
+ItemPresentation:
+    presentableText: IntArray
+    locationString: (kotlin)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public final class IntArray public constructor(size: kotlin.Int) {
+QualifiedName: kotlin.IntArray
+
+NavigationItem:
+    name: IntArrayNode
+ItemPresentation:
+    presentableText: IntArrayNode in Nodes
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static class IntArrayNode implements Node.OfInt {
+QualifiedName: java.util.stream.Nodes.IntArrayNode
+
+NavigationItem:
+    name: IntArraySpliterator
+ItemPresentation:
+    presentableText: IntArraySpliterator in Spliterators
+    locationString: (java.util)
+    icon: RowIcon(icons=[Class, Local])
+TargetElement: static final class IntArraySpliterator implements Spliterator.OfInt {
+QualifiedName: java.util.Spliterators.IntArraySpliterator
+
+NavigationItem:
+    name: IntBinaryOperator
+ItemPresentation:
+    presentableText: IntBinaryOperator
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntBinaryOperator
+
+NavigationItem:
+    name: IntCompanionObject
+ItemPresentation:
+    presentableText: IntCompanionObject
+    locationString: (kotlin.jvm.internal)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/objectKotlin.svg, Local])
+TargetElement: internal object IntCompanionObject {
+QualifiedName: kotlin.jvm.internal.IntCompanionObject
+
+NavigationItem:
+    name: IntConsumer
+ItemPresentation:
+    presentableText: IntConsumer
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntConsumer
+
+NavigationItem:
+    name: IntCumulateTask
+ItemPresentation:
+    presentableText: IntCumulateTask in ArrayPrefixHelpers
+    locationString: (java.util)
+    icon: RowIcon(icons=[Class, Local])
+TargetElement: static final class IntCumulateTask extends CountedCompleter<Void> {
+QualifiedName: java.util.ArrayPrefixHelpers.IntCumulateTask
+
+NavigationItem:
+    name: IntFixedNodeBuilder
+ItemPresentation:
+    presentableText: IntFixedNodeBuilder in Nodes
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static final class IntFixedNodeBuilder extends IntArrayNode implements Node.Builder.OfInt {
+QualifiedName: java.util.stream.Nodes.IntFixedNodeBuilder
+
+NavigationItem:
+    name: IntFunction
+ItemPresentation:
+    presentableText: IntFunction
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntFunction
+
+NavigationItem:
+    name: IntIterator
+ItemPresentation:
+    presentableText: IntIterator
+    locationString: (kotlin.collections)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/abstractClassKotlin.svg, Public])
+TargetElement: public abstract class IntIterator public constructor() : kotlin.collections.Iterator<kotlin.Int> {
+QualifiedName: kotlin.collections.IntIterator
+
+NavigationItem:
+    name: IntIteratorSpliterator
+ItemPresentation:
+    presentableText: IntIteratorSpliterator in Spliterators
+    locationString: (java.util)
+    icon: RowIcon(icons=[Class, Local])
+TargetElement: static final class IntIteratorSpliterator implements Spliterator.OfInt {
+QualifiedName: java.util.Spliterators.IntIteratorSpliterator
+
+NavigationItem:
+    name: IntPipeline
+ItemPresentation:
+    presentableText: IntPipeline
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[AbstractClass, Local])
+TargetElement: abstract class IntPipeline<E_IN> extends AbstractPipeline<E_IN, Integer, IntStream> implements IntStream {
+QualifiedName: java.util.stream.IntPipeline
+
+NavigationItem:
+    name: IntPredicate
+ItemPresentation:
+    presentableText: IntPredicate
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntPredicate
+
+NavigationItem:
+    name: IntProgression
+ItemPresentation:
+    presentableText: IntProgression
+    locationString: (kotlin.ranges)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public open class IntProgression internal constructor(start: kotlin.Int, endInclusive: kotlin.Int, step: kotlin.Int) : kotlin.collections.Iterable<kotlin.Int> {
+QualifiedName: kotlin.ranges.IntProgression
+
+NavigationItem:
+    name: IntProgressionIterator
+ItemPresentation:
+    presentableText: IntProgressionIterator
+    locationString: (kotlin.ranges)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Local])
+TargetElement: internal final class IntProgressionIterator public constructor(first: kotlin.Int, last: kotlin.Int, step: kotlin.Int) : kotlin.collections.IntIterator {
+QualifiedName: kotlin.ranges.IntProgressionIterator
+
+NavigationItem:
+    name: IntRange
+ItemPresentation:
+    presentableText: IntRange
+    locationString: (kotlin.ranges)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public final class IntRange public constructor(start: kotlin.Int, endInclusive: kotlin.Int) : kotlin.ranges.IntProgression, kotlin.ranges.ClosedRange<kotlin.Int>, kotlin.ranges.OpenEndRange<kotlin.Int> {
+QualifiedName: kotlin.ranges.IntRange
+
+NavigationItem:
+    name: IntRef
+ItemPresentation:
+    presentableText: IntRef in Ref
+    locationString: (kotlin.jvm.internal)
+    icon: RowIcon(icons=[Class, Public])
+TargetElement: public static final class IntRef implements Serializable {
+QualifiedName: kotlin.jvm.internal.Ref.IntRef
+
+NavigationItem:
+    name: IntSortingSink
+ItemPresentation:
+    presentableText: IntSortingSink in SortedOps
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static final class IntSortingSink extends AbstractIntSortingSink {
+QualifiedName: java.util.stream.SortedOps.IntSortingSink
+
+NavigationItem:
+    name: IntSpinedNodeBuilder
+ItemPresentation:
+    presentableText: IntSpinedNodeBuilder in Nodes
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static final class IntSpinedNodeBuilder extends SpinedBuffer.OfInt implements Node.OfInt, Node.Builder.OfInt {
+QualifiedName: java.util.stream.Nodes.IntSpinedNodeBuilder
+
+NavigationItem:
+    name: IntSpreadBuilder
+ItemPresentation:
+    presentableText: IntSpreadBuilder
+    locationString: (kotlin.jvm.internal)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public final class IntSpreadBuilder public constructor(size: kotlin.Int) : kotlin.jvm.internal.PrimitiveSpreadBuilder<kotlin.IntArray> {
+QualifiedName: kotlin.jvm.internal.IntSpreadBuilder
+
+NavigationItem:
+    name: IntStream
+ItemPresentation:
+    presentableText: IntStream
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: public interface IntStream extends BaseStream<Integer, IntStream> {
+QualifiedName: java.util.stream.IntStream
+
+NavigationItem:
+    name: IntStreamBuilderImpl
+ItemPresentation:
+    presentableText: IntStreamBuilderImpl in Streams
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Local])
+TargetElement: static final class IntStreamBuilderImpl extends AbstractStreamBuilderImpl<Integer, Spliterator.OfInt> implements IntStream.Builder, Spliterator.OfInt {
+QualifiedName: java.util.stream.Streams.IntStreamBuilderImpl
+
+NavigationItem:
+    name: IntSummaryStatistics
+ItemPresentation:
+    presentableText: IntSummaryStatistics
+    locationString: (java.util)
+    icon: RowIcon(icons=[Class, Public])
+TargetElement: public class IntSummaryStatistics implements IntConsumer {
+QualifiedName: java.util.IntSummaryStatistics
+
+NavigationItem:
+    name: IntSupplier
+ItemPresentation:
+    presentableText: IntSupplier
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntSupplier
+
+NavigationItem:
+    name: IntToDoubleFunction
+ItemPresentation:
+    presentableText: IntToDoubleFunction
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntToDoubleFunction
+
+NavigationItem:
+    name: IntToLongFunction
+ItemPresentation:
+    presentableText: IntToLongFunction
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntToLongFunction
+
+NavigationItem:
+    name: IntUnaryOperator
+ItemPresentation:
+    presentableText: IntUnaryOperator
+    locationString: (java.util.function)
+    icon: RowIcon(icons=[Interface, Public])
+TargetElement: @FunctionalInterface
+QualifiedName: java.util.function.IntUnaryOperator
+
+NavigationItem:
+    name: IntWrappingSpliterator
+ItemPresentation:
+    presentableText: IntWrappingSpliterator in StreamSpliterators
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[Class, Local])
+TargetElement: static final class IntWrappingSpliterator<P_IN> extends AbstractWrappingSpliterator<P_IN, Integer, SpinedBuffer.OfInt> implements Spliterator.OfInt {
+QualifiedName: java.util.stream.StreamSpliterators.IntWrappingSpliterator
+
+NavigationItem:
+    name: Integer
+ItemPresentation:
+    presentableText: Integer
+    locationString: (java.lang)
+    icon: RowIcon(icons=[Class, Public])
+TargetElement: public final class Integer extends Number implements Comparable<Integer> {
+QualifiedName: java.lang.Integer
+
+NavigationItem:
+    name: IntegerCache
+ItemPresentation:
+    presentableText: IntegerCache in Integer
+    locationString: (java.lang)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static class IntegerCache {
+QualifiedName: java.lang.Integer.IntegerCache
+
+NavigationItem:
+    name: Internal
+ItemPresentation:
+    presentableText: Internal in ApiStatus
+    locationString: (org.jetbrains.annotations)
+    icon: RowIcon(icons=[Annotation, Public])
+TargetElement: @Documented
+QualifiedName: org.jetbrains.annotations.ApiStatus.Internal
+
+NavigationItem:
+    name: InternalError
+ItemPresentation:
+    presentableText: InternalError
+    locationString: (java.lang)
+    icon: RowIcon(icons=[ExceptionClass, Public])
+TargetElement: public class InternalError extends VirtualMachineError {
+QualifiedName: java.lang.InternalError
+
+NavigationItem:
+    name: InternalNodeSpliterator
+ItemPresentation:
+    presentableText: InternalNodeSpliterator in Nodes
+    locationString: (java.util.stream)
+    icon: RowIcon(icons=[AbstractClass, Private])
+TargetElement: private abstract static class InternalNodeSpliterator<T, S extends Spliterator<T>, N extends Node<T>> implements Spliterator<T> {
+QualifiedName: java.util.stream.Nodes.InternalNodeSpliterator
+
+NavigationItem:
+    name: InterruptedException
+ItemPresentation:
+    presentableText: InterruptedException
+    locationString: (java.lang)
+    icon: RowIcon(icons=[ExceptionClass, Public])
+TargetElement: public class InterruptedException extends Exception {
+QualifiedName: java.lang.InterruptedException
+
+NavigationItem:
+    name: InterruptedIOException
+ItemPresentation:
+    presentableText: InterruptedIOException
+    locationString: (java.io)
+    icon: RowIcon(icons=[ExceptionClass, Public])
+TargetElement: public class InterruptedIOException extends IOException {
+QualifiedName: java.io.InterruptedIOException
+
+NavigationItem:
+    name: Intrinsic
+ItemPresentation:
+    presentableText: Intrinsic in MethodHandleImpl
+    locationString: (java.lang.invoke)
+    icon: RowIcon(icons=[Enum, Local])
+TargetElement: static enum Intrinsic {
+QualifiedName: java.lang.invoke.MethodHandleImpl.Intrinsic
+
+NavigationItem:
+    name: IntrinsicConstEvaluation
+ItemPresentation:
+    presentableText: IntrinsicConstEvaluation
+    locationString: (kotlin.internal)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/annotationKotlin.svg, Local])
+TargetElement: @kotlin.annotation.Target @kotlin.annotation.Retention @kotlin.SinceKotlin internal final annotation class IntrinsicConstEvaluation public constructor() : kotlin.Annotation {
+QualifiedName: kotlin.internal.IntrinsicConstEvaluation
+
+NavigationItem:
+    name: IntrinsicMethodHandle
+ItemPresentation:
+    presentableText: IntrinsicMethodHandle in MethodHandleImpl
+    locationString: (java.lang.invoke)
+    icon: RowIcon(icons=[Class, Private])
+TargetElement: private static final class IntrinsicMethodHandle extends DelegatingMethodHandle {
+QualifiedName: java.lang.invoke.MethodHandleImpl.IntrinsicMethodHandle
+
+NavigationItem:
+    name: Intrinsics
+ItemPresentation:
+    presentableText: Intrinsics
+    locationString: (kotlin.jvm.internal)
+    icon: RowIcon(icons=[Class, Public])
+TargetElement: public class Intrinsics {
+QualifiedName: kotlin.jvm.internal.Intrinsics
+
+NavigationItem:
+    name: IntrinsicsKt
+ItemPresentation:
+    presentableText: IntrinsicsKt
+    locationString: (kotlin.coroutines.intrinsics)
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: // IntelliJ API Decompiler stub source generated from a class file
+QualifiedName: kotlin.coroutines.intrinsics.IntrinsicsKt

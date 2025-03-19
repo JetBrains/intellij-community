@@ -6,12 +6,14 @@ import org.jetbrains.kotlin.idea.compilerPlugin.parcelize.KotlinParcelizeBundle
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ParcelizeAddIgnoreOnParcelAnnotationQuickFix(property: KtProperty) : AbstractParcelizeQuickFix<KtProperty>(property) {
-    object Factory : AbstractFactory({ findElement<KtProperty>()?.let(::ParcelizeAddIgnoreOnParcelAnnotationQuickFix) })
-
+class ParcelizeAddIgnoreOnParcelAnnotationQuickFix(property: KtProperty) : AbstractParcelizePsiOnlyQuickFix<KtProperty>(property) {
     override fun getText() = KotlinParcelizeBundle.message("parcelize.fix.add.ignored.on.parcel.annotation")
 
     override fun invoke(ktPsiFactory: KtPsiFactory, element: KtProperty) {
         element.addAnnotationEntry(ktPsiFactory.createAnnotationEntry("@kotlinx.parcelize.IgnoredOnParcel")).shortenReferences()
+    }
+
+    companion object {
+        val FACTORY = factory(::ParcelizeAddIgnoreOnParcelAnnotationQuickFix)
     }
 }

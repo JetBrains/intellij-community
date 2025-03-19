@@ -1,0 +1,26 @@
+<component name="libraryTable">
+  <library name="google.protobuf.java.util" type="repository">
+    <properties maven-id="com.google.protobuf:protobuf-java-util:3.24.4-jb.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2.jar">
+          <sha256sum>bd30f6cf55c4f9f0891f8b6ea6601c1502b643543d2535c8b477ea0481809e99</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="com.google.protobuf:protobuf-java" />
+        <dependency maven-id="com.google.guava:guava" />
+        <dependency maven-id="com.google.j2objc:j2objc-annotations" />
+        <dependency maven-id="com.google.code.gson:gson" />
+        <dependency maven-id="com.google.code.findbugs:jsr305" />
+        <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/protobuf/protobuf-java-util/3.24.4-jb.2/protobuf-java-util-3.24.4-jb.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -11,7 +10,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.SLRUCache
-import org.jetbrains.kotlin.analyzer.*
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analyzer.AnalysisResult
+import org.jetbrains.kotlin.analyzer.EmptyResolverForProject
+import org.jetbrains.kotlin.analyzer.ResolverForModule
+import org.jetbrains.kotlin.analyzer.ResolverForProject
 import org.jetbrains.kotlin.caches.resolve.PlatformAnalysisSettings
 import org.jetbrains.kotlin.context.GlobalContextImpl
 import org.jetbrains.kotlin.context.withProject
@@ -35,6 +38,7 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
 import org.jetbrains.kotlin.storage.guarded
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
@@ -148,7 +152,10 @@ internal class ProjectResolutionFacade(
           resolvedModulesWithDependencies,
           syntheticFilesByModule,
           delegateResolverForProject,
-          if (invalidateOnOOCB) KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker else JavaLibraryModificationTracker.getInstance(project),
+          with(KotlinModificationTrackerFactory.getInstance(project)) {
+              if (invalidateOnOOCB) createProjectWideSourceModificationTracker()
+              else createProjectWideLibraryModificationTracker()
+          },
           settings
         )
     }
@@ -158,7 +165,16 @@ internal class ProjectResolutionFacade(
     internal fun resolverForElement(element: PsiElement): ResolverForModule {
         val moduleInfos = mutableSetOf<IdeaModuleInfo>()
 
-        for (result in ModuleInfoProvider.getInstance(element.project).collect(element)) {
+        val config = allModules?.firstIsInstanceOrNull<ScriptDependenciesInfo.ForFile>()?.let {
+            ModuleInfoProvider.Configuration(contextualModuleInfo = it)
+        }
+
+        val elementModuleInfos = ModuleInfoProvider.getInstance(element.project).collect(
+            element,
+            config = config ?: ModuleInfoProvider.Configuration.Default,
+        )
+
+        for (result in elementModuleInfos) {
             val moduleInfo = result.getOrNull()
             if (moduleInfo != null) {
                 val resolver = cachedResolverForProject.tryGetResolverForModule(moduleInfo)

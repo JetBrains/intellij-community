@@ -81,11 +81,11 @@ public class PyRenameTest extends PyTestCase {
     doTest("bar");
   }
 
-  public void testEpydocRenameParameter() {
+  public void testRestRenameParameter() {
     doTest("bar");
   }
 
-  public void testEpydocRenameType() {
+  public void testRestRenameType() {
     doTest("Shazam");
   }
 
@@ -396,6 +396,21 @@ public class PyRenameTest extends PyTestCase {
   // PY-55231
   public void testRenameKeywordArgumentConstructorParameter() {
     doTest("taram");
+  }
+
+  // PY-63373
+  public void testRenameTypeAliasFromItsDefinition() {
+    doTest("Renamed");
+  }
+
+  // PY-63373
+  public void testRenameTypeAliasFromItsUsage() {
+    doTest("Renamed");
+  }
+
+  // PY-17733
+  public void testRenameClassAttributeDefinedInClassMethod() {
+    doTest("renamed");
   }
 
   private void renameWithDocStringFormat(DocStringFormat format, final String newName) {

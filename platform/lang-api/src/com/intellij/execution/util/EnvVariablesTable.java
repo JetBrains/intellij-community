@@ -1,31 +1,29 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.PasteProvider;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable> {
   private CopyPasteProviderPanel myPanel;
@@ -48,8 +46,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  protected ListTableModel createListModel() {
-    return new ListTableModel(new NameColumnInfo(), new ValueColumnInfo());
+  protected ListTableModel<EnvironmentVariable> createListModel() {
+    return new ListTableModel<>(new NameColumnInfo(), new ValueColumnInfo());
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
@@ -68,9 +66,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  public void setValues(List<? extends EnvironmentVariable> list) {
-    list.sort(Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE));
-    super.setValues(list);
+  public void setValues(@Unmodifiable List<? extends EnvironmentVariable> list) {
+    super.setValues(ContainerUtil.sorted(list, Comparator.comparing(EnvironmentVariable::getName, NaturalComparator.INSTANCE)));
   }
 
   public List<EnvironmentVariable> getEnvironmentVariables() {
@@ -132,9 +129,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     protected String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
-    @NotNull
     @Override
-    public TableCellEditor getEditor(EnvironmentVariable variable) {
+    public @NotNull TableCellEditor getEditor(EnvironmentVariable variable) {
       return new DefaultCellEditor(new JTextField());
     }
   }
@@ -160,20 +156,18 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       setModified();
     }
 
-    @Nullable
     @Override
-    protected String getDescription(EnvironmentVariable environmentVariable) {
+    protected @Nullable String getDescription(EnvironmentVariable environmentVariable) {
       return environmentVariable.getDescription();
     }
 
-    @NotNull
     @Override
-    public TableCellEditor getEditor(EnvironmentVariable variable) {
+    public @NotNull TableCellEditor getEditor(EnvironmentVariable variable) {
       return new StringWithNewLinesCellEditor();
     }
   }
 
-  private final class CopyPasteProviderPanel extends JPanel implements DataProvider, CopyProvider, PasteProvider {
+  private final class CopyPasteProviderPanel extends JPanel implements UiDataProvider, CopyProvider, PasteProvider {
     CopyPasteProviderPanel(JComponent component) {
       super(new GridLayout(1, 1));
       add(component);
@@ -184,13 +178,10 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       return ActionUpdateThread.EDT;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-        return this;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, this);
     }
 
     @Override
@@ -224,7 +215,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
       List<EnvironmentVariable> variables = getSelection();
       for (EnvironmentVariable environmentVariable : variables) {
         if (isEmpty(environmentVariable)) continue;
-        if (sb.length() > 0) sb.append(';');
+        if (!sb.isEmpty()) sb.append(';');
         sb.append(StringUtil.escapeChars(environmentVariable.getName(), '=', ';')).append('=')
           .append(StringUtil.escapeChars(environmentVariable.getValue(), '=', ';'));
       }
@@ -292,49 +283,13 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  protected AnActionButton @NotNull [] createExtraActions() {
-    AnActionButton copyButton = new AnActionButton(ActionsBundle.message("action.EditorCopy.text"), AllIcons.Actions.Copy) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPanel.performCopy(e.getDataContext());
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return myPanel.isCopyEnabled(DataContext.EMPTY_CONTEXT);
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    };
-    AnActionButton pasteButton = new AnActionButton(ActionsBundle.message("action.EditorPaste.text"), AllIcons.Actions.MenuPaste) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPanel.performPaste(e.getDataContext());
-      }
-
-      @Override
-      public boolean isEnabled() {
-        return myPanel.isPasteEnabled(DataContext.EMPTY_CONTEXT);
-      }
-
-      @Override
-      public boolean isVisible() {
-        return myPanel.isPastePossible(DataContext.EMPTY_CONTEXT);
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    };
-    return new AnActionButton[]{copyButton, pasteButton};
+  protected AnAction @NotNull [] createExtraToolbarActions() {
+    AnAction copyButton = ActionManager.getInstance().getAction(IdeActions.ACTION_COPY);
+    AnAction pasteButton = ActionManager.getInstance().getAction(IdeActions.ACTION_PASTE);
+    return new AnAction[]{copyButton, pasteButton};
   }
 
-  @NotNull
-  public static Map<String, String> parseEnvsFromText(String content) {
+  public static @NotNull Map<String, String> parseEnvsFromText(String content) {
     Map<String, String> result = new LinkedHashMap<>();
     if (content != null && content.contains("=")) {
       boolean legacyFormat = content.contains("\n");

@@ -3,6 +3,8 @@ package com.intellij.diagnostic
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.internal.DebugAttachDetector
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.ProjectManager
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
@@ -10,7 +12,7 @@ private val isDebugEnabled = DebugAttachDetector.isDebugEnabled()
 private const val TOLERABLE_UI_LATENCY = 100
 private const val UI_RESPONSE_LOGGING_INTERVAL_MS = 100000
 
-private class FusFreezeReporter : IdePerformanceListener {
+private class FusFreezeReporter : PerformanceListener {
   @Volatile
   private var previousLoggedUiResponse: Long = 0
 
@@ -28,7 +30,8 @@ private class FusFreezeReporter : IdePerformanceListener {
       UILatencyLogger.LATENCY.log(latencyMs)
     }
     if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
-      UILatencyLogger.LAGGING.log(latencyMs)
+      val hasIndexingGoingOn = ProjectManager.getInstance().openProjects.any { DumbService.isDumb(it) }
+      UILatencyLogger.LAGGING.log(latencyMs, hasIndexingGoingOn)
     }
   }
 }

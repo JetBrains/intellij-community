@@ -19,12 +19,9 @@ import java.awt.event.ActionListener;
 
 public class SettingsPage implements Configurable {
 
-  @NonNls
-  public static final SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
-  @NonNls
-  public static final SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
-  @NonNls
-  public static final SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
+  public static final @NonNls SettingKey OPEN_HELP_FROM_WEB = SettingKey.simple("bundled.help.open.web.site.when.possible");
+  public static final @NonNls SettingKey USE_BROWSER = SettingKey.simple("bundled.help.use.specific.web.browser");
+  public static final @NonNls SettingKey OPEN_HELP_BASE_URL = SettingKey.simple("bundled.help.open.web.site.base.url");
 
   private final SettingsPageUI ui = new SettingsPageUI();
 

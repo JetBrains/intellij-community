@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -35,14 +34,12 @@ public abstract class VcsDirtyScope {
   /**
    * @return project for this dirty scope
    */
-  @NotNull
-  public abstract Project getProject();
+  public abstract @NotNull Project getProject();
 
   /**
    * @return the vcs for this dirty scope
    */
-  @NotNull
-  public abstract AbstractVcs getVcs();
+  public abstract @NotNull AbstractVcs getVcs();
 
   /**
    * Get dirty files and directories.
@@ -70,16 +67,6 @@ public abstract class VcsDirtyScope {
    */
   public abstract Set<FilePath> getRecursivelyDirtyDirectories();
 
-  /**
-   * Invoke the {@code iterator} for all files in the dirty scope.
-   * For recursively dirty directories all children are processed.
-   *
-   * @param iterator an iterator to invoke
-   */
-  public abstract void iterate(Processor<? super FilePath> iterator);
-  
-  public abstract void iterateExistingInsideScope(Processor<? super VirtualFile> vf);
-
   public abstract boolean isEmpty();
 
   /**
@@ -87,9 +74,7 @@ public abstract class VcsDirtyScope {
    *
    * @param path a path to check
    */
-  public abstract boolean belongsTo(final FilePath path);
+  public abstract boolean belongsTo(@NotNull final FilePath path);
 
-  public boolean wasEveryThingDirty() {
-    return false;
-  }
+  public abstract boolean wasEveryThingDirty();
 }

@@ -39,7 +39,7 @@ public class DomChildrenTest extends DomTestCase {
 
   public void testGetChild() {
     final MyElement element = createElement("<a>" + "<child>foo</child>" + "</a>");
-    element.toString();
+    assertNotNull(element.toString());
     assertEquals("foo", element.getMyChild().getValue());
     assertEquals("foo", element.getChild().getValue());
     assertSame(element.getChild(), element.getMyChild());

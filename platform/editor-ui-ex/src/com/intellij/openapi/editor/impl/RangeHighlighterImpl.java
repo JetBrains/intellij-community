@@ -1,7 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -9,6 +11,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -23,9 +26,10 @@ import java.util.Objects;
 
 /**
  * Implementation of the markup element for the editor and document.
- * @author max
  */
-class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
+@ApiStatus.Internal
+public sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx permits PersistentRangeHighlighterImpl {
+  private static final Logger LOG = Logger.getInstance(RangeHighlighterImpl.class);
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
   private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
@@ -77,6 +81,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     myModel = model;
 
     registerInTree(start, end, greedyToLeft, greedyToRight, layer);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RangeHighlighterImpl: create " + this);
+    }
   }
 
   private boolean isFlagSet(@Flag byte mask) {
@@ -149,7 +156,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   public void setVisibleIfFolded(boolean value) {
-    putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    if (isVisibleIfFolded() != value) {
+      putUserData(VISIBLE_IF_FOLDED, value ? Boolean.TRUE : null);
+    }
   }
 
   @Override
@@ -166,8 +175,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  @NotNull
-  public HighlighterTargetArea getTargetArea() {
+  public @NotNull HighlighterTargetArea getTargetArea() {
     return isFlagSet(TARGET_AREA_IS_EXACT_MASK) ? HighlighterTargetArea.EXACT_RANGE : HighlighterTargetArea.LINES_IN_RANGE;
   }
 
@@ -218,6 +226,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
+      if (old instanceof Disposable oldDisposableRenderer) {
+        Disposer.dispose(oldDisposableRenderer);
+      }
     }
   }
 
@@ -303,8 +314,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  @NotNull
-  public MarkupEditorFilter getEditorFilter() {
+  public @NotNull MarkupEditorFilter getEditorFilter() {
     return myFilter;
   }
 
@@ -349,7 +359,8 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     }
   }
 
-  private void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
+  @Override
+  public void fireChanged(boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     if (isFlagSet(IN_BATCH_CHANGE_MASK)) {
       // under IN_BATCH_CHANGE_MASK, do not fire events, just add flags above
       int changedFlags = CHANGED_MASK|RENDERERS_CHANGED_MASK|FONT_STYLE_CHANGED_MASK|FOREGROUND_COLOR_CHANGED_MASK;
@@ -409,8 +420,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return result;
   }
 
-  @NotNull
-  private MarkupModel getMarkupModel() {
+  private @NotNull MarkupModel getMarkupModel() {
     return myModel;
   }
 
@@ -436,9 +446,20 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
 
   @Override
   protected void unregisterInTree() {
-    if (!isValid()) return;
     // we store highlighters in MarkupModel
     getMarkupModel().removeHighlighter(this);
+  }
+
+  @Override
+  public void dispose() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("RangeHighlighterImpl: dispose " + this);
+    }
+    super.dispose();
+    GutterIconRenderer renderer = getGutterIconRenderer();
+    if (renderer instanceof Disposable disposableRenderer) {
+      Disposer.dispose(disposableRenderer);
+    }
   }
 
   @Override
@@ -454,8 +475,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   }
 
   @Override
-  @NonNls
-  public String toString() {
-    return "RangeHighlighter: ("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip() + (isValid() ? "" : "(invalid)");
+  public @NonNls String toString() {
+    return "RangeHighlighter: " +
+           (isValid() ? "" : "(invalid)") +
+           "("+getStartOffset()+","+getEndOffset()+"); layer:"+getLayer()+"; tooltip: "+getErrorStripeTooltip();
   }
 }

@@ -1,0 +1,2 @@
+# Mock
+setuptools.msvc.winreg

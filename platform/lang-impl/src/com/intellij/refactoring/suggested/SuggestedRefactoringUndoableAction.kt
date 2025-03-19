@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
+import com.intellij.openapi.command.undo.DocumentReference
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoableAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SuggestedRefactoringUndoableAction private constructor(
   document: Document,
   private val project: Project,
@@ -32,9 +35,19 @@ class SuggestedRefactoringUndoableAction private constructor(
 
   private val documentReference = DocumentReferenceManager.getInstance().create(document)
 
-  override fun getAffectedDocuments() = arrayOf(documentReference)
+  private var performedNanoTime: Long = -1
 
-  override fun isGlobal() = false
+  override fun getPerformedNanoTime(): Long {
+    return performedNanoTime
+  }
+
+  override fun setPerformedNanoTime(l: Long) {
+    performedNanoTime = l
+  }
+
+  override fun getAffectedDocuments(): Array<DocumentReference> = arrayOf(documentReference)
+
+  override fun isGlobal(): Boolean = false
 
   override fun undo() {
     val document = documentReference.document ?: return

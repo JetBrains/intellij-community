@@ -15,7 +15,6 @@ commands. When this options is given, an ASCII representation of the
 revision graph is also shown.
 '''
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (

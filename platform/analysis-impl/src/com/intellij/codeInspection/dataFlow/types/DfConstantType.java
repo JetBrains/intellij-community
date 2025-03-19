@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -23,16 +23,15 @@ public abstract class DfConstantType<T> implements DfType {
     return other.equals(this) || other == DfType.BOTTOM;
   }
 
-  @NotNull
   @Override
-  public DfType meet(@NotNull DfType other) {
+  public @NotNull DfType meet(@NotNull DfType other) {
     return other.isSuperType(this) ? this : DfType.BOTTOM;
   }
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    if (relationType == RelationType.EQ) return this;
-    if (relationType == RelationType.NE) {
+    if (relationType == RelationType.EQ || relationType == RelationType.IS) return this;
+    if (relationType == RelationType.NE || relationType == RelationType.IS_NOT) {
       DfType negated = tryNegate();
       if (negated != null) {
         return negated;

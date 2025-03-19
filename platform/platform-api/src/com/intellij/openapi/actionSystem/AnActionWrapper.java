@@ -9,7 +9,6 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
   public AnActionWrapper(@NotNull AnAction action) {
     myDelegate = action;
     copyFrom(action);
-    setEnabledInModalContext(action.isEnabledInModalContext());
   }
 
   @Override
@@ -19,7 +18,7 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    myDelegate.update(e);
+    ActionWrapperUtil.update(e, this, myDelegate);
   }
 
   @Override
@@ -29,7 +28,7 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myDelegate.actionPerformed(e);
+    ActionWrapperUtil.actionPerformed(e, this, myDelegate);
   }
 
   @Override
@@ -39,7 +38,7 @@ public class AnActionWrapper extends AnAction implements ActionWithDelegate<AnAc
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myDelegate.getActionUpdateThread();
+    return ActionWrapperUtil.getActionUpdateThread(this, myDelegate);
   }
 
   @Override

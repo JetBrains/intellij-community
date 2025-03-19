@@ -9,14 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import java.net.URISyntaxException
 
+@ApiStatus.Internal
 object ScriptDebuggerUrls {
 
   @JvmStatic
   fun newLocalFileUrl(path: String): Url {
     val uriPath = toUriPath(path)
-    if (uriPath.isNotEmpty() && uriPath[0] != '/') throw URISyntaxException(path, "Must be absolute")
     return Urls.newUrl(URLUtil.FILE_PROTOCOL, "", uriPath)
   }
 

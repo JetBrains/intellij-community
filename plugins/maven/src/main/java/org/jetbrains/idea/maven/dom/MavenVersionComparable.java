@@ -71,6 +71,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       };
     }
 
+    @Override
     public String toString() {
       return value.toString();
     }
@@ -158,6 +159,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       };
     }
 
+    @Override
     public String toString() {
       return value;
     }
@@ -225,6 +227,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
       };
     }
 
+    @Override
     public String toString() {
       StringBuilder buffer = new StringBuilder("(");
       for (Iterator<Item> iter = iterator(); iter.hasNext(); ) {
@@ -330,14 +333,17 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
     return items.compareTo(o.items);
   }
 
+  @Override
   public String toString() {
     return value;
   }
 
+  @Override
   public boolean equals(Object o) {
     return (o instanceof MavenVersionComparable) && canonical.equals(((MavenVersionComparable)o).canonical);
   }
 
+  @Override
   public int hashCode() {
     return canonical.hashCode();
   }

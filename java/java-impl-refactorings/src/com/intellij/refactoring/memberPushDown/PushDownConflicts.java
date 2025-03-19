@@ -1,16 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -138,7 +139,7 @@ public class PushDownConflicts {
     Members:
     for (PsiMember member : myMovedMembers) {
       if (member.hasModifierProperty(PsiModifier.STATIC)) continue;
-      for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
+      for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false).asIterable()) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression referenceExpression) {
           if (myConflicts.containsKey(element)) continue;
@@ -217,7 +218,7 @@ public class PushDownConflicts {
     if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
         !targetClass.hasModifierProperty(PsiModifier.STATIC) &&
         !(targetClass.getParent() instanceof PsiFile) &&
-        !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) {
+        !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, targetClass)) {
       myConflicts.putValue(movedMember, JavaBundle.message("push.down.static.nonstatic.conflict",
                                               RefactoringUIUtil.getDescription(movedMember, false),
                                               RefactoringUIUtil.getDescription(targetClass, false)));

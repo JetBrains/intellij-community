@@ -23,6 +23,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParam
 import com.intellij.ui.LanguageTextField
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.font.FontRenderContext
@@ -137,6 +138,7 @@ internal class ChangeSignaturePopup(
   }
 }
 
+@ApiStatus.Internal
 data class NewParameterInfo(val newParameterData: SuggestedRefactoringUI.NewParameterData,
                             val name: String,
                             val value: NewParameterValue)
@@ -154,7 +156,7 @@ private class SignatureChangesPage(
     add(
       object : JComponent() {
         init {
-          preferredSize = presentation.requiredSize
+          preferredSize = presentation.requiredSize(getFontMetrics(editorFont).fontRenderContext)
         }
 
         override fun paint(g: Graphics) {
@@ -182,10 +184,13 @@ private class SignatureChangesPage(
     val minFontSize = 8
     while (true) {
       var presentation = SignatureChangePresentation(model, font, themeColorsScheme, verticalMode = false)
-      if (presentation.requiredSize.width > maxWidthHorizontalMode) {
+      val frc = getFontMetrics(font).fontRenderContext
+      var requiredSize = presentation.requiredSize(frc)
+      if (requiredSize.width > maxWidthHorizontalMode) {
         presentation = SignatureChangePresentation(model, font, themeColorsScheme, verticalMode = true)
+        requiredSize = presentation.requiredSize(frc)
       }
-      if (presentation.requiredSize.width <= maxWidth && presentation.requiredSize.height <= maxHeight || font.size <= minFontSize) {
+      if (requiredSize.width <= maxWidth && requiredSize.height <= maxHeight || font.size <= minFontSize) {
         return presentation
       }
       font = Font(font.name, font.style, font.size - 1)
@@ -284,7 +289,7 @@ private class ParameterValuesPage(
       c.gridx++
 
       c.weightx = 0.0
-      panel.add(JLabel("=").apply { font = editorFont })
+      panel.add(JLabel(" = ").apply { font = editorFont }, c)
       c.gridx++
 
       c.weightx = 1.0

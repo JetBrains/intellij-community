@@ -3,11 +3,14 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -15,6 +18,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -89,6 +94,7 @@ public final class NullabilityUtil {
         expression.getType() instanceof PsiPrimitiveType) {
       return Nullability.NOT_NULL;
     }
+    boolean dumb = DumbService.isDumb(expression.getProject());
     if (expression instanceof PsiConditionalExpression) {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
@@ -104,7 +110,7 @@ public final class NullabilityUtil {
       if (ref != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(ref, thenExpression)) {
         return getExpressionNullability(elseExpression, useDataflow);
       }
-      if (useDataflow) {
+      if (useDataflow && !dumb) {
         return DfaNullability.toNullability(DfaNullability.fromDfType(CommonDataflow.getDfType(expression)));
       }
       Nullability left = getExpressionNullability(thenExpression, false);
@@ -121,27 +127,48 @@ public final class NullabilityUtil {
       }
       return Nullability.NOT_NULL;
     }
-    if (useDataflow) {
+    if (useDataflow && !dumb) {
       return DfaNullability.toNullability(DfaNullability.fromDfType(CommonDataflow.getDfType(expression)));
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-      PsiElement target = (ref).resolve();
-      if (target instanceof PsiPatternVariable) {
-        return Nullability.NOT_NULL; // currently all pattern variables are not-null
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiElement target = ref.resolve();
+      if (target instanceof PsiPatternVariable patternVariable && 
+          !(patternVariable.getPattern().getParent() instanceof PsiDeconstructionList)) {
+        return Nullability.NOT_NULL; // currently top-level pattern variables are not-null
       }
+      if (dumb) return Nullability.UNKNOWN;
       if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
         PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
         // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
         // only initial nullability
-        if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
+        if (block == null || !ControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block)) return Nullability.UNKNOWN;
       }
       return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression || expression instanceof PsiTemplateExpression) {
+      if (dumb) return Nullability.UNKNOWN;
+      PsiMethod method = ((PsiCall)expression).resolveMethod();
       return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;
+  }
+
+  /**
+   * @param type type to process
+   * @return the same type but without top-level nullability annotations. Could be used to declare new local variables,
+   * as top-level nullability annotations could be inferred from the initializer.
+   */
+  public static @NotNull PsiType removeTopLevelNullabilityAnnotations(@NotNull Project project, @NotNull PsiType type) {
+    PsiAnnotation[] annotations = type.getAnnotations();
+    if (annotations.length == 0) return type;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+    for (PsiAnnotation annotation : annotations) {
+      if (manager.getAnnotationNullability(annotation.getQualifiedName()).isPresent()) {
+        return type.annotate(TypeAnnotationProvider.Static.create(
+          StreamEx.of(annotations).remove(a -> manager.getAnnotationNullability(a.getQualifiedName()).isPresent())
+            .toArray(PsiAnnotation.EMPTY_ARRAY)));
+      }
+    }
+    return type;
   }
 }

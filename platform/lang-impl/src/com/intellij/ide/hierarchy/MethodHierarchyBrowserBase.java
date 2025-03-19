@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
@@ -26,8 +26,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  @NotNull
-  protected String getPrevOccurenceActionNameImpl() {
+  protected @NotNull String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.prev.occurence.name");
   }
 
@@ -39,8 +38,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  @NotNull
-  protected String getNextOccurenceActionNameImpl() {
+  protected @NotNull String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.method.next.occurence.name");
   }
 
@@ -80,8 +78,7 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
   }
 
   @Override
-  @NotNull
-  protected String getActionPlace() {
+  protected @NotNull String getActionPlace() {
     return ActionPlaces.METHOD_HIERARCHY_VIEW_TOOLBAR;
   }
 
@@ -116,12 +113,11 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageMethodHierarchy.INSTANCE);
+      super(LanguageMethodHierarchy.INSTANCE);
     }
   }
 
-  @Nls
-  public static String getMethodType() {
+  public static @Nls String getMethodType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.method");
   }

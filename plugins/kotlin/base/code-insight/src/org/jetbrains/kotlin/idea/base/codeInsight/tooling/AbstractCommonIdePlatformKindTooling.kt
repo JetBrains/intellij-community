@@ -21,13 +21,13 @@ abstract class AbstractCommonIdePlatformKindTooling : IdePlatformKindTooling() {
         private const val MAVEN_COMMON_STDLIB_ID = "kotlin-stdlib-common"
     }
 
-    override val kind = CommonIdePlatformKind
+    override val kind: CommonIdePlatformKind get() = CommonIdePlatformKind
 
-    override val mavenLibraryIds = listOf(MAVEN_COMMON_STDLIB_ID)
-    override val gradlePluginId = "kotlin-platform-common"
+    override val mavenLibraryIds: List<String> = listOf(MAVEN_COMMON_STDLIB_ID)
+    override val gradlePluginId get() = "kotlin-platform-common"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.COMMON)
 
-    override val libraryKind = KotlinCommonLibraryKind
+    override val libraryKind: KotlinCommonLibraryKind get() = KotlinCommonLibraryKind
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val platform = declaration.module?.platform

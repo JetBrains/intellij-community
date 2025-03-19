@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
-import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 /**
@@ -13,6 +14,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testRemoveCompleteAssignment() { doTest(); }
+  public void testOperatorAssignment() { doTest(); }
   public void testKeepReference() { doTest(); }
   public void testFieldAssignsItself() { doTest(); }
   public void testFieldKeepInitializer() { doTest(); }
@@ -26,16 +28,17 @@ public class RemoveSillyAssignmentFixTest extends LightJavaCodeInsightFixtureTes
   public void doTest() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
     myFixture.configureByFile(getTestName(false) + ".java");
-    final IntentionAction intention = myFixture.findSingleIntention(JavaBundle.message("assignment.to.itself.quickfix.name"));
+    final IntentionAction intention = myFixture.findSingleIntention(InspectionsBundle.message("assignment.to.itself.quickfix.name"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 
   protected void assertQuickfixNotAvailable() {
     myFixture.enableInspections(SillyAssignmentInspection.class);
-    final String quickfixName = JavaBundle.message("assignment.to.itself.quickfix.name");
     myFixture.configureByFile(getTestName(false) + ".java");
+    final String quickfixName = InspectionsBundle.message("assignment.to.itself.quickfix.name");
     assertEmpty("Quickfix '" + quickfixName + "' is available unexpectedly", myFixture.filterAvailableIntentions(quickfixName));
   }
 

@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
+import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
 
 plugins {
     kotlin("multiplatform")
@@ -14,7 +15,7 @@ repositories {
 
 kotlin {
     jvm()
-    android()
+    {{androidTargetPlaceholder}}
     ios()
     js(IR) { nodejs() }
 
@@ -28,10 +29,12 @@ kotlin {
         }
     }
 
-    targetHierarchy.default {
-        group("jvmAndroid") {
-            withAndroid()
-            withJvm()
+    applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
+        common {
+            group("jvmAndroid") {
+                withAndroid()
+                withJvm()
+            }
         }
     }
 }

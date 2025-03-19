@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: field
-// IS_APPLICABLE: false
+// NO_OPTION: FIELD|Add use-site target 'field'
+// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.openapi.components.*;
@@ -20,26 +19,26 @@ import java.util.Map;
 import java.util.Set;
 
 @State(name = "EclipseModuleManager")
-public class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
-  @NonNls static final String VALUE_ATTR = "value";
-  @NonNls static final String VARELEMENT = "varelement";
-  @NonNls static final String VAR_ATTRIBUTE = "var";
-  @NonNls static final String CONELEMENT = "conelement";
-  @NonNls static final String FORCED_JDK = "forced_jdk";
-  @NonNls static final String SRC_DESCRIPTION = "src_description";
-  @NonNls static final String EXPECTED_POSITION = "expected_position";
-  @NonNls static final String SRC_FOLDER = "src_folder";
+public final class EclipseModuleManagerImpl implements EclipseModuleManager, PersistentStateComponent<Element>, StateStorageChooserEx {
+  static final @NonNls String VALUE_ATTR = "value";
+  static final @NonNls String VARELEMENT = "varelement";
+  static final @NonNls String VAR_ATTRIBUTE = "var";
+  static final @NonNls String CONELEMENT = "conelement";
+  static final @NonNls String FORCED_JDK = "forced_jdk";
+  static final @NonNls String SRC_DESCRIPTION = "src_description";
+  static final @NonNls String EXPECTED_POSITION = "expected_position";
+  static final @NonNls String SRC_FOLDER = "src_folder";
   private CachedXmlDocumentSet myDocumentSet;
   private final Map<String, String> myEclipseVariablePaths = new LinkedHashMap<>();
   private final Set<String> myEclipseUrls = new LinkedHashSet<>();
   private final Set<String> myUnknownCons = new LinkedHashSet<>();
   private boolean myForceConfigureJDK;
-  @NonNls static final String SRC_PREFIX = "src:";
-  @NonNls static final String SRC_LINK_PREFIX = "linksrc:";
-  @NonNls static final String LINK_PREFIX = "link:";
-  @NonNls static final String PREFIX_ATTR = "kind";
+  static final @NonNls String SRC_PREFIX = "src:";
+  static final @NonNls String SRC_LINK_PREFIX = "linksrc:";
+  static final @NonNls String LINK_PREFIX = "link:";
+  static final @NonNls String PREFIX_ATTR = "kind";
   private final Module myModule;
-  @NonNls static final String LIBELEMENT = "libelement";
+  static final @NonNls String LIBELEMENT = "libelement";
   private int myExpectedModuleSourcePlace;
   private final Map<String, Integer> mySrcPlace = new LinkedHashMap<>();
   private String myInvalidJdk;
@@ -78,8 +77,7 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     return ArrayUtilRt.toStringArray(myKnownCons);
   }
 
-  @Nullable
-  public CachedXmlDocumentSet getDocumentSet() {
+  public @Nullable CachedXmlDocumentSet getDocumentSet() {
     return myDocumentSet;
   }
 
@@ -132,9 +130,8 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     myUnknownCons.add(con);
   }
 
-  @NotNull
   @Override
-  public Set<String> getUnknownCons() {
+  public @NotNull Set<String> getUnknownCons() {
     return myUnknownCons;
   }
 
@@ -159,9 +156,8 @@ public class EclipseModuleManagerImpl implements EclipseModuleManager, Persisten
     return myEclipseUrls.contains(url);
   }
 
-  @NotNull
   @Override
-  public Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
+  public @NotNull Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
     if (operation == StateStorageOperation.READ) {
       return Resolution.DO;
     }

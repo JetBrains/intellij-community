@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.PartialCommitHelper;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -25,6 +27,8 @@ import java.util.Collection;
 import java.util.List;
 
 public final class IdeaTextPatchBuilder {
+  private static final Logger LOG = Logger.getInstance(IdeaTextPatchBuilder.class);
+
   private IdeaTextPatchBuilder() {
   }
 
@@ -42,6 +46,10 @@ public final class IdeaTextPatchBuilder {
                                         boolean honorExcludedFromCommit) {
     Collection<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
       if (!tracker.hasPartialChangesToCommit()) return false;
+      if (!tracker.isOperational()) {
+        LOG.warn("Skipping non-operational tracker: " + tracker);
+        return false;
+      }
 
       List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
       Change change = partialChanges.get(0).getChange();
@@ -90,11 +98,23 @@ public final class IdeaTextPatchBuilder {
                                         convertRevision(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, () -> ProgressManager.checkCanceled());
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch);
   }
 
-  @Nullable
-  private static AirContentRevision convertRevision(@Nullable ContentRevision cr) {
+  /**
+   * @deprecated Use {@link #buildPatch}
+   */
+  @Deprecated
+  public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
+                                                    @NotNull Collection<? extends Change> changes,
+                                                    @NotNull Path basePath,
+                                                    boolean reversePatch,
+                                                    boolean honorExcludedFromCommit,
+                                                    @Nullable Runnable ignoredParameter) throws VcsException {
+    return buildPatch(project, changes, basePath, reversePatch, honorExcludedFromCommit);
+  }
+
+  private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr) {
     return convertRevision(cr, null);
   }
 
@@ -104,8 +124,7 @@ public final class IdeaTextPatchBuilder {
     return cr.getFile().getFileType().isBinary();
   }
 
-  @Nullable
-  private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
+  private static @Nullable AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable String actualTextContent) {
     if (cr == null) {
       return null;
     }
@@ -123,8 +142,7 @@ public final class IdeaTextPatchBuilder {
     }
   }
 
-  @Nullable
-  private static Long getRevisionTimestamp(@NotNull ContentRevision revision) {
+  private static @Nullable Long getRevisionTimestamp(@NotNull ContentRevision revision) {
     if (revision instanceof CurrentContentRevision) {
       try {
         FilePath filePath = revision.getFile();
@@ -140,8 +158,8 @@ public final class IdeaTextPatchBuilder {
 
 
   private static class BinaryAirContentRevision implements AirContentRevision {
-    @NotNull private final ByteBackedContentRevision myRevision;
-    @NotNull private final FilePath myFilePath;
+    private final @NotNull ByteBackedContentRevision myRevision;
+    private final @NotNull FilePath myFilePath;
 
     BinaryAirContentRevision(@NotNull ByteBackedContentRevision revision,
                              @NotNull FilePath filePath) {
@@ -155,7 +173,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       throw new IllegalStateException();
     }
 
@@ -175,15 +193,14 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    @NotNull
-    public FilePath getPath() {
+    public @NotNull FilePath getPath() {
       return myFilePath;
     }
   }
 
   private static class TextAirContentRevision implements AirContentRevision {
-    @NotNull private final ContentRevision myRevision;
-    @NotNull private final FilePath myFilePath;
+    private final @NotNull ContentRevision myRevision;
+    private final @NotNull FilePath myFilePath;
 
     TextAirContentRevision(@NotNull ContentRevision revision,
                            @NotNull FilePath filePath) {
@@ -197,8 +214,15 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() throws VcsException {
-      return myRevision.getContent();
+    public @NotNull String getContentAsString() throws VcsException {
+      String content = myRevision.getContent();
+      if (content == null) {
+        VcsRevisionNumber revisionNumber = myRevision.getRevisionNumber();
+        String revisionText = revisionNumber != VcsRevisionNumber.NULL ? revisionNumber.asString() : myRevision.toString();
+        throw new VcsException(VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision",
+                                                 myFilePath.getPath(), revisionText));
+      }
+      return content;
     }
 
     @Override
@@ -217,27 +241,24 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    @NotNull
-    public FilePath getPath() {
+    public @NotNull FilePath getPath() {
       return myFilePath;
     }
 
-    @NotNull
     @Override
-    public Charset getCharset() {
+    public @NotNull Charset getCharset() {
       return myRevision.getFile().getCharset();
     }
 
-    @Nullable
     @Override
-    public String getLineSeparator() {
+    public @Nullable String getLineSeparator() {
       VirtualFile virtualFile = myRevision.getFile().getVirtualFile();
       return virtualFile != null ? virtualFile.getDetectedLineSeparator() : null;
     }
   }
 
   private static class PartialTextAirContentRevision extends TextAirContentRevision {
-    @NotNull private final String myContent;
+    private final @NotNull String myContent;
 
     PartialTextAirContentRevision(@NotNull String content,
                                   @NotNull ContentRevision delegateRevision,
@@ -247,7 +268,7 @@ public final class IdeaTextPatchBuilder {
     }
 
     @Override
-    public String getContentAsString() {
+    public @NotNull String getContentAsString() {
       return myContent;
     }
 

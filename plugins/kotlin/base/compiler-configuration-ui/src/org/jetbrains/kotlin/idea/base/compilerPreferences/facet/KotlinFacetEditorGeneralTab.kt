@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 import com.intellij.facet.ui.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
@@ -17,7 +19,10 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.base.compilerPreferences.configuration.KotlinCompilerConfigurableTab
 import org.jetbrains.kotlin.idea.base.util.onTextChange
-import org.jetbrains.kotlin.idea.compiler.configuration.*
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
 import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.idea.facet.getExposedFacetFields
@@ -60,7 +65,7 @@ class KotlinFacetEditorGeneralTab(
     class EditorComponent(
         private val project: Project,
         private val configuration: KotlinFacetConfiguration?
-    ) : JPanel(BorderLayout()) {
+    ) : JPanel(BorderLayout()), Disposable {
         private val isMultiEditor: Boolean
             get() = configuration == null
 
@@ -273,6 +278,12 @@ class KotlinFacetEditorGeneralTab(
                 targetPlatformSelectSingleCombobox.selectedItemTyped?.targetPlatform
             }
         }
+
+        override fun dispose() {
+            if (::compilerConfigurable.isInitialized) {
+                compilerConfigurable.disposeUIResources()
+            }
+        }
     }
 
     inner class ArgumentConsistencyValidator : FacetEditorValidator() {
@@ -289,11 +300,11 @@ class KotlinFacetEditorGeneralTab(
                 )
             }
             val argumentClass = primaryArguments.javaClass
-            val additionalArguments = argumentClass.newInstance().apply {
+            val additionalArguments = argumentClass.getDeclaredConstructor().newInstance().apply {
                 parseCommandLineArguments(splitArgumentString(editor.compilerConfigurable.additionalArgsOptionsField.text), this)
                 validateArguments(errors)?.let { message -> return ValidationResult(message) }
             }
-            val emptyArguments = argumentClass.newInstance()
+            val emptyArguments = argumentClass.getDeclaredConstructor().newInstance()
             val fieldNamesToCheck = getExposedFacetFields(platform.idePlatformKind)
 
             val propertiesToCheck = collectProperties(argumentClass.kotlin, false).filter { it.name in fieldNamesToCheck }
@@ -342,12 +353,6 @@ class KotlinFacetEditorGeneralTab(
 
     private var enableValidation = false
 
-    private fun onLanguageLevelChanged() {
-        with(editor.compilerConfigurable) {
-            onLanguageLevelChanged(selectedLanguageVersionView)
-        }
-    }
-
     private fun JTextField.validateOnChange() {
         onTextChange { doValidate() }
     }
@@ -373,7 +378,7 @@ class KotlinFacetEditorGeneralTab(
         }
     }
 
-    fun initializeIfNeeded() {
+    private fun initializeIfNeeded() {
         if (isInitialized) return
 
         editor.initialize()
@@ -388,13 +393,10 @@ class KotlinFacetEditorGeneralTab(
             reportWarningsCheckBox.validateOnChange()
             additionalArgsOptionsField.textField.validateOnChange()
             generateSourceMapsCheckBox.validateOnChange()
-            outputPrefixFile.textField.validateOnChange()
-            outputPostfixFile.textField.validateOnChange()
             outputDirectory.textField.validateOnChange()
             copyRuntimeFilesCheckBox.validateOnChange()
             moduleKindComboBox.validateOnChange()
             languageVersionComboBox.addActionListener {
-                onLanguageLevelChanged()
                 doValidate()
             }
             apiVersionComboBox.validateOnChange()
@@ -405,10 +407,6 @@ class KotlinFacetEditorGeneralTab(
         isInitialized = true
 
         reset()
-    }
-
-    override fun onTabEntering() {
-        initializeIfNeeded()
     }
 
     override fun isModified(): Boolean {
@@ -462,9 +460,9 @@ class KotlinFacetEditorGeneralTab(
     }
 
     override fun apply() {
-        initializeIfNeeded()
         validateOnce {
             editor.compilerConfigurable.apply()
+            configuration.settings.compilerArguments = editor.compilerConfigurable.commonCompilerArguments
             with(configuration.settings) {
                 useProjectSettings = editor.useProjectSettingsCheckBox.isSelected
                 editor.getChosenPlatform()?.let {
@@ -497,12 +495,13 @@ class KotlinFacetEditorGeneralTab(
     override fun getDisplayName() = KotlinBaseCompilerConfigurationUiBundle.message("facet.name.general")
 
     override fun createComponent(): JComponent {
+        initializeIfNeeded()
         return editor
     }
 
     override fun disposeUIResources() {
         if (isInitialized) {
-            editor.compilerConfigurable.disposeUIResources()
+            Disposer.dispose(editor)
         }
     }
 }

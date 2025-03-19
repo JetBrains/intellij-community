@@ -1,15 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.preview.jcef
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
-import org.junit.*
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import java.io.File
 
 /**
@@ -21,8 +23,10 @@ import java.io.File
  * Basically, all these tests are checking if the passed to the preview HTML
  * stays the same after conversion to incremental DOM.
  */
-@RunWith(Parameterized::class)
-class MarkdownContentEscapingTest(enableOsr: Boolean): MarkdownJcefTestCase(enableOsr) {
+@EnabledIfSystemProperty(named = "intellij.test.standalone", matches = "^true$")
+@MarkdownPreviewTest
+class MarkdownContentEscapingTest: MarkdownJcefTestCase() {
+
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
 
@@ -43,15 +47,16 @@ class MarkdownContentEscapingTest(enableOsr: Boolean): MarkdownJcefTestCase(enab
 
   private fun doTest(name: String) {
     val content = File(testPath, "$name.html").readText()
-    val panel = setupPreview(content)
+
     val expected = parseContentBody(content)
-    var got = parseContentBody(panel.collectPageSource()!!)
-    // can't listen for the content load, so use this primitive approach
-    var counter = 5
-    while (got.children().isEmpty() and (counter-- > 0)) {
-      Thread.sleep(500)
-      got = parseContentBody(panel.collectPageSource()!!)
-    }
+
+    val got = parseContentBody(runBlocking(Dispatchers.EDT) {
+      val panel = createPreview()
+      panel.setupPreview()
+      panel.setHtmlAndWait(content)
+      panel.collectPageSource()
+    })
+
     assertTrue(got.children().isNotEmpty())
     assertEquals(expected.html(), got.child(0).html())
   }
@@ -65,11 +70,6 @@ class MarkdownContentEscapingTest(enableOsr: Boolean): MarkdownJcefTestCase(enab
   }
 
   companion object {
-    @Suppress("unused")
-    @JvmStatic
-    @get:Parameterized.Parameters(name = "enableOsr = {0}")
-    val modes = listOf(true)
-
     private val testPath = FileUtil.join(MarkdownTestingUtil.TEST_DATA_PATH, "preview", "jcef", "escaping")
   }
 }

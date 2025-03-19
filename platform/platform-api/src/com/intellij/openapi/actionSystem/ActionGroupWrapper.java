@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.List;
 
 public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegate<ActionGroup>, PerformWithDocumentsCommitted {
   private final ActionGroup myDelegate;
@@ -10,7 +13,6 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   public ActionGroupWrapper(@NotNull ActionGroup action) {
     myDelegate = action;
     copyFrom(action);
-    setEnabledInModalContext(action.isEnabledInModalContext());
   }
 
   @Override
@@ -25,22 +27,17 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return myDelegate.getActionUpdateThread();
+    return ActionWrapperUtil.getActionUpdateThread(this, myDelegate);
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    return myDelegate.getChildren(e);
-  }
-
-  @Override
-  public final boolean isPopup() {
-    return myDelegate.isPopup();
+    return ActionWrapperUtil.getChildren(e, this, myDelegate);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    myDelegate.update(e);
+    ActionWrapperUtil.update(e, this, myDelegate);
   }
 
   @Override
@@ -49,13 +46,8 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return myDelegate.canBePerformed(context);
-  }
-
-  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myDelegate.actionPerformed(e);
+    ActionWrapperUtil.actionPerformed(e, this, myDelegate);
   }
 
   @Override
@@ -69,13 +61,9 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
   }
 
   @Override
-  public boolean hideIfNoVisibleChildren() {
-    return myDelegate.hideIfNoVisibleChildren();
-  }
-
-  @Override
-  public boolean disableIfNoVisibleChildren() {
-    return myDelegate.disableIfNoVisibleChildren();
+  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                             @NotNull List<? extends AnAction> visibleChildren) {
+    return myDelegate.postProcessVisibleChildren(e, visibleChildren);
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
@@ -6,8 +6,8 @@ package com.intellij.ui.tabs.impl.multiRow
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.UiDecorator
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabLabel.ActionsPosition
+import com.intellij.ui.tabs.impl.mergeUiDecorations
 import com.intellij.util.ui.JBUI
 import java.awt.Insets
 import java.util.*
@@ -15,47 +15,45 @@ import java.util.function.Function
 import kotlin.math.max
 import kotlin.math.round
 
-class CompressibleTabsRow(infos: List<TabInfo>,
-                          withTitle: Boolean,
-                          withEntryPointToolbar: Boolean
+internal class CompressibleTabsRow(infos: List<TabInfo>, withTitle: Boolean, withEntryPointToolbar: Boolean
 ) : TabsRow(infos, withTitle, withEntryPointToolbar) {
   override fun layoutTabs(data: MultiRowPassInfo, x: Int, y: Int, maxLength: Int) {
     val tabs = data.tabs
     val decoration = tabs.uiDecorator!!.getDecoration()
     val prefLengths = infos.map {
-      val label = tabs.infoToLabel.get(it)!!
+      val label = tabs.getTabLabel(it)!!
       label.apply(decoration)
       label.preferredSize.width
     }
     val requiredLength = prefLengths.sum()
     val gapsLengths = tabs.tabHGap * (infos.size - 1)
 
-    val lengths = if (requiredLength > maxLength - gapsLengths) {
+    val result: CompressionResult = if (requiredLength > maxLength - gapsLengths) {
       calculateCompressibleLengths(data, prefLengths, requiredLength, maxLength - gapsLengths)
     }
-    else prefLengths
+    else CompressionResult(prefLengths, forcePaintBorders = false)
 
     var curX = x
     for ((index, info) in infos.withIndex()) {
-      val label = tabs.infoToLabel.get(info)!!
-      val len = lengths[index]
+      val label = tabs.getTabLabel(info)!!
+      val len = result.lengths[index]
+      label.isForcePaintBorders = result.forcePaintBorders
       tabs.layout(label, curX, y, len, data.rowHeight)
       curX += len + tabs.tabHGap
     }
   }
 
-  private fun calculateCompressibleLengths(data: MultiRowPassInfo, prefLengths: List<Int>, requiredLen: Int, maxLen: Int): List<Int> {
+  private fun calculateCompressibleLengths(data: MultiRowPassInfo,
+                                           prefLengths: List<Int>,
+                                           requiredLen: Int,
+                                           maxLen: Int): CompressionResult {
     val decreasedLengths = decreaseInsets(data, prefLengths, requiredLen, maxLen)
     return if (decreasedLengths.sum() > maxLen) {
       val resultLengths = decreaseMaxLengths(decreasedLengths, maxLen)
       val paintBorders = resultLengths.zip(decreasedLengths).all { it.first < it.second }
-      for (info in infos) {
-        val label = data.tabs.infoToLabel.get(info)!!
-        label.isForcePaintBorders = paintBorders
-      }
-      return resultLengths
+      return CompressionResult(resultLengths, paintBorders)
     }
-    else decreasedLengths
+    else CompressionResult(decreasedLengths, forcePaintBorders = false)
   }
 
   private fun decreaseInsets(data: MultiRowPassInfo, prefLengths: List<Int>, requiredLen: Int, maxLen: Int): List<Int> {
@@ -73,7 +71,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
         curExtraLen++
         remainingExtraLen--
       }
-      val label = tabs.infoToLabel.get(info)!!
+      val label = tabs.getTabLabel(info)!!
       val actionsPosition = label.actionsPosition
       val cached = cachedDecorations.find { it.extraLen == curExtraLen && it.actionsPosition == actionsPosition }
       if (cached != null) {
@@ -90,7 +88,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
         label.apply(decoration)
         decreasedLengths.add(prefLengths[ind] - decreasedLen)
       }
-      label.enableCompressionMode(true)
+      label.isCompressionEnabled = true
     }
     return decreasedLengths
   }
@@ -142,7 +140,7 @@ class CompressibleTabsRow(infos: List<TabInfo>,
 
     // Index in the sortedLengths list from which we need to decrease all lengths.
     // Lengths with index less than this index will not be changed.
-    // No need to use binary search here, because size is small
+    // No need to use binary search here because size is small
     val index = sums.indexOfFirst { it >= maxLength }
     val decreasableLen = maxLength - sortedLengths.subList(0, index).sum()
     val avgLen = decreasableLen / (lengths.size - index)
@@ -185,9 +183,11 @@ class CompressibleTabsRow(infos: List<TabInfo>,
   }
 
   private fun createTabInsets(tabs: JBTabsImpl, info: TabInfo): TabInsets {
-    val decoration = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(),
-                                                 JBTabsImpl.defaultDecorator.getDecoration())
-    val actionsPosition = tabs.infoToLabel.get(info)!!.actionsPosition
+    val decoration = mergeUiDecorations(
+      customDec = tabs.uiDecorator!!.getDecoration(),
+      defaultDec = JBTabsImpl.defaultDecorator.getDecoration(),
+    )
+    val actionsPosition = tabs.getTabLabel(info)!!.actionsPosition
     val contentInsets = decoration.contentInsetsSupplier.apply(actionsPosition)
     val cornerToText = if (actionsPosition == ActionsPosition.RIGHT) {
       decoration.labelInsets.left + contentInsets.left
@@ -213,11 +213,11 @@ class CompressibleTabsRow(infos: List<TabInfo>,
 
   @Suppress("UseDPIAwareInsets")
   private fun createUiDecoration(tabs: JBTabsImpl, info: TabInfo, insets: TabInsets): UiDecorator.UiDecoration {
-    val actionsPosition = tabs.infoToLabel.get(info)!!.actionsPosition
+    val actionsPosition = tabs.getTabLabel(info)!!.actionsPosition
     val cornerToActions = insets.cornerToActions + if (actionsPosition == ActionsPosition.NONE && insets.actionsInset > 0) insets.actionsInset else 0
     val contentInsets = Insets(0, if (actionsPosition == ActionsPosition.LEFT) insets.actionsInset else 0,
                                0, if (actionsPosition == ActionsPosition.RIGHT) insets.actionsInset else 0)
-    val originalDec = TabLabel.mergeUiDecorations(tabs.uiDecorator!!.getDecoration(), JBTabsImpl.defaultDecorator.getDecoration())
+    val originalDec = mergeUiDecorations(customDec = tabs.uiDecorator!!.getDecoration(), defaultDec = JBTabsImpl.defaultDecorator.getDecoration())
     val labelInsets = Insets(originalDec.labelInsets.top,
                              if (actionsPosition == ActionsPosition.RIGHT) insets.cornerToText else cornerToActions,
                              originalDec.labelInsets.bottom,
@@ -234,6 +234,8 @@ class CompressibleTabsRow(infos: List<TabInfo>,
                                  val extraLen: Int,
                                  val decreasedLen: Int,
                                  val actionsPosition: ActionsPosition)
+
+  private class CompressionResult(val lengths: List<Int>, val forcePaintBorders: Boolean)
 
   private data class TabInsets(val actionsPosition: ActionsPosition,
                                val cornerToText: Int,

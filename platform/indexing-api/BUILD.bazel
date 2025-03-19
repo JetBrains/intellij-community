@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.indexing` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "indexing_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "indexing",
+  module_name = "intellij.platform.indexing",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "//platform/util",
+    "//platform/util/concurrency",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = ["//platform/core-api:core"],
+  runtime_deps = [":indexing_resources"]
+)
+### auto-generated section `build intellij.platform.indexing` end

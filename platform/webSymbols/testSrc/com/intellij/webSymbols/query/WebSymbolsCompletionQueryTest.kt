@@ -5,8 +5,13 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.intellij.util.containers.Stack
-import com.intellij.webSymbols.*
+import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.testFramework.query.doTest
+import com.intellij.webSymbols.testFramework.query.printCodeCompletionItems
+import com.intellij.webSymbols.webSymbolsTestsDataPath
 import com.intellij.webSymbols.webTypes.json.parseWebTypesPath
 
 class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
@@ -229,12 +234,10 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
       object : WebSymbolsScope {
         override fun createPointer(): Pointer<out WebSymbolsScope> = Pointer.hardPointer(this)
 
-        override fun getCodeCompletions(namespace: SymbolNamespace,
-                                        kind: SymbolKind,
-                                        name: String?,
+        override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> {
-          return if (kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
+          return if (qualifiedName.kind == WebSymbol.KIND_HTML_ATTRIBUTES) {
             listOf(WebSymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()
@@ -301,11 +304,34 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   }
 
   fun testBasicCustomElementsManifest1() {
-    doTest("html/elements/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/", customElementsManifests = listOf("basic"))
   }
 
   fun testBasicCustomElementsManifest2() {
-    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic") )
+    doTest("html/elements/my-EleMeNt/attributes/", customElementsManifests = listOf("basic"))
+  }
+
+  fun testCssClassListSingleClass1() {
+    doTest("css/class-list/foo", 0, null, "css-class-list")
+  }
+
+  fun testCssClassListSingleClass2() {
+    doTest("css/class-list/foo", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses1() {
+    doTest("css/class-list/foo bar", 1, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses2() {
+    doTest("css/class-list/foo bar", 4, null, "css-class-list")
+  }
+
+  fun testCssClassListMultipleClasses3() {
+    doTest("css/class-list/foa bar", 4, null, "css-class-list")
+  }
+  fun testCssClassListMultipleClasses4() {
+    doTest("css/class-list/foo bar", 3, null, "css-class-list")
   }
 
   private fun doTest(path: String, position: Int, framework: String?, vararg webTypes: String) {

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -30,74 +31,95 @@ import java.util.EventListener;
 import java.util.List;
 
 public class NameSuggestionsField extends JPanel {
-  private final JComponent myComponent;
+  private final @NotNull JComponent myComponent;
   private final EventListenerList myListenerList = new EventListenerList();
-  private final MyComboBoxModel myComboBoxModel;
-  private final Project myProject;
-  private MyDocumentListener myDocumentListener;
-  private MyComboBoxItemListener myComboBoxItemListener;
+  private final @Nullable MyComboBoxModel myComboBoxModel;
+  private final @NotNull Project myProject;
+  private @Nullable MyDocumentListener myDocumentListener;
+  private @Nullable MyComboBoxItemListener myComboBoxItemListener;
 
   private boolean myNonHumanChange = false;
 
-  public NameSuggestionsField(Project project) {
+  public NameSuggestionsField(@NotNull Project project) {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
-    final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
+    final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
   }
 
-  public NameSuggestionsField(String[] nameSuggestions, Project project) {
+  /**
+   * @deprecated specify the file type explicitly as the third constructor argument 
+   */
+  @Deprecated
+  public NameSuggestionsField(String @Nullable [] nameSuggestions, @NotNull Project project) {
     this(nameSuggestions, project, StdFileTypes.JAVA);
   }
+  
+  public @NotNull Project getProject() {
+    return myProject;
+  }
 
-  public NameSuggestionsField(String[] nameSuggestions, Project project, FileType fileType) {
+  public NameSuggestionsField(String @Nullable [] nameSuggestions, @NotNull Project project, FileType fileType) {
     super(new BorderLayout());
     myProject = project;
-    if (nameSuggestions == null || nameSuggestions.length <= 1) {
+    if (nameSuggestions == null || nameSuggestions.length <= 1 && !forceCombobox()) {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
+      myComboBoxModel = null;
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions);
+      myComboBoxModel = new MyComboBoxModel();
+      myComboBoxModel.setSuggestions(nameSuggestions);
+      final ComboBox<String> combobox = new ComboBox<>(myComboBoxModel);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;
     }
     add(myComponent, BorderLayout.CENTER);
-    myComboBoxModel = null;
   }
 
-  public NameSuggestionsField(final String[] suggestedNames, final Project project, final FileType fileType, @Nullable final Editor editor) {
+  /**
+   * @return whether combobox must be used even if there are no initial suggestions.
+   * Subclasses may override this method and return true 
+   * if they may add suggestions later via {@link #setSuggestions(String[])}.
+   */
+  protected boolean forceCombobox() {
+    return false;
+  }
+
+  public NameSuggestionsField(final String[] suggestedNames, final @NotNull Project project, final FileType fileType, final @Nullable Editor editor) {
     this(suggestedNames, project, fileType);
     if (editor == null) return;
     // later here because EditorTextField creates Editor during addNotify()
     final Runnable selectionRunnable = () -> {
-      final int offset = editor.getCaretModel().getOffset();
-      List<TextRange> ranges = new ArrayList<>();
-      SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
-      Editor myEditor = getEditor();
-      if (myEditor == null) return;
-      for (TextRange wordRange : ranges) {
-        String word = editor.getDocument().getText(wordRange);
-        if (!word.equals(getEnteredName())) continue;
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        myEditor.getSelectionModel().removeSelection();
-        final int wordRangeStartOffset = wordRange.getStartOffset();
-        int myOffset = offset - wordRangeStartOffset;
-        myEditor.getCaretModel().moveToOffset(myOffset);
-        TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
-                                           Math.max(0, selectionModel.getSelectionEnd() - wordRangeStartOffset));
-        selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
-        if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
-          myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
+      ReadAction.run(() -> {
+        final int offset = editor.getCaretModel().getOffset();
+        List<TextRange> ranges = new ArrayList<>();
+        SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editor.getDocument().getCharsSequence(), offset, ranges);
+        Editor myEditor = getEditor();
+        if (myEditor == null) return;
+        for (TextRange wordRange : ranges) {
+          String word = editor.getDocument().getText(wordRange);
+          if (!word.equals(getEnteredName())) continue;
+          final SelectionModel selectionModel = editor.getSelectionModel();
+          myEditor.getSelectionModel().removeSelection();
+          final int wordRangeStartOffset = wordRange.getStartOffset();
+          int myOffset = offset - wordRangeStartOffset;
+          myEditor.getCaretModel().moveToOffset(myOffset);
+          TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
+                                             Math.max(0, selectionModel.getSelectionEnd() - wordRangeStartOffset));
+          selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
+          if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
+            myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
+          }
+          else if (shouldSelectAll()) {
+            myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
+          }
+          break;
         }
-        else if (shouldSelectAll()) {
-          myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
-        }
-        break;
-      }
+      });
     };
     SwingUtilities.invokeLater(selectionRunnable);
   }
@@ -108,34 +130,31 @@ public class NameSuggestionsField extends JPanel {
 
   public void selectNameWithoutExtension() {
     SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      final int pos = editor.getDocument().getText().lastIndexOf('.');
+      EditorTextField textField = getEditorTextField();
+      if (textField == null) return;
+      final int pos = textField.getDocument().getText().lastIndexOf('.');
       if (pos > 0) {
-        editor.getSelectionModel().setSelection(0, pos);
-        editor.getCaretModel().moveToOffset(pos);
+        textField.select(TextRange.create(0, pos));
+        textField.setCaretPosition(pos);
       }
     });
-
   }
 
   public void select(final int start, final int end) {
     SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      editor.getSelectionModel().setSelection(start, end);
-      editor.getCaretModel().moveToOffset(end);
-
+      EditorTextField textField = getEditorTextField();
+      if (textField == null) return;
+      textField.select(TextRange.create(start, end));
+      textField.setCaretPosition(end);
     });
   }
 
-  public void setSuggestions(final String[] suggestions) {
+  public void setSuggestions(final String @NotNull [] suggestions) {
     if(myComboBoxModel == null) return;
-    JComboBox comboBox = (JComboBox) myComponent;
+    @SuppressWarnings("unchecked") JComboBox<String> comboBox = (JComboBox<String>)myComponent;
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
     final String oldItemFromTextField = (String) comboBox.getEditor().getItem();
-    final boolean shouldUpdateTextField =
-      oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
+    final boolean shouldUpdateTextField = oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.isBlank();
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
       if (oldSelectedItem != null) {
@@ -149,21 +168,21 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
   public JComponent getFocusableComponent() {
-    if(myComponent instanceof JComboBox) {
-      return (JComponent) ((JComboBox<?>) myComponent).getEditor().getEditorComponent();
+    if (myComponent instanceof JComboBox<?> comboBox) {
+      return (JComponent)comboBox.getEditor().getEditorComponent();
     } else {
       return myComponent;
     }
   }
 
   public String getEnteredName() {
-    if (myComponent instanceof JComboBox) {
-      return (String)((JComboBox<?>)myComponent).getEditor().getItem();
+    if (myComponent instanceof JComboBox<?> comboBox) {
+      return (String)comboBox.getEditor().getItem();
     } else {
       return ((EditorTextField) myComponent).getText();
     }
@@ -173,7 +192,7 @@ public class NameSuggestionsField extends JPanel {
     return myComponent instanceof JComboBox;
   }
 
-  private JComponent createTextFieldForName(String[] nameSuggestions, FileType fileType) {
+  private @NotNull JComponent createTextFieldForName(String @Nullable [] nameSuggestions, FileType fileType) {
     final String text;
     if (nameSuggestions != null && nameSuggestions.length > 0 && nameSuggestions[0] != null) {
       text = nameSuggestions[0];
@@ -187,7 +206,7 @@ public class NameSuggestionsField extends JPanel {
     return field;
   }
 
-  private static class MyComboBoxModel extends DefaultComboBoxModel {
+  private static final class MyComboBoxModel extends DefaultComboBoxModel<String> {
     private String[] mySuggestions;
 
     MyComboBoxModel() {
@@ -202,7 +221,7 @@ public class NameSuggestionsField extends JPanel {
 
     // implements javax.swing.ListModel
     @Override
-    public Object getElementAt(int index) {
+    public String getElementAt(int index) {
       return mySuggestions[index];
     }
 
@@ -214,7 +233,7 @@ public class NameSuggestionsField extends JPanel {
 
   }
 
-  private void setupComboBox(final ComboBox combobox, FileType fileType) {
+  private void setupComboBox(final @NotNull ComboBox<String> combobox, FileType fileType) {
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, fileType, combobox) {
       @Override
       public void setItem(Object anObject) {
@@ -232,13 +251,17 @@ public class NameSuggestionsField extends JPanel {
     comboEditor.selectAll();
   }
 
-  public Editor getEditor() {
-    if (myComponent instanceof EditorTextField) {
-      return ((EditorTextField)myComponent).getEditor();
+  private EditorTextField getEditorTextField() {
+    if (myComponent instanceof EditorTextField field) {
+      return field;
     }
     else {
-      return ((EditorTextField)((JComboBox<?>)myComponent).getEditor().getEditorComponent()).getEditor();
+      return ((EditorTextField)((JComboBox<?>)myComponent).getEditor().getEditorComponent());
     }
+  }
+
+  public @Nullable Editor getEditor() {
+    return getEditorTextField().getEditor();
   }
 
   @FunctionalInterface
@@ -263,9 +286,9 @@ public class NameSuggestionsField extends JPanel {
       myDocumentListener = new MyDocumentListener();
       ((EditorTextField) getFocusableComponent()).addDocumentListener(myDocumentListener);
     }
-    if (myComboBoxItemListener == null && myComponent instanceof JComboBox) {
+    if (myComboBoxItemListener == null && myComponent instanceof JComboBox<?> comboBox) {
       myComboBoxItemListener = new MyComboBoxItemListener();
-      ((JComboBox<?>) myComponent).addItemListener(myComboBoxItemListener);
+      comboBox.addItemListener(myComboBoxItemListener);
     }
   }
 
@@ -284,16 +307,16 @@ public class NameSuggestionsField extends JPanel {
     Object[] list = myListenerList.getListenerList();
 
     for (Object aList : list) {
-      if (aList instanceof DataChanged) {
-        ((DataChanged)aList).dataChanged();
+      if (aList instanceof DataChanged dataChanged) {
+        dataChanged.dataChanged();
       }
     }
   }
 
   @Override
   public boolean requestFocusInWindow() {
-    if(myComponent instanceof JComboBox) {
-      return ((JComboBox<?>) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
+    if(myComponent instanceof JComboBox<?> comboBox) {
+      return comboBox.getEditor().getEditorComponent().requestFocusInWindow();
     }
     else {
       return myComponent.requestFocusInWindow();
@@ -305,11 +328,11 @@ public class NameSuggestionsField extends JPanel {
     myComponent.setEnabled(enabled);
   }
 
-  private class MyDocumentListener implements DocumentListener {
+  private final class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(@NotNull DocumentEvent event) {
-      if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox<?>)myComponent).isPopupVisible()) {
-        ((JComboBox<?>)myComponent).hidePopup();
+      if (!myNonHumanChange && myComponent instanceof JComboBox<?> comboBox && comboBox.isPopupVisible()) {
+        comboBox.hidePopup();
       }
       myNonHumanChange = false;
 
@@ -317,7 +340,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
-  private class MyComboBoxItemListener implements ItemListener {
+  private final class MyComboBoxItemListener implements ItemListener {
     @Override
     public void itemStateChanged(ItemEvent e) {
       fireDataChanged();

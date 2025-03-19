@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,13 +12,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
 import java.util.Map;
+import java.util.Objects;
 import java.util.WeakHashMap;
 
 public final class ScreenUtil {
   public static final String DISPOSE_TEMPORARY = "dispose.temporary";
 
-  @Nullable private static final Map<GraphicsConfiguration, Pair<Insets, Long>> ourInsetsCache = Boolean.getBoolean("ide.cache.screen.insets")
-                                                                                                 ? new WeakHashMap<>() : null;
+  private static final @Nullable Map<@NotNull GraphicsConfiguration, @NotNull Pair<@NotNull Insets, @NotNull Long>> insetCache =
+    Boolean.getBoolean("ide.cache.screen.insets") ? new WeakHashMap<>() : null;
   private static final int ourInsetsTimeout = SystemProperties.getIntProperty("ide.insets.cache.timeout", 5000);  // shouldn't be too long
 
   private ScreenUtil() { }
@@ -42,11 +44,11 @@ public final class ScreenUtil {
     return false;
   }
 
-  public static Rectangle getMainScreenBounds() {
+  public static @NotNull Rectangle getMainScreenBounds() {
     return getScreenRectangle(GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice());
   }
 
-  private static Rectangle[] getAllScreenBounds() {
+  private static @NotNull Rectangle @NotNull[] getAllScreenBounds() {
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     Rectangle[] result = new Rectangle[devices.length];
     for (int i = 0; i < devices.length; i++) {
@@ -55,7 +57,7 @@ public final class ScreenUtil {
     return result;
   }
 
-  public static Shape getAllScreensShape() {
+  public static @NotNull Shape getAllScreensShape() {
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     if (devices.length == 0) {
       return new Rectangle();
@@ -109,11 +111,11 @@ public final class ScreenUtil {
     return new Rectangle(minX, minY, maxX - minX, maxY - minY);
   }
 
-  public static Rectangle getScreenRectangle(@NotNull Point p) {
+  public static @NotNull Rectangle getScreenRectangle(@NotNull Point p) {
     return getScreenRectangle(p.x, p.y);
   }
 
-  public static Rectangle getScreenRectangle(@NotNull Component component) {
+  public static @NotNull Rectangle getScreenRectangle(@NotNull Component component) {
     GraphicsConfiguration configuration = component.getGraphicsConfiguration();
     if (configuration != null) return getScreenRectangle(configuration);
     // try to find the nearest screen if configuration is not available
@@ -126,7 +128,7 @@ public final class ScreenUtil {
    * @param bounds a rectangle used to find corresponding graphics device
    * @return a graphics device that contains the biggest part of the specified rectangle
    */
-  public static GraphicsDevice getScreenDevice(Rectangle bounds) {
+  public static @Nullable GraphicsDevice getScreenDevice(@NotNull Rectangle bounds) {
     GraphicsDevice candidate = null;
     int maxIntersection = 0;
 
@@ -150,12 +152,12 @@ public final class ScreenUtil {
    * Method removeNotify (and then addNotify) will be invoked for all components when main frame switches between states "Normal" <-> "FullScreen".
    * In this case we shouldn't call Disposer  in removeNotify and/or release some resources that we won't initialize again in addNotify (e.g. listeners).
    */
-  public static boolean isStandardAddRemoveNotify(Component component) {
+  public static boolean isStandardAddRemoveNotify(@Nullable Component component) {
     JRootPane rootPane = findMainRootPane(component);
     return rootPane == null || rootPane.getClientProperty(DISPOSE_TEMPORARY) == null;
   }
 
-  private static JRootPane findMainRootPane(Component component) {
+  private static @Nullable JRootPane findMainRootPane(@Nullable Component component) {
     while (component != null) {
       Container parent = component.getParent();
       if (parent == null) {
@@ -166,29 +168,29 @@ public final class ScreenUtil {
     return null;
   }
 
-  private static Rectangle applyInsets(Rectangle rect, Insets i) {
+  private static @NotNull Rectangle applyInsets(@NotNull Rectangle rect, @Nullable Insets i) {
     rect = new Rectangle(rect);
     JBInsets.removeFrom(rect, i);
     return rect;
   }
 
-  public static Insets getScreenInsets(final GraphicsConfiguration gc) {
-    if (ourInsetsCache == null) {
+  public static @NotNull Insets getScreenInsets(final @NotNull GraphicsConfiguration gc) {
+    if (insetCache == null) {
       return calcInsets(gc);
     }
 
-    synchronized (ourInsetsCache) {
-      Pair<Insets, Long> data = ourInsetsCache.get(gc);
-      final long now = System.currentTimeMillis();
+    synchronized (insetCache) {
+      Pair<Insets, Long> data = insetCache.get(gc);
+      long now = System.currentTimeMillis();
       if (data == null || now > data.second + ourInsetsTimeout) {
-        data = Pair.create(calcInsets(gc), now);
-        ourInsetsCache.put(gc, data);
+        data = new Pair<>(calcInsets(gc), now);
+        insetCache.put(gc, data);
       }
       return data.first;
     }
   }
 
-  private static Insets calcInsets(GraphicsConfiguration gc) {
+  private static @NotNull Insets calcInsets(GraphicsConfiguration gc) {
     return Toolkit.getDefaultToolkit().getScreenInsets(gc);
   }
 
@@ -198,7 +200,7 @@ public final class ScreenUtil {
    * @param device one of available devices
    * @return a visible area rectangle
    */
-  private static Rectangle getScreenRectangle(GraphicsDevice device) {
+  private static @NotNull Rectangle getScreenRectangle(@NotNull GraphicsDevice device) {
     return getScreenRectangle(device.getDefaultConfiguration());
   }
 
@@ -208,7 +210,7 @@ public final class ScreenUtil {
    * @param configuration one of available configurations
    * @return a visible area rectangle
    */
-  public static Rectangle getScreenRectangle(GraphicsConfiguration configuration) {
+  public static @NotNull Rectangle getScreenRectangle(@NotNull GraphicsConfiguration configuration) {
     return applyInsets(configuration.getBounds(), getScreenInsets(configuration));
   }
 
@@ -219,7 +221,7 @@ public final class ScreenUtil {
    * @param y the Y coordinate of the specified point
    * @return a visible area rectangle
    */
-  public static Rectangle getScreenRectangle(int x, int y) {
+  public static @NotNull Rectangle getScreenRectangle(int x, int y) {
     if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance()) {
       return new Rectangle(x, y, 0, 0);
     }
@@ -288,13 +290,50 @@ public final class ScreenUtil {
    * @param y the Y coordinate of the specified point
    * @return a square of the distance
    */
-  private static int distance(Rectangle bounds, int x, int y) {
+  private static int distance(@NotNull Rectangle bounds, int x, int y) {
     x -= normalize(x, bounds.x, bounds.x + bounds.width);
     y -= normalize(y, bounds.y, bounds.y + bounds.height);
     return x * x + y * y;
   }
 
-  public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
+  public static void moveAndScale(@NotNull Point location, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    location.setLocation(toScreen.x + (location.x - fromScreen.x) * kw, toScreen.y + (location.y - fromScreen.y) * kh);
+  }
+
+  public static void moveAndScale(@NotNull Dimension size, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    size.setSize(size.width * kw, size.height * kh);
+  }
+
+  public static void moveAndScale(@NotNull Rectangle bounds, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    bounds.setRect(
+      toScreen.x + (bounds.x - fromScreen.x) * kw,
+      toScreen.y + (bounds.y - fromScreen.y) * kh,
+      bounds.width * kw,
+      bounds.height * kh
+    );
+  }
+
+  private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    if (fromScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);
+    }
+    if (toScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move to an empty screen: " + toScreen);
+    }
+  }
+
+  public static void moveRectangleToFitTheScreen(@NotNull Rectangle aRectangle) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
     Rectangle screen = getScreenRectangle(screenX, screenY);
@@ -302,11 +341,11 @@ public final class ScreenUtil {
     moveToFit(aRectangle, screen, null);
   }
 
-  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding) {
+  public static void moveToFit(final @NotNull Rectangle rectangle, final @NotNull Rectangle container, @Nullable Insets padding) {
     moveToFit(rectangle, container, padding, false);
   }
 
-  public static void moveToFit(final Rectangle rectangle, final Rectangle container, @Nullable Insets padding, boolean crop) {
+  public static void moveToFit(final @NotNull Rectangle rectangle, final @NotNull Rectangle container, @Nullable Insets padding, boolean crop) {
     Rectangle move = new Rectangle(rectangle);
     JBInsets.addTo(move, padding);
 
@@ -342,7 +381,9 @@ public final class ScreenUtil {
    * @param bottom       preferred offset between {@code rectangle.y} and popup below
    * @param rightAligned shows that the rectangle should be moved to the left
    */
-  public static void fitToScreenVertical(Rectangle rectangle, int top, int bottom, boolean rightAligned) {
+  public static void fitToScreenVertical(@NotNull Rectangle rectangle, int top, int bottom, boolean rightAligned) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     Rectangle screen = getScreenRectangle(rectangle.x, rectangle.y);
     if (rectangle.width > screen.width) {
       rectangle.width = screen.width;
@@ -377,7 +418,9 @@ public final class ScreenUtil {
     }
   }
 
-  public static void fitToScreen(Rectangle r) {
+  public static void fitToScreen(@NotNull Rectangle r) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     Rectangle screen = getScreenRectangle(r.x, r.y);
 
     int xOverdraft = r.x + r.width - screen.x - screen.width;
@@ -401,7 +444,7 @@ public final class ScreenUtil {
     }
   }
 
-  public static Point findNearestPointOnBorder(Rectangle rect, Point p) {
+  public static @NotNull Point findNearestPointOnBorder(@NotNull Rectangle rect, @NotNull Point p) {
     final int x0 = rect.x;
     final int y0 = rect.y;
     final int x1 = x0 + rect.width;
@@ -419,7 +462,9 @@ public final class ScreenUtil {
     return best;
   }
 
-  public static void cropRectangleToFitTheScreen(Rectangle rect) {
+  public static void cropRectangleToFitTheScreen(@NotNull Rectangle rect) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // No abs coordinates in Wayland
+
     int screenX = rect.x;
     int screenY = rect.y;
     final Rectangle screen = getScreenRectangle(screenX, screenY);
@@ -448,7 +493,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final @Nullable Point prevLocation, @NotNull Point location, final @Nullable Rectangle bounds) {
     if (bounds == null) {
       return false;
     }
@@ -503,7 +548,11 @@ public final class ScreenUtil {
     return false;
   }
 
-  public static boolean intersectsVisibleScreen (Window window) {
-    return window.getGraphicsConfiguration().getBounds().intersects(window.getBounds());
+  public static boolean intersectsVisibleScreen(@NotNull Window window) {
+    if (StartupUiUtil.isWaylandToolkit()) return true; // No window coordinates in Wayland
+    GraphicsConfiguration configuration = window.getGraphicsConfiguration();
+    // keep the ID in sync with com.intellij.platform.impl.toolkit.HeadlessDummyGraphicsEnvironment, can't be referenced here
+    if (Objects.equals(configuration.getDevice().getIDstring(), "DummyHeadless")) return true;
+    return configuration.getBounds().intersects(window.getBounds());
   }
 }

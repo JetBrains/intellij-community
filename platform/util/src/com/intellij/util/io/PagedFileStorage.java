@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.Forceable;
@@ -6,16 +6,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
 import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.storage.AbstractStorage;
-import com.intellij.util.lang.CompoundRuntimeException;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -24,23 +23,20 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.List;
 
 import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
-public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
+@Internal
+public final class PagedFileStorage implements Forceable/*, PagedStorage*/, Closeable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
 
   private static final int DEFAULT_PAGE_SIZE = PageCacheUtils.DEFAULT_PAGE_SIZE;
 
-  @NotNull
-  private static final ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
+  private static final @NotNull ThreadLocal<byte[]> ourTypedIOBuffer = ThreadLocal.withInitial(() -> new byte[8]);
 
-  @NotNull
-  public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
+  public static final @NotNull ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
 
-  @NotNull
-  private final StorageLockContext myStorageLockContext;
+  private final @NotNull StorageLockContext myStorageLockContext;
   private final boolean myNativeBytesOrder;
   /**
    * Storage id(key), as returned by {@link FilePageCache#registerPagedFileStorage(PagedFileStorage)}, or -1 when closed
@@ -51,11 +47,9 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
    * but the main idea is that buffers in that cache are 'locked', i.e. can't be reclaimed by {@link FilePageCache},
    * hence this is also a way to reduce 'page faults' on most recent buffers
    */
-  @NotNull
-  private final PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
+  private final @NotNull PagedFileStorageCache myLastAccessedBufferCache = new PagedFileStorageCache();
 
-  @NotNull
-  private final Path myFile;
+  private final @NotNull Path myFile;
   private final boolean myReadOnly;
   private final Object myInputStreamLock = new Object();
 
@@ -74,15 +68,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
     myReadOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
 
-    StorageLockContext context = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
-    if (context != null) {
-      if (storageLockContext != null && storageLockContext != context) {
-        throw new IllegalStateException("Context(" + storageLockContext + ") != THREAD_LOCAL_STORAGE_LOCK_CONTEXT(" + context + ")");
-      }
-      storageLockContext = context;
-    }
-
-    myStorageLockContext = storageLockContext != null ? storageLockContext : StorageLockContext.ourDefaultContext;
+    myStorageLockContext = lookupStorageContext(storageLockContext);
     myPageSize = Math.max(pageSize > 0 ? pageSize : DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.getBufferCache().registerPagedFileStorage(this);
@@ -333,20 +319,22 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
+  @Override
   public void close() throws IOException {
-    List<Exception> exceptions = new SmartList<>();
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> force()));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      unmapAll();
-      myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
-      myStorageIndex = -1;
-    }));
-    ContainerUtil.addIfNotNull(exceptions, ExceptionUtil.runAndCatch(() -> {
-      CHANNELS_CACHE.closeChannel(myFile);
-    }));
-    if (!exceptions.isEmpty()) {
-      throw new IOException(new CompoundRuntimeException(exceptions));
-    }
+    ExceptionUtil.runAllAndRethrowAllExceptions(
+      IOException.class,
+      () -> new IOException("Failed to close PagedFileStorage[" + getFile() + "]"),
+
+      this::force,
+      () -> {
+        unmapAll();
+        myStorageLockContext.getBufferCache().removeStorage(myStorageIndex);
+        myStorageIndex = -1;
+      },
+      () -> {
+        CHANNELS_CACHE.closeChannel(myFile);
+      }
+    );
   }
 
   private void unmapAll() {
@@ -413,7 +401,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  public final long length() {
+  public long length() {
     long size = mySize;
     if (size == -1) {
       if (Files.exists(myFile)) {
@@ -449,8 +437,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     }
   }
 
-  @NotNull
-  private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
+  private @NotNull DirectBufferWrapper doGetBufferWrapper(long page, boolean modify, boolean checkAccess) throws IOException {
     if (myReadOnly && modify) {
       throw new IOException("Read-only storage can't be modified");
     }
@@ -495,6 +482,7 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
     return ourTypedIOBuffer.get();
   }
 
+
   @Override
   public void force() throws IOException {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
@@ -520,5 +508,21 @@ public class PagedFileStorage implements Forceable/*, PagedStorage*/ {
   @Override
   public String toString() {
     return "PagedFileStorage[" + myFile + "]";
+  }
+
+  public static @NotNull StorageLockContext lookupStorageContext(@Nullable StorageLockContext storageLockContext) {
+    StorageLockContext threadLocalContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
+    if (threadLocalContext != null) {
+      if (storageLockContext != null && storageLockContext != threadLocalContext) {
+        throw new IllegalStateException("Context(" + storageLockContext + ") != THREAD_LOCAL_STORAGE_LOCK_CONTEXT(" + threadLocalContext + ")");
+      }
+      return threadLocalContext;
+    }
+    else if (storageLockContext != null) {
+      return storageLockContext;
+    }
+    else {
+      return StorageLockContext.DEFAULT_CONTEXT;
+    }
   }
 }

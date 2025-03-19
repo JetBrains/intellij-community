@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 
-public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
+public final class PyInheritorRenameFactory implements AutomaticRenamerFactory {
   @Override
   public boolean isApplicable(@NotNull PsiElement element) {
     return element instanceof PyClass;
@@ -35,9 +35,8 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
     PyCodeInsightSettings.getInstance().RENAME_CLASS_INHERITORS = enabled;
   }
 
-  @NotNull
   @Override
-  public AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
+  public @NotNull AutomaticRenamer createRenamer(PsiElement element, String newName, Collection<UsageInfo> usages) {
     return new PyInheritorRenamer((PyClass) element, newName);
   }
 

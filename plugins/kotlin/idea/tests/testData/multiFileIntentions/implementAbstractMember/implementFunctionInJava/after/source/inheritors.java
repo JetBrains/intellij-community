@@ -12,7 +12,7 @@ class Y implements T<String> {
 
     @Override
     public String foo(String s) {
-        return null;
+        return "";
     }
 }
 

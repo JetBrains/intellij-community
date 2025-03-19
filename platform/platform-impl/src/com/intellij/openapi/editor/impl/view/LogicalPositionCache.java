@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ import java.util.Collections;
  * Caches information allowing faster offset<->logicalPosition conversions even for long lines.
  * Requests for conversion can be made from under read action, document changes and cache invalidation should be done in EDT.
  */
-class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
+@ApiStatus.Internal
+public final class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, Dumpable {
   private final Document myDocument;
   private final EditorView myView;
   private ArrayList<LineData> myLines = new ArrayList<>();
@@ -30,10 +32,11 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   // will be visible for reads (happening under read action)
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myUpdateInProgress;
+  private long myDocumentStamp = Long.MIN_VALUE;
 
   LogicalPositionCache(EditorView view) {
     myView = view;
-    myDocument = view.getEditor().getDocument();
+    myDocument = view.getDocument();
     myDocument.addDocumentListener(this, this);
   }
 
@@ -44,12 +47,14 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent event) {
+    assert !myView.isAd();
     myUpdateInProgress = true;
     myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
   }
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {
+    assert !myView.isAd();
     try {
       int startLine = myDocument.getLineNumber(event.getOffset());
       int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
@@ -78,8 +83,8 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
-  synchronized LogicalPosition offsetToLogicalPosition(int offset) {
+  synchronized @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
+    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     int textLength = myDocument.getTextLength();
     if (offset <= 0 || textLength == 0) {
@@ -92,6 +97,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   }
 
   synchronized int offsetToLogicalColumn(int line, int intraLineOffset) {
+    resetIfOutdated();
     if (myUpdateInProgress) throw new IllegalStateException();
     if (line < 0 || line >= myDocument.getLineCount()) return 0;
     LineData lineData = getLineInfo(line);
@@ -99,6 +105,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
   }
 
   synchronized int logicalPositionToOffset(@NotNull LogicalPosition pos) {
+    resetIfOutdated();
     int line = pos.line;
     int column = pos.column;
     if (line >= myDocument.getLineCount()) return myDocument.getTextLength();
@@ -173,8 +180,7 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
-  private LineData getLineInfo(int line) {
+  private @NotNull LineData getLineInfo(int line) {
     checkDisposed();
     LineData result = myLines.get(line);
     if (result == null) {
@@ -207,15 +213,21 @@ class LogicalPositionCache implements PrioritizedDocumentListener, Disposable, D
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     try {
       validateState();
       return "valid";
     }
     catch (Exception e) {
       return "invalid (" + e.getMessage() + ")";
+    }
+  }
+
+  private void resetIfOutdated() {
+    if (myView.isAd() && myDocumentStamp != myDocument.getModificationStamp()) {
+      reset(true);
+      myDocumentStamp = myDocument.getModificationStamp();
     }
   }
 

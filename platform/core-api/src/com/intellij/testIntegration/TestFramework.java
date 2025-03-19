@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -6,6 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -19,7 +20,7 @@ import javax.swing.*;
  * 
  * Also is used in multiple inspections, intentions, etc. when test framework should be detected. 
  */
-public interface TestFramework {
+public interface TestFramework extends PossiblyDumbAware {
   ExtensionPointName<TestFramework> EXTENSION_NAME = ExtensionPointName.create("com.intellij.testFramework");
 
   /**
@@ -69,8 +70,7 @@ public interface TestFramework {
   @NotNull
   FileTemplateDescriptor getTestMethodFileTemplateDescriptor();
 
-  @Nullable
-  default PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
+  default @Nullable PsiElement findBeforeClassMethod(@NotNull PsiElement clazz) {
     return null;
   }
 
@@ -78,8 +78,7 @@ public interface TestFramework {
     return null;
   }
 
-  @Nullable
-  default PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
+  default @Nullable PsiElement findAfterClassMethod(@NotNull PsiElement clazz) {
     return null;
   }
 

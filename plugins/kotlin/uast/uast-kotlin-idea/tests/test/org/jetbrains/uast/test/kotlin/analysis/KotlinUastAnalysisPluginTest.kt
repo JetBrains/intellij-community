@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.kotlin.analysis
 
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UField
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UExpressionFact
 import org.jetbrains.uast.analysis.UNullability
@@ -16,6 +18,10 @@ import kotlin.test.assertTrue as kAssertTrue
 import kotlin.test.fail as kFail
 
 class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     fun `test dataflow not null`() = doTest("""
         fun dataFlowNotNull(b: Boolean) {
             val a = if (b) null else "hello"
@@ -73,8 +79,8 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
 
     fun `test nullability of parameter with dfa`() = doTest("""
         fun nullableParamWithDfa(p: Int?) {
-            if (d != null) {
-                println(/*NOT_NULL*/d)
+            if (p != null) {
+                println(/*NOT_NULL*/p)
             }
         }
     """.trimIndent())
@@ -92,7 +98,7 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
     fun `test nullability with platform type and if`() = doTest("""
         fun platformWithIf(): String = run {
             val a = java.lang.StringBuilder().append("a").toString()
-            /*NOT_NULL*/ if (a != null) {
+            if (a != null) {
                 return@run /*NOT_NULL*/ a
             } else {
                 "a"
@@ -159,6 +165,25 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     """.trimIndent())
 
+    fun `test nullable properties with primitive types`() = doTest("""
+        data class SomeClass(val a:/*NULLABLE*/String?, var b:/*NULLABLE*/Int? = null, val c:/*NULLABLE*/Int? = 1)
+    """.trimIndent())
+
+    fun `test non nullable properties with primitive types`() = doTest("""
+        data class SomeClass(val a:/*NOT_NULL*/String, var b:/*NOT_NULL*/Int = 1)
+    """.trimIndent())
+
+    fun `test complex properties`() = doTest("""
+        data class SomeClass(
+            val a:/*NOT_NULL*/String, 
+            var b:/*NULLABLE*/Int? = null,
+            val c:/*NULLABLE*/D?,
+            val d:/*NOT_NULL*/D
+        )
+        
+        class D
+    """.trimIndent())
+
     private fun doTest(
         @Language("kotlin") source: String
     ) {
@@ -168,6 +193,11 @@ class KotlinUastAnalysisPluginTest : KotlinLightCodeInsightFixtureTestCase() {
         val file = myFixture.configureByText("file.kt", source).toUElement() ?: kFail("Cannot create UFile")
         var visitAny = false
         file.accept(object : AbstractUastVisitor() {
+            override fun visitField(node: UField): Boolean {
+                val typeReference = node.typeReference ?: return super.visitField(node)
+                return visitExpression(typeReference)
+            }
+
             override fun visitExpression(node: UExpression): Boolean {
                 val uNullability = node.comments.firstOrNull()?.text
                     ?.removePrefix("/*")

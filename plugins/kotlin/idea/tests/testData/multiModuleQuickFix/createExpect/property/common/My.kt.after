@@ -1,4 +1,5 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
+
 
 expect class My {
     var s: String

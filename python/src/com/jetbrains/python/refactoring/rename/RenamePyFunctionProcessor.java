@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 
-public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
+public final class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PyFunction;

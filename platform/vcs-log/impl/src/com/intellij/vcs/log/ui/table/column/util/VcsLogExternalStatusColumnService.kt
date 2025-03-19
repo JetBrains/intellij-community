@@ -1,14 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column.util
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.table.JBTable
-import com.intellij.util.childScope
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.MiniDetailsGetter
 import com.intellij.vcs.log.data.VcsCommitExternalStatus
@@ -16,9 +14,11 @@ import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
+import com.intellij.vcs.log.ui.table.VcsLogTableIndex
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import com.intellij.vcs.log.ui.table.column.isVisible
+import com.intellij.vcs.log.ui.table.getCommitId
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.onClosed
@@ -30,6 +30,7 @@ import javax.swing.event.TableModelEvent
 import javax.swing.event.TableModelListener
 
 abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : Disposable {
+  protected abstract val scope: CoroutineScope
 
   private val providers = mutableMapOf<GraphTableModel, CachingVcsCommitsDataLoader<T>>()
 
@@ -38,7 +39,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
 
     val loader = getDataLoader(table.logData.project)
     val provider = CachingVcsCommitsDataLoader(loader)
-    loadDataForVisibleRows(table, column, provider)
+    loadDataForVisibleRows(table, column, provider, scope)
 
     Disposer.register(this, provider)
 
@@ -49,7 +50,7 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
     })
   }
 
-  fun getStatus(model: GraphTableModel, row: Int): T? = model.getCommitId(row)?.let { providers[model]?.getData(it) }
+  fun getStatus(model: GraphTableModel, row: VcsLogTableIndex): T? = model.getCommitId(row)?.let { providers[model]?.getData(it) }
 
   abstract fun getDataLoader(project: Project): VcsCommitsDataLoader<T>
 
@@ -61,15 +62,11 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
     @OptIn(FlowPreview::class)
     private fun <T : VcsCommitExternalStatus> loadDataForVisibleRows(table: VcsLogGraphTable,
                                                                      column: VcsLogCustomColumn<T>,
-                                                                     dataProvider: VcsCommitsDataLoader<T>) {
+                                                                     dataProvider: VcsCommitsDataLoader<T>,
+                                                                     coroutineScope: CoroutineScope) {
       // Dispatchers.EDT is not immediate -
       // later invocation is important here to ensure [VcsLogGraphTable] is already wrapped with scroll pane
-      val scope = ApplicationManager.getApplication().coroutineScope.childScope(Dispatchers.EDT)
-      Disposer.register(dataProvider) {
-        scope.cancel()
-      }
-
-      scope.launch(CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
+      val job = coroutineScope.launch(Dispatchers.EDT + CoroutineName("Vcs log table ${table.id} rows visibility tracker")) {
         combine(
           table.columnVisibilityFlow(column),
           combine(table.modelChangedFlow(),
@@ -85,6 +82,9 @@ abstract class VcsLogExternalStatusColumnService<T : VcsCommitExternalStatus> : 
             table.onColumnDataChanged(column)
           }
         }
+      }
+      Disposer.register(dataProvider) {
+        job.cancel()
       }
     }
 

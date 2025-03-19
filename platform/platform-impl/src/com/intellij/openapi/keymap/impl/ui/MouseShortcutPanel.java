@@ -5,12 +5,14 @@ import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+@ApiStatus.Internal
 public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
   private static final JBColor BACKGROUND = JBColor.namedColor("Panel.mouseShortcutBackground", new JBColor(0xF5F5F5, 0x4B4F52));
 

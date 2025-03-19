@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
+import com.intellij.jarRepository.JarHttpDownloaderJps;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,19 +18,19 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,25 +66,74 @@ public final class RepositoryUtils {
   }
 
 
+  /**
+   * Returns the common storage root directory path (system-dependent) from a list of URLs.
+   * <p>
+   * If roots (non-filename part) of URLs are different, returns null.
+   * On empty list also returns null.
+   * <p>
+   * Used by JarRepositoryManager to determine whether it needs to copy resolved files somewhere or now
+   * (it's two modes of JPS repository libraries)
+   * <p>
+   */
   public static String getStorageRoot(String[] urls) {
     if (urls.length == 0) {
       return null;
     }
-    final String localRepositoryPath = FileUtil.toSystemIndependentName(JarRepositoryManager.getLocalRepositoryPath().getAbsolutePath());
-    List<String> roots = JBIterable.of(urls).transform(urlWithPrefix -> {
-      String url = StringUtil.trimStart(urlWithPrefix, JarFileSystem.PROTOCOL_PREFIX);
-      return url.startsWith(localRepositoryPath) ? null : FileUtil.toSystemDependentName(PathUtil.getParentPath(url));
-    }).toList();
-    final Map<String, Integer> counts = new HashMap<>();
-    for (String root : roots) {
-      final Integer count = counts.get(root);
-      counts.put(root, count != null ? count + 1 : 1);
+
+    String firstPath = getOnDiskParentPath(urls[0]);
+    for (String root : urls) {
+      if (!FileUtil.pathsEqual(firstPath, getOnDiskParentPath(root))) {
+        return null;
+      }
     }
-    return Collections.max(counts.entrySet(), Map.Entry.comparingByValue()).getKey();
+
+    if (urls.length == 1) {
+      // IJPL-175157 Only one file in the library, so we can't decide on storage root without looking into cache location
+      // It's worse with symlinks where we may have a non-canonical path in `firstPath`
+      // and canonical path in JarRepositoryManager.getLocalRepositoryPath
+      var localRepositoryPath = JarRepositoryManager.getLocalRepositoryPath();
+
+      // happy case, no symlinks, so canonical localRepositoryPath is the same is firstPath
+      if (FileUtil.startsWith(firstPath, localRepositoryPath.getPath())) {
+        return null;
+      }
+
+      // non-happy case, symlinks, let's try to get as much canonical as we can.
+      // covered by tests
+      try {
+        var canonicalFirstPath = new File(firstPath).getCanonicalPath();
+        var canonicalLocalRepositoryPath = localRepositoryPath.getCanonicalPath();
+        if (FileUtil.startsWith(canonicalFirstPath, canonicalLocalRepositoryPath)) {
+          return null;
+        }
+      }
+      catch (IOException ignored) {
+        // IOError, can't decide
+      }
+    }
+
+    return firstPath;
   }
 
-  public static Promise<List<OrderRoot>> loadDependenciesToLibrary(@NotNull final Project project,
-                                                                   @NotNull final LibraryEx library,
+  private static String getOnDiskParentPath(String url) {
+    String trimmedStart;
+
+    if (url.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
+      trimmedStart = url.substring(JarFileSystem.PROTOCOL_PREFIX.length());
+    }
+    else if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+      trimmedStart = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
+    }
+    else {
+      trimmedStart = url;
+    }
+
+    return FileUtil.toSystemDependentName(PathUtil.getParentPath(trimmedStart));
+  }
+
+  public static Promise<List<OrderRoot>> loadDependenciesToLibrary(final @NotNull Project project,
+                                                                   final @NotNull LibraryEx library,
                                                                    boolean downloadSources,
                                                                    boolean downloadJavaDocs,
                                                                    @Nullable String copyTo) {
@@ -127,6 +177,7 @@ public final class RepositoryUtils {
       .submit(NonUrgentExecutor.getInstance())
       .thenAsync(rootsEqual -> {
         if (rootsEqual) {
+          LOG.debug("Finished setup library root for: " + library.getName());
           // Nothing to update
           return resolvedPromise();
         }
@@ -167,14 +218,16 @@ public final class RepositoryUtils {
               LOG.warn("Unable to update project model for library '" + library.getName() + "'", t);
               result.setError(t);
             }
+            finally {
+              LOG.debug("Finished setup library root for: " + library.getName());
+            }
           });
 
         return result;
       });
   }
 
-  @NotNull
-  private static Boolean libraryRootsEqual(@NotNull LibraryEx library, String[] annotationUrls, String[] excludedRootUrls, List<OrderRoot> roots) {
+  private static @NotNull Boolean libraryRootsEqual(@NotNull LibraryEx library, String[] annotationUrls, String[] excludedRootUrls, List<OrderRoot> roots) {
     List<String> allRootUrls = new ArrayList<>();
 
     Set<Pair<OrderRootType, String>> actualRoots = new HashSet<>();
@@ -210,12 +263,39 @@ public final class RepositoryUtils {
     return true;
   }
 
-  public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
-    return loadDependenciesToLibrary(project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+  public static Promise<?> reloadDependencies(final @NotNull Project project, final @NotNull LibraryEx library) {
+    if (JarHttpDownloaderJps.enabled()) {
+      Promise<?> promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(library);
+
+      // null means this library should be handled by standard resolver
+      if (promise != null) {
+        // callers of this function typically do not log, so do it for them
+        promise.onError(error -> {
+          LOG.warn("Failed to download repository library '" + library.getName() + "' with JarHttpDownloader", error);
+        });
+
+        if (LOG.isDebugEnabled()) {
+          promise.onSuccess(result -> {
+            LOG.debug("Downloaded repository library '" + library.getName() + "' with JarHttpDownloader");
+          });
+        }
+
+        return promise;
+      }
+    }
+
+    Promise<List<OrderRoot>> mavenResolverPromise = loadDependenciesToLibrary(
+      project, library, libraryHasSources(library), libraryHasJavaDocs(library), getStorageRoot(library));
+    // callers of this function typically do not log, so do it for them
+    mavenResolverPromise.onError(error -> {
+      LOG.warn("Failed to download repository library '" + library.getName() + "' with maven resolver", error);
+    });
+
+    return mavenResolverPromise;
   }
 
-  public static Promise<List<OrderRoot>> deleteAndReloadDependencies(@NotNull final Project project,
-                                                                     @NotNull final LibraryEx library) throws IOException {
+  public static Promise<?> deleteAndReloadDependencies(final @NotNull Project project,
+                                                       final @NotNull LibraryEx library) throws IOException {
     LOG.debug("start deleting files in library " + library.getName());
     var filesToDelete = new ArrayList<VirtualFile>();
     for (var rootType : OrderRootType.getAllTypes()) {

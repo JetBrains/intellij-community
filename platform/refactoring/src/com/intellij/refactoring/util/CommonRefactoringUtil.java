@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.ide.ui.IdeUiService;
@@ -72,7 +72,7 @@ public final class CommonRefactoringUtil {
                                    @NotNull @DialogMessage String message,
                                    @NotNull @DialogTitle String title,
                                    @Nullable String helpId) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RefactoringErrorHintException(message);
     }
 
@@ -230,7 +230,7 @@ public final class CommonRefactoringUtil {
     return seenNonWritablePsiFilesWithoutVirtualFile;
   }
 
-  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<? super VirtualFile> list) {
+  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, final @NotNull Collection<? super VirtualFile> list) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
 
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
@@ -245,14 +245,6 @@ public final class CommonRefactoringUtil {
     });
   }
 
-  /**
-   * @deprecated use {@link StringUtil#capitalize(String)}
-   */
-  @Deprecated(forRemoval = true)
-  public static String capitalize(@NotNull String text) {
-    return StringUtil.capitalize(text);
-  }
-
   public static boolean isAncestor(@NotNull PsiElement resolved, @NotNull Collection<? extends PsiElement> scopes) {
     for (final PsiElement scope : scopes) {
       if (PsiTreeUtil.isAncestor(scope, resolved, false)) return true;
@@ -260,7 +252,7 @@ public final class CommonRefactoringUtil {
     return false;
   }
 
-  private static int fixCaretOffset(@NotNull final Editor editor) {
+  private static int fixCaretOffset(final @NotNull Editor editor) {
     final int caret = editor.getCaretModel().getOffset();
     if (editor.getSelectionModel().hasSelection()) {
       if (caret == editor.getSelectionModel().getSelectionEnd()) {
@@ -278,7 +270,7 @@ public final class CommonRefactoringUtil {
    * @param editor  the editor from which carets and selections are used
    * @param file  the file in the editor
    * @param stopAt  when traversing up the psi tree, stop when reaching an element of this type
-   * @param types  the classes of the elements that should be found.
+   * @param accept  predicate to test the found elements match some condition.
    * @return a list of found elements.
    */
   public static <T extends PsiElement> List<T> findElementsFromCaretsAndSelections(
@@ -299,7 +291,7 @@ public final class CommonRefactoringUtil {
       PsiTreeUtil.processElements(element, e -> {
         if (accept.test(e)) {
           TextRange range = e.getTextRange();
-          if (selectionRange.intersects(range) || selectionRange.intersects(range)) {
+          if (selectionRange.intersects(range)) {
             elements.add(e);
           }
         }
@@ -325,7 +317,7 @@ public final class CommonRefactoringUtil {
     return (List<T>)elements;
   }
 
-  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
+  public static PsiElement getElementAtCaret(final @NotNull Editor editor, final PsiFile file) {
     final int offset = fixCaretOffset(editor);
     PsiElement element = file.findElementAt(offset);
     if (element == null && offset == file.getTextLength()) {

@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.python.terminal">
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+  </dependencies>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <localTerminalCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij"/>
+
+
+</idea-plugin>

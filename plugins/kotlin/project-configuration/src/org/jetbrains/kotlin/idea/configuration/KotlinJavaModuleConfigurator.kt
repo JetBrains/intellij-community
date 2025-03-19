@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescript
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.base.util.sdk
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
@@ -88,7 +89,9 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
                         val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false, commitModel = true)
                         val facetSettings = facet.configuration.settings
                         facetSettings.initializeIfNeeded(module, null, JvmPlatforms.jvm8)
-                        (facetSettings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = "1.8"
+                        facetSettings.updateCompilerArguments {
+                            (this as? K2JVMCompilerArguments)?.jvmTarget = "1.8"
+                        }
                     } finally {
                         modelsProvider.dispose()
                     }
@@ -98,15 +101,24 @@ open class KotlinJavaModuleConfigurator : KotlinWithLibraryConfigurator<Reposito
     }
 
     override fun configureModule(module: Module, collector: NotificationMessageCollector, writeActions: MutableList<() -> Unit>?) {
-        super.configureModule(module, collector, writeActions)
+        configureModuleAndGetResult(module, collector, writeActions)
+    }
 
-        val callable = addStdlibToJavaModuleInfoLazy(module, collector) ?: return
+    override fun configureModuleAndGetResult(
+        module: Module,
+        collector: NotificationMessageCollector,
+        writeActions: MutableList<() -> Unit>?
+    ): Boolean {
+        val configured = super.configureModuleAndGetResult(module, collector, writeActions)
+
+        val callable = addStdlibToJavaModuleInfoLazy(module, collector) ?: return configured
 
         if (writeActions != null) {
             writeActions.add(callable)
         } else {
             callable()
         }
+        return configured
     }
 
     companion object {

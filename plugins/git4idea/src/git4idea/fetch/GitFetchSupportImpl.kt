@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
 import com.intellij.dvcs.MultiRootMessage
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.externalProcessAuthHelper.AuthenticationGate
 import com.intellij.externalProcessAuthHelper.RestrictingAuthenticationGate
 import com.intellij.notification.NotificationType
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.util.concurrency.AppExecutorUtil
 import git4idea.GitNotificationIdsHolder
@@ -28,6 +29,7 @@ import git4idea.GitUtil.mention
 import git4idea.commands.Git
 import git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS
 import git4idea.commands.GitImpl
+import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitConfigUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
@@ -40,6 +42,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
+import kotlin.math.min
 
 private val LOG = logger<GitFetchSupportImpl>()
 private val PRUNE_PATTERN = Pattern.compile("\\s*x\\s*\\[deleted\\].*->\\s*(\\S*)") // x [deleted]  (none) -> origin/branch
@@ -94,6 +97,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     return fetch(listOf(RemoteRefCoordinates(repository, remote)))
   }
 
+  override fun fetchUnshallow(repository: GitRepository, remote: GitRemote): GitFetchResult {
+    return fetch(listOf(RemoteRefCoordinates(repository, remote, unshallow = true)))
+  }
+
   override fun fetch(repository: GitRepository, remote: GitRemote, refspec: @NonNls String): GitFetchResult {
     return fetch(listOf(RemoteRefCoordinates(repository, remote, refspec)))
   }
@@ -104,7 +111,11 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
 
   private fun fetch(arguments: List<RemoteRefCoordinates>): GitFetchResult {
     try {
-      fetchRequestCounter.incrementAndGet()
+      val counterAfterIncrement = fetchRequestCounter.incrementAndGet()
+      if (counterAfterIncrement == 1) {
+        project.messageBus.syncPublisher(GitFetchInProgressListener.TOPIC).fetchStarted()
+      }
+
       return withIndicator {
         val activity = VcsStatisticsCollector.FETCH_ACTIVITY.started(project)
 
@@ -127,7 +138,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       }
     }
     finally {
-      fetchRequestCounter.decrementAndGet()
+      val counterAfterDecrement = fetchRequestCounter.decrementAndGet()
+      if (counterAfterDecrement == 0) {
+        project.messageBus.syncPublisher(GitFetchInProgressListener.TOPIC).fetchFinished()
+      }
     }
   }
 
@@ -149,7 +163,10 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("GitFetch pool", maxThreads)
     val commonIndicator = progressManager.progressIndicator ?: EmptyProgressIndicator()
     val authenticationGate = RestrictingAuthenticationGate()
-    for ((repository, remote, refspec) in remotes) {
+    for (fetchTarget in remotes) {
+      val repository = fetchTarget.repository
+      val remote = fetchTarget.remote
+
       LOG.debug("Fetching $remote in $repository")
       val future: Future<SingleRemoteResult> = executor.submit<SingleRemoteResult> {
         commonIndicator.checkCanceled()
@@ -158,7 +175,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         ProgressManager.getInstance().executeProcessUnderProgress({
                                                                     commonIndicator.checkCanceled()
                                                                     result = fetchQueue.executeForRemote(repository, remote) {
-                                                                      doFetch(repository, remote, refspec, authenticationGate)
+                                                                      doFetch(fetchTarget, authenticationGate)
                                                                     }
                                                                   }, commonIndicator)
         result
@@ -174,19 +191,22 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       config > 0 -> config
       config == -1 -> Runtime.getRuntime().availableProcessors()
       config == -2 -> numberOfRemotes
-      config == -3 -> Math.min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
+      config == -3 -> min(numberOfRemotes, Runtime.getRuntime().availableProcessors() * 2)
       else -> 1
     }
 
-    if (isStoreCredentialsHelperUsed(repositories)) {
+    val isStoreCredentialsHelperUsed = try {
+      repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
+    }
+    catch (e: VcsException) {
+      LOG.warn(e)
+      return 1
+    }
+    if (isStoreCredentialsHelperUsed) {
       return 1
     }
 
-    return Math.min(maxThreads, MAX_SSH_CONNECTIONS)
-  }
-
-  private fun isStoreCredentialsHelperUsed(repositories: Collection<GitRepository>): Boolean {
-    return repositories.any { GitConfigUtil.getValue(project, it.root, "credential.helper").equals("store", ignoreCase = true) }
+    return min(maxThreads, MAX_SSH_CONNECTIONS)
   }
 
   private fun waitForFetchTasks(tasks: List<FetchTask>): List<SingleRemoteResult> {
@@ -219,15 +239,29 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     }
     finally {
       indicator?.text = prevText
+      indicator?.text2 = null
     }
   }
 
-  private fun doFetch(repository: GitRepository, remote: GitRemote, refspec: String?, authenticationGate: AuthenticationGate? = null)
-    : SingleRemoteResult {
+  private fun doFetch(fetchTarget: RemoteRefCoordinates, authenticationGate: AuthenticationGate?): SingleRemoteResult {
+    val indicator = progressManager.progressIndicator
+    val progressListener = GitLineHandlerListener { line, outputType ->
+      if (indicator != null && outputType == ProcessOutputTypes.STDERR) {
+        // TODO: support 'GitStandardProgressAnalyzer' for multiple remotes
+        indicator.text2 = line
+      }
+    }
 
     val recurseSubmodules = "--recurse-submodules=no"
-    val params = if (refspec == null) arrayOf(recurseSubmodules) else arrayOf(refspec, recurseSubmodules)
-    val result = git.fetch(repository, remote, emptyList(), authenticationGate, *params)
+    val params = buildList {
+      if (fetchTarget.refspec != null) add(fetchTarget.refspec)
+      add(recurseSubmodules)
+      if (fetchTarget.unshallow) add("--unshallow")
+    }.toTypedArray()
+
+    val repository = fetchTarget.repository
+    val remote = fetchTarget.remote
+    val result = git.fetch(fetchTarget.repository, remote, listOf(progressListener), authenticationGate, *params)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
     if (result.success()) {
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote)
@@ -242,7 +276,12 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     return if (matcher.matches()) matcher.group(1) else null
   }
 
-  private data class RemoteRefCoordinates(val repository: GitRepository, val remote: GitRemote, val refspec: String? = null)
+  private data class RemoteRefCoordinates(
+    val repository: GitRepository,
+    val remote: GitRemote,
+    val refspec: String? = null,
+    val unshallow: Boolean = false,
+  )
 
   private class FetchTask(val repository: GitRepository, val remote: GitRemote, val future: Future<SingleRemoteResult>)
 
@@ -280,9 +319,11 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     fun success() = error == null
   }
 
-  private class FetchResultImpl(val project: Project,
-                                val vcsNotifier: VcsNotifier,
-                                val results: Map<GitRepository, RepoResult>) : GitFetchResult {
+  private class FetchResultImpl(
+    val project: Project,
+    val vcsNotifier: VcsNotifier,
+    val results: Map<GitRepository, RepoResult>,
+  ) : GitFetchResult {
 
     private val isFailed = results.values.any { !it.totallySuccessful() }
 
@@ -295,15 +336,21 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       return !isFailed
     }
 
-    override fun showNotificationIfFailed(title: @Nls String): Boolean {
+    override fun showNotificationIfFailed(title: @NotificationTitle String): Boolean {
       if (isFailed) doShowNotification(title)
       return !isFailed
     }
 
-    private fun doShowNotification(failureTitle: @Nls String? = null) {
+    private fun doShowNotification(failureTitle: @NotificationTitle String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
+      val title = if (!isFailed) {
+        GitBundle.message("notification.title.fetch.success")
+      }
+      else {
+        failureTitle ?: GitBundle.message("notification.title.fetch.failure")
+      }
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification(message, type)
+      val notification = VcsNotifier.standardNotification().createNotification(title, message, type)
       notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }
@@ -327,14 +374,9 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       }
 
       val sb = HtmlBuilder()
-      if (!isFailed) {
-        sb.append(HtmlChunk.text(GitBundle.message("notification.title.fetch.success")).bold())
-      }
-      else {
+      if (isFailed && failed.size != roots.size && failed.keys.isNotEmpty()) {
         sb.append(HtmlChunk.text(failureTitle ?: GitBundle.message("notification.title.fetch.failure")).bold())
-        if (failed.size != roots.size) {
-          sb.append(mention(failed.keys))
-        }
+        sb.append(mention(failed.keys))
       }
       appendDetails(sb, errorMessage)
       appendDetails(sb, prunedRefs)
@@ -344,7 +386,8 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     private fun appendDetails(sb: HtmlBuilder, details: MultiRootMessage) {
       val text = details.asString()
       if (text.isNotEmpty()) {
-        sb.br().append(text)
+        if (!sb.isEmpty) sb.br()
+        sb.append(text)
       }
     }
   }

@@ -1,6 +1,6 @@
 <profile version="1.0">
   <option name="myName" value="Chained profile" />
-  <inspection_tool class="TodoComment" enabled="true" level="INFO" enabled_by_default="true">
+  <inspection_tool class="TodoComment" enabled="false" level="INFO" enabled_by_default="true">
     <scope name="file:Main.*" level="INFO" enabled="true" />
     <scope name="file:*.*" level="INFO" enabled="false" />
   </inspection_tool>

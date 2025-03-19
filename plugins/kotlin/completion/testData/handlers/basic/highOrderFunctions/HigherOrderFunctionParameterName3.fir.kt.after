@@ -1,0 +1,11 @@
+// FIR_COMPARISON
+
+fun foo() {
+    emptyMap<String, Int>()
+        .forEach { (key, value) -> <caret> }
+}
+
+// ELEMENT: "key"
+// ITEM_TEXT: "(key, value)"
+// TAIL_TEXT: " -> "
+// TYPE_TEXT: "(String, Int)"

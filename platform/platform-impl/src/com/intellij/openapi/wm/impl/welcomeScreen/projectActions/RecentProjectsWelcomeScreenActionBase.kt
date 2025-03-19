@@ -13,11 +13,17 @@ import com.intellij.ui.treeStructure.Tree
  * @author Konstantin Bulenkov
  */
 abstract class RecentProjectsWelcomeScreenActionBase : DumbAwareAction(), LightEditCompatible {
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   companion object {
-    internal val RECENT_PROJECT_SELECTED_ITEM_KEY = DataKey.create<RecentProjectTreeItem>("RECENT_PROJECT_SELECTED_ITEM")
-    internal val RECENT_PROJECT_TREE_KEY = DataKey.create<Tree>("RECENT_PROJECT_TREE")
+    internal val RECENT_PROJECT_SELECTED_ITEM_KEY: DataKey<RecentProjectTreeItem> = DataKey.create("RECENT_PROJECT_SELECTED_ITEM")
+    internal val RECENT_PROJECT_SELECTED_ITEMS_KEY: DataKey<List<RecentProjectTreeItem>> = DataKey.create("RECENT_PROJECT_SELECTED_ITEMS")
+    internal val RECENT_PROJECT_TREE_KEY: DataKey<Tree> = DataKey.create("RECENT_PROJECT_TREE")
+
+    internal fun getSelectedItems(event: AnActionEvent): List<RecentProjectTreeItem>? {
+      return event.getData(RECENT_PROJECT_SELECTED_ITEMS_KEY)?.takeIf { it.isNotEmpty() }
+             ?: getSelectedItem(event)?.let { listOf(it) }
+    }
 
     internal fun getSelectedItem(event: AnActionEvent): RecentProjectTreeItem? {
       return event.getData(RECENT_PROJECT_SELECTED_ITEM_KEY)

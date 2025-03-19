@@ -18,6 +18,11 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testBadarglist() {
     doTest();
   }
+
+  // PY-73886
+  public void testBadarglistMultiFile() {
+    doMultiFileTest();
+  }
   
   public void testKwargsMapToNothing() {
     doTest();
@@ -466,5 +471,10 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-49946
   public void testInitializingDataclassKwOnlyOnField() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
+  // PY-73102
+  public void testDeprecatedCall() {
+    doMultiFileTest("client.py");
   }
 }

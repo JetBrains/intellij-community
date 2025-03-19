@@ -19,16 +19,15 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
 import com.siyeh.ig.ui.ExternalizableStringSet
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
+@VisibleForTesting
 class UnstableApiUsageInspection : LocalInspectionTool() {
 
-  companion object {
+  private inline val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String get() = ApiStatus.ScheduledForRemoval::class.java.canonicalName
 
-    private val SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME: String = ApiStatus.ScheduledForRemoval::class.java.canonicalName
-
-    private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
-  }
+  private val knownAnnotationMessageProviders = mapOf(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME to ScheduledForRemovalMessageProvider())
 
   @JvmField
   val unstableApiAnnotations: List<String> =
@@ -52,7 +51,8 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
           knownAnnotationMessageProviders
         )
       )
-    } else {
+    }
+    else {
       PsiElementVisitor.EMPTY_VISITOR
     }
   }
@@ -60,7 +60,8 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
   override fun getOptionsPane(): OptPane {
     return pane(
       checkbox("myIgnoreInsideImports", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports")),
-      checkbox("myIgnoreApiDeclaredInThisProject", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project")),
+      checkbox("myIgnoreApiDeclaredInThisProject",
+               JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.declared.inside.this.project")),
       //TODO in add annotation window "Include non-project items" should be enabled by default
       stringList("unstableApiAnnotations", JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"),
                  JavaClassValidator().annotationsOnly())
@@ -145,7 +146,8 @@ private class UnstableApiUsageProcessor(
       val fix = DeprecationInspection.getReplacementQuickFix(target, elementToHighlight)
       if (fix != null) {
         problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType, fix)
-      } else {
+      }
+      else {
         problemsHolder.registerProblem(elementToHighlight, message, messageProvider.problemHighlightType)
       }
       return true
@@ -153,7 +155,9 @@ private class UnstableApiUsageProcessor(
     return false
   }
 
-  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner, sourceNode: UElement, isMethodOverriding: Boolean) {
+  private fun checkTargetReferencesUnstableTypeInSignature(target: PsiModifierListOwner,
+                                                           sourceNode: UElement,
+                                                           isMethodOverriding: Boolean) {
     if (!isMethodOverriding && !arePsiElementsFromTheSameFile(sourceNode.sourcePsi, target.containingFile)) {
       val declaration = target.toUElement(UDeclaration::class.java)
       if (declaration !is UClass && declaration !is UMethod && declaration !is UField) {
@@ -202,7 +206,8 @@ private object DefaultUnstableApiUsageMessageProvider : UnstableApiUsageMessageP
   override fun buildMessageUnstableMethodOverridden(annotatedContainingDeclaration: AnnotatedContainingDeclaration): String =
     with(annotatedContainingDeclaration) {
       if (isOwnAnnotation) {
-        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName, presentableAnnotationName)
+        JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.overridden.method.is.marked.unstable.itself", targetName,
+                                  presentableAnnotationName)
       }
       else {
         JvmAnalysisBundle.message(

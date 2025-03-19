@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.lang.LangBundle;
@@ -23,18 +23,15 @@ public final class GithubDownloadUtil {
 
   private GithubDownloadUtil() {}
 
-  @NotNull
-  private static String formatGithubRepositoryName(@NotNull String userName, @NotNull String repositoryName) {
+  private static @NotNull String formatGithubRepositoryName(@NotNull String userName, @NotNull String repositoryName) {
     return "github-" + userName + "-" + repositoryName;
   }
 
-  @NotNull
-  private static String formatGithubUserName(@NotNull String userName) {
+  private static @NotNull String formatGithubUserName(@NotNull String userName) {
     return "github-" + userName;
   }
 
-  @NotNull
-  public static File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
+  public static @NotNull File getCacheDir(@NotNull String userName, @NotNull String repositoryName) {
     File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubRepositoryName(userName, repositoryName);
     File dir = new File(generatorsDir, dirName);
@@ -45,8 +42,7 @@ public final class GithubDownloadUtil {
     }
   }
 
-  @NotNull
-  public static File getUserCacheDir(@NotNull String userName) {
+  public static @NotNull File getUserCacheDir(@NotNull String userName) {
     File generatorsDir = new File(PathManager.getSystemPath(), PROJECT_GENERATORS);
     String dirName = formatGithubUserName(userName);
     File dir = new File(generatorsDir, dirName);
@@ -64,11 +60,11 @@ public final class GithubDownloadUtil {
 
   public static void downloadContentToFileWithProgressSynchronously(
     @Nullable Project project,
-    @NotNull final String url,
+    final @NotNull String url,
     @NotNull @NlsContexts.ProgressTitle String progressTitle,
-    @NotNull final File outputFile,
-    @NotNull final String userName,
-    @NotNull final String repositoryName,
+    final @NotNull File outputFile,
+    final @NotNull String userName,
+    final @NotNull String repositoryName,
     final boolean retryOnError) throws GeneratorException
   {
     Outcome<File> outcome = DownloadUtil.provideDataWithProgressSynchronously(

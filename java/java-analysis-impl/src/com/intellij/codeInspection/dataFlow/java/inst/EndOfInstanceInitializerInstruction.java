@@ -9,7 +9,8 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.PsiMember;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.psi.util.PsiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,9 +27,10 @@ public class EndOfInstanceInitializerInstruction extends Instruction {
   }
 
   @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
     return StreamEx.of(factory.getValues()).select(DfaVariableValue.class)
-      .filter(var -> var.getPsiVariable() instanceof PsiMember).toList();
+      .map(DfaVariableValue::getDescriptor)
+      .filter(var -> !PsiUtil.isJvmLocalVariable(var.getPsiElement())).toList();
   }
 
   @Override

@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.lang.java.JavaLanguage;
@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   private final String myQualifiedName;
   private String myForcedPresentableName;
   private final String myPackageDisplayName;
+  private final @Nullable Icon myIcon;
+  private final boolean myStrikeout;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public JavaPsiClassReferenceElement(@NotNull PsiClass psiClass) {
@@ -33,17 +36,28 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     myQualifiedName = psiClass.getQualifiedName();
     myClass = psiClass;
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
-    setTailType(TailType.NONE);
+    setTailType(TailTypes.noneType());
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
+    myIcon = DefaultLookupItemRenderer.getRawIcon(this);
+    myStrikeout = JavaElementLookupRenderer.isToStrikeout(this);
+  }
+
+  @Override
+  public boolean isToStrikeout() {
+    return myStrikeout;
+  }
+
+  @Override
+  public @Nullable Icon getIcon() {
+    return myIcon;
   }
 
   public String getForcedPresentableName() {
     return myForcedPresentableName;
   }
 
-  @Nullable
   @Override
-  public PsiType getType() {
+  public @Nullable PsiType getType() {
     PsiClass psiClass = getObject();
     return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, getSubstitutor());
   }
@@ -57,9 +71,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return this;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     if (myForcedPresentableName != null) {
       return myForcedPresentableName;
     }
@@ -79,9 +92,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     myForcedPresentableName = forcedPresentableName;
   }
 
-  @NotNull
   @Override
-  public PsiClass getObject() {
+  public @NotNull PsiClass getObject() {
     return myClass;
   }
 
@@ -118,19 +130,19 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   public static void renderClassItem(LookupElementPresentation presentation, LookupElement item, PsiClass psiClass, boolean diamond,
                                      @NotNull String locationString, @NotNull PsiSubstitutor substitutor) {
     if (!(psiClass instanceof PsiTypeParameter)) {
-      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
+      presentation.setIcon(item instanceof TypedLookupItem typed ? typed.getIcon() : DefaultLookupItemRenderer.getRawIcon(item));
     }
 
-    boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
+    boolean strikeout = item instanceof TypedLookupItem typed ? typed.isToStrikeout() : JavaElementLookupRenderer.isToStrikeout(item);
     presentation.setItemText(getName(psiClass, item, diamond, substitutor));
     presentation.setStrikeout(strikeout);
 
     String tailText = locationString;
 
-    if (item instanceof PsiTypeLookupItem) {
-      if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
+    if (item instanceof PsiTypeLookupItem typeLookupItem) {
+      if (typeLookupItem.isIndicateAnonymous() &&
           (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) ||
-          ((PsiTypeLookupItem)item).isAddArrayInitializer()) {
+          typeLookupItem.isAddArrayInitializer()) {
         tailText = "{...}" + tailText;
       }
     }
@@ -146,8 +158,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
-    String forced = item instanceof JavaPsiClassReferenceElement ? ((JavaPsiClassReferenceElement)item).getForcedPresentableName() :
-                    item instanceof PsiTypeLookupItem ? ((PsiTypeLookupItem)item).getForcedPresentableName() :
+    String forced = item instanceof JavaPsiClassReferenceElement referenceElement ? referenceElement.getForcedPresentableName() :
+                    item instanceof PsiTypeLookupItem lookupItem ? lookupItem.getForcedPresentableName() :
                     null;
     if (forced != null) {
       return forced;
@@ -168,8 +180,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     return StringUtil.notNullize(name);
   }
 
-  @NotNull
-  private static String formatTypeParameters(@NotNull final PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
+  private static @NotNull String formatTypeParameters(final @NotNull PsiSubstitutor substitutor, final PsiTypeParameter[] params) {
     final boolean space = showSpaceAfterComma(params[0]);
     StringBuilder buffer = new StringBuilder();
     buffer.append("<");
@@ -179,8 +190,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
       if(type == null){
         return "";
       }
-      if (type instanceof PsiClassType && ((PsiClassType)type).getParameters().length > 0) {
-        buffer.append(((PsiClassType)type).rawType().getPresentableText()).append("<...>");
+      if (type instanceof PsiClassType classType && classType.getParameters().length > 0) {
+        buffer.append(classType.rawType().getPresentableText()).append("<...>");
       } else {
         buffer.append(type.getPresentableText());
       }

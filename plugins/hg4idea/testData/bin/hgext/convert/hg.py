@@ -16,7 +16,6 @@
 #   identifier to be stored in the converted revision. This will cause
 #   the converted revision to have a different identity than the
 #   source.
-from __future__ import absolute_import
 
 import os
 import re
@@ -36,10 +35,10 @@ from mercurial import (
     exchange,
     hg,
     lock as lockmod,
+    logcmdutil,
     merge as mergemod,
+    mergestate,
     phases,
-    pycompat,
-    scmutil,
     util,
 )
 from mercurial.utils import dateutil
@@ -138,14 +137,14 @@ class mercurial_sink(common.converter_sink):
 
         if missings:
             self.after()
-            for pbranch, heads in sorted(pycompat.iteritems(missings)):
+            for pbranch, heads in sorted(missings.items()):
                 pbranchpath = os.path.join(self.path, pbranch)
                 prepo = hg.peer(self.ui, {}, pbranchpath)
                 self.ui.note(
                     _(b'pulling from %s into %s\n') % (pbranch, branch)
                 )
                 exchange.pull(
-                    self.repo, prepo, [prepo.lookup(h) for h in heads]
+                    self.repo, prepo, heads=[prepo.lookup(h) for h in heads]
                 )
             self.before()
 
@@ -241,7 +240,7 @@ class mercurial_sink(common.converter_sink):
 
             # If the file requires actual merging, abort. We don't have enough
             # context to resolve merges correctly.
-            if action in [b'm', b'dm', b'cd', b'dc']:
+            if action in mergestate.CONVERT_MERGE_ACTIONS:
                 raise error.Abort(
                     _(
                         b"unable to convert merge commit "
@@ -250,7 +249,7 @@ class mercurial_sink(common.converter_sink):
                     )
                     % (file, p1ctx, p2ctx)
                 )
-            elif action == b'k':
+            elif action == mergestate.ACTION_KEEP:
                 # 'keep' means nothing changed from p1
                 continue
             else:
@@ -299,8 +298,9 @@ class mercurial_sink(common.converter_sink):
         parents = pl
         nparents = len(parents)
         if self.filemapmode and nparents == 1:
-            m1node = self.repo.changelog.read(bin(parents[0]))[0]
             parent = parents[0]
+            p1_node = bin(parent)
+            m1node = self.repo.changelog.changelogrevision(p1_node).manifest
 
         if len(parents) < 2:
             parents.append(self.repo.nullid)
@@ -423,7 +423,7 @@ class mercurial_sink(common.converter_sink):
         tagparent = tagparent or self.repo.nullid
 
         oldlines = set()
-        for branch, heads in pycompat.iteritems(self.repo.branchmap()):
+        for branch, heads in self.repo.branchmap().items():
             for h in heads:
                 if b'.hgtags' in self.repo[h]:
                     oldlines.update(
@@ -564,7 +564,7 @@ class mercurial_source(common.converter_source):
                 )
             nodes = set()
             parents = set()
-            for r in scmutil.revrange(self.repo, [hgrevs]):
+            for r in logcmdutil.revrange(self.repo, [hgrevs]):
                 ctx = self.repo[r]
                 nodes.add(ctx.node())
                 parents.update(p.node() for p in ctx.parents())
@@ -595,7 +595,7 @@ class mercurial_source(common.converter_source):
         maappend = ma.append
         rappend = r.append
         d = ctx1.manifest().diff(ctx2.manifest())
-        for f, ((node1, flag1), (node2, flag2)) in pycompat.iteritems(d):
+        for f, ((node1, flag1), (node2, flag2)) in d.items():
             if node2 is None:
                 rappend(f)
             else:
@@ -609,7 +609,10 @@ class mercurial_source(common.converter_source):
             files = copyfiles = ctx.manifest()
         if parents:
             if self._changescache[0] == rev:
-                ma, r = self._changescache[1]
+                # TODO: add type hints to avoid this warning, instead of
+                #  suppressing it:
+                #     No attribute '__iter__' on None [attribute-error]
+                ma, r = self._changescache[1]  # pytype: disable=attribute-error
             else:
                 ma, r = self._changedfiles(parents[0], ctx)
             if not full:
@@ -621,7 +624,7 @@ class mercurial_source(common.converter_source):
         cleanp2 = set()
         if len(parents) == 2:
             d = parents[1].manifest().diff(ctx.manifest(), clean=True)
-            for f, value in pycompat.iteritems(d):
+            for f, value in d.items():
                 if value is None:
                     cleanp2.add(f)
         changes = [(f, rev) for f in files if f not in self.ignored]

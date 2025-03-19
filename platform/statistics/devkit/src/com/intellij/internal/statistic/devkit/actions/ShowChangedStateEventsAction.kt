@@ -31,7 +31,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
 
     val message = StatisticsBundle.message("stats.collecting.feature.usages.in.event.log")
     runBackgroundableTask(message, project, false) { indicator ->
-      FeatureUsageLogger.rollOver()
+      FeatureUsageLogger.getInstance().rollOver()
       val oldState = FusStatesRecorder.getCurrentState()
       val newState = FusStatesRecorder.recordStateAndWait(project, recorderId)
       if (newState == null) {

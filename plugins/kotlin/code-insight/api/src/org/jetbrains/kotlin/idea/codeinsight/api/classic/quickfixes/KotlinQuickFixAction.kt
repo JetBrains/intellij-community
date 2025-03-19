@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 @ApiStatus.Internal
 abstract class KotlinQuickFixAction<out T : PsiElement>(element: T) : QuickFixActionBase<T>(element) {
-    protected open fun isAvailable(project: Project, editor: Editor?, file: KtFile) = true
+    protected open fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = true
 
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {
         val ktFile = file as? KtFile ?: return false
@@ -20,12 +20,13 @@ abstract class KotlinQuickFixAction<out T : PsiElement>(element: T) : QuickFixAc
 
     final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val element = element ?: return
-        if (file is KtFile && IntentionPreviewUtils.prepareElementForWrite(element)) {
+        if (file is KtFile &&
+            (startInWriteAction() && getElementToMakeWritable(file) == file || IntentionPreviewUtils.prepareElementForWrite(element))) {
             invoke(project, editor, file)
         }
     }
 
     protected abstract operator fun invoke(project: Project, editor: Editor?, file: KtFile)
 
-    override fun startInWriteAction() = true
+    override fun startInWriteAction(): Boolean = true
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution.configuration
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
 import com.intellij.openapi.options.SettingsEditor
 
 /**
@@ -16,7 +17,7 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
   /**
    * Creates and adds editor fragments into [this] fragments container.
    */
-  abstract fun SettingsFragmentsContainer<C>.configureFragments(configuration: C)
+  abstract fun SettingsEditorFragmentContainer<C>.configureFragments(configuration: C)
 
   override fun isApplicableFor(configuration: ExternalSystemRunConfiguration): Boolean {
     return runConfigurationClass.isInstance(configuration)
@@ -24,7 +25,7 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
 
   @Suppress("UNCHECKED_CAST")
   override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditor<P>> {
-    return SettingsFragmentsContainer.fragments<C> {
+    return SettingsEditorFragmentContainer.fragments {
       configureFragments(configuration as C)
     } as List<SettingsEditor<P>>
   }

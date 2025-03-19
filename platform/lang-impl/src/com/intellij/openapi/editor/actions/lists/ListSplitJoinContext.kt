@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 interface ListSplitJoinContext {
 
   companion object {
-    val EXTENSION = LanguageExtension<ListSplitJoinContext>("com.intellij.listSplitJoinContext")
+    val EXTENSION: LanguageExtension<ListSplitJoinContext> = LanguageExtension<ListSplitJoinContext>("com.intellij.listSplitJoinContext")
   }
 
   /**
@@ -76,7 +76,7 @@ interface ListSplitJoinContext {
 class ListWithElements(val list: PsiElement, val elements: List<PsiElement>)
 enum class JoinOrSplit { JOIN, SPLIT }
 
-fun getListSplitJoinContext(element: PsiElement, joinOrSplit: JoinOrSplit): Pair<ListSplitJoinContext, ListWithElements>? {
+internal fun getListSplitJoinContext(element: PsiElement, joinOrSplit: JoinOrSplit): Pair<ListSplitJoinContext, ListWithElements>? {
   val language = element.language
   val extensions = ListSplitJoinContext.EXTENSION.allForLanguage(language)
   for (extension in extensions) {

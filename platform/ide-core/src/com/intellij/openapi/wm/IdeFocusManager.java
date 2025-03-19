@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.diagnostic.LoadingState;
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
@@ -49,30 +50,33 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract @Nullable JComponent getFocusTargetFor(@NotNull JComponent comp);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
+   * @deprecated See deprecation notice for {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code modality} state.
+   * @deprecated This method doesn't do what it's expected to do.
+   *   If called in EDT, it just invokes the target runnable directly, after performing expiration check for {@link ExpirableRunnable}
+   *   and wrapping the execution into {@link WriteIntentReadAction}.<br>
+   *   If you want to postpone the execution until focus transfers, requested in this or previous EDT events, will be completed, just use
+   *   {@link SwingUtilities#invokeLater(Runnable)} or {@link Application#invokeLater(Runnable, ModalityState)}.
+   *   Note that requests to transfer focus between windows cannot be reliably handled in this manner, as they are asynchronous in nature,
+   *   and one cannot know when OS will grant them, if at all, at least on Linux.
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
   /**
-   * Executes {@code runnable} after all focus activities are finished, immediately or later with the {@code ModalityState.defaultModalityState()} state.
+   * @deprecated See deprecation notice for {@link #doWhenFocusSettlesDown(Runnable, ModalityState)}
    */
+  @Deprecated
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
   /**
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows.
    */
   public abstract @Nullable Component getFocusedDescendantFor(@NotNull Component comp);
-
-  /**
-   * @deprecated This method does nothing currently.
-   */
-  @Deprecated(forRemoval = true)
-  public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
    * Requests default focus. The method should not be called by the user code.
@@ -141,12 +145,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
       focusManager = app.getService(IdeFocusManager.class);
     }
 
-    if (focusManager == null) {
-      // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
-      focusManager = PassThroughIdeFocusManager.getInstance();
-    }
-
-    return focusManager;
+    // happens when app is semi-initialized (e.g. when IDEA server dialog is shown)
+    return focusManager == null ? PassThroughIdeFocusManager.getInstance() : focusManager;
   }
 
   @Override

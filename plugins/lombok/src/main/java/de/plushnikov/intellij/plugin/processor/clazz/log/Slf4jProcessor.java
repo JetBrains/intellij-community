@@ -5,7 +5,7 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 /**
  * @author Plushnikov Michail
  */
-public class Slf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
+public final class Slf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
 
   public static final String LOGGER_TYPE = "org.slf4j.Logger";
   private static final String LOGGER_INITIALIZER = "org.slf4j.LoggerFactory.getLogger(%s)";

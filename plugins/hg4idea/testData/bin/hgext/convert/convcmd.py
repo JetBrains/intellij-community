@@ -4,9 +4,9 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 import collections
+import heapq
 import os
 import shutil
 
@@ -87,7 +87,7 @@ def readauthormap(ui, authorfile, authors=None):
 
 
 def recode(s):
-    if isinstance(s, pycompat.unicode):
+    if isinstance(s, str):
         return s.encode(pycompat.sysstr(orig_encoding), 'replace')
     else:
         return s.decode('utf-8').encode(
@@ -177,7 +177,7 @@ def convertsink(ui, path, type):
     raise error.Abort(_(b'%s: unknown repository type') % path)
 
 
-class progresssource(object):
+class progresssource:
     def __init__(self, ui, source, filecount):
         self.ui = ui
         self.source = source
@@ -199,7 +199,60 @@ class progresssource(object):
         self.progress.complete()
 
 
-class converter(object):
+# Sorters are used by the `toposort` function to maintain a set of revisions
+# which can be converted immediately and pick one
+class branchsorter:
+    """If the previously converted revision has a child in the
+    eligible revisions list, pick it. Return the list head
+    otherwise. Branch sort attempts to minimize branch
+    switching, which is harmful for Mercurial backend
+    compression.
+    """
+
+    def __init__(self, parents):
+        self.nodes = []
+        self.parents = parents
+        self.prev = None
+
+    def picknext(self):
+        next = self.nodes[0]
+        for n in self.nodes:
+            if self.prev in self.parents[n]:
+                next = n
+                break
+        self.prev = next
+        self.nodes.remove(next)
+        return next
+
+    def insert(self, node):
+        self.nodes.insert(0, node)
+
+    def __len__(self):
+        return self.nodes.__len__()
+
+
+class keysorter:
+    """Key-based sort, ties broken by insertion order"""
+
+    def __init__(self, keyfn):
+        self.heap = []
+        self.keyfn = keyfn
+        self.counter = 0
+
+    def picknext(self):
+        return heapq.heappop(self.heap)[2]
+
+    def insert(self, node):
+        counter = self.counter
+        self.counter = counter + 1
+        key = self.keyfn(node)
+        heapq.heappush(self.heap, (key, counter, node))
+
+    def __len__(self):
+        return self.heap.__len__()
+
+
+class converter:
     def __init__(self, ui, source, dest, revmapfile, opts):
 
         self.source = source
@@ -243,7 +296,7 @@ class converter(object):
         m = {}
         try:
             fp = open(path, b'rb')
-            for i, line in enumerate(util.iterfile(fp)):
+            for i, line in enumerate(fp):
                 line = line.splitlines()[0].rstrip()
                 if not line:
                     # Ignore blank lines
@@ -365,37 +418,10 @@ class converter(object):
 
             return children, roots
 
-        # Sort functions are supposed to take a list of revisions which
-        # can be converted immediately and pick one
-
-        def makebranchsorter():
-            """If the previously converted revision has a child in the
-            eligible revisions list, pick it. Return the list head
-            otherwise. Branch sort attempts to minimize branch
-            switching, which is harmful for Mercurial backend
-            compression.
-            """
-            prev = [None]
-
-            def picknext(nodes):
-                next = nodes[0]
-                for n in nodes:
-                    if prev[0] in parents[n]:
-                        next = n
-                        break
-                prev[0] = next
-                return next
-
-            return picknext
-
         def makesourcesorter():
             """Source specific sort."""
             keyfn = lambda n: self.commitcache[n].sortkey
-
-            def picknext(nodes):
-                return sorted(nodes, key=keyfn)[0]
-
-            return picknext
+            return keysorter(keyfn)
 
         def makeclosesorter():
             """Close order sort."""
@@ -403,44 +429,42 @@ class converter(object):
                 b'close' not in self.commitcache[n].extra,
                 self.commitcache[n].sortkey,
             )
-
-            def picknext(nodes):
-                return sorted(nodes, key=keyfn)[0]
-
-            return picknext
+            return keysorter(keyfn)
 
         def makedatesorter():
             """Sort revisions by date."""
-            dates = {}
 
             def getdate(n):
-                if n not in dates:
-                    dates[n] = dateutil.parsedate(self.commitcache[n].date)
-                return dates[n]
+                commit = self.commitcache[n]
+                # The other entries are here as tie breaker for stability
+                return (
+                    dateutil.parsedate(commit.date),
+                    commit.rev,
+                    commit.branch,
+                )
 
-            def picknext(nodes):
-                return min([(getdate(n), n) for n in nodes])[1]
-
-            return picknext
+            return keysorter(getdate)
 
         if sortmode == b'branchsort':
-            picknext = makebranchsorter()
+            sorter = branchsorter(parents)
         elif sortmode == b'datesort':
-            picknext = makedatesorter()
+            sorter = makedatesorter()
         elif sortmode == b'sourcesort':
-            picknext = makesourcesorter()
+            sorter = makesourcesorter()
         elif sortmode == b'closesort':
-            picknext = makeclosesorter()
+            sorter = makeclosesorter()
         else:
             raise error.Abort(_(b'unknown sort mode: %s') % sortmode)
 
-        children, actives = mapchildren(parents)
+        children, roots = mapchildren(parents)
+
+        for node in roots:
+            sorter.insert(node)
 
         s = []
         pendings = {}
-        while actives:
-            n = picknext(actives)
-            actives.remove(n)
+        while sorter:
+            n = sorter.picknext()
             s.append(n)
 
             # Update dependents list
@@ -456,7 +480,7 @@ class converter(object):
                     )
                 if not pendings[c]:
                     # Parents are converted, node is eligible
-                    actives.insert(0, c)
+                    sorter.insert(c)
                     pendings[c] = None
 
         if len(s) != len(parents):
@@ -585,9 +609,7 @@ class converter(object):
                         # write another hash correspondence to override the
                         # previous one so we don't end up with extra tag heads
                         tagsparents = [
-                            e
-                            for e in pycompat.iteritems(self.map)
-                            if e[1] == tagsparent
+                            e for e in self.map.items() if e[1] == tagsparent
                         ]
                         if tagsparents:
                             self.map[tagsparents[0][0]] = nrev

@@ -1,4 +1,4 @@
-# $Id: __init__.py 6433 2010-09-28 08:21:25Z milde $
+# $Id: __init__.py 9502 2023-12-14 22:39:08Z milde $
 # Authors: David Goodger <goodger@python.org>; Ueli Schlaepfer
 # Copyright: This module has been placed in the public domain.
 
@@ -27,14 +27,12 @@ __docformat__ = 'reStructuredText'
 from docutils import languages, ApplicationError, TransformSpec
 
 
-class TransformError(ApplicationError): pass
+class TransformError(ApplicationError):
+    pass
 
 
 class Transform:
-
-    """
-    Docutils transform component abstract base class.
-    """
+    """Docutils transform component abstract base class."""
 
     default_priority = None
     """Numerical priority of this transform, 0 through 999 (override)."""
@@ -62,19 +60,26 @@ class Transform:
 
 
 class Transformer(TransformSpec):
-
     """
-    Stores transforms (`Transform` classes) and applies them to document
-    trees.  Also keeps track of components by component type name.
+    Store "transforms" and apply them to the document tree.
+
+    Collect lists of `Transform` instances and "unknown_reference_resolvers"
+    from Docutils components (`TransformSpec` instances).
+    Apply collected "transforms" to the document tree.
+
+    Also keeps track of components by component type name.
+
+    https://docutils.sourceforge.io/docs/peps/pep-0258.html#transformer
     """
 
     def __init__(self, document):
         self.transforms = []
-        """List of transforms to apply.  Each item is a 3-tuple:
-        ``(priority string, transform class, pending node or None)``."""
+        """List of transforms to apply.  Each item is a 4-tuple:
+        ``(priority string, transform class, pending node or None, kwargs)``.
+        """
 
         self.unknown_reference_resolvers = []
-        """List of hook functions which assist in resolving references"""
+        """List of hook functions which assist in resolving references."""
 
         self.document = document
         """The `nodes.document` object this Transformer is attached to."""
@@ -82,12 +87,14 @@ class Transformer(TransformSpec):
         self.applied = []
         """Transforms already applied, in order."""
 
-        self.sorted = 0
+        self.sorted = False
         """Boolean: is `self.tranforms` sorted?"""
 
         self.components = {}
-        """Mapping of component type name to component object.  Set by
-        `self.populate_from_components()`."""
+        """Mapping of component type name to component object.
+
+        Set by `self.populate_from_components()`.
+        """
 
         self.serialno = 0
         """Internal serial number to keep track of the add order of
@@ -105,7 +112,7 @@ class Transformer(TransformSpec):
         priority_string = self.get_priority_string(priority)
         self.transforms.append(
             (priority_string, transform_class, None, kwargs))
-        self.sorted = 0
+        self.sorted = False
 
     def add_transforms(self, transform_list):
         """Store multiple transforms, with default priorities."""
@@ -114,7 +121,7 @@ class Transformer(TransformSpec):
                 transform_class.default_priority)
             self.transforms.append(
                 (priority_string, transform_class, None, {}))
-        self.sorted = 0
+        self.sorted = False
 
     def add_pending(self, pending, priority=None):
         """Store a transform with an associated `pending` node."""
@@ -124,7 +131,7 @@ class Transformer(TransformSpec):
         priority_string = self.get_priority_string(priority)
         self.transforms.append(
             (priority_string, transform_class, pending, {}))
-        self.sorted = 0
+        self.sorted = False
 
     def get_priority_string(self, priority):
         """
@@ -137,24 +144,28 @@ class Transformer(TransformSpec):
 
     def populate_from_components(self, components):
         """
-        Store each component's default transforms, with default priorities.
+        Store each component's default transforms and reference resolvers
+
+        Transforms are stored with default priorities for later sorting.
+        "Unknown reference resolvers" are sorted and stored.
+        Components that don't inherit from `TransformSpec` are ignored.
+
         Also, store components by type name in a mapping for later lookup.
         """
+        resolvers = []
         for component in components:
-            if component is None:
+            if not isinstance(component, TransformSpec):
                 continue
             self.add_transforms(component.get_transforms())
             self.components[component.component_type] = component
-        self.sorted = 0
-        # Set up all of the reference resolvers for this transformer. Each
-        # component of this transformer is able to register its own helper
-        # functions to help resolve references.
-        unknown_reference_resolvers = []
-        for i in components:
-            unknown_reference_resolvers.extend(i.unknown_reference_resolvers)
-        decorated_list = [(f.priority, f) for f in unknown_reference_resolvers]
-        decorated_list.sort()
-        self.unknown_reference_resolvers.extend([f[1] for f in decorated_list])
+            resolvers.extend(component.unknown_reference_resolvers)
+        self.sorted = False  # sort transform list in self.apply_transforms()
+
+        # Sort and add helper functions to help resolve unknown references.
+        def keyfun(f):
+            return f.priority
+        resolvers.sort(key=keyfun)
+        self.unknown_reference_resolvers += resolvers
 
     def apply_transforms(self):
         """Apply all of the stored transforms, in priority order."""
@@ -162,11 +173,13 @@ class Transformer(TransformSpec):
             self.document.note_transform_message)
         while self.transforms:
             if not self.sorted:
-                # Unsorted initially, and whenever a transform is added.
-                self.transforms.sort()
-                self.transforms.reverse()
-                self.sorted = 1
+                # Unsorted initially, and whenever a transform is added
+                # (transforms may add other transforms).
+                self.transforms.sort(reverse=True)
+                self.sorted = True
             priority, transform_class, pending, kwargs = self.transforms.pop()
             transform = transform_class(self.document, startnode=pending)
             transform.apply(**kwargs)
             self.applied.append((priority, transform_class, pending, kwargs))
+        self.document.reporter.detach_observer(
+            self.document.note_transform_message)

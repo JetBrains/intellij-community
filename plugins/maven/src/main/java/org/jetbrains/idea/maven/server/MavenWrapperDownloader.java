@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.project.BundledMaven3;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
@@ -21,45 +22,47 @@ import java.util.Locale;
 public final class MavenWrapperDownloader {
 
   public static void checkOrInstall(@NotNull Project project, @Nullable String workingDir) {
-    checkOrInstall(project, workingDir, null);
+    checkOrInstall(project, workingDir, null, true);
   }
 
   public static void checkOrInstallForSync(@NotNull Project project,
-                                           @Nullable String workingDir) {
-    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole());
+                                           @Nullable String workingDir,
+                                           boolean showNotificationIfUrlMissing) {
+    checkOrInstall(project, workingDir, MavenProjectsManager.getInstance(project).getSyncConsole(), showNotificationIfUrlMissing);
   }
 
   private static synchronized void checkOrInstall(@NotNull Project project,
                                                   @Nullable String workingDir,
-                                                  @Nullable MavenSyncConsole syncConsole) {
+                                                  @Nullable MavenSyncConsole syncConsole,
+                                                  boolean showNotificationIfUrlMissing) {
     if (workingDir == null) return;
     MavenDistributionsCache distributionsCache = MavenDistributionsCache.getInstance(project);
 
     String multiModuleDir = distributionsCache.getMultimoduleDirectory(workingDir);
     String distributionUrl = distributionsCache.getWrapperDistributionUrl(multiModuleDir);
     if (distributionUrl == null) {
-      MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
+      if (showNotificationIfUrlMissing) {
+        MavenWrapperEventLogNotification.noDistributionUrlEvent(project, multiModuleDir);
+      }
       return;
     }
 
-    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
+    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(project, distributionUrl);
     if (distribution != null) return;
 
     MavenLog.LOG.info("start install wrapper " + distributionUrl);
 
     if (syncConsole != null) syncConsole.startWrapperResolving();
-    MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.start"));
 
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = new WrapperProgressIndicator(project, task, syncConsole);
     try {
-      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator);
+      distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, indicator, project);
       if (syncConsole != null && distributionUrl.toLowerCase(Locale.ENGLISH).startsWith("http:")) {
         MavenWrapperSupport.showUnsecureWarning(syncConsole, LocalFileSystem.getInstance().findFileByPath(multiModuleDir));
       }
       distributionsCache.addWrapper(multiModuleDir, distribution);
       if (syncConsole != null) syncConsole.finishWrapperResolving(null);
-      MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.finish"));
     }
     catch (Exception e) {
       MavenLog.LOG.warn("error install wrapper", e);
@@ -67,7 +70,7 @@ public final class MavenWrapperDownloader {
       MavenWrapperEventLogNotification.errorDownloading(project, e.getLocalizedMessage());
       if (syncConsole != null) {
         MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-        settings.getGeneralSettings().setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+        settings.getGeneralSettings().setMavenHomeType(BundledMaven3.INSTANCE);
       }
     }
     finally {
@@ -76,8 +79,7 @@ public final class MavenWrapperDownloader {
     }
   }
 
-  @NotNull
-  private static Task.Backgroundable getTaskInfo() {
+  private static @NotNull Task.Backgroundable getTaskInfo() {
     return new Task.Backgroundable(null, SyncBundle.message("maven.sync.wrapper.downloading")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) { }

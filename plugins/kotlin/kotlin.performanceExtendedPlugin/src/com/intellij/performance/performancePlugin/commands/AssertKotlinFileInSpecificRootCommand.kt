@@ -2,17 +2,19 @@
 package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.vfs.findPsiFile
+import com.jetbrains.performancePlugin.PerformanceTestingBundle
+import com.jetbrains.performancePlugin.commands.OpenFileCommand.Companion.findFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 
-class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+internal class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
     companion object {
         const val PREFIX: @NonNls String = CMD_PREFIX + "assertOpenedKotlinFileInRoot"
     }
@@ -20,16 +22,15 @@ class AssertKotlinFileInSpecificRootCommand(text: String, line: Int) : PlaybackC
     override suspend fun doExecute(context: PlaybackContext) {
         withContext(Dispatchers.EDT) {
             val project = context.project
-            val editor = FileEditorManager.getInstance(project).selectedTextEditor
-            if (editor == null) {
-                throw IllegalStateException("Selected editor is null")
-            }
-            val file = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.document)
-            if (file == null) {
-                throw IllegalStateException("Psi file of document is null")
-            }
-            if (file.getKtModule() !is KtSourceModule) {
-                throw IllegalStateException("File $file not in kt source root module")
+            val filePath = text.replace(PREFIX, "").trim()
+            val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
+            //maybe readaction
+            writeIntentReadAction {
+                val psiFile = file.findPsiFile(project) ?: error("Fail to find psi file $filePath")
+                val module = psiFile.getKaModule(project, useSiteModule = null)
+                if (module !is KaSourceModule) {
+                    throw IllegalStateException("File $file ($module) not in kt source root module")
+                }
             }
         }
     }

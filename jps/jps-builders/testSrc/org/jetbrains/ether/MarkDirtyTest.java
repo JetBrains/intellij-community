@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.builders.java.dependencyView.Mappings;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
@@ -91,7 +91,7 @@ public class MarkDirtyTest extends IncrementalTestCase {
     JpsModule lib = addModule("lib", "lib/src");
     addTestRoot(lib, "lib/testSrc");
     JpsModuleRootModificationUtil.addDependency(util, lib);
-    PlatformTestUtil.withSystemProperty(Mappings.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1).assertSuccessful());
+    PlatformTestUtil.withSystemProperty(BuildDataManager.PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, String.valueOf(true), () -> doTestBuild(1).assertSuccessful());
   }
 
   public void testRecompileTwinDependencies() {

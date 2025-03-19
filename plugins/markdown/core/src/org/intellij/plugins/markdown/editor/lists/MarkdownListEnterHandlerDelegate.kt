@@ -12,11 +12,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.isAncestor
-import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.siblings
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.*
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.obtainMarkerNumber
 import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBulk
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
@@ -155,16 +151,22 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     EditorModificationUtil.insertStringAtCaret(editor, emptyItem)
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
     val item = (file as MarkdownFile).getListItemAt(editor.caretModel.offset, document)!!
-    if (codeInsightSettings.renumberListsOnType) {
+    val listNumberingType = codeInsightSettings.listNumberingType
+    if (codeInsightSettings.renumberListsOnType && listNumberingType != MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER) {
       // Will fix numbering in a whole list
-      item.list.renumberInBulk(document, recursive = false, restart = false)
+      item.list.renumberInBulk(document, recursive = false, restart = false, sequentially = listNumberingType == MarkdownCodeInsightSettings.ListNumberingType.SEQUENTIAL)
     } else {
       // Will only fix current item based on previous one
       val previousItem = item.siblings(forward = false, withSelf = false).filterIsInstance<MarkdownListItem>().firstOrNull()
       val previousNumber = previousItem?.obtainMarkerNumber()
       if (previousNumber != null) {
         val marker = item.markerElement as? MarkdownListNumber
-        marker?.replaceWithOtherNumber(previousNumber + 1)
+        val currentNumber = when (listNumberingType) {
+          MarkdownCodeInsightSettings.ListNumberingType.SEQUENTIAL -> previousNumber + 1
+          MarkdownCodeInsightSettings.ListNumberingType.ONES -> 1
+          MarkdownCodeInsightSettings.ListNumberingType.PREVIOUS_NUMBER -> previousNumber
+        }
+        marker?.replaceWithOtherNumber(currentNumber)
       }
     }
 

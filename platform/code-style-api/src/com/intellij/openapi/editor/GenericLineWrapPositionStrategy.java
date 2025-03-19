@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
   private static final int NON_ID_WEIGHT = (Rule.DEFAULT_WEIGHT - 1) / 2;
 
   /** Holds symbols wrap rules by symbol. */
-  private final IntObjectMap<Rule> myRules = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<Rule> myRules = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final Storage myOffset2weight = new Storage();
 
   @Override

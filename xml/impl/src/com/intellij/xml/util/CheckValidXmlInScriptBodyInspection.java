@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml.util;
 
@@ -28,14 +28,12 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
       return XmlBundle.message("xml.quickfix.unescaped.xml.character.text", getXmlCharacter());
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return XmlBundle.message("xml.quickfix.unescaped.xml.character.family");
     }
 

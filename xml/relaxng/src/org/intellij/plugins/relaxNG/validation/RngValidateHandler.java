@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.relaxNG.validation;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -62,8 +62,7 @@ public class RngValidateHandler implements ValidateXmlHandler {
     return getRngSchema(file) != null;
   }
 
-  @Nullable
-  private static XmlFile getRngSchema(XmlFile file) {
+  private static @Nullable XmlFile getRngSchema(XmlFile file) {
     final RngElementDescriptor descriptor = getRootDescriptor(file);
     if (descriptor == null) return null;
 

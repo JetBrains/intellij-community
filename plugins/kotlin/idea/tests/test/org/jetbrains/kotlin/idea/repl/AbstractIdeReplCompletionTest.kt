@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
@@ -15,11 +16,11 @@ import org.jetbrains.kotlin.console.KotlinConsoleRunner
 import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
 import org.jetbrains.kotlin.idea.completion.test.testCompletion
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import java.io.File
 
 abstract class AbstractIdeReplCompletionTest : KotlinFixtureCompletionBaseTestCase() {
@@ -31,6 +32,7 @@ abstract class AbstractIdeReplCompletionTest : KotlinFixtureCompletionBaseTestCa
         vfsDisposable = allowProjectRootAccess(this)
         consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)!!
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(consoleRunner!!.consoleFile)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
     }
 
     override fun tearDown() {

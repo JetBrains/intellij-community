@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Symbol is an element in some model, e.g. language model or framework model.
+ * Symbol is an element in some model, e.g., language model or framework model.
  * <p/>
  * <h4>Lifecycle</h4>
  * The Symbol instance is expected to stay valid within a single read action,
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * in the subsequent read action.
  *
  * @see com.intellij.model
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/symbols.html">Symbols (IntelliJ Platform Docs)</a>
  */
 public interface Symbol {
 
@@ -29,7 +30,9 @@ public interface Symbol {
    * The platform will also check the equality when several concurrent computations
    * return different instances but only one instance should be cached.
    */
+  @Override
   boolean equals(Object obj);
 
+  @Override
   int hashCode();
 }

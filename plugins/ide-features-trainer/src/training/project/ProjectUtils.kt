@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -37,6 +36,7 @@ import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 object ProjectUtils {
@@ -327,7 +327,6 @@ object ProjectUtils {
         }
 
         if (modified) {
-          VfsUtil.markDirtyAndRefresh(false, true, true, root)
           PropertiesComponent.getInstance(project).setValue(LEARNING_PROJECT_MODIFICATION, System.currentTimeMillis().toString())
         }
         done.complete(true)

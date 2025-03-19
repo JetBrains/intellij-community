@@ -27,18 +27,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyNestedSynchronizedStatementInspection extends BaseInspection {
+public final class GroovyNestedSynchronizedStatementInspection extends BaseInspection {
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.nested.ref.statement");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

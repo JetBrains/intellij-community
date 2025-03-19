@@ -3,20 +3,17 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.*
+import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 
@@ -38,25 +35,25 @@ sealed class SuperDeclaration {
         }
 }
 
+@ApiStatus.Internal
 object SuperDeclarationProvider {
     @RequiresReadLock
     @ApiStatus.Internal
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     fun findSuperDeclarations(declaration: KtDeclaration): List<SuperDeclaration> {
         allowAnalysisOnEdt {
             analyze(declaration) {
-                val superSymbols = when (val symbol = declaration.getSymbol()) {
-                    is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.getDirectlyOverriddenSymbols()?.asSequence()
-                        ?: emptySequence()
+                val superSymbols = when (val symbol = declaration.symbol) {
+                    is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.directlyOverriddenSymbols ?: emptySequence()
 
-                    is KtCallableSymbol -> symbol.getDirectlyOverriddenSymbols().asSequence()
-                    is KtClassOrObjectSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KtNonErrorClassType)?.classSymbol }
+                    is KaCallableSymbol -> symbol.directlyOverriddenSymbols
+                    is KaClassSymbol -> symbol.superTypes.asSequence().mapNotNull { (it as? KaClassType)?.symbol }
                     else -> emptySequence()
                 }
 
                 return buildList {
                     for (superSymbol in superSymbols) {
-                        if (superSymbol is KtClassOrObjectSymbol && StandardClassIds.Any == superSymbol.classIdIfNonLocal) {
+                        if (superSymbol is KaClassSymbol && StandardClassIds.Any == superSymbol.classId) {
                             continue
                         }
                         when (val psi = superSymbol.psi) {
@@ -72,4 +69,16 @@ object SuperDeclarationProvider {
             }
         }
     }
+
+    @ApiStatus.Internal
+    fun findDeclaration(element: PsiElement): KtDeclaration? = element
+        .parents(false)
+        .filter { declaration ->
+            when (declaration) {
+                is KtNamedFunction, is KtClassOrObject, is KtProperty -> true
+                is KtParameter -> declaration.hasValOrVar()
+                else -> false
+            }
+        }
+        .firstOrNull() as? KtDeclaration
 }

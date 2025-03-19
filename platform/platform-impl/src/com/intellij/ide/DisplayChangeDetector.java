@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import sun.awt.DisplayChangedListener;
 
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@ApiStatus.Internal
 public final class DisplayChangeDetector {
   private static final Logger LOG = Logger.getInstance(DisplayChangeDetector.class);
   private static final DisplayChangeDetector INSTANCE = new DisplayChangeDetector();
@@ -50,7 +52,7 @@ public final class DisplayChangeDetector {
     void displayChanged();
   }
 
-  private class DisplayChangeHandler implements DisplayChangedListener {
+  private final class DisplayChangeHandler implements DisplayChangedListener {
     @Override
     public void displayChanged() {
       runActions();

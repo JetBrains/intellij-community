@@ -17,6 +17,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.LocalPathCellEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class LogsFragment<T extends RunConfigurationBase<?>> extends SettingsEditorFragment<T, JComponent> {
   private final Map<LogFileOptions, PredefinedLogFile> myLog2Predefined = new HashMap<>();
   private final List<PredefinedLogFile> myUnresolvedPredefined = new SmartList<>();
@@ -175,7 +177,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class TabNameColumnInfo extends ColumnInfo<LogFileOptions, String> {
+  private final class TabNameColumnInfo extends ColumnInfo<LogFileOptions, String> {
     TabNameColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.tab.name.column"));
     }
@@ -201,7 +203,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class FileColumnInfo extends ColumnInfo<LogFileOptions, String> {
+  private final class FileColumnInfo extends ColumnInfo<LogFileOptions, String> {
     FileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.file.column"));
     }
@@ -227,8 +229,8 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsActiveColumnInfo() {
+  private final class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+    private MyIsActiveColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
 
@@ -257,8 +259,8 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Setti
     }
   }
 
-  private class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsSkipColumnInfo() {
+  private final class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+    private MyIsSkipColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 

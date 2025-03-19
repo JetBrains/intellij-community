@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext;
@@ -8,13 +8,13 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -122,9 +122,7 @@ public interface RunAnythingProvider<V> {
   /**
    * Returns help group title this provider belongs to
    */
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
-  default String getHelpGroupTitle() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getHelpGroupTitle() {
     return null;
   }
 
@@ -170,11 +168,7 @@ public interface RunAnythingProvider<V> {
    * @param dataContext use it to fetch project, module, working directory
    * @param pattern     input string
    */
-  @Nullable
-  static RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
-    return Arrays.stream(EP_NAME.getExtensions())
-                 .filter(provider -> provider.findMatchingValue(dataContext, pattern) != null)
-                 .findFirst()
-                 .orElse(null);
+  static @Nullable RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
+    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.findMatchingValue(dataContext, pattern) != null);
   }
 }

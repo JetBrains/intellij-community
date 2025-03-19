@@ -5,13 +5,22 @@ import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.util.ui.JBInsets
 import java.awt.*
 import kotlin.math.min
+import kotlin.properties.Delegates.observable
 
 /**
- * Wraps a single component limiting its size to [maxSize]
+ * Wraps a single component limiting its size to [minSize] - [maxSize] and overriding the preferred size with [prefSize]
  */
 class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
-  var maxSize: DimensionRestrictions = DimensionRestrictions.None
+  var minSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
+  var maxSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
+  var prefSize: DimensionRestrictions by observable(DimensionRestrictions.None) { _, _, _ ->
+    component?.revalidate()
+  }
 
   private var component: Component? = null
 
@@ -29,6 +38,8 @@ class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
   override fun minimumLayoutSize(parent: Container): Dimension =
     component?.takeIf { it.isVisible }?.minimumSize?.let {
+      it.width = minSize.getWidth() ?: it.width
+      it.height = minSize.getHeight() ?: it.height
       maxSize.limitMax(it)
     }?.also {
       JBInsets.addTo(it, parent.insets)
@@ -36,6 +47,8 @@ class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
   override fun preferredLayoutSize(parent: Container): Dimension =
     component?.takeIf { it.isVisible }?.preferredSize?.let {
+      it.width = prefSize.getWidth() ?: it.width
+      it.height = prefSize.getHeight() ?: it.height
       maxSize.limitMax(it)
     }?.also {
       JBInsets.addTo(it, parent.insets)

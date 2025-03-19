@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -6,16 +6,21 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+@ApiStatus.Internal
 final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup> {
-  private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<>();
+  private final UndoRedoList<UndoableGroup> myGlobalStack = new UndoRedoList<>();
+  private final SharedAdjustableUndoableActionsHolder myUndoableActionsHolder;
 
-  UndoRedoStacksHolder(boolean isUndo) {
+  UndoRedoStacksHolder(boolean isUndo, SharedAdjustableUndoableActionsHolder undoableActionsHolder) {
     super(isUndo);
+    myUndoableActionsHolder = undoableActionsHolder;
   }
 
   boolean canBeUndoneOrRedone(@NotNull Collection<? extends DocumentReference> refs) {
@@ -26,7 +31,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return false;
   }
 
-  @NotNull
+  @Nullable
   UndoableGroup getLastAction(@NotNull Collection<? extends DocumentReference> refs) {
     if (refs.isEmpty()) return myGlobalStack.getLast();
 
@@ -34,7 +39,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     int mostRecentDocTimestamp = 0;
 
     for (DocumentReference each : refs) {
-      LinkedList<UndoableGroup> stack = getStack(each);
+      UndoRedoList<UndoableGroup> stack = getStack(each);
       // the stack for a document can be empty in case of compound editors with several documents
       if (stack.isEmpty()) continue;
       UndoableGroup lastAction = stack.getLast();
@@ -42,7 +47,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
       int timestamp = lastAction.getCommandTimestamp();
       if (mostRecentAction == null || lastAction.isTemporary() && !mostRecentAction.isTemporary() ||
           lastAction.isTemporary() == mostRecentAction.isTemporary() &&
-          (myUndo ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp)) {
+          (isUndo() ? timestamp > mostRecentDocTimestamp : timestamp < mostRecentDocTimestamp)) {
         mostRecentAction = lastAction;
         mostRecentDocTimestamp = timestamp;
       }
@@ -77,13 +82,13 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     if (LOG.isDebugEnabled()) {
       LOG.debug("Adding to " + getStacksDescription() + ": " + group.dumpState());
     }
-    for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
-      if (myUndo && !group.isTemporary()) convertTemporaryActionsToPermanent(each);
+    for (UndoRedoList<UndoableGroup> each : getAffectedStacks(group)) {
+      if (isUndo() && !group.isTemporary()) convertTemporaryActionsToPermanent(each);
       doAddToStack(each, group, each == myGlobalStack ? UndoManagerImpl.getGlobalUndoLimit() : UndoManagerImpl.getDocumentUndoLimit());
     }
   }
 
-  private void doAddToStack(@NotNull LinkedList<UndoableGroup> stack, @NotNull UndoableGroup group, int limit) {
+  private void doAddToStack(@NotNull UndoRedoList<UndoableGroup> stack, @NotNull UndoableGroup group, int limit) {
     if (!group.isUndoable() && stack.isEmpty()) return;
 
     stack.add(group);
@@ -96,7 +101,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     if (LOG.isDebugEnabled()) {
       LOG.debug("Removing from " + getStacksDescription() + ": " + group.dumpState());
     }
-    for (LinkedList<UndoableGroup> each : getAffectedStacks(group)) {
+    for (UndoRedoList<UndoableGroup> each : getAffectedStacks(group)) {
       assert each.getLast() == group;
       each.removeLast();
     }
@@ -105,7 +110,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
   public boolean replaceOnStacks(@NotNull UndoableGroup group, @NotNull UndoableGroup newGroup) {
     boolean hasAffectedItems = false;
 
-    for (LinkedList<UndoableGroup> stack : getAffectedStacks(group)) {
+    for (UndoRedoList<UndoableGroup> stack : getAffectedStacks(group)) {
       for (var stackIterator = stack.listIterator(); stackIterator.hasNext(); ) {
         var currentGroup = stackIterator.next();
         if (currentGroup != group) continue;
@@ -119,7 +124,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
   }
 
   void clearStacks(boolean clearGlobal, @NotNull Set<? extends DocumentReference> refs) {
-    for (LinkedList<UndoableGroup> each : getAffectedStacks(clearGlobal, refs)) {
+    for (UndoRedoList<UndoableGroup> each : getAffectedStacks(clearGlobal, refs)) {
       while(!each.isEmpty()) {
         clearStacksFrom(each.getLast());
       }
@@ -136,7 +141,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     myGlobalStack.removeIf(group -> ContainerUtil.and(group.getAffectedDocuments(), ref->ref.equals(referenceFile) || ref.equals(referenceDoc)));
   }
 
-  private static void convertTemporaryActionsToPermanent(LinkedList<UndoableGroup> each) {
+  private static void convertTemporaryActionsToPermanent(UndoRedoList<UndoableGroup> each) {
     for (int i = each.size() - 1; i >= 0; i--) {
       UndoableGroup group1 = each.get(i);
       if (!group1.isTemporary()) break;
@@ -151,7 +156,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     if (LOG.isDebugEnabled()) {
       LOG.debug("Clearing " + getStacksDescription() + " from " + from.dumpState());
     }
-    for (LinkedList<UndoableGroup> each : getAffectedStacks(from)) {
+    for (UndoRedoList<UndoableGroup> each : getAffectedStacks(from)) {
       int pos = each.indexOf(from);
       if (pos == -1) continue;
 
@@ -160,19 +165,17 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
         clearStacksFrom(each.get(pos - 1));
         assert each.size() == top && each.indexOf(from) == 0;
       }
-      each.removeFirst();
+      each.removeFirstSlow();
     }
-    from.invalidateChangeRanges();
+    from.invalidateChangeRanges(myUndoableActionsHolder);
   }
 
-  @NotNull
-  private List<LinkedList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
+  private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull UndoableGroup group) {
     return getAffectedStacks(group.isGlobal(), group.getAffectedDocuments());
   }
 
-  @NotNull
-  private List<LinkedList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<? extends DocumentReference> refs) {
-    List<LinkedList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
+  private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(boolean global, @NotNull Collection<? extends DocumentReference> refs) {
+    List<UndoRedoList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
     if (global) result.add(myGlobalStack);
     for (DocumentReference ref : refs) {
       result.add(getStack(ref));
@@ -208,15 +211,14 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     }
   }
 
-  @NotNull
-  private Set<DocumentReference> getAffectedDocuments() {
+  private @NotNull Set<DocumentReference> getAffectedDocuments() {
     Set<DocumentReference> result = new HashSet<>();
     collectAllAffectedDocuments(result);
     return result;
   }
 
   int getLastCommandTimestamp(@NotNull DocumentReference r) {
-    LinkedList<UndoableGroup> stack = getStack(r);
+    UndoRedoList<UndoableGroup> stack = getStack(r);
     if (stack.isEmpty()) return 0;
     return Math.max(stack.getFirst().getCommandTimestamp(), stack.getLast().getCommandTimestamp());
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
@@ -21,10 +21,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +33,16 @@ import java.util.Objects;
 
 public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplateExpressionCondition> implements PostfixTemplateEditor {
 
-  @NotNull protected final PostfixTemplateProvider myProvider;
-  @NotNull protected final Editor myTemplateEditor;
-  @NotNull protected final JBList<Condition> myExpressionTypesList;
-  @NotNull protected final DefaultListModel<Condition> myExpressionTypesListModel;
+  protected final @NotNull PostfixTemplateProvider myProvider;
+  protected final @NotNull Editor myTemplateEditor;
+  protected final @NotNull JBList<Condition> myExpressionTypesList;
+  protected final @NotNull DefaultListModel<Condition> myExpressionTypesListModel;
 
-  @NotNull protected final JBCheckBox myApplyToTheTopmostJBCheckBox;
-  @NotNull protected final JPanel myEditTemplateAndConditionsPanel;
+  protected final @NotNull JBCheckBox myApplyToTheTopmostJBCheckBox;
+  protected final @NotNull JPanel myEditTemplateAndConditionsPanel;
 
-  protected class AddConditionAction extends DumbAwareAction {
-    @NotNull
-    private final Condition myCondition;
+  protected final class AddConditionAction extends DumbAwareAction {
+    private final @NotNull Condition myCondition;
 
     public AddConditionAction(Condition condition) {
       super(condition.getPresentableName());
@@ -69,7 +68,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
 
     myExpressionTypesListModel = JBList.createDefaultListModel();
     myExpressionTypesList = new JBList<>(myExpressionTypesListModel);
-    myExpressionTypesList.setCellRenderer(SimpleListCellRenderer.create("", PostfixTemplateExpressionCondition::getPresentableName));
+    myExpressionTypesList.setCellRenderer(BuilderKt.textListCellRenderer(PostfixTemplateExpressionCondition::getPresentableName));
 
     ToolbarDecorator expressionTypesToolbar = null;
     if (showExpressionTypes) {
@@ -84,13 +83,11 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     myEditTemplateAndConditionsPanel = content.panel;
   }
 
-  @NotNull
-  protected static Editor createEditor(@Nullable Project project, @NotNull Document document) {
+  protected static @NotNull Editor createEditor(@Nullable Project project, @NotNull Document document) {
     return TemplateEditorUtil.createEditor(false, document, project);
   }
 
-  @NotNull
-  private static Editor createSimpleEditor() {
+  private static @NotNull Editor createSimpleEditor() {
     return createEditor(null, EditorFactory.getInstance().createDocument(""));
   }
 

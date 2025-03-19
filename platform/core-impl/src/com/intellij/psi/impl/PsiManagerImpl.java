@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,13 +24,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -54,6 +52,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
+  @Topic.ProjectLevel
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   public PsiManagerImpl(@NotNull Project project) {
@@ -86,9 +85,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  @RequiresEdt
   public void dropPsiCaches() {
     dropResolveCaches();
-    WriteAction.run(myFileManager::firePropertyChangedForUnloadedPsi);
+    ApplicationManager.getApplication().runWriteAction(myFileManager::firePropertyChangedForUnloadedPsi);
   }
 
   @Override
@@ -115,6 +115,11 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return myFileManager.findCachedViewProvider(vFile);
+  }
+
+  @Override
   @TestOnly
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
     // Find something to ensure there are no changed files waiting to be processed in repository indices.
@@ -128,14 +133,12 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     return myFileManager;
   }
 
@@ -158,11 +161,24 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     return myFileManager.findFile(file);
   }
 
-  @NotNull
+  @ApiStatus.Internal
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findFile(file, context);
+  }
+
+  @Override
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     ProgressIndicatorProvider.checkCanceled();
     return myFileManager.findViewProvider(file);
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
+    ProgressIndicatorProvider.checkCanceled();
+    return myFileManager.findViewProvider(file, context);
   }
 
   @Override
@@ -436,8 +452,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     return myModificationTracker;
   }
 

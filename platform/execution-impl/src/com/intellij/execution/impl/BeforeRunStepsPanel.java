@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.BeforeRunTask;
@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +32,13 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Vassiliy Kudryashov
  */
+@ApiStatus.Internal
 public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
@@ -307,6 +307,10 @@ public final class BeforeRunStepsPanel extends JPanel {
     myModel.add(task);
   }
 
+  public void replaceTasks(@NotNull List<BeforeRunTask<?>> tasks) {
+    myModel.replaceAll(tasks);
+  }
+
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
     List<BeforeRunTask<?>> items = myModel.getItems();
     Set<Key<?>> result = CollectionFactory.createSmallMemoryFootprintSet(items.size());
@@ -356,7 +360,9 @@ public final class BeforeRunStepsPanel extends JPanel {
   }
 
   private static @Nullable BeforeRunTaskProvider<BeforeRunTask<?>> getProvider(@NotNull Project project, Key<?> key) {
-    for (BeforeRunTaskProvider<BeforeRunTask<?>> provider : BeforeRunTaskProvider.EP_NAME.getIterable(project)) {
+    for (Iterator<BeforeRunTaskProvider<BeforeRunTask<?>>> it = BeforeRunTaskProvider.EP_NAME.asSequence(project).iterator();
+         it.hasNext(); ) {
+      BeforeRunTaskProvider<BeforeRunTask<?>> provider = it.next();
       if (provider.getId() == key) {
         return provider;
       }

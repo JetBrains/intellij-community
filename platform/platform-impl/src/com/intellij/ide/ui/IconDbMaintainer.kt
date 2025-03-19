@@ -1,38 +1,44 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.ide.AppLifecycleListener
+import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.ui.svg.getSvgIconCacheFile
-import com.intellij.ui.svg.getSvgIconCacheInvalidMarkerFile
-import com.intellij.ui.svg.svgCache
-import java.nio.file.Files
-import java.nio.file.StandardOpenOption
+import com.intellij.openapi.components.Service
+import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.activeSvgCache
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit.MILLISECONDS)
 
 // icons maybe loaded before app loaded, so, SvgCacheMapper cannot be as a service
-private class IconDbMaintainer : AppLifecycleListener {
-  init {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
+@Service(Service.Level.APP)
+@Internal
+class IconDbMaintainer : SettingsSavingComponent {
+  // we save only once every 2 minutes, and not earlier than 2 minutes after the start
+  private var lastSaved = nowAsDuration()
 
-  override fun appWillBeClosed(isRestart: Boolean) {
-    svgCache?.close()
+  override suspend fun save() {
+    val exitInProgress = ApplicationManager.getApplication().isExitInProgress
+    if (!exitInProgress && (nowAsDuration() - lastSaved) < 2.minutes) {
+      return
+    }
+
+    val svgCache = activeSvgCache ?: return
+    withContext(Dispatchers.IO) {
+      svgCache.save()
+      lastSaved = nowAsDuration()
+    }
   }
 }
 
 private class IconCacheInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
-    val svgIconCacheFile = getSvgIconCacheFile()
-    val markerFile = getSvgIconCacheInvalidMarkerFile(svgIconCacheFile)
-    if (Files.exists(svgIconCacheFile)) {
-      Files.write(markerFile, ByteArray(0), StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-    }
-    else {
-      Files.deleteIfExists(markerFile)
-    }
+    SvgCacheManager.invalidateCache()
   }
 }

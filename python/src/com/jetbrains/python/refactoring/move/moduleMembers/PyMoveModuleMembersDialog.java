@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapperPeer;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
@@ -36,7 +37,7 @@ import java.util.List;
  * @author Mikhail Golubev
  */
 public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
-  @NonNls private final static String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
+  private static final @NonNls String BULK_MOVE_TABLE_VISIBLE = "python.move.module.members.dialog.show.table";
 
   private final TopLevelSymbolsSelectionTable myMemberSelectionTable;
   private final PyModuleMemberInfoModel myModuleMemberModel;
@@ -117,12 +118,21 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     });
 
     init();
+    initValidation();
   }
 
   @Override
   protected void setUpDialog() {
     super.setUpDialog();
     enlargeDialogHeightIfNecessary();
+  }
+
+  @Override
+  protected ValidationInfo doValidate() {
+    if (!areButtonsValid()) {
+      return new ValidationInfo(PyBundle.message("refactoring.move.module.members.error.selection.empty"));
+    }
+    return super.doValidate();
   }
 
   private void enlargeDialogHeightIfNecessary() {
@@ -136,9 +146,8 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
     }
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog";
   }
 
@@ -155,15 +164,13 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   /**
    * @return selected elements in the same order as they are declared in the original file
    */
-  @NotNull
-  public List<PyElement> getSelectedTopLevelSymbols() {
+  public @NotNull List<PyElement> getSelectedTopLevelSymbols() {
     final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
     final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, MemberInfoBase::getMember);
     return ContainerUtil.sorted(selectedElements, (e1, e2) -> PyPsiUtils.isBefore(e1, e2) ? -1 : 1);
   }
 
-  @NotNull
-  private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
+  private static @NotNull List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
     final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
     return ContainerUtil.mapNotNull(moduleMembers, PyModuleMemberInfo::new);
   }
@@ -174,9 +181,8 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
       super(memberInfos, memberInfoModel, null);
     }
 
-    @Nullable
     @Override
-    protected Object getAbstractColumnValue(PyModuleMemberInfo memberInfo) {
+    protected @Nullable Object getAbstractColumnValue(PyModuleMemberInfo memberInfo) {
       return null;
     }
 

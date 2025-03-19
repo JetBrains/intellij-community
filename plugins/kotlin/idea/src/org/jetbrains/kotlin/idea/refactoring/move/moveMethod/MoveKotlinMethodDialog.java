@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveMethod;
 
@@ -18,17 +18,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.KotlinIconProvider;
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinTypeReferenceEditorComboWithBrowseButton;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.psi.*;
@@ -39,8 +39,8 @@ import org.jetbrains.kotlin.types.KotlinType;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.jetbrains.kotlin.name.Name.isValidIdentifier;
 
@@ -110,9 +110,8 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
         invokeRefactoring(processor);
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
         return mainPanel;
     }
 
@@ -213,7 +212,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtObjectDeclaration) && KotlinRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtObjectDeclaration) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }
@@ -288,9 +287,8 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                 null,
                 true
         ) {
-            @Nullable
             @Override
-            protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
+            protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
                 PsiClass psiClass = super.getSelectedFromTreeUserObject(node);
                 if (psiClass != null) return psiClass;
                 Object userObject = node.getUserObject();

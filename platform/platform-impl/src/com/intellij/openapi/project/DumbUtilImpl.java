@@ -14,7 +14,7 @@ public final class DumbUtilImpl implements DumbUtil {
 
   @Override
   public boolean mayUseIndices() {
-    return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null;
+    return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType(myProject) != null;
   }
 
   public static void waitForSmartMode(@Nullable Project project) {

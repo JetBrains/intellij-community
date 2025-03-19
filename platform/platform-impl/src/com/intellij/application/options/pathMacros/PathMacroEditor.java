@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.pathMacros;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -16,7 +16,7 @@ import javax.swing.event.DocumentListener;
 import java.io.File;
 import java.io.IOException;
 
-public class PathMacroEditor extends DialogWrapper {
+public final class PathMacroEditor extends DialogWrapper {
   private JTextField myNameField;
   private JPanel myPanel;
   private TextFieldWithBrowseButton myValueField;
@@ -40,22 +40,22 @@ public class PathMacroEditor extends DialogWrapper {
     };
     myNameField.getDocument().addDocumentListener(documentListener);
     myValueField.setText(value);
-    myValueField.addBrowseFolderListener(null, null, null, new FileChooserDescriptor(false, true, true, false, true, false),
-                                         new TextComponentAccessor<>() {
-                                           @Override
-                                           public String getText(JTextField component) {
-                                             return component.getText();
-                                           }
+    var descriptor = new FileChooserDescriptor(false, true, true, false, true, false);
+    myValueField.addBrowseFolderListener(null, descriptor, new TextComponentAccessor<>() {
+      @Override
+      public String getText(JTextField component) {
+        return component.getText();
+      }
 
-                                           @Override
-                                           public void setText(JTextField component, @NotNull String text) {
-                                             final int len = text.length();
-                                             if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
-                                               text = text.substring(0, len - 1);
-                                             }
-                                             component.setText(text);
-                                           }
-                                         });
+      @Override
+      public void setText(JTextField component, @NotNull String text) {
+        final int len = text.length();
+        if (len > 0 && text.charAt(len - 1) == File.separatorChar) {
+          text = text.substring(0, len - 1);
+        }
+        component.setText(text);
+      }
+    });
     myValueField.getTextField().getDocument().addDocumentListener(documentListener);
 
     init();
@@ -71,7 +71,7 @@ public class PathMacroEditor extends DialogWrapper {
     getOKAction().setEnabled(isNameOK);
     if (isNameOK) {
       final String text = myValueField.getText().trim();
-      getOKAction().setEnabled(text.length() > 0 && !"/".equals(text.trim()));
+      getOKAction().setEnabled(!text.isEmpty() && !"/".equals(text.trim()));
     }
   }
 

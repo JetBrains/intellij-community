@@ -3,11 +3,9 @@ package com.intellij.refactoring;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -36,9 +34,6 @@ public class RefactoringUiService {
   }
 
   public void setStatusBarInfo(@NotNull Project project, @NotNull @StatusBarText String message) {
-  }
-
-  public void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
   }
 
   public ConflictsDialogBase createConflictsDialog(@NotNull Project project,

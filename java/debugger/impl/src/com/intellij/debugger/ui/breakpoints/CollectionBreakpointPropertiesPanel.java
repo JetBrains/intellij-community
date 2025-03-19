@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.AnActionLink;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -25,7 +26,7 @@ import java.awt.*;
 @ApiStatus.Experimental
 public class CollectionBreakpointPropertiesPanel
   extends XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaCollectionBreakpointProperties>> {
-  private final static int PREFERRED_PANEL_HEIGHT = 40;
+  private static final int PREFERRED_PANEL_HEIGHT = 40;
   private @Nullable String myClsName = null;
   private @Nullable String myFieldName = null;
   private JCheckBox mySaveCollectionHistoryCheckBox;
@@ -37,7 +38,7 @@ public class CollectionBreakpointPropertiesPanel
     AnActionLink button =
       new AnActionLink(ActionsBundle.message("action.Debugger.ShowCollectionHistory.text"), new MyShowCollectionHistoryAction());
 
-    Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
     JPanel panel = JBUI.Panels.simplePanel();
     panel.add(mySaveCollectionHistoryCheckBox, BorderLayout.NORTH);

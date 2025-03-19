@@ -1,10 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -14,15 +20,18 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.VARARGS);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -76,21 +85,19 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static class AddToArrayFix implements LocalQuickFix {
+  private static class AddToArrayFix extends PsiUpdateModCommandQuickFix {
     private final String myClassName;
 
     AddToArrayFix(String className) {myClassName = className;}
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.call", "toArray(new " + StringUtil.getShortName(myClassName) + "[0])");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return;
       if (!InheritanceUtil.isInheritor(expression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

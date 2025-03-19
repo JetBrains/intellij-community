@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -44,7 +44,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull final JavaTestConfigurationWithDiscoverySupport configuration,
+  protected boolean setupConfigurationFromContext(final @NotNull JavaTestConfigurationWithDiscoverySupport configuration,
                                                   @NotNull ConfigurationContext configurationContext,
                                                   @NotNull Ref<PsiElement> ref) {
     if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
@@ -101,11 +101,10 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
 
   public abstract boolean isApplicable(@NotNull Location<PsiMethod> testMethod);
 
-  @NotNull
-  public abstract RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
-                                                Module module,
-                                                RunConfiguration configuration,
-                                                ExecutionEnvironment environment);
+  public abstract @NotNull RunProfileState createProfile(Location<PsiMethod> @NotNull [] testMethods,
+                                                         Module module,
+                                                         RunConfiguration configuration,
+                                                         ExecutionEnvironment environment);
 
   public RunProfile createProfile(Location<PsiMethod>[] testMethods,
                                   Module module,
@@ -214,27 +213,23 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       myConfigurationName = configurationName;
     }
 
-    @Nullable
     @Override
-    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+    public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
       return createProfile(myTestMethods, myModule, myConfiguration, environment);
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myConfigurationName;
     }
 
-    @Nullable
     @Override
-    public Icon getIcon() {
+    public @Nullable Icon getIcon() {
       return myConfiguration.getIcon();
     }
 
-    @Nullable
     @Override
-    public ShortenCommandLine getShortenCommandLine() {
+    public @Nullable ShortenCommandLine getShortenCommandLine() {
       return myConfiguration.getShortenCommandLine();
     }
 
@@ -243,9 +238,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       myConfiguration.setShortenCommandLine(mode);
     }
 
-    @Nullable
     @Override
-    public ConfigurationFactory getFactory() {
+    public @Nullable ConfigurationFactory getFactory() {
       return myConfiguration.getFactory();
     }
 
@@ -253,15 +247,13 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     public void setName(@NotNull String name) {
     }
 
-    @NotNull
     @Override
-    public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+    public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfiguration.getConfigurationEditor();
     }
 
     @Override
-    @NotNull
-    public Project getProject() {
+    public @NotNull Project getProject() {
       return myConfiguration.getProject();
     }
 

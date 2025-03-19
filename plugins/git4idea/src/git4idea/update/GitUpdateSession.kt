@@ -8,6 +8,8 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.update.UpdateSession
@@ -15,16 +17,19 @@ import com.intellij.util.containers.MultiMap
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
 /**
  * Ranges are null if update didn't start yet, in which case there are no new commits to display,
  * and the error notification is shown from the GitUpdateProcess itself.
  */
-class GitUpdateSession(private val project: Project,
-                       private val notificationData: GitUpdateInfoAsLog.NotificationData?,
-                       private val result: Boolean,
-                       private val skippedRoots: Map<GitRepository, String>) : UpdateSession {
+class GitUpdateSession(
+  private val project: Project,
+  private val notificationData: GitUpdateInfoAsLog.NotificationData?,
+  private val result: Boolean,
+  private val skippedRoots: Map<GitRepository, String>,
+) : UpdateSession {
 
   override fun getExceptions(): List<VcsException> {
     return emptyList()
@@ -40,18 +45,26 @@ class GitUpdateSession(private val project: Project,
     if (skippedRoots.isEmpty()) return null
 
     if (skippedRoots.size == 1) {
-      val repo = skippedRoots.keys.first()
-      return GitBundle.message("git.update.repo.was.skipped", getShortRepositoryName(repo), skippedRoots[repo])
+      val (repo, reason) = skippedRoots.entries.first()
+      return GitBundle.message("git.update.repo.was.skipped", HtmlChunk.text(getShortRepositoryName(repo)), HtmlChunk.text(reason))
     }
 
-    val prefix = GitBundle.message("git.update.skipped.repositories", skippedRoots.size) + " <br/>" // NON-NLS
+    val prefix = HtmlChunk.text(GitBundle.message("git.update.skipped.repositories", skippedRoots.size)) // NON-NLS
     val grouped = groupByReasons(skippedRoots)
-    if (grouped.keySet().size == 1) {
-      val reason = grouped.keySet().first()
-      return prefix + getShortNames(grouped.get(reason)) + " (" + reason + ")"
+    if (grouped.entrySet().size == 1) {
+      val (reason, repos) = grouped.entrySet().first()
+      return HtmlBuilder().append(prefix).br()
+        .append(mentionSkippedRoots(repos, reason))
+        .toString()
     }
 
-    return prefix + grouped.keySet().joinToString("<br/>") { reason -> getShortNames(grouped.get(reason)) + " (" + reason + ")" } // NON-NLS
+    return HtmlBuilder().append(prefix).br()
+      .appendWithSeparators(HtmlChunk.br(), grouped.entrySet().map { (reason, repos) -> mentionSkippedRoots(repos, reason) })
+      .toString()
+  }
+
+  private fun mentionSkippedRoots(repos: Collection<GitRepository>, reason: @Nls String): HtmlChunk {
+    return HtmlChunk.text(getShortNames(repos) + " (" + reason + ")")
   }
 
   private fun groupByReasons(skippedRoots: Map<GitRepository, String>): MultiMap<String, GitRepository> {
@@ -62,15 +75,24 @@ class GitUpdateSession(private val project: Project,
 
   override fun showNotification() {
     if (notificationData != null) {
-      val notification = prepareNotification(notificationData.updatedFilesCount, notificationData.receivedCommitsCount,
+      val notification = prepareNotification(notificationData.updatedFilesCount,
+                                             notificationData.receivedCommitsCount,
                                              notificationData.filteredCommitsCount)
+
       notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
                                                              notificationData.viewCommitAction))
+
+      GitPostUpdateHandler.getActions(project, notificationData.ranges).forEach { notification.addAction(it) }
+
       VcsNotifier.getInstance(project).notify(notification)
     }
   }
 
-  private fun prepareNotification(updatedFilesNumber: Int, updatedCommitsNumber: Int, filteredCommitsNumber: Int?): Notification {
+  private fun prepareNotification(
+    updatedFilesNumber: Int,
+    updatedCommitsNumber: Int,
+    filteredCommitsNumber: Int?,
+  ): Notification {
     val title: String
     var content: String?
     val type: NotificationType
@@ -97,7 +119,7 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
+    return VcsNotifier.standardNotification().createNotification(title, content, type).also { it.setDisplayId(displayId) }
   }
 }
 

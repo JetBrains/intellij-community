@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.project.Project;
@@ -8,15 +8,16 @@ import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 
 
+@ApiStatus.Internal
 public class IssueLinkConfigurationDialog extends DialogWrapper {
   private JPanel myPanel;
   private JTextField myIssueIDTextField;
@@ -46,7 +47,7 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   private void updateFeedback() {
     myErrorLabel.setText(" ");
     try {
-      if (myIssueIDTextField.getText().length() > 0) {
+      if (!myIssueIDTextField.getText().isEmpty()) {
         ArrayList<IssueNavigationConfiguration.LinkMatch> matches = new ArrayList<>();
         IssueNavigationConfiguration.findIssueLinkMatches(myExampleIssueIDTextField.getText(), getLink(), matches);
         IssueNavigationConfiguration.LinkMatch firstMatch = ContainerUtil.getFirstItem(matches);
@@ -66,14 +67,12 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.settings.vcs.issue.navigation.add.link";
   }
 

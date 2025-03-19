@@ -1,16 +1,12 @@
-fun f(a: Int): Int {
+<info descr="null">fun</info> f(a: Int): Int {
     if (a < 5) {
         run {
-            <caret>return 1
+            <info descr="null">~return 1</info>
         }
     }
     else {
-        return 2
+        <info descr="null">return 2</info>
     }
 }
 
 inline public fun <T> run(f: () -> T): T { }
-
-//HIGHLIGHTED: return 1
-//HIGHLIGHTED: f
-//HIGHLIGHTED: return 2

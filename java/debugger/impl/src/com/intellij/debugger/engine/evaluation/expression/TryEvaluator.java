@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class TryEvaluator implements Evaluator {
-  @NotNull private final Evaluator myBodyEvaluator;
+  private final @NotNull Evaluator myBodyEvaluator;
   private final List<? extends CatchEvaluator> myCatchBlockEvaluators;
-  @Nullable private final Evaluator myFinallyEvaluator;
+  private final @Nullable Evaluator myFinallyEvaluator;
 
   public TryEvaluator(@NotNull Evaluator bodyEvaluator,
                       List<? extends CatchEvaluator> catchBlockEvaluators,
@@ -25,7 +25,7 @@ public class TryEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object result = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
+    Object result = context.getVirtualMachineProxy().mirrorOfVoid();
     try {
       result = myBodyEvaluator.evaluate(context);
     }

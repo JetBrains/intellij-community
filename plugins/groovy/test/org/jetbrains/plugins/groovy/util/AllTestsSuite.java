@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.TestAll;
@@ -27,7 +27,7 @@ public class AllTestsSuite extends Suite {
     String testPackage = annotation.value();
     SlowPolicy policy = annotation.policy();
 
-    TestCaseLoader loader = new TestCaseLoader("", true);
+    TestCaseLoader loader = TestCaseLoader.Builder.fromDefaults().withForceLoadPerformanceTests(true).build();
     loader.fillTestCases(testPackage, TestAll.getClassRoots());
 
     List<Class<?>> result = new ArrayList<>();

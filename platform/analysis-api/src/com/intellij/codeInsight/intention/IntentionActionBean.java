@@ -30,6 +30,13 @@ public final class IntentionActionBean extends CustomLoadingExtensionPointBean<C
   @Tag
   public String descriptionDirectoryName;
 
+  /**
+   * Should be set to true only for intention actions that do not modify code and can't provide meaningful
+   * before/after examples.
+   */
+  @Tag
+  public boolean skipBeforeAfter;
+
   @Override
   protected @Nullable String getImplementationClassName() {
     return className;

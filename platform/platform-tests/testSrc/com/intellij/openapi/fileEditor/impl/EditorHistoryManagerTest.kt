@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -15,7 +16,6 @@ import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.common.publishHeapDump
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +27,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 class EditorHistoryManagerTest {
   companion object {
@@ -49,7 +50,7 @@ class EditorHistoryManagerTest {
     val file = dir.resolve("some.txt")
     file.write("first line\nsecond line")
 
-    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.systemIndependentPath)!!
+    val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.invariantSeparatorsPathString)!!
     overrideFileEditorManagerImplementation(PsiAwareFileEditorManagerImpl::class.java, disposable.disposable)
     runBlocking {
       openProjectPerformTaskCloseProject(dir) { project ->
@@ -86,7 +87,7 @@ class EditorHistoryManagerTest {
   }
 }
 
-internal fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditorManager>, disposable: Disposable) {
+fun overrideFileEditorManagerImplementation(implementation: Class<out FileEditorManager>, disposable: Disposable) {
   ProjectServiceContainerCustomizer.getEp().maskAll(listOf(object : ProjectServiceContainerCustomizer {
     override fun serviceRegistered(project: Project) {
       (project as ComponentManagerImpl).registerService(serviceInterface = FileEditorManager::class.java,
@@ -102,8 +103,10 @@ private suspend fun openProjectPerformTaskCloseProject(projectDir: Path, task: (
   val project = projectManager.openProject(projectDir, createTestOpenProjectOptions())!!
   try {
     withContext(Dispatchers.EDT) {
-      task(project)
-      project.stateStore.saveComponent(EditorHistoryManager.getInstance(project))
+      writeIntentReadAction {
+        task(project)
+        project.stateStore.saveComponent(EditorHistoryManager.getInstance(project))
+      }
     }
   }
   finally {

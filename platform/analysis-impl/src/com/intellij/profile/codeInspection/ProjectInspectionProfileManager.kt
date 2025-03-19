@@ -1,18 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
-import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.codeInspection.ex.ProjectInspectionToolRegistrar
 import com.intellij.configurationStore.*
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.profile.ProfileChangeAdapter
 import com.intellij.project.isDirectoryBased
@@ -23,8 +24,11 @@ import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 
-private const val VERSION = "1.0"
 const val PROJECT_DEFAULT_PROFILE_NAME: String = "Project Default"
+const val PROFILE_DIR: String = "inspectionProfiles"
+const val PROFILES_SETTINGS: String = "profiles_settings.xml"
+
+private const val VERSION = "1.0"
 
 private val defaultSchemeDigest = hashElement(JDOMUtil.load("""<component name="InspectionProjectProfileManager">
   <profile version="1.0">
@@ -32,8 +36,7 @@ private val defaultSchemeDigest = hashElement(JDOMUtil.load("""<component name="
   </profile>
 </component>"""))
 
-const val PROFILE_DIR: String = "inspectionProfiles"
-const val PROFILES_SETTINGS: String = "profiles_settings.xml"
+private val LOG = logger<ProjectInspectionProfileManager>()
 
 @State(name = "InspectionProjectProfileManager", storages = [(Storage(value = "$PROFILE_DIR/profiles_settings.xml", exclusive = true))])
 open class ProjectInspectionProfileManager(final override val project: Project) : BaseInspectionProfileManager(project.messageBus),
@@ -42,47 +45,46 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
                                                                                   Disposable {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ProjectInspectionProfileManager {
-      return InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
-    }
+    fun getInstance(project: Project): ProjectInspectionProfileManager =
+      InspectionProjectProfileManager.getInstance(project) as ProjectInspectionProfileManager
   }
 
   private var state = ProjectInspectionProfileManagerState()
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager = SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
-    override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
-                              name: String,
-                              attributeProvider: (String) -> String?,
-                              isBundled: Boolean): InspectionProfileImpl {
-      val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
-      profile.isProjectLevel = true
-      return profile
-    }
-
-    override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, PROFILES_SETTINGS)
-
-    override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean {
-      return scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
-    }
-
-    override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
-      schemeRemoved(scheme)
-    }
-
-    override fun onSchemeAdded(scheme: InspectionProfileImpl) {
-      if (scheme.wasInitialized()) {
-        fireProfileChanged(scheme)
+  override val schemeManager: SchemeManager<InspectionProfileImpl> =
+    SchemeManagerFactory.getInstance(project).create(PROFILE_DIR, object : InspectionProfileProcessor() {
+      override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
+                                name: String,
+                                attributeProvider: (String) -> String?,
+                                isBundled: Boolean): InspectionProfileImpl {
+        val profile = InspectionProfileImpl(name, ProjectInspectionToolRegistrar.getInstance(project), this@ProjectInspectionProfileManager, dataHolder)
+        profile.isProjectLevel = true
+        return profile
       }
-    }
 
-    override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
-                                         newScheme: InspectionProfileImpl?,
-                                         processChangeSynchronously: Boolean) {
-      project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
-    }
-  }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
+      override fun isSchemeFile(name: CharSequence): Boolean = name != PROFILES_SETTINGS
+
+      override fun isSchemeDefault(scheme: InspectionProfileImpl, digest: Long): Boolean =
+        scheme.name == PROJECT_DEFAULT_PROFILE_NAME && digest == defaultSchemeDigest
+
+      override fun onSchemeDeleted(scheme: InspectionProfileImpl) {
+        schemeRemoved(scheme)
+      }
+
+      override fun onSchemeAdded(scheme: InspectionProfileImpl) {
+        if (scheme.wasInitialized()) {
+          fireProfileChanged(scheme)
+        }
+      }
+
+      override fun onCurrentSchemeSwitched(oldScheme: InspectionProfileImpl?,
+                                           newScheme: InspectionProfileImpl?,
+                                           processChangeSynchronously: Boolean) {
+        project.messageBus.syncPublisher(ProfileChangeAdapter.TOPIC).profileActivated(oldScheme, newScheme)
+      }
+    }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   override fun initializeComponent() {
     val app = ApplicationManager.getApplication()
@@ -120,12 +122,12 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
       cleanupInspectionProfilesRunnable.invoke()
     }
     else {
-      @Suppress("DEPRECATION")
-      app.coroutineScope.launch { cleanupInspectionProfilesRunnable() }
+      (app as ComponentManagerEx).getCoroutineScope().launch { cleanupInspectionProfilesRunnable() }
     }
   }
 
-  override fun getStateModificationCount() = state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
+  override fun getStateModificationCount(): Long =
+    state.modificationCount + severityRegistrar.modificationCount + (schemeManagerIprProvider?.modificationCount ?: 0)
 
   @TestOnly
   fun forceLoadSchemes() {
@@ -133,7 +135,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     schemeManager.loadSchemes()
   }
 
-  fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
+  fun isCurrentProfileInitialized(): Boolean = currentProfile.wasInitialized()
 
   override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
@@ -186,7 +188,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     }
   }
 
-  override fun getScopesManager() = DependencyValidationManager.getInstance(project)
+  override fun getScopesManager(): DependencyValidationManager = DependencyValidationManager.getInstance(project)
 
   @Synchronized
   override fun getProfiles(): Collection<InspectionProfileImpl> {
@@ -237,7 +239,7 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
-        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this)
+        currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, ProjectInspectionToolRegistrar.getInstance(project), this)
         currentScheme.copyFrom(InspectionProfileManager.getInstance().currentProfile)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME
@@ -249,10 +251,8 @@ open class ProjectInspectionProfileManager(final override val project: Project) 
   }
 
   @Synchronized
-  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? {
-    val profile = schemeManager.findSchemeByName(name)
-    return profile ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
-  }
+  override fun getProfile(name: String, returnRootProfileIfNamedIsAbsent: Boolean): InspectionProfileImpl? =
+    schemeManager.findSchemeByName(name) ?: InspectionProfileManager.getInstance().getProfile(name, returnRootProfileIfNamedIsAbsent)
 
   fun fireProfileChanged() {
     fireProfileChanged(currentProfile)

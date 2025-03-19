@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -31,14 +31,11 @@ public final class GrTraitType extends PsiType {
     myTraitTypes = ContainerUtil.subArrayAsList(delegate.getConjuncts(), 1, delegate.getConjuncts().length);
   }
 
-  @NotNull
-  public PsiType getExprType() {
+  public @NotNull PsiType getExprType() {
     return myExprType;
   }
 
-  @NotNull
-  @Unmodifiable
-  public List<PsiType> getTraitTypes() {
+  public @NotNull @Unmodifiable List<PsiType> getTraitTypes() {
     return myTraitTypes;
   }
 
@@ -46,22 +43,18 @@ public final class GrTraitType extends PsiType {
     return myDelegate.getConjuncts();
   }
 
-  @NotNull
   @Override
-  public String getPresentableText() {
+  public @NotNull String getPresentableText() {
     return myExprType.getPresentableText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, type -> type.getPresentableText()), ", ");
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myDelegate.getCanonicalText();
   }
 
-  @NlsSafe
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NlsSafe @NotNull String getInternalCanonicalText() {
     return myExprType.getCanonicalText() + " as " + StringUtil.join(ContainerUtil.map(myTraitTypes, type -> type.getInternalCanonicalText()), ", ");
   }
 
@@ -80,9 +73,8 @@ public final class GrTraitType extends PsiType {
     return myDelegate.accept(visitor);
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @Nullable GlobalSearchScope getResolveScope() {
     return myDelegate.getResolveScope();
   }
 
@@ -91,18 +83,15 @@ public final class GrTraitType extends PsiType {
     return myDelegate.getSuperTypes();
   }
 
-  @NotNull
-  public static PsiType createTraitType(@NotNull PsiType type, @NotNull List<? extends PsiType> traits) {
+  public static @NotNull PsiType createTraitType(@NotNull PsiType type, @NotNull List<? extends PsiType> traits) {
     return createTraitType(ContainerUtil.prepend(traits, type instanceof GrTraitType ? ((GrTraitType)type).myDelegate : type));
   }
 
-  @NotNull
-  public static PsiType createTraitType(@NotNull List<PsiType> types) {
+  public static @NotNull PsiType createTraitType(@NotNull List<PsiType> types) {
     return createTraitType(types.toArray(PsiType.createArray(types.size())));
   }
 
-  @NotNull
-  public static PsiType createTraitType(PsiType @NotNull [] types) {
+  public static @NotNull PsiType createTraitType(PsiType @NotNull [] types) {
     final Set<PsiType> flattened = PsiIntersectionType.flatten(types, new LinkedHashSet<>() {
       @Override
       public boolean add(PsiType type) {

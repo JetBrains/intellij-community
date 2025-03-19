@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
@@ -40,15 +40,6 @@ class PluginModelValidatorTest {
     @ClassRule
     @JvmField
     val cleanupSnapshots = CleanupSnapshots(testSnapshotDir)
-  }
-
-  @Test
-  fun `dependency on a plugin in a new format must be in a plugin with package prefix`() {
-    val modules = produceDependencyAndDependentPlugins {
-      it.replace(" package=\"dependentPackagePrefix\"", "")
-    }
-    val errors = PluginModelValidator(modules).errorsAsString
-    assertWithMatchSnapshot(errors)
   }
 
   @Test
@@ -131,7 +122,8 @@ class PluginModelValidatorTest {
       """,
     )
 
-    (root / "intellij.angularJs" / "intellij.angularJs.diagram.xml").writeIdeaPluginXml(
+    writeIdeaPluginXml(
+      file = (root / "intellij.angularJs" / "intellij.angularJs.diagram.xml"),
       content = """
       <idea-plugin package="org.angularjs.diagram">
         <dependencies>
@@ -219,10 +211,9 @@ class PluginModelValidatorTest {
   private fun assertWithMatchSnapshot(charSequence: CharSequence) = assertThat(charSequence).toMatchSnapshot(snapshot)
 }
 
-private fun Path.writeIdeaPluginXml(
-  @Language("xml") content: String,
-  mutator: (String) -> String,
-) = write(mutator(content).trimIndent())
+private fun writeIdeaPluginXml(file: Path, @Language("xml") content: String, mutator: (String) -> String): Path {
+  return file.write(mutator(content).trimIndent())
+}
 
 private fun writeIdeaPluginXml(
   name: String,
@@ -230,13 +221,12 @@ private fun writeIdeaPluginXml(
   path: String = "META-INF/plugin",
   @Language("xml") content: String,
   mutator: (String) -> String = { it },
-) = object : PluginModelValidator.Module {
-
-  init {
-    (sourceRoot / "$path.xml")
-      .writeIdeaPluginXml(content, mutator)
-  }
-
-  override val name: String = name
-  override val sourceRoots: List<Path> = listOf(sourceRoot)
+): PluginModelValidator.Module {
+  writeIdeaPluginXml(file = sourceRoot.resolve("$path.xml"), content = content, mutator = mutator)
+  return PluginModel(name, sequenceOf(sourceRoot))
 }
+
+private data class PluginModel(
+  override val name: String,
+  override val sourceRoots: Sequence<Path>,
+) : PluginModelValidator.Module

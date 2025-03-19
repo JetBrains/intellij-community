@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.java.debugger` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-debugger_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-debugger",
+  module_name = "intellij.java.debugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/execution/openapi:java-execution",
+    "//java/jsp-openapi:jsp",
+    "//java/java-psi-api:psi",
+    "//resources-en:java-resources-en",
+    "//platform/util/jdom",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = ["//platform/xdebugger-api:debugger"],
+  runtime_deps = [":java-debugger_resources"]
+)
+### auto-generated section `build intellij.java.debugger` end

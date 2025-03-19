@@ -21,11 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class DebuggerActionHandler {
 
-  public abstract void perform(@NotNull Project project, AnActionEvent event);
+  public abstract void perform(@NotNull Project project, @NotNull AnActionEvent event);
 
-  public abstract boolean isEnabled(@NotNull Project project, AnActionEvent event);
+  public abstract boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event);
 
-  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+  public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
     return false;
   }
 }

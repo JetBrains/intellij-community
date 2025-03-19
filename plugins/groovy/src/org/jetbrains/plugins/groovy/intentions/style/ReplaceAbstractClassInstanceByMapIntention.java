@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -27,7 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -44,17 +31,14 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
-  @NotNull
+public final class ReplaceAbstractClassInstanceByMapIntention extends GrPsiUpdateIntention {
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new MyPredicate();
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement psiElement, @NotNull Project project, Editor editor) throws IncorrectOperationException {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  protected void processIntention(@NotNull PsiElement psiElement, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     GrCodeReferenceElement ref = (GrCodeReferenceElement)psiElement;
     final GrAnonymousClassDefinition anonymous = (GrAnonymousClassDefinition)ref.getParent();
     final GrNewExpression newExpr = (GrNewExpression)anonymous.getParent();
@@ -102,7 +86,7 @@ public class ReplaceAbstractClassInstanceByMapIntention extends Intention {
       buffer.append(" as ").append(iface.getQualifiedName());
     }
 
-    createAndAdjustNewExpression(project, newExpr, buffer);
+    createAndAdjustNewExpression(context.project(), newExpr, buffer);
   }
 
   private static void createAndAdjustNewExpression(final Project project,

@@ -10,8 +10,35 @@ import static org.junit.Assert.assertEquals;
 public class DocumentUtilTest {
   @Test
   public void testGetIndent() {
-    final Document doc = new DocumentImpl("line1\n" +
-                                          " \t line2");
-    assertEquals(" \t ", DocumentUtil.getIndent(doc, doc.getTextLength() - 1).toString());
+    final Document doc = new DocumentImpl("""
+                                            no indent
+                                             \t some indent
+                                            
+                                            \s\s\s
+                                            \s
+                                            """);
+    assertEquals("no indent",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(0) + 2).toString());
+    assertEquals("some indent",
+                 " \t ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(1) + 2).toString());
+    assertEquals("empty line",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(2)).toString());
+    assertEquals("line with spaces",
+                 "   ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(3) + 1).toString());
+    assertEquals("line with a single space",
+                 " ", DocumentUtil.getIndent(doc, doc.getLineStartOffset(4)).toString());
+    assertEquals("end of the document",
+                 "", DocumentUtil.getIndent(doc, doc.getLineStartOffset(5)).toString());
+  }
+
+  @Test
+  public void calculateOffsetIsZeroBased() {
+    final Document doc = new DocumentImpl("""
+                                            line1
+                                            line2
+                                            """);
+
+    int offset = DocumentUtil.calculateOffset(doc, 0, 0, 0);
+    assertEquals(0, offset);
   }
 }

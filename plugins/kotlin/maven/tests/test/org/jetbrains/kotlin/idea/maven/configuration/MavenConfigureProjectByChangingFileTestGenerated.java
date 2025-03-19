@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven.configuration;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/configurator/jvm")
 public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMavenConfigureProjectByChangingFileTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTestWithMaven, this, testDataFilePath);
     }
@@ -31,6 +38,21 @@ public class MavenConfigureProjectByChangingFileTestGenerated extends AbstractMa
     @TestMetadata("jreLib")
     public void testJreLib() throws Exception {
         runTest("testData/configurator/jvm/jreLib/");
+    }
+
+    @TestMetadata("jvmVersion11InheritanceFromJava")
+    public void testJvmVersion11InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion11InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion1_8InheritanceFromJava")
+    public void testJvmVersion1_8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion1_8InheritanceFromJava/");
+    }
+
+    @TestMetadata("jvmVersion8InheritanceFromJava")
+    public void testJvmVersion8InheritanceFromJava() throws Exception {
+        runTest("testData/configurator/jvm/jvmVersion8InheritanceFromJava/");
     }
 
     @TestMetadata("libraryMissing")

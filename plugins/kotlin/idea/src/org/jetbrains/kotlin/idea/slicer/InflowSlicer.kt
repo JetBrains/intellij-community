@@ -9,6 +9,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.Instruction
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.*
@@ -21,12 +22,13 @@ import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.base.searching.usages.processAllUsages
 import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.KtPropertyDelegationMethodsReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccessWithFullExpression
-import org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator
+import org.jetbrains.kotlin.idea.util.findLambdaOpenLBraceForGeneratedIt
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -43,7 +45,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 class InflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,
-    parentUsage: KotlinSliceUsage
+    parentUsage: AbstractKotlinSliceUsage
 ) : Slicer(element, processor, parentUsage) {
 
     override fun processChildren(forcedExpressionMode: Boolean) {
@@ -231,7 +233,7 @@ class InflowSlicer(
                     is ValueParameterDescriptor -> {
                         if (accessedDeclaration == null) {
                             val anonymousFunction = accessedDescriptor.containingDeclaration as? AnonymousFunctionDescriptor
-                            if (anonymousFunction != null && accessedDescriptor.name.asString() == "it") {
+                            if (anonymousFunction != null && accessedDescriptor.name == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                                 val functionLiteral = anonymousFunction.source.getPsi() as KtFunctionLiteral
                                 val parameterDescriptor = anonymousFunction.valueParameters.first()
                                 processCalls(functionLiteral, false, ArgumentSliceProducer(parameterDescriptor))
@@ -379,8 +381,8 @@ class InflowSlicer(
 
     private fun KtFunctionLiteral.implicitItUsages(): Collection<KtSimpleNameExpression> {
         return collectDescendantsOfType(fun(expression: KtSimpleNameExpression): Boolean {
-            if (expression.getQualifiedExpressionForSelector() != null || expression.getReferencedName() != "it") return false
-            val lBrace = FE10KotlinTargetElementEvaluator.findLambdaOpenLBraceForGeneratedIt(expression.mainReference) ?: return false
+            if (expression.getQualifiedExpressionForSelector() != null || expression.getReferencedNameAsName() != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) return false
+            val lBrace = findLambdaOpenLBraceForGeneratedIt(expression.mainReference) ?: return false
             return lBrace == this.lBrace.node.treeNext.psi
         })
     }

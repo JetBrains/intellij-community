@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
@@ -14,6 +14,7 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,20 +27,23 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
+public final class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
 
   public FieldNameConstantsOldProcessor() {
     super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
   private static FieldNameConstantsFieldProcessor getFieldNameConstantsFieldProcessor() {
-    return ApplicationManager.getApplication().getService(FieldNameConstantsFieldProcessor.class);
+    return LombokProcessorManager.getInstance().getFieldNameConstantsFieldProcessor();
   }
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
+    String prefix = "prefix";
+    //it can help for dumb mode or incomplete mode
+    if (null != psiAnnotation.findDeclaredAttributeValue(prefix)) return true;
     // old version of @FieldNameConstants has attributes "prefix" and "suffix", the new one not
-    return null != psiAnnotation.findAttributeValue("prefix");
+    return null != psiAnnotation.findAttributeValue(prefix);
   }
 
   @Override
@@ -64,7 +68,10 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass,
+                                     @NotNull PsiAnnotation psiAnnotation,
+                                     @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
     for (PsiField psiField : psiFields) {
       if (FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, new ProblemProcessingSink())) {
@@ -73,39 +80,37 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
     }
   }
 
-  @NotNull
-  private static Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
+  private static @NotNull Collection<PsiField> filterFields(@NotNull PsiClass psiClass) {
     final Collection<PsiField> psiFields = new ArrayList<>();
 
-    FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
+    final FieldNameConstantsFieldProcessor fieldProcessor = getFieldNameConstantsFieldProcessor();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      boolean useField = true;
-      PsiModifierList modifierList = psiField.getModifierList();
-      if (null != modifierList) {
-        //Skip static fields.
-        useField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        //Skip fields having same annotation already
-        useField &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
-        //Skip fields that start with $
-        useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-      }
-
-      if (useField) {
+      if (shouldUseField(psiField, fieldProcessor)) {
         psiFields.add(psiField);
       }
     }
     return psiFields;
   }
 
+  private static boolean shouldUseField(@NotNull PsiField psiField, @NotNull FieldNameConstantsFieldProcessor fieldProcessor) {
+    boolean useField = true;
+    PsiModifierList modifierList = psiField.getModifierList();
+    if (null != modifierList) {
+      //Skip static fields.
+      useField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+      //Skip fields having same annotation already
+      useField &= PsiAnnotationSearchUtil.isNotAnnotatedWith(psiField, fieldProcessor.getSupportedAnnotationClasses());
+      //Skip fields that start with $
+      useField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+    }
+    return useField;
+  }
+
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterFields(containingClass)).contains(psiField.getName())) {
-        return LombokPsiElementUsage.USAGE;
-      }
+    if (shouldUseField(psiField, getFieldNameConstantsFieldProcessor())) {
+      return LombokPsiElementUsage.USAGE;
     }
     return LombokPsiElementUsage.NONE;
   }
-
 }

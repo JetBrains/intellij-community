@@ -12,6 +12,10 @@ public interface TreeExpander {
     return true;
   }
 
+  default boolean isExpandAllEnabled() {
+    return canExpand();
+  }
+
 
   void collapseAll();
 

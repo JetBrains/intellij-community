@@ -8,18 +8,18 @@ import org.jetbrains.annotations.NotNull;
 
 public class ShOldLexerVersion3Test extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new ShLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/core/testData/oldLexer/v3";
   }
 
   @NotNull
   @Override
-  protected String getPathToTestDataFile(String extension) {
+  protected String getPathToTestDataFile(@NotNull String extension) {
     return getDirPath() + "/" + getTestName(true) + extension;
   }
 
@@ -42,11 +42,11 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testSquareBracketArithmeticExpr() {
     doFileTest("sh");
   }
-  
+
   public void testArithmeticExpr() {
     doFileTest("sh");
   }
-  
+
   public void testLetExpressions() {
     doFileTest("sh");
   }
@@ -58,7 +58,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIdentifier() {
     doFileTest("sh");
   }
-  
+
   public void testStrings() {
     doFileTest("sh");
   }
@@ -98,7 +98,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testVariable() {
     doFileTest("sh");
   }
-  
+
   public void testRedirect1() {
     doFileTest("sh");
   }
@@ -114,27 +114,27 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testParameterSubstitution() {
     doFileTest("sh");
   }
-  
+
   public void testWeirdStuff1() {
     doFileTest("sh");
   }
-  
+
   public void testCaseWhitespacePattern() {
     doFileTest("sh");
   }
-  
+
   public void testNestedCase() {
     doFileTest("sh");
   }
-  
+
   public void testBackquote1() {
     doFileTest("sh");
   }
-  
+
   public void testCasePattern() {
     doFileTest("sh");
   }
-  
+
   public void testAssignmentList() {
     doFileTest("sh");
   }
@@ -146,7 +146,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testNestedStatements() {
     doFileTest("sh");
   }
-  
+
   public void testV4Lexing() {
     doFileTest("sh");
   }
@@ -154,7 +154,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testParamExpansionNested() {
     doFileTest("sh");
   }
-  
+
   public void testParamExpansion() {
     doFileTest("sh");
   }
@@ -162,11 +162,11 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testArithmeticLiterals() {
     doFileTest("sh");
   }
-  
+
   public void testReadCommand() {
     doFileTest("sh");
   }
-  
+
   public void testUmlaut() {
     doFileTest("sh");
   }
@@ -218,7 +218,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue272() {
     doFileTest("sh");
   }
-  
+
   public void testIssue300() {
     doFileTest("sh");
   }
@@ -238,7 +238,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue320() {
     doFileTest("sh");
   }
-  
+
   public void testIssue325() {
     doFileTest("sh");
   }
@@ -246,19 +246,19 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue327() {
     doFileTest("sh");
   }
-  
+
   public void testIssue330() {
     doFileTest("sh");
   }
-  
+
   public void testIssue330Var() {
     doFileTest("sh");
   }
-  
+
   public void testIssue341() {
     doFileTest("sh");
   }
-  
+
   public void testIssue343() {
     doFileTest("sh");
   }
@@ -266,7 +266,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue354() {
     doFileTest("sh");
   }
-  
+
   public void testIssue389() {
     doFileTest("sh");
   }
@@ -274,7 +274,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testTrapLexing() {
     doFileTest("sh");
   }
-  
+
   public void testEvalLexing() {
     doFileTest("sh");
   }
@@ -286,7 +286,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue367() {
     doFileTest("sh");
   }
-  
+
   public void testIssue418() {
     doFileTest("sh");
   }
@@ -302,7 +302,7 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testLineContinuation() {
     doFileTest("sh");
   }
-  
+
   public void testIssue358() {
     doFileTest("sh");
   }
@@ -330,11 +330,11 @@ public class ShOldLexerVersion3Test extends LexerTestCase {
   public void testIssue458() {
     doFileTest("sh");
   }
-  
+
   public void testIssue469() {
     doFileTest("sh");
   }
-  
+
   public void testIssue474() {
     doFileTest("sh");
   }

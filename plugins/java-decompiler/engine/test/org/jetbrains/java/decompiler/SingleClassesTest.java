@@ -1,31 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
-import static org.junit.Assert.assertTrue;
-
-public class SingleClassesTest {
-  private DecompilerTestFixture fixture;
-
+public class SingleClassesTest extends SingleClassesTestBase {
   /*
    * Set individual test duration time limit to 60 seconds.
    * This will help us to test bugs hanging decompiler.
@@ -33,21 +18,26 @@ public class SingleClassesTest {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
 
-  @Before
-  public void setUp() throws IOException {
-    fixture = new DecompilerTestFixture();
-    fixture.setUp(Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                         IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                         IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"));
+  @Override
+  protected Map<String, Object> getDecompilerOptions() {
+    return Map.ofEntries(
+        Map.entry(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1"),
+        Map.entry(IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"),
+        Map.entry(IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1"),
+        Map.entry(IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"),
+        Map.entry(IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1"),
+        Map.entry(IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1"),
+        Map.entry(IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "1"),
+        Map.entry(IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE, "0"),
+        Map.entry(IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "0"),
+        Map.entry(IFernflowerPreferences.MAX_DIRECT_NODES_COUNT, 20000),
+        Map.entry(IFernflowerPreferences.MAX_DIRECT_VARIABLE_NODE_COUNT, 30000)
+    );
   }
 
-  @After
-  public void tearDown() throws IOException {
-    fixture.tearDown();
-    fixture = null;
-  }
-
+  @Test public void testHelloWorld() { doTest("pkg/TestHelloWorld"); }
+  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
+  @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
   @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
@@ -68,6 +58,7 @@ public class SingleClassesTest {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("pkg/TestConstants");
   }
+
   @Test public void testInteger() {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("java/lang/Integer");
@@ -111,7 +102,6 @@ public class SingleClassesTest {
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
   @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
   @Test public void testIffSimplification() { doTest("pkg/TestIffSimplification"); }
-  @Test public void testKotlinConstructor() { doTest("pkg/TestKotlinConstructorKt"); }
   @Test public void testAsserts() { doTest("pkg/TestAsserts"); }
   @Test public void testLocalsNames() { doTest("pkg/TestLocalsNames"); }
   @Test public void testAnonymousParamNames() { doTest("pkg/TestAnonymousParamNames"); }
@@ -145,6 +135,23 @@ public class SingleClassesTest {
   @Test public void testIntVarMerge() { doTest("pkg/TestIntVarMerge"); }
   @Test public void testSwitchOnStringsJavac() { doTest("pkg/TestSwitchOnStringsJavac"); }
   @Test public void testSwitchOnStringsEcj() { doTest("pkg/TestSwitchOnStringsEcj"); }
+  @Test public void testSwitchRules() { doTest("pkg/TestSwitchRules"); }
+  @Test public void testSwitchSimpleReferencesJavac() { doTest("pkg/TestSwitchSimpleReferencesJavac"); }
+  @Test public void testSwitchClassReferencesJavac() { doTest("pkg/TestSwitchClassReferencesJavac"); }
+  @Test public void testSwitchClassReferencesEcj() { doTest("pkg/TestSwitchClassReferencesEcj"); }
+  @Test public void testSwitchClassReferencesFastExitJavac() { doTest("pkg/TestSwitchClassReferencesFastExitJavac"); }
+  @Test public void testSwitchClassReferencesFastExitEcj() { doTest("pkg/TestSwitchClassReferencesFastExitEcj"); }
+  @Test public void testSwitchGuardedJavac() { doTest("pkg/TestSwitchGuardedJavac"); }
+  @Test public void testSwitchGuarded2Javac() { doTest("pkg/TestSwitchGuarded2Javac"); }
+  @Test public void testSwitchGuardedEcj() { doTest("pkg/TestSwitchGuardedEcj"); }
+
+  //ecj doesn't support here, because it produces code with unnecessary assignments,
+  //which can confuse decompiler with ordinary ones
+  @Test public void testSimpleInstanceOfRecordPatternJavac() { doTest("pkg/TestSimpleInstanceOfRecordPatternJavac"); }
+  @Test public void testComplexInstanceOfRecordPatternJavac() { doTest("pkg/TestComplexInstanceOfRecordPatternJavac"); }
+  @Test public void testSwitchWithDeconstructionsWithoutNestedJavac() { doTest("pkg/TestSwitchWithDeconstructionsWithoutNestedJavac"); }
+  @Test public void testSwitchNestedDeconstructionJavac() { doTest("pkg/TestSwitchNestedDeconstructionsJavac"); }
+  @Test public void testSwitchWrapReturnJavac() { doTest("pkg/TestSwitchWrapReturnJavac"); }
 
   // TODO: fix all below
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
@@ -161,6 +168,7 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+  @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
   @Test public void testRootWithClassInner() { doTest("sealed/RootWithClassInner"); }
   @Test public void testRootWithInterfaceInner() { doTest("sealed/RootWithInterfaceInner"); }
   @Test public void testRootWithClassOuter() { doTest("sealed/RootWithClassOuter",
@@ -222,6 +230,11 @@ public class SingleClassesTest {
   @Test public void testInstanceofWithPattern() {
     doTest("patterns/TestInstanceofWithPattern");
   }
+  //it is not actual expressions, but convert expressions into statements
+  @Test public void testSwitchPatternWithExpression() {
+    doTest("patterns/TestSwitchPatternWithExpression");
+  }
+
   @Test public void testInstanceofVarNotSupported() {
     // the bytecode version of this test data doesn't support patterns in `instanceof`, so no modifications regarding that are applied
     doTest("patterns/TestInstanceofPatternNotSupported");
@@ -229,49 +242,20 @@ public class SingleClassesTest {
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
+  @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
+  @Test public void testCompoundAssignment() { doTest("pkg/TestCompoundAssignment"); }
+  @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
 
-  private void doTest(String testFile, String... companionFiles) {
-    var decompiler = fixture.getDecompiler();
-
-    var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
-    assertThat(classFile).isRegularFile();
-    for (var file : collectClasses(classFile)) {
-      decompiler.addSource(file.toFile());
-    }
-
-    for (String companionFile : companionFiles) {
-      var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
-      assertThat(companionClassFile).isRegularFile();
-      for (var file : collectClasses(companionClassFile)) {
-        decompiler.addSource(file.toFile());
-      }
-    }
-
-    decompiler.decompileContext();
-
-    var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
-    assertThat(decompiledFile).isRegularFile();
-    assertTrue(Files.isRegularFile(decompiledFile));
-    var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
-    assertThat(referenceFile).isRegularFile();
-    assertFilesEqual(referenceFile, decompiledFile);
-  }
-
-  private static List<Path> collectClasses(Path classFile) {
-    var files = new ArrayList<Path>();
-    files.add(classFile);
-
-    var parent = classFile.getParent();
-    if (parent != null) {
-      var glob = classFile.getFileName().toString().replace(".class", "$*.class");
-      try (DirectoryStream<Path> inner = Files.newDirectoryStream(parent, glob)) {
-        inner.forEach(files::add);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    return files;
-  }
+  @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }
+  @Test public void testPreserveAssignmentToRecord2() { doTest("pkg/PreserveAssignmentToRecord2"); }
+  @Test public void testLambda() { doTest("pkg/TestLambda"); }
+  @Test public void testCustomSyntheticRecords() { doTest("pkg/TestCustomSyntheticRecords"); }
+  @Test public void testFinally() { doTest("pkg/TestFinally"); }
+  @Test public void testEnumInit() { doTest("pkg/TestEnumInit"); }
+  @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
+  @Test public void testNotNullRecord() { doTest("pkg/TestNotNullRecord"); }
+  @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }
+  @Test public void testTryCatchFinallyMismatched() { doTest("pkg/TestTryCatchFinallyMismatched"); }
+  @Test public void testNestedCalls() { doTest("pkg/TestNestedCalls"); }
+  @Test public void testBreakpointsContextProvider() { doTest("com/intellij/tasks/context/java/BreakpointsContextProvider"); }
 }

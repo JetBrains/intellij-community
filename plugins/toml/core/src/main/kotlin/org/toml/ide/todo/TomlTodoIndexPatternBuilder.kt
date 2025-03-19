@@ -14,7 +14,7 @@ import org.toml.lang.lexer.TomlLexer
 import org.toml.lang.psi.TOML_COMMENTS
 import org.toml.lang.psi.TomlFile
 
-class TomlTodoIndexPatternBuilder : IndexPatternBuilder {
+private class TomlTodoIndexPatternBuilder : IndexPatternBuilder {
     override fun getIndexingLexer(file: PsiFile): Lexer? = if (file is TomlFile) TomlLexer() else null
     override fun getCommentTokenSet(file: PsiFile): TokenSet? = if (file is TomlFile) TOML_COMMENTS else null
     override fun getCommentStartDelta(tokenType: IElementType?): Int = if (tokenType in TOML_COMMENTS) 1 else 0

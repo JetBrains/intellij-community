@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.*;
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
+@ApiStatus.Internal
 public final class InitialInfoBuilder {
   private static final RangesAssert ASSERT = new RangesAssert();
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
@@ -48,7 +50,7 @@ public final class InitialInfoBuilder {
 
   private InitialInfoBuilder(final Block rootBlock,
                              final FormattingDocumentModel model,
-                             @Nullable final FormatTextRanges affectedRanges,
+                             final @Nullable FormatTextRanges affectedRanges,
                              final CommonCodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
                              @NotNull FormattingProgressCallback progressCallback)
@@ -62,8 +64,7 @@ public final class InitialInfoBuilder {
     myPositionOfInterest = positionOfInterest;
   }
 
-  @NotNull
-  static InitialInfoBuilder prepareToBuildBlocksSequentially(
+  static @NotNull InitialInfoBuilder prepareToBuildBlocksSequentially(
     Block root,
     FormattingDocumentModel model,
     FormatProcessor.FormatOptions formatOptions,
@@ -112,9 +113,9 @@ public final class InitialInfoBuilder {
 
   private AbstractBlockWrapper buildFrom(final Block rootBlock,
                                          final int index,
-                                         @Nullable final CompositeBlockWrapper parent,
+                                         final @Nullable CompositeBlockWrapper parent,
                                          @Nullable WrapImpl currentWrapParent,
-                                         @Nullable final Block parentBlock)
+                                         final @Nullable Block parentBlock)
   {
     final WrapImpl wrap = (WrapImpl)rootBlock.getWrap();
     if (wrap != null) {
@@ -136,11 +137,7 @@ public final class InitialInfoBuilder {
     if (isInsideFormattingRanges(textRange) || shouldCollectAlignmentsAround(textRange)) {
       final List<Block> subBlocks = rootBlock.getSubBlocks();
       if (subBlocks.isEmpty()) {
-        final AbstractBlockWrapper wrapper = buildLeafBlock(rootBlock, parent, false, index, parentBlock);
-        if (!subBlocks.isEmpty()) {
-          wrapper.setIndent((IndentImpl)subBlocks.get(0).getIndent());
-        }
-        return wrapper;
+        return buildLeafBlock(rootBlock, parent, false, index, parentBlock);
       }
       return buildCompositeBlock(rootBlock, parent, index, currentWrapParent);
     }
@@ -239,7 +236,7 @@ public final class InitialInfoBuilder {
   }
 
   private AbstractBlockWrapper buildLeafBlock(final Block rootBlock,
-                                              @Nullable final CompositeBlockWrapper parent,
+                                              final @Nullable CompositeBlockWrapper parent,
                                               final boolean readOnly,
                                               final int index,
                                               @Nullable Block parentBlock)
@@ -250,7 +247,7 @@ public final class InitialInfoBuilder {
   }
 
   private LeafBlockWrapper doProcessSimpleBlock(final Block rootBlock,
-                                                @Nullable final CompositeBlockWrapper parent,
+                                                final @Nullable CompositeBlockWrapper parent,
                                                 final boolean readOnly,
                                                 final int index,
                                                 @Nullable Block parentBlock)

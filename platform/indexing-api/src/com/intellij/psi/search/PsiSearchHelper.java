@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -36,8 +36,7 @@ public interface PsiSearchHelper {
     }
   }
 
-  @NotNull
-  static PsiSearchHelper getInstance(@NotNull Project project) {
+  static @NotNull PsiSearchHelper getInstance(@NotNull Project project) {
     return project.getService(PsiSearchHelper.class);
   }
 
@@ -194,7 +193,8 @@ public interface PsiSearchHelper {
                                   boolean caseSensitive,
                                   boolean processInjectedPsi);
 
-  default boolean hasIdentifierInFile(@NotNull PsiFile file, @NotNull String name) {
+  @ApiStatus.Internal
+  default boolean hasIdentifierInFile(@NotNull PsiFile psiFile, @NotNull String name) {
     throw new UnsupportedOperationException();
   }
 
@@ -207,11 +207,21 @@ public interface PsiSearchHelper {
                                        boolean caseSensitive);
 
 
+  /**
+   * @deprecated use {@link #isCheapEnoughToSearch(String, GlobalSearchScope, PsiFile)}
+   */
+  @Deprecated
   @NotNull
   SearchCostResult isCheapEnoughToSearch(@NotNull String name,
                                          @NotNull GlobalSearchScope scope,
-                                         @Nullable PsiFile fileToIgnoreOccurrencesIn,
+                                         @Nullable PsiFile psiFileToIgnoreOccurrencesIn,
                                          @Nullable ProgressIndicator progress);
+
+  default @NotNull SearchCostResult isCheapEnoughToSearch(@NotNull String name,
+                                                          @NotNull GlobalSearchScope scope,
+                                                          @Nullable PsiFile psiFileToIgnoreOccurrencesIn) {
+    return isCheapEnoughToSearch(name, scope, psiFileToIgnoreOccurrencesIn, null);
+  }
 
   enum SearchCostResult {
     ZERO_OCCURRENCES, FEW_OCCURRENCES, TOO_MANY_OCCURRENCES

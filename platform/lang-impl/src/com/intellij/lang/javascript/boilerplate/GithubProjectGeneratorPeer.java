@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.intellij.BundleBase;
@@ -6,13 +6,13 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.WebProjectGenerator;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ReloadableComboBoxPanel;
 import com.intellij.util.ui.ReloadablePanel;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
+public final class GithubProjectGeneratorPeer implements WebProjectGenerator.GeneratorPeer<GithubTagInfo> {
 
   public static String getGithubZipballUrl(String ghUserName,String ghRepoName, String branch) {
     return String.format("https://github.com/%s/%s/zipball/%s", ghUserName, ghRepoName, branch);
@@ -38,7 +38,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
 
         List<GithubTagInfo> sortedTags = createSortedTagList(tags);
         GithubTagInfo selectedItem = getSelectedValue();
-        if (selectedItem == null && sortedTags.size() > 0) {
+        if (selectedItem == null && !sortedTags.isEmpty()) {
           selectedItem = sortedTags.get(0);
         }
         myComboBox.removeAllItems();
@@ -69,7 +69,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
         int count = myComboBox.getItemCount();
         Set<GithubTagInfo> oldTags = new HashSet<>();
         for (int i = 1; i < count; i++) {
-          GithubTagInfo item = ObjectUtils.tryCast(myComboBox.getItemAt(i), GithubTagInfo.class);
+          GithubTagInfo item = myComboBox.getItemAt(i);
           if (item != null) {
             oldTags.add(item);
           }
@@ -77,9 +77,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
         return !oldTags.equals(newTags);
       }
 
-      @NotNull
       @Override
-      protected JComboBox<GithubTagInfo> createValuesComboBox() {
+      protected @NotNull JComboBox<GithubTagInfo> createValuesComboBox() {
         JComboBox<GithubTagInfo> box = super.createValuesComboBox();
         box.setRenderer(SimpleListCellRenderer.create((label, tag, index) -> {
           final String text;
@@ -136,12 +135,11 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     myReloadableComboBoxPanel.onUpdateValues(tags);
   }
 
-  void onTagsUpdateError(@NotNull final @NlsContexts.DialogMessage String errorMessage) {
+  void onTagsUpdateError(final @NotNull @NlsContexts.DialogMessage String errorMessage) {
     myReloadableComboBoxPanel.onValuesUpdateError(errorMessage);
   }
 
-  @NotNull
-  private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
+  private static @NotNull List<GithubTagInfo> createSortedTagList(@NotNull Collection<? extends GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = new ArrayList<>(tags);
     sortedTags.sort((tag1, tag2) -> {
       GithubTagInfo.Version v1 = tag1.getVersion();
@@ -158,9 +156,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField, @NotNull Runnable checkValid) {
     return myComponent;
   }
 
@@ -170,9 +167,8 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
     settingsStep.addSettingsComponent(myReloadableComboBoxPanel.getErrorComponent());
   }
 
-  @NotNull
   @Override
-  public GithubTagInfo getSettings() {
+  public @NotNull GithubTagInfo getSettings() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag == null) {
       throw new RuntimeException("[internal error] No versions available.");
@@ -181,8 +177,7 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   }
 
   @Override
-  @Nullable
-  public ValidationInfo validate() {
+  public @Nullable ValidationInfo validate() {
     GithubTagInfo tag = myReloadableComboBoxPanel.getSelectedValue();
     if (tag != null) {
       return null;

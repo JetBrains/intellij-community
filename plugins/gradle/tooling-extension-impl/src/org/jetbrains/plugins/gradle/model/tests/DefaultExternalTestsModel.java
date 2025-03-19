@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.tests;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,12 +7,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class DefaultExternalTestsModel implements ExternalTestsModel {
-  @NotNull
-  private List<ExternalTestSourceMapping> sourceTestMappings = Collections.emptyList();
+  private @NotNull List<ExternalTestSourceMapping> sourceTestMappings = Collections.emptyList();
 
   @Override
-  @NotNull
-  public List<ExternalTestSourceMapping> getTestSourceMappings() {
+  public @NotNull List<ExternalTestSourceMapping> getTestSourceMappings() {
     return Collections.unmodifiableList(sourceTestMappings);
   }
 

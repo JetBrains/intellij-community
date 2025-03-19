@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.lastModified
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
 import org.eclipse.jgit.errors.TransportException
@@ -25,6 +26,8 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.inputStream
 
 class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>,
                            dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
@@ -91,7 +94,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun isRepositoryExists(): Boolean {
     val repo = _repository
     if (repo == null) {
-      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setUseSystemConfig(false).setUseUserConfig(false).setup().objectDirectory.exists()
+      return Files.exists(dir) && FileRepositoryBuilder().setWorkTree(dir.toFile()).setAutonomous(true).setup().objectDirectory.exists()
     }
     else {
       return repo.objectDatabase.exists()
@@ -101,7 +104,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun hasUpstream() = getUpstream() != null
 
   override fun addToIndex(file: Path, path: String, content: ByteArray) {
-    repository.edit(AddLoadedFile(path, content, file.lastModified().toMillis()))
+    repository.edit(AddLoadedFile(path, content, file.getLastModifiedTime().toMillis()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {
@@ -146,7 +149,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun getAheadCommitsCount() = repository.getAheadCommitCount()
 
-  override suspend fun push() {
+  override suspend fun push():Unit = reportRawProgress { reporter ->
     LOG.debug("Push")
 
     val refSpecs = SmartList(RemoteConfig(repository.config, Constants.DEFAULT_REMOTE_NAME).pushRefSpecs)
@@ -157,7 +160,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       }
     }
 
-    val monitor = progressMonitor()
+    val monitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
     for (transport in Transport.openAll(repository, Constants.DEFAULT_REMOTE_NAME, Transport.Operation.PUSH)) {
       for (attempt in 0..1) {
         transport.credentialsProvider = credentialsProvider

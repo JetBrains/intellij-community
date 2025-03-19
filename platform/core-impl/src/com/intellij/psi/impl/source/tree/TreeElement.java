@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable {
+public abstract class TreeElement extends ElementBase implements ASTNode, ReparseableASTNode, Cloneable, LighterASTNode {
   public static final TreeElement[] EMPTY_ARRAY = new TreeElement[0];
   private TreeElement myNextSibling;
   private TreeElement myPrevSibling;
@@ -41,9 +42,8 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return node == null ? null : (PsiFileImpl)node.getCachedPsi();
   }
 
-  @NotNull
   @Override
-  public Object clone() {
+  public @NotNull Object clone() {
     TreeElement clone = (TreeElement)super.clone();
     clone.myNextSibling = null;
     clone.myPrevSibling = null;
@@ -140,6 +140,19 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
     return offsetInParent;
   }
 
+  @Override
+  public abstract int getTextLength();
+
+  @Override
+  public IElementType getTokenType() {
+    return getElementType();
+  }
+
+  @Override
+  public int getEndOffset() {
+    return getStartOffset() + getTextLength();
+  }
+
   public int getTextOffset() {
     return getStartOffset();
   }
@@ -159,8 +172,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Element" + "(" + getElementType() + ")";
   }
 
@@ -177,9 +189,11 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   final void setTreeParent(CompositeElement parent) {
     if (parent == myParent) return;
 
-    PsiFileImpl file = getCachedFile(this);
-    if (file != null) {
-      file.beforeAstChange();
+    if (myParent != null) {
+      PsiFileImpl file = getCachedFile(this);
+      if (file != null) {
+        file.beforeAstChange();
+      }
     }
 
     myParent = parent;
@@ -408,8 +422,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Repars
   }
 
   @Override
-  @NotNull
-  public IElementType getElementType() {
+  public @NotNull IElementType getElementType() {
     return myType;
   }
 

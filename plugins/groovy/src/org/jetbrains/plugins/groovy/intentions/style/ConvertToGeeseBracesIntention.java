@@ -1,40 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -43,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 /**
  * @author Max Medvedev
  */
-public class ConvertToGeeseBracesIntention extends Intention {
+public final class ConvertToGeeseBracesIntention extends GrPsiUpdateIntention {
   private static final Logger LOG = Logger.getInstance(ConvertToGeeseBracesIntention.class);
 
   private static final PsiElementPredicate MY_PREDICATE = new PsiElementPredicate() {
@@ -67,8 +51,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
     }
   };
 
-  @Nullable
-  private static PsiElement getPrev(PsiElement element) {
+  private static @Nullable PsiElement getPrev(PsiElement element) {
     PsiElement prev = PsiUtil.getPreviousNonWhitespaceToken(element);
     if (prev != null && prev.getNode().getElementType() == GroovyTokenTypes.mNLS) {
       prev = PsiUtil.getPreviousNonWhitespaceToken(prev);
@@ -76,24 +59,21 @@ public class ConvertToGeeseBracesIntention extends Intention {
     return prev;
   }
 
-  @Nullable
-  private static PsiElement getNext(PsiElement element) {
+  private static @Nullable PsiElement getNext(PsiElement element) {
     PsiElement next = GeeseUtil.getNextNonWhitespaceToken(element);
     if (next != null && next.getNode().getElementType() == GroovyTokenTypes.mNLS) next = GeeseUtil.getNextNonWhitespaceToken(next);
     return next;
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (PsiImplUtil.isWhiteSpaceOrNls(element)) {
       element = PsiTreeUtil.prevLeaf(element);
     }
     LOG.assertTrue(GeeseUtil.isClosureRBrace(element) && GeeseUtil.isClosureContainLF(element));
 
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     PsiFile file = element.getContainingFile();
-    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    Document document = file.getViewProvider().getDocument();
 
     TextRange textRange = findRange(element);
     int startOffset = textRange.getStartOffset();
@@ -106,7 +86,7 @@ public class ConvertToGeeseBracesIntention extends Intention {
       if (text.charAt(i) == '\n') document.deleteString(i, i + 1);
     }
 
-    CodeStyleManager.getInstance(project).reformatText(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+    CodeStyleManager.getInstance(context.project()).reformatText(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
   }
 
   private static TextRange findRange(PsiElement element) {
@@ -128,9 +108,8 @@ public class ConvertToGeeseBracesIntention extends Intention {
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return MY_PREDICATE;
   }
 }

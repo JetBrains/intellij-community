@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,10 +19,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.paint.LinePainter2D;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
-    if (!myEditor.getSettings().isIndentGuidesShown() || !HighlightingFeature.TEXT_BLOCKS.isAvailable(myFile)) {
+    if (!myEditor.getSettings().isIndentGuidesShown() || !PsiUtil.isAvailable(JavaFeature.TEXT_BLOCKS, myFile)) {
       return;
     }
     Document document = myEditor.getDocument();
@@ -105,14 +106,15 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       int indent = StringContentIndentUtil.getIndent(highlighter);
       if (indent <= 0) return;
 
-      VisualPosition startPosition = editor.offsetToVisualPosition(highlighter.getStartOffset());
-      Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent - 1));
-
-      Point right = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent));
-      float x = (start.x + right.x) / 2f;
-
-      VisualPosition endPosition = editor.offsetToVisualPosition(highlighter.getEndOffset());
-      Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, indent - 1));
+      int startOffset = highlighter.getStartOffset();
+      int endOffset = highlighter.getEndOffset();
+      int startLine = editor.offsetToVisualLine(startOffset, false);
+      int endLine = editor.offsetToVisualLine(endOffset, false);
+      if (startLine == endLine && editor.getFoldingModel().isOffsetCollapsed(startOffset)) {
+        return;
+      }
+      Point start = editor.visualPositionToXY(new VisualPosition(startLine, indent - 1));
+      Point end = editor.visualPositionToXY(new VisualPosition(endLine, indent - 1));
 
       EditorColorsScheme scheme = editor.getColorsScheme();
       g.setColor(scheme.getColor(EditorColors.STRING_CONTENT_INDENT_GUIDE_COLOR));
@@ -126,6 +128,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       float startY = start.y + baseline - ascent;
       float endY = end.y + baseline + descent;
 
+      Point right = editor.visualPositionToXY(new VisualPosition(startLine, indent));
+      float x = (start.x + right.x) / 2f;
       LinePainter2D.paint((Graphics2D)g, x, startY, x, endY);
     }
   }
@@ -148,8 +152,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       myIndents.add(new StringContentIndent(model.myBaseIndent, contentRange.getStartOffset(), contentRange.getEndOffset()));
     }
 
-    @Nullable
-    private TextRange getContentRange(@NotNull TextRange blockRange) {
+    private @Nullable TextRange getContentRange(@NotNull TextRange blockRange) {
       int nStartLine = myDocument.getLineNumber(blockRange.getStartOffset()) + 1;
       int nEndLine = myDocument.getLineNumber(blockRange.getEndOffset());
       TextRange lastLineRange = new TextRange(myDocument.getLineStartOffset(nEndLine), myDocument.getLineEndOffset(nEndLine));
@@ -175,8 +178,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         myRange = range;
       }
 
-      @Nullable
-      private static TextBlockModel create(@Nullable PsiLiteralExpression expression) {
+      private static @Nullable TextBlockModel create(@Nullable PsiLiteralExpression expression) {
         if (expression == null || !expression.isTextBlock()) return null;
         int baseIndent = getIndent(expression);
         if (baseIndent == -1) return null;
@@ -198,8 +200,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         return indent;
       }
 
-      @Nullable
-      private static IndentType findIndentType(String @NotNull [] lines, int indent) {
+      private static @Nullable IndentType findIndentType(String @NotNull [] lines, int indent) {
         IndentType indentType = null;
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i];
@@ -227,9 +228,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
         SPACES,
         TABS;
 
-        @Nullable
         @Contract(pure = true)
-        private static IndentType of(char c) {
+        private static @Nullable IndentType of(char c) {
           if (c == ' ') return SPACES;
           if (c == '\t') return TABS;
           return null;

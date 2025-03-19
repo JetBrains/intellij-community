@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -20,7 +20,7 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -46,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class InteractiveTemplateStateProcessor implements TemplateStateProcessor {
-  @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
+  private static final @NonNls String DUMMY_IDENTIFIER = "xxx";
 
   private boolean myLookupShown;
 
@@ -68,20 +68,19 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
   }
 
   /**
-   * Allows to check if given offset points to white space element within the given PSI file and return that white space
+   * Allows checking if given offset points to a white space element within the given PSI file and return that white space
    * element in the case of positive answer.
    *
    * @param file    target file
-   * @param offset  offset that might point to white space element within the given PSI file
-   * @return        target white space element for the given offset within the given file (if any); {@code null} otherwise
+   * @param offset  offset that might point to a white space element within the given PSI file
+   * @return        target a white space element for the given offset within the given file (if any); {@code null} otherwise
    */
   @Override
   public PsiElement findWhiteSpaceNode(PsiFile file, int offset) {
     return doFindWhiteSpaceNode(file, offset).first;
   }
 
-  @NotNull
-  private static Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
+  private static @NotNull Pair<PsiElement, CharTable> doFindWhiteSpaceNode(@NotNull PsiFile file, int offset) {
     ASTNode astNode = SourceTreeToPsiMap.psiElementToTree(file);
     if (!(astNode instanceof FileElement)) {
       return new Pair<>(null, null);
@@ -122,12 +121,12 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
         assert lookupItem != null : expressionNode;
       }
 
-      AsyncEditorLoader.performWhenLoaded(editor, () ->
+      AsyncEditorLoader.Companion.performWhenLoaded(editor, () ->
         runLookup(state, lookupItems, project, editor, expressionNode.getAdvertisingText(), expressionNode.getLookupFocusDegree()));
     }
   }
 
-  private void runLookup(TemplateState state, final List<? extends TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
+  private void runLookup(TemplateState state, final List<TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
                          @Nullable @NlsContexts.PopupAdvertisement String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
     if (state.isDisposed()) return;
 
@@ -173,9 +172,9 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     });
   }
 
-  private static void insertSingleItem(Editor editor, List<? extends TemplateExpressionLookupElement> lookupItems) {
+  private static void insertSingleItem(Editor editor, List<TemplateExpressionLookupElement> lookupItems) {
     TemplateExpressionLookupElement first = lookupItems.get(0);
-    EditorModificationUtil.insertStringAtCaret(editor, first.getLookupString());
+    EditorModificationUtilEx.insertStringAtCaret(editor, first.getLookupString());
     first.handleTemplateInsert(lookupItems, Lookup.AUTO_INSERT_SELECT_CHAR);
   }
 
@@ -208,8 +207,8 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
   /**
    * Formatter trims line that contains white spaces symbols only, however, there is a possible case that we want
-   * to preserve them for particular line
-   * (e.g. for live template that defines line with whitespaces that contains $END$ marker: templateText   $END$).
+   * to preserve them for a particular line
+   * (e.g., for live template that defines line with whitespaces that contains $END$ marker: templateText   $END$).
    * <p/>
    * Current approach is to do the following:
    * <pre>
@@ -225,8 +224,8 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
    * <p/>
    * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
    * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
-   * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
-   * are updated correspondingly after current method call and whole white space region is reformatted.
+   * E.g., there is a possible case that a particular range marker serves for defining formatting range, hence, its start/end offsets
+   * are updated correspondingly after the current method call, and a whole white space region is reformatted.
    *
    * @param file        target PSI file
    * @param document    target document
@@ -234,8 +233,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
    * @return            text range that points to the newly inserted dummy text if any; {@code null} otherwise
    * @throws IncorrectOperationException  if given file is read-only
    */
-  @Nullable
-  private static TextRange doInsertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
+  private static @Nullable TextRange doInsertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
     CharSequence text = document.getImmutableCharSequence();
     if (offset <= 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
@@ -248,7 +246,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
     int end = offset;
     for (; end < text.length(); end++) {
       if (text.charAt(end) == '\n') {
-        break; // line is empty till the end
+        break; // the line is empty till the end
       }
       if (!isWhiteSpaceSymbol(text.charAt(end))) {
         return null;
@@ -288,8 +286,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
 
   private static final class MyBasicUndoableAction extends BasicUndoableAction implements Disposable {
     private final Project myProject;
-    @Nullable
-    private TemplateState myTemplateState;
+    private @Nullable TemplateState myTemplateState;
 
     private MyBasicUndoableAction(@NotNull TemplateState templateState, Project project, @Nullable Document document) {
       super(document != null ? new DocumentReference[]{DocumentReferenceManager.getInstance().create(document)} : null);

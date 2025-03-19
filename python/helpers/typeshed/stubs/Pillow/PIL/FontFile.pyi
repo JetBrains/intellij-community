@@ -1,16 +1,16 @@
-from typing import Any
+from _typeshed import Incomplete
 
 WIDTH: int
 
 def puti16(fp, values) -> None: ...
 
 class FontFile:
-    bitmap: Any
-    info: Any
-    glyph: Any
+    bitmap: Incomplete
+    info: Incomplete
+    glyph: Incomplete
     def __init__(self) -> None: ...
     def __getitem__(self, ix): ...
-    ysize: Any
-    metrics: Any
+    ysize: Incomplete
+    metrics: Incomplete
     def compile(self): ...
     def save(self, filename) -> None: ...

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.ide.DataManager;
@@ -27,6 +13,7 @@ import com.intellij.ui.AnActionButtonRunnable;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ui.UI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +23,20 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.Function;
 
-public class ListEditForm {
-  JPanel contentPanel;
-  ListTable table;
+public final class ListEditForm {
+  private JPanel contentPanel;
+  private final ListTable table;
   private final @Nullable Function<@NotNull Project, @Nullable String> myNewElementSupplier;
 
   public ListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
     myNewElementSupplier = null;
     contentPanel = setupActions(ToolbarDecorator.createDecorator(table), "").createPanel();
+  }
+
+  @ApiStatus.Internal
+  public ListTable getTable() {
+    return table;
   }
 
   public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList) {
@@ -58,6 +50,15 @@ public class ListEditForm {
     this(title, label, stringList, defaultElement, null);
   }
 
+  /**
+   * Creates a form for editing a list of strings.
+   *
+   * @param title The title of the form.
+   * @param label The label for the content panel.
+   * @param stringList The list of strings to be edited.
+   * @param defaultElement The default element to be used in the list.
+   * @param newElementSupplier A function that supplies a new element for the list. If it returns null, defaultElement is used.
+   */
   public ListEditForm(@NlsContexts.ColumnName String title, @NlsContexts.Label String label, List<String> stringList, @NotNull String defaultElement,
                       @Nullable Function<@NotNull Project, @Nullable String> newElementSupplier) {
     table = new ListTable(new ListWrappingTableModel(stringList, title));
@@ -83,7 +84,10 @@ public class ListEditForm {
             final ListWrappingTableModel tableModel = table.getModel();
             if (project != null) {
               String newElement = myNewElementSupplier.apply(project);
-              if (newElement == null) return;
+              if (newElement == null) {
+                setDefaultElement();
+                return;
+              }
               final int index = tableModel.indexOf(newElement, 0);
               if (index < 0) {
                 tableModel.addRow(newElement);
@@ -96,6 +100,10 @@ public class ListEditForm {
               return;
             }
           }
+          setDefaultElement();
+        }
+
+        private void setDefaultElement() {
           final ListWrappingTableModel tableModel = table.getModel();
           tableModel.addRow(defaultElement);
           EventQueue.invokeLater(() -> {

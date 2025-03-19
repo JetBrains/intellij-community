@@ -1,21 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import org.jetbrains.annotations.NonNls;
 
 
 public final class SwingProperties {
-  @NonNls public static final String TEXT = "text";
-  @NonNls public static final String LABEL_FOR = "labelFor";
-  @NonNls public static final String SELECTED_INDEX = "selectedIndex";
-  @NonNls public static final String SELECTED_COMPONENT = "selectedComponent";
-  @NonNls public static final String MODEL = "model";
-  @NonNls public static final String LABEL = "label";
-  @NonNls public static final String ACTION_COMMAND = "actionCommand";
-  @NonNls public static final String PREFERRED_SIZE = "preferredSize";
-  @NonNls public static final String MINIMUM_SIZE = "minimumSize";
-  @NonNls public static final String MAXIMUM_SIZE = "maximumSize";
-  @NonNls public static final String VISIBLE = "visible";
+  public static final @NonNls String TEXT = "text";
+  public static final @NonNls String LABEL_FOR = "labelFor";
+  public static final @NonNls String SELECTED_INDEX = "selectedIndex";
+  public static final @NonNls String SELECTED_COMPONENT = "selectedComponent";
+  public static final @NonNls String MODEL = "model";
+  public static final @NonNls String LABEL = "label";
+  public static final @NonNls String ACTION_COMMAND = "actionCommand";
+  public static final @NonNls String PREFERRED_SIZE = "preferredSize";
+  public static final @NonNls String MINIMUM_SIZE = "minimumSize";
+  public static final @NonNls String MAXIMUM_SIZE = "maximumSize";
+  public static final @NonNls String VISIBLE = "visible";
 
   private SwingProperties() {
   }

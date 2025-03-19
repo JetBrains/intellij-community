@@ -19,16 +19,17 @@ public final class ProjectProductionScope extends NamedScope {
   public static final ProjectProductionScope INSTANCE = new ProjectProductionScope();
 
   private ProjectProductionScope() {
-    super("Production", () ->getNameText(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production), new FilteredPackageSet(getNameText()) {
-      @Override
-      public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
-        ProjectFileIndex index = ProjectFilesScope.getFileIndex(project);
-        return index != null
-               && index.isInSource(file)
-               && !index.isInLibrary(file)
-               && !TestSourcesFilter.isTestSources(file, project);
-      }
-    });
+    super("Production", () -> getNameText(), IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Production),
+          new FilteredPackageSet(getNameText()) {
+            @Override
+            public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
+              ProjectFileIndex index = ProjectFilesScope.getFileIndex(project);
+              return index != null
+                     && index.isInSource(file)
+                     && !index.isInLibrary(file)
+                     && !TestSourcesFilter.isTestSources(file, project);
+            }
+          });
   }
 
   public static String getNameText() {

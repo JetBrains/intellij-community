@@ -11,3 +11,6 @@ fun newFun(p1: String, vararg p2: Int){}
 fun foo() {
     <caret>oldFun("a", 1, 2, 3)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

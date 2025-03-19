@@ -1,22 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.process.*
-import com.intellij.execution.target.*
+import com.intellij.execution.target.HostPort
+import com.intellij.execution.target.TargetPlatform
+import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
+import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.PlatformUtils
 import com.intellij.util.io.BaseOutputReader
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
@@ -30,10 +31,8 @@ import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.service.execution.GradleServerConfigurationProvider
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
-import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.io.ByteArrayInputStream
 import java.net.InetAddress
 import java.util.concurrent.Future
@@ -42,25 +41,28 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
                                   private val consumerOperationParameters: ConsumerOperationParameters,
                                   private val prepareTaskState: Boolean) {
 
-  fun run(classpathInferer: GradleServerClasspathInferer,
-          targetBuildParametersBuilder: TargetBuildParameters.Builder,
-          resultHandler: ResultHandler<Any?>) {
+  fun run(
+    classloaderHolder: GradleToolingProxyClassloaderHolder,
+    targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
+    resultHandler: ResultHandler<Any?>,
+  ) {
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
     consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, connection, prepareTaskState)
-    val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
-                                                                progressIndicator)
-    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler,classpathInferer)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, connection, prepareTaskState)
+    val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters, progressIndicator)
+    runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classloaderHolder)
   }
 
-  private fun runTargetProcess(targetedCommandLine: TargetedCommandLine,
-                               serverEnvironmentSetup: GradleServerEnvironmentSetupImpl,
-                               targetProgressIndicator: GradleServerProgressIndicator,
-                               resultHandler: ResultHandler<Any?>,
-                               classpathInferer: GradleServerClasspathInferer) {
+  private fun runTargetProcess(
+    targetedCommandLine: TargetedCommandLine,
+    serverEnvironmentSetup: GradleServerEnvironmentSetup,
+    targetProgressIndicator: GradleServerProgressIndicator,
+    resultHandler: ResultHandler<Any?>,
+    classloaderHolder: GradleToolingProxyClassloaderHolder,
+  ) {
     targetProgressIndicator.checkCanceled()
-    val remoteEnvironment = serverEnvironmentSetup.targetEnvironment
+    val remoteEnvironment = serverEnvironmentSetup.getTargetEnvironment()
     val process = remoteEnvironment.createProcess(targetedCommandLine, EmptyProgressIndicator())
     val processHandler: CapturingProcessHandler = object :
       CapturingProcessHandler(process, targetedCommandLine.charset, targetedCommandLine.getCommandPresentation(remoteEnvironment)) {
@@ -68,21 +70,20 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         return BaseOutputReader.Options.forMostlySilentProcess()
       }
     }
-    val targetBuildParameters = serverEnvironmentSetup.targetBuildParameters
-    val projectUploadRoot = serverEnvironmentSetup.projectUploadRoot
+    val projectUploadRoot = serverEnvironmentSetup.getProjectUploadRoot()
     val targetProjectBasePath = projectUploadRoot.getTargetUploadPath().apply(remoteEnvironment)
     val localProjectBasePath = projectUploadRoot.localRootPath.toString()
     val targetPlatform = remoteEnvironment.targetPlatform
 
     val serverConfigurationProvider = connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
     val connectionAddressResolver: (HostPort) -> HostPort = {
-      val serverBindingPort = serverEnvironmentSetup.serverBindingPort
+      val serverBindingPort = serverEnvironmentSetup.getServerBindingPort()
       val localPort = serverBindingPort?.localValue?.blockingGet(0)
       val targetPort = serverBindingPort?.targetValue?.blockingGet(0)
       val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
-      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, hostPort) ?: hostPort
+      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.getEnvironmentConfiguration(), hostPort) ?: hostPort
     }
-    val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver, classpathInferer) {
+    val gradleServerEventsListener = GradleServerEventsListener(serverEnvironmentSetup, connectionAddressResolver, classloaderHolder) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -105,17 +106,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         }
       }
     }
-
-    val appStartedMessage = if (connection.getUserData(targetPreparationKey) == true || PlatformUtils.isFleetBackend()) null
-    else {
-      connection.putUserData(targetPreparationKey, true)
-      val targetTypeId = serverEnvironmentSetup.environmentConfiguration.typeId
-      val targetDisplayName = TargetEnvironmentType.EXTENSION_NAME.findFirstSafe { it.id == targetTypeId }?.displayName
-      targetDisplayName?.run { GradleBundle.message("gradle.target.execution.running", this) + "\n" }
-    }
-    processHandler.addProcessListener(
-      GradleServerProcessListener(appStartedMessage, targetProgressIndicator, resultHandler, gradleServerEventsListener)
-    )
+    val listener = GradleServerProcessListener(targetProgressIndicator, resultHandler, gradleServerEventsListener)
+    processHandler.addProcessListener(listener)
     processHandler.runProcessWithProgressIndicator(targetProgressIndicator.progressIndicator, -1, true)
   }
 
@@ -163,32 +155,41 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     buf.append(text.substring(pathIndexEnd))
     return buf.toString()
   }
-  private class GradleServerEventsListener(private val targetBuildParameters: TargetBuildParameters,
-                                           private val connectionAddressResolver: (HostPort) -> HostPort,
-                                           private val classpathInferer: GradleServerClasspathInferer,
-                                           private val buildEventConsumer: BuildEventConsumer) {
+
+  private class GradleServerEventsListener(
+    private val serverEnvironmentSetup: GradleServerEnvironmentSetup,
+    private val connectionAddressResolver: (HostPort) -> HostPort,
+    private val classloaderHolder: GradleToolingProxyClassloaderHolder,
+    private val buildEventConsumer: BuildEventConsumer,
+  ) {
+
     private lateinit var listenerTask: Future<*>
+
     fun start(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
       check(!::listenerTask.isInitialized) { "Gradle server events listener has already been started" }
       listenerTask = ApplicationManager.getApplication().executeOnPooledThread {
         try {
-          val hostPort = connectionAddressResolver.invoke(HostPort(hostName, port))
-          doRun(targetBuildParameters, hostPort, resultHandler, buildEventConsumer)
+          doRun(hostName, port, resultHandler)
         }
         catch (t: Throwable) {
           resultHandler.onFailure(GradleConnectionException(t.message, t))
         }
       }
     }
-    private fun doRun(targetBuildParameters: TargetBuildParameters,
-                      hostName: HostPort,
-                      resultHandler: ResultHandler<Any?>,
-                      buildEventConsumer: BuildEventConsumer) {
-      val inetAddress = InetAddress.getByName(hostName.host)
-      val connectCompletion = TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostName.port))
+
+    private fun createConnection(hostName: String, port: Int): RemoteConnection<Message> {
+      val hostPort = connectionAddressResolver.invoke(HostPort(hostName, port))
+      val inetAddress = InetAddress.getByName(hostPort.host)
+      val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port)) }
       val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
-      val connection = connectCompletion.create(Serializers.stateful(serializer))
-      connection.dispatch(BuildEvent(targetBuildParameters))
+      return connectCompletion.create(Serializers.stateful(serializer))
+    }
+
+    private fun doRun(hostName: String, port: Int, resultHandler: ResultHandler<Any?>) {
+
+      val connection = createConnection(hostName, port)
+
+      connection.dispatch(BuildEvent(serverEnvironmentSetup.getTargetBuildParameters()))
       connection.flush()
 
       try {
@@ -204,14 +205,18 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
               resultHandler.onFailure(message.value as? GradleConnectionException ?: GradleConnectionException(message.value.message))
               break@loop
             }
+            is BuildEvent -> {
+              buildEventConsumer.dispatch(message.payload)
+            }
             is org.jetbrains.plugins.gradle.tooling.proxy.Output -> {
               buildEventConsumer.dispatch(message)
             }
-            !is BuildEvent -> {
-              break@loop
+            is org.jetbrains.plugins.gradle.tooling.proxy.IntermediateResult -> {
+              val value = deserializeIfNeeded(message.value)
+              serverEnvironmentSetup.getTargetIntermediateResultHandler().onResult(message.type, value)
             }
             else -> {
-              buildEventConsumer.dispatch(message.payload)
+              break@loop
             }
           }
         }
@@ -223,7 +228,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     private fun deserializeIfNeeded(value: Any?): Any? {
       val bytes = value as? ByteArray ?: return value
-      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classpathInferer.getClassloaders()).use {
+      val deserialized = MultiLoaderObjectInputStream(ByteArrayInputStream(bytes), classloaderHolder.getClassloaders()).use {
         it.readObject()
       }
       return deserialized
@@ -251,17 +256,18 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
           try {
             lock.wait(100)
           }
-          catch (ignore: InterruptedException) {
+          catch (_: InterruptedException) {
           }
         }
       }
     }
   }
 
-  private class GradleServerProcessListener(private val appStartedMessage: @Nls String?,
-                                            private val targetProgressIndicator: TargetProgressIndicator,
-                                            private val resultHandler: ResultHandler<Any?>,
-                                            private val gradleServerEventsListener: GradleServerEventsListener) : ProcessListener {
+  private class GradleServerProcessListener(
+    private val targetProgressIndicator: TargetProgressIndicator,
+    private val resultHandler: ResultHandler<Any?>,
+    private val gradleServerEventsListener: GradleServerEventsListener,
+  ) : ProcessListener {
     @Volatile
     private var connectionAddressReceived = false
 
@@ -274,14 +280,10 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         resultHandler.onComplete(result)
       }
 
-      override fun onFailure(gradleConnectionException: GradleConnectionException?) {
+      override fun onFailure(gradleConnectionException: GradleConnectionException) {
         resultReceived = true
         resultHandler.onFailure(gradleConnectionException)
       }
-    }
-
-    override fun startNotified(event: ProcessEvent) {
-      appStartedMessage?.let { targetProgressIndicator.addText(it, ProcessOutputType.STDOUT) }
     }
 
     override fun processTerminated(event: ProcessEvent) {
@@ -321,24 +323,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
   }
 
-  internal class GradleServerProgressIndicator(private val taskId: ExternalSystemTaskId,
-                                               private val taskListener: ExternalSystemTaskNotificationListener?) : TargetProgressIndicator {
-    val progressIndicator = EmptyProgressIndicator().apply { start() }
-
-    override fun addText(text: String, outputType: Key<*>) {
-      taskListener?.onTaskOutput(taskId, text, outputType != ProcessOutputTypes.STDERR)
-    }
-
-    override fun stop() = progressIndicator.stop()
-    override fun isStopped(): Boolean = !progressIndicator.isRunning
-    fun cancel() = progressIndicator.cancel()
-    override fun isCanceled(): Boolean = progressIndicator.isCanceled
-    fun checkCanceled() = progressIndicator.checkCanceled()
-  }
-
   companion object {
     private val log = logger<GradleServerRunner>()
-    private val targetPreparationKey = Key.create<Boolean>("target preparation key")
   }
 }
 

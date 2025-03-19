@@ -7,3 +7,4 @@ class Owner(val z: Int) {
 
 fun Owner.foo(y: Int) = y + z
 
+// IGNORE_K2

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.generation.surroundWith.*;
@@ -31,7 +31,7 @@ import java.util.List;
 public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
   private static final String BASE_PATH = "/codeInsight/generation/surroundWith/java/";
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   private enum SurroundType {
     IF(new JavaWithIfSurrounder()),
     IF_ELSE(new JavaWithIfElseSurrounder()),
@@ -84,6 +84,18 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
       doTest(String.format(template, StringUtil.capitalize(type.toFileName())), type.getSurrounder());
     }
   }
+  
+  public void testSurroundCompleteLineWithIf() {
+    doTest(new JavaWithIfSurrounder());
+  }
+
+  public void testSurroundCompleteLineWithIfElse() {
+    doTest(new JavaWithIfElseSurrounder());
+  }
+  
+  public void testSurroundCompleteLineWithTryFinally() {
+    doTest(new JavaWithTryFinallySurrounder());
+  }
 
   public void testSurroundWithStatementWithoutSelection() {
     doTest(new JavaWithIfSurrounder());
@@ -132,39 +144,29 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundWithNotNullCheck() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNullCheckSurrounder());
-  }
-
-  public void testSurroundExpressionWithIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithIfForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithNotForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNotSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIfElse() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfElseExpressionSurrounder());
-  }
+  public void testSurroundWithNotNullCheck() { doTest(new JavaWithNullCheckSurrounder()); }
+  public void testSurroundExpressionWithIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithIfForBoxedBooleans() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithNotForBoxedBooleans() { doTest(new JavaWithNotSurrounder()); }
+  public void testSurroundExpressionWithElseIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithElseIfElse() { doTest(new JavaWithIfElseExpressionSurrounder()); }
+  public void testCaseBlockWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithSynchronized() { doTest(new JavaWithSynchronizedSurrounder()); }
+  public void testCaseThrowWithBlock() { doTest(new JavaWithBlockSurrounder()); }
+  public void testCaseThrowWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseThrowWithTryCatch() { doTest(new JavaWithTryCatchSurrounder()); }
+  public void testCatchBlockWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testCatchResultWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testDefaultBlockWithDoWhile() { doTest(new JavaWithDoWhileSurrounder()); }
+  public void testDefaultBlockWithTryFinally() { doTest(new JavaWithTryFinallySurrounder()); }
+  public void testDefaultResultWithRunnable() { doTest(new JavaWithRunnableSurrounder()); }
+  public void testDefaultResultWithTryCatchFinally() { doTest(new JavaWithTryCatchFinallySurrounder()); }
+  public void testDefaultResultWithWhile() { doTest(new JavaWithWhileSurrounder()); }
+  public void testDefaultThrowWithIfElse() { doTest(new JavaWithIfElseSurrounder()); }
 
   public void testSurroundWithTryFinallyUsingIndents() {
     CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
-    boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());
   }
@@ -270,7 +272,7 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
                              }
                             }""");
     JavaFoldingTestCase.performInitialFolding(getEditor());
-    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile(), null);
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), getEditor(), getFile());
     assertSize(2, ContainerUtil.findAll(actions, a -> {
       String text = a.getTemplatePresentation().getText();
       return text != null && text.contains("while");

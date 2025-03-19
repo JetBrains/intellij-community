@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.search;
 
 import com.intellij.lang.ASTNode;
@@ -36,16 +36,15 @@ import java.util.List;
  *   }
  * </pre>
  */
-class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+final class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   private static final String DELIMITER = "/";
 
   // split with lookaheads and lookbehinds to keep the delimiters
   private static final String DELIMITER_REGEX = "((?<=%1$s)|(?=%1$s))".formatted(DELIMITER);
 
-  @NotNull
-  private static List<PsiReference> getPomTagReferencesToDirectory(@Nullable XmlTag tag,
-                                                                   @NotNull VirtualFile pomFile,
-                                                                   @NotNull VirtualFile directory) {
+  private static @NotNull List<PsiReference> getPomTagReferencesToDirectory(@Nullable XmlTag tag,
+                                                                            @NotNull VirtualFile pomFile,
+                                                                            @NotNull VirtualFile directory) {
     try {
       return doGetPomTagReferencesToDirectory(tag, pomFile, directory);
     } catch (InvalidPathException ignored) {
@@ -53,10 +52,9 @@ class MavenModuleReferenceSearcher extends QueryExecutorBase<PsiReference, Refer
     }
   }
 
-  @NotNull
-  private static List<PsiReference> doGetPomTagReferencesToDirectory(@Nullable XmlTag tag,
-                                                                     @NotNull VirtualFile pomFile,
-                                                                     @NotNull VirtualFile directory) {
+  private static @NotNull List<PsiReference> doGetPomTagReferencesToDirectory(@Nullable XmlTag tag,
+                                                                              @NotNull VirtualFile pomFile,
+                                                                              @NotNull VirtualFile directory) {
     var references = new ArrayList<PsiReference>();
     if (null != tag) {
       var oldDirectoryPath = Paths.get(directory.getPath()).normalize();

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * which logically consists of two {@code int} parts: for {@link TextRange#myStartOffset} and {@link TextRange#myEndOffset}.
  * It might be useful to address atomicity or memory concerns.
  */
+@ApiStatus.Internal
 public final class TextRangeScalarUtil {
   public static long toScalarRange(@NotNull Segment range) {
     return toScalarRange(range.getStartOffset(), range.getEndOffset());
@@ -57,8 +59,16 @@ public final class TextRangeScalarUtil {
     return thisRange.intersects(startOffset(otherRange), endOffset(otherRange));
   }
 
-  @NotNull
-  public static TextRange create(long range) {
+  public static @NotNull TextRange create(long range) {
     return TextRange.create(startOffset(range), endOffset(range));
+  }
+
+  /**
+   * @return {@code range} coerced to be within ({@code start}, {@code end})
+   */
+  public static long coerce(long range, int start, int end) {
+    int newStart = Math.max(startOffset(range), start);
+    int newEnd = Math.max(newStart, Math.min(endOffset(range), end));
+    return toScalarRange(newStart, newEnd);
   }
 }

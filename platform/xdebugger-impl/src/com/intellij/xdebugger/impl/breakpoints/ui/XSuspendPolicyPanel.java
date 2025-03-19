@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+@ApiStatus.Internal
 public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   private JCheckBox mySuspendCheckBox;
   private JRadioButton mySuspendAll;
@@ -29,7 +31,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   private ButtonGroup mySuspendPolicyGroup;
 
   public interface Delegate {
-    void showMoreOptionsIfNeeded();
+    void showActionOptionsIfNeeded();
   }
 
   private Delegate myDelegate;
@@ -47,9 +49,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
           changeEnableState(selected);
         }
 
-        if (myDelegate != null && !selected) {
-          myDelegate.showMoreOptionsIfNeeded();
-        }
+        showActionOptionsIfNeeded(selected);
       }
     });
 
@@ -85,21 +85,31 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
     });
   }
 
+  // If the breakpoint is not suspending, it's reasonable to show other available action options.
+  private void showActionOptionsIfNeeded(boolean suspendIsSelected) {
+    if (myDelegate != null && !suspendIsSelected) {
+      myDelegate.showActionOptionsIfNeeded();
+    }
+  }
+
   private void updateMakeDefaultEnableState() {
-    boolean enabled = !getSelectedSuspendPolicy().equals(
-      ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy());
+    boolean enabled = !getSelectedSuspendPolicy().equals(getDefaultSuspendPolicy());
     ((CardLayout)myMakeDefaultPanel.getLayout()).show(myMakeDefaultPanel, enabled ? "Show" : "Hide");
     myMakeDefaultButton.setVisible(enabled);
     myMakeDefaultButton.setEnabled(enabled);
   }
 
   private void updateSuspendPolicyFont() {
-    SuspendPolicy defaultPolicy = ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
+    SuspendPolicy defaultPolicy = getDefaultSuspendPolicy();
     Font font = mySuspendAll.getFont().deriveFont(Font.PLAIN);
     Font boldFont = font.deriveFont(Font.BOLD);
 
     mySuspendAll.setFont(SuspendPolicy.ALL.equals(defaultPolicy) ? boldFont : font);
     mySuspendThread.setFont(SuspendPolicy.THREAD.equals(defaultPolicy) ? boldFont : font);
+  }
+
+  private SuspendPolicy getDefaultSuspendPolicy() {
+    return ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
   }
 
   private void changeEnableState(boolean selected) {
@@ -140,14 +150,14 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
 
     changeVisibleState(suspendThreadSupported);
     if (suspendThreadSupported) {
-      mySuspendPolicyGroup.setSelected(suspendPolicy == SuspendPolicy.THREAD ? mySuspendThread.getModel() : mySuspendAll.getModel(), true);
+      // Preselect default policy if the current policy is "suspend none".
+      var adjustedPolicy = (suspendPolicy != SuspendPolicy.NONE) ? suspendPolicy : getDefaultSuspendPolicy();
+      mySuspendPolicyGroup.setSelected(adjustedPolicy == SuspendPolicy.THREAD ? mySuspendThread.getModel() : mySuspendAll.getModel(), true);
       changeEnableState(selected);
     }
 
     mySuspendCheckBox.setSelected(selected);
-    if (!selected && myDelegate != null) {
-      myDelegate.showMoreOptionsIfNeeded();
-    }
+    showActionOptionsIfNeeded(selected);
   }
 
   private SuspendPolicy getSelectedSuspendPolicy() {

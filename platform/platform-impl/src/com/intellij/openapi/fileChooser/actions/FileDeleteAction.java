@@ -26,9 +26,9 @@ import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class FileDeleteAction extends FileChooserAction {
+public final class FileDeleteAction extends FileChooserAction {
   /** @deprecated please use {@link FileDeleteAction#FileDeleteAction(String, String, Icon)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public FileDeleteAction() { }
 
   @SuppressWarnings("unused")

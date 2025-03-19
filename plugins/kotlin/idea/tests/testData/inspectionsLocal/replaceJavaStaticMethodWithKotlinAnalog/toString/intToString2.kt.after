@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// FIX: Replace with 'toString' function (may change semantics)
 
 fun foo() {
     val b = listOf(42, 10)

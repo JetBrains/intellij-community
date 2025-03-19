@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -27,10 +28,10 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewImpl
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.usages.similarity.clustering.UsageCluster
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMoreSnippetsLoadedInClustersPreview
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsRefreshClicked
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsShown
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logShowSimilarUsagesLinkClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMoreSnippetsLoadedInClustersPreview
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMostCommonUsagePatternsShown
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logShowSimilarUsagesLinkClicked
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener.Companion.install
@@ -47,7 +48,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-class MostCommonUsagePatternsComponent(
+internal class MostCommonUsagePatternsComponent(
   private val usageView: UsageViewImpl,
   private val session: ClusteringSearchSession,
 ) : SimpleToolWindowPanel(true), Disposable {
@@ -183,10 +184,13 @@ class MostCommonUsagePatternsComponent(
             val previewComponent: UsagePreviewComponent?
             if (index < previewComponents.size) {
               previewComponent = previewComponents[index]
-              previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              //maybe readaction
+              writeIntentReadAction {
+                previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              }
             }
             else {
-              previewComponent = create(usageView, loadedSnippet.usageInfo, loadedSnippet.renderingData, this)
+              previewComponent = writeIntentReadAction { create(usageView, loadedSnippet.usageInfo, loadedSnippet.renderingData, this) }
               myMainPanel.add(previewComponent)
               previewComponents.add(previewComponent)
             }

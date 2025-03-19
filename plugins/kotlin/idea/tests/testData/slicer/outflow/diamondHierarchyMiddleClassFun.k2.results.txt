@@ -1,0 +1,6 @@
+8 override fun foo() = <bold>2</bold> (in B.foo())
+8 	override <bold>fun foo()</bold> = 2 (in B)
+20 		val x = a.<bold>foo()</bold> (in test(A, B, C, D))
+20 			<bold>val x</bold> = a.foo() (in test(A, B, C, D))
+21 		val y = b.<bold>foo()</bold> (in test(A, B, C, D))
+21 			<bold>val y</bold> = b.foo() (in test(A, B, C, D))

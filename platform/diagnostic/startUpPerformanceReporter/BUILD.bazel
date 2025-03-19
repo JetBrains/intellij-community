@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.diagnostic.startUpPerformanceReporter` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
+
+jvm_library(
+  name = "startUpPerformanceReporter",
+  module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jackson",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/util:util-ui",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-protobuf",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/diagnostic",
+    "//platform/diagnostic/telemetry",
+  ]
+)
+### auto-generated section `build intellij.platform.diagnostic.startUpPerformanceReporter` end

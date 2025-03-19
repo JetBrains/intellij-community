@@ -1,19 +1,22 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.GeneralCommandLineTest;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.ApplicationRule;
 import org.jetbrains.annotations.NotNull;
+import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
 
 public class PtyCommandLineTest extends GeneralCommandLineTest {
-  @NotNull
+  public static final @ClassRule ApplicationRule appRule = new ApplicationRule();
+
   @Override
-  protected String filterExpectedOutput(@NotNull String output) {
+  protected @NotNull String filterExpectedOutput(@NotNull String output) {
     if (SystemInfo.isWindows) {
       output = StringUtil.trimTrailing(expandTabs(output, 8));
     }
@@ -25,7 +28,6 @@ public class PtyCommandLineTest extends GeneralCommandLineTest {
     return new PtyCommandLine(Arrays.asList(command)).withWindowsAnsiColorDisabled();
   }
 
-  @NotNull
   private static String expandTabs(String s, @SuppressWarnings("SameParameterValue") int tabSize) {
     StringBuilder sb = new StringBuilder();
 

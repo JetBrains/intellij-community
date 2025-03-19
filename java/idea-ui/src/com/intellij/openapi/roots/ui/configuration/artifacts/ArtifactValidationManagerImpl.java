@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.Disposable;
@@ -43,8 +43,7 @@ public class ArtifactValidationManagerImpl implements Disposable {
     }
   }
 
-  @Nullable
-  public Collection<ArtifactProblemDescription> getProblems(PackagingElementNode<?> node) {
+  public @Nullable Collection<ArtifactProblemDescription> getProblems(PackagingElementNode<?> node) {
     return myProblemsForNodes.get(node);
   }
 

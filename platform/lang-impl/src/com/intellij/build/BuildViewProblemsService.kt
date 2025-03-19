@@ -2,17 +2,21 @@
 package com.intellij.build
 
 import com.intellij.analysis.problemsView.FileProblem
-import com.intellij.analysis.problemsView.HighlightingDuplicate
+import com.intellij.analysis.problemsView.HighlightingDuplicateProblem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.build.events.FileMessageEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
+@Service(Service.Level.PROJECT)
 class BuildViewProblemsService(override val project: Project) : ProblemsProvider {
 
   override fun dispose() {
@@ -32,7 +36,7 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
         val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(event.filePosition.file.toPath()) ?: return@BuildProgressListener
         val problem = FileBuildProblem(event, virtualFile, this)
 
-        val problems = buildIdToFileProblems.getOrPut(buildId, { HashSet() })
+        val problems = buildIdToFileProblems.getOrPut(buildId) { HashSet() }
         if (problems.add(problem)) {
           collector.problemAppeared(problem)
         } else {
@@ -56,7 +60,7 @@ class BuildViewProblemsService(override val project: Project) : ProblemsProvider
 
   class FileBuildProblem(val event: FileMessageEvent,
                          val virtualFile: VirtualFile,
-                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicate {
+                         val problemsProvider: ProblemsProvider) : FileProblem, HighlightingDuplicateProblem {
     override val description: String?
       get() = event.description
     override val file: VirtualFile

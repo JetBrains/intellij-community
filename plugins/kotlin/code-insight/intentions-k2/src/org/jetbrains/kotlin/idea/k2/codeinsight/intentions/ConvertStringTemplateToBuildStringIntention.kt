@@ -1,30 +1,38 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
-import org.jetbrains.kotlin.idea.base.psi.isAnnotationArgument
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertStringTemplateToBuildStringCall
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
-internal class ConvertStringTemplateToBuildStringIntention : AbstractKotlinApplicableIntention<KtStringTemplateExpression>(
-    KtStringTemplateExpression::class
-), LowPriorityAction {
+internal class ConvertStringTemplateToBuildStringIntention :
+    KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(KtStringTemplateExpression::class) {
+
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")
-    override fun getActionName(element: KtStringTemplateExpression): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
+    override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
-        !element.text.startsWith("\"\"\"") && !element.isAnnotationArgument()
+        element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null
 
-    override fun apply(element: KtStringTemplateExpression, project: Project, editor: Editor?) {
+    override fun KaSession.prepareContext(element: KtStringTemplateExpression) {
+    }
+
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtStringTemplateExpression,
+      elementContext: Unit,
+      updater: ModPsiUpdater,
+    ) {
         val buildStringCall = convertStringTemplateToBuildStringCall(element)
         shortenReferences(buildStringCall)
     }

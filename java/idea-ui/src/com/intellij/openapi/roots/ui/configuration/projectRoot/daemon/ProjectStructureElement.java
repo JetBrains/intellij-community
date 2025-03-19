@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
@@ -14,15 +15,13 @@ public abstract class ProjectStructureElement {
     myContext = context;
   }
 
-  @NotNull
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableText() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableText() {
     return getTypeName() + " '" + getPresentableName() + "'";
   }
 
   public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName();
 
-  @Nullable
-  public @Nls String getDescription() {
+  public @Nullable @Nls String getDescription() {
     return null;
   }
 
@@ -39,8 +38,7 @@ public abstract class ProjectStructureElement {
     return false;
   }
 
-  @Nullable
-  public ProjectStructureProblemDescription createUnusedElementWarning() {
+  public @Nullable ProjectStructureProblemDescription createUnusedElementWarning() {
     return null;
   }
 

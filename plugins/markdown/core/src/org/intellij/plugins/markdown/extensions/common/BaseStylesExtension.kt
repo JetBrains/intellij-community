@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.extensions.common
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.isDirectory
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -13,6 +12,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
 internal class BaseStylesExtension(private val project: Project?) : MarkdownBrowserPreviewExtension, ResourceProvider {

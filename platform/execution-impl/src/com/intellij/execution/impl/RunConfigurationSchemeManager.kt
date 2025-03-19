@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -18,7 +18,12 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
+internal class RunConfigurationSchemeManager(
+  private val manager: RunManagerImpl,
+  private val templateDifferenceHelper: TemplateDifferenceHelper,
+  private val isShared: Boolean,
+  private val isWrapSchemeIntoComponentElement: Boolean,
+) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {

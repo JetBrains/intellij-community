@@ -1,8 +1,0 @@
-pyVmomi.vim
-pyVmomi.vim.event
-pyVmomi.vim.fault
-pyVmomi.vim.option
-pyVmomi.vim.view
-pyVmomi.vmodl
-pyVmomi.vmodl.fault
-pyVmomi.vmodl.query

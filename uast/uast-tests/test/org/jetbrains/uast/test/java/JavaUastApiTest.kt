@@ -24,6 +24,8 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import com.intellij.platform.uast.testFramework.env.findElementByText
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import org.jetbrains.uast.util.isConstructorCall
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import org.junit.Test
 
@@ -216,7 +218,8 @@ class JavaUastApiTest : AbstractJavaUastTest() {
     val psiFile = myFixture.configureByFile("Simple/Record.java")
     val psiClass = (psiFile as PsiJavaFile).classes[0]
     val uClass = psiClass.toUElementOfType<UClass>()
-    val constructor = uClass!!.methods.single { it.isConstructor }
+    TestCase.assertTrue(uClass!!.isRecord)
+    val constructor = uClass.methods.single { it.isConstructor }
     assertInstanceOf(constructor.javaPsi, LightRecordCanonicalConstructor::class.java)
     TestCase.assertEquals(constructor, constructor.javaPsi.toUElement())
     assertInstanceOf(constructor.sourcePsi, PsiRecordHeader::class.java)
@@ -230,5 +233,110 @@ class JavaUastApiTest : AbstractJavaUastTest() {
                           file.findElementByTextFromPsi<UInjectionHost>("\"Hello \"").getStringRoomExpression().sourcePsi?.text)
     TestCase.assertEquals("\"Hello again \" + s1 + \" world\"",
                           file.findElementByTextFromPsi<UInjectionHost>("\"Hello again \"").getStringRoomExpression().sourcePsi?.text)
+  }
+
+  @Test
+  fun testNameReferenceVisitInConstructorCall() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        class Test {
+          static class Foo
+          static void test() {
+            Foo foo = new Foo();
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        var inConstructorCall: Boolean = false
+
+        override fun visitCallExpression(node: UCallExpression): Boolean {
+          if (node.isConstructorCall()) {
+            inConstructorCall = true
+          }
+          return super.visitCallExpression(node)
+        }
+
+        override fun afterVisitCallExpression(node: UCallExpression) {
+          inConstructorCall = false
+          super.afterVisitCallExpression(node)
+        }
+
+        override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+          if (inConstructorCall) {
+            count++
+            TestCase.assertEquals("Foo", node.resolvedName)
+          }
+          return super.visitSimpleNameReferenceExpression(node)
+        }
+      }
+    )
+    TestCase.assertEquals(1, count)
+  }
+
+  @Test
+  fun testNullLiteral() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        class Test {
+          static void test() {
+            Object foo = null;
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitLiteralExpression(node: ULiteralExpression): Boolean {
+          TestCase.assertTrue(node.isNull)
+          TestCase.assertEquals("null", node.getExpressionType()?.canonicalText)
+          count++
+          return super.visitLiteralExpression(node)
+        }
+      }
+    )
+    TestCase.assertEquals(1, count)
+  }
+
+  @Test
+  fun testHasAndFindTypeUseAnnotation() {
+    val file = myFixture.configureByText(
+      "Test.java",
+      """
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Target;
+        @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})
+        @interface MyNullable {}
+
+        class Test {
+          @MyNullable String test() {
+            return null;
+          }
+        }
+      """.trimIndent()
+    )
+    val uFile = file.toUElementOfType<UFile>()!!
+    var count = 0
+    uFile.accept(
+      object : AbstractUastVisitor() {
+        override fun visitMethod(node: UMethod): Boolean {
+          if (node.hasAnnotation("MyNullable")) {
+            val anno = node.findAnnotation("MyNullable")
+            TestCase.assertNotNull(anno)
+            count++
+          }
+          return super.visitMethod(node)
+        }
+      }
+    )
+    // IDEA-336319: TYPE_USE should not be applicable to UMethod
+    TestCase.assertEquals(0, count)
   }
 }

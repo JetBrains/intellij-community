@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgressIfEdt
+import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -70,6 +71,18 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
             return annotationClass to annotationTypeDescriptor
         }
 
+        // TODO K2 migration: see
+        // org.jetbrains.kotlin.j2k.k2.postProcessings.PropertiesDataFilter#getPropertyWithAccessors.accessorsAreAnnotatedWithFunctionOnlyAnnotations.getExistingAnnotationTargets
+        fun getExistingAnnotationTargets(annotationClassDescriptor: ClassDescriptor): Set<String> =
+            annotationClassDescriptor.annotations
+                .firstOrNull { it.fqName == StandardNames.FqNames.target }
+                ?.firstArgument()
+                .safeAs<TypedArrayValue>()
+                ?.value
+                ?.mapNotNull { it.safeAs<EnumValue>()?.enumEntryName?.asString() }
+                ?.toSet()
+                .orEmpty()
+
         override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotationEntry>? {
             if (diagnostic.factory != WRONG_ANNOTATION_TARGET && diagnostic.factory != WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET) {
                 return null
@@ -95,14 +108,7 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
             .toSet()
     } else emptySet()
 
-    val existingTargets = annotationClassDescriptor.annotations
-        .firstOrNull { it.fqName == StandardNames.FqNames.target }
-        ?.firstArgument()
-        .safeAs<TypedArrayValue>()
-        ?.value
-        ?.mapNotNull { it.safeAs<EnumValue>()?.enumEntryName?.asString() }
-        ?.toSet()
-        .orEmpty()
+    val existingTargets = getExistingAnnotationTargets(annotationClassDescriptor)
 
     val validTargets = AnnotationTarget.values()
         .map { it.name }
@@ -116,7 +122,7 @@ private fun KtAnnotationEntry.getRequiredAnnotationTargets(
 
     val searchScope = GlobalSearchScope.allScope(project)
     return project.runSynchronouslyWithProgressIfEdt(KotlinBundle.message("progress.looking.up.add.annotation.usage"), true) {
-        val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).mapNotNull { reference ->
+        val otherReferenceRequiredTargets = ReferencesSearch.search(annotationClass, searchScope).asIterable().mapNotNull { reference ->
             if (reference.element is KtNameReferenceExpression) {
                 // Kotlin annotation
                 reference.element
@@ -164,7 +170,7 @@ private fun KtAnnotationEntry.getActualTargetList(): List<KotlinTarget> {
         ?: getStrictParentOfType<KtFile>()
         ?: return emptyList()
 
-    val targetList = AnnotationChecker.getActualTargetList(annotatedElement, null, BindingTraceContext().bindingContext)
+    val targetList = AnnotationChecker.getActualTargetList(annotatedElement, null, BindingTraceContext(this.project).bindingContext)
 
     val useSiteTarget = this.useSiteTarget ?: return targetList.defaultTargets
     val annotationUseSiteTarget = useSiteTarget.getAnnotationUseSiteTarget()

@@ -1,33 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher.Simple ITERABLE_FOREACH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "forEach").parameterCount(1);
   private static final CallMatcher.Simple STREAM_FOREACH_ORDERED =
@@ -36,22 +34,18 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "forEach", "forEachOrdered").parameterCount(1);
 
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    PsiFile file = holder.getFile();
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (!PsiUtil.isLanguageLevel8OrHigher(file) || virtualFile == null ||
-        !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -71,8 +65,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     };
   }
 
-  @NotNull
-  private static TextRange getRange(PsiMethodCallExpression call) {
+  private static @NotNull TextRange getRange(PsiMethodCallExpression call) {
     if(!InspectionProjectProfileManager.isInformationLevel("SimplifyForEach", call)) {
       PsiReferenceExpression methodExpression = call.getMethodExpression();
       return new TextRange(methodExpression.getTextOffset(), call.getArgumentList().getTextOffset());
@@ -80,9 +73,8 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     return call.getTextRange();
   }
 
-  @Nullable
-  static TerminalBlock extractTerminalBlock(@Nullable PsiElement lambdaBody,
-                                            @NotNull ExistingStreamSource source) {
+  static @Nullable TerminalBlock extractTerminalBlock(@Nullable PsiElement lambdaBody,
+                                                      @NotNull ExistingStreamSource source) {
     if (lambdaBody instanceof PsiCodeBlock) {
       return TerminalBlock.from(source, (PsiCodeBlock)lambdaBody);
     }
@@ -92,8 +84,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     return null;
   }
 
-  @Nullable
-  static PsiLambdaExpression extractLambdaFromForEach(@NotNull PsiMethodCallExpression call) {
+  static @Nullable PsiLambdaExpression extractLambdaFromForEach(@NotNull PsiMethodCallExpression call) {
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if (qualifier == null || !(STREAM_FOREACH.test(call) || isCollectionForEach(call, qualifier))) return null;
     PsiExpression arg = call.getArgumentList().getExpressions()[0];
@@ -105,16 +96,15 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   static class LightExpressionStatement extends LightElement implements PsiExpressionStatement {
-    @NotNull private final PsiExpression myExpression;
+    private final @NotNull PsiExpression myExpression;
 
     protected LightExpressionStatement(@NotNull PsiExpression expression) {
       super(expression.getManager(), JavaLanguage.INSTANCE);
       myExpression = expression;
     }
 
-    @NotNull
     @Override
-    public PsiExpression getExpression() {
+    public @NotNull PsiExpression getExpression() {
       return myExpression;
     }
 
@@ -138,8 +128,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       return myExpression.getText() + (myIsCollectionForEach? ".stream()" : "");
     }
 
-    @Nullable
-    static ExistingStreamSource extractSource(PsiMethodCallExpression call, PsiLambdaExpression lambda) {
+    static @Nullable ExistingStreamSource extractSource(PsiMethodCallExpression call, PsiLambdaExpression lambda) {
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 1) return null;
       PsiParameter parameter = parameters[0];
@@ -155,10 +144,10 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   static final class SimplifyForEachContext {
-    @NotNull private final TerminalBlock myTerminalBlock;
-    @NotNull private final PsiStatement myMainStatement;
-    @NotNull private final BaseStreamApiMigration myMigration;
-    @NotNull private final PsiElement myLambdaBody;
+    private final @NotNull TerminalBlock myTerminalBlock;
+    private final @NotNull PsiStatement myMainStatement;
+    private final @NotNull BaseStreamApiMigration myMigration;
+    private final @NotNull PsiElement myLambdaBody;
 
     private SimplifyForEachContext(@NotNull TerminalBlock terminalBlock,
                                    @NotNull PsiStatement mainStatement,
@@ -199,29 +188,26 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class SimplifyForEachFix implements LocalQuickFix {
-    @NotNull private final @Nls String myCustomName;
+  public static class SimplifyForEachFix extends PsiUpdateModCommandQuickFix {
+    private final @NotNull @Nls String myCustomName;
 
     protected SimplifyForEachFix(@NotNull @Nls String customName) {
       myCustomName = customName;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myCustomName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.simplify.foreach.lambda");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpressionStatement statement = tryCast(descriptor.getPsiElement(), PsiExpressionStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpressionStatement statement = tryCast(element, PsiExpressionStatement.class);
       if (statement == null) return;
       PsiMethodCallExpression call = tryCast(statement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return;
@@ -233,23 +219,28 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
   }
 
-  public static class ForEachNonFinalFix extends PsiElementBaseIntentionAction implements HighPriorityAction {
+  public static final class ForEachNonFinalFix extends PsiUpdateModCommandAction<PsiElement> {
     private final @Nullable PsiElement myContext;
+    private final @Nls String myMessage;
 
     public ForEachNonFinalFix(@Nullable PsiElement context) {
+      super(PsiElement.class);
       SimplifyForEachContext simplifyContext = findMigration(context);
       if (simplifyContext == null) {
         myContext = null;
+        myMessage = null;
       }
       else {
         myContext = context;
-        setText(JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement()));
+        myMessage =
+          JavaBundle.message("quickfix.text.avoid.mutation.using.stream.api.0.operation", simplifyContext.myMigration.getReplacement());
       }
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new ForEachNonFinalFix(PsiTreeUtil.findSameElementInCopy(myContext, target));
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+      return myContext == null || !myContext.isValid() ? null :
+             Presentation.of(myMessage).withPriority(PriorityAction.Priority.HIGH);
     }
 
     private static SimplifyForEachContext findMigration(@Nullable PsiElement context) {
@@ -267,27 +258,20 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call =
         PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class), PsiMethodCallExpression.class);
       SimplifyForEachContext simplifyForEachContext = SimplifyForEachContext.from(call);
       if (simplifyForEachContext != null) {
         PsiElement result = simplifyForEachContext.migrate();
         if (result != null) {
-          MigrateToStreamFix.simplify(project, result);
+          MigrateToStreamFix.simplify(context.project(), result);
         }
       }
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return myContext != null && myContext.isValid();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.avoid.mutation.using.stream.api");
     }
   }

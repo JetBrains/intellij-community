@@ -5,10 +5,13 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,7 +31,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
-import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +64,9 @@ public final class PyClassRefactoringUtil {
    *                                                               For example: MyClass.Foo will become Foo it this param is MyClass.
    * @return new (copied) fields
    */
-  @NotNull
-  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<? extends PyAssignmentStatement> assignmentStatements,
-                                                                            @NotNull final PyStatementList superClassStatement,
-                                                                            @Nullable final PyClass dequalifyIfDeclaredInClass) {
+  public static @NotNull List<PyAssignmentStatement> copyFieldDeclarationToStatement(final @NotNull Collection<? extends PyAssignmentStatement> assignmentStatements,
+                                                                            final @NotNull PyStatementList superClassStatement,
+                                                                            final @Nullable PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
 
     for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
@@ -90,7 +91,7 @@ public final class PyClassRefactoringUtil {
    * @param assignmentStatement statement to change
    * @param newValue new value
    */
-  private static void setNewAssigneeValue(@NotNull final PyAssignmentStatement assignmentStatement, @NotNull final String newValue) {
+  private static void setNewAssigneeValue(final @NotNull PyAssignmentStatement assignmentStatement, final @NotNull String newValue) {
     final PyExpression oldValue = assignmentStatement.getAssignedValue();
     final PyExpression newExpression =
       PyElementGenerator.getInstance(assignmentStatement.getProject()).createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
@@ -107,8 +108,7 @@ public final class PyClassRefactoringUtil {
    * @param dequalifyIfDeclaredInClass  class to check
    * @return value as string
    */
-  @NotNull
-  private static String getNewValueToAssign(@NotNull final PyReferenceExpression currentValue, @NotNull final PyClass dequalifyIfDeclaredInClass) {
+  private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue, final @NotNull PyClass dequalifyIfDeclaredInClass) {
     final PyExpression qualifier = currentValue.getQualifier();
     if ((qualifier instanceof PyReferenceExpression) &&
         ((PyReferenceExpression)qualifier).getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
@@ -126,8 +126,7 @@ public final class PyClassRefactoringUtil {
    * @param skipIfExist do not add anything if method already exists
    * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
-  @NotNull
-  public static List<PyFunction> addMethods(@NotNull final PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
+  public static @NotNull List<PyFunction> addMethods(final @NotNull PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
     final List<PyFunction> result = new ArrayList<>(methods.length);
@@ -155,10 +154,9 @@ public final class PyClassRefactoringUtil {
    * @param method            method to add
    * @return newlty added method
    */
-  @NotNull
-  private static PyFunction insertMethodInProperPlace(
-    @NotNull final PyStatementList destStatementList,
-    @NotNull final PyFunction method) {
+  private static @NotNull PyFunction insertMethodInProperPlace(
+    final @NotNull PyStatementList destStatementList,
+    final @NotNull PyFunction method) {
     boolean methodIsInit = PyNames.INIT.equals(method.getName());
     if (!methodIsInit) {
       //Not init method could be inserted in the bottom
@@ -166,7 +164,7 @@ public final class PyClassRefactoringUtil {
     }
 
     //We should find appropriate place for init
-    for (final PsiElement element : destStatementList.getChildren()) {
+    for (final PsiElement element : destStatementList.getStatements()) {
       final boolean elementComment = element instanceof PyExpressionStatement;
       final boolean elementClassField = element instanceof PyAssignmentStatement;
 
@@ -184,16 +182,16 @@ public final class PyClassRefactoringUtil {
    * @param element newly created element to restore references
    * @see #rememberNamedReferences(PsiElement, String...)
    */
-  public static void restoreNamedReferences(@NotNull final PsiElement element) {
+  public static void restoreNamedReferences(final @NotNull PsiElement element) {
     restoreNamedReferences(element, null);
   }
 
-  public static void restoreNamedReferences(@NotNull final PsiElement newElement, @Nullable final PsiElement oldElement) {
+  public static void restoreNamedReferences(final @NotNull PsiElement newElement, final @Nullable PsiElement oldElement) {
     restoreNamedReferences(newElement, oldElement, PsiElement.EMPTY_ARRAY);
   }
 
-  public static void restoreNamedReferences(@NotNull final PsiElement newElement,
-                                            @Nullable final PsiElement oldElement,
+  public static void restoreNamedReferences(final @NotNull PsiElement newElement,
+                                            final @Nullable PsiElement oldElement,
                                             final PsiElement @NotNull [] otherMovedElements) {
     Set<FutureFeature> fromFutureImports = newElement.getCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS);
     newElement.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, null);
@@ -236,9 +234,9 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static void restoreReference(@NotNull PsiElement sourceNode,
-                                      @NotNull PsiElement targetNode,
-                                      PsiElement @NotNull [] otherMovedElements) {
+  private static void restoreReference(@NotNull PsiElement sourceNode,
+                                       @NotNull PsiElement targetNode,
+                                       PsiElement @NotNull [] otherMovedElements) {
     try {
       if (sourceNode instanceof PyReferenceExpression) {
         doRestoreReference((PyReferenceExpression)sourceNode, targetNode, otherMovedElements);
@@ -297,7 +295,7 @@ public final class PyClassRefactoringUtil {
    * @param element     element to store references for
    * @param namesToSkip if reference inside of element has one of this names, it will not be saved.
    */
-  public static void rememberNamedReferences(@NotNull final PsiElement element, final String @NotNull ... namesToSkip) {
+  public static void rememberNamedReferences(final @NotNull PsiElement element, final String @NotNull ... namesToSkip) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile instanceof PyFile) {
       Set<FutureFeature> fromFutureImports = collectFromFutureImports((PyFile)containingFile);
@@ -407,8 +405,7 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  @Nullable
-  private static PyImportedNameDefiner getImportElement(PyReferenceExpression expr) {
+  private static @Nullable PyImportedNameDefiner getImportElement(PyReferenceExpression expr) {
     for (ResolveResult result : expr.getReference().multiResolve(false)) {
       final PsiElement e = result.getElement();
       if (e instanceof PyImportElement) {
@@ -421,16 +418,14 @@ public final class PyClassRefactoringUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiElement resolveExpression(@NotNull PyExpression expr) {
+  private static @Nullable PsiElement resolveExpression(@NotNull PyExpression expr) {
     if (expr instanceof PyReferenceExpression) {
       return ((PyReferenceExpression)expr).getReference().resolve();
     }
     return null;
   }
 
-  @NotNull
-  private static List<PsiElement> multiResolveExpression(@NotNull PyReferenceExpression expr) {
+  private static @NotNull List<PsiElement> multiResolveExpression(@NotNull PyReferenceExpression expr) {
     return ContainerUtil.mapNotNull(expr.getReference().multiResolve(false), result -> result.getElement());
   }
 
@@ -502,7 +497,7 @@ public final class PyClassRefactoringUtil {
     return false;
   }
 
-  private static void deleteImportStatementFromInjected(@NotNull final PyImportStatementBase importStatement) {
+  private static void deleteImportStatementFromInjected(final @NotNull PyImportStatementBase importStatement) {
     final PsiElement sibling = importStatement.getPrevSibling();
     importStatement.delete();
     if (sibling instanceof PsiWhiteSpace) sibling.delete();
@@ -514,12 +509,105 @@ public final class PyClassRefactoringUtil {
    *
    * @param file file to optimize imports
    */
-  public static void optimizeImports(@NotNull final PsiFile file) {
+  public static void optimizeImports(final @NotNull PsiFile file) {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
-  @NotNull
-  public static PyFile getOrCreateFile(String path, Project project) {
+
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace) throws IOException {
+    return placeFile(project, path, filename, null, isNamespace);
+  }
+
+  /**
+   * Places a file at the end of given path, creating intermediate dirs and inits.
+   *
+   * @return the placed file
+   */
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, @Nullable String content, boolean isNamespace) throws IOException {
+    PsiDirectory psiDir = createDirectories(project, path, isNamespace);
+    LOG.assertTrue(psiDir != null);
+    PsiFile psiFile = psiDir.findFile(filename);
+    if (psiFile == null) {
+      psiFile = psiDir.createFile(filename);
+      if (content != null) {
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+        Document document = manager.getDocument(psiFile);
+        if (document != null) {
+          document.setText(content);
+          manager.commitDocument(document);
+        }
+      }
+    }
+    return psiFile;
+  }
+
+  /**
+   * Create all intermediate dirs with inits from one of roots up to target dir.
+   *
+   * @param target  a full path to target dir
+   * @return deepest child directory, or null if target is not in roots or process fails at some point.
+   */
+  private static @Nullable PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace) throws IOException {
+    String relativePath = null;
+    VirtualFile closestRoot = null;
+
+    // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
+    target = FileUtil.toSystemIndependentName(target);
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final List<VirtualFile> allRoots = new ArrayList<>();
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
+    // Check deepest roots first
+    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
+    for (VirtualFile file : allRoots) {
+      final String rootPath = file.getPath();
+      if (target.startsWith(rootPath)) {
+        relativePath = target.substring(rootPath.length());
+        closestRoot = file;
+        break;
+      }
+    }
+    if (closestRoot == null) {
+      throw new IOException("Can't find '" + target + "' among roots");
+    }
+    final LocalFileSystem lfs = LocalFileSystem.getInstance();
+    final PsiManager psiManager = PsiManager.getInstance(project);
+    final String[] dirs = relativePath.split("/");
+    int i = 0;
+    if (dirs[0].isEmpty()) i = 1;
+    VirtualFile resultDir = closestRoot;
+    while (i < dirs.length) {
+      VirtualFile subdir = resultDir.findChild(dirs[i]);
+      if (subdir != null) {
+        if (!subdir.isDirectory()) {
+          throw new IOException("Expected resultDir, but got non-resultDir: " + subdir.getPath());
+        }
+      }
+      else {
+        subdir = resultDir.createChildDirectory(lfs, dirs[i]);
+      }
+      if (subdir.findChild(PyNames.INIT_DOT_PY) == null && !isNamespace) {
+        subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
+      }
+      /*
+      // here we could add an __all__ clause to the __init__.py.
+      // * there's no point to do so; we import the class directly;
+      // * we can't do this consistently since __init__.py may already exist and be nontrivial.
+      if (i == dirs.length - 1) {
+        PsiFile init_file = psiManager.findFile(initVFile);
+        LOG.assertTrue(init_file != null);
+        final PyElementGenerator gen = PyElementGenerator.getInstance(project);
+        final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
+        init_file.add(statement);
+      }
+      */
+      resultDir = subdir;
+      i += 1;
+    }
+    return psiManager.findDirectory(resultDir);
+  }
+
+  public static @NotNull PyFile getOrCreateFile(@NotNull String path, @NotNull Project project, boolean isNamespace) {
     final VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(path));
     final PsiFile psi;
     if (vfile == null) {
@@ -531,14 +619,14 @@ public final class PyClassRefactoringUtil {
         final Properties properties = fileTemplateManager.getDefaultProperties();
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = template.getText(properties);
-        psi = PyExtractSuperclassHelper.placeFile(project,
+        psi = PyClassRefactoringUtil.placeFile(project,
                                                   StringUtil.notNullize(
                                                     file.getParent(),
                                                     baseDir != null ? baseDir
                                                       .getPath() : "."
                                                   ),
                                                   file.getName(),
-                                                  content
+                                                  content, isNamespace
         );
       }
       catch (IOException e) {
@@ -553,6 +641,45 @@ public final class PyClassRefactoringUtil {
         "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
     }
     return (PyFile)psi;
+  }
+
+  /**
+   * Transfer necessary imports for references in the signature of one function to another.
+   */
+  public static void transplantImportsFromSignature(@NotNull PyFunction sourceFunction, @NotNull PyFunction targetFunction) {
+    Map<String, PyReferenceExpression> unresolvedNames = new HashMap<>();
+
+    targetFunction.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression referenceExpression) {
+        super.visitPyReferenceExpression(referenceExpression);
+        if (!referenceExpression.isQualified() && referenceExpression.getReference().multiResolve(false).length == 0) {
+          unresolvedNames.put(referenceExpression.getName(), referenceExpression);
+        }
+      }
+
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList pruned) {
+      }
+    });
+
+    sourceFunction.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression referenceExpression) {
+        super.visitPyReferenceExpression(referenceExpression);
+        if (!referenceExpression.isQualified()) {
+          PyReferenceExpression unresolvedReference = unresolvedNames.get(referenceExpression.getName());
+          if (unresolvedReference != null) {
+            rememberNamedReferences(referenceExpression);
+            restoreReference(referenceExpression, unresolvedReference, PsiElement.EMPTY_ARRAY);
+          }
+        }
+      }
+
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList pruned) {
+      }
+    });
   }
 
   private static final class DynamicNamedElement extends LightElement implements PsiNamedElement {

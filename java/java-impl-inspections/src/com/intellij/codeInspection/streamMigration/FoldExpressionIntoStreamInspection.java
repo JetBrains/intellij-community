@@ -1,10 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -21,22 +24,20 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.codeInsight.intention.impl.StreamRefactoringUtil.getMapOperationName;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CHAR_SEQUENCE;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalInspectionTool {
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -122,8 +123,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  @Nullable
-  private static TerminalGenerator getGenerator(PsiPolyadicExpression polyadicExpression) {
+  private static @Nullable TerminalGenerator getGenerator(PsiPolyadicExpression polyadicExpression) {
     IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (tokenType.equals(JavaTokenType.OROR)) {
       return (elementType, lambda, ct) -> ".anyMatch(" + lambda + ")";
@@ -167,35 +167,30 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @NotNull
-  private static String mapToString(PsiType elementType, PsiType resultType, String lambda) {
+  private static @NotNull String mapToString(PsiType elementType, PsiType resultType, String lambda) {
     return "." + getMapOperationName(elementType, resultType) + "(" + lambda + ")";
   }
 
-  private static final class FoldExpressionIntoStreamFix implements LocalQuickFix {
+  private static final class FoldExpressionIntoStreamFix extends PsiUpdateModCommandQuickFix {
     private final boolean myStringJoin;
 
     private FoldExpressionIntoStreamFix(boolean stringJoin) {myStringJoin = stringJoin;}
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.fold.expression.fix.family.name");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return JavaBundle.message(myStringJoin ?
                                        "inspection.fold.expression.into.string.fix.name" :
                                        "inspection.fold.expression.into.stream.fix.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiPolyadicExpression expression = tryCast(descriptor.getStartElement(), PsiPolyadicExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiPolyadicExpression expression = tryCast(element, PsiPolyadicExpression.class);
       if (expression == null) return;
       TerminalGenerator generator = getGenerator(expression);
       if (generator == null) return;
@@ -270,9 +265,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       return operands[0] == diff.get(0);
     }
 
-    @NotNull
     @Override
-    public String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
+    public @NotNull String generateTerminal(PsiType elementType, String lambda, CommentTracker ct) {
       String map = (lambda == null ? "" : mapToString(elementType, myOperandType, lambda)) + myMapToString;
       return map +
              ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS +
@@ -280,8 +274,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
              (myRest == null ? "" : "+" + ct.text(myRest));
     }
 
-    @NotNull
-    private String getDelimiterText(CommentTracker ct) {
+    private @NotNull String getDelimiterText(CommentTracker ct) {
       if (myDelimiter == null) {
         return "";
       }

@@ -21,6 +21,11 @@ public interface CodeConstants {
   int BYTECODE_JAVA_15 = 59;
   int BYTECODE_JAVA_16 = 60;
   int BYTECODE_JAVA_17 = 61;
+  int BYTECODE_JAVA_18 = 62;
+  int BYTECODE_JAVA_19 = 63;
+  int BYTECODE_JAVA_20 = 64;
+  int BYTECODE_JAVA_21 = 65;
+  int BYTECODE_JAVA_22 = 66;
 
   // ----------------------------------------------------------------------
   // VARIABLE TYPES
@@ -69,13 +74,15 @@ public interface CodeConstants {
   int ACC_FINAL = 0x0010;
   int ACC_SYNCHRONIZED = 0x0020;
   int ACC_OPEN = 0x0020;
+  int ACC_TRANSITIVE = 0x0020;
+  int ACC_VOLATILE = 0x0040;
+  int ACC_BRIDGE = 0x0040;
+  int ACC_STATIC_PHASE = 0x0040;
+  int ACC_TRANSIENT = 0x0080;
+  int ACC_VARARGS = 0x0080;
   int ACC_NATIVE = 0x0100;
   int ACC_ABSTRACT = 0x0400;
   int ACC_STRICT = 0x0800;
-  int ACC_VOLATILE = 0x0040;
-  int ACC_BRIDGE = 0x0040;
-  int ACC_TRANSIENT = 0x0080;
-  int ACC_VARARGS = 0x0080;
   int ACC_SYNTHETIC = 0x1000;
   int ACC_ANNOTATION = 0x2000;
   int ACC_ENUM = 0x4000;

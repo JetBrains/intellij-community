@@ -3,6 +3,7 @@ __all__ = ['S1', 'S2']
 __version__ = '0.1'
 
 from typing_extensions import TypeAlias
+from typing import TypeAlias as TA
 
 S1_ok = "foo"
 S2_ok = "foo.bar"
@@ -11,8 +12,18 @@ too_long_string = "foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.foo.f
 natural_text = "Foo is baz."
 glued_string = 'foo' '.bar'
 
+S4_notOk = f"int"
+S5_notOk = u"int"
+S6_notOk = b"int"
+
+bin1_ok = int | str
+bin2_ok = int | str | bool | None
+bin3_ok = Union[str, bool] | None
+bin4_notOk = str & int
+
 explicit_alias1_ok: TypeAlias = 'Foo is bar.'
 explicit_alias2_ok = 'Foo is bar.'  # type: TypeAlias
+explicit_alias_imported_via_as_ok: TA = int | str
 
 # Such expressions are kept as qualified expressions in PyTargetExpressionStub 
 # with initializer type of ReferenceExpression instead of custom stubs for

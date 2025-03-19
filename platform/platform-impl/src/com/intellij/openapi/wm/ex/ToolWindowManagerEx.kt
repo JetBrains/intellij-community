@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.toolWindow.ToolWindowToolbar
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -21,22 +20,8 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   abstract val toolWindows: List<ToolWindow>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
-  abstract fun initToolWindow(bean: ToolWindowEP)
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  open fun addToolWindowManagerListener(listener: ToolWindowManagerListener, parentDisposable: Disposable) {
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
-  open fun removeToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }
 
   /**
@@ -49,6 +34,12 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   abstract fun getMoreButtonSide(): ToolWindowAnchor
 
   open fun setMoreButtonSide(side: ToolWindowAnchor) {
+  }
+
+  open fun setShowNames(value: Boolean) {
+  }
+
+  open fun setSideCustomWidth(toolbar: ToolWindowToolbar, width: Int) {
   }
 
   /**

@@ -42,6 +42,11 @@ public final class EmptySubstitutor implements PsiSubstitutor {
   }
 
   @Override
+  public boolean hasRawSubstitution() {
+    return false;
+  }
+
+  @Override
   public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
     return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);
   }

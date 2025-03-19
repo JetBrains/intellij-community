@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeDependentActionGroup;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,16 +17,12 @@ import com.intellij.platform.ModuleAttachProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Bas Leijdekkers
  */
-public final class ProjectWindowActionGroup extends IdeDependentActionGroup {
+public final class ProjectWindowActionGroup extends IdeDependentActionGroup implements ActionRemoteBehaviorSpecification.Frontend {
   private ProjectWindowAction latest = null;
 
   public void addProject(@NotNull Project project) {
@@ -46,7 +44,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup {
   }
 
   private static @NlsActions.ActionText String getProjectDisplayName(Project project) {
-    if (LightEdit.owns(project)) return LightEditService.WINDOW_NAME;
+    if (LightEdit.owns(project)) return LightEditService.getWindowName();
     String name = ModuleAttachProcessor.getMultiProjectDisplayName(project);
     return name != null ? name : project.getName();
   }
@@ -112,12 +110,11 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup {
     }
   }
 
-  @Nullable
-  private ProjectWindowAction findWindowAction(String projectLocation) {
+  private @Nullable ProjectWindowAction findWindowAction(String projectLocation) {
     if (projectLocation == null) {
       return null;
     }
-    final AnAction[] children = getChildren(null);
+    final AnAction[] children = getChildren(ActionManager.getInstance());
     for (AnAction child : children) {
       if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;
@@ -131,7 +128,7 @@ public final class ProjectWindowActionGroup extends IdeDependentActionGroup {
 
   private List<ProjectWindowAction> findWindowActionsWithProjectName(String projectName) {
     List<ProjectWindowAction> result = null;
-    final AnAction[] children = getChildren(null);
+    final AnAction[] children = getChildren(ActionManager.getInstance());
     for (AnAction child : children) {
       if (!(child instanceof ProjectWindowAction windowAction)) {
         continue;

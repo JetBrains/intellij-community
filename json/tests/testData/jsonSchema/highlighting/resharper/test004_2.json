@@ -1,9 +1,9 @@
 {
-  <warning descr="Property 'b' is not allowed">"b": 5</warning>,
+  <warning descr="Property 'b' is not allowed">"b"</warning>: 5,
   "x25": "q",
   "x255": <warning descr="Incompatible types.
  Required: string. Actual: integer.">7</warning>,
   "0x256": <warning descr="Incompatible types.
  Required: string. Actual: boolean.">true</warning>,
-  <warning descr="Property 'x025' is not allowed">"x025": "fail"</warning>
+  <warning descr="Property 'x025' is not allowed">"x025"</warning>: "fail"
 }

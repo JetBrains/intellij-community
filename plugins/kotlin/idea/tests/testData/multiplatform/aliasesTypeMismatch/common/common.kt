@@ -1,6 +1,6 @@
 @file:Suppress("UNUSED_PARAMETER")
 
-expect open class <!LINE_MARKER("descr='Has actuals in jvm module'")!>MyCancelException<!> : MyIllegalStateException
+expect class <!LINE_MARKER("descr='Has actuals in jvm module'")!>MyCancelException<!> : MyIllegalStateException
 
 fun cancel(cause: MyCancelException) {}
 

@@ -9,21 +9,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY
 import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
-class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {
+internal class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDirectories: List<JarDirectoryDescription>) {
   private val virtualFilePointersList = mutableSetOf<VirtualFilePointer>()
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
 
-  @Volatile
-  private var timestampOfCachedFiles = -1L
-
-  @Volatile
-  private var cachedFilesList = arrayOf<VirtualFile>()
+  private val cachedFilesList: AtomicReference<Pair<Array<VirtualFile>, Long>> = AtomicReference(Pair(emptyArray(), -1))
 
   @Volatile
   private var cachedUrlsList: Array<String>? = null
@@ -44,12 +41,13 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDi
   }
 
   fun getFiles(): Array<VirtualFile> {
-    val timestamp = timestampOfCachedFiles
-    val cachedResults = cachedFilesList
-    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else cacheVirtualFilePointersData()
+    val cachedResults = cachedFilesList.get()
+    return if (cachedResults.second == virtualFilePointerManager.modificationCount) cachedResults.first else cacheVirtualFilePointersData()
   }
 
   private fun cacheVirtualFilePointersData(): Array<VirtualFile> {
+    val timestampBefore = virtualFilePointerManager.modificationCount // snapshot at the beginning
+
     val cachedFiles: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size)
     val cachedDirectories: MutableList<VirtualFile> = ArrayList(virtualFilePointersList.size / 3)
     var allFilesAreDirs = true
@@ -105,10 +103,20 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, private val jarDi
       }
     }
     val files = if (allFilesAreDirs) VfsUtilCore.toVirtualFileArray(cachedDirectories) else VfsUtilCore.toVirtualFileArray(cachedFiles)
-    cachedFilesList = files
-    timestampOfCachedFiles = virtualFilePointerManager.modificationCount
+
+    val timestampAfter = virtualFilePointerManager.modificationCount // snapshot at the end
+    if (timestampBefore == timestampAfter) {
+      // Sometimes we may overwrite more recent results. This is fine. This should not happen often, cache will be re-calculated on the following query.
+      cachedFilesList.set(Pair(files, timestampAfter))
+    }
+    // else {
+    // we don't know what we have calculated just now. This might happen, because  findFileByUrl might load (not yet loaded) children
+    // and increment the counter, or because the client didn't hold RA and another VFS event has occurred. Either way, don't cache
+    // and don't log an error, because incrementing VFS counter from findFileByUrl is expected (though, not desired) behavior.
+    // thisLogger().error("Race detected: fileManager.modificationCount has changed during method invocation. Probably, missing ReadAction?")
+    // }
     return files
   }
 }
 
-data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
+internal data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)

@@ -1,7 +1,5 @@
-import textwrap
 from collections.abc import Callable
-from typing import IO, Any, Generic, TypeVar, overload
-from typing_extensions import SupportsIndex
+from typing import IO, Any, Generic, SupportsIndex, TypeVar, overload
 
 _TB = TypeVar("_TB", bound=_BaseEntry)
 _TP = TypeVar("_TP", bound=POFile)
@@ -39,7 +37,7 @@ class _BaseFile(list[_TB]):
     def append(self, entry: _TB) -> None: ...
     def insert(self, index: SupportsIndex, entry: _TB) -> None: ...
     def metadata_as_entry(self) -> POEntry: ...
-    def save(self, fpath: str | None = ..., repr_method: str = ...) -> None: ...
+    def save(self, fpath: str | None = ..., repr_method: str = ..., newline: str | None = ...) -> None: ...
     def find(self, st: str, by: str = ..., include_obsolete_entries: bool = ..., msgctxt: bool = ...) -> _TB | None: ...
     def ordered_metadata(self) -> list[tuple[str, str]]: ...
     def to_binary(self) -> bytes: ...
@@ -72,18 +70,20 @@ class _BaseEntry:
     msgid: str
     msgstr: str
     msgid_plural: str
-    msgstr_plural: list[str]
+    msgstr_plural: dict[int, str]
     msgctxt: str
     obsolete: bool
     encoding: str
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def __unicode__(self, wrapwidth: int = ...) -> str: ...
     def __eq__(self, other: object) -> bool: ...
+    @property
+    def msgid_with_context(self) -> str: ...
 
 class POEntry(_BaseEntry):
     comment: str
     tcomment: str
-    occurrences: list[tuple[str, int]]
+    occurrences: list[tuple[str, str]]
     flags: list[str]
     previous_msgctxt: str | None
     previous_msgid: str | None
@@ -109,7 +109,7 @@ class POEntry(_BaseEntry):
 class MOEntry(_BaseEntry):
     comment: str
     tcomment: str
-    occurrences: list[tuple[str, int]]
+    occurrences: list[tuple[str, str]]
     flags: list[str]
     previous_msgctxt: str | None
     previous_msgid: str | None
@@ -152,7 +152,3 @@ class _MOFileParser(Generic[_TM]):
     def __init__(self, mofile: str, *args: Any, **kwargs: Any) -> None: ...
     def __del__(self) -> None: ...
     def parse(self) -> _TM: ...
-
-class TextWrapper(textwrap.TextWrapper):
-    drop_whitespace: bool
-    def __init__(self, *args: Any, **kwargs: Any) -> None: ...

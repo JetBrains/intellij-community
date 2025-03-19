@@ -36,15 +36,6 @@ public abstract class SerializationManagerEx implements StubTreeSerializer {
 
   public abstract void repairNameStorage(@NotNull Exception corruptionCause);
 
-  /**
-   * @deprecated use {@link SerializationManagerEx#repairNameStorage(Exception)}
-   * with specified corruption cause
-   */
-  @Deprecated(forRemoval = true)
-  public void repairNameStorage() {
-    repairNameStorage(new Exception());
-  }
-
   public abstract void flushNameStorage() throws IOException;
 
   public abstract void reinitializeNameStorage();

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,17 +39,18 @@ import java.util.List;
 import static com.intellij.openapi.editor.markup.EffectType.LINE_UNDERSCORE;
 import static com.intellij.openapi.editor.markup.HighlighterTargetArea.EXACT_RANGE;
 
-public class FocusModeModel implements Disposable {
+public final class FocusModeModel implements Disposable {
   public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attributes");
-  public static final int LAYER = 10_000;
+  private static final int LAYER = 10_000;
 
   private final List<RangeHighlighter> myFocusModeMarkup = new SmartList<>();
-  @NotNull private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
   private RangeMarker myFocusModeRange;
 
   private final List<FocusModeModelListener> mySegmentListeners = new SmartList<>();
   private final RangeMarkerTree<RangeMarkerEx> myFocusMarkerTree;
 
+  @ApiStatus.Internal
   public FocusModeModel(@NotNull EditorImpl editor) {
     myEditor = editor;
     myFocusMarkerTree = new RangeMarkerTree<>(editor.getDocument());
@@ -134,20 +136,21 @@ public class FocusModeModel implements Disposable {
     }
   }
 
-  boolean isInFocusMode(@NotNull RangeMarker region) {
+  @ApiStatus.Internal
+  public boolean isInFocusMode(@NotNull RangeMarker region) {
     return myFocusModeRange != null && !intersects(myFocusModeRange, region);
   }
 
-  @NotNull
-  public RangeMarker createFocusRegion(int start, int end) {
+  @ApiStatus.Internal
+  public @NotNull RangeMarker createFocusRegion(int start, int end) {
     RangeMarkerEx marker = new RangeMarkerImpl(myEditor.getDocument(), start, end, false, false);
     myFocusMarkerTree.addInterval(marker, start, end, false, false, true, 0);
     mySegmentListeners.forEach(l -> l.focusRegionAdded(marker));
     return marker;
   }
 
-  @Nullable
-  public RangeMarker findFocusRegion(int start, int end) {
+  @ApiStatus.Internal
+  public @Nullable RangeMarker findFocusRegion(int start, int end) {
     RangeMarker[] found = new RangeMarker[1];
     myFocusMarkerTree.processOverlappingWith(start, end, range -> {
       if (range.getStartOffset() == start && range.getEndOffset() == end) {
@@ -159,18 +162,19 @@ public class FocusModeModel implements Disposable {
     return found[0];
   }
 
+  @ApiStatus.Internal
   public void removeFocusRegion(@NotNull RangeMarker marker) {
     boolean removed = myFocusMarkerTree.removeInterval((RangeMarkerEx)marker);
     if (removed) mySegmentListeners.forEach(l -> l.focusRegionRemoved(marker));
   }
 
+  @ApiStatus.Internal
   public void addFocusSegmentListener(FocusModeModelListener newListener, Disposable disposable) {
     mySegmentListeners.add(newListener);
     Disposer.register(disposable, () -> mySegmentListeners.remove(newListener));
   }
 
-  @NotNull
-  private Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
+  private @NotNull Segment enlargeFocusRangeIfNeeded(@NotNull Segment range) {
     int originalStart = range.getStartOffset();
     DocumentEx document = myEditor.getDocument();
     int start = DocumentUtil.getLineStartOffset(originalStart, document);
@@ -217,6 +221,7 @@ public class FocusModeModel implements Disposable {
     return Math.max(a.getStartOffset(), b.getStartOffset()) < Math.min(a.getEndOffset(), b.getEndOffset());
   }
 
+  @ApiStatus.Internal
   public interface FocusModeModelListener {
     void focusRegionAdded(@NotNull Segment newRegion);
     void focusRegionRemoved(@NotNull Segment oldRegion);

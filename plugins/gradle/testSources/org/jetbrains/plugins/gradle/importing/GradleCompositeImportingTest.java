@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSe
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -35,7 +36,9 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
+import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.intellij.openapi.roots.DependencyScope.COMPILE;
@@ -45,43 +48,44 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Vladislav.Soroka
  */
 public class GradleCompositeImportingTest extends GradleImportingTestCase {
+
   @Test
-  @TargetVersions("3.3+")
   public void testBasicCompositeBuild() throws Exception {
     //enableGradleDebugWithSuspend();
-    createSettingsFile("""
-                         rootProject.name='adhoc'
+    createSettingsFile(settingsScript(it -> it
+      .setProjectName("adhoc")
+      .includeBuild("../my-app")
+      .includeBuild("../my-utils")
+    ));
 
-                         includeBuild '../my-app'
-                         includeBuild '../my-utils'""");
+    createProjectSubFile("../my-app/settings.gradle", settingsScript(it -> it
+      .setProjectName("my-app-name")
+    ));
+    createProjectSubFile("../my-app/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+      .addImplementationDependency("org.sample:number-utils:1.0")
+      .addImplementationDependency("org.sample:string-utils:1.0")
+    ));
 
-    createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app-name'\n");
-    createProjectSubFile("../my-app/build.gradle",
-                         createBuildScriptBuilder()
-                           .addGroup("org.sample")
-                           .addVersion("1.0")
-                           .withJavaPlugin()
-                           .addImplementationDependency("org.sample:number-utils:1.0")
-                           .addImplementationDependency("org.sample:string-utils:1.0")
-                           .generate());
-
-    createProjectSubFile("../my-utils/settings.gradle",
-                         "rootProject.name = 'my-utils'\n" +
-                         "include 'number-utils', 'string-utils' ");
-    createProjectSubFile("../my-utils/build.gradle",
-                         createBuildScriptBuilder()
-                           .subprojects(it -> {
-                             it.addGroup("org.sample")
-                               .addVersion("1.0")
-                               .withJavaPlugin();
-                           })
-                           .project(":string-utils", it -> {
-                             it
-                               .withMavenCentral()
-                               .withJavaLibraryPlugin()
-                               .addApiDependency("org.apache.commons:commons-lang3:3.4");
-                           })
-                           .generate());
+    createProjectSubFile("../my-utils/settings.gradle", settingsScript(it -> it
+      .setProjectName("my-utils")
+      .include("number-utils", "string-utils")
+    ));
+    createProjectSubFile("../my-utils/number-utils/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+    ));
+    createProjectSubFile("../my-utils/string-utils/build.gradle", script(it -> it
+      .addGroup("org.sample")
+      .addVersion("1.0")
+      .withJavaPlugin()
+      .withMavenCentral()
+      .withJavaLibraryPlugin()
+      .addApiDependency("org.apache.commons:commons-lang3:3.4")
+    ));
 
     importProject();
 
@@ -102,7 +106,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("my-app-name.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     assertTasksProjectPath("adhoc", getProjectPath());
-    if (isGradleNewerOrSameAs("6.8")) {
+    if (isGradleAtLeast("6.8")) {
       /* Has to be :my-app: as this is the name of the included build (rootProject.name) is not used for path construction */
       assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app:");
       assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
@@ -113,7 +117,35 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.3+")
+  @TargetVersions("6.0+")
+  public void testIncludedBuildWithBuildSrc() throws Exception {
+    createSettingsFile("""
+                         rootProject.name='adhoc'
+
+                         includeBuild 'my-app'
+                         """);
+
+    createProjectSubFile("my-app/settings.gradle", "rootProject.name = 'my-app'\n");
+    createProjectSubFile("my-app/build.gradle",
+                         createBuildScriptBuilder()
+                           .generate());
+
+    createProjectSubFile("buildSrc/build.gradle",
+                         createBuildScriptBuilder()
+                           .generate());
+
+    importProject();
+
+    DataNode<ModuleData> myAppData = GradleUtil.findGradleModuleData(getModule("my-app"));
+
+    assertFalse(GradleModuleDataKt.isBuildSrcModule(myAppData.getData()));
+    assertTrue(GradleModuleDataKt.isIncludedBuild(myAppData.getData()));
+
+    DataNode<ModuleData> buildSrcData = GradleUtil.findGradleModuleData(getModule("adhoc.buildSrc"));
+    assertTrue(GradleModuleDataKt.isBuildSrcModule(buildSrcData.getData()));
+  }
+
+  @Test
   public void testCompositeBuildWithNestedModules() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
@@ -139,7 +171,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     assertModuleModuleDepScope("app.main", "lib.runtime.runtime-mod.main", COMPILE);
 
     assertTasksProjectPath("app", getProjectPath());
-    if (isGradleNewerOrSameAs("6.8")) {
+    if (isGradleAtLeast("6.8")) {
       assertTasksProjectPath("lib", getProjectPath(), ":lib:");
     }
     else {
@@ -149,7 +181,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithNestedModulesSingleModulePerProject() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "includeBuild 'lib'");
@@ -177,7 +208,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("4.0+")
   public void testCompositeBuildWithGradleProjectDuplicates() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'app'
@@ -220,7 +250,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'app'
@@ -254,34 +283,18 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         .addImplementationDependency("my.group.lib_2:runtime");
     }));
 
-    if (isGradleNewerOrSameAs("4.0")) {
-      assertModules("app", "app_main", "app_test",
-                    "app-runtime", "app-runtime_main", "app-runtime_test",
-                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
-                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
-    }
-    else {
-      assertModules("app", "app_main", "app_test",
-                    "runtime", "runtime_main", "runtime_test",
-                    "lib1", "my.group.lib_1-runtime", "my.group.lib_1-runtime_main", "my.group.lib_1-runtime_test",
-                    "lib2", "my.group.lib_2-runtime", "my.group.lib_2-runtime_main", "my.group.lib_2-runtime_test");
-    }
+    assertModules("app", "app_main", "app_test",
+                  "app-runtime", "app-runtime_main", "app-runtime_test",
+                  "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                  "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
 
-    if (isGradleNewerOrSameAs("4.0")) {
-      assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
-    }
-    else {
-      assertModuleModuleDepScope("app_main", "runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "my.group.lib_1-runtime_main", COMPILE);
-      assertModuleModuleDepScope("app_main", "my.group.lib_2-runtime_main", COMPILE);
-    }
+    assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
+    assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+    assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
   }
 
 
   @Test
-  @TargetVersions("3.3+")
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
     IdeModifiableModelsProvider modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(myProject);
     modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
@@ -339,35 +352,19 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     String myAppApiModuleName = myTestDir.getName() + "-my-app-api";
     String myAppApiMainModuleName = myTestDir.getName() + "-my-app-api_main";
-    String myUtilsApiMainModuleName = isGradleNewerOrSameAs("4.0") ? "org.sample-my-utils-api_main" : "org.sample-api_main";
-    if (isGradleNewerOrSameAs("4.0")) {
-      assertModules(
-        // non-gradle modules
-        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
-        // generated modules by gradle import
-        "adhoc",
-        "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "my-app-api_test",
-        "my-utils",
-        "org.sample-my-utils-api", myUtilsApiMainModuleName, "my-utils-api_test",
-        "string-utils", "string-utils_main", "string-utils_test",
-        "number-utils", "number-utils_main", "number-utils_test"
-      );
-    }
-    else {
-      assertModules(
-        // non-gradle modules
-        "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
-        // generated modules by gradle import
-        "adhoc",
-        "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "api_test",
-        "my-utils",
-        "org.sample-api", myUtilsApiMainModuleName, "org.sample-api_test",
-        "string-utils", "string-utils_main", "string-utils_test",
-        "number-utils", "number-utils_main", "number-utils_test"
-      );
-    }
+    String myUtilsApiMainModuleName = "org.sample-my-utils-api_main";
+    assertModules(
+      // non-gradle modules
+      "api", "api_main", "my-app-api", "my-app-api_main", "my-utils-api", "my-utils-api_main",
+      // generated modules by gradle import
+      "adhoc",
+      "my-app", "my-app_main", "my-app_test",
+      myAppApiModuleName, myAppApiMainModuleName, "my-app-api_test",
+      "my-utils",
+      "org.sample-my-utils-api", myUtilsApiMainModuleName, "my-utils-api_test",
+      "string-utils", "string-utils_main", "string-utils_test",
+      "number-utils", "number-utils_main", "number-utils_test"
+    );
 
     String[] emptyModules =
       new String[]{
@@ -396,7 +393,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("4.1+")
   public void testApiDependenciesAreImported() throws Exception {
     createSettingsFile("rootProject.name = \"project-b\"\n" +
                        "includeBuild 'project-a'");
@@ -452,8 +448,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("project-a/settings.gradle", "rootProject.name = \"project-a\"");
 
-    String mainCompileConfiguration = isJavaLibraryPluginSupported() ? "implementation" : "compile";
-    String utilCompileConfiguration = isJavaLibraryPluginSupported() ? "utilImplementation" : "utilCompile";
     createProjectSubFile("project-a/build.gradle", script(it -> {
       it.withIdeaPlugin()
         .withJavaPlugin()
@@ -467,8 +461,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
           "    }",
           "}",
           "configurations {",
-          "  " + mainCompileConfiguration + " {",
-          "    extendsFrom " + utilCompileConfiguration,
+          "  implementation {",
+          "    extendsFrom utilImplementation",
           "  }",
           "}",
           "jar {",
@@ -495,11 +489,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "project-a.main", "project-a.test", "project-a.util",
                   "project-b", "project-b.main", "project-b.test");
 
-    assertModuleModuleDeps("project-b.main", "project-a.util", "project-a.main");
+    assertModuleModuleDeps("project-b.main",  "project-a.main", "project-a.util");
   }
 
   @Test
-  @TargetVersions("4.4+")
   public void testProjectWithCompositePluginDependencyImported() throws Exception {
     createSettingsFile("includeBuild('plugin'); includeBuild('consumer')");
     createProjectSubFile("plugin/settings.gradle", "rootProject.name = 'test-plugin'");
@@ -553,9 +546,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.1+")
   public void testSubstituteDependencyWithRootProject() throws Exception {
-    if (isGradleNewerOrSameAs("6.6")) {
+    if (isGradleAtLeast("6.6")) {
       createSettingsFile("""
                          rootProject.name = "root-project"
                          include 'sub-project'
@@ -592,7 +584,6 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.1+")
   public void testScopeUpdateForSubstituteDependency() throws Exception {
     createSettingsFile("""
                          rootProject.name = 'pA'
@@ -642,7 +633,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.3+")
+  @Ignore
   public void testIdeCompositeBuild() throws Exception {
     createSettingsFile("rootProject.name='rootProject'\n");
     // generate Gradle wrapper files for the test
@@ -743,17 +734,16 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("8.0-rc-3")
+  @TargetVersions("8.0+")
   public void testNestedCompositeBuildsWithDuplicateNames() throws Exception {
     createSettingsFile("""
- rootProject.name = 'root'
- includeBuild('doppelganger')
- includeBuild('nested')
-""");
-
+     rootProject.name = 'root'
+     includeBuild('doppelganger')
+     includeBuild('nested')
+    """);
     createProjectSubFile("nested/settings.gradle", """
       includeBuild('doppelganger')
-      """);
+    """);
     createProjectSubFile("doppelganger/settings.gradle", "include('module')");
     createProjectSubFile("doppelganger/module/build.gradle", "//empty");
     createProjectSubFile("nested/doppelganger/settings.gradle", "include('module')");

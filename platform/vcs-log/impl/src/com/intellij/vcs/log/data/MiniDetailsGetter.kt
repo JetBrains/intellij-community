@@ -11,14 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogObjectsFactory
-import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
@@ -30,7 +28,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   AbstractDataGetter<VcsCommitMetadata>(storage, logProviders, parentDisposable) {
 
   private val factory = project.getService(VcsLogObjectsFactory::class.java)
-  private val cache = Caffeine.newBuilder().maximumSize(10000).build<Int, VcsCommitMetadata>()
+  private val cache = Caffeine.newBuilder().maximumSize(10000).build<VcsLogCommitStorageIndex, VcsCommitMetadata>()
   private val loader = SequentialLimitedLifoExecutor(this, MAX_LOADING_TASKS) { task: TaskDescriptor ->
     doLoadCommitsData(task.commits) { commitId, data -> saveInCache(commitId, data) }
     notifyLoaded()
@@ -42,12 +40,13 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCommitData(commit: Int): VcsCommitMetadata {
+  fun getCachedDataOrPlaceholder(commit: VcsLogCommitStorageIndex): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 
-  fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
-    val details = getCommitDataIfAvailable(commit)
+  @ApiStatus.Internal
+  fun getCommitData(commit: VcsLogCommitStorageIndex, commitsToLoad: Iterable<VcsLogCommitStorageIndex>): VcsCommitMetadata {
+    val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
     if (!EventQueue.isDispatchThread()) {
@@ -56,13 +55,17 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
 
     val toLoad = IntOpenHashSet(commitsToLoad.iterator())
+    if (toLoad.isEmpty()) {
+      return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
     return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, taskNumber)
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  private fun getFromCacheAndCleanOldPlaceholder(commit: VcsLogCommitStorageIndex): VcsCommitMetadata? {
     if (!EventQueue.isDispatchThread()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
@@ -80,21 +83,18 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    val detailsFromCache = commits.associateNotNull {
-      val details = getCommitDataIfAvailable(it)
-      if (details is LoadingDetails) {
-        return@associateNotNull null
-      }
-      details
-    }
-    return detailsFromCache
+  override fun getCachedData(commit: VcsLogCommitStorageIndex): VcsCommitMetadata? {
+    return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
   }
 
-  override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
+  override fun getCachedData(commits: List<VcsLogCommitStorageIndex>): Int2ObjectMap<VcsCommitMetadata> {
+    return commits.associateNotNull { getCachedData(it) }
+  }
+
+  override fun saveInCache(commit: VcsLogCommitStorageIndex, details: VcsCommitMetadata) = cache.put(commit, details)
 
   @RequiresEdt
-  private fun cacheCommit(commitId: Int, taskNumber: Long) {
+  private fun cacheCommit(commitId: VcsLogCommitStorageIndex, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
     if (cache.getIfPresent(commitId) == null) {
@@ -141,7 +141,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     logProvider.readMetadata(root, hashes, consumer)
   }
 
-  private fun createPlaceholderCommit(commit: Int, taskNumber: Long): VcsCommitMetadata {
+  private fun createPlaceholderCommit(commit: VcsLogCommitStorageIndex, taskNumber: Long): VcsCommitMetadata {
     val dataGetter = index.dataGetter
     return if (dataGetter != null && Registry.`is`("vcs.log.use.indexed.details")) {
       IndexedDetails(dataGetter, storage, commit, taskNumber)

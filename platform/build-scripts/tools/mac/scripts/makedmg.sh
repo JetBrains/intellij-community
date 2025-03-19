@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 #immediately exit script with an error if a command fails
 set -euo pipefail
@@ -13,6 +13,7 @@ TEMP_DMG="$2.temp.dmg"
 BG_PIC="$2.png"
 CLEANUP_EXPLODED=${5:-"true"}
 CONTENT_SIGNED=${6:-"true"}
+CHECK_LAUNCHER_INTEGRITY=${7:-"true"}
 
 function log() {
   echo "$(date '+[%H:%M:%S]') [$RESULT_DMG] $*"
@@ -61,7 +62,8 @@ function generate_DS_Store() {
   fi
   log "ds_store library is required for DMG/DS_Store generation, installing in a Python virtual environment"
   python3 -m venv .
-  ./bin/pip3 install mac-alias==2.2.0 ds-store==1.3.0
+  ./bin/pip3 install "setuptools<72"
+  ./bin/pip3 install --no-build-isolation mac-alias==2.2.0 ds-store==1.3.0
   ./bin/python3 makedmg.py "$VOLNAME" "$BG_PIC" "$1"
   log "DMG/DS_Store is generated"
   rm -rf "$MOUNT_POINT/.fseventsd"
@@ -109,7 +111,21 @@ fi
 
 
 if [ "$CONTENT_SIGNED" = "true" ]; then
+  log "Checking the signature"
   codesign --verify --deep --strict --verbose "$MOUNT_POINT/$BUILD_NAME"
+fi
+
+if [ "$CHECK_LAUNCHER_INTEGRITY" = "true" ]; then
+  log "Checking the launcher integrity"
+  LAUNCHER="$(ls "$MOUNT_POINT/$BUILD_NAME/Contents/MacOS")"
+  LAUNCHER_PATH="$MOUNT_POINT/$BUILD_NAME/Contents/MacOS/$LAUNCHER"
+  LAUNCHER_ARCH="$(lipo -archs "$LAUNCHER_PATH")"
+  HOST_ARCH="$(arch)"
+  if [ "$LAUNCHER_ARCH" = "$HOST_ARCH" ]; then
+    "$LAUNCHER_PATH" --version
+  else
+    log "The launcher arch is $LAUNCHER_ARCH, the host arch is $HOST_ARCH, integrity may not be checked"
+  fi
 fi
 
 function detach_disk() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -37,13 +37,11 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,7 +59,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
   private Executor myCurrentExecutor;
   private boolean myEditConfiguration;
-  private final RunListPopup myPopup;
+  private RunListPopup myPopup;
 
   public ChooseRunConfigurationPopup(@NotNull Project project,
                                      @NotNull String addKey,
@@ -71,12 +69,16 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     myAddKey = addKey;
     myDefaultExecutor = defaultExecutor;
     myAlternativeExecutor = alternativeExecutor;
-
-    myPopup = new RunListPopup(project, null, new ConfigurationListPopupStep(this, myProject, this, myDefaultExecutor.getActionName()), null);
   }
 
-  public void show() {
+  @RequiresBackgroundThread
+  @NotNull ListPopupStep<?> buildStep(@NotNull DataContext dataContext) {
+    List<ChooseRunConfigurationPopup.ItemWrapper<?>> settingsList = createSettingsList(myProject, this, dataContext, true);
+    return new ConfigurationListPopupStep(this, myProject, myDefaultExecutor.getActionName(), settingsList);
+  }
 
+  void show(@NotNull ListPopupStep<?> step) {
+    myPopup = new RunListPopup(myProject, null, step, null);
     final String adText = getAdText(myAlternativeExecutor);
     if (adText != null) {
       myPopup.setAdText(adText);
@@ -246,7 +248,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     return new MyAbstractAction(listPopup, number, executor);
   }
 
-  private abstract static class Wrapper implements NumericMnemonicItem {
+  @ApiStatus.Internal
+  public abstract static class Wrapper implements NumericMnemonicItem {
     private int myMnemonic = -1;
     private boolean myMnemonicsEnabled;
     private final boolean myAddSeparatorAbove;
@@ -428,9 +431,9 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     private ConfigurationListPopupStep(final @NotNull ChooseRunConfigurationPopup action,
                                        final @NotNull Project project,
-                                       final @NotNull ExecutorProvider executorProvider,
-                                       final @NotNull @Nls String title) {
-      super(title, createSettingsList(project, executorProvider, true));
+                                       final @NotNull @Nls String title,
+                                       @NotNull List<ItemWrapper<?>> list) {
+      super(title, list);
       myProject = project;
       myAction = action;
 
@@ -499,7 +502,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ItemWrapper wrapper, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ItemWrapper wrapper, boolean finalChoice) {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
@@ -662,7 +665,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
       return doFinalStep(() -> selectedValue.perform());
     }
 
@@ -704,7 +707,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static class MyAbstractAction extends AbstractAction implements DumbAware {
+  private static final class MyAbstractAction extends AbstractAction implements DumbAware {
     private final ListPopupImpl myListPopup;
     private final int myNumber;
     private final Executor myExecutor;
@@ -728,7 +731,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private class RunListPopup extends ListPopupImpl {
+  private final class RunListPopup extends ListPopupImpl {
 
     RunListPopup(Project project, WizardPopup aParent, ListPopupStep aStep, Object parentValue) {
       super(project, aParent, aStep, parentValue);
@@ -784,7 +787,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       super.handleSelect(handleFinalChoices, e);
     }
 
-    protected void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
+    private void handleShiftClick(boolean handleFinalChoices, final InputEvent inputEvent, final RunListPopup popup) {
       myCurrentExecutor = myAlternativeExecutor;
       popup._handleSelect(handleFinalChoices, inputEvent);
     }
@@ -891,7 +894,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
         if (myPopup.myEditConfiguration) {
           final RunnerAndConfigurationSettings settings = selectedValue.getSettings();
@@ -924,15 +927,27 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
+  /**
+   * @deprecated Use {@link #createSettingsList(Project, ExecutorProvider, DataContext, boolean)}
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
+                                                                 @NotNull ExecutorProvider executorProvider,
+                                                                 boolean isCreateEditAction) {
+    return createSettingsList(project, executorProvider, DataManager.getInstance().getDataContext(), isCreateEditAction);
+  }
+
   public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull Project project,
                                                               @NotNull ExecutorProvider executorProvider,
+                                                              @NotNull DataContext dataContext,
                                                               boolean isCreateEditAction) {
     RunManager runManager = RunManager.getInstanceIfCreated(project);
     if (runManager == null) {
       return Collections.emptyList();
     }
     //noinspection TestOnlyProblems
-    return createSettingsList((RunManagerImpl)runManager, executorProvider, isCreateEditAction, Registry.is("run.popup.move.folders.to.top", false));
+    return createSettingsList((RunManagerImpl)runManager, executorProvider, isCreateEditAction,
+                              Registry.is("run.popup.move.folders.to.top", false), dataContext);
   }
 
   public static List<ItemWrapper<?>> createFlatSettingsList(@NotNull Project project) {
@@ -943,7 +958,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   public static @NotNull List<ItemWrapper<?>> createSettingsList(@NotNull RunManagerImpl runManager,
                                                                  @NotNull ExecutorProvider executorProvider,
                                                                  boolean isCreateEditAction,
-                                                                 boolean isMoveFoldersToTop) {
+                                                                 boolean isMoveFoldersToTop,
+                                                                 @NotNull DataContext dataContext) {
     List<ItemWrapper<?>> result = new ArrayList<>();
 
     if (isCreateEditAction) {
@@ -996,7 +1012,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.addAll(folderWrappers);
     }
     if (!DumbService.isDumb(project)) {
-      populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
+      populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration, dataContext);
     }
     if (isMoveFoldersToTop) {
       result.addAll(wrappedExisting.values());
@@ -1111,19 +1127,15 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
                                                  Map<RunnerAndConfigurationSettings, ItemWrapper<?>> existing,
                                                  Project project,
                                                  RunManager manager,
-                                                 RunnerAndConfigurationSettings selectedConfiguration) {
-    if (!EventQueue.isDispatchThread()) {
-      return;
-    }
-
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
+                                                 RunnerAndConfigurationSettings selectedConfiguration,
+                                                 @NotNull DataContext dataContext) {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
-    final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
+    List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
                                                                                                         context, false, true);
     if (producers == null) return;
 
-    producers.sort(ConfigurationFromContext.NAME_COMPARATOR);
+    producers = ContainerUtil.sorted(producers, ConfigurationFromContext.NAME_COMPARATOR);
 
     final RunnerAndConfigurationSettings[] preferred = {null};
 

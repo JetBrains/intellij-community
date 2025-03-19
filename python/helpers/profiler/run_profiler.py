@@ -12,6 +12,7 @@ from prof_util import generate_snapshot_filepath, stats_to_response, get_snapsho
 
 base_snapshot_path = os.getenv('PYCHARM_SNAPSHOT_PATH')
 remote_run = bool(os.getenv('PYCHARM_REMOTE_RUN', ''))
+send_stat_flag = bool(os.getenv('PYCHARM_SEND_STAT', ''))
 
 def StartClient(host, port):
     """ connects to a host/port """
@@ -71,7 +72,7 @@ class Profiler(object):
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
-            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run, self.snapshot_extension()), remote_run)
+            self.save_snapshot(message.id, generate_snapshot_filepath(message.save_snapshot.filepath, remote_run, self.snapshot_extension()), remote_run or send_stat_flag)
         else:
             raise AssertionError("Unknown request %s" % dir(message))
 
@@ -89,7 +90,7 @@ class Profiler(object):
             execfile(file, globals, globals)  # execute the script
         finally:
             self.stop_profiling()
-            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run, self.snapshot_extension()), remote_run)
+            self.save_snapshot(0, generate_snapshot_filepath(base_snapshot_path, remote_run, self.snapshot_extension()), remote_run or send_stat_flag)
 
     def start_profiling(self):
         self.profiling_backend.enable()

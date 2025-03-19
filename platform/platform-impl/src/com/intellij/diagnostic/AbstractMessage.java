@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+/** Internal API. See a note in {@link MessagePool}. */
+@ApiStatus.Internal
 public abstract class AbstractMessage {
   private final Date myDate = Calendar.getInstance().getTime();
   private boolean myIsRead;
@@ -19,24 +22,20 @@ public abstract class AbstractMessage {
   private boolean myIsSubmitting;
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
-  private Integer myAssigneeId;
-  private boolean myAssigneeVisible;
-  private Long myDevListTimestamp;
   private String myAppInfo;
 
   public abstract @NotNull Throwable getThrowable();
   public abstract @NotNull String getThrowableText();
 
-  /** Returns a user message (see {@link LogMessage#eventOf}), if present. */
+  /** Returns a message passed along with a throwable to {@link com.intellij.openapi.diagnostic.Logger#error}, if present. */
   public abstract @Nullable String getMessage();
 
   /** Returns a (possibly empty) list of all attachments. */
-  public @NotNull List<Attachment> getAllAttachments() {
-    return Collections.emptyList();
+  public @NotNull @Unmodifiable List<Attachment> getAllAttachments() {
+    return List.of();
   }
 
-  /** Returns a list of attachments marked by a user to be included into the error report. */
-  public @NotNull List<Attachment> getIncludedAttachments() {
+  public @NotNull @Unmodifiable List<Attachment> getIncludedAttachments() {
     return ContainerUtil.filter(getAllAttachments(), Attachment::isIncluded);
   }
 
@@ -89,30 +88,6 @@ public abstract class AbstractMessage {
 
   public void setAdditionalInfo(String additionalInfo) {
     myAdditionalInfo = additionalInfo;
-  }
-
-  public @Nullable Integer getAssigneeId() {
-    return myAssigneeId;
-  }
-
-  public void setAssigneeId(@Nullable Integer assigneeId) {
-    myAssigneeId = assigneeId;
-  }
-
-  boolean isAssigneeVisible() {
-    return myAssigneeVisible;
-  }
-
-  void setAssigneeVisible(boolean assigneeVisible) {
-    myAssigneeVisible = assigneeVisible;
-  }
-
-  @Nullable Long getDevListTimestamp() {
-    return myDevListTimestamp;
-  }
-
-  void setDevListTimestamp(@Nullable Long timestamp) {
-    myDevListTimestamp = timestamp;
   }
 
   protected @Nullable String getAppInfo() {

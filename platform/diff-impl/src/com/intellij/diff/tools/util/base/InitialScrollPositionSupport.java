@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,12 +20,13 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class InitialScrollPositionSupport {
   public abstract static class InitialScrollHelperBase {
     protected boolean myShouldScroll = true;
 
-    @Nullable protected ScrollToPolicy myScrollToChange;
-    @Nullable protected EditorsVisiblePositions myEditorsPosition;
+    protected @Nullable ScrollToPolicy myScrollToChange;
+    protected @Nullable EditorsVisiblePositions myEditorsPosition;
     protected LogicalPosition @Nullable [] myCaretPosition;
 
     public void processContext(@NotNull DiffRequest request) {
@@ -44,19 +46,19 @@ public final class InitialScrollPositionSupport {
 
     protected abstract LogicalPosition @Nullable [] getCaretPositions();
 
-    @Nullable
-    protected abstract EditorsVisiblePositions getVisiblePositions();
+    @ApiStatus.Internal
+    protected abstract @Nullable EditorsVisiblePositions getVisiblePositions();
   }
 
-  private static abstract class SideInitialScrollHelper extends InitialScrollHelperBase {
+  private abstract static class SideInitialScrollHelper extends InitialScrollHelperBase {
     @Override
     protected LogicalPosition @Nullable [] getCaretPositions() {
       return doGetCaretPositions(getEditors());
     }
 
-    @Nullable
+    @ApiStatus.Internal
     @Override
-    protected EditorsVisiblePositions getVisiblePositions() {
+    protected @Nullable EditorsVisiblePositions getVisiblePositions() {
       return doGetVisiblePositions(getEditors());
     }
 
@@ -83,15 +85,14 @@ public final class InitialScrollPositionSupport {
       return true;
     }
 
-    @NotNull
-    protected abstract List<? extends Editor> getEditors();
+    protected abstract @NotNull List<? extends Editor> getEditors();
 
     protected abstract void disableSyncScroll(boolean value);
   }
 
-  public static abstract class TwosideInitialScrollHelper extends SideInitialScrollHelper {
-    @Nullable protected Pair<Side, Integer> myScrollToLine;
-    @Nullable protected DiffNavigationContext myNavigationContext;
+  public abstract static class TwosideInitialScrollHelper extends SideInitialScrollHelper {
+    protected @Nullable Pair<Side, Integer> myScrollToLine;
+    protected @Nullable DiffNavigationContext myNavigationContext;
 
     @Override
     public void processContext(@NotNull DiffRequest request) {
@@ -113,7 +114,7 @@ public final class InitialScrollPositionSupport {
       if (myScrollToChange != null) return;
 
       ensureEditorSizeIsUpToDate(getEditors());
-      if (myShouldScroll) myShouldScroll = !doScrollToLine();
+      if (myShouldScroll) myShouldScroll = !doScrollToLine(true);
       if (myNavigationContext != null) return;
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
     }
@@ -124,7 +125,7 @@ public final class InitialScrollPositionSupport {
 
       ensureEditorSizeIsUpToDate(getEditors());
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
-      if (myShouldScroll) myShouldScroll = !doScrollToLine();
+      if (myShouldScroll) myShouldScroll = !doScrollToLine(false);
       if (myShouldScroll) myShouldScroll = !doScrollToContext();
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
       if (myShouldScroll) doScrollToFirstChange();
@@ -141,11 +142,11 @@ public final class InitialScrollPositionSupport {
     protected abstract boolean doScrollToContext();
 
     @RequiresEdt
-    protected abstract boolean doScrollToLine();
+    protected abstract boolean doScrollToLine(boolean onSlowRediff);
   }
 
-  public static abstract class ThreesideInitialScrollHelper extends SideInitialScrollHelper {
-    @Nullable protected Pair<ThreeSide, Integer> myScrollToLine;
+  public abstract static class ThreesideInitialScrollHelper extends SideInitialScrollHelper {
+    protected @Nullable Pair<ThreeSide, Integer> myScrollToLine;
 
     @Override
     public void processContext(@NotNull DiffRequest request) {
@@ -205,8 +206,7 @@ public final class InitialScrollPositionSupport {
     return carets;
   }
 
-  @Nullable
-  public static EditorsVisiblePositions doGetVisiblePositions(@NotNull List<? extends Editor> editors) {
+  public static @Nullable EditorsVisiblePositions doGetVisiblePositions(@NotNull List<? extends Editor> editors) {
     LogicalPosition[] carets = doGetCaretPositions(editors);
     Point[] points = doGetScrollingPositions(editors);
     return new EditorsVisiblePositions(carets, points);

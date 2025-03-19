@@ -20,7 +20,7 @@ public final class LombokBasics {
   }
 }
 @AllArgsConstructor
-class FinalCheck {
+class <warning descr="Class 'FinalCheck' is never used">FinalCheck</warning> {
   @Getter
   private int a;
   @Setter
@@ -28,13 +28,13 @@ class FinalCheck {
   @Getter @Setter
   private int c;
 }
-final class Foo {
+final class <warning descr="Class 'Foo' is never used">Foo</warning> {
   @Getter
   String bar;
 
   public void <warning descr="Method 'test()' is never used">test</warning>() {
     bar = null;
-    System.out.println(getBar().trim());
+    System.out.println(getBar().<warning descr="Method invocation 'trim' will produce 'NullPointerException'">trim</warning>());
   }
 }
 class <warning descr="Class 'Outer' is never used">Outer</warning> {
@@ -45,10 +45,10 @@ class <warning descr="Local class 'Inner' is never used">Inner</warning> {
   }
   }
   }
-class IntellijInspectionNPEDemo {
+class <warning descr="Class 'IntellijInspectionNPEDemo' is never used">IntellijInspectionNPEDemo</warning> {
 
   @Builder
-  public static class SomeDataClass {
+  public static class <warning descr="Class 'SomeDataClass' is never used">SomeDataClass</warning> {
     public static class <warning descr="Class 'SomeDataClassBuilder' is never used">SomeDataClassBuilder</warning> {
       private void <warning descr="Private method 'buildWithJSON()' is never used">buildWithJSON</warning>() {
         this.jsonObject = "test";

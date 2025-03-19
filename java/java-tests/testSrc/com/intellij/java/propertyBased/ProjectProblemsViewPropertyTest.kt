@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.problems.MemberUsageCollector
 import com.intellij.codeInsight.daemon.problems.Problem
 import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
 import com.intellij.codeInsight.javadoc.JavaDocUtil
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
@@ -41,29 +42,30 @@ import org.jetbrains.jetCheck.PropertyChecker
 import kotlin.math.absoluteValue
 
 @SkipSlowTestLocally
+@IgnoreJUnit3
 class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   override fun setUp() {
     TestModeFlags.set(ProjectProblemUtils.ourTestingProjectProblems, true, testRootDisposable)
     super.setUp()
   }
 
-  fun testAllFilesWithMemberNameReported() {
+  fun testStressAllFilesWithMemberNameReported() {
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+    val filesGenerator = psiJavaFiles()
     PropertyChecker.customized()
-      .rechecking("6NPkvxPGro77DQMBOrenewIECAQCAwoG")
-      .withIterationCount(50)
-      .checkScenarios { ImperativeCommand(this::doTestAllFilesWithMemberNameReported) }
+      .withIterationCount(30)
+      .checkScenarios { ImperativeCommand { this.doTestAllFilesWithMemberNameReported(it, filesGenerator) } }
   }
 
-  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment) {
+  private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment, filesGenerator: Generator<PsiJavaFile>) {
     val changedFiles = mutableMapOf<VirtualFile, Set<VirtualFile>>()
 
     MadTestingUtil.changeAndRevert(myProject) {
       val nFilesToChange = env.generateValue(Generator.integers(1, 3), "Files to change: %s")
       var i = 0
       while (i < nFilesToChange) {
-        val fileToChange = env.generateValue(psiJavaFiles(), null)
+        val fileToChange = env.generateValue(filesGenerator, null)
         val relatedFiles = findRelatedFiles(fileToChange)
         if (relatedFiles.isEmpty()) continue
 
@@ -222,7 +224,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
     val module = ModuleUtilCore.findModuleForPsiElement(member) ?: return false
     val scope = GlobalSearchScope.moduleScope(module)
     val memberFile = member.containingFile
-    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile, null) != TOO_MANY_OCCURRENCES
+    return PsiSearchHelper.getInstance(myProject).isCheapEnoughToSearch(name, scope, memberFile) != TOO_MANY_OCCURRENCES
   }
 
   private fun isOverride(possibleOverride: PsiMethod, target: PsiMember): Boolean {

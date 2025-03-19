@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.platform.structuralSearch` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "structuralSearch_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structuralSearch",
+  module_name = "intellij.platform.structuralSearch",
+  visibility = ["//visibility:public"],
+  srcs = glob(["source/**/*.kt", "source/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/util/jdom",
+    "//xml/impl",
+    "@lib//:org-codehaus-groovy-groovy",
+    "//platform/platform-api:ide",
+    "//platform/usageView",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-parser:parser",
+    "//RegExpSupport:regexp",
+    "//platform/refactoring",
+    "//platform/duplicates-analysis",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+  ],
+  exports = ["//platform/duplicates-analysis"],
+  runtime_deps = [":structuralSearch_resources"]
+)
+### auto-generated section `build intellij.platform.structuralSearch` end
+
+### auto-generated section `build intellij.platform.structuralSearch.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "structuralSearch-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "structuralSearch-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/structuralsearch:structuralSearch",
+    "//java/testFramework",
+    "//xml/impl",
+    "//java/structuralsearch-java:structuralSearch",
+    "//java/structuralsearch-java:structuralSearch_test_lib",
+    "//platform/util/jdom",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "structuralSearch-tests_test",
+  runtime_deps = [":structuralSearch-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.structuralSearch.tests` end

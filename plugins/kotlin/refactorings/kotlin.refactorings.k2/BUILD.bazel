@@ -1,0 +1,68 @@
+### auto-generated section `build kotlin.refactorings.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-refactorings-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-refactorings-k2",
+  module_name = "kotlin.refactorings.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/usageView",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//java/java-psi-api:psi",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/openapi:java",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//plugins/kotlin/kotlin.searching:searching-k2",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/kdoc:kotlin-base-kdoc",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "@lib//:kotlinc-analysis-api-k2",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/kotlin.searching/base",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:guava",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.move.k2:kotlin-refactorings-move-k2",
+    "//platform/util/text-matching",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "@lib//:fastutil-min",
+    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+  ],
+  runtime_deps = [":kotlin-refactorings-k2_resources"]
+)
+### auto-generated section `build kotlin.refactorings.k2` end

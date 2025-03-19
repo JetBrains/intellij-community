@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.buildScripts.downloader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "buildScripts-downloader",
+  module_name = "intellij.platform.buildScripts.downloader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:commons-compress",
+    "@lib//:tc_service_messages",
+    "@lib//:guava",
+    "@lib//:zstd-jni",
+    "@lib//:commons-io",
+    "@lib//:kotlin-stdlib",
+    "@lib//:ktor-client-auth",
+    "@lib//:ktor-client-encoding",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:opentelemetry-extension-kotlin",
+    "@lib//:ktor-client-okhttp",
+    "@lib//:okhttp",
+    "@lib//:ktor-client-core",
+    "@lib//:hash4j",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.downloader` end

@@ -6,23 +6,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 
 class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinExtensionsByReceiverTypeStubIndexHelper() {
         @JvmField
         @Suppress("DeprecatedCallableAddReplaceWith")
+        @ApiStatus.ScheduledForRemoval
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
         val INSTANCE: KotlinTopLevelExtensionsByReceiverTypeIndex = KotlinTopLevelExtensionsByReceiverTypeIndex()
 
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExtensionsByReceiverTypeIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java.simpleName)
     }
 
     override fun getKey() = indexKey
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }

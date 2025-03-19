@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.vcs.git.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-git-rt",
+  module_name = "intellij.vcs.git.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+  ]
+)
+### auto-generated section `build intellij.vcs.git.rt` end

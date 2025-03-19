@@ -1,17 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.actions.Switcher.SwitcherPanel
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.speedSearch.NameFilteringListModel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListModel
 
+@ApiStatus.Internal
 class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSearchBase<SwitcherPanel>(switcher, null) {
-  fun updateEnteredPrefix() = searchField?.let {
+  fun updateEnteredPrefix(): Unit? = searchField?.let {
     val text = it.text ?: ""
     when (text.length > 1) {
       true -> {
@@ -27,9 +28,9 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
 
   fun <T : SwitcherListItem> wrap(model: ListModel<T>): ListModel<T> =
     NameFilteringListModel(model,
-                           { it.mainText },
+                           { it.mainText + " " + it.pathText },
                            { !isPopupActive || compare(it, enteredPrefix) },
-                           { StringUtil.notNullize(enteredPrefix) })
+                           { (enteredPrefix ?: "") })
 
   private val files
     get() = myComponent.files
@@ -37,16 +38,16 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
   private val windows
     get() = myComponent.toolWindows
 
-  override fun getSelectedIndex() = when (windows.selectedIndex >= 0) {
+  override fun getSelectedIndex(): Int = when (windows.selectedIndex >= 0) {
     true -> windows.selectedIndex + files.itemsCount
     else -> files.selectedIndex
   }
 
-  override fun getElementText(element: Any?) = (element as? SwitcherListItem)?.mainText ?: ""
+  override fun getElementText(element: Any?): String = (element as? SwitcherListItem)?.let { it.mainText + " " + it.pathText } ?: ""
 
-  override fun getElementCount() = files.itemsCount + windows.itemsCount
+  override fun getElementCount(): Int = files.itemsCount + windows.itemsCount
 
-  override fun getElementAt(index: Int) = when {
+  override fun getElementAt(index: Int): Any? = when {
     index < 0 -> null
     index < files.itemsCount -> files.model.getElementAt(index)
     index < elementCount -> windows.model.getElementAt(index - files.itemsCount)
@@ -92,7 +93,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
                                        Registry.`is`("ide.recent.files.speed.search.camel.case"))
     addChangeListener {
       if (myComponent.project.isDisposed) {
-        myComponent.myPopup?.cancel()
+        myComponent.popup?.cancel()
       }
       else {
         val isPopupActive = isPopupActive
@@ -118,7 +119,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
   }
 
   companion object {
-    fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
+    internal fun installOn(switcher: SwitcherPanel): SwitcherSpeedSearch {
       val search = SwitcherSpeedSearch(switcher)
       search.setupListeners()
       return search

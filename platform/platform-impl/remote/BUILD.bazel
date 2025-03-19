@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.ide.remote` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-remote",
+  module_name = "intellij.platform.ide.remote",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-core",
+    "//platform/execution",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/concurrency",
+    "@lib//:guava",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.remote` end

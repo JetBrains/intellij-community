@@ -1,0 +1,16 @@
+class X {
+
+    val c: Char = 'a'
+}
+
+fun Char.newFun(x: X, c: Char): Char = this
+
+fun foo(s: String, x: X) {
+    val chars = s.filter {
+        O.x?.let { t -> it.newFun(t, x.c) } != 'a'
+    }
+}
+
+object O {
+    var x: X? = null
+}

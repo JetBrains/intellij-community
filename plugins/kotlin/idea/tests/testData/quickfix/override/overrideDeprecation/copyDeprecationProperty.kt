@@ -11,3 +11,6 @@ class Derived : Base() {
         get() = 0
         set(value) {}
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CopyDeprecatedAnnotationFix

@@ -6,12 +6,12 @@ import com.intellij.ide.ui.UISettingsState
 import com.intellij.openapi.application.ApplicationBundle.message
 import com.intellij.ui.ExperimentalUI
 
-internal const val EDITOR_TABS_OPTIONS_ID = "editor.preferences.tabs"
+internal const val EDITOR_TABS_OPTIONS_ID: String = "editor.preferences.tabs"
 
 private val ui: UISettingsState
   get() = UISettings.getInstance().state
 
-internal val showDirectoryForNonUniqueFilenames
+internal val showDirectoryForNonUniqueFilenames: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.show.directory.for.non.unique.files"), ui::showDirectoryForNonUniqueFilenames)
 internal val markModifiedTabsWithAsterisk: CheckboxDescriptor
   get() {
@@ -21,24 +21,24 @@ internal val markModifiedTabsWithAsterisk: CheckboxDescriptor
     else message("checkbox.mark.modified.tabs.with.asterisk")
     return CheckboxDescriptor(text, ui::markModifiedTabsWithAsterisk)
   }
-internal val showTabsTooltips
+internal val showTabsTooltips: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.show.tabs.tooltips"), ui::showTabsTooltips)
-internal val showFileIcon
+internal val showFileIcon: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.show.file.icon.in.editor.tabs"), ui::showFileIconInTabs)
-internal val showFileExtension
+internal val showFileExtension: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.show.file.extension.in.editor.tabs"), { !ui.hideKnownExtensionInTabs }, { ui.hideKnownExtensionInTabs = !it })
-internal val hideTabsIfNeeded
+internal val hideTabsIfNeeded: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.editor.scroll.if.need"), ui::hideTabsIfNeeded)
-internal val showPinnedTabsInASeparateRow
+internal val showPinnedTabsInASeparateRow: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.show.pinned.tabs.in.a.separate.row"), ui::showPinnedTabsInASeparateRow)
-internal val sortTabsAlphabetically
+internal val sortTabsAlphabetically: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.sort.tabs.alphabetically"), ui::sortTabsAlphabetically)
-internal val openTabsAtTheEnd
+internal val openTabsAtTheEnd: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.open.new.tabs.at.the.end"), ui::openTabsAtTheEnd)
-internal val showTabsInOneRow
+internal val showTabsInOneRow: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.editor.tabs.in.single.row"), ui::scrollTabLayoutInEditor)
-internal val openInPreviewTabIfPossible
+internal val openInPreviewTabIfPossible: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.smart.tab.preview"), ui::openInPreviewTabIfPossible,
                              message("checkbox.smart.tab.preview.inline.help"))
-internal val useSmallFont
+internal val useSmallFont: CheckboxDescriptor
   get() = CheckboxDescriptor(message("checkbox.use.small.font.for.labels"), ui::useSmallLabelsOnTabs)

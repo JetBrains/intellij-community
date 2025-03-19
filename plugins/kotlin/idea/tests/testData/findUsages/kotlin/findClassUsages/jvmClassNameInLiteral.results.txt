@@ -1,0 +1,1 @@
+Usage in string constants 10 val a = "C"

@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.ide.util.io.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-util-io-impl",
+  module_name = "intellij.platform.ide.util.io.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util/base",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:pty4j",
+    "@lib//:winp",
+    "//platform/util",
+    "@lib//:proxy-vole",
+    "@lib//:jna",
+    "@lib//:jackson",
+  ],
+  exports = ["//platform/platform-util-io:ide-util-io"],
+  runtime_deps = ["@lib//:rhino"]
+)
+### auto-generated section `build intellij.platform.ide.util.io.impl` end

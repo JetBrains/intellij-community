@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.platform.tasks.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tasks-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tasks-impl",
+  module_name = "intellij.platform.tasks.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/tasks-platform-api:tasks",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/vcs-api:vcs",
+    "@lib//:gson",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/vcs-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/text-matching",
+    "//platform/statistics",
+    "//platform/bookmarks",
+  ],
+  exports = ["//platform/statistics"],
+  runtime_deps = [":tasks-impl_resources"]
+)
+### auto-generated section `build intellij.platform.tasks.impl` end

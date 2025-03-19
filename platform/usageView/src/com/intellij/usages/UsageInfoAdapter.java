@@ -11,6 +11,7 @@ public interface UsageInfoAdapter extends Usage, MergeableUsage {
   @NotNull
   String getPath();
   int getLine();
+  @Override
   int getNavigationOffset();
   @NotNull UsageInfo @NotNull [] getMergedInfos();
   @NotNull

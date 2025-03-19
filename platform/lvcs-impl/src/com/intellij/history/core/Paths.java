@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.core;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,13 +56,13 @@ public final class Paths {
     if (!isParent(root, path)) return null;
 
     path = path.substring(root.length());
-    if (path.length() == 0) return "";
+    if (path.isEmpty()) return "";
 
     if (path.charAt(0) != DELIM) return null;
     return path.substring(1);
   }
 
-  public static Iterable<String> split(String path) {
+  public static @Unmodifiable Iterable<String> split(String path) {
     String root = FileUtil.extractRootPath(path);
     if (root == null) return splitInner(path);
     if (root.length() + 1 == path.length() && path.endsWith("/")) {
@@ -72,8 +73,7 @@ public final class Paths {
     return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
-  @NotNull
-  private static List<String> splitInner(String path) {
+  private static @Unmodifiable @NotNull List<String> splitInner(String path) {
     if (path.isEmpty()) return Collections.emptyList();
     int s = 0;
     int e = path.length();
@@ -114,15 +114,13 @@ public final class Paths {
     myIsCaseSensitive = SystemInfo.isFileSystemCaseSensitive;
   }
 
-  @NotNull
-  public static FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
+  public static @NotNull FilePath createDvcsFilePath(@NotNull String path, boolean isDirectory) {
     return path.contains(URLUtil.SCHEME_SEPARATOR)
            ? new UrlFilePath(path, isDirectory)
            : new LocalFilePath(path, isDirectory);
   }
 
-  @NotNull
-  public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
+  public static @NotNull FilePath createDvcsFilePath(@NotNull VirtualFile file) {
     if (VersionManagingFileSystem.isEnforcedNonLocal(file)) {
       return new UrlFilePath(file.getUrl(), file.isDirectory());
     }

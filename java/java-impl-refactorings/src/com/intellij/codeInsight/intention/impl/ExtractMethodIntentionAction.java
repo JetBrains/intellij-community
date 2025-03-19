@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -18,6 +18,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodHandler;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,21 +26,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 
-public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
-  @NotNull
+public final class ExtractMethodIntentionAction implements IntentionAction, Iconable {
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.extract.method.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (floatingToolbar != null && (floatingToolbar.isShown() || floatingToolbar.canBeShownAtCurrentSelection())) return false;
     if (file instanceof PsiCodeFragment || !file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return false;
     }
@@ -68,9 +69,8 @@ public class ExtractMethodIntentionAction implements IntentionAction, Iconable {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 

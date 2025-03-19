@@ -2,149 +2,165 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.project.MavenWrapper
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 import org.junit.Test
-import java.io.File
+import java.nio.file.Files.createDirectories
+import java.nio.file.Path.of
 
 class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
-  protected lateinit var myAnotherProjectRoot: VirtualFile
 
-  @Throws(Exception::class)
+  private lateinit var myAnotherProjectRoot: VirtualFile
+
   override fun setUpInWriteAction() {
     super.setUpInWriteAction()
-    val projectDir = File(myDir, "anotherProject")
-    projectDir.mkdirs()
-    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir)!!
+    val projectDir = createDirectories(of(dir.toString(), "anotherProject"))
+    myAnotherProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(projectDir)!!
   }
 
   @Test
-  fun testShouldNotCreateNewConnectorForNewProject() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project1</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "<modules>" +
-                     "<module>m1</module>" +
-                     " </modules>")
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>")
-    importProject()
+  fun testShouldNotCreateNewConnectorForNewProject() = runBlocking {
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>""".trimIndent())
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>""".trimIndent())
+    importProjectAsync()
     assertModules("project1", "m1")
-    val p2Root = createPomFile(myAnotherProjectRoot, "<groupId>test</groupId>" +
-                                                     "<artifactId>project2</artifactId>" +
-                                                     "<version>1</version>" +
-                                                     "<packaging>pom</packaging>" +
-                                                     "<modules>" +
-                                                     "<module>m2</module>" +
-                                                     " </modules>")
-    createModulePom("../anotherProject/m2", "<groupId>test</groupId>" +
-                                            "<artifactId>m2</artifactId>" +
-                                            "<version>2</version>")
-    MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-    waitForLinkingCompleted()
+    val p2Root = createPomFile(myAnotherProjectRoot, """
+      <groupId>test</groupId>
+      <artifactId>project2</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m2</module>
+      </modules>""".trimIndent())
+    createModulePom("../anotherProject/m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>2</version>""".trimIndent())
+    runBlockingMaybeCancellable {
+      MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
+    }
     assertModules("project1", "m1", "project2", "m2")
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
+    assertEquals(1, allConnectors.size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(myDir, File(it))
+      allConnectors.first().multimoduleDirectories.map {
+        getRelativePath(dir, it)
       },
       listOf("project", "anotherProject")
     )
   }
 
-  private fun waitForLinkingCompleted() {
-    if (!isNewImportingProcess) return
-    PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
-  }
-
   @Test
-  fun testShouldCreateNewConnectorForNewProjectIfJvmConfigPresents() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project1</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "<modules>" +
-                     "<module>m1</module>" +
-                     " </modules>")
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>")
-    importProject()
+  fun testShouldCreateNewConnectorForNewProjectIfJvmConfigPresents() = runBlocking {
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>""".trimIndent())
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>""".trimIndent())
+    importProjectAsync()
     assertModules("project1", "m1")
-    val p2Root = createPomFile(myAnotherProjectRoot, "<groupId>test</groupId>" +
-                                                     "<artifactId>project2</artifactId>" +
-                                                     "<version>1</version>" +
-                                                     "<packaging>pom</packaging>" +
-                                                     "<modules>" +
-                                                     "<module>m2</module>" +
-                                                     " </modules>")
-    createModulePom("../anotherProject/m2", "<groupId>test</groupId>" +
-                                            "<artifactId>m2</artifactId>" +
-                                            "<version>2</version>")
+    val p2Root = createPomFile(myAnotherProjectRoot, """
+      <groupId>test</groupId>
+      <artifactId>project2</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m2</module>
+      </modules>""".trimIndent())
+    createModulePom("../anotherProject/m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>2</version>""".trimIndent())
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
-    MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-    waitForLinkingCompleted()
+    MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
     assertModules("project1", "m1", "project2", "m2")
 
-    assertEquals(2, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(2, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.map {
-        FileUtil.getRelativePath(myDir, File(it.multimoduleDirectories.first()))
+      MavenServerManager.getInstance().getAllConnectors().map {
+        getRelativePath(dir, it.multimoduleDirectories.first())
       },
       listOf("project", "anotherProject")
     )
   }
 
   @Test
-  fun testShouldNotCreateNewConnectorForNewProjectIfJvmConfigPresentsAndRegistrySet() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project1</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "<modules>" +
-                     "<module>m1</module>" +
-                     " </modules>")
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>")
-    importProject()
+  fun testShouldNotCreateNewConnectorForNewProjectIfJvmConfigPresentsAndRegistrySet() = runBlocking {
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m1</module>
+      </modules>""".trimIndent())
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>""".trimIndent())
+    importProjectAsync()
     assertModules("project1", "m1")
-    val p2Root = createPomFile(myAnotherProjectRoot, "<groupId>test</groupId>" +
-                                                     "<artifactId>project2</artifactId>" +
-                                                     "<version>1</version>" +
-                                                     "<packaging>pom</packaging>" +
-                                                     "<modules>" +
-                                                     "<module>m2</module>" +
-                                                     " </modules>")
-    createModulePom("../anotherProject/m2", "<groupId>test</groupId>" +
-                                            "<artifactId>m2</artifactId>" +
-                                            "<version>2</version>")
+    val p2Root = createPomFile(myAnotherProjectRoot, """
+      <groupId>test</groupId>
+      <artifactId>project2</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m2</module>
+      </modules>""".trimIndent())
+    createModulePom("../anotherProject/m2", """
+      <groupId>test</groupId>
+      <artifactId>m2</artifactId>
+      <version>2</version>""".trimIndent())
 
     createProjectSubFile("../anotherProject/.mvn/jvm.config", "-Dsomething=blablabla")
     val value = Registry.`is`("maven.server.per.idea.project")
     try {
       Registry.get("maven.server.per.idea.project").setValue(true)
-      MavenOpenProjectProvider().linkToExistingProject(p2Root, myProject)
-      waitForLinkingCompleted()
+      waitForImportWithinTimeout {
+        MavenOpenProjectProvider().linkToExistingProjectAsync(p2Root, project)
+      }
       assertModules("project1", "m1", "project2", "m2")
 
-      assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+      assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
       assertContainsElements(
-        MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
-          FileUtil.getRelativePath(myDir, File(it))
+        MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
+          getRelativePath(dir, it)
         },
         listOf("project", "anotherProject")
       )
@@ -152,96 +168,138 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
     finally {
       Registry.get("maven.server.per.idea.project").setValue(value)
     }
-
   }
 
 
   @Test
-  fun testShouldNotCreateNewConnectorsIfProjectRootIsInSiblingDir() {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
-                                             "<artifactId>project1</artifactId>" +
-                                             "<version>1</version>" +
-                                             "<packaging>pom</packaging>" +
-                                             "<modules>" +
-                                             "<module>../m1</module>" +
-                                             " </modules>")
-    createModulePom("m1", "<parent>\n" +
-                          "    <groupId>test</groupId>\n" +
-                          "    <artifactId>project1</artifactId>\n" +
-                          "    <version>1</version>\n" +
-                          "    <relativePath>../parent/pom.xml</relativePath>\n" +
-                          "  </parent>")
-    importProject()
+  fun testShouldNotCreateNewConnectorsIfProjectRootIsInSiblingDir() = runBlocking {
+    projectPom = createModulePom("parent", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>../m1</module>
+      </modules>""".trimIndent())
+    createModulePom("m1", """
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project1</artifactId>
+        <version>1</version>
+        <relativePath>../parent/pom.xml</relativePath>
+      </parent>""".trimIndent())
+    importProjectAsync()
     assertModules("project1", mn("project", "m1"))
 
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
 
     assertUnorderedElementsAreEqual(
-      MavenServerManager.getInstance().allConnectors.first().multimoduleDirectories.map {
-        FileUtil.getRelativePath(myDir, File(it))
+      MavenServerManager.getInstance().getAllConnectors().first().multimoduleDirectories.map {
+        getRelativePath(dir, it)
       }.map { it?.replace("\\", "/") },
       listOf("project/parent", "project/m1")
     )
   }
 
   @Test
-  fun testCreateNewConnectorsVmOptionsMvnAndSettings() {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
-                                             "<artifactId>project1</artifactId>" +
-                                             "<version>1</version>" +
-                                             "<packaging>pom</packaging>"
-    )
-    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
-    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
+  fun testCreateNewConnectorsVmOptionsMvnAndSettings() = runBlocking {
+    projectPom = createModulePom("parent", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>""".trimIndent())
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
+    settingsComponent.settings.importingSettings.vmOptionsForImporter = "-Dsomething=settings"
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=jvm")
-    importProject()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    importProjectAsync()
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
   }
 
   @Test
-  fun testCreateNewConnectorsVmOptionsMvn() {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
-                                             "<artifactId>project1</artifactId>" +
-                                             "<version>1</version>" +
-                                             "<packaging>pom</packaging>"
-    )
+  fun testCreateNewConnectorsVmOptionsMvn() = runBlocking {
+    projectPom = createModulePom("parent", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>""".trimIndent())
     createProjectSubFile(".mvn/jvm.config", "-Dsomething=something")
-    importProject()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+    importProjectAsync()
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=something", mavenServerConnector.vmOptions)
   }
 
   @Test
-  fun testCreateNewConnectorsVmOptionsSettings() {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
-                                             "<artifactId>project1</artifactId>" +
-                                             "<version>1</version>" +
-                                             "<packaging>pom</packaging>"
-    )
-    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(myProject)
-    settingsComponent.getSettings().getImportingSettings().setVmOptionsForImporter("-Dsomething=settings")
-    importProject()
-    val allConnectors = MavenServerManager.getInstance().allConnectors
+  fun testCreateNewConnectorsVmOptionsSettings() = runBlocking {
+    projectPom = createModulePom("parent", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>""".trimIndent())
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
+    settingsComponent.settings.importingSettings.vmOptionsForImporter = "-Dsomething=settings"
+    importProjectAsync()
+    val allConnectors = MavenServerManager.getInstance().getAllConnectors()
     assertEquals(1, allConnectors.size)
     val mavenServerConnector = allConnectors.elementAt(0)
     assertEquals("-Dsomething=settings", mavenServerConnector.vmOptions)
   }
 
   @Test
-  fun testCreateNewConnectorsVmOptionsJvmXms() {
-    myProjectPom = createModulePom("parent", "<groupId>test</groupId>" +
-                                             "<artifactId>project1</artifactId>" +
-                                             "<version>1</version>" +
-                                             "<packaging>pom</packaging>"
-    )
+  fun testCreateNewConnectorsVmOptionsJvmXms() = runBlocking {
+    projectPom = createModulePom("parent", """
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>""".trimIndent())
     createProjectSubFile(".mvn/jvm.config", "-Xms800m")
-    importProject()
-    assertEquals(1, MavenServerManager.getInstance().allConnectors.size)
+    importProjectAsync()
+    assertEquals(1, MavenServerManager.getInstance().getAllConnectors().size)
+  }
+
+  @Test
+  fun testShouldPassValidConfigurationOfGlobalSettingsToConnector() = runBlocking {
+    createProjectPom("""
+      <groupId>test</groupId>
+      <artifactId>project1</artifactId>
+      <version>1</version>""".trimIndent())
+    createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+                         "distributionUrl=" + MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toUri().toASCIIString())
+    val settingsRef = Ref<MavenEmbedderSettings>()
+    ApplicationManager.getApplication().replaceService(MavenServerManager.MavenServerConnectorFactory::class.java,
+                                                       object : MavenServerManager.MavenServerConnectorFactory {
+                                                         override fun create(project: Project,
+                                                                             jdk: Sdk,
+                                                                             vmOptions: String,
+                                                                             debugPort: Int?,
+                                                                             mavenDistribution: MavenDistribution,
+                                                                             multimoduleDirectory: String): MavenServerConnector {
+                                                           return object : MavenServerConnectorImpl(project, jdk, vmOptions, null,
+                                                                                                    mavenDistribution,
+                                                                                                    multimoduleDirectory) {
+                                                             override suspend fun createEmbedder(settings: MavenEmbedderSettings): MavenServerEmbedder {
+                                                               settingsRef.set(settings)
+                                                               throw UnsupportedOperationException()
+                                                             }
+                                                           }
+                                                         }
+
+                                                       }, testRootDisposable)
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.mavenHomeType = MavenWrapper
+    assertThrows(UnsupportedOperationException::class.java) {
+      runBlockingMaybeCancellable {
+        val mavenEmbedderWrappers = project.service<MavenEmbedderWrappersManager>().createMavenEmbedderWrappers()
+        mavenEmbedderWrappers.getEmbedder(projectRoot.path).getEmbedder()
+      }
+    }
+    assertNotNull(settingsRef.get())
+    val path = MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.mavenHome
+
+    assertEquals(path.resolve("conf/settings.xml").toString(), settingsRef.get().settings.globalSettingsPath)
   }
 
 

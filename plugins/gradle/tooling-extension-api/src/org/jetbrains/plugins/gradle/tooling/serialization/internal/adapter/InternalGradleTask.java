@@ -20,6 +20,11 @@ public final class InternalGradleTask implements GradleTask {
     return this.path;
   }
 
+  @Override
+  public String getBuildTreePath() {
+    throw new UnsupportedOperationException();
+  }
+
   public void setPath(String path) {
     this.path = path;
   }
@@ -87,6 +92,7 @@ public final class InternalGradleTask implements GradleTask {
     this.gradleProject = gradleProject;
   }
 
+  @Override
   public String toString() {
     return "GradleTask{path='" + this.path + "',public=" + this.isPublic + "}";
   }

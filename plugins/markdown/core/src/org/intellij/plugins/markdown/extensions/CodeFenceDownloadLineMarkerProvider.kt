@@ -10,8 +10,8 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.application
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -19,7 +19,8 @@ import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 abstract class CodeFenceDownloadLineMarkerProvider : LineMarkerProviderDescriptor() {
   init {
     application.messageBus.connect().subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, object: MarkdownExtensionsSettings.ChangeListener {

@@ -6,12 +6,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ArchiveCachesCleaner : PersistentFsConnectionListener {
+private class ArchiveCachesCleaner : PersistentFsConnectionListener {
   override fun beforeConnectionClosed() {
-    for (root in PersistentFS.getInstance().roots) {
+    for (root in (PersistentFS.getInstanceOrNull() ?: return).roots) {
       val fs = root.fileSystem
       if (fs is ArchiveFileSystem && fs !is Disposable) {
         try {

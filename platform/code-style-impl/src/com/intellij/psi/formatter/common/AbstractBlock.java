@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.common;
 
 import com.intellij.formatting.*;
@@ -36,14 +36,12 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
@@ -65,8 +63,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     return myBuildIndentsOnly;
   }
 
-  @NotNull
-  private List<Block> buildInjectedBlocks() {
+  private @NotNull List<Block> buildInjectedBlocks() {
     if (myBuildIndentsOnly) {
       return EMPTY;
     }
@@ -117,26 +114,22 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return myAlignment;
   }
 
-  @NotNull
   @Override
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myNode;
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(getChildIndent(), getFirstChildAlignment());
   }
 
-  @Nullable
-  private Alignment getFirstChildAlignment() {
+  private @Nullable Alignment getFirstChildAlignment() {
     List<Block> subBlocks = getSubBlocks();
     for (Block subBlock : subBlocks) {
       Alignment alignment = subBlock.getAlignment();
@@ -147,8 +140,7 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
     return null;
   }
 
-  @Nullable
-  protected Indent getChildIndent() {
+  protected @Nullable Indent getChildIndent() {
     return null;
   }
 
@@ -163,9 +155,8 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
   /**
    * @return additional range to reformat, when this block if formatted
    */
-  @Nullable
   @Override
-  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+  public @Nullable List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
     return info.isOnInsertedLine(getTextRange().getStartOffset()) && myNode.textContains('\n')
            ? new NodeIndentRangesCalculator(myNode).calculateExtraRanges()
            : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
@@ -8,20 +8,23 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.testFramework.testEnv.EnvTagsKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
+
 
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
@@ -42,7 +45,7 @@ public class PyEnvTaskRunner {
   /**
    * Runs test on all interpreters.
    *
-   * @param skipOnFlavors optional array of flavors of interpreters to skip
+   * @param skipOnFlavors optional array of interpreter flavors to skip
    *
    * @param tagsRequiredByTest optional array of tags to run tests on interpreters with these tags only
    */
@@ -68,16 +71,10 @@ public class PyEnvTaskRunner {
       try {
         testTask.setUp(testName);
         wasExecuted = true;
-        if (isJython(root)) {
-          testTask.useLongTimeout();
-        }
-        else {
-          testTask.useNormalTimeout();
-        }
-        final String executable = PythonSdkUtil.getPythonExecutable(root);
+        final Path executable = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(root));
         assert executable != null : "No executable in " + root;
 
-        final Sdk sdk = getSdk(executable, testTask);
+        final Sdk sdk = getSdk(executable.toString(), testTask);
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
           if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
@@ -89,19 +86,19 @@ public class PyEnvTaskRunner {
         /*
           Skipping test if {@link PyTestTask} reports it does not support this language level
          */
-        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+        final LanguageLevel languageLevel = PySdkUtil.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
 
           if (myLoggingRule != null) {
             final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
             if (execTask != null) {
-              // Fill be disabled automatically on project dispose
+              // Fill be disabled automatically on project disposing.
               myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
             }
           }
 
 
-          testTask.runTestOn(executable, sdk);
+          testTask.runTestOn(executable.toString(), sdk);
 
           passedRoots.add(root);
         }
@@ -111,7 +108,7 @@ public class PyEnvTaskRunner {
       }
       catch (final RuntimeException | Error ex) {
         // Runtime and error are logged including environment info
-        LOG.warn(joinStrings(passedRoots, "Tests passed environments: ") +
+        LOG.warn(formatCollectionToString(passedRoots, "Tests passed environments") +
                  "Test failed on " +
                  getEnvType() +
                  " environment " +
@@ -119,13 +116,12 @@ public class PyEnvTaskRunner {
         throw ex;
       }
       catch (final Exception e) {
-        // Exception can't be thrown with out of
         throw new PyEnvWrappingException(e);
       }
       finally {
         try {
-          // Teardown should be called on main thread because fixture teardown checks for
-          // thread leaks, and blocked main thread is considered as leaked
+          // Teardown should be called on the main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked.
           testTask.tearDown();
         }
         catch (final Exception e) {
@@ -138,22 +134,11 @@ public class PyEnvTaskRunner {
       throw new RuntimeException("test " +
                                  testName +
                                  " was not executed.\n" +
-                                 joinStrings(myRoots, "All roots: ") +
+                                 formatCollectionToString(myRoots, "All roots") +
                                  "\n" +
-                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+                                 formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
     }
   }
-
-  private static boolean isNeededToRun(@NotNull Set<String> tagsToCover, @NotNull List<String> envTags) {
-    for (String tag : envTags) {
-      if (tagsToCover.contains(tag)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
 
   protected boolean shouldRun(String root, PyTestTask task) {
     return true;
@@ -183,7 +168,7 @@ public class PyEnvTaskRunner {
    * <p>
    *  Instances of this class are ordered by the number of tags they provide. Typically, fewer tags
    *  mean fewer packages installed inside the environment. If two environments have the same Python version
-   *  and both are suitable for a test, we prefer the one with less number of packages
+   *  and both are suitable for a test, we prefer the one with fewer numbers of packages
    *  since it can improve performance when code inside is involved.
    */
   private static class EnvInfo implements Comparable<EnvInfo> {
@@ -193,7 +178,7 @@ public class PyEnvTaskRunner {
 
     EnvInfo(@NotNull String root) {
       this.root = root;
-      tags = PyEnvTestCase.loadEnvTags(root);
+      tags = EnvTagsKt.loadEnvTags(Path.of(root)).stream().toList();
       pythonVersion = ContainerUtil.find(tags, tag -> tag.matches("^python\\d\\.\\d+$"));
     }
 
@@ -224,7 +209,7 @@ public class PyEnvTaskRunner {
     return result;
   }
 
-  public static boolean isSuitableForTags(List<String> envTags, Set<String> taskTags) {
+  public static boolean isSuitableForTags(@NotNull List<String> envTags, Set<String> taskTags) {
     Set<String> necessaryTags = Sets.newHashSet(taskTags);
 
     for (String tag : envTags) {
@@ -243,12 +228,8 @@ public class PyEnvTaskRunner {
     return necessaryTags.isEmpty();
   }
 
-  public static boolean isJython(@NotNull String sdkHome) {
-    return sdkHome.toLowerCase().contains("jython");
-  }
-
   @NotNull
-  private static String joinStrings(final Collection<String> roots, final String rootsName) {
-    return !roots.isEmpty() ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
+  private static String formatCollectionToString(Collection<String> coll, String collName) {
+    return !coll.isEmpty() ? collName + ": " + StringUtil.join(coll, ", ") + "\n" : "";
   }
 }

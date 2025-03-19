@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -11,33 +11,25 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class DaemonTooltipsUtil {
-  @NlsSafe
-  @NotNull
-  public static String getWrappedTooltip(String message,
-                                         String shortName,
-                                         boolean showToolDescription) {
+  public static @NlsSafe @NotNull String getWrappedTooltip(String message,
+                                                           String shortName,
+                                                           boolean showToolDescription) {
     return getWrappedTooltip(message, shortName, getShortcutText(), showToolDescription);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getWrappedTooltip(String message,
-                                         String shortName,
-                                         String shortcutText,
-                                         boolean showToolDescription) {
+  public static @NlsSafe @NotNull String getWrappedTooltip(String message,
+                                                           String shortName,
+                                                           String shortcutText,
+                                                           boolean showToolDescription) {
     return getWrappedTooltipWithCustomReference(message, "#inspection/" + shortName, shortcutText, showToolDescription);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getWrappedTooltipWithCustomReference(String message, String reference, boolean showToolDescription) {
+  public static @NlsSafe @NotNull String getWrappedTooltipWithCustomReference(String message, String reference, boolean showToolDescription) {
     return getWrappedTooltipWithCustomReference(message, reference, getShortcutText(), showToolDescription);
   }
 
-  @NlsSafe
-  @NotNull
-  public static String getWrappedTooltipWithCustomReference(String message, String reference, String shortcutText,
-                                                            boolean showToolDescription) {
+  public static @NlsSafe @NotNull String getWrappedTooltipWithCustomReference(String message, String reference, String shortcutText,
+                                                                              boolean showToolDescription) {
     String link = "";
     if (showToolDescription) {
       link = " <a "
@@ -50,8 +42,7 @@ public final class DaemonTooltipsUtil {
                                                                   : XmlStringUtil.escapeString(message)) + link);
   }
 
-  @NotNull
-  public static String getShortcutText() {
+  public static @NotNull String getShortcutText() {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager == null) {
       return "";

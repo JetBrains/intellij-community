@@ -1,0 +1,33 @@
+<idea-plugin>
+    <id>org.jetbrains.jewel.demo</id>
+    <name>Jewel Demo</name>
+    <vendor>JetBrains</vendor>
+
+    <description><![CDATA[
+A plugin that demonstrates the capabilities of the Jewel library and Compose.
+
+See the <a href="https://github.com/JetBrains/jewel">Jewel repository</a> for more information.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.JewelBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+
+        <toolWindow id="JewelDemo" anchor="bottom" secondary="false" canCloseContents="false"
+                    icon="JewelIcons.ToolWindowIcon"
+                    factoryClass="org.jetbrains.jewel.samples.ideplugin.JewelDemoToolWindowFactory"/>
+
+        <iconMapper mappingFile="JewelIntUiIconMappings.json"/>
+    </extensions>
+
+    <actions resource-bundle="messages.JewelBundle">
+        <action id="JewelWizardDialog" class="org.jetbrains.jewel.samples.ideplugin.dialog.JewelWizardDialogAction"
+                internal="true"/>
+        <action id="JewelActionSystemTest" class="org.jetbrains.jewel.samples.ideplugin.ActionSystemTestAction"
+                internal="true"/>
+        <action id="JewelComponentShowcaseDialog"
+                class="org.jetbrains.jewel.samples.ideplugin.dialog.ComponentShowcaseDialogAction" internal="true"/>
+    </actions>
+</idea-plugin>

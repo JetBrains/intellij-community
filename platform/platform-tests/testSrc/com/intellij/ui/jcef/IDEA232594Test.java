@@ -44,7 +44,7 @@ public class IDEA232594Test {
   public void test() {
     JBCefBrowser browser = new JBCefBrowser("chrome:version");
 
-    JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);
+    JBCefJSQuery jsQuery = JBCefJSQuery.create((JBCefBrowserBase)browser);
     jsQuery.addHandler(result -> {
       CALLBACL_COUNT.incrementAndGet();
       String str = "JBCefJSQuery result: " + result;

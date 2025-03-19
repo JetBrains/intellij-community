@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
@@ -26,8 +27,7 @@ public class HgCloneCommand {
     this.repositoryURL = repositoryURL;
   }
 
-  @Nullable
-  public HgCommandResult executeInCurrentThread() {
+  public @Nullable HgCommandResult executeInCurrentThread() {
     final List<String> arguments = new ArrayList<>(2);
     arguments.add(repositoryURL);
     arguments.add(directory);

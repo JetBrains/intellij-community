@@ -1,14 +1,15 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.model;
 
 import java.io.File;
 
-public class AffectedModule {
+public final class AffectedModule {
   private final String type;
   private final String name;
-  private final String hash;
+  private final long hash;
   private final File outPath;
 
-  public AffectedModule(String type, String name, String hash, File outPath) {
+  public AffectedModule(String type, String name, long hash, File outPath) {
     this.type = type;
     this.name = name;
     this.hash = hash;
@@ -23,7 +24,7 @@ public class AffectedModule {
     return name;
   }
 
-  public String getHash() {
+  public long getHash() {
     return hash;
   }
 
@@ -40,7 +41,7 @@ public class AffectedModule {
 
     if (type != null ? !type.equals(module.type) : module.type != null) return false;
     if (name != null ? !name.equals(module.name) : module.name != null) return false;
-    if (hash != null ? !hash.equals(module.hash) : module.hash != null) return false;
+    if (hash != module.hash) return false;
     if (outPath != null ? !outPath.equals(module.outPath) : module.outPath != null) return false;
 
     return true;
@@ -50,7 +51,7 @@ public class AffectedModule {
   public int hashCode() {
     int result = type != null ? type.hashCode() : 0;
     result = 31 * result + (name != null ? name.hashCode() : 0);
-    result = 31 * result + (hash != null ? hash.hashCode() : 0);
+    result = 31 * result + Long.hashCode(hash);
     result = 31 * result + (outPath != null ? outPath.hashCode() : 0);
     return result;
   }

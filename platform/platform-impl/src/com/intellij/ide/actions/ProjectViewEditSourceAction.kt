@@ -2,10 +2,11 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.pom.NavigatableWithText
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class ProjectViewEditSourceAction : BaseNavigateToSourceAction(true) {
   override fun update(e: AnActionEvent) {
     super.update(e)

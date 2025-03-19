@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.ide.IdeBundle;
@@ -17,12 +17,11 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
-import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -37,7 +36,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
+public final class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanelImpl.ColorDescriptionPanel {
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
   private JPanel myPanel;
@@ -79,7 +78,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
 
     setBorder(JBUI.Borders.empty(4, 0, 4, 4));
     myEffectsCombo.setModel(new CollectionComboBoxModel<>(new ArrayList<>(myEffectsMap.keySet())));
-    myEffectsCombo.setRenderer(SimpleListCellRenderer.create(IdeBundle.message("label.invalid.color"), Functions.id()));
+    myEffectsCombo.setRenderer(BuilderKt.textListCellRenderer(IdeBundle.message("label.invalid.color"), s -> s) );
 
     ActionListener actionListener = e -> {
       if (myUiEventsEnabled) {
@@ -108,9 +107,8 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     myLabelFont.setVisible(false); // hide for now as it doesn't look that good
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 
@@ -214,7 +212,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
     Pair<ColorAndFontDescriptorsProvider, ? extends AbstractKeyDescriptor> baseDescriptor = description.getFallbackKeyDescriptor();
     if (baseDescriptor != null) {
       String attrName = baseDescriptor.second.getDisplayName();
-      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR, FontUtil.rightArrow(
+      String attrLabel = attrName.replaceAll(EditorSchemeAttributeDescriptorWithPath.getNameSeparator(), FontUtil.rightArrow(
         StartupUiUtil.getLabelFont()));
       ColorAndFontDescriptorsProvider settingsPage = baseDescriptor.first;
       String tooltipText;

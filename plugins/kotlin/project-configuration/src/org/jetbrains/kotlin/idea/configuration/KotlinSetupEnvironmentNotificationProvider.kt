@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -40,7 +42,7 @@ import javax.swing.JComponent
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("unknown.sdk.show.editor.actions")) {
+        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
             return null
         }
 
@@ -53,7 +55,16 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             return null
         }
 
+        if (isIncompleteModel(psiFile)) {
+            return null
+        }
+
         val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
+
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog(module)) {
+            return null
+        }
+
         if (!ModuleRootManager.getInstance(module).fileIndex.isInSourceContent(file)) {
             return null
         }
@@ -96,6 +107,8 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
+                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtPanel(module.project)
+
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                 text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
                 if (configurators.isNotEmpty()) {
@@ -108,9 +121,10 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                             val configuratorsPopup = createConfiguratorsPopup(project, configurators)
                             configuratorsPopup.showUnderneathOf(label)
                         }
+                        KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                     }
 
-                    createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
+                    createActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {
                         KotlinNotConfiguredSuppressedModulesState.suppressConfiguration(module)
                         EditorNotifications.getInstance(project).updateAllNotifications()
                     }
@@ -124,7 +138,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
             checkHideNonConfiguredNotifications(project)
         }
 
-        fun createConfiguratorsPopup(project: Project, configurators: List<KotlinProjectConfigurator>): ListPopup {
+        fun createConfiguratorsPopup(
+            project: Project,
+            configurators: List<KotlinProjectConfigurator>,
+            onConfiguratorApplied: (KotlinProjectConfigurator) -> Unit = {}
+        ): ListPopup {
             val step = object : BaseListPopupStep<KotlinProjectConfigurator>(
                 KotlinProjectConfigurationBundle.message("title.choose.configurator"),
                 configurators
@@ -133,7 +151,9 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
                 override fun onChosen(selectedValue: KotlinProjectConfigurator?, finalChoice: Boolean): PopupStep<*>? {
                     return doFinalStep {
-                        selectedValue?.apply(project)
+                        if (selectedValue == null) return@doFinalStep
+                        selectedValue.apply(project)
+                        onConfiguratorApplied(selectedValue)
                     }
                 }
             }

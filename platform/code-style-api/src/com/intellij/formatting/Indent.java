@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,8 +68,7 @@ import org.jetbrains.annotations.NotNull;
  */
 
 public abstract class Indent {
-  @NotNull
-  public abstract Type getType();
+  public abstract @NotNull Type getType();
 
   /**
    * Returns an instance of a regular indent, with the width specified
@@ -258,11 +258,34 @@ public abstract class Indent {
     return Formatter.getInstance().getSmartIndent(type, relativeToDirectParent);
   }
 
+  /**
+   * Returns an indent instance that specifies that all children should be aligned to this block
+   * and then indented (relative to the block beginning) with specified indent type.
+   * The same effect could be achieved if all children would use relativeToDirectParent.
+   * @param type    indent type
+   * @param spaces  the number of spaces in the indent (if indent type is SPACES)
+   * @return        newly created indent configured in accordance with the given arguments
+   */
+  @Experimental
+  public static Indent getIndentEnforcedToChildrenToBeRelativeToMe(@NotNull Type type, int spaces) {
+    return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(type, spaces);
+  }
+
+  /**
+   * Returns an indent instance that specifies that all children should be aligned to this block.
+   * The same effect could be achieved if all children would use relativeToDirectParent.
+   * @return        newly created indent configured in accordance with the given arguments
+   */
+  @Experimental
+  public static Indent getIndentEnforcedToChildrenToBeRelativeToMe() {
+    return Formatter.getInstance().getIndentEnforcedToChildrenToBeRelativeToMe(Type.NONE, 0);
+  }
+
   public static final class Type {
     private final String myName;
 
 
-    private Type(@NonNls final String name) {
+    private Type(final @NonNls String name) {
       myName = name;
     }
 
@@ -273,6 +296,19 @@ public abstract class Indent {
     public static final Type CONTINUATION = new Type("CONTINUATION");
     public static final Type CONTINUATION_WITHOUT_FIRST = new Type("CONTINUATION_WITHOUT_FIRST");
 
+    /**
+     * Outdent with a size of normal indent
+     */
+    @Experimental
+    public static final Type OUTDENT_NORMAL = new Type("OUTDENT_NORMAL");
+
+    /**
+     * Outdent with a size specified in spaces. Used for outdenting aligned blocks, so gets substracted from spaces instead of indent spaces
+     */
+    @Experimental
+    public static final Type OUTDENT_SPACES = new Type("OUTDENT_SPACES");
+
+    @Override
     public String toString() {
       return myName;
     }

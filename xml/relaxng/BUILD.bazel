@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.relaxng` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "relaxng_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "relaxng",
+  module_name = "intellij.relaxng",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//xml/relaxng/lib:rngom-20051226-patched",
+    "@lib//:relaxng-isorelax",
+    "//xml/relaxng/lib:trang-core",
+    "@lib//:relaxng-jing",
+    "//platform/util/nanoxml",
+    "@lib//:fastutil-min",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":relaxng_resources"]
+)
+
+jvm_library(
+  name = "relaxng_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":relaxng"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//xml/impl",
+    "//xml/dom-openapi:dom",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/relaxng/lib:rngom-20051226-patched",
+    "@lib//:relaxng-isorelax",
+    "//xml/relaxng/lib:trang-core",
+    "@lib//:relaxng-jing",
+    "//platform/util/nanoxml",
+    "@lib//:fastutil-min",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":relaxng_resources"]
+)
+
+jvm_test(
+  name = "relaxng_test",
+  runtime_deps = [":relaxng_test_lib"]
+)
+### auto-generated section `build intellij.relaxng` end

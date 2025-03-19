@@ -19,12 +19,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,20 +29,13 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -396,51 +385,6 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import 'matplotlib.pyplot as plt' locally");
   }
 
-  // PY-46361
-  public void testPackagesFromPythonSkeletonsNotSuggested() {
-    doMultiFileNegativeTest("Import");
-
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myFixture.getProject());
-    List<PyFile> djangoPackages = PyModuleNameIndex.findByQualifiedName(QualifiedName.fromComponents("django"),
-                                                                       myFixture.getProject(), scope);
-    if (djangoPackages.size() != 1) {
-      dumpSdkRootsFileSystemAndIndexResults();
-    }
-    PyFile djangoPackage = assertOneElement(djangoPackages);
-    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoPackage));
-  }
-
-  // PY-46361
-  public void testClassesFromPythonSkeletonsNotSuggested() {
-    doMultiFileNegativeTest("Import");
-
-    PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
-    if (djangoViewClass == null) {
-      dumpSdkRootsFileSystemAndIndexResults();
-    }
-    assertNotNull(djangoViewClass);
-    assertTrue(PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(djangoViewClass.getContainingFile()));
-  }
-
-  private void dumpSdkRootsFileSystemAndIndexResults() {
-    dumpSdkRoots();
-    VirtualFile skeletonsDir = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
-    skeletonsDir.refresh(true, true);
-    System.out.println("Under VFS (django): " + skeletonsDir.findChild("django"));
-    System.out.println("Under VFS (django/__init__.py): " + skeletonsDir.findFileByRelativePath("django/__init__.py"));
-    Path djangoDirPath = skeletonsDir.toNioPath().resolve("django");
-    System.out.println("Under NIO (django): " + Files.exists(djangoDirPath));
-    Path djangoInitPyPath = skeletonsDir.toNioPath().resolve("django/__init__.py");
-    System.out.println("Under NIO (django/__init__.py): " + Files.exists(djangoInitPyPath));
-    GlobalSearchScope projectScope = GlobalSearchScope.allScope(myFixture.getProject());
-    System.out.println("Under filename index (django): " + FilenameIndex.getVirtualFilesByName("django", projectScope));
-    List<VirtualFile> djangoInitPy = ContainerUtil.filter(FilenameIndex.getVirtualFilesByName("__init__.py", projectScope),
-                                                          f -> f.getParent().getName().equals("django"));
-    System.out.println("Under filename index (django/__init__.py): " + djangoInitPy);
-    final List<PyFile> djangoModules = PyModuleNameIndex.findByShortName("django", myFixture.getProject(), projectScope);
-    System.out.println("Under module name index: " + ContainerUtil.map(djangoModules, PsiFile::getVirtualFile));
-  }
-
   // PY-46344
   public void testImportAbstractContainersFromCollectionsABC() {
     Consumer<VirtualFile> fileConsumer = file -> {
@@ -462,6 +406,16 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
         """,
       fileConsumer
     );
+  }
+
+  // PY-58464
+  public void testDecimalCanonicalPath() {
+    doMultiFileAutoImportTest("Import 'decimal.Decimal'");
+  }
+
+  // PY-75291
+  public void testTypeAliasStatement() {
+    doMultiFileAutoImportTest("Import 'lib.ExampleType'");
   }
 
   private void doTestProposedImportsOrdering(String @NotNull ... expected) {

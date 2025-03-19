@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -25,21 +25,25 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.update.GitUpdateExecutionProcess
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+@Language("devkit-action-id")
+const val GIT_SINGLE_REF_ACTION_GROUP = "Git.Branch"
+
 @JvmOverloads
 internal fun createOrCheckoutNewBranch(project: Project,
-                                       repositories: List<GitRepository>,
+                                       repositories: Collection<GitRepository>,
                                        startPoint: String,
                                        @Nls(capitalization = Nls.Capitalization.Title)
                                        title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
   val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, false, true).showAndGetOptions() ?: return
-  GitBranchCheckoutOperation(project, repositories).perform(startPoint, options)
+  GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
 }
 
-internal fun updateBranches(project: Project, repositories: List<GitRepository>, localBranchNames: List<String>) {
+internal fun updateBranches(project: Project, repositories: Collection<GitRepository>, localBranchNames: List<String>) {
   val repoToTrackingInfos =
     repositories.associateWith { it.branchTrackInfos.filter { info -> localBranchNames.contains(info.localBranch.name) } }
   if (repoToTrackingInfos.isEmpty()) return
@@ -95,7 +99,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
   })
 }
 
-internal fun isTrackingInfosExist(branchNames: List<String>, repositories: List<GitRepository>) =
+internal fun isTrackingInfosExist(branchNames: List<String>, repositories: Collection<GitRepository>) =
   repositories
     .flatMap(GitRepository::getBranchTrackInfos)
     .any { trackingBranchInfo -> branchNames.any { branchName -> branchName == trackingBranchInfo.localBranch.name } }

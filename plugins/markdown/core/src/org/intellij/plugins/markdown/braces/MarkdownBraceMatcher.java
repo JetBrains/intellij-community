@@ -24,7 +24,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownBraceMatcher extends PairedBraceMatcherAdapter {
+public final class MarkdownBraceMatcher extends PairedBraceMatcherAdapter {
 
   public MarkdownBraceMatcher() {
     super(new MyPairedBraceMatcher(), MarkdownLanguage.INSTANCE);

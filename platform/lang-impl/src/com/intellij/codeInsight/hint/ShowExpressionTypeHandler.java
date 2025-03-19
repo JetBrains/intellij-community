@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -26,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -37,7 +38,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
+public final class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 
   public ShowExpressionTypeHandler(boolean requestFocus) {
@@ -50,8 +51,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
+    ThreadingAssertions.assertEventDispatchThread();
 
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final Set<ExpressionTypeProvider> handlers = getHandlers(project, language, file.getViewProvider().getBaseLanguage());
@@ -105,26 +106,23 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @NotNull
-  public Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
-                                                                @NotNull Editor editor) {
+  public @NotNull Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                         @NotNull Editor editor) {
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     Set<ExpressionTypeProvider> handlers = getHandlers(file.getProject(), language, file.getViewProvider().getBaseLanguage());
     return getExpressions(file, editor, handlers);
   }
 
-  @NotNull
-  private static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
-                                                                        @NotNull Editor editor,
-                                                                        @NotNull Set<? extends ExpressionTypeProvider> handlers) {
+  private static @NotNull Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                                 @NotNull Editor editor,
+                                                                                 @NotNull Set<? extends ExpressionTypeProvider> handlers) {
     return getExpressions(file, EditorUtil.getSelectionInAnyMode(editor), editor.getDocument(), handlers);
   }
 
-  @NotNull
-  public static Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
-                                                                        @NotNull TextRange range,
-                                                                        @NotNull Document document,
-                                                                        @NotNull Set<? extends ExpressionTypeProvider> handlers) {
+  public static @NotNull Map<PsiElement, ExpressionTypeProvider> getExpressions(@NotNull PsiFile file,
+                                                                                @NotNull TextRange range,
+                                                                                @NotNull Document document,
+                                                                                @NotNull Set<? extends ExpressionTypeProvider> handlers) {
     if (handlers.isEmpty()) return Collections.emptyMap();
     boolean exactRange = false;
     final Map<PsiElement, ExpressionTypeProvider> map = new LinkedHashMap<>();
@@ -144,8 +142,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     return map;
   }
 
-  @NotNull
-  public static Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
+  public static @NotNull Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
     DumbService dumbService = DumbService.getInstance(project);
     return JBIterable.of(languages).flatten(
       language -> dumbService.filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(

@@ -2,13 +2,15 @@
   "name": "IntelliJ Light",
   "dark": false,
   "author": "JetBrains",
-  "editorScheme": "/themes/Light.xml",
-
+  "parentTheme": "IntelliJ",
+  "nameKey": "intellij.light.theme.name",
+  "editorScheme": "IntelliJ Light",
   "ui": {
     "ToolWindow": {
       "background": "#FFFFFF"
     }
   },
+
   "iconColorsOnSelection": {
     "#767a8a": "#ffffff",
     "#6e6e6e": "#afb1b3",
@@ -27,5 +29,12 @@
     "#f98b9eb3": "#f1a4b2",
     "#f4af3db3": "#ecc27d",
     "#b99bf8b3": "#b49ee2"
+  },
+
+  "CombinedDiff": {
+    "BlockBorder": {
+      "selectedActiveColor": "#A0BDF8",
+      "selectedInactiveColor": "#C9CCD6"
+    }
   }
 }

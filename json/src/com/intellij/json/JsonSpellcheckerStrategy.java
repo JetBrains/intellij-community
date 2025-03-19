@@ -1,6 +1,8 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.json.psi.JsonStringLiteral;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -15,7 +17,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
+public class JsonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
   private final Tokenizer<JsonStringLiteral> ourStringLiteralTokenizer = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull JsonStringLiteral element, @NotNull TokenConsumer consumer) {
@@ -37,9 +39,8 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     }
   };
 
-  @NotNull
   @Override
-  public Tokenizer<?> getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
     if (element instanceof JsonStringLiteral) {
       if (isInjectedLanguageFragment(element)) {
         return EMPTY_TOKENIZER;
@@ -52,10 +53,10 @@ public class JsonSpellcheckerStrategy extends SpellcheckingStrategy {
     return super.getTokenizer(element);
   }
 
-  private static class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
-    @NotNull private final JsonStringLiteral element;
+  private static final class JsonSchemaSpellcheckerClientForJson extends JsonSchemaSpellcheckerClient {
+    private final @NotNull JsonStringLiteral element;
 
-    protected JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
+    private JsonSchemaSpellcheckerClientForJson(@NotNull JsonStringLiteral element) {
       this.element = element;
     }
 

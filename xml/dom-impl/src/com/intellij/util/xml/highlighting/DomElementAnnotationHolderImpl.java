@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.highlighting;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -54,36 +40,32 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
     return myOnTheFly;
   }
 
-  @NotNull
   @Override
-  public DomFileElement<?> getFileElement() {
+  public @NotNull DomFileElement<?> getFileElement() {
     return myFileElement;
   }
 
   @Override
-  @NotNull
-  public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
-                                                   @Nullable @InspectionMessage String message,
-                                                   @NotNull LocalQuickFix @NotNull ... fixes) {
+  public @NotNull DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
+                                                            @Nullable @InspectionMessage String message,
+                                                            @NotNull LocalQuickFix @NotNull ... fixes) {
     return createProblem(domElement, HighlightSeverity.ERROR, message, fixes);
   }
 
   @Override
-  @NotNull
-  public DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
-                                                   DomCollectionChildDescription childDescription,
-                                                   @Nullable @InspectionMessage String message) {
+  public @NotNull DomElementProblemDescriptor createProblem(@NotNull DomElement domElement,
+                                                            DomCollectionChildDescription childDescription,
+                                                            @Nullable @InspectionMessage String message) {
     return addProblem(new DomCollectionProblemDescriptorImpl(domElement, message, HighlightSeverity.ERROR, childDescription));
   }
 
   @Override
-  @NotNull
-  public final DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, @InspectionMessage String message) {
+  public final @NotNull DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, @InspectionMessage String message) {
     return createProblem(domElement, highlightType, message, LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
-  public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
+  public DomElementProblemDescriptor createProblem(final @NotNull DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    @InspectionMessage String message,
                                                    final @NotNull LocalQuickFix @NotNull ... fixes) {
@@ -91,7 +73,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   }
 
   @Override
-  public DomElementProblemDescriptor createProblem(@NotNull final DomElement domElement,
+  public DomElementProblemDescriptor createProblem(final @NotNull DomElement domElement,
                                                    final HighlightSeverity highlightType,
                                                    @InspectionMessage String message,
                                                    final TextRange textRange,
@@ -109,8 +91,7 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
   }
 
   @Override
-  @NotNull
-  public DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
+  public @NotNull DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference) {
     return addProblem(new DomElementResolveProblemDescriptorImpl(element, reference, getQuickFixes(element, reference)));
   }
 

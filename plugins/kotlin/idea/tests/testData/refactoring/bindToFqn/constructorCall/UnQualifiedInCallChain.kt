@@ -1,0 +1,14 @@
+// BIND_TO test.B
+package test
+
+class A {
+    fun foo() { }
+}
+
+class B {
+    fun foo() { }
+}
+
+fun foo() {
+    <caret>A().foo()
+}

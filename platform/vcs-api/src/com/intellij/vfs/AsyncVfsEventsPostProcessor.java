@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vfs;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import org.jetbrains.annotations.ApiStatus;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -18,19 +17,16 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see AsyncVfsEventsListener
  */
-@ApiStatus.Experimental
 public interface AsyncVfsEventsPostProcessor {
-
   /**
    * Subscribes the given listener to get the VFS events on a pooled thread.
    * The listener is automatically unsubscribed when the {@code disposable} is disposed.<br/><br/>
    *
    * The caller should properly synchronize the call to {@code addListener()} with the {@code dispose()} of the given Disposable.
    */
-  void addListener(@NotNull AsyncVfsEventsListener listener, @NotNull Disposable disposable);
+  void addListener(@NotNull AsyncVfsEventsListener listener, @NotNull CoroutineScope coroutineScope);
 
-  @NotNull
-  static AsyncVfsEventsPostProcessor getInstance() {
+  static @NotNull AsyncVfsEventsPostProcessor getInstance() {
     return ApplicationManager.getApplication().getService(AsyncVfsEventsPostProcessor.class);
   }
 }

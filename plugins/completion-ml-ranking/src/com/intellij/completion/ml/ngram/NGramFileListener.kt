@@ -2,29 +2,23 @@
 package com.intellij.completion.ml.ngram
 
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiManager
-import com.intellij.util.concurrency.SequentialTaskExecutor
-import java.util.concurrent.ExecutorService
 
-class NGramFileListener(private val project: Project) : FileEditorManagerListener.Before {
+private class NGramFileListener(private val project: Project) : FileEditorManagerListener.Before {
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-    if (LightEdit.owns(project)) return
+    if (LightEdit.owns(project)) {
+      return
+    }
+
     val language = (file.fileType as? LanguageFileType)?.language ?: return
-    if (!NGram.isSupported(language)) return
-    ReadAction.nonBlocking(Runnable {
-      if (!file.isValid) return@Runnable
-      NGramModelRunnerManager.getInstance(project).processFile(PsiManager.getInstance(project).findFile(file) ?: return@Runnable, language)
-    }).inSmartMode(project).submit(executor)
+    if (!NGram.isSupported(language)) {
+      return
+    }
 
-  }
-
-  private companion object {
-    private val executor: ExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("N-grams for recent files")
+    NGramModelRunnerManager.getInstance(project).scheduleAnalysis(file)
   }
 }

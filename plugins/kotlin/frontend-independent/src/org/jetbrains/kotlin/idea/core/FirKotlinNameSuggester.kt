@@ -2,4 +2,6 @@
 
 package org.jetbrains.kotlin.idea.core
 
+@Suppress("DEPRECATION")
+@Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 object FirKotlinNameSuggester : AbstractKotlinNameSuggester()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
@@ -138,14 +138,14 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private static class SoftMarginsOption extends Option {
+  private static final class SoftMarginsOption extends Option {
 
     private final Language myLanguage;
 
-    protected SoftMarginsOption(@NotNull Language language,
-                                @NotNull String optionName,
-                                @NotNull String title,
-                                @Nullable String groupName) {
+    private SoftMarginsOption(@NotNull Language language,
+                              @NotNull String optionName,
+                              @NotNull String title,
+                              @Nullable String groupName) {
       super(optionName, title, groupName, null, null);
       myLanguage = language;
     }
@@ -167,11 +167,11 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
-  private class CommaSeparatedIdentifiersOption extends FieldOption {
+  private final class CommaSeparatedIdentifiersOption extends FieldOption {
 
-    protected CommaSeparatedIdentifiersOption(@NotNull String optionName,
-                                              @NotNull String title,
-                                              @Nullable String groupName) {
+    private CommaSeparatedIdentifiersOption(@NotNull String optionName,
+                                            @NotNull String title,
+                                            @Nullable String groupName) {
       super(null, optionName, title, groupName, null, null);
     }
 
@@ -196,16 +196,15 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   private static List<Integer> castToIntList(@Nullable Object value) {
-    if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
+    if (value instanceof List && !((List<?>)value).isEmpty() && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;
     }
     return Collections.emptyList();
   }
 
-  @Nullable
   @Override
-  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+  protected @Nullable JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
       JLabel softMarginsLabel = new JLabel(getSoftMarginsString(castToIntList(value)));
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, softMarginsLabel);
@@ -237,17 +236,15 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return super.getCustomValueRenderer(optionName, value);
   }
 
-  @NotNull
-  private @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
-    if (intList.size() > 0) {
+  private @NotNull @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
+    if (!intList.isEmpty()) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
     return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());
   }
 
-  @Nullable
   @Override
-  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+  protected @Nullable JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
     String optionName = node.getKey().getOptionName();
     if (CodeStyleSoftMarginsPresentation.OPTION_NAME.equals(optionName)) {
       mySoftMarginsEditor.setValue(castToIntList(node.getValue()));
@@ -275,9 +272,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return super.getCustomNodeEditor(node);
   }
 
-  @Nullable
   @Override
-  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+  protected @Nullable Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
     if (customEditor instanceof CommaSeparatedIntegersField) {
       return ((CommaSeparatedIntegersField)customEditor).getValue();
     }

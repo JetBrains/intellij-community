@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.openapi.editor.Editor;
@@ -26,15 +12,12 @@ import com.jetbrains.python.vp.ViewPresenterUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dennis.Ushakov
- */
-public class PyPullUpHandler extends PyClassRefactoringHandler {
+public final class PyPullUpHandler extends PyClassRefactoringHandler {
   @Override
-  protected void doRefactorImpl(@NotNull final Project project,
-                                @NotNull final PyClass classUnderRefactoring,
-                                @NotNull final PyMemberInfoStorage infoStorage,
-                                @NotNull final Editor editor) {
+  protected void doRefactorImpl(final @NotNull Project project,
+                                final @NotNull PyClass classUnderRefactoring,
+                                final @NotNull PyMemberInfoStorage infoStorage,
+                                final @NotNull Editor editor) {
     //TODO: Move to vp (presenter) as well
     final PyPullUpNothingToRefactorMessage nothingToRefactor = new PyPullUpNothingToRefactorMessage(project, editor, classUnderRefactoring);
 
@@ -46,15 +29,13 @@ public class PyPullUpHandler extends PyClassRefactoringHandler {
 
     ViewPresenterUtils
       .linkViewWithPresenterAndLaunch(PyPullUpPresenter.class, PyPullUpView.class, new Creator<>() {
-                                        @NotNull
                                         @Override
-                                        public PyPullUpPresenter createPresenter(@NotNull final PyPullUpView view) {
+                                        public @NotNull PyPullUpPresenter createPresenter(final @NotNull PyPullUpView view) {
                                           return new PyPullUpPresenterImpl(view, infoStorage, classUnderRefactoring);
                                         }
 
-                                        @NotNull
                                         @Override
-                                        public PyPullUpView createView(@NotNull final PyPullUpPresenter presenter) {
+                                        public @NotNull PyPullUpView createView(final @NotNull PyPullUpPresenter presenter) {
                                           return new PyPullUpViewSwingImpl(project, presenter, classUnderRefactoring, nothingToRefactor);
                                         }
                                       }

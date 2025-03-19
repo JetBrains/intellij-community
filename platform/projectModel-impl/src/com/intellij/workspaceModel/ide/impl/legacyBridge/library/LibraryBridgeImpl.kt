@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -11,31 +11,32 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.EventDispatcher
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getGlobalInstance
-import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 interface LibraryBridge : LibraryEx {
   val libraryId: LibraryId
@@ -45,12 +46,18 @@ interface LibraryBridge : LibraryEx {
 }
 
 @ApiStatus.Internal
+sealed interface LibraryOrigin {
+  class OfProject(val project: Project) : LibraryOrigin
+  class OfDescriptor(val descriptor: EelDescriptor) : LibraryOrigin
+}
+
+@ApiStatus.Internal
 class LibraryBridgeImpl(
   var libraryTable: LibraryTable,
-  val project: Project?,
+  val origin: LibraryOrigin,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  private var targetBuilder: MutableEntityStorage?
+  private var targetBuilder: MutableEntityStorage?,
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
@@ -75,12 +82,11 @@ class LibraryBridgeImpl(
     LibraryStateSnapshot(
       libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       storage = storage,
-      libraryTable = libraryTable,
-      parentDisposable = this
+      libraryTable = libraryTable
     )
   }
 
-  val librarySnapshot: LibraryStateSnapshot
+  internal val librarySnapshot: LibraryStateSnapshot
     get() {
       checkDisposed()
       return entityStorage.cachedValue(librarySnapshotCached)
@@ -91,7 +97,7 @@ class LibraryBridgeImpl(
 
   override fun getTable(): LibraryTable? = if (libraryTable is ModuleLibraryTableBridge) null else libraryTable
   override fun getRootProvider(): RootProvider = this
-  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
+  override fun getPresentableName(): String = getPresentableName(this)
 
   override fun toString(): String {
     return "Library '$name', roots: ${librarySnapshot.libraryEntity.roots}"
@@ -108,11 +114,20 @@ class LibraryBridgeImpl(
   }
 
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
-    return getModifiableModel(MutableEntityStorage.from(librarySnapshot.storage))
+    val storage = librarySnapshot.storage
+    val immutable = when (storage) {
+      is ImmutableEntityStorage -> storage
+      is MutableEntityStorage -> storage.toSnapshot()
+      else -> error("Unexpected storage $this")
+    }
+    return getModifiableModel(MutableEntityStorage.from(immutable))
   }
 
   override fun getModifiableModel(builder: MutableEntityStorage): LibraryEx.ModifiableModelEx {
-    val virtualFileUrlManager = if (project == null) VirtualFileUrlManager.getGlobalInstance() else VirtualFileUrlManager.getInstance(project)
+    val virtualFileUrlManager = when (origin) {
+      is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).getVirtualFileUrlManager()
+      is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).getVirtualFileUrlManager()
+    }
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, virtualFileUrlManager, false)
   }
 
@@ -168,10 +183,9 @@ class LibraryBridgeImpl(
         null
       }
       val isDisposedGlobally = libraryEntity?.let {
-        val snapshot = if (project != null) {
-          WorkspaceModel.getInstance(project).currentSnapshot
-        } else {
-          GlobalWorkspaceModel.getInstance().currentSnapshot
+        val snapshot = when (origin) {
+          is LibraryOrigin.OfDescriptor -> GlobalWorkspaceModel.getInstance(origin.descriptor).currentSnapshot
+          is LibraryOrigin.OfProject -> WorkspaceModel.getInstance(origin.project).currentSnapshot
         }
         snapshot.libraryMap.getDataByEntity(it)?.isDisposed
       }
@@ -179,7 +193,11 @@ class LibraryBridgeImpl(
         Library $entityId already disposed:
         Library id: $libraryId
         Entity: ${libraryEntity.run { "$name, $this" }}
-        Is disposed in ${if (project != null) "project" else "global"} model: ${isDisposedGlobally != false}
+        Is disposed in ${
+        when (origin) {
+          is LibraryOrigin.OfProject -> "project"; is LibraryOrigin.OfDescriptor -> "global (${origin.descriptor})"
+        }
+      } model: ${isDisposedGlobally != false}
         Stack trace: $stackTrace
         """.trimIndent()
       try {
@@ -207,10 +225,25 @@ class LibraryBridgeImpl(
   companion object {
     private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRootTypeId> { LibraryRootTypeId(it) }
 
-    internal fun OrderRootType.toLibraryRootType(): LibraryRootTypeId = when (this) {
+    fun OrderRootType.toLibraryRootType(): LibraryRootTypeId = when (this) {
       OrderRootType.CLASSES -> LibraryRootTypeId.COMPILED
       OrderRootType.SOURCES -> LibraryRootTypeId.SOURCES
       else -> libraryRootTypes[name()]!!
+    }
+
+    internal fun getPresentableName(library: LibraryEx): @Nls(capitalization = Nls.Capitalization.Title) String {
+      val name = library.name
+      if (name != null) {
+        return name
+      }
+      if (library.isDisposed) {
+        return ProjectModelBundle.message("disposed.library.title")
+      }
+      val urls = library.getUrls(OrderRootType.CLASSES)
+      if (urls.size > 0) {
+        return PathUtil.getFileName(PathUtil.toPresentableUrl(urls[0]))
+      }
+      return ProjectModelBundle.message("empty.library.title")
     }
   }
 }

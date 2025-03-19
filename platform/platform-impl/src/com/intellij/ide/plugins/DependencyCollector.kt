@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -14,7 +15,6 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollector>() {
-
   @Attribute("kind")
   @JvmField
   @RequiredElement
@@ -26,7 +26,8 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
   var implementation: String = ""
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<DependencyCollectorBean>("com.intellij.dependencyCollector")
+    @JvmField
+    val EP_NAME: ExtensionPointName<DependencyCollectorBean> = ExtensionPointName("com.intellij.dependencyCollector")
   }
 
   override fun getImplementationClassName(): String = implementation
@@ -37,7 +38,7 @@ internal class DependencyCollectorBean : BaseKeyedLazyInstance<DependencyCollect
  * Implementations of this interface are registered through the `dependencyCollector` extension point.
  *
  * The plugins which need to be suggested must define "dependencySupport"
- * with a coordinate that corresponding to one of the dependencies with the same "kind".
+ * with a coordinate that corresponds to one of the dependencies with the same "kind".
  */
 interface DependencyCollector {
   /**
@@ -45,7 +46,7 @@ interface DependencyCollector {
    * The specific format of returned strings depends on the dependency kind. For Java, the format is Maven group ID and artifact ID
    * separated by a colon.
    */
-  fun collectDependencies(project: Project): Collection<String>
+  suspend fun collectDependencies(project: Project): Collection<String>
 }
 
 /**
@@ -53,7 +54,6 @@ interface DependencyCollector {
  * library/dependency, in the same format as returned from [DependencyCollector.collectDependencies] for the respective dependency kind.
  */
 internal class DependencySupportBean() : PluginAware {
-
   private var pluginDescriptor: PluginDescriptor? = null
 
   @Attribute("kind")
@@ -74,11 +74,6 @@ internal class DependencySupportBean() : PluginAware {
   @NlsSafe
   var displayName: String = ""
 
-  companion object {
-
-    val EP_NAME = ExtensionPointName.create<DependencySupportBean>("com.intellij.dependencySupport")
-  }
-
   @ApiStatus.Experimental
   internal constructor(attributes: Map<String, String>) : this() {
     kind = attributes["kind"]!!
@@ -98,24 +93,30 @@ internal class DependencySupportBean() : PluginAware {
       )
     }
   }
+
+  override fun toString(): String {
+    return "DependencySupportBean(coordinate='$coordinate', kind='$kind')"
+  }
 }
 
-internal const val DEPENDENCY_SUPPORT_FEATURE = "dependencySupport"
+internal const val DEPENDENCY_SUPPORT_FEATURE: String = "dependencySupport"
 
 internal val DependencySupportBean.id: @NlsSafe String
   get() = "$kind:$coordinate"
 
+private val DEPENDENCY_COLLECTOR_EP_NAME: ExtensionPointName<DependencySupportBean> =
+  ExtensionPointName("com.intellij.dependencySupport")
+
 internal val DependencySupportBean.displayNameOrId: @NlsSafe String
   get() = displayName.ifEmpty { id }
 
-internal class DependencyFeatureCollector : ProjectActivity {
-
+private class DependencyFeatureCollector : ProjectActivity {
   override suspend fun execute(project: Project) {
-    PluginFeatureService.instance.collectFeatureMapping(
-      DEPENDENCY_SUPPORT_FEATURE,
-      DependencySupportBean.EP_NAME,
-      { it.id },
-      { it.displayNameOrId },
+    serviceAsync<PluginFeatureService>().collectFeatureMapping(
+      featureType = DEPENDENCY_SUPPORT_FEATURE,
+      ep = DEPENDENCY_COLLECTOR_EP_NAME,
+      idMapping = { it.id },
+      displayNameMapping = { it.displayNameOrId },
     )
   }
 }

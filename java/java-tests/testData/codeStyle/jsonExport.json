@@ -26,6 +26,7 @@
       "align_subsequent_simple_methods": false,
       "align_throws_keyword": false,
       "align_types_in_multi_catch": true,
+      "annotation_new_line_in_record_component": false,
       "annotation_parameter_wrap": "off",
       "array_initializer_new_line_after_left_brace": false,
       "array_initializer_right_brace_on_new_line": false,
@@ -42,6 +43,7 @@
       "blank_lines_around_class": 1,
       "blank_lines_around_field": 0,
       "blank_lines_around_field_in_interface": 0,
+      "blank_lines_around_field_with_annotations": 0,
       "blank_lines_around_initializer": 1,
       "blank_lines_around_method": 1,
       "blank_lines_around_method_in_interface": 1,
@@ -49,6 +51,7 @@
       "blank_lines_before_imports": 1,
       "blank_lines_before_method_body": 0,
       "blank_lines_before_package": 0,
+      "blank_lines_between_record_components": 0,
       "block_brace_style": "end_of_line",
       "block_comment_add_space": false,
       "block_comment_at_first_column": true,
@@ -90,6 +93,7 @@
       "doc_use_throws_not_exception_tag": true,
       "else_on_new_line": false,
       "enum_constants_wrap": "off",
+      "enum_field_annotation_wrap": "off",
       "extends_keyword_wrap": "off",
       "extends_list_wrap": "off",
       "field_annotation_wrap": "split_into_lines",
@@ -101,8 +105,10 @@
       "for_statement_wrap": "off",
       "generate_final_locals": false,
       "generate_final_parameters": false,
+      "generate_use_type_annotation_before_type": true,
       "if_brace_force": "never",
       "imports_layout": [
+        "@*",
         "*",
         "|",
         "javax.**",
@@ -132,6 +138,7 @@
       "label_indent_absolute": false,
       "label_indent_size": 0,
       "lambda_brace_style": "end_of_line",
+      "layout_on_demand_import_from_same_package_first": true,
       "layout_static_imports_separately": true,
       "line_comment_add_space": false,
       "line_comment_add_space_on_reformat": false,
@@ -148,6 +155,7 @@
       "new_line_after_lparen_in_annotation": false,
       "new_line_after_lparen_in_deconstruction_pattern": true,
       "new_line_after_lparen_in_record_header": false,
+      "new_line_when_body_is_presented": false,
       "packages_to_use_import_on_demand": [
         "java.awt.*",
         "javax.swing.*"
@@ -158,6 +166,7 @@
       "place_assignment_sign_on_next_line": false,
       "prefer_longer_names": true,
       "prefer_parameters_wrap": false,
+      "preserve_module_imports": true,
       "record_components_wrap": "normal",
       "repeat_annotations": [
         "com.jetbrains.First",
@@ -234,6 +243,7 @@
       "spaces_around_shift_operators": true,
       "spaces_around_type_bounds_in_type_parameters": true,
       "spaces_around_unary_operator": false,
+      "spaces_inside_block_braces_when_body_is_present": false,
       "spaces_within_angle_brackets": false,
       "spaces_within_annotation_parentheses": false,
       "spaces_within_array_initializer_braces": false,
@@ -255,6 +265,7 @@
       "special_else_if_treatment": true,
       "static_field_name_suffix": "_s",
       "subclass_name_suffix": "Impl",
+      "switch_expressions_wrap": "normal",
       "tab_width": 4,
       "ternary_operation_signs_on_next_line": false,
       "ternary_operation_wrap": "off",
@@ -276,7 +287,8 @@
       "wrap_comments": false,
       "wrap_first_method_in_call_chain": false,
       "wrap_long_lines": false,
-      "wrap_on_typing": true
+      "wrap_on_typing": true,
+      "wrap_semicolon_after_call_chain": false
     }
   }
 }

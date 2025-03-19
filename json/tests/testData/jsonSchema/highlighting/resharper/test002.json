@@ -1,5 +1,5 @@
 {
   "a": <warning descr="Incompatible types.
  Required: string. Actual: integer.">6</warning>,
-  <warning descr="Property 'b' is not allowed">"b": "a"</warning>
+  <warning descr="Property 'b' is not allowed">"b"</warning>: "a"
 }

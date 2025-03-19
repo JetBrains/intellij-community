@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import org.jetbrains.annotations.NotNull;
 
 public class EventsSchemePathSettings {
-  @NotNull private final String myCustomPath;
+  private final @NotNull String myCustomPath;
   private final boolean myUseCustomPath;
 
   public EventsSchemePathSettings(@NotNull String customPath, boolean useCustomPath) {
@@ -12,8 +12,7 @@ public class EventsSchemePathSettings {
     myUseCustomPath = useCustomPath;
   }
 
-  @NotNull
-  public String getCustomPath() {
+  public @NotNull String getCustomPath() {
     return myCustomPath;
   }
 

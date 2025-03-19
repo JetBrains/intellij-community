@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.EDT;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -153,20 +154,17 @@ public final class IfsUtil {
     return false;
   }
 
-  @Nullable
-  public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
+  public static @Nullable BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
     return getImage(file, null);
   }
 
-  @Nullable
-  public static BufferedImage getImage(@NotNull VirtualFile file, @Nullable Component ancestor) throws IOException {
+  public static @Nullable BufferedImage getImage(@NotNull VirtualFile file, @Nullable Component ancestor) throws IOException {
     ScaledImageProvider imageProvider = getImageProvider(file);
     if (imageProvider == null) return null;
     return imageProvider.apply(1d, ancestor);
   }
 
-  @Nullable
-  public static ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
+  public static @Nullable ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
     return dereference(imageProviderRef);
@@ -176,13 +174,16 @@ public final class IfsUtil {
     return file != null && SVG_FORMAT.equalsIgnoreCase(file.getExtension());
   }
 
-  @Nullable
-  public static String getFormat(@NotNull VirtualFile file) throws IOException {
+  public static @Nullable String getFormat(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     return file.getUserData(FORMAT_KEY);
   }
 
   public static @NlsSafe String getReferencePath(Project project, VirtualFile file) {
+    if (EDT.isCurrentThreadEdt()) {
+      LOG.warn("FIXME IDEA-341171 org.intellij.images.vfs.IfsUtil#getReferencePath on EDT");
+      return file.getName();
+    }
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile sourceRoot = fileIndex.getSourceRootForFile(file);
     if (sourceRoot != null) {

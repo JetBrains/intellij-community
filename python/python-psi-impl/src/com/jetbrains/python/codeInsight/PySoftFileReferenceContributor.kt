@@ -20,6 +20,7 @@ import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.Locale
 
 /**
  * Contributes file path references for Python string literals where it seems appropriate based on heuristics.
@@ -175,7 +176,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
 
     private fun matchesPathNamePattern(name: String): Boolean {
       val nameParts = name.split("_")
-      return nameParts.any { it.toLowerCase() in FILE_NAME_PATTERNS }
+      return nameParts.any { it.lowercase(Locale.getDefault()) in FILE_NAME_PATTERNS }
     }
   }
 

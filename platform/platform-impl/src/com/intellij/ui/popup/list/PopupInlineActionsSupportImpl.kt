@@ -3,28 +3,24 @@ package com.intellij.ui.popup.list
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
-import com.intellij.ui.popup.PopupFactoryImpl.InlineActionItem
-import com.intellij.ui.popup.list.ListPopupImpl.ListWithInlineButtons
 import java.awt.Point
 import java.awt.event.InputEvent
 import javax.swing.JComponent
-import javax.swing.JList
 
-class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : PopupInlineActionsSupport {
+internal class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : PopupInlineActionsSupport {
 
   private val myStep = myListPopup.listStep as ActionPopupStep
-
-  override fun hasExtraButtons(element: Any?): Boolean = calcExtraButtonsCount(element) > 0
 
   override fun calcExtraButtonsCount(element: Any?): Int {
     if (!ExperimentalUI.isNewUI() || element !is ActionItem) return 0
 
     var res = 0
-    res += myStep.getInlineActions(element).size
+    res += myStep.getInlineItems(element).size
     if (hasMoreButton(element)) res++
     return res
   }
@@ -37,64 +33,67 @@ class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupImpl) : Po
     return calcButtonIndex(myListPopup.list, buttonsCount, point)
   }
 
-  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?) : InlineActionDescriptor =
-    getExtraButtonsActions(element, event)[index]
-
-  private fun getExtraButtonsActions(element: Any?, event: InputEvent?): List<InlineActionDescriptor> {
-    if (!ExperimentalUI.isNewUI() || element !is ActionItem) return emptyList()
-
-    val res: MutableList<InlineActionDescriptor> = mutableListOf()
-
-    res.addAll(myStep.getInlineActions(element).map {
-      item: InlineActionItem -> InlineActionDescriptor(createInlineActionRunnable(item.action, event), true)
-    })
-    if (hasMoreButton(element)) res.add(InlineActionDescriptor(createNextStepRunnable(element), false))
-    return res
+  override fun getToolTipText(element: Any?, index: Int): String? = when {
+    element !is ActionItem -> null
+    isMoreButton(element, index) -> IdeBundle.message("inline.actions.more.actions.text")
+    else -> myStep.getInlineItems(element)[index]?.text
   }
 
-  override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> {
+  override fun getKeepPopupOnPerform(element: Any?, index: Int): KeepPopupOnPerform = when {
+    element !is ActionItem -> KeepPopupOnPerform.Always
+    isMoreButton(element, index) -> KeepPopupOnPerform.Always
+    else -> myStep.getInlineItems(element)[index].keepPopupOnPerform
+  }
+
+  override fun performAction(element: Any?, index: Int, event: InputEvent?) = when {
+    element !is ActionItem -> Unit
+    isMoreButton(element, index) -> {
+      myListPopup.showNextStepPopup(myStep.onChosen(element, false), element)
+    }
+    else -> {
+      val item = myStep.getInlineItems(element)[index]
+      myStep.performActionItem(item, event)
+      myStep.updateStepItems(myListPopup.list)
+    }
+  }
+
+  override fun createExtraButtons(value: Any?, isSelected: Boolean, activeIndex: Int): List<JComponent> {
     if (value !is ActionItem) return emptyList()
-    val inlineActions = myStep.getInlineActions(value)
+    val inlineItems = myStep.getInlineItems(value)
 
-    val res: MutableList<JComponent> = java.util.ArrayList()
-    val activeIndex = getActiveButtonIndex(list)
+    val buttons = ArrayList<JComponent>()
 
-    for (i in 0 until inlineActions.size) res.add(createActionButton(inlineActions[i], i == activeIndex, isSelected))
-    if (hasMoreButton(value)) res.add(createSubmenuButton(value, res.size == activeIndex))
+    inlineItems.forEachIndexed { index, item ->
+      if (isSelected || item.getClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION) == true) {
+        buttons.add(createActionButton(item, index == activeIndex, isSelected))
+      }
+    }
+    if ((isSelected || buttons.isNotEmpty()) && hasMoreButton(value)) {
+      val icon = when {
+        myStep.isFinal(value) -> AllIcons.Actions.More
+        else -> AllIcons.Icons.Ide.MenuArrow
+      }
+      buttons.add(createExtraButton(icon, buttons.size == activeIndex))
+    }
 
-    return res
+    return buttons
   }
 
-  override fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListWithInlineButtons)?.selectedButtonIndex
-
-  private fun createSubmenuButton(value: ActionItem, active: Boolean): JComponent {
-    val icon = if (myStep.isFinal(value)) AllIcons.Actions.More else AllIcons.Icons.Ide.MenuArrow
+  private fun createActionButton(item: ActionItem, active: Boolean, isSelected: Boolean): JComponent {
+    val icon = item.getIcon(isSelected)
+    if (icon == null) {
+      throw AssertionError("null inline item icon for action '${item.action.javaClass.name}'")
+    }
     return createExtraButton(icon, active)
   }
 
-  private fun createActionButton(action: InlineActionItem, active: Boolean, isSelected: Boolean): JComponent =
-    createExtraButton(action.getIcon(isSelected), active)
-
-  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? {
-    if (value !is ActionItem) return null
-    val inlineActions = myStep.getInlineActions(value)
-    val activeButton = getActiveButtonIndex(list) ?: return null
-    return if (activeButton == inlineActions.size)
-      IdeBundle.message("inline.actions.more.actions.text")
-    else
-      inlineActions.getOrNull(activeButton)?.text
-  }
-
   override fun isMoreButton(element: Any?, index: Int): Boolean {
+    if (element !is ActionItem || !hasMoreButton(element)) return false
     val count = calcExtraButtonsCount(element)
     return count > 0 && index == count - 1
   }
 
-  private fun createNextStepRunnable(element: ActionItem) = Runnable { myListPopup.showNextStepPopup(myStep.onChosen(element, false), element) }
-
-  private fun createInlineActionRunnable(action: AnAction, inputEvent: InputEvent?) = Runnable { myStep.performAction(action, inputEvent) }
-
-  private fun hasMoreButton(element: ActionItem) = myStep.hasSubstep(element)
-                                                                    && !myListPopup.isShowSubmenuOnHover
-                                                                    && myStep.isFinal(element)
+  private fun hasMoreButton(element: ActionItem): Boolean {
+    return myStep.hasSubstep(element) && !myListPopup.isShowSubmenuOnHover && myStep.isFinal(element)
+  }
 }

@@ -3,8 +3,12 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;
 
+import java.util.Collections;
 import java.util.List;
 
+/** @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#INLINE_ACTIONS} instead */
+@Deprecated(forRemoval = true)
 public interface InlineActionsHolder {
-  List<AnAction> getInlineActions();
+
+  default List<AnAction> getInlineActions() { return Collections.emptyList(); }
 }

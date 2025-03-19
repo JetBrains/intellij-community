@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -11,17 +11,10 @@ public class IfStatementEvaluator implements Evaluator {
   private final Evaluator myThenEvaluator;
   private final Evaluator myElseEvaluator;
 
-  private Modifier myModifier;
-
   public IfStatementEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
     myConditionEvaluator = DisableGC.create(conditionEvaluator);
     myThenEvaluator = DisableGC.create(thenEvaluator);
     myElseEvaluator = elseEvaluator == null ? null : DisableGC.create(elseEvaluator);
-  }
-
-  @Override
-  public Modifier getModifier() {
-    return myModifier;
   }
 
   @Override
@@ -33,16 +26,13 @@ public class IfStatementEvaluator implements Evaluator {
     else {
       if (((BooleanValue)value).booleanValue()) {
         value = myThenEvaluator.evaluate(context);
-        myModifier = myThenEvaluator.getModifier();
       }
       else {
         if (myElseEvaluator != null) {
           value = myElseEvaluator.evaluate(context);
-          myModifier = myElseEvaluator.getModifier();
         }
         else {
-          value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
-          myModifier = null;
+          value = context.getVirtualMachineProxy().mirrorOfVoid();
         }
       }
     }

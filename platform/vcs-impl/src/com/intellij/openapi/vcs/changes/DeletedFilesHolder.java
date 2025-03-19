@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class DeletedFilesHolder implements FileHolder {
   private final Map<String, LocallyDeletedChange> myFiles = new HashMap<>();
 
@@ -23,7 +25,7 @@ public class DeletedFilesHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     final List<LocallyDeletedChange> currentFiles = new ArrayList<>(myFiles.values());
     for (LocallyDeletedChange change : currentFiles) {
       if (scope.belongsTo(change.getPath())) {
@@ -52,6 +54,7 @@ public class DeletedFilesHolder implements FileHolder {
     return copyHolder;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -63,6 +66,7 @@ public class DeletedFilesHolder implements FileHolder {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myFiles.hashCode();
   }

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author gregsh
  */
-public class JavaScratchFileCreationHelper extends ScratchFileCreationHelper {
+public final class JavaScratchFileCreationHelper extends ScratchFileCreationHelper {
 
   @Override
   public boolean prepareText(@NotNull Project project, @NotNull Context context, @NotNull DataContext dataContext) {

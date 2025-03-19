@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
@@ -18,21 +18,36 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.function.Supplier
 
-@Suppress("ComponentNotRegistered")
-class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML" },
-                                                                InspectionsBundle.messagePointer("inspection.action.export.xml.description"),
-                                                                AllIcons.FileTypes.Xml) {
+@Suppress("ComponentNotRegistered") // false positive: AnAction inheritor vs EP
+internal class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML" },
+                                                                         InspectionsBundle.messagePointer(
+                                                                           "inspection.action.export.xml.description"),
+                                                                         AllIcons.FileTypes.Xml) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.xml.progress.title")
   override fun writeResults(tree: InspectionTree,
                             profile: InspectionProfileImpl,
                             globalInspectionContext: GlobalInspectionContextImpl,
                             project: Project,
                             outputPath: Path) {
-    dumpToXml(profile, tree, project, globalInspectionContext, outputPath)
+    Util.dumpToXml(profile, tree, project, globalInspectionContext, outputPath)
   }
 
-  companion object {
-    fun dumpToXml(profile: InspectionProfileImpl, tree: InspectionTree, project: Project, globalInspectionContext: GlobalInspectionContextImpl, outputPath: Path) {
+  object Util {
+
+    @JvmStatic
+    fun dumpToXml(profile: InspectionProfileImpl,
+                  tree: InspectionTree,
+                  project: Project,
+                  globalInspectionContext: GlobalInspectionContextImpl,
+                  outputPath: Path) {
+      fun getWrappersForAllScopes(shortName: String,
+                                  context: GlobalInspectionContextImpl): Collection<InspectionToolWrapper<*, *>> {
+        return when (val tools = context.tools[shortName]) {
+          null -> emptyList() //dummy entry points tool
+          else -> ContainerUtil.map(tools.tools) { obj: ScopeToolState -> obj.tool }
+        }
+      }
+
       val singleTool = profile.singleTool
       val shortName2Wrapper = MultiMap<String, InspectionToolWrapper<*, *>>()
       if (singleTool != null) {
@@ -51,8 +66,8 @@ class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML"
       for (entry in shortName2Wrapper.entrySet()) {
         val shortName: String = entry.key
         val wrappers: Collection<InspectionToolWrapper<*, *>> = entry.value
-        InspectionsResultUtil.writeInspectionResult(project, shortName, wrappers, outputPath) {
-          wrapper: InspectionToolWrapper<*, *> -> globalInspectionContext.getPresentation(wrapper)
+        InspectionsResultUtil.writeInspectionResult(project, shortName, wrappers, outputPath) { wrapper: InspectionToolWrapper<*, *> ->
+          globalInspectionContext.getPresentation(wrapper)
         }
       }
 
@@ -63,14 +78,7 @@ class ExportToXMLAction : InspectionResultsExportActionProvider(Supplier { "XML"
       catch (e: javax.xml.stream.XMLStreamException) {
         throw IOException(e)
       }
-    }
 
-    private fun getWrappersForAllScopes(shortName: String,
-                                        context: GlobalInspectionContextImpl): Collection<InspectionToolWrapper<*, *>> {
-      return when (val tools = context.tools[shortName]) {
-        null -> emptyList() //dummy entry points tool
-        else -> ContainerUtil.map(tools.tools) { obj: ScopeToolState -> obj.tool }
-      }
     }
   }
 }

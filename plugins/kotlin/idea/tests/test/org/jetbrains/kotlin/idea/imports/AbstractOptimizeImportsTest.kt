@@ -3,23 +3,29 @@
 package org.jetbrains.kotlin.idea.imports
 
 import com.intellij.testFramework.LightProjectDescriptor
-import junit.framework.TestCase
 import org.jetbrains.kotlin.AbstractImportsTest
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractOptimizeImportsTest : AbstractImportsTest() {
+
+    override fun doTest(unused: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            dataFile().toPath(),
+            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            ".after",
+            test = { super.doTest(unused) }
+        )
+    }
+
     override fun doTest(file: KtFile): String {
         OptimizedImportsBuilder.testLog = StringBuilder()
         try {
             val optimizer = KotlinImportOptimizer().processFile(file)
             optimizer.run()
-            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
-            if (message != null) {
-                TestCase.assertEquals(message, optimizer.userNotificationInfo)
-            }
+            userNotificationInfo = optimizer.userNotificationInfo
             return OptimizedImportsBuilder.testLog.toString()
         } finally {
             OptimizedImportsBuilder.testLog = null

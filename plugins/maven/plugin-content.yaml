@@ -1,0 +1,42 @@
+- name: lib/artifact-resolver-m31.jar
+  modules:
+  - name: intellij.maven.artifactResolver.m31
+  - name: intellij.maven.artifactResolver.common
+- name: lib/intellij.maven.server.indexer/lib/apache.maven.archetype.catalog-no-trans-321.jar
+- name: lib/intellij.maven.server.indexer/lib/apache.maven.archetype.common-no-trans-3.2.1.jar
+- name: lib/intellij.maven.server.indexer/lib/apache.maven.core-3.8.3.jar
+- name: lib/intellij.maven.server.indexer/lib/apache.maven.wagon.provider.api-3.5.2.jar
+- name: lib/maven-event-listener.jar
+  modules:
+  - name: intellij.maven.server.eventListener
+- name: lib/maven-jps.jar
+  modules:
+  - name: intellij.maven.jps
+- name: lib/maven-server-indexer.jar
+  modules:
+  - name: intellij.maven.server.indexer
+- name: lib/maven-server-telemetry.jar
+  modules:
+  - name: intellij.maven.server.telemetry
+- name: lib/maven.jar
+  modules:
+  - name: intellij.idea.community.build.dependencies
+  - name: intellij.maven.errorProne.compiler
+  - name: intellij.maven
+    libraries:
+      plexus-archiver:
+      - name: $MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/4/plexus-archiver-4.jar
+      jetbrains.idea.maven.indexer.api.rt:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023/maven-indexer-api-rt-2023.jar
+- name: lib/maven3-server-common.jar
+  modules:
+  - name: intellij.maven.server.m3.common
+- name: lib/maven3-server.jar
+  modules:
+  - name: intellij.maven.server.m3.impl
+- name: lib/maven36-server.jar
+  modules:
+  - name: intellij.maven.server.m36.impl
+- name: lib/maven40-server.jar
+  modules:
+  - name: intellij.maven.server.m40

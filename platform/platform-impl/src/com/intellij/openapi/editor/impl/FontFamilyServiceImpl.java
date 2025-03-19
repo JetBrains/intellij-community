@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -18,8 +17,8 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 final class FontFamilyServiceImpl extends FontFamilyService {
@@ -63,7 +62,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   private FontFamilyServiceImpl() {
     Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment() || !AppFontOptions.NEW_FONT_SELECTOR) {
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
       return;
     }
 
@@ -94,7 +93,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     }
     catch (Throwable e) {
       LOG.error(e);
-      myFamilies.clear(); // fallback to old behaviour in case of any errors
+      myFamilies.clear(); // fallback to old behavior in case of any errors
     }
   }
 
@@ -247,7 +246,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       return MethodHandleUtil.getPublicMethod(Font2D.class, methodName, MethodType.methodType(type));
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.debug(e);
       return null;
     }
   }
@@ -290,7 +289,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         }
         OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
-        class Candidate {
+        final class Candidate {
           final int desiredWeight;
           String bestSubFamily;
           int bestDistance = Integer.MAX_VALUE;
@@ -428,7 +427,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     }
   }
 
-  private static class OurWeightMap extends MultiMap<Integer, String> {
+  private static final class OurWeightMap extends MultiMap<Integer, String> {
     private OurWeightMap() {
       super(new TreeMap<>());
     }

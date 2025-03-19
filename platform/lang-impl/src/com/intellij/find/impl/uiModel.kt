@@ -35,7 +35,8 @@ class FindPopupItem(
   }
 }
 
-internal class SearchEverywhereItem(
+@ApiStatus.Internal
+class SearchEverywhereItem(
   val usage: UsageInfo2UsageAdapter,
   val presentation: UsagePresentation,
 ) {
@@ -56,6 +57,8 @@ internal class SearchEverywhereItem(
   }
 
   override fun hashCode(): Int = presentableText.hashCode()
+
+  override fun toString(): String = "Text: `$presentableText', Usage: $usage"
 }
 
 @ApiStatus.Internal

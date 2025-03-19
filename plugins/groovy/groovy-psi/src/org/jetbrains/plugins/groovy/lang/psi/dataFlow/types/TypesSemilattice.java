@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,10 +24,9 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     myManager = manager;
   }
 
-  @NotNull
   @Override
-  public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
-    if (ins.size() == 0) {
+  public @NotNull TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
+    if (ins.isEmpty()) {
       return TypeDfaState.EMPTY_STATE;
     }
     if (ins.size() == 1) {

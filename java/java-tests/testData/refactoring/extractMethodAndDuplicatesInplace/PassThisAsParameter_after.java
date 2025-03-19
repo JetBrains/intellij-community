@@ -1,9 +1,9 @@
 public class Test<K> {
     public Test<K> test() {
-        return getkTest(this);
+        return getKTest(this);
     }
 
-    private static <K> Test<K> getkTest(Test<K> test) {
+    private static <K> Test<K> getKTest(Test<K> test) {
         return test;
     }
 }

@@ -20,13 +20,14 @@ import java.util.*;
 
 public class MavenModelBase implements Serializable {
   private Properties myProperties;
-  private List<MavenPlugin> myPlugins = Collections.emptyList();
-  private List<MavenArtifact> myExtensions = Collections.emptyList();
-  private List<MavenArtifact> myDependencies = Collections.emptyList();
-  private List<MavenArtifactNode> myDependencyTree = Collections.emptyList();
-  private List<MavenRemoteRepository> myRemoteRepositories = Collections.emptyList();
+  private ArrayList<MavenPlugin> myPlugins = new ArrayList<>();
+  private ArrayList<MavenArtifact> myExtensions = new ArrayList<>();
+  private ArrayList<MavenArtifact> myDependencies = new ArrayList<>();
+  private ArrayList<MavenArtifactNode> myDependencyTree = new ArrayList<>();
+  private ArrayList<MavenRemoteRepository> myRemoteRepositories = new ArrayList<>();
+  private ArrayList<MavenRemoteRepository> myRemotePluginRepositories = new ArrayList<>();
 
-  private List<String> myModules;
+  private ArrayList<String> myModules;
 
   public Properties getProperties() {
     if (myProperties == null) myProperties = new Properties();
@@ -41,7 +42,7 @@ public class MavenModelBase implements Serializable {
     while (newPropertyNames.hasMoreElements()) {
       String key = newPropertyNames.nextElement().toString();
       String value = newProperties.getProperty(key);
-      properties.put(key, value);
+      properties.setProperty(key, value);
     }
   }
 
@@ -89,6 +90,14 @@ public class MavenModelBase implements Serializable {
 
   public void setRemoteRepositories(List<MavenRemoteRepository> remoteRepositories) {
     myRemoteRepositories = new ArrayList<>(remoteRepositories);
+  }
+
+  public ArrayList<MavenRemoteRepository> getRemotePluginRepositories() {
+    return myRemotePluginRepositories;
+  }
+
+  public void setRemotePluginRepositories(List<MavenRemoteRepository> remotePluginRepositories) {
+    myRemotePluginRepositories = new ArrayList<>(remotePluginRepositories);
   }
 
   public List<String> getModules() {

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,8 +20,19 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/keywords")
 public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("AfterAsInImport.kt")
+    public void testAfterAsInImport() throws Exception {
+        runTest("../testData/keywords/AfterAsInImport.kt");
     }
 
     @TestMetadata("AfterClassName.kt")
@@ -61,6 +73,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("AfterIf.kt")
     public void testAfterIf() throws Exception {
         runTest("../testData/keywords/AfterIf.kt");
+    }
+
+    @TestMetadata("AfterImportDirective.kt")
+    public void testAfterImportDirective() throws Exception {
+        runTest("../testData/keywords/AfterImportDirective.kt");
     }
 
     @TestMetadata("AfterSafeDot.kt")
@@ -166,6 +183,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("FixingLayoutAndReturn.kt")
     public void testFixingLayoutAndReturn() throws Exception {
         runTest("../testData/keywords/FixingLayoutAndReturn.kt");
+    }
+
+    @TestMetadata("FunInterface.kt")
+    public void testFunInterface() throws Exception {
+        runTest("../testData/keywords/FunInterface.kt");
     }
 
     @TestMetadata("GlobalPropertyAccessors.kt")
@@ -388,6 +410,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/NoContinue.kt");
     }
 
+    @TestMetadata("NoExistingClassifier.kt")
+    public void testNoExistingClassifier() throws Exception {
+        runTest("../testData/keywords/NoExistingClassifier.kt");
+    }
+
     @TestMetadata("NoFinalInParameterList.kt")
     public void testNoFinalInParameterList() throws Exception {
         runTest("../testData/keywords/NoFinalInParameterList.kt");
@@ -456,6 +483,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("PropertyAccessors2.kt")
     public void testPropertyAccessors2() throws Exception {
         runTest("../testData/keywords/PropertyAccessors2.kt");
+    }
+
+    @TestMetadata("PropertyAccessorsSameLine.kt")
+    public void testPropertyAccessorsSameLine() throws Exception {
+        runTest("../testData/keywords/PropertyAccessorsSameLine.kt");
     }
 
     @TestMetadata("PropertyAccessors_ExplicitBackingFieldsEnabled.kt")
@@ -581,6 +613,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("ReturnSet.kt")
     public void testReturnSet() throws Exception {
         runTest("../testData/keywords/ReturnSet.kt");
+    }
+
+    @TestMetadata("ReturnWithLabelPrefix.kt")
+    public void testReturnWithLabelPrefix() throws Exception {
+        runTest("../testData/keywords/ReturnWithLabelPrefix.kt");
     }
 
     @TestMetadata("SealedForAlreadySealed.kt")

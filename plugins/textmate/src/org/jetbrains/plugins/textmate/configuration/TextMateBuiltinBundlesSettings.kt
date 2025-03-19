@@ -1,14 +1,13 @@
 package org.jetbrains.plugins.textmate.configuration
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.SerializablePersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import java.nio.file.Path
+import com.intellij.openapi.components.*
+import org.jetbrains.plugins.textmate.TextMateBundleToLoad
 
-@State(name = "TextMateBuiltinBundlesSettings", storages = [Storage(value = "textmateBuiltinBundles.xml")])
-@Service(Service.Level.APP)
+@State(name = "TextMateBuiltinBundlesSettings",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "textmateBuiltinBundles.xml", roamingType = RoamingType.DISABLED)])
 class TextMateBuiltinBundlesSettings : SerializablePersistentStateComponent<TextMateBuiltinBundlesSettings.State>(State()) {
   companion object {
     @JvmStatic
@@ -16,7 +15,7 @@ class TextMateBuiltinBundlesSettings : SerializablePersistentStateComponent<Text
       get() = ApplicationManager.getApplication().getService(TextMateBuiltinBundlesSettings::class.java)
   }
 
-  var builtinBundles: List<Path> = emptyList()
+  var builtinBundles: List<TextMateBundleToLoad> = emptyList()
 
   fun setTurnedOffBundleNames(names: Collection<String>) {
     updateState { State(names.sorted()) }

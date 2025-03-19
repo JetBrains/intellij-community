@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -97,10 +97,9 @@ public class CopyOptionsDialog extends DialogWrapper {
     update();
   }
 
-  @NotNull
-  public static ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
-                                                                  @NotNull ComboBox<String> comboBox,
-                                                                  @NotNull Consumer<? super String> messageConsumer) {
+  public static @NotNull ComboBox<String> configureRecentMessagesComponent(@NotNull Project project,
+                                                                           @NotNull ComboBox<String> comboBox,
+                                                                           @NotNull Consumer<? super String> messageConsumer) {
     List<String> messages = VcsConfiguration.getInstance(project).getRecentMessages();
     Collections.reverse(messages);
     CollectionComboBoxModel<String> model = new CollectionComboBoxModel<>(messages);
@@ -112,8 +111,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     return comboBox;
   }
 
-  @NlsSafe
-  private static String getPresentableCommitMessage(@NotNull String commitMessage) {
+  private static @NlsSafe String getPresentableCommitMessage(@NotNull String commitMessage) {
     return commitMessage.replace('\r', '|').replace('\n', '|');
   }
 
@@ -152,16 +150,14 @@ public class CopyOptionsDialog extends DialogWrapper {
     );
   }
 
-  @NotNull
-  private JPanel createCommitMessageWrapper() {
+  private @NotNull JPanel createCommitMessageWrapper() {
     myCommitMessage = new CommitMessage(myProject, false, false, true);
     Disposer.register(getDisposable(), myCommitMessage);
 
     return simplePanel(myCommitMessage).addToTop(new JBLabel(message("label.commit.message")));
   }
 
-  @NotNull
-  private JPanel createBrowserPartWrapper() {
+  private @NotNull JPanel createBrowserPartWrapper() {
     JPanel wrapper = new JPanel(new GridBagLayout());
     GridBag gridBag =
       new GridBag().setDefaultAnchor(GridBagConstraints.NORTHWEST).setDefaultFill(GridBagConstraints.NONE).setDefaultInsets(insets(1))
@@ -199,8 +195,7 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @NonNls
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "svn4idea.copy.options";
   }
 
@@ -216,19 +211,16 @@ public class CopyOptionsDialog extends DialogWrapper {
     return myNameField.getText();
   }
 
-  @Nullable
-  public Url getTargetURL() {
+  public @Nullable Url getTargetURL() {
     return myTargetUrl;
   }
 
-  @Nullable
-  public RepositoryTreeNode getTargetParentNode() {
+  public @Nullable RepositoryTreeNode getTargetParentNode() {
     return myBrowser.getSelectedNode();
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 

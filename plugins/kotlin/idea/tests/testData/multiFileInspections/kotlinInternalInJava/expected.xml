@@ -11,16 +11,6 @@
 
     <problem>
         <file>test.java</file>
-        <line>7</line>
-        <module>A</module>
-        <package>&lt;default&gt;</package>
-        <entry_point TYPE="file" FQNAME="test.java" />
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of Kotlin internal declarations from Java</problem_class>
-        <description>Usage of Kotlin internal declaration from different module</description>
-    </problem>
-
-    <problem>
-        <file>test.java</file>
         <line>9</line>
         <module>A</module>
         <package>&lt;default&gt;</package>
@@ -41,7 +31,7 @@
 
     <problem>
         <file>test.java</file>
-        <line>12</line>
+        <line>13</line>
         <module>A</module>
         <package>&lt;default&gt;</package>
         <entry_point TYPE="file" FQNAME="test.java" />
@@ -51,7 +41,7 @@
 
     <problem>
         <file>test.java</file>
-        <line>15</line>
+        <line>14</line>
         <module>A</module>
         <package>&lt;default&gt;</package>
         <entry_point TYPE="file" FQNAME="test.java" />
@@ -61,7 +51,17 @@
 
     <problem>
         <file>test.java</file>
-        <line>15</line>
+        <line>17</line>
+        <module>A</module>
+        <package>&lt;default&gt;</package>
+        <entry_point TYPE="file" FQNAME="test.java" />
+        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Usage of Kotlin internal declarations from Java</problem_class>
+        <description>Usage of Kotlin internal declaration from different module</description>
+    </problem>
+
+    <problem>
+        <file>test.java</file>
+        <line>17</line>
         <module>A</module>
         <package>&lt;default&gt;</package>
         <entry_point TYPE="file" FQNAME="test.java" />

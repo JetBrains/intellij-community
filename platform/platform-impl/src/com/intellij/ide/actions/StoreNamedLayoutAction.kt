@@ -7,7 +7,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class StoreNamedLayoutAction(protected val layoutNameSupplier: () -> @NlsSafe String) : DumbAwareAction() {
 
   constructor(@NlsSafe layoutName: String) : this({ layoutName })
@@ -22,6 +24,6 @@ abstract class StoreNamedLayoutAction(protected val layoutNameSupplier: () -> @N
     e.presentation.isEnabled = e.project != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
 }

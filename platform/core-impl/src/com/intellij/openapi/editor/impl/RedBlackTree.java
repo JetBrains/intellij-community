@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
 
+@ApiStatus.Internal
 public abstract class RedBlackTree<K> extends AtomicInteger {
   // this "extends AtomicInteger" thing is for supporting modCounter.
   // I couldn't make it "volatile int" field because Unsafe.getAndAddInt is since jdk8 only, and "final AtomicInteger" field would be too many indirections
 
-  public static boolean VERIFY;
+  static boolean VERIFY;
   private static final int INDENT_STEP = 4;
   private int nodeSize; // number of nodes
   protected Node<K> root;
@@ -185,11 +174,9 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     verifyProperties();
   }
 
-  @NotNull
-  protected abstract Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
+  protected abstract @NotNull Node<K> swapWithMaxPred(@NotNull Node<K> nowAscendant, @NotNull Node<K> nowDescendant);
 
-  @NotNull
-  protected Node<K> maximumNode(@NotNull Node<K> n) {
+  protected @NotNull Node<K> maximumNode(@NotNull Node<K> n) {
     while (n.getRight() != null) {
       n = n.getRight();
     }
@@ -311,11 +298,13 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     private volatile byte myFlags;
     static final byte COLOR_MASK = 1;
 
-    boolean isFlagSet(byte mask) {
+    @Contract(pure = true)
+    @ApiStatus.Internal
+    public boolean isFlagSet(byte mask) {
       return BitUtil.isSet(myFlags, mask);
     }
 
-    void setFlag(byte mask, boolean value) {
+    public void setFlag(byte mask, boolean value) {
       myFlags = BitUtil.set(myFlags, mask, value);
     }
 
@@ -365,6 +354,7 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
 
     public abstract boolean hasAliveKey(boolean purgeDead);
 
+    @Contract(pure = true)
     public boolean isBlack() {
       return isFlagSet(COLOR_MASK);
     }
@@ -398,7 +388,6 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
   }
 
   private static void verifyProperty1(Node<?> n) {
-    assert !isBlack(n) || isBlack(n);
     if (n == null) return;
     assert n.getParent() != n;
     assert n.getLeft() != n;
@@ -413,6 +402,7 @@ public abstract class RedBlackTree<K> extends AtomicInteger {
     assert isBlack(root);
   }
 
+  @Contract(pure = true)
   private static boolean isBlack(@Nullable Node<?> n) {
     return n == null || n.isBlack();
   }

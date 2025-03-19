@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -12,6 +12,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -67,7 +68,7 @@ public class InspectionProfileWrapper {
     }
   }
 
-  public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
+  public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
     return myProfile.isToolEnabled(key, element);
   }
 
@@ -75,7 +76,7 @@ public class InspectionProfileWrapper {
     return myProfile.getErrorLevel(inspectionToolKey, element);
   }
 
-  public InspectionToolWrapper<?, ?> getInspectionTool(final String shortName, PsiElement element) {
+  public InspectionToolWrapper<?, ?> getInspectionTool(@NotNull String shortName, @Nullable PsiElement element) {
     return myProfile.getInspectionTool(shortName, element);
   }
 

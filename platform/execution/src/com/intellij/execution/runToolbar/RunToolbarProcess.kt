@@ -9,11 +9,11 @@ import javax.swing.Icon
 
 interface RunToolbarProcess {
   companion object {
-    const val RUN_WIDGET_MORE_ACTION_GROUP = "RunToolbarMoreActionGroup"
-    const val RUN_WIDGET_GROUP = "RunToolbarProcessActionGroup"
-    const val RUN_WIDGET_MAIN_GROUP = "RunToolbarProcessMainActionGroup"
+    const val RUN_WIDGET_MORE_ACTION_GROUP: String = "RunToolbarMoreActionGroup"
+    const val RUN_WIDGET_GROUP: String = "RunToolbarProcessActionGroup"
+    const val RUN_WIDGET_MAIN_GROUP: String = "RunToolbarProcessMainActionGroup"
 
-    const val ACTIVE_STATE_BUTTONS_COUNT = 3
+    const val ACTIVE_STATE_BUTTONS_COUNT: Int = 3
 
     @JvmStatic
     val isSettingsAvailable: Boolean

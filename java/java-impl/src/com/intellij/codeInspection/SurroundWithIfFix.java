@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithIfSurrounder;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -12,14 +14,13 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.trivialif.MergeIfAndIntention;
 import org.jetbrains.annotations.NotNull;
 
-public class SurroundWithIfFix implements LocalQuickFix {
+public class SurroundWithIfFix extends PsiUpdateModCommandQuickFix {
   private static final Logger LOG = Logger.getInstance(SurroundWithIfFix.class);
   private final String myText;
   private final String mySuffix;
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("inspection.surround.if.quickfix", myText, mySuffix);
   }
 
@@ -29,8 +30,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiElement anchorStatement = CommonJavaRefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
     if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
@@ -44,12 +44,11 @@ public class SurroundWithIfFix implements LocalQuickFix {
     }
     final PsiIfStatement ifStatement = new JavaWithIfSurrounder()
       .surroundStatements(project, anchorStatement.getParent(), elements, myText + mySuffix);
-    new MergeIfAndIntention().processIntention(ifStatement.getFirstChild());
+    new MergeIfAndIntention().invoke(ifStatement.getFirstChild());
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("inspection.surround.if.family");
   }
 

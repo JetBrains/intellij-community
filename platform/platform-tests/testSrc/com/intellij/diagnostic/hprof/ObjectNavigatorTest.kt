@@ -19,6 +19,7 @@ import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
+import com.intellij.diagnostic.hprof.util.IDMapper
 import com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -29,7 +30,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.nio.channels.FileChannel
 import java.nio.file.StandardOpenOption
-import java.util.function.LongUnaryOperator
 
 class ObjectNavigatorTest {
 
@@ -82,24 +82,24 @@ class ObjectNavigatorTest {
     HProfTestUtils.createHProfOnFile(hprofFile,
                                      scenario,
                                      classNameMapping)
-    val (navigator, remap) = getObjectNavigatorAndRemappingFunction(hprofFile)
+    val (navigator, idMapper) = getObjectNavigatorAndRemappingFunction(hprofFile)
     val clashedClassNames = ArrayList<String>()
 
     // Check that each class got assigned a unique name
-    clashedClassNames.add(navigator.getClassForObjectId(remap.applyAsLong(object1Id)).name)
-    clashedClassNames.add(navigator.getClassForObjectId(remap.applyAsLong(object2Id)).name)
+    clashedClassNames.add(navigator.getClassForObjectId(idMapper.getID(object1Id)).name)
+    clashedClassNames.add(navigator.getClassForObjectId(idMapper.getID(object2Id)).name)
     clashedClassNames.sort()
 
     assertArrayEquals(arrayOf("MyTestClass!1", "MyTestClass!2"), clashedClassNames.toArray())
 
     // Verify goToInstanceField works correctly for classes with name clash
-    navigator.goTo(remap.applyAsLong(object1Id))
+    navigator.goTo(idMapper.getID(object1Id))
     navigator.goToInstanceField("MyTestClass", "field")
 
     assertEquals("java.lang.String", navigator.getClass().undecoratedName)
   }
 
-  private fun getObjectNavigatorAndRemappingFunction(hprofFile: File): Pair<ObjectNavigator, LongUnaryOperator> {
+  private fun getObjectNavigatorAndRemappingFunction(hprofFile: File): Pair<ObjectNavigator, IDMapper> {
     FileChannel.open(hprofFile.toPath(), StandardOpenOption.READ).use { hprofChannel ->
       val parser = HProfEventBasedParser(hprofChannel)
       val hprofMetadata = HProfMetadata.create(parser)
@@ -107,8 +107,9 @@ class ObjectNavigatorTest {
 
       val remapIDsVisitor = RemapIDsVisitor.createMemoryBased()
       parser.accept(remapIDsVisitor, "id mapping")
-      parser.setIdRemappingFunction(remapIDsVisitor.getRemappingFunction())
-      hprofMetadata.remapIds(remapIDsVisitor.getRemappingFunction())
+      val remapper = remapIDsVisitor.getIDMapper()
+      parser.setIDMapper(remapper)
+      hprofMetadata.remapIds(remapper)
 
       return Pair(ObjectNavigator.createOnAuxiliaryFiles(
         parser,
@@ -116,7 +117,7 @@ class ObjectNavigatorTest {
         openTempEmptyFileChannel(),
         hprofMetadata,
         histogram.instanceCount
-      ), remapIDsVisitor.getRemappingFunction())
+      ), remapper)
     }
   }
 

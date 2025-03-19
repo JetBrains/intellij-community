@@ -8,8 +8,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -21,8 +21,11 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
-@NonNls const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
-@NlsSafe const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
+@NonNls
+const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
+
+@NlsSafe
+const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
 const val GROOVY_TRANSFORM_NAMED_VARIANT = "groovy.transform.NamedVariant"
 const val GROOVY_TRANSFORM_NAMED_PARAM = "groovy.transform.NamedParam"
 const val GROOVY_TRANSFORM_NAMED_PARAMS = "groovy.transform.NamedParams"
@@ -31,26 +34,42 @@ private val NAVIGABLE_ELEMENT: Key<PsiElement> = Key("GROOVY_NAMED_VARIANT_NAVIG
 
 
 fun collectNamedParams(mapParameter: PsiParameter): List<NamedParamData> {
-  if (!mapParameter.type.equalsToText(CommonClassNames.JAVA_UTIL_MAP)) return emptyList()
+  if (!PsiTypesUtil.classNameEquals(mapParameter.type, CommonClassNames.JAVA_UTIL_MAP)) return emptyList()
 
   val annotations = mapParameter
     .getAnnotation(GROOVY_TRANSFORM_NAMED_PARAMS)
     ?.findDeclaredAttributeValue("value")
-    ?.getArrayValue { it as? GrAnnotation }
+    ?.getArrayValue { it as? PsiAnnotation }
 
   if (annotations != null) {
     return annotations.mapNotNull { constructNamedParameter(it, mapParameter) }
   }
 
-  return mapParameter.annotations.mapNotNull{ constructNamedParameter(it, mapParameter) }
+  return mapParameter.annotations.mapNotNull { constructNamedParameter(it, mapParameter) }
+}
+
+private fun getName(annotation: PsiAnnotation): String? = when (val attributeLiteral = annotation.findAttributeValue("value")) {
+  is GrLiteral -> attributeLiteral.value as? String
+  is PsiLiteralExpression -> attributeLiteral.value as? String
+  else -> null
+}
+
+private fun getType(annotation: PsiAnnotation): PsiType? {
+  return when (val attributeType = annotation.findAttributeValue("type")) {
+    is GrExpression -> ResolveUtil.getClassReferenceFromExpression(attributeType)
+    is PsiClassObjectAccessExpression -> {
+      val classType = attributeType.type
+      if (classType !is PsiClassType || !PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_LANG_CLASS)) return null
+      classType.parameters.firstOrNull()
+    }
+    else -> null
+  }
 }
 
 private fun constructNamedParameter(annotation: PsiAnnotation, owner: PsiParameter): NamedParamData? {
-  if(annotation.qualifiedName != GROOVY_TRANSFORM_NAMED_PARAM) return null
-  val attributeLiteral = annotation.findAttributeValue("value")
-  val name = (attributeLiteral as? GrLiteral)?.value as? String ?: return null
-  val classValue = annotation.findAttributeValue("type") as? GrExpression ?: return null
-  val type = ResolveUtil.getClassReferenceFromExpression(classValue) ?: return null
+  if (annotation.qualifiedName != GROOVY_TRANSFORM_NAMED_PARAM) return null
+  val name = getName(annotation) ?: return null
+  val type = getType(annotation) ?: return null
   val required = GrAnnotationUtil.inferBooleanAttribute(annotation, "required") ?: false
   val navigableElement = annotation.getUserData(NAVIGABLE_ELEMENT) ?: annotation
   return NamedParamData(name, type, owner, navigableElement, required)

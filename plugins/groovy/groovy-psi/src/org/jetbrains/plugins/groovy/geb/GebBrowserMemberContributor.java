@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-public class GebBrowserMemberContributor extends NonCodeMembersContributor {
+public final class GebBrowserMemberContributor extends NonCodeMembersContributor {
 
   @Override
   protected String getParentClassName() {

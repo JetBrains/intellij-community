@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -18,11 +18,11 @@ import java.util.List;
 
 import static com.intellij.patterns.uast.UastPatterns.injectionHostUExpression;
 
-public class PropertiesUastReferenceContributor extends PsiReferenceContributor {
+public final class PropertiesUastReferenceContributor extends PsiReferenceContributor {
   private static final Logger LOG = Logger.getInstance(PropertiesUastReferenceContributor.class);
 
   @Override
-  public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
+  public void registerReferenceProviders(final @NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(registrar, injectionHostUExpression(),
                                                          new UastPropertiesReferenceProvider(true), PsiReferenceRegistrar.LOWER_PRIORITY);
 
@@ -39,6 +39,13 @@ public class PropertiesUastReferenceContributor extends PsiReferenceContributor 
         @Override
         public boolean acceptsTarget(@NotNull PsiElement target) {
           return target instanceof PsiFile;
+        }
+
+        @Override
+        public boolean acceptsHint(@NotNull PsiReferenceService.Hints hints) {
+          if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) return false;
+
+          return super.acceptsHint(hints);
         }
 
         @Override

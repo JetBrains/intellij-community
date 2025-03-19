@@ -4,37 +4,17 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArgument {
   public PyKeywordArgumentImpl(ASTNode astNode) {
     super(astNode);
-  }
-
-  @Override
-  @Nullable
-  public String getKeyword() {
-    ASTNode node = getKeywordNode();
-    return node != null ? node.getText() : null;
-  }
-
-  @Override
-  public ASTNode getKeywordNode() {
-    return getNode().findChildByType(PyTokenTypes.IDENTIFIER);
-  }
-
-  @Override
-  public PyExpression getValueExpression() {
-    return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
   @Override
@@ -59,7 +39,7 @@ public class PyKeywordArgumentImpl extends PyElementImpl implements PyKeywordArg
 
   @Override
   public String getName() {
-    return getKeyword();
+    return PyKeywordArgument.super.getName();
   }
 
   @Override

@@ -15,8 +15,9 @@ SHELL_SCRIPT
       PsiWhiteSpace(' ')
       DO_BLOCK
         PsiElement(do)('do')
-        PsiErrorElement:<block compound list> expected, got ';'
-          PsiElement(;)(';')
+        COMPOUND_LIST
+          PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+            PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
   PsiElement(\n)('\n')

@@ -29,7 +29,7 @@ object JvmResolveUtil {
         targetEnvironment: TargetEnvironment = CompilerEnvironment
     ): ComponentProvider =
         TopDownAnalyzerFacadeForJVM.createContainer(
-            environment.project, files, NoScopeRecordCliBindingTrace(),
+            environment.project, files, NoScopeRecordCliBindingTrace(environment.project),
             environment.configuration, { PackagePartProvider.Empty }, ::FileBasedDeclarationProviderFactory,
             targetEnvironment
         )
@@ -40,7 +40,7 @@ object JvmResolveUtil {
         files: Collection<KtFile>,
         configuration: CompilerConfiguration,
         packagePartProvider: (GlobalSearchScope) -> PackagePartProvider,
-        trace: BindingTrace = CliBindingTrace(),
+        trace: BindingTrace = CliBindingTrace(project),
         klibList: List<KotlinLibrary> = emptyList()
     ): AnalysisResult {
         for (file in files) {
@@ -82,7 +82,7 @@ object JvmResolveUtil {
         files: Collection<KtFile>,
         configuration: CompilerConfiguration,
         packagePartProviderFactory: (GlobalSearchScope) -> PackagePartProvider,
-        trace: BindingTrace = CliBindingTrace(),
+        trace: BindingTrace = CliBindingTrace(project),
         klibList: List<KotlinLibrary> = emptyList()
     ): AnalysisResult {
         return TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(

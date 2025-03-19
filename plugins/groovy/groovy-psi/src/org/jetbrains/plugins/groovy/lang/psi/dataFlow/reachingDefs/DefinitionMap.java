@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs;
 
 import com.intellij.util.SmartList;
@@ -25,8 +25,7 @@ public final class DefinitionMap {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public DefinitionMap withRegisteredDef(int varIndex, @NotNull Instruction instruction) {
+  public @NotNull DefinitionMap withRegisteredDef(int varIndex, @NotNull Instruction instruction) {
     if (varIndex == 0) {
       return this;
     }
@@ -38,8 +37,7 @@ public final class DefinitionMap {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public DefinitionMap withMerged(DefinitionMap other) {
+  public @NotNull DefinitionMap withMerged(DefinitionMap other) {
     if (other == this || other == NEUTRAL) {
       return this;
     }

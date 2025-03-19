@@ -4,19 +4,23 @@ package com.intellij.util.text
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Clock
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil.assumeMacOS
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.testFramework.ApplicationRule
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
-import java.io.File
+import java.nio.file.Path
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class DateFormatUtilTest {
+  @JvmField @Rule val appRule = ApplicationRule()
+
   @Before fun setUp() {
     Clock.reset()
   }
@@ -24,9 +28,9 @@ class DateFormatUtilTest {
   @Test fun system() {
     assumeMacOS()
     val testDate = LocalDateTime.of(2019, 5, 22, 13, 45).toMillis()
-    val helper = File(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!.toURI())
-    FileUtil.setExecutable(helper)
-    val expected = ExecUtil.execAndGetOutput(GeneralCommandLine(helper.path, "${testDate / 1000}")).stdoutLines[0]
+    val helper = Path.of(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!.toURI())
+    NioFiles.setExecutable(helper)
+    val expected = ExecUtil.execAndGetOutput(GeneralCommandLine(helper.toString(), "${testDate / 1000}")).stdoutLines[0]
     assertEquals(expected, DateFormatUtil.formatDateTime(testDate))
   }
 
@@ -72,6 +76,25 @@ class DateFormatUtilTest {
     assertEquals("Once in a few moments", DateFormatUtil.formatFrequency(1000L))
   }
 
+  @Test
+  fun overriding() {
+    DateTimeFormatManager.getInstance().apply {
+      isOverrideSystemDateFormat = true; dateFormatPattern = "dd|MM|YYYY"; isUse24HourTime = true; resetFormats()
+    }
+    try {
+      val t = LocalDateTime.parse("1970-01-22T09:28:15").toMillis()
+      assertEquals("22|01|1970", DateFormatUtil.formatDate(t))
+      assertEquals("09:28", DateFormatUtil.formatTime(t))
+      assertEquals("09:28:15", DateFormatUtil.formatTimeWithSeconds(t))
+      assertEquals("22|01|1970 09:28", DateFormatUtil.formatDateTime(t))
+    }
+    finally {
+      DateTimeFormatManager.getInstance().apply {
+        isOverrideSystemDateFormat = false; resetFormats()
+      }
+    }
+  }
+
   private fun assertPrettyDate(expected: String, now: LocalDateTime) {
     assertEquals(expected, DateFormatUtil.formatPrettyDate(now.toMillis()))
   }
@@ -80,5 +103,5 @@ class DateFormatUtilTest {
     assertEquals(expected, DateFormatUtil.formatPrettyDateTime(now.toMillis()))
   }
 
-  private fun LocalDateTime.toMillis() = atZone(ZoneId.systemDefault()).toEpochSecond() * 1000L
+  private fun LocalDateTime.toMillis() = atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 }

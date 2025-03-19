@@ -2,7 +2,6 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 import os
 
@@ -184,23 +183,24 @@ def wirereposetup(ui, repo):
 
         @wireprotov1peer.batchable
         def statlfile(self, sha):
-            f = wireprotov1peer.future()
+            def decode(d):
+                try:
+                    return int(d)
+                except (ValueError, urlerr.httperror):
+                    # If the server returns anything but an integer followed by a
+                    # newline, newline, it's not speaking our language; if we get
+                    # an HTTP error, we can't be sure the largefile is present;
+                    # either way, consider it missing.
+                    return 2
+
             result = {b'sha': sha}
-            yield result, f
-            try:
-                yield int(f.value)
-            except (ValueError, urlerr.httperror):
-                # If the server returns anything but an integer followed by a
-                # newline, newline, it's not speaking our language; if we get
-                # an HTTP error, we can't be sure the largefile is present;
-                # either way, consider it missing.
-                yield 2
+            return result, decode
 
     repo.__class__ = lfileswirerepository
 
 
 # advertise the largefiles=serve capability
-@eh.wrapfunction(wireprotov1server, b'_capabilities')
+@eh.wrapfunction(wireprotov1server, '_capabilities')
 def _capabilities(orig, repo, proto):
     '''announce largefile server capability'''
     caps = orig(repo, proto)

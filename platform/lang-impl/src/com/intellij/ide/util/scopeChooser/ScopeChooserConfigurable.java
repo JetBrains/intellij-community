@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -45,8 +45,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
-  @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
+public final class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
+  public static final @NonNls String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   public static final String PROJECT_SCOPES = "project.scopes";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
@@ -260,14 +260,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getHelpTopic() {
+  public @NotNull @NonNls String getHelpTopic() {
     return PROJECT_SCOPES;  //todo help id
   }
 
   @Override
-  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+  protected void updateSelection(final @Nullable NamedConfigurable configurable) {
     super.updateSelection(configurable);
     if (configurable instanceof ScopeConfigurable) {
       ((ScopeConfigurable)configurable).restoreCanceledProgress();
@@ -319,7 +317,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
             return false;
           }
         }
-        return inputString.trim().length() > 0;
+        return !inputString.trim().isEmpty();
       }
 
       @Override
@@ -333,13 +331,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return getHelpTopic();
   }
 
-  private class MyAddAction extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
+  private final class MyAddAction extends ActionGroup implements ActionGroupWithPreselection, DumbAware {
 
     private AnAction[] myChildren;
     private final boolean myFromPopup;
@@ -403,10 +399,10 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MyMoveAction extends DumbAwareAction {
+  private final class MyMoveAction extends DumbAwareAction {
     private final int myDirection;
 
-    protected MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
+    private MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
       super(() -> text, icon);
       ShortcutSet shortcutSet = direction < 0 ? CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.UP)
                                               : CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.DOWN);
@@ -415,12 +411,12 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath selectionPath = myTree.getSelectionPath();
@@ -443,7 +439,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MyCopyAction extends DumbAwareAction {
+  private final class MyCopyAction extends DumbAwareAction {
     MyCopyAction() {
       super(ExecutionBundle.messagePointer("copy.configuration.action.name"), COPY_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
@@ -471,7 +467,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  private class MySaveAsAction extends DumbAwareAction {
+  private final class MySaveAsAction extends DumbAwareAction {
     MySaveAsAction() {
       super(ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.MenuSaveall);
     }
@@ -507,7 +503,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-  public static class ScopeChooserConfigurableState extends MasterDetailsState {
+  public static final class ScopeChooserConfigurableState extends MasterDetailsState {
     @XCollection(propertyElementName = "order", elementName = "scope", valueAttributeName = "name")
     public List<String> myOrder = new ArrayList<>();
   }

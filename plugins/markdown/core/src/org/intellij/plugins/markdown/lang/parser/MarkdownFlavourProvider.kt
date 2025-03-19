@@ -30,8 +30,7 @@ interface MarkdownFlavourProvider {
     @JvmStatic
     fun findFlavour(viewProvider: FileViewProvider): MarkdownFlavourDescriptor {
       val providers = extensionPoint.extensionList
-      val flavour = providers.firstNotNullOfOrNull { it.provideFlavour(viewProvider) }
-      return when (flavour) {
+      return when (val flavour = providers.firstNotNullOfOrNull { it.provideFlavour(viewProvider) }) {
         null -> obtainDefaultMarkdownFlavour()
         else -> flavour
       }

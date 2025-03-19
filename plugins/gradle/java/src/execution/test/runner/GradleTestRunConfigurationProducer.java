@@ -1,17 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.TestData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.module.Module;
@@ -27,13 +24,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.plugins.gradle.execution.GradleRunConfigurationProducer;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.TestRunner;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleModuleData;
 import org.jetbrains.plugins.gradle.util.TasksToRun;
 
@@ -44,20 +40,11 @@ import java.util.Set;
 
 import static org.jetbrains.plugins.gradle.settings.TestRunner.*;
 
-public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<GradleRunConfiguration> {
+public abstract class GradleTestRunConfigurationProducer extends GradleRunConfigurationProducer {
 
   protected static final Logger LOG = Logger.getInstance(GradleTestRunConfigurationProducer.class);
 
   private TestTasksChooser testTasksChooser = new TestTasksChooser();
-
-  protected GradleTestRunConfigurationProducer() {
-    super(true);
-  }
-
-  @Override
-  public @NotNull ConfigurationFactory getConfigurationFactory() {
-    return GradleExternalTaskConfigurationType.getInstance().getFactory();
-  }
 
   @Override
   public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
@@ -75,8 +62,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
     @NotNull ConfigurationContext context,
     @NotNull Ref<PsiElement> sourceElement
   ) {
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
     if (sourceElement.isNull()) return false;
     if (isUsedTestRunners(context, PLATFORM)) return false;
     configuration.setDebugServerProcess(false);
@@ -94,9 +79,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
 
   @Override
   public boolean isConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
-    ProjectSystemId externalSystemId = configuration.getSettings().getExternalSystemId();
-    return GradleConstants.SYSTEM_ID.equals(externalSystemId) &&
-           isUsedTestRunners(configuration, CHOOSE_PER_TEST, GRADLE) &&
+    return isUsedTestRunners(configuration, CHOOSE_PER_TEST, GRADLE) &&
            doIsConfigurationFromContext(configuration, context);
   }
 
@@ -163,8 +146,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
    * @param project is a project with the source
    * @return any of possible tasks to run tests for specified source
    */
-  @NotNull
-  public static TasksToRun findTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+  public static @NotNull TasksToRun findTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
     List<TasksToRun> tasksToRun = findAllTestsTaskToRun(source, project);
     if (tasksToRun.isEmpty()) return TasksToRun.EMPTY;
     return tasksToRun.get(0);
@@ -177,8 +159,7 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
    * @param project is a project with the source
    * @return all of possible tasks to run tests for specified source
    */
-  @NotNull
-  public static List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
+  public static @NotNull List<TasksToRun> findAllTestsTaskToRun(@NotNull VirtualFile source, @NotNull Project project) {
     String sourcePath = source.getPath();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     Module module = ReadAction.compute(() -> projectFileIndex.getModuleForFile(source));

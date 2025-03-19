@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates.github;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -12,21 +15,29 @@ import org.jetbrains.annotations.Nullable;
 public final class GithubTagInfo {
   private final String myName;
   private final String myZipballUrl;
+  @JsonIgnore
   private Version myVersion;
+  @JsonIgnore
   private boolean myRecentTag = false;
+
 
   public GithubTagInfo(@NotNull String name, @NotNull String zipballUrl) {
     myName = name;
     myZipballUrl = zipballUrl;
   }
 
-  @NotNull
-  public @NlsSafe String getName() {
+  @JsonCreator
+  public static GithubTagInfo createInstance(
+    @JsonProperty("name") String name,
+    @JsonProperty("zipball_url") String zipballUrl) {
+    return new GithubTagInfo(name, zipballUrl);
+  }
+
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getZipballUrl() {
+  public @NotNull String getZipballUrl() {
     return myZipballUrl;
   }
 
@@ -38,16 +49,14 @@ public final class GithubTagInfo {
     return myRecentTag;
   }
 
-  @NotNull
-  public Version getVersion() {
+  public @NotNull Version getVersion() {
     if (myVersion == null) {
       myVersion = createVersionComponents();
     }
     return myVersion;
   }
 
-  @NotNull
-  private Version createVersionComponents() {
+  private @NotNull Version createVersionComponents() {
     String tagName = myName;
     if (tagName.startsWith("v.")) { //NON-NLS
       tagName = tagName.substring(2);
@@ -156,8 +165,7 @@ public final class GithubTagInfo {
     }
   }
 
-  @Nullable
-  public static GithubTagInfo tryCast(@Nullable Object o) {
+  public static @Nullable GithubTagInfo tryCast(@Nullable Object o) {
     return ObjectUtils.tryCast(o, GithubTagInfo.class);
   }
 

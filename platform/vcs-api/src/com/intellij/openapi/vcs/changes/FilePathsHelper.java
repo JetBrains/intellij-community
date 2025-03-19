@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -12,24 +12,20 @@ public final class FilePathsHelper {
   private FilePathsHelper() {
   }
 
-  @NlsSafe
-  public static String convertPath(final FilePath fp) {
+  public static @NlsSafe String convertPath(final FilePath fp) {
     return convertPath(fp.getPath());
   }
 
-  @NlsSafe
-  public static String convertWithLastSeparator(final FilePath fp) {
+  public static @NlsSafe String convertWithLastSeparator(final FilePath fp) {
     return convertWithLastSeparatorImpl(fp.getPath(), fp.isDirectory());
   }
 
-  @NlsSafe
-  private static String convertWithLastSeparatorImpl(final String initPath, final boolean isDir) {
+  private static @NlsSafe String convertWithLastSeparatorImpl(final String initPath, final boolean isDir) {
     final String path = isDir ? (initPath.endsWith("/") || initPath.endsWith("\\") ? initPath : initPath + "/") : initPath;
     return convertPath(path);
   }
 
-  @NlsSafe
-  public static String convertPath(final String parent, final String subpath) {
+  public static @NlsSafe String convertPath(final String parent, final String subpath) {
     String convParent = FileUtil.toSystemIndependentName(parent);
     String convPath = FileUtil.toSystemIndependentName(subpath);
 
@@ -37,9 +33,7 @@ public final class FilePathsHelper {
     return SystemInfo.isFileSystemCaseSensitive ? withSlash : StringUtil.toUpperCase(withSlash);
   }
 
-  @NotNull
-  @NlsSafe
-  public static String convertPath(@NotNull String s) {
+  public static @NotNull @NlsSafe String convertPath(@NotNull String s) {
     String result = FileUtil.toSystemIndependentName(s);
     return SystemInfo.isFileSystemCaseSensitive ? result : StringUtil.toUpperCase(result);
   }

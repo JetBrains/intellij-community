@@ -15,15 +15,12 @@
  */
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstIfPart;
+
 /**
  * Branches of an 'if' statement.
  * @see PyElsePart
  */
-public interface PyIfPart extends PyConditionalStatementPart {
+public interface PyIfPart extends PyAstIfPart, PyConditionalStatementPart {
   PyIfPart[] EMPTY_ARRAY = new PyIfPart[0];
-  /**
-   * @return true for a 'elif' part.
-   */
-  boolean isElif();
-
 }

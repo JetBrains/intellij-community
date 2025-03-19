@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.vcs.VcsLocaleHelper;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +51,7 @@ public final class ShellCommand {
     myCommandLine.withEnvironment(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("hg"));
   }
 
-  @NotNull
-  public HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
+  public @NotNull HgCommandResult execute(boolean showTextOnIndicator, boolean isBinary) throws ShellCommandException {
     CommandResultCollector listener = new CommandResultCollector(isBinary);
     execute(showTextOnIndicator, isBinary, listener);
     return listener.getResult();
@@ -63,9 +61,7 @@ public final class ShellCommand {
     throws ShellCommandException {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
-      OSProcessHandler processHandler = isBinary
-                                        ? new BinaryOSProcessHandler(myCommandLine)
-                                        : new KillableProcessHandler(myCommandLine, Registry.is("hg4idea.execute.with.mediator"));
+      OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new KillableProcessHandler(myCommandLine);
       ProcessAdapter outputAdapter = new ProcessAdapter() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
@@ -101,7 +97,7 @@ public final class ShellCommand {
   }
 
   public static class CommandResultCollector extends HgLineProcessListener {
-    @NotNull private final ProcessOutput myOutput;
+    private final @NotNull ProcessOutput myOutput;
     private final boolean myIsBinary;
 
     public CommandResultCollector(boolean binary) {

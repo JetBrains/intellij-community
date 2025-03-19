@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.declarative
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NonNls
  *
  * If you need to have support for multiple languages, use [com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory]
  */
-interface InlayHintsProvider {
+interface InlayHintsProvider : PossiblyDumbAware {
   companion object {
     @JvmStatic
     val PROVIDER_NAME: DataKey<@Nls String> = DataKey.create("declarative.hints.provider.name")

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible.filters
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.text.CharFilter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
@@ -23,7 +24,7 @@ import java.util.regex.PatternSyntaxException
 object VcsLogFilterObject {
   private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
-  const val ME = "*"
+  const val ME: String = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
@@ -31,7 +32,7 @@ object VcsLogFilterObject {
       try {
         return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
       }
-      catch (ignored: PatternSyntaxException) {
+      catch (_: PatternSyntaxException) {
       }
     }
     return VcsLogTextFilterImpl(text, isMatchCase)
@@ -133,7 +134,7 @@ object VcsLogFilterObject {
   @JvmStatic
   fun fromHash(text: String): VcsLogHashFilter? {
     val hashes = mutableListOf<String>()
-    for (word in StringUtil.split(text, " ")) {
+    for (word in StringUtil.split(text, HashSeparatorCharFilter, true, true)) {
       if (!VcsLogUtil.HASH_REGEX.matcher(word).matches()) {
         return null
       }
@@ -195,6 +196,16 @@ object VcsLogFilterObject {
   }
 
   @JvmStatic
+  fun noMerges(): VcsLogParentFilter {
+    return fromParentCount(maxParents = 1)
+  }
+
+  @JvmStatic
+  fun fromParentCount(minParents: Int? = null, maxParents: Int? = null): VcsLogParentFilter {
+    return VcsLogParentFilterImpl(minParents ?: 0, maxParents ?: Int.MAX_VALUE)
+  }
+
+  @JvmStatic
   fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
     val filterSet = createFilterSet()
     for (f in filters) {
@@ -206,7 +217,7 @@ object VcsLogFilterObject {
   }
 
   @JvmField
-  val EMPTY_COLLECTION = collection()
+  val EMPTY_COLLECTION: VcsLogFilterCollection = collection()
 }
 
 fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {
@@ -232,17 +243,21 @@ fun <T : VcsLogFilter> VcsLogFilterCollection.without(filterClass: Class<T>): Vc
   return without { filterClass.isInstance(it) }
 }
 
-fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean {
-  return this.filters.mapTo(mutableSetOf()) { it.key } == filterKey.toSet()
+val VcsLogFilterCollection.keysToSet: Set<FilterKey<*>> get() = this.filters.mapTo(mutableSetOf()) { it.key }
+
+fun VcsLogFilterCollection.matches(vararg filterKey: FilterKey<*>): Boolean = matches(filterKey.toSet())
+
+fun VcsLogFilterCollection.matches(filterKeys: Set<FilterKey<*>>): Boolean {
+  return this.keysToSet == filterKeys
 }
 
 @Nls
-fun VcsLogFilterCollection.getPresentation(): String {
+fun VcsLogFilterCollection.getPresentation(withPrefix: Boolean = false): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
   return StringUtil.join(filters, { filter: VcsLogFilter ->
-    if (filters.size != 1) {
+    if (filters.size != 1 || withPrefix) {
       filter.withPrefix()
     }
     else filter.displayText
@@ -254,7 +269,7 @@ private fun VcsLogFilter.withPrefix(): String {
   when (this) {
     is VcsLogTextFilter -> return VcsLogBundle.message("vcs.log.filter.text.presentation.with.prefix", displayText)
     is VcsLogUserFilter -> return VcsLogBundle.message("vcs.log.filter.user.presentation.with.prefix", displayText)
-    is VcsLogDateFilter -> return displayTextWithPrefix
+    is VcsLogDateFilter -> return VcsLogDateFilterImpl.getDisplayTextWithPrefix(this)
     is VcsLogBranchFilter -> return VcsLogBundle.message("vcs.log.filter.branch.presentation.with.prefix", displayText)
     is VcsLogRootFilter -> return VcsLogBundle.message("vcs.log.filter.root.presentation.with.prefix", displayText)
     is VcsLogStructureFilter -> return VcsLogBundle.message("vcs.log.filter.structure.presentation.with.prefix", displayText)
@@ -276,4 +291,15 @@ private fun <T> replace(set: ObjectOpenCustomHashSet<T>, element: T): Boolean {
   val isModified = set.remove(element)
   set.add(element)
   return isModified
+}
+
+internal object HashSeparatorCharFilter : CharFilter {
+  override fun accept(ch: Char): Boolean {
+    if (ch == ',' || ch == ';') return true
+    if (Character.isWhitespace(ch)) return true
+    return false
+  }
+
+  @JvmStatic
+  fun invert(): CharFilter = CharFilter { ch -> !accept(ch) }
 }

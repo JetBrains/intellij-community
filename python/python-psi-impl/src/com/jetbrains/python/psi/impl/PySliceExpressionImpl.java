@@ -16,12 +16,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySliceExpression;
-import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,27 +29,13 @@ public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpre
     super(astNode);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = context.getType(getOperand());
     return getSliceType(type, context);
   }
 
-  @NotNull
-  @Override
-  public PyExpression getOperand() {
-    return childToPsiNotNull(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
-  }
-
-  @Nullable
-  @Override
-  public PySliceItem getSliceItem() {
-    return PsiTreeUtil.getChildOfType(this, PySliceItem.class);
-  }
-
-  @Nullable
-  private PyType getSliceType(@Nullable PyType operandType, @NotNull TypeEvalContext context) {
+  private @Nullable PyType getSliceType(@Nullable PyType operandType, @NotNull TypeEvalContext context) {
     // TODO: Currently we don't evaluate the static range of the slice, so we have to return a generic tuple type without elements
     if (operandType instanceof PyTupleType) {
       return ((PyTupleType)operandType).isHomogeneous() ? operandType : PyBuiltinCache.getInstance(this).getTupleType();

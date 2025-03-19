@@ -6,10 +6,14 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.fileTypes.SyntaxHighlighter"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.mergeableGutterIconRendererProvider" interface="com.intellij.openapi.editor.MergeableGutterIconRendererProvider" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings" preload="true"/>
-    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings"/>
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettingsStateDefaultsProviderImpl"
+                        serviceInterface="com.intellij.ide.ui.UISettingsStateDefaultsProvider" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <applicationSettings service="com.intellij.ide.ui.UISettings"/>
 
     <projectService
       serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
@@ -17,5 +21,6 @@
     <projectService
       serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
       serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
+    <applicationService serviceImplementation="com.intellij.ide.ui.NotRoamableUiSettings" />
   </extensions>
 </idea-plugin>

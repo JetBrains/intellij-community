@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 
@@ -18,9 +19,10 @@ class RetypeOptions(val project: Project) {
   var fileCount: Int by propComponentProperty(project, 10)
   var retypeExtension: String by propComponentProperty(project, "")
   var restoreOriginalText: Boolean by propComponentProperty(project, true)
-  var retypeCurrentFile = false
+  var retypeCurrentFile: Boolean = false
 }
 
+@ApiStatus.Internal
 class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOptions, private val editor: Editor?) : DialogWrapper(project) {
   init {
     init()

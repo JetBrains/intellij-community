@@ -55,8 +55,7 @@ import static com.intellij.util.ObjectUtils.doIfNotNull;
 public class UnusedDefineInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  public RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyElementVisitor(holder);
   }
 
@@ -100,7 +99,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static boolean processRncUsages(PsiElement tag, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         final RncDefine t = PsiTreeUtil.getParentOfType(e, RncDefine.class, false);
         if (t == null || !PsiTreeUtil.isAncestor(tag, t, true)) {
@@ -132,7 +131,7 @@ public class UnusedDefineInspection extends BaseInspection {
       if (value == null) return;
 
       final String s = value.getValue();
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return;
       }
       final PsiElement parent = value.getParent();
@@ -169,7 +168,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static boolean processUsages(PsiElement tag, XmlAttributeValue value, LocalSearchScope scope) {
       final Query<PsiReference> query = ReferencesSearch.search(tag, scope, true);
-      for (PsiReference reference : query) {
+      for (PsiReference reference : query.asIterable()) {
         final PsiElement e = reference.getElement();
         if (e != value) {
           final XmlTag t = PsiTreeUtil.getParentOfType(e, XmlTag.class);
@@ -183,8 +182,7 @@ public class UnusedDefineInspection extends BaseInspection {
 
     private static class MyFix<T extends PsiElement> implements LocalQuickFix {
       @Override
-      @NotNull
-      public String getFamilyName() {
+      public @NotNull String getFamilyName() {
         return RelaxngBundle.message("relaxng.quickfix.remove-define");
       }
 

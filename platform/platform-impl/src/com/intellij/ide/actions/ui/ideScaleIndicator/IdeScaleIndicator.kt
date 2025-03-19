@@ -6,8 +6,6 @@ import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
@@ -23,11 +21,6 @@ import javax.swing.JPanel
 class IdeScaleIndicator(percentage: Int) : JPanel() {
   private val titleLabel = JBLabel(UIBundle.message("ide.scale.indicator.current.scale.format", percentage))
   private val resetLink = ActionManager.getInstance().getAction(ResetIdeScaleAction::class.java.simpleName).run {
-    val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.POPUP,
-                                                   null, DataContext.EMPTY_CONTEXT,
-                                                   false, true)
-    update(event)
-
     AnActionLink(this, ActionPlaces.POPUP).also {
       it.text = UIBundle.message("ide.scale.indicator.reset.scale.format",
                                  UISettingsUtils.getInstance().currentDefaultScale.percentValue)

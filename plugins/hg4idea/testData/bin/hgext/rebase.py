@@ -14,9 +14,7 @@ For more information:
 https://mercurial-scm.org/wiki/RebaseExtension
 '''
 
-from __future__ import absolute_import
 
-import errno
 import os
 
 from mercurial.i18n import _
@@ -32,9 +30,9 @@ from mercurial import (
     commands,
     copies,
     destutil,
-    dirstateguard,
     error,
     extensions,
+    logcmdutil,
     merge as mergemod,
     mergestate as mergestatemod,
     mergeutil,
@@ -53,6 +51,7 @@ from mercurial import (
     state as statemod,
     util,
 )
+
 
 # The following constants are used throughout the rebase module. The ordering of
 # their values must be maintained.
@@ -84,15 +83,6 @@ testedwith = b'ships-with-hg-core'
 
 def _nothingtorebase():
     return 1
-
-
-def _savegraft(ctx, extra):
-    s = ctx.extra().get(b'source', None)
-    if s is not None:
-        extra[b'source'] = s
-    s = ctx.extra().get(b'intermediate-source', None)
-    if s is not None:
-        extra[b'intermediate-source'] = s
 
 
 def _savebranch(ctx, extra):
@@ -159,7 +149,7 @@ def _ctxdesc(ctx):
     )
 
 
-class rebaseruntime(object):
+class rebaseruntime:
     """This class is a container for rebase runtime state"""
 
     def __init__(self, repo, ui, inmemory=False, dryrun=False, opts=None):
@@ -195,7 +185,7 @@ class rebaseruntime(object):
         self.date = opts.get('date', None)
 
         e = opts.get('extrafn')  # internal, used by e.g. hgsubversion
-        self.extrafns = [_savegraft]
+        self.extrafns = [rewriteutil.preserve_extras_on_rebase]
         if e:
             self.extrafns = [e]
 
@@ -243,7 +233,7 @@ class rebaseruntime(object):
         f.write(b'%d\n' % int(self.keepbranchesf))
         f.write(b'%s\n' % (self.activebookmark or b''))
         destmap = self.destmap
-        for d, v in pycompat.iteritems(self.state):
+        for d, v in self.state.items():
             oldrev = repo[d].hex()
             if v >= 0:
                 newrev = repo[v].hex()
@@ -505,7 +495,7 @@ class rebaseruntime(object):
             # commits.
             self.storestatus(tr)
 
-        cands = [k for k, v in pycompat.iteritems(self.state) if v == revtodo]
+        cands = [k for k, v in self.state.items() if v == revtodo]
         p = repo.ui.makeprogress(
             _(b"rebasing"), unit=_(b'changesets'), total=len(cands)
         )
@@ -547,7 +537,9 @@ class rebaseruntime(object):
         date = self.date
         if date is None:
             date = ctx.date()
-        extra = {b'rebase_source': ctx.hex()}
+        extra = {}
+        if repo.ui.configbool(b'rebase', b'store-source'):
+            extra = {b'rebase_source': ctx.hex()}
         for c in self.extrafns:
             c(ctx, extra)
         destphase = max(ctx.phase(), phases.draft)
@@ -838,6 +830,7 @@ class rebaseruntime(object):
                 cleanup = False
 
             if cleanup:
+
                 if rebased:
                     strippoints = [
                         c.node() for c in repo.set(b'roots(%ld)', rebased)
@@ -846,13 +839,17 @@ class rebaseruntime(object):
                 updateifonnodes = set(rebased)
                 updateifonnodes.update(self.destmap.values())
 
-                if not dryrun and not confirm:
+                if not confirm:
+                    # note: when dry run is set the `rebased` and `destmap`
+                    # variables seem to contain "bad" contents, so do not
+                    # rely on them. As dryrun does not need this part of
+                    # the cleanup, this is "fine"
                     updateifonnodes.add(self.originalwd)
 
                 shouldupdate = repo[b'.'].rev() in updateifonnodes
 
                 # Update away from the rebase if necessary
-                if shouldupdate:
+                if not dryrun and shouldupdate:
                     mergemod.clean_update(repo[self.originalwd])
 
                 # Strip from the first rebased revision
@@ -1270,15 +1267,9 @@ def _origrebase(ui, repo, action, opts, rbsrt):
         # one transaction here. Otherwise, transactions are obtained when
         # committing each node, which is slower but allows partial success.
         with util.acceptintervention(tr):
-            # Same logic for the dirstate guard, except we don't create one when
-            # rebasing in-memory (it's not needed).
-            dsguard = None
-            if singletr and not rbsrt.inmemory:
-                dsguard = dirstateguard.dirstateguard(repo, b'rebase')
-            with util.acceptintervention(dsguard):
-                rbsrt._performrebase(tr)
-                if not rbsrt.dryrun:
-                    rbsrt._finishrebase()
+            rbsrt._performrebase(tr)
+            if not rbsrt.dryrun:
+                rbsrt._finishrebase()
 
 
 def _definedestmap(ui, repo, inmemory, destf, srcf, basef, revf, destspace):
@@ -1302,19 +1293,19 @@ def _definedestmap(ui, repo, inmemory, destf, srcf, basef, revf, destspace):
     dest = None
 
     if revf:
-        rebaseset = scmutil.revrange(repo, revf)
+        rebaseset = logcmdutil.revrange(repo, revf)
         if not rebaseset:
             ui.status(_(b'empty "rev" revision set - nothing to rebase\n'))
             return None
     elif srcf:
-        src = scmutil.revrange(repo, srcf)
+        src = logcmdutil.revrange(repo, srcf)
         if not src:
             ui.status(_(b'empty "source" revision set - nothing to rebase\n'))
             return None
         # `+  (%ld)` to work around `wdir()::` being empty
         rebaseset = repo.revs(b'(%ld):: + (%ld)', src, src)
     else:
-        base = scmutil.revrange(repo, basef or [b'.'])
+        base = logcmdutil.revrange(repo, basef or [b'.'])
         if not base:
             ui.status(
                 _(b'empty "base" revision set - ' b"can't compute rebase set\n")
@@ -1322,7 +1313,7 @@ def _definedestmap(ui, repo, inmemory, destf, srcf, basef, revf, destspace):
             return None
         if destf:
             # --base does not support multiple destinations
-            dest = scmutil.revsingle(repo, destf)
+            dest = logcmdutil.revsingle(repo, destf)
         else:
             dest = repo[_destrebase(repo, base, destspace=destspace)]
             destf = bytes(dest)
@@ -1336,7 +1327,7 @@ def _definedestmap(ui, repo, inmemory, destf, srcf, basef, revf, destspace):
             # emulate the old behavior, showing "nothing to rebase" (a better
             # behavior may be abort with "cannot find branching point" error)
             bpbase.clear()
-        for bp, bs in pycompat.iteritems(bpbase):  # calculate roots
+        for bp, bs in bpbase.items():  # calculate roots
             roots += list(repo.revs(b'children(%d) & ancestors(%ld)', bp, bs))
 
         rebaseset = repo.revs(b'%ld::', roots)
@@ -1499,16 +1490,18 @@ def commitmemorynode(repo, wctx, editor, extra, user, date, commitmsg):
 def commitnode(repo, editor, extra, user, date, commitmsg):
     """Commit the wd changes with parents p1 and p2.
     Return node of committed revision."""
-    dsguard = util.nullcontextmanager()
+    tr = util.nullcontextmanager
     if not repo.ui.configbool(b'rebase', b'singletransaction'):
-        dsguard = dirstateguard.dirstateguard(repo, b'rebase')
-    with dsguard:
+        tr = lambda: repo.transaction(b'rebase')
+    with tr():
         # Commit might fail if unresolved files exist
         newnode = repo.commit(
             text=commitmsg, user=user, date=date, extra=extra, editor=editor
         )
 
-        repo.dirstate.setbranch(repo[newnode].branch())
+        repo.dirstate.setbranch(
+            repo[newnode].branch(), repo.currenttransaction()
+        )
         return newnode
 
 
@@ -1519,12 +1512,14 @@ def rebasenode(repo, rev, p1, p2, base, collapse, wctx):
     p1ctx = repo[p1]
     if wctx.isinmemory():
         wctx.setbase(p1ctx)
+        scope = util.nullcontextmanager
     else:
         if repo[b'.'].rev() != p1:
             repo.ui.debug(b" update to %d:%s\n" % (p1, p1ctx))
             mergemod.clean_update(p1ctx)
         else:
             repo.ui.debug(b" already in destination\n")
+        scope = lambda: repo.dirstate.changing_parents(repo)
         # This is, alas, necessary to invalidate workingctx's manifest cache,
         # as well as other data we litter on it in other places.
         wctx = repo[None]
@@ -1534,26 +1529,27 @@ def rebasenode(repo, rev, p1, p2, base, collapse, wctx):
     if base is not None:
         repo.ui.debug(b"   detach base %d:%s\n" % (base, repo[base]))
 
-    # See explanation in merge.graft()
-    mergeancestor = repo.changelog.isancestor(p1ctx.node(), ctx.node())
-    stats = mergemod._update(
-        repo,
-        rev,
-        branchmerge=True,
-        force=True,
-        ancestor=base,
-        mergeancestor=mergeancestor,
-        labels=[b'dest', b'source'],
-        wc=wctx,
-    )
-    wctx.setparents(p1ctx.node(), repo[p2].node())
-    if collapse:
-        copies.graftcopies(wctx, ctx, p1ctx)
-    else:
-        # If we're not using --collapse, we need to
-        # duplicate copies between the revision we're
-        # rebasing and its first parent.
-        copies.graftcopies(wctx, ctx, ctx.p1())
+    with scope():
+        # See explanation in merge.graft()
+        mergeancestor = repo.changelog.isancestor(p1ctx.node(), ctx.node())
+        stats = mergemod._update(
+            repo,
+            rev,
+            branchmerge=True,
+            force=True,
+            ancestor=base,
+            mergeancestor=mergeancestor,
+            labels=[b'dest', b'source', b'parent of source'],
+            wc=wctx,
+        )
+        wctx.setparents(p1ctx.node(), repo[p2].node())
+        if collapse:
+            copies.graftcopies(wctx, ctx, p1ctx)
+        else:
+            # If we're not using --collapse, we need to
+            # duplicate copies between the revision we're
+            # rebasing and its first parent.
+            copies.graftcopies(wctx, ctx, ctx.p1())
 
     if stats.unresolvedcount > 0:
         if wctx.isinmemory():
@@ -1940,9 +1936,7 @@ def restorecollapsemsg(repo, isabort):
         f = repo.vfs(b"last-message.txt")
         collapsemsg = f.readline().strip()
         f.close()
-    except IOError as err:
-        if err.errno != errno.ENOENT:
-            raise
+    except FileNotFoundError:
         if isabort:
             # Oh well, just abort like normal
             collapsemsg = b''
@@ -2103,7 +2097,7 @@ def clearrebased(
         fl = fm.formatlist
         fd = fm.formatdict
         changes = {}
-        for oldns, newn in pycompat.iteritems(replacements):
+        for oldns, newn in replacements.items():
             for oldn in oldns:
                 changes[hf(oldn)] = fl([hf(n) for n in newn], name=b'node')
         nodechanges = fd(changes, key=b"oldnode", value=b"newnodes")
@@ -2139,16 +2133,16 @@ def pullrebase(orig, ui, repo, *args, **opts):
             )
 
             revsprepull = len(repo)
-            origpostincoming = commands.postincoming
+            origpostincoming = cmdutil.postincoming
 
             def _dummy(*args, **kwargs):
                 pass
 
-            commands.postincoming = _dummy
+            cmdutil.postincoming = _dummy
             try:
                 ret = orig(ui, repo, *args, **opts)
             finally:
-                commands.postincoming = origpostincoming
+                cmdutil.postincoming = origpostincoming
             revspostpull = len(repo)
             if revspostpull > revsprepull:
                 # --rev option from pull conflict with rebase own --rev
@@ -2257,7 +2251,7 @@ def summaryhook(ui, repo):
         msg = _(b'rebase: (use "hg rebase --abort" to clear broken state)\n')
         ui.write(msg)
         return
-    numrebased = len([i for i in pycompat.itervalues(state) if i >= 0])
+    numrebased = len([i for i in state.values() if i >= 0])
     # i18n: column positioning for "hg summary"
     ui.write(
         _(b'rebase: %s, %s (rebase --continue)\n')

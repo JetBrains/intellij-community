@@ -3,23 +3,15 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.invocation.Gradle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public interface ModelBuilderContext extends MessageReporter {
-  /**
-   * @return root Gradle instance
-   */
-  @NotNull
-  Gradle getRootGradle();
+public interface ModelBuilderContext {
 
-  /**
-   * @return the value of the parameter passed to the builder, if the parametrized version of {@link BuildController#getModel} is used.
-   */
-  @Nullable
-  String getParameter();
+  @NotNull Gradle getGradle();
+
+  @NotNull MessageReporter getMessageReporter();
 
   /**
    * @return cached data if it's already created, newly created data otherwise
@@ -33,6 +25,6 @@ public interface ModelBuilderContext extends MessageReporter {
      * Returned value should be thread-safe.
      */
     @NotNull
-    T create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter);
+    T create(@NotNull ModelBuilderContext context);
   }
 }

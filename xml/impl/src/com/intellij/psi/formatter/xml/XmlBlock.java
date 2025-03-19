@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -50,8 +50,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     if (myTextRange != null && !(isCDATAStart() || isCDATAEnd())) {
       return myTextRange;
     }
@@ -202,13 +201,11 @@ public class XmlBlock extends AbstractXmlBlock {
     }
   }
 
-  @Nullable
-  protected Wrap getDefaultWrap(ASTNode node) {
+  protected @Nullable Wrap getDefaultWrap(ASTNode node) {
     return null;
   }
 
-  @Nullable
-  protected Indent getChildDefaultIndent() {
+  protected @Nullable Indent getChildDefaultIndent() {
     if (myNode.getElementType() == XmlElementType.HTML_DOCUMENT) {
       return Indent.getNoneIndent();
     }
@@ -310,8 +307,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     PsiElement element = myNode.getPsi();
     if (element instanceof PsiFile || element instanceof XmlDocument || element instanceof XmlProlog) {
       return new ChildAttributes(Indent.getNoneIndent(), null);

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
@@ -18,11 +19,14 @@ public final class BinaryFileTypeDecompilers extends FileTypeExtension<BinaryFil
 
   private BinaryFileTypeDecompilers() {
     super(EP_NAME);
-    EP_NAME.addChangeListener(() -> notifyDecompilerSetChange(), null);
+    Application app = ApplicationManager.getApplication();
+    if (!app.isUnitTestMode()) {
+      EP_NAME.addChangeListener(() -> notifyDecompilerSetChange(), null);
+    }
   }
 
   public void notifyDecompilerSetChange() {
-    ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().reloadBinaryFiles(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().reloadBinaryFiles(), ModalityState.nonModal());
   }
 
   public static BinaryFileTypeDecompilers getInstance() {

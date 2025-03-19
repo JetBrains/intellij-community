@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTarget;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -36,16 +23,12 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public class CompiledClass extends UserDataHolderBase{
-  private final static Logger LOG = Logger.getInstance(CompiledClass.class);
+  private static final Logger LOG = Logger.getInstance(CompiledClass.class);
 
-  @NotNull
-  private final File myOutputFile;
-  @NotNull
-  private final Collection<File> mySourceFiles;
-  @Nullable
-  private final String myClassName;
-  @NotNull
-  private BinaryContent myContent;
+  private final @NotNull File myOutputFile;
+  private final @NotNull Collection<File> sourceFiles;
+  private final @Nullable String myClassName;
+  private @NotNull BinaryContent myContent;
 
   private boolean myIsDirty = false;
 
@@ -57,14 +40,14 @@ public class CompiledClass extends UserDataHolderBase{
    */
   public CompiledClass(@NotNull File outputFile, @NotNull Collection<File> sourceFiles, @Nullable String className, @NotNull BinaryContent content) {
     myOutputFile = outputFile;
-    mySourceFiles = sourceFiles;
+    this.sourceFiles = sourceFiles;
     myClassName = className;
     myContent = content;
-    LOG.assertTrue(!mySourceFiles.isEmpty());
+    LOG.assertTrue(!this.sourceFiles.isEmpty());
   }
 
   public CompiledClass(@NotNull File outputFile, @NotNull File sourceFile, @Nullable String className, @NotNull BinaryContent content) {
-    this(outputFile, Collections.singleton(sourceFile), className, content);
+    this(outputFile, List.of(sourceFile), className, content);
   }
 
   public void save() throws IOException {
@@ -72,28 +55,31 @@ public class CompiledClass extends UserDataHolderBase{
     myIsDirty = false;
   }
 
-  @NotNull
-  public File getOutputFile() {
+  public @NotNull File getOutputFile() {
     return myOutputFile;
   }
 
-  @NotNull
-  public Collection<File> getSourceFiles() {
-    return mySourceFiles;
+  public @NotNull Collection<File> getSourceFiles() {
+    return sourceFiles;
   }
 
-  @NotNull
-  public List<String> getSourceFilesPaths() {
-    return ContainerUtil.map(mySourceFiles, file -> file.getPath());
+  public @Unmodifiable @NotNull List<String> getSourceFilesPaths() {
+    if (sourceFiles.isEmpty()) {
+      return List.of();
+    }
+
+    List<String> result = new ArrayList<>(sourceFiles.size());
+    for (File t : sourceFiles) {
+      result.add(t.getPath());
+    }
+    return result;
   }
 
-  @Nullable
-  public String getClassName() {
+  public @Nullable String getClassName() {
     return myClassName;
   }
 
-  @NotNull
-  public BinaryContent getContent() {
+  public @NotNull BinaryContent getContent() {
     return myContent;
   }
 
@@ -113,21 +99,24 @@ public class CompiledClass extends UserDataHolderBase{
 
     CompiledClass aClass = (CompiledClass)o;
 
-    if (!FileUtil.filesEqual(myOutputFile, aClass.myOutputFile)) return false;
+    // on MacOS java.io.File.equals() is incorrectly case-sensitive
+    if (!FileUtil.pathsEqual(myOutputFile.getPath(), aClass.myOutputFile.getPath())) {
+      return false;
+    }
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return FileUtil.fileHashCode(myOutputFile);
+    return FileUtilRt.pathHashCode(myOutputFile.getPath());
   }
 
   @Override
   public String toString() {
     return "CompiledClass{" +
            "myOutputFile=" + myOutputFile +
-           ", mySourceFiles=" + mySourceFiles +
+           ", mySourceFiles=" + sourceFiles +
            ", myIsDirty=" + myIsDirty +
            '}';
   }

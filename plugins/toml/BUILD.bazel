@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.toml` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "toml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "toml",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    ":toml_resources",
+    "//plugins/toml/core",
+    "//plugins/toml/json",
+    "//plugins/toml/grazie",
+  ]
+)
+### auto-generated section `build intellij.toml` end

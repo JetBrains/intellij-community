@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.Action
@@ -24,9 +25,9 @@ class InterpretationHandlerImpl(
     actionStats.add(ActionStat(action, System.currentTimeMillis()))
   }
 
-  override fun onSessionFinished(path: String): Boolean {
+  override fun onSessionFinished(path: String, fileSessionsLeft: Int): Boolean {
     completed++
-    updateProgress(path)
+    updateProgress(path, fileSessionsLeft)
     return isCancelled()
   }
 
@@ -55,10 +56,12 @@ class InterpretationHandlerImpl(
     return false
   }
 
-  private fun updateProgress(path: String) {
+  private fun updateProgress(path: String, fileSessionsLeft: Int) {
+    val actualSessionsCount = sessionsLimit ?: sessionsCount
     val perMinute = actionStats.count { it.timestamp > Date().time - minInMs }
     val fileName = File(path).name
-    indicator.setProgress(fileName, "$fileName ($completed/$sessionsCount sessions, $perMinute act/min)",
-                          completed.toDouble() / sessionsCount)
+    val limitExceededPostfix = if (isLimitExceeded()) " - limit exceeded; $fileSessionsLeft sessions left in the last file" else ""
+    indicator.setProgress(fileName, "$fileName ($completed/$actualSessionsCount sessions, $perMinute act/min)$limitExceededPostfix",
+                          completed.toDouble() / actualSessionsCount)
   }
 }

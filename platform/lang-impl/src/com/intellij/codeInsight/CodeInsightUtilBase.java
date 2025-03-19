@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -16,7 +16,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +25,7 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   }
 
   @Override
-  public boolean prepareFileForWrite(@Nullable final PsiFile psiFile) {
+  public boolean prepareFileForWrite(final @Nullable PsiFile psiFile) {
     if (psiFile == null) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     final Project project = psiFile.getProject();
@@ -36,7 +35,7 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
     }
     ApplicationManager.getApplication().invokeLater(() -> {
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-      if (editor != null && editor.getComponent().isDisplayable()) {
+      if (editor != null && (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isDisplayable())) {
         HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
       }
     }, project.getDisposed());
@@ -48,11 +47,6 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
   public boolean preparePsiElementForWrite(@Nullable PsiElement element) {
     PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
-  }
-
-  @Override
-  public boolean preparePsiElementsForWrite(PsiElement @NotNull ... elements) {
-    return preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
   @Override

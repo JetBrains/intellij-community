@@ -1,3 +1,3 @@
 fun x(a: Int): Float {
-    x(1);
+    x(1)
 }

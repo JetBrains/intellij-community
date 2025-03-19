@@ -1,36 +1,39 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsStatusWidget
-import com.intellij.ide.DataManager
-import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
+import com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener
 import com.intellij.ide.ui.ToolbarSettings
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
-import git4idea.GitBranchesUsageCollector.Companion.branchWidgetClicked
+import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
+import git4idea.branch.calcTooltip
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchIconUtil.Companion.getBranchIcon
-import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.create
-import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.isEnabled
+import git4idea.ui.branch.popup.GitBranchesTreePopup
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -64,12 +67,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
 
   override fun getWidgetPopup(project: Project, repository: GitRepository): JBPopup {
     branchWidgetClicked()
-    return if (isEnabled()) {
-      create(project, repository)
-    }
-    else {
-      GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar!!.component)).asListPopup()
-    }
+    return GitBranchesTreePopup.create(project, repository)
   }
 
   override fun rememberRecentRoot(path: String) {
@@ -81,13 +79,41 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
       GitBundle.message("git.status.bar.widget.tooltip.detached")
     }
     else {
-      super.getToolTip(repository)
+      repository ?: return null
+      val toolTip = super.getToolTip(repository) ?: return null
+      val htmlBuilder = HtmlBuilder().append(toolTip)
+
+      val currentBranch = repository.currentBranch ?: return htmlBuilder.toString()
+      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+      val incomingOutgoingState = incomingOutgoingManager.getIncomingOutgoingState(repository, currentBranch)
+      val incomingOutgoingTooltip = incomingOutgoingState.calcTooltip()
+      if (incomingOutgoingTooltip != null) {
+        htmlBuilder.br()
+        htmlBuilder.appendRaw(incomingOutgoingTooltip)
+      }
+
+      htmlBuilder.toString()
     }
   }
 
   internal class Listener(private val project: Project) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
       project.service<StatusBarWidgetsManager>().updateWidget(Factory::class.java)
+    }
+  }
+
+  internal class SettingsListener(private val project: Project) : UISettingsListener {
+    override fun uiSettingsChanged(uiSettings: UISettings) {
+      val statusBarSettings = StatusBarWidgetSettings.getInstance()
+      if (!ExperimentalUI.isNewUI() || statusBarSettings.isExplicitlyDisabled(ID)) return
+
+      // Show/hide git branch if main toolbar is hidden/shown via settings
+      StatusBarWidgetFactory.EP_NAME.findExtension(Factory::class.java)?.let {  factory ->
+        val manager = project.service<StatusBarWidgetsManager>()
+        if (manager.wasWidgetCreated(ID) != factory.isEnabledByDefault) {
+          manager.updateWidget(factory)
+        }
+      }
     }
   }
 
@@ -103,9 +129,9 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     override fun createWidget(project: Project): StatusBarWidget = GitBranchWidget(project)
 
     override fun isEnabledByDefault(): Boolean {
-      // disabled by default in ExperimentalUI per designers request
       if (ExperimentalUI.isNewUI()) {
-        return false
+        // Show by default if the main toolbar is hidden via settings
+        return !UISettings.getInstance().showNewMainToolbar
       }
 
       val toolbarSettings = ToolbarSettings.getInstance()
@@ -113,7 +139,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     }
   }
 
-  internal class MyExperimentalToolbarStateListener(private val project: Project) : ExperimentalToolbarStateListener {
+  internal class MyRiderMainToolbarStateListener(private val project: Project) : RiderMainToolbarStateListener {
     override fun refreshVisibility() {
       project.getService(StatusBarWidgetsManager::class.java).updateWidget(Factory::class.java)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -32,7 +32,7 @@ public class XmlAttlistDeclImpl extends XmlElementImpl implements XmlAttlistDecl
     final List<XmlAttributeDecl> result = new ArrayList<>();
     processElements(new FilterElementProcessor(new ClassFilter(XmlAttributeDecl.class), result) {
       @Override
-      public boolean execute(@NotNull final PsiElement element) {
+      public boolean execute(final @NotNull PsiElement element) {
         if (element instanceof XmlAttributeDecl) {
           if (element.getNextSibling() == null && element.getChildren().length == 1) {
             return true;

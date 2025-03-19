@@ -82,14 +82,14 @@ if not exist "%JAVA_HOME%\bin\java.exe" (
 echo Using JVM at %JAVA_HOME%
 
 REM Download and compile jps-bootstrap itself
-"%JAVA_HOME%\bin\java.exe" -ea -Daether.connector.resumeDownloads=false -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_PREPARE_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
+"%JAVA_HOME%\bin\java.exe" -ea -Daether.connector.resumeDownloads=false %BOOTSTRAP_SYSTEM_PROPERTIES% -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_PREPARE_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
 REM %RANDOM% may not be so random, but let's assume this script does not run several times per second
 set _JPS_BOOTSTRAP_JAVA_ARGS_FILE=%JPS_BOOTSTRAP_PREPARE_DIR%\java.args.%RANDOM%.txt
 
 REM Run jps-bootstrap and produce java args file to run actual user class
-"%JAVA_HOME%\bin\java.exe" -ea -Xmx4g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_PREPARE_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" %*
+"%JAVA_HOME%\bin\java.exe" -ea -Xmx4g -Djava.awt.headless=true %BOOTSTRAP_SYSTEM_PROPERTIES% -classpath "%JPS_BOOTSTRAP_PREPARE_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "--java-argfile-target=%_JPS_BOOTSTRAP_JAVA_ARGS_FILE%" %*
 if errorlevel 1 goto fail
 
 REM Run user class via wrapper from platform to correctly capture and report exception to TeamCity build log

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -8,7 +8,9 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.notification.*;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,9 +42,8 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyCompatibilityInspectionAdvertiser implements Annotator {
+public final class PyCompatibilityInspectionAdvertiser implements Annotator {
 
-  private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Compatibility Inspection Advertiser");
   private static final Key<Boolean> DONT_SHOW_BALLOON = Key.create("showingPyCompatibilityAdvertiserBalloon");
 
   // Allow to show declined suggestion multiple times to ease debugging
@@ -96,8 +97,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
     return false;
   }
 
-  @Nullable
-  private static LanguageLevel getLatestConfiguredCompatiblePython3Version(@NotNull PsiElement element) {
+  private static @Nullable LanguageLevel getLatestConfiguredCompatiblePython3Version(@NotNull PsiElement element) {
     final LanguageLevel latestVersion = getLatestConfiguredCompatiblePythonVersion(element);
     return latestVersion != null && !latestVersion.isPython2() ? latestVersion : null;
   }
@@ -126,8 +126,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
       });
   }
 
-  @NotNull
-  private static List<LanguageLevel> getVersionsNewerThan(@NotNull LanguageLevel version) {
+  private static @NotNull List<LanguageLevel> getVersionsNewerThan(@NotNull LanguageLevel version) {
     final List<LanguageLevel> result = new ArrayList<>();
     final LanguageLevel latest = LanguageLevel.getLatest();
     for (LanguageLevel level : PyCompatibilityInspection.SUPPORTED_LEVELS) {
@@ -175,7 +174,8 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
                                                 @NotNull @NotificationContent String htmlContent,
                                                 @NotNull NotificationListener listener) {
     project.putUserData(DONT_SHOW_BALLOON, true);
-    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+    NotificationGroupManager.getInstance().getNotificationGroup("Python Compatibility Inspection Advertiser")
+      .createNotification(title, htmlContent, NotificationType.INFORMATION)
       .setSuggestionType(true)
       .setListener((notification, event) -> {
         try {
@@ -212,8 +212,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
     }
   }
 
-  @Nullable
-  private static LanguageLevel getLatestConfiguredCompatiblePythonVersion(@NotNull PsiElement anchor) {
+  private static @Nullable LanguageLevel getLatestConfiguredCompatiblePythonVersion(@NotNull PsiElement anchor) {
     final InspectionProfile profile = InspectionProfileManager.getInstance(anchor.getProject()).getCurrentProfile();
     final PyCompatibilityInspection inspection = (PyCompatibilityInspection)profile.getUnwrappedTool(getCompatibilityInspectionShortName(), anchor);
     assert inspection != null;
@@ -227,13 +226,11 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
       .orElse(null);
   }
 
-  @NotNull
-  private static String getCompatibilityInspectionShortName() {
+  private static @NotNull String getCompatibilityInspectionShortName() {
     return PyCompatibilityInspection.class.getSimpleName();
   }
 
-  @NotNull
-  private static PyCompatibilityInspectionAdvertiserSettings getSettings(@NotNull Project project) {
+  private static @NotNull PyCompatibilityInspectionAdvertiserSettings getSettings(@NotNull Project project) {
     return project.getService(PyCompatibilityInspectionAdvertiserSettings.class);
   }
 }

@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
@@ -382,6 +383,58 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
   // PY-7758
   public void testVariableNotReportedAfterBuiltinExit() {
     doTest();
+  }
+
+  public void testVariableReportedAfterNotBuiltinExit() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       exit = lambda : 1
+                       if x:
+                          y = 1
+                       else:
+                         exit()
+                       print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+                     """);
+    });
+  }
+
+  public void testDoReportInFakeExit() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       exit = lambda : 1
+                       if x:
+                          y = 1
+                       if not x:
+                         exit()
+                         print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+                     """);
+    });
+  }
+
+
+  public void testDoNoReportInUnreachableCode() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       if x:
+                          y = 1
+                       if not x:
+                         exit()
+                         print(y)
+                     """);
+    });
+  }
+
+  // PY-63357
+  public void testFunctionParameterAnnotatedWithReferenceToTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   def foo[T](x: T):
+                       pass
+                   """);
+    });
   }
 
   @NotNull

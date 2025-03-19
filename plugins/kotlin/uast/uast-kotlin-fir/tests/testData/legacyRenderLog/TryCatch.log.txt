@@ -6,18 +6,15 @@ UFile (package = )
                     UBlockExpression
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                             UIdentifier (Identifier (body))
-                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null)
                     UCatchClause (e)
                         UParameter (name = e)
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                         UBlockExpression
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (catcher))
-                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null)
                     UBlockExpression
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                             UIdentifier (Identifier (finalizer))
-                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)
@@ -29,27 +26,26 @@ UFile (package = )
         UMethod (name = catches)
             UAnnotation (fqName = java.lang.SuppressWarnings)
                 UNamedExpression (name = value)
-                    ULiteralExpression (value = "Something")
+                    UPolyadicExpression (operator = +)
+                        ULiteralExpression (value = "Something")
             UBlockExpression
                 UTryExpression
                     UBlockExpression
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                             UIdentifier (Identifier (body))
-                            USimpleNameReferenceExpression (identifier = body, resolvesTo = null)
                     UCatchClause (e)
                         UParameter (name = e)
                             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                             UAnnotation (fqName = java.lang.SuppressWarnings)
                                 UNamedExpression (name = value)
-                                    ULiteralExpression (value = "Something")
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "Something")
                         UBlockExpression
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (catcher))
-                                USimpleNameReferenceExpression (identifier = catcher, resolvesTo = null)
                     UBlockExpression
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                             UIdentifier (Identifier (finalizer))
-                            USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null)
         UMethod (name = body)
             UBlockExpression
         UMethod (name = catcher)

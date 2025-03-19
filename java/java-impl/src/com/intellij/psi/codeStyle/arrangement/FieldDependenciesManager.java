@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.PsiField;
@@ -18,8 +18,7 @@ public class FieldDependenciesManager {
     }
   }
 
-  @NotNull
-  public List<ArrangementEntryDependencyInfo> getRoots() {
+  public @NotNull List<ArrangementEntryDependencyInfo> getRoots() {
     List<ArrangementEntryDependencyInfo> list = new ArrayList<>();
 
     for (Map.Entry<PsiField, Set<PsiField>> entry : myFieldDependencies.entrySet()) {

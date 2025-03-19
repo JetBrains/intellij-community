@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.*;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public abstract class WelcomePopupAction extends AnAction implements DumbAware {
 
   protected abstract void fillActions(DefaultActionGroup group);
@@ -35,16 +37,16 @@ public abstract class WelcomePopupAction extends AnAction implements DumbAware {
   protected abstract boolean isSilentlyChooseSingleOption();
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     showPopup(e);
   }
 
-  private void showPopup(final AnActionEvent e) {
+  private void showPopup(@NotNull AnActionEvent e) {
     final DefaultActionGroup group = new DefaultActionGroup();
     fillActions(group);
 
     if (group.getChildrenCount() == 1 && isSilentlyChooseSingleOption()) {
-      final AnAction[] children = group.getChildren(null);
+      AnAction[] children = group.getChildren(e.getActionManager());
       children[0].actionPerformed(e);
       return;
     }

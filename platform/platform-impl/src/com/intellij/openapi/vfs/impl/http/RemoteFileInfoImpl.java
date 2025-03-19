@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
-public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
+@ApiStatus.Internal
+public final class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCallback, RemoteFileInfo {
   private static final Logger LOG = Logger.getInstance(RemoteFileInfoImpl.class);
   private final Object myLock = new Object();
   private final Url myUrl;
@@ -102,7 +104,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  public void finished(@Nullable final FileType fileType) {
+  public void finished(final @Nullable FileType fileType) {
     final File localIOFile;
 
     synchronized (myLock) {
@@ -127,7 +129,21 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
 
     VfsImplUtil.refreshAndFindFileByPath(LocalFileSystem.getInstance(), localIOFile.toString(), localFile -> {
-      LOG.assertTrue(localFile != null, "Virtual local file not found for " + localIOFile.getAbsolutePath());
+      if (localFile == null) {
+        LOG.warn("Virtual local file not found for " + localIOFile.getAbsolutePath());
+        var errorMessage = IdeCoreBundle.message("vfs.file.not.exist.error", localIOFile.getAbsolutePath());
+        synchronized (myLock) {
+          myLocalVirtualFile = null;
+          myPrevLocalFile = null;
+          myState = RemoteFileState.ERROR_OCCURRED;
+          myErrorMessage = errorMessage;
+        }
+        for (FileDownloadingListener listener : myListeners) {
+          listener.errorOccurred(errorMessage);
+        }
+        return;
+      }
+
       LOG.debug("Virtual local file: " + localFile + ", size = " + localFile.getLength());
       synchronized (myLock) {
         myLocalVirtualFile = localFile;
@@ -160,7 +176,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  public void errorOccurred(@NotNull final @NlsContexts.DialogMessage String errorMessage, boolean cancelled) {
+  public void errorOccurred(final @NotNull @NlsContexts.DialogMessage String errorMessage, boolean cancelled) {
     LOG.debug("Error: " + errorMessage);
     synchronized (myLock) {
       myLocalVirtualFile = null;
@@ -183,7 +199,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  public void setProgressText(@NotNull final @NlsContexts.ProgressText String text, final boolean indeterminate) {
+  public void setProgressText(final @NotNull @NlsContexts.ProgressText String text, final boolean indeterminate) {
     for (FileDownloadingListener listener : myListeners) {
       listener.progressMessageChanged(indeterminate, text);
     }
@@ -197,8 +213,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     final String errorMessage = getErrorMessage();
     return "state=" + getState()
            + ", local file=" + myLocalFile
@@ -245,7 +260,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
   }
 
-  private class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
+  private final class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
     private final Runnable myPostRunnable;
 
     MyRefreshingDownloadingListener(final Runnable postRunnable) {
@@ -261,7 +276,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
 
     @Override
-    public void fileDownloaded(@NotNull final VirtualFile localFile) {
+    public void fileDownloaded(final @NotNull VirtualFile localFile) {
       removeDownloadingListener(this);
       if (myPostRunnable != null) {
         myPostRunnable.run();
@@ -269,7 +284,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
 
     @Override
-    public void errorOccurred(@NotNull final String errorMessage) {
+    public void errorOccurred(final @NotNull String errorMessage) {
       removeDownloadingListener(this);
       if (myPostRunnable != null) {
         myPostRunnable.run();
@@ -277,8 +292,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
   }
 
-  @NotNull
-  public Promise<VirtualFile> download() {
+  public @NotNull Promise<VirtualFile> download() {
     synchronized (myLock) {
       return switch (getState()) {
         case DOWNLOADING_NOT_STARTED -> {
@@ -292,8 +306,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
     }
   }
 
-  @NotNull
-  private static Promise<VirtualFile> createDownloadedCallback(@NotNull final RemoteFileInfo remoteFileInfo) {
+  private static @NotNull Promise<VirtualFile> createDownloadedCallback(final @NotNull RemoteFileInfo remoteFileInfo) {
     final AsyncPromise<VirtualFile> promise = new AsyncPromise<>();
     remoteFileInfo.addDownloadingListener(new FileDownloadingAdapter() {
       @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.extractMethodObject;
 
@@ -44,7 +30,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
   private static final Logger LOG = Logger.getInstance(ExtractMethodObjectHandler.class);
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     ExtractMethodHandler.selectAndPass(project, editor, file, selectedValue-> invokeOnElements(project, editor, file, selectedValue));
   }
 
@@ -53,8 +39,8 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     return false;
   }
 
-  private static void invokeOnElements(@NotNull final Project project,
-                                       @NotNull final Editor editor,
+  private static void invokeOnElements(final @NotNull Project project,
+                                       final @NotNull Editor editor,
                                        @NotNull PsiFile file,
                                        PsiElement @NotNull [] elements) {
     if (elements.length == 0) {
@@ -82,10 +68,10 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
     }
   }
 
-  public static void extractMethodObject(@NotNull final Project project,
+  public static void extractMethodObject(final @NotNull Project project,
                                          final Editor editor,
-                                         @NotNull final ExtractMethodObjectProcessor processor,
-                                         @NotNull final ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor) {
+                                         final @NotNull ExtractMethodObjectProcessor processor,
+                                         final @NotNull ExtractMethodObjectProcessor.MyExtractMethodProcessor extractProcessor) {
     final RangeMarker marker;
     if (editor != null) {
       final int offset = editor.getCaretModel().getOffset();
@@ -138,7 +124,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     throw new UnsupportedOperationException();
   }
 }

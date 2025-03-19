@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch
 
@@ -16,23 +16,20 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.FileEditorManagerTestCase
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestActionEvent
-import com.intellij.testFramework.TestDataProvider
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.containers.addIfNotNull
+import com.intellij.testFramework.*
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.scratch.actions.ClearScratchAction
-import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
-import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
-import org.jetbrains.kotlin.idea.scratch.output.InlayScratchFileRenderer
-import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
+import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ScratchCompilationSupport
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.InlayScratchFileRenderer
+import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
@@ -42,7 +39,8 @@ import org.junit.Assert
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
+abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
+                                              ExpectedPluginModeProvider {
 
     private val scratchFiles: MutableList<VirtualFile> = ArrayList()
     private var vfsDisposable: Ref<Disposable>? = null
@@ -117,6 +115,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
                 fileText, "// ${CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE} "
             ).firstOrNull()?.let { options += it }
         }
+
+        options.addAll(listOf("-language-version", "1.9"))
 
         val outputDir = FileUtil.createTempDirectory(dirName, "")
 
@@ -218,7 +218,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     private fun getPreviewTextWithFoldings(): String {
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch panel")
+                                ?: error("Couldn't find scratch panel")
 
         val previewEditor = scratchFileEditor.previewEditor as TextEditor
         return getFoldingData(previewEditor.editor, withCollapseStatus = false)
@@ -244,9 +244,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         myFixture.openFileInEditor(scratchVirtualFile)
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+        IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
 
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch file")
+                                ?: error("Couldn't find scratch file")
 
         configureOptions(scratchFileEditor, text, myFixture.module)
 
@@ -258,8 +259,10 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
         val scratchFileEditor = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)
-            ?: error("Couldn't find scratch panel")
+                                ?: error("Couldn't find scratch panel")
 
         // We want to check that correct module is selected automatically,
         // that's why we set `module` to null so it wouldn't be changed
@@ -276,8 +279,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun launchAction(action: AnAction) {
         val e = getActionEvent(action)
-        Assert.assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true))
-        Assert.assertTrue(e.presentation.isEnabled && e.presentation.isVisible)
+        ActionUtil.performDumbAwareUpdate(action, e, false)
+        Assert.assertTrue(e.presentation.isEnabledAndVisible)
         ActionUtil.performActionDumbAwareWithCallbacks(action, e)
     }
 
@@ -303,7 +306,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     protected fun stopReplProcess() {
         if (myFixture.file != null) {
             val scratchFile = getScratchEditorForSelectedFile(manager!!, myFixture.file.virtualFile)?.scratchFile
-                ?: error("Couldn't find scratch panel")
+                    as? org.jetbrains.kotlin.idea.jvm.k1.scratch.K1KotlinScratchFile ?: error("Couldn't find scratch panel")
             scratchFile.replScratchExecutor?.stopAndWait()
         }
 
@@ -331,7 +334,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
     }
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
 
         vfsDisposable = allowProjectRootAccess(this)
 
@@ -340,11 +343,11 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disposeVfsRootAccess(vfsDisposable) },
-            ThrowableRunnable { super.tearDown() },
-            ThrowableRunnable {
-                for (scratchFile in scratchFiles) {
-                    runWriteAction { scratchFile.delete(this) }
+            { disposeVfsRootAccess(vfsDisposable) },
+            { super.tearDown() },
+            {
+                runWriteAction {
+                    scratchFiles.forEach { it.delete(this) }
                 }
             },
         )

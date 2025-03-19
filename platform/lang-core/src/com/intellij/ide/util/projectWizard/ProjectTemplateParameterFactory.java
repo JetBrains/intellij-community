@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -22,11 +22,9 @@ public abstract class ProjectTemplateParameterFactory {
   public abstract String getParameterId();
 
   /** Null if no UI needed */
-  @Nullable
-  public abstract WizardInputField createField(String defaultValue);
+  public abstract @Nullable WizardInputField createField(String defaultValue);
 
-  @Nullable
-  public abstract String detectParameterValue(Project project);
+  public abstract @Nullable String detectParameterValue(Project project);
 
   /** If null, no UI will be shown */
   public String getImmediateValue() {

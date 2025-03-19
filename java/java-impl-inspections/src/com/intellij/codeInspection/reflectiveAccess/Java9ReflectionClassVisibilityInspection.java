@@ -1,44 +1,46 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddOpensDirectiveFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final PsiFile file = holder.getFile();
-    if (PsiUtil.isLanguageLevel9OrHigher(file)) {
-      final PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(file);
-      if (javaModule != null) {
-        return new JavaElementVisitor() {
-          @Override
-          public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.MODULES);
+  }
 
-            if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {
-              checkClassVisibility(expression, holder, javaModule);
-            }
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    final PsiJavaModule javaModule = JavaPsiModuleUtil.findDescriptorByElement(holder.getFile());
+    if (javaModule != null) {
+      return new JavaElementVisitor() {
+        @Override
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+          super.visitMethodCallExpression(expression);
+
+          if (isCallToMethod(expression, JAVA_LANG_CLASS, FOR_NAME) || isCallToMethod(expression, JAVA_LANG_CLASS_LOADER, LOAD_CLASS)) {
+            checkClassVisibility(expression, holder, javaModule);
           }
-        };
-      }
+        }
+      };
     }
 
     return PsiElementVisitor.EMPTY_VISITOR;
@@ -57,11 +59,11 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final PsiClass psiClass = facade.findClass(className, callExpression.getResolveScope());
         if (psiClass != null) {
-          final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
+          final PsiJavaModule otherModule = JavaPsiModuleUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
-            if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
+            if (!JavaPsiModuleUtil.reads(javaModule, otherModule)) {
               String message = JavaBundle.message("module.not.in.requirements", javaModule.getName(), otherModule.getName());
-              holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()));
+              holder.problem(classNameArgument, message).fix(new AddRequiresDirectiveFix(javaModule, otherModule.getName())).register();
               return;
             }
 
@@ -80,10 +82,10 @@ public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLo
               }
               if (publicApi) {
                 final String message = JavaBundle.message("module.package.not.exported", otherModule.getName(), packageName, javaModule.getName());
-                holder.registerProblem(classNameArgument, message, new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName()));
+                holder.problem(classNameArgument, message).fix(new AddExportsDirectiveFix(otherModule, packageName, javaModule.getName())).register();
               } else {
                 final String message = JavaBundle.message("module.package.not.open", otherModule.getName(), packageName, javaModule.getName());
-                holder.registerProblem(classNameArgument, message, new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName()));
+                holder.problem(classNameArgument, message).fix(new AddOpensDirectiveFix(otherModule, packageName, javaModule.getName())).register();
               }
             }
           }

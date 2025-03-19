@@ -34,7 +34,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   fun testPlainTextAfterwards() {
     doTestByText("""
       def foo(x: str):
-          print(x.<warning descr="Unresolved attribute reference 'bar' for class 'str'">bar</warning>) # type: <warning descr="Unresolved reference 'ignore'">ignore</warning><error descr="End of statement expected"> </error><warning descr="Unresolved reference 'plaintextnotcomment'">plaintextnotcomment</warning>
+          print(x.bar) # type: ignore plaintextnotcomment
     """)
   }
 
@@ -96,7 +96,7 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
   fun testIgnoreUnresolvedReferenceImport() {
     doTestByText("""
       import frobnicate  # type: ignore
-      <warning descr="Unused import statement 'import frobnicate1'">import <error descr="No module named 'frobnicate1'">frobnicate1</error></warning>
+      import <error descr="No module named 'frobnicate1'">frobnicate1</error>
     """)
   }
 
@@ -179,6 +179,42 @@ class TypeIgnoreInspectionSuppressorTest : PyTestCase() {
       class Movie1(TypedDict, <warning descr="Specifying a metaclass is not allowed in TypedDict">metaclass=<error descr="Unresolved reference 'Meta'">Meta</error></warning>):
           name: str
     """)
+  }
+
+  fun testSpaceBeforeSquareBrackets() {
+    doTestByText("""
+      x: int = ""#type:ignore []      
+    """.trimIndent())
+  }
+
+  fun testNoSpaceAfterIgnore() {
+    doTestByText("""#type: <warning descr="Unresolved reference 'ignore'">ignore</warning>#""")
+  }
+
+  fun testTypeIgnoreAtFileLevel() {
+    doTestByText("""
+      # type:ignore
+      x: int = ""
+    """.trimIndent())
+    doTestByText("""
+      
+      
+      # some comment
+      
+      # some other comment
+      
+      # type:  ignore
+      
+      x: int = ""
+    """.trimIndent())
+    doTestByText("""
+      ""${'"'}
+      Non comment
+      ""${'"'}
+      
+      # type:  ignore
+      x: int = <warning>""</warning>
+    """.trimIndent())
   }
 
   private fun doTestByText(notTrimmedText: String) {

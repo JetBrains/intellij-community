@@ -2,7 +2,7 @@
 
 @SuppressWarnings("synchronization")
 class Main {
-  final OpenValueBased vb = new OpenValueBased();
+  final OpenValueBased vb = new OpenValueBased(){};
 
   {
     synchronized(vb){ }

@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.codeStyle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "codeStyle_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "codeStyle",
+  module_name = "intellij.platform.codeStyle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":codeStyle_resources"]
+)
+### auto-generated section `build intellij.platform.codeStyle` end

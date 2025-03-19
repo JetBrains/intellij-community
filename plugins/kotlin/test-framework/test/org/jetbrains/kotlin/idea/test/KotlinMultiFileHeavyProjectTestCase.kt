@@ -12,13 +12,16 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.directoryContent
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import java.nio.file.Path
 import kotlin.io.path.*
 
-abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
+abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase(),
+                                                     ExpectedPluginModeProvider {
+
     open val testDataDirectory: Path by lazy {
         Path(TestMetadataUtil.getTestDataPath(javaClass))
     }
@@ -32,17 +35,17 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
 
     private var mockLibraryFacility: MockLibraryFacility? = null
 
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     override fun tearDown(): Unit = runAll(
         { mockLibraryFacility?.tearDown(module) },
         { super.tearDown() },
     )
 
     protected open fun doTest(testDataPath: String) {
-        if (testDataPath.endsWith(".test")) {
-            doMultiFileTest(testDataPath)
-        } else {
-            TODO("Not implemented yet")
-        }
+        doMultiFileTest(testDataPath)
     }
 
     private fun doMultiFileTest(testDataPath: String) {
@@ -86,6 +89,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
             }
         }
 
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
         doMultiFileTest(testDataPath, globalDirectives)
     }
 
@@ -120,7 +124,7 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
     }
 
     private fun createTestFiles(mainFile: Path): List<KotlinBaseTest.TestFile> = TestFiles.createTestFiles(
-        /* testFileName = */ "single.kt",
+        /* testFileName = */ mainFile.name.takeIf { it.endsWith("kt") || it.endsWith("kts") } ?: "single.kt",
         /* expectedText = */ mainFile.readText(),
         object : TestFiles.TestFileFactoryNoModules<KotlinBaseTest.TestFile>() {
             override fun create(fileName: String, text: String, directives: Directives): KotlinBaseTest.TestFile {
@@ -142,4 +146,6 @@ abstract class KotlinMultiFileHeavyProjectTestCase : HeavyPlatformTestCase() {
 
         VfsUtil.findFile(contentPath, true)!!.refresh(false, true)
     }
+
+    open fun isFirPlugin(): Boolean = false
 }

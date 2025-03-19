@@ -6,14 +6,17 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.refactoring.suggested.endOffset
+import com.intellij.psi.util.endOffset
 import com.intellij.util.Function
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiverOrThis
@@ -23,6 +26,14 @@ fun allExpressions(vararg filters: (KtExpression) -> Boolean): PostfixTemplateEx
     return selector { file, offset ->
         collectExpressions(file, offset).filter { expression ->
             filters.all { it(expression) }
+        }.also { expressions ->
+            if (isUnitTestMode()) {
+                val expressionTexts = expressions.toList().map { it.text }
+                if (expressionTexts.size > 1) {
+                    @Suppress("TestOnlyProblems")
+                    with(KotlinPostfixTemplateInfo) { file.suggestedExpressions = expressionTexts }
+                }
+            }
         }
     }
 }
@@ -45,21 +56,31 @@ internal object ValuedFilter : (KtExpression) -> Boolean {
     }
 }
 
-internal object StatementFilter: (KtExpression) -> Boolean {
+internal object StatementFilter : (KtExpression) -> Boolean {
     override fun invoke(expression: KtExpression): Boolean {
         return KtPsiUtil.isStatement(expression.getQualifiedExpressionForReceiverOrThis())
     }
 }
 
-internal class ExpressionTypeFilter(val predicate: KtAnalysisSession.(KtType) -> Boolean) : (KtExpression) -> Boolean {
-    @OptIn(KtAllowAnalysisOnEdt::class)
+internal class ExpressionTypeFilter(val predicate: KaSession.(KaType) -> Boolean) : (KtExpression) -> Boolean {
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun invoke(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
-            analyze(expression) {
-                val type = expression.getKtType()
-                return type != null && predicate(type)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(expression) {
+                    val type = expression.expressionType
+                    return type != null && predicate(type)
+                }
             }
         }
+    }
+}
+
+internal object NonPackageAndNonImportFilter : (KtExpression) -> Boolean {
+    override fun invoke(expression: KtExpression): Boolean {
+        val parent = expression.parent
+        return parent !is KtPackageDirective && parent !is KtImportDirective
     }
 }
 

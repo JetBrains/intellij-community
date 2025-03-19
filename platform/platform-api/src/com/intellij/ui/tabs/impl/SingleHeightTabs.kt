@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.Disposable
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Dimension
 
 open class SingleHeightTabs(project: Project?, @Suppress("UNUSED_PARAMETER") focusManager: IdeFocusManager?, parent: Disposable) :
@@ -18,10 +19,9 @@ open class SingleHeightTabs(project: Project?, @Suppress("UNUSED_PARAMETER") foc
 
   override fun createTabLabel(info: TabInfo): TabLabel = SingleHeightLabel(this, info)
 
+  @Internal
   open inner class SingleHeightLabel(tabs: JBTabsImpl, info: TabInfo) : TabLabel(tabs, info) {
-    override fun getPreferredSize(): Dimension {
-      return Dimension(super.getPreferredSize().width, getPreferredHeight())
-    }
+    override fun getPreferredSize(): Dimension = Dimension(super.getPreferredSize().width, getPreferredHeight())
 
     protected open fun getPreferredHeight(): Int = JBUI.scale(UNSCALED_PREF_HEIGHT)
   }

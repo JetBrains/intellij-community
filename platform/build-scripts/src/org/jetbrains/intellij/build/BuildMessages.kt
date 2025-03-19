@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import java.util.concurrent.Callable
@@ -7,11 +7,6 @@ interface BuildMessages: System.Logger {
   fun info(message: String)
 
   fun warning(message: String)
-
-  /**
-   * Print `message` to <output-root>/log/debug.log file. This log file will also include 'info' and 'warning' messages.
-   */
-  fun debug(message: String)
 
   /**
    * Report an error and stop the build process
@@ -26,11 +21,32 @@ interface BuildMessages: System.Logger {
 
   fun buildStatus(message: String)
 
+  fun changeBuildStatusToSuccess(message: String)
+
   fun setParameter(parameterName: String, value: String)
 
+  /**
+   * Use [spanBuilder]
+   */
+  @Deprecated(message = "Use [org.jetbrains.intellij.build.telemetry.block]")
   fun block(blockName: String, task: Callable<Unit>)
 
+  /**
+   * Use [CompilationContext.notifyArtifactBuilt] instead since it respects [BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP]
+   */
   fun artifactBuilt(relativeArtifactPath: String)
 
+  fun startWritingFileToBuildLog(artifactPath: String)
+
   fun reportStatisticValue(key: String, value: String)
+
+  fun reportBuildProblem(description: String, identity: String? = null)
+
+  fun reportBuildNumber(value: String)
+
+  fun cancelBuild(reason: String)
+
+  fun getDebugLog(): String?
+
+  fun close()
 }

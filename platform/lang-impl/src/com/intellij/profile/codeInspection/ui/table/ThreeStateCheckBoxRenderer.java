@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,9 +61,8 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     return this;
   }
 
-  @Nullable
   @Override
-  public Object getCellEditorValue() {
+  public @Nullable Object getCellEditorValue() {
     return getState() != State.DONT_CARE ? isSelected() : null;
   }
 

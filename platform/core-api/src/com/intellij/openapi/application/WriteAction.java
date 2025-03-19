@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,7 @@ import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
  * @param <T> Result type.
  * @see ReadAction
@@ -37,9 +37,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * or (if really desperate) {@link #computeAndWait(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
 
     Application application = ApplicationManager.getApplication();
@@ -70,9 +69,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * @see #compute(ThrowableComputable)
    */
   @Deprecated
-  @NotNull
   @ApiStatus.ScheduledForRemoval
-  public static AccessToken start() {
+  public static @NotNull AccessToken start() {
     // get useful information about the write action
     Class<?> callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
     return ApplicationManager.getApplication().acquireWriteActionLock(callerClass);
@@ -132,14 +130,14 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action, ModalityState modalityState) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isWriteIntentLockAcquired()) {
-      return ApplicationManager.getApplication().runWriteAction(action);
+      return application.runWriteAction(action);
     }
 
     if (SwingUtilities.isEventDispatchThread()) {
-      LOG.error("You can't run blocking actions from EDT in Pure UI mode");
+      return application.runWriteIntentReadAction(() -> application.runWriteAction(action));
     }
 
-    if (application.isReadAccessAllowed()) {
+    if (application.holdsReadLock()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
     }
 

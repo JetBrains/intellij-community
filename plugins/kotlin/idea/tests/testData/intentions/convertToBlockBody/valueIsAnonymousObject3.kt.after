@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 interface I1
 interface I2
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.notification.Notification
@@ -27,6 +27,7 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
   protected abstract fun ask(obj: T, description: String?): Boolean
   protected abstract fun getKey(obj: T): Key
   protected abstract fun getNotificationContent(obj: T): @NlsContexts.NotificationContent String
+  protected open fun configureNotification(notification: Notification, obj: T): Unit = Unit
 
   protected fun getStateFor(key: Key) = synchronized(myLock) { myState.containsKey(key) }
 
@@ -36,7 +37,7 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
       myState.clear()
       currentNotifications
     }
-    invokeLaterIfNeeded(ModalityState.NON_MODAL, myProject.disposed) {
+    invokeLaterIfNeeded(ModalityState.nonModal(), myProject.disposed) {
       for (notification in notifications) {
         notification.expire()
       }
@@ -51,6 +52,7 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
       if (myState.containsKey(key)) return false
 
       val objNotification = MyNotification(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj)
+      configureNotification(objNotification, obj)
       myState[key] = objNotification
       objNotification
     }

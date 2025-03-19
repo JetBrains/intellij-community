@@ -14,14 +14,14 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.elementsAtOffsetUp
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.jetbrains.annotations.Nls
@@ -46,7 +46,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun isSelected(event: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownEditor(event)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    if (editor == null || file !is MarkdownFile) {
+    if (editor == null || file == null || !file.language.supportsMarkdown()) {
       event.presentation.isEnabledAndVisible = false
       return false
     }
@@ -76,8 +76,8 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   }
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
-    val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE)
+    val editor = MarkdownActionUtil.findMarkdownEditor(event) ?: return
+    val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
 
     if (state) {
       for (caret in editor.caretModel.allCarets) {
@@ -100,7 +100,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun update(event: AnActionEvent) {
     val originalIcon = event.presentation.icon
     super.update(event)
-    if (ActionPlaces.isPopupPlace(event.place)) {
+    if (event.isFromContextMenu) {
       // Restore original icon, as it will be disabled in popups, and we still want to show in GeneratePopup
       event.presentation.icon = originalIcon
     }

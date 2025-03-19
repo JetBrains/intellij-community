@@ -34,13 +34,12 @@ import java.util.Set;
  * for instance,
  * dict().get(x, None) --> None is default value for second param in dict().get function
  */
-public class PyArgumentEqualDefaultInspection extends PyInspection {
+public final class PyArgumentEqualDefaultInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -116,9 +115,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
-                                                 @NotNull PyCallableParameter parameter) {
+    private static @Nullable PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                           @NotNull PyCallableParameter parameter) {
       final String name = parameter.getName();
       final PyExpression value = parameter.getDefaultValue();
 
@@ -175,9 +173,9 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       return false;
     }
 
-    private static boolean isBothInstanceOf(@NotNull final PyExpression key,
-                                            @NotNull final PyExpression defaultValue,
-                                            @NotNull final Class clazz) {
+    private static boolean isBothInstanceOf(final @NotNull PyExpression key,
+                                            final @NotNull PyExpression defaultValue,
+                                            final @NotNull Class clazz) {
       return clazz.isInstance(key) && clazz.isInstance(defaultValue);
     }
   }

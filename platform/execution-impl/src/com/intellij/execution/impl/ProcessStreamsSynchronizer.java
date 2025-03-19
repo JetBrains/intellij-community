@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +38,8 @@ public class ProcessStreamsSynchronizer {
    *
    * @see com.intellij.util.io.BaseDataReader.SleepingPolicy#NON_BLOCKING
    */
-  static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
+  @ApiStatus.Internal
+  public static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final Object myLock = new Object();
   private final List<Chunk> myPendingChunks = new ArrayList<>();
@@ -48,7 +50,8 @@ public class ProcessStreamsSynchronizer {
   private long myLastFlushedChunkCreatedNanoTime = 0;
   private int myReschedules = 0;
 
-  ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
+  @ApiStatus.Internal
+  public ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -60,7 +63,8 @@ public class ProcessStreamsSynchronizer {
     });
   }
 
-  final void doWhenStreamsSynchronized(@NotNull String text, @NotNull ProcessOutputType outputType, @NotNull Runnable flushRunnable) {
+  @ApiStatus.Internal
+  public final void doWhenStreamsSynchronized(@NotNull String text, @NotNull ProcessOutputType outputType, @NotNull Runnable flushRunnable) {
     long nowNano = getNanoTime();
     synchronized (myLock) {
       ProcessOutputType baseOutputType = outputType.getBaseOutputType();
@@ -77,7 +81,7 @@ public class ProcessStreamsSynchronizer {
         myLastFlushedChunkBaseOutputType = baseOutputType;
         myLastFlushedChunkCreatedNanoTime = nowNano;
         flushRunnable.run();
-        if (newlineAdded && myPendingChunks.size() > 0
+        if (newlineAdded && !myPendingChunks.isEmpty()
             && myPendingChunks.get(0).getNanoTimePassedSinceLastFlushedChunk(nowNano) >= AWAIT_SAME_STREAM_TEXT_NANO) {
           processPendingChunks(nowNano);
         }

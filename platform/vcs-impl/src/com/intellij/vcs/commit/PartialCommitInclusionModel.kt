@@ -14,7 +14,9 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.convertExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PartialCommitInclusionModel(private val project: Project) : BaseInclusionModel(), Disposable {
   var changeLists: Collection<LocalChangeList> = emptyList()
     set(value) {
@@ -54,9 +56,8 @@ class PartialCommitInclusionModel(private val project: Project) : BaseInclusionM
     override fun findTrackerFor(element: Any): PartialLocalLineStatusTracker? =
       (element as? Change)?.let { getPartialTracker(project, it) }
 
-    override fun updateExclusionStates() {
-      super.updateExclusionStates()
-      fireInclusionChanged()
+    override fun fireInclusionChanged() {
+      this@PartialCommitInclusionModel.fireInclusionChanged()
     }
   }
 }

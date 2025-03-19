@@ -1,16 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi
 import com.intellij.xdebugger.impl.ui.ExecutionPositionUi
 import com.intellij.xdebugger.impl.ui.showExecutionPointUi
 import kotlinx.coroutines.*
@@ -22,7 +26,7 @@ private val LOG = logger<XDebuggerExecutionPointManager>()
 
 internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
-  private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
+  private val coroutineScope: CoroutineScope = parentScope.childScope(javaClass.simpleName, Dispatchers.EDT)
 
   private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
@@ -44,23 +48,32 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
   private val executionPointVmState = MutableStateFlow<ExecutionPointVm?>(null)
-  private var executionPointVm: ExecutionPointVm? by executionPointVmState::value
+  private var executionPointVm: ExecutionPointVm?
+    get() = executionPointVmState.value
+    set(value) {
+      executionPointVmState.update { oldValue ->
+        oldValue.asSafely<ExecutionPointVmImpl>()?.coroutineScope?.cancel()
+        value
+      }
+    }
 
   init {
-    val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
+    val uiScope = coroutineScope.childScope("${javaClass.simpleName}/UI")
     showExecutionPointUi(project, uiScope, executionPointVmState)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      uiScope.launch {
+      uiScope.launch(Dispatchers.EDT) {
         executionPointVmState
           .map { it != null }.distinctUntilChanged()
           .dropWhile { !it }  // ignore initial 'false' value
           .collect { hasHighlight ->
-            if (hasHighlight) {
-              EditorMouseHoverPopupControl.disablePopups(project)
-            }
-            else {
-              EditorMouseHoverPopupControl.enablePopups(project)
+            if (Registry.`is`(DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY)) {
+              if (hasHighlight) {
+                EditorMouseHoverPopupControl.disablePopups(project)
+              }
+              else {
+                EditorMouseHoverPopupControl.enablePopups(project)
+              }
             }
           }
       }
@@ -80,14 +93,14 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
     }
 
     executionPointVm = ExecutionPointVmImpl.create(project,
-                                                   coroutineScope,
+                                                   coroutineScope.childScope(ExecutionPointVm::class.java.simpleName),
                                                    mainSourcePosition,
                                                    alternativeSourcePosition,
                                                    isTopFrame,
                                                    activeSourceKindState,
                                                    gutterIconRendererState,
                                                    updateRequestFlow).also {
-      coroutineScope.launch {
+      coroutineScope.launch(ClientId.coroutineContext()) {
         it.navigateTo(ExecutionPositionNavigationMode.OPEN, navigationSourceKind)
       }
     }
@@ -99,7 +112,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   private fun isCurrentFile(file: VirtualFile): Boolean {
-    val pointVm = executionPointVmState.value ?: return false
+    val pointVm = executionPointVm ?: return false
     return pointVm.mainPositionVm?.file == file ||
            pointVm.alternativePositionVm?.file == file
   }
@@ -112,7 +125,9 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   fun showExecutionPosition() {
-    executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
+    coroutineScope.launch(ClientId.coroutineContext()) {
+      executionPointVm?.navigateTo(ExecutionPositionNavigationMode.OPEN)
+    }
   }
 }
 

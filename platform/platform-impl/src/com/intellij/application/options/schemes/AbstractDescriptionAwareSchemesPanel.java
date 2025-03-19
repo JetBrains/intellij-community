@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.schemes;
 
 import com.intellij.ide.IdeBundle;
@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> implements Disposable {
   private static final String SHOW_DESCRIPTION_CARD = "show.description.card";
   private static final String EDIT_DESCRIPTION_CARD = "edit.description.card";
@@ -43,9 +45,8 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     super(0);
   }
 
-  @NotNull
   @Override
-  protected JPanel createInfoComponent() {
+  protected @NotNull JPanel createInfoComponent() {
     JPanel panel = new JPanel();
     myLayout = new CardLayout();
     panel.setLayout(myLayout);
@@ -139,8 +140,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     myPainter.setNeedsRepaint(true);
   }
 
-  @NotNull
-  protected abstract JComponent getConfigurableFocusComponent();
+  protected abstract @NotNull JComponent getConfigurableFocusComponent();
 
   private void applyDescription() {
     T scheme = getSelectedScheme();
@@ -148,7 +148,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     showDescription(scheme);
   }
 
-  private static class DescriptionLabel extends JBLabel {
+  private static final class DescriptionLabel extends JBLabel {
     private @Nls String myAllText = "";
 
     DescriptionLabel() {

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.api
 
-import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.util.lazyPub
@@ -15,11 +14,8 @@ open class LazyTypeProperty(
 
   override fun isValid(): Boolean = super.isValid() && myContext.isValid
 
-  protected open fun decorateType(type: PsiClassType) : PsiClassType = type
-
   private val myType by lazyPub {
-    val newType = createType(type, myContext)
-    decorateType(newType)
+    createType(type, myContext)
   }
 
   final override fun getPropertyType(): PsiType = myType

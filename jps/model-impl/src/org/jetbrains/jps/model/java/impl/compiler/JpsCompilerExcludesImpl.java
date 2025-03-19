@@ -2,6 +2,7 @@
 package org.jetbrains.jps.model.java.impl.compiler;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -9,6 +10,7 @@ import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class JpsCompilerExcludesImpl implements JpsCompilerExcludes {
   private final Set<File> myFiles = new LinkedHashSet<>();
   private final Set<File> myDirectories = new LinkedHashSet<>();

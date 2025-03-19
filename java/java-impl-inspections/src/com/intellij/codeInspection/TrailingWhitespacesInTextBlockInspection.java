@@ -1,93 +1,128 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.java.PsiFragmentImpl;
 import com.intellij.psi.util.PsiLiteralUtil;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
-import static com.intellij.util.ObjectUtils.tryCast;
 
+public final class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
 
-public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+  
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.TEXT_BLOCKS.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
+      public void visitTemplate(@NotNull PsiTemplate template) {
+        super.visitTemplate(template);
+        for (PsiFragment fragment : template.getFragments()) {
+          if (!fragment.isTextBlock()) return;
+          String suffix = (fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) ? "\"\"\"" : "\\{";
+          if (checkTextBlock(fragment, suffix)) {
+            return;
+          }
+        }
+      }
+
+      @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-        String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
-        if (lines == null) return;
-        int indent = PsiLiteralUtil.getTextBlockIndent(lines, true, false);
-        if (indent == -1) return;
-        int start = expression.getText().indexOf('\n');
-        if (start == -1) return;
-        start++;
+        super.visitLiteralExpression(expression);
+        if (!expression.isTextBlock()) return;
+        checkTextBlock(expression, "\"\"\"");
+      }
+
+      private boolean checkTextBlock(@NotNull PsiElement textBlock, @NotNull String suffix) {
+        String text = textBlock.getText();
+        String[] lines = text.split("\n", -1);
+        int indent = getIndent(textBlock);
+        if (indent == -1) return false;
+        int offset = 0;
         for (int i = 0; i < lines.length; i++) {
           String line = lines[i];
-          if (i != 0) start++;
-          if (line.isBlank()) {
-            start += line.length();
+          if (i != 0) offset++; // count newline
+          if (line.startsWith("\"\"\"")) {
+            offset += line.length();
             continue;
           }
-          char c = line.charAt(line.length() - 1);
-          if (c == ' ' || c == '\t') {
-            for (int j = line.length() - 2; j >= 0; j--) {
-              c = line.charAt(j);
-              if (c != ' ' && c != '\t') {
-                holder.registerProblem(expression, new TextRange(start + j + 1, start + j + 2),
-                                       JavaBundle.message("inspection.trailing.whitespaces.in.text.block.message"),
-                                       createFixes());
-                return;
+          int lineEnd;
+          if (line.endsWith(suffix)) {
+            if (suffix.equals("\\{")) return false;
+            lineEnd = line.length() - suffix.length();
+          }
+          else {
+            lineEnd = line.length();
+          }
+          boolean fragmentStart = StringUtil.startsWithChar(line, '}');
+          if (fragmentStart ? lineEnd != 0 : lineEnd > indent) {
+            char c = line.charAt(lineEnd - 1);
+            if (c == ' ' || c == '\t') {
+              for (int j = lineEnd - 2; j >= 0; j--) {
+                c = line.charAt(j);
+                if (c != ' ' && c != '\t' || j < indent && !fragmentStart) {
+                  holder.registerProblem(textBlock, new TextRange(offset + j + 1, offset + lineEnd),
+                                         JavaBundle.message("inspection.trailing.whitespaces.in.text.block.message"),
+                                         createFixes());
+                  return true;
+                }
               }
             }
           }
-          start += line.length();
+          offset += line.length();
         }
+        return false;
       }
     };
   }
 
   private static LocalQuickFix @NotNull [] createFixes() {
     return new LocalQuickFix[]{
-      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.remove.whitespaces", c -> removeWhitespaces(c)),
-      new ReplaceTrailingWhiteSpacesFix("inspection.trailing.whitespaces.in.text.block.replaces.whitespaces.with.escapes",
-                                        c -> replaceWhitespacesWithEscapes(c))
+      new ReplaceTrailingWhiteSpacesFix(JavaBundle.message("inspection.trailing.whitespaces.in.text.block.remove.whitespaces"),
+                                        s -> removeWhitespaces(s)),
+      new ReplaceTrailingWhiteSpacesFix(JavaBundle.message("inspection.trailing.whitespaces.in.text.block.replaces.whitespaces.with.escapes"),
+                                        s -> replaceWhitespacesWithEscapes(s))
     };
   }
 
-  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull TransformationContext context) {
-    String contentLine = context.text();
+  private static int getIndent(@NotNull PsiElement textBlock) {
+    return textBlock instanceof PsiFragment
+           ? PsiFragmentImpl.getTextBlockFragmentIndent((PsiFragment)textBlock)
+           : PsiLiteralUtil.getTextBlockIndent((PsiLiteralExpression)textBlock);
+  }
+
+  private static @NotNull String replaceWhitespacesWithEscapes(@NotNull String contentLine) {
     int len = contentLine.length();
-    char c = contentLine.charAt(len - 1);
-    return switch (c) {
+    return switch (contentLine.charAt(len - 1)) {
       case ' ' -> contentLine.substring(0, len - 1) + "\\s";
       case '\t' -> contentLine.substring(0, len - 1) + "\\t";
       default -> contentLine;
     };
   }
 
-  private static @NotNull String removeWhitespaces(@NotNull TransformationContext context) {
-    String contentLine = context.text();
-    int j;
-    for (j = contentLine.length() - 2; j >= 0; j--) {
-      char c = contentLine.charAt(j);
-      if (c != ' ' && c != '\t') break;
+  private static @NotNull String removeWhitespaces(@NotNull String contentLine) {
+    for (int i = contentLine.length() - 1; i >= 0; i--) {
+      char c = contentLine.charAt(i);
+      if (c != ' ' && c != '\t') return contentLine.substring(0, i + 1);
     }
-    String result = contentLine.substring(0, j + 1);
-    if (context.isEnd() && hasUnescapedLastQuote(result)) {
-      result = result.substring(0, result.length() - 1) + "\\\"";
-    }
-    return result;
+    return "";
   }
 
   public static boolean hasUnescapedLastQuote(String text) {
@@ -111,73 +146,78 @@ public class TrailingWhitespacesInTextBlockInspection extends AbstractBaseJavaLo
     return countBackSlash % 2 == 0;
   }
 
-  static void replaceTextBlock(@NotNull Project project, @NotNull PsiLiteralExpression toReplace, @NotNull String newTextBlock) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    PsiExpression replacement = elementFactory.createExpressionFromText(newTextBlock, toReplace);
-    CodeStyleManager manager = CodeStyleManager.getInstance(project);
-    manager.performActionWithFormatterDisabled(() -> toReplace.replace(replacement));
+  static void replaceTextBlock(@NotNull PsiLiteralExpression toReplace, @NotNull String newTextBlock) {
+    Project project = toReplace.getProject();
+    PsiExpression replacement = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newTextBlock, toReplace);
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(() -> toReplace.replace(replacement));
   }
 
-  private static class ReplaceTrailingWhiteSpacesFix implements LocalQuickFix {
-    private final String myMessage;
-    @SafeFieldForPreview
-    private final @NotNull Function<@NotNull TransformationContext, ? extends @Nullable CharSequence> myTransformation;
+  private static class ReplaceTrailingWhiteSpacesFix extends PsiUpdateModCommandQuickFix {
+    private final @IntentionFamilyName String myMessage;
+    private final @NotNull Function<@NotNull String, String> myTransformation;
 
-    private ReplaceTrailingWhiteSpacesFix(@NotNull String message,
-                                          @NotNull Function<@NotNull TransformationContext, ? extends @Nullable CharSequence> transformation) {
+    private ReplaceTrailingWhiteSpacesFix(@NotNull @IntentionFamilyName String message,
+                                          @NotNull Function<@NotNull String, String> transformation) {
       myMessage = message;
       myTransformation = transformation;
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      IntentionPreviewInfo info = LocalQuickFix.super.generatePreview(project, previewDescriptor);
-      return info == IntentionPreviewInfo.DIFF ? IntentionPreviewInfo.DIFF_NO_TRIM : info;
-    }
-
-    @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return JavaBundle.message(myMessage);
+      return myMessage;
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression expression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
-      if (expression == null || !expression.isTextBlock()) return;
-      String[] lines = PsiLiteralUtil.getTextBlockLines(expression);
-      if (lines == null) return;
-      String newTextBlock = transformTextBlockLines(lines, myTransformation);
-      if (newTextBlock == null) return;
-      replaceTextBlock(project, expression, newTextBlock);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiLiteralExpression expression) {
+        if (!expression.isTextBlock()) return;
+        String text = buildReplacementText(element, "\"\"\"", myTransformation);
+        if (text == null) return;
+        replaceTextBlock(expression, text);
+      }
+      else if (element instanceof PsiFragment fragment) {
+        if (fragment.isTextBlock() && fragment.getParent() instanceof PsiTemplate template) {
+          @NotNull List<@NotNull PsiFragment> fragments = template.getFragments();
+          for (int i = fragments.size() - 1; i >= 0; i--) {
+            PsiFragment current = fragments.get(i);
+            String suffix = fragment.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ? "\"\"\"" : "\\{";
+            String text = buildReplacementText(current, suffix, myTransformation);
+            if (text == null) return;
+            PsiReplacementUtil.replaceFragment(current, text);
+            if (fragment == current) break;
+          }
+        }
+      }
     }
 
-    private static @Nullable String transformTextBlockLines(String @NotNull [] lines,
-                                                            @NotNull Function<TransformationContext, ? extends @Nullable CharSequence> lineTransformation) {
-      StringBuilder newTextBlock = new StringBuilder();
-      newTextBlock.append("\"\"\"\n");
+    private static String buildReplacementText(PsiElement element, String suffix, Function<String, String> lineTransformation) {
+      String[] lines = element.getText().split("\n", -1);
+      int indent = getIndent(element);
+      StringBuilder result = new StringBuilder();
       for (int i = 0; i < lines.length; i++) {
         String line = lines[i];
-        if (i != 0) newTextBlock.append('\n');
-        if (!isContentLineEndsWithWhitespace(line)) {
-          newTextBlock.append(line);
+        if (line.startsWith("\"\"\"")) {
+          result.append("\"\"\"\n");
           continue;
         }
-        CharSequence transformed = lineTransformation.apply(new TransformationContext(line, i == lines.length - 1));
+        boolean last = (i == lines.length - 1);
+        if (last) {
+          if (suffix.equals("\\{")) return result.append(line).toString();
+          line = line.substring(0, line.length() - suffix.length());
+        }
+        String transformed = line.isEmpty() ? line : lineTransformation.apply(line);
         if (transformed == null) return null;
-        newTextBlock.append(transformed);
+        if (last && hasUnescapedLastQuote(transformed)) {
+          result.append(transformed, 0, transformed.length() - 1).append("\\\"");
+        }
+        else if (transformed.isEmpty()) {
+          result.append((line.length() < indent) ? line : line.substring(0, indent));
+        } else {
+          result.append(transformed);
+        }
+        result.append(last ? suffix : "\n");
       }
-      newTextBlock.append("\"\"\"");
-
-      return newTextBlock.toString();
-    }
-
-    private static boolean isContentLineEndsWithWhitespace(@NotNull String line) {
-      if (line.isBlank()) return false;
-      char lastChar = line.charAt(line.length() - 1);
-      return lastChar == ' ' || lastChar == '\t';
+      return result.toString();
     }
   }
-}
-
-record TransformationContext(@NotNull String text, boolean isEnd) {
 }

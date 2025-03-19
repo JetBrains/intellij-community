@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -18,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class SelectionModelImpl implements SelectionModel {
+//@ApiStatus.Internal
+public final class SelectionModelImpl implements SelectionModel {
   private static final Logger LOG = Logger.getInstance(SelectionModelImpl.class);
 
   private final List<SelectionListener> mySelectionListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -26,6 +26,7 @@ public class SelectionModelImpl implements SelectionModel {
 
   private TextAttributes myTextAttributes;
 
+  @ApiStatus.Internal
   public SelectionModelImpl(EditorImpl editor) {
     myEditor = editor;
   }
@@ -33,6 +34,7 @@ public class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public boolean isUnknownDirection() {
     return myEditor.getCaretModel().getCurrentCaret().isUnknownDirection();
   }
@@ -40,6 +42,7 @@ public class SelectionModelImpl implements SelectionModel {
   /**
    * @see CaretImpl#setUnknownDirection(boolean)
    */
+  @ApiStatus.Internal
   public void setUnknownDirection(boolean unknownDirection) {
     myEditor.getCaretModel().getCurrentCaret().setUnknownDirection(unknownDirection);
   }
@@ -119,7 +122,7 @@ public class SelectionModelImpl implements SelectionModel {
   @Override
   public void removeSelectionListener(@NotNull SelectionListener listener) {
     boolean success = mySelectionListeners.remove(listener);
-    LOG.assertTrue(success);
+    LOG.assertTrue(success, "Failed to remove listener: " + listener + "from editor: " + myEditor);
   }
 
   @Override
@@ -140,6 +143,7 @@ public class SelectionModelImpl implements SelectionModel {
     return myTextAttributes;
   }
 
+  @ApiStatus.Internal
   public void reinitSettings() {
     myTextAttributes = null;
   }

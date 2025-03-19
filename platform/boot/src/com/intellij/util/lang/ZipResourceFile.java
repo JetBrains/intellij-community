@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.util.lang.ZipFile.ZipResource;
@@ -18,21 +18,19 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-@SuppressWarnings("SuspiciousPackagePrivateAccess")
 final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
   private final boolean defineClassUsingBytes;
 
-  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes) {
+  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes, @Nullable ZipFilePool zipFilePool) {
     this.defineClassUsingBytes = defineClassUsingBytes;
 
-    ZipFilePool pool = ZipFilePool.POOL;
     try {
-      if (pool == null) {
-        zipFile = ImmutableZipFile.load(file);
+      if (zipFilePool == null) {
+        zipFile = ZipFile.load(file);
       }
       else {
-        Object zipFile = pool.loadZipFile(file);
+        Object zipFile = zipFilePool.loadZipFile(file);
         this.zipFile = (ZipFile)zipFile;
       }
     }
@@ -84,6 +82,9 @@ final class ZipResourceFile implements ResourceFile {
           return file.resourcePackages;
         }
       };
+    }
+    else if (zipFile instanceof EmptyZipFile) {
+      return new ClasspathCache.LoaderDataBuilder();
     }
     else {
       return computePackageIndex();
@@ -174,11 +175,16 @@ final class ZipResourceFile implements ResourceFile {
     public byte @NotNull [] getBytes() throws IOException {
       return entry.getData();
     }
+
+    @Override
+    public @NotNull ByteBuffer getByteBuffer() throws IOException {
+      return entry.getByteBuffer();
+    }
   }
 
   private static final class MyJarUrlStreamHandler extends URLStreamHandler {
-    private @NotNull final ZipResource entry;
-    private @NotNull final JarLoader jarLoader;
+    private final @NotNull ZipResource entry;
+    private final @NotNull JarLoader jarLoader;
 
     private URL original;
 

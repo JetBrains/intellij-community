@@ -6,8 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 
 interface KotlinFacetSettingsProvider {
-    fun getSettings(module: Module): KotlinFacetSettings?
-    fun getInitializedSettings(module: Module): KotlinFacetSettings
+    fun getSettings(module: Module): IKotlinFacetSettings?
+    fun getInitializedSettings(module: Module): IKotlinFacetSettings
 
     companion object {
         fun getInstance(project: Project): KotlinFacetSettingsProvider? =

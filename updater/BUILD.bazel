@@ -1,0 +1,42 @@
+### auto-generated section `build intellij.tools.updater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tools-updater_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools-updater",
+  module_name = "intellij.tools.updater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:jna",
+  ],
+  runtime_deps = [":tools-updater_resources"]
+)
+
+jvm_library(
+  name = "tools-updater_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [":tools-updater"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:jna",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+  ],
+  runtime_deps = [":tools-updater_resources"]
+)
+
+jvm_test(
+  name = "tools-updater_test",
+  runtime_deps = [":tools-updater_test_lib"]
+)
+### auto-generated section `build intellij.tools.updater` end

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -12,7 +13,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.testframework.sm.FileUrlProvider;
-import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup;
@@ -34,9 +35,9 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link SMRunnerConsolePropertiesProvider} so importer {@link AbstractImportTestsAction.ImportRunProfile#ImportRunProfile(VirtualFile, Project)}
  * would be able to create properties by read configuration and test navigation, rerun failed tests etc. would work on imported results
  */
-public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParserEx {
+public class SMTRunnerConsoleProperties extends TestConsoleProperties implements SMStacktraceParser {
   private final RunProfile myConfiguration;
-  @NotNull private final String myTestFrameworkName;
+  private final @NotNull String myTestFrameworkName;
   private final CompositeFilter myCustomFilter;
   private boolean myIdBasedTestTree = false;
   private boolean myPrintTestingStartedTime = true;
@@ -127,9 +128,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     }
   }
 
-  @Nullable
   @Override
-  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+  public @Nullable Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     if (myCustomFilter.isEmpty()) {
       return null;
     }
@@ -191,23 +191,19 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
   /**
    * @return custom test locator which would be combined with default {@link FileUrlProvider}
    */
-  @Nullable
-  public SMTestLocator getTestLocator() {
+  public @Nullable SMTestLocator getTestLocator() {
     return null;
   }
 
-  @Nullable
-  public TestProxyFilterProvider getFilterProvider() {
+  public @Nullable TestProxyFilterProvider getFilterProvider() {
     return null;
   }
 
-  @Nullable
-  public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
+  public @Nullable AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return null;
   }
 
-  @NotNull
-  public String getTestFrameworkName() {
+  public @NotNull String getTestFrameworkName() {
     return myTestFrameworkName;
   }
 
@@ -216,5 +212,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    */
   public boolean isUndefined() {
     return false;
+  }
+
+  @Override
+  public @NotNull String getWindowId() {
+    if (myConfiguration instanceof RunConfiguration configuration) {
+      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
+      if (manager.isShowInDashboard(configuration)) {
+        return manager.getToolWindowId();
+      }
+    }
+    return super.getWindowId();
   }
 }

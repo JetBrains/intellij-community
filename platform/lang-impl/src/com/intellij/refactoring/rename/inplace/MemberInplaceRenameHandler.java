@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -22,7 +8,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -41,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
@@ -56,7 +42,7 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
       element = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiNamedElement.class);
     }
     final RefactoringSupportProvider
-      supportProvider = element == null ? null : LanguageRefactoringSupport.INSTANCE.forContext(element);
+      supportProvider = element == null ? null : LanguageRefactoringSupport.getInstance().forContext(element);
     return editor.getSettings().isVariableInplaceRenameEnabled()
            && supportProvider != null
            && element instanceof PsiNameIdentifierOwner
@@ -79,7 +65,8 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
             @Override
             public void pass(PsiElement element) {
               final MemberInplaceRenamer renamer = createMemberRenamer(element, (PsiNameIdentifierOwner)elementToRename, editor);
-              boolean startedRename = renamer.performInplaceRename();
+              List<String> names = dataContext == null ? null : PsiElementRenameHandler.NAME_SUGGESTIONS.getData(dataContext);
+              boolean startedRename = renamer.performInplaceRename(names);
               if (!startedRename) {
                 performDialogRename(elementToRename, editor, createDataContext(contextComponent, newName, elementToRename), renamer.myInitialName);
               }
@@ -108,14 +95,13 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
     return SimpleDataContext.builder()
       .setParent(context)
       .add(PsiElementRenameHandler.DEFAULT_NAME, newName)
-      .add(LangDataKeys.PSI_ELEMENT_ARRAY, newElementToRename == null ? null : new PsiElement[]{newElementToRename})
+      .add(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, newElementToRename == null ? null : new PsiElement[]{newElementToRename})
       .build();
   }
 
-  @NotNull
-  protected MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element,
-                                                     @NotNull PsiNameIdentifierOwner elementToRename,
-                                                     @NotNull Editor editor) {
+  protected @NotNull MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element,
+                                                              @NotNull PsiNameIdentifierOwner elementToRename,
+                                                              @NotNull Editor editor) {
     return new MemberInplaceRenamer(elementToRename, element, editor);
   }
 }

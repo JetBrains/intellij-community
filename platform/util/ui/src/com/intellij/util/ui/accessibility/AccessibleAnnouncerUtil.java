@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.accessibility;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.jetbrains.AccessibleAnnouncer;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.Nullable;
@@ -8,19 +9,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import java.awt.*;
 
-final public class AccessibleAnnouncerUtil {
-  final private static AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
+public final class AccessibleAnnouncerUtil {
+  private static final AccessibleAnnouncer announcer = JBR.getAccessibleAnnouncer();
 
   private AccessibleAnnouncerUtil() {}
 
   /**
-   * This method make announce with screenreader
+   * This method makes an announcement with screen reader
    *
    * @param a         announce owner
    * @param str       message for announcing
    * @param interruptCurrentOutput  output interruption
    */
-  public static void announce(@Nullable final Accessible a, final String str, final boolean interruptCurrentOutput) {
+  public static void announce(final @Nullable Accessible a, final String str, final boolean interruptCurrentOutput) {
     if (announcer == null) return;
 
     KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -33,5 +34,11 @@ final public class AccessibleAnnouncerUtil {
     }
 
     announcer.announce(a, str, AccessibleAnnouncer.ANNOUNCE_WITHOUT_INTERRUPTING_CURRENT_OUTPUT);
+  }
+
+  public static boolean isAnnouncingAvailable() {
+    return ScreenReader.isActive()
+           && JBR.isAccessibleAnnouncerSupported()
+           && Registry.is("ide.accessibility.announcing.notifications.available", false);
   }
 }

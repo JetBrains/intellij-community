@@ -6,12 +6,14 @@ import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public class TextFieldWithProgress extends JPanel {
   private final @NotNull TextFieldWithCompletion myTextField;
   private final @NotNull AsyncProcessIcon myProgressIcon;

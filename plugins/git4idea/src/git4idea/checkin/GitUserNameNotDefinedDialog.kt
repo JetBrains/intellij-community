@@ -31,7 +31,8 @@ internal class GitUserNameNotDefinedDialog(
   project: Project,
   private val rootsWithUndefinedProps: Collection<VirtualFile>,
   private val allRootsAffectedByCommit: Collection<VirtualFile>,
-  private val rootsWithDefinedProps: Map<VirtualFile, VcsUser>
+  private val rootsWithDefinedProps: Map<VirtualFile, VcsUser>,
+  commitActionText: @NlsContexts.Label String,
 ) : DialogWrapper(project, false) {
   private val settings = GitVcsSettings.getInstance(project)
 
@@ -43,7 +44,7 @@ internal class GitUserNameNotDefinedDialog(
 
   init {
     title = GitBundle.message("title.user.name.email.not.specified")
-    setOKButtonText(GitBundle.message("button.set.name.and.commit"))
+    setOKButtonText(GitBundle.message("button.set.name.and.commit.template", commitActionText))
 
     init()
   }

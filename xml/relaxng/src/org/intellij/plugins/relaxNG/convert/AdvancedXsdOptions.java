@@ -24,12 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AdvancedXsdOptions implements AdvancedOptions {
-  @NonNls
-  private static final String DISABLE_ABSTRACT_ELEMENTS = "disable-abstract-elements";
-  @NonNls
-  private static final String ANY_PROCESS_CONTENTS = "any-process-contents";
-  @NonNls
-  private static final String ANY_ATTRIBUTE_PROCESS_CONTENTS = "any-attribute-process-contents";
+  private static final @NonNls String DISABLE_ABSTRACT_ELEMENTS = "disable-abstract-elements";
+  private static final @NonNls String ANY_PROCESS_CONTENTS = "any-process-contents";
+  private static final @NonNls String ANY_ATTRIBUTE_PROCESS_CONTENTS = "any-attribute-process-contents";
 
   private JComponent myRoot;
 

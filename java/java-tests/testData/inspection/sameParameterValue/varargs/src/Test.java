@@ -54,3 +54,14 @@ class SingleArgNotNull {
     new SingleArgNotNull().foo(0);
   }
 }
+class Classes {
+  void x(Class<?>... cs) {
+    for (Class<?> c : cs) {
+      System.out.println(c);
+    }
+  }
+
+  public static void main(String[] args) {
+    new Classes().x(String.class, Long.class);
+  }
+}

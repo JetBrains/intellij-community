@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -65,9 +65,8 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
   protected void customizeDecorator(ToolbarDecorator decorator) {
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myList.getEmptyText();
   }
 
@@ -78,8 +77,7 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     }
   }
 
-  @Nullable
-  protected abstract T findItemToAdd();
+  protected abstract @Nullable T findItemToAdd();
 
   public Object [] getListItems(){
     List<Object> items = new ArrayList<>();

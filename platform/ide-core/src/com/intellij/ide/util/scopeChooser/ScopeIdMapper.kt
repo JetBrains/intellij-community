@@ -22,39 +22,39 @@ abstract class ScopeIdMapper {
 
     // Scope serialization ids are equal to English scope translations (for compatibility with 2020.2-)
     @NonNls
-    const val ALL_PLACES_SCOPE_ID = "All Places"
+    const val ALL_PLACES_SCOPE_ID: String = "All Places"
 
     @NonNls
-    const val PROJECT_AND_LIBRARIES_SCOPE_ID = "Project and Libraries"
+    const val PROJECT_AND_LIBRARIES_SCOPE_ID: String = "Project and Libraries"
 
     @NonNls
-    const val PROJECT_FILES_SCOPE_ID = "Project Files"
+    const val PROJECT_FILES_SCOPE_ID: String = "Project Files"
 
     @NonNls
-    const val PROJECT_PRODUCTION_FILES_SCOPE_ID = "Project Production Files"
+    const val PROJECT_PRODUCTION_FILES_SCOPE_ID: String = "Project Production Files"
 
     @NonNls
-    const val PROJECT_TEST_FILES_SCOPE_ID = "Project Test Files"
+    const val PROJECT_TEST_FILES_SCOPE_ID: String = "Project Test Files"
 
     @NonNls
-    const val SCRATCHES_AND_CONSOLES_SCOPE_ID = "Scratches and Consoles"
+    const val SCRATCHES_AND_CONSOLES_SCOPE_ID: String = "Scratches and Consoles"
 
     @NonNls
-    const val RECENTLY_VIEWED_FILES_SCOPE_ID = "Recently Viewed Files"
+    const val RECENTLY_VIEWED_FILES_SCOPE_ID: String = "Recently Viewed Files"
 
     @NonNls
-    const val RECENTLY_CHANGED_FILES_SCOPE_ID = "Recently Changed Files"
+    const val RECENTLY_CHANGED_FILES_SCOPE_ID: String = "Recently Changed Files"
 
     @NonNls
-    const val OPEN_FILES_SCOPE_ID = "Open Files"
+    const val OPEN_FILES_SCOPE_ID: String = "Open Files"
 
     @NonNls
-    const val CURRENT_FILE_SCOPE_ID = "Current File"
+    const val CURRENT_FILE_SCOPE_ID: String = "Current File"
 
     @JvmStatic
-    val standardNames = setOf(ALL_PLACES_SCOPE_ID, PROJECT_AND_LIBRARIES_SCOPE_ID, PROJECT_FILES_SCOPE_ID, PROJECT_PRODUCTION_FILES_SCOPE_ID,
-                              PROJECT_TEST_FILES_SCOPE_ID, SCRATCHES_AND_CONSOLES_SCOPE_ID, RECENTLY_VIEWED_FILES_SCOPE_ID, RECENTLY_CHANGED_FILES_SCOPE_ID,
-                              RECENTLY_CHANGED_FILES_SCOPE_ID, OPEN_FILES_SCOPE_ID, CURRENT_FILE_SCOPE_ID)
+    val standardNames: Set<String> = setOf(ALL_PLACES_SCOPE_ID, PROJECT_AND_LIBRARIES_SCOPE_ID, PROJECT_FILES_SCOPE_ID, PROJECT_PRODUCTION_FILES_SCOPE_ID,
+                                           PROJECT_TEST_FILES_SCOPE_ID, SCRATCHES_AND_CONSOLES_SCOPE_ID, RECENTLY_VIEWED_FILES_SCOPE_ID, RECENTLY_CHANGED_FILES_SCOPE_ID,
+                                           RECENTLY_CHANGED_FILES_SCOPE_ID, OPEN_FILES_SCOPE_ID, CURRENT_FILE_SCOPE_ID)
   }
 
   @Nls

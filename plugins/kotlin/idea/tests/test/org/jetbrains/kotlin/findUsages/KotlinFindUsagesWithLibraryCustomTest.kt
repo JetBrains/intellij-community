@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.findUsages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -14,6 +13,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibraryTest() {
+
+    override val isWithSourcesTestData = false
+
     fun testFindUsagesForLocalClassProperty() {
         val ktParameter = findElementInLibrary<KtParameter>("localClassProperty")
         val usages = findUsages(ktParameter.originalElement, null, false, project)

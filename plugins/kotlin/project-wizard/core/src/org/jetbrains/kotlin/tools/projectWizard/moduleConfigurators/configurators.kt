@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
 import com.intellij.openapi.util.NlsSafe
+import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
+import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSettingReference
@@ -14,10 +16,12 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildFileIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinBuildSystemPluginIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.KotlinExtensionConfigurationIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenPropertyIR
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.buildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
@@ -30,7 +34,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             GenerationPhase.PROJECT_GENERATION
         ) {
             tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
-            defaultValue = value(TargetJvmVersion.JVM_11)
+            defaultValue = value(TargetJvmVersion.JVM_1_8)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
                 val projectKind = KotlinPlugin.projectKind.settingValue
@@ -87,6 +91,18 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
 
     override fun Reader.getTestFramework(module: Module): KotlinTestFramework {
         return inContextOfModuleConfigurator(module) { testFramework.reference.settingValue }
+    }
+
+    fun needToAddToolchain(reader: Reader, module: Module): Boolean {
+        val currentGradleVersionString = inContextOfModuleConfigurator(module) {
+            reader {
+                GradlePlugin.gradleVersion.settingValue.text
+            }
+        }
+
+        val minGradleFoojayVersion = GradleVersion.version(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
+        val currentGradleVersion = GradleVersion.version(currentGradleVersionString)
+        return currentGradleVersion >= minGradleFoojayVersion
     }
 }
 
@@ -162,6 +178,10 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
     ): List<BuildSystemIR> =
         buildList {
             +super<JvmModuleConfigurator>.createBuildFileIRs(reader, configurationData, module)
+            val needToAddToolchain = needToAddToolchain(reader, module)
+            if (!needToAddToolchain && configurationData.buildSystemType == BuildSystemType.GradleKotlinDsl) {
+                +GradleImportIR("org.jetbrains.kotlin.gradle.tasks.KotlinCompile")
+            }
 
             val targetVersion = inContextOfModuleConfigurator(module) {
                 reader {
@@ -169,8 +189,25 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
                 }
             }
             when (configurationData.buildSystemType) {
-                BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> {
-                    +KotlinExtensionConfigurationIR(targetVersion)
+                BuildSystemType.GradleKotlinDsl -> {
+                    if (needToAddToolchain) {
+                        +KotlinExtensionConfigurationIR(targetVersion)
+                    } else {
+                        +GradleConfigureTaskIR(
+                            GradleByClassTasksAccessIR("KotlinCompile"),
+                            irs = listOf(
+                                GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersion.value))
+                            )
+                        )
+                    }
+                }
+                BuildSystemType.GradleGroovyDsl -> {
+                    if (needToAddToolchain) {
+                        +KotlinExtensionConfigurationIR(targetVersion)
+                    } else {
+                        +jvmTargetSetup("compileKotlin", targetVersion.value)
+                        +jvmTargetSetup("compileTestKotlin", targetVersion.value)
+                    }
                 }
                 BuildSystemType.Maven -> {
                     +MavenPropertyIR("kotlin.compiler.jvmTarget", targetVersion.value)
@@ -178,6 +215,13 @@ object JvmSinglePlatformModuleConfigurator : JvmModuleConfigurator,
                 else -> {}
             }
         }
+
+    private fun jvmTargetSetup(taskName: String, targetVersion: String) = GradleSectionIR(
+        taskName,
+        irs = listOf(
+            GradleAssignmentIR("kotlinOptions.jvmTarget", GradleStringConstIR(targetVersion))
+        )
+    )
 }
 
 

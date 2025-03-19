@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.project.Project;
@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import javax.swing.*;
 import java.util.Set;
 
-public class GeneralGroupNode extends PackageDependenciesNode {
+public final class GeneralGroupNode extends PackageDependenciesNode {
   private final String myName;
   private final Icon myIcon;
 
@@ -27,6 +27,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     }
   }
 
+  @Override
   public String toString() {
     return myName;
   }
@@ -36,6 +37,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     return 6;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()){
       return super.equals(o);
@@ -44,6 +46,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     return myName.equals(((GeneralGroupNode)o).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }

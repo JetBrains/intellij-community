@@ -20,6 +20,8 @@ class 'pkg/TestInterfaceSuper' {
 class 'pkg/TestInterfaceSuper$Impl' {
    method 'defaultMethod ()V' {
       1      8
+      2      8
+      3      8
       4      9
    }
 }

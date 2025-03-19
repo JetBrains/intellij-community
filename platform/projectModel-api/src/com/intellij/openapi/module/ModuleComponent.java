@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.project.Project;
 
 /**
  * @deprecated Components are deprecated, please see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html">SDK Docs</a> for guidelines on migrating to other APIs.
@@ -13,13 +12,4 @@ import com.intellij.openapi.project.Project;
  */
 @Deprecated(forRemoval = true)
 public interface ModuleComponent extends BaseComponent {
-  /**
-   * Invoked when the module corresponding to this component instance has been completely
-   * loaded and added to the project.
-   *
-   * @deprecated Use {@link com.intellij.ProjectTopics#MODULES} ({@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)})
-   */
-  @Deprecated(forRemoval = true)
-  default void moduleAdded() {
-  }
 }

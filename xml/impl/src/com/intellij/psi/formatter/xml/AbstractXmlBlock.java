@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -169,12 +170,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
-  @Nullable
-  protected ASTNode processChild(@NotNull List<Block> result,
-                                 @NotNull ASTNode child,
-                                 @Nullable Wrap wrap,
-                                 @Nullable Alignment alignment,
-                                 @Nullable Indent indent) {
+  protected @Nullable ASTNode processChild(@NotNull List<Block> result,
+                                           @NotNull ASTNode child,
+                                           @Nullable Wrap wrap,
+                                           @Nullable Alignment alignment,
+                                           @Nullable Indent indent) {
     final Language myLanguage = myNode.getPsi().getLanguage();
     final PsiElement childPsi = child.getPsi();
     final Language childLanguage = childPsi.getLanguage();
@@ -242,7 +242,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private ASTNode processAllChildrenFrom(final List<Block> result,
-                                         @NotNull final ASTNode child,
+                                         final @NotNull ASTNode child,
                                          final Wrap wrap,
                                          final Alignment alignment,
                                          final Indent indent) {
@@ -280,9 +280,29 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         }
       );
     }
+    else if (child.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
+             && child.getTreeParent().getElementType() != XmlElementType.XML_CDATA
+             && child.textContains('\n')) {
+      result.add(createRawTextChild(child, indent, wrap, alignment));
+    }
     else {
       result.add(createSimpleChild(child, indent, wrap, alignment, null));
     }
+  }
+
+  protected @NotNull XmlBlock createRawTextChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment) {
+    var text = child.getText();
+    var textStart = StringUtil.skipWhitespaceOrNewLineForward(text, 0);
+    var textEnd = StringUtil.skipWhitespaceOrNewLineBackward(text, text.length());
+    TextRange textRange;
+    if (textStart < textEnd) {
+      textRange = child.getTextRange();
+      textRange = new TextRange(textRange.getStartOffset() + textStart, textRange.getStartOffset() + textEnd);
+    } else {
+      textRange = null;
+    }
+    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, textRange, isPreserveSpace());
   }
 
   protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,
@@ -295,22 +315,19 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
                            isPreserveSpace());
   }
 
-  @Nullable
-  protected XmlTag findXmlTagAt(final ASTNode child, final int startOffset) {
+  protected @Nullable XmlTag findXmlTagAt(final ASTNode child, final int startOffset) {
     return null;
   }
 
-  @Nullable
-  protected ASTNode createAnotherTreeNode(final List<? super Block> result,
-                                          final ASTNode child,
-                                          PsiElement tag,
-                                          final Indent indent,
-                                          final Wrap wrap, final Alignment alignment) {
+  protected @Nullable ASTNode createAnotherTreeNode(final List<? super Block> result,
+                                                    final ASTNode child,
+                                                    PsiElement tag,
+                                                    final Indent indent,
+                                                    final Wrap wrap, final Alignment alignment) {
     return null;
   }
 
-  @Nullable
-  protected Block createAnotherTreeTagBlock(final PsiElement tag, final Indent childIndent) {
+  protected @Nullable Block createAnotherTreeTagBlock(final PsiElement tag, final Indent childIndent) {
     return null;
   }
 
@@ -318,8 +335,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return myXmlFormattingPolicy;
   }
 
-  @Nullable
-  protected XmlTag getAnotherTreeTag(final ASTNode child) {
+  protected @Nullable XmlTag getAnotherTreeTag(final ASTNode child) {
     return null;
   }
 
@@ -383,8 +399,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   protected void createJspTextNode(final List<? super Block> localResult, final ASTNode child, final Indent indent) {
   }
 
-  @Nullable
-  protected static ASTNode findChildAfter(@NotNull final ASTNode child, final int endOffset) {
+  protected static @Nullable ASTNode findChildAfter(final @NotNull ASTNode child, final int endOffset) {
     TreeElement fileNode = TreeUtil.getFileElement((TreeElement)child);
     final LeafElement leaf = fileNode.findLeafElementAt(endOffset);
     if (leaf != null && leaf.getStartOffset() == endOffset && endOffset > 0) {

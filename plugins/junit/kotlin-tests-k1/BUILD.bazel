@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.junit.kotlin.tests.k1` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-tests-k1",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-tests-k1_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/junit/kotlin-tests-shared:kotlin-tests-shared_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//java/testFramework",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+  ],
+  runtime_deps = ["//plugins/kotlin/plugin/k1:kotlin-plugin-k1"]
+)
+
+jvm_test(
+  name = "kotlin-tests-k1_test",
+  runtime_deps = [":kotlin-tests-k1_test_lib"]
+)
+### auto-generated section `build intellij.junit.kotlin.tests.k1` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,12 +6,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
-public class LocalFileStorage {
+@ApiStatus.Internal
+public final class LocalFileStorage {
   private final File myStorageIODirectory;
 
   public LocalFileStorage() {

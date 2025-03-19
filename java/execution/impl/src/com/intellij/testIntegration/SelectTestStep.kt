@@ -3,6 +3,7 @@ package com.intellij.testIntegration
 
 import com.intellij.icons.AllIcons
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
@@ -10,7 +11,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsContexts.PopupTitle
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiElement
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupImpl
@@ -31,7 +31,7 @@ class RecentTestsListPopup(project: Project,
     shiftReleased()
     registerActions(this)
 
-    val shift = if (SystemInfo.isMac) MacKeymapUtil.SHIFT else JavaCompilerBundle.message("shift.key")
+    val shift = if (ClientSystemInfo.isMac()) MacKeymapUtil.SHIFT else JavaCompilerBundle.message("shift.key")
     setAdText(JavaCompilerBundle.message("popup.advertisement.debug.with.shift.navigate.with.f4", shift))
   }
 

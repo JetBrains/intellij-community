@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.rest.api2.model;
 
 import com.intellij.tasks.jira.rest.model.*;
@@ -40,81 +26,68 @@ public class JiraIssueApi2 extends JiraIssue {
   private String self;
   private Fields fields;
 
-  @NotNull
   @Override
-  public String getKey() {
+  public @NotNull String getKey() {
     return key;
   }
 
-  @NotNull
   @Override
-  public String getIssueUrl() {
+  public @NotNull String getIssueUrl() {
     return self;
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return fields.summary;
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return fields.description;
   }
 
-  @NotNull
   @Override
-  public Date getCreated() {
+  public @NotNull Date getCreated() {
     return fields.created;
   }
 
-  @NotNull
   @Override
-  public Date getUpdated() {
+  public @NotNull Date getUpdated() {
     return fields.updated;
   }
 
-  @Nullable
   @Override
-  public Date getResolutionDate() {
+  public @Nullable Date getResolutionDate() {
     return fields.resolutiondate;
   }
 
-  @Nullable
   @Override
-  public Date getDueDate() {
+  public @Nullable Date getDueDate() {
     return fields.duedate;
   }
 
-  @NotNull
   @Override
-  public JiraIssueType getIssueType() {
+  public @NotNull JiraIssueType getIssueType() {
     return fields.issuetype;
   }
 
-  @Nullable
   @Override
-  public JiraUser getAssignee() {
+  public @Nullable JiraUser getAssignee() {
     return fields.assignee;
   }
 
-  @Nullable
   @Override
-  public JiraUser getReporter() {
+  public @Nullable JiraUser getReporter() {
     return fields.reporter;
   }
 
-  @NotNull
   @Override
-  public List<JiraComment> getComments() {
+  public @NotNull List<JiraComment> getComments() {
     return fields.comment == null ? ContainerUtil.emptyList() : fields.comment.getComments();
   }
 
-  @NotNull
   @Override
-  public JiraStatus getStatus() {
+  public @NotNull JiraStatus getStatus() {
     return fields.status;
   }
 

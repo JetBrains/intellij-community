@@ -1,14 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework.fixtures.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteActionAndWait
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installBulkVirtualFileListener
 import com.intellij.openapi.externalSystem.util.runReadAction
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
+import com.intellij.openapi.observable.operation.core.onFailureCatching
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.*
@@ -27,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
-import org.jetbrains.plugins.gradle.testFramework.util.onFailureCatching
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import java.nio.file.Path
 import java.util.*
@@ -112,12 +112,12 @@ internal class FileTestFixtureImpl(
       return
     }
     for ((path, text) in snapshots) {
-      revertFile(path.toNioPath(), text)
+      revertFile(Path.of(path), text)
     }
   }
 
   private suspend fun invalidateFixtureCaches() {
-    writeAction {
+    edtWriteAction {
       root.deleteChildrenRecursively { it != fixtureStateFile }
     }
   }
@@ -237,7 +237,7 @@ internal class FileTestFixtureImpl(
 
                  path !in snapshots &&
                  path !in excludedFiles &&
-                 excludedFiles.all { !FileUtil.isAncestor(it, path, false) }
+                 excludedFiles.none(path::startsWith)
                }
       }
 

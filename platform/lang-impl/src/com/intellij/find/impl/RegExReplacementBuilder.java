@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,8 +18,9 @@ import java.util.regex.Pattern;
  * <p>
  * Instances of this class are not safe for use by multiple concurrent threads, just as {@link Matcher} instances are.
  */
-public class RegExReplacementBuilder {
-  @NotNull private final MatchGroupContainer myMatcher;
+@ApiStatus.Internal
+public final class RegExReplacementBuilder {
+  private final @NotNull MatchGroupContainer myMatcher;
 
   private String myTemplate;
   private int myCursor;
@@ -149,7 +151,7 @@ public class RegExReplacementBuilder {
           break;
         }
       }
-      if (gsb.length() == 0) throw new IllegalArgumentException("named capturing group has 0 length name");
+      if (gsb.isEmpty()) throw new IllegalArgumentException("named capturing group has 0 length name");
       if (nextChar != '}') throw new IllegalArgumentException("named capturing group is missing trailing '}'");
       String gname = gsb.toString();
       if (isDigit(gname.charAt(0))) {

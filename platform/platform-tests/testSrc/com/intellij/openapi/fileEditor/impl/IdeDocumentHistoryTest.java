@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -46,7 +48,8 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     };
 
     EditorManager editorManager = new EditorManager();
-    myHistory = new IdeDocumentHistoryImpl(getProject()) {
+    Project project = getProject();
+    myHistory = new IdeDocumentHistoryImpl(project, ((ComponentManagerEx)project).getCoroutineScope()) {
       @Override
       protected FileEditorManagerEx getFileEditorManager() {
         return editorManager;
@@ -58,8 +61,8 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      protected void executeCommand(Runnable runnable, String name, Object groupId) {
-        myHistory.onCommandStarted();
+      protected void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
+        myHistory.onCommandStarted(groupId);
         runnable.run();
         myHistory.onSelectionChanged();
         myHistory.onCommandFinished(getProject(), groupId);
@@ -98,7 +101,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   public void testNoHistoryRecording() {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onCommandFinished(getProject(), null);
 
     assertFalse(myHistory.isBackAvailable());
@@ -182,6 +185,37 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     assertFalse(myHistory.isForwardAvailable());
   }
 
+  public void testRemoveOptionallyIncludedFiles() {
+    var file = new MyOptionallyIncludedFile();
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertTrue(myHistory.isBackAvailable());
+
+    file.myIsIncludedInDocumentHistory = false;
+    myHistory.removeInvalidFilesFromStacks();
+
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testOptionallyExcludedFileIsNotPushed() {
+    var file = new MyOptionallyIncludedFile();
+    file.myIsIncludedInDocumentHistory = false;
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testExcludedFileIsNotPushed() {
+    mySelectedFile = new MyAlwaysExcludedFile();
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
 
   private void pushTwoStates() {
     myState1 = new MyState(false, "state1");
@@ -194,7 +228,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
   }
 
   private void makeNavigationChange(MyState newState) {
-    myHistory.onCommandStarted();
+    myHistory.onCommandStarted(null);
     myHistory.onSelectionChanged();
     myHistory.onCommandFinished(getProject(), null);
     myEditorState = newState;
@@ -228,8 +262,21 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       return myCanBeMerged;
     }
 
+    @Override
     public String toString() {
       return myName;
+    }
+  }
+
+  private static final class MyAlwaysExcludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.SkipFromDocumentHistory {
+  }
+
+  private static final class MyOptionallyIncludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.OptionallyIncluded {
+    boolean myIsIncludedInDocumentHistory = true;
+
+    @Override
+    public boolean isIncludedInDocumentHistory(@NotNull Project project) {
+      return myIsIncludedInDocumentHistory;
     }
   }
 }

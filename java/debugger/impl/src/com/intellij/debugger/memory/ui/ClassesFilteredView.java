@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.memory.ui;
 
@@ -7,12 +7,15 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
+import com.intellij.debugger.memory.filtering.ClassInstancesProvider;
+import com.intellij.debugger.memory.filtering.FixedListProvider;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
 import com.intellij.debugger.memory.utils.AndroidUtil;
 import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -70,7 +73,6 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession, @NotNull DebugProcessImpl debugProcess, @NotNull InstancesTracker tracker) {
     super(debugSession);
-    final DebuggerManagerThreadImpl managerThread = debugProcess.getManagerThread();
     myInstancesTracker = tracker;
     final InstancesTrackerListener instancesTrackerListener = new InstancesTrackerListener() {
       @Override
@@ -82,7 +84,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         }
         ReferenceType ref = ((JavaTypeInfo)typeInfo).getReferenceType();
         final boolean activated = myIsTrackersActivated.get();
-        managerThread.schedule(new DebuggerCommandImpl() {
+        debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
           protected void action() {
             trackClass(debugSession, debugProcess, ref, type, activated);
@@ -115,30 +117,26 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void processAttached(@NotNull DebugProcess process) {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
         debugProcess.removeDebugProcessListener(this);
-        managerThread.invoke(new DebuggerCommandImpl() {
-          @Override
-          protected void action() {
-            final boolean activated = myIsTrackersActivated.get();
-            final VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
-            if (!proxy.canBeModified()) {
-              return;
+        boolean activated = myIsTrackersActivated.get();
+        VirtualMachineProxyImpl proxy = debugProcess.getVirtualMachineProxy();
+        if (!proxy.canBeModified()) {
+          return;
+        }
+        tracker.getTrackedClasses().forEach((className, type) -> {
+          List<ReferenceType> classes = proxy.classesByName(className);
+          if (classes.isEmpty()) {
+            trackWhenPrepared(className, debugSession, debugProcess, type);
+          }
+          else {
+            for (ReferenceType ref : classes) {
+              trackClass(debugSession, debugProcess, ref, type, activated);
             }
-            tracker.getTrackedClasses().forEach((className, type) -> {
-              List<ReferenceType> classes = proxy.classesByName(className);
-              if (classes.isEmpty()) {
-                trackWhenPrepared(className, debugSession, debugProcess, type);
-              }
-              else {
-                for (ReferenceType ref : classes) {
-                  trackClass(debugSession, debugProcess, ref, type, activated);
-                }
-              }
-            });
-
-            tracker.addTrackerListener(instancesTrackerListener);
           }
         });
+
+        tracker.addTrackerListener(instancesTrackerListener);
       }
 
       private void trackWhenPrepared(@NotNull String className,
@@ -212,19 +210,19 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   @Override
   protected void scheduleUpdateClassesCommand(XSuspendContext context) {
     SuspendContextImpl suspendContext = (SuspendContextImpl)context;
-    suspendContext.getDebugProcess().getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
+    suspendContext.getManagerThread().schedule(new MyUpdateClassesCommand(suspendContext));
   }
 
-  @Nullable
   @Override
-  protected TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
+  protected @Nullable TrackerForNewInstances getStrategy(@NotNull TypeInfo ref) {
     JavaTypeInfo javaTypeInfo = (JavaTypeInfo)ref;
     return myConstructorTrackedClasses.getOrDefault(javaTypeInfo.getReferenceType(), null);
   }
 
   @Override
   protected InstancesWindowBase getInstancesWindow(@NotNull TypeInfo ref, XDebugSession debugSession) {
-    return new InstancesWindow(debugSession, limit -> ref.getInstances(limit), ref.name());
+    ReferenceType referenceType = ((JavaTypeInfo)ref).getReferenceType();
+    return new InstancesWindow(debugSession, new ClassInstancesProvider(referenceType), referenceType);
   }
 
   @Override
@@ -245,23 +243,20 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
-      TypeInfo selectedClass = getTable().getSelectedClass();
-      if (selectedClass != null) {
-        TrackerForNewInstances strategy = getStrategy(selectedClass);
-        if (strategy != null && strategy.isReady()) {
-          List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider)limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new);
-        }
-      }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TypeInfo selectedClass = getTable().getSelectedClass();
+    if (selectedClass == null) {
+      return;
     }
-    return null;
+    TrackerForNewInstances strategy = getStrategy(selectedClass);
+    if (strategy != null && strategy.isReady()) {
+      List<ObjectReference> newInstances = strategy.getNewInstances();
+      sink.set(NEW_INSTANCES_PROVIDER_KEY, limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new));
+    }
   }
 
-  @Nullable
   @Override
-  protected XDebugSessionListener getAdditionalSessionListener() {
+  protected @Nullable XDebugSessionListener getAdditionalSessionListener() {
     return additionalSessionListener;
   }
 
@@ -323,8 +318,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (data != null) {
           final List<ObjectReference> newInstances = strategy.getNewInstances();
           data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(debugSession,
-                                                                      limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new), ref.name());
+          final InstancesWindow instancesWindow = new InstancesWindow(debugSession, new FixedListProvider(newInstances), ref);
           Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
           instancesWindow.show();
         }
@@ -376,7 +370,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       handleTrackers();
 
-      final VirtualMachineProxyImpl proxy = suspendContext.getDebugProcess().getVirtualMachineProxy();
+      final VirtualMachineProxyImpl proxy = suspendContext.getVirtualMachineProxy();
       final List<ReferenceType> classes = proxy.allClasses();
 
       ClassesTable table = getTable();

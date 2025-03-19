@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.completion.ml.features.ContextFeaturesStorage
 import com.intellij.completion.ml.performance.MLCompletionPerformanceTracker
 import com.intellij.completion.ml.personalization.UserFactorStorage
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.TestOnly
 
 class MutableLookupStorage(
@@ -132,9 +133,9 @@ class MutableLookupStorage(
     getItemStorage(element.idString()).fireElementScored(factors, mlScore)
   }
 
+  @RequiresReadLock
   fun initUserFactors(project: Project) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
-    if (_userFactors == null && UserFactorsManager.ENABLE_USER_FACTORS) {
+    if (_userFactors == null) {
       val userFactorValues = mutableMapOf<String, String>()
       val userFactors = UserFactorsManager.getInstance().getAllFactors()
       val applicationStorage: UserFactorStorage = UserFactorStorage.getInstance()

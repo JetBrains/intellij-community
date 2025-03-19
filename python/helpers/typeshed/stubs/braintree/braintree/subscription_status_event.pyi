@@ -1,8 +1,8 @@
-from typing import Any
+from decimal import Decimal
 
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class SubscriptionStatusEvent(Resource):
-    balance: Any
-    price: Any
+    balance: Decimal
+    price: Decimal
     def __init__(self, gateway, attributes) -> None: ...

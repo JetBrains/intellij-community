@@ -14,7 +14,7 @@ import org.junit.runners.JUnit4
 class MarkdownListEnterHandlerDelegateTest: LightPlatformCodeInsightTestCase() {
   @Rule
   @JvmField
-  val rule = MarkdownCodeInsightSettingsRule { it.copy(renumberListsOnType = true) }
+  val rule = MarkdownCodeInsightSettingsRule { it.renumberListsOnType = true }
 
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/editor/lists/enter/"
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ReadActionProcessor;
@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public final class PsiElementFinderImpl extends PsiElementFinder implements DumbAware {
   private final Project myProject;
@@ -54,6 +56,14 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
+  public boolean hasClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope, @NotNull Predicate<PsiClass> filter) {
+    if (skipIndices()) {
+      return false;
+    }
+    return myFileManager.hasClass(qualifiedName, scope, filter);
+  }
+
+  @Override
   public PsiPackage findPackage(@NotNull String qualifiedName) {
     return myFileManager.findPackage(qualifiedName);
   }
@@ -65,6 +75,9 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
       PsiDirectory[] subDirs = dir.getSubdirectories();
       for (PsiDirectory subDir : subDirs) {
+        if (JavaMultiReleaseUtil.getVersion(subDir.getVirtualFile()) != null) {
+          continue;
+        }
         final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subDir);
         if (aPackage != null) {
           final String subQualifiedName = aPackage.getQualifiedName();
@@ -80,16 +93,18 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, final @NotNull GlobalSearchScope scope) {
     return getClasses(null, psiPackage, scope);
   }
 
   @Override
-  public PsiClass @NotNull [] getClasses(@Nullable String shortName, @NotNull PsiPackage psiPackage, @NotNull final GlobalSearchScope scope) {
+  public PsiClass @NotNull [] getClasses(@Nullable String shortName,
+                                         @NotNull PsiPackage psiPackage,
+                                         @NotNull GlobalSearchScope scope) {
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir);
+      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir, scope);
       if (classes.length == 0) continue;
       if (list == null) list = new ArrayList<>();
       for (PsiClass aClass : classes) {
@@ -112,13 +127,12 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  public Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
+  public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     Set<String> names = null;
     FileIndexFacade facade = FileIndexFacade.getInstance(myProject);
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      for (PsiFile file : dir.getFiles()) {
+      for (PsiFile file : dir.getFiles(scope)) {
         if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
           VirtualFile vFile = file.getVirtualFile();
           if (vFile != null &&
@@ -143,8 +157,8 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   @Override
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,
-                                           @NotNull final GlobalSearchScope scope,
-                                           @NotNull final Processor<? super PsiDirectory> consumer,
+                                           final @NotNull GlobalSearchScope scope,
+                                           final @NotNull Processor<? super PsiDirectory> consumer,
                                            boolean includeLibrarySources) {
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     return PackageIndex.getInstance(myProject)
@@ -152,9 +166,11 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
       .forEach(new ReadActionProcessor<VirtualFile>() {
         @Override
         public boolean processInReadAction(final VirtualFile dir) {
-          if (!scope.contains(dir)) return true;
-          PsiDirectory psiDir = psiManager.findDirectory(dir);
-          return psiDir == null || consumer.process(psiDir);
+          if (scope.contains(dir)) {
+            PsiDirectory psiDir = psiManager.findDirectory(dir);
+            if (psiDir != null && !consumer.process(psiDir)) return false;
+          }
+          return true;
         }
       });
   }

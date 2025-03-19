@@ -1,0 +1,15 @@
+LineBreakpoint created at unsignedConst.kt:8
+Run Java
+Connected to the target VM
+unsignedConst.kt:8
+Compile bytecode for UByte.MAX_VALUE as Any?
+Compile bytecode for UShort.MIN_VALUE as Any?
+Compile bytecode for UInt.MAX_VALUE as Any?
+Compile bytecode for ULong.MIN_VALUE as Any?
+Compile bytecode for uByteMax as Any?
+Compile bytecode for uShortMin as Any?
+Compile bytecode for uIntMax as Any?
+Compile bytecode for uLongMin as Any?
+Disconnected from the target VM
+
+Process finished with exit code 0

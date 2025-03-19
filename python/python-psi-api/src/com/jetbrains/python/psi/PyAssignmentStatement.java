@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.Pair;
+import com.jetbrains.python.ast.PyAstAssignmentStatement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +11,17 @@ import java.util.List;
 /**
  * Describes an assignment statement.
  */
-public interface PyAssignmentStatement extends PyStatement, PyNamedElementContainer, PyAnnotationOwner {
+public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyStatement, PyNamedElementContainer, PyAnnotationOwner {
+
+  @Override
+  default @Nullable PyAnnotation getAnnotation() {
+    return (PyAnnotation)PyAstAssignmentStatement.super.getAnnotation();
+  }
 
   /**
    * @return the left-hand side of the statement; each item may consist of many elements.
    */
+  @Override
   PyExpression @NotNull [] getTargets();
 
   /**
@@ -37,14 +30,17 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    *
    * @return the array of assignment target expressions
    */
+  @Override
   PyExpression @NotNull [] getRawTargets();
 
 
   /**
    * @return right-hand side of the statement; may as well consist of many elements.
    */
-  @Nullable
-  PyExpression getAssignedValue();
+  @Override
+  default @Nullable PyExpression getAssignedValue() {
+    return (PyExpression)PyAstAssignmentStatement.super.getAssignedValue();
+  }
 
   /*
    * Applies a visitor to every element of left-hand side. Tuple elements are flattened down to their most nested
@@ -70,12 +66,15 @@ public interface PyAssignmentStatement extends PyStatement, PyNamedElementContai
    * If source is severely incorrect, the returned mapping is empty.
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
-  @NotNull
-  List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping();
+  @Override
+  default @NotNull List<Pair<PyExpression, PyExpression>> getTargetsToValuesMapping() {
+    //noinspection unchecked
+    return (List<Pair<PyExpression, PyExpression>>)PyAstAssignmentStatement.super.getTargetsToValuesMapping();
+  }
 
-  @Nullable
-  PyExpression getLeftHandSideExpression();
-
-  boolean isAssignmentTo(@NotNull String name);
+  @Override
+  default @Nullable PyExpression getLeftHandSideExpression() {
+    return (PyExpression)PyAstAssignmentStatement.super.getLeftHandSideExpression();
+  }
 
 }

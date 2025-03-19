@@ -113,7 +113,7 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_18_PREVIEW);
+           .setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
       Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
       model.setSdk(mockJdk);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -20,33 +20,28 @@ import java.util.*;
 
 public final class GroovyOverrideImplementExploreUtil {
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull GrTypeDefinition aClass) {
     if (aClass.isAnnotationType()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false, true).keySet();
   }
 
-  @NotNull
-  public static Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull GrTypeDefinition aClass) {
+  public static @NotNull Collection<MethodSignature> getMethodSignaturesToImplement(@NotNull GrTypeDefinition aClass) {
     return getMapToOverrideImplement(aClass, true, true).keySet();
   }
 
-  @NotNull
-  public static Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean toImplement) {
+  public static @NotNull Collection<CandidateInfo> getMethodsToOverrideImplement(GrTypeDefinition aClass, boolean toImplement) {
     return getMapToOverrideImplement(aClass, toImplement, true).values();
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, boolean toImplement, boolean skipImplemented) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, boolean toImplement, boolean skipImplemented) {
     Collection<HierarchicalMethodSignature> allMethodSignatures = aClass.getVisibleSignatures();
     return getMapToOverrideImplement(aClass, allMethodSignatures, toImplement, skipImplemented);
   }
 
-  @NotNull
-  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
-                                                                              Collection<? extends HierarchicalMethodSignature> allMethodSignatures,
-                                                                              boolean toImplement,
-                                                                              boolean skipImplemented) {
+  public static @NotNull Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(PsiClass aClass,
+                                                                                       Collection<? extends HierarchicalMethodSignature> allMethodSignatures,
+                                                                                       boolean toImplement,
+                                                                                       boolean skipImplemented) {
     Map<MethodSignature, PsiMethod> abstracts = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> finals = new LinkedHashMap<>();
     Map<MethodSignature, PsiMethod> concretes = new LinkedHashMap<>();

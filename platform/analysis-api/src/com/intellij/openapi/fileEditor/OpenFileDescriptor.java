@@ -1,11 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInsight.multiverse.SingleEditorContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,30 +29,46 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   private final int myLogicalColumn;
   private final int myOffset;
   private final RangeMarker myRangeMarker;
+  private final @NotNull CodeInsightContext myContext;
 
   private boolean myUseCurrentWindow;
   private boolean myUsePreviewTab;
   private ScrollType myScrollType = ScrollType.CENTER;
 
+  // todo ijpl-339 design properly
+  @ApiStatus.Internal
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, @NotNull CodeInsightContext context, int offset) {
+    this(project, file, context, -1, -1, offset, false);
+  }
+
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, -1, -1, offset, false);
+    this(project, file, CodeInsightContexts.anyContext(), - 1, -1, offset, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, logicalLine, logicalColumn, -1, false);
+    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, logicalLine, logicalColumn, -1, persistent);
+    this(project, file, CodeInsightContexts.anyContext(), logicalLine, logicalColumn, -1, persistent);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1, false);
+    this(project, file, CodeInsightContexts.anyContext(), -1, -1, -1, false);
   }
 
-  private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn, int offset, boolean persistent) {
+  private OpenFileDescriptor(
+    @NotNull Project project,
+    @NotNull VirtualFile file,
+    @NotNull CodeInsightContext context,
+    int logicalLine,
+    int logicalColumn,
+    int offset,
+    boolean persistent
+  ) {
     myProject = project;
     myFile = file;
+    myContext = context;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
     myOffset = offset;
@@ -63,9 +84,13 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CodeInsightContext getContext() {
+    return myContext;
   }
 
   public RangeMarker getRangeMarker() {
@@ -98,7 +123,8 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     navigateInEditor(this, e);
   }
 
-  protected static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
+  @ApiStatus.Internal
+  public static void navigateInEditor(@NotNull OpenFileDescriptor descriptor, @NotNull Editor e) {
     int offset = descriptor.getOffset();
     CaretModel caretModel = e.getCaretModel();
     boolean caretMoved = false;
@@ -123,9 +149,17 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
         unfoldCurrentLine(e);
       });
     }
+
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(descriptor.getProject())) {
+      CodeInsightContext context = descriptor.getContext();
+      if (context != CodeInsightContexts.anyContext()) {
+        EditorContextManager.getInstance(descriptor.getProject()).setEditorContext(e, new SingleEditorContext(context));
+      }
+    }
   }
 
-  protected static void unfoldCurrentLine(@NotNull Editor editor) {
+  @ApiStatus.Internal
+  public static void unfoldCurrentLine(@NotNull Editor editor) {
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     TextRange range = getRangeToUnfoldOnNavigation(editor);
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
@@ -137,8 +171,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     });
   }
 
-  @NotNull
-  public static TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
+  public static @NotNull TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);
     int start = editor.getDocument().getLineStartOffset(line);
@@ -160,13 +193,11 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return FileNavigator.getInstance().canNavigateToSource(this);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public OpenFileDescriptor setUseCurrentWindow(boolean search) {
+  public @NotNull OpenFileDescriptor setUseCurrentWindow(boolean search) {
     myUseCurrentWindow = search;
     return this;
   }
@@ -176,8 +207,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return myUseCurrentWindow;
   }
 
-  @NotNull
-  public OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
+  public @NotNull OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
     myUsePreviewTab = usePreviewTab;
     return this;
   }

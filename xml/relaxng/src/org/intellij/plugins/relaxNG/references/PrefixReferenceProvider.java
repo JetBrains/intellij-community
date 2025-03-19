@@ -21,7 +21,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.XmlQuickFixFactory;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -38,9 +37,7 @@ import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PrefixReferenceProvider extends PsiReferenceProvider {
-  private static final Logger LOG = Logger.getInstance(PrefixReferenceProvider.class);
-
+public final class PrefixReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
     final XmlAttributeValue value = (XmlAttributeValue)element;
@@ -62,8 +59,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       final String prefix = getCanonicalText();
       XmlTag tag = PsiTreeUtil.getParentOfType(getElement(), XmlTag.class);
       while (tag != null) {
@@ -106,8 +102,7 @@ public class PrefixReferenceProvider extends PsiReferenceProvider {
     }
 
     @Override
-    @NotNull
-    public String getUnresolvedMessagePattern() {
+    public @NotNull String getUnresolvedMessagePattern() {
       //The format substitution is performed at the call site
       //noinspection UnresolvedPropertyKey
       return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");

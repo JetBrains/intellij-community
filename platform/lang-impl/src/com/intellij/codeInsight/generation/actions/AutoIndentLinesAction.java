@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -31,13 +16,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
-  @Nullable
+@ApiStatus.Internal
+public final class AutoIndentLinesAction extends BaseCodeInsightAction implements DumbAware {
   @Override
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     Editor editor = getBaseEditor(dataContext, project);
     if (editor == null) return null;
     Document document = editor.getDocument();
@@ -49,14 +35,13 @@ public class AutoIndentLinesAction extends BaseCodeInsightAction implements Dumb
     return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, startLineOffset);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new AutoIndentLinesHandler();
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
     final FileType fileType = file.getFileType();
     return fileType instanceof LanguageFileType &&
            LanguageFormatting.INSTANCE.forContext(((LanguageFileType)fileType).getLanguage(), file) != null;

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -21,10 +20,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -35,6 +34,9 @@ import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ui.UIUtil;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,19 +53,21 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class UsageViewManagerImpl extends UsageViewManager {
   private static final Logger LOG = Logger.getInstance(UsageViewManagerImpl.class);
-  private final Project myProject;
+  private final Project project;
+  private final @NotNull CoroutineScope coroutineScope;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
 
-  public UsageViewManagerImpl(@NotNull Project project) {
-    myProject = project;
+  @ApiStatus.Internal
+  public UsageViewManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    this.project = project;
+    this.coroutineScope = coroutineScope;
   }
 
   @Override
-  @NotNull
-  public UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
-                                     Usage @NotNull [] usages,
-                                     @NotNull UsageViewPresentation presentation,
-                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+  public @NotNull UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
+                                              Usage @NotNull [] usages,
+                                              @NotNull UsageViewPresentation presentation,
+                                              @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
@@ -71,10 +75,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
       }
     }
 
-    UsageViewEx usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+    UsageViewEx usageView = new UsageViewImpl(project, CoroutineScopeKt.childScope(coroutineScope, "UsageView",
+                                                                                   EmptyCoroutineContext.INSTANCE, true), presentation, targets, usageSearcherFactory);
     if (usages.length != 0) {
       usageView.appendUsagesInBulk(Arrays.asList(usages));
-      ProgressManager.getInstance().run(new Task.Modal(myProject, UsageViewBundle.message("progress.title.waiting.for.usages"), false) {
+      ProgressManager.getInstance().run(new Task.Modal(project, UsageViewBundle.message("progress.title.waiting.for.usages"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           usageView.waitForUpdateRequestsCompletion();
@@ -112,12 +117,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   void showUsageView(@NotNull UsageViewEx usageView, @NotNull UsageViewPresentation presentation) {
     boolean wasPinned = false;
-    Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent();
+    Content selectedContent = UsageViewContentManager.getInstance(project).getSelectedContent();
     if (selectedContent != null && System.identityHashCode(selectedContent) == presentation.getRerunHash()) {
       wasPinned = selectedContent.isPinned();
       selectedContent.setPinned(false);//Unpin explicitly to make old content removed as we rerun search
     }
-    Content content = UsageViewContentManager.getInstance(myProject).addContent(
+    Content content = UsageViewContentManager.getInstance(project).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
       presentation.getToolwindowTitle(),
@@ -133,7 +138,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   public @Nullable UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                 @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                                                 @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                                                  boolean showPanelIfOnlyOneUsage,
                                                  boolean showNotFoundMessage,
                                                  @NotNull UsageViewPresentation presentation,
@@ -146,7 +151,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   private UsageView doSearchAndShow(UsageTarget @NotNull [] searchFor,
-                                    @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                                    @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                                     @NotNull UsageViewPresentation presentation,
                                     @NotNull FindUsagesProcessPresentation processPresentation,
                                     @Nullable UsageViewStateListener listener) {
@@ -158,11 +163,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
     long start = System.nanoTime();
     AtomicLong firstItemFoundTS = new AtomicLong();
     AtomicBoolean tooManyUsages = new AtomicBoolean();
-    Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
+    Task.Backgroundable task = new Task.Backgroundable(project, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         SearchScope searchScopeToWarnOfFallingOutOf = ReadAction.compute(() -> scopeSupplier.get());
-        new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
+        new SearchForUsagesRunnable(UsageViewManagerImpl.this, UsageViewManagerImpl.this.project, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, searchScopeToWarnOfFallingOutOf, listener, firstItemFoundTS, tooManyUsages).run();
       }
 
@@ -172,9 +177,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
         super.onCancel();
       }
 
-      @NotNull
       @Override
-      public NotificationInfo getNotificationInfo() {
+      public @NotNull NotificationInfo getNotificationInfo() {
         UsageViewEx usageView = usageViewRef.get();
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         long duration = reportSearchCompletedToFus(false);
@@ -210,7 +214,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @NotNull Supplier<SearchScope> getMaxSearchScopeToWarnOfFallingOutOf(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor.length > 0 ? searchFor[0] : null;
-    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(target);
+    DataProvider dataProvider = target instanceof DataProvider o ? o : null;
     SearchScope scope = dataProvider != null ? UsageView.USAGE_SCOPE.getData(dataProvider) : null;
     if (scope != null) {
       return () -> scope;
@@ -219,7 +223,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return () -> {
       SearchScope scope2 = bgtProvider != null ? UsageView.USAGE_SCOPE.getData(bgtProvider) : null;
       if (scope2 != null) return scope2;
-      return GlobalSearchScope.everythingScope(myProject); // by default do not warn of falling out of scope
+      return GlobalSearchScope.everythingScope(project); // by default do not warn of falling out of scope
     };
   }
 
@@ -234,7 +238,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   public UsageView getSelectedUsageView() {
-    Content content = UsageViewContentManager.getInstance(myProject).getSelectedContent();
+    Content content = UsageViewContentManager.getInstance(project).getSelectedContent();
     if (content != null) {
       return content.getUserData(USAGE_VIEW_KEY);
     }
@@ -242,13 +246,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return null;
   }
 
-  @NotNull
-  public static @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
+  public static @NotNull @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     return UsageViewBundle.message("search.progress.0.in.1", presentation.getSearchString(), presentation.getScopeText());
   }
 
   void showToolWindow(boolean activateWindow) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND);
     toolWindow.show(null);
     if (activateWindow && !toolWindow.isActive()) {
       toolWindow.activate(null);
@@ -256,6 +259,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
 
+  @ApiStatus.Internal
   public static void showTooManyUsagesWarningLater(@NotNull Project project,
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
@@ -281,30 +285,38 @@ public class UsageViewManagerImpl extends UsageViewManager {
     });
   }
 
+  @ApiStatus.Internal
   public static long getFileLength(@NotNull VirtualFile virtualFile) {
     return ReadAction.compute(() -> virtualFile.isValid() ? virtualFile.getLength() : -1L);
   }
 
-  @NotNull
-  public static String presentableSize(long bytes) {
+  @ApiStatus.Internal
+  public static @NotNull String presentableSize(long bytes) {
     long megabytes = bytes / (1024 * 1024);
     return UsageViewBundle.message("find.file.size.megabytes", Long.toString(megabytes));
   }
 
-  public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    VirtualFile file = ReadAction.compute(() -> {
-      if (usage instanceof PsiElementUsage) {
-        PsiElement element = ((PsiElementUsage)usage).getElement();
-        if (element == null) return null;
+  @ApiStatus.Internal
+  public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope, @NotNull SearchScope everythingScope) {
+    if (searchScope.equals(everythingScope)) return true;
+    return ReadAction.compute(() -> {
+      VirtualFile file;
+      if (usage instanceof PsiElementUsage psiElementUsage) {
+        PsiElement element = psiElementUsage.getElement();
+        if (element == null) return false;
         if (searchScope instanceof EverythingGlobalScope ||
             searchScope instanceof ProjectScopeImpl ||
-            searchScope instanceof ProjectAndLibrariesScope) return NullVirtualFile.INSTANCE;
-        return PsiUtilCore.getVirtualFile(element);
+            searchScope instanceof ProjectAndLibrariesScope) return true;
+        file = PsiUtilCore.getVirtualFile(element);
       }
-      return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+      else if (usage instanceof UsageInFile usageInFile){
+        file = usageInFile.getFile(); 
+      }
+      else {
+        return false;
+      }
+      return file != null && isFileInScope(file, searchScope);
     });
-    //noinspection UseVirtualFileEquals
-    return file == NullVirtualFile.INSTANCE || file != null && isFileInScope(file, searchScope);
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {
@@ -315,6 +327,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return searchScope.contains(file);
   }
 
+  @ApiStatus.Internal
   public static @Nls(capitalization = Sentence) @NotNull String outOfScopeMessage(int nUsages, @NotNull SearchScope searchScope) {
     return UsageViewBundle.message("0.usages.are.out.of.scope", nUsages, searchScope.getDisplayName());
   }

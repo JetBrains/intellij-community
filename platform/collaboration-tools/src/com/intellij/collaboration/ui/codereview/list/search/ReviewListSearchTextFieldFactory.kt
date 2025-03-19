@@ -3,7 +3,6 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldProperties
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
@@ -16,16 +15,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.awt.Point
-import java.awt.event.InputEvent
-import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JTextField
 
-class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow<String?>) {
+internal class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow<String?>) {
 
   fun create(viewScope: CoroutineScope, chooseFromHistory: suspend (RelativePoint) -> Unit): JTextField {
     val searchField = ExtendableTextField()
-    DarculaTextFieldProperties.makeTextFiledRounded(searchField)
     searchField.addActionListener {
       val text = searchField.text.nullize()
       searchState.update { text }
@@ -40,12 +36,10 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
       override fun isIconBeforeText(): Boolean = true
       override fun getIcon(hovered: Boolean): Icon = AllIcons.Actions.SearchWithHistory
 
-      override fun getActionOnClick(inputEvent: InputEvent): Runnable = Runnable {
-        if (inputEvent is MouseEvent) {
-          val point = createHistoryPoint(searchField)
-          viewScope.launch {
-            chooseFromHistory(point)
-          }
+      override fun getActionOnClick(): Runnable = Runnable {
+        val point = createHistoryPoint(searchField)
+        viewScope.launch {
+          chooseFromHistory(point)
         }
       }
     })

@@ -1,19 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
-  private @NotNull final UnknownInvalidSdk mySdk;
-  private @NotNull final UnknownSdkLocalSdkFix myFix;
+final class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
+  private final @NotNull UnknownInvalidSdk mySdk;
+  private final @NotNull UnknownSdkLocalSdkFix myFix;
 
   UnknownInvalidSdkFixLocal(@NotNull UnknownInvalidSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix localSdkFix) {
@@ -52,10 +52,9 @@ class UnknownInvalidSdkFixLocal extends UnknownSdkFixActionLocalBase implements 
     return myFix.getExistingSdkHome();
   }
 
-  @NotNull
   @Override
-  protected Sdk applyLocalFix() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  protected @NotNull Sdk applyLocalFix() {
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       String sdkFixVersionString = myFix.getVersionString();
       String sdkHome = myFix.getExistingSdkHome();

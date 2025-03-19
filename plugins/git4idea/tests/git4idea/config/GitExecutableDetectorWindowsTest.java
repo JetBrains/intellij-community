@@ -171,7 +171,7 @@ public class GitExecutableDetectorWindowsTest {
 
       @NotNull
       @Override
-      protected File getWinRoot() {
+      protected File getWinRootInTests() {
         return TEST_WIN_ROOT;
       }
 

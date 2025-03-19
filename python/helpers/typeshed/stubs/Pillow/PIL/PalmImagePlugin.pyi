@@ -1,5 +1,5 @@
-from typing import Any
+from _typeshed import Incomplete
 
 def build_prototype_image(): ...
 
-Palm8BitColormapImage: Any
+Palm8BitColormapImage: Incomplete

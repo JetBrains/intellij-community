@@ -19,7 +19,7 @@ import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
@@ -71,14 +71,14 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       if (atToken(PyTokenTypes.LPAR)) {
         final SyntaxTreeBuilder.Marker funcTypeMark = myBuilder.mark();
         parseParameterTypeList();
-        checkMatches(PyTokenTypes.RARROW, PyPsiBundle.message("rarrow.expected"));
+        checkMatches(PyTokenTypes.RARROW, PyParsingBundle.message("rarrow.expected"));
         final boolean parsed = getExpressionParser().parseSingleExpression(false);
         if (!parsed) {
-          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
         }
         funcTypeMark.done(PyFunctionTypeAnnotationElementTypes.FUNCTION_SIGNATURE);
       }
-      recoverUntilMatches(PyPsiBundle.message("unexpected.tokens"));
+      recoverUntilMatches(PyParsingBundle.message("unexpected.tokens"));
     }
 
     private void parseParameterTypeList() {
@@ -90,7 +90,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       int paramCount = 0;
       while (!(atAnyOfTokens(PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK) || myBuilder.eof()) ) {
         if (paramCount > 0) {
-          checkMatches(PyTokenTypes.COMMA, PyPsiBundle.message("PARSE.expected.comma"));
+          checkMatches(PyTokenTypes.COMMA, PyParsingBundle.message("PARSE.expected.comma"));
         }
         boolean parsed;
         if (atToken(PyTokenTypes.MULT)) {
@@ -109,12 +109,12 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
           parsed = exprParser.parseSingleExpression(false);
         }
         if (!parsed) {
-          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
-          recoverUntilMatches(PyPsiBundle.message("PARSE.expected.expression"), PyTokenTypes.COMMA, PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK);
+          myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
+          recoverUntilMatches(PyParsingBundle.message("PARSE.expected.expression"), PyTokenTypes.COMMA, PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK);
         }
         paramCount++;
       }
-      checkMatches(PyTokenTypes.RPAR, PyPsiBundle.message("PARSE.expected.rpar"));
+      checkMatches(PyTokenTypes.RPAR, PyParsingBundle.message("PARSE.expected.rpar"));
       listMark.done(PyFunctionTypeAnnotationElementTypes.PARAMETER_TYPE_LIST);
     }
 

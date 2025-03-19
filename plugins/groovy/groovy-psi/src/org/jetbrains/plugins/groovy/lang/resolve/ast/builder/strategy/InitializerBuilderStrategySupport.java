@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,7 +22,7 @@ import java.util.Objects;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getBuilderClassName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.getFieldMethodName;
 
-public class InitializerBuilderStrategySupport extends BuilderAnnotationContributor {
+public final class InitializerBuilderStrategySupport extends BuilderAnnotationContributor {
 
   public static final String INITIALIZER_STRATEGY_NAME = "InitializerStrategy";
   public static final String SET_FQN = "groovy.transform.builder.InitializerStrategy.SET";
@@ -60,9 +60,8 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       myContext.addInnerClass(builderClass);
     }
 
-    @NotNull
-    private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation,
-                                                    PsiVariable @NotNull [] setters) {
+    private @NotNull LightPsiClassBuilder createBuilderClass(final @NotNull PsiAnnotation annotation,
+                                                             PsiVariable @NotNull [] setters) {
       final LightPsiClassBuilder builderClass = new BuilderHelperLightPsiClass(
         myContainingClass, getBuilderClassName(annotation, myContainingClass)
       );
@@ -75,11 +74,10 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       return builderClass.addMethod(createBuildMethod(annotation, builderClass));
     }
 
-    @NotNull
-    private LightMethodBuilder createFieldSetter(@NotNull LightPsiClassBuilder builderClass,
-                                                 @NotNull PsiVariable field,
-                                                 @NotNull PsiAnnotation annotation,
-                                                 int currentField) {
+    private @NotNull LightMethodBuilder createFieldSetter(@NotNull LightPsiClassBuilder builderClass,
+                                                          @NotNull PsiVariable field,
+                                                          @NotNull PsiAnnotation annotation,
+                                                          int currentField) {
       final String name = Objects.requireNonNull(field.getName());
       final LightMethodBuilder fieldSetter = new LightMethodBuilder(builderClass.getManager(), getFieldMethodName(annotation, name));
       final PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put(
@@ -105,8 +103,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       return buildMethod;
     }
 
-    @NotNull
-    private LightMethodBuilder createBuilderMethod(@NotNull PsiClass builderClass, @NotNull PsiAnnotation annotation) {
+    private @NotNull LightMethodBuilder createBuilderMethod(@NotNull PsiClass builderClass, @NotNull PsiAnnotation annotation) {
       final LightMethodBuilder builderMethod = new LightMethodBuilder(myContext.getManager(), getBuilderMethodName(annotation));
       builderMethod.addModifier(PsiModifier.STATIC);
       builderMethod.setOriginInfo(ORIGIN_INFO);
@@ -115,10 +112,9 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       return builderMethod;
     }
 
-    @NotNull
-    private LightMethodBuilder createBuilderConstructor(@NotNull PsiClass constructedClass,
-                                                        @NotNull PsiClass builderClass,
-                                                        @NotNull PsiAnnotation annotation) {
+    private @NotNull LightMethodBuilder createBuilderConstructor(@NotNull PsiClass constructedClass,
+                                                                 @NotNull PsiClass builderClass,
+                                                                 @NotNull PsiAnnotation annotation) {
       final LightMethodBuilder constructor = new LightMethodBuilder(constructedClass, constructedClass.getLanguage()).addParameter(
         "builder", createAllSetUnsetType(builderClass, true)
       ).setConstructor(true);
@@ -144,21 +140,17 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       myContext.addInnerClass(builderClass);
     }
 
-    @NotNull
-    private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
+    private static @NotNull String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
       return StringUtil.isEmpty(builderMethodName) ? "createInitializer" : builderMethodName;
     }
 
-    @NlsSafe
-    @NotNull
-    private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
+    private static @NlsSafe @NotNull String getBuildMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");
       return StringUtil.isEmpty(builderMethodName) ? "create" : builderMethodName;
     }
 
-    @NotNull
-    private PsiType createAllSetUnsetType(@NotNull PsiClass builderClass, boolean setUnset) {
+    private @NotNull PsiType createAllSetUnsetType(@NotNull PsiClass builderClass, boolean setUnset) {
       final PsiClassType type = myElementFactory.createTypeByFQClassName(
         setUnset ? SET_FQN : UNSET_FQN,
         builderClass.getResolveScope()

@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.directoryContent
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.zipFile
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
@@ -32,6 +31,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipOutputStream
 import kotlin.io.path.inputStream
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   fun testFileCopy() {
@@ -364,7 +364,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
         file("file.txt", "text")
       }
     }.generateInTempDir()
-    return zipFile.toAbsolutePath().systemIndependentPath
+    return zipFile.toAbsolutePath().invariantSeparatorsPathString
   }
 
   fun testSelfIncludingArtifact() {

@@ -21,12 +21,12 @@ internal class OutdatedTableOfContentsInspection: LocalInspectionTool() {
   }
 
   private fun checkFile(file: MarkdownFile, holder: ProblemsHolder) {
-    val existingRanges = GenerateTableOfContentsAction.findExistingTocs(file).toList()
+    val existingRanges = GenerateTableOfContentsAction.Manager.findExistingTocs(file).toList()
     if (existingRanges.isEmpty()) {
       return
     }
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return
-    val expectedToc = GenerateTableOfContentsAction.obtainToc(file)
+    val expectedToc = GenerateTableOfContentsAction.Manager.obtainToc(file)
     for (range in existingRanges.asReversed()) {
       val text = document.getText(range)
       if (text != expectedToc) {

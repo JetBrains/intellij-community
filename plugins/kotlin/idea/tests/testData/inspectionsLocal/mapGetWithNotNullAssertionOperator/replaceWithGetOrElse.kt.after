@@ -1,5 +1,5 @@
 // FIX: Replace with 'getOrElse' call
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 fun test(map: Map<Int, String>) {
     val s = map.getOrElse(1) { <caret> }

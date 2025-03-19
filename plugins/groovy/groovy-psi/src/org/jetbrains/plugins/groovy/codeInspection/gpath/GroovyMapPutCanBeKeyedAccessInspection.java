@@ -15,19 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.gpath;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -36,44 +37,39 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
+public final class GroovyMapPutCanBeKeyedAccessInspection extends BaseInspection {
   private final ReplaceWithPropertyAccessFix fix = new ReplaceWithPropertyAccessFix();
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.ref.can.be.keyed.access");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return fix;
   }
 
-  private static class ReplaceWithPropertyAccessFix extends GroovyFix {
+  private static class ReplaceWithPropertyAccessFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.replace.with.keyed.access");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement referenceName = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement referenceName, @NotNull ModPsiUpdater updater) {
       final GrReferenceExpression invokedExpression = (GrReferenceExpression) referenceName.getParent();
       final GrMethodCallExpression callExpression = (GrMethodCallExpression) invokedExpression.getParent();
       final GrArgumentList argumentList = callExpression.getArgumentList();
       final GrExpression[] args = argumentList.getExpressionArguments();
-      replaceExpression(callExpression, invokedExpression.getQualifierExpression().getText() +
-          '[' + args[0].getText() + "]=" + args[1].getText());
+      GrInspectionUtil.replaceExpression(callExpression, invokedExpression.getQualifierExpression().getText() +
+                                                         '[' + args[0].getText() + "]=" + args[1].getText());
     }
   }
 

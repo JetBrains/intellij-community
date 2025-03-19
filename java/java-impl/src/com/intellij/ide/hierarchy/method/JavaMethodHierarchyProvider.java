@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.ide.hierarchy.HierarchyBrowser;
@@ -31,8 +31,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
     }
   }
 
-  @Nullable
-  private static PsiMethod getMethodImpl(DataContext dataContext){
+  private static @Nullable PsiMethod getMethodImpl(DataContext dataContext){
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
@@ -72,8 +71,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
   }
 
   @Override
-  @NotNull
-  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
+  public @NotNull HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new MethodHierarchyBrowser(target.getProject(), (PsiMethod) target);
   }
 

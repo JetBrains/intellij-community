@@ -1,5 +1,5 @@
 fun test(seq: Sequence<Int>) {
-    for (i in seq) {
-        
+    for (<selection>i<caret></selection> in seq) {
+
     }
 }

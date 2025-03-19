@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -39,7 +39,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 /**
  * @author Max Medvedev
  */
-public class GroovyInlineLocalHandler extends InlineActionHandler {
+public final class GroovyInlineLocalHandler extends InlineActionHandler {
   private static final Logger LOG = Logger.getInstance(GroovyInlineLocalHandler.class);
 
   @Override
@@ -76,8 +76,7 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
   /**
    * Returns Settings object for referenced definition in case of local variable
    */
-  @Nullable
-  private static InlineLocalVarSettings createSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
+  private static @Nullable InlineLocalVarSettings createSettings(final GrVariable variable, Editor editor, boolean invokedOnReference) {
     final String localName = variable.getName();
     final Project project = variable.getProject();
 
@@ -158,9 +157,8 @@ public class GroovyInlineLocalHandler extends InlineActionHandler {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement element) {
+  public @Nullable String getActionName(PsiElement element) {
     return getInlineVariable();
   }
 

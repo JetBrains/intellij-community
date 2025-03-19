@@ -56,6 +56,10 @@ public abstract class PyCommonResolveTestCase extends PythonCommonTestCase {
     return assertResolvesTo(aClass, name, null);
   }
 
+  protected void assertNotResolved() {
+    assertNull(doResolve());
+  }
+
   protected <T extends PsiElement> T assertResolvesTo(final Class<T> aClass,
                                                       final String name,
                                                       String containingFilePath) {

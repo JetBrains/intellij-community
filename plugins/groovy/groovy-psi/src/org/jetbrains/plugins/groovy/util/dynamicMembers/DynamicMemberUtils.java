@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,13 +41,7 @@ public final class DynamicMemberUtils {
   }
 
   public static ClassMemberHolder getMembers(@NotNull Project project, @NotNull String source) {
-    ConcurrentHashMap<String, ClassMemberHolder> map = project.getUserData(KEY);
-
-    if (map == null) {
-      map = new ConcurrentHashMap<>();
-      map = ((UserDataHolderEx)project).putUserDataIfAbsent(KEY, map);
-    }
-
+    ConcurrentHashMap<String, ClassMemberHolder> map = ConcurrencyUtil.computeIfAbsent(project, KEY, () -> new ConcurrentHashMap<>());
     ClassMemberHolder res = map.get(source);
 
     if (res == null) {
@@ -97,9 +91,7 @@ public final class DynamicMemberUtils {
     return version.compareTo(since) >= 0;
   }
 
-  @NlsSafe
-  @Nullable
-  public static String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
+  public static @NlsSafe @Nullable String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
@@ -117,7 +109,6 @@ public final class DynamicMemberUtils {
     private final Map<String, PsiField[]> myStaticFieldMap;
 
     private final Map<String, PsiMethod[]> myNonStaticMethodMap;
-    private final Map<String, PsiField[]> myNonStaticFieldMap;
 
     private ClassMemberHolder(Project project, String classSource) {
       myClassSource = classSource;
@@ -131,7 +122,6 @@ public final class DynamicMemberUtils {
       // Collect fields.
       myFieldMap = new HashMap<>();
       myStaticFieldMap = new HashMap<>();
-      myNonStaticFieldMap = new HashMap<>();
 
       GrField[] fields = myClass.getCodeFields();
 
@@ -153,9 +143,6 @@ public final class DynamicMemberUtils {
         if (field.hasModifierProperty(PsiModifier.STATIC)) {
           myStaticFieldMap.put(field.getName(), dynamicFieldArray);
         }
-        else {
-          myNonStaticFieldMap.put(field.getName(), dynamicFieldArray);
-        }
 
         Object oldValue = myFieldMap.put(field.getName(), dynamicFieldArray);
         assert oldValue == null : "Duplicated field in dynamic class: " + myClass.getName() + ":" + field.getName();
@@ -165,7 +152,7 @@ public final class DynamicMemberUtils {
 
       myFieldMap.put(null, allFields);
 
-      // Collect methods..
+      // Collect methods
       checkDuplicatedMethods(myClass);
 
       MultiMap<String, PsiMethod> multiMap = new MultiMap<>();
@@ -354,15 +341,13 @@ public final class DynamicMemberUtils {
       return myTypeParameters;
     }
 
-    @NotNull
     @Override
-    public GrParameterList getParameterList() {
+    public @NotNull GrParameterList getParameterList() {
       return myParameterList;
     }
 
-    @NotNull
     @Override
-    public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+    public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
       return namedParameters;
     }
 
@@ -381,9 +366,8 @@ public final class DynamicMemberUtils {
       return myMethod.getContainingClass();
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginalInfo;
     }
 
@@ -414,9 +398,8 @@ public final class DynamicMemberUtils {
       return myClass;
     }
 
-    @Nullable
     @Override
-    public String getOriginInfo() {
+    public @Nullable String getOriginInfo() {
       return myOriginalInfo;
     }
 

@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,10 +26,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
-    PsiExpressionList list = myArgList.getElement();
-    if (list != null && list.getExpressionCount() == 1) {
+  public @NotNull String getText(@NotNull PsiExpressionList list) {
+    if (list.getExpressionCount() == 1) {
       return QuickFixBundle.message("add.type.arguments.single.argument.text");
     }
 
@@ -38,8 +36,8 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {
     @Override
-    public AddTypeArgumentsFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new AddTypeArgumentsFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new AddTypeArgumentsFix(list, i, toType, this).asIntention();
     }
 
     @Override
@@ -48,19 +46,17 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
     }
 
     @Override
-    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(final @NotNull PsiType exprType, final @NotNull PsiType parameterType, final @NotNull PsiElement context) {
       return !(exprType instanceof PsiPrimitiveType) && !(parameterType instanceof PsiPrimitiveType) || TypeConversionUtil.boxingConversionApplicable(exprType, parameterType);
     }
   }
 
-  @Nullable
-  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
+  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType) {
     return addTypeArguments(expression, toType, true);
   }
 
-  @Nullable
-  public static PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(expression)) return null;
+  public static @Nullable PsiExpression addTypeArguments(@NotNull PsiExpression expression, @Nullable PsiType toType, boolean withShortening) {
+    if (!PsiUtil.isAvailable(JavaFeature.GENERICS, expression)) return null;
 
     PsiExpression orig = expression;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -127,14 +123,6 @@ public final class AddTypeArgumentsFix extends MethodArgumentFix {
       }
     }
     return null;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiExpressionList list = myArgList.getElement();
-    if (list == null) return null;
-    return new AddTypeArgumentsFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
-                                   myArgumentFixerActionFactory);
   }
 
   public static final ArgumentFixerActionFactory REGISTRAR = new AddTypeArgumentsFix.MyFixerActionFactory();

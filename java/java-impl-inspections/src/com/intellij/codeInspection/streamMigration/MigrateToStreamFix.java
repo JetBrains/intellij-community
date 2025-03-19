@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -14,41 +17,31 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-class MigrateToStreamFix implements LocalQuickFix {
+class MigrateToStreamFix extends PsiUpdateModCommandQuickFix {
   private final BaseStreamApiMigration myMigration;
 
   protected MigrateToStreamFix(BaseStreamApiMigration migration) {
     myMigration = migration;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return JavaAnalysisBundle.message("replace.with.stream.api.fix", myMigration.getReplacement());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.family.replace.with.stream.api.equivalent");
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    // Has non-trivial fields but safe
-    return this;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiLoopStatement loopStatement = tryCast(descriptor.getPsiElement(), PsiLoopStatement.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiLoopStatement loopStatement = tryCast(element, PsiLoopStatement.class);
     if (loopStatement == null) return;
     StreamSource source = StreamSource.tryCreate(loopStatement);
     PsiStatement body = loopStatement.getBody();

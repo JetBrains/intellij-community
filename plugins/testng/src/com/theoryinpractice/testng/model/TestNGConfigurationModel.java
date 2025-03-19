@@ -127,7 +127,7 @@ public class TestNGConfigurationModel
           final LinkedHashSet<String> set = new LinkedHashSet<>();
           final String[] patterns = getText(TestType.PATTERN).split("\\|\\|");
           for (String pattern : patterns) {
-            if (pattern.length() > 0) {
+            if (!pattern.isEmpty()) {
               set.add(pattern);
             }
           }
@@ -151,7 +151,7 @@ public class TestNGConfigurationModel
         return getText(type, typeDocuments);
     }
 
-    private String getText(TestType testType, Object[] documents) {
+    private static String getText(TestType testType, Object[] documents) {
         Object document = documents[testType.getValue()];
       if (document instanceof PlainDocument) {
         try {

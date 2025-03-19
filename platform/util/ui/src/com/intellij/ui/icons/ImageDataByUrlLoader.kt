@@ -9,15 +9,17 @@ import java.lang.ref.WeakReference
 import java.net.MalformedURLException
 import java.net.URL
 
-private val UNRESOLVED_URL = URL("file:///unresolved")
+private val UNRESOLVED_URL = URL("$FILE_SCHEME_PREFIX//unresolved")
 
 @ApiStatus.Internal
 internal class ImageDataByUrlLoader internal constructor(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
-  private val useCacheOnLoad: Boolean,
   override val url: URL,
 ) : ImageDataLoader {
+  override val path: String
+    get() = url.toString()
+
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     return loadImage(path = url.toString(),
                      filters = parameters.filters,
@@ -25,18 +27,18 @@ internal class ImageDataByUrlLoader internal constructor(
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
-                     useCache = useCacheOnLoad,
+                     useCache = false,
                      scaleContext = scaleContext)
   }
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
-    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
+  override fun patch(transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = path, transform = transform)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
   override fun toString(): String {
-    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url, useCacheOnLoad=$useCacheOnLoad)"
+    return "ImageDataByUrlLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, url=$url"
   }
 }
 
@@ -44,7 +46,7 @@ internal class ImageDataByPathResourceLoader(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
   private val strict: Boolean,
-  private val path: String,
+  override val path: String,
 ) : ImageDataLoader {
   @Volatile
   override var url: URL? = UNRESOLVED_URL
@@ -72,13 +74,13 @@ internal class ImageDataByPathResourceLoader(
                      scaleContext = scaleContext)
   }
 
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
-    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
+  override fun patch(transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = path, transform = transform)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
 
-  override fun toString(): String = "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
+  override fun toString(): String = "ImageDataByPathResourceLoader(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
 }
 
 private fun resolveUrl(path: String?,
@@ -112,18 +114,18 @@ private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
   // Find either PNG or SVG icon.
   // The icon will then be wrapped into CachedImageIcon,
   // which will load a proper icon version depending on the context - UI theme, DPI.
-  // SVG version, when present, has more priority than PNG.
+  // The SVG version, when present, has more priority than PNG.
   // See for details: com.intellij.util.ImageLoader.ImageDescList#create
   var effectivePath = path
   when {
     effectivePath.endsWith(".png") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".svg"
     effectivePath.endsWith(".svg") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".png"
-    else -> logger<ImageDataLoader>().debug("unexpected path: ", effectivePath)
+    else -> logger<ImageDataLoader>().warn("unexpected path: $effectivePath")
   }
   return urlProvider(effectivePath)
 }
 
-internal class ImageDataByFilePathLoader(private val path: String) : PatchedImageDataLoader {
+internal class ImageDataByFilePathLoader(override val path: String) : PatchedImageDataLoader {
   override val url: URL
     get() = URL(path)
 
@@ -138,21 +140,19 @@ internal class ImageDataByFilePathLoader(private val path: String) : PatchedImag
                      scaleContext = scaleContext)
   }
 
-  override fun toString(): String = "ImageDataByFilePathLoader(path=$path"
+  override fun toString(): String = "ImageDataByFilePathLoader(path=$path)"
 }
 
-private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
-                              originalPath: String,
-                              transform: IconTransform): ImageDataLoader? {
+private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?, originalPath: String, transform: IconTransform): ImageDataLoader? {
   val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
   val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
   val path = patchedPath.first
-  if (path != null && path.startsWith('/')) {
+  if (path.startsWith('/')) {
     return FinalImageDataLoader(path = path.substring(1), classLoader = classLoader ?: transform.javaClass.classLoader)
   }
 
   // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one.
-  if (path != null && path.startsWith("file:/")) {
+  if (path.startsWith(FILE_SCHEME_PREFIX)) {
     try {
       return ImageDataByFilePathLoader(path)
     }
@@ -162,7 +162,7 @@ private fun createNewResolverIfNeeded(originalClassLoader: ClassLoader?,
   return null
 }
 
-private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
+private class FinalImageDataLoader(override val path: String, classLoader: ClassLoader) : PatchedImageDataLoader {
   private val classLoaderRef = WeakReference(classLoader)
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
@@ -187,7 +187,7 @@ private class FinalImageDataLoader(private val path: String, classLoader: ClassL
 
 private interface PatchedImageDataLoader : ImageDataLoader {
   // this resolver is already produced as a result of a patch
-  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? = null
+  override fun patch(transform: IconTransform): ImageDataLoader? = null
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean = false
 }

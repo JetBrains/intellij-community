@@ -417,10 +417,9 @@ class RecursionUtils {
     } else if (statement instanceof GrExpression expression) {
       return expressionDefinitelyRecurses(expression, method);
     } else if (statement instanceof GrVariableDeclaration declaration) {
-      final GrVariable[] declaredElements =
-          declaration.getVariables();
-      for (final GrVariable variable : declaredElements) {
-        final GrExpression initializer = (GrExpression) variable.getInitializer();
+      final GrVariable[] declaredElements = declaration.getVariables();
+      for (GrVariable variable : declaredElements) {
+        final GrExpression initializer = variable.getInitializerGroovy();
         if (expressionDefinitelyRecurses(initializer, method)) {
           return true;
         }

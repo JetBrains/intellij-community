@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.Application;
@@ -39,7 +39,7 @@ public final class ProjectMacrosUtil {
     return checkMacros(project, usedMacros);
   }
 
-  public static boolean checkMacros(@NotNull final Project project, @NotNull final Set<String> usedMacros) {
+  public static boolean checkMacros(final @NotNull Project project, final @NotNull Set<String> usedMacros) {
     PathMacros pathMacros = PathMacros.getInstance();
     usedMacros.removeAll(pathMacros.getSystemMacroNames());
     usedMacros.removeAll(pathMacros.getUserMacroNames());
@@ -62,7 +62,7 @@ public final class ProjectMacrosUtil {
 
     // there are undefined macros, need to define them before loading components
     final boolean[] result = new boolean[1];
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.NON_MODAL);
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(() -> result[0] = showMacrosConfigurationDialog(project, usedMacros), ModalityState.nonModal());
     return result[0];
   }
 }

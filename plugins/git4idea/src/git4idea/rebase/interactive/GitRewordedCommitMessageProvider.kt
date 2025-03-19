@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.xmlb.annotations.XCollection
 import git4idea.rebase.GitRebaseUtils
 
+@Service(Service.Level.PROJECT)
 @State(
   name = "GitRewordedCommitMessages",
   storages = [Storage(value = StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED)],

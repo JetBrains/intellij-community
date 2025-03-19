@@ -3,12 +3,14 @@ package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 
+@ApiStatus.Internal
 object NGramModelSerializer {
   @Throws(IOException::class)
   fun saveNGrams(path: Path, runner: NGramIncrementalModelRunner) {

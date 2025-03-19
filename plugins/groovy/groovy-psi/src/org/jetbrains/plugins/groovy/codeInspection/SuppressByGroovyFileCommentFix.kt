@@ -2,19 +2,18 @@
 package org.jetbrains.plugins.groovy.codeInspection
 
 import com.intellij.analysis.AnalysisBundle
-import com.intellij.codeInsight.daemon.impl.actions.SuppressByCommentFix
+import com.intellij.codeInsight.daemon.impl.actions.SuppressByCommentModCommandFix
 import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.SuppressionUtilCore
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
-internal class SuppressByGroovyFileCommentFix(toolId: String) : SuppressByCommentFix(toolId, GroovyFile::class.java) {
+internal class SuppressByGroovyFileCommentFix(toolId: String) : SuppressByCommentModCommandFix(toolId, GroovyFile::class.java) {
 
   override fun getText(): @IntentionName String = AnalysisBundle.message("suppress.inspection.file")
 
@@ -22,7 +21,7 @@ internal class SuppressByGroovyFileCommentFix(toolId: String) : SuppressByCommen
 
   override fun createSuppression(project: Project, element: PsiElement, container: PsiElement) {
     val file = container as GroovyFile
-    val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+    val document = file.viewProvider.document ?: return
     val commentText = "//" + SuppressionUtil.FILE_PREFIX + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + myID
     val anchor = fileComments(file).lastOrNull()
     if (anchor == null) {

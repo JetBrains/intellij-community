@@ -25,7 +25,6 @@
 package com.intellij.openapi.vcs.changes.ignore.lang;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
@@ -65,7 +64,7 @@ public class IgnoreParserDefinition implements ParserDefinition {
   /**
    * Element type of the node describing a file in the specified language.
    */
-  public static final IFileElementType FILE = new IFileElementType(Language.findInstance(IgnoreLanguage.class));
+  public static final IFileElementType FILE = new IFileElementType(IgnoreLanguage.INSTANCE);
 
   /**
    * Returns the lexer for lexing files in the specified project. This lexer does not need to support incremental
@@ -74,9 +73,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param project the project to which the lexer is connected.
    * @return the lexer instance.
    */
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new IgnoreLexerAdapter();
   }
 
@@ -108,9 +106,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of comment token types.
    */
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return Lazy.COMMENTS;
   }
 
@@ -120,9 +117,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    *
    * @return the set of string literal element types.
    */
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.EMPTY;
   }
 
@@ -134,9 +130,8 @@ public class IgnoreParserDefinition implements ParserDefinition {
    * @param node the node for which the PSI element should be returned.
    * @return the PSI element matching the element type of the AST node.
    */
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     return IgnoreTypes.Factory.createElement(node);
   }
 

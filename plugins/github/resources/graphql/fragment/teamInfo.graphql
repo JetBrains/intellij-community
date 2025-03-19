@@ -1,9 +1,0 @@
-fragment teamInfo on Team {
-    __typename
-    ...nodeInfo
-    slug
-    url
-    avatarUrl
-    name
-    combinedSlug
-}

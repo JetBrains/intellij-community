@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -11,13 +11,9 @@ import org.jetbrains.annotations.Nullable;
 public class JavaCollectionBreakpointProperties extends JavaBreakpointProperties<JavaCollectionBreakpointProperties> {
   public boolean SHOULD_SAVE_COLLECTION_HISTORY = true;
 
-  @Attribute("field")
-  @NlsSafe
-  public String myFieldName;
+  @Attribute("field") public @NlsSafe String myFieldName;
 
-  @Attribute("class")
-  @NlsSafe
-  public String myClassName;
+  @Attribute("class") public @NlsSafe String myClassName;
 
   public JavaCollectionBreakpointProperties(String fieldName, String className) {
     myFieldName = fieldName;
@@ -27,9 +23,8 @@ public class JavaCollectionBreakpointProperties extends JavaBreakpointProperties
   public JavaCollectionBreakpointProperties() {
   }
 
-  @Nullable
   @Override
-  public JavaCollectionBreakpointProperties getState() {
+  public @Nullable JavaCollectionBreakpointProperties getState() {
     return this;
   }
 

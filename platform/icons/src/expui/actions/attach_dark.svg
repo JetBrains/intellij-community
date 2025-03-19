@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_18121_15090)">
+<path d="M2.49961 7.5L7.49958 2.50003C8.88031 1.1193 11.1189 1.1193 12.4996 2.50002V2.50002C13.8803 3.88073 13.8804 6.11929 12.4997 7.50002L6.09999 13.9C5.27156 14.7284 3.92839 14.7285 3.09989 13.9001V13.9001C2.27132 13.0716 2.27128 11.7283 3.09979 10.8998L9.49961 4.5" stroke="#CED0D6" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_18121_15090">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

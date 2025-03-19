@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.server.BuildManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -44,8 +43,8 @@ class KotlinCompilerReferenceIndexStorage private constructor(
 
         private val LOG = logger<KotlinCompilerReferenceIndexStorage>()
 
-        fun open(project: Project): KotlinCompilerReferenceIndexStorage? {
-            val projectPath = runReadAction { project.takeUnless(Project::isDisposed)?.basePath } ?: return null
+        fun open(project: Project, projectPath: String): KotlinCompilerReferenceIndexStorage? {
+            if (project.isDisposed) return null
             val buildDataPaths = project.buildDataPaths
             val kotlinDataContainerPath = buildDataPaths.kotlinDataContainer ?: kotlin.run {
                 LOG.warn("${SettingConstants.KOTLIN_DATA_CONTAINER_ID} is not found")
@@ -77,12 +76,12 @@ class KotlinCompilerReferenceIndexStorage private constructor(
         ) = initializeSubtypeStorage(buildDataPaths, destination)
 
         internal val Project.buildDataPaths: BuildDataPaths
-            get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDirectory(this))
+            get() = BuildDataPathsImpl(BuildManager.getInstance().getProjectSystemDir(this))
 
         internal val BuildDataPaths.kotlinDataContainer: Path?
-            get() = targetsDataRoot?.toPath()
-                ?.resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
-                ?.takeIf { it.exists() && it.isDirectory() }
+            get() = targetsDataRoot
+                .resolve(SettingConstants.KOTLIN_DATA_CONTAINER_ID)
+                .takeIf { it.exists() && it.isDirectory() }
                 ?.listDirectoryEntries("${SettingConstants.KOTLIN_DATA_CONTAINER_ID}*")
                 ?.firstOrNull()
 
@@ -127,7 +126,7 @@ class KotlinCompilerReferenceIndexStorage private constructor(
 
         private fun visitSubtypeStorages(buildDataPaths: BuildDataPaths, processor: (Path) -> Unit) {
             for (buildTargetType in JavaModuleBuildTargetType.ALL_TYPES) {
-                val buildTargetPath = buildDataPaths.getTargetTypeDataRoot(buildTargetType).toPath()
+                val buildTargetPath = buildDataPaths.getTargetTypeDataRootDir(buildTargetType)
                 if (buildTargetPath.notExists() || !buildTargetPath.isDirectory()) continue
                 buildTargetPath.forEachDirectoryEntry { targetDataRoot ->
                     val workingPath = targetDataRoot.takeIf { it.isDirectory() }

@@ -6,11 +6,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
@@ -27,11 +23,10 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
+import java.awt.Component
+import java.awt.Container
 import java.awt.event.ActionEvent
-import javax.swing.ComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -107,6 +102,11 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
       })
       add(head, CC().minWidth("30"))
       add(changesWarningLabel, CC().gapLeft("10"))
+
+      isFocusTraversalPolicyProvider = true
+      focusTraversalPolicy = object : LayoutFocusTraversalPolicy() {
+        override fun getDefaultComponent(aContainer: Container): Component = head
+      }
     }
   }
 
@@ -118,13 +118,13 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
           it.remote == remote
         }
-        replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
+        replaceAll(branches.sorted())
         selectedItem = currentRemoteBranch.takeIf { it != null && branches.contains(it) }
       }
       return branchModel
     }
 
-    private fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
+    fun <RepoMapping : GitRepositoryMappingData> chooseBaseBranch(parentComponent: JComponent,
                                                                           currentBranch: GitRemoteBranch?,
                                                                           repoMapping: RepoMapping,
                                                                           applySelection: (GitRemoteBranch?) -> Unit) {
@@ -146,7 +146,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                                                                  applySelection: (RepoMapping?, GitBranch?) -> Unit,
                                                                                  items: List<RepoMapping>) {
 
-      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items, currentRepo)
+      val repoModel: CollectionComboBoxModel<RepoMapping> = CollectionComboBoxModel(items.toMutableList(), currentRepo)
       val branchModel = MutableCollectionComboBoxModel<GitBranch>()
 
       repoModel.addListDataListener(object : ListDataListener {
@@ -164,9 +164,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                     GitBundle.message("branch.direction.panel.head.repo.label"),
                                     ComboBox(repoModel).apply {
                                       renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
-                                    }.also {
-                                      ComboboxSpeedSearch.installSpeedSearch(it, GitRepositoryMappingData::repositoryPath)
-                                    }) {
+                                      isSwingPopup = false
+                                    }
+      ) {
         applySelection(repoModel.selected, branchModel.selected)
       }
 
@@ -186,13 +186,10 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         it.remote == remote
       }
 
-      val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
+      val branches = repo.branches.localBranches.sorted() + remoteBranches.sorted()
       branchModel.replaceAll(branches)
       branchModel.selectedItem = repo.currentBranch
     }
-
-    private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
-
 
     private fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
                                                   @Nls repoRowMessage: String,
@@ -209,10 +206,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         row(GitBundle.message("branch.direction.panel.branch.label")) {
           branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
             .align(AlignX.FILL)
-            .also {
-              ComboboxSpeedSearch.installSpeedSearch(it.component, GitBranch::getName)
+            .component.apply {
+              isSwingPopup = false
             }
-            .component
         }
         row {
           button(GitBundle.message("branch.direction.panel.save.button")) {
@@ -226,7 +222,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
 
       return JBPopupFactory.getInstance()
         .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
-        .setFocusable(false)
+        .setFocusable(true)
         .createPopup().apply {
           setRequestFocus(true)
         }.also { popup ->

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.execution.ExecutionException
@@ -13,6 +14,7 @@ import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToPro
 import com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 import java.util.function.Supplier
 import kotlin.coroutines.coroutineContext
@@ -23,6 +25,7 @@ private val logger = Logger.getInstance("AttachDialogCollectItemsUtil")
  * Actions added to the [AttachDialogSettings] group can implement this interface to
  * affect list of processes. Only processes accepted by all predicates will be shown.
  */
+@ApiStatus.Internal
 interface ProcessPredicate : Supplier<Predicate<ProcessInfo>>
 
 suspend fun collectAttachProcessItemsGroupByProcessInfo(
@@ -30,7 +33,7 @@ suspend fun collectAttachProcessItemsGroupByProcessInfo(
   host: XAttachHost,
   attachDebuggerProviders: List<XAttachDebuggerProvider>): AttachItemsInfo {
   try {
-    val processes = host.processList
+    val processes = host.getProcessListAsync()
 
     val debuggerProviders = attachDebuggerProviders.filter { it.isAttachHostApplicable(host) }
     val dataHolder = UserDataHolderBase()
@@ -65,7 +68,7 @@ suspend fun collectAttachProcessItemsGroupByProcessInfo(
   catch (cancellationException: CancellationException) {
     throw cancellationException
   }
-  catch (executionException: ExecutionException) {
+  catch (_: ExecutionException) {
     return AttachItemsInfo.EMPTY
   }
   catch (t: Throwable) {

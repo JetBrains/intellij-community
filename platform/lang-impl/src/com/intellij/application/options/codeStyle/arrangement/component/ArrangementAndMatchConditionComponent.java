@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -28,14 +28,14 @@ import java.util.*;
  * <p/>
  * Not thread-safe.
  */
-public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
+public final class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final List<ArrangementUiComponent>  myComponents      = new ArrayList<>();
-  @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
+  private final @NotNull List<ArrangementUiComponent>  myComponents      = new ArrayList<>();
+  private final @NotNull Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 
-  @NotNull private final ArrangementCompositeMatchCondition mySetting;
-  @Nullable private      Rectangle                          myScreenBounds;
-  @Nullable private      ArrangementUiComponent             myComponentUnderMouse;
+  private final @NotNull ArrangementCompositeMatchCondition mySetting;
+  private @Nullable Rectangle                          myScreenBounds;
+  private @Nullable ArrangementUiComponent             myComponentUnderMouse;
 
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
@@ -76,9 +76,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     }
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     return mySetting;
   }
 
@@ -87,15 +86,13 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     // Do nothing
   }
 
-  @NotNull
   @Override
-  public JComponent getUiComponent() {
+  public @NotNull JComponent getUiComponent() {
     return this;
   }
 
-  @Nullable
   @Override
-  public Rectangle getScreenBounds() {
+  public @Nullable Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -195,9 +192,8 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     return null;
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseExited() {
+  public @Nullable Rectangle onMouseExited() {
     if (myComponentUnderMouse != null) {
       Rectangle result = myComponentUnderMouse.onMouseExited();
       myComponentUnderMouse = null;
@@ -206,15 +202,13 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     return null;
   }
 
-  @Nullable
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @Nullable ArrangementSettingsToken getToken() {
     return myComponentUnderMouse == null ? null : myComponentUnderMouse.getToken();
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
     return myAvailableTokens;
   }
 

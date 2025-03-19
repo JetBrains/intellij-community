@@ -1,8 +1,13 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
+fun nulls() {}
+
+fun `nul`() {}
+
 fun foo() {
     if (a == nu<caret>
 }
 
 // ORDER: null
-// ORDER: arrayOfNulls
-// ORDER: enumValueOf
-// ORDER: enumValues
+// ORDER: nul
+// ORDER: nulls

@@ -4,3 +4,5 @@ fun test(a: Any) {
 }
 
 fun <T> foo(map: Map<T, *>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToStarProjectionFix

@@ -41,10 +41,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.tryCast;
-
 public final class ProjectProblemUtils {
-
   public static final Key<Boolean> ourTestingProjectProblems = Key.create("TestingProjectProblems");
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
@@ -156,19 +153,19 @@ public final class ProjectProblemUtils {
 
   static boolean containsJvmLanguage(@NotNull VirtualFile file) {
     FileTypeRegistry fileTypeRegistry = FileTypeRegistry.getInstance();
-    LanguageFileType languageFileType = tryCast(fileTypeRegistry.getFileTypeByFileName(file.getName()), LanguageFileType.class);
+    Object obj = fileTypeRegistry.getFileTypeByFileName(file.getName());
+    LanguageFileType languageFileType = obj instanceof LanguageFileType ? (LanguageFileType)obj : null;
     return languageFileType != null && languageFileType.getLanguage() instanceof JvmLanguage;
   }
 
-  private static class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
-
+  private static final class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return ProjectProblemCodeVisionProvider.hintsEnabled(project);
+    public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
+      return ProjectProblemCodeVisionProviderKt.isCodeVisionEnabled(project);
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member == null) return;
       showProblems(editor, member);

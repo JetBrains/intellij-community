@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.module.Module;
@@ -34,9 +34,9 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
   private PythonUnitTestDetectorsBasedOnSettings() {
   }
 
-  public static boolean isTestFile(@NotNull final PyFile file,
-                                   @NotNull final ThreeState testCaseClassRequired,
-                                   @Nullable final TypeEvalContext context) {
+  public static boolean isTestFile(final @NotNull PyFile file,
+                                   final @NotNull ThreeState testCaseClassRequired,
+                                   final @Nullable TypeEvalContext context) {
     if (file.getTopLevelClasses().stream().anyMatch(o -> isTestClass(o, testCaseClassRequired, context))) {
       return true;
     }
@@ -51,7 +51,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
   /**
    * If element itself is test or situated inside of test
    */
-  public static boolean isTestElement(@NotNull final PsiElement element, @Nullable final TypeEvalContext context) {
+  public static boolean isTestElement(final @NotNull PsiElement element, final @Nullable TypeEvalContext context) {
     final PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class, false);
     if (fun != null) {
       if (isTestFunction(fun, ThreeState.UNSURE, context)) {
@@ -73,8 +73,8 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
    *
    * @see PythonUnitTestDetectorsKt#isTestClass(PyClass, TypeEvalContext)
    */
-  public static boolean isTestClass(@NotNull final PyClass cls,
-                                    @NotNull final ThreeState testCaseClassRequired,
+  public static boolean isTestClass(final @NotNull PyClass cls,
+                                    final @NotNull ThreeState testCaseClassRequired,
                                     @Nullable TypeEvalContext context) {
     if (context == null) {
       context = TypeEvalContext.codeInsightFallback(cls.getProject());
@@ -91,9 +91,9 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
    *
    * @see PythonUnitTestDetectorsKt#isTestFunction(PyFunction)
    */
-  public static boolean isTestFunction(@NotNull final PyFunction function,
-                                       @NotNull final ThreeState testCaseClassRequired,
-                                       @Nullable final TypeEvalContext context) {
+  public static boolean isTestFunction(final @NotNull PyFunction function,
+                                       final @NotNull ThreeState testCaseClassRequired,
+                                       final @Nullable TypeEvalContext context) {
     if (!PythonUnitTestDetectorsKt.isTestFunction(function)) {
       // Since there are a lot of ways to launch assert in modern frameworks,
       // we assume any function with "test" word in name is test
@@ -111,7 +111,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
   /**
    * Test class is required if "unittest" is set as test runner
    */
-  public static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor) {
+  public static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(anchor);
     if (module == null) {
       return true;
@@ -124,7 +124,7 @@ public final class PythonUnitTestDetectorsBasedOnSettings {
     return factory.onlyClassesAreSupported(sdk);
   }
 
-  private static boolean isTestCaseClassRequired(@NotNull final PsiElement anchor, @NotNull final ThreeState userProvidedValue) {
+  private static boolean isTestCaseClassRequired(final @NotNull PsiElement anchor, final @NotNull ThreeState userProvidedValue) {
     if (userProvidedValue != ThreeState.UNSURE) {
       return userProvidedValue.toBoolean();
     }

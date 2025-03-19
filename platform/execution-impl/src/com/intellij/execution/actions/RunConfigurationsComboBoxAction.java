@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.execution.ui.RedesignedRunWidgetKt;
+import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -19,12 +21,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.ActionPopupStep;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,18 +48,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+
+import static com.intellij.execution.ui.RunToolbarPopupKt.RUN_CONFIGURATION_KEY;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
+  private static final String RUN_CONFIGURATION_GROUP_ID = "RunConfiguration.Group";
 
-  public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
-  public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public static boolean hasRunCurrentFileItem(@NotNull Project project) {
+    // `RunToolbarSlotManager.getActive$intellij_platform_execution_impl()` is the same as `RunManager.isRiderRunWidgetActive()`
+    // but cheaper because it doesn't use RunManager
     if (RunToolbarSlotManager.Companion.getInstance(project).getActive$intellij_platform_execution_impl()) {
       // Run Widget shows up only in Rider. In other IDEs it's a secret feature backed by the "ide.run.widget" Registry key.
       // The 'Run Current File' feature doesn't look great together with the Run Widget.
@@ -138,14 +147,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       else {
-        name = StringUtil.shortenTextWithEllipsis(settings.getName(), RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH, 8, true);
+        name = StringUtil.shortenTextWithEllipsis(
+          settings.getName(),
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH,
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH,
+          true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        boolean withLiveIndicator = !(ExperimentalUI.isNewUI() &&
-                                      RedesignedRunWidgetKt.isContrastRunWidget() &&
-                                      actionPlace.equals(ActionPlaces.MAIN_TOOLBAR));
-        setConfigurationIcon(presentation, settings, project, withLiveIndicator);
+        setConfigurationIcon(presentation, settings, project, true);
       }
     }
     else {
@@ -203,9 +213,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return true;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 
@@ -227,68 +236,76 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
-    final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+    DefaultActionGroup result = new DefaultActionGroup();
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project == null) {
-      return allActionsGroup;
+      return result;
     }
 
     AnAction editRunConfigurationAction = getEditRunConfigurationAction();
-    if(editRunConfigurationAction != null) {
-      allActionsGroup.add(editRunConfigurationAction);
+    if (editRunConfigurationAction != null) {
+      result.add(editRunConfigurationAction);
     }
-    allActionsGroup.add(new SaveTemporaryAction());
-    allActionsGroup.addSeparator();
+    result.add(new SaveTemporaryAction());
+    result.addSeparator();
 
 
     if (!ExperimentalUI.isNewUI()) {
-      // no need for targets list in `All configurations` in new UI, since there is a separate combobox for them
-      addTargetGroup(project, allActionsGroup);
+      // no need for the target list in `All configurations` in new UI, since there is a separate combobox for them
+      addTargetGroup(project, result);
     }
 
-    allActionsGroup.add(new RunCurrentFileAction(executor -> true));
-    allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
+    result.add(new RunCurrentFileAction());
+    result.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
-    addRunConfigurations(allActionsGroup, project,
-                         settings -> createFinalAction(settings, project),
-                         folderName -> DefaultActionGroup.createPopupGroup(() -> folderName),
-                         null);
-    return allActionsGroup;
+    Map<ConfigurationType, Map<String, List<RunnerAndConfigurationSettings>>> configurationMap =
+      RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true);
+    result.add(createRunConfigurationFolderActions(project, configurationMap.values()));
+    return result;
   }
 
-  @ApiStatus.Internal
-  public static int addRunConfigurations(@NotNull DefaultActionGroup allActionsGroup,
-                                         @NotNull Project project,
-                                         @NotNull Function<? super RunnerAndConfigurationSettings, ? extends AnAction> createAction,
-                                         @NotNull Function<? super @NlsSafe String, ? extends DefaultActionGroup> createFolder,
-                                         @Nullable BiFunction<? super RunnerAndConfigurationSettings, String, ? extends AnAction> createSubAction) {
-    int allConfigurationsNumber = 0;
-    for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
-      final DefaultActionGroup actionGroup = new DefaultActionGroup();
-      for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
-        @NlsSafe String folderName = entry.getKey();
-        DefaultActionGroup group = folderName == null ? actionGroup : createFolder.apply(folderName);
-        group.getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
-        List<RunnerAndConfigurationSettings> configurationsList = entry.getValue();
-        for (RunnerAndConfigurationSettings settings : configurationsList) {
-          group.add(createAction.apply(settings));
-          if (createSubAction != null && group != actionGroup) {
-            // Inline run configuration from folder to the top level popup. It may be hidden by default but shown on search.
-            actionGroup.add(createSubAction.apply(settings, folderName));
-          }
-        }
-        if (group != actionGroup) {
-          actionGroup.add(group);
-        }
-        allConfigurationsNumber += configurationsList.size();
-      }
+  private @NotNull AnAction createRunConfigurationFolderActions(
+    @NotNull Project project,
+    @NotNull Collection<Map<String, List<RunnerAndConfigurationSettings>>> folderMaps) {
+    return new ActionGroup() {
+      @Override
+      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+        List<AnAction> result = new ArrayList<>();
+        for (Map<String, List<RunnerAndConfigurationSettings>> folderMap : folderMaps) {
+          result.add(new ActionGroup() {
+            @Override
+            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+              List<AnAction> result = new ArrayList<>();
+              for (Map.Entry<String, List<RunnerAndConfigurationSettings>> folderEntry : folderMap.entrySet()) {
+                @NlsSafe String folderName = folderEntry.getKey();
+                if (folderName == null) {
+                  result.addAll(ContainerUtil.map(folderEntry.getValue(), o -> createFinalAction(project, o)));
+                }
+                else {
+                  result.add(new ActionGroup() {
+                    {
+                      getTemplatePresentation().setPopupGroup(true);
+                      getTemplatePresentation().setText(folderName);
+                      getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
+                    }
 
-      allActionsGroup.add(actionGroup);
-      allActionsGroup.addSeparator();
-    }
-    return allConfigurationsNumber;
+                    @Override
+                    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+                      return ContainerUtil.map(folderEntry.getValue(),
+                                               o -> createFinalAction(project, o)).toArray(AnAction.EMPTY_ARRAY);
+                    }
+                  });
+                }
+              }
+              return result.toArray(AnAction.EMPTY_ARRAY);
+            }
+          });
+          result.add(Separator.getInstance());
+        }
+        return result.toArray(AnAction.EMPTY_ARRAY);
+      }
+    };
   }
 
   protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {
@@ -306,11 +323,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
   }
 
-  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
-    return new SelectConfigAction(configuration, project, executor -> true);
+  protected @NotNull AnAction createFinalAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
+    return new SelectConfigAction(project, configuration);
   }
 
-  public class RunConfigurationsComboBoxButton extends ComboBoxButton {
+  public final class RunConfigurationsComboBoxButton extends ComboBoxButton {
 
     public RunConfigurationsComboBoxButton(@NotNull Presentation presentation) {
       super(presentation);
@@ -350,7 +367,28 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-
+  @Override
+  protected JBPopup createActionPopup(DefaultActionGroup group,
+                                      @NotNull DataContext context,
+                                      @Nullable Runnable disposeCallback) {
+    JBPopup popup = super.createActionPopup(group, context, disposeCallback);
+    if (popup instanceof PopupFactoryImpl.ActionGroupPopup actionGroupPopup) {
+      PopupStep<?> step = actionGroupPopup.getStep();
+      if (step instanceof ActionPopupStep actionPopupStep) {
+        actionPopupStep.setSubStepContextAdjuster((stepContext, action) -> {
+          if (action instanceof SelectConfigAction selectConfigAction) {
+            return CustomizedDataContext.withSnapshot(stepContext, sink -> {
+              sink.set(RUN_CONFIGURATION_KEY, selectConfigAction.getConfiguration());
+            });
+          }
+          else {
+            return stepContext;
+          }
+        });
+      }
+    }
+    return popup;
+  }
 
   private static final class SaveTemporaryAction extends DumbAwareAction {
     SaveTemporaryAction() {
@@ -359,7 +397,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         RunnerAndConfigurationSettings settings = chooseTempSettings(project);
@@ -371,7 +409,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) {
@@ -399,8 +437,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setEnabledAndVisible(false);
     }
 
-    @Nullable
-    private static RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
+    private static @Nullable RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
       RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
       if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
         return selectedConfiguration;
@@ -410,55 +447,53 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
 
-  private static void addExecutorActions(@NotNull DefaultActionGroup group,
-                                         @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator,
-                                         @NotNull Function<? super Executor, Boolean> executorFilter) {
+  public static void forAllExecutors(@NotNull Consumer<? super Executor> executorProcessor) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor instanceof ExecutorGroup) {
         for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
-          if (executorFilter.apply(childExecutor)) {
-            group.addAction(actionCreator.apply(childExecutor));
-          }
+          executorProcessor.accept(childExecutor);
         }
       }
       else {
-        if (executorFilter.apply(executor)) {
-          group.addAction(actionCreator.apply(executor));
-        }
+        executorProcessor.accept(executor);
       }
     }
   }
 
   @ApiStatus.Internal
-  public static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
-    private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
+  public static class RunCurrentFileAction extends ActionGroup implements DumbAware {
 
-    public RunCurrentFileAction(@NotNull Function<? super Executor, Boolean> executorFilter) {
-      super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
-            ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
-            null);
-      myExecutorFilter = executorFilter;
-      setPopup(true);
-      getTemplatePresentation().setPerformGroup(true);
-
-      addSubActions();
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return getDefaultChildren(null).toArray(AnAction.EMPTY_ARRAY);
     }
 
-    private void addSubActions() {
+    protected @NotNull List<AnAction> getDefaultChildren(@Nullable Predicate<? super Executor> executorFilter) {
       // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
-      addExecutorActions(this, ExecutorRegistryImpl.RunCurrentFileExecutorAction::new, myExecutorFilter);
-      addSeparator();
-      addAction(new ExecutorRegistryImpl.EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
+      List<AnAction> result = new ArrayList<>();
+      forAllExecutors(o -> {
+        if (executorFilter == null || executorFilter.test(o)) {
+          result.add(new RunCurrentFileExecutorAction(o));
+        }
+      });
+      result.add(Separator.getInstance());
+      result.add(new EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
+      return result;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setPopupGroup(true);
+      e.getPresentation().setPerformGroup(true);
+
+      e.getPresentation().setText(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"));
+      e.getPresentation().setDescription(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"));
       e.getPresentation().setEnabledAndVisible(e.getProject() != null && hasRunCurrentFileItem(e.getProject()));
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -475,6 +510,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
+
+    private static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
+    private static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
 
     SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
       myProject = project;
@@ -507,83 +545,79 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class SelectConfigAction extends DefaultActionGroup implements DumbAware, AlwaysVisibleActionGroup {
-    private final RunnerAndConfigurationSettings myConfiguration;
+  public static class SelectConfigAction extends ActionGroup implements DumbAware {
     private final Project myProject;
-    private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
+    private final RunnerAndConfigurationSettings myConfiguration;
 
-    public SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project, @NotNull Function<? super Executor, Boolean> executorFilter) {
-      myConfiguration = configuration;
+    public SelectConfigAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
       myProject = project;
-      myExecutorFilter = executorFilter;
-
-      setPopup(true);
-      getTemplatePresentation().setPerformGroup(true);
-
-      String fullName = configuration.getName();
-      String name = Executor.shortenNameIfNeeded(fullName);
-      if (name.isEmpty()) {
-        name = " ";
-      }
-      String toolTip = name.equals(fullName) ? null : fullName;
-      final Presentation presentation = getTemplatePresentation();
-      presentation.setText(name, false);
-      presentation.setDescription(ExecutionBundle.message("select.0.1", configuration.getType().getConfigurationTypeDescription(), name));
-      presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, toolTip);
-      updateIcon(presentation);
-
-      // Secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
-      // We may reconsider changing this to `if (!RunManager.getInstance(project).isRunWidgetActive()) { addSubActions(); }`
-      if (hasRunSubActions(project)) {
-        addSubActions();
-      }
+      myConfiguration = configuration;
+      getTemplatePresentation().putClientProperty(RunToolbarPopupKt.RUN_CONFIGURATION_ID, myConfiguration.getUniqueID());
     }
 
-    private void updateIcon(final Presentation presentation) {
-      setConfigurationIcon(presentation, myConfiguration, myProject);
-    }
-
-    private void addSubActions() {
-      // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
-      addExecutorActions(this,
-                         executor -> new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(executor, myConfiguration, false),
-                         myExecutorFilter);
-      addSeparator(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null);
-
-      Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-      addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
-
-      if (myConfiguration.isTemporary()) {
-        String actionName = ExecutionBundle.message("choose.run.popup.save");
-        String description = ExecutionBundle.message("choose.run.popup.save.description");
-        addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            RunManager.getInstance(myProject).makeStable(myConfiguration);
-          }
-        });
-      }
-
-      String actionName = ExecutionBundle.message("choose.run.popup.delete");
-      String description = ExecutionBundle.message("choose.run.popup.delete.description");
-      addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ChooseRunConfigurationPopup.deleteConfiguration(myProject, myConfiguration, null);
-        }
-      });
+    public @NotNull RunnerAndConfigurationSettings getConfiguration() {
+      return myConfiguration;
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      return getDefaultChildren(null).toArray(AnAction.EMPTY_ARRAY);
+    }
+
+    protected @NotNull List<AnAction> getDefaultChildren(@Nullable Predicate<? super Executor> executorFilter) {
+      // The secondary menu for the existing run configurations is not directly related to the 'Run Current File' feature.
+      // We may reconsider changing this to `if (!RunManager.getInstance(project).isRunWidgetActive()) { addSubActions(); }`
+      if (!hasRunSubActions(myProject)) return Collections.emptyList();
+
+      List<AnAction> result = new ArrayList<>();
+      // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
+      forAllExecutors(o -> {
+        if (executorFilter == null || executorFilter.test(o)) {
+          result.add(new RunSpecifiedConfigExecutorAction(o, myConfiguration, false));
+        }
+      });
+      result.add(Separator.create(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null));
+
+      if (!ExperimentalUI.isNewUI()) {
+        Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+        result.add(new RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      }
+      else {
+        // TODO - when the Old UI is removed from the platform at all, do the following:
+        //   1) remove this line
+        //   2) include the action with id `IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS`
+        //      into the action group with id `RunConfigurationsComboBoxAction.RUN_CONFIGURATION_GROUP_ID`
+        //      in xml-file where the action group is declared
+        result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+      }
+
+      result.add(ActionManager.getInstance().getAction(RUN_CONFIGURATION_GROUP_ID));
+
+      return result;
+    }
+
+    @Override
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
-      super.update(e);
-      updateIcon(e.getPresentation());
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setPopupGroup(true);
+      e.getPresentation().setPerformGroup(true);
+      e.getPresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
+
+      String fullName = myConfiguration.getName();
+      String name = StringUtil.notNullize(StringUtil.nullize(Executor.shortenNameIfNeeded(fullName), " "));
+
+      String toolTip = name.equals(fullName) ? null : fullName;
+      Presentation presentation = e.getPresentation();
+      presentation.setText(name, false);
+      presentation.setDescription(ExecutionBundle.message("select.0.1", myConfiguration.getType().getConfigurationTypeDescription(), name));
+      presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, toolTip);
+
+      setConfigurationIcon(e.getPresentation(), myConfiguration, myProject);
     }
 
     @Override

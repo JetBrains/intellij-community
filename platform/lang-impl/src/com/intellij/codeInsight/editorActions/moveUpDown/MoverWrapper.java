@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
@@ -20,14 +20,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoverWrapper {
+final class MoverWrapper {
   private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
 
-  protected final boolean myIsDown;
+  private final boolean myIsDown;
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
 
-  protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+  MoverWrapper(final @NotNull StatementUpDownMover mover, final @NotNull StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;
     myIsDown = isDown;
 
@@ -38,7 +38,7 @@ class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(@NotNull Editor editor, @Nullable PsiFile file) {
+  public void move(@NotNull Editor editor, @Nullable PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();
@@ -238,7 +238,7 @@ class MoverWrapper {
     int lineStartOffset = document.getLineStartOffset(line);
     int lineEndOffset = document.getLineEndOffset(line);
     @NonNls String text = document.getCharsSequence().subSequence(lineStartOffset, lineEndOffset).toString();
-    return text.trim().length() != 0;
+    return !text.trim().isEmpty();
   }
 
   private static void restoreSelection(Editor editor,

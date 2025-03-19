@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.project.Project;
@@ -44,8 +44,7 @@ public final class RelaxedDirectInheritorChecker {
   private record ClassesAndAmbiguities(@NotNull PsiClass @NotNull [] classes, @NotNull PsiFile @NotNull [] containingFiles, boolean isAmbiguous) {
   }
 
-  @NotNull
-  private static ClassesAndAmbiguities getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
+  private static @NotNull ClassesAndAmbiguities getClassesAndTheirAmbiguities(@NotNull Project project, @NotNull String classShortName) {
     Map<String, Reference<ClassesAndAmbiguities>> cache = CachedValuesManager.getManager(project).getCachedValue(project, () ->
       CachedValueProvider.Result.create(new ConcurrentHashMap<>(), PsiModificationTracker.MODIFICATION_COUNT));
     ClassesAndAmbiguities result = dereference(cache.get(classShortName));

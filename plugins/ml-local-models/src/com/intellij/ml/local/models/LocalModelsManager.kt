@@ -3,9 +3,11 @@ package com.intellij.ml.local.models
 import com.intellij.ml.local.models.api.LocalModel
 import com.intellij.lang.Language
 import com.intellij.ml.local.models.api.LocalModelFactory
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
 class LocalModelsManager private constructor(private val project: Project) {
   companion object {

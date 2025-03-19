@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -13,10 +12,10 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 @Service(Service.Level.APP)
-class RuntimeChooserDownloader {
+internal class RuntimeChooserDownloader {
   fun downloadAndUse(indicator: ProgressIndicator, jdk: JdkItem, targetDir: Path): Path? {
     try {
-      val installer = service<RuntimeChooserJbrInstaller>()
+      val installer = RuntimeChooserJbrInstaller
       val request = installer.prepareJdkInstallation(jdk, targetDir)
       installer.installJdk(request, indicator, null)
       return request.javaHome
@@ -32,9 +31,9 @@ class RuntimeChooserDownloader {
   }
 }
 
-@Service(Service.Level.APP)
-class RuntimeChooserJbrInstaller : JdkInstallerBase() {
-  override fun defaultInstallDir(): Path {
+internal object RuntimeChooserJbrInstaller : JdkInstallerBase() {
+  override fun defaultInstallDir(osAbstractionForJdkInstaller: OsAbstractionForJdkInstaller?): Path {
+    // TODO Use osAbstractionForJdkInstaller
     val explicitHome = System.getProperty("jbr.downloader.home")
     if (explicitHome != null) {
       return Paths.get(explicitHome)

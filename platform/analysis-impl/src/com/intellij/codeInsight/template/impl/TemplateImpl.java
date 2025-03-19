@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
            Objects.equals(myGroupName, template.myGroupName) &&
            Objects.equals(myKey, template.myKey) &&
            string().equals(template.string()) &&
+           getValue(Property.USE_STATIC_IMPORT_IF_POSSIBLE) == template.getValue(Property.USE_STATIC_IMPORT_IF_POSSIBLE) &&
            (templateText() != null ? templateText().equals(template.templateText()) : template.templateText() == null) &&
            new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables)) && isDeactivated == template.isDeactivated;
   }
@@ -57,9 +59,9 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   private boolean isToShortenLongNames = true;
   private TemplateContext myTemplateContext = new TemplateContext();
 
-  @NonNls private static final String SELECTION_START = "SELECTION_START";
-  @NonNls private static final String SELECTION_END = "SELECTION_END";
-  @NonNls public static final String ARG = "ARG";
+  private static final @NonNls String SELECTION_START = "SELECTION_START";
+  private static final @NonNls String SELECTION_END = "SELECTION_END";
+  public static final @NonNls String ARG = "ARG";
 
   public static final Set<String> INTERNAL_VARS_SET = Set.of(
     END, SELECTION, SELECTION_START, SELECTION_END);
@@ -90,26 +92,25 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     this(key, string, group, true);
   }
 
-  TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
+  @ApiStatus.Internal
+  public TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
     super(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myKey = key;
     myGroupName = group;
     setBuildingTemplateTrace(storeBuildingStacktrace ? new Throwable() : null);
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt) {
+  public @NotNull Variable addVariable(@NotNull Expression expression, boolean isAlwaysStopAt) {
     return addVariable("__Variable" + myVariables.size(), expression, isAlwaysStopAt);
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull @NlsSafe String name,
-                              Expression expression,
-                              Expression defaultValueExpression,
-                              boolean isAlwaysStopAt,
-                              boolean skipOnStart) {
+  public @NotNull Variable addVariable(@NotNull @NlsSafe String name,
+                                       Expression expression,
+                                       Expression defaultValueExpression,
+                                       boolean isAlwaysStopAt,
+                                       boolean skipOnStart) {
     if (isParsed() || !isToParseSegments()) {
       addVariableSegment(name);
     }
@@ -118,9 +119,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return variable;
   }
 
-  @NotNull
   @Override
-  public Variable addVariable(@NotNull @NlsSafe String name, @NlsSafe String expression, @NlsSafe String defaultValue, boolean isAlwaysStopAt) {
+  public @NotNull Variable addVariable(@NotNull @NlsSafe String name, @NlsSafe String expression, @NlsSafe String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
@@ -151,9 +151,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myId;
   }
 
-  @NotNull
   @Override
-  public TemplateImpl copy() {
+  public @NotNull TemplateImpl copy() {
     TemplateImpl template = new TemplateImpl(myKey, string(), myGroupName);
     template.resetFrom(this);
     return template;
@@ -223,8 +222,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return isDeactivated;
   }
 
-  @NotNull
-  public TemplateContext getTemplateContext() {
+  public @NotNull TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -255,13 +253,11 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myVariables.size();
   }
 
-  @NotNull
-  public @NlsSafe String getVariableNameAt(int i) {
+  public @NotNull @NlsSafe String getVariableNameAt(int i) {
     return myVariables.get(i).getName();
   }
 
-  @NotNull
-  public @NlsSafe String getExpressionStringAt(int i) {
+  public @NotNull @NlsSafe String getExpressionStringAt(int i) {
     return myVariables.get(i).getExpressionString();
   }
 
@@ -270,8 +266,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return myVariables.get(i).getExpression();
   }
 
-  @NotNull
-  public @NlsSafe String getDefaultValueStringAt(int i) {
+  public @NotNull @NlsSafe String getDefaultValueStringAt(int i) {
     return myVariables.get(i).getDefaultValueString();
   }
 
@@ -330,7 +325,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return false;
   }
 
-  public void setId(@Nullable final String id) {
+  public void setId(final @Nullable String id) {
     myId = id;
   }
 
@@ -347,8 +342,12 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {
+    TemplateContext templateContext = getTemplateContext();
     for (Map.Entry<TemplateOptionalProcessor, Boolean> entry : context.entrySet()) {
-      entry.getKey().setEnabled(this, entry.getValue().booleanValue());
+      TemplateOptionalProcessor key = entry.getKey();
+      if (key.isVisible(this, templateContext)) {
+        key.setEnabled(this, entry.getValue().booleanValue());
+      }
     }
   }
 
@@ -365,7 +364,8 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     return new ArrayList<>(myVariables);
   }
 
-  void dropParsedData() {
+  @ApiStatus.Internal
+  public void dropParsedData() {
     for (Variable variable : myVariables) {
       variable.dropParsedData();
     }

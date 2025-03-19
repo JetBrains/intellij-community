@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
+import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Once the tree building started, it must provide at least one text node. Otherwise, an exception will be thrown.
@@ -56,7 +59,8 @@ class InlayActionData(val payload: InlayActionPayload, val handlerId: String) {
   }
 }
 
-sealed interface InlayActionPayload
+@ApiStatus.NonExtendable
+interface InlayActionPayload
 
 class StringInlayActionPayload(val text: String) : InlayActionPayload {
   override fun equals(other: Any?): Boolean {
@@ -65,9 +69,7 @@ class StringInlayActionPayload(val text: String) : InlayActionPayload {
 
     other as StringInlayActionPayload
 
-    if (text != other.text) return false
-
-    return true
+    return text == other.text
   }
 
   override fun hashCode(): Int {
@@ -86,9 +88,22 @@ class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>) : Inl
 
     other as PsiPointerInlayActionPayload
 
-    if (pointer != other.pointer) return false
+    return pointer == other.pointer
+  }
 
-    return true
+  override fun hashCode(): Int {
+    return pointer.hashCode()
+  }
+}
+
+class SymbolPointerInlayActionPayload(val pointer: Pointer<out Symbol>) : InlayActionPayload {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SymbolPointerInlayActionPayload
+
+    return pointer == other.pointer
   }
 
   override fun hashCode(): Int {

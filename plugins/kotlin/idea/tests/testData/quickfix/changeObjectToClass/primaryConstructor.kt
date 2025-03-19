@@ -6,3 +6,5 @@ annotation class Ann
 object Foo<caret>(val s: String) : Any() {
     constructor() : this("")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeObjectToClassFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeObjectToClassFix

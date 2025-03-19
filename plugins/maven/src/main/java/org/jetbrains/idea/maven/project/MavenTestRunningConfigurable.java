@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.Configurable;
@@ -25,15 +25,13 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
     myProject = project;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return MavenProjectBundle.message("maven.testRunning");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "reference.settings.project.maven.testRunning";
   }
 
@@ -57,9 +55,8 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
     myPassEnvironmentVariablesCB.setSelected(settings.isPassEnvironmentVariables());
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return myMainPanel;
   }
 
@@ -73,9 +70,8 @@ public class MavenTestRunningConfigurable implements SearchableConfigurable, Con
     return !projectSettings.equals(uiSettings);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "reference.settings.project.maven.testRunning";
   }
 }

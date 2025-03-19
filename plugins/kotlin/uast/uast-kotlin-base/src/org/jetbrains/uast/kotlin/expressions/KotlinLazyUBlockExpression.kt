@@ -10,20 +10,24 @@ import org.jetbrains.uast.*
 @ApiStatus.Internal
 class KotlinLazyUBlockExpression(
     override val uastParent: UElement?,
-    expressionProducer: (expressionParent: UElement) -> List<UExpression>
+    private val expressionProducer: (expressionParent: UElement) -> List<UExpression>
 ) : UBlockExpression {
+
+    private val expressionsPart = UastLazyPart<List<UExpression>>()
+
     override val psi: PsiElement? get() = null
     override val javaPsi: PsiElement? get() = null
     override val sourcePsi: PsiElement? get() = null
     override val uAnnotations: List<UAnnotation> = emptyList()
-    override val expressions by lz { expressionProducer(this) }
+    override val expressions: List<UExpression>
+        get() = expressionsPart.getOrBuild { expressionProducer(this) }
 
     companion object {
         fun create(initializers: List<KtAnonymousInitializer>, uastParent: UElement): UBlockExpression {
-            val languagePlugin = uastParent.getLanguagePlugin()
+            val languagePlugin = UastFacade.findPlugin(uastParent.lang)
             return KotlinLazyUBlockExpression(uastParent) { expressionParent ->
                 initializers.map {
-                    languagePlugin.convertOpt(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
+                    languagePlugin?.convertOpt(it.body, expressionParent) ?: UastEmptyExpression(expressionParent)
                 }
             }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -22,7 +22,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
 */
-public class ModuleDescriptor {
+public non-sealed class ModuleDescriptor implements Dependency {
   private String myName;
   private final MultiMap<File, DetectedSourceRoot> myContentToSourceRoots = new MultiMap<>();
   private final Set<File> myLibraryFiles = new HashSet<>();
@@ -64,8 +64,13 @@ public class ModuleDescriptor {
     return myReuseExistingElement;
   }
 
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return myModuleType;
+  }
+
+  @Override
+  public int getWeight() {
+    return 20;
   }
 
   private static String suggestModuleName(final File contentRoot) {
@@ -134,8 +139,9 @@ public class ModuleDescriptor {
   /**
    * For debug purposes only
    */
+  @Override
   public String toString() {
-    @NonNls final StringBuilder builder = new StringBuilder();
+    final @NonNls StringBuilder builder = new StringBuilder();
     builder.append("[Module: ").append(getContentRoots()).append(" | ");
     for (DetectedProjectRoot sourceRoot : getSourceRoots()) {
       builder.append(sourceRoot.getDirectory().getName()).append(",");
@@ -152,11 +158,10 @@ public class ModuleDescriptor {
     myLibraryFiles.clear();
   }
 
-  @NotNull
-  public String computeModuleFilePath() throws InvalidDataException {
+  public @NotNull String computeModuleFilePath() throws InvalidDataException {
     final String name = getName();
     final Set<File> contentRoots = getContentRoots();
-    if (contentRoots.size() > 0) {
+    if (!contentRoots.isEmpty()) {
       return contentRoots.iterator().next().getPath() + File.separator + name + ModuleFileType.DOT_DEFAULT_EXTENSION;
     }
     else {

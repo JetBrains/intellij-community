@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.PatchLine;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -26,7 +27,7 @@ import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.*;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance(GenericPatchApplier.class);
-  private final static int ourMaxWalk = 1000;
+  private static final int ourMaxWalk = 1000;
 
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
@@ -37,10 +38,10 @@ public class GenericPatchApplier {
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
-  @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
+  private final @NotNull List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
   private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
 
-  private static void debug(@NonNls final String s) {
+  private static void debug(final @NonNls String s) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(s);
     }
@@ -59,8 +60,7 @@ public class GenericPatchApplier {
     myAppliedInfo = new ArrayList<>();
   }
 
-  @Nullable
-  public static AppliedPatch apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
+  public static @Nullable AppliedPatch apply(@NotNull CharSequence text, @NotNull List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedPatch(patchedText, SUCCESS);
@@ -74,8 +74,7 @@ public class GenericPatchApplier {
     return new AppliedPatch(applier.getAfter(), applier.getStatus());
   }
 
-  @NotNull
-  public static AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
+  public static @NotNull AppliedSomehowPatch applySomehow(CharSequence text, List<? extends PatchHunk> hunks) {
     String patchedText = PlainSimplePatchApplier.apply(text, hunks);
     if (patchedText != null) {
       return new AppliedSomehowPatch(patchedText, SUCCESS, false);
@@ -90,8 +89,8 @@ public class GenericPatchApplier {
   }
 
   public static class AppliedPatch {
-    @NotNull public final String patchedText;
-    @NotNull public final ApplyPatchStatus status;
+    public final @NotNull String patchedText;
+    public final @NotNull ApplyPatchStatus status;
 
     public AppliedPatch(@NotNull String patchedText, @NotNull ApplyPatchStatus status) {
       this.patchedText = patchedText;
@@ -128,7 +127,7 @@ public class GenericPatchApplier {
     }
   }
 
-  private void printTransformations(@NonNls final String comment) {
+  private void printTransformations(final @NonNls String comment) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(comment + " GenericPatchApplier.printTransformations ---->");
       int cnt = 0;
@@ -167,55 +166,87 @@ public class GenericPatchApplier {
   }
 
   public boolean execute() {
-    debug("GenericPatchApplier execute started");
-    if (! myHunks.isEmpty()) {
-      mySuppressNewLineInEnd = myHunks.get(myHunks.size() - 1).isNoNewLineAtEnd();
-    }
-    for (final PatchHunk hunk : myHunks) {
-      myNotExact.addAll(SplitHunk.read(hunk));
-    }
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk splitHunk = iterator.next();
-      final SplitHunk copy = createWithAllContextCopy(splitHunk);
-      if (testForExactMatch(copy, splitHunk)) {
-        iterator.remove();
+    try {
+      debug("GenericPatchApplier execute started");
+      if (!myHunks.isEmpty()) {
+        mySuppressNewLineInEnd = myHunks.get(myHunks.size() - 1).isNoNewLineAtEnd();
       }
-    }
-    printTransformations("after exact match");
-    /*for (SplitHunk hunk : myNotExact) {
-      complementInsertAndDelete(hunk);
-    }*/
+      for (final PatchHunk hunk : myHunks) {
+        myNotExact.addAll(SplitHunk.read(hunk));
+      }
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk splitHunk = iterator.next();
+        final SplitHunk copy = createWithAllContextCopy(splitHunk);
+        if (testForExactMatch(copy, splitHunk)) {
+          iterator.remove();
+        }
+      }
+      printTransformations("after exact match");
+      /*for (SplitHunk hunk : myNotExact) {
+        complementInsertAndDelete(hunk);
+      }*/
 
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk hunk = iterator.next();
-      final SplitHunk copy = createWithAllContextCopy(hunk);
-      if (copy.isInsertion()) continue;
-      if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk, hunk)) {
-        iterator.remove();
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk hunk = iterator.next();
+        final SplitHunk copy = createWithAllContextCopy(hunk);
+        if (copy.isInsertion()) continue;
+        if (testForPartialContextMatch(copy, new ExactMatchSolver(copy), ourMaxWalk, hunk)) {
+          iterator.remove();
+        }
       }
+      printTransformations("after exact but without context");
+      for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
+        SplitHunk hunk = iterator.next();
+        SplitHunk original = copySplitHunk(hunk, hunk.getContextAfter(), hunk.getContextBefore());
+        complementInsertAndDelete(hunk);
+        if (hunk.isInsertion()) {
+          processAppliedInfoForUnApplied(original);
+          continue;
+        }
+        if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk, original)) {
+          iterator.remove();
+        }
+        else {
+          processAppliedInfoForUnApplied(original);
+        }
+      }
+      printTransformations("after variable place match");
+      return myNotExact.isEmpty();
     }
-    printTransformations("after exact but without context");
-    for (Iterator<SplitHunk> iterator = myNotExact.iterator(); iterator.hasNext(); ) {
-      SplitHunk hunk = iterator.next();
-      SplitHunk original = copySplitHunk(hunk, hunk.getContextAfter(), hunk.getContextBefore());
-      complementInsertAndDelete(hunk);
-      if (hunk.isInsertion()) {
-        processAppliedInfoForUnApplied(original);
-        continue;
-      }
-      if (testForPartialContextMatch(hunk, new ExactMatchSolver(hunk), ourMaxWalk, original)) {
-        iterator.remove();
-      }
-      else {
-        processAppliedInfoForUnApplied(original);
-      }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
-    printTransformations("after variable place match");
+    catch (Throwable e) {
+      LOG.error(e); // GenericPatchApplier is buggy, limit AIOOB impact on user
+    }
+
+    resetToFallbackStateOnError(false);
     return myNotExact.isEmpty();
   }
 
-  @NotNull
-  private static SplitHunk copySplitHunk(@NotNull SplitHunk hunk, @NotNull List<String> contextAfter, @NotNull List<String> contextBefore) {
+  private void resetToFallbackStateOnError(boolean applySomehow) {
+    myHadAlreadyAppliedMet = false;
+    myTransformations.clear();
+
+    myAppliedInfo.clear();
+    myNotExact.clear();
+    for (PatchHunk hunk : myHunks) {
+      List<SplitHunk> splitHunks = SplitHunk.read(hunk);
+      myNotExact.addAll(splitHunks);
+
+      for (SplitHunk splitHunk : splitHunks) {
+        processAppliedInfoForUnApplied(splitHunk);
+      }
+    }
+
+    if (applySomehow) {
+      myNotBound.addAll(myNotExact);
+      myNotBound.sort(HunksComparator.getInstance());
+      myNotExact.clear();
+    }
+  }
+
+  private static @NotNull SplitHunk copySplitHunk(@NotNull SplitHunk hunk, @NotNull List<String> contextAfter, @NotNull List<String> contextBefore) {
     ArrayList<BeforeAfter<List<String>>> steps = new ArrayList<>();
     for (BeforeAfter<List<String>> step : hunk.getPatchSteps()) {
       steps.add(new BeforeAfter<>(new ArrayList<>(step.getBefore()), new ArrayList<>(step.getAfter())));
@@ -258,8 +289,7 @@ public class GenericPatchApplier {
     return copy;
   }
 
-  @NotNull
-  private static String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
+  private static @NotNull String constructHunkWarnMessage(int startLineBefore, int startLineAfter, int sizeBefore, int sizeAfter) {
     return VcsBundle.message("patch.apply.hunk.warning", startLineBefore, sizeBefore,
                          startLineAfter, sizeAfter);
   }
@@ -320,27 +350,40 @@ public class GenericPatchApplier {
 
   // applies in a way that patch _can_ be solved manually even in the case of total mismatch
   public void trySolveSomehow() {
-    assert !myNotExact.isEmpty();
-    for (final SplitHunk hunk : myNotExact) {
-      hunk.cutSameTail();
-      if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
-        if (complementIfShort(hunk)) {
-          if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+    try {
+      assert !myNotExact.isEmpty();
+      for (final SplitHunk hunk : myNotExact) {
+        hunk.cutSameTail();
+        if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+          if (complementIfShort(hunk)) {
+            if (!testForPartialContextMatch(hunk, new LongTryMismatchSolver(hunk), ourMaxWalk, null)) {
+              myNotBound.add(hunk);
+            }
+          }
+          else {
             myNotBound.add(hunk);
           }
         }
-        else {
-          myNotBound.add(hunk);
-        }
       }
+
+      myNotBound.sort(HunksComparator.getInstance());
+      myNotExact.clear();
+      return;
     }
-    myNotBound.sort(HunksComparator.getInstance());
-    myNotExact.clear();
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e); // GenericPatchApplier is buggy, limit AIOOB impact on user
+    }
+
+    // fallback root on internal error
+    resetToFallbackStateOnError(true);
   }
 
   private boolean testForPartialContextMatch(final SplitHunk splitHunkWithExtendedContext,
                                              final MismatchSolver mismatchSolver,
-                                             final int maxWalkFromBinding, @Nullable final SplitHunk originalSplitHunk) {
+                                             final int maxWalkFromBinding, final @Nullable SplitHunk originalSplitHunk) {
     final List<BeforeAfter<List<String>>> steps = splitHunkWithExtendedContext.getPatchSteps();
     final BetterPoint betterPoint = new BetterPoint();
 
@@ -452,8 +495,7 @@ public class GenericPatchApplier {
     return fragmentResult;
   }
 
-  @NotNull
-  public List<AppliedTextPatch.AppliedSplitPatchHunk> getAppliedInfo() {
+  public @NotNull List<AppliedTextPatch.AppliedSplitPatchHunk> getAppliedInfo() {
     return myAppliedInfo;
   }
 
@@ -648,7 +690,7 @@ public class GenericPatchApplier {
   private static class BetterPoint {
     private Point myPoint;
 
-    public void feed(@NotNull final Point point) {
+    public void feed(final @NotNull Point point) {
       if (myPoint == null || point.meBetter(myPoint)) {
         myPoint = point;
       }
@@ -1138,7 +1180,7 @@ public class GenericPatchApplier {
   public static class SplitHunk {
     private final List<String> myContextBefore;
     private final List<String> myContextAfter;
-    @NotNull private final List<BeforeAfter<List<String>>> myPatchSteps;
+    private final @NotNull List<BeforeAfter<List<String>>> myPatchSteps;
     private final int myStartLineBefore;
     private final int myStartLineAfter;
 
@@ -1280,8 +1322,7 @@ public class GenericPatchApplier {
       return myContextAfter;
     }
 
-    @NotNull
-    public List<BeforeAfter<List<String>>> getPatchSteps() {
+    public @NotNull List<BeforeAfter<List<String>>> getPatchSteps() {
       return myPatchSteps;
     }
 
@@ -1344,7 +1385,7 @@ public class GenericPatchApplier {
   }
 
   private static class HunksComparator implements Comparator<SplitHunk> {
-    private final static HunksComparator ourInstance = new HunksComparator();
+    private static final HunksComparator ourInstance = new HunksComparator();
 
     public static HunksComparator getInstance() {
       return ourInstance;

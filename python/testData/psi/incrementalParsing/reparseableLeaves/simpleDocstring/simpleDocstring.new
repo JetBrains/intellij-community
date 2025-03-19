@@ -1,0 +1,6 @@
+def foo():
+    """
+    This is a TEXT docstring
+    :return: nothing
+    """
+    pass

@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.SettingsProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.openapi.actionSystem.CompositeDataProvider;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -15,9 +12,10 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -74,7 +72,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    if (element instanceof AbstractTreeNode){
+    if (element instanceof AbstractTreeNode) {
       return ((AbstractTreeNode<?>)element).getParent();
     }
     return null;
@@ -85,27 +83,16 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return (NodeDescriptor<?>)element;
   }
 
-  public abstract @Nullable List<TreeStructureProvider> getProviders();
+  public abstract @Unmodifiable @Nullable List<TreeStructureProvider> getProviders();
 
+  /** @deprecated Drop together with {@link TreeStructureProvider#getData(Collection, String)} */
+  @Deprecated(forRemoval = true)
+  @ApiStatus.Internal
   public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
-    List<TreeStructureProvider> providers = getProvidersDumbAware();
-    if (providers.isEmpty()) {
-      return null;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      List<DataProvider> bgtProviders = ContainerUtil.mapNotNull(providers, o -> (DataProvider)o.getData(selectedNodes, dataId));
-      return bgtProviders.isEmpty() ? null : CompositeDataProvider.compose(bgtProviders);
-    }
-    for (TreeStructureProvider treeStructureProvider : providers) {
-      Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
-      if (fromProvider != null) {
-        return fromProvider;
-      }
-    }
     return null;
   }
 
-  private @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
+  private @Unmodifiable @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
       return Collections.emptyList();
     }

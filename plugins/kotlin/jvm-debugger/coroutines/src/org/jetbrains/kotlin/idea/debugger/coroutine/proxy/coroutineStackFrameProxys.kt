@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.SuspendManagerUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.openapi.util.getOrCreateUserData
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StackFrame
@@ -54,9 +56,12 @@ class CoroutineStackFrameProxyImpl(
         }
 
         val debugProcess = virtualMachine.debugProcess as? DebugProcessImpl ?: return null
-        val suspendContext = debugProcess.suspendManager.pausedContext ?: return null
+        val suspendContext = SuspendManagerUtil.getContextForEvaluation(debugProcess.suspendManager) ?: return null
         val evaluationContext = EvaluationContextImpl(suspendContext, this)
-        return CoroutineScopeExtractor.extractCoroutineScope(continuation, evaluationContext)
+        val extractor = virtualMachine.getOrCreateUserData(CoroutineScopeExtractor.KEY) {
+            CoroutineScopeExtractor.create(evaluationContext)
+        }
+        return extractor.extractCoroutineScope(continuation, evaluationContext)
     }
 }
 

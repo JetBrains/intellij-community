@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE
@@ -20,7 +20,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentManagerImpl
@@ -79,7 +78,7 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
   override fun hasEmptyState(project: Project): Boolean = ChangesViewContentManager.isCommitToolWindowShown(project)
 
   override fun update(e: AnActionEvent) {
-    if (e.project?.isTrusted() == false) {
+    if (e.project?.let { TrustedProjects.isProjectTrusted(it) } == false) {
       e.presentation.isEnabledAndVisible = false
       return
     }
@@ -88,8 +87,9 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
 }
 
 private fun findCreateRepositoryAction(): AnAction? {
-  val group = ActionManager.getInstance().getAction("Vcs.ToolWindow.CreateRepository") as? ActionGroup
-  return group?.getChildren(null)?.firstOrNull()
+  val actionManager = ActionManager.getInstance()
+  val group = actionManager.getAction("Vcs.ToolWindow.CreateRepository") as? DefaultActionGroup
+  return group?.getChildren(actionManager)?.firstOrNull()
 }
 
 private fun invokeAction(project: Project, source: Any?, actionId: String, place: String) {
@@ -110,49 +110,32 @@ private fun createDataContext(project: Project): DataContext {
 }
 
 
-internal fun hideIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
-  fun updateIdLabel() {
-    val hideIdLabel = when {
-      toolWindow.contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
-      toolWindow.contentManager.isEmpty -> null
-      else -> "true"
-    }
-    if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) != hideIdLabel) {
-      toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
-      updateContentUi(toolWindow.contentManager, toolWindow.project)
-    }
-  }
-
+internal fun hideCommitIdLabelIfNotEmptyState(toolWindow: ToolWindow) {
   toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
-      updateIdLabel()
+      updateCommitIdLabel(toolWindow)
     }
 
     override fun contentRemoved(event: ContentManagerEvent) {
-      updateIdLabel()
+      updateCommitIdLabel(toolWindow)
     }
   })
-  updateIdLabel()
+  updateCommitIdLabel(toolWindow)
 }
 
-private fun updateContentUi(contentManager: ContentManager, project: Project) {
+private fun updateCommitIdLabel(toolWindow: ToolWindow) {
+  val contentManager = toolWindow.contentManager
+
+  val hideIdLabel = when {
+    contentManager.contentCount == 1 && ExperimentalUI.isNewUI() -> null
+    contentManager.isEmpty -> null
+    else -> "true"
+  }
+
+  if (toolWindow.component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL) == hideIdLabel) return
+
+  toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideIdLabel)
   if (contentManager is ContentManagerImpl) {
     (contentManager.ui as? ToolWindowContentUi)?.update()
-  }
-
-  updateCommitTabName(contentManager, project)
-}
-
-private fun updateCommitTabName(contentManager: ContentManager, project: Project) {
-  val singleContent = contentManager.contents.singleOrNull()
-
-  if (ExperimentalUI.isNewUI() && singleContent != null && singleContent.tabName == ChangesViewContentManager.LOCAL_CHANGES) {
-    singleContent.displayName = null
-  }
-  else {
-    contentManager.contents.filter { it.tabName == ChangesViewContentManager.LOCAL_CHANGES }.forEach {
-      val displayName = it.getUserData(CHANGES_VIEW_EXTENSION)?.getDisplayName(project)
-      it.displayName = displayName
-    }
   }
 }

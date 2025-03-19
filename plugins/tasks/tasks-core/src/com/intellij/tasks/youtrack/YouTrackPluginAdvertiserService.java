@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.youtrack;
 
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
@@ -25,8 +28,7 @@ final class YouTrackPluginAdvertiserService {
 
   private boolean myNotificationWasShownPerAppSession = false;
 
-  @NotNull
-  public static YouTrackPluginAdvertiserService getInstance() {
+  public static @NotNull YouTrackPluginAdvertiserService getInstance() {
     return ApplicationManager.getApplication().getService(YouTrackPluginAdvertiserService.class);
   }
 
@@ -42,7 +44,7 @@ final class YouTrackPluginAdvertiserService {
     if (PluginManagerCore.isPluginInstalled(pluginId)) {
       return;
     }
-    Notification notification = PluginsAdvertiser.getNotificationGroup()
+    Notification notification = PluginsAdvertiser.getPluginSuggestionNotificationGroup()
       .createNotification(TaskBundle.message("notification.title.more.time.tracking.features"), 
                           TaskBundle.message("notification.content.time.tracking.in.youtrack.plugin"), 
                           NotificationType.INFORMATION)
@@ -57,8 +59,7 @@ final class YouTrackPluginAdvertiserService {
     myNotificationWasShownPerAppSession = true;
   }
 
-  @Nullable
-  private static Project detectCurrentProject() {
+  private static @Nullable Project detectCurrentProject() {
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     return frame != null ? frame.getProject() : null;
   }

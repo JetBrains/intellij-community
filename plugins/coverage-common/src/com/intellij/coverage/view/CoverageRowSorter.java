@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageLogger;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
@@ -13,12 +15,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class CoverageRowSorter extends RowSorter<TableModel> {
+class CoverageRowSorter extends RowSorter<TableModel> {
   private final JBTreeTable myTreeTable;
   private final CoverageTableModel myModel;
   private RowSorter.SortKey mySortKey;
 
-  public CoverageRowSorter(JBTreeTable table, CoverageTableModel model) {
+  CoverageRowSorter(JBTreeTable table, CoverageTableModel model) {
     myTreeTable = table;
     myModel = model;
   }
@@ -46,7 +48,7 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
   }
 
   @Override
-  public List<? extends SortKey> getSortKeys() {
+  public @Unmodifiable List<? extends SortKey> getSortKeys() {
     return ContainerUtil.createMaybeSingletonList(mySortKey);
   }
 
@@ -55,6 +57,7 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
     if (keys == null || keys.isEmpty()) return;
     final SortKey key = keys.get(0);
     if (key.getSortOrder() == SortOrder.UNSORTED) return;
+    CoverageLogger.logColumnSortChanged(myModel.getColumnName(key.getColumn()), key.getSortOrder());
     mySortKey = key;
     final ColumnInfo columnInfo = myModel.getColumnInfos()[key.getColumn()];
     final Comparator<? super NodeDescriptor<?>> comparator = columnInfo.getComparator();
@@ -98,8 +101,7 @@ public class CoverageRowSorter extends RowSorter<TableModel> {
   public void rowsUpdated(int firstRow, int endRow, int column) {
   }
 
-  @NotNull
-  private static <T> Comparator<T> reverseComparator(@NotNull Comparator<T> comparator, SortOrder order) {
+  private static @NotNull <T> Comparator<T> reverseComparator(@NotNull Comparator<T> comparator, SortOrder order) {
     if (order != SortOrder.DESCENDING) return comparator;
     return (o1, o2) -> -comparator.compare(o1, o2);
   }

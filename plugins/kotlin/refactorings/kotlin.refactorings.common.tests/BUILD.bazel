@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.refactorings.common.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-refactorings-common-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-refactorings-common-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/openapi:java",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:kotlin-reflect",
+    "//java/testFramework",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/test-framework",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-refactorings-common-tests_test",
+  runtime_deps = [":kotlin-refactorings-common-tests_test_lib"]
+)
+### auto-generated section `build kotlin.refactorings.common.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -14,13 +14,13 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EnterAction extends EditorAction implements LatencyAwareEditorAction {
+public final class EnterAction extends EditorAction implements LatencyAwareEditorAction {
   public EnterAction() {
     super(new Handler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public void executeWriteAction(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (IntentionPreviewUtils.getPreviewEditor() != editor) {

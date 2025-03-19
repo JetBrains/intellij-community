@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.navigation;
 
 import com.intellij.ide.actions.QualifiedNameProvider;
@@ -16,16 +17,14 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class JsonQualifiedNameProvider implements QualifiedNameProvider {
-  @Nullable
+public final class JsonQualifiedNameProvider implements QualifiedNameProvider {
   @Override
-  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
+  public @Nullable PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName(@NotNull PsiElement element) {
+  public @Nullable String getQualifiedName(@NotNull PsiElement element) {
     return generateQualifiedName(element, JsonQualifiedNameKind.Qualified);
   }
 
@@ -53,7 +52,7 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
       parentProperty = PsiTreeUtil.getParentOfType(parentProperty, JsonProperty.class, JsonArray.class);
     }
 
-    if (builder.length() == 0) return null;
+    if (builder.isEmpty()) return null;
 
     // if the first operation is array indexing, we insert the 'root' element $
     if (builder.charAt(0) == '[') {

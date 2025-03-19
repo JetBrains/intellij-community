@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.json.JsonBundle;
@@ -14,12 +12,14 @@ import com.intellij.json.JsonLanguage;
 import com.intellij.json.jsonLines.JsonLinesFileType;
 import com.intellij.json.psi.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +47,13 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   public boolean myWarnAboutTrailingCommas = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
-  @NotNull
   @Override
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!JsonDialectUtil.isStandardJson(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new StandardJsonValidatingElementVisitor(holder);
   }
@@ -102,24 +100,24 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     return result.toString();
   }
 
-  private static class AddDoubleQuotesFix implements LocalQuickFix {
-    @NotNull
+  private static final class AddDoubleQuotesFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JsonBundle.message("quickfix.add.double.quotes.desc");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final String rawText = element.getText();
       if (element instanceof JsonLiteral || element instanceof JsonReferenceExpression) {
         String content = JsonPsiUtil.stripQuotes(rawText);
         if (element instanceof JsonStringLiteral && rawText.startsWith("'")) {
           content = escapeSingleQuotedStringContent(content);
         }
-        final PsiElement replacement = new JsonElementGenerator(project).createValue("\"" + content + "\"");
-        CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> element.replace(replacement));
+        TextRange range = element.getTextRange();
+        // Replace in document to avoid reformat
+        element.getContainingFile().getFileDocument()
+          .replaceString(range.getStartOffset(), range.getEndOffset(), "\"" + content + "\"");
       }
       else {
         Logger.getInstance(JsonStandardComplianceInspection.class)
@@ -130,7 +128,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
 
   protected class StandardJsonValidatingElementVisitor extends JsonElementVisitor {
     private final ProblemsHolder myHolder;
-    private final static String MISSING_VALUE = "missingValue";
+    private static final String MISSING_VALUE = "missingValue";
 
     public StandardJsonValidatingElementVisitor(ProblemsHolder holder) {myHolder = holder;}
 

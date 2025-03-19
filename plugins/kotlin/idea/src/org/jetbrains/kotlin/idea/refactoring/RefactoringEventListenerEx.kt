@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.util.messages.Topic
 
+@Deprecated("Please use the frontend-agnostic KotlinRefactoringListener instead")
 interface KotlinRefactoringEventListener {
     companion object {
         val EVENT_TOPIC = Topic.create("KOTLIN_REFACTORING_EVENT_TOPIC", KotlinRefactoringEventListener::class.java)

@@ -9,3 +9,6 @@ class Foo<T>(val x: T) {
 fun <T> Foo<T>.bar(z: T) {
     foo(x<caret>)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeParameterTypeFix

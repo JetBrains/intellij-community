@@ -116,11 +116,8 @@ internal object JavaInlayHintsProvider {
   }
 
   private fun isCallInfoToShow(info: CallInfo): Boolean {
-    val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-    if (!hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
-      return false
-    }
-    return true
+    val hintsProvider = JavaInlayParameterHintsProvider.Utils.getInstance()
+    return hintsProvider.ignoreOneCharOneDigitHints.get() || !info.allParamsSequential()
   }
 
   private fun String.decomposeOrderedParams(): Pair<String, Int>? {
@@ -171,13 +168,13 @@ internal object JavaInlayHintsProvider {
     return resultSet
   }
 
-  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.getInstance().showForParamsWithSameType.get()
+  private fun isShowForParamsWithSameType() = JavaInlayParameterHintsProvider.Utils.getInstance().showForParamsWithSameType.get()
 
   private fun isMethodToShow(method: PsiMethod): Boolean {
     val params = method.parameterList.parameters
     if (params.isEmpty()) return false
     if (params.size == 1) {
-      val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
+      val hintsProvider = JavaInlayParameterHintsProvider.Utils.getInstance()
       
       if (!hintsProvider.showIfMethodNameContainsParameterName.get()
           && isParamNameContainedInMethodName(params[0], method)) {
@@ -250,7 +247,7 @@ private val OPTIONAL_EMPTY: CallMatcher = CallMatcher.staticCall(CommonClassName
   .parameterCount(0)
 
 private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
-  if (JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.get()) return true
+  if (JavaInlayParameterHintsProvider.Utils.getInstance().isShowHintWhenExpressionTypeIsClear.get()) return true
   return when (callArgument) {
     is PsiLiteralExpression -> true
     is PsiThisExpression -> true

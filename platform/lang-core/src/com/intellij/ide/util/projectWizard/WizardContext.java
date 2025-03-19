@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -27,8 +27,7 @@ public class WizardContext extends UserDataHolderBase {
   /**
    * a project where the module should be added, can be null => the wizard creates a new project
    */
-  @Nullable
-  private final Project myProject;
+  private final @Nullable Project myProject;
   private final Disposable myDisposable;
   private Session mySessionId = null;
   private Path myProjectFileDirectory;
@@ -103,8 +102,7 @@ public class WizardContext extends UserDataHolderBase {
     }
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -152,6 +150,10 @@ public class WizardContext extends UserDataHolderBase {
     myProjectName = projectName;
   }
 
+  /**
+   * Returns <code>true</code> if this wizard is creating a new project,
+   * returns <code>false</code> if this wizard is creating a new module under an existing project.
+   */
   public boolean isCreatingNewProject() {
     return myProject == null;
   }
@@ -166,8 +168,7 @@ public class WizardContext extends UserDataHolderBase {
     return isCreatingNewProject() ? 1 : 0;
   }
 
-  @Nullable
-  public Icon getStepIcon() {
+  public @Nullable Icon getStepIcon() {
     return null;
   }
 
@@ -205,12 +206,11 @@ public class WizardContext extends UserDataHolderBase {
     return myProjectJdk;
   }
 
-  @Nullable
-  public ProjectBuilder getProjectBuilder() {
+  public @Nullable ProjectBuilder getProjectBuilder() {
     return myProjectBuilder;
   }
 
-  public void setProjectBuilder(@Nullable final ProjectBuilder projectBuilder) {
+  public void setProjectBuilder(final @Nullable ProjectBuilder projectBuilder) {
     myProjectBuilder = projectBuilder;
     myOriginalBuilder = myProjectBuilder;
   }

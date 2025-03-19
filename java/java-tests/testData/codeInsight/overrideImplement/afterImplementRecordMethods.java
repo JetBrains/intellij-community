@@ -11,6 +11,6 @@ record R() {
 
     @Override
     public String toString() {
-        return null;
+        return "";
     }
 }

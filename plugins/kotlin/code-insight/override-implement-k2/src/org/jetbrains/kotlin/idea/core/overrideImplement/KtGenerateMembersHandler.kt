@@ -2,25 +2,36 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -36,7 +47,9 @@ abstract class KtGenerateMembersHandler(
     final override val toImplement: Boolean
 ) : AbstractGenerateMembersHandler<KtClassMember>() {
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    override fun isClassNode(key: MemberChooserObject): Boolean = key is KaClassOrObjectSymbolChooserObject
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun generateMembers(
         editor: Editor,
         classOrObject: KtClassOrObject,
@@ -45,21 +58,25 @@ abstract class KtGenerateMembersHandler(
     ) {
         // Using allowAnalysisOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
         val (commands, insertedBlocks) = allowAnalysisOnEdt {
-            val entryMembers = analyze(classOrObject) {
-                this.generateMembers(editor, classOrObject, selectedElements, copyDoc)
-            }
-            val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
-            // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
-            // members.
-            val commands = analyze(classOrObject) {
-                insertedBlocks.mapNotNull { block ->
-                    val declarations = block.declarations.mapNotNull { it.element }
-                    val first = declarations.firstOrNull() ?: return@mapNotNull null
-                    val last = declarations.last()
-                    collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                val entryMembers = analyze(classOrObject) {
+                    createMemberEntries(editor, classOrObject, selectedElements, copyDoc)
                 }
+                val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
+                // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
+                // members.
+                val commands = analyze(classOrObject) {
+                    insertedBlocks.mapNotNull { block ->
+                        val declarations = block.declarations.mapNotNull { it.element }
+                        val first = declarations.firstOrNull() ?: return@mapNotNull null
+                        val last = declarations.last()
+                        collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+                    }
+                }
+
+                commands to insertedBlocks
             }
-            commands to insertedBlocks
         }
         runWriteAction {
             commands.forEach { it.invokeShortening() }
@@ -80,7 +97,9 @@ abstract class KtGenerateMembersHandler(
         }
     }
 
-    private fun KtAnalysisSession.generateMembers(
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun createMemberEntries(
         editor: Editor,
         currentClass: KtClassOrObject,
         selectedElements: Collection<KtClassMember>,
@@ -157,9 +176,10 @@ abstract class KtGenerateMembersHandler(
      * callable symbol for an overridable member that the user has picked to override (or implement), and the value is the stub
      * implementation for the chosen symbol.
      */
-    private fun KtAnalysisSession.getMembersOrderedByRelativePositionsInSuperTypes(
+    context(KaSession)
+private fun getMembersOrderedByRelativePositionsInSuperTypes(
         currentClass: KtClassOrObject,
-        newMemberSymbolsAndGeneratedPsi: Map<KtCallableSymbol, KtCallableDeclaration>
+        newMemberSymbolsAndGeneratedPsi: Map<KaCallableSymbol, KtCallableDeclaration>
     ): List<MemberEntry> {
 
         // This doubly linked list tracks the preferred ordering of members.
@@ -176,8 +196,8 @@ abstract class KtGenerateMembersHandler(
             for (existingDeclaration in existingDeclarations) {
                 val node: DoublyLinkedNode<MemberEntry> = DoublyLinkedNode(MemberEntry.ExistingEntry(existingDeclaration))
                 sentinelTailNode.prepend(node)
-                val callableSymbol = existingDeclaration.getSymbol() as? KtCallableSymbol ?: continue
-                for (overriddenSymbol in callableSymbol.getAllOverriddenSymbols()) {
+                val callableSymbol = existingDeclaration.symbol as? KaCallableSymbol ?: continue
+                for (overriddenSymbol in callableSymbol.allOverriddenSymbols) {
                     put(overriddenSymbol.psi ?: continue, node)
                 }
             }
@@ -187,7 +207,7 @@ abstract class KtGenerateMembersHandler(
         // `KtMemberScope` because the latter does not guarantee members are traversed in the original order. For example the
         // FIR implementation groups overloaded functions together.
         outer@ for ((selectedSymbol, generatedPsi) in newMemberSymbolsAndGeneratedPsi) {
-            val superSymbol = selectedSymbol.unwrapFakeOverrides
+            val superSymbol = selectedSymbol.fakeOverrideOriginal
             val superPsi = superSymbol.psi
             if (superPsi == null) {
                 // This normally should not happen, but we just try to play safe here.
@@ -254,7 +274,6 @@ abstract class KtGenerateMembersHandler(
         return sentinelHeadNode.toListSkippingNulls()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun insertMembersAccordingToPreferredOrder(
         symbolsInPreferredOrder: List<MemberEntry>,
         editor: Editor,
@@ -284,6 +303,7 @@ abstract class KtGenerateMembersHandler(
                     updateBatch()
                     currentAnchor = entry.psi
                 }
+
                 is MemberEntry.NewEntry -> {
                     currentBatch += entry.psi
                 }
@@ -291,11 +311,14 @@ abstract class KtGenerateMembersHandler(
         }
         updateBatch()
 
-        return runWriteAction {
-            insertionBlocks.map { (newDeclarations, anchor) ->
-                InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+        //do not reformat on WA finish automatically, first we need to shorten references
+        return PostprocessReformattingAspect.getInstance(currentClass.project).postponeFormattingInside(Computable {
+            runWriteAction {
+                insertionBlocks.map { (newDeclarations, anchor) ->
+                    InsertedBlock(insertMembersAfter(editor, currentClass, newDeclarations, anchor = anchor))
+                }
             }
-        }
+        })
     }
 
     private class DoublyLinkedNode<T>(val t: T? = null) {
@@ -318,7 +341,6 @@ abstract class KtGenerateMembersHandler(
             prev?.next = node
         }
 
-        @OptIn(ExperimentalStdlibApi::class)
         fun toListSkippingNulls(): List<T> {
             var current: DoublyLinkedNode<T>? = this
             return buildList {
@@ -338,13 +360,30 @@ abstract class KtGenerateMembersHandler(
     }
 
     companion object {
-        val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+        @KaExperimentalApi
+        val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            keywordsRenderer = KaKeywordsRenderer.NONE
+
+            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.THREE_DOTS
+
+            typeRenderer = typeRenderer.with {
+                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
+            }
+
+            withoutLabel()
+
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
             modifiersRenderer = modifiersRenderer.with {
-                modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+                keywordsRenderer = keywordsRenderer.with {
+                    keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD)
+                }
             }
+
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }
 

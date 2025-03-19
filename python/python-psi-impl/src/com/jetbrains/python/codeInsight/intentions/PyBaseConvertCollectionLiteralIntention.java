@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -37,7 +37,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseIntentionAction {
+public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateModCommandAction<PsiElement> {
   private final Class<? extends PySequenceExpression> myTargetCollectionClass;
   private final String myTargetCollectionName;
   private final String myRightBrace;
@@ -46,42 +46,40 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
   public PyBaseConvertCollectionLiteralIntention(@NotNull Class<? extends PySequenceExpression> targetCollectionClass,
                                                  @NotNull String targetCollectionName,
                                                  @NotNull String leftBrace, @NotNull String rightBrace) {
+    super(PsiElement.class);
     myTargetCollectionClass = targetCollectionClass;
     myTargetCollectionName = targetCollectionName;
     myLeftBrace = leftBrace;
     myRightBrace = rightBrace;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.collection.literal", myTargetCollectionName);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!(context.file() instanceof PyFile)) {
+      return null;
     }
-    final PySequenceExpression literal = findCollectionLiteralUnderCaret(editor, file);
+    final PySequenceExpression literal = findCollectionLiteralUnderElement(element);
     if (myTargetCollectionClass.isInstance(literal)) {
-      return false;
+      return null;
     }
-    if (literal instanceof PyTupleExpression) {
-      if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(literal.getProject(), file))) return false;
-      setText(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
+    if (literal != null && isAvailableForCollection(literal)) {
+      if (literal instanceof PyTupleExpression) {
+        if (PyTypingTypeProvider.isInsideTypeHint(literal, TypeEvalContext.codeAnalysis(context.project(), context.file()))) return null;
+        return Presentation.of(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
+      }
+      else if (literal instanceof PyListLiteralExpression) {
+        return Presentation.of(PyPsiBundle.message("INTN.convert.collection.literal", "list", myTargetCollectionName));
+      }
+      else if (literal instanceof PySetLiteralExpression) {
+        return Presentation.of(PyPsiBundle.message("INTN.convert.collection.literal", "set", myTargetCollectionName));
+      }
     }
-    else if (literal instanceof PyListLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal", "list", myTargetCollectionName));
-    }
-    else if (literal instanceof PySetLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal", "set", myTargetCollectionName));
-    }
-    else {
-      return false;
-    }
-    return isAvailableForCollection(literal);
+    return null;
   }
 
   protected boolean isAvailableForCollection(@NotNull PySequenceExpression literal) {
@@ -89,8 +87,8 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
   }
 
   @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PySequenceExpression literal = findCollectionLiteralUnderCaret(editor, file);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PySequenceExpression literal = findCollectionLiteralUnderElement(element);
     assert literal != null;
 
     final PsiElement replacedElement = wrapCollection(literal);
@@ -98,14 +96,13 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
 
     final TextRange contentRange = getRangeOfContentWithoutBraces(copy);
     final String contentToWrap = contentRange.substring(copy.getText());
-    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    final PyExpression newLiteral = elementGenerator.createExpressionFromText(LanguageLevel.forElement(file),
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
+    final PyExpression newLiteral = elementGenerator.createExpressionFromText(LanguageLevel.forElement(context.file()),
                                                                               myLeftBrace + contentToWrap + myRightBrace);
     replacedElement.replace(newLiteral);
   }
 
-  @NotNull
-  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+  protected @NotNull PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
     final PySequenceExpression sequence = unwrapCollection(copy);
     if (sequence instanceof PyTupleExpression) {
       final PyExpression[] elements = sequence.getElements();
@@ -120,8 +117,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
     return copy;
   }
 
-  @NotNull
-  protected static PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
+  protected static @NotNull PySequenceExpression unwrapCollection(@NotNull PsiElement literal) {
     final PyParenthesizedExpression parenthesizedExpression = as(literal, PyParenthesizedExpression.class);
     if (parenthesizedExpression != null) {
       final PyExpression containedExpression = parenthesizedExpression.getContainedExpression();
@@ -131,16 +127,14 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
     return (PySequenceExpression)literal;
   }
 
-  @NotNull
-  protected static PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
+  protected static @NotNull PsiElement wrapCollection(@NotNull PySequenceExpression literal) {
     if (literal instanceof PyTupleExpression && literal.getParent() instanceof PyParenthesizedExpression) {
       return literal.getParent();
     }
     return literal;
   }
 
-  @NotNull
-  private static TextRange getRangeOfContentWithoutBraces(@NotNull PsiElement literal) {
+  private static @NotNull TextRange getRangeOfContentWithoutBraces(@NotNull PsiElement literal) {
     if (literal instanceof PyTupleExpression) {
       return TextRange.create(0, literal.getTextLength());
     }
@@ -168,10 +162,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
     return TextRange.create(contentStartOffset, contentEndOffset);
   }
 
-  @Nullable
-  private static PySequenceExpression findCollectionLiteralUnderCaret(@NotNull Editor editor, @NotNull PsiFile psiFile) {
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final PsiElement curElem = psiFile.findElementAt(caretOffset);
+  private static @Nullable PySequenceExpression findCollectionLiteralUnderElement(PsiElement curElem) {
     final PySequenceExpression seqExpr = PsiTreeUtil.getParentOfType(curElem, PySequenceExpression.class);
     if (seqExpr != null) {
       return seqExpr;

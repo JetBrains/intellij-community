@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.junit.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "junit-rt",
+  module_name = "intellij.junit.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:junit4-provided",
+    "//java/java-runtime:rt",
+  ]
+)
+### auto-generated section `build intellij.junit.rt` end

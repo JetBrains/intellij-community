@@ -32,10 +32,12 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
@@ -100,6 +102,7 @@ object TemplateInlayUtil {
 
   @Deprecated("Use overload with JPanel",
               ReplaceWith("createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement, logStatisticsOnHide)"))
+  @ApiStatus.ScheduledForRemoval
   @JvmStatic
   fun createNavigatableButtonWithPopup(templateState: TemplateState,
                                        inEditorOffset: Int,
@@ -107,7 +110,8 @@ object TemplateInlayUtil {
                                        panel: DialogPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
                                        logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
-    return createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement, logStatisticsOnHide)
+    return createNavigatableButtonWithPopup(templateState, inEditorOffset, presentation, panel as JPanel, templateElement,
+                                            isPopupAbove = false, logStatisticsOnHide)
   }
   
   @JvmOverloads
@@ -117,8 +121,10 @@ object TemplateInlayUtil {
                                        presentation: SelectableInlayPresentation,
                                        panel: JPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+                                       isPopupAbove: Boolean,
                                        logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
-    val inlay = createNavigatableButtonWithPopup(templateState.editor, inEditorOffset, presentation, panel, templateElement) ?: return null
+    val inlay = createNavigatableButtonWithPopup(templateState.editor, inEditorOffset, presentation, panel, templateElement,
+                                                 isPopupAbove = isPopupAbove) ?: return null
     Disposer.register(templateState, inlay)
     presentation.addSelectionListener { isSelected ->
       if (!isSelected) logStatisticsOnHide.invoke()
@@ -128,11 +134,13 @@ object TemplateInlayUtil {
 
   @JvmOverloads
   @JvmStatic
-  fun createNavigatableButtonWithPopup(editor: Editor,
-                                       offset: Int,
-                                       presentation: SelectableInlayPresentation,
-                                       panel: JPanel,
-                                       templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+  fun createNavigatableButtonWithPopup(
+    editor: Editor,
+    offset: Int,
+    presentation: SelectableInlayPresentation,
+    panel: JPanel,
+    templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+    isPopupAbove: Boolean,
   ): Inlay<PresentationRenderer>? {
     val inlay = createNavigatableButton(editor, offset, presentation, templateElement) ?: return null
     fun showPopup() {
@@ -147,6 +155,9 @@ object TemplateInlayUtil {
           }
         })
         .createPopup()
+
+      Disposer.register(inlay, popup)
+
       DumbAwareAction
         .create {
           popup.cancel()
@@ -158,7 +169,15 @@ object TemplateInlayUtil {
         .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel, popup)
       try {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
-        popup.showInBestPositionFor(editor)
+        if (isPopupAbove) {
+          val popupFactory = JBPopupFactory.getInstance()
+          val target = popupFactory.guessBestPopupLocation(editor)
+          val screenPoint = target.getScreenPoint()
+          popup.show(RelativePoint(Point(screenPoint.x, screenPoint.y - editor.lineHeight - panel.preferredHeight)))
+        }
+        else {
+          popup.showInBestPositionFor(editor)
+        }
       }
       finally {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null)
@@ -176,13 +195,15 @@ object TemplateInlayUtil {
   fun createSettingsPresentation(editor: EditorImpl, onClick: (MouseEvent) -> Unit = {}): SelectableInlayPresentation {
     val factory = PresentationFactory(editor)
     fun button(background: Color?): InlayPresentation {
-      val button = factory.container(
-        presentation = factory.icon(AllIcons.Actions.InlayGear),
-        padding = InlayPresentationFactory.Padding(4, 4, 4, 4),
+      val scaledFactory = ScaleAwarePresentationFactory(editor, factory)
+      val icon = scaledFactory.icon(AllIcons.Actions.InlayGear)
+      val inset = (editor.lineHeight - icon.height) / 2
+      val button = scaledFactory.container(
+        presentation = factory.inset(icon, left = inset, right = inset, top = inset, down = inset),
         roundedCorners = InlayPresentationFactory.RoundedCorners(6, 6),
         background = background
       )
-      return factory.container(button, padding = InlayPresentationFactory.Padding(3, 6, 0, 0))
+      return scaledFactory.inset(button, left = 3, right = 6)
     }
 
     val colorsScheme = editor.colorsScheme
@@ -241,26 +262,28 @@ object TemplateInlayUtil {
 
     val editor = templateState.editor as EditorImpl
     val factory = PresentationFactory(editor)
+    val scaledFactory = ScaleAwarePresentationFactory(editor, factory)
     val colorsScheme = editor.colorsScheme
-    fun button(presentation: InlayPresentation, second: Boolean) = factory.container(
-      presentation = presentation,
-      padding = InlayPresentationFactory.Padding(if (second) 0 else 4, 4, 4, 4)
-    )
+    fun button(presentation: InlayPresentation, second: Boolean): InlayPresentation {
+      val inset = (editor.lineHeight - presentation.height) / 2
+      val padding = InlayPresentationFactory.Padding((if (second) 0 else inset), inset, inset, inset)
+      return factory.container(presentation = presentation, padding = padding)
+    }
 
     var tooltip = LangBundle.message("inlay.rename.tooltip.header")
     val commentStringPresentation = initOptions.commentStringOccurrences?.let { commentStringOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.comments.strings")
       BiStatePresentation(
-        first = { factory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
-        second = { factory.icon(AllIcons.Actions.InlayRenameInComments) },
+        first = { scaledFactory.icon(AllIcons.Actions.InlayRenameInCommentsActive) },
+        second = { scaledFactory.icon(AllIcons.Actions.InlayRenameInComments) },
         initiallyFirstEnabled = commentStringOccurrences,
       )
     }
     val textPresentation = initOptions.textOccurrences?.let { textOccurrences ->
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
       BiStatePresentation(
-        first = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
-        second = { factory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
+        first = { scaledFactory.icon(AllIcons.Actions.InlayRenameInNoCodeFilesActive) },
+        second = { scaledFactory.icon(AllIcons.Actions.InlayRenameInNoCodeFiles) },
         initiallyFirstEnabled = textOccurrences,
       )
     }
@@ -282,7 +305,7 @@ object TemplateInlayUtil {
       tooltip += LangBundle.message("inlay.rename.tooltip.tab.advertisement", KeymapUtil.getShortcutText(shortcut))
     }
 
-    fun withBackground(bgKey: ColorKey) = factory.container(
+    fun withBackground(bgKey: ColorKey) = scaledFactory.container(
       presentation = buttonsPresentation,
       roundedCorners = InlayPresentationFactory.RoundedCorners(3, 3),
       background = colorsScheme.getColor(bgKey),
@@ -317,7 +340,7 @@ object TemplateInlayUtil {
       }
       optionsListener.invoke(newOptions)
     }
-    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel as JPanel, templateElement) {
+    return createNavigatableButtonWithPopup(templateState, offset, presentation, panel as JPanel, templateElement, isPopupAbove = false) {
       logStatisticsOnHide(editor, initOptions, currentOptions)
     }
   }

@@ -1,0 +1,24 @@
+### auto-generated section `build kotlin.scripting` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  allow_kotlin_package = True
+)
+
+jvm_library(
+  name = "scripting",
+  module_name = "kotlin.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+  ]
+)
+### auto-generated section `build kotlin.scripting` end

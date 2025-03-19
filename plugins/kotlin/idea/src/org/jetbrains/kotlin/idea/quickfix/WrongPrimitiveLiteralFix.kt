@@ -6,19 +6,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.constants.ConstantValue
+import org.jetbrains.kotlin.resolve.constants.evaluate.isStandaloneOnlyConstant
+import org.jetbrains.kotlin.resolve.jvm.getCompileTimeConstant
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isUnsignedNumberType
@@ -31,7 +34,7 @@ private val valueRanges = mapOf(
     StandardNames.FqNames._long to Long.MIN_VALUE..Long.MAX_VALUE
 )
 
-class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
+internal class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
 
     private val typeName = DescriptorUtils.getFqName(type.constructor.declarationDescriptor!!)
     private val expectedTypeIsFloat = KotlinBuiltIns.isFloat(type)
@@ -40,10 +43,18 @@ class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) 
 
     private val constValue = run {
         val shouldInlineConstVals = element.languageVersionSettings.supportsFeature(LanguageFeature.InlineConstVals)
-        ExpressionCodegen.getPrimitiveOrStringCompileTimeConstant(
+        getPrimitiveOrStringCompileTimeConstant(
             element, element.analyze(BodyResolveMode.PARTIAL), shouldInlineConstVals
         )?.value as? Number
     }
+
+    private fun getPrimitiveOrStringCompileTimeConstant(
+        expression: KtExpression,
+        bindingContext: BindingContext,
+        shouldInlineConstVals: Boolean
+    ): ConstantValue<*>? =
+        getCompileTimeConstant(expression, bindingContext, false, shouldInlineConstVals)
+            ?.takeUnless { it.isStandaloneOnlyConstant() }
 
     private val fixedExpression = buildString {
         if (expectedTypeIsFloat || expectedTypeIsDouble) {
@@ -69,7 +80,9 @@ class WrongPrimitiveLiteralFix(element: KtConstantExpression, type: KotlinType) 
         }
     }
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = isAvailable()
+
+    fun isAvailable(): Boolean {
         if (constValue == null) return false
         if (expectedTypeIsFloat || expectedTypeIsDouble || expectedTypeIsUnsigned) return true
 

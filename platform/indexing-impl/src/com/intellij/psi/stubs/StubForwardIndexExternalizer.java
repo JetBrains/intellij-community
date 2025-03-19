@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.*;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,15 +16,15 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.UnaryOperator;
 
+@Internal
 public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
   implements DataExternalizer<Map<StubIndexKey<?, ?>, Map<Object, StubIdList>>> {
 
-  @ApiStatus.Internal
+  @Internal
   public static final String USE_SHAREABLE_STUBS_PROP = "idea.uses.shareable.serialized.stubs";
 
-  @ApiStatus.Internal
+  @Internal
   public static final boolean USE_SHAREABLE_STUBS = Boolean.getBoolean(USE_SHAREABLE_STUBS_PROP);
 
 
@@ -39,16 +40,37 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
 
   protected StubForwardIndexExternalizer(final boolean useStableBinaryFormat) { this.useStableBinaryFormat = useStableBinaryFormat; }
 
-  @NotNull
-  public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
+  private static @NotNull <K> Map<K, StubIdList> deserializeIndexValue(@NotNull DataInput in,
+                                                                       @NotNull StubIndexKey<K, ?> stubIndexKey,
+                                                                       @Nullable K requestedKey) throws IOException {
+    KeyDescriptor<K> keyDescriptor = StubIndexKeyDescriptorCache.INSTANCE.getKeyDescriptor(stubIndexKey);
+
+    int bufferSize = DataInputOutputUtil.readINT(in);
+    byte[] buffer = new byte[bufferSize];
+    in.readFully(buffer);
+    UnsyncByteArrayInputStream indexIs = new UnsyncByteArrayInputStream(buffer);
+    DataInputStream indexDis = new DataInputStream(indexIs);
+    HashingStrategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
+    Map<K, StubIdList> result = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
+    while (indexDis.available() > 0) {
+      ProgressManager.checkCanceled();
+      K key = keyDescriptor.read(indexDis);
+      StubIdList read = StubIdExternalizer.INSTANCE.read(indexDis);
+      if (requestedKey == null) {
+        result.put(key, read);
+      }
+      else if (hashingStrategy.equals(requestedKey, key)) {
+        result.put(key, read);
+        return result;
+      }
+    }
+    return result;
+  }
+
+  public static @NotNull StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
     if (!USE_SHAREABLE_STUBS) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
-    return new FileLocalStubForwardIndexExternalizer();
-  }
-
-  @NotNull
-  public static StubForwardIndexExternalizer<?> createFileLocalExternalizer() {
     return new FileLocalStubForwardIndexExternalizer();
   }
 
@@ -111,10 +133,12 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
             skipIndexValue(in);
           }
         }
-        else {
+        else if (indexKey == null) {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
+        }
+        else {
+          throw new AssertionError("indexKey '" + indexKey + "' [" + indexKey.getClass() + "] is not null, and not a StubIndexKey");
         }
       }
       return stubIndicesValueMap;
@@ -143,32 +167,11 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
     out.write(indexOs.getInternalBuffer(), 0, indexOs.size());
   }
 
-  @NotNull
-  private <K> Map<K, StubIdList> deserializeIndexValue(@NotNull DataInput in, @NotNull StubIndexKey<K, ?> stubIndexKey, @Nullable K requestedKey) throws IOException {
-    KeyDescriptor<K> keyDescriptor = StubIndexKeyDescriptorCache.INSTANCE.getKeyDescriptor(stubIndexKey);
-
-    int bufferSize = DataInputOutputUtil.readINT(in);
-    byte[] buffer = new byte[bufferSize];
-    in.readFully(buffer);
-    UnsyncByteArrayInputStream indexIs = new UnsyncByteArrayInputStream(buffer);
-    DataInputStream indexDis = new DataInputStream(indexIs);
-    HashingStrategy<K> hashingStrategy = StubIndexKeyDescriptorCache.INSTANCE.getKeyHashingStrategy(stubIndexKey);
-    Map<K, StubIdList> result = CollectionFactory.createCustomHashingStrategyMap(hashingStrategy);
-    while (indexDis.available() > 0) {
-      K key = keyDescriptor.read(indexDis);
-      StubIdList read = StubIdExternalizer.INSTANCE.read(indexDis);
-      if (requestedKey == null) {
-        result.put(key, read);
-      }
-      else if (hashingStrategy.equals(requestedKey, key)) {
-        result.put(key, read);
-        return result;
-      }
-    }
-    return result;
+  public static @NotNull StubForwardIndexExternalizer<?> createFileLocalExternalizer() {
+    return new FileLocalStubForwardIndexExternalizer();
   }
 
-  private void skipIndexValue(@NotNull DataInput in) throws IOException {
+  private static void skipIndexValue(@NotNull DataInput in) throws IOException {
     int bufferSize = DataInputOutputUtil.readINT(in);
     in.skipBytes(bufferSize);
   }
@@ -218,7 +221,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState>
     @Override
     protected FileLocalStringEnumerator createStubIndexKeySerializationState(@NotNull DataInput input, int stubIndexKeyCount)  throws IOException {
       FileLocalStringEnumerator enumerator = new FileLocalStringEnumerator(false);
-      enumerator.read(input, UnaryOperator.identity());
+      enumerator.read(input);
       return enumerator;
     }
 

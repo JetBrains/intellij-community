@@ -13,27 +13,34 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
+
   @Test
   fun `test simple gradle jvm resolution`() {
     withGradleProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = USE_GRADLE_JAVA_HOME)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
     withRegisteredSdks(earliestSdk, latestSdk, unsupportedSdk) {
-      withGradleLinkedProject(java = earliestSdk) {
-        assertGradleJvmSuggestion(expected = earliestSdk)
+      assertUnexpectedSdksRegistration {
+        withGradleLinkedProject(java = earliestSdk) {
+          assertGradleJvmSuggestion(expected = earliestSdk)
+        }
       }
     }
-    withRegisteredSdk(latestSdk, isProjectSdk = true) {
-      assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+    withRegisteredSdks(latestSdk) {
+      withProjectSdk(latestSdk) {
+        assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+      }
     }
     environment.withVariables(JAVA_HOME to latestSdk.homePath) {
       assertGradleJvmSuggestion(expected = USE_JAVA_HOME)
     }
     withRegisteredSdks(earliestSdk, latestSdk, unsupportedSdk) {
-      assertGradleJvmSuggestion(expected = latestSdk)
+      assertUnexpectedSdksRegistration {
+        assertGradleJvmSuggestion(expected = latestSdk)
+      }
     }
     assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
   }
@@ -48,28 +55,35 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
   @Test
   fun `test gradle jvm resolution (linked project)`() {
-    registerSdks(earliestSdk, latestSdk, unsupportedSdk)
-    withGradleLinkedProject(java = earliestSdk) {
-      assertGradleJvmSuggestion(expected = earliestSdk)
-    }
-    withGradleLinkedProject(java = latestSdk) {
-      assertGradleJvmSuggestion(expected = latestSdk)
-    }
-    withGradleLinkedProject(java = unsupportedSdk) {
-      assertGradleJvmSuggestion(expected = unsupportedSdk)
+    withRegisteredSdks(earliestSdk, latestSdk, unsupportedSdk) {
+      withGradleLinkedProject(java = earliestSdk) {
+        assertGradleJvmSuggestion(expected = earliestSdk)
+      }
+      withGradleLinkedProject(java = latestSdk) {
+        assertGradleJvmSuggestion(expected = latestSdk)
+      }
+      withGradleLinkedProject(java = unsupportedSdk) {
+        assertGradleJvmSuggestion(expected = unsupportedSdk)
+      }
     }
   }
 
   @Test
   fun `test gradle jvm resolution (project sdk)`() {
-    withRegisteredSdk(earliestSdk, isProjectSdk = true) {
-      assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+    withRegisteredSdks(earliestSdk) {
+      withProjectSdk(earliestSdk) {
+        assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+      }
     }
-    withRegisteredSdk(latestSdk, isProjectSdk = true) {
-      assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+    withRegisteredSdks(latestSdk) {
+      withProjectSdk(latestSdk) {
+        assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+      }
     }
-    withRegisteredSdk(unsupportedSdk, isProjectSdk = true) {
-      assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+    withRegisteredSdks(unsupportedSdk) {
+      withProjectSdk(unsupportedSdk) {
+        assertGradleJvmSuggestion(expected = USE_PROJECT_JDK)
+      }
     }
   }
 
@@ -97,29 +111,29 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
   }
 
   @Test
-  fun `test gradle jvm resolution (local properties)`() {
-    withLocalProperties(externalProjectPath, java = earliestSdk) {
+  fun `test gradle jvm resolution (gradle local properties)`() {
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
-    withLocalProperties(externalProjectPath, java = unsupportedSdk) {
+    withGradleLocalProperties(externalProjectPath, java = unsupportedSdk) {
       assertGradleJvmSuggestion(expected = latestSdk, expectsSdkRegistration = true)
     }
   }
 
   @Test
-  fun `test local properties resolution (project properties)`() {
-    assertLocalProperties(java = null)
-    withLocalProperties(externalProjectPath, java = earliestSdk) {
-      assertLocalProperties(java = earliestSdk)
+  fun `test gradle local properties resolution (project properties)`() {
+    assertGradleLocalProperties(java = null)
+    withGradleLocalProperties(externalProjectPath, java = earliestSdk) {
+      assertGradleLocalProperties(java = earliestSdk)
     }
-    withLocalProperties(externalProjectPath, java = latestSdk) {
-      assertLocalProperties(java = latestSdk)
+    withGradleLocalProperties(externalProjectPath, java = latestSdk) {
+      assertGradleLocalProperties(java = latestSdk)
     }
-    withLocalProperties(externalProjectPath, java = null) {
-      assertLocalProperties(java = null)
+    withGradleLocalProperties(externalProjectPath, java = null) {
+      assertGradleLocalProperties(java = null)
     }
   }
 

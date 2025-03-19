@@ -1,7 +1,7 @@
-from typing import Any
+from _typeshed import Incomplete
 
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class GrantedPaymentInstrumentUpdate(Resource):
-    payment_method_nonce: Any
+    payment_method_nonce: Incomplete
     def __init__(self, gateway, attributes) -> None: ...

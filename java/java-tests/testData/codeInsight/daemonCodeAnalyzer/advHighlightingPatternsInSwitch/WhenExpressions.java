@@ -11,7 +11,7 @@ class Test {
     }
 
     switch (o) {
-      case Integer i when <error descr="Incompatible types. Found: 'int', required: 'boolean'">isInt()</error>:
+      case Integer i when <error descr="Incompatible types. Found: 'int', required: 'boolean'">isInt</error>():
         break;
       default:
         break;
@@ -42,4 +42,12 @@ class Test {
   private native int isInt();
 
   private native boolean foo(boolean blag);
+
+  public static void main2(Object o) {
+    int x = switch (o) {
+      case Object _, String _ when o == o -> 4;
+      case Integer _ -> 2;
+      default -> 3;
+    };
+  }
 }

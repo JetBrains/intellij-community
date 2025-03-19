@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiType
@@ -34,8 +34,16 @@ interface UTryExpression : UExpression {
   val hasResources: Boolean
 
   /**
-   * Returns the list of resource variables declared in this expression, or an empty list if this expression is not a `try-with-resources` expression.
+   * Returns the list of resource variables or expressions declared in this expression, or an empty list if this expression is not a
+   * `try-with-resources` expression.
    */
+  val resources: List<UAnnotated> get() = emptyList()
+
+  /**
+   * Returns the list of resource variables declared in this expression, or an empty list if this expression is not a `try-with-resources`
+   * expression.
+   */
+  @Deprecated("This API doesn't support resource expression", ReplaceWith("resources"))
   val resourceVariables: List<UVariable>
 
   /**
@@ -66,7 +74,7 @@ interface UTryExpression : UExpression {
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitTryExpression(this)) return
     uAnnotations.acceptList(visitor)
-    resourceVariables.acceptList(visitor)
+    resources.acceptList(visitor)
     tryClause.accept(visitor)
     catchClauses.acceptList(visitor)
     finallyClause?.accept(visitor)
@@ -78,13 +86,13 @@ interface UTryExpression : UExpression {
 
   override fun asRenderString(): String = buildString {
     append("try ")
-    if (hasResources) {
+    if (resources.isNotEmpty()) {
       append("(")
-      append(resourceVariables.joinToString("\n") { it.asRenderString() })
+      append(resources.joinToString("\n") { it.asRenderString() })
       append(")")
     }
-    appendln(tryClause.asRenderString().trim('\n', '\r'))
-    catchClauses.forEach { appendln(it.asRenderString().trim('\n', '\r')) }
+    appendLine(tryClause.asRenderString().trim('\n', '\r'))
+    catchClauses.forEach { appendLine(it.asRenderString().trim('\n', '\r')) }
     finallyClause?.let { append("finally ").append(it.asRenderString().trim('\n', '\r')) }
   }
 

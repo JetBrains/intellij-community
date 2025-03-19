@@ -6,8 +6,10 @@ package com.intellij.util;
  */
 @Deprecated
 public final class EmptyConsumer {
+  private static final Consumer<Object> EMPTY_CONSUMER = t -> {};
+
   public static <T> Consumer<T> getInstance() {
     // noinspection unchecked
-    return (Consumer<T>)Consumer.EMPTY_CONSUMER;
+    return (Consumer<T>)EMPTY_CONSUMER;
   }
 }

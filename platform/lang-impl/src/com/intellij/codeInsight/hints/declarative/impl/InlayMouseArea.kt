@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InlayMouseArea(val actionData: InlayActionData) {
   val entries: MutableList<InlayPresentationEntry> = ArrayList()
 }

@@ -24,11 +24,13 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class ChooserBasedAttachRootButtonDescriptor extends AttachRootButtonDescriptor {
   public ChooserBasedAttachRootButtonDescriptor(@NotNull OrderRootType rootType, @NotNull @NlsContexts.Button String buttonText) {
     super(rootType, buttonText);

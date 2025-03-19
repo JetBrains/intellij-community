@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,8 +20,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
-public class TestTextFieldAction extends DumbAwareAction {
+public final class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;
 
   @Override

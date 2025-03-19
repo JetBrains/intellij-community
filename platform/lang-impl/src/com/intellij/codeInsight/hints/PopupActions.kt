@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -31,16 +32,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
+@ApiStatus.Internal
+class ShowSettingsWithAddedPattern : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
-class ShowSettingsWithAddedPattern : AnAction() {
-  init {
-    templatePresentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
-    templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
-  }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -65,16 +63,17 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
-class ShowParameterHintsSettings : AnAction() {
+@ApiStatus.Internal
+class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
   }
 }
 
-fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
+private fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String?) {
   val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
   val editor = e.getData(CommonDataKeys.EDITOR) ?: return
 
@@ -92,6 +91,7 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo?) -> String
   }
 }
 
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityAction {
   override fun getText(): String = CodeInsightBundle.message("inlay.hints.exclude.list.method")
@@ -161,7 +161,7 @@ class AddToExcludeListCurrentMethodIntention : IntentionAction, LowPriorityActio
   override fun startInWriteAction(): Boolean = false
 }
 
-
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   @IntentionName
@@ -205,6 +205,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   override fun startInWriteAction(): Boolean = false
 }
 
+@ApiStatus.Internal
 @Suppress("IntentionDescriptionNotFoundInspection")
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   @IntentionName
@@ -262,9 +263,9 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction() {
+class ToggleInlineHintsAction : AnAction(), ActionRemoteBehaviorSpecification.BackendOnly {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {
@@ -346,4 +347,4 @@ private fun getInfoForElement(file: PsiFile,
   return provider.getHintInfo(method, file)
 }
 
-fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+private fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'

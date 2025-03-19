@@ -24,7 +24,6 @@ import git4idea.ignore.lang.GitExcludeFileType
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import java.util.function.Supplier
-import kotlin.streams.toList
 
 abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls String>,
                                        dynamicDescription: @NotNull Supplier<@Nls String>)
@@ -68,7 +67,7 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val gitVcs = GitVcs.getInstance(project)
     val selectedFiles = getSelectedFiles(e)
     if (selectedFiles.isEmpty()) return
@@ -92,7 +91,7 @@ class OpenGitExcludeAction : DefaultGitExcludeAction(
 ) {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val excludeToOpen = GitUtil.getRepositories(project).map { it.repositoryFiles.excludeFile }
     for (gitExclude in excludeToOpen) {
       VfsUtil.findFileByIoFile(gitExclude, true)?.let { excludeVf ->

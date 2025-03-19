@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
@@ -16,7 +15,7 @@ import java.util.Collections;
 /**
  * Extension point to implement a file-based inverted index.
  * <p>
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs/file_based_indexes.html">SDK Docs</a> for reference.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/file-based-indexes.html">SDK Docs</a> for reference.
  * <p>
  *   <ul>
  *     <li>
@@ -50,6 +49,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
     new ExtensionPointName<>("com.intellij.fileBasedIndex");
 
   // Use VFS-based implementation for FilenameIndex
+  @ApiStatus.Internal
   public static final boolean USE_VFS_FOR_FILENAME_INDEX = Boolean.parseBoolean(System.getProperty("indexing.filename.over.vfs", "true"));
 
   private static final int DEFAULT_CACHE_SIZE = 1024;
@@ -83,7 +83,7 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
    * For most indices the method should return an empty collection.
    *
    * @return collection of file types to which file size limit will not be applied when indexing.
-   * This allows indexing of files whose limit exceeds {@link PersistentFSConstants#getMaxIntellisenseFileSize()}.
+   * This allows indexing of files whose limit exceeds {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getIntellisenseLimit(FileType)}}.
    * <p>
    * Use carefully, because indexing large files may influence index update speed dramatically.
    */

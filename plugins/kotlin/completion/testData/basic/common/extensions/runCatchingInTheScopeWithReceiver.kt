@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 class Foo {
     val x = runCatchin<caret>
 }

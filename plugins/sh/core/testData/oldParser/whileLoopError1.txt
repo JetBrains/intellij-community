@@ -14,8 +14,9 @@ SHELL_SCRIPT
       DO_BLOCK
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
-        PsiErrorElement:<block compound list> expected, got ';'
-          PsiElement(;)(';')
+        COMPOUND_LIST
+          PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+            PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
   PsiElement(\n)('\n')
@@ -23,14 +24,16 @@ SHELL_SCRIPT
     WHILE_COMMAND
       PsiElement(while)('while')
       PsiWhiteSpace(' ')
-      PsiErrorElement:<block compound list> expected, got ';'
-        PsiElement(;)(';')
+      COMPOUND_LIST
+        PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+          PsiElement(;)(';')
       PsiWhiteSpace(' ')
       DO_BLOCK
         PsiElement(do)('do')
         PsiWhiteSpace(' ')
-        PsiErrorElement:<block compound list> expected, got ';'
-          PsiElement(;)(';')
+        COMPOUND_LIST
+          PsiErrorElement:<pipeline command> or '\n' expected, got ';'
+            PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(done)('done')
   PsiElement(\n)('\n')

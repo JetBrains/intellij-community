@@ -6,9 +6,9 @@ class AC extends AbstractValueBased {
   {
     final AC localAc = new AC();
 
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">ac</warning>) {}
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">objectAc</warning>) {}
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">localAc</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">ac</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">objectAc</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">localAc</warning>) {}
     synchronized (AC.class) {}
 
     synchronized (new Object()) {}
@@ -18,7 +18,7 @@ class AC extends AbstractValueBased {
   }
 
   void f(AC ac) {
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">ac</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">ac</warning>) {}
   }
 
   void g(Object ac) {

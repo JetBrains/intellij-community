@@ -1,30 +1,44 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
+import com.intellij.codeInsight.multiverse.*;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.graph.Graph;
+import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.platform.workspace.jps.entities.ExtensionsKt.collectTransitivelyDependentModules;
+
 public class ModuleUtilCore {
   public static final Key<Module> KEY_MODULE = new Key<>("Module");
+
+  @ApiStatus.Internal
+  protected ModuleUtilCore() {
+  }
 
   public static boolean projectContainsFile(@NotNull Project project, @NotNull VirtualFile file, boolean isLibraryElement) {
     ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(project);
     if (isLibraryElement) {
       List<OrderEntry> orders = projectFileIndex.getOrderEntriesForFile(file);
-      for(OrderEntry orderEntry:orders) {
+      for (OrderEntry orderEntry : orders) {
         if (orderEntry instanceof JdkOrderEntry || orderEntry instanceof LibraryOrderEntry) {
           return true;
         }
@@ -36,8 +50,7 @@ public class ModuleUtilCore {
     }
   }
 
-  @NotNull
-  public static String getModuleNameInReadAction(@NotNull Module module) {
+  public static @NotNull String getModuleNameInReadAction(@NotNull Module module) {
     return ReadAction.compute(module::getName);
   }
 
@@ -54,11 +67,10 @@ public class ModuleUtilCore {
   }
 
   /**
-   * @return module where {@code containingFile} is located, 
-   *         null for project files outside module content roots or library files
+   * @return module where {@code containingFile} is located,
+   * null for project files outside module content roots or library files
    */
-  @Nullable
-  public static Module findModuleForFile(@Nullable PsiFile containingFile) {
+  public static @Nullable Module findModuleForFile(@Nullable PsiFile containingFile) {
     if (containingFile != null) {
       VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile != null) {
@@ -68,12 +80,12 @@ public class ModuleUtilCore {
     return null;
   }
 
-    /**
-   * @return module where {@code file} is located, 
-   *         null for project files outside module content roots or library files
+  /**
+   * @return module where {@code file} is located,
+   * null for project files outside module content roots or library files
    */
-  @Nullable
-  public static Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public static @Nullable Module findModuleForFile(@NotNull VirtualFile file, @NotNull Project project) {
     if (project.isDefault()) {
       return null;
     }
@@ -81,13 +93,24 @@ public class ModuleUtilCore {
   }
 
   /**
-   * @return module where containing file of the {@code element} is located. 
-   * 
-   * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
-   * If this virtual file belongs to a library and this library is attached to the exactly one module, then this module will be returned.
+   * @return modules which include the file,
+   *         empty list for project files outside module content roots or library files
    */
-  @Nullable
-  public static Module findModuleForPsiElement(@NotNull PsiElement element) {
+  @ApiStatus.Internal
+  public static @NotNull Set<Module> findModulesForFile(@NotNull VirtualFile file, @NotNull Project project) {
+    if (project.isDefault()) {
+      return Collections.emptySet();
+    }
+    return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).getModulesForFile(file, true));
+  }
+
+  /**
+   * Return module where containing file of the {@code element} is located.
+   * <br>
+   * For {@link com.intellij.psi.PsiDirectory}, corresponding virtual file is checked directly.
+   * If this virtual file belongs to a library or SDK and this library/SDK is attached to exactly one module, then this module will be returned.
+   */
+  public static @Nullable Module findModuleForPsiElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     PsiElement highestPsi = containingFile == null ? element : containingFile;
     if (!highestPsi.isValid()) {
@@ -105,21 +128,33 @@ public class ModuleUtilCore {
           return element.getUserData(KEY_MODULE);
         }
       }
+
       if (fileIndex.isInLibrary(vFile)) {
         List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
         if (orderEntries.isEmpty()) {
           return null;
         }
-        if (orderEntries.size() == 1) {
+
+        if (orderEntries.size() == 1 && orderEntries.get(0) instanceof LibraryOrSdkOrderEntry) {
           return orderEntries.get(0).getOwnerModule();
         }
-        Set<Module> modules = new HashSet<>();
-        for (OrderEntry orderEntry : orderEntries) {
-          modules.add(orderEntry.getOwnerModule());
+
+        Optional<Module> module = orderEntries
+          .stream()
+          .filter(entry -> entry instanceof LibraryOrSdkOrderEntry)
+          .map(OrderEntry::getOwnerModule)
+          .min(ModuleManager.getInstance(project).moduleDependencyComparator());
+        //there may be no LibraryOrSdkOrderEntry if the file is located under both module source root and a library root
+        if (module.isPresent()) {
+          return module.get();
         }
-        Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
-        Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
-        return candidates[0];
+      }
+
+      if (CodeInsightContexts.isSharedSourceSupportEnabled(project) && containingFile != null) {
+        var currentContext = CodeInsightContextManager.getInstance(project).getCodeInsightContext(containingFile.getViewProvider());
+        if (currentContext instanceof ModuleContext) {
+          return ((ModuleContext) currentContext).getModule();
+        }
       }
       return fileIndex.getModuleForFile(vFile);
     }
@@ -138,6 +173,14 @@ public class ModuleUtilCore {
       PsiFile originalFile = containingFile.getOriginalFile();
       if (originalFile.getUserData(KEY_MODULE) != null) {
         return originalFile.getUserData(KEY_MODULE);
+      }
+
+      CodeInsightContext codeInsightContext = FileViewProviderUtil.getCodeInsightContext(originalFile);
+      if (codeInsightContext instanceof ModuleContext) {
+        Module module = ((ModuleContext)codeInsightContext).getModule();
+        if (module != null) {
+          return module;
+        }
       }
 
       VirtualFile virtualFile = originalFile.getVirtualFile();
@@ -160,40 +203,37 @@ public class ModuleUtilCore {
   }
 
   /**
-   * collect transitive module dependants
+   * <h3>Obsolescence notice</h3>
+   * This method uses
+   * {@link com.intellij.platform.workspace.jps.entities.ExtensionsKt#collectTransitivelyDependentModules(ModuleEntity, EntityStorage)},
+   * and remains for compatibility. 
+   * <p>
+   *   
+   * Collect transitive dependent modules.
+   *
    * @param module to find dependencies on
    * @param result resulted set
    */
+  @ApiStatus.Obsolete(since = "2025.1")
   public static void collectModulesDependsOn(@NotNull Module module, @NotNull Set<? super Module> result) {
-    if (!result.add(module)) {
-      return;
-    }
+    var project = module.getProject();
+    var legacyBridge = project.getService(WorkspaceModelLegacyBridge.class);
+    var moduleEntity = legacyBridge.findModuleEntity(module);
+    if (moduleEntity == null) return; // error?
 
-    ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
-    List<Module> dependentModules = moduleManager.getModuleDependentModules(module);
-    for (Module dependentModule : dependentModules) {
-      OrderEntry[] orderEntries = ModuleRootManager.getInstance(dependentModule).getOrderEntries();
-      for (OrderEntry o : orderEntries) {
-        if (o instanceof ModuleOrderEntry orderEntry) {
-          if (orderEntry.getModule() == module) {
-            if (orderEntry.isExported()) {
-              collectModulesDependsOn(dependentModule, result);
-            }
-            else {
-              result.add(dependentModule);
-            }
-            break;
-          }
-        }
-      }
+    var tmpSet = collectTransitivelyDependentModules(moduleEntity, WorkspaceModel.getInstance(project).getCurrentSnapshot());
+    ProgressManager.checkCanceled();
+    for (var dependentModule : tmpSet) {
+      var legacyModule = legacyBridge.findLegacyModule(dependentModule);
+      if (legacyModule != null)
+        result.add(legacyModule);
     }
   }
 
-  @NotNull
-  public static List<Module> getAllDependentModules(@NotNull Module module) {
+  public static @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     List<Module> list = new ArrayList<>();
     Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
-    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
       list.add(i.next());
     }
     return list;
@@ -231,8 +271,7 @@ public class ModuleUtilCore {
     return VfsUtilCore.pathEqualsTo(dir, getModuleDirPath(module));
   }
 
-  @NotNull
-  public static String getModuleDirPath(@NotNull Module module) {
+  public static @NotNull String getModuleDirPath(@NotNull Module module) {
     return PathUtilRt.getParentPath(module.getModuleFilePath());
   }
 

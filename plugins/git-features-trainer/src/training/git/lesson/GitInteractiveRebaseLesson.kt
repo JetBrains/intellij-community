@@ -1,15 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.KeyboardShortcut
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.CommitMessage
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
@@ -31,6 +30,7 @@ import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -55,11 +55,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
   override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it),
@@ -104,7 +100,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
         ideFrame {
           val table: VcsLogGraphTable = findComponentWithTimeout(defaultTimeout)
           val row = invokeAndWaitIfNeeded {
-            (0 until table.rowCount).find { table.model.getCommitMetadata(it).id == commitHashToHighlight }
+            (0 until table.rowCount).find { table.model.getCommitMetadata(it)?.id == commitHashToHighlight }
           } ?: error("Failed to find commit with hash: $commitHashToHighlight")
           JTableFixture(robot, table).click(TableCell.row(row).column(1), MouseButton.RIGHT_BUTTON)
         }
@@ -174,6 +170,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.fixup", LessonUtil.rawKeyStroke(fixupShortcut),
                                     strong(GitBundle.message("rebase.entry.action.name.fixup"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.ArrowButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.FixupAction")
       test(waitEditorToBeReady = false) {
         invokeActionViaShortcut("ALT F")
@@ -201,6 +198,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
       text(GitLessonsBundle.message("git.interactive.rebase.invoke.squash",
                                     LessonUtil.rawKeyStroke(squashShortcut), strong(GitBundle.message("rebase.entry.action.name.squash"))))
       triggerAndBorderHighlight().component { ui: BasicOptionButtonUI.MainButton -> isInsideRebaseDialog(ui) }
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("git4idea.rebase.interactive.dialog.SquashAction")
       restoreState {
         val table = previous.ui as? JBTable ?: return@restoreState false
@@ -216,7 +214,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     task {
-      val applyRewordShortcut = CommonShortcuts.CTRL_ENTER.shortcuts.first() as KeyboardShortcut
+      val applyRewordShortcut = CommonShortcuts.getCtrlEnter().shortcuts.first() as KeyboardShortcut
       text(GitLessonsBundle.message("git.interactive.rebase.apply.reword", code("Fix style"),
                                     LessonUtil.rawKeyStroke(applyRewordShortcut.firstKeyStroke)))
       stateCheck { previous.ui?.isShowing != true }
@@ -294,7 +292,7 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
 
   private fun VcsLogData.getCommitMetadata(hash: Hash): VcsCommitMetadata {
     val index = getCommitIndex(hash, roots.single())
-    return topCommitsCache[index] ?: miniDetailsGetter.getCommitData(index)
+    return topCommitsCache[index] ?: miniDetailsGetter.getCachedDataOrPlaceholder(index)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

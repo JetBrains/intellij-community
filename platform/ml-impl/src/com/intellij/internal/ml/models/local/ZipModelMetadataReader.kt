@@ -2,9 +2,11 @@
 package com.intellij.internal.ml.models.local
 
 import com.intellij.internal.ml.ModelMetadataReader
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.util.zip.ZipFile
 
+@ApiStatus.Internal
 open class ZipModelMetadataReader(private val zipFile: ZipFile): ModelMetadataReader {
   override fun binaryFeatures(): String = resourceContent("binary.json")
   override fun floatFeatures(): String = resourceContent("float.json")

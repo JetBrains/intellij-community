@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.TextRange
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.InjectionTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.SmartList
@@ -34,6 +36,11 @@ import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade
 
 class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
+
+  override fun setUp() {
+    super.setUp()
+    ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations)
+  }
 
   fun `test edit multiline in fragment-editor`() {
     with(myFixture) {
@@ -387,6 +394,67 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
     }
 
+  }
+
+  fun `test indented update`() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+        void test() {
+          createClass(""${'"'}
+                      class Foo {
+                        static void foo(int a) {}<caret>
+                        static void foo(int a, int b) {}
+                      }""${'"'});
+       }
+        
+          private static void createClass(@Language("JAVA") String text){};
+    }""".trimIndent())
+    val originalEditor = injectionTestFixture.topLevelEditor
+
+    val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+    val fragmentFile = quickEditHandler.newFile
+    TestCase.assertEquals("""
+      class Foo {
+        static void foo(int a) {}
+        static void foo(int a, int b) {}
+      }
+      """.trimIndent(), fragmentFile.text)
+
+    myFixture.openFileInEditor(fragmentFile.virtualFile)
+
+    myFixture.editor.caretModel.moveToOffset(fragmentFile.text.indexAfter("foo(int a) {}"))
+    myFixture.type("\n\n\n")
+
+    TestCase.assertEquals("""
+      class Foo {
+        static void foo(int a) {}
+
+
+
+        static void foo(int a, int b) {}
+      }
+      """.trimIndent(), myFixture.editor.document.text.replace(Regex("[ \t]+\n"), "\n"))
+
+    TestCase.assertEquals("""
+          import org.intellij.lang.annotations.*;
+        
+          class Hello {
+            void test() {
+              createClass(""${'"'}
+                          
+                      class Foo {
+                            static void foo(int a) {}
+                          
+                          
+                          
+                            static void foo(int a, int b) {}
+                          }""${'"'});
+           }
+            
+              private static void createClass(@Language("JAVA") String text){};
+        }""".trimIndent(), originalEditor.document.text)
   }
 
   fun `test suffix-prefix-edit-reformat`() {

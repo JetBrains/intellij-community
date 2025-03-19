@@ -12,7 +12,7 @@ class Test {
   static void notNullable(String s) {
     switch (s) {
       case "xyz" -> System.out.println("xyz");
-      case default -> System.out.println("else");
+      default -> System.out.println("else");
     }
   }
 

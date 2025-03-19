@@ -6,6 +6,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
 
+@Service(Service.Level.PROJECT)
 @State(name = "KotlinCompilerWorkspaceSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerWorkspaceSettings> {
     /**
@@ -15,6 +16,7 @@ class KotlinCompilerWorkspaceSettings : PersistentStateComponent<KotlinCompilerW
     var preciseIncrementalEnabled: Boolean = true
     var incrementalCompilationForJsEnabled: Boolean = true
     var enableDaemon: Boolean = true
+    var daemonVmOptions: String = ""
 
     override fun getState(): KotlinCompilerWorkspaceSettings {
         return this

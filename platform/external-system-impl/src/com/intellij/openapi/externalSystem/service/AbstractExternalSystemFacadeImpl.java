@@ -3,10 +3,14 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.remote.*;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
   implements RemoteExternalSystemFacade<S>
 {
@@ -25,8 +30,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
 
   private final AtomicReference<S> mySettings              = new AtomicReference<>();
   private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener =
-    new AtomicReference<>(new ExternalSystemTaskNotificationListenerAdapter() {
-    });
+    new AtomicReference<>(ExternalSystemTaskNotificationListener.NULL_OBJECT);
 
   private final @NotNull RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
   private final @NotNull RemoteExternalSystemTaskManagerImpl<S>     myTaskManager;
@@ -62,19 +66,18 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
       return getService(RemoteExternalSystemProjectResolver.class, myProjectResolver);
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public @NotNull RawExternalSystemProjectResolver<S> getRawProjectResolver() throws IllegalStateException {
     try {
       return getService(RawExternalSystemProjectResolver.class, new RawExternalSystemProjectResolverImpl<>(myProjectResolver));
     }
     catch (Exception e) {
-      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()),
-                                      e);
+      throw new IllegalStateException(String.format("Can't create '%s' service", RawExternalSystemProjectResolverImpl.class.getName()), e);
     }
   }
 
@@ -213,15 +216,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public synchronized void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
-    }
-
-    @Override
-    public synchronized void onStart(@NotNull ExternalSystemTaskId id) {
-    }
-
-
-    @Override
     public synchronized void onEnvironmentPrepared(@NotNull ExternalSystemTaskId id) {
       try {
         myManager.onEnvironmentPrepared(id);
@@ -249,26 +243,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
       catch (RemoteException e) {
         // Ignore
       }
-    }
-
-    @Override
-    public synchronized void onEnd(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onSuccess(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
-    }
-
-    @Override
-    public synchronized void beforeCancel(@NotNull ExternalSystemTaskId id) {
-    }
-
-    @Override
-    public synchronized void onCancel(@NotNull ExternalSystemTaskId id) {
     }
   }
 }

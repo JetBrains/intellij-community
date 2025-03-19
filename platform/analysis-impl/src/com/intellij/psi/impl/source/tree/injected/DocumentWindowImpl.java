@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -27,15 +27,18 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import com.intellij.util.text.StringOperation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
+@ApiStatus.Internal
+public final class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance(DocumentWindowImpl.class);
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
@@ -57,7 +60,8 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Nullable("null means we were unable to calculate")
-  LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
+  @ApiStatus.Internal
+  public LogicalPosition hostToInjectedInVirtualSpace(@NotNull LogicalPosition hPos) {
     // beware the virtual space
     int hLineStartOffset = hPos.line >= myDelegate.getLineCount() ? myDelegate.getTextLength() : myDelegate.getLineStartOffset(hPos.line);
     int iLineStartOffset = hostToInjected(hLineStartOffset);
@@ -145,9 +149,8 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return startOffsetOfNextLine == 0 || getText().charAt(startOffsetOfNextLine - 1) != '\n' ? startOffsetOfNextLine : startOffsetOfNextLine - 1;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     CachedText cachedText = myCachedText;
 
     if (cachedText == null || cachedText.modificationStamp() != getModificationStamp()) {
@@ -157,8 +160,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return cachedText.text();
   }
 
-  @NotNull
-  private String calcText() {
+  private @NotNull String calcText() {
     StringBuilder text = new StringBuilder();
     CharSequence hostText = myDelegate.getCharsSequence();
     synchronized (myLock) {
@@ -174,9 +176,8 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return text.toString();
   }
 
-  @NotNull
   @Override
-  public CharSequence getImmutableCharSequence() {
+  public @NotNull CharSequence getImmutableCharSequence() {
     return ImmutableCharSequence.asImmutable(getText());
   }
 
@@ -291,7 +292,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+  public @Unmodifiable @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -308,7 +309,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return doPrepareReplaceString(startOffset, endOffset, s);
   }
 
-  private @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
+  private @Unmodifiable @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
@@ -393,8 +394,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+  public @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     return new RangeMarkerWindow(this, startOffset, endOffset, surviveOnExternalChange);
   }
 
@@ -414,8 +414,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+  public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     ProperTextRange hostRange = injectedToHost(new ProperTextRange(startOffset, endOffset));
     return myDelegate.createGuardedBlock(hostRange.getStartOffset(), hostRange.getEndOffset());
   }
@@ -495,8 +494,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+  public @NotNull RangeMarker createRangeMarker(@NotNull TextRange textRange) {
     ProperTextRange properTextRange = new ProperTextRange(textRange);
     return createRangeMarker(properTextRange.getStartOffset(), properTextRange.getEndOffset());
   }
@@ -512,8 +510,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public LineIterator createLineIterator() {
+  public @NotNull LineIterator createLineIterator() {
     return myDelegate.createLineIterator();
   }
 
@@ -569,8 +566,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public DocumentEx getDelegate() {
+  public @NotNull DocumentEx getDelegate() {
     return myDelegate;
   }
 
@@ -659,8 +655,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  @NotNull
-  public ProperTextRange injectedToHost(@NotNull TextRange injected) {
+  public @NotNull ProperTextRange injectedToHost(@NotNull TextRange injected) {
     int start = injectedToHost(injected.getStartOffset(), false, true);
     ProperTextRange fixedTextRange = getFixedTextRange(start);
     if (fixedTextRange != null) {
@@ -668,13 +663,12 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
     int end = injectedToHost(injected.getEndOffset(), true, true);
     if (end < start) {
-      end = injectedToHost(injected.getEndOffset(), false, true);
+      end = Math.max(start, injectedToHost(injected.getEndOffset(), false, true));
     }
     return new ProperTextRange(start, end);
   }
 
-  @Nullable("null means invalid")
-  private ProperTextRange getFixedTextRange(int startOffset) {
+  private @Nullable("null means invalid") ProperTextRange getFixedTextRange(int startOffset) {
     ProperTextRange fixedTextRange;
     TextRange textRange = getHostRange(startOffset);
     if (textRange == null) {
@@ -691,8 +685,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     return fixedTextRange;
   }
 
-  @Nullable("null means invalid")
-  private TextRange findNearestTextRange(int startOffset) {
+  private @Nullable("null means invalid") TextRange findNearestTextRange(int startOffset) {
     TextRange textRange = null;
     for (Segment marker : getHostRanges()) {
       TextRange curRange = ProperTextRange.create(marker);
@@ -735,8 +728,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
   }
 
-  @Nullable
-  private TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
+  private @Nullable TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
     int startOffset = -1;
     int endOffset = -1;
     synchronized (myLock) {
@@ -892,8 +884,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof DocumentWindowImpl window)) return false;
-    return myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
+    return o instanceof DocumentWindowImpl window && myDelegate.equals(window.getDelegate()) && areRangesEqual(window);
   }
 
   @Override

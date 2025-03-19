@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl
@@ -15,8 +15,10 @@ import com.intellij.util.animation.Easing
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 
+@Internal
 class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
   private val animator = JBAnimator()
   private var start: Int = -1
@@ -28,6 +30,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       override fun selectionChanged(oldSelection: TabInfo?, newSelection: TabInfo?) {
         val from = bounds(oldSelection) ?: return
         val to = bounds(newSelection) ?: return
+        if (from.width == 0 || to.width == 0) return //tab was added or removed. See IDEA-331744
         val dur = 100
         val del = 50
         val s1 = from.x
@@ -57,7 +60,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       }
 
       private fun bounds(tabInfo: TabInfo?): Rectangle? {
-        return tabs.infoToLabel.get(tabInfo ?: return null)?.bounds
+        return tabs.getTabLabel(tabInfo ?: return null)?.bounds
       }
     })
   }
@@ -80,12 +83,11 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
       return
     }
 
-    val myInfo2Label = tabs.infoToLabel
-    val firstLabel = myInfo2Label[tabs.getVisibleInfos()[0]] ?: return
+    val firstLabel = tabs.getTabLabel(tabs.getVisibleInfos().first()) ?: return
 
-    when (tabs.position) {
+    when (tabs.tabsPosition) {
       JBTabsPosition.top -> {
-        val startY = firstLabel.y - if (tabs.position == JBTabsPosition.bottom) 0 else thickness
+        val startY = firstLabel.y - if (tabs.tabsPosition == JBTabsPosition.bottom) 0 else thickness
         val startRow = if (ExperimentalUI.isNewUI()) 1 else 0
         val lastRow = tabs.lastLayoutPass!!.rowCount
         for (eachRow in startRow until lastRow) {
@@ -116,11 +118,11 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     }
 
     if (hasAnimation()) {
-      tabs.tabPainter.paintUnderline(tabs.position, calcRectangle() ?: return, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
+      tabs.tabPainter.paintUnderline(tabs.tabsPosition, calcRectangle() ?: return, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
     else {
       val selectedLabel = tabs.selectedLabel ?: return
-      tabs.tabPainter.paintUnderline(tabs.position, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
+      tabs.tabPainter.paintUnderline(tabs.tabsPosition, selectedLabel.bounds, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))
     }
   }
 

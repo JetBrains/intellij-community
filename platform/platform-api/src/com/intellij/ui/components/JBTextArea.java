@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ObjectUtils;
@@ -9,8 +10,10 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StatusText;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.Document;
@@ -122,5 +125,28 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     }
 
     myEmptyText.paintStatusText(g);
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleJBTextArea();
+    }
+    return accessibleContext;
+  }
+
+  private class AccessibleJBTextArea extends AccessibleJTextArea {
+    @Override
+    public String getAccessibleDescription() {
+      String description = super.getAccessibleDescription();
+      if (description == null && StringUtil.isEmpty(getText())) {
+        //noinspection HardCodedStringLiteral
+        String emptyText = myEmptyText.toString();
+        if (!emptyText.isEmpty()) {
+          return AccessibleContextUtil.getUniqueDescription(this, emptyText);
+        }
+      }
+      return description;
+    }
   }
 }

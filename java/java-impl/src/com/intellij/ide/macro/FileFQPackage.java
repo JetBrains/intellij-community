@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.macro;
 
 import com.intellij.java.JavaBundle;
@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.NotNull;
 
-public class FileFQPackage extends Macro {
+public final class FileFQPackage extends Macro {
   @Override
   public String expand(@NotNull DataContext dataContext) {
     PsiPackage aPackage = FilePackageMacro.getFilePackage(dataContext);
@@ -14,15 +14,13 @@ public class FileFQPackage extends Macro {
     return aPackage.getQualifiedName();
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return JavaBundle.message("macro.file.fully.qualified.package");
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "FileFQPackage";
   }
 }

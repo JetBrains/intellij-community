@@ -1,7 +1,8 @@
 // "Make containing function suspend" "false"
 // ACTION: Convert to run
 // ACTION: Convert to with
-// DISABLE-ERRORS
+// ACTION: Enable option 'Property types' for 'Types' inlay hints
+// DISABLE_ERRORS
 class A {
     suspend fun foo() {}
 }

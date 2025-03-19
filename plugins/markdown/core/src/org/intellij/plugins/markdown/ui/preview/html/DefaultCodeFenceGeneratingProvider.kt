@@ -30,8 +30,7 @@ internal class DefaultCodeFenceGeneratingProvider(
         additionalLineProcessor = ::processCodeLine
       )
     }
-    val provider = cacheProviders.firstOrNull { it.isApplicable(language) }
-    val html = when (provider) {
+    val html = when (val provider = cacheProviders.firstOrNull { it.isApplicable(language) }) {
       null -> buildHighlightedFenceContent(
         codeFenceContent,
         highlightedRanges = emptyList(),
@@ -136,6 +135,7 @@ internal class DefaultCodeFenceGeneratingProvider(
     val html = """
     <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">
       <img class="code-fence-highlighter-copy-button-icon">
+      <span class="tooltiptext">Copy to clipboard</span>
     </div>
     """.trimIndent()
     visitor.consumeHtml(html)

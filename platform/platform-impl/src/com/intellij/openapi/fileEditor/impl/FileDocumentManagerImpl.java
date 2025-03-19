@@ -1,15 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -59,6 +57,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +79,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
 
   public static final Key<Object> NOT_RELOADABLE_DOCUMENT_KEY = new Key<>("NOT_RELOADABLE_DOCUMENT_KEY");
+  private static final Key<Boolean> FORCE_SAVE_DOCUMENT_KEY = new Key<>("FORCE_SAVE_DOCUMENT_KEY");
 
   private static final Key<String> LINE_SEPARATOR_KEY = Key.create("LINE_SEPARATOR_KEY");
   private static final Key<Boolean> MUST_RECOMPUTE_FILE_TYPE = Key.create("Must recompute file type");
@@ -101,9 +101,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
-      if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
-        myUnsavedDocuments.add(document);
-      }
+      markDocumentUnsaved(document, false);
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       VirtualFile virtualFile = getFile(document);
@@ -173,7 +171,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListener.TOPIC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);
@@ -206,9 +204,19 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return true;
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public void markDocumentUnsaved(Document document, boolean force) {
+    if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+      myUnsavedDocuments.add(document);
+      if (force) {
+        document.putUserData(FORCE_SAVE_DOCUMENT_KEY, Boolean.TRUE);
+      }
+    }
   }
 
   @Override
@@ -235,6 +243,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         VirtualFile file = getFile(document);
         if (file == null) continue;
         unbindFileFromDocument(file, document);
+        document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
       }
       myUnsavedDocuments.clear();
       myMultiCaster.unsavedDocumentsDropped();
@@ -275,7 +284,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
@@ -316,9 +325,10 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void saveDocument(@NotNull Document document, boolean explicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
+    myMultiCaster.beforeAnyDocumentSaving(document, explicit);
     if (!myUnsavedDocuments.contains(document)) return;
 
     try {
@@ -349,7 +359,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private static class SaveVetoException extends Exception {}
+  private static final class SaveVetoException extends Exception {}
 
   private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
@@ -426,6 +436,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
+
       if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);
       }
@@ -434,6 +445,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       LoadTextUtil.write(project, file, this, text, document.getModificationStamp());
 
       myUnsavedDocuments.remove(document);
+      document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
+
       LOG.assertTrue(!myUnsavedDocuments.contains(document));
       myTrailingSpacesStripper.clearLineModificationFlags(document);
     });
@@ -442,7 +455,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   private static void updateModifiedProperty(@NotNull VirtualFile file) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      for (FileEditor editor : fileEditorManager.getAllEditors(file)) {
+      for (FileEditor editor : fileEditorManager.getAllEditorList(file)) {
         if (editor instanceof TextEditorImpl) {
           ((TextEditorImpl)editor).updateModifiedProperty();
         }
@@ -452,11 +465,17 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   private void removeFromUnsaved(@NotNull Document document) {
     myUnsavedDocuments.remove(document);
+    document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
+
     myMultiCaster.unsavedDocumentDropped(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
   }
 
   private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) throws IOException {
+    if (document.getUserData(FORCE_SAVE_DOCUMENT_KEY)== Boolean.TRUE) {
+      return true;
+    }
+
     if (file.getFileType().isBinary() || document.getTextLength() > 1000 * 1000) {    // don't compare if the file is too big
       return true;
     }
@@ -554,10 +573,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    if (branch != null && ((ModelBranchImpl)branch).hasModifications(file)) {
-      return true;
-    }
     Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
@@ -710,9 +725,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void reloadFromDisk(@NotNull Document document) {
-    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+  public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
       assert file != null;
@@ -722,7 +737,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         return;
       }
 
-      Project project = ProjectLocator.getInstance().guessProjectForFile(file);
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
@@ -756,7 +770,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         myMultiCaster.fileWithNoDocumentChanged(file);
         myMultiCaster.afterDocumentUnbound(file, document);
       }
+
       myUnsavedDocuments.remove(document);
+      document.putUserData(FORCE_SAVE_DOCUMENT_KEY, null);
     }
   }
 
@@ -775,9 +791,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void fileDeleted(@NotNull VFileDeleteEvent event) {
-    Document doc = getCachedDocument(event.getFile());
+    VirtualFile virtualFile = event.getFile();
+    Document doc = getCachedDocument(virtualFile);
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
+      unbindFileFromDocument(virtualFile, doc);
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -45,8 +45,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "project.propGUI";
   }
 
@@ -87,6 +86,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
       return true;
     }
 
+    if (configuration.GENERATE_SOURCES_ON_SAVE != myGeneralUI.myRbInstrumentSourcesOnSave.isSelected()) {
+      return true;
+    }
+
     if (configuration.RESIZE_HEADERS != myGeneralUI.myResizeHeaders.isSelected()) {
       return true;
     }
@@ -103,6 +106,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     configuration.DEFAULT_FIELD_ACCESSIBILITY = (String)myGeneralUI .myDefaultFieldAccessibilityCombo.getSelectedItem();
     configuration.RESIZE_HEADERS = myGeneralUI.myResizeHeaders.isSelected();
     configuration.USE_DYNAMIC_BUNDLES = myGeneralUI.myChkUseDynamicBundles.isSelected();
+    configuration.GENERATE_SOURCES_ON_SAVE = myGeneralUI.myRbInstrumentSourcesOnSave.isSelected();
 
     if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
       final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
@@ -120,8 +124,11 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     if (configuration.INSTRUMENT_CLASSES) {
       myGeneralUI.myRbInstrumentClasses.setSelected(true);
     }
+    else if (configuration.GENERATE_SOURCES_ON_SAVE) {
+      myGeneralUI.myRbInstrumentSourcesOnSave.setSelected(true);
+    }
     else {
-      myGeneralUI.myRbInstrumentSources.setSelected(true);
+      myGeneralUI.myRbInstrumentSourcesOnCompilation.setSelected(true);
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
     myGeneralUI.myChkUseDynamicBundles.setSelected(configuration.USE_DYNAMIC_BUNDLES);
@@ -143,7 +150,8 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   private static final class MyGeneralUI {
     public JPanel myPanel;
     public JRadioButton myRbInstrumentClasses;
-    public JRadioButton myRbInstrumentSources;
+    public JRadioButton myRbInstrumentSourcesOnCompilation;
+    public JRadioButton myRbInstrumentSourcesOnSave;
     public JCheckBox myChkCopyFormsRuntime;
     public JCheckBox myChkUseDynamicBundles;
     private JComboBox<String> myLayoutManagerCombo;
@@ -206,8 +214,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

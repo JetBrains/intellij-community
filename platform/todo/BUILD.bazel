@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.todo` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "todo_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "todo",
+  module_name = "intellij.platform.todo",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "@lib//:stream_ex",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//platform/indexing-impl",
+    "//platform/editor-ui-ex:editor-ex",
+  ],
+  runtime_deps = [":todo_resources"]
+)
+### auto-generated section `build intellij.platform.todo` end

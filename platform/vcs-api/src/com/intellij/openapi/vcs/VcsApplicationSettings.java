@@ -2,8 +2,8 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -28,7 +28,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean MANAGE_IGNORE_FILES = false;
   public boolean DISABLE_MANAGE_IGNORE_FILES = false;
   public boolean MARK_EXCLUDED_AS_IGNORED = true;
-  public boolean COMMIT_FROM_LOCAL_CHANGES = false;
+  public boolean COMMIT_FROM_LOCAL_CHANGES = true;
   /**
    * Option to show editor diff preview in non-modal commit interface with Commit toolwindow.
    */

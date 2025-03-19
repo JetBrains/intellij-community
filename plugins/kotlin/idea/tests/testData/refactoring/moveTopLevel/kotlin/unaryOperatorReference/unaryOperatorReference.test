@@ -1,0 +1,7 @@
+{
+  "mainFile": "bar/UseSite.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "otherBar",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

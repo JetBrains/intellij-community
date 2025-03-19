@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.structureView;
 
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.ResourceBundleImpl;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.SoftFactoryMap;
@@ -22,10 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.IntConsumer;
 
+@Service(Service.Level.PROJECT)
 @State(name = "PropertiesSeparatorManager")
 public final class PropertiesSeparatorManager implements PersistentStateComponent<PropertiesSeparatorManager.PropertiesSeparatorManagerState> {
-  private final Project myProject;
-
   public static PropertiesSeparatorManager getInstance(final Project project) {
     return project.getService(PropertiesSeparatorManager.class);
   }
@@ -38,12 +37,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
     }
   };
 
-  public PropertiesSeparatorManager(final Project project) {
-    myProject = project;
-  }
-
-  @NotNull
-  public String getSeparator(final ResourceBundle resourceBundle) {
+  public @NotNull String getSeparator(final ResourceBundle resourceBundle) {
     if (!(resourceBundle instanceof ResourceBundleImpl resourceBundleImpl)) {
       return ".";
     }
@@ -94,13 +88,12 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
   }
 
   @Override
-  public void loadState(@NotNull final PropertiesSeparatorManagerState state) {
-    myUserDefinedSeparators = state.decode(myProject);
+  public void loadState(final @NotNull PropertiesSeparatorManagerState state) {
+    myUserDefinedSeparators = state.decode();
   }
 
-  @Nullable
   @Override
-  public PropertiesSeparatorManagerState getState() {
+  public @Nullable PropertiesSeparatorManagerState getState() {
     return myUserDefinedSeparators.isEmpty() ? null : myUserDefinedSeparators.encode();
   }
 
@@ -132,7 +125,7 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
       return encodedState;
     }
 
-    public PropertiesSeparatorManagerState decode(final Project project) {
+    public PropertiesSeparatorManagerState decode() {
       PropertiesSeparatorManagerState decoded = new PropertiesSeparatorManagerState();
       for (final Map.Entry<String, String> entry : mySeparators.entrySet()) {
         String separator = entry.getValue();
@@ -141,17 +134,13 @@ public final class PropertiesSeparatorManager implements PersistentStateComponen
           continue;
         }
         final String url = entry.getKey();
-        ResourceBundle resourceBundle = PropertiesImplUtil.createByUrl(url, project);
-        if (resourceBundle != null) {
-          decoded.getSeparators().put(url, separator);
-        }
+        decoded.getSeparators().put(url, separator);
       }
       return decoded;
     }
   }
 
-  @Nullable
-  private static String decodeSeparator(String separator) {
+  private static @Nullable String decodeSeparator(String separator) {
     if (separator.length() % 6 != 0) {
       return null;
     }

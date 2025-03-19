@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
+public final class SuggestFirstVariableNameMacro extends VariableOfTypeMacro {
   @Override
   public String getName() {
     return "suggestFirstVariableName";

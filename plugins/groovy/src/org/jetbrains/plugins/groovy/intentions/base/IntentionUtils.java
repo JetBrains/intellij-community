@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.base;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -40,7 +40,7 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              TypeConstraint[] constraints,
                                              boolean isConstructor,
-                                             @NotNull final PsiElement context) {
+                                             final @NotNull PsiElement context) {
     ParameterNameExpression[] nameExpressions = new ParameterNameExpression[paramTypesExpressions.length];
     for (int i = 0; i < nameExpressions.length; i++) {
       nameExpressions[i] = StringParameterNameExpression.Companion.getEMPTY();
@@ -52,7 +52,7 @@ public final class IntentionUtils {
       context.getResolveScope(),
       method.getLanguage() == GroovyLanguage.INSTANCE
     );
-    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, context);
+    createTemplateForMethod(paramTypesExpressions, nameExpressions, method, owner, returnTypeExpression, isConstructor, true, context);
   }
 
   public static void createTemplateForMethod(ChooseTypeExpression[] paramTypesExpressions,
@@ -61,12 +61,14 @@ public final class IntentionUtils {
                                              PsiClass owner,
                                              ChooseTypeExpression returnTypeExpression,
                                              boolean isConstructor,
-                                             @Nullable final PsiElement context) {
+                                             boolean isScrollToTemplate,
+                                             final @Nullable PsiElement context) {
 
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
 
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
+    builder.setScrollToTemplate(isScrollToTemplate);
     if (!isConstructor) {
       assert typeElement != null;
       builder.replaceElement(typeElement, returnTypeExpression);

@@ -1,0 +1,15 @@
+LineBreakpoint created at smartStepIntoInlineSuspendLambda.kt:11
+Run Java
+Connected to the target VM
+smartStepIntoInlineSuspendLambda.kt:11
+smartStepIntoInlineSuspendLambda.kt:13
+smartStepIntoInlineSuspendLambda.kt:14
+smartStepIntoInlineSuspendLambda.kt:15
+smartStepIntoInlineSuspendLambda.kt:16
+smartStepIntoInlineSuspendLambda.kt:17
+smartStepIntoInlineSuspendLambda.kt:18
+smartStepIntoInlineSuspendLambda.kt:19
+Compile bytecode for i
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,6 +1,8 @@
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
-class ISerialisableFile(ABC, metaclass=ABCMeta):
+# This interface is unused. Nothing implements `id` as property either.
+# IDs can be ints, strings, None, or a Descriptor returning those throughout the codebase.
+class ISerialisableFile(ABC):
     @property
     @abstractmethod
-    def id(self): ...
+    def id(self) -> str | int | None: ...

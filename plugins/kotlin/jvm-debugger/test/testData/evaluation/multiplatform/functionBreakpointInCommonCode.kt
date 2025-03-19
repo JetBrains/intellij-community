@@ -1,3 +1,5 @@
+// IGNORE_K2
+// IDEA-358364
 // MODULE: common
 // FILE: common.kt
 // PLATFORM: common
@@ -7,7 +9,7 @@ fun bar() {
     foo()
 }
 
-// ADDITIONAL_BREAKPOINT: common.kt / expect fun foo(): Int / fun / 1
+// ADDITIONAL_BREAKPOINT: common.kt / expect fun foo(): Int / fun
 
 // EXPRESSION: x
 // RESULT: 1: I

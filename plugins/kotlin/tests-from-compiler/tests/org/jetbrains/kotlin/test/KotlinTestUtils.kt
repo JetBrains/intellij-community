@@ -42,4 +42,9 @@ object KotlinTestUtils {
     fun runTest(test: DoTest, targetBackend: TargetBackend, @TestDataFile testDataFile: String) {
         KotlinTestUtils.runTest(test, null, targetBackend, testDataFile)
     }
+
+    @JvmStatic
+    fun runTest(test: DoTest, testCase: TestCase, targetBackend: TargetBackend,  @TestDataFile testDataFile: String) {
+        KotlinTestUtils.runTest(test, testCase, targetBackend, testDataFile)
+    }
 }

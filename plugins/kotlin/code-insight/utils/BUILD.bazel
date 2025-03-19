@@ -1,0 +1,36 @@
+### auto-generated section `build kotlin.code-insight.utils` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+)
+
+jvm_library(
+  name = "kotlin-code-insight-utils",
+  module_name = "kotlin.code-insight.utils",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/formatter",
+    "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//java/java-psi-api:psi",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build kotlin.code-insight.utils` end

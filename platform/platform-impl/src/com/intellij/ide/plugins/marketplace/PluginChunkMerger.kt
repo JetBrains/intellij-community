@@ -5,21 +5,23 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.Chunk
 import com.jetbrains.plugin.blockmap.core.ChunkMerger
+import org.jetbrains.annotations.ApiStatus
 import java.io.*
 
 
+@ApiStatus.Internal
 class PluginChunkMerger(
   oldFile: File,
   oldBlockMap: BlockMap,
   newBlockMap: BlockMap,
-  private val indicator: ProgressIndicator
+  private val indicator: ProgressIndicator?,
 ) : ChunkMerger(oldFile, oldBlockMap, newBlockMap) {
   private val newFileSize: Int = newBlockMap.chunks.sumOf { chunk -> chunk.length }
   private var progress: Int = 0
 
   override fun merge(output: OutputStream, newChunkDataSource: Iterator<ByteArray>) {
-    indicator.checkCanceled()
-    indicator.isIndeterminate = newFileSize <= 0
+    indicator?.checkCanceled()
+    indicator?.isIndeterminate = newFileSize <= 0
     super.merge(output, newChunkDataSource)
   }
 
@@ -36,7 +38,7 @@ class PluginChunkMerger(
   }
 
   private fun setIndicatorFraction() {
-    indicator.checkCanceled()
-    indicator.fraction = progress.toDouble() / newFileSize.toDouble()
+    indicator?.checkCanceled()
+    indicator?.fraction = progress.toDouble() / newFileSize.toDouble()
   }
 }

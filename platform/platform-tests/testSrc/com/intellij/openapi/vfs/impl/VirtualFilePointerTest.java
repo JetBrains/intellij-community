@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.SuperUserStatus;
@@ -163,6 +165,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {
     final var file = tempDir.newFile("myfile.txt");
@@ -225,7 +228,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Object url = ((VirtualFilePointerImpl)pointer).myNode.myFileOrUrl;
+        Object url = ((VirtualFilePointerImpl)pointer).getNode().getFileOrUrl();
         assertTrue(url.toString(), url instanceof String);
         assertFalse(pointer.isValid());
       }
@@ -599,7 +602,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ConcurrentCollectionFactory.createConcurrentSet();
+    Collection<Job> reads = ConcurrentCollectionFactory.createConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -638,7 +641,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       connection.disconnect();  // unregister listener early
-      for (Job<?> read : reads) {
+      for (Job read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -646,9 +649,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<?>> reference = new AtomicReference<>();
+      AtomicReference<Job> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -778,7 +781,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
         try {
           ready.countDown();
           while (run.get()) {
-            bb.myNode.update(((VirtualFilePointerImpl)fileToCreatePointer).myNode, fakeRoot, "test", null);
+            bb.getNode().update(((VirtualFilePointerImpl)fileToCreatePointer).getNode(), fakeRoot, "test", null);
           }
         }
         catch (Throwable e) {
@@ -787,7 +790,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Job<?>> jobs = new ArrayList<>(nThreads);
+      List<Job> jobs = new ArrayList<>(nThreads);
       for (int it = 0; it < nThreads; it++) {
         jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
       }
@@ -797,7 +800,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run.set(false);
-      for (Job<?> job : jobs) {
+      for (Job job : jobs) {
         job.waitForCompletion(2_000);
       }
       ExceptionUtil.rethrowAll(exception.get());
@@ -1124,11 +1127,11 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
 
-    PlatformTestUtil.startPerformanceTest("get()", 3000, () -> {
+    Benchmark.newBenchmark("get()", () -> {
       for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }
-    }).assertTiming();
+    }).start();
   }
 
   @Test
@@ -1335,7 +1338,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(expectedPointerRelativeUrl, StringUtil.trimStart(pointer.getUrl(), "jar://" + tempRoot + "/" + abc));
     String expectedPointerFileNameToCheck = expectedPointerFileName == null ? abc : expectedPointerFileName;
     assertEquals(expectedPointerFileNameToCheck, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
     assertFalse(pointer.isValid());
 
     File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
@@ -1351,7 +1354,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(sourceUrl, disposable, null);
     assertEquals(expectedPointerUrl, pointer.getUrl());
     assertEquals(expectedPointerFileName, pointer.getFileName());
-    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).myNode.myFS);
+    assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getNode().fs);
     assertFalse(pointer.isValid());
   }
 }

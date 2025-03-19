@@ -1,66 +1,58 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class StaticFilePath {
-  private final String myKey;
-  private final String myPath;
-  private final boolean myIsDirectory;
-  private final VirtualFile myVf;
+  private final String myKey; // canonical path form for case-insensitive systems
+  private final FilePath myPath;
 
-  public StaticFilePath(boolean isDirectory, @NotNull String path, @Nullable VirtualFile vf) {
-    this(isDirectory, path, FilePathsHelper.convertPath(path), vf);
+  public StaticFilePath(@NotNull FilePath path) {
+    this(path, FilePathsHelper.convertPath(path));
   }
 
-  private StaticFilePath(boolean isDirectory, @NotNull String path, @NotNull String key, @Nullable VirtualFile vf) {
-    myIsDirectory = isDirectory;
+  private StaticFilePath(@NotNull FilePath path, @NotNull String key) {
     myPath = path;
     myKey = key;
-    myVf = vf;
   }
 
   public boolean isDirectory() {
-    return myIsDirectory;
+    return myPath.isDirectory();
   }
 
-  @NotNull
-  public String getPath() {
-    return myPath;
+  public @NotNull String getPath() {
+    return myPath.getPath();
   }
 
-  @NotNull
-  public String getKey() {
+  public @NotNull String getKey() {
     return myKey;
   }
 
-  @Nullable
-  public VirtualFile getVf() {
-    return myVf;
+  /**
+   * @deprecated Use {@link #resolve()} or {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately}
+   */
+  @Deprecated
+  public @Nullable VirtualFile getVf() {
+    return null;
   }
 
-  @NotNull
-  public FilePath getFilePath() {
-    return VcsUtil.getFilePath(myPath, myIsDirectory);
+  public @NotNull FilePath getFilePath() {
+    return myPath;
   }
 
-  @Nullable
-  public StaticFilePath getParent() {
-    final int idx = myKey.lastIndexOf('/');
-    if (idx == -1 || idx == 0) return null;
-    return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx), myVf == null ? null : myVf.getParent());
+  public @Nullable StaticFilePath getParent() {
+    FilePath parentPath = myPath.getParentPath();
+    if (parentPath == null) return null;
+    String parentKey = myKey.substring(0, parentPath.getPath().length());
+    return new StaticFilePath(parentPath, parentKey);
   }
 
-  @Nullable
-  public VirtualFile resolve() {
-    VirtualFile result = getVf();
-    if (result != null) return result;
+  public @Nullable VirtualFile resolve() {
     return LocalFileSystem.getInstance().findFileByPath(getPath());
   }
 }

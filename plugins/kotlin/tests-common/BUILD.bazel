@@ -1,0 +1,48 @@
+### auto-generated section `build kotlin.tests-common` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "tests-common",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests-common_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:guava",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//java/testFramework",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//jps/model-api:model",
+  ]
+)
+
+jvm_test(
+  name = "tests-common_test",
+  runtime_deps = [":tests-common_test_lib"]
+)
+### auto-generated section `build kotlin.tests-common` end

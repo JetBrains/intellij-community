@@ -29,7 +29,9 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * A pruned and optimized version of javolution.text.Text
@@ -52,7 +54,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
+@ApiStatus.Internal
+public final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.
    */
@@ -65,8 +68,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
   // visible for tests
   // Here (String | CompositeNode | ByteArrayCharSequence) is stored
-  @NotNull
-  final CharSequence myNode;
+  @VisibleForTesting
+  public final @NotNull CharSequence myNode;
 
   private ImmutableText(@NotNull CharSequence node) {
     myNode = node;
@@ -78,15 +81,13 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @param  obj the object to represent as text.
    * @return the textual representation of the specified object.
    */
-  @NotNull
-  static ImmutableText valueOf(@NotNull Object obj) {
+  static @NotNull ImmutableText valueOf(@NotNull Object obj) {
     if (obj instanceof ImmutableText) return (ImmutableText)obj;
     if (obj instanceof CharSequence) return valueOf((CharSequence)obj);
     return valueOf(String.valueOf(obj));
   }
 
-  @NotNull
-  private static ImmutableText valueOf(@NotNull CharSequence str) {
+  private static @NotNull ImmutableText valueOf(@NotNull CharSequence str) {
     if (str instanceof ByteArrayCharSequence) {
       return new ImmutableText(str);
     }
@@ -103,16 +104,14 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    *
    * @return a copy of the myNode better prepared for small modifications to fully enable structure-sharing capabilities
    */
-  @NotNull
-  private CharSequence ensureChunked() {
+  private @NotNull CharSequence ensureChunked() {
     if (length() > BLOCK_SIZE && !(myNode instanceof CompositeNode)) {
       return nodeOf(myNode, 0, length());
     }
     return myNode;
   }
 
-  @NotNull
-  private static CharSequence nodeOf(@NotNull CharSequence node, int offset, int length) {
+  private static @NotNull CharSequence nodeOf(@NotNull CharSequence node, int offset, int length) {
     if (length <= BLOCK_SIZE) {
       // Use toString to avoid referencing the original byte[] array in case if node is ByteArrayCharSequence
       return node.subSequence(offset, offset + length).toString();
@@ -143,8 +142,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @param  that the text that is concatenated.
    * @return {@code this + that}
    */
-  @NotNull
-  private ImmutableText concat(@NotNull ImmutableText that) {
+  private @NotNull ImmutableText concat(@NotNull ImmutableText that) {
     return that.length() == 0 ? this : length() == 0 ? that : new ImmutableText(concatNodes(ensureChunked(), that.ensureChunked()));
   }
 
@@ -200,8 +198,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
 
   @Override
-  @NotNull
-  public CharSequence subSequence(final int start, final int end) {
+  public @NotNull CharSequence subSequence(final int start, final int end) {
     if (start == 0 && end == length()) return this;
     return new CharSequenceSubSequence(this, start, end);
   }
@@ -242,8 +239,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
   }
   private InnerLeaf myLastLeaf;
 
-  @NotNull
-  private InnerLeaf findLeaf(int index) {
+  private @NotNull InnerLeaf findLeaf(int index) {
     if (index < 0) throw outOfRange(index);
 
     CharSequence node = myNode;
@@ -347,13 +343,11 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
    * @return the {@code java.lang.String} for this text.
    */
   @Override
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     return myNode.toString();
   }
 
-  @NotNull
-  private static CharSequence concatNodes(@NotNull CharSequence node1, @NotNull CharSequence node2) {
+  private static @NotNull CharSequence concatNodes(@NotNull CharSequence node1, @NotNull CharSequence node2) {
     // All Text instances are maintained balanced:
     //   (head < tail * 2) & (tail < head * 2)
     final int length = node1.length() + node2.length();
@@ -399,10 +393,11 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     return (shorter.length() << 1) < longer.length() && longer instanceof CompositeNode;
   }
 
-  static final class CompositeNode implements CharSequence {
+  @ApiStatus.Internal
+  public static final class CompositeNode implements CharSequence {
     final int count;
-    final CharSequence head;
-    final CharSequence tail;
+    public final CharSequence head;
+    public final CharSequence tail;
 
     CompositeNode(@NotNull CharSequence head, @NotNull CharSequence tail) {
       count = head.length() + tail.length();
@@ -464,8 +459,7 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
     }
 
     @Override
-    @NotNull
-    public CharSequence subSequence(int start, int end) {
+    public @NotNull CharSequence subSequence(int start, int end) {
       int cesure = head.length();
       if (end <= cesure) {
         return head.subSequence(start, end);
@@ -486,9 +480,8 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
       return concatNodes(head.subSequence(start, cesure), tail.subSequence(0, end - cesure));
     }
 
-    @NotNull
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       int len = length();
       char[] data = new char[len];
       getChars(0, len, data, 0);

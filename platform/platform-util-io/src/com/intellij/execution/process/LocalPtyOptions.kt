@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
 class LocalPtyOptions private constructor(val consoleMode: Boolean,
                                           val useCygwinLaunch: Boolean,
@@ -18,11 +21,17 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
   }
 
   companion object {
+    @JvmStatic
+    fun defaults(): LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, shouldUseWinConPty())
+
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated("Use [defaults] instead", ReplaceWith("LocalPtyOptions.defaults()"))
     @JvmField
-    val DEFAULT = LocalPtyOptions(false, false, -1, -1, false)
+    val DEFAULT: LocalPtyOptions = LocalPtyOptions(false, false, -1, -1, false)
 
     @JvmStatic
-    fun shouldUseWinConPty() : Boolean = Registry.`is`("terminal.use.conpty.on.windows", false)
+    @Internal
+    fun shouldUseWinConPty() : Boolean = SystemInfo.isWindows && Registry.`is`("terminal.use.conpty.on.windows", true)
   }
 
   class Builder internal constructor(private var consoleMode: Boolean,
@@ -38,20 +47,27 @@ class LocalPtyOptions private constructor(val consoleMode: Boolean,
      *
      * `false` means that started process output will be shown using `TerminalExecutionConsole` that is based on a terminal emulator.
      */
-    fun consoleMode(consoleMode: Boolean) = apply { this.consoleMode = consoleMode }
-    fun consoleMode() = consoleMode
-    fun useCygwinLaunch(useCygwinLaunch: Boolean) = apply { this.useCygwinLaunch = useCygwinLaunch }
-    fun useCygwinLaunch() = useCygwinLaunch
-    fun initialColumns(initialColumns: Int) = apply { this.initialColumns = initialColumns }
-    fun initialColumns() = initialColumns
-    fun initialRows(initialRows: Int) = apply { this.initialRows = initialRows }
-    fun initialRows() = initialRows
-    fun useWinConPty(useWinConPty: Boolean) = apply { this.useWinConPty = useWinConPty }
-    fun useWinConPty() = useWinConPty
+    fun consoleMode(consoleMode: Boolean): Builder = apply { this.consoleMode = consoleMode }
+    fun consoleMode(): Boolean = consoleMode
+    fun useCygwinLaunch(useCygwinLaunch: Boolean): Builder = apply { this.useCygwinLaunch = useCygwinLaunch }
+    fun useCygwinLaunch(): Boolean = useCygwinLaunch
+    fun initialColumns(initialColumns: Int): Builder = apply { this.initialColumns = initialColumns }
+    fun initialColumns(): Int = initialColumns
+    fun initialRows(initialRows: Int): Builder = apply { this.initialRows = initialRows }
+    fun initialRows(): Int = initialRows
 
-    fun build() = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty)
+    /**
+     * If this method is not called, the value of [shouldUseWinConPty] is applied by default.
+     */
+    @Internal
+    fun useWinConPty(useWinConPty: Boolean): Builder = apply { this.useWinConPty = useWinConPty }
 
-    fun set(options: LocalPtyOptions) = apply {
+    @Internal
+    fun useWinConPty(): Boolean = useWinConPty
+
+    fun build(): LocalPtyOptions = LocalPtyOptions(consoleMode, useCygwinLaunch, initialColumns, initialRows, useWinConPty)
+
+    fun set(options: LocalPtyOptions): Builder = apply {
       consoleMode = options.consoleMode
       useCygwinLaunch = options.useCygwinLaunch
       initialColumns = options.initialColumns

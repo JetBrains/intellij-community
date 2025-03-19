@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.ide.ui.customization
 
@@ -8,34 +8,40 @@ import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.Customi
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.icons.loadCustomIcon
+import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
-import com.intellij.util.ui.JBImageIcon
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
-import kotlinx.collections.immutable.toPersistentMap
+import com.intellij.util.containers.with
+import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.IOException
+import java.io.FileNotFoundException
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Consumer
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
+import kotlin.Throws
 
 private val LOG = logger<CustomActionsSchema>()
 
@@ -47,30 +53,33 @@ private const val ATTRIBUTE_ICON = "icon"
 private const val GROUP = "group"
 private val additionalIdToName = ConcurrentHashMap<String, String>()
 
+private val EP_NAME = ExtensionPointName<CustomizableActionGroupProvider>("com.intellij.customizableActionGroupProvider")
+
 @State(name = "com.intellij.ide.ui.customization.CustomActionsSchema",
        storages = [Storage(value = "customization.xml", usePathMacroManager = false)],
        category = SettingsCategory.UI)
-class CustomActionsSchema : PersistentStateComponent<Element?> {
+class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : PersistentStateComponent<Element?> {
   /**
    * Contain action id binding to some icon reference. It can be one of the following:
-   *
    *  * id of the other action that uses some icon
    *  * path to the SVG or PNG file of the icon
    *  * URL of the SVG or PNG icon
-   *
    */
-  private val iconCustomizations = HashMap<String, String?>()
+  // do not use Map.of - value is nullable
+  @Volatile
+  private var iconCustomizations: Map<String, String?> = Collections.emptyMap()
   private val lock = Any()
 
+  // ordered map, do not use hash map
   @Volatile
-  private var idToName: PersistentMap<String, String>
+  private var idToName: LinkedHashMap<String, String>
 
   @Volatile
-  private var idToActionGroup = persistentHashMapOf<String, ActionGroup>()
+  private var idToActionGroup: Map<String, ActionGroup> = java.util.Map.of()
   private val extGroupIds = HashSet<String>()
   private val actions = ArrayList<ActionUrl>()
   private var isFirstLoadState = true
-  var modificationStamp = 0
+  var modificationStamp: Int = 0
     private set
 
   init {
@@ -86,17 +95,17 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     idToName.put(IdeActions.GROUP_NAVBAR_POPUP, ActionsTreeUtil.getNavigationBarPopupMenu())
     idToName.put(IdeActions.GROUP_NAVBAR_TOOLBAR, ActionsTreeUtil.getNavigationBarToolbar())
     fillExtGroups(idToName, extGroupIds)
-    CustomizableActionGroupProvider.EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
+    EP_NAME.addChangeListener({ fillExtGroups(idToName, extGroupIds) }, null)
     idToName.putAll(additionalIdToName)
-    this.idToName = idToName.toPersistentMap()
+    this.idToName = idToName
   }
 
   companion object {
     /**
-     * Original icon should be saved in template presentation when one customizes action icon
+     * The original icon should be saved in template presentation when one customizes action icon
      */
     @JvmField
-    val PROP_ORIGINAL_ICON = Key.create<Icon?>("originalIcon")
+    val PROP_ORIGINAL_ICON: Key<Icon?> = Key.create("originalIcon")
 
     @JvmStatic
     fun addSettingsGroup(itemId: String, itemName: @Nls String) {
@@ -104,7 +113,9 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
       // Need to sync new items with global instance (if it has been created)
       val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
-      customActionSchema.idToName = customActionSchema.idToName.put(itemId, itemName)
+      customActionSchema.idToName = LinkedHashMap(customActionSchema.idToName).also {
+        it.put(itemId, itemName)
+      }
     }
 
     @JvmStatic
@@ -113,74 +124,68 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
 
       // Need to sync new items with global instance (if it has been created)
       val customActionSchema = serviceIfCreated<CustomActionsSchema>() ?: return
-      customActionSchema.idToName = customActionSchema.idToName.remove(itemId)
+      customActionSchema.idToName = LinkedHashMap(customActionSchema.idToName).also {
+        it.remove(itemId)
+      }
     }
 
     @JvmStatic
     fun getInstance(): CustomActionsSchema = service<CustomActionsSchema>()
 
-    @JvmStatic
-    fun setCustomizationSchemaForCurrentProjects() {
-      // increment myModificationStamp clear children cache in CustomisedActionGroup
-      //  as a result do it *before* update all toolbars, menu bars and popups
-      getInstance().incrementModificationStamp()
-      val windowManager = WindowManagerEx.getInstanceEx()
-      for (project in ProjectManager.getInstance().openProjects) {
-        windowManager.getFrameHelper(project)?.updateView()
-      }
-      windowManager.getFrameHelper(null)?.updateView()
-    }
-
-    /**
-     * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
-     */
-    @ApiStatus.Internal
-    @Throws(IOException::class)
-    @JvmStatic
-    fun loadCustomIcon(path: String): Icon? {
-      val independentPath = FileUtil.toSystemIndependentName(path)
-      val urlString = if (independentPath.startsWith("file:") || independentPath.startsWith("jar:")) {
-        independentPath
-      }
-      else {
-        "file:$independentPath"
-      }
-      val url = URL(null, urlString)
-      val image = loadCustomIcon(url)
-      return image?.let(::JBImageIcon)
-    }
+    suspend fun getInstanceAsync(): CustomActionsSchema = serviceAsync<CustomActionsSchema>()
   }
 
+  fun setCustomizationSchemaForCurrentProjects() {
+    // increment `modificationStamp` clear children cache in CustomisedActionGroup
+    // as a result do it *before* update all toolbars, menu bars and popups
+    incrementModificationStamp()
+    val windowManager = WindowManagerEx.getInstanceEx()
+    for (project in ProjectManager.getInstance().openProjects) {
+      windowManager.getFrameHelper(project)?.updateView()
+    }
+    windowManager.getFrameHelper(null)?.updateView()
+  }
+
+  @ApiStatus.Internal
   fun addAction(url: ActionUrl) {
-    if (!actions.contains(url) && !actions.remove(url.inverted)) {
-      actions.add(url)
+    synchronized(lock) {
+      if (!actions.contains(url) && !actions.remove(url.inverted)) {
+        actions.add(url)
+      }
     }
   }
 
   /**
    * Mutable list is returned.
    */
+  @ApiStatus.Internal
   fun getActions(): List<ActionUrl> = actions
 
+  @ApiStatus.Internal
   fun setActions(newActions: List<ActionUrl>) {
-    assert(actions !== newActions)
-    actions.clear()
-    actions.addAll(newActions)
-    actions.sortWith(ActionUrlComparator.INSTANCE)
+    synchronized(lock) {
+      assert(actions !== newActions)
+      actions.clear()
+      actions.addAll(newActions)
+      actions.sortWith(ActionUrlComparator)
+    }
   }
 
   fun copyFrom(result: CustomActionsSchema) {
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = java.util.Map.of()
       actions.clear()
-      val ids = HashSet(iconCustomizations.keys)
-      iconCustomizations.clear()
+      val ids = java.util.List.copyOf(iconCustomizations.keys)
+      val iconCustomizations = HashMap<String, String?>()
       for (actionUrl in result.actions) {
         addAction(actionUrl.copy())
       }
-      actions.sortWith(ActionUrlComparator.INSTANCE)
+      actions.sortWith(ActionUrlComparator)
       iconCustomizations.putAll(result.iconCustomizations)
-      ids.forEach(Consumer { id -> iconCustomizations.putIfAbsent(id, null) })
+      for (id in ids) {
+        iconCustomizations.putIfAbsent(id, null)
+      }
+      this.iconCustomizations = Collections.unmodifiableMap(iconCustomizations)
     }
   }
 
@@ -194,7 +199,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
       return true
     }
     for (i in getActions().indices) {
-      if (getActions()[i] != storedActions[i]) {
+      if (getActions().get(i) != storedActions.get(i)) {
         return true
       }
     }
@@ -205,9 +210,8 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   override fun loadState(element: Element) {
     var reload: Boolean
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = java.util.Map.of()
       actions.clear()
-      iconCustomizations.clear()
       var schElement = element
       val activeName = element.getAttributeValue(ACTIVE)
       if (activeName != null) {
@@ -220,6 +224,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
           }
         }
       }
+
       for (groupElement in schElement.getChildren(GROUP)) {
         val url = ActionUrl()
         url.readExternal(groupElement)
@@ -231,28 +236,32 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
         LOG.error(IdeBundle.message("custom.option.testmode", actions.toString()))
       }
 
+      val iconCustomizations = HashMap<String, String?>()
       for (action in element.getChildren(ELEMENT_ACTION)) {
-        val actionId = action.getAttributeValue(ATTRIBUTE_ID)
-        val iconPath = action.getAttributeValue(ATTRIBUTE_ICON)
-        if (actionId != null) {
-          iconCustomizations.put(actionId, iconPath)
-        }
+        val actionId = action.getAttributeValue(ATTRIBUTE_ID) ?: continue
+        iconCustomizations.put(actionId, action.getAttributeValue(ATTRIBUTE_ICON))
       }
+
       reload = !isFirstLoadState
       if (isFirstLoadState) {
         isFirstLoadState = false
       }
+
+      this.iconCustomizations = Collections.unmodifiableMap(iconCustomizations)
     }
-    ApplicationManager.getApplication().invokeLater {
-      initActionIcons()
+    coroutineScope?.launch {
+      if (!iconCustomizations.isEmpty()) {
+        val actionManager = serviceAsync<ActionManager>()
+        withContext(Dispatchers.EDT) {
+          applyIconCustomization(actionManager)
+        }
+      }
       if (reload) {
-        setCustomizationSchemaForCurrentProjects()
+        withContext(Dispatchers.EDT) {
+          setCustomizationSchemaForCurrentProjects()
+        }
       }
     }
-  }
-
-  fun clearFirstLoadState() {
-    synchronized(lock) { isFirstLoadState = false }
   }
 
   fun incrementModificationStamp() {
@@ -275,16 +284,46 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     return getCorrectedAction(id, name)
   }
 
+  suspend fun getCorrectedActionAsync(id: String): ActionGroup? {
+    val name = idToName.get(id) ?: return serviceAsync<ActionManager>().getAction(id) as? ActionGroup
+    return getCorrectedActionAsync(id, name)
+  }
+
+  suspend fun getCorrectedActionAsync(id: String, name: String): ActionGroup? {
+    idToActionGroup.get(id)?.let {
+      return it
+    }
+
+    val actionGroup = serviceAsync<ActionManager>().getAction(id) as? ActionGroup ?: return null
+    return getOrPut(id, actionGroup, name)
+  }
+
   fun getCorrectedAction(id: String, name: String): ActionGroup? {
     idToActionGroup.get(id)?.let {
       return it
     }
 
     val actionGroup = ActionManager.getInstance().getAction(id) as? ActionGroup ?: return null
+    return getOrPut(id, actionGroup, name)
+  }
+
+  private fun getOrPut(id: String, actionGroup: ActionGroup, name: String): ActionGroup {
+    idToActionGroup.get(id)?.let {
+      return it
+    }
+
+    // compute out of lock
     // if a plugin is disabled
-    val corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true)
+    val corrected = CustomizationUtil.correctActionGroup(/* group = */ actionGroup,
+                                                         /* schema = */ this,
+                                                         /* defaultGroupName = */ name,
+                                                         /* rootGroupName = */ name,
+                                                         /* force = */ true)
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.put(id, corrected)
+      idToActionGroup.get(id)?.let {
+        return it
+      }
+      idToActionGroup = idToActionGroup.with(id, corrected)
     }
     return corrected
   }
@@ -314,7 +353,7 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     for ((key, value) in idToName) {
       val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
       //J2EE/Commander plugin was disabled
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, null, true, null, false)))
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, true, null, false)))
     }
   }
 
@@ -345,9 +384,11 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     return true
   }
 
-  fun getChildActions(url: ActionUrl): List<ActionUrl> {
+  @ApiStatus.Internal
+  fun getChildActions(url: ActionUrl): List<ActionUrl> = getChildActions(url.groupPath)
+
+  internal fun getChildActions(groupPath: List<String>): List<ActionUrl> {
     val result = ArrayList<ActionUrl>()
-    val groupPath = url.groupPath
     for (actionUrl in actions) {
       var index = 0
       if (groupPath.size <= actionUrl.groupPath.size) {
@@ -366,16 +407,14 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
   }
 
   fun removeIconCustomization(actionId: String) {
-    iconCustomizations.put(actionId, null)
+    iconCustomizations = iconCustomizations.with(actionId, null)
   }
 
   fun addIconCustomization(actionId: String, iconPath: String?) {
-    iconCustomizations.put(actionId, if (iconPath == null) null else FileUtil.toSystemIndependentName(iconPath))
+    iconCustomizations = iconCustomizations.with(actionId, if (iconPath == null) null else FileUtil.toSystemIndependentName(iconPath))
   }
 
-  fun getIconPath(actionId: String): String {
-    return iconCustomizations.get(actionId) ?: ""
-  }
+  fun getIconPath(actionId: String): String = iconCustomizations.get(actionId) ?: ""
 
   fun getIconCustomizations(): Map<String, String?> {
     return Collections.unmodifiableMap(iconCustomizations)
@@ -393,54 +432,72 @@ class CustomActionsSchema : PersistentStateComponent<Element?> {
     }
   }
 
-  fun initActionIcons() {
+  @JvmOverloads
+  fun initActionIcons(updateView: Boolean = true) {
     if (!iconCustomizations.isEmpty()) {
-      val actionManager = ActionManager.getInstance()
-      for (actionId in iconCustomizations.keys) {
-        val action = actionManager.getActionOrStub(actionId)
-        if (action == null || action is ActionStub) {
-          continue
-        }
-
-        initActionIcon(anAction = action, actionId = actionId, actionManager = actionManager)
-        PresentationFactory.updatePresentation(action)
-      }
+      applyIconCustomization(ActionManager.getInstance())
     }
-    WindowManagerEx.getInstanceEx().getFrameHelper(null)?.updateView()
+    if (updateView) {
+      WindowManagerEx.getInstanceEx().getFrameHelper(null)?.updateView()
+    }
+  }
+
+  private fun applyIconCustomization(actionManager: ActionManager) {
+    for (actionId in iconCustomizations.keys) {
+      val action = actionManager.getActionOrStub(actionId)
+      if (action == null || action is ActionStub) {
+        continue
+      }
+
+      initActionIcon(anAction = action, actionId = actionId, actionSupplier = { actionManager.getAction(it) })
+      PresentationFactory.updatePresentation(action)
+    }
   }
 
   @ApiStatus.Internal
-  fun initActionIcon(anAction: AnAction, actionId: String, actionManager: ActionManager) {
+  fun initActionIcon(anAction: AnAction, actionId: String, actionSupplier: (String) -> AnAction?) {
     LOG.assertTrue(anAction !is ActionStub)
-    val iconPath = iconCustomizations.get(actionId)
-    var icon: Icon? = CustomizationUtil.getIconForPath(actionManager, iconPath)
-
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
     if (presentation.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon && originalIcon != null) {
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
-    if (icon == null) {
-      icon = presentation.getClientProperty(PROP_ORIGINAL_ICON)
-    }
+
+    val icon = iconCustomizations.get(actionId)?.let { getIconForPath(actionSupplier = actionSupplier, iconPath = it) }
+               ?: presentation.getClientProperty(PROP_ORIGINAL_ICON)
     presentation.icon = icon
     presentation.disabledIcon = if (icon == null) null else getDisabledIcon(icon)
     anAction.isDefaultIcon = icon == originalIcon
   }
 }
 
-private class ActionUrlComparator : Comparator<ActionUrl> {
-  companion object {
-    val INSTANCE: ActionUrlComparator = ActionUrlComparator()
+private fun fillExtGroups(idToName: MutableMap<String, String>, extGroupIds: MutableSet<String>) {
+  for (id in extGroupIds) {
+    idToName.remove(id)
+  }
+  extGroupIds.clear()
+  val extList = ArrayList<Pair<String, String>>()
+  val registrar = CustomizableActionGroupRegistrar { groupId, groupTitle ->
+    extList.add(groupId to groupTitle)
+  }
+  for (provider in EP_NAME.extensionList) {
+    provider.registerGroups(registrar)
+  }
+  extList.sortWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.second, o2.second) }
+  for (couple in extList) {
+    extGroupIds.add(couple.first)
+    idToName.put(couple.first, couple.second)
+  }
+}
 
-    var DELETED: Int = 1
+private object ActionUrlComparator : Comparator<ActionUrl> {
+  const val DELETED: Int = 1
 
-    private fun getEquivalenceClass(url: ActionUrl): Int {
-      return when (url.actionType) {
-        ActionUrl.DELETED -> 1
-        ActionUrl.ADDED -> 2
-        else -> 3
-      }
+  private fun getEquivalenceClass(url: ActionUrl): Int {
+    return when (url.actionType) {
+      ActionUrl.DELETED -> 1
+      ActionUrl.ADDED -> 2
+      else -> 3
     }
   }
 
@@ -463,21 +520,100 @@ private class ActionUrlComparator : Comparator<ActionUrl> {
   }
 }
 
-private fun fillExtGroups(idToName: MutableMap<String, String>, extGroupIds: MutableSet<String>) {
-  for (id in extGroupIds) {
-    idToName.remove(id)
+/**
+ * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
+ * Also, the path can contain '_dark', '@2x', '@2x_dark' suffixes, but the resulting icon will be taken
+ * according to current scale and UI theme.
+ */
+@ApiStatus.Internal
+@Throws(Throwable::class)
+fun loadCustomIcon(path: String): Icon {
+  val independentPath = FileUtil.toSystemIndependentName(path)
+
+  val lastDotIndex = independentPath.lastIndexOf('.')
+  val rawUrl: String
+  val ext: String
+  if (lastDotIndex == -1) {
+    rawUrl = independentPath
+    ext = "svg"
   }
-  extGroupIds.clear()
-  val extList: MutableList<Pair<String, String>> = ArrayList()
-  val registrar = CustomizableActionGroupRegistrar { groupId, groupTitle ->
-    extList.add(Pair(groupId, groupTitle))
+  else {
+    rawUrl = independentPath.substring(0, lastDotIndex)
+    ext = independentPath.substring(lastDotIndex + 1)
   }
-  for (provider in CustomizableActionGroupProvider.EP_NAME.extensionList) {
-    provider.registerGroups(registrar)
+
+  val possibleSuffixes = listOf("@2x_dark", "_dark@2x", "_dark", "@2x")
+  val adjustedUrl = possibleSuffixes.firstOrNull { rawUrl.endsWith(it) }?.let { rawUrl.removeSuffix(it) } ?: rawUrl
+  try {
+    return doLoadCustomIcon("$adjustedUrl.$ext")
   }
-  extList.sortWith { o1, o2 -> NaturalComparator.INSTANCE.compare(o1.second, o2.second) }
-  for (couple in extList) {
-    extGroupIds.add(couple.first)
-    idToName.put(couple.first, couple.second)
+  catch (t: Throwable) {
+    // In Light theme we do not fall back on dark icon, so if the original provided path ends with '_dark'
+    // and there is no icon file without '_dark' suffix, we will fail.
+    // And in this case, we just need to load the file chosen by the user.
+    if (rawUrl == adjustedUrl) {
+      throw t
+    }
+    else {
+      return doLoadCustomIcon("$rawUrl.$ext")
+    }
   }
+}
+
+private fun doLoadCustomIcon(urlString: String): Icon {
+  if (!urlString.startsWith("file:") && !urlString.startsWith("jar:")) {
+    val file = Path.of(urlString)
+    if (Files.notExists(file)) {
+      throw FileNotFoundException("Failed to find icon by URL: $urlString")
+    }
+
+    val icon = IconLoader.findUserIconByPath(file)
+    val w = icon.iconWidth
+    val h = icon.iconHeight
+    if (w <= 1 || h <= 1) {
+      throw FileNotFoundException("Failed to find icon by URL: $urlString")
+    }
+
+    if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+      return icon.scale(scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat())
+    }
+    return icon
+  }
+
+  val url = URL(null, urlString)
+  val icon = IconLoader.findIcon(url) ?: throw FileNotFoundException("Failed to find icon by URL: $url")
+  val w = icon.iconWidth
+  val h = icon.iconHeight
+  if (w <= 1 || h <= 1) {
+    throw FileNotFoundException("Failed to find icon by URL: $url")
+  }
+
+  if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+    val scale = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toFloat()
+    // ScaledResultIcon will be returned here, so we will be unable to scale it again or get the dark version,
+    // but we have nothing to do because the icon is too large
+    return IconUtil.scale(icon, scale = scale, ancestor = null)
+  }
+  return icon
+}
+
+internal fun getIconForPath(actionSupplier: (String) -> AnAction?, iconPath: String): Icon? {
+  val reuseFrom = actionSupplier(iconPath)
+  if (reuseFrom != null) {
+    return getOriginalIconFrom(reuseFrom)
+  }
+  else {
+    try {
+      return loadCustomIcon(iconPath)
+    }
+    catch (e: Throwable) {
+      LOG.info(e.message)
+      return null
+    }
+  }
+}
+
+internal fun getOriginalIconFrom(reuseFrom: AnAction): Icon? {
+  val presentation = reuseFrom.templatePresentation
+  return presentation.getClientProperty(CustomActionsSchema.PROP_ORIGINAL_ICON) ?: presentation.icon
 }

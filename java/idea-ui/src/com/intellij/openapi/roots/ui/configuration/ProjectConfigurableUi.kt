@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.core.JavaPsiBundle
@@ -87,7 +87,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
 
     row(JavaUiBundle.message("project.structure.sdk")) {
       cell(myProjectJdkConfigurable.createComponent())
-        .widthGroup(NAME_SDK_GROUP_NAME)
+        .widthGroup(LANGUAGE_COMPILER_GROUP_NAME)
     }
       .bottomGap(BottomGap.SMALL)
 
@@ -98,12 +98,7 @@ internal class ProjectConfigurableUi(private val myProjectConfigurable: ProjectC
       .bottomGap(BottomGap.SMALL)
 
     row(JavaUiBundle.message("project.structure.compiler.output")) {
-      textFieldWithBrowseButton(
-        null,
-        null,
-        FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-        null
-      )
+      textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor())
         .bindText(compilerOutputProperty.toUiPathProperty())
         .onIsModified {
           if (!myProjectConfigurable.isFrozen)

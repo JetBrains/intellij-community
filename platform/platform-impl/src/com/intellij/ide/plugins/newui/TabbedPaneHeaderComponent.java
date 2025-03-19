@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -31,7 +32,7 @@ import java.awt.event.ComponentEvent;
 /**
  * @author Alexander Lobas
  */
-public class TabbedPaneHeaderComponent extends JPanel {
+public final class TabbedPaneHeaderComponent extends JPanel {
   private final JBValue myHeight = new JBValue.Float(30);
   private final JBValue myGap = new JBValue.Float(10);
 
@@ -98,7 +99,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PluginsHeaderToolbar", toolbarActionGroup, true);
     toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new DumbAwareAction(tooltip, tooltip, icon) {
       @Override

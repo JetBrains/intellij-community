@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.optionalToIf;
 
 import com.intellij.codeInspection.streamToLoop.ChainVariable;
@@ -11,14 +11,12 @@ import org.jetbrains.annotations.Nullable;
 
 abstract class TerminalOperation implements Operation {
 
-  @NotNull
   @Override
-  public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+  public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
     return inVar;
   }
 
-  @Nullable
-  static TerminalOperation create(String name, PsiExpression[] args) {
+  static @Nullable TerminalOperation create(String name, PsiExpression[] args) {
     if ("get".equals(name) && args.length == 0) {
       return new Get();
     }
@@ -56,12 +54,11 @@ abstract class TerminalOperation implements Operation {
 
   static class Get extends TerminalOperation {
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       context.setElseBranch("throw new java.util.NoSuchElementException(\"No value present\");");
       return context.createResult(outVar.getName());
     }
@@ -76,12 +73,11 @@ abstract class TerminalOperation implements Operation {
       myArg = arg;
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       context.setInitializer(myArg);
       return context.createResult(outVar.getName());
     }
@@ -100,12 +96,11 @@ abstract class TerminalOperation implements Operation {
       myFn.preprocessVariable(context, inVar, 0);
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       myFn.transform(context, inVar.getName());
       return "{\n" + myFn.getStatementText() + "\n}\n";
     }
@@ -128,18 +123,16 @@ abstract class TerminalOperation implements Operation {
       outVar.addBestNameCandidate("result");
     }
 
-    @NotNull
     @Override
-    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       return new ChainVariable(inVar.getType());
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       myElseFn.transform(context);
       myIfPresentFn.transform(context, outVar.getName());
       context.addBeforeStep(outVar.getDeclaration("null"));
@@ -161,12 +154,11 @@ abstract class TerminalOperation implements Operation {
       myIsInverted = isInverted;
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       context.setInitializer(String.valueOf(myIsInverted));
       return context.createResult(String.valueOf(!myIsInverted));
     }
@@ -180,9 +172,8 @@ abstract class TerminalOperation implements Operation {
       myFn = fn;
     }
 
-    @NotNull
     @Override
-    public ChainVariable getOutVar(@NotNull ChainVariable inVar) {
+    public @NotNull ChainVariable getOutVar(@NotNull ChainVariable inVar) {
       return new ChainVariable(inVar.getType());
     }
 
@@ -191,12 +182,11 @@ abstract class TerminalOperation implements Operation {
       outVar.addBestNameCandidate("result");
     }
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       myFn.transform(context);
       if (!SideEffectChecker.mayHaveSideEffects(myFn.getExpression())) {
         context.setInitializer(myFn.getText());
@@ -217,12 +207,11 @@ abstract class TerminalOperation implements Operation {
 
     OrElseThrow(FunctionHelper fn) {myFn = fn;}
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       if (myFn == null) {
         context.setElseBranch("throw new java.util.NoSuchElementException(\"No value present\");");
       }
@@ -236,12 +225,11 @@ abstract class TerminalOperation implements Operation {
 
   static class Stream extends TerminalOperation {
 
-    @Nullable
     @Override
-    public String generate(@NotNull ChainVariable inVar,
-                           @NotNull ChainVariable outVar,
-                           @NotNull String code,
-                           @NotNull OptionalToIfContext context) {
+    public @Nullable String generate(@NotNull ChainVariable inVar,
+                                     @NotNull ChainVariable outVar,
+                                     @NotNull String code,
+                                     @NotNull OptionalToIfContext context) {
       context.setInitializer("java.util.stream.Stream.empty()");
       return context.createResult("java.util.stream.Stream.of(" + outVar.getName() + ")");
     }

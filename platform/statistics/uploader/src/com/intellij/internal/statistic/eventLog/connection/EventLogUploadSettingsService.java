@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
@@ -23,8 +23,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private static final String METADATA = "metadata";
   private static final String DICTIONARY = "dictionary";
 
-  @NotNull
-  private final EventLogApplicationInfo myApplicationInfo;
+  private final @NotNull EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
     this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
@@ -34,29 +33,26 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
                                        @NotNull EventLogApplicationInfo appInfo,
                                        long settingsCacheTimeoutMs) {
     super(
-      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()),
+      () -> getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
       recorderId, appInfo, settingsCacheTimeoutMs
     );
     myApplicationInfo = appInfo;
   }
 
-  @NotNull
-  private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTest) {
-    if (isTest) {
+  private static @NotNull String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTestConfig) {
+    if (isTestConfig) {
       return String.format(templateUrl, "test/" + recorderId, productCode);
     }
     return String.format(templateUrl, recorderId, productCode);
   }
 
-  @Nullable
   @Override
-  public String getServiceUrl() {
+  public @Nullable String getServiceUrl() {
     return getEndpointValue(SEND);
   }
 
   @Override
-  @Nullable
-  public String getDictionaryServiceUrl() {
+  public @Nullable String getDictionaryServiceUrl() {
     return getEndpointValue(DICTIONARY);
   }
 
@@ -72,14 +68,12 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Override
-  @NotNull
-  public LogEventFilter getBaseEventFilter() {
+  public @NotNull LogEventFilter getBaseEventFilter() {
     return new LogEventMetadataFilter(notNull(loadApprovedGroupsRules(), EventGroupsFilterRules.empty()));
   }
 
   @Override
-  @NotNull
-  public LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
+  public @NotNull LogEventFilter getEventFilter(@NotNull LogEventFilter base, @NotNull EventLogBuildType type) {
     final EventLogSendConfiguration configuration = getConfiguration(type);
     if (configuration == null) {
       DataCollectorDebugLogger logger = myApplicationInfo.getLogger();
@@ -105,19 +99,16 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     return myApplicationInfo;
   }
 
-  @Nullable
-  protected EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
+  protected @Nullable EventGroupsFilterRules<EventLogBuild> loadApprovedGroupsRules() {
     final String productUrl = getMetadataProductUrl();
     if (productUrl == null) return null;
     EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
     return EventLogMetadataUtils.loadAndParseGroupsFilterRules(productUrl, settings);
   }
 
-  @NonNls
-  @Nullable
-  public String getMetadataProductUrl() {
+  public @NonNls @Nullable String getMetadataProductUrl() {
     String baseMetadataUrl = getEndpointValue(METADATA);
     if (baseMetadataUrl == null) return null;
-    return baseMetadataUrl + myApplicationInfo.getProductCode() + ".json";
+    return baseMetadataUrl + myApplicationInfo.getBaselineVersion() + "/" + myApplicationInfo.getProductCode() + ".json";
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.*;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -53,8 +54,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +79,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     }
 
     List<URL> cp = new ArrayList<>();
+    appendPath(cp, com.github.benmanes.caffeine.cache.Caffeine.class);
     appendPath(cp, JBTabbedPane.class);
     appendPath(cp, TitledSeparator.class);
     appendPath(cp, Int2ObjectOpenHashMap.class);
@@ -93,7 +95,9 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
+    appendPath(cp, BitUtil.class); // intellij.platform.util.kmp
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
+    appendPath(cp, CharArrayCharSequence.class); // intellij.platform.util.base.kmp
     appendPath(cp, Strings.class);  // intellij.platform.util.base
     appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, FileUtilRt.class);  // intellij.platform.util.rt
@@ -348,7 +352,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assertEquals("Test Value", border.getTitle());
     assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
     assertTrue(border.getBorder().toString(), border.getBorder() instanceof EtchedBorder);
-    assertEquals(border.getClass().getName(), "javax.swing.border.TitledBorder");
+    assertEquals("javax.swing.border.TitledBorder", border.getClass().getName());
   }
 
   public void testTitledBorderInternal() throws Exception {
@@ -359,7 +363,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
       TitledBorder border = (TitledBorder)panel.getBorder();
       assertEquals("Test Value", border.getTitle());
       assertEquals("Test Value", ((JLabel)panel.getComponent(0)).getText());
-      assertEquals(border.getClass().getName(), "com.intellij.ui.border.IdeaTitledBorder");
+      assertEquals("com.intellij.ui.border.IdeaTitledBorder", border.getClass().getName());
     });
   }
 

@@ -53,15 +53,15 @@ private fun buildTestCase(
     for (method in ownerClass.declaredMethods) {
         if (method.name == methodNode.name) {
             val isStatic = (method.modifiers and Modifier.STATIC) != 0
-            if (method.parameterTypes!!.isNotEmpty()) {
+            if (method.parameterTypes.isNotEmpty()) {
                 println("Skipping method with parameters: $method")
-            } else if (!isStatic && !method.name!!.startsWith("test")) {
+            } else if (!isStatic && !method.name.startsWith("test")) {
                 println("Skipping instance method (should be started with 'test') : $method")
             } else {
                 method.isAccessible = true
                 try {
-                    val result = method.invoke(if (isStatic) null else ownerClass.newInstance())
-                    val returnType = Type.getType(method.returnType!!)
+                    val result = method.invoke(if (isStatic) null else ownerClass.getDeclaredConstructor().newInstance())
+                    val returnType = Type.getType(method.returnType)
                     expected = ValueReturned(objectToValue(result, returnType))
                 } catch (e: UnsupportedOperationException) {
                     println("Skipping $method: $e")

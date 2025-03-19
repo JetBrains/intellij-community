@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.jlink;
 
 import com.intellij.java.JavaBundle;
@@ -30,9 +30,8 @@ final class JLinkArtifactPropertiesEditor extends ArtifactPropertiesEditor {
                                     CompressionLevel.SECOND, JavaBundle.message("packaging.jlink.compression.second.level"));
   }
 
-  @Nls
   @Override
-  public String getTabName() {
+  public @Nls String getTabName() {
     return JavaBundle.message("packaging.jlink.artifact.name");
   }
 

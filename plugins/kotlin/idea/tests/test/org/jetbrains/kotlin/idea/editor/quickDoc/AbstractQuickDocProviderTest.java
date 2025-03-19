@@ -8,23 +8,47 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ArrayUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.completion.test.IdeaTestUtilsKt;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources;
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsightFixtureTestCase {
     protected void doTest(@NotNull String path) throws Exception {
+        IgnoreTests.INSTANCE.runTestIfNotDisabledByFileDirective(
+                Paths.get(path),
+                IgnoreTests.DIRECTIVES.of(getPluginMode()),
+                ArrayUtil.EMPTY_STRING_ARRAY,
+                IgnoreTests.DirectivePosition.FIRST_LINE_IN_FILE,
+                new Function1<>() {
+                    @Override
+                    public Unit invoke(Boolean aBoolean) {
+                        try {
+                            doActualTest(path);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        return Unit.INSTANCE;
+                    }
+                });
+    }
+
+    private void doActualTest(@NotNull String path) throws Exception {
         IdeaTestUtilsKt.configureByFilesWithSuffixes(myFixture, dataFile(), getTestDataDirectory(), "_Data");
 
         PsiElement element = myFixture.getFile().findElementAt(myFixture.getEditor().getCaretModel().getOffset());
@@ -40,10 +64,10 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
 
         File testDataFile = new File(path);
         String textData = FileUtil.loadFile(testDataFile, true);
-        List<String> directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "INFO:");
+        List<String> directives = getDirectives(textData);
 
         if (directives.isEmpty()) {
-            throw new FileComparisonFailure(
+            throw new FileComparisonFailedError(
                     "'// INFO:' directive was expected",
                     textData,
                     textData + "\n\n//INFO: " + info,
@@ -72,6 +96,10 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
                 wrapToFileComparisonFailure(cleanedInfo, path, textData);
             }
         }
+    }
+
+    protected @NotNull List<String> getDirectives(String textData) {
+        return InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "INFO:");
     }
 
     @Nullable
@@ -106,13 +134,12 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
         }
 
         String correctedFileText = fileData.replaceAll("//\\s?INFO:\\s?.*\n?", "") + infoBuilder.toString();
-        throw new FileComparisonFailure("Unexpected info", fileData, correctedFileText, new File(filePath).getAbsolutePath());
+        throw new FileComparisonFailedError("Unexpected info", fileData, correctedFileText, new File(filePath).getAbsolutePath());
     }
 
 
-    @NotNull
     @Override
-    protected LightProjectDescriptor getProjectDescriptor() {
-        return ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources();
+    protected @NotNull KotlinLightProjectDescriptor getProjectDescriptor() {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance();
     }
 }

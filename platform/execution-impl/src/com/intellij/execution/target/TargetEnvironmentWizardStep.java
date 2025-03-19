@@ -4,8 +4,10 @@ package com.intellij.execution.target;
 import com.intellij.ide.wizard.AbstractWizardStepEx;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class TargetEnvironmentWizardStep extends AbstractWizardStepEx {
 
   public TargetEnvironmentWizardStep(@Nullable @NlsContexts.DialogTitle String title) {

@@ -83,10 +83,13 @@ class UastMappingsAccountantTest(
       private val ourComputedMappings by lazy { oneOfUs.get()!!.computeMappings() }
       private val ourComputedAndRenderedMappings by lazy { oneOfUs.get()!!.renderMappings(ourComputedMappings) }
 
-      override fun UastMappingsAccountantTest.computeOrGetMappings() =
+      override fun UastMappingsAccountantTest.computeOrGetMappings(): Pair<
+              UastMappingsRepository<PsiClazz, PairWithFirstIdentity<UastClazz?, Location>>,
+              UastMappingsRepository<UastClazz, Location>
+              > =
         oneOfUs.compareAndSet(null, this).let { ourComputedMappings }
 
-      override fun UastMappingsAccountantTest.computeOrGetRenderedMappings() =
+      override fun UastMappingsAccountantTest.computeOrGetRenderedMappings(): AllRenderedUastMappings =
         oneOfUs.compareAndSet(null, this).let { ourComputedAndRenderedMappings }
     }
   }
@@ -409,7 +412,7 @@ class UastMappingsAccountantTest(
   ) {
     print(fileName, contextMargin, printTargetsOnNewLine) { contextMap, typeMapPrinter ->
       printMapAsAlignedLists(
-        contextMap, lexicographicalOrder<String>(),
+        contextMap, lexicographicalOrder(),
         prefix = """<span class="context">[""",
         postfix = """]</span>""",
         alignByRight = contextAlignmentByRight,
@@ -575,7 +578,7 @@ class UastMappingsAccountantTest(
 /* ------------------------------------------------------------------------------------------- */
 //region Sources grabbers
 
-fun sourcesFromDirRecursive(dir: File, fileMatcher: FileNameMatcher, fixture: JavaCodeInsightTestFixture) =
+fun sourcesFromDirRecursive(dir: File, fileMatcher: FileNameMatcher, fixture: JavaCodeInsightTestFixture): Sequence<Lazy<Pair<PsiFile, Path>>> =
   dir
     .walkTopDown()
     .filter { fileMatcher.acceptsCharSequence(it.name) }
@@ -586,7 +589,7 @@ fun sourcesFromDirRecursive(dir: File, fileMatcher: FileNameMatcher, fixture: Ja
       }
     }
 
-fun sourcesFromLargeProject(fileType: FileType, project: Project, sourcesToProcessLimit: Int = Int.MAX_VALUE / 2, logger: Logger?) =
+fun sourcesFromLargeProject(fileType: FileType, project: Project, sourcesToProcessLimit: Int = Int.MAX_VALUE / 2, logger: Logger?): Sequence<Lazy<Pair<PsiFile, Path>?>> =
   runReadAction {
     val files = FileTypeIndex.getFiles(fileType, ProjectScope.getProjectScope(project))
     val actualSourcesAmount = min(files.size, sourcesToProcessLimit)
@@ -695,7 +698,7 @@ object PsiClassToString {
 
 private fun Class<*>.getBaseClassesAndInterfaces(): Sequence<Class<*>> =
   sequence {
-    val todo = java.util.ArrayDeque<Class<*>>(listOf(this@getBaseClassesAndInterfaces))
+    val todo = ArrayDeque(listOf(this@getBaseClassesAndInterfaces))
     while (todo.isNotEmpty()) {
       val head = todo.pollFirst()
       todo.addAll(head.interfaces.asList())

@@ -1,17 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -20,26 +17,32 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
-public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected final JPanel myComponent;
-  protected final WeakReference<XDebugSessionImpl> mySession;
+@ApiStatus.Internal
+public class XVariablesView extends XVariablesViewBase {
+  protected final JComponent myComponent;
+  private final WeakReference<XDebugSessionProxy> myProxy;
 
+  /**
+   * @deprecated Use {@link XVariablesView#XVariablesView(XDebugSessionProxy)} instead
+   */
+  @Deprecated
   public XVariablesView(@NotNull XDebugSessionImpl session) {
-    super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
-    mySession = new WeakReference<>(session);
-    myComponent = createMainPanel(super.getPanel());
-    DataManager.registerDataProvider(myComponent, this);
+    this(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+  }
+
+  public XVariablesView(@NotNull XDebugSessionProxy proxy) {
+    super(proxy.getProject(), proxy.getEditorsProvider(), proxy.getValueMarkers());
+    myProxy = new WeakReference<>(proxy);
+    myComponent = UiDataProvider.wrapComponent(createMainPanel(super.getPanel()), sink -> uiDataSnapshot(sink));
   }
 
   protected JPanel createMainPanel(JComponent localsPanel) {
@@ -47,7 +50,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   @Override
-  public JPanel getPanel() {
+  public JComponent getPanel() {
     return myComponent;
   }
 
@@ -63,6 +66,10 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     if (ApplicationManager.getApplication().isDispatchThread()) { // mark nodes obsolete asap
       getTree().markNodesObsolete();
+    }
+
+    if (event == SessionEvent.STOPPED) {
+      myProxy.clear();
     }
 
     if (event == SessionEvent.BEFORE_RESUME) {
@@ -89,22 +96,41 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     super.dispose();
   }
 
-  private static void clearInlineData(XDebuggerTree tree) {
-    InlineVariablesInfo.set(getSession(tree), null);
+  /**
+   * @deprecated Use {@link XVariablesView#getSessionProxy()} instead
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public final @Nullable XDebugSessionImpl getSession() {
+    XDebugSessionProxy proxy = getSessionProxy();
+    if (proxy == null) return null;
+    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
+      Logger.getInstance(XVariablesView.class).error("This method can be used only with monolith session proxies, got: " +
+                                                     proxy + " of type " + proxy.getClass() + " instead");
+      return null;
+    }
+    return (XDebugSessionImpl)monolith.getSession();
+  }
+
+  @ApiStatus.Internal
+  public final @Nullable XDebugSessionProxy getSessionProxy() {
+    return myProxy.get();
+  }
+
+  private void clearInlineData(XDebuggerTree tree) {
+    InlineVariablesInfo.set(getSessionProxy(), null);
     tree.updateEditor();
     clearInlays(tree);
   }
 
-  protected void addEmptyMessage(XValueContainerNode root) {
-    XDebugSession session = getSession(getPanel());
-    if (session != null) {
-      if (!session.isStopped() && session.isPaused()) {
-        root.setInfoMessage(XDebuggerBundle.message("message.frame.is.not.available"), null);
-      }
-      else {
-        XDebugProcess debugProcess = session.getDebugProcess();
-        root.setInfoMessage(debugProcess.getCurrentStateMessage(), debugProcess.getCurrentStateHyperlinkListener());
-      }
+  protected void addEmptyMessage(XValueContainerNode<?> root) {
+    XDebugSessionProxy session = getSessionProxy();
+    if (session == null) return;
+    if (!session.isStopped() && session.isPaused()) {
+      root.setInfoMessage(XDebuggerBundle.message("message.frame.is.not.available"), null);
+    }
+    else {
+      root.setInfoMessage(session.getCurrentStateMessage(), session.getCurrentStateHyperlinkListener());
     }
   }
 
@@ -114,24 +140,17 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     tree.setSourcePosition(null);
     clearInlineData(tree);
 
-    XValueContainerNode root = createNewRootNode(null);
+    XValueContainerNode<?> root = createNewRootNode(null);
     addEmptyMessage(root);
     super.clear();
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      XDebugSessionImpl session = mySession.get();
-      if (session != null) {
-        XSourcePosition position = session.getCurrentPosition();
-        if (position != null) {
-          return position.getFile();
-        }
-      }
+  protected void uiDataSnapshot(@NotNull DataSink sink) {
+    XDebugSessionProxy session = getSessionProxy();
+    XSourcePosition position = session == null ? null : session.getCurrentPosition();
+    if (position != null) {
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> position.getFile());
     }
-    return null;
   }
 
   public static final class InlineVariablesInfo {
@@ -139,17 +158,26 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
     private List<InlineDebugRenderer> myInlays = null;
 
-    @Nullable
-    public static InlineVariablesInfo get(@Nullable XDebugSession session) {
+    public static @Nullable InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
         return DEBUG_VARIABLES.get(((XDebugSessionImpl)session).getSessionData());
       }
       return null;
     }
 
+    /**
+     * @deprecated Use {@link InlineVariablesInfo#set(XDebugSessionProxy, InlineVariablesInfo)} instead
+     */
+    @Deprecated
     public static void set(@Nullable XDebugSession session, InlineVariablesInfo info) {
       if (session != null) {
-        DEBUG_VARIABLES.set(((XDebugSessionImpl)session).getSessionData(), info);
+        set(XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session), info);
+      }
+    }
+
+    public static void set(@Nullable XDebugSessionProxy session, InlineVariablesInfo info) {
+      if (session != null) {
+        DEBUG_VARIABLES.set(session.getSessionData(), info);
       }
     }
 
@@ -157,8 +185,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       myInlays = inlays;
     }
 
-    @NotNull
-    public List<InlineDebugRenderer> getInlays() {
+    public @NotNull List<InlineDebugRenderer> getInlays() {
       return ObjectUtils.notNull(myInlays, Collections::emptyList);
     }
   }

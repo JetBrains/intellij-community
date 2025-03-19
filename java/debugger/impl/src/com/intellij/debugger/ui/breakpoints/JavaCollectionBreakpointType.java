@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -27,7 +28,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointPro
 import javax.swing.*;
 
 @ApiStatus.Experimental
-public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
+public final class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<JavaCollectionBreakpointProperties> {
 
   public JavaCollectionBreakpointType() {
     super("java-collection", JavaDebuggerBundle.message("collection.watchpoints.tab.title"));
@@ -38,39 +39,33 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
     return Registry.is("debugger.collection.watchpoints.enabled");
   }
 
-  @NotNull
   @Override
-  public Icon getEnabledIcon() {
+  public @NotNull Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getDisabledIcon() {
+  public @NotNull Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getSuspendNoneIcon() {
+  public @NotNull Icon getSuspendNoneIcon() {
     return AllIcons.Debugger.Db_no_suspend_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getMutedEnabledIcon() {
+  public @NotNull Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getMutedDisabledIcon() {
+  public @NotNull Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getInactiveDependentIcon() {
+  public @NotNull Icon getInactiveDependentIcon() {
     return AllIcons.Debugger.Db_dep_field_breakpoint;
   }
 
@@ -80,7 +75,7 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.COLLECTION_WATCHPOINTS;
   }
 
@@ -89,29 +84,34 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
     return JavaDebuggerBundle.message("collection.watchpoints.tab.title");
   }
 
+  @Override
+  protected @Nls @NotNull String getGeneralDescription(XLineBreakpointType<JavaCollectionBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("collection.watchpoint.description");
+  }
 
-  @Nls
-  public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+  @Override
+  public @Nls String getGeneralDescription(XLineBreakpoint<JavaCollectionBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("collection.watchpoint.description");
+  }
+
+  public @Nls String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     JavaFieldBreakpointProperties properties = breakpoint.getProperties();
     final String className = properties.myClassName;
     return className != null && !className.isEmpty() ? className + "." + properties.myFieldName : properties.myFieldName;
   }
 
-  @Nullable
   @Override
-  public JavaCollectionBreakpointProperties createProperties() {
+  public @Nullable JavaCollectionBreakpointProperties createProperties() {
     return new JavaCollectionBreakpointProperties();
   }
 
-  @Nullable
   @Override
-  public JavaCollectionBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+  public @Nullable JavaCollectionBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
     return new JavaCollectionBreakpointProperties();
   }
 
-  @NotNull
   @Override
-  public Breakpoint<JavaCollectionBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public @NotNull Breakpoint<JavaCollectionBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new CollectionBreakpoint(project, breakpoint);
   }
 
@@ -138,25 +138,24 @@ public class JavaCollectionBreakpointType extends JavaLineBreakpointTypeBase<Jav
     });
   }
 
-  @Nullable
   @Override
-  public XLineBreakpoint<JavaCollectionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
+  public @Nullable XLineBreakpoint<JavaCollectionBreakpointProperties> addBreakpoint(final Project project, JComponent parentComponent) {
     final Ref<XLineBreakpoint<JavaCollectionBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       @Override
       protected boolean validateData() {
         final String className = getClassName();
-        if (className.length() == 0) {
+        if (className.isEmpty()) {
           return false;
         }
         final String fieldName = getFieldName();
-        if (fieldName.length() == 0) {
+        if (fieldName.isEmpty()) {
           return false;
         }
         PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
         if (psiClass != null) {
           final PsiFile psiFile = psiClass.getContainingFile();
-          Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          Document document = psiFile.getViewProvider().getDocument();
           if (document != null) {
             PsiField field = psiClass.findFieldByName(fieldName, false);
             if (field != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -21,17 +21,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
+@ApiStatus.Internal
+public final class EnterInBlockCommentHandler extends EnterHandlerDelegateAdapter {
   private static final String WHITESPACE = " \t";
 
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file,
-                                @NotNull final Editor editor,
-                                @NotNull final Ref<Integer> caretOffsetRef,
+  public Result preprocessEnter(final @NotNull PsiFile file,
+                                final @NotNull Editor editor,
+                                final @NotNull Ref<Integer> caretOffsetRef,
                                 final @NotNull Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext,
+                                final @NotNull DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     CodeDocumentationAwareCommenter commenter = EnterInCommentUtil.getDocumentationAwareCommenter(dataContext);
     if (commenter == null) return Result.Continue;

@@ -3,9 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +67,7 @@ public final class SafeFileOutputStream extends OutputStream {
   private Path backup() throws IOException {
     Path backup = myTarget.getFileSystem().getPath(myTarget + myBackupExt);
     Files.copy(myTarget, backup, BACKUP_COPY);
-    if (SystemInfo.isWindows) {
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(backup.toAbsolutePath().toString())) {
       DosFileAttributeView dosView = Files.getFileAttributeView(backup, DosFileAttributeView.class);
       if (dosView != null && dosView.readAttributes().isReadOnly()) {
         dosView.setReadOnly(false);

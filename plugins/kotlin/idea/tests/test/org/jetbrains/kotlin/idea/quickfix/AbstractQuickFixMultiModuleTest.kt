@@ -1,21 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.TestDialog
-import com.intellij.openapi.ui.TestDialogManager
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K1_TOOL_DIRECTIVE
+import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest.Companion.K2_TOOL_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,28 +36,35 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         return File(TestMetadataUtil.getTestDataPath(this::class.java))
     }
 
+    override val additionalToolDirectives: Array<String>
+        get() {
+            val directive = when (pluginMode) {
+                KotlinPluginMode.K1 -> K1_TOOL_DIRECTIVE
+                KotlinPluginMode.K2 -> K2_TOOL_DIRECTIVE
+            }
+            return arrayOf(directive)
+        }
+
     fun doTest(unused: String) {
         setupMppProjectFromDirStructure(dataFile())
-        val directiveFileText = project.findFileWithCaret().text
-        withCustomCompilerOptions(directiveFileText, project, module) {
-            doQuickFixTest(fileName())
+        val actionFile = project.findFileWithCaret()
+        val virtualFilePath = actionFile.virtualFile!!.toNioPath()
+
+        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+
+        IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
+            val directiveFileText = actionFile.text
+            withCustomCompilerOptions(directiveFileText, project, module) {
+                doQuickFixTest(fileName())
+            }
         }
     }
 
-    private fun VirtualFile.toIOFile(): File? {
-        val paths = mutableListOf<String>()
-        var vFile: VirtualFile? = this
-        while (vFile != null) {
-            vFile.sourceIOFile()?.let {
-                return File(it, paths.reversed().joinToString("/"))
-            }
-            paths.add(vFile.name)
-            vFile = vFile.parent
-        }
-        return null
-    }
+    protected open val actionPrefix: String? = null
 
     private fun doQuickFixTest(dirPath: String) {
+        KotlinTestHelpers.registerChooserInterceptor(testRootDisposable)
+
         val actionFile = project.findFileWithCaret()
         val virtualFile = actionFile.virtualFile!!
         val mainFile = virtualFile.toIOFile()?.takeIf(File::exists) ?: error("unable to lookup source io file")
@@ -68,7 +77,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         project.executeCommand("") {
             var expectedErrorMessage = ""
             try {
-                val actionHint = ActionHint.parse(actionFile, actionFileText)
+                val actionHint = ActionHint.parse(actionFile, actionFileText, actionPrefix?.let { ".*//(?: $it)?" } ?: "//", true)
                 val text = actionHint.expectedText
 
                 val actionShouldBeAvailable = actionHint.shouldPresent()
@@ -77,15 +86,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     actionFileText,
                     "// SHOULD_FAIL_WITH: "
                 ).joinToString(separator = "\n")
-
-                val dialogOption = when (InTextDirectivesUtils.findStringWithPrefixes(actionFileText, "// DIALOG_OPTION: ")) {
-                    "OK" -> TestDialog.OK
-                    "NO" -> TestDialog.NO
-                    "CANCEL" -> TestDialog { Messages.CANCEL }
-                    else -> TestDialog.DEFAULT
-                }
-
-                val oldDialogOption = TestDialogManager.setTestDialog(dialogOption)
 
                 TypeAccessibilityChecker.testLog = StringBuilder()
                 val log = try {
@@ -97,19 +97,23 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                         editor,
                         actionShouldBeAvailable,
                         actionFileName,
+                        actionHint,
                         this::availableActions,
                         this::doHighlighting,
-                        InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
+                        pluginMode = pluginMode,
+                        shouldBeAvailableAfterExecution = InTextDirectivesUtils.isDirectiveDefined(actionFile.text, "// SHOULD_BE_AVAILABLE_AFTER_EXECUTION")
                     )
 
                     TypeAccessibilityChecker.testLog.toString()
                 } finally {
-                    TestDialogManager.setTestDialog(oldDialogOption)
                     TypeAccessibilityChecker.testLog = null
                 }
 
                 if (actionFile is KtFile) {
-                    DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                    when (pluginMode) {
+                        KotlinPluginMode.K1 -> DirectiveBasedActionUtils.checkForUnexpectedErrors(actionFile)
+                        KotlinPluginMode.K2 -> {} // TODO check diagnostics for K2
+                    }
                 }
 
                 if (actionShouldBeAvailable) {
@@ -124,8 +128,6 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                     TestCase.assertFalse(logFile.exists())
                 }
 
-            } catch (e: ComparisonFailure) {
-                throw e
             } catch (e: AssertionError) {
                 throw e
             } catch (e: Throwable) {
@@ -145,7 +147,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         val afterFiles = projectDirectory.walkTopDown().filter { it.path.endsWith(".after") }.toList()
 
         for (editedFile in project.allKotlinFiles()) {
-            val afterFileInTmpProject = editedFile.containingDirectory?.findFile(editedFile.name + ".after") ?: continue
+            val afterFileInTmpProject = findAfterFile(editedFile) ?: continue
             val afterFileInTestData = afterFiles.filter { it.name == afterFileInTmpProject.name }.single {
                 it.readText() == File(afterFileInTmpProject.virtualFile.path).readText()
             }
@@ -153,11 +155,13 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
             setActiveEditor(editedFile.findExistingEditor() ?: createEditor(editedFile.virtualFile))
             try {
                 checkResultByFile(afterFileInTestData.relativeTo(File(testDataPath)).path)
-            } catch (e: ComparisonFailure) {
+            } catch (_: FileComparisonFailedError) {
                 KotlinTestUtils.assertEqualsToFile(afterFileInTestData, editor)
             }
         }
     }
+
+    protected open fun findAfterFile(editedFile: KtFile): PsiFile? = editedFile.containingDirectory?.findFile(editedFile.name + ".after")
 
     private val availableActions: List<IntentionAction>
         get() {

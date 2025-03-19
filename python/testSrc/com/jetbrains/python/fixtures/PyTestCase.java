@@ -13,6 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
@@ -22,7 +24,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -40,13 +41,12 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
-import com.intellij.util.ContentsUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
@@ -74,6 +74,40 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected static final PyLightProjectDescriptor ourPyLatestDescriptor = new PyLightProjectDescriptor(LanguageLevel.getLatest());
 
   protected CodeInsightTestFixture myFixture;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
+    myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      if (myFixture != null) {
+        PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
+        PyModuleNameCompletionContributor.ENABLED = true;
+        setLanguageLevel(null);
+
+        myFixture.tearDown();
+        myFixture = null;
+      }
+
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
     assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
@@ -120,17 +154,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final TextRange myTextRange = file.getTextRange();
     CodeStyleManager.getInstance(myFixture.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
-    myFixture.setTestDataPath(getTestDataPath());
-    myFixture.setUp();
   }
 
   /**
@@ -220,52 +243,57 @@ public abstract class PyTestCase extends UsefulTestCase {
                                             @NotNull VirtualFile root,
                                             @NotNull OrderRootType rootType,
                                             @NotNull Consumer<VirtualFile> rootConsumer) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(root, rootType);
-      modificator.commitChanges();
-    });
+    addSdkRoots(sdk, List.of(root), rootType);
     try {
       rootConsumer.accept(root);
     }
     finally {
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(root, rootType);
-        modificator.commitChanges();
-      });
+      removeSdkRoots(sdk, List.of(root), rootType);
     }
   }
 
-  protected void dumpSdkRoots() {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.removeRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      for (VirtualFile root : roots) {
+        modificator.addRoot(root, rootType);
+      }
+      modificator.commitChanges();
+    });
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  }
+
+  protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
     assertNotNull(sdk);
-    final String[] roots = sdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-    System.out.println(StringUtil.join(roots, "\n"));
+    List<VirtualFile> stubPackageRoots = new ArrayList<>();
+    for (String packageName : packageNames) {
+      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
+      if (stubPackageRoot == null) {
+        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
+      }
+      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
+      stubPackageRoots.add(stubPackageRoot);
+    }
+    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
+    Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
   }
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
-      PyModuleNameCompletionContributor.ENABLED = true;
-      setLanguageLevel(null);
-      myFixture.tearDown();
-      myFixture = null;
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   @Nullable
@@ -290,6 +318,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   private void setLanguageLevel(@Nullable LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.getProject());
   }
 
   protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
@@ -439,11 +468,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     handler.invoke(myFixture.getProject(), editor, myFixture.getFile(), ((EditorEx)editor).getDataContext());
   }
 
-  public static String getHelpersPath() {
-    return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
-  }
-
-
   /**
    * Compares sets with string sorting them and displaying one-per-line to make comparision easier
    *
@@ -486,8 +510,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   /**
    * When you have more than one completion variant, you may use this method providing variant to choose.
-   * It only works for one caret (multiple carets not supported) and since it puts tab after completion, be sure to limit
-   * line somehow (i.e. with comment).
+   * Since it puts tab after completion, be sure to limit line somehow (i.e. with comment).
    * <br/>
    * Example: "user.n[caret]." There are "name" and "nose" fields.
    * By calling this function with "nose" you will end with "user.nose  ".
@@ -506,6 +529,29 @@ public abstract class PyTestCase extends UsefulTestCase {
           return;
         }
       }
+    }
+  }
+
+  /**
+   * The same as completeCaretWithMultipleVariants but for multiple carets in the file
+   */
+  protected final void completeAllCaretsWithMultipleVariants(final String @NotNull ... desiredVariants) {
+    CaretModel caretModel = myFixture.getEditor().getCaretModel();
+    List<Caret> carets = caretModel.getAllCarets();
+
+    List<Integer> originalOffsets = new ArrayList<>(carets.size());
+
+    for (Caret caret : carets) {
+      originalOffsets.add(caret.getOffset());
+    }
+    caretModel.removeSecondaryCarets();
+
+    // We do it in reverse order because completions would affect offsets
+    // i.e.: when you complete "spa" to "spam", the next caret offset increased by 1
+    for (int i = originalOffsets.size() - 1; i >= 0; i--) {
+      int originalOffset = originalOffsets.get(i);
+      caretModel.moveToOffset(originalOffset);
+      completeCaretWithMultipleVariants(desiredVariants);
     }
   }
 

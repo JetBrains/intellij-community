@@ -1,51 +1,60 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.modcommand.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class InsertMissingTokenFix implements IntentionActionWithFixAllOption, LowPriorityAction {
-  private final String myToken;
+import java.util.List;
+import java.util.Objects;
 
-  public InsertMissingTokenFix(String token) {
+public class InsertMissingTokenFix implements ModCommandAction {
+  private final @NotNull String myToken;
+  private final boolean myMoveAfter;
+
+  public InsertMissingTokenFix(@NotNull String token) {
+    this(token, false);
+  }
+
+  public InsertMissingTokenFix(@NotNull String token, boolean moveAfter) {
     myToken = token;
+    myMoveAfter = moveAfter;
   }
 
   @Override
-  public @NotNull String getText() {
-    return IdeBundle.message("quickfix.text.insert.0", myToken);
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return Presentation.of(getFamilyName())
+      .withPriority(PriorityAction.Priority.LOW)
+      .withFixAllOption(this, action -> action instanceof InsertMissingTokenFix tokenFix && tokenFix.myToken.equals(myToken));
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return getText();
+    return CommonQuickFixBundle.message("fix.insert.x", myToken);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             Editor editor,
-                             PsiFile file) {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    editor.getDocument().insertString(editor.getCaretModel().getOffset(), myToken);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
-    return action instanceof InsertMissingTokenFix && ((InsertMissingTokenFix)action).myToken.equals(myToken);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    int offset = context.offset();
+    Document document = context.file().getFileDocument();
+    if (document instanceof DocumentWindow window) {
+      offset = window.injectedToHost(offset);
+      document = window.getDelegate();
+    }
+    String oldText = document.getText();
+    String newText = oldText.substring(0, offset) + myToken + oldText.substring(offset);
+    VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
+    ModCommand fix = new ModUpdateFileText(file, oldText, newText,
+                                           List.of(new ModUpdateFileText.Fragment(offset, 0, myToken.length())));
+    if (myMoveAfter) {
+      fix = fix.andThen(new ModNavigate(file, -1, -1, offset + myToken.length()));
+    }
+    return fix;
   }
 }

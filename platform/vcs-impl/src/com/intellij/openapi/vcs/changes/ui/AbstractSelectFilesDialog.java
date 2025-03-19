@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 
 
+@ApiStatus.Internal
 public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   private final @NlsContexts.Label String myPrompt;
 
@@ -48,8 +50,7 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  protected abstract ChangesTree getFileList();
+  protected abstract @NotNull ChangesTree getFileList();
 
   @Override
   protected JComponent createNorthPanel() {
@@ -68,8 +69,7 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     DefaultActionGroup group = createToolbarActions();
     group.add(Separator.getInstance());
     group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
@@ -84,8 +84,7 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  protected DefaultActionGroup createToolbarActions() {
+  protected @NotNull DefaultActionGroup createToolbarActions() {
     return new DefaultActionGroup();
   }
 

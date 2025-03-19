@@ -9,6 +9,6 @@ SHELL_SCRIPT
         PsiElement({)('{')
         COMPOUND_LIST
           PsiElement(\n)('\n')
-          PsiErrorElement:<pipeline command> or '\n' expected, got '}'
-            <empty list>
+        PsiErrorElement:<pipeline command> or '\n' expected, got '}'
+          <empty list>
         PsiElement(})('}')

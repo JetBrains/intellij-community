@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.*;
@@ -13,17 +13,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class Jsr305Support implements AnnotationPackageSupport {
+public final class Jsr305Support implements AnnotationPackageSupport {
   public static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   public static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
+  public static final String JAVAX_ANNOTATION_CHECK_FOR_NULL = "javax.annotation.CheckForNull";
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
 
-  @Nullable
   @Override
-  public NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
-                                                                       @NotNull PsiElement context,
-                                                                       PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                       boolean superPackage) {
+  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation annotation,
+                                                                                 @NotNull PsiElement context,
+                                                                                 PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                                 boolean superPackage) {
     if (superPackage) return null;
     PsiClass declaration = annotation.resolveAnnotationType();
     PsiModifierList modList = declaration == null ? null : declaration.getModifierList();
@@ -48,8 +48,7 @@ public class Jsr305Support implements AnnotationPackageSupport {
     return null;
   }
 
-  @Nullable
-  private static Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
+  private static @Nullable Nullability getJsr305QualifierNullability(@NotNull PsiAnnotation qualifier) {
     String qName = qualifier.getQualifiedName();
     if (qName == null) return null;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(qualifier.getProject());
@@ -71,10 +70,18 @@ public class Jsr305Support implements AnnotationPackageSupport {
    * @return nicknamed nullability declared by this annotation; null if this annotation is not a nullability nickname annotation
    */
   public static @Nullable Nullability getNickNamedNullability(@NotNull PsiClass psiClass) {
-    if (AnnotationUtil.findAnnotation(psiClass, TYPE_QUALIFIER_NICKNAME) == null) return null;
+    PsiModifierList modifierList = psiClass.getModifierList();
+    if (modifierList == null) return null;
+    if (!modifierList.hasAnnotation(TYPE_QUALIFIER_NICKNAME)) return null;
 
-    PsiAnnotation nonNull = AnnotationUtil.findAnnotation(psiClass, JAVAX_ANNOTATION_NONNULL);
-    return nonNull != null ? extractNullityFromWhenValue(nonNull) : null;
+    PsiAnnotation nonNull = modifierList.findAnnotation(JAVAX_ANNOTATION_NONNULL);
+    if (nonNull != null) {
+      return extractNullityFromWhenValue(nonNull);
+    }
+    if (modifierList.hasAnnotation(JAVAX_ANNOTATION_CHECK_FOR_NULL)) {
+      return Nullability.NULLABLE;
+    }
+    return null;
   }
 
   public static @Nullable Nullability extractNullityFromWhenValue(@NotNull PsiAnnotation nonNull) {
@@ -99,12 +106,11 @@ public class Jsr305Support implements AnnotationPackageSupport {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> Collections.singletonList(JAVAX_ANNOTATION_NONNULL);
-      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull");
+      case NULLABLE -> Arrays.asList(JAVAX_ANNOTATION_NULLABLE, JAVAX_ANNOTATION_CHECK_FOR_NULL);
       case UNKNOWN -> Collections.emptyList();
     };
   }

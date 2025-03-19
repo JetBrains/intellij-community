@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,9 +17,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnit5Framework extends JUnitTestFramework {
+
   @Override
-  @NotNull
-  public String getName() {
+  public boolean isDumbAware() {
+    return this.getClass().isAssignableFrom(JUnit5Framework.class);
+  }
+
+  @Override
+  public @NotNull String getName() {
     return "JUnit5";
   }
 
@@ -29,10 +34,12 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
-    return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
-           //check explicit jupiter to support library with broken dependency       
-           isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
+  public boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
+    return callWithAlternateResolver(clazz.getProject(), ()->{
+      return isFrameworkApplicable(clazz, JUnitUtil.CUSTOM_TESTABLE_ANNOTATION) ||
+             //check explicit jupiter to support library with broken dependency
+             isFrameworkApplicable(clazz, JUnitUtil.TEST5_ANNOTATION);
+    }, false);
   }
 
   @Override
@@ -40,65 +47,71 @@ public class JUnit5Framework extends JUnitTestFramework {
     return true;
   }
 
-  @Nullable
   @Override
-  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+  public @Nullable ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return JUnitExternalLibraryDescriptor.JUNIT5;
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return null;
   }
 
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (canBePotential) return isUnderTestSources(clazz);
-    return JUnitUtil.isJUnit5TestClass(clazz, false);
-  }
-
-  @Nullable
-  @Override
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, 0)) return each;
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.hasModifierProperty(PsiModifier.STATIC)
-          && AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME, 0)) return each;
-    }
-    return null;
-  }
-
-  @Nullable
-  @Override
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_EACH_ANNOTATION_NAME, 0)) return each;
-    }
-    return null;
-  }
-  
-  @Nullable
-  @Override
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.hasModifierProperty(PsiModifier.STATIC)
-          && AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ALL_ANNOTATION_NAME, 0)) return each;
-    }
-    return null;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (canBePotential) return isUnderTestSources(clazz);
+      if (!isFrameworkAvailable(clazz)) return false;
+      return JUnitUtil.isJUnit5TestClass(clazz, false);
+    }, false);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), ()->{
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, 0)) return each;
+      }
+      return null;
+    }, null);
+  }
+
+  @Override
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.hasModifierProperty(PsiModifier.STATIC)
+            && AnnotationUtil.isAnnotated(each, JUnitUtil.BEFORE_ALL_ANNOTATION_NAME, 0)) return each;
+      }
+      return null;
+    }, null);
+  }
+
+  @Override
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_EACH_ANNOTATION_NAME, 0)) return each;
+      }
+      return null;
+    }, null);
+  }
+
+  @Override
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.hasModifierProperty(PsiModifier.STATIC)
+            && AnnotationUtil.isAnnotated(each, JUnitUtil.AFTER_ALL_ANNOTATION_NAME, 0)) {
+          return each;
+        }
+      }
+      return null;
+    }, null);
+  }
+
+  @Override
+  protected @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
     PsiMethod method = findSetUpMethod(clazz);
     if (method != null) return method;
 
@@ -132,8 +145,15 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
-    final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.jupiter.api.Disabled", 0);
+    if (element == null) return false;
+    return callWithAlternateResolver(element.getProject(), () -> {
+      if (element instanceof PsiMethod method) {
+        final PsiMethod ignoredTestMethod =
+          AnnotationUtil.isAnnotated(method, "org.junit.jupiter.api.Disabled", 0) ? JUnitUtil.getTestMethod(element) : null;
+        return ignoredTestMethod != null;
+      }
+      return false;
+    }, true);
   }
 
   @Override
@@ -162,8 +182,7 @@ public class JUnit5Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 Test Method.java");
   }
 
@@ -174,6 +193,9 @@ public class JUnit5Framework extends JUnitTestFramework {
 
   @Override
   public boolean isSuiteClass(PsiClass psiClass) {
-    return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
+    if (psiClass == null) return false;
+    return callWithAlternateResolver(psiClass.getProject(), () -> {
+      return AnnotationUtil.isAnnotated(psiClass, "org.junit.platform.suite.api.Suite", AnnotationUtil.CHECK_HIERARCHY);
+    }, false);
   }
 }

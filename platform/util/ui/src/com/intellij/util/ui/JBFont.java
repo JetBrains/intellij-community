@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.NewUiValue;
 import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -19,9 +20,9 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class JBFont extends Font {
-  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(() -> { return labelFont().getSize2D(); });
+  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(false, () -> { return labelFont().getSize2D(); });
   private final JBFontScaler myFontScaler;
-  private Font myScaledFont;
+  private @NotNull Font myScaledFont;
 
   JBFont(@NotNull Font font) {
     super(font);
@@ -30,7 +31,7 @@ public class JBFont extends Font {
     myScaledFont = font;
   }
 
-  private Font getScaledFont() {
+  private @NotNull Font getScaledFont() {
     refreshScaledFont();
     return myScaledFont;
   }
@@ -68,21 +69,25 @@ public class JBFont extends Font {
     return labelFont().getSize();
   }
 
+  public static @Nullable Float labelFontSize2D() {
+    Font font = labelFont();
+    if (font != null) return font.getSize2D();
+    else return null;
+  }
+
   private static Font labelFont() {
     return UIManager.getFont("Label.font");
   }
 
-  @NotNull
-  public static JBFont label() {
+  public static @NotNull JBFont label() {
     return create(labelFont(), false);
   }
 
-  public static JBFont create(Font font) {
+  public static @NotNull JBFont create(Font font) {
     return create(font, true);
   }
 
-  @NotNull
-  public static JBFont create(@NotNull Font font, boolean tryToScale) {
+  public static @NotNull JBFont create(@NotNull Font font, boolean tryToScale) {
     if (font instanceof JBFont) {
       return ((JBFont)font);
     }
@@ -94,63 +99,63 @@ public class JBFont extends Font {
     return new JBFont(scaled);
   }
 
-  public JBFont asBold() {
+  public @NotNull JBFont asBold() {
     return deriveFont(BOLD, getSize());
   }
 
-  public JBFont asItalic() {
+  public @NotNull JBFont asItalic() {
     return deriveFont(ITALIC, getSize());
   }
 
-  public JBFont asPlain() {
+  public @NotNull JBFont asPlain() {
     return deriveFont(PLAIN, getSize());
   }
 
   @Override
-  public JBFont deriveFont(int style, float size) {
+  public @NotNull JBFont deriveFont(int style, float size) {
     refreshScaledFont();
     return create(super.deriveFont(style, size), false);
   }
 
   @Override
-  public JBFont deriveFont(float size) {
+  public @NotNull JBFont deriveFont(float size) {
     refreshScaledFont();
     return deriveFont(getStyle(), size);
   }
 
   @Override
-  public Font deriveFont(int style) {
+  public @NotNull Font deriveFont(int style) {
     refreshScaledFont();
     return create(super.deriveFont(style, pointSize), false);
   }
 
   @Override
-  public Font deriveFont(Map<? extends AttributedCharacterIterator.Attribute, ?> attributes) {
+  public @NotNull Font deriveFont(Map<? extends AttributedCharacterIterator.Attribute, ?> attributes) {
     refreshScaledFont();
     return create(super.deriveFont(attributes).deriveFont(pointSize), false);
   }
 
   @Override
-  public Font deriveFont(AffineTransform trans) {
+  public @NotNull Font deriveFont(AffineTransform trans) {
     refreshScaledFont();
     return create(super.deriveFont(trans).deriveFont(pointSize), false);
   }
 
   @Override
-  public Font deriveFont(int style, AffineTransform trans) {
+  public @NotNull Font deriveFont(int style, AffineTransform trans) {
     refreshScaledFont();
     return create(super.deriveFont(style, trans).deriveFont(pointSize), false);
   }
 
-  public JBFont biggerOn(float size) {
+  public @NotNull JBFont biggerOn(float size) {
     return deriveFont(getSize() + JBUIScale.scale(size));
   }
 
-  public JBFont lessOn(float size) {
+  public @NotNull JBFont lessOn(float size) {
     return deriveFont(getSize() - JBUIScale.scale(size));
   }
 
-  public JBFont asUIResource() {
+  public @NotNull JBFont asUIResource() {
     if (this instanceof UIResource) return this;
     return new JBFontUIResource(this);
   }
@@ -161,14 +166,14 @@ public class JBFont extends Font {
     }
   }
 
-  public static JBFont h0() { return label().biggerOn(12).asBold(); }
-  public static JBFont h1() { return label().biggerOn(9).asBold(); }
-  public static JBFont h2() { return label().biggerOn(5); }
-  public static JBFont h3() { return label().biggerOn(3); }
-  public static JBFont h4() { return label().biggerOn(1).asBold(); }
-  public static JBFont regular() { return label(); }
-  public static JBFont medium() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(1); }
-  public static JBFont small() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(2); }
+  public static @NotNull JBFont h0() { return label().biggerOn(12).asBold(); }
+  public static @NotNull JBFont h1() { return label().biggerOn(9).asBold(); }
+  public static @NotNull JBFont h2() { return label().biggerOn(5); }
+  public static @NotNull JBFont h3() { return label().biggerOn(3); }
+  public static @NotNull JBFont h4() { return label().biggerOn(1).asBold(); }
+  public static @NotNull JBFont regular() { return label(); }
+  public static @NotNull JBFont medium() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(1); }
+  public static @NotNull JBFont small() { return mediumAndSmallFontsAsRegular() ? label() : label().lessOn(2); }
 
   /**
    * In new UI {@link #small()} font should be used only in exceptional cases when the medium size won't fit at all.
@@ -176,10 +181,12 @@ public class JBFont extends Font {
    * and {@link #small()} for old UI. Will be replaced by {@link #medium()} after full migration to new UI
    */
   @ApiStatus.Internal
-  public static JBFont smallOrNewUiMedium() { return Registry.is("ide.experimental.ui") ? medium() : small(); }
+  public static @NotNull JBFont smallOrNewUiMedium() {
+    return NewUiValue.isEnabled() ? medium() : small();
+  }
 
   private static boolean mediumAndSmallFontsAsRegular() {
-    return SystemInfo.isWindows && !Registry.is("ide.experimental.ui");
+    return SystemInfo.isWindows && !NewUiValue.isEnabled();
   }
 
   public static float scaleFontSize(float fontSize, float scale) {

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -31,7 +32,7 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
     if (qualifier != null) {
       final PsiElement aClass = qualifier.resolve();
       if (!(aClass instanceof PsiClass)) return null;
-      return getSuperType((PsiClass)aClass, PsiUtil.isLanguageLevel8OrHigher(this));
+      return getSuperType((PsiClass)aClass, PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, this));
     }
 
     for (PsiElement scope = getContext(); scope != null; scope = scope.getContext()) {
@@ -52,8 +53,7 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
     return null;
   }
 
-  @Nullable
-  private PsiType getSuperType(PsiClass aClass, boolean checkImmediateSuperInterfaces) {
+  private @Nullable PsiType getSuperType(PsiClass aClass, boolean checkImmediateSuperInterfaces) {
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;
 
     PsiClass containingClass = checkImmediateSuperInterfaces ? PsiTreeUtil.getContextOfType(this, PsiClass.class) : null;
@@ -99,9 +99,6 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.QUALIFIER:
         return getFirstChildNode().getElementType() == JAVA_CODE_REFERENCE ? getFirstChildNode() : null;
 
@@ -110,6 +107,9 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
 
       case ChildRole.SUPER_KEYWORD:
         return getLastChildNode();
+
+      default:
+        return null;
     }
   }
 

@@ -9,19 +9,13 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 
 class KotlinSuperClassIndex internal constructor() : StringStubIndexExtension<KtClassOrObject>() {
     companion object Helper : KotlinStringStubIndexHelper<KtClassOrObject>(KtClassOrObject::class.java) {
-        @JvmStatic
-        @Suppress("DeprecatedCallableAddReplaceWith")
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        fun getInstance(): KotlinSuperClassIndex {
-            return KotlinSuperClassIndex()
-        }
-
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex")
     }
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinSuperClassIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[key, project, scope]
     }

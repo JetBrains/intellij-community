@@ -55,7 +55,6 @@
 package org.jdom;
 
 import org.jdom.filter2.Filter;
-import org.jdom.util.IteratorIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -68,7 +67,7 @@ import java.util.NoSuchElementException;
  * @author Bradley S. Huffman
  * @author Rolf Lear
  */
-final class FilterIterator<T> implements IteratorIterable<T> {
+final class FilterIterator<T> implements Iterable<T>, Iterator<T> {
   private final DescendantIterator iterator;
   private final Filter<T> filter;
   private T nextObject;

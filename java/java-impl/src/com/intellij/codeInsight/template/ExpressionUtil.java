@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -68,7 +69,10 @@ import org.jetbrains.annotations.Nullable;
            }
          }
        }
-       SuggestedNameInfo suggestedInfo = codeStyleManager.suggestVariableName(variableKind, null, initializer, var.getType());
+       PsiExpression finalInitializer = initializer;
+       SuggestedNameInfo suggestedInfo =
+         DumbService.getInstance(project)
+           .withAlternativeResolveEnabled(() -> codeStyleManager.suggestVariableName(variableKind, null, finalInitializer, var.getType()));
        return suggestedInfo.names;
      }
      return null;

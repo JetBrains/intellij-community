@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexId;
@@ -25,8 +11,10 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collection;
 
+//TODO RC: why we need this class -- why not use CollectionDataExternalizer directly?
 public final class InputIndexDataExternalizer<K> implements DataExternalizer<Collection<K>> {
   private final DataExternalizer<Collection<K>> myKeyCollectionExternalizer;
+  /** Only for debug logging */
   private final IndexId<K, ?> myIndexId;
 
   public InputIndexDataExternalizer(KeyDescriptor<K> keyDescriptor, IndexId<K, ?> indexId) {
@@ -44,9 +32,8 @@ public final class InputIndexDataExternalizer<K> implements DataExternalizer<Col
     }
   }
 
-  @NotNull
   @Override
-  public Collection<K> read(@NotNull DataInput in) throws IOException {
+  public @NotNull Collection<K> read(@NotNull DataInput in) throws IOException {
     try {
       return myKeyCollectionExternalizer.read(in);
     }

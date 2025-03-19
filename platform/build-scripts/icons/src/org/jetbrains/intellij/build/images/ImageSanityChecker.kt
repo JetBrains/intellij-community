@@ -53,9 +53,16 @@ abstract class ImageSanityCheckerBase(private val projectHome: Path, private val
   }
 
   private val excludedFromSizeCheck = setOf(
+    "/cdi/newui/cdi@14x14",
+    "/cdi/newui/event@14x14",
+    "/javaee/newui/jpaFacet@14x14",
+    "/javaee/newui/persistenceId@14x14",
+    "/javaee/newui/persistenceRelationship@14x14",
+    "/newui/renderKit",
     "/expui/run/rerun",
     "/expui/toolbar/unknown@20x20",
     "/expui/welcome/open",
+    "/resharper/SolutionAnalysis/StatusBarIndicatorBackground"
   )
 
   private fun checkHaveValidSize(images: List<ImageInfo>, module: JpsModule) {

@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.runtime.product.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "runtime-product-tests_test",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/runtime/product",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/runtime/repository",
+    "//platform/runtime/repository/tests:runtime-repository-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.runtime.product.tests` end

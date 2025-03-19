@@ -2,13 +2,15 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class ListActions extends SwingActionDelegate {
+@ApiStatus.Internal
+public abstract class ListActions extends SwingActionDelegate implements ActionRemoteBehaviorSpecification.Frontend {
   private ListActions(String actionId) {
     super(actionId);
   }
@@ -16,7 +18,7 @@ public abstract class ListActions extends SwingActionDelegate {
   @Override
   protected @Nullable JList<?> getComponent(AnActionEvent event) {
     var component = super.getComponent(event);
-    return component instanceof JList<?> list && SpeedSearchSupply.getSupply(component) == null ? list : null;
+    return component instanceof JList<?> list && !speedSearchHandlesNavigation(component) ? list : null;
   }
 
   public static final class Home extends ListActions {

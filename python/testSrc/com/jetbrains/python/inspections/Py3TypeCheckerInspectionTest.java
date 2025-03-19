@@ -102,6 +102,10 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testFunctionReturnTypePy3() {
     doTest();
   }
+  
+  public void testFunctionYieldTypePy3() {
+    doTest();
+  }
 
   // PY-20770
   public void testAsyncForOverAsyncGenerator() {
@@ -358,6 +362,46 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-36889
+  public void testInstanceAndClassAttributeAssignment() {
+    doTestByText("""
+                   from typing import ClassVar
+                   
+                   class ClassAnnotations:
+                       attr: int
+                       class_attr: ClassVar[int]
+                   
+                   ClassAnnotations().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   ClassAnnotations.class_attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class ClassAnnotationInstanceAssignment:
+                       attr: int
+                       def __init__(self, x):
+                           self.attr = x
+                   
+                   ClassAnnotationInstanceAssignment(42).attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   
+                   class InstanceAnnotationAndAssignment:
+                       def __init__(self):
+                           self.attr: int = 42
+                   
+                   InstanceAnnotationAndAssignment().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
+  // PY-36889
+  public void testDataclassInstanceAssignment() {
+    doTestByText("""
+                   from dataclasses import dataclass
+                   
+                   @dataclass
+                   class C:
+                       attr: int
+                   
+                   C().attr = <warning descr="Expected type 'int', got 'str' instead">"foo"</warning>
+                   """);
+  }
+
   // PY-24832
   public void testNoTypeMismatchInAssignmentWithoutTypeAnnotation() {
     doTest();
@@ -391,6 +435,192 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    foo4(<warning descr="Expected type 'bytes', got 'Literal[\\"abc\\"]' instead">a</warning>)
                    foo4(b)
                    """);
+  }
+
+  // PY-46385
+  public void testAliasingEnumClassNameInLiteralType() {
+    doTestByText("""
+             from enum import Enum
+             from typing import Literal
+     
+             class Colors(Enum):
+                 RED = 1
+                 GREEN = 1
+                 BLUE = 3
+     
+             AliasColors = Colors
+     
+             x: AliasColors = Colors.RED
+             y: Literal[Colors.RED] = <warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>
+             z: Literal[AliasColors.RED] = Colors.RED""");
+  }
+
+  // PY-46385
+  public void testAliasingEnumMemberNameInLiteralType() {
+    doTestByText("""
+                   from enum import Enum
+                   from typing import Literal
+                   
+                   class Colors(Enum):
+                       RED = 1
+                       GREEN = 2
+                       BLUE = 3
+                   
+                   SpecialColors = Literal[Colors.RED]
+                   
+                   def special_painter(color: SpecialColors):
+                       assert color == Colors.RED
+                   
+                   special_painter(<warning descr="Expected type 'Literal[Colors.RED]', got 'Literal[Colors.GREEN]' instead">Colors.GREEN</warning>)
+                   
+                   costs: dict[SpecialColors, int] = <warning descr="Expected type 'dict[Literal[Colors.RED], int]', got 'dict[Literal[Colors.GREEN], Literal[7]]' instead">{Colors.GREEN: 7}</warning>""");
+  }
+
+  public void testEnumMemberAlias() {
+    doTestByText(
+      """
+        from enum import Enum
+        from typing import Literal
+        
+        class Color(Enum):
+            RED = 1
+            R = RED
+        
+        x: Literal[Color.RED]
+        x = Color.R"""
+    );
+  }
+
+  public void testTypeNarrowingIsOrEquals() {
+    doTestByText(
+      """
+        from enum import Enum
+        from typing import Literal
+
+        class Color(Enum):
+            R = 1
+            G = 2
+            B = 3
+            RED = R
+            GREEN = G
+            BLUE = B
+
+        def foo(v: Color | str) -> None:
+            if v is Color.RED:
+                r: Literal[Color.R] = v
+            elif v == Color.G:
+                g: Literal[Color.G] = v
+            elif v is Color.B:
+                b: Literal[Color.B] = v
+            else:
+                s: str = v
+                c: Color = <warning descr="Expected type 'Color', got 'str' instead">v</warning>
+        
+            if v is Color.BLUE or isinstance(v, str):
+                pass
+            else:
+                s: str = <warning descr="Expected type 'str', got 'Literal[Color.R, Color.G]' instead">v</warning>
+
+        def bar(v: Literal[Color.R, "1"]) -> None:
+            if isinstance(v, Color):
+                r: Literal[Color.R] = v
+            else:
+                s: Literal["1"] = v
+                c: Color = <warning descr="Expected type 'Color', got 'Literal[\\"1\\"]' instead">v</warning>
+        
+        def buz(v: Color):
+            if v is not Color.B and v != Color.RED:
+                g: Literal[Color.G] = v
+                s: str = <warning descr="Expected type 'str', got 'Literal[Color.G]' instead">v</warning>
+        """
+    );
+  }
+
+  // PY-79164
+  public void testTypeNarrowingIn() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def expects_bad_status(status: Literal["MALFORMED", "ABORTED"]): ...
+                   
+                   def expects_pending_status(status: Literal["PENDING"]): ...
+                   
+                   def parse_status(status: str) -> None:
+                       if status in ("MALFORMED", "ABORTED"):
+                           return expects_bad_status(status)
+                   
+                       if status == "PENDING":
+                           expects_pending_status(status)
+                   """);
+    doTestByText("""
+                   from typing import Literal
+                   from enum import Enum
+                   
+                   class Color(Enum):
+                       R = 1
+                       G == 2
+                       B == 3
+                       RED = R
+                       BLUE = B
+                   
+                   def expects_red_or_blue(v: Literal[Color.RED, Color.B]): ...
+                   
+                   def expects_green(v: Literal[Color.G]): ...
+                   
+                   def foo(v: Color):
+                       if v in (Color.R, Color.BLUE):
+                           expects_red_or_blue(v)
+                       else:
+                           expects_green(v)
+                   
+                       if v not in (Color.R, Color.BLUE):
+                           expects_green(v)
+                       else:
+                           expects_red_or_blue(v)
+                   """);
+
+    doTestByText("""
+                   from enum import Enum
+                   
+                   class MyEnum(Enum):
+                       A = 1
+                       B = 2
+                       C = 3
+                       D = 4
+                   
+                   def foo(v: MyEnum):
+                       if v == MyEnum.A:
+                           pass
+                       elif v in (MyEnum.B, MyEnum.C):
+                           b_or_c: Literal[MyEnum.B, MyEnum.C] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.B, MyEnum.C]' instead">v</warning>
+                       else:
+                           d: Literal[MyEnum.D] = v
+                           s: int = <warning descr="Expected type 'int', got 'Literal[MyEnum.D]' instead">v</warning>
+                   """);
+  }
+
+  // PY-77937
+  public void testListOfEnumMembers() {
+    doTestByText(
+      """
+        from enum import Enum
+        
+        class Direction(Enum):
+            NORTH = "N"
+            SOUTH = "S"
+            EAST = "E"
+            WEST = "W"
+            LEFT = "L"
+            RIGHT = "R"
+            FORWARD = "F"
+        
+        CARTESIAN = [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
+        
+        def index(d: Direction) -> None:
+            print(CARTESIAN.index(d))
+        """
+    );
   }
 
   // PY-42418
@@ -469,6 +699,146 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    def myfoo(*args: int) -> int:
                      pass
                    mymap(myfoo, [1, 2, 3])
+                   """);
+  }
+
+  public void testCallableWithTypeGuards() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   def foo(c: Callable[[Any], TypeIs[int]]):
+                      ...
+                   
+                   def is_str(x: Any) -> TypeIs[str]:
+                      ...
+                   
+                   foo(<warning descr="Expected type '(Any) -> TypeIs[int]', got '(x: Any) -> TypeIs[str]' instead">is_str</warning>)
+                   """);
+  }
+
+  public void testCallableWithTypeGuards2() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   def foo(c: Callable[[Any], TypeIs[str]]):
+                      ...
+                   
+                   def is_str(x: Any) -> TypeIs[str]:
+                      ...
+                   
+                   foo(is_str)
+                   """);
+  }
+
+  public void testCallableWithTypeGuards3() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   class B:
+                      ...
+                   
+                   class D(B):
+                      ...
+                   
+                   def foo(c: Callable[[Any], TypeIs[D]]):
+                      ...
+                   
+                   def is_str(x: Any) -> TypeIs[B]:
+                      ...
+                   
+                   foo(<warning descr="Expected type '(Any) -> TypeIs[D]', got '(x: Any) -> TypeIs[B]' instead">is_str</warning>)
+                   """);
+  }
+
+  public void testCallableWithTypeGuards4() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   class B:
+                      ...
+                   
+                   class D(B):
+                      ...
+                   
+                   def foo(c: Callable[[Any], TypeIs[B]]):
+                      ...
+                   
+                   def is_str(x: Any) -> TypeIs[D]:
+                      ...
+                   foo(<warning descr="Expected type '(Any) -> TypeIs[B]', got '(x: Any) -> TypeIs[D]' instead">is_str</warning>)
+                   """);
+  }
+
+  public void testTypeIsAndTypeGuardAreNotAssignableToEachOther() {
+    doTestByText("""
+                   from typing import Callable, TypeGuard, TypeIs
+                   
+                   def takes_typeguard(f: Callable[[object], TypeGuard[int]]) -> None:
+                       pass
+                   
+                   def takes_typeis(f: Callable[[object], TypeIs[int]]) -> None:
+                       pass
+                   
+                   def is_int_typeis(val: object) -> TypeIs[int]:
+                       return isinstance(val, int)
+                   
+                   def is_int_typeguard(val: object) -> TypeGuard[int]:
+                       return isinstance(val, int)
+                   
+                   takes_typeguard(is_int_typeguard)
+                   takes_typeguard(<warning descr="Expected type '(object) -> TypeGuard[int]', got '(val: object) -> TypeIs[int]' instead">is_int_typeis</warning>)
+                   takes_typeis(<warning descr="Expected type '(object) -> TypeIs[int]', got '(val: object) -> TypeGuard[int]' instead">is_int_typeguard</warning>)
+                   takes_typeis(is_int_typeis)
+                   """);
+  }
+
+  // test is broken, type variable in TypeIs is invariant, so TypeIs[B] and TypeIs[D] are not consistent
+  public void testCallableBoolean() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   def foo(c: bool):
+                      ...
+                   
+                   def is_int(x: Any) -> TypeIs[int]:
+                      ...
+                   
+                   foo(is_int(1))
+                   """);
+  }
+
+  public void testCallableStr() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   def foo(c: str):
+                      ...
+                   
+                   def is_int(x: Any) -> TypeIs[int]:
+                      ...
+                   
+                   foo(<warning descr="Expected type 'str', got 'TypeIs[int]' instead">is_int(1)</warning>)
+                   """);
+  }
+
+  public void testCallableInt() {
+    doTestByText("""
+                   from typing import Any, Callable
+                   from typing_extensions import TypeIs
+                   
+                   def foo(c: int):
+                      ...
+                   
+                   def is_int(x: Any) -> TypeIs[int]:
+                      ...
+                   
+                   foo(is_int(1))
                    """);
   }
 
@@ -764,6 +1134,55 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    transform(bar)(<warning descr="Expected type 'str', got 'int' instead">42</warning>)""");
   }
 
+  // PY-79098
+  public void testCallableConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   def f[**P2](fn: Callable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type '(**P2) -> None', got 'None' instead">Callable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: Callable[Concatenate[int, P3], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(Concatenate(int, **P3)) -> None' instead">fn</warning>)
+                       def longer_concat[**P3](fn: Callable[Concatenate[int, int, int, P3], None]):
+                           f(fn)
+                       def empty(fn: Callable[[], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '() -> None' instead">fn</warning>)
+                       def param_spec[**P3](fn: Callable[P3, None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(**P3) -> None' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: Callable[[int], None]):
+                           f(<warning descr="Expected type '(Concatenate(int, int, **P2)) -> None' (matched generic type '(Concatenate(int, int, **P2)) -> None'), got '(int) -> None' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: Callable[[int, int], None]):
+                           f(fn)
+                       def longer_param_list[**P3](fn: Callable[[int, int, int], None]):
+                           f(fn)
+                   """);
+  }
+
+  // PY-79098
+  public void testUserGenericConcatenateMatching() {
+    doTestByText("""
+                   from typing import Callable, Concatenate, reveal_type
+                   
+                   class MyCallable[**P, R]:
+                       pass
+                   
+                   def g[**P2](fn: MyCallable[Concatenate[int, int, P2], None]) -> <warning descr="Expected type 'MyCallable[**P2, None]', got 'None' instead">MyCallable[P2, None]</warning>:
+                       def shorter_concat[**P3](fn: MyCallable[Concatenate[int, P3], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[Concatenate(int, **P3), None]' instead">fn</warning>)
+                       def longer_concat[**P3](fn: MyCallable[Concatenate[int, int, int, P3], None]):
+                           g(fn)
+                       def empty(fn: MyCallable[[], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[], None]' instead">fn</warning>)
+                       def param_spec[**P3](fn: MyCallable[P3, None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[**P3, None]' instead">fn</warning>)
+                       def shorter_param_list[**P3](fn: MyCallable[[int], None]):
+                           g(<warning descr="Expected type 'MyCallable[Concatenate(int, int, **P2), None]' (matched generic type 'MyCallable[Concatenate(int, int, **P2), None]'), got 'MyCallable[[int], None]' instead">fn</warning>)
+                       def exact_param_list[**P3](fn: MyCallable[[int, int], None]):
+                           g(fn)
+                       def longer_param_list[**P3](fn: MyCallable[[int, int, int], None]):
+                           g(fn)
+                   """);
+  }
+
   // PY-50337
   public void testBitwiseOrUnionWithNotCalculatedGenericFromUnion() {
     doTestByText("""
@@ -964,6 +1383,22 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                                               """));
   }
 
+  // PY-78126
+  public void testTypedDictVariableKey() {
+    doTestByText("""
+                   from typing import TypedDict, Literal
+                   class Movie(TypedDict):
+                       name: str
+                       year: int
+                   def foo(key: str):
+                       m: Movie = <warning descr="Expected type 'Movie', got 'dict[str, str | int]' instead">{key: "abb", "year": 1917}</warning>
+                   def bar(key: Literal["name"]):
+                       m: Movie = {key: "abb", "year": 1917} # OK
+                   def buz(key: Literal["wrong_key"]):
+                       m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{<warning descr="Extra key 'wrong_key' for TypedDict 'Movie'">key: "abb"</warning>, "year": 1917}</warning>
+                   """);
+  }
+
   // PY-53611
   public void testTypedDictRequiredNotRequiredEquivalence() {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
@@ -985,6 +1420,52 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                                                   pass
                                               g(<warning descr="TypedDict 'B' has missing key: 'x'">{}</warning>)
                                               """));
+  }
+
+  public void testRequiredWithReadOnly() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doTestByText(
+      """
+        from typing_extensions import TypedDict, Required, NotRequired, ReadOnly
+        
+        class Movie(TypedDict):
+            name: ReadOnly[Required[str]]
+            year: NotRequired[int]
+        
+        m: Movie = <warning descr="TypedDict 'Movie' has missing key: 'name'">{"year": 2024}</warning>
+        """
+    ));
+  }
+
+  public void testTypedDictsReadonlyConsistency() {
+    doTestByText("""
+                   from typing import TypedDict, Required, NotRequired, ReadOnly
+                   
+                   class A1(TypedDict):
+                       x: NotRequired[str]
+                   
+                   class B1(TypedDict):
+                       x: NotRequired[ReadOnly[str]]
+                   
+                   class B2(TypedDict):
+                       x: ReadOnly[NotRequired[str]]
+                   
+                   class C(TypedDict):
+                       x: Required[str]
+                   
+                   def func1(b1: B1, b2: B2, c: C):
+                       v1: A1 = <warning descr="Expected type 'A1', got 'B1' instead">b1</warning>
+                       v2: A1 = <warning descr="Expected type 'A1', got 'B2' instead">b2</warning>
+                       v3: B1 = c
+                   
+                   class A2(TypedDict):
+                       x: ReadOnly[NotRequired[object]]
+                   
+                   class B3(TypedDict):
+                       pass
+                   
+                   def func2(b: B3):
+                       a: A2 = b
+                   """);
   }
 
   // PY-53611
@@ -1256,6 +1737,387 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-53105
+  public void testVariadicGenericInFunction() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple, TypeVar
+
+                   T = TypeVar('T')
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(x: T, y: Tuple[*Ts]):
+                       pass
+
+
+                   foo(10, (1, '1', [1]))
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericArgumentByCallableInFunction() {
+    doTestByText("""
+                   from typing import Callable, TypeVarTuple, Tuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: int, f: Callable[[*Ts], None], args: Tuple[*Ts]) -> None: ...
+                   def bar(a: int, b: str) -> None: ...
+
+
+                   foo(1, bar, args=(0, 'foo'))
+
+                   foo(1, bar, <warning descr="Expected type 'tuple[int, str]' (matched generic type 'tuple[*Ts]'), got 'tuple[str, int]' instead">args=('foo', 0)</warning>)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericCheckCallableInFunction() {
+    doTestByText("""
+                   from typing import TypeVar, TypeVarTuple, Callable, Tuple
+
+                   T = TypeVar('T')
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> None: ...
+
+
+                   def ok1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, bool]: ...
+                   def ok2(a: int, b: str) -> Tuple[str]: ...
+
+
+                   foo(ok1)
+                   foo(ok2)
+
+
+                   def err1(a: int, b: str, c: bool, d: list[int]) -> Tuple[list[int], str, str]: ...
+                   def err2(a: int, b: str) -> Tuple[str, str]: ...
+
+
+                   foo(<warning descr="Expected type '(int, str, bool, list[int]) -> tuple[list[int], str, bool]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str, c: bool, d: list[int]) -> tuple[list[int], str, str]' instead">err1</warning>)
+                   foo(<warning descr="Expected type '(int, str) -> tuple[str]' (matched generic type '(int, *Ts, T) -> tuple[T, *Ts]'), got '(a: int, b: str) -> tuple[str, str]' instead">err2</warning>)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericTwoTsInFunction() {
+    doTestByText("""
+                   from typing import TypeVarTuple, Generic
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   class Array(Generic[*Ts]):
+                       ...
+
+
+                   def foo(x: Array[*Ts], y: Array[*Ts]) -> Array[*Ts]:
+                       ...
+
+
+                   x: Array[int]
+                   y: Array[str]
+                   z: Array[int, str]
+
+                   foo(x, x)
+
+                   foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[str]' instead">y</warning>)
+                   foo(x, <warning descr="Expected type 'Array[int]' (matched generic type 'Array[*Ts]'), got 'Array[int, str]' instead">z</warning>)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericUnboundTupleInFunction() {
+    doTestByText("""
+                   from typing import Generic, TypeVarTuple, Tuple, Any
+                                      
+                   Ts = TypeVarTuple('Ts')
+                                      
+                                      
+                   class Array(Generic[*Ts]):
+                       def __init__(self, shape: Tuple[*Ts]):
+                           ...
+                                      
+                                      
+                   def foo(x: Array[int, *Tuple[Any, ...], str]) -> None:
+                       ...
+                                      
+                                      
+                   x: Array[int, list[str], bool, str]
+                   foo(x)
+                                      
+                   y: Array[int, str]
+                   foo(y)
+                                      
+                   z: Array[int]
+                   foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[int]' instead">z</warning>)
+                                      
+                   t: Array[str]
+                   foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[str]' instead">t</warning>)
+                                      
+                   k: Array[int, int]
+                   foo(<warning descr="Expected type 'Array[int, *tuple[Any, ...], str]', got 'Array[int, int]' instead">k</warning>)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsNamedParameters() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+                                      
+                   Ts = TypeVarTuple('Ts')
+                                      
+                                      
+                   def foo(a: str, *args: *Tuple[*Ts, int], b: str, c: bool) -> None: ...
+                                      
+                                      
+                   foo('', 1, True, [1], 42, b='', c=True)
+                   foo('', 42, b='', c=True)
+                   foo('', True, 42, c=True, b='')
+                                      
+                   foo('', b='', c=True<warning descr="Parameter 'args' unfilled, expected '*tuple[*Ts, int]'">)</warning>
+                   foo('', <warning descr="Expected type '*tuple[int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str]' instead">''</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, list]' instead">[False]</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, str, int]' (matched generic type '*tuple[*Ts, int]'), got '*tuple[str, str, str, float]' instead">1.1</warning>, b='', c=True)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsTupleAndUnpackedTuple() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+                                      
+                   Ts = TypeVarTuple('Ts')
+                                      
+                                      
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+                                      
+                                      
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+                                      
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">{}</warning>, b='')
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsOfVariadicGeneric() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(*args: Tuple[*Ts]): ...
+
+
+                   foo((0,), (1,))
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
+                   # *tuple[int | str] is inferred for *Ts
+                   foo((0,), ('1',))
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsOfVariadicGenericPrefixSuffix() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+                                      
+                   Ts = TypeVarTuple('Ts')
+                                      
+                                      
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+                                      
+                                      
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+                                      
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">{}</warning>, b='')
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsPrefixSuffix() {
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+                                      
+                   Ts = TypeVarTuple('Ts')
+                                      
+                                      
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+                                      
+                                      
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+                                      
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*tuple[str, str, int, int]'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, str, str, int]' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, int, int, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">''</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, <warning descr="Expected type '*tuple[str, str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, int]' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">''</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">42</warning>, <warning descr="Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, int, Any]' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">''</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">[]</warning>, <warning descr="Expected type '*tuple[str, list, dict, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[str, list, dict]' instead">{}</warning>, b='')
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericStarArgsUnboundTuple() {
+    doTestByText("""
+                   from typing import Tuple
+
+
+                   def foo(*args: *Tuple[int, ...]) -> None: ...
+
+
+                   foo()
+                   foo(1)
+                   foo(1, 2, 3)
+
+                   foo(<warning descr="Expected type 'int', got 'str' instead">''</warning>)
+                   foo(1, <warning descr="Expected type 'int', got 'str' instead">''</warning>)
+                   """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericMatchWithHomogeneousGenericVariadic() {
+    doTestByText("""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[Any, ...]] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape]) -> None:
+                        print(x)
+                    
+                    expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericMatchWithHomogeneousGenericVariadicAndOtherTypes() {
+    doTestByText("""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[Any, ...], int, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape]) -> None:
+                        print(x)
+                    
+                    expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericCheckTypeAliasesMissingParameter() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+                   from typing import TypeVar
+                   from typing import Generic
+                   from typing import NewType
+                   
+                   Shape = TypeVarTuple("Shape")
+                   Height = NewType("Height", int)
+                   Width = NewType("Width", int)
+                   DType = TypeVar("DType")
+                   
+                   
+                   class Array(Generic[DType, *Shape]):
+                       ...
+                   
+                   
+                   Float32Array = Array[float, *Shape]
+                   
+                   
+                   def takes_float_array_of_specific_shape(arr: Float32Array[Height, Width]): ...
+                   
+                   
+                   y: Float32Array[Height] = Array()
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height, Width]', got 'Array[float, Height]' instead">y</warning>)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericCheckTypeAliasesRedundantParameter() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+                   from typing import TypeVar
+                   from typing import Generic
+                   from typing import NewType
+                   
+                   Shape = TypeVarTuple("Shape")
+                   Height = NewType("Height", int)
+                   Width = NewType("Width", int)
+                   DType = TypeVar("DType")
+                   
+                   
+                   class Array(Generic[DType, *Shape]):
+                       ...
+                   
+                   
+                   Float32Array = Array[float, *Shape]
+                   
+                   
+                   def takes_float_array_of_specific_shape(arr: Float32Array[Height]): ...
+                   
+                   
+                   y: Float32Array[Height, Width] = Array()
+                   takes_float_array_of_specific_shape(<warning descr="Expected type 'Array[float, Height]', got 'Array[float, Height, Width]' instead">y</warning>)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericEmpty() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+                                      
+                   Ts = TypeVarTuple("Ts")
+                                      
+                   IntTuple = tuple[int, *Ts]
+                                      
+                   c: IntTuple[()] = <warning descr="Expected type 'tuple[int]', got 'tuple[int, str]' instead">(1, "")</warning>
+                    """);
+  }
+
   // PY-56785
   public void testTypingSelfNoInspectionReturnSelfMethod() {
     doTestByText("""
@@ -1365,7 +2227,438 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-53612
-  public void testLiteralStringInPlaceOrStr() {
+  public void testLiteralStringInPlaceOfStr() {
     doTest();
+  }
+
+  // PY-53612
+  public void testLiteralStringEqualsToStr() {
+    doTestByText("""
+                   from typing_extensions import LiteralString
+                   s: str
+                   literal_string: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">s</warning>
+                   literal_string: LiteralString = "hello"
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralStringAddition() {
+    doTestByText("""
+                   from typing_extensions import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                                                                    
+                   expect_literal_string("foo" + "bar")
+                   literal_string: LiteralString
+                   expect_literal_string(literal_string + "bar")
+                             
+                   literal_string2: LiteralString
+                   expect_literal_string(literal_string + literal_string2)
+                             
+                   plain_string: str
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string + plain_string</warning>)
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">plain_string + literal_string</warning>)
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralStringJoin() {
+    doTestByText("""
+                   from typing import List
+                   from typing_extensions import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                   expect_literal_string(",".join(["foo", "bar"]))
+                   literal_string: LiteralString
+                   expect_literal_string(literal_string.join(["foo", "bar"]))
+                   literal_string2: LiteralString
+                   expect_literal_string(literal_string.join([literal_string, literal_string2]))
+                             
+                   xs: List[LiteralString]
+                   expect_literal_string(literal_string.join(xs))
+                   plain_string: str
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">plain_string.join([literal_string, literal_string2])</warning>)
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">literal_string.join([plain_string, literal_string2])</warning>)
+                   """);
+  }
+
+  // PY-38873
+  public void testTypedDictWithListField() {
+    doTestByText("""
+                   from typing import TypedDict, List, LiteralString
+                   Movie = TypedDict('Movie', {'address': List[str]}, total=False)
+                   class Movie2(TypedDict, total=False):
+                       address: List[str]
+                   movie = Movie()
+                   movie2 = Movie2()
+                   s1: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">movie['address'][0]</warning>
+                   s2: LiteralString = <warning descr="Expected type 'LiteralString', got 'str' instead">movie2['address'][0]</warning>
+                   """);
+  }
+
+  // PY-53612
+  public void testLiteralInPlaceOfLiteralString() {
+    doTestByText("""
+                   from typing import LiteralString, Literal
+                   def literal_identity(s: LiteralString) -> LiteralString:
+                       return s
+                   hello: Literal["hello"] = "hello"
+                   literal_identity(hello)
+                   """);
+  }
+
+  // PY-53612
+  public void testStrInPlaceOfLiteralStringWithFString() {
+    doTestByText("""
+                   from typing import LiteralString
+                   def expect_literal_string(s: LiteralString) -> None: ...
+                   plain_string: str
+                   literal_string: LiteralString
+                   expect_literal_string(f"hello {literal_string}")
+                   expect_literal_string(<warning descr="Expected type 'LiteralString', got 'str' instead">f"hello {plain_string}"</warning>)
+                   """);
+  }
+
+  // PY-53612
+  public void testGenericSubstitutionWithLiteralString() {
+    doTestByText("""
+                   from typing import TypeVar, LiteralString
+                   T = TypeVar('T')
+                   def calc(a: T, b: T):
+                       pass
+                   plain_string: str
+                   literal_string: LiteralString
+                   calc('literal string', plain_string)
+                   calc(literal_string, plain_string)
+                   """);
+  }
+
+  // PY-61137
+  public void testLiteralStringInConditionalStatementsAndExpressions() {
+    doTestByText("""
+                   from typing import LiteralString
+                   def condition1():
+                       pass
+                   def return_literal_string() -> LiteralString:
+                       return "foo" if condition1() else "bar"  # OK
+                   def return_literal_str2(literal_string: LiteralString) -> LiteralString:
+                       return "foo" if condition1() else literal_string  # OK
+                   """);
+  }
+
+  // PY-61137
+  public void testLiteralInConditionalStatementsAndExpressions() {
+    doTestByText("""
+                   from typing import Literal
+                   def condition1():
+                       pass
+                   def return_literal_string() -> Literal["foo", "bar"]:
+                       return "foo" if condition1() else "bar"  # OK
+                   def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
+                       return "foo" if condition1() else literal_string  # OK
+                   """);
+  }
+
+  // PY-61137
+  public void testLiteralStringDoesNotGetCapturedInsideGenerics() {
+    doTestByText("""
+                   import typing
+                   T = typing.TypeVar('T')
+                   class Box(typing.Generic[T]):
+                       def __init__(self, x: T) -> None:
+                           ...
+                   def same_type(b1: Box[T], b2: Box[T]):
+                       ...
+                   b = Box('foo'.upper())
+                   same_type(b, Box('FOO'))
+                   """);
+  }
+
+  // PY-61137
+  public void testTypeVarBoundToLiteralString() {
+    doTestByText("""
+                   from typing import TypeVar, LiteralString
+                   TLiteral = TypeVar("TLiteral", bound=LiteralString)
+                   def literal_identity(s: TLiteral) -> TLiteral:
+                       return s
+                   s: LiteralString
+                   y2 = literal_identity(s)
+                   """);
+  }
+
+  // PY-62476
+  public void testTypeGuardReturnTypeTreatedAsBool() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+from typing import TypeGuard
+def foo(param: str | int) -> TypeGuard[str]:
+    return <warning descr="Expected type 'TypeGuard[str]', got 'str | int' instead">param</warning>
+      """)
+    );
+  }
+
+  // PY-16994
+  public void testCallableArity() {
+    doTest();
+  }
+
+  // PY-64124
+  public void testExpectedPositionalOnlyParameterMatchedWithRegularParameter() {
+    doTest();
+  }
+
+  // PY-64124
+  public void testExpectedKeywordOnlyParameterMatchedWithRegularParameter() {
+    doTest();
+  }
+
+  // PY-55044
+  public void testTypedDictKwargsArgument() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+                   
+                   class Movie(TypedDict):
+                       name: str
+                   
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                   
+                   foo(<warning descr="Expected type 'str', got 'int' instead">name=1</warning>)
+                   """);
+  }
+
+  // PY-70528
+  public void testVersionDependentTypeVarTupleInitialization() {
+    doTestByText("""
+                  import sys
+                  
+                  if sys.version_info >= (3, 11):
+                      from typing import TypeVarTuple
+                  else:
+                      from typing_extensions import TypeVarTuple
+                  
+                  PosArgsT = TypeVarTuple("PosArgsT")
+                  """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+
+                   class MyClass:
+                     def foo(self, i: int):
+                         pass
+
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+
+                   router = Router()
+                   router.route(-2)
+                   router.route(<warning descr="Expected type 'int', got 'str' instead">""</warning>)
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetSimpleCase() {
+    doTestByText("""                   
+                   class MyDescriptor:
+                   
+                       def __set__(self, obj, value: str) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   t = Test()
+                   t.member = "str"
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithGenericDunderSetSimpleCase() {
+    doTestByText("""                   
+                   class MyDescriptor[T]:
+                   
+                       def __set__(self, obj, value: T) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor[str]
+                   
+                   t = Test()
+                   t.member = "str"
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">123</warning>
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'Type[list]' instead">list</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetWithOverloads() {
+    doTestByText("""
+                   from typing import overload
+                   
+                   class MyDescriptor:
+                   
+                       @overload
+                       def __set__(self, obj: "Test", value: str) -> None:
+                           ...
+                       @overload
+                       def __set__(self, obj: "Prod", value: "LocalizedString") -> None:
+                           ...
+                       def __set__(self, obj, value) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   class Prod:
+                       member: MyDescriptor
+                   
+                   class LocalizedString:
+                       def __init__(self, value: str):
+                           ...
+                   
+                   t = Test()
+                   t.member = "abc"
+                   t.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">42</warning>
+                   p = Prod()
+                   p.member = <warning descr="Expected type 'LocalizedString' (from '__set__'), got 'str' instead">"abc"</warning>
+                   p.member = <warning descr="Expected type 'LocalizedString' (from '__set__'), got 'int' instead">42</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetWithLiteralValue() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   
+                   class MyDescriptor:
+                       def __set__(self, obj, value: Literal[42]) -> None:
+                           ...
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                   t = Test()
+                   t.member = 42
+                   t.member = <warning descr="Expected type 'Literal[42]' (from '__set__'), got 'Literal[43]' instead">43</warning>
+                   t.member = <warning descr="Expected type 'Literal[42]' (from '__set__'), got 'Literal[\\"42\\"]' instead">"42"</warning>
+                   """);
+  }
+
+  // PY-76399
+  public void testAssignedValueMatchesWithDunderSetOfAttributeUsedInConstructor() {
+    doTestByText("""
+                   class MyDescriptor:
+                       def __set__(self, obj: object, value: str): ...
+                   
+                   
+                   class Test:
+                       member: MyDescriptor
+                   
+                       def __init__(self, member):
+                           self.member = member
+                   
+                   
+                   x = Test("foo")
+                   x.member = <warning descr="Expected type 'str' (from '__set__'), got 'int' instead">42</warning>
+                   """);
+  }
+
+  // PY-77539
+  public void testMatchingCallableParameterLists() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   compatible: MyCallable[[int], object] = MyCallable[[object], str]()
+                   incompatible1: MyCallable[[object], object] = <warning descr="Expected type 'MyCallable[[object], object]', got 'MyCallable[[int], str]' instead">MyCallable[[int], str]()</warning>
+                   incompatible2: MyCallable[[int], str] = <warning descr="Expected type 'MyCallable[[int], str]', got 'MyCallable[[object], object]' instead">MyCallable[[object], object]()</warning>
+                   """);    
+  }
+
+  // PY-77541
+  public void testMatchingUnboundParamSpecWithAnotherParamSpecInCustomGeneric() {
+    doTestByText("""
+                   class MyCallable[**P, R]:
+                       def __call__(self, *args: P.args, **kwargs: P.kwargs):
+                           ...
+                   
+                   def f[**P, R](callback: MyCallable[P, R]) -> MyCallable[P, R]:
+                       ...
+                   
+                   def g[**P2, R2](callback: MyCallable[P2, R2]) -> MyCallable[P2, R2]:
+                       return f(callback)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
+  }
+
+  // PY-76059
+  public void testDataclassInstanceProtocol() {
+    doTestByText("""
+                   from dataclasses import dataclass, asdict
+                   
+                   @dataclass
+                   class MyDataClass:
+                       name:str
+                   
+                   asdict(MyDataClass(name="Bob"))
+                   asdict(<warning descr="Expected type 'DataclassInstance', got 'str' instead">"Bob"</warning>)
+                   """);
+  }
+
+  // PY-79129
+  public void testTupleIndexOutOfRange() {
+    doTestByText("""
+                   from typing import Literal
+                   
+                   def foo(t: tuple[int, str], i: Literal[1], j: Literal[3], k: Literal[-3]):
+                       t[i]
+                       t[-1]
+                       t[<warning descr="Tuple index out of range">j</warning>]
+                       t[<warning descr="Tuple index out of range">2</warning>]
+                       t[<warning descr="Tuple index out of range">k</warning>]
+                       t[<warning descr="Tuple index out of range">-4</warning>]
+                   
+                   def bar(t: tuple[int, ...]):
+                       t[10]
+                   """);
+  }
+
+  // PY-79163
+  public void testLiteralTypeInferredForFinalVariableOrAttribute() {
+    doTestByText("""
+                   from typing import Literal, Final
+                   
+                   foo: Final = 3
+                   def expects_three(x: Literal[3]) -> None: ...
+                   
+                   expects_three(foo)
+                   
+                   def bar():
+                       var: Final = 3
+                       expects_three(var)
+                   """);
+    doTestByText("""
+                   from typing import Literal, Final
+                   v: Final = [1, 2]
+                   def expects_list(l: list[int]): ...
+                   
+                   expects_list(v)
+                   """);
   }
 }

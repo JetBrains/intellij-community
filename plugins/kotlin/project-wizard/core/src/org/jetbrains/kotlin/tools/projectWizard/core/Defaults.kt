@@ -7,4 +7,6 @@ object Defaults {
     val SRC_DIR = Paths.get("src")
     val KOTLIN_DIR = Paths.get("kotlin")
     val RESOURCES_DIR = Paths.get("resources")
+    val TEST_DIR = Paths.get("test")
+    val TEST_RESOURCES_DIR = Paths.get("testResources")
 }

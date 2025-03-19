@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -9,10 +9,12 @@ import com.intellij.openapi.fileTypes.impl.FileTypeOverrider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LightEditFileTypeOverrider implements FileTypeOverrider {
+@ApiStatus.Internal
+public final class LightEditFileTypeOverrider implements FileTypeOverrider {
 
   private static final Key<Boolean> KEY = Key.create("LightEdit.PlainText");
 

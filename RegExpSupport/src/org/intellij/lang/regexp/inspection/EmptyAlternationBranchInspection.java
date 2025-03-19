@@ -1,7 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -17,9 +20,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class EmptyAlternationBranchInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new EmptyAlternationBranchVisitor(holder);
   }
 
@@ -58,18 +60,14 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
     }
   }
 
-  private static class EmptyAlternationBranchFix implements LocalQuickFix {
-
-    @Nls
-    @NotNull
+  private static class EmptyAlternationBranchFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.remove.empty.branch");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element.getParent() instanceof RegExpPattern)) return;
       element.getNextSibling().delete();
       element.delete();

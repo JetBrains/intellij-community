@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -48,7 +48,7 @@ public final class ClassPath {
   private int searchOffset = 0;
 
   private final @NotNull Function<Path, ResourceFile> resourceFileFactory;
-  final boolean mimicJarUrlConnection;
+  public final boolean mimicJarUrlConnection;
   private final List<Loader> loaders = new ArrayList<>();
 
   private volatile boolean allUrlsWereProcessed;
@@ -106,7 +106,7 @@ public final class ClassPath {
     return Arrays.asList(files);
   }
 
-  synchronized void reset(Collection<Path> newClassPath) {
+  public synchronized void reset(Collection<Path> newClassPath) {
     reset();
     files = newClassPath.toArray(new Path[]{});
   }
@@ -182,6 +182,8 @@ public final class ClassPath {
     try {
       int i;
       if (useCache) {
+        boolean allUrlsWereProcessedBeforeAccessingCache = allUrlsWereProcessed;
+        int lastLoaderProcessedBeforeAccessingCache = lastLoaderProcessed.get();
         Loader[] loaders = cache.getClassLoadersByPackageNameHash(packageNameHash);
         if (loaders != null) {
           for (Loader loader : loaders) {
@@ -192,7 +194,7 @@ public final class ClassPath {
           }
         }
 
-        if (allUrlsWereProcessed) {
+        if (allUrlsWereProcessedBeforeAccessingCache) {
           if (isNewClassLoadingEnabled) {
             i = 0;
           }
@@ -201,7 +203,7 @@ public final class ClassPath {
           }
         }
         else {
-          i = lastLoaderProcessed.get();
+          i = lastLoaderProcessedBeforeAccessingCache;
         }
       }
       else {
@@ -250,6 +252,8 @@ public final class ClassPath {
     try {
       int i;
       if (useCache) {
+        boolean allUrlsWereProcessedBeforeAccessingCache = allUrlsWereProcessed;
+        i = lastLoaderProcessed.get();
         Loader[] loaders = cache.getLoadersByName(resourceName);
         if (loaders != null) {
           for (Loader loader : loaders) {
@@ -263,11 +267,9 @@ public final class ClassPath {
           }
         }
 
-        if (allUrlsWereProcessed) {
+        if (allUrlsWereProcessedBeforeAccessingCache) {
           return null;
         }
-
-        i = lastLoaderProcessed.get();
       }
       else {
         i = 0;
@@ -340,7 +342,7 @@ public final class ClassPath {
       }
 
       // https://youtrack.jetbrains.com/issue/IDEA-314175
-      // some environments (e.g. Bazel tests) put relative jar paths on the Java classpath,
+      // some environments (e.g., Bazel tests) put relative jar paths on the Java classpath,
       // because relative paths are useful for hermeticity.
       Path path = files[searchOffset++].toAbsolutePath();
       try {
@@ -606,6 +608,7 @@ public final class ClassPath {
 
     private static void record(long start) {
       if (start != -1) {
+        //noinspection ThreadLocalSetWithNull
         doingClassDefineTiming.set(null);
         classDefineTotalTime.addAndGet(System.nanoTime() - start);
       }
@@ -634,6 +637,7 @@ public final class ClassPath {
         return;
       }
 
+      //noinspection ThreadLocalSetWithNull
       doingTiming.set(null);
 
       long time = System.nanoTime() - start;

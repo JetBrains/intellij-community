@@ -40,7 +40,7 @@ public class SuspiciousCollectionMethodCallsTest extends LightJavaCodeInsightFix
     super.tearDown();
   }
 
-  public void testConcurrentHashMap() { doTest(); }
+  public void testConcurrentHashMapCalls() { doTest(); }
   public void testRemoveAllCall() { doTest(); }
   public void testRetainAllCall() { doTest(); }
   public void testSetList() { doTest(); }

@@ -1,22 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
-import com.fasterxml.jackson.jr.ob.JSON;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import kotlin.Pair;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,21 +20,31 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @ApiStatus.Internal
-public final class ConsentOptions {
+public final class ConsentOptions implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
+  private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
+  private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
   private final BooleanSupplier myIsEap;
   private String myProductCode;
   private Set<String> myPluginCodes = Set.of();
+
+  private final AtomicLong myModificationCount = new AtomicLong();
+
+  @Override
+  public long getModificationCount() {
+    return myModificationCount.get();
+  }
 
   private static @NotNull Path getDefaultConsentsFile() {
     return PathManager.getCommonDataPath()
@@ -48,6 +54,14 @@ public final class ConsentOptions {
 
   private static @NotNull Path getConfirmedConsentsFile() {
     return PathManager.getCommonDataPath().resolve("consentOptions/accepted");
+  }
+
+  private static Locale getCurrentLocale() {
+    return LocalizationUtil.INSTANCE.getLocale();
+  }
+  
+  private static Locale getDefaultLocale() {
+    return LocalizationUtil.INSTANCE.getDefaultLocale();
   }
 
   private static final class InstanceHolder {
@@ -70,13 +84,28 @@ public final class ConsentOptions {
       }
 
       @Override
+      public @Nullable String readLocalizedBundledConsents() {
+        if (getCurrentLocale() == getDefaultLocale()) {
+          return null;
+        }
+
+        for (String localizedPath : LocalizationUtil.INSTANCE.getLocalizedPaths(getBundledResourcePath(), getCurrentLocale())) {
+          String loadedText = loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(localizedPath));
+          if (!loadedText.isEmpty()) {
+            return loadedText;
+          }
+        }
+        return null;
+      }
+
+      @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
         Path confirmedConsentsFile = getConfirmedConsentsFile();
         Files.createDirectories(confirmedConsentsFile.getParent());
         Files.writeString(confirmedConsentsFile, data);
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
           DataSharingSettingsChangeListener syncPublisher =
-            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.Companion.getTOPIC());
+            ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC);
           syncPublisher.consentWritten();
         }
       }
@@ -120,7 +149,7 @@ public final class ConsentOptions {
     myBackend = backend;
     myIsEap = () -> {
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      return appInfo.isEAP() && appInfo.isVendorJetBrains();
+      return appInfo.isEAP() && appInfo.isVendorJetBrains() && !Agreements.isReleaseAgreementsEnabled();
     };
   }
 
@@ -142,10 +171,10 @@ public final class ConsentOptions {
   }
 
   public void setProductCode(String platformCode, Iterable<String> pluginCodes) {
-    myProductCode = platformCode != null? platformCode.toLowerCase(Locale.ENGLISH) : null;
+    myProductCode = platformCode != null? platformCode.toLowerCase(getDefaultLocale()) : null;
     Set<String> codes = new HashSet<>();
     for (String pluginCode : pluginCodes) {
-      codes.add(pluginCode.toLowerCase(Locale.ENGLISH));
+      codes.add(pluginCode.toLowerCase(getDefaultLocale()));
     }
     myPluginCodes = codes.isEmpty()? Set.of() : Collections.unmodifiableSet(codes);
   }
@@ -164,6 +193,10 @@ public final class ConsentOptions {
 
   public static @NotNull Predicate<Consent> condEAPFeedbackConsent() {
     return consent -> isProductConsentOfKind(EAP_FEEDBACK_OPTION_ID, consent.getId());
+  }
+
+  public static @NotNull Predicate<Consent> condAiDataCollectionConsent() {
+    return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
   /**
@@ -190,6 +223,14 @@ public final class ConsentOptions {
     return setPermission(EAP_FEEDBACK_OPTION_ID, allowed);
   }
 
+  public @NotNull Permission getAiDataCollectionPermission() {
+    return getPermission(AI_DATA_COLLECTION_OPTION_ID);
+  }
+
+  public void setAiDataCollectionPermission(boolean permitted) {
+    setPermission(AI_DATA_COLLECTION_OPTION_ID, permitted);
+  }
+
   private @NotNull Permission getPermission(final String consentId) {
     final ConfirmedConsent confirmedConsent = getConfirmedConsent(consentId);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
@@ -210,11 +251,12 @@ public final class ConsentOptions {
   }
 
   public @Nullable String getConfirmedConsentsString() {
-    final Map<String, Consent> defaults = loadDefaultConsents();
+    final Map<String, Map<Locale,Consent>> defaults = loadDefaultConsents();
     if (!defaults.isEmpty()) {
       final String str = confirmedConsentToExternalString(
         loadConfirmedConsents().values().stream().filter(c -> {
-          final Consent def = defaults.get(c.getId());
+          Map<Locale, Consent> defaultConsents = defaults.get(c.getId());
+          final Consent def = defaultConsents != null? defaultConsents.get(getDefaultLocale()): null;
           if (def != null) {
             return !def.isDeleted();
           }
@@ -240,18 +282,19 @@ public final class ConsentOptions {
     try {
       final Collection<ConsentAttributes> fromServer = fromJson(json);
       // defaults
-      final Map<String, Consent> defaults = loadDefaultConsents();
+      final @NotNull Map<String, Map<Locale, Consent>> defaults = loadDefaultConsents();
       if (applyServerChangesToDefaults(defaults, fromServer)) {
-        myBackend.writeDefaultConsents(consentsToJson(defaults.values().stream()));
+        myBackend.writeDefaultConsents(consentsToJson(defaults.values().stream().flatMap(it -> it.values().stream())));
       }
       // confirmed consents
       final Map<String, ConfirmedConsent> confirmed = loadConfirmedConsents();
       if (applyServerChangesToConfirmedConsents(confirmed, fromServer)) {
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(confirmed.values().stream()));
       }
+      notifyConsentsUpdated();
     }
     catch (Exception e) {
-      LOG.info(e);
+      LOG.info("Unable to apply server consents", e);
     }
   }
 
@@ -260,7 +303,7 @@ public final class ConsentOptions {
   }
 
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
-    final Map<String, Consent> allDefaults = loadDefaultConsents();
+    final Map<String, Map<Locale, Consent>> allDefaults = loadDefaultConsents();
     if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
@@ -270,9 +313,10 @@ public final class ConsentOptions {
       allDefaults.remove(lookupConsentID(EAP_FEEDBACK_OPTION_ID));
     }
 
-    for (Iterator<Map.Entry<String, Consent>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
-      final Map.Entry<String, Consent> entry = it.next();
-      if (!filter.test(entry.getValue())) {
+    for (Iterator<Map.Entry<String, Map<Locale, Consent>>> it = allDefaults.entrySet().iterator(); it.hasNext(); ) {
+      final Map.Entry<String, Map<Locale, Consent>> entry = it.next();
+      Consent consent = entry.getValue().get(getDefaultLocale());
+      if (consent != null && !filter.test(consent)) {
         it.remove();
       }
     }
@@ -283,11 +327,14 @@ public final class ConsentOptions {
 
     final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
     final List<Consent> result = new ArrayList<>();
-    for (Map.Entry<String, Consent> entry : allDefaults.entrySet()) {
-      final Consent base = entry.getValue();
+    for (Map.Entry<String, Map<Locale, Consent>> entry : allDefaults.entrySet()) {
+      final Consent base = entry.getValue().get(getDefaultLocale());
+      final Consent localized = entry.getValue().get(getCurrentLocale());
+      if (base == null) continue; 
       if (!base.isDeleted()) {
         final ConfirmedConsent confirmed = allConfirmed.get(base.getId());
-        result.add(confirmed == null? base : base.derive(confirmed.isAccepted()));
+        Consent consent = localized == null || base.getVersion().isNewer(localized.getVersion()) ? base : localized;
+        result.add(confirmed == null? consent : consent.derive(confirmed.isAccepted()));
       }
     }
     result.sort(Comparator.comparing(ConsentBase::getId));
@@ -321,7 +368,14 @@ public final class ConsentOptions {
   }
 
   private @Nullable Consent getDefaultConsent(String consentId) {
-    return loadDefaultConsents().get(lookupConsentID(consentId));
+    Map<String, Map<Locale, Consent>> defaultConsents = loadDefaultConsents();
+    Map<Locale, Consent> consentMap = defaultConsents.get(consentId);
+    Consent defaultConsent = consentMap.get(getDefaultLocale());
+    if (defaultConsent == null) return null;
+    Consent localizedConsent = consentMap.get(getCurrentLocale());
+    return localizedConsent == null || defaultConsent.getVersion().isNewer(localizedConsent.getVersion())
+           ? defaultConsent
+           : localizedConsent;
   }
 
   private @Nullable ConfirmedConsent getConfirmedConsent(String consentId) {
@@ -342,9 +396,10 @@ public final class ConsentOptions {
           allConfirmed.put(consent.getId(), consent);
         }
         myBackend.writeConfirmedConsents(confirmedConsentToExternalString(allConfirmed.values().stream()));
+        notifyConsentsUpdated();
       }
       catch (IOException e) {
-        LOG.info(e);
+        LOG.info("Unable to save confirmed consents", e);
       }
     }
   }
@@ -364,9 +419,10 @@ public final class ConsentOptions {
     return confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor();
   }
 
-  private boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {
-    for (Consent defConsent : defaults.values()) {
-      if (defConsent.isDeleted()) {
+  private boolean needReconfirm(Map<String, Map<Locale, Consent>> defaults, Map<String, ConfirmedConsent> confirmed) {
+    for (Map<Locale, Consent> consents : defaults.values()) {
+      Consent defConsent = consents.get(getDefaultLocale());
+      if (defConsent == null || defConsent.isDeleted()) {
         continue;
       }
       final ConfirmedConsent confirmedConsent = confirmed.get(defConsent.getId());
@@ -387,6 +443,10 @@ public final class ConsentOptions {
 
       final Version confirmedVersion = confirmedConsent.getVersion();
       final Version defaultVersion = defConsent.getVersion();
+      // for test purpose only
+      if (Boolean.getBoolean(RECONFIRM_CONSENTS_PROPERTY)) {
+        return true;
+      }
       // consider only major version differences
       if (confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor()) {
         return true;
@@ -410,13 +470,23 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(@NotNull Map<String, Consent> base, @NotNull Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(@NotNull Map<String, Map<Locale, Consent>> base, @NotNull Collection<ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
-      final Consent current = base.get(newConsent.getId());
-      if (current != null && !newConsent.isDeleted() && newConsent.getVersion().isNewer(current.getVersion())) {
-        base.put(newConsent.getId(), newConsent);
+      final Map<Locale, Consent> current = base.get(newConsent.getId());
+      if (current == null) {
+        base.put(newConsent.getId(), Map.of(Locale.forLanguageTag(newConsent.getLocale()), newConsent));
+        return true;
+      }
+      Locale newConsentLocale = newConsent.getLocale() != null && !newConsent.getLocale().isEmpty()? Locale.forLanguageTag(newConsent.getLocale()): getDefaultLocale();
+      Consent consent = current.get(newConsentLocale);
+      if (consent == null && newConsentLocale != getDefaultLocale()) {
+        newConsentLocale = getDefaultLocale();
+        consent = current.get(newConsentLocale);
+      }
+      if (consent != null && !newConsent.isDeleted() && newConsent.getVersion().isNewer(consent.getVersion())) {
+        base.get(newConsent.getId()).put(newConsentLocale, newConsent);
         changes = true;
       }
     }
@@ -424,14 +494,16 @@ public final class ConsentOptions {
   }
 
   private @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
+    if (json == null || json.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     try {
-      List<ConsentAttributes> data = json == null || json.isEmpty() ? null : JSON.std.listOfFrom(ConsentAttributes.class, json);
-      if (data != null) {
-        for (ConsentAttributes attributes : data) {
-          attributes.consentId = lookupConsentID(attributes.consentId);
-        }
-        return data;
+      List<ConsentAttributes> data = ConsentAttributes.Companion.readListFromJson(json);
+      for (ConsentAttributes attributes : data) {
+        attributes.consentId = lookupConsentID(attributes.consentId);
       }
+      return data;
     }
     catch (Throwable e) {
       LOG.info(e);
@@ -440,25 +512,29 @@ public final class ConsentOptions {
   }
 
   private @NotNull String consentsToJson(@NotNull Stream<Consent> consents) {
-    Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    return gson.toJson(consents.map(consent -> {
+    return ConsentAttributes.Companion.writeListToJson(consents.map(consent -> {
       final ConsentAttributes attribs = consent.toConsentAttributes();
       final String prefix = getProductConsentKind(myProductCode, attribs.consentId);
       if (prefix != null) {
         attribs.consentId = prefix;
       }
       return attribs;
-    }).toArray());
+    }).toList());
   }
 
   private static @NotNull String confirmedConsentToExternalString(@NotNull Stream<ConfirmedConsent> consents) {
     return consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.joining(";"));
   }
 
-  private @NotNull Map<String, Consent> loadDefaultConsents() {
-    final Map<String, Consent> result = new HashMap<>();
+  private @NotNull Map<String, Map<Locale, Consent>> loadDefaultConsents() {
+    final Map<String, Map<Locale, Consent>> result = new HashMap<>();
+    Collection<ConsentAttributes> localizedConsentAttributes = fromJson(myBackend.readLocalizedBundledConsents());
     for (ConsentAttributes attributes : fromJson(myBackend.readBundledConsents())) {
-      result.put(attributes.consentId, new Consent(attributes));
+      HashMap<Locale, Consent> map = new HashMap<>();
+      map.put(getDefaultLocale(), new Consent(attributes));
+      localizedConsentAttributes.stream().filter(it -> Objects.equals(it.consentId, attributes.consentId)).findFirst()
+        .ifPresent(localizedAttributes -> map.put(getCurrentLocale(), new Consent(localizedAttributes)));
+      result.put(attributes.consentId, map);
     }
     try {
       applyServerChangesToDefaults(result, fromJson(myBackend.readDefaultConsents()));
@@ -495,13 +571,31 @@ public final class ConsentOptions {
     return null;
   }
 
+  private void notifyConsentsUpdated() {
+    myModificationCount.incrementAndGet();
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(DataSharingSettingsChangeListener.TOPIC).consentsUpdated();
+    }
+  }
+
+  @TestOnly
+  public static @NotNull Path getDefaultConsentsFileForTests() {
+    return getDefaultConsentsFile();
+  }
+
+  @TestOnly
+  public static @NotNull Path getConfirmedConsentsFileForTests() {
+    return getConfirmedConsentsFile();
+  }
+
   protected interface IOBackend {
     void writeDefaultConsents(@NotNull String data) throws IOException;
     @NotNull
     String readDefaultConsents() throws IOException;
     @NotNull
     String readBundledConsents();
-
+    @Nullable
+    String readLocalizedBundledConsents();
     void writeConfirmedConsents(@NotNull String data) throws IOException;
     @NotNull
     String readConfirmedConsents() throws IOException;

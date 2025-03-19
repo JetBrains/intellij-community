@@ -3,19 +3,25 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix
+import com.intellij.codeInspection.java19modules.JavaModuleDefinitionInspection
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
 
-  fun testExportsMissingDir() = doTestMissingDir("exports")
-  fun testOpensMissingDir() = doTestMissingDir("opens")
+  override fun setUp() {
+    super.setUp()
+    myFixture.enableInspections(JavaModuleDefinitionInspection())
+  }
 
-  fun testExportsEmptyDir() = doTestEmptyDir("exports")
-  fun testOpensEmptyDir() = doTestEmptyDir("opens")
+  fun testExportsMissingDir(): Unit = doTestMissingDir("exports")
+  fun testOpensMissingDir(): Unit = doTestMissingDir("opens")
 
-  fun testExportsInterface() = doTestInterface("exports")
-  fun testOpensInterface() = doTestInterface("opens")
+  fun testExportsEmptyDir(): Unit = doTestEmptyDir("exports")
+  fun testOpensEmptyDir(): Unit = doTestEmptyDir("opens")
+
+  fun testExportsInterface(): Unit = doTestInterface("exports")
+  fun testOpensInterface(): Unit = doTestInterface("opens")
 
   private fun doTestMissingDir(keyword: String) {
     val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { $keyword foo.bar.<caret>missing; }") as PsiJavaFile
@@ -44,7 +50,7 @@ class CreateClassInPackageInModuleTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.launchAction(action)
     myFixture.checkHighlighting(false, false, false) // no error
 
-    val psiClass = myFixture.findClass(packageName + "." + name)
+    val psiClass = myFixture.findClass("$packageName.$name")
     assertEquals(isInterface, psiClass.isInterface)
 
     val ownerModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass)

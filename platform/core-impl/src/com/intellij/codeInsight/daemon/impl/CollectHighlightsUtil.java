@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,22 +20,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class CollectHighlightsUtil {
-  static final ExtensionPointName<Condition<PsiElement>> EP_NAME = ExtensionPointName.create("com.intellij.elementsToHighlightFilter");
+  @ApiStatus.Internal
+  public static final ExtensionPointName<Condition<PsiElement>> EP_NAME = new ExtensionPointName<>("com.intellij.elementsToHighlightFilter");
 
   private static final Logger LOG = Logger.getInstance(CollectHighlightsUtil.class);
 
   private CollectHighlightsUtil() { }
 
-  @NotNull
-  public static List<PsiElement> getElementsInRange(@NotNull PsiElement root, int startOffset, int endOffset) {
+  public static @NotNull List<PsiElement> getElementsInRange(@NotNull PsiElement root, int startOffset, int endOffset) {
     return getElementsInRange(root, startOffset, endOffset, false);
   }
 
-  @NotNull
-  public static List<PsiElement> getElementsInRange(@NotNull PsiElement root,
-                                                    int startOffset,
-                                                    int endOffset,
-                                                    boolean includeAllParents) {
+  public static @NotNull List<PsiElement> getElementsInRange(@NotNull PsiElement root,
+                                                             int startOffset,
+                                                             int endOffset,
+                                                             boolean includeAllParents) {
     PsiElement commonParent = findCommonParent(root, startOffset, endOffset);
     if (commonParent == null) return new ArrayList<>();
     List<PsiElement> list = getElementsToHighlight(commonParent, startOffset, endOffset);
@@ -53,8 +52,7 @@ public final class CollectHighlightsUtil {
 
   private static final int STARTING_TREE_HEIGHT = 100;
 
-  @NotNull
-  private static List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, int startOffset, int endOffset) {
+  private static @NotNull List<PsiElement> getElementsToHighlight(@NotNull PsiElement parent, int startOffset, int endOffset) {
     int estimatedElements = parent.getTextLength()/2;
     List<PsiElement> result = new ArrayList<>(estimatedElements);
     int offset = parent.getTextRange().getStartOffset();
@@ -65,7 +63,7 @@ public final class CollectHighlightsUtil {
     PsiElement element = parent;
 
     PsiElement child = PsiUtilCore.NULL_PSI_ELEMENT;
-    Condition<PsiElement> @NotNull [] filters = EP_NAME.getExtensions();
+    List<Condition<PsiElement>> filters = EP_NAME.getExtensionList();
     while (true) {
       ProgressIndicatorProvider.checkCanceled();
 
@@ -120,8 +118,7 @@ public final class CollectHighlightsUtil {
   }
 
 
-  @Nullable
-  public static PsiElement findCommonParent(PsiElement root, int startOffset, int endOffset) {
+  public static @Nullable PsiElement findCommonParent(PsiElement root, int startOffset, int endOffset) {
     if (startOffset == endOffset) return null;
     PsiElement left = findElementAtInRoot(root, startOffset);
     PsiElement right = findElementAtInRoot(root, endOffset - 1);
@@ -141,8 +138,7 @@ public final class CollectHighlightsUtil {
     return commonParent;
   }
 
-  @Nullable
-  private static PsiElement findElementAtInRoot(PsiElement root, int offset) {
+  private static @Nullable PsiElement findElementAtInRoot(PsiElement root, int offset) {
     if (root instanceof PsiFile) {
       return ((PsiFile)root).getViewProvider().findElementAt(offset, root.getLanguage());
     }

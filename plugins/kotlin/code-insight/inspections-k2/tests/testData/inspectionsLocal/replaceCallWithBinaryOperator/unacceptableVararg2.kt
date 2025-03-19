@@ -1,4 +1,5 @@
 // PROBLEM: none
+// K2_ERROR: 'operator' modifier is not applicable to function: must have a single value parameter.
 // ERROR: 'operator' modifier is inapplicable on this function: must have a single value parameter
 fun test() {
     class Test{

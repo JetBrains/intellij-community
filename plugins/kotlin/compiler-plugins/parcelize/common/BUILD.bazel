@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.compiler-plugins.parcelize.common` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
+
+jvm_resources(
+  name = "kotlin-compiler-plugins-parcelize-common_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-parcelize-common",
+  module_name = "kotlin.compiler-plugins.parcelize.common",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-impl",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+  ],
+  runtime_deps = [":kotlin-compiler-plugins-parcelize-common_resources"]
+)
+### auto-generated section `build kotlin.compiler-plugins.parcelize.common` end

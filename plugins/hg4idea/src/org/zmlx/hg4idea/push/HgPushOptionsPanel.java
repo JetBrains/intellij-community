@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.VcsPushOptionsPanel;
@@ -20,14 +20,12 @@ public class HgPushOptionsPanel extends VcsPushOptionsPanel {
   }
 
   @Override
-  @Nullable
-  public HgVcsPushOptionValue getValue() {
+  public @Nullable HgVcsPushOptionValue getValue() {
     return myPushBookmarkCheckBox.isSelected() ? HgVcsPushOptionValue.Current : null;
   }
 
-  @NotNull
   @Override
-  public OptionsPanelPosition getPosition() {
+  public @NotNull OptionsPanelPosition getPosition() {
     return OptionsPanelPosition.SOUTH;
   }
 }

@@ -12,9 +12,11 @@ import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 
+@ApiStatus.Internal
 class ShelfProjectConfigurable(val project: Project) : BoundSearchableConfigurable(
   VcsBundle.message("shelf.tab"),
   "project.propVCSSupport.Shelf",

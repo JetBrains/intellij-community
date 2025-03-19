@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.envTest.upload
 
 import com.intellij.internal.statistic.envTest.ApacheContainer
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
+import com.intellij.internal.statistic.eventLog.MachineId
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
@@ -15,10 +17,11 @@ internal const val RECORDER_ID = "FUS"
 internal const val PRODUCT_VERSION = "2020.1"
 internal const val PRODUCT_CODE = "IC"
 
-internal class TestEventLogApplicationInfo(private val settingsUrl: String): EventLogInternalApplicationInfo(false) {
+internal class TestEventLogApplicationInfo(private val settingsUrl: String): EventLogInternalApplicationInfo(false, false) {
   override fun getProductVersion(): String = PRODUCT_VERSION
   override fun getProductCode(): String = PRODUCT_CODE
   override fun getTemplateUrl(): String = settingsUrl
+  override fun getBaselineVersion(): Int = 201
 }
 
 internal class TestEventLogSendConfig(recorderId: String,

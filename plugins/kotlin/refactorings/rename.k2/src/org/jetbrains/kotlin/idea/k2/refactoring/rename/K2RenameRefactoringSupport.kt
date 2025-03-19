@@ -1,82 +1,56 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.rename
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
-import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.parameterInfo.getJvmName
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport
+import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
-    private fun notImplementedInK2(): Nothing {
-        throw IncorrectOperationException()
-    }
 
-    override fun processForeignUsages(
-        element: PsiElement,
-        newName: String,
-        usages: Array<UsageInfo>,
-        fallbackHandler: (UsageInfo) -> Unit
-    ) {
-        usages.forEach(fallbackHandler)
-    }
-
-    override fun prepareForeignUsagesRenaming(
-        element: PsiElement,
-        newName: String,
-        allRenames: MutableMap<PsiElement, String>,
-        scope: SearchScope
-    ) {}
-
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        // TODO
-    }
-
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        // TODO
-    }
-
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        // TODO
-    }
-
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        // TODO
+        if (declaration is KtClassLikeDeclaration) {
+            checkClassNameShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
+        } else if (declaration is KtTypeParameter) {
+            //it's impossible to fix type parameter usages, let's try to fix external usages
+            checkClassLikeNameShadowing(declaration, newName.quoteIfNeeded(), newUsages)
+        }
+        checkCallableShadowing(declaration, newName.quoteIfNeeded(), originalUsages, newUsages)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
         return analyze(function) {
-            val overridenFunctions = (function.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols().orEmpty()
+            val overridenFunctions = (function.symbol as? KaCallableSymbol)?.allOverriddenSymbols?.toList().orEmpty()
             overridenFunctions.mapNotNull { it.psi as? KtNamedFunction }
         }
-    }
-
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        notImplementedInK2()
     }
 
     override fun mangleInternalName(name: String, moduleName: String): String {
@@ -88,66 +62,40 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         return if (indexOfDollar >= 0) mangledName.substring(0, indexOfDollar) else null
     }
 
-    override fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration> {
-        notImplementedInK2()
-    }
-
-    override fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
-        return null
-    }
-
     override fun getJvmName(element: PsiElement): String? {
         val property = element.unwrapped as? KtDeclaration ?: return null
         analyseOnEdt(property) {
-            val propertySymbol = property.getSymbol() as? KtCallableSymbol
-            return propertySymbol?.let(::getJvmName)
+            val propertySymbol = property.symbol as? KaCallableSymbol
+            return propertySymbol?.let { getJvmName(it) }
         }
     }
 
     override fun isCompanionObjectClassReference(psiReference: PsiReference): Boolean {
-        notImplementedInK2()
+        if (psiReference !is KtSimpleNameReference) {
+            return false
+        }
+        return analyze(psiReference.element) {
+            psiReference.isImplicitReferenceToCompanion()
+        }
     }
 
     override fun shortenReferencesLater(element: KtElement) {
-        notImplementedInK2()
+        shortenReferences(element)
     }
 
-    @OptIn(KtAllowAnalysisOnEdt::class)
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {
-        fun KtCallableDeclaration.overridesNothing(): Boolean {
-            val declaration = this
-
-            analyze(this) {
-                val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
-
-                return declarationSymbol.getDirectlyOverriddenSymbols().isEmpty()
-            }
+        val declaration = element as? KtCallableDeclaration ?: return
+        if (overridesNothing(declaration)) {
+            declaration.removeModifier(KtTokens.OVERRIDE_KEYWORD)
         }
-
-        fun dropOverrideKeywordIfNecessary(declaration: KtCallableDeclaration) {
-            if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) && declaration.overridesNothing()) {
-                declaration.removeModifier(KtTokens.OVERRIDE_KEYWORD)
-            }
-        }
-
-        allowAnalysisOnEdt {
-            dropOverrideKeywordIfNecessary(element as? KtCallableDeclaration ?: return)
-        }
-
     }
 
-    override fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> {
+    override fun findAllOverridingMethods(psiMethod: PsiElement, scope: SearchScope): List<PsiElement> {
         return when (val element = psiMethod.unwrapped) {
-            is PsiMethod -> notImplementedInK2()
+            is PsiMethod -> OverridingMethodsSearch.search(element, scope, /* checkDeep = */ true).asIterable().toList()
 
             is KtCallableDeclaration -> {
-                val allOverrides = element.findAllOverridings(scope).toList()
-
-                val lightOverrides = allOverrides
-                    .flatMap { runReadAction { it.toLightMethods() } }
-                    .distinctBy { it.unwrapped }
-
-                lightOverrides
+                element.findAllOverridings(scope).toList()
             }
 
             else -> error("Unexpected class ${psiMethod::class}")
@@ -158,16 +106,16 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         val propertyOrParameter = element.unwrapped as? KtDeclaration ?: return null to null
 
         analyseOnEdt(propertyOrParameter) {
-            val propertySymbol = when (val symbol = propertyOrParameter.getSymbol()) {
-                is KtKotlinPropertySymbol -> symbol
-                is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
+            val propertySymbol = when (val symbol = propertyOrParameter.symbol) {
+                is KaKotlinPropertySymbol -> symbol
+                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty
                 else -> null
             }
 
             val getter = propertySymbol?.getter
             val setter = propertySymbol?.setter
 
-            return getter?.let(::getJvmName) to setter?.let(::getJvmName)
+            return getter?.let { getJvmName(it) } to setter?.let { getJvmName(it) }
         }
     }
 
@@ -183,8 +131,8 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
      * Please, do not try to move this function to some util module. Usage of
      * [allowAnalysisOnEdt] should generally be avoided.
      */
-    @OptIn(KtAllowAnalysisOnEdt::class, ExperimentalContracts::class)
-    private inline fun <T> analyseOnEdt(element: KtElement, action: KtAnalysisSession.() -> T) {
+    @OptIn(KaAllowAnalysisOnEdt::class, ExperimentalContracts::class)
+    private inline fun <T> analyseOnEdt(element: KtElement, action: KaSession.() -> T) {
         contract { callsInPlace(action, InvocationKind.EXACTLY_ONCE) }
 
         return allowAnalysisOnEdt { analyze(element, action = action) }

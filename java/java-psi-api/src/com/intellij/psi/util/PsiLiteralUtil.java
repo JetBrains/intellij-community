@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -14,15 +14,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 public final class PsiLiteralUtil {
-  @NonNls public static final String HEX_PREFIX = "0x";
-  @NonNls public static final String BIN_PREFIX = "0b";
-  @NonNls public static final String _2_IN_31 = Long.toString(-1L << 31).substring(1);
-  @NonNls public static final String _2_IN_63 = Long.toString(-1L << 63).substring(1);
+  public static final @NonNls String HEX_PREFIX = "0x";
+  public static final @NonNls String BIN_PREFIX = "0b";
+  public static final @NonNls String _2_IN_31 = Long.toString(-1L << 31).substring(1);
+  public static final @NonNls String _2_IN_63 = Long.toString(-1L << 63).substring(1);
 
   private static final String QUOT = "&quot;";
 
-  @Nullable
-  public static Integer parseInteger(String text) {
+  public static @Nullable Integer parseInteger(String text) {
     try {
       if (text.startsWith(HEX_PREFIX)) {
         // should fit in 32 bits
@@ -46,8 +45,7 @@ public final class PsiLiteralUtil {
     }
   }
 
-  @Nullable
-  public static Integer parseIntegerNoPrefix(String text) {
+  public static @Nullable Integer parseIntegerNoPrefix(String text) {
     final long l = Long.parseLong(text, 10);
     if (text.equals(_2_IN_31) || l == (long)(int)l) {
       return Integer.valueOf((int)l);
@@ -57,8 +55,7 @@ public final class PsiLiteralUtil {
     }
   }
 
-  @Nullable
-  public static Long parseLong(String text) {
+  public static @Nullable Long parseLong(String text) {
     if (StringUtil.endsWithChar(text, 'L') || StringUtil.endsWithChar(text, 'l')) {
       text = text.substring(0, text.length() - 1);
     }
@@ -81,8 +78,7 @@ public final class PsiLiteralUtil {
     }
   }
 
-  @Nullable
-  public static Float parseFloat(String text) {
+  public static @Nullable Float parseFloat(String text) {
     try {
       return Float.valueOf(text);
     }
@@ -91,8 +87,7 @@ public final class PsiLiteralUtil {
     }
   }
 
-  @Nullable
-  public static Double parseDouble(String text) {
+  public static @Nullable Double parseDouble(String text) {
     try {
       return Double.valueOf(text);
     }
@@ -130,8 +125,7 @@ public final class PsiLiteralUtil {
    * @param charLiteral character literal to convert.
    * @return resulting string literal
    */
-  @NotNull
-  public static String stringForCharLiteral(@NotNull String charLiteral) {
+  public static @NotNull String stringForCharLiteral(@NotNull String charLiteral) {
     if ("'\"'".equals(charLiteral)) {
       return "\"\\\"\"";
     }
@@ -151,8 +145,7 @@ public final class PsiLiteralUtil {
    * @param expression  a single character string
    * @return the character literal string
    */
-  @Nullable
-  public static String charLiteralString(PsiLiteralExpression expression) {
+  public static @Nullable String charLiteralString(PsiLiteralExpression expression) {
     final Object value = expression.getValue();
     if (!(value instanceof String) || ((CharSequence)value).length() > 1) {
       throw new IllegalArgumentException();
@@ -181,7 +174,7 @@ public final class PsiLiteralUtil {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
-    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) && 
+    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) &&
            expression.getValue() == null;
   }
 
@@ -192,8 +185,7 @@ public final class PsiLiteralUtil {
    * @param s original text
    * @see #escapeTextBlockCharacters(String, boolean, boolean, boolean)
    */
-  @NotNull
-  public static String escapeTextBlockCharacters(@NotNull String s) {
+  public static @NotNull String escapeTextBlockCharacters(@NotNull String s) {
     return escapeTextBlockCharacters(s, false, true, true);
   }
 
@@ -215,8 +207,7 @@ public final class PsiLiteralUtil {
    * @param escapeEndQuote       true if last quote should be escaped (e.g. inserting text into text block before closing quotes)
    * @param escapeSpacesInTheEnd true if spaces in the end of the line should be preserved even if no new line in the end is present
    */
-  @NotNull
-  public static String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote,
+  public static @NotNull String escapeTextBlockCharacters(@NotNull String s, boolean escapeStartQuote,
                                                  boolean escapeEndQuote, boolean escapeSpacesInTheEnd) {
     int i = 0;
     int length = s.length();
@@ -336,8 +327,7 @@ public final class PsiLiteralUtil {
   /**
    * Escapes backslashes in a text block (even if they're represented as an escape sequence).
    */
-  @NotNull
-  public static String escapeBackSlashesInTextBlock(@NotNull String str) {
+  public static @NotNull String escapeBackSlashesInTextBlock(@NotNull String str) {
     int i = 0;
     int length = str.length();
     StringBuilder result = new StringBuilder(length);
@@ -395,20 +385,15 @@ public final class PsiLiteralUtil {
    * @return the lines of the expression, or null if the expression is not a text block.
    */
   public static String @Nullable [] getTextBlockLines(@NotNull PsiLiteralExpression expression) {
-    if (!expression.isTextBlock()) return null;
-    String rawText = expression.getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
-    int start = 3;
-    while (true) {
-      char c = rawText.charAt(start++);
-      if (c == '\n') break;
-      if (!isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
-    }
-    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+    return BasicLiteralUtil.getTextBlockLines(expression);
+  }
+
+  public static String @Nullable [] getTextBlockLines(String text) {
+    return BasicLiteralUtil.getTextBlockLines(text);
   }
 
   public static boolean isTextBlockWhiteSpace(char c) {
-    return c == ' ' || c == '\t' || c == '\f';
+    return BasicLiteralUtil.isTextBlockWhiteSpace(c);
   }
 
   /**
@@ -420,16 +405,24 @@ public final class PsiLiteralUtil {
    * @return the indent of the text block counted in characters, where a tab is also counted as 1.
    */
   public static int getTextBlockIndent(@NotNull PsiLiteralExpression expression) {
-    String[] lines = getTextBlockLines(expression);
-    if (lines == null) return -1;
-    return getTextBlockIndent(lines);
+    return BasicLiteralUtil.getTextBlockIndent(expression);
+  }
+
+  /**
+   * Retrieves the indent string of a text block literal expression.
+   * @param expression The text block literal expression.
+   * @return The indent string of the text block, or null if it is impossible to determine indent string.
+   * @see #getTextBlockIndent(PsiLiteralExpression)
+   */
+  public static @Nullable String getTextBlockIndentString(@NotNull PsiLiteralExpression expression) {
+    return BasicLiteralUtil.getTextBlockIndentString(expression);
   }
 
   /**
    * @see #getTextBlockIndent(PsiLiteralExpression)
    */
   public static int getTextBlockIndent(String @NotNull [] lines) {
-    return getTextBlockIndent(lines, false, false);
+    return BasicLiteralUtil.getTextBlockIndent(lines);
   }
 
   /**
@@ -437,17 +430,7 @@ public final class PsiLiteralUtil {
    * Note that this method might change some of the given lines.
    */
   public static int getTextBlockIndent(String @NotNull [] lines, boolean preserveContent, boolean ignoreLastLine) {
-    int prefix = Integer.MAX_VALUE;
-    for (int i = 0; i < lines.length && prefix != 0; i++) {
-      String line = lines[i];
-      int indent = 0;
-      while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) indent++;
-      if (indent == line.length() && (i < lines.length - 1 || ignoreLastLine)) {
-        if (!preserveContent) lines[i] = "";
-      }
-      else if (indent < prefix) prefix = indent;
-    }
-    return prefix;
+    return BasicLiteralUtil.getTextBlockIndent(lines, preserveContent, ignoreLastLine);
   }
 
   /**
@@ -457,8 +440,7 @@ public final class PsiLiteralUtil {
    * @param expression  regular string literal.
    * @return the text inside the quotes, or null if the expression is not a string literal.
    */
-  @Nullable
-  public static String getStringLiteralContent(PsiLiteralExpression expression) {
+  public static @Nullable String getStringLiteralContent(PsiLiteralExpression expression) {
     String text = expression.getText();
     int textLength = text.length();
     if (textLength > 1 && text.charAt(0) == '\"' && text.charAt(textLength - 1) == '\"') {
@@ -477,8 +459,7 @@ public final class PsiLiteralUtil {
    * @param expression  a text block expression
    * @return the text of the text block, or null if the expression is not a text block.
    */
-  @Nullable
-  public static String getTextBlockText(PsiLiteralExpression expression) {
+  public static @Nullable String getTextBlockText(PsiLiteralExpression expression) {
     String[] lines = getTextBlockLines(expression);
     if (lines == null) return null;
 
@@ -487,7 +468,7 @@ public final class PsiLiteralUtil {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
-      if (line.length() > 0) {
+      if (!line.isEmpty()) {
         sb.append(trimTrailingWhitespaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
@@ -497,8 +478,7 @@ public final class PsiLiteralUtil {
     return sb.toString();
   }
 
-  @NotNull
-  private static String trimTrailingWhitespaces(@NotNull String line) {
+  public static @NotNull String trimTrailingWhitespaces(@NotNull String line) {
     int index = line.length();
     while (true) {
       int wsIndex = parseWhitespaceBackwards(line, index - 1);
@@ -574,8 +554,7 @@ public final class PsiLiteralUtil {
    * @return the range which represents the corresponding substring inside source representation,
    * or null if from/to values are out of bounds.
    */
-  @Nullable
-  public static TextRange mapBackStringRange(@NotNull String text, int from, int to) {
+  public static @Nullable TextRange mapBackStringRange(@NotNull String text, int from, int to) {
     if (from > to || to < 0) return null;
     if (text.length() < 2 || !text.startsWith("\"") || !text.endsWith("\"")) {
       return null;
@@ -605,8 +584,7 @@ public final class PsiLiteralUtil {
    * @param indent text block indent
    * @return range in source code representation, null when from/to out of bounds or given text block source code representation is invalid
    */
-  @Nullable
-  public static TextRange mapBackTextBlockRange(@NotNull String text, int from, int to, int indent) {
+  public static @Nullable TextRange mapBackTextBlockRange(@NotNull String text, int from, int to, int indent) {
     if (from > to || to < 0) return null;
     TextBlockModel model = TextBlockModel.create(text, indent);
     if (model == null) return null;
@@ -697,6 +675,27 @@ public final class PsiLiteralUtil {
     return null;
   }
 
+  /**
+   * @param text string literal content (either normal, or text-block)
+   * @return range of the first occurrence of '\s' escape; null if there's no '\s' escape 
+   */
+  public static TextRange findSlashS(@NotNull String text) {
+    int start = 0;
+    String slashS = "\\s";
+    while ((start = StringUtil.indexOf(text, slashS, start)) != -1) {
+      int nSlashes = 0;
+      for (int pos = start - 1; pos >= 0; pos--) {
+        if (text.charAt(pos) != '\\') break;
+        nSlashes++;
+      }
+      if (nSlashes % 2 == 0) {
+        return TextRange.from(start, slashS.length());
+      }
+      start += slashS.length();
+    }
+    return null;
+  }
+
   private static final class TextBlockModel {
 
     private final String[] lines;
@@ -709,8 +708,7 @@ public final class PsiLiteralUtil {
       this.startPrefixLength = startPrefixLength;
     }
 
-    @Nullable
-    private TextRange mapTextBlockRangeBack(int from, int to) {
+    private @Nullable TextRange mapTextBlockRangeBack(int from, int to) {
       int curOffset = startPrefixLength;
       int charsSoFar = 0;
       int mappedFrom = -1;
@@ -756,8 +754,7 @@ public final class PsiLiteralUtil {
       return 0;
     }
 
-    @Nullable
-    private static TextBlockModel create(@NotNull String text, int indent) {
+    private static @Nullable TextBlockModel create(@NotNull String text, int indent) {
       if (text.length() < 7 || !text.startsWith("\"\"\"") || !text.endsWith("\"\"\"")) return null;
       int startPrefixLength = findStartPrefixLength(text);
       if (startPrefixLength == -1) return null;

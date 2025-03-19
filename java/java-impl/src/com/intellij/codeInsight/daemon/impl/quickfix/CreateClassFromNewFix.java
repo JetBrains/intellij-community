@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -46,7 +46,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
     PsiClass psiClass = CreateFromUsageUtils.createClass(referenceElement, getKind(), null);
-    WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+    if (psiClass != null) {
+      WriteAction.run(() -> setupClassFromNewExpression(psiClass, newExpression));
+    }
   }
 
   @Override
@@ -67,7 +69,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return CreateClassKind.CLASS;
   }
 
-  protected void setupClassFromNewExpression(final PsiClass aClass, final PsiNewExpression newExpression) {
+  protected void setupClassFromNewExpression(final @NotNull PsiClass aClass, final @NotNull PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     if (classReference != null && aClass.isPhysical()) {
       classReference.bindToElement(aClass);
@@ -102,8 +104,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     return templateBuilder;
   }
 
-  @Nullable
-  public static PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
+  public static @Nullable PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
     throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     PsiMethod supConstructor = null;
@@ -256,8 +257,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.class.from.new.family");
   }
 

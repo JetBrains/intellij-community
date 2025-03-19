@@ -22,7 +22,7 @@ class Const {
   public static final int Y = 2;
   public static final int Z = 4;
 }
-public class X {
+class X {
 
   void f(@MagicConstant(intValues={Const.X, Const.Y, Const.Z}) int x) {
     /////////// BAD

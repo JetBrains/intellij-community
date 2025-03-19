@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -10,6 +11,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(name = "uidesigner-configuration", storages = @Storage("uiDesigner.xml"))
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
   public static GuiDesignerConfiguration getInstance(final Project project){
@@ -22,6 +24,13 @@ public final class GuiDesignerConfiguration implements PersistentStateComponent<
   public boolean INSTRUMENT_CLASSES = true;
 
   public boolean COPY_FORMS_RUNTIME_TO_OUTPUT = true;
+
+  /**
+   * If INSTRUMENT_CLASSES is false, the user may select between generating source files
+   * upon Build (default, GENERATE_SOURCES_ON_SAVE is false) and
+   * generating right after saving the form (GENERATE_SOURCES_ON_SAVE is true)
+   */
+  public boolean GENERATE_SOURCES_ON_SAVE = false;
 
   public @NlsSafe String DEFAULT_LAYOUT_MANAGER = UIFormXmlConstants.LAYOUT_INTELLIJ;
 

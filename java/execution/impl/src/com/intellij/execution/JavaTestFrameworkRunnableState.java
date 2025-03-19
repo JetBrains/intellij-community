@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
@@ -11,6 +12,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.target.*;
+import com.intellij.execution.target.eel.EelTargetEnvironmentRequest;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
 import com.intellij.execution.testframework.*;
@@ -25,8 +27,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
-import com.intellij.execution.wsl.target.WslTargetEnvironmentRequest;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +48,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -104,10 +105,9 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   private RemoteConnectionCreator remoteConnectionCreator;
   private final List<ArgumentFileFilter> myArgumentFileFilters = new ArrayList<>();
 
-  @Nullable private volatile TargetProgressIndicator myTargetProgressIndicator = null;
+  private volatile @Nullable TargetProgressIndicator myTargetProgressIndicator = null;
 
-  @Nullable
-  protected final ServerSocket getServerSocket() {
+  protected final @Nullable ServerSocket getServerSocket() {
     return myTargetBoundServerSocket != null ? myTargetBoundServerSocket.getServerSocket() : null;
   }
 
@@ -115,9 +115,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     this.remoteConnectionCreator = remoteConnectionCreator;
   }
 
-  @Nullable
   @Override
-  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+  public @Nullable RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
     return remoteConnectionCreator == null
            ? super.createRemoteConnection(environment)
            : remoteConnectionCreator.createRemoteConnection(environment);
@@ -132,25 +131,19 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     super(environment);
   }
 
-  @NotNull
-  protected abstract String getFrameworkName();
+  protected abstract @NotNull String getFrameworkName();
 
-  @NotNull
-  protected abstract String getFrameworkId();
+  protected abstract @NotNull String getFrameworkId();
 
   protected abstract void passTempFile(ParametersList parametersList, String tempFilePath);
 
-  @NotNull
-  protected abstract T getConfiguration();
+  protected abstract @NotNull T getConfiguration();
 
-  @Nullable
-  protected abstract TestSearchScope getScope();
+  protected abstract @Nullable TestSearchScope getScope();
 
-  @NotNull
-  protected abstract String getForkMode();
+  protected abstract @NotNull String getForkMode();
 
-  @NotNull
-  private OSProcessHandler createHandler(SMTestRunnerResultsForm viewer) throws ExecutionException {
+  private @NotNull OSProcessHandler createHandler(SMTestRunnerResultsForm viewer) throws ExecutionException {
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, TargetProgressIndicator.EMPTY);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
@@ -186,8 +179,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Override
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     // Don't call getJavaParameters() because it will perform too much initialization
-    WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(getJdk());
-    return config == null ? null : new WslTargetEnvironmentRequest(config);
+    final var config = checkCreateNonLocalConfiguration(getJdk());
+    return config == null ? null : new EelTargetEnvironmentRequest(config);
   }
 
   public void resolveServerSocketPort(@NotNull TargetEnvironment remoteEnvironment) throws ExecutionException {
@@ -216,6 +209,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return true;
+  }
+
   @Override
   public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                               @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
@@ -239,14 +236,18 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return myTargetProgressIndicator;
   }
 
-  @NotNull
   @Override
-  protected TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
+  protected @NotNull TargetedCommandLineBuilder createTargetedCommandLine(@NotNull TargetEnvironmentRequest request)
     throws ExecutionException {
 
     downloadAdditionalDependencies(getJavaParameters());
     appendForkInfo(getEnvironment().getExecutor());
     appendRepeatMode();
+
+    var asyncStackTraceForExceptions = isPrintAsyncStackTraceForExceptions();
+    if (asyncStackTraceForExceptions && Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+      AsyncStacksUtils.addDebuggerAgent(getJavaParameters(), getEnvironment().getProject(), true);
+    }
 
     TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());
@@ -260,9 +261,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return commandLineBuilder;
   }
 
-  @NotNull
   @Override
-  public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+  public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -383,8 +383,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   private ServerSocket myForkSocket = null;
 
-  @Nullable
-  public ServerSocket getForkSocket() {
+  public @Nullable ServerSocket getForkSocket() {
     if (myForkSocket == null && (!Comparing.strEqual(getForkMode(), "none") || forkPerModule()) && getRunnerSettings() != null) {
       try {
         myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
@@ -471,7 +470,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         }
       }
       if (enabled) {
-        if (buf.length() > 0) buf.append(delimiter);
+        if (!buf.isEmpty()) buf.append(delimiter);
         final Class<?> classListener = listener.getClass();
         buf.append(classListener.getName());
         javaParameters.getClassPath().add(PathUtil.getJarPathForClass(classListener));
@@ -737,7 +736,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return true;
   }
 
-  private final static class TargetBoundServerSocket {
+  private static final class TargetBoundServerSocket {
     private final int myLocalPort;
     private final @Nullable TargetEnvironment.LocalPortBinding myLocalPortBinding;
 
@@ -810,8 +809,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
     }
 
-    @NotNull
-    public static TargetBoundServerSocket fromRequest(@Nullable TargetEnvironmentRequest targetEnvironmentRequest) throws IOException {
+    public static @NotNull TargetBoundServerSocket fromRequest(@Nullable TargetEnvironmentRequest targetEnvironmentRequest) throws IOException {
       int serverPort = NetUtils.findAvailableSocketPort();
       if (targetEnvironmentRequest != null) {
         TargetEnvironment.LocalPortBinding localPortBinding = new TargetEnvironment.LocalPortBinding(serverPort, null);

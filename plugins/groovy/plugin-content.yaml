@@ -1,0 +1,24 @@
+- name: lib/Groovy.jar
+  modules:
+  - name: intellij.groovy.psi
+  - name: intellij.groovy.structuralSearch
+  - name: intellij.groovy.duplicates
+  - name: intellij.groovy.duplicatesDetection
+  - name: intellij.groovy
+  contentModules:
+  - name: intellij.groovy.git
+- name: lib/groovy-constants-rt.jar
+  modules:
+  - name: intellij.groovy.constants.rt
+- name: lib/groovy-jps.jar
+  modules:
+  - name: intellij.groovy.jps
+- name: lib/groovy-rt-class-loader.jar
+  modules:
+  - name: intellij.groovy.rt.classLoader
+- name: lib/groovy-rt.jar
+  modules:
+  - name: intellij.groovy.rt
+- name: lib/groovy-spock-rt.jar
+  modules:
+  - name: intellij.groovy.spock.rt

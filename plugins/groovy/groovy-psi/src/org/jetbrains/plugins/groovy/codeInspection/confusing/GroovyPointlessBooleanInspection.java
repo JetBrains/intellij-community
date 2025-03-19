@@ -15,21 +15,22 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
+import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -40,11 +41,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class GroovyPointlessBooleanInspection extends BaseInspection {
+public final class GroovyPointlessBooleanInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PointlessBooleanExpressionVisitor();
   }
 
@@ -53,8 +53,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     return GroovyBundle.message("pointless.boolean.problem.descriptor");
   }
 
-  @Nullable
-  private static String calculateSimplifiedBinaryExpression(GrBinaryExpression expression) {
+  private static @Nullable String calculateSimplifiedBinaryExpression(GrBinaryExpression expression) {
     final IElementType sign = expression.getOperationTokenType();
     final GrExpression lhs = expression.getLeftOperand();
 
@@ -136,8 +135,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NonNls
-  private static String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
+  private static @NonNls String calculateSimplifiedPrefixExpression(GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (isUnaryNot(operand)) {
       return booleanLiteral(((GrUnaryExpression)operand).getOperand());
@@ -147,8 +145,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static String negateBooleanLiteral(GrExpression operand) {
+  private static @NotNull String negateBooleanLiteral(GrExpression operand) {
     if (isTrue(operand)) {
       return "false";
     }
@@ -160,8 +157,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static String booleanLiteral(GrExpression operand) {
+  private static @NotNull String booleanLiteral(GrExpression operand) {
     if (isTrue(operand)) {
       return "true";
     }
@@ -174,31 +170,27 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new BooleanLiteralComparisonFix();
   }
 
-  private static class BooleanLiteralComparisonFix extends GroovyFix {
+  private static class BooleanLiteralComparisonFix extends PsiUpdateModCommandQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("pointless.boolean.quickfix");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof GrBinaryExpression) {
-        final GrBinaryExpression expression = (GrBinaryExpression)element;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof GrBinaryExpression expression) {
         final String replacementString = calculateSimplifiedBinaryExpression(expression);
-        replaceExpression(expression, replacementString);
+        GrInspectionUtil.replaceExpression(expression, replacementString);
       }
       else {
         final GrUnaryExpression expression = (GrUnaryExpression)element;
         final String replacementString = calculateSimplifiedPrefixExpression(expression);
-        replaceExpression(expression, replacementString);
+        GrInspectionUtil.replaceExpression(expression, replacementString);
       }
     }
   }
@@ -308,7 +300,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     if (!(expression instanceof GrLiteral)) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "true".equals(text);
   }
 
@@ -319,7 +311,7 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
     if (!(expression instanceof GrLiteral)) {
       return false;
     }
-    @NonNls final String text = expression.getText();
+    final @NonNls String text = expression.getText();
     return "false".equals(text);
   }
 }

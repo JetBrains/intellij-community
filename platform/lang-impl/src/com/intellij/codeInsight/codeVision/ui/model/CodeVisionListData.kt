@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -7,12 +8,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.map
-import com.jetbrains.rd.util.throttleLast
-import java.time.Duration
+import org.jetbrains.annotations.ApiStatus
 
-class CodeVisionListData(
+class CodeVisionListData @ApiStatus.Internal constructor(
   val lifetime: Lifetime,
+  @get:ApiStatus.Internal
   val projectModel: ProjectCodeVisionModel,
   val rangeCodeVisionModel: RangeCodeVisionModel,
   val inlay: Inlay<*>,
@@ -21,7 +21,7 @@ class CodeVisionListData(
 ) {
   companion object {
     @JvmField
-    val KEY: Key<CodeVisionListData> = Key.create<CodeVisionListData>("CodeVisionListData")
+    val KEY: Key<CodeVisionListData> = Key.create("CodeVisionListData")
 
   }
 
@@ -35,17 +35,9 @@ class CodeVisionListData(
       }
     }
 
-  val visibleLens: ArrayList<CodeVisionEntry> = ArrayList<CodeVisionEntry>()
-  private var throttle = false
+  val visibleLens: ArrayList<CodeVisionEntry> = ArrayList()
 
   init {
-    projectModel.hoveredInlay.map {
-      it == inlay
-    }.throttleLast(Duration.ofMillis(300), SwingScheduler).advise(lifetime) {
-      throttle = it
-      inlay.repaint()
-    }
-
     updateVisible()
   }
 
@@ -64,7 +56,6 @@ class CodeVisionListData(
   }
 
   fun state(): RangeCodeVisionModel.InlayState = rangeCodeVisionModel.state()
-  fun isMoreLensActive(): Boolean = throttle && Registry.`is`("editor.codeVision.more.inlay")
-  fun isHoveredEntry(entry: CodeVisionEntry): Boolean = projectModel.hoveredEntry.value == entry && projectModel.hoveredInlay.value == inlay
+  fun isMoreLensActive(): Boolean = Registry.`is`("editor.codeVision.more.inlay")
 }
 

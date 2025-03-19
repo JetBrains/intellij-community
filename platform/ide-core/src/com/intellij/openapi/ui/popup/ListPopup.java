@@ -58,6 +58,12 @@ public interface ListPopup extends JBPopup {
    */
   default void setShowSubmenuOnHover(boolean showSubmenuOnHover) {}
 
+  /**
+   * If enabled then item will be executed on click even if submenu for this item is opened
+   * If disabled then mouse click closes sub menu
+   */
+  default void setExecuteExpandedItemOnClick(boolean executeExpandedItemOnClick) {}
+
   default boolean isShowSubmenuOnHover() {
     return false;
   }

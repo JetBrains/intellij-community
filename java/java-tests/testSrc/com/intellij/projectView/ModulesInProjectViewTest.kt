@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -6,14 +6,14 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.ui.Queryable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 
-open class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
+abstract class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
     myPrintInfo = Queryable.PrintInfo()
   }
@@ -71,7 +71,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runBlockingModal(myProject, "") {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
     assertStructureEqual("""
@@ -111,7 +111,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runBlockingModal(myProject, "") {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)
@@ -184,6 +184,34 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
       |  Group: baz
       |   module2
       |    subdir
+      |
+      """.trimMargin())
+  }
+
+  fun `test three-level modules`() {
+    val root = directoryContent {
+      dir("module1") {
+        dir("subdir") {}
+      }
+      dir("module1.module2") {
+        dir("subdir") {}
+      }
+      dir("module1.module2.module3") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module1"), root.findChild("module1")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module2"), root.findChild("module1.module2")!!)
+    PsiTestUtil.addContentRoot(createModule("module1.module2.module3"), root.findChild("module1.module2.module3")!!)
+    assertStructureEqual("""
+      |Project
+      | Group: module1
+      |  module1.module2
+      |   subdir
+      |  module1.module2.module3
+      |   subdir
+      | module1
+      |  subdir
       |
       """.trimMargin())
   }
@@ -282,15 +310,15 @@ class ModulesInPackageViewTest : ModulesInProjectViewTestCase() {
       |Project
       | Group: module1
       |  Module name=module1.module11
-      |   Module name=module1.module11.main
-      |   Module name=module1.module11.test
+      |  Module name=module1.module11.main
+      |  Module name=module1.module11.test
       |  Module name=module1.module12
-      |   Module name=module1.module12.main
-      |   Module name=module1.module12.test
+      |  Module name=module1.module12.main
+      |  Module name=module1.module12.test
       | Group: module2
       |  Module name=module2.module22
-      |   Module name=module2.module22.main
-      |   Module name=module2.module22.test
+      |  Module name=module2.module22.main
+      |  Module name=module2.module22.test
       |
       """.trimMargin())
   }

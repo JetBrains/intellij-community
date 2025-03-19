@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
 fun <T> genericFoo(p: Int){}
 fun <T> genericFoo(c: Char){}

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase;
@@ -18,9 +18,8 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
     super(manager);
   }
 
-  @NotNull
   @Override
-  protected VcsRepositoryIgnoredFilesHolder getHolder(@NotNull HgRepository repository) {
+  protected @NotNull VcsRepositoryIgnoredFilesHolder getHolder(@NotNull HgRepository repository) {
     return repository.getIgnoredFilesHolder();
   }
 
@@ -33,15 +32,13 @@ public class HgIgnoredFileHolder extends VcsIgnoredFilesHolderBase<HgRepository>
       myManager = HgUtil.getRepositoryManager(project);
     }
 
-    @NotNull
     @Override
-    public AbstractVcs getVcs() {
+    public @NotNull AbstractVcs getVcs() {
       return myVcs;
     }
 
-    @NotNull
     @Override
-    public VcsManagedFilesHolder createHolder() {
+    public @NotNull VcsManagedFilesHolder createHolder() {
       return new HgIgnoredFileHolder(myManager);
     }
 

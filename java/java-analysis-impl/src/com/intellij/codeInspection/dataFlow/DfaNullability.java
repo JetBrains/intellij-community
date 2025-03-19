@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -43,8 +43,7 @@ public enum DfaNullability {
     myNullability = nullability;
   }
 
-  @NotNull
-  public String getInternalName() {
+  public @NotNull String getInternalName() {
     return myInternalName;
   }
 
@@ -52,8 +51,7 @@ public enum DfaNullability {
     return myPresentationalName.get();
   }
 
-  @NotNull
-  public DfaNullability unite(@NotNull DfaNullability other) {
+  public @NotNull DfaNullability unite(@NotNull DfaNullability other) {
     if (this == other) {
       return this;
     }
@@ -67,8 +65,7 @@ public enum DfaNullability {
     return UNKNOWN;
   }
 
-  @Nullable
-  public DfaNullability intersect(@NotNull DfaNullability right) {
+  public @Nullable DfaNullability intersect(@NotNull DfaNullability right) {
     if (this == NOT_NULL) {
       return right == NULL ? null : NOT_NULL;
     }
@@ -84,13 +81,11 @@ public enum DfaNullability {
     return equals(right) ? this : null;
   }
 
-  @NotNull
-  public static Nullability toNullability(@Nullable DfaNullability dfaNullability) {
+  public static @NotNull Nullability toNullability(@Nullable DfaNullability dfaNullability) {
     return dfaNullability == null ? Nullability.UNKNOWN : dfaNullability.myNullability;
   }
 
-  @NotNull
-  public static DfaNullability fromNullability(@NotNull Nullability nullability) {
+  public static @NotNull DfaNullability fromNullability(@NotNull Nullability nullability) {
     return switch (nullability) {
       case NOT_NULL -> NOT_NULL;
       case NULLABLE -> NULLABLE;
@@ -98,8 +93,7 @@ public enum DfaNullability {
     };
   }
 
-  @NotNull
-  public DfReferenceType asDfType() {
+  public @NotNull DfReferenceType asDfType() {
     return switch (this) {
       case NULL -> DfTypes.NULL;
       case NOT_NULL -> DfTypes.NOT_NULL_OBJECT;
@@ -108,8 +102,7 @@ public enum DfaNullability {
     };
   }
 
-  @NotNull
-  public static DfaNullability fromDfType(@NotNull DfType type) {
+  public static @NotNull DfaNullability fromDfType(@NotNull DfType type) {
     return type == DfType.FAIL || type instanceof DfPrimitiveType ? NOT_NULL : 
            type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
   }

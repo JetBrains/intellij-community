@@ -11,6 +11,8 @@ public abstract class NotificationsManager {
     return ApplicationManager.getApplication().getService(NotificationsManager.class);
   }
 
+  public abstract void showNotification(@NotNull Notification notification, @Nullable Project project);
+
   public abstract void expire(@NotNull Notification notification);
 
   public abstract <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project);

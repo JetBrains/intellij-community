@@ -2,7 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.UsefulTestCase;
 
 public class ImmutableTextTest extends UsefulTestCase {
@@ -23,13 +23,13 @@ public class ImmutableTextTest extends UsefulTestCase {
   public void testDeleteAllPerformance() {
     ImmutableText original = ImmutableText.valueOf(StringUtil.repeat("abcdefghij", 1_900_000));
 
-    PlatformTestUtil.startPerformanceTest("Deletion of all contents must be fast", 100, () -> {
+    Benchmark.newBenchmark("Deletion of all contents must be fast", () -> {
       for (int iter = 0; iter < 100000; iter++) {
         ImmutableText another = original.delete(0, original.length());
         assertEquals(0, another.length());
         assertEquals("", another.toString());
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static void assertBalanced(CharSequence node) {

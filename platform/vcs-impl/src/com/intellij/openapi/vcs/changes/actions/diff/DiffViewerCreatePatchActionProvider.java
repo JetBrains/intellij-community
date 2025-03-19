@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class DiffViewerCreatePatchActionProvider implements AnActionExtensionProvider {
   private final boolean mySilentClipboard;
 
@@ -97,8 +99,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     return true;
   }
 
-  @NotNull
-  private static Change createChange(@NotNull DiffRequest request) {
+  private static @NotNull Change createChange(@NotNull DiffRequest request) {
     Change change = request.getUserData(ChangeDiffRequestProducer.CHANGE_KEY);
     if (change != null) return change;
 
@@ -112,8 +113,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     return new Change(bRev, aRev);
   }
 
-  @Nullable
-  private static ContentRevision createRevision(@NotNull DiffContent content, @NotNull String title) {
+  private static @Nullable ContentRevision createRevision(@NotNull DiffContent content, @NotNull String title) {
     if (content instanceof EmptyContent) return null;
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
@@ -134,12 +134,11 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     throw new IllegalStateException(content.toString());
   }
 
-  @NotNull
-  private static FilePath guessFilePath(@NotNull DiffContent content, @NotNull String title) {
+  private static @NotNull FilePath guessFilePath(@NotNull DiffContent content, @NotNull String title) {
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
       String path = OutsidersPsiFileSupport.getOriginalFilePath(file);
-      if (path != null) return VcsUtil.getFilePath(path);
+      if (path != null) return VcsUtil.getFilePath(path, file.isDirectory());
     }
 
     String fileName = content.getUserData(DiffUserDataKeysEx.FILE_NAME);
@@ -147,13 +146,13 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
       VirtualFile highlightFile = ((DocumentContent)content).getHighlightFile();
       fileName = highlightFile != null ? highlightFile.getName() : null;
     }
-    if (fileName != null) return VcsUtil.getFilePath(fileName);
+    if (fileName != null) return VcsUtil.getFilePath(fileName, false);
 
     FileType fileType = content.getContentType();
     String ext = fileType != null ? fileType.getDefaultExtension() : null;
     if (StringUtil.isEmptyOrSpaces(ext)) ext = "tmp";
 
     String path = PathUtil.suggestFileName(title + "." + ext, true, false);
-    return VcsUtil.getFilePath(path);
+    return VcsUtil.getFilePath(path, false);
   }
 }

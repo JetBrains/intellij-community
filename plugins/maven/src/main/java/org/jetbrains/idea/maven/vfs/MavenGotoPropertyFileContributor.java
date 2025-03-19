@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-public class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
+public final class MavenGotoPropertyFileContributor implements ChooseByNameContributor {
   @Override
   public String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
     return MavenPropertiesVirtualFileSystem.PROPERTIES_FILES;

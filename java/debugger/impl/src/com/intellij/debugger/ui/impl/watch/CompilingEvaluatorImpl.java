@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
@@ -60,8 +59,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   }
 
   @Override
-  @NotNull
-  protected Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
+  protected @NotNull Collection<ClassObject> compile(@Nullable JavaSdkVersion debuggeeVersion) throws EvaluateException {
     if (myCompiledClasses == null) {
       List<String> options = new ArrayList<>();
       options.add("-encoding");
@@ -147,10 +145,9 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     return file;
   }
 
-  @Nullable
-  public static ExpressionEvaluator create(@NotNull Project project,
-                                           @Nullable PsiElement psiContext,
-                                           @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
+  public static @Nullable ExpressionEvaluator create(@NotNull Project project,
+                                                     @Nullable PsiElement psiContext,
+                                                     @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ReadAction.compute(() -> {
@@ -177,21 +174,18 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     return null;
   }
 
-  @Nullable
-  private static PsiElement findPhysicalContext(@NotNull PsiElement element) {
+  private static @Nullable PsiElement findPhysicalContext(@NotNull PsiElement element) {
     while (element != null && !element.isPhysical()) {
       element = element.getContext();
     }
     return element;
   }
 
-  @Nullable
-  public static JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {
+  public static @Nullable JavaSdkVersion getJavaVersion(@Nullable XDebugSession session) {
     if (session != null) {
       XSuspendContext suspendContext = session.getSuspendContext();
-      if (suspendContext instanceof SuspendContextImpl) {
-        DebugProcessImpl debugProcess = ((SuspendContextImpl)suspendContext).getDebugProcess();
-        return JavaSdkVersion.fromVersionString(debugProcess.getVirtualMachineProxy().version());
+      if (suspendContext instanceof SuspendContextImpl suspendContextImpl) {
+        return JavaSdkVersion.fromVersionString(suspendContextImpl.getVirtualMachineProxy().version());
       }
     }
 

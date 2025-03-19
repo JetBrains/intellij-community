@@ -7,7 +7,6 @@
 
 '''import revisions from foreign VCS repositories into Mercurial'''
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import registrar

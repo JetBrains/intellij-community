@@ -11,7 +11,7 @@ class GenericOuter<T> {
 
 class OuterClient {
     public void context() {
-        <error descr="Improper formed type; some type parameters are missing">GenericOuter<String>.GenericInner</error> v1 = null;
+        <error descr="Improperly formed type: 'GenericInner' needs type arguments because its qualifier has type arguments">GenericOuter<String>.GenericInner</error> v1 = null;
         GenericOuter.GenericInner<error descr="Type arguments given on a raw type"><String></error> v2 = null;
         GenericOuter.GenericInner v3 = null; 
         GenericOuter<String>.GenericInner<String> v4 = null;

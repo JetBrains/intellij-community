@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,13 +29,15 @@ import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -43,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 
-public class JpsOutputLoaderManager {
+public final class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
   // Downloading caches applicable only for the good internet connection
@@ -122,13 +124,13 @@ public class JpsOutputLoaderManager {
   public void updateBuildStatistic(@NotNull ProjectDescriptor projectDescriptor) {
     if (isForceCachesDownload) return;
     if (!hasRunningTask.get() && isCacheDownloaded) {
-      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
       myOriginalBuildStatistic.getBuildTargetTypeStatistic().forEach((buildTargetType, originalBuildTime) -> {
-        targetsState.setAverageBuildTime(buildTargetType, originalBuildTime);
+        targetStateManager.setAverageBuildTime(buildTargetType, originalBuildTime);
         LOG.info("Saving old build statistic for " + buildTargetType.getTypeId() + " with value " + originalBuildTime);
       });
       Long originalBuildStatisticProjectRebuildTime = myOriginalBuildStatistic.getProjectRebuildTime();
-      targetsState.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
+      targetStateManager.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
       LOG.info("Saving old project rebuild time " + originalBuildStatisticProjectRebuildTime);
     }
   }
@@ -196,8 +198,8 @@ public class JpsOutputLoaderManager {
       deletionSpeed = systemOpsStatistic.getDeletionSpeedBytesPerSec();
     }
 
-    int approximateSizeToDelete = projectModulesCount * PROJECT_MODULE_SIZE_DISK_BYTES;
-    int approximateDownloadSize = projectModulesCount * PROJECT_MODULE_DOWNLOAD_SIZE_BYTES + AVERAGE_CACHE_SIZE_BYTES;
+    long approximateSizeToDelete = ((long)projectModulesCount) * PROJECT_MODULE_SIZE_DISK_BYTES;
+    long approximateDownloadSize = ((long)projectModulesCount) * PROJECT_MODULE_DOWNLOAD_SIZE_BYTES + AVERAGE_CACHE_SIZE_BYTES;
     long expectedDownloadTimeSec = approximateDownloadSize / systemOpsStatistic.getConnectionSpeedBytesPerSec();
     long expectedDecompressionTimeSec = approximateDownloadSize / decompressionSpeed;
     long expectedDeleteTimeSec = approximateSizeToDelete / deletionSpeed;
@@ -250,8 +252,7 @@ public class JpsOutputLoaderManager {
     }
   }
 
-  @Nullable
-  private static String getBuildDirPath(@NotNull JpsProject project) {
+  private static @Nullable String getBuildDirPath(@NotNull JpsProject project) {
     JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     if (projectExtension == null) return null;
     String url = projectExtension.getOutputUrl();
@@ -272,9 +273,9 @@ public class JpsOutputLoaderManager {
     return true;
   }
 
-  private <T> CompletableFuture<LoaderStatus> initLoaders(String commitId, int totalDownloads,
-                                                          Map<String, Map<String, BuildTargetState>> commitSourcesState,
-                                                          Map<String, Map<String, BuildTargetState>> currentSourcesState) {
+  private CompletableFuture<LoaderStatus> initLoaders(String commitId, int totalDownloads,
+                                                      Map<String, Map<String, BuildTargetState>> commitSourcesState,
+                                                      Map<String, Map<String, BuildTargetState>> currentSourcesState) {
     JpsLoaderContext loaderContext =
       JpsLoaderContext.createNewContext(totalDownloads, myCanceledStatus, commitId, myNettyClient, commitSourcesState, currentSourcesState);
     List<JpsOutputLoader<?>> loaders = getLoaders();
@@ -350,27 +351,28 @@ public class JpsOutputLoaderManager {
     try {
       long startTime = System.currentTimeMillis();
       BuildFSState fsState = new BuildFSState(false);
-      final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
-      if (!dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists()) {
+      Path dataStorageRoot = Utils.getDataStorageRoot(myProjectPath).toPath();
+      if (!Files.exists(dataStorageRoot) || !Files.exists(dataStorageRoot.resolve(FS_STATE_FILE))) {
         // invoked the very first time for this project
         buildRunner.setForceCleanCaches(true);
         LOG.info("Storage files are absent");
       }
+
       projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
       long contextInitializationTime = System.currentTimeMillis() - startTime;
       LOG.info("Time spend to context initialization: " + contextInitializationTime);
       CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
       long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, t -> compilationScope.isAffected(t));
-      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
       if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
         LOG.info("Project rebuild enabled, caches will not be download");
         return null;
       }
       Map<BuildTargetType<?>, Long> buildTargetTypeStatistic = new HashMap<>();
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
-        buildTargetTypeStatistic.put(type,  targetsState.getAverageBuildTime(type));
+        buildTargetTypeStatistic.put(type,  targetStateManager.getAverageBuildTime(type));
       }
-      myOriginalBuildStatistic = new ProjectBuildStatistic(targetsState.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
+      myOriginalBuildStatistic = new ProjectBuildStatistic(targetStateManager.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
       long totalCalculationTime = System.currentTimeMillis() - startTime;
       LOG.info("Calculated build time: " + StringUtil.formatDuration(estimatedBuildTime));
       LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);

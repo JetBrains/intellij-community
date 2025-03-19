@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * <p>This process handler supports ANSI coloring.</p>
- * <p>Although it supports the {@link KillableProcessHandler"soft-kill" feature}, it is turned off by default for compatibility reasons.
+ * <p>Although it supports the {@link KillableProcessHandler} "soft-kill" feature, it is turned off by default for compatibility reasons.
  * To turn it on either call {@link #setShouldKillProcessSoftly(boolean)}, or extend from {@link KillableColoredProcessHandler}.
  */
 public class ColoredProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
@@ -53,7 +53,7 @@ public class ColoredProcessHandler extends KillableProcessHandler implements Ans
   }
 
   @Override
-  public final void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
+  public final void notifyTextAvailable(final @NotNull String text, final @NotNull Key outputType) {
     myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 

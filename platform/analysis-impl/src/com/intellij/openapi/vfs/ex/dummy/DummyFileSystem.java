@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.dummy;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
-  @NonNls public static final String PROTOCOL = "dummy";
+  public static final @NonNls String PROTOCOL = "dummy";
 
   public static DummyFileSystem getInstance() {
     return (DummyFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
@@ -22,16 +22,14 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     startEventPropagation();
   }
 
-  @NotNull
-  public VirtualFile createRoot(@NotNull String name) {
+  public @NotNull VirtualFile createRoot(@NotNull String name) {
     DummyDirectoryImpl root = new DummyDirectoryImpl(this, null, name);
     fireFileCreated(null, root);
     return root;
   }
 
   @Override
-  @NotNull
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return PROTOCOL;
   }
 
@@ -41,9 +39,8 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     return null;
   }
 
-  @NotNull
   @Override
-  public String extractPresentableUrl(@NotNull String path) {
+  public @NotNull String extractPresentableUrl(@NotNull String path) {
     return path;
   }
 
@@ -76,9 +73,8 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
     firePropertyChanged(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName);
   }
 
-  @NotNull
   @Override
-  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
+  public @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
     final DummyDirectoryImpl dir = (DummyDirectoryImpl)vDir;
     DummyFileBase child = new DummyFileImpl(this, dir, fileName);
     dir.addChild(child);
@@ -87,18 +83,17 @@ public class DummyFileSystem extends DeprecatedVirtualFileSystem implements NonP
   }
 
   @Override
-  public void fireBeforeContentsChange(final Object requestor, @NotNull final VirtualFile file) {
+  public void fireBeforeContentsChange(final Object requestor, final @NotNull VirtualFile file) {
     super.fireBeforeContentsChange(requestor, file);
   }
 
   @Override
-  public void fireContentsChanged(final Object requestor, @NotNull final VirtualFile file, final long oldModificationStamp) {
+  public void fireContentsChanged(final Object requestor, final @NotNull VirtualFile file, final long oldModificationStamp) {
     super.fireContentsChanged(requestor, file, oldModificationStamp);
   }
 
   @Override
-  @NotNull
-  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
+  public @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) {
     final DummyDirectoryImpl dir = (DummyDirectoryImpl)vDir;
     DummyFileBase child = new DummyDirectoryImpl(this, dir, dirName);
     dir.addChild(child);

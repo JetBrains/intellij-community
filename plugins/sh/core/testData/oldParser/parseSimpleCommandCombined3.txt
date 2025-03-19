@@ -13,5 +13,6 @@ SHELL_SCRIPT
           PsiElement(>>)('>>')
           PsiWhiteSpace(' ')
           PsiElement(word)('out')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('c')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('c')

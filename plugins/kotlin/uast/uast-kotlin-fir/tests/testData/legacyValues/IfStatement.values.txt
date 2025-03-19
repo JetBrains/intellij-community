@@ -6,7 +6,9 @@ UFile (package = ) [public final class IfStatementKt {...]
                     ULocalVariable (name = x) [var x: int = if ("abc" != "def") 1 else 0]
                         UIfExpression [if ("abc" != "def") 1 else 0] = 1
                             UBinaryExpression (operator = !=) ["abc" != "def"] = true
-                                ULiteralExpression (value = "abc") ["abc"] = "abc"
-                                ULiteralExpression (value = "def") ["def"] = "def"
+                                UPolyadicExpression (operator = +) ["abc"] = "abc"
+                                    ULiteralExpression (value = "abc") ["abc"] = "abc"
+                                UPolyadicExpression (operator = +) ["def"] = "def"
+                                    ULiteralExpression (value = "def") ["def"] = "def"
                             ULiteralExpression (value = 1) [1] = 1
                             ULiteralExpression (value = 0) [0] = 0

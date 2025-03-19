@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.ui;
 
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -14,15 +14,13 @@ final class SpellCheckingEditorCustomizationProviderImpl extends SpellCheckingEd
   private static final NotNullLazyValue<SpellCheckingEditorCustomization> DISABLED =
     NotNullLazyValue.createValue(() -> new SpellCheckingEditorCustomization(false));
 
-  @NotNull
   @Override
-  public EditorCustomization getEnabledCustomization() {
+  public @NotNull EditorCustomization getEnabledCustomization() {
     return ENABLED.getValue();
   }
 
-  @NotNull
   @Override
-  public EditorCustomization getDisabledCustomization() {
+  public @NotNull EditorCustomization getDisabledCustomization() {
     return DISABLED.getValue();
   }
 

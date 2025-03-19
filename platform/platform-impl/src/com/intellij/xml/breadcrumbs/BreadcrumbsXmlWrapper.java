@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -13,7 +13,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.RectanglePainter2D;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,27 +20,35 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
+public final class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
   private final VirtualFile myFile;
+  private final FileBreadcrumbsCollector myBreadcrumbsCollector;
 
-  public BreadcrumbsXmlWrapper(@NotNull final Editor editor) {
+  public BreadcrumbsXmlWrapper(final @NotNull Editor editor) {
     super(editor);
     myFile = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+
+    if (myFile != null) {
+      myBreadcrumbsCollector = FileBreadcrumbsCollector.findBreadcrumbsCollector(myProject, myFile);
+      myBreadcrumbsCollector.watchForChanges(myFile, myEditor, this, () -> queueUpdate());
+    }
+    else {
+      myBreadcrumbsCollector = null;
+    }
+
     if (ExperimentalUI.isNewUI()) {
       putClientProperty(FileEditorManager.SEPARATOR_DISABLED, Boolean.TRUE);
     }
     setBorder(this);
   }
 
-  @Nullable
   @Override
-  protected Iterable<? extends Crumb> computeCrumbs(int offset) {
-    FileBreadcrumbsCollector breadcrumbsCollector = findCollectorFor(myProject, myFile, this);
-    if (breadcrumbsCollector == null) return null;
+  protected @Nullable Iterable<? extends Crumb> computeCrumbs(int offset) {
+    if (myBreadcrumbsCollector == null) return null;
 
     Document document = myEditor.getDocument();
     Boolean forcedShown = BreadcrumbsForceShownSettings.getForcedShown(myEditor);
-    return breadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
+    return myBreadcrumbsCollector.computeCrumbs(myFile, document, offset, forcedShown);
   }
 
   public void navigate(NavigatableCrumb crumb, boolean withSelection) {
@@ -73,8 +80,8 @@ public class BreadcrumbsXmlWrapper extends BreadcrumbsPanel implements Border {
     return true;
   }
 
-  @Nullable
-  public static BreadcrumbsXmlWrapper getBreadcrumbsWrapper(@NotNull Editor editor) {
-    return ObjectUtils.tryCast(BreadcrumbsPanel.getBreadcrumbsComponent(editor), BreadcrumbsXmlWrapper.class);
+  public static @Nullable BreadcrumbsXmlWrapper getBreadcrumbWrapper(@NotNull Editor editor) {
+    Object obj = BreadcrumbsPanel.getBreadcrumbsComponent(editor);
+    return obj instanceof BreadcrumbsXmlWrapper ? (BreadcrumbsXmlWrapper)obj : null;
   }
 }

@@ -27,7 +27,7 @@ public class XDebuggerDataViewSettings implements XDebuggerSettingsManager.DataV
   private boolean autoExpressions = true;
   private int valueLookupDelay = DEFAULT_VALUE_TOOLTIP_DELAY;
 
-  private boolean showLibraryStackFrames = true;
+  private boolean showLibraryStackFrames = false;
 
   @Tag("show-values-inline")
   private boolean showValuesInline = true;

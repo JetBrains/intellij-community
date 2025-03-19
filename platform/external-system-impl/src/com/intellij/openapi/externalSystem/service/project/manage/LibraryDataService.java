@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
+import com.intellij.openapi.externalSystem.service.project.ModifiableWorkspaceModel;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -25,20 +26,20 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
+
   private static final Logger LOG = Logger.getInstance(LibraryDataService.class);
-  public static final @NotNull NotNullFunction<String, File> PATH_TO_FILE = File::new;
 
   public static final ExtensionPointName<LibraryDataServiceExtension> EP_NAME =
     ExtensionPointName.create("com.intellij.libraryDataServiceExtension");
@@ -71,8 +72,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     }
   }
 
-  private void importLibrary(final @NotNull LibraryData toImport, final @NotNull IdeModifiableModelsProvider modelsProvider) {
-
+  private static void importLibrary(final @NotNull LibraryData toImport, final @NotNull IdeModifiableModelsProvider modelsProvider) {
     final String libraryName = toImport.getInternalName();
     Library library = modelsProvider.getLibraryByName(libraryName);
     ProjectModelExternalSource source = ExternalSystemApiUtil.toExternalSource(toImport.getOwner());
@@ -89,7 +89,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     prepareNewLibrary(toImport, libraryName, libraryModel);
   }
 
-  private void prepareNewLibrary(@NotNull LibraryData libraryData,
+  private static void prepareNewLibrary(@NotNull LibraryData libraryData,
                                  @NotNull String libraryName,
                                  @NotNull Library.ModifiableModel libraryModel) {
     Map<OrderRootType, Collection<File>> libraryFiles = prepareLibraryFiles(libraryData);
@@ -108,16 +108,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     return null;
   }
 
-  private static void refreshVfsFiles(Collection<? extends File> files) {
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    for (File file : files) {
-      Path path = file.toPath();
-      // search for jar file first otherwise lib root won't be found!
-      virtualFileManager.refreshAndFindFileByNioPath(path);
-    }
-  }
-
-  public @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
+  static @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
       OrderRootType orderRootType = ExternalLibraryPathTypeMapper.getInstance().map(pathType);
@@ -128,8 +119,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       if (paths.isEmpty()) {
         continue;
       }
-      List<File> files = ContainerUtil.map(paths, PATH_TO_FILE);
-      refreshVfsFiles(files);
+      List<File> files = ContainerUtil.map(paths, File::new);
       result.put(orderRootType, files);
     }
     return result;
@@ -211,6 +201,7 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
 
     final List<Library> orphanIdeLibraries = new SmartList<>();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
+    final ModifiableWorkspaceModel workspaceModel = modelsProvider.getModifiableWorkspaceModel();
     final Map<String, Library> namesToLibs = new HashMap<>();
     final Set<Library> potentialOrphans = new HashSet<>();
     RootPolicy<Void> excludeUsedLibraries = new RootPolicy<>() {
@@ -242,8 +233,8 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
       }
     }
 
-    for (Library lib: potentialOrphans) {
-      if (!modelsProvider.isSubstituted(lib.getName())) {
+    for (Library lib : potentialOrphans) {
+      if (!workspaceModel.isLibrarySubstituted(lib)) {
         orphanIdeLibraries.add(lib);
       }
     }
@@ -302,13 +293,12 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     Set<String> excludedPaths = externalLibrary.getPaths(LibraryPathType.EXCLUDED);
     for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = new HashMap<>();
-      roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
+      roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), File::new));
       registerPaths(false, roots, excludedPaths, libraryModel, externalLibrary.getInternalName());
     }
   }
 
-  @NotNull
-  private static String getLocalPath(@NotNull String url) {
+  private static @NotNull String getLocalPath(@NotNull String url) {
     if (url.startsWith(StandardFileSystems.JAR_PROTOCOL_PREFIX)) {
       url = StringUtil.trimEnd(url, JarFileSystem.JAR_SEPARATOR);
     }

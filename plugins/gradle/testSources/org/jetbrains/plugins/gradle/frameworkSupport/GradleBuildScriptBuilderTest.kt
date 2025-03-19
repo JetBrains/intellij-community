@@ -1,11 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport
 
+import com.intellij.testFramework.junit5.SystemProperty
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
 
+@SystemProperty("idea.gradle.mavenRepositoryUrl", "")
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test
@@ -111,7 +115,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     """.trimIndent()) {
       withBuildScriptPrefix { call("println", "Hello, Prefix!") }
       withBuildScriptRepository { call("repo", call("file", "build/repo")) }
-      withBuildScriptDependency { call("classpath", call("file", "build/targets/org/classpath/archive.jar")) }
+      addBuildScriptClasspath(call("file", "build/targets/org/classpath/archive.jar"))
       withBuildScriptPostfix { call("println", "Hello, Postfix!") }
       applyPlugin("gradle-build")
       addImport("org.classpath.Build")
@@ -167,10 +171,10 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     }
   }
 
-  @Test
-  fun `test compile-implementation dependency scope`() {
-    assertBuildScript(
-      GradleVersion.current() to ("""
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test compile-implementation dependency scope`(gradleVersion: GradleVersion) {
+    assertBuildScript(gradleVersion to ("""
         dependencies {
             implementation 'my-dep'
             runtimeOnly 'my-runtime-dep'
@@ -183,22 +187,6 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
             runtimeOnly("my-runtime-dep")
             testImplementation("my-test-dep")
             testRuntimeOnly("my-runtime-dep")
-        }
-      """.trimIndent()),
-
-      GradleVersion.version("3.0") to ("""
-        dependencies {
-            compile 'my-dep'
-            runtime 'my-runtime-dep'
-            testCompile 'my-test-dep'
-            testRuntime 'my-runtime-dep'
-        }
-      """.trimIndent() to """
-        dependencies {
-            compile("my-dep")
-            runtime("my-runtime-dep")
-            testCompile("my-test-dep")
-            testRuntime("my-runtime-dep")
         }
       """.trimIndent())
     ) {
@@ -355,6 +343,81 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       """.trimIndent())
     ) {
       withJUnit()
+    }
+  }
+
+  @Test
+  fun `test string escaping`() {
+    assertBuildScript(groovyScript = """
+      |def string = 'simple string'
+      |println "string with ${'$'}string interpolation"
+      |println '/example/unix/path'
+      |println 'C:\\example\\win\\path'
+      |println 'string with \' quote'
+      |println 'string with " quote'
+      |println 'multi-line\n joined\n string'
+      |println 'multi-line\n raw\n string'
+    """.trimMargin(), kotlinScript = """
+      |var string = "simple string"
+      |println("string with ${'$'}string interpolation")
+      |println("/example/unix/path")
+      |println("C:\\example\\win\\path")
+      |println("string with ' quote")
+      |println("string with \" quote")
+      |println("multi-line\n joined\n string")
+      |println("multi-line\n raw\n string")
+    """.trimMargin()) {
+      withPostfix {
+        property("string", "simple string")
+        call("println", "string with ${'$'}string interpolation")
+        call("println", "/example/unix/path")
+        call("println", "C:\\example\\win\\path")
+        call("println", "string with ' quote")
+        call("println", "string with \" quote")
+        call("println", "multi-line\n joined\n string")
+        call("println", """
+          |multi-line
+          | raw
+          | string
+        """.trimMargin())
+      }
+    }
+  }
+
+  @Test
+  fun `test tasks configuration`() {
+    assertBuildScript(groovyScript = """
+      |test {
+      |    myConfiguration()
+      |}
+    """.trimMargin(), kotlinScript = """
+      |tasks.test {
+      |    myConfiguration()
+      |}
+    """.trimMargin()) {
+      configureTask("test", "Test") {
+        call("myConfiguration")
+      }
+    }
+
+    assertBuildScript(groovyScript = """
+      |tasks.named('myTask', MyTask) {
+      |    myConfiguration()
+      |}
+    """.trimMargin(), kotlinScript = """
+      |tasks.named<MyTask>("myTask") {
+      |    myConfiguration()
+      |}
+    """.trimMargin()) {
+      configureTask("myTask", "MyTask") {
+        call("myConfiguration")
+      }
+    }
+
+    assertBuildScript(groovyScript = "", kotlinScript = "") {
+      configureTask("myTask", "MyTask") {
+        // no configuration
+      }
     }
   }
 }

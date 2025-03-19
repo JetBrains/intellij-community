@@ -1,0 +1,49 @@
+### auto-generated section `build intellij.platform.projectModel.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "projectModel-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "projectModel-impl",
+  module_name = "intellij.platform.projectModel.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
+    "//jps/model-api:model",
+    "//jps/model-impl",
+    "//platform/util",
+    "//jps/model-serialization",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+    "//platform/util/jdom",
+    "@lib//:kryo5",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:hash4j",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/eel-provider",
+  ],
+  exports = [
+    "//platform/projectModel-api:projectModel",
+    "//jps/model-serialization",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+  ],
+  runtime_deps = [":projectModel-impl_resources"]
+)
+### auto-generated section `build intellij.platform.projectModel.impl` end

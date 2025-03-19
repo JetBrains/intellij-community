@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -11,6 +13,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FakeRerunAction extends AnAction {
+public class FakeRerunAction extends AnAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -32,6 +35,15 @@ public class FakeRerunAction extends AnAction {
     Presentation presentation = event.getPresentation();
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
+      RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+      RunConfiguration configuration = settings == null ? null : settings.getConfiguration();
+      if (configuration != null &&
+          RunDashboardManager.getInstance(configuration.getProject()).isShowInDashboard(configuration) &&
+          (ActionPlaces.RUNNER_TOOLBAR.equals(event.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(event.getPlace()))) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
       presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
                                                           StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       Icon rerunIcon = ExperimentalUI.isNewUI() ? environment.getExecutor().getRerunIcon() : environment.getExecutor().getIcon();

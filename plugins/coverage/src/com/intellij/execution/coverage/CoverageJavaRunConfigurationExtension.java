@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -23,15 +23,10 @@ import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
@@ -56,12 +51,11 @@ import java.util.Objects;
 /**
  * Registers "Coverage" tab in Java run configurations
  */
-public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
-
+final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
   private JavaTargetDependentParameters myTargetDependentParameters;
 
   @Override
-  public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
+  public void attachToProcess(final @NotNull RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
     if (myTargetDependentParameters == null || myTargetDependentParameters.getTargetEnvironment() == null) {
       CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
       return;
@@ -70,7 +64,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (runnerSettings instanceof CoverageRunnerData) {
       handler.addProcessListener(new ProcessAdapter() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           new Task.Backgroundable(configuration.getProject(),
                                   JavaCoverageBundle.message("download.coverage.report.from.target.progress.title")) {
             @Override
@@ -100,8 +94,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  @Nullable
-  public SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
+  public @Nullable SettingsEditor createEditor(@NotNull RunConfigurationBase configuration) {
     return new CoverageConfigurable(configuration);
   }
 
@@ -115,9 +108,8 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return CoverageEngine.getEditorTitle();
   }
 
-  @NotNull
   @Override
-  public String getSerializationId() {
+  public @NotNull String getSerializationId() {
     return "coverage";
   }
 
@@ -130,35 +122,24 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
     if (coverageConfig == null) return;
     coverageConfig.setCurrentCoverageSuite(null);
-    final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
-    if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
+    if (runnerSettings instanceof CoverageRunnerData) {
       Project project = configuration.getProject();
-      final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      }, ModalityState.NON_MODAL, project.getDisposed());
-      appendCoverageArgument(configuration, params, coverageConfig);
-
-      final Sdk jdk = params.getJdk();
-      if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
-        Notifications.Bus.notify(new Notification("Coverage",
-                                                  JavaCoverageBundle.message("coverage.instrumentation.jdk7.compatibility"),
-                                                  JavaCoverageBundle.message(
-                                                    "coverage.instrumentation.jdk7.compatibility.veryfy.error.warning",
-                                                    coverageRunner.getPresentableName()),
-                                                  NotificationType.WARNING));
+      CoverageSuite suite = CoverageDataManager.getInstance(project).addCoverageSuite(coverageConfig);
+      if (suite != null) {
+        coverageConfig.setCurrentCoverageSuite(suite);
+        appendCoverageArgument(suite, params, coverageConfig);
       }
     }
   }
 
-  private void appendCoverageArgument(@NotNull RunConfigurationBase configuration,
+  private void appendCoverageArgument(@NotNull CoverageSuite suite,
                                       @NotNull JavaParameters params,
                                       JavaCoverageEnabledConfiguration coverageConfig) {
     JavaParameters coverageParams = new JavaParameters();
-    coverageConfig.appendCoverageArgument(configuration, coverageParams);
+    coverageConfig.appendCoverageArgument(suite, coverageParams);
 
-    boolean runsUnderNonLocalTarget = configuration instanceof TargetEnvironmentAwareRunProfile
-                                      && ((TargetEnvironmentAwareRunProfile)configuration).needPrepareTarget();
+    boolean runsUnderNonLocalTarget = coverageConfig.getConfiguration() instanceof TargetEnvironmentAwareRunProfile profile
+                                      && profile.needPrepareTarget();
     if (!runsUnderNonLocalTarget) {
       params.getVMParametersList().addAll(coverageParams.getTargetDependentParameters().toLocalParameters());
       myTargetDependentParameters = null;
@@ -170,7 +151,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   }
 
   @Override
-  public void readExternal(@NotNull final RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
+  public void readExternal(final @NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
      if (!isApplicableFor(runConfiguration)) {
       return;
     }
@@ -287,15 +268,15 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   public boolean isListenerDisabled(RunConfigurationBase configuration, Object listener, RunnerSettings runnerSettings) {
     if (listener instanceof CoverageListener) {
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
-      final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-      return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) ||
-             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && coverageEnabledConfiguration.isTracingEnabled());
+      CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
+      CoverageSuite suite = coverageEnabledConfiguration.getCurrentCoverageSuite();
+      return suite == null || !suite.getRunner().isCoverageByTestApplicable() || !suite.isCoverageByTestEnabled();
     }
     return false;
   }
 
   @Override
-  public boolean isApplicableFor(@NotNull final RunConfigurationBase configuration) {
+  public boolean isApplicableFor(final @NotNull RunConfigurationBase configuration) {
     return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 

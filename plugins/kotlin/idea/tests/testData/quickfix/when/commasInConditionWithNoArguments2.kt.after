@@ -6,4 +6,6 @@ fun test(a: Boolean, b: Boolean, c: Boolean) {
         else -> "e"
     }
 }
-/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

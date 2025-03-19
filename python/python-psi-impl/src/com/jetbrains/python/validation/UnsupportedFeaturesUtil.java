@@ -42,7 +42,7 @@ public final class UnsupportedFeaturesUtil {
 
   private static void fillTestCaseMethods() throws IOException {
     final Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/class_method_versions.xml"))) {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/class_method_versions.xml"))) {
       final XMLReader xr = XMLReaderFactory.createXMLReader();
       final ClassMethodsParser parser = new ClassMethodsParser();
       xr.setContentHandler(parser);
@@ -55,7 +55,7 @@ public final class UnsupportedFeaturesUtil {
 
   private static void fillMaps() throws IOException {
     Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
-    try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/versions.xml"))) {
+    try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/versions.xml"))) {
       XMLReader xr = XMLReaderFactory.createXMLReader();
       VersionsParser parser = new VersionsParser();
       xr.setContentHandler(parser);

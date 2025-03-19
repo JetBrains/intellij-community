@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -14,9 +14,12 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -43,9 +46,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySupport {
-  @NonNls private static final String PATTERNS_EL_NAME = "patterns";
-  @NonNls private static final String PATTERN_EL_NAME = "pattern";
-  @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
+  private static final @NonNls String PATTERNS_EL_NAME = "patterns";
+  private static final @NonNls String PATTERN_EL_NAME = "pattern";
+  private static final @NonNls String TEST_CLASS_ATT_NAME = "testClass";
+
+  private static final Logger LOG = Logger.getInstance(TestNGConfiguration.class);
 
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
@@ -62,10 +67,18 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     }
 
     @Override
-    @Nullable
-    public PsiPackage getPsiElement() {
+    public @Nullable PsiPackage getPsiElement() {
       final String qualifiedName = data.getPackageName();
-      return qualifiedName != null ? JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName) : null;
+      if (qualifiedName == null) return null;
+      try {
+        return DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(() -> {
+          return JavaPsiFacade.getInstance(getProject()).findPackage(qualifiedName);
+        });
+      }
+      catch (IndexNotReadyException e) {
+        LOG.error(e);
+        return null;
+      }
     }
 
     @Override
@@ -83,12 +96,18 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     }
 
     @Override
-    @Nullable
-    public PsiClass getPsiElement() {
+    public @Nullable PsiClass getPsiElement() {
       final String qualifiedName = data.getMainClassName();
-      return qualifiedName != null
-             ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project))
-             : null;
+      if (qualifiedName == null) return null;
+      try {
+        return DumbService.getInstance(getProject()).computeWithAlternativeResolveEnabled(() -> {
+          return JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, GlobalSearchScope.allScope(project));
+        });
+      }
+      catch (IndexNotReadyException e) {
+        LOG.error(e);
+        return null;
+      }
     }
 
     @Override
@@ -116,13 +135,12 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     this.project = project;
   }
 
-  @Nullable
-  public RemoteConnectionCreator getRemoteConnectionCreator() {
+  public @Nullable RemoteConnectionCreator getRemoteConnectionCreator() {
     return null;
   }
 
   @Override
-  public TestNGRunnableState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+  public TestNGRunnableState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -186,8 +204,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return data.getEnvs();
   }
 
@@ -212,8 +229,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
    }
 
    @Override
-   @Nullable
-   public String getAlternativeJrePath() {
+   public @Nullable String getAlternativeJrePath() {
      return ALTERNATIVE_JRE_PATH != null ? new AlternativeJrePathConverter().fromString(ALTERNATIVE_JRE_PATH) : null;
    }
 
@@ -321,8 +337,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   }
 
   @Override
-  @NotNull
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<TestNGConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
                     new TestNGConfigurationEditor<>(getProject()));
@@ -430,8 +445,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
   }
 
   @Override
-  @Nullable
-  public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
+  public @Nullable RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
     if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       if (!(element instanceof PsiPackage)) return null;
       final RefactoringElementListener listener = RefactoringListeners.getListener((PsiPackage)element, myPackage);
@@ -451,7 +465,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
       if (!method.getContainingClass().equals(myClass.getPsiElement())) return null;
       class Listener extends RefactoringElementAdapter implements UndoRefactoringElementListener {
         @Override
-        public void elementRenamedOrMoved(@NotNull final PsiElement newElement) {
+        public void elementRenamedOrMoved(final @NotNull PsiElement newElement) {
           data.setTestMethod(PsiLocation.fromPsiElement((PsiMethod)newElement));
         }
 
@@ -472,9 +486,8 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     return false;
   }
 
-  @NotNull
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
+  public @NotNull SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return new TestNGConsoleProperties(this, executor);
   }
 
@@ -483,8 +496,7 @@ public class TestNGConfiguration extends JavaTestConfigurationWithDiscoverySuppo
     return 0x1;
   }
 
-  @Nullable
-  public Set<String> calculateGroupNames() {
+  public @Nullable Set<String> calculateGroupNames() {
     if (!TestType.GROUP.getType().equals(data.TEST_OBJECT)) {
       return null;
     }

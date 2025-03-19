@@ -8,6 +8,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class DataStreamUtil {
   public static Entry readEntry(DataInput in) throws IOException {
     int type = DataInputOutputUtil.readINT(in);
@@ -74,8 +76,7 @@ public final class DataStreamUtil {
     change.write(out);
   }
 
-  @NotNull
-  public static String readString(DataInput in) throws IOException {
+  public static @NotNull String readString(DataInput in) throws IOException {
     return IOUtil.readUTF(in);
   }
 
@@ -83,8 +84,7 @@ public final class DataStreamUtil {
     IOUtil.writeUTF(out, s);
   }
 
-  @Nullable
-  public static String readStringOrNull(DataInput in) throws IOException {
+  public static @Nullable String readStringOrNull(DataInput in) throws IOException {
     if (!in.readBoolean()) return null;
     return readString(in);
   }

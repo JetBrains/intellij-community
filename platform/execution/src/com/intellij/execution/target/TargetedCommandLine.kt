@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
 import com.intellij.execution.CommandLineUtil
@@ -6,10 +6,14 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.util.execution.ParametersListUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.collectResults
+import org.jetbrains.concurrency.asPromise
+import org.jetbrains.concurrency.await
 import java.nio.charset.Charset
 import java.util.concurrent.TimeoutException
+import kotlin.time.Duration.Companion.nanoseconds
 
 /**
  * Command line that can be executed on any [TargetEnvironment].
@@ -24,7 +28,7 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
                                                private val _workingDirectory: TargetValue<String>,
                                                private val _inputFilePath: TargetValue<String>,
                                                val charset: Charset,
-                                               private val parameters: List<TargetValue<String>>,
+                                               private val parameters: List<TargetValue<out String?>>,
                                                private val environment: Map<String, TargetValue<String>>,
                                                val isRedirectErrorStream: Boolean,
                                                val ptyOptions: PtyOptions?) {
@@ -35,34 +39,61 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
   fun getCommandPresentation(target: TargetEnvironment): String {
     val exePath = exePath.targetValue.resolve("exe path")
                   ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.exe.path.not.set"))
-    val parameters = parameters.map { it.targetValue.resolve("parameter") }
+    val parameters = parameters.mapNotNull { it.targetValue.resolve("parameter") }
     val targetPlatform = target.targetPlatform.platform
     return CommandLineUtil.toCommandLine(ParametersListUtil.escape(exePath), parameters, targetPlatform).joinToString(separator = " ")
   }
 
+  /**
+   * Despite the word "synchronously", this method doesn't block current thread for unpredictable time.
+   * It throws [ExecutionException] if any of the underlying futures haven't succeeded.
+   */
   @Throws(ExecutionException::class)
-  fun collectCommandsSynchronously(): List<String> =
+  fun collectCommandsSynchronously(): List<String> = @Suppress("RAW_RUN_BLOCKING") runBlocking {
     try {
-      collectCommands().blockingGet(0)!!
+      withTimeout(1.nanoseconds) {
+        collectCommandsImpl()
+      }
     }
-    catch (e: java.util.concurrent.ExecutionException) {
-      throw ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e)
+    catch (e: TimeoutCancellationException) {
+      // By the time of writing this code, it wasn't know if there had been any caller that expects something from
+      // causes of ExecutionException or not. Anyway, the class hierarchy persisted changes.
+      throw ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), TimeoutException(e.message))
     }
-    catch (e: TimeoutException) {
-      throw ExecutionException(ExecutionBundle.message("targeted.command.line.collector.failed"), e)
+    catch (e: RuntimeException) {
+      throw e
     }
+    catch (e: Exception) {
+      // This wrapping into java.util.concurrent.ExecutionException is kept for possible backward compatibility,
+      // though no usages of this structure have been checked.
+      throw ExecutionException(
+        ExecutionBundle.message("targeted.command.line.collector.failed"),
+        java.util.concurrent.ExecutionException(e),
+      )
+    }
+  }
 
   fun collectCommands(): Promise<List<String>> {
-    val promises: MutableList<Promise<String>> = ArrayList(parameters.size + 1)
-    promises.add(exePath.targetValue.then { command: String? ->
-      checkNotNull(command) { "Resolved value for exe path is null" }
-      command
-    })
-    for (parameter in parameters) {
-      promises.add(parameter.targetValue)
-    }
-    return promises.collectResults()
+    // Dispatchers.Unconfined is used in order to make the returning Promise immediately completed if all underlying promises
+    // have already been completed at the moment of the function call. Otherwise, `collectCommands().blockingGet(0)` wouldn't work.
+    val dispatcher = Dispatchers.Unconfined
+
+    @OptIn(DelicateCoroutinesApi::class) // When it used Futures, it didn't have any scope anyway.
+    return GlobalScope.async(dispatcher) { collectCommandsImpl() }.asCompletableFuture().asPromise()
   }
+
+  private suspend fun collectCommandsImpl(): List<String> =
+    buildList {
+      add(exePath.targetValue.await().also { command: String? ->
+        checkNotNull(command) { "Resolved value for exe path is null" }
+      })
+      for (parameter in parameters) {
+        val arg = parameter.targetValue.await()
+        if (arg != null) {
+          add(arg)
+        }
+      }
+    }
 
   @get:Throws(ExecutionException::class)
   val workingDirectory: String?
@@ -90,7 +121,7 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
 
   companion object {
     @Throws(ExecutionException::class)
-    private fun Promise<String>.resolve(debugName: String): String? =
+    private fun Promise<out String?>.resolve(debugName: String): String? =
       try {
         blockingGet(0)
       }

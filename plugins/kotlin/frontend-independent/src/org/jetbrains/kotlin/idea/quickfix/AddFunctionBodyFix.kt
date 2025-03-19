@@ -1,35 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class AddFunctionBodyFix(element: KtFunction) : KotlinPsiOnlyQuickFixAction<KtFunction>(element) {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.function.body")
-    override fun getText() = familyName
+class AddFunctionBodyFix(element: KtFunction) : PsiUpdateModCommandAction<KtFunction>(element) {
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.function.body")
 
-    override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        val element = element ?: return false
-        return !element.hasBody()
-    }
+    override fun getPresentation(context: ActionContext, element: KtFunction): Presentation? =
+        Presentation.of(familyName).takeIf { !element.hasBody() }
 
-    public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
+    override fun invoke(context: ActionContext, element: KtFunction, updater: ModPsiUpdater) {
         if (!element.hasBody()) {
-            element.add(KtPsiFactory(project).createEmptyBody())
+            element.add(KtPsiFactory(context.project).createEmptyBody())
         }
     }
 
     companion object : QuickFixesPsiBasedFactory<KtFunction>(KtFunction::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: KtFunction): List<IntentionAction> = listOfNotNull(AddFunctionBodyFix(psiElement))
+        override fun doCreateQuickFix(psiElement: KtFunction): List<IntentionAction> =
+            listOfNotNull(
+                AddFunctionBodyFix(psiElement).asIntention()
+            )
     }
 }

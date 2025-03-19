@@ -26,7 +26,7 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 
 import javax.swing.*;
 
-public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {

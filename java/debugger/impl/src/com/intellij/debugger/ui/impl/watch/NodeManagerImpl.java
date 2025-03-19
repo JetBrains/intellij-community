@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -48,8 +48,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   @Override
-  @NotNull
-  public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+  public @NotNull DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
     return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
   }
@@ -63,8 +62,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
   @Override
-  @NotNull
-  public DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
+  public @NotNull DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
 
@@ -92,13 +90,11 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
   }
 
 
-  @Nullable
-  public String getContextKey(final StackFrameProxyImpl frame) {
+  public @Nullable String getContextKey(final StackFrameProxyImpl frame) {
     return getContextKeyForFrame(frame);
   }
 
-  @Nullable
-  public static String getContextKeyForFrame(final StackFrameProxyImpl frame) {
+  public static @Nullable String getContextKeyForFrame(final StackFrameProxyImpl frame) {
     if (frame == null) {
       return null;
     }

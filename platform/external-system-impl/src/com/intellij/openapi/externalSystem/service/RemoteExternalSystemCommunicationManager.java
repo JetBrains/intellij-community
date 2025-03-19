@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.configurationStore.StorageUtilKt;
@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.Service;
@@ -29,7 +28,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkPr
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -48,6 +46,7 @@ import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +61,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.application.PathManager.getJarPathForClass;
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 public final class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
   private static final Logger LOG = Logger.getInstance(RemoteExternalSystemCommunicationManager.class);
@@ -71,13 +71,13 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
   private final AtomicReference<RemoteExternalSystemProgressNotificationManager> myExportedNotificationManager
     = new AtomicReference<>();
 
-  @NotNull private final ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
+  private final @NotNull ThreadLocal<ProjectSystemId> myTargetExternalSystemId = new ThreadLocal<>();
 
-  @NotNull private final ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
-  @NotNull private final RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
+  private final @NotNull ExternalSystemProgressNotificationManagerImpl                    myProgressManager;
+  private final @NotNull RemoteProcessSupport<Object, RemoteExternalSystemFacade, String> mySupport;
 
   public RemoteExternalSystemCommunicationManager() {
-    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ApplicationManager.getApplication().getService(ExternalSystemProgressNotificationManager.class);
+    myProgressManager = (ExternalSystemProgressNotificationManagerImpl)ExternalSystemProgressNotificationManager.getInstance();
     mySupport = new RemoteProcessSupport<>(RemoteExternalSystemFacade.class) {
       @Override
       protected void fireModificationCountChanged() {
@@ -152,6 +152,12 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         params.getVMParametersList().addParametersString(
           "-Dsun.rmi.transport.connectionTimeout=" + TimeUnit.HOURS.toMillis(1)
         );
+        // Context propagation depends on kotlinx.coroutines library.
+        // We don't want to pass it for context propagation only, so until there is a significant reason to do it,
+        // we would rather disable context propagation completely within the spawned process
+        params.getVMParametersList().addParametersString(
+          "-Dide.propagate.context=false"
+        );
         final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
         if (debugPort != null) {
           params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=" + debugPort);
@@ -173,14 +179,12 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
       }
 
       @Override
-      @NotNull
-      public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
+      public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
         ProcessHandler processHandler = startProcess();
         return new DefaultExecutionResult(processHandler);
       }
 
-      @NotNull
-      private OSProcessHandler startProcess() throws ExecutionException {
+      private @NotNull OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
         OSProcessHandler processHandler = new OSProcessHandler(commandLine);
@@ -190,9 +194,8 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
     };
   }
 
-  @Nullable
   @Override
-  public RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId)
+  public @Nullable RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId)
     throws Exception
   {
     myTargetExternalSystemId.set(externalSystemId);
@@ -201,7 +204,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
       facade = mySupport.acquire(this, id);
     }
     finally {
-      myTargetExternalSystemId.set(null);
+      myTargetExternalSystemId.remove();
     }
     if (facade == null) {
       return null;
@@ -226,8 +229,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
     return wrapResolverDeserialization(facade);
   }
 
-  @NotNull
-  private static RemoteExternalSystemFacade wrapResolverDeserialization(@NotNull RemoteExternalSystemFacade facade) {
+  private static @NotNull RemoteExternalSystemFacade wrapResolverDeserialization(@NotNull RemoteExternalSystemFacade facade) {
     return new ResolverDeserializationWrapper(facade);
   }
 
@@ -239,12 +241,7 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
 
   @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
-    RemoteExternalSystemFacade toCheck = facade;
-    if (facade instanceof ExternalSystemFacadeWrapper) {
-      toCheck = ((ExternalSystemFacadeWrapper)facade).getDelegate();
-
-    }
-    if (toCheck instanceof InProcessExternalSystemFacadeImpl) {
+    if (facade instanceof InProcessExternalSystemFacadeImpl) {
       return false;
     }
     try {

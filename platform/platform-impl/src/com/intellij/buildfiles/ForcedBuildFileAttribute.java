@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.buildfiles;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +29,7 @@ public final class ForcedBuildFileAttribute {
     return frameworkId.equals(getFrameworkIdOfBuildFile(file));
   }
 
-  @Nullable
-  public static String getFrameworkIdOfBuildFile(VirtualFile file) {
+  public static @Nullable String getFrameworkIdOfBuildFile(VirtualFile file) {
     if (file instanceof NewVirtualFile) {
       try (DataInputStream is = FRAMEWORK_FILE_ATTRIBUTE.readFileAttribute(file)) {
         if (is != null) {
@@ -50,13 +49,14 @@ public final class ForcedBuildFileAttribute {
 
 
   public static void forceFileToFramework(VirtualFile file, String frameworkId, boolean value) {
-    //belongs to other framework - do not override!
+    // belongs to another framework - do not override!
     String existingFrameworkId = getFrameworkIdOfBuildFile(file);
     if (!StringUtil.isEmpty(existingFrameworkId) && !frameworkId.equals(existingFrameworkId)) {
       return;
     }
 
-    if (value) {//write framework
+    if (value) {
+      // write a framework
       forceBuildFile(file, frameworkId);
     }
     else {

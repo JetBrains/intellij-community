@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -57,9 +58,11 @@ public interface QuickFixTestCase {
   void checkPreviewAndInvoke(@NotNull IntentionAction action, @NotNull String previewFilePath);
 
   @NotNull
+  @Unmodifiable
   List<HighlightInfo> doHighlighting();
 
   @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableActions();
 
   void bringRealEditorBack();

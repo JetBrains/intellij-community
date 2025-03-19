@@ -1,29 +1,30 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.getWarningIcon
 import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FileStatus.*
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.merge.MergeConflictManager
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Checks if there are unresolved conflicts selected to commit.
  */
+@ApiStatus.Internal
 class UnresolvedMergeCheckFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     UnresolvedMergeCheckHandler(panel, commitContext)
 }
 
-private val MERGE_STATUSES = setOf(MERGE, MERGED_WITH_BOTH_CONFLICTS, MERGED_WITH_CONFLICTS, MERGED_WITH_PROPERTY_CONFLICTS)
-
 private class UnresolvedMergeCheckHandler(
   private val panel: CheckinProjectPanel,
   private val commitContext: CommitContext
-) : CheckinHandler(), CommitCheck {
+) : CheckinHandler(), CommitCheck, DumbAware {
 
   override fun isEnabled(): Boolean = true
 
@@ -35,7 +36,7 @@ private class UnresolvedMergeCheckHandler(
       .firstOrNull()
     if (providerResult != null) return createProblemFor(providerResult)
 
-    val hasUnresolvedConflicts = commitInfo.committedChanges.any { it.fileStatus in MERGE_STATUSES }
+    val hasUnresolvedConflicts = commitInfo.committedChanges.any { MergeConflictManager.isMergeConflict(it.fileStatus) }
     if (!hasUnresolvedConflicts) return null
 
     val answer = showYesNoDialog(

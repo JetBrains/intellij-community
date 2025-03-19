@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +23,7 @@ public final class SourceCodeCompressor {
   }
 
   static {
-    @NonNls final String preset_buf_string =
+    final @NonNls String preset_buf_string =
       "                   ;\r\n\r\n\r\n\r\n\n\n\n { {\r\n }\r\n = == != < > >= <= ? : ++ += -- -= [] [i] () ()) ())) (); ()); ())); () {" +
       "// /* /** */ * opyright (c)package com.import java.utilimport javax.swingimport java.awt" +
       "import com.intellijimport org.import gnu.*;new super(this(public interface extends implements " +
@@ -94,7 +94,7 @@ public final class SourceCodeCompressor {
     }
   }
 
-  private static class VaultOutputStream extends ByteArrayOutputStream {
+  private static final class VaultOutputStream extends ByteArrayOutputStream {
 
     private static final int MIN_BUF_SIZE = 0x10000;
     private final byte[] MIN_BUFFER;

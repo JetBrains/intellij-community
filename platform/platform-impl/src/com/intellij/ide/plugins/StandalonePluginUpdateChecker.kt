@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowLogAction
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -12,19 +11,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
 import java.io.IOException
@@ -36,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 
 sealed class PluginUpdateStatus {
-  val timestamp = System.currentTimeMillis()
+  val timestamp: Long = System.currentTimeMillis()
 
   object LatestVersionInstalled : PluginUpdateStatus()
 
@@ -77,10 +75,13 @@ sealed class PluginUpdateStatus {
   }
 }
 
+/**
+ * When [notificationGroup] is null, [StandalonePluginUpdateChecker] doesn't create any notifications about available plugin updates.
+ */
 open class StandalonePluginUpdateChecker(
   val pluginId: PluginId,
   private val updateTimestampProperty: String,
-  private val notificationGroup: NotificationGroup,
+  private val notificationGroup: NotificationGroup?,
   private val notificationIcon: Icon?
 ): Disposable {
 
@@ -101,7 +102,7 @@ open class StandalonePluginUpdateChecker(
   open fun verifyUpdate(status: PluginUpdateStatus.Update): PluginUpdateStatus = status
 
   fun pluginUsed() {
-    if (!UpdateSettings.getInstance().isCheckNeeded) return
+    if (!UpdateSettings.getInstance().isPluginsCheckNeeded) return
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     val lastUpdateTime = PropertiesComponent.getInstance().getLong(updateTimestampProperty, 0L)
@@ -119,7 +120,7 @@ open class StandalonePluginUpdateChecker(
   }
 
   protected fun queueUpdateCheck(callback: (PluginUpdateStatus) -> Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (checkQueued.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
       alarm.addRequest(
         {
@@ -143,7 +144,7 @@ open class StandalonePluginUpdateChecker(
     } else {
       try {
         updateStatus = checkUpdatesInMainRepository()
-        for (host in RepositoryHelper.getPluginHosts().filterNotNull()) {
+        for (host in RepositoryHelper.getCustomPluginRepositoryHosts()) {
           val customUpdateStatus = checkUpdatesInCustomRepository(host)
           updateStatus = updateStatus.mergeWith(customUpdateStatus)
         }
@@ -181,17 +182,8 @@ open class StandalonePluginUpdateChecker(
   private fun checkUpdatesInMainRepository(): PluginUpdateStatus {
     val buildNumber = ApplicationInfo.getInstance().apiVersion
     val os = URLEncoder.encode(SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION, CharsetToolkit.UTF8)
-    val uid = PermanentInstallationID.get()
     val pluginId = pluginId.idString
-    var url =
-      "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
-
-    if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
-      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
-      if (machineId != null) {
-        url += "&${UpdateChecker.MACHINE_ID_PARAMETER}=$machineId"
-      }
-    }
+    val url = "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os"
 
     val responseDoc = HttpRequests.request(url).connect { JDOMUtil.load(it.inputStream) }
     if (responseDoc.name != "plugin-repository") {
@@ -247,6 +239,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
+    if (notificationGroup == null) return
+
     val pluginName = findPluginDescriptor().name
     notificationGroup
       .createNotification(
@@ -317,6 +311,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyNotInstalled(message: String?) {
+    if (notificationGroup == null) return
+
     val content = when (message) {
       null -> IdeBundle.message("plugin.updater.not.installed")
       else -> IdeBundle.message("plugin.updater.not.installed.misc", message)
@@ -332,12 +328,12 @@ open class StandalonePluginUpdateChecker(
       .notify(null)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   companion object {
     private const val INITIAL_UPDATE_DELAY = 2000L
     @JvmStatic
-    protected val CACHED_REQUEST_DELAY = TimeUnit.DAYS.toMillis(1)
+    protected val CACHED_REQUEST_DELAY: Long = TimeUnit.DAYS.toMillis(1)
     private val LOG = Logger.getInstance(StandalonePluginUpdateChecker::class.java)
   }
 }

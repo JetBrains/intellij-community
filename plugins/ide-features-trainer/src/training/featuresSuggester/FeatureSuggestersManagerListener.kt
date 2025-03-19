@@ -17,6 +17,6 @@ interface FeatureSuggestersManagerListener : EventListener {
   /**
    * This method is called after suggestion is shown
    */
-  fun featureFound(suggestion: PopupSuggestion) {
+  fun featureFound(suggestion: UiSuggestion) {
   }
 }

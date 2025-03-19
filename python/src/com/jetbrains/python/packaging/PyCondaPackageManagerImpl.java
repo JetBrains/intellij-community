@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -9,28 +9,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
-  @Nullable private volatile List<PyPackage> mySideCache = null;
+  private volatile @Nullable List<PyPackage> mySideCache = null;
 
   public static final String PYTHON = "python";
   public boolean useConda = true;
 
-  public boolean useConda() {
-    return useConda;
-  }
-
-  public void useConda(boolean conda) {
-    useConda = conda;
-  }
-
-  PyCondaPackageManagerImpl(@NotNull final Sdk sdk) {
+  PyCondaPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);
   }
 
@@ -53,7 +47,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     }
   }
 
-  private ProcessOutput getCondaOutput(@NotNull final String command, List<String> arguments) throws ExecutionException {
+  private ProcessOutput getCondaOutput(final @NotNull String command, List<String> arguments) throws ExecutionException {
     final Sdk sdk = getSdk();
 
     final String path = getCondaDirectory();
@@ -65,8 +59,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return PyCondaRunKt.runConda(sdk, parameters);
   }
 
-  @Nullable
-  private String getCondaDirectory() {
+  private @Nullable String getCondaDirectory() {
     final VirtualFile condaDirectory = PythonSdkUtil.getCondaDirectory(getSdk());
     return condaDirectory == null ? null : condaDirectory.getPath();
   }
@@ -139,9 +132,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return new ArrayList<>(packages);
   }
 
-  @NotNull
-  public static String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
-                                        @NotNull String version) throws ExecutionException {
+  public static @NotNull String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
+                                                 @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) {
       throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.conda"), "Conda", Collections.emptyList(),
                                      new ProcessOutput());
@@ -150,14 +142,13 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final ArrayList<String> parameters = Lists.newArrayList("create", "-p", destinationDir, "-y", "python=" + version);
 
     PyCondaRunKt.runConda(condaExecutable, parameters);
-    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
+    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(destinationDir));
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
-    return (binary != null) ? binary : binaryFallback;
+    return (binary != null) ? binary.toString() : binaryFallback;
   }
 
-  @Nullable
   @Override
-  public List<PyPackage> getPackages() {
+  public @Nullable List<PyPackage> getPackages() {
     final List<PyPackage> packagesCache = mySideCache;
     if (packagesCache == null) return null;
     final List<PyPackage> packages = Lists.newArrayList(packagesCache);

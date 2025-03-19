@@ -108,8 +108,8 @@ class LightClassFromTextTest8 : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals(exampleClass, (f.returnType as PsiClassType).resolve())
     }
 
-    fun testHeaderDeclarations() {
-        val contextFile = myFixture.configureByText("Header.kt", "header class Foo\n\nheader fun foo()\n") as KtFile
+    fun testExpectDeclarations() {
+        val contextFile = myFixture.configureByText("Header.kt", "expect class Foo\n\nexpect fun foo()\n") as KtFile
         val headerClass = contextFile.declarations.single { it is KtClassOrObject }
         assertEquals(0, headerClass.toLightElements().size)
         val headerFunction = contextFile.declarations.single { it is KtNamedFunction }

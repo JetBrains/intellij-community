@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -10,15 +11,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
@@ -35,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
 final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static final Logger LOG = Logger.getInstance(IdeScriptEngineManagerImpl.class);
 
-  private final SynchronizedClearableLazy<Map<EngineInfo, ScriptEngineFactory>> myFactories = new SynchronizedClearableLazy(() -> {
+  private final SynchronizedClearableLazy<Map<EngineInfo, ScriptEngineFactory>> myFactories = new SynchronizedClearableLazy<>(() -> {
     long start = System.nanoTime();
     Map<EngineInfo, ScriptEngineFactory> map = calcFactories();
     LOG.info(TimeoutUtil.getDurationMillis(start) + " ms to enumerate javax.scripting engines on " +
@@ -111,29 +113,38 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
   private static @NotNull Map<EngineInfo, ScriptEngineFactory> calcFactories() {
     // bundled factories from java modules (Groovy) and from plugins
     return JBIterable.of(PluginManagerCore.getPlugins())
-      .flatten(o1 -> {
+      .flatten(o -> {
         try {
-          return new ScriptEngineManager(o1.getClassLoader()).getEngineFactories();
+          return new ScriptEngineManager(o.getClassLoader()).getEngineFactories();
         }
-        catch (Exception e) {
-          LOG.warn(e);
+        catch (Throwable e) {
+          LOG.error(new PluginException(e, o.getPluginId()));
           return null;
         }
       })
       .unique(o -> o.getClass().getName())
-      .toMap(factory -> {
-        Class<? extends ScriptEngineFactory> aClass = factory.getClass();
-        ClassLoader classLoader = aClass.getClassLoader();
-        PluginDescriptor plugin = classLoader instanceof PluginAwareClassLoader
-                                  ? ((PluginAwareClassLoader)classLoader).getPluginDescriptor() : null;
-        return new EngineInfo(factory.getEngineName(),
-                              factory.getEngineVersion(),
-                              factory.getLanguageName(),
-                              factory.getLanguageVersion(),
-                              factory.getExtensions(),
-                              aClass.getName(),
-                              plugin);
-      }, o -> o);
+      .filterMap(factory -> {
+        try {
+          Class<? extends ScriptEngineFactory> aClass = factory.getClass();
+          ClassLoader classLoader = aClass.getClassLoader();
+          PluginDescriptor plugin = classLoader instanceof PluginAwareClassLoader
+                                    ? ((PluginAwareClassLoader)classLoader).getPluginDescriptor() : null;
+          EngineInfo info = new EngineInfo(
+            factory.getEngineName(),
+            factory.getEngineVersion(),
+            factory.getLanguageName(),
+            factory.getLanguageVersion(),
+            factory.getExtensions(),
+            aClass.getName(),
+            plugin);
+          return Pair.create(info, factory);
+        }
+        catch (Throwable e) {
+          LOG.error(PluginException.createByClass(e, factory.getClass()));
+          return null;
+        }
+      })
+      .toMap(o -> o.first, o -> o.second);
   }
 
   private static @Nullable IdeScriptEngine createIdeScriptEngine(@Nullable ScriptEngineFactory scriptEngineFactory,
@@ -252,7 +263,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     }
   }
 
-  static class AllPluginsLoader extends ClassLoader {
+  static final class AllPluginsLoader extends ClassLoader {
     static final AllPluginsLoader INSTANCE = new AllPluginsLoader();
 
     final ConcurrentMap<Long, ClassLoader> myLuckyGuess = new ConcurrentHashMap<>();
@@ -341,28 +352,32 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     @Override
     protected Enumeration<URL> findResources(String name) throws IOException {
       if (isAllowedPluginResource(name)) {
-        Set<URL> result = null;
+        Map<String, URL> result = null;
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           ClassLoader l = descriptor.getPluginClassLoader();
           Enumeration<URL> urls = l == null ? null : l.getResources(name);
           if (urls == null || !urls.hasMoreElements()) continue;
-          if (result == null) result = new LinkedHashSet<>();
-          ContainerUtil.addAll(result, urls);
+          if (result == null) result = new LinkedHashMap<>();
+          while (urls.hasMoreElements()) {
+            URL url = urls.nextElement();
+            result.put(url.toString(), url);
+          }
         }
         if (result != null) {
-          return Collections.enumeration(result);
+          return Collections.enumeration(result.values());
         }
       }
       return getClass().getClassLoader().getResources(name);
     }
 
     // used by kotlin engine
-    public @NotNull List<URL> getUrls() {
+    public @Unmodifiable @NotNull List<URL> getUrls() {
       return JBIterable.of(PluginManagerCore.getPlugins())
         .map(PluginDescriptor::getClassLoader)
         .unique()
         .flatMap(o -> {
           try {
+            //noinspection unchecked
             return (List<URL>)o.getClass().getMethod("getUrls").invoke(o);
           }
           catch (Exception e) {

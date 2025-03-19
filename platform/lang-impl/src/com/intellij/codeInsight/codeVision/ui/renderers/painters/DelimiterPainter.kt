@@ -5,10 +5,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 
+@ApiStatus.Internal
 class DelimiterPainter : ICodeVisionGraphicPainter {
   override fun paint(
     editor: Editor,

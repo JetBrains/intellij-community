@@ -399,13 +399,11 @@ public final class ControlFlowUtils {
     return element instanceof GrLoopStatement;
   }
 
-  @Nullable
-  private static GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
+  private static @Nullable GrStatement getContainingStatement(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class);
   }
 
-  @Nullable
-  private static GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
+  private static @Nullable GroovyPsiElement getContainingStatementOrBlock(@NotNull GroovyPsiElement statement) {
     return PsiTreeUtil.getParentOfType(statement, GrStatement.class, GrCodeBlock.class);
   }
 
@@ -418,13 +416,11 @@ public final class ControlFlowUtils {
     return statement == lastStatement;
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(@Nullable GroovyPsiElement element) {
+  public static @NotNull List<GrStatement> collectReturns(@Nullable GroovyPsiElement element) {
     return collectReturns(element, element instanceof GrCodeBlock || element instanceof GroovyFile || element instanceof GrLambdaBody);
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(@Nullable GroovyPsiElement element, final boolean allExitPoints) {
+  public static @NotNull List<GrStatement> collectReturns(@Nullable GroovyPsiElement element, final boolean allExitPoints) {
     if (element == null) return Collections.emptyList();
 
     final GroovyControlFlow flow;
@@ -439,9 +435,9 @@ public final class ControlFlowUtils {
 
   // stateful class
   private static final class ExitPointCollector implements ExitPointVisitor {
-    @Nullable private final Class<? extends Instruction> instructionFilter;
-    @Nullable private final Class<? extends GrStatement> statementFilter;
-    @NotNull private final List<GrStatement> collector;
+    private final @Nullable Class<? extends Instruction> instructionFilter;
+    private final @Nullable Class<? extends GrStatement> statementFilter;
+    private final @NotNull List<GrStatement> collector;
 
     private ExitPointCollector(@Nullable Class<? extends Instruction> instructionFilter,
                                @Nullable Class<? extends GrStatement> statementFilter) {
@@ -465,16 +461,14 @@ public final class ControlFlowUtils {
     }
   }
 
-  @NotNull
-  public static List<GrStatement> collectReturns(Instruction @NotNull [] flow, @NotNull GroovyPsiElement element, final boolean allExitPoints) {
+  public static @NotNull List<GrStatement> collectReturns(Instruction @NotNull [] flow, @NotNull GroovyPsiElement element, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
     var collector = new ExitPointCollector(allExitPoints ? MaybeReturnInstruction.class : null, GrReturnStatement.class);
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
     return collector.getCollectedStatements();
   }
 
-  @NotNull
-  public static List<GrStatement> collectYields(Instruction @NotNull [] flow) {
+  public static @NotNull List<GrStatement> collectYields(Instruction @NotNull [] flow) {
     boolean[] visited = new boolean[flow.length];
     var collector = new ExitPointCollector(MaybeYieldInstruction.class, GrYieldStatement.class);
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, collector);
@@ -487,8 +481,7 @@ public final class ControlFlowUtils {
     });
   }
 
-  @Nullable
-  public static GrExpression extractReturnExpression(GrStatement returnStatement) {
+  public static @Nullable GrExpression extractReturnExpression(GrStatement returnStatement) {
     if (returnStatement instanceof GrReturnStatement) return ((GrReturnStatement)returnStatement).getReturnValue();
     if (returnStatement instanceof GrExpression) return (GrExpression)returnStatement;
     return null;
@@ -520,8 +513,7 @@ public final class ControlFlowUtils {
     return builder.toString();
   }
 
-  @Nullable
-  public static ReadWriteVariableInstruction findRWInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
+  public static @Nullable ReadWriteVariableInstruction findRWInstruction(final GrReferenceExpression refExpr, final Instruction[] flow) {
     for (Instruction instruction : flow) {
       if (instruction instanceof ReadWriteVariableInstruction && instruction.getElement() == refExpr) {
         return (ReadWriteVariableInstruction)instruction;
@@ -530,8 +522,7 @@ public final class ControlFlowUtils {
     return null;
   }
 
-  @Nullable
-  public static Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
+  public static @Nullable Instruction findNearestInstruction(PsiElement place, Instruction[] flow) {
     List<Instruction> applicable = new ArrayList<>();
     for (Instruction instruction : flow) {
       final PsiElement element = instruction.getElement();
@@ -653,7 +644,7 @@ public final class ControlFlowUtils {
     boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue);
   }
 
-  public static Set<GrExpression> getAllReturnValues(@NotNull final GrControlFlowOwner block) {
+  public static Set<GrExpression> getAllReturnValues(final @NotNull GrControlFlowOwner block) {
     return CachedValuesManager.getCachedValue(block, () -> {
       final Set<GrExpression> result = new HashSet<>();
       visitAllExitPoints(block, new ExitPointVisitor() {
@@ -726,8 +717,7 @@ public final class ControlFlowUtils {
     return true;
   }
 
-  @Nullable
-  public static GrControlFlowOwner findControlFlowOwner(PsiElement place) {
+  public static @Nullable GrControlFlowOwner findControlFlowOwner(PsiElement place) {
     place = place.getContext();
     while (place != null) {
       if (place instanceof GrControlFlowOwner && ((GrControlFlowOwner)place).isTopControlFlowOwner()) return (GrControlFlowOwner)place;
@@ -806,8 +796,7 @@ public final class ControlFlowUtils {
     return result;
   }
 
-  @Nullable
-  public static Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
+  public static @Nullable Instruction findInstruction(final PsiElement place, Instruction[] controlFlow) {
     return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
@@ -830,17 +819,15 @@ public final class ControlFlowUtils {
     }
   }
 
-  @NotNull
-  public static List<@NotNull BitSet> inferWriteAccessMap(final GroovyControlFlow groovyFlow, final GrVariable var) {
+  public static @NotNull List<@NotNull BitSet> inferWriteAccessMap(final GroovyControlFlow groovyFlow, final GrVariable var) {
 
     BitSet neutral = new BitSet(groovyFlow.getFlow().length);
 
     final Semilattice<BitSet> sem = new Semilattice<>() {
 
-      @NotNull
       @Override
-      public BitSet join(@NotNull List<? extends BitSet> ins) {
-        if (ins.size() == 0) {
+      public @NotNull BitSet join(@NotNull List<? extends BitSet> ins) {
+        if (ins.isEmpty()) {
           return neutral;
         }
         if (ins.size() == 1) {

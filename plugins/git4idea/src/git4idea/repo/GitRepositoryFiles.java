@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -36,11 +37,12 @@ public final class GitRepositoryFiles {
   private static final @NonNls String INFO = "info";
   private static final @NonNls String INFO_EXCLUDE = INFO + "/exclude";
   private static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
-  private static final @NonNls String MERGE_MSG = "MERGE_MSG";
+  public static final @NonNls String MERGE_MSG = "MERGE_MSG";
   private static final @NonNls String ORIG_HEAD = "ORIG_HEAD";
   private static final @NonNls String REBASE_APPLY = "rebase-apply";
   private static final @NonNls String REBASE_MERGE = "rebase-merge";
   private static final @NonNls String PACKED_REFS = "packed-refs";
+  private static final @NonNls String REFTABLE = "reftable";
   private static final @NonNls String REFS = "refs";
   private static final @NonNls String REVERT_HEAD = "REVERT_HEAD";
   private static final @NonNls String HEADS = "heads";
@@ -55,6 +57,9 @@ public final class GitRepositoryFiles {
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
   private static final @NonNls String WORKTREES_DIR = "worktrees";
+  public static final @NotNull String SUBMODULES_FILE = ".gitmodules";
+
+  private static final @NonNls String SEQUENCER_TODO = "sequencer/todo";
 
   private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
@@ -70,6 +75,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myRebaseApplyPath;
   private final @NonNls String myRebaseMergePath;
   private final @NonNls String myPackedRefsPath;
+  private final @NonNls String myReftablePath;
   private final @NonNls String myRefsHeadsDirPath;
   private final @NonNls String myRefsRemotesDirPath;
   private final @NonNls String myRefsTagsPath;
@@ -82,6 +88,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
   private final @NonNls String myWorktreesDirPath;
+  private final @NonNls String mySequencerTodoPath;
 
   private @Nullable @NonNls String myCustomHooksDirPath;
 
@@ -98,6 +105,7 @@ public final class GitRepositoryFiles {
     String mainPath = myMainDir.getPath();
     myConfigFilePath = mainPath + slash(CONFIG);
     myPackedRefsPath = mainPath + slash(PACKED_REFS);
+    myReftablePath = mainPath + slash(REFTABLE);
     String refsPath = mainPath + slash(REFS);
     myRefsHeadsDirPath = refsPath + slash(HEADS);
     myRefsTagsPath = refsPath + slash(TAGS);
@@ -115,6 +123,7 @@ public final class GitRepositoryFiles {
     myMergeHeadPath = worktreePath + slash(MERGE_HEAD);
     myCherryPickHeadPath = worktreePath + slash(CHERRY_PICK_HEAD);
     myRevertHeadPath = worktreePath + slash(REVERT_HEAD);
+    mySequencerTodoPath = worktreePath + slash(SEQUENCER_TODO);
     myOrigHeadPath = worktreePath + slash(ORIG_HEAD);
     myCommitMessagePath = worktreePath + slash(COMMIT_EDITMSG);
     myMergeMessagePath = worktreePath + slash(MERGE_MSG);
@@ -123,9 +132,8 @@ public final class GitRepositoryFiles {
     myRebaseMergePath = worktreePath + slash(REBASE_MERGE);
   }
 
-  @NotNull
-  public static GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
-                                                  @NotNull VirtualFile gitDir) {
+  public static @NotNull GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
+                                                           @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
     return new GitRepositoryFiles(rootDir, mainDir, gitDir);
@@ -137,8 +145,7 @@ public final class GitRepositoryFiles {
    * <p/>
    * Worktree's ".git" file references {@code <main-project>/.git/worktrees/<worktree-name>}
    */
-  @Nullable
-  private static VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
+  private static @Nullable VirtualFile getMainGitDirForWorktree(@NotNull VirtualFile gitDir) {
     File gitDirFile = virtualToIoFile(gitDir);
     File commonDir = new File(gitDirFile, "commondir");
     if (!commonDir.exists()) return null;
@@ -157,9 +164,12 @@ public final class GitRepositoryFiles {
     return lfs.refreshAndFindFileByPath(pathToMain); // absolute path is also possible
   }
 
-  @NotNull
-  private static String slash(@NotNull String s) {
+  private static @NotNull String slash(@NotNull String s) {
     return "/" + s;
+  }
+
+  public @NotNull VirtualFile getRootDir() {
+    return myRootDir;
   }
 
   /**
@@ -167,7 +177,8 @@ public final class GitRepositoryFiles {
    */
   @NotNull
   Collection<String> getPathsToWatch() {
-    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myInfoDirPath, myHooksDirPath, myStashReflogPath);
+    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myReftablePath, myInfoDirPath, myHooksDirPath,
+                         myStashReflogPath);
   }
 
   @NotNull
@@ -186,107 +197,104 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
+  File getReftableFile() {
+    return file(myReftablePath);
+  }
+
+  @NotNull
   File getPackedRefsPath() {
     return file(myPackedRefsPath);
   }
 
-  @NotNull
-  public File getHeadFile() {
+  public @NotNull File getHeadFile() {
     return file(myHeadFilePath);
   }
 
-  @NotNull
-  public File getConfigFile() {
+  public @NotNull File getConfigFile() {
     return file(myConfigFilePath);
   }
 
-  @NotNull
-  public File getRebaseMergeDir() {
+  public @NotNull File getRebaseMergeDir() {
     return file(myRebaseMergePath);
   }
 
-  @NotNull
-  public File getRebaseApplyDir() {
+  public @NotNull File getRebaseApplyDir() {
     return file(myRebaseApplyPath);
   }
 
-  @NotNull
-  public File getMergeHeadFile() {
+  public @NotNull File getMergeHeadFile() {
     return file(myMergeHeadPath);
   }
 
-  @NotNull
-  public File getCherryPickHead() {
+  public @NotNull File getCherryPickHead() {
     return file(myCherryPickHeadPath);
   }
 
-  @NotNull
-  public File getRevertHead() {
+  public @NotNull File getRevertHead() {
     return file(myRevertHeadPath);
   }
 
-  @NotNull
-  public File getMergeMessageFile() {
+  public @NotNull File getSequencerTodoFile() {
+    return file(mySequencerTodoPath);
+  }
+
+  public @NotNull File getMergeMessageFile() {
     return file(myMergeMessagePath);
   }
 
-  @NotNull
-  public File getSquashMessageFile() {
+  public @NotNull File getSquashMessageFile() {
     return file(myMergeSquashPath);
   }
 
   public void updateCustomPaths(@NotNull GitConfig.Core core) {
     String hooksPath = core.getHooksPath();
     if (hooksPath != null) {
-      myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+      try {
+        myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+      }
+      catch (InvalidPathException e) {
+        LOG.warn("Can't resolve custom hooks path: '" + hooksPath + "'");
+        myCustomHooksDirPath = null;
+      }
     }
     else {
       myCustomHooksDirPath = null;
     }
   }
 
-  @NotNull
-  public File getPreCommitHookFile() {
+  public @NotNull File getPreCommitHookFile() {
     return hook(PRE_COMMIT_HOOK);
   }
 
-  @NotNull
-  public File getPrePushHookFile() {
+  public @NotNull File getPrePushHookFile() {
     return hook(PRE_PUSH_HOOK);
   }
 
-  @NotNull
-  public File getCommitMsgHookFile() {
+  public @NotNull File getCommitMsgHookFile() {
     return hook(COMMIT_MSG_HOOK);
   }
 
-  @NotNull
-  public File getShallowFile() {
+  public @NotNull File getShallowFile() {
     return file(myShallow);
   }
 
-  @NotNull
-  public File getExcludeFile() {
+  public @NotNull File getExcludeFile() {
     return file(myExcludePath);
   }
 
-  @NotNull
-  public File getStashReflogFile() {
+  public @NotNull File getStashReflogFile() {
     return file(myStashReflogPath);
   }
 
-  @NotNull
-  public File getWorktreesDirFile() {
+  public @NotNull File getWorktreesDirFile() {
     return file(myWorktreesDirPath);
   }
 
-  @NotNull
-  private File hook(@NotNull String filePath) {
+  private @NotNull File hook(@NotNull String filePath) {
     return file(ObjectUtils.chooseNotNull(myCustomHooksDirPath, myHooksDirPath) + slash(filePath));
   }
 
-  @NotNull
-  private static File file(@NotNull String filePath) {
+  private static @NotNull File file(@NotNull String filePath) {
     return new File(FileUtil.toSystemDependentName(filePath));
   }
 
@@ -351,6 +359,13 @@ public final class GitRepositoryFiles {
   }
 
   /**
+   * .git/reftable/*
+   */
+  public boolean isReftableFile(@NotNull String path) {
+    return path.startsWith(myReftablePath);
+  }
+
+  /**
    * .git/rebase-merge or .git/rebase-apply
    */
   public boolean isRebaseFile(String path) {
@@ -362,6 +377,13 @@ public final class GitRepositoryFiles {
    */
   public boolean isMergeFile(String file) {
     return file.equals(myMergeHeadPath);
+  }
+
+  /**
+   * .git/MERGE_MSG
+   */
+  public boolean isMergeMessageFile(@NotNull String path) {
+    return path.equals(myMergeMessagePath);
   }
 
   /**
@@ -408,14 +430,15 @@ public final class GitRepositoryFiles {
 
   /**
    * Refresh that part of .git repository files, which is not covered by {@link GitRepository#update()}, e.g. the {@code refs/tags/} dir.
-   *
+   * <p>
    * The call to this method should be probably be done together with a call to update(): thus all information will be updated,
    * but some of it will be updated synchronously, the rest - asynchronously.
    */
   public void refreshTagsFiles() {
     VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
     VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPackedRefsPath);
-    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile);
+    VirtualFile reftableDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myReftablePath);
+    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile, reftableDir);
   }
 
   @NotNull

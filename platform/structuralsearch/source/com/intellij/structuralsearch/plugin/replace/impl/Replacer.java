@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
@@ -39,8 +39,7 @@ import java.util.List;
  */
 public class Replacer {
   private final Project project;
-  @NotNull
-  private final ReplaceOptions options;
+  private final @NotNull ReplaceOptions options;
   private final StructuralReplaceHandler replaceHandler;
   private final ReplacementBuilder replacementBuilder;
   private PsiElement lastAffectedElement;
@@ -53,10 +52,6 @@ public class Replacer {
     replaceHandler = profile.getReplaceHandler(project, options);
     assert replaceHandler != null;
     replacementBuilder = new ReplacementBuilder(this.project, this.options);
-  }
-
-  public static String stripTypedVariableDecoration(final String type) {
-    return type.substring(1, type.length() - 1);
   }
 
   public static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
@@ -207,8 +202,7 @@ public class Replacer {
     reformatAndPostProcess(doReplace(info));
   }
 
-  @Nullable
-  private PsiElement doReplace(@NotNull ReplacementInfo info) {
+  private @Nullable PsiElement doReplace(@NotNull ReplacementInfo info) {
     final PsiElement element = info.getMatch(0);
 
     if (element==null || !element.isWritable() || !element.isValid()) return null;
@@ -327,8 +321,7 @@ public class Replacer {
     }
   }
 
-  @NotNull
-  public ReplacementInfo buildReplacement(@NotNull MatchResult result) {
+  public @NotNull ReplacementInfo buildReplacement(@NotNull MatchResult result) {
     final ReplacementInfoImpl replacementInfo = new ReplacementInfoImpl(result, project);
     final LanguageFileType fileType = options.getMatchOptions().getFileType();
     assert fileType != null;

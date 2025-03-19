@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,8 +20,29 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/navigation/gotoDeclaration")
 public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("annotationCallWithMissedTypeArgs.test")
+    public void testAnnotationCallWithMissedTypeArgs() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/annotationCallWithMissedTypeArgs.test");
+    }
+
+    @TestMetadata("dataClassToString.test")
+    public void testDataClassToString() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/dataClassToString.test");
+    }
+
+    @TestMetadata("flexibleType.test")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/flexibleType.test");
     }
 
     @TestMetadata("importAlias.test")
@@ -63,6 +85,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/labeledThisToMemberExtension.test");
     }
 
+    @TestMetadata("listFlexibleType.test")
+    public void testListFlexibleType() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/listFlexibleType.test");
+    }
+
     @TestMetadata("thisExtensionFunction.test")
     public void testThisExtensionFunction() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisExtensionFunction.test");
@@ -76,5 +103,15 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
     @TestMetadata("thisInExtensionPropertyAccessor.test")
     public void testThisInExtensionPropertyAccessor() throws Exception {
         runTest("testData/navigation/gotoDeclaration/thisInExtensionPropertyAccessor.test");
+    }
+
+    @TestMetadata("valClass.test")
+    public void testValClass() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/valClass.test");
+    }
+
+    @TestMetadata("valGeneric.test")
+    public void testValGeneric() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/valGeneric.test");
     }
 }

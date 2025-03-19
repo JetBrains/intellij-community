@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.testFramework.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +34,7 @@ public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     int pos = fileName.indexOf("-before.");
     if (pos < 0) {
       return null;

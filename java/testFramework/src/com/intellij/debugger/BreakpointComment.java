@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.Pair;
@@ -144,7 +144,7 @@ public final class BreakpointComment {
   public void done() {
     if (kind != null) throw error("Unprocessed kind '" + kind + "'");
     if (kindValue != null) throw error("Unprocessed kind value '" + kindValue + "'");
-    if (values.size() >= 1) {
+    if (!values.isEmpty()) {
       String valid = String.join(", ", validValues);
       String msg = "Unprocessed %s '%s', %s".formatted(
         values.size() > 1 ? "values" : "value",
@@ -183,23 +183,21 @@ public final class BreakpointComment {
       skip('/');
       skipWhitespace();
 
-      String kind = parseName();
+      final String head = parseName();
       if (i < len && s[i] == '(') {
-        comment.kind = kind;
+        // We have kind with value.
+        comment.kind = head;
         comment.kindValue = parseValue();
         skipWhitespace();
         int nameStart = i;
-        kind = parseName();
-        if (!kind.equals("Breakpoint")) {
-          throw errorAt(nameStart, "Expected 'Breakpoint' instead of '" + kind + "'");
+        String tail = parseName();
+        if (!tail.equals("Breakpoint")) {
+          throw errorAt(nameStart, "Expected 'Breakpoint' instead of '" + tail + "'");
         }
       }
       else {
-        comment.kind = switch (kind) {
-          case "Method Breakpoint" -> "Method";
-          case "Breakpoint" -> "Line";
-          default -> kind.replaceFirst("\\s+Breakpoint$", "");
-        };
+        var kind = head.replaceFirst("\\s*Breakpoint$", "");
+        comment.kind = kind.isEmpty() ? "Line" : kind;
       }
       skip('!');
 

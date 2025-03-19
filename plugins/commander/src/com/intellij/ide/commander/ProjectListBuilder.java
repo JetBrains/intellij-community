@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -132,21 +132,21 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
 
     @Override
-    public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
+    public void childRemoved(final @NotNull PsiTreeChangeEvent event) {
       final PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
     @Override
-    public void childAdded(@NotNull final PsiTreeChangeEvent event) {
+    public void childAdded(final @NotNull PsiTreeChangeEvent event) {
       final PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
     @Override
-    public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
+    public void childReplaced(final @NotNull PsiTreeChangeEvent event) {
       final PsiElement oldChild = event.getOldChild();
       final PsiElement newChild = event.getNewChild();
       if (oldChild instanceof PsiWhiteSpace && newChild instanceof PsiWhiteSpace) return; //optimization
@@ -154,12 +154,12 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
 
     @Override
-    public void childMoved(@NotNull final PsiTreeChangeEvent event) {
+    public void childMoved(final @NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
     @Override
-    public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
+    public void childrenChanged(final @NotNull PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
@@ -171,7 +171,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
 
     @Override
-    public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
+    public void propertyChanged(final @NotNull PsiTreeChangeEvent event) {
       final String propertyName = event.getPropertyName();
       switch (propertyName) {
         case PsiTreeChangeEvent.PROP_ROOTS, PsiTreeChangeEvent.PROP_FILE_TYPES -> addUpdateRequest();
@@ -187,7 +187,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     }
 
     @Override
-    public void fileStatusChanged(@NotNull final VirtualFile vFile) {
+    public void fileStatusChanged(final @NotNull VirtualFile vFile) {
       PsiFileSystemItem item = PsiUtilCore.findFileSystemItem(myProject, vFile);
       if (item != null) myPsiTreeChangeListener.childrenChanged();
     }

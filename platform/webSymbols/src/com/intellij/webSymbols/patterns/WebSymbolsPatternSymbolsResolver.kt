@@ -7,7 +7,9 @@ import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface WebSymbolsPatternSymbolsResolver {
   fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
     emptySet()
@@ -18,6 +20,10 @@ interface WebSymbolsPatternSymbolsResolver {
                      position: Int,
                      scopeStack: Stack<WebSymbolsScope>,
                      queryExecutor: WebSymbolsQueryExecutor): List<WebSymbolCodeCompletionItem>
+
+  fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
+                  queryExecutor: WebSymbolsQueryExecutor,
+                  expandPatterns: Boolean): List<WebSymbol>
 
   fun matchName(name: String,
                 scopeStack: Stack<WebSymbolsScope>,

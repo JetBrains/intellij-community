@@ -1,0 +1,37 @@
+### auto-generated section `build kotlin.base.fe10.obsolete-compat` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-fe10-obsolete-compat",
+  module_name = "kotlin.base.fe10.obsolete-compat",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.obsolete-compat` end

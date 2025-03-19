@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.debugger.DebuggerManager
@@ -38,12 +38,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.TestModeFlags
 import kotlinx.coroutines.*
 import org.jdom.Content
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.junit.Rule
 import org.junit.runner.RunWith
 import java.io.StringWriter
 import java.util.function.Predicate
@@ -57,6 +59,9 @@ import kotlin.coroutines.resumeWithException
 
 @RunWith(org.junit.runners.Parameterized::class)
 abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMode) : ExecutionWithDebuggerToolsTestCase() {
+  @get:Rule
+  val disableProfilerWidgetInRunConsoleRule = RegistryKeyRule("profiler.widget.in.run.console", false)
+
   /** A [com.intellij.execution.target.ContributedConfigurationBase.displayName] or null for the local target. */
   abstract val targetName: String?
 
@@ -89,6 +94,8 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
       it.forceCompilationInTests = true
     }
   }
+
+  override fun logAllCommands(): Boolean = false
 
   public override fun tearDown() {
     try {

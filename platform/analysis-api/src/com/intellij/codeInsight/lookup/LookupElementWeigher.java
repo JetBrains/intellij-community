@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.NonNls;
@@ -33,13 +33,11 @@ public abstract class LookupElementWeigher {
     return myId;
   }
 
-  @Nullable
-  public Comparable weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
+  public @Nullable Comparable weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
     return weigh(element);
   }
 
-  @Nullable
-  public Comparable weigh(@NotNull LookupElement element) {
+  public @Nullable Comparable weigh(@NotNull LookupElement element) {
     throw new UnsupportedOperationException("weigh not implemented in " + getClass());
   }
 

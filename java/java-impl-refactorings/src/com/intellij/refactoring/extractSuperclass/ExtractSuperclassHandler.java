@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.history.LocalHistory;
@@ -66,6 +66,12 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
               : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
     if (mySubclass == null) {
       String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
+      return;
+    }
+
+    if (mySubclass instanceof PsiImplicitClass) {
+      String message = RefactoringBundle.message("error.superclass.cannot.be.extracted.from.implicit.class");
       CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_SUPERCLASS);
       return;
     }
@@ -156,8 +162,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
     }
   }
 
-  @NlsContexts.Label
-  private static String getCommandName(final PsiClass subclass, String newName) {
+  private static @NlsContexts.Label String getCommandName(final PsiClass subclass, String newName) {
     return RefactoringBundle.message("extract.superclass.command.name", newName, DescriptiveNameUtil.getDescriptiveName(subclass));
   }
 

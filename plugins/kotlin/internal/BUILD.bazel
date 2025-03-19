@@ -1,0 +1,32 @@
+### auto-generated section `build kotlin.k2.internal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "k2-internal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "k2-internal",
+  module_name = "kotlin.k2.internal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinc-low-level-api-fir",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":k2-internal_resources"]
+)
+### auto-generated section `build kotlin.k2.internal` end

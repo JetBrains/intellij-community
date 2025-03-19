@@ -18,13 +18,14 @@ val propFoo: Int
         return 1
     }
 
-// EXISTS: getter for propFoo: Int,
+// EXISTS: propFoo.get()
 // EXISTS: foo()
 // EXISTS: fooWithParam(Int\, () -> Int)
 // EXISTS: extFoo()
 // EXISTS: fooWithParam: f.invoke()
-// EXISTS: test()
-// EXISTS: constructor FooClass()
 // EXISTS: constructor FooClass(Int)
+// EXISTS: test()_0
+// EXISTS: constructor FooClass()
+// EXISTS: test()_1
 // EXISTS: constructor FooClass(Int\, Int)
-// IGNORE_K2
+// EXISTS: test()_2

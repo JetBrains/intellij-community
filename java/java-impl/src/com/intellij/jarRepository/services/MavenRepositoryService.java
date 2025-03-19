@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.services;
 
 import com.intellij.jarRepository.RemoteRepositoryDescription;
@@ -22,6 +8,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -34,24 +21,21 @@ import java.util.Map;
  * @author Gregory.Shrago
  */
 public abstract class MavenRepositoryService {
-  @NotNull
-  public abstract String getDisplayName();
+  public abstract @NotNull String getDisplayName();
 
-  @NotNull
-  public abstract List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
+  public abstract @Unmodifiable @NotNull List<RemoteRepositoryDescription> getRepositories(@NotNull String url) throws IOException;
 
-  @NotNull
-  public abstract List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
+  public abstract @NotNull List<RepositoryArtifactDescription> findArtifacts(@NotNull String url, @NotNull RepositoryArtifactDescription template)
     throws IOException;
 
 
+  @Override
   public final String toString() {
     return getDisplayName();
   }
 
 
-  @NotNull
-  protected String mapToParamString(@NotNull Map<String, String> params) {
+  protected @NotNull String mapToParamString(@NotNull Map<String, String> params) {
     return StringUtil.join(params.entrySet(), entry -> {
       if (entry.getValue() == null) {
         return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -13,6 +13,8 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
+
 class RemoveBreakpointGutterIconAction extends DumbAwareAction {
   private final XBreakpointBase<?,?,?> myBreakpoint;
 
@@ -24,11 +26,13 @@ class RemoveBreakpointGutterIconAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    InputEvent event = e.getInputEvent();
-    // for mouse events check that no modifiers applied
-    if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
-      XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint.getProject(), myBreakpoint);
-    }
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    performDebuggerAction(e, () -> {
+      InputEvent event = e.getInputEvent();
+      // for mouse events check that no modifiers applied
+      if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
+      }
+    });
   }
 }

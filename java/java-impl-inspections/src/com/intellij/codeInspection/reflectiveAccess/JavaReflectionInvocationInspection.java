@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
@@ -22,16 +23,15 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String JAVA_LANG_REFLECT_METHOD = "java.lang.reflect.Method";
   private static final String JAVA_LANG_REFLECT_CONSTRUCTOR = "java.lang.reflect.Constructor";
 
   private static final String INVOKE = "invoke";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCall) {
@@ -65,10 +65,11 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
-      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, 
+      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset,
                                                                  MethodCallUtils.isVarArgCall(methodCall));
       if (actualArguments != null) {
-        if (requiredTypes.size() != actualArguments.expressions.length) {
+        PsiExpression[] actualExpressions = actualArguments.expressions;
+        if (requiredTypes.size() != actualExpressions.length) {
           if (actualArguments.varargAsArray) {
             final PsiExpression[] expressions = argumentList.getExpressions();
             final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
@@ -76,8 +77,15 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
               "inspection.reflection.invocation.item.count", requiredTypes.size()));
           }
           else {
-            holder.registerProblem(argumentList, JavaBundle.message(
-              "inspection.reflection.invocation.argument.count", requiredTypes.size() + argumentOffset));
+            if (actualExpressions.length > 0) {
+              TextRange range =
+                actualExpressions[0].getTextRangeInParent().union(actualExpressions[actualExpressions.length - 1].getTextRangeInParent());
+              holder.registerProblem(argumentList, range, JavaBundle.message(
+                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
+            } else {
+              holder.registerProblem(argumentList, JavaBundle.message(
+                "inspection.reflection.invocation.reflective.argument.count", requiredTypes.size()));
+            }
           }
           return;
         }
@@ -85,7 +93,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
         for (int i = 0; i < requiredTypes.size(); i++) {
           final ReflectiveType requiredType = getReflectiveType(requiredTypes.get(i));
           if (requiredType != null) {
-            final PsiExpression argument = actualArguments.expressions[i];
+            final PsiExpression argument = actualExpressions[i];
             if (argument != null) {
               PsiType actualType = argument.getType();
               if (TypeUtils.isJavaLangObject(actualType) && !requiredType.isAssignableFrom(actualType) &&
@@ -107,7 +115,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
                   final PsiExpression[] expressions = argumentList.getExpressions();
                   final PsiElement element = expressions.length == argumentOffset + 1 ? expressions[argumentOffset] : argumentList;
                   holder.registerProblem(element, JavaBundle.message(
-                    "inspection.reflection.invocation.array.not.assignable", actualArguments.expressions.length));
+                    "inspection.reflection.invocation.array.not.assignable", actualExpressions.length));
                   break;
                 }
               }
@@ -118,10 +126,9 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  @Nullable
-  private static List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
-                                                                int argumentOffset,
-                                                                @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
+  private static @Nullable List<PsiExpression> getRequiredMethodArguments(@Nullable PsiExpression qualifier,
+                                                                          int argumentOffset,
+                                                                          @NotNull Predicate<? super PsiMethodCallExpression> methodPredicate) {
     final PsiExpression definition = findDefinition(PsiUtil.skipParenthesizedExprDown(qualifier));
     if (definition instanceof PsiMethodCallExpression definitionCall && methodPredicate.test(definitionCall)) {
       return JavaLangClassMemberReference.getReflectionMethodArguments(definitionCall, argumentOffset);
@@ -129,8 +136,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
+  static @Nullable Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean isVarArgCall) {
     if (!isVarArgCall) {
       if (arguments.length == argumentOffset + 1) {
         final List<PsiExpression> expressions = getVarargs(arguments[argumentOffset]);
@@ -151,8 +157,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     return null;
   }
 
-  @Nullable
-  private static PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
+  private static @Nullable PsiExpression unwrapDisambiguatingCastToObject(@Nullable PsiExpression expression) {
     if (expression instanceof PsiTypeCastExpression typeCast) {
       final PsiTypeElement castElement = typeCast.getCastType();
       if (castElement != null && castElement.getType().equalsToText(JAVA_LANG_OBJECT)) {

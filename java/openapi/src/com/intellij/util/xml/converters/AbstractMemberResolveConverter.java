@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.converters;
 
@@ -37,13 +23,11 @@ import java.util.Collections;
  * @author Gregory.Shrago
  */
 public abstract class AbstractMemberResolveConverter extends ResolvingConverter<PsiMember> {
-  @Nullable
-  protected abstract PsiClass getTargetClass(final ConvertContext context);
+  protected abstract @Nullable PsiClass getTargetClass(final ConvertContext context);
 
   protected abstract PropertyMemberType @NotNull [] getMemberTypes(final ConvertContext context);
 
-  @NotNull
-  protected PsiType getPsiType(final ConvertContext context) {
+  protected @NotNull PsiType getPsiType(final ConvertContext context) {
     return PsiType.getJavaLangObject(context.getPsiManager(), ProjectScope.getAllScope(context.getPsiManager().getProject()));
   }
 
@@ -56,7 +40,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  public PsiMember fromString(final String s, final ConvertContext context) {
+  public PsiMember fromString(final String s, final @NotNull ConvertContext context) {
     if (s == null) return null;
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return null;
@@ -73,20 +57,19 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
 
 
   @Override
-  public String toString(final PsiMember t, final ConvertContext context) {
+  public String toString(final PsiMember t, final @NotNull ConvertContext context) {
     return t == null? null : getPropertyName(t.getName(), context);
   }
 
   @Override
-  public String getErrorMessage(final String s, final ConvertContext context) {
+  public String getErrorMessage(final String s, final @NotNull ConvertContext context) {
     final DomElement parent = context.getInvocationElement().getParent();
     assert parent != null;
     return CodeInsightBundle.message("error.cannot.resolve.0.1", TypePresentationService.getService().getTypeName(parent), s);
   }
 
   @Override
-  @NotNull
-  public Collection<? extends PsiMember> getVariants(final ConvertContext context) {
+  public @NotNull Collection<? extends PsiMember> getVariants(final @NotNull ConvertContext context) {
     final PsiClass psiClass = getTargetClass(context);
     if (psiClass == null) return Collections.emptyList();
 
@@ -113,7 +96,7 @@ public abstract class AbstractMemberResolveConverter extends ResolvingConverter<
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes(final ConvertContext context) {
+  public LocalQuickFix[] getQuickFixes(final @NotNull ConvertContext context) {
     final String targetName = ((GenericValue<?>)context.getInvocationElement()).getStringValue();
     if (!PsiNameHelper.getInstance(context.getProject()).isIdentifier(targetName)) return super.getQuickFixes(context);
     final PsiClass targetClass = getTargetClass(context);

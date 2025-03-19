@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -23,9 +23,9 @@ import java.util.Arrays;
  */
 class TableToolbarDecorator extends ToolbarDecorator {
   private final JTable myTable;
-  @Nullable private final ElementProducer<?> myProducer;
+  private final @Nullable ElementProducer<?> myProducer;
 
-  TableToolbarDecorator(@NotNull JTable table, @Nullable final ElementProducer<?> producer) {
+  TableToolbarDecorator(@NotNull JTable table, final @Nullable ElementProducer<?> producer) {
     myTable = table;
     myProducer = producer;
     myAddActionEnabled = myRemoveActionEnabled = myUpActionEnabled = myDownActionEnabled = isModelEditable();
@@ -96,7 +96,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
     }
   }
 
-  private void createDefaultTableActions(@Nullable final ElementProducer<?> producer) {
+  private void createDefaultTableActions(final @Nullable ElementProducer<?> producer) {
     final JTable table = myTable;
     final EditableModel tableModel = (EditableModel)table.getModel();
 
@@ -172,6 +172,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
           idx[i] += delta;
         }
         TableUtil.selectRows(table, idx);
+        TableUtil.scrollSelectionToVisible(table);
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(table, true));
         if (row != -1 && col != -1) {
           int newEditingRow = row + delta;

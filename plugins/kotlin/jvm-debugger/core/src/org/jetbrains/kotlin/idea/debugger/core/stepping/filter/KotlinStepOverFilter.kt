@@ -6,14 +6,15 @@ import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.util.Range
+import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVariables
 import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinMethodFilter
+import org.jetbrains.kotlin.load.java.JvmAbi
 
 data class StepOverCallerInfo(val declaringType: String, val methodName: String?, val methodSignature: String?) {
     companion object {
@@ -27,17 +28,17 @@ data class StepOverCallerInfo(val declaringType: String, val methodName: String?
     }
 }
 
-data class LocationToken(val lineNumber: Int, val inlineVariables: List<String>) {
+data class LocationToken(val lineNumber: Int, val inlineVariables: List<LocalVariable>) {
     companion object {
         fun from(stackFrame: StackFrame): LocationToken {
             val location = stackFrame.location()
             val lineNumber = location.safeLineNumber(JAVA_STRATUM)
-            val methodVariables = ArrayList<String>(0)
+            val methodVariables = ArrayList<LocalVariable>(0)
 
             for (variable in location.safeMethod()?.safeVariables() ?: emptyList()) {
                 val name = variable.name()
-                if (variable.isVisible(stackFrame) && isFakeLocalVariableForInline(name)) {
-                    methodVariables += name
+                if (variable.isVisible(stackFrame) && JvmAbi.isFakeLocalVariableForInline(name)) {
+                    methodVariables += variable
                 }
             }
 
@@ -56,12 +57,12 @@ abstract class KotlinStepOverFilter(locationStepOverStartedFrom: Location) : Kot
         val stackFrame = context.frameProxy?.stackFrame ?: return true
         val callerInfo = StepOverCallerInfo.from(location)
         if (callerInfo.methodName != null && callerInfo.methodSignature != null && this.callerInfo == callerInfo) {
-            return isAcceptable(location, LocationToken.from(stackFrame))
+            return isAcceptable(location, LocationToken.from(stackFrame), stackFrame)
         }
         return true
     }
 
-    abstract fun isAcceptable(location: Location, locationToken: LocationToken): Boolean
+    abstract fun isAcceptable(location: Location, locationToken: LocationToken, stackFrame: StackFrame): Boolean
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         throw IllegalStateException("Should not be called from Kotlin hint")

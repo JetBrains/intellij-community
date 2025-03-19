@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.TreeNodeWithCacheableAttributes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -16,15 +17,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -33,9 +33,11 @@ import java.util.List;
  * @see TreeStructureProvider#modify(AbstractTreeNode, Collection, ViewSettings)
  */
 
-public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> implements RootsProvider, SettingsProvider {
+public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value>
+  implements RootsProvider, SettingsProvider, TreeNodeWithCacheableAttributes {
 
   protected static final Logger LOG = Logger.getInstance(ProjectViewNode.class);
+  @ApiStatus.Internal public static final String CACHED_FILE_PATH_KEY = "filePath";
 
   private final ViewSettings mySettings;
   private boolean myValidating;
@@ -67,9 +69,79 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * @return the virtual file instance, or null if the project view node doesn't represent a virtual file.
    */
   @Override
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return null;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @Nullable Map<@NotNull String, @NotNull String> getCacheableAttributes() {
+    var path = getCacheableFilePath();
+    if (path == null) return null;
+    return Map.of(CACHED_FILE_PATH_KEY, path);
+  }
+
+  /**
+   * Returns the file path that can be cached to reuse it on IDE startup.
+   * <p>
+   * By default, uses {@link #getCacheableFile()} and uses its path if it's local.
+   * May be overridden by subclasses as necessary to make it safe and fast to call on the EDT.
+   * No slow ops are allowed in implementations.
+   * </p>
+   * <p>
+   *   The returned path will be saved as a part of the Project View state and then used to be able
+   *   to quickly open files after an IDE restart, before the actual Project View nodes are loaded.
+   * </p>
+   * <p>
+   *   Nodes for which it doesn't make sense to save the path, should return {@code null}.
+   *   This applies, for example, for any nodes that use remote file systems,
+   *   as the saved path is always interpreted as a path within the {@link com.intellij.openapi.vfs.LocalFileSystem}.
+   * </p>
+   * <p>
+   *   Nodes that have a {@code VirtualFile} instance available may override {@link #getCacheableFile()} instead.
+   *   Overriding both is also possible, but not necessary, as when {@code getCacheableFilePath()} is overridden,
+   *   then {@code getCacheableFile()} is never called (unless the override calls it or {@code super}, of course).
+   * </p>
+   *
+   * @see #getCacheableFile()
+   * @return the virtual file to use for presentation caching or {@code null} if there's no path or the path shouldn't be cached
+   */
+  @ApiStatus.Internal
+  protected @Nullable String getCacheableFilePath() {
+    @Nullable VirtualFile file = getCacheableFile();
+    if (file == null) return null;
+    var path = file.isInLocalFileSystem() ? file.getPath() : null;
+    if (path == null) return null;
+    return path;
+  }
+
+  /**
+   * Returns the virtual file that can be used to cache the path to reuse it on IDE startup.
+   * <p>
+   * By default, delegates to {@link #getVirtualFile()}, but should be overridden by subclasses
+   * as necessary to make it safe and fast to call on the EDT. No slow ops are allowed in implementations.
+   * </p>
+   * <p>
+   *   The returned path will be saved as a part of the Project View state and then used to be able
+   *   to quickly open files after an IDE restart, before the actual Project View nodes are loaded.
+   * </p>
+   * <p>
+   *   Nodes for which it doesn't make sense to save the path, should return {@code null}.
+   *   This applies, for example, for any nodes that use remote file systems,
+   *   as the saved path is always interpreted as a path within the {@link com.intellij.openapi.vfs.LocalFileSystem}.
+   * </p>
+   * <p>
+   *   Nodes that don't have a {@code VirtualFile} instance available may override {@link #getCacheableFilePath()} instead.
+   *   Overriding both is also possible, but not necessary, as when {@code getCacheableFilePath()} is overridden,
+   *   then {@code getCacheableFile()} is never called (unless the override calls it or {@code super}, of course).
+   * </p>
+   *
+   * @see #getCacheableFilePath()
+   * @return the virtual file to use for presentation caching or {@code null} if there's no path or the path shouldn't be cached
+   */
+  @ApiStatus.Internal
+  protected @Nullable VirtualFile getCacheableFile() {
+    return getVirtualFile();
   }
 
   @Override
@@ -94,11 +166,10 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     }
   }
 
-  @NotNull
-  public static AbstractTreeNode<?> createTreeNode(Class<? extends AbstractTreeNode<?>> nodeClass,
-                                                   Project project,
-                                                   Object value,
-                                                   ViewSettings settings) throws InstantiationException {
+  public static @NotNull AbstractTreeNode<?> createTreeNode(Class<? extends AbstractTreeNode<?>> nodeClass,
+                                                            Project project,
+                                                            Object value,
+                                                            ViewSettings settings) throws InstantiationException {
     Object[] parameters = {project, value, settings};
     for (Constructor<? extends AbstractTreeNode<?>> constructor : (Constructor<? extends AbstractTreeNode<?>>[])nodeClass.getConstructors()) {
       if (constructor.getParameterCount() != 3) continue;
@@ -149,9 +220,8 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     Value value = getValue();
     if (value instanceof RootsProvider) {
       return ((RootsProvider)value).getRoots();
@@ -195,9 +265,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return true;
   }
 
-  @Nullable
-  @NlsContexts.PopupTitle
-  public String getTitle() {
+  public @Nullable @NlsContexts.PopupTitle String getTitle() {
     return null;
   }
 
@@ -227,8 +295,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * have not null comparable keys.
    * @return Comparable object.
    */
-  @Nullable
-  public Comparable getTypeSortKey() {
+  public @Nullable Comparable getTypeSortKey() {
     return null;
   }
 
@@ -240,18 +307,19 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    * have not null comparable keys.
    * @return Comparable object.
    */
-  @Nullable
-  public Comparable getSortKey() {
+  public @Nullable Comparable getSortKey() {
     return null;
   }
 
-  @Nullable
-  public Comparable getManualOrderKey() {
+  public @Nullable Comparable getManualOrderKey() {
     return null;
   }
 
-  @Nullable
-  public String getQualifiedNameSortKey() {
+  public @Nullable String getQualifiedNameSortKey() {
+    return null;
+  }
+
+  public @Nullable Comparable<?> getTimeSortKey() {
     return null;
   }
 

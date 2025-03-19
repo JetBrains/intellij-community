@@ -4,10 +4,9 @@ package com.intellij.openapi.util;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 @ReviseWhenPortedToJDK("11") // rewrite to VarHandles to avoid smelling AtomicREference inheritance
@@ -71,7 +70,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
     return compareAndSet(oldMap, newMap);
   }
 
-  public <T> T getCopyableUserData(@NotNull Key<T> key) {
+  public <T> @UnknownNullability T getCopyableUserData(@NotNull Key<T> key) {
     KeyFMap map = getUserData(COPYABLE_USER_MAP_KEY);
     return map == null ? null : map.get(key);
   }
@@ -122,6 +121,11 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   public void copyCopyableDataTo(@NotNull UserDataHolderBase clone) {
     clone.putUserData(COPYABLE_USER_MAP_KEY, getUserData(COPYABLE_USER_MAP_KEY));
+  }
+
+  @ApiStatus.Experimental
+  protected boolean isCopyableDataEqual(@NotNull UserDataHolderBase other) {
+    return Objects.equals(getUserData(COPYABLE_USER_MAP_KEY), other.getUserData(COPYABLE_USER_MAP_KEY));
   }
 
   protected void clearUserData() {

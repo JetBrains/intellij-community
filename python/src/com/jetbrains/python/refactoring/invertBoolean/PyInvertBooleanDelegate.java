@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.invertBoolean;
 
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
+public final class PyInvertBooleanDelegate extends InvertBooleanDelegate {
   @Override
   public boolean isVisibleOnElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
@@ -58,9 +58,8 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     return isBooleanLiteral(element.getParent());
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
+  public @Nullable PsiElement adjustElement(PsiElement element, Project project, Editor editor) {
     final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (assignmentStatement != null) {
       return assignmentStatement.getTargets()[0];
@@ -123,8 +122,7 @@ public class PyInvertBooleanDelegate extends InvertBooleanDelegate {
     }
   }
 
-  @NotNull
-  private static PyExpression invertExpression(@NotNull final PsiElement expression) {
+  private static @NotNull PyExpression invertExpression(final @NotNull PsiElement expression) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(expression.getProject());
     if (expression instanceof PyBoolLiteralExpression) {
       final String value = ((PyBoolLiteralExpression)expression).getValue() ? PyNames.FALSE : PyNames.TRUE;

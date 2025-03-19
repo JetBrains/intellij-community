@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaCompilableFileTypesProvider implements CompilableFileTypesProvider {
+public final class JavaCompilableFileTypesProvider implements CompilableFileTypesProvider {
 
   @Override
   public @NotNull Set<FileType> getCompilableFileTypes() {

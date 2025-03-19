@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -41,18 +43,42 @@ suspend fun performAction(
   action: AnAction,
   project: Project? = null,
   systemId: ProjectSystemId? = null,
-  selectedFile: VirtualFile? = null
+  selectedFile: VirtualFile? = null,
 ) {
   withSelectedFileIfNeeded(selectedFile) {
+    val event = TestActionEvent.createTestEvent {
+      when {
+        ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
+        CommonDataKeys.PROJECT.`is`(it) -> project
+        CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
+        else -> null
+      }
+    }
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(TestActionEvent.createTestEvent {
-        when {
-          ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
-          CommonDataKeys.PROJECT.`is`(it) -> project
-          CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
-          else -> null
-        }
-      })
+      writeIntentReadAction {
+        action.actionPerformed(event)
+      }
+    }
+  }
+}
+
+suspend fun performActionAsync(
+  action: suspend (AnActionEvent) -> Unit,
+  project: Project? = null,
+  systemId: ProjectSystemId? = null,
+  selectedFile: VirtualFile? = null,
+) {
+  withSelectedFileIfNeeded(selectedFile) {
+    val event = TestActionEvent.createTestEvent {
+      when {
+        ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.`is`(it) -> systemId
+        CommonDataKeys.PROJECT.`is`(it) -> project
+        CommonDataKeys.VIRTUAL_FILE.`is`(it) -> selectedFile
+        else -> null
+      }
+    }
+    withContext(Dispatchers.EDT) {
+      action(event)
     }
   }
 }
@@ -64,19 +90,10 @@ private inline fun <R> withSelectedFileIfNeeded(selectedFile: VirtualFile?, acti
 
   Disposer.newDisposable().use {
     ApplicationManager.getApplication().replaceService(FileChooserFactory::class.java, object : FileChooserFactoryImpl() {
-      override fun createFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): FileChooserDialog {
-        return object : FileChooserDialog {
-
-          @Suppress("OVERRIDE_DEPRECATION")
-          override fun choose(toSelect: VirtualFile?, project: Project?): Array<VirtualFile> {
-            return choose(project, toSelect)
-          }
-
-          override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<VirtualFile> {
-            return arrayOf(selectedFile)
-          }
+      override fun createFileChooser(descriptor: FileChooserDescriptor, project: Project?, parent: Component?): FileChooserDialog =
+        object : FileChooserDialog {
+          override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<VirtualFile> = arrayOf(selectedFile)
         }
-      }
     }, it)
     return action()
   }

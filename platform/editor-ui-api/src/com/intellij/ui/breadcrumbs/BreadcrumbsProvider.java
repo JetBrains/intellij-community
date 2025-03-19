@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.breadcrumbs;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,8 @@ import static java.util.Collections.emptyList;
  * Allows providing language-specific breadcrumbs, i.e. path to the file root from a selected PSI element.
  */
 public interface BreadcrumbsProvider {
+
+  @ApiStatus.Internal
   ExtensionPointName<BreadcrumbsProvider> EP_NAME = ExtensionPointName.create("com.intellij.breadcrumbsInfoProvider");
 
   /**
@@ -43,8 +46,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return icon for the crumb
    */
-  @Nullable
-  default Icon getElementIcon(@NotNull PsiElement element) {
+  default @Nullable Icon getElementIcon(@NotNull PsiElement element) {
     return null;
   }
 
@@ -52,8 +54,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return description for the crumb
    */
-  @Nullable
-  default @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
+  default @Nullable @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
     return null;
   }
 
@@ -61,8 +62,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return element that represents a parent crumb, or {@code null}
    */
-  @Nullable
-  default PsiElement getParent(@NotNull PsiElement element) {
+  default @Nullable PsiElement getParent(@NotNull PsiElement element) {
     return element.getParent();
   }
 
@@ -72,8 +72,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return list of elements to navigate
    */
-  @NotNull
-  default List<PsiElement> getChildren(@NotNull PsiElement element) {
+  default @NotNull List<PsiElement> getChildren(@NotNull PsiElement element) {
     return emptyList();
   }
 
@@ -81,8 +80,7 @@ public interface BreadcrumbsProvider {
    * @param element that represents a single crumb
    * @return list of actions for the context menu
    */
-  @NotNull
-  default List<? extends Action> getContextActions(@NotNull PsiElement element) {
+  default @NotNull List<? extends Action> getContextActions(@NotNull PsiElement element) {
     return emptyList();
   }
 
@@ -92,5 +90,13 @@ public interface BreadcrumbsProvider {
    */
   default boolean isShownByDefault() {
     return true;
+  }
+
+  /**
+   * Determines whether the element should be pinned on sticky lines panel
+   */
+  @ApiStatus.Experimental
+  default boolean acceptStickyElement(@NotNull PsiElement element) {
+    return acceptElement(element);
   }
 }

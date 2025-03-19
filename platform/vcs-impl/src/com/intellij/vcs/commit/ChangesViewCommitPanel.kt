@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -25,18 +26,19 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI.Borders.*
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
+import com.intellij.vcsUtil.VcsUIUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
-internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
-
-class ChangesViewCommitPanel(project: Project, private val changesViewHost: ChangesViewPanel)
+class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, private val changesViewHost: ChangesViewPanel)
   : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
 
   private val changesView get() = changesViewHost.changesView
@@ -47,7 +49,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   }
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
-  private var isHideToolWindowOnDeactivate = false
+  private var isHideToolWindowOnCommit = false
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
     if (oldValue != newValue) {
@@ -67,11 +69,14 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
     addToolbar(isToolbarHorizontal)
 
-    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
+    for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 
-    changesView.setInclusionListener { fireInclusionChanged() }
+    changesView.setInclusionListener {
+      //readaction is not enough
+      WriteIntentReadAction.run { fireInclusionChanged () }
+    }
     changesView.isShowCheckboxes = true
     changesViewHost.statusComponent =
       CommitStatusPanel(this).apply {
@@ -110,7 +115,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     }
   }
 
-  override var editedCommit by observable<EditedCommitDetails?>(null) { _, _, newValue ->
+  override var editedCommit by observable<EditedCommitPresentation?>(null) { _, _, newValue ->
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       newValue?.let { expand(it) }
     }
@@ -126,6 +131,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     changesView.isShowCheckboxes = true
     isVisible = true
     commitActionsPanel.isActive = true
+    changesViewHost.statusComponent?.isVisible = true
 
     toolbar.updateActionsImmediately()
 
@@ -134,30 +140,28 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     return true
   }
 
-  override fun deactivate(isRestoreState: Boolean) {
-    if (isRestoreState) restoreToolWindowState()
+  override fun deactivate(isOnCommit: Boolean) {
+    if (isOnCommit && isHideToolWindowOnCommit) {
+      getVcsToolWindow()?.hide(null)
+    }
+
     clearToolWindowState()
     changesView.isShowCheckboxes = false
     isVisible = false
     commitActionsPanel.isActive = false
+    changesViewHost.statusComponent?.isVisible = false
 
     toolbar.updateActionsImmediately()
   }
 
   private fun saveToolWindowState() {
     if (!isActive) {
-      isHideToolWindowOnDeactivate = getVcsToolWindow()?.isVisible != true
-    }
-  }
-
-  private fun restoreToolWindowState() {
-    if (isHideToolWindowOnDeactivate) {
-      getVcsToolWindow()?.hide(null)
+      isHideToolWindowOnCommit = getVcsToolWindow()?.isVisible != true
     }
   }
 
   private fun clearToolWindowState() {
-    isHideToolWindowOnDeactivate = false
+    isHideToolWindowOnCommit = false
   }
 
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
@@ -179,16 +183,21 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     path?.let { selectPath(changesView, it, false) }
   }
 
-  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
-    if (isFromToolbar && !isToolbarHorizontal) popup.showAbove(this@ChangesViewCommitPanel)
-    else super.showCommitOptions(popup, isFromToolbar, dataContext)
+  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) {
+    if (isFromToolbar && !isToolbarHorizontal) {
+      VcsUIUtil.showPopupAbove(popup, this, scale(COMMIT_OPTIONS_POPUP_MINIMUM_SIZE))
+    }
+    else {
+      super.showCommitOptions(popup, isFromToolbar, dataContext)
+    }
+  }
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
     commitMessage.setChangesSupplier(ChangeListChangesSupplier(changeLists))
   }
 
   override suspend fun refreshChangesViewBeforeCommit() {
-    val modalityState = coroutineContext.contextModality() ?: ModalityState.NON_MODAL
+    val modalityState = coroutineContext.contextModality() ?: ModalityState.nonModal()
     ChangesViewManager.getInstanceEx(project).promiseRefresh(modalityState).await()
   }
 
@@ -213,8 +222,6 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
   private fun closeEditorPreviewIfEmpty() {
     val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
-    if (!ChangesViewManager.isEditorPreview(project)) return
-
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       changesViewManager.closeEditorPreview(true)
     }

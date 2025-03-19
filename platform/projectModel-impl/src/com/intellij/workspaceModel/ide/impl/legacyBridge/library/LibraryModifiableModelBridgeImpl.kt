@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
@@ -9,23 +9,22 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
 import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -38,7 +37,6 @@ internal class LibraryModifiableModelBridgeImpl(
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
-  //private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
   private var entityId = originalLibrarySnapshot.libraryEntity.symbolicId
   private var reloadKind = false
 
@@ -46,8 +44,7 @@ internal class LibraryModifiableModelBridgeImpl(
     val newLibrary = LibraryStateSnapshot(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       storage = storage,
-      libraryTable = originalLibrarySnapshot.libraryTable,
-      parentDisposable = originalLibrary
+      libraryTable = originalLibrarySnapshot.libraryTable
     )
 
     newLibrary
@@ -60,7 +57,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun getKind(): PersistentLibraryKind<*>? = currentLibrary.kind
   override fun getUrls(rootType: OrderRootType): Array<String> = currentLibrary.getUrls(rootType)
   override fun getName(): String? = currentLibrary.name
-  override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
+  override fun getPresentableName(): String = LibraryBridgeImpl.getPresentableName(this)
   override fun getProperties(): LibraryProperties<*>? = currentLibrary.properties
   override fun getExcludedRootUrls(): Array<String> = currentLibrary.excludedRootUrls
   override fun isJarDirectory(url: String): Boolean = currentLibrary.isJarDirectory(url)
@@ -76,7 +73,7 @@ internal class LibraryModifiableModelBridgeImpl(
     }
 
     entityId = entity.symbolicId.copy(name = name)
-    diff.modifyEntity(entity) {
+    diff.modifyLibraryEntity(entity) {
       this.name = name
     }
 
@@ -96,18 +93,20 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) {
       if (targetBuilder != null) {
         if (targetBuilder !== diff) {
-          targetBuilder.addDiff(diff)
+          targetBuilder.applyChangesFrom(diff)
         }
       }
       else {
-        if (originalLibrary.project != null) {
-          WorkspaceModel.getInstance(originalLibrary.project).updateProjectModel("Library model commit") {
-            it.addDiff(diff)
+        when (val o = originalLibrary.origin) {
+          is LibraryOrigin.OfProject -> {
+            WorkspaceModel.getInstance(o.project).updateProjectModel("Library model commit") {
+              it.applyChangesFrom(diff)
+            }
           }
-        }
-        else {
-          GlobalWorkspaceModel.getInstance().updateModel("Library model commit") {
-            it.addDiff(diff)
+          is LibraryOrigin.OfDescriptor -> {
+            GlobalWorkspaceModel.getInstance(o.descriptor).updateModel("Library model commit") {
+              it.applyChangesFrom(diff)
+            }
           }
         }
       }
@@ -125,15 +124,18 @@ internal class LibraryModifiableModelBridgeImpl(
     if (isChanged) originalLibrary.entityId = entityId
   }
 
+  override val libraryId: LibraryId
+    get() = entityId
+
   private fun update(updater: LibraryEntity.Builder.() -> Unit) {
-    diff.modifyEntity(currentLibrary.libraryEntity, updater)
+    diff.modifyLibraryEntity(currentLibrary.libraryEntity, updater)
   }
 
   override fun setExternalSource(externalSource: ProjectModelExternalSource) {
     update {
       val currentEntitySource = entitySource
       if (currentEntitySource is JpsFileEntitySource) {
-        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, originalLibrary.project!!.isExternalStorageEnabled)
+        entitySource = JpsImportedEntitySource(currentEntitySource, externalSource.id, (originalLibrary.origin as LibraryOrigin.OfProject).project.isExternalStorageEnabled)
       }
     }
   }
@@ -148,16 +150,20 @@ internal class LibraryModifiableModelBridgeImpl(
       }
     }
     else if (properties == null) {
-      diff.addEntity(LibraryPropertiesEntity(libraryType, entity.entitySource) {
-        library = entity
-        if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
-      })
+      diff.modifyLibraryEntity(currentLibrary.libraryEntity) {
+        this.libraryProperties = LibraryPropertiesEntity(entity.entitySource) {
+          if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
+        }
+      }
     }
     else {
-      diff.modifyEntity(properties) {
-        this.libraryType = libraryType
+      diff.modifyLibraryPropertiesEntity(properties) {
         if (propertiesXmlTag != null) this.propertiesXmlTag = propertiesXmlTag
       }
+    }
+
+    diff.modifyLibraryEntity(entity) {
+      this.typeId = libraryType?.let { LibraryTypeId(libraryType) }
     }
   }
 
@@ -170,6 +176,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
   private fun LibraryEntity.hasEqualProperties(another: LibraryEntity): Boolean {
     if (this.tableId != another.tableId) return false
+    if (this.typeId != another.typeId) return false
     if (this.name != another.name) return false
     if (this.roots != another.roots) return false
     if (this.excludedRoots != another.excludedRoots) return false
@@ -177,9 +184,7 @@ internal class LibraryModifiableModelBridgeImpl(
   }
 
   private fun LibraryPropertiesEntity.hasEqualProperties(another: LibraryPropertiesEntity): Boolean {
-    if (this.libraryType != another.libraryType) return false
-    if (this.propertiesXmlTag != another.propertiesXmlTag) return false
-    return true
+    return this.propertiesXmlTag == another.propertiesXmlTag
   }
 
   override fun addJarDirectory(url: String, recursive: Boolean) =
@@ -189,7 +194,7 @@ internal class LibraryModifiableModelBridgeImpl(
     assertModelIsLive()
 
     val rootTypeId = rootType.toLibraryRootType()
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
     update {
@@ -209,7 +214,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootUp(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -226,7 +231,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun moveRootDown(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       val index = roots.indexOfFirst { it.url == virtualFileUrl }
@@ -257,7 +262,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     update {
       if (!excludedRoots.map { it.url }.contains(virtualFileUrl)) {
@@ -273,7 +278,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addRoot(url: String, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val root = LibraryRoot(
       url = virtualFileUrl,
@@ -338,7 +343,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeRoot(url: String, rootType: OrderRootType): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     if (!currentLibrary.getUrls(rootType).contains(virtualFileUrl.url)) return false
 
@@ -360,7 +365,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun removeExcludedRoot(url: String): Boolean {
     assertModelIsLive()
 
-    val virtualFileUrl = virtualFileManager.fromUrl(url)
+    val virtualFileUrl = virtualFileManager.getOrCreateFromUrl(url)
 
     val excludeUrlEntity = currentLibrary.libraryEntity.excludedRoots.find { it.url == virtualFileUrl }
     if (excludeUrlEntity == null) return false

@@ -1,3 +1,4 @@
+// IGNORE_K2
 public fun String.bar() = ""
 
 fun foo() {

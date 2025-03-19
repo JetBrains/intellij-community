@@ -5,13 +5,13 @@ class Test {
 
   void test() {
     switch (s) {
-      case <caret>String ss && ss.length() <= 3:
+      case <caret>String ss when ss.length() <= 3:
         System.out.println(1);
         break;
       case "fsd":
         System.out.println(2);
         break;
-      case default:
+      default:
         System.out.println(3);
         break;
     }

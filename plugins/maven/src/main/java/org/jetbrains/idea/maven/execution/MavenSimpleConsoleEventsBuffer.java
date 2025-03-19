@@ -1,24 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven3SpyOutputExtractor;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven4SpyOutputExtractor;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.SpyOutputExtractor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
+
 
 public class MavenSimpleConsoleEventsBuffer {
   private final TypedBuffer myBuffer;
-  private final BiConsumer<String, Key<String>> myConsumer;
+  private final BiConsumer<String, Key<Object>> myConsumer;
   private final boolean myShowSpyOutput;
 
-  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<String>> consumer, boolean showSpyOutput) {
+  public MavenSimpleConsoleEventsBuffer(BiConsumer<String, Key<Object>> consumer, boolean showSpyOutput, boolean withLoggingOutputStream) {
     myConsumer = consumer;
     myShowSpyOutput = showSpyOutput;
-    myBuffer = new TypedBuffer(consumer);
+    myBuffer = new TypedBuffer(consumer, withLoggingOutputStream ? new Maven4SpyOutputExtractor() : new Maven3SpyOutputExtractor());
   }
 
-  public void addText(@NotNull String text, @NotNull Key<String> outputType) {
+  public void addText(@NotNull String text, @NotNull Key<Object> outputType) {
     if (myShowSpyOutput) {
       myConsumer.accept(text, outputType);
       return;
@@ -27,37 +34,43 @@ public class MavenSimpleConsoleEventsBuffer {
     myBuffer.append(text, outputType);
   }
 
+  private record OutputChunk(String text, Key<Object> outputType) {
+  }
+
   private static final class TypedBuffer {
-    private final BiConsumer<String, @NotNull Key<String>> myConsumer;
-    private final StringBuilder myBuilder = new StringBuilder();
-    private Key<String> myOutputType;
+    private final BiConsumer<String, @NotNull Key<Object>> myConsumer;
+    private final SpyOutputExtractor myExtractor;
+    private final List<OutputChunk> chunks = new ArrayList<>();
+    private ProcessOutputType myBaseOutputType;
     private boolean myIsProcessingSpyNow;
 
-    private TypedBuffer(BiConsumer<String, @NotNull Key<String>> consumer)
-    {
+    private TypedBuffer(BiConsumer<String, @NotNull Key<Object>> consumer, SpyOutputExtractor extractor) {
       this.myConsumer = consumer;
+      myExtractor = extractor;
     }
 
     private void reset() {
-      myBuilder.setLength(0);
-      myOutputType = null;
+      chunks.clear();
     }
 
     private void sendAndReset() {
-      myConsumer.accept(getText(), myOutputType);
+      for (OutputChunk chunk : chunks) {
+        myConsumer.accept(chunk.text, chunk.outputType);
+      }
       reset();
     }
 
-    private String getText() {
-      return myBuilder.toString();
+    private boolean canAppend(@NotNull Key<Object> outputType) {
+      ProcessOutputType baseOutType = getBaseOutputType(outputType);
+      return null == myBaseOutputType || (baseOutType != null && baseOutType.equals(myBaseOutputType));
     }
 
-    private boolean canAppend(@NotNull Key<String> outputType) {
-      var currentOutputType = myOutputType;
-      return null == currentOutputType || currentOutputType.toString().equals(outputType.toString());
+    private static @Nullable ProcessOutputType getBaseOutputType(Key<Object> outputType) {
+      if (!(outputType instanceof ProcessOutputType)) return null;
+      return ((ProcessOutputType)outputType).getBaseOutputType();
     }
 
-    public void append(@NotNull String text, @NotNull Key<String> outputType) {
+    public void append(@NotNull String text, @NotNull Key<Object> outputType) {
       boolean lastChunk = text.charAt(text.length() - 1) == '\n';
       if (myIsProcessingSpyNow) {
         myIsProcessingSpyNow = !lastChunk;
@@ -66,10 +79,11 @@ public class MavenSimpleConsoleEventsBuffer {
       if (!canAppend(outputType)){
         sendAndReset();
       }
-      myBuilder.append(text);
-      myOutputType = outputType;
-      if (myBuilder.length() >= MavenSpyOutputParser.PREFIX.length() || lastChunk) {
-        if (!MavenSpyOutputParser.isSpyLog(getText())) {
+      chunks.add(new OutputChunk(text, outputType));
+      myBaseOutputType = getBaseOutputType(outputType);
+      String clearedBuffer = getAllInBuffer();
+      if (myExtractor.isLengthEnough(clearedBuffer) || lastChunk) {
+        if (!myExtractor.isSpyLog(clearedBuffer)) {
           sendAndReset();
         } else {
           myIsProcessingSpyNow = !lastChunk;
@@ -77,6 +91,15 @@ public class MavenSimpleConsoleEventsBuffer {
         }
       }
     }
+
+    private String getAllInBuffer() {
+      StringBuilder plainText = new StringBuilder();
+      for (OutputChunk chunk : chunks) {
+        plainText.append(chunk.text);
+      }
+      return plainText.toString();
+    }
+
 
   }
 }

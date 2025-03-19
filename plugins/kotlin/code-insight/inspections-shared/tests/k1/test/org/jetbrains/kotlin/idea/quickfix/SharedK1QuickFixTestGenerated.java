@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class SharedK1QuickFixTestGenerated extends AbstractSharedK1Quic
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/quickfix/redundantSemicolon")
     public static class RedundantSemicolon extends AbstractSharedK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -34,6 +41,64 @@ public abstract class SharedK1QuickFixTestGenerated extends AbstractSharedK1Quic
         @TestMetadata("afterStatement.kt")
         public void testAfterStatement() throws Exception {
             runTest("../testData/quickfix/redundantSemicolon/afterStatement.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/quickfix/unresolvedInvocation")
+    public static class UnresolvedInvocation extends AbstractSharedK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumEntryCall.kt")
+        public void testEnumEntryCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/enumEntryCall.kt");
+        }
+
+        @TestMetadata("nonSimpleName.kt")
+        public void testNonSimpleName() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/nonSimpleName.kt");
+        }
+
+        @TestMetadata("objectCall.kt")
+        public void testObjectCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/objectCall.kt");
+        }
+
+        @TestMetadata("propertyCall.kt")
+        public void testPropertyCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/propertyCall.kt");
+        }
+
+        @TestMetadata("propertyCallWithArguments.kt")
+        public void testPropertyCallWithArguments() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/propertyCallWithArguments.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/quickfix/unusedImport")
+    public static class UnusedImport extends AbstractSharedK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("import.kt")
+        public void testImport() throws Exception {
+            runTest("../testData/quickfix/unusedImport/import.kt");
         }
     }
 }

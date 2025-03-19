@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -26,18 +26,15 @@ import static org.jetbrains.plugins.groovy.codeInspection.BaseInspection.getProb
 /**
  * @author Vladislav.Soroka
  */
-public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
+public final class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
 
-  @NotNull
   @Override
-  public GroovyElementVisitor buildGroovyVisitor(@NotNull ProblemsHolder holder, boolean onTheFly) {
+  public @NotNull GroovyElementVisitor buildGroovyVisitor(@NotNull ProblemsHolder holder, boolean onTheFly) {
     return new MyVisitor(holder);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return getProbableBugs();
   }
 
@@ -75,8 +72,7 @@ public class MultipleRepositoryUrlsInspection extends GradleBaseInspection {
     }
   }
 
-  @NotNull
-  static List<GrCallExpression> findUrlCallExpressions(@NotNull GrClosableBlock closure) {
+  static @NotNull List<GrCallExpression> findUrlCallExpressions(@NotNull GrClosableBlock closure) {
     GrCallExpression[] applicationStatements = PsiTreeUtil.getChildrenOfType(closure, GrCallExpression.class);
     if (applicationStatements == null) return Collections.emptyList();
 

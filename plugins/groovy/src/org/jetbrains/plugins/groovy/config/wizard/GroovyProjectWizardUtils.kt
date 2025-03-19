@@ -1,24 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyProjectWizardUtils")
 package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.CommonBundle
 import com.intellij.framework.library.FrameworkLibraryVersion
-import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Groovy.logGroovyLibraryFinished
-import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.projectWizard.NewProjectWizardConstants
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.*
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
+import com.intellij.util.application
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
@@ -26,24 +22,23 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
 import javax.swing.SwingUtilities
 
-const val GROOVY_SDK_FALLBACK_VERSION = "3.0.9"
-
-private const val MAIN_FILE = "Main.groovy"
-private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
+const val GROOVY_SDK_FALLBACK_VERSION: String = "3.0.9"
 
 fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : BuildSystemGroovyNewProjectWizardData {
   val groovyLibraryDescription = GroovyLibraryDescription()
   val comboBox = DistributionComboBox(context.project, object : FileChooserInfo {
-    override val fileChooserTitle = GroovyBundle.message("dialog.title.select.groovy.sdk")
-    override val fileChooserDescription: String? = null
-    override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+    override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor().withTitle(GroovyBundle.message("dialog.title.select.groovy.sdk"))
     override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
   })
   comboBox.specifyLocationActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")
   comboBox.addLoadingItem()
-  val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
-  if (pathToGroovyHome != null) {
-    comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+  application.executeOnPooledThread {
+    val pathToGroovyHome = groovyLibraryDescription.findPathToGroovyHome()
+    if (pathToGroovyHome != null) {
+      application.invokeLater {
+        comboBox.addDistributionIfNotExists(LocalDistributionInfo(pathToGroovyHome.path))
+      }
+    }
   }
   loadLatestGroovyVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
     override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
@@ -65,6 +60,7 @@ fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : B
       .validationOnApply { validateGroovySdkWithDialog(groovySdk) }
       .columns(COLUMNS_MEDIUM)
       .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
+      .onApply { logGroovySdkFinished(groovySdk) }
   }.bottomGap(BottomGap.SMALL)
 }
 
@@ -110,15 +106,6 @@ private fun isInvalidSdk(distribution: DistributionInfo?): Boolean {
                                   GroovyConfigUtils.getInstance().getSDKVersionOrNull(distribution.path) == null)
 }
 
-fun ModuleBuilder.createSampleGroovyCodeFile(project: Project, sourceDirectory: VirtualFile) {
-  WriteCommandAction.runWriteCommandAction(project, GroovyBundle.message("new.project.wizard.groovy.creating.main.file"), null,
-                                           Runnable {
-                                             val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
-                                             val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
-                                             VfsUtil.saveText(helloWorldFile, fileTemplate.text)
-                                           })
-}
-
 fun moveUnstableVersionToTheEnd(left: FrameworkLibraryVersion, right: FrameworkLibraryVersion): Int {
   val leftVersion = left.versionString
   val rightVersion = right.versionString
@@ -143,11 +130,11 @@ fun NewProjectWizardStep.logGroovySdkFinished(sdk: DistributionInfo?) {
   logGroovyLibraryFinished(type, version)
 }
 
-private fun getGroovySdkType(sdk: DistributionInfo?): String? {
+private fun getGroovySdkType(sdk: DistributionInfo?): String {
   return when (sdk) {
-    is FrameworkLibraryDistributionInfo -> "maven"
-    is LocalDistributionInfo -> "local"
-    null -> null
+    is FrameworkLibraryDistributionInfo -> NewProjectWizardConstants.GroovySdk.MAVEN
+    is LocalDistributionInfo -> NewProjectWizardConstants.GroovySdk.LOCAL
+    null -> NewProjectWizardConstants.GroovySdk.NONE
     else -> error("Unexpected distribution type: $sdk")
   }
 }

@@ -5,14 +5,14 @@ plugins {
 
 android {
     compileSdkVersion({{compile_sdk_version}})
-
+    namespace = "org.common.example"
     val debug by buildTypes.getting
     debug.matchingFallbacks += listOf("debug", "release")
 }
 
 kotlin {
     jvm()
-    android()
+    androidTarget()
     iosArm64()
     iosX64()
 

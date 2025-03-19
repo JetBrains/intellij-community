@@ -2,18 +2,19 @@ package com.intellij.json;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin.Ulitin
  */
 public class JsonLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new JsonLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return null;
   }
 

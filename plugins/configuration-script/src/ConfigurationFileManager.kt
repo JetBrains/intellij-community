@@ -1,5 +1,9 @@
 package com.intellij.configurationScript
 
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.ide.trustedProjects.TrustedProjectsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,16 +29,26 @@ import java.nio.file.Paths
 
 // we cannot use the same approach as we generate JSON scheme because we should load option classes only in a lazy manner
 // that's why we don't use snakeyaml TypeDescription approach to load
-internal class ConfigurationFileManager(project: Project) {
+@Service(Service.Level.PROJECT)
+internal class ConfigurationFileManager(project: Project): Disposable {
   private val clearableLazyValues = ContainerUtil.createConcurrentList<() -> Unit>()
 
   private val yamlData = SynchronizedClearableLazy {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      return@SynchronizedClearableLazy null
+    }
     val projectIdeaDir = Paths.get(project.basePath ?: return@SynchronizedClearableLazy null)
     readProjectConfigurationFile(projectIdeaDir)
   }
 
   init {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      TrustedProjectsListener.onceWhenProjectTrusted(this) {
+        clearClearableValues()
+      }
+    }
     registerClearableLazyValue(yamlData)
+    addFileListener(project)
   }
 
   companion object {
@@ -49,8 +63,8 @@ internal class ConfigurationFileManager(project: Project) {
     clearableLazyValues.add(value)
   }
 
-  init {
-    addFileListener(project)
+  private fun clearClearableValues() {
+    clearableLazyValues.forEach { it() }
   }
 
   private fun addFileListener(project: Project) {
@@ -62,7 +76,7 @@ internal class ConfigurationFileManager(project: Project) {
           }
 
           if (event is VFileCreateEvent) {
-            // VFileCreateEvent computes file on request, so, avoid getFile call
+            // VFileCreateEvent computes a file on request, so, avoid getFile call
             if (event.isDirectory || !isConfigurationFile(event.childName)) {
               continue
             }
@@ -74,7 +88,7 @@ internal class ConfigurationFileManager(project: Project) {
             }
           }
 
-          clearableLazyValues.forEach { it() }
+          clearClearableValues()
         }
       }
     })
@@ -86,6 +100,8 @@ internal class ConfigurationFileManager(project: Project) {
     val root = getConfigurationNode() ?: return null
     return findValueNode(root, namePath)
   }
+
+  override fun dispose() = Unit
 }
 
 // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)

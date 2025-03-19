@@ -5,3 +5,5 @@ fun test() {
     val foo = Foo("A", 1)
     var (bar, baz) = foo<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDataModifierFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddDataModifierFixFactory$AddDataModifierFix

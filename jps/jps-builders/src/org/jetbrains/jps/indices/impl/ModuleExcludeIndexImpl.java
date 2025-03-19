@@ -1,14 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
@@ -22,40 +22,41 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
-  private final Set<File> myExcludedRoots = FileCollectionFactory.createCanonicalFileSet();
-  private final Set<File> myTopLevelContentRoots = FileCollectionFactory.createCanonicalFileSet();
-  private final Map<JpsModule, ArrayList<File>> myModuleToExcludesMap = new HashMap<>();
-  private final Map<JpsModule, List<File>> myModuleToContentMap = new HashMap<>();
-  private final Map<File, FileTypeAssocTable<Boolean>> myExcludeFromContentRootTables = FileCollectionFactory.createCanonicalFileMap();
+  private final Set<Path> myExcludedRoots = FileCollectionFactory.createCanonicalPathSet();
+  private final Set<Path> myTopLevelContentRoots = FileCollectionFactory.createCanonicalPathSet();
+  private final Map<JpsModule, ArrayList<Path>> myModuleToExcludesMap = new HashMap<>();
+  private final Map<JpsModule, List<Path>> myModuleToContentMap = new HashMap<>();
+  private final Map<Path, FileTypeAssocTable<Boolean>> myExcludeFromContentRootTables = FileCollectionFactory.createCanonicalPathMap();
 
   public ModuleExcludeIndexImpl(JpsModel model) {
     final Collection<JpsModule> allModules = model.getProject().getModules();
-    Map<File, JpsModule> contentToModule = FileCollectionFactory.createCanonicalFileMap();
+    Map<Path, JpsModule> contentToModule = FileCollectionFactory.createCanonicalPathMap();
 
     /* maps URL of content root to URLs of its source roots if there are exclusion patterns to be reused */
     MultiMap<String, String> contentToSourceRootsWithExcludePatterns = MultiMap.createLinked();
 
     MultiMap<String, String> excludePatterns = MultiMap.createLinked();
     for (final JpsModule module : allModules) {
-      final ArrayList<File> moduleExcludes = new ArrayList<>();
+      ArrayList<Path> moduleExcludes = new ArrayList<>();
       for (String url : module.getExcludeRootsList().getUrls()) {
-        moduleExcludes.add(JpsPathUtil.urlToFile(url));
+        moduleExcludes.add(Path.of(JpsPathUtil.urlToPath(url)));
       }
       JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
       if (moduleExtension != null && !moduleExtension.isInheritOutput() && moduleExtension.isExcludeOutput()) {
         String outputUrl = moduleExtension.getOutputUrl();
         if (outputUrl != null) {
-          moduleExcludes.add(JpsPathUtil.urlToFile(outputUrl));
+          moduleExcludes.add(Path.of(JpsPathUtil.urlToPath(outputUrl)));
         }
         String testOutputUrl = moduleExtension.getTestOutputUrl();
         if (testOutputUrl != null) {
-          moduleExcludes.add(JpsPathUtil.urlToFile(testOutputUrl));
+          moduleExcludes.add(Path.of(JpsPathUtil.urlToPath(testOutputUrl)));
         }
       }
       List<JpsExcludePattern> excludePatternsList = module.getExcludePatterns();
@@ -63,19 +64,19 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         excludePatterns.putValue(pattern.getBaseDirUrl(), pattern.getPattern());
       }
       List<String> contentUrls = module.getContentRootsList().getUrls();
-      final List<File> moduleContent = new ArrayList<>(contentUrls.size());
+      List<Path> moduleContent = new ArrayList<>(contentUrls.size());
       for (String contentUrl : contentUrls) {
-        File contentRoot = JpsPathUtil.urlToFile(contentUrl);
+        Path contentRoot = Path.of(JpsPathUtil.urlToPath(contentUrl));
         moduleContent.add(contentRoot);
         contentToModule.put(contentRoot, module);
       }
       for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-        File sourceRoot = root.getFile();
+        Path sourceRoot = root.getPath();
         moduleContent.add(sourceRoot);
         contentToModule.put(sourceRoot, module);
         //source root should reuse exclusion patterns from its parent content root if any
         for (JpsExcludePattern pattern : excludePatternsList) {
-          if (FileUtil.isAncestor(JpsPathUtil.urlToFile(pattern.getBaseDirUrl()), sourceRoot, true)) {
+          if (FileUtil.isAncestor(JpsPathUtil.urlToPath(pattern.getBaseDirUrl()), sourceRoot.toString(), true)) {
             contentToSourceRootsWithExcludePatterns.putValue(pattern.getBaseDirUrl(), root.getUrl());
           }
         }
@@ -91,10 +92,10 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       for (String pattern : entry.getValue()) {
         table.addAssociation(factory.createMatcher(pattern), Boolean.TRUE);
       }
-      myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(entry.getKey()), table);
+      myExcludeFromContentRootTables.put(Path.of(JpsPathUtil.urlToPath(entry.getKey())), table);
       Collection<String> sourceRootUrls = contentToSourceRootsWithExcludePatterns.get(entry.getKey());
       for (String sourceRootUrl : sourceRootUrls) {
-        myExcludeFromContentRootTables.put(JpsPathUtil.urlToFile(sourceRootUrl), table);
+        myExcludeFromContentRootTables.put(Path.of(JpsPathUtil.urlToPath(sourceRootUrl)), table);
       }
     }
 
@@ -102,24 +103,24 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
     if (projectExtension != null) {
       String url = projectExtension.getOutputUrl();
       if (!Strings.isEmpty(url)) {
-        File excluded = JpsPathUtil.urlToFile(url);
-        File parent = excluded;
+        Path excluded = Path.of(JpsPathUtil.urlToPath(url));
+        Path parent = excluded;
         while (parent != null) {
           JpsModule module = contentToModule.get(parent);
           if (module != null) {
             myModuleToExcludesMap.get(module).add(excluded);
           }
-          parent = FileUtilRt.getParentFile(parent);
+          parent = parent.getParent();
         }
         myExcludedRoots.add(excluded);
       }
     }
 
-    List<File> parents = new ArrayList<>();
-    Set<File> notUnderExcludedCache = FileCollectionFactory.createCanonicalFileSet();
+    List<Path> parents = new ArrayList<>();
+    Set<Path> notUnderExcludedCache = FileCollectionFactory.createCanonicalPathSet();
     for (JpsModule module : allModules) {
-      for (File contentRoot : myModuleToContentMap.get(module)) {
-        File parent = contentRoot.getParentFile();
+      for (Path contentRoot : myModuleToContentMap.get(module)) {
+        Path parent = contentRoot.getParent();
         JpsModule parentModule = null;
         parents.clear();
         while (parent != null) {
@@ -128,14 +129,15 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
             parentModule = contentToModule.get(parent);
             break;
           }
-          parent = parent.getParentFile();
+          parent = parent.getParent();
         }
 
         if (parentModule != null) {
           if (!parentModule.equals(module)) {
             myModuleToExcludesMap.get(parentModule).add(contentRoot);
           }
-          //if the content root is located under an excluded root we need to register it as top-level root to ensure that 'isExcluded' works correctly
+          // if the content root is located under an excluded root,
+          // we need to register it as top-level root to ensure that 'isExcluded' works correctly
           if (isUnderExcluded(contentRoot, myExcludedRoots, notUnderExcludedCache)) {
             myTopLevelContentRoots.add(contentRoot);
           }
@@ -143,20 +145,20 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         else {
           myTopLevelContentRoots.add(contentRoot);
         }
-        for (File file : parents) {
+        for (Path file : parents) {
           contentToModule.put(file, parentModule);
         }
       }
     }
 
-    for (ArrayList<File> files : myModuleToExcludesMap.values()) {
+    for (ArrayList<Path> files : myModuleToExcludesMap.values()) {
       files.trimToSize();
     }
   }
 
-  private static boolean isUnderExcluded(File root, Set<? extends File> excluded, Set<? super File> notUnderExcludedCache) {
-    File parent = root;
-    List<File> parents = new ArrayList<>();
+  private static boolean isUnderExcluded(Path root, Set<? extends Path> excluded, Set<? super Path> notUnderExcludedCache) {
+    Path parent = root;
+    List<Path> parents = new ArrayList<>();
     while (parent != null) {
       if (notUnderExcludedCache.contains(parent)) {
         return false;
@@ -165,7 +167,7 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         return true;
       }
       parents.add(parent);
-      parent = parent.getParentFile();
+      parent = parent.getParent();
     }
     notUnderExcludedCache.addAll(parents);
     return false;
@@ -173,26 +175,26 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
 
   @Override
   public boolean isExcluded(File file) {
-    return determineFileLocation(file, myTopLevelContentRoots, myExcludedRoots) == FileLocation.EXCLUDED;
+    return determineFileLocation(file.toPath(), myTopLevelContentRoots, myExcludedRoots) == FileLocation.EXCLUDED;
   }
 
   @Override
-  public boolean isExcludedFromModule(File file, JpsModule module) {
-    return determineFileLocation(file, myModuleToContentMap.get(module), myModuleToExcludesMap.get(module)) == FileLocation.EXCLUDED;
+  public boolean isExcludedFromModule(@NotNull File file, @NotNull JpsModule module) {
+    return determineFileLocation(file.toPath(), myModuleToContentMap.get(module), myModuleToExcludesMap.get(module)) == FileLocation.EXCLUDED;
   }
 
   @Override
-  public boolean isInContent(File file) {
-    return determineFileLocation(file, myTopLevelContentRoots, myExcludedRoots) == FileLocation.IN_CONTENT;
+  public boolean isInContent(@NotNull File file) {
+    return determineFileLocation(file.toPath(), myTopLevelContentRoots, myExcludedRoots) == FileLocation.IN_CONTENT;
   }
 
   private enum FileLocation { IN_CONTENT, EXCLUDED, NOT_IN_PROJECT }
 
-  private FileLocation determineFileLocation(File file, Collection<File> roots, Collection<File> excluded) {
+  private FileLocation determineFileLocation(Path file, Collection<Path> roots, Collection<Path> excluded) {
     if (roots.isEmpty() && excluded.isEmpty()) {
       return FileLocation.NOT_IN_PROJECT; // optimization
     }
-    File current = file;
+    Path current = file;
     while (current != null) {
       if (excluded.contains(current)) {
         return FileLocation.EXCLUDED;
@@ -204,32 +206,34 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
       if (roots.contains(current)) {
         return FileLocation.IN_CONTENT;
       }
-      current = FileUtilRt.getParentFile(current);
+      current = current.getParent();
     }
     return FileLocation.NOT_IN_PROJECT;
   }
 
-  private static boolean isExcludedByPattern(File file, File root, FileTypeAssocTable<Boolean> table) {
-    File current = file;
-    //noinspection FileEqualsUsage it's ok to compare files by 'equals' here be because these files are produced by the same 'getParentFile' calls
+  private static boolean isExcludedByPattern(Path file, Path root, FileTypeAssocTable<Boolean> table) {
+    Path current = file;
+    // it's ok to compare files by 'equals' here be because these files are produced by the same 'getParentFile' calls
     while (current != null && !current.equals(root)) {
-      if (table.findAssociatedFileType(current.getName()) != null) {
+      if (table.findAssociatedFileType(current.getFileName().toString()) != null) {
         return true;
       }
-      current = FileUtilRt.getParentFile(current);
+      current = current.getParent();
     }
     return false;
   }
 
   @Override
-  public Collection<File> getModuleExcludes(JpsModule module) {
+  public @Unmodifiable @NotNull Collection<@NotNull Path> getModuleExcludes(@NotNull JpsModule module) {
     return myModuleToExcludesMap.get(module);
   }
 
   @Override
   public @NotNull FileFilter getModuleFileFilterHonorExclusionPatterns(@NotNull JpsModule module) {
-    List<File> contentRoots = myModuleToContentMap.get(module);
-    if (contentRoots == null || contentRoots.isEmpty() || myExcludeFromContentRootTables.isEmpty()) return FileFilters.EVERYTHING;
-    return file -> determineFileLocation(file, contentRoots, Collections.emptyList()) == FileLocation.IN_CONTENT;
+    List<Path> contentRoots = myModuleToContentMap.get(module);
+    if (contentRoots == null || contentRoots.isEmpty() || myExcludeFromContentRootTables.isEmpty()) {
+      return FileFilters.EVERYTHING;
+    }
+    return file -> determineFileLocation(file.toPath(), contentRoots, Collections.emptyList()) == FileLocation.IN_CONTENT;
   }
 }

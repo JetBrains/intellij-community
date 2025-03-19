@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.sh.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "copyright_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.sh.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/copyright",
+    "//platform/util",
+    "//plugins/sh/core",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":copyright_resources"]
+)
+### auto-generated section `build intellij.sh.copyright` end
+
+### auto-generated section `build intellij.sh.copyright.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "copyright-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "copyright-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/sh",
+    "//plugins/copyright",
+    "//plugins/copyright:copyright_test_lib",
+    "//platform/projectModel-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "copyright-tests_test",
+  runtime_deps = [":copyright-tests_test_lib"]
+)
+### auto-generated section `build intellij.sh.copyright.tests` end

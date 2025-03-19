@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,8 +17,7 @@ import java.util.Objects;
  */
 public class FileTargetContext {
 
-  @NotNull
-  private final PsiFileSystemItem myContext;
+  private final @NotNull PsiFileSystemItem myContext;
   private final String @NotNull [] myPathToCreate;
 
   /**
@@ -48,7 +48,7 @@ public class FileTargetContext {
     return myPathToCreate;
   }
 
-  public static Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
+  public static @Unmodifiable Collection<FileTargetContext> toTargetContexts(Collection<? extends PsiFileSystemItem> items) {
     return ContainerUtil.map(items, FileTargetContext::new);
   }
 

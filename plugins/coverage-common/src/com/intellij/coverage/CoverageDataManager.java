@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.coverage;
 
@@ -9,19 +9,25 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 public abstract class CoverageDataManager {
+
+  CoverageDataManager() {}
+
   public static CoverageDataManager getInstance(@NotNull Project project) {
     return project.getService(CoverageDataManagerImpl.class);
   }
 
   /**
    * TeamCity compatibility
-   *
+   * <p>
    * List coverage suite for presentation from IDEA
    *
    * @param name                  presentable name of a suite
@@ -29,38 +35,63 @@ public abstract class CoverageDataManager {
    * @param lastCoverageTimeStamp when this coverage data was gathered
    * @param suiteToMergeWith      null remove coverage pack from prev run and get from new
    */
+  @SuppressWarnings("unused")
   public abstract CoverageSuite addCoverageSuite(String name,
-                                                 CoverageFileProvider fileProvider,
+                                                 @NotNull CoverageFileProvider fileProvider,
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
-                                                 @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean coverageByTestEnabled, final boolean tracingEnabled);
+                                                 @Nullable String suiteToMergeWith,
+                                                 @NotNull CoverageRunner coverageRunner,
+                                                 boolean coverageByTestEnabled, boolean branchCoverage);
 
-  public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
+  /**
+   * @deprecated Use {@link CoverageDataManager#addExternalCoverageSuite(File, CoverageRunner)}
+   */
+  @Deprecated(forRemoval = true)
+  public abstract CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
                                                          long timeStamp,
-                                                         CoverageRunner coverageRunner, CoverageFileProvider fileProvider);
+                                                         @NotNull CoverageRunner coverageRunner,
+                                                         @NotNull CoverageFileProvider fileProvider);
+
+  public final CoverageSuite addExternalCoverageSuite(@NotNull File file, @NotNull CoverageRunner coverageRunner) {
+    return addExternalCoverageSuite(file.getName(), file.lastModified(), coverageRunner, new DefaultCoverageFileProvider(file.getAbsolutePath()));
+  }
 
 
   public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
 
 
   /**
+   * Suites that are tracked by the coverage manager.
    * @return registered suites
+   * @see com.intellij.coverage.actions.CoverageSuiteChooserDialog
    */
   public abstract CoverageSuite @NotNull [] getSuites();
 
   /**
-   * @return currently active suite
+   * @return Currently opened suites.
+   */
+  public abstract Collection<CoverageSuitesBundle> activeSuites();
+
+  /**
+   * Currently visible or one of the opened suites if view is not enabled.
    */
   public abstract CoverageSuitesBundle getCurrentSuitesBundle();
 
   /**
    * Choose active suite. Calling this method triggers updating the presentations in project view, editors etc.
-   * @param suite coverage suite to choose. <b>null</b> means no coverage information should be presented
+   * @param suite coverage suite to choose. Must not be <code>null</code>. Use <code>closeSuitesBundle</code> to close a suite
    */
-  public abstract void chooseSuitesBundle(@Nullable CoverageSuitesBundle suite);
+  public abstract void chooseSuitesBundle(@NotNull CoverageSuitesBundle suite);
+
+  public abstract void closeSuitesBundle(@NotNull CoverageSuitesBundle suite);
 
   public abstract void coverageGathered(@NotNull CoverageSuite suite);
+
+  /**
+   * Called each time after a coverage suite is completely processed: data is loaded and accumulated
+   */
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suite) {}
 
   /**
    * Remove suite
@@ -69,20 +100,34 @@ public abstract class CoverageDataManager {
   public abstract void removeCoverageSuite(CoverageSuite suite);
 
   /**
+   * Remove suite from the list of tracked suites.
+   * <p>
+   * In contrast to <code>removeCoverageSuite</code>, this method keeps file on disk.
+   * @param suite suite to unregister
+   */
+  public abstract void unregisterCoverageSuite(CoverageSuite suite);
+
+  /**
    * runs computation in read action, blocking project close till action has been run,
    * and doing nothing in case projectClosing() event has been already broadcasted.
-   *  Note that actions must not be long running not to cause significant pauses on project close.
+   *  Note that actions must not be long-running not to cause significant pauses on project close.
    * @param computation {@link Computable to be run}
    * @return result of the computation or null if the project is already closing.
    */
-  @Nullable
-  public abstract <T> T doInReadActionIfProjectOpen(Computable<T> computation);
+  public abstract @Nullable <T> T doInReadActionIfProjectOpen(Computable<T> computation);
 
-  public abstract boolean isSubCoverageActive();
+  @ApiStatus.Internal
+  public boolean isSubCoverageActive() {
+    return false;
+  }
 
-  public abstract void selectSubCoverage(@NotNull final CoverageSuitesBundle suite, final List<String> methodNames);
+  @ApiStatus.Internal
+  public void selectSubCoverage(final @NotNull CoverageSuitesBundle suite, final List<String> methodNames) {
+  }
 
-  public abstract void restoreMergedCoverage(@NotNull final CoverageSuitesBundle suite);
+  @ApiStatus.Internal
+  public void restoreMergedCoverage(final @NotNull CoverageSuitesBundle suite) {
+  }
 
   public abstract void addSuiteListener(@NotNull CoverageSuiteListener listener, @NotNull Disposable parentDisposable);
 
@@ -91,9 +136,9 @@ public abstract class CoverageDataManager {
   /**
    * This method attach process listener to process handler. Listener will load coverage information after process termination
    */
-  public abstract void attachToProcess(@NotNull final ProcessHandler handler,
-                                       @NotNull final RunConfigurationBase configuration, RunnerSettings runnerSettings);
+  public abstract void attachToProcess(final @NotNull ProcessHandler handler,
+                                       final @NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
-  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase configuration, RunnerSettings runnerSettings);
+  public abstract void processGatheredCoverage(@NotNull RunConfigurationBase<?> configuration, RunnerSettings runnerSettings);
 
 }

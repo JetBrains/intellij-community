@@ -7,6 +7,7 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * Ex: it is possible to override {@link com.intellij.diff.tools.simple.SimpleDiffTool} for some requests,
  * without disturbing {@link com.intellij.diff.tools.simple.SimpleDiffTool} vs {@link com.intellij.diff.tools.fragmented.UnifiedDiffTool} priority.
  */
+@ApiStatus.Internal
 public interface DiffToolSubstitutor {
   ExtensionPointName<DiffToolSubstitutor> EP_NAME =
     ExtensionPointName.create("com.intellij.diff.impl.DiffToolSubstitutor");

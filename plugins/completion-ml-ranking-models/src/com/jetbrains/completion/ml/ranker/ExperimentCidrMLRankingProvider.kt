@@ -9,6 +9,7 @@ class ExperimentCidrMLRankingProvider : CatBoostJarCompletionModelProvider(
   CompletionRankingModelsBundle.message("ml.completion.experiment.model.cidr"), "cpp_features_exp", "cpp_model_exp"), ExperimentModelProvider {
 
   override fun isLanguageSupported(language: Language): Boolean = language.id.compareTo("ObjectiveC", ignoreCase = true) == 0
+                                                                  || language.id.compareTo("C++", ignoreCase = true) == 0
 
   override fun experimentGroupNumber(): Int = 13
 }

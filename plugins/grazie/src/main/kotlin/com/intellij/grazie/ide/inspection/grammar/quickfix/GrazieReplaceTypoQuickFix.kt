@@ -2,7 +2,6 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
 import ai.grazie.nlp.langs.Language
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.CustomizableIntentionAction.RangeToHighlight
 import com.intellij.codeInsight.intention.FileModifier
@@ -11,6 +10,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -25,19 +25,22 @@ import com.intellij.grazie.text.TextProblem
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.math.min
 
 object GrazieReplaceTypoQuickFix {
   private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
-    HighPriorityAction {
+    HighPriorityAction, DumbAware {
     override fun compareTo(other: IntentionAction): Int {
       if (other is GrazieCustomFixWrapper) return -1
       return super.compareTo(other)
@@ -55,7 +58,7 @@ object GrazieReplaceTypoQuickFix {
     private val detectedLanguage: Language?,
     private val batchId: String?
   )
-    : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption {
+    : ChoiceVariantIntentionAction(), HighPriorityAction, IntentionActionWithFixAllOption, DumbAware {
     override fun getName(): String {
       if (suggestion.isEmpty()) return msg("grazie.grammar.quickfix.remove.typo.tooltip")
       if (suggestion[0].isWhitespace() || suggestion.last().isWhitespace()) return "'$suggestion'"
@@ -107,7 +110,7 @@ object GrazieReplaceTypoQuickFix {
       GrazieFUSCounter.quickFixInvoked(rule, project, "accept.suggestion")
       val document = file.viewProvider.document ?: return
       underlineRanges.forEach { underline ->
-        underline.range?.let { UpdateHighlightersUtil.removeHighlightersWithExactRange(document, project, it) }
+        underline.range?.let { removeHighlightersWithExactRange(document, project, it) }
       }
       applyReplacements(document, replacements)
     }
@@ -143,13 +146,6 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
-  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
-  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
-    return getReplacementFixes(problem, underlineRanges)
-  }
-
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
@@ -157,7 +153,8 @@ object GrazieReplaceTypoQuickFix {
     val spm = SmartPointerManager.getInstance(file.project)
     val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
-    problem.suggestions.forEachIndexed { index, suggestion ->
+    val suggestions = problem.suggestions.asSequence().take(15)
+    suggestions.forEachIndexed { index, suggestion ->
       val changes = suggestion.changes
       val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
       val presentable = suggestion.presentableText
@@ -183,7 +180,7 @@ object GrazieReplaceTypoQuickFix {
     if (shreds.isEmpty()) return emptyList()
 
     if (replacement.isEmpty() && removalWouldGlueUnrelatedTokens(localRange, text)) {
-      replacement = " ";
+      replacement = " "
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()
@@ -238,4 +235,23 @@ object GrazieReplaceTypoQuickFix {
   }
 
   private fun charsMatch(c1: Char, c2: Char) = c1 == c2 || c1 == ' ' && c2 == '\n'
+  /**
+   * Remove all highlighters with exactly the given range from [DocumentMarkupModel].
+   * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   * Note that all highlighters at the given range are removed, not only the ones produced by your inspection,
+   * but most likely that will look fine:
+   * they'll be restored when the new highlighting pass is finished.
+   * This method currently works in O(total highlighter count in file) time.
+   */
+  fun removeHighlightersWithExactRange(document: Document, project: Project, range: Segment) {
+    if (IntentionPreviewUtils.isIntentionPreviewActive()) return
+    ThreadingAssertions.assertEventDispatchThread()
+    val model = DocumentMarkupModel.forDocument(document, project, false) ?: return
+
+    for (highlighter in model.allHighlighters) {
+      if (TextRange.areSegmentsEqual(range, highlighter!!)) {
+        model.removeHighlighter(highlighter!!)
+      }
+    }
+  }
 }

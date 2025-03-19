@@ -5,9 +5,15 @@ import com.intellij.psi.PsiJavaFile;
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
 public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokParsingTestCase {
+
   @Override
   public void doTest() {
-    final String fullFileName = getTestName(true).replace('$', '/') + ".java";
+    doTest(true);
+  }
+
+  @Override
+  protected void compareFiles(boolean lowercaseFirstLetter) {
+    final String fullFileName = getTestName(lowercaseFirstLetter).replace('$', '/') + ".java";
     final int lastIndexOf = fullFileName.lastIndexOf('/');
     final String subPath = fullFileName.substring(0, lastIndexOf);
     final String fileName = fullFileName.substring(lastIndexOf + 1);
@@ -25,6 +31,6 @@ public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokP
       fail("The test file type is not supported");
     }
 
-    compareFiles((PsiJavaFile) psiLombokFile, (PsiJavaFile) psiDelombokFile);
+    compareFiles((PsiJavaFile)psiLombokFile, (PsiJavaFile)psiDelombokFile);
   }
 }

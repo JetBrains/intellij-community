@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.java.codeserver.highlighting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-codeserver-highlighting_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-codeserver-highlighting",
+  module_name = "intellij.java.codeserver.highlighting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:stream_ex",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-indexing-api:indexing",
+    "//java/codeserver/core:java-codeserver-core",
+  ],
+  runtime_deps = [":java-codeserver-highlighting_resources"]
+)
+### auto-generated section `build intellij.java.codeserver.highlighting` end

@@ -5,18 +5,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.indexing.FileIndexingState;
+import com.intellij.util.indexing.FileIndexingStateWithExplanation;
 import com.intellij.util.indexing.IndexInfrastructure;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.indexing.impl.perFileVersion.IntFileAttribute;
 import com.intellij.util.io.PersistentStringEnumerator;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -24,7 +20,7 @@ import java.util.stream.Collectors;
 
 final class CompositeBinaryBuilderMap {
   private static final Logger LOG = Logger.getInstance(CompositeBinaryBuilderMap.class);
-  private static final FileAttribute VERSION_STAMP = new FileAttribute("stubIndex.cumulativeBinaryBuilder", 1, true);
+  private static final IntFileAttribute VERSION_STAMP = IntFileAttribute.create("stubIndex.cumulativeBinaryBuilder", 1);
 
   private final Object2IntMap<FileType> myCumulativeVersionMap;
 
@@ -61,11 +57,9 @@ final class CompositeBinaryBuilderMap {
     persistVersion(version, fileId);
   }
 
-  private void persistVersion(int version, int fileId) throws IOException {
+  private static void persistVersion(int version, int fileId) throws IOException {
     if (version == 0) return;
-    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
-      DataInputOutputUtil.writeINT(stream, version);
-    }
+    VERSION_STAMP.writeInt(fileId, version);
   }
 
   void persistState(int fileId, @NotNull FileType fileType) throws IOException {
@@ -74,31 +68,19 @@ final class CompositeBinaryBuilderMap {
   }
 
   void resetPersistedState(int fileId) throws IOException {
-    boolean hasWrittenAttribute;
-    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
-      hasWrittenAttribute = stream != null;
-    }
-    if (hasWrittenAttribute) {
-      try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
-        DataInputOutputUtil.writeINT(stream, 0);
-      }
-    }
+    VERSION_STAMP.writeInt(fileId, 0);
   }
 
-  FileIndexingState isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
-    int indexedVersion = 0;
-    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
-      if (stream != null) {
-        indexedVersion = DataInputOutputUtil.readINT(stream);
-      }
-    }
+  FileIndexingStateWithExplanation isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
+    int indexedVersion = VERSION_STAMP.readInt(fileId);
 
     if (indexedVersion == 0) {
-      return FileIndexingState.NOT_INDEXED;
+      return FileIndexingStateWithExplanation.notIndexed();
     }
 
     int actualVersion = getBuilderCumulativeVersion(file);
-    return actualVersion == indexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+    return actualVersion == indexedVersion ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.outdated(
+      () -> "actual version (" + actualVersion + ") != indexedVersion (" + indexedVersion + ")");
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {

@@ -2,18 +2,18 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import java.util.*
 
@@ -21,7 +21,8 @@ private fun Collection<Change>.toPartialAwareSet() =
   CollectionFactory.createCustomHashingStrategySet(ChangeListChange.HASHING_STRATEGY)
     .also { it.addAll(this) }
 
-internal class ChangesViewCommitWorkflowHandler(
+@ApiStatus.Internal
+class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
   override val ui: ChangesViewCommitWorkflowUi
 ) : NonModalCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
@@ -45,20 +46,20 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val inclusionModel = PartialCommitInclusionModel(project)
 
-  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi) { getIncludedChanges() }
-  private var currentChangeList: LocalChangeList
+  private var currentChangeList: LocalChangeList = changeListManager.defaultChangeList
+  private val commitMessagePolicy = ChangesViewCommitMessagePolicy(project, ui.commitMessageUi, currentChangeList)
 
   init {
     Disposer.register(this, inclusionModel)
     Disposer.register(this, ui)
 
     workflow.addListener(this, this)
-    workflow.addVcsCommitListener(GitCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(NonModalCommitStateCleaner(), this)
     workflow.addVcsCommitListener(PostCommitChecksRunner(), this)
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
-    ui.addDataProvider(createDataProvider())
+    ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
@@ -69,7 +70,6 @@ internal class ChangesViewCommitWorkflowHandler(
     setupCommitChecksResultTracking()
 
     vcsesChanged() // as currently vcses are set before handler subscribes to corresponding event
-    currentChangeList = workflow.getAffectedChangeList(emptySet())
     changeListDataChanged()
 
     if (isToggleMode()) deactivate(false)
@@ -77,15 +77,17 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    commitMessagePolicy.init(currentChangeList, this)
+    commitMessagePolicy.init()
+    Disposer.register(this, commitMessagePolicy)
   }
 
-  override fun createDataProvider(): DataProvider = object : DataProvider {
-    private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
-
-    override fun getData(dataId: String): Any? =
-      if (COMMIT_WORKFLOW_HANDLER.`is`(dataId)) this@ChangesViewCommitWorkflowHandler.takeIf { it.isActive }
-      else superProvider.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    if (!isActive) {
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
+      sink.setNull(VcsDataKeys.COMMIT_WORKFLOW_UI)
+      sink.setNull(VcsDataKeys.COMMIT_MESSAGE_CONTROL)
+    }
   }
 
   override fun commitOptionsCreated() {
@@ -157,11 +159,14 @@ internal class ChangesViewCommitWorkflowHandler(
 
   val isActive: Boolean get() = ui.isActive
   fun activate(): Boolean = fireActivityStateChanged { ui.activate() }
-  fun deactivate(isRestoreState: Boolean) {
-    fireActivityStateChanged { ui.deactivate(isRestoreState) }
+  fun deactivate(isOnCommit: Boolean) {
+    fireActivityStateChanged { ui.deactivate(isOnCommit) }
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
+      if (!isOnCommit) {
+        LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+      }
     }
   }
 
@@ -186,9 +191,8 @@ internal class ChangesViewCommitWorkflowHandler(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
 
+    commitMessagePolicy.onChangelistChanged(newChangeList)
     if (oldChangeList.id != newChangeList.id) {
-      commitMessagePolicy.onChangelistChanged(oldChangeList, newChangeList)
-
       commitOptions.changeListChanged(newChangeList)
     }
     if (oldChangeList.data != newChangeList.data) {
@@ -237,7 +241,7 @@ internal class ChangesViewCommitWorkflowHandler(
     }
   }
 
-  private fun isToggleMode(): Boolean {
+  protected open fun isToggleMode(): Boolean {
     val commitMode = CommitModeManager.getInstance(project).getCurrentCommitMode()
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
@@ -271,7 +275,7 @@ internal class ChangesViewCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(currentChangeList)
+    commitMessagePolicy.onBeforeCommit()
   }
 
   // save state on project close
@@ -290,17 +294,16 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun saveStateBeforeDispose() {
     commitOptions.saveState()
-    commitMessagePolicy.onDispose(currentChangeList)
   }
 
   interface ActivityListener : EventListener {
     fun activityStateChanged()
   }
 
-  private inner class GitCommitStateCleaner : CommitStateCleaner() {
+  private inner class NonModalCommitStateCleaner : CommitStateCleaner() {
 
     override fun onSuccess() {
-      commitMessagePolicy.onAfterCommit(currentChangeList)
+      commitMessagePolicy.onAfterCommit()
       super.onSuccess()
     }
   }

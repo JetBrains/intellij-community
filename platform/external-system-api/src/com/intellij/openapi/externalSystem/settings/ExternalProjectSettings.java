@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +19,9 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   private static final Logger LOG = Logger.getInstance(ExternalProjectSettings.class);
 
   private String myExternalProjectPath;
-  @Nullable private Set<String> myModules = new HashSet<>();
+  private @Nullable Set<String> myModules = new HashSet<>();
 
-  @NotNull
-  public Set<String> getModules() {
+  public @NotNull Set<String> getModules() {
     return myModules == null ? Collections.emptySet() : myModules;
   }
 
@@ -82,6 +81,13 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     return myUseQualifiedModuleNames;
   }
 
+  /**
+   * @deprecated qualified module names are used by default, so there is no need to call with method with {@code true}; and {@code false}
+   * shouldn't be used as a parameter as well, because all plugins are supposed to use qualified module names for grouping (see IDEA-166061 
+   * for details). 
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
     myUseQualifiedModuleNames = useQualifiedModuleNames;
   }
@@ -112,8 +118,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
   }
 
   @Override
-  @NotNull
-  public abstract ExternalProjectSettings clone();
+  public abstract @NotNull ExternalProjectSettings clone();
 
   protected void copyTo(@NotNull ExternalProjectSettings receiver) {
     receiver.myExternalProjectPath = myExternalProjectPath;

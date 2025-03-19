@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,7 @@ import java.io.IOException;
 public class MigrationManager {
   private final Project myProject;
   private final MigrationMapSet myMigrationMapSet = new MigrationMapSet();
-  private final static Logger LOG = Logger.getInstance(MigrationManager.class);
+  private static final Logger LOG = Logger.getInstance(MigrationManager.class);
 
   public MigrationManager(Project project) {
     myProject = project;
@@ -53,8 +53,7 @@ public class MigrationManager {
     map.setFileName(FileUtil.sanitizeFileName(map.getName()));
   }
 
-  @Nullable
-  public MigrationMap findMigrationMap(@NotNull String name) {
+  public @Nullable MigrationMap findMigrationMap(@NotNull String name) {
     return myMigrationMapSet.findMigrationMap(name);
   }
 

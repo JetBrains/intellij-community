@@ -1,0 +1,8 @@
+// IS_APPLICABLE: true
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun test() {
+    val name: String = "Foo"
+    val suffix: String = "Bar"
+    val fullName = $$$"`$$Baz$Boo$$$$name$$$suffix`"
+}

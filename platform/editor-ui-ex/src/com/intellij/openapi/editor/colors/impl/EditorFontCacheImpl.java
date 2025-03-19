@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.impl.FontFamilyService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,19 +16,23 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class EditorFontCacheImpl extends EditorFontCache {
+  private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
+
   private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
 
-  private final @NotNull Map<EditorFontType, Font> myFonts = new EnumMap<>(EditorFontType.class);
+  private final @NotNull Map<EditorFontType, Font> fonts = new EnumMap<>(EditorFontType.class);
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
-    synchronized (myFonts) {
-      if (myFonts.isEmpty()) {
+    synchronized (fonts) {
+      if (fonts.isEmpty()) {
         initFonts();
       }
+
       EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
-      final Font font = myFonts.get(fontType);
+      Font font = fonts.get(fontType);
       assert font != null : "Font " + fontType + " not found.";
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getPresentationMode()) {
@@ -38,8 +44,8 @@ public class EditorFontCacheImpl extends EditorFontCache {
 
   @Override
   public void reset() {
-    synchronized (myFonts) {
-      myFonts.clear();
+    synchronized (fonts) {
+      fonts.clear();
     }
   }
 
@@ -55,6 +61,18 @@ public class EditorFontCacheImpl extends EditorFontCache {
     String fallbackName = getFallbackName(editorFontName);
     if (fallbackName != null) {
       editorFontName = fallbackName;
+    }
+    if (LOG.isDebugEnabled()) {
+      String schemeName;
+      try {
+        schemeName = scheme.getName();
+      } catch (Throwable th) {
+        LOG.warn(th);
+        schemeName = "unknown(th)";
+      }
+      LOG.debug(String.format(
+        "Initializing fonts: scheme=%s, delegating=%b, fontName=%s, fontSize=%.2f",
+        schemeName, preferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize));
     }
 
     setFont(EditorFontType.PLAIN, editorFontName, Font.PLAIN, editorFontSize, preferences);
@@ -79,14 +97,13 @@ public class EditorFontCacheImpl extends EditorFontCache {
                        FontPreferences fontPreferences) {
     Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                               style, fontSize);
-    myFonts.put(fontType, deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
+    fonts.put(fontType, deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
   }
 
   private static @Nullable String getFallbackName(@NotNull String fontName) {
     Font plainFont = new Font(fontName, Font.PLAIN, 12);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
-      FontPreferences appPrefs = AppEditorFontOptions.getInstance().getFontPreferences();
-      return appPrefs.getFontFamily();
+      return AppEditorFontOptions.getInstance().getFontPreferences().getFontFamily();
     }
     return null;
   }

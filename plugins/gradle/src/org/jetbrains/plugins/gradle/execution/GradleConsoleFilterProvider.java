@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 import static com.intellij.execution.filters.RegexpFilter.*;
 import static java.lang.String.format;
 
-public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
+public final class GradleConsoleFilterProvider implements ConsoleFilterProvider {
   /*
    * `file:line` or `file:line:column`.
    */

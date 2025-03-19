@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.nls;
 
 import com.ibm.icu.number.FormattedNumber;
@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -346,6 +347,7 @@ public final class NlsMessages {
      * @param durationTimeUnit unit of measurement
      * @return formatter
      */
+    @Internal
     public @NotNull NlsDurationFormatter setDurationMeasureTimeUnit(@NotNull MeasureUnit durationTimeUnit) {
       if (
         durationTimeUnit != MeasureUnit.NANOSECOND &&
@@ -403,7 +405,7 @@ public final class NlsMessages {
   /**
    * Immutable object to store locale-specific immutable formatters.
    */
-  private static class CachedFormats {
+  private static final class CachedFormats {
     final Locale locale;
     final MeasureFormat shortFormat;
     final LocalizedNumberFormatter narrowNumber;

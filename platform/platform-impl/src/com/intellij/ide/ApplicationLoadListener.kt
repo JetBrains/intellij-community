@@ -13,8 +13,11 @@ import java.nio.file.Path
 interface ApplicationLoadListener {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<ApplicationLoadListener>("com.intellij.ApplicationLoadListener")
+    val EP_NAME: ExtensionPointName<ApplicationLoadListener> = ExtensionPointName("com.intellij.ApplicationLoadListener")
   }
 
-  fun beforeApplicationLoaded(application: Application, configPath: Path)
+  suspend fun beforeApplicationLoaded(application: Application, configPath: Path, args: List<String>) {
+    beforeApplicationLoaded(application, configPath)
+  }
+  suspend fun beforeApplicationLoaded(application: Application, configPath: Path)
 }

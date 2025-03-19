@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionDomExtender;
 
 import javax.swing.*;
@@ -32,12 +32,10 @@ import java.util.Set;
 public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
-  @NonNls 
-  private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
+  private static final @NonNls Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     Set.of("id", "name", "version", "category", "resource-bundle");
 
-  @NonNls
-  private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = Map.ofEntries(
+  private static final @NonNls Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = Map.ofEntries(
     Map.entry("psi", "PSI"),
     Map.entry("dom", "DOM"),
     Map.entry("sdk", "SDK"),
@@ -65,8 +63,8 @@ public final class PluginDescriptorStructureUtil {
       return safeGetTagDisplayText(tag);
     }
 
-    if (element instanceof Action) {
-      String actionId = ((Action)element).getId().getStringValue();
+    if (element instanceof Action action) {
+      String actionId = action.getEffectiveId();
       if (StringUtil.isNotEmpty(actionId)) {
         return actionId;
       }
@@ -198,7 +196,7 @@ public final class PluginDescriptorStructureUtil {
   }
 
   private static @Nullable String getGroupLocation(ActionOrGroup element) {
-    return element.getId().getStringValue();
+    return element.getEffectiveId();
   }
 
   private static @Nullable String getAddToGroupLocation(AddToGroup element) {

@@ -25,6 +25,7 @@ import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.PlatformIcons
 import com.intellij.util.containers.toArray
 import com.intellij.util.text.UniqueNameGenerator
@@ -32,6 +33,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
 import javax.swing.*
@@ -39,6 +41,7 @@ import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val project: Project,
   private val initialSelectedName: String? = null,
@@ -60,14 +63,15 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     row(ExecutionBundle.message("targets.details.project.default.target")) {
       projectDefaultTargetComboBox = comboBox(
         DefaultComboBoxModel<TargetEnvironmentConfiguration?>(),
-        SimpleListCellRenderer.create { label, value, _ ->
+        listCellRenderer {
+          val value = value
           if (value == null) {
-            label.text = ExecutionBundle.message("local.machine")
-            label.icon = AllIcons.Nodes.HomeFolder
+            icon(AllIcons.Nodes.HomeFolder)
+            text(ExecutionBundle.message("local.machine"))
           }
           else {
-            label.text = value.displayName
-            label.icon = value.getTargetType().icon
+            icon(value.getTargetType().icon)
+            text(value.displayName)
           }
         }
       ).bindItem(

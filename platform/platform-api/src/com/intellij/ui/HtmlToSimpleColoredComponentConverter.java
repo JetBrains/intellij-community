@@ -98,6 +98,10 @@ public class HtmlToSimpleColoredComponentConverter {
         //since <body> tag may be skipped for this parser
         if (errorMsg.startsWith("start.missing body")) return;
 
+        // style and class attributes can be processed by StyleTagHandler
+        if (errorMsg.startsWith("invalid.tagatt style")) return;
+        if (errorMsg.startsWith("invalid.tagatt class")) return;
+
         LOG.error("Cannot parse HTML: [" + htmlString + "]", errorMsg);
       }
     };
@@ -129,8 +133,8 @@ public class HtmlToSimpleColoredComponentConverter {
    * Describes colored fragment (part of {@link SimpleColoredComponent} component)
    */
   public static class Fragment {
-    @NotNull @Nls private final String myText;
-    @NotNull private final SimpleTextAttributes myAttributes;
+    private final @NotNull @Nls String myText;
+    private final @NotNull SimpleTextAttributes myAttributes;
 
     public Fragment(@NotNull @Nls String text, @NotNull SimpleTextAttributes attributes) {
       myText = text;
@@ -200,15 +204,22 @@ public class HtmlToSimpleColoredComponentConverter {
 
     @Override
     public SimpleTextAttributes calcAttributes(javax.swing.text.html.HTML.Tag tag, MutableAttributeSet attr) {
-      if (tag == B) return REGULAR_BOLD_ATTRIBUTES;
-      if (tag == I) return REGULAR_ITALIC_ATTRIBUTES;
-      if (tag == U) return new SimpleTextAttributes(STYLE_UNDERLINE, null);
-      if (tag == S) return new SimpleTextAttributes(STYLE_STRIKEOUT, null);
-      if (tag == A) return LINK_PLAIN_ATTRIBUTES;
+      SimpleTextAttributes styleAttributes = parseStyleIfPossible(attr);
 
-      if (tag == DIV || tag == SPAN) return parseStyleIfPossible(attr);
+      if (tag == DIV || tag == SPAN) return styleAttributes;
 
-      return null;
+      SimpleTextAttributes tagAttributes = null;
+      if (tag == B) tagAttributes = REGULAR_ATTRIBUTES;
+      if (tag == I) tagAttributes = REGULAR_ITALIC_ATTRIBUTES;
+      if (tag == U) tagAttributes = new SimpleTextAttributes(STYLE_UNDERLINE, null);
+      if (tag == S) tagAttributes = new SimpleTextAttributes(STYLE_STRIKEOUT, null);
+      if (tag == A) tagAttributes = LINK_PLAIN_ATTRIBUTES;
+
+      if (tagAttributes != null && styleAttributes != null) {
+        return merge(tagAttributes, styleAttributes);
+      }
+
+      return tagAttributes;
     }
 
     private static SimpleTextAttributes parseStyleIfPossible(MutableAttributeSet attr) {

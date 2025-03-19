@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -32,24 +32,24 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.Predicates.nonNull;
-
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
   private final RefEntity myResolvedEntity;
   private final CommonProblemDescriptor myResolvedDescriptor;
   private volatile boolean myExcluded;
 
-  private OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
+  private OfflineDescriptorResolveResult(@Nullable RefEntity resolvedEntity, @Nullable CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
     myResolvedDescriptor = resolvedDescriptor;
   }
@@ -72,10 +72,9 @@ public final class OfflineDescriptorResolveResult {
     myExcluded = excluded;
   }
 
-  @NotNull
-  static OfflineDescriptorResolveResult resolve(@NotNull OfflineProblemDescriptor descriptor,
-                                                @NotNull InspectionToolWrapper<?,?> wrapper,
-                                                @NotNull InspectionToolPresentation presentation) {
+  static @NotNull OfflineDescriptorResolveResult resolve(@NotNull OfflineProblemDescriptor descriptor,
+                                                         @NotNull InspectionToolWrapper<?,?> wrapper,
+                                                         @NotNull InspectionToolPresentation presentation) {
     RefEntity element = descriptor.getRefElement(presentation.getContext().getRefManager());
     CommonProblemDescriptor resolvedDescriptor =
       ReadAction.compute(() -> createDescriptor(element, descriptor, wrapper, presentation));
@@ -83,11 +82,10 @@ public final class OfflineDescriptorResolveResult {
   }
 
 
-  @Nullable
-  private static CommonProblemDescriptor createDescriptor(@Nullable RefEntity element,
-                                                          @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                          @NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                                          @NotNull InspectionToolPresentation presentation) {
+  private static @Nullable CommonProblemDescriptor createDescriptor(@Nullable RefEntity element,
+                                                                    @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                                                    @NotNull InspectionToolWrapper<?,?> toolWrapper,
+                                                                    @NotNull InspectionToolPresentation presentation) {
     Project project = presentation.getContext().getProject();
     if (toolWrapper instanceof GlobalInspectionToolWrapper) {
       LocalInspectionToolWrapper localTool = ((GlobalInspectionToolWrapper)toolWrapper).getSharedLocalInspectionToolWrapper();
@@ -104,16 +102,14 @@ public final class OfflineDescriptorResolveResult {
       if (element instanceof RefElement) {
         PsiElement psiElement = ((RefElement)element).getPsiElement();
         if (psiElement != null) {
-          ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
+          return ProgressManager.getInstance().runProcess(
             () -> runLocalTool(psiElement,
                                offlineDescriptor,
                                (LocalInspectionToolWrapper)toolWrapper,
                                presentation.getContext()), new DaemonProgressIndicator());
-          if (descriptor != null) return descriptor;
         }
         return null;
       }
-
     }
 
     CommonProblemDescriptor descriptor = createProblemDescriptorFromOfflineDescriptor(element,
@@ -130,11 +126,10 @@ public final class OfflineDescriptorResolveResult {
     return descriptor;
   }
 
-  @NotNull
-  private static CommonProblemDescriptor createProblemDescriptorFromOfflineDescriptor(@Nullable RefEntity element,
-                                                                                      @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                                                      @NotNull QuickFix<?> @NotNull [] fixes,
-                                                                                      @NotNull Project project) {
+  private static @NotNull CommonProblemDescriptor createProblemDescriptorFromOfflineDescriptor(@Nullable RefEntity element,
+                                                                                               @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                                                                               @NotNull QuickFix<?> @NotNull [] fixes,
+                                                                                               @NotNull Project project) {
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
     if (element instanceof RefElement refElement) {
       if(refElement.getPsiElement() instanceof PsiFile) {
@@ -155,9 +150,8 @@ public final class OfflineDescriptorResolveResult {
     }
   }
 
-  @Nullable
-  private static PsiElement findTargetElementFromOfflineDescriptor(@NotNull PsiFile file, @NotNull OfflineProblemDescriptor descriptor,
-                                                                   @NotNull Project project) {
+  private static @Nullable PsiElement findTargetElementFromOfflineDescriptor(@NotNull PsiFile file, @NotNull OfflineProblemDescriptor descriptor,
+                                                                             @NotNull Project project) {
     if(descriptor.getLine() - 1 <= 0 && descriptor.getOffset() <= 0)
       return null;
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -222,7 +216,7 @@ public final class OfflineDescriptorResolveResult {
     return null;
   }
 
-  private static PsiElement @NotNull [] getElementsIntersectingRange(PsiFile file, int startOffset, int endOffset) {
+  private static PsiElement @NotNull [] getElementsIntersectingRange(@NotNull PsiFile file, int startOffset, int endOffset) {
     FileViewProvider viewProvider = file.getViewProvider();
     Set<PsiElement> result = new LinkedHashSet<>();
     for (Language language : viewProvider.getLanguages()) {
@@ -235,8 +229,9 @@ public final class OfflineDescriptorResolveResult {
   }
 
   private static @NotNull QuickFix<?> @Nullable [] getFixes(@NotNull CommonProblemDescriptor descriptor,
-                                                RefEntity entity,
-                                                InspectionToolPresentation presentation, List<String> hints) {
+                                                            @Nullable RefEntity entity,
+                                                            @NotNull InspectionToolPresentation presentation,
+                                                            @Nullable List<String> hints) {
     List<QuickFix<?>> fixes = new ArrayList<>(hints == null ? 1 : hints.size());
     if (hints == null) {
       addFix(descriptor, entity, fixes, null, presentation);
@@ -249,19 +244,21 @@ public final class OfflineDescriptorResolveResult {
     return fixes.isEmpty() ? null : fixes.toArray(QuickFix.EMPTY_ARRAY);
   }
 
-  private static void addFix(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, List<? super QuickFix<?>> fixes, String hint, @NotNull InspectionToolPresentation presentation) {
+  private static void addFix(@NotNull CommonProblemDescriptor descriptor,
+                             @Nullable RefEntity entity,
+                             @NotNull List<? super QuickFix<?>> fixes,
+                             @Nullable String hint,
+                             @NotNull InspectionToolPresentation presentation) {
     ContainerUtil.addAllNotNull(fixes, presentation.findQuickFixes(descriptor, entity, hint));
   }
 
-  private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
-                                                                         @Nullable RefEntity entity,
-                                                                         @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                                         @NotNull Project project) {
+  private static @NotNull CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
+                                                                                  @Nullable RefEntity entity,
+                                                                                  @NotNull OfflineProblemDescriptor offlineDescriptor,
+                                                                                  @NotNull Project project) {
     QuickFix<?> rerunFix = new QuickFix<>() {
-      @Nls
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls @NotNull String getFamilyName() {
         return InspectionsBundle.message("rerun.inspection.family.name", wrapper.getDisplayName());
       }
 
@@ -285,7 +282,7 @@ public final class OfflineDescriptorResolveResult {
     };
     List<String> hints = offlineDescriptor.getHints();
     if (hints != null && entity instanceof RefModule) {
-      List<QuickFix> fixes = hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(nonNull()).toList();
+      List<QuickFix> fixes = ContainerUtil.mapNotNull(hints, hint -> wrapper.getTool().getQuickFix(hint));
       return InspectionManager.getInstance(project).createProblemDescriptor(offlineDescriptor.getDescription(), ((RefModule)entity).getModule(), ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix));
     }
     return InspectionManager.getInstance(project).createProblemDescriptor(offlineDescriptor.getDescription(), rerunFix);
@@ -296,8 +293,8 @@ public final class OfflineDescriptorResolveResult {
     private final OfflineProblemDescriptor myOfflineProblemDescriptor;
     private final QuickFix<?>[] myFixes;
 
-    private ProblemDescriptorBackedByRefElement(RefElement element,
-                                                OfflineProblemDescriptor descriptor,
+    private ProblemDescriptorBackedByRefElement(@NotNull RefElement element,
+                                                @NotNull OfflineProblemDescriptor descriptor,
                                                 @NotNull QuickFix<?> @NotNull [] fixes) {
       myElement = element;
       myOfflineProblemDescriptor = descriptor;
@@ -329,9 +326,8 @@ public final class OfflineDescriptorResolveResult {
       return 0;
     }
 
-    @NotNull
     @Override
-    public ProblemHighlightType getHighlightType() {
+    public @NotNull ProblemHighlightType getHighlightType() {
       return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     }
 
@@ -345,9 +341,8 @@ public final class OfflineDescriptorResolveResult {
 
     }
 
-    @Nullable
     @Override
-    public ProblemGroup getProblemGroup() {
+    public @Nullable ProblemGroup getProblemGroup() {
       return null;
     }
 
@@ -361,9 +356,8 @@ public final class OfflineDescriptorResolveResult {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getDescriptionTemplate() {
+    public @NotNull String getDescriptionTemplate() {
       return myOfflineProblemDescriptor.getDescription();
     }
 

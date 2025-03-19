@@ -7,16 +7,23 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.impl.*
+import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFix
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
+import java.util.Locale
 
-@Service //project
+@Service(Service.Level.PROJECT)
 class CompilerDriverUnknownSdkTracker(
   private val project: Project
 ) {
@@ -89,7 +96,7 @@ class CompilerDriverUnknownSdkTracker(
       modules.size)
     )
 
-    message.append(HtmlChunk.ul().children(actionsWithFix.sortedBy { it.actionDetailedText.toLowerCase() }.map { fix ->
+    message.append(HtmlChunk.ul().children(actionsWithFix.sortedBy { it.actionDetailedText.lowercase(Locale.getDefault()) }.map { fix ->
       var li = HtmlChunk.li().addText(fix.actionDetailedText)
       fix.actionTooltipText?.let {
         li = li.addText(it)
@@ -99,7 +106,7 @@ class CompilerDriverUnknownSdkTracker(
 
     if (actionsWithoutFix.isNotEmpty()) {
       message.append(JavaCompilerBundle.message("dialog.message.error.jdk.not.specified.with.noFix"))
-      message.append(HtmlChunk.ul().children(actionsWithoutFix.sortedBy { it.notificationText.toLowerCase() }.map { fix ->
+      message.append(HtmlChunk.ul().children(actionsWithoutFix.sortedBy { it.notificationText.lowercase(Locale.getDefault()) }.map { fix ->
         HtmlChunk.li().addText(fix.notificationText)
       }))
     }

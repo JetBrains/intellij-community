@@ -10,15 +10,12 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
-import com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator;
 import com.intellij.psi.javadoc.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavadocInjector implements MultiHostInjector {
+public final class JavadocInjector implements MultiHostInjector {
 
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar,

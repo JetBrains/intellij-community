@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.gradle.analysis` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis",
+  module_name = "intellij.gradle.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//android/gradle-dsl",
+    "//android/gradle-dsl-toml",
+    "//plugins/gradle/java",
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+  ],
+  runtime_deps = [":analysis_resources"]
+)
+### auto-generated section `build intellij.gradle.analysis` end

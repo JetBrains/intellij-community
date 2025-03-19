@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -13,20 +14,25 @@ import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import java.util.concurrent.TimeUnit
 
 fun loadDependenciesSync(project: Project) {
-  val libs = RepositoryLibrarySynchronizer.collectLibrariesToSync(project)
-  if (libs.isEmpty()) return
-
-  val timeout = Registry.intValue("load.maven.dependencies.timeout", 120).toLong()
+  val libs = collectLibrariesToSync(project)
+  if (libs.isEmpty()) {
+    return
+  }
 
   runBlocking(JarRepositoryManager.DOWNLOADER_EXECUTOR.asCoroutineDispatcher()) {
-    try {
-      withTimeout(TimeUnit.MINUTES.toMillis(timeout)) {
-        submitLoadJobs(project, libs, this)
-      }
+    loadDependenciesSyncImpl(project, libs)
+  }
+}
+
+internal suspend fun loadDependenciesSyncImpl(project: Project, libs: Set<Library>) {
+  val timeout = Registry.intValue("load.maven.dependencies.timeout", 120).toLong()
+  try {
+    withTimeout(TimeUnit.MINUTES.toMillis(timeout)) {
+      submitLoadJobs(project = project, libs = libs, scope = this)
     }
-    catch (e: TimeoutCancellationException) {
-      thisLogger().error("Cant resolve maven dependencies within $timeout minutes")
-    }
+  }
+  catch (e: TimeoutCancellationException) {
+    logger<JarRepositoryManager>().error("Cant resolve maven dependencies within $timeout minutes")
   }
 }
 

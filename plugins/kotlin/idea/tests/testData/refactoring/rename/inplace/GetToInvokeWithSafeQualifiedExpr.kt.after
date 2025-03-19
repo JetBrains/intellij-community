@@ -1,3 +1,6 @@
+// NEW_NAME: invoke
+// RENAME: member
+
 class WInvoke {
     operator fun invoke(body: () -> Unit) { }
 }

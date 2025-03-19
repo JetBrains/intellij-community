@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -61,8 +62,7 @@ public final class Executor {
     return ourCurrentDir;
   }
 
-  @NotNull
-  public static File touch(String filePath) {
+  public static @NotNull File touch(String filePath) {
     try {
       File file = child(filePath);
       assert !file.exists() : "File " + file + " shouldn't exist yet";
@@ -78,8 +78,7 @@ public final class Executor {
     }
   }
 
-  @NotNull
-  public static File touch(@NotNull String fileName, @NotNull String content) {
+  public static @NotNull File touch(@NotNull String fileName, @NotNull String content) {
     File filePath = touch(fileName);
     echo(fileName, content);
     return filePath;
@@ -128,8 +127,7 @@ public final class Executor {
     return file;
   }
 
-  @NotNull
-  public static String cat(@NotNull String fileName) {
+  public static @NotNull String cat(@NotNull String fileName) {
     try {
       String content = FileUtil.loadFile(child(fileName));
       debug("# cat " + fileName);
@@ -149,8 +147,7 @@ public final class Executor {
     }
   }
 
-  @NotNull
-  public static List<String> splitCommandInParameters(@NotNull String command) {
+  public static @NotNull List<String> splitCommandInParameters(@NotNull String command) {
     List<String> split = new ArrayList<>();
 
     boolean insideParam = false;
@@ -193,8 +190,7 @@ public final class Executor {
 
 
 
-  @NotNull
-  private static String shortenPath(@NotNull String path) {
+  private static @NotNull String shortenPath(@NotNull String path) {
     String[] split = path.split("/");
     if (split.length > 3) {
       // split[0] is empty, because the path starts from /
@@ -203,14 +199,17 @@ public final class Executor {
     return path;
   }
 
-  @NotNull
-  public static File child(@NotNull String fileName) {
+  public static @NotNull File child(@NotNull String fileName) {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir, fileName);
   }
 
-  @NotNull
-  public static File ourCurrentDir() {
+  public static @NotNull FilePath childPath(@NotNull String fileName) {
+    File child = child(fileName);
+    return VcsUtil.getFilePath(child);
+  }
+
+  public static @NotNull File ourCurrentDir() {
     assert ourCurrentDir != null : "Current dir hasn't been initialized yet. Call cd at least once before any other command.";
     return new File(ourCurrentDir);
   }

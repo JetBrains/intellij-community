@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.idea.community.build` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "build",
+  module_name = "intellij.idea.community.build",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/build-scripts:buildScripts",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//jps/model-api:model",
+    "//build/deps:dependencies",
+    "@lib//:kotlinx-collections-immutable",
+    "//build/tasks",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "@rules_jvm//zip:build-zip",
+  ],
+  exports = ["//platform/build-scripts:buildScripts"],
+  runtime_deps = ["@lib//:test-discovery-plugin-base"]
+)
+### auto-generated section `build intellij.idea.community.build` end

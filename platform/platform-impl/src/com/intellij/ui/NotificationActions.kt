@@ -19,7 +19,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.IdeFrame
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class CloseNotificationAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val layout = getBalloonLayout(e)
@@ -31,12 +33,14 @@ abstract class CloseNotificationAction : DumbAwareAction() {
   }
 }
 
+@ApiStatus.Internal
 class CloseFirstNotificationAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
     getBalloonLayout(e)!!.closeFirst()
   }
 }
 
+@ApiStatus.Internal
 class CloseAllNotificationsAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
     getBalloonLayout(e)!!.closeAll()

@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePatch> {
   public ApplyBinaryFilePatch(BinaryFilePatch patch) {
     super(patch);

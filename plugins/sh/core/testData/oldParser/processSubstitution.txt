@@ -10,40 +10,41 @@ SHELL_SCRIPT
           PROCESS_SUBSTITUTION
             PsiElement(<()('<(')
             COMPOUND_LIST
-              SIMPLE_COMMAND
-                GENERIC_COMMAND_DIRECTIVE
-                  LITERAL
-                    PsiElement(word)('printf')
+              PIPELINE_COMMAND_LIST
+                SIMPLE_COMMAND
+                  GENERIC_COMMAND_DIRECTIVE
+                    LITERAL
+                      PsiElement(word)('printf')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(RAW_STRING)(''%s\n'')
+                  PsiWhiteSpace(' ')
+                  STRING
+                    PsiElement(OPEN_QUOTE)('"')
+                    PsiElement($)('$')
+                    SHELL_PARAMETER_EXPANSION
+                      PsiElement({)('{')
+                      PsiElement(word)('BEFORE')
+                      ARRAY_EXPRESSION
+                        PsiElement([)('[')
+                        LITERAL_EXPRESSION
+                          PsiElement(word)('@')
+                        PsiElement(])(']')
+                      PsiElement(})('}')
+                    PsiElement(CLOSE_QUOTE)('"')
                 PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(RAW_STRING)(''%s\n'')
+                PsiElement(|)('|')
                 PsiWhiteSpace(' ')
-                STRING
-                  PsiElement(OPEN_QUOTE)('"')
-                  PsiElement($)('$')
-                  SHELL_PARAMETER_EXPANSION
-                    PsiElement({)('{')
-                    PsiElement(word)('BEFORE')
-                    ARRAY_EXPRESSION
-                      PsiElement([)('[')
-                      LITERAL_EXPRESSION
-                        PsiElement(word)('@')
-                      PsiElement(])(']')
-                    PsiElement(})('}')
-                  PsiElement(CLOSE_QUOTE)('"')
-              PsiWhiteSpace(' ')
-              PsiElement(|)('|')
-              PsiWhiteSpace(' ')
-              SIMPLE_COMMAND
-                ASSIGNMENT_COMMAND
+                SIMPLE_COMMAND
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('LC_ALL')
+                    PsiElement(=)('=')
+                    LITERAL
+                      PsiElement(word)('C')
+                  PsiWhiteSpace(' ')
                   LITERAL
-                    PsiElement(word)('LC_ALL')
-                  PsiElement(=)('=')
-                  LITERAL
-                    PsiElement(word)('C')
-                PsiWhiteSpace(' ')
-                LITERAL
-                  PsiElement(word)('sort')
+                    PsiElement(word)('sort')
             PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST

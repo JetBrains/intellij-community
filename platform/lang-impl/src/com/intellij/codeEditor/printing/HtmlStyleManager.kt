@@ -9,11 +9,13 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.util.BitUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Font
 import java.io.IOException
 import java.io.Writer
 
+@ApiStatus.Internal
 class HtmlStyleManager(val isInline: Boolean) {
   private val styleMap = HashMap<TextAttributes, String>()
   private val separatorStyleMap = HashMap<Color, String>()
@@ -88,7 +90,7 @@ class HtmlStyleManager(val isInline: Boolean) {
     }
   }
 
-  fun getSeparatorClassName(color: Color) = separatorStyleMap.get(color)!!
+  fun getSeparatorClassName(color: Color): String = separatorStyleMap.get(color)!!
 }
 
 private fun colorToHtml(color: Color) = "#${ColorUtil.toHex(color)}"

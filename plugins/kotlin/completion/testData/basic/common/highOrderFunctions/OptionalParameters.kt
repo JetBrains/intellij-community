@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+
 fun xfoo1(option1: String = "", option2: Int = 1, p: () -> Unit){}
 fun xfoo2(option1: String = "", option2: Int = 1, p: (Int) -> Boolean){}
 fun xfoo3(option1: String = "", option2: Int = 1, p: (String, Char) -> Unit){}

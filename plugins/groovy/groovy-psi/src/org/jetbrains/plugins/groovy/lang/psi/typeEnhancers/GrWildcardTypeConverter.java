@@ -1,7 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,7 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.Convers
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesKt;
 
 
-public class GrWildcardTypeConverter extends GrTypeConverter {
+public final class GrWildcardTypeConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
@@ -21,11 +21,10 @@ public class GrWildcardTypeConverter extends GrTypeConverter {
   }
 
   @Override
-  @Nullable
-  public ConversionResult isConvertible(@NotNull PsiType ltype,
-                                        @NotNull PsiType rtype,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType ltype,
+                                                  @NotNull PsiType rtype,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     PsiType lBound = TypesKt.promoteLowerBoundWildcard(ltype, context);
     PsiType rBound = TypesKt.promoteLowerBoundWildcard(rtype, context);
     if (lBound == null || rBound == null) return null;

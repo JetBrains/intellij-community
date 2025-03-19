@@ -41,9 +41,9 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
     private val parentIds = LongArrayList()
     private val rootIds = LongOpenHashSet()
 
-    fun parentCount() = LongOpenHashSet(parentIds).size
-    fun rootCount() = rootIds.size
-    fun objectCount() = parentIds.size
+    fun parentCount(): Int = LongOpenHashSet(parentIds).size
+    fun rootCount(): Int = rootIds.size
+    fun objectCount(): Int = parentIds.size
 
     fun registerObject(parentId: Long, rootId: Long) {
       parentIds.add(parentId)
@@ -54,7 +54,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
   data class DisposedDominatorReportEntry(val classDefinition: ClassDefinition, val count: Long, val size: Long)
 
   companion object {
-    val TOP_REPORTED_CLASSES = setOf(
+    val TOP_REPORTED_CLASSES: Set<String> = setOf(
       "com.intellij.openapi.project.impl.ProjectImpl"
     )
   }
@@ -234,7 +234,7 @@ class AnalyzeDisposer(private val analysisContext: AnalysisContext) {
       count++
     }
 
-    fun getChildForClassName(name: String): DisposerNode = children.getOrPut(name, { DisposerNode(name) })
+    fun getChildForClassName(name: String): DisposerNode = children.getOrPut(name) { DisposerNode(name) }
   }
 
   private enum class SubTreeUpdaterOperation  { PROCESS_CHILDREN, UPDATE_SIZE }

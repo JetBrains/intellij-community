@@ -4,10 +4,10 @@ import java.io.*;
 class a {
     void f(InputStream in) {
         final int n;
-        int n1;
+        int <caret>n1;
         if (in==null) {
             n1 = 2;
-            <caret>n1 = 2;
+            n1 = 2;
         }
         else {
             n1 =4;

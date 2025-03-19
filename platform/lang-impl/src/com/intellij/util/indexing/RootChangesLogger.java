@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,15 +14,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 final class RootChangesLogger {
-  private final static int BATCH_CAPACITY = 10;
-  @NotNull
-  private static final Logger myLogger = Logger.getInstance(RootChangesLogger.class);
+  private static final int BATCH_CAPACITY = 10;
+  private static final @NotNull Logger myLogger = Logger.getInstance(RootChangesLogger.class);
 
-  @NotNull
-  private final IntOpenHashSet myReportedHashes = new IntOpenHashSet();
+  private final @NotNull IntOpenHashSet myReportedHashes = new IntOpenHashSet();
   private final List<Report> myReports = new ArrayList<>(BATCH_CAPACITY);
 
   void info(@NotNull Project project, boolean fullReindex) {
+    if (!fullReindex) {
+      if (myLogger.isTraceEnabled()) {
+        myLogger.trace("New rootsChanged event for \"" + project.getName() + "\" project with " +
+                       "partial rescanning:\n" + ExceptionUtil.getThrowableText(new Throwable()));
+      }
+      return;
+    }
     Throwable stacktrace = new Throwable();
     int hash = ThrowableInterner.computeAccurateTraceHashCode(stacktrace);
     boolean isNew;
@@ -32,14 +37,13 @@ final class RootChangesLogger {
 
     if (isNew) {
       myLogger.info("New rootsChanged event for \"" + project.getName() + "\" project with " +
-                    (fullReindex ? "full" : "partial") + " rescanning with trace_hash = " + hash + ":\n" +
-                    ExceptionUtil.getThrowableText(stacktrace));
+                    "full rescanning with trace_hash = " + hash + ":\n" + ExceptionUtil.getThrowableText(stacktrace));
       return;
     }
 
     Report[] reports = null;
     synchronized (myReports) {
-      myReports.add(new Report(hash, fullReindex));
+      myReports.add(new Report(hash));
       if (myReports.size() == BATCH_CAPACITY) {
         reports = myReports.toArray(new Report[0]);
         myReports.clear();
@@ -50,13 +54,12 @@ final class RootChangesLogger {
       StringBuilder text = new StringBuilder();
       text.append(BATCH_CAPACITY).append(" more rootsChanged events for \"").append(project.getName()).append("\" project.");
       Arrays.stream(reports).collect(Collectors.groupingBy(report -> report)).forEach((report, equalHashes) -> {
-        text.append(" ").append(equalHashes.size()).append(" ").append(report.isFullReindex ? "full" : "partial").
-          append(" reindex with trace_hash = ").append(report.hash).append(";");
+        text.append(" ").append(equalHashes.size()).append(" full reindex with trace_hash = ").append(report.hash).append(";");
       });
       myLogger.info(text.substring(0, text.length() - 1));
     }
   }
 
-  private record Report(int hash, boolean isFullReindex) {
+  private record Report(int hash) {
   }
 }

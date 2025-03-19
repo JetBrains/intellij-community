@@ -22,6 +22,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * The provider of external application scripts called by Git when a remote operation needs communication with the user.
@@ -38,15 +39,11 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   private val scriptNamePrefix: @NonNls String,
   private val scriptMainClass: Class<out ExternalApp>
 ) {
-  companion object {
-    private val LOG = logger<ExternalProcessHandlerService<*>>()
-  }
 
   private val scriptPaths = HashMap<@NonNls String, File>()
   private val SCRIPT_FILE_LOCK = Any()
 
-  private val handlers = HashMap<UUID, T>()
-  private val HANDLERS_LOCK = Any()
+  private val handlers = ConcurrentHashMap<UUID, T>()
 
   fun getIdePort(): Int {
     return BuiltInServerManager.getInstance().waitForStart().port
@@ -73,11 +70,8 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   }
 
   fun registerHandler(handler: T, disposable: Disposable): UUID {
-    val key: UUID
-    synchronized(HANDLERS_LOCK) {
-      key = UUID.randomUUID()
-      handlers[key] = handler
-    }
+    val key: UUID = UUID.randomUUID()
+    handlers[key] = handler
 
     Disposer.register(disposable) {
       unregisterHandler(key)
@@ -87,21 +81,19 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   }
 
   private fun unregisterHandler(key: UUID) {
-    synchronized(HANDLERS_LOCK) {
-      if (handlers.remove(key) == null) {
-        LOG.error("The handler $key is not registered")
-      }
+    val handler = handlers.remove(key)
+    if (handler == null) {
+      LOG_SERVICE.error("The handler $key is not registered")
     }
   }
 
-  private fun getHandler(key: UUID): T {
-    synchronized(HANDLERS_LOCK) {
-      return handlers[key] ?: throw IllegalStateException("No handler for the key $key")
-    }
+  internal fun validateHandler(key: UUID): Boolean {
+    return handlers.containsKey(key)
   }
 
   internal fun invokeHandler(key: UUID, requestBody: String): String? {
-    return handleRequest(getHandler(key), requestBody)
+    val handler = handlers[key] ?: throw IllegalStateException("No handler for the key $key")
+    return handleRequest(handler, requestBody)
   }
 
   protected abstract fun handleRequest(handler: T, requestBody: String): String?
@@ -110,9 +102,6 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
 abstract class ExternalProcessRest<T : ExternalAppHandler>(
   private val entryPointName: @NonNls String
 ) : RestService() {
-  companion object {
-    private val LOG = logger<ExternalProcessRest<*>>()
-  }
 
   protected abstract val externalProcessHandler: ExternalProcessHandlerService<T>
 
@@ -124,9 +113,16 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
     return method === HttpMethod.POST
   }
 
+  override fun getRequesterId(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any {
+    val uuid = getHandlerUUID(urlDecoder)
+    if (uuid != null && externalProcessHandler.validateHandler(uuid)) {
+      return uuid
+    }
+    return super.getRequesterId(urlDecoder, request, context)
+  }
+
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val handlerId = urlDecoder.parameters()[ExternalAppHandler.HANDLER_ID_PARAMETER]?.singleOrNull() ?: return "Handler is not specified"
-    val uuid = UUID.fromString(handlerId)
+    val uuid = getHandlerUUID(urlDecoder) ?: return "Handler is not specified"
     val bodyContent = request.content().readUtf8()
 
     val channel = context.channel()
@@ -143,7 +139,7 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
           channel.close()
         }
         else {
-          LOG.warn(err)
+          LOG_REST.warn(Throwable(err))
           sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
         }
       }
@@ -157,6 +153,15 @@ abstract class ExternalProcessRest<T : ExternalAppHandler>(
     return null
   }
 
+  private fun getHandlerUUID(urlDecoder: QueryStringDecoder): UUID? {
+    val handlerId = urlDecoder.parameters()[ExternalAppHandler.HANDLER_ID_PARAMETER]?.singleOrNull() ?: return null
+    return UUID.fromString(handlerId)
+  }
+
   private fun runHandler(indicator: EmptyProgressIndicator, uuid: UUID, bodyContent: String): String? =
     ProgressManager.getInstance().runProcess(Computable { externalProcessHandler.invokeHandler(uuid, bodyContent) }, indicator)
 }
+
+private val LOG_SERVICE = logger<ExternalProcessHandlerService<*>>()
+
+private val LOG_REST = logger<ExternalProcessRest<*>>()

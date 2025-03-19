@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 interface FindInProjectExtension {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<FindInProjectExtension>("com.intellij.findInProjectExtension")
+    val EP_NAME: ExtensionPointName<FindInProjectExtension> = ExtensionPointName.create("com.intellij.findInProjectExtension")
   }
 
   /**

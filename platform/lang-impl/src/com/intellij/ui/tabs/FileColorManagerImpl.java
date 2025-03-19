@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,13 +15,12 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class FileColorManagerImpl extends FileColorManager {
   private static final String FC_ENABLED = "FileColorsEnabled";
   private static final String FC_TABS_ENABLED = "FileColorsForTabsEnabled";
-  private static final String EXP_UI_FC_TABS_ENABLED = "ExpUIFileColorsForTabsEnabled";
   private static final String FC_PROJECT_VIEW_ENABLED = "FileColorsForProjectViewEnabled";
 
   private final Project myProject;
@@ -67,11 +65,7 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @ApiStatus.Internal
   public static void setEnabledForTabs(boolean enabled) {
-    if (ExperimentalUI.isNewUI()) {
-      PropertiesComponent.getInstance().setValue(EXP_UI_FC_TABS_ENABLED, Boolean.toString(enabled));
-    } else {
-      PropertiesComponent.getInstance().setValue(FC_TABS_ENABLED, Boolean.toString(enabled));
-    }
+    PropertiesComponent.getInstance().setValue(FC_TABS_ENABLED, Boolean.toString(enabled));
   }
 
   @Override
@@ -81,9 +75,6 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @ApiStatus.Internal
   public static boolean _isEnabledForTabs() {
-    if (ExperimentalUI.isNewUI()) {
-      return PropertiesComponent.getInstance().getBoolean(EXP_UI_FC_TABS_ENABLED, false);
-    }
     return PropertiesComponent.getInstance().getBoolean(FC_TABS_ENABLED, true);
   }
 
@@ -101,8 +92,7 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  @Nullable
-  public Color getColor(@NotNull @NonNls String id) {
+  public @Nullable Color getColor(@NotNull @NonNls String id) {
     Color color = ourDefaultColors.get(id);
     return color == null ? ColorUtil.fromHex(id, null) : color;
   }
@@ -115,7 +105,7 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  public Collection<@NonNls String> getColorIDs() {
+  public @Unmodifiable Collection<@NonNls String> getColorIDs() {
     return ContainerUtil.sorted(ourDefaultColors.keySet());
   }
 
@@ -129,9 +119,8 @@ public final class FileColorManagerImpl extends FileColorManager {
     return list;
   }
 
-  @Nullable
   @Override
-  public Color getRendererBackground(VirtualFile vFile) {
+  public @Nullable Color getRendererBackground(VirtualFile vFile) {
     if (vFile == null) return null;
 
     if (isEnabled()) {
@@ -143,9 +132,8 @@ public final class FileColorManagerImpl extends FileColorManager {
     return null;
   }
 
-  @Nullable
   @Override
-  public Color getRendererBackground(PsiFile file) {
+  public @Nullable Color getRendererBackground(PsiFile file) {
     if (file == null) return null;
 
     VirtualFile vFile = file.getVirtualFile();
@@ -160,16 +148,14 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Override
-  @Nullable
-  public Color getFileColor(@NotNull VirtualFile file) {
+  public @Nullable Color getFileColor(@NotNull VirtualFile file) {
     if (!isEnabled()) return null;
     String colorName = myInitializedModel.getValue().getColor(file, getProject());
     return colorName == null ? null : getColor(colorName);
   }
 
   @Override
-  @Nullable
-  public Color getScopeColor(@NotNull String scopeName) {
+  public @Nullable Color getScopeColor(@NotNull String scopeName) {
     if (!isEnabled()) {
       return null;
     }
@@ -197,8 +183,7 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myProject;
   }
 
-  @NotNull
-  public List<FileColorConfiguration> getApplicationLevelConfigurations() {
+  public @NotNull List<FileColorConfiguration> getApplicationLevelConfigurations() {
     return myInitializedModel.getValue().getLocalConfigurations();
   }
 
@@ -206,9 +191,7 @@ public final class FileColorManagerImpl extends FileColorManager {
     return myInitializedModel.getValue().getProjectLevelConfigurations();
   }
 
-  @Nullable
-  @NonNls
-  public static String getColorID(@NotNull Color color) {
+  public static @Nullable @NonNls String getColorID(@NotNull Color color) {
     for (Map.Entry<String, Color> entry : ourDefaultColors.entrySet()) {
       if (color.equals(entry.getValue())) {
         return entry.getKey();
@@ -217,8 +200,7 @@ public final class FileColorManagerImpl extends FileColorManager {
     return null;
   }
 
-  @Nls
-  static String getAlias(@Nls String text) {
+  static @Nls String getAlias(@Nls String text) {
     return StartupUiUtil.isUnderDarcula() && text.equals(IdeBundle.message("color.name.yellow")) ?
            IdeBundle.message("color.name.brown") : text;
   }

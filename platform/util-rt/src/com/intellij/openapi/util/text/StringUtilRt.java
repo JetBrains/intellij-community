@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -13,7 +13,10 @@ import java.util.List;
  * Stripped-down version of {@link com.intellij.openapi.util.text.StringUtil}.
  * Intended to use by external (out-of-IDE-process) runners and helpers so it should not contain any library dependencies.
  */
-public class StringUtilRt {
+public final class StringUtilRt {
+
+  private StringUtilRt() { }
+
   @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
   public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
     if (s1 == s2) return true;
@@ -199,16 +202,6 @@ public class StringUtilRt {
     return defaultValue;
   }
 
-  @Contract(pure = true)
-  static <E extends Enum<E>> E parseEnum(@NotNull String string, E defaultValue, @NotNull Class<E> clazz) {
-    try {
-      return Enum.valueOf(clazz, string);
-    }
-    catch (Exception e) {
-      return defaultValue;
-    }
-  }
-
   @NotNull
   @Contract(pure = true)
   public static String getShortName(@NotNull Class<?> aClass) {
@@ -373,16 +366,23 @@ public class StringUtilRt {
     return formatFileSize(fileSize, unitSeparator, -1);
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+    return formatFileSize(fileSize, unitSeparator, rank, false);
+  }
+
   /**
-   *
-   * @param fileSize - size of the file in bytes
-   * @param unitSeparator - separator inserted between value and unit
-   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @param fileSize               - size of the file in bytes
+   * @param unitSeparator          - separator inserted between value and unit
+   * @param rank                   - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @param fixedFractionPrecision - keep the fraction precision. if true, a number like 5.50 will be kept as it is, otherwise it will be
+   *                               rounded to 5.5
    * @return string with formatted file size
    */
   @NotNull
   @Contract(pure = true)
-  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank, boolean fixedFractionPrecision) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
     if (rank < 0) {
@@ -390,7 +390,11 @@ public class StringUtilRt {
     }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
-    return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+    DecimalFormat decimalFormat = new DecimalFormat("0.##");
+    if (fixedFractionPrecision) {
+      decimalFormat.setMinimumFractionDigits(2);
+    }
+    return decimalFormat.format(value) + unitSeparator + units[rank];
   }
 
   @Contract(pure = true)
@@ -404,7 +408,11 @@ public class StringUtilRt {
    */
   @Contract(pure = true)
   public static boolean isQuotedString(@NotNull String s) {
-    return s.length() > 1 && (s.charAt(0) == '\'' || s.charAt(0) == '\"') && s.charAt(0) == s.charAt(s.length() - 1);
+    int length = s.length();
+    if (length <= 1) return false;
+    char firstChar = s.charAt(0);
+    if (firstChar != '\'' && firstChar != '\"') return false;
+    return firstChar == s.charAt(length - 1);
   }
 
   @NotNull

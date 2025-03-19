@@ -5,15 +5,16 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
 
 /**
@@ -21,25 +22,57 @@ import kotlin.system.measureTimeMillis
  *
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
+ *
+ * If this synchronizer overrides your changes and you'd like to postpone the changes to be after this synchronization,
+ *   you can use [com.intellij.workspaceModel.ide.JpsProjectLoadingManager].
  */
+@ApiStatus.Internal
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
-    doSync(project)
+    fun logJpsEntities(state: String) {
+      val logger = thisLogger()
+      if (logger.isDebugEnabled) {
+        try {
+          fun <T> List<T>.safeSubList(fromIndex: Int, toIndex: Int): List<T> =
+            this.subList(fromIndex.coerceAtLeast(0), toIndex.coerceAtMost(this.size))
+
+          val wsm = WorkspaceModel.getInstance(project).currentSnapshot
+          val jpsEntities = wsm.entitiesBySource { entitySource -> entitySource is JpsFileEntitySource }.toList()
+          val sampleSize = 50
+          val entitySources = jpsEntities.stream().map { e -> e.entitySource }.distinct().limit(sampleSize.toLong()).toList()
+          logger.warn("$state: ${jpsEntities.size} entities.\n" +
+                      "First $sampleSize entities are: ${jpsEntities.safeSubList(0, sampleSize)}.\n" +
+                      "First $sampleSize entity sources are: ${entitySources}")
+        } catch (_: Throwable) {
+          // do nothing. Imagine that this code was never existed. We are debugging BAZEL-1750.
+        }
+      }
+    }
+
+    logJpsEntities("Before Util.doSync")
+    Util.doSync(project)
+    logJpsEntities("After Util.doSync")
   }
 
-  companion object {
-    private suspend fun doSync(project: Project) {
+  object Util {
+    init {
+      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+    }
+
+    // This function is effectively "private". It's internal because otherwise it's not available for DelayedProjectSynchronizer
+    internal suspend fun doSync(project: Project) {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         return
       }
 
       val loadingTime = measureTimeMillis {
-        projectModelSynchronizer.loadProject(project)
+        val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
+        projectModelSynchronizer.applyLoadedStorage(projectEntities)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      syncTimeMs.addElapsedTimeMs(loadingTime)
+      syncTimeMs.duration.addAndGet(loadingTime)
       thisLogger().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
@@ -53,17 +86,12 @@ class DelayedProjectSynchronizer : ProjectActivity {
       doSync(project)
     }
 
-    private val syncTimeMs: AtomicLong = AtomicLong()
+    private val syncTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val syncTimeGauge = meter.gaugeBuilder("workspaceModel.delayed.project.synchronizer.sync.ms")
-        .ofLongs().buildObserver()
+      val syncTimeCounter = meter.counterBuilder("workspaceModel.delayed.project.synchronizer.sync.ms").buildObserver()
 
-      meter.batchCallback({ syncTimeGauge.record(syncTimeMs.get()) }, syncTimeGauge)
-    }
-
-    init {
-      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+      meter.batchCallback({ syncTimeCounter.record(syncTimeMs.asMilliseconds()) }, syncTimeCounter)
     }
   }
 }

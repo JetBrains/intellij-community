@@ -4,7 +4,6 @@ UFile (package = )
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (run))
-                    USimpleNameReferenceExpression (identifier = run, resolvesTo = null)
                     ULambdaExpression
                         UBlockExpression
                             UReturnExpression
@@ -13,14 +12,12 @@ UFile (package = )
                 UQualifiedReferenceExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))
                         UIdentifier (Identifier (listOf))
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
                         ULiteralExpression (value = 1)
                         ULiteralExpression (value = 2)
                         ULiteralExpression (value = 3)
                         ULiteralExpression (value = 4)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (forEach))
-                        USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null)
                         ULabeledExpression (label = l)
                             ULambdaExpression
                                 UParameter (name = it)
@@ -32,23 +29,21 @@ UFile (package = )
                                                 ULiteralExpression (value = 2)
                                             ULiteralExpression (value = 0)
                                         UReturnExpression
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                        UIdentifier (Identifier (print))
-                                        USimpleNameReferenceExpression (identifier = print, resolvesTo = null)
-                                        USimpleNameReferenceExpression (identifier = it)
+                                    UReturnExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (print))
+                                            USimpleNameReferenceExpression (identifier = it)
         UMethod (name = implicitLabel)
             UBlockExpression
                 UQualifiedReferenceExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))
                         UIdentifier (Identifier (listOf))
-                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
                         ULiteralExpression (value = 1)
                         ULiteralExpression (value = 2)
                         ULiteralExpression (value = 3)
                         ULiteralExpression (value = 4)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (forEach))
-                        USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null)
                         ULambdaExpression
                             UParameter (name = it)
                             UBlockExpression
@@ -59,38 +54,51 @@ UFile (package = )
                                             ULiteralExpression (value = 2)
                                         ULiteralExpression (value = 0)
                                     UReturnExpression
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                    UIdentifier (Identifier (print))
-                                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null)
-                                    USimpleNameReferenceExpression (identifier = it)
+                                UReturnExpression
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                        UIdentifier (Identifier (print))
+                                        USimpleNameReferenceExpression (identifier = it)
         UMethod (name = simulateBreak)
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (run))
-                    USimpleNameReferenceExpression (identifier = run, resolvesTo = null)
                     ULabeledExpression (label = loop)
                         ULambdaExpression
                             UBlockExpression
-                                UQualifiedReferenceExpression
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))
-                                        UIdentifier (Identifier (listOf))
-                                        USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
-                                        ULiteralExpression (value = 1)
-                                        ULiteralExpression (value = 2)
-                                        ULiteralExpression (value = 3)
-                                        ULiteralExpression (value = 4)
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                        UIdentifier (Identifier (forEach))
-                                        USimpleNameReferenceExpression (identifier = forEach, resolvesTo = null)
-                                        ULambdaExpression
-                                            UParameter (name = it)
-                                            UBlockExpression
-                                                UIfExpression
-                                                    UBinaryExpression (operator = ==)
-                                                        USimpleNameReferenceExpression (identifier = it)
-                                                        ULiteralExpression (value = 3)
+                                UReturnExpression
+                                    UQualifiedReferenceExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))
+                                            UIdentifier (Identifier (listOf))
+                                            ULiteralExpression (value = 1)
+                                            ULiteralExpression (value = 2)
+                                            ULiteralExpression (value = 3)
+                                            ULiteralExpression (value = 4)
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (forEach))
+                                            ULambdaExpression
+                                                UParameter (name = it)
+                                                UBlockExpression
+                                                    UIfExpression
+                                                        UBinaryExpression (operator = ==)
+                                                            USimpleNameReferenceExpression (identifier = it)
+                                                            ULiteralExpression (value = 3)
+                                                        UReturnExpression
                                                     UReturnExpression
-                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                                    UIdentifier (Identifier (print))
-                                                    USimpleNameReferenceExpression (identifier = print, resolvesTo = null)
-                                                    USimpleNameReferenceExpression (identifier = it)
+                                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                            UIdentifier (Identifier (print))
+                                                            USimpleNameReferenceExpression (identifier = it)
+        UMethod (name = lambdaInConstructor)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
+                    UIdentifier (Identifier (CustomAccessibilityAction))
+                    USimpleNameReferenceExpression (identifier = CustomAccessibilityAction, resolvesTo = PsiClass: CustomAccessibilityAction)
+                    ULambdaExpression
+                        UBlockExpression
+                            UReturnExpression
+    UClass (name = CustomAccessibilityAction)
+        UField (name = action)
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+        UMethod (name = getAction)
+        UMethod (name = CustomAccessibilityAction)
+            UParameter (name = action)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)

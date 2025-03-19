@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,10 +15,12 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class ToggleBreakpointEnabledAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -38,8 +40,7 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
     return ActionUpdateThread.EDT;
   }
 
-  @NotNull
-  private static Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
+  private static @NotNull Set<XLineBreakpoint> findLineBreakpoints(AnActionEvent e) {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return Collections.emptySet();
@@ -51,9 +52,8 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction {
       lineRanges.add(new Range<>(document.getLineNumber(caret.getSelectionStart()), document.getLineNumber(caret.getSelectionEnd())));
     }
 
-    Collection<XLineBreakpointImpl> breakpoints = lineBreakpointManager.getDocumentBreakpoints(document);
     HashSet<XLineBreakpoint> res = new HashSet<>();
-    for (XLineBreakpointImpl breakpoint : breakpoints) {
+    for (XLineBreakpointImpl breakpoint : lineBreakpointManager.getDocumentBreakpoints(document)) {
       int line = breakpoint.getLine();
       for (Range<Integer> range : lineRanges) {
         if (range.isWithin(line)) {

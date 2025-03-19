@@ -5,19 +5,20 @@ SHELL_SCRIPT
         PsiElement({)('{')
         PsiWhiteSpace(' ')
         COMPOUND_LIST
-          SIMPLE_COMMAND
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('git')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('log')
+            PsiWhiteSpace(' ')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
             GENERIC_COMMAND_DIRECTIVE
               LITERAL
-                PsiElement(word)('git')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('log')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('cat')
+                PsiElement(word)('cat')
           PsiElement(;)(';')
         PsiWhiteSpace(' ')
         PsiElement(})('}')

@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ModuleOutputPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.PackagingExternalMapping;
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleOutputPackagingElementEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -33,14 +34,13 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     super(ProductionModuleOutputElementType.ELEMENT_TYPE, project, modulePointer);
   }
 
-  @NonNls @Override
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "module:" + getModuleName();
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
+  public @NotNull Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context) {
     Module module = findModule(context);
     if (module == null) return Collections.emptyList();
 
@@ -49,27 +49,29 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE));
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     String moduleName = this.getModuleName();
     ModuleOutputPackagingElementEntity addedEntity;
     if (moduleName != null) {
-      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, new ModuleId(moduleName), source);
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source, entityBuilder -> {
+        entityBuilder.setModule(new ModuleId(moduleName));
+        return Unit.INSTANCE;
+      }));
     }
     else {
-      addedEntity = ExtensionsKt.addModuleOutputPackagingElementEntity(diff, null, source);
+      addedEntity = diff.addEntity(ModuleOutputPackagingElementEntity.create(source));
     }
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
-    return addedEntity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(addedEntity, this);
+    return getBuilder(diff, addedEntity);
   }
 }

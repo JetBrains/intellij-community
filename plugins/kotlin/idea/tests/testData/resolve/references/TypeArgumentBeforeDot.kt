@@ -8,4 +8,4 @@ class C {
 
 class Foo
 
-// REF: (<root>).Foo
+// REF: Foo

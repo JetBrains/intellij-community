@@ -2,49 +2,64 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.createTagLabel
+import com.intellij.collaboration.ui.SingleValueModel
+import com.intellij.collaboration.ui.codereview.avatar.Avatar
+import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.FontUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
+import icons.DvcsImplIcons
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.geom.RoundRectangle2D
 import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.properties.Delegates
 
-class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
+@ApiStatus.Internal
+data class ReviewListCellUiOptions(
+  val bordered: Boolean = true,
+)
+
+@ApiStatus.Internal
+internal class ReviewListCellRenderer<T>(
+  private val presenter: (T) -> ReviewListItemPresentation,
+  private val options: ReviewListCellUiOptions = ReviewListCellUiOptions(),
+)
   : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
 
+  private val titleSpacer = JLabel().apply {
+    preferredSize = JBDimension(1, CodeReviewAvatarUtils.expectedIconHeight(Avatar.Sizes.OUTLINED))
+  }
+  private val unseen = JLabel().apply {
+    icon = UnreadDotIcon()
+    border = JBEmptyBorder(0, 2, 0, 0)
+  }
   private val title = JLabel().apply {
     minimumSize = JBDimension(30, 0)
   }
   private val info = JLabel().apply {
-    val titleFontSize = title.font.size
-    font = font.deriveFont(titleFontSize / 13.0f * 12.0f)
+    font = JBFont.create(font, false).let(FontUtil::minusOne)
   }
   private val tags = JLabel()
-  private val state = JLabel().apply {
-    border = JBUI.Borders.empty(0, 4)
-    foreground = stateForeground
-  }
-  private val statePanel = StatePanel(state).apply {
-    background = stateBackground
-  }
+  private val stateTextModel = SingleValueModel<@Nls String?>(null)
+  private val stateLabel = createTagLabel(stateTextModel)
   private val nonMergeable = JLabel()
   private val buildStatus = JLabel()
   private val userGroup1 = JLabel()
@@ -59,10 +74,12 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val firstLinePanel = JPanel(HorizontalSidesLayout(6)).apply {
       isOpaque = false
+      add(unseen, SwingConstants.LEFT as Any)
       add(title, SwingConstants.LEFT as Any)
       add(tags, SwingConstants.LEFT as Any)
 
-      add(statePanel, SwingConstants.RIGHT as Any)
+      add(titleSpacer, SwingConstants.RIGHT as Any)
+      add(stateLabel, SwingConstants.RIGHT as Any)
       add(nonMergeable, SwingConstants.RIGHT as Any)
       add(buildStatus, SwingConstants.RIGHT as Any)
       add(userGroup1, SwingConstants.RIGHT as Any)
@@ -77,18 +94,24 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     UIUtil.forEachComponentInHierarchy(this) {
       it.isFocusable = false
     }
-    updateRendering()
   }
 
   private fun updateRendering() {
+    val hSelectionInsets = if (!options.bordered) 0 else 13
+    val hBorder = when {
+      !options.bordered -> 6
+      isNewUI -> 19
+      else -> 13
+    }
+
     if (isNewUI) {
-      border = JBUI.Borders.empty(4, 19, 5, 19)
+      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
       selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       selectionArcCorners = SelectionArcCorners.ALL
-      selectionInsets = JBInsets(0, 13, 0, 13)
+      selectionInsets = JBInsets(0, hSelectionInsets, 0, hSelectionInsets)
     }
     else {
-      border = JBUI.Borders.empty(4, 13, 5, 13)
+      border = JBUI.Borders.empty(4, hBorder, 5, hBorder)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
       selectionInsets = JBInsets(0)
@@ -96,7 +119,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   }
 
   override fun getListCellRendererComponent(list: JList<out T>,
-                                            value: T,
+                                            value: T?,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
@@ -106,8 +129,11 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected && !ExperimentalUI.isNewUI(), list.hasFocus())
 
-    val presentation = presenter(value)
+    val presentation = value?.let { presenter(it) } ?: return this
 
+    unseen.apply {
+      isVisible = presentation.seen?.not() ?: false
+    }
     title.apply {
       text = presentation.title
       foreground = primaryTextColor
@@ -131,7 +157,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val tagGroup = presentation.tagGroup
     tags.apply {
-      icon = CollaborationToolsIcons.Review.Branch
+      icon = DvcsImplIcons.BranchLabel
       isVisible = tagGroup != null
     }.also {
       if (tagGroup != null) {
@@ -142,10 +168,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
-              label.icon = IconUtil.colorize(CollaborationToolsIcons.Review.Branch, color)
+              label.icon = IconUtil.colorize(DvcsImplIcons.BranchLabel, color)
             }
             else {
-              label.icon = CollaborationToolsIcons.Review.Branch
+              label.icon = DvcsImplIcons.BranchLabel
             }
           }
         }
@@ -156,12 +182,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       }
     }
 
-    state.apply {
-      font = JBUI.Fonts.smallFont()
-      text = presentation.state
-      isVisible = presentation.state != null
-    }
-    statePanel.isVisible = presentation.state != null
+    stateTextModel.value = presentation.state
+    stateLabel.isVisible = presentation.state != null
 
     nonMergeable.apply {
       val status = presentation.mergeableStatus
@@ -189,6 +211,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       isVisible = counter != null
       border = JBUI.Borders.emptyRight(1)
     }
+
+    updateRendering()
 
     return this
   }
@@ -237,38 +261,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
-
-    // TODO: register metadata provider somehow?
-    private val stateForeground = JBColor.namedColor("ReviewList.state.foreground", 0x797979)
-    private val stateBackground = JBColor.namedColor("ReviewList.state.background", 0xDFE1E5)
-
-    /**
-     * Draws a background with rounded corners
-     */
-    private class StatePanel(stateLabel: JLabel) : JPanel(BorderLayout()) {
-      init {
-        add(stateLabel, BorderLayout.CENTER)
-        isOpaque = false
-      }
-
-      override fun paintComponent(g: Graphics) {
-        g as Graphics2D
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
-
-        val insets = insets
-        val bounds = bounds
-        JBInsets.removeFrom(bounds, insets)
-        val arc = JBUIScale.scale(6)
-        val rect = RoundRectangle2D.Float(0f, 0f,
-                                          bounds.width.toFloat(), bounds.height.toFloat(),
-                                          arc.toFloat(), arc.toFloat())
-        g.color = background
-        g.fill(rect)
-        super.paintComponent(g)
-      }
-    }
 
     /**
      * Lays out the components horizontally in two groups - [SwingConstants.LEFT] and [SwingConstants.RIGHT] anchored to the left and right sides respectively.
@@ -383,5 +375,12 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
         return true
       }
     }
+  }
+}
+
+@ApiStatus.Internal
+data object ReviewListCellRendererFactory {
+  fun <T> getCellRenderer(presenter: (T) -> ReviewListItemPresentation): ListCellRenderer<T> {
+    return ReviewListCellRenderer(presenter)
   }
 }

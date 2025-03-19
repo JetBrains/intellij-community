@@ -16,8 +16,11 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
+import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
 
@@ -614,10 +617,6 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-16906
   public void testGoogleDocstringModuleAttribute() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
-  }
-
-  public void testEpyDocTypeReferenceForInstanceAttributeInClassLevelDocstring() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
   }
 
   // PY-7541
@@ -1420,6 +1419,15 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
     assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
   }
 
+  // PY-26947
+  public void testVariableDeclaredOnClassLevelResolvesOnlyToItself() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("correct", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
   // PY-29975
   public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
     assertResolvesTo(PyNamedParameter.class, "foo");
@@ -1696,5 +1704,490 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
   // PY-50788
   public void testNumpyDocstringAttributeNameResolvesToInheritedClassAttribute() {
     runWithDocStringFormat(DocStringFormat.NUMPY, () -> assertResolvesTo(PyTargetExpression.class, "bar"));
+  }
+
+  // PY-61878
+  public void testTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeAliasStatement.class, "myType");
+    });
+  }
+
+  // PY-61878
+  public void testTypeParameterResolvedInsideTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNamedParameterInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNestedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testFunctionParameterDefaultValueNotResolvedToTypeParameterInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testDecoratorArgumentNotResolvedToTypeParameterOfDecoratedFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideReturnTypeInFunctionDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testNotResolvedToTypeParameterOutsideOfFunctionScope() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61877
+  public void testNotResolvedToTypeParameterOutsideOfClassScope() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertNotResolved();
+    });
+  }
+
+  // PY-61878
+  public void testNotResolvedToTypeParameterOutsideOfTypeAliasStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideClassDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideVariableAnnotationInsideFunction() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideClassAttributeAnnotation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNamedParameterOfClassMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideReturnTypeAnnotationOfClassMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testVariableInsideFunctionResolvedToTypeParameterInsteadOfGlobalVariableWithTheSameName() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testTypeParameterResolvedInsideNestedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testGlobalVariableRedeclarationWithSameAsTypeParameterNameInsideNestedClassNotResolvedToTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInFunctionInsideNestedClassResolvedToTypeParameterIfTheOuterClassIsParameterized() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTypeParameter.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInFunctionInsideNestedClassResolvedToGlobalVariableIfTheOuterClassIsNotParameterized() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877
+  public void testReferenceInsideNestedFunctionNotResolvedToTypeParameterOfOuterClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      assertResolvesTo(PyTargetExpression.class, "T");
+    });
+  }
+
+  // PY-61877 PY-63366
+  public void testNestedClassNotResolvedInsideMethodOfNewStyleGenericClass() {
+    assertNotResolved();
+  }
+
+  // PY-61877 PY-63367
+  public void testNestedClassResolvedInsideAnnotationOfNewStyleGenericMethod() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
+  // PY-61877
+  public void testNestedClassIsResolvedInSuperclassListOfAnotherNewStyleGenericNestedClass() {
+    assertResolvesTo(PyClass.class, "Nested");
+  }
+
+  // PY-61877
+  public void testNewStyleTypeParameterNotResolvedAsClassAttribute() {
+    assertNotResolved();
+  }
+
+  // [TODO] daniil.kalinin enable when resolve for collisions in type parameter names and class attribute names is implemented
+  // PY-61877
+  //public void testClassAttributeDeclarationWithSameAsTypeParameterNameNotResolvedToTypeParameter() {
+  //  runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+  //    assertResolvesTo(PyTargetExpression.class, "T");
+  //  });
+  //}
+
+  // [TODO] daniil.kalinin enable when resolve for collisions in type parameter names and class attribute names is implemented
+  // PY-61877
+  //public void testGlobalVariableRedeclarationWithSameAsTypeParameterNameInsideClassNotResolvedToTypeParameter() {
+  //  runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+  //    assertResolvesTo(PyTargetExpression.class, "T");
+  //  });
+  //}
+
+
+  // PY-17627
+  public void testClassAttributeDefinedInSameClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInOtherClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("first", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeDefinedInAncestorClassMethod() {
+    assertResolvesTo(PyTargetExpression.class, "attr");
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInClassHasPrecedenceOverSameClassMethod() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyClass.class);
+  }
+
+  // PY-17627
+  public void testClassAttributeInitializationInSameClassMethodHasPrecedenceOverOtherClassMethods() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("current", containingMethod.getName());
+  }
+
+  // PY-17627
+  public void testClassAttributeResolvesToNextClassMethodIfItsOwnDefinitionPrecedesUsage() {
+    PyTargetExpression classAttr = assertResolvesTo(PyTargetExpression.class, "attr");
+    PyFunction containingMethod = assertInstanceOf(ScopeUtil.getScopeOwner(classAttr), PyFunction.class);
+    assertEquals("next", containingMethod.getName());
+  }
+
+  // PY-34617
+  public void testModuleAttributeUnderVersionCheck() {
+    String decl = """
+      import sys
+            
+      if True:
+          if sys.version_info >= (3,):
+              if sys.version_info >= (3, 10) and sys.version_info < (3, 12):
+                  foo = 23
+              if sys.version_info < (3, 11) and (sys.version_info < (3, 5) or sys.version_info > (3, 7)):
+                  buz = 23
+          else:
+              bar = -1
+
+      """;
+
+    String foo = decl + """
+      foo
+       <ref>""";
+    Consumer<PsiElement> fooTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "foo", null);
+    String buz = decl + """
+      buz
+       <ref>""";
+    Consumer<PsiElement> buzTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "buz", null);
+    String bar = decl + """
+      bar
+       <ref>""";
+    Consumer<PsiElement> barTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "bar", null);
+
+    assertResolvedElement(LanguageLevel.PYTHON310, foo, fooTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON310, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON310, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON312, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON312, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON312, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON38, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON38, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON38, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON37, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON37, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON37, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON34, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON34, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON34, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON27, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, bar, barTargetExpr);
+  }
+
+  // PY-34617
+  public void testModuleAttributeUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ModuleAttributeUnderVersionCheck", "");
+    String foo = """
+      import mod
+      mod.foo
+           <ref>""";
+    Consumer<PsiElement> fooTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "foo", "mod.py");
+    String buz = """
+      import mod
+      mod.buz
+           <ref>""";
+    Consumer<PsiElement> buzTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "buz", "mod.py");
+    String bar = """
+      import mod
+      mod.bar
+           <ref>""";
+    Consumer<PsiElement> barTargetExpr = e -> assertResolveResult(e, PyTargetExpression.class, "bar", "mod.py");
+
+    assertResolvedElement(LanguageLevel.PYTHON310, foo, fooTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON310, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON310, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON312, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON312, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON312, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON38, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON38, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON38, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON37, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON37, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON37, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON34, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON34, buz, buzTargetExpr);
+    assertResolvedElement(LanguageLevel.PYTHON34, bar, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON27, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, buz, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, bar, barTargetExpr);
+  }
+
+  // PY-34617
+  public void testClassAttributeUnderVersionCheck() {
+    String classDecl = """
+      import sys
+            
+      if sys.version_info < (4,):
+          class MyClass:
+              if sys.version_info >= (3,):
+                  def foo(self):
+                      pass
+              elif sys.version_info < (2, 5):
+                  def bar(self):
+                      pass
+              else:
+                  def buz(self):
+                      pass
+
+      """;
+
+    String foo = classDecl + """
+      MyClass().foo()
+                 <ref>""";
+    String bar = classDecl + """
+      MyClass().bar()
+                 <ref>""";
+    String buz = classDecl + """
+      MyClass().buz()
+                 <ref>""";
+
+    assertResolvedElement(LanguageLevel.PYTHON310, foo, e -> assertResolveResult(e, PyFunction.class, "foo", null));
+    assertResolvedElement(LanguageLevel.PYTHON310, bar, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON310, buz, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON24, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON24, bar, e -> assertResolveResult(e, PyFunction.class, "bar", null));
+    assertResolvedElement(LanguageLevel.PYTHON24, buz, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON27, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, bar, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, buz, e -> assertResolveResult(e, PyFunction.class, "buz", null));
+  }
+
+  // PY-34617
+  public void testClassAttributeUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ClassAttributeUnderVersionCheck", "");
+    String foo = """
+      from mod import MyClass
+      m = MyClass()
+      m.foo()
+         <ref>""";
+    String bar = """
+      from mod import MyClass
+      m = MyClass()
+      m.bar()
+         <ref>""";
+    String buz = """
+      from mod import MyClass
+      m = MyClass()
+      m.buz()
+         <ref>""";
+
+    assertResolvedElement(LanguageLevel.PYTHON310, foo, e -> assertResolveResult(e, PyFunction.class, "foo", "mod.py"));
+    assertResolvedElement(LanguageLevel.PYTHON310, bar, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON310, buz, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON24, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON24, bar, e -> assertResolveResult(e, PyFunction.class, "bar", "mod.py"));
+    assertResolvedElement(LanguageLevel.PYTHON24, buz, TestCase::assertNull);
+
+    assertResolvedElement(LanguageLevel.PYTHON27, foo, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, bar, TestCase::assertNull);
+    assertResolvedElement(LanguageLevel.PYTHON27, buz, e -> assertResolveResult(e, PyFunction.class, "buz", "mod.py"));
+  }
+
+  // PY-34617
+  public void testImportUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ImportUnderVersionCheck", "");
+    String plainImport = """
+      from mod import *
+      math
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, plainImport, e -> assertResolveResult(e, PyFile.class, "math.pyi", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, plainImport, TestCase::assertNull);
+
+    String importAlias = """
+      from mod import *
+      cm
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, importAlias, e -> assertResolveResult(e, PyFile.class, "cmath.pyi", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, importAlias, TestCase::assertNull);
+  }
+
+  // PY-34617
+  public void testImportFromUnderVersionCheckMultifile() {
+    myFixture.copyDirectoryToProject("resolve/ImportUnderVersionCheck", "");
+    String plainImport = """
+      from mod import *
+      digits
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, plainImport, e -> assertResolveResult(e, PyTargetExpression.class, "digits", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, plainImport, TestCase::assertNull);
+
+    String importAlias = """
+      from mod import *
+      imported_name
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, importAlias, e -> assertResolveResult(e, PyTargetExpression.class, "hexdigits", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, importAlias, TestCase::assertNull);
+
+    String starImport = """
+      from mod import *
+      DivisionByZero
+       <ref>""";
+    assertResolvedElement(LanguageLevel.PYTHON35, starImport, e -> assertResolveResult(e, PyClass.class, "DivisionByZero", null));
+    assertResolvedElement(LanguageLevel.PYTHON34, starImport, TestCase::assertNull);
+  }
+
+  // PY-77168
+  public void testResolveFromUnderUnmatchedVersionCheck() {
+    assertResolvesTo("""
+                       import sys
+                       
+                       Alias = int
+                       if sys.version_info < (3, 12):
+                           name: Alias
+                       #          <ref>
+                       """, PyTargetExpression.class, "Alias");
+  }
+
+  // PY-79480
+  public void testInheritedAttributeWithTypeAnnotationInParentConstructor() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
+      assertEquals("FakeBase", resolved.getContainingClass().getName());
+    });
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInParent() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
+      assertEquals("Fake", resolved.getContainingClass().getName());
+    });
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInChild() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      PyTargetExpression resolved = assertResolvesTo(PyTargetExpression.class, "_some_var");
+      assertEquals("Fake", resolved.getContainingClass().getName());
+    });
+  }
+
+  private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {
+    runWithLanguageLevel(languageLevel, () -> {
+      myFixture.configureByText(PythonFileType.INSTANCE, text);
+      PsiElement element = PyCommonResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+      assertion.accept(element);
+    });
+    assertFilesNotParsed();
+  }
+
+  private void assertFilesNotParsed() {
+    final PsiFile file = myFixture.getFile();
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
   }
 }

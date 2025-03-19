@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.TooltipTitle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,7 +16,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -68,15 +68,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     JFrame frame = WindowManager.getInstance().getFrame(project);
     if (!(frame instanceof IdeFrame)) return;
 
-    ListPopup popup = createActionPopup(e.getDataContext(), ((IdeFrame)frame).getComponent(), null);
+    JBPopup popup = createActionPopup(e.getDataContext(), ((IdeFrame)frame).getComponent(), null);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  protected @NotNull ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+  protected @NotNull JBPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     return createActionPopup(createPopupActionGroup(component, context), context, disposeCallback);
   }
 
-  protected ListPopup createActionPopup(DefaultActionGroup group, @NotNull DataContext context, @Nullable Runnable disposeCallback) {
+  protected JBPopup createActionPopup(DefaultActionGroup group, @NotNull DataContext context, @Nullable Runnable disposeCallback) {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       myPopupTitle, group, context, false, shouldShowDisabledActions(), false, disposeCallback, getMaxRows(), getPreselectCondition());
     popup.setMinimumSize(new Dimension(getMinWidth(), getMinHeight()));
@@ -96,7 +96,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   protected boolean isNoWrapping(@NotNull String place) {
-    return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
+    if (!ExperimentalUI.isNewUI()) return false;
+    return ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
   protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
@@ -167,7 +168,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
       if (isSmallVariant()) {
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
@@ -207,6 +208,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       });
     }
 
+    private void setMargin() {
+      setMargin(JBUI.insets(0, 8, 0, 5));
+    }
+
     /**
      * Sets a label for this component.  If the given label has displayed mnemonic,
      * it will call the {@code #doClick} method when the mnemonic is activated.
@@ -229,20 +234,20 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       });
     }
 
-    protected void presentationChanged(PropertyChangeEvent evt) {
-      String propertyName = evt.getPropertyName();
+    protected void presentationChanged(PropertyChangeEvent event) {
+      String propertyName = event.getPropertyName();
       if (Presentation.PROP_TEXT.equals(propertyName)) {
-        setText((String)evt.getNewValue());
+        setText((String)event.getNewValue());
       }
       else if (Presentation.PROP_DESCRIPTION.equals(propertyName)) {
-        myTooltipText = (String)evt.getNewValue();
+        myTooltipText = (String)event.getNewValue();
         updateTooltipText();
       }
       else if (Presentation.PROP_ICON.equals(propertyName)) {
-        setIcon((Icon)evt.getNewValue());
+        setIcon((Icon)event.getNewValue());
       }
       else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-        setEnabled((Boolean)evt.getNewValue());
+        setEnabled((Boolean)event.getNewValue());
       }
     }
 
@@ -277,13 +282,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public @Nullable String getToolTipText() {
-      return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
+      return myForcePressed || UISettings.isIdeHelpTooltipEnabled() ? null : super.getToolTipText();
     }
 
     public void showPopup() {
       JBPopup popup = createPopup(this::releaseForcePressed);
       setForcePressed(true);
-      if (Registry.is("ide.helptooltip.enabled")) {
+      if (UISettings.isIdeHelpTooltipEnabled()) {
         HelpTooltip.setMasterPopup(this, popup);
       }
 
@@ -313,7 +318,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void updateTooltipText() {
       HelpTooltip.dispose(this);
 
-      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(myTooltipText)) {
+      if (StringUtil.isNotEmpty(myTooltipText) && UISettings.isIdeHelpTooltipEnabled()) {
         String shortcut = KeymapUtil.getFirstKeyboardShortcutText(ComboBoxAction.this);
         new HelpTooltip().setTitle(myTooltipText).setShortcut(shortcut).installOn(this);
       }
@@ -342,7 +347,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public Font getFont() {
-      if (myFontSet) return super.getFont();
+      if (myFontSet && ExperimentalUI.isNewUI()) return super.getFont();
       return isSmallVariant() ? UIUtil.getToolbarFont() : StartupUiUtil.getLabelFont();
     }
 
@@ -382,7 +387,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setUI(uiClassName == null ?
             BasicButtonUI.createUI(this) :
             UIManager.getUI(this));
-      setMargin(JBUI.insets(0, 8, 0, 5));
+      setMargin();
     }
 
     @ApiStatus.Experimental

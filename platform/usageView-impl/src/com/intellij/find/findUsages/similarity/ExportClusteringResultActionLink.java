@@ -39,13 +39,13 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.command.WriteCommandAction.writeCommandAction;
 
-public class ExportClusteringResultActionLink extends ActionLink {
+class ExportClusteringResultActionLink extends ActionLink {
   public static final String FILENAME = "filename";
   public static final String CLUSTER_NUMBER = "cluster_number";
   public static final String SNIPPET = "snippet";
   public static final String FEATURES = "features";
 
-  public ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
+  ExportClusteringResultActionLink(@NotNull Project project, @NotNull ClusteringSearchSession session, @NotNull String fileName) {
     super(UsageViewBundle.message("similar.usages.internal.export.clustering.data"), (event) -> {
       List<UsageCluster> clusters = session.getClusters();
       Task.Backgroundable loadMostCommonUsagePatternsTask =

@@ -2,26 +2,35 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
 import com.intellij.openapi.observable.operation.core.traceRun
 import com.intellij.openapi.observable.operation.core.withCompletedOperation
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.ActivityKey
+import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.backend.observation.trackActivityBlocking
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashMap
-import kotlin.concurrent.thread
+import kotlin.time.Duration.Companion.seconds
 
 class MockProjectAware(
   override val projectId: ExternalSystemProjectId,
-  private val parentDisposable: Disposable
+  private val project: Project,
+  private val parentDisposable: Disposable,
 ) : ExternalSystemProjectAware {
 
   val subscribeCounter = AtomicInteger(0)
@@ -47,6 +56,9 @@ class MockProjectAware(
 
   private val ignoredSettingsFiles = LinkedHashMap<String, (ExternalSystemSettingsFilesModificationContext) -> Boolean>()
 
+  val modificationTypeAdjustingRule: AtomicReference<(String, ExternalSystemModificationType) -> ExternalSystemModificationType> =
+    AtomicReference { _, type -> type }
+
   fun resetAssertionCounters() {
     settingsAccessCounter.set(0)
     reloadCounter.set(0)
@@ -71,13 +83,16 @@ class MockProjectAware(
   }
 
   override fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean {
-    val condition = ignoredSettingsFiles[path]
-    if (condition != null) {
-      return condition(context)
+    if (super.isIgnoredSettingsFileEvent(path, context)) {
+      return true
     }
-    else {
-      return super.isIgnoredSettingsFileEvent(path, context)
-    }
+    val condition = ignoredSettingsFiles[path] ?: return false
+    return condition(context)
+  }
+
+  override fun adjustModificationType(path: String, modificationType: ExternalSystemModificationType): ExternalSystemModificationType {
+    val rule = modificationTypeAdjustingRule.get()
+    return rule(path, modificationType)
   }
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
@@ -123,6 +138,10 @@ class MockProjectAware(
 
   private fun reloadProjectImpl(context: ExternalSystemProjectReloadContext) {
     background {
+      invokeAndWaitIfNeeded {
+        val fileDocumentManager = FileDocumentManager.getInstance()
+        fileDocumentManager.saveAllDocuments()
+      }
       val reloadStatus = reloadStatus.get()
       startReloadEventDispatcher.fireEvent()
       reloadProject.traceRun {
@@ -135,11 +154,30 @@ class MockProjectAware(
 
   private fun background(action: () -> Unit) {
     if (AutoImportProjectTracker.isAsyncChangesProcessing) {
-      thread(block = action)
+      ApplicationManager.getApplication().executeOnPooledThread(action)
     }
     else {
       action()
     }
+  }
+
+  private val LOG = Logger.getInstance(MockProjectAware::class.java)
+
+  fun <R> waitForAllProjectActivities(action: () -> R): R {
+    return project.trackActivityBlocking(MockProjectReloadActivityKey, action)
+      .also {
+        runBlocking {
+          withTimeout(10.seconds) {
+            Observation.awaitConfiguration(project) { message ->
+              LOG.debug(message)
+            }
+          }
+        }
+      }
+  }
+
+  private object MockProjectReloadActivityKey : ActivityKey {
+    override val presentableName: String = "mock project reload"
   }
 
   enum class ReloadCollisionPassType { DUPLICATE, CANCEL, IGNORE }

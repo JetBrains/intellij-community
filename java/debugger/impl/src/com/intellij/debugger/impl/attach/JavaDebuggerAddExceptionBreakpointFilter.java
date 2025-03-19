@@ -14,7 +14,6 @@ import com.intellij.execution.impl.InlayProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -28,7 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class JavaDebuggerAddExceptionBreakpointFilter implements JvmExceptionOccurrenceFilter {
+public final class JavaDebuggerAddExceptionBreakpointFilter implements JvmExceptionOccurrenceFilter {
   @Override
   public @Nullable ResultItem applyFilter(@NotNull String exceptionClassName,
                                           @NotNull List<PsiClass> classes,
@@ -58,7 +57,7 @@ public class JavaDebuggerAddExceptionBreakpointFilter implements JvmExceptionOcc
             ContainerUtil.find(exceptionBreakpoints, b -> Objects.equals(myExceptionFqn, b.getProperties().myQualifiedName));
           if (breakpoint == null) {
             ExceptionBreakpoint ebpt = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager()
-              .addExceptionBreakpoint(myExceptionFqn, StringUtil.getPackageName(myExceptionFqn));
+              .addExceptionBreakpoint(myExceptionFqn);
             if (ebpt != null) {
               breakpoint = ebpt.getXBreakpoint();
             }

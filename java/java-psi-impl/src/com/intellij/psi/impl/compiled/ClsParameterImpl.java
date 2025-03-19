@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -48,6 +48,11 @@ public final class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameter
     return CachedValuesManager.getCachedValue(this, () -> {
       return CachedValueProvider.Result.create(calcName(), PsiModificationTracker.MODIFICATION_COUNT);
     });
+  }
+
+  @Override
+  public PsiElement @NotNull [] getChildren() {
+    return getChildren(getModifierList(), getTypeElement());
   }
 
   private @NotNull String calcName() {
@@ -172,7 +177,7 @@ public final class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameter
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiParameter mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
@@ -248,6 +253,6 @@ public final class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameter
 
   @Override
   public String toString() {
-    return "PsiParameter";
+    return "PsiParameter:" + getName();
   }
 }

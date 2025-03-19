@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -26,7 +26,7 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
 
-public class DirectoryNode extends PackageDependenciesNode {
+public final class DirectoryNode extends PackageDependenciesNode {
 
   private final String myDirName;
   private PsiDirectory myDirectory;
@@ -37,6 +37,8 @@ public class DirectoryNode extends PackageDependenciesNode {
   private boolean myCompactPackages = true;
   private String myFQName = null;
   private final VirtualFile myVDirectory;
+  private Icon myIcon = AllIcons.Nodes.Package;
+  private String myComment;
 
   public DirectoryNode(VirtualFile aDirectory,
                        Project project,
@@ -138,6 +140,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return false;
   }
 
+  @Override
   public String toString() {
     if (myFQName != null) return myFQName;
     if (myCompactPackages) {
@@ -178,8 +181,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return getTargetDirectory();
   }
 
-  @Nullable
-  private PsiDirectory getPsiDirectory() {
+  private @Nullable PsiDirectory getPsiDirectory() {
     if (myDirectory == null) {
       if (myVDirectory.isValid() && !myProject.isDisposed()) {
         myDirectory = PsiManager.getInstance(myProject).findDirectory(myVDirectory);
@@ -203,6 +205,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return 3;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (isEquals()) {
       return super.equals(o);
@@ -217,17 +220,39 @@ public class DirectoryNode extends PackageDependenciesNode {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return toString().hashCode();
   }
 
   @Override
   public Icon getIcon() {
+    return myIcon;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+    myComment = doGetComment();
+  }
+
+  private Icon doGetIcon() {
     if (myVDirectory != null) {
       final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
     }
     return AllIcons.Nodes.Package;
+  }
+
+  private @Nullable String doGetComment() {
+    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
+      final PsiDirectory directory = getPsiDirectory();
+      if (directory != null) {
+        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
+      }
+    }
+    return null;
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {
@@ -244,8 +269,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return myWrapper;
   }
 
-  @Nullable
-  public DirectoryNode getCompactedDirNode() {
+  public @Nullable DirectoryNode getCompactedDirNode() {
     return myCompactPackages ? myCompactedDirNode : null;
   }
 
@@ -266,13 +290,7 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public String getComment() {
-    if (myVDirectory != null && myVDirectory.isValid() && !myProject.isDisposed()) {
-      final PsiDirectory directory = getPsiDirectory();
-      if (directory != null) {
-        return ProjectViewDirectoryHelper.getInstance(myProject).getLocationString(directory);
-      }
-    }
-    return super.getComment();
+    return myComment;
   }
 
   @Override

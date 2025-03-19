@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ObjectUtilsRt;
@@ -11,7 +11,7 @@ import java.lang.ref.SoftReference;
  * Concurrent map with soft keys and soft values.
  * Null keys are NOT allowed
  * Null values are NOT allowed
- * To instantiate use {@link ContainerUtil#createConcurrentWeakKeySoftValueMap(int, float, int, HashingStrategy)}
+ * To create, use {@link ContainerUtil#createConcurrentSoftKeySoftValueMap()}
  */
 final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySoftValueHashMap<K,V> {
   ConcurrentSoftKeySoftValueHashMap(int initialCapacity,
@@ -24,7 +24,7 @@ final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySof
   private static class SoftKey<K, V> extends SoftReference<K> implements KeyReference<K, V> {
     private final int myHash; // Hash code of the key, stored here since the key may be tossed by the GC
     private final HashingStrategy<? super K> myStrategy;
-    @NotNull private final ValueReference<K, V> myValueReference;
+    private final @NotNull ValueReference<K, V> myValueReference;
 
     SoftKey(@NotNull K k,
             @NotNull ValueReference<K, V> valueReference,
@@ -52,22 +52,22 @@ final class ConcurrentSoftKeySoftValueHashMap<K, V> extends ConcurrentWeakKeySof
       return myHash;
     }
 
-    @NotNull
     @Override
-    public ValueReference<K, V> getValueReference() {
+    public @NotNull ValueReference<K, V> getValueReference() {
       return myValueReference;
     }
   }
 
   @Override
   @NotNull
-  KeyReference<K,V> createKeyReference(@NotNull K k, @NotNull final V v) {
+  KeyReference<K,V> createKeyReference(@NotNull K k, final @NotNull V v) {
     final ValueReference<K, V> valueReference = createValueReference(v, myValueQueue);
     KeyReference<K,V> keyReference = new SoftKey<>(k, valueReference, myHashingStrategy, myKeyQueue);
     if (valueReference instanceof SoftValue) {
       ((SoftValue<K,V>)valueReference).myKeyReference = keyReference;
     }
     ObjectUtilsRt.reachabilityFence(k);
+    ObjectUtilsRt.reachabilityFence(v); // to avoid queueing in myValueQueue before setting its myKeyReference to not-null value
     return keyReference;
   }
 }

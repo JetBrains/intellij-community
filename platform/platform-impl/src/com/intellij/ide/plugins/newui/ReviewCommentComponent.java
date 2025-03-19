@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -6,10 +6,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.RatesPanel;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -21,16 +21,15 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 
-/**
- * @author Alexander Lobas
- */
-public class ReviewCommentComponent extends JPanel {
+@ApiStatus.Internal
+public final class ReviewCommentComponent extends JPanel {
   private final String myPluginId;
   private final String myCommendId;
   private final JComponent myMoreButton;
@@ -87,23 +86,20 @@ public class ReviewCommentComponent extends JPanel {
 
   private @NotNull JComponent createMoreAction() {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.setPopup(true);
-
+    group.getTemplatePresentation().setPopupGroup(true);
+    group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
+    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     group.add(new DumbAwareAction(IdeBundle.message("plugins.review.action.copy.link.text")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        String url = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() +
+        String url = MarketplaceUrls.getPluginManagerUrl() + "/" +
                      myPluginId + "/reviews#review=" + URLUtil.encodeURIComponent(myCommendId);
 
         CopyPasteManager.getInstance().setContents(new StringSelection(url));
       }
     });
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
-    return new ActionButton(group, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+    return new ActionButton(group, null, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
       @Override
       protected @NotNull JBPopup createAndShowActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
         myShowPopup = true;

@@ -4,10 +4,11 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
-import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
+import org.jetbrains.kotlin.analysis.decompiler.konan.FileWithMetadata
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
+import org.jetbrains.kotlin.metadata.ProtoBuf
+import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -17,12 +18,12 @@ import org.jetbrains.kotlin.serialization.deserialization.getName
 @ApiStatus.Internal
 class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
     companion object {
-        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.simpleName)
     }
 
     override fun getName(): ID<FqName, List<Name>> = NAME
 
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = 3
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {
@@ -44,15 +45,26 @@ class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameInde
 
         val (nameResolver, proto) = readProtoPackageData(kotlinJvmBinaryClass) ?: return emptyList()
 
-        return buildList {
-            proto.functionList.mapTo(this) { nameResolver.getName(it.name) }
-            proto.propertyList.mapTo(this) { nameResolver.getName(it.name) }
-        }
+        return getTopLevelDeclarationNamesFromProto(proto, nameResolver)
     }
 
     override fun getPackageAndNamesFromBuiltIns(fileContent: FileContent): Map<FqName, List<Name>> {
         val metadata = readKotlinMetadataDefinition(fileContent) ?: return emptyMap()
         //there are no top level properties in builtins
         return mapOf(metadata.packageFqName to metadata.proto.`package`.functionOrBuilderList.map { metadata.nameResolver.getName(it.name) })
+    }
+
+    override fun getDeclarationNamesByKnm(kotlinNativeMetadata: FileWithMetadata.Compatible): List<Name> {
+        val nameResolver = kotlinNativeMetadata.nameResolver
+        val packageProto = kotlinNativeMetadata.proto.`package`
+
+        return getTopLevelDeclarationNamesFromProto(packageProto, nameResolver)
+    }
+
+    private fun getTopLevelDeclarationNamesFromProto(packageProto: ProtoBuf.Package, nameResolver: NameResolver): List<Name> {
+        return buildList {
+            packageProto.functionOrBuilderList.mapTo(this) { nameResolver.getName(it.name) }
+            packageProto.propertyOrBuilderList.mapTo(this) { nameResolver.getName(it.name) }
+        }
     }
 }

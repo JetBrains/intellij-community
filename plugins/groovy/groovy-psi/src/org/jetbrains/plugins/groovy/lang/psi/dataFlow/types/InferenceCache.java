@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -95,10 +95,9 @@ final class InferenceCache {
     return dfaType == null ? null : dfaType.getResultType();
   }
 
-  @Nullable
-  private List<@Nullable TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
-                                                      @NotNull GroovyControlFlow flow,
-                                                      @NotNull DFAFlowInfo flowInfo) {
+  private @Nullable List<@Nullable TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
+                                                                @NotNull GroovyControlFlow flow,
+                                                                @NotNull DFAFlowInfo flowInfo) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner, myFlow.getVarIndices()));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow.getFlow(), dfaInstance, semilattice).performDFAWithTimeout();
@@ -153,11 +152,10 @@ final class InferenceCache {
                            interestingDescriptors);
   }
 
-  @NotNull
-  private Set<Pair<Instruction, Integer>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
-                                                           @NotNull Instruction instruction,
-                                                           int descriptorId,
-                                                           Map<PsiElement, Collection<ReadWriteVariableInstruction>> scopeCache) {
+  private @NotNull Set<Pair<Instruction, Integer>> findDependencies(@NotNull List<DefinitionMap> definitionMaps,
+                                                                    @NotNull Instruction instruction,
+                                                                    int descriptorId,
+                                                                    Map<PsiElement, Collection<ReadWriteVariableInstruction>> scopeCache) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
     IntSet definitions = definitionMap.getDefinitions(descriptorId);
 

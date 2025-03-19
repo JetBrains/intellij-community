@@ -8,11 +8,13 @@ import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationD
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Created by Nikita.Skvortsov
  * date: 12.09.2017.
  */
+@ApiStatus.Internal
 class FacetConfigurationHandler : ConfigurationHandler {
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val modifiableModel = modelsProvider.getModifiableFacetModel(module)

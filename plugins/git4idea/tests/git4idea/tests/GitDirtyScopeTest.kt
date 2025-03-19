@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.tests
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.SystemInfo
@@ -163,7 +164,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
       parent.createFile("FILE.txt", "initial")
     }
     git("add .")
-    VcsDirtyScopeVfsListener.getInstance(project).waitForAsyncTaskCompletion()
+    project.service<VcsDirtyScopeVfsListener>().waitForAsyncTaskCompletion()
 
     changeListManager.forceGoInTestMode()
     changeListManager.waitUntilRefreshed()
@@ -198,7 +199,7 @@ class GitDirtyScopeTest : GitSingleRepoTest() {
     dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "DHq")) // hash code collisions
     dirtyScopeManager.dirDirtyRecursively(VcsUtil.getFilePath(repo.root, "djS"))
     git("add .")
-    VcsDirtyScopeVfsListener.getInstance(project).waitForAsyncTaskCompletion()
+    project.service<VcsDirtyScopeVfsListener>().waitForAsyncTaskCompletion()
 
     changeListManager.forceGoInTestMode()
     changeListManager.waitUntilRefreshed()

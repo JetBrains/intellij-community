@@ -5,21 +5,20 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsFileUtil
 import git4idea.GitContentRevision
 import git4idea.index.ui.GitFileStatusNode
+import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
+class GitAddWithoutContent : StagingAreaOperationAction(GitAddWithoutContentOperation)
 class GitResetAction : StagingAreaOperationAction(GitResetOperation)
 class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
 
@@ -55,42 +54,36 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
       }
     }
 
-    val exceptions = mutableListOf<VcsException>()
+    val successfulRoots = linkedSetOf<VirtualFile>()
+    val exceptions = MultiMap<VirtualFile, VcsException>()
     pathsByRoot.forEach { (repo, nodes) ->
       try {
         operation.processPaths(project, repo.root, nodes)
+        successfulRoots.add(repo.root)
         VcsFileUtil.markFilesDirty(project, nodes.map { it.filePath })
       }
       catch (ex: VcsException) {
-        exceptions.add(ex)
+        exceptions.putValue(repo.root, ex)
       }
     }
 
     submodulesByRoot.forEach { (repo, submodules) ->
       try {
         operation.processPaths(project, repo.root, submodules)
+        successfulRoots.add(repo.root)
         VcsFileUtil.markFilesDirty(project, submodules.mapNotNull { it.filePath.parentPath })
       }
       catch (ex: VcsException) {
-        exceptions.add(ex)
+        exceptions.putValue(repo.root, ex)
       }
     }
 
-    if (exceptions.isNotEmpty()) {
-      showErrorMessage(project, operation.errorMessage, exceptions)
-    }
+    operation.reportResult(project, nodes, successfulRoots, exceptions)
+    stagingAreaActionInvoked()
   }
 }
 
 fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, canBeCancelled: Boolean, process: () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable { process() },
                                                                            title, canBeCancelled, project)
-}
-
-private fun showErrorMessage(project: Project, @NotificationContent messageTitle: String, exceptions: Collection<Exception>) {
-  val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
-    .br()
-    .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
-
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, message.toString(), MessageType.ERROR)
 }

@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -26,12 +26,27 @@ import java.util.Objects;
 /**
  * refactored from {@link MoveInitializerToConstructorAction}
  */
-public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIntentionAction {
+public abstract class BaseMoveInitializerToMethodAction extends PsiUpdateModCommandAction<PsiField> {
+  public BaseMoveInitializerToMethodAction() {
+    super(PsiField.class);
+  }
+
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiCompiledElement) return false;
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class);
-    if (field == null || hasUnsuitableModifiers(field)) return false;
+  public @NotNull String getFamilyName() {
+    return getText();
+  }
+
+  @Override
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiField element) {
+    if (PsiTreeUtil.getParentOfType(context.findLeaf(), PsiField.class, false, PsiMember.class, PsiCodeBlock.class, PsiDocComment.class) !=
+        element) {
+      return null;
+    }
+    return isAvailable(element) ? Presentation.of(getText()) : null;
+  }
+
+  protected boolean isAvailable(@NotNull PsiField field) {
+    if (hasUnsuitableModifiers(field)) return false;
     // Doesn't work for Groovy
     if (field.getLanguage() != JavaLanguage.INSTANCE) return false;
     PsiExpression initializer = field.getInitializer();
@@ -54,17 +69,16 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     return false;
   }
 
-  @NotNull
-  protected abstract Collection<String> getUnsuitableModifiers();
+  protected abstract @IntentionName String getText();
+
+  protected abstract @NotNull Collection<String> getUnsuitableModifiers();
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-    assert field != null;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
     final PsiClass aClass = field.getContainingClass();
     if (aClass == null) return;
 
-    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(project, editor, element.getContainingFile(), aClass);
+    final Collection<PsiMethod> methodsToAddInitialization = getOrCreateMethods(aClass);
 
     if (methodsToAddInitialization.isEmpty()) return;
 
@@ -75,19 +89,14 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     }
 
     if (!assignments.isEmpty()) {
-      highlightRExpression((PsiAssignmentExpression)assignments.get(0).getExpression(), project, editor);
+      PsiExpression expression = ((PsiAssignmentExpression)assignments.get(0).getExpression()).getRExpression();
+      if (expression != null) {
+        updater.highlight(expression);
+      }
     }
   }
 
-  private static void highlightRExpression(@NotNull PsiAssignmentExpression assignment, @NotNull Project project, Editor editor) {
-    final PsiExpression expression = assignment.getRExpression();
-
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, new PsiElement[]{expression},
-                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, false, null);
-  }
-
-  @NotNull
-  private static List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<? extends PsiMethod> methods) {
+  private static @NotNull List<PsiExpressionStatement> addFieldAssignments(@NotNull PsiField field, @NotNull Collection<? extends PsiMethod> methods) {
     final List<PsiExpressionStatement> assignments = new ArrayList<>();
     for (PsiMethod method : methods) {
       assignments.add(addAssignment(getOrCreateMethodBody(method), field));
@@ -95,8 +104,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     return assignments;
   }
 
-  @NotNull
-  private static PsiCodeBlock getOrCreateMethodBody(@NotNull PsiMethod method) {
+  private static @NotNull PsiCodeBlock getOrCreateMethodBody(@NotNull PsiMethod method) {
     PsiCodeBlock codeBlock = method.getBody();
     if (codeBlock == null) {
       CreateFromUsageUtils.setupMethodBody(method);
@@ -105,11 +113,9 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     return codeBlock;
   }
 
-  @NotNull
-  protected abstract Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass);
+  protected abstract @NotNull Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass);
 
-  @NotNull
-  private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
+  private static @NotNull PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(codeBlock.getProject());
 
     final PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + " = y;", codeBlock);
@@ -125,8 +131,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
     return (PsiExpressionStatement)newStatement;
   }
 
-  @Nullable
-  private static PsiElement findFirstFieldUsage(PsiStatement @NotNull [] statements, @NotNull PsiField field) {
+  private static @Nullable PsiElement findFirstFieldUsage(PsiStatement @NotNull [] statements, @NotNull PsiField field) {
     for (PsiStatement blockStatement : statements) {
       if (!isSuperOrThisMethodCall(blockStatement) && containsReference(blockStatement, field)) {
         return blockStatement;

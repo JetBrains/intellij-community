@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
@@ -6,41 +6,51 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.Consumer;
+import com.intellij.psi.util.CachedValue;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.util.CachedValueImpl;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.VirtualFileGist;
 import com.intellij.util.indexing.FileBasedIndex;
-import one.util.streamex.EntryStream;
+import com.intellij.util.io.UnsyncByteArrayOutputStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.InsnList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.tree.VarInsnNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
- * Scala code (same algorithm, but easier to read): https://github.com/ilya-klyuchnikov/faba
- *
- * Based on "Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values" by Ilya Klyuchnikov
- *     (http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf)
+ * Here's <a href="https://github.com/ilya-klyuchnikov/faba">Scala code</a> (same algorithm, but easier to read).
+ * <p>
+ * Based on <a href="http://meta2014.pereslavl.ru/papers/2014_Klyuchnikov__Nullness_Analysis_of_Java_Bytecode_via_Supercompilation_over_Abstract_Values.pdf">"Nullness Analysis of Java Bytecode via Supercompilation over Abstract Values"</a> 
+ * by Ilya Klyuchnikov.
  */
-public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
+public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
 
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
@@ -50,15 +60,16 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   static final BinaryOperator<Equations> MERGER =
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
-  private static final int VERSION = 16; // change when inference algorithm changes
+  private static final int VERSION = 19; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
+  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
+    BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion()))
+      .collect(Collectors.joining("-")));
   private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new BytecodeAnalysisIndex.EquationsExternalizer(), new ClassDataIndexer());
 
-  @Nullable
   @Override
-  public Map<HMember, Equations> calcData(Project project, @NotNull VirtualFile file) {
+  public @Nullable Map<HMember, Equations> calcData(Project project, @NotNull VirtualFile file) {
     HashMap<HMember, Equations> map = new HashMap<>();
     if (isFileExcluded(file)) {
       return map;
@@ -66,7 +77,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     try {
       ClassReader reader = new ClassReader(file.contentsToByteArray(false));
       Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
-      allEquations = solvePartially(reader.getClassName(), allEquations);
+      solvePartially(reader.getClassName(), allEquations);
       allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(), hash(equations), MERGER));
     }
     catch (ProcessCanceledException e) {
@@ -77,7 +88,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       // so here we suppose that exception is due to incorrect bytecode
       LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
-    ourIndexSizeStatistics.consume(map);
+    ourIndexSizeStatistics.accept(map);
     return map;
   }
 
@@ -89,38 +100,70 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
    * @return true if this file must be excluded
    */
   static boolean isFileExcluded(VirtualFile file) {
-    return isInsideDummyAndroidJar(file) ||
+    String path = file.getPath();
+    return isInsideDummyAndroidJar(path) ||
            // Methods of GenericModel.class in Play framework throw UnsupportedOperationException
            // However, it looks like they are replaced with something meaningful during compilation/runtime
            // See IDEA-285334.
-           file.getPath().endsWith("!/play/db/jpa/GenericModel.class");
+           path.endsWith("!/play/db/jpa/GenericModel.class") ||
+           ContainerUtil.exists(BytecodeAnalysisSuppressor.EP_NAME.getExtensionList(), ep -> ep.shouldSuppress(file));
   }
+  
+  private static final Pattern ANDROID_JAR_PATH = Pattern.compile(
+    "(platforms/android-.+/android.jar!/|com/google/android/android/[\\d.]+/android-[\\d.]+.jar!/android)");
 
   /**
    * Ignore inside android.jar because all class files there are dummy and contain no code at all.
    * Rely on the fact that it's always located at .../platforms/android-.../android.jar!/
    */
-  private static boolean isInsideDummyAndroidJar(VirtualFile file) {
-    String path = file.getPath();
-    int index = path.indexOf("/android.jar!/");
-    return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
+  private static boolean isInsideDummyAndroidJar(String path) {
+    return path.contains("android") && ANDROID_JAR_PATH.matcher(path).find();
   }
 
-  private static Map<EKey, Equations> solvePartially(String className, Map<EKey, Equations> map) {
+  @Contract(mutates = "param2")
+  private static void solvePartially(String className, Map<EKey, Equations> map) {
     PuritySolver solver = new PuritySolver();
-    BiFunction<EKey, Equations, EKey> keyCreator =
-      (key, eqs) -> new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
-    EntryStream.of(map).mapToKey(keyCreator)
-      .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
-      .selectValues(Effects.class)
-      .forKeyValue(solver::addEquation);
-    solver.addPlainFieldEquations(md -> md instanceof Member && ((Member)md).internalClassName.equals(className));
-    Map<EKey, Effects> solved = solver.solve();
-    Map<EKey, Effects> partiallySolvedPurity =
-      StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
-    return EntryStream.of(map)
-      .mapToValue((key, eqs) -> eqs.update(Pure, partiallySolvedPurity.get(keyCreator.apply(key, eqs))))
-      .toMap();
+    for (Map.Entry<EKey, Equations> entry : map.entrySet()) {
+      EKey key = entry.getKey();
+      Equations equations = entry.getValue();
+      for (DirectionResultPair drp : equations.results) {
+        Result result = drp.result;
+        if (result instanceof Effects effects) {
+          key = new EKey(key.member, fromInt(drp.directionKey), equations.stable, false);
+          solver.addEquation(key, effects);
+        }
+      }
+    }
+    solver.addPlainFieldEquations(md -> md instanceof Member member && member.internalClassName.equals(className));
+    solver.solve();
+    map.replaceAll((key, eqs) -> updatePurity(key, eqs, solver));
+  }
+
+  private static @NotNull Equations updatePurity(EKey key, Equations eqs, PuritySolver solver) {
+    for (int i = 0; i < eqs.results.size(); i++) {
+      DirectionResultPair drp = eqs.results.get(i);
+      if (drp.directionKey == Pure.asInt() || drp.directionKey == Volatile.asInt()) {
+        EKey newKey = new EKey(key.member, fromInt(drp.directionKey), eqs.stable, false);
+        Effects effects = solver.pending.get(newKey);
+        if (effects == null || effects.isTop()) {
+          effects = solver.solved.get(newKey);
+        }
+        if (effects == drp.result) {
+          return eqs;
+        }
+        List<DirectionResultPair> newPairs;
+        if (effects == null || effects.isTop()) {
+          newPairs = new ArrayList<>(eqs.results.size() - 1);
+          newPairs.addAll(eqs.results.subList(0, i));
+          newPairs.addAll(eqs.results.subList(i + 1, eqs.results.size()));
+        } else {
+          newPairs = new ArrayList<>(eqs.results);
+          newPairs.set(i, new DirectionResultPair(Pure.asInt(), effects));
+        }
+        return new Equations(newPairs, eqs.stable);
+      }
+    }
+    return eqs;
   }
 
   private static Equations hash(Equations equations) {
@@ -142,7 +185,12 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
   }
 
   private static Component hash(Component component) {
-    return new Component(component.value, StreamEx.of(component.ids).map(EKey::hashed).toArray(EKey[]::new));
+    EKey[] ids = component.ids;
+    EKey[] hashedKeys = new EKey[ids.length];
+    for (int i = 0; i < ids.length; i++) {
+      hashedKeys[i] = ids[i].hashed();
+    }
+    return new Component(component.value, hashedKeys);
   }
 
   private static EffectQuantum hash(EffectQuantum effect) {
@@ -152,14 +200,13 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     return effect;
   }
 
-  @NotNull
-  private static Equations convertEquations(EKey methodKey, List<Equation> rawMethodEquations) {
+  private static @NotNull Equations convertEquations(EKey methodKey, List<Equation> rawMethodEquations) {
     List<DirectionResultPair> compressedMethodEquations =
       ContainerUtil.map(rawMethodEquations, equation -> new DirectionResultPair(equation.key.dirKey, equation.result));
     return new Equations(compressedMethodEquations, methodKey.stable);
   }
 
-  public static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
+  static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
@@ -170,8 +217,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     final ExpandableArray<PResults.PResult> sharedResults = new ExpandableArray<>();
     final Map<EKey, Equations> equations = new HashMap<>();
 
-    registerVolatileFields(equations, classReader);
-    Set<Member> staticFinalFields = getStaticFinalFields(classReader);
+    FieldData data = FieldData.read(classReader);
+    data.registerVolatileFields(equations);
+    Set<Member> staticFinalFields = data.staticFinalFields();
 
     if ((classReader.getAccess() & Opcodes.ACC_ENUM) != 0) {
       // ordinal() method is final in java.lang.Enum, but for some reason referred on call sites using specific enum class
@@ -187,40 +235,47 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
 
     return equations;
   }
-
-  private static void registerVolatileFields(Map<EKey, Equations> equations, ClassReader classReader) {
-    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        if ((access & Opcodes.ACC_VOLATILE) != 0) {
-          EKey fieldKey = new EKey(new Member(classReader.getClassName(), name, desc), Out, true);
-          equations.put(fieldKey, new Equations(Collections.singletonList(new DirectionResultPair(Volatile.asInt(), VOLATILE_EFFECTS)), true));
+  
+  private record FieldData(Set<Member> staticFinalFields, Set<Member> volatileFields) {
+    static @NotNull FieldData read(@NotNull ClassReader classReader) {
+      Set<Member> staticFields = new HashSet<>();
+      Set<Member> volatileFields = new HashSet<>();
+      classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+        @Override
+        public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+          int modifiers = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+          if ((access & modifiers) == modifiers && (access & (Opcodes.ACC_ENUM | Opcodes.ACC_SYNTHETIC)) == 0 &&
+              (desc.startsWith("L") || desc.startsWith("["))) {
+            staticFields.add(new Member(classReader.getClassName(), name, desc));
+          }
+          if ((access & Opcodes.ACC_VOLATILE) != 0) {
+            volatileFields.add(new Member(classReader.getClassName(), name, desc));
+          }
+          return null;
         }
-        return null;
+      }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+      return new FieldData(staticFields, volatileFields);
+    }
+    
+    void registerVolatileFields(Map<EKey, Equations> equations) {
+      for (Member field : volatileFields) {
+        EKey fieldKey = new EKey(field, Out, true);
+        equations.put(fieldKey, new Equations(Collections.singletonList(new DirectionResultPair(Volatile.asInt(), VOLATILE_EFFECTS)), true));
       }
-    }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+    }
   }
 
-  private static Set<Member> getStaticFinalFields(ClassReader classReader) {
-    Set<Member> staticFields = new HashSet<>();
-    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        int modifiers = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
-        if ((access & modifiers) == modifiers && (access & (Opcodes.ACC_ENUM | Opcodes.ACC_SYNTHETIC)) == 0 &&
-            (desc.startsWith("L") || desc.startsWith("["))) {
-          staticFields.add(new Member(classReader.getClassName(), name, desc));
-        }
-        return null;
-      }
-    }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
-    return staticFields;
-  }
+  private static final Key<CachedValue<Map<HMember, Equations>>> EQUATIONS =
+    Key.create("com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer.Equations");
 
-  @NotNull
-  static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
-    return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
-                                    file -> ourGist.getFileData(null, file).get(key));
+  static @NotNull @Unmodifiable List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
+    return ContainerUtil.mapNotNull(
+      FileBasedIndex.getInstance().getContainingFiles(BytecodeAnalysisIndex.NAME, key, scope),
+      file -> {
+        CachedValue<Map<HMember, Equations>> equations = ConcurrencyUtil.computeIfAbsent(file, EQUATIONS, () ->
+          new CachedValueImpl<>(() -> CachedValueProvider.Result.create(ourGist.getFileData(null, file), file)));
+        return equations.getValue().get(key);
+      });
   }
 
   private static class ClassDataIndexerStatistics implements Consumer<Map<HMember, Equations>> {
@@ -228,9 +283,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     private static final AtomicLong ourTotalCount = new AtomicLong(0);
 
     @Override
-    public void consume(Map<HMember, Equations> map) {
+    public void accept(Map<HMember, Equations> map) {
       try {
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
         new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
         ourTotalSize.addAndGet(stream.size());
         ourTotalCount.incrementAndGet();
@@ -274,6 +329,15 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
     protected MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key) {
       return new MethodVisitor(Opcodes.API_VERSION, node) {
         private boolean jsr;
+        private boolean skip;
+
+        @Override
+        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+          if (descriptor.equals("Lio/quarkus/panache/common/impl/GenerateBridge;")) {
+            skip = true;
+          }
+          return super.visitAnnotation(descriptor, visible);
+        }
 
         @Override
         public void visitJumpInsn(int opcode, Label label) {
@@ -286,7 +350,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         @Override
         public void visitEnd() {
           super.visitEnd();
-          myEquations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
+          if (!skip) {
+            myEquations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
+          }
         }
       };
     }
@@ -308,13 +374,13 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
       List<Equation> equations = new ArrayList<>();
-      ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable));
+      ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable, jsr));
 
       try {
         final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
         if (graph.transitions.length > 0) {
           final DFSTree dfs = DFSTree.build(graph.transitions, graph.edgeCount);
-          boolean branching = !dfs.back.isEmpty();
+          boolean branching = !dfs.isBackEmpty();
           if (!branching) {
             for (int[] transition : graph.transitions) {
               if (transition != null && transition.length > 1) {
@@ -431,7 +497,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         }
       }
 
-      if (graph.methodNode.instructions.size() < 20 && isBooleanResult && dfs.back.isEmpty() && !jsr) {
+      if (graph.methodNode.instructions.size() < 20 && isBooleanResult && dfs.isBackEmpty() && !jsr) {
         Util util = new Util();
         if (util.singleIfBranch() && util.singleMethodCall() && util.booleanConstResult()) {
           NegationAnalysis analyzer = new NegationAnalysis(method, graph);
@@ -480,8 +546,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       }
       final boolean shouldInferNonTrivialFailingContracts;
       final Equation throwEquation;
-      if (methodNode.name.equals("<init>")) {
-        // Do not infer failing contracts for constructors
+      if (methodNode.name.equals("<init>") || methodNode.instructions.size() > 64) {
+        // Do not infer failing contracts for constructors or long methods
         shouldInferNonTrivialFailingContracts = false;
         throwEquation = new Equation(new EKey(method, Throw, stable), Value.Top);
       }
@@ -495,7 +561,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                                 richControlFlow.controlFlow.errorTransitions.isEmpty();
       }
 
-      boolean withCycle = !richControlFlow.dfsTree.back.isEmpty();
+      boolean withCycle = !richControlFlow.dfsTree.isBackEmpty();
       if (argumentTypes.length > 50 && withCycle) {
         // IDEA-137443 - do not analyze very complex methods
         return;
@@ -578,6 +644,12 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                                            boolean stable,
                                            List<? super Equation> result) throws AnalyzerException {
       Set<Member> fieldsToTrack = method.methodName.equals("<clinit>") ? myStaticFinalFields : Collections.emptySet();
+      if (argumentTypes.length == 0 && !Type.VOID_TYPE.equals(returnType)) {
+        ContainerUtil.addIfNotNull(result, getterEquation(method, graph, stable));
+      }
+      if (argumentTypes.length == 1 && Type.VOID_TYPE.equals(returnType)) {
+        ContainerUtil.addIfNotNull(result, setterEquation(method, graph, stable));
+      }
       CombinedAnalysis analyzer = new CombinedAnalysis(method, graph, fieldsToTrack);
       analyzer.analyze();
       ContainerUtil.addIfNotNull(result, analyzer.outContractEquation(stable));
@@ -602,6 +674,64 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
           }
         }
       }
+    }
+
+    private @Nullable Equation setterEquation(@NotNull Member method, @NotNull ControlFlowGraph controlFlow, boolean stable) {
+      MethodNode node = controlFlow.methodNode;
+      boolean isStatic = (node.access & Opcodes.ACC_STATIC) != 0;
+      InsnList instructions = node.instructions;
+      int size = instructions.size();
+      int shift = isStatic ? 0 : 1;
+      if (size != 3 + shift) return null;
+      if (instructions.get(2 + shift).getOpcode() != Opcodes.RETURN) return null;
+      // isStatic -> xLOAD_0 + PUTSTATIC + RETURN
+      // !isStatic -> ALOAD_0 + xLOAD_1 + PUTFIELD + RETURN
+      if (!isStatic) {
+        if (!(instructions.get(0) instanceof VarInsnNode varAccess) ||
+            varAccess.getOpcode() != Opcodes.ALOAD ||
+            varAccess.var != 0) {
+          return null;
+        }
+      }
+      if (!(instructions.get(shift) instanceof VarInsnNode argLoad)) return null;
+      if (argLoad.var != shift) return null;
+      int loadOpcode = argLoad.getOpcode();
+      if (loadOpcode < Opcodes.ILOAD || loadOpcode > Opcodes.ALOAD) return null;
+
+      if (!(instructions.get(1 + shift) instanceof FieldInsnNode fieldAccess) ||
+          fieldAccess.getOpcode() != (isStatic ? Opcodes.PUTSTATIC : Opcodes.PUTFIELD) ||
+          !fieldAccess.owner.equals(className)) {
+        return null;
+      }
+      String name = fieldAccess.name;
+      return new Equation(new EKey(method, new In(0, true), stable), new FieldAccess(name));
+    }
+    
+    private @Nullable Equation getterEquation(@NotNull Member method, @NotNull ControlFlowGraph controlFlow, boolean stable) {
+      MethodNode node = controlFlow.methodNode;
+      boolean isStatic = (node.access & Opcodes.ACC_STATIC) != 0;
+      InsnList instructions = node.instructions;
+      int size = instructions.size();
+      int shift = isStatic ? 0 : 1;
+      if (size != 2 + shift) return null;
+      int returnOpcode = instructions.get(1 + shift).getOpcode();
+      if (returnOpcode < Opcodes.IRETURN || returnOpcode > Opcodes.ARETURN) return null;
+      // isStatic -> GETSTATIC + xRETURN
+      // !isStatic -> ALOAD_0 + GETFIELD + xRETURN
+      if (!isStatic) {
+        if (!(instructions.get(0) instanceof VarInsnNode varAccess) ||
+            varAccess.getOpcode() != Opcodes.ALOAD ||
+            varAccess.var != 0) {
+          return null;
+        }
+      }
+      if (!(instructions.get(shift) instanceof FieldInsnNode fieldAccess) ||
+          fieldAccess.getOpcode() != (isStatic ? Opcodes.GETSTATIC : Opcodes.GETFIELD) ||
+          !fieldAccess.owner.equals(className)) {
+        return null;
+      }
+      String name = fieldAccess.name;
+      return new Equation(new EKey(method, Out, stable), new FieldAccess(name));
     }
 
     private void storeStaticFieldEquations(CombinedAnalysis analyzer) {
@@ -635,8 +765,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
       return result;
     }
 
-    @NotNull
-    private static LeakingParameters leakingParametersAndFrames(Member method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
+    private static @NotNull LeakingParameters leakingParametersAndFrames(Member method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
       throws AnalyzerException {
       return argumentTypes.length < 32 ?
               LeakingParameters.buildFast(method.internalClassName, methodNode, jsr) :

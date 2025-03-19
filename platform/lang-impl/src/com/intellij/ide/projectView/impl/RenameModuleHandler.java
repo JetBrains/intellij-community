@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -40,7 +40,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
@@ -56,7 +56,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
     return RefactoringBundle.message("rename.module.title");
   }
 
-  private static class MyInputValidator implements InputValidator {
+  private static final class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Module myModule;
     MyInputValidator(Project project, Module module) {
@@ -66,7 +66,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
 
     @Override
     public boolean checkInput(String inputString) {
-      return inputString != null && inputString.length() > 0;
+      return inputString != null && !inputString.isEmpty();
     }
 
     @Override
@@ -78,8 +78,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       return true;
     }
 
-    @Nullable
-    private ModifiableModuleModel renameModule(String inputString) {
+    private @Nullable ModifiableModuleModel renameModule(String inputString) {
       final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
       try {
         modifiableModel.renameModule(myModule, inputString);

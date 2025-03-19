@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -9,8 +8,12 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.IntentionSource;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -27,14 +30,17 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
 
-public class FileLevelIntentionComponent extends EditorNotificationPanel {
+public final class FileLevelIntentionComponent extends EditorNotificationPanel {
   public FileLevelIntentionComponent(@NlsContexts.Label String description,
                                      @NotNull HighlightSeverity severity,
                                      @Nullable GutterMark gutterMark,
@@ -46,18 +52,52 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
     if (intentions != null) {
+      var isActionAvailable = new HashMap<HighlightInfo.IntentionActionDescriptor, Boolean>();
+      Runnable showIntentions = () -> {
+        for (var intention : intentions) {
+          HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
+          if (!isActionAvailable.get(descriptor)) continue;
+          info.intentionsToShow.add(descriptor);
+          IntentionAction action = descriptor.getAction();
+          if (action instanceof EmptyIntentionAction) {
+            continue;
+          }
+          String text = action.getText();
+          createActionLabel(text, new ActionHandler() {
+            @Override
+            public void handlePanelActionClick(@NotNull EditorNotificationPanel panel, @NotNull HyperlinkEvent event) {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text, IntentionSource.FILE_LEVEL_ACTIONS);
+            }
+
+            @Override
+            public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text, IntentionSource.FILE_LEVEL_ACTIONS);
+            }
+
+            @Override
+            public @NotNull IntentionPreviewInfo generatePreview(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+              return action.generatePreview(project, editor, psiFile);
+            }
+          }, true);
+        }
+      };
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
-        info.intentionsToShow.add(descriptor);
         IntentionAction action = descriptor.getAction();
-        if (action instanceof EmptyIntentionAction) {
-          continue;
-        }
-        String text = action.getText();
-        createActionLabel(text, () -> {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-        });
+        // Compute action availability, but only show all of them once everything's computed,
+        // to preserve the order of intentions (because read actions finish in an unpredictable order).
+        ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
+          .expireWith(project)
+          .inSmartMode(project)
+          .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
+            isActionAvailable.put(descriptor, isAvailable);
+            if (isActionAvailable.size() == intentions.size()) {
+              showIntentions.run();
+            }
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
 
@@ -68,7 +108,6 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     if (intentions != null && !intentions.isEmpty()) {
-
       IntentionAction intentionAction = intentions.get(0).getFirst().getAction();
       if (!(intentionAction instanceof UserDataHolder) ||
           !Boolean.FALSE.equals(((UserDataHolder)intentionAction).getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
@@ -83,7 +122,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
             PsiFile psiFile = filePointer.getElement();
             if (psiFile == null) return true;
             CachedIntentions cachedIntentions = new CachedIntentions(project, psiFile, editor);
-            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions);
+            IntentionListStep step = new IntentionListStep(null, editor, psiFile, project, cachedIntentions, IntentionSource.FILE_LEVEL_ACTIONS);
             HighlightInfo.IntentionActionDescriptor descriptor = intentions.get(0).getFirst();
             IntentionActionWithTextCaching actionWithTextCaching = cachedIntentions.wrapAction(descriptor, psiFile, psiFile, editor);
             if (step.hasSubstep(actionWithTextCaching)) {

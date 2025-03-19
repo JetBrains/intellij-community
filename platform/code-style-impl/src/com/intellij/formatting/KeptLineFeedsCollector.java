@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,13 +8,15 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class KeptLineFeedsCollector {
+@ApiStatus.Internal
+public final class KeptLineFeedsCollector {
 
   private static final ThreadLocal<KeptLineFeedsCollector> THREAD_LOCAL = new ThreadLocal<>();
   private final PsiFile myPsiFile;

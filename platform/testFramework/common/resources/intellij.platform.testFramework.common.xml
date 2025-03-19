@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.testFramework.core" />
+  </dependencies>
+</idea-plugin>

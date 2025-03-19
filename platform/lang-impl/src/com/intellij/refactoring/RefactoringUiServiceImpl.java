@@ -8,10 +8,8 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiCompiledFile;
@@ -26,6 +24,7 @@ import com.intellij.refactoring.rename.RenameRefactoringDialog;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +34,7 @@ import java.util.Collection;
 
 import static com.intellij.openapi.util.NlsContexts.*;
 
+@ApiStatus.Internal
 public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public RenameRefactoringDialog createRenameRefactoringDialog(Project project,
@@ -54,11 +54,6 @@ public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public void setStatusBarInfo(@NotNull Project project, @NotNull @StatusBarText String message) {
     StatusBarUtil.setStatusBarInfo(project, message);
-  }
-
-  @Override
-  public void displayPreview(Project project, ModelPatch patch) throws ProcessCanceledException {
-    new BaseRefactoringProcessorUi().displayPreview(project, patch);
   }
 
   @Override

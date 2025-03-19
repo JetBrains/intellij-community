@@ -1,7 +1,9 @@
 from collections import defaultdict
-from typing import Any
+from typing import TypeVar
 
-class BoundDictionary(defaultdict[Any, Any]):
-    reference: Any
-    def __init__(self, reference: Any | None = ..., *args, **kw) -> None: ...
-    def __getitem__(self, key): ...
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
+
+class BoundDictionary(defaultdict[_KT, _VT]):
+    reference: str | None
+    def __init__(self, reference: str | None = None, *args, **kw) -> None: ...

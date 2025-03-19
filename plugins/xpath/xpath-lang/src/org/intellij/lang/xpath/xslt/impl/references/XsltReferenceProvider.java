@@ -150,7 +150,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       return psiReferences;
     }
 
-    private PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
+    private static PsiReference[] createReferencesWithPrefix(XmlAttribute attribute, PsiReference reference) {
       if (attribute.getValue().contains(":")) {
         return new PsiReference[]{ new PrefixReference(attribute), reference };
       } else {

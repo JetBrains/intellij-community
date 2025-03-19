@@ -137,7 +137,7 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     assertNotNull(moduleRoot2);
     PsiTestUtil.addSourceRoot(getModule(), moduleRoot2);
 
-    GlobalSearchScope modScope = getModule().getModuleContentScope();
+    GlobalSearchScope modScope = getModule().getModuleScope();
     int compare = modScope.compare(moduleRoot, moduleRoot2);
     assertTrue(compare != 0);
     GlobalSearchScope union = modScope.uniteWith(GlobalSearchScope.EMPTY_SCOPE);

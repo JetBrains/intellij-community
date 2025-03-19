@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -12,8 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,6 +101,11 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
+  public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isDisposed() {
     return false;
   }
@@ -120,11 +123,6 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   @Override
   public boolean isInitialized() {
     return false;
-  }
-
-  @Override
-  public CoroutineScope getCoroutineScope() {
-    return GlobalScope.INSTANCE;
   }
 
   @Override

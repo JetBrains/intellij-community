@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -16,8 +16,7 @@ import java.util.Comparator;
 
 /*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
 
-  @NotNull
-  private final Direction myDirection;
+  private final @NotNull Direction myDirection;
 
   /**
    * @param direction defines direction for next usage searching.
@@ -26,9 +25,8 @@ import java.util.Comparator;
     myDirection = direction;
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return this;
   }
 

@@ -1,8 +1,8 @@
-<idea-plugin package="com.intellij.completion.ml">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.completion.ml">
   <id>com.intellij.completion.ml.ranking</id>
   <name>Machine Learning Code Completion</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>Local AI/ML Tools</category>
 
   <description><![CDATA[
       <p>The plugin improves code completion feature by reordering of elements in the completion
@@ -13,8 +13,13 @@
       Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
     ]]></description>
 
+  <xi:include href="/META-INF/ml-ranking-ultimate.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
 
   <extensionPoints>
@@ -41,6 +46,7 @@
     <extensionPoint qualifiedName="com.intellij.completion.ml.featuresOverride" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.features.RankingFeaturesOverrides"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.completion.ml.experimentFetcher" interface="com.intellij.completion.ml.experiments.MLRankingExperimentFetcher" dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -59,20 +65,16 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
 
-    <codeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
+    <mlCodeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
 
     <applicationService serviceImplementation="com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage"/>
 
     <applicationService serviceInterface="com.intellij.completion.ml.personalization.UserFactorsManager"
                         serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage"/>
+    <applicationService serviceInterface="com.intellij.completion.ml.experiments.ExperimentStatus"
+                        serviceImplementation="com.intellij.completion.ml.experiments.ExperimentStatusV2"/>
 
-    <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"
-                        preload="true"/>
-
-    <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
     <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.features.MLCompletionWeigher" order="last"/>
@@ -91,23 +93,24 @@
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1"
+    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1" restartRequired="true"
                  description="Set experiment bucket number. If value is negative, will be skipped."/>
 
     <registryKey key="completion.ml.path.to.zip.model" defaultValue="no path"
                  description="Path to load ml completion model from zip"/>
 
+    <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.VcsContextFeatureProvider"/>
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonElementLocationFeatures"/>
 
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.ngram.NGramFeatureProvider"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
-    <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.VcsFeatureProvider"/>
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.templates.LiveTemplateUsageFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
     <statistics.collectorExtension implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor$MLRankingCompletionCollectorExtension"/>
-
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>

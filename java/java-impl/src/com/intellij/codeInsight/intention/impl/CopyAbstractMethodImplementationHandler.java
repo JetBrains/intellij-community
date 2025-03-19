@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -77,7 +77,7 @@ public class CopyAbstractMethodImplementationHandler {
   private void searchExistingImplementations() {
     mySourceClass = myMethod.getContainingClass();
     if (!mySourceClass.isValid()) return;
-    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass)) {
+    for (PsiClass inheritor : ClassInheritorsSearch.search(mySourceClass).asIterable()) {
       if (!inheritor.isInterface()) {
         PsiMethod method = ImplementAbstractMethodAction.findExistingImplementation(inheritor, myMethod);
         if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {

@@ -1,0 +1,7 @@
+# Aliases for Python 3 compatibility, not part of the API
+unidiff.patch.PY2
+unidiff.patch.basestring
+unidiff.patch.implements_to_string
+unidiff.patch.make_str
+unidiff.patch.open_file
+unidiff.patch.unicode

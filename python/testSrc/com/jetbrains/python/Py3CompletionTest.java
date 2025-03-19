@@ -235,30 +235,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    final String testName = getTestName(true);
-
-    runWithAdditionalClassEntryInSdkRoots(
-      testName + "/lib",
-      () -> {
-        myFixture.configureByFile(testName + "/a.py");
-        myFixture.completeBasic();
-        myFixture.checkResultByFile(testName + "/a.after.py");
-      }
-    );
+    doMultiFileTest();
   }
 
   // PY-21060
@@ -329,6 +311,11 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27398
   public void testDataclassWithInitVarPostInit() {
+    doMultiFileTest();
+  }
+
+  // PY-78008
+  public void testDataclassWithInheritedInitVarPostInit() {
     doMultiFileTest();
   }
 
@@ -414,14 +401,19 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-27148
   public void testNamedTupleSpecial() {
-    final List<String> suggested = doTestByText("""
-                                                  from collections import namedtuple
-                                                  class Cat1(namedtuple("Cat", "name age")):
-                                                      pass
-                                                  c1 = Cat1("name", 5)
-                                                  c1.<caret>""");
-    assertNotNull(suggested);
-    assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final List<String> suggested = doTestByText("""
+                                                      from collections import namedtuple
+                                                      class Cat1(namedtuple("Cat", "name age")):
+                                                          pass
+                                                      c1 = Cat1("name", 5)
+                                                      c1.<caret>""");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
+      }
+    );
   }
 
   // PY-33254, PY-12339, PY-40834
@@ -681,6 +673,100 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-53104
   public void testOnSelfInsideClassFunctionNestedFunction() {
     doTestVariants("x", "foo");
+  }
+
+  // PY-55044
+  public void testTypedDictKwargsParameter() {
+    List<String> suggested = doTestByText("""
+      from typing import TypedDict, Unpack
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(**x: Unpack[Movie]):
+          x['<caret>']""");
+    assertSameElements(suggested, "name", "year");
+  }
+
+  // PY-55044
+  public void testTypedDictKwargsArgument() {
+    List<String> suggested = doTestByText("""
+      from typing import TypedDict, Unpack
+      class Movie(TypedDict):
+          name: str
+          year: int
+      def foo(**x: Unpack[Movie]):
+          pass
+      foo(<caret>)""");
+    assertContainsElements(suggested, "name=", "year=");
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterImportedParameterizedTypesFromTypingInsideTypeHints() {
+    doMultiFileTest();
+  }
+  
+  // PY-73246
+  public void testSquareBracketsInsertedAfterImportedGenericClassesInsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsNotInsertedAfterImportedGenericClassesOutsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideTypeComments() {
+    doMultiFileTest();
+  }
+  
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideOldStyleTypeAliases() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsInsertedAfterBuiltinGenericTypesInsideNewStyleTypeAliases() {
+    doMultiFileTest();
+  }
+
+  // PY-73246
+  public void testSquareBracketsNotInsertedAfterAlreadyParameterizedGenericInsideTypeHints() {
+    doMultiFileTest();
+  }
+
+  // PY-74116
+  public void testParenthesesAreNotInsertedAfterNamesDefinedAsFunctionsInTypingPy() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
+          ...
+      """, ignored -> {
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def Final(self, parameters):
+          ...
+      """, ignored -> {
+      doTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      Tuple = _TupleType(tuple, -1, inst=False, name='Tuple')
+      """, ignored -> {
+      doTest();
+    });
   }
 
   private void doTestVariants(String @NotNull ... expected) {

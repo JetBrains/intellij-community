@@ -9,7 +9,7 @@ The first sentence must be in a dedicated paragraph separated from the rest of t
 Make sure the description doesn’t just repeat the inspection title.
 </p>  
 <p>
-See https://jetbrains.design/intellij/text/inspections/#descriptions for more information.
+See https://plugins.jetbrains.com/docs/intellij/inspections.html#descriptions for more information.
 </p>
 <p>
 Embed code snippets:

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -21,8 +22,9 @@ import java.beans.PropertyChangeListener;
 
 import static com.intellij.openapi.util.registry.Registry.is;
 
-public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
-  protected TreeExpandableItemsHandler(final JTree tree) {
+@ApiStatus.Internal
+public final class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<Integer, JTree> {
+  TreeExpandableItemsHandler(final JTree tree) {
     super(tree);
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       @Override

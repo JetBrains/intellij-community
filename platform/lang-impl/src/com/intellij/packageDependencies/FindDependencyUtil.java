@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies;
 
@@ -17,7 +17,7 @@ import java.util.*;
 public final class FindDependencyUtil {
   private FindDependencyUtil() {}
 
-  public static UsageInfo[] findDependencies(@Nullable final List<? extends DependenciesBuilder> builders, Set<? extends PsiFile> searchIn, Set<? extends PsiFile> searchFor) {
+  public static UsageInfo[] findDependencies(final @Nullable List<? extends DependenciesBuilder> builders, Set<? extends PsiFile> searchIn, Set<? extends PsiFile> searchFor) {
     final List<UsageInfo> usages = new ArrayList<>();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     int totalCount = searchIn.size();

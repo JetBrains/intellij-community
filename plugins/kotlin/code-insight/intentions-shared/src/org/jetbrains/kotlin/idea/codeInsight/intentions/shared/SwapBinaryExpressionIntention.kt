@@ -16,21 +16,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>(
+internal class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
     KotlinBundle.lazyMessage("flip.binary.expression")
 ), LowPriorityAction {
-    companion object {
-        private val SUPPORTED_OPERATIONS: Set<KtSingleValueToken> by lazy {
-            setOf(PLUS, MUL, OROR, ANDAND, EQEQ, EXCLEQ, EQEQEQ, EXCLEQEQEQ, GT, LT, GTEQ, LTEQ)
-        }
-
-        private val SUPPORTED_OPERATION_NAMES: Set<String> by lazy {
-            SUPPORTED_OPERATIONS.asSequence().mapNotNull { OperatorConventions.BINARY_OPERATION_NAMES[it]?.asString() }.toSet() +
-                    setOf("xor", "or", "and", "equals")
-        }
-    }
-
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
         val opRef = element.operationReference
         if (!opRef.textRange.containsOffset(caretOffset)) return false
@@ -89,4 +78,13 @@ class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>
 
         return expression
     }
+}
+
+private val SUPPORTED_OPERATIONS: Set<KtSingleValueToken> by lazy {
+    setOf(PLUS, MUL, OROR, ANDAND, EQEQ, EXCLEQ, EQEQEQ, EXCLEQEQEQ, GT, LT, GTEQ, LTEQ)
+}
+
+private val SUPPORTED_OPERATION_NAMES: Set<String> by lazy {
+    SUPPORTED_OPERATIONS.asSequence().mapNotNull { OperatorConventions.BINARY_OPERATION_NAMES[it]?.asString() }.toSet() +
+            setOf("xor", "or", "and", "equals")
 }

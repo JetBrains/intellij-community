@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -45,8 +45,8 @@ public class IdeaNativeAgentProxyMirror {
   private static final String CAN_GET_RETAINED_SIZE_BY_CLASSES = "canGetRetainedSizeByClasses";
   private static final String CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS = "canFindPathsToClosestGcRoots";
   private static final String ESTIMATE_OBJECT_SIZE = "size";
-
-  private static final String ESTIMATE_OBJECTS_SIZES = "estimateRetainedSize";
+  private static final String GET_SHALLOW_AND_RETAINED_SIZE_BY_OBJECTS = "getShallowAndRetainedSizesByObjects";
+  private static final String ESTIMATE_OBJECTS_SIZES_BY_CLASS = "getSortedShallowAndRetainedSizesByClass";
   private static final String FIND_PATHS_TO_CLOSEST_GC_ROOTS = "findPathsToClosestGcRoots";
   private static final String GET_SHALLOW_SIZE_BY_CLASSES = "getShallowSizeByClasses";
   private static final String GET_RETAINED_SIZE_BY_CLASSES = "getRetainedSizeByClasses";
@@ -70,10 +70,9 @@ public class IdeaNativeAgentProxyMirror {
     return myProgressFileName;
   }
 
-  @NotNull
-  public MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                     @NotNull ObjectReference reference,
-                                                                                     long timeoutInMillis) throws EvaluateException {
+  public @NotNull MemoryAgentActionResult<Pair<long[], ObjectReference[]>> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                              @NotNull ObjectReference reference,
+                                                                                              long timeoutInMillis) throws EvaluateException {
     Value result = callMethod(
       evaluationContext,
       ESTIMATE_OBJECT_SIZE,
@@ -96,27 +95,51 @@ public class IdeaNativeAgentProxyMirror {
     return new MemoryAgentActionResult<>(sizesAndObjects, errCode);
   }
 
-  @NotNull
-  public MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
-                                                              @NotNull List<ObjectReference> references,
-                                                              long timeoutInMillis) throws EvaluateException {
+  public @NotNull MemoryAgentActionResult<MemoryAgent.ObjectsAndSizes> getShallowAndRetainedSizeByClass(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                                        @NotNull ReferenceType classType,
+                                                                                                        long objectsLimit,
+                                                                                                        long timeoutInMillis) throws EvaluateException {
+    LongValue objectsLimitValue = evaluationContext.getVirtualMachineProxy().mirrorOf(objectsLimit);
+    Value result = callMethod(
+      evaluationContext,
+      ESTIMATE_OBJECTS_SIZES_BY_CLASS,
+      timeoutInMillis,
+      classType.classObject(),
+      objectsLimitValue
+    );
+    Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    MemoryAgentActionResult.ErrorCode errCode = errCodeAndResult.getFirst();
+    MemoryAgent.ObjectsAndSizes objectsAndSizes;
+    if (errCode != MemoryAgentActionResult.ErrorCode.OK) {
+      objectsAndSizes = new MemoryAgent.ObjectsAndSizes(new ObjectReference[0], new long[0], new long[0]);
+    } else {
+      objectsAndSizes = SizesAndObjectsOfClassParser.INSTANCE.parse(errCodeAndResult.getSecond());
+    }
+
+    return new MemoryAgentActionResult<>(objectsAndSizes, errCode);
+  }
+
+  public @NotNull MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                                    @NotNull List<ObjectReference> references,
+                                                                                                    long timeoutInMillis) throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, references);
     Value result = callMethod(
       evaluationContext,
-      ESTIMATE_OBJECTS_SIZES,
+      GET_SHALLOW_AND_RETAINED_SIZE_BY_OBJECTS,
       timeoutInMillis, array
     );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
-    return new MemoryAgentActionResult<>(
-      LongArrayParser.INSTANCE.parse(errCodeAndResult.getSecond()).stream().mapToLong(Long::longValue).toArray(),
-      errCodeAndResult.getFirst()
-    );
+    if (errCodeAndResult.getFirst() != MemoryAgentActionResult.ErrorCode.OK) {
+      return new MemoryAgentActionResult<>(new Pair<>(new long[0], new long[0]), errCodeAndResult.getFirst());
+    }
+    else {
+      return getShallowAndRetainedSizesResult(errCodeAndResult);
+    }
   }
 
-  @NotNull
-  public MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                 @NotNull List<ReferenceType> classes,
-                                                                 long timeoutInMillis) throws EvaluateException {
+  public @NotNull MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                          @NotNull List<ReferenceType> classes,
+                                                                          long timeoutInMillis) throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
     Value result = callMethod(
       evaluationContext,
@@ -130,10 +153,9 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @NotNull
-  public MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                  @NotNull List<ReferenceType> classes,
-                                                                  long timeoutInMillis) throws EvaluateException {
+  public @NotNull MemoryAgentActionResult<long[]> getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                           @NotNull List<ReferenceType> classes,
+                                                                           long timeoutInMillis) throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
     Value result = callMethod(
       evaluationContext,
@@ -147,10 +169,9 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @NotNull
-  public MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                          @NotNull List<ReferenceType> classes,
-                                                                                          long timeoutInMillis) throws EvaluateException {
+  public @NotNull MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                                   @NotNull List<ReferenceType> classes,
+                                                                                                   long timeoutInMillis) throws EvaluateException {
     ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
     Value result = callMethod(
       evaluationContext,
@@ -158,6 +179,10 @@ public class IdeaNativeAgentProxyMirror {
       timeoutInMillis, array
     );
     Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult = ErrorCodeParser.INSTANCE.parse(result);
+    return getShallowAndRetainedSizesResult(errCodeAndResult);
+  }
+
+  private static @NotNull MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesResult(Pair<MemoryAgentActionResult.ErrorCode, Value> errCodeAndResult) {
     Pair<List<Long>, List<Long>> shallowAndRetainedSizes = ShallowAndRetainedSizeParser.INSTANCE.parse(errCodeAndResult.getSecond());
     return new MemoryAgentActionResult<>(
       new Pair<>(
@@ -168,13 +193,12 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @NotNull
-  public MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
-                                                                                 @NotNull ObjectReference reference,
-                                                                                 int pathsNumber, int objectsNumber,
-                                                                                 long timeoutInMillis) throws EvaluateException {
-    IntegerValue pathsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(pathsNumber);
-    IntegerValue objectsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsNumber);
+  public @NotNull MemoryAgentActionResult<ReferringObjectsInfo> findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                          @NotNull ObjectReference reference,
+                                                                                          int pathsNumber, int objectsNumber,
+                                                                                          long timeoutInMillis) throws EvaluateException {
+    IntegerValue pathsNumberValue = evaluationContext.getVirtualMachineProxy().mirrorOf(pathsNumber);
+    IntegerValue objectsNumberValue = evaluationContext.getVirtualMachineProxy().mirrorOf(objectsNumber);
     Value result = callMethod(
       evaluationContext,
       FIND_PATHS_TO_CLOSEST_GC_ROOTS,
@@ -217,8 +241,7 @@ public class IdeaNativeAgentProxyMirror {
     }
   }
 
-  @Nullable
-  public MemoryAgentProgressPoint checkProgress() {
+  public @Nullable MemoryAgentProgressPoint checkProgress() {
     if (!FileUtil.exists(myProgressFileName)) {
       return null;
     }
@@ -236,8 +259,7 @@ public class IdeaNativeAgentProxyMirror {
     }
   }
 
-  @NotNull
-  private ClassType getProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+  private @NotNull ClassType getProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     if (myProxyType == null) {
       boolean valueBefore = evaluationContext.isAutoLoadClasses();
       try {
@@ -250,19 +272,18 @@ public class IdeaNativeAgentProxyMirror {
     return myProxyType;
   }
 
-  @NotNull
-  private static ObjectReference getProxyInstance(@NotNull EvaluationContextImpl evaluationContext,
-                                                  @NotNull ClassType proxyType,
-                                                  @NotNull ObjectReference cancellationFileName,
-                                                  @NotNull ObjectReference progressFileName,
-                                                  @NotNull LongValue timeoutInMillis) throws EvaluateException {
+  private static @NotNull ObjectReference getProxyInstance(@NotNull EvaluationContextImpl evaluationContext,
+                                                           @NotNull ClassType proxyType,
+                                                           @NotNull ObjectReference cancellationFileName,
+                                                           @NotNull ObjectReference progressFileName,
+                                                           @NotNull LongValue timeoutInMillis) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     Method constructor = DebuggerUtils.findMethod(proxyType, JVMNameUtil.CONSTRUCTOR_NAME, PROXY_CONSTRUCTOR_SIGNATURE);
     if (constructor == null) {
       throw EvaluateExceptionUtil.createEvaluateException("No appropriate constructor found for proxy class");
     }
     return debugProcess.newInstance(
-      evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis)
+      evaluationContext, proxyType, constructor, Arrays.asList(cancellationFileName, progressFileName, timeoutInMillis), 0, true
     );
   }
 
@@ -295,22 +316,19 @@ public class IdeaNativeAgentProxyMirror {
     return false;
   }
 
-  @NotNull
-  private static LongValue getLongValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
-    return evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(timeoutInMillis);
+  private static @NotNull LongValue getLongValue(@NotNull EvaluationContextImpl evaluationContext, long timeoutInMillis) {
+    return evaluationContext.getVirtualMachineProxy().mirrorOf(timeoutInMillis);
   }
 
-  @NotNull
-  private static StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string)
+  private static @NotNull StringReference getStringReference(@NotNull EvaluationContextImpl evaluationContext, @NotNull String string)
     throws EvaluateException {
-    return DebuggerUtilsEx.mirrorOfString(string, evaluationContext.getDebugProcess().getVirtualMachineProxy(), evaluationContext);
+    return DebuggerUtilsEx.mirrorOfString(string, evaluationContext);
   }
 
-  @NotNull
-  private static Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
-                                  @NotNull ClassType proxyType,
-                                  @NotNull String methodName,
-                                  @NotNull List<? extends Value> args) throws EvaluateException {
+  private static @NotNull Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                           @NotNull ClassType proxyType,
+                                           @NotNull String methodName,
+                                           @NotNull List<? extends Value> args) throws EvaluateException {
     return callMethod(
       evaluationContext,
       proxyType,
@@ -322,11 +340,10 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @NotNull
-  public Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
-                          @NotNull String methodName,
-                          long timeoutInMillis,
-                          Value... args) throws EvaluateException {
+  public @NotNull Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                   @NotNull String methodName,
+                                   long timeoutInMillis,
+                                   Value... args) throws EvaluateException {
     ClassType proxyType = getProxyType(evaluationContext);
     return callMethod(
       evaluationContext,
@@ -339,14 +356,13 @@ public class IdeaNativeAgentProxyMirror {
     );
   }
 
-  @NotNull
-  private static Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
-                                  @NotNull ClassType proxyType,
-                                  @NotNull String methodName,
-                                  @NotNull ObjectReference cancellationFileName,
-                                  @NotNull ObjectReference progressFileName,
-                                  @NotNull LongValue timeoutInMillis,
-                                  @NotNull List<? extends Value> args) throws EvaluateException {
+  private static @NotNull Value callMethod(@NotNull EvaluationContextImpl evaluationContext,
+                                           @NotNull ClassType proxyType,
+                                           @NotNull String methodName,
+                                           @NotNull ObjectReference cancellationFileName,
+                                           @NotNull ObjectReference progressFileName,
+                                           @NotNull LongValue timeoutInMillis,
+                                           @NotNull List<? extends Value> args) throws EvaluateException {
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
     long start = System.currentTimeMillis();
@@ -366,7 +382,7 @@ public class IdeaNativeAgentProxyMirror {
           evaluationContext, proxyType, cancellationFileName, progressFileName, timeoutInMillis
         );
         return debugProcess.invokeInstanceMethod(
-          evaluationContext, proxyInstance, method, args, ObjectReference.INVOKE_SINGLE_THREADED
+          evaluationContext, proxyInstance, method, args, ObjectReference.INVOKE_SINGLE_THREADED, true
         );
       });
 
@@ -378,8 +394,7 @@ public class IdeaNativeAgentProxyMirror {
     return new ProxyExtractor().extractProxy();
   }
 
-  @Nullable
-  private static ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+  private static @Nullable ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     byte[] bytes = readUtilityClass();
     evaluationContext.setAutoLoadClasses(true);
@@ -420,7 +435,7 @@ public class IdeaNativeAgentProxyMirror {
     ObjectReference agentPathMirror = getStringReference(evaluationContext, agentPath);
     ObjectReference propertyNameMirror = getStringReference(evaluationContext, "intellij.memory.agent.path");
     debugProcess.invokeMethod(
-      evaluationContext, systemClassType, setPropertyMethod, Arrays.asList(propertyNameMirror, agentPathMirror)
+      evaluationContext, systemClassType, setPropertyMethod, Arrays.asList(propertyNameMirror, agentPathMirror), true
     );
   }
 
@@ -429,8 +444,7 @@ public class IdeaNativeAgentProxyMirror {
   }
 
   // Evaluates System.getProperty(propertyName)
-  @Nullable
-  private static String getPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
+  private static @Nullable String getPropertyValue(@NotNull EvaluationContextImpl evaluationContext,
                                          @NotNull ClassType systemClassType,
                                          @NotNull String propertyName) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
@@ -440,25 +454,19 @@ public class IdeaNativeAgentProxyMirror {
     if (getPropertyMethod == null) return null;
 
     ObjectReference propertyNameMirror = getStringReference(evaluationContext, propertyName);
-    StringReference propertyValueRef = (StringReference)debugProcess.invokeMethod(
-      evaluationContext, systemClassType, getPropertyMethod, Collections.singletonList(propertyNameMirror)
+    StringReference propertyValueRef = (StringReference)evaluationContext.computeAndKeep(
+      () -> debugProcess.invokeMethod(evaluationContext, systemClassType, getPropertyMethod, Collections.singletonList(propertyNameMirror),
+                                      true)
     );
 
     return propertyValueRef == null ? null : propertyValueRef.value();
   }
 
-  @NotNull
-  private static ArrayReference wrapWithArray(@NotNull EvaluationContextImpl context, @NotNull List<ObjectReference> references)
+  private static @NotNull ArrayReference wrapWithArray(@NotNull EvaluationContextImpl context, @NotNull List<ObjectReference> references)
     throws EvaluateException {
     long start = System.currentTimeMillis();
     ArrayType longArray = (ArrayType)context.getDebugProcess().findClass(context, "java.lang.Object[]", context.getClassLoader());
-    ArrayReference instancesArray = longArray.newInstance(references.size());
-    try {
-      instancesArray.setValues(references);
-    }
-    catch (InvalidTypeException | ClassNotLoadedException e) {
-      throw EvaluateExceptionUtil.createEvaluateException("Could not wrap objects with array", e);
-    }
+    ArrayReference instancesArray = DebuggerUtilsEx.mirrorOfArray(longArray, references, context);
     LOG.info("Wrapping values with array took " + (System.currentTimeMillis() - start) + " ms");
     return instancesArray;
   }

@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingElement
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.util.actualsForExpected
@@ -35,7 +36,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class OutflowSlicer(
     element: KtElement,
     processor: Processor<in SliceUsage>,
-    parentUsage: KotlinSliceUsage
+    parentUsage: AbstractKotlinSliceUsage
 ) : Slicer(element, processor, parentUsage) {
 
     override fun processChildren(forcedExpressionMode: Boolean) {

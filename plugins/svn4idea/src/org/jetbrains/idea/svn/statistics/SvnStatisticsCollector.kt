@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.statistics
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -12,12 +12,10 @@ import org.jetbrains.idea.svn.SvnVcs
 import java.util.*
 
 private class SvnStatisticsCollector : ProjectUsagesCollector() {
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
-    if (!project.isTrusted()) return emptySet()
+    if (!TrustedProjects.isProjectTrusted(project)) return emptySet()
     val vcs = SvnVcs.getInstance(project)
     if (vcs == null) return Collections.emptySet()
     // do not track roots with errors (SvnFileUrlMapping.getErrorRoots()) as they are "not usable" until errors are resolved
@@ -30,9 +28,7 @@ private class SvnStatisticsCollector : ProjectUsagesCollector() {
       .toSet()
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("svn.configuration", 2)
-    private val WORKING_COPY = GROUP.registerEvent("working.copy",
-                                                   EventFields.StringValidatedByRegexp("format", "version"))
-  }
+  private val GROUP = EventLogGroup("svn.configuration", 2)
+  private val WORKING_COPY = GROUP.registerEvent("working.copy",
+                                                 EventFields.StringValidatedByRegexpReference("format", "version"))
 }

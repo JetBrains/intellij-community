@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.ide.util.PropertiesComponent;
@@ -34,7 +33,7 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * Two lines: title and content line; title and actions; content line and actions; contents on two lines.<br>
  * Three lines: title and content line and actions; contents on two lines and actions; contents on three lines or more; etc.</p>
  *
- * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} instead.</p>
+ * <p><b>Warning:</b> please avoid links in HTML content, use {@link #addAction(AnAction)} and {@link NotificationAction#createSimpleExpiring(String, Runnable)} instead.</p>
  * <p>Use {@link Notifications.Bus} to show notifications.</p>
  *
  * @see NotificationAction
@@ -43,11 +42,12 @@ import static com.intellij.openapi.util.NlsContexts.*;
  * @author Alexander Lobas
  */
 public class Notification {
-  /**
-   * Tells which actions to keep when actions do not fit horizontally into the width of the notification
-   * (i.e. do not put under the "Actions" dropdown).
-   */
-  public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
+  /** @deprecated use {@link #Notification(String, String, NotificationType)} and {@link #setIcon} */
+  @Deprecated(forRemoval = true)
+  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
+    this(groupId, "", type);
+    setIcon(icon);
+  }
 
   private static final Logger LOG = Logger.getInstance(Notification.class);
   public static final DataKey<Notification> KEY = DataKey.create("Notification");
@@ -71,8 +71,11 @@ public class Notification {
   private @Nullable Boolean myImportant;
   private boolean mySuggestionType;
   private boolean myImportantSuggestion;
+  private boolean myRemoveWhenExpired;
+  private boolean myAddExtraAction;
   private String myDoNotAskId;
   private @Nls String myDoNotAskDisplayName;
+  private boolean myIsShowingPopupSuppressed;
   private String myRemindLaterHandlerId;
   private @Nullable String myToolWindowId;
 
@@ -104,6 +107,7 @@ public class Notification {
     return mySuggestionType;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setSuggestionType(boolean suggestionType) {
     mySuggestionType = suggestionType;
     return this;
@@ -113,8 +117,29 @@ public class Notification {
     return myImportantSuggestion;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setImportantSuggestion(boolean importantSuggestion) {
     myImportantSuggestion = importantSuggestion;
+    return this;
+  }
+
+  public boolean isRemoveWhenExpired() {
+    return myRemoveWhenExpired;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setRemoveWhenExpired(boolean removeWhenExpired) {
+    myRemoveWhenExpired = removeWhenExpired;
+    return this;
+  }
+
+  public boolean isAddExtraAction() {
+    return myAddExtraAction;
+  }
+
+  @Contract(value = "_ -> this", mutates = "this")
+  public @NotNull Notification setAddExtraAction(boolean addExtraAction) {
+    myAddExtraAction = addExtraAction;
     return this;
   }
 
@@ -132,6 +157,7 @@ public class Notification {
     return myDisplayId;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setDisplayId(@NotNull String displayId) {
     myDisplayId = displayId;
     return this;
@@ -141,6 +167,7 @@ public class Notification {
     return myIcon;
   }
 
+  @Contract(value = "_ -> this", mutates = "this")
   public @NotNull Notification setIcon(@Nullable Icon icon) {
     myIcon = icon;
     return this;
@@ -150,20 +177,24 @@ public class Notification {
     return myGroupId;
   }
 
-  /**
-   * Unique ID for "Don’t show again" action for a specific notification. By default, used group ID and they title.
-   * Only for suggestion notifications.
-   *
-   * @param displayName tile for UI in Preferences | Appearance & Behavior | Notifications
-   */
-  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
-    myDoNotAskId = id;
-    myDoNotAskDisplayName = displayName;
+  /** @deprecated use {@link #Notification(String, String, String, NotificationType)} and {@link #setListener} */
+  @Deprecated(forRemoval = true)
+  public Notification(@NotNull String groupId,
+                      @NotNull @NotificationTitle String title,
+                      @NotNull @NotificationContent String content,
+                      @NotNull NotificationType type,
+                      @Nullable NotificationListener listener) {
+    this(groupId, title, content, type);
+    myListener = listener;
   }
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    if (myDoNotAskId == null) {
+    if (myDoNotAskId == null && myDisplayId != null) {
+      myDoNotAskDisplayName = myTitle;
+      myDoNotAskId = myDisplayId;
+    }
+    else if (myDoNotAskId == null) {
       @NlsSafe String title = NotificationGroup.getGroupTitle(myGroupId);
       if (title == null) {
         title = myGroupId;
@@ -182,12 +213,29 @@ public class Notification {
     return true;
   }
 
+  /** @deprecated use {@link #Notification(String, String, NotificationType)}, {@link #setIcon}, {@link #setSubtitle}, {@link #setListener} */
+  @Deprecated(forRemoval = true)
+  public Notification(@NotNull String groupId,
+                      @Nullable Icon icon,
+                      @Nullable @NotificationTitle String title,
+                      @Nullable @NotificationSubtitle String subtitle,
+                      @Nullable @NotificationContent String content,
+                      @NotNull NotificationType type,
+                      @Nullable NotificationListener listener) {
+    this(groupId, content != null ? content : "", type);
+    setIcon(icon);
+    setTitle(title, subtitle);
+    myListener = listener;
+  }
+
   @ApiStatus.Internal
-  public Notification setDoNotAskFor(@Nullable Project project) {
-    PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
-    manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
-    manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
-    return this;
+  public void setSuppressShowingPopup(boolean isShowingPopupSuppressed) {
+    myIsShowingPopupSuppressed = isShowingPopupSuppressed;
+  }
+
+  @ApiStatus.Internal
+  public boolean isShowingPopupSuppressed() {
+    return myIsShowingPopupSuppressed;
   }
 
   @ApiStatus.Internal
@@ -201,6 +249,7 @@ public class Notification {
    *
    * @see NotificationRemindLaterHandler
    */
+  @Contract(value = "_ -> this", mutates = "this")
   public Notification setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
     myRemindLaterHandlerId = remindLaterHandlerId;
     return this;
@@ -265,15 +314,16 @@ public class Notification {
     return Objects.requireNonNull(e.getData(KEY));
   }
 
-  public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
-    DataContext dataContext = context != null ? context :
-                              CustomizedDataContext.create(DataContext.EMPTY_CONTEXT, dataId -> KEY.is(dataId) ? notification : null);
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, dataContext);
-    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
-  }
-
-  public static void setDataProvider(@NotNull Notification notification, @NotNull JComponent component) {
-    DataManager.registerDataProvider(component, dataId -> KEY.is(dataId) ? notification : null);
+  /**
+   * Unique ID for "Don’t show again" action for a specific notification.
+   * By default, uses the group ID and the title.
+   * Only for suggestion notifications.
+   *
+   * @param displayName tile for UI in <em>Preferences | Appearance & Behavior | Notifications</em>
+   */
+  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
+    myDoNotAskId = id;
+    myDoNotAskDisplayName = displayName;
   }
 
   public @NotNull @LinkLabel String getDropDownText() {
@@ -412,44 +462,27 @@ public class Notification {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #Notification(String, String, NotificationType)} and {@link #setIcon} */
-  @Deprecated
-  public Notification(@NotNull String groupId, @Nullable Icon icon, @NotNull NotificationType type) {
-    this(groupId, "", type);
-    setIcon(icon);
+
+  @ApiStatus.Internal
+  @Contract("_ -> this")
+  public Notification setDoNotAskFor(@Nullable Project project) {
+    PropertiesComponent manager = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
+    manager.setValue("Notification.DoNotAsk-" + myDoNotAskId, true);
+    manager.setValue("Notification.DisplayName-DoNotAsk-" + myDoNotAskId, myDoNotAskDisplayName);
+    return this;
   }
 
-  /** @deprecated use {@link #Notification(String, String, String, NotificationType)} and {@link #setListener} */
-  @Deprecated
-  public Notification(@NotNull String groupId,
-                      @NotNull @NotificationTitle String title,
-                      @NotNull @NotificationContent String content,
-                      @NotNull NotificationType type,
-                      @Nullable NotificationListener listener) {
-    this(groupId, title, content, type);
-    myListener = listener;
+  public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
+    var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
+    var event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.NOTIFICATION, ActionUiKind.NONE, null);
+    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
   }
 
-  /** @deprecated use {@link #Notification(String, String, NotificationType)}, {@link #setIcon}, {@link #setSubtitle}, {@link #setListener} */
-  @Deprecated
-  public Notification(@NotNull String groupId,
-                      @Nullable Icon icon,
-                      @Nullable @NotificationTitle String title,
-                      @Nullable @NotificationSubtitle String subtitle,
-                      @Nullable @NotificationContent String content,
-                      @NotNull NotificationType type,
-                      @Nullable NotificationListener listener) {
-    this(groupId, content != null ? content : "", type);
-    setIcon(icon);
-    setTitle(title, subtitle);
-    myListener = listener;
-  }
-
-  /** @deprecated use {@link #addActions(Collection)} or {@link #addAction} */
-  @Deprecated(forRemoval = true)
-  public final void addActions(@NotNull List<? extends AnAction> actions) {
-    addActions((Collection<? extends AnAction>)actions);
-  }
+  /**
+   * Tells which actions to keep when actions do not fit horizontally into the width of the notification
+   * (i.e., do not put under the "Actions" dropdown).
+   */
+  public enum CollapseActionsDirection {KEEP_LEFTMOST, KEEP_RIGHTMOST}
 
   /** @deprecated use {@link #setCollapseDirection} */
   @Deprecated(forRemoval = true)

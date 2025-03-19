@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -15,10 +14,10 @@ import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -309,9 +308,7 @@ public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
   private File createTestFile(final String fileName) throws IOException {
     final File testFile = new File(myContentRoot.getPath(), fileName);
     testFile.createNewFile();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFileManager.getInstance().syncRefresh();
-    });
+    VfsTestUtil.syncRefresh();
     return testFile;
   }
 

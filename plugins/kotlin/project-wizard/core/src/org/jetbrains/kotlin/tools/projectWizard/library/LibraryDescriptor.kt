@@ -12,6 +12,7 @@ data class MavenArtifact(
     @NonNls val groupId: String,
     @NonNls val artifactId: String
 ) : LibraryArtifact() {
+
     constructor(
         repository: Repository,
         groupId: String,
@@ -26,7 +27,6 @@ data class MavenArtifact(
 data class NpmArtifact(
     @NonNls val name: String
 ) : LibraryArtifact()
-
 
 sealed class LibraryDescriptor {
     abstract val artifact: LibraryArtifact

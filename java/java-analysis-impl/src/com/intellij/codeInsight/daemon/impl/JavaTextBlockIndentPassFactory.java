@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -10,15 +10,14 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTextBlockIndentPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+public final class JavaTextBlockIndentPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
 
-  @Nullable
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    PsiJavaFile javaFile = ObjectUtils.tryCast(file, PsiJavaFile.class);
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    PsiJavaFile javaFile = ObjectUtils.tryCast(psiFile, PsiJavaFile.class);
     if (javaFile == null) return null;
     if (!StringContentIndentUtil.isDocumentUpdated(editor)) return null;
-    return new JavaTextBlockIndentPass(file.getProject(), editor, javaFile);
+    return new JavaTextBlockIndentPass(psiFile.getProject(), editor, javaFile);
   }
 
   @Override

@@ -136,6 +136,7 @@ public class AssignableFromFilter implements ElementFilter {
     return intersection instanceof PsiIntersectionType && ((PsiIntersectionType)intersection).getConflictingConjunctsMessage() != null;
   }
 
+  @Override
   public String toString() {
     return "assignable-from(" + (myType != null ? myType : myClassName) + ")";
   }

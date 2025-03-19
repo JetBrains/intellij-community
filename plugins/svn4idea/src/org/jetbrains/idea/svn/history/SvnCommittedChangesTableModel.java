@@ -18,7 +18,7 @@ public class SvnCommittedChangesTableModel extends CommittedChangesTableModel im
                                        ChangeListColumn @NotNull [] columns) throws VcsException {
     super(new ArrayList<>(), columns, false);
     myMediator = new SvnRevisionsNavigationMediator(location, project, vcsRoot);
-    setItems(myMediator.getCurrent());
+    setItems(new ArrayList<>(myMediator.getCurrent()));
   }
 
   @Override
@@ -34,13 +34,13 @@ public class SvnCommittedChangesTableModel extends CommittedChangesTableModel im
   @Override
   public void goBack() throws VcsException {
     myMediator.goBack();
-    setItems(myMediator.getCurrent());
+    setItems(new ArrayList<>(myMediator.getCurrent()));
   }
 
   @Override
   public void goForward() {
     myMediator.goForward();
-    setItems(myMediator.getCurrent());
+    setItems(new ArrayList<>(myMediator.getCurrent()));
   }
 
   @Override

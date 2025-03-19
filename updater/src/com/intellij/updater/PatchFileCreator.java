@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.File;
@@ -20,14 +20,15 @@ import static com.intellij.updater.Runner.LOG;
 public final class PatchFileCreator {
   private static final String PATCH_INFO_FILE_NAME = ".patch-info";
 
-  public static Patch create(PatchSpec spec, File patchFile, UpdaterUI ui) throws IOException {
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static Patch create(PatchSpec spec, File patchFile, Path cacheDir) throws IOException {
     LOG.info("Creating the patch file '" + patchFile + "'...");
-    ui.startProcess("Creating the patch file '" + patchFile + "'...");
+    System.out.println("Creating the patch file '" + patchFile + "'...");
 
-    Patch patchInfo = new Patch(spec, ui);
+    var patchInfo = new Patch(spec);
 
     LOG.info("Packing entries...");
-    ui.startProcess("Packing entries...");
+    System.out.println("Packing entries...");
 
     List<PatchAction> actions = patchInfo.getActions();
     File olderDir = new File(spec.getOldFolder());
@@ -40,10 +41,26 @@ public final class PatchFileCreator {
       if (action instanceof UpdateAction && !action.isCritical()) {
         int _i = i;
         tasks.put(action, executor.submit(() -> {
+          Path cached = null;
+          if (cacheDir != null) {
+            String cachedName = getCachedFileName((UpdateAction)action, newerDir);
+            if (cachedName != null) {
+              cached = cacheDir.resolve(cachedName);
+              if (Files.exists(cached) && Files.isRegularFile(cached)) {
+                LOG.info("Reusing diff for " + action.getPath() + " : " + cachedName);
+                return cached;
+              }
+            }
+          }
           Path temp = Utils.getTempFile("diff_" + _i).toPath();
           try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(temp))) {
             out.setLevel(0);
             action.buildPatchFile(olderDir, newerDir, out);
+          }
+          if (cached != null) {
+            Files.createDirectories(cached.getParent());
+            Files.copy(temp, cached);
+            LOG.info("Caching diff for " + action.getPath() + " : " + cached.getFileName());
           }
           return temp;
         }));
@@ -93,6 +110,24 @@ public final class PatchFileCreator {
     return patchInfo;
   }
 
+  private static String getCachedFileName(UpdateAction action, File newerDir) {
+    if (action.isMove()) return null;
+    if (!Digester.isFile(action.getChecksum())) return null;
+    // Single file diff is a zip file with single entry corresponding to target file name, so entry name should be part of caching key
+    // Also both source and target digests are part of key
+    try {
+      return "diff-v1-" +
+             action.getPath().replaceAll("[^A-Za-z0-9_\\-]","_") +
+             '-' +
+             Long.toHexString(action.getChecksum()) +
+             '-' +
+             Long.toHexString(Digester.digestRegularFile(action.getFile(newerDir)));
+    }
+    catch (IOException ignored) {
+      return null;
+    }
+  }
+
   public static PreparationResult prepareAndValidate(File patchFile,
                                                      File toDir,
                                                      UpdaterUI ui) throws IOException, OperationCancelledException {
@@ -104,7 +139,7 @@ public final class PatchFileCreator {
     }
 
     LOG.info(patch.getOldBuild() + " -> " + patch.getNewBuild());
-    ui.setDescription(patch.getOldBuild(), patch.getNewBuild());
+    ui.setDescription(UpdaterUI.message("updating.x.to.y", patch.getOldBuild(), patch.getNewBuild()));
 
     List<ValidationResult> validationResults = patch.validate(toDir, ui);
     return new PreparationResult(patch, patchFile, toDir, validationResults);
@@ -120,7 +155,7 @@ public final class PatchFileCreator {
   }
 
   public static void revert(PreparationResult preparationResult,
-                            List<? extends PatchAction> actionsToRevert,
+                            List<PatchAction> actionsToRevert,
                             File backupDir,
                             UpdaterUI ui) throws IOException {
     preparationResult.patch.revert(actionsToRevert, backupDir, preparationResult.toDir, ui);

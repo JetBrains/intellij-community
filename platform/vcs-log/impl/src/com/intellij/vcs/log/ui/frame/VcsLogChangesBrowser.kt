@@ -1,25 +1,33 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.frame
 
+import com.intellij.diff.impl.DiffEditorViewer
+import com.intellij.diff.tools.combined.CombinedDiffManager
+import com.intellij.diff.tools.combined.CombinedDiffRegistry
+import com.intellij.diff.tools.combined.DISABLE_LOADING_BLOCKS
+import com.intellij.diff.util.CombinedDiffToggle
+import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDataKeys
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
-import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.ScrollableContentBorder.Companion.setup
@@ -37,12 +45,13 @@ import com.intellij.vcs.log.history.FileHistoryUtil
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.MergedChange
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
-import com.intellij.vcs.log.util.VcsLogUiUtil
 import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -54,11 +63,10 @@ import javax.swing.tree.DefaultTreeModel
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-class VcsLogChangesBrowser internal constructor(project: Project,
-                                                private val uiProperties: MainVcsLogUiProperties,
-                                                private val dataGetter: (CommitId) -> VcsShortCommitDetails,
-                                                isWithEditorDiffPreview: Boolean,
-                                                parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
+class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
+                                                           private val uiProperties: VcsLogUiProperties,
+                                                           private val dataGetter: (CommitId) -> VcsShortCommitDetails,
+                                                           parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
 
@@ -69,7 +77,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   private var isShowOnlyAffectedSelected = false
 
   private var affectedPaths: Collection<FilePath>? = null
-  private var editorDiffPreviewController: DiffPreviewController? = null
 
   init {
     val propertiesChangeListener = object : PropertiesChangeListener {
@@ -93,13 +100,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     init()
 
-    if (isWithEditorDiffPreview) {
-      setEditorDiffPreview()
-      getInstance(myProject).subscribeToPreviewVisibilityChange(this) { setEditorDiffPreview() }
-    }
-
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
+
+    getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"))
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     myViewer.rebuildTree()
@@ -129,6 +133,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       super.createToolbarActions(),
       getInstance().getCorrectedAction(VcsLogActionIds.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
     )
+  }
+
+  override fun createLastToolbarActions(): List<AnAction> {
+    return emptyList() // do not duplicate 'ChangesView.GroupBy' group
   }
 
   override fun createPopupMenuActions(): List<AnAction> {
@@ -181,13 +189,13 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.status")).appendSecondaryText(
         VcsLogBundle.message("vcs.log.changes.show.changes.to.parents.status.action"),
         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-      ) { uiProperties.set(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS, true) }
+      ) { uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS] = true }
     }
     else if (isShowOnlyAffectedSelected && affectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
                              SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
-        ) { uiProperties.set(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES, false) }
+        ) { uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES] = false }
     }
     else {
       emptyText.setText("")
@@ -250,9 +258,9 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
   private fun updateUiSettings() {
     isShowChangesFromParents = uiProperties.exists(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS) &&
-                               uiProperties.get(MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS)
+                               uiProperties[MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS]
     isShowOnlyAffectedSelected = uiProperties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
-                                 uiProperties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES)
+                                 uiProperties[MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES]
   }
 
   val directChanges: List<Change>
@@ -260,45 +268,34 @@ class VcsLogChangesBrowser internal constructor(project: Project,
   val selectedChanges: List<Change>
     get() = VcsTreeModelData.selected(myViewer).userObjects(Change::class.java)
 
-  override fun getData(dataId: String): Any? {
-    if (HAS_AFFECTED_FILES.`is`(dataId)) {
-      return affectedPaths != null
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[HAS_AFFECTED_FILES] = affectedPaths != null
+    sink[QuickActionProvider.KEY] = ComponentQuickActionProvider(this@VcsLogChangesBrowser)
+
+    val roots = HashSet(commitModel.roots)
+    val selectedData = VcsTreeModelData.selected(myViewer)
+    sink.lazy(VcsDataKeys.VCS) {
+      getSelectedVcs(roots, selectedData)?.keyInstanceMethod
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId)) {
-      val roots = HashSet(commitModel.roots)
-      val selectedData = VcsTreeModelData.selected(myViewer)
-      val superProvider = super.getData(dataId) as DataProvider?
-      return CompositeDataProvider.compose({ slowId -> getSlowData(slowId, roots, selectedData) }, superProvider)
-    }
-    else if (QuickActionProvider.KEY.`is`(dataId)) {
-      return ComponentQuickActionProvider(this@VcsLogChangesBrowser)
-    }
-    return super.getData(dataId)
   }
 
-  private fun getSlowData(dataId: String,
-                          roots: Set<VirtualFile>,
-                          selectedData: VcsTreeModelData): Any? {
-    if (VcsDataKeys.VCS.`is`(dataId)) {
-      val rootsVcs = JBIterable.from(roots)
-        .map { root: VirtualFile? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()
-      if (rootsVcs != null) return rootsVcs.keyInstanceMethod
+  private fun getSelectedVcs(
+    roots: Set<VirtualFile>,
+    selectedData: VcsTreeModelData,
+  ): AbstractVcs? {
+    val rootsVcs = JBIterable.from(roots)
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    if (rootsVcs != null) return rootsVcs
 
-      val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-        .map { change: Change? ->
-          ChangesUtil.getFilePath(
-            change!!)
-        }
-        .map { root: FilePath? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()
-      return selectionVcs?.keyInstanceMethod
-    }
-    return null
+    val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
+      .map { change -> ChangesUtil.getFilePath(change) }
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    return selectionVcs
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
@@ -313,28 +310,24 @@ class VcsLogChangesBrowser internal constructor(project: Project,
         context[ChangeDiffRequestProducer.TAG_KEY] = tag
       }
     }
-    return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
+    return createDiffRequestProducer(myProject, userObject, context)
   }
 
-  private fun setEditorDiffPreview() {
-    val diffPreviewController = editorDiffPreviewController
-    val isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject)
-    if (isWithEditorDiffPreview && diffPreviewController == null) {
-      editorDiffPreviewController = VcsLogChangesBrowserDiffPreviewController()
+  fun createChangeProcessor(isInEditor: Boolean): DiffEditorViewer {
+    val place = if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.VCS_LOG_VIEW
+    val handler = VcsLogDiffPreviewHandler(this)
+
+    val processor: DiffEditorViewer
+    if (CombinedDiffRegistry.isEnabled()) {
+      processor = CombinedDiffManager.getInstance(myProject).createProcessor(place)
+      processor.context.putUserData(DISABLE_LOADING_BLOCKS, true)
     }
-    else if (!isWithEditorDiffPreview && diffPreviewController != null) {
-      diffPreviewController.activePreview.closePreview()
-      editorDiffPreviewController = null
+    else {
+      processor = VcsLogChangeProcessor(place, this, handler, true)
     }
-  }
-
-  fun createChangeProcessor(isInEditor: Boolean): VcsLogChangeProcessor {
-    return VcsLogChangeProcessor(myProject, this, isInEditor, this)
-  }
-
-  override fun getShowDiffActionPreview(): DiffPreview? {
-    val editorDiffPreviewController = editorDiffPreviewController
-    return editorDiffPreviewController?.activePreview
+    VcsLogTreeChangeProcessorTracker(this, processor, handler, !isInEditor).track()
+    processor.context.putUserData(DiffUserDataKeysEx.COMBINED_DIFF_TOGGLE, CombinedDiffToggle.DEFAULT)
+    return processor
   }
 
   fun selectChange(userObject: Any, tag: ChangesBrowserNode.Tag?) {
@@ -362,15 +355,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
   fun interface Listener : EventListener {
     fun onModelUpdated()
-  }
-
-  private inner class VcsLogChangesBrowserDiffPreviewController : DiffPreviewControllerBase() {
-    override val simplePreview: DiffPreview
-      get() = VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)
-
-    override fun createCombinedDiffPreview(): CombinedDiffPreview {
-      return VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser)
-    }
   }
 
   private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
@@ -405,7 +389,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
       val singleCommitDetail = details.singleOrNull()
       if (singleCommitDetail == null) {
-        return CommitModel(roots, VcsLogUtil.collectChanges(details) { it.changes }, emptyMap(), null)
+        return CommitModel(roots, VcsLogUtil.collectChanges(details), emptyMap(), null)
       }
 
       val changesToParents = if (singleCommitDetail.parents.size > 1) {
@@ -435,35 +419,14 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       }
     }
 
-    fun createDiffRequestProducer(project: Project,
-                                  change: Change,
-                                  context: MutableMap<Key<*>, Any>,
-                                  forDiffPreview: Boolean): ChangeDiffRequestChain.Producer? {
-      if (change is MergedChange) {
-        if (change.sourceChanges.size == 2) {
-          if (forDiffPreview) {
-            putFilePathsIntoMergedChangeContext(change, context)
-          }
-          return MergedChangeDiffRequestProvider.MyProducer(project, change, context)
-        }
-      }
-      if (forDiffPreview) {
-        VcsDiffUtil.putFilePathsIntoChangeContext(change, context)
-      }
-      return ChangeDiffRequestProducer.create(project, change, context)
-    }
-
-    private fun putFilePathsIntoMergedChangeContext(change: MergedChange, context: MutableMap<Key<*>, Any>) {
-      val centerRevision = change.afterRevision
-      val leftRevision = change.sourceChanges[0].beforeRevision
-      val rightRevision = change.sourceChanges[1].beforeRevision
-      val centerFile = centerRevision?.file
-      val leftFile = leftRevision?.file
-      val rightFile = rightRevision?.file
-      context[DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(centerRevision, centerFile, null)
-      context[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(rightRevision, rightFile, centerFile)
-      context[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(leftRevision, leftFile,
-                                                                                             centerFile ?: rightFile)
-    }
+    fun createDiffRequestProducer(
+      project: Project,
+      change: Change,
+      context: MutableMap<Key<*>, Any>,
+    ): ChangeDiffRequestChain.Producer? =
+      if (change is MergedChange && change.sourceChanges.size == 2)
+        MergedChangeDiffRequestProvider.MyProducer(project, change, context)
+      else
+        ChangeDiffRequestProducer.create(project, change, context)
   }
 }

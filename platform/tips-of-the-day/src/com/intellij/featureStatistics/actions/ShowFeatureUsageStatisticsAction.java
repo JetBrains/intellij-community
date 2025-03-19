@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class ShowFeatureUsageStatisticsAction extends AnAction implements DumbAware {
+final class ShowFeatureUsageStatisticsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new ShowFeatureUsageStatisticsDialog(Objects.requireNonNull(getEventProject(e))).show();

@@ -20,9 +20,21 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val isActive: Boolean
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
-            PlatformUtils.isGoIde()
+            PlatformUtils.isWebStorm() ||
+            PlatformUtils.isCLion() ||
+            PlatformUtils.isGoIde() ||
+            PlatformUtils.isPhpStorm() ||
+            PlatformUtils.isRustRover() ||
+            PlatformUtils.getPlatformPrefix() == "AndroidStudio"
+
+  override val isEnabled: Boolean = true
+
+  override val disabledText: String = ""
 
   override fun getInteractiveCourseComponent(): JComponent = JBAcademyInteractiveCoursePanel(EduToolsInteractiveCourseData())
+  override fun getCourseData(): InteractiveCourseData {
+    return EduToolsInteractiveCourseData()
+  }
 }
 
 private class EduToolsInteractiveCourseData : InteractiveCourseData {
@@ -55,8 +67,6 @@ private class EduToolsInteractiveCourseData : InteractiveCourseData {
     }
   }
 
-  override fun isEduTools(): Boolean {
-    return true
-  }
+  override fun isEduTools(): Boolean = true
 }
 

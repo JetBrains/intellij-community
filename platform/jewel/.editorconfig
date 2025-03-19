@@ -1,0 +1,53 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 150
+tab_width = 4
+
+[*.iml]
+insert_final_newline = false
+
+[{*.html,*.js,*.css}]
+indent_size = 2
+
+[*.yml]
+indent_size = 2
+
+[{*.kt,*.kts}]
+ij_kotlin_allow_trailing_comma = true
+ktlint_function_naming_ignore_when_annotated_with = Composable
+ktlint_function_signature_body_expression_wrapping = multiline
+ktlint_ignore_back_ticked_identifier = true
+ktlint_standard_annotation = disabled
+ktlint_standard_chain-method-continuation = disabled
+ktlint_standard_class-signature = disabled
+ktlint_standard_condition-wrapping = disabled
+ktlint_standard_function-expression-body = disabled
+ktlint_standard_function-literal = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_import-ordering = disabled
+ktlint_standard_indent = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_parameter-list-wrapping = disabled
+ktlint_standard_string-template-indent = disabled
+ktlint_standard_trailing-comma-on-call-site = disabled
+ktlint_standard_trailing-comma-on-declaration-site = disabled
+ktlint_standard_try-catch-finally-spacing = disabled
+ktlint_standard_wrapping = disabled
+trim_trailing_whitespace = false
+
+[gradlew.bat]
+end_of_line = crlf
+
+[{*.bash,*.sh,*.zsh}]
+indent_size = 2
+tab_width = 2
+
+[*.md]
+indent_size = 2

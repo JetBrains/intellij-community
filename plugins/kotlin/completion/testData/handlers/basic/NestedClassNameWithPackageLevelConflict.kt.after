@@ -8,5 +8,6 @@ class Main {
     fun test(b: foo.Bar<caret>)
 }
 
+// IGNORE_K2
 // ELEMENT: Bar
 // TAIL_TEXT: " (foo)"

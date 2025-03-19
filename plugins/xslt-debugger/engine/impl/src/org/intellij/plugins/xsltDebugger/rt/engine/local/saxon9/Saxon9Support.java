@@ -32,6 +32,7 @@ public final class Saxon9Support {
       }
     });
     controller.getConfiguration().setDebugger(new Debugger() {
+      @Override
       public SlotManager makeSlotManager() {
         return new SlotManager() {
           @Override

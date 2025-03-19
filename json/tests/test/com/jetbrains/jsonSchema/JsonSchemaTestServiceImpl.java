@@ -3,7 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
@@ -14,10 +14,19 @@ import java.util.List;
 import java.util.Objects;
 
 public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
-  private static JsonSchemaFileProvider provider;
+  private static List<JsonSchemaFileProvider> providers;
 
   public static void setProvider(JsonSchemaFileProvider newProvider) {
-    provider = newProvider;
+    if (newProvider != null) {
+      providers = new SmartList<>(newProvider);
+    }
+    else {
+      providers = null;
+    }
+  }
+
+  public static void setProviders(JsonSchemaFileProvider... newProviders) {
+    providers = new SmartList<>(newProviders);
   }
 
   public JsonSchemaTestServiceImpl(@NotNull Project project) {
@@ -45,7 +54,7 @@ public final class JsonSchemaTestServiceImpl extends JsonSchemaServiceImpl {
     @NotNull
     @Override
     public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
-      return ContainerUtil.createMaybeSingletonList(provider);
+      return providers;
     }
   }
 }

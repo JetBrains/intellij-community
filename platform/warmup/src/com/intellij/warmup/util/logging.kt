@@ -1,31 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.application.subscribe
-import com.intellij.ide.warmup.WarmupStatus
-import com.intellij.idea.logEssentialInfoAboutIde
+import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.JulLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.RollingFileHandler
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.asContextElement
-import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.openapi.progress.impl.TextDetailsProgressReporter
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.progress.util.ProgressWindow
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.project.configuration.ChannelingProgressIndicator
+import com.intellij.openapi.project.configuration.HeadlessLogging
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.util.application
+import com.intellij.platform.ide.bootstrap.logEssentialInfoAboutIde
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.util.lazyPub
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.onClosed
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.sample
 import java.io.IOException
@@ -34,150 +27,105 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.logging.Level
 import java.util.logging.LogRecord
-import java.util.logging.SimpleFormatter
 import kotlin.io.path.div
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 
-object WarmupLogger {
+internal object WarmupLogger {
   fun logInfo(message: String) {
-    ConsoleLog.info(message)
     warmupLogger?.info(message)
+    ConsoleLog.info(message)
   }
 
-  fun logError(message: String, t : Throwable? = null) {
-    ConsoleLog.error(message, t)
+  fun logError(message: String, t: Throwable? = null) {
     warmupLogger?.error(message, t)
+    ConsoleLog.error(message, t)
+  }
+
+  internal fun logStructured(message: StructuredMessage) {
+    warmupLogger?.info(message.fullMessage)
+    ConsoleLog.info(message.fullMessage)
   }
 }
 
-internal fun initLogger(args: List<String>) {
-  val logger = warmupLogger ?: return
+internal fun CoroutineScope.initLogger(args: List<String>): Job {
+  val logger = warmupLogger ?: return Job()
   val info = ApplicationInfo.getInstance()
   val buildDate = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(info.buildDate.time)
-  logEssentialInfoAboutIde(logger, info, args)
+  logEssentialInfoAboutIde(log = logger, appInfo = info, args = args)
   logger.info("IDE: ${ApplicationNamesInfo.getInstance().fullProductName} (build #${info.build.asString()}, ${buildDate})")
+  return launch {
+    HeadlessLogging.loggingFlow().collect { (level, message) ->
+      val messageRepresentation = message.representation()
+      when (level) {
+        HeadlessLogging.SeverityKind.Info -> WarmupLogger.logInfo(messageRepresentation)
+        HeadlessLogging.SeverityKind.Warning -> WarmupLogger.logInfo(messageRepresentation)
+        HeadlessLogging.SeverityKind.Fatal -> WarmupLogger.logError(messageRepresentation)
+      }
+    }
+  }
 }
 
-@OptIn(FlowPreview::class)
+
 suspend fun <Y> withLoggingProgresses(action: suspend CoroutineScope.(ProgressIndicator) -> Y): Y {
-  val messages = Channel<String>(128)
-  val indicator = ChannelingProgressIndicator(messages)
+  val indicator = ChannelingProgressIndicator("")
 
   return coroutineScope {
-    val disposable = Disposer.newDisposable()
-
-    ProgressWindow.TOPIC.subscribe(disposable, ProgressWindow.Listener { pw ->
-      pw.addStateDelegate(ChannelingProgressIndicator(messages))
-    })
-
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    val job = launch(Dispatchers.IO) {
-      messages.consumeAsFlow()
-        .sample(300)
-        .distinctUntilChanged()
-        .collect {
-          ConsoleLog.info(it)
-        }
-    }
-    job.invokeOnCompletion { Disposer.dispose(disposable) }
-
-    try {
-      action(indicator)
-    }
-    finally {
-      job.cancelAndJoin()
-    }
+    action(indicator)
   }
 }
 
 private fun trimProgressTextAndNullize(s: String?) = s?.trim()?.trimEnd('.', '\u2026', ' ')?.takeIf { it.isNotBlank() }
 
-internal fun progressStateText(state: ProgressState): String? {
-  val text = trimProgressTextAndNullize(state.text)
-  val text2 = trimProgressTextAndNullize(state.details)
+internal fun progressStateText(fraction: Double?, text: String?, details: String?): StructuredMessage? {
+  val text = trimProgressTextAndNullize(text)
+  val text2 = trimProgressTextAndNullize(details)
   if (text.isNullOrBlank() && text2.isNullOrBlank()) {
     return null
   }
 
-  val message = (text ?: "") + (text2?.let { " ($it)" } ?: "")
-  if (message.isBlank() || state.fraction < 0.0) {
-    return message.takeIf { it.isNotBlank() }
+  val shortText = text ?: ""
+  val verboseText = shortText + (text2?.let { " ($it)" } ?: "")
+  if (shortText.isBlank() || fraction == null) {
+    return StructuredMessage(shortText, verboseText)
   }
 
-  val v = (100.0 * state.fraction).toInt()
+  val v = (100.0 * fraction).toInt()
   val total = 18
-  val completed = (total * state.fraction).toInt().coerceAtLeast(0)
+  val completed = (total * fraction).toInt().coerceAtLeast(0)
   val d = ".".repeat(completed).padEnd(total, ' ')
-  return message.take(75).padEnd(79) + "$d $v%"
+  val verboseReport = verboseText.take(100).padEnd(105) + "$d $v%"
+  val shortReport = shortText.take(100).padEnd(105) + "$d $v%"
+  return StructuredMessage(verboseReport, shortReport)
 }
 
-private class ChannelingProgressIndicator(private val messages: SendChannel<String>) : ProgressIndicatorBase() {
-  override fun setIndeterminate(indeterminate: Boolean) {
-    super.setIndeterminate(indeterminate)
-    offerState()
-  }
 
-  override fun setFraction(fraction: Double) {
-    super.setFraction(fraction)
-    offerState()
-  }
-
-  override fun setText(text: String?) {
-    super.setText(text)
-    super.setText2("")
-    offerState()
-  }
-
-  override fun setText2(text: String?) {
-    super.setText2(text)
-    offerState()
-  }
-
-  private fun offerState() {
-    messages.trySend(progressStateText(dumpProgressState()) ?: return).onClosed {
-      throw IllegalStateException(it)
-    }
-  }
-}
-
-private fun ProgressIndicator.dumpProgressState() : ProgressState =
-  ProgressState(text = text, details = text2, fraction = if (isIndeterminate) -1.0 else fraction)
 
 /**
  * Installs a progress reporter that sends the information about progress to the stdout instead of UI.
  */
 suspend fun <T> withLoggingProgressReporter(action: suspend CoroutineScope.() -> T): T = coroutineScope {
-  TextDetailsProgressReporter(this).use { reporter ->
-    val reportToCommandLineJob = reportLogsJob(reporter.progressState)
-    try {
-      withContext(reporter.asContextElement(), action)
+  val pipe = createProgressPipe()
+  val job = launch {
+    pipe.progressUpdates().collect { progressState ->
+      progressStateText(progressState.fraction, progressState.text, progressState.details)?.let { WarmupLogger.logStructured(it) }
     }
-    finally {
-      reportToCommandLineJob.cancel()
-    }
+  }
+  try {
+    pipe.collectProgressUpdates(action)
+  }
+  finally {
+    job.cancel()
   }
 }
 
-@OptIn(FlowPreview::class)
-private fun CoroutineScope.reportLogsJob(
-  stateFlow: Flow<ProgressState>
-): Job {
-  return launch(Dispatchers.IO) {
-    stateFlow.sample(300.milliseconds).distinctUntilChanged().collect { state ->
-      val text = progressStateText(state)
-      text?.let {
-        ConsoleLog.info(it)
-        warmupLogger?.info(it)
-      }
-    }
-  }
-}
 
 private class WarmupLoggerFactory : Logger.Factory {
 
   companion object {
     val basePath: Path = Path.of(PathManager.getLogPath()) / "warmup" / "warmup.log"
   }
+
   private val appender: RollingFileHandler = RollingFileHandler(basePath, 20_000_000, 50, false)
 
   override fun getLoggerInstance(category: String): Logger {
@@ -195,10 +143,11 @@ private class WarmupLoggerFactory : Logger.Factory {
   }
 }
 
-private val loggerFactory : WarmupLoggerFactory? by lazyPub {
+private val loggerFactory: WarmupLoggerFactory? by lazyPub {
   try {
     WarmupLoggerFactory.basePath.findOrCreateFile()
-  } catch (e : IOException) {
+  }
+  catch (_: IOException) {
     return@lazyPub null
   }
   val instance = WarmupLoggerFactory()
@@ -207,10 +156,36 @@ private val loggerFactory : WarmupLoggerFactory? by lazyPub {
 }
 
 private val warmupLogger: Logger? by lazyPub {
-  if (WarmupStatus.currentStatus(application) != WarmupStatus.InProgress) {
-    null
-  } else {
-    val instance = loggerFactory?.getLoggerInstance("Warmup") ?: return@lazyPub null
-    instance
+  val instance = loggerFactory?.getLoggerInstance("Warmup") ?: return@lazyPub null
+  instance
+}
+
+internal data class StructuredMessage(
+  // a complete message as it is shown in the UI ide
+  val fullMessage: String,
+  // a short message, suitable for logging as it does not contain sensitive information
+  val contractedMessage: String,
+)
+
+@OptIn(FlowPreview::class)
+@Service(Service.Level.APP)
+private class WarmupLoggingService(scope: CoroutineScope) {
+  val messages = MutableSharedFlow<StructuredMessage>(replay = 0, extraBufferCapacity = 1024, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+
+  init {
+    scope.launch(Dispatchers.IO) {
+      messages.sample(300.milliseconds).distinctUntilChanged().collect {
+        WarmupLogger.logStructured(it)
+      }
+    }
+  }
+}
+
+
+internal fun dumpThreadsAfterConfiguration() {
+  val dump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false)
+  Path.of(PathManager.getLogPath(), "warmup").findOrCreateFile("thread-dump-after-project-configuration.txt").apply {
+    writeText(dump.rawDump)
   }
 }

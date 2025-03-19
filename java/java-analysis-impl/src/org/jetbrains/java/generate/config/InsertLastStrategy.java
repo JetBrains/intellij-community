@@ -53,6 +53,7 @@ public final class InsertLastStrategy implements InsertNewMethodStrategy {
         return (PsiMethod) clazz.addBefore(newMethod, last);
     }
 
+    @Override
     public String toString() {
         return "Last";
     }

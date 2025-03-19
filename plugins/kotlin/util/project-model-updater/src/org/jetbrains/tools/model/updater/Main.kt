@@ -1,11 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
-import org.jetbrains.tools.model.updater.impl.JpsLibrary
-import org.jetbrains.tools.model.updater.impl.Preferences
-import org.jetbrains.tools.model.updater.impl.readXml
-import org.jetbrains.tools.model.updater.impl.xml
+import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
 
@@ -16,7 +13,6 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by Preference()
     val kotlinGradlePluginVersion: String by Preference()
     val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
-    val bootstrapWithNative: Boolean by Preference(String::toBoolean)
 
     enum class ArtifactMode {
         MAVEN, BOOTSTRAP
@@ -47,13 +43,16 @@ fun main(args: Array<String>) {
     val preferences = GeneratorPreferences.parse(args)
 
     val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }
-        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }
+        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }.normalize()
 
-    val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }
+    val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }?.normalize()
+
+    val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
     fun processRoot(root: File, isCommunity: Boolean) {
+        println("Processing kotlinc libraries in root: $root")
         val libraries = generateKotlincLibraries(preferences, isCommunity)
-        regenerateProjectLibraries(root.resolve(".idea"), libraries)
+        regenerateProjectLibraries(root.resolve(".idea"), libraries, resolverSettings)
     }
 
     if (monorepoRoot != null) {
@@ -64,15 +63,21 @@ fun main(args: Array<String>) {
     processRoot(communityRoot, isCommunity = true)
     updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
     updateKGPVersionForKotlinNativeTests(communityRoot, preferences.kotlinGradlePluginVersion)
+    updateCoopRunConfiguration(monorepoRoot, communityRoot)
 }
 
-private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
+private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>, resolverSettings: JpsResolverSettings) {
     val librariesDir = dotIdea.resolve("libraries")
-    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach { it.delete() }
+    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach {
+        println("Removing $it")
+        it.delete()
+    }
 
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
-        librariesDir.resolve(libraryFileName).writeText(library.render())
+        val xmlFile = librariesDir.resolve(libraryFileName)
+        println("Writing $xmlFile")
+        xmlFile.writeText(library.render(resolverSettings))
     }
 }
 
@@ -93,11 +98,6 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
     val communityModuleRenames = readModuleRenames(communityModulesXml)
 
     val newCommunityModulesXmlContent = xml("project", "version" to "4") {
-        if (communityModules.isNotEmpty()) {
-            xml("component", "name" to "ModuleRenamingHistory") {
-                communityModuleRenames.forEach { (old, new) -> xml("module", "old-name" to old, "new-name" to new) }
-            }
-        }
         xml("component", "name" to "ProjectModuleManager") {
             xml("modules") {
                 for (module in communityModules.values) {
@@ -111,6 +111,20 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
     communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
 }
 
+private fun updateCoopRunConfiguration(monorepoRoot: File?, communityRoot: File) {
+    val runConfigurationFilePath = ".idea/runConfigurations/Kotlin_Coop__Publish_compiler_for_ide_JARs.xml"
+    val runConfiguration = communityRoot.resolve(runConfigurationFilePath)
+    val originalText = runConfiguration.readText()
+    val resultText = originalText.replace(bootstrapVersionRegex) { matchResult ->
+        "${matchResult.groupValues[1]}$BOOTSTRAP_VERSION${matchResult.groupValues[4]}"
+    }
+
+    runConfiguration.writeText(resultText)
+    monorepoRoot?.resolve(runConfigurationFilePath)?.writeText(resultText)
+}
+
+private val bootstrapVersionRegex = Regex("(-P(deployVersion|build\\.number)=)(.+?)([ \"])")
+
 /**
  * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion]
  * in the source code. The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
@@ -118,7 +132,7 @@ private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
  */
 private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
     val kotlinGradlePluginVersionsKt = communityRoot.resolve(
-        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+        "plugins/kotlin/gradle/gradle-java/tests.shared/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
     )
     updateFile(
         kotlinGradlePluginVersionsKt,

@@ -12,8 +12,9 @@ SHELL_SCRIPT
         REDIRECTION
           PsiElement(>)('>')
           PsiElement(word)('/dev/null')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('file2.txt')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file2.txt')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -28,8 +29,9 @@ SHELL_SCRIPT
         REDIRECTION
           PsiElement(<<<)('<<<')
           PsiElement(word)('stdin')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('file.txt')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file.txt')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -45,30 +47,37 @@ SHELL_SCRIPT
           PsiElement(<<<)('<<<')
           PsiWhiteSpace(' ')
           PsiElement(word)('stdin')
-          PsiWhiteSpace(' ')
-          PsiElement(word)('file.txt')
+      PsiWhiteSpace(' ')
+      LITERAL
+        PsiElement(word)('file.txt')
   PsiElement(\n)('\n')
   PsiComment(Comment)('# equivalent redirects')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      REDIRECTION
-        PsiElement(>&)('>&')
-        PsiWhiteSpace(' ')
-        PsiElement(word)('x')
-        PsiWhiteSpace(' ')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('echo')
-        PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('out')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      REDIRECTION
-        PsiElement(>&)('>&')
-        PsiElement(word)('x')
-        PsiWhiteSpace(' ')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('echo')
-        PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('out')
   PsiElement(\n)('\n')
   COMMANDS_LIST
@@ -110,3 +119,22 @@ SHELL_SCRIPT
         REDIRECTION
           PsiElement(>)('>')
           PsiElement(word)('out')
+  PsiElement(\n)('\n')
+  COMMANDS_LIST
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        LITERAL
+          PsiElement(word)('echo')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          PsiElement(>)('>')
+          PsiElement(word)('/dev/null')
+      PsiWhiteSpace(' ')
+      SIMPLE_COMMAND_ELEMENT
+        REDIRECTION
+          NUMBER
+            PsiElement(int)('2')
+          PsiElement(>&)('>&')
+          NUMBER
+            PsiElement(int)('1')

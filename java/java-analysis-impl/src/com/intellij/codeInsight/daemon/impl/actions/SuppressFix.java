@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,8 +7,6 @@ import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -23,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
+public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentModCommandFix {
   private String myAlternativeID;
 
   public SuppressFix(@NotNull HighlightDisplayKey key) {
@@ -36,15 +34,13 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     String myText = super.getText();
     return StringUtil.isEmpty(myText) ? JavaAnalysisBundle.message("suppress.inspection.member") : myText;
   }
 
   @Override
-  @Nullable
-  public PsiJavaDocumentedElement getContainer(final PsiElement context) {
+  public @Nullable PsiJavaDocumentedElement getContainer(final PsiElement context) {
     if (context == null || !BaseIntentionAction.canModify(context)) {
       return null;
     }
@@ -61,11 +57,11 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
       if (container == null) return null;
     }
-    return container instanceof SyntheticElement ? null : (PsiJavaDocumentedElement)container;
+    return container instanceof SyntheticElement || container instanceof PsiImplicitClass ? null : (PsiJavaDocumentedElement)container;
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+  public boolean isAvailable(final @NotNull Project project, final @NotNull PsiElement context) {
     PsiJavaDocumentedElement container = getContainer(context);
     boolean isValid = container != null && !(container instanceof PsiMethod && container instanceof SyntheticElement);
     if (!isValid) {
@@ -87,22 +83,14 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final @NotNull PsiElement element) throws IncorrectOperationException {
     PsiJavaDocumentedElement container = getContainer(element);
     if (container == null) return;
-    PsiFile file = element.getContainingFile();
     doSuppress(project, container);
-    UndoUtil.markPsiFileForUndo(file);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("suppress.inspection.member");
   }
 
@@ -114,7 +102,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       }
     }
     else {
-      WriteCommandAction.runWriteCommandAction(project, null, null, () -> suppressByDocComment(project, container), container.getContainingFile());
+      suppressByDocComment(project, container);
     }
   }
 
@@ -154,8 +142,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     return id != null ? id : myID;
   }
 
-  @Nullable
-  static String getID(@NotNull PsiElement place, String alternativeID) {
+  static @Nullable String getID(@NotNull PsiElement place, String alternativeID) {
     if (alternativeID != null) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(place);
       if (module != null) {
@@ -166,5 +153,10 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     }
 
     return null;
+  }
+
+  @Override
+  public int getPriority() {
+    return 40;
   }
 }

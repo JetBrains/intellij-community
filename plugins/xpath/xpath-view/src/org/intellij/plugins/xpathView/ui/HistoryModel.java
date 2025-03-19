@@ -49,8 +49,7 @@ class HistoryModel extends AbstractListModel implements ComboBoxModel, Multiline
     }
 
     @Override
-    @Nullable
-    public HistoryElement getSelectedItem() {
+    public @Nullable HistoryElement getSelectedItem() {
         if (selectedItem != null) {
             if (Comparing.equal(selectedItem.expression, myDocument.getCharsSequence())) {
                 return selectedItem;

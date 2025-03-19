@@ -1,15 +1,18 @@
 <component name="libraryTable">
   <library name="ion" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:ion-java:1.8.2-4" />
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/lib/annotations/ion" />
-    </ANNOTATIONS>
+    <properties maven-id="com.amazon.ion:ion-java:1.11.9">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.9/ion-java-1.11.9.jar">
+          <sha256sum>7f7e4914ac79d578969d75c040e3b3adce215b32281bc65d9d6aca411553b5dd</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ion-java/1.8.2-4/ion-java-1.8.2-4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.9/ion-java-1.11.9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ion-java/1.8.2-4/ion-java-1.8.2-4-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/amazon/ion/ion-java/1.11.9/ion-java-1.11.9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

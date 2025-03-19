@@ -40,9 +40,8 @@ public class PyFromImportNameReference extends PyImportReference {
     assert myStatement != null;
   }
 
-  @NotNull
   @Override
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     QualifiedName qName = myElement.asQualifiedName();
     return qName == null
            ? Collections.emptyList()

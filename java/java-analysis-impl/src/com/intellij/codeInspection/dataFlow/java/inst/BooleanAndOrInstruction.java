@@ -51,6 +51,7 @@ public class BooleanAndOrInstruction extends ExpressionPushingInstruction {
     return result.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
+  @Override
   public String toString() {
     return myOr ? "OR" : "AND";
   }

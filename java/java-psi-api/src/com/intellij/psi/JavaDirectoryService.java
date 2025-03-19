@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -7,7 +7,9 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,16 +25,14 @@ public abstract class JavaDirectoryService {
    *
    * @return the package instance, or null if the directory does not correspond to any package.
    */
-  @Nullable
-  public abstract PsiPackage getPackage(@NotNull PsiDirectory dir);
+  public abstract @Nullable PsiPackage getPackage(@NotNull PsiDirectory dir);
 
   /**
    * Returns the package corresponding to the directory.
    *
    * @return the package instance, or null if the directory does not correspond to any package or package is under resource roots
    */
-  @Nullable
-  public abstract PsiPackage getPackageInSources(@NotNull PsiDirectory dir);
+  public abstract @Nullable PsiPackage getPackageInSources(@NotNull PsiDirectory dir);
 
   /**
    * Returns the list of Java classes contained in the directory.
@@ -42,14 +42,22 @@ public abstract class JavaDirectoryService {
   public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir);
 
   /**
+   * Returns the list of Java classes contained in the directory and the given {@param scope}.
+   *
+   * @return the array of classes.
+   */
+  // todo ijpl-339 mark experimental
+  @ApiStatus.Internal
+  public abstract PsiClass @NotNull [] getClasses(@NotNull PsiDirectory dir, @NotNull GlobalSearchScope scope);
+
+  /**
    * Creates a class with the specified name in the directory.
    *
    * @param name the name of the class to create (not including the file extension).
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a class with the specified name in the directory.
@@ -59,8 +67,7 @@ public abstract class JavaDirectoryService {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createClass(@NotNull PsiDirectory dir, @NotNull String name, @NotNull String templateName) throws IncorrectOperationException;
 
   /**
    * @param askForUndefinedVariables
@@ -76,7 +83,7 @@ public abstract class JavaDirectoryService {
                                        @NotNull String name,
                                        @NotNull String templateName,
                                        boolean askForUndefinedVariables,
-                                       @NotNull final Map<String, String> additionalProperties) throws IncorrectOperationException;
+                                       final @NotNull Map<String, String> additionalProperties) throws IncorrectOperationException;
 
   /**
    * Checks if it's possible to create a class with the specified name in the directory,
@@ -95,8 +102,7 @@ public abstract class JavaDirectoryService {
    * @return the created interface instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createInterface(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates an enumeration class with the specified name in the directory.
@@ -105,8 +111,7 @@ public abstract class JavaDirectoryService {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createEnum(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates a record class with the specified name in the directory.
@@ -115,8 +120,7 @@ public abstract class JavaDirectoryService {
    * @return the created record instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createRecord(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
   /**
    * Creates an annotation class with the specified name in the directory.
@@ -125,8 +129,7 @@ public abstract class JavaDirectoryService {
    * @return the created class instance.
    * @throws IncorrectOperationException if the operation failed for some reason.
    */
-  @NotNull
-  public abstract PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
+  public abstract @NotNull PsiClass createAnnotationType(@NotNull PsiDirectory dir, @NotNull String name) throws IncorrectOperationException;
 
 
   /**

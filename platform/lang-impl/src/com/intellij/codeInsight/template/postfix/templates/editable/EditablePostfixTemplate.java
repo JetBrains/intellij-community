@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -24,6 +24,7 @@ import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +38,7 @@ import java.util.Objects;
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
  */
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
-  @NotNull private final TemplateImpl myLiveTemplate;
+  private final @NotNull TemplateImpl myLiveTemplate;
 
   public EditablePostfixTemplate(@NotNull String templateId,
                                  @NotNull String templateName,
@@ -58,13 +59,12 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     myLiveTemplate = liveTemplate;
   }
 
-  @NotNull
-  public TemplateImpl getLiveTemplate() {
+  public @NotNull TemplateImpl getLiveTemplate() {
     return myLiveTemplate;
   }
 
   @Override
-  public final void expand(@NotNull PsiElement context, @NotNull final Editor editor) {
+  public final void expand(@NotNull PsiElement context, final @NotNull Editor editor) {
     List<PsiElement> expressions = getExpressions(context, editor.getDocument(), editor.getCaretModel().getOffset());
 
     if (expressions.isEmpty()) {
@@ -88,7 +88,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
       editor, expressions,
       new Pass<>() {
         @Override
-        public void pass(@NotNull final PsiElement e) {
+        public void pass(final @NotNull PsiElement e) {
           prepareAndExpandForChooseExpression(e, editor);
         }
       },
@@ -110,7 +110,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     return Objects.hash(getKey(), myLiveTemplate);
   }
 
-  protected abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
+  protected abstract @Unmodifiable List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
 
   @Override
   public boolean isApplicable(@NotNull PsiElement context, @NotNull Document copyDocument, int newOffset) {
@@ -124,8 +124,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
    * @param element element to which the template was applied
    * @return an element to remove before inserting the template
    */
-  @NotNull
-  protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+  protected @NotNull PsiElement getElementToRemove(@NotNull PsiElement element) {
     return element;
   }
 
@@ -136,19 +135,16 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
    * @param element element to which the template was applied
    * @return a range to remove before inserting the template
    */
-  @NotNull
-  protected TextRange getRangeToRemove(@NotNull PsiElement element) {
+  protected @NotNull TextRange getRangeToRemove(@NotNull PsiElement element) {
     return getElementToRemove(element).getTextRange();
   }
 
-  @NotNull
-  protected Function<PsiElement, String> getElementRenderer() {
+  protected @NotNull Function<PsiElement, String> getElementRenderer() {
     return element -> element.getText();
   }
 
-  @NotNull
   @Override
-  public PostfixTemplateProvider getProvider() {
+  public @NotNull PostfixTemplateProvider getProvider() {
     PostfixTemplateProvider provider = super.getProvider();
     assert provider != null;
     return provider;

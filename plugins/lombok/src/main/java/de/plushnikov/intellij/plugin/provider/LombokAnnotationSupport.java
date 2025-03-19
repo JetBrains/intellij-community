@@ -8,10 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-class LombokAnnotationSupport implements AnnotationPackageSupport {
-  @NotNull
+final class LombokAnnotationSupport implements AnnotationPackageSupport {
   @Override
-  public List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
+  public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     if (nullability == Nullability.NOT_NULL) {
       return Collections.singletonList("lombok.NonNull");
     }

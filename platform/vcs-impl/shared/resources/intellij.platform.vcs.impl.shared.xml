@@ -1,0 +1,10 @@
+<idea-plugin package="com.intellij.platform.vcs.impl.shared">
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.ShelfDiffEntityTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.GroupingItemTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.ShelfNodesEntityTypeProvider"/>
+    <platform.entityTypes implementation="com.intellij.platform.vcs.impl.shared.rhizome.VcsEntityTypeProvider"/>
+    <registryKey key="vcs.shelves.rhizome.enabled" defaultValue="false" restartRequired="true"
+                 description="New vcs shelves split to frontend and backend using Rhizome and rpc"/>
+  </extensions>
+</idea-plugin>

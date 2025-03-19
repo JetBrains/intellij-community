@@ -1,18 +1,24 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal
+from _typeshed import Incomplete
+from enum import IntEnum
+from typing import ClassVar, Literal
 
-from .ImageFile import ImageFile, PyDecoder
+from .ImageFile import ImageFile, PyDecoder, PyEncoder
 
-BLP_FORMAT_JPEG: int
-BLP_ENCODING_UNCOMPRESSED: int
-BLP_ENCODING_DXT: int
-BLP_ENCODING_UNCOMPRESSED_RAW_BGRA: int
-BLP_ALPHA_ENCODING_DXT1: int
-BLP_ALPHA_ENCODING_DXT3: int
-BLP_ALPHA_ENCODING_DXT5: int
+class Format(IntEnum):
+    JPEG = 0
+
+class Encoding(IntEnum):
+    UNCOMPRESSED = 1
+    DXT = 2
+    UNCOMPRESSED_RAW_BGRA = 3
+
+class AlphaEncoding(IntEnum):
+    DXT1 = 0
+    DXT3 = 1
+    DXT5 = 7
 
 def unpack_565(i): ...
-def decode_dxt1(data, alpha: bool = ...): ...
+def decode_dxt1(data, alpha: bool = False): ...
 def decode_dxt3(data): ...
 def decode_dxt5(data): ...
 
@@ -23,8 +29,11 @@ class BlpImageFile(ImageFile):
     format_description: ClassVar[str]
 
 class _BLPBaseDecoder(PyDecoder):
-    magic: Any
+    magic: Incomplete
     def decode(self, buffer): ...
 
 class BLP1Decoder(_BLPBaseDecoder): ...
 class BLP2Decoder(_BLPBaseDecoder): ...
+
+class BLPEncoder(PyEncoder):
+    def encode(self, bufsize): ...

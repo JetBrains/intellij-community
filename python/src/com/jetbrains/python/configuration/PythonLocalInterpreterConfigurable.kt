@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBCheckBox
@@ -27,13 +28,7 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
   : BoundConfigurable(sdk.name) {
   private val initialSdkHomePath = sdk.homePath
 
-  private val sdkModificator: SdkModificator = sdk.sdkModificator
-
-  private var interpreterPath: String
-    get() = sdkModificator.homePath
-    set(value) {
-      sdkModificator.homePath = value
-    }
+  private val interpreterPath = AtomicProperty(sdk.homePath ?: "")
 
   private var isSdkAssociatedWithOtherPathInitiallyAndReset: Boolean = false
 
@@ -43,10 +38,11 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
 
   override fun createPanel(): DialogPanel = panel {
     row(PyBundle.message("form.edit.sdk.interpreter.path")) {
-      textFieldWithBrowseButton(PyBundle.message("sdk.edit.dialog.specify.interpreter.path"),
-                                project,
-                                PythonSdkType.getInstance().homeChooserDescriptor) { it.name }
-        .bindText(::interpreterPath)
+      textFieldWithBrowseButton(
+        PythonSdkType.getInstance().homeChooserDescriptor.withTitle(PyBundle.message("sdk.edit.dialog.specify.interpreter.path")),
+        project
+      ) { it.name }
+        .bindText(interpreterPath)
         .align(AlignX.FILL)
     }
     val sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
@@ -91,6 +87,11 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
   override fun apply() {
     super.apply()
 
+    val sdkModificator = sdk.sdkModificator
+    if (interpreterPath.get() != initialSdkHomePath) {
+      sdkModificator.homePath = interpreterPath.get()
+    }
+
     if (isSdkAssociatedWithOtherPathInitiallyAndReset || wasSdkAssociatedWithPathInitially != isSdkAssociatedWithPath) {
       if (isSdkAssociatedWithPath) {
         if (module != null) sdkModificator.associateWithModule(module)
@@ -101,7 +102,9 @@ class PythonLocalInterpreterConfigurable(private val project: Project, private v
       }
     }
 
-    sdkModificator.commitChanges()
+    WriteAction.run<Throwable> {
+      sdkModificator.commitChanges()
+    }
 
     if (initialSdkHomePath != sdk.homePath) {
       PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)

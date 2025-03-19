@@ -1,105 +1,140 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.platform.diagnostic.telemetry.impl.TraceUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 
-public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
-  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
+@ApiStatus.Internal
+public final class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
   private static final int[] IGNORE_FOR_COMPILED = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
     Pass.LOCAL_INSPECTIONS,
-    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
-    Pass.EXTERNAL_TOOLS,
-  };
+    Pass.EXTERNAL_TOOLS};
+  private static final Logger LOG = Logger.getInstance(TextEditorBackgroundHighlighter.class);
 
-  private final Project myProject;
-  private final Editor myEditor;
-  private final Document myDocument;
+  private final Project project;
+  private final Editor editor;
+  private final Document document;
 
+  /**
+   * please use {@link FileEditor#getBackgroundHighlighter()} instead of manual instantiation
+   */
+  @ApiStatus.Internal
   public TextEditorBackgroundHighlighter(@NotNull Project project, @NotNull Editor editor) {
-    myProject = project;
-    myEditor = editor;
-    myDocument = myEditor.getDocument();
+    this.project = project;
+    this.editor = editor;
+    document = editor.getDocument();
   }
 
-  @Nullable
-  private PsiFile renewFile() {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-    if (file != null) {
-      file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
-    }
-    return file;
-  }
-
-  @NotNull
-  List<TextEditorHighlightingPass> getPasses(int @NotNull [] passesToIgnore) {
-    if (myProject.isDisposed()) return Collections.emptyList();
-
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
-    if (!documentManager.isCommitted(myDocument)) {
-      LOG.error(myDocument + "; " + documentManager.someDocumentDebugInfo(myDocument));
+  private @NotNull List<TextEditorHighlightingPass> createPasses() {
+    ThreadingAssertions.assertBackgroundThread();
+    if (project.isDisposed()) {
+      return List.of();
     }
 
-    PsiFile file = renewFile();
-    if (file == null) return Collections.emptyList();
-
-    boolean compiled = file instanceof PsiCompiledFile;
-    if (compiled) {
-      file = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      passesToIgnore = IGNORE_FOR_COMPILED;
-    }
-    else if (!DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
-      return Collections.emptyList();
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    if (!documentManager.isCommitted(document)) {
+      LOG.error(document + documentManager.someDocumentDebugInfo(document));
     }
 
-    int @NotNull [] finalPassesToIgnore = passesToIgnore;
-    PsiFile finalFile = file;
-    return TraceUtil.computeWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, "passes instantiation", span -> {
+    CodeInsightContext context = editor != null
+                                 ? EditorContextManager.getEditorContext(editor, project)
+                                 : CodeInsightContexts.anyContext();
+
+    PsiFile psiFile = renewFile(project, document, context);
+    if (psiFile == null) return List.of();
+
+    int[] effectivePassesToIgnore =
+    psiFile.getOriginalFile() instanceof PsiCompiledFile ? IGNORE_FOR_COMPILED:
+    DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(psiFile) ?
+    ArrayUtil.EMPTY_INT_ARRAY : null;
+    if (effectivePassesToIgnore == null) {
+      return List.of();
+    }
+
+    return TraceKt.use(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation"), span -> {
       Activity startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation");
       boolean cancelled = false;
       try {
-        TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
-        return passRegistrar.instantiatePasses(finalFile, myEditor, finalPassesToIgnore);
+        TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
+        return passRegistrar.instantiatePasses(psiFile, editor, effectivePassesToIgnore);
       }
-      catch (ProcessCanceledException | CancellationException e) {
+      catch (CancellationException e) {
         cancelled = true;
         throw e;
       }
       finally {
         startupActivity.end();
-        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, finalFile.getName());
-        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, Boolean.toString(cancelled));
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, psiFile.getName());
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, cancelled+"");
       }
     });
   }
 
   @Override
-  public TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
-    List<TextEditorHighlightingPass> passes = getPasses(ArrayUtilRt.EMPTY_INT_ARRAY);
+  public @NotNull TextEditorHighlightingPass @NotNull [] createPassesForEditor() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    GlobalInspectionContextBase.assertUnderDaemonProgress();
+    List<TextEditorHighlightingPass> passes = createPasses();
     return passes.isEmpty() ? TextEditorHighlightingPass.EMPTY_ARRAY : passes.toArray(TextEditorHighlightingPass.EMPTY_ARRAY);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PsiFile renewFile(@NotNull Project project, @NotNull Document document, @NotNull CodeInsightContext context)  {
+    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = compiled.getDecompiledPsiFile();
+    }
+    if (psiFile == null) return null;
+    psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);
+    return psiFile;
+  }
+
+  /**
+   * Returns PSI file associated with {@param document}, if it's exists and cached, or null otherwise.
+   * Guarantees no expensive PSI creation/decompilation ops are performed here
+   */
+  @ApiStatus.Internal
+  public static @Nullable PsiFile getCachedFileToHighlight(@NotNull Project project,
+                                                           @NotNull VirtualFile virtualFile,
+                                                           @NotNull CodeInsightContext context) {
+    PsiDocumentManagerBase psiDocumentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = psiDocumentManager.getRawCachedFile(virtualFile, context);
+    if (psiFile instanceof PsiCompiledFile compiled) {
+      psiFile = (PsiFile)compiled.getCachedMirror();
+    }
+    if (psiFile == null) return null;
+    psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, true);
+    return psiFile;
   }
 }

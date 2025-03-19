@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy;
 
 import com.intellij.psi.*;
@@ -11,7 +11,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
-public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
+public final class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContributor {
 
   private static final String CLASS_SOURCE = """
     class PomElements {
@@ -23,9 +23,8 @@ public class MavenGroovyPomScriptMemberContributor extends NonCodeMembersContrib
       groovy.util.AntBuilder ant;
       public void fail() {}}""";
 
-  @Nullable
   @Override
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return "pom";
   }
 

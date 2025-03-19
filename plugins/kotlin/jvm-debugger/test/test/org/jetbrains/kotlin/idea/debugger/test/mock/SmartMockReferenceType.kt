@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.mock
 
+import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.sun.jdi.*
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.backend.common.output.OutputFileCollection
@@ -20,12 +22,12 @@ class SmartMockReferenceTypeContext(outputFiles: List<OutputFile>) {
         .filter { it.relativePath.endsWith(".class") }
         .map { it.readClass() }
 
-    private val referenceTypes: List<ReferenceType> by lazy {
+    internal val referenceTypes: List<ReferenceType> by lazy {
         classes.map { SmartMockReferenceType(it, this) }
     }
 
     val referenceTypesByName by lazy {
-        referenceTypes.map { Pair(it.name(), it) }.toMap()
+        referenceTypes.associate { Pair(it.name(), it) }
     }
 }
 
@@ -40,7 +42,7 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun isPublic() = (classNode.access and Opcodes.ACC_PUBLIC) != 0
     override fun classLoader() = null
     override fun sourceName(): String? = classNode.sourceFile
-    override fun defaultStratum() = "Java"
+    override fun defaultStratum() = JAVA_STRATUM
     override fun isStatic() = (classNode.access and Opcodes.ACC_STATIC) != 0
     override fun modifiers() = classNode.access
     override fun isProtected() = (classNode.access and Opcodes.ACC_PROTECTED) != 0
@@ -59,17 +61,13 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun sourceNames(stratum: String) = listOf(classNode.sourceFile)
     override fun availableStrata() = emptyList<String>()
 
+    override fun toString(): String = name()
+
     private val methodsCached by lazy { classNode.methods.map { MockMethod(it, this) } }
     override fun methods() = methodsCached
 
     override fun nestedTypes(): List<ReferenceType> {
-        val fromInnerClasses = classNode.innerClasses
-            .filter { it.outerName == classNode.name }
-            .mapNotNull { context.classes.find { c -> it.name == c.name } }
-
-        val fromOuterClasses = context.classes.filter { it.outerClass == classNode.name }
-
-        return (fromInnerClasses + fromOuterClasses).distinctBy { it.name }.map { SmartMockReferenceType(it, context) }
+        return mutableListOf<ReferenceType>().also { VirtualMachineProxyImpl.addNestedTypes(this, context.referenceTypes, it) }
     }
 
     override fun isPackagePrivate(): Boolean {
@@ -85,7 +83,10 @@ class SmartMockReferenceType(val classNode: ClassNode, private val context: Smar
     override fun fieldByName(fieldName: String) = TODO()
     override fun getValue(p0: Field?) = TODO()
     override fun visibleFields() = TODO()
-    override fun allLineLocations(stratum: String, sourceName: String) = TODO()
+    override fun allLineLocations(stratum: String?, sourceName: String?): List<Location> {
+        if (stratum != null || sourceName != null) TODO()
+        return allLineLocations()
+    }
     override fun majorVersion() = TODO()
     override fun constantPoolCount() = TODO()
     override fun constantPool() = TODO()

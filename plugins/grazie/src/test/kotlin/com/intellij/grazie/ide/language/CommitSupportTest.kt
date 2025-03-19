@@ -9,7 +9,7 @@ class CommitSupportTest : BasePlatformTestCase() {
   fun `test commit message has highlighting with all quick fixes`() {
     configureCommit(myFixture, """
             
-            This is <caret><warning>a</warning> error.
+            This is <caret><TYPO descr="Use an instead of 'a' if the following word starts with a vowel sound, e.g. 'an article', 'an hour'." textAttributesKey="TYPO">a</TYPO> error.
             
             This reverts commit abcdef00.
             
@@ -21,7 +21,7 @@ class CommitSupportTest : BasePlatformTestCase() {
     myFixture.findSingleIntention("Wrong article")
     myFixture.findSingleIntention("an")
     myFixture.findSingleIntention("Ignore 'a error'")
-    myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an''...")
+    myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an''…")
   }
 }
 

@@ -6,6 +6,7 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAssertStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
+import org.jetbrains.annotations.NotNull;
 
 
 public class PyAssertStatementImpl extends PyElementImpl implements PyAssertStatement {
@@ -19,7 +20,7 @@ public class PyAssertStatementImpl extends PyElementImpl implements PyAssertStat
   }
 
   @Override
-  public PyExpression[] getArguments() {
+  public PyExpression @NotNull [] getArguments() {
     return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 }

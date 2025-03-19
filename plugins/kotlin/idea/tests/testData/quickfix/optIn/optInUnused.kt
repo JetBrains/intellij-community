@@ -1,4 +1,5 @@
 // "Safe delete 'Marker'" "false"
+// IGNORE_K2
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn -opt-in=test.Marker
 // WITH_STDLIB
 // ACTION: Rename file to Marker.kt

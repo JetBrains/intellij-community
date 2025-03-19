@@ -1,20 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 public class ArrayExprent extends Exprent {
   private Exprent array;
   private Exprent index;
   private final VarType hardType;
 
-  public ArrayExprent(Exprent array, Exprent index, VarType hardType, Set<Integer> bytecodeOffsets) {
+  public ArrayExprent(Exprent array, Exprent index, VarType hardType, BitSet bytecodeOffsets) {
     super(EXPRENT_ARRAY);
     this.array = array;
     this.index = index;
@@ -29,7 +34,7 @@ public class ArrayExprent extends Exprent {
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     VarType exprType = array.getExprType();
     if (exprType.equals(VarType.VARTYPE_NULL)) {
       return hardType.copy();
@@ -53,8 +58,7 @@ public class ArrayExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
     lst.add(array);
     lst.add(index);
     return lst;
@@ -104,5 +108,12 @@ public class ArrayExprent extends Exprent {
 
   public Exprent getIndex() {
     return index;
+  }
+
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, array);
+    measureBytecode(values, index);
+    measureBytecode(values);
   }
 }

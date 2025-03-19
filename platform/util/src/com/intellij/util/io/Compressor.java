@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,15 +11,11 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.DosFileAttributes;
@@ -32,14 +28,19 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public abstract class Compressor implements Closeable {
+  /**
+   * <b>NOTE</b>: requires {@code commons-compress} and {@code commons-io} libraries to be on the classpath.
+   */
   public static class Tar extends Compressor {
     public enum Compression {GZIP, BZIP2, NONE}
 
-    @ApiStatus.Obsolete
     public Tar(@NotNull Path file, @NotNull Compression compression) throws IOException {
       this(Files.newOutputStream(file), compression);
     }
 
+    /** @deprecated use {@link #Tar(Path, Compression)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
       this(file.toPath(), compression);
     }
@@ -47,7 +48,7 @@ public abstract class Compressor implements Closeable {
     //<editor-fold desc="Implementation">
     private final TarArchiveOutputStream myStream;
 
-    public Tar(@NotNull OutputStream stream, @NotNull Compression compression) throws IOException {
+    private Tar(OutputStream stream, Compression compression) throws IOException {
       myStream = new TarArchiveOutputStream(compressedStream(stream, compression));
       myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
     }
@@ -111,7 +112,9 @@ public abstract class Compressor implements Closeable {
    * ZIP extensions (file modes, symlinks, etc.) are not supported.
    */
   public static class Zip extends Compressor {
-    @ApiStatus.Obsolete
+    /** @deprecated use {@link #Zip(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Zip(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -170,7 +173,10 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
-  public static class Jar extends Zip {
+  public static final class Jar extends Zip {
+    /** @deprecated use {@link #Jar(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Jar(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -179,7 +185,7 @@ public abstract class Compressor implements Closeable {
       super(new JarOutputStream(new BufferedOutputStream(Files.newOutputStream(file))));
     }
 
-    public final void addManifest(@NotNull Manifest manifest) throws IOException {
+    public void addManifest(@NotNull Manifest manifest) throws IOException {
       ByteArrayOutputStream buffer = new ByteArrayOutputStream();
       manifest.write(buffer);
       addFile(JarFile.MANIFEST_NAME, buffer.toByteArray());
@@ -191,13 +197,16 @@ public abstract class Compressor implements Closeable {
   /**
    * Filtering entries being added to the archive.
    * Please note that the second parameter of a filter ({@code Path}) <b>might be {@code null}</b> when it is applied
-   * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
+   * to an entry not present on a disk - e.g., via {@link #addFile(String, byte[])}.
    */
   public Compressor filter(@Nullable BiPredicate<? super String, ? super @Nullable Path> filter) {
     myFilter = filter;
     return this;
   }
 
+  /** @deprecated use {@link #addFile(String, Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addFile(@NotNull String entryName, @NotNull File file) throws IOException {
     addFile(entryName, file.toPath());
   }
@@ -246,7 +255,9 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  @ApiStatus.Obsolete
+  /** @deprecated use {@link #addDirectory(Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull File directory) throws IOException {
     addDirectory(directory.toPath());
   }
@@ -255,6 +266,9 @@ public abstract class Compressor implements Closeable {
     addDirectory("", directory);
   }
 
+  /** @deprecated use {@link #addDirectory(String, Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void addDirectory(@NotNull String prefix, @NotNull File directory) throws IOException {
     addDirectory(prefix, directory.toPath());
   }
@@ -264,8 +278,8 @@ public abstract class Compressor implements Closeable {
   }
 
   public final void addDirectory(@NotNull String prefix, @NotNull Path directory, long timestampInMillis) throws IOException {
-    String entryName = prefix.isEmpty() ? "" : entryName(prefix);
-    addRecursively(entryName, directory, timestampInMillis);
+    prefix = prefix.isEmpty() ? "" : entryName(prefix);
+    addRecursively(prefix, directory, timestampInMillis);
   }
 
   //<editor-fold desc="Internal interface">
@@ -293,6 +307,7 @@ public abstract class Compressor implements Closeable {
       String symlinkTarget = attrs.isSymbolicLink() ? Files.readSymbolicLink(file).toString() : null;
       writeFileEntry(name, source, attrs.size(), timestamp, mode(file), symlinkTarget);
     }
+    catch (NoSuchFileException ignored) { }  // ignoring disappearing files
   }
 
   private static int mode(Path file) throws IOException {
@@ -344,6 +359,12 @@ public abstract class Compressor implements Closeable {
           addFile(file, attrs, name, timestampMs);
         }
         return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        if (exc instanceof NoSuchFileException) return FileVisitResult.CONTINUE;  // ignoring disappearing files
+        throw exc;
       }
 
       private String entryName(Path fileOrDir) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.lexer;
 
 import com.intellij.lexer.FlexAdapter;
@@ -43,21 +43,19 @@ public class IntellijEditorConfigLexerAdapter extends FlexAdapter {
       else {
         final IElementType tokenType = getTokenType();
         switch (myState) {
-          case Initial:
+          case Initial -> {
             if (tokenType == EditorConfigElementTypes.IDENTIFIER) {
               myState = AdapterState.Key;
             }
-            break;
-          case Header:
-            myState = AdapterState.Initial;
-            break;
-          case Key:
+          }
+          case Header -> myState = AdapterState.Initial;
+          case Key -> {
             if (tokenType == EditorConfigElementTypes.SEPARATOR) {
               myState = AdapterState.Value;
             }
-            break;
-          case Value:
-            break;
+          }
+          case Value -> {
+          }
         }
       }
     }

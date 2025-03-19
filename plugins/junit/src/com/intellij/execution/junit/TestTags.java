@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.ExecutionException;
@@ -44,9 +44,8 @@ class TestTags extends TestObject {
     parseAsJavaExpression(tags);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
   }

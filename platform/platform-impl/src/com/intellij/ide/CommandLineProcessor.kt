@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
@@ -12,20 +12,20 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.idea.CommandLineArgs
-import com.intellij.idea.findStarter
+import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
@@ -35,13 +35,15 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.ide.bootstrap.CommandLineArgs
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Frame
 import java.awt.Window
@@ -51,22 +53,32 @@ import java.text.ParseException
 import java.util.concurrent.CancellationException
 import kotlin.Result
 
+@get:Internal
+val isIdeStartupWizardEnabled: Boolean
+  get() {
+    return (!ApplicationManagerEx.isInIntegrationTest() ||
+            System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
+           !AppMode.isRemoteDevHost() &&
+           System.getProperty("intellij.startup.wizard", "true").toBoolean()
+  }
+
 object CommandLineProcessor {
   private val LOG = logger<CommandLineProcessor>()
   private const val OPTION_WAIT = "--wait"
+
   @JvmField
   val OK_FUTURE: Deferred<CliResult> = CompletableDeferred(value = CliResult.OK)
 
-  @ApiStatus.Internal
-  const val SCHEME_INTERNAL = "!!!internal!!!"
+  @Internal
+  const val SCHEME_INTERNAL: String = "!!!internal!!!"
 
   @VisibleForTesting
-  @ApiStatus.Internal
+  @Internal
   suspend fun doOpenFileOrProject(file: Path, shouldWait: Boolean): CommandLineProcessorResult {
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
       val options = OpenProjectTask {
         // do not check for .ipr files in the specified directory
-        // (@develar: it is existing behaviour, I am not fully sure that it is correct)
+        // (@develar: it is existing behavior, I am not fully sure that it is correct)
         preventIprLookup = true
         configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir = file, projectToClose = null)
       }
@@ -79,7 +91,7 @@ object CommandLineProcessor {
           )
         }
       }
-      catch (e: ProcessCanceledException) {
+      catch (_: ProcessCanceledException) {
         return createError(IdeBundle.message("dialog.message.open.cancelled"))
       }
     }
@@ -133,18 +145,16 @@ object CommandLineProcessor {
       else {
         PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
       }
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch(Dispatchers.EDT) {
+      (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
         navigatable.navigate(true)
       }
     }
     return CommandLineProcessorResult(project, if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE)
   }
 
-  private suspend fun findBestProject(file: VirtualFile, projects: List<Project>): Project {
+  private fun findBestProject(file: VirtualFile, projects: List<Project>): Project {
     for (project in projects) {
-      val fileIndex = ProjectFileIndex.getInstance(project)
-      if (readAction { fileIndex.isInContent(file) }) {
+      if (BaseProjectDirectories.getInstance(project).contains(file)) {
         return project
       }
     }
@@ -153,15 +163,14 @@ object CommandLineProcessor {
     return if (project != null && !LightEdit.owns(project)) project else projects.first()
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun scheduleProcessProtocolCommand(rawUri: @NlsSafe String) {
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       processProtocolCommand(rawUri)
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   suspend fun processProtocolCommand(rawUri: @NlsSafe String): CliResult {
     LOG.info("external URI request:\n$rawUri")
     check(!ApplicationManager.getApplication().isHeadlessEnvironment) { "cannot process URI requests in headless state" }
@@ -185,8 +194,7 @@ object CommandLineProcessor {
 
     if (cliResult.message != null) {
       val title = IdeBundle.message("ide.protocol.cannot.title")
-      @Suppress("DEPRECATION")
-      Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, cliResult.message!!, NotificationType.WARNING)
+      Notification("System Messages", title, cliResult.message!!, NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
     }
@@ -212,12 +220,7 @@ object CommandLineProcessor {
         if (file != null) {
           val line = parameters["line"]?.lastOrNull()?.toIntOrNull() ?: -1
           val column = parameters["column"]?.lastOrNull()?.toIntOrNull() ?: -1
-          val (project) = openFileOrProject(file = file,
-                                            line = line,
-                                            column = column,
-                                            tempProject = false,
-                                            shouldWait = false,
-                                            lightEditMode = false)
+          val (project) = openFileOrProject(file, line, column, tempProject = false, shouldWait = false, lightEditMode = false)
           LifecycleUsageTriggerCollector.onProtocolOpenCommandHandled(project)
           return CliResult.OK
         }
@@ -226,9 +229,7 @@ object CommandLineProcessor {
     return CliResult(0, IdeBundle.message("ide.protocol.internal.bad.query", query))
   }
 
-  suspend fun processExternalCommandLine(args: List<String>,
-                                         currentDirectory: String?,
-                                         focusApp: Boolean = false): CommandLineProcessorResult {
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?, focusApp: Boolean = false): CommandLineProcessorResult {
     val logMessage = StringBuilder()
     logMessage.append("External command line:").append('\n')
     logMessage.append("Dir: ").append(currentDirectory).append('\n')
@@ -238,6 +239,7 @@ object CommandLineProcessor {
     logMessage.append("-----")
     LOG.info(logMessage.toString())
     if (args.isEmpty()) {
+      FUSProjectHotStartUpMeasurer.noProjectFound()
       if (focusApp) {
         withContext(Dispatchers.EDT) {
           findVisibleFrame()?.let { frame ->
@@ -249,6 +251,7 @@ object CommandLineProcessor {
     }
 
     processApplicationStarters(args, currentDirectory)?.let {
+      FUSProjectHotStartUpMeasurer.reportStarterUsed()
       // app focus is up to app starter
       return CommandLineProcessorResult(project = null, result = it)
     }
@@ -277,7 +280,8 @@ object CommandLineProcessor {
   }
 
   // find a frame to activate
-  internal fun findVisibleFrame(): Window? {
+  @Internal
+  fun findVisibleFrame(): Window? {
     // we assume that the most recently created frame is the most relevant one
     return Frame.getFrames().asList().asReversed().firstOrNull { it.isVisible }
   }
@@ -285,35 +289,22 @@ object CommandLineProcessor {
   private suspend fun processApplicationStarters(args: List<String>, currentDirectory: String?): CliResult? {
     val command = args.first()
 
-    val starter = try {
-      findStarter(command) ?: return null
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      return null
-    }
+    val starter = findStarter(command) ?: return null
 
     if (!starter.canProcessExternalCommandLine()) {
       return CliResult(1, IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time",
                                             ApplicationNamesInfo.getInstance().productName))
     }
 
-    LOG.info("Processing command with $starter")
+    LOG.info("Processing command with ${starter}")
     val requiredModality = starter.requiredModality
     if (requiredModality == ApplicationStarter.NOT_IN_EDT) {
       return starter.processExternalCommandLine(args, currentDirectory)
     }
 
-    val modalityState = if (requiredModality == ApplicationStarter.ANY_MODALITY) {
-      ModalityState.any()
-    }
-    else {
-      ModalityState.defaultModalityState()
-    }
-    return withContext(Dispatchers.EDT + modalityState.asContextElement()) {
+    @Suppress("ForbiddenInSuspectContextMethod")
+    val modality = if (requiredModality == ApplicationStarter.ANY_MODALITY) ModalityState.any() else ModalityState.defaultModalityState()
+    return withContext(Dispatchers.EDT + modality.asContextElement()) {
       starter.processExternalCommandLine(args, currentDirectory)
     }
   }
@@ -343,6 +334,7 @@ object CommandLineProcessor {
   ): CommandLineProcessorResult {
     val parsedArgsResult = parseArgs(args, currentDirectory)
     if (parsedArgsResult.isFailure) {
+      FUSProjectHotStartUpMeasurer.noProjectFound()
       when (val e = parsedArgsResult.exceptionOrNull()) {
         is ParseException -> return createError(IdeBundle.message("dialog.message.invalid.path", e.message))
         else -> error("Unexpected exception during parsing arguments: $e")
@@ -351,6 +343,28 @@ object CommandLineProcessor {
 
     val commands = parsedArgsResult.getOrNull()
     requireNotNull(commands) { "Parsed args result should have been checked for failure before" }
+
+    if (commands.isEmpty()) {
+      FUSProjectHotStartUpMeasurer.noProjectFound()
+    }
+    else if (commands.size > 1) {
+      FUSProjectHotStartUpMeasurer.openingMultipleProjects()
+    }
+    else {
+      when (val command = commands[0]) {
+        is OpenProjectResult -> {
+          if (command.lightEditMode) {
+            FUSProjectHotStartUpMeasurer.lightEditProjectFound()
+          }
+          else {
+            FUSProjectHotStartUpMeasurer.reportProjectPath(command.file)
+          }
+        }
+        is NoProjectResult -> {
+          FUSProjectHotStartUpMeasurer.noProjectFound()
+        }
+      }
+    }
 
     var result: CommandLineProcessorResult? = null
     for (command in commands) {
@@ -493,4 +507,25 @@ object CommandLineProcessor {
       }
     }
   }
+}
+
+private const val APP_STARTER_EP_NAME = "com.intellij.appStarter"
+
+/**
+ * Returns name of the command for this [ApplicationStarter] specified in plugin.xml file.
+ * It should be used instead of deprecated [ApplicationStarter.commandName].
+ */
+@get:Internal
+val ApplicationStarter.commandNameFromExtension: String?
+  get() {
+    return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME)
+      .filterableLazySequence()
+      .find { it.implementationClassName == javaClass.name }
+      ?.id
+  }
+
+@Suppress("DEPRECATION")
+@Internal
+fun findStarter(key: String): ApplicationStarter? {
+  return ExtensionPointName<ApplicationStarter>(APP_STARTER_EP_NAME).findByIdOrFromInstance(key) { it.commandName }
 }

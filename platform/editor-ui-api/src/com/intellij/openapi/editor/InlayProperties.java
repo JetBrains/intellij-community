@@ -7,7 +7,7 @@ package com.intellij.openapi.editor;
  * The properties should be provided when the inlay is created, see:
  * <ul>
  * <li>{@link InlayModel#addInlineElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addInlineElement},
- * <li>{@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.adAfterLineEndElement},
+ * <li>{@link InlayModel#addAfterLineEndElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addAfterLineEndElement},
  * <li>{@link InlayModel#addBlockElement(int, InlayProperties, EditorCustomElementRenderer) InlayModel.addBlockElement}.
  * </ul>
  * <p>
@@ -39,7 +39,7 @@ public final class InlayProperties {
   /**
    * Tells whether this inlay is associated with the preceding or the following text.
    * This relation affects the inlay's behavior with respect to changes in the editor.
-   * For example, when text is inserted at the inlay's position,
+   * For example, when a text is inserted at the inlay's position,
    * the inlay will end up before the inserted text if the property is {@code false}
    * and after the text if it is {@code true}.
    * <p>

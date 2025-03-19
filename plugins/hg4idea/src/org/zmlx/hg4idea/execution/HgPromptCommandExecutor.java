@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.openapi.project.Project;
@@ -25,10 +25,9 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
   }
 
   @Override
-  @Nullable
-  public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
-                                                @NotNull final String operation,
-                                                @Nullable final List<String> arguments) {
+  public @Nullable HgCommandResult executeInCurrentThread(final @Nullable VirtualFile repo,
+                                                          final @NotNull String operation,
+                                                          final @Nullable List<String> arguments) {
     SocketServer promptServer = new SocketServer(new PromptReceiver(new HgDeleteModifyPromptHandler()));
     try {
       int promptPort = promptServer.start();
@@ -51,7 +50,7 @@ public class HgPromptCommandExecutor extends HgCommandExecutor {
     cmdArguments.add("--config");
     cmdArguments.add("hg4ideaprompt.port=" + port);
 
-    if (arguments != null && arguments.size() != 0) {
+    if (arguments != null && !arguments.isEmpty()) {
       cmdArguments.addAll(arguments);
     }
     return cmdArguments;

@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.grpc.netty.shaded` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "grpc-netty-shaded_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "grpc-netty-shaded",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:grpc-netty-shaded"],
+  runtime_deps = [
+    ":grpc-netty-shaded_resources",
+    "@lib//:grpc-netty-shaded",
+  ]
+)
+### auto-generated section `build intellij.libraries.grpc.netty.shaded` end

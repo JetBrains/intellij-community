@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xsltDebugger;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -17,14 +18,13 @@ import org.intellij.lang.xpath.xslt.context.XsltVariableContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BreakpointContext extends XsltContextProvider {
+public final class BreakpointContext extends XsltContextProvider {
   public BreakpointContext(PsiElement contextElement) {
     super((XmlElement)contextElement);
   }
 
   @Override
-  @NotNull
-  public XPathQuickFixFactory getQuickFixFactory() {
+  public @NotNull XPathQuickFixFactory getQuickFixFactory() {
     return XPathQuickFixFactoryImpl.INSTANCE;
   }
 
@@ -34,12 +34,10 @@ public class BreakpointContext extends XsltContextProvider {
   }
 
   @Override
-  @NotNull
-  public VariableContext getVariableContext() {
+  public @NotNull VariableContext getVariableContext() {
     return new XsltVariableContext() {
       @Override
-      @Nullable
-      protected XmlTag getContextTagImpl(XPathElement element) {
+      protected @Nullable XmlTag getContextTagImpl(XPathElement element) {
         return PsiTreeUtil.getParentOfType(getContextElement(), XmlTag.class, false);
       }
 

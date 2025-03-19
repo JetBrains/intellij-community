@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.java.compiler.antTasks` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-compiler-antTasks",
+  module_name = "intellij.java.compiler.antTasks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//ant/lib:ant-antlr-provided",
+    "//java/compiler/forms-compiler:java-guiForms-compiler",
+    "//platform/forms_rt:java-guiForms-rt",
+    "@lib//:asm",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+  ],
+  runtime_deps = ["//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8"]
+)
+### auto-generated section `build intellij.java.compiler.antTasks` end

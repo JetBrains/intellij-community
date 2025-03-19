@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,20 +14,17 @@ import javax.swing.*;
  *
  * @author Konstantin Bulenkov
  * @see DialogWrapper#doValidate()
- * @see <a href="https://jetbrains.design/intellij/principles/validation_errors/">Validation errors guidelines</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/validation-errors.html">Validation errors guidelines</a>
  */
 public final class ValidationInfo {
   /**
-   * The description of a validation problem to display to user.
+   * The description of a validation problem to display to user, in HTML format.
    * The blank message means that there is still a problem, but nothing to display.
    * It can be used for some obvious problems like an empty text field.
    */
-  @NlsContexts.DialogMessage
-  @NotNull
-  public final String message;
+  public final @NlsContexts.DialogMessage @NotNull String message;
 
-  @Nullable
-  public final JComponent component;
+  public final @Nullable JComponent component;
 
   public boolean okEnabled;
   public boolean warning;
@@ -50,6 +48,18 @@ public final class ValidationInfo {
    */
   public ValidationInfo(@NlsContexts.DialogMessage @NotNull String message) {
     this(message, null);
+  }
+
+  /**
+   * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
+   * and will be focused when the user tries to close the dialog by pressing OK.
+   *
+   * @param message   the error message to display.
+   * @param component the component containing the invalid data.
+   */
+  public ValidationInfo(@NotNull HtmlChunk message, @Nullable JComponent component) {
+    this.message = message.toString();
+    this.component = component;
   }
 
   public ValidationInfo withOKEnabled() {
@@ -78,5 +88,10 @@ public final class ValidationInfo {
            this.component == that.component &&
            this.okEnabled == that.okEnabled &&
            this.warning == that.warning;
+  }
+
+  @Override
+  public  String toString() {
+    return "ValidationInfo{message='" + message + '\'' + '}';
   }
 }

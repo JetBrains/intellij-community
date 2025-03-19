@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -8,6 +10,7 @@ import java.util.ListIterator;
 /**
 * @author Konstantin Bulenkov
 */
+@ApiStatus.Internal
 public final class SpeedSearchObjectWithWeight {
   public final Object node;
   private final int weight;

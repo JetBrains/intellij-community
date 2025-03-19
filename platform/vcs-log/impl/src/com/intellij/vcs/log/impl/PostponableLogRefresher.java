@@ -10,14 +10,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class PostponableLogRefresher {
   private static final Logger LOG = Logger.getInstance(PostponableLogRefresher.class);
   private final @NotNull VcsLogData myLogData;
@@ -25,12 +28,12 @@ public final class PostponableLogRefresher {
   private final @NotNull Set<VcsLogWindow> myLogWindows = new HashSet<>();
   private final @NotNull Map<String, Throwable> myCreationTraces = new HashMap<>();
 
-  public PostponableLogRefresher(@NotNull VcsLogData logData) {
+  PostponableLogRefresher(@NotNull VcsLogData logData) {
     myLogData = logData;
     myLogData.addDataPackChangeListener(dataPack -> {
       LOG.debug("Refreshing log windows " + myLogWindows);
       for (VcsLogWindow window : myLogWindows) {
-        dataPackArrived(window.getRefresher(), window.isVisible());
+        dataPackArrived(window.getRefresher(), window.isVisible(), dataPack);
       }
     });
   }
@@ -80,14 +83,14 @@ public final class PostponableLogRefresher {
     }
   }
 
-  private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
-    refresher.setValid(visible, true);
+  private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible, @NotNull DataPack newDataPack) {
+    refresher.setDataPack(visible, newDataPack);
   }
 
   @RequiresEdt
   public void refresh(@NotNull VirtualFile root) {
     if (canRefreshNow()) {
-      myLogData.refresh(Collections.singleton(root));
+      myLogData.refresh(Collections.singleton(root), true);
     }
     else {
       LOG.debug("Postponed refresh for " + root);

@@ -1,16 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-class MixedListFactory extends SEResultsListFactory {
+final class MixedListFactory extends SEResultsListFactory {
 
   private final List<String> prioritizedContributors = new ArrayList<>();
 
@@ -19,19 +21,22 @@ class MixedListFactory extends SEResultsListFactory {
     prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
-    if (Registry.is("search.everywhere.recent.at.top")) {
+    if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {
       prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
     }
   }
 
   @Override
-  public SearchListModel createModel() {
+  public SearchListModel createModel(Computable<String> tabIDProvider) {
     MixedSearchListModel mixedModel = new MixedSearchListModel();
+    mixedModel.setTabIDProvider(tabIDProvider);
 
     Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {
-      int firstElementPriority = priorities.getOrDefault(element1.getContributor().getSearchProviderId(), 0);
-      int secondElementPriority = priorities.getOrDefault(element2.getContributor().getSearchProviderId(), 0);
+      @Nullable SearchEverywhereContributor<?> contributor1 = element1.getContributor();
+      @Nullable SearchEverywhereContributor<?> contributor2 = element2.getContributor();
+      int firstElementPriority = contributor1 == null ? 0 : priorities.getOrDefault(contributor1.getSearchProviderId(), 0);
+      int secondElementPriority = contributor2 == null ? 0 : priorities.getOrDefault(contributor2.getSearchProviderId(), 0);
       return Integer.compare(firstElementPriority, secondElementPriority);
     };
 
@@ -43,8 +48,7 @@ class MixedListFactory extends SEResultsListFactory {
     return mixedModel;
   }
 
-  @NotNull
-  public Map<String, Integer> getContributorsPriorities() {
+  public @NotNull Map<String, Integer> getContributorsPriorities() {
     Map<String, Integer> priorities = new HashMap<>();
     for (int i = 0; i < prioritizedContributors.size(); i++) {
       priorities.put(prioritizedContributors.get(i), prioritizedContributors.size() - i);
@@ -67,6 +71,8 @@ class MixedListFactory extends SEResultsListFactory {
       public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         if (value == SearchListModel.MORE_ELEMENT) {
           return getMoreElementRenderer(list, index, isSelected, cellHasFocus);
+        } else if (value instanceof SearchListModel.ResultsNotificationElement) {
+          return resultsNotificationElementRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
 
         return getNonMoreElementRenderer(list, value, index, isSelected, cellHasFocus, model, myRenderersCache);

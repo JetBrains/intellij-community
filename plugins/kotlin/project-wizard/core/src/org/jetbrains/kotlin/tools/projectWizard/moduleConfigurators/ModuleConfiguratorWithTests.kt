@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfi
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.maven.MavenOnlyPluginIR
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.settings.DisplayableSettingItem
-import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.DefaultRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 
@@ -157,10 +156,9 @@ enum class KotlinTestFramework(
         dependencyNames = listOf("test-junit5"),
         additionalDependencies = listOf(
             ArtifactBasedLibraryDependencyIR(
-                MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "org.junit.jupiter", "junit-jupiter-engine"),
-                version = Versions.JUNIT5,
-                dependencyType = DependencyType.TEST,
-                dependencyKind = DependencyKind.runtimeOnly
+              Dependencies.JUNIT5,
+              dependencyType = DependencyType.TEST,
+              dependencyKind = DependencyKind.runtimeOnly
             ),
         )
     ),

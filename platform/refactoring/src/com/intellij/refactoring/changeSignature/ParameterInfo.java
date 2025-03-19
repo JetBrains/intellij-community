@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.changeSignature;
 
@@ -52,8 +52,7 @@ public interface ParameterInfo {
    * By default it's expression based on {@link #getDefaultValue()} string representation or default value for a type
    * Could be overridden to provide values which depend on the call site
    */
-  @Nullable
-  default PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
+  default @Nullable PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
     return null;
   }
 

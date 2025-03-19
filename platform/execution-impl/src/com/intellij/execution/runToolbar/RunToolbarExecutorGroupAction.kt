@@ -2,7 +2,7 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.Executor
-import com.intellij.execution.ExecutorRegistryImpl
+import com.intellij.execution.actions.ExecutorGroupActionGroup
 import com.intellij.execution.executors.ExecutorGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -34,8 +34,9 @@ internal class RunToolbarExecutorGroupAction(private val group: RunToolbarExecut
 }
 
 internal class RunToolbarExecutorGroup(executorGroup: ExecutorGroup<*>,
-                                       childConverter: Function<in Executor, out AnAction>, override val process: RunToolbarProcess) :
-  ExecutorRunToolbarAction, ExecutorRegistryImpl.ExecutorGroupActionGroup(executorGroup, childConverter) {
+                                       childConverter: Function<in Executor, out AnAction>,
+                                       override val process: RunToolbarProcess)
+  : ExecutorRunToolbarAction, ExecutorGroupActionGroup(executorGroup, childConverter) {
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.RIGHT_FLEXIBLE
 

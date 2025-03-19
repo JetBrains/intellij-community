@@ -2,6 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED;
 
 public class ChangeMethodSignatureFromUsageModernTest extends LightQuickFixParameterizedTestCase {
 
@@ -10,4 +14,8 @@ public class ChangeMethodSignatureFromUsageModernTest extends LightQuickFixParam
     return "/codeInsight/daemonCodeAnalyzer/quickFix/changeMethodSignatureFromUsageModern";
   }
 
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21_ANNOTATED;
+  }
 }

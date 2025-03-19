@@ -1,34 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.nastradamus
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.*
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.tool.Cache
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
-import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.*
 import org.junit.rules.TestName
 import org.junit.rules.Timeout
-import java.io.File
 import java.net.URI
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.readText
 
 class NastradamusClientTest {
   init {
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   @JvmField
   @Rule
-  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+  val timeoutRule: Timeout = Timeout(30, TimeUnit.SECONDS)
 
   @JvmField
   @Rule
@@ -41,7 +41,7 @@ class NastradamusClientTest {
   private lateinit var nastradamus: NastradamusClient
 
   private val fakeResponsesDir by lazy {
-    Paths.get(this::class.java.classLoader.getResource("nastradamus")!!.toURI())
+    Path.of(PlatformTestUtil.getCommunityPath() + "/platform/testFramework/testData/nastradamus")
   }
 
   @Before
@@ -54,11 +54,11 @@ class NastradamusClientTest {
   @After
   fun afterEach() {
     tcMockServer.shutdown()
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {
-    val tempPropertiesFile = File.createTempFile("teamcity_", "_properties_file.properties")
+    val tempPropertiesFile = FileUtil.createTempFile("teamcity_", "_properties_file.properties")
 
     Properties().apply {
       setProperty("teamcity.build.id", "225659992")
@@ -207,7 +207,7 @@ class NastradamusClientTest {
   @Test
   fun successfulErrorThresholdTest() {
     (1..3).forEach {
-      val result = withErrorThreshold<String>(
+      val result = withErrorThreshold(
         objName = testName.methodName,
         errorThreshold = 1,
         action = { it.toString() },
@@ -224,7 +224,7 @@ class NastradamusClientTest {
 
     (1..3).forEach {
       try {
-        withErrorThreshold<String>(
+        withErrorThreshold(
           objName = testName.methodName,
           errorThreshold = 3,
           action = { throw Exception("Badums") },
@@ -238,7 +238,7 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Count of failures should be 3", 3, counter.get())
 
-    val result = withErrorThreshold<String>(
+    val result = withErrorThreshold(
       objName = testName.methodName,
       errorThreshold = 3,
       action = { "action" },
@@ -299,7 +299,7 @@ class NastradamusClientTest {
     )
 
     val xxHash3TestClassResult = testResultRequestEntity.testRunResults
-      .single { it.fullName == "org.jetbrains.xxh3.XxHash3Test" }
+      .single { it.fullName == "com.intellij.util.lang.XxHash3Test" }
 
     Assert.assertTrue("""
       XxHash3Test class must have 184 tests and be with correct duration and bucket attributes.

@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.platform.ui.jcef` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.awt=ALL-UNNAMED",
+    "java.desktop/java.awt.peer=ALL-UNNAMED",
+  ]
+)
+
+jvm_resources(
+  name = "ui-jcef_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui-jcef",
+  module_name = "intellij.platform.ui.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jcef",
+    "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-ui",
+    "//platform/util-ex",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/concurrency",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "@lib//:jbr-api",
+    "//platform/jbr",
+    "@lib//:jna",
+  ],
+  exports = ["@lib//:jcef"],
+  runtime_deps = [":ui-jcef_resources"]
+)
+### auto-generated section `build intellij.platform.ui.jcef` end

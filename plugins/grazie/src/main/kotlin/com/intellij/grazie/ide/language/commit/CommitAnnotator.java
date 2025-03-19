@@ -10,7 +10,6 @@ import com.intellij.grazie.utils.Text;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiElement;
@@ -20,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 import java.util.List;
 
-public class CommitAnnotator implements Annotator {
-
+final class CommitAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!CommitMessage.isCommitMessage(element) || !GrazieConfig.Companion.get().getCheckingContext().isCheckInCommitMessagesEnabled()) {
@@ -51,7 +49,7 @@ public class CommitAnnotator implements Annotator {
 
       for (TextRange range : problem.getHighlightRanges()) {
         AnnotationBuilder annotation = holder
-          .newAnnotation(HighlightSeverity.WARNING, message)
+          .newAnnotation(SpellCheckerSeveritiesProvider.TYPO, message)
           .tooltip(tooltip)
           .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
           .range(text.textRangeToFile(range));
@@ -63,5 +61,4 @@ public class CommitAnnotator implements Annotator {
       return null;
     });
   }
-
 }

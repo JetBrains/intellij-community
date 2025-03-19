@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.propertybased
 
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -18,22 +19,17 @@ import com.intellij.packaging.impl.elements.DirectoryPackagingElement
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
 import com.intellij.packaging.ui.ArtifactEditorContext
 import com.intellij.packaging.ui.PackagingElementPresentation
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
+import com.intellij.testFramework.propertyBased.MadTestingUtil.assertNoErrorLoggedIn
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.util.ui.EmptyIcon
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
@@ -78,7 +74,7 @@ class ArtifactsPropertyTest {
 
     PropertyChecker.checkScenarios {
       codeMaker = CodeMaker()
-      ImperativeCommand {
+      assertNoErrorLoggedIn(ImperativeCommand {
         try {
           it.executeCommands(Generator.sampledFrom(
             RenameArtifact(),
@@ -125,7 +121,7 @@ class ArtifactsPropertyTest {
           it.logMessage("------- Code -------")
           it.logMessage(codeMaker.get())
         }
-      }
+      })
     }
   }
 
@@ -299,9 +295,11 @@ class ArtifactsPropertyTest {
 
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          val rootElement = createCompositeElementEntity(env, it)
+          val rootElement = createCompositeElementEntity(env)
           val (_, id, _) = selectArtifactType(env)
-          it.addArtifactEntity(artifactName, id, true, null, rootElement, TestEntitySource)
+          it addEntity ArtifactEntity(artifactName, id, true, TestEntitySource) {
+            this.rootElement = rootElement
+          }
         }
       }
       env.logMessage("Add artifact via model: $artifactName")
@@ -331,7 +329,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Rename artifact via workspace model: ${selectedArtifact.name} -> $artifactName")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.name = artifactName
           }
         }
@@ -359,7 +357,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Change build on make option for ${selectedArtifact.name}: Prev value: ${selectedArtifact.includeInProjectBuild}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.includeInProjectBuild = !this.includeInProjectBuild
           }
         }
@@ -386,7 +384,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Change artifact type for ${selectedArtifact.name}: Prev value: ${selectedArtifact.artifactType}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(selectedArtifact) {
+          it.modifyArtifactEntity(selectedArtifact) {
             this.artifactType = id
           }
         }
@@ -739,9 +737,8 @@ class ArtifactsPropertyTest {
     return element to elementName
   }
 
-  private fun createCompositeElementEntity(env: ImperativeCommand.Environment,
-                                           builder: MutableEntityStorage): CompositePackagingElementEntity {
-    return builder.addArtifactRootElementEntity(emptyList(), TestEntitySource)
+  private fun createCompositeElementEntity(env: ImperativeCommand.Environment): ArtifactRootElementEntity.Builder {
+    return ArtifactRootElementEntity(TestEntitySource)
   }
 
   private fun chooseSomeElementFromTree(env: ImperativeCommand.Environment,

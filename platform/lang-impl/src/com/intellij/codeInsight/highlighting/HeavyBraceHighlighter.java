@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.lang.PairedBraceMatcher;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.codeInsight.highlighting.JavaBraceMatcher
  */
 public abstract class HeavyBraceHighlighter {
-  public final static ExtensionPointName<HeavyBraceHighlighter> EP_NAME =
+  public static final ExtensionPointName<HeavyBraceHighlighter> EP_NAME =
     ExtensionPointName.create("com.intellij.heavyBracesHighlighter");
 
   /**
@@ -51,8 +51,7 @@ public abstract class HeavyBraceHighlighter {
    * @param offset An offset in {@link PsiFile PsiFile} {@code file} to match in.
    * @return Nullable {@link Pair Pair} of {@link TextRange TextRange} result.
    */
-  @Nullable
-  public static Pair<TextRange, TextRange> match(@NotNull PsiFile file, int offset) {
+  public static @Nullable Pair<TextRange, TextRange> match(@NotNull PsiFile file, int offset) {
     if (!file.isValid()) return null;
 
     for (HeavyBraceHighlighter highlighter : EP_NAME.getExtensionList()) {
@@ -85,6 +84,5 @@ public abstract class HeavyBraceHighlighter {
    * a {@link Pair Pair} of {@link TextRange TextRange} to highlight otherwise.
    * @see CaretModel
    */
-  @Nullable
-  protected abstract Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile file, int offset);
+  protected abstract @Nullable Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile file, int offset);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -10,13 +10,13 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CompilerConfigurable implements SearchableConfigurable.Parent, Configurable.NoScroll {
+public class CompilerConfigurable implements SearchableConfigurable.Parent {
   static final String CONFIGURABLE_ID = "project.propCompiler";
 
-  private final CompilerUIConfigurable myCompilerUIConfigurable;
+  private final CompilerUIConfigurableKt myCompilerUIConfigurable;
 
   public CompilerConfigurable(Project project) {
-    myCompilerUIConfigurable = new CompilerUIConfigurable(project);
+    myCompilerUIConfigurable = new CompilerUIConfigurableKt(project);
   }
 
   @Override
@@ -30,8 +30,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return CONFIGURABLE_ID;
   }
 
@@ -70,7 +69,8 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
     return new Configurable[0];
   }
 
-  @NotNull CompilerUIConfigurable getCompilerUIConfigurable() {
+  @NotNull
+  CompilerUIConfigurableKt getCompilerUIConfigurable() {
     return myCompilerUIConfigurable;
   }
 }

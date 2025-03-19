@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -16,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
@@ -30,6 +28,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static java.util.Objects.requireNonNullElse;
 
 /**
  * created at Nov 13, 2001
@@ -41,6 +43,8 @@ public class PsiElementRenameHandler implements RenameHandler {
   private static final ExtensionPointName<Condition<? super PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
 
   public static final DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
+  
+  public static final DataKey<List<String>> NAME_SUGGESTIONS = DataKey.create("renameNameSuggestions");
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, @NotNull DataContext dataContext) {
@@ -59,7 +63,9 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtilBase.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
-    invoke(element, project, nameSuggestionContext, editor, shouldCheckInProject());
+    boolean checkInProject = shouldCheckInProject();
+    List<String> suggestedNames = requireNonNullElse(NAME_SUGGESTIONS.getData(dataContext), List.of());
+    invoke(element, project, nameSuggestionContext, suggestedNames, editor, checkInProject);
   }
 
   @Override
@@ -86,7 +92,20 @@ public class PsiElementRenameHandler implements RenameHandler {
     invoke(element, project, nameSuggestionContext, editor, true);
   }
 
-  public static void invoke(@NotNull PsiElement element, @NotNull Project project, PsiElement nameSuggestionContext, @Nullable Editor editor, boolean checkInProject) {
+  public static void invoke(@NotNull PsiElement element,
+                            @NotNull Project project,
+                            PsiElement nameSuggestionContext,
+                            @Nullable Editor editor,
+                            boolean checkInProject) {
+    invoke(element, project, nameSuggestionContext, List.of(), editor, checkInProject);
+  }
+
+  private static void invoke(@NotNull PsiElement element,
+                             @NotNull Project project,
+                             PsiElement nameSuggestionContext,
+                             @NotNull List<String> suggestedNames,
+                             @Nullable Editor editor,
+                             boolean checkInProject) {
     if (!canRename(project, editor, element)) {
       return;
     }
@@ -104,51 +123,49 @@ public class PsiElementRenameHandler implements RenameHandler {
       }
     }
 
-    rename(element, project, nameSuggestionContext, editor);
+    var processor = RenamePsiElementProcessorBase.forPsiElement(element);
+    rename(element, project, nameSuggestionContext, suggestedNames, editor, null, processor);
   }
 
-  public static boolean canRename(@NotNull Project project, Editor editor, PsiElement element) throws CommonRefactoringUtil.RefactoringErrorHintException {
-    String message = element == null ? null : renameabilityStatus(project, element);
-    if (StringUtil.isNotEmpty(message)) {
-      showErrorMessage(project, editor, message);
+  public static boolean canRename(@NotNull Project project, Editor editor, PsiElement element) {
+    if (element == null) return false;
+    String message = getErrorMessage(project, editor, element);
+    if (message != null) {
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message),
+                                          RefactoringBundle.message("rename.title"), null);
       return false;
     }
+
     return true;
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String renameabilityStatus(@NotNull Project project, @NotNull PsiElement element) {
-    boolean hasRenameProcessor = !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
-    boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
+  private static @Nullable @NlsContexts.DialogMessage String getErrorMessage(@NotNull Project project, Editor editor, PsiElement element) {
+    boolean hasRenameProcessor =
+      !(RenamePsiElementProcessorBase.forPsiElement(element) instanceof RenamePsiElementProcessorBase.DefaultRenamePsiElementProcessor);
+    boolean hasWritableMetaData = element instanceof PsiMetaOwner o && o.getMetaData() instanceof PsiWritableMetaData;
 
     if (!hasRenameProcessor && !hasWritableMetaData && !(element instanceof PsiNamedElement)) {
-      return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.symbol.to.rename"));
+      return editor == null
+             ? RefactoringBundle.message("error.cannot.be.renamed")
+             : RefactoringBundle.message("error.wrong.caret.position.symbol.to.rename");
     }
-
-    if (!PsiManager.getInstance(project).isInProject(element)) {
-      if (element.isPhysical()) {
-        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-        if (!(virtualFile != null && NonProjectFileWritingAccessProvider.isWriteAccessAllowed(virtualFile, project))) {
-          String message = RefactoringBundle.message("error.out.of.project.element", RenameUtil.getUsageViewType(element));
-          return RefactoringBundle.getCannotRefactorMessage(message);
+    else {
+      if (!PsiManager.getInstance(project).isInProject(element)) {
+        if (element.isPhysical()) {
+          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+          if (virtualFile == null || !NonProjectFileWritingAccessProvider.isWriteAccessAllowed(virtualFile, project)) {
+            return RefactoringBundle.message("error.out.of.project.element", RenameUtil.getUsageViewType(element));
+          }
+        }
+        if (!element.isWritable()) {
+          return RefactoringBundle.message("error.cannot.be.renamed");
         }
       }
-
-      if (!element.isWritable()) {
-        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.cannot.be.renamed"));
+      if (InjectedLanguageUtilBase.isInInjectedLanguagePrefixSuffix(element)) {
+        return RefactoringBundle.message("error.in.injected.lang.prefix.suffix", RenameUtil.getUsageViewType(element));
       }
     }
-
-    if (InjectedLanguageUtilBase.isInInjectedLanguagePrefixSuffix(element)) {
-      final String message = RefactoringBundle.message("error.in.injected.lang.prefix.suffix", RenameUtil.getUsageViewType(element));
-      return RefactoringBundle.getCannotRefactorMessage(message);
-    }
-
     return null;
-  }
-
-  private static void showErrorMessage(@NotNull Project project, @Nullable Editor editor, @NotNull @NlsContexts.DialogMessage String message) {
-    CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 
   public static void rename(@NotNull PsiElement element, @NotNull Project project, PsiElement nameSuggestionContext, Editor editor) {
@@ -166,10 +183,21 @@ public class PsiElementRenameHandler implements RenameHandler {
                             Editor editor,
                             String defaultName,
                             RenamePsiElementProcessorBase processor) {
+    rename(element, project, nameSuggestionContext, List.of(), editor, defaultName, processor);
+  }
+
+  private static void rename(@NotNull PsiElement element,
+                             @NotNull Project project,
+                             PsiElement nameSuggestionContext,
+                             @NotNull Collection<String> suggestedNames, 
+                             Editor editor,
+                             String defaultName,
+                             RenamePsiElementProcessorBase processor) {
     PsiElement substituted = processor.substituteElementToRename(element, editor);
     if (substituted == null || !canRename(project, editor, substituted)) return;
 
     RenameRefactoringDialog dialog = processor.createDialog(project, substituted, nameSuggestionContext, editor);
+    dialog.addSuggestedNames(suggestedNames);
 
     if (defaultName == null && ApplicationManager.getApplication().isUnitTestMode()) {
       String[] strings = dialog.getSuggestedNames();
@@ -202,23 +230,19 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static boolean isVetoed(PsiElement element) {
     if (element == null ||
-        element instanceof SyntheticElement ||
-        element instanceof PsiNamedElement namedElement && namedElement.getName() == null) {
+       element instanceof SyntheticElement ||
+       element instanceof PsiNamedElement namedElement && namedElement.getName() == null) {
       return true;
     }
-    for(Condition<? super PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {
+    for (Condition<? super PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {
       if (condition.value(element)) return true;
     }
     return false;
   }
 
-  @Nullable
-  public static PsiElement getElement(@NotNull DataContext dataContext) {
+  public static @Nullable PsiElement getElement(@NotNull DataContext dataContext) {
     PsiElement[] elementArray = CommonRefactoringUtil.getPsiElementArray(dataContext);
 
-    if (elementArray.length != 1) {
-      return null;
-    }
-    return elementArray[0];
+    return elementArray.length != 1 ? null : elementArray[0];
   }
 }

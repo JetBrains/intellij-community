@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Reader;
 
-public class UnsyncCharArrayReader extends Reader {
+class UnsyncCharArrayReader extends Reader {
   private final char[] myText;
   private final int myLength;
   private int myCurPos;
 
-  public UnsyncCharArrayReader(final char[] text, int offset, int length) {
+  UnsyncCharArrayReader(final char[] text, int offset, int length) {
     myText = text;
     myLength = length;
     myCurPos = offset;

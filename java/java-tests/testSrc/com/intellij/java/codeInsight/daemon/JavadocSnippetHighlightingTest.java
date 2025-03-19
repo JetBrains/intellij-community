@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class JavadocSnippetHighlightingTest extends LightJavaCodeInsightFixtureTestCase {
@@ -39,7 +40,8 @@ public class JavadocSnippetHighlightingTest extends LightJavaCodeInsightFixtureT
                    class X {}
                    """, myFixture.getIntentionPreviewText(deleteSnippetBody));
     IntentionAction action = myFixture.findSingleIntention("Synchronize inline snippet");
-    myFixture.launchAction(action);
+    myFixture.checkPreviewAndLaunchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("""
                             /**
                              * {@snippet class="Test":

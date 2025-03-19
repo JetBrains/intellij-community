@@ -1,17 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.impl.ModifiableModelCommitterService
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterService {
   override fun multiCommit(rootModels: MutableCollection<out ModifiableRootModel>, moduleModel: ModifiableModuleModel) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -29,7 +27,7 @@ internal class ModifiableModelCommitterServiceBridge : ModifiableModelCommitterS
     }
 
     WorkspaceModel.getInstance(moduleModel.project).updateProjectModel("Multicommit for modifiable models") { builder ->
-      diffs.forEach { builder.addDiff(it) }
+      diffs.forEach { builder.applyChangesFrom(it) }
     }
 
     for (rootModel in committedModels) {

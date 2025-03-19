@@ -93,8 +93,4 @@ public interface PlatformIcons {
   /** @deprecated use {@link #FOLDER_ICON} */
   @Deprecated(forRemoval = true)
   Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
-
-  /** @deprecated use {@link #FOLDER_ICON} */
-  @Deprecated(forRemoval = true)
-  Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

@@ -142,7 +142,7 @@ public class JBDimension extends Dimension {
     this.height = height;
   }
 
-  protected void set(Size2D size2d) {
+  private void set(Size2D size2d) {
     set(size2d.intWidth(), size2d.intHeight());
   }
 

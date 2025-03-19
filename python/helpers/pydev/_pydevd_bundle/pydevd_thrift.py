@@ -17,7 +17,7 @@ from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresenta
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import  is_string, should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
+    get_column_formatter_by_type, get_formatted_row_elements, IAtPolarsAccessor, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
@@ -187,14 +187,17 @@ class TypeResolveHandler(object):
 
             return self._base_get_type(o, type_name, type_name)
 
-    def str_from_providers(self, o, type_object, type_name):
+    def str_from_providers(self, o, type_object, type_name, do_trim=True):
         provider = self._type_to_str_provider_cache.get(type_object)
 
         if provider is self.NO_PROVIDER:
             return None
 
         if provider is not None:
-            return provider.get_str(o)
+            try:
+                return provider.get_str(o, do_trim)
+            except TypeError:
+                return provider.get_str(o)
 
         if not self._initialized:
             self._initialize()
@@ -202,7 +205,10 @@ class TypeResolveHandler(object):
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
-                return provider.get_str(o)
+                try:
+                    return provider.get_str(o, do_trim)
+                except TypeError:
+                    return provider.get_str(o)
 
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
@@ -257,7 +263,7 @@ def frame_vars_to_struct(frame_f_locals, group_type, hidden_ns=None, user_type_r
 
 
 def _get_default_var_string_representation(v, _type, typeName, format, do_trim=True):
-    str_from_provider = _str_from_providers(v, _type, typeName)
+    str_from_provider = _str_from_providers(v, _type, typeName, do_trim)
     if str_from_provider is not None:
         return str_from_provider
 
@@ -368,6 +374,10 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
+    if rows == 0 and cols == 0:
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_value(r, c) for c in range(cols)), format)
+        return array_chunk
+
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
         array = array[0]
@@ -402,6 +412,25 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     return array_chunk
 
 
+def tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        return array_to_thrift_struct(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_thrift_struct(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def sparse_tensor_to_thrift_struct(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        import tensorflow as tf
+        return tensor_to_thrift_struct(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
+
+
+def dataset_to_thrift_struct(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_thrift_struct(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
+
+
 def array_to_meta_thrift_struct(array, name, format):
     type = array.dtype.kind
     slice = name
@@ -426,25 +455,19 @@ def array_to_meta_thrift_struct(array, name, format):
     reslice = ""
     if l > 2:
         raise ExceedingArrayDimensionsException
+    elif l == 0:
+        rows = 0
+        cols = 0
     elif l == 1:
         # special case with 1D arrays arr[i, :] - row, but arr[:, i] - column with equal shape and ndim
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -483,7 +506,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     array_chunk = GetArrayResponse()
@@ -501,7 +524,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                except (IndexError, KeyError, AttributeError):
                     kind = "O"
             format = array_default_format(kind)
         else:
@@ -516,7 +539,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
-        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, '%' + format)
         return array_chunk
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
@@ -534,25 +558,41 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df = df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(c):
         return get_column_formatter_by_type(format, dtypes[c])
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format='%s')
     return array_chunk
 
 
@@ -588,7 +628,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
     for row in range(rows):
         row_header = RowHeader()
         row_header.index = row
-        row_header.label = get_label(df.axes[0].values[row])
+        row_header.label = get_label(df.axes[0].values[row] if dim != -1 else str(row))
         row_headers.append(row_header)
     array_headers.colHeaders = col_headers
     array_headers.rowHeaders = row_headers
@@ -597,8 +637,14 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {
     "ndarray": array_to_thrift_struct,
+    "recarray": array_to_thrift_struct,
+    "EagerTensor": tensor_to_thrift_struct,
+    "ResourceVariable": tensor_to_thrift_struct,
+    "SparseTensor": sparse_tensor_to_thrift_struct,
+    "Tensor": tensor_to_thrift_struct,
     "DataFrame": dataframe_to_thrift_struct,
     "Series": dataframe_to_thrift_struct,
+    "Dataset": dataset_to_thrift_struct,
     "GeoDataFrame": dataframe_to_thrift_struct,
     "GeoSeries": dataframe_to_thrift_struct
 }

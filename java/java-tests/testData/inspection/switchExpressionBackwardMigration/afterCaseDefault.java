@@ -8,7 +8,7 @@ class SwitchExpressionMigration {
           case String s:
               i = 0;
               break;
-          case default:
+          default:
               i = 1;
               break;
       }

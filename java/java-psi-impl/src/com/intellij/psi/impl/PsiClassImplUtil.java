@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,6 +37,7 @@ import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -157,7 +159,7 @@ public final class PsiClassImplUtil {
            : ContainerUtil.filter(type.getMembers(aClass), member -> name.equals(member.getName()));
   }
 
-  public static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
+  public static @Unmodifiable @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> getAllWithSubstitutorsByMap(@NotNull PsiClass aClass, @NotNull MemberType type) {
     return withSubstitutors(aClass, getMap(aClass).getAllMembers(type, null));
   }
 
@@ -239,10 +241,11 @@ public final class PsiClassImplUtil {
   public static Icon getClassIcon(int flags, @NotNull PsiClass aClass, @Nullable Icon symbolIcon) {
     Icon base = LastComputedIconCache.get(aClass, flags);
     if (base == null) {
-      if (symbolIcon == null) {
-        symbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
+      Icon baseSymbolIcon = symbolIcon;
+      if (baseSymbolIcon == null) {
+        baseSymbolIcon = ElementPresentationUtil.getClassIconOfKind(aClass, ElementPresentationUtil.getBasicClassKind(aClass));
       }
-      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, symbolIcon, 0);
+      RowIcon baseIcon = IconManager.getInstance().createLayeredIcon(aClass, baseSymbolIcon, 0);
       base = ElementPresentationUtil.addVisibilityIcon(aClass, flags, baseIcon);
     }
 
@@ -283,7 +286,9 @@ public final class PsiClassImplUtil {
     PsiClass containingClass = aClass.getContainingClass();
     if (aClass.hasModifierProperty(PsiModifier.PUBLIC) ||
         aClass.hasModifierProperty(PsiModifier.PROTECTED)) {
-      return containingClass == null ? maximalUseScope : containingClass.getUseScope();
+      // If the containing class is not final, it's possible to expose nested class through public subclass of containing class 
+      return containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL) ? 
+             maximalUseScope : containingClass.getUseScope();
     }
     else if (aClass.hasModifierProperty(PsiModifier.PRIVATE) || aClass instanceof PsiTypeParameter) {
       PsiClass topClass = PsiUtil.getTopLevelClass(aClass);
@@ -313,6 +318,9 @@ public final class PsiClassImplUtil {
   }
 
   public static boolean isMainOrPremainMethod(@NotNull PsiMethod method) {
+    if ("main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method)) {
+      return true;
+    }
     String name = method.getName();
     if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
@@ -343,8 +351,19 @@ public final class PsiClassImplUtil {
     private final ConcurrentMap<MemberType, PsiMember[]> myAllMembers;
 
     MemberCache(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
+      boolean dumb = DumbService.isDumb(psiClass.getProject());
       myAllSupers = JBTreeTraverser
-        .from((PsiClass c) -> ContainerUtil.mapNotNull(c.getSupers(), s -> PsiSuperMethodUtil.correctClassByScope(s, scope)))
+        .from((PsiClass c) -> ContainerUtil.mapNotNull(c.getSupers(),
+                                                       superOne -> {
+                                                         PsiClass correctedClass = PsiSuperMethodUtil.correctClassByScope(superOne, scope);
+                                                         if (correctedClass == null && dumb) {
+                                                           if (superOne.getContainingFile() instanceof PsiJavaFile &&
+                                                               ((PsiJavaFile)superOne.getContainingFile()).getPackageStatement() == null) {
+                                                             return superOne;
+                                                           }
+                                                         }
+                                                         return correctedClass;
+                                                       }))
         .unique()
         .withRoot(psiClass)
         .toList();
@@ -906,9 +925,9 @@ public final class PsiClassImplUtil {
     return resolved;
   }
 
-  public static @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
-                                                                                                     @NotNull String name,
-                                                                                                     boolean checkBases) {
+  public static @Unmodifiable @NotNull List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NotNull PsiClass psiClass,
+                                                                                                                   @NotNull String name,
+                                                                                                                   boolean checkBases) {
     if (!checkBases) {
       PsiMethod[] methodsByName = psiClass.findMethodsByName(name, false);
       List<Pair<PsiMethod, PsiSubstitutor>> ret = new ArrayList<>(methodsByName.length);
@@ -922,7 +941,7 @@ public final class PsiClassImplUtil {
     return withSubstitutors(psiClass, list.toArray(PsiMember.EMPTY_ARRAY));
   }
 
-  private static @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull PsiClass psiClass, PsiMember[] members) {
+  private static @Unmodifiable @NotNull <T extends PsiMember> List<Pair<T, PsiSubstitutor>> withSubstitutors(@NotNull PsiClass psiClass, PsiMember[] members) {
     ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(psiClass, psiClass.getResolveScope());
     LanguageLevel level = PsiUtil.getLanguageLevel(psiClass);
     return ContainerUtil.map(members, member -> {
@@ -1067,13 +1086,18 @@ public final class PsiClassImplUtil {
   public static boolean isClassEquivalentTo(@NotNull PsiClass aClass, PsiElement another) {
     if (aClass == another) return true;
     if (!(another instanceof PsiClass)) return false;
-    String name1 = aClass.getName();
-    if (name1 == null) return false;
     if (!another.isValid()) return false;
-    String name2 = ((PsiClass)another).getName();
-    if (name2 == null) return false;
-    if (name1.hashCode() != name2.hashCode()) return false;
-    if (!name1.equals(name2)) return false;
+    boolean isImplicitClass = aClass instanceof PsiImplicitClass;
+    boolean anotherImplicitClass = another instanceof PsiImplicitClass;
+    if (isImplicitClass != anotherImplicitClass) return false;
+    if (!isImplicitClass) {
+      String name1 = aClass.getName();
+      if (name1 == null) return false;
+      String name2 = ((PsiClass)another).getName();
+      if (name2 == null) return false;
+      if (name1.hashCode() != name2.hashCode()) return false;
+      if (!name1.equals(name2)) return false;
+    }
     String qName1 = aClass.getQualifiedName();
     String qName2 = ((PsiClass)another).getQualifiedName();
     if (qName1 == null || qName2 == null) {
@@ -1116,8 +1140,8 @@ public final class PsiClassImplUtil {
       return true;
     }
 
-    FileIndexFacade fileIndex = file1.getProject().getService(FileIndexFacade.class);
-    FileIndexFacade fileIndex2 = file2.getProject().getService(FileIndexFacade.class);
+    FileIndexFacade fileIndex = FileIndexFacade.getInstance(file1.getProject());
+    FileIndexFacade fileIndex2 = FileIndexFacade.getInstance(file2.getProject());
     VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);

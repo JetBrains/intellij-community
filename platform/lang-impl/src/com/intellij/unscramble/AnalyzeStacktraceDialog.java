@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.unscramble;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,11 +13,12 @@ import java.awt.*;
 import static com.intellij.openapi.application.ex.ClipboardUtil.getTextInClipboard;
 
 
-public class AnalyzeStacktraceDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class AnalyzeStacktraceDialog extends DialogWrapper {
   private final Project myProject;
-  protected AnalyzeStacktraceUtil.StacktraceEditorPanel myEditorPanel;
+  private AnalyzeStacktraceUtil.StacktraceEditorPanel myEditorPanel;
 
-  protected AnalyzeStacktraceDialog(Project project) {
+  AnalyzeStacktraceDialog(Project project) {
     super(project, true);
     myProject = project;
     setTitle(IdeBundle.message("unscramble.dialog.title"));

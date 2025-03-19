@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -27,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -38,12 +25,12 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
+@ApiStatus.Internal
+public final class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
   private static final Logger LOG = Logger.getInstance(CopyPasteFoldingProcessor.class);
 
-  @NotNull
   @Override
-  public List<FoldingTransferableData> collectTransferableData(final @NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
+  public @NotNull List<FoldingTransferableData> collectTransferableData(final @NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
@@ -72,9 +59,8 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
     return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[0])));
   }
 
-  @NotNull
   @Override
-  public List<FoldingTransferableData> extractTransferableData(final @NotNull Transferable content) {
+  public @NotNull List<FoldingTransferableData> extractTransferableData(final @NotNull Transferable content) {
     DataFlavor flavor = FoldingData.getDataFlavor();
     if (flavor == null) {
       return Collections.emptyList();

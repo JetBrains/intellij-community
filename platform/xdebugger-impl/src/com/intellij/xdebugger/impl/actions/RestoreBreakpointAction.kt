@@ -7,7 +7,9 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RestoreBreakpointAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {

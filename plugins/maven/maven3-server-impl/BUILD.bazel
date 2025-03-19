@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.maven.server.m3.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "server-m3-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "server-m3-impl",
+  module_name = "intellij.maven.server.m3.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//plugins/maven-server-api:maven-server",
+    "//plugins/maven/maven-server-telemetry:server-telemetry",
+    "//plugins/maven/maven3-server-common:server-m3-common",
+    "@lib//:commons-logging",
+    "@lib//:maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
+    "@lib//:maven-server-m3-impl-org-apache-maven-shared-maven-dependency-tree-1-2-provided",
+    "@lib//:maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",
+    "@lib//:maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9-provided",
+    "@lib//:maven-server-m3-impl-com-google-inject-guice-no_aop-4-0-provided",
+    "@lib//:maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2-provided",
+    "@lib//:maven-server-m3-impl-org-apache-maven-archetype-archetype-common-2-2-provided",
+  ],
+  runtime_deps = [":server-m3-impl_resources"]
+)
+### auto-generated section `build intellij.maven.server.m3.impl` end

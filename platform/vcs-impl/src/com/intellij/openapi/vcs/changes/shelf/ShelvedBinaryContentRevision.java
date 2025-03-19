@@ -19,11 +19,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class ShelvedBinaryContentRevision extends SimpleBinaryContentRevision {
   private final String myShelvedContentPath;
 

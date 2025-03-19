@@ -10,10 +10,12 @@ import com.jediterm.terminal.model.TerminalTypeAheadSettings;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.terminal.action.TerminalNewTabAction;
+import org.jetbrains.plugins.terminal.settings.TerminalOsSpecificOptions;
 
+import java.awt.*;
 import java.util.concurrent.TimeUnit;
 
-public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
+public final class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsProviderBase {
 
   @Override
   public @NotNull TerminalActionPresentation getSelectAllActionPresentation() {
@@ -28,6 +30,30 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   }
 
   @Override
+  public Font getTerminalFont() {
+    return new Font(getFontFamily(), super.getTerminalFont().getStyle(), Math.round(getTerminalFontSize()));
+  }
+
+  private static @NotNull String getFontFamily() {
+    return TerminalFontOptions.getInstance().getSettings().getFontFamily();
+  }
+
+  @Override
+  public float getTerminalFontSize() {
+    return TerminalFontOptions.getInstance().getSettings().getFontSize();
+  }
+
+  @Override
+  public float getLineSpacing() {
+    return TerminalFontOptions.getInstance().getSettings().getLineSpacing();
+  }
+
+  @Override
+  public float getColumnSpacing() {
+    return TerminalFontOptions.getInstance().getSettings().getColumnSpacing();
+  }
+
+  @Override
   public boolean audibleBell() {
     return TerminalOptionsProvider.getInstance().getAudibleBell();
   }
@@ -39,7 +65,7 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
 
   @Override
   public boolean copyOnSelect() {
-    return TerminalOptionsProvider.getInstance().getCopyOnSelection();
+    return TerminalOsSpecificOptions.getInstance().getCopyOnSelection();
   }
 
   @Override

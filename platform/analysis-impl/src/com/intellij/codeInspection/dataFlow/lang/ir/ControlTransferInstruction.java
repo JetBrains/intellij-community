@@ -50,6 +50,11 @@ public class ControlTransferInstruction extends Instruction {
   }
 
   @Override
+  public boolean isLinear() {
+    return false;
+  }
+
+  @Override
   public String toString() {
     int[] indexes = getSuccessorIndexes();
     return "TRANSFER " + myTransfer + (indexes.length == 0 ? "" : " [targets: " + Arrays.toString(indexes) + "]");

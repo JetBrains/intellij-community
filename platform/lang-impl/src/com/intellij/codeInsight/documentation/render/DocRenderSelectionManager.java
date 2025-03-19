@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.openapi.Disposable;
@@ -11,12 +11,12 @@ import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class DocRenderSelectionManager implements CaretListener, SelectionListener, Disposable {
+final class DocRenderSelectionManager implements CaretListener, SelectionListener, Disposable {
   private static final Key<DocRenderSelectionManager> OUR_KEY = Key.create("DocRenderSelectionManager");
 
   private final Editor myEditor;
 
-  private DocRenderer.EditorPane myPaneWithSelection;
+  private DocRenderer.EditorInlineHtmlPane myPaneWithSelection;
   private boolean mySkipSelectionEvents;
 
   DocRenderSelectionManager(Editor editor) {
@@ -31,7 +31,7 @@ class DocRenderSelectionManager implements CaretListener, SelectionListener, Dis
     myEditor.putUserData(OUR_KEY, null);
   }
 
-  void setPaneWithSelection(DocRenderer.EditorPane pane) {
+  void setPaneWithSelection(DocRenderer.EditorInlineHtmlPane pane) {
     if (pane != myPaneWithSelection) {
       if (myPaneWithSelection != null) {
         myPaneWithSelection.removeSelection();
@@ -69,7 +69,7 @@ class DocRenderSelectionManager implements CaretListener, SelectionListener, Dis
     if (!mySkipSelectionEvents) setPaneWithSelection(null);
   }
 
-  public static @Nullable DocRenderer.EditorPane getPaneWithSelection(@NotNull Editor editor) {
+  public static @Nullable DocRenderer.EditorInlineHtmlPane getPaneWithSelection(@NotNull Editor editor) {
     DocRenderSelectionManager selectionManager = editor.getUserData(OUR_KEY);
     return selectionManager == null ? null : selectionManager.myPaneWithSelection;
   }

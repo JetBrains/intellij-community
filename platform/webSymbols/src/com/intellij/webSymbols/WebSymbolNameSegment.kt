@@ -3,75 +3,63 @@ package com.intellij.webSymbols
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.webSymbols.impl.WebSymbolNameSegmentImpl
 import com.intellij.webSymbols.utils.matchedNameOrName
+import org.jetbrains.annotations.ApiStatus
 
-class WebSymbolNameSegment(val start: Int,
-                           val end: Int,
-                           val symbols: List<WebSymbol> = emptyList(),
-                           val problem: MatchProblem? = null,
-                           val displayName: @NlsSafe String? = null,
-                           val matchScore: Int = end - start,
-                           symbolKinds: Set<WebSymbolQualifiedKind>? = null,
-                           private val explicitApiStatus: WebSymbolApiStatus? = null,
-                           private val explicitPriority: WebSymbol.Priority? = null,
-                           private val explicitProximity: Int? = null) {
+@ApiStatus.NonExtendable
+interface WebSymbolNameSegment {
+  val start: Int
 
-  constructor(symbol: WebSymbol) : this(0, symbol.name.length, listOf(symbol))
+  val end: Int
 
-  constructor(start: Int, end: Int, symbol: WebSymbol) : this(start, end, listOf(symbol))
-  constructor(start: Int, end: Int, vararg symbols: WebSymbol) : this(start, end, symbols.toList())
+  val symbols: List<WebSymbol>
 
-  init {
-    assert(start <= end)
-  }
+  val problem: MatchProblem?
 
-  private val forcedSymbolTypes = symbolKinds
+  val displayName: @NlsSafe String?
+
+  val matchScore: Int
 
   val apiStatus: WebSymbolApiStatus?
-    get() = explicitApiStatus
 
   val priority: WebSymbol.Priority?
-    get() = explicitPriority ?: symbols.asSequence().mapNotNull { it.priority }.maxOrNull()
 
   val proximity: Int?
-    get() = explicitProximity ?: symbols.asSequence().mapNotNull { it.proximity }.maxOrNull()
 
   val symbolKinds: Set<WebSymbolQualifiedKind>
-    get() =
-      forcedSymbolTypes
-      ?: symbols.asSequence().map { WebSymbolQualifiedKind(it.namespace, it.kind) }.toSet()
 
   fun getName(symbol: WebSymbol): @NlsSafe String =
     symbol.matchedNameOrName.substring(start, end)
 
-  internal fun withOffset(offset: Int): WebSymbolNameSegment =
-    WebSymbolNameSegment(start + offset, end + offset, symbols, problem, displayName,
-                         matchScore, symbolKinds, explicitApiStatus, explicitPriority, explicitProximity)
+  fun createPointer(): Pointer<WebSymbolNameSegment>
 
-  internal fun copy(apiStatus: WebSymbolApiStatus? = null,
-                    priority: WebSymbol.Priority? = null,
-                    proximity: Int? = null,
-                    problem: MatchProblem? = null,
-                    symbols: List<WebSymbol> = emptyList()): WebSymbolNameSegment =
-    WebSymbolNameSegment(start, end, this.symbols + symbols, problem ?: this.problem,
-                         displayName, matchScore, symbolKinds,
-                         apiStatus ?: this.explicitApiStatus, priority ?: this.explicitPriority,
-                         proximity ?: this.explicitProximity)
+  companion object {
 
-  internal fun canUnwrapSymbols(): Boolean =
-    explicitApiStatus == null
-    && problem == null
-    && displayName == null
-    && matchScore == end - start
-    && explicitPriority == null
-    && explicitProximity == null
-    && symbols.isNotEmpty()
+    fun create(symbol: WebSymbol): WebSymbolNameSegment =
+      create(0, symbol.name.length, listOf(symbol))
 
-  fun createPointer(): Pointer<WebSymbolNameSegment> =
-    NameSegmentPointer(this)
+    fun create(start: Int, end: Int, symbol: WebSymbol): WebSymbolNameSegment =
+      create(start, end, listOf(symbol))
 
-  override fun toString(): String =
-    "<$start:$end${if (problem != null) ":$problem" else ""}-${symbols.size}cs>"
+    fun create(start: Int, end: Int, vararg symbols: WebSymbol): WebSymbolNameSegment =
+      create(start, end, symbols.toList())
+
+    fun create(
+      start: Int,
+      end: Int,
+      symbols: List<WebSymbol> = emptyList(),
+      problem: MatchProblem? = null,
+      displayName: @NlsSafe String? = null,
+      matchScore: Int = end - start,
+      symbolKinds: Set<WebSymbolQualifiedKind>? = null,
+      explicitApiStatus: WebSymbolApiStatus? = null,
+      explicitPriority: WebSymbol.Priority? = null,
+      explicitProximity: Int? = null,
+    ): WebSymbolNameSegment =
+      WebSymbolNameSegmentImpl(start, end, symbols, problem, displayName, matchScore,
+                               symbolKinds, explicitApiStatus, explicitPriority, explicitProximity, null)
+  }
 
   enum class MatchProblem {
     MISSING_REQUIRED_PART,
@@ -79,30 +67,4 @@ class WebSymbolNameSegment(val start: Int,
     DUPLICATE
   }
 
-  private class NameSegmentPointer(nameSegment: WebSymbolNameSegment) : Pointer<WebSymbolNameSegment> {
-
-    private val start = nameSegment.start
-    private val end = nameSegment.end
-    private val symbols = nameSegment.symbols.map { it.createPointer() }
-    private val problem = nameSegment.problem
-
-    @NlsSafe
-    private val displayName = nameSegment.displayName
-    private val matchScore = nameSegment.matchScore
-    private val types = nameSegment.symbolKinds
-    private val explicitApiStatus = nameSegment.explicitApiStatus
-    private val explicitPriority = nameSegment.explicitPriority
-    private val explicitProximity = nameSegment.explicitProximity
-
-
-    override fun dereference(): WebSymbolNameSegment? =
-      symbols.map { it.dereference() }
-        .takeIf { it.all { symbol -> symbol != null } }
-        ?.let {
-          @Suppress("UNCHECKED_CAST")
-          (WebSymbolNameSegment(start, end, it as List<WebSymbol>, problem, displayName, matchScore,
-                                types, explicitApiStatus, explicitPriority, explicitProximity))
-        }
-
-  }
 }

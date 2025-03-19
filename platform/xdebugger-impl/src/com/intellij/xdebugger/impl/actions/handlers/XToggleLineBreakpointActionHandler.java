@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -22,15 +22,17 @@ import com.intellij.xdebugger.impl.actions.ToggleLineBreakpointAction;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
   private final boolean myTemporary;
@@ -40,17 +42,17 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   @Override
-  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor == null || DiffUtil.isDiffEditor(editor)) {
       return false;
     }
     XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
-    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XSourcePosition position : ToggleLineBreakpointAction.getAllPositionsForBreakpoints(project, event.getDataContext())) {
       for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
-        final VirtualFile file = position.getFile();
-        final int line = position.getLine();
+        VirtualFile file = position.getFile();
+        int line = position.getLine();
         if (breakpointType.canPutAt(file, line, project) || breakpointManager.findBreakpointAtLine(breakpointType, file, line) != null) {
           return true;
         }
@@ -60,7 +62,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
   }
 
   @Override
-  public void perform(@NotNull final Project project, final AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     boolean isFromGutterClick = event.getData(XLineBreakpointManager.BREAKPOINT_LINE_KEY) != null;
     InputEvent inputEvent = event.getInputEvent();
@@ -73,6 +75,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       if (processedLines.add(position.getLine())) {
         XBreakpointUtil.toggleLineBreakpoint(project,
                                              position,
+                                             !isFromGutterClick,
                                              editor,
                                              isAltClick || myTemporary,
                                              !isFromGutterClick,
@@ -85,10 +88,10 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     }
   }
 
-  private static void setupLogBreakpoint(@Nullable final XLineBreakpoint<?> breakpoint,
-                                         @Nullable final InputEvent inputEvent,
-                                         @Nullable final Editor editor,
-                                         @NotNull final Project project) {
+  private static void setupLogBreakpoint(final @Nullable XLineBreakpoint<?> breakpoint,
+                                         final @Nullable InputEvent inputEvent,
+                                         final @Nullable Editor editor,
+                                         final @NotNull Project project) {
     if (breakpoint == null || editor == null ||
         !(inputEvent instanceof MouseEvent mouseEvent) ||
         inputEvent.isAltDown() || !inputEvent.isShiftDown()) {

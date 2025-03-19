@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Author: David Goodger
 # Contact: goodger@users.sourceforge.net
 # Revision: $Revision: 2224 $
@@ -6,9 +5,9 @@
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Galician-language mappings for language-dependent features of Docutils.
@@ -20,24 +19,24 @@ labels = {
       # fixed: language-dependent
       'author': 'Autor',
       'authors': 'Autores',
-      'organization': 'Organizaci\u00f3n',
+      'organization': 'Organización',
       'address': 'Enderezo',
       'contact': 'Contacto',
-      'version': 'Versi\u00f3n',
-      'revision': 'Revisi\u00f3n',
+      'version': 'Versión',
+      'revision': 'Revisión',
       'status': 'Estado',
       'date': 'Data',
       'copyright': 'Dereitos de copia',
       'dedication': 'Dedicatoria',
       'abstract': 'Abstract',
-      'attention': 'Atenci\u00f3n!',
+      'attention': 'Atención!',
       'caution': 'Advertencia!',
       'danger': 'PERIGO!',
       'error': 'Erro',
       'hint': 'Consello',
       'important': 'Importante',
       'note': 'Nota',
-      'tip': 'Suxesti\u00f3n',
+      'tip': 'Suxestión',
       'warning': 'Aviso',
       'contents': 'Contido'}
 """Mapping of node class name to label text."""
@@ -46,11 +45,11 @@ bibliographic_fields = {
       # language-dependent: fixed
       'autor': 'author',
       'autores': 'authors',
-      'organizaci\u00f3n': 'organization',
+      'organización': 'organization',
       'enderezo': 'address',
       'contacto': 'contact',
-      'versi\u00f3n': 'version',
-      'revisi\u00f3n': 'revision',
+      'versión': 'version',
+      'revisión': 'revision',
       'estado': 'status',
       'data': 'date',
       'dereitos de copia': 'copyright',

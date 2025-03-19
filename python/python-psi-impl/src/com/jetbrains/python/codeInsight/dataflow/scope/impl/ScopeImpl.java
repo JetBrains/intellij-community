@@ -16,8 +16,8 @@ import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsSemilattice;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,9 +46,10 @@ public class ScopeImpl implements Scope {
   }
 
   @Override
-  public ScopeVariable getDeclaredVariable(@NotNull final PsiElement anchorElement,
-                                           @NotNull final String name) throws DFALimitExceededException {
-    computeScopeVariables();
+  public ScopeVariable getDeclaredVariable(final @NotNull PsiElement anchorElement,
+                                           final @NotNull String name,
+                                           final @NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException {
+    computeScopeVariables(typeEvalContext);
     for (int i = 0; i < myFlow.length; i++) {
       Instruction instruction = myFlow[i];
       final PsiElement element = instruction.getElement();
@@ -59,10 +60,10 @@ public class ScopeImpl implements Scope {
     return null;
   }
 
-  private synchronized void computeScopeVariables() throws DFALimitExceededException {
+  private synchronized void computeScopeVariables(@NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException {
     computeFlow();
     if (myCachedScopeVariables == null) {
-      final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance();
+      final PyReachingDefsDfaInstance dfaInstance = new PyReachingDefsDfaInstance(typeEvalContext);
       final PyReachingDefsSemilattice semilattice = new PyReachingDefsSemilattice();
       final DFAMapEngine<ScopeVariable> engine = new DFAMapEngine<>(myFlow, dfaInstance, semilattice);
       myCachedScopeVariables = engine.performDFA();
@@ -150,18 +151,16 @@ public class ScopeImpl implements Scope {
     return false;
   }
 
-  @NotNull
   @Override
-  public List<PyImportedNameDefiner> getImportedNameDefiners() {
+  public @NotNull List<PyImportedNameDefiner> getImportedNameDefiners() {
     if (myImportedNameDefiners == null) {
       collectDeclarations();
     }
     return myImportedNameDefiners;
   }
 
-  @NotNull
   @Override
-  public Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
+  public @NotNull Collection<PsiNamedElement> getNamedElements(String name, boolean includeNestedGlobals) {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -182,9 +181,8 @@ public class ScopeImpl implements Scope {
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiNamedElement> getNamedElements() {
+  public @NotNull Collection<PsiNamedElement> getNamedElements() {
     if (myNamedElements == null) {
       collectDeclarations();
     }
@@ -195,9 +193,8 @@ public class ScopeImpl implements Scope {
     return results;
   }
 
-  @NotNull
   @Override
-  public Collection<PyTargetExpression> getTargetExpressions() {
+  public @NotNull Collection<PyTargetExpression> getTargetExpressions() {
     if (myTargetExpressions == null) {
       collectDeclarations();
     }
@@ -212,7 +209,31 @@ public class ScopeImpl implements Scope {
     final Set<String> nonlocals = new HashSet<>();
     final Set<String> augAssignments = new HashSet<>();
     final List<PyTargetExpression> targetExpressions = new ArrayList<>();
-    myFlowOwner.acceptChildren(new PyRecursiveElementVisitor() {
+    final LanguageLevel languageLevel;
+    if (myFlowOwner instanceof PyFile pyFile) {
+      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyFile);
+    }
+    else if (myFlowOwner instanceof PyClass pyClass) {
+      languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile());
+    }
+    else {
+      languageLevel = null;
+    }
+    if (myFlowOwner instanceof PyCodeFragmentWithHiddenImports fragment) {
+      var pseudoImports = fragment.getPseudoImports();
+      for (PyImportStatementBase importStmt : pseudoImports) {
+        importStmt.accept(new PyVersionAwareElementVisitor(languageLevel) {
+          @Override
+          public void visitPyElement(@NotNull PyElement node) {
+           if (node instanceof PyImportedNameDefiner definer) {
+             importedNameDefiners.add(definer);
+           }
+           super.visitPyElement(node);
+          }
+        });
+      }
+    }
+    myFlowOwner.acceptChildren(new PyVersionAwareElementVisitor(languageLevel) {
       @Override
       public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         targetExpressions.add(node);

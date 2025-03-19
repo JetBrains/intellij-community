@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.debugger` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "debugger_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "debugger",
+  module_name = "intellij.platform.debugger",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/util:util-ui",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = [
+    "//platform/lang-api:lang",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":debugger_resources"]
+)
+### auto-generated section `build intellij.platform.debugger` end

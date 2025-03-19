@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -21,18 +22,17 @@ import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+  private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
-  @NotNull
   @Override
-  public ID<HMember, Void> getName() {
+  public @NotNull ID<HMember, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<HMember, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<HMember, Void, FileContent> getIndexer() {
     return inputData -> {
       try {
         return collectKeys(inputData.getContent());
@@ -49,32 +49,31 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     };
   }
 
-  @NotNull
-  private static Map<HMember, Void> collectKeys(byte[] content) {
+  private static @NotNull Map<HMember, Void> collectKeys(byte[] content) {
     HashMap<HMember, Void> map = new HashMap<>();
     ClassReader reader = new ClassReader(content);
     String className = reader.getClassName();
+    long classHash = HMember.classHash(className);
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
         if ((access & Opcodes.ACC_PRIVATE) == 0) {
-          map.put(new Member(className, name, desc).hashed(), null);
+          map.put(HMember.create(classHash, name, desc), null);
         }
         return null;
       }
 
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        map.put(new Member(className, name, desc).hashed(), null);
+        map.put(HMember.create(classHash, name, desc), null);
         return null;
       }
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE);
     return map;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<HMember> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<HMember> getKeyDescriptor() {
     return HKeyDescriptor.INSTANCE;
   }
 
@@ -83,10 +82,11 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     return true;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE);
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return IS_ENABLED
+           ? new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
+           : new DefaultFileTypeSpecificInputFilter();
   }
 
   @Override
@@ -154,15 +154,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {
       out.writeBoolean(eqs.stable);
       DataInputOutputUtil.writeINT(out, eqs.results.size());
+      int maxFinal = Value.values().length;
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
         if (rhs instanceof Value finalResult) {
-          out.writeBoolean(true); // final flag
           DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
         else if (rhs instanceof Pending pendResult) {
-          out.writeBoolean(false); // pending flag
+          DataInputOutputUtil.writeINT(out, maxFinal); // pending flag
           DataInputOutputUtil.writeINT(out, pendResult.delta.length);
 
           for (Component component : pendResult.delta) {
@@ -181,6 +181,13 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           }
           writeDataValue(out, effects.returnValue);
         }
+        else if (rhs instanceof FieldAccess fieldAccess) {
+          DataInputOutputUtil.writeINT(out, maxFinal + 1);
+          out.writeUTF(fieldAccess.name());
+        }
+        else {
+          throw new UnsupportedOperationException("Unsupported result: " + rhs + " in " + eqs);
+        }
       }
     }
 
@@ -188,6 +195,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);
+      Value[] values = Value.values();
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = Direction.fromInt(directionKey);
@@ -201,19 +209,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           results.add(new DirectionResultPair(directionKey, new Effects(returnValue, Set.copyOf(effects))));
         }
         else {
-          boolean isFinal = in.readBoolean(); // flag
-          if (isFinal) {
-            int ordinal = DataInputOutputUtil.readINT(in);
-            Value value = Value.values()[ordinal];
-            results.add(new DirectionResultPair(directionKey, value));
-          }
-          else {
+          int resultKind = DataInputOutputUtil.readINT(in);
+          if (resultKind == values.length) {
+            // pending
             int sumLength = DataInputOutputUtil.readINT(in);
             Component[] components = new Component[sumLength];
 
             for (int i = 0; i < sumLength; i++) {
               int ordinal = DataInputOutputUtil.readINT(in);
-              Value value = Value.values()[ordinal];
+              Value value = values[ordinal];
               int componentSize = DataInputOutputUtil.readINT(in);
               EKey[] ids = new EKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
@@ -223,13 +227,19 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
             }
             results.add(new DirectionResultPair(directionKey, new Pending(components)));
           }
+          else if (resultKind == values.length + 1) {
+            results.add(new DirectionResultPair(directionKey, new FieldAccess(in.readUTF())));
+          }
+          else {
+            Value value = values[resultKind];
+            results.add(new DirectionResultPair(directionKey, value));
+          }
         }
       }
       return new Equations(results, stable);
     }
 
-    @NotNull
-    private static EKey readKey(@NotNull DataInput in) throws IOException {
+    private static @NotNull EKey readKey(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[HMember.HASH_SIZE];
       in.readFully(bytes);
       int rawDirKey = DataInputOutputUtil.readINT(in);

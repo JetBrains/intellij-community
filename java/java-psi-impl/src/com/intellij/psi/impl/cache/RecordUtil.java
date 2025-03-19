@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache;
 
 import com.intellij.lang.LighterAST;
@@ -25,6 +25,13 @@ public final class RecordUtil {
   private static final String DEPRECATED_TAG = "@deprecated";
 
   private RecordUtil() { }
+
+  public static boolean hasValueModifier(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
+    for (LighterASTNode child : tree.getChildren(modList)) {
+      if (child.getTokenType() == JavaTokenType.VALUE_KEYWORD) return true;
+    }
+    return false;
+  }
 
   public static boolean isDeprecatedByAnnotation(@NotNull LighterAST tree, @NotNull LighterASTNode modList) {
     for (final LighterASTNode child : tree.getChildren(modList)) {
@@ -68,8 +75,7 @@ public final class RecordUtil {
     return packed;
   }
 
-  @NotNull
-  public static String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
+  public static @NotNull String intern(@NotNull CharTable table, @NotNull LighterASTNode node) {
     assert node instanceof LighterASTTokenNode : node;
     return table.intern(((LighterASTTokenNode)node).getText()).toString();
   }

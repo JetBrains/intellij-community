@@ -2,6 +2,7 @@
 package com.intellij.execution.ui.layout.impl
 
 import com.intellij.execution.ui.layout.impl.GridImpl.Placeholder
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.ui.content.TabDescriptor
 import com.intellij.ui.content.TabGroupId
@@ -41,6 +42,7 @@ class GridPlaceholderTest {
 
       Assert.assertNull(placeholder.focusTraversalPolicy.getDefaultComponent(panel))
 
+      Disposer.dispose(content)
       frame.dispose()
     }
   }

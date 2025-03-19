@@ -57,10 +57,9 @@ public class ListTable extends JBTable {
     super.setModel(dataModel);
   }
 
-  @NotNull
   @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row,
-                                   int column) {
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row,
+                                            int column) {
     final Component component =
       super.prepareRenderer(renderer, row, column);
     // to properly display the table in disabled state. See also

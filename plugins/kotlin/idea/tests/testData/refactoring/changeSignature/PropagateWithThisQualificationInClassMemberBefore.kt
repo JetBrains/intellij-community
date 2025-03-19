@@ -5,3 +5,4 @@ class A(val n: Int) {
         return foo() + n
     }
 }
+

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
@@ -25,7 +25,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.RefactoringUiService;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -42,7 +41,7 @@ import javax.swing.*;
 public class PsiElement2UsageTargetAdapter
   implements PsiElementUsageTarget, DataProvider, PsiElementNavigationItem, ItemPresentation, ConfigurableUsageTarget {
   private final SmartPsiElementPointer<?> myPointer;
-  @NotNull protected final FindUsagesOptions myOptions;
+  protected final @NotNull FindUsagesOptions myOptions;
   private String myPresentableText;
   private String myLocationText;
   private Icon myIcon;
@@ -65,9 +64,8 @@ public class PsiElement2UsageTargetAdapter
   }
 
   /**
-   * Consider to use {@link PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
+   * Consider to use {@link #PsiElement2UsageTargetAdapter(PsiElement, boolean)} to avoid
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
-   *
    */
   @Deprecated(forRemoval = true)
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
@@ -81,8 +79,7 @@ public class PsiElement2UsageTargetAdapter
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return this;
   }
 
@@ -166,7 +163,7 @@ public class PsiElement2UsageTargetAdapter
   /**
    * @deprecated use {@link #convert(PsiElement[], boolean)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);
   }
@@ -189,9 +186,8 @@ public class PsiElement2UsageTargetAdapter
     return targets;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)this::getSlowData;
     }
@@ -218,14 +214,12 @@ public class PsiElement2UsageTargetAdapter
 
   @Override
   public @Nls @NotNull String getLongDescriptiveName() {
-    SearchScope searchScope = myOptions.searchScope;
-    String scopeString = searchScope.getDisplayName();
     PsiElement psiElement = getElement();
 
     return psiElement == null ? UsageViewBundle.message("node.invalid") :
            FindBundle.message("recent.find.usages.action.popup", StringUtil.capitalize(UsageViewUtil.getType(psiElement)),
                               DescriptiveNameUtil.getDescriptiveName(psiElement),
-                              scopeString
+                              myOptions.searchScope.getDisplayName()
            );
   }
 
@@ -283,8 +277,7 @@ public class PsiElement2UsageTargetAdapter
     return myIcon;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myPointer.getProject();
   }
 }

@@ -2,13 +2,15 @@
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.LanguageLevel
@@ -27,6 +29,7 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
   // PY-42285
   fun testImportedClassRename() {
+    (myFixture as? CodeInsightTestFixtureImpl)?.canChangeDocumentDuringHighlighting(true)
     doRenameImportedTest(
       """
         class A<caret>C:
@@ -92,12 +95,11 @@ class PySuggestedRefactoringTest : PyTestCase() {
       """
         def test<caret>(): pass
       """.trimIndent(),
-      {
-        repeat("test".length, this::performBackspace)
-        myFixture.type("def")
-      },
       intention = changeSignatureIntention()
-    )
+    ) {
+      repeat("test".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+      type("def")
+    }
   }
 
   // PY-42285
@@ -250,10 +252,11 @@ class PySuggestedRefactoringTest : PyTestCase() {
         a.a = 10
         print(a.a)
       """.trimIndent(),
-      { repeat(3, this::performBackspace) },
-      { myFixture.type("zzz") },
       intention = RefactoringBundle.message("suggested.refactoring.rename.intention.text", "bbb", "zzz")
-    )
+    ) {
+      repeat(3) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+      type("zzz")
+    }
   }
 
   // PY-42285
@@ -273,8 +276,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
         foo("b", "a")
         foo(a="a")
       """.trimIndent(),
-      { replaceTextAtCaret("a=\"a\", b=\"b\"", "b=\"b\", a=\"a\"") }
-    )
+    ) {
+      replaceTextAtCaret("a=\"a\", b=\"b\"", "b=\"b\", a=\"a\"")
+    }
   }
 
   // PY-42285
@@ -294,8 +298,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
         foo(None, 2)
       """.trimIndent(),
-      { myFixture.type(", /") }
-    )
+
+    ) {
+      type(", /")
+    }
   }
 
   // PY-42285
@@ -317,8 +323,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         foo(None, 2)
       """.trimIndent(),
-      { myFixture.type("p1=None, ") }
-    )
+    ) {
+      type("p1=None, ")
+    }
   }
 
   // PY-42285
@@ -340,8 +347,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
           foo(1, b=2)
           foo(3, b=4)
       """.trimIndent(),
-      { myFixture.type("*, ") }
-    )
+    ) {
+      type("*, ")
+    }
   }
 
   // PY-42285
@@ -361,8 +369,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
         foo(1)
       """.trimIndent(),
-      { replaceTextAtCaret("=1", "") }
-    )
+    ) {
+      replaceTextAtCaret("=1", "")
+    }
   }
 
   // PY-42285
@@ -380,8 +389,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
         foo(0)
       """.trimIndent(),
-      { replaceTextAtCaret("=1", "") }
-    )
+    ) {
+      replaceTextAtCaret("=1", "")
+    }
   }
 
   // PY-42285
@@ -403,8 +413,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
         foo(0, name="geeks", ID="101", language="Python")
       """.trimIndent(),
-      { myFixture.type("a, ") }
-    )
+    ) {
+      type("a, ")
+    }
   }
 
   // PY-42285
@@ -422,9 +433,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         foo(b=2, c=3)
       """.trimIndent(),
-      { myFixture.type("a=") },
-      { myFixture.type("0, ") } // don't squash actions, sequence is important
-    )
+    ) {
+      type("a=")
+      type("0, ")
+    }
   }
 
   // PY-42285
@@ -442,9 +454,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         foo(b=2)
       """.trimIndent(),
-      { myFixture.type("a=") },
-      { myFixture.type("0, ") } // don't squash actions, sequence is important
-    )
+    ) {
+      type("a=")
+      type("0, ")
+    }
   }
 
   // PY-42285
@@ -462,8 +475,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         foo(0)
       """.trimIndent(),
-      { myFixture.type("b=123") }
-    )
+    ) {
+      type("b=123")
+    }
   }
 
   // PY-42285
@@ -483,8 +497,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         foo()
       """.trimIndent(),
-      { myFixture.type("b=123") }
-    )
+    ) {
+      type("b=123")
+    }
   }
 
   // PY-42285
@@ -502,17 +517,18 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         f(1, 0)
       """.trimIndent(),
-      { performBackspace() },
-      { myFixture.type("1") },
-      { myFixture.editor.caretModel.moveCaretRelatively(7, 0, false, false, false) },
-      { myFixture.type("p2=") },
-      { myFixture.type("N") },
-      { myFixture.type("o") },
-      { myFixture.type("n") },
-      { myFixture.type("e") },
-      { myFixture.type(",") },
-      { myFixture.type(" ") } // don't squash actions, sequence is important
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+      type("1")
+      myFixture.editor.caretModel.moveCaretRelatively(7, 0, false, false, false)
+      type("p2=")
+      type("N")
+      type("o")
+      type("n")
+      type("e")
+      type(",")
+      type(" ")
+    }
   }
 
   // PY-42285
@@ -530,14 +546,15 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         f(2, 0, 3)
       """.trimIndent(),
-      { performBackspace() },
-      { myFixture.type("1") },
-      { myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false) },
-      { myFixture.type("p") },
-      { myFixture.type("2") },
-      { myFixture.type(",") },
-      { myFixture.type(" ") } // don't squash actions, sequence is important
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+      type("1")
+      myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false)
+      type("p")
+      type("2")
+      type(",")
+      type(" ")
+    }
   }
 
   // PY-42285
@@ -555,17 +572,18 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         f(2, 0, 3)
       """.trimIndent(),
-      { performBackspace() },
-      { myFixture.type("1") },
-      { myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false) },
-      { myFixture.type("p2=") },
-      { myFixture.type("N") },
-      { myFixture.type("o") },
-      { myFixture.type("n") },
-      { myFixture.type("e") },
-      { myFixture.type(",") },
-      { myFixture.type(" ") } // don't squash actions, sequence is important
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+      type("1")
+      myFixture.editor.caretModel.moveCaretRelatively(2, 0, false, false, false)
+      type("p2=")
+      type("N")
+      type("o")
+      type("n")
+      type("e")
+      type(",")
+      type(" ")
+    }
   }
 
   // PY-42285
@@ -587,8 +605,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         f(f("base"))
       """.trimIndent(),
-      { myFixture.type("s") }
-    )
+
+    ) {
+      type("s")
+    }
   }
 
   // PY-42285
@@ -597,9 +617,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
       """
         <caret>def foo(a, b): pass
       """.trimIndent(),
-      { myFixture.type("async ") },
       intention = changeSignatureIntention()
-    )
+    ) {
+      type("async ")
+    }
   }
 
   // PY-42285
@@ -608,9 +629,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
       """
         async <caret>def foo(a, b): pass
       """.trimIndent(),
-      { repeat("async ".length, this::performBackspace) },
       intention = changeSignatureIntention()
-    )
+    ) {
+      repeat("async ".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE)}
+    }
   }
 
   // PY-42285
@@ -628,9 +650,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         bar(1, 2)
       """.trimIndent(),
-      { repeat(" foo".length, this::performBackspace) },
-      { myFixture.type(" bar") }
-    )
+    ) {
+      repeat(" foo".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+      type(" bar")
+    }
   }
 
   // PY-42285
@@ -654,8 +677,9 @@ class PySuggestedRefactoringTest : PyTestCase() {
 
         A.method(5, 0)
       """.trimIndent(),
-      { myFixture.type(", b") }
-    )
+    ) {
+      type(", b")
+    }
   }
 
   // PY-42285
@@ -671,9 +695,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
             return b.swapcase()
         d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
       """.trimIndent(),
-      { performBackspace() },
-      { myFixture.type("b") }
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+      type("b")
+    }
   }
 
   // PY-42285
@@ -689,9 +714,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
             return bbb.swapcase()
         d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
       """.trimIndent(),
-      { performBackspace() },
-      { myFixture.type("bbb") }
-    )
+    ) {
+      performAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+      type("bbb")
+    }
   }
 
   // PY-42285
@@ -707,9 +733,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
             return b.swapcase()
         d = {'1': __func__0(__func__0("abc")), '2': __func__0(__func__0("abc"))}
       """.trimIndent(),
-      { repeat("aaa".length) { performBackspace() } },
-      { myFixture.type("b") }
-    )
+    ) {
+      repeat("aaa".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+      type("b")
+    }
   }
 
   // PY-42285
@@ -722,9 +749,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
           
         A().print_r()
       """.trimIndent(),
-      { repeat("_r".length, this::performBackspace) },
       intention = RefactoringBundle.message("suggested.refactoring.rename.intention.text", "print_r", "print")
-    )
+    ) {
+      repeat("_r".length) { performAction(IdeActions.ACTION_EDITOR_BACKSPACE) }
+    }
   }
 
   // PY-42285
@@ -756,20 +784,21 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         
         greeting(0, 12345432123, 1234, name_family="DIZEL")
-      """.trimIndent(),
-      { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE) },
-      { myFixture.type("m") },
-      { myFixture.type("i") },
-      { myFixture.type("n") },
-      { myFixture.type("o") },
-      { myFixture.type("r") },
-      { myFixture.type(":") },
-      { myFixture.type(" ") },
-      { myFixture.type("i") },
-      { myFixture.type("n") },
-      { myFixture.type("t") },
-      { myFixture.type(",") } // don't squash actions, sequence is important
-    )
+      """.trimIndent()
+    ) {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
+      type("m")
+      type("i")
+      type("n")
+      type("o")
+      type("r")
+      type(":")
+      type(" ")
+      type("i")
+      type("n")
+      type("t")
+      type(",")
+    }
   }
 
   // PY-42285
@@ -784,9 +813,10 @@ class PySuggestedRefactoringTest : PyTestCase() {
         def foo(p1<caret>):
           print(p1)
       """.trimIndent(),
-      { myFixture.type("2") },
       intention = changeSignatureIntention()
-    )
+    ) {
+      type("2")
+    }
   }
 
   // EA-252027
@@ -800,16 +830,17 @@ class PySuggestedRefactoringTest : PyTestCase() {
         
         def foo(p1, p2): ...
       """.trimIndent(),
-      { myFixture.type("aram") },
       intention = changeSignatureIntention()
-    )
+    ) {
+      type("aram")
+    }
   }
 
   private fun doRenameTest(before: String, after: String, oldName: String, newName: String, type: String, intention: String? = null) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
 
-    myFixture.type(type)
+    type(type)
     PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
 
     executeIntention(intention ?: RefactoringBundle.message("suggested.refactoring.rename.intention.text", oldName, newName))
@@ -837,15 +868,13 @@ class PySuggestedRefactoringTest : PyTestCase() {
   private fun doChangeSignatureTest(
     before: String,
     after: String,
-    vararg editingActions: () -> Unit
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(PythonFileType.INSTANCE, before)
     myFixture.checkHighlighting()
 
-    editingActions.forEach {
-      WriteCommandAction.runWriteCommandAction(myFixture.project, it)
-      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
-    }
+    editingActions()
+    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
 
     executeIntention(changeSignatureIntention())
 
@@ -853,26 +882,23 @@ class PySuggestedRefactoringTest : PyTestCase() {
     myFixture.checkHighlighting()
   }
 
-  private fun doNoIntentionTest(text: String, vararg editingActions: () -> Unit, intention: String) {
+  private fun doNoIntentionTest(text: String, intention: String, editingActions: () -> Unit) {
     myFixture.configureByText(PythonFileType.INSTANCE, text)
     myFixture.checkHighlighting()
-
-    editingActions.forEach {
-      WriteCommandAction.runWriteCommandAction(myFixture.project, it)
-      PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
-    }
-
+    editingActions()
+    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
     assertNull(myFixture.getAvailableIntention(intention))
   }
 
   private fun executeIntention(intention: String) {
     val project = myFixture.project
     myFixture.findSingleIntention(intention).also {
-      CommandProcessor.getInstance().executeCommand(project, { it.invoke(project, myFixture.editor, myFixture.file) }, it.text, null)
+      CommandProcessor.getInstance().executeCommand(
+        project, { it.invoke(project, myFixture.editor, myFixture.file) }, it.text, null)
     }
   }
 
-  private fun replaceTextAtCaret(oldText: String, newText: String) {
+  private fun replaceTextAtCaret(oldText: String, newText: String) = editAction {
     val editor = myFixture.editor
     val offset = editor.caretModel.offset
     val actualText = editor.document.getText(TextRange(offset, offset + oldText.length))
@@ -880,12 +906,29 @@ class PySuggestedRefactoringTest : PyTestCase() {
     editor.document.replaceString(offset, offset + oldText.length, newText)
   }
 
-  private fun performBackspace(@Suppress("UNUSED_PARAMETER") unused: Int = 0) {
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+  private fun performAction(actionId: String) {
+    myFixture.performEditorAction(actionId)
+    PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
   }
 
   private fun changeSignatureIntention(): String {
     return RefactoringBundle.message("suggested.refactoring.change.signature.intention.text",
                                      RefactoringBundle.message("suggested.refactoring.usages"))
+  }
+  
+  private fun type(text: String) {
+    myFixture.type(text)
+    PsiDocumentManager.getInstance(myFixture.project).commitDocument(myFixture.editor.document)
+  }
+
+  private fun editAction(action: () -> Unit) {
+    val psiDocumentManager = PsiDocumentManager.getInstance(myFixture.project)
+    executeCommand {
+      runWriteAction {
+        action()
+        psiDocumentManager.commitAllDocuments()
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(myFixture.editor.document)
+      }
+    }
   }
 }

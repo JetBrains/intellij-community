@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -19,10 +19,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -39,11 +36,14 @@ import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
 import static com.intellij.util.ui.UIUtil.*;
 import static java.lang.String.format;
 
-public class ChangeListDetailsAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class ChangeListDetailsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(PROJECT);
-    ChangeList[] changeLists = e.getRequiredData(CHANGE_LISTS);
+    Project project = e.getData(PROJECT);
+    if (project == null) return;
+    ChangeList[] changeLists = e.getData(CHANGE_LISTS);
+    if (changeLists == null || changeLists.length == 0) return;
 
     showDetailsPopup(project, (CommittedChangeList)changeLists[0]);
   }
@@ -80,9 +80,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       .showInBestPositionFor(DataManager.getInstance().getDataContext());
   }
 
-  @Nls
-  @NotNull
-  private static String getDetails(@NotNull Project project, @NotNull CommittedChangeList changeList) {
+  private static @Nls @NotNull String getDetails(@NotNull Project project, @NotNull CommittedChangeList changeList) {
     return join(packNullables(
       getNumber(changeList),
       getCommitterAndDate(changeList),
@@ -91,9 +89,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     ), BR);
   }
 
-  @Nls
-  @Nullable
-  private static String getNumber(@NotNull CommittedChangeList changeList) {
+  private static @Nls @Nullable String getNumber(@NotNull CommittedChangeList changeList) {
     return Optional.ofNullable(changeList.getVcs())
       .map(AbstractVcs::getCachingCommittedChangesProvider)
       .map(CachingCommittedChangesProvider::getChangelistTitle)
@@ -101,16 +97,12 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       .orElse(null);
   }
 
-  @Nls
-  @NotNull
-  private static String getCommitterAndDate(@NotNull CommittedChangeList changeList) {
+  private static @Nls @NotNull String getCommitterAndDate(@NotNull CommittedChangeList changeList) {
     @NonNls String committer = "<b>" + changeList.getCommitterName() + "</b>";
     return message("changelist.details.committed.format", committer, formatPrettyDateTime(changeList.getCommitDate()));
   }
 
-  @Nls
-  @Nullable
-  private static String getCustomDetails(@NotNull CommittedChangeList changeList) {
+  private static @Nls @Nullable String getCustomDetails(@NotNull CommittedChangeList changeList) {
     AbstractVcs vcs = changeList.getVcs();
 
     if (vcs != null && vcs.getCachingCommittedChangesProvider() != null) {
@@ -130,9 +122,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
     return null;
   }
 
-  @Nls
-  @NotNull
-  private static String toString(@Nullable Object value) {
+  private static @Nls @NotNull String toString(@Nullable Object value) {
     String result = value != null ? value.toString() : ""; //NON-NLS
     return result.isEmpty() ? message("changes.none") : result;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,8 +49,7 @@ public final class NlsCapitalizationUtil {
     return !word.isEmpty() && Character.isLetter(word.charAt(0)) && Character.isUpperCase(word.charAt(0));
   }
 
-  @NotNull
-  public static String fixValue(String string, Nls.Capitalization capitalization) {
+  public static @NotNull String fixValue(String string, Nls.Capitalization capitalization) {
     return capitalization == Nls.Capitalization.Title
            ? StringUtil.wordsToBeginFromUpperCase(string)
            : StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(string));

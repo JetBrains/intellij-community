@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class ClassLiteralGetter {
 
-  public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
+  public static void addCompletions(final @NotNull JavaSmartCompletionParameters parameters,
                                     @NotNull Consumer<? super LookupElement> result, final PrefixMatcher matcher) {
     PsiType expectedType = parameters.getDefaultType();
     if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
@@ -60,7 +60,7 @@ public final class ClassLiteralGetter {
     CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, type -> addClassLiteralLookupElement(type, result, context));
   }
 
-  private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<? super LookupElement> resultSet, final PsiFile context) {
+  private static void addClassLiteralLookupElement(final @Nullable PsiType type, final Consumer<? super LookupElement> resultSet, final PsiFile context) {
     if (type instanceof PsiClassType &&
         PsiUtil.resolveClassInType(type) != null &&
         !((PsiClassType)type).hasParameters() &&

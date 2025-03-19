@@ -5,12 +5,12 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.addPostCommitAction
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.commitByBuilder
+import com.intellij.ide.wizard.AbstractNewProjectWizardBuilder.Companion.postCommitByBuilder
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.DslComponentProperty
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBInsets
@@ -31,20 +30,9 @@ import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
-val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
+val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
-@Deprecated(
-  message = "Use NewProjectWizardChainStep.nextStep instead",
-  replaceWith = ReplaceWith(
-    "nextStep(f1)",
-    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
-  )
-)
-fun <T1, T2> T1.chain(f1: (T1) -> T2): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep {
-  return nextStep(f1)
-}
-
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
   replaceWith = ReplaceWith(
@@ -58,6 +46,7 @@ fun <T1, T2, T3> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3): NewProjectWizardStep
     .nextStep(f2)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
   replaceWith = ReplaceWith(
@@ -70,39 +59,6 @@ fun <T1, T2, T3, T4> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4): N
   return nextStep(f1)
     .nextStep(f2)
     .nextStep(f3)
-}
-
-@Deprecated(
-  message = "Use NewProjectWizardChainStep.nextStep instead",
-  replaceWith = ReplaceWith(
-    "nextStep(f1).nextStep(f2).nextStep(f3).nextStep(f4)",
-    "com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep"
-  )
-)
-fun <T1, T2, T3, T4, T5> T1.chain(f1: (T1) -> T2, f2: (T2) -> T3, f3: (T3) -> T4, f4: (T4) -> T5): NewProjectWizardStep
-  where T1 : NewProjectWizardStep, T2 : NewProjectWizardStep, T3 : NewProjectWizardStep, T4 : NewProjectWizardStep, T5 : NewProjectWizardStep {
-  return nextStep(f1)
-    .nextStep(f2)
-    .nextStep(f3)
-    .nextStep(f4)
-}
-
-@Deprecated("Use NewProjectWizardChainStep.nextStep instead")
-fun stepSequence(first: NewProjectWizardStep, vararg rest: NewProjectWizardStep): NewProjectWizardStep {
-  val steps = listOf(first) + rest
-  return object : AbstractNewProjectWizardStep(first) {
-    override fun setupUI(builder: Panel) {
-      for (step in steps) {
-        step.setupUI(builder)
-      }
-    }
-
-    override fun setupProject(project: Project) {
-      for (step in steps) {
-        step.setupProject(project)
-      }
-    }
-  }
 }
 
 fun DialogPanel.setMinimumWidthForAllRowLabels(width: Int) {
@@ -122,15 +78,8 @@ private fun isRowLabel(label: JLabel): Boolean {
 }
 
 fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
-  if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
-    val top = if (topField) 20 else 15
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
-  }
-  else {
-    val top = if (topField) 15 else 5
-    border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 5, 0, 5))
-  }
-
+  val top = if (topField) 20 else 15
+  border = IdeBorderFactory.createEmptyBorder(JBInsets(top, 20, 20, 20))
   return this
 }
 
@@ -138,7 +87,7 @@ fun DialogPanel.withVisualPadding(topField: Boolean = false): DialogPanel {
  * Notifies user-visible error if [execution] is failed.
  */
 @ApiStatus.Experimental
-fun NewProjectWizardStep.setupProjectSafe(
+inline fun NewProjectWizardStep.setupProjectSafe(
   project: Project,
   errorMessage: @NlsContexts.DialogMessage String,
   execution: () -> Unit
@@ -147,9 +96,6 @@ fun NewProjectWizardStep.setupProjectSafe(
     execution()
   }
   catch (ex: CancellationException) {
-    throw ex
-  }
-  catch (ex: ProcessCanceledException) {
     throw ex
   }
   catch (ex: Exception) {
@@ -165,24 +111,30 @@ fun NewProjectWizardStep.setupProjectSafe(
   }
 }
 
-@ApiStatus.Internal
-fun whenProjectCreated(project: Project, action: () -> Unit) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    action()
-  }
-  else {
-    StartupManager.getInstance(project).runAfterOpened {
-      ApplicationManager.getApplication().invokeLater(action, project.disposed)
-    }
-  }
+/**
+ * Schedules activity executed on the pooled thread after the project is opened.
+ * The runnable will be executed in the current thread if the project is already opened.
+ *
+ * Note: The target project can be changed if the created project is attached to the multi-project workspace.
+ * Therefore, use the project, from the [callback] parameter.
+ *
+ * @see ProjectBuilder.postCommit
+ * @see StartupManager.runAfterOpened
+ */
+@ApiStatus.Experimental
+fun NewProjectWizardStep.runAfterOpened(project: Project, callback: (Project) -> Unit) {
+  addPostCommitAction(callback)
+  // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+  StartupManager.getInstance(project).runAfterOpened { callback(project) }
 }
 
 /**
- * This is a workaround for https://youtrack.jetbrains.com/issue/IDEA-286690
+ * Bridges the [ProjectBuilder] and [NewProjectWizardStep] abstractions.
+ *
+ * @param builder is a legacy abstraction for defining a new project wizard UI and project generator.
  */
-@ApiStatus.Internal
+@ApiStatus.Obsolete
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
-  val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-  return builder.commit(project, model)?.firstOrNull()
+  return commitByBuilder(builder, project).firstOrNull()
+    .also { postCommitByBuilder(builder) }
 }
-

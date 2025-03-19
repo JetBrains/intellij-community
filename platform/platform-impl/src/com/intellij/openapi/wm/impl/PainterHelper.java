@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -11,17 +12,15 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StartupUiUtilKt;
+import com.intellij.util.ui.*;
+import kotlin.jvm.functions.Function0;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,8 +162,18 @@ final class PainterHelper implements Painter.Listener {
     }
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  void addFallbackBackgroundPainter(@NotNull Painter fallbackBackgroundPainter) {
+    addPainter(fallbackBackgroundPainter, null);
+  }
+
   static void initWallpaperPainter(@NotNull String propertyName, @NotNull PainterHelper painters) {
     painters.addPainter(new MyImagePainter(painters.rootComponent, propertyName), null);
+  }
+
+  static void resetWallpaperPainterCache() {
+    MyImagePainter.ourImageCache.clear();
   }
 
   static AbstractPainter newImagePainter(@NotNull Image image,
@@ -301,6 +310,11 @@ final class PainterHelper implements Painter.Listener {
       }
 
       float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? 0.65f * alpha : alpha;
+      Object hintedAdjustedAlphaObject = g.getRenderingHint(JBSwingUtilities.ADJUSTED_BACKGROUND_ALPHA);
+      if (hintedAdjustedAlphaObject instanceof Float hintedAdjustedAlpha) {
+        adjustedAlpha = hintedAdjustedAlpha;
+      }
+
       GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
       StartupUiUtilKt.drawImage(g, scaled, dst, src, null, null);
       gc.restore();
@@ -432,6 +446,8 @@ final class PainterHelper implements Painter.Listener {
   }
 
   private static final class MyImagePainter extends ImagePainter {
+    private static final Map<ImageLoadSettings, Image> ourImageCache = ContainerUtil.createWeakValueMap();
+
     private final JComponent rootComponent;
     private final String propertyName;
 
@@ -464,8 +480,7 @@ final class PainterHelper implements Painter.Listener {
     }
 
     boolean ensureImageLoaded() {
-      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
-      Project project = frame == null ? null : frame.getProject();
+      Project project = ProjectUtil.getProjectForComponent(rootComponent);
       String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
       if (!Objects.equals(value, current)) {
         current = value;
@@ -498,7 +513,7 @@ final class PainterHelper implements Painter.Listener {
       boolean newOk = newImage != null;
       if (prevOk || newOk) {
         ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
-        if (modalityState.dominates(ModalityState.NON_MODAL)) {
+        if (!modalityState.accepts(ModalityState.nonModal())) {
           ComponentUtil.getActiveWindow().repaint();
         }
         else {
@@ -528,9 +543,16 @@ final class PainterHelper implements Painter.Listener {
         return;
       }
 
+      Image cachedImage = ourImageCache.get(newLoadSettings);
+      if (cachedImage != null) {
+        resetImage(propertyValue, newLoadSettings, cachedImage, newAlpha, newFillType, newAnchor);
+        return;
+      }
+
       ModalityState modalityState = ModalityState.stateForComponent(rootComponent);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         Image newImage = filterImage(loadImage(newLoadSettings), newLoadSettings);
+        ourImageCache.put(newLoadSettings, newImage);
         ApplicationManager.getApplication().invokeLater(() -> {
           resetImage(propertyValue, newLoadSettings, newImage, newAlpha, newFillType, newAnchor);
         }, modalityState);

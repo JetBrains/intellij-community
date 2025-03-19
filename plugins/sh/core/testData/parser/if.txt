@@ -739,75 +739,76 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('dpkg')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('dpkg')
+                PsiElement(word)('--list')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('--list')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('awk')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''{ print $2 }'')
+            PsiWhiteSpace(' ')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('grep')
+              PsiWhiteSpace(' ')
+              STRING
+                PsiElement(RAW_STRING)(''linux-image-.*-generic'')
+            PsiWhiteSpace(' ')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('grep')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('awk')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''{ print $2 }'')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('grep')
-            PsiWhiteSpace(' ')
-            STRING
-              PsiElement(RAW_STRING)(''linux-image-.*-generic'')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
-              LITERAL
-                PsiElement(word)('grep')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-v')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
-              COMMAND_SUBSTITUTION_COMMAND
-                PsiElement(OPEN_BACKQUOTE)('`')
-                COMPOUND_LIST
-                  SIMPLE_COMMAND
-                    GENERIC_COMMAND_DIRECTIVE
+                PsiElement(word)('-v')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND_ELEMENT
+                COMMAND_SUBSTITUTION_COMMAND
+                  PsiElement(OPEN_BACKQUOTE)('`')
+                  COMPOUND_LIST
+                    SIMPLE_COMMAND
+                      GENERIC_COMMAND_DIRECTIVE
+                        LITERAL
+                          PsiElement(word)('uname')
+                      PsiWhiteSpace(' ')
                       LITERAL
-                        PsiElement(word)('uname')
-                    PsiWhiteSpace(' ')
-                    LITERAL
-                      PsiElement(word)('-r')
-                PsiElement(CLOSE_BACKQUOTE)('`')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+                        PsiElement(word)('-r')
+                  PsiElement(CLOSE_BACKQUOTE)('`')
+            PsiWhiteSpace(' ')
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('xargs')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('xargs')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('apt-get')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-y')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('purge')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('--auto-remove')
+                PsiElement(word)('apt-get')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-y')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('purge')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('--auto-remove')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')
   PsiElement(\n)('\n')
@@ -856,23 +857,24 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+          PIPELINE_COMMAND_LIST
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('curl')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('curl')
+                PsiElement(word)('https://bootstrap.pypa.io/get-pip.py')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('https://bootstrap.pypa.io/get-pip.py')
-          PsiWhiteSpace(' ')
-          PsiElement(|)('|')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND
-            GENERIC_COMMAND_DIRECTIVE
+            PsiElement(|)('|')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND
+              GENERIC_COMMAND_DIRECTIVE
+                LITERAL
+                  PsiElement(word)('sudo')
+              PsiWhiteSpace(' ')
               LITERAL
-                PsiElement(word)('sudo')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('python')
+                PsiElement(word)('python')
           PsiElement(\n)('\n')
           PsiWhiteSpace('\t')
           SIMPLE_COMMAND

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggerTestCompilerFacility
 
 abstract class AbstractK2IdeK1CodeKotlinSteppingTest : AbstractIrKotlinSteppingTest() {
-    override val isK2Plugin: Boolean get() = true
 
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,

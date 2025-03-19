@@ -1,11 +1,15 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog.items.tree
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.treeStructure.treetable.TreeTableModel
 import javax.swing.JTree
 import javax.swing.event.TreeModelListener
 import javax.swing.tree.TreePath
 
-class FilteringTreeTableModel(private val initialModel: TreeTableModel) : TreeTableModel {
+private val logger = Logger.getInstance(FilteringTreeTableModel::class.java)
+
+internal class FilteringTreeTableModel(private val initialModel: AttachTreeModel) : TreeTableModel {
 
   private var acceptedNodeIndex: Map<Any, List<Int>>
   private var condition: (Any) -> Boolean = { true }
@@ -38,11 +42,11 @@ class FilteringTreeTableModel(private val initialModel: TreeTableModel) : TreeTa
     return childrenMask.indexOf(initialIndex)
   }
 
-  override fun addTreeModelListener(l: TreeModelListener?) {
+  override fun addTreeModelListener(l: TreeModelListener) {
     initialModel.addTreeModelListener(l)
   }
 
-  override fun removeTreeModelListener(l: TreeModelListener?) {
+  override fun removeTreeModelListener(l: TreeModelListener) {
     initialModel.removeTreeModelListener(l)
   }
 
@@ -72,6 +76,7 @@ class FilteringTreeTableModel(private val initialModel: TreeTableModel) : TreeTa
 
   fun refilter() {
     acceptedNodeIndex = buildAcceptanceCache()
+    initialModel.treeStructureChanged()
   }
 
   private fun buildAcceptanceCache(): Map<Any, List<Int>> {
@@ -88,6 +93,10 @@ class FilteringTreeTableModel(private val initialModel: TreeTableModel) : TreeTa
 
     for (i in 0 until initialModel.getChildCount(node)) {
       val child = initialModel.getChild(node, i)
+      if (child == null) {
+        logger.error("Child $i of node $node is not expected to be null")
+        continue
+      }
       val isChildAccepted = processNode(child, acceptedNodesIndicesToChildren)
       if (isChildAccepted) {
         acceptedChildrenIndices.add(i)

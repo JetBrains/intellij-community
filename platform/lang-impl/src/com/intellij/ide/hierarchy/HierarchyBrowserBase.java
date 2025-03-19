@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -21,7 +21,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +29,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 
-public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
+public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable {
   protected final Project myProject;
+  private final @NotNull ExporterToTextFileHierarchy myExporter = new ExporterToTextFileHierarchy(this);
   protected Content myContent;
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
@@ -75,8 +78,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     return myDisposed;
   }
 
-  @NotNull
-  protected ActionToolbar createToolbar(@NotNull String place, @NotNull String helpID) {
+  protected @NotNull ActionToolbar createToolbar(@NotNull String place, @NotNull String helpID) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
@@ -90,7 +92,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
     actionGroup.add(actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL));
     actionGroup.add(actionManager.getAction(PinToolwindowTabAction.ACTION_NAME));
-    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new ExporterToTextFileHierarchy(this)));
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(myExporter));
     actionGroup.add(new CloseAction());
   }
 
@@ -98,18 +100,15 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   abstract StructureTreeModel getCurrentBuilder();
 
-  @Nullable
-  protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
+  protected abstract @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
-  @Nullable
-  protected final PsiElement getSelectedElement(@NotNull DataContext dataContext) {
+  protected final @Nullable PsiElement getSelectedElement(@NotNull DataContext dataContext) {
     Object element = ArrayUtil.getFirstElement(dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
     if (!(element instanceof HierarchyNodeDescriptor)) return null;
     return getElementFromDescriptor((HierarchyNodeDescriptor)element);
   }
 
-  @Nullable
-  protected static HierarchyNodeDescriptor getDescriptor(@NotNull DefaultMutableTreeNode node) {
+  protected static @Nullable HierarchyNodeDescriptor getDescriptor(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)userObject;
@@ -197,45 +196,30 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return null;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      JTree tree = getCurrentTree();
-      if (tree != null) {
-        return new DefaultTreeExpander(tree);
-      }
-    }
-    if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      return getSelectedDescriptors();
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      DataProvider bgtProvider = (DataProvider)super.getData(PlatformCoreDataKeys.BGT_DATA_PROVIDER.getName());
-      HierarchyNodeDescriptor[] descriptors = getSelectedDescriptors();
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, descriptors), bgtProvider);
-    }
-    return super.getData(dataId);
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    JTree tree = getCurrentTree();
+    HierarchyNodeDescriptor[] selection = getSelectedDescriptors();
 
-  protected @Nullable Object getSlowData(@NotNull String dataId, HierarchyNodeDescriptor @NotNull [] selection) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    sink.set(PlatformDataKeys.TREE_EXPANDER, tree == null ? null : new DefaultTreeExpander(tree));
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, selection);
+    sink.set(PlatformDataKeys.EXPORTER_TO_TEXT_FILE, myExporter);
+
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       PsiElement anElement = selection.length > 0 ? getElementFromDescriptor(selection[0]) : null;
       return anElement != null && anElement.isValid() ? anElement : null;
-    }
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       return JBIterable.of(selection).filterMap(this::getElementFromDescriptor).toArray(PsiElement.EMPTY_ARRAY);
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       return JBIterable.of(selection).filterMap(this::getNavigatable).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    return null;
+    });
   }
 
   private final class CloseAction extends CloseTabToolbarAction {

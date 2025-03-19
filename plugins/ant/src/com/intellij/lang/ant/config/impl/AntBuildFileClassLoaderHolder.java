@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.util.config.AbstractProperty;
@@ -27,7 +27,7 @@ public final class AntBuildFileClassLoaderHolder extends ClassLoaderHolder {
 
     final AntInstallation antInstallation = AntBuildFileImpl.RUN_WITH_ANT.get(myOptions);
     final ClassLoader parentLoader = (antInstallation != null) ? antInstallation.getClassLoader() : null;
-    if (parentLoader != null && files.size() == 0) {
+    if (parentLoader != null && files.isEmpty()) {
       // no additional classpath, so it's ok to use ant installation's loader
       return parentLoader;
     }

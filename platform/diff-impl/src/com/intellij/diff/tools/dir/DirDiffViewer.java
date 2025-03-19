@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.dir;
 
 import com.intellij.diff.DiffContext;
@@ -24,31 +10,32 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
 class DirDiffViewer implements FrameDiffTool.DiffViewer {
 
   private final DirDiffPanel myDirDiffPanel;
-  private final JPanel myPanel;
+  private final JComponent myComponent;
   private final String myHelpID;
 
   DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -69,9 +56,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     DirDiffTableModel model = new DirDiffTableModel(context.getProject(), element1, element2, settings);
 
     myDirDiffPanel = new DirDiffPanel(model, new DirDiffWindow() {
-      @NotNull
       @Override
-      public Disposable getDisposable() {
+      public @NotNull Disposable getDisposable() {
         return DirDiffViewer.this;
       }
 
@@ -81,19 +67,14 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
       }
     });
 
-    myPanel = new JPanel(new BorderLayout());
-    myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myPanel, dataId -> {
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return myHelpID;
-      }
-      return myDirDiffPanel.getData(dataId);
+    myComponent = UiDataProvider.wrapComponent(myDirDiffPanel.getPanel(), sink -> {
+      sink.set(PlatformCoreDataKeys.HELP_ID, myHelpID);
+      DataSink.uiDataSnapshot(sink, myDirDiffPanel);
     });
   }
 
-  @NotNull
   @Override
-  public FrameDiffTool.ToolbarComponents init() {
+  public @NotNull FrameDiffTool.ToolbarComponents init() {
     FrameDiffTool.ToolbarComponents components = new FrameDiffTool.ToolbarComponents();
     components.toolbarActions = Arrays.asList(myDirDiffPanel.getActions());
     components.statusPanel = myDirDiffPanel.extractFilterPanel();
@@ -105,15 +86,13 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     Disposer.dispose(myDirDiffPanel);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
-    return myPanel;
+  public @NotNull JComponent getComponent() {
+    return myComponent;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myDirDiffPanel.getTable();
   }
 
@@ -147,8 +126,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
     return false;
   }
 
-  @NotNull
-  private static DiffElement createDiffElement(@NotNull DiffContent content) {
+  private static @NotNull DiffElement createDiffElement(@NotNull DiffContent content) {
     if (content instanceof EmptyContent) {
       return new DiffElement() {
         @Override
@@ -156,9 +134,8 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
           return "";
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return "Nothing";
         }
 
@@ -194,10 +171,12 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
       };
     }
     if (content instanceof DirectoryContent) {
-      return VirtualFileDiffElement.createElement(((DirectoryContent)content).getFile());
+      VirtualFile file = ((DirectoryContent)content).getFile();
+      return VirtualFileDiffElement.createElement(file, file);
     }
     if (content instanceof FileContent && content.getContentType() instanceof ArchiveFileType) {
-      return VirtualFileDiffElement.createElement(((FileContent)content).getFile());
+      VirtualFile file = ((FileContent)content).getFile();
+      return VirtualFileDiffElement.createElement(file, file);
     }
     throw new IllegalArgumentException(content.getClass() + " " + content.getContentType());
   }

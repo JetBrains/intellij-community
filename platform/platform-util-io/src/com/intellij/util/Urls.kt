@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.net.MalformedURLException
 import java.net.URI
@@ -78,10 +79,12 @@ object Urls {
   /**
    * Url will not be normalized (see [VfsUtilCore.toIdeaUrl]), parsed as is
    */
+  @ApiStatus.Internal
   @JvmStatic
   fun newFromIdea(url: CharSequence): Url = parseFromIdea(url) ?: throw MalformedURLException("Malformed URL: ${url}")
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
+  @ApiStatus.Internal
   @JvmStatic
   fun parseFromIdea(url: CharSequence): Url? {
     for (element in url) {
@@ -102,6 +105,7 @@ object Urls {
     }
   }
 
+  @ApiStatus.Internal
   @JvmStatic
   fun parseAsJavaUriWithoutParameters(url: String): URI? {
     val asUrl = parseUrl(url) ?: return null
@@ -138,11 +142,6 @@ object Urls {
     else if (StandardFileSystems.FILE_PROTOCOL == scheme || !hasUrlSeparator) {
       path = if (path == null) authority else authority + path
       authority = if (hasUrlSeparator) "" else null
-    }
-
-    // canonicalize only if authority is not empty or file url - we should not canonicalize URL with unknown scheme (webpack:///./modules/flux-orion-plugin/fluxPlugin.ts)
-    if (path != null && (!authority.isNullOrEmpty() || StandardFileSystems.FILE_PROTOCOL == scheme)) {
-      path = FileUtilRt.toCanonicalPath(path, '/', false)
     }
 
     return UrlImpl(scheme, authority, path, matcher.group(5))

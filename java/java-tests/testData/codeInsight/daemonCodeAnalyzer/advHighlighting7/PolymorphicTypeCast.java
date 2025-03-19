@@ -83,7 +83,7 @@ class C {
 
   void unsupported() {
     Object o = 42;
-    if (<error descr="Inconvertible types; cannot cast 'java.lang.Object' to 'int'">o instanceof int</error>) {
+    if (<error descr="Primitive types in patterns, instanceof and switch are not supported at language level '7'">o instanceof int</error>) {
       int i = (Integer) o;
       System.out.println(i);
     }

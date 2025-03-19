@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -13,6 +13,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -36,10 +37,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -53,6 +51,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public class VcsStructureChooser extends DialogWrapper {
   private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
@@ -133,47 +132,15 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!super.isFileVisible(file, showHiddenFiles)) return false;
-        if (myRoots.contains(file)) return false;
-        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-        return !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file);
-      }
-    };
-    descriptor.withRoots(new ArrayList<>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
-    final MyCheckboxTreeCellRenderer cellRenderer =
-      new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
-    FileSystemTreeImpl fileSystemTree =
-      new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, o -> {
-        DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
-        Object uo = lastPathComponent.getUserObject();
-        if (uo instanceof FileNodeDescriptor) {
-          VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
-          String module = myModulesSet.get(file);
-          if (module != null) return module;
-          return file == null ? "" : file.getName();
-        }
-        return o.toString();
-      }) {
-        @Override
-        protected Comparator<? super NodeDescriptor<?>> getFileComparator() {
-          return (o1, o2) -> {
-            if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-              VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-              VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
-
-              boolean isDir1 = f1.isDirectory();
-              boolean isDir2 = f2.isDirectory();
-              if (isDir1 != isDir2) return isDir1 ? -1 : 1;
-
-              return f1.getPath().compareToIgnoreCase(f2.getPath());
-            }
-            return o1.getIndex() - o2.getIndex();
-          };
-        }
-      };
+    var changeListManager = ChangeListManager.getInstance(myProject);
+    var descriptor = new FileChooserDescriptor(true, true, true, true, false, true)
+      .withFileFilter(file -> !myRoots.contains(file) && !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file))
+      .withRoots(new ArrayList<>(myRoots))
+      .withShowHiddenFiles(true)
+      .withHideIgnored(true);
+    var cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
+    var fileSystemTree = new MyFileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, myModulesSet);
+    Disposer.register(myDisposable, fileSystemTree);
 
     new ClickListener() {
       @Override
@@ -408,6 +375,44 @@ public class VcsStructureChooser extends DialogWrapper {
     @Override
     protected void putParentPathImpl(@NotNull Object value, @NotNull String parentPath, @NotNull FilePath self) {
       append(self.getPath(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
+  }
+
+  private static class MyFileSystemTreeImpl extends FileSystemTreeImpl {
+    private MyFileSystemTreeImpl(@NotNull Project project, FileChooserDescriptor descriptor, Tree tree,
+                                 MyCheckboxTreeCellRenderer cellRenderer, @NotNull Map<VirtualFile, @Nls String> modulesSet) {
+      super(project, descriptor, tree, cellRenderer, null, treePath -> {
+        return getString(treePath, modulesSet);
+      });
+    }
+
+    @Override
+    protected Comparator<? super NodeDescriptor<?>> getFileComparator() {
+      return (o1, o2) -> {
+        if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
+          VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+          VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+
+          boolean isDir1 = f1.isDirectory();
+          boolean isDir2 = f2.isDirectory();
+          if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+
+          return f1.getPath().compareToIgnoreCase(f2.getPath());
+        }
+        return o1.getIndex() - o2.getIndex();
+      };
+    }
+
+    private static @NotNull String getString(@NotNull TreePath treePath, @NotNull Map<VirtualFile, @Nls String> modulesSet) {
+      DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)treePath.getLastPathComponent());
+      Object uo = lastPathComponent.getUserObject();
+      if (uo instanceof FileNodeDescriptor) {
+        VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
+        String module = modulesSet.get(file);
+        if (module != null) return module;
+        return file == null ? "" : file.getName();
+      }
+      return treePath.toString();
     }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.ui.colorpicker
 import com.intellij.CommonBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import javax.swing.JPanel
@@ -34,6 +35,7 @@ private val BUTTON_BORDER = JBUI.Borders.empty(5, 5, 5, 5)
  * @param ok Callback when clicking "OK" button. The "OK" button only appear when this parameter is not-null.
  * @param cancel Callback when clicking "Cancel" button.  The "OK" button only appear when this parameter is not-null.
  */
+@ApiStatus.Internal
 class OperationPanel(private val model: ColorPickerModel,
                      ok: ((Color) -> Unit)?,
                      cancel: ((Color) -> Unit)?)

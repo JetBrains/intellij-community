@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.commander;
 
 import com.intellij.diff.DiffContentFactory;
@@ -23,8 +23,7 @@ public final class PsiDiffContentFactory {
   private PsiDiffContentFactory() {
   }
 
-  @Nullable
-  private static DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
+  private static @Nullable DiffContent fromPsiElement(@NotNull PsiElement psiElement) {
     DiffContentFactory factory = DiffContentFactory.getInstance();
     if (psiElement instanceof PsiFile) {
       return factory.create(psiElement.getProject(), ((PsiFile)psiElement).getVirtualFile());
@@ -43,8 +42,7 @@ public final class PsiDiffContentFactory {
     return factory.createFragment(psiElement.getProject(), wholeFileContent, psiElement.getTextRange());
   }
 
-  @Nullable
-  public static DiffRequest comparePsiElements(@NotNull PsiElement psiElement1, @NotNull PsiElement psiElement2) {
+  public static @Nullable DiffRequest comparePsiElements(@NotNull PsiElement psiElement1, @NotNull PsiElement psiElement2) {
     if (!psiElement1.isValid() || !psiElement2.isValid()) return null;
     Project project = psiElement1.getProject();
     LOG.assertTrue(project == psiElement2.getProject());

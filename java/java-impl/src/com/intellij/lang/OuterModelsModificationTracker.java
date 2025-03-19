@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -43,7 +43,10 @@ import static org.jetbrains.uast.util.ClassSetKt.isInstanceOf;
 @ApiStatus.Internal
 public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
-  public OuterModelsModificationTracker(Project project, Disposable parent, boolean useUastBased) {
+  private final boolean myTrackConfigurationFiles;
+
+  public OuterModelsModificationTracker(Project project, Disposable parent, boolean useUastBased, boolean trackConfigurationFiles) {
+    myTrackConfigurationFiles = trackConfigurationFiles;
     PsiManager.getInstance(project).addPsiTreeChangeListener(
       useUastBased ? new MyUastPsiTreeChangeAdapter(project) : new MyJavaPsiTreeChangeAdapter(),
       parent
@@ -55,7 +58,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
   private boolean processConfigFileChange(PsiFile psiFile) {
     String languageId = psiFile == null ? null : psiFile.getLanguage().getID();
-    if ("Properties".equals(languageId)) {
+    if (myTrackConfigurationFiles && "Properties".equals(languageId)) {
       incModificationCount();
       return true;
     }
@@ -65,7 +68,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       return true;
     }
 
-    if ("yaml".equals(languageId)) {
+    if (myTrackConfigurationFiles && "yaml".equals(languageId)) {
       incModificationCount();
       return true;
     }
@@ -92,12 +95,12 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     }
 
     @Override
-    public void fileMoved(@NotNull final VirtualFileMoveEvent event) {
+    public void fileMoved(final @NotNull VirtualFileMoveEvent event) {
       incModificationCountIfMine(event);
     }
 
     @Override
-    public void propertyChanged(@NotNull final VirtualFilePropertyEvent event) {
+    public void propertyChanged(final @NotNull VirtualFilePropertyEvent event) {
       if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
         incModificationCountIfMine(event);
       }
@@ -328,8 +331,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
                  && !isInstanceOf(modifierListOwner, possiblePsiTypes.forVariables));
     }
 
-    @Nullable
-    private MyPsiPossibleTypes getPossiblePsiTypesFor(@NotNull String languageId) {
+    private @Nullable MyPsiPossibleTypes getPossiblePsiTypesFor(@NotNull String languageId) {
       return myPsiPossibleTypes.computeIfAbsent(languageId, (_key) ->
         CachedValuesManager.getManager(myProject).createCachedValue(() -> {
           final var uastLanguagePlugin =
@@ -344,12 +346,12 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
   // It is specially kept as simple as possible for performance and readability
   private static class MyPsiPossibleTypes {
-    @NotNull public final ClassSet<PsiElement> forClasses;
-    @NotNull public final ClassSet<PsiElement> forMethods;
-    @NotNull public final ClassSet<PsiElement> forVariables;
-    @NotNull public final ClassSet<PsiElement> forImports;
-    @NotNull public final ClassSet<PsiElement> forAnnotations;
-    @NotNull public final ClassSet<PsiElement> forAnnotationOwners;
+    public final @NotNull ClassSet<PsiElement> forClasses;
+    public final @NotNull ClassSet<PsiElement> forMethods;
+    public final @NotNull ClassSet<PsiElement> forVariables;
+    public final @NotNull ClassSet<PsiElement> forImports;
+    public final @NotNull ClassSet<PsiElement> forAnnotations;
+    public final @NotNull ClassSet<PsiElement> forAnnotationOwners;
 
     private MyPsiPossibleTypes(@NotNull UastLanguagePlugin uastPlugin) {
       this.forClasses = uastPlugin.getPossiblePsiSourceTypes(UClass.class);

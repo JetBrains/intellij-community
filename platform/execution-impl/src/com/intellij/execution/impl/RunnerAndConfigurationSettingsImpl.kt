@@ -14,11 +14,14 @@ import com.intellij.execution.configuration.PersistentAwareRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.execution.ui.RunConfigurationStartHistory
+import com.intellij.execution.util.ProgramParametersConfigurator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.components.impl.getProjectPathMacroSubstitutor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
@@ -27,6 +30,8 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.nullize
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 private const val RUNNER_ID = "RunnerId"
@@ -144,18 +149,30 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   }
 
   override fun setName(name: String) {
-    val existing = uniqueId != null && manager.getConfigurationById(uniqueID) != null
+    val alreadyExists = uniqueId != null && manager.getConfigurationById(uniqueID) != null
+    val oldUniqueId = uniqueId
     uniqueId = null
     configuration.name = name
-    if (existing) {
+    if (alreadyExists) {
       manager.addConfiguration(this)
+      val runConfigHistory = RunConfigurationStartHistory.getInstance(manager.project)
+      for (set in runConfigHistory.state.let { listOf(it.pinned, it.history) }) {
+        set.find { it.setting == oldUniqueId }?.apply {
+          setting = getSettings(configuration).uniqueID
+        }
+      }
+      runConfigHistory.reloadState()
     }
+  }
+
+  private fun getSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings {
+    return RunnerAndConfigurationSettingsImpl(manager, configuration)
   }
 
   override fun getName(): String {
     val configuration = configuration
     if (isTemplate) {
-      return "<template> of ${factory.id}"
+      return ExecutionBundle.message("runner.and.configuration.settings.from.template", factory.name)
     }
     return configuration.name
   }
@@ -195,7 +212,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun getFolderName() = folderName
 
-  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean) {
+  @JvmOverloads
+  fun readExternal(element: Element, isStoredInDotIdeaFolder: Boolean, configFilePath: String? = null) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
 
     if (isStoredInDotIdeaFolder) {
@@ -222,7 +240,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     _configuration = configuration
     uniqueId = null
 
-    PathMacroManager.getInstance(configuration.project).expandPaths(element)
+    getProjectPathMacroSubstitutor(configuration.project, configFilePath).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
@@ -337,19 +355,22 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationException? = null
+    val dataContext = ProgramParametersConfigurator.projectContext(configuration.project, null, null)
 
-    ReadAction.nonBlocking {
+    var warning = ReadAction.nonBlocking<RuntimeConfigurationException?> {
       try {
-        configuration.checkConfiguration()
+        ExecutionManagerImpl.withEnvironmentDataContext(dataContext).use {
+          configuration.checkConfiguration()
+        }
       }
       catch (e: RuntimeConfigurationException) {
-        warning = e
+        return@nonBlocking e
       }
+      null
     }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning as RuntimeConfigurationException
+        throw warning
       }
       return
     }
@@ -384,7 +405,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (warning != null) {
-      throw warning as RuntimeConfigurationException
+      throw warning
     }
   }
 
@@ -422,6 +443,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
+    isFocusToolWindowBeforeRun = template.isFocusToolWindowBeforeRun
   }
 
   private fun <T> importFromTemplate(templateItem: RunnerItem<T>, item: RunnerItem<T>) {
@@ -600,8 +622,12 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
-  get() = ApplicationManager.getApplication().isUnitTestMode || isStoredInLocalWorkspace
+  get() = ApplicationManager.getApplication().isUnitTestMode && writeDefaultAttributeWithFalseValueInTests || isStoredInLocalWorkspace
 
+@set:TestOnly
+var writeDefaultAttributeWithFalseValueInTests: Boolean = true
+
+@ApiStatus.Internal
 fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
   when (configuration) {
     is PersistentStateComponent<*> -> serializeStateInto(configuration, element)
@@ -610,6 +636,7 @@ fun serializeConfigurationInto(configuration: RunConfiguration, element: Element
   }
 }
 
+@ApiStatus.Internal
 fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element, isTemplate: Boolean = false) {
   when (configuration) {
     is PersistentStateComponent<*> -> deserializeAndLoadState(configuration, element)

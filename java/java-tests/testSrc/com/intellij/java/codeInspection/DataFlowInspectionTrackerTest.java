@@ -10,7 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +83,7 @@ public class DataFlowInspectionTrackerTest extends LightJavaCodeInsightFixtureTe
       catch (IOException e) {
         throw new UncheckedIOException(e);
       }
-      throw new FileComparisonFailure("Dump differs", expectedFile, actualFile, origPath);
+      throw new FileComparisonFailedError("Dump differs", expectedFile, actualFile, origPath);
     }
     assertEquals(text, actual);
   }

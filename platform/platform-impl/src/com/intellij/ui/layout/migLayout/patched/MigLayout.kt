@@ -34,12 +34,15 @@
 package com.intellij.ui.layout.migLayout.patched
 
 import net.miginfocom.layout.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.ActionListener
 import javax.swing.*
 import kotlin.math.max
 import kotlin.math.roundToInt
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 open class MigLayout @JvmOverloads constructor(val layoutConstraints: LC = LC(), val columnConstraints: AC = AC(), val rowConstraints: AC = AC()) : LayoutManager2 {
   @Transient
   private var cacheParentW: ContainerWrapper? = null

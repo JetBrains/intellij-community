@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.PsiMethodMember
+import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiMethod
@@ -14,12 +15,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.overrideImplement.AbstractGenerateMembersHandler
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.utils.IgnoreTests
+import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndRemoveRedundantEmptyLinesAtTheEnd
 import org.jetbrains.kotlin.utils.rethrow
 import org.junit.Assert
 import java.io.File
@@ -81,36 +84,48 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
     private fun doFileTest(handler: AbstractGenerateMembersHandler<T>, memberToOverride: String? = null) {
         myFixture.configureByFile(getTestName(true) + ".kt")
-        doOverrideImplement(handler, memberToOverride)
-        checkResultByFile(getTestName(true))
+
+        val fileNameWithoutExtension = getTestName(true)
+        doOverrideImplement(handler, memberToOverride, fileNameWithoutExtension)
+        checkResultByFile(fileNameWithoutExtension)
     }
 
     private fun doMultiFileTest(handler: AbstractGenerateMembersHandler<T>) {
         myFixture.configureByFile(getTestName(true) + ".kt")
-        doMultiOverrideImplement(handler)
-        checkResultByFile(getTestName(true))
+
+        val fileNameWithoutExtension = getTestName(true)
+        doMultiOverrideImplement(handler, fileNameWithoutExtension)
+        checkResultByFile(fileNameWithoutExtension)
     }
 
     private fun doDirectoryTest(handler: AbstractGenerateMembersHandler<T>, memberToOverride: String? = null) {
         myFixture.copyDirectoryToProject(getTestName(true), "")
         myFixture.configureFromTempProjectFile("foo/Impl.kt")
-        doOverrideImplement(handler, memberToOverride)
+
+        val filePathWithoutExtension = getTestName(true) + "/foo/Impl"
+        doOverrideImplement(handler, memberToOverride, filePathWithoutExtension)
         checkResultByFile(getTestName(true) + "/foo/Impl")
     }
 
     private fun doMultiDirectoryTest(handler: AbstractGenerateMembersHandler<T>) {
         myFixture.copyDirectoryToProject(getTestName(true), "")
         myFixture.configureFromTempProjectFile("foo/Impl.kt")
-        doMultiOverrideImplement(handler)
-        checkResultByFile(getTestName(true) + "/foo/Impl")
+
+        val filePathWithoutExtension = getTestName(true) + "/foo/Impl"
+        doMultiOverrideImplement(handler, filePathWithoutExtension)
+        checkResultByFile(filePathWithoutExtension)
     }
 
-    private fun doOverrideImplement(handler: AbstractGenerateMembersHandler<T>, memberToOverride: String?) {
+    private fun doOverrideImplement(
+        handler: AbstractGenerateMembersHandler<T>,
+        memberToOverride: String?,
+        fileNameWithoutExtension: String,
+    ) {
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")
 
-        val chooserObjects = handler.collectMembersToGenerateUnderProgress(classOrObject)
+        val chooserObjects = collectAndCheckChooserObjects(fileNameWithoutExtension, handler, classOrObject)
 
         val singleToOverride = if (memberToOverride == null) {
             val filtered = chooserObjects.filter { !isMemberOfAny(classOrObject, it) }
@@ -125,15 +140,15 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         performGenerateCommand(handler, classOrObject, listOf(singleToOverride))
     }
 
-    private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>) {
-        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_FIR)) {
+    private fun doMultiOverrideImplement(handler: AbstractGenerateMembersHandler<T>, fileNameWithoutExtension: String) {
+        if (isFirPlugin && InTextDirectivesUtils.isDirectiveDefined(myFixture.file.text, IgnoreTests.DIRECTIVES.IGNORE_K2)) {
             return
         }
         val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)
         val classOrObject = PsiTreeUtil.getParentOfType(elementAtCaret, KtClassOrObject::class.java)
             ?: error("Caret should be inside class or object")
 
-        val chooserObjects = handler.collectMembersToGenerateUnderProgress(classOrObject)
+        val chooserObjects = collectAndCheckChooserObjects(fileNameWithoutExtension, handler, classOrObject)
             .sortedBy { getMemberName(classOrObject, it) + " in " + getContainingClassName(classOrObject, it) }
         performGenerateCommand(handler, classOrObject, chooserObjects)
     }
@@ -176,7 +191,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         val resultFile = if (isFirPlugin) {
             if (InTextDirectivesUtils.isDirectiveDefined(
                     goldenResultFile.readText(StandardCharsets.UTF_8),
-                    IgnoreTests.DIRECTIVES.IGNORE_FIR
+                    IgnoreTests.DIRECTIVES.IGNORE_K2
                 )
             ) {
                 return
@@ -185,7 +200,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
             if (firIdenticalIsPresent) {
                 goldenResultFile
             } else {
-                val firResultFile = File(myFixture.testDataPath, "$fileNameWithoutExtension.kt.fir.after")
+                val firResultFile = File(myFixture.testDataPath, "$fileNameWithoutExtension.kt.${IgnoreTests.FileExtension.FIR}.after")
                 if (!firResultFile.exists()) {
                     goldenResultFile.copyTo(firResultFile)
                 }
@@ -217,11 +232,66 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
         }
 
         if (resultFile != goldenResultFile) {
-            IgnoreTests.cleanUpIdenticalFirTestFile(
+            IgnoreTests.cleanUpIdenticalK2TestFile(
                 goldenResultFile,
+                IgnoreTests.FileExtension.FIR,
                 resultFile,
                 File(myFixture.testDataPath, "$fileNameWithoutExtension.kt"),
             )
         }
+    }
+
+    private fun collectAndCheckChooserObjects(
+        fileNameWithoutExtension: String,
+        handler: AbstractGenerateMembersHandler<T>,
+        classOrObject: KtClassOrObject,
+        addMissingDirectives: Boolean = false,
+    ): Collection<T> {
+        val chooserObjects = handler.collectMembersToGenerateUnderProgress(classOrObject)
+
+        val testFile = File(testDataDirectory, "$fileNameWithoutExtension.kt")
+
+        val frontendDependentDirective = if (isFirPlugin) MEMBER_K2_DIRECTIVE_PREFIX else MEMBER_K1_DIRECTIVE_PREFIX
+        val actualMemberTexts = chooserObjects.map { it.text }.toLinkedSet()
+        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).toLinkedSet() +
+                                  InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), frontendDependentDirective)
+
+        if (addMissingDirectives) {
+            actualMemberTexts
+                .filterNot { it in expectedMemberTexts }
+                .takeIf { it.isNotEmpty() }
+                ?.let { missingActualMemberTexts ->
+                    val missingDirectives = missingActualMemberTexts.map { "$MEMBER_DIRECTIVE_PREFIX \"$it\"" }
+
+                    addDirectivesToFile(testFile, missingDirectives)
+
+                    val testFilePath = testFile.path
+                    val testResultFiles = listOf("after", "fir.after").map { File("$testFilePath.$it") }.filter { it.exists() }
+
+                    for (testResultFile in testResultFiles) {
+                        addDirectivesToFile(testResultFile, missingDirectives)
+                    }
+                }
+        }
+
+        expectedMemberTexts.minus(actualMemberTexts).firstOrNull()?.let { missingMemberText ->
+            Assert.fail("Expected '${missingMemberText}' not found in:\n${getCollectionRepresentation(actualMemberTexts)}")
+        }
+
+        return chooserObjects
+    }
+
+    private fun addDirectivesToFile(file: File, directives: List<String>) {
+        val fileText = file.readText().trimTrailingWhitespacesAndRemoveRedundantEmptyLinesAtTheEnd()
+        file.writeText(fileText + directives.joinToString(prefix = "\n", separator = "\n"))
+    }
+
+    private fun getCollectionRepresentation(collection: Collection<*>): String = collection.joinToString(separator = "\n")
+
+    companion object {
+        protected const val MEMBER_TEXT = "MEMBER"
+        protected const val MEMBER_DIRECTIVE_PREFIX = "// $MEMBER_TEXT:"
+        protected const val MEMBER_K1_DIRECTIVE_PREFIX = "// ${MEMBER_TEXT}_K1:"
+        protected const val MEMBER_K2_DIRECTIVE_PREFIX = "// ${MEMBER_TEXT}_K2:"
     }
 }

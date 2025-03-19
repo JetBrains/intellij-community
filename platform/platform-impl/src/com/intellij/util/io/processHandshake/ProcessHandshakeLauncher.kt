@@ -80,7 +80,7 @@ abstract class ProcessHandshakeLauncher<H, T : ProcessHandshakeTransport<H>, R> 
         }
         catch (e: IOException) {
           // give the launcher a chance to exit cleanly (in case it hasn't yet) to collect the whole output
-          select<Unit> {
+          select {
             finishedAsync.onAwait { }
             launcherOutputTimeoutAfterHandshakeFailedMillis.takeUnless { it < 0 }?.let { timeoutMs ->
               onTimeout(timeoutMs) { launcherOutput.setTimeout() }

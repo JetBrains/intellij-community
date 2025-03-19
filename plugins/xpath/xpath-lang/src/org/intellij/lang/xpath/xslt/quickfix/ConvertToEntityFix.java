@@ -41,8 +41,7 @@ public class ConvertToEntityFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         return XPathBundle.message("intention.name.convert.to.entity", myToken.getText(), myValue);
     }
 

@@ -9,10 +9,10 @@ internal class KotlinAssertPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "assert",
         /* example = */ "assert(expr)",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { it.isBoolean && !it.isMarkedNullable }),
+        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { it.isBooleanType && !it.isMarkedNullable }),
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.assert(\$expr$)\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.assert(\$expr$)\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView.smartPointerPsiNodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -14,13 +14,15 @@ import java.util.Collection;
 import java.util.List;
 
 public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
+
+  private boolean isAlwaysExpand;
+
   public ClassSmartPointerNode(@NotNull Project project, @NotNull PsiClass value, @NotNull ViewSettings viewSettings) {
     super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildrenImpl() {
     PsiClass parent = getPsiClass();
     List<AbstractTreeNode<?>> treeNodes = new ArrayList<>();
 
@@ -61,6 +63,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
     }
+    isAlwaysExpand = getParentValue() instanceof PsiFile;
   }
 
   public boolean isTopLevel() {
@@ -79,6 +82,6 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
 
   @Override
   public boolean isAlwaysExpand() {
-    return getParentValue() instanceof PsiFile;
+    return isAlwaysExpand;
   }
 }

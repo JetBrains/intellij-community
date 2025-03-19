@@ -25,7 +25,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="cab16" class="com.intellij.openapi.ui.LabeledComponent" binding="myJarPathComponent" custom-create="true">
+      <component id="cab16" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myJarPathComponent" custom-create="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -34,7 +34,7 @@
           <text resource-bundle="messages/ExecutionBundle" key="label.path.to.jar"/>
         </properties>
       </component>
-      <component id="6fe96" class="com.intellij.openapi.ui.LabeledComponent" binding="myModuleComponent">
+      <component id="6fe96" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myModuleComponent">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>

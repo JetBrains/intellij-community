@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
@@ -20,12 +20,14 @@ import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsTransferableData.Companion.STUB_RENDERER
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import com.intellij.openapi.editor.asTextRange
 
 class MoveDeclarationsProcessor(
     val project: Project,
@@ -39,7 +41,7 @@ class MoveDeclarationsProcessor(
         fun build(file: PsiFile, cookie: MoveDeclarationsEditorCookie): MoveDeclarationsProcessor? {
             val data = cookie.data
             val project = file.project
-            val range = cookie.bounds.range ?: return null
+            val range = cookie.bounds.asTextRange ?: return null
 
             val sourceFileUrl = data.sourceFileUrl
             val sourceFile = VirtualFileManager.getInstance().findFileByUrl(sourceFileUrl) ?: return null
@@ -152,13 +154,14 @@ class MoveDeclarationsProcessor(
             }
         } ?: return
 
-        project.executeWriteCommand(commandName, commandGroupId) {
+        project.executeCommand(commandName, commandGroupId) {
             project.runRefactoringAndKeepDelayedRequests { declarationProcessor.execute(declarationUsages) }
-
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(sourceDocument)
-            val insertedStubRange = stubRangeAndDeclarations.first
-            assert(insertedStubRange.isValid)
-            sourceDocument.deleteString(insertedStubRange.startOffset, insertedStubRange.endOffset)
+            runWriteAction {
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(sourceDocument)
+                val insertedStubRange = stubRangeAndDeclarations.first
+                assert(insertedStubRange.isValid)
+                sourceDocument.deleteString(insertedStubRange.startOffset, insertedStubRange.endOffset)
+            }
         }
     }
 

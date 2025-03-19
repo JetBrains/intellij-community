@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.markdown.fenceInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.toml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.images" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.model" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.compose.preview" scope="RUNTIME" />
+  </component>
+</module>

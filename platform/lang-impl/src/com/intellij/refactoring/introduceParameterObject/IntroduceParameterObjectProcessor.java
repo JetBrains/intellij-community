@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
+public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(IntroduceParameterObjectProcessor.class);
   private final C myClassDescriptor;
@@ -144,9 +144,8 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     return showConflicts(conflicts, usageInfos);
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new IntroduceParameterObjectUsageViewDescriptor(myMethod);
   }
 
@@ -168,13 +167,12 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
   }
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());
   }
 
-  public static class ChangeSignatureUsageWrapper extends FixableUsageInfo {
+  public static final class ChangeSignatureUsageWrapper extends FixableUsageInfo {
     private final UsageInfo myInfo;
 
     public ChangeSignatureUsageWrapper(UsageInfo info) {

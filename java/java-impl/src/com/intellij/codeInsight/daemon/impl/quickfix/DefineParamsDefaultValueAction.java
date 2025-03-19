@@ -1,222 +1,194 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.RecordConstructorMember;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.MemberChooser;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.ExperimentalUI;
+import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
-public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
+public final class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<PsiElement> implements DumbAware {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+  public DefineParamsDefaultValueAction() {
+    super(PsiElement.class);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("generate.overloaded.method.with.default.parameter.values");
   }
 
   @Override
-  public Icon getIcon(int flags) {
-    return ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RefactoringBulb;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) return null;
+    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class, PsiCodeBlock.class);
+    String message;
+    if (parent instanceof PsiMethod method) {
+      final PsiParameterList parameterList = method.getParameterList();
+      if (parameterList.isEmpty()) return null;
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, method))) {
+        return null;
+      }
+      if ((containingClass instanceof PsiImplicitClass || containingClass instanceof PsiAnonymousClass) && method.isConstructor()) {
+        return null; // constructors can't be declared here, code is broken so don't suggest generating more broken code
+      }
+      if (containingClass.isAnnotationType()) {
+        // Method with parameters in annotation is a compilation error; there's no sense to create overload
+        return null;
+      }
+      message = QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
+                                       JavaElementKind.fromElement(method).lessDescriptive().object());
+    }
+    else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
+      PsiRecordHeader header = aClass.getRecordHeader();
+      if (header == null || header.getTextOffset() + header.getTextLength() < element.getTextOffset()) return null;
+      if (header.getRecordComponents().length == 0) return null;
+      message = QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
+                                       JavaElementKind.CONSTRUCTOR.lessDescriptive().object());
+    }
+    else {
+      return null;
+    }
+    return Presentation.of(message)
+      .withIcon(AllIcons.Actions.RefactoringBulb)
+      .withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
-      return false;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClass.class);
+    PsiMethod method;
+    if (parent instanceof PsiMethod) {
+      method = (PsiMethod)parent;
     }
-    final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiCodeBlock.class);
-    if (!(parent instanceof PsiMethod method)) {
-      return false;
+    else if (parent instanceof PsiClass aClass && aClass.isRecord()) {
+      method = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+      assert method != null;
     }
-    final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.isEmpty()) {
-      return false;
-    }
-    final PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || (containingClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(method))) {
-      return false;
-    }
-    if (containingClass.isAnnotationType()) {
-      // Method with parameters in annotation is a compilation error; there's no sense to create overload
-      return false;
-    }
-    setText(QuickFixBundle.message("generate.overloaded.method.or.constructor.with.default.parameter.values",
-                                   JavaElementKind.fromElement(method).lessDescriptive().object()));
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-    assert method != null;
+    else throw new AssertionError();
     PsiParameterList parameterList = method.getParameterList();
-    final PsiParameter[] parameters = getParams(element, parameterList);
-    if (parameters == null || parameters.length == 0) return;
+    PsiParameter[] parameters = parameterList.getParameters();
+    if (parameters.length == 1) {
+      return ModCommand.psiUpdate(method, (m, updater) -> invoke(context.project(), m, updater,
+                                                                 updater.getWritable(m).getParameterList().getParameters()));
+    }
+    List<ParameterClassMember> members = ContainerUtil.map(parameters, ParameterClassMember::new);
+    int idx = getSelectedIndex(element);
+    List<ParameterClassMember> defaultSelection = idx >= 0 ? List.of(members.get(idx)) : members;
+    return ModCommand.chooseMultipleMembers(
+      QuickFixBundle.message("choose.default.value.parameters.popup.title"),
+      members, defaultSelection, 
+      sel -> ModCommand.psiUpdate(context, updater -> {
+        invoke(context.project(), updater.getWritable(method), updater,
+               ContainerUtil.map2Array(sel, PsiParameter.EMPTY_ARRAY,
+                                       s -> updater.getWritable(((ParameterClassMember)s).getParameter())));
+      }));
+  }
+
+  private static int getSelectedIndex(@NotNull PsiElement element) {
+    PsiVariable selected = PsiTreeUtil.getParentOfType(element, PsiParameter.class, PsiRecordComponent.class);
+    if (selected instanceof PsiParameter parameter) {
+      PsiParameterList parameterList = (PsiParameterList)parameter.getParent();
+      return parameterList.getParameterIndex(parameter);
+    }
+    else if (selected instanceof PsiRecordComponent recordComponent) {
+      PsiRecordHeader recordHeader = (PsiRecordHeader)recordComponent.getParent();
+      return ArrayUtil.find(recordHeader.getRecordComponents(), recordComponent);
+    }
+    else {
+      return -1;
+    }
+  }
+
+  private static void invoke(@NotNull Project project, @NotNull PsiMethod method, 
+                             @NotNull ModPsiUpdater updater, @NotNull PsiParameter @NotNull [] parameters) {
+    PsiParameterList parameterList = method.getParameterList();
+    if (parameters.length == 0) return;
     final PsiMethod methodPrototype = generateMethodPrototype(method, parameters);
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
-    final PsiMethod existingMethod = containingClass.findMethodBySignature(methodPrototype, false);
-    if (existingMethod != null) {
-      if (containingClass.isPhysical()) {
-        editor.getCaretModel().moveToOffset(existingMethod.getTextOffset());
-        HintManager.getInstance().showErrorHint(editor,
-                                                JavaBundle.message("default.param.value.warning", existingMethod.isConstructor() ? 0 : 1));
+    for (PsiMethod existingMethod : containingClass.findMethodsByName(method.getName(), false)) {
+      if (MethodSignatureUtil.areParametersErasureEqual(existingMethod, methodPrototype)) {
+        updater.moveCaretTo(existingMethod.getTextOffset());
+        String description = RefactoringUIUtil.getDescription(existingMethod, false);
+        updater.message(StringUtil.capitalize(JavaBundle.message("default.param.value.warning", description)));
+        return;
       }
-      return;
     }
 
-    if (!IntentionPreviewUtils.prepareElementForWrite(element)) return;
+    final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
+    CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, Set.of(prototype.getParameterList().getParameters()));
 
-    Runnable runnable = () -> {
-      final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, Set.of(prototype.getParameterList().getParameters()));
-
-
-      PsiCodeBlock body = prototype.getBody();
-      final String callArgs =
-        "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
-          if (ArrayUtil.find(parameters, psiParameter) > -1) return TypeUtils.getDefaultValue(psiParameter.getType());
-          return psiParameter.getName();
-        }, ",") + ");";
-      final String methodCall;
-      if (method.getReturnType() == null) {
-        methodCall = "this";
-      } else if (!PsiTypes.voidType().equals(method.getReturnType())) {
-        methodCall = "return " + method.getName();
-      } else {
-        methodCall = method.getName();
-      }
-      LOG.assertTrue(body != null);
-      body.add(JavaPsiFacade.getElementFactory(project).createStatementFromText(methodCall + callArgs, method));
-      body = (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body);
-      final PsiStatement stmt = body.getStatements()[0];
-      final PsiExpression expr;
-      if (stmt instanceof PsiReturnStatement) {
-        expr = ((PsiReturnStatement)stmt).getReturnValue();
-      } else if (stmt instanceof PsiExpressionStatement) {
-        expr = ((PsiExpressionStatement)stmt).getExpression();
-      }
-      else {
-        expr = null;
-      }
-      if (expr instanceof PsiMethodCallExpression) {
-        PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
-        PsiExpression[] toDefaults = ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[parameterList.getParameterIndex(parameter)]));
-        startTemplate(project, editor, toDefaults, prototype);
-      }
-    };
-    if (startInWriteAction() || !containingClass.isPhysical()) {
-      runnable.run();
-    } else {
-      ApplicationManager.getApplication().runWriteAction(runnable);
+    PsiCodeBlock body = prototype.getBody();
+    final String callArgs =
+      "(" + StringUtil.join(parameterList.getParameters(), psiParameter -> {
+        if (ArrayUtil.find(parameters, psiParameter) > -1) {
+          PsiType type = GenericsUtil.getVariableTypeByExpressionType(psiParameter.getType());
+          String defaultValue = TypeUtils.getDefaultValue(type);
+          return defaultValue.equals(PsiKeyword.NULL) ? "(" + type.getCanonicalText() + ")null" : defaultValue;
+        }
+        return psiParameter.getName();
+      }, ",") + ");";
+    final String methodCall;
+    if (method.getReturnType() == null) {
+      methodCall = "this";
     }
-  }
-
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
-                                                       @NotNull Editor editor,
-                                                       @NotNull PsiFile file) {
-    invoke(project, editor, file);
-    return IntentionPreviewInfo.DIFF;
-  }
-
-  public static void startTemplate(@NotNull Project project,
-                                   Editor editor,
-                                   PsiExpression[] argsToBeDelegated,
-                                   PsiMethod delegateMethod) {
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(delegateMethod);
-    RangeMarker rangeMarker = editor.getDocument().createRangeMarker(delegateMethod.getTextRange());
-    for (final PsiExpression exprToBeDefault  : argsToBeDelegated) {
-      builder.replaceElement(exprToBeDefault, new TextExpression(exprToBeDefault.getText()));
-    }
-    Template template = builder.buildTemplate();
-    editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
-
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-
-    rangeMarker.dispose();
-
-    CreateFromUsageBaseFix.startTemplate(editor, template, project);
-  }
-
-  private static PsiParameter @Nullable [] getParams(@NotNull PsiElement element, @NotNull PsiParameterList parameterList) {
-    final PsiParameter[] parameters = parameterList.getParameters();
-    if (parameters.length == 1 || !parameterList.isPhysical()) {
-      return parameters;
-    }
-    final ParameterClassMember[] members = new ParameterClassMember[parameters.length];
-    for (int i = 0; i < members.length; i++) {
-      members[i] = new ParameterClassMember(parameters[i]);
-    }
-    final PsiParameter selectedParam = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
-    final int idx = selectedParam != null ? ArrayUtil.find(parameters, selectedParam) : -1;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return idx >= 0 ? new PsiParameter[] {selectedParam} : null;
-    }
-    final MemberChooser<ParameterClassMember> chooser =
-      new MemberChooser<>(members, false, true, parameterList.getProject());
-    if (idx >= 0) {
-      chooser.selectElements(new ClassMember[] {members[idx]});
+    else if (!PsiTypes.voidType().equals(method.getReturnType())) {
+      methodCall = "return " + method.getName();
     }
     else {
-      chooser.selectElements(members);
+      methodCall = method.getName();
     }
-    chooser.setTitle(QuickFixBundle.message("choose.default.value.parameters.popup.title"));
-    chooser.setCopyJavadocVisible(false);
-    if (chooser.showAndGet()) {
-      final List<ParameterClassMember> elements = chooser.getSelectedElements();
-      if (elements != null) {
-        PsiParameter[] params = new PsiParameter[elements.size()];
-        for (int i = 0; i < params.length; i++) {
-          params[i] = elements.get(i).getParameter();
+    LOG.assertTrue(body != null);
+    body.add(JavaPsiFacade.getElementFactory(project).createStatementFromText(methodCall + callArgs, method));
+    body = (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body);
+    final PsiStatement stmt = body.getStatements()[0];
+    final PsiExpression expr;
+    if (stmt instanceof PsiReturnStatement returnStatement) {
+      expr = returnStatement.getReturnValue();
+    }
+    else if (stmt instanceof PsiExpressionStatement exprStatement) {
+      expr = exprStatement.getExpression();
+    }
+    else {
+      expr = null;
+    }
+    if (expr instanceof PsiMethodCallExpression call) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      PsiExpression[] toDefaults =
+        ContainerUtil.map2Array(parameters, PsiExpression.class, (parameter -> args[parameterList.getParameterIndex(parameter)]));
+      ModTemplateBuilder builder = updater.templateBuilder();
+      for (PsiExpression exprToBeDefault : toDefaults) {
+        if (exprToBeDefault instanceof PsiTypeCastExpression cast && RedundantCastUtil.isCastRedundant(cast)) {
+          exprToBeDefault = RemoveRedundantCastUtil.removeCast(cast);
         }
-        return params;
+        builder.field(exprToBeDefault, new TextExpression(exprToBeDefault.getText()));
       }
     }
-    return null;
   }
 
   private static PsiMethod generateMethodPrototype(PsiMethod method, PsiParameter... params) {
@@ -225,16 +197,23 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
                                 (PsiMethod)method.copy();
     final PsiCodeBlock body = prototype.getBody();
     final PsiCodeBlock emptyBody = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
+    PsiModifierList modifierList = prototype.getModifierList();
     if (body != null) {
       body.replace(emptyBody);
     } else {
-      prototype.getModifierList().setModifierProperty(PsiModifier.ABSTRACT, false);
+      modifierList.setModifierProperty(PsiModifier.ABSTRACT, false);
       prototype.addBefore(emptyBody, null);
     }
 
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && aClass.isInterface() && !method.hasModifierProperty(PsiModifier.STATIC)) {
-      prototype.getModifierList().setModifierProperty(PsiModifier.DEFAULT, true);
+      modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+    }
+
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (annotation.hasQualifiedName(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+        annotation.delete();
+      }
     }
 
     final PsiParameterList parameterList = method.getParameterList();

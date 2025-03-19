@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBaseImpl implements PsiSwitchLabeledRuleStatement {
-  private static final TokenSet BODY_STATEMENTS =
+  public static final TokenSet BODY_STATEMENTS =
     TokenSet.create(JavaElementType.BLOCK_STATEMENT, JavaElementType.THROW_STATEMENT, JavaElementType.EXPRESSION_STATEMENT);
 
   public PsiSwitchLabeledRuleStatementImpl() {
@@ -51,9 +51,7 @@ public class PsiSwitchLabeledRuleStatementImpl extends PsiSwitchLabelStatementBa
 
     if (!shouldProcess()) return true;
 
-    final PsiCaseLabelElementList patternsInCaseLabel = getCaseLabelElementList();
-    if (patternsInCaseLabel == null) return true;
-    return patternsInCaseLabel.processDeclarations(processor, state, null, place);
+    return processPatternVariables(processor, state, place);
   }
 
   private boolean shouldProcess() {

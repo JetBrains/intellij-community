@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.ActionCenter;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.impl.ApplicationNotificationsModel;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
+public final class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
   public static final String WIDGET_ID = "Notifications";
   private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
@@ -68,7 +70,8 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
       }.installOn(myComponent.get(), true);
 
       Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
+      app.getMessageBus().connect(this).subscribe(ApplicationNotificationsModel.STATE_CHANGED,
+                                                  () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }
@@ -82,7 +85,7 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
+    List<Notification> notifications = ApplicationNotificationsModel.getStateNotifications(project);
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
@@ -135,7 +138,7 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
     return forToolWindow ? AllIcons.Toolwindows.NoEvents : AllIcons.Ide.Notification.NoEvents;
   }
 
-  private static class TextIcon implements Icon {
+  private static final class TextIcon implements Icon {
     private final String myStr;
     private final JComponent myComponent;
     private final Color myTextColor;

@@ -12,8 +12,17 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="spockframework.spock.core" type="repository">
         <properties maven-id="org.spockframework:spock-core:2.1-groovy-3.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/spockframework/spock-core/2.1-groovy-3.0/spock-core-2.1-groovy-3.0.jar">
+              <sha256sum>fa8ff7446df04c51b3ccbc2a1bbc71f9c280878afe2d53be44d59d00b1b9828c</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.1/junit-platform-engine-1.8.1.jar">
+              <sha256sum>702868ed7e86b9b4672ede0f1e185e905baca9afab57746a7c650be3c7bca047</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.codehaus.groovy:groovy" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
             <dependency maven-id="org.junit.platform:junit-platform-commons" />
             <dependency maven-id="org.apiguardian:apiguardian-api" />
             <dependency maven-id="org.hamcrest:hamcrest" />
@@ -22,15 +31,14 @@
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/spockframework/spock-core/2.1-groovy-3.0/spock-core-2.1-groovy-3.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.1/junit-platform-engine-1.8.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/spockframework/spock-core/2.1-groovy-3.0/spock-core-2.1-groovy-3.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.8.1/junit-platform-engine-1.8.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="opentest4j" level="project" />
   </component>
 </module>

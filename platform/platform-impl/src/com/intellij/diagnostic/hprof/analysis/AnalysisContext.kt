@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic.hprof.analysis
 
+import com.intellij.diagnostic.hprof.classstore.ClassStore
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
 import com.intellij.diagnostic.hprof.util.IntList
@@ -32,8 +33,8 @@ class AnalysisContext(
   val refIndexList: UByteList,
   var histogram: Histogram
 ) {
-  val classStore = navigator.classStore
-  val disposedObjectsIDs = IntOpenHashSet()
-  val disposerParentToChildren = Long2ObjectOpenHashMap<LongArrayList>()
-  var disposerTreeObjectId = 0
+  val classStore: ClassStore = navigator.classStore
+  val disposedObjectsIDs: IntOpenHashSet = IntOpenHashSet()
+  val disposerParentToChildren: Long2ObjectOpenHashMap<LongArrayList> = Long2ObjectOpenHashMap<LongArrayList>()
+  var disposerTreeObjectId: Int = 0
 }

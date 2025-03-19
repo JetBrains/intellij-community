@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -96,6 +97,6 @@ internal fun suggestNamesForComponent(descriptor: FunctionDescriptor, project: P
         if (componentName == descriptorName) {
             descriptor.returnType?.let { addAll(Fe10KotlinNameSuggester.suggestNamesByType(it, validator)) }
         }
-        add(Fe10KotlinNameSuggester.suggestNameByName(componentName, validator))
+        add(KotlinNameSuggester.suggestNameByName(componentName, validator))
     }
 }

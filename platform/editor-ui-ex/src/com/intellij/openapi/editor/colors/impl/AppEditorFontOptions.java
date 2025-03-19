@@ -10,16 +10,20 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 @State(name = "DefaultFont", storages = {
-  @Storage(value = "editor-font.xml"),
+  @Storage(value = AppEditorFontOptions.STORAGE_NAME),
   @Storage(value = "editor.xml", deprecated = true)
 }, category = SettingsCategory.UI)
 public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOptions.PersistentFontPreferences> {
+
+  @ApiStatus.Internal
+  public static final String STORAGE_NAME = "editor-font.xml";
 
   @Override
   protected PersistentFontPreferences createFontState(@NotNull FontPreferences fontPreferences) {

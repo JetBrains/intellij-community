@@ -29,7 +29,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasPackagingChanges(value: Boolean) {
     hasPackagingChanges = value
-    packaging = value // backward compatibility
   }
 
   override fun hasOutputChanges(): Boolean {
@@ -38,7 +37,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasOutputChanges(value: Boolean) {
     hasOutputChanges = value
-    output = value // backward compatibility
   }
 
   override fun hasSourceChanges(): Boolean {
@@ -47,7 +45,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasSourceChanges(value: Boolean) {
     hasSourceChanges = value
-    sources = value // backward compatibility
   }
 
   override fun hasDependencyChanges(): Boolean {
@@ -56,7 +53,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasDependencyChanges(value: Boolean) {
     hasDependencyChanges = value
-    dependencies = value // backward compatibility
   }
 
   override fun hasPluginsChanges(): Boolean {
@@ -65,7 +61,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasPluginChanges(value: Boolean) {
     hasPluginsChanges = value
-    plugins = value // backward compatibility
   }
 
   override fun hasPropertyChanges(): Boolean {
@@ -74,7 +69,6 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
 
   fun setHasPropertyChanges(value: Boolean) {
     hasPropertyChanges = value
-    properties = value // backward compatibility
   }
 
   fun setAllChanges(value: Boolean) {
@@ -84,6 +78,10 @@ class MavenProjectChangesBuilder : MavenProjectChanges() {
     setHasDependencyChanges(value)
     setHasPluginChanges(value)
     setHasPropertyChanges(value)
+  }
+
+  override fun toString(): String {
+    return "MavenProjectChangesBuilder(hasPackagingChanges=$hasPackagingChanges, hasOutputChanges=$hasOutputChanges, hasSourceChanges=$hasSourceChanges, hasDependencyChanges=$hasDependencyChanges, hasPluginsChanges=$hasPluginsChanges, hasPropertyChanges=$hasPropertyChanges)"
   }
 
   companion object {

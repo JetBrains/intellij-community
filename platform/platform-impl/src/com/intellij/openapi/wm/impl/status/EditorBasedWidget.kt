@@ -13,9 +13,11 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.ui.EditorTextField
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.KeyboardFocusManager
 
+@ApiStatus.Internal
 open class EditorBasedWidgetHelper(val project: Project) {
   fun getFocusedEditor(statusBar: StatusBar?): Editor? {
     val component = getFocusedComponent()
@@ -59,7 +61,7 @@ abstract class EditorBasedWidget protected constructor(
   protected val myConnection: MessageBusConnection
 
   @Volatile
-  protected var isDisposed = false
+  protected var isDisposed: Boolean = false
     private set
 
   @Suppress("DEPRECATION")
@@ -79,6 +81,7 @@ abstract class EditorBasedWidget protected constructor(
     registerCustomListeners(myConnection)
   }
 
+  @Deprecated("Custom listeners should be registered after class initialization to prevent using not fully constructed class in the listeners.")
   protected open fun registerCustomListeners(connection: MessageBusConnection) {
   }
 

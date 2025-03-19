@@ -21,8 +21,8 @@ class NativeSshAuthService : ExternalProcessHandlerService<NativeSshAskPassAppHa
   }
 }
 
-class NativeSshExternalProcessRest : ExternalProcessRest<NativeSshAskPassAppHandler>(
+internal class NativeSshExternalProcessRest : ExternalProcessRest<NativeSshAskPassAppHandler>(
   NativeSshAskPassAppHandler.ENTRY_POINT_NAME
 ) {
-  override val externalProcessHandler: ExternalProcessHandlerService<NativeSshAskPassAppHandler> get() = service<NativeSshAuthService>()
+  override val externalProcessHandler: ExternalProcessHandlerService<NativeSshAskPassAppHandler> get() = NativeSshAuthService.getInstance()
 }

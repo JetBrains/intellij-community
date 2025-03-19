@@ -1,0 +1,49 @@
+f:com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper
+- s:loadDump(java.io.File,com.intellij.psi.util.CachedValueProfiler$EventConsumer):V
+com.intellij.internal.cachedValueProfiler.CachedValueProfilerDumpHelper$EventConsumerFactory
+- a:createEventConsumer():com.intellij.psi.util.CachedValueProfiler$EventConsumer
+a:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider
+- sf:Companion:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+- <init>(java.lang.String,java.lang.String,java.lang.String):V
+- f:assertModelMetadataConsistent():V
+- getDisplayNameInSettings():java.lang.String
+- getModel():com.intellij.internal.ml.DecisionFunction
+- f:getModelDirectory():java.lang.String
+- f:getResourceDirectory():java.lang.String
+f:com.intellij.internal.ml.catboost.CatBoostJarCompletionModelProvider$Companion
+f:com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
+- <init>(java.lang.Class,java.lang.String,java.lang.String):V
+- loadModel():com.intellij.internal.ml.catboost.NaiveCatBoostModel
+f:com.intellij.internal.ml.catboost.NaiveCatBoostModel
+- s:loadModel(java.io.InputStream):com.intellij.internal.ml.catboost.NaiveCatBoostModel
+- makePredict(D[]):D
+com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- sf:Companion:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
+- a:itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByAbsoluteThreshold
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(D):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByRelativeThreshold
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(D):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
+- f:getDISABLED():com.intellij.internal.ml.completion.DecoratingItemsPolicy
+f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Composite
+- com.intellij.internal.ml.completion.DecoratingItemsPolicy
+- <init>(com.intellij.internal.ml.completion.DecoratingItemsPolicy[]):V
+- itemsToDecorate(java.lang.Iterable):java.util.Set
+f:com.intellij.internal.performance.LatencyRecord
+- <init>():V
+- f:getAverageLatency():J
+- f:getMaxLatency():I
+- f:getSamples():it.unimi.dsi.fastutil.ints.IntArrayList
+- f:getTotalLatency():J
+- f:percentile(I):I
+- f:setMaxLatency(I):V
+- f:setTotalLatency(J):V
+- f:update(I):V
+com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider
+- a:accept(com.intellij.openapi.editor.Editor,com.intellij.openapi.fileTypes.FileType):Z
+- a:getPluginId():java.lang.String

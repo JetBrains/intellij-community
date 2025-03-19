@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.jsp.base` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "jsp-base",
+  module_name = "intellij.jsp.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+  ],
+  exports = ["//xml/openapi:xml"]
+)
+### auto-generated section `build intellij.jsp.base` end

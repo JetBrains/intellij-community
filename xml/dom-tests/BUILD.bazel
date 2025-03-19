@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.xml.dom.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "dom-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "dom-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = ["//xml/dom-impl"],
+  deps = [
+    "//xml/impl",
+    "//java/testFramework",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl:impl",
+    "@lib//:assert_j",
+    "//java/openapi:java",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/libraries/cglib",
+  ]
+)
+
+jvm_test(
+  name = "dom-tests_test",
+  runtime_deps = [":dom-tests_test_lib"]
+)
+### auto-generated section `build intellij.xml.dom.tests` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiType;
@@ -16,19 +16,18 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_DECIMAL;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.JAVA_MATH_BIG_INTEGER;
 
-public class GrNumberConverter extends GrTypeConverter {
+public final class GrNumberConverter extends GrTypeConverter {
 
   @Override
   public boolean isApplicableTo(@NotNull Position position) {
     return true;
   }
 
-  @Nullable
   @Override
-  public ConversionResult isConvertible(@NotNull PsiType targetType,
-                                        @NotNull PsiType actualType,
-                                        @NotNull Position position,
-                                        @NotNull GroovyPsiElement context) {
+  public @Nullable ConversionResult isConvertible(@NotNull PsiType targetType,
+                                                  @NotNull PsiType actualType,
+                                                  @NotNull Position position,
+                                                  @NotNull GroovyPsiElement context) {
     if (CompileStaticUtil.isCompileStatic(context)) return isCSConvertible(targetType, actualType, position);
 
     if (position == Position.METHOD_PARAMETER) {
@@ -46,10 +45,9 @@ public class GrNumberConverter extends GrTypeConverter {
     return null;
   }
 
-  @Nullable
-  private static ConversionResult isCSConvertible(@NotNull PsiType targetType,
-                                                  @NotNull PsiType actualType,
-                                                  @NotNull Position currentPosition) {
+  private static @Nullable ConversionResult isCSConvertible(@NotNull PsiType targetType,
+                                                            @NotNull PsiType actualType,
+                                                            @NotNull Position currentPosition) {
     if (currentPosition == Position.METHOD_PARAMETER) return null;
 
     if (TypesUtil.isClassType(actualType, JAVA_MATH_BIG_DECIMAL))

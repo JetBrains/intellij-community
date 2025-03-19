@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -31,11 +31,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Batkovich
  */
 public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
-
-  public ResourceBundleEditorShowQuickFixesAction() {
-    super(ResourceBundleEditorBundle.messagePointer("resource.bundle.editor.show.quick.fixes.action.text"));
-  }
+  private static final Logger LOG = Logger.getInstance(ResourceBundleEditorShowQuickFixesAction.class);
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -61,7 +57,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
                                                                                            AllIcons.Actions.IntentionBulb,
                                                                                            sourceKey,
                                                                                            null,
-                                                                                           null));
+                                                                                           null, null));
           isQuickFixListEmpty = false;
         }
       }
@@ -105,17 +101,13 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
       myIndex = index;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getText() {
+    public @Nls @NotNull String getText() {
       return getFamilyName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return getQuickFix().getFamilyName();
     }
 

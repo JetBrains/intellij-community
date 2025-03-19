@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -16,6 +18,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,12 +27,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The highlighting pass which is associated with {@link Document} and its markup model.
+ * The instantiation of this class must happen in the background thread, under {@link com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator}
+ * which has corresponding {@link com.intellij.codeInsight.daemon.impl.HighlightingSession}.
+ * It's discouraged to do all that manually, please register your {@link TextEditorHighlightingPassFactory} in plugin.xml instead, e.g. like this:
+ * <pre>
+ *   {@code <highlightingPassFactory implementation="com.a.b.MyPassFactory"/>}
+ * </pre>
+ */
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
-  @NotNull
-  protected final Document myDocument;
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Document myDocument;
+  protected final @NotNull Project myProject;
   private final boolean myRunIntentionPassAfter;
   private final long myInitialDocStamp;
   private final long myInitialPsiStamp;
@@ -37,6 +48,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   private volatile int myId;
   private volatile boolean myDumb;
   private EditorColorsScheme myColorsScheme;
+  private volatile CodeInsightContext myContext;
 
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document, boolean runIntentionPassAfter) {
     myDocument = document;
@@ -44,6 +56,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myRunIntentionPassAfter = runIntentionPassAfter;
     myInitialDocStamp = document.getModificationStamp();
     myInitialPsiStamp = PsiModificationTracker.getInstance(project).getModificationCount();
+    ThreadingAssertions.assertBackgroundThread();
   }
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
@@ -57,8 +70,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     doCollectInformation(progress);
   }
 
-  @Nullable
-  public EditorColorsScheme getColorsScheme() {
+  public @Nullable EditorColorsScheme getColorsScheme() {
     return myColorsScheme;
   }
 
@@ -82,7 +94,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (isDumbMode() && !DumbService.isDumbAware(this)) {
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       return false;
     }
 
@@ -91,7 +103,8 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     }
 
     if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+    CodeInsightContext codeInsightContext = getContext();
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument, codeInsightContext);
     PsiElement context;
     return file != null
            && file.isValid()
@@ -103,15 +116,17 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (!isValid()) {
       return; // the document has changed.
     }
-    if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
-      Document document = getDocument();
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file != null) {
-        DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getId());
-      }
-      return;
+    if (DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
+      doApplyInformationToEditor();
     }
-    doApplyInformationToEditor();
+  }
+
+  @ApiStatus.Internal
+  public void markUpToDateIfStillValid() {
+    ThreadingAssertions.assertEventDispatchThread();
+    if (isValid()) {
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getContext(), getId());
+    }
   }
 
   public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
@@ -125,8 +140,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myId = id;
   }
 
-  @NotNull
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
     return Collections.emptyList();
   }
 
@@ -138,9 +152,24 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
+  }
+
+  @ApiStatus.Internal
+  public void setContext(@NotNull CodeInsightContext context) {
+    assert myContext == null : "context is already assigned";
+    myContext = context;
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull CodeInsightContext getContext() {
+    if (myContext == null) {
+      // todo ijpl-339 report an error here once all the highlighting passes are ready
+      //      LOG.error("context was not set");
+      return CodeInsightContexts.anyContext();
+    }
+    return myContext;
   }
 
   public final int @NotNull [] getStartingPredecessorIds() {
@@ -152,8 +181,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return (getClass().isAnonymousClass() ? getClass().getSuperclass() : getClass()).getSimpleName() + "; id=" + getId();
   }
 

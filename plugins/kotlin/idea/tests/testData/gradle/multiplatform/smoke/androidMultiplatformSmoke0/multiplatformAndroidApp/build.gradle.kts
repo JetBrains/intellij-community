@@ -5,13 +5,14 @@ plugins {
 
 android {
     compileSdk = {{compile_sdk_version}}
+    namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidApp"
     defaultConfig {
         minSdk = 30
     }
 }
 
 kotlin {
-    android()
+    androidTarget()
 
     val commonMain by sourceSets.getting
 

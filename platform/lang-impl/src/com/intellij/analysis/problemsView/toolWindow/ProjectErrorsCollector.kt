@@ -1,12 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.analysis.problemsView.FileProblem
-import com.intellij.analysis.problemsView.HighlightingDuplicate
-import com.intellij.analysis.problemsView.Problem
-import com.intellij.analysis.problemsView.ProblemsCollector
-import com.intellij.analysis.problemsView.ProblemsListener
-import com.intellij.analysis.problemsView.ProblemsProvider
+import com.intellij.analysis.problemsView.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -23,25 +18,29 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private val otherProblems = mutableSetOf<Problem>()
   private val problemCount = AtomicInteger()
 
-  override fun getProblemCount() = problemCount.get()
+  init {
+    VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it);null }, project)
+  }
 
-  override fun getProblemFiles() = synchronized(fileProblems) {
+  override fun getProblemCount(): Int = problemCount.get()
+
+  override fun getProblemFiles(): Set<VirtualFile> = synchronized(fileProblems) {
     fileProblems.keys.toSet()
   }
 
-  override fun getFileProblemCount(file: VirtualFile) = synchronized(fileProblems) {
+  override fun getFileProblemCount(file: VirtualFile): Int = synchronized(fileProblems) {
     fileProblems[file]?.size ?: 0
   }
 
-  override fun getFileProblems(file: VirtualFile) = synchronized(fileProblems) {
+  override fun getFileProblems(file: VirtualFile): Set<FileProblem> = synchronized(fileProblems) {
     fileProblems[file]?.toSet() ?: emptySet()
   }
 
-  override fun getOtherProblemCount() = synchronized(otherProblems) {
+  override fun getOtherProblemCount(): Int = synchronized(otherProblems) {
     otherProblems.size
   }
 
-  override fun getOtherProblems() = synchronized(otherProblems) {
+  override fun getOtherProblems(): Set<Problem> = synchronized(otherProblems) {
     otherProblems.toSet()
   }
 
@@ -52,7 +51,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       problem is FileProblem -> process(problem, true) { set ->
         when {
           // do not add HighlightingDuplicate if there is any HighlightingProblem
-          problem is HighlightingDuplicate && set.any { it is HighlightingProblem } -> SetUpdateState.IGNORED
+          problem is HighlightingDuplicateProblem && set.any { it is HighlightingProblem } -> SetUpdateState.IGNORED
           else -> SetUpdateState.add(problem, set)
         }
       }
@@ -61,24 +60,28 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     if (!ignored && problem is HighlightingProblem) {
       // remove any HighlightingDuplicate if HighlightingProblem is appeared
       synchronized(fileProblems) {
-        fileProblems[problem.file]?.filter { it is HighlightingDuplicate }
+        fileProblems[problem.file]?.filter { it is HighlightingDuplicateProblem }
       }?.forEach { problemDisappeared(it) }
     }
   }
 
-  override fun problemDisappeared(problem: Problem) = notify(problem, when {
-    isIgnored(problem.provider) -> SetUpdateState.IGNORED
-    problem is FileProblem -> process(problem, false) { SetUpdateState.remove(problem, it) }
-    else -> synchronized(otherProblems) { SetUpdateState.remove(problem, otherProblems) }
-  })
+  override fun problemDisappeared(problem: Problem) {
+    notify(problem, when {
+      isIgnored(problem.provider) -> SetUpdateState.IGNORED
+      problem is FileProblem -> process(problem, false) { SetUpdateState.remove(problem, it) }
+      else -> synchronized(otherProblems) { SetUpdateState.remove(problem, otherProblems) }
+    })
+  }
 
-  override fun problemUpdated(problem: Problem) = notify(problem, when {
-    isIgnored(problem.provider) -> SetUpdateState.IGNORED
-    problem is FileProblem -> process(problem, false) { SetUpdateState.update(problem, it) }
-    else -> synchronized(otherProblems) { SetUpdateState.update(problem, otherProblems) }
-  })
+  override fun problemUpdated(problem: Problem) {
+    notify(problem, when {
+      isIgnored(problem.provider) -> SetUpdateState.IGNORED
+      problem is FileProblem -> process(problem, false) { SetUpdateState.update(problem, it) }
+      else -> synchronized(otherProblems) { SetUpdateState.update(problem, otherProblems) }
+    })
+  }
 
-  private fun isIgnored(provider: ProblemsProvider) = provider.project != project || providerClassFilter.contains(provider.javaClass.name)
+  private fun isIgnored(provider: ProblemsProvider): Boolean = provider.project != project || providerClassFilter.contains(provider.javaClass.name)
 
   private fun process(problem: FileProblem, create: Boolean, function: (MutableSet<FileProblem>) -> SetUpdateState): SetUpdateState {
     val file = problem.file
@@ -118,14 +121,12 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     }
   }
 
-  private fun onVfsChanges(events: List<VFileEvent>) = events
-    .filter { it is VFileDeleteEvent || it is VFileMoveEvent }
-    .mapNotNull { it.file }
-    .distinct()
-    .flatMap { getFileProblems(it) }
-    .forEach { problemDisappeared(it) }
-
-  init {
-    VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it);null }, project)
+  private fun onVfsChanges(events: List<VFileEvent>) {
+    events
+      .filter { it is VFileDeleteEvent || it is VFileMoveEvent }
+      .mapNotNull { it.file }
+      .distinct()
+      .flatMap { getFileProblems(it) }
+      .forEach { problemDisappeared(it) }
   }
 }

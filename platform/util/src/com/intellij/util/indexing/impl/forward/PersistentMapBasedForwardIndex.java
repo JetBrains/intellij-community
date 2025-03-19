@@ -1,15 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
+/**
+ * The implementation thread-safety relies on {@link PersistentMap} implementation used to be a thread-safe
+ * (Which is true for the currently existing impls)
+ */
+@Internal
+public final class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
   private volatile @NotNull PersistentMap<Integer, ByteArraySequence> myPersistentMap;
   private final @NotNull Path myMapFile;
   private final boolean myUseChunks;
@@ -31,9 +37,8 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     myReadOnly = isReadOnly;
   }
 
-  @Nullable
   @Override
-  public ByteArraySequence get(@NotNull Integer key) throws IOException {
+  public @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     return myPersistentMap.get(key);
   }
 
@@ -48,8 +53,13 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
   }
 
   @Override
-  public void force() {
+  public void force() throws IOException {
     myPersistentMap.force();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myPersistentMap.isDirty();
   }
 
   @Override
@@ -68,6 +78,11 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     myPersistentMap.close();
   }
 
+  @Override
+  public boolean isClosed() {
+    return myPersistentMap.isClosed();
+  }
+
   public boolean containsMapping(int key) throws IOException {
     return myPersistentMap.containsMapping(key);
   }
@@ -76,11 +91,10 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     return myPersistentMap;
   }
 
-  @NotNull
-  private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
-                                                                     boolean useChunks,
-                                                                     boolean isReadOnly,
-                                                                     @Nullable StorageLockContext storageLockContext) throws IOException {
+  private static @NotNull PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
+                                                                              boolean useChunks,
+                                                                              boolean isReadOnly,
+                                                                              @Nullable StorageLockContext storageLockContext) throws IOException {
     assert PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get() == null || storageLockContext == null;
     PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
     try {

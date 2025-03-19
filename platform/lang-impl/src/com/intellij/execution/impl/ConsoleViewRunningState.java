@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -18,7 +18,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
-public class ConsoleViewRunningState extends ConsoleState {
+public final class ConsoleViewRunningState extends ConsoleState {
   private static final char LF = '\n';
   private final ConsoleViewImpl myConsole;
   private final ProcessHandler myProcessHandler;
@@ -79,8 +79,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   @Override
-  @NotNull
-  public ConsoleState dispose() {
+  public @NotNull ConsoleState dispose() {
     if (myProcessHandler != null) {
       myProcessHandler.removeProcessListener(myProcessListener);
     }
@@ -89,7 +88,7 @@ public class ConsoleViewRunningState extends ConsoleState {
 
   @Override
   public boolean isCommandLine(@NotNull String line) {
-    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLine());
+    return myProcessHandler instanceof BaseProcessHandler && line.equals(((BaseProcessHandler<?>)myProcessHandler).getCommandLineForLog());
   }
 
   @Override
@@ -123,9 +122,8 @@ public class ConsoleViewRunningState extends ConsoleState {
     return LF;
   }
 
-  @NotNull
   @Override
-  public ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
+  public @NotNull ConsoleState attachTo(@NotNull ConsoleViewImpl console, @NotNull ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }
 

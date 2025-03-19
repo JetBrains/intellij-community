@@ -1,15 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search
 
 import com.intellij.model.search.SearchParameters
 import com.intellij.model.search.Searcher
 import com.intellij.model.search.impl.*
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
-import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.search.PsiSearchHelperImpl.CandidateFileInfo
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -22,10 +24,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.produce
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.searcher")
 
@@ -34,9 +34,17 @@ internal fun <R : Any> searchers(parameters: SearchParameters<R>): List<Searcher
   return searchersExtension.forKey(parameters.javaClass) as List<Searcher<SearchParameters<R>, R>>
 }
 
+@Internal
+@TestOnly
+fun registerSearcherForTesting(key: Class<*>, searcher: Searcher<*, *>, parentDisposable: Disposable) {
+  if (!ApplicationManager.getApplication().isUnitTestMode) throw IllegalStateException()
+  searchersExtension.addExplicitExtension(key, searcher, parentDisposable)
+}
+
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
 
+@Internal
 fun <R> runSearch(cs: CoroutineScope, project: Project, query: Query<R>): ReceiveChannel<R> {
   @Suppress("EXPERIMENTAL_API_USAGE")
   return cs.produce(capacity = Channel.UNLIMITED) {
@@ -225,8 +233,8 @@ private class Layer<T>(
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
   }
 
-  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in PsiElement>> {
-    val result = HashMap<WordRequestInfo, Processor<in PsiElement>>()
+  private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in CandidateFileInfo>> {
+    val result = HashMap<WordRequestInfo, Processor<in CandidateFileInfo>>()
     for (requestAndProcessors: RequestAndProcessors in globals) {
       progress.checkCanceled()
       result[requestAndProcessors.request] = scopeProcessor(requestAndProcessors)
@@ -234,7 +242,7 @@ private class Layer<T>(
     return result
   }
 
-  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<in PsiElement> {
+  private fun scopeProcessor(requestAndProcessors: RequestAndProcessors): Processor<in CandidateFileInfo> {
     val (request: WordRequestInfo, processors: RequestProcessors) = requestAndProcessors
     val searcher = StringSearcher(request.word, request.isCaseSensitive, true, false)
     val adapted = MyBulkOccurrenceProcessor(project, processors)

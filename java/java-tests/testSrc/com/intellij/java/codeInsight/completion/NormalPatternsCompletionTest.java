@@ -12,7 +12,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_19;
+    return JAVA_21;
   }
 
   @NeedsIndex.Full
@@ -25,8 +25,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -47,8 +47,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x1, int y2)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x1, int y2)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -69,8 +69,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Point;
 
@@ -97,7 +97,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult("""
                             import com.example.Age;
                             import com.example.Person;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 if(o instanceof Person(String name, Age age))
@@ -115,11 +115,11 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Y;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 if(o instanceof Y.Point(int x, int y))
@@ -139,8 +139,8 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             record Point(int x, int y);
                             class X {
@@ -166,7 +166,7 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     // Options contributed by TypoTolerantMatcher; these classes contain nested public classes,
     // so we allow them, as they may potentially contain string constants
-    assertEquals(List.of("ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("Policy", "ForkJoinPool", "ThreadPoolExecutor"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
@@ -181,11 +181,11 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
         }
       }""");
     myFixture.completeBasic();
-    assertEquals(List.of("Point", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
-    selectItem(1);
+    assertEquals(List.of("Point", "PolicyQualifierInfo", "Point(int x, int y)", "NullPointerException"), myFixture.getLookupElementStrings());
+    selectItem(2);
     myFixture.checkResult("""
                             import com.example.Point;
-                                                         
+                            
                             class X {
                               void test(Object o) {
                                 switch(o) {
@@ -221,6 +221,123 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
       }""");
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "StrIncompatible", "String", "StrictMath", "StringBuffer", "StringBuilder");
+  }
+
+  public void testUnnamedVariableAndWhen() {
+    String text = """
+        class X {
+          void test(Object obj) {
+            switch (obj) {
+              case String _ when _.isE<caret>
+            }
+          }
+        }
+      """;
+    myFixture.configureByText("a.java", text);
+    myFixture.completeBasic();
+    myFixture.checkResult(text);
+  }
+
+  @NeedsIndex.Full
+  public void testDeconstructionListPrimitive() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(1);
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int <caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testDeconstructionListPrimitive2() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(int x, String description, in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int x, String description, int <caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testFullDeconstructionList() {
+    myFixture.configureByText("a.java", """
+      record Point(int x, String description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult("""
+                            record Point(int x, String description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point(int x, String description, int y<caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testFullDeconstructionListGenerics() {
+    myFixture.configureByText("a.java", """
+      record Point<T>(int x, T description, int y);
+      class X {
+        void test(Object o) {
+          if(o instanceof Point<String>(in<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult("""
+                            record Point<T>(int x, T description, int y);
+                            class X {
+                              void test(Object o) {
+                                if(o instanceof Point<String>(int x, String description, int y<caret>)
+                              }
+                            }""");
+  }
+
+  @NeedsIndex.Full
+  public void testHasTheSameName() {
+    myFixture.configureByText("a.java", """
+      record Point(int x1, int x2);
+      class X {
+        void test(Object o) {
+          int x1 = 0;
+          if(o instanceof Point(<caret>)
+        }
+      }""");
+    myFixture.completeBasic();
+    selectItem(0);
+    myFixture.checkResult(
+      """
+        record Point(int x1, int x2);
+        class X {
+          void test(Object o) {
+            int x1 = 0;
+            if(o instanceof Point(int x2, int x3)
+          }
+        }""");
   }
 
   private void selectItem(int index) {

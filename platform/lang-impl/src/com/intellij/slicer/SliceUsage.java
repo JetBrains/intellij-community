@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -12,7 +12,9 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +22,10 @@ import java.util.Collections;
 public abstract class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
+
+  // Store provider here to quickly access it from EDT later
+  // since the psi element won't be available at that time
+  private final @Nullable SliceLanguageSupportProvider mySliceLanguageSupportProvider;
 
   public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent) {
     this(element, parent, parent.params);
@@ -29,6 +35,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     super(new UsageInfo(element));
     myParent = parent;
     this.params = params;
+    mySliceLanguageSupportProvider = LanguageSlicing.getProvider(element);
   }
 
   // root usage
@@ -36,10 +43,15 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
+    mySliceLanguageSupportProvider = LanguageSlicing.getProvider(element);
   }
 
-  @NotNull
-  private static Collection<SliceUsage> transformToLanguageSpecificUsage(@NotNull SliceUsage usage) {
+  @ApiStatus.Internal
+  public @Nullable SliceLanguageSupportProvider getSliceLanguageSupportProvider() {
+    return mySliceLanguageSupportProvider;
+  }
+
+  private static @NotNull Collection<SliceUsage> transformToLanguageSpecificUsage(@NotNull SliceUsage usage) {
     PsiElement element = usage.getElement();
     if (element == null) return Collections.singletonList(usage);
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
@@ -105,13 +117,11 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
     return myParent;
   }
 
-  @NotNull
-  public AnalysisScope getScope() {
+  public @NotNull AnalysisScope getScope() {
     return params.scope;
   }
 
-  @NotNull
-  protected abstract SliceUsage copy();
+  protected abstract @NotNull SliceUsage copy();
 
   public boolean canBeLeaf() {
     return getElement() != null;

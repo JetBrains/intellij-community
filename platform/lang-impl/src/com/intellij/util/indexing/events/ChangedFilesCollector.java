@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -19,23 +18,23 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexImpl;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.TimeoutCancellationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class ChangedFilesCollector extends IndexedFilesListener {
@@ -43,8 +42,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   public static final boolean CLEAR_NON_INDEXABLE_FILE_DATA =
     SystemProperties.getBooleanProperty("idea.indexes.clear.non.indexable.file.data", true);
 
-  private final IntObjectMap<VirtualFile> myFilesToUpdate =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final DirtyFiles myDirtyFiles = new DirtyFiles();
+
   private final AtomicInteger myProcessedEventIndex = new AtomicInteger();
   private final Phaser myWorkersFinishedSync = new Phaser() {
     @Override
@@ -53,10 +52,13 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   };
 
-  private final Executor
-    myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
+  private final CoroutineDispatcherBackedExecutor vfsEventsExecutor;
   private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+  ChangedFilesCollector(@NotNull CoroutineScope coroutineScope) {
+    vfsEventsExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor("FileBasedIndex Vfs Event Processor", coroutineScope);
+  }
 
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -72,69 +74,42 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   }
 
-  public void scheduleForUpdate(@NotNull VirtualFile file) {
-    int fileId = FileBasedIndex.getFileId(file);
-    if (!(file instanceof DeletedVirtualFileStub)) {
-      Set<Project> projects = myFileBasedIndex.getContainingProjects(file);
-      if (projects.isEmpty()) {
-        removeNonIndexableFileData(file, fileId);
+  public void clear() {
+    myDirtyFiles.clear();
+    ReadAction.run(() -> {
+      if (ApplicationManager.getApplication() == null) {
+        // If the application is already disposed (ApplicationManager.getApplication() == null)
+        // it means that this method is invoked via ShutDownTracker and the process will be shut down
+        // so we don't need to clear collectors.
         return;
       }
-    }
-
-    VfsEventsMerger.tryLog("ADD_TO_UPDATE", file);
-    myFilesToUpdate.put(fileId, file);
-  }
-
-  public void removeScheduledFileFromUpdate(VirtualFile file) {
-    int fileId = FileBasedIndex.getFileId(file);
-    VirtualFile alreadyScheduledFile = myFilesToUpdate.get(fileId);
-    if (!(alreadyScheduledFile instanceof DeletedVirtualFileStub)) {
-      VfsEventsMerger.tryLog("PULL_OUT_FROM_UPDATE", file);
-      myFilesToUpdate.remove(fileId);
-    }
-  }
-
-  public void removeFileIdFromFilesScheduledForUpdate(int fileId) {
-    myFilesToUpdate.remove(fileId);
-  }
-
-  public boolean containsFileId(int fileId) {
-    return myFilesToUpdate.containsKey(fileId);
-  }
-
-  public Iterator<@NotNull VirtualFile> getFilesToUpdate() {
-    return myFilesToUpdate.values().iterator();
-  }
-
-  public Collection<VirtualFile> getAllFilesToUpdate() {
-    ensureUpToDate();
-    return myFilesToUpdate.isEmpty()
-           ? Collections.emptyList()
-           : Collections.unmodifiableCollection(myFilesToUpdate.values());
-  }
-
-  // it's important here to don't load any extension here, so we don't check scopes.
-  public Collection<VirtualFile> getAllPossibleFilesToUpdate() {
-
-    ReadAction.run(() -> {
       processFilesInReadAction(info -> {
-        myFilesToUpdate.put(info.getFileId(),
-                            info.isFileRemoved() ? new DeletedVirtualFileStub(((VirtualFileWithId)info.getFile())) : info.getFile());
         return true;
       });
     });
-
-    return new ArrayList<>(myFilesToUpdate.values());
-  }
-
-  public void clearFilesToUpdate() {
-    myFilesToUpdate.clear();
   }
 
   @Override
-  @NotNull
-  public AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    addToDirtyFiles(fileOrDir);
+    super.recordFileEvent(fileOrDir, onlyContentDependent);
+  }
+
+  @Override
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    addToDirtyFiles(file);
+    super.recordFileRemovedEvent(file);
+  }
+
+  private void addToDirtyFiles(@NotNull VirtualFile fileOrDir) {
+    if (!(fileOrDir instanceof VirtualFileWithId fileOrDirWithId)) return;
+    int id = fileOrDirWithId.getId();
+    List<Project> projects = myFileBasedIndex.getIndexableFilesFilterHolder().findProjectsForFile(FileBasedIndex.getFileId(fileOrDir));
+    myDirtyFiles.addFile(projects, id);
+  }
+
+  @Override
+  public @NotNull AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     boolean shouldCleanup = ContainerUtil.exists(events, ChangedFilesCollector::memoryStorageCleaningNeeded);
     ChangeApplier superApplier = super.prepareChange(events);
 
@@ -156,17 +131,8 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     };
   }
 
-  private void removeNonIndexableFileData(@NotNull VirtualFile file, int fileId) {
-    if (CLEAR_NON_INDEXABLE_FILE_DATA) {
-      List<ID<?, ?>> extensions = getIndexedContentDependentExtensions(fileId);
-      if (!extensions.isEmpty()) {
-        myFileBasedIndex.removeDataFromIndicesForFile(fileId, file, "non_indexable_file");
-      }
-      IndexingFlag.cleanProcessingFlag(file);
-    }
-    else if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      checkNotIndexedByContentBasedIndexes(file, fileId);
-    }
+  public @NotNull DirtyFiles getDirtyFiles() {
+    return myDirtyFiles;
   }
 
   private static boolean memoryStorageCleaningNeeded(@NotNull VFileEvent event) {
@@ -174,10 +140,6 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     return requestor instanceof FileDocumentManager ||
            requestor instanceof PsiManager ||
            requestor == LocalHistory.VFS_EVENT_REQUESTOR;
-  }
-
-  public boolean isScheduledForUpdate(VirtualFile file) {
-    return myFilesToUpdate.containsKey(FileBasedIndex.getFileId(file));
   }
 
   public void ensureUpToDate() {
@@ -196,34 +158,36 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void ensureUpToDateAsync() {
-    if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
-      if (DumbServiceImpl.isSynchronousTaskExecution()) {
-        ensureUpToDate();
-        return;
-      }
+    if (getEventMerger().getApproximateChangesCount() < 20 || !myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
+      return;
+    }
 
-      myVfsEventsExecutor.execute(() -> {
-        try {
-          processFilesInReadActionWithYieldingToWriteAction();
+    if (DumbServiceImpl.isSynchronousTaskExecution()) {
+      ensureUpToDate();
+      return;
+    }
 
-          if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
-            for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-              try {
-                FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
-              }
-              catch (AlreadyDisposedException | ProcessCanceledException ignored) {
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+    vfsEventsExecutor.execute(() -> {
+      try {
+        processFilesInReadActionWithYieldingToWriteAction();
+
+        if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
+          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+            try {
+              FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
+            }
+            catch (ProcessCanceledException ignored) {
+            }
+            catch (Exception e) {
+              LOG.error(e);
             }
           }
         }
-        finally {
-          myScheduledVfsEventsWorkers.decrementAndGet();
-        }
-      });
-    }
+      }
+      finally {
+        myScheduledVfsEventsWorkers.decrementAndGet();
+      }
+    });
   }
 
   public void processFilesToUpdateInReadAction() {
@@ -232,15 +196,26 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
         ((StubIndexImpl)StubIndex.getInstance()).getPerFileElementTypeModificationTrackerUpdateProcessor();
       @Override
       public boolean process(VfsEventsMerger.@NotNull ChangeInfo info) {
-        int fileId = info.getFileId();
-        VirtualFile file = info.getFile();
-        if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file);
-        if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true);
-        if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file);
-        if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false);
-        if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
-            StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
-          perFileElementTypeUpdateProcessor.processUpdate(file);
+        LOG.debug("Processing ", info);
+        try {
+          int fileId = info.getFileId();
+          VirtualFile file = info.getFile();
+          List<Project> dirtyQueueProjects = myDirtyFiles.getProjects(info.getFileId());
+          if (info.isTransientStateChanged()) myFileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects);
+          if (info.isContentChanged()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, true, dirtyQueueProjects);
+          if (info.isFileRemoved()) myFileBasedIndex.doInvalidateIndicesForFile(fileId, file, Collections.emptySet(), dirtyQueueProjects);
+          if (info.isFileAdded()) myFileBasedIndex.scheduleFileForIndexing(fileId, file, false, dirtyQueueProjects);
+          if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
+              StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
+            perFileElementTypeUpdateProcessor.processUpdate(file);
+          }
+        }
+        catch (Throwable t) {
+          if (LOG.isDebugEnabled()) LOG.debug("Exception while processing " + info, t);
+          throw t;
+        }
+        finally {
+          myDirtyFiles.removeFile(info.getFileId());
         }
         return true;
       }
@@ -321,49 +296,27 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void processFilesInReadActionWithYieldingToWriteAction() {
     while (getEventMerger().hasChanges()) {
-      ReadAction.nonBlocking(() -> processFilesToUpdateInReadAction()).executeSynchronously();
+      ReadAction.nonBlocking((Callable<Void>)() -> {
+        processFilesToUpdateInReadAction();
+        return null;
+      }).executeSynchronously();
     }
-  }
-
-  private void checkNotIndexedByContentBasedIndexes(@NotNull VirtualFile file, int fileId) {
-    List<ID<?, ?>> contentDependentIndexes = getIndexedContentDependentExtensions(fileId);
-    if (!contentDependentIndexes.isEmpty()) {
-      LOG.error("indexes " + contentDependentIndexes + " will not be updated for file = " + file + ", id = " + fileId);
-    }
-  }
-
-  private @NotNull List<ID<?, ?>> getIndexedContentDependentExtensions(int fileId) {
-    List<ID<?, ?>> indexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-    RegisteredIndexes registeredIndexes = myFileBasedIndex.getRegisteredIndexes();
-    List<ID<?, ?>> contentDependentIndexes;
-    if (registeredIndexes == null) {
-      Set<? extends ID<?, ?>> allContentDependentIndexes = FileBasedIndexExtension.EXTENSION_POINT_NAME.getExtensionList().stream()
-        .filter(ex -> ex.dependsOnFileContent())
-        .map(ex -> ex.getName())
-        .collect(Collectors.toSet());
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> !allContentDependentIndexes.contains(id));
-    }
-    else {
-      contentDependentIndexes = ContainerUtil.filter(indexedStates, id -> {
-        return registeredIndexes.isContentDependentIndex(id);
-      });
-    }
-    return contentDependentIndexes;
   }
 
   @TestOnly
-  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
+  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(timeout, unit);
+      vfsEventsExecutor.waitAllTasksExecuted(timeout, unit);
       return;
     }
+
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     while (System.nanoTime() < deadline) {
       try {
-        ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(100, TimeUnit.MILLISECONDS);
+        vfsEventsExecutor.waitAllTasksExecuted(100, TimeUnit.MILLISECONDS);
         return;
       }
-      catch (TimeoutException e) {
+      catch (TimeoutCancellationException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
     }

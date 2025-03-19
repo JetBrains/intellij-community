@@ -4,8 +4,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyType;
@@ -28,28 +29,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Override
-  public @Nullable PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return PyCallExpressionHelper.getReceiver(this, resolvedCallee);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getCallee() {
-    // peel off any parens, because we may have smth like (lambda x: x+1)(2)
-    PsiElement seeker = getFirstChild();
-    while (seeker instanceof PyParenthesizedExpression) seeker = ((PyParenthesizedExpression)seeker).getContainedExpression();
-    return seeker instanceof PyExpression ? (PyExpression) seeker : null;
-  }
-
-  @NotNull
-  @Override
-  public List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
+  public @NotNull List<PyCallableType> multiResolveCallee(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.multiResolveCallee(this, resolveContext);
   }
 
-  @NotNull
   @Override
-  public List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
+  public @NotNull List<PyArgumentsMapping> multiMapArguments(@NotNull PyResolveContext resolveContext) {
     return PyCallExpressionHelper.mapArguments(this, resolveContext);
   }
 
@@ -59,8 +44,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
   }
 
   @Override
-  @Nullable
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context, key);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -37,6 +36,8 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,9 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class RecentLocationsAction extends DumbAwareAction implements LightEditCompatible {
-  @NonNls public static final String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
+  public static final @NonNls String RECENT_LOCATIONS_ACTION_ID = "RecentLocations";
   private static final String LOCATION_SETTINGS_KEY = "recent.locations.popup";
   private static int getDefaultWidth() { return JBUIScale.scale(700); }
   private static int getDefaultHeight() { return JBUIScale.scale(530); }
@@ -88,7 +90,12 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
                                @NotNull @NlsContexts.StatusText String emptyText,
                                @Nullable Function<? super Boolean, ? extends List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
                                @Nullable Consumer<? super List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
-    RecentLocationsDataModel model = new RecentLocationsDataModel(project, supplier, remover);
+    RecentLocationsDataModel model = new RecentLocationsDataModel(project,
+                                                                  supplier == null ? null : supplier::apply,
+                                                                  remover == null ? null : infos -> {
+                                                                    remover.accept(infos);
+                                                                    return Unit.INSTANCE;
+                                                                  });
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                                       ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -123,7 +130,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     JPanel topPanel = createHeaderPanel(title, checkBox);
     JPanel mainPanel = createMainPanel(listWithFilter, topPanel);
 
-    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo
+    Color borderColor = SystemInfo.isMac && LafManager.getInstance().getCurrentUIThemeLookAndFeel().isDark()
                         ? topPanel.getBackground()
                         : null;
 

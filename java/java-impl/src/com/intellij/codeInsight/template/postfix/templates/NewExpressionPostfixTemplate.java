@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.*;
@@ -7,17 +7,21 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
+public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   private static final Condition<PsiElement> CONSTRUCTOR = expression -> {
     PsiReferenceExpression ref = expression instanceof PsiMethodCallExpression call ? call.getMethodExpression() :
                                  expression instanceof PsiReferenceExpression r ? r :
@@ -26,36 +30,49 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
 
     PsiExpression qualifier = ref.getQualifierExpression();
 
-    JavaResolveResult result = ref.advancedResolve(true);
-    PsiElement element = result.getElement();
+    return DumbService.getInstance(ref.getProject()).computeWithAlternativeResolveEnabled(() -> {
+      JavaResolveResult result = ref.advancedResolve(true);
+      PsiElement element = result.getElement();
 
-    //todo implement proper support for Foo<Bar>, Foo.new Bar()
-    if (qualifier != null && (!(qualifier instanceof PsiReferenceExpression) || element == null)) return false;
+      //todo implement proper support for Foo<Bar>, Foo.new Bar()
+      if (qualifier != null && (!(qualifier instanceof PsiReferenceExpression) || element == null)) return false;
 
-    if (element == null) return true;
-    if (!(element instanceof PsiClass cls)) return false;
-    PsiMethod[] constructors = cls.getConstructors();
-    if (constructors.length == 0) return true;
-    PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
-    // Check whether there's at least one accessible constructor
-    return !ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, cls));
+      if (element == null) return true;
+      if (!(element instanceof PsiClass cls)) return false;
+      PsiMethod[] constructors = cls.getConstructors();
+      if (constructors.length == 0) return true;
+      PsiResolveHelper helper = JavaPsiFacade.getInstance(element.getProject()).getResolveHelper();
+      // Check whether there's at least one accessible constructor
+      return !ContainerUtil.and(constructors, m -> !helper.isAccessible(m, ref, cls));
+    });
   };
 
   protected NewExpressionPostfixTemplate() {
     super("new", "new T()", selectorAllExpressionsWithCurrentOffset(CONSTRUCTOR));
   }
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     return element instanceof PsiMethodCallExpression ? "new $expr$" : "new $expr$($END$)";
   }
 
   @Override
   public void expandForChooseExpression(@NotNull PsiElement expression, @NotNull Editor editor) {
     if (expression instanceof PsiReferenceExpression ref) {
-      JavaResolveResult result = ref.advancedResolve(true);
+      JavaResolveResult result = DumbService.getInstance(expression.getProject())
+        .withAlternativeResolveEnabled(() -> ref.advancedResolve(true));
       PsiElement element = result.getElement();
+      
+      if (element == null) {
+        String name = ref.getReferenceName();
+        if (name != null && ref.getQualifierExpression() == null) {
+          PsiClass[] classes = DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+            () -> PsiShortNamesCache.getInstance(ref.getProject()).getClassesByName(name, ref.getResolveScope()));
+          if (classes.length == 1) {
+            element = classes[0];
+          }
+        }
+      }
 
       if (element instanceof PsiClass psiClass) {
         WriteAction.run(() -> insertConstructorCallWithSmartBraces(expression, editor, psiClass));
@@ -63,6 +80,11 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
       }
     }
     super.expandForChooseExpression(expression, editor);
+  }
+
+  @Override
+  protected PsiElement getElementToRemove(PsiElement expr) {
+    return expr;
   }
 
   public void insertConstructorCallWithSmartBraces(@NotNull PsiElement expression,
@@ -86,11 +108,10 @@ public class NewExpressionPostfixTemplate extends StringBasedPostfixTemplate {
     item.handleInsert(createInsertionContext(editor, file, item, startOffset));
   }
 
-  @NotNull
-  private static InsertionContext createInsertionContext(@NotNull Editor editor,
-                                                         @NotNull PsiFile file,
-                                                         @NotNull JavaPsiClassReferenceElement item,
-                                                         int startOffset) {
+  private static @NotNull InsertionContext createInsertionContext(@NotNull Editor editor,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull JavaPsiClassReferenceElement item,
+                                                                  int startOffset) {
     Document document = editor.getDocument();
     final OffsetMap offsetMap = new OffsetMap(document);
     final InsertionContext insertionContext = new InsertionContext(offsetMap,

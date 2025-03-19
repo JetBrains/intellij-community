@@ -17,7 +17,7 @@ fun UFile.asIdentifiers(): String = UElementToParentMap { it.toUElementOfType<UI
   )
 }.visitUFileAndGetResult(this)
 
-fun UFile.asRefNames() = UElementToParentMap { it.toUElementOfType<UReferenceExpression>()?.referenceNameElement }
+fun UFile.asRefNames(): String = UElementToParentMap { it.toUElementOfType<UReferenceExpression>()?.referenceNameElement }
   .visitUFileAndGetResult(this)
 
 open class UElementToParentMap(shouldIndent: (PsiElement) -> Boolean,

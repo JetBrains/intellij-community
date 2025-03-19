@@ -10,13 +10,13 @@ import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 
-@Service
+@Service(Service.Level.PROJECT)
 class VersionCatalogsLocator(val myProject: Project) {
   fun getVersionCatalogsForModule(module: Module): Map<String, Path> {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return emptyMap()
     val projectInfo = ProjectDataManager.getInstance()
                         .getExternalProjectData(myProject, GradleConstants.SYSTEM_ID, externalProjectPath)
-                      ?: return emptyMap();
+                      ?: return emptyMap()
     val versionCatalogsModel = projectInfo.externalProjectStructure?.let {
       ExternalSystemApiUtil.find(it, BuildScriptClasspathData.VERSION_CATALOGS)?.data
     }

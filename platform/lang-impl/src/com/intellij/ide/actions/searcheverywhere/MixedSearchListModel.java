@@ -1,19 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-class MixedSearchListModel extends SearchListModel {
-
+@ApiStatus.Internal
+public final class MixedSearchListModel extends SearchListModel {
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
+
+  private final AtomicReference<SearchEverywhereFoundElementInfo> myNotificationElement = new AtomicReference<>();
+
+  private final SearchEverywhereReorderingService myReorderingService = SearchEverywhereReorderingService.getInstance();
+
+  private static final Logger LOG = Logger.getInstance(MixedSearchListModel.class);
+
+  private Computable<String> tabIDProvider;
 
   private Comparator<? super SearchEverywhereFoundElementInfo> myElementsComparator = SearchEverywhereFoundElementInfo.COMPARATOR.reversed();
 
@@ -22,6 +36,10 @@ class MixedSearchListModel extends SearchListModel {
 
   public void setElementsComparator(Comparator<? super SearchEverywhereFoundElementInfo> elementsComparator) {
     myElementsComparator = elementsComparator;
+  }
+
+  public void setTabIDProvider(Computable<String> provider) {
+    tabIDProvider = provider;
   }
 
   @Override
@@ -40,6 +58,17 @@ class MixedSearchListModel extends SearchListModel {
       return;
     }
 
+    if (LOG.isTraceEnabled()) {
+      final var sb = new StringBuilder();
+      sb.append("Adding ").append(items.size()).append(" elements to the list, breakdown:\n");
+
+      for (final var item : items) {
+        sb.append(item.getElement()).append(" coming from contributor ").append(item.getContributor().getClass().getSimpleName()).append("\n");
+      }
+
+      LOG.trace(sb.toString());
+    }
+
     items = items.stream()
       .sorted(myElementsComparator)
       .collect(Collectors.toList());
@@ -48,12 +77,15 @@ class MixedSearchListModel extends SearchListModel {
       int lastIndex = listElements.size() - 1;
       listElements.clear();
       if (lastIndex >= 0) fireIntervalRemoved(this, 0, lastIndex);
+
+      addNotificationIfApplicable();
       listElements.addAll(items);
       if (!listElements.isEmpty()) fireIntervalAdded(this, 0, listElements.size() - 1);
 
       resultsExpired = false;
     }
     else {
+      addNotificationIfApplicable();
       int startIndex = listElements.size();
       listElements.addAll(items);
       int endIndex = listElements.size() - 1;
@@ -69,6 +101,35 @@ class MixedSearchListModel extends SearchListModel {
         lst.sort(myElementsComparator);
         int begin = myMaxFrozenIndex >= 0 ? myMaxFrozenIndex + 1 : 0;
         fireContentsChanged(this, begin, endIndex);
+      }
+    }
+
+    reorderItemsIfApplicable();
+  }
+
+  private void reorderItemsIfApplicable() {
+    if (myReorderingService != null && myMaxFrozenIndex == -1 && tabIDProvider != null) {
+      String tabID = tabIDProvider.compute();
+      myReorderingService.reorder(tabID, listElements);
+      fireContentsChanged(this, 0, listElements.size() - 1);
+    }
+  }
+
+  private void addNotificationIfApplicable() {
+    var notificationElement = myNotificationElement.getAndSet(null);
+    if (notificationElement != null && AdvancedSettings.getBoolean("search.everywhere.show.results.notification")) {
+      var lastItemIndex = listElements.size() - 1;
+      listElements.removeIf(info -> info.getElement() instanceof ResultsNotificationElement);
+      var newLastItemIndex = listElements.size() - 1;
+      if (newLastItemIndex < lastItemIndex) {
+        fireIntervalRemoved(this, 0, lastItemIndex - newLastItemIndex - 1);
+      }
+
+      listElements.add(notificationElement);
+      newLastItemIndex++;
+      fireIntervalAdded(this, newLastItemIndex, newLastItemIndex);
+      if (myMaxFrozenIndex != -1) {
+        myMaxFrozenIndex++;
       }
     }
   }
@@ -118,10 +179,20 @@ class MixedSearchListModel extends SearchListModel {
     }
 
     if (!alreadyHas && hasMore) {
+      SearchEverywhereUsageTriggerCollector.MORE_ITEM_SHOWN.log(
+        SearchEverywhereUsageTriggerCollector.ITEM_NUMBER_BEFORE_MORE.with(listElements.size()),
+        SearchEverywhereUsageTriggerCollector.IS_ONLY_MORE.with(true)
+      );
       listElements.add(new SearchEverywhereFoundElementInfo(MORE_ELEMENT, 0, null));
       lasItemIndex += 1;
       fireIntervalAdded(this, lasItemIndex, lasItemIndex);
     }
+  }
+
+  @Override
+  public void addNotificationElement(@NotNull String label) {
+    myNotificationElement.getAndSet(new SearchEverywhereFoundElementInfo(
+      new ResultsNotificationElement(label), Integer.MAX_VALUE - 1, null));
   }
 
   @Override
@@ -135,12 +206,14 @@ class MixedSearchListModel extends SearchListModel {
   public void clear() {
     hasMoreContributors.clear();
     myMaxFrozenIndex = -1;
+    myNotificationElement.set(null);
     super.clear();
   }
 
   @Override
   public void expireResults() {
     super.expireResults();
+    myNotificationElement.set(null);
     myMaxFrozenIndex = -1;
   }
 }

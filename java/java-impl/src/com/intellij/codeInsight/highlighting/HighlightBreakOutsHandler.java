@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.util.Consumer;
@@ -12,7 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightBreakOutsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public HighlightBreakOutsHandler(Editor editor, PsiFile file, PsiElement target) {

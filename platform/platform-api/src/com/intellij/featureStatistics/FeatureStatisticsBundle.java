@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
+import com.intellij.DynamicBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.PropertyKey;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -36,7 +35,7 @@ public final class FeatureStatisticsBundle {
 
     ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
     if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
+      bundle = DynamicBundle.getResourceBundle(FeatureStatisticsBundle.class.getClassLoader(), BUNDLE);
       ourBundle = new SoftReference<>(bundle);
     }
     return bundle;
@@ -49,10 +48,7 @@ public final class FeatureStatisticsBundle {
     private ProviderBundles() {
       for (FeatureStatisticsBundleEP bundleEP : FeatureStatisticsBundleEP.EP_NAME.getExtensionList()) {
         try {
-          ResourceBundle bundle = ResourceBundle.getBundle(bundleEP.qualifiedName,
-                                                           Locale.getDefault(),
-                                                           bundleEP.getPluginDescriptor().getClassLoader(),
-                                                           AbstractBundle.getControl());
+          ResourceBundle bundle = DynamicBundle.getResourceBundle(bundleEP.getPluginDescriptor().getClassLoader(), bundleEP.qualifiedName);
           for (String key : bundle.keySet()) {
             put(key, bundle);
           }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -17,7 +17,9 @@ import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance(DetectedFrameworksData.class);
   private PersistentHashMap<String, IntSet> myExistentFrameworkFiles;
@@ -85,8 +88,8 @@ public final class DetectedFrameworksData {
     }
   }
 
-  public Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
-                                                                                 Collection<? extends DetectedFrameworkDescription> frameworks) {
+  public @Unmodifiable Collection<? extends DetectedFrameworkDescription> updateFrameworksList(String detectorId,
+                                                                                               Collection<? extends DetectedFrameworkDescription> frameworks) {
     synchronized (myLock) {
       final Collection<DetectedFrameworkDescription> oldFrameworks = myDetectedFrameworks.remove(detectorId);
       myDetectedFrameworks.putValues(detectorId, frameworks);
@@ -121,7 +124,7 @@ public final class DetectedFrameworksData {
     }
   }
 
-  private static class TIntHashSetExternalizer implements DataExternalizer<IntSet> {
+  private static final class TIntHashSetExternalizer implements DataExternalizer<IntSet> {
     @Override
     public void save(@NotNull DataOutput out, IntSet value) throws IOException {
       out.writeInt(value.size());
@@ -142,8 +145,7 @@ public final class DetectedFrameworksData {
     }
   }
 
-  @NotNull
-  private static Path getDetectionDirPath() {
+  private static @NotNull Path getDetectionDirPath() {
     return PathManagerEx.getAppSystemDir().resolve("frameworks").resolve("detection");
   }
 }

@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NotNull
 import java.io.*
 
+@Internal
 class ShareableStubTreeSerializer : StubTreeSerializer {
   private val serializationManager = SerializationManagerEx.getInstanceEx() as SerializationManagerImpl
   private val serializer = object : StubTreeSerializerBase<FileLocalStringEnumerator>() {
     override fun readSerializationState(stream: StubInputStream): FileLocalStringEnumerator {
       val enumerator = FileLocalStringEnumerator(false)
-      enumerator.read(stream) { it }
+      enumerator.read(stream)
       return enumerator
     }
 

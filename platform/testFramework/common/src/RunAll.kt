@@ -14,6 +14,7 @@ import org.jetbrains.annotations.TestOnly
  */
 @TestOnly
 class RunAll(private val actions: List<ThrowableRunnable<*>>) : Runnable {
+  @SafeVarargs
   constructor(vararg actions: ThrowableRunnable<Throwable?>) : this(listOf(*actions))
 
   override fun run() {

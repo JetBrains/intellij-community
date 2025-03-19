@@ -1,0 +1,8 @@
+LineBreakpoint created at smartStepIntoSuspendCallWithoutSuspension.kt:10
+Run Java
+Connected to the target VM
+smartStepIntoSuspendCallWithoutSuspension.kt:10
+smartStepIntoSuspendCallWithoutSuspension.kt:4
+Disconnected from the target VM
+
+Process finished with exit code 0

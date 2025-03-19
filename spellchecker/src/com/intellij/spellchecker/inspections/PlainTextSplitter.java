@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -38,8 +24,7 @@ public class PlainTextSplitter extends BaseSplitter {
     return INSTANCE;
   }
 
-  private static final
-  Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
+  private static final Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b|\\(|\\))");
 
   private static final Pattern MAIL =
     Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
@@ -61,14 +46,14 @@ public class PlainTextSplitter extends BaseSplitter {
 
   private static final int SHA384_BASE64_LENGTH = 64;
   private static final String SHA384_PREFIX = "sha384-";
-  private final static Pattern SHA384_PREFIXED_VALUE_PATTERN = Pattern.compile("sha384-[A-Za-z0-9+=/]{" + SHA384_BASE64_LENGTH + "}");
+  private static final Pattern SHA384_PREFIXED_VALUE_PATTERN = Pattern.compile("sha384-[A-Za-z0-9+=/]{" + SHA384_BASE64_LENGTH + "}");
 
   private static final int SHA512_BASE64_LENGTH = 88;
   private static final String SHA512_PREFIX = "sha512-";
-  private final static Pattern SHA512_PREFIXED_VALUE_PATTERN = Pattern.compile("sha512-[A-Za-z0-9+=/]{" + SHA512_BASE64_LENGTH + "}");
+  private static final Pattern SHA512_PREFIXED_VALUE_PATTERN = Pattern.compile("sha512-[A-Za-z0-9+=/]{" + SHA512_BASE64_LENGTH + "}");
 
-  private final static String JWT_COMMON_PREFIX = "eyJhbGci"; // Base64 of `{"alg":` in JWT header
-  private final static Pattern JWT_PATTERN = Pattern.compile("[A-Za-z0-9+=/_\\-.]+");
+  private static final String JWT_COMMON_PREFIX = "eyJhbGci"; // Base64 of `{"alg":` in JWT header
+  private static final Pattern JWT_PATTERN = Pattern.compile("[A-Za-z0-9+=/_\\-.]+");
 
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
@@ -88,7 +73,7 @@ public class PlainTextSplitter extends BaseSplitter {
       matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(text, range));
 
       while (true) {
-        checkCancelled();
+        ProgressManager.checkCanceled();
 
         List<TextRange> toCheck;
         TextRange wRange;
@@ -145,12 +130,11 @@ public class PlainTextSplitter extends BaseSplitter {
         if (matcher.hitEnd()) break;
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (TooLongBombedMatchingException ignored) {
     }
   }
 
-  @NotNull
-  protected Splitter getTextSplitter() {
+  protected @NotNull Splitter getTextSplitter() {
     return TextSplitter.getInstance();
   }
 

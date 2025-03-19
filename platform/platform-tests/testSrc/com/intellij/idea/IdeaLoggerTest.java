@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
+import com.intellij.openapi.diagnostic.AsyncLogKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -40,6 +41,7 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
 
       log(logger, level, null, t);
       log(logger, level, null, t);
+      AsyncLogKt.awaitLogQueueProcessed();
 
       assertEquals("Too many " + level + " posted: " + diags, 1, diags.size());
       assertEquals("Too many " + level + " posted: " + diags, 1, diags.get(level).size());

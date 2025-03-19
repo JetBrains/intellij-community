@@ -3,6 +3,6 @@ class A<T> {
 }
 class C<T> extends A<T> {
     {
-        B[] o = <error descr="Generic array creation">{}</error>;
+        B[] o = <error descr="Generic array creation not allowed">{}</error>;
     }
 }

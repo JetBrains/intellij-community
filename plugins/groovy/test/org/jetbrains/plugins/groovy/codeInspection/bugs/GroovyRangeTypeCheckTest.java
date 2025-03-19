@@ -9,7 +9,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -30,7 +29,7 @@ public class GroovyRangeTypeCheckTest extends LightJavaCodeInsightFixtureTestCas
     final GrRangeExpression range = PsiTreeUtil.getParentOfType(atCaret, GrRangeExpression.class);
     final GroovyRangeTypeCheckInspection inspection = new GroovyRangeTypeCheckInspection();
 
-    final GroovyFix fix = inspection.buildFix(range);
+    final LocalQuickFix fix = inspection.buildFix(range);
 
     LocalQuickFix[] fixes = {fix};
     final ProblemDescriptor descriptor = InspectionManager.getInstance(getProject()).createProblemDescriptor(range, "bla-bla", false, fixes, ProblemHighlightType.WEAK_WARNING);

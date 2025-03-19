@@ -1,32 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.style;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -37,24 +22,24 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 /**
  * @author Maxim.Medvedev
  */
-public class ImportOnDemandIntention extends Intention {
+public final class ImportOnDemandIntention extends GrPsiUpdateIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrReferenceElement<?> ref)) return;
     final PsiElement resolved = ref.resolve();
-    if (!(resolved instanceof PsiClass)) return;
+    if (!(resolved instanceof PsiClass psiClass)) return;
 
-    final String qname = ((PsiClass)resolved).getQualifiedName();
+    final String qname = psiClass.getQualifiedName();
 
     final GrImportStatement importStatement =
-      GroovyPsiElementFactory.getInstance(project).createImportStatementFromText(qname, true, true, null);
+      GroovyPsiElementFactory.getInstance(context.project()).createImportStatementFromText(qname, true, true, null);
 
     final PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof GroovyFile)) return;
     ((GroovyFile)containingFile).addImport(importStatement);
 
-    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile))) {
+    for (PsiReference reference : ReferencesSearch.search(resolved, new LocalSearchScope(containingFile)).asIterable()) {
       final PsiElement refElement = reference.getElement();
       final PsiElement parent = refElement.getParent();
       if (parent instanceof GrQualifiedReference<?>) {
@@ -63,13 +48,12 @@ public class ImportOnDemandIntention extends Intention {
     }
   }
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return new PsiElementPredicate() {
       @Override
       public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceElement ref)) return false;
+        if (!(element instanceof GrReferenceElement<?> ref)) return false;
         final PsiElement parent = ref.getParent();
         if (!(parent instanceof GrReferenceElement)) return false;
         final PsiElement resolved = ref.resolve();

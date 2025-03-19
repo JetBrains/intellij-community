@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSDoubleColonExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "doubleColonExpression"
-
     fun testClassLiteralExpression() { doTest("Int::class", """
         fun foo(x: Any) { print(x) }
 

@@ -11,7 +11,7 @@ import javax.swing.JScrollPane
 import kotlin.math.max
 import kotlin.math.min
 
-class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
+internal class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
   override fun getHorizontalOffset(editor: Editor,
                                    targetLocation: Point,
                                    scrollType: ScrollType,
@@ -126,15 +126,14 @@ class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
     val scrollOffset = editor.settings.verticalScrollOffset
     val scrollJump = editor.settings.verticalScrollJump
     // the two following lines should be both visible in view rectangle after scrolling (that's the meaning of the scroll offset setting)
-    //  If it is not possible, e.g. view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
+    //  If it is not possible, e.g., view rectangle is too small to contain both lines, then scrolling will go to the `centerPosition`
     val offsetTopBound = addVerticalOffsetToPosition(editor, -scrollOffset, targetLocation)
     val offsetBottomBound = addVerticalOffsetToPosition(editor, scrollOffset, targetLocation) + lineHeight
 
     // the position that we consider to be the "central" one
     // for some historical reasons, before scroll offset support, center was actually at the 1/3 of the view rectangle
-    val centerPosition: Int
     val oneThirdPosition = targetLocation.y - editorHeight / 3
-    centerPosition = if (oneThirdPosition < offsetTopBound) { // if editor has enough height to show top bound, let the center be in its historical (expected for users) position
+    val centerPosition = if (oneThirdPosition < offsetTopBound) { // if editor has enough height to show top bound, let the center be in its historical (expected for users) position
       oneThirdPosition
     }
     else { // the real centered position for ones who use big offsets or don't have enough height
@@ -199,53 +198,52 @@ class ScrollPositionCalculatorImpl : ScrollPositionCalculator {
     return if (scrollOffset > 0) {
       // if we are calculating the bottom scroll bound, add scroll offset to the end of logical line containing the given point,
       // because we want to see some following lines and not just wrapped visual lines of the same logical line
-      val pointLogicalLineEnd = getLogicalLineEnd(editor, point, isUseSoftWraps)
-      val bottomLine = VisualPosition(pointLogicalLineEnd.line + scrollOffset, 0)
-      editor.visualPositionToXY(bottomLine).y
+      val lastVisualLine = getLastVisualLine(editor, point, isUseSoftWraps)
+      val bottomLine = lastVisualLine + scrollOffset
+      editor.visualLineToY(bottomLine)
     }
     else if (scrollOffset < 0) {
       // we count offset from logical line start to see previous lines (not the same line content if soft wrap is enabled)
-      val pointLineStart = getLogicalLineStart(editor, point, isUseSoftWraps)
-      var topLine = VisualPosition(max(0, pointLineStart.line + scrollOffset), 0)
+      val topVisualLine = getFirstVisualLine(editor, point, isUseSoftWraps)
+      var topLineWithOffset = max(0, topVisualLine + scrollOffset)
       // If soft wraps are enabled, last visual lines of one logical line may be not so helpful. That's why we scroll to logical line start
-      topLine = getLogicalLineStart(editor, topLine, isUseSoftWraps)
-      editor.visualLineToY(topLine.line)
+      topLineWithOffset = getFirstVisualLine(editor, VisualPosition(topLineWithOffset, 0), isUseSoftWraps)
+      editor.visualLineToY(topLineWithOffset)
     }
     else {
       point.y
     }
   }
 
-  private fun getLogicalLineEnd(editor: Editor, point: Point, isUseSoftWraps: Boolean): VisualPosition {
+  private fun getLastVisualLine(editor: Editor, point: Point, isUseSoftWraps: Boolean): Int {
     if (isUseSoftWraps) {
       val logicalPosition = editor.xyToLogicalPosition(point)
       val lineCount = editor.document.lineCount
       if (logicalPosition.line < lineCount) {
         val endOffset = editor.document.getLineEndOffset(logicalPosition.line)
-        return editor.offsetToVisualPosition(endOffset)
+        return editor.offsetToVisualPosition(endOffset).line
       }
     }
-    return editor.xyToVisualPosition(point)
+    return editor.yToVisualLine(point.y)
   }
 
-  private fun getLogicalLineStart(editor: Editor, point: Point, isUseSoftWraps: Boolean): VisualPosition {
+  private fun getFirstVisualLine(editor: Editor, point: Point, isUseSoftWraps: Boolean): Int {
     return if (isUseSoftWraps) {
-      val logicalPosition = editor.xyToLogicalPosition(point)
-      editor.logicalToVisualPosition(LogicalPosition(logicalPosition.line, 0))
+      val logicalLine = editor.xyToLogicalPosition(point).line
+      editor.logicalToVisualPosition(LogicalPosition(logicalLine, 0)).line
     }
     else {
-      val visualPosition = editor.xyToVisualPosition(point)
-      VisualPosition(visualPosition.line, 0)
+      editor.yToVisualLine(point.y)
     }
   }
 
-  private fun getLogicalLineStart(editor: Editor, visualPosition: VisualPosition, isUseSoftWraps: Boolean): VisualPosition {
+  private fun getFirstVisualLine(editor: Editor, visualPosition: VisualPosition, isUseSoftWraps: Boolean): Int {
     return if (isUseSoftWraps) {
       val logicalPosition = editor.visualToLogicalPosition(visualPosition)
-      editor.logicalToVisualPosition(LogicalPosition(logicalPosition.line, 0))
+      editor.logicalToVisualPosition(LogicalPosition(logicalPosition.line, 0)).line
     }
     else {
-      visualPosition
+      visualPosition.line
     }
   }
 

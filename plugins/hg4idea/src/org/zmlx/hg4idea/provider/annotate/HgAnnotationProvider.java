@@ -37,7 +37,7 @@ import java.util.List;
 
 public class HgAnnotationProvider implements AnnotationProviderEx {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public HgAnnotationProvider(@NotNull Project project) {
     myProject = project;
@@ -49,14 +49,12 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file) throws VcsException {
     return annotate(file, null);
   }
 
   @Override
-  @NotNull
-  public FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(file.getPath()));
     if (vcsRoot == null) {
       throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", file.getPresentableUrl()));
@@ -70,14 +68,13 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(fileToAnnotate, revisionNumber);
     //for uncommitted renamed file we should provide local name otherwise --follow will fail
     final List<HgFileRevision> logResult =
-      HgHistoryProvider.getHistory(revision == null ? hgFile.toFilePath() : fileToAnnotate.toFilePath(), vcsRoot, myProject, null, -1);
+      HgHistoryProvider.getHistoryOrFail(revision == null ? hgFile.toFilePath() : fileToAnnotate.toFilePath(), vcsRoot, myProject, null, -1);
     return new HgAnnotation(myProject, hgFile, annotationResult, logResult,
                             revisionNumber != null ? revisionNumber : new HgWorkingCopyRevisionsCommand(myProject).tip(vcsRoot));
   }
 
-  @NotNull
   @Override
-  public FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException {
+  public @NotNull FileAnnotation annotate(@NotNull FilePath path, @NotNull VcsRevisionNumber revision) throws VcsException {
     final VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, path);
     if (vcsRoot == null) {
       throw new VcsException(HgBundle.message("error.cannot.find.repository.for.file", path.getPresentableUrl()));
@@ -85,7 +82,7 @@ public class HgAnnotationProvider implements AnnotationProviderEx {
     final HgFile hgFile = new HgFile(vcsRoot, path);
     final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, (HgRevisionNumber)revision);
     final List<HgFileRevision> logResult = HgHistoryProvider
-      .getHistory(hgFile.toFilePath(), vcsRoot, myProject, (HgRevisionNumber)revision, -1);
+      .getHistoryOrFail(hgFile.toFilePath(), vcsRoot, myProject, (HgRevisionNumber)revision, -1);
     return new HgAnnotation(myProject, hgFile, annotationResult, logResult, revision);
   }
 }

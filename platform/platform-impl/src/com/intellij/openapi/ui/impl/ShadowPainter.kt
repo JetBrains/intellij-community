@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl
 
 import com.intellij.ide.ui.LafManagerListener
@@ -22,7 +22,7 @@ import kotlin.math.floor
 /**
  * @author Konstantin Bulenkov
  */
-class ShadowPainter(private val top: Icon,
+internal class ShadowPainter(private val top: Icon,
                     private val topRight: Icon,
                     private val right: Icon,
                     private val bottomRight: Icon,
@@ -39,18 +39,6 @@ class ShadowPainter(private val top: Icon,
   init {
     updateIcons(null)
     ApplicationManager.getApplication().messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener { updateIcons(null) })
-  }
-
-  constructor(top: Icon,
-              topRight: Icon,
-              right: Icon,
-              bottomRight: Icon,
-              bottom: Icon,
-              bottomLeft: Icon,
-              left: Icon,
-              topLeft: Icon,
-              borderColor: Color?) : this(top, topRight, right, bottomRight, bottom, bottomLeft, left, topLeft) {
-    this.borderColor = borderColor
   }
 
   private var cachedScaleContext: ScaleContext? = null

@@ -12,9 +12,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.ReSTService;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
+import com.jetbrains.python.documentation.PyDocumentationSettingsDetector;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
@@ -45,11 +47,13 @@ final class PyDefaultProjectAwareServiceConfigurator implements DirectoryProject
   private static void updateServices(@NotNull Module module, boolean newProject) {
     List<PyDefaultProjectAwareServiceModuleConfigurator> configurators = Arrays.asList(
       TestRunnerService.getConfigurator(),
-      PyDocumentationSettings.getConfigurator(),
+      new PyDefaultProjectAwareModuleConfiguratorImpl<>(PyDocumentationSettings.SERVICE_CLASSES, PY_DOCUMENTATION_SETTINGS_DETECTOR),
       ReSTService.getConfigurator(),
       PyPackageRequirementsSettings.getConfigurator());
     for (PyDefaultProjectAwareServiceModuleConfigurator configurator : configurators) {
       configurator.configureModule(module, newProject);
     }
   }
+
+  private static final PyDocumentationSettingsDetector PY_DOCUMENTATION_SETTINGS_DETECTOR = new PyDocumentationSettingsDetector();
 }

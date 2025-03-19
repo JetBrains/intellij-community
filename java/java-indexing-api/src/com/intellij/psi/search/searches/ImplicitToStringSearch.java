@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.psi.*;
@@ -11,21 +11,18 @@ public final class ImplicitToStringSearch extends ExtensibleQueryFactory<PsiExpr
 
   public static class SearchParameters {
     private final PsiMethod myTargetMethod;
-    @NotNull
-    private final SearchScope myScope;
+    private final @NotNull SearchScope myScope;
 
     public SearchParameters(@NotNull PsiMethod targetMethod, @NotNull SearchScope scope) {
       myTargetMethod = targetMethod;
       myScope = scope;
     }
 
-    @NotNull
-    public PsiMethod getTargetMethod() {
+    public @NotNull PsiMethod getTargetMethod() {
       return myTargetMethod;
     }
 
-    @NotNull
-    public SearchScope getSearchScope() {
+    public @NotNull SearchScope getSearchScope() {
       return myScope;
     }
   }

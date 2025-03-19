@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.runInEdtAndWait
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.performance.tests.utils.projectFileByName
@@ -27,9 +26,7 @@ fun openInEditor(project: Project, vFile: VirtualFile): EditorFile {
 
     TestCase.assertTrue("file $vFile is not indexed yet", FileIndexFacade.getInstance(project).isInContent(vFile))
 
-    runInEdtAndWait {
-        fileEditorManager.openFile(vFile, true)
-    }
+    fileEditorManager.openFile(vFile, true)
     val document = fileDocumentManager.getDocument(vFile) ?: error("no document for $vFile found")
 
     TestCase.assertNotNull("doc not found for $vFile", EditorFactory.getInstance().getEditors(document))

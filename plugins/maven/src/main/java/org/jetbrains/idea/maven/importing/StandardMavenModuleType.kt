@@ -46,6 +46,12 @@ enum class StandardMavenModuleType(override val containsCode: Boolean,
   MAIN_ONLY(containsCode = true, containsMain = true, containsTest = false),
 
   /**
+   * Additional module containing only main folders and dependencies (e.g., from `compileSourceRoots` tag
+   * in compiler plugin execution configuration)
+   */
+  MAIN_ONLY_ADDITIONAL(containsCode = true, containsMain = true, containsTest = false),
+
+  /**
    * Module containing only test folders and dependencies
    */
   TEST_ONLY(containsCode = true, containsMain = false, containsTest = true)

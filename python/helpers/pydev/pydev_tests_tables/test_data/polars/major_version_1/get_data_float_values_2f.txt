@@ -1,0 +1,8 @@
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (3, 3)</small><table border="1" class="dataframe"><thead><tr><th>int_col</th><th>float_col</th><th>struct_col</th></tr><tr><td>i64</td><td>f64</td><td>struct[2]</td></tr></thead><tbody><tr><td>1</td><td>1.00</td><td>{30,5.50}</td></tr><tr><td>2</td><td>2.00</td><td>{25,6.10}</td></tr><tr><td>3</td><td>null</td><td>{35,null}</td></tr></tbody></table></div>

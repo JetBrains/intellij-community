@@ -2,13 +2,15 @@
 package org.jetbrains.rpc
 
 import com.intellij.openapi.diagnostic.Logger
-import io.netty.buffer.ByteBuf
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
+@Deprecated("Please don't use logger from scriptDebugger", level = DeprecationLevel.HIDDEN)
 val LOG: Logger = Logger.getInstance(CommandProcessor::class.java)
 
+@ApiStatus.NonExtendable
 abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPONSE : Any?> : CommandSenderBase<SUCCESS_RESPONSE>(),
                                                                                               MessageManager.Handler<Request<*>, INCOMING, INCOMING_WITH_SEQ, SUCCESS_RESPONSE>,
                                                                                               ResultReader<SUCCESS_RESPONSE>,
@@ -31,17 +33,10 @@ abstract class CommandProcessor<INCOMING, INCOMING_WITH_SEQ : Any, SUCCESS_RESPO
     return id
   }
 
+  @ApiStatus.Internal
   final override fun <RESULT> doSend(message: Request<RESULT>, callback: RequestPromise<SUCCESS_RESPONSE, RESULT>) {
     messageManager.send(message, callback)
   }
-}
-
-fun requestToByteBuf(message: Request<*>, isDebugEnabled: Boolean = LOG.isDebugEnabled): ByteBuf {
-  val content = message.buffer
-  if (isDebugEnabled) {
-    LOG.debug("OUT: ${content.toString(Charsets.UTF_8)}")
-  }
-  return content
 }
 
 interface ResultReader<in RESPONSE> {

@@ -1,9 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import com.intellij.util.SmartList
 import com.intellij.util.text.CharSequenceBackedByChars
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.io.Reader
+import java.net.SocketTimeoutException
 import java.net.URLEncoder
 import java.nio.ByteBuffer
 import java.util.*
@@ -22,46 +29,6 @@ fun Reader.readCharSequence(length: Int): CharSequence {
     }
     return CharSequenceBackedByChars(chars, 0, count)
   }
-}
-
-/**
- * Think twice before use - consider to to specify length.
- */
-fun Reader.readCharSequence(): CharSequence {
-  var chars = CharArray(DEFAULT_BUFFER_SIZE)
-  var buffers: MutableList<CharArray>? = null
-  var count = 0
-  var total = 0
-  while (true) {
-    val n = read(chars, count, chars.size - count)
-    if (n <= 0) {
-      break
-    }
-
-    count += n
-    total += n
-    if (count == chars.size) {
-      if (buffers == null) {
-        buffers = SmartList()
-      }
-      buffers.add(chars)
-      val newLength = min(1024 * 1024, chars.size * 2)
-      chars = CharArray(newLength)
-      count = 0
-    }
-  }
-
-  if (buffers == null) {
-    return CharSequenceBackedByChars(chars, 0, total)
-  }
-
-  val result = CharArray(total)
-  for (buffer in buffers) {
-    System.arraycopy(buffer, 0, result, result.size - total, buffer.size)
-    total -= buffer.size
-  }
-  System.arraycopy(chars, 0, result, result.size - total, total)
-  return CharSequenceBackedByChars(result)
 }
 
 fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
@@ -84,6 +51,57 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   return bytes
 }
 
-fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use URLEncoder.encode()")
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
-fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
+@Deprecated("Use java.util.Base64.getDecoder().decode()")
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
+
+/**
+ * Behaves like [InputStream.copyTo], but doesn't block _current_ coroutine context even for a second.
+ * Due to unavailability of non-blocking IO for [InputStream], all blocking calls are executed on some daemonic thread, and some I/O
+ * operations may outlive current coroutine context.
+ *
+ * It's safe to set [java.net.Socket.setSoTimeout] if [InputStream] comes from a socket.
+ *
+ * @throws IOException when write or read failed.
+ */
+@ApiStatus.Experimental
+@OptIn(DelicateCoroutinesApi::class)
+@Throws(IOException::class) // Can't use @CheckReturnValue: KTIJ-7061
+suspend fun InputStream.copyToAsync(
+  outputStream: OutputStream,
+  bufferSize: Int = DEFAULT_BUFFER_SIZE,
+  limit: Long = Long.MAX_VALUE,
+  progressNotifier: (suspend (Long) -> Unit)? = null,
+) {
+  computeDetached(context = CoroutineName("copyToAsync: $this => $outputStream")) {
+    val buffer = ByteArray(bufferSize)
+    var totalRead = 0L
+    while (totalRead < limit) {
+      progressNotifier?.invoke(totalRead)
+      yield()
+      val read =
+        try {
+          read(buffer, 0, min(limit - totalRead, buffer.size.toLong()).toInt())
+        }
+        catch (_: SocketTimeoutException) {
+          continue
+        }
+      when {
+        read < 0 -> break
+        read > 0 -> {
+          totalRead += read
+          yield()
+          // According to Javadoc, Socket.soTimeout doesn't have any influence on SocketOutputStream.
+          // Had timeout affected sends, it would have impossible to distinguish if the packets were delivered or not in case of timeout.
+          outputStream.write(buffer, 0, read)
+        }
+        else -> Unit
+      }
+    }
+  }
+}

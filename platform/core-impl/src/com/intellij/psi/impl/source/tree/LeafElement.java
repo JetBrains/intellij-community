@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,7 @@ import java.lang.ref.SoftReference;
 
 import static com.intellij.reference.SoftReference.dereference;
 
-public abstract class LeafElement extends TreeElement {
+public abstract class LeafElement extends TreeElement implements LighterASTTokenNode {
   private static final Logger LOG = Logger.getInstance(LeafElement.class);
   private static final Key<SoftReference<String>> CACHED_TEXT = Key.create("CACHED_TEXT");
 
@@ -31,9 +32,8 @@ public abstract class LeafElement extends TreeElement {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public LeafElement clone() {
+  public @NotNull LeafElement clone() {
     LeafElement clone = (LeafElement)super.clone();
     clone.clearCaches();
     return clone;
@@ -44,15 +44,13 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
-  @NotNull
   @Override
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
     return myText;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     CharSequence text = myText;
     if (text.length() > 1000 && !(text instanceof String)) { // e.g. a large text file
       String cachedText = dereference(getUserData(CACHED_TEXT));
@@ -128,8 +126,7 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
-  @NotNull
-  public LeafElement rawReplaceWithText(@NotNull String newText) {
+  public @NotNull LeafElement rawReplaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
     copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
@@ -137,8 +134,7 @@ public abstract class LeafElement extends TreeElement {
     return newLeaf;
   }
 
-  @NotNull
-  public LeafElement replaceWithText(@NotNull String newText) {
+  public @NotNull LeafElement replaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
     getTreeParent().replaceChild(this, newLeaf);
     return newLeaf;
@@ -184,14 +180,12 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet) {
     return null;
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
     return null;
   }
 
@@ -226,7 +220,7 @@ public abstract class LeafElement extends TreeElement {
 
   @Override
   public ASTNode @NotNull [] getChildren(TokenSet filter) {
-    return EMPTY_ARRAY;
+    return TreeElement.EMPTY_ARRAY;
   }
 
   @Override
@@ -260,12 +254,12 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, @Nullable ASTNode firstWhichStayInTree) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
   @Override
-  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, @Nullable ASTNode lastChild, @Nullable ASTNode anchorBefore) {
     throw new IncorrectOperationException("Leaf elements cannot have children.");
   }
 
@@ -280,8 +274,9 @@ public abstract class LeafElement extends TreeElement {
   }
 
   static <T extends PsiElement> T getPsi(@NotNull Class<T> clazz, PsiElement element, @NotNull Logger log) {
-    log.assertTrue(clazz.isInstance(element), "unexpected psi class. expected: " + clazz
-                                             + " got: " + (element == null ? null : element.getClass()));
+    if (!clazz.isInstance(element)) {
+      log.error("unexpected psi class. expected: " + clazz + " got: " + (element == null ? null : element.getClass()));
+    }
     //noinspection unchecked
     return (T)element;
   }

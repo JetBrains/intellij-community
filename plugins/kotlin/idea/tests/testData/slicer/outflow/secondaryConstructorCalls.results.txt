@@ -1,5 +1,5 @@
 4 <bold>constructor(n: Int)</bold> (in A)
-3 	<bold>super</bold>(1);
+3 	JAVA: <bold>super</bold>(1); (in J.J())
 6 	constructor() : <bold>this(1)</bold> (in constructor A())
 7 	A a = new <bold>A</bold>(1);
 9 	class B : <bold>A(1)</bold> (in B)

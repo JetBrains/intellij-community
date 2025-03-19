@@ -1,28 +1,33 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.DumbModeTestUtils
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.findMainOwner
 import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.checkers.languageVersionSettingsFromText
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.withCustomLanguageAndApiVersion
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.atomic.AtomicReference
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 
-abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfigurationTest() {
+abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfigurationBaseTest() {
     fun testMainInTest() {
         configureProject()
         val configuredModule = defaultConfiguredModule
@@ -44,7 +49,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
 
             for (file in files) {
                 val ktFile = psiManager.findFile(file) as? KtFile ?: continue
-                val languageVersionSettings = languageVersionSettingsFromText(listOf(ktFile.text))
+                val languageVersionSettings = defaultLanguageVersionSettings()
 
                 module.withLanguageVersionSettings(languageVersionSettings) {
                     var functionCandidates: List<KtNamedFunction>? = null
@@ -80,6 +85,10 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
         }
     }
 
+    private fun defaultLanguageVersionSettings(): LanguageVersionSettings {
+        val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
+        return LanguageVersionSettingsImpl(bundledKotlinVersion.languageVersion, bundledKotlinVersion.apiVersion)
+    }
 
     private val detectorConfiguration = KotlinMainFunctionDetector.Configuration()
 
@@ -124,7 +133,7 @@ abstract class AbstractRunConfigurationWithResolveTest : AbstractRunConfiguratio
                 findMainClassFile(module, mainClassName, true)
             } else {
                 val findMainClassFileResult = AtomicReference<KtFile>()
-                DumbServiceImpl.getInstance(project).runInDumbMode {
+                DumbModeTestUtils.runInDumbModeSynchronously(project) {
                     findMainClassFileResult.set(findMainClassFile(module, mainClassName, true))
                 }
                 findMainClassFileResult.get()

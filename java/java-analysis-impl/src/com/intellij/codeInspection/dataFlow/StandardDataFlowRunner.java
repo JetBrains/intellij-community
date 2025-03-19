@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -21,7 +21,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
@@ -31,6 +34,7 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -88,7 +92,8 @@ public class StandardDataFlowRunner {
           myInlining = true;
         }
         if (result == RunnerResult.OK || result == RunnerResult.CANCELLED) {
-          final Collection<DfaMemoryState> closureStates = myInterpreter.getClosures().get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
+          PsiElement topmostBlock = DfaPsiUtil.getTopmostBlockInSameClass(psiBlock);
+          final Collection<DfaMemoryState> closureStates = topmostBlock == null ? List.of() : myInterpreter.getClosures().get(topmostBlock);
           if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
           }
@@ -106,7 +111,7 @@ public class StandardDataFlowRunner {
    * On the other hand, inlining will normally work inside the supplied method.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param listener an listener to use
+   * @param listener a listener to use
    * @return result status
    */
   public final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull DfaListener listener) {
@@ -119,7 +124,7 @@ public class StandardDataFlowRunner {
    * Usually inlining works, e.g. for lambdas inside stream API calls.
    *
    * @param psiBlock method/lambda/class initializer body
-   * @param listener an listener to use
+   * @param listener a listener to use
    * @return result status
    */
   public final @NotNull RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull DfaListener listener) {
@@ -131,16 +136,6 @@ public class StandardDataFlowRunner {
       return RunnerResult.OK;
     }
     return analyzeMethod(psiBlock, listener, initialStates);
-  }
-
-  /**
-   * Analyze given code-block without analyzing any parent and children context
-   * @param block block to analyze
-   * @param listener an listener to use
-   * @return result status
-   */
-  public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block, @NotNull DfaListener listener) {
-    return analyzeMethod(block, listener, Collections.singleton(createMemoryState()));
   }
 
   final @NotNull RunnerResult analyzeMethod(@NotNull PsiElement psiBlock,
@@ -180,17 +175,22 @@ public class StandardDataFlowRunner {
                                                   @NotNull ControlFlow flow,
                                                   @NotNull List<DfaInstructionState> startingStates) {
     myInterpreter = createInterpreter(listener, flow);
-    return myInterpreter.interpret(startingStates);
+    RunnerResult result = myInterpreter.interpret(startingStates);
+    afterInterpretation(flow, myInterpreter, result);
+    return result;
   }
 
-  @NotNull
-  protected StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+  protected void afterInterpretation(@NotNull ControlFlow flow, @NotNull StandardDataFlowInterpreter interpreter, @NotNull RunnerResult result) {
+    
+  }
+
+  protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
     return new StandardDataFlowInterpreter(flow, listener);
   }
 
-  protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
-                                                                              @NotNull Collection<? extends DfaMemoryState> memStates,
-                                                                              @NotNull ControlFlow flow) {
+  protected @Unmodifiable @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
+                                                                                            @NotNull Collection<? extends DfaMemoryState> memStates,
+                                                                                            @NotNull ControlFlow flow) {
     DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(myValueFactory);
     if (assertionStatus != null && myIgnoreAssertions != ThreeState.UNSURE) {
       DfaCondition condition = assertionStatus.eq(DfTypes.booleanValue(myIgnoreAssertions.toBoolean()));
@@ -243,7 +243,7 @@ public class StandardDataFlowRunner {
       Collection<DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
         List<DfaMemoryState> stateList = StreamEx.of(states)
-          .peek(state -> state.flushVariables(unusedVars::contains))
+          .peek(state -> state.forgetVariables(unusedVars::contains))
           .distinct().toList();
         states = StateQueue.squash(stateList);
       }

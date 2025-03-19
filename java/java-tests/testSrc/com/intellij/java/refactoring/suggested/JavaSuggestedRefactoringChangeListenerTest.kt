@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.endOffset
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringChangeListenerTest
-import com.intellij.refactoring.suggested.endOffset
 
 class JavaSuggestedRefactoringChangeListenerTest : BaseSuggestedRefactoringChangeListenerTest() {
   override val fileType: FileType

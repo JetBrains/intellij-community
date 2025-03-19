@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -15,11 +15,10 @@ import java.util.Collection;
  * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
  */
 public abstract class FileContextProvider {
-
   public static final ExtensionPointName<FileContextProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileContextProvider");
 
   public static @Nullable FileContextProvider getProvider(final @NotNull PsiFile hostFile) {
-    for (FileContextProvider provider : EP_NAME.getExtensions(hostFile.getProject())) {
+    for (FileContextProvider provider : EP_NAME.getExtensionList(hostFile.getProject())) {
       if (provider.isAvailable(hostFile)) {
         return provider;
       }

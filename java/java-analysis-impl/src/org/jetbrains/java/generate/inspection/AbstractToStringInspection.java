@@ -28,8 +28,7 @@ public abstract class AbstractToStringInspection extends LocalInspectionTool {
     protected static final Logger LOG = Logger.getInstance(AbstractToStringInspection.class);
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
         return InspectionsBundle.message("group.names.toString.issues" );
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -16,10 +16,13 @@ import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.*;
+import static com.intellij.psi.xml.XmlTokenType.*;
+
+public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttributeDecl {
   private static final Logger LOG = Logger.getInstance(XmlAttributeDeclImpl.class);
-  @NonNls private static final String ID_ATT = "ID";
-  @NonNls private static final String IDREF_ATT = "IDREF";
+  private static final @NonNls String ID_ATT = "ID";
+  private static final @NonNls String IDREF_ATT = "IDREF";
 
   public XmlAttributeDeclImpl() {
     super(XML_ATTRIBUTE_DECL);
@@ -152,8 +155,7 @@ public class XmlAttributeDeclImpl extends XmlElementImpl implements XmlAttribute
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 }

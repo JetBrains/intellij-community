@@ -1,10 +1,10 @@
 import p.*
 
-fun foo(): KotlinTrait<I1, I2> {
+fun foo(): KotlinInterface<I1, I2> {
     return <caret>
 }
 
-// EXIST: { lookupString: "object", itemText: "object : KotlinTrait<I1, I2>{...}" }
+// EXIST: { lookupString: "object", itemText: "object : KotlinInterface<I1, I2>{...}" }
 // EXIST: { lookupString: "KotlinInheritor1", itemText: "KotlinInheritor1", tailText: "() (p)" }
 // EXIST: { lookupString: "KotlinInheritor2", itemText: "KotlinInheritor2", tailText: "() (p)" }
 // ABSENT: KotlinInheritor3

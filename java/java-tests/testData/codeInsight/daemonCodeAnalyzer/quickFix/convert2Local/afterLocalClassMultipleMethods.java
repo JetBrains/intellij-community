@@ -1,11 +1,11 @@
-// "Convert to local" "true-preview"
+// "Convert to local variable" "true-preview"
 class Outer {
 
   void test() {
     class Local {
 
         void foo() {
-          String s = "1";
+            String s = "1";
         System.out.println(s);
       }
 

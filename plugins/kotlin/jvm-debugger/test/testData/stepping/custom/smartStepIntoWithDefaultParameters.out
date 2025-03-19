@@ -1,0 +1,19 @@
+LineBreakpoint created at smartStepIntoWithDefaultParameters.kt:12
+LineBreakpoint created at smartStepIntoWithDefaultParameters.kt:17
+LineBreakpoint created at smartStepIntoWithDefaultParameters.kt:26
+LineBreakpoint created at smartStepIntoWithDefaultParameters.kt:31
+Run Java
+Connected to the target VM
+smartStepIntoWithDefaultParameters.kt:12
+smartStepIntoWithDefaultParameters.kt:3
+smartStepIntoWithDefaultParameters.kt:17
+smartStepIntoWithDefaultParameters.kt:3
+smartStepIntoWithDefaultParameters.kt:4
+smartStepIntoWithDefaultParameters.kt:26
+smartStepIntoWithDefaultParameters.kt:20
+smartStepIntoWithDefaultParameters.kt:31
+smartStepIntoWithDefaultParameters.kt:20
+smartStepIntoWithDefaultParameters.kt:20
+Disconnected from the target VM
+
+Process finished with exit code 0

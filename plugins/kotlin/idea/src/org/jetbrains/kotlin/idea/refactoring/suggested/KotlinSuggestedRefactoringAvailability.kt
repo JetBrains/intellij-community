@@ -130,7 +130,7 @@ class KotlinSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefact
 
     override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
         val declaration = state.declaration
-        if (declaration !is KtCallableDeclaration || KotlinSuggestedRefactoringSupport.isOnlyRenameSupported(declaration)) {
+        if (declaration !is KtCallableDeclaration || KotlinSuggestedRefactoringSupportBase.isOnlyRenameSupported(declaration)) {
             if (state.additionalData[HAS_USAGES] == false) return null
             return SuggestedRenameData(declaration as PsiNamedElement, state.oldSignature.name)
         }

@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -10,12 +10,18 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +30,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-public class LocalQuickFixWrapper extends QuickFixAction {
+@ApiStatus.Internal
+public final class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix<?> myFix;
 
   public LocalQuickFixWrapper(@NotNull QuickFix<?> fix, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
@@ -42,13 +49,11 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return true;
   }
 
-  @NotNull
-  public QuickFix<?> getFix() {
+  public @NotNull QuickFix<?> getFix() {
     return myFix;
   }
 
-  @Nullable
-  private QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
+  private @Nullable QuickFix<?> getWorkingQuickFix(QuickFix<?> @NotNull [] fixes) {
     for (QuickFix<?> fix : fixes) {
       if (fix.getFamilyName().equals(myFix.getFamilyName())) {
         return fix;
@@ -63,14 +68,14 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected void applyFix(@NotNull final Project project,
-                          @NotNull final GlobalInspectionContextImpl context,
-                          final CommonProblemDescriptor @NotNull [] descriptors,
-                          @NotNull final Set<? super PsiElement> ignoredElements) {
+  protected @NotNull BatchExecutionResult applyFix(final @NotNull Project project,
+                                                   final @NotNull GlobalInspectionContextImpl context,
+                                                   final CommonProblemDescriptor @NotNull [] descriptors,
+                                                   final @NotNull Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzerEx.getInstanceEx(project).restart("LocalQuickFixWrapper.applyFix.refreshViews");
         for (CommonProblemDescriptor descriptor : descriptors) {
           ignore(ignoredElements, descriptor, getWorkingQuickFix(descriptor.getFixes()) != null, context);
         }
@@ -92,26 +97,36 @@ public class LocalQuickFixWrapper extends QuickFixAction {
         fixApplicator.run();
       }
 
-      return;
+      return ModCommandExecutor.Result.SUCCESS;
     }
 
     boolean restart = false;
+    BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
       final QuickFix<?>[] fixes = descriptor.getFixes();
       if (fixes != null) {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {
-          //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-          fix.applyFix(project, descriptor);
+          if (fix instanceof ModCommandQuickFix modCommandQuickFix) {
+            ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
+            ModCommand command = modCommandQuickFix.perform(project, problemDescriptor);
+            result = result.compose(
+              ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(problemDescriptor), command));
+          } else {
+            //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+            fix.applyFix(project, descriptor);
+            result = ModCommandExecutor.Result.SUCCESS;
+          }
           restart = true;
           ignore(ignoredElements, descriptor, true, context);
         }
       }
     }
     if (restart) {
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("LocalQuickFixWrapper.applyFix");
     }
+    return result;
   }
 
   @Override
@@ -125,7 +140,10 @@ public class LocalQuickFixWrapper extends QuickFixAction {
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
-      applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
+      executeAndNotify(project, () -> {
+        BatchExecutionResult result = applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
+        return result.getMessage();
+      });
     }
     else {
       super.performFixesInBatch(project, descriptors, context, ignoredElements);
@@ -140,8 +158,8 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       InspectionToolPresentation presentation = context.getPresentation(myToolWrapper);
       presentation.resolveProblem(descriptor);
     }
-    if (descriptor instanceof ProblemDescriptor) {
-      PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+    if (descriptor instanceof ProblemDescriptor problemDescriptor) {
+      PsiElement element = problemDescriptor.getPsiElement();
       if (element != null) {
         ignoredElements.add(element);
       }

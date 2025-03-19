@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,19 +8,18 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.JpsProductionModuleSourcePackagingElement;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
-public final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
+final class JpsProductionModuleSourcePackagingElementImpl extends JpsCompositeElementBase<JpsProductionModuleSourcePackagingElementImpl>
   implements JpsProductionModuleSourcePackagingElement {
 
   private static final JpsElementChildRole<JpsModuleReference>
     MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
 
-  public JpsProductionModuleSourcePackagingElementImpl(JpsModuleReference moduleReference) {
+  JpsProductionModuleSourcePackagingElementImpl(JpsModuleReference moduleReference) {
     myContainer.setChild(MODULE_REFERENCE_CHILD_ROLE, moduleReference);
   }
 
   @Override
-  @NotNull
-  public JpsModuleReference getModuleReference() {
+  public @NotNull JpsModuleReference getModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);
   }
 
@@ -28,9 +27,13 @@ public final class JpsProductionModuleSourcePackagingElementImpl extends JpsComp
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsProductionModuleSourcePackagingElementImpl createCopy() {
+  public @NotNull JpsProductionModuleSourcePackagingElementImpl createCopy() {
+    return new JpsProductionModuleSourcePackagingElementImpl(this);
+  }
+
+  @Override
+  public @NotNull JpsProductionModuleSourcePackagingElementImpl createElementCopy() {
     return new JpsProductionModuleSourcePackagingElementImpl(this);
   }
 

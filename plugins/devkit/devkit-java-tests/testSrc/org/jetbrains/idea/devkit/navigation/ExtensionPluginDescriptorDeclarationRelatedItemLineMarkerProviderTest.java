@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.testFramework.TestDataPath;
@@ -18,8 +18,16 @@ public class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerProviderTe
     doTestInvalidExtension("MyInvalidExtension.java");
   }
 
-  public void testExtension() {
-    doTestExtension("MyExtension.java", "<myEp implementation=\"MyExtension\"/>");
+  public void testExtensionNoParameters() {
+    doTestExtension("MyExtensionNoParameters.java", "<myEp implementation=\"MyExtensionNoParameters\"/>");
+  }
+
+  public void testExtensionSingleParameter() {
+    doTestExtension("MyExtensionSingleParameter.java", "<myEp implementation=\"MyExtensionSingleParameter\"/>");
+  }
+
+  public void testExtensionTwoParameters() {
+    doTestExtension("MyExtensionTwoParameters.java", "<myEp implementation=\"MyExtensionTwoParameters\"/>");
   }
 
   public void testNestedClassExtension() {

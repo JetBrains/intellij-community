@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -29,10 +29,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.FixtureRuleKt;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.PathKt;
@@ -40,6 +37,7 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -246,8 +244,24 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsi(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    GCWatcher.tracking(psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+
+    //don't store cached psi file into a local variable, otherwise it won't be gc-ed!
+    int originalIdentity = identity(getCachedPsiFile(psiManager, file));
+
+    GCWatcher.tracking(getCachedPsiFile(psiManager, file)).ensureCollected();
+
+    // storing the current value into a local variable to ensure identity check is correct
+    PsiFile newCachedFile = getCachedPsiFile(psiManager, file);
+    assertTrue(newCachedFile == null ||
+               identity(newCachedFile) != originalIdentity);
+  }
+
+  private static @Nullable PsiFile getCachedPsiFile(@NotNull PsiManagerEx psiManager, @NotNull VirtualFile file) {
+    return psiManager.getFileManager().getCachedPsiFile(file);
+  }
+
+  private static int identity(@Nullable Object o) {
+    return o == null ? 0 : System.identityHashCode(o);
   }
 
   public void testClassShouldNotDisappearWithoutEvents_NoDocument() {
@@ -266,9 +280,9 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
 
   private void gcPsiAndDocument(VirtualFile file) {
     PsiManagerEx psiManager = PsiManagerEx.getInstanceEx(getProject());
-    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), psiManager.getFileManager().getCachedPsiFile(file)).ensureCollected();
+    GCWatcher.tracking(FileDocumentManager.getInstance().getCachedDocument(file), getCachedPsiFile(psiManager, file)).ensureCollected();
     assertNull(FileDocumentManager.getInstance().getCachedDocument(file));
-    assertNull(psiManager.getFileManager().getCachedPsiFile(file));
+    assertNull(getCachedPsiFile(psiManager, file));
   }
 
   public void testClassShouldNotAppearWithoutEvents_NoPsiDirectory() throws IOException {
@@ -282,6 +296,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     File file = new File(parentDir.getPath(), "Foo.java");
     FileUtil.writeToFile(file, "class Foo {}");
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count0 == getJavaTracker().getModificationCount());
@@ -297,6 +312,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     File file = new File(parentDir.getPath() + "/foo", "Foo.java");
     FileUtil.writeToFile(file, "package foo; class Foo {}");
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass("foo.Foo", GlobalSearchScope.allScope(getProject())));
     assertFalse(count0 == getJavaTracker().getModificationCount());
@@ -401,6 +417,7 @@ public class PsiModificationTrackerTest extends JavaCodeInsightTestCase {
     Path file = ProjectKt.getStateStore(getProject()).getProjectBasePath().resolve(fileName);
     PathKt.write(file, text);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return PsiManager.getInstance(getProject()).findFile(virtualFile);
   }
 

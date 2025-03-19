@@ -9,12 +9,14 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.ReplaceIsEmptyWithIfEmptyInspection.Replacement
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
-import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -25,30 +27,27 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+private val replacements: Map<FqName, Replacement> = listOf(
+    Replacement(FqName("kotlin.collections.Collection.isEmpty"), "ifEmpty"),
+    Replacement(FqName("kotlin.collections.List.isEmpty"), "ifEmpty"),
+    Replacement(FqName("kotlin.collections.Set.isEmpty"), "ifEmpty"),
+    Replacement(FqName("kotlin.collections.Map.isEmpty"), "ifEmpty"),
+    Replacement(FqName("kotlin.text.isEmpty"), "ifEmpty"),
+    Replacement(FqName("kotlin.text.isBlank"), "ifBlank"),
+    Replacement(FqName("kotlin.collections.isNotEmpty"), "ifEmpty", negativeCondition = true),
+    Replacement(FqName("kotlin.text.isNotEmpty"), "ifEmpty", negativeCondition = true),
+    Replacement(FqName("kotlin.text.isNotBlank"), "ifBlank", negativeCondition = true),
+).associateBy { it.conditionFunctionFqName }
+
+private val conditionFunctionShortNames: Set<String> = replacements.keys.map { it.shortName().asString() }.toSet()
 
 class ReplaceIsEmptyWithIfEmptyInspection : AbstractKotlinInspection() {
-    private data class Replacement(
+
+    internal data class Replacement(
         val conditionFunctionFqName: FqName,
         val replacementFunctionName: String,
         val negativeCondition: Boolean = false
     )
-
-    companion object {
-        private val replacements = listOf(
-            Replacement(FqName("kotlin.collections.Collection.isEmpty"), "ifEmpty"),
-            Replacement(FqName("kotlin.collections.List.isEmpty"), "ifEmpty"),
-            Replacement(FqName("kotlin.collections.Set.isEmpty"), "ifEmpty"),
-            Replacement(FqName("kotlin.collections.Map.isEmpty"), "ifEmpty"),
-            Replacement(FqName("kotlin.text.isEmpty"), "ifEmpty"),
-            Replacement(FqName("kotlin.text.isBlank"), "ifBlank"),
-            Replacement(FqName("kotlin.collections.isNotEmpty"), "ifEmpty", negativeCondition = true),
-            Replacement(FqName("kotlin.text.isNotEmpty"), "ifEmpty", negativeCondition = true),
-            Replacement(FqName("kotlin.text.isNotBlank"), "ifBlank", negativeCondition = true),
-        ).associateBy { it.conditionFunctionFqName }
-
-        private val conditionFunctionShortNames = replacements.keys.map { it.shortName().asString() }.toSet()
-    }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = ifExpressionVisitor(fun(ifExpression: KtIfExpression) {
         if (ifExpression.languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_3) return

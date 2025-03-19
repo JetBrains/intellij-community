@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
@@ -43,7 +43,7 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     val resetLineHandler = gitLineHandlerCtor.newInstance(project, projectRoot, gitCommandReset)
     gitLineHandlerAddParameters.invoke(resetLineHandler, listOf("--hard", "HEAD"))
 
-    val gitService = ApplicationManager.getApplication().getService(gitCls)
+    @Suppress("IncorrectServiceRetrieving") val gitService = ApplicationManager.getApplication().getService(gitCls)
     val runCommandResult = runCommand.invoke(gitService, resetLineHandler)
 
     val gitResetResultCode = getExitCode.invoke(runCommandResult) as Int

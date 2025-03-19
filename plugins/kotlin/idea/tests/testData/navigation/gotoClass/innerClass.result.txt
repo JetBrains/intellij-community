@@ -1,0 +1,8 @@
+NavigationItem:
+    name: InnerA
+ItemPresentation:
+    presentableText: InnerA
+    locationString: (in small.A)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: class InnerA {
+QualifiedName: small.A.InnerA

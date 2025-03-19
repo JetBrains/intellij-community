@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.*;
@@ -16,14 +16,12 @@ public class PsiReceiverParameterImpl extends CompositePsiElement implements Psi
   }
 
   @Override
-  @NotNull
-  public PsiThisExpression getIdentifier() {
+  public @NotNull PsiThisExpression getIdentifier() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiThisExpression.class);
   }
 
-  @Nullable
   @Override
-  public PsiModifierList getModifierList() {
+  public @Nullable PsiModifierList getModifierList() {
     return PsiTreeUtil.getChildOfType(this, PsiModifierList.class);
   }
 
@@ -33,21 +31,18 @@ public class PsiReceiverParameterImpl extends CompositePsiElement implements Psi
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaSharedImplUtil.getType(getTypeElement(), getIdentifier());
   }
 
-  @NotNull
   @Override
-  public PsiTypeElement getTypeElement() {
+  public @NotNull PsiTypeElement getTypeElement() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiTypeElement.class);
   }
 
-  @Nullable
   @Override
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -56,9 +51,8 @@ public class PsiReceiverParameterImpl extends CompositePsiElement implements Psi
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @Nullable PsiIdentifier getNameIdentifier() {
     return null;
   }
 
@@ -70,9 +64,8 @@ public class PsiReceiverParameterImpl extends CompositePsiElement implements Psi
   @Override
   public void normalizeDeclaration() throws IncorrectOperationException { }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 

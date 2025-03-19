@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.ExecutionException;
@@ -27,8 +27,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    *
    * @return the serialization ID (must be unique across all run configuration extensions).
    */
-  @NotNull
-  protected String getSerializationId() {
+  protected @NotNull String getSerializationId() {
     return getClass().getCanonicalName();
   }
 
@@ -39,7 +38,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param runConfiguration the run configuration being deserialized.
    * @param element          the element with persisted settings.
    */
-  protected void readExternal(@NotNull final T runConfiguration, @NotNull final Element element) {
+  protected void readExternal(final @NotNull T runConfiguration, final @NotNull Element element) {
   }
 
   /**
@@ -58,8 +57,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param configuration the configuration being edited.
    * @return the editor component, or null if this extension doesn't provide any UI for editing the settings.
    */
-  @Nullable
-  protected <P extends T> SettingsEditor<P> createEditor(@NotNull final P configuration) {
+  protected @Nullable <P extends T> SettingsEditor<P> createEditor(final @NotNull P configuration) {
     return null;
   }
 
@@ -72,9 +70,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    *
    * @return the editor tab title, or null if this extension doesn't provide any UI for editing the settings.
    */
-  @Nullable
-  @TabTitle
-  protected String getEditorTitle() {
+  protected @Nullable @TabTitle String getEditorTitle() {
     return null;
   }
 
@@ -83,7 +79,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @return True if extension in general applicable to given run configuration - just to attach settings tab, etc. But extension may be
    *         turned off in its settings. E.g. RCov in general available for given run configuration, but may be turned off.
    */
-  public abstract boolean isApplicableFor(@NotNull final T configuration);
+  public abstract boolean isApplicableFor(final @NotNull T configuration);
 
   /**
    *
@@ -91,7 +87,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @return True if extension is turned on in configuration extension settings.
    *         E.g. RCov is turned on for given run configuration.
    */
-  public abstract boolean isEnabledFor(@NotNull final T applicableConfiguration, @Nullable RunnerSettings runnerSettings);
+  public abstract boolean isEnabledFor(final @NotNull T applicableConfiguration, @Nullable RunnerSettings runnerSettings);
 
   /**
    * Patches the command line of the process about to be started by the underlying run configuration.
@@ -102,10 +98,10 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param runnerId       the ID of the {@link com.intellij.execution.runners.ProgramRunner} used to start the process.
    * @throws ExecutionException if there was an error configuring the command line and the execution should be canceled.
    */
-  protected abstract void patchCommandLine(@NotNull final T configuration,
+  protected abstract void patchCommandLine(final @NotNull T configuration,
                                            @Nullable RunnerSettings runnerSettings,
-                                           @NotNull final GeneralCommandLine cmdLine,
-                                           @NotNull final String runnerId) throws ExecutionException;
+                                           final @NotNull GeneralCommandLine cmdLine,
+                                           final @NotNull String runnerId) throws ExecutionException;
 
   /**
    * Patches the command line of the process about to be started by the underlying run configuration.
@@ -117,11 +113,11 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param executor       the executor which is using to run the configuration
    * @throws ExecutionException if there was an error configuring the command line and the execution should be canceled.
    */
-  protected void patchCommandLine(@NotNull final T configuration,
-                                           @Nullable RunnerSettings runnerSettings,
-                                           @NotNull final GeneralCommandLine cmdLine,
-                                           @NotNull final String runnerId,
-                                           @NotNull final Executor executor) throws ExecutionException {
+  protected void patchCommandLine(final @NotNull T configuration,
+                                  @Nullable RunnerSettings runnerSettings,
+                                  final @NotNull GeneralCommandLine cmdLine,
+                                  final @NotNull String runnerId,
+                                  final @NotNull Executor executor) throws ExecutionException {
     patchCommandLine(configuration, runnerSettings, cmdLine, runnerId);
   }
 
@@ -133,8 +129,8 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param handler        the ProcessHandler for the running process.
    * @param runnerSettings the runner-specific settings.
    */
-  protected void attachToProcess(@NotNull final T configuration,
-                                 @NotNull final ProcessHandler handler,
+  protected void attachToProcess(final @NotNull T configuration,
+                                 final @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
 
   }
@@ -145,7 +141,7 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param isExecution   true if the configuration is about to be executed, false if the configuration settings are being edited.
    *
    */
-  protected void validateConfiguration(@NotNull final T configuration, final boolean isExecution) throws Exception {
+  protected void validateConfiguration(final @NotNull T configuration, final boolean isExecution) throws Exception {
   }
 
   /**
@@ -154,11 +150,11 @@ public abstract class RunConfigurationExtensionBase<T extends RunConfigurationBa
    * @param configuration Configuration created from context.
    * @param location      the location from which the configuration was created.
    */
-  protected void extendCreatedConfiguration(@NotNull final T configuration,
-                                            @NotNull final Location location) {
+  protected void extendCreatedConfiguration(final @NotNull T configuration,
+                                            final @NotNull Location location) {
 
   }
 
-  protected void extendTemplateConfiguration(@NotNull final T configuration) {
+  protected void extendTemplateConfiguration(final @NotNull T configuration) {
   }
 }

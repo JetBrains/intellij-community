@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -17,10 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightRecordField;
-import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -41,13 +38,12 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   protected VariableTypeFix(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {
     super(variable);
-    myReturnType = GenericsUtil.getVariableTypeByExpressionType(toReturn);
+    myReturnType = PsiTypesUtil.removeExternalAnnotations(GenericsUtil.getVariableTypeByExpressionType(toReturn));
     myName = variable.getName();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     PsiType type = getReturnType();
     PsiElement startElement = getStartElement();
     String typeName = startElement == null ? "?" : JavaElementKind.fromElement(startElement).lessDescriptive().subject();
@@ -58,8 +54,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.variable.type.family");
   }
 
@@ -84,8 +79,8 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
-                     @NotNull final PsiFile file,
+  public void invoke(final @NotNull Project project,
+                     final @NotNull PsiFile file,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {

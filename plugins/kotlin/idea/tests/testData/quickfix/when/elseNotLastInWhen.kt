@@ -7,4 +7,6 @@ fun test() {
         2 -> { /* some more code */ }
     }
 }
-/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveWhenElseBranchFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveWhenElseBranchFix

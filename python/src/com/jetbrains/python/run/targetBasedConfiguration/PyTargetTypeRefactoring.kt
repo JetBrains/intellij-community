@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.extensions.getQName
+import com.jetbrains.python.extensions.getQName
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.run.UndoRefactoringCompletionListener
 

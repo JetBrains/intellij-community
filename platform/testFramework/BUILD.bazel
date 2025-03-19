@@ -1,0 +1,165 @@
+### auto-generated section `build intellij.platform.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "testFramework_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "testFramework_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_resources(
+  name = "testFramework_test_resources_1",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_provided_library(
+  name = "junit4_provided",
+  lib = "//libraries/junit4"
+)
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.platform.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/observable:ide-observable",
+    "//platform/execution-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/indexing-impl",
+    "//platform/usageView",
+    "//platform/ide-core-impl",
+    "//platform/refactoring",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "//platform/analysis-impl",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-stdlib",
+    "//platform/boot",
+    "@lib//:jet_check",
+    "//platform/testFramework/core",
+    "//platform/service-container:serviceContainer",
+    "//platform/workspace/jps",
+    "//platform/diagnostic/telemetry",
+    "//platform/workspace/storage",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//platform/util/jdom",
+    "//platform/testFramework/common",
+    "//platform/backend/workspace",
+    "//platform/util/coroutines",
+    "@lib//:assert_j",
+    "//platform/todo",
+    "//platform/syntax/syntax-api:syntax",
+    ":junit4_provided",
+  ],
+  exports = [
+    "//platform/execution-impl",
+    "//libraries/junit4",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jet_check",
+    "//platform/testFramework/core",
+    "//platform/core-ui",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//platform/testFramework/common",
+  ],
+  runtime_deps = [
+    ":testFramework_resources",
+    "//resources-en:java-resources-en",
+    "//xml/dom-impl",
+    "//images",
+    "//RegExpSupport:regexp",
+  ]
+)
+
+jvm_library(
+  name = "testFramework_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":testFramework"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/observable:ide-observable",
+    "//platform/execution-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/indexing-impl",
+    "//libraries/junit4",
+    "//platform/usageView",
+    "//platform/ide-core-impl",
+    "//platform/refactoring",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework/bootstrap:tools-testsBootstrap",
+    "//platform/analysis-impl",
+    "//java/java-runtime:rt",
+    "@lib//:kotlin-stdlib",
+    "//platform/boot",
+    "@lib//:jet_check",
+    "//platform/testFramework/core",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/workspace/jps",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/workspace/storage",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Params-provided",
+    "//platform/util/jdom",
+    "//platform/testFramework/common",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:http-client",
+    "@lib//:platform-test_framework-okhttp3-mockwebserver",
+    "@lib//:okhttp",
+    "//platform/backend/workspace",
+    "//platform/util/coroutines",
+    "@lib//:assert_j",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/todo",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-api:syntax_test_lib",
+  ],
+  runtime_deps = [
+    ":testFramework_resources",
+    ":testFramework_test_resources",
+    ":testFramework_test_resources_1",
+  ]
+)
+
+jvm_test(
+  name = "testFramework_test",
+  runtime_deps = [":testFramework_test_lib"]
+)
+### auto-generated section `build intellij.platform.testFramework` end

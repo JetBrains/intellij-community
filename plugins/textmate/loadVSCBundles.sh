@@ -31,6 +31,7 @@ for f in *; do
     rm -rf "$ROOT/lib/bundles/$f/src"
     rm -rf "$ROOT/lib/bundles/$f/resources"
     rm -rf "$ROOT/lib/bundles/$f/yarn.lock"
+    rm -rf "$ROOT/lib/bundles/$f/cgmanifest.json"
     find "$ROOT/lib/bundles/$f/" -name "*.js" -type f -delete
     find "$ROOT/lib/bundles/$f/" -name "*.ts" -type f -delete
     find "$ROOT/lib/bundles/$f/" -name "*.png" -type f -delete
@@ -40,7 +41,7 @@ cd ../..
 
 # vim script
 echo "Adding vim script"
-git clone git@github.com:AlexPl292/language-viml.git
+git clone https://github.com/AlexPl292/language-viml
 cd language-viml
 
 mkdir -p "$ROOT/lib/bundles/viml"
@@ -51,16 +52,17 @@ cp -r "grammars" "$ROOT/lib/bundles/viml"
 cd ..
 
 # mdx
-git clone https://github.com/silvenon/vscode-mdx.git
-cd vscode-mdx
+git clone https://github.com/mdx-js/mdx-analyzer
+cd mdx-analyzer/packages/vscode-mdx
 
 echo "Adding mdx"
 mkdir -p "$ROOT/lib/bundles/mdx"
 cp -r "package.json" "$ROOT/lib/bundles/mdx/"
+cp -r "language-configuration.json" "$ROOT/lib/bundles/mdx/"
 cp -r "license" "$ROOT/lib/bundles/mdx/"
 cp -r "syntaxes" "$ROOT/lib/bundles/mdx/"
 
-cd ..
+cd ../../..
 
 #twig
 echo "Adding twig"
@@ -90,6 +92,7 @@ cp -r "syntaxes" "$ROOT/lib/bundles/jsp"
 
 cd ..
 
+# terraform
 git clone https://github.com/hashicorp/vscode-terraform
 cd vscode-terraform
 
@@ -100,6 +103,36 @@ cp -r "package.json" "$ROOT/lib/bundles/terraform"
 cp -r "language-configuration.json" "$ROOT/lib/bundles/terraform"
 cp -r "README.md" "$ROOT/lib/bundles/terraform"
 cp -r "snippets" "$ROOT/lib/bundles/terraform"
+
+cd ..
+
+# asciidoc
+git clone https://github.com/asciidoctor/asciidoctor-vscode
+cd asciidoctor-vscode
+
+echo "Adding asciidoc"
+mkdir -p "$ROOT/lib/bundles/adoc"
+cp -r "LICENSE" "$ROOT/lib/bundles/adoc"
+cp -r "package.json" "$ROOT/lib/bundles/adoc"
+cp -r "asciidoc-language-configuration.json" "$ROOT/lib/bundles/adoc"
+cp -r "README.md" "$ROOT/lib/bundles/adoc"
+cp -r "syntaxes" "$ROOT/lib/bundles/adoc"
+cp -r "snippets" "$ROOT/lib/bundles/adoc"
+
+cd ..
+
+# hcl
+git clone https://github.com/hashicorp/vscode-hcl
+cd vscode-hcl
+
+echo "Adding hcl"
+mkdir -p "$ROOT/lib/bundles/hcl"
+cp -r "LICENSE" "$ROOT/lib/bundles/hcl"
+cp -r "package.json" "$ROOT/lib/bundles/hcl"
+cp -r "language-configuration.json" "$ROOT/lib/bundles/hcl"
+cp -r "README.md" "$ROOT/lib/bundles/hcl"
+
+cd ..
 
 git clone https://github.com/twxs/vs.language.cmake
 cd vs.language.cmake
@@ -115,13 +148,31 @@ cd ..
 
 mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
+wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/hcl.tmGrammar.json"
 
+mkdir -p "$ROOT/lib/bundles/hcl/syntaxes"
+wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/hcl/syntaxes/hcl.tmGrammar.json"
 
 echo "Adding erlang"
 mkdir -p "$ROOT/lib/bundles/erlang/grammar"
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/language-configuration.json -O "$ROOT/lib/bundles/erlang/language-configuration.json"
 wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/package.json -O "$ROOT/lib/bundles/erlang/package.json"
 wget -q https://raw.githubusercontent.com/erlang-ls/grammar/main/Erlang.plist -O "$ROOT/lib/bundles/erlang/grammar/Erlang.plist"
+
+# Kconfig
+git clone https://github.com/trond-snekvik/vscode-kconfig/
+pushd vscode-kconfig
+
+echo "Adding KConfig"
+declare kconfig_target="$ROOT/lib/bundles/kconfig"
+declare -a kconfig_resources=("LICENSE" "package.json" "language-configuration.json" "syntaxes")
+mkdir -p "$kconfig_target"
+for resource in ${kconfig_resources[@]}
+do
+  cp -r "$resource" "$kconfig_target"
+done
+
+popd
 
 cd $ROOT
 

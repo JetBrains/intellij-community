@@ -1,22 +1,33 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.ui.components
 
-import com.intellij.openapi.util.Computable
-import com.intellij.util.Alarm
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.CoroutineSupport
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.serviceOrNull
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.EventQueue
 import javax.swing.JScrollBar
+import kotlin.coroutines.CoroutineContext
 
-public enum class ScrollBarVisibilityPolicy {
-  ON, OFF, AUTOMATIC
-}
-
-internal abstract class ScrollBarAnimationBehavior(protected val trackAnimator: TwoWayAnimator,
-                                                   protected val thumbAnimator: TwoWayAnimator) {
-
+@Internal
+abstract class ScrollBarAnimationBehavior(
+  @JvmField protected val trackAnimator: TwoWayAnimator,
+  @JvmField protected val thumbAnimator: TwoWayAnimator,
+) {
   val trackFrame: Float
-    get() = trackAnimator.myValue
+    get() = trackAnimator.value
 
   val thumbFrame: Float
-    get() = thumbAnimator.myValue
+    get() = thumbAnimator.value
 
   open fun onToggle(isOn: Boolean?) {}
   abstract fun onTrackHover(hovered: Boolean)
@@ -26,10 +37,10 @@ internal abstract class ScrollBarAnimationBehavior(protected val trackAnimator: 
   abstract fun onReset()
 }
 
-internal open class DefaultScrollBarAnimationBehavior(trackAnimator: TwoWayAnimator,
-                                                      thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                  thumbAnimator) {
-
+internal open class DefaultScrollBarAnimationBehavior(
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : ScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   override fun onTrackHover(hovered: Boolean) {
     trackAnimator.start(hovered)
   }
@@ -47,21 +58,51 @@ internal open class DefaultScrollBarAnimationBehavior(trackAnimator: TwoWayAnima
 
   override fun onReset() {
     trackAnimator.rewind(false)
-    trackAnimator.rewind(false)
+    thumbAnimator.rewind(false)
   }
 }
 
-internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Computable<JScrollBar>,
-                                             trackAnimator: TwoWayAnimator,
-                                             thumbAnimator: TwoWayAnimator) : DefaultScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                thumbAnimator) {
-
+internal class MacScrollBarAnimationBehavior(
+  coroutineScope : CoroutineScope,
+  private val scrollBarComputable: () -> JScrollBar?,
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
-  private val hideThumbAlarm = Alarm()
+
+  private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    // Can be called early in the lifecycle when there is no application yet.
+    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+    if (context == null) {
+      context = object : CoroutineDispatcher() {
+        override fun dispatch(context: CoroutineContext, block: Runnable) {
+          EventQueue.invokeLater(block)
+        }
+
+        override fun toString() = "Swing"
+      }
+    }
+    if (ApplicationManager.getApplication() != null) {
+      context += ModalityState.defaultModalityState().asContextElement()
+    }
+    coroutineScope.launch {
+      hideThumbRequests
+        .debounce(700)
+        .collectLatest { start ->
+          if (start) {
+            withContext(context) {
+              thumbAnimator.start(forward = false)
+            }
+          }
+        }
+    }
+  }
 
   override fun onTrackHover(hovered: Boolean) {
     isTrackHovered = hovered
-    val scrollBar = scrollBarComputable.compute()
+    val scrollBar = scrollBarComputable()
     if (scrollBar != null && DefaultScrollBarUI.isOpaque(scrollBar)) {
       trackAnimator.start(hovered)
       thumbAnimator.start(hovered)
@@ -77,27 +118,22 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   override fun onThumbHover(hovered: Boolean) {}
 
   override fun onThumbMove() {
-    val scrollBar = scrollBarComputable.compute()
+    val scrollBar = scrollBarComputable()
     if (scrollBar != null && scrollBar.isShowing() && !DefaultScrollBarUI.isOpaque(scrollBar)) {
-      if (!isTrackHovered && thumbAnimator.myValue == 0f) trackAnimator.rewind(false)
-      thumbAnimator.rewind(true)
-      hideThumbAlarm.cancelAllRequests()
-      if (!isTrackHovered) {
-        hideThumbAlarm.addRequest(Runnable { thumbAnimator.start(false) }, 700)
+      if (!isTrackHovered && thumbAnimator.value == 0f) {
+        trackAnimator.rewind(false)
       }
+      thumbAnimator.rewind(true)
+      check(hideThumbRequests.tryEmit(!isTrackHovered))
     }
-  }
-
-  override fun onUninstall() {
-    hideThumbAlarm.cancelAllRequests()
-    super.onUninstall()
   }
 }
 
-internal class ToggleableScrollBarAnimationBehaviorDecorator(private val decoratedBehavior: ScrollBarAnimationBehavior,
-                                                             trackAnimator: TwoWayAnimator,
-                                                             thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                        thumbAnimator) {
+internal open class ToggleableScrollBarAnimationBehaviorDecorator(
+  private val decoratedBehavior: ScrollBarAnimationBehavior,
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : ScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isOn: Boolean? = null
 
   override fun onToggle(isOn: Boolean?) {

@@ -4,12 +4,14 @@ package com.intellij.execution.runToolbar
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistryImpl
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.actions.ExecutorAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorRegistryImpl.ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
+open class RunToolbarProcessAction(override val process: RunToolbarProcess, val executor: Executor) : ExecutorAction(executor), ExecutorRunToolbarAction, DumbAware {
 
   override fun displayTextInToolbar(): Boolean {
     return true
@@ -25,7 +27,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
     e.project?.let { project ->
       if (canRun(e)) {
         getSelectedConfiguration(e)?.let {
-           ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
+          ExecutorRegistryImpl.RunnerHelper.run(project, it.configuration, it, e.dataContext, executor)
         }
       }
     }
@@ -45,7 +47,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
       }
     }
 
-    if(e.presentation.isVisible) {
+    if (e.presentation.isVisible) {
       e.presentation.isEnabled = canRun(e)
     }
   }
@@ -55,7 +57,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   }
 
   protected fun canRun(e: AnActionEvent): Boolean {
-    return e.project?.let { project->
+    return e.project?.let { project ->
       return getSelectedConfiguration(e)?.let {
         ExecutorRegistryImpl.RunnerHelper.canRun(project, executor, it.configuration)
       } ?: false
@@ -63,6 +65,7 @@ open class RunToolbarProcessAction(override val process: RunToolbarProcess, val 
   }
 }
 
+@ApiStatus.Internal
 class RunToolbarGroupProcessAction(process: RunToolbarProcess, executor: Executor) : RunToolbarProcessAction(process, executor) {
   override fun update(e: AnActionEvent) {
     super.update(e)

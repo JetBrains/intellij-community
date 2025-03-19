@@ -10,7 +10,7 @@ import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 
-public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
+public final class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
 
   private enum Result {
     NON_DEFAULT,

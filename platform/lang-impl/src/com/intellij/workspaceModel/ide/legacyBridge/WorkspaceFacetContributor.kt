@@ -3,9 +3,9 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.facet.Facet
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @ApiStatus.OverrideOnly
-interface WorkspaceFacetContributor<T: ModuleSettingsBase> {
+interface WorkspaceFacetContributor<T: ModuleSettingsFacetBridgeEntity> {
   /**
    * Declare class for the main entity associated with [com.intellij.facet.Facet].
    */
@@ -68,6 +68,6 @@ interface WorkspaceFacetContributor<T: ModuleSettingsBase> {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsBase>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
+    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
   }
 }

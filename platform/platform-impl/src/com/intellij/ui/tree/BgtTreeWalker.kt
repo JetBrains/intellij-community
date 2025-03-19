@@ -15,7 +15,7 @@ internal abstract class BgtTreeWalker<N : Any>(
   private val convert: (N) -> Any,
 ) : TreeWalkerBase<N>() {
 
-  val promise = AsyncPromise<TreePath>()
+  val promise: AsyncPromise<TreePath> = AsyncPromise()
   private inner class Level(val path: TreePath?, val nodes: ArrayDeque<N>)
   private val stack = ArrayDeque<Level>()
   @set:RequiresEdt
@@ -81,7 +81,7 @@ internal abstract class BgtTreeWalker<N : Any>(
           success.enter(null)
           return
         }
-        val node = level.nodes.removeLastOrNull()
+        val node = level.nodes.removeFirstOrNull()
         if (node == null) {
           debug("No nodes remaining on the level, going up")
           stack.removeLast()
@@ -110,13 +110,13 @@ internal abstract class BgtTreeWalker<N : Any>(
       background.computeLater {
         visitor.visit(path)
       }.onSuccess { action ->
-        foreground.invoke {
+        foreground.invokeLater {
           val visitResult = action!!
           val postVisitResult = edtBgtVisitor?.postVisitEDT(path, visitResult)
           processVisitResult(postVisitResult ?: visitResult, path, node)
         }
       }.onError { error ->
-        foreground.invoke {
+        foreground.invokeLater {
           failure.enter(error)
         }
       }
@@ -157,7 +157,7 @@ internal abstract class BgtTreeWalker<N : Any>(
     }
 
     fun setChildren(children: Collection<N>) {
-      foreground.invoke {
+      foreground.invokeLater {
         stack.addLast(Level(path, ArrayDeque(children)))
         lookingForNextNode.enter()
       }

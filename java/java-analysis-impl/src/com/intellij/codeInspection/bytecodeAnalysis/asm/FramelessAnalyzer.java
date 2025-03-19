@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -95,8 +96,7 @@ public class FramelessAnalyzer extends SubroutineFinder {
         else {
           subroutine = subroutine == null ? null : subroutine.copy();
 
-          if (insnNode instanceof JumpInsnNode) {
-            JumpInsnNode j = (JumpInsnNode)insnNode;
+          if (insnNode instanceof JumpInsnNode j) {
             if (insnOpcode != GOTO && insnOpcode != JSR) {
               merge(insn + 1, subroutine);
               myEdgeCreator.newControlFlowEdge(insn, insn + 1);
@@ -227,7 +227,8 @@ public class FramelessAnalyzer extends SubroutineFinder {
     }
   }
 
-  interface EdgeCreator {
+  @ApiStatus.Internal
+  public interface EdgeCreator {
     void newControlFlowEdge(int insn, int successor);
     void newControlFlowExceptionEdge(int insn, int successor, boolean npe);
   }

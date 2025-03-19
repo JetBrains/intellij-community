@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.createJavaSourcePath
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
-import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
@@ -14,7 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleAssetsNewProjectWizardStep
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
+import org.jetbrains.plugins.gradle.service.project.wizard.addGradleGitIgnoreAsset
+import org.jetbrains.plugins.gradle.service.project.wizard.addGradleWrapperAsset
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
 
@@ -46,6 +48,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
           .bindSelected(addSampleCodeProperty)
           .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
+          .onApply { logAddSampleCodeFinished(addSampleCode) }
       }
     }
 
@@ -62,12 +65,42 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       setupGroupIdUI(builder)
       setupArtifactIdUI(builder)
     }
+  }
 
-    override fun setupProject(project: Project) {
-      linkGradleProject(project) {
-        when (val groovySdk = groovySdk) {
-          null -> withPlugin("groovy")
-          is FrameworkLibraryDistributionInfo -> withGroovyPlugin(groovySdk.version.versionString)
+  private class AssetsStep(parent: Step) : GradleAssetsNewProjectWizardStep<Step>(parent) {
+
+    override fun setupAssets(project: Project) {
+      if (context.isCreatingNewProject) {
+        addGradleGitIgnoreAsset()
+        addGradleWrapperAsset(parent.gradleVersionToUse)
+      }
+
+      addEmptyDirectoryAsset("src/main/groovy")
+      addEmptyDirectoryAsset("src/main/resources")
+      addEmptyDirectoryAsset("src/test/groovy")
+      addEmptyDirectoryAsset("src/test/resources")
+
+      if (parent.addSampleCode) {
+        withGroovySampleCode("src/main/groovy", parent.groupId)
+      }
+
+      addOrConfigureSettingsScript {
+        if (parent.isCreatingDaemonToolchain) {
+          withFoojayPlugin()
+        }
+      }
+      addBuildScript {
+
+        addGroup(parent.groupId)
+        addVersion(parent.version)
+
+        when (val groovySdk = parent.groovySdk) {
+          null -> {
+            withPlugin("groovy")
+          }
+          is FrameworkLibraryDistributionInfo -> {
+            withGroovyPlugin(groovySdk.version.versionString)
+          }
           is LocalDistributionInfo -> {
             withPlugin("groovy")
             withMavenCentral()
@@ -82,20 +115,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
           }
         }
         withJUnit()
-      }
-    }
-  }
-
-  private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
-
-    override fun setupAssets(project: Project) {
-      if (context.isCreatingNewProject) {
-        addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
-      }
-      if (parent.addSampleCode) {
-        val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
-        addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)
-        addFilesToOpen(sourcePath)
       }
     }
   }

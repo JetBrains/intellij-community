@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -25,6 +25,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,8 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public class CompareWithSelectedRevisionAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class CompareWithSelectedRevisionAction extends DumbAwareAction {
   private static class Holder {
     private static final ColumnInfo<TreeNodeAdapter, String> BRANCH_COLUMN =
       new ColumnInfo<>(VcsBundle.message("column.name.revisions.list.branch")) {
@@ -146,8 +148,8 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     });
   }
 
-  protected void showSelectedRevision(@NotNull VcsRevisionNumber selected, @NotNull AbstractVcs vcs,
-                                      @NotNull VirtualFile file, @NotNull Project project) {
+  private static void showSelectedRevision(@NotNull VcsRevisionNumber selected, @NotNull AbstractVcs vcs,
+                                           @NotNull VirtualFile file, @NotNull Project project) {
     if (file.isDirectory()) {
       final DiffProvider diffProvider = requireNonNull(vcs.getDiffProvider());
       VcsDiffUtil.showChangesWithWorkingDirLater(
@@ -197,7 +199,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
   }
 
 
-  @Nullable private static VcsFileRevision getRevisionAt(final TreeTableView treeTable, final int index) {
+  private static @Nullable VcsFileRevision getRevisionAt(final TreeTableView treeTable, final int index) {
     final List items = treeTable.getItems();
     if (items.size() <= index) {
       return null;
@@ -306,6 +308,7 @@ public class CompareWithSelectedRevisionAction extends DumbAwareAction {
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
         setItemChosenCallback(runnable).
         setResizable(true).
+        setMovable(true).
         setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();
 

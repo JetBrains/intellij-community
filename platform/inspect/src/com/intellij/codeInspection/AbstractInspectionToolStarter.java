@@ -13,7 +13,7 @@ import java.util.concurrent.ForkJoinPool;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractInspectionToolStarter implements ApplicationStarter {
-  private InspectionApplication myApplication;
+  private InspectionApplicationBase myApplication;
   protected InspectionToolCmdlineOptions myOptions;
 
   protected abstract AbstractInspectionCmdlineOptions createCmdlineOptions();
@@ -56,13 +56,13 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
       System.exit(1);
     }
 
-    myApplication = new InspectionApplication();
+    myApplication = new InspectionApplicationBase();
     initApplication(myApplication, myOptions);
 
     // TODO: keep application settings in Memory
   }
 
-  protected InspectionApplication getApplication() {
+  protected InspectionApplicationBase getApplication() {
     return myApplication;
   }
 
@@ -71,7 +71,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myOptions.beforeStartup();
 
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    InspectionApplication.LOG.info(
+    InspectionApplicationBase.LOG.info(
       "CPU cores: " + Runtime.getRuntime().availableProcessors() + "; " +
       "ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; " +
       "factory: " + ForkJoinPool.commonPool().getFactory());
@@ -79,7 +79,7 @@ public abstract class AbstractInspectionToolStarter implements ApplicationStarte
     myApplication.startup();
   }
 
-  private static void initApplication(@NotNull InspectionApplication application,
+  private static void initApplication(@NotNull InspectionApplicationBase application,
                                       @NotNull InspectionToolCmdlineOptions opts) {
     opts.initApplication(application);
   }

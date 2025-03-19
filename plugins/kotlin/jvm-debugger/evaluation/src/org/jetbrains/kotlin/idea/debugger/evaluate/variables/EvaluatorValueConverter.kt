@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.sun.jdi.*
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder.Result
+import org.jetbrains.kotlin.idea.debugger.base.util.findMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.isSubtype
-import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.idea.debugger.evaluate.variables.VariableFinder.Result
 import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import kotlin.jvm.internal.Ref
 import com.sun.jdi.Type as JdiType
@@ -28,16 +29,16 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
         )
 
         fun unref(value: Value?): Value? {
-            if (value !is ObjectReference) {
+            if (value !is ObjectReference || value is StringReference) {
                 return value
             }
 
             val type = value.type()
-            if (type !is ClassType || !type.signature().startsWith("L" + AsmTypes.REF_TYPE_PREFIX)) {
+            if (type !is ClassType || !type.signature().startsWith("Lkotlin/jvm/internal/Ref$")) {
                 return value
             }
 
-            val field = type.fieldByName("element") ?: return value
+            val field = DebuggerUtils.findField(type, "element") ?: return value
             return value.getValue(field)
         }
     }
@@ -61,7 +62,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             return true
         }
 
-        if (requestedType == AsmTypes.K_CLASS_TYPE && actualType == AsmTypes.JAVA_CLASS_TYPE) {
+        if (requestedType.internalName == "kotlin/reflect/KClass" && actualType.internalName == "java/lang/Class") {
             // KClass can be represented as a Java class for simpler cases. See BoxingInterpreter.isJavaLangClassBoxing().
             return true
         }
@@ -150,7 +151,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             ?: error("Class $boxedType is not loaded")
 
         val methodDesc = AsmType.getMethodDescriptor(boxedType, unboxedType)
-        val valueOfMethod = boxedTypeClass.methodsByName("valueOf", methodDesc).first()
+        val valueOfMethod = boxedTypeClass.findMethod("valueOf", methodDesc)
 
         return context.invokeMethod(boxedTypeClass, valueOfMethod, listOf(value))
     }
@@ -166,7 +167,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
 
         val unboxingMethodName = UNBOXING_METHOD_NAMES.getValue(boxedType.internalName)
         val methodDesc = AsmType.getMethodDescriptor(unboxedType)
-        val valueMethod = boxedTypeClass.methodsByName(unboxingMethodName, methodDesc).first()
+        val valueMethod = boxedTypeClass.findMethod(unboxingMethodName, methodDesc)
         return context.invokeMethod(value, valueMethod, emptyList())
     }
 
@@ -180,7 +181,7 @@ class EvaluatorValueConverter(val context: ExecutionContext) {
             val ref = context.newInstance(refTypeClass, constructor, emptyList())
             context.keepReference(ref)
 
-            val elementField = refTypeClass.fieldByName("element") ?: error("'element' field not found")
+            val elementField = DebuggerUtils.findField(refTypeClass, "element") ?: error("'element' field not found")
             ref.setValue(elementField, value)
             return ref
         }

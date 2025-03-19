@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.util;
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.WrappedProgressIndicator;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,10 +17,12 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
   private final boolean myCheckCanceledForMe;
   private final int nested;
 
+  @Obsolete
   protected ProgressWrapper(@NotNull ProgressIndicator original) {
     this(original, false);
   }
 
+  @Obsolete
   protected ProgressWrapper(@NotNull ProgressIndicator original, boolean checkCanceledForMe) {
     if (!(original instanceof StandardProgressIndicator)) {
       throw new IllegalArgumentException("Original indicator " + original + " must be StandardProgressIndicator but got: " + original.getClass());
@@ -55,9 +58,8 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     }
   }
 
-  @Nullable
   @Override
-  protected Throwable getCancellationTrace() {
+  protected @Nullable Throwable getCancellationTrace() {
     if (myOriginal instanceof AbstractProgressIndicatorBase) {
       return ((AbstractProgressIndicatorBase)myOriginal).getCancellationTrace();
     }
@@ -113,31 +115,31 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     return myOriginal.isIndeterminate();
   }
 
-  @NotNull
   @Override
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return myOriginal.getModalityState();
   }
 
   @Override
-  @NotNull
-  public ProgressIndicator getOriginalProgressIndicator() {
+  public @NotNull ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
   }
 
+  @Obsolete
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static ProgressWrapper wrap(@Nullable ProgressIndicator indicator) {
     return indicator == null ? null : new ProgressWrapper(indicator);
   }
 
+  @Obsolete
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static ProgressIndicator unwrap(ProgressIndicator indicator) {
     return indicator instanceof WrappedProgressIndicator ?
            ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator() : indicator;
   }
 
-  @NotNull
-  public static ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
+  @Obsolete
+  public static @NotNull ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
     while (indicator instanceof ProgressWrapper) {
       indicator = ((ProgressWrapper)indicator).getOriginalProgressIndicator();
     }

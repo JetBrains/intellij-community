@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,7 @@ import java.util.function.DoubleFunction;
 @ApiStatus.Experimental
 public final class Animation {
 
-  private @NotNull final DoubleConsumer myConsumer;
+  private final @NotNull DoubleConsumer myConsumer;
   private @NotNull Easing myEasing = Easing.EASE;
   private int myDelay = 0;
   private int myDuration = 500;
@@ -67,8 +67,7 @@ public final class Animation {
   /**
    * @param delay in milliseconds.
    */
-  @NotNull
-  public Animation setDelay(int delay) {
+  public @NotNull Animation setDelay(int delay) {
     myDelay = Math.max(delay, 0);
     return this;
   }
@@ -83,8 +82,7 @@ public final class Animation {
   /**
    * @param duration in milliseconds.
    */
-  @NotNull
-  public Animation setDuration(int duration) {
+  public @NotNull Animation setDuration(int duration) {
     myDuration = Math.max(duration, 0);
     return this;
   }
@@ -100,19 +98,16 @@ public final class Animation {
     myConsumer.accept(myEasing.calc(timeline));
   }
 
-  @NotNull
-  public Easing getEasing() {
+  public @NotNull Easing getEasing() {
     return myEasing;
   }
 
-  @NotNull
-  public Animation setEasing(@NotNull Easing easing) {
+  public @NotNull Animation setEasing(@NotNull Easing easing) {
     myEasing = easing;
     return this;
   }
 
-  @NotNull
-  public Animation addListener(@NotNull Listener listener) {
+  public @NotNull Animation addListener(@NotNull Listener listener) {
     if (myListeners == null) {
       myListeners = new ArrayList<>();
     }
@@ -124,32 +119,28 @@ public final class Animation {
    * Runnable is called before first {@link Animation#update(double)} is called.
    * The time between animation is scheduled and updated can differ.
    */
-  @NotNull
-  public Animation runWhenScheduled(@NotNull Runnable runnable) {
+  public @NotNull Animation runWhenScheduled(@NotNull Runnable runnable) {
     return addListener(Phase.SCHEDULED, runnable);
   }
 
   /**
    * Runnable is called right after {@link Animation#update(double)} is called.
    */
-  @NotNull
-  public Animation runWhenUpdated(@NotNull Runnable runnable) {
+  public @NotNull Animation runWhenUpdated(@NotNull Runnable runnable) {
     return addListener(Phase.UPDATED, runnable);
   }
 
   /**
    * Runnable is called if animation is expired.
    */
-  @NotNull
-  public Animation runWhenExpired(@NotNull Runnable runnable) {
+  public @NotNull Animation runWhenExpired(@NotNull Runnable runnable) {
     return addListener(Phase.EXPIRED, runnable);
   }
 
   /**
    * Runnable is called if animation is cancelled but not expired.
    */
-  @NotNull
-  public Animation runWhenCancelled(@NotNull Runnable runnable) {
+  public @NotNull Animation runWhenCancelled(@NotNull Runnable runnable) {
     return addListener(Phase.CANCELLED, runnable);
   }
 
@@ -159,8 +150,7 @@ public final class Animation {
     });
   }
 
-  @NotNull
-  private Animation addListener(@NotNull Phase phase, @NotNull Runnable runnable) {
+  private @NotNull Animation addListener(@NotNull Phase phase, @NotNull Runnable runnable) {
     return addListener(p -> {
       if (p == phase) runnable.run();
     });

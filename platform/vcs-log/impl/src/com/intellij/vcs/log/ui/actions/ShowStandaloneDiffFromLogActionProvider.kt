@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 
-class ShowStandaloneDiffFromLogActionProvider : AnActionExtensionProvider {
+internal class ShowStandaloneDiffFromLogActionProvider : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
     return e.getData(VcsLogInternalDataKeys.MAIN_UI) != null && e.getData(ChangesBrowserBase.DATA_KEY) == null
   }
@@ -28,6 +28,8 @@ class ShowStandaloneDiffFromLogActionProvider : AnActionExtensionProvider {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    ChangesBrowserBase.showStandaloneDiff(e.project!!, e.getRequiredData(VcsLogInternalDataKeys.MAIN_UI).changesBrowser)
+    val project = e.project ?: return
+    val ui = e.getData(VcsLogInternalDataKeys.MAIN_UI) ?: return
+    ChangesBrowserBase.showStandaloneDiff(project, ui.changesBrowser)
   }
 }

@@ -1,17 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19api;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -35,7 +42,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
-public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher UNMODIFIABLE_SET = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_MAP = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
   private static final CallMatcher UNMODIFIABLE_LIST = staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);
@@ -62,12 +69,13 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       checkbox("SUGGEST_MAP_OF_ENTRIES", JavaBundle.message("inspection.collection.factories.option.suggest.ofentries")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.COLLECTION_FACTORIES);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel9OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -139,7 +147,18 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       listDefinition = PsiUtil.skipParenthesizedExprDown(listDefinition);
       if(listDefinition instanceof PsiMethodCallExpression call) {
         if (ARRAYS_AS_LIST.test(call)) {
-          return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), "List");
+          PsiExpression[] expressions = call.getArgumentList().getExpressions();
+          if (!MethodCallUtils.isVarArgCall(call) && expressions.length == 1) {
+            PsiExpression arg = PsiUtil.skipParenthesizedExprDown(expressions[0]);
+            PsiVariable variable = ExpressionUtils.resolveVariable(arg);
+            if (variable != null) {
+              PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(variable);
+              if (elements != null && ContainerUtil.all(elements, Objects::nonNull)) {
+                expressions = elements;
+              }
+            }
+          }
+          return new PrepopulatedCollectionModel(Arrays.asList(expressions), Collections.emptyList(), "List");
         }
         return fromCollect(call, "List", COLLECTORS_TO_LIST);
       }
@@ -177,13 +196,18 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         if (argumentList != null) {
           PsiExpression[] args = argumentList.getExpressions();
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-          if (classReference != null && PsiUtil.isLanguageLevel10OrHigher(mapDefinition) &&
+          if (classReference != null && PsiUtil.getLanguageLevel(mapDefinition).isAtLeast(LanguageLevel.JDK_10) &&
               JAVA_UTIL_HASH_MAP.equals(classReference.getQualifiedName()) && args.length == 1) {
             PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
             if (arg != null) {
               PsiType sourceType = arg.getType();
               PsiType targetType = newExpression.getType();
               if (targetType != null && sourceType != null && sourceType.isAssignableFrom(targetType)) {
+                PsiType keyType = PsiUtil.substituteTypeParameter(sourceType, JAVA_UTIL_MAP, 0, false);
+                PsiType valueType = PsiUtil.substituteTypeParameter(sourceType, JAVA_UTIL_MAP, 1, false);
+                if (DfaPsiUtil.getTypeNullability(keyType) == Nullability.NULLABLE || DfaPsiUtil.getTypeNullability(valueType) == Nullability.NULLABLE) {
+                  return null;
+                }
                 return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), "Map", true);
               }
             }
@@ -199,8 +223,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromCollect(PsiMethodCallExpression call, String typeName, CallMatcher collector) {
+    private static @Nullable PrepopulatedCollectionModel fromCollect(PsiMethodCallExpression call, String typeName, CallMatcher collector) {
       if (STREAM_COLLECT.test(call) && collector.matches(call.getArgumentList().getExpressions()[0])) {
         PsiMethodCallExpression qualifier = MethodCallUtils.getQualifierMethodCall(call);
         if (STREAM_OF.matches(qualifier)) {
@@ -211,9 +234,8 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromVariable(PsiReferenceExpression expression,
-                                                            String typeName, String collectionClass, CallMatcher addMethod) {
+    private static @Nullable PrepopulatedCollectionModel fromVariable(PsiReferenceExpression expression,
+                                                                      String typeName, String collectionClass, CallMatcher addMethod) {
       PsiLocalVariable variable = tryCast(expression.resolve(), PsiLocalVariable.class);
       if (variable == null) return null;
       PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
@@ -246,8 +268,7 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromNewExpression(PsiNewExpression newExpression, String type, String className) {
+    private static @Nullable PrepopulatedCollectionModel fromNewExpression(PsiNewExpression newExpression, String type, String className) {
       PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList != null) {
         PsiExpression[] args = argumentList.getExpressions();
@@ -266,23 +287,27 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
+    private static @Nullable PrepopulatedCollectionModel fromCopyConstructor(PsiExpression[] args, String type) {
       if (args.length == 1) {
         PsiExpression arg = PsiUtil.skipParenthesizedExprDown(args[0]);
         PsiMethodCallExpression call = tryCast(arg, PsiMethodCallExpression.class);
         if (ARRAYS_AS_LIST.test(call)) {
           return new PrepopulatedCollectionModel(Arrays.asList(call.getArgumentList().getExpressions()), Collections.emptyList(), type);
         }
-        if(arg != null && PsiUtil.isLanguageLevel10OrHigher(arg) && InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+        if (arg != null &&
+            PsiUtil.getLanguageLevel(arg).isAtLeast(LanguageLevel.JDK_10) &&
+            InheritanceUtil.isInheritor(arg.getType(), JAVA_UTIL_COLLECTION)) {
+          PsiType elementType = PsiUtil.substituteTypeParameter(arg.getType(), JAVA_UTIL_COLLECTION, 0, false);
+          if (DfaPsiUtil.getTypeNullability(elementType) == Nullability.NULLABLE) {
+            return null;
+          }
           return new PrepopulatedCollectionModel(Collections.singletonList(arg), Collections.emptyList(), type, true);
         }
       }
       return null;
     }
 
-    @Nullable
-    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
+    private static @Nullable PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
       PsiClassInitializer initializer = ClassUtils.getDoubleBraceInitializer(anonymousClass);
       if(initializer != null) {
         List<PsiExpression> contents = new ArrayList<>();
@@ -300,28 +325,26 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
     }
   }
 
-  private static class ReplaceWithCollectionFactoryFix implements LocalQuickFix {
+  private static class ReplaceWithCollectionFactoryFix extends PsiUpdateModCommandQuickFix {
     private final @IntentionName String myMessage;
 
     ReplaceWithCollectionFactoryFix(@IntentionName String message) {
       myMessage = message;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myMessage;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.collection.factories.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class, false);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, false);
       if(call == null) return;
       PrepopulatedCollectionModel model = MAPPER.mapFirst(call);
       if(model == null) return;
@@ -347,12 +370,12 @@ public class Java9CollectionFactoryInspection extends AbstractBaseJavaLocalInspe
         StreamEx.of(model.myElementsToDelete).map(PsiElement::getParent).select(PsiLocalVariable.class).toList();
       model.myElementsToDelete.forEach(ct::delete);
       PsiElement replacement = ct.replaceAndRestoreComments(call, replacementText);
-      vars.stream().filter(var -> ReferencesSearch.search(var).findFirst() == null).forEach(PsiElement::delete);
+      vars.stream().filter(var -> !VariableAccessUtils.variableIsUsed(var, PsiUtil.getVariableCodeBlock(var, null)))
+        .forEach(PsiElement::delete);
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(replacement);
     }
 
-    @NotNull
-    private static String getTypeArguments(PsiType type, String typeName) {
+    private static @NotNull String getTypeArguments(PsiType type, String typeName) {
       if (typeName.equals("Map")) {
         PsiType keyType = PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 0, false);
         PsiType valueType = PsiUtil.substituteTypeParameter(type, JAVA_UTIL_MAP, 1, false);

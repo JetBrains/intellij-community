@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import java.util.HashSet;
 import java.util.Set;
 
-public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
+public final class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
   private static final Set<@NlsSafe String> METHOD_NAMES = new HashSet<>();
 
@@ -41,15 +41,13 @@ public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.call.to.thread.ref");
 
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 fun foo(f: (Int, Int, Int) -> Unit) {
 }
 

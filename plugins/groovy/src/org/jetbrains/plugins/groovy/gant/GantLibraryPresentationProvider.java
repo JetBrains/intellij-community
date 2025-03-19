@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 import javax.swing.*;
 import java.io.File;
 
-public class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
+public final class GantLibraryPresentationProvider extends GroovyLibraryPresentationProviderBase {
   private static final LibraryKind GANT_KIND = LibraryKind.create("gant");
 
   public GantLibraryPresentationProvider() {
@@ -30,15 +30,13 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
   }
 
   @Override
-  @Nls
-  public String getLibraryVersion(final VirtualFile[] libraryFiles) {
+  public @Nls String getLibraryVersion(final VirtualFile[] libraryFiles) {
     String version = GantUtils.getGantVersionOrNull(GantUtils.getGantLibraryHome(libraryFiles));
     return version == null ? GroovyBundle.message("undefined.library.version") : version;
   }
 
   @Override
-  @NotNull
-  public Icon getIcon(GroovyLibraryProperties properties) {
+  public @NotNull Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Groovy.Gant_sdk;
   }
 
@@ -52,10 +50,8 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
     return GantUtils.getGantVersionOrNull(path);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getLibraryCategoryName() {
+  public @Nls @NotNull String getLibraryCategoryName() {
     return GroovyBundle.message("framework.gant");
   }
 

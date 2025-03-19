@@ -1,46 +1,44 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
-interface AsyncFileEditorProvider : FileEditorProvider {
+interface AsyncFileEditorProvider : FileEditorProvider, DumbAware {
   /**
    * This method is intended to be called from background thread. It should perform all time-consuming tasks required to build an editor,
    * and return a builder instance that will be called in EDT to create UI for the editor.
    */
-  @OverrideOnly
-  @RequiresBlockingContext
   @RequiresReadLock
-  fun createEditorAsync(project: Project, file: VirtualFile): Builder
+  @OverrideOnly
+  fun createEditorAsync(project: Project, file: VirtualFile): Builder {
+    throw IllegalStateException("Should not be called")
+  }
 
   @Experimental
-  @OverrideOnly
-  suspend fun createEditorBuilder(project: Project, file: VirtualFile): Builder {
-    return readAction { createEditorAsync(project, file) }
+  suspend fun createFileEditor(
+    project: Project,
+    file: VirtualFile,
+    document: Document?,
+    editorCoroutineScope: CoroutineScope,
+  ): FileEditor {
+    val builder = readAction { createEditorAsync(project = project, file = file) }
+    return withContext(Dispatchers.EDT) {
+      builder.build()
+    }
   }
 
   abstract class Builder {
-    @OverrideOnly
     abstract fun build(): FileEditor
   }
 }

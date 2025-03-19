@@ -1,3 +1,4 @@
+// HIGHLIGHT: INFORMATION
 fun test() = true
 
 fun foo(): Int {

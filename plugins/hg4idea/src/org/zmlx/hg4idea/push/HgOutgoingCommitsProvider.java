@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.*;
@@ -6,6 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgVcs;
@@ -26,11 +28,10 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
 
   private static final Logger LOG = Logger.getInstance(HgOutgoingCommitsProvider.class);
 
-  @NotNull
   @Override
-  public OutgoingResult getOutgoingCommits(@NotNull final HgRepository repository,
-                                           @NotNull final PushSpec<HgPushSource, HgTarget> pushSpec,
-                                           boolean initial) {
+  public @NotNull OutgoingResult getOutgoingCommits(final @NotNull HgRepository repository,
+                                                    final @NotNull PushSpec<HgPushSource, HgTarget> pushSpec,
+                                                    boolean initial) {
     final Project project = repository.getProject();
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
@@ -71,6 +72,15 @@ public class HgOutgoingCommitsProvider extends OutgoingCommitsProvider<HgReposit
       }
       LOG.warn(resultErrors.toString());
     }
-    return new OutgoingResult(HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version, true), errors);
+
+    try {
+      List<? extends VcsFullCommitDetails> fullCommits =
+        HgHistoryUtil.createFullCommitsFromResult(project, repository.getRoot(), result, version);
+      return new OutgoingResult(fullCommits, errors);
+    }
+    catch (VcsException e) {
+      errors.add(new VcsError(e.getMessage()));
+      return new OutgoingResult(Collections.emptyList(), errors);
+    }
   }
 }

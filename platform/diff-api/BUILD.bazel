@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.diff` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "diff_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "diff",
+  module_name = "intellij.platform.diff",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util/diff",
+    "//platform/ide-core",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = ["//platform/util/diff"],
+  runtime_deps = [":diff_resources"]
+)
+### auto-generated section `build intellij.platform.diff` end

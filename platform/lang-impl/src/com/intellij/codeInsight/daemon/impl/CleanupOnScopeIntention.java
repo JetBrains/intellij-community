@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -12,16 +12,17 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class CleanupOnScopeIntention extends CleanupIntention {
   public static final CleanupOnScopeIntention INSTANCE = new CleanupOnScopeIntention();
 
   private CleanupOnScopeIntention() {}
 
-  @Nullable
   @Override
-  protected AnalysisScope getScope(Project project, PsiFile file) {
+  protected @Nullable AnalysisScope getScope(Project project, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
     AnalysisScope analysisScope = new AnalysisScope(file);
     VirtualFile virtualFile = file.getVirtualFile();

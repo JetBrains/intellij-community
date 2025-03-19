@@ -1,21 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.model;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public abstract class AbstractRegistry<T> {
-  @SuppressWarnings("SSBasedInspection")
-  @NotNull private final Int2ObjectOpenHashMap<T> myDataById = new Int2ObjectOpenHashMap<>();
+  @SuppressWarnings("SSBasedInspection") private final @NotNull Int2ObjectOpenHashMap<T> myDataById = new Int2ObjectOpenHashMap<>();
 
   private transient Object2IntMap<T> myIdsByData = new Object2IntOpenHashMap<>();
 
-  @NotNull
-  public T dataById(int id) throws IllegalArgumentException {
+  public @NotNull T dataById(int id) throws IllegalArgumentException {
     T result = myDataById.get(id);
     if (result == null) {
       throw new IllegalArgumentException("No data is registered for id " + id);

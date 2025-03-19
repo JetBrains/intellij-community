@@ -10,7 +10,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames.*
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -18,15 +18,15 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 
 private val LOG = Logger.getInstance(KotlinJvmMetadataVersionIndex::class.java)
 
-class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersionIndexBase<JvmMetadataVersion>() {
+class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersionIndexBase<MetadataVersion>() {
     companion object {
-        val NAME: ID<JvmMetadataVersion, Void> = ID.create(KotlinJvmMetadataVersionIndex::class.java.canonicalName)
+        val NAME: ID<MetadataVersion, Void> = ID.create(KotlinJvmMetadataVersionIndex::class.java.canonicalName)
     }
 
-    override fun getName(): ID<JvmMetadataVersion, Void> = NAME
+    override fun getName(): ID<MetadataVersion, Void> = NAME
 
-    override fun createBinaryVersion(versionArray: IntArray, extraBoolean: Boolean?): JvmMetadataVersion =
-        JvmMetadataVersion(versionArray, isStrictSemantics = extraBoolean!!)
+    override fun createBinaryVersion(versionArray: IntArray, extraBoolean: Boolean?): MetadataVersion =
+        MetadataVersion(versionArray, isStrictSemantics = extraBoolean!!)
 
     override fun getIndexer() = INDEXER
 
@@ -38,7 +38,7 @@ class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersi
 
     override fun isExtraBooleanNeeded(): Boolean = true
 
-    override fun getExtraBoolean(version: JvmMetadataVersion): Boolean = version.isStrictSemantics
+    override fun getExtraBoolean(version: MetadataVersion): Boolean = version.isStrictSemantics
 
     private val kindsToIndex: Set<KotlinClassHeader.Kind> by lazy {
         setOf(
@@ -48,8 +48,8 @@ class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersi
         )
     }
 
-    private val INDEXER: DataIndexer<JvmMetadataVersion, Void, FileContent> by lazy {
-        DataIndexer<JvmMetadataVersion, Void, FileContent> { inputData: FileContent ->
+    private val INDEXER: DataIndexer<MetadataVersion, Void, FileContent> by lazy {
+        DataIndexer<MetadataVersion, Void, FileContent> { inputData: FileContent ->
             var versionArray: IntArray? = null
             var isStrictSemantics = false
             var annotationPresent = false
@@ -89,7 +89,7 @@ class KotlinJvmMetadataVersionIndex internal constructor() : KotlinMetadataVersi
                 version = null
             } else if (annotationPresent && version == null) {
                 // No version at all because the class is too old, or version is set to something weird
-                version = JvmMetadataVersion.INVALID_VERSION
+                version = MetadataVersion.INVALID_VERSION
             }
 
             if (version != null) mapOf(version to null) else emptyMap()

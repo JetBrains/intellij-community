@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.execution.ExecutionBundle;
@@ -32,9 +32,8 @@ public class ApplicationConfigurationType implements ConfigurationType {
         return JvmMainMethodRunConfigurationOptions.class;
       }
 
-      @NotNull
       @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+      public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new ApplicationConfiguration("", project, ApplicationConfigurationType.this);
       }
 
@@ -50,9 +49,8 @@ public class ApplicationConfigurationType implements ConfigurationType {
     };
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return ExecutionBundle.message("application.configuration.name");
   }
 
@@ -81,19 +79,17 @@ public class ApplicationConfigurationType implements ConfigurationType {
     return true;
   }
 
-  @Nullable
-  public static PsiClass getMainClass(PsiElement element) {
+  public static @Nullable PsiClass getMainClass(PsiElement element) {
     while (element != null) {
-      if (element instanceof PsiClass) {
-        final PsiClass aClass = (PsiClass)element;
-        if (PsiMethodUtil.findMainInClass(aClass) != null) {
+      if (element instanceof PsiClass aClass) {
+        if (PsiMethodUtil.hasMainInClass(aClass)) {
           return aClass;
         }
       }
-      else if (element instanceof PsiJavaFile) {
-        final PsiClass[] classes = ((PsiJavaFile)element).getClasses();
+      else if (element instanceof PsiJavaFile javaFile) {
+        final PsiClass[] classes = javaFile.getClasses();
         for (PsiClass aClass : classes) {
-          if (PsiMethodUtil.findMainInClass(aClass) != null) {
+          if (PsiMethodUtil.hasMainInClass(aClass)) {
             return aClass;
           }
         }
@@ -105,20 +101,17 @@ public class ApplicationConfigurationType implements ConfigurationType {
 
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "Application";
   }
 
-  @NotNull
   @Override
-  public String getTag() {
+  public @NotNull String getTag() {
     String id = getId();
     return id.equals("Application") ? "java" : id;
   }
 
-  @NotNull
-  public static ApplicationConfigurationType getInstance() {
+  public static @NotNull ApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(ApplicationConfigurationType.class);
   }
 }

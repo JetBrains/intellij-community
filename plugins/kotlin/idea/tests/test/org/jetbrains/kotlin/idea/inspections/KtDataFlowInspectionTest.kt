@@ -29,10 +29,12 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     }
     fun testAnyType() = doTest()
     fun testArrays() = doTest()
+    fun testAssertApply() = doTest()
     fun testBoolean() = doTest()
     fun testBooleanConst() = doTest()
     fun testBoxedInt() = doTest()
     fun testBrokenCode() = doTest()
+    fun testCallWithSideEffect() = doTest()
     fun testCastArray() = doTest()
     fun testCastGenericMethodReturn() = doTest()
     fun testClassRef() = doTest()
@@ -45,10 +47,12 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testEnumComparison() = doTest()
     fun testEnumOrdinal() = doTest()
     fun testExclamation() = doTest()
+    fun testExtensionOnGeneric() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
     fun testInIterable() = doTest()
     fun testIncompleteCode1() = doTest()
+    fun testInlineClass() = doTest()
     fun testInlineLambda() = doTest()
     fun testInlineStandardCalls() = doTest()
     fun testIndices() = doTest()
@@ -58,9 +62,11 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testLambda() = doTest()
     fun testLanguageConstructs() = doTest()
     fun testList() = doTest()
+    fun testListApply() = doTest()
     fun testMapEmpty() = doTest()
     fun testMath() = doTest()
     fun testMembers() = doTest()
+    fun testNestedLoopLabel() = doTest()
     fun testNothingType() = doTest()
     fun testPlatformType() {
         // KTIJ-22430
@@ -79,8 +85,11 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testQualifier() = doTest()
     fun testRangeAnnotation() = doTest()
     fun testReifiedGeneric() = doTest()
+    fun testReturnContract() = doTest()
     fun testSingleton() = doTest()
     fun testSmartCastConflict() = doTest()
+    fun testSmartCastExtensionCondition() = doTest()
+    fun testSmartCastWhen() = doTest()
     fun testStaticAnalysisVsHumanBrain() = doTest()
     fun testStringComparison() = doTest()
     fun testStringTemplate() = doTest()
@@ -88,13 +97,17 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testSuppressions() = doTest()
     fun testTopLevelDeclaration() = doTest()
     fun testTryCatch() = doTest()
+    fun testTryCatchReturnValue() = doTest()
     fun testTryCatchInsideFinally() = doTest()
     fun testTryFinally() = doTest()
     fun testTypeCast() = doTest()
     fun testTypeTest() = doTest()
-    fun testWhen() = doTest()
-    fun testWhileLoop() = doTest()
     fun testUInt() = doTest()
+    fun testUsefulNull() = doTest()
+    fun testWhen() = doTest()
+    fun testWhenInLambda() = doTest()
+    fun testWhenIsObject() = doTest()
+    fun testWhileLoop() = doTest()
 
     fun doTest(warnOnConstantRefs: Boolean = true) {
         val fileName = "${getTestName(false)}.kt"
@@ -103,7 +116,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
         myFixture.configureByFile(fileName)
         val inspection = KotlinConstantConditionsInspection()
-        inspection.warnOnConstantRefs = warnOnConstantRefs 
+        inspection.warnOnConstantRefs = warnOnConstantRefs
         myFixture.enableInspections(inspection)
         myFixture.testHighlighting(true, false, true, fileName)
     }

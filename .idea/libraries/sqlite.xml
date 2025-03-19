@@ -1,12 +1,21 @@
 <component name="libraryTable">
   <library name="sqlite" type="repository">
-    <properties maven-id="org.xerial:sqlite-jdbc:3.40.0.0" />
+    <properties maven-id="org.xerial:sqlite-jdbc:3.48.0.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.48.0.0/sqlite-jdbc-3.48.0.0.jar">
+          <sha256sum>dbe24ab138e9654c918f561299e47cb6a3baf1a946eda97871f6f3abd4eca395</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.slf4j:slf4j-api" />
+      </exclude>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.40.0.0/sqlite-jdbc-3.40.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.48.0.0/sqlite-jdbc-3.48.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.40.0.0/sqlite-jdbc-3.40.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.48.0.0/sqlite-jdbc-3.48.0.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

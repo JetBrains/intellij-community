@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -14,11 +14,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 class DocumentChangeInactivityDetector implements DocumentListener {
-  private final static int CHECK_DELAY = 500; // ms
+  private static final int CHECK_DELAY = 500; // ms
 
   private final    ScheduledExecutorService myExecutorService;
 
-  private final static Logger LOG = Logger.getInstance(DocumentChangeInactivityDetector.class);
+  private static final Logger LOG = Logger.getInstance(DocumentChangeInactivityDetector.class);
 
   private volatile long     myLastChangeTime;
   private volatile long     myLastDocStamp;
@@ -28,7 +28,7 @@ class DocumentChangeInactivityDetector implements DocumentListener {
 
   DocumentChangeInactivityDetector(@NotNull Document document) {
     myDocument = document;
-    myExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("DocumentChangeInactivityDetector");
+    myExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("DocumentChangeInactivityDetector", 1);
   }
 
   void addListener(@NotNull InactivityListener listener) {
@@ -41,7 +41,7 @@ class DocumentChangeInactivityDetector implements DocumentListener {
 
   void start() {
     myLastChangeTime = System.currentTimeMillis();
-    myExecutorService.scheduleAtFixedRate(() -> checkLastUpdate(), CHECK_DELAY, CHECK_DELAY, TimeUnit.MILLISECONDS);
+    myExecutorService.scheduleWithFixedDelay(() -> checkLastUpdate(), CHECK_DELAY, CHECK_DELAY, TimeUnit.MILLISECONDS);
   }
 
   void stop() {

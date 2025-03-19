@@ -6,6 +6,4 @@ PyFile:shell6.py
     PsiElement(Py:EQ)('=')
     PsiWhiteSpace(' ')
     PyEmptyExpression
-      PsiElement(Py:PLING)('!')
-      PsiElement(Py:PLING)('!')
-      PsiElement(Py:IDENTIFIER)('dir')
+      PsiElement(Py:SHELL_COMMAND)('!!dir')

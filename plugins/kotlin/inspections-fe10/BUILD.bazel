@@ -1,0 +1,33 @@
+### auto-generated section `build kotlin.inspections-fe10` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "inspections-fe10_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "inspections-fe10",
+  module_name = "kotlin.inspections-fe10",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+  ],
+  runtime_deps = [":inspections-fe10_resources"]
+)
+### auto-generated section `build kotlin.inspections-fe10` end

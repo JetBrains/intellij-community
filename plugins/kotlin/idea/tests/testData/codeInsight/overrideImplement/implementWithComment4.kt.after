@@ -9,3 +9,5 @@ class C : I { // comment1
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "foo(): Unit"

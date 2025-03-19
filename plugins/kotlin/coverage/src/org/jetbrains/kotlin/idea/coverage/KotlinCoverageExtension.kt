@@ -2,13 +2,21 @@
 
 package org.jetbrains.kotlin.idea.coverage
 
-import com.intellij.coverage.*
+import com.intellij.coverage.CoverageDataManager
+import com.intellij.coverage.CoverageSuitesBundle
+import com.intellij.coverage.JavaCoverageEngine
+import com.intellij.coverage.JavaCoverageEngineExtension
+import com.intellij.coverage.analysis.JavaCoverageAnnotator
+import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator
+import com.intellij.coverage.analysis.PackageAnnotator
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,6 +24,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.rt.coverage.data.LineData
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
@@ -23,7 +32,6 @@ import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.getKotlinSourceRootType
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
-import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -48,9 +56,10 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         element: PsiNamedElement
     ): PackageAnnotator.ClassCoverageInfo? {
         if (element is KtClassOrObject) {
-            val searchScope = CoverageDataManager.getInstance(element.project)
-                ?.currentSuitesBundle
-                ?.getSearchScope(element.project) ?: return null
+            val project = element.project
+            val bundle = CoverageDataManager.getInstance(project).activeSuites()
+                .firstOrNull { it.getAnnotator(project).javaClass == coverageAnnotator.javaClass } ?: return null
+            val searchScope = bundle.getSearchScope(project) ?: return null
             val vFile = PsiUtilCore.getVirtualFile(element) ?: return null
             if (!searchScope.contains(vFile)) return null
             return coverageAnnotator.getClassCoverageInfo(element.fqName?.asString())
@@ -86,6 +95,21 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
             return existingClassFiles.isNotEmpty()
         }
         return false
+    }
+
+    override fun generateBriefReport(
+        editor: Editor?,
+        file: PsiFile?,
+        lineNumber: Int,
+        startOffset: Int,
+        endOffset: Int,
+        lineData: LineData?
+    ): String? {
+        if (file !is KtFile || lineData == null) return super.generateBriefReport(editor, file, lineNumber, startOffset, endOffset, lineData)
+        val range = TextRange.create(startOffset, endOffset)
+        val conditions = getConditions(file, range)
+        val switches = getSwitches(file, range)
+        return JavaCoverageEngine.createBriefReport(lineData, conditions, switches)
     }
 
     override fun getModuleWithOutput(module: Module): Module? = findJvmModule(module)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -38,7 +38,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,14 +76,25 @@ public final class RefactoringUtil {
       final PsiReferenceExpression ref = (PsiReferenceExpression)factory.createExpressionFromText("this." + fieldName, null);
       if (!occurrence.isValid()) return null;
       if (newField.hasModifierProperty(PsiModifier.STATIC)) {
-        ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        if (destinationClass instanceof PsiImplicitClass) {
+          //If it is an implicit class, it is impossible to use class reference as qualifier.
+          //So if it is possible, keep it as unqualified.
+          //Otherwise, if there are variables with the same name, let's use `this`, even though it is not a good practise
+          JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(manager.getProject());
+          String name = codeStyleManager.suggestUniqueVariableName(newField.getName(), occurrence, true);
+          if (newField.getName().equals(name)) {
+            ref.setQualifierExpression(null);
+          }
+        }
+        else {
+          ref.setQualifierExpression(factory.createReferenceExpression(destinationClass));
+        }
       }
       return IntroduceVariableUtil.replace(occurrence, ref, manager.getProject());
     }
   }
 
-  @Nullable
-  public static String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
+  public static @Nullable String suggestNewOverriderName(String oldOverriderName, String oldBaseName, String newBaseName) {
     if (oldOverriderName.equals(oldBaseName)) {
       return newBaseName;
     }
@@ -134,8 +144,7 @@ public final class RefactoringUtil {
     while (outermost.getParent() instanceof PsiExpression) {
       outermost = (PsiExpression)outermost.getParent();
     }
-    if (outermost.getParent() instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)outermost.getParent();
+    if (outermost.getParent() instanceof PsiForStatement forStatement) {
       if (forStatement.getCondition() == outermost) {
         return forStatement;
       }
@@ -143,8 +152,8 @@ public final class RefactoringUtil {
         return null;
       }
     }
-    if (outermost.getParent() instanceof PsiExpressionStatement && outermost.getParent().getParent() instanceof PsiForStatement) {
-      final PsiForStatement forStatement = (PsiForStatement)outermost.getParent().getParent();
+    if (outermost.getParent() instanceof PsiExpressionStatement &&
+        outermost.getParent().getParent() instanceof PsiForStatement forStatement) {
       if (forStatement.getUpdate() == outermost.getParent()) {
         return forStatement;
       }
@@ -194,7 +203,7 @@ public final class RefactoringUtil {
                                               String newName,
                                               SearchScope scope,
                                               final boolean ignoreAccessScope) throws IncorrectOperationException {
-    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope)) {
+    for (PsiReference reference : ReferencesSearch.search(variable, scope, ignoreAccessScope).asIterable()) {
       reference.handleElementRename(newName);
     }
   }
@@ -257,8 +266,7 @@ public final class RefactoringUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
+  public static @Nullable PsiExpressionList getArgumentListByMethodReference(PsiElement ref) {
     if (ref instanceof PsiCall) return ((PsiCall)ref).getArgumentList();
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiCall) {
@@ -479,26 +487,9 @@ public final class RefactoringUtil {
   /**
    * @deprecated use CommonJavaRefactoringUtil.suggestUniqueVariableName instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
     return CommonJavaRefactoringUtil.suggestUniqueVariableName(baseName, place, fieldToReplace);
-  }
-
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.convertInitializerToNormalExpression instead.
-   */
-  @Deprecated
-  @Contract("null, _ -> null")
-  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType) throws IncorrectOperationException {
-    return CommonJavaRefactoringUtil.convertInitializerToNormalExpression(expression, forcedReturnType);
-  }
-
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock instead.
-   */
-  @Deprecated(forRemoval = true)
-  public static PsiCodeBlock expandExpressionLambdaToCodeBlock(@NotNull PsiLambdaExpression lambdaExpression) {
-    return CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
   }
 
   /**
@@ -513,8 +504,7 @@ public final class RefactoringUtil {
    * @deprecated use CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot instead.
    */
   @Deprecated
-  @NotNull
-  public static PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, @NotNull final VirtualFile sourceRoot)
+  public static @NotNull PsiDirectory createPackageDirectoryInSourceRoot(@NotNull PackageWrapper aPackage, final @NotNull VirtualFile sourceRoot)
     throws IncorrectOperationException {
     return CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(aPackage, sourceRoot);
   }
@@ -528,7 +518,7 @@ public final class RefactoringUtil {
       final PsiType substitutedType = substitutor.substitute(parameter);
       final PsiType erasedType = substitutedType == null ? TypeConversionUtil.erasure(factory.createType(parameter))
                                                          : substitutedType;
-      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member))) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(member)).asIterable()) {
         final PsiElement element = reference.getElement();
         final PsiElement parent = element.getParent();
         if (parent instanceof PsiTypeElement) {
@@ -624,8 +614,7 @@ public final class RefactoringUtil {
     return false;
   }
 
-  @NlsContexts.DialogMessage
-  public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
+  public static @NlsContexts.DialogMessage String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
       if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
@@ -718,7 +707,7 @@ public final class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false)) {
+    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).asIterable()) {
       if (isAssignmentLHS(reference.getElement())) return true;
     }
     return false;

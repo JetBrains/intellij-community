@@ -66,7 +66,7 @@ public class XmlSurroundWithTest extends MarkupSurroundTestBase {
   private void doHtmlSurroundWithTagViaSurroundPopup(String tag) {
     String baseName = getBaseName("tag");
     myFixture.configureByFile(baseName + ".html");
-    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), myFixture.getEditor(), myFixture.getFile(), null);
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(getProject(), myFixture.getEditor(), myFixture.getFile());
     Optional<InvokeTemplateAction> surroundWithTagAction = actions.stream()
       .filter(it -> it instanceof InvokeTemplateAction)
       .map(it -> (InvokeTemplateAction) it)

@@ -8,12 +8,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service(Service.Level.APP)
@@ -26,6 +22,7 @@ public final class LiveTemplateContextService implements Disposable {
 
     LiveTemplateContextBean.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
     LiveTemplateContextProvider.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
+    LiveTemplateInternalContextBean.EP_NAME.addChangeListener(this::reloadLiveTemplateContexts, this);
   }
 
   public static LiveTemplateContextService getInstance() {
@@ -39,6 +36,7 @@ public final class LiveTemplateContextService implements Disposable {
   public @Nullable LiveTemplateContext getLiveTemplateContext(@Nullable String id) {
     if (id == null) return null;
 
+    id = getInternalIds().getOrDefault(id, id);
     return myState.myLiveTemplateIds.get(id);
   }
 
@@ -103,10 +101,8 @@ public final class LiveTemplateContextService implements Disposable {
       }
     }
 
-    var internalIds = allIdsMap.values().stream()
-      .map(LiveTemplateContext::getContextId)
-      .distinct()
-      .collect(Collectors.toMap(Function.identity(), Function.identity()));
+    var internalIds = LiveTemplateInternalContextBean.EP_NAME.getExtensionList().stream()
+      .collect(Collectors.toMap(it -> it.internalContextId, it -> it.contextId));
 
     return new LiveTemplateContextsState(allIdsMap, internalIds);
   }

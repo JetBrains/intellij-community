@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay.Tropin
  */
-public class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
+public final class DefaultSyntheticProvider implements SyntheticTypeComponentProvider {
 
   @Override
   public boolean isSynthetic(@NotNull TypeComponent typeComponent) {

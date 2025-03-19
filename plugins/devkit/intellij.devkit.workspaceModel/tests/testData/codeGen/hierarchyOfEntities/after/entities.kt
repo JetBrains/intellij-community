@@ -1,32 +1,33 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Open
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.annotations.Abstract
+import com.intellij.platform.workspace.storage.annotations.Open
 
 @Abstract
 interface GrandParentEntity : WorkspaceEntity {
   val data1: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder<T : GrandParentEntity> : GrandParentEntity, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : GrandParentEntity> : WorkspaceEntity.Builder<T> {
     override var entitySource: EntitySource
-    override var data1: String
+    var data1: String
   }
 
-  companion object : Type<GrandParentEntity, Builder<GrandParentEntity>>() {
+  companion object : EntityType<GrandParentEntity, Builder<GrandParentEntity>>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        entitySource: EntitySource,
-                        init: (Builder<GrandParentEntity>.() -> Unit)? = null): GrandParentEntity {
+    operator fun invoke(
+      data1: String,
+      entitySource: EntitySource,
+      init: (Builder<GrandParentEntity>.() -> Unit)? = null,
+    ): Builder<GrandParentEntity> {
       val builder = builder()
       builder.data1 = data1
       builder.entitySource = entitySource
@@ -42,21 +43,23 @@ interface ParentEntity : GrandParentEntity {
   val data2: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, WorkspaceEntity.Builder<T>, ObjBuilder<T> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder<T : ParentEntity> : WorkspaceEntity.Builder<T>, GrandParentEntity.Builder<T> {
     override var entitySource: EntitySource
     override var data1: String
-    override var data2: String
+    var data2: String
   }
 
-  companion object : Type<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
+  companion object : EntityType<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        data2: String,
-                        entitySource: EntitySource,
-                        init: (Builder<ParentEntity>.() -> Unit)? = null): ParentEntity {
+    operator fun invoke(
+      data1: String,
+      data2: String,
+      entitySource: EntitySource,
+      init: (Builder<ParentEntity>.() -> Unit)? = null,
+    ): Builder<ParentEntity> {
       val builder = builder()
       builder.data1 = data1
       builder.data2 = data2
@@ -72,23 +75,25 @@ interface ChildEntity: ParentEntity {
   val data3: String
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, WorkspaceEntity.Builder<ChildEntity>, ObjBuilder<ChildEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<ChildEntity>, ParentEntity.Builder<ChildEntity> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
-    override var data3: String
+    var data3: String
   }
 
-  companion object : Type<ChildEntity, Builder>(ParentEntity) {
+  companion object : EntityType<ChildEntity, Builder>(ParentEntity) {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(data1: String,
-                        data2: String,
-                        data3: String,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): ChildEntity {
+    operator fun invoke(
+      data1: String,
+      data2: String,
+      data3: String,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.data1 = data1
       builder.data2 = data2
@@ -102,6 +107,10 @@ interface ChildEntity: ParentEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: ChildEntity, modification: ChildEntity.Builder.() -> Unit) = modifyEntity(
-  ChildEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyChildEntity(
+  entity: ChildEntity,
+  modification: ChildEntity.Builder.() -> Unit,
+): ChildEntity {
+  return modifyEntity(ChildEntity.Builder::class.java, entity, modification)
+}
 //endregion

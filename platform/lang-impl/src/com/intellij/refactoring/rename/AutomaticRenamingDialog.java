@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -23,11 +23,13 @@ import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,6 +108,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
+  }
+
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(myRenamer.getDialogDescription()), BorderLayout.CENTER);
@@ -114,7 +121,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("AutoRenaming", actionGroup, true);
     toolbar.setTargetComponent(myTable);
     panel.add(toolbar.getComponent(), BorderLayout.EAST);
-    final Box box = Box.createHorizontalBox();
+    final JBBox box = JBBox.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
     return box;
@@ -178,7 +185,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       if (index != -1) {
         PsiNamedElement element = myRenames[index];
         UsageInfo usageInfo = new UsageInfo(element);
-        myUsagePreviewPanel.updateLayout(Collections.singletonList(usageInfo));
+        myUsagePreviewPanel.updateLayout(myProject, Collections.singletonList(usageInfo));
         final PsiFile containingFile = element.getContainingFile();
         if (containingFile != null) {
           final VirtualFile virtualFile = containingFile.getVirtualFile();
@@ -188,13 +195,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
         }
       }
       else {
-        myUsagePreviewPanel.updateLayout(null);
+        myUsagePreviewPanel.updateLayout(myProject, null);
       }
     };
     myTable.getSelectionModel().addListSelectionListener(myListSelectionListener);
 
     myPanelForPreview.add(myUsagePreviewPanel, BorderLayout.CENTER);
-    myUsagePreviewPanel.updateLayout(null);
+    myUsagePreviewPanel.updateLayout(myProject, null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
     double top = mySplitPane.getTopComponent().getPreferredSize().getHeight();
     double bottom = mySplitPane.getBottomComponent().getPreferredSize().getHeight();
@@ -394,9 +401,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
           return checkInput(inputString);
         }
 
-        @Nullable
         @Override
-        public String getErrorText(@NlsSafe String inputString) {
+        public @Nullable String getErrorText(@NlsSafe String inputString) {
           final int selectedRow = myTable.getSelectedRow();
           if (!isValidName(inputString, selectedRow)) {
             return RefactoringBundle.message("text.identifier.invalid", inputString);

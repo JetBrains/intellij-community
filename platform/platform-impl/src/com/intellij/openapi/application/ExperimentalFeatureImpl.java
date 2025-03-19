@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
@@ -9,6 +10,11 @@ import com.intellij.openapi.diagnostic.Logger;
  * @author Konstantin Bulenkov
  */
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
+  @ApiStatus.Internal
+  public ExperimentalFeatureImpl() {
+  }
+
+  @ApiStatus.Internal
   @Override
   public boolean isEnabled() {
     Application app = ApplicationManager.getApplication();

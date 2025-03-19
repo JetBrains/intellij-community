@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
@@ -16,6 +16,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,9 +28,10 @@ import java.util.Objects;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.normalizePath;
 
+@ApiStatus.Internal
 public final class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
-  @NotNull private final ProjectSystemId myExternalSystemId;
-  @NotNull private final Project myProject;
+  private final @NotNull ProjectSystemId myExternalSystemId;
+  private final @NotNull Project myProject;
 
   @SuppressWarnings("FieldCanBeLocal") // Used via reflection at showUi() and disposeResources()
   private JBLabel myProjectPathLabel;
@@ -45,7 +47,7 @@ public final class ExternalSystemTaskSettingsControl implements ExternalSystemSe
   private RawCommandLineEditor myArgumentsEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
 
-  @Nullable private ExternalSystemTaskExecutionSettings myOriginalSettings;
+  private @Nullable ExternalSystemTaskExecutionSettings myOriginalSettings;
 
   public ExternalSystemTaskSettingsControl(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     myProject = project;
@@ -57,7 +59,7 @@ public final class ExternalSystemTaskSettingsControl implements ExternalSystemSe
   }
 
   @Override
-  public void fillUi(@NotNull final PaintAwarePanel canvas, int indentLevel) {
+  public void fillUi(final @NotNull PaintAwarePanel canvas, int indentLevel) {
     myProjectPathLabel = new JBLabel(ExternalSystemBundle.message(
       "run.configuration.settings.label.project", myExternalSystemId.getReadableName()
     ));

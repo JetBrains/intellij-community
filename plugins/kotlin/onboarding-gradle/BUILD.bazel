@@ -1,0 +1,83 @@
+### auto-generated section `build kotlin.onboarding.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "onboarding-gradle_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "onboarding-gradle",
+  module_name = "kotlin.onboarding.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/statistics",
+    "//platform/analysis-api:analysis",
+    "//platform/feedback",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/onboarding",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+  ],
+  runtime_deps = [":onboarding-gradle_resources"]
+)
+
+jvm_library(
+  name = "onboarding-gradle_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":onboarding-gradle"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/feedback",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit5",
+    "//java/testFramework",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/onboarding",
+    "//plugins/kotlin/onboarding:onboarding_test_lib",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java_test_lib",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl_test_lib",
+  ],
+  runtime_deps = [":onboarding-gradle_resources"]
+)
+
+jvm_test(
+  name = "onboarding-gradle_test",
+  runtime_deps = [":onboarding-gradle_test_lib"]
+)
+### auto-generated section `build kotlin.onboarding.gradle` end

@@ -1,5 +1,5 @@
-// "Add non-null asserted (!!) call" "true"
-// ACTION: Add non-null asserted (!!) call
+// "Add non-null asserted (a!!) call" "true"
+// ACTION: Add non-null asserted (a!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Remove braces from 'if' statement
@@ -18,3 +18,5 @@ open class MyClass {
         }
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

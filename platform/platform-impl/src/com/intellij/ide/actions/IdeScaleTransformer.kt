@@ -69,33 +69,34 @@ internal class IdeScaleTransformer {
       private const val SCALING_STEP = 0.1f
       private const val PRESENTATION_MODE_MIN_SCALE = 0.5f
       private const val PRESENTATION_MODE_MAX_SCALE = 4f
-      private val ideScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
+      private val ideScaleOptions = listOf(0.7f, 0.8f, 0.9f, 1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f)
+
       private val presentationModeScaleOptions = listOf(1f, 1.1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f)
-      val currentScaleOptions get() = scaleOptions(UISettings.getInstance().presentationMode)
+      val currentScaleOptions: List<Float> get() = scaleOptions(UISettings.getInstance().presentationMode)
 
       private fun scaleOptions(isPresentation: Boolean) = if (isPresentation) presentationModeScaleOptions else ideScaleOptions
 
       fun createIdeScaleComboboxModel(): CollectionComboBoxModel<String> {
-        return CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue },
+        return CollectionComboBoxModel(scaleOptions(false).map { it.percentStringValue }.toMutableList(),
                                        UISettings.getInstance().ideScale.percentStringValue)
       }
 
       fun createPresentationModeScaleComboboxModel(): CollectionComboBoxModel<String> {
-        return CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue },
+        return CollectionComboBoxModel(scaleOptions(true).map { it.percentStringValue }.toMutableList(),
                                        UISettings.getInstance().presentationModeIdeScale.percentStringValue)
       }
 
-      fun validatePresentationModePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>): ValidationInfo? {
-        val message = validatePresentationModePercentScaleInput(comboBox.item) ?: return null
+      fun validatePercentScaleInput(builder: ValidationInfoBuilder, comboBox: ComboBox<String>, isPresentation: Boolean): ValidationInfo? {
+        val message = validatePercentScaleInput(comboBox.item, isPresentation) ?: return null
         return builder.error(message)
       }
 
       @Nls
-      fun validatePresentationModePercentScaleInput(string: String): String? {
-        val scale = scaleFromPercentStringValue(string, true)
+      fun validatePercentScaleInput(string: String, isPresentation: Boolean): String? {
+        val scale = scaleFromPercentStringValue(string, isPresentation)
                     ?: return IdeBundle.message("presentation.mode.ide.scale.wrong.number.message")
 
-        return validatePresentationModePercentScale(scale)
+        return if (isPresentation) validatePresentationModePercentScale(scale) else null
       }
 
       @Nls

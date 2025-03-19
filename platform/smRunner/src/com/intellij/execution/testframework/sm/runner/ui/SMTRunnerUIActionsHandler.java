@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -20,7 +20,7 @@ public class SMTRunnerUIActionsHandler implements TestResultsViewer.EventsListen
   }
 
   @Override
-  public void onTestingFinished(@NotNull final TestResultsViewer sender) {
+  public void onTestingFinished(final @NotNull TestResultsViewer sender) {
     // select first defect at the end (my be TRACK_RUNNING_TEST was enabled and affects on the fly selection)
     final SMTestProxy testsRootNode = sender.getTestsRootNode();
     if (TestConsoleProperties.SELECT_FIRST_DEFECT.value(myConsoleProperties)) {

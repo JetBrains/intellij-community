@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.ecmascript;
 
 import com.intellij.lang.PsiParser;
@@ -28,12 +28,10 @@ public class EcmaScriptRegexpParserDefinition extends RegExpParserDefinition {
                                                                     RegExpCapability.MAX_OCTAL_377);
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new RegExpLexer(CAPABILITIES) {
-      @Nullable
       @Override
-      public IElementType getTokenType() {
+      public @Nullable IElementType getTokenType() {
         final IElementType baseType = super.getTokenType();
         if (baseType == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN ||
             baseType == StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN) {

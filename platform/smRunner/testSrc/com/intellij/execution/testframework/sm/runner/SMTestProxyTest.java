@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IdempotenceChecker;
+import com.intellij.util.containers.ContainerUtil;
 import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
@@ -899,10 +900,11 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     assertNotNull(duration);
     assertEquals(7L, duration.longValue());
 
+
     suite.setTerminated();
     duration = suite.getDuration();
     assertNotNull(duration);
-    assertEquals(7L, duration.longValue());
+    assertEquals(0L, duration.longValue());
 
     test.setDuration(8);
     duration = suite.getDuration();
@@ -1058,6 +1060,161 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
 
     assertEquals(Magnitude.PASSED_INDEX, root.getMagnitudeInfo());
     assertFalse(root.isEmptySuite());
+  }
+
+  public void testDisplayTimeAfterTermination() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy firstSubSuite = createSuiteProxy("firstSubSuite", root);
+    SMTestProxy secondSubSuite = createSuiteProxy("secondSubSuite", root);
+    SMTestProxy firstSubSuiteChild = createTestProxy("firstSubSuiteChild", firstSubSuite);
+    SMTestProxy secondSubSuiteChild = createTestProxy("secondSubSuiteChild", secondSubSuite);
+
+    root.setStarted();
+    firstSubSuite.setStarted();
+    firstSubSuiteChild.setStarted();
+    secondSubSuite.setStarted();
+    secondSubSuiteChild.setStarted();
+    root.setTerminated();
+    firstSubSuiteChild.setDuration(10L);
+    secondSubSuiteChild.setDuration(5L);
+
+    assertDisplayTimeEqualsToSumOfChildren(firstSubSuite);
+    assertDisplayTimeEqualsToSumOfChildren(secondSubSuite);
+    assertDisplayTimeEqualsToSumOfChildren(root);
+  }
+
+  public void testDisplayTimeShowsZeroForNonStartedTestsAfterTermination() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy firstChild = createTestProxy("firstChild", root);
+    SMTestProxy secondChild = createTestProxy("secondChild", root);
+
+    root.setStarted();
+    firstChild.setStarted();
+    root.setTerminated();
+    firstChild.setDuration(5L);
+
+    assertNotNull(secondChild.getDuration());
+    assertEquals(0L, secondChild.getDuration().longValue());
+    assertDisplayTimeEqualsToSumOfChildren(root);
+  }
+
+  public void testDisplayTimeAfterTerminationHasNoEffectForPassedAndFailedTests() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy passedChild = createTestProxy("passedChild", root);
+    SMTestProxy failedChild = createTestProxy("failedChild", root);
+    SMTestProxy ignoredChild = createTestProxy("ignoredChild", root);
+    SMTestProxy runningChild = createTestProxy("runningChild", root);
+
+    root.setStarted();
+
+    passedChild.setStarted();
+    passedChild.setFinished();
+    passedChild.setDuration(10L);
+    Long passedChildDuration = passedChild.getDuration();
+
+    failedChild.setStarted();
+    failedChild.setTestFailed("message", "stacktrace", true);
+    failedChild.setDuration(5L);
+    Long failedChildDuration = failedChild.getDuration();
+
+    ignoredChild.setStarted();
+    ignoredChild.setTestIgnored("message", "stacktrace");
+    Long ignoredChildDuration = ignoredChild.getDuration();
+
+    runningChild.setStarted();
+    root.setTerminated();
+
+    assertEquals(passedChildDuration, passedChild.getDuration());
+    assertEquals(failedChildDuration, failedChild.getDuration());
+    assertNull(ignoredChildDuration);
+    assertEquals(ignoredChildDuration, ignoredChild.getDuration());
+    assertDisplayTimeEqualsToSumOfChildren(root);
+  }
+
+  public void testDisplayOwnTime() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy child1 = createTestProxy("child1", root);
+    SMTestProxy child2 = createTestProxy("child12", root);
+
+    root.setStarted();
+
+    child1.setStarted();
+    child1.setFinished();
+    child1.setDuration(10L);
+
+    child2.setStarted();
+    child2.setFinished();
+    child2.setDuration(10L);
+
+
+    root.setFinished();
+    root.setDuration(60_000_000_000L);
+
+    assertDisplayTimeEqualsToSumOfChildren(root);
+    assertTrue(root.getEndTimeMillis() - root.getStartTimeMillis() != root.getDuration());
+  }
+
+  public void testDisplayOwnTimeTerminated() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy child1 = createTestProxy("child1", root);
+    SMTestProxy child2 = createTestProxy("child12", root);
+
+    root.setStarted();
+
+    child1.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTimeMillis());
+    assertNotNull(child1.getEndTimeMillis());
+    assertNotNull(child2.getEndTimeMillis());
+  }
+
+  public void testTerminatedWithNonFinished() {
+    SMTestProxy root = createSuiteProxy("root");
+    SMTestProxy suite1 = createSuiteProxy("suite1", root);
+    SMTestProxy suite2 = createSuiteProxy("suite2", root);
+
+    root.setStarted();
+
+    suite1.setStarted();
+    suite1.setFinished();
+
+    SMTestProxy test1 = createTestProxy("test1", suite1);
+    SMTestProxy test2 = createTestProxy("test2", suite2);
+
+    test1.setStarted();
+    suite2.setStarted();
+    test2.setStarted();
+
+    root.setTerminated();
+
+    assertNotNull(root.getEndTimeMillis());
+    assertNotNull(suite1.getEndTimeMillis());
+    assertNotNull(suite2.getEndTimeMillis());
+    assertNotNull(test1.getEndTimeMillis());
+    assertNotNull(test2.getEndTimeMillis());
+
+    assertTrue(root.wasTerminated());
+    assertTrue(suite1.isPassed());
+    assertTrue(suite2.wasTerminated());
+    assertTrue(test1.wasTerminated());
+    assertTrue(test2.wasTerminated());
+  }
+
+
+  private static void assertDisplayTimeEqualsToSumOfChildren(@NotNull SMTestProxy node) {
+    List<? extends SMTestProxy> children = node.collectChildren(new Filter<>() {
+      @Override
+      public boolean shouldAccept(SMTestProxy test) {
+        return test.isLeaf();
+      }
+    });
+    assertTrue(ContainerUtil.all(children, child -> !child.wasTerminated() || child.getDuration() != null));
+    Long totalTime = ContainerUtil.reduce(ContainerUtil.map(children, child -> child.getDuration() == null ? 0 : child.getDuration()), 0L,
+                                          (a, b) -> a + b);
+    assertNotNull(node.getDuration());
+    assertEquals(node.getDuration(), totalTime);
   }
 
   protected static void assertWeightsOrder(final Magnitude previous, final Magnitude next) {

@@ -1,14 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.builtins.createFunctionType
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -21,18 +22,19 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.UnsignedErrorValueTypeConstant
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.CommonSupertypes
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
@@ -51,10 +53,9 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     )
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
 
-    @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
-    fun getTypeMapper(element: KtElement): KotlinTypeMapper?
-
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
+
+    fun isJvmOrCommonElement(psiElement: PsiElement): Boolean
 
     override val languagePlugin: UastLanguagePlugin
         get() = kotlinUastPlugin
@@ -99,13 +100,21 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
     }
 
-    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression? {
-        val parameter = ktCallElement.resolveToClassDescriptor()
-            ?.unsubstitutedPrimaryConstructor
+    override fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression? {
+        val classDescriptor = ktCallElement.resolveToClassDescriptor() ?: return null
+        val psiElement = classDescriptor.source.getPsi()
+        if (psiElement is PsiClass) {
+            // a usage Java annotation
+            return findAttributeValueExpression(psiElement, name)
+        }
+        val parameter = classDescriptor
+            .unsubstitutedPrimaryConstructor
             ?.valueParameters
             ?.find { it.name.asString() == name } ?: return null
 
-        return (parameter.source.getPsi() as? KtParameter)?.defaultValue
+        return (parameter.source.getPsi() as? KtParameter)?.defaultValue?.let {
+            languagePlugin.convertWithParent(it)
+        }
     }
 
     override fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression? {
@@ -132,17 +141,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return baseKotlinConverter.createVarargsHolder(arguments, parent)
     }
 
-    override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
-        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
-        val context = lastExpression.analyze()
-        if (context[BindingContext.USED_AS_RESULT_OF_LAMBDA, lastExpression] == true) {
-            return KotlinUImplicitReturnExpression(parent).apply {
-                returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
-            }
-        }
-        return null
-    }
-
     override fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,
         parent: UElement,
@@ -153,17 +151,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
         val parameters = if (includeExplicitParameters) functionDescriptor.explicitParameters else functionDescriptor.valueParameters
 
-        return parameters.map { p ->
+        return parameters.map { param ->
+            val type = param.type.toPsiType(parent, ktLambdaExpression, PsiTypeConversionConfiguration.create(ktLambdaExpression))
             KotlinUParameter(
                 UastKotlinPsiParameterBase(
-                    name = p.name.asString(),
-                    type = p.type.toPsiType(parent, ktLambdaExpression, PsiTypeConversionConfiguration.create(ktLambdaExpression)),
+                    name = param.name.asString(),
                     parent = ktLambdaExpression,
-                    ktOrigin = ktLambdaExpression,
-                    language = ktLambdaExpression.language,
-                    isVarArgs = p.isVararg,
-                    ktDefaultValue = null
-                ),
+                    isVarArgs = param.isVararg,
+                    ktDefaultValue = null,
+                    ktOrigin = ktLambdaExpression
+                ) { type },
                 null,
                 parent
             )
@@ -287,6 +284,13 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
+        when (ktCallElement) {
+            is KtSuperTypeCallEntry, is KtAnnotationEntry, is KtConstructorDelegationCall -> return UastCallKind.CONSTRUCTOR_CALL
+            is KtCallExpression -> {}
+            else -> errorWithAttachment("Unexpected element: ${ktCallElement::class.simpleName}") {
+                withPsiEntry("callElement", ktCallElement)
+            }
+        }
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
         val fqName = DescriptorUtils.getFqNameSafe(resolvedCall.candidateDescriptor)
         return when {
@@ -325,7 +329,61 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression is KtExpressionWithLabel) {
-            return ktExpression.analyze()[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]
+            fun PsiElement.getLambdaReceiver(): PsiElement {
+                val lambda = toUElementOfType<ULambdaExpression>()
+                // NB: not value parameters, which will exclude implicit `this` as the lambda receiver
+                return lambda?.parameters?.firstOrNull()?.javaPsi ?: this
+            }
+
+            val bindingContext = ktExpression.analyze()
+            return when (val psiElement = bindingContext[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]) {
+                null -> {
+                    if (ktExpression is KtInstanceExpressionWithLabel) {
+                        // A subtype of [KtExpressionWithLabel], including [KtThisExpression]/[KtSuperExpression]
+                        // If it's just `this`, not `this@withLabel`, LABEL_TARGET is empty, of course.
+                        // Try REFERENCE_TARGET one more time.
+                        bindingContext[BindingContext.REFERENCE_TARGET, ktExpression.instanceReference]?.let { descriptor ->
+                            when (descriptor) {
+                                is AnonymousFunctionDescriptor -> {
+                                    descriptor.source.getPsi()?.getLambdaReceiver()
+                                }
+                                is FunctionDescriptor -> {
+                                    if (descriptor.isExtension) {
+                                        // ReceiverType.ext(args...) -> ext(ReceiverType, args...)
+                                        val psiMethod = resolveToDeclarationImpl(ktExpression, descriptor) as? PsiMethod
+                                        psiMethod?.parameterList?.parameters?.firstOrNull()
+                                    } else {
+                                        // member function
+                                        resolveToDeclarationImpl(ktExpression, descriptor.containingDeclaration)
+                                    }
+                                }
+                                is PropertyDescriptor -> {
+                                    if (descriptor.isExtension) {
+                                        // ReceiverType.ext -> getExt(ReceiverType)
+                                        val maybeGetter = resolveToDeclarationImpl(ktExpression, descriptor) as? PsiMethod
+                                        maybeGetter?.parameterList?.parameters?.firstOrNull()
+                                    } else {
+                                        // member property
+                                        resolveToDeclarationImpl(ktExpression, descriptor.containingDeclaration)
+                                    }
+                                }
+                                else -> {
+                                    resolveToDeclarationImpl(ktExpression, descriptor)
+                                }
+                            }
+                        }
+                    } else null
+                }
+                is KtFunctionLiteral -> {
+                    // E.g., this@apply
+                    psiElement.getLambdaReceiver()
+                }
+                is KtDeclaration -> {
+                    // E.g., this@Foo
+                    psiElement.toLightElements().singleOrNull() ?: psiElement
+                }
+                else -> psiElement
+            }
         }
         return resolveToDeclarationImpl(ktExpression)
     }
@@ -341,7 +399,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getReceiverType(ktCallElement: KtCallElement, source: UElement): PsiType? {
         val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
-        val receiver = resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver ?: return null
+        val receiver = resolvedCall.extensionReceiver ?: resolvedCall.dispatchReceiver ?: return null
         return receiver.type.toPsiType(source, ktCallElement, PsiTypeConversionConfiguration.create(ktCallElement, isBoxed = true))
     }
 
@@ -398,10 +456,16 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return ktType.toPsiType(source, ktExpression, PsiTypeConversionConfiguration.create(ktExpression))
     }
 
+    private inline fun <reified T : DeclarationDescriptor> getDescriptor(ktDeclaration: KtDeclaration): T? {
+        return ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? T
+    }
+
+    private fun getType(ktDeclaration: KtDeclaration): KotlinType? {
+        return getDescriptor<CallableDescriptor>(ktDeclaration)?.returnType
+    }
+
     override fun getType(ktDeclaration: KtDeclaration, source: UElement): PsiType? {
-        val returnType = (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)
-            ?.returnType
-            ?: return null
+        val returnType = getType(ktDeclaration) ?: return null
         return returnType.toPsiType(
             source,
             ktDeclaration,
@@ -410,10 +474,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 isBoxed = returnType.isMarkedNullable,
             )
         )
-    }
-
-    private fun getType(ktDeclaration: KtDeclaration): KotlinType? {
-        return (ktDeclaration.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, ktDeclaration] as? CallableDescriptor)?.returnType
     }
 
     override fun getType(
@@ -430,6 +490,22 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 isBoxed = returnType.isMarkedNullable,
                 isForFake = isForFake,
             )
+        )
+    }
+
+    override fun getSuspendContinuationType(
+        suspendFunction: KtFunction,
+        containingLightDeclaration: PsiModifierListOwner?,
+    ): PsiType? {
+        val descriptor = suspendFunction.analyze()[BindingContext.FUNCTION, suspendFunction] ?: return null
+        if (!descriptor.isSuspend) return null
+        val returnType = descriptor.returnType ?: return null
+        val moduleDescriptor = DescriptorUtils.getContainingModule(descriptor)
+        val continuationType = moduleDescriptor.getContinuationOfTypeOrAny(returnType)
+        return continuationType.toPsiType(
+            containingLightDeclaration,
+            suspendFunction,
+            PsiTypeConversionConfiguration.create(suspendFunction)
         )
     }
 
@@ -462,14 +538,18 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
                 returnType.nullability() != TypeNullability.NOT_NULL
     }
 
-    override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+    override fun nullability(psiElement: PsiElement): KaTypeNullability? {
         return getTargetType(psiElement)?.nullability()?.let {
             when (it) {
-                TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
-                TypeNullability.NULLABLE -> KtTypeNullability.NULLABLE
-                TypeNullability.FLEXIBLE -> KtTypeNullability.UNKNOWN
+                TypeNullability.NOT_NULL -> KaTypeNullability.NON_NULLABLE
+                TypeNullability.NULLABLE -> KaTypeNullability.NULLABLE
+                TypeNullability.FLEXIBLE -> KaTypeNullability.UNKNOWN
             }
         }
+    }
+
+    override fun modality(ktDeclaration: KtDeclaration): Modality? {
+        return getDescriptor<MemberDescriptor>(ktDeclaration)?.modality
     }
 
     private fun getTargetType(annotatedElement: PsiElement): KotlinType? {
@@ -484,8 +564,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }
             annotatedElement.delegateExpression?.let { it.getType(it.analyze())?.arguments?.firstOrNull()?.type }?.let { return it }
         }
-        annotatedElement.getParentOfType<KtProperty>(false)?.let {
-            it.typeReference?.getType() ?: it.initializer?.let { it.getType(it.analyze()) }
+        annotatedElement.getParentOfType<KtProperty>(false)?.let { property ->
+            property.typeReference?.getType() ?: property.initializer?.let { it.getType(it.analyze()) }
         }?.let { return it }
         return null
     }

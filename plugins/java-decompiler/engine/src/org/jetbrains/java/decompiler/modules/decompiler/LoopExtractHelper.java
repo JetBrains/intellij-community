@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
@@ -12,12 +13,35 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.Statemen
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 
 public final class LoopExtractHelper {
 
-
+  /**
+   * Analyzes the provided statement structure to identify and extract loop constructs.
+   * If any loops are successfully extracted, the statement sequences are condensed.<p>
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * while(true){
+   *  if (var1 >= 10){
+   *    break
+   *  }
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * while(var1 >= 10){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   */
   public static boolean extractLoops(Statement root) {
 
     boolean res = (extractLoopsRec(root) != 0);
@@ -67,16 +91,33 @@ public final class LoopExtractHelper {
       return false;
     }
 
+    List<Statement> stats = new ArrayList<>();
     for (StatEdge edge : stat.getLabelEdges()) {
       if (edge.getType() != EdgeType.CONTINUE && edge.getDestination().type != StatementType.DUMMY_EXIT) {
+        if (edge.getType() == EdgeType.BREAK && isExternStatement(stat, edge.getSource(), edge.getSource())) {
+          stats.add(edge.getSource());
+        }
+        else {
+          return false;
+        }
+      }
+    }
+
+    if (!stats.isEmpty()) { // In this case prioritize first to help the Loop enhancer
+      if (stat.getParent().getStats().getLast() != stat) {
         return false;
       }
     }
 
-    return extractLastIf(stat) || extractFirstIf(stat);
+    if (!extractFirstIf(stat, stats)) {
+      return extractLastIf(stat, stats);
+    }
+    else {
+      return true;
+    }
   }
 
-  private static boolean extractLastIf(DoStatement stat) {
+  private static boolean extractLastIf(DoStatement stat, List<Statement> stats) {
 
     // search for an if condition at the end of the loop
     Statement last = stat.getFirst();
@@ -97,6 +138,19 @@ public final class LoopExtractHelper {
 
           if (set.isEmpty()) { // no direct continues in a do{}while loop
             if (isExternStatement(stat, ifstat, ifstat)) {
+              Statement first = stat.getFirst();
+              while (first.type == Statement.StatementType.SEQUENCE) {
+                first = first.getFirst();
+              }
+              if (first.type == Statement.StatementType.DO && ((DoStatement)first).getLoopType() == DoStatement.LoopType.DO) {
+                return false;
+              }
+
+              for (Statement s : stats) {
+                if (!ifstat.containsStatement(s)) {
+                  return false;
+                }
+              }
               extractIfBlock(stat, lastif);
               return true;
             }
@@ -107,7 +161,7 @@ public final class LoopExtractHelper {
     return false;
   }
 
-  private static boolean extractFirstIf(DoStatement stat) {
+  private static boolean extractFirstIf(DoStatement stat, List<Statement> stats) {
 
     // search for an if condition at the entrance of the loop
     Statement first = stat.getFirst();
@@ -118,13 +172,18 @@ public final class LoopExtractHelper {
     // found an if statement
     if (first.type == StatementType.IF) {
       IfStatement firstif = (IfStatement)first;
-
-      if (firstif.getFirst().getExprents().isEmpty()) {
+      List<Exprent> exprents = firstif.getFirst().getExprents();
+      if (exprents != null && exprents.isEmpty()) {
 
         if (firstif.iftype == IfStatement.IFTYPE_IF && firstif.getIfstat() != null) {
           Statement ifstat = firstif.getIfstat();
 
           if (isExternStatement(stat, ifstat, ifstat)) {
+            for (Statement s : stats) {
+              if (!ifstat.containsStatement(s)) {
+                return false;
+              }
+            }
             extractIfBlock(stat, firstif);
             return true;
           }
@@ -184,6 +243,11 @@ public final class LoopExtractHelper {
         edge.getSource().changeEdgeNode(EdgeDirection.FORWARD, edge, loop);
         loop.addPredecessor(edge);
       }
+    }
+
+    List<StatEdge> link = target.getPredecessorEdges(StatEdge.EdgeType.BREAK);
+    if (link.size() == 1) {
+      link.get(0).canInline = false;
     }
   }
 }

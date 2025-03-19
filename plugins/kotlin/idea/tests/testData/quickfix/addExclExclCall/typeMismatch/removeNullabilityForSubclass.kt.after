@@ -1,4 +1,4 @@
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (s!!) call" "true"
 
 interface A<out T>
 class B<out T>: A<T>
@@ -12,3 +12,5 @@ fun test() {
 }
 
 fun other(s: A<C>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix

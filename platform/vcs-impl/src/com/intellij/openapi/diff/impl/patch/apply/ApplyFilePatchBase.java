@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,14 +9,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
-  protected final static Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
+  protected static final Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
   protected final T myPatch;
 
   public ApplyFilePatchBase(T patch) {
@@ -60,8 +62,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
                                         @NotNull FilePath pathBeforeRename,
                                         @Nullable Supplier<? extends CharSequence> baseContents) throws IOException;
 
-  @Nullable
-  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
+  public static @Nullable VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
     throws IOException {
     VirtualFile file = null;
     if (beforeName != null) {
@@ -114,17 +115,15 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return true;
   }
 
-  @Nullable
-  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
+  private static @Nullable VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
     String[] pathNameComponents = fileName.split("/");
     int lastComponentToFind = pathNameComponents.length;
     return findFileToPatchByComponents(context, pathNameComponents, lastComponentToFind);
   }
 
-  @Nullable
-  private static VirtualFile findFileToPatchByComponents(ApplyPatchContext context,
-                                                         final String[] pathNameComponents,
-                                                         final int lastComponentToFind) {
+  private static @Nullable VirtualFile findFileToPatchByComponents(ApplyPatchContext context,
+                                                                   final String[] pathNameComponents,
+                                                                   final int lastComponentToFind) {
     VirtualFile patchedDir = context.getBaseDir();
     for (int i = context.getSkipTopDirs(); i < lastComponentToFind; i++) {
       VirtualFile nextChild;

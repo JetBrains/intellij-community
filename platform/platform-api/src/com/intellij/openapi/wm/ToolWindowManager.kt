@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -34,19 +35,19 @@ abstract class ToolWindowManager {
   abstract fun canShowNotification(toolWindowId: String): Boolean
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String, component: JComponent, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, component = component, anchor = anchor, canCloseContent = false, canWorkInDumbMode = false))
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String, canCloseContent: Boolean, anchor: ToolWindowAnchor): ToolWindow {
     return registerToolWindow(RegisterToolWindowTask(id = id, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -55,7 +56,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -65,7 +66,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
                          anchor: ToolWindowAnchor,
@@ -76,7 +77,7 @@ abstract class ToolWindowManager {
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   @ApiStatus.ScheduledForRemoval
   fun registerToolWindow(id: String,
                          canCloseContent: Boolean,
@@ -85,10 +86,12 @@ abstract class ToolWindowManager {
     return registerToolWindow(RegisterToolWindowTask(id = id, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
-  @ApiStatus.Internal
+  @Internal
   abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow
 
   /**
+   * Use only for dynamically registered toolwindows required for a certain operation.
+   *
    * [ToolWindow.getAnchor] is set to [ToolWindowAnchor.BOTTOM] by default.
    * [ToolWindow.setToHideOnEmptyContent] is set to `true` by default.
    */
@@ -99,9 +102,9 @@ abstract class ToolWindowManager {
   }
 
   /**
-   * does nothing if a tool window with specified isn't registered.
+   * Does nothing if a tool window with specified id isn't registered.
    */
-  @Deprecated("Use ToolWindowFactory and toolWindow extension point")
+  @Deprecated("Use ToolWindowFactory and com.intellij.toolWindow extension point")
   abstract fun unregisterToolWindow(id: String)
 
   abstract fun activateEditorComponent()
@@ -119,13 +122,12 @@ abstract class ToolWindowManager {
   abstract val toolWindowIdSet: Set<String>
 
   /**
-   * @return `ID` of currently active tool window or `null` if there is no active
-   * tool window.
+   * @return `ID` of currently active tool window or `null` if there is no active tool window.
    */
   abstract val activeToolWindowId: String?
 
   /**
-   * @return `ID` of tool window that was activated last time.
+   * @return `ID` of tool window activated last time.
    */
   abstract val lastActiveToolWindowId: String?
 
@@ -171,12 +173,14 @@ abstract class ToolWindowManager {
    */
   open fun getLocationIcon(id: String, fallbackIcon: Icon): Icon = fallbackIcon
 
+  open fun getShowInFindToolWindowIcon(): Icon = AllIcons.General.OpenInToolWindow
+
   open fun isStripeButtonShow(toolWindow: ToolWindow): Boolean = false
 }
 
 class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private val id: String) {
   @JvmField
-  var anchor = ToolWindowAnchor.BOTTOM
+  var anchor: ToolWindowAnchor = ToolWindowAnchor.BOTTOM
   @JvmField
   var stripeTitle: Supplier<@NlsContexts.TabTitle String>? = null
   @JvmField
@@ -195,19 +199,18 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
 
   @PublishedApi
   internal fun build(): RegisterToolWindowTask {
-    val result = RegisterToolWindowTask(id = id,
-                                        anchor = anchor,
-                                        component = null,
-                                        sideTool = sideTool,
-                                        canCloseContent = canCloseContent,
-                                        canWorkInDumbMode = true,
-                                        shouldBeAvailable = shouldBeAvailable,
-                                        contentFactory = contentFactory,
-                                        icon = icon,
-                                        stripeTitle = stripeTitle)
-
-    result.hideOnEmptyContent = hideOnEmptyContent
-    return result
+    return RegisterToolWindowTask(RegisterToolWindowTaskData(
+      id = id,
+      anchor = anchor,
+      component = null,
+      sideTool = sideTool,
+      canCloseContent = canCloseContent,
+      shouldBeAvailable = shouldBeAvailable,
+      contentFactory = contentFactory,
+      icon = icon,
+      stripeTitle = stripeTitle,
+      hideOnEmptyContent = hideOnEmptyContent,
+    ))
   }
 }
 

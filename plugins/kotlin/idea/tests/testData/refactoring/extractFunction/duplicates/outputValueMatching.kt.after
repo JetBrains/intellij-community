@@ -39,3 +39,5 @@ private fun i(a: Int): Int {
     println(a)
     return a + 1
 }
+
+// IGNORE_K2

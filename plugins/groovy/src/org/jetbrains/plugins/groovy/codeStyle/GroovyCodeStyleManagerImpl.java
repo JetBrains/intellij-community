@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -39,10 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 import java.util.Comparator;
 
-public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
-  @NotNull
+public final class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
   @Override
-  public GrImportStatement addImport(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) throws IncorrectOperationException {
+  public @NotNull GrImportStatement addImport(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) throws IncorrectOperationException {
     PsiElement anchor = getAnchorToInsertImportAfter(psiFile, statement);
     final PsiElement result = psiFile.addAfter(statement, anchor);
 
@@ -52,14 +37,12 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return gImport;
   }
 
-  @Nullable
-  private PsiElement getShellComment(@NotNull PsiElement psiFile) {
+  private static @Nullable PsiElement getShellComment(@NotNull PsiElement psiFile) {
     final ASTNode node = psiFile.getNode().findChildByType(GroovyTokenTypes.mSH_COMMENT);
     return node == null ? null : node.getPsi();
   }
 
-  @Nullable
-  private PsiElement getAnchorToInsertImportAfter(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) {
+  private static @Nullable PsiElement getAnchorToInsertImportAfter(@NotNull GroovyFile psiFile, @NotNull GrImportStatement statement) {
     final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(psiFile);
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();
@@ -102,7 +85,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return anchor;
   }
 
-  protected static int getPackageEntryIdx(PackageEntry @NotNull [] entries, @NotNull GrImportStatement statement) {
+  private static int getPackageEntryIdx(PackageEntry @NotNull [] entries, @NotNull GrImportStatement statement) {
     final GrCodeReferenceElement reference = statement.getImportReference();
     if (reference == null) return -1;
     final String packageName = StringUtil.getPackageName(reference.getCanonicalText());
@@ -131,7 +114,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     return allOther;
   }
 
-  protected void addLineFeedBefore(@NotNull PsiElement psiFile, @NotNull GrImportStatement result) {
+  private void addLineFeedBefore(@NotNull PsiElement psiFile, @NotNull GrImportStatement result) {
     final CodeStyleSettings rootSettings = CodeStyle.getSettings(psiFile.getContainingFile());
     final GroovyCodeStyleSettings settings = rootSettings.getCustomSettings(GroovyCodeStyleSettings.class);
 
@@ -163,7 +146,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
     }
   }
 
-  protected void addLineFeedAfter(@NotNull PsiElement psiFile, GrImportStatement result) {
+  private void addLineFeedAfter(@NotNull PsiElement psiFile, GrImportStatement result) {
     final GroovyCodeStyleSettings settings = GroovyCodeStyleSettings.getInstance(psiFile.getContainingFile());
     final PackageEntryTable layoutTable = settings.IMPORT_LAYOUT_TABLE;
     final PackageEntry[] entries = layoutTable.getEntries();

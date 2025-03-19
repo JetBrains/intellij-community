@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor
@@ -11,10 +10,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
-import git4idea.test.GitPlatformTest
-import git4idea.test.createRepository
-import git4idea.test.git
-import git4idea.test.tac
+import git4idea.test.*
 import java.io.File
 import java.util.*
 
@@ -47,7 +43,7 @@ class GitConfigTest : GitPlatformTest() {
     val config = GitConfig.read(File(gitFile, "config"))
     val rootDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile)
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitFile)
-    val reader = GitRepositoryReader(GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
+    val reader = GitRepositoryReader(myProject, GitRepositoryFiles.createInstance(rootDir!!, gitDir!!))
     val state = reader.readState(config.parseRemotes())
     val trackInfos = config.parseTrackInfos(state.localBranches.keys, state.remoteBranches.keys)
     assertTrue("Couldn't find correct a#branch tracking information among: [$trackInfos]",
@@ -75,7 +71,7 @@ class GitConfigTest : GitPlatformTest() {
     createRepository()
     addRemote("git@github.com:foo/bar.git")
     val pushUrl = "git@github.com:foo/push.git"
-    git("config remote.origin.pushurl " + pushUrl)
+    git("config remote.origin.pushurl $pushUrl")
 
     val config = readConfig()
     val remote = getFirstItem(config.parseRemotes())
@@ -295,11 +291,8 @@ class GitConfigTest : GitPlatformTest() {
     assertEquals("git@github.com:foo/bar.git", remote.firstUrl)
   }
 
-  private fun getTestDataFolder(subfolder: String): File {
-    val pluginRoot = File(PluginPathManager.getPluginHomePath("git4idea"))
-    val testData = File(pluginRoot, "testData")
-    return File(File(testData, "config"), subfolder)
-  }
+  private fun getTestDataFolder(subfolder: String): File =
+    TestDataUtil.basePath.resolve("config/$subfolder").toFile()
 
   private fun loadConfigData(dataFolder: File): Collection<TestSpec> {
     val tests = dataFolder.listFiles { _, name -> !name.startsWith(".") }
@@ -317,13 +310,13 @@ class GitConfigTest : GitPlatformTest() {
           file.name.endsWith("_result.txt") -> resultFile = file
         }
       }
-      val message = " file not found in $testDir among ${Arrays.toString(testDir.list())}"
+      val message = " file not found in $testDir among ${testDir.list().contentToString()}"
       assertNotNull("description $message", descriptionFile)
       assertNotNull("config $message", configFile)
       assertNotNull("result $message", resultFile)
 
       val testName = FileUtil.loadFile(descriptionFile!!).lines()[0] // description is in the first line of the desc-file
-      if (!testName.toLowerCase().startsWith("ignore")) {
+      if (!testName.lowercase(Locale.getDefault()).startsWith("ignore")) {
         data.add(TestSpec(testName, configFile!!, resultFile!!))
       }
     }

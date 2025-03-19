@@ -9,8 +9,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
-import com.intellij.openapi.util.TextRange
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.intersect
@@ -18,11 +17,13 @@ import com.jetbrains.rd.util.reactive.IProperty
 import com.jetbrains.rd.util.reactive.ISource
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.throttleLast
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.time.Duration
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class EditorAnchoringRect(
   lifetime: Lifetime,
   private val editor: Editor,
@@ -94,11 +95,11 @@ class EditorAnchoringRect(
   }
 
   private fun calculateRectangle(): Rectangle? {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     require(!editor.isDisposed)
 
     val range = if (rangeMarker.isValid) {
-      TextRange(rangeMarker.startOffset, rangeMarker.endOffset)
+      rangeMarker.textRange
     }
     else {
       return null

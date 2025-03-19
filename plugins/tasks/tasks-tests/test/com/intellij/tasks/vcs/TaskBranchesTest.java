@@ -15,10 +15,10 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.RunAll;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -239,7 +239,11 @@ public abstract class TaskBranchesTest extends HeavyPlatformTestCase {
   }
 
   private List<Repository> initRepositories(String... names) {
-    return ContainerUtil.map(names, this::initRepository);
+    List<Repository> result = new ArrayList<>();
+    for (String t : names) {
+      result.add(initRepository(t));
+    }
+    return result;
   }
 
   @Override

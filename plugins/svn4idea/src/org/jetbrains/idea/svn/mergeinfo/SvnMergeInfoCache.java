@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.mergeinfo;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -11,7 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,14 +28,16 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
+@Service(Service.Level.PROJECT)
 public final class SvnMergeInfoCache {
 
-  private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
+  private static final Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   // key - working copy root url
-  @NotNull private final Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
+  private final @NotNull Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
 
+  @Topic.ProjectLevel
   public static final Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
     new Topic<>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
 
@@ -55,8 +58,7 @@ public final class SvnMergeInfoCache {
     }
   }
 
-  @Nullable
-  public MergeInfoCached getCachedState(@NotNull WCInfoWithBranches info, String branchPath) {
+  public @Nullable MergeInfoCached getCachedState(@NotNull WCInfoWithBranches info, String branchPath) {
     BranchInfo branchInfo = getBranchInfo(info, branchPath);
 
     return branchInfo != null ? branchInfo.getCached() : null;
@@ -89,8 +91,7 @@ public final class SvnMergeInfoCache {
     return branchInfo != null && branchInfo.isMixedRevisionsFound();
   }
 
-  @Nullable
-  private BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
+  private @Nullable BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
     MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
@@ -152,7 +153,7 @@ public final class SvnMergeInfoCache {
   private static final class MyCurrentUrlData {
 
     // key - working copy local path
-    @NotNull private final Map<String, BranchInfo> myBranchInfo = ContainerUtil.createSoftMap();
+    private final @NotNull Map<String, BranchInfo> myBranchInfo = CollectionFactory.createSoftMap();
 
     private MyCurrentUrlData() {
     }

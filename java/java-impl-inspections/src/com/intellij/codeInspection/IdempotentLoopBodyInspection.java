@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -11,10 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitWhileStatement(@NotNull PsiWhileStatement loop) {
@@ -59,7 +58,7 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         checkControlFlow(loop, controlFlow, holder);
       }
 
-      private void checkControlFlow(PsiLoopStatement loop, ControlFlow bodyFlow, @NotNull ProblemsHolder holder) {
+      private static void checkControlFlow(PsiLoopStatement loop, ControlFlow bodyFlow, @NotNull ProblemsHolder holder) {
         Collection<PsiVariable> variables = ControlFlowUtil.getWrittenVariables(bodyFlow, 0, bodyFlow.getSize(), true);
         if (variables.isEmpty()) return;
         List<PsiReferenceExpression> reads = ControlFlowUtil.getReadBeforeWrite(bodyFlow);

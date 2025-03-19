@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -34,6 +34,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testLambdaExpressions() { doTest(false, true); }
   public void testUnsupportedFeatures() { doTest(false, false); }
   public void testModulesNotSupported() { doTest(false, false); }
+  public void testWrongNumberOfArguments() { doTest(false, false); }
 
   public void testTooManyVarargsPolyArguments() {
     doTest(true, false);

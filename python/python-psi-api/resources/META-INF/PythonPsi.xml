@@ -1,12 +1,10 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
-                    interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceResolveProvider"
                     interface="com.jetbrains.python.psi.resolve.PyReferenceResolveProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.typeProvider" interface="com.jetbrains.python.psi.impl.PyTypeProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.typeHintProvider" interface="com.jetbrains.python.codeInsight.typing.PyTypeHintProvider" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pySuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassMembersProvider"
                     interface="com.jetbrains.python.psi.types.PyClassMembersProvider"
@@ -46,13 +44,6 @@
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Python"
-              language="Python"
-              extensions="py;pyw"
-              hashBangs="python"
-              implementationClass="com.jetbrains.python.PythonFileType"
-              fieldName="INSTANCE"/>
-    <iconMapper mappingFile="PythonPsiApiIconMappings.json"/>
     <projectService serviceInterface="com.jetbrains.python.psi.types.TypeEvalContextCache"
                     serviceImplementation="com.jetbrains.python.psi.types.TypeEvalContextCacheImpl"/>
   </extensions>

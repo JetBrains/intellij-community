@@ -1,13 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Path
 import java.util.jar.Attributes
 import java.util.jar.JarInputStream
+import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 import kotlin.test.fail
 
 class DirectoryContentSpecTest {
@@ -78,6 +79,27 @@ class DirectoryContentSpecTest {
     dir.assertNotMatches(directoryContent {
       file("a.txt", "a")
     }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `file content different line separators`() {
+    val dir = directoryContent {
+      file("a.txt", "first\nsecond")
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      file("a.txt", "first\r\nsecond")
+    }, FileTextMatcher.ignoreLineSeparators())
+
+    try {
+      dir.assertMatches(directoryContent {
+        file("a.txt", "first\r\nsecond")
+      })
+      fail("Must not match")
+    }
+    catch (e: AssertionError) {
+      assertThat(e.message).contains("Different line separators")
+    }
   }
 
   @Test
@@ -205,8 +227,8 @@ class DirectoryContentSpecTest {
     val zip = zipFile {
       file("a.txt", "a")
     }.generateInTempDir()
-    assertTrue(zip.isFile())
-    Assertions.assertThat(zip.fileName.toString()).endsWith(".zip")
+    assertTrue(zip.isRegularFile())
+    assertThat(zip.fileName.toString()).endsWith(".zip")
     zip.assertMatches(zipFile {
       file("a.txt", "a")
     })
@@ -226,8 +248,8 @@ class DirectoryContentSpecTest {
     val jar = jarFile {
       file("a.txt", "a")
     }.generateInTempDir()
-    assertTrue(jar.isFile())
-    Assertions.assertThat(jar.fileName.toString()).endsWith(".jar")
+    assertTrue(jar.isRegularFile())
+    assertThat(jar.fileName.toString()).endsWith(".jar")
     jar.assertMatches(jarFile {
       file("a.txt", "a")
     })

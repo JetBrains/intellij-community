@@ -14,26 +14,32 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class BaseReference implements PsiReference, PyUserInitiatedResolvableReference {
   protected final PsiElement myElement;
+  private TextRange myTextRange;
 
   protected BaseReference(@NotNull PsiElement element) {
     myElement = element;
   }
 
+  public BaseReference(@NotNull PsiElement element, @Nullable TextRange textRange) {
+    this(element);
+    myTextRange = textRange;
+  }
+
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
-    return new TextRange(0, myElement.getTextLength());
+  public @NotNull TextRange getRangeInElement() {
+    if (myTextRange == null) {
+      return new TextRange(0, myElement.getTextLength());
+    }
+    return myTextRange;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myElement.getText();
   }
 
@@ -60,9 +66,8 @@ public abstract class BaseReference implements PsiReference, PyUserInitiatedReso
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement userInitiatedResolve() {
+  public @Nullable PsiElement userInitiatedResolve() {
     // Override this method if your reference may benefit from this knowledge
     return resolve();
   }

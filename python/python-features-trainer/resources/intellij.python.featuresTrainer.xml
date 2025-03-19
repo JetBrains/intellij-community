@@ -1,0 +1,11 @@
+<idea-plugin package="com.intellij.python.featuresTrainer">
+  <dependencies>
+    <plugin id="training"/>
+  </dependencies>
+  <extensions defaultExtensionNs="training">
+    <ift.language.extension language="Python" defaultProductName="PyCharm"
+                            implementationClass="com.intellij.python.featuresTrainer.ift.PythonLangSupport"/>
+    <ift.learning.course language="Python" implementationClass="com.intellij.python.featuresTrainer.ift.PythonLearningCourse"/>
+    <ifs.suggesterSupport language="Python" implementationClass="com.intellij.python.featuresTrainer.ifs.PythonSuggesterSupport"/>
+  </extensions>
+</idea-plugin>

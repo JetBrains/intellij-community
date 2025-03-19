@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "buildScripts-codeOptimizer_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_test(
+  name = "buildScripts-codeOptimizer_test",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:platform-build_scripts-code_optimizer-proguard",
+  ],
+  runtime_deps = [":buildScripts-codeOptimizer_test_resources"]
+)
+### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` end

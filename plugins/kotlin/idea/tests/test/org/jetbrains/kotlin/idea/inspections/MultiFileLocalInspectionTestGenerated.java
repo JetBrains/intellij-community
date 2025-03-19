@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiFileLocalInspections")
 public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLocalInspectionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -131,6 +138,21 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
     @TestMetadata("unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test")
     public void testUnusedSymbol_internalConstructorUsedInJava_InternalConstructorUsedInJava() throws Exception {
         runTest("testData/multiFileLocalInspections/unusedSymbol/internalConstructorUsedInJava/internalConstructorUsedInJava.test");
+    }
+
+    @TestMetadata("unusedSymbol/jvmField/jvmFieldTest.test")
+    public void testUnusedSymbol_jvmField_JvmFieldTest() throws Exception {
+        runTest("testData/multiFileLocalInspections/unusedSymbol/jvmField/jvmFieldTest.test");
+    }
+
+    @TestMetadata("unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test")
+    public void testUnusedSymbol_propertyWithJvmNameAnnotation_PropertyWithJvmNameAnnotation() throws Exception {
+        runTest("testData/multiFileLocalInspections/unusedSymbol/propertyWithJvmNameAnnotation/propertyWithJvmNameAnnotation.test");
+    }
+
+    @TestMetadata("unusedSymbol/topLevelFunctionWithJvmName/topLevelFunctionWithJvmName.test")
+    public void testUnusedSymbol_topLevelFunctionWithJvmName_TopLevelFunctionWithJvmName() throws Exception {
+        runTest("testData/multiFileLocalInspections/unusedSymbol/topLevelFunctionWithJvmName/topLevelFunctionWithJvmName.test");
     }
 
     @TestMetadata("usePropertyAccessSyntax/excludedCustomAccessor/excludedCustomAccessor.test")

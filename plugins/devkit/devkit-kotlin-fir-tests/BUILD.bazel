@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.devkit.kotlin.fir.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-fir-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-fir-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2",
+    "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-code-insight-k2_test_lib",
+    "//plugins/devkit/intellij.devkit:devkit",
+    "//plugins/devkit/devkit-core:core",
+    "//java/openapi:java",
+    "//plugins/devkit/devkit-tests:testFramework",
+    "//plugins/devkit/devkit-tests:testFramework_test_lib",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//xml/dom-openapi:dom",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
+  ],
+  runtime_deps = [
+    "//plugins/kotlin:kotlin-plugin-community-main",
+    "//plugins/devkit/intellij.kotlin.devkit/k2:kotlin-devkit-k2",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-fir-tests_test",
+  runtime_deps = [":kotlin-fir-tests_test_lib"]
+)
+### auto-generated section `build intellij.devkit.kotlin.fir.tests` end

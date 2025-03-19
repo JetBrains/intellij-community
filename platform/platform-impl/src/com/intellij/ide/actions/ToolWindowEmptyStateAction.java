@@ -11,10 +11,12 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentUI;
 import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowAction {
   protected ToolWindowEmptyStateAction(@NotNull String toolWindowId, Icon icon) {
     super(toolWindowId);

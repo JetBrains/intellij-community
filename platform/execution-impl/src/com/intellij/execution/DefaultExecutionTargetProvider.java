@@ -3,15 +3,16 @@ package com.intellij.execution;
 
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class DefaultExecutionTargetProvider extends ExecutionTargetProvider {
-  @NotNull
+@ApiStatus.Internal
+public final class DefaultExecutionTargetProvider extends ExecutionTargetProvider {
   @Override
-  public List<ExecutionTarget> getTargets(@NotNull Project project, @NotNull RunConfiguration configuration) {
+  public @NotNull List<ExecutionTarget> getTargets(@NotNull Project project, @NotNull RunConfiguration configuration) {
     return Collections.singletonList(DefaultExecutionTarget.INSTANCE);
   }
 }

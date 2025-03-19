@@ -12,9 +12,6 @@ private const val URL = "https://localhost/"
 
 class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   private class TestExternalEventLogSettings: ExternalEventLogSettings {
-    override fun getTemplateUrl(recorderId: String): String = URL
-    override fun isSendAllowedOverride(): Boolean = true
-    override fun isCollectAllowedOverride(): Boolean = true
     override fun forceDisableCollectionConsent(): Boolean = true
     override fun forceLoggingAlwaysEnabled(): Boolean = true
     override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
@@ -30,16 +27,8 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   fun testSubstitution() {
-    val applicationInfo = EventLogInternalApplicationInfo(true)
+    val applicationInfo = EventLogInternalApplicationInfo(false, true)
     Assertions.assertThat(applicationInfo.templateUrl).isNotEqualTo(URL)
-  }
-
-  fun testSendOverride() {
-    assertTrue(StatisticsUploadAssistant.getSendAllowedOverride())
-  }
-
-  fun testCollectOverride() {
-    assertTrue(StatisticsUploadAssistant.getCollectAllowedOverride())
   }
 
   fun testForceDisableCollectionConsent() {

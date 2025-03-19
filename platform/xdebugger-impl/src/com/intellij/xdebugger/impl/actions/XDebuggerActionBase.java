@@ -1,11 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
 
 public abstract class XDebuggerActionBase extends AnAction {
   private final boolean myHideDisabledInPopup;
@@ -19,7 +23,7 @@ public abstract class XDebuggerActionBase extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     boolean hidden = isHidden(event);
     if (hidden) {
@@ -28,7 +32,7 @@ public abstract class XDebuggerActionBase extends AnAction {
     }
 
     boolean enabled = isEnabled(event);
-    if (myHideDisabledInPopup && ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (myHideDisabledInPopup && event.isFromContextMenu()) {
       presentation.setVisible(enabled);
     }
     else {
@@ -37,53 +41,57 @@ public abstract class XDebuggerActionBase extends AnAction {
     presentation.setEnabled(enabled);
   }
 
-  protected boolean isEnabled(final AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return e.getUpdateSession().compute(this, "isEnabled", ActionUpdateThread.EDT, () ->
-        ContainerUtil.exists(supports, support -> isEnabled(project, e, support)));
+      DebuggerSupport support = new DebuggerSupport();
+      if (isEnabled(project, e, support)) {
+        return true;
+      }
+      return false;
     }
     return false;
   }
 
-  @NotNull
-  protected abstract DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport);
+  protected abstract @NotNull DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport);
 
   private boolean isEnabled(final Project project, final AnActionEvent event, final DebuggerSupport support) {
     return getHandler(support).isEnabled(project, event);
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    performWithHandler(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    performDebuggerAction(e, () -> performWithHandler(e));
   }
 
-  protected boolean performWithHandler(AnActionEvent e) {
+  protected boolean performWithHandler(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || project.isDisposed()) {
       return true;
     }
 
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      if (isEnabled(project, e, support)) {
-        perform(project, e, support);
-        return true;
-      }
+    DebuggerSupport support = new DebuggerSupport();
+    if (isEnabled(project, e, support)) {
+      perform(project, e, support);
+      return true;
     }
     return false;
   }
 
-  private void perform(final Project project, final AnActionEvent e, final DebuggerSupport support) {
+  private void perform(@NotNull Project project,
+                       @NotNull AnActionEvent e,
+                       @NotNull DebuggerSupport support) {
     getHandler(support).perform(project, e);
   }
 
-  protected boolean isHidden(AnActionEvent event) {
+  protected boolean isHidden(@NotNull AnActionEvent event) {
     Project project = event.getProject();
     if (project != null && !project.isDisposed()) {
-      DebuggerSupport[] supports = DebuggerSupport.getDebuggerSupports();
-      return event.getUpdateSession().compute(this, "isHidden", ActionUpdateThread.EDT, () ->
-        ContainerUtil.and(supports, support -> getHandler(support).isHidden(project, event)));
+      DebuggerSupport support = new DebuggerSupport();
+      if (!getHandler(support).isHidden(project, event)) {
+        return false;
+      }
+      return true;
     }
     return true;
   }

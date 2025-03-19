@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 import java.util.List;
 
-public class UpdateGroovyCopyrightsProvider extends UpdateCopyrightsProvider {
+public final class UpdateGroovyCopyrightsProvider extends UpdateCopyrightsProvider {
   @Override
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
     return new UpdateJavaFileCopyright(project, module, file, options) {

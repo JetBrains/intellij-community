@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.openapi.application.runWriteAction
@@ -9,11 +9,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createFile
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.text.nullize
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import kotlin.io.path.createFile
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val EXCLUDED_DIR_NAME = "excludedDir"
 
@@ -41,9 +42,9 @@ class TestManager(private val projectRule: ProjectRule, private val tempDirManag
     if (filePath!! == "_tmp_") {
       val file = tempDirManager.newPath(".txt")
       if (!annotation!!.doNotCreate) {
-        file.createFile()
+        file.createParentDirectories().createFile()
       }
-      filePath = file.systemIndependentPath
+      filePath = file.invariantSeparatorsPathString
       return
     }
 

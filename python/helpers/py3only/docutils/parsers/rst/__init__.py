@@ -1,4 +1,4 @@
-# $Id: __init__.py 7598 2013-01-30 12:39:24Z milde $
+# $Id: __init__.py 9258 2022-11-21 14:51:43Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -69,10 +69,11 @@ appropriate).
 
 __docformat__ = 'reStructuredText'
 
+
 import docutils.parsers
 import docutils.statemachine
-from docutils import frontend, nodes, Component
-from docutils.parsers.rst import states
+from docutils.parsers.rst import roles, states
+from docutils import frontend, nodes
 from docutils.transforms import universal
 
 
@@ -80,19 +81,19 @@ class Parser(docutils.parsers.Parser):
 
     """The reStructuredText parser."""
 
-    supported = ('restructuredtext', 'rst', 'rest', 'restx', 'rtxt', 'rstx')
+    supported = ('rst', 'restructuredtext', 'rest', 'restx', 'rtxt', 'rstx')
     """Aliases this parser supports."""
 
-    settings_spec = (
+    settings_spec = docutils.parsers.Parser.settings_spec + (
         'reStructuredText Parser Options',
         None,
         (('Recognize and link to standalone PEP references (like "PEP 258").',
           ['--pep-references'],
           {'action': 'store_true', 'validator': frontend.validate_boolean}),
          ('Base URL for PEP references '
-          '(default "http://www.python.org/dev/peps/").',
+          '(default "https://peps.python.org/").',
           ['--pep-base-url'],
-          {'metavar': '<URL>', 'default': 'http://www.python.org/dev/peps/',
+          {'metavar': '<URL>', 'default': 'https://peps.python.org/',
            'validator': frontend.validate_url_trailing_slash}),
          ('Template for PEP file part of URL. (default "pep-%04d")',
           ['--pep-file-url-template'],
@@ -100,9 +101,10 @@ class Parser(docutils.parsers.Parser):
          ('Recognize and link to standalone RFC references (like "RFC 822").',
           ['--rfc-references'],
           {'action': 'store_true', 'validator': frontend.validate_boolean}),
-         ('Base URL for RFC references (default "http://www.faqs.org/rfcs/").',
+         ('Base URL for RFC references '
+          '(default "https://tools.ietf.org/html/").',
           ['--rfc-base-url'],
-          {'metavar': '<URL>', 'default': 'http://www.faqs.org/rfcs/',
+          {'metavar': '<URL>', 'default': 'https://tools.ietf.org/html/',
            'validator': frontend.validate_url_trailing_slash}),
          ('Set number of spaces for tab expansion (default 8).',
           ['--tab-width'],
@@ -114,34 +116,36 @@ class Parser(docutils.parsers.Parser):
          ('Leave spaces before footnote references.',
           ['--leave-footnote-reference-space'],
           {'action': 'store_false', 'dest': 'trim_footnote_reference_space'}),
-         ('Disable directives that insert the contents of external file '
-          '("include" & "raw"); replaced with a "warning" system message.',
-          ['--no-file-insertion'],
-          {'action': 'store_false', 'default': 1,
-           'dest': 'file_insertion_enabled',
-           'validator': frontend.validate_boolean}),
-         ('Enable directives that insert the contents of external file '
-          '("include" & "raw").  Enabled by default.',
-          ['--file-insertion-enabled'],
-          {'action': 'store_true'}),
-         ('Disable the "raw" directives; replaced with a "warning" '
-          'system message.',
-          ['--no-raw'],
-          {'action': 'store_false', 'default': 1, 'dest': 'raw_enabled',
-           'validator': frontend.validate_boolean}),
-         ('Enable the "raw" directive.  Enabled by default.',
-          ['--raw-enabled'],
-          {'action': 'store_true'}),
          ('Token name set for parsing code with Pygments: one of '
-          '"long", "short", or "none (no parsing)". Default is "long".',
+          '"long", "short", or "none" (no parsing). Default is "long".',
           ['--syntax-highlight'],
           {'choices': ['long', 'short', 'none'],
            'default': 'long', 'metavar': '<format>'}),
          ('Change straight quotation marks to typographic form: '
           'one of "yes", "no", "alt[ernative]" (default "no").',
           ['--smart-quotes'],
-          {'default': False, 'validator': frontend.validate_ternary}),
-        ))
+          {'default': False, 'metavar': '<yes/no/alt>',
+           'validator': frontend.validate_ternary}),
+         ('Characters to use as "smart quotes" for <language>. ',
+          ['--smartquotes-locales'],
+          {'metavar': '<language:quotes[,language:quotes,...]>',
+           'action': 'append',
+           'validator': frontend.validate_smartquotes_locales}),
+         ('Inline markup recognized at word boundaries only '
+          '(adjacent to punctuation or whitespace). '
+          'Force character-level inline markup recognition with '
+          '"\\ " (backslash + space). Default.',
+          ['--word-level-inline-markup'],
+          {'action': 'store_false', 'dest': 'character_level_inline_markup'}),
+         ('Inline markup recognized anywhere, regardless of surrounding '
+          'characters. Backslash-escapes must be used to avoid unwanted '
+          'markup recognition. Useful for East Asian languages. '
+          'Experimental.',
+          ['--character-level-inline-markup'],
+          {'action': 'store_true', 'default': False,
+           'dest': 'character_level_inline_markup'}),
+         )
+        )
 
     config_section = 'restructuredtext parser'
     config_section_dependencies = ('parsers',)
@@ -155,12 +159,14 @@ class Parser(docutils.parsers.Parser):
         self.inliner = inliner
 
     def get_transforms(self):
-        return Component.get_transforms(self) + [
-            universal.SmartQuotes]
+        return super().get_transforms() + [universal.SmartQuotes]
 
     def parse(self, inputstring, document):
         """Parse `inputstring` and populate `document`, a document tree."""
         self.setup_parse(inputstring, document)
+        # provide fallbacks in case the document has only generic settings
+        self.document.settings.setdefault('tab_width', 8)
+        self.document.settings.setdefault('syntax_highlight', 'long')
         self.statemachine = states.RSTStateMachine(
               state_classes=self.state_classes,
               initial_state=self.initial_state,
@@ -168,7 +174,17 @@ class Parser(docutils.parsers.Parser):
         inputlines = docutils.statemachine.string2lines(
               inputstring, tab_width=document.settings.tab_width,
               convert_whitespace=True)
-        self.statemachine.run(inputlines, document, inliner=self.inliner)
+        for i, line in enumerate(inputlines):
+            if len(line) > self.document.settings.line_length_limit:
+                error = self.document.reporter.error(
+                            'Line %d exceeds the line-length-limit.'%(i+1))
+                self.document.append(error)
+                break
+        else:
+            self.statemachine.run(inputlines, document, inliner=self.inliner)
+        # restore the "default" default role after parsing a document
+        if '' in roles._roles:
+            del roles._roles['']
         self.finish_parse()
 
 
@@ -190,7 +206,7 @@ class DirectiveError(Exception):
         self.msg = message
 
 
-class Directive(object):
+class Directive:
 
     """
     Base class for reStructuredText directives.
@@ -248,21 +264,18 @@ class Directive(object):
     - ``lineno`` is the absolute line number of the first line
       of the directive.
 
-    - ``src`` is the name (or path) of the rst source of the directive.
-
-    - ``srcline`` is the line number of the first line of the directive
-      in its source. It may differ from ``lineno``, if the main source
-      includes other sources with the ``.. include::`` directive.
-
-    - ``content_offset`` is the line offset of the first line of the content from
-      the beginning of the current input.  Used when initiating a nested parse.
+    - ``content_offset`` is the line offset of the first line
+      of the content from the beginning of the current input.
+      Used when initiating a nested parse.
 
     - ``block_text`` is a string containing the entire directive.
 
     - ``state`` is the state which called the directive function.
 
-    - ``state_machine`` is the state machine which controls the state which called
-      the directive function.
+    - ``state_machine`` is the state machine which controls the state
+      which called the directive function.
+
+    - ``reporter`` is the state machine's `reporter` instance.
 
     Directive functions return a list of nodes which will be inserted
     into the document tree at the point where the directive was
@@ -277,7 +290,7 @@ class Directive(object):
     substitution definition context, typically using code like this::
 
         if not isinstance(state, states.SubstitutionDef):
-            error = state_machine.reporter.error(
+            error = self.reporter.error(
                 'Invalid context: the "%s" directive can only be used '
                 'within a substitution definition.' % (name),
                 nodes.literal_block(block_text, block_text), line=lineno)
@@ -285,7 +298,7 @@ class Directive(object):
     """
 
     # There is a "Creating reStructuredText Directives" how-to at
-    # <http://docutils.sf.net/docs/howto/rst-directives.html>.  If you
+    # <https://docutils.sourceforge.io/docs/howto/rst-directives.html>.  If you
     # update this docstring, please update the how-to as well.
 
     required_arguments = 0
@@ -314,9 +327,10 @@ class Directive(object):
         self.block_text = block_text
         self.state = state
         self.state_machine = state_machine
+        self.reporter = state_machine.reporter
 
     def run(self):
-        raise NotImplementedError('Must override run() is subclass.')
+        raise NotImplementedError('Must override run() in subclass.')
 
     # Directive errors:
 
@@ -369,7 +383,7 @@ class Directive(object):
         if 'name' in self.options:
             name = nodes.fully_normalize_name(self.options.pop('name'))
             if 'name' in node:
-                del(node['name'])
+                del node['name']
             node['names'].append(name)
             self.state.document.note_explicit_target(node, node)
 

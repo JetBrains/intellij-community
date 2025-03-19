@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.handlers
 
@@ -10,6 +10,7 @@ import com.intellij.find.impl.FindManagerImpl
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -19,18 +20,19 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
-import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinCallableFindUsagesOptions
@@ -41,19 +43,22 @@ import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindFunctio
 import org.jetbrains.kotlin.idea.base.searching.usages.dialogs.KotlinFindPropertyUsagesDialog
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
-import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
+import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
+import org.jetbrains.kotlin.idea.search.usagesSearch.buildProcessDelegationCallKotlinConstructorUsagesTask
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.match
@@ -86,12 +91,7 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             mustOpenInNewTab: Boolean
         ): AbstractFindUsagesDialog {
             val options = factory.findFunctionOptions
-            val lightMethod = getElement().toLightMethods().firstOrNull()
-            if (lightMethod != null) {
-                return KotlinFindFunctionUsagesDialog(lightMethod, project, options, toShowInNewTab, mustOpenInNewTab, isSingleFile, this)
-            }
-
-            return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab)
+            return KotlinFindFunctionUsagesDialog(getElement(), project, options, toShowInNewTab, mustOpenInNewTab, isSingleFile, this)
         }
 
         override fun createKotlinReferencesSearchOptions(options: FindUsagesOptions, forHighlight: Boolean): KotlinReferencesSearchOptions {
@@ -105,10 +105,16 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinFunctionFindUsagesOptions
             return query
                 .applyFilter(kotlinOptions.isSkipImportStatements) { !it.isImportUsage() }
+                .applyFilter(!fromHighlighting) { it.element !is KtLabelReferenceExpression }
         }
     }
 
@@ -146,26 +152,33 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
         override fun getPrimaryElements(): Array<PsiElement> {
             val element = psiElement as KtNamedDeclaration
             if (element is KtParameter && !element.hasValOrVar() && factory.findPropertyOptions.isSearchInOverridingMethods) {
-                val function = element.ownerFunction
-                if (function != null && function.isOverridable()) {
-                    function.toLightMethods().singleOrNull()?.let { method ->
-                        if (OverridingMethodsSearch.search(method).any()) {
-                            val parametersCount = method.parameterList.parametersCount
-                            val parameterIndex = element.parameterIndex()
-
-                            assert(parameterIndex < parametersCount)
-                            return OverridingMethodsSearch.search(method, true)
-                                .filter { method.parameterList.parametersCount == parametersCount }
-                                .mapNotNull { method.parameterList.parameters[parameterIndex].unwrapped }
-                                .toTypedArray()
-                        }
-                    }
-                }
+                return ActionUtil.underModalProgress(project, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) { getPrimaryElementsUnderProgress(element) }
             } else if (factory.findPropertyOptions.isSearchForBaseAccessors) {
                 val supers = KotlinFindUsagesSupport.getSuperMethods(element, null)
                 return if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
             }
 
+            return super.getPrimaryElements()
+        }
+
+        private fun getPrimaryElementsUnderProgress(element: KtParameter): Array<PsiElement> {
+            val function = element.ownerFunction
+            if (function != null && function.isOverridable()) {
+                val parameterIndex = element.parameterIndex()
+                val offset = if ((function as? KtFunction)?.receiverTypeReference != null) 1 else 0
+                return super.getPrimaryElements() + KotlinFindUsagesSupport.searchOverriders(function, function.useScope)
+                    .mapNotNull { overrider ->
+                        when (overrider) {
+                            is KtNamedFunction -> overrider.valueParameters[parameterIndex]
+                            is PsiMethod -> {
+                                overrider.parameterList.takeIf { it.parametersCount > parameterIndex + offset }?.getParameter(parameterIndex + offset)
+                            }
+                            else -> null
+                        }
+                    }
+                    .toList()
+                    .toTypedArray()
+            }
             return super.getPrimaryElements()
         }
 
@@ -187,7 +200,12 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             )
         }
 
-        override fun applyQueryFilters(element: PsiElement, options: FindUsagesOptions, query: Query<PsiReference>): Query<PsiReference> {
+        override fun applyQueryFilters(
+            element: PsiElement,
+            options: FindUsagesOptions,
+            fromHighlighting: Boolean,
+            query: Query<PsiReference>
+        ): Query<PsiReference> {
             val kotlinOptions = options as KotlinPropertyFindUsagesOptions
 
             if (!kotlinOptions.isReadAccess && !kotlinOptions.isWriteAccess) {
@@ -264,43 +282,91 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
             if (options.isUsages) {
                 val baseKotlinSearchOptions = createKotlinReferencesSearchOptions(options, forHighlight)
-                val kotlinSearchOptions = if (element is KtNamedFunction && KotlinPsiHeuristics.isPossibleOperator(element)) {
+                var kotlinSearchOptions = if (element is KtNamedFunction && KotlinPsiHeuristics.isPossibleOperator(element)) {
                     baseKotlinSearchOptions
                 } else {
                     baseKotlinSearchOptions.copy(searchForOperatorConventions = false)
                 }
+                if (element is KtDeclaration && element.isExpectDeclaration() && !kotlinOptions.searchExpected) {
+                    kotlinSearchOptions = kotlinSearchOptions.copy(searchForExpectedUsages = true)
+                }
 
                 val searchParameters = KotlinReferencesSearchParameters(element, options.searchScope, kotlinOptions = kotlinSearchOptions)
 
-                addTask { applyQueryFilters(element, options, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
+                addTask { applyQueryFilters(element, options, forHighlight, ReferencesSearch.search(searchParameters)).forEach(referenceProcessor) }
 
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
-                    // TODO: very bad code!! ReferencesSearch does not work correctly for constructors and annotation parameters
+                    val nonKotlinSources = options.searchScope.excludeKotlinSources(project)
                     val psiMethodScopeSearch = when {
-                        element is KtParameter && element.dataClassComponentMethodName != null ->
-                            options.searchScope.excludeKotlinSources(project)
+                        element is KtParameter && element.dataClassComponentMethodName != null -> {
+                            nonKotlinSources
+                        }
                         else -> options.searchScope
                     }
 
                     for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
                         addTask {
+                            // function as property syntax when there is java super
                             val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
                             applyQueryFilters(
                                 element,
                                 options,
+                                forHighlight,
                                 query
                             ).forEach(referenceProcessor)
                         }
                     }
+
+                    if (element is KtPrimaryConstructor) {
+                        val containingClass = element.containingClass()
+                        if (containingClass?.isAnnotation() == true) {
+                            addTask {
+                                val query = ReferencesSearch.search(containingClass, nonKotlinSources)
+                                applyQueryFilters(
+                                    element,
+                                    options,
+                                    forHighlight,
+                                    query
+                                ).forEach(referenceProcessor)
+                            }
+                        }
+                    }
+                }
+
+                if (element is KtConstructor<*>) {
+                    addTask(
+                        element.buildProcessDelegationCallKotlinConstructorUsagesTask(options.searchScope) { callElement ->
+                            callElement.calleeExpression?.let { callee ->
+                                val reference = callee.mainReference
+                                reference == null || referenceProcessor.process(reference) } != false
+                        }
+                    )
                 }
             }
 
+
             if (kotlinOptions.searchOverrides) {
                 addTask {
-                    val overriders = HierarchySearchRequest(element, options.searchScope, true).searchOverriders()
-                    overriders.all {
+                    val overriders = KotlinFindUsagesSupport.searchOverriders(element, options.searchScope)
+                    val processor: (PsiElement) -> Boolean = all@{
                         val element = runReadAction { it.takeIf { it.isValid }?.navigationElement } ?: return@all true
                         processUsage(uniqueProcessor, element)
+                    }
+                    if (!overriders.all(processor)) {
+                        false
+                    } else {
+                        val psiClass = runReadAction {
+                            when (element) {
+                                is KtNamedFunction -> element.toPossiblyFakeLightMethods().singleOrNull()
+                                else -> null
+                            }?.containingClass?.takeIf { LambdaUtil.isFunctionalClass(it) }
+                        }
+
+                        if (psiClass != null) {
+                            FunctionalExpressionSearch.search(psiClass, options.searchScope).asIterable().all(processor)
+                        } else {
+                            true
+                        }
                     }
                 }
             }
@@ -317,10 +383,11 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
     protected abstract fun applyQueryFilters(
         element: PsiElement,
         options: FindUsagesOptions,
+        fromHighlighting: Boolean,
         query: Query<PsiReference>
     ): Query<PsiReference>
 
-    override fun isSearchForTextOccurrencesAvailable(psiElement: PsiElement, isSingleFile: Boolean): Boolean =
+    protected override fun isSearchForTextOccurrencesAvailable(psiElement: PsiElement, isSingleFile: Boolean): Boolean =
         !isSingleFile && psiElement !is KtParameter
 
     override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope): Collection<PsiReference> {

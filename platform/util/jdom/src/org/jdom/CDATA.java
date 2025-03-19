@@ -54,10 +54,12 @@
 
 package org.jdom;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
- * An XML CDATA section. Represents character-based content within an XML
- * document that should be output within special CDATA tags. Semantically it's
- * identical to a simple {@link Text} object, but output behavior is different.
+ * An XML CDATA section.
+ * Represents character-based content within an XML document that should be output within special CDATA tags.
+ * Semantically it's identical to a simple {@link Text} object, but output behavior is different.
  * CDATA makes no guarantees about the underlying textual representation of
  * character data, but does expose that data as a Java String.
  *
@@ -93,6 +95,12 @@ public class CDATA extends Text {
     setText(string);
   }
 
+  public CDATA(boolean ignored, String string) {
+    super(CType.CDATA);
+
+    value = string == null ? "" : string;
+  }
+
   /**
    * This will set the value of this <code>CDATA</code> node.
    *
@@ -104,23 +112,22 @@ public class CDATA extends Text {
    *                              or the CDATA end delimiter <code>]]&gt;</code>.
    */
   @Override
-  public CDATA setText(final String str) {
+  public CDATA setText(@Nullable String str) {
     // Overrides Text.setText() because this needs to check that CDATA rules
     // are enforced. We could have a separate Verifier check for CDATA
     // beyond Text and call that alone before super.setText().
 
     if (str == null || str.isEmpty()) {
-      value = EMPTY_STRING;
+      value = "";
       return this;
     }
 
-    final String reason = Verifier.checkCDATASection(str);
+    String reason = Verifier.checkCDATASection(str);
     if (reason != null) {
       throw new IllegalDataException(str, "CDATA section", reason);
     }
 
     value = str;
-
     return this;
   }
 
@@ -135,7 +142,7 @@ public class CDATA extends Text {
    *                              or the CDATA end delimiter <code>]]&gt;</code>.
    */
   @Override
-  public void append(final String str) {
+  public void append(@Nullable String str) {
     // Overrides Text.append(String) because this needs to check that CDATA
     // rules are enforced. We could have a separate Verifier check for CDATA
     // beyond Text and call that alone before super.setText().
@@ -144,24 +151,15 @@ public class CDATA extends Text {
       return;
     }
 
-    // we need a temp value to ensure that the value is changed _after_
-    // validation
-    final String tmpValue;
-    //noinspection StringEquality
-    if (value == EMPTY_STRING) {
-      tmpValue = str;
-    }
-    else {
-      tmpValue = value + str;
-    }
-
+    // we need a temp value to ensure that the value is changed after validation
+    String tmpValue = value == null || value.isEmpty() ? str : value + str;
     // we have to do late checking since the end of a CDATA section could
     // have been created by concatenating both strings:
     // "]" + "]>"
     // or
     // "]]" + ">"
     // TODO: maybe this could be optimized for this two cases
-    final String reason = Verifier.checkCDATASection(tmpValue);
+    String reason = Verifier.checkCDATASection(tmpValue);
     if (reason != null) {
       throw new IllegalDataException(str, "CDATA section", reason);
     }

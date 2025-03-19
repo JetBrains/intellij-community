@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.util.NlsContexts
 
 abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : NewProjectWizardMultiStepFactory<S>>(
   parent: NewProjectWizardStep,
@@ -24,7 +25,7 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : N
     )
   }
 
-  override fun initSteps() = epName.extensionList
+  override fun initSteps(): LinkedHashMap<@NlsContexts.Label String, NewProjectWizardStep> = epName.extensionList
     .sortedBy { it.ordinal }
     .filter { it.isEnabled(context) }
     .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }

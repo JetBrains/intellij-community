@@ -42,6 +42,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testPass() {
+    doTest();
+  }
+
   public void testFile() {
     doTest();
   }
@@ -288,6 +292,21 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-37718
+  public void testWithAssert() {
+    doTest();
+  }
+  
+  // PY-37718
+  public void testWithAssertFalse() {
+    doTest();
+  }
+
+  // PY-51564
+  public void testWithSeveralContextsAssert() {
+    doTest();
+  }
+
   // PY-29767
   public void testContinueInPositiveIteration() {
     doTest();
@@ -479,17 +498,29 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   // PY-7758
-  public void testControlFlowAbruptedOnExit() {
+  public void testControlFlowIsAbruptAfterExit() {
     doTest();
   }
 
   // PY-7758
-  public void testControlFlowAbruptedOnSysExit() {
+  public void testControlFlowIsAbruptAfterSysExit() {
+    doTest();
+  }
+
+  public void testTypeGuard() {
+    doTest();
+  }
+
+  public void testTypeGuardConjunct() {
+    doTest();
+  }
+
+  public void testTypeGuardWhile() {
     doTest();
   }
 
   // PY-23859
-  public void testControlFlowAbruptedOnRealSelfFailAssumedByClassName() {
+  public void testControlFlowIsAbruptAfterSelfFail() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -498,8 +529,53 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     check(fullPath, flow);
   }
 
-  public void testControlFlowAbruptedOnPytestFail() {
+  // PY-24273
+  public void testControlFlowIsAbruptAfterNoReturn() {
+    doTest();
+  }
+
+  // TODO migrate this test class to Python 3 SDK by default to make this test work
+  // PY-53703
+  //public void testControlFlowIsAbruptAfterNever() {
+  //  doTest();
+  //}
+
+  // PY-61878
+  public void testTypeAliasStatement() {
+    doTest();
+  }
+
+  // PY-61878
+  public void testTypeAliasStatementWithTypeParameterList() {
     doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testTypeParameterListInFunctionDeclaration() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testTypeParameterListInClassDeclaration() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreExcludedFromItsGraph() {
+    doTestFirstStatement();
+  }
+
+  public void testFunctionAnnotationsAndParameterDefaultsAreIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreIncludedInItsGraph() {
+    doTestFirstStatement();
+  }
+
+  // PY-61877
+  public void testNewStyleGenericFunctionAnnotationsAreNotIncludedInEnclosingScopeGraph() {
+    doTest();
   }
 
   private void doTestFirstStatement() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +72,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  @NotNull
-  protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (DumbService.isDumb(file.getProject())) {
       return emptyTask();
@@ -88,7 +88,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
                                   ? Collections.emptyList() : collectAutoImports(file);
 
     return new FutureTask<>(() -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
       try {
         for (Runnable runnable : runnables) {
@@ -107,8 +107,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   /**
    * walk PSI and for each unresolved reference ask {@link ReferenceImporter} how to import it
    */
-  @NotNull
-  private static List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
+  private static @NotNull List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) return List.of();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return List.of();
@@ -123,16 +122,19 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     file.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        for (PsiReference reference : element.getReferences()) {
-          if (reference.resolve() == null) {
-            for (ReferenceImporter importer : referenceImporters) {
-              BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
-              if (action != null) {
-                result.add(action);
+        if (!(element instanceof PsiLanguageInjectionHost)) { // ignore contributed references from languages and plugins
+          for (PsiReference reference : element.getReferences()) {
+            if (reference.resolve() == null) {
+              for (ReferenceImporter importer : referenceImporters) {
+                BooleanSupplier action = importer.computeAutoImportAtOffset(editor, file, element.getTextRange().getStartOffset(), true);
+                if (action != null) {
+                  result.add(action);
+                }
               }
             }
           }
         }
+
         super.visitElement(element);
       }
     });
@@ -141,7 +143,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends BooleanSupplier> actions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (actions.isEmpty()) return;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return;
@@ -164,8 +166,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     return runnables;
   }
 
-  @NotNull
-  private static NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
+  private static @NotNull NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
     if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
       String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
       return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
@@ -195,13 +196,12 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     collector.setOptimizeImportsNotification(hint);
   }
 
-  static class NotificationInfo {
+  static final class NotificationInfo {
     static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
     static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 
     private final boolean mySomethingChanged;
-    @HintText
-    private final String myMessage;
+    private final @HintText String myMessage;
 
     NotificationInfo(@NotNull @HintText String message) {
       this(true, message);

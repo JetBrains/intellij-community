@@ -46,6 +46,16 @@ public class PyTypeTest extends PyTestCase {
     doTest("str",
            "t = ('a', 2)\n" +
            "expr = t[0]");
+    doTest("List[bool]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[2]):
+                 expr = t[i]""");
+    doTest("Union[int, List[bool]]",
+           """
+             from typing import List, Literal
+             def foo(t: tuple[int, str, List[bool]], i: Literal[0, -1]):
+                 expr = t[i]""");
   }
 
   public void testTupleAssignmentType() {
@@ -89,8 +99,8 @@ public class PyTypeTest extends PyTestCase {
   public void testUnionOfTuples() {
     doTest("Union[Tuple[int, str], Tuple[str, int]]",
            """
-             def x():
-               if True:
+             def x(b):
+               if b:
                  return (1, 'a')
                else:
                  return ('a', 1)
@@ -108,7 +118,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSetComp() {
-    doTest("set",
+    doTest("Set[int]",
            "expr = {i for i in range(3)}");
   }
 
@@ -213,32 +223,6 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
-  public void testEpydocReturnType() {
-    doTest("str",
-           """
-             def foo(*args):
-                 '''@rtype: C{str}'''
-                 return args[0]expr = foo('')""");
-  }
-
-  public void testEpydocParamType() {
-    doTest("str",
-           """
-             def foo(s):
-                 '''@type s: C{str}'''
-                 expr = s""");
-  }
-
-  public void testEpydocIvarType() {
-    doTest("int",
-           """
-             class C:
-                 s = None
-                 '''@type: C{int}'''
-                 def foo(self):
-                     expr = self.s""");
-  }
-
   public void testRestParamType() {
     doTest("int",
            """
@@ -302,6 +286,83 @@ public class PyTypeTest extends PyTestCase {
                  x = g()
                  if not isinstance(x, (str, long)):
                      expr = x""");
+  }
+
+  public void testIsInstance2() {
+    doTest("str",
+           """
+             x = ""
+             if isinstance(x, (1, "")):
+                 expr = x
+             """);
+  }
+
+  public void testIfIsInstanceOr1() {
+    doTest("Union[str, int]",
+           """
+               def foo(a):
+                   if isinstance(a, int) or isinstance(a, str):
+                       expr = a
+           """);
+  }
+
+  public void testIfIsInstanceOr2() {
+    doTest("Union[B, A, int, str]",
+           """
+           class A:
+               pass
+           
+           class B:
+               pass
+          
+           def f(a: object):
+               if isinstance(a, str) or isinstance(a, int) or isinstance(a, A) or isinstance(a, B):
+                   expr = a
+               else:
+                   pass
+           """);
+  }
+
+  public void testIfIsInstanceAnd1() {
+    doTest("A",
+           """
+             class A:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A)) and isinstance(a, (A, int)):
+                     expr = a
+             """);
+  }
+
+  public void testIfIsInstanceAnd2() {
+    doTest("A",
+           """
+             class A:
+                 pass
+             
+             class B:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A)) and isinstance(a, (A, int)) and isinstance(a, (B, A)):
+                     expr = a
+             """);
+  }
+
+  public void testIfIsInstanceLogicalExpressions() {
+    doTest("Union[B, str]",
+           """
+             class A:
+                 pass
+             
+             class B:
+                 pass
+             
+             def f(a):
+                 if isinstance(a, (str, A, int)) and not isinstance(a, (A, int)) or isinstance(a, B):
+                     expr = a
+             """);
   }
 
   // PY-4383
@@ -412,6 +473,16 @@ public class PyTypeTest extends PyTestCase {
              if False is isinstance(a, str):
                  raise TypeError('Invalid type')
              expr = a""");
+  }
+
+  public void testIfNotEqOperator() {
+    doTest("Literal[\"ab\"]",
+           """
+             from typing import Literal
+             def foo(v: Literal["abba", "ab"]):
+                 if (v <> "abba"):
+                     expr = v
+             """);
   }
 
   // PY-4279
@@ -885,30 +956,6 @@ public class PyTypeTest extends PyTestCase {
            "expr = open('foo', 'rb')\n");
   }
 
-  public void testIoOpenDefault() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo')
-             """);
-  }
-
-  public void testIoOpenText() {
-    doTest("TextIO",
-           """
-             import io
-             expr = io.open('foo', 'r')
-             """);
-  }
-
-  public void testIoOpenBinary() {
-    doTest("BinaryIO",
-           """
-             import io
-             expr = io.open('foo', 'rb')
-             """);
-  }
-
   public void testNoResolveToFunctionsInTypes() {
     doTest("Union[C, Any]",
            """
@@ -1112,6 +1159,17 @@ public class PyTypeTest extends PyTestCase {
     doTest("str",
            "xs = (2,'val')\n" +
            "(a, (_, expr)) = (1, xs) ");
+  }
+
+  // PY-38928
+  public void testIterateListOfTuples() {
+    doTest(
+      "str",
+      """
+        for ((_, expr)) in [(1, 'foo')]:
+            pass
+        """
+    );
   }
 
   public void testConstructorUnification() {
@@ -1419,482 +1477,9 @@ public class PyTypeTest extends PyTestCase {
            TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
   }
 
-  // PY-1182
-  public void testListTypeByModifications() {
-    doTest("List[int]",
-           """
-             def f():
-                 expr = []
-                 expr.append(42)
-                 expr.append(0)"""
-    );
-
-    doTest("List[Union[str, int]]",
-           """
-             def f():
-                 expr = []
-                 expr.append('a')
-                 expr.append(1)"""
-    );
-
-    doTest("List[Union[Union[int, str], Any]]",
-           "expr = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]\n" +
-           "expr.append('a')"
-    );
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = [1, 2]
-             expr.append(42)
-             expr.extend(['a']"""
-    );
-
-    doTest("List[Union[int, str, None]]",
-           "expr = []\n" +
-           "expr.extend([1, 'a', None])"
-    );
-
-    doTest("List[int]",
-           "expr = []\n" +
-           "expr.index(42)");
-
-    doTest("List[int]",
-           "expr = [1, 2, 3]\n");
-
-    doTest("List[Union[int, Any]]",
-           """
-             expr = [1, 2, 3]
-             expr.append(var)
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = [1, 2, 3]
-             expr[0] = 'a'
-             expr[1] = 'b'
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = [1, 2, 3]
-             expr[0] = 'a'
-             expr[1] = 'b'
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = [1, 2]
-             t, expr[1] = 23, 'b'
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             def f():
-                 expr, b = [1, 2, 3], 'abc'
-                 expr.append('a')
-             """
-    );
-
-    doTest("List[int]",
-           """
-             def f():    expr = [1, 2, 3]
-                 def inner():
-                     expr.append('a')
-             """
-    );
-  }
-
-  // PY-1182
-  public void testListTypeByModificationsConstructor() {
-    doTest("List[str]",
-           """
-             expr = list()
-             expr.append('a')
-             """
-    );
-
-    doTest("List[Union[str, int]]",
-           """
-             expr = list()
-             expr.append('a')
-             expr.append(1)
-             """
-    );
-
-    doTest("List[Union[int, str]]",
-           """
-             a = list([1, 2, 3])
-             a.append('a')
-             expr = a
-             """
-    );
-
-    doTest("List[Union[str, Any]]",
-           """
-             expr = list()
-             expr.append('a')
-             expr.append(var)
-             """
-    );
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = list([1, 2])
-             t, expr[1] = 23, 'b'
-             """);
-
-    doTest("List[Union[str, Any]]",
-           """
-             expr = list(var)
-             expr[0] = 'abc'
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             b, expr = 1, list([1, 2, 3])
-             expr.append('a')
-             """
-    );
-
-    doTest("List[int]",
-           """
-             def f():    expr = list([1, 2, 3])
-                 def inner():
-                     expr.append('a')
-             """
-    );
-  }
-
-  // PY-29577
-  public void testRangeTypeByModifications() {
-    doTest("List[int]",
-           "expr = range(10)\n");
-
-    doTest("List[Union[int, str]]",
-           "expr = range(10)\n" +
-           "expr.append('a')");
-
-    doTest("List[Union[int, Any]]",
-           """
-             expr = range(10)
-             expr.append(var)
-             """);
-
-    doTest("List[Union[int, str]]",
-           """
-             expr = range(10)
-             expr[0] = 'a'
-             """);
-
-    doTest("List[Union[int, str, None]]",
-           "expr = range(10)\n" +
-           "expr.extend(['a', None])");
-
-    doTest("List[Union[int, str]]",
-           "expr = range(10)\n" +
-           "expr.index('a')");
-  }
-
-  // PY-1182
-  public void testDictTypeByModifications() {
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr['b'] = "s\""""
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr['b'] = "s\""""
-    );
-
-    doTest("Dict[str, Union[int, List[int]]]",
-           """
-             def f():
-                 expr = {}
-                 expr['a'] = 0
-                 expr['c'] = [1, 2]"""
-    );
-
-    doTest("Dict[str, Union[int, Any]]",
-           """
-             def f():
-                 expr = {'b': D()}
-                 expr['a'] = 2
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr['b'], t = "s", 12"""
-    );
-
-    doTest("Dict[str, Union[int, Any]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr['a'] = var
-             """
-    );
-
-    doTest("Dict[str, int]",
-           """
-             def f():
-                 expr = {'a': 3, 'b': 4}
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr.update({'a': 'str'})
-             """
-    );
-
-    doTest("Dict[str, Union[int, Any]]",
-           """
-             def f():
-                 expr = {'a': 3}
-                 expr.update({'b': var})
-             """
-    );
-
-    doTest("Dict[str, int]",
-           """
-             def f():
-                 expr = {}
-                 expr.update(a=1, b=2)"""
-    );
-
-    doTest("Dict[Union[int, str], Union[int, str]]",
-           """
-             def f():
-                 expr = {1: '3'}
-                 expr.update(a=1, b=2)"""
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 expr = {}
-                 expr['a'] = 23
-                 expr.update(a='m', b='n')"""
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             def f():
-                 b, expr = 23, {'a': 3}
-                 expr['b'] = 'l'"""
-    );
-
-    doTest("Dict[str, int]",
-           """
-             def f():    expr = {'a': 1}
-                 def inner():
-                     expr['b'] = 'a'
-             """
-    );
-  }
-
-  // PY-1182
-  public void testDictTypeByModificationConstructor() {
-    doTest("Dict[str, int]",
-           """
-             expr = dict()
-             expr['d'] = 12
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             expr = dict({'a': 1, 'b': 2})
-             expr['a'] = '12'
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))
-             expr['d'] = '12'
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))
-             expr['d'] = '12'
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             expr = dict([('two', 2), ('one', 1), ('three', 3)])
-             expr['d'] = '12'
-             """
-    );
-
-    doTest("Dict[str, Union[int, Any]]",
-           """
-             expr = dict({'a': 1, 'b': 2})
-             expr['a'] = var
-             """
-    );
-
-    doTest("Dict[Union[str, Any], Union[int, Any]]",
-           """
-             expr = dict(var)
-             expr.update({'c': 12})
-             """
-    );
-
-    doTest("Dict[str, Union[int, str]]",
-           """
-             a, expr = 23, dict({'a': 1})
-             expr.update({'c': '34'})
-             """
-    );
-
-    doTest("Dict[str, int]",
-           """
-             def f():    expr = dict({'a': 1})
-                 def inner():
-                     expr['b'] = 'a'
-             """
-    );
-  }
-
   public void testDictCallOnDictLiteralResult() {
     doTest("Dict[str, int]",
            "expr = dict({'a': 1})");
-  }
-
-  // PY-1182
-  public void testSetTypeByModifications() {
-    doTest("Set[Union[str, int]]",
-           """
-             def f():
-                 expr = {'abc'}
-                 expr.add(1)"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr = {1, 2}
-                 b = {'abc'}
-                 expr.update(b)"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr = {1, 2}
-                 b = {2, 3}
-                 expr.update(b, ['a', 'b'], {1, 2})"""
-    );
-
-    doTest("Set[str]",
-           """
-             def f():
-                 expr = {'m', 'n'}
-                 expr.update({'a': 1, 'b': 2})"""
-    );
-
-    doTest("Set[Union[Union[int, str], Any]]",
-           """
-             def f():
-                 expr = {1, 2}
-                 b = {'a', 'b'}
-                 expr.update(b, var)"""
-    );
-
-    doTest("Set[str]",
-           """
-             def f():
-                 expr, var = {'a', 'b'}, 'lala'
-                 expr.add('b')"""
-    );
-
-    doTest("Set[int]",
-           """
-             def f():    expr = {1, 2, 3}
-                 def inner():
-                     expr.add('a')
-             """
-    );
-  }
-
-  // PY-1182
-  public void testSetTypeByModificationsConstructor() {
-    doTest("Set[int]",
-           """
-             def f():
-                 expr = set()
-                 expr.add(1)"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr = set({1, 2})
-                 expr.add('abc')"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr = set({1, 2})
-                 b = {'abc'}
-                 expr.update(b)"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr = set({1, 2})
-                 b = {2, 3}
-                 expr.update(b, ['a', 'b'], {1, 2})"""
-    );
-
-    doTest("Set[Union[str, Any]]",
-           """
-             def f():
-                 expr = set()
-                 b = {'a', 'b'}
-                 expr.update(b, var)"""
-    );
-
-    doTest("Set[Union[str, Any]]",
-           """
-             def f():
-                 expr = set(var)
-                 b = {'a', 'b'}
-                 expr.update(b)"""
-    );
-
-    doTest("Set[Union[int, str]]",
-           """
-             def f():
-                 expr, var = set([1, 2, 3]), 'lala'
-                 expr.add('b')"""
-    );
-
-    doTest("Set[int]",
-           """
-             def f():
-                 expr = set()
-                 expr.add(1)
-                 def inner():
-                     expr.add('a')
-             """
-    );
   }
 
   // PY-20063
@@ -2054,19 +1639,29 @@ public class PyTypeTest extends PyTestCase {
              """);
   }
 
-  public void testHeterogeneousListLiteral() {
+  public void testListLiteral() {
+    doTest("list", "expr = []");
+
+    doTest("List[int]", "expr = [1, 2, 3]");
+
     doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
 
     doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
   }
 
-  public void testHeterogeneousSetLiteral() {
+  public void testSetLiteral() {
+    doTest("Set[int]", "expr = {1}");
+
     doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
 
     doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
   }
 
-  public void testHeterogeneousDictLiteral() {
+  public void testDictLiteral() {
+    doTest("dict", "expr = {}");
+
+    doTest("Dict[int, bool]", "expr = {1: False}");
+
     doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
 
     doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
@@ -3094,6 +2689,62 @@ public class PyTypeTest extends PyTestCase {
              expr, y2 = p2""");
   }
 
+  // PY-29489
+  public void testGenericIterableUnpackingNoBrackets() {
+    doTest("int",
+           """
+             _, expr, _ = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingParentheses() {
+    doTest("int",
+           """
+             (_, expr, _) = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testGenericIterableUnpackingSquareBrackets() {
+    doTest("int",
+           """
+             [_, expr] = [1, 2, 3]
+             """);
+  }
+
+  // PY-29489
+  public void testNonGenericIterableUnpacking() {
+    doTest("str",
+           """
+             _, expr = "ab"
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInAssignments() {
+    doTest("int",
+           """
+             [_, [[expr], _]] = "foo", ((42,), "bar")
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInForLoops() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             for [_, [expr]] in xs:
+                 pass
+             """);
+  }
+
+  public void testUnpackingToNestedTargetsInSquareBracketsInComprehensions() {
+    doTest("str",
+           """
+             xs = [(1, ("foo",))]
+             ys = [expr for [_, [expr]] in xs]
+             """);
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorUnpacking() {
     // Seems that this case won't be supported because
@@ -3162,7 +2813,8 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-24960
-  public void testOperatorReturnsAny() {
+  // TODO Re-enable once PY-61090 is fixed
+  public void _testOperatorReturnsAny() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> doTest("Union[bool, Any]",
@@ -3666,6 +3318,13 @@ public class PyTypeTest extends PyTestCase {
                      expr = UserId(12)""")
     );
 
+    doTest("UserId",
+           """
+             from typing import NewType
+             UserId = NewType(tp=int, name='UserId')
+             expr = UserId(12)
+             """);
+
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> doTest("Type[UserId]",
@@ -3764,7 +3423,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-9634
   public void testAfterIsInstanceAndAttributeUsage() {
-    doTest("Union[int, {bar}]",
+    doTest("Union[{bar}, int]",
            """
              def bar(y):
                  if isinstance(y, int):
@@ -3803,14 +3462,14 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-28227
   public void testTypeVarTargetAST() {
-    doTest("T",
+    doTest("TypeVar",
            "from typing import TypeVar\n" +
            "expr = TypeVar('T')");
   }
 
   // PY-28227
   public void testTypeVarTargetStub() {
-    doMultiFileTest("T",
+    doMultiFileTest("TypeVar",
                     "from a import T\n" +
                     "expr = T");
   }
@@ -3920,13 +3579,19 @@ public class PyTypeTest extends PyTestCase {
                "from typing_extensions import Final\n" +
                "expr: Final[int] = undefined");
 
-        doTest("int",
+        doTest("Literal[5]",
                "from typing_extensions import Final\n" +
                "expr: Final = 5");
 
         doTest("int",
                "from typing_extensions import Final\n" +
                "expr: Final[int]");
+
+        doTest("List[int]",
+               """
+                 from typing_extensions import Final
+                 expr: Final = [1, 2]
+                 """);
       }
     );
 
@@ -3934,7 +3599,7 @@ public class PyTypeTest extends PyTestCase {
            "from typing_extensions import Final\n" +
            "expr = undefined  # type: Final[int]");
 
-    doTest("int",
+    doTest("Literal[5]",
            "from typing_extensions import Final\n" +
            "expr = 5  # type: Final");
   }
@@ -4002,10 +3667,9 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-35235
   public void testTypingLiteralEnum() {
-    // we don't support using `typing.Literal` with enums :(
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doMultiFileTest("A",
+      () -> doTest("Literal[A.V1]",
                             """
                               from typing_extensions import Literal
 
@@ -4210,6 +3874,23 @@ public class PyTypeTest extends PyTestCase {
                      x: int
                  a: A = {'x': 42}
                  expr = a['x']""");
+        doTest("str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                 def foo(v: TD, k: Literal['b']):
+                     expr = v[k]""");
+        doTest("bool | str",
+               """
+                 from typing import Literal, TypedDict
+                 class TD(TypedDict):
+                     a: int
+                     b: str
+                     c: bool
+                 def foo(v: TD, k: Literal['c', 'b']):
+                     expr = v[k]""");
       }
     );
   }
@@ -4531,6 +4212,41 @@ public class PyTypeTest extends PyTestCase {
 
              c = User1(10)
              expr = c.get()""");
+  }
+
+  // PY-28076
+  public void testAssignmentParens() {
+    doTest("int", "((expr)) = 42");
+  }
+
+  public void testElif1() {
+    doTest("str",
+           """
+            class A:
+                pass
+            
+            def foo(a: int | str | A):
+                if isinstance(a, A):
+                    pass
+                elif isinstance(a, int):
+                    pass
+                else:
+                    expr = a
+            """);
+  }
+
+  public void testElif2() {
+    doTest("A",
+           """
+            class A:
+                pass
+            
+            def foo(a: int | str | A):
+               if isinstance(a, int):
+                   pass
+               elif not isinstance(a, str):
+                   expr = a
+            """);
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

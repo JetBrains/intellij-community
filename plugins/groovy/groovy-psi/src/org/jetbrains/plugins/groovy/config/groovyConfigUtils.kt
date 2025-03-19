@@ -38,15 +38,15 @@ private fun getSdkVersionFromHome(module: Module): String? {
 sealed class GroovyHomeKind private constructor(val jarsPath : String, val subPaths: List<String>, val pattern: Pattern) {
 
   class Jar(path: String) : GroovyHomeKind(path, listOf("*.jar"), GroovyConfigUtils.GROOVY_JAR_PATTERN)
-  class Lib(path: String) : GroovyHomeKind(path + "/lib", listOf("*.jar", "*/*.jar"), GroovyConfigUtils.GROOVY_JAR_PATTERN)
-  class Embeddable(path: String) : GroovyHomeKind(path + "/embeddable", listOf("*.jar", "*/*.jar"), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)
+  class Lib(path: String) : GroovyHomeKind("$path/lib", listOf("*.jar", "*/*.jar"), GroovyConfigUtils.GROOVY_JAR_PATTERN)
+  class Embeddable(path: String) : GroovyHomeKind("$path/embeddable", listOf("*.jar", "*/*.jar"), GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN)
 
   companion object {
     @JvmStatic
     fun fromString(path : String) : GroovyHomeKind? =
-      if (getFilesInDirectoryByPattern(path + "/lib", GroovyConfigUtils.GROOVY_JAR_PATTERN).size > 0) {
+      if (getFilesInDirectoryByPattern("$path/lib", GroovyConfigUtils.GROOVY_JAR_PATTERN).size > 0) {
         Lib(path)
-      } else if (getFilesInDirectoryByPattern(path + "/embeddable", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN).size > 0) {
+      } else if (getFilesInDirectoryByPattern("$path/embeddable", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN).size > 0) {
         Embeddable(path)
       } else if (getFilesInDirectoryByPattern(path, GroovyConfigUtils.GROOVY_JAR_PATTERN).size > 0) {
         Jar(path)

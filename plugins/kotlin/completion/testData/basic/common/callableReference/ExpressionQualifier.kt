@@ -2,6 +2,8 @@ abstract class A {
     abstract fun memberFunInA()
     abstract val memberValInA: Int
 
+    fun C.memberExtensionFunInA() {}
+
     inner class InnerInA
     class NestedInA
 }
@@ -64,6 +66,7 @@ class C {
 // ABSENT: memberFun
 // ABSENT: memberVal
 // ABSENT: memberExtensionFun
+// ABSENT: memberExtensionFunInA
 // ABSENT: localFun
 // ABSENT: companionObjectFun
 // ABSENT: companionExtension

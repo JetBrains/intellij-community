@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.space.java.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-jps",
+  module_name = "intellij.space.java.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//platform/util",
+    "//jps/jps-builders:build",
+  ],
+  runtime_deps = [":java-jps_resources"]
+)
+### auto-generated section `build intellij.space.java.jps` end

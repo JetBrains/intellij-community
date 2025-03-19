@@ -10,11 +10,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
-import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
+import com.intellij.webSymbols.WebSymbol.Companion.HTML_ELEMENTS
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 
 class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<HtmlTag>() {
 
@@ -34,8 +33,8 @@ class WebSymbolElementNameCompletionProvider : WebSymbolsCompletionProviderBase<
     if (endTag) return
 
     val patchedResultSet = result.withPrefixMatcher(result.prefixMatcher.cloneWithPrefix(name))
-    processCompletionQueryResults(queryExecutor, patchedResultSet, NAMESPACE_HTML, KIND_HTML_ELEMENTS, name,
-                                  position, filter = Companion::filterStandardHtmlSymbols) {
+    processCompletionQueryResults(queryExecutor, patchedResultSet, HTML_ELEMENTS, name,
+                                  position, context, filter = Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .addToResult(parameters, patchedResultSet)
     }

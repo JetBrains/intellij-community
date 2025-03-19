@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -16,13 +15,20 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ref.GCWatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.DecompilerPreset;
+import org.jetbrains.java.decompiler.IdeaDecompilerSettings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -276,17 +282,79 @@ public class ClsPsiTest extends LightIdeaTestCase {
       assertEquals("o", parameters[1].getName());
     };
 
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode(checkNames);
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), checkNames::run);
     checkNames.run();
   }
 
-  public void testModifiers() {
-    PsiClass aClass = getFile().getClasses()[0];
-    assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
-    assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
-    assertEquals("public", aClass.getMethods()[0].getModifierList().getText());
-    assertEquals("private", aClass.getMethods()[1].getModifierList().getText());
-    assertEquals("private synchronized", aClass.getMethods()[2].getModifierList().getText());
+  public void testNoMirrorNotSetWarnings() {
+    List<String> warnings = new ArrayList<>();
+    LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+      @Override
+      public boolean processWarn(@NotNull String category, @NotNull String message, Throwable t) {
+        warnings.add(message);
+        return super.processWarn(category, message, t);
+      }
+    }, () -> {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      PsiMethod constructor = aClass.getMethods()[0];
+      ClsModifierListImpl modifierList = (ClsModifierListImpl)constructor.getModifierList();
+      ClsReferenceListImpl throwsList = (ClsReferenceListImpl)constructor.getThrowsList();
+
+      // We are actually most interested in the side effect of calls to getText() (we want to ensure no warnings are being logged)
+
+      assertNull(modifierList.getMirror());
+      assertEquals("public", modifierList.getText());
+      assertNull(modifierList.getMirror()); // assert that calling getText() does not set a mirror
+
+      assertNull(throwsList.getMirror());
+      assertEquals("", throwsList.getText());
+      assertNull(throwsList.getMirror()); // assert that calling getText() does not set a mirror
+    });
+
+    assertEmpty(warnings);
+  }
+
+  public void testModifiers_high() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.HIGH);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
+  }
+
+  public void testModifiers_medium() {
+    final var originalState = IdeaDecompilerSettings.getInstance().getState();
+    IdeaDecompilerSettings.State state = IdeaDecompilerSettings.State.fromPreset(DecompilerPreset.MEDIUM);
+    IdeaDecompilerSettings.getInstance().loadState(state);
+    try {
+      PsiClass aClass = getFile("Modifiers").getClasses()[0];
+      assertEquals("private transient", aClass.getFields()[0].getModifierList().getText());
+      assertEquals("private volatile", aClass.getFields()[1].getModifierList().getText());
+
+      PsiMethod constructor = aClass.getMethods()[0];
+      assertEquals("public", constructor.getModifierList().getText());
+
+      PsiMethod methodM1 = aClass.getMethods()[1];
+      assertEquals("private", methodM1.getModifierList().getText());
+
+      PsiMethod methodM2 = aClass.getMethods()[2];
+      assertEquals("private synchronized", methodM2.getModifierList().getText());
+    }
+    finally {
+      IdeaDecompilerSettings.getInstance().loadState(originalState);
+    }
   }
 
   public void testEnum() {
@@ -324,28 +392,32 @@ public class ClsPsiTest extends LightIdeaTestCase {
 
     PsiModifierList modifierList = aClass.getModifierList();
     assertNotNull(modifierList);
-    PsiAnnotation[] annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     PsiMethod method = aClass.getMethods()[1];
-    annotations = method.getModifierList().getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(method.getModifierList());
 
     PsiParameter[] params = method.getParameterList().getParameters();
     assertEquals(1, params.length);
     modifierList = params[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
-    assertEquals(1, annotations.length);
-    assertEquals("@pack.Annotation", annotations[0].getText());
+    checkAnnotations(modifierList);
 
     modifierList = aClass.getFields()[0].getModifierList();
     assertNotNull(modifierList);
-    annotations = modifierList.getAnnotations();
+    checkAnnotations(modifierList);
+
+    PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
+    assertEquals(1, typeParameters.length);
+    checkAnnotations(typeParameters[0]);
+  }
+
+  private void checkAnnotations(@NotNull PsiAnnotationOwner annotationOwner) {
+    PsiAnnotation[] annotations = annotationOwner.getAnnotations();
     assertEquals(1, annotations.length);
     assertEquals("@pack.Annotation", annotations[0].getText());
+    assertNotNull(annotationOwner.findAnnotation("pack.Annotation"));
+    assertTrue(annotationOwner.hasAnnotation("pack.Annotation"));
   }
 
   public void testAnnotationMethods() {
@@ -480,7 +552,7 @@ public class ClsPsiTest extends LightIdeaTestCase {
     WriteAction.run(() -> copyVFile.delete(this));
     assertFalse(clsFile.isValid());
     assertFalse(mirror.isValid());
-    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror))
-      .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)).contains(
+      PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
   }
 }

@@ -1,21 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.InlayProperties;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL;
+import static com.intellij.openapi.editor.impl.InlayKeys.ORDER_BEFORE_DISPOSAL;
+
+/**
+ * @see InlayModel#addInlineElement
+ */
 final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
-  private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
   final int myPriority;
 
   InlineInlayImpl(@NotNull EditorImpl editor,
@@ -28,7 +29,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
   }
 
   @Override
-  RangeMarkerTree<InlineInlayImpl<?>> getTree() {
+  public RangeMarkerTree<InlineInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myInlineElementsTree;
   }
 
@@ -62,6 +63,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
       int offset = getOffset();
       List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
       putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
+      putUserData(ID_BEFORE_DISPOSAL, getId());
     }
     super.dispose();
   }
@@ -75,15 +77,13 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
     }
   }
 
-  @NotNull
   @Override
-  public Placement getPlacement() {
+  public @NotNull Placement getPlacement() {
     return Placement.INLINE;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     int offset = getOffset();
     VisualPosition pos = myEditor.offsetToVisualPosition(offset);
     List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);

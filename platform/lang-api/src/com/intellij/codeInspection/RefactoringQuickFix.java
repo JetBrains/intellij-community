@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -32,8 +32,7 @@ public interface RefactoringQuickFix extends LocalQuickFix {
   /**
    * Override if preferred handler can be chosen based on context
    */
-  @NotNull
-  default RefactoringActionHandler getHandler(DataContext context) {
+  default @NotNull RefactoringActionHandler getHandler(@NotNull DataContext context) {
     return getHandler();
   }
 
@@ -63,8 +62,7 @@ public interface RefactoringQuickFix extends LocalQuickFix {
   /**
    * @see com.intellij.openapi.actionSystem.impl.SimpleDataContext
    */
-  @NotNull
-  default DataContext enhanceDataContext(@NonNls DataContext context) {
+  default @NotNull DataContext enhanceDataContext(@NonNls DataContext context) {
     return context;
   }
 }

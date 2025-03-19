@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.parser;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -202,13 +202,10 @@ public class GeneratedParserUtilBase {
     return consumeTokenFast(builder, token);
   }
 
+  @Contract(mutates = "param1")
   public static boolean consumeToken(PsiBuilder builder, IElementType token) {
     addVariantSmart(builder, token, true);
-    if (nextTokenIsFast(builder, token)) {
-      builder.advanceLexer();
-      return true;
-    }
-    return false;
+    return consumeTokenFast(builder, token);
   }
 
   public static boolean consumeTokenFast(PsiBuilder builder, IElementType token) {
@@ -398,7 +395,7 @@ public class GeneratedParserUtilBase {
   }
 
   public static boolean isWhitespaceOrComment(@NotNull PsiBuilder builder, @Nullable IElementType type) {
-    return ((PsiBuilderImpl)((Builder)builder).getDelegate()).whitespaceOrComment(type);
+    return builder.isWhitespaceOrComment(type);
   }
 
   private static boolean wasAutoSkipped(@NotNull PsiBuilder builder, int steps) {
@@ -549,7 +546,7 @@ public class GeneratedParserUtilBase {
       final boolean eatMoreFlagOnce = !builder.eof() && eatMore.parse(builder, frame.level + 1);
       boolean eatMoreFlag = eatMoreFlagOnce || !result && frame.position == initialPos && lastErrorPos > frame.position;
 
-      PsiBuilderImpl.ProductionMarker latestDoneMarker =
+      PsiBuilder.Marker latestDoneMarker =
         (pinned || result) && (state.altMode || elementType != null) &&
         eatMoreFlagOnce ? getLatestExtensibleDoneMarker(builder) : null;
       // advance to the last error pos
@@ -587,7 +584,7 @@ public class GeneratedParserUtilBase {
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
+        extend_marker_impl(latestDoneMarker);
       }
       state.suppressErrors = false;
       if (errorReported || result) {
@@ -637,13 +634,13 @@ public class GeneratedParserUtilBase {
     if (elementType != null && marker != null) {
       if (result || pinned) {
         if ((frame.modifiers & _COLLAPSE_) != 0) {
-          PsiBuilderImpl.ProductionMarker last = (PsiBuilderImpl.ProductionMarker)builder.getLatestDoneMarker();
+          PsiBuilder.Marker last = (PsiBuilder.Marker)builder.getLatestDoneMarker();
           if (last != null &&
               last.getStartIndex() == frame.position &&
               state.typeExtends(last.getTokenType(), elementType) &&
               wasAutoSkipped(builder, builder.rawTokenIndex() - last.getEndIndex())) {
             elementType = last.getTokenType();
-            ((PsiBuilder.Marker)last).drop();
+            last.drop();
           }
         }
         if ((frame.modifiers & _UPPER_) != 0) {
@@ -684,9 +681,9 @@ public class GeneratedParserUtilBase {
 
   private static void extend_marker_impl(PsiBuilder.Marker marker) {
     PsiBuilder.Marker precede = marker.precede();
-    IElementType elementType = ((LighterASTNode)marker).getTokenType();
+    IElementType elementType = marker.getTokenType();
     if (elementType == TokenType.ERROR_ELEMENT) {
-      precede.error(notNullize(PsiBuilderImpl.getErrorMessage((LighterASTNode)marker)));
+      precede.error(notNullize(marker.getErrorMessage()));
     }
     else {
       precede.done(elementType);
@@ -706,7 +703,7 @@ public class GeneratedParserUtilBase {
     }
     else {
       if (frame != null) {
-        int position = ((PsiBuilderImpl.ProductionMarker)marker).getStartIndex();
+        int position = marker.getStartIndex();
         if (frame.errorReportedAt > position) {
           frame.errorReportedAt = frame.parentFrame == null ? -1 : frame.parentFrame.errorReportedAt;
         }
@@ -747,12 +744,10 @@ public class GeneratedParserUtilBase {
     }
   }
 
-  @Nullable
-  private static PsiBuilderImpl.ProductionMarker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
-    Builder b = (Builder)builder;
-    PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(b.getProductions());
-    if (marker == null || ((PsiBuilderImpl)b.getDelegate()).isCollapsed(marker)) return null;
-    return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? marker : null;
+  private static @Nullable PsiBuilder.Marker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
+    SyntaxTreeBuilder.Production marker = ContainerUtil.getLastItem(builder.getProductions());
+    if (marker == null || marker.isCollapsed()) return null;
+    return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? (PsiBuilder.Marker)marker : null;
   }
 
   private static boolean reportError(PsiBuilder builder,
@@ -788,12 +783,12 @@ public class GeneratedParserUtilBase {
       mark.error(message);
     }
     else if (inner) {
-      PsiBuilderImpl.ProductionMarker latestDoneMarker = getLatestExtensibleDoneMarker(builder);
+      PsiBuilder.Marker latestDoneMarker = getLatestExtensibleDoneMarker(builder);
       builder.error(message);
       if (latestDoneMarker != null &&
           frame.position >= latestDoneMarker.getStartIndex() &&
           frame.position <= latestDoneMarker.getEndIndex()) {
-        extend_marker_impl((PsiBuilder.Marker)latestDoneMarker);
+        extend_marker_impl(latestDoneMarker);
       }
     }
     else {
@@ -810,8 +805,8 @@ public class GeneratedParserUtilBase {
     int pos = builder.rawTokenIndex();
     if (frame.errorReportedAt > pos) {
       // report error for previous unsuccessful frame
-      LighterASTNode marker = builder.getLatestDoneMarker();
-      int endOffset = marker != null ? ((PsiBuilderImpl.ProductionMarker)marker).getEndIndex() : pos + 1;
+      PsiBuilder.Marker marker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
+      int endOffset = marker != null ? marker.getEndIndex() : pos + 1;
       while (endOffset <= pos && isWhitespaceOrComment(builder, builder.rawLookup(endOffset - pos))) endOffset ++;
       boolean inner = endOffset == pos;
       builder.eof();
@@ -829,8 +824,7 @@ public class GeneratedParserUtilBase {
       offset = offset_;
     }
 
-    @Nullable
-    public String convertItem(Object o) {
+    public @Nullable String convertItem(Object o) {
       return o instanceof Object[] ? join((Object[]) o, this, " ") : o.toString();
     }
 
@@ -894,14 +888,13 @@ public class GeneratedParserUtilBase {
       parser = parser_;
     }
 
-    @NotNull
-    public Lexer getLexer() {
+    public @NotNull Lexer getLexer() {
       return ((PsiBuilderImpl)myDelegate).getLexer();
     }
 
-    @NotNull
-    public List<PsiBuilderImpl.ProductionMarker> getProductions() {
-      return ((PsiBuilderImpl)myDelegate).getProductions();
+    @Override
+    public @NotNull List<? extends Production> getProductions() {
+      return myDelegate.getProductions();
     }
   }
 
@@ -919,8 +912,8 @@ public class GeneratedParserUtilBase {
 
     public Frame currentFrame;
     public CompletionState completionState;
-    MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
-    MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
+    final MyList<Variant> variants = new MyList<>(INITIAL_VARIANTS_SIZE);
+    final MyList<Variant> unexpected = new MyList<>(INITIAL_VARIANTS_SIZE / 10);
 
     int predicateCount;
     int level;
@@ -975,7 +968,7 @@ public class GeneratedParserUtilBase {
       Arrays.sort(strings);
       count = 0;
       for (String s : strings) {
-        if (s.length() == 0) continue;
+        if (s.isEmpty()) continue;
         if (count++ > 0) {
           if (count > MAX_VARIANTS_TO_DISPLAY) {
             sb.append(" ").append(AnalysisBundle.message("parsing.error.and.ellipsis"));
@@ -1029,7 +1022,7 @@ public class GeneratedParserUtilBase {
     public int position;
     public int level;
     public int modifiers;
-    @NonNls public String name;
+    public @NonNls String name;
     public int variantCount;
     public int errorReportedAt;
     public int lastVariantAt;
@@ -1207,9 +1200,8 @@ public class GeneratedParserUtilBase {
       super("DUMMY_BLOCK", Language.ANY);
     }
 
-    @NotNull
     @Override
-    public ASTNode createCompositeNode() {
+    public @NotNull ASTNode createCompositeNode() {
       return new DummyBlock();
     }
   }
@@ -1224,9 +1216,8 @@ public class GeneratedParserUtilBase {
       return PsiReference.EMPTY_ARRAY;
     }
 
-    @NotNull
     @Override
-    public Language getLanguage() {
+    public @NotNull Language getLanguage() {
       return getParent().getLanguage();
     }
   }

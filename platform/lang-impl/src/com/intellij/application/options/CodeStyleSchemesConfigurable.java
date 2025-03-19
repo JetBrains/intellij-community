@@ -1,12 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
-import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -14,6 +13,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,8 +26,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   public static final String CONFIGURABLE_ID = "preferences.sourceCode";
 
-  private CodeStyleSchemesPanel myRootSchemesPanel;
-  private @NotNull final CodeStyleSchemesModel myModel;
+  private final @NotNull CodeStyleSchemesModel myModel;
   private List<Configurable> myPanels;
   private boolean myResetCompleted = false;
   private boolean myInitResetInvoked = false;
@@ -42,31 +41,11 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   @Override
   public JComponent createComponent() {
-    initSchemesPanel(myModel);
+    if (myPanels == null && AppMode.isRemoteDevHost()) {
+      buildConfigurables();
+    }
+
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
-  }
-
-  private void initSchemesPanel(@NotNull final CodeStyleSchemesModel model) {
-    myRootSchemesPanel = new CodeStyleSchemesPanel(model, 0);
-
-    model.addListener(new CodeStyleSchemesModelListener() {
-      @Override
-      public void currentSchemeChanged(final Object source) {
-        if (source != myRootSchemesPanel) {
-          myRootSchemesPanel.onSelectedSchemeChanged();
-        }
-      }
-
-      @Override
-      public void schemeListChanged() {
-        myRootSchemesPanel.resetSchemesCombo();
-      }
-
-      @Override
-      public void schemeChanged(final CodeStyleScheme scheme) {
-        if (scheme == model.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
-      }
-    });
   }
 
   @Override
@@ -85,7 +64,6 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
       }
       finally {
         myPanels = null;
-        myRootSchemesPanel = null;
         myResetCompleted = false;
         myRevertCompleted = false;
         myInitResetInvoked = false;
@@ -183,11 +161,16 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
       }
     }
 
+    SimpleModificationTracker codeStyleModificationTracker = CodeStyle.getSettings(myProject).getModificationTracker();
+    long settingsModificationCount = codeStyleModificationTracker.getModificationCount();
     CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
+    if (settingsModificationCount != codeStyleModificationTracker.getModificationCount()) {
+      myModel.updateClonedSettings();
+    }
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(getModel(), this);
     myPanels = new ArrayList<>();
 
@@ -273,8 +256,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return CONFIGURABLE_ID;
   }
 
@@ -283,21 +265,19 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
     return myModel.isUsePerProjectSettings();
   }
 
-  @Nullable
-  public SearchableConfigurable findSubConfigurable(@NotNull final String name) {
+  public @Nullable SearchableConfigurable findSubConfigurable(final @NotNull String name) {
     return findSubConfigurable(this, name);
   }
 
-  @NotNull
   @Override
-  public Collection<BaseExtensionPointName<?>> getDependencies() {
+  public @NotNull Collection<BaseExtensionPointName<?>> getDependencies() {
     return Arrays.asList(new ExtensionPointName<?>[]{
       LanguageCodeStyleSettingsProvider.EP_NAME,
       CodeStyleSettingsProvider.EXTENSION_POINT_NAME
     });
   }
 
-  private static SearchableConfigurable findSubConfigurable(SearchableConfigurable.Parent topConfigurable, @NotNull final String name) {
+  private static SearchableConfigurable findSubConfigurable(SearchableConfigurable.Parent topConfigurable, final @NotNull String name) {
     for (Configurable configurable : topConfigurable.getConfigurables()) {
       if (configurable instanceof SearchableConfigurable) {
         if (name.equals(configurable.getDisplayName())) return (SearchableConfigurable)configurable;

@@ -26,7 +26,7 @@ import java.io.IOException;
 
 /**
  * Tests from https://github.com/emmetio/emmet/blob/master/test/expandAbbreviation.js
- * and from https://github.com/emmetio/emmet/blob/master/lib/snippets.json
+ * and from https://github.com/emmetio/emmet/blob/master/src/snippets/css.json
  *
  * The new one: https://github.com/emmetio/snippets/blob/047c644a3d29f75f7cbb8183ebb91ab3fbcd143b/html.json
  */
@@ -55,7 +55,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
 
   @Override
   protected void setUp(@NotNull Project project) throws Exception {
-    super.setUp(project);    
+    super.setUp(project);
     final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
     TemplateContextType contextType = TemplateContextTypes.getByClass(HtmlTextContextType.class);
 
@@ -222,10 +222,8 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
     addTestWithInit("input[title]", "<input type=\"text\" title=\"\">", null);
     addTestWithInit("input[title]", "<input type=\"text\" title>", (fixture, testRootDisposable) -> {
       final HtmlUnknownBooleanAttributeInspection inspection = new HtmlUnknownBooleanAttributeInspection();
-      final String oldValue = inspection.getAdditionalEntries();
-      inspection.updateAdditionalEntries("title");
+      inspection.updateAdditionalEntries("title", testRootDisposable);
       fixture.enableInspections(inspection);
-      Disposer.register(testRootDisposable, () -> inspection.updateAdditionalEntries(oldValue));
     });
   }
 

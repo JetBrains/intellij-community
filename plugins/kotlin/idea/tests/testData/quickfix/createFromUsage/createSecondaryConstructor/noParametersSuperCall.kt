@@ -7,3 +7,4 @@ class Creation: Base {
     constructor(f: Int): super(f)
 }
 val v = Creation(<caret>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

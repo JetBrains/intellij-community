@@ -18,11 +18,13 @@ package com.intellij.diagnostic
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 open class GcPauseWatcher {
   private val watchers = ManagementFactory.getGarbageCollectorMXBeans().map(::SingleCollectorWatcher)
   private val counter = AtomicInteger()
@@ -50,7 +52,9 @@ open class GcPauseWatcher {
 
   protected open fun recordGcPauseTime(name: String, currPauseDuration: Long) {
     if (StartUpMeasurer.isEnabled()) {
-      StartUpMeasurer.addCompletedActivity(StartUpMeasurer.getCurrentTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration), Integer.toString(counter.incrementAndGet()), ActivityCategory.GC, null)
+      //MAYBE: add time-to-safepoint metrics, in addition to GC time metrics?
+      StartUpMeasurer.addCompletedActivity(System.nanoTime() - TimeUnit.MILLISECONDS.toNanos(currPauseDuration),
+                                           counter.incrementAndGet().toString(), ActivityCategory.GC, null)
     }
   }
 

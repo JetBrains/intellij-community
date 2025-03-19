@@ -43,6 +43,24 @@ class FeatureMappersTest {
     assertEquals(binary.defaultValue, binary.createMapper(null).asArrayValue(100))
   }
 
+  @Test
+  fun `binary feature should be case insensitive`() {
+    val binaryCaseSensitive = BinaryFeature("is_in_same_file_case_sensitive",
+                                            "True" to 1.0,
+                                            "False" to 0.0,
+                                            10.0, true)
+    assertEquals(binaryCaseSensitive.firstValueMapping.second, binaryCaseSensitive.createMapper(null).asArrayValue(true))
+    assertEquals(binaryCaseSensitive.secondValueMapping.second, binaryCaseSensitive.createMapper(null).asArrayValue(false))
+  }
+
+  @Test
+  fun `categorical feature should be case insensitive`() {
+    val mapper1 = categoricalWithOther.createMapper("red")
+    assertEquals(mapper1.asArrayValue("yellow"), mapper1.asArrayValue("Yellow"))
+    assertEquals(mapper1.asArrayValue("red"), mapper1.asArrayValue("RED"))
+    assertEquals(0.0, mapper1.asArrayValue(null))
+  }
+
   @Test(expected = InconsistentMetadataException::class)
   fun `categorical feature should declare categories`() {
     categoricalWithOther.createMapper(null)

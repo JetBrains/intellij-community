@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi;
 
@@ -61,8 +47,7 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
   /**
    * @return range inside the host where injection can be performed; usually it's range of text without boundary quotes
    */
-  @NotNull
-  public TextRange getRelevantTextRange() {
+  public @NotNull TextRange getRelevantTextRange() {
     return TextRange.from(0, myHost.getTextLength());
   }
 
@@ -71,8 +56,11 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
    */
   public abstract boolean isOneLine();
 
-  @NotNull
-  public static <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(@NotNull T element) {
+  public static @NotNull <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(@NotNull T element) {
+    return createSimple(element, true);
+  }
+
+  public static @NotNull <T extends PsiLanguageInjectionHost> LiteralTextEscaper<T> createSimple(@NotNull T element, boolean isOneLine) {
     return new LiteralTextEscaper<T>(element) {
       @Override
       public boolean decode(@NotNull TextRange rangeInsideHost, @NotNull StringBuilder outChars) {
@@ -87,7 +75,7 @@ public abstract class LiteralTextEscaper<T extends PsiLanguageInjectionHost> {
 
       @Override
       public boolean isOneLine() {
-        return true;
+        return isOneLine;
       }
     };
   }

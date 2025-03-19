@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.IProperty;
@@ -28,7 +28,7 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public final class ResourceBundlePropertiesUpdateManager {
-  private final static Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
+  private static final Logger LOG = Logger.getInstance(ResourceBundlePropertiesUpdateManager.class);
 
   private final ResourceBundle myResourceBundle;
   private final CodeStyleManager myCodeStyleManager;
@@ -151,16 +151,14 @@ public final class ResourceBundlePropertiesUpdateManager {
     }
   }
 
-  @Nullable
-  private static Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
+  private static @Nullable Pair<List<String>, Boolean> keysOrder(final ResourceBundle resourceBundle) {
     final List<PropertiesOrder> propertiesOrders =
       ContainerUtil.map(resourceBundle.getPropertiesFiles(), PropertiesOrder::new);
 
     final boolean[] isAlphaSorted = new boolean[]{true};
     final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
-      @NotNull
       @Override
-      public Collection<String> getNodes() {
+      public @NotNull Collection<String> getNodes() {
         final Set<String> nodes = new LinkedHashSet<>();
         for (PropertiesOrder order : propertiesOrders) {
           nodes.addAll(order.myKeys);
@@ -168,9 +166,8 @@ public final class ResourceBundlePropertiesUpdateManager {
         return nodes;
       }
 
-      @NotNull
       @Override
-      public Iterator<String> getIn(String n) {
+      public @NotNull Iterator<String> getIn(String n) {
         final Collection<String> siblings = new LinkedHashSet<>();
 
         for (PropertiesOrder order : propertiesOrders) {
@@ -231,8 +228,7 @@ public final class ResourceBundlePropertiesUpdateManager {
       }
     }
 
-    @NotNull
-    public List<String> getNext(@NotNull String key) {
+    public @NotNull List<String> getNext(@NotNull String key) {
       List<String> nextProperties = null;
       if (myKeyIndices.containsKey(key)) {
         final IntList indices = myKeyIndices.get(key);

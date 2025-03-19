@@ -1,15 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link EmptyProgressIndicatorBase} notice.
+ * </p>
+ */
 public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implements StandardProgressIndicator {
-  private volatile boolean myIsCanceled;
+  private volatile @Nullable Throwable myCancellationRequester;
 
+  @Obsolete
+  @Contract(pure = true)
   public EmptyProgressIndicator() { }
 
+  @Obsolete
   public EmptyProgressIndicator(@NotNull ModalityState modalityState) {
     super(modalityState);
   }
@@ -17,20 +28,31 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
   @Override
   public void start() {
     super.start();
-    myIsCanceled = false;
+    myCancellationRequester = null;
   }
 
   @Override
   public final void cancel() {
-    myIsCanceled = true;
+    myCancellationRequester = new Throwable("Origin of cancellation of " + this);
     ProgressManager.canceled(this);
+  }
+
+  final @Nullable Throwable getCancellationCause() {
+    return myCancellationRequester;
   }
 
   @Override
   public final boolean isCanceled() {
-    return myIsCanceled;
+    return myCancellationRequester != null;
   }
 
+  /**
+   * @deprecated instead of using this function somewhere higher in the stacktrace,
+   * make sure the indicator is installed by whoever calls the function which calls {@code notNullize},
+   * or, in other words, make sure {@link ProgressManager#getGlobalProgressIndicator()} returns non-null value.
+   * This function is dangerous because it makes the code effectively non-cancellable suppressing any assertions.
+   */
+  @Deprecated
   public static @NotNull ProgressIndicator notNullize(@Nullable ProgressIndicator indicator) {
     return indicator != null ? indicator : new EmptyProgressIndicator();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -12,8 +12,8 @@ import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.Type;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -32,6 +32,7 @@ public final class MethodBytecodeUtil {
    * Visitor could implement {@link InstructionOffsetReader} to additionally consume bytecode instruction offsets.
    */
   public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    assert method.virtualMachine().canGetBytecodes();
     visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
   }
 
@@ -41,6 +42,7 @@ public final class MethodBytecodeUtil {
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
     if (maxOffset > 0) {
       // need to keep the size, otherwise labels array will not be initialized correctly
+      assert method.virtualMachine().canGetBytecodes();
       byte[] originalBytecodes = method.bytecodes();
       byte[] bytecodes = originalBytecodes;
       if (maxOffset < originalBytecodes.length) {
@@ -54,6 +56,7 @@ public final class MethodBytecodeUtil {
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
     ReferenceType type = method.declaringType();
 
+    assert type.virtualMachine().canGetConstantPool();
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     try (DataOutputStream dos = new DataOutputStream(bytes)) {
       writeClassHeader(dos, type.constantPoolCount(), type.constantPool());
@@ -209,8 +212,7 @@ public final class MethodBytecodeUtil {
     };
   }
 
-  @Nullable
-  public static Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
+  public static @Nullable Method getLambdaMethod(ReferenceType clsType, @NotNull ClassesByNameProvider classesByName) {
     if (DebuggerUtilsEx.isLambdaClassName(clsType.name())) {
       List<Method> applicableMethods = ContainerUtil.filter(clsType.methods(), m -> m.isPublic() && !m.isBridge());
       if (applicableMethods.size() == 1) {
@@ -220,12 +222,12 @@ public final class MethodBytecodeUtil {
     return null;
   }
 
-  @Nullable
-  public static Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+  public static @Nullable Method getBridgeTargetMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
     return method.isBridge() ? getFirstCalledMethod(method, classesByName) : null;
   }
 
   private static Method getFirstCalledMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+    Ref<Method> methodInSameClass = Ref.create();
     Ref<Method> methodRef = Ref.create();
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       @Override
@@ -235,14 +237,19 @@ public final class MethodBytecodeUtil {
         }
         ReferenceType declaringType = method.declaringType();
         owner = Type.getObjectType(owner).getClassName();
-        ReferenceType cls = declaringType.name().equals(owner) ?
+        String declaringTypeName = declaringType.name();
+        ReferenceType cls = declaringTypeName.equals(owner) ?
                             declaringType :
                             ContainerUtil.getFirstItem(classesByName.get(owner));
-        if (cls != null) {
-          methodRef.setIfNull(DebuggerUtils.findMethod(cls, name, desc));
+        if (cls == null) return;
+        Method targetMethod = DebuggerUtils.findMethod(cls, name, desc);
+        methodRef.setIfNull(targetMethod);
+        if (owner.equals(DebuggerUtilsEx.getLambdaBaseClassName(declaringTypeName))) {
+          methodInSameClass.setIfNull(targetMethod);
         }
       }
     }, false);
+    if (methodInSameClass.get() != null) return methodInSameClass.get();
     return methodRef.get();
   }
 
@@ -267,7 +274,8 @@ public final class MethodBytecodeUtil {
       return locations;
     }
 
-    if (!method.declaringType().virtualMachine().canGetConstantPool()) {
+    VirtualMachine vm = method.declaringType().virtualMachine();
+    if (!vm.canGetConstantPool() || !vm.canGetBytecodes()) {
       return locations;
     }
 

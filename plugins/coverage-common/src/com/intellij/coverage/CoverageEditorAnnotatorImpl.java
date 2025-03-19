@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.icons.AllIcons;
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import kotlin.ranges.IntRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
+@ApiStatus.Internal
 public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Disposable {
   private static final Logger LOG = Logger.getInstance(CoverageEditorAnnotatorImpl.class);
   public static final Key<List<RangeHighlighter>> COVERAGE_HIGHLIGHTERS = Key.create("COVERAGE_HIGHLIGHTERS");
@@ -54,6 +57,9 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   private Document myDocument;
   private final Project myProject;
   private volatile LineHistoryMapper myMapper;
+  private final Object myLock = new Object();
+  private Disposable myListenerDisposable;
+  private boolean myIsDisposed;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -69,7 +75,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     Editor editor = myEditor;
     PsiFile file = myFile;
     Document document = myDocument;
-    if (editor == null || editor.isDisposed() || file == null || document == null) return;
+    if (editor == null || file == null || document == null) return;
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
     removeHighlighters();
 
@@ -85,17 +91,11 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         fileEditorManager.removeTopComponent(fileEditor, map.get(fileEditor));
       }
     }
-
-    final DocumentListener documentListener = editor.getUserData(COVERAGE_DOCUMENT_LISTENER);
-    if (documentListener != null) {
-      document.removeDocumentListener(documentListener);
-      editor.putUserData(COVERAGE_DOCUMENT_LISTENER, null);
-    }
   }
 
   private synchronized void removeHighlighters() {
     var editor = myEditor;
-    if (editor == null || editor.isDisposed()) return;
+    if (editor == null) return;
     var highlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
     if (highlighters != null) {
       for (var highlighter : highlighters) {
@@ -105,8 +105,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
   }
 
-  @Nullable
-  private synchronized List<RangeHighlighter> getOrCreateHighlighters(boolean init) {
+  private synchronized @Nullable List<RangeHighlighter> getOrCreateHighlighters(boolean init) {
     var editor = myEditor;
     if (editor == null || editor.isDisposed()) return null;
     var highlighters = editor.getUserData(COVERAGE_HIGHLIGHTERS);
@@ -143,9 +142,6 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
 
     final CoverageEngine engine = suite.getCoverageEngine();
-    if (engine.isInLibraryClasses(myProject, file)) {
-      return;
-    }
     final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(psiFile));
     if (module != null) {
       if (engine.recompileProjectAndRerunAction(module, suite, () -> CoverageDataManager.getInstance(myProject).chooseSuitesBundle(suite))) {
@@ -187,6 +183,12 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         if (mapping == null) return;
         removeHighlighters();
         myUpdateAlarm.cancelAllRequests();
+        synchronized (myLock) {
+          var listenerDisposable = myListenerDisposable;
+          if (listenerDisposable != null) {
+            Disposer.dispose(listenerDisposable);
+          }
+        }
         showCoverage(suite);
       });
     }
@@ -198,44 +200,51 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     final TreeMap<Integer, String> classNames = new TreeMap<>();
     collectLinesInFile(suite, psiFile, module, oldToNewLineMapping, markupModel, executableLines, classNames);
 
-    if (editor.getUserData(COVERAGE_DOCUMENT_LISTENER) == null) {
-      final DocumentListener documentListener = new DocumentListener() {
-        @Override
-        public void documentChanged(@NotNull final DocumentEvent e) {
-          myMapper.clear();
-          var rangeHighlighters = getOrCreateHighlighters(false);
-          if (rangeHighlighters == null) return;
-          int offset = e.getOffset();
-          final int lineNumber = document.getLineNumber(offset);
-          final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
-          var changeRange = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
-          for (var it = rangeHighlighters.iterator(); it.hasNext(); ) {
-            final RangeHighlighter highlighter = it.next();
-            if (!highlighter.isValid() || highlighter.getTextRange().intersects(changeRange)) {
-              ApplicationManager.getApplication().invokeLater(() -> highlighter.dispose());
-              it.remove();
-            }
-          }
-          if (!myUpdateAlarm.isDisposed()) {
-            myUpdateAlarm.addRequest(() -> {
-              Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
-              if (newToOldLineMapping != null) {
-                final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
-                for (int line = lineNumber; line <= lastLine; line++) {
-                  if (!newToOldLineMapping.containsKey(line)) continue;
-                  int oldLineNumber = newToOldLineMapping.get(line);
-                  var lineData = executableLines.get(oldLineNumber);
-                  if (lineData == null) continue;
-                  addHighlighter(markupModel, executableLines, suite, oldLineNumber, line, classNames.get(oldLineNumber));
-                }
+    final DocumentListener documentListener = new DocumentListener() {
+      @Override
+      public void documentChanged(final @NotNull DocumentEvent e) {
+        myMapper.clear();
+        int offset = e.getOffset();
+        final int lineNumber = document.getLineNumber(offset);
+        final int lastLineNumber = document.getLineNumber(offset + e.getNewLength());
+        if (!removeChangedHighlighters(lineNumber, lastLineNumber, document)) return;
+        if (!myUpdateAlarm.isDisposed()) {
+          myUpdateAlarm.addRequest(() -> {
+            Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
+            if (newToOldLineMapping != null) {
+              final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
+              for (int line = lineNumber; line <= lastLine; line++) {
+                if (!newToOldLineMapping.containsKey(line)) continue;
+                int oldLineNumber = newToOldLineMapping.get(line);
+                var lineData = executableLines.get(oldLineNumber);
+                if (lineData == null) continue;
+                addHighlighter(markupModel, executableLines, suite, oldLineNumber, line, classNames.get(oldLineNumber));
               }
-            }, 100);
-          }
+            }
+          }, 100);
         }
-      };
-      document.addDocumentListener(documentListener);
-      editor.putUserData(COVERAGE_DOCUMENT_LISTENER, documentListener);
+      }
+    };
+    synchronized (myLock) {
+      if (!myIsDisposed) {
+        myListenerDisposable = Disposer.newDisposable(this);
+        document.addDocumentListener(documentListener, myListenerDisposable);
+      }
     }
+  }
+
+  private synchronized boolean removeChangedHighlighters(int lineNumber, int lastLineNumber, Document document) {
+    var rangeHighlighters = getOrCreateHighlighters(false);
+    if (rangeHighlighters == null) return false;
+    var changeRange = new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lastLineNumber));
+    for (var it = rangeHighlighters.iterator(); it.hasNext(); ) {
+      final RangeHighlighter highlighter = it.next();
+      if (!highlighter.isValid() || highlighter.getTextRange().intersects(changeRange)) {
+        ApplicationManager.getApplication().invokeLater(() -> highlighter.dispose());
+        it.remove();
+      }
+    }
+    return true;
   }
 
   protected void collectLinesInFile(@NotNull CoverageSuitesBundle suite,
@@ -259,10 +268,10 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
           final Object[] lines = fileData.getLines();
           if (lines != null) {
             final Object[] postProcessedLines = engine.postProcessExecutableLines(lines, editor);
-            for (Object lineData : postProcessedLines) {
-              if (lineData instanceof LineData) {
+            for (Object o : postProcessedLines) {
+              if (o instanceof LineData lineData) {
                 if (engine.isGeneratedCode(myProject, qualifiedName, lineData)) continue;
-                final int line = ((LineData)lineData).getLineNumber() - 1;
+                final int line = (lineData).getLineNumber() - 1;
                 final int lineNumberInCurrent;
                 if (oldToNewLineMapping != null) {
                   if (!oldToNewLineMapping.containsKey(line)) continue;
@@ -272,7 +281,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
                   // use id mapping
                   lineNumberInCurrent = line;
                 }
-                executableLines.put(line, (LineData)lineData);
+                executableLines.put(line, lineData);
                 classNames.put(line, qualifiedName);
 
                 addHighlighter(markupModel, executableLines, suite, line, lineNumberInCurrent, qualifiedName);
@@ -321,20 +330,31 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     return false;
   }
 
+
+  /**
+   * Additional highlighter in case user redefines coverage color scheme in edtior.
+   * It is separated from gutter highlighter as it should have lower layer to be compatible with other inspections.
+   */
+  private static @Nullable RangeHighlighter createBackgroundHighlighter(MarkupModel markupModel,
+                                                              @NotNull TreeMap<Integer, LineData> executableLines,
+                                                              int line, int lineNumberInCurrent) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
+    TextAttributes attributes = scheme.getAttributes(attributesKey);
+    if (attributes.getBackgroundColor() != null) {
+      return markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, attributes);
+    }
+    return null;
+  }
+
   private RangeHighlighter createRangeHighlighter(final MarkupModel markupModel,
-                                                  final TreeMap<Integer, LineData> executableLines,
-                                                  @Nullable final String className,
+                                                  final @NotNull TreeMap<Integer, LineData> executableLines,
+                                                  final @Nullable String className,
                                                   final int line,
                                                   final int lineNumberInCurrent,
-                                                  @NotNull final CoverageSuitesBundle coverageSuite) {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    final TextAttributesKey attributesKey = CoverageLineMarkerRenderer.getAttributesKey(line, executableLines);
-    final TextAttributes attributes = scheme.getAttributes(attributesKey);
-    TextAttributes textAttributes = null;
-    if (attributes.getBackgroundColor() != null) {
-      textAttributes = attributes;
-    }
-    var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes);
+                                                  final @NotNull CoverageSuitesBundle coverageSuite) {
+    // Use maximum layer here for coverage markers to be visible in diff view
+    var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, null);
     Function<Integer, Integer> newToOldConverter = newLine -> {
       var oldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
       return oldLineMapping != null ? oldLineMapping.getOrDefault(newLine.intValue(), -1) : newLine;
@@ -421,7 +441,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   }
 
   protected final void addHighlighter(final MarkupModel markupModel,
-                                      final TreeMap<Integer, LineData> executableLines,
+                                      final @NotNull TreeMap<Integer, LineData> executableLines,
                                       final CoverageSuitesBundle coverageSuite,
                                       final int lineNumber,
                                       final int updatedLineNumber,
@@ -431,8 +451,13 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       var document = myDocument;
       if (editor == null || editor.isDisposed() || document == null) return;
       if (updatedLineNumber < 0 || updatedLineNumber >= document.getLineCount()) return;
+      if (lineNumber < 0) return;
       var highlighter = createRangeHighlighter(markupModel, executableLines, className, lineNumber, updatedLineNumber, coverageSuite);
       registerOrDisposeHighlighter(highlighter);
+      var backgroundHighlighter = createBackgroundHighlighter(markupModel, executableLines, lineNumber, updatedLineNumber);
+      if (backgroundHighlighter != null) {
+        registerOrDisposeHighlighter(backgroundHighlighter);
+      }
     });
   }
 
@@ -452,6 +477,9 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
 
   @Override
   public void dispose() {
+    synchronized (myLock) {
+      myIsDisposed = true;
+    }
     hideCoverage();
     myEditor = null;
     myDocument = null;

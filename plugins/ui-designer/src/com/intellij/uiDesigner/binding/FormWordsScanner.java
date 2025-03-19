@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.binding;
 
@@ -16,11 +16,11 @@ import org.jdom.input.JDOMParseException;
 import org.jetbrains.annotations.NotNull;
 
 
-public class FormWordsScanner extends SimpleWordsScanner {
+public final class FormWordsScanner extends SimpleWordsScanner {
   private static final Logger LOG = Logger.getInstance(FormWordsScanner.class);
 
   @Override
-  public void processWords(@NotNull CharSequence fileText, @NotNull final Processor<? super WordOccurrence> processor) {
+  public void processWords(@NotNull CharSequence fileText, final @NotNull Processor<? super WordOccurrence> processor) {
     super.processWords(fileText, processor);
 
     try {

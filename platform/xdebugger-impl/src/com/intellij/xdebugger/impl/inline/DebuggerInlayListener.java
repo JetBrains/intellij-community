@@ -33,15 +33,15 @@ public class DebuggerInlayListener implements EditorMouseMotionListener, EditorM
   public void mouseMoved(@NotNull EditorMouseEvent event) {
     Inlay inlay = event.getInlay();
     if (lastHoveredInlay != null) {
-      InlineDebugRenderer renderer = (InlineDebugRenderer)lastHoveredInlay.getRenderer();
+      InlineDebugRendererBase renderer = (InlineDebugRendererBase)lastHoveredInlay.getRenderer();
       if (lastHoveredInlay != event.getInlay()) {
         renderer.onMouseExit(lastHoveredInlay);
       }
       lastHoveredInlay = null;
     }
     if (inlay != null) {
-      if (inlay.getRenderer() instanceof InlineDebugRenderer) {
-        ((InlineDebugRenderer)inlay.getRenderer()).onMouseMove(inlay, event);
+      if (inlay.getRenderer() instanceof InlineDebugRendererBase) {
+        ((InlineDebugRendererBase)inlay.getRenderer()).onMouseMove(inlay, event);
         lastHoveredInlay = inlay;
       } else {
         lastHoveredInlay = null;
@@ -53,8 +53,8 @@ public class DebuggerInlayListener implements EditorMouseMotionListener, EditorM
   public void mouseClicked(@NotNull EditorMouseEvent event) {
     if (event.isConsumed()) return;
     Inlay inlay = event.getInlay();
-    if (inlay != null && inlay.getRenderer() instanceof InlineDebugRenderer) {
-      ((InlineDebugRenderer)inlay.getRenderer()).onClick(inlay, event);
+    if (inlay != null && inlay.getRenderer() instanceof InlineDebugRendererBase) {
+      ((InlineDebugRendererBase)inlay.getRenderer()).onClick(inlay, event);
       event.consume();
     }
   }

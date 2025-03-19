@@ -2,6 +2,7 @@
 package org.jetbrains.fir.uast.test
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.LightClassBehaviorTestBase
@@ -10,8 +11,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), LightClassBehaviorTestBase {
-    override val isFirUastPlugin: Boolean = true
-    override fun isFirPlugin(): Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -30,6 +32,10 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testPropertyAccessorModifierListOffsets() {
         checkPropertyAccessorModifierListOffsets(myFixture)
+    }
+
+    fun testLocalClassCaching() {
+        checkLocalClassCaching(myFixture)
     }
 
     fun testThrowsList() {
@@ -67,5 +73,29 @@ class FirLightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testUpperBoundWildcardForVar() {
         checkUpperBoundWildcardForVar(myFixture)
+    }
+
+    fun testUpperBoundForRecursiveTypeParameter() {
+        checkUpperBoundForRecursiveTypeParameter(myFixture)
+    }
+
+    fun testDefaultValueOfAnnotation_Kotlin() {
+        checkDefaultValueOfAnnotation_Kotlin(myFixture)
+    }
+
+    fun testDefaultValueOfAnnotation_Java() {
+        checkDefaultValueOfAnnotation_Java(myFixture)
+    }
+
+    fun testAnnotationParameterReference() {
+        checkAnnotationParameterReference(myFixture)
+    }
+
+    fun testContainingFile() {
+        checkContainingFile(myFixture)
+    }
+
+    fun testContainingFileInFacadeFiles() {
+        checkContainingFileInFacadeFiles(myFixture)
     }
 }

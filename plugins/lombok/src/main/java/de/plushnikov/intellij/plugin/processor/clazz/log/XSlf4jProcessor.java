@@ -5,7 +5,7 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 /**
  * @author Plushnikov Michail
  */
-public class XSlf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
+public final class XSlf4jProcessor extends AbstractTopicSupportingSimpleLogProcessor {
 
   private static final String LOGGER_TYPE = "org.slf4j.ext.XLogger";
   private static final String LOGGER_INITIALIZER = "org.slf4j.ext.XLoggerFactory.getXLogger(%s)";

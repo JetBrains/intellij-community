@@ -14,7 +14,7 @@ import java.util.Collection;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderPreDefinedInnerClassMethodProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
+public final class SuperBuilderPreDefinedInnerClassMethodProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
 
   public SuperBuilderPreDefinedInnerClassMethodProcessor() {
     super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);

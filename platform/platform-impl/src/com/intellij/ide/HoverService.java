@@ -4,7 +4,7 @@ package com.intellij.ide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.hover.HoverListener;
-import com.intellij.util.SmartList;
+import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -14,6 +14,8 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 final class HoverService {
   private static final Logger LOG = Logger.getInstance(HoverService.class);
@@ -26,25 +28,34 @@ final class HoverService {
   }
 
   private void process(@NotNull MouseEvent event) {
-    SmartList<Component> components = new SmartList<>();
+    PersistentList<Component> components = persistentListOf();
     if (MouseEvent.MOUSE_EXITED != event.getID()) {
       Component parent = event.getComponent();
       if (parent != null && parent.isShowing()) {
         Component component = getDeepestComponentAt(parent, event.getX(), event.getY());
         while (component != null && !(component instanceof Window)) {
-          if (!HoverListener.getAll(component).isEmpty()) components.add(0, component);
+          if (!HoverListener.getAll(component).isEmpty()) {
+            components = components.add(0, component);
+          }
           component = component.getParent();
         }
       }
     }
+
     int componentsCount = components.size();
     int hierarchySize = hierarchy.size();
     int index = 0;
-    while (index < hierarchySize && index < componentsCount && components.get(index) == hierarchy.get(index).reference.get()) index++;
-    while (index < hierarchySize) hierarchy.remove(--hierarchySize).mouseExited();
+    while (index < hierarchySize && index < componentsCount && components.get(index) == hierarchy.get(index).reference.get()) {
+      index++;
+    }
+    while (index < hierarchySize) {
+      hierarchy.remove(--hierarchySize).mouseExited();
+    }
     if (index == componentsCount) {
       // notify only the deepest component in the hover hierarchy
-      if (index > 0) hierarchy.get(index - 1).mouseMoved(event);
+      if (index > 0) {
+        hierarchy.get(index - 1).mouseMoved(event);
+      }
     }
     else {
       while (index < componentsCount) {
@@ -65,21 +76,30 @@ final class HoverService {
    * @see SwingUtilities#getDeepestComponentAt
    */
   private static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
-    if (!parent.contains(x, y)) return null; // parent does not contain the specified location
+    if (!parent.contains(x, y)) {
+      // parent does not contain the specified location
+      return null;
+    }
     if (parent instanceof Container) {
       for (Component child : ((Container)parent).getComponents()) {
         if (child != null && child.isVisible()) {
-          Component deepest = child instanceof Container
-                              ? getDeepestComponentAt(child, x - child.getX(), y - child.getY())
-                              : child.getComponentAt(x - child.getX(), y - child.getY());
-          if (deepest != null && deepest.isVisible()) return deepest; // the deepest component that contains the specified location
+          Component deepest;
+          if (child instanceof Container) {
+            deepest = getDeepestComponentAt(child, x - child.getX(), y - child.getY());
+          }
+          else {
+            deepest = child.getComponentAt(x - child.getX(), y - child.getY());
+          }
+          if (deepest != null && deepest.isVisible()) {
+            // the deepest component that contains the specified location
+            return deepest;
+          }
         }
       }
     }
     // do not allow returning visible glass pane without components
     return parent instanceof IdeGlassPane ? null : parent;
   }
-
 
   private static final class ComponentPoint {
     private final WeakReference<Component> reference;

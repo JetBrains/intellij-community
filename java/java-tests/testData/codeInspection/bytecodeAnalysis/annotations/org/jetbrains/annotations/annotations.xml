@@ -1,0 +1,20 @@
+<root>
+    <item name='org.jetbrains.annotations.ApiStatus ApiStatus()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.jetbrains.annotations.Async Async()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.jetbrains.annotations.Debug Debug()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+</root>

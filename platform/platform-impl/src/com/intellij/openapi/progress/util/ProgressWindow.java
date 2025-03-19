@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -23,16 +22,17 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +41,15 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link com.intellij.openapi.progress.ProgressIndicator} notice.
+ * Use {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} or
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.
+ * </p>
+ */
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, TitledIndicator, ProgressIndicatorWithDelayedPresentation, Disposable,
                                                                      ModalContextProjectLocator {
   private static final Logger LOG = Logger.getInstance(ProgressWindow.class);
@@ -57,7 +64,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
-  int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  int delayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
 
   @FunctionalInterface
@@ -68,14 +75,17 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Topic.AppLevel
   public static final Topic<Listener> TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.NONE, true);
 
+  @Obsolete
   public ProgressWindow(boolean shouldShowCancel, @Nullable Project project) {
     this(shouldShowCancel, false, project);
   }
 
+  @Obsolete
   public ProgressWindow(boolean shouldShowCancel, boolean shouldShowBackground, @Nullable Project project) {
     this(shouldShowCancel, shouldShowBackground, project, null);
   }
 
+  @Obsolete
   public ProgressWindow(boolean shouldShowCancel,
                         boolean shouldShowBackground,
                         @Nullable Project project,
@@ -83,6 +93,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     this(shouldShowCancel, shouldShowBackground, project, null, cancelText);
   }
 
+  @Obsolete
   public ProgressWindow(boolean shouldShowCancel,
                         boolean shouldShowBackground,
                         @Nullable Project project,
@@ -96,7 +107,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
 
     myDialogInitialization = () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       Window parentWindow = calcParentWindow(parentComponent, myProject);
       myDialog = new ProgressDialog(this, shouldShowBackground, cancelText, parentWindow);
       Disposer.register(this, myDialog);
@@ -109,12 +120,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   protected void initializeOnEdtIfNeeded() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     initializeDialog();
   }
 
   private void initializeDialog() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Runnable initialization = myDialogInitialization;
     if (initialization == null) return;
     myDialogInitialization = null;
@@ -158,7 +169,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
    */
   @Override
   public void setDelayInMillis(int delayInMillis) {
-    myDelayInMillis = delayInMillis;
+    this.delayInMillis = delayInMillis;
   }
 
   protected void prepareShowDialog() {
@@ -166,14 +177,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
     // for each of them. The solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
     // if the task is already finished when the time comes.
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
+    EdtScheduler.getInstance().schedule(delayInMillis, getModalityState(), () -> {
       if (isRunning()) {
         showDialog();
       }
       else if (isPopupWasShown()) {
         Disposer.dispose(this);
       }
-    }, getModalityState(), myDelayInMillis, TimeUnit.MILLISECONDS);
+    });
   }
 
   final void executeInModalContext(@NotNull Runnable modalAction) {
@@ -198,7 +209,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public void startBlocking(@NotNull Runnable init, @NotNull CompletableFuture<?> stopCondition) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning());
       LOG.assertTrue(!myStoppedAlready);
@@ -211,13 +222,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           initializeOnEdtIfNeeded();
           // guarantee AWT event after the future is done will be pumped and loop exited
           stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-            IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
-              if (isCancellationEvent(event)) {
-                cancel();
-              }
-            });
-          }
+          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
+            if (isCancellationEvent(event)) {
+              cancel();
+            }
+          });
           return null;
         });
       });
@@ -239,12 +248,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   protected void showDialog() {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    app.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!isRunning() || isCanceled()) {
       return;
     }
 
-    if (app.isExitInProgress() && Registry.is("ide.instant.shutdown", true)) {
+    if (app.isExitInProgress() && app.getService(InstantShutdown.class).isAllowed()) {
       return;
     }
 
@@ -285,12 +294,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Nullable ProgressDialog getDialog() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myDialog;
   }
 
   public void background() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
@@ -330,7 +339,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private void update() {
     ProgressDialog dialog = myDialog;
     if (dialog != null) {
-      dialog.update();
+      dialog.scheduleUpdate();
     }
   }
 
@@ -349,13 +358,14 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @Override
   public @ProgressTitle String getTitle() {
     return myTitle;
   }
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myDialogInitialization = null;
     stopSystemActivity();
     if (isRunning()) {
@@ -365,7 +375,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public boolean isPopupWasShown() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myDialog != null && myDialog.getPopup() != null && myDialog.getPopup().isShowing();
   }
 

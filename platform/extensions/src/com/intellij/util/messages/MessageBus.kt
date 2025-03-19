@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Core of IntelliJ Platform messaging infrastructure. Basic functions:
- *  * allows to [push messages][.syncPublisher];
- *  * allows to [create connections][.connect] for further [subscriptions][MessageBusConnection.subscribe];
+ *  * allows to [push messages][syncPublisher];
+ *  * allows to [create connections][connect] for further [subscriptions][MessageBusConnection.subscribe];
  *
  * Use [com.intellij.openapi.components.ComponentManager.getMessageBus] to obtain one.
  *
- * Please see [Messaging Infrastructure](https://www.jetbrains.org/intellij/sdk/docs/reference_guide/messaging_infrastructure.html) and
- * [Plugin Listeners](http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_listeners.html).
+ * Please see [Messaging Infrastructure](https://plugins.jetbrains.com/docs/intellij/messaging-infrastructure.html) and
+ * [Listeners](https://plugins.jetbrains.com/docs/intellij/plugin-listeners.html).
  */
 interface MessageBus : Disposable {
   /**
@@ -92,13 +91,12 @@ interface MessageBus : Disposable {
    * like `'messageBus.syncPublisher(targetTopic).targetMethod()'`.
    *
    * @param topic target topic
-   * @param <L>   [business interface][Topic.getListenerClass] of the target topic
+   * @param <L> [business interface][Topic.getListenerClass] of the target topic
    * @return publisher for a target topic
    */
   fun <L : Any> syncPublisher(topic: Topic<L>): L
 
   @Internal
-  @Experimental
   fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L
 
   /**

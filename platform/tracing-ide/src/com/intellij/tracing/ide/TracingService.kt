@@ -27,7 +27,9 @@ internal class TracingService {
       return tracesDirPath.resolve(subDir).resolve(getNewTraceFileName())
     }
 
-    private fun getNewTraceFileName() = "trace_" + LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + ".json"
+    private val fileNameDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
+
+    private fun getNewTraceFileName() = "trace_${LocalDateTime.now().format(fileNameDateTimeFormatter)}.json"
 
     private fun getTracesDirPath() : Path {
       return Paths.get(PathManager.getHomePath()).resolve(COMMON_TRACING_DIR_NAME)

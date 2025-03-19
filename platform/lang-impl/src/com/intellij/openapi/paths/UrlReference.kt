@@ -19,7 +19,10 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class UrlReference(private val element: PsiElement,
                    private val rangeInElement: TextRange,
                    val url: String) : PsiHighlightedReference {
@@ -30,7 +33,7 @@ class UrlReference(private val element: PsiElement,
 
   override fun resolveReference(): Collection<Symbol> = listOf(UrlSymbol(url))
 
-  override fun highlightMessage() = HyperlinkAnnotator.getMessage()
+  override fun highlightMessage(): @Nls String = HyperlinkAnnotator.getMessage()
 
   override fun highlightReference(annotationBuilder: AnnotationBuilder): AnnotationBuilder {
     return annotationBuilder.textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)

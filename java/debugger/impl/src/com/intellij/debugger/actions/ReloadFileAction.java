@@ -5,12 +5,12 @@ import com.intellij.compiler.actions.CompileAction;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.HotSwapUI;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.NotNull;
 
 public class ReloadFileAction extends CompileAction {
@@ -22,6 +22,7 @@ public class ReloadFileAction extends CompileAction {
       if (files.length > 0) {
         DebuggerSession session = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
         if (session != null) {
+          HotSwapStatistics.logHotSwapCalled(project, HotSwapStatistics.HotSwapSource.RELOAD_FILE);
           HotSwapUI.getInstance(project).compileAndReload(session, files);
         }
       }
@@ -36,10 +37,5 @@ public class ReloadFileAction extends CompileAction {
       DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession() != null &&
       getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).length > 0 &&
       !CompilerManager.getInstance(project).isCompilationActive());
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
   }
 }

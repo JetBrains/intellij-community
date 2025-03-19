@@ -2,10 +2,11 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
@@ -92,29 +93,28 @@ class PyAsyncCallInspection : PyInspection() {
     }
   }
 
-  private class PyAddAwaitCallForCoroutineFix(val type: AwaitableType) : LocalQuickFix {
+  private class PyAddAwaitCallForCoroutineFix(val type: AwaitableType) : PsiUpdateModCommandQuickFix() {
     override fun getFamilyName() = PyPsiBundle.message("QFIX.coroutine.is.not.awaited")
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val psiElement = descriptor.psiElement
-      if (psiElement is PyExpressionStatement) {
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      if (element is PyExpressionStatement) {
         val sb = StringBuilder()
         when (type) {
           AwaitableType.AWAITABLE -> {
             sb.append("""async def foo():
-                         |    """.trimMargin()).append(PyNames.AWAIT).append(" ").append(psiElement.text)
+                         |    """.trimMargin()).append(PyNames.AWAIT).append(" ").append(element.text)
           }
           AwaitableType.COROUTINE -> {
             sb.append("""def foo():
                          |    """.trimMargin()).append(PyNames.YIELD).append(" ").append(PyNames.FROM).append(" ")
-              .append(psiElement.text)
+              .append(element.text)
           }
         }
         val generator = PyElementGenerator.getInstance(project)
-        val function = generator.createFromText(LanguageLevel.forElement(psiElement), PyFunction::class.java, sb.toString())
+        val function = generator.createFromText(LanguageLevel.forElement(element), PyFunction::class.java, sb.toString())
         val awaitedStatement = function.statementList.statements.firstOrNull()
         if (awaitedStatement != null) {
-          PyReplaceExpressionUtil.replaceExpression(psiElement, awaitedStatement)
+          PyReplaceExpressionUtil.replaceExpression(element, awaitedStatement)
         }
       }
     }

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -25,10 +26,12 @@ public interface VcsLogFilterCollection {
   FilterKey<VcsLogTextFilter> TEXT_FILTER = FilterKey.create("text");
   FilterKey<VcsLogStructureFilter> STRUCTURE_FILTER = FilterKey.create("structure");
   FilterKey<VcsLogRootFilter> ROOT_FILTER = FilterKey.create("roots");
+  FilterKey<VcsLogParentFilter> PARENT_FILTER = FilterKey.create("parent");
 
   Collection<FilterKey<? extends VcsLogFilter>> STANDARD_KEYS = List.of(BRANCH_FILTER, REVISION_FILTER, RANGE_FILTER,
                                                                         USER_FILTER, HASH_FILTER, DATE_FILTER,
-                                                                        TEXT_FILTER, STRUCTURE_FILTER, ROOT_FILTER);
+                                                                        TEXT_FILTER, STRUCTURE_FILTER, ROOT_FILTER,
+                                                                        PARENT_FILTER);
 
   @Nullable <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key);
 
@@ -42,20 +45,18 @@ public interface VcsLogFilterCollection {
   @NotNull
   Collection<VcsLogFilter> getFilters();
 
-  @NotNull
-  default List<VcsLogDetailsFilter> getDetailsFilters() {
+  default @NotNull @Unmodifiable List<VcsLogDetailsFilter> getDetailsFilters() {
     return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
   }
 
   class FilterKey<T extends VcsLogFilter> {
-    @NotNull private final String myName;
+    private final @NotNull String myName;
 
     public FilterKey(@NotNull String name) {
       myName = name;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
@@ -77,8 +78,7 @@ public interface VcsLogFilterCollection {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return myName + " filter";
     }
   }

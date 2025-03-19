@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.BreakpointChecker.Bre
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.Color
-import java.util.*
 
 class InspectBreakpointApplicabilityAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
@@ -33,10 +32,10 @@ class InspectBreakpointApplicabilityAction : AnAction() {
         data.editor.gutter.registerTextAnnotation(gutterProvider)
     }
 
-    private class BreakpointsGutterProvider(private val breakpoints: List<EnumSet<BreakpointType>>) : TextAnnotationGutterProvider {
+    private class BreakpointsGutterProvider(private val breakpoints: List<List<BreakpointType>>) : TextAnnotationGutterProvider {
         override fun getLineText(line: Int, editor: Editor?): String? {
             val breakpoints = breakpoints.getOrNull(line) ?: return null
-            return breakpoints.map { it.prefix }.distinct().joinToString()
+            return breakpoints.joinToString { it.prefix }
         }
 
         override fun getToolTip(line: Int, editor: Editor?): String? = null

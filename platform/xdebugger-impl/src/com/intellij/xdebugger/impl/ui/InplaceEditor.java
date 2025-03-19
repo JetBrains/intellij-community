@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class InplaceEditor implements AWTEventListener {
   public static final Key<Boolean> IGNORE_MOUSE_EVENT = Key.create("InplaceEditor.Ignore.Mouse.Event");
   private static final Logger LOG = Logger.getInstance(InplaceEditor.class);
@@ -109,11 +111,11 @@ public abstract class InplaceEditor implements AWTEventListener {
     setInplaceEditorBounds(inplaceEditorComponent, layeredPanePoint.x, layeredPanePoint.y, bounds.width, bounds.height);
 
     layeredPane.add(inplaceEditorComponent, Integer.valueOf(250));
-    ComponentUtil.putClientProperty(inplaceEditorComponent, ToolWindowManagerImpl.PARENT_COMPONENT, hostComponent);
+    ClientProperty.put(inplaceEditorComponent, ToolWindowManagerImpl.PARENT_COMPONENT, hostComponent);
 
     myRemoveActions.add(() -> {
       layeredPane.remove(inplaceEditorComponent);
-      ComponentUtil.putClientProperty(inplaceEditorComponent, ToolWindowManagerImpl.PARENT_COMPONENT, null);
+      ClientProperty.put(inplaceEditorComponent, ToolWindowManagerImpl.PARENT_COMPONENT, null);
     });
 
     inplaceEditorComponent.validate();
@@ -278,8 +280,7 @@ public abstract class InplaceEditor implements AWTEventListener {
     }
   }
 
-  @Nullable
-  protected abstract Rectangle getEditorBounds();
+  protected abstract @Nullable Rectangle getEditorBounds();
 
   public boolean isShown() {
     return myInplaceEditorComponent != null;

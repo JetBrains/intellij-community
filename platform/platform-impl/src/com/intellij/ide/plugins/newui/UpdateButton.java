@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -9,7 +9,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public class UpdateButton extends ColorButton {
+public final class UpdateButton extends ColorButton {
   private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
   private static final Color ForegroundColor = JBColor.namedColor("Plugins.Button.updateForeground", WhiteForeground);
   private static final Color BackgroundColor = JBColor.namedColor("Plugins.Button.updateBackground", BlueColor);

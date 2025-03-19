@@ -4,65 +4,83 @@ package com.intellij.toolWindow
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ToggleToolbarAction
+import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
-import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.layout.migLayout.createLayoutConstraints
-import com.intellij.ui.layout.migLayout.patched.MigLayout
 import com.intellij.ui.popup.PopupState
-import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.SingleHeightTabs
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import net.miginfocom.layout.CC
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
-import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
-import javax.swing.SwingUtilities
+import javax.swing.*
+import javax.swing.GroupLayout.DEFAULT_SIZE
+import javax.swing.GroupLayout.PREFERRED_SIZE
 import javax.swing.event.PopupMenuEvent
 import javax.swing.event.PopupMenuListener
 
+@ApiStatus.Internal
 abstract class ToolWindowHeader internal constructor(
   private val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val gearProducer: Supplier<ActionGroup>
-) : BorderLayoutPanel(), DataProvider, PropertyChangeListener {
+) : BorderLayoutPanel(), PropertyChangeListener {
+
+  @ApiStatus.Internal
+  companion object {
+    internal fun getUnscaledHeight() = if (ExperimentalUI.isNewUI()) {
+      JBUI.CurrentTheme.ToolWindow.headerHeight()
+    }
+    else {
+      SingleHeightTabs.UNSCALED_PREF_HEIGHT
+    }
+  }
 
   private val actionGroup = DefaultActionGroup()
-  private val actionGroupWest = DefaultActionGroup()
   private val toolbar: ActionToolbar
-  private var toolbarWest: ActionToolbar? = null
-  private val westPanel: JPanel
+  private val westPanel = WestPanel()
   private val popupMenuListener = object : PopupMenuListener {
     override fun popupMenuWillBecomeVisible(event: PopupMenuEvent) = setPopupShowing(true)
     override fun popupMenuWillBecomeInvisible(event: PopupMenuEvent) = setPopupShowing(false)
     override fun popupMenuCanceled(event: PopupMenuEvent) = setPopupShowing(false)
   }
 
-  var isPopupShowing = false
+  var isPopupShowing: Boolean = false
     private set
+
+  var sideComponent: JComponent? = null
+    set(value) {
+      val old = field
+      if (old !== value) {
+        westPanel.setComponents(contentUi.tabComponent, value)
+        field = value
+        westPanel.revalidateAndRepaint()
+      }
+    }
 
   private fun setPopupShowing(showing: Boolean) {
     if (isPopupShowing != showing) {
@@ -74,13 +92,10 @@ abstract class ToolWindowHeader internal constructor(
   init {
     @Suppress("LeakingThis")
     AccessibleContextUtil.setName(this, IdeBundle.message("toolwindow.header.accessible.name"))
-    westPanel = JPanel(MigLayout(createLayoutConstraints(0, 0).noVisualPadding().fillY()))
-    westPanel.isOpaque = false
-    westPanel.add(contentUi.tabComponent, CC().growY())
-    MouseDragHelper.setComponentDraggable(westPanel, true)
+    westPanel.setComponents(contentUi.tabComponent, null)
     @Suppress("LeakingThis")
-    add(westPanel)
-    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
+    add(westPanel.component)
+    ToolWindowContentUi.initMouseListeners(westPanel.component, contentUi, true)
     val commonActionsGroup = DefaultActionGroup(DockToolWindowAction(), ShowOptionsAction(), HideAction())
     toolbar = object : ActionToolbarImpl(
       ActionPlaces.TOOLWINDOW_TITLE,
@@ -114,7 +129,7 @@ abstract class ToolWindowHeader internal constructor(
 
           val tabListAction = e.actionManager.getAction("TabList")
           if (hideCommonActions == true) {
-            return arrayOf(tabListAction, *extraActions.toTypedArray())
+            return arrayOf(tabListAction)
           }
           return arrayOf(tabListAction, *extraActions.toTypedArray(), commonActionsGroup)
         }
@@ -137,8 +152,8 @@ abstract class ToolWindowHeader internal constructor(
     }
 
     toolbar.targetComponent = toolbar.component
-    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+    toolbar.isReservePlaceAutoPopupIcon = false
     val component = toolbar.component
     component.border = JBUI.Borders.empty(2, 0)
     if (toolWindow.toolWindowManager.isNewUi) {
@@ -161,7 +176,7 @@ abstract class ToolWindowHeader internal constructor(
 
     @Suppress("LeakingThis")
     add(toolbarPanel, BorderLayout.EAST)
-    westPanel.addMouseListener(
+    westPanel.component.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
@@ -187,6 +202,9 @@ abstract class ToolWindowHeader internal constructor(
           }
           else {
             toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
+            // Move focus to the context component.
+            val decorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
+            decorator?.requestContentFocus()
           }
         }
       }
@@ -203,8 +221,8 @@ abstract class ToolWindowHeader internal constructor(
         manager.setMaximized(this@ToolWindowHeader.toolWindow, !manager.isMaximized(this@ToolWindowHeader.toolWindow))
         return true
       }
-    }.installOn(westPanel)
-    westPanel.addMouseListener(
+    }.installOn(westPanel.component)
+    westPanel.component.addMouseListener(
       object : MouseAdapter() {
         override fun mouseReleased(e: MouseEvent) {
           val runnable = Runnable { dispatchEvent(SwingUtilities.convertMouseEvent(e.component, e, this@ToolWindowHeader)) }
@@ -214,67 +232,38 @@ abstract class ToolWindowHeader internal constructor(
     )
   }
 
+  private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
+    if (init) {
+      val allowDnd = ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)
+      westPanel.growFirst = allowDnd
+      westPanel.setComponents(contentUi.tabComponent, sideComponent)
+      contentUi.connectTabToolbar()
+    }
+    else { // remove to avoid extra events, toolbars update on addNotify!
+      westPanel.clear()
+      contentUi.disconnectTabToolbar()
+    }
+  }
+
   override fun propertyChange(evt: PropertyChangeEvent?) {
-    if (ClientProperty.isTrue(toolWindow.component as Component?, ToolWindowContentUi.ALLOW_DND_FOR_TABS)) {
-      westPanel.add(contentUi.tabComponent, CC().grow().pushX())
-    }
-    else {
-      westPanel.add(contentUi.tabComponent, CC().growY())
-    }
-    val toolbar = toolbarWest
-    if (toolbar != null) {
-      // It always should stay after tab component
-      westPanel.add(toolbar.component, CC().pushX())
-    }
+    manageWestPanelTabComponentAndToolbar(true)
   }
 
   override fun addNotify() {
     super.addNotify()
     toolWindow.component.addPropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
-    propertyChange(null)
+    manageWestPanelTabComponentAndToolbar(true)
   }
 
   override fun removeNotify() {
     toolWindow.component.removePropertyChangeListener(ToolWindowContentUi.ALLOW_DND_FOR_TABS.toString(), this)
     super.removeNotify()
+    manageWestPanelTabComponentAndToolbar(false)
   }
 
-  fun getToolbar() = toolbar
+  fun getToolbar(): ActionToolbar = toolbar
 
-  fun getToolbarWest() = toolbarWest
-
-  fun getToolbarActions() = actionGroup
-
-  fun getToolbarWestActions() = actionGroupWest
-
-  override fun getData(dataId: String): Any? {
-    if (MorePopupAware.KEY.`is`(dataId)) {
-      return contentUi.getData(dataId)
-    }
-    else {
-      return null
-    }
-  }
-
-  fun setTabActions(actions: List<AnAction>) {
-    if (toolbarWest == null) {
-      toolbarWest = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, DefaultActionGroup(actionGroupWest),
-                                                                    true)
-      with(toolbarWest as ActionToolbarImpl) {
-        targetComponent = this
-        setForceMinimumSize(true)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-        setReservePlaceAutoPopupIcon(false)
-        isOpaque = false
-        border = JBUI.Borders.empty()
-        westPanel.add(this, CC().pushX())
-      }
-    }
-    actionGroupWest.removeAll()
-    actionGroupWest.addSeparator()
-    actionGroupWest.addAll(actions)
-    toolbarWest?.updateActionsImmediately()
-  }
+  fun getToolbarActions(): DefaultActionGroup = actionGroup
 
   fun setAdditionalTitleActions(actions: List<AnAction>) {
     actionGroup.removeAll()
@@ -282,7 +271,7 @@ abstract class ToolWindowHeader internal constructor(
     if (actions.isNotEmpty() && !ExperimentalUI.isNewUI()) {
       actionGroup.addSeparator()
     }
-    toolbar.updateActionsImmediately()
+    toolbar.updateActionsAsync()
   }
 
   override fun paintComponent(g: Graphics) {
@@ -290,16 +279,16 @@ abstract class ToolWindowHeader internal constructor(
       return
     }
 
-    val type = toolWindow.type
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
     val isNewUi = toolWindow.toolWindowManager.isNewUi
-    val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
+    val drawTopLine = InternalDecoratorImpl.headerNeedsTopBorder(this)
     var drawBottomLine = true
 
     if (isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
+      val contentCount = (nearestDecorator?.contentManager ?: toolWindow.contentManager).contentCount
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
-                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
+                        || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
                         || scrolled)
     }
@@ -308,12 +297,13 @@ abstract class ToolWindowHeader internal constructor(
     UIUtil.drawHeader(g, 0, width, height, active, true, drawTopLine, drawBottomLine)
   }
 
+  @Suppress("UseJBColor")
   override fun paintChildren(g: Graphics) {
     val graphics = g.create() as Graphics2D
     setupAntialiasing(graphics)
     super.paintChildren(graphics)
     val r = bounds
-    if (!isActive && !StartupUiUtil.isUnderDarcula) {
+    if (!isActive && !StartupUiUtil.isDarkTheme) {
       graphics.color = Color(255, 255, 255, 30)
       graphics.fill(r)
     }
@@ -325,19 +315,17 @@ abstract class ToolWindowHeader internal constructor(
   protected abstract fun hideToolWindow()
 
   override fun getPreferredSize(): Dimension {
-    val size = super.getPreferredSize()
     val insets = insets
-    var height = JBUI.scale(SingleHeightTabs.UNSCALED_PREF_HEIGHT) - insets.top - insets.bottom
-    if (toolWindow.toolWindowManager.isNewUi) {
-      height = JBUI.scale(JBUI.CurrentTheme.ToolWindow.headerHeight()) - insets.top - insets.bottom
-    }
+    val top = if (InternalDecoratorImpl.headerNeedsTopBorder(this)) 1 else 0
+    val height = JBUI.scale(getUnscaledHeight()) + top - insets.top - insets.bottom
+    val size = super.getPreferredSize()
     return Dimension(size.width, height)
   }
 
-  private inner class ShowOptionsAction : DumbAwareAction() {
-    val myPopupState = PopupState.forPopupMenu()
+  inner class ShowOptionsAction : DumbAwareAction(), FusAwareAction {
+    private val myPopupState = PopupState.forPopupMenu()
 
-    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = true
@@ -357,6 +345,10 @@ abstract class ToolWindowHeader internal constructor(
       myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.addPopupMenuListener(popupMenuListener)
       popupMenu.component.show(inputEvent!!.component, x, y)
+    }
+
+    override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> {
+      return listOf(ToolwindowFusEventFields.TOOLWINDOW with toolWindow.id)
     }
 
     init {
@@ -383,3 +375,45 @@ abstract class ToolWindowHeader internal constructor(
     }
   }
 }
+
+private class WestPanel {
+  val component = JPanel().apply {
+    isOpaque = false
+    MouseDragHelper.setComponentDraggable(this, true)
+  }
+
+  var growFirst = false
+
+  fun setComponents(first: Component, second: Component?) {
+    clear()
+    val layout = GroupLayout(component)
+    val hg: GroupLayout.SequentialGroup = layout.createSequentialGroup()
+    val vg: GroupLayout.ParallelGroup = layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+    layout.setHorizontalGroup(hg)
+    layout.setVerticalGroup(vg)
+    component.layout = layout
+
+    hg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, if (growFirst) INFINITE_SIZE else PREFERRED_SIZE)
+    vg.addComponent(first, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+    if (second != null) {
+      hg.addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, PREFERRED_SIZE)
+      vg.addGroup(
+        layout.createSequentialGroup()
+          .addGap(JBUI.scale(1))
+          .addComponent(second, DEFAULT_SIZE, DEFAULT_SIZE, INFINITE_SIZE)
+          .addGap(JBUI.scale(1))
+      )
+    }
+  }
+
+  fun clear() {
+    component.removeAll()
+  }
+
+  fun revalidateAndRepaint() {
+    component.revalidate()
+    component.repaint()
+  }
+}
+
+private const val INFINITE_SIZE: Int = Short.MAX_VALUE.toInt()

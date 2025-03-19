@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -120,7 +121,7 @@ private fun checkMemberClashing(
                         targetClassDescriptor.renderForConflicts(),
                         clashingDescriptor.renderForConflicts()
                     )
-                    conflicts.putValue(clashingDeclaration, CommonRefactoringUtil.capitalize(message))
+                    conflicts.putValue(clashingDeclaration, StringUtil.capitalize(message))
                 }
                 if (!clashingDeclaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
                     val message = KotlinBundle.message(
@@ -129,7 +130,7 @@ private fun checkMemberClashing(
                         targetClassDescriptor.renderForConflicts(),
                         context.sourceClassDescriptor.renderForConflicts()
                     )
-                    conflicts.putValue(clashingDeclaration, CommonRefactoringUtil.capitalize(message))
+                    conflicts.putValue(clashingDeclaration, StringUtil.capitalize(message))
                 }
             }
         }
@@ -138,7 +139,7 @@ private fun checkMemberClashing(
             targetClass.declarations
                 .asSequence()
                 .filterIsInstance<KtClassOrObject>()
-                .firstOrNull() { it.name == member.name }
+                .firstOrNull { it.name == member.name }
                 ?.let {
                     val message = KotlinBundle.message(
                         "text.0.already.contains.nested.class.1",
@@ -186,7 +187,7 @@ internal fun checkExternalUsages(
     targetClassDescriptor: ClassDescriptor,
     resolutionFacade: ResolutionFacade
 ) {
-    for (ref in ReferencesSearch.search(member, member.resolveScope, false)) {
+    for (ref in ReferencesSearch.search(member, member.resolveScope, false).asIterable()) {
         val calleeExpr = ref.element as? KtSimpleNameExpression ?: continue
         val resolvedCall = calleeExpr.getResolvedCall(resolutionFacade.analyze(calleeExpr)) ?: continue
         val callElement = resolvedCall.call.callElement

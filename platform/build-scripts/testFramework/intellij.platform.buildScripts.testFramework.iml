@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="grpc-netty-shaded" level="project" />
     <orderEntry type="library" name="grpc-core" level="project" />
     <orderEntry type="library" name="grpc-protobuf" level="project" />
@@ -17,19 +18,21 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
     <orderEntry type="library" name="JUnit5" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
-    <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" />
+    <orderEntry type="module" module-name="intellij.tools.reproducibleBuilds.diff" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
-    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />
-    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="library" name="tcServiceMessages" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
   </component>
 </module>

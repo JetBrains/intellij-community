@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -8,25 +8,20 @@ import com.intellij.util.withScheme
 import java.net.URI
 
 object URIUtil {
-
   fun normalizeAndValidateHttpUri(uri: String): String {
-    val normalized = addHttpsSchemaIfMissing(uri).removeSuffix("/")
-    require(uri.startsWith("http")) { CollaborationToolsBundle.message("login.server.invalid") }
+    val normalized = URLUtil.addSchemaIfMissing(uri).removeSuffix("/")
+    require(normalized.startsWith(URLUtil.HTTP_PROTOCOL)) { CollaborationToolsBundle.message("login.server.invalid") }
     URI.create(normalized)
     return normalized
   }
 
-  private fun addHttpsSchemaIfMissing(uri: String): String {
-    if (uri.contains("://")) return uri
-    return "https://$uri"
-  }
-
   fun isValidHttpUri(uri: String): Boolean {
+    if (uri.isBlank()) return false
     return try {
       normalizeAndValidateHttpUri(uri)
       true
     }
-    catch (e: Throwable) {
+    catch (_: Throwable) {
       false
     }
   }
@@ -39,6 +34,17 @@ object URIUtil {
   fun toStringWithoutScheme(uri: URI): @NlsSafe String {
     val schemeText = uri.scheme + URLUtil.SCHEME_SEPARATOR
     return uri.toString().removePrefix(schemeText)
+  }
+
+  fun createUriWithCustomScheme(uri: String, scheme: String): URI {
+    val prefix = scheme + URLUtil.SCHEME_SEPARATOR
+    if (uri.startsWith(prefix)) return URI(uri)
+    return URI(prefix + removeProtocolPrefix(uri))
+  }
+
+  private fun removeProtocolPrefix(url: String): String {
+    val index = url.indexOf(URLUtil.SCHEME_SEPARATOR)
+    return if (index != -1) url.substring(index + URLUtil.SCHEME_SEPARATOR.length) else url
   }
 }
 

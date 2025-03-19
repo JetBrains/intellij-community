@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BeanConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 
-public class BaseCodeFoldingOptionsProvider extends BeanConfigurable<CodeFoldingSettings> implements CodeFoldingOptionsProvider {
+@ApiStatus.Internal
+public final class BaseCodeFoldingOptionsProvider extends BeanConfigurable<CodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public BaseCodeFoldingOptionsProvider() {
     super(CodeFoldingSettings.getInstance(), ApplicationBundle.message("title.general"));
     CodeFoldingSettings settings = getInstance();

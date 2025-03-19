@@ -12,7 +12,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import java.awt.datatransfer.StringSelection
 
-class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
+internal class DumpFeaturesAndTipsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     ProductivityFeaturesRegistry.getInstance()?.let { featuresRegistry ->
       val tips = TipAndTrickBean.EP_NAME.extensionList.associateBy { it.fileName }.toMutableMap()

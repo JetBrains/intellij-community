@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ui;
 
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsSafe;
@@ -11,17 +9,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
@@ -38,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.checkConflictsInteractively;
 import static org.jetbrains.kotlin.idea.util.NonblockingKt.nonBlocking;
 
 public class KotlinExtractFunctionDialog extends DialogWrapper {
@@ -81,15 +77,14 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
     }
 
     private boolean isVisibilitySectionAvailable() {
-        return ExtractableAnalysisUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
+        return ExtractUtilKt.isVisibilityApplicable(originalDescriptor.getDescriptor().getExtractionData());
     }
 
     private String getFunctionName() {
         return KtPsiUtilKt.quoteIfNeeded(functionNameField.getEnteredName());
     }
 
-    @Nullable
-    private KtModifierKeywordToken getVisibility() {
+    private @Nullable KtModifierKeywordToken getVisibility() {
         if (!isVisibilitySectionAvailable()) return null;
 
         KtModifierKeywordToken value = (KtModifierKeywordToken) visibilityBox.getSelectedItem();
@@ -109,7 +104,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
 
         setOKActionEnabled(checkNames());
         signaturePreviewField.setText(
-                ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration(), IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS)
+                ExtractorUtilKt.getSignaturePreview(getCurrentConfiguration())
         );
     }
 
@@ -134,9 +129,8 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
             returnTypeBox.setModel(returnTypeBoxModel);
             returnTypeBox.setRenderer(
                     new DefaultListCellRenderer() {
-                        @NotNull
                         @Override
-                        public Component getListCellRendererComponent(
+                        public @NotNull Component getListCellRendererComponent(
                                 JList list,
                                 Object value,
                                 int index,
@@ -222,7 +216,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
                     MultiMap<PsiElement, String> conflicts = ((ExtractableCodeDescriptorWithConflicts) result).getConflicts();
                     conflicts.values().removeAll(originalDescriptor.getConflicts().values());
 
-                    KotlinRefactoringUtilKt.checkConflictsInteractively(
+                    checkConflictsInteractively(
                             project,
                             conflicts,
                             new Function0<>() {
@@ -254,14 +248,12 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
         return contentPane;
     }
 
-    @NotNull
     @Override
-    protected JComponent createContentPane() {
+    protected @NotNull JComponent createContentPane() {
         return contentPane;
     }
 
-    @NotNull
-    private ExtractableCodeDescriptor createDescriptor() {
+    private @NotNull ExtractableCodeDescriptor createDescriptor() {
         return createNewDescriptor(originalDescriptor.getDescriptor(),
                                    getFunctionName(),
                                    getVisibility(),
@@ -270,8 +262,7 @@ public class KotlinExtractFunctionDialog extends DialogWrapper {
                                    (KotlinType) returnTypeBox.getSelectedItem());
     }
 
-    @NotNull
-    public ExtractionGeneratorConfiguration getCurrentConfiguration() {
+    public @NotNull ExtractionGeneratorConfiguration getCurrentConfiguration() {
         return new ExtractionGeneratorConfiguration(currentDescriptor, ExtractionGeneratorOptions.DEFAULT);
     }
 

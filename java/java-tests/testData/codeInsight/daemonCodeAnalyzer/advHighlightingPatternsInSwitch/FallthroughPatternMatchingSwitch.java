@@ -2,9 +2,9 @@
 class Main {
   void ff(Object o) {
     switch (o) {
-      case String s:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
       case null:
-      case <error descr="Illegal fall-through to a pattern">Integer i</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">Integer i</error>:
         System.out.println(i + 1);
         break;
       case Long l:
@@ -29,7 +29,7 @@ class Main {
   void g(Object o) {
     switch (o) {
       case null:
-      case Integer i:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">Integer i</error>:
         System.out.println(i + 1);
       default:
         throw new IllegalStateException("Unexpected value: " + o);
@@ -88,8 +88,8 @@ class Main {
 
   void m(Object o) {
     switch (o) {
-      case String s:
-      case <error descr="Illegal fall-through to a pattern">Integer i</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">String s</error>:
+      case <error descr="Multiple switch labels are permitted for a switch labeled statement group only if none of them declare any pattern variables">Integer i</error>:
         System.out.println(i + 1);
       default:
         throw new IllegalStateException("Unexpected value: " + o);

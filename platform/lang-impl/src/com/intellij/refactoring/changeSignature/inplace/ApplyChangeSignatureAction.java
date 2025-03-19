@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.openapi.editor.Editor;
@@ -23,25 +9,25 @@ import com.intellij.refactoring.BaseRefactoringIntentionAction;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
+@ApiStatus.Internal
+public final class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
   private final String myMethodName;
 
   public ApplyChangeSignatureAction(String methodName) {
     myMethodName = methodName;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return RefactoringBundle.message("changing.signature.of.0", myMethodName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return RefactoringBundle.message("intention.family.name.apply.signature.change");
   }
 
@@ -70,9 +56,8 @@ public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
     detector.performChange(currentInfo, editor, initialSignature);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
   }
 

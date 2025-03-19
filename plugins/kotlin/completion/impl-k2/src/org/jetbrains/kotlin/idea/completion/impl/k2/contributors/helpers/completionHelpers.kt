@@ -7,9 +7,10 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.utils.checkWithAttachment
 
-internal fun InsertionContext.insertSymbolAndInvokeCompletion(symbol: String) {
-    this.insertSymbol(symbol)
+internal fun InsertionContext.insertStringAndInvokeCompletion(stringToInsert: String) {
+    this.insertString(stringToInsert)
     scheduleCompletion(this)
 }
 
@@ -22,9 +23,17 @@ private fun scheduleCompletion(context: InsertionContext) {
     }
 }
 
-internal fun InsertionContext.insertSymbol(symbol: String, position: Int = tailOffset, moveCaretToEnd: Boolean = true) {
+internal fun InsertionContext.insertString(stringToInsert: String, position: Int = tailOffset, moveCaretToEnd: Boolean = true) {
+    val rangeMarker = document.createRangeMarker(position, position)
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
-    document.insertString(position, symbol)
+
+    checkWithAttachment(rangeMarker.isValid, { "Unexpected invalid range marker" }) {
+        it.withAttachment("document", document)
+        it.withAttachment("rangeMarker", rangeMarker)
+    }
+    val updatedPosition = rangeMarker.startOffset
+
+    document.insertString(updatedPosition, stringToInsert)
     commitDocument()
     if (moveCaretToEnd) editor.caretModel.moveToOffset(tailOffset)
 }
@@ -34,12 +43,14 @@ internal fun InsertionContext.addTypeArguments(typeArgumentsCount: Int) {
         typeArgumentsCount == 0 -> {
             return
         }
+
         typeArgumentsCount < 0 -> {
             error("Count of type arguments should be non-negative, but was $typeArgumentsCount")
         }
+
         else -> {
             commitDocument()
-            insertSymbol(createStarTypeArgumentsList(typeArgumentsCount))
+            insertString(createStarTypeArgumentsList(typeArgumentsCount))
         }
     }
 }

@@ -1,0 +1,77 @@
+### auto-generated section `build intellij.devkit.workspaceModel.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "com.jetbrains.kotlin.ocSwift.KotlinFE10Usage",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_resources(
+  name = "devkit-workspaceModel-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "devkit-workspaceModel-k1",
+  module_name = "intellij.devkit.workspaceModel.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/workspace/storage",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//java/java-indexing-api:indexing",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+    "@lib//:workspace-model-codegen",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":devkit-workspaceModel-k1_resources"]
+)
+
+jvm_test(
+  name = "devkit-workspaceModel-k1_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":devkit-workspaceModel-k1"],
+  deps = [
+    "//platform/workspace/storage",
+    "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//java/java-indexing-api:indexing",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-compiler-fe10-provided",
+    "@lib//:workspace-model-codegen",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/devkit/intellij.devkit.workspaceModel/tests:devkit-workspaceModel-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+  ],
+  runtime_deps = [":devkit-workspaceModel-k1_resources"]
+)
+### auto-generated section `build intellij.devkit.workspaceModel.k1` end

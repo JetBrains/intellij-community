@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
@@ -7,16 +7,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class TemplateBase extends Template {
 
-  @NotNull private String myString;
-  @Nullable private Throwable myBuildingTemplateTrace;
+  private @NotNull String myString;
+  private @Nullable Throwable myBuildingTemplateTrace;
   private String myTemplateText;
 
   private final List<Segment> mySegments;
@@ -93,9 +95,8 @@ public abstract class TemplateBase extends Template {
     this.toParseSegments = toParseSegments;
   }
 
-  @NotNull
   @Override
-  public String getString() {
+  public @NotNull String getString() {
     parseSegments();
     return myString;
   }
@@ -116,9 +117,8 @@ public abstract class TemplateBase extends Template {
     myBuildingTemplateTrace = new Throwable();
   }
 
-  @NotNull
   @Override
-  public String getTemplateText() {
+  public @NotNull String getTemplateText() {
     parseSegments();
     return myTemplateText;
   }
@@ -163,9 +163,8 @@ public abstract class TemplateBase extends Template {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
-  @NotNull
   @Override
-  public String getSegmentName(int i) {
+  public @NotNull String getSegmentName(int i) {
     parseSegments();
     return mySegments.get(i).name;
   }
@@ -204,8 +203,7 @@ public abstract class TemplateBase extends Template {
   }
   
   protected static final class Segment {
-    @NotNull
-    public final String name;
+    public final @NotNull String name;
     public final int offset;
 
     private Segment(@NotNull String name, int offset) {

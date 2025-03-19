@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -55,7 +55,7 @@ import org.jetbrains.uast.UExpression;
 import javax.swing.*;
 import java.util.*;
 
-public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
+public final class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeFormBatchFix.class);
   private static final List<DefaultPrefixSuggestion> PREFIX_SUGGESTIONS = Arrays.asList(
     new DefaultPrefixSuggestion(LinkLabel.class, "text", "link"),
@@ -87,7 +87,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
         fillDuplicates(project, descriptors, dataList, contextFiles, containerMap, duplicates);
         return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
       })
-      .finishOnUiThread(ModalityState.NON_MODAL, bundleManager -> {
+      .finishOnUiThread(ModalityState.nonModal(), bundleManager -> {
         showI18nizeMultipleStringsDialog(project, dataList, contextFiles, bundleManager, containerMap, duplicates);
       })
       .submit(AppExecutorUtil.getAppExecutorService());
@@ -160,12 +160,12 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  private void fillDuplicates(@NotNull Project project,
-                         CommonProblemDescriptor @NotNull [] descriptors,
-                         List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
-                         HashSet<PsiFile> contextFiles,
-                         Map<VirtualFile, RadRootContainer> containerMap,
-                         Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
+  private static void fillDuplicates(@NotNull Project project,
+                                     CommonProblemDescriptor @NotNull [] descriptors,
+                                     List<I18nizedPropertyData<HardcodedStringInFormData>> dataList,
+                                     HashSet<PsiFile> contextFiles,
+                                     Map<VirtualFile, RadRootContainer> containerMap,
+                                     Map<String, List<I18nizedPropertyData<HardcodedStringInFormData>>> duplicates) {
     final UniqueNameGenerator uniqueNameGenerator = new UniqueNameGenerator();
 
     for (CommonProblemDescriptor descriptor : descriptors) {
@@ -219,8 +219,7 @@ public class I18nizeFormBatchFix implements LocalQuickFix, BatchQuickFix {
     }
   }
 
-  @Nullable
-  private static String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
+  private static @Nullable String suggestPropertyKeyPrefix(@NotNull RadComponent component, @NotNull String propertyName) {
     Class<?> componentClass = component.getComponentClass();
     for (DefaultPrefixSuggestion suggestion : PREFIX_SUGGESTIONS) {
       if (suggestion.getPropertyName().equals(propertyName) && suggestion.getComponentClass().isAssignableFrom(componentClass)) {

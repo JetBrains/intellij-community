@@ -6,3 +6,5 @@ import kotlin.RequiresOptIn.*
 
 @Experimental<caret>(Experimental.Level.ERROR)
 annotation class Marker
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExperimentalToRequiresOptInFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column.util
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -6,12 +6,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
+import org.jetbrains.annotations.ApiStatus
 
-class CachingVcsCommitsDataLoader<T>(
+@ApiStatus.Internal
+class CachingVcsCommitsDataLoader<T : Any>(
   private val loader: VcsCommitsDataLoader<T>,
   cacheSize: Long = 150
 ) : VcsCommitsDataLoader<T> {
-
   private val cache = Caffeine.newBuilder().maximumSize(cacheSize).build<CommitId, T>()
 
   init {

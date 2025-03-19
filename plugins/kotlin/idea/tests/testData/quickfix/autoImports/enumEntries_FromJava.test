@@ -1,0 +1,24 @@
+// FILE: first.before.kt
+// "Import class 'BLUE'" "true"
+// ERROR: Unresolved reference: BLUE
+// IGNORE_K1
+package test
+
+val blue = <caret>BLUE
+
+// FILE: foo/ColorEnum.java
+package foo;
+
+public enum ColorEnum {
+    RED, GREEN, BLUE
+}
+
+// FILE: first.after.kt
+// "Import class 'BLUE'" "true"
+// ERROR: Unresolved reference: BLUE
+// IGNORE_K1
+package test
+
+import foo.ColorEnum
+
+val blue = <caret>ColorEnum.BLUE

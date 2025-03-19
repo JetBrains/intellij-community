@@ -7,10 +7,11 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XDebugProcess
-import org.jetbrains.rpc.LOG
 import java.io.OutputStream
 
+@Deprecated("Please consider implementing own wrapper")
 class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
     if (handler.isStartNotified) {
@@ -68,7 +69,7 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
       .onSuccess { stopProcess(destroy) }
       .onError {
         try {
-          LOG.error(it)
+          thisLogger().error(it)
         }
         finally {
           stopProcess(destroy)

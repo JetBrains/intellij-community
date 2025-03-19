@@ -4,8 +4,6 @@ package com.intellij.execution.rmi.ssl;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
@@ -33,6 +31,10 @@ public final class SslTrustStore extends DelegateKeyStore {
 
   public SslTrustStore() {
     super(KeyStore.getDefaultType());
+  }
+
+  public static String getType() {
+    return NAME;
   }
 
   public static void setDefault() {

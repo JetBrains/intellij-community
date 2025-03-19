@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -10,14 +10,13 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final String SCHEDULED_THREAD_POOL_EXECUTOR_CLASS_NAME = "java.util.concurrent.ScheduledThreadPoolExecutor";
   private static final String SET_CORE_POOL_SIZE_METHOD_NAME = "setCorePoolSize";
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -40,6 +39,7 @@ public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends Ab
         final PsiExpression arg = getZeroArgument(expression.getArgumentList());
         if (arg == null) return;
         final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return;
         final TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(qualifier));
         final PsiType type = constraint.getPsiType(expression.getProject());
         if (!TypeUtils.typeEquals(SCHEDULED_THREAD_POOL_EXECUTOR_CLASS_NAME, type)) return;
@@ -50,8 +50,7 @@ public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection extends Ab
     };
   }
 
-  @Nullable
-  private static PsiExpression getZeroArgument(@Nullable PsiExpressionList argList) {
+  private static @Nullable PsiExpression getZeroArgument(@Nullable PsiExpressionList argList) {
     if (argList == null) return null;
     final PsiExpression[] args = argList.getExpressions();
     if (args.length != 1) return null;

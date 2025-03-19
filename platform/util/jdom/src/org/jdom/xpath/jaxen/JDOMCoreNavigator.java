@@ -146,7 +146,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
     return ((NamespaceContainer)namespace).getNamespace().getPrefix();
   }
 
-  private void recurseElementText(Element element, StringBuilder sb) {
+  private static void recurseElementText(Element element, StringBuilder sb) {
     for (Iterator<?> it = element.getContent().iterator(); it.hasNext(); ) {
       Content c = (Content)it.next();
       if (c instanceof Element) {
@@ -168,7 +168,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   @Override
   public final String getElementQName(Object element) {
     Element e = (Element)element;
-    if (e.getNamespace().getPrefix().length() == 0) {
+    if (e.getNamespace().getPrefix().isEmpty()) {
       return e.getName();
     }
     return e.getNamespacePrefix() + ":" + e.getName();
@@ -197,7 +197,7 @@ class JDOMCoreNavigator extends DefaultNavigator {
   @Override
   public final String getAttributeQName(Object att) {
     Attribute attribute = (Attribute)att;
-    if (attribute.getNamespacePrefix().length() == 0) {
+    if (attribute.getNamespacePrefix().isEmpty()) {
       return attribute.getName();
     }
     return attribute.getNamespacePrefix() + ":" + attribute.getName();

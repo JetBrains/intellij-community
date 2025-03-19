@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -21,7 +21,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class DebuggerPanelsManager {
   private final Project myProject;
 
@@ -29,16 +29,14 @@ public final class DebuggerPanelsManager {
     myProject = project;
   }
 
-  @Nullable
-  public RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
-                                                   RunProfileState state,
-                                                   RemoteConnection remoteConnection,
-                                                   boolean pollConnection) throws ExecutionException {
+  public @Nullable RunContentDescriptor attachVirtualMachine(@NotNull ExecutionEnvironment environment,
+                                                             RunProfileState state,
+                                                             RemoteConnection remoteConnection,
+                                                             boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(new DefaultDebugUIEnvironment(environment, state, remoteConnection, pollConnection));
   }
 
-  @Nullable
-  public RunContentDescriptor attachVirtualMachine(DebugUIEnvironment environment) throws ExecutionException {
+  public @Nullable RunContentDescriptor attachVirtualMachine(DebugUIEnvironment environment) throws ExecutionException {
     final DebugEnvironment modelEnvironment = environment.getEnvironment();
     final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(modelEnvironment);
     if (debuggerSession == null) {
@@ -48,8 +46,7 @@ public final class DebuggerPanelsManager {
     XDebugSession debugSession =
       XDebuggerManager.getInstance(myProject).startSessionAndShowTab(modelEnvironment.getSessionName(), environment.getReuseContent(), new XDebugProcessStarter() {
         @Override
-        @NotNull
-        public XDebugProcess start(@NotNull XDebugSession session) {
+        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
           return JavaDebugProcess.create(session, debuggerSession);
         }
       });

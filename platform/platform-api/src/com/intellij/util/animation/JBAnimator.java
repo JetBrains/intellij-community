@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation;
 
 import com.intellij.ide.PowerSaveMode;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -18,6 +19,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,32 +70,33 @@ public final class JBAnimator implements Disposable {
 
   private int myPeriod = 16;
   private @NotNull Type myType = Type.IN_TIME;
-  private boolean myCyclic = false;
-  private boolean myIgnorePowerSaveMode = false;
-  private @Nullable String myName = null;
+  private boolean myCyclic;
+  private boolean myIgnorePowerSaveMode;
+  private @Nullable String myName;
 
   private final @NotNull ScheduledExecutorService myService;
   private final @NotNull AtomicLong myRunning = new AtomicLong();
   private final @NotNull AtomicBoolean myDisposed = new AtomicBoolean();
 
   private static final Logger LOG = Logger.getInstance(JBAnimator.class);
-  private @Nullable Statistic myStatistic = null;
+  private @Nullable Statistic myStatistic;
+  private volatile @NotNull Future<?> myCurrentAnimatorFuture = CompletableFuture.completedFuture(null); // a future scheduled to display the next part of the animation
 
   public JBAnimator() {
-    this(Thread.SWING_THREAD, null);
+    this(Alarm.ThreadToUse.SWING_THREAD, null);
   }
 
   @SuppressWarnings("unused")
   public JBAnimator(@NotNull Disposable parentDisposable) {
-    this(Thread.SWING_THREAD, parentDisposable);
+    this(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
-  public JBAnimator(@NotNull Thread threadToUse, @Nullable Disposable parentDisposable) {
-    myService = threadToUse == Thread.SWING_THREAD ?
+  public JBAnimator(@NotNull Alarm.ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
+    myService = threadToUse == Alarm.ThreadToUse.SWING_THREAD ?
                 EdtExecutorService.getScheduledExecutorInstance() :
                 AppExecutorUtil.createBoundedScheduledExecutorService("Animator Pool", 1);
     if (parentDisposable == null) {
-      if (threadToUse != Thread.SWING_THREAD) {
+      if (threadToUse != Alarm.ThreadToUse.SWING_THREAD) {
         Logger.getInstance(JBAnimator.class).error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
       }
     }
@@ -137,10 +141,10 @@ public final class JBAnimator implements Disposable {
     final var taskId = myRunning.incrementAndGet();
 
     if (!myIgnorePowerSaveMode && PowerSaveMode.isEnabled()
-        || Registry.is("ui.no.bangs.and.whistles")
+        || Registry.is("ui.no.bangs.and.whistles", false)
         || RemoteDesktopService.isRemoteSession()
         || duration == 0) {
-      myService.schedule(() -> {
+      myCurrentAnimatorFuture = myService.schedule(() -> {
         if (taskId < myRunning.get()) {
           for (Animation animation : animations) {
             animation.fireEvent(Animation.Phase.CANCELLED);
@@ -169,7 +173,7 @@ public final class JBAnimator implements Disposable {
       JBAnimatorHelper.requestHighPrecisionTimer(this);
     }
 
-    myService.schedule(new Runnable() {
+    myCurrentAnimatorFuture = myService.schedule(new Runnable() {
       final Type type = myType;
       final int period = myPeriod;
       final boolean cycle = myCyclic;
@@ -241,7 +245,7 @@ public final class JBAnimator implements Disposable {
         if (isProceed) {
           long nextDelay = Math.max(TimeUnit.MILLISECONDS.toNanos(currentDelay) - wasLate, TimeUnit.MILLISECONDS.toNanos(1));
           nextScheduleTime = System.nanoTime() + nextDelay;
-          myService.schedule(this, nextDelay, TimeUnit.NANOSECONDS);
+          myCurrentAnimatorFuture = myService.schedule(this, nextDelay, TimeUnit.NANOSECONDS);
         }
         else {
           // There's a situation when a new task is submitted but current is already in progress.
@@ -345,6 +349,7 @@ public final class JBAnimator implements Disposable {
   /**
    * @return statistic of the last animation
    */
+  @ApiStatus.Internal
   public @Nullable Statistic getStatistic() {
     return myStatistic;
   }
@@ -352,18 +357,11 @@ public final class JBAnimator implements Disposable {
   @Override
   public void dispose() {
     stop();
-
+    myCurrentAnimatorFuture.cancel(false);
     if (!myDisposed.getAndSet(true) && myService != EdtExecutorService.getScheduledExecutorInstance()) {
       myService.shutdownNow();
       JBAnimatorHelper.cancelHighPrecisionTimer(this);
     }
-  }
-
-  /**
-   * <p>The thread where {@link Animation#update(double)} and {@link Animation.Listener#update(Animation.Phase)} will be called.</p>
-   */
-  public enum Thread {
-    SWING_THREAD, POOLED_THREAD
   }
 
   /**
@@ -376,7 +374,7 @@ public final class JBAnimator implements Disposable {
    */
   public enum Type {
     /**
-     * Animation creates necessary amount of frames and tries to play them.
+     * Animation creates the necessary number of frames and tries to play them.
      *
      * <p>For simple animation n + 1 frame is submitted, started from the 0.0 until 1.0,
      * except the case when animation is cyclic. In the latter case instead of 1.0
@@ -407,7 +405,7 @@ public final class JBAnimator implements Disposable {
       case EACH_FRAME -> new FrameCounter() {
 
         final long frames = duration / period + ((duration % period == 0) ? 0 : 1);
-        long frame = 0;
+        long frame;
 
         @Override
         public long getNextFrame(boolean isCyclic) {
@@ -454,7 +452,7 @@ public final class JBAnimator implements Disposable {
 
   @ApiStatus.Internal
   public static class Statistic {
-    private @Nullable final String myName;
+    private final @Nullable String myName;
     private final AtomicLong count = new AtomicLong(0);
     private long start;
     private long end;

@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -18,13 +18,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-final class ConsoleTokenUtil {
+@ApiStatus.Internal
+public final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
   private static final Key<Boolean> USER_INPUT_SENT = Key.create("USER_INPUT_SENT");
@@ -69,7 +73,7 @@ final class ConsoleTokenUtil {
     text.setLength(newLength);
   }
 
-  static int evaluateBackspacesInTokens(@NotNull List<? extends TokenBuffer.TokenInfo> source,
+  static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
                                         int sourceStartIndex,
                                         @NotNull List<? super TokenBuffer.TokenInfo> dest) {
     int backspacesFromNextToken = 0;
@@ -98,17 +102,17 @@ final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  public static @Nullable ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
-  private static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
+  public static void saveTokenType(@NotNull RangeMarker m, @NotNull ConsoleViewContentType contentType) {
     m.putUserData(CONTENT_TYPE, contentType);
   }
 
   // finds range marker the [offset..offset+1) belongs to
   static RangeMarker findTokenMarker(@NotNull Editor editor, @NotNull Project project, int offset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     RangeMarker[] marker = new RangeMarker[1];
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     model.processRangeHighlightersOverlappingWith(offset, offset, m->{
@@ -126,7 +130,7 @@ final class ConsoleTokenUtil {
                                           int startOffset,
                                           int endOffset,
                                           boolean mergeWithThePreviousSameTypeToken) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(editor.getDocument(), project, true);
     int layer = HighlighterLayer.SYNTAX + 1; // make custom filters able to draw their text attributes over the default ones
     if (mergeWithThePreviousSameTypeToken && startOffset > 0) {
@@ -142,11 +146,12 @@ final class ConsoleTokenUtil {
         prevMarker.dispose();
       }
     }
+    TextAttributesKey key = contentType.getAttributesKey();
     model.addRangeHighlighterAndChangeAttributes(
-      contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
+      key, startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
       rm -> {
-        // fallback for contentTypes which provide only attributes
-        if (rm.getTextAttributesKey() == null) {
+        // fallback for contentTypes that provides only attributes
+        if (key == null) {
           rm.setTextAttributes(contentType.getAttributes());
         }
         saveTokenType(rm, contentType);
@@ -163,8 +168,7 @@ final class ConsoleTokenUtil {
     }
   }
 
-  @NotNull
-  static CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
+  static @NotNull CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
     StringBuilder textToSend = new StringBuilder();
     // compute text input from the console contents:
     // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
@@ -174,7 +178,7 @@ final class ConsoleTokenUtil {
       ConsoleViewContentType tokenType = getTokenType(marker);
       if (tokenType != null) {
         if (tokenType != ConsoleViewContentType.USER_INPUT || marker.getUserData(USER_INPUT_SENT) == Boolean.TRUE) {
-          break;
+          continue;
         }
         marker.putUserData(USER_INPUT_SENT, true);
         textToSend.insert(0, marker.getDocument().getText(marker.getTextRange()));
@@ -185,7 +189,7 @@ final class ConsoleTokenUtil {
 
   static void highlightTokenTextAttributes(@NotNull Editor editor,
                                            @NotNull Project project,
-                                           @NotNull List<? extends TokenBuffer.TokenInfo> tokens,
+                                           @NotNull List<TokenBuffer.TokenInfo> tokens,
                                            @NotNull EditorHyperlinkSupport hyperlinks,
                                            @NotNull Collection<? super ConsoleViewContentType> contentTypes,
                                            @NotNull List<? super Pair<String, ConsoleViewContentType>> contents) {

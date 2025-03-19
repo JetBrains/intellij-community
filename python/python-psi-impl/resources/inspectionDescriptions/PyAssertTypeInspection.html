@@ -1,0 +1,14 @@
+<html>
+<body>
+<p>
+    Checks <code>typing.assert_type(val, typ, /)</code> calls and reports cases when <code>val</code>'s inferred type is not
+    <code>typ</code>.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+def greet(name: str) -> None:
+    assert_type(name, str)  # OK
+    assert_type(name, int)  # Expected type 'int', got 'str' instead
+</code></pre>
+</body>
+</html>

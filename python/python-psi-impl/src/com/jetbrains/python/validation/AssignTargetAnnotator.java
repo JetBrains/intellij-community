@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -118,7 +118,9 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
     node.getForComponents().forEach(
       it -> {
-        checkNotAssignmentExpression(it.getIteratorVariable(), targetMessage);
+        PyExpression iteratorVariable = it.getIteratorVariable();
+        iteratorVariable.accept(new ExprVisitor(Operation.For));
+        checkNotAssignmentExpression(iteratorVariable, targetMessage);
         checkNoAssignmentExpressionAsChild(it.getIteratedList(), iterableMessage);
       }
     );
@@ -293,6 +295,13 @@ public class AssignTargetAnnotator extends PyAnnotator {
     @Override
     public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
       getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.assignment.to.keyword")).range(node).create();
+    }
+
+    @Override
+    public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
+      if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
+        getHolder().newAnnotation(HighlightSeverity.ERROR, message("ANN.cant.assign.to.await.expr")).range(node).create();
+      }
     }
   }
 }

@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.java.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi-impl",
+  module_name = "intellij.java.psi.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "@lib//:asm",
+    "//platform/util",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+  ],
+  exports = [
+    "//java/java-psi-api:psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":psi-impl_resources"]
+)
+### auto-generated section `build intellij.java.psi.impl` end

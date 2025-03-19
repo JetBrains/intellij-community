@@ -1,0 +1,21 @@
+f:com.intellij.ui.util.UiSizeUtilKt
+- sf:getAvailTextLength(javax.swing.JComponent,java.lang.String,I):I
+- sf:getHeight(com.intellij.openapi.ui.popup.JBPopup):I
+- sf:getHeight(java.awt.Insets):I
+- sf:getMaximumHeight(javax.swing.JComponent):I
+- sf:getMaximumWidth(javax.swing.JComponent):I
+- sf:getMinimumHeight(javax.swing.JComponent):I
+- sf:getMinimumWidth(javax.swing.JComponent):I
+- sf:getPreferredHeight(javax.swing.JComponent):I
+- sf:getPreferredWidth(javax.swing.JComponent):I
+- sf:getTextWidth(javax.swing.JComponent,java.lang.String):I
+- sf:getWidth(com.intellij.openapi.ui.popup.JBPopup):I
+- sf:getWidth(java.awt.Insets):I
+- sf:setHeight(com.intellij.openapi.ui.popup.JBPopup,I):V
+- sf:setMaximumHeight(javax.swing.JComponent,I):V
+- sf:setMaximumWidth(javax.swing.JComponent,I):V
+- sf:setMinimumHeight(javax.swing.JComponent,I):V
+- sf:setMinimumWidth(javax.swing.JComponent,I):V
+- sf:setPreferredHeight(javax.swing.JComponent,I):V
+- sf:setPreferredWidth(javax.swing.JComponent,I):V
+- sf:setWidth(com.intellij.openapi.ui.popup.JBPopup,I):V

@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.LocalTimeCounter;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class VFileContentChangeEvent extends VFileEvent {
@@ -18,25 +18,32 @@ public final class VFileContentChangeEvent extends VFileEvent {
 
   private static final int UNDEFINED_TIMESTAMP_OR_LENGTH = -1;
 
-  public VFileContentChangeEvent(Object requestor,
-                                 @NotNull VirtualFile file,
-                                 long oldModificationStamp,
-                                 long newModificationStamp,
-                                 boolean isFromRefresh) {
-    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH,
-         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH, isFromRefresh);
+  /** @deprecated use {@link VFileContentChangeEvent#VFileContentChangeEvent(Object, VirtualFile, long, long)} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileContentChangeEvent(Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
+    this(requestor, file, oldModificationStamp, newModificationStamp);
   }
 
-  public VFileContentChangeEvent(Object requestor,
-                                 @NotNull VirtualFile file,
-                                 long oldModificationStamp,
-                                 long newModificationStamp,
-                                 long oldTimestamp,
-                                 long newTimestamp,
-                                 long oldLength,
-                                 long newLength,
-                                 boolean isFromRefresh) {
-    super(requestor, isFromRefresh);
+  @ApiStatus.Internal
+  public VFileContentChangeEvent(Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp) {
+    this(requestor, file, oldModificationStamp, newModificationStamp, UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH,
+         UNDEFINED_TIMESTAMP_OR_LENGTH, UNDEFINED_TIMESTAMP_OR_LENGTH);
+  }
+
+  @ApiStatus.Internal
+  public VFileContentChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    long oldModificationStamp,
+    long newModificationStamp,
+    long oldTimestamp,
+    long newTimestamp,
+    long oldLength,
+    long newLength
+  ) {
+    super(requestor);
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp == UNDEFINED_TIMESTAMP_OR_LENGTH ? LocalTimeCounter.currentTime() : newModificationStamp;
@@ -46,9 +53,8 @@ public final class VFileContentChangeEvent extends VFileEvent {
     myNewLength = newLength;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -81,7 +87,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
            myOldLength != UNDEFINED_TIMESTAMP_OR_LENGTH || myNewLength != UNDEFINED_TIMESTAMP_OR_LENGTH;
   }
 
-  @NonNls
+  @Override
   public String toString() {
     return "VfsEvent[update: " + myFile.getPresentableUrl() +
            ", oldTimestamp:" + myOldTimestamp + ", newTimestamp:" + myNewTimestamp +
@@ -90,15 +96,13 @@ public final class VFileContentChangeEvent extends VFileEvent {
            "]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myFile.getPath();
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 
@@ -107,6 +111,7 @@ public final class VFileContentChangeEvent extends VFileEvent {
     return myFile.isValid() && myFile.getModificationStamp() == myOldModificationStamp;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -120,10 +125,11 @@ public final class VFileContentChangeEvent extends VFileEvent {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myFile.hashCode();
-    result = 31 * result + (int)(myOldModificationStamp ^ (myOldModificationStamp >>> 32));
-    result = 31 * result + (int)(myNewModificationStamp ^ (myNewModificationStamp >>> 32));
+    result = 31 * result + Long.hashCode(myOldModificationStamp);
+    result = 31 * result + Long.hashCode(myNewModificationStamp);
     return result;
   }
 }

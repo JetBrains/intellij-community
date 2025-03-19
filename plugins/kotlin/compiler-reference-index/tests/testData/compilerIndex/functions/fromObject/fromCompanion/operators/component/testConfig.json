@@ -8,6 +8,5 @@
         "Implicit2.kt",
         "Import.kt",
         "JavaClass.java"
-    ],
-    "ignoreK2Compiler": "KTIJ-24831"
+    ]
 }

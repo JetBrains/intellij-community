@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,6 +12,7 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
@@ -23,7 +24,7 @@ import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.incremental.storage.BuildTargetStateManager;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
@@ -34,6 +35,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
+@ApiStatus.Internal
 public final class BuildMain {
   private static final String PRELOAD_PROJECT_PATH = "preload.project.path";
   private static final String PRELOAD_CONFIG_PATH = "preload.config.path";
@@ -114,13 +116,13 @@ public final class BuildMain {
 
             final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
             final BuildFSState fsState = new BuildFSState(false);
-            final ProjectDescriptor pd = runner.load(new MessageHandler() {
+            final ProjectDescriptor projectDescriptor = runner.load(new MessageHandler() {
               @Override
               public void processMessage(BuildMessage msg) {
                 data.addMessage(msg);
               }
-            }, dataStorageRoot, fsState);
-            data.setProjectDescriptor(pd);
+            }, dataStorageRoot.toPath(), fsState);
+            data.setProjectDescriptor(projectDescriptor);
 
             final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
             try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)))) {
@@ -128,7 +130,7 @@ public final class BuildMain {
               if (version == BuildFSState.VERSION) {
                 final long savedOrdinal = in.readLong();
                 final boolean hasWorkToDo = in.readBoolean();
-                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                fsState.load(in, projectDescriptor.getModel(), projectDescriptor.getBuildRootIndex());
                 data.setFsEventOrdinal(savedOrdinal);
                 data.setHasHasWorkToDo(hasWorkToDo);
               }
@@ -141,9 +143,9 @@ public final class BuildMain {
             }
 
             // preloading target configurations and pre-calculating target dirty state
-            final BuildTargetsState targetsState = pd.getTargetsState();
-            for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-              targetsState.getTargetConfiguration(target).isTargetDirty(pd);
+            BuildTargetStateManager targetStateManager = projectDescriptor.dataManager.getTargetStateManager();
+            for (BuildTarget<?> target : projectDescriptor.getBuildTargetIndex().getAllTargets()) {
+              targetStateManager.isTargetDirty(target, projectDescriptor);
             }
 
             //noinspection ResultOfMethodCallIgnored

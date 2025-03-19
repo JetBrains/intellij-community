@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.turboComplete` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "turboComplete_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "turboComplete",
+  module_name = "intellij.turboComplete",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/statistics",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//platform/lang-impl",
+    "//platform/ml-impl",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/ml-api:ml",
+  ],
+  runtime_deps = [":turboComplete_resources"]
+)
+### auto-generated section `build intellij.turboComplete` end
+
+### auto-generated section `build intellij.turboComplete.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "turboComplete-tests_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:junit5",
+    "//plugins/turboComplete",
+    "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+  ]
+)
+### auto-generated section `build intellij.turboComplete.tests` end

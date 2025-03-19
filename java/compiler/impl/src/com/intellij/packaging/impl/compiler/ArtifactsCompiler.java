@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.compiler;
 
 import com.intellij.openapi.compiler.CompileContext;
@@ -24,13 +24,11 @@ public final class ArtifactsCompiler {
     paths.addAll(writtenPaths);
   }
 
-  @Nullable
-  public static Set<String> getWrittenPaths(@NotNull CompileContext context) {
+  public static @Nullable Set<String> getWrittenPaths(@NotNull CompileContext context) {
     return context.getUserData(WRITTEN_PATHS_KEY);
   }
 
-  @Nullable
-  public static Set<String> getWrittenPaths(@NotNull ProjectTaskContext context) {
+  public static @Nullable Set<String> getWrittenPaths(@NotNull ProjectTaskContext context) {
     JpsBuildData jpsBuildData = context.getUserData(JpsProjectTaskRunner.JPS_BUILD_DATA_KEY);
     return jpsBuildData == null ? null : jpsBuildData.getArtifactsWrittenPaths();
   }

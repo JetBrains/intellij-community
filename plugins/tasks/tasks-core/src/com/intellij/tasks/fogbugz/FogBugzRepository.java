@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
@@ -93,28 +92,24 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     return TaskType.OTHER;
   }
 
-  @NotNull
-  private Task createCase(final Element element, final XPath commentPath) {
+  private @NotNull Task createCase(final Element element, final XPath commentPath) {
     final String id = element.getAttributeValue("ixBug");
     final String title = element.getChildTextTrim("sTitle");
     final TaskType type = getType(element);
     return new Task() {
 
-      @NotNull
       @Override
-      public String getId() {
+      public @NotNull String getId() {
         return id;
       }
 
-      @NotNull
       @Override
-      public String getSummary() {
+      public @NotNull String getSummary() {
         return title;
       }
 
-      @Nullable
       @Override
-      public String getDescription() {
+      public @Nullable String getDescription() {
         return null;
       }
 
@@ -129,22 +124,20 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
           throw new RuntimeException("Error selecting comment nodes", e);
         }
         List<Comment> comments = ContainerUtil.mapNotNull(nodes, new NotNullFunction<>() {
-          @NotNull
           @Override
-          public Comment fun(Element element) {
+          public @NotNull Comment fun(Element element) {
             return createComment(element);
           }
 
-          private Comment createComment(final Element element) {
+          private static Comment createComment(final Element element) {
             return new Comment() {
               @Override
               public String getText() {
                 return element.getChildTextTrim("s");
               }
 
-              @Nullable
               @Override
-              public String getAuthor() {
+              public @Nullable String getAuthor() {
                 return element.getChildTextTrim("sPerson");
               }
 
@@ -158,15 +151,13 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
         return comments.toArray(Comment.EMPTY_ARRAY);
       }
 
-      @NotNull
       @Override
-      public Icon getIcon() {
+      public @NotNull Icon getIcon() {
         return TasksCoreIcons.Fogbugz;
       }
 
-      @NotNull
       @Override
-      public TaskType getType() {
+      public @NotNull TaskType getType() {
         return type;
       }
 
@@ -202,9 +193,8 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     };
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull String id) throws Exception {
+  public @Nullable Task findTask(@NotNull String id) throws Exception {
     Task[] tasks = getCases(id);
     return switch (tasks.length) {
       case 0 -> null;
@@ -216,9 +206,8 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new FogBugzRepository(this);
   }
 
@@ -244,8 +233,7 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     myToken = result.getTextTrim();
   }
 
-  @NotNull
-  private PostMethod getLoginMethod() {
+  private @NotNull PostMethod getLoginMethod() {
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
     method.addParameter("cmd", "logon");
     method.addParameter("email", getUsername());
@@ -253,8 +241,7 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     return method;
   }
 
-  @NotNull
-  private PostMethod getLogoutMethod() {
+  private @NotNull PostMethod getLogoutMethod() {
     PostMethod method = new PostMethod(getUrl() + "/api.asp");
     method.addParameter("cmd", "logoff");
     assert myToken != null;
@@ -262,7 +249,6 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     return method;
   }
 
-  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
@@ -288,8 +274,7 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     };
   }
 
-  @NotNull
-  private static Date parseDate(@NotNull String string) {
+  private static @NotNull Date parseDate(@NotNull String string) {
     try {
       return DatatypeFactory.newInstance().newXMLGregorianCalendar(string).toGregorianCalendar().getTime();
     }
@@ -302,21 +287,4 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
   public String getComment() {
     return "{id} (e.g. 2344245), {summary}";
   }
-
-  @Tag("token")
-  @NotNull
-  public String getEncodedToken() {
-    // The same approach as used for passwords in BaseRepository
-    return PasswordUtil.encodePassword(myToken);
-  }
-
-  @SuppressWarnings("unused")
-  public void setEncodedToken(@Nullable String token) {
-    try {
-      myToken = PasswordUtil.decodePassword(token);
-    }
-    catch (NumberFormatException ignored) {
-    }
-  }
-
 }

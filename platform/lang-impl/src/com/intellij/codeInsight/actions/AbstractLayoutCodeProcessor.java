@@ -1,9 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.core.CoreBundle;
 import com.intellij.formatting.service.CoreFormattingService;
 import com.intellij.formatting.service.FormattingService;
 import com.intellij.formatting.service.FormattingServiceUtil;
@@ -12,14 +9,13 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
@@ -27,11 +23,11 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiDirectory;
@@ -56,8 +52,7 @@ import java.util.function.Consumer;
 public abstract class AbstractLayoutCodeProcessor {
   private static final Logger LOG = Logger.getInstance(AbstractLayoutCodeProcessor.class);
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
   private final Module myModule;
 
   private PsiDirectory myDirectory;
@@ -205,8 +200,7 @@ public abstract class AbstractLayoutCodeProcessor {
    *                  is finished correctly or not (exception occurred, user cancelled formatting etc)
    * @throws IncorrectOperationException    if unexpected exception occurred during formatting
    */
-  @NotNull
-  protected abstract FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
+  protected abstract @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) throws IncorrectOperationException;
 
   protected static @NotNull FutureTask<Boolean> emptyTask() {
     return new FutureTask<>(EmptyRunnable.INSTANCE, true);
@@ -229,8 +223,7 @@ public abstract class AbstractLayoutCodeProcessor {
     runProcessFiles();
   }
 
-  @NotNull
-  private FileRecursiveIterator build() {
+  private @NotNull FileRecursiveIterator build() {
     if (myFiles != null) {
       return new FileRecursiveIterator(myProject, ContainerUtil.filter(myFiles, AbstractLayoutCodeProcessor::canBeFormatted));
     }
@@ -246,14 +239,12 @@ public abstract class AbstractLayoutCodeProcessor {
     return new FileRecursiveIterator(myProject);
   }
 
-  @NotNull
-  private FileRecursiveIterator buildChangedFilesIterator() {
+  private @NotNull FileRecursiveIterator buildChangedFilesIterator() {
     List<PsiFile> files = getChangedFilesFromContext();
     return new FileRecursiveIterator(myProject, files);
   }
 
-  @NotNull
-  private List<PsiFile> getChangedFilesFromContext() {
+  private @NotNull List<PsiFile> getChangedFilesFromContext() {
     List<PsiDirectory> dirs = getAllSearchableDirsFromContext();
     return VcsFacade.getInstance().getChangedFilesFromDirs(myProject, dirs);
   }
@@ -275,21 +266,11 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
 
-  private void runProcessFile(@NotNull final VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-
-    if (document == null) {
+  private void runProcessFile(final @NotNull VirtualFile file) {
+    ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(List.of(file));
+    if (status.hasReadonlyFiles()) {
       return;
     }
-
-    if (!FileDocumentManager.getInstance().requestWriting(document, myProject)) {
-      Messages.showMessageDialog(myProject, CoreBundle.message("cannot.modify.a.read.only.file", file.getName()),
-                                 CodeInsightBundle.message("error.dialog.readonly.file.title"),
-                                 Messages.getErrorIcon()
-      );
-      return;
-    }
-
     Consumer<@NotNull ProgressIndicator> runnable = (indicator) -> {
       indicator.setText(myProgressText);
         try {
@@ -323,10 +304,16 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private void runProcessFiles() {
-    boolean isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      return processFilesUnderProgress(indicator);
-    }, getProgressTitle(), true, myProject);
+    boolean isSuccess;
+    try {
+      isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        return processFilesUnderProgress(indicator);
+      }, getProgressTitle(), true, myProject);
+    }
+    catch (ProcessCanceledException e) {
+      isSuccess = false;
+    }
 
     if (isSuccess && myPostRunnable != null) {
       myPostRunnable.run();
@@ -389,7 +376,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return vFile != null ? ProjectUtil.calcRelativeToProjectPath(vFile, project) : file.getName();
   }
 
-  private class ProcessingTask implements SequentialTask {
+  private final class ProcessingTask implements SequentialTask {
     private final List<AbstractLayoutCodeProcessor> myProcessors;
 
     private final FileRecursiveIterator myFileTreeIterator;
@@ -412,10 +399,6 @@ public abstract class AbstractLayoutCodeProcessor {
     @Override
     public boolean isDone() {
       return myStopFormatting;
-    }
-
-    private void countingIteration() {
-      myTotalFiles++;
     }
 
     @Override
@@ -470,13 +453,11 @@ public abstract class AbstractLayoutCodeProcessor {
 
         ProgressIndicatorProvider.checkCanceled();
 
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          WriteCommandAction.writeCommandAction(myProject)
-            .withName(myCommandName)
-            .withGroupId(groupId)
-            .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
-            .run(() -> writeTask.run());
-        });
+        WriteCommandAction.writeCommandAction(myProject)
+          .withName(myCommandName)
+          .withGroupId(groupId)
+          .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
+          .run(() -> writeTask.run());
 
         checkStop(writeTask, file);
       }
@@ -513,11 +494,26 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     private boolean process() {
-      myCountingIterator.processAll(file -> {
-        updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "");
-        countingIteration();
+      myProgressIndicator.setIndeterminate(true);
+      List<VirtualFile> files = new ArrayList<>();
+      updateIndicatorText(ApplicationBundle.message("bulk.reformat.prepare.progress.text"), "");
+      boolean success = myCountingIterator.processAll(file -> {
+        files.add(file.getVirtualFile());
         return !isDone();
       });
+      if (!success) return false;
+      myTotalFiles = files.size();
+      myProgressIndicator.setIndeterminate(false);
+      Application application = ApplicationManager.getApplication();
+      if (!application.isUnitTestMode()) {
+        application.invokeAndWait(() -> {
+          ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(files);
+          if (status.hasReadonlyFiles()) {
+            stop();
+          }
+        });
+        if (isDone()) return false;
+      }
 
       return myFileTreeIterator.processAll(file -> {
         next = file;
@@ -563,8 +559,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
   }
 
-  @Nullable
-  public LayoutCodeInfoCollector getInfoCollector() {
+  public @Nullable LayoutCodeInfoCollector getInfoCollector() {
     return myInfoCollector;
   }
 }

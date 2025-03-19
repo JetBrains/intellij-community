@@ -1,3 +1,4 @@
+// "Convert to primary constructor" "true"
 class WithComments {
     /**
      * A very important property
@@ -11,3 +12,4 @@ class WithComments {
         this.veryImportant = veryImportant
     }
 }
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSecondaryConstructorToPrimaryInspection$createQuickFix$1

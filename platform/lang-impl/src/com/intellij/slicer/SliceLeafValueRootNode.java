@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -31,8 +31,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   @Override
-  @NotNull
-  public Collection<SliceNode> getChildren() {
+  public @NotNull Collection<SliceNode> getChildren() {
     return myCachedChildren;
   }
 
@@ -43,6 +42,10 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
+    SliceUsage sliceUsage = getValue();
+    if (sliceUsage != null) {
+      sliceUsage.updateCachedPresentation();
+    }
   }
 
   @Override
@@ -91,8 +94,8 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   private static void appendElementText(@NotNull UsageInfo2UsageAdapter usage,
-                                        @NotNull final PsiElement element,
-                                        @NotNull final SliceUsageCellRendererBase renderer) {
+                                        final @NotNull PsiElement element,
+                                        final @NotNull SliceUsageCellRendererBase renderer) {
     PsiFile file = element.getContainingFile();
     List<TextChunk> result = new ArrayList<>();
     ChunkExtractor.getExtractor(element.getContainingFile())

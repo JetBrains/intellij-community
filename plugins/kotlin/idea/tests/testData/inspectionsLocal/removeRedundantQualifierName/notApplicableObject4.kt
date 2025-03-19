@@ -13,5 +13,3 @@ constructor(): super(
   }
 )
 }
-
-// IGNORE_FIR

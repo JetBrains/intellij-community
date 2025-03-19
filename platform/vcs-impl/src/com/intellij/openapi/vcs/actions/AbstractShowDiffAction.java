@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.Predicates.nonNull;
-import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractShowDiffAction extends DumbAwareAction {
   @Override
@@ -82,22 +81,26 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) {
       return;
     }
 
-    VirtualFile file = requireNonNull(VcsContextUtil.selectedFile(e.getDataContext()));
-    AbstractVcs vcs = requireNonNull(ChangesUtil.getVcsForFile(file, project));
-    DiffProvider provider = requireNonNull(vcs.getDiffProvider());
+    VirtualFile file = VcsContextUtil.selectedFile(e.getDataContext());
+    if (file == null) return;
+    AbstractVcs vcs = ChangesUtil.getVcsForFile(file, project);
+    if (vcs == null) return;
+    DiffProvider provider = vcs.getDiffProvider();
+    if (provider == null) return;
     Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     getExecutor(provider, file, project, editor).showDiff();
   }
 
-  @NotNull
-  protected abstract DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
-                                                    @NotNull VirtualFile selectedFile,
-                                                    @NotNull Project project,
-                                                    @Nullable Editor editor);
+  protected abstract @NotNull DiffActionExecutor getExecutor(@NotNull DiffProvider diffProvider,
+                                                             @NotNull VirtualFile selectedFile,
+                                                             @NotNull Project project,
+                                                             @Nullable Editor editor);
 }

@@ -1,161 +1,244 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import com.intellij.util.io.Decompressor
-import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.TraceManager
-import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
-import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
-import org.jetbrains.intellij.build.retryWithExponentialBackOff
-import org.jetbrains.jps.cache.model.BuildTargetState
-import java.nio.file.Files
+import com.google.gson.stream.JsonReader
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
+import org.jetbrains.intellij.build.forEachConcurrent
+import org.jetbrains.intellij.build.http2Client.*
+import org.jetbrains.intellij.build.jpsCache.*
+import org.jetbrains.intellij.build.impl.Git
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
+import org.jetbrains.intellij.build.telemetry.withTracer
+import org.jetbrains.jps.incremental.storage.BuildTargetSourcesState
+import java.net.URI
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinTask
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.LongAdder
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 
 private const val COMMITS_COUNT = 1_000
 
-internal class PortableCompilationCacheDownloader(
-  private val context: CompilationContext,
-  private val git: Git,
-  private val remoteCache: PortableCompilationCache.RemoteCache,
-  private val gitUrl: String,
-  private val availableForHeadCommitForced: Boolean,
-  private val downloadCompilationOutputsOnly: Boolean,
+internal object TestJpsCacheDownload {
+  @ExperimentalPathApi
+  @JvmStatic
+  fun main(args: Array<String>) = withTracer(serviceName = "test-jps-cache-downloader") {
+    System.setProperty("jps.cache.test", "true")
+    System.setProperty("org.jetbrains.jps.portable.caches", "true")
+
+    val projectHome = ULTIMATE_HOME
+    val outputDir = projectHome.resolve("out/test-jps-cache-downloaded")
+    outputDir.deleteRecursively()
+    downloadJpsCache(
+      cacheUrl = getJpsCacheUrl("https://127.0.0.1:1900/cache/jps"),
+      gitUrl = jpsCacheRemoteGitUrl,
+      authHeader = jpsCacheAuthHeader,
+      projectHome = projectHome,
+      classOutDir = outputDir.resolve("classes"),
+      cacheDestination = outputDir.resolve("jps-build-data"),
+      reportStatisticValue = { k, v ->
+        println("$k: $v")
+      }
+    )
+  }
+}
+
+internal suspend fun downloadJpsCache(
+  cacheUrl: URI,
+  authHeader: CharSequence?,
+  gitUrl: String,
+  projectHome: Path,
+  classOutDir: Path,
+  cacheDestination: Path,
+  reportStatisticValue: (key: String, value: String) -> Unit,
+): Int {
+  val start = System.nanoTime()
+  val totalDownloadedBytes = LongAdder()
+  val notFound = LongAdder()
+  var availableCommitDepth = -1
+  val totalItemCount = withHttp2ClientConnectionFactory(trustAll = cacheUrl.host == "127.0.0.1") { client ->
+    checkMirrorAndConnect(initialServerUri = cacheUrl, client = client, authHeader = authHeader) { connection, urlPathPrefix ->
+      val info = spanBuilder("prepare downloading").use {
+        prepareDownload(urlPathPrefix = urlPathPrefix, gitUrl = gitUrl, connection = connection, lastCommits = Git(projectHome).log(COMMITS_COUNT))
+      } ?: return@checkMirrorAndConnect -1
+      availableCommitDepth = info.second
+      spanBuilder("download JPS Cache").setAttribute("commit", info.first).use {
+        doDownload(
+          urlPathPrefix = urlPathPrefix,
+          lastCachedCommit = info.first,
+          notFound = notFound,
+          totalDownloadedBytes = totalDownloadedBytes,
+          connection = connection,
+          classOutDir = classOutDir,
+          cacheDestination = cacheDestination,
+        )
+      }
+    }
+  }
+
+  if (availableCommitDepth == -1) {
+    return -1
+  }
+
+  reportStatisticValue("jps-cache:download:time", TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+  reportStatisticValue("jps-cache:downloaded:bytes", totalDownloadedBytes.sum().toString())
+  reportStatisticValue("jps-cache:downloaded:count", totalItemCount.toString())
+  reportStatisticValue("jps-cache:notFound:count", notFound.sum().toString())
+
+  return availableCommitDepth
+}
+
+private suspend fun prepareDownload(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection, lastCommits: List<String>): Pair<String, Int>? {
+  val availableCachesKeys = getAvailableCachesKeys(urlPathPrefix = urlPathPrefix, gitUrl = gitUrl, connection = connection)
+  val availableCommitDepth = lastCommits.indexOfFirst {
+    availableCachesKeys.contains(it)
+  }
+
+  if (availableCommitDepth !in 0 until lastCommits.count()) {
+    Span.current().addEvent(
+      "unable to find cache for any of last ${lastCommits.count()} commits",
+      Attributes.of(
+        AttributeKey.stringArrayKey("availableCacheKeys"), availableCachesKeys.toList()
+      ),
+    )
+    return null
+  }
+
+  val lastCachedCommit = lastCommits.get(availableCommitDepth)
+  Span.current().addEvent(
+    "using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit)",
+    Attributes.of(
+      AttributeKey.longKey("behind last commit"), availableCommitDepth.toLong(),
+      AttributeKey.stringArrayKey("available cache keys"), availableCachesKeys.toList(),
+    )
+  )
+  return lastCachedCommit to availableCommitDepth
+}
+
+private suspend fun getAvailableCachesKeys(urlPathPrefix: String, gitUrl: String, connection: Http2ClientConnection): Collection<String> {
+  val commitHistoryUrl = "$urlPathPrefix/$COMMIT_HISTORY_JSON_FILE"
+  val data: Map<String, Set<String>> = connection.getJsonOrDefaultIfNotFound(path = commitHistoryUrl, defaultIfNotFound = emptyMap())
+  if (data.isEmpty()) {
+    return emptyList()
+  }
+
+  val result = data.get(gitUrl) ?: emptyList()
+  if (result.isEmpty()) {
+    Span.current().addEvent(
+      "no data for remote",
+      Attributes.of(
+        AttributeKey.stringKey("remote"), gitUrl,
+        AttributeKey.stringArrayKey("availableRemotes"), java.util.List.copyOf(data.keys),
+      ),
+    )
+  }
+  return result
+}
+
+private suspend fun doDownload(
+  urlPathPrefix: String,
+  lastCachedCommit: String,
+  notFound: LongAdder,
+  totalDownloadedBytes: LongAdder,
+  connection: Http2ClientConnection,
+  classOutDir: Path,
+  cacheDestination: Path,
+): Int {
+  return withContext(Dispatchers.IO) {
+    val zstdDecompressContextPool = ZstdDecompressContextPool()
+    launch(CoroutineName("download JPS Cache")) {
+      downloadAndUnpackJpsCache(
+        urlPathPrefix = urlPathPrefix,
+        commitHash = lastCachedCommit,
+        totalBytes = totalDownloadedBytes,
+        connection = connection,
+        cacheDestination = cacheDestination,
+        zstdDecompressContextPool = zstdDecompressContextPool,
+      )
+    }
+
+    val json = connection.getString("$urlPathPrefix/metadata/$lastCachedCommit")
+    val outputs = getAllCompilationOutputs(sourceState = BuildTargetSourcesState.readJson(JsonReader(json.reader())), classOutDir = classOutDir)
+    spanBuilder("download compilation output parts").setAttribute(AttributeKey.longKey("count"), outputs.size.toLong()).use {
+      outputs.forEachConcurrent(downloadParallelism) { output ->
+        downloadAndUnpackCompilationOutput(
+          urlPathPrefix = urlPathPrefix,
+          compilationOutput = output,
+          notFound = notFound,
+          totalDownloadedBytes = totalDownloadedBytes,
+          connection = connection,
+          zstdDecompressContextPool = zstdDecompressContextPool,
+        )
+      }
+    }
+    outputs.size
+  }
+}
+
+private suspend fun downloadAndUnpackJpsCache(
+  urlPathPrefix: String,
+  commitHash: String,
+  totalBytes: LongAdder,
+  connection: Http2ClientConnection,
+  cacheDestination: Path,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
 ) {
-  private val remoteCacheUrl = remoteCache.url.trimEnd('/')
-
-  private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
-
-  /**
-   * If true then latest commit in current repository will be used to download caches.
-   */
-  val availableForHeadCommit by lazy { availableCommitDepth == 0 }
-
-  private val lastCommits by lazy { git.log(COMMITS_COUNT) }
-
-  private fun downloadString(url: String): String = retryWithExponentialBackOff {
-    if (url.isS3()) {
-      awsS3Cli("cp", url, "-")
+  val urlPath = "$urlPathPrefix/caches/$commitHash.zip.zstd"
+  spanBuilder("download JPS Cache").setAttribute("urlPath", urlPath).setAttribute("outDir", cacheDestination.toString()).use { span ->
+    val downloaded = connection.download(
+      path = urlPath,
+      file = cacheDestination,
+      zstdDecompressContextPool = zstdDecompressContextPool,
+      digestFactory = null,
+      unzip = true,
+    ).size
+    if (downloaded == -1L) {
+      Span.current().addEvent("resource not found")
+      false
     }
     else {
-      httpClient.get(url, remoteCache.authHeader) { it.body.string() }
+      totalBytes.add(downloaded)
+      true
     }
   }
+}
 
-  private fun downloadToFile(url: String, file: Path, spanName: String) {
-    TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
-      Files.createDirectories(file.parent)
-      retryWithExponentialBackOff {
-        if (url.isS3()) {
-          awsS3Cli("cp", url, "$file")
-        } else {
-          httpClient.get(url, remoteCache.authHeader) { response ->
-            Files.newOutputStream(file).use {
-              response.body.byteStream().transferTo(it)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  val availableCommitDepth by lazy {
-    if (availableForHeadCommitForced) 0 else lastCommits.indexOfFirst {
-      availableCachesKeys.contains(it)
-    }
-  }
-
-  private val availableCachesKeys by lazy {
-    val commitHistory = "$remoteCacheUrl/${CommitsHistory.JSON_FILE}"
-    if (isExist(commitHistory)) {
-      val json = downloadString(commitHistory)
-      CommitsHistory(json).commitsForRemote(gitUrl)
+private suspend fun downloadAndUnpackCompilationOutput(
+  urlPathPrefix: String,
+  compilationOutput: CompilationOutput,
+  notFound: LongAdder,
+  totalDownloadedBytes: LongAdder,
+  connection: Http2ClientConnection,
+  zstdDecompressContextPool: ZstdDecompressContextPool,
+) {
+  val urlPath = "$urlPathPrefix/${compilationOutput.remotePath}.zip.zstd"
+  spanBuilder("download output").setAttribute("urlPath", urlPath).setAttribute("outDir", compilationOutput.path.toString()).use { span ->
+    val downloaded = connection.download(
+      path = urlPath,
+      file = compilationOutput.path,
+      zstdDecompressContextPool = zstdDecompressContextPool,
+      unzip = true,
+      ignoreNotFound = true,
+    ).size
+    if (downloaded == -1L) {
+      // We assume that the error is logged by downloadToFile.
+      // In the future, we will implement stricter behavior.
+      // For now, the JPS cache reports non-existent compilation outputs, and we have to use such a workaround.
+      span.addEvent("resource not found")
+      notFound.increment()
     }
     else {
-      emptyList()
+      totalDownloadedBytes.add(downloaded)
     }
-  }
-
-  private fun isExist(path: String): Boolean =
-    TraceManager.spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
-      retryWithExponentialBackOff {
-        httpClient.head(path, remoteCache.authHeader) == 200
-      }
-    }
-
-  fun download() {
-    if (availableCommitDepth in 0 until lastCommits.count()) {
-      val lastCachedCommit = lastCommits.get(availableCommitDepth)
-      context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
-      val tasks = mutableListOf<ForkJoinTask<*>>()
-      if (!downloadCompilationOutputsOnly) {
-        tasks.add(ForkJoinTask.adapt { saveJpsCache(lastCachedCommit) })
-      }
-
-      val sourcesState = getSourcesState(lastCachedCommit)
-      val outputs = sourcesStateProcessor.getAllCompilationOutputs(sourcesState)
-      context.messages.info("Going to download ${outputs.size} compilation output parts.")
-      outputs.forEach { output ->
-        tasks.add(ForkJoinTask.adapt { saveOutput(output) })
-      }
-      ForkJoinTask.invokeAll(tasks)
-    }
-    else {
-      context.messages.warning("Unable to find cache for any of last ${lastCommits.count()} commits.")
-    }
-  }
-
-  private fun getSourcesState(commitHash: String): Map<String, Map<String, BuildTargetState>> {
-    return sourcesStateProcessor.parseSourcesStateFile(downloadString("$remoteCacheUrl/metadata/$commitHash"))
-  }
-
-  private fun saveJpsCache(commitHash: String) {
-    var cacheArchive: Path? = null
-    try {
-      cacheArchive = downloadJpsCache(commitHash)
-
-      val cacheDestination = context.compilationData.dataStorageRoot
-
-      val start = System.currentTimeMillis()
-      Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
-      context.messages.info("Jps Cache was uncompressed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
-    }
-    finally {
-      if (cacheArchive != null) {
-        Files.deleteIfExists(cacheArchive)
-      }
-    }
-  }
-
-  private fun downloadJpsCache(commitHash: String): Path {
-    val cacheArchive = Files.createTempFile("cache", ".zip")
-    downloadToFile("$remoteCacheUrl/caches/$commitHash", cacheArchive, spanName = "download jps cache")
-    return cacheArchive
-  }
-
-  private fun saveOutput(compilationOutput: CompilationOutput) {
-    var outputArchive: Path? = null
-    try {
-      outputArchive = downloadOutput(compilationOutput)
-      Decompressor.Zip(outputArchive).overwrite(true).extract(Path.of(compilationOutput.path))
-    }
-    catch (e: Exception) {
-      throw Exception("Unable to decompress $remoteCacheUrl/${compilationOutput.remotePath} to $compilationOutput.path", e)
-    }
-    finally {
-      if (outputArchive != null) {
-        Files.deleteIfExists(outputArchive)
-      }
-    }
-  }
-
-  private fun downloadOutput(compilationOutput: CompilationOutput): Path {
-    val outputArchive = Path.of(compilationOutput.path, "tmp-output.zip")
-    downloadToFile("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive, spanName = "download output")
-    return outputArchive
   }
 }

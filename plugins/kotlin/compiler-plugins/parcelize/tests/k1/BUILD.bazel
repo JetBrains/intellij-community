@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.compiler-plugins.parcelize.tests.k1` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-compiler-plugins-parcelize-tests-k1",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-parcelize-tests-k1_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/compiler-plugins/parcelize/tests:kotlin-compiler-plugins-parcelize-tests_test_lib",
+    "//plugins/kotlin/idea/tests:kotlin-idea-tests_test_lib",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//java/testFramework",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-compiler-plugins-parcelize-tests-k1_test",
+  runtime_deps = [":kotlin-compiler-plugins-parcelize-tests-k1_test_lib"]
+)
+### auto-generated section `build kotlin.compiler-plugins.parcelize.tests.k1` end

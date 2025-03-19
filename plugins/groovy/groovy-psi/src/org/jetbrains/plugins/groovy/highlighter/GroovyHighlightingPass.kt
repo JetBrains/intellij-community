@@ -9,9 +9,10 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
-internal abstract class GroovyHighlightingPass(val myFile: PsiFile, document: Document)
-  : TextEditorHighlightingPass(myFile.project, document) {
+internal abstract class GroovyHighlightingPass(val psiFile: PsiFile, val myGroovyBaseFile: GroovyFileBase, document: Document)
+  : TextEditorHighlightingPass(myGroovyBaseFile.project, document) {
 
   private val myInfos = mutableListOf<HighlightInfo>()
 
@@ -20,9 +21,7 @@ internal abstract class GroovyHighlightingPass(val myFile: PsiFile, document: Do
 
   internal fun applyInformationInBackground() {
     if (myInfos.isEmpty()) return
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(
-      myProject, myDocument, 0, myFile.textLength, myInfos, colorsScheme, id
-    )
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, 0, myGroovyBaseFile.textLength, myInfos, id)
   }
 
   protected fun addInfo(element: PsiElement, attribute: TextAttributesKey) {

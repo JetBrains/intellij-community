@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 
@@ -18,6 +19,11 @@ public class ExecutionException extends Exception {
     super(s, cause);
   }
 
+  /**
+   * @deprecated Quite a trivial method for the API. Just inline it.
+   */
+  @ApiStatus.Internal
+  @Deprecated
   public IOException toIOException() {
     final Throwable cause = getCause();
     return cause instanceof IOException ? (IOException)cause : new IOException(this);

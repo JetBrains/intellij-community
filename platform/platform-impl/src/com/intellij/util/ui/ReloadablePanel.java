@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -51,10 +37,8 @@ public abstract class ReloadablePanel<T> {
   private final AsyncProcessIcon myLoadingVersionIcon = new AsyncProcessIcon("Getting possible values");
 
   private final JLabel myErrorMessage = new JLabel();
-  @Nullable
-  private volatile DataProvider<T> myDataProvider;
-  @Nullable
-  private volatile UpdateStatus myUpdateStatus;
+  private volatile @Nullable DataProvider<T> myDataProvider;
+  private volatile @Nullable UpdateStatus myUpdateStatus;
 
   protected JPanel myActionPanel;
   public ReloadablePanel() {
@@ -81,8 +65,7 @@ public abstract class ReloadablePanel<T> {
 
   public abstract T getSelectedValue();
 
-  @NotNull
-  public final JLabel getErrorComponent() {
+  public final @NotNull JLabel getErrorComponent() {
     return myErrorMessage;
   }
 
@@ -122,7 +105,7 @@ public abstract class ReloadablePanel<T> {
     changeUpdateStatus(UpdateStatus.IDLE);
   }
 
-  public final void onValuesUpdateError(@NlsContexts.DialogMessage @NotNull final String errorMessage) {
+  public final void onValuesUpdateError(final @NlsContexts.DialogMessage @NotNull String errorMessage) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (getSelectedValue() == null) {
         myErrorMessage.setText(errorMessage);
@@ -132,8 +115,7 @@ public abstract class ReloadablePanel<T> {
   }
 
 
-  @NotNull
-  private JPanel createReloadButtonPanel() {
+  private @NotNull JPanel createReloadButtonPanel() {
     ReloadAction reloadAction = new ReloadAction();
     ActionButton reloadButton = new ActionButton(
       reloadAction,
@@ -146,16 +128,14 @@ public abstract class ReloadablePanel<T> {
     return panel;
   }
 
-  @NotNull
-  public abstract JPanel getMainPanel();
+  public abstract @NotNull JPanel getMainPanel();
 
   @NotNull
   JPanel getActionPanel(){
     return myActionPanel;
   }
 
-  @NotNull
-  private JPanel createReloadInProgressPanel() {
+  private @NotNull JPanel createReloadInProgressPanel() {
     JPanel panel = new JPanel();
     panel.add(myLoadingVersionIcon);
     return panel;

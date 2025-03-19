@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * Listen for daemon finish events and schedule {@link com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl.OptimizeImportsFix} to run in EDT if they are still relevant.
- * This service is needed for batching all these import fix requests in one place to avoid overhead of registering individual Disposables/listeners for each file in {@link PostHighlightingVisitor}
+ * This service is needed for batching all these import fix requests in one place to avoid overhead of registering individual Disposables/listeners for each file in {@link UnusedImportsVisitor}
  */
 @Service(Service.Level.PROJECT)
 final class OptimizeImportRestarter implements Disposable {

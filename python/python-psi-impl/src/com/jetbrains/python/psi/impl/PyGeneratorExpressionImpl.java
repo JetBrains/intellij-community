@@ -16,17 +16,15 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyGeneratorExpression;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implements PyGeneratorExpression {
@@ -39,34 +37,12 @@ public class PyGeneratorExpressionImpl extends PyComprehensionElementImpl implem
     pyVisitor.visitPyGeneratorExpression(this);
   }
 
-  @Nullable
   @Override
-  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression resultExpr = getResultExpression();
     if (resultExpr != null) {
-      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), PyNoneType.INSTANCE, this);
+      return PyTypingTypeProvider.wrapInGeneratorType(context.getType(resultExpr), null, PyNoneType.INSTANCE, this);
     }
     return null;
-  }
-
-  @Override
-  @NotNull
-  public List<PsiNamedElement> getNamedElements() {
-    // extract whatever names are defined in "for" components
-    List<PyComprehensionForComponent> fors = getForComponents();
-    PyExpression[] for_targets = new PyExpression[fors.size()];
-    int i = 0;
-    for (PyComprehensionForComponent for_comp : fors) {
-      for_targets[i] = for_comp.getIteratorVariable();
-      i += 1;
-    }
-    final List<PyExpression> expressions = PyUtil.flattenedParensAndStars(for_targets);
-    final List<PsiNamedElement> results = new ArrayList<>();
-    for (PyExpression expression : expressions) {
-      if (expression instanceof PsiNamedElement) {
-        results.add((PsiNamedElement)expression);
-      }
-    }
-    return results;
   }
 }

@@ -1,0 +1,9 @@
+fun myRunSuspendLambda(action: suspend () -> Unit) {}
+
+fun test(action: suspend () -> Unit) {
+
+    myRunSuspendLambda {
+        action()
+    }
+
+}

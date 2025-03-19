@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.execution.dashboard` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "execution-dashboard_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "execution-dashboard",
+  module_name = "intellij.platform.execution.dashboard",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/statistics",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+    "//platform/ide-core-impl",
+    "//platform/execution.serviceView:execution-serviceView",
+  ],
+  runtime_deps = [":execution-dashboard_resources"]
+)
+### auto-generated section `build intellij.platform.execution.dashboard` end

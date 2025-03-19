@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -43,21 +43,18 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
     this.helpTopic = helpTopic;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return id;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return displayName;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     if (helpTopic != null) {
       return helpTopic;
     }
@@ -73,9 +70,8 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
     return false;
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     if (rootComponent == null) {
       Configurable firstConfigurable = children[0];
       if (children.length == 1) {
@@ -122,8 +118,7 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
                                 provider -> provider.isTargetedToProduct(configurable));
   }
 
-  @NotNull
-  static JPanel createPanel(boolean isUseTitledBorder) {
+  static @NotNull JPanel createPanel(boolean isUseTitledBorder) {
     int verticalGap = TitledSeparator.TOP_INSET;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, isUseTitledBorder ? 0 : verticalGap, true, true));
     // VerticalFlowLayout incorrectly use vertical gap as top inset
@@ -139,9 +134,8 @@ class MergedCompositeConfigurable extends CompositeConfigurable<Configurable> im
     super.disposeUIResources();
   }
 
-  @NotNull
   @Override
-  protected List<Configurable> createConfigurables() {
+  protected @NotNull List<Configurable> createConfigurables() {
     return Arrays.asList(children);
   }
 }

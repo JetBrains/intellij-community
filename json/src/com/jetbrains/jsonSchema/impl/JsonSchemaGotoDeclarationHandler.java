@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
+public final class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler {
   @Override
   public PsiElement @Nullable [] getGotoDeclarationTargets(@Nullable PsiElement sourceElement, int offset, Editor editor) {
     boolean shouldSuppressNavigation =
@@ -29,14 +29,14 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
     if (shouldSuppressNavigation) return null;
 
     final IElementType elementType = PsiUtilCore.getElementType(sourceElement);
-    if (elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
-    final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class);
+    if (elementType != JsonElementTypes.STRING_LITERAL && elementType != JsonElementTypes.DOUBLE_QUOTED_STRING && elementType != JsonElementTypes.SINGLE_QUOTED_STRING) return null;
+    final JsonStringLiteral literal = PsiTreeUtil.getParentOfType(sourceElement, JsonStringLiteral.class, false);
     if (literal == null) return null;
     final PsiElement parent = literal.getParent();
     if (literal.getReferences().length == 0
-        && parent instanceof JsonProperty
-        && ((JsonProperty)parent).getNameElement() == literal
-        && canNavigateToSchema(parent)) {
+        && parent instanceof JsonProperty parentProperty
+        && parentProperty.getNameElement() == literal
+        && canNavigateToSchema(parentProperty)) {
       final PsiFile containingFile = literal.getContainingFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(literal.getProject());
       final VirtualFile file = containingFile.getVirtualFile();
@@ -45,7 +45,8 @@ public class JsonSchemaGotoDeclarationHandler implements GotoDeclarationHandler 
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(containingFile);
       if (schemaObject != null) {
-        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps).findNavigationTarget(((JsonProperty)parent).getValue());
+        final PsiElement target = new JsonSchemaResolver(sourceElement.getProject(), schemaObject, steps, JsonOriginalPsiWalker.INSTANCE.createValueAdapter(parentProperty.getParent()))
+          .findNavigationTarget(parentProperty.getValue());
         if (target != null) {
           return new PsiElement[] {target};
         }

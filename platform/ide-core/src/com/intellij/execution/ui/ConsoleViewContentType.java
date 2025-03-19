@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -9,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +56,7 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(ProcessOutputTypes.STDERR, ERROR_OUTPUT);
   }
 
-  public ConsoleViewContentType(@NonNls final String name, final TextAttributes textAttributes) {
+  public ConsoleViewContentType(final @NonNls String name, final TextAttributes textAttributes) {
     myName = name;
     myTextAttributes = textAttributes;
     myTextAttributesKey = null;
@@ -70,6 +68,11 @@ public class ConsoleViewContentType {
     myTextAttributesKey = textAttributesKey;
   }
 
+  public String getName() {
+    return myName;
+  }
+
+  @Override
   public String toString() {
     return myName;
   }
@@ -87,18 +90,11 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
-  @ApiStatus.Internal
-  public @Nullable TextAttributes getForcedAttributes() {
-    return myTextAttributes;
-  }
-
-  @Nullable
-  public TextAttributesKey getAttributesKey() {
+  public @Nullable TextAttributesKey getAttributesKey() {
     return myTextAttributesKey;
   }
 
-  @NotNull
-  public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key<?> key, @NotNull TextAttributesKey attributesKey) {
+  public static @NotNull ConsoleViewContentType registerNewConsoleViewType(@NotNull Key<?> key, @NotNull TextAttributesKey attributesKey) {
     ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
     registerNewConsoleViewType(key, type);
     return type;
@@ -108,19 +104,16 @@ public class ConsoleViewContentType {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  @NotNull
-  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key<?> processOutputType) {
+  public static synchronized @NotNull ConsoleViewContentType getConsoleViewType(@NotNull Key<?> processOutputType) {
     ConsoleViewContentType type = ourRegisteredTypes.get(processOutputType);
     if (type != null) {
       return type;
     }
-    LOG.warn("Unregistered " + processOutputType.getClass().getName() + ": " +
-             ProcessOutputType.getKeyNameForLogging(processOutputType));
+    LOG.warn("Unregistered " + processOutputType.getClass().getName() + ": " + processOutputType);
     return SYSTEM_OUTPUT;
   }
 
-  @NotNull
-  public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {
+  public static synchronized @NotNull Collection<ConsoleViewContentType> getRegisteredTypes() {
     return ourRegisteredTypes.values();
   }
 

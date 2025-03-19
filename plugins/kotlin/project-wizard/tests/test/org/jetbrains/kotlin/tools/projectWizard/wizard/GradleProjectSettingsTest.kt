@@ -12,7 +12,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
-    fun testDistributionTypeIsWrapped() {
+    fun testDistributionTypeIsDefaultWrapped() {
         val directory = Paths.get("consoleApplication")
         val tempDirectory = Files.createTempDirectory(null)
 
@@ -28,7 +28,7 @@ class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportT
         val settings = GradleSettings.getInstance(project)
         val projectSettings = settings.linkedProjectsSettings
 
-        val expectedDistributionType = DistributionType.WRAPPED
+        val expectedDistributionType = DistributionType.DEFAULT_WRAPPED
         val actualDistributionType = projectSettings.map { it.distributionType }.singleOrNull()
 
         assert(projectSettings.isNotEmpty()) { "Project settings are empty" }

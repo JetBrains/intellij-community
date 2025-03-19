@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.devkit.gradle` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "gradle_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle",
+  module_name = "intellij.devkit.gradle",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/idea-ui:ui",
+    "//platform/core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle/java",
+    "//platform/smRunner",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/util:util-ui",
+    "//java/java-psi-api:psi",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//java/openapi:java",
+  ],
+  runtime_deps = [":gradle_resources"]
+)
+
+jvm_library(
+  name = "gradle_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":gradle"],
+  deps = [
+    "//java/idea-ui:ui",
+    "//platform/core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/execution",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle/java",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/util:util-ui",
+    "//java/java-psi-api:psi",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//java/openapi:java",
+  ],
+  runtime_deps = [":gradle_resources"]
+)
+
+jvm_test(
+  name = "gradle_test",
+  runtime_deps = [":gradle_test_lib"]
+)
+### auto-generated section `build intellij.devkit.gradle` end

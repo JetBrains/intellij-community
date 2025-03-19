@@ -1,0 +1,8 @@
+{
+  "mainFile": "RandomJavaFile.java",
+  "filesToMove": ["one/destructuring"],
+  "type": "MOVE_FILES",
+  "targetPackage": "zero",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

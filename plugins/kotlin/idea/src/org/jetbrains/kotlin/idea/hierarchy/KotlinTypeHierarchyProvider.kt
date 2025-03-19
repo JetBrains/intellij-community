@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.hierarchy
 
@@ -16,19 +16,15 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
     private fun getOriginalPsiClassOrCreateLightClass(classOrObject: KtClassOrObject, module: Module?): PsiClass? {
@@ -55,12 +51,10 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
             is KtConstructor<*> -> getOriginalPsiClassOrCreateLightClass(target.getContainingClassOrObject(), module)
             is KtClassOrObject -> getOriginalPsiClassOrCreateLightClass(target, module)
             is KtNamedFunction -> { // Factory methods
-                val functionName = target.name
-                val functionDescriptor = target.resolveToDescriptorIfAny(BodyResolveMode.FULL) ?: return null
-                val type = functionDescriptor.returnType ?: return null
-                val returnTypeText = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
-                if (returnTypeText != functionName) return null
-                val classOrObject = KotlinClassShortNameIndex.get(functionName, project, project.allScope()).singleOrNull()
+                val functionName = target.name ?: return null
+                val returnTypeText = target.typeReference?.text
+                if (returnTypeText?.substringAfter(".") != functionName) return null
+                val classOrObject = KotlinClassShortNameIndex.get(functionName, project, GlobalSearchScope.allScope(project)).singleOrNull()
                     ?: return null
                 getOriginalPsiClassOrCreateLightClass(classOrObject, module)
             }

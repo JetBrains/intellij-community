@@ -4,6 +4,5 @@ package org.jetbrains.kotlin.idea.fir.search.refIndex
 import org.jetbrains.kotlin.idea.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexTest
 
 abstract class AbstractFindUsagesWithCompilerReferenceIndexFirTest : AbstractFindUsagesWithCompilerReferenceIndexTest() {
-    override val isFir: Boolean get() = true
     override val ignoreLog: Boolean get() = true
 }

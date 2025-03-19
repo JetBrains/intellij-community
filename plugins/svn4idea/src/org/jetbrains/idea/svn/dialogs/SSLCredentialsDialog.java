@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -56,9 +56,8 @@ public class SSLCredentialsDialog extends DialogWrapper {
 
     myCertificatePath = new TextFieldWithBrowseButton();
 
-    myCertificatePath.addBrowseFolderListener(
-        SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myCertificatePath.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title")));
 
     gb.weightx = 1;
     ++ gb.gridx;

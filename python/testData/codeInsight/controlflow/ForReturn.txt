@@ -15,7 +15,7 @@
 14(15,16) READ ACCESS: end
 15(3,20) element: null. Condition: hour < end:false
 16(17) element: null. Condition: hour < end:true
-17(18) element: PyStatementList. Condition: hour >= start and hour < end:true
+17(18) element: PyStatementList
 18(19) element: PyReturnStatement
 19(20) READ ACCESS: name
 20() element: null

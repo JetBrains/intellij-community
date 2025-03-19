@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -24,7 +24,7 @@ public enum WorkingCopyFormat {
   private static final Version ONE_DOT_NINE_VERSION = new Version(1, 9, 0);
 
   private final int myFormat;
-  @NotNull private final Version myVersion;
+  private final @NotNull Version myVersion;
 
   WorkingCopyFormat(int format, @NotNull Version version) {
     myFormat = format;
@@ -47,13 +47,11 @@ public enum WorkingCopyFormat {
     return this == UNKNOWN ? message("label.working.copy.format.unknown") : getName();
   }
 
-  @NotNull
-  public Version getVersion() {
+  public @NotNull Version getVersion() {
     return myVersion;
   }
 
-  @NotNull
-  public static WorkingCopyFormat getInstance(int value) {
+  public static @NotNull WorkingCopyFormat getInstance(int value) {
     if (INTERNAL_FORMAT_17 == value) {
       return ONE_DOT_SEVEN;
     } else if (INTERNAL_FORMAT_18 == value) {
@@ -84,8 +82,7 @@ public enum WorkingCopyFormat {
     return myVersion.lessThan(format.getVersion().major, format.getVersion().minor);
   }
 
-  @NotNull
-  public static WorkingCopyFormat from(@NotNull Version version) {
+  public static @NotNull WorkingCopyFormat from(@NotNull Version version) {
     return version.compareTo(ONE_DOT_NINE_VERSION) >= 0
            ? ONE_DOT_EIGHT
            : Stream.of(values())

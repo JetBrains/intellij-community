@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.kernel.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.navbar.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.project.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.progress.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.bookmarks.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.editor.backend" scope="RUNTIME" />
+  </component>
+</module>

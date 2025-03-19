@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.compiler.CompileContext
 import com.intellij.openapi.compiler.CompileTask
 import com.intellij.openapi.compiler.CompilerMessageCategory
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.project.stateStore
 import org.jetbrains.annotations.Nls
@@ -13,13 +14,22 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloade
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 
+private val LOG = logger<SetupKotlinJpsPluginBeforeCompileTask>()
+
 class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
+
     override fun execute(context: CompileContext): Boolean {
         val project = context.project
+
+        val bundledJpsVersion = KotlinJpsPluginSettings.rawBundledVersion
+        LOG.debug("Found bundled JPS version: $bundledJpsVersion")
+
         val jpsVersion = KotlinJpsPluginSettings.supportedJpsVersion(
             project = project,
             onUnsupportedVersion = { context.addErrorWithReferenceToKotlincXml(it) }
         ) ?: return true
+
+        LOG.debug("Attempting to lazy download JPS version: $jpsVersion")
 
         return KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
             project = project,

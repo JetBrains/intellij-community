@@ -1,4 +1,5 @@
 // PROBLEM: none
+// K2_ERROR: Unresolved reference 'got'.
 // ERROR: Unresolved reference: got
 fun test() {
     class Test{

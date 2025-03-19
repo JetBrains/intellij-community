@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
@@ -24,6 +24,7 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -34,7 +35,14 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
+
 public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTest {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
+  }
+
   @Nullable
   @Override
   protected PsiExpression getExpressionFromEditor() {
@@ -242,12 +250,28 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTest(null);
   }
 
+  public void testSuperExpression() {
+    try {
+      doTest(null);
+      fail();
+    }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" +
+                   "Selected expression cannot be extracted", e.getMessage());
+    }
+  }
+
   public void testHeavilyBrokenFile() {
     doTest(null);
   }
 
   public void testHeavilyBrokenFile2() {
-    doTest(null);
+    try {
+      doTest(null);
+      fail("Refactoring should not be performed");
+    } catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      assertEquals("Cannot perform refactoring.\n" + JavaRefactoringBundle.message("introduce.variable.message.cannot.extract.in.implicit.class"), e.getMessage());
+    }
   }
 
   public void testHeavilyBrokenFile3() {
@@ -259,10 +283,6 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testHeavilyBrokenFile5() {
-    doTest(null);
-  }
-
-  public void testHeavilyBrokenFile6() {
     doTest(null);
   }
 
@@ -322,6 +342,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPatternUsedInSubsequentCondition() {
+    doTest(null);
+  }
+  
+  public void testNoExternalTypeAnnotations() {
     doTest(null);
   }
   

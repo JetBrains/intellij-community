@@ -2,48 +2,71 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.getTypeInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
 
-internal class SpecifyTypeExplicitlyIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
+internal class SpecifyTypeExplicitlyIntention:
+    KotlinApplicableModCommandAction<KtCallableDeclaration, TypeInfo>(KtCallableDeclaration::class) {
 
-    override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
-    override fun getActionName(element: KtCallableDeclaration, context: TypeInfo): String = when (element) {
-        is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
-        else -> KotlinBundle.message("specify.type.explicitly")
-    }
-
-    override fun getApplicabilityRange() = ApplicabilityRanges.DECLARATION_WITHOUT_INITIALIZER
+    override fun getApplicableRanges(element: KtCallableDeclaration): List<TextRange> =
+        ApplicabilityRanges.declarationWithoutInitializer(element)
 
     override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean {
         if (element is KtConstructor<*> || element is KtFunctionLiteral) return false
+        if (element is KtParameter && element.isLoopParameter && element.destructuringDeclaration != null) return false
         return element.typeReference == null && (element as? KtNamedFunction)?.hasBlockBody() != true
     }
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtCallableDeclaration): TypeInfo? {
-        // Avoid redundant intentions
-        val diagnostics = element.getDiagnostics(KtDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        if (diagnostics.any { diagnostic ->
-                diagnostic is KtFirDiagnostic.AmbiguousAnonymousTypeInferred
-                        || diagnostic is KtFirDiagnostic.PropertyWithNoTypeNoInitializer
-                        || diagnostic is KtFirDiagnostic.MustBeInitialized
-        }) return null
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun skip(element: KtCallableDeclaration): Boolean =
+        element.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+            .any { diagnostic ->
+                diagnostic is KaFirDiagnostic.AmbiguousAnonymousTypeInferred
+                        || diagnostic is KaFirDiagnostic.PropertyWithNoTypeNoInitializer
+                        || diagnostic is KaFirDiagnostic.MustBeInitialized
+            }
 
-        return getTypeInfo(element)
+    override fun getFamilyName(): String =
+        KotlinBundle.message("specify.type.explicitly")
+
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtCallableDeclaration,
+    ): Presentation {
+        val actionName = when (element) {
+            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+            else -> KotlinBundle.message("specify.type.explicitly")
+        }
+        return Presentation.of(actionName)
     }
 
-    override fun apply(element: KtCallableDeclaration, context: TypeInfo, project: Project, editor: Editor?) =
-        updateType(element, context, project, editor)
+    override fun KaSession.prepareContext(element: KtCallableDeclaration): TypeInfo? =
+        if (skip(element)) {
+            null
+        } else {
+            getTypeInfo(element).takeUnless { it.defaultType.isError }
+        }
+
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtCallableDeclaration,
+        elementContext: TypeInfo,
+        updater: ModPsiUpdater,
+    ) {
+        updateType(element, elementContext, element.project, updater)
+    }
 }

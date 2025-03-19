@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.ui.SimpleListCellRenderer
@@ -19,8 +20,7 @@ private class SelectAndShowTipAction : DumbAwareAction() {
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     PopupChooserBuilder(JBList(tips))
       .setItemChosenCallback { tip ->
-        @Suppress("DEPRECATION")
-        project.coroutineScope.launch {
+        (project as ComponentManagerEx).getCoroutineScope().launch {
           TipAndTrickManager.getInstance().showTipDialog(project, tip)
         }
       }

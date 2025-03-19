@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.idea.TestFor
@@ -10,13 +10,14 @@ import com.intellij.openapi.progress.impl.CoreProgressManager.shouldEnterModalit
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 class ProgressManagerContractsTest : LightPlatformTestCase() {
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked exception from backgroundable task`() {
+  fun `test leaked exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {
@@ -33,7 +34,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
   }
 
   @TestFor(issues = ["IDEA-241785"])
-  fun `test leaked invokeLater exception from backgroundable task`() {
+  fun `test leaked invokeLater exception from backgroundable task`(): Unit = rethrowLoggedErrorsIn {
     DefaultLogger.disableStderrDumping(testRootDisposable)
     val message = "this is test exception message to ignore"
     try {
@@ -126,7 +127,7 @@ class ProgressManagerContractsTest : LightPlatformTestCase() {
     }.queue()
 
     flushEdtEvents { taskCompleted.get() < 3 }
-    assertThat(callbackResult).isEqualTo("fromProgress.1.fromProgress.2.fromPool.")
+    assertThat(callbackResult).isEqualTo("fromProgress.1.fromPool.fromProgress.2.")
   }
 
   @TestFor(issues = ["IDEA-241785"])

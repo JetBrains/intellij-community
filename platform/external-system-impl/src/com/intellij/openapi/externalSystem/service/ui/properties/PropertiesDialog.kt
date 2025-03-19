@@ -9,7 +9,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PropertiesDialog(
   private val project: Project,
   private val info: PropertiesInfo

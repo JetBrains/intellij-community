@@ -5,5 +5,6 @@ open class Klass {
 class Subklass(override val used: String): Klass
 
 fun main(args: Array<String>) {
+    println(args)
     Subklass().used
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ReadAction;
@@ -15,8 +15,7 @@ import java.util.List;
 
 final class ProjectLocatorImpl extends ProjectLocator {
   @Override
-  @Nullable
-  public Project guessProjectForFile(@Nullable("for plugin compatibility only; actually it should have been notnull") VirtualFile file) {
+  public @Nullable Project guessProjectForFile(@Nullable("for plugin compatibility only; actually it should have been notnull") VirtualFile file) {
     if (file == null) {
       return null;
     }
@@ -59,8 +58,7 @@ final class ProjectLocatorImpl extends ProjectLocator {
   }
 
   @Override
-  @NotNull
-  public Collection<Project> getProjectsForFile(@NotNull VirtualFile file) {
+  public @NotNull Collection<Project> getProjectsForFile(@NotNull VirtualFile file) {
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
     if (projectManager == null) {
       return Collections.emptyList();

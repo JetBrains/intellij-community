@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 from typing_extensions import TypeAlias
 
 from redis.asyncio.connection import ConnectionPool as AsyncConnectionPool
@@ -30,5 +30,5 @@ AnyFieldT = TypeVar("AnyFieldT", bytes, str, memoryview)  # noqa: Y001
 AnyChannelT = TypeVar("AnyChannelT", bytes, str, memoryview)  # noqa: Y001
 
 class CommandsProtocol(Protocol):
-    connection_pool: AsyncConnectionPool | ConnectionPool
+    connection_pool: AsyncConnectionPool[Any] | ConnectionPool
     def execute_command(self, *args, **options): ...

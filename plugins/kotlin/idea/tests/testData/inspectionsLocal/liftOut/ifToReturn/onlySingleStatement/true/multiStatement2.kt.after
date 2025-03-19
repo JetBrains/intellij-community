@@ -1,0 +1,11 @@
+// HIGHLIGHT: INFORMATION
+fun test(b: Boolean): Int {
+    return if (b) {
+        1
+    } else {
+        println(2)
+        2
+    }
+}
+
+fun println(i: Int) {}

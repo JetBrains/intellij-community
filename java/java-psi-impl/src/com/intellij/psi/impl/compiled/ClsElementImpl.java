@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.core.JavaPsiBundle;
@@ -125,7 +125,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     return JavaFileCodeStyleFacade.forContext(getContainingFile()).getIndentSize();
   }
 
-  public abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
+  protected abstract void setMirror(@NotNull TreeElement element) throws InvalidMirrorException;
 
   @Override
   public PsiElement getMirror() {
@@ -177,7 +177,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     StringBuilder buffer = new StringBuilder();
     appendMirrorText(0, buffer);
-    Logger.getInstance(ClsElementImpl.class).warn("Mirror wasn't set for " + this + " in " + getContainingFile() + ", expected text '" + buffer + "'");
+    Logger.getInstance(ClsElementImpl.class).warn("Mirror wasn't set for " + this + " (child of " + this.getParent() + ") in " + getContainingFile() + ", expected text '" + buffer + "'");
     return buffer.toString();
   }
 
@@ -265,7 +265,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     }
   }
 
-  protected static class InvalidMirrorException extends RuntimeException {
+  protected static final class InvalidMirrorException extends RuntimeException {
     public InvalidMirrorException(@NotNull String message) {
       super(message);
     }

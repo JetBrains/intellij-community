@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.openapi.module.Module;
@@ -26,40 +26,35 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     myLibrariesScope = new CoreLibrariesScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildLibrariesScope() {
+  public @NotNull GlobalSearchScope buildLibrariesScope() {
     return myLibrariesScope;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildAllScope() {
+  public @NotNull GlobalSearchScope buildAllScope() {
     return new EverythingGlobalScope();
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildProjectScope() {
+  public @NotNull GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, myFileIndexFacade);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildContentScope() {
+  public @NotNull GlobalSearchScope buildContentScope() {
     return new ContentSearchScope(myProject, myFileIndexFacade);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildEverythingScope() {
+  public @NotNull GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject);
   }
 
   private class CoreLibrariesScope extends GlobalSearchScope {
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return myFileIndexFacade.isInLibraryClasses(file) || myFileIndexFacade.isInLibrarySource(file);
+      return myFileIndexFacade.isInLibrary(file);
     }
 
     @Override
@@ -97,9 +92,8 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
       return false;
     }
 
-    @NotNull
     @Override
-    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myFileIndexFacade.getUnloadedModuleDescriptions();
     }
   }

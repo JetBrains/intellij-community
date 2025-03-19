@@ -1,12 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
+import org.jetbrains.annotations.ApiStatus
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 interface StoredProperty<T> {
   var name: String?
 
+  @get:ApiStatus.Internal
   val jsonType: JsonSchemaType
 
   fun getValue(thisRef: BaseState): T
@@ -15,11 +17,14 @@ interface StoredProperty<T> {
   // true if changed
   fun setValue(other: StoredProperty<T>): Boolean
 
+  @ApiStatus.Internal
   fun isEqualToDefault(): Boolean
 
+  @ApiStatus.Internal
   fun getModificationCount(): Long = 0
 }
 
+@ApiStatus.Internal
 interface ScalarProperty {
   // mod count not changed
   fun parseAndSetValue(rawValue: String?)
@@ -40,9 +45,10 @@ abstract class StoredPropertyBase<T> : StoredProperty<T>, ReadWriteProperty<Base
   }
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = getValue(thisRef)
-  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) = setValue(thisRef, value)
+  override operator fun setValue(thisRef: BaseState, property: KProperty<*>, value: T): Unit = setValue(thisRef, value)
 }
 
+@ApiStatus.Internal
 enum class JsonSchemaType(val jsonName: String) {
   OBJECT("object"),
   ARRAY("array"),

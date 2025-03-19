@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.impl.PropertyBunch;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
-import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType;
 import com.jetbrains.python.psi.impl.stubs.PropertyStubType;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +22,8 @@ import java.io.IOException;
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
-  @NotNull
   @Override
-  protected Maybe<String> translate(@Nullable PyExpression ref) {
+  protected @NotNull Maybe<String> translate(@Nullable PyExpression ref) {
     if (ref instanceof PyNoneLiteralExpression) {
       return new Maybe<>(PyNames.NONE);
     }
@@ -43,14 +41,13 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     else stream.writeName(IMPOSSIBLE_NAME);
   }
 
-  @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public @NotNull Class<PropertyStubType> getTypeClass() {
     return PropertyStubType.class;
   }
 
   @Override
-  public void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(@NotNull StubOutputStream stream) throws IOException {
     writeOne(myGetter, stream);
     writeOne(mySetter, stream);
     writeOne(myDeleter, stream);
@@ -85,8 +82,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   private static final Maybe<String> unknown = new Maybe<>();
   private static final Maybe<String> none = new Maybe<>(null);
 
-  @Nullable
-  private static Maybe<String> readOne(StubInputStream stream) throws IOException {
+  private static @Nullable Maybe<String> readOne(StubInputStream stream) throws IOException {
     String s = stream.readNameString();
     if (s == null) return none;
     else {
@@ -95,8 +91,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
     }
   }
 
-  @Nullable
-  public static PropertyStubStorage fromCall(@Nullable PyExpression expr) {
+  public static @Nullable PropertyStubStorage fromCall(@Nullable PyExpression expr) {
     final PropertyStubStorage prop = new PropertyStubStorage();
     final boolean success = fillFromCall(expr, prop);
     return success? prop : null;

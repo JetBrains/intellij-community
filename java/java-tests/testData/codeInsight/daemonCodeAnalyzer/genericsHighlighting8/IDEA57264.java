@@ -2,7 +2,7 @@ class A1<T> {}
 class B1<T extends A1<? super A1<? super T>>>{
     {
         T a = null;
-        <error descr="Incompatible types. Found: 'T', required: 'A1<? super T>'">A1<? super T> b = a;</error>
+        A1<? super T> b = <error descr="Incompatible types. Found: 'T', required: 'A1<? super T>'">a</error>;
     }
 }
 

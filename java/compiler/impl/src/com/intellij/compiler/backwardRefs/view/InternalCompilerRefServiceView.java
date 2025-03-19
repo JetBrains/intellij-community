@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -22,8 +23,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -31,7 +32,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 
-public class InternalCompilerRefServiceView extends JPanel implements DataProvider {
+public class InternalCompilerRefServiceView extends JPanel implements UiDataProvider {
   private static final String TOOL_WINDOW_ID = "Compiler Reference View";
   private final Tree myTree;
   private final Project myProject;
@@ -63,8 +64,7 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
         } else if (userObject instanceof PsiClass) {
           append(ClassPresentationUtil.getNameForClass((PsiClass)userObject, true));
         } else {
-          @NlsSafe
-          final String text = userObject.toString();
+          final @NlsSafe String text = userObject.toString();
           append(text);
         }
       }
@@ -73,22 +73,14 @@ public class InternalCompilerRefServiceView extends JPanel implements DataProvid
     add(new JBScrollPane(myTree));
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final TreePath path = myTree.getSelectionPath();
-      if (path != null) {
-        final Object usrObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-        if (usrObject instanceof VirtualFile) {
-          return new OpenFileDescriptor(myProject, (VirtualFile)usrObject);
-        }
-        else if (usrObject instanceof NavigatablePsiElement) {
-          return usrObject;
-        }
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath path = myTree.getSelectionPath();
+    Object usrObject = TreeUtil.getLastUserObject(path);
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      return usrObject instanceof VirtualFile o ? new OpenFileDescriptor(myProject, o) :
+             usrObject instanceof NavigatablePsiElement o ? o : null;
+    });
   }
 
   public static void showFindUsages(CompilerReferenceFindUsagesTestInfo info, PsiElement element) {

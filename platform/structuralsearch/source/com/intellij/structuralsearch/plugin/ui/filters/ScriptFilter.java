@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -66,9 +66,8 @@ class ScriptFilter extends FilterAction {
       @Override
       protected void layoutComponents() {
         new ExpandableEditorSupport(myTextField) {
-          @NotNull
           @Override
-          protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
+          protected @NotNull Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
             final Content popup = super.prepare(field, onShow);
             popup.getContentComponent().setPreferredSize(new Dimension(600, 150));
             return popup;

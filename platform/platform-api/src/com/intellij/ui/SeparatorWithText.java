@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -20,6 +20,10 @@ import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
+/**
+ * @deprecated Use {@link com.intellij.ui.GroupHeaderSeparator} instead. (see UX-2329)
+ */
+@Deprecated
 public class SeparatorWithText extends JComponent implements Accessible {
   protected @NlsContexts.Separator String myCaption;
   protected int myPrefWidth;
@@ -67,8 +71,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     return size;
   }
 
-  @NotNull
-  protected Dimension getLabelSize(Insets labelInsets) {
+  protected @NotNull Dimension getLabelSize(Insets labelInsets) {
     String caption = getCaption();
     if (caption == null) {
       return new Dimension(Math.max(myPrefWidth, 0), 1);

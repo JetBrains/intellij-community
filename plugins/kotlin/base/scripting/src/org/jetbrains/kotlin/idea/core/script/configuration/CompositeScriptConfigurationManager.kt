@@ -4,24 +4,34 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.ide.scratch.ScratchUtil
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.ProjectJdkTable.JDK_TABLE_TOPIC
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.psi.search.GlobalSearchScope
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
+import org.jetbrains.kotlin.idea.base.util.caching.getChanges
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifier
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.core.script.ucache.*
+import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK1
+import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangesNotifierK2
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsUpdater
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import java.nio.file.Path
 
 /**
  * The [CompositeScriptConfigurationManager] will provide redirection of [ScriptConfigurationManager] calls to the
@@ -38,9 +48,8 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * [notifier] will call first applicable [ScriptChangesNotifier.listeners] when editor is activated or document changed.
  * Listener should do something to invalidate configuration and schedule reloading.
  */
-class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigurationManager {
-    private val notifier = ScriptChangesNotifier(project)
-
+class CompositeScriptConfigurationManager(val project: Project, val scope: CoroutineScope) : ScriptConfigurationManager {
+    private val notifier = if (KotlinPluginModeProvider.isK2Mode()) ScriptChangesNotifierK2() else ScriptChangesNotifierK1(project)
     private val classpathRoots: ScriptClassRootsCache
         get() = updater.classpathRoots
 
@@ -49,7 +58,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
 
     val default = DefaultScriptingSupport(this)
 
-    val updater = object : ScriptClassRootsUpdater(project, this) {
+    val updater = object : ScriptClassRootsUpdater(project, this, scope) {
         override fun gatherRoots(builder: ScriptClassRootsBuilder) {
             default.collectConfigurations(builder)
             plugins.forEach { it.collectConfigurations(builder) }
@@ -58,10 +67,14 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         override fun afterUpdate() {
             plugins.forEach { it.afterUpdate() }
         }
-    }
 
-    override fun loadPlugins() {
-        plugins
+        override fun onTrivialUpdate() {
+            plugins.forEach { it.onTrivialUpdate() }
+        }
+
+        override fun onUpdateException(exception: Exception) {
+            plugins.forEach { it.onUpdateException(exception) }
+        }
     }
 
     fun updateScriptDependenciesIfNeeded(file: VirtualFile) {
@@ -106,7 +119,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
             ?: default.isConfigurationLoadingInProgress(file)
 
     fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
-        classpathRoots.getLightScriptInfo(file)
+        updater.classpathRoots.getLightScriptInfo(file)
 
     override fun updateScriptDefinitionReferences() {
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
@@ -120,37 +133,37 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
 
     init {
         val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+        connection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                val storageBefore = event.storageBefore
+                val storageAfter = event.storageAfter
+                val changes = event.getChanges<SdkEntity>().ifEmpty { return }
 
-        connection.subscribe(JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
-            override fun jdkAdded(jdk: Sdk) = updater.checkInvalidSdks()
-            override fun jdkNameChanged(jdk: Sdk, previousName: String) = updater.checkInvalidSdks()
-            override fun jdkRemoved(jdk: Sdk) = updater.checkInvalidSdks(remove = jdk)
+                changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::newEntity)
+                    .mapNotNull { it.findSdkBridge(storageAfter) }
+                    .firstOrNull()?.let {
+                        updater.checkInvalidSdks()
+                        return
+                    }
+
+                val outdated: List<Sdk> = changes.asSequence()
+                    .mapNotNull(EntityChange<SdkEntity>::oldEntity)
+                    .mapNotNull { it.findSdkBridge(storageBefore) }
+                    .toList()
+
+                if (outdated.isNotEmpty()) {
+                    updater.checkInvalidSdks(*outdated.toTypedArray())
+                }
+            }
         })
-    }
-
-    /**
-     * Returns script classpath roots
-     * Loads script configuration if classpath roots don't contain [file] yet
-     */
-    private fun getActualClasspathRoots(file: VirtualFile): ScriptClassRootsCache {
-        try {
-            // we should run default loader if this [file] is not cached in [classpathRoots]
-            // and it is not supported by any of [plugins]
-            // getOrLoadConfiguration will do this
-            // (despite that it's result becomes unused, it still may populate [classpathRoots])
-            getOrLoadConfiguration(file, null)
-        } catch (cancelled: ProcessCanceledException) {
-            // read actions may be cancelled if we are called by impatient reader
-        }
-
-        return this.classpathRoots
     }
 
     override fun getScriptSdk(file: VirtualFile): Sdk? =
         if (ScratchUtil.isScratch(file)) {
             ProjectRootManager.getInstance(project).projectSdk
         } else {
-            getActualClasspathRoots(file).getScriptSdk(file)
+            classpathRoots.getScriptSdk(file)
         }
 
     override fun getFirstScriptsSdk(): Sdk? =
@@ -177,28 +190,18 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
     override fun getAllScriptSdkDependenciesSources(): Collection<VirtualFile> =
         classpathRoots.sdks.nonIndexedSourceRoots
 
+    override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? =
+        classpathRoots.scriptsPaths().firstNotNullOfOrNull { scriptPath ->
+            VfsUtil.findFile(Path.of(scriptPath), true)?.takeIf { scriptVirtualFile ->
+                getScriptDependenciesClassFiles(scriptVirtualFile).any { scriptDependency ->
+                    dependencies.contains(scriptDependency.presentableUrl)
+                }
+            }
+        }
+
     override fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
         classpathRoots.getScriptDependenciesClassFiles(file)
 
     override fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
         classpathRoots.getScriptDependenciesSourceFiles(file)
-
-    override fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile> =
-        classpathRoots.getScriptDependenciesSdkFiles(file, OrderRootType.CLASSES)
-
-    override fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile> =
-        classpathRoots.getScriptDependenciesSdkFiles(file, OrderRootType.SOURCES)
-
-    ///////////////////
-    // Adapters for deprecated API
-    //
-
-    @Deprecated("Use getScriptClasspath(KtFile) instead")
-    override fun getScriptClasspath(file: VirtualFile): List<VirtualFile> {
-        val ktFile = project.getKtFile(file) ?: return emptyList()
-        return getScriptClasspath(ktFile)
-    }
-
-    override fun getScriptClasspath(file: KtFile): List<VirtualFile> =
-        ScriptConfigurationManager.toVfsRoots(getConfiguration(file)?.dependenciesClassPath.orEmpty())
 }

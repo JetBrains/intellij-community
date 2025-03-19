@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  * Utility methods to use {@link LongRangeSet} in JVM.
@@ -40,6 +42,7 @@ public final class JvmPsiRangeSetUtil {
   private static final String JAKARTA_VALIDATION_NEGATIVE_OR_ZERO = "jakarta.validation.constraints.NegativeOrZero";
   private static final String JAKARTA_VALIDATION_POSITIVE = "jakarta.validation.constraints.Positive";
   private static final String JAKARTA_VALIDATION_POSITIVE_OR_ZERO = "jakarta.validation.constraints.PositiveOrZero";
+  private static final String JMH_PARAM = "org.openjdk.jmh.annotations.Param";
   private static final List<String> ANNOTATIONS = Arrays.asList(CHECKER_RANGE,
                                                                 CHECKER_GTE_NEGATIVE_ONE,
                                                                 CHECKER_NON_NEGATIVE,
@@ -52,7 +55,8 @@ public final class JvmPsiRangeSetUtil {
                                                                 JAKARTA_VALIDATION_NEGATIVE,
                                                                 JAKARTA_VALIDATION_NEGATIVE_OR_ZERO,
                                                                 JAKARTA_VALIDATION_POSITIVE,
-                                                                JAKARTA_VALIDATION_POSITIVE_OR_ZERO);
+                                                                JAKARTA_VALIDATION_POSITIVE_OR_ZERO,
+                                                                JMH_PARAM);
 
   private JvmPsiRangeSetUtil() {}
 
@@ -61,8 +65,7 @@ public final class JvmPsiRangeSetUtil {
    * @return the set of possible values, according to the annotation; complete set (all possible long numbers) if not annotated via
    * range annotation.
    */
-  @NotNull
-  public static LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
+  public static @NotNull LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return LongRangeSet.all();
     return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
                    .nonNull()
@@ -124,6 +127,23 @@ public final class JvmPsiRangeSetUtil {
       }
       case CHECKER_POSITIVE -> {
         return LongRangeSet.range(1, Long.MAX_VALUE);
+      }
+      case JMH_PARAM -> {
+        PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("value");
+        Stream<PsiAnnotationMemberValue> stream = attributeValue instanceof PsiArrayInitializerMemberValue array
+                                                  ? Arrays.stream(array.getInitializers())
+                                                  : Stream.of(attributeValue);
+        return stream.map(value -> {
+          if (value instanceof PsiExpression expr &&
+              ExpressionUtils.computeConstantExpression(expr) instanceof String str) {
+            try {
+              return LongRangeSet.point(Long.parseLong(str));
+            }
+            catch (NumberFormatException ignored) {
+            }
+          }
+          return LongRangeSet.all();
+        }).reduce(LongRangeSet::join).orElse(LongRangeSet.all());
       }
     }
     return LongRangeSet.all();

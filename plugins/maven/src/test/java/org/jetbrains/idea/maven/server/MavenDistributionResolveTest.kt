@@ -4,15 +4,18 @@ package org.jetbrains.idea.maven.server
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.project.MavenProjectsManager
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.project.MavenWrapper
 import org.junit.Test
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -27,89 +30,89 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    mySyncViewManager = object : SyncViewManager(myProject) {
+    mySyncViewManager = object : SyncViewManager(project) {
       override fun onEvent(buildId: Any,
                            event: BuildEvent) {
         myEvents.add(event to Exception())
       }
     }
-    myProject.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
-    MavenProjectsManager.getInstance(myProject).setProgressListener(mySyncViewManager)
+    project.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
   }
 
   @Throws(IOException::class)
   @Test
-  fun testShouldUseEmbedMavenIfWrapperIsBad() {
+  fun testShouldUseEmbedMavenIfWrapperIsBad() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
-    importProject()
-    val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "Cannot install wrapped maven, set Bundled Maven" }
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() {
+  @Test fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
-    importProject()
-    val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>2</version>")
-    importProject()
-    assertSame(connector, MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path))
+    importProjectAsync()
+    assertSame(connector, MavenServerManager.getInstance().getConnector(project, projectRoot.path))
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() {
+  @Test fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() = runBlocking {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
-      importProject()
-      val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
       assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
       assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "HTTP used to download maven distribution" }
     }
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() {
+  @Test fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() = runBlocking {
     runWithServer { url ->
       createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.BUNDLED_MAVEN_3
-      importProject()
-      val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
-      assertFalse(connector.mavenDistribution.mavenHome.toFile().absolutePath.contains(".wrapper"))
+      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
+      importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      assertFalse(connector.mavenDistribution.mavenHome.absolutePathString().contains(".wrapper"))
       assertNotContains<BuildEvent> {  it.message == "Running maven wrapper" }
     }
   }
 
   @Throws(IOException::class)
-  @Test fun testShouldUseEmbeddedMavenForUnexistingHome() {
+  @Test fun testShouldUseEmbeddedMavenForUnexistingHome() = runBlocking {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home")
-    importProject()
-    val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
+    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenInSpecificPath(
+      "path/to/unexisted/maven/home")
+    importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
     assertEquals(
-      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toFile().canonicalPath, connector.mavenDistribution.mavenHome.toFile().canonicalPath)
+      MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
   }
 

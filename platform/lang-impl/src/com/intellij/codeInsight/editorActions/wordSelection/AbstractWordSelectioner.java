@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -15,7 +15,7 @@ import java.util.List;
 
 public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(@NotNull final PsiElement e) {
+  public boolean canSelect(final @NotNull PsiElement e) {
     return false;
   }
 

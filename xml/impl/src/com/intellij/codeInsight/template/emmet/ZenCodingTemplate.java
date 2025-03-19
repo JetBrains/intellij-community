@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.analysis.AnalysisBundle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
@@ -22,10 +21,16 @@ import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.diagnostic.CoreAttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
@@ -33,6 +38,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
@@ -41,9 +48,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 
 
 public class ZenCodingTemplate extends CustomLiveTemplateBase {
+
+  private static final ThreadPoolExecutor EMMET_EXECUTOR = ConcurrencyUtil.newSingleThreadExecutor("Emmet expander");
+
   public static final char MARKER = '\0';
   private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
   private static final String EMMET_LAST_WRAP_ABBREVIATIONS_KEY = "emmet.last.wrap.abbreviations";
@@ -53,8 +64,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                          XmlBundle.messagePointer("zen.coding.context.help.link"),
                          "https://docs.emmet.io/actions/wrap-with-abbreviation/");
 
-  @Nullable
-  public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull CustomTemplateCallback callback, boolean wrapping) {
+  public static @Nullable ZenCodingGenerator findApplicableDefaultGenerator(@NotNull CustomTemplateCallback callback, boolean wrapping) {
     PsiElement context = callback.getContext();
     if (!context.isValid()) {
       return null;
@@ -67,11 +77,10 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return null;
   }
 
-  @Nullable
-  public static ZenCodingNode parse(@NotNull String text,
-                                    @NotNull CustomTemplateCallback callback,
-                                    @NotNull ZenCodingGenerator generator,
-                                    @Nullable String surroundedText) {
+  public static @Nullable ZenCodingNode parse(@NotNull String text,
+                                              @NotNull CustomTemplateCallback callback,
+                                              @NotNull ZenCodingGenerator generator,
+                                              @Nullable String surroundedText) {
     List<ZenCodingToken> tokens = new EmmetLexer().lex(text);
     if (tokens == null) {
       return null;
@@ -101,23 +110,72 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
+  public final void expand(@NotNull String key, @NotNull CustomTemplateCallback callback) {
     ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, false);
+    Editor editor = callback.getEditor();
     if (defaultGenerator == null) {
-      LOG.error("Cannot find defaultGenerator for key `" + key +"` at " + callback.getEditor().getCaretModel().getOffset() + " offset",
-                CoreAttachmentFactory.createAttachment(callback.getEditor().getDocument()));
+      LOG.error("Cannot find defaultGenerator for key `" + key + "` at " + editor.getCaretModel().getOffset() + " offset",
+                CoreAttachmentFactory.createAttachment(editor.getDocument()));
       return;
     }
-    try {
-      expand(key, callback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
-    }
-    catch (EmmetException e) {
-      CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), XmlBundle.message("emmet.error"), "");
-    }
+    PsiFile file = callback.getFile();
+    CaretModel caretModel = editor.getCaretModel();
+    Project project = callback.getProject();
+    Caret startCaret = caretModel.getCurrentCaret();
+
+    ReadAction
+      .nonBlocking(() -> {
+        Ref<CollectCustomTemplateCallback> result = Ref.create();
+        runForCaret(startCaret, editor, () -> {
+          try {
+            CollectCustomTemplateCallback collectCallback = new CollectCustomTemplateCallback(editor, file);
+            expand(key, collectCallback, defaultGenerator, Collections.emptyList(), true, Registry.intValue("emmet.segments.limit"));
+            result.set(collectCallback);
+          }
+          catch (EmmetException e) {
+            CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(), XmlBundle.message("emmet.error"), "");
+          }
+        });
+
+        return result.get();
+      })
+      .finishOnUiThread(ModalityState.current(), (collectCallback) -> {
+        if (collectCallback == null) return;
+
+        TemplateImpl template = collectCallback.getGeneratedTemplate();
+        if (template == null) return;
+
+        writeActionForCaret(startCaret, editor, file, () -> {
+          //original callback
+          callback.deleteTemplateKey(key);
+          callback.startTemplate(template, null, null);
+          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+        });
+      })
+      .expireWhen(() -> editor.isDisposed() || !file.isValid() || !startCaret.isValid())
+      .submit(EMMET_EXECUTOR);
   }
 
-  @Nullable
-  private static ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
+  private static void writeActionForCaret(Caret startCaret, @NotNull Editor editor, @NotNull PsiFile file, @NotNull Runnable command) {
+    runForCaret(startCaret, editor, () -> {
+      CaretModel model = editor.getCaretModel();
+      if (model.getCaretCount() == 0) {
+        WriteCommandAction.writeCommandAction(editor.getProject(), file).run(() -> command.run());
+      }
+      else {
+        DocumentUtil.writeInRunUndoTransparentAction(command);
+      }
+    });
+  }
+
+  private static void runForCaret(@NotNull Caret caret, Editor editor, Runnable runnable) {
+    editor.getCaretModel().runForEachCaret(candidate -> {
+      if (candidate != caret) return;
+      runnable.run();
+    });
+  }
+
+  private static @Nullable ZenCodingGenerator findApplicableGenerator(ZenCodingNode node, CustomTemplateCallback callback, boolean wrapping) {
     ZenCodingGenerator defaultGenerator = null;
     List<ZenCodingGenerator> generators = ZenCodingGenerator.getInstances();
     PsiElement context = callback.getContext();
@@ -141,8 +199,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return defaultGenerator;
   }
 
-  @NotNull
-  private static List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
+  private static @NotNull List<ZenCodingFilter> getFilters(ZenCodingNode node, PsiElement context) {
     List<ZenCodingFilter> result = new ArrayList<>();
 
     while (node instanceof FilterNode filterNode) {
@@ -170,17 +227,19 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                             @NotNull ZenCodingGenerator defaultGenerator,
                             @NotNull Collection<? extends ZenCodingFilter> extraFilters,
                             boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
     final ZenCodingNode node = parse(key, callback, defaultGenerator, null);
-    if (node == null) {
-      return;
-    }
+    if (node == null) return;
+
     if (node instanceof TemplateNode) {
       if (key.equals(((TemplateNode)node).getTemplateToken().getKey()) && callback.findApplicableTemplates(key).size() > 1) {
         TemplateManagerImpl templateManager = (TemplateManagerImpl)callback.getTemplateManager();
-        Map<TemplateImpl, String> template2Argument = templateManager.findMatchingTemplates(callback.getFile(), callback.getEditor(), null, TemplateSettings.getInstance());
+        Map<TemplateImpl, String> template2Argument =
+          templateManager.findMatchingTemplates(callback.getFile(), callback.getEditor(), null, TemplateSettings.getInstance());
         Runnable runnable = templateManager.startNonCustomTemplates(template2Argument, callback.getEditor(), null);
         if (runnable != null) {
-          runnable.run();
+          ApplicationManager.getApplication().invokeLater(runnable);
         }
         return;
       }
@@ -201,7 +260,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
                              ZenCodingGenerator generator,
                              List<ZenCodingFilter> filters,
                              String surroundedText,
-                             CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit) throws EmmetException {
+                             CustomTemplateCallback callback, boolean expandPrimitiveAbbreviations, int segmentsLimit)
+    throws EmmetException {
 
     checkTemplateOutputLength(node, callback);
 
@@ -258,7 +318,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   }
 
   @Override
-  public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
+  public void wrap(final @NotNull String selection, final @NotNull CustomTemplateCallback callback) {
     new EmmetAbbreviationBalloon(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY, EMMET_LAST_WRAP_ABBREVIATIONS_KEY,
                                  new EmmetAbbreviationBalloon.Callback() {
                                    @Override
@@ -291,36 +351,60 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
     return applicableGenerator != null && applicableGenerator.isEnabled() && applicableGenerator.hasCompletionItem();
   }
 
-  public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
+  public static void doWrap(final @NotNull String abbreviation, final @NotNull CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, true);
     assert defaultGenerator != null;
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(
-      __ -> {
-        String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
-        if (selectedText != null) {
+    Editor editor = callback.getEditor();
+
+    CaretModel model = editor.getCaretModel();
+    model.runForEachCaret(caret -> {
+      doWrapForCaret(abbreviation, callback, caret, defaultGenerator);
+    });
+  }
+
+  private static void doWrapForCaret(@NotNull String abbreviation,
+                                     @NotNull CustomTemplateCallback callback,
+                                     @NotNull Caret startCaret,
+                                     @NotNull ZenCodingGenerator defaultGenerator) {
+    CollectCustomTemplateCallback collect = new CollectCustomTemplateCallback(callback.getEditor(), callback.getFile());
+    Editor editor = callback.getEditor();
+    ReadAction.nonBlocking(() -> {
+        var result = Ref.create(Boolean.FALSE);
+        runForCaret(startCaret, editor, () -> {
+          String selectedText = editor.getSelectionModel().getSelectedText();
+          if (selectedText == null) return;
           ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selectedText);
           assert node != null;
           PsiElement context = callback.getContext();
           ZenCodingGenerator generator = findApplicableGenerator(node, callback, true);
           List<ZenCodingFilter> filters = getFilters(node, context);
 
-          EditorModificationUtil.deleteSelectedText(callback.getEditor());
-          PsiDocumentManager.getInstance(callback.getProject()).commitAllDocuments();
-
           try {
-            expand(node, generator, filters, selectedText, callback, true, Registry.intValue("emmet.segments.limit"));
+            expand(node, generator, filters, selectedText, collect, true, Registry.intValue("emmet.segments.limit"));
+            result.set(true);
           }
           catch (EmmetException e) {
-            CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(),
+            CommonRefactoringUtil.showErrorHint(callback.getProject(), editor, e.getMessage(),
                                                 XmlBundle.message("emmet.error"), "");
           }
-        }
-      }), AnalysisBundle.message("insert.code.template.command"), null));
+        });
+        return result.get() ? collect : null;
+      }).finishOnUiThread(ModalityState.current(), result -> {
+        if (result == null) return;
+        TemplateImpl template = result.getGeneratedTemplate();
+        if (template == null) return;
+
+        writeActionForCaret(startCaret, editor, callback.getFile(), () -> {
+          EditorModificationUtilEx.deleteSelectedText(editor);
+          PsiDocumentManager.getInstance(callback.getProject()).commitDocument(editor.getDocument());
+          callback.startTemplate(template, null, null);
+        });
+      })
+      .submit(EMMET_EXECUTOR);
   }
 
   @Override
-  @NotNull
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return XmlBundle.message("emmet.title");
   }
 
@@ -391,7 +475,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
           }
         }
       }
-      else if(result.getPrefixMatcher().getPrefix().isEmpty()) {
+      else if (result.getPrefixMatcher().getPrefix().isEmpty()) {
         result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0));
       }
     }

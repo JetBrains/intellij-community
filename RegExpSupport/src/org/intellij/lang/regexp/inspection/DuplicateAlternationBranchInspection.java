@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -23,9 +23,8 @@ import java.util.Set;
  */
 public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new DuplicateAlternationBranchVisitor(holder, isOnTheFly);
   }
 
@@ -70,18 +69,14 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
     }
   }
 
-  private static class DuplicateAlternationBranchFix implements LocalQuickFix {
-
-    @Nls
-    @NotNull
+  private static class DuplicateAlternationBranchFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.remove.duplicate.branch");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof RegExpBranch)) {
         return;
       }

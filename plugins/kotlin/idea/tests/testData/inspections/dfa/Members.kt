@@ -9,11 +9,12 @@ class A(val formattedPercentage5: Int = when {
     val percentage: Double = Math.abs(103.0)
 
     init {
-        val <warning descr="[UNUSED_VARIABLE] Variable 'b' is never used">b</warning> = when {
+        val b = when {
             percentage >= 10 -> 1
             <warning descr="Condition 'percentage >= 100' is always false">percentage >= 100</warning> -> 2
             else -> 3
         }
+        println(b)
     }
 
     fun t(): Int {

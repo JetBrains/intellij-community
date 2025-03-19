@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.action;
 
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,7 +17,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 /**
  * An action that activates the terminal window for file, selected by user.
  */
-public class RevealFileInTerminalAction extends DumbAwareAction {
+public final class RevealFileInTerminalAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -34,11 +33,10 @@ public class RevealFileInTerminalAction extends DumbAwareAction {
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return project != null && !LightEdit.owns(project) && getSelectedFile(e) != null &&
-           (!ActionPlaces.isPopupPlace(e.getPlace()) || editor == null || !editor.getSelectionModel().hasSelection());
+           (!e.isFromContextMenu() || editor == null || !editor.getSelectionModel().hasSelection());
   }
 
-  @Nullable
-  private static VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
+  private static @Nullable VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
     return RevealFileAction.findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 

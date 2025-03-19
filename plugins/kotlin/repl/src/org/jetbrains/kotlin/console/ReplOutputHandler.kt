@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
@@ -28,7 +28,7 @@ class ReplOutputHandler(
 ) : OSProcessHandler(process, commandLine) {
 
     private var isBuildInfoChecked = false
-    private val factory = DocumentBuilderFactory.newInstance()
+    private val factory = DocumentBuilderFactory.newDefaultInstance()
     private val outputProcessor = ReplOutputProcessor(runner)
     private val inputBuffer = StringBuilder()
 

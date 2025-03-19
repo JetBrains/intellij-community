@@ -30,7 +30,7 @@ public interface DocumentationActionProvider {
    * &lt;/action>
    * </pre>
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default List<AnAction> additionalActions(DocumentationComponent component) {
     return Collections.emptyList();
   }

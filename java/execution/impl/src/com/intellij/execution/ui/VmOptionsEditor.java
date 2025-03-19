@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -29,6 +29,7 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
     myEditor.getAccessibleContext().setAccessibleName(message);
     myEditor.setPlaceholder(message);
     setupEditor(myEditor, settings);
+    myEditor.setCaretPosition(0);
     add(myEditor, BorderLayout.CENTER);
     setMinimumWidth(this, 400);
     mySupport = new ExpandableEditorSupport(myEditor, ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER) {
@@ -37,6 +38,7 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
         LanguageTextField popupEditor = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), settings.getProject(), text);
         setupEditor(popupEditor, settings);
         myPopupEditor = popupEditor;
+        myPopupEditor.setCaretPosition(Math.min(text.length(), myEditor.getCaretModel().getOffset()));
         return popupEditor;
       }
     };

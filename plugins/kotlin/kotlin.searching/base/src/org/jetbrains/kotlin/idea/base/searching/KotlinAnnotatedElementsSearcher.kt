@@ -14,20 +14,21 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toPsiParameters
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.KotlinIconProvider.Companion.getBaseIcon
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.psi.*
@@ -43,7 +44,7 @@ import kotlin.contracts.contract
 class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
 
     override fun execute(p: AnnotatedElementsSearch.Parameters, consumer: Processor<in PsiModifierListOwner>): Boolean {
-        return processAnnotatedMembers(p.annotationClass, p.scope) { declaration ->
+        return processAnnotatedMembers(p.annotationClass, p.scope) { declaration, useSiteTarget ->
             when (declaration) {
                 is KtClassOrObject -> {
                     val lightClass = declaration.toLightClass()
@@ -54,23 +55,47 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
                     consumer.process(wrappedMethod)
                 }
                 is KtProperty -> {
-                    val backingField = LightClassUtil.getLightClassBackingField(declaration)
-                    if (backingField != null) {
-                        return@processAnnotatedMembers consumer.process(backingField)
-                    }
+                    when (useSiteTarget?.getAnnotationUseSiteTarget()) {
+                        AnnotationUseSiteTarget.PROPERTY_GETTER ->
+                            return@processAnnotatedMembers LightClassUtil.getLightClassPropertyMethods(declaration).getter?.let { consumer.process(it) } != false
+                        AnnotationUseSiteTarget.PROPERTY_SETTER ->
+                            return@processAnnotatedMembers LightClassUtil.getLightClassPropertyMethods(declaration).setter?.let { consumer.process(it) } != false
+                        AnnotationUseSiteTarget.FIELD ->
+                            return@processAnnotatedMembers LightClassUtil.getLightClassBackingField(declaration)?.let { consumer.process(it) } != false
+                        AnnotationUseSiteTarget.PROPERTY -> true // not visible to java
+                        else -> {
+                            val backingField = LightClassUtil.getLightClassBackingField(declaration)
+                            if (backingField != null) {
+                                return@processAnnotatedMembers consumer.process(backingField)
+                            }
 
-                    LightClassUtil.getLightClassPropertyMethods(declaration).all { consumer.process(it) }
+                            LightClassUtil.getLightClassPropertyMethods(declaration).all { consumer.process(it) }
+                        }
+                    }
                 }
                 is KtPropertyAccessor -> {
                     val method = LightClassUtil.getLightClassAccessorMethod(declaration)
                     return@processAnnotatedMembers consumer.process(method)
                 }
                 is KtParameter -> {
-                    if (!declaration.toPsiParameters().all { consumer.process(it) }) return@processAnnotatedMembers false
-                    LightClassUtil.getLightClassBackingField(declaration)?.let {
-                        if (!consumer.process(it)) return@processAnnotatedMembers false
+                    when (useSiteTarget?.getAnnotationUseSiteTarget()) {
+                        AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER ->
+                            return@processAnnotatedMembers declaration.toPsiParameters().all { consumer.process(it) }
+                        AnnotationUseSiteTarget.PROPERTY_GETTER -> {
+                            return@processAnnotatedMembers LightClassUtil.getLightClassPropertyMethods(declaration).getter?.let { consumer.process(it) } != false
+                        }
+                        AnnotationUseSiteTarget.PROPERTY_SETTER ->
+                            return@processAnnotatedMembers LightClassUtil.getLightClassPropertyMethods(declaration).setter?.let { consumer.process(it) } != false
+                        AnnotationUseSiteTarget.FIELD ->
+                            return@processAnnotatedMembers LightClassUtil.getLightClassBackingField(declaration)?.let { consumer.process(it) } != false
+                        else -> {
+                            if (!declaration.toPsiParameters().all { consumer.process(it) }) return@processAnnotatedMembers false
+                            LightClassUtil.getLightClassBackingField(declaration)?.let {
+                                if (!consumer.process(it)) return@processAnnotatedMembers false
+                            }
+                            LightClassUtil.getLightClassPropertyMethods(declaration).all { consumer.process(it) }
+                        }
                     }
-                    LightClassUtil.getLightClassPropertyMethods(declaration).all { consumer.process(it) }
                 }
                 else -> true
             }
@@ -84,7 +109,7 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
             annClass: PsiClass,
             useScope: SearchScope,
             preFilter: (KtAnnotationEntry) -> Boolean = { true },
-            consumer: (KtDeclaration) -> Boolean
+            consumer: (KtDeclaration, KtAnnotationUseSiteTarget?) -> Boolean
         ): Boolean {
             assert(annClass.isAnnotationType) { "Annotation type should be passed to annotated members search" }
 
@@ -107,19 +132,22 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
 
                     if (psiBasedResolveResult == ImpreciseResolveResult.NO_MATCH) return true
                     if (psiBasedResolveResult == ImpreciseResolveResult.UNSURE) {
-                        @OptIn(KtAllowAnalysisOnEdt::class)
+                        @OptIn(KaAllowAnalysisOnEdt::class)
                         allowAnalysisOnEdt {
-                            analyze(elt) {
-                                val annotationSymbol = elt.resolveCall().singleConstructorCallOrNull()?.symbol
-                                    ?: return false
-                                val annotationType = annotationSymbol.returnType as? KtNonErrorClassType ?: return false
-                                val fqName = annotationType.classId.asFqNameString()
-                                if (fqName != annotationFQN) return true
+                            @OptIn(KaAllowAnalysisFromWriteAction::class)
+                            allowAnalysisFromWriteAction {
+                                analyze(elt) {
+                                    val annotationSymbol = elt.resolveToCall()?.singleConstructorCallOrNull()?.symbol
+                                        ?: return false
+                                    val annotationType = annotationSymbol.returnType as? KaClassType ?: return false
+                                    val fqName = annotationType.classId.asFqNameString()
+                                    if (fqName != annotationFQN) return true
+                                }
                             }
                         }
                     }
 
-                    if (!consumer(declaration)) return false
+                    if (!consumer(declaration, elt.useSiteTarget)) return false
 
                     return true
                 })

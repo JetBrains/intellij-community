@@ -23,43 +23,63 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
     return object : DefaultJvmElementVisitor<Boolean> {
       override fun visitMethod(method: JvmMethod): Boolean {
         if (!method.isConstructor) return true
+        val clazz = method.containingClass ?: return true
+        if (clazz.classKind != JvmClassKind.CLASS ||
+            clazz.hasModifier(JvmModifier.ABSTRACT) ||
+            clazz.isLocalOrAnonymous()) {
+          return true
+        }
+        val annotation = clazz.getAnnotation(Service::class.java.canonicalName) ?: return true
         val sourceElement = method.sourceElement ?: return true
         val file = sourceElement.containingFile ?: return true
-        val containingClass = method.containingClass ?: return true
-        val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
-        val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
-        val levelType = ServiceUtil.getLevelType(annotation, sourceElement.language.id == "kotlin")
-        if (!levelType.isProject() && isProjectParamCtor(method)) {
+        val levelType = getLevelType(annotation, sourceElement.language)
+        if (!levelType.isProject() && isProjectLevelExclusiveCtor(method)) {
+          val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
           registerProblemProjectLevelRequired(annotation, elementToReport, file)
         }
-        if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(containingClass)) {
+        if (levelType.isApp() && !isAppLevelServiceCtor(method) && !hasAppLevelServiceCtor(clazz)) {
           registerProblemApplicationLevelRequired(method, file)
         }
         return true
+      }
+
+      private fun JvmClass.isLocalOrAnonymous(): Boolean {
+        return this.qualifiedName == null
       }
 
       private fun hasAppLevelServiceCtor(clazz: JvmClass): Boolean {
         return clazz.methods.filter { it.isConstructor }.any { isAppLevelServiceCtor(it) }
       }
 
-      private fun isAppLevelServiceCtor(method: JvmMethod): Boolean {
-        assert(method.isConstructor)
-        return method.parameters.isEmpty() || method.hasSingleParamOfType(CoroutineScope::class.java)
+      /**
+       * Check if the given [constructor] is suitable for an application-level service.
+       */
+      private fun isAppLevelServiceCtor(constructor: JvmMethod): Boolean {
+        assert(constructor.isConstructor)
+        return !constructor.hasParameters() || (constructor.parameters.singleOrNull()?.hasType(CoroutineScope::class.java) ?: false)
       }
 
-      private fun isProjectParamCtor(method: JvmMethod): Boolean {
-        assert(method.isConstructor)
-        return method.hasSingleParamOfType(Project::class.java)
+      /**
+       * Checks if the given [constructor] requires that the light service class be specified as `@Service(Service.Level.PROJECT)`.
+       */
+      private fun isProjectLevelExclusiveCtor(constructor: JvmMethod): Boolean {
+        assert(constructor.isConstructor)
+        val parameters = constructor.parameters
+        return when (parameters.size) {
+          1 -> parameters[0].hasType(Project::class.java)
+          2 -> parameters[0].hasType(Project::class.java) && parameters[1].hasType(CoroutineScope::class.java)
+          else -> false
+        }
       }
 
-      private fun JvmMethod.hasSingleParamOfType(clazz: Class<*>): Boolean {
-        return (this.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == clazz.canonicalName
+      private fun JvmParameter.hasType(clazz: Class<*>): Boolean {
+        return (this.type as? PsiType)?.canonicalText == clazz.canonicalName
       }
 
       private fun registerProblemProjectLevelRequired(annotation: JvmAnnotation,
                                                       elementToReport: PsiJavaCodeReferenceElement,
                                                       file: PsiFile) {
-        val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
+        val projectLevelFqn = getProjectLevelFQN()
         val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
         val text = DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.specify.project.level.fix")
         val actions = createChangeAnnotationAttributeActions(annotation, 0, request, text, text)

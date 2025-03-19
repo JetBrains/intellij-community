@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
@@ -70,9 +70,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
-  @NotNull
   @Override
-  protected GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
+  protected @NotNull GrReferenceElement<GrCodeReferenceElement> createQualifiedRef(@NotNull String qName) {
     return GroovyPsiElementFactory.getInstance(getProject()).createCodeReference(qName);
   }
 
@@ -97,8 +96,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     switch (getKind()) {
       case PACKAGE_REFERENCE, IMPORT_REFERENCE -> {
         return getTextSkipWhiteSpaceAndComments();
@@ -218,9 +216,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+  public @NotNull Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     return TypeInferenceHelper.getTopContext().resolve(this, incomplete, GrCodeReferenceResolver.INSTANCE);
   }
 
@@ -234,9 +231,8 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     }
   }
 
-  @NotNull
   @Override
-  public CodeReferenceKind getKind() {
+  public @NotNull CodeReferenceKind getKind() {
     return doGetKind(this);
   }
 

@@ -3,7 +3,6 @@ package com.intellij.filePrediction.logger
 
 import com.intellij.filePrediction.FilePredictionEventFieldEncoder.encodeBool
 import com.intellij.filePrediction.FilePredictionEventFieldEncoder.encodeDouble
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
 
 internal class EncodedBooleanEventField(name: String) {
@@ -27,15 +26,5 @@ internal class EncodedEnumEventField<T : Enum<*>>(name: String) {
 
   infix fun with(data: T): EventPair<Int> {
     return field.with(data.ordinal)
-  }
-}
-
-internal class CandidateAnonymizedPath : PrimitiveEventField<String?>() {
-  override val validationRule: List<String>
-    get() = listOf("{regexp#hash}")
-
-  override val name = "file_path"
-  override fun addData(fuData: FeatureUsageData, value: String?) {
-    fuData.addAnonymizedPath(value)
   }
 }

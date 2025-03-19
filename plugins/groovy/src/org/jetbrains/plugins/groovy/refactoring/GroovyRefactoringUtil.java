@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.refactoring;
 
@@ -288,8 +288,7 @@ public abstract class GroovyRefactoringUtil {
 
   }
 
-  @Nullable
-  public static GrCall getCallExpressionByMethodReference(@Nullable PsiElement ref) {
+  public static @Nullable GrCall getCallExpressionByMethodReference(@Nullable PsiElement ref) {
     if (ref == null) return null;
     if (ref instanceof GrEnumConstant) return (GrEnumConstant)ref;
     if (ref instanceof GrConstructorInvocation) return (GrCall)ref;
@@ -484,8 +483,7 @@ public abstract class GroovyRefactoringUtil {
    * @return corresponding statement inside block if it has been created or statement itself.
    */
 
-  @NotNull
-  public static <Type extends PsiElement> Type addBlockIntoParent(@NotNull Type statement) throws IncorrectOperationException {
+  public static @NotNull <Type extends PsiElement> Type addBlockIntoParent(@NotNull Type statement) throws IncorrectOperationException {
 
     PsiElement parent = statement.getParent();
     PsiElement child = statement;
@@ -549,20 +547,17 @@ public abstract class GroovyRefactoringUtil {
     return typeArgumentList != null && typeArgumentList.isDiamond();
   }
 
-  @Nullable
-  public static GrStatementOwner getDeclarationOwner(GrStatement statement) {
+  public static @Nullable GrStatementOwner getDeclarationOwner(GrStatement statement) {
     PsiElement parent = statement.getParent();
     return parent instanceof GrStatementOwner ? ((GrStatementOwner) parent) : null;
   }
 
-  @NotNull
-  private static PsiType getType(@NotNull PsiParameter myParameter) {
+  private static @NotNull PsiType getType(@NotNull PsiParameter myParameter) {
     PsiType type = myParameter.getType();
     return type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
   }
 
-  @NotNull
-  public static PsiType getSubstitutedType(@NotNull GrParameter parameter) {
+  public static @NotNull PsiType getSubstitutedType(@NotNull GrParameter parameter) {
     final PsiType type = getType(parameter);
 
     if (type instanceof PsiArrayType) {
@@ -594,7 +589,7 @@ public abstract class GroovyRefactoringUtil {
     return psiClass instanceof PsiTypeParameter ? subst.substitute((PsiTypeParameter)psiClass) : elementFactory.createType(psiClass, substitutor);
   }
 
-  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, @NotNull final GroovyPsiElement element) {
+  public static void collectTypeParameters(final Set<? super PsiTypeParameter> used, final @NotNull GroovyPsiElement element) {
     element.accept(new GroovyRecursiveElementVisitor() {
       @Override
       public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {
@@ -610,7 +605,7 @@ public abstract class GroovyRefactoringUtil {
       }
 
       @Override
-      public void visitExpression(@NotNull final GrExpression expression) {
+      public void visitExpression(final @NotNull GrExpression expression) {
         super.visitExpression(expression);
         final PsiType type = expression.getType();
         if (type != null) {
@@ -628,17 +623,17 @@ public abstract class GroovyRefactoringUtil {
         private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 
         @Override
-        public Boolean visitType(@NotNull final PsiType type) {
+        public Boolean visitType(final @NotNull PsiType type) {
           return false;
         }
 
         @Override
-        public Boolean visitArrayType(@NotNull final PsiArrayType arrayType) {
+        public Boolean visitArrayType(final @NotNull PsiArrayType arrayType) {
           return arrayType.getComponentType().accept(this);
         }
 
         @Override
-        public Boolean visitClassType(@NotNull final PsiClassType classType) {
+        public Boolean visitClassType(final @NotNull PsiClassType classType) {
           final PsiClass aClass = classType.resolve();
           if (aClass instanceof PsiTypeParameter) {
             myTypeParams.add((PsiTypeParameter)aClass);
@@ -652,7 +647,7 @@ public abstract class GroovyRefactoringUtil {
         }
 
         @Override
-        public Boolean visitWildcardType(@NotNull final PsiWildcardType wildcardType) {
+        public Boolean visitWildcardType(final @NotNull PsiWildcardType wildcardType) {
           final PsiType bound = wildcardType.getBound();
           if (bound != null) {
             bound.accept(this);
@@ -663,8 +658,7 @@ public abstract class GroovyRefactoringUtil {
     });
   }
 
-  @NotNull
-  public static String getNewName(@NotNull PsiNamedElement element, boolean property) {
+  public static @NotNull String getNewName(@NotNull PsiNamedElement element, boolean property) {
     final String name;
     if (element instanceof PsiMethod && property) {
       name = GroovyPropertyUtils.getPropertyName((PsiMethod)element);

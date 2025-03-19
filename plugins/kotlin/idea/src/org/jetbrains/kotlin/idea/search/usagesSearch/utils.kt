@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.usagesSearch
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -32,10 +33,7 @@ import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
-import org.jetbrains.kotlin.idea.util.FuzzyType
-import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
-import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
-import org.jetbrains.kotlin.idea.util.toFuzzyType
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -44,7 +42,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.types.DelegatingSimpleType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.util.isValidOperator
 
@@ -53,7 +51,7 @@ inline fun <R> calculateInModalWindow(
     @NlsContexts.DialogTitle windowTitle: String,
     crossinline action: () -> R
 ): R {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val task = object : Task.WithResult<R, Exception>(contextElement.project, windowTitle, /*canBeCancelled*/ true) {
         override fun compute(indicator: ProgressIndicator): R =
           ApplicationManager.getApplication().runReadAction(Computable { action() })
@@ -170,6 +168,7 @@ fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration)
     val descriptor = declaration.descriptor ?: return false
     return checkUsageVsOriginalDescriptor(descriptor) { usageDescriptor, targetDescriptor ->
         usageDescriptor != targetDescriptor
+                && usageDescriptor is FunctionDescriptor
                 && usageDescriptor.containingDeclaration == targetDescriptor.containingDeclaration
     }
 }
@@ -226,6 +225,9 @@ private fun PsiElement.resolveTargetToDescriptor(isDestructionDeclarationSearch:
 private fun containsTypeOrDerivedInside(declaration: KtDeclaration, typeToSearch: FuzzyType): Boolean {
 
     fun KotlinType.containsTypeOrDerivedInside(): Boolean {
+        if (this is DelegatingSimpleType && this.isMarkedNullable) {
+            return typeToSearch.makeNullable().checkIsSuperTypeOf(this) != null
+        }
         return typeToSearch.checkIsSuperTypeOf(this) != null || arguments.any { !it.isStarProjection && it.type.containsTypeOrDerivedInside() }
     }
 
@@ -270,4 +272,3 @@ fun KtFile.getDefaultImports(): List<ImportPath> {
         .getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
 }
 
-fun PsiFile.scriptDefinitionExists(): Boolean = findScriptDefinition() != null

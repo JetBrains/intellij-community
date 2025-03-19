@@ -31,7 +31,7 @@ public class MarkdownPsiElementFactoryTest extends BasePlatformTestCase {
   }
 
   public void testEmptyContent() {
-    doTest("js", "", "```js\n```");
+    doTest("js", "", "```js\n\n```");
   }
 
   public void testTicks() {

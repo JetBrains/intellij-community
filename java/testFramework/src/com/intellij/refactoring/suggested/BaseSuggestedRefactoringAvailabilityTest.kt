@@ -2,6 +2,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.refactoring.RefactoringBundle
@@ -9,7 +10,7 @@ import com.intellij.refactoring.RefactoringBundle
 abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFixtureTestCaseWithUtils() {
   protected abstract val fileType: LanguageFileType
 
-  protected var ignoreErrors = false
+  protected var ignoreErrors: Boolean = false
 
   override fun setUp() {
     ignoreErrors = false
@@ -46,11 +47,10 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
   
   protected fun doTest(
     initialText: String,
-    vararg editingActions: () -> Unit,
     expectedAvailability: Availability,
     expectedAvailabilityAfterResolve: Availability = expectedAvailability,
     expectedAvailabilityAfterBackgroundAmend: Availability = expectedAvailabilityAfterResolve,
-    wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(fileType, initialText)
 
@@ -63,12 +63,14 @@ abstract class BaseSuggestedRefactoringAvailabilityTest : LightJavaCodeInsightFi
     try {
       provider._amendStateInBackgroundEnabled = false
 
-      executeEditingActions(editingActions, wrapIntoCommandAndWriteActionAndCommitAll)
+      executeEditingActions(editingActions)
 
       checkAvailability(expectedAvailability, afterResolve = false)
       checkAvailability(expectedAvailabilityAfterResolve, afterResolve = true)
 
       provider._amendStateInBackgroundEnabled = true
+      
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
       checkAvailability(expectedAvailabilityAfterBackgroundAmend, afterResolve = true)
     }

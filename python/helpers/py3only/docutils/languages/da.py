@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: da.py 7678 2013-07-03 09:57:36Z milde $
+# $Id: da.py 9030 2022-03-05 23:28:32Z milde $
 # Author: E D
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Danish-language mappings for language-dependent features of Docutils.

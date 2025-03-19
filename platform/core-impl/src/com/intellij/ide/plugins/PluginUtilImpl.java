@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,18 +17,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 @ApiStatus.Internal
-public final class PluginUtilImpl implements PluginUtil {
+public class PluginUtilImpl implements PluginUtil {
   private static final Logger LOG = Logger.getInstance(PluginUtilImpl.class);
-
-  @Override
-  public @Nullable PluginId getCallerPlugin(int stackFrameCount) {
-    Class<?> aClass = ReflectionUtil.getCallerClass(stackFrameCount + 1);
-    if (aClass == null) {
-      return null;
-    }
-    ClassLoader classLoader = aClass.getClassLoader();
-    return classLoader instanceof PluginAwareClassLoader ? ((PluginAwareClassLoader)classLoader).getPluginId() : null;
-  }
 
   @Override
   public @Nullable PluginId findPluginId(@NotNull Throwable t) {
@@ -122,21 +111,29 @@ public final class PluginUtilImpl implements PluginUtil {
 
     Throwable cause = t.getCause();
     PluginId causeId = cause == null ? null : doFindPluginId(cause);
-    return causeId != null ? causeId : bundledId;
+    return causeId == null ? bundledId : causeId;
+  }
+
+  @Override
+  public @Nls @Nullable String findPluginName(@NotNull PluginId pluginId) {
+    IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
+    return plugin == null ? null : plugin.getName();
   }
 
   private static void logPluginDetection(String className, PluginId id) {
-    if (LOG.isDebugEnabled()) {
-      String message = "Detected a plugin " + id + " by class " + className;
-      IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
-      if (descriptor != null) {
-        ClassLoader loader = descriptor.getClassLoader();
-        message += "; loader=" + loader + '/' + loader.getClass();
-        if (loader instanceof PluginClassLoader) {
-          message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
-        }
-      }
-      LOG.debug(message);
+    if (!LOG.isDebugEnabled()) {
+      return;
     }
+
+    String message = "Detected a plugin " + id + " by class " + className;
+    IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(id);
+    if (descriptor != null) {
+      ClassLoader loader = descriptor.getClassLoader();
+      message += "; loader=" + loader + '/' + loader.getClass();
+      if (loader instanceof PluginClassLoader) {
+        message += "; loaded class: " + ((PluginClassLoader)loader).hasLoadedClass(className);
+      }
+    }
+    LOG.debug(message);
   }
 }

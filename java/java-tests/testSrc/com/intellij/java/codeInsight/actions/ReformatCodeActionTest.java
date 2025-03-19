@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.actions;
 import com.intellij.codeInsight.actions.ReformatCodeAction;
 import com.intellij.codeInsight.actions.ReformatFilesOptions;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -171,23 +172,26 @@ public class ReformatCodeActionTest extends JavaPsiTestCase {
     }
   }
 
-  protected AnActionEvent createEventFor(AnAction action, final VirtualFile[] files, final Project project) {
-    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files;
-      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      return null;
-    });
+  private static @NotNull AnActionEvent createEventFor(@NotNull AnAction action,
+                                                       VirtualFile @NotNull [] files,
+                                                       @NotNull Project project) {
+    return AnActionEvent.createFromAnAction(action, null, "", SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, files)
+      .add(CommonDataKeys.PROJECT, project)
+      .build());
   }
 
-  protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
-    return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(VirtualFile.EMPTY_ARRAY);
-      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) return eventInfo.getElement();
-      return null;
-    });
+  private static @NotNull AnActionEvent createEventFor(@NotNull AnAction action,
+                                                       @NotNull List<VirtualFile> files,
+                                                       @NotNull Project project,
+                                                       @NotNull AdditionalEventInfo eventInfo) {
+    return AnActionEvent.createFromAnAction(action, null, "", SimpleDataContext.builder()
+      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, files.toArray(VirtualFile.EMPTY_ARRAY))
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.EDITOR, eventInfo.getEditor())
+      .add(LangDataKeys.MODULE_CONTEXT, eventInfo.getModule())
+      .add(CommonDataKeys.PSI_ELEMENT, eventInfo.getElement())
+      .build());
   }
 
   @NotNull

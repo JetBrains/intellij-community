@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -7,8 +7,8 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -109,7 +109,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
   private fun tryOpenTab(fileEditor: FileEditor, project: Project, editorProviderId: String): Boolean {
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
     for (window in fileEditorManager.windows) {
-      for (composite in window.getComposites().toList()) {
+      for (composite in window.composites().toList()) {
         for (tab in composite.allEditors) {
           if (tab == fileEditor) {
             // move focus to the current window
@@ -147,7 +147,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
     }
 
     for ((text, action) in myButtons) {
-      add(Link(text, null, action), "alignx center, gapbottom ${UIUtil.DEFAULT_VGAP}")
+      add(ActionLink(text) { action() }, "alignx center, gapbottom ${UIUtil.DEFAULT_VGAP}")
     }
   }
 

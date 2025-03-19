@@ -23,6 +23,7 @@ import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.image.ToolkitImage
 import java.awt.*
 import java.awt.event.MouseAdapter
@@ -31,21 +32,24 @@ import java.awt.image.ColorModel
 import java.awt.image.MemoryImageSource
 import javax.swing.JComponent
 import kotlin.math.ceil
+import kotlin.math.max
+import kotlin.math.min
 
 private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
 
+@ApiStatus.Internal
 class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener, ColorPipette.Callback {
-  var brightness = 1f
+  var brightness: Float = 1f
     private set
-  var hue = 1f
+  var hue: Float = 1f
     private set
-  var saturation = 0f
+  var saturation: Float = 0f
     private set
   var alpha: Int = 255
     private set
-  var pipetteMode = false
-  val robot = Robot()
+  var pipetteMode: Boolean = false
+  val robot: Robot = Robot()
 
   init {
     isOpaque = false
@@ -74,15 +78,14 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
   }
 
   public fun getColorByPoint(p: Point): Color {
-    val x = Math.max(0, Math.min(p.x, size.width))
-    val y = Math.max(0, Math.min(p.y, size.height))
+    val x = max(0, min(p.x, size.width))
+    val y = max(0, min(p.y, size.height))
 
     val saturation = x.toFloat() / size.width
     val brightness = 1.0f - y.toFloat() / size.height
 
     val argb = ahsbToArgb(alpha, hue, saturation, brightness)
-    val newColor = Color(argb, true)
-    return newColor
+    return Color(argb, true)
   }
 
   override fun getPreferredSize(): Dimension = JBUI.size(PICKER_PREFERRED_WIDTH, 150)

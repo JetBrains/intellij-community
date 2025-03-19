@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -74,7 +74,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   @Override
-  protected boolean invokeImpl(final Project project, @NotNull final PsiExpression selectedExpr, final Editor editor) {
+  protected boolean invokeImpl(final Project project, final @NotNull PsiExpression selectedExpr, final Editor editor) {
     final PsiElement element = getPhysicalElement(selectedExpr);
 
     final PsiFile file = element.getContainingFile();
@@ -246,8 +246,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     return element;
   }
 
-  @Nullable
-  protected PsiElement isStaticFinalInitializer(PsiExpression expr) {
+  protected @Nullable PsiElement isStaticFinalInitializer(PsiExpression expr) {
     PsiClass parentClass = expr != null ? getParentClass(expr) : null;
     if (parentClass == null) return null;
     IsStaticFinalInitializerExpression visitor = new IsStaticFinalInitializerExpression(parentClass, expr);
@@ -295,14 +294,12 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   }
 
   public @Nullable PsiClass getParentClass(@NotNull PsiExpression initializerExpression) {
-    PsiElement element = initializerExpression.getUserData(ElementToWorkOn.PARENT);
-    if (element == null) element = initializerExpression.getParent();
-    PsiElement parent = element;
-    while (parent != null) {
-      if (parent instanceof PsiClass && (!myIsConstant || LocalToFieldHandler.mayContainConstants((PsiClass)parent))) {
-        return (PsiClass)parent;
-      }
-      parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class);
+    boolean compileTimeConstant = LocalToFieldHandler.isCompileTimeConstant(initializerExpression, initializerExpression.getType());
+    PsiElement parent = initializerExpression.getUserData(ElementToWorkOn.PARENT);
+    PsiClass aClass = PsiTreeUtil.getParentOfType((parent == null) ? initializerExpression : parent, PsiClass.class);
+    while (aClass != null) {
+      if (!myIsConstant || compileTimeConstant || LocalToFieldHandler.isStaticFieldAllowed(aClass)) return aClass;
+      aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
     }
     return null;
   }
@@ -534,8 +531,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return myVisibility;
     }
 
-    @Nullable
-    public PsiClass getDestinationClass() {
+    public @Nullable PsiClass getDestinationClass() {
       return myTargetClass != null ? myTargetClass.getTargetClass() : null;
     }
 
@@ -628,8 +624,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myProject = targetClass.getProject();
     }
 
-    @Nullable
-    public PsiClass getTargetClass() {
+    public @Nullable PsiClass getTargetClass() {
       if (myTargetClass != null) return myTargetClass;
       final String packageName = StringUtil.getPackageName(myQualifiedName);
       final String shortName = StringUtil.getShortName(myQualifiedName);
@@ -690,11 +685,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       myOutOfCodeBlockExtraction = selectedExpr.getUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK);
       myDeleteSelf = myOutOfCodeBlockExtraction != null;
       myElement = getPhysicalElement(selectedExpr);
-      if (myElement.getParent() instanceof PsiExpressionStatement && getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) && selectedExpr.isPhysical()) {
-        PsiStatement statement = (PsiStatement)myElement.getParent();
-        if (statement.getParent() instanceof PsiCodeBlock) {
-          myDeleteSelf = true;
-        }
+      if (myElement.getParent() instanceof PsiExpressionStatement statement &&
+          getNormalizedAnchor(myAnchorElement).equals(myAnchorElement) &&
+          selectedExpr.isPhysical() &&
+          statement.getParent() instanceof PsiCodeBlock) {
+        myDeleteSelf = true;
       }
 
       myEditor = editor;
@@ -882,7 +877,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     /**
      * @deprecated use CommonJavaRefactoringUtil.appendField instead
      */
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static PsiField appendField(final PsiClass destClass,
                                        final PsiField psiField,
                                        final PsiElement anchorMember,
@@ -890,8 +885,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       return CommonJavaRefactoringUtil.appendField(destClass, psiField, anchorMember, forwardReference);
     }
 
-    @Nullable
-    private static PsiField checkForwardRefs(@Nullable final PsiExpression initializer, final PsiClass parentClass) {
+    private static @Nullable PsiField checkForwardRefs(final @Nullable PsiExpression initializer, final PsiClass parentClass) {
       if (initializer == null) return null;
       final PsiField[] refConstantFields = new PsiField[1];
       initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -975,13 +969,17 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
 
     @Override
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
+      myElementReference = expression;
+    }
+
+    @Override
     public void visitElement(@NotNull PsiElement element) {
       if (myElementReference != null) return;
       super.visitElement(element);
     }
 
-    @Nullable
-    public PsiElement getElementReference() {
+    public @Nullable PsiElement getElementReference() {
       return myElementReference;
     }
   }

@@ -1,0 +1,8 @@
+a:com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+- com.intellij.openapi.options.SchemeManagerFactory
+- p:createFileChangeSubscriber():kotlin.jvm.functions.Function1
+- dispose(com.intellij.openapi.options.SchemeManager):V
+- f:process(kotlin.jvm.functions.Function1):V
+- f:save(kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.configurationStore.schemeManager.SchemeManagerFactoryImplKt
+- sf:ROOT_CONFIG:java.lang.String

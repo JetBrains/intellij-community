@@ -17,10 +17,12 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class ItemWrapperListRenderer extends ColoredListCellRenderer {
   private final JComponent myAccessory;
   private final Project myProject;

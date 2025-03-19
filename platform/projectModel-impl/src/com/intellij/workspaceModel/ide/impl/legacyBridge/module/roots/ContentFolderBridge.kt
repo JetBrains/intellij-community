@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
@@ -7,18 +8,16 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
-import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 internal abstract class ContentFolderBridge(private val entry: ContentEntryBridge, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryBridge = entry
@@ -60,7 +59,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
     if (other !is SourceFolderBridge) return false
 
     if (sourceRootEntity.url != other.sourceRootEntity.url) return false
-    if (sourceRootEntity.rootType != other.sourceRootEntity.rootType) return false
+    if (sourceRootEntity.rootTypeId != other.sourceRootEntity.rootTypeId) return false
 
     val javaSourceRoot = sourceRootEntity.asJavaSourceRoot()
     val otherJavaSourceRoot = other.sourceRootEntity.asJavaSourceRoot()
@@ -74,9 +73,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
     val customRoot = sourceRootEntity.customSourceRootProperties
     val otherCustomRoot = other.sourceRootEntity.customSourceRootProperties
-    if (customRoot?.propertiesXmlTag != otherCustomRoot?.propertiesXmlTag) return false
-
-    return true
+    return customRoot?.propertiesXmlTag == otherCustomRoot?.propertiesXmlTag
   }
 
   override fun setPackagePrefix(packagePrefix: String) {
@@ -91,12 +88,14 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix)
+        diff.modifySourceRootEntity(sourceRootEntity) {
+          this.javaSourceRoots += JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource)
+        }
       }
     }
     else {
       updater { diff ->
-        diff.modifyEntity(javaSourceRoot) {
+        diff.modifyJavaSourceRootPropertiesEntity(javaSourceRoot) {
           this.packagePrefix = packagePrefix
         }
       }
@@ -109,7 +108,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
   }
 
   private fun getSourceRootType(entity: SourceRootEntity): JpsModuleSourceRootType<out JpsElement> {
-    return SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType) ?: UnknownSourceRootType.getInstance(entity.rootType)
+    return SourceRootTypeRegistry.getInstance().findTypeById(entity.rootTypeId) ?: UnknownSourceRootType.getInstance(entity.rootTypeId.name)
   }
 
   companion object {

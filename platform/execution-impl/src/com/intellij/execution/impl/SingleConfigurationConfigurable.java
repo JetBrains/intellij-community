@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -13,6 +13,8 @@ import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -58,8 +60,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   private final PlainDocument myNameDocument = new PlainDocument();
 
-  @NotNull private final Project myProject;
-  @Nullable private final Executor myExecutor;
+  private final @NotNull Project myProject;
+  private final @Nullable Executor myExecutor;
   private MyValidatableComponent myComponent;
   private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
@@ -110,9 +112,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myRunOnTargetPanel = new RunOnTargetPanel(settings, getEditor());
   }
 
-  @NotNull
-  public static <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
-                                                                                                       @Nullable Executor executor) {
+  public static @NotNull <Config extends RunConfiguration> SingleConfigurationConfigurable<Config> editSettings(@NotNull RunnerAndConfigurationSettings settings,
+                                                                                                                @Nullable Executor executor) {
     SingleConfigurationConfigurable<Config> configurable = new SingleConfigurationConfigurable<>(settings, executor);
     configurable.reset();
     return configurable;
@@ -152,7 +153,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       RunConfiguration oldRunConfiguration = runConfiguration.clone();
 
       performApply(settings, runConfiguration);
-      
+
       ((FusCollectSettingChangesRunConfiguration)runConfiguration)
         .collectSettingChangesOnApply((FusCollectSettingChangesRunConfiguration)oldRunConfiguration);
     }
@@ -200,7 +201,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     if (myComponent == null) return;
 
     ModalityState modalityState = ModalityState.stateForComponent(myComponent.myWholePanel);
-    if (modalityState == ModalityState.NON_MODAL) return;
+    if (modalityState == ModalityState.nonModal()) return;
 
     myValidationRequested = true;
     myValidationAlarm.cancelAllRequests();
@@ -235,31 +236,27 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   public JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
-    DataManager.registerDataProvider(result, dataId -> {
-      if (myComponent == null) {
-        return null; // disposed
-      }
-      if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
-        return getEditor();
-      }
-      if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
-        return TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject);
-      }
-      if (RunConfigurationSelector.KEY.is(dataId)) {
-        return new RunConfigurationSelector() {
-          @Override
-          public void select(@NotNull RunConfiguration configuration) {
-            RunDialog.editConfiguration(myProject,
-                                        new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), configuration),
-                                        ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
-          }
-        };
-      }
-      return null;
-    });
     Dimension size = result.getPreferredSize();
     result.setPreferredSize(new Dimension(Math.min(size.width, 800), Math.min(size.height, 600)));
-    return result;
+    return UiDataProvider.wrapComponent(result, sink -> uiDataSnapshot(sink));
+  }
+
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myComponent == null) return;
+
+    sink.set(ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY,
+             getEditor() instanceof ConfigurationSettingsEditorWrapper o ? o : null);
+    sink.set(RUN_ON_TARGET_NAME_KEY,
+             TargetEnvironmentConfigurations.getEffectiveTargetName(myRunOnTargetPanel.getDefaultTargetName(), myProject));
+    sink.set(RunConfigurationSelector.KEY, new RunConfigurationSelector() {
+      @Override
+      public void select(@NotNull RunConfiguration configuration) {
+        RunnerAndConfigurationSettingsImpl settings = RunManagerImpl.getInstanceImpl(myProject).getSettings(configuration);
+        RunDialog.editConfiguration(myProject,
+                                    Objects.requireNonNull(settings),
+                                    ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", configuration.getName()));
+      }
+    });
   }
 
   JComponent getValidationComponent() {
@@ -319,11 +316,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return new ValidationResult(
       e.getLocalizedMessage(),
       e instanceof RuntimeConfigurationException ? e.getTitle() : ExecutionBundle.message("invalid.data.dialog.title"),
-      getQuickFix(snapshot, e));
+      getQuickFix(snapshot, e),
+      e instanceof RuntimeConfigurationWarning
+    );
   }
 
-  @Nullable
-  private Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
+  private @Nullable Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
     ConfigurationQuickFix quickFix = exception.getConfigurationQuickFix();
     if (quickFix != null && snapshot != null) {
       return () -> {
@@ -404,14 +402,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myHelpTopic;
   }
 
-  @NotNull
-  public Config getConfiguration() {
+  public @NotNull Config getConfiguration() {
     //noinspection unchecked
     return (Config)getSettings().getConfiguration();
   }
 
-  @NotNull
-  public RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
+  public @NotNull RunnerAndConfigurationSettings createSnapshot(boolean cloneBeforeRunTasks) throws ConfigurationException {
     RunnerAndConfigurationSettings snapshot = getEditor().getSnapshot();
     RunConfiguration runConfiguration = snapshot.getConfiguration();
     runConfiguration.setAllowRunningInParallel(myIsAllowRunningInParallel);
@@ -436,12 +432,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  @Nullable
-  public String getFolderName() {
+  public @Nullable String getFolderName() {
     return myFolderName;
   }
 
-  private class MyValidatableComponent {
+  private final class MyValidatableComponent {
     private JLabel myNameLabel;
     private JTextField myNameText;
     private JComponent myWholePanel;
@@ -521,7 +516,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myIsAllowRunningInParallelCheckBox.setVisible(hasParallelCheckBox());
     }
 
-    public final JComponent getWholePanel() {
+    public JComponent getWholePanel() {
       return myWholePanel;
     }
 
@@ -534,6 +529,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         mySeparator.setVisible(true);
         myWarningLabel.setVisible(true);
         myWarningLabel.setText(generateWarningLabelText(configurationException));
+        myWarningLabel.setIcon(configurationException.isWarning() ? AllIcons.General.BalloonWarning : AllIcons.General.BalloonError);
         final Runnable quickFix = configurationException.getQuickFix();
         if (quickFix == null) {
           myFixButton.setVisible(false);
@@ -558,7 +554,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     }
 
-    private @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
+    private static @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
       return new HtmlBuilder().append(configurationException.getTitle()).append(": ")
         .wrapWith("b").wrapWith("body").addRaw(configurationException.getMessage()).wrapWith("html").toString();
     }

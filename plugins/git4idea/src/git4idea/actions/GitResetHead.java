@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitActivity;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -28,8 +29,7 @@ public class GitResetHead extends GitRepositoryAction {
    * {@inheritDoc}
    */
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("reset.action.name");
   }
 
@@ -48,7 +48,7 @@ public class GitResetHead extends GitRepositoryAction {
     new Task.Backgroundable(project, GitBundle.message("resetting.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
+        try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.reset"), GitActivity.Reset)) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(RESET_FAILED,

@@ -1,13 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.IconTestUtil;
-import com.intellij.util.PsiIconUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +124,7 @@ public class PyPackageIconTest extends PyTestCase {
     assertNotNull(found);
     PsiDirectory dir = PsiManager.getInstance(myFixture.getProject()).findDirectory(found);
     assertNotNull(dir);
-    Icon icon = PsiIconUtil.getProvidersIcon(dir, 0);
+    Icon icon = dir.getIcon(0);
     assertEquals(AllIcons.Nodes.Package.equals(IconTestUtil.unwrapIcon(icon)), has);
   }
 

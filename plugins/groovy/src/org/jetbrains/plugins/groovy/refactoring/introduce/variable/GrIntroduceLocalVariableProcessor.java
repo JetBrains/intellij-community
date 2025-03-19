@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,8 +52,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     myExpression = expression;
   }
 
-  @NotNull
-  public GrVariable processExpression(@NotNull GrVariableDeclaration declaration) {
+  public @NotNull GrVariable processExpression(@NotNull GrVariableDeclaration declaration) {
     resolveLocalConflicts(myContext.getScope(), mySettings.getName());
 
     preprocessOccurrences();
@@ -95,8 +94,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  @NotNull
-  private GrExpression preprocessOccurrences() {
+  private @NotNull GrExpression preprocessOccurrences() {
     GroovyRefactoringUtil.sortOccurrences(myOccurrences);
     if (myOccurrences.length == 0 || !(myOccurrences[0] instanceof GrExpression)) {
       throw new IncorrectOperationException("Wrong expression occurrence");
@@ -126,10 +124,9 @@ public abstract class GrIntroduceLocalVariableProcessor {
     }
   }
 
-  @NotNull
-  private GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration,
-                                              @NotNull GrStatement anchor,
-                                              @Nullable PsiElement expression) throws IncorrectOperationException {
+  private @NotNull GrVariable insertVariableDefinition(@NotNull GrVariableDeclaration declaration,
+                                                       @NotNull GrStatement anchor,
+                                                       @Nullable PsiElement expression) throws IncorrectOperationException {
     GrLabeledStatement labeledStatement = expression != null && expression.getParent() instanceof GrLabeledStatement ? (GrLabeledStatement)expression.getParent() : null;
 
     boolean expressionMustBeDeleted = expression != null && PsiUtil.isExpressionStatement(expression) && !isSingleGStringInjectionExpr(expression);
@@ -183,8 +180,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     }
   }
 
-  @NotNull
-  static GrStatement insertBraces(@NotNull GrStatement anchor) {
+  static @NotNull GrStatement insertBraces(@NotNull GrStatement anchor) {
     GrBlockStatement blockStatement = GroovyPsiElementFactory.getInstance(anchor.getProject()).createBlockStatement();
 
     blockStatement.getBlock().addStatementBefore(anchor, null);
@@ -197,8 +193,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     return parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection;
   }
 
-  @Nullable
-  private static String getFieldName(@Nullable PsiElement element) {
+  private static @Nullable String getFieldName(@Nullable PsiElement element) {
     if (element instanceof GrAccessorMethod) element = ((GrAccessorMethod)element).getProperty();
     return element instanceof GrField ? ((GrField)element).getName() : null;
   }

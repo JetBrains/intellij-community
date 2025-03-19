@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.FileModifier;
@@ -47,9 +47,8 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     myEndElement = endElement == startElement ? null : SmartPointerManager.getInstance(project).createSmartPsiElementPointer(endElement, endContainingFile);
   }
 
-  @NotNull
   @Override
-  public final String getName() {
+  public final @NotNull String getName() {
     return getText();
   }
 
@@ -81,9 +80,7 @@ public abstract class LocalQuickFixOnPsiElement implements LocalQuickFix, Clonea
     return myEndElement == null ? null : myEndElement.getElement();
   }
 
-  @IntentionName
-  @NotNull
-  public abstract String getText();
+  public abstract @IntentionName @NotNull String getText();
 
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

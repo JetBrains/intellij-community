@@ -2,7 +2,13 @@ import sys
 
 try:
     try:
-        from _pydevd_frame_eval_ext import pydevd_frame_evaluator as mod
+        major_minor = sys.version_info[:2]
+        if (3, 6) <= major_minor <= (3, 8):
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_36_38 as mod
+        elif (3, 9) <= major_minor <= (3, 10):
+            from _pydevd_frame_eval_ext import pydevd_frame_evaluator_39_310 as mod
+        else:
+            raise ImportError
     except ImportError:
         from _pydevd_frame_eval import pydevd_frame_evaluator as mod
 except ImportError:

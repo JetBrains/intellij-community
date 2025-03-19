@@ -4,6 +4,6 @@ fun List<*>.func(function: List<*>.()-> Unit) {
 
 fun test() {
     return listOf(1, 2, 3).func {
-        this@func<caret>
+        this@func~
     }
 }

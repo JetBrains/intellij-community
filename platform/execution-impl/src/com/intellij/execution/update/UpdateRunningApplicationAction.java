@@ -64,8 +64,7 @@ final class UpdateRunningApplicationAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static RunningApplicationUpdater findUpdater(@NotNull Project project, @Nullable ProcessHandler processHandler) {
+  private static @Nullable RunningApplicationUpdater findUpdater(@NotNull Project project, @Nullable ProcessHandler processHandler) {
     if (processHandler == null) return null;
 
     for (RunningApplicationUpdaterProvider provider : RunningApplicationUpdaterProvider.EP_NAME.getExtensions()) {
@@ -114,9 +113,8 @@ final class UpdateRunningApplicationAction extends AnAction {
       final ListPopup popup =
         JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(
           ExecutionBundle.message("popup.title.select.process.to.update"), updaters) {
-          @NotNull
           @Override
-          public String getTextFor(RunningApplicationUpdater value) {
+          public @NotNull String getTextFor(RunningApplicationUpdater value) {
             return value.getShortName();
           }
 
@@ -126,7 +124,7 @@ final class UpdateRunningApplicationAction extends AnAction {
           }
 
           @Override
-          public PopupStep onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
             return doFinalStep(() -> selectedValue.performUpdate(e));
           }
         });

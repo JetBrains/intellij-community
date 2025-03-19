@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -35,7 +35,7 @@ import java.awt.*;
 
 import static java.util.Objects.requireNonNull;
 
-public class ShowBaseRevisionAction extends DumbAwareAction {
+final class ShowBaseRevisionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = requireNonNull(e.getProject());
@@ -82,8 +82,7 @@ public class ShowBaseRevisionAction extends DumbAwareAction {
     }
   }
 
-  @Nls
-  private static String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
+  private static @Nls String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
     String commitMessage = IssueLinkHtmlRenderer.formatTextWithLinks(project, StringUtil.notNullize(description.getCommitMessage()));
     String message = VcsBundle.message("current.version.text",
                                        description.getAuthor(),

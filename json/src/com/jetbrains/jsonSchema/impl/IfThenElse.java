@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class IfThenElse {
+public final class IfThenElse {
   private final JsonSchemaObject condition;
   private final JsonSchemaObject trueBranch;
   private final JsonSchemaObject falseBranch;
@@ -15,18 +15,15 @@ public class IfThenElse {
     this.falseBranch = falseBranch;
   }
 
-  @NotNull
-  public JsonSchemaObject getIf() {
+  public @NotNull JsonSchemaObject getIf() {
     return condition;
   }
 
-  @Nullable
-  public JsonSchemaObject getThen() {
+  public @Nullable JsonSchemaObject getThen() {
     return trueBranch;
   }
 
-  @Nullable
-  public JsonSchemaObject getElse() {
+  public @Nullable JsonSchemaObject getElse() {
     return falseBranch;
   }
 }

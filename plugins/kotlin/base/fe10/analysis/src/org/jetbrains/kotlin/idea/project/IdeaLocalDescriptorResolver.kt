@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.project
 
+import com.intellij.psi.stubs.StubInconsistencyReporter
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.statistics.KotlinFailureCollector
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.stubindex.resolve.StubBasedPackageMemberDeclarationProvider
 import org.jetbrains.kotlin.psi.*
@@ -28,6 +30,9 @@ class IdeaAbsentDescriptorHandler(
 ) : AbsentDescriptorHandler {
 
     override fun diagnoseDescriptorNotFound(declaration: KtDeclaration): DeclarationDescriptor {
+        val project = kotlin.runCatching { declaration.project }.getOrNull()
+        StubInconsistencyReporter.getInstance().reportKotlinDescriptorNotFound(project)
+        project?.let { KotlinFailureCollector.recordDescriptorNotFoundEvent(it) }
         val exceptionWithAttachments =
             declarationProviderFactory.safeAs<PluginDeclarationProviderFactory>()?.let { factory ->
                 var declarationException = NoDescriptorForDeclarationException(declaration)

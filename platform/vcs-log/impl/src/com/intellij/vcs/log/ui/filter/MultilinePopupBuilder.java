@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.google.common.primitives.Chars;
@@ -24,6 +24,7 @@ import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletio
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,13 +77,13 @@ class MultilinePopupBuilder {
         popup.closeOk(e.getInputEvent());
       }
     };
-    okAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, popup.getContent());
+    okAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), popup.getContent());
     return popup;
   }
 
   private @NotNull @NlsContexts.PopupAdvertisement String getAdText() {
     return VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", getSeparatorsText(mySeparators),
-                                KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()));
+                                KeymapUtil.getShortcutsText(CommonShortcuts.getCtrlEnter().getShortcuts()));
   }
 
   @NotNull
@@ -112,8 +113,9 @@ class MultilinePopupBuilder {
     textField.setBorder(new CompoundBorder(JBUI.Borders.empty(2), textField.getBorder()));
   }
 
-  interface CompletionPrefixProvider {
-    String getPrefix(@NotNull String text, int offset);
+  @ApiStatus.OverrideOnly
+  public interface CompletionPrefixProvider {
+    @NotNull String getPrefix(@NotNull String text, int offset);
   }
 
   private static class MyCompletionProvider extends ValuesCompletionProviderDumbAware<String> {

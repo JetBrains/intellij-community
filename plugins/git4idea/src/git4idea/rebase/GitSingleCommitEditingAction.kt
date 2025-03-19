@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.vcs.log.VcsLogCommitSelection
@@ -21,7 +21,7 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, selection, logData))
   }
 
-  override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
+  override fun lastCheckCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
     val commit = commitEditingData.selectedCommit
     val branches = findContainingBranches(commitEditingData.logData, commit.root, commit.id)
 
@@ -42,7 +42,7 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     selection: VcsLogCommitSelection,
     logData: VcsLogData
   ) : MultipleCommitEditingData(repository, selection, logData) {
-    val selectedCommit = selectedCommitList.first()
+    val selectedCommit = selection.cachedMetadata.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
   }
 }

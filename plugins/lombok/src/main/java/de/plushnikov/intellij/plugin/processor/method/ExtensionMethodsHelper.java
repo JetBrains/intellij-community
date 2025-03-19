@@ -11,8 +11,9 @@ import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokExtensionMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightParameter;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +44,10 @@ public final class ExtensionMethodsHelper {
 
     @Nullable PsiClass context = PsiTreeUtil.getContextOfType(place, PsiClass.class);
     while (context != null) {
-      final @Nullable PsiAnnotation annotation = context.getAnnotation(LombokClassNames.EXTENSION_METHOD);
+      final @Nullable PsiAnnotation annotation = PsiAnnotationSearchUtil.findAnnotation(context, LombokClassNames.EXTENSION_METHOD);
       if (annotation != null) {
 
-        final Set<PsiClass> providers = PsiAnnotationUtil.getAnnotationValues(annotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class).stream()
+        final Set<PsiClass> providers = PsiAnnotationUtil.getAnnotationValues(annotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, PsiType.class, List.of()).stream()
           .filter(PsiClassType.class::isInstance)
           .map(PsiClassType.class::cast)
           .map(PsiClassType::resolve)
@@ -126,8 +127,7 @@ public final class ExtensionMethodsHelper {
     PsiSubstitutor substitutor = result.getSubstitutor();
 
     final LombokExtensionMethod lightMethod = new LombokExtensionMethod(staticMethod);
-    lightMethod
-      .addModifiers(PsiModifier.PUBLIC);
+    lightMethod.addModifiers(PsiModifier.PUBLIC);
     PsiParameter @NotNull [] parameters = staticMethod.getParameterList().getParameters();
 
     if (targetClass.isInterface()) {
@@ -138,7 +138,10 @@ public final class ExtensionMethodsHelper {
 
     for (int i = 1, length = parameters.length; i < length; i++) {
       PsiParameter parameter = parameters[i];
-      lightMethod.addParameter(new LombokLightParameter(parameter.getName(), substitutor.substitute(parameter.getType()), lightMethod, JavaLanguage.INSTANCE));
+      final LombokLightParameter lombokLightParameter =
+        new LombokLightParameter(parameter.getName(), substitutor.substitute(parameter.getType()), lightMethod, JavaLanguage.INSTANCE);
+      lombokLightParameter.setParent(lightMethod);
+      lightMethod.addParameter(lombokLightParameter);
     }
 
     PsiClassType[] thrownTypes = staticMethod.getThrowsList().getReferencedTypes();
@@ -155,32 +158,5 @@ public final class ExtensionMethodsHelper {
     lightMethod.setNavigationElement(staticMethod);
     lightMethod.setContainingClass(targetClass);
     return lightMethod;
-  }
-
-  private static class LombokExtensionMethod extends LombokLightMethodBuilder implements PsiExtensionMethod {
-    private final @NotNull PsiMethod myStaticMethod;
-
-    LombokExtensionMethod(@NotNull PsiMethod staticMethod) {
-      super(staticMethod.getManager(), staticMethod.getName());
-      myStaticMethod = staticMethod;
-    }
-
-    @Override
-    public boolean isEquivalentTo(final PsiElement another) { return myStaticMethod.isEquivalentTo(another); }
-
-    @Override
-    public @NotNull PsiMethod getTargetMethod() {
-      return myStaticMethod;
-    }
-
-    @Override
-    public @Nullable PsiParameter getTargetReceiverParameter() {
-      return myStaticMethod.getParameterList().getParameter(0);
-    }
-
-    @Override
-    public @Nullable PsiParameter getTargetParameter(int index) {
-      return myStaticMethod.getParameterList().getParameter(index + 1);
-    }
   }
 }

@@ -1,13 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.text.CharArrayCharSequence
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
 import it.unimi.dsi.fastutil.objects.Object2IntMap
+import kotlinx.serialization.json.JsonElement
 import net.jpountz.lz4.LZ4Factory
 import org.apache.log4j.Appender
 import org.apache.oro.text.regex.PatternMatcher
@@ -31,29 +35,34 @@ object ClassPathUtil {
     val classLoader = PathManager::class.java.classLoader
     PathManager.getResourceRoot(classLoader, "kotlin/jdk7/AutoCloseableKt.class")?.let(classPath::add) // kotlin-stdlib-jdk7
     PathManager.getResourceRoot(classLoader, "kotlin/streams/jdk8/StreamsKt.class")?.let(classPath::add) // kotlin-stdlib-jdk8
+    PathManager.getResourceRoot(classLoader, "gnu/trove/THashSet.class")?.let(classPath::add) // Trove
   }
 
   @JvmStatic
   fun getUtilClasses(): Array<Class<*>> {
     val classLoader = ClassPathUtil::class.java.classLoader
     return arrayOf(
+      LoadingState::class.java,  // module 'intellij.platform.diagnostic'
       PathManager::class.java,  // module 'intellij.platform.util'
+      CharArrayCharSequence::class.java, // module 'intellij.platform.util.base.kmp'
+      JavaVersion::class.java, // module 'intellij.platform.util.kmp'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
       SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
       UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
-      classLoader.loadClass("org.jetbrains.xxh3.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
-      Flow::class.java,  // jetbrains-annotations-java5
-      Document::class.java,  // jDOM
+      classLoader.loadClass("com.intellij.util.lang.Xxh3Impl"),  // intellij.platform.util.rt.java8 (required for classLoader)
+      Flow::class.java,  // jetbrains-annotations
+      Document::class.java,  // JDOM
       Appender::class.java,  // Log4J
       Object2IntMap::class.java,  // fastutil
-      classLoader.loadClass("gnu.trove.THashSet"),  // Trove,
       TypeMapper::class.java,  // JNA
       FileUtils::class.java,  // JNA (jna-platform)
       PatternMatcher::class.java,  // OROMatcher
       LZ4Factory::class.java,  // LZ4-Java
       ReaderConfig::class.java,  // Aalto XML
       XMLStreamReader2::class.java,  // Aalto XML
-      Pair::class.java)
+      JsonElement::class.java,  // kotlinx-serialization
+      Pair::class.java // Kotlin stdlib
+    )
   }
 }

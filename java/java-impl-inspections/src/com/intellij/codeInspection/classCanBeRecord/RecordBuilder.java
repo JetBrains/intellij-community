@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -94,9 +94,8 @@ class RecordBuilder {
     return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }
 
-  @NotNull
-  private static String generateComponentText(@NotNull PsiParameter parameter,
-                                              @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
+  private static @NotNull String generateComponentText(@NotNull PsiParameter parameter,
+                                                       @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     PsiField field = null;
     FieldAccessorCandidate fieldAccessorCandidate = null;
     for (var entry : fieldAccessors.entrySet()) {
@@ -115,9 +114,8 @@ class RecordBuilder {
     return generateComponentText(field, componentType, fieldAccessorCandidate);
   }
 
-  @NotNull
-  private static String generateComponentText(@NotNull PsiField field, @NotNull PsiType componentType,
-                                              @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
+  private static @NotNull String generateComponentText(@NotNull PsiField field, @NotNull PsiType componentType,
+                                                       @Nullable FieldAccessorCandidate fieldAccessorCandidate) {
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations)
       .filter(anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
@@ -171,7 +169,7 @@ class RecordBuilder {
   }
 
   private void trimEndingWhiteSpaces() {
-    if (myRecordText.length() == 0) return;
+    if (myRecordText.isEmpty()) return;
     int endIndex = myRecordText.length() - 1;
     if (myRecordText.charAt(endIndex) != ' ') return;
 

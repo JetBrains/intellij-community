@@ -1,7 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -9,10 +11,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class InvalidComparatorMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
@@ -53,30 +54,25 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     return ((PsiClass)refType).getQualifiedName();
   }
 
-  private static class ReplaceWithComparatorQuickFix implements LocalQuickFix {
+  private static class ReplaceWithComparatorQuickFix extends PsiUpdateModCommandQuickFix {
     private final boolean reverse;
 
     ReplaceWithComparatorQuickFix(boolean reverse) {
       this.reverse = reverse;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", reverse ? "Comparator.reverseOrder()" : "Comparator.naturalOrder()");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.comparator");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (parent != null) {
         PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project)

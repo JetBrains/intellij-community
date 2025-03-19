@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution.cmd;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -21,9 +21,8 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
     myOptions = options;
   }
 
-  @NotNull
   @Override
-  protected String getPrefix(@NotNull String currentTextPrefix) {
+  protected @NotNull String getPrefix(@NotNull String currentTextPrefix) {
     ParametersListLexer lexer = new ParametersListLexer(currentTextPrefix);
     while (lexer.nextToken()) {
       if (lexer.getTokenEnd() == currentTextPrefix.length()) {
@@ -38,7 +37,7 @@ public abstract class CommandLineCompletionProvider extends TextFieldCompletionP
     LookupElementBuilder res = LookupElementBuilder.create(text);
 
     if (option.getDescription() != null) {
-      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailType.INSERT_SPACE);
+      return TailTypeDecorator.withTail(res.withTypeText(option.getDescription(), true), TailTypes.insertSpaceType());
     }
 
     return res;

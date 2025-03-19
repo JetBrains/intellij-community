@@ -1,27 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.function.IntFunction;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import java.util.zip.ZipException;
 
+@SuppressWarnings("BoundedWildcard")
 @ApiStatus.Internal
 public final class ImmutableZipEntry {
-  final static byte STORED = 0;
-  final static byte DEFLATED = 8;
+  static final byte STORED = 0;
+  static final byte DEFLATED = 8;
 
-  final int uncompressedSize;
-  final int compressedSize;
+  public final int uncompressedSize;
+  public final int compressedSize;
   private final byte method;
 
-  final String name;
+  public final String name;
 
   // headerOffset and nameLengthInBytes
   private final long offsets;
@@ -59,6 +62,7 @@ public final class ImmutableZipEntry {
     return uncompressedSize == -2;
   }
 
+  @Override
   public int hashCode() {
     return name.hashCode();
   }
@@ -111,14 +115,14 @@ public final class ImmutableZipEntry {
 
   @ApiStatus.Internal
   public InputStream getInputStream(@NotNull HashMapZipFile file) throws IOException {
-    return new DirectByteBufferBackedInputStream(getByteBuffer(file), method == DEFLATED);
+    return new DirectByteBufferBackedInputStream(getByteBuffer(file, null), method == DEFLATED);
   }
 
   /**
    * Release returned buffer using {@link ZipFile#releaseBuffer} after use.
    */
   @ApiStatus.Internal
-  public ByteBuffer getByteBuffer(@NotNull HashMapZipFile file) throws IOException {
+  public ByteBuffer getByteBuffer(@NotNull HashMapZipFile file, @Nullable IntFunction<ByteBuffer> allocator) throws IOException {
     if (uncompressedSize < 0) {
       throw new IOException("no data");
     }
@@ -135,7 +139,9 @@ public final class ImmutableZipEntry {
         Inflater inflater = new Inflater(true);
         inflater.setInput(inputBuffer);
         try {
-          ByteBuffer result = DirectByteBufferPool.DEFAULT_POOL.allocate(uncompressedSize);
+          ByteBuffer result = allocator == null
+                              ? DirectByteBufferPool.DEFAULT_POOL.allocate(uncompressedSize)
+                              : allocator.apply(uncompressedSize);
           while (result.hasRemaining()) {
             if (inflater.inflate(result) == 0) {
               throw new IllegalStateException("Inflater wants input, but input was already set");

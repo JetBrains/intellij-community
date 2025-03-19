@@ -3,7 +3,6 @@ package org.editorconfig.language.util
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -150,6 +149,7 @@ object EditorConfigPsiTreeUtil {
     if (honorRoot) return childFiles.keys.filterNotNull()
 
     return childFiles.filter { (_, virtualChildFile) ->
+      // keep the .editorconfig if none of its ancestors (and itself) contain 'root = true'
       childFiles.all { (otherChildFile, virtualOtherChildFile) ->
         when {
           !VfsUtil.isAncestor(virtualOtherChildFile, virtualChildFile, false) -> true
@@ -174,7 +174,7 @@ object EditorConfigPsiTreeUtil {
   fun findIdentifierUnderCaret(element: PsiElement?): PsiElement? {
     element ?: return null
     val project = element.project
-    val editor = (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.getSelectedTextEditor(true) ?: return null
+    val editor = FileEditorManager.getInstance(project).getSelectedTextEditor(true) ?: return null
     val file = element.containingFile ?: return null
     return findIdentifierUnderCaret(editor, file)
   }

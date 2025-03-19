@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
-@file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl.status.widget
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
@@ -23,7 +23,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.createComponentByWidgetPresentation
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import javax.swing.JComponent
@@ -33,37 +33,27 @@ class StatusBarWidgetsManager(private val project: Project,
                               private val parentScope: CoroutineScope) : SimpleModificationTracker(), Disposable {
   companion object {
     private val LOG = logger<StatusBarWidgetsManager>()
-
-    internal fun anchorToOrder(anchor: String): LoadingOrder {
-      if (anchor.isEmpty() || anchor.equals("any", ignoreCase = true)) {
-        return LoadingOrder.ANY
-      }
-      else {
-        try {
-          return LoadingOrder(anchor)
-        }
-        catch (e: Throwable) {
-          LOG.error("Cannot parse anchor ${anchor}", e)
-          return LoadingOrder.ANY
-        }
-      }
-    }
   }
 
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
+  init {
+    StatusBarActionManager.getInstance()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
       flow {
-        emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
+        emit(project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       }
         .take(1)
         .flatMapConcat { it.currentFileEditorFlow }
-        .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
+        .stateIn(scope = parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 
@@ -108,7 +98,9 @@ class StatusBarWidgetsManager(private val project: Project,
       widgetIdMap.put(widget.ID(), factory)
       parentScope.launch(Dispatchers.EDT) {
         when (val statusBar = WindowManager.getInstance().getStatusBar(project)) {
-          null -> LOG.error("Cannot add a widget for project without root status bar: ${factory.id}")
+          null -> PluginException.logPluginError(LOG, "Cannot add a widget for project without root status bar: ${factory.id}",
+                                                 null,
+                                                 factory.javaClass)
           is IdeStatusBarImpl -> statusBar.addWidget(widget, order)
           else -> {
             @Suppress("DEPRECATION")
@@ -160,15 +152,15 @@ class StatusBarWidgetsManager(private val project: Project,
     return factory.isAvailable(project) && factory.isConfigurable && factory.canBeEnabledOn(statusBar)
   }
 
-  internal fun init(): List<Pair<StatusBarWidget, LoadingOrder>> {
+  internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
     val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
       .filter {
         val id = it.id
         if (id == null) {
-          LOG.warn("${it.implementationClassName} doesn't define id for extension (point=com.intellij.statusBarWidgetFactory). " +
-                   "Please specify `id` attribute.")
+          LOG.warn("${it.implementationClassName} doesn't define 'id' for extension (point=com.intellij.statusBarWidgetFactory). " +
+                   "Please specify `id` attribute. Plugin ID: ${it.pluginDescriptor.pluginId}")
           true
         }
         else {
@@ -179,21 +171,24 @@ class StatusBarWidgetsManager(private val project: Project,
       .filter { !isLightEditProject || it.first is LightEditCompatible }
       .toList()
 
-    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
-      val pendingFactories = availableFactories.toMutableList()
-      @Suppress("removal", "DEPRECATION")
-      StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
-        StatusBarWidgetProviderToFactoryAdapter(project, it) to anchorToOrder(it.anchor)
-      }
+    val pendingFactories = availableFactories.toMutableList()
 
+    @Suppress("removal", "DEPRECATION")
+    StatusBarWidgetProvider.EP_NAME.extensionList.mapTo(pendingFactories) {
+      StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to LoadingOrder.anchorToOrder(it.anchor)
+    }
+
+    pendingFactories.removeAll {  (factory, _) ->
+      (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)
+    }
+
+    val widgets: List<Pair<StatusBarWidget, LoadingOrder>> = synchronized(widgetFactories) {
       val result = mutableListOf<Pair<StatusBarWidget, LoadingOrder>>()
       for ((factory, anchor) in pendingFactories) {
-        if ((factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) || !factory.isAvailable(project)) {
-          continue
-        }
-
         if (widgetFactories.containsKey(factory)) {
-          LOG.error("Factory has been added already: ${factory.id}")
+          PluginException.logPluginError(LOG, "Factory has been added already: ${factory.id}",
+                                         null,
+                                         factory.javaClass)
           continue
         }
 
@@ -215,7 +210,9 @@ class StatusBarWidgetsManager(private val project: Project,
 
         synchronized(widgetFactories) {
           if (widgetFactories.containsKey(extension)) {
-            LOG.error("Factory has been added already: ${extension.id}")
+            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}",
+                                           null,
+                                           extension.javaClass)
             return
           }
 

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.script;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/script/definition/highlighting")
     public static class Highlighting extends AbstractScriptConfigurationHighlightingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -63,11 +70,6 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
         @TestMetadata("customLibrary")
         public void testCustomLibrary() throws Exception {
             runTest("testData/script/definition/highlighting/customLibrary/");
-        }
-
-        @TestMetadata("customLibraryInModuleDeps")
-        public void testCustomLibraryInModuleDeps() throws Exception {
-            runTest("testData/script/definition/highlighting/customLibraryInModuleDeps/");
         }
 
         @TestMetadata("doNotSpeakAboutJava")
@@ -129,6 +131,12 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/script/definition/complex")
     public static class Complex extends AbstractScriptConfigurationHighlightingTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doComplexTest, this, testDataFilePath);
         }

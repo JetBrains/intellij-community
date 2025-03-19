@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -8,10 +8,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class ConfigureBranchContextDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myPanel;
@@ -34,9 +36,8 @@ public class ConfigureBranchContextDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 

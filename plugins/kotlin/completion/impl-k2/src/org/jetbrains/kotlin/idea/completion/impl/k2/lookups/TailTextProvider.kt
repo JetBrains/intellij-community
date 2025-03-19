@@ -3,44 +3,55 @@
 package org.jetbrains.kotlin.idea.completion.lookups
 
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
+import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionalTypeParameters
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
-    fun KtAnalysisSession.getTailText(signature: KtCallableSignature<*>): String = buildString {
-        if (signature is KtFunctionLikeSignature<*>) {
-            if (insertLambdaBraces(signature)) {
-                append(" {...}")
-            } else {
-                append(renderFunctionParameters(signature))
-            }
-        }
 
+    context(KaSession)
+    fun getTailText(
+        signature: KaCallableSignature<*>,
+    ): String = buildString {
         // use unsubstituted type when rendering receiver type of extension
-        signature.symbol.receiverType?.let { receiverType ->
-            val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
-            append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
-        }
+        val symbol = signature.symbol
+        symbol.receiverType?.let { renderReceiverType(it) }
 
-        signature.symbol.getContainerPresentation()?.let { append(it) }
+        symbol.getContainerPresentation(isFunctionalVariableCall = false)?.let { append(it) }
     }
 
-    fun KtAnalysisSession.getTailText(
-        symbol: KtClassLikeSymbol,
+    context(KaSession)
+    fun getTailTextForVariableCall(functionalType: KaFunctionType, signature: KaVariableSignature<*>): String = buildString {
+        if (insertLambdaBraces(functionalType)) {
+            append(" {...} ")
+        }
+        append(renderFunctionalTypeParameters(functionalType))
+
+        // use unsubstituted type when rendering receiver type of extension
+        functionalType.receiverType?.let { renderReceiverType(it) }
+
+        signature.symbol.getContainerPresentation(isFunctionalVariableCall = true)?.let { append(it) }
+    }
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun getTailText(
+        symbol: KaClassLikeSymbol,
         usePackageFqName: Boolean = false,
         addTypeParameters: Boolean = true
     ): String = buildString {
-        symbol.classIdIfNonLocal?.let { classId ->
+        symbol.classId?.let { classId ->
             if (addTypeParameters && symbol.typeParameters.isNotEmpty()) {
                 // We want to render type parameter names without modifiers and bounds, so no renderer is required.
                 append(symbol.typeParameters.joinToString(", ", "<", ">") { it.name.render() })
@@ -54,15 +65,23 @@ internal object TailTextProvider {
         }
     }
 
-    context(KtAnalysisSession)
-    private fun KtCallableSymbol.getContainerPresentation(): String? {
-        val callableId = callableIdIfNonLocal ?: return null
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    private fun StringBuilder.renderReceiverType(receiverType: KaType) {
+        val renderedType = receiverType.renderVerbose()
+        append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
+    }
+
+    context(KaSession)
+    private fun KaCallableSymbol.getContainerPresentation(isFunctionalVariableCall: Boolean): String? {
+        val callableId = callableId ?: return null
         val className = callableId.className
 
+        val isExtensionCall = isExtensionCall(isFunctionalVariableCall)
         val packagePresentation = callableId.packageName.asStringForTailText()
         return when {
-            !isExtension && className != null -> null
-            !isExtension -> " ($packagePresentation)"
+            !isExtensionCall && className != null -> null
+            !isExtensionCall -> " ($packagePresentation)"
 
             else -> {
                 val containerPresentation = className?.asString() ?: packagePresentation
@@ -72,15 +91,11 @@ internal object TailTextProvider {
     }
 
     private fun FqName.asStringForTailText(): String =
-        if (isRoot) "<root>" else asString()
+        if (isRoot) "<root>" else render()
 
-    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionLikeSignature<*>): Boolean {
-        val singleParam = symbol.valueParameters.singleOrNull()
-        return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KtFunctionalType
-    }
-
-    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {
+    context(KaSession)
+    fun insertLambdaBraces(symbol: KaFunctionType): Boolean {
         val singleParam = symbol.parameterTypes.singleOrNull()
-        return singleParam != null && singleParam is KtFunctionalType
+        return singleParam != null && singleParam is KaFunctionType
     }
 }

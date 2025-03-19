@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
+final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
 
   @Override
@@ -51,8 +51,7 @@ public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
     }
   }
 
-  @NotNull
-  private static Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
+  private static @NotNull Set<String> collectVcses(@NotNull Project project, @NotNull DataContext dataContext) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
 
     return VcsContextUtil.selectedFilePathsIterable(dataContext)
@@ -63,8 +62,7 @@ public class VcsGroupsWrapper extends ActionGroup implements DumbAware {
       .toSet();
   }
 
-  @Nullable
-  private static DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
+  private static @Nullable DefaultActionGroup mergeVcsGroups(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return null;
 

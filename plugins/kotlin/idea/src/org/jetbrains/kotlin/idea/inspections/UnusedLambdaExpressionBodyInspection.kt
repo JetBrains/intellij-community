@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
+
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
@@ -13,19 +13,18 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Util.replaceBlockExpressionWithLambdaBody
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.NewVariableAsFunctionResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -65,15 +64,11 @@ class UnusedLambdaExpressionBodyInspection : AbstractKotlinInspection() {
 
         override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
             val function = startElement as? KtFunction ?: return
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(function)) {
-                return
-            }
-
             function.replaceBlockExpressionWithLambdaBody(function.bodyExpression?.safeAs<KtLambdaExpression>()?.bodyExpression)
         }
     }
 
-    companion object {
+    object Util {
         fun KtDeclarationWithBody.replaceBlockExpressionWithLambdaBody(lambdaBody: KtBlockExpression?) {
             equalsToken?.let { token ->
                 val ktPsiFactory = KtPsiFactory(project)

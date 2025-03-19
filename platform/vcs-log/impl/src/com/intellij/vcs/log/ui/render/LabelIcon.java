@@ -80,7 +80,7 @@ public class LabelIcon implements Icon {
 
       if (i != tagCount - 1) {
         float x0 = scale * 2 * i + 2 * scale - JBUIScale.scale((float)Math.sqrt(2.0));
-        TagPainter.paintTag(g2, x0, false, myBgColor, myBgColor,  mySize);
+        TagPainter.paintTag(g2, x0, false, myBgColor, myBgColor, mySize);
       }
     }
   }

@@ -1,28 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.codeVision.CodeVisionState
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import com.intellij.util.containers.ConcurrentIntObjectMap
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Title
 import java.awt.Dimension
 import java.awt.Rectangle
+import java.util.concurrent.CancellationException
 import java.util.function.Supplier
 
 internal class ProviderWithSettings<T : Any>(
@@ -44,9 +51,9 @@ internal fun <T : Any> ProviderWithSettings<T>.withSettingsCopy(): ProviderWithS
 
 internal fun <T : Any> ProviderWithSettings<T>.getCollectorWrapperFor(file: PsiFile,
                                                                       editor: Editor,
-                                                                      language: Language): CollectorWithSettings<T>? {
+                                                                      language: Language,
+                                                                      sink: InlayHintsSinkImpl): CollectorWithSettings<T>? {
   val key = provider.key
-  val sink = InlayHintsSinkImpl(editor)
   val collector = provider.getCollectorFor(file, editor, settings, sink) ?: return null
   return CollectorWithSettings(collector, key, language, sink)
 }
@@ -101,7 +108,7 @@ class CollectorWithSettings<T : Any>(
     applyToEditor(file, editor, hintsBuffer)
   }
 
-  fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
+  internal fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
       traverser.forEach {
@@ -111,15 +118,15 @@ class CollectorWithSettings<T : Any>(
     return sink.complete()
   }
 
-  fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
+  internal fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
     InlayHintsPass.applyCollected(hintsBuffer, file, editor)
   }
 }
 
-internal fun <T : Any> addStrikeout(inlineHints: Int2ObjectOpenHashMap<MutableList<ConstrainedPresentation<*, T>>>,
+internal fun <T : Any> addStrikeout(inlineHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, T>>>,
                                     builder: TextAttributesEffectsBuilder,
                                     factory: (RootInlayPresentation<*>, T?) -> ConstrainedPresentation<*, T>) {
-  for (entry in inlineHints) {
+  for (entry in inlineHints.entrySet()) {
     entry.value.replaceAll { presentation ->
       val transformer = AttributesTransformerPresentation(presentation.root) { builder.applyTo(it) }
       val rootPresentation = RecursivelyUpdatingRootPresentation(transformer)
@@ -140,7 +147,7 @@ fun InlayPresentation.fireUpdateEvent(previousDimension: Dimension) {
   fireContentChanged()
 }
 
-fun InlayPresentation.dimension() = Dimension(width, height)
+fun InlayPresentation.dimension(): Dimension = Dimension(width, height)
 
 private typealias ConstrPresent<C> = ConstrainedPresentation<*, C>
 
@@ -271,7 +278,8 @@ object InlayHintsUtils {
 
   private val TEXT_METRICS_STORAGE = Key.create<InlayTextMetricsStorage>("InlayTextMetricsStorage")
 
-  internal fun getTextMetricStorage(editor: Editor): InlayTextMetricsStorage {
+  @ApiStatus.Internal
+  fun getTextMetricStorage(editor: Editor): InlayTextMetricsStorage {
     val storage = editor.getUserData(TEXT_METRICS_STORAGE)
     if (storage == null) {
       val newStorage = InlayTextMetricsStorage(editor)
@@ -279,5 +287,39 @@ object InlayHintsUtils {
       return newStorage
     }
     return storage
+  }
+
+  @JvmOverloads
+  fun computeCodeVisionUnderReadAction(expectsIndicator: Boolean = false, computable: () -> CodeVisionState): CodeVisionState {
+    try {
+      if (!EDT.isCurrentThreadEdt()) {
+        return ReadAction.computeCancellable<CodeVisionState, Throwable> {
+          if (expectsIndicator) {
+            blockingContextToIndicator {
+              computable.invoke()
+            }
+          }
+          else {
+            computable.invoke()
+          }
+        }
+      }
+      else {
+        // In tests [computeCodeVision] is executed in sync mode on EDT
+        assert(ApplicationManager.getApplication().isUnitTestMode)
+        return ReadAction.compute<CodeVisionState, Throwable> {
+          return@compute computable.invoke()
+        }
+      }
+    }
+    catch (e: ReadAction.CannotReadException) {
+      return CodeVisionState.NotReady
+    }
+    catch (e: ProcessCanceledException) {
+      return CodeVisionState.NotReady
+    }
+    catch (e: CancellationException) {
+      return CodeVisionState.NotReady
+    }
   }
 }

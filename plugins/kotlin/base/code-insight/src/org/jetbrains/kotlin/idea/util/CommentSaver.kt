@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.*
 import kotlin.properties.Delegates
 
@@ -54,9 +55,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         val nextSiblings: Sequence<TreeElement>
             get() = generateSequence({ next }, { it.next })
 
-        val parents: Sequence<TreeElement>
-            get() = generateSequence({ parent }, { it.parent })
-
         val parentsWithSelf: Sequence<TreeElement>
             get() = generateSequence(this) { it.parent }
 
@@ -91,9 +89,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         val prevLeafs: Sequence<TreeElement>
             get() = generateSequence({ prevLeaf }, { it.prevLeaf })
 
-        val nextLeafs: Sequence<TreeElement>
-            get() = generateSequence({ nextLeaf }, { it.nextLeaf })
-
         fun withDescendants(leftToRight: Boolean): Sequence<TreeElement> {
             val children = if (leftToRight) children else reverseChildren
             return sequenceOf(this) + children.flatMap { it.withDescendants(leftToRight) }
@@ -104,13 +99,11 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
 
         val nextElements: Sequence<TreeElement>
             get() = nextSiblings.flatMap { it.withDescendants(leftToRight = true) }
-
-//        var debugText: String? = null
     }
 
-    private class StandardTreeElement() : TreeElement()
+    private class StandardTreeElement : TreeElement()
     private class TokenTreeElement(val tokenType: KtToken) : TreeElement()
-    private class LineBreakTreeElement() : TreeElement()
+    private class LineBreakTreeElement : TreeElement()
 
     private class CommentTreeElement(
         val commentText: String,
@@ -173,7 +166,6 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
         set(value) = putCopyableUserData(SAVED_TREE_KEY, value)
 
     private var isFinished = false
-        private set
 
     private fun deleteCommentsInside(element: PsiElement) {
         assert(!isFinished)
@@ -251,7 +243,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
             resultElements.forEach { deleteCommentsInside(it) }
 
             if (commentsToRestore.isNotEmpty() || lineBreaksToRestore.isNotEmpty()) {
-                toNewPsiElementMap = HashMap<TreeElement, MutableCollection<PsiElement>>()
+                toNewPsiElementMap = HashMap()
                 for (element in resultElements) {
                     element.accept(object : PsiRecursiveElementVisitor() {
                         override fun visitElement(element: PsiElement) {
@@ -345,7 +337,10 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     }
                 }
             } else {
-                restored = putAbandonedCommentsAfter.parent.addBefore(comment, putAbandonedCommentsAfter) as PsiComment
+                val parent = putAbandonedCommentsAfter.parent
+                //move comment out of argument, similar to parser
+                restored = (if (parent is KtValueArgument) parent.parent.addBefore(comment, parent)
+                else parent.addBefore(comment, putAbandonedCommentsAfter)) as PsiComment
 
                 if (isCommentInside) {
                     val element = resultElements.first
@@ -492,7 +487,7 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
     // don't put line break right before comma
     private fun shiftNewLineAnchor(putAfter: PsiElement): PsiElement {
         val next = putAfter.nextLeaf(nonSpaceAndNonEmptyFilter)
-        return if (next?.tokenType == KtTokens.COMMA) next!! else putAfter
+        return if (next?.tokenType == KtTokens.COMMA) next else putAfter
     }
 
     private val nonSpaceAndNonEmptyFilter = { element: PsiElement -> element !is PsiWhiteSpace && element.textLength > 0 }

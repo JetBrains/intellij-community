@@ -24,11 +24,10 @@ import java.util.function.Supplier;
 public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChildrenDescription, Comparable<AbstractDomChildDescriptionImpl> {
   private final Type myType;
   private Map<Class<? extends Annotation>, Annotation> myCustomAnnotations;
-  @Nullable private Map<Key<?>, Object> myUserMap;
+  private @Nullable Map<Key<?>, Object> myUserMap;
   private volatile Ref<ElementPresentationTemplate> myPresentationTemplate = null;
 
-  @Nullable
-  private ElementPresentationTemplate calcPresentationTemplate() {
+  private @Nullable ElementPresentationTemplate calcPresentationTemplate() {
     Class<?> clazz = ClassUtil.getRawType(getType());
     Presentation presentation = DomApplicationComponent.getInstance().getInvocationCache(clazz).getClassAnnotation(Presentation.class);
     return presentation == null ? null : new ElementPresentationTemplateImpl(presentation, clazz);
@@ -77,8 +76,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
   @Override
-  @Nullable
-  public <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
+  public @Nullable <T extends Annotation> T getAnnotation(final Class<T> annotationClass) {
     return myCustomAnnotations == null ? null : annotationClass.cast(myCustomAnnotations.get(annotationClass));
   }
 
@@ -89,8 +87,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
   @Override
-  @NotNull
-  public final List<? extends DomElement> getStableValues(@NotNull final DomElement parent) {
+  public final @NotNull List<? extends DomElement> getStableValues(final @NotNull DomElement parent) {
     final List<? extends DomElement> list = getValues(parent);
     final ArrayList<DomElement> result = new ArrayList<>(list.size());
     final DomManager domManager = parent.getManager();
@@ -108,14 +105,12 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
 
   @Override
-  @NotNull
-  public final Type getType() {
+  public final @NotNull Type getType() {
     return myType;
   }
 
   @Override
-  @NotNull
-  public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
+  public @NotNull DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
     final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(getType()), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
@@ -126,8 +121,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
   @Override
-  @Nullable
-  public ElementPresentationTemplate getPresentationTemplate() {
+  public @Nullable ElementPresentationTemplate getPresentationTemplate() {
     Ref<ElementPresentationTemplate> ref = myPresentationTemplate;
     if (ref == null) {
       myPresentationTemplate = ref = Ref.create(calcPresentationTemplate());
@@ -136,8 +130,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
   }
 
   @Override
-  @Nullable
-  public PsiElement getDeclaration(final Project project) {
+  public @Nullable PsiElement getDeclaration(final Project project) {
     DomElement domDeclaration = getDomDeclaration();
     if (domDeclaration != null) {
       final DomTarget target = DomTarget.getTarget(domDeclaration);

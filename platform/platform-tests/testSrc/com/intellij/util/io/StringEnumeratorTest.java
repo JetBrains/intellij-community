@@ -17,7 +17,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.IntObjectCache;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
@@ -163,7 +163,7 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 700, () -> {
+    Benchmark.newBenchmark("PersistentStringEnumerator.enumerate", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();
@@ -171,7 +171,7 @@ public class StringEnumeratorTest extends TestCase {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
     myEnumerator.close();
     System.out.printf("File size = %d bytes\n", myFile.length());
   }

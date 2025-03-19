@@ -4,15 +4,16 @@ package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.isFrameworkAvailable
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import javax.swing.Icon
 
 abstract class AbstractGenericTestIconProvider {
-    abstract fun isKotlinTestDeclaration(declaration: KtClassOrObject): Boolean
+    abstract fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean
 
     fun getTestContainerElement(declaration: KtNamedDeclaration): KtClassOrObject? {
         return when (declaration) {
@@ -23,9 +24,13 @@ abstract class AbstractGenericTestIconProvider {
     }
 
     fun getGenericTestIcon(declaration: KtNamedDeclaration, initialLocations: List<String>): Icon? {
-        val locations = initialLocations.toMutableList()
-
         if (!isFrameworkAvailable<KotlinTestAvailabilityChecker>(declaration)) {
+            return null
+        }
+
+        if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) return null
+
+        if (!isKotlinTestDeclaration(declaration)) {
             return null
         }
 
@@ -34,19 +39,7 @@ abstract class AbstractGenericTestIconProvider {
             return null
         }
 
-        locations += testContainer.parentsWithSelf.filterIsInstance<KtNamedDeclaration>()
-            .mapNotNull { it.name }
-            .toList().asReversed()
-
-        val testName = (declaration as? KtNamedFunction)?.name
-        if (testName != null) {
-            locations += "$testName"
-        }
-
-        val prefix = if (testName != null) "test://" else "suite://"
-        val url = prefix + locations.joinWithEscape('.')
-
-        return KotlinTestRunLineMarkerContributor.getTestStateIcon(listOf("java:$url", url), declaration)
+        return KotlinTestRunLineMarkerContributor.getTestStateIcon(declaration.genericKotlinTestUrls(), declaration)
     }
 
     private fun Collection<String>.joinWithEscape(delimiterChar: Char): String {

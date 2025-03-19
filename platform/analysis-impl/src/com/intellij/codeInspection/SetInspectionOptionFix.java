@@ -29,52 +29,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Function;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
+/**
+ * @deprecated use {@link UpdateInspectionOptionFix} instead.
+ */
+@Deprecated(forRemoval = true)
 public class SetInspectionOptionFix extends IntentionAndQuickFixAction implements LowPriorityAction, Iconable {
   private final String myShortName;
   private final String myProperty;
   private final @IntentionName String myMessage;
   private final Object myValue;
-  private final @Nullable Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> myExtractor;
 
   public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, boolean value) {
-    this(inspection.getShortName(), property, message, value, null);
+    this(inspection.getShortName(), property, message, value);
   }
 
   public SetInspectionOptionFix(LocalInspectionTool inspection, @NonNls String property, @IntentionName String message, int value) {
-    this(inspection.getShortName(), property, message, value, null);
+    this(inspection.getShortName(), property, message, value);
   }
 
-  private SetInspectionOptionFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, Object value,
-                                 @Nullable Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> extractor) {
+  private SetInspectionOptionFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, Object value) {
     myShortName = shortName;
     myProperty = property;
     myMessage = message;
     myValue = value;
-    myExtractor = extractor;
   }
 
-  /**
-   * @param extractor may be useful for composed inspections e.g. unused declaration, when you need to unwrap a nested inspection's instance
-   */
-  @NotNull
-  public static SetInspectionOptionFix createFix(@NotNull String shortName, @NonNls String property, @IntentionName String message, boolean value,
-                                                 @NotNull Function<? super InspectionProfileEntry, ? extends InspectionProfileEntry> extractor) {
-    return new SetInspectionOptionFix(shortName, property, message, value, extractor);
-  }
-
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myMessage;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return AnalysisBundle.message("set.inspection.option.fix");
   }
 
@@ -110,15 +99,20 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return generatePreview(project, null, previewDescriptor.getPsiElement().getContainingFile());
+    return generatePreviewForFile(previewDescriptor.getPsiElement().getContainingFile());
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return generatePreviewForFile(file);
+  }
+
+  private @NotNull IntentionPreviewInfo generatePreviewForFile(@NotNull PsiFile psiFile) {
+    Project project = psiFile.getProject();
     InspectionToolWrapper<?, ?> tool =
-      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
+      InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, psiFile);
     if (tool == null) return IntentionPreviewInfo.EMPTY;
-    InspectionProfileEntry inspection = myExtractor == null ? tool.getTool() : myExtractor.apply(tool.getTool());
+    InspectionProfileEntry inspection = getLocalTool(tool);
     OptPane pane = inspection.getOptionsPane();
     if (myValue instanceof Boolean value) {
       OptCheckbox control = ObjectUtils.tryCast(pane.findControl(myProperty), OptCheckbox.class);
@@ -134,8 +128,8 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
           tag("td").child(label)
         ));
       return new IntentionPreviewInfo.Html(
-        new HtmlBuilder().append(value ? AnalysisBundle.message("set.inspection.option.description.check")
-                                         : AnalysisBundle.message("set.inspection.option.description.uncheck"))
+        new HtmlBuilder().append(value ? AnalysisBundle.message("set.option.description.check")
+                                       : AnalysisBundle.message("set.option.description.uncheck"))
           .br().br().append(info).toFragment());
     } else if (myValue instanceof Integer value) {
       OptNumber control = ObjectUtils.tryCast(pane.findControl(myProperty), OptNumber.class);
@@ -144,27 +138,33 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
       Element input = tag("input").attr("type", "text").attr("value", value)
         .attr("size", value.toString().length() + 1).attr("readonly", "true");
       HtmlChunk info = tag("table").child(tag("tr").children(
-          tag("td").child(text(prefixSuffix.prefix())),
-          tag("td").child(input),
-          tag("td").child(text(prefixSuffix.suffix()))
+        tag("td").child(text(prefixSuffix.prefix())),
+        tag("td").child(input),
+        tag("td").child(text(prefixSuffix.suffix()))
       ));
       return new IntentionPreviewInfo.Html(
-        new HtmlBuilder().append(AnalysisBundle.message("set.inspection.option.description.input"))
+        new HtmlBuilder().append(AnalysisBundle.message("set.option.description.input"))
           .br().br().append(info).br().toFragment());
-    } else {
+    }
+    else {
       throw new IllegalStateException("Value of type " + myValue.getClass() + " is not supported");
     }
   }
-  
+
+  private static InspectionProfileEntry getLocalTool(InspectionToolWrapper<?, ?> tool) {
+    InspectionProfileEntry inspection = tool.getTool();
+    if (inspection instanceof GlobalInspectionTool global) {
+      return global.getSharedLocalInspectionTool();
+    }
+    return inspection;
+  }
+
   private Object getOption(@NotNull Project project, @NotNull VirtualFile vFile) {
     PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     if (file == null) return null;
     InspectionToolWrapper<?, ?> tool = InspectionProfileManager.getInstance(project).getCurrentProfile().getInspectionTool(myShortName, file);
     if (tool == null) return null;
-    InspectionProfileEntry inspection = tool.getTool();
-    if (myExtractor != null) {
-      inspection = myExtractor.apply(inspection);
-    }
+    InspectionProfileEntry inspection = getLocalTool(tool);
     return inspection.getOptionController().getOption(myProperty);
   }
 
@@ -174,10 +174,7 @@ public class SetInspectionOptionFix extends IntentionAndQuickFixAction implement
     InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
       InspectionToolWrapper<?, ?> tool = model.getInspectionTool(myShortName, file);
       if (tool == null) return;
-      InspectionProfileEntry inspection = tool.getTool();
-      if (myExtractor != null) {
-        inspection = myExtractor.apply(inspection);
-      }
+      InspectionProfileEntry inspection = getLocalTool(tool);
       inspection.getOptionController().setOption(myProperty, value);
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.externalAnnotation.AnnotationProvider;
@@ -14,9 +14,8 @@ public class UntaintedAnnotationProvider implements AnnotationProvider {
   public static final String DEFAULT_TAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.Tainted";
   public static final String DEFAULT_POLY_TAINTED_ANNOTATION = "org.checkerframework.checker.tainting.qual.PolyTainted";
 
-  @NotNull
   @Override
-  public String getName(Project project) {
+  public @NotNull String getName(Project project) {
     return DEFAULT_UNTAINTED_ANNOTATION;
   }
 

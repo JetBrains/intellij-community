@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.idea.imports
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -14,12 +15,16 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.types.KotlinType
 
+@get:Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
+@get:ApiStatus.ScheduledForRemoval
 val DeclarationDescriptor.importableFqName: FqName?
     get() {
         if (!canBeReferencedViaImport()) return null
         return getImportableDescriptor().fqNameSafe
     }
 
+@Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
+@ApiStatus.ScheduledForRemoval
 fun DeclarationDescriptor.canBeReferencedViaImport(): Boolean {
     if (this is PackageViewDescriptor ||
         DescriptorUtils.isTopLevelDeclaration(this) ||
@@ -51,4 +56,10 @@ fun KtReferenceExpression.getImportableTargets(bindingContext: BindingContext): 
     val targets = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, this]?.let { listOf(it) }
         ?: getReferenceTargets(bindingContext)
     return targets.map { it.getImportableDescriptor() }.toSet()
+}
+
+fun ClassifierDescriptor.getConstructors(): Collection<ConstructorDescriptor> = when (this) {
+    is ClassDescriptor -> constructors
+    is TypeAliasDescriptor -> constructors
+    else -> emptyList()
 }

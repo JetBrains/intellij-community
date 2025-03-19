@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script
 
 import com.intellij.ide.CliResult
@@ -21,10 +21,7 @@ import java.nio.file.Path
 /**
  * @author gregsh
  */
-internal class IdeScriptStarter : ApplicationStarterBase() {
-  override val commandName: String
-    get() = "ideScript"
-
+private class IdeScriptStarter : ApplicationStarterBase() {
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName
@@ -36,9 +33,9 @@ internal class IdeScriptStarter : ApplicationStarterBase() {
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
     val filePaths = args.subList(1, args.size).map { Path.of(it) }
     val project = guessProject()
-    val result = IdeStartupScripts.prepareScriptsAndEngines(filePaths)
-    IdeStartupScripts.runAllScriptsImpl(project, result,
-                                        if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>())
+    val result = prepareScriptsAndEngines(filePaths)
+    runAllScriptsImpl(project = project, result = result,
+                      log = if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>())
     return CliResult.OK
   }
 }
@@ -62,10 +59,6 @@ private fun redirectStreamsAndGetLogger(result: List<Pair<Path, IdeScriptEngine>
     pair.second.stdIn = InputStreamReader(System.`in`, Charset.defaultCharset())
   }
   return object : DefaultLogger(null) {
-    override fun info(message: String) {
-      println("INFO: $message")
-    }
-
     override fun info(message: String, t: Throwable?) {
       println("INFO: $message")
     }

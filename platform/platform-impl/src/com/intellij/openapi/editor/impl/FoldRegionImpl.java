@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.impl;
 
@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
   private static final Key<Boolean> SHOW_GUTTER_MARK_FOR_SINGLE_LINE = Key.create("show.gutter.mark.for.single.line");
@@ -90,8 +92,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
-  @NotNull
-  public String getPlaceholderText() {
+  public @NotNull String getPlaceholderText() {
     return myPlaceholderText;
   }
 
@@ -101,8 +102,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
   }
 
   @Override
-  @Nullable
-  public FoldingGroup getGroup() {
+  public @Nullable FoldingGroup getGroup() {
     return myGroup;
   }
 
@@ -145,7 +145,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
     DocumentUtil.isInsideCharacterPair(document, getStartOffset()) ? -1 : 0,
     DocumentUtil.isInsideCharacterPair(document, getEndOffset()) ? -1 : 0);
     if (alignedRange != toScalarRange()) {
-      myEditor.getFoldingModel().myComplexDocumentChange = true;
+      myEditor.getFoldingModel().setComplexDocumentChange(true);
     }
     setRange(alignedRange);
   }

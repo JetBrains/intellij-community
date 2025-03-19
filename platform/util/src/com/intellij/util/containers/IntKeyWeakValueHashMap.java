@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
@@ -78,8 +78,7 @@ final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   }
 
   @Override
-  @NotNull
-  public Collection<@NotNull V> values() {
+  public @NotNull Collection<@NotNull V> values() {
     Collection<MyReference<V>> refs = myMap.values();
     List<V> result = new ArrayList<>(refs.size());
     for (MyReference<V> o : refs) {
@@ -101,16 +100,14 @@ final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return values().contains(value);
   }
 
-  @NotNull
   @Override
-  public Set<Entry<V>> entrySet() {
+  public @NotNull Set<Entry<V>> entrySet() {
     return new MyEntrySetView();
   }
 
-  private class MyEntrySetView extends AbstractSet<Entry<V>> {
-    @NotNull
+  private final class MyEntrySetView extends AbstractSet<Entry<V>> {
     @Override
-    public Iterator<Entry<V>> iterator() {
+    public @NotNull Iterator<Entry<V>> iterator() {
       return entriesIterator();
     }
 
@@ -120,8 +117,7 @@ final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     }
   }
 
-  @NotNull
-  private Iterator<Entry<V>> entriesIterator() {
+  private @NotNull Iterator<Entry<V>> entriesIterator() {
     ObjectIterator<Int2ObjectMap.Entry<MyReference<V>>> entryIterator = myMap.int2ObjectEntrySet().iterator();
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;

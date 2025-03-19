@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy.actions;
 
@@ -8,7 +8,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 
@@ -57,10 +55,9 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     createAndAddToPanel(project, provider, target);
   }
 
-  @NotNull
-  public static HierarchyBrowser createAndAddToPanel(@NotNull Project project,
-                                                     @NotNull HierarchyProvider provider,
-                                                     @NotNull PsiElement target) {
+  public static @NotNull HierarchyBrowser createAndAddToPanel(@NotNull Project project,
+                                                              @NotNull HierarchyProvider provider,
+                                                              @NotNull PsiElement target) {
     HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
     HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
@@ -69,26 +66,17 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     Content selectedContent = contentManager.getSelectedContent();
 
     JComponent browserComponent = hierarchyBrowser.getComponent();
-    if (!DumbService.isDumbAware(hierarchyBrowser)) {
-      browserComponent = DumbService.getInstance(project).wrapGently(browserComponent, project);
-    }
 
-    Content content;
     if (selectedContent != null && !selectedContent.isPinned()) {
-      content = selectedContent;
-      Component component = content.getComponent();
-      if (component instanceof DumbUnawareHider) {
-        component = ((DumbUnawareHider)component).getContent();
-      }
-      if (component instanceof Disposable) {
-        Disposer.dispose((Disposable)component);
-      }
+      contentManager.removeContent(selectedContent, true);
+    }
+    Content content = ContentFactory.getInstance().createContent(browserComponent, null, true);
+    if (!DumbService.isDumbAware(hierarchyBrowser)) {
+      browserComponent = DumbService.getInstance(project).wrapGently(browserComponent, content);
       content.setComponent(browserComponent);
     }
-    else {
-      content = ContentFactory.getInstance().createContent(browserComponent, null, true);
-      contentManager.addContent(content);
-    }
+    contentManager.addContent(content);
+
     content.setHelpId(HierarchyBrowserBaseEx.HELP_ID);
     contentManager.setSelectedContent(content);
     hierarchyBrowser.setContent(content);
@@ -102,7 +90,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
     toolWindow.activate(runnable);
     if (hierarchyBrowser instanceof Disposable) {
-      Disposer.register(toolWindow.getContentManager(), (Disposable)hierarchyBrowser);
+      Disposer.register(content, (Disposable)hierarchyBrowser);
     }
     return hierarchyBrowser;
   }
@@ -114,7 +102,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     }
     else {
       boolean enabled = isEnabled(e);
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      if (e.isFromContextMenu()) {
         e.getPresentation().setVisible(enabled);
       }
       else {
@@ -137,16 +125,14 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     return target != null;
   }
 
-  @Nullable
-  private HierarchyProvider getProvider(@NotNull AnActionEvent e) {
+  private @Nullable HierarchyProvider getProvider(@NotNull AnActionEvent e) {
     return findProvider(myExtension, e.getData(CommonDataKeys.PSI_ELEMENT), e.getData(CommonDataKeys.PSI_FILE), e.getDataContext());
   }
 
-  @Nullable
-  public static HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
-                                               @Nullable PsiElement psiElement,
-                                               @Nullable PsiFile psiFile,
-                                               @NotNull DataContext dataContext) {
+  public static @Nullable HierarchyProvider findProvider(@NotNull LanguageExtension<HierarchyProvider> extension,
+                                                         @Nullable PsiElement psiElement,
+                                                         @Nullable PsiFile psiFile,
+                                                         @NotNull DataContext dataContext) {
     HierarchyProvider provider = findBestHierarchyProvider(extension, psiElement, dataContext);
     if (provider == null) {
       return findBestHierarchyProvider(extension, psiFile, dataContext);
@@ -154,10 +140,9 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
     return provider;
   }
 
-  @Nullable
-  public static HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
-                                                            @Nullable PsiElement element,
-                                                            DataContext dataContext) {
+  public static @Nullable HierarchyProvider findBestHierarchyProvider(LanguageExtension<HierarchyProvider> extension,
+                                                                      @Nullable PsiElement element,
+                                                                      DataContext dataContext) {
     if (element == null) return null;
     List<HierarchyProvider> providers = extension.allForLanguage(element.getLanguage());
     for (HierarchyProvider provider : providers) {

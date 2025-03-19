@@ -41,7 +41,7 @@ public final class XmlInstanceValidator {
   private XmlInstanceValidator() {
   }
 
-  public static void doValidation(@NotNull final XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
+  public static void doValidation(final @NotNull XmlDocument doc, final Validator.ValidationHost host, final XmlFile descriptorFile) {
     try {
       final Schema schema = RngParser.getCachedSchema(descriptorFile);
       if (schema == null) {
@@ -110,8 +110,7 @@ public final class XmlInstanceValidator {
       });
     }
 
-    @Nullable
-    public static ErrorHandler create(XmlDocument doc, Validator.ValidationHost host) {
+    public static @Nullable ErrorHandler create(XmlDocument doc, Validator.ValidationHost host) {
       final XmlTag rootTag = doc.getRootTag();
       if (rootTag == null) {
         return null;

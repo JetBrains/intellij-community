@@ -1,0 +1,15 @@
+// FIR_COMPARISON
+
+fun foo(
+    optional1: String = "",
+    block: (String) -> Unit,
+) {
+}
+
+fun bar() {
+    foo { <caret> }
+}
+
+// ELEMENT: foo
+// TAIL_TEXT: " {...} (..., block: (String) -> Unit) (<root>)"
+

@@ -6,37 +6,20 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.jetbrains.extensions.hasPython
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import com.jetbrains.python.packaging.pip.PypiPackageCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Files
-import java.nio.file.Path
-import java.time.Duration
-import java.time.Instant
-import kotlin.io.path.exists
 
 class PythonPackagesUpdater : ProjectActivity {
 
   override suspend fun execute(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode || !project.hasPython) return
+    if (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("disable.python.cache.update")) return
     withContext(Dispatchers.IO) {
       thisLogger().debug("Updating PyPI cache and ranking")
       service<PyPIPackageRanking>().reload()
-
-      service<PypiPackageCache>().apply {
-        if (filePath.exists() && !cacheExpired(filePath)) loadFromFile()
-        else refresh()
-      }
-
+      service<PypiPackageCache>().reloadCache()
     }
-  }
-
-  private fun cacheExpired(path: Path): Boolean {
-    val fileTime = Files.getLastModifiedTime(path)
-    val expirationTime = fileTime.toInstant().plus(Duration.ofDays(1))
-
-    return expirationTime.isBefore(Instant.now())
   }
 }

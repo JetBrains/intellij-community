@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiAnnotation;
@@ -32,16 +32,14 @@ public class NullabilityAnnotationInfo {
   /**
    * @return annotation object (might be synthetic)
    */
-  @NotNull
-  public PsiAnnotation getAnnotation() {
+  public @NotNull PsiAnnotation getAnnotation() {
     return myAnnotation;
   }
 
   /**
    * @return nullability this annotation represents
    */
-  @NotNull
-  public Nullability getNullability() {
+  public @NotNull Nullability getNullability() {
     return myNullability;
   }
 

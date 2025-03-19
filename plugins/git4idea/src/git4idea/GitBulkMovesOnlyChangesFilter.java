@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,9 +100,8 @@ public class GitBulkMovesOnlyChangesFilter implements BulkMovesOnlyChangesFilter
     return !Objects.equals(findBlob(blobs, bRev), findBlob(blobs, aRev));
   }
 
-  @NotNull
-  private static String findBlob(@NotNull Map<Pair<GitRevisionNumber, FilePath>, String> blobs,
-                                 @NotNull ContentRevision revision) throws VcsException {
+  private static @NotNull String findBlob(@NotNull Map<Pair<GitRevisionNumber, FilePath>, String> blobs,
+                                          @NotNull ContentRevision revision) throws VcsException {
     FilePath filePath = revision.getFile();
     GitRevisionNumber number = (GitRevisionNumber)revision.getRevisionNumber();
     String blob = blobs.get(Pair.create(number, filePath));

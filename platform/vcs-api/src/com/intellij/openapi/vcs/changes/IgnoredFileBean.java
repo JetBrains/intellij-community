@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -36,11 +36,11 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     myPattern = null;
   }
 
-  IgnoredFileBean(@NotNull @NonNls String mask) {
+  IgnoredFileBean(@NotNull @NonNls String mask, @Nullable String path) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
     myPattern = PatternUtil.fromMask(mask);
-    myPath = null;
+    myPath = path;
     myFilenameIfFile = null;
     myProject = null;
   }
@@ -51,22 +51,17 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
   }
 
   @Override
-  @Nullable
-  @NlsSafe
-  public String getPath() {
+  public @Nullable @NlsSafe String getPath() {
     return myPath;
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getMask() {
+  public @Nullable @NonNls String getMask() {
     return myMask;
   }
 
   @Override
-  @NotNull
-  public IgnoreSettingsType getType() {
+  public @NotNull IgnoreSettingsType getType() {
     return myType;
   }
 
@@ -122,30 +117,30 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     }
   }
 
-  @Nullable
-  private FilePath resolve() {
+  private @Nullable FilePath resolve() {
+    assert myType != IgnoreSettingsType.MASK;
     if (myCachedResolved == null) {
-      myCachedResolved = doResolve();
+      myCachedResolved = doResolve(myProject, myPath, myType == IgnoreSettingsType.UNDER_DIR);
     }
 
     return myCachedResolved;
   }
 
-  private @Nullable FilePath doResolve() {
-    if (myProject == null || myProject.isDisposed()) {
+  private static @Nullable FilePath doResolve(@Nullable Project project, @NotNull String rawPath, boolean isDirectory) {
+    if (project == null || project.isDisposed()) {
       return null;
     }
-    VirtualFile baseDir = myProject.getBaseDir();
+    VirtualFile baseDir = project.getBaseDir();
 
-    String path = FileUtil.toSystemIndependentName(myPath);
+    String path = FileUtil.toSystemIndependentName(rawPath);
     if (baseDir == null) {
-      return VcsUtil.getFilePath(path);
+      return VcsUtil.getFilePath(path, isDirectory);
     }
 
     VirtualFile resolvedRelative = baseDir.findFileByRelativePath(path);
     if (resolvedRelative != null) return VcsUtil.getFilePath(resolvedRelative);
 
-    return VcsUtil.getFilePath(path);
+    return VcsUtil.getFilePath(path, isDirectory);
   }
 
   public void resetCache() {

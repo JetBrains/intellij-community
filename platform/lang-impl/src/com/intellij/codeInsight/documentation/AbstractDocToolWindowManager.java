@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.util.Disposer;
@@ -35,15 +35,13 @@ public abstract class AbstractDocToolWindowManager implements DocToolWindowManag
   }
 
   @Override
-  @Nullable
-  public Content getDocumentationContent(@NotNull ToolWindow toolWindow, @NotNull DocumentationManager documentationManager) {
+  public @Nullable Content getDocumentationContent(@NotNull ToolWindow toolWindow, @NotNull DocumentationManager documentationManager) {
     return toolWindow.getContentManager().getSelectedContent();
   }
 
   @Override
-  @Nullable
-  public DocumentationComponent getDocumentationComponent(@NotNull ToolWindow toolWindow,
-                                                          @NotNull DocumentationManager documentationManager) {
+  public @Nullable DocumentationComponent getDocumentationComponent(@NotNull ToolWindow toolWindow,
+                                                                    @NotNull DocumentationManager documentationManager) {
     Content content = getDocumentationContent(toolWindow, documentationManager);
     if (content == null) return null;
     return (DocumentationComponent)content.getComponent();

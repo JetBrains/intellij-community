@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class PorterStemmerUtil {
   private PorterStemmerUtil() {
@@ -10,25 +12,26 @@ public final class PorterStemmerUtil {
 
   public static @Nullable String stem(String str) {
     // check for zero length
-    final int strLen = str.length();
-    if (strLen > 0) {
-      int lastNonLetter = -1;
-      for (int i = 0; i < strLen; ++i) {
-        char c = str.charAt(i);
-        if (Character.isDigit(c) || c == '-' || c == '_') {
-          lastNonLetter = i;
-        }
-        else if (!Character.isLetter(c)) {
-          return null;
-        }
-      }
-      ++lastNonLetter;
-      if (lastNonLetter > 0 && lastNonLetter < strLen) {
-        return str.substring(0, lastNonLetter) + stemString(str.substring(lastNonLetter));
-      }
-      return stemString(str);
+    int strLen = str.length();
+    if (strLen == 0) {
+      return null;
     }
-    return null;
+
+    int lastNonLetter = -1;
+    for (int i = 0; i < strLen; ++i) {
+      char c = str.charAt(i);
+      if (Character.isDigit(c) || c == '-' || c == '_') {
+        lastNonLetter = i;
+      }
+      else if (!Character.isLetter(c)) {
+        return null;
+      }
+    }
+    ++lastNonLetter;
+    if (lastNonLetter > 0 && lastNonLetter < strLen) {
+      return str.substring(0, lastNonLetter) + stemString(str.substring(lastNonLetter));
+    }
+    return stemString(str);
   }
 
   private static String stemString(String str) {

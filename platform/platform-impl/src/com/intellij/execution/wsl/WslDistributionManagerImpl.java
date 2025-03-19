@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class WslDistributionManagerImpl extends WslDistributionManager {
 
   // Distributions created by tools, e.g. Docker. Not suitable for running user apps.
@@ -70,7 +72,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
     // Windows Subsystem for Linux has no installed distributions
-    if (output.getExitCode() != 0 && output.getStdout().endsWith("https://aka.ms/wslstore")) {
+    if (output.getExitCode() != 0 && output.getStdout().trim().endsWith("https://aka.ms/wslstore")) {
       LOG.info("Windows Subsystem for Linux has no installed distributions");
       return Collections.emptyList();
     }
@@ -109,7 +111,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     stdoutLines = ContainerUtil.subList(stdoutLines, 1);
     final List<WslDistributionAndVersion> result = new ArrayList<>(stdoutLines.size());
 
-    for (String l: stdoutLines) {
+    for (String l : stdoutLines) {
       List<String> words = StringUtil.split(l, " ");
       if ("*".equals(ContainerUtil.getFirstItem(words))) {
         words = ContainerUtil.subList(words, 1);

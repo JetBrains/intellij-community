@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mocks
 
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.lang.Language
 import com.intellij.stats.completion.network.service.RequestService
 import com.intellij.stats.completion.sender.StatisticSender

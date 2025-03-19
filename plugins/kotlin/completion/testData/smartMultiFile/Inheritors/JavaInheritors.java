@@ -1,6 +1,6 @@
-import p2.KotlinTrait
+import p2.KotlinInterface
 
-public abstract class JavaInheritor1 implements KotlinTrait {
+public abstract class JavaInheritor1 implements KotlinInterface {
 }
 
 public class JavaInheritor2 extends JavaInheritor1 {
@@ -12,5 +12,5 @@ public class JavaInheritor2 extends JavaInheritor1 {
 }
 
 // not visible - it's package local
-class JavaInheritor3 extends KotlinTrait {}
+class JavaInheritor3 extends KotlinInterface {}
 

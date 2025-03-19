@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.*
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectState.*
+import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Stamp
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -10,90 +11,100 @@ class ProjectStatusTest {
   @Test
   fun `test open project with broken state`() {
     val status = ProjectStatus()
-    status.markDirty(10) as Dirty
-    status.markModified(20) as Dirty
+    status.markDirty(Stamp.nextStamp()) as Dirty
+    status.markModified(Stamp.nextStamp()) as Dirty
     assertFalse(status.isUpToDate())
-    status.markSynchronized(30) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test generate project with broken state`() {
     val status = ProjectStatus()
-    status.markModified(10) as Modified
-    status.markDirty(20) as Dirty
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markDirty(Stamp.nextStamp()) as Dirty
     assertFalse(status.isUpToDate())
-    status.markSynchronized(30) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test generate project with lag and broken state`() {
+    val stamp1 = Stamp.nextStamp()
+    val stamp2 = Stamp.nextStamp()
+    val stamp3 = Stamp.nextStamp()
+
     val status = ProjectStatus()
-    status.markDirty(10) as Dirty
+    status.markDirty(stamp1) as Dirty
     assertFalse(status.isUpToDate())
-    status.markSynchronized(30) as Synchronized
+    status.markSynchronized(stamp3) as Synchronized
     assertTrue(status.isUpToDate())
-    status.markModified(20) as Synchronized
+    status.markModified(stamp2) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test delayed modification event`() {
+    val stamp1 = Stamp.nextStamp()
+    val stamp2 = Stamp.nextStamp()
+
     val status = ProjectStatus()
-    status.markSynchronized(20) as Synchronized
-    status.markModified(10) as Synchronized
+    status.markSynchronized(stamp2) as Synchronized
+    status.markModified(stamp1) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test delayed invalidation event`() {
+    val stamp1 = Stamp.nextStamp()
+    val stamp2 = Stamp.nextStamp()
+
     val status = ProjectStatus()
-    status.markSynchronized(20) as Synchronized
-    status.markDirty(10) as Synchronized
+    status.markSynchronized(stamp2) as Synchronized
+    status.markDirty(stamp1) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test common sample`() {
     val status = ProjectStatus()
-    status.markModified(10) as Modified
-    status.markModified(20) as Modified
-    status.markModified(30) as Modified
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markModified(Stamp.nextStamp()) as Modified
     assertFalse(status.isUpToDate())
-    status.markSynchronized(40) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test revert changes`() {
     val status = ProjectStatus()
-    status.markModified(10) as Modified
-    status.markReverted(20) as Reverted
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markReverted(Stamp.nextStamp()) as Reverted
     assertTrue(status.isUpToDate())
-    status.markSynchronized(30) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test revert dirty changes`() {
     val status = ProjectStatus()
-    status.markModified(10) as Modified
-    status.markDirty(20) as Dirty
-    status.markReverted(30) as Dirty
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markDirty(Stamp.nextStamp()) as Dirty
+    status.markReverted(Stamp.nextStamp()) as Dirty
     assertFalse(status.isUpToDate())
-    status.markSynchronized(40) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
   @Test
   fun `test modification after revert event`() {
     val status = ProjectStatus()
-    status.markModified(10) as Modified
-    status.markReverted(20) as Reverted
-    status.markModified(30) as Modified
+    status.markModified(Stamp.nextStamp()) as Modified
+    status.markReverted(Stamp.nextStamp()) as Reverted
+    status.markModified(Stamp.nextStamp()) as Modified
     assertFalse(status.isUpToDate())
-    status.markSynchronized(40) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertTrue(status.isUpToDate())
   }
 
@@ -101,32 +112,32 @@ class ProjectStatusTest {
   fun `test modification types`() {
     val status = ProjectStatus()
 
-    status.markModified(10, INTERNAL) as Modified
+    status.markModified(Stamp.nextStamp(), INTERNAL) as Modified
     assertEquals(INTERNAL, status.getModificationType())
-    status.markModified(20, EXTERNAL) as Modified
+    status.markModified(Stamp.nextStamp(), EXTERNAL) as Modified
     assertEquals(INTERNAL, status.getModificationType())
 
-    status.markSynchronized(30) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertEquals(UNKNOWN, status.getModificationType())
-    status.markModified(40, EXTERNAL) as Modified
+    status.markModified(Stamp.nextStamp(), EXTERNAL) as Modified
     assertEquals(EXTERNAL, status.getModificationType())
-    status.markModified(50, INTERNAL) as Modified
+    status.markModified(Stamp.nextStamp(), INTERNAL) as Modified
     assertEquals(INTERNAL, status.getModificationType())
 
-    status.markSynchronized(60) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertEquals(UNKNOWN, status.getModificationType())
-    status.markDirty(70, INTERNAL) as Dirty
+    status.markDirty(Stamp.nextStamp(), INTERNAL) as Dirty
     assertEquals(INTERNAL, status.getModificationType())
-    status.markModified(80, EXTERNAL) as Dirty
+    status.markModified(Stamp.nextStamp(), EXTERNAL) as Dirty
     assertEquals(INTERNAL, status.getModificationType())
-    status.markModified(90, INTERNAL) as Dirty
+    status.markModified(Stamp.nextStamp(), INTERNAL) as Dirty
     assertEquals(INTERNAL, status.getModificationType())
 
-    status.markSynchronized(100) as Synchronized
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
     assertEquals(UNKNOWN, status.getModificationType())
-    status.markDirty(110, EXTERNAL) as Dirty
+    status.markDirty(Stamp.nextStamp(), EXTERNAL) as Dirty
     assertEquals(EXTERNAL, status.getModificationType())
-    status.markModified(120, INTERNAL) as Dirty
+    status.markModified(Stamp.nextStamp(), INTERNAL) as Dirty
     assertEquals(INTERNAL, status.getModificationType())
   }
 
@@ -134,25 +145,30 @@ class ProjectStatusTest {
   fun `test tracking status after failed import`() {
     val status = ProjectStatus()
 
-    status.markModified(10, INTERNAL) as Modified
-    status.markSynchronized(20) as Synchronized
-    status.markBroken(30) as Broken
+    status.markModified(Stamp.nextStamp(), INTERNAL) as Modified
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
+    status.markBroken(Stamp.nextStamp()) as Broken
 
     assertFalse(status.isUpToDate())
     assertFalse(status.isDirty())
 
-    status.markModified(40) as Dirty
-    status.markReverted(50) as Dirty
-    status.markSynchronized(60) as Synchronized
-    status.markBroken(70) as Broken
+    status.markModified(Stamp.nextStamp()) as Dirty
+    status.markReverted(Stamp.nextStamp()) as Dirty
+    status.markSynchronized(Stamp.nextStamp()) as Synchronized
+    status.markBroken(Stamp.nextStamp()) as Broken
 
     assertFalse(status.isUpToDate())
     assertFalse(status.isDirty())
 
-    status.markReverted(80) as Broken
-    status.markSynchronized(90) as Synchronized
-    status.markModified(110) as Modified
-    status.markBroken(100) as Dirty
+    val stamp1 = Stamp.nextStamp()
+    val stamp2 = Stamp.nextStamp()
+    val stamp3 = Stamp.nextStamp()
+    val stamp4 = Stamp.nextStamp()
+
+    status.markReverted(stamp1) as Broken
+    status.markSynchronized(stamp2) as Synchronized
+    status.markModified(stamp4) as Modified
+    status.markBroken(stamp3) as Dirty
 
     assertFalse(status.isUpToDate())
     assertTrue(status.isDirty())

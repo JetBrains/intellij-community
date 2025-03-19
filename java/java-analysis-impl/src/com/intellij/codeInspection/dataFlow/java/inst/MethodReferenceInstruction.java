@@ -10,6 +10,8 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceRetur
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -39,6 +41,7 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
     return nextStates(interpreter, stateBefore);
   }
 
+  @Override
   public String toString() {
     return "METHOD_REF: " + getDfaAnchor();
   }
@@ -61,9 +64,25 @@ public class MethodReferenceInstruction extends ExpressionPushingInstruction {
                                           NullabilityProblemKind.callMethodRefNPE.problem(methodRef, null));
     }
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
-    if (contracts.isEmpty() || !JavaMethodContractUtil.isPure(method)) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
-    DfaValue defaultResult = interpreter.getFactory().fromDfType(typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method)));
+    DfType dfType;
+    if (method.isConstructor()) {
+      PsiClass containingClass = method.getContainingClass();
+      if (containingClass != null) {
+        dfType = TypeConstraints.exactClass(containingClass).asDfType().meet(DfTypes.NOT_NULL_OBJECT);
+      } else {
+        dfType = DfTypes.NOT_NULL_OBJECT;
+      }
+    } else {
+      dfType = typedObject(returnType, DfaPsiUtil.getElementNullability(returnType, method));
+    }
+    DfaValue defaultResult = interpreter.getFactory().fromDfType(dfType);
+    Nullability expectedNullability = DfaPsiUtil.getTypeNullability(LambdaUtil.getFunctionalInterfaceReturnType(methodRef));
+    if (expectedNullability == Nullability.NOT_NULL) {
+      CheckNotNullInstruction.checkNotNullable(interpreter, state, defaultResult, 
+                                               NullabilityProblemKind.nullableFunctionReturn.problem(methodRef, null));
+    }
+    if (contracts.isEmpty() || !JavaMethodContractUtil.isPure(method)) return;
     Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments, defaultResult));
     JavaMethodReferenceReturnAnchor anchor = new JavaMethodReferenceReturnAnchor(methodRef);
     DfaValue[] args = callArguments.toArray();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -17,12 +17,14 @@ import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaVersionConverter;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +37,7 @@ import java.util.regex.Pattern;
 
 @Tag("SchemaInfo")
 public final class UserDefinedJsonSchemaConfiguration {
-  private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
+  private static final Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
     if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
     if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
@@ -44,7 +46,8 @@ public final class UserDefinedJsonSchemaConfiguration {
   private @Nls String name;
   private @Nullable @Nls String generatedName;
   public String relativePathToSchema;
-  public JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
+  @OptionTag(converter = JsonSchemaVersionConverter.class)
+  public @NotNull JsonSchemaVersion schemaVersion = JsonSchemaVersion.SCHEMA_4;
   public boolean applicationDefined;
   public List<Item> patterns = new SmartList<>();
   public boolean isIgnoredFile = false;
@@ -56,13 +59,13 @@ public final class UserDefinedJsonSchemaConfiguration {
   }
 
   public UserDefinedJsonSchemaConfiguration(@NotNull @NlsSafe String name,
-                                            JsonSchemaVersion schemaVersion,
+                                            @Nullable JsonSchemaVersion schemaVersion,
                                             @NotNull String relativePathToSchema,
                                             boolean applicationDefined,
                                             @Nullable List<Item> patterns) {
     this.name = name;
     this.relativePathToSchema = relativePathToSchema;
-    this.schemaVersion = schemaVersion;
+    this.schemaVersion = schemaVersion == null ? JsonSchemaVersion.SCHEMA_4 : schemaVersion;
     this.applicationDefined = applicationDefined;
     setPatterns(patterns);
   }
@@ -95,12 +98,12 @@ public final class UserDefinedJsonSchemaConfiguration {
     return Item.normalizePath(relativePathToSchema);
   }
 
-  public JsonSchemaVersion getSchemaVersion() {
+  public @NotNull JsonSchemaVersion getSchemaVersion() {
     return schemaVersion;
   }
 
   public void setSchemaVersion(JsonSchemaVersion schemaVersion) {
-    this.schemaVersion = schemaVersion;
+    this.schemaVersion = schemaVersion == null ? JsonSchemaVersion.SCHEMA_4 : schemaVersion;
   }
 
   public void setRelativePathToSchema(String relativePathToSchema) {
@@ -130,8 +133,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     myCalculatedPatterns.drop();
   }
 
-  @NotNull
-  public List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
+  public @NotNull List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
     return myCalculatedPatterns.getValue();
   }
 
@@ -148,7 +150,7 @@ public final class UserDefinedJsonSchemaConfiguration {
                                   : pathText.indexOf('/') >= 0
                                     ? PatternUtil.compileSafe(".*/" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
                                     : PatternUtil.fromMask(pathText);
-          result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
+          result.add((project, file) -> JsonSchemaObjectReadingUtils.matchPattern(pattern, pathText.indexOf('/') >= 0
                                                                                ? file.getPath()
                                                                                : file.getName()));
         }
@@ -163,8 +165,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile getRelativeFile(@NotNull final Project project, @NotNull final Item pattern) {
+  private static @Nullable VirtualFile getRelativeFile(final @NotNull Project project, final @NotNull Item pattern) {
     if (project.getBasePath() == null) {
       return null;
     }
@@ -179,8 +180,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     }
   }
 
-  @NotNull
-  private static List<String> pathToPartsList(@NotNull String path) {
+  private static @NotNull List<String> pathToPartsList(@NotNull String path) {
     return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
   }
 
@@ -214,7 +214,7 @@ public final class UserDefinedJsonSchemaConfiguration {
   }
 
 
-  public static class Item {
+  public static final class Item {
     public String path;
     public JsonMappingKind mappingKind = JsonMappingKind.File;
 
@@ -231,8 +231,7 @@ public final class UserDefinedJsonSchemaConfiguration {
       this.mappingKind = isPattern ? JsonMappingKind.Pattern : isDirectory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
-    @NotNull
-    private static String normalizePath(@NotNull String path) {
+    private static @NotNull String normalizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemDependentName(path), File.separatorChar);
     }
@@ -245,8 +244,7 @@ public final class UserDefinedJsonSchemaConfiguration {
              || JsonFileResolver.isTempOrMockUrl(path);
     }
 
-    @NotNull
-    public static String neutralizePath(@NotNull String path) {
+    public static @NotNull String neutralizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }

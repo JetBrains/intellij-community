@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -21,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class ReadWriteAccessDetector {
   public static final ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
 
-  @Nullable
-  public static ReadWriteAccessDetector findDetector(@NotNull PsiElement element) {
+  public static @Nullable ReadWriteAccessDetector findDetector(@NotNull PsiElement element) {
     ReadWriteAccessDetector detector = null;
     for(ReadWriteAccessDetector accessDetector: EP_NAME.getExtensionList()) {
       if (accessDetector.isReadWriteAccessible(element)) {
@@ -45,8 +44,6 @@ public abstract class ReadWriteAccessDetector {
 
   public abstract boolean isReadWriteAccessible(@NotNull PsiElement element);
   public abstract boolean isDeclarationWriteAccess(@NotNull PsiElement element);
-  @NotNull
-  public abstract Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference);
-  @NotNull
-  public abstract Access getExpressionAccess(@NotNull PsiElement expression);
+  public abstract @NotNull Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference);
+  public abstract @NotNull Access getExpressionAccess(@NotNull PsiElement expression);
 }

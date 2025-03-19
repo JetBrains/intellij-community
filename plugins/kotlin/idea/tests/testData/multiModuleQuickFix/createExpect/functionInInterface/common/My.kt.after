@@ -1,4 +1,5 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
+
 
 expect interface My {
     fun foo(param: String)

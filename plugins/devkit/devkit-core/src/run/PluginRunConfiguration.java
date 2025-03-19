@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -12,9 +12,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -46,13 +47,14 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
+import static org.jetbrains.idea.devkit.run.ProductInfoKt.resolveIdeHomeVariable;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-
-  private static final Logger LOG = Logger.getInstance(PluginRunConfiguration.class);
 
   private static final String NAME = "name";
   private static final String MODULE = "module";
@@ -60,8 +62,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   private static final String PATH = "path";
   private static final String ALTERNATIVE_PATH_ENABLED_ATTR = "alternative-path-enabled";
 
-  private Module myModule;
-  private String myModuleName;
+  private @Nullable ModulePointer myModulePointer;
 
   public String VM_PARAMETERS;
   public String PROGRAM_PARAMETERS;
@@ -149,14 +150,14 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
           else {
             try {
-              usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+              usedIdeaJdk = usedIdeaJdk.clone();
             }
             catch (CloneNotSupportedException e) {
               throw new ExecutionException(e.getMessage());
             }
             final SdkModificator sdkToSetUp = usedIdeaJdk.getSdkModificator();
             sdkToSetUp.setHomePath(alternativeIdePath);
-            sdkToSetUp.commitChanges();
+            ApplicationManager.getApplication().runWriteAction(sdkToSetUp::commitChanges);
           }
         }
         String ideaJdkHome = usedIdeaJdk.getHomePath();
@@ -168,9 +169,6 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         vm.defineProperty(PathManager.PROPERTY_SYSTEM_PATH, canonicalSandbox + File.separator + "system");
         vm.defineProperty(PathManager.PROPERTY_PLUGINS_PATH, canonicalSandbox + File.separator + "plugins");
 
-        if (!vm.hasProperty("idea.classpath.index.enabled")) {
-          vm.defineProperty("idea.classpath.index.enabled", "false");
-        }
         if (!vm.hasProperty("jdk.module.illegalAccess.silent")) {
           vm.defineProperty("jdk.module.illegalAccess.silent", "true");
         }
@@ -178,8 +176,10 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         // use product-info.json values if found, otherwise fallback to defaults
         ProductInfo productInfo = ProductInfoKt.loadProductInfo(ideaJdkHome);
 
-        if (productInfo != null && !productInfo.getAdditionalJvmArguments().isEmpty()) {
-          productInfo.getAdditionalJvmArguments().forEach(vm::add);
+        if (productInfo != null && !productInfo.getCurrentLaunch().getAdditionalJvmArguments().isEmpty()) {
+          productInfo.getCurrentLaunch().getAdditionalJvmArguments().forEach(item -> {
+            vm.add(resolveIdeHomeVariable(item, ideaJdkHome));
+          });
         }
         else {
           String buildNumber = IdeaJdk.getBuildNumber(ideaJdkHome);
@@ -205,7 +205,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           Sdk internalJavaSdk = ObjectUtils.chooseNotNull(IdeaJdk.getInternalJavaSdk(usedIdeaJdk), usedIdeaJdk);
           var sdkVersion = ((JavaSdk)internalJavaSdk.getSdkType()).getVersion(jdk);
           if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
-            try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("OpenedPackages.txt")) {
+            try (InputStream stream = PluginRunConfiguration.class.getResourceAsStream("/META-INF/OpenedPackages.txt")) {
               assert stream != null;
               JavaModuleOptions.readOptions(stream, OS.CURRENT).forEach(vm::add);
             }
@@ -223,11 +223,10 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isMac) {
-          vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
-        if (SystemInfo.isXWindow) {
+        if (SystemInfo.isUnix && !SystemInfo.isMac) {
           if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
@@ -251,6 +250,12 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           for (String path : getJarFileNames(productInfo)) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
+
+          if (productInfo != null) {
+            for (String moduleJarPath : productInfo.getProductModuleJarPaths()) {
+              params.getClassPath().add(ideaJdkHome + FileUtil.toSystemIndependentName("/" + moduleJarPath));
+            }
+          }
         }
         params.getClassPath().addFirst(((JavaSdkType)usedIdeaJdk.getSdkType()).getToolsPath(usedIdeaJdk));
 
@@ -260,8 +265,15 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
       }
 
       private static List<String> getJarFileNames(@Nullable ProductInfo productInfo) {
-        if (productInfo != null && !productInfo.getBootClassPathJarNames().isEmpty()) {
-          return productInfo.getBootClassPathJarNames();
+        if (productInfo != null) {
+          List<String> bootClassPathJarNames = productInfo.getCurrentLaunch().getBootClassPathJarNames();
+          List<String> additionalJarNames = List.of("nio-fs.jar");  // See IJPL-176801
+          if (!bootClassPathJarNames.isEmpty()) {
+            Set<String> result = new HashSet<>();
+            result.addAll(bootClassPathJarNames);
+            result.addAll(additionalJarNames);
+            return List.copyOf(result);
+          }
         }
 
         return List.of(
@@ -293,7 +305,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
     if (value == null) return;
 
     for (String parameter : value.split(" ")) {
-      if (parameter != null && parameter.length() > 0) {
+      if (!parameter.isEmpty()) {
         list.add(parameter);
       }
     }
@@ -329,7 +341,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     Element module = element.getChild(MODULE);
     if (module != null) {
-      myModuleName = module.getAttributeValue(NAME);
+      String moduleName = module.getAttributeValue(NAME);
+      myModulePointer = ModulePointerManager.getInstance(getProject()).create(moduleName);
     }
     DefaultJDOMExternalizer.readExternal(this, element);
     final Element altElement = element.getChild(ALTERNATIVE_PATH_ELEMENT);
@@ -347,14 +360,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     Element moduleElement = new Element(MODULE);
-    moduleElement.setAttribute(NAME, ApplicationManager.getApplication().runReadAction(new Computable<>() {
-      @Override
-      public String compute() {
-        final Module module = getModule();
-        return module != null ? module.getName()
-                              : myModuleName != null ? myModuleName : "";
-      }
-    }));
+    String moduleName = myModulePointer != null ? myModulePointer.getModuleName() : "";
+    moduleElement.setAttribute(NAME, moduleName);
     element.addContent(moduleElement);
     DefaultJDOMExternalizer.writeExternal(this, element);
     if (!StringUtil.isEmptyOrSpaces(ALTERNATIVE_JRE_PATH)) {
@@ -367,17 +374,15 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
   }
 
   public @Nullable Module getModule() {
-    if (myModule == null && myModuleName != null && !getProject().isDisposed()) {
-      myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
+    if (myModulePointer != null) {
+      return myModulePointer.getModule();
     }
-    if (myModule != null && myModule.isDisposed()) {
-      myModule = null;
-    }
-    return myModule;
+
+    return null;
   }
 
   public void setModule(Module module) {
-    myModule = module;
+    myModulePointer = ModulePointerManager.getInstance(getProject()).create(module);
   }
 
   private static @Nullable String getPluginId(Module plugin) {

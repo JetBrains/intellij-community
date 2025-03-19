@@ -18,7 +18,7 @@ class DvcsBranchSyncPolicyUpdateNotifier<Repo : Repository>(
   private val project: Project,
   private val vcs: AbstractVcs,
   private val dvcsSyncSettings: DvcsSyncSettings,
-  private val repositoryManager: AbstractRepositoryManager<Repo>
+  private val repositoryManager: AbstractRepositoryManager<Repo>,
 ) {
 
   fun initBranchSyncPolicyIfNotInitialized() {
@@ -35,7 +35,7 @@ class DvcsBranchSyncPolicyUpdateNotifier<Repo : Repository>(
 
   private fun notifyAboutSyncedBranches() {
     VcsNotifier.getInstance(project).notify(
-      VcsNotifier.STANDARD_NOTIFICATION
+      VcsNotifier.standardNotification()
         .createNotification(DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"),
                             NotificationType.INFORMATION)
         .setDisplayId(DvcsNotificationIdsHolder.BRANCH_OPERATIONS_ON_ALL_ROOTS)

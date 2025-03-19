@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -26,8 +26,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.ui.UIBundle;
+import com.intellij.testFramework.TestObservation;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -46,14 +48,15 @@ import java.util.function.Supplier;
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends HeavyPlatformTestCase {
   protected static final String DEFAULT_SDK = "default";
   protected T myWizard;
-  @Nullable
-  private Project myCreatedProject;
+  private @Nullable Project myCreatedProject;
   private Sdk myOldDefaultProjectSdk;
+  private File contentRoot;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
+    contentRoot = createTempDirectoryWithSuffix("new").toFile();
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     myOldDefaultProjectSdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
@@ -108,16 +111,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     myWizard = wizard;
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster)
-    throws IOException {
-    return createProject(step -> {
-      setSelectedTemplate(step, group, name);
-      if (adjuster != null) {
-        adjuster.accept(step);
-      }
-    });
-  }
-
   private Project createProjectFromWizard() {
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
@@ -129,52 +122,38 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
-
-    UIUtil.dispatchAllInvocationEvents();
-
+    waitForConfiguration(myCreatedProject);
     return myCreatedProject;
-  }
-
-  protected Project getCreatedProject() {
-    return myCreatedProject;
-  }
-
-  protected @Nullable Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
-    throws IOException {
-    return createModule(project, step -> {
-      setSelectedTemplate(step, group, name);
-      if (adjuster != null) {
-        adjuster.accept(step);
-      }
-    });
   }
 
   private Module createModuleFromWizard(@NotNull Project project) {
-    return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+    Module createdModule = new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+    waitForConfiguration(project);
+    return createdModule;
+  }
+
+  protected void waitForConfiguration(@NotNull Project project) {
+    UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project);
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
-    if (step instanceof ProjectTypeStep projectTypeStep && !projectTypeStep.setSelectedTemplate(group, name)) {
+    var projectTypeStep = assertInstanceOf(step, ProjectTypeStep.class);
+    if (!projectTypeStep.setSelectedTemplate(group, name)) {
       throw new IllegalArgumentException(
         group + '/' + name + " template not found. " +
         "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
       );
     }
-    if (step instanceof ChooseTemplateStep) {
-      if (name != null) {
-        ChooseTemplateStep chooseTemplateStep = (ChooseTemplateStep)step;
-        if (!chooseTemplateStep.setSelectedTemplate(name)) {
-          throw new IllegalArgumentException(
-            group + '/' + name + " template not found. " +
-            "Available groups: " + chooseTemplateStep.getTemplateList().availableProjectTemplatesToString()
-          );
-        }
-      }
-    }
   }
 
-  protected void cancelWizardRun() {
-    throw new CancelWizardException();
+  private static void adjustSelectedStep(@NotNull Step step, @NotNull Consumer<? super NewProjectWizardStep> adjuster) {
+    var projectTypeStep = assertInstanceOf(step, ProjectTypeStep.class);
+    var moduleWizardStep = projectTypeStep.getCustomStep();
+    assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
+    var npwStep = (NewProjectWizardStep)moduleWizardStep;
+    adjuster.accept(npwStep);
   }
 
   private static class CancelWizardException extends RuntimeException {
@@ -205,9 +184,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
   }
 
-  protected void createWizard(@Nullable Project project) throws IOException {
-    setWizard(createWizard(project, createTempDirectoryWithSuffix("new").toFile()));
-    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
+  protected void createWizard(@Nullable Project project) {
+    setWizard(createWizard(project, contentRoot));
+    // to make default selection applied
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   protected Project createProject(Consumer<? super Step> adjuster) throws IOException {
@@ -217,16 +197,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return createProjectFromWizard();
   }
 
-  protected Project createProjectFromTemplate(@NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
-    return createProjectFromTemplate(UIBundle.message("label.project.wizard.project.generator.name"), adjuster);
-  }
-
-  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
-    return createProjectFromTemplate(group, null, step -> {
-      var npwStep = getNewProjectWizardStep(step);
-      if (npwStep != null) {
-        adjuster.accept(npwStep);
-      }
+  protected Project createProjectFromTemplate(
+    @NotNull String group,
+    @NotNull Consumer<? super NewProjectWizardStep> adjuster
+  ) throws IOException {
+    return createProject(step -> {
+      setSelectedTemplate(step, group, null);
+      adjustSelectedStep(step, adjuster);
     });
   }
 
@@ -237,30 +214,19 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     return createModuleFromWizard(project);
   }
 
-  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
-    return createModuleFromTemplate(project, UIBundle.message("label.project.wizard.module.generator.name"), adjuster);
-  }
-
   protected Module createModuleFromTemplate(
     @NotNull Project project,
     @NotNull String group,
     @NotNull Consumer<? super NewProjectWizardStep> adjuster
   ) throws IOException {
-    return createModuleFromTemplate(group, null, project, step -> {
-      var npwStep = getNewProjectWizardStep(step);
-      if (npwStep != null) {
-        adjuster.accept(npwStep);
-      }
+    return createModule(project, step -> {
+      setSelectedTemplate(step, group, null);
+      adjustSelectedStep(step, adjuster);
     });
   }
 
-  protected @Nullable NewProjectWizardStep getNewProjectWizardStep(@NotNull Step step) {
-    if (step instanceof ProjectTypeStep) {
-      var moduleWizardStep = ((ProjectTypeStep)step).getCustomStep();
-      assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
-      return (NewProjectWizardStep)moduleWizardStep;
-    }
-    return null;
+  protected File getContentRoot() {
+    return contentRoot;
   }
 
   protected T createWizard(Project project, File directory) {

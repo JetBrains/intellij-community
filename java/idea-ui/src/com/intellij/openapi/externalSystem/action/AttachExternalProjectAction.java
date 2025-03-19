@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.actions.ImportModuleAction;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -93,12 +95,14 @@ public final class AttachExternalProjectAction extends DumbAwareAction {
     @NotNull Project project,
     @NotNull ProjectSystemId externalSystemId
   ) {
-    ExternalSystemUnlinkedProjectAware unlinkedProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(externalSystemId);
+    var unlinkedProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(externalSystemId);
     if (unlinkedProjectAware == null) {
       return manager.getExternalProjectDescriptor();
     }
-    return new FileChooserDescriptor(true, true, false, false, false, false)
-      .withFileFilter(virtualFile -> unlinkedProjectAware.isBuildFile(project, virtualFile));
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withFileFilter(file -> unlinkedProjectAware.isBuildFile(project, file));
+    var extensions = unlinkedProjectAware.buildFileExtensions();
+    return extensions.length == 0 ? descriptor : descriptor.withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", unlinkedProjectAware.getSystemId().getReadableName()), extensions);
   }
 
   private static Predicate<VirtualFile> getSelectedFileValidator(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {

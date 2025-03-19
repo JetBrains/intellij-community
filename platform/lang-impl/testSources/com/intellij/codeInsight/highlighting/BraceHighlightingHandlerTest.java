@@ -3,7 +3,6 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -35,7 +34,7 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
 
   @Nullable
   @Override
-  public String getFileSuffix(String fileName) {
+  public String getFileSuffix(@NotNull String fileName) {
     return StringUtil.endsWith(fileName, ".txt") ? null : fileName;
   }
 

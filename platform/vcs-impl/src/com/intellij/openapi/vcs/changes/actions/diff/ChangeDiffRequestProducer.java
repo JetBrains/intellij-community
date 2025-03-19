@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.*;
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.diff.impl.DiffTitleWithDetailsCustomizers;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeUtils;
@@ -42,13 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-import static com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR;
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDiffRequestChain.Producer {
   private static final Logger LOG = Logger.getInstance(ChangeDiffRequestProducer.class);
@@ -215,7 +213,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
         }
       }
       if (request == null) {
-        request = createRequest(myProject, myChange, context, indicator);
+        request = createRequest(context, indicator);
       }
     }
     catch (DiffRequestProducerException e) {
@@ -237,33 +235,45 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     request.putUserData(CHANGE_KEY, myChange);
     request.putUserData(DiffViewerWrapper.KEY, wrapper);
 
-    for (Map.Entry<Key<?>, Object> entry : myChangeContext.entrySet()) {
-      //noinspection unchecked,rawtypes
-      request.putUserData((Key)entry.getKey(), entry.getValue());
-    }
+    propagateChangeContext(request);
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_CHANGE, myChange);
 
     return request;
   }
 
-  private @NotNull DiffRequest createRequest(@Nullable Project project,
-                                             @NotNull Change change,
-                                             @NotNull UserDataHolder context,
+  private void propagateChangeContext(@NotNull UserDataHolder target) {
+    for (Map.Entry<Key<?>, Object> entry : myChangeContext.entrySet()) {
+      //noinspection unchecked,rawtypes
+      target.putUserData((Key)entry.getKey(), entry.getValue());
+    }
+  }
+
+  private @NotNull DiffRequest createRequest(@NotNull UserDataHolder context,
                                              @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
-    if (ChangesUtil.isTextConflictingChange(change)) { // three side diff
-      return createMergeRequest(project, change, context);
+    if (ChangesUtil.isTextConflictingChange(myChange)) { // three side diff
+      return createMergeRequest(myProject, indicator, myChange, context);
     }
 
-    SimpleDiffRequest request = createSimpleRequest(project, change, context, indicator);
+    SimpleDiffRequest request = createSimpleRequest(myProject, myChange, context, indicator);
+    DiffUtil.addTitleCustomizers(request, createTitleCustomizers());
 
-    DiffRequest localRequest = createLocalChangeListRequest(project, change, request);
+    DiffRequest localRequest = createLocalChangeListRequest(myProject, myChange, request);
     if (localRequest != null) return localRequest;
 
     return request;
   }
 
+  private @NotNull List<DiffEditorTitleCustomizer> createTitleCustomizers() {
+    return DiffTitleWithDetailsCustomizers.getTitleCustomizers(myProject, myChange,
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE),
+                                                               (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE)
+    );
+  }
+
+  @SuppressWarnings("unchecked")
   private static @NotNull DiffRequest createMergeRequest(@Nullable Project project,
+                                                         @NotNull ProgressIndicator indicator,
                                                          @NotNull Change change,
                                                          @NotNull UserDataHolder context) throws DiffRequestProducerException {
     FilePath path = ChangesUtil.getFilePath(change);
@@ -291,17 +301,15 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
       String title = DiffRequestFactory.getInstance().getTitle(file);
       List<String> titles = Arrays.asList(beforeRevisionTitle, getBaseVersion(), afterRevisionTitle);
 
-      DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-      List<DiffContent> contents = Arrays.asList(contentFactory.createFromBytes(project, mergeData.CURRENT, file),
-                                                 contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
-                                                 contentFactory.createFromBytes(project, mergeData.LAST, file));
+      List<byte[]> byteContents = Arrays.asList(mergeData.CURRENT, mergeData.ORIGINAL, mergeData.LAST);
+      List<DocumentContent> contents = DiffUtil.getDocumentContentsForViewer(project, byteContents, file, mergeData.CONFLICT_TYPE);
 
-      SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
+      SimpleDiffRequest request = new SimpleDiffRequest(title, new ArrayList<>(contents), titles);
       MergeUtils.putRevisionInfos(request, mergeData);
 
       return request;
     }
-    catch (VcsException | IOException e) {
+    catch (VcsException e) {
       LOG.info(e);
       throw new DiffRequestProducerException(e);
     }
@@ -321,7 +329,8 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (bRev != null) checkContentRevision(project, bRev, context, indicator);
     if (aRev != null) checkContentRevision(project, aRev, context, indicator);
 
-    String title = getRequestTitle(change);
+    final String editorTabTitle = (String)myChangeContext.get(DiffUserDataKeysEx.VCS_DIFF_EDITOR_TAB_TITLE);
+    String title = editorTabTitle == null ? getRequestTitle(change) : editorTabTitle;
 
     indicator.setIndeterminate(true);
     DiffContent content1 = createContent(project, bRev, context, indicator);
@@ -366,15 +375,22 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   public static @NotNull @Nls String getRequestTitle(@NotNull Change change) {
     FilePath bPath = ChangesUtil.getBeforePath(change);
     FilePath aPath = ChangesUtil.getAfterPath(change);
-    return DiffRequestFactoryImpl.getTitle(bPath, aPath, DIFF_TITLE_RENAME_SEPARATOR);
+    return DiffRequestFactory.getInstance().getTitleForModification(bPath, aPath);
   }
 
   public static @NotNull @Nls String getRevisionTitle(@Nullable ContentRevision revision, @NotNull @Nls String defaultValue) {
-    if (revision == null) {
-      return defaultValue;
-    }
-    String title = revision.getRevisionNumber().asString();
+    String title = getRevisionTitleOrEmpty(revision);
     return title.isEmpty() ? defaultValue : title;
+  }
+
+  public static @NotNull @Nls String getRevisionTitleOrEmpty(@Nullable ContentRevision revision) {
+    if (revision instanceof CurrentContentRevision) {
+      return DiffBundle.message("merge.version.title.current");
+    } else if (revision == null) {
+      return "";
+    } else {
+      return getShortRevisionString(revision.getRevisionNumber());
+    }
   }
 
   public static @NotNull DiffContent createContent(@Nullable Project project,
@@ -445,23 +461,19 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     return hashCode(myChange);
   }
 
-  @Nls
-  public static String getYourVersion() {
+  public static @Nls String getYourVersion() {
     return DiffBundle.message("merge.version.title.our");
   }
 
-  @Nls
-  public static String getServerVersion() {
+  public static @Nls String getServerVersion() {
     return DiffBundle.message("merge.version.title.their");
   }
 
-  @Nls
-  public static String getBaseVersion() {
+  public static @Nls String getBaseVersion() {
     return DiffBundle.message("merge.version.title.base");
   }
 
-  @Nls
-  public static String getMergedVersion() {
+  public static @Nls String getMergedVersion() {
     return DiffBundle.message("merge.version.title.merged");
   }
 }

@@ -31,7 +31,7 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author Mikhail Golubev
  */
-public class DocStringSectionHeaderCompletionContributor extends CompletionContributor implements DumbAware {
+public final class DocStringSectionHeaderCompletionContributor extends CompletionContributor implements DumbAware {
   public DocStringSectionHeaderCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().withParent(DocStringTagCompletionContributor.DOCSTRING_PATTERN),
            new CompletionProvider<>() {
@@ -43,7 +43,7 @@ public class DocStringSectionHeaderCompletionContributor extends CompletionContr
                final PsiElement stringNode = parameters.getOriginalPosition();
                assert stringNode != null;
                final int offset = parameters.getOffset();
-               final DocStringFormat format = DocStringUtil.getConfiguredDocStringFormat(file);
+               final DocStringFormat format = DocStringParser.getConfiguredDocStringFormat(file);
                if (!(format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY)) {
                  return;
                }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -75,19 +75,6 @@ public interface ChangelistBuilder {
    */
   void processModifiedWithoutCheckout(VirtualFile file);
 
-  /**
-   * Process the file that is ignored by the version control.
-   *
-   * @param file an ignored file
-   * @deprecated use {@link #processIgnoredFile(FilePath)} instead
-   */
-  @Deprecated(forRemoval = true)
-  default void processIgnoredFile(VirtualFile file) {
-    if (file != null) {
-      processIgnoredFile(VcsUtil.getFilePath(file));
-    }
-  }
-
   void processIgnoredFile(FilePath filePath);
 
   /**
@@ -114,7 +101,7 @@ public interface ChangelistBuilder {
 
   boolean reportChangesOutsideProject();
 
-  void reportAdditionalInfo(@NlsContexts.Label final String text);
+  void reportAdditionalInfo(final @NlsContexts.Label String text);
 
-  void reportAdditionalInfo(final Factory<JComponent> infoComponent);
+  void reportAdditionalInfo(@NotNull Factory<@Nullable JComponent> infoComponent);
 }

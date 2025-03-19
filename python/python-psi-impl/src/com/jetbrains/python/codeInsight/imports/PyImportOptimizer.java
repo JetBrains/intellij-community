@@ -27,6 +27,7 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.inspections.unresolvedReference.SimplePyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +38,13 @@ import java.util.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyImportOptimizer implements ImportOptimizer {
+public final class PyImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
   private static final Set<JavaResourceRootType> TEST_RESOURCE_ROOT_TYPES = Set.of(JavaResourceRootType.TEST_RESOURCE);
 
   private boolean mySortImports = true;
 
-  @NotNull
-  public static PyImportOptimizer onlyRemoveUnused() {
+  public static @NotNull PyImportOptimizer onlyRemoveUnused() {
     final PyImportOptimizer optimizer = new PyImportOptimizer();
     optimizer.mySortImports = false;
     return optimizer;
@@ -56,8 +56,7 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   @Override
-  @NotNull
-  public Runnable processFile(@NotNull final PsiFile file) {
+  public @NotNull Runnable processFile(final @NotNull PsiFile file) {
     if (isInsideTestResourceRoot(file)) {
       return EmptyRunnable.INSTANCE;
     }
@@ -80,7 +79,9 @@ public class PyImportOptimizer implements ImportOptimizer {
     TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), rfile);
 
     SimplePyUnresolvedReferencesInspection inspection = new SimplePyUnresolvedReferencesInspection();
-    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(null, inspection, context);
+    final PyUnresolvedReferencesVisitor visitor = new SimplePyUnresolvedReferencesInspection.Visitor(
+      null, inspection, context, PythonLanguageLevelPusher.getLanguageLevelForFile(file)
+    );
     file.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement node) {
@@ -124,8 +125,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       myLangLevel = LanguageLevel.forElement(myFile);
     }
 
-    @NotNull
-    private Comparator<PyImportElement> getFromNamesComparator() {
+    private @NotNull Comparator<PyImportElement> getFromNamesComparator() {
       final Comparator<String> stringComparator = AddImportHelper.getImportTextComparator(myFile);
       final Comparator<QualifiedName> qNamesComparator = Comparator.comparing(QualifiedName::toString, stringComparator);
       return Comparator
@@ -175,8 +175,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
     }
 
-    @NotNull
-    private List<PyImportStatementBase> transformImportsInGroup(@NotNull List<PyImportStatementBase> imports) {
+    private @NotNull List<PyImportStatementBase> transformImportsInGroup(@NotNull List<PyImportStatementBase> imports) {
       final List<PyImportStatementBase> result = new ArrayList<>();
 
       for (PyImportStatementBase statement : imports) {
@@ -298,14 +297,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       result.add(oldImport);
     }
 
-    @NotNull
-    private static String getNormalizedImportElementText(@NotNull PyImportElement element) {
+    private static @NotNull String getNormalizedImportElementText(@NotNull PyImportElement element) {
       // Remove comments, line feeds and backslashes
       return element.getText().replaceAll("#.*", "").replaceAll("[\\s\\\\]+", " ");
     }
 
-    @NotNull
-    private static Couple<List<PsiComment>> collectPrecedingLineComments(@NotNull PyImportStatementBase statement) {
+    private static @NotNull Couple<List<PsiComment>> collectPrecedingLineComments(@NotNull PyImportStatementBase statement) {
       final List<PsiComment> boundComments = PyPsiUtils.getPrecedingComments(statement, true);
       final PsiComment firstComment = ContainerUtil.getFirstItem(boundComments);
       if (firstComment != null && isFirstInFile(firstComment)) {
@@ -322,8 +319,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       return prevWhitespace != null && prevWhitespace.getTextRange().getStartOffset() == 0;
     }
 
-    @NotNull
-    public static String getNormalizedFromImportSource(@NotNull PyFromImportStatement statement) {
+    public static @NotNull String getNormalizedFromImportSource(@NotNull PyFromImportStatement statement) {
       return StringUtil.repeatSymbol('.', statement.getRelativeLevel()) + Objects.toString(statement.getImportSourceQName(), "");
     }
 
@@ -361,7 +357,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       final StringBuilder content = new StringBuilder();
 
       for (List<PyImportStatementBase> imports : myGroups.values()) {
-        if (content.length() > 0 && !imports.isEmpty()) {
+        if (!content.isEmpty() && !imports.isEmpty()) {
           // one extra blank line between import groups according to PEP 8
           content.append("\n");
         }

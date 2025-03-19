@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.convertModulePackage;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -33,9 +34,8 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
     return false;
   }
 
-  @Nullable
   @Override
-  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new RefactoringActionHandler() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
@@ -50,7 +50,7 @@ public class PyConvertModuleToPackageAction extends PyBaseConvertModulePackageAc
   }
 
   @VisibleForTesting
-  public void createPackageFromModule(@NotNull final PyFile file) {
+  public void createPackageFromModule(final @NotNull PyFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     final VirtualFile parentDir = vFile.getParent();
     final String newPackageName = vFile.getNameWithoutExtension();

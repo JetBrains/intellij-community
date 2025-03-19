@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.lang.Language;
@@ -57,9 +57,8 @@ class FileLanguageGlobalScope extends DelegatingGlobalSearchScope {
     }
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
+  public @NotNull GlobalSearchScope intersectWith(@NotNull GlobalSearchScope scope) {
     if (scope instanceof FileLanguageGlobalScope) {
       FileLanguageGlobalScope other = (FileLanguageGlobalScope)scope;
       if (myBaseScope == other.myBaseScope) {
@@ -75,9 +74,8 @@ class FileLanguageGlobalScope extends DelegatingGlobalSearchScope {
     return super.intersectWith(scope);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+  public @NotNull GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
     if (scope instanceof FileLanguageGlobalScope) {
       FileLanguageGlobalScope other = (FileLanguageGlobalScope)scope;
       if (myBaseScope == other.myBaseScope) {

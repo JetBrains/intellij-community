@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// IGNORE_FE10
+// IGNORE_K1
 // AFTER-WARNING: Variable 'i' is never used
 fun test() {
     var i: <caret>Int? = 1

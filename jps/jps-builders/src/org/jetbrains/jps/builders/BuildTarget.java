@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -32,7 +19,7 @@ import java.util.List;
 /**
  * A single unit of the compilation process of a specific project. Has a number of inputs (individual files or directories with
  * filter support). Places its output in a specific set of output roots. Can have dependencies on other build targets.
- * E.g. any Java module has two build targets: production output and test output. Custom build targets (not based on a module)
+ * E.g., any Java module has two build targets: production output and test output. Custom build targets (not based on a module)
  * cannot have cyclic dependencies on each other.
  * <p>
  * When parallel compilation is enabled, build targets that don't have any dependencies on each other may be built at the same
@@ -41,8 +28,7 @@ import java.util.List;
  * @see BuildTargetType
  */
 public abstract class BuildTarget<R extends BuildRootDescriptor> {
-  @NotNull
-  private final BuildTargetType<? extends BuildTarget<R>> myTargetType;
+  private final @NotNull BuildTargetType<? extends BuildTarget<R>> myTargetType;
 
   protected BuildTarget(@NotNull BuildTargetType<? extends BuildTarget<R>> targetType) {
     myTargetType = targetType;
@@ -54,8 +40,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    */
   public abstract @NotNull String getId();
 
-  @NotNull
-  public final BuildTargetType<? extends BuildTarget<R>> getTargetType() {
+  public final @NotNull BuildTargetType<? extends BuildTarget<R>> getTargetType() {
     return myTargetType;
   }
 
@@ -70,27 +55,27 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
 
   /**
    * Allows the build target to tag the current project settings relevant to the build of this target
-   * (e.g the language level of a Java module) so that the target is fully recompiled when those settings
-   * change.
+   * (e.g., the language level of a Java module) so that the target is fully recompiled when those settings change.
    *
-   * @param pd  the complete state of a compilation invocation
+   * @param projectDescriptor  the complete state of a compilation invocation
    * @param out the print writer to which the project settings can be written (the settings are compared with the ones
    *            written during the invocation of the same method in a previous compilation).
    */
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor projectDescriptor, @NotNull PrintWriter out) {
   }
 
   /**
-   * Returns the list of root directories which contain input files for this target. The build process will track files under these root
-   * and pass modified and deleted files to the builders via {@link DirtyFilesHolder}.
+   * Returns the list of root directories which contain input files for this target.
+   * The build process will track files under these roots and pass modified and deleted files to the builders via {@link DirtyFilesHolder}.
    * @see AdditionalRootsProviderService
    * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
-  @NotNull
-  public abstract List<R> computeRootDescriptors(@NotNull JpsModel model,
-                                                 @NotNull ModuleExcludeIndex index,
-                                                 @NotNull IgnoredFileIndex ignoredFileIndex,
-                                                 @NotNull BuildDataPaths dataPaths);
+  public abstract @NotNull @Unmodifiable List<R> computeRootDescriptors(
+    @NotNull JpsModel model,
+    @NotNull ModuleExcludeIndex index,
+    @NotNull IgnoredFileIndex ignoredFileIndex,
+    @NotNull BuildDataPaths dataPaths
+  );
 
   /**
    * Finds a source root by its serialized ID.
@@ -99,22 +84,21 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param rootIndex the index of build roots.
    * @return the build root or null if no root with this ID exists.
    */
-  @Nullable
-  public abstract R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex);
+  public abstract @Nullable R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex);
 
-  @NotNull
-  public abstract String getPresentableName();
+  public abstract @NotNull String getPresentableName();
 
   /**
    * Returns the list of output directories in which this target is going to produce its output. (The specific
    * files produced need to be reported by {@link org.jetbrains.jps.incremental.TargetBuilder#build} through
-   *
+   * <p>
    * {@link BuildOutputConsumer#registerOutputFile}.)
    * @param context the compilation context.
    * @return the collection of output roots.
    */
-  @NotNull
-  public abstract Collection<File> getOutputRoots(@NotNull CompileContext context);
+  public @Unmodifiable @NotNull Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    return List.of();
+  }
 
   @Override
   public String toString() {

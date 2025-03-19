@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -7,17 +7,18 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 @SuppressWarnings("SameParameterValue")
 public final class LightEditSaveStatusIcon extends ColorIcon {
-  private final static int BASE_ICON_SIZE = 7;
+  private static final int BASE_ICON_SIZE = 7;
 
-  @SuppressWarnings("UseJBColor")
-  private final static Color DEFAULT_COLOR = new Color(0x4083c9);
+  @SuppressWarnings("UseJBColor") private static final Color DEFAULT_COLOR = new Color(0x4083c9);
 
   private LightEditSaveStatusIcon(@NotNull Color color) {
     super(BASE_ICON_SIZE, color);

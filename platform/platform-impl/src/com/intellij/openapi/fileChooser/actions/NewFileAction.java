@@ -32,7 +32,7 @@ import java.nio.file.StandardOpenOption;
 
 import static java.util.Objects.requireNonNullElse;
 
-class NewFileAction extends FileChooserAction implements LightEditCompatible {
+final class NewFileAction extends FileChooserAction implements LightEditCompatible {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     var visible = e.getData(FileChooserKeys.NEW_FILE_TYPE) != null;

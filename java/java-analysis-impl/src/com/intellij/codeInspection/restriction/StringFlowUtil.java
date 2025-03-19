@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -13,13 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
+import java.util.List;
+
 public final class StringFlowUtil {
 
   /**
    * Extracts return value without qualifier from getter-like method.
    */
-  @Nullable
-  public static UExpression getReturnValue(@NotNull UCallExpression call) {
+  public static @Nullable UExpression getReturnValue(@NotNull UCallExpression call) {
     PsiMethod psiMethod = call.resolve();
     UExpression returnValue = UastContextKt.toUElement(PropertyUtilBase.getGetterReturnExpression(psiMethod), UExpression.class);
     if (returnValue instanceof UQualifiedReferenceExpression) {
@@ -59,8 +60,9 @@ public final class StringFlowUtil {
       }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
       if (next == null || next instanceof UNamedExpression) return parent;
-      if (next instanceof USwitchClauseExpression) {
-        if (((USwitchClauseExpression)next).getCaseValues().contains(AnnotationContext.normalize(parent))) return parent;
+      if (next instanceof USwitchClauseExpression switchClause) {
+        List<UExpression> caseValues = ContainerUtil.map(switchClause.getCaseValues(), caseValue -> AnnotationContext.normalize(caseValue));
+        if (caseValues.contains(AnnotationContext.normalize(parent))) return parent;
         UExpressionList switchBody = ObjectUtils.tryCast(next.getUastParent(), UExpressionList.class);
         if (switchBody == null) return parent;
         USwitchExpression switchExpression = ObjectUtils.tryCast(switchBody.getUastParent(), USwitchExpression.class);
@@ -166,7 +168,7 @@ public final class StringFlowUtil {
         parameters = method.getParameterList().getParameters();
       }
       else {
-        PsiParameter parameter = AnnotationContext.getParameter(method, call, arg);
+        PsiParameter parameter = AnnotationContext.getParameter(call, arg);
         if (parameter == null) return false;
         PsiType parameterType = parameter.getType();
         PsiElement psi = call.getSourcePsi();

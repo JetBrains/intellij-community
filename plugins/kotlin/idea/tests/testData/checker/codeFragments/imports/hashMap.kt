@@ -3,3 +3,4 @@ fun foo() {
 }
 
 // IMPORT: java.util.HashMap
+// IGNORE_K2

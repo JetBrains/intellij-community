@@ -1,24 +1,30 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.noarg
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
-import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
 import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
 import org.jetbrains.kotlin.asJava.classes.KtUltraLightClass
 import org.jetbrains.kotlin.asJava.classes.createGeneratedMethodFromDescriptor
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
 import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
-import org.jetbrains.kotlin.noarg.AbstractNoArgExpressionCodegenExtension
-import org.jetbrains.kotlin.noarg.AbstractNoArgExpressionCodegenExtension.Companion.isZeroParameterConstructor
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
+import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.allConstructors
+import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
 import org.jetbrains.kotlin.util.isAnnotated
 import org.jetbrains.kotlin.util.isOrdinaryClass
 
-class NoArgUltraLightClassModifierExtension(project: Project) :
+@InternalIgnoreDependencyViolation
+private class NoArgUltraLightClassModifierExtension(project: Project) :
     AnnotationBasedExtension,
     UltraLightClassModifierExtension {
 
@@ -63,8 +69,28 @@ class NoArgUltraLightClassModifierExtension(project: Project) :
 
         if (classDescriptor.constructors.any { isZeroParameterConstructor(it) }) return
 
-        val constructorDescriptor = AbstractNoArgExpressionCodegenExtension.createNoArgConstructorDescriptor(classDescriptor)
+        val constructorDescriptor = createNoArgConstructorDescriptor(classDescriptor)
 
         methodsList.add(parentClass.createGeneratedMethodFromDescriptor(constructorDescriptor))
     }
+
+    private fun isZeroParameterConstructor(constructor: ClassConstructorDescriptor): Boolean {
+        val parameters = constructor.valueParameters
+        return parameters.isEmpty() ||
+               (parameters.all { it.declaresDefaultValue() } && (constructor.isPrimary || constructor.findJvmOverloadsAnnotation() != null))
+    }
+
+    private fun createNoArgConstructorDescriptor(containingClass: ClassDescriptor): ConstructorDescriptor =
+        ClassConstructorDescriptorImpl.createSynthesized(containingClass, Annotations.EMPTY, false, SourceElement.NO_SOURCE).apply {
+            initialize(
+                null,
+                calculateDispatchReceiverParameter(),
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                containingClass.builtIns.unitType,
+                Modality.OPEN,
+                DescriptorVisibilities.PUBLIC
+            )
+        }
 }

@@ -12,18 +12,23 @@ import org.jetbrains.uast.kotlin.internal.multiResolveResults
 @ApiStatus.Internal
 class KotlinDocUQualifiedReferenceExpression(
     override val sourcePsi: KDocName,
-    givenParent: UElement?
+    private val givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
 
-    override val receiver by lz {
-        baseResolveProviderService.baseKotlinConverter
-            .convertPsiElement(sourcePsi, givenParent, DEFAULT_EXPRESSION_TYPES_LIST) as? UExpression
-            ?: UastEmptyExpression(givenParent)
-    }
+    private val receiverPart = UastLazyPart<UExpression>()
+    private val selectorPart = UastLazyPart<UExpression>()
 
-    override val selector by lz {
-        createKDocNameSimpleNameReference(parentKDocName = sourcePsi, givenParent = this) ?: UastEmptyExpression(this)
-    }
+    override val receiver: UExpression
+        get() = receiverPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter
+                .convertPsiElement(sourcePsi, givenParent, DEFAULT_EXPRESSION_TYPES_LIST) as? UExpression
+                ?: UastEmptyExpression(givenParent)
+        }
+
+    override val selector: UExpression
+        get() = selectorPart.getOrBuild {
+            createKDocNameSimpleNameReference(parentKDocName = sourcePsi, givenParent = this) ?: UastEmptyExpression(this)
+        }
 
     override val accessType = UastQualifiedExpressionAccessType.SIMPLE
 

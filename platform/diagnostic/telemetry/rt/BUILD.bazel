@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "diagnostic-telemetry-rt",
+  module_name = "intellij.platform.diagnostic.telemetry.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:opentelemetry",
+    "//platform/util-rt",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+
+jvm_test(
+  name = "diagnostic-telemetry-rt_test",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":diagnostic-telemetry-rt"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.platform.diagnostic.telemetry.rt` end

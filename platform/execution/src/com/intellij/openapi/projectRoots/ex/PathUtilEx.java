@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.projectRoots.ex;
 
@@ -24,8 +24,7 @@ import java.util.List;
  */
 public final class PathUtilEx {
 
-  @Nullable
-  public static Sdk getAnyJdk(@NotNull Project project) {
+  public static @Nullable Sdk getAnyJdk(@NotNull Project project) {
     return chooseJdk(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
@@ -33,22 +32,12 @@ public final class PathUtilEx {
    * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  @Nullable
-  public static Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
+  @Deprecated(forRemoval = true)
+  private static @Nullable Sdk chooseJdk(@NotNull Project project, @NotNull Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null && projectJdk.getSdkType() instanceof JavaSdkType) {
       return projectJdk;
     }
-    return chooseJdk(modules);
-  }
-
-  /**
-   * @deprecated the meaning of this method is unclear, choose a JDK using explicit criteria instead 
-   */
-  @Deprecated
-  @Nullable
-  public static Sdk chooseJdk(@NotNull Collection<? extends Module> modules) {
     List<Sdk> jdks = ContainerUtil.mapNotNull(modules, module -> {
       if (module == null) return null;
       Sdk sdk = ModuleRootManager.getInstance(module).getSdk();

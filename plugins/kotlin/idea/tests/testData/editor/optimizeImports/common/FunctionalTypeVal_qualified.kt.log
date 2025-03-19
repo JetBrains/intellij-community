@@ -1,0 +1,3 @@
+Additional checking of reference Getter: TOP_LEVEL_VAL
+Additional checking of reference KtSimpleNameReference: TOP_LEVEL_VAL
+Additional checking of reference KtInvokeFunctionReference: TOP_LEVEL_VAL()

@@ -12,3 +12,5 @@ class NewClass(p: Int)
 typealias Old = <caret>OldClass
 
 val a: Old = Old(1)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// IGNORE_K2

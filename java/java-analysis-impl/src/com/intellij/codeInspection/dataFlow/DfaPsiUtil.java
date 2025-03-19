@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
@@ -14,7 +13,10 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -28,11 +30,13 @@ import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -40,14 +44,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -71,21 +73,38 @@ public final class DfaPsiUtil {
     return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;
   }
 
-  @NotNull
-  public static Nullability getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+  /**
+   * Returns nullability of variable or method. This method takes into account various sources of nullability information,
+   * like method annotations, type annotations, container annotations, inferred annotations, or external annotations.
+   * 
+   * @param resultType concrete type of particular variable access or method call (an instantiation of generic method return type, 
+   *                   or variable type), if known.
+   * @param owner method or variable to get its nullability
+   * @return nullability of the owner; {@link Nullability#UNKNOWN} is both parameters are null.
+   */
+  public static @NotNull Nullability getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, false);
   }
 
-  @NotNull
-  public static Nullability getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
-                                                                         @Nullable PsiModifierListOwner owner) {
+  /**
+   * Returns nullability of variable or method. This method takes into account various sources of nullability information,
+   * like method annotations, type annotations, container annotations, inferred annotations, or external annotations.
+   * Automatic inference of method parameter nullability is ignored, which is useful when analyzing the method body (as it's
+   * inferred from method body as well, so both analyses may produce conflicting results).
+   *
+   * @param resultType concrete type of particular variable access or method call (an instantiation of generic method return type, 
+   *                   or variable type), if known.
+   * @param owner method or variable to get its nullability
+   * @return nullability of the owner; {@link Nullability#UNKNOWN} is both parameters are null.
+   */
+  public static @NotNull Nullability getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
+                                                                            @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, true);
   }
 
-  @NotNull
-  private static Nullability getElementNullability(@Nullable PsiType resultType,
-                                                   @Nullable PsiModifierListOwner owner,
-                                                   boolean ignoreParameterNullabilityInference) {
+  private static @NotNull Nullability getElementNullability(@Nullable PsiType resultType,
+                                                            @Nullable PsiModifierListOwner owner,
+                                                            boolean ignoreParameterNullabilityInference) {
     if (owner == null) return getTypeNullability(resultType);
 
     if (resultType instanceof PsiPrimitiveType) {
@@ -96,8 +115,21 @@ public final class DfaPsiUtil {
       return Nullability.NOT_NULL;
     }
 
+    // Annotation manager requires index
+    if (DumbService.isDumb(owner.getProject())) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
+      if (fromAnnotation.getNullability() != Nullability.NOT_NULL &&
+          owner instanceof PsiMethod method) {
+        PsiType type = method.getReturnType();
+        PsiAnnotationOwner annotationOwner = fromAnnotation.getAnnotation().getOwner();
+        if (PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter &&
+            annotationOwner instanceof PsiType && annotationOwner != type) {
+          // Nullable/Unknown from type hierarchy: should check the instantiation, as it could be more concrete
+          Nullability fromType = getNullabilityFromType(resultType, owner);
+          if (fromType != null) return fromType;
+        }
+      }
       return fromAnnotation.getNullability();
     }
 
@@ -110,17 +142,15 @@ public final class DfaPsiUtil {
       }
     }
 
-    Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) {
-      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
-        return Nullability.UNKNOWN;
+    if (owner instanceof PsiParameter parameter) {
+      Nullability nullability = inferParameterNullability(parameter);
+      if (nullability != Nullability.UNKNOWN) {
+        return nullability;
       }
-      return fromType;
     }
 
-    if (owner instanceof PsiParameter parameter) {
-      return inferParameterNullability(parameter);
-    }
+    Nullability fromType = getNullabilityFromType(resultType, owner);
+    if (fromType != null) return fromType;
 
     if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {
       PsiField field = PropertyUtil.getFieldOfGetter(method);
@@ -132,11 +162,22 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
+  private static @Nullable Nullability getNullabilityFromType(@Nullable PsiType resultType, @NotNull PsiModifierListOwner owner) {
+    Nullability fromType = getTypeNullability(resultType);
+    if (fromType != Nullability.UNKNOWN) {
+      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+        return Nullability.UNKNOWN;
+      }
+      return fromType;
+    }
+    return null;
+  }
+
   private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
       int index = method.getParameterList().getParameterIndex(parameter);
       List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
-      return ContainerUtil.exists(contracts, 
+      return ContainerUtil.exists(contracts,
                                c -> c.getParameterConstraint(index) == StandardMethodContract.ValueConstraint.NULL_VALUE);
     }
     return false;
@@ -165,8 +206,7 @@ public final class DfaPsiUtil {
     return ("java.util.Map." + name).equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
   }
 
-  @NotNull
-  public static Nullability inferParameterNullability(@NotNull PsiParameter parameter) {
+  public static @NotNull Nullability inferParameterNullability(@NotNull PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
     if (parent instanceof PsiParameterList) {
       PsiElement gParent = parent.getParent();
@@ -182,44 +222,44 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
-  @Nullable
-  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+  private static @Nullable PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
     PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
     if (iteratedValue == null) return null;
 
     PsiType iteratedType = iteratedValue.getType();
-    if (iteratedValue instanceof PsiReferenceExpression refExpr && 
+    if (iteratedValue instanceof PsiReferenceExpression refExpr &&
         refExpr.resolve() instanceof PsiParameter parameter &&
         parameter.getParent() instanceof PsiForeachStatement targetLoop &&
         PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
-        !HighlightControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
+        !ControlFlowUtil.isReassigned(parameter, new HashMap<>())) {
       iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
     }
     return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
   }
 
 
-  @NotNull
-  public static Nullability getTypeNullability(@Nullable PsiType type) {
+  public static @NotNull Nullability getTypeNullability(@Nullable PsiType type) {
     NullabilityAnnotationInfo info = getTypeNullabilityInfo(type);
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
-  @Nullable
-  public static NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
+  public static @Nullable NullabilityAnnotationInfo getTypeNullabilityInfo(@Nullable PsiType type) {
     if (type == null || type instanceof PsiPrimitiveType) return null;
 
     Ref<NullabilityAnnotationInfo> result = Ref.create(null);
+    boolean local = type instanceof PsiClassType classType &&
+                    classType.getPsiContext() instanceof PsiJavaCodeReferenceElement ref &&
+                    ref.getParent() instanceof PsiTypeElement typeElement &&
+                    typeElement.getParent() instanceof PsiLocalVariable;
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(eachType));
+      result.set(getTypeOwnNullability(eachType, local));
       return result.get() == null &&
              (!(type instanceof PsiClassType) || PsiUtil.resolveClassInClassTypeOnly(type) instanceof PsiTypeParameter);
     });
     return result.get();
   }
 
-  @Nullable
-  private static NullabilityAnnotationInfo getTypeOwnNullability(PsiType eachType) {
+  private static @Nullable NullabilityAnnotationInfo getTypeOwnNullability(@NotNull PsiType eachType, boolean local) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
@@ -230,17 +270,26 @@ public final class DfaPsiUtil {
         return new NullabilityAnnotationInfo(annotation, nullability, false);
       }
     }
-    if (eachType instanceof PsiClassType) {
-      PsiElement context = ((PsiClassType)eachType).getPsiContext();
+    if (eachType instanceof PsiClassType classType && !local) {
+      PsiElement context = classType.getPsiContext();
       if (context != null) {
-        return NullableNotNullManager.getInstance(context.getProject()).findDefaultTypeUseNullability(context);
+        NullableNotNullManager manager = NullableNotNullManager.getInstance(context.getProject());
+        NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(context);
+        if (typeUseNullability != null) {
+          return typeUseNullability;
+        }
+        PsiClass declaration = PsiUtil.resolveClassInClassTypeOnly(classType);
+        if (declaration instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsList().getReferenceElements().length == 0) {
+          // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
+          return manager.findDefaultTypeUseNullability(declaration);
+        }
       }
     }
     return null;
   }
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
-    PsiClass containingClass = ClassUtils.getContainingClass(annotation);
+    PsiClass containingClass = PsiUtil.getContainingClass(annotation);
     if (containingClass == null || !containingClass.isValid()) return false;
     String qualifiedName = containingClass.getQualifiedName();
     // We deliberately ignore nullability annotations on Guava functional interfaces to avoid noise warnings
@@ -255,61 +304,18 @@ public final class DfaPsiUtil {
    * @param index parameter index
    * @return nullability, defined by SAM parameter annotations or known otherwise
    */
-  @NotNull
-  public static Nullability getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
-    Nullability nullability = inferLambdaParameterNullability(function, index);
-    if(nullability != Nullability.UNKNOWN) {
-      return nullability;
-    }
-    PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
+  public static @NotNull Nullability getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
+    PsiClassType type = tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (sam != null) {
       PsiParameter parameter = sam.getParameterList().getParameter(index);
       if (parameter != null) {
-        nullability = getElementNullability(null, parameter);
-        if (nullability != Nullability.UNKNOWN) {
-          return nullability;
-        }
         PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
-        return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
-      }
-    }
-    return Nullability.UNKNOWN;
-  }
-
-  @NotNull
-  private static Nullability inferLambdaParameterNullability(PsiFunctionalExpression lambda, int parameterIndex) {
-    PsiElement expression = lambda;
-    PsiElement expressionParent = lambda.getParent();
-    while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
-      expression = expressionParent;
-      expressionParent = expressionParent.getParent();
-    }
-    if (expressionParent instanceof PsiExpressionList list && list.getParent() instanceof PsiMethodCallExpression call) {
-      PsiMethod method = call.resolveMethod();
-      if (method != null) {
-        int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
-        return getLambdaParameterNullability(method, expressionIndex, parameterIndex);
-      }
-    }
-    return Nullability.UNKNOWN;
-  }
-
-  private static final CallMatcher OPTIONAL_FUNCTIONS =
-    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map", "filter", "ifPresent", "flatMap", "ifPresentOrElse");
-  private static final CallMatcher MAP_COMPUTE =
-    CallMatcher.instanceCall(JAVA_UTIL_MAP, "compute").parameterTypes("K", JAVA_UTIL_FUNCTION_BI_FUNCTION);
-
-  @NotNull
-  private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
-    if (OPTIONAL_FUNCTIONS.methodMatches(method)) {
-      if (parameterIndex == 0 && lambdaParameterIndex == 0) {
-        return Nullability.NOT_NULL;
-      }
-    }
-    else if (MAP_COMPUTE.methodMatches(method)) {
-      if (parameterIndex == 1 && lambdaParameterIndex == 1) {
-        return Nullability.NULLABLE;
+        NullabilityAnnotationInfo info = getTypeNullabilityInfo(GenericsUtil.eliminateWildcards(parameterType, false, true));
+        if (info != null) {
+          return info.getNullability();
+        }
+        return getElementNullability(null, parameter);
       }
     }
     return Nullability.UNKNOWN;
@@ -349,9 +355,8 @@ public final class DfaPsiUtil {
     if (body == null) return Collections.emptySet();
 
     return CachedValuesManager.getCachedValue(body, new CachedValueProvider<>() {
-      @NotNull
       @Override
-      public Result<Set<PsiField>> compute() {
+      public @NotNull Result<Set<PsiField>> compute() {
         PsiClass containingClass = PsiTreeUtil.getContextOfType(body, PsiClass.class);
         LOG.assertTrue(containingClass != null);
         DfaValueFactory factory = new DfaValueFactory(body.getProject());
@@ -359,6 +364,10 @@ public final class DfaPsiUtil {
         if (flow == null) {
           return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
         }
+        flow.keepVariables(
+          desc ->
+            desc instanceof PlainDescriptor plainDescriptor && plainDescriptor.getPsiElement() instanceof PsiField field &&
+            field.getContainingClass() == containingClass);
         var interpreter = new StandardDataFlowInterpreter(flow, DfaListener.EMPTY) {
           final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
@@ -400,13 +409,6 @@ public final class DfaPsiUtil {
           @Override
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
-            if (instruction instanceof FinishElementInstruction) {
-              Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
-              vars.removeIf(v -> {
-                PsiElement variable = v.getPsiVariable();
-                return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
-              });
-            }
             if ((isCallExposingNonInitializedFields(instruction) || instruction instanceof ReturnInstruction)) {
               for (PsiField field : containingClass.getFields()) {
                 DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);
@@ -455,9 +457,8 @@ public final class DfaPsiUtil {
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<>() {
-      @NotNull
       @Override
-      public Result<MultiMap<PsiField, PsiExpression>> compute() {
+      public @NotNull Result<MultiMap<PsiField, PsiExpression>> compute() {
         final Set<String> fieldNames = new HashSet<>();
         for (PsiField field : psiClass.getFields()) {
           ContainerUtil.addIfNotNull(fieldNames, field.getName());
@@ -498,8 +499,7 @@ public final class DfaPsiUtil {
     });
   }
 
-  @Nullable
-  public static PsiElement getTopmostBlockInSameClass(@NotNull PsiElement position) {
+  public static @Nullable PsiElement getTopmostBlockInSameClass(@NotNull PsiElement position) {
     return JBIterable.
       generate(position, PsiElement::getParent).
       takeWhile(e -> !(e instanceof PsiMember || e instanceof PsiFile || e instanceof PsiLambdaExpression)).
@@ -507,10 +507,9 @@ public final class DfaPsiUtil {
       last();
   }
 
-  @NotNull
-  public static Collection<PsiExpression> getVariableAssignmentsInFile(@NotNull PsiVariable psiVariable,
-                                                                       final boolean literalsOnly,
-                                                                       final PsiElement place) {
+  public static @NotNull Collection<PsiExpression> getVariableAssignmentsInFile(@NotNull PsiVariable psiVariable,
+                                                                                final boolean literalsOnly,
+                                                                                final PsiElement place) {
     Ref<Boolean> modificationRef = Ref.create(Boolean.FALSE);
     PsiElement codeBlock = place == null? null : getTopmostBlockInSameClass(place);
     int placeOffset = codeBlock != null? place.getTextRange().getStartOffset() : 0;
@@ -554,7 +553,7 @@ public final class DfaPsiUtil {
     return list;
   }
 
-  private static boolean allOperandsAreLiterals(@Nullable final PsiExpression expression) {
+  private static boolean allOperandsAreLiterals(final @Nullable PsiExpression expression) {
     if (expression == null) return false;
     if (expression instanceof PsiLiteralExpression) return true;
     if (expression instanceof PsiPolyadicExpression) {
@@ -580,8 +579,7 @@ public final class DfaPsiUtil {
    * @param method method to check
    * @return nullability of vararg parameter component; {@link Nullability#UNKNOWN} if not specified or method is not vararg method.
    */
-  @NotNull
-  static Nullability getVarArgComponentNullability(PsiMethod method) {
+  static @NotNull Nullability getVarArgComponentNullability(PsiMethod method) {
     if (method != null) {
       if (NON_NULL_VAR_ARG.methodMatches(method)) {
         return Nullability.NOT_NULL;
@@ -614,9 +612,8 @@ public final class DfaPsiUtil {
     }
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    if (!(expression.getType() instanceof PsiClassType expressionType)) return classType;
+    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, expressionType);
     if (result.isRaw()) {
       PsiClass aClass = result.resolve();
       if (aClass != null) {
@@ -634,8 +631,7 @@ public final class DfaPsiUtil {
    * @param expr literal to create a constant type from
    * @return a DfType that describes given literal
    */
-  @NotNull
-  public static DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
+  public static @NotNull DfType fromLiteral(@NotNull PsiLiteralExpression expr) {
     PsiType type = expr.getType();
     if (type == null) return DfType.TOP;
     if (PsiTypes.nullType().equals(type)) return DfTypes.NULL;
@@ -649,8 +645,7 @@ public final class DfaPsiUtil {
    * @param type Java token
    * @return RelationType
    */
-  @Nullable
-  public static RelationType getRelationByToken(IElementType type) {
+  public static @Nullable RelationType getRelationByToken(IElementType type) {
     if(JavaTokenType.EQEQ.equals(type)) {
       return RelationType.EQ;
     }

@@ -4,20 +4,22 @@ UFile (package = )
             UAnnotation (fqName = org.jetbrains.annotations.Nullable)
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                 UIdentifier (Identifier (readLine))
-                USimpleNameReferenceExpression (identifier = readLine, resolvesTo = null)
         UField (name = b)
             UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             USwitchExpression
                 USimpleNameReferenceExpression (identifier = a)
                 UExpressionList (when)
                     USwitchClauseExpressionWithBody
-                        ULiteralExpression (value = "abc")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "abc")
                         UExpressionList (when_entry)
                             UYieldExpression
                                 ULiteralExpression (value = 1)
                     USwitchClauseExpressionWithBody
-                        ULiteralExpression (value = "def")
-                        ULiteralExpression (value = "ghi")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "def")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "ghi")
                         UExpressionList (when_entry)
                             UYieldExpression
                                 ULiteralExpression (value = 2)

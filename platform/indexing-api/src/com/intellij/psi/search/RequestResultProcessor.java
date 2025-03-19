@@ -44,35 +44,7 @@ public abstract class RequestResultProcessor {
    * occurrence inside, from leaf elements up the tree until file element. The implementation is supposed to search for references
    * inside the given element at the given offset, and feed them to {@code consumer}.<p/>
    *
-   * If you wish to process all offsets in the scope (e.g. file) at once, extend {@link BulkResultProcessor}.
-   *
    * @return whether the consumer has returned false for any of the references (and thus stopped searching), false otherwise.
    */
   public abstract boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer);
-
-  /**
-   * A variant of {@link RequestResultProcessor} that processes all text occurrences at once, e.g. for performance purposes.
-   */
-  public abstract static class BulkResultProcessor extends RequestResultProcessor {
-
-    public BulkResultProcessor() {
-    }
-
-    public BulkResultProcessor(Object @NotNull ... equality) {
-      super(equality);
-    }
-
-    @Override
-    public boolean processTextOccurrence(@NotNull PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
-      return processTextOccurrences(element, new int[]{offsetInElement}, consumer);
-    }
-
-    /**
-     * Invoked for every element of the search scope (e.g. file) with the array of all offsets of search string occurrences in this scope.
-     * Offsets are relative to {@code scope} start offset. The implementation is supposed to search for references
-     * inside the given element at the given offsets, and feed them to {@code consumer}.<p/>
-     * @return whether the consumer has returned false for any of the references (and thus stopped searching), false otherwise.
-     */
-    public abstract boolean processTextOccurrences(@NotNull PsiElement scope, int[] offsetsInScope, @NotNull Processor<? super PsiReference> consumer);
-  }
 }

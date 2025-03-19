@@ -1,0 +1,54 @@
+### auto-generated section `build intellij.kotlin.devkit` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-devkit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-devkit",
+  module_name = "intellij.kotlin.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//xml/xml-psi-api:psi",
+    "//java/java-analysis-api:analysis",
+    "//plugins/kotlin/code-insight/intentions-shared:kotlin-code-insight-intentions-shared",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":kotlin-devkit_resources"]
+)
+### auto-generated section `build intellij.kotlin.devkit` end

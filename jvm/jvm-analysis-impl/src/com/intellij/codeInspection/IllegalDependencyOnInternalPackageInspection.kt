@@ -3,7 +3,9 @@ package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil
 import com.intellij.packageDependencies.DependenciesBuilder
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiElementVisitor
@@ -17,7 +19,7 @@ class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
 
 private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHolder) : PsiElementVisitor() {
   override fun visitFile(file: PsiFile) {
-    if (!PsiUtil.isLanguageLevel9OrHigher(file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
     DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
       if (dependency !is PsiClass) return@analyzeFileDependencies
       val dependencyFile = dependency.containingFile
@@ -27,7 +29,7 @@ private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHol
       val moduleName = javaModule.name
       if (moduleName.startsWith("java.")) return@analyzeFileDependencies
       val packageName = dependencyFile.packageName
-      if (JavaModuleGraphUtil.exports(javaModule, packageName, null)) return@analyzeFileDependencies
+      if (JavaPsiModuleUtil.exports(javaModule, packageName, null)) return@analyzeFileDependencies
       holder.registerProblem(
         place,
         JvmAnalysisBundle.message("inspection.message.illegal.dependency.module.doesn.t.export", moduleName, packageName)

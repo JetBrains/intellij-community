@@ -219,9 +219,6 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.MODIFIER_LIST:
         return findChildByType(JavaElementType.MODIFIER_LIST);
 
@@ -239,6 +236,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, JavaTokenType.SEMICOLON);
+
+      default:
+        return null;
     }
   }
 
@@ -305,6 +305,9 @@ public class PsiLocalVariableImpl extends CompositePsiElement implements PsiLoca
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     final PsiElement parentElement = getParent();
     if (parentElement instanceof PsiDeclarationStatement) {
       return new LocalSearchScope(parentElement.getParent());

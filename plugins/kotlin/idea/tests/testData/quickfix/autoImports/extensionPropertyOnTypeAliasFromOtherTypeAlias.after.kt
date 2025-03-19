@@ -8,4 +8,3 @@ fun use() {
     val ta = TA1()
     ta.ext<caret>
 }
-/* IGNORE_FIR */

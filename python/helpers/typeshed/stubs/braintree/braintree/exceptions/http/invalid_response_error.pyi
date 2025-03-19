@@ -1,3 +1,3 @@
-from braintree.exceptions.unexpected_error import UnexpectedError as UnexpectedError
+from braintree.exceptions.unexpected_error import UnexpectedError
 
 class InvalidResponseError(UnexpectedError): ...

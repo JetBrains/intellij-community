@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,13 +19,21 @@ public class AsyncProcessIcon extends AnimatedIcon {
     this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
+  public AsyncProcessIcon(@NotNull CoroutineScope coroutineScope) {
+    this(null, SMALL_ICONS, AllIcons.Process.Step_passive, coroutineScope);
+  }
+
   public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
     super(name, icons, passive, CYCLE_LENGTH);
   }
 
+  public AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive, @NotNull CoroutineScope coroutineScope) {
+    super(name, icons, passive, CYCLE_LENGTH, coroutineScope);
+  }
+
   @Override
   protected Dimension calcPreferredSize() {
-    return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
+    return new Dimension(passiveIcon.getIconWidth(), passiveIcon.getIconHeight());
   }
 
   public void updateLocation(@NotNull JComponent container) {
@@ -44,11 +52,17 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
   }
 
-  public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Big.ICONS.toArray(new Icon[0]);
+  public static @NotNull AnimatedIcon createBig(@NonNls String name) {
+    return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
+  }
 
-    public Big(final @NonNls String name) {
-      super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
+  public static @NotNull AnimatedIcon createBig(@NotNull CoroutineScope coroutineScope) {
+    return new AsyncProcessIcon(null, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive, coroutineScope);
+  }
+
+  public static class Big extends AsyncProcessIcon {
+    public Big(@NonNls String name) {
+      super(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
     }
   }
 
@@ -67,6 +81,6 @@ public class AsyncProcessIcon extends AnimatedIcon {
 
 
   public boolean isDisposed() {
-    return myAnimator.isDisposed();
+    return animator.isDisposed();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.lang.ant.AntBundle;
@@ -31,7 +31,7 @@ import java.awt.event.ActionListener;
 import java.util.*;
 
 public final class BuildFilePropertiesPanel {
-  @NonNls private static final String DIMENSION_SERVICE_KEY = "antBuildFilePropertiesDialogDimension";
+  private static final @NonNls String DIMENSION_SERVICE_KEY = "antBuildFilePropertiesDialogDimension";
 
   private final Form myForm;
   private AntBuildFileBase myBuildFile;
@@ -270,8 +270,7 @@ public final class BuildFilePropertiesPanel {
     }
 
     @Override
-    @Nullable
-    public String getDisplayName() {
+    public @Nullable String getDisplayName() {
       return AntBundle.message("edit.ant.properties.tab.display.name");
     }
 
@@ -372,8 +371,7 @@ public final class BuildFilePropertiesPanel {
     }
 
     @Override
-    @Nullable
-    public String getDisplayName() {
+    public @Nullable String getDisplayName() {
       return AntBundle.message("edit.ant.properties.filters.tab.display.name");
     }
 
@@ -453,8 +451,7 @@ public final class BuildFilePropertiesPanel {
     }
 
     @Override
-    @Nullable
-    public String getDisplayName() {
+    public @Nullable String getDisplayName() {
       return AntBundle.message("edit.ant.properties.execution.tab.display.name");
     }
 
@@ -501,8 +498,7 @@ public final class BuildFilePropertiesPanel {
     }
 
     @Override
-    @Nullable
-    public String getDisplayName() {
+    public @Nullable String getDisplayName() {
       return AntBundle.message("edit.ant.properties.additional.classpath.tab.display.name");
     }
 

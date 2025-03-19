@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.config.SettingConstants.KOTLIN_TO_JVM_COMPILER_ARGUMENTS_SECTION
 
+@Service(Service.Level.PROJECT)
 @State(name = KOTLIN_TO_JVM_COMPILER_ARGUMENTS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class Kotlin2JvmCompilerArgumentsHolder(project: Project) : BaseKotlinCompilerSettings<K2JVMCompilerArguments>(project) {
     override fun createSettings() = K2JVMCompilerArguments()

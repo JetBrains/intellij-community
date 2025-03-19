@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom.impl;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,8 @@ import java.util.stream.Stream;
 /**
  * @author Yura Cangea, dsl
  */
-public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
+@ApiStatus.Internal
+public final class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   private final JTextField myFileTypeName = new JTextField();
   private final JTextField myFileTypeDescr = new JTextField();
   private final JCheckBox myIgnoreCase = new JCheckBox(IdeBundle.message("checkbox.customfiletype.ignore.case"));
@@ -91,11 +93,11 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
 
   @Override
   public void applyEditorTo(@NotNull AbstractFileType type) throws ConfigurationException {
-    if (myFileTypeName.getText().trim().length() == 0) {
+    if (myFileTypeName.getText().trim().isEmpty()) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());
     }
-    else if (myFileTypeDescr.getText().trim().length() == 0) {
+    else if (myFileTypeDescr.getText().trim().isEmpty()) {
       myFileTypeDescr.setText(myFileTypeName.getText());
     }
     type.setName(myFileTypeName.getText());
@@ -104,8 +106,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     JPanel panel = new JPanel(new BorderLayout());
 
     JPanel fileTypePanel = new JPanel(new BorderLayout());
@@ -170,8 +171,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     return panel;
   }
 
-  @NotNull
-  public SyntaxTable getSyntaxTable() {
+  public @NotNull SyntaxTable getSyntaxTable() {
     SyntaxTable syntaxTable = new SyntaxTable();
     syntaxTable.setLineComment(myLineComment.getText());
     syntaxTable.setStartComment(myBlockCommentStart.getText());

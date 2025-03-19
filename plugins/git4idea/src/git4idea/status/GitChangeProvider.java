@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.openapi.components.Service;
@@ -8,19 +8,24 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vcs.util.paths.RootDirtySet;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.GitVcsDirtyScope;
 import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -33,7 +38,7 @@ public final class GitChangeProvider implements ChangeProvider {
   static final Logger LOG = Logger.getInstance("#GitStatus");
   private volatile boolean isRefreshInProgress = false;
 
-  @NotNull private final Project project;
+  private final @NotNull Project project;
 
   public GitChangeProvider(@NotNull Project project) {
     this.project = project;
@@ -48,28 +53,38 @@ public final class GitChangeProvider implements ChangeProvider {
     isRefreshInProgress = true;
     try {
       LOG.debug("initial dirty scope: ", dirtyScope);
-      appendNestedVcsRootsToDirt((VcsModifiableDirtyScope)dirtyScope);
-      LOG.debug("after adding nested vcs roots to dirt: ", dirtyScope);
-
       GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-      Collection<VirtualFile> affectedRoots = dirtyScope.getAffectedContentRoots();
-      Set<GitRepository> repos = ContainerUtil.map2SetNotNull(affectedRoots, repositoryManager::getRepositoryForRoot);
+
+      Map<GitRepository, GitSubmodule> knownSubmodules = new HashMap<>();
+      for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
+        Collection<GitRepository> submodules = GitSubmoduleKt.getDirectSubmodules(repository);
+        for (GitRepository submodule : submodules) {
+          knownSubmodules.put(submodule, new GitSubmodule(submodule, repository));
+        }
+      }
 
       List<FilePath> newDirtyPaths = new ArrayList<>();
       NonChangedHolder holder = new NonChangedHolder(project, addGate);
 
-      Map<VirtualFile, List<FilePath>> dirtyPaths = GitStagingAreaHolder.collectDirtyPaths(dirtyScope);
+      Map<VirtualFile, RootDirtySet> dirtyPaths =
+        GitStagingAreaHolder.collectDirtyPathsPerRoot((GitVcsDirtyScope)dirtyScope, knownSubmodules);
+      LOG.debug("after adding nested vcs roots to dirt: ", dirtyPaths);
 
-      for (GitRepository repo : repos) {
-        LOG.debug("checking root: ", repo.getRoot());
-        List<FilePath> rootDirtyPaths = ContainerUtil.notNullize(dirtyPaths.get(repo.getRoot()));
-        if (rootDirtyPaths.isEmpty()) continue;
+      for (Map.Entry<VirtualFile, RootDirtySet> entry : dirtyPaths.entrySet()) {
+        VirtualFile root = entry.getKey();
+        RootDirtySet rootDirtyPaths = entry.getValue();
+
+        LOG.debug("checking root: ", root);
+        GitRepository repo = repositoryManager.getRepositoryForRoot(root);
+        if (repo == null) continue;
 
         GitStagingAreaHolder stageAreaHolder = repo.getStagingAreaHolder();
+
+        boolean wasEmptyStaging = stageAreaHolder.isEmpty();
         List<GitFileStatus> newChanges = stageAreaHolder.refresh(rootDirtyPaths);
 
         GitChangesCollector collector = GitChangesCollector.collect(project, repo, newChanges);
-        holder.markHeadRevision(repo.getRoot(), collector.getHead());
+        holder.markHeadRevision(root, collector.getHead());
 
         Collection<Change> changes = collector.getChanges();
         for (Change change : changes) {
@@ -91,6 +106,11 @@ public final class GitChangeProvider implements ChangeProvider {
           }
         }
 
+        GitSubmodule asSubmodule = knownSubmodules.get(repo);
+        if (asSubmodule != null) {
+          updateDirtyPathsForSubmodule(asSubmodule, wasEmptyStaging, dirtyPaths, newDirtyPaths);
+        }
+
         BackgroundTaskUtil.syncPublisher(project, GitRefreshListener.TOPIC).repositoryUpdated(repo);
       }
       holder.feedBuilder(dirtyScope, builder);
@@ -103,35 +123,34 @@ public final class GitChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void appendNestedVcsRootsToDirt(@NotNull VcsModifiableDirtyScope dirtyScope) {
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(dirtyScope.getProject());
+  private static void updateDirtyPathsForSubmodule(@NotNull GitSubmodule submodule,
+                                                   boolean wasEmptyStaging,
+                                                   @NotNull Map<VirtualFile, RootDirtySet> dirtyPaths,
+                                                   @NotNull List<FilePath> newDirtyPaths) {
+    GitRepository submoduleRepo = submodule.getRepository();
+    GitRepository parentRepo = submodule.getParent();
 
-    final Set<FilePath> recursivelyDirtyDirectories = dirtyScope.getRecursivelyDirtyDirectories();
-    if (recursivelyDirtyDirectories.isEmpty()) {
-      return;
-    }
+    VirtualFile submoduleRoot = submoduleRepo.getRoot();
+    VirtualFile parentRoot = parentRepo.getRoot();
 
-    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(dirtyScope.getVcs());
+    boolean isEmptyStaging = submoduleRepo.getStagingAreaHolder().isEmpty();
+    if (isEmptyStaging == wasEmptyStaging) return;
 
-    Set<VirtualFile> dirtyDirs = new HashSet<>();
-    for (FilePath dir : recursivelyDirtyDirectories) {
-      VirtualFile vf = VcsUtil.getVirtualFileWithRefresh(dir.getIOFile());
-      if (vf != null) {
-        dirtyDirs.add(vf);
-      }
-    }
+    FilePath submoduleRootPath = VcsUtil.getFilePath(submoduleRoot);
 
-    for (VirtualFile root : rootsUnderGit) {
-      if (dirtyDirs.contains(root)) continue;
+    RootDirtySet parentDirtySet = dirtyPaths.get(parentRoot);
+    if (parentDirtySet != null && parentDirtySet.belongsTo(submoduleRootPath)) return; // parent repo was refreshed
 
-      for (VirtualFile dirtyDir : dirtyDirs) {
-        if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
-          LOG.debug("adding git root for check. root: ", root, ", dir: ", dirtyDir);
-          dirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(root));
-          break;
-        }
-      }
-    }
+    // we store submodules as non-directory FilePath records
+    FilePath submoduleRootPathAsFile = VcsUtil.getFilePath(submoduleRootPath.getPath(), false);
+    GitFileStatus record = parentRepo.getStagingAreaHolder().findRecord(submoduleRootPathAsFile);
+    if (record != null && record.getStagedStatus() != null) return; // no need to refresh if there are staged changes
+
+    boolean parentThinksSubmoduleUnchanged = record == null;
+    if (parentThinksSubmoduleUnchanged == isEmptyStaging) return; // parent repo agrees
+
+    // refresh parent repo (and the submodule as a whole - which is costly)
+    newDirtyPaths.add(submoduleRootPath);
   }
 
   private static final class NonChangedHolder {
@@ -164,13 +183,15 @@ public final class GitChangeProvider implements ChangeProvider {
         if (!fileDocumentManager.isFileModified(vf)) continue;
         if (myAddGate.getStatus(vf) != null) continue;
 
-        FilePath filePath = VcsUtil.getFilePath(vf);
+        VirtualFile vcsFile = VcsUtil.resolveSymlinkIfNeeded(myProject, vf);
+        FilePath filePath = VcsUtil.getFilePath(vcsFile);
         if (myProcessedPaths.contains(filePath)) continue;
         if (!dirtyScope.belongsTo(filePath)) continue;
 
-        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vcsFile);
         if (repository == null) continue;
-        if (repository.getUntrackedFilesHolder().containsFile(filePath)) continue;
+        if (repository.getUntrackedFilesHolder().containsUntrackedFile(filePath)) continue;
+        if (repository.getIgnoredFilesHolder().containsFile(filePath)) continue;
 
         VirtualFile root = repository.getRoot();
         VcsRevisionNumber beforeRevisionNumber = myHeadRevisions.get(root);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
@@ -54,7 +40,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
                                                  caption, -1);
     myCurrentIndex = index;
     myRendererComponent.setBackground(list.getBackground());
-    customizeComponent(list, value, isSelected);
+    customizeComponent(list, value, index, isSelected, cellHasFocus);
 
     if (ExperimentalUI.isNewUI() && getItemComponent() instanceof SelectablePanel selectablePanel) {
       selectablePanel.setSelectionColor(isSelected ? JBUI.CurrentTheme.List.background(true, true) : null);
@@ -72,8 +58,7 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
     return myDescriptor.hasSeparatorAboveOf(value);
   }
 
-  @Nullable
-  protected Icon getItemIcon(E value, boolean isSelected) {
+  protected @Nullable Icon getItemIcon(E value, boolean isSelected) {
     return isSelected ? IconUtil.wrapToSelectionAwareIcon(myDescriptor.getSelectedIconFor(value)) : myDescriptor.getIconFor(value);
   }
 
@@ -108,5 +93,9 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
   }
 
   protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+  }
+
+  protected void customizeComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
+    customizeComponent(list, value, isSelected);
   }
 }

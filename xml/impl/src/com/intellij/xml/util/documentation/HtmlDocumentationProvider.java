@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util.documentation;
 
+import com.intellij.documentation.mdn.MdnApiNamespace;
+import com.intellij.documentation.mdn.MdnDocumentationKt;
 import com.intellij.documentation.mdn.MdnSymbolDocumentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
@@ -38,9 +40,9 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
 
   private final boolean myUseStyleProvider;
 
-  @NonNls public static final String ELEMENT_ELEMENT_NAME = "element";
-  @NonNls public static final String NBSP = ":&nbsp;";
-  @NonNls public static final String BR = "<br>";
+  public static final @NonNls String ELEMENT_ELEMENT_NAME = "element";
+  public static final @NonNls String NBSP = ":&nbsp;";
+  public static final @NonNls String BR = "<br>";
 
   public HtmlDocumentationProvider() {
     this(true);
@@ -51,8 +53,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  @Nullable
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     if (element instanceof SchemaPrefix) {
       return ((SchemaPrefix)element).getQuickNavigateInfo();
     }
@@ -127,9 +128,10 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   private static boolean checkProvider(@Nullable DocumentationProvider provider) {
     if (provider == null) return false;
     if (provider instanceof CompositeDocumentationProvider
-      && ContainerUtil.or(((CompositeDocumentationProvider)provider).getAllProviders(), p -> p instanceof HtmlDocumentationProvider)) {
+        && ContainerUtil.or(((CompositeDocumentationProvider)provider).getAllProviders(), p -> p instanceof HtmlDocumentationProvider)) {
       Logger.getInstance(HtmlDocumentationProvider.class)
-        .error("An 'HtmlDocumentationProvider' is most likely registered through 'com.intellij.documentationProvider' extension point instead of 'com.intellij.lang.documentationProvider'. Recurrent behaviour has been prevented.");
+        .error(
+          "An 'HtmlDocumentationProvider' is most likely registered through 'com.intellij.documentationProvider' extension point instead of 'com.intellij.lang.documentationProvider'. Recurrent behaviour has been prevented.");
       return false;
     }
     return true;
@@ -150,8 +152,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
-  @Nls
-  private String generateDocFromStyleOrScript(PsiElement element, PsiElement originalElement) {
+  private @Nls String generateDocFromStyleOrScript(PsiElement element, PsiElement originalElement) {
     DocumentationProvider styleProvider = getStyleProvider();
     if (styleProvider != null) {
       String result = styleProvider.generateDoc(element, originalElement);
@@ -185,17 +186,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return result;
   }
 
-  private static HtmlAttributeDescriptor getDescriptor(String name, XmlTag context) {
-    HtmlAttributeDescriptor attributeDescriptor = HtmlDescriptorsTable.getAttributeDescriptor(name);
-    if (attributeDescriptor instanceof CompositeAttributeTagDescriptor) {
-      return ((CompositeAttributeTagDescriptor)attributeDescriptor).findHtmlAttributeInContext(context);
-    }
-
-    return attributeDescriptor;
-  }
-
-  @Nls
-  private String generateDocForHtml(PsiElement element, PsiElement originalElement) {
+  private @Nls String generateDocForHtml(PsiElement element, PsiElement originalElement) {
     MdnSymbolDocumentation documentation = getDocumentation(element, originalElement);
     if (documentation != null) {
       return documentation.getDocumentation(true, null);
@@ -215,9 +206,12 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       return null;
     }
     String key = StringUtil.toLowerCase(text);
-    final HtmlTagDescriptor descriptor = HtmlDescriptorsTable.getTagDescriptor(key);
+    final boolean isStdTag = key != null
+                             && (MdnDocumentationKt.getHtmlMdnTagDocumentation(MdnApiNamespace.Html, key) != null
+                                 || MdnDocumentationKt.getHtmlMdnTagDocumentation(MdnApiNamespace.Svg, key) != null
+                                 || MdnDocumentationKt.getHtmlMdnTagDocumentation(MdnApiNamespace.MathML, key) != null);
 
-    if (descriptor != null && !isAttributeContext(context)) {
+    if (isStdTag && !isAttributeContext(context)) {
       try {
         final XmlTag tagFromText =
           XmlElementFactory.getInstance(psiManager.getProject()).createTagFromText("<" + key + " xmlns=\"" + XmlUtil.XHTML_URI + "\"/>");
@@ -228,9 +222,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
     else {
       XmlTag tagContext = findTagContext(context);
-      HtmlAttributeDescriptor myAttributeDescriptor = getDescriptor(key, tagContext);
-
-      if (myAttributeDescriptor != null && tagContext != null) {
+      if (tagContext != null) {
         XmlElementDescriptor tagDescriptor = tagContext.getDescriptor();
         return tagDescriptor != null ? tagDescriptor.getAttributeDescriptor(text, tagContext) : null;
       }
@@ -265,13 +257,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     return PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
   }
 
-  @Nullable
-  private static DocumentationProvider getScriptDocumentationProvider() {
+  private static @Nullable DocumentationProvider getScriptDocumentationProvider() {
     return ContainerUtil.getFirstItem(SCRIPT_PROVIDER_EP_NAME.getExtensionList());
   }
 
-  @Nullable
-  private DocumentationProvider getStyleProvider() {
+  private @Nullable DocumentationProvider getStyleProvider() {
     if (!myUseStyleProvider) return null;
     Language cssLanguage = Language.findLanguageByID("CSS");
     if (cssLanguage != null) {

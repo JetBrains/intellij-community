@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -39,7 +39,7 @@ import java.util.List;
 public abstract class XmlExtension {
   public static final ExtensionPointName<XmlExtension> EP_NAME = new ExtensionPointName<>("com.intellij.xml.xmlExtension");
 
-  public static XmlExtension getExtension(@NotNull final PsiFile file) {
+  public static XmlExtension getExtension(final @NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> CachedValueProvider.Result.create(calcExtension(file), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -84,17 +84,14 @@ public abstract class XmlExtension {
       this.namespace = namespace;
     }
 
-    @Nullable
-    public PsiElement getDeclaration() {
+    public @Nullable PsiElement getDeclaration() {
       return null;
     }
   }
 
-  @NotNull
-  public abstract List<TagInfo> getAvailableTagNames(@NotNull final XmlFile file, @NotNull final XmlTag context);
+  public abstract @NotNull List<TagInfo> getAvailableTagNames(final @NotNull XmlFile file, final @NotNull XmlTag context);
 
-  @Nullable
-  public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
+  public @Nullable TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
@@ -114,8 +111,7 @@ public abstract class XmlExtension {
     return HighlightInfoType.ERROR;
   }
 
-  @Nullable
-  public abstract SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
+  public abstract @Nullable SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix);
 
   public SearchScope getNsPrefixScope(XmlAttribute declaration) {
     return new LocalSearchScope(declaration.getParent());
@@ -125,13 +121,11 @@ public abstract class XmlExtension {
     return true;
   }
 
-  @Nullable
-  public XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag, final XmlElementDescriptor parentDescriptor) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(XmlTag tag, XmlTag contextTag, final XmlElementDescriptor parentDescriptor) {
     return parentDescriptor.getElementDescriptor(tag, contextTag);
   }
 
-  @Nullable
-  public XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
+  public @Nullable XmlNSDescriptor getNSDescriptor(final XmlTag element, final String namespace, final boolean strict) {
     return element.getNSDescriptor(namespace, strict);
   }
 
@@ -144,13 +138,11 @@ public abstract class XmlExtension {
     return descriptor;
   }
 
-  @Nullable
-  public XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
+  public @Nullable XmlTag getParentTagForNamespace(XmlTag tag, XmlNSDescriptor namespace) {
     return tag.getParentTag();
   }
 
-  @Nullable
-  public XmlFile getContainingFile(PsiElement element) {
+  public @Nullable XmlFile getContainingFile(PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -178,20 +170,17 @@ public abstract class XmlExtension {
     return true;
   }
 
-  @NotNull
-  public AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
-                                                                  @NotNull String attributeName,
-                                                                  @NotNull String defaultAttributeQuote) {
+  public @NotNull AttributeValuePresentation getAttributeValuePresentation(@Nullable XmlTag tag,
+                                                                           @NotNull String attributeName,
+                                                                           @NotNull String defaultAttributeQuote) {
     return new AttributeValuePresentation() {
-      @NotNull
       @Override
-      public String getPrefix() {
+      public @NotNull String getPrefix() {
         return defaultAttributeQuote;
       }
 
-      @NotNull
       @Override
-      public String getPostfix() {
+      public @NotNull String getPostfix() {
         return defaultAttributeQuote;
       }
     };
@@ -212,8 +201,6 @@ public abstract class XmlExtension {
   public boolean isSelfClosingTagAllowed(@NotNull XmlTag tag) {
     return false;
   }
-
-  public boolean isSingleTagException(@NotNull XmlTag tag) { return false; }
 
   public boolean isValidTagNameChar(final char c) {
     return false;

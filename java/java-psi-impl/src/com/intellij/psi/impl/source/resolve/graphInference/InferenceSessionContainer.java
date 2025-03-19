@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -127,9 +127,9 @@ public class InferenceSessionContainer {
 
   private static PsiSubstitutor inferNested(final PsiParameter @NotNull [] parameters,
                                             final PsiExpression @NotNull [] arguments,
-                                            @NotNull final PsiCall parent,
-                                            @NotNull final MethodCandidateInfo currentMethod,
-                                            @NotNull final InferenceSession parentSession) {
+                                            final @NotNull PsiCall parent,
+                                            final @NotNull MethodCandidateInfo currentMethod,
+                                            final @NotNull InferenceSession parentSession) {
     final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
     if (errorMessages != null && !MethodCandidateInfo.isOverloadCheck()) {
       //for lambda parameter type calculation, the parent inference may contain errors due to skipping that lambda constraints
@@ -237,10 +237,9 @@ public class InferenceSessionContainer {
     return new CompoundInitialState(PsiSubstitutor.createSubstitutor(map), nestedStates);
   }
 
-  @Nullable
-  private static InferenceSession startTopLevelInference(final PsiCall topLevelCall,
-                                                         final ParameterTypeInferencePolicy policy,
-                                                         MethodCandidateInfo currentMethod) {
+  private static @Nullable InferenceSession startTopLevelInference(final PsiCall topLevelCall,
+                                                                   final ParameterTypeInferencePolicy policy,
+                                                                   MethodCandidateInfo currentMethod) {
     final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(topLevelCall);
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
@@ -260,8 +259,7 @@ public class InferenceSessionContainer {
     return null;
   }
 
-  @NotNull
-  private static PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
+  private static @NotNull PsiSubstitutor replaceVariables(Collection<InferenceVariable> inferenceVariables) {
     final List<InferenceVariable> targetVars = new ArrayList<>();
     Map<PsiTypeParameter, PsiType> map = new HashMap<>();
     final InferenceVariable[] oldVars = inferenceVariables.toArray(new InferenceVariable[0]);

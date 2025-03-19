@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.icons.AllIcons;
@@ -24,37 +24,36 @@ import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.ReplaceableIcon;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBScalableIcon;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.wrapKeepEditorAreaFocusNavigatable;
 
-public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
+public class XDebuggerFramesList extends DebuggerFramesList implements UiCompatibleDataProvider {
   private final Project myProject;
   private final FileColorsCache myFileColorsCache;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
@@ -124,59 +123,70 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   @Override
-  public @Nullable Object getData(@NonNls @NotNull String dataId) {
-    if (FRAMES_LIST.is(dataId)) {
-      return this;
-    }
-    // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
-    // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
-    if (PlatformDataKeys.CONTEXT_MENU_POINT.is(dataId)) {
-      int index = getSelectedIndex();
-      if (index != -1) {
-        Rectangle cellBounds = getCellBounds(index, index);
-        if (cellBounds != null) {
-          Rectangle visibleRect = getVisibleRect();
-          return new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1);
-        }
-      }
-      return null;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      XStackFrame frame = getSelectedFrame();
-      if (frame != null) {
-        return (DataProvider)realDataId -> getSlowData(frame, realDataId);
-      }
-    }
-    return null;
-  }
+  public void updateUI() {
+    super.updateUI();
 
-  @Nullable
-  private Object getSlowData(@NotNull XStackFrame frame, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getFrameNavigatable(frame, true);
+    if (ExpandedItemListCellRendererWrapper.unwrap(getCellRenderer()) instanceof XDebuggerGroupedFrameListRenderer renderer) {
+      renderer.updateUI();
     }
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return getFile(frame);
-    }
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      VirtualFile file = getFile(frame);
-      if (file != null && file.isValid()) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    }
-    return null;
   }
 
   @Override
-  public void clear() {
-    super.clear();
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(FRAMES_LIST, this);
+    {
+      // Because of the overridden locationToIndex(), the default logic of retrieving the context menu point doesn't work.
+      // Here, were mimic the way PopupFactoryImpl.guessBestPopupLocation(JComponent) calculates it for JLists.
+      int index = getSelectedIndex();
+      Rectangle cellBounds = index != -1 ? getCellBounds(index, index) : null;
+      if (cellBounds != null) {
+        Rectangle visibleRect = getVisibleRect();
+        sink.set(PlatformDataKeys.CONTEXT_MENU_POINT,
+                 new Point(visibleRect.x + visibleRect.width / 4, cellBounds.y + cellBounds.height - 1));
+      }
+    }
+    XStackFrame frame = getSelectedFrame();
+    if (frame == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      return getFrameNavigatable(frame, true);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return getFile(frame);
+    });
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      VirtualFile file = getFile(frame);
+      return file != null && file.isValid() ?
+             PsiManager.getInstance(myProject).findFile(file) : null;
+    });
   }
 
+  @SuppressWarnings("unchecked")
   public boolean selectFrame(@NotNull XStackFrame toSelect) {
-    //noinspection unchecked
-    if (!Objects.equals(getSelectedValue(), toSelect) && getModel().contains(toSelect)) {
+    if (Objects.equals(getSelectedValue(), toSelect)) return false;
+    if (getModel().contains(toSelect)) {
       setSelectedValue(toSelect, true);
       return true;
+    }
+    else if (toSelect instanceof XFramesView.HiddenStackFramesItem placeholder) {
+      // If a user has a selected hidden frames placeholder and toggles "view library frames",
+      // we should select first of hidden frames under the selected placeholder.
+      var firstHiddenFrame = placeholder.hiddenFrames.get(0);
+      if (getModel().contains(firstHiddenFrame)) {
+        setSelectedValue(firstHiddenFrame, true);
+        return true;
+      }
+    }
+    else {
+      // If a user has a selected frame and toggles "hide library frames",
+      // we should be able to select the placeholder containing the hidden frame.
+      var placeholderContainingFrameToSelect =
+        ContainerUtil.find(getModel().getItems(),
+                           frame -> frame instanceof XFramesView.HiddenStackFramesItem placeholder &&
+                                    placeholder.hiddenFrames.contains(toSelect));
+      if (placeholderContainingFrameToSelect != null) {
+        setSelectedValue(placeholderContainingFrameToSelect, true);
+        return true;
+      }
     }
     return false;
   }
@@ -211,8 +221,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return position != null ? position.createNavigatable(myProject) : null;
   }
 
-  @Nullable
-  private static VirtualFile getFile(XStackFrame frame) {
+  private static @Nullable VirtualFile getFile(XStackFrame frame) {
     XSourcePosition position = frame.getSourcePosition();
     return position != null ? position.getFile() : null;
   }
@@ -222,20 +231,25 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     return new XDebuggerGroupedFrameListRenderer();
   }
 
+  Color getFrameBgColor(XStackFrame stackFrame) {
+    if (stackFrame instanceof ItemWithCustomBackgroundColor) {
+      return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
+    }
+    return myFileColorsCache.get(getFile(stackFrame));
+  }
+
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
-    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer();
+    private XDebuggerFrameListRenderer myOriginalRenderer;
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
-        @Nullable
         @Override
-        public String getTextFor(Object value) {
+        public @Nullable String getTextFor(Object value) {
           return null;
         }
 
-        @Nullable
         @Override
-        public String getCaptionAboveOf(Object value) {
+        public @Nullable String getCaptionAboveOf(Object value) {
           return value instanceof ItemWithSeparatorAbove ? ((ItemWithSeparatorAbove)value).getCaptionAboveOf() : null;
         }
 
@@ -247,39 +261,71 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       mySeparatorComponent.setCaptionCentered(false);
     }
 
+    public void updateUI() {
+      SwingUtilities.updateComponentTreeUI(myRendererComponent);
+    }
+
+    @Override
+    protected Border getDefaultItemComponentBorder() {
+      return null;
+    }
+
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (myDescriptor.hasSeparatorAboveOf(value)) {
-        Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (hasSeparator(value, index)) {
-          setSeparatorFont(list.getFont());
-        }
-        ((XDebuggerFrameListRenderer)getItemComponent()).getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        return component;
+      setSeparatorFont(list.getFont());
+      myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      result.getAccessibleContext().setAccessibleName(myOriginalRenderer.getAccessibleContext().getAccessibleName());
+      var itemComponent = getItemComponent();
+      if (itemComponent instanceof SelectablePanel selectablePanel) {
+        Color stackFrameColor = value instanceof XStackFrame stackFrame ? getFrameBgColor(stackFrame) : null;
+        selectablePanel.setOpaque(true);
+        selectablePanel.setBackground(stackFrameColor);
+        selectablePanel.setSelectionColor(myOriginalRenderer.background);
+      } else {
+        myOriginalRenderer.setBackground(myOriginalRenderer.background);
       }
-      else {
-        return myOriginalRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-      }
+
+      return result;
     }
 
     @Override
     protected JComponent createItemComponent() {
       createLabel();
-      return new XDebuggerFrameListRenderer();
+      myOriginalRenderer = new XDebuggerFrameListRenderer();
+      return layoutComponent(myOriginalRenderer);
     }
   }
 
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
+
+    Color background;
+
+    private XDebuggerFrameListRenderer() {
+      if (ExperimentalUI.isNewUI()) {
+        getIpad().left = 0;
+        getIpad().right = 0;
+      }
+    }
+
+    @Override
+    // Avoid usage of cached icons in paintSelectionAwareIcon, because the icon can change background
+    protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
+      Rectangle area = computePaintArea();
+      icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight()) / 2);
+    }
+
     private final XDebuggerPopFrameIcon myPopFrameIcon = JBUIScale.scaleIcon(
       new XDebuggerPopFrameIcon(AllIcons.Actions.InlineDropFrame, AllIcons.Actions.InlineDropFrameSelected, 16, 16)
     );
 
     @Override
-    protected void customizeCellRenderer(@NotNull final JList list,
+    protected void customizeCellRenderer(final @NotNull JList list,
                                          final Object value,
                                          final int index,
                                          final boolean selected,
                                          final boolean hasFocus) {
+      background = null;
       if (value == null) {
         append(XDebuggerBundle.message("stack.frame.loading.text"), SimpleTextAttributes.GRAY_ATTRIBUTES);
         return;
@@ -300,14 +346,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       if (!selected) {
         Color c = getFrameBgColor(stackFrame);
         if (index <= hoveredIndex && canDropSomething && iconHovered) {
-          setBackground(RenderingUtil.getHoverBackground(list));
+          background = RenderingUtil.getHoverBackground(list);
         }
         else if (c != null) {
-          setBackground(c);
+          background = c;
         }
       }
       else {
-        setBackground(UIUtil.getListSelectionBackground(hasFocus));
+        background = UIUtil.getListSelectionBackground(hasFocus);
         setForeground(NamedColorUtil.getListSelectionForeground(hasFocus));
         mySelectionForeground = getForeground();
       }
@@ -326,9 +372,13 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
         }
         myPopFrameIcon.setSelected(selected && hasFocus);
       }
+
+      // Without this call, speed search will select the matching item, but the matching part won't be highlighted.
+      // Note that speed search is enabled for the whole frames in `XFramesView`
+      SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
 
-    private boolean canDropSelectedFrame(JList list) {
+    private static boolean canDropSelectedFrame(JList list) {
       if (!(list instanceof XDebuggerFramesList)) {
         return false;
       }
@@ -358,16 +408,11 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       if (p == null || bounds == null) {
         return false;
       }
-      var leftPadding = this.getIpad().left;
+      var leftPadding = ExperimentalUI.isNewUI() ?
+                        JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left
+                                                 : this.getIpad().left;
       var iconWidth = myPopFrameIcon.getIconWidth();
       return new Rectangle(leftPadding, 0, iconWidth, bounds.height).contains(p);
-    }
-
-    Color getFrameBgColor(XStackFrame stackFrame) {
-      if (stackFrame instanceof ItemWithCustomBackgroundColor) {
-        return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
-      }
-      return myFileColorsCache.get(getFile(stackFrame));
     }
   }
 
@@ -424,6 +469,9 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   public interface ItemWithSeparatorAbove {
     boolean hasSeparatorAbove();
     @NlsContexts.Separator String getCaptionAboveOf();
+
+    default void setWithSeparator(boolean withSeparator) {
+    }
   }
 
   public interface ItemWithCustomBackgroundColor {

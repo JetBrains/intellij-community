@@ -15,15 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class ThrowParsingTest extends JavaParsingTestCase {
+public class ThrowParsingTest extends AbstractBasicThrowParsingTest {
   public ThrowParsingTest() {
-    super("parser-full/statementParsing/throw");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testNormal() { doTest(true); }
-
-  public void testUncomplete1() { doTest(true); }
-  public void testUncomplete2() { doTest(true); }
 }

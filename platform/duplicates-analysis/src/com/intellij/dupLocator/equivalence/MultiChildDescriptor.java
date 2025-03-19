@@ -1,8 +1,10 @@
 package com.intellij.dupLocator.equivalence;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class MultiChildDescriptor {
   private final MyType myType;
   private final PsiElement[] myElements;
@@ -12,8 +14,7 @@ public class MultiChildDescriptor {
     myElements = elements;
   }
 
-  @NotNull
-  public MyType getType() {
+  public @NotNull MyType getType() {
     return myType;
   }
 

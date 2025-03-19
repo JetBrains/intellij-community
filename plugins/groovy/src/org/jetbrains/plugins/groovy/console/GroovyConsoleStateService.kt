@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService.MyState
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 @State(name = "GroovyConsoleState", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 internal class GroovyConsoleStateService(private val project: Project) : PersistentStateComponent<MyState> {
   private val fileModuleMap: MutableMap<VirtualFile, ModulePointer?> = Collections.synchronizedMap(HashMap())

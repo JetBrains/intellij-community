@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.CollectionFactory;
@@ -22,7 +21,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Eugene Zhuravlev
  */
 @SkipSlowTestLocally
-@HardwareAgentRequired
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   interface MapConstructor<T, T2> {
     PersistentHashMap<T, T2> createMap(File file) throws IOException;
@@ -334,7 +332,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     };
 
     AtomicInteger count = new AtomicInteger();
-    PlatformTestUtil.startPerformanceTest("put/remove", 9000, () -> {
+    Benchmark.newBenchmark("put/remove", () -> {
       try {
         stringCache.addDeletedPairsListener(listener);
         for (int i = 0; i < 100000; ++i) {
@@ -354,7 +352,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       catch (IOException e) {
         throw new RuntimeException(e);
       }
-    }).ioBound().assertTiming();
+    }).start();
 
     myMap.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
@@ -368,7 +366,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       strings.add(createRandomString());
     }
 
-    PlatformTestUtil.startPerformanceTest("put/remove", 1500, () -> {
+    Benchmark.newBenchmark("put/remove", () -> {
       for (int i = 0; i < 100000; ++i) {
         final String string = strings.get(i);
         myMap.put(string, string);
@@ -387,7 +385,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       for (String string : strings) {
         myMap.remove(string);
       }
-    }).assertTiming();
+    }).start();
     myMap.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
     LOG.debug(String.format("Data file size = %d bytes\n",

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.ide.progress` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-progress_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-progress",
+  module_name = "intellij.platform.ide.progress",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/progress",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/service-container:serviceContainer",
+    "//platform/kernel/shared:kernel",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/project/shared:project",
+  ],
+  runtime_deps = [":ide-progress_resources"]
+)
+### auto-generated section `build intellij.platform.ide.progress` end

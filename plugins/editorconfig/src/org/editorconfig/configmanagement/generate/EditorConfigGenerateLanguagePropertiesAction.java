@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.generate;
 
 import com.intellij.application.options.CodeStyle;
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.ec4j.core.model.Ec4jPath;
+import org.ec4j.core.model.Glob;
 import org.editorconfig.configmanagement.export.EditorConfigSettingsWriter;
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind;
 import org.editorconfig.language.messages.EditorConfigBundle;
@@ -31,7 +32,6 @@ import org.editorconfig.language.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.ec4j.core.model.Glob;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,8 +43,8 @@ import java.util.stream.Collectors;
 
 public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAction {
 
-  private final static CodeInsightActionHandler HANDLER = new LanguagePropertiesGenerator();
-  private final static Logger LOG = Logger.getInstance(EditorConfigGenerateLanguagePropertiesAction.class);
+  private static final CodeInsightActionHandler HANDLER = new LanguagePropertiesGenerator();
+  private static final Logger LOG = Logger.getInstance(EditorConfigGenerateLanguagePropertiesAction.class);
 
   @Override
   protected @NotNull CodeInsightActionHandler getHandler() {
@@ -153,8 +153,7 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
                                                  .collect(Collectors.toList());
     }
 
-    @Nullable
-    private static Set<Language> getPreferredLanguages(@NotNull PsiFile file, int offset) {
+    private static @Nullable Set<Language> getPreferredLanguages(@NotNull PsiFile file, int offset) {
       Set<Language> languages = new HashSet<>();
       int currOffset = offset == file.getTextLength() && offset > 0 ? offset - 1 : offset;
       PsiElement contextElement = file.findElementAt(currOffset);
@@ -179,8 +178,7 @@ public class EditorConfigGenerateLanguagePropertiesAction extends CodeInsightAct
       return languages;
     }
 
-    @Nullable
-    private static EditorConfigHeader findHeader(@NotNull PsiElement contextElement) {
+    private static @Nullable EditorConfigHeader findHeader(@NotNull PsiElement contextElement) {
       if (contextElement instanceof PsiWhiteSpace) {
         PsiElement prev = contextElement.getPrevSibling();
         if (prev instanceof EditorConfigSection) {

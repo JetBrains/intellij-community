@@ -1,0 +1,10 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class X {
+  public static List<Integer> prepare(ArrayList<Integer> list) {
+      Integer last = list.get(list.size() - 1);
+      return list;
+  }
+
+}

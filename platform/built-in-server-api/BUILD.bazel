@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.builtInServer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "builtInServer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "builtInServer",
+  module_name = "intellij.platform.builtInServer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "@lib//:kotlin-stdlib",
+    "@lib//:netty-codec-http",
+    "//platform/util-ex",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+  ],
+  runtime_deps = [":builtInServer_resources"]
+)
+### auto-generated section `build intellij.platform.builtInServer` end

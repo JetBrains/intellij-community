@@ -1,0 +1,25 @@
+### auto-generated section `build kotlin.base.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-base-jps",
+  module_name = "kotlin.base.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/core-impl",
+    "//platform/lang-api:lang",
+    "//platform/projectModel-impl",
+    "//java/compiler/impl:java-compiler-impl",
+  ]
+)
+### auto-generated section `build kotlin.base.jps` end

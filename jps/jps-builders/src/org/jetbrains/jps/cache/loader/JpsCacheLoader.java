@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class JpsCacheLoader implements JpsOutputLoader<File> {
+final class JpsCacheLoader implements JpsOutputLoader<File> {
   private static final Logger LOG = Logger.getInstance(JpsCacheLoader.class);
   private static final String TIMESTAMPS_FOLDER_NAME = "timestamps";
   private static final String FS_STATE_FILE = "fs_state.dat";
@@ -34,9 +34,8 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     isCleanupAsynchronously = cleanupAsynchronously;
   }
 
-  @Nullable
   @Override
-  public File load() {
+  public @Nullable File load() {
     LOG.info("Loading JPS caches for commit: " + myContext.getCommitId());
     myTmpCacheFolder = null;
 

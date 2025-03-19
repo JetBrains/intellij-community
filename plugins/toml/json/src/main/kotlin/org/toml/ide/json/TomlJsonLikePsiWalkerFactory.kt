@@ -13,5 +13,5 @@ import org.toml.lang.psi.TomlFile
 
 class TomlJsonLikePsiWalkerFactory : JsonLikePsiWalkerFactory {
     override fun handles(element: PsiElement): Boolean = element.containingFile is TomlFile
-    override fun create(schemaObject: JsonSchemaObject): JsonLikePsiWalker = TomlJsonPsiWalker
+    override fun create(schemaObject: JsonSchemaObject?): JsonLikePsiWalker = TomlJsonPsiWalker
 }

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -17,16 +16,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +60,7 @@ public final class IntroduceTargetChooser {
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
+                                                        @Unmodifiable
                                                         @NotNull List<? extends T> expressions,
                                                         @NotNull Pass<? super T> callback,
                                                         @NotNull Function<? super T, String> renderer,
@@ -74,7 +74,7 @@ public final class IntroduceTargetChooser {
     }
     else {
       ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
-        .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+        .finishOnUiThread(ModalityState.nonModal(), targets ->
           showIntroduceTargetChooser(editor, targets, target -> callback.accept(target.getPlace()), title, selection))
         .expireWhen(() -> editor.isDisposed())
         .submit(AppExecutorUtil.getAppExecutorService());
@@ -125,31 +125,16 @@ public final class IntroduceTargetChooser {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .setRenderer(new DefaultListCellRenderer() {
+      .setRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
         @Override
-        public Component getListCellRendererComponent(JList list,
-                                                      Object value,
-                                                      int index,
-                                                      boolean isSelected,
-                                                      boolean cellHasFocus) {
-          Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          //noinspection unchecked
-          IntroduceTarget expr = (T)value;
-          if (expr.isValid()) {
-            String text = expr.render();
-            int firstNewLinePos = text.indexOf('\n');
-            String trimmedText =
-              text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
-            if (trimmedText.length() != text.length()) trimmedText += " ...";
-            setText(trimmedText);
-          }
-          else {
-            setForeground(JBColor.RED);
-            setText(IdeBundle.message("invalid.node.text"));
-          }
-          return rendererComponent;
+        public String getTextFor(T value) {
+          String text = value.render();
+          int firstNewLinePos = text.indexOf('\n');
+          String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+          if (trimmedText.length() != text.length()) trimmedText += " ...";
+          return trimmedText;
         }
-      });
+      }));
     if (southComponent != null && builder instanceof PopupChooserBuilder) {
       ((PopupChooserBuilder<T>)builder).setSouthComponent(southComponent);
     }
@@ -161,33 +146,29 @@ public final class IntroduceTargetChooser {
     }
   }
 
-  private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
+  private static final class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
     private final TextRange myTextRange;
     private final String myText;
 
-    MyIntroduceTarget(@NotNull T psi,
-                      @NotNull TextRange range,
-                      @NotNull String text) {
+    MyIntroduceTarget(@NotNull T psi, @NotNull TextRange range, @NotNull String text) {
       super(psi);
       myTextRange = range;
       myText = text;
     }
 
-    @NotNull
     @Override
-    public TextRange getTextRange() {
+    public @NotNull TextRange getTextRange() {
       return myTextRange;
     }
 
-    @NotNull
     @Override
-    public String render() {
+    public @NotNull String render() {
       return myText;
     }
 
     @Override
     public String toString() {
-      return isValid() ? myText : "invalid";
+      return myText;
     }
   }
 }

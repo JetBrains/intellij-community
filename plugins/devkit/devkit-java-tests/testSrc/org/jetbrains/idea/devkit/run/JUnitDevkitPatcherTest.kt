@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run
 
 import com.intellij.execution.configurations.ParametersList
@@ -30,7 +30,6 @@ class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
     val module = projectRule.module
     runWriteActionAndWait {
       file = ModuleRootManager.getInstance(module).contentRoots[0].createChildData(this, "OpenedPackages.txt")
-      @Suppress("SpellCheckingInspection")
       file.setBinaryContent("""
           --add-opens=java.base/java.io=ALL-UNNAMED
           --add-opens=java.base/java.lang=ALL-UNNAMED
@@ -44,7 +43,7 @@ class JUnitDevkitPatcherTest : BareTestFixtureTestCase() {
 
     JUnitDevKitPatcher.appendAddOpensWhenNeeded(projectRule.project, jdk, parametersList)
 
-    @Suppress("SpellCheckingInspection") val awtPackage = when {
+    val awtPackage = when {
       SystemInfo.isWindows -> "sun.awt.windows"
       SystemInfo.isMac -> "sun.lwawt"
       else -> "sun.awt.X11"

@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.xdebugger.XExpression;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class XWatchTransferable extends StringSelection {
   public static final DataFlavor EXPRESSIONS_FLAVOR = new DataFlavor(List.class, "Debugger watches expressions");
   private final List<XExpression> myData;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.preview;
 
 import com.intellij.openapi.Disposable;
@@ -74,8 +74,7 @@ class PreviewTree implements Disposable {
     }
   }
 
-  @NotNull
-  public List<FragmentNode> getSelectedNodes() {
+  public @NotNull List<FragmentNode> getSelectedNodes() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (ArrayUtil.isEmpty(selectionPaths)) {
       return Collections.emptyList();
@@ -87,8 +86,7 @@ class PreviewTree implements Disposable {
     return result;
   }
 
-  @Nullable
-  private FragmentNode getFirstSelectedNode() {
+  private @Nullable FragmentNode getFirstSelectedNode() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
     if (ArrayUtil.isEmpty(selectionPaths)) {
       return null;
@@ -102,8 +100,7 @@ class PreviewTree implements Disposable {
     return null;
   }
 
-  @NotNull
-  private static List<FragmentNode> getFragmentNodes(@NotNull TreePath path) {
+  private static @NotNull List<FragmentNode> getFragmentNodes(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof FragmentNode) {
       return Collections.singletonList((FragmentNode)component);

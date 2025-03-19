@@ -1,7 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.impl
 
-import com.intellij.codeInsight.navigation.*
+import com.intellij.codeInsight.navigation.CtrlMouseData
+import com.intellij.codeInsight.navigation.rangeOnlyCtrlMouseData
 import com.intellij.navigation.DirectNavigationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -29,6 +30,6 @@ private class DirectNavigationData(
 
   override fun result(): NavigationActionResult? {
     val request = targetElement.psiNavigatable()?.navigationRequest() ?: return null
-    return NavigationActionResult.SingleTarget(request, navigationProvider)
+    return NavigationActionResult.SingleTarget({ request }, navigationProvider)
   }
 }

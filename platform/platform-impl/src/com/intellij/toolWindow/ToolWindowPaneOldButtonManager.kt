@@ -29,14 +29,15 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
   override val isNewUi: Boolean
     get() = false
 
-  override fun add(pane: JComponent) {
-  }
-
-  override fun addToToolWindowPane(pane: JComponent) {
+  override fun setupToolWindowPane(pane: JComponent) {
     pane.add(topStripe, JLayeredPane.POPUP_LAYER, -1)
     pane.add(leftStripe, JLayeredPane.POPUP_LAYER, -1)
     pane.add(bottomStripe, JLayeredPane.POPUP_LAYER, -1)
     pane.add(rightStripe, JLayeredPane.POPUP_LAYER, -1)
+  }
+
+  override fun wrapWithControls(pane: ToolWindowPane): JComponent {
+    return pane
   }
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {
@@ -111,7 +112,7 @@ internal class ToolWindowPaneOldButtonManager(paneId: String) : ToolWindowButton
     }
   }
 
-  override fun getBottomHeight() = if (bottomStripe.isVisible) bottomStripe.height else 0
+  override fun getBottomHeight(): Int = if (bottomStripe.isVisible) bottomStripe.height else 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): Stripe {
     return when(anchor) {

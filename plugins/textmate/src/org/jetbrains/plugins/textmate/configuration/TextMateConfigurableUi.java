@@ -50,15 +50,13 @@ public class TextMateConfigurableUi implements ConfigurableUi<TextMateConfigurab
     return myBundlesListPanel.isModified(settings.getConfigurableBundles());
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myBundlesList;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myBundlesList;
   }
 

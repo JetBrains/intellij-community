@@ -98,3 +98,18 @@ data class KotlinBuildSystemPluginIR(
         }
     }
 }
+
+
+class FoojayPluginIR(private val version: Version) : DefaultBuildSystemPluginIR {
+    override fun BuildFilePrinter.render() = when (this) {
+        is GradlePrinter -> {
+            call("id") { +"org.gradle.toolchains.foojay-resolver-convention".quotified }
+            version.let {
+                +" version "
+                +it.toString().quotified
+            }.ignore()
+        }
+        is MavenPrinter -> Unit // Does not exist for Maven
+        else -> Unit
+    }
+}

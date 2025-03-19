@@ -8,18 +8,20 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.UndoChangeRevertingVisitor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class ChangeRange {
+@ApiStatus.Internal
+public final class ChangeRange {
   private static final Logger LOG = Logger.getInstance(ChangeRange.class);
 
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
   private final Long myFromChangeId;
-  @Nullable private final Long myToChangeId;
+  private final @Nullable Long myToChangeId;
 
   public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @NotNull Long changeId) {
     this(gw, vcs, changeId, changeId);

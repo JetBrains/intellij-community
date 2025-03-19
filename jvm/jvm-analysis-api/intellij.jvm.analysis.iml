@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="intellij.java.psi" exported="" />
     <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.java.analysis" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" exported="" />
   </component>

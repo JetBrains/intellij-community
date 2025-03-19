@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.debugger.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "debugger-testFramework",
+  module_name = "intellij.platform.debugger.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:stream_ex",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+  ]
+)
+### auto-generated section `build intellij.platform.debugger.testFramework` end

@@ -8,22 +8,31 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TextMatePersistentBundle(val name: String, val enabled: Boolean)
 
-@State(name = "TextMateUserBundlesSettings", storages = [Storage(value = "textmate.xml", roamingType = RoamingType.DISABLED)])
-@Service
-class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMateUserBundlesSettings.State>(State()) {
+@State(name = "TextMateUserBundlesSettings",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "textmate.xml", roamingType = RoamingType.DISABLED)])
+class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMateUserBundleServiceState>(TextMateUserBundleServiceState()) {
   val bundles: Map<String, TextMatePersistentBundle>
     get() = state.bundles
 
   fun setBundlesConfig(bundles: Map<String, TextMatePersistentBundle>) {
     updateState {
-      State(bundles.mapKeys { (path, _) -> FileUtil.toSystemIndependentName(path) })
+      TextMateUserBundleServiceState(bundles.mapKeys { (path, _) -> FileUtil.toSystemIndependentName(path) })
     }
   }
 
   fun addBundle(path: String, name: String) {
     val normalizedPath = FileUtil.toSystemIndependentName(path)
     updateState { state ->
-      State(state.bundles + (normalizedPath to TextMatePersistentBundle(name, enabled = true)))
+      TextMateUserBundleServiceState(state.bundles + (normalizedPath to TextMatePersistentBundle(name, enabled = true)))
+    }
+  }
+
+  fun removeBundle(path: String) {
+    val normalizedPath = FileUtil.toSystemIndependentName(path)
+    updateState { state ->
+      TextMateUserBundleServiceState(state.bundles.filter { it.key != normalizedPath })
     }
   }
 
@@ -31,19 +40,26 @@ class TextMateUserBundlesSettings : SerializablePersistentStateComponent<TextMat
     val normalizedPath = FileUtil.toSystemIndependentName(path)
     updateState { state ->
       state.bundles[normalizedPath]?.let { bundle ->
-        State(state.bundles + (normalizedPath to bundle.copy(enabled = false)))
+        TextMateUserBundleServiceState(state.bundles + (normalizedPath to bundle.copy(enabled = false)))
       } ?: state
     }
   }
 
-  data class State(
-    @JvmField
-    val bundles: Map<String, TextMatePersistentBundle> = emptyMap()
-  )
+  fun hasEnabledBundle(path: String): Boolean {
+    val normalizedPath = FileUtil.toSystemIndependentName(path)
+    return bundles[normalizedPath]?.enabled == true
+  }
 
   companion object {
     @JvmStatic
-    val instance: TextMateUserBundlesSettings?
-      get() = ApplicationManager.getApplication().getService(TextMateUserBundlesSettings::class.java)
+    fun getInstance(): TextMateUserBundlesSettings? {
+      return ApplicationManager.getApplication().getService(TextMateUserBundlesSettings::class.java)
+    }
   }
 }
+
+@Serializable
+data class TextMateUserBundleServiceState(
+  @JvmField
+  val bundles: Map<String, TextMatePersistentBundle> = emptyMap()
+)

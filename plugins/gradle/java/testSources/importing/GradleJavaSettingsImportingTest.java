@@ -30,18 +30,18 @@ public class GradleJavaSettingsImportingTest extends GradleSettingsImportingTest
           idea {
             project.settings {
               compiler {
-                resourcePatterns '!*.java;!*.class'
-                clearOutputDirectory false
-                addNotNullAssertions false
-                autoShowFirstErrorInEditor false
-                displayNotificationPopup false
-                enableAutomake false
-                parallelCompilation true
-                rebuildModuleOnDependencyChange false
+                resourcePatterns = '!*.java;!*.class'
+                clearOutputDirectory = false
+                addNotNullAssertions = false
+                autoShowFirstErrorInEditor = false
+                displayNotificationPopup = false
+                enableAutomake = false
+                parallelCompilation = true
+                rebuildModuleOnDependencyChange = false
                 javac {
-                  preferTargetJDKCompiler false
-                  javacAdditionalOptions '-Dkey=val'
-                  generateNoWarnings true
+                  preferTargetJDKCompiler = false
+                  javacAdditionalOptions = '-Dkey=val'
+                  generateNoWarnings = true
                 }
               }
             }

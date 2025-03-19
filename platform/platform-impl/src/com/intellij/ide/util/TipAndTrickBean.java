@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -33,8 +33,7 @@ public final class TipAndTrickBean implements PluginAware {
   @Attribute("feature-id")
   public String featureId;
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getTipId(fileName);
   }
 
@@ -49,13 +48,11 @@ public final class TipAndTrickBean implements PluginAware {
     this.pluginDescriptor = pluginDescriptor;
   }
 
-  @NotNull
-  public static String getTipId(@NotNull String tipFilename) {
+  public static @NotNull String getTipId(@NotNull String tipFilename) {
     return StringUtil.substringBeforeLast(tipFilename, ".");
   }
 
-  @Nullable
-  public static TipAndTrickBean findById(@NotNull String tipId) {
+  public static @Nullable TipAndTrickBean findById(@NotNull String tipId) {
     for (TipAndTrickBean tip : EP_NAME.getExtensionList()) {
       if (Objects.equals(tipId, tip.getId())) {
         return tip;
@@ -64,23 +61,8 @@ public final class TipAndTrickBean implements PluginAware {
     return null;
   }
 
-  /**
-   * @deprecated Use {@code findById()} instead
-   */
-  @Deprecated
-  @Nullable
-  public static TipAndTrickBean findByFileName(String tipFileName) {
-    for (TipAndTrickBean tip : EP_NAME.getExtensionList()) {
-      if (Objects.equals(tipFileName, tip.fileName)) {
-        return tip;
-      }
-    }
-    return null;
-  }
-
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "TipAndTrickBean{" +
            "fileName='" + fileName + '\'' +
            ", plugin='" + (pluginDescriptor != null ? pluginDescriptor.getPluginId() : null) + '\'' +

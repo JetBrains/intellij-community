@@ -1,19 +1,15 @@
-from typing import Any
-
-from braintree import Subscription as Subscription
-from braintree.search import Search as Search
-from braintree.util import Constants as Constants
+from braintree.search import Search
 
 class SubscriptionSearch:
-    billing_cycles_remaining: Any
-    created_at: Any
-    days_past_due: Any
-    id: Any
-    ids: Any
-    in_trial_period: Any
-    merchant_account_id: Any
-    next_billing_date: Any
-    plan_id: Any
-    price: Any
-    status: Any
-    transaction_id: Any
+    billing_cycles_remaining: Search.RangeNodeBuilder
+    created_at: Search.RangeNodeBuilder
+    days_past_due: Search.RangeNodeBuilder
+    id: Search.TextNodeBuilder
+    ids: Search.MultipleValueNodeBuilder
+    in_trial_period: Search.MultipleValueNodeBuilder
+    merchant_account_id: Search.MultipleValueNodeBuilder
+    next_billing_date: Search.RangeNodeBuilder
+    plan_id: Search.MultipleValueOrTextNodeBuilder
+    price: Search.RangeNodeBuilder
+    status: Search.MultipleValueNodeBuilder
+    transaction_id: Search.TextNodeBuilder

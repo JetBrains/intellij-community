@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
+import git4idea.repo.GitRefUtil;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchActionsUtilKt;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
@@ -83,13 +85,14 @@ public final class GitBranchUtil {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
     h.addParameters("-l");
     h.setSilent(true);
+    h.setEnableInteractiveCallbacks(false);
 
     List<String> tags = new ArrayList<>();
     h.addLineListener(new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType != ProcessOutputTypes.STDOUT) return;
-        if (line.length() != 0) tags.add(line);
+        if (!line.isEmpty()) tags.add(line);
       }
     });
 
@@ -124,13 +127,14 @@ public final class GitBranchUtil {
    * For fresh repository returns an empty string.
    */
   public static @NlsSafe @NotNull String getBranchNameOrRev(@NotNull GitRepository repository) {
-    if (repository.isOnBranch()) {
-      GitBranch currentBranch = repository.getCurrentBranch();
+    var repoInfo = repository.getInfo();
+    if (repoInfo.isOnBranch()) {
+      GitBranch currentBranch = repoInfo.getCurrentBranch();
       assert currentBranch != null;
       return currentBranch.getName();
     }
     else {
-      String currentRevision = repository.getCurrentRevision();
+      String currentRevision = repoInfo.getCurrentRevision();
       return currentRevision != null ? currentRevision.substring(0, 7) : "";
     }
   }
@@ -167,15 +171,9 @@ public final class GitBranchUtil {
   public static @Nls @NotNull String getDisplayableBranchText(@NotNull GitRepository repository,
                                                               @NotNull Function<@NotNull @NlsSafe String, @NotNull @NlsSafe String> branchNameTruncator) {
     GitRepository.State state = repository.getState();
-    if (state == GitRepository.State.DETACHED) {
-      String currentRevision = repository.getCurrentRevision();
-      if (currentRevision != null) {
-        return DvcsUtil.getShortHash(currentRevision);
-      }
-      else {
-        LOG.warn(String.format("Current revision is null in DETACHED state. isFresh: %s", repository.isFresh()));
-        return GitBundle.message("git.status.bar.widget.text.unknown");
-      }
+    if (state == Repository.State.DETACHED) {
+      String detachedStatePresentableText = getDetachedStatePresentableText(repository, branchNameTruncator);
+      return detachedStatePresentableText != null ? detachedStatePresentableText : "";
     }
 
     GitBranch branch = repository.getCurrentBranch();
@@ -195,6 +193,25 @@ public final class GitBranchUtil {
     }
     else {
       return branchName;
+    }
+  }
+
+  private static @Nls String getDetachedStatePresentableText(@NotNull GitRepository repository,
+                                                             @NotNull Function<@NotNull @NlsSafe String,
+                                                        @NotNull @NlsSafe String> branchNameTruncator) {
+    GitReference currentReference = GitRefUtil.getCurrentReference(repository);
+    if (currentReference instanceof GitTag) {
+      return branchNameTruncator.apply(currentReference.getName());
+    }
+    else {
+      String currentRevision = repository.getCurrentRevision();
+      if (currentRevision != null) {
+        return DvcsUtil.getShortHash(currentRevision);
+      }
+      else {
+        LOG.warn(String.format("Current revision is null in DETACHED state. isFresh: %s", repository.isFresh()));
+        return GitBundle.message("git.status.bar.widget.text.unknown");
+      }
     }
   }
 
@@ -252,6 +269,10 @@ public final class GitBranchUtil {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
   }
 
+  public static @NotNull List<GitTag> getCommonTags(@NotNull Collection<? extends GitRepository> repositories) {
+    return collectCommon(repositories.stream().map(repository -> repository.getTagHolder().getTags().keySet()));
+  }
+
   public static @NotNull <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
     return collectCommon(groups, null);
   }
@@ -290,7 +311,7 @@ public final class GitBranchUtil {
    */
   @RequiresBackgroundThread
   public static @NotNull Collection<String> getBranches(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted,
-                                               boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
+                                                        boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
     // preparing native command executor
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.BRANCH);
     handler.setSilent(true);
@@ -309,7 +330,7 @@ public final class GitBranchUtil {
     }
     final String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
 
-    if (output.trim().length() == 0) {
+    if (output.trim().isEmpty()) {
       // the case after git init and before first commit - there is no branch and no output, and we'll take refs/heads/master
       String head;
       try {

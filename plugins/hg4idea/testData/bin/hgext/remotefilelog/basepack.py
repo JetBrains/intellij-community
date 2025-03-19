@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import collections
 import errno
 import mmap
@@ -9,13 +7,11 @@ import time
 
 from mercurial.i18n import _
 from mercurial.pycompat import (
-    getattr,
     open,
 )
 from mercurial.node import hex
 from mercurial import (
     policy,
-    pycompat,
     util,
     vfs as vfsmod,
 )
@@ -56,16 +52,8 @@ SMALLFANOUTCUTOFF = 2 ** 16 // 8
 # loaded the pack list.
 REFRESHRATE = 0.1
 
-if pycompat.isposix and not pycompat.ispy3:
-    # With glibc 2.7+ the 'e' flag uses O_CLOEXEC when opening.
-    # The 'e' flag will be ignored on older versions of glibc.
-    # Python 3 can't handle the 'e' flag.
-    PACKOPENMODE = b'rbe'
-else:
-    PACKOPENMODE = b'rb'
 
-
-class _cachebackedpacks(object):
+class _cachebackedpacks:
     def __init__(self, packs, cachesize):
         self._packs = set(packs)
         self._lrucache = util.lrucachedict(cachesize)
@@ -111,7 +99,7 @@ class _cachebackedpacks(object):
         self._lastpack = None
 
 
-class basepackstore(object):
+class basepackstore:
     # Default cache size limit for the pack files.
     DEFAULTCACHESIZE = 100
 
@@ -177,9 +165,8 @@ class basepackstore(object):
                         )
                     else:
                         ids.add(id)
-        except OSError as ex:
-            if ex.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
 
     def _getavailablepackfilessorted(self):
         """Like `_getavailablepackfiles`, but also sorts the files by mtime,
@@ -269,7 +256,7 @@ class basepackstore(object):
         return newpacks
 
 
-class versionmixin(object):
+class versionmixin:
     # Mix-in for classes with multiple supported versions
     VERSION = None
     SUPPORTED_VERSIONS = [2]
@@ -320,7 +307,7 @@ class basepack(versionmixin):
         params = self.params
         rawfanout = self._index[FANOUTSTART : FANOUTSTART + params.fanoutsize]
         fanouttable = []
-        for i in pycompat.xrange(0, params.fanoutcount):
+        for i in range(0, params.fanoutcount):
             loc = i * 4
             fanoutentry = struct.unpack(b'!I', rawfanout[loc : loc + 4])[0]
             fanouttable.append(fanoutentry)
@@ -345,12 +332,12 @@ class basepack(versionmixin):
             self._data.close()
 
         # TODO: use an opener/vfs to access these paths
-        with open(self.indexpath, PACKOPENMODE) as indexfp:
+        with open(self.indexpath, b'rb') as indexfp:
             # memory-map the file, size 0 means whole file
             self._index = mmap.mmap(
                 indexfp.fileno(), 0, access=mmap.ACCESS_READ
             )
-        with open(self.packpath, PACKOPENMODE) as datafp:
+        with open(self.packpath, b'rb') as datafp:
             self._data = mmap.mmap(datafp.fileno(), 0, access=mmap.ACCESS_READ)
 
         self._pagedin = 0
@@ -514,7 +501,7 @@ class mutablebasepack(versionmixin):
         self.idxfp.write(rawindex)
         self.idxfp.close()
 
-    def createindex(self, nodelocations):
+    def createindex(self, nodelocations, indexoffset):
         raise NotImplementedError()
 
     def _writeheader(self, indexparams):
@@ -528,7 +515,7 @@ class mutablebasepack(versionmixin):
         self.idxfp.write(struct.pack(b'!BB', self.VERSION, config))
 
 
-class indexparams(object):
+class indexparams:
     __slots__ = (
         'fanoutprefix',
         'fanoutstruct',

@@ -37,8 +37,8 @@ class JavaHotSwapConfigurableUi : ConfigurableUi<DebuggerSettings> {
           .bindSelected(settings::HOTSWAP_HANG_WARNING_ENABLED)
       }
       row {
-        checkBox(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.hotswap.background"))
-          .bindSelected(settings::HOTSWAP_IN_BACKGROUND)
+        checkBox(JavaDebuggerBundle.message("label.debugger.hotswap.configurable.suggest.in.editor"))
+          .bindSelected(settings::HOTSWAP_SHOW_FLOATING_BUTTON)
       }
 
       buttonsGroup {

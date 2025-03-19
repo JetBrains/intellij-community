@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.project.Project;
@@ -21,6 +21,5 @@ public abstract class BaseActionRunnable<T> {
    * or similar
    */
   @Deprecated
-  @NotNull
-  public abstract RunResult<T> execute();
+  public abstract @NotNull RunResult<T> execute();
 }

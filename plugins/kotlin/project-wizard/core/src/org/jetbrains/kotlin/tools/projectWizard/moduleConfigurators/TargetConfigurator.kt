@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.ModuleConfiguratorSetting
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.JvmToolchainConfigurationIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleStringConstIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.TargetAccessIR
@@ -155,9 +156,15 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
         +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
         reader {
             inContextOfModuleConfigurator(module) {
-                val targetVersionValue = JvmModuleConfigurator.targetJvmVersion.reference.settingValue
+                val targetVersion = JvmModuleConfigurator.targetJvmVersion.reference.settingValue
                 if (buildSystemType.isGradle) {
-                    +JvmToolchainConfigurationIR(targetVersionValue)
+                    if (needToAddToolchain(reader, module)) {
+                        +JvmToolchainConfigurationIR(targetVersion)
+                    } else {
+                        "compilations.all" {
+                            "kotlinOptions.jvmTarget" assign GradleStringConstIR(targetVersion.value)
+                        }
+                    }
                 }
                 if (!module.hasAndroidSibling()) {
                     "withJava"()

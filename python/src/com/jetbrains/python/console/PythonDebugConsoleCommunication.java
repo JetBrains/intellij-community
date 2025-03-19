@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,14 +6,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -26,7 +30,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   private final PyDebugProcess myDebugProcess;
   private boolean myNeedsMore = false;
   private boolean firstExecution = true;
-  @NotNull private final PythonConsoleView myConsoleView;
+  private final @NotNull PythonConsoleView myConsoleView;
   private boolean isExecuting = false;
 
   public PythonDebugConsoleCommunication(@NotNull Project project,
@@ -37,9 +41,18 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
     myConsoleView = consoleView;
   }
 
-  @NotNull
+  /**
+   * Set context for static code completion in Debugger Console
+   */
+  public void setContext() {
+    if (PsiUtilCore.getPsiFile(myProject, myConsoleView.getVirtualFile()) instanceof PyExpressionCodeFragmentImpl editorPsiFile) {
+      PsiElement debuggerContext = PyDebuggerEditorsProvider.getContextElement(myProject, myDebugProcess.getSession().getCurrentPosition());
+      editorPsiFile.setContext(debuggerContext);
+    }
+  }
+
   @Override
-  public List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception {
+  public @NotNull List<PydevCompletionVariant> getCompletions(String text, String actualToken) throws Exception {
     return myDebugProcess.getCompletions(actualToken);
   }
 

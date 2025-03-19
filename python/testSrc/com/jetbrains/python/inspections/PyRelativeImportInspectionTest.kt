@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.openapi.util.registry.RegistryManager
@@ -11,12 +11,12 @@ import org.jetbrains.annotations.NonNls
 class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   override fun setUp() {
     super.setUp()
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault()
   }
 
   override fun tearDown() {
     try {
-      RegistryManager.getInstance()["python.explicit.namespace.packages"].resetToDefault()
+      RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -68,7 +68,7 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   }
 
   fun testPlainDirectoryDottedImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doMultiFileTest("$PLAIN_DIR/dottedImport.py")
   }
 
@@ -102,12 +102,12 @@ class PyRelativeImportInspectionTest: PyInspectionTestCase() {
   }
 
   fun testNamespacePackageSameDirectoryImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doNamespacePackageTest("$NAMESPACE_PACK_DIR/mod.py", NAMESPACE_PACK_DIR)
   }
 
   fun testNestedNamespacePackageSameDirectoryImportRegistryOffNoInspection() {
-    RegistryManager.getInstance()["python.explicit.namespace.packages"].setValue(false)
+    RegistryManager.getInstance().get("python.explicit.namespace.packages").setValue(false)
     doNamespacePackageTest("$NAMESPACE_PACK_DIR/nestedNamespacePackage/mod.py", NAMESPACE_PACK_DIR)
   }
 

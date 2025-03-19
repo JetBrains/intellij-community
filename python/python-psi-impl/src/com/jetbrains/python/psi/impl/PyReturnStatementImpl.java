@@ -2,11 +2,8 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReturnStatement;
-import org.jetbrains.annotations.Nullable;
 
 
 public class PyReturnStatementImpl extends PyElementImpl implements PyReturnStatement {
@@ -17,11 +14,5 @@ public class PyReturnStatementImpl extends PyElementImpl implements PyReturnStat
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyReturnStatement(this);
-  }
-
-  @Override
-  @Nullable
-  public PyExpression getExpression() {
-    return childToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), 0);
   }
 }

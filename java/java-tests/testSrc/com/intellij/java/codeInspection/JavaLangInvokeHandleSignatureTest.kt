@@ -51,6 +51,8 @@ class JavaLangInvokeHandleSignatureTest : LightJavaCodeInsightFixtureTestCase() 
 
   fun testVarArgMethodHandle() = doTest()
 
+  fun testSignaturePolymorphic() = doTest()
+
   private fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")
   }

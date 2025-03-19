@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -32,8 +32,7 @@ public interface VcsLogColorManager {
   /**
    * Returns the color assigned to the given file path.
    */
-  @NotNull
-  default Color getPathColor(@NotNull FilePath path) {
+  default @NotNull Color getPathColor(@NotNull FilePath path) {
     return getPathColor(path, DEFAULT_COLOR_MODE);
   }
 

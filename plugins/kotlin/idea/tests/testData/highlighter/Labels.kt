@@ -1,18 +1,18 @@
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 
-fun <info descr="null">bar</info>(<info descr="null">block</info>: () -> <info descr="null">Int</info>) = <info descr="null"><info descr="null">block</info></info>()
+fun <symbolName descr="null">bar</symbolName>(<symbolName descr="null">block</symbolName>: () -> <symbolName descr="null">Int</symbolName>) = <symbolName descr="null"><symbolName descr="null">block</symbolName></symbolName>()
 
-fun <info descr="null">foo</info>(): <info descr="null">Int</info> {
-    <info descr="null"><info descr="null">bar</info></info> <info descr="null" textAttributesKey="KOTLIN_LABEL">label@</info> {
-        return<info descr="null" textAttributesKey="KOTLIN_LABEL">@label</info> 2
+fun <symbolName descr="null">foo</symbolName>(): <symbolName descr="null">Int</symbolName> {
+    <symbolName descr="null"><symbolName descr="null">bar</symbolName></symbolName> <symbolName descr="null" textAttributesKey="KOTLIN_LABEL">label@</symbolName> {
+        return<symbolName descr="null" textAttributesKey="KOTLIN_LABEL">@label</symbolName> 2
     }
 
-    <info descr="null" textAttributesKey="KOTLIN_LABEL">loop@</info> for (<info descr="null">i</info> in 1..100) {
-        break<info descr="null" textAttributesKey="KOTLIN_LABEL">@loop</info>
+    <symbolName descr="null" textAttributesKey="KOTLIN_LABEL">loop@</symbolName> for (<symbolName descr="null">i</symbolName> in 1..100) {
+        break<symbolName descr="null" textAttributesKey="KOTLIN_LABEL">@loop</symbolName>
     }
 
-    <info descr="null" textAttributesKey="KOTLIN_LABEL">loop2@</info> for (<info descr="null">i</info> in 1..100) {
-        break<error descr="There should be no space or comments before '@' in label reference"> </error><info descr="null" textAttributesKey="KOTLIN_LABEL">@loop2</info>
+    <symbolName descr="null" textAttributesKey="KOTLIN_LABEL">loop2@</symbolName> for (<symbolName descr="null">i</symbolName> in 1..100) {
+        break<error descr="There should be no space or comments before '@' in label reference"> </error><symbolName descr="null" textAttributesKey="KOTLIN_LABEL">@loop2</symbolName>
     }
 
     return 1

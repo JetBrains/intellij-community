@@ -2,7 +2,7 @@
 package com.intellij.completion.ml.performance
 
 import com.intellij.platform.diagnostic.telemetry.CompletionRanking
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import io.opentelemetry.api.metrics.LongCounter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -10,11 +10,24 @@ import java.util.concurrent.atomic.LongAdder
 
 
 class MLCompletionPerformanceTracker {
-  private val tracker: MeasuredTracker = MeasuredTracker(OTelTracker())
+  private val measuredTracker = MeasuredTracker()
+  private val tracker = DelegatingTracker(listOf(OTelTracker(), measuredTracker))
   private val elementProvidersMeasurer: ConcurrentHashMap<String, LongAdder> = ConcurrentHashMap()
 
   private var sortingCount = 0
   private var totalMlContribution: Long = 0L
+
+  private val metricCollectors: MutableList<PerformanceMetricCollector> = mutableListOf()
+
+  fun addMetricCollector(metricCollectorFactory: PerformanceMetricCollectorFactory) {
+    val performanceTracker = object : PerformanceTracker {
+      override fun addByKey(key: String, timeMs: Long) {
+        tracker.addByKey("${metricCollectorFactory.performanceMetricName}.$key", timeMs)
+      }
+    }
+    val metricCollector = metricCollectorFactory.createMetricCollector(performanceTracker)
+    metricCollectors.add(metricCollector)
+  }
 
   fun totalMLTimeContribution(): Long = totalMlContribution
 
@@ -55,8 +68,9 @@ class MLCompletionPerformanceTracker {
   }
 
   fun measurements(): Map<String, Long> {
+    metricCollectors.forEach { it.onFinishCollecting() }
     flushElementProvidersContribution()
-    return tracker.measurements()
+    return measuredTracker.measurements()
   }
 
   private fun flushElementProvidersContribution() {
@@ -70,12 +84,8 @@ class MLCompletionPerformanceTracker {
     }
   }
 
-  private interface PerfTracker {
-    fun addByKey(key: String, timeMs: Long)
-  }
-
-  private class OTelTracker : PerfTracker {
-    private val meter = TelemetryTracer.getMeter(CompletionRanking)
+  private class OTelTracker : PerformanceTracker {
+    private val meter = TelemetryManager.getMeter(CompletionRanking)
     private val key2counter: MutableMap<String, LongCounter> = mutableMapOf()
     override fun addByKey(key: String, timeMs: Long) {
       key2counter.computeIfAbsent(key) {
@@ -84,10 +94,15 @@ class MLCompletionPerformanceTracker {
     }
   }
 
-  private class MeasuredTracker(private val delegate: PerfTracker) : PerfTracker {
+  private class DelegatingTracker(private val trackers: List<PerformanceTracker>) : PerformanceTracker {
+    override fun addByKey(key: String, timeMs: Long) {
+      trackers.forEach { it.addByKey(key, timeMs) }
+    }
+  }
+
+  private class MeasuredTracker : PerformanceTracker {
     private val measurements: ConcurrentHashMap<String, LongAdder> = ConcurrentHashMap()
     override fun addByKey(key: String, timeMs: Long) {
-      delegate.addByKey(key, timeMs)
       measurements.computeIfAbsent(key) { LongAdder() }.add(timeMs)
     }
 

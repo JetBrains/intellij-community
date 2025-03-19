@@ -9,7 +9,6 @@
 # bookkeeping for declaring interfaces. So, we use stubs for various
 # zope.interface primitives unless instructed otherwise.
 
-from __future__ import absolute_import
 
 from .. import encoding
 
@@ -21,11 +20,11 @@ if encoding.environ.get(b'HGREALINTERFACES'):
     implementer = zi.implementer
 else:
 
-    class Attribute(object):
+    class Attribute:
         def __init__(self, __name__, __doc__=b''):
             pass
 
-    class Interface(object):
+    class Interface:
         def __init__(
             self, name, bases=(), attrs=None, __doc__=None, __module__=None
         ):

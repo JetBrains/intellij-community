@@ -45,14 +45,12 @@ public class AddFunctionQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.create.function.in.module", myIdentifier, myModuleName);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.create.function.in.module");
   }
 
@@ -125,7 +123,7 @@ public class AddFunctionQuickFix implements LocalQuickFix {
     }
   }
 
-  private static void showTemplateBuilder(PyFunction method, @NotNull final PsiFile file) {
+  private static void showTemplateBuilder(PyFunction method, final @NotNull PsiFile file) {
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
     final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(method);

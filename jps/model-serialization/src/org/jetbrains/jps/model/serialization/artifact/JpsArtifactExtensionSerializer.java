@@ -16,10 +16,12 @@
 package org.jetbrains.jps.model.serialization.artifact;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 
+@ApiStatus.Internal
 public abstract class JpsArtifactExtensionSerializer<E extends JpsElement> {
   private final JpsElementChildRole<E> myRole;
   private final String myId;

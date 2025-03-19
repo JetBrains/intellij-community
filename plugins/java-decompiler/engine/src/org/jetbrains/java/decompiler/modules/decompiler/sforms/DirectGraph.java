@@ -1,6 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -79,6 +81,7 @@ public class DirectGraph {
 
 
   public boolean iterateExprents(ExprentIterator iter) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     LinkedList<DirectNode> stack = new LinkedList<>();
     stack.add(first);
@@ -95,6 +98,7 @@ public class DirectGraph {
       setVisited.add(node);
 
       for (int i = 0; i < node.exprents.size(); i++) {
+        cancellationManager.checkCanceled();
         int res = iter.processExprent(node.exprents.get(i));
 
         if (res == 1) {
@@ -111,6 +115,28 @@ public class DirectGraph {
     }
 
     return true;
+  }
+
+  /**
+   * Used to iterate over all exprents, including nested ones.
+   *
+   * @param itr the {@link ExprentIterator} used to process each expression.
+   * @return {@code true} if the iteration was successful within the provided constraints (itr doesn't return 1),
+   *         {@code false} otherwise.
+   */
+  public boolean iterateExprentsDeep(ExprentIterator itr) {
+    return iterateExprents(exprent -> {
+      List<Exprent> lst = exprent.getAllExprents(true);
+      lst.add(exprent);
+
+      for (Exprent expr : lst) {
+        int res = itr.processExprent(expr);
+        if (res == 1 || res == 2) {
+          return res;
+        }
+      }
+      return 0;
+    });
   }
 
   public interface ExprentIterator {

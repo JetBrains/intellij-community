@@ -15,7 +15,9 @@
  */
 package com.intellij.spellchecker;
 
-import com.intellij.psi.PsiMethod;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.psi.*;
+import com.intellij.codeInsight.DumbAwareAnnotationUtil;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,9 +28,11 @@ public class MethodNameTokenizerJava extends NamedElementTokenizer<PsiMethod> {
 
   @Override
   public void tokenize(@NotNull PsiMethod element, @NotNull TokenConsumer consumer) {
-    if (element.isConstructor() || element.findDeepestSuperMethods().length > 0) return;
-
+    if (element.isConstructor() ||
+        (!DumbService.isDumb(element.getProject()) && element.findDeepestSuperMethods().length > 0) ||
+        DumbAwareAnnotationUtil.hasAnnotation(element, CommonClassNames.JAVA_LANG_OVERRIDE)) {
+      return;
+    }
     super.tokenize(element, consumer);
   }
-
 }

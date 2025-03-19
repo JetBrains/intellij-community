@@ -31,15 +31,12 @@ import org.jetbrains.annotations.NotNull;
 public class UnusedElementInspection extends XsltInspection {
 
   @Override
-    @NonNls
-    @NotNull
-    public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
         return "XsltUnusedDeclaration";
     }
 
     @Override
-    @NotNull
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
         if (!(holder.getFile() instanceof XmlFile)) return PsiElementVisitor.EMPTY_VISITOR;
         return new MyVisitor(holder);
     }
@@ -63,7 +60,7 @@ public class UnusedElementInspection extends XsltInspection {
             }
             final XsltVariable variable = XsltElementFactory.getInstance().wrapElement(tag, XsltVariable.class);
             final String name = variable.getName();
-            if (name == null || name.length() == 0) {
+            if (name == null || name.isEmpty()) {
                 return;
             }
 

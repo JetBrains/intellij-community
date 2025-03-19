@@ -14,21 +14,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.util.SmartList
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import com.intellij.xml.CommonXmlStrings
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.dialog.AddFieldBreakpointDialog
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtParameter
@@ -43,6 +42,37 @@ class KotlinFieldBreakpointType :
     ),
     KotlinBreakpointType
 {
+    override fun getGeneralDescription(variant: XLineBreakpointVariant) =
+        KotlinDebuggerCoreBundle.message("property.watchpoint.description")
+
+    override fun getGeneralDescription(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>) =
+        KotlinDebuggerCoreBundle.message("property.watchpoint.description")
+
+    override fun getPropertyXMLDescriptions(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>): MutableList<String> {
+        val res = SmartList(super.getPropertyXMLDescriptions(breakpoint))
+        val props = breakpoint.getProperties() ?: return res
+        val defaults = createProperties()
+        if (props.watchInitialization != defaults.watchInitialization ||
+            props.watchAccess != defaults.watchAccess ||
+            props.watchModification != defaults.watchModification) {
+
+            // Add all if at least one property isn't default.
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.initialization") + CommonXmlStrings.NBSP +
+                        props.watchInitialization
+            )
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.access") + CommonXmlStrings.NBSP +
+                        props.watchAccess
+            )
+            res.add(
+                KotlinDebuggerCoreBundle.message("property.watchpoint.property.name.modification") + CommonXmlStrings.NBSP +
+                        props.watchModification
+            )
+        }
+        return res
+    }
+
     override fun createJavaBreakpoint(
         project: Project,
         breakpoint: XBreakpoint<KotlinPropertyBreakpointProperties>
@@ -63,7 +93,7 @@ class KotlinFieldBreakpointType :
     override fun getPriority() = 120
 
     override fun createBreakpointProperties(file: VirtualFile, line: Int): KotlinPropertyBreakpointProperties {
-        return KotlinPropertyBreakpointProperties()
+        return createProperties()
     }
 
     override fun addBreakpoint(project: Project, parentComponent: JComponent?): XLineBreakpoint<KotlinPropertyBreakpointProperties>? {
@@ -77,8 +107,8 @@ class KotlinFieldBreakpointType :
                     return false
                 }
 
-                val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))
-                if (psiClass !is KtLightClass) {
+                val candidates = KotlinFullClassNameIndex[className, project, GlobalSearchScope.allScope(project)]
+                if (candidates.isEmpty()) {
                     reportError(project, KotlinDebuggerCoreBundle.message("property.watchpoint.error.couldnt.find.0.class", className))
                     return false
                 }
@@ -89,16 +119,8 @@ class KotlinFieldBreakpointType :
                     return false
                 }
 
-                result = when (psiClass) {
-                    is KtLightClassForFacade -> psiClass.files.asSequence().mapNotNull {
-                        createBreakpointIfPropertyExists(it, it, className, fieldName)
-                    }.firstOrNull()
-
-                    is KtLightClassForSourceDeclaration -> {
-                        val ktClassOrObject = psiClass.kotlinOrigin
-                        createBreakpointIfPropertyExists(ktClassOrObject, ktClassOrObject.containingKtFile, className, fieldName)
-                    }
-                    else -> null
+                result = candidates.firstNotNullOfOrNull { ktClassOrObject ->
+                    createBreakpointIfPropertyExists(ktClassOrObject, ktClassOrObject.containingKtFile, className, fieldName)
                 }
 
                 if (result == null) {
@@ -168,7 +190,7 @@ class KotlinFieldBreakpointType :
 
     override fun getDisplayText(breakpoint: XLineBreakpoint<KotlinPropertyBreakpointProperties>): String? {
         val kotlinBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint) as? BreakpointWithHighlighter
-        return kotlinBreakpoint?.description ?: super.getDisplayText(breakpoint)
+        return kotlinBreakpoint?.displayName ?: super.getDisplayText(breakpoint)
     }
 
     override fun getEditorsProvider(

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.resources;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -28,15 +28,14 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import java.util.HashSet;
 
-import static com.intellij.psi.util.PointersKt.createSmartPointer;
+import static com.intellij.psi.SmartPointersKt.createSmartPointer;
 
 /**
  * @author Max Medvedev
  */
-public class TypeCustomizerInspection extends BaseInspection {
-  @NotNull
+public final class TypeCustomizerInspection extends BaseInspection {
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitFile(@NotNull GroovyFileBase file) {
@@ -57,7 +56,7 @@ public class TypeCustomizerInspection extends BaseInspection {
                 "incompatibleAssignment");
 
 
-  public static boolean fileSeemsToBeTypeCustomizer(@NotNull final PsiFile file) {
+  public static boolean fileSeemsToBeTypeCustomizer(final @NotNull PsiFile file) {
     if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
       for (GrStatement statement : ((GroovyFile)file).getStatements()) {
         if (statement instanceof GrMethodCall) {
@@ -85,9 +84,8 @@ public class TypeCustomizerInspection extends BaseInspection {
       myFilePointer = createSmartPointer(file);
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return GroovyBundle.message("add.to.resources");
     }
 
@@ -96,9 +94,8 @@ public class TypeCustomizerInspection extends BaseInspection {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("add.type.customizer.to.resources");
     }
 

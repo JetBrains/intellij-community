@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * @see VcsLogFilterObject#fromBranch(String)
+ * @see VcsLogFilterObject#fromBranchPatterns
+ */
 class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   private final @NotNull List<String> myBranches;
   private final @NotNull List<Pattern> myPatterns;

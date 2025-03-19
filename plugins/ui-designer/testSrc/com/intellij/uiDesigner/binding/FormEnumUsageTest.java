@@ -4,7 +4,6 @@ package com.intellij.uiDesigner.binding;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
@@ -35,7 +34,7 @@ public class FormEnumUsageTest extends JavaPsiTestCase {
   }
 
   public void testEnumUsage() throws IncorrectOperationException {
-    LanguageLevelProjectExtension.getInstance(myJavaFacade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
+    IdeaTestUtil.setProjectLanguageLevel(myJavaFacade.getProject(), LanguageLevel.JDK_1_5);
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         createFile(myModule, myTestProjectRoot, "PropEnum.java", "public enum PropEnum { valueA, valueB }");

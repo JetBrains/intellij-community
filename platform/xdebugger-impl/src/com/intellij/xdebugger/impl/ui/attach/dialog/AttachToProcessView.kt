@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.execution.ExecutionException
@@ -12,10 +13,12 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addPreferredFocusedComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.attach.XAttachDebuggerProvider
 import com.intellij.xdebugger.attach.XAttachHost
@@ -38,7 +41,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-internal abstract class AttachToProcessView(
+abstract class AttachToProcessView(
   private val project: Project,
   protected val state: AttachDialogState,
   private val columnsLayout: AttachDialogColumnsLayout,
@@ -49,7 +52,6 @@ internal abstract class AttachToProcessView(
   }
 
   private val currentComponentDisposables: SequentialDisposables = SequentialDisposables(state.dialogDisposable)
-  private var updateJob: Job? = null
 
   protected val centerPanel = JPanel(MigLayout("ins 0, fill, gapy 0")).apply {
     border = JBUI.Borders.empty(0, 0, 0, 0)
@@ -62,6 +64,7 @@ internal abstract class AttachToProcessView(
     logger.error(throwable)
   }
   protected val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + coroutineExceptionHandler)
+  protected var updateScope = coroutineScope.childScope()
 
   init {
     state.searchFieldValue.afterChange { updateSearchFilter(it) }
@@ -71,11 +74,12 @@ internal abstract class AttachToProcessView(
   fun getMainComponent() = centerPanel
 
   fun updateProcesses() {
-    application.assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (state.dialogDisposable.isNotAlive) return
     showLoadingPanel()
-    updateJob?.cancel()
-    updateJob = coroutineScope.launch(coroutineExceptionHandler) {
+    updateScope.cancel()
+    updateScope = coroutineScope.childScope()
+    updateScope.launch(coroutineExceptionHandler) {
       doUpdateProcesses()
     }
   }
@@ -160,12 +164,11 @@ internal abstract class AttachToProcessView(
   private suspend fun processDiagnosticInfo(problem: ProcessesFetchingProblemException, host: XAttachHost) {
     val panel = getActionablePane(problem) { selectedAction ->
       try {
-        coroutineScope.launch {
+        updateScope.launch {
           withUiContextAnyModality {
-
             val progressIndicator = showLoadingPanel()
             selectedAction.action(project, host, progressIndicator)
-            updateProcesses()
+            doUpdateProcesses()
           }
         }
       }
@@ -218,7 +221,7 @@ internal abstract class AttachToProcessView(
   }
 
   private fun updateSearchFilter(searchFilter: String) {
-    coroutineScope.launch {
+    updateScope.launch {
       withUiContextAnyModality {
         val attachList = state.currentList.get()
         attachList?.updateFilter(searchFilter)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -77,8 +77,7 @@ public abstract class DebuggerSessionTabBase extends RunTab {
     }
   }
 
-  @Nullable
-  protected RunProfile getRunProfile() {
+  protected @Nullable RunProfile getRunProfile() {
     return myEnvironment != null ? myEnvironment.getRunProfile() : null;
   }
 

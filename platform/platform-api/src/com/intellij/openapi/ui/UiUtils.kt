@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -21,8 +22,11 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
-import java.awt.*
-import java.awt.event.*
+import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Rectangle
+import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -31,7 +35,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 
-val PREFERRED_FOCUSED_COMPONENT = Key.create<JComponent>("JComponent.preferredFocusedComponent")
+val PREFERRED_FOCUSED_COMPONENT: Key<JComponent> = Key.create("JComponent.preferredFocusedComponent")
 
 fun JComponent.getPreferredFocusedComponent(): JComponent? {
   if (this is DialogPanel) {
@@ -54,6 +58,10 @@ inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
 
 inline fun <reified T> JComponent.getOrPutUserData(key: Key<T>, block: () -> T): T {
   return getUserData(key) ?: block().also { putUserData(key, it) }
+}
+
+inline fun <reified T> Component.getParentOfType(): T? {
+  return ComponentUtil.getParentOfType(T::class.java, this)
 }
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
@@ -127,7 +135,7 @@ fun ExtendableTextField.addExtension(
   addExtension(ExtendableTextComponent.Extension.create(icon, hoverIcon, tooltip, action))
 }
 
-fun <T> ListModel<T>.asSequence() = sequence<T> {
+fun <T> ListModel<T>.asSequence(): Sequence<T> = sequence {
   for (i in 0 until size) {
     yield(getElementAt(i))
   }
@@ -171,7 +179,7 @@ fun <C> C.setEmptyState(
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel
 
-fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
+fun <T> Iterable<T>.naturalSorted(): List<T> = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
 
 fun getPresentablePath(path: @NonNls String): @NlsSafe String {
   return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
@@ -203,7 +211,7 @@ fun shortenTextWithEllipsis(
   maxTextWidth: Int,
   getTextWidth: (String) -> Int,
   useEllipsisSymbol: Boolean = false
-) = shortenText(
+): @NlsSafe String = shortenText(
   text = text,
   minTextPrefixLength = minTextPrefixLength,
   minTextSuffixLength = minTextSuffixLength,

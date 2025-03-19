@@ -5,3 +5,4 @@ fun foo(p: StringBuilder<caret>) {
 }
 
 // ELEMENT: StringBuilder
+// TAIL_TEXT: " (kotlin.text)"

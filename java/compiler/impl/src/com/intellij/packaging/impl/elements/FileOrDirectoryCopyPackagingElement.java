@@ -1,31 +1,18 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.FileOrDirectoryPackagingElementEntity;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.elements.PackagingElementType;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.workspaceModel.storage.bridgeEntities.FileOrDirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +22,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.util.Objects;
 
 public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirectoryCopyPackagingElement> extends PackagingElement<T> {
-  @NonNls public static final String PATH_ATTRIBUTE = "path";
+  public static final @NonNls String PATH_ATTRIBUTE = "path";
   protected String myFilePath;
 
   public FileOrDirectoryCopyPackagingElement(PackagingElementType type) {
@@ -47,8 +34,7 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
     myFilePath = filePath;
   }
 
-  @Nullable
-  public VirtualFile findFile() {
+  public @Nullable VirtualFile findFile() {
     return LocalFileSystem.getInstance().findFileByPath(myFilePath);
   }
 
@@ -72,9 +58,9 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
         if (filePathBefore.equals(filePath)) return;
 
         builder.modifyEntity(FileOrDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
-          VirtualFileUrlManager manager = VirtualFileUrls.getVirtualFileUrlManager(myProject);
+          VirtualFileUrlManager manager = WorkspaceModel.getInstance(myProject).getVirtualFileUrlManager();
           if (filePath != null) {
-            VirtualFileUrl fileUrl = manager.fromPath(filePath);
+            VirtualFileUrl fileUrl = manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(filePath));
             ent.setFilePath(fileUrl);
           }
           else {
@@ -85,9 +71,8 @@ public abstract class FileOrDirectoryCopyPackagingElement<T extends FileOrDirect
       });
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+  public @NotNull PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     VirtualFile file = findFile();
     if (file == null) return PackagingElementOutputKind.OTHER;
 

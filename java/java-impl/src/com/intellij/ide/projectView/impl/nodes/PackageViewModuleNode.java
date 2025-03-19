@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ViewSettings;
@@ -20,8 +20,12 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     Module module = getValue();
     if (module == null || module.isDisposed()) return Collections.emptyList();
     var result = new ArrayList<AbstractTreeNode<?>>();
@@ -45,7 +49,8 @@ public class PackageViewModuleNode extends AbstractModuleNode{
 
   private void addSourceRoots(Module module, ArrayList<AbstractTreeNode<?>> result) {
     List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
-    result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+    var nodeBuilder = new PackageNodeBuilder(module, false);
+    result.addAll(nodeBuilder.createPackageViewChildrenOnFiles(roots, myProject, getSettings()));
   }
 
   private void addLibraries(Module module, ArrayList<AbstractTreeNode<?>> result) {

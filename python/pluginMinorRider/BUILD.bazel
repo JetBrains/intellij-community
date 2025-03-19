@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.python.community.plugin.minorRider` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "community-plugin-minorRider_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-plugin-minorRider",
+  module_name = "intellij.python.community.plugin.minorRider",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = ["//platform/analysis-impl"],
+  runtime_deps = [
+    ":community-plugin-minorRider_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.python.community.plugin.minorRider` end

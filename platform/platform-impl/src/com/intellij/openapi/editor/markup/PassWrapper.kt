@@ -4,6 +4,6 @@ package com.intellij.openapi.editor.markup
 import org.jetbrains.annotations.Nls
 
 /**
- * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.
+ * Light wrapper for [com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass] with only essential UI data.
  */
 data class PassWrapper(@Nls @get:Nls val presentableName: String, val percent: Int)

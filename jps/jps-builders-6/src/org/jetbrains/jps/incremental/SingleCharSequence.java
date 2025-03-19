@@ -1,13 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class SingleCharSequence implements CharSequence {
+final class SingleCharSequence implements CharSequence {
   private final char myCh;
 
-  public SingleCharSequence(char ch) {
+  SingleCharSequence(char ch) {
     myCh = ch;
   }
 
@@ -29,6 +26,7 @@ public final class SingleCharSequence implements CharSequence {
     throw new RuntimeException("Method subSequence not implemented");
   }
 
+  @Override
   public String toString() {
     return String.valueOf(myCh);
   }

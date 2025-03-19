@@ -10,8 +10,14 @@
       "description": "Framework, for which the components are provided by the library. If the library is not enabled in a particular context, all symbols from this file will not be available as well. If you want symbols to be always available do not specify framework.",
       "type": "string"
     },
+    "required-context": {
+      "description": "Specify contexts, which are required to enable contributions from this file.",
+      "$ref": "#/definitions/required-context"
+    },
     "context": {
-      "$ref": "#/definitions/context"
+      "description": "Deprecated because of ambiguous meaning - use \"required-context\" instead.",
+      "deprecationMessage": "Use \"required-context\" instead.",
+      "$ref": "#/definitions/required-context"
     },
     "name": {
       "description": "Name of the library.",
@@ -76,7 +82,7 @@
         "none"
       ]
     },
-    "context": {
+    "required-context": {
       "oneOf": [
         {
           "type": "object",
@@ -100,7 +106,7 @@
             "anyOf": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/context"
+                "$ref": "#/definitions/required-context"
               }
             }
           },
@@ -115,7 +121,7 @@
             "allOf": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/context"
+                "$ref": "#/definitions/required-context"
               }
             }
           },
@@ -128,7 +134,7 @@
           "type": "object",
           "properties": {
             "not": {
-              "$ref": "#/definitions/context"
+              "$ref": "#/definitions/required-context"
             }
           },
           "required": [
@@ -166,18 +172,37 @@
     "contexts-config": {
       "description": "Provide configuration for Web Types contexts. This allows to contribute additional Web Types for example if a particular library is present in the project.",
       "type": "object",
+      "additionalProperties":
+          {
+            "$ref": "#/definitions/context-kind-config"
+          }
+
+    },
+    "context-kind-config": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "description": "Context kind. Only a single context of the particular kind will be enabled. An example of context kind is framework, which has dedicated support in Web Types.",
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "type": "string"
+        },
+        "enable-when": {
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "$ref": "#/definitions/enablement-rules"
+        },
+        "disable-when": {
+          "deprecationMessage": "This is deprecated way of defining context. The outer context should be the context kind with a nested context name.",
+          "$ref": "#/definitions/disablement-rules"
+        }
+      },
       "additionalProperties": {
         "$ref": "#/definitions/context-config"
       }
     },
     "context-config": {
-      "description": "Provide configuration for a specified Web Types context. This allows to contribute additional Web Types for example if a particular library is present in the project.",
+      "description": "Provide rules for setting a particular name for particular context kind. This allows to contribute additional Web Types for example if a particular library is present in the project.",
       "type": "object",
       "properties": {
-        "kind": {
-          "description": "Context kind. Only a single context of the particular kind will be enabled. An example of context kind is framework, which has dedicated support in Web Types.",
-          "type": "string"
-        },
         "enable-when": {
           "$ref": "#/definitions/enablement-rules"
         },
@@ -185,9 +210,6 @@
           "$ref": "#/definitions/disablement-rules"
         }
       },
-      "required": [
-        "kind"
-      ],
       "additionalProperties": false
     },
     "enablement-rules": {
@@ -201,11 +223,18 @@
             "type": "string"
           }
         },
-        "script-url-patterns": {
-          "description": "RegExps to match script URLs, which enable framework support within a particular HTML.",
+        "ruby-gems": {
+          "description": "Ruby gem names, which enable framework support within the particular Ruby module.",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/pattern"
+            "type": "string"
+          }
+        },
+        "symfony-bundles": {
+          "description": "Symfony bundle names, which enable framework support within the particular Symfony project using AssetMapper.",
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "file-extensions": {
@@ -237,7 +266,16 @@
           }
         }
       },
-      "additionalProperties": false
+      "additionalProperties": {
+        "$ref": "#/definitions/custom-enablement-rules"
+      }
+    },
+    "custom-enablement-rules": {
+      "description": "Custom package manager dependencies, which would enable context according to the rules of custom provider.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "disablement-rules": {
       "description": "Specify rules for disabling web framework support. These rules take precedence over enable-when rules. They allow to turn off framework support in case of some conflicts between frameworks priority.",
@@ -317,6 +355,10 @@
         "description-sections": {
           "$ref": "#/definitions/description-sections"
         },
+        "required-context": {
+          "description": "Specify contexts, which are required to enable this contribution.",
+          "$ref": "#/definitions/required-context"
+        },
         "doc-url": {
           "$ref": "#/definitions/doc-url"
         },
@@ -334,6 +376,12 @@
         },
         "deprecated-since": {
           "$ref": "#/definitions/deprecated-since"
+        },
+        "obsolete": {
+          "$ref": "#/definitions/obsolete"
+        },
+        "obsolete-since": {
+          "$ref": "#/definitions/obsolete-since"
         },
         "experimental": {
           "$ref": "#/definitions/experimental"
@@ -454,7 +502,7 @@
       "oneOf": [
         {
           "type": "string",
-          "description": "Provide one of special attribute value types:  \"enum\", \"of-match\", or a simple JavaScript type according to the specified type format."
+          "description": "Provide one of special attribute value types:  \"enum\", \"symbol\", \"of-match\", or a simple JavaScript type according to the specified type format."
         },
         {
           "$ref": "#/definitions/type-reference"
@@ -746,7 +794,7 @@
       "type": "string"
     },
     "deprecated": {
-      "description": "Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.",
+      "description": "Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.",
       "type": [
         "boolean",
         "string"
@@ -755,6 +803,18 @@
     },
     "deprecated-since": {
       "description": "Version in which this symbol was first deprecated.",
+      "type": "string"
+    },
+    "obsolete": {
+      "description": "Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.",
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "default": false
+    },
+    "obsolete-since": {
+      "description": "Version in which this symbol was first made obsolete.",
       "type": "string"
     },
     "experimental": {
@@ -1059,7 +1119,7 @@
     },
     "css": {
       "type": "object",
-      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are6 predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
+      "description": "Contains contributions to CSS namespace. It's property names represent symbol kinds, its property values contain list of contributions of particular kind. There are predefined kinds, which integrate directly with IDE - properties, classes, functions, pseudo-elements, pseudo-classes and parts.",
       "allOf": [
         {
           "$ref": "#/definitions/css-contributions-host"
@@ -1247,7 +1307,7 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "#/definitions/base-contribution"
+          "$ref": "#/definitions/generic-contribution"
         },
         {
           "$ref": "#/definitions/js-contributions-host"
@@ -1264,7 +1324,7 @@
       "type": "object",
       "allOf": [
         {
-          "$ref": "#/definitions/base-contribution"
+          "$ref": "#/definitions/typed-contribution"
         },
         {
           "$ref": "#/definitions/js-contributions-host"

@@ -36,9 +36,51 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_FOR_TEXT: Boolean
             by delegateTo { it::MOVE_SEARCH_FOR_TEXT }
 
-    override var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
-            by delegateTo { it::MOVE_DELETE_EMPTY_SOURCE_FILES }
+    override var MOVE_SEARCH_REFERENCES: Boolean
+            by delegateTo { it::MOVE_SEARCH_REFERENCES }
 
     override var MOVE_MPP_DECLARATIONS: Boolean
             by delegateTo { it::MOVE_MPP_DECLARATIONS }
+
+    override var INTRODUCE_DECLARE_WITH_VAR: Boolean
+            by delegateTo { it::INTRODUCE_DECLARE_WITH_VAR }
+
+    override var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
+            by delegateTo { it::INTRODUCE_SPECIFY_TYPE_EXPLICITLY }
+
+    override var renameFileNames: Boolean
+            by delegateTo { it::renameFileNames }
+
+    override var renameVariables: Boolean
+            by delegateTo { it::renameVariables }
+
+    override var renameParameterInHierarchy: Boolean
+            by delegateTo { it::renameParameterInHierarchy }
+
+    override var renameInheritors: Boolean
+            by delegateTo { it::renameInheritors }
+
+    override var renameOverloads: Boolean
+            by delegateTo { it::renameOverloads }
+
+    override var renameTestMethods: Boolean
+            by delegateTo { it::renameTestMethods }
+
+    override var INLINE_LOCAL_THIS: Boolean
+            by delegateTo { it::INLINE_LOCAL_THIS }
+
+    override var INLINE_PROPERTY_KEEP: Boolean
+            by delegateTo { it::INLINE_PROPERTY_KEEP }
+
+    override var INLINE_METHOD_THIS: Boolean
+            by delegateTo { it::INLINE_METHOD_THIS }
+
+    override var INLINE_METHOD_KEEP: Boolean
+            by delegateTo { it::INLINE_METHOD_KEEP }
+
+    override var INLINE_TYPE_ALIAS_THIS: Boolean
+            by delegateTo { it::INLINE_TYPE_ALIAS_THIS }
+
+    override var INLINE_TYPE_ALIAS_KEEP: Boolean
+            by delegateTo { it::INLINE_TYPE_ALIAS_KEEP }
 }

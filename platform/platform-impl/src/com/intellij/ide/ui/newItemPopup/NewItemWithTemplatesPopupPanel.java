@@ -1,21 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
-import com.intellij.accessibility.TextFieldWithListAccessibleContext;
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -41,29 +46,54 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
     myTemplatesListModel = new MyListModel(templatesList);
     myTemplatesList = createTemplatesList(myTemplatesListModel, renderer);
+    myTemplatesList.getAccessibleContext().setAccessibleName(IdeBundle.message("action.create.new.class.templates.list.accessible.name"));
 
     JTextField textField = getTextField();
-    if (textField instanceof JBExtendableTextFieldWithMixedAccessibleContext) {
-      ((JBExtendableTextFieldWithMixedAccessibleContext)textField).myListContext = myTemplatesList.getAccessibleContext();
-    }
 
-    ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
-    ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
+    if (!ScreenReader.isActive()) {
+      ScrollingUtil.installMoveUpAction(myTemplatesList, myTextField);
+      ScrollingUtil.installMoveDownAction(myTemplatesList, myTextField);
+    }
+    else {
+      setFocusCycleRoot(true);
+      setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+      textField.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e != null && (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_UP)) {
+            textField.transferFocus();
+          }
+        }
+      });
+      myTemplatesList.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          performApplyActionOnEnter(e);
+        }
+      });
+    }
 
     JBScrollPane scrollPane = new JBScrollPane(myTemplatesList);
     scrollPane.setBorder(JBUI.Borders.empty());
     scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    templatesListHolder = new Box(BoxLayout.Y_AXIS);
+    templatesListHolder = new JBBox(BoxLayout.Y_AXIS);
+
+    setBottomSpace(false);
     if (ExperimentalUI.isNewUI()) {
+      scrollPane.setOverlappingScrollBar(true);
+      SeparatorComponent separator =
+        new SeparatorComponent(JBUI.CurrentTheme.Popup.separatorColor(), SeparatorOrientation.HORIZONTAL);
+      separator.setHGap(JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get());
+      templatesListHolder.add(separator);
+      myTemplatesList.setBorder(JBUI.Borders.empty(4, 0, JBUI.CurrentTheme.Popup.bodyBottomInsetNoAd(), 0));
       templatesListHolder.setOpaque(true);
       templatesListHolder.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     }
     else {
-      Border border = JBUI.Borders.merge(JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()),
-                                         JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor()), true);
-      templatesListHolder.setBorder(border);
+      Border lineBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.NewClassDialog.bordersColor());
+      Border outerBorder = JBUI.Borders.compound(lineBorder, JBUI.Borders.emptyTop(JBUI.CurrentTheme.NewClassDialog.fieldsSeparatorWidth()));
+      templatesListHolder.setBorder(JBUI.Borders.merge(lineBorder, outerBorder, true));
     }
-
     templatesListHolder.add(scrollPane);
 
     add(templatesListHolder, BorderLayout.CENTER);
@@ -79,6 +109,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
 
   protected void setTemplatesListVisible(boolean visible) {
     if (templatesListHolder.isVisible() != visible) {
+      setBottomSpace(!visible);
       templatesListHolder.setVisible(visible);
       myVisibilityListeners.forEach(l -> l.visibilityChanged(visible));
     }
@@ -88,34 +119,24 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     myTemplatesListModel.update(templatesList);
   }
 
-  @NotNull
-  private JBList<T> createTemplatesList(@NotNull ListModel<T> model, ListCellRenderer<T> renderer) {
+  private @NotNull JBList<T> createTemplatesList(@NotNull ListModel<T> model, ListCellRenderer<T> renderer) {
     JBList<T> list = new JBList<>(model);
     MouseAdapter mouseListener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (myApplyAction != null && e.getClickCount() > 1) myApplyAction.consume(e);
+        if (myApplyAction == null || e.getClickCount() <= 1) return;
+        try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162396
+          myApplyAction.consume(e);
+        }
       }
     };
 
     list.addMouseListener(mouseListener);
     list.setCellRenderer(renderer);
-    list.setFocusable(false);
+    list.setFocusable(ScreenReader.isActive());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
-
-    Border border = JBUI.Borders.merge(
-      JBUI.Borders.emptyLeft(JBUIScale.scale(5)),
-      JBUI.Borders.customLine(JBUI.CurrentTheme.NewClassDialog.bordersColor(), 1, 0, 0, 0),
-      true
-    );
-    list.setBorder(border);
+    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, !ScreenReader.isActive());
     return list;
-  }
-
-  @Override
-  protected ExtendableTextField createNonCustomizedTextField() {
-    return new JBExtendableTextFieldWithMixedAccessibleContext();
   }
 
   protected final class MyListModel extends AbstractListModel<T> {
@@ -146,15 +167,6 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     @Override
     public T getElementAt(int index) {
       return myItems.get(index);
-    }
-  }
-
-  private static class JBExtendableTextFieldWithMixedAccessibleContext extends ExtendableTextField {
-    private AccessibleContext myListContext;
-
-    @Override
-    protected AccessibleContext getOriginalAccessibleContext() {
-      return new TextFieldWithListAccessibleContext(this, myListContext);
     }
   }
 }

@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -14,7 +17,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.util.PlatformUtils.isIntelliJ;
 
-public class FlattenModulesToggleAction extends ToggleAction implements DumbAware {
+public final class FlattenModulesToggleAction extends ToggleAction implements DumbAware {
   private final BooleanSupplier myIsEnabled;
   private final BooleanSupplier myIsSelected;
   private final Consumer<? super Boolean> mySetSelected;
@@ -35,7 +38,7 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
     presentation.setEnabledAndVisible(isIntelliJ() && ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject));
     if (!myIsEnabled.getAsBoolean()) {
       presentation.setEnabled(false);
-      if (ActionPlaces.isPopupPlace(e.getPlace())) {
+      if (e.isFromContextMenu()) {
         presentation.setVisible(false);
       }
     }

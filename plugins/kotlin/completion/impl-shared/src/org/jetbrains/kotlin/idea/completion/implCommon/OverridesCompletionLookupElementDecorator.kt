@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -11,10 +13,10 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.completion.handlers.indexOfSkippingSpace
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -26,6 +28,7 @@ class OverridesCompletionLookupElementDecorator(
     lookupElement: LookupElement,
     private val declaration: KtCallableDeclaration?,
     private val text: String,
+    private val tailText: String?,
     private val isImplement: Boolean,
     private val icon: RowIcon,
     private val baseClassName: String?,
@@ -47,6 +50,7 @@ class OverridesCompletionLookupElementDecorator(
         presentation.isItemTextBold = isImplement
         presentation.icon = icon
         presentation.clearTail()
+        presentation.setTailText(tailText, true)
         presentation.setTypeText(baseClassName, baseClassIcon)
     }
 
@@ -94,7 +98,17 @@ class OverridesCompletionLookupElementDecorator(
         val tailComments = dummyMemberChildren.toList().takeLastWhile(::isCommentOrWhiteSpace).map(::createCommentOrWhiteSpace)
 
         val prototype = generateMember()
-        prototype.modifierList!!.replace(modifierList)
+        val prototypeModifierList = prototype.modifierList!!
+        prototypeModifierList.contextReceiverList?.let { receiverList ->
+            val anchor = modifierList.firstChild
+            when (val sibling = receiverList.nextSibling) {
+                is PsiWhiteSpace -> modifierList.addRangeBefore(receiverList, sibling, anchor)
+                else -> modifierList.addBefore(receiverList, anchor)
+            }
+        }
+        context.copyRetainedAnnotations(from = prototypeModifierList, to = modifierList)
+
+        prototypeModifierList.replace(modifierList)
         val insertedMember = dummyMember.replaced(prototype)
         if (isSuspend) insertedMember.addModifier(KtTokens.SUSPEND_KEYWORD)
 
@@ -116,6 +130,21 @@ class OverridesCompletionLookupElementDecorator(
             context.editor.moveCaret(offset)
         } else {
             moveCaretIntoGeneratedElement(context.editor, insertedMember)
+        }
+    }
+
+    /**
+     * Determines which annotations should be retained, according to the [OverrideImplementsAnnotationsFilter] parameters,
+     * and copies them from the original [KtModifierList] to the new one.
+     */
+    private fun InsertionContext.copyRetainedAnnotations(from: KtModifierList, to: KtModifierList) {
+        val annotationsToRetain = from.annotationEntries.filter {
+            val fqName = it.typeReference?.text.orEmpty()
+            OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(fqName, file)
+        }
+        val annotationsToAdd = annotationsToRetain - to.annotationEntries.toSet()
+        if (annotationsToAdd.isNotEmpty()) {
+            to.addRangeBefore(annotationsToAdd.first(), annotationsToAdd.last(), to.firstChild)
         }
     }
 }

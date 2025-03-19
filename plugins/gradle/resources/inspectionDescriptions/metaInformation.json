@@ -1,0 +1,40 @@
+{
+  "inspections": [
+    {
+      "id": "ForeignDelegate",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnusedVersionCatalogEntry",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MultipleRepositoryUrls",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "BintrayPublishingPlugin",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "IncorrectPluginDslStructure",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "DependencyNotationArgument",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "DeprecatedConfigurations",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "JCenterRepository",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ConfigurationAvoidance",
+      "codeQualityCategory": "Performance"
+    }
+  ]
+}

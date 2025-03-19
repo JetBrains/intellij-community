@@ -3,10 +3,12 @@
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class ProjectLoadingErrorsNotifier {
 
   public static ProjectLoadingErrorsNotifier getInstance(@NotNull Project project) {

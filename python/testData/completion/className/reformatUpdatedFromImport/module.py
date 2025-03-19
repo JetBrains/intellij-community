@@ -2,5 +2,5 @@ class Foo:
     pass
 
 
-class Bar:
+class UniqueBar:
     pass

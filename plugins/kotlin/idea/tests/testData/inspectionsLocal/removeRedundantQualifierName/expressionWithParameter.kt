@@ -10,4 +10,4 @@ fun main() {
     val b = my.simple.name.go(::run)
 }
 
-// IGNORE_FIR
+// IGNORE_K2

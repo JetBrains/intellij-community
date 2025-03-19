@@ -1,5 +1,6 @@
 <idea-plugin implementation-detail="true">
   <id>org.jetbrains.idea.reposearch</id>
+  <!--suppress PluginXmlValidity -->
   <name>JetBrains Repository Search</name>
   <vendor>JetBrains</vendor>
   <description>
@@ -7,7 +8,12 @@
     Technical plugin, provides API for artifacts search
     ]]>
   </description>
-  <depends>org.jetbrains.idea.maven.model</depends>
+
+  <dependencies>
+    <plugin id="org.jetbrains.idea.maven.model"/>
+    <module name="intellij.libraries.ktor.client"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="provider"
                     interface="org.jetbrains.idea.reposearch.DependencySearchProvidersFactory" dynamic="true"/>
@@ -18,9 +24,6 @@
 
     <registryKey key="packagesearch.config.url" defaultValue="https://resources.jetbrains.com/package-search/config/config.json"
                  description="package search service config url" restartRequired="true"/>
-
-    <registryKey key="packagesearch.timeout" defaultValue="15000"
-                 description="timeout when  package search service request failed (milliseconds)" restartRequired="true"/>
 
     <registryKey id="org.jetbrains.idea.reposearch.log.debug"
                  key="org.jetbrains.idea.reposearch.log.debug"

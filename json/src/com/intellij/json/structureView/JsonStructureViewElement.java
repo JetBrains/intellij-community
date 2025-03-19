@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonStructureViewElement implements StructureViewTreeElement {
+public final class JsonStructureViewElement implements StructureViewTreeElement {
   private final JsonElement myElement;
 
   public JsonStructureViewElement(@NotNull JsonElement element) {
@@ -41,9 +42,8 @@ public class JsonStructureViewElement implements StructureViewTreeElement {
     return myElement.canNavigateToSource();
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     final ItemPresentation presentation = myElement.getPresentation();
     assert presentation != null;
     return presentation;

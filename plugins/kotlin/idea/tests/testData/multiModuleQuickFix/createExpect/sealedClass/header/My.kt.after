@@ -1,5 +1,5 @@
 // My: to be implemented
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 expect sealed class My(x: Double) {
     abstract val num: Int
     open fun isGood(): Boolean

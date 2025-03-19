@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -29,7 +29,7 @@ import java.util.*;
 
 public final class TodoPackageNode extends PackageElementNode {
   private final TodoTreeBuilder myBuilder;
-  @Nullable private final String myPresentationName;
+  private final @Nullable String myPresentationName;
 
   public TodoPackageNode(@NotNull Project project,
                          @NotNull PackageElement element,
@@ -152,8 +152,7 @@ public final class TodoPackageNode extends PackageElementNode {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     ArrayList<AbstractTreeNode<?>> children = new ArrayList<>();
     final Project project = getProject();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(Objects.requireNonNull(project)).getFileIndex();

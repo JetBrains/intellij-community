@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -31,8 +31,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   }
 
   @Override
-  @Nullable
-  protected String showDialog() {
+  protected @Nullable String showDialog() {
     ClassFilter.ClassFilterWithScope classFilter;
     try {
       classFilter = getFilter();
@@ -108,8 +107,7 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
       };
     }
 
-    @Nullable
-    protected ClassFilter createFilter(@Nullable Module module) {
+    protected @Nullable ClassFilter createFilter(@Nullable Module module) {
       return null;
     }
   }

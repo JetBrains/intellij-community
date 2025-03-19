@@ -22,4 +22,3 @@ fun test() {
 }
 
 
-// IGNORE_FIR_LOG

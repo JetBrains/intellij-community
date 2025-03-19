@@ -33,17 +33,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.isProtocol;
+
 /**
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
  */
-public class PyPropertyDefinitionInspection extends PyInspection {
+public final class PyPropertyDefinitionInspection extends PyInspection {
 
   private static final ImmutableList<String> SUFFIXES = ImmutableList.of(PyNames.SETTER, PyNames.DELETER);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -206,8 +207,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static PsiElement getFunctionMarkingElement(PyFunction node) {
+    private static @Nullable PsiElement getFunctionMarkingElement(PyFunction node) {
       if (node == null) return null;
       final ASTNode nameNode = node.getNameNode();
       PsiElement markable = node;
@@ -276,6 +276,11 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable instanceof PyFunction function) {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
+          return;
+        }
+
+        PyClass containingClass = function.getContainingClass();
+        if (containingClass != null && isProtocol(containingClass, myTypeEvalContext)) {
           return;
         }
 

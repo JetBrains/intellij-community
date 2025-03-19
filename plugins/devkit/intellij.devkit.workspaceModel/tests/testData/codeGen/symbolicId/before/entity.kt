@@ -1,9 +1,7 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
 interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val version: Int
@@ -28,5 +26,4 @@ sealed class SealedClassWithLinks {
     data class Ordered(val list: List<SimpleId>) : Many()
     data class Unordered(val set: Set<SimpleId>) : Many()
   }
-
 }

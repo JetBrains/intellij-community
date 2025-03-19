@@ -1,4 +1,5 @@
-// DISABLE-ERRORS
+// IGNORE_K2
+// DISABLE_ERRORS
 fun foo() {
     {
         <selection>class A(p: Int = 1, val q: Int = p + 1) {

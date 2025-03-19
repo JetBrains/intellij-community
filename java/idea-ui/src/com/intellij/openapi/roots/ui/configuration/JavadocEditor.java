@@ -1,39 +1,23 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,8 +42,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   }
 
   @Override
-  @NlsContexts.ConfigurableName
-  public String getDisplayName() {
+  public @NlsContexts.ConfigurableName String getDisplayName() {
     return getName();
   }
 
@@ -109,7 +92,8 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-      }).addExtraAction(new DumbAwareActionButton(JavaUiBundle.messagePointer("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
+      })
+      .addExtraAction(new DumbAwareAction(JavaUiBundle.messagePointer("module.javadoc.add.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           VirtualFile[] files = new VirtualFile[]{Util.showSpecifyJavadocUrlDialog(myTable)};
@@ -126,32 +110,23 @@ public class JavadocEditor extends ModuleElementsEditor {
             TableUtil.selectRows(myTable, new int[]{tableModel.getRowCount() - 1});
           }
         }
-
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
-      }).setRemoveAction(new AnActionButtonRunnable() {
+      })
+      .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
-          if (removedItems.size() > 0) {
+          if (!removedItems.isEmpty()) {
             saveData();
           }
         }
-      }).setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
+      })
+      .setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
                              CommonBundle.message("button.remove")).createPanel();
 
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(tablePanel, BorderLayout.CENTER);
-    mainPanel.add(
-      new JBLabel(JavaUiBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
-      BorderLayout.NORTH);
-    return mainPanel;
+    return new JavadocEditorUi().createPanel(tablePanel);
   }
 
-  @NotNull
-  private Project getProject() {
+  private @NotNull Project getProject() {
     return myProject;
   }
 

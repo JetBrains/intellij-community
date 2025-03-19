@@ -4,8 +4,11 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
+import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.plugins.parser.impl.ReadModuleContext
+import com.intellij.platform.plugins.parser.impl.elements.OS
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
@@ -19,18 +22,22 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext(
-  @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
-  @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
-  @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
-  private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
-  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
+  customDisabledPlugins: Set<PluginId>? = null,
+  customExpiredPlugins: Set<PluginId>? = null,
+  customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
+  customEssentialPlugins: List<PluginId>? = null,
+  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
-  checkOptionalConfigFileUniqueness: Boolean = false,
-  @JvmField val transient: Boolean = false
+  checkOptionalConfigFileUniqueness: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
+  val disabledPlugins: Set<PluginId> by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
+  val expiredPlugins: Set<PluginId> by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  val essentialPlugins: List<PluginId> by lazy { customEssentialPlugins ?: ApplicationInfoImpl.getShadowInstance().getEssentialPluginIds() }
+  private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
+  
   @JvmField
-  internal val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
+  internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
   internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 
@@ -57,7 +64,7 @@ class DescriptorListLoadingContext(
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
-    PluginManagerCore.getLogger().warn("Cannot load $file", e)
+    PluginManagerCore.logger.warn("Cannot load $file", e)
     globalErrors.add(Supplier {
       CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
     })
@@ -78,6 +85,7 @@ class DescriptorListLoadingContext(
 
   override val interner: XmlInterner
     get() = threadLocalXmlFactory.get()[0]!!
+  override val elementOsFilter: (OS) -> Boolean = { it.convert().isSuitableForOs() }
 
   override fun close() {
     for (ref in toDispose) {
@@ -100,7 +108,7 @@ class DescriptorListLoadingContext(
       return false
     }
 
-    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.logger.error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

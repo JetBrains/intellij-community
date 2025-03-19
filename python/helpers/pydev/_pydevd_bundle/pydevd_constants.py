@@ -125,10 +125,18 @@ IS_PY37_OR_GREATER = False
 IS_PY36_OR_LESSER = False
 IS_PY38_OR_GREATER = False
 IS_PY38 = False
+IS_PY39 = False
 IS_PY39_OR_GREATER = False
+IS_PY310 = False
+IS_PY310_OR_GREATER = False
 IS_PY311 = False
 IS_PY311_OR_GREATER = False
 IS_PY312_OR_GREATER = False
+IS_PY312_OR_LESSER = False
+IS_PY313 = False
+IS_PY313_OR_GREATER = False
+IS_PY313_OR_LESSER = False
+IS_PY314 = False
 IS_PY2 = True
 IS_PY27 = False
 IS_PY24 = False
@@ -142,10 +150,18 @@ try:
         IS_PY36_OR_LESSER = sys.version_info[:2] <= (3, 6)
         IS_PY38 = sys.version_info[0] == 3 and sys.version_info[1] == 8
         IS_PY38_OR_GREATER = sys.version_info >= (3, 8)
+        IS_PY39 = sys.version_info[0] == 3 and sys.version_info[1] == 9
         IS_PY39_OR_GREATER = sys.version_info >= (3, 9)
+        IS_PY310 = sys.version_info[0] == 3 and sys.version_info[1] == 10
+        IS_PY310_OR_GREATER = sys.version_info >= (3, 10)
         IS_PY311 = sys.version_info[0] == 3 and sys.version_info[1] == 11
         IS_PY311_OR_GREATER = sys.version_info >= (3, 11)
         IS_PY312_OR_GREATER = sys.version_info >= (3, 12)
+        IS_PY312_OR_LESSER = sys.version_info[:2] <= (3, 12)
+        IS_PY313 = sys.version_info[0] == 3 and sys.version_info[1] == 13
+        IS_PY313_OR_GREATER = sys.version_info >= (3, 13)
+        IS_PY313_OR_LESSER = sys.version_info[:2] <= (3, 13)
+        IS_PY314 = sys.version_info[0] == 3 and sys.version_info[1] == 14
     elif sys.version_info[0] == 2 and sys.version_info[1] == 7:
         IS_PY27 = True
     elif sys.version_info[0] == 2 and sys.version_info[1] == 4:
@@ -170,6 +186,16 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
+USE_LOW_IMPACT_MONITORING = (IS_PY312_OR_GREATER and
+                             os.environ.get('USE_LOW_IMPACT_MONITORING', False))
+
+# The tool name to use in the API calls from PEP 669.
+PYDEVD_TOOL_NAME = 'pydevd'
+
+HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME = os.environ.get(
+    'HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME', False)
+
+
 class ValuesPolicy:
     SYNC = 0
     ASYNC = 1
@@ -190,7 +216,6 @@ NEXT_VALUE_SEPARATOR = "__pydev_val__"
 BUILTINS_MODULE_NAME = '__builtin__' if IS_PY2 else 'builtins'
 SHOW_DEBUG_INFO_ENV = os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True'
 IS_ASYNCIO_REPL = os.getenv('ASYNCIO_REPL') == 'True' and IS_PY38_OR_GREATER
-IS_ASYNCIO_DEBUGGER_ENV = os.getenv('ASYNCIO_DEBUGGER_ENV') == 'True' and IS_PY38_OR_GREATER
 
 # If True, CMD_SET_NEXT_STATEMENT and CMD_RUN_TO_LINE commands have responses indicating success or failure.
 GOTO_HAS_RESPONSE = IS_PYCHARM

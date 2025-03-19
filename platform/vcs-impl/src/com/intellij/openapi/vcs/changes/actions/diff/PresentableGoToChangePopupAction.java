@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,7 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,18 +35,16 @@ import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Comparator.comparing;
 
 public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
-  public static abstract class Default<T extends PresentableChange> extends PresentableGoToChangePopupAction<T> {
+  public abstract static class Default<T extends PresentableChange> extends PresentableGoToChangePopupAction<T> {
     @Override
     protected PresentableChange getPresentation(@NotNull T change) {
       return change;
     }
   }
 
-  @NotNull
-  protected abstract ListSelection<? extends T> getChanges();
+  protected abstract @NotNull ListSelection<? extends T> getChanges();
 
-  @Nullable
-  protected abstract PresentableChange getPresentation(@NotNull T change);
+  protected abstract @Nullable PresentableChange getPresentation(@NotNull T change);
 
   @Override
   protected boolean canNavigate() {
@@ -62,9 +60,8 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       myChanges = changes;
     }
 
-    @NotNull
     @Override
-    public DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
+    public @NotNull DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
       MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = MultiMap.createLinked();
 
       for (int i = 0; i < myChanges.size(); i++) {
@@ -87,9 +84,8 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
 
   protected abstract void onSelected(@NotNull T change);
 
-  @NotNull
   @Override
-  protected JBPopup createPopup(@NotNull AnActionEvent e) {
+  protected @NotNull JBPopup createPopup(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
 
@@ -124,8 +120,8 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
   //
 
   private class MyChangesBrowser extends AsyncChangesBrowserBase {
-    @NotNull private final Ref<? extends JBPopup> myRef;
-    @NotNull private final ListSelection<? extends T> myChanges;
+    private final @NotNull Ref<? extends JBPopup> myRef;
+    private final @NotNull ListSelection<? extends T> myChanges;
 
     MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
@@ -140,7 +136,7 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       viewer.requestRefresh();
 
       if (myChanges.getSelectedIndex() != -1) {
-        UiNotifyConnector.doWhenFirstShown(this, () -> {
+        DiffUtil.runWhenFirstShown(this, () -> {
           viewer.invokeAfterRefresh(() -> {
             DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
               return node instanceof GenericChangesBrowserNode &&
@@ -154,21 +150,18 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       }
     }
 
-    @NotNull
     @Override
-    protected AsyncChangesTreeModel getChangesTreeModel() {
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
       return new MyAsyncChangesTreeModel(myProject, myChanges.getList());
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createToolbarActions() {
+    protected @NotNull List<AnAction> createToolbarActions() {
       return Collections.emptyList(); // remove diff action
     }
 
-    @NotNull
     @Override
-    protected List<AnAction> createPopupMenuActions() {
+    protected @NotNull List<AnAction> createPopupMenuActions() {
       return Collections.emptyList(); // remove diff action
     }
 
@@ -186,8 +179,8 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
   }
 
   private static class GenericChangesBrowserNode extends ChangesBrowserNode<FilePath> implements Comparable<GenericChangesBrowserNode> {
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final FileStatus myFileStatus;
+    private final @NotNull FilePath myFilePath;
+    private final @NotNull FileStatus myFileStatus;
     private final int myIndex;
 
     GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, int index) {
@@ -197,13 +190,11 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       myIndex = index;
     }
 
-    @NotNull
-    public FilePath getFilePath() {
+    public @NotNull FilePath getFilePath() {
       return myFilePath;
     }
 
-    @NotNull
-    public FileStatus getFileStatus() {
+    public @NotNull FileStatus getFileStatus() {
       return myFileStatus;
     }
 

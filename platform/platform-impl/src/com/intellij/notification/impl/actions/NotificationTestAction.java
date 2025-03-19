@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -29,7 +29,7 @@ import java.util.List;
 @SuppressWarnings("HardCodedStringLiteral")
 public final class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
-  private static class Holder {
+  private static final class Holder {
     private static final NotificationGroup TEST_STICKY_GROUP =
       NotificationGroupManager.getInstance().getNotificationGroup("Test Sticky Notification");
     private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
@@ -155,7 +155,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       NotificationInfo notification = null;
 
       for (String line : StringUtil.splitByLines(text, false)) {
-        if (line.length() == 0) {
+        if (line.isEmpty()) {
           if (notification != null) {
             notification = null;
             continue;
@@ -207,6 +207,9 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         else if (line.equals("ImportantSuggestion")) {
           notification.setImportantSuggestion(true);
         }
+        else if (line.equals("AddExtraAction")) {
+          notification.setAddExtraAction(true);
+        }
         else if (line.equals("Sticky")) {
           notification.setSticky(true);
         }
@@ -242,6 +245,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
     private boolean myToolwindow;
     private boolean myLeftActionsDirection = true;
     private boolean mySuggestionType;
+    private boolean myAddExtraAction;
     private boolean myImportantSuggestion;
 
     private Notification myNotification;
@@ -270,6 +274,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
         }
 
         myNotification.setSuggestionType(mySuggestionType);
+        myNotification.setAddExtraAction(myAddExtraAction);
         myNotification.setImportantSuggestion(myImportantSuggestion);
 
         if (myActions != null && !myToolwindow) {
@@ -289,8 +294,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
       return myNotification;
     }
 
-    @Nullable
-    private NotificationListener getListener() {
+    private @Nullable NotificationListener getListener() {
       return myAddListener ? this : null;
     }
 
@@ -339,6 +343,10 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     private void setImportantSuggestion(boolean importantSuggestion) {
       myImportantSuggestion = importantSuggestion;
+    }
+
+    private void setAddExtraAction(boolean addExtraAction) {
+      myAddExtraAction = addExtraAction;
     }
 
     public void setToolwindow(boolean toolwindow) {

@@ -1,0 +1,10 @@
+LineBreakpoint created at anyMethodViaSuper.kt:8
+Run Java
+Connected to the target VM
+anyMethodViaSuper.kt:8
+Compile bytecode for super.toString().substring(0, 2)
+Compile bytecode for super.hashCode() == hashCode()
+Compile bytecode for super.equals(this)
+Disconnected from the target VM
+
+Process finished with exit code 0

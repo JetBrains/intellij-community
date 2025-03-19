@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
     public static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -60,14 +67,14 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
             runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementationComplex.kt");
         }
 
-        @TestMetadata("ExtendClassWithDefaultImplementation_1_6.kt")
-        public void testExtendClassWithDefaultImplementation_1_6() throws Exception {
-            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_1_6.kt");
+        @TestMetadata("ExtendClassWithDefaultImplementation_JvmDefaultDisable.kt")
+        public void testExtendClassWithDefaultImplementation_JvmDefaultDisable() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_JvmDefaultDisable.kt");
         }
 
-        @TestMetadata("ExtendClassWithDefaultImplementation_1_8.kt")
-        public void testExtendClassWithDefaultImplementation_1_8() throws Exception {
-            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_1_8.kt");
+        @TestMetadata("ExtendClassWithDefaultImplementation_JvmDefaultEnable.kt")
+        public void testExtendClassWithDefaultImplementation_JvmDefaultEnable() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_JvmDefaultEnable.kt");
         }
 
         @TestMetadata("ExtendInterfaceWithAJvmStaticMethodInCompanion.kt")
@@ -98,6 +105,11 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
         @TestMetadata("ExtendingReadOnlyInterfaces.kt")
         public void testExtendingReadOnlyInterfaces() throws Exception {
             runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendingReadOnlyInterfaces.kt");
+        }
+
+        @TestMetadata("FlexibleTypes.kt")
+        public void testFlexibleTypes() throws Exception {
+            runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/FlexibleTypes.kt");
         }
 
         @TestMetadata("FunctionInNestedClassInDataFlowInspection.kt")
@@ -214,6 +226,12 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kotlinAndJavaChecker/javaWithKotlin")
     public static class JavaWithKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

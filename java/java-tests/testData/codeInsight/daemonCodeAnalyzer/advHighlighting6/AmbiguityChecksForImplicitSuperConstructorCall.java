@@ -4,9 +4,9 @@ class A {
   A(Integer... i) {}
 }
 class B extends A {
-  <error descr="Ambiguous method call: both 'A.A(String...)' and 'A.A(Integer...)' match">public B()</error> {}
+  <error descr="Ambiguous implicit constructor call: both 'A.A(String...)' and 'A.A(Integer...)' match">public B()</error> {}
 }
-<error descr="Ambiguous method call: both 'A.A(String...)' and 'A.A(Integer...)' match">class C extends A</error> {}
+<error descr="Ambiguous implicit constructor call: both 'A.A(String...)' and 'A.A(Integer...)' match">class C extends A</error> {}
 
 class A1 {
   A1(String... i){}

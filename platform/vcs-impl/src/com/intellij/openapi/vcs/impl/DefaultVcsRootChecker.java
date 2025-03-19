@@ -1,30 +1,30 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class DefaultVcsRootChecker extends VcsRootChecker {
-  @NotNull private final AbstractVcs myVcs;
-  private final VcsDescriptor myVcsDescriptor;
+  private final @NotNull AbstractVcs myVcs;
+  private final @Nullable VcsDescriptor myVcsDescriptor;
 
-  DefaultVcsRootChecker(@NotNull AbstractVcs vcs) {
+  DefaultVcsRootChecker(@NotNull AbstractVcs vcs, @Nullable VcsDescriptor vcsDescriptor) {
     myVcs = vcs;
-    myVcsDescriptor = ProjectLevelVcsManager.getInstance(vcs.getProject()).getDescriptor(vcs.getName());
+    myVcsDescriptor = vcsDescriptor;
   }
 
-  @NotNull
   @Override
-  public VcsKey getSupportedVcs() {
+  public @NotNull VcsKey getSupportedVcs() {
     return myVcs.getKeyInstanceMethod();
   }
 
   @Override
   public boolean isRoot(@NotNull VirtualFile file) {
+    if (myVcsDescriptor == null) return false;
     return myVcsDescriptor.probablyUnderVcs(file);
   }
 

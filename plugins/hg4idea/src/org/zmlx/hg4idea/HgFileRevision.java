@@ -29,8 +29,8 @@ import java.util.Set;
 public class HgFileRevision implements VcsFileRevision {
 
   private final Project myProject;
-  @NotNull private final HgFile myFile;
-  @NotNull private final HgRevisionNumber myRevisionNumber;
+  private final @NotNull HgFile myFile;
+  private final @NotNull HgRevisionNumber myRevisionNumber;
   private final String myBranchName;
   private final Date myRevisionDate;
   private final String myAuthor;
@@ -57,8 +57,7 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   @Override
-  @NotNull
-  public HgRevisionNumber getRevisionNumber() {
+  public @NotNull HgRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -67,9 +66,8 @@ public class HgFileRevision implements VcsFileRevision {
     return myBranchName;
   }
 
-  @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public @Nullable RepositoryLocation getChangedRepositoryPath() {
     return null;
   }
 
@@ -79,34 +77,28 @@ public class HgFileRevision implements VcsFileRevision {
   }
 
   @Override
-  @Nullable
-  public String getAuthor() {
+  public @Nullable String getAuthor() {
     return myAuthor;
   }
 
   @Override
-  @Nullable
-  public String getCommitMessage() {
+  public @Nullable String getCommitMessage() {
     return myCommitMessage;
   }
 
-  @NotNull
-  public Set<String> getModifiedFiles() {
+  public @NotNull Set<String> getModifiedFiles() {
     return myFilesModified;
   }
 
-  @NotNull
-  public Set<String> getAddedFiles() {
+  public @NotNull Set<String> getAddedFiles() {
     return myFilesAdded;
   }
 
-  @NotNull
-  public Set<String> getDeletedFiles() {
+  public @NotNull Set<String> getDeletedFiles() {
     return myFilesDeleted;
   }
 
-  @NotNull
-  public Map<String, String> getMovedFiles() {
+  public @NotNull Map<String, String> getMovedFiles() {
     return myFilesMoved;
   }
 

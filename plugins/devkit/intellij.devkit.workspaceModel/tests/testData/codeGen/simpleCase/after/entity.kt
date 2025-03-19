@@ -1,11 +1,10 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface SimpleEntity : WorkspaceEntity {
   val version: Int
@@ -13,23 +12,25 @@ interface SimpleEntity : WorkspaceEntity {
   val isSimple: Boolean
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleEntity, WorkspaceEntity.Builder<SimpleEntity>, ObjBuilder<SimpleEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var isSimple: Boolean
+    var version: Int
+    var name: String
+    var isSimple: Boolean
   }
 
-  companion object : Type<SimpleEntity, Builder>() {
+  companion object : EntityType<SimpleEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        name: String,
-                        isSimple: Boolean,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleEntity {
+    operator fun invoke(
+      version: Int,
+      name: String,
+      isSimple: Boolean,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -43,6 +44,10 @@ interface SimpleEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleEntity, modification: SimpleEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySimpleEntity(
+  entity: SimpleEntity,
+  modification: SimpleEntity.Builder.() -> Unit,
+): SimpleEntity {
+  return modifyEntity(SimpleEntity.Builder::class.java, entity, modification)
+}
 //endregion

@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-// FIR_COMPARISON
 import java.io.File
 
 fun foo(o: Any) {

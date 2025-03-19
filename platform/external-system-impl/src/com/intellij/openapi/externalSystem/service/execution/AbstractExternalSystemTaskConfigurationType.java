@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.diagnostic.PluginException;
@@ -182,7 +182,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     }
     if (!isTasksAbsent) buffer.append(tasksPostfix);
 
-    if (buffer.length() == 0) {
+    if (buffer.isEmpty()) {
       buffer.append(ExecutionBundle.message("run.configuration.unnamed.name.prefix"));
     }
     return buffer.toString();

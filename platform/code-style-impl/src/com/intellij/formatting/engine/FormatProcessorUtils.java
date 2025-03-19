@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
@@ -9,16 +9,16 @@ import org.jetbrains.annotations.NotNull;
 final class FormatProcessorUtils {
 
 
-  private static int calcShift(@NotNull final IndentInside oldIndent,
-                               @NotNull final IndentInside newIndent,
-                               @NotNull final CommonCodeStyleSettings.IndentOptions options)
+  private static int calcShift(final @NotNull IndentInside oldIndent,
+                               final @NotNull IndentInside newIndent,
+                               final @NotNull CommonCodeStyleSettings.IndentOptions options)
   {
     if (oldIndent.equals(newIndent)) return 0;
     return newIndent.getSpacesCount(options) - oldIndent.getSpacesCount(options);
   }
 
   static int replaceWhiteSpace(final FormattingModel model,
-                               @NotNull final LeafBlockWrapper block,
+                               final @NotNull LeafBlockWrapper block,
                                int shift,
                                final CharSequence _newWhiteSpace,
                                final CommonCodeStyleSettings.IndentOptions options

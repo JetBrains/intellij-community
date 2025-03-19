@@ -1,21 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
     return PyArgumentListInspection.class;
-  }
-
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPyLatestDescriptor;
   }
 
   // PY-36158
@@ -32,6 +25,18 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
 
                    print(Foo(1, 2))
                    """);
+  }
+
+  // PY-59198
+  public void testAttrFieldAliasParameter() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-54560
+  public void testDataclassTransformFieldAliasParameter() {
+    doMultiFileTest();
   }
 
   // PY-50404
@@ -140,5 +145,235 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                                      
                    non_working_function(1.1, 2.2)
                    """);
+  }
+
+  // PY-70484
+  public void testParamSpecInDecoratorReturnTypeCannotBeBoundFromArguments() {
+    doTestByText("""
+                   from typing import Callable, Any, ParamSpec
+                                      
+                   P = ParamSpec("P")
+                                      
+                   def deco(fn: Callable[..., Any]) -> Callable[P, Any]:
+                       return fn
+                                      
+                   @deco
+                   def f(x: int):
+                       pass
+                                      
+                   f("foo", 42)
+                   """);
+  }
+
+  // PY-70484
+  public void testParamSpecInDecoratorReturnTypeUnboundDueToUnresolvedArgument() {
+    doTestByText("""
+                   from typing import Callable, Any, ParamSpec
+                                      
+                   P = ParamSpec("P")
+                                      
+                   def deco(fn: Callable[P, Any]) -> Callable[P, Any]:
+                       return fn
+                                      
+                   deco(unresolved)("foo", 42)
+                   """);
+  }
+
+  // PY-65385
+  public void testImportedFunctionDecoratedWithAsyncContextManager() {
+    doMultiFileTest();
+  }
+
+  // PY-55044
+  public void testTypedDictKwargsArgumentWithNonexistentKey() {
+    doTestByText("""
+                   from typing import TypedDict, Unpack
+                                      
+                   class Movie(TypedDict):
+                       pass
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Unexpected argument">nonexistent_key=1</warning>)
+                   """);
+  }
+
+  // PY-55044
+  public void testTypedDictWithRequiredKeyKwargsArgument() {
+    doTestByText("""
+                   from typing import Required, TypedDict, Unpack
+                                      
+                   class Movie(TypedDict, total=False):
+                       title: Required[str]
+                       year: int
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(year=1982<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(title='Blade Runner')
+                   foo(title='Blade Runner', year=1982)
+                   """);
+  }
+
+  // PY-55044
+  public void testTypedDictWithNotRequiredKeyKwargsArgument() {
+    doTestByText("""
+                   from typing import NotRequired, TypedDict, Unpack
+                                      
+                   class Movie(TypedDict):
+                       title: str
+                       year: NotRequired[int]
+
+                   def foo(**x: Unpack[Movie]):
+                       pass
+                       
+                   foo(<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(year=1982<warning descr="Parameter 'title' unfilled">)</warning>
+                   foo(title='Blade Runner')
+                   foo(title='Blade Runner', year=1982)
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDataclassWithKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class MyClass:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   MyClass(0, b=0)
+                   MyClass(0, <warning descr="Unexpected argument">0</warning><warning descr="Parameter 'b' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   @dataclass
+                   class Derived(Base):
+                       c: int
+                       ww: KW_ONLY
+                       d: int
+
+                   Derived(0, 0, b=0, d=0)
+                   Derived(0, 0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'd' unfilled">)</warning>
+                   Derived(0, 0, <warning descr="Unexpected argument">0</warning>, d=0<warning descr="Parameter 'b' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithOverridenAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+                                      
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+                                      
+                   @dataclass
+                   class Derived(Base):
+                       b: int
+
+                   Derived(0, 0)
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithOverridenKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   @dataclass
+                   class Derived1(Base):
+                       qq: int
+
+                   Derived1(0, 0, b=0)
+                   Derived1(0, 0, <warning descr="Unexpected argument">0</warning><warning descr="Parameter 'b' unfilled">)</warning>
+                   
+                   @dataclass
+                   class Derived2(Base):
+                       ww: KW_ONLY
+                       qq: int
+
+                   Derived2(0, b=0, qq=0)
+                   Derived2(0, <warning descr="Unexpected argument">0</warning>, qq=0<warning descr="Parameter 'b' unfilled">)</warning>
+                   Derived2(0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'qq' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+                                      
+                   class MyClass:
+                     def foo(self, s: str, i: int):
+                         pass
+                                      
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+                                      
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+                                      
+                   r = Router()
+                   r.route("", 13)
+                   r.route(""<warning descr="Parameter 'i' unfilled">)</warning>
+                   r.route("", 13, <warning descr="Unexpected argument">1</warning>)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnDecorator() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnBaseClass() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnMetaClass() {
+    doMultiFileTest();
+  }
+
+  // PY-42137
+  public void testMismatchedOverloadsHaveBothTooFewAndTooManyParameters() {
+    doTest();
+  }
+
+  // PY-42137
+  public void testMismatchedConditionalImplementationsHaveBothTooFewAndTooManyParameters() {
+    doTest();
   }
 }

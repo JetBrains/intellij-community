@@ -7,12 +7,14 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class BooleanPropertyToggleAction extends ToggleAction implements DumbAware {
   public BooleanPropertyToggleAction() {
   }

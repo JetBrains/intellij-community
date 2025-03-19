@@ -13,8 +13,14 @@ data class MavenCoordinates @JvmOverloads constructor(
   val groupId: @NlsSafe String,
   val artifactId: @NlsSafe String,
   val version: @NlsSafe String,
+  /**
+   * For release versions the MavenCoordinates.version and MavenCoordinates.baseVersion are the same.
+   * For snapshots, MavenCoordinates.version is the timestamped version number e.g. 1.0-20240918.105500-34
+   * and baseVersion is the raw version number, e.g. 1.0-SNAPSHOT
+   */
+  val baseVersion: @NlsSafe String = version,
   val packaging: @NonNls String = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING,
-  val classifier: @NonNls String? = null
+  val classifier: @NonNls String? = null,
 )
 
 fun Library.getMavenCoordinates(): MavenCoordinates? = JavaLibraryUtil.getMavenCoordinates(this)

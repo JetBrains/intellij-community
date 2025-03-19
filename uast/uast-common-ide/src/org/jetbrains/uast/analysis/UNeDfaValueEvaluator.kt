@@ -276,111 +276,132 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
       objectsToAnalyze: Collection<UValueMark>?,
       originalObjectsToAnalyze: Collection<UValueMark>?
     ): T? {
-      if (element is UDeclaration && declarationEvaluator != null) {
-        val value = declarationEvaluator?.invoke(element)
-        if (value != null) return value
-      }
-
-      if (element is UCallExpression) {
-        val methodEvaluator = builderEvaluator.methodDescriptions.entries.firstOrNull { (pattern, _) ->
-          pattern.accepts(element.resolve())
+      var nextElement = element
+      val converters = mutableListOf<(T?) -> T?>()
+      val result: T?
+      while (true) {
+        val curElement = nextElement
+        if (curElement is UDeclaration && declarationEvaluator != null) {
+          val value = declarationEvaluator?.invoke(curElement)
+          if (value != null) {
+            result = value
+            break
+          }
         }
-        if (methodEvaluator != null) {
-          val dependencies = graph.dependencies[element].orEmpty()
-          val isStrict = objectsToAnalyze == originalObjectsToAnalyze
-          return when (
-            val dependency = dependencies
-              .firstOrNull { it !is Dependency.PotentialSideEffectDependency && it !is Dependency.ArgumentDependency }
-          ) {
-            is Dependency.BranchingDependency -> {
-              val branchResult = dependency.elements.mapNotNull {
-                calculateBuilder(it, objectsToAnalyze, originalObjectsToAnalyze)
-              }.let { strategy.constructValueFromList(element, it) }
-              methodEvaluator.value.evaluate(element, branchResult, this@UNeDfaValueEvaluator, configuration, isStrict)
+
+        if (curElement is UCallExpression) {
+          val methodEvaluator = builderEvaluator.methodDescriptions.entries.firstOrNull { (pattern, _) ->
+            pattern.accepts(curElement.resolve())
+          }
+          if (methodEvaluator != null) {
+            val dependencies = graph.dependencies[curElement].orEmpty()
+            val isStrict = objectsToAnalyze == originalObjectsToAnalyze
+            when (
+              val dependency = dependencies
+                .firstOrNull { it !is Dependency.PotentialSideEffectDependency && it !is Dependency.ArgumentDependency }
+            ) {
+              is Dependency.BranchingDependency -> {
+                val branchResult = dependency.elements.mapNotNull {
+                  calculateBuilder(it, objectsToAnalyze, originalObjectsToAnalyze)
+                }.let { strategy.constructValueFromList(curElement, it) }
+                result = methodEvaluator.value.evaluate(curElement, branchResult, this@UNeDfaValueEvaluator, configuration, isStrict)
+                break
+              }
+              is Dependency.CommonDependency -> {
+                nextElement = dependency.element
+                converters += { methodEvaluator.value.evaluate(curElement, it, this@UNeDfaValueEvaluator, configuration, isStrict) }
+                continue 
+              }
+              is Dependency.PotentialSideEffectDependency -> {
+                result = null // there should not be anything
+                break
+              }
+              else -> {
+                result = methodEvaluator.value.evaluate(curElement, null, this@UNeDfaValueEvaluator, configuration, isStrict)
+                break
+              }
             }
-            is Dependency.CommonDependency -> {
-              val result = calculateBuilder(
-                dependency.element,
-                objectsToAnalyze,
-                originalObjectsToAnalyze
-              )
-              methodEvaluator.value.evaluate(element, result, this@UNeDfaValueEvaluator, configuration, isStrict)
+          }
+        }
+
+        val dependencies = graph.dependencies[curElement].orEmpty()
+
+        if (dependencies.isEmpty() && curElement is UReferenceExpression) {
+          val declaration = curElement.resolveToUElement()
+          if (declaration is UParameter && declaration.uastParent is UMethod && declaration.uastParent == graph.uAnchor) {
+            val usagesResults = analyzeUsages(declaration.uastParent as UMethod, declaration,
+                                              configuration) { usageGraph, argument, usageConfiguration ->
+              BuilderEvaluator(usageGraph, usageConfiguration, builderEvaluator).calculateBuilder(argument, null, null)
             }
-            is Dependency.PotentialSideEffectDependency -> null // there should not be anything
-            else -> methodEvaluator.value.evaluate(element, null, this@UNeDfaValueEvaluator, configuration, isStrict)
+            result = usagesResults.singleOrNull() ?: strategy.constructValueFromList(curElement, usagesResults)
+            break
+          }
+          if (declaration is UField && configuration.isAppropriateField(declaration)) {
+            val declarationResult = listOfNotNull(UastLocalUsageDependencyGraph.getGraphByUElement(declaration)?.let { graphForField ->
+              declaration.uastInitializer?.let { initializer ->
+                BuilderEvaluator(graphForField, configuration, builderEvaluator).calculateBuilder(initializer, null, null)
+              }
+            })
+            result = declarationResult.singleOrNull() ?: strategy.constructUnknownValue(curElement)
+            break
+          }
+        }
+
+        val (dependency, candidates) = selectDependency(dependencies, builderEvaluator) {
+          (originalObjectsToAnalyze == null ||
+           originalObjectsToAnalyze.intersect(it.dependencyWitnessValues).isNotEmpty()) &&
+          provePossibleDependency(it.dependencyEvidence, builderEvaluator)
+        }
+
+        if (
+          dependency is DependencyOfReference &&
+          originalObjectsToAnalyze != null &&
+          dependency.referenceInfo?.possibleReferencedValues?.intersect(originalObjectsToAnalyze)?.isEmpty() == true
+        ) {
+          result = null
+          break
+        }
+
+        when (dependency) {
+          is Dependency.BranchingDependency -> {
+            val variants = dependency.elements.mapNotNull {
+              calculateBuilder(it, objectsToAnalyze, originalObjectsToAnalyze)
+            }.takeUnless { it.isEmpty() }
+
+            result = if (variants?.size == 1) {
+              variants.single()
+            }
+            else {
+              strategy.constructValueFromList(curElement, variants)
+            }
+            break
+          }
+          is Dependency.CommonDependency -> {
+            nextElement = dependency.element
+            continue
+          }
+          is Dependency.PotentialSideEffectDependency -> {
+            result = if (!builderEvaluator.allowSideEffects) null
+            else {
+              candidates
+                .mapNotNull { candidate ->
+                  calculateBuilder(
+                    candidate.updateElement,
+                    candidate.dependencyWitnessValues,
+                    originalObjectsToAnalyze ?: dependency.referenceInfo?.possibleReferencedValues
+                  )
+                }
+                .let { strategy.constructValueFromList(curElement, it) }
+            }
+            break
+          }
+          else -> {
+            result = null
+            break
           }
         }
       }
-
-      val dependencies = graph.dependencies[element].orEmpty()
-
-      if (dependencies.isEmpty() && element is UReferenceExpression) {
-        val declaration = element.resolveToUElement()
-        if (declaration is UParameter && declaration.uastParent is UMethod && declaration.uastParent == graph.uAnchor) {
-          val usagesResults = analyzeUsages(declaration.uastParent as UMethod, declaration,
-                                            configuration) { usageGraph, argument, usageConfiguration ->
-            BuilderEvaluator(usageGraph, usageConfiguration, builderEvaluator).calculateBuilder(argument, null, null)
-          }
-          return usagesResults.singleOrNull() ?: strategy.constructValueFromList(element, usagesResults)
-        }
-        if (declaration is UField && configuration.isAppropriateField(declaration)) {
-          val declarationResult = listOfNotNull(UastLocalUsageDependencyGraph.getGraphByUElement(declaration)?.let { graphForField ->
-            declaration.uastInitializer?.let { initializer ->
-              BuilderEvaluator(graphForField, configuration, builderEvaluator).calculateBuilder(initializer, null, null)
-            }
-          })
-          return declarationResult.singleOrNull() ?: strategy.constructUnknownValue(element)
-        }
-      }
-
-      val (dependency, candidates) = selectDependency(dependencies, builderEvaluator) {
-        (originalObjectsToAnalyze == null ||
-         originalObjectsToAnalyze.intersect(it.dependencyWitnessValues).isNotEmpty()) &&
-        provePossibleDependency(it.dependencyEvidence, builderEvaluator)
-      }
-
-      if (
-        dependency is DependencyOfReference &&
-        originalObjectsToAnalyze != null &&
-        dependency.referenceInfo?.possibleReferencedValues?.intersect(originalObjectsToAnalyze)?.isEmpty() == true
-      ) {
-        return null
-      }
-
-      return when (dependency) {
-        is Dependency.BranchingDependency -> {
-          val variants = dependency.elements.mapNotNull {
-            calculateBuilder(it, objectsToAnalyze, originalObjectsToAnalyze)
-          }.takeUnless { it.isEmpty() }
-
-          if (variants?.size == 1) {
-            variants.single()
-          }
-          else {
-            strategy.constructValueFromList(element, variants)
-          }
-        }
-        is Dependency.CommonDependency -> {
-          calculateBuilder(
-            dependency.element,
-            objectsToAnalyze,
-            originalObjectsToAnalyze
-          )
-        }
-        is Dependency.PotentialSideEffectDependency -> if (!builderEvaluator.allowSideEffects) null
-        else {
-          candidates
-            .mapNotNull { candidate ->
-              calculateBuilder(
-                candidate.updateElement,
-                candidate.dependencyWitnessValues,
-                originalObjectsToAnalyze ?: dependency.referenceInfo?.possibleReferencedValues
-              )
-            }
-            .let { strategy.constructValueFromList(element, it) }
-        }
-        else -> null
-      }
+      return converters.asReversed().fold(result) { acc, converter -> converter(acc) }
     }
   }
 

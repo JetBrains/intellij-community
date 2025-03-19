@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui
 
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
@@ -10,15 +9,16 @@ import com.intellij.refactoring.classMembers.MemberInfoChange
 import com.intellij.refactoring.extractSuperclass.JavaExtractSuperBaseDialog
 import com.intellij.refactoring.util.DocCommentPolicy
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.util.onTextChange
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ExtractSuperInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
@@ -90,7 +90,7 @@ abstract class KotlinExtractSuperDialogBase(
 
     override fun checkConflicts() = conflictChecker(this)
 
-    override fun createActionComponent() = Box.createHorizontalBox()!!
+    override fun createActionComponent() = JBBox.createHorizontalBox()!!
 
     override fun createExtractedSuperNameField(): JTextField {
         return super.createExtractedSuperNameField().apply {
@@ -177,7 +177,7 @@ abstract class KotlinExtractSuperDialogBase(
             targetFileName,
             extractedSuperName.quoteIfNeeded(),
             isExtractInterface,
-            DocCommentPolicy<PsiComment>(docCommentPolicy)
+            DocCommentPolicy(docCommentPolicy)
         )
         refactoring(extractInfo)
     }

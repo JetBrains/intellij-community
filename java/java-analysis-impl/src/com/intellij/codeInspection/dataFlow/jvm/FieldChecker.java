@@ -18,6 +18,7 @@ public class FieldChecker {
   private final boolean myTrustFieldInitializersInConstructors;
   private final boolean myCanInstantiateItself;
   private final PsiClass myClass;
+  private final FieldChecker myParent;
 
   private FieldChecker(PsiElement context) {
     PsiMethod method = ObjectUtils.tryCast(PsiTreeUtil.getNonStrictParentOfType(context, PsiMember.class), PsiMethod.class);
@@ -25,8 +26,10 @@ public class FieldChecker {
     myClass = contextClass;
     if (method == null || myClass == null) {
       myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
+      myParent = null;
       return;
     }
+    myParent = PsiUtil.isLocalOrAnonymousClass(myClass) ? new FieldChecker(myClass.getParent()) : null;
     // Indirect instantiation via other class is still possible, but hopefully unlikely
     ClassInitializationInfo info = CachedValuesManager.getProjectPsiDependentCache(contextClass, ClassInitializationInfo::new);
     myCanInstantiateItself = info.myCanInstantiateItself;
@@ -40,6 +43,7 @@ public class FieldChecker {
   }
 
   public boolean canTrustFieldInitializer(PsiField field) {
+    if (myParent != null && !myParent.canTrustFieldInitializer(field)) return false;
     if (field.hasInitializer()) {
       boolean staticField = field.hasModifierProperty(PsiModifier.STATIC);
       if (staticField && myClass != null && field.getContainingClass() != myClass) return true;

@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 interface ProblemsCollector : ProblemsListener {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.getService(ProblemsCollector::class.java)!!
+    fun getInstance(project: Project): ProblemsCollector = project.getService(ProblemsCollector::class.java)!!
   }
 
   fun getProblemCount(): Int

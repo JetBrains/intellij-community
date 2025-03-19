@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -164,7 +164,7 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
                 bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass]?.fqNameOrNull()?.asString() ?: return emptyList()
             val psiFactory = KtPsiFactory(targetClass.project)
             val newReceiver = psiFactory.createExpression(fqName)
-            return ReferencesSearch.search(targetClass, targetClass.useScope).mapNotNull {
+            return ReferencesSearch.search(targetClass, targetClass.useScope).asIterable().mapNotNull {
                 val callExpression = it.element.parent as? KtCallExpression ?: return@mapNotNull null
                 val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
                 val parentClass = callExpression.getStrictParentOfType<KtClass>()

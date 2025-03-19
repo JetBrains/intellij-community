@@ -51,4 +51,22 @@ internal class TextTest {
     assertFalse(".\n Vitorino Nemésio (1901 - 1978) — writer and university".looksLikeCode())
     assertFalse("Vitorino Nemesio (1901 - 1978) - writer and university".looksLikeCode())
   }
+
+  @Test
+  fun `testLooksLikeCode c# generic`() {
+    assertTrue("public void Method<T>(T string)".looksLikeCode())
+    assertTrue("public void Method<TA, TB, TC>()".looksLikeCode())
+    assertTrue("public void Method<TA, in TB,out    TC>()".looksLikeCode())
+    assertTrue("public void Method<in (TA, TB, TC)>()".looksLikeCode())
+  }
+
+  @Test
+  fun `testLooksLikeCode Java loop`() {
+    assertTrue("for (Person person : people)".looksLikeCode())
+  }
+
+  @Test
+  fun `testLooksLikeCode Scala`() {
+    assertTrue("given j: Int = ???".looksLikeCode())
+  }
 }

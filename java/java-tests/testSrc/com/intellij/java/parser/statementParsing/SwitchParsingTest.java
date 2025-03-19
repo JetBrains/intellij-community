@@ -15,20 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class SwitchParsingTest extends JavaParsingTestCase {
+public class SwitchParsingTest extends AbstractBasicSwitchParsingTest {
   public SwitchParsingTest() {
-    super("parser-full/statementParsing/switch");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testNormal() { doTest(true); }
-
-  public void testUncomplete1() { doTest(true); }
-  public void testUncomplete2() { doTest(true); }
-  public void testUncomplete3() { doTest(true); }
-  public void testUncomplete4() { doTest(true); }
-  public void testUncomplete5() { doTest(true); }
-  public void testUncomplete6() { doTest(true); }
-  public void testUncomplete7() { doTest(true); }
 }

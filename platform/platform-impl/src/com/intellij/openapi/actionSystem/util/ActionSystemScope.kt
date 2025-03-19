@@ -4,4 +4,4 @@ package com.intellij.openapi.actionSystem.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val ActionSystem = Scope("actionSystem")
+val ActionSystem: Scope = Scope("actionSystem", verbose = true)

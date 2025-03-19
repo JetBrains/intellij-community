@@ -18,4 +18,10 @@ final class SubstringConsoleFolding extends ConsoleFolding {
   public String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     return LangBundle.message("x.internal.lines", lines.size());
   }
+
+  @Override
+  public int getNestingPriority() {
+    // This folding is not very intelligent, lower its priority to not break more sophisticated ones.
+    return super.getNestingPriority() - 10;
+  }
 }

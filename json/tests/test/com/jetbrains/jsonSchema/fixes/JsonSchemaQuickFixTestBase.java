@@ -15,6 +15,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingTestBase {
 
@@ -27,7 +28,11 @@ public abstract class JsonSchemaQuickFixTestBase extends JsonSchemaHighlightingT
     PsiFile psiFile = configureInitially(schema, text, "json");
     myFixture.checkHighlighting();
     List<IntentionAction> intentions = myFixture.getAvailableIntentions();
-    IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getFamilyName()));
+    IntentionAction action = ContainerUtil.find(intentions, o -> fixName.equals(o.getText()));
+    if (action == null) {
+      String intentionsList = intentions.stream().map(i -> i.getText()).distinct().sorted().collect(Collectors.joining("\n"));
+      throw new IllegalStateException("No available intention found with name \"" + fixName + "\". Available intentions:\n" + intentionsList);
+    }
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
         ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, myFixture.getEditor(), action, action.getText());

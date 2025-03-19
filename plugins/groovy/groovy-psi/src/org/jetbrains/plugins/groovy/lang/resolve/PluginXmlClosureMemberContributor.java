@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.List;
 
-public class PluginXmlClosureMemberContributor extends ClosureMissingMethodContributor {
+public final class PluginXmlClosureMemberContributor extends ClosureMissingMethodContributor {
   @Override
   public boolean processMembers(GrClosableBlock closure, PsiScopeProcessor processor, GrReferenceExpression refExpr, ResolveState state) {
     PsiElement parent = closure.getParent();

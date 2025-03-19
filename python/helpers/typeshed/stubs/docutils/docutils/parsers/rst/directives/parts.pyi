@@ -1,3 +1,10 @@
-from typing import Any
+from collections.abc import Sequence
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+from docutils.parsers.rst import Directive
+
+class Contents(Directive):
+    backlinks_values: Sequence[str]
+
+class Sectnum(Directive): ...
+class Header(Directive): ...
+class Footer(Directive): ...

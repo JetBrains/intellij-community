@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorLinePainter
 import com.intellij.openapi.editor.LineExtensionInfo
@@ -11,14 +13,26 @@ import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
+import java.util.function.Consumer
 
 /**
  * Created by Yuli Fiterman on 9/16/2016.
  */
 class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePainter(), TextAnnotationGutterProvider {
+  /**
+   * The list of prompt change listeners. Must be accessed only from EDT.
+   */
+  private val promptListeners = mutableListOf<Consumer<ConsolePromptDecorator>>()
+    get() {
+      ThreadingAssertions.assertEventDispatchThread()
+      return field
+    }
 
   var mainPrompt: String = "> "
     get() = if (myEditorEx.isRendererMode) "" else field
@@ -32,7 +46,7 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePaint
       }
     }
 
-  var promptAttributes: ConsoleViewContentType = ConsoleViewContentType.USER_INPUT
+  var promptAttributes: ConsoleViewContentType = ConsoleViewContentType.SYSTEM_OUTPUT
     set(promptAttributes) {
       field = promptAttributes
       myEditorEx.colorsScheme.setColor(promptColor, promptAttributes.attributes.foregroundColor)
@@ -89,11 +103,33 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePaint
       if (!myEditorEx.isDisposed) {
         myEditorEx.gutterComponentEx.revalidateMarkup()
       }
+
+      promptListeners.forEach {
+        try {
+          it.accept(this)
+        } catch (e: Exception) {
+          LOG.error("Failed to invoke prompt change listener ${it::class.java}", e)
+        }
+      }
+    }
+  }
+
+  @Internal
+  fun addChangeListener(promptChangeListener: Consumer<ConsolePromptDecorator>, disposable: Disposable) {
+    UIUtil.invokeLaterIfNeeded {
+      promptListeners.add(promptChangeListener)
+
+      Disposer.register(disposable) {
+        UIUtil.invokeLaterIfNeeded {
+          promptListeners.remove(promptChangeListener)
+        }
+      }
     }
   }
 
   companion object {
     private val promptColor = ColorKey.createColorKey("CONSOLE_PROMPT_COLOR")
+    private val LOG = Logger.getInstance(ConsolePromptDecorator::class.java)
   }
 }
 

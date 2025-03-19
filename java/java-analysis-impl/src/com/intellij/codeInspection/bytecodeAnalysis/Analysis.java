@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -15,7 +15,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 final class AbstractValues {
   static final class ParamValue extends BasicValue {
@@ -56,8 +55,8 @@ final class AbstractValues {
     }
   }
   static final class CallResultValue extends BasicValue {
-    final Set<EKey> inters;
-    CallResultValue(Type tp, Set<EKey> inters) {
+    final List<EKey> inters;
+    CallResultValue(Type tp, List<EKey> inters) {
       super(tp);
       this.inters = inters;
     }
@@ -117,7 +116,8 @@ final class AbstractValues {
       return curr instanceof NotNullValue;
     }
     if (prev instanceof CallResultValue prevCall) {
-      return curr instanceof CallResultValue currCall && prevCall.inters.equals(currCall.inters);
+      return curr instanceof CallResultValue currCall && prevCall.inters.size() == currCall.inters.size() &&
+        prevCall.inters.containsAll(currCall.inters);
     }
     return true;
   }
@@ -125,10 +125,10 @@ final class AbstractValues {
   static boolean equiv(BasicValue curr, BasicValue prev) {
     if (curr == prev) return true;
     if (curr.getClass() == prev.getClass()) {
-      if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
-        Set<EKey> keys1 = ((CallResultValue)prev).inters;
-        Set<EKey> keys2 = ((CallResultValue)curr).inters;
-        return keys1.equals(keys2);
+      if (curr instanceof CallResultValue currRes && prev instanceof CallResultValue prevRes) {
+        List<EKey> keys1 = prevRes.inters;
+        List<EKey> keys2 = currRes.inters;
+        return keys1.size() == keys2.size() && keys1.containsAll(keys2);
       }
       else return true;
     }
@@ -250,8 +250,7 @@ abstract class Analysis<Res> {
     return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
   }
 
-  @NotNull
-  protected abstract Equation analyze() throws AnalyzerException;
+  protected abstract @NotNull Equation analyze() throws AnalyzerException;
 
   final Frame<BasicValue> createStartFrame() {
     Frame<BasicValue> frame = new Frame<>(methodNode.maxLocals, methodNode.maxStack);
@@ -283,8 +282,7 @@ abstract class Analysis<Res> {
     return frame;
   }
 
-  @NotNull
-  static Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
+  static @NotNull Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
     Frame<BasicValue> catchFrame = new Frame<>(frame);
     catchFrame.clearStack();
     catchFrame.push(ASMUtils.THROWABLE_VALUE);

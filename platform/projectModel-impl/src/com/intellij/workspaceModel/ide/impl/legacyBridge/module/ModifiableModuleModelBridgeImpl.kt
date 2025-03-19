@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
@@ -13,28 +13,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
-import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.atomic.AtomicLong
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG: Logger
   get() = logger<ModifiableModuleModelBridgeImpl>()
@@ -45,6 +44,8 @@ internal class ModifiableModuleModelBridgeImpl(
   diff: MutableEntityStorage,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableModuleModelBridge {
+  private val moduleTypes = ConcurrentFactoryMap.createMap<String, ModuleTypeId> { ModuleTypeId(it) }
+
   override fun getProject(): Project = project
 
   private val modulesToAdd = BidirectionalMap<String, ModuleBridge>()
@@ -58,10 +59,9 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getModules(): Array<Module> = currentModuleSet.toTypedArray()
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      source = NonPersistentEntitySource
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleSourceDependency),
+                                                   entitySource = NonPersistentEntitySource
     )
 
     val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
@@ -69,14 +69,12 @@ internal class ModifiableModuleModelBridgeImpl(
     modulesToAdd.put(moduleName, module)
     currentModuleSet.add(module)
 
-    module.init(null)
+    module.init()
     module.setModuleType(moduleTypeId)
     return module
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String): Module {
-    val start = System.currentTimeMillis()
-
+  override fun newModule(filePath: String, moduleTypeId: String): Module = newModuleTimeMs.addMeasuredTime {
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
@@ -84,7 +82,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
-      return existingModule
+      return@addMeasuredTime existingModule
     }
 
     val moduleName = ModulePath.getModuleNameByFilePath(canonicalPath)
@@ -92,22 +90,21 @@ internal class ModifiableModuleModelBridgeImpl(
       throw ModuleWithNameAlreadyExists("Module already exists: $moduleName", moduleName)
     }
 
-    val entitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(
-      project = project,
-      baseModuleDir = VirtualFileUrlManager.getInstance(project).fromPath(PathUtil.getParentPath(canonicalPath)),
+    val parentPath = PathUtil.getParentPath(canonicalPath)
+    val baseModuleDir = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(parentPath))
+    val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
+      baseModuleDir = baseModuleDir,
       externalSource = null,
     )
 
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      type = moduleTypeId,
-      source = entitySource
-    )
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleSourceDependency),
+                                                   entitySource = entitySource
+    ) {
+      type = moduleTypes[moduleTypeId]
+    }
 
-    val moduleInstance = createModuleInstance(moduleEntity, true)
-    newModuleTimeMs.addElapsedTimeMs(start)
-    return moduleInstance
+    return@addMeasuredTime createModuleInstance(moduleEntity, true)
   }
 
   private fun resolveShortWindowsName(filePath: String): String {
@@ -149,21 +146,16 @@ internal class ModifiableModuleModelBridgeImpl(
     return null
   }
 
-  override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
+  override fun loadModule(file: Path) = loadModule(file.invariantSeparatorsPathString)
 
-  override fun loadModule(filePath: String): Module {
-    val start = System.currentTimeMillis()
-
+  override fun loadModule(filePath: String): Module = loadModuleTimeMs.addMeasuredTime {
     val moduleName = ModulePath.getModuleNameByFilePath(filePath)
     if (findModuleByName(moduleName) != null) {
       error("Module name '$moduleName' already exists. Trying to load module: $filePath")
     }
 
     val moduleEntity = moduleManager.loadModuleToBuilder(moduleName, filePath, diff)
-    val moduleInstance = createModuleInstance(moduleEntity, false)
-
-    loadModuleTimeMs.addElapsedTimeMs(start)
-    return moduleInstance
+    return@addMeasuredTime createModuleInstance(moduleEntity, false)
   }
 
   override fun disposeModule(module: Module) {
@@ -195,7 +187,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
     moduleEntity.dependencies
       .asSequence()
-      .filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+      .filterIsInstance<LibraryDependency>()
       .filter { (it.library.tableId as? LibraryTableId.ModuleLibraryTableId)?.moduleId == module.moduleEntityId }
       .mapNotNull { it.library.resolve(diff) }
       .forEach {
@@ -216,8 +208,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return moduleManager.findModuleByName(name)
   }
 
-  override fun dispose() {
-    val start = System.currentTimeMillis()
+  override fun dispose() = disposingTimeMs.addMeasuredTime {
 
     assertModelIsLive()
 
@@ -233,8 +224,6 @@ internal class ModifiableModuleModelBridgeImpl(
     modulesToAdd.clear()
     modulesToDispose.clear()
     newNameToModule.clear()
-
-    disposingTimeMs.addElapsedTimeMs(start)
   }
 
   override fun isChanged(): Boolean =
@@ -247,7 +236,7 @@ internal class ModifiableModuleModelBridgeImpl(
     val diff = collectChanges()
 
     WorkspaceModel.getInstance(project).updateProjectModel("Module model commit") {
-      it.addDiff(diff)
+      it.applyChangesFrom(diff)
     }
   }
 
@@ -261,9 +250,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return diff
   }
 
-  override fun renameModule(module: Module, newName: String) {
-    val start = System.currentTimeMillis()
-
+  override fun renameModule(module: Module, newName: String) = moduleRenamingTimeMs.addMeasuredTime {
     module as ModuleBridge
 
     val oldModule = findModuleByName(newName)
@@ -283,7 +270,7 @@ internal class ModifiableModuleModelBridgeImpl(
         newNameToModule[newName] = module
       }
       val entity = module.findModuleEntity(entityStorageOnDiff.current) ?: error("Unable to find module entity for $module")
-      diff.modifyEntity(entity) {
+      diff.modifyModuleEntity(entity) {
         name = newName
       }
     }
@@ -291,8 +278,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
     }
-
-    moduleRenamingTimeMs.addElapsedTimeMs(start)
   }
 
   override fun getModuleToBeRenamed(newName: String): Module? = newNameToModule[newName]
@@ -313,17 +298,17 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {
       when {
-        moduleGroupEntity == null && groupPathList != null -> diff.addModuleGroupPathEntity(
-          module = moduleEntity,
-          path = groupPathList,
-          source = moduleEntity.entitySource
-        )
+        moduleGroupEntity == null && groupPathList != null -> {
+          diff.modifyModuleEntity(moduleEntity) {
+            this.groupPath = ModuleGroupPathEntity(path = groupPathList, entitySource = moduleEntity.entitySource)
+          }
+        }
 
         moduleGroupEntity == null && groupPathList == null -> Unit
 
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
 
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(moduleGroupEntity) {
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyModuleGroupPathEntity(moduleGroupEntity) {
           path = groupPathList
         }
 
@@ -334,32 +319,25 @@ internal class ModifiableModuleModelBridgeImpl(
   }
 
   companion object {
-    private val moduleRenamingTimeMs: AtomicLong = AtomicLong()
-    private val disposingTimeMs: AtomicLong = AtomicLong()
-    private val loadModuleTimeMs: AtomicLong = AtomicLong()
-    private val newModuleTimeMs: AtomicLong = AtomicLong()
+    private val moduleRenamingTimeMs = MillisecondsMeasurer()
+    private val disposingTimeMs = MillisecondsMeasurer()
+    private val loadModuleTimeMs = MillisecondsMeasurer()
+    private val newModuleTimeMs = MillisecondsMeasurer()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val moduleRenamingTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.renaming.ms")
-        .ofLongs().buildObserver()
-
-      val disposingTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.disposing.ms")
-        .ofLongs().buildObserver()
-
-      val loadModuleTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.load.module.ms")
-        .ofLongs().buildObserver()
-
-      val newModuleTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.new.module.ms")
-        .ofLongs().buildObserver()
+      val moduleRenamingTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.renaming.ms").buildObserver()
+      val disposingTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.disposing.ms").buildObserver()
+      val loadModuleTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.load.module.ms").buildObserver()
+      val newModuleTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.new.module.ms").buildObserver()
 
       meter.batchCallback(
         {
-          moduleRenamingTimeGauge.record(moduleRenamingTimeMs.get())
-          disposingTimeGauge.record(disposingTimeMs.get())
-          loadModuleTimeGauge.record(loadModuleTimeMs.get())
-          newModuleTimeGauge.record(newModuleTimeMs.get())
+          moduleRenamingTimeCounter.record(moduleRenamingTimeMs.asMilliseconds())
+          disposingTimeCounter.record(disposingTimeMs.asMilliseconds())
+          loadModuleTimeCounter.record(loadModuleTimeMs.asMilliseconds())
+          newModuleTimeCounter.record(newModuleTimeMs.asMilliseconds())
         },
-        moduleRenamingTimeGauge, disposingTimeGauge, loadModuleTimeGauge, newModuleTimeGauge
+        moduleRenamingTimeCounter, disposingTimeCounter, loadModuleTimeCounter, newModuleTimeCounter
       )
     }
 

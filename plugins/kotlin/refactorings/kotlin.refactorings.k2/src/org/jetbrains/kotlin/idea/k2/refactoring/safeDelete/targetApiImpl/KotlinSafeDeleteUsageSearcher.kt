@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.targetApiImpl
 
 import com.intellij.find.usages.api.PsiUsage
@@ -7,19 +7,21 @@ import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.walkUp
-import com.intellij.refactoring.safeDelete.api.*
+import com.intellij.refactoring.safeDelete.api.PsiSafeDeleteUsage
+import com.intellij.refactoring.safeDelete.api.SafeDeleteSearchParameters
+import com.intellij.refactoring.safeDelete.api.SafeDeleteUsage
+import com.intellij.refactoring.safeDelete.api.SafeDeleteUsageSearcher
 import com.intellij.refactoring.safeDelete.impl.DefaultPsiSafeDeleteUsage
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.AbstractQuery
 import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -41,7 +43,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 result.add(SearchService.getInstance()
                                .searchWord(project, ktFunction.nameAsSafeName.asString())
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .inFilesWithLanguage(KotlinLanguage.INSTANCE)
                                .buildQuery(LeafOccurrenceMapper.withPointer(ktFunction.createSmartPointer()) { function, occurrence ->
                                    findArguments(function, occurrence, parameterIndex)
@@ -54,7 +56,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 SearchService.getInstance()
                     .searchWord(project, ktElement.nameAsSafeName.asString())
                     .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                    .inContexts(SearchContext.IN_CODE)
+                    .inContexts(SearchContext.inCode())
                     .buildQuery(LeafOccurrenceMapper.withPointer(ktElement.createSmartPointer(), ::findReferences))
             )
         }
@@ -67,7 +69,7 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                 result.add(SearchService.getInstance()
                                .searchWord(project, owner.nameAsSafeName.asString())
                                .inScope(target.searchScope ?: GlobalSearchScope.projectScope(project))
-                               .inContexts(SearchContext.IN_CODE)
+                               .inContexts(SearchContext.inCode())
                                .inFilesWithLanguage(KotlinLanguage.INSTANCE)
                                .buildQuery(LeafOccurrenceMapper.withPointer(owner.createSmartPointer()) { parameterOwner, occurrence ->
                                    findTypeArguments(parameterOwner, occurrence, parameterIndex)
@@ -82,12 +84,12 @@ class KotlinSafeDeleteUsageSearcher : SafeDeleteUsageSearcher {
                     return runReadAction {
                         val classOrObject = ktElement.containingClassOrObject
                         analyze(ktElement) {
-                            val elementClassSymbol = classOrObject?.getSymbol() as? KtClassOrObjectSymbol ?: return@analyze
+                            val elementClassSymbol = classOrObject?.symbol as? KaClassSymbol ?: return@analyze
                             val superMethods =
-                                (ktElement.getSymbol() as? KtCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return@analyze
+                                (ktElement.symbol as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return@analyze
                             val abstractExternalSuper = superMethods.find {
-                                val superClassSymbol = it.getContainingSymbol() as? KtClassOrObjectSymbol ?: return@find false
-                                if ((it as? KtSymbolWithModality)?.modality != Modality.ABSTRACT) return@find false
+                                val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@find false
+                                if (it.modality != KaSymbolModality.ABSTRACT) return@find false
                                 return@find !superClassSymbol.isSubClassOf(elementClassSymbol)
                             }
 

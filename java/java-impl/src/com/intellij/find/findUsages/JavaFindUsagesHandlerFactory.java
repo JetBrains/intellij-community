@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.lang.java.JavaFindUsagesProvider;
@@ -18,7 +18,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   private final JavaVariableFindUsagesOptions myFindVariableOptions;
 
   public static JavaFindUsagesHandlerFactory getInstance(@NotNull Project project) {
-    return ContainerUtil.findInstance(EP_NAME.getExtensions(project), JavaFindUsagesHandlerFactory.class);
+    return ContainerUtil.findInstance(EP_NAME.getExtensionList(project), JavaFindUsagesHandlerFactory.class);
   }
 
   public JavaFindUsagesHandlerFactory(Project project) {
@@ -30,7 +30,7 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   }
 
   @Override
-  public boolean canFindUsages(@NotNull final PsiElement element) {
+  public boolean canFindUsages(final @NotNull PsiElement element) {
     return new JavaFindUsagesProvider().canFindUsagesFor(element);
   }
 
@@ -45,32 +45,27 @@ public class JavaFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   }
 
   @Override
-  public FindUsagesHandler createFindUsagesHandler(@NotNull final PsiElement element, boolean forHighlightUsages) {
+  public FindUsagesHandler createFindUsagesHandler(final @NotNull PsiElement element, boolean forHighlightUsages) {
     return createFindUsagesHandler(element, forHighlightUsages ? OperationMode.HIGHLIGHT_USAGES : OperationMode.DEFAULT);
   }
 
-  @NotNull
-  public JavaClassFindUsagesOptions getFindClassOptions() {
+  public @NotNull JavaClassFindUsagesOptions getFindClassOptions() {
     return myFindClassOptions;
   }
 
-  @NotNull
-  public JavaMethodFindUsagesOptions getFindMethodOptions() {
+  public @NotNull JavaMethodFindUsagesOptions getFindMethodOptions() {
     return myFindMethodOptions;
   }
 
-  @NotNull
-  public JavaPackageFindUsagesOptions getFindPackageOptions() {
+  public @NotNull JavaPackageFindUsagesOptions getFindPackageOptions() {
     return myFindPackageOptions;
   }
 
-  @NotNull
-  public JavaThrowFindUsagesOptions getFindThrowOptions() {
+  public @NotNull JavaThrowFindUsagesOptions getFindThrowOptions() {
     return myFindThrowOptions;
   }
 
-  @NotNull
-  public JavaVariableFindUsagesOptions getFindVariableOptions() {
+  public @NotNull JavaVariableFindUsagesOptions getFindVariableOptions() {
     return myFindVariableOptions;
   }
 }

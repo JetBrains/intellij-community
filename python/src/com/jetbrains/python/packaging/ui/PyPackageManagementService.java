@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.ui;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
@@ -19,10 +20,10 @@ import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
+import com.jetbrains.python.execution.FailureReason;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
-import com.jetbrains.python.packaging.statistics.PythonPackagesDialogStatisticsCollector;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -38,12 +39,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+/**
+ * @deprecated for search in for packages and managing repositories use
+ * {@link com.jetbrains.python.packaging.management.PythonRepositoryManager}
+ * obtained through {@link com.jetbrains.python.packaging.management.PythonPackageManager}
+ */
+@Deprecated(forRemoval = true)
 public class PyPackageManagementService extends PackageManagementServiceEx {
-  @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
-  @NonNls protected static final String TEXT_PREFIX = buildHtmlStylePrefix();
+  private static final @NotNull Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
+  protected static final @NonNls String TEXT_PREFIX = buildHtmlStylePrefix();
 
-  @NotNull
-  private static String buildHtmlStylePrefix() {
+  private static @NotNull String buildHtmlStylePrefix() {
     // Shamelessly copied from Plugin Manager dialog
     final int fontSize = JBUIScale.scale(12);
     final int m1 = JBUIScale.scale(2);
@@ -58,10 +64,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
                          fontSize, m1, m1, fontSize, m2, m2);
   }
 
-  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
+  private static final @NonNls String TEXT_SUFFIX = "</body></html>";
 
-  @NotNull private final Project myProject;
-  @NotNull protected final Sdk mySdk;
+  private final @NotNull Project myProject;
+  protected final @NotNull Sdk mySdk;
   protected final ExecutorService myExecutorService;
 
   public PyPackageManagementService(@NotNull Project project, @NotNull Sdk sdk) {
@@ -71,19 +77,16 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService Pool", 4);
   }
 
-  @NotNull
-  public Sdk getSdk() {
+  public @NotNull Sdk getSdk() {
     return mySdk;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
   @Override
-  public List<String> getAllRepositories() {
+  public @Nullable List<String> getAllRepositories() {
     final List<String> result = new ArrayList<>();
     if (!PyPackageService.getInstance().PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
     result.addAll(getAdditionalRepositories());
@@ -100,25 +103,22 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     PyPackageService.getInstance().removeRepository(repositoryUrl);
   }
 
-  @NotNull
   @Override
-  public List<RepoPackage> getAllPackages() throws IOException {
+  public @NotNull List<RepoPackage> getAllPackages() throws IOException {
     PyPIPackageUtil.INSTANCE.loadPackages();
     PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), false);
     return getAllPackagesCached();
   }
 
-  @NotNull
   @Override
-  public List<RepoPackage> reloadAllPackages() throws IOException {
+  public @NotNull List<RepoPackage> reloadAllPackages() throws IOException {
     PyPIPackageUtil.INSTANCE.updatePyPICache();
     PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), true);
     return getAllPackagesCached();
   }
 
-  @NotNull
   @Override
-  public List<RepoPackage> getAllPackagesCached() {
+  public @NotNull List<RepoPackage> getAllPackagesCached() {
     // Make a copy, since ManagePackagesDialog attempts to change the passed in collection directly
     final List<RepoPackage> result = new ArrayList<>();
     if (!PyPackageService.getInstance().PYPI_REMOVED) {
@@ -128,23 +128,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return result;
   }
 
-  public Map<String, List<RepoPackage>> getAllPackagesByRepository() {
-    Map<String, List<RepoPackage>> result = new HashMap<>();
-    result.put(PyPIPackageUtil.PYPI_LIST_URL, getCachedPyPIPackages());
-    List<String> repositories = getAdditionalRepositories();
-    for (String repo : repositories) {
-      result.put(repo, PyPIPackageUtil.INSTANCE.getAdditionalPackages(List.of(repo)));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static List<String> getAdditionalRepositories() {
+  private static @NotNull List<String> getAdditionalRepositories() {
     return PyPackageService.getInstance().additionalRepositories;
   }
 
-  @NotNull
-  private static List<RepoPackage> getCachedPyPIPackages() {
+  private static @NotNull List<RepoPackage> getCachedPyPIPackages() {
     // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
     final boolean customRepoConfigured = !getAdditionalRepositories().isEmpty();
     final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
@@ -156,9 +144,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return !PythonSdkUtil.isVirtualEnv(mySdk);
   }
 
-  @NotNull
   @Override
-  public String getInstallToUserText() {
+  public @NotNull String getInstallToUserText() {
     String userSiteText = PyBundle.message("button.install.to.user.site.packages.directory");
     if (!PythonSdkUtil.isRemote(mySdk)) {
       userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
@@ -225,15 +212,13 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     ui.install(Collections.singletonList(req), extraArgs);
   }
 
-  @Nullable
-  public static ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
+  public static @Nullable ErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions, @Nullable Sdk sdk) {
     return toErrorDescription(exceptions, sdk, null);
   }
 
-  @Nullable
-  public static PyPackageInstallationErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions,
-                                                                         @Nullable Sdk sdk,
-                                                                         @Nullable String packageName) {
+  public static @Nullable PyPackageInstallationErrorDescription toErrorDescription(@Nullable List<ExecutionException> exceptions,
+                                                                                   @Nullable Sdk sdk,
+                                                                                   @Nullable String packageName) {
     if (exceptions != null && !exceptions.isEmpty() && !isCancelled(exceptions)) {
       return createDescription(exceptions.get(0), sdk, packageName);
     }
@@ -242,7 +227,6 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   @Override
   public void uninstallPackages(List<? extends InstalledPackage> installedPackages, @NotNull Listener listener) {
-    PythonPackagesDialogStatisticsCollector.getPackageUninstalledEvent().log(myProject);
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
@@ -315,11 +299,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return stringBuilder.toString();
   }
 
-  @NonNls private static final String HTML_PREFIX = "<a href=\"";
-  @NonNls private static final String HTML_SUFFIX = "</a>";
+  private static final @NonNls String HTML_PREFIX = "<a href=\"";
+  private static final @NonNls String HTML_SUFFIX = "</a>";
 
-  @NotNull
-  private static String composeHref(String vendorUrl) {
+  private static @NotNull String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
   }
 
@@ -332,27 +315,28 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return false;
   }
 
-  @NotNull
-  private static PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
-                                                                         @Nullable Sdk sdk,
-                                                                         @Nullable String packageName) {
-    if (e instanceof PyExecutionException ee) {
+  private static @NotNull PyPackageInstallationErrorDescription createDescription(@NotNull ExecutionException e,
+                                                                                  @Nullable Sdk sdk,
+                                                                                  @Nullable String packageName) {
+    if (e instanceof PyExecutionException pyExecEx && pyExecEx.getFailureReason() instanceof FailureReason.ExecutionFailed execFailed) {
+      var ee = execFailed.getOutput();
       final String stdout = ee.getStdout();
       final String stdoutCause = findErrorCause(stdout);
       final String stderrCause = findErrorCause(ee.getStderr());
       final String cause = stdoutCause != null ? stdoutCause : stderrCause;
-      final String message = cause != null ? cause : ee.getMessage();
-      final String command = ee.getCommand() + " " + StringUtil.join(ee.getArgs(), " ");
+      final String message = cause != null ? cause : pyExecEx.getMessage();
+      final String command = pyExecEx.getCommand() + " " + StringUtil.join(pyExecEx.getArgs(), " ");
       return new PyPackageInstallationErrorDescription(message, command, stdout.isEmpty() ? ee.getStderr() : stdout + "\n" + ee.getStderr(),
-                                                       findErrorSolution(ee, cause, sdk), packageName, sdk);
+                                                       findErrorSolution(pyExecEx, cause, sdk), packageName, sdk);
     }
     else {
       return new PyPackageInstallationErrorDescription(e.getMessage(), null, null, null, packageName, sdk);
     }
   }
 
-  @Nullable
-  private static @DetailedDescription String findErrorSolution(@NotNull PyExecutionException e, @Nullable String cause, @Nullable Sdk sdk) {
+  private static @Nullable @DetailedDescription String findErrorSolution(@NotNull PyExecutionException e,
+                                                                         @Nullable String cause,
+                                                                         @Nullable Sdk sdk) {
     if (cause != null) {
       if (StringUtil.containsIgnoreCase(cause, "SyntaxError")) {
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
@@ -360,8 +344,10 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       }
     }
 
-    if (SystemInfo.isLinux && (containsInOutput(e, "pyconfig.h") || containsInOutput(e, "Python.h"))) {
-      return PySdkBundle.message("python.sdk.check.python.development.packages.installed");
+    if (e.getFailureReason() instanceof FailureReason.ExecutionFailed executionFailed) {
+      if (SystemInfo.isLinux && (containsInOutput(executionFailed.getOutput(), "pyconfig.h") || containsInOutput(executionFailed.getOutput(), "Python.h"))) {
+        return PySdkBundle.message("python.sdk.check.python.development.packages.installed");
+      }
     }
 
     if ("pip".equals(e.getCommand()) && sdk != null) {
@@ -371,12 +357,11 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return null;
   }
 
-  private static boolean containsInOutput(@NotNull PyExecutionException e, @NotNull String text) {
+  private static boolean containsInOutput(@NotNull ProcessOutput e, @NotNull String text) {
     return StringUtil.containsIgnoreCase(e.getStdout(), text) || StringUtil.containsIgnoreCase(e.getStderr(), text);
   }
 
-  @Nullable
-  private static String findErrorCause(@NotNull String output) {
+  private static @Nullable String findErrorCause(@NotNull String output) {
     final Matcher m = PATTERN_ERROR_LINE.matcher(output);
     if (m.find()) {
       final String result = m.group();
@@ -420,17 +405,16 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }
 
-  @Nullable
   @Override
-  public String getID() {
+  public @Nullable String getID() {
     return "Python";
   }
 
   public static class PyPackageInstallationErrorDescription extends ErrorDescription {
-    @Nullable private final String myPackageName;
-    @Nullable private final String myPythonVersion;
-    @Nullable private final String myInterpreterPath;
-    @Nullable private final Sdk mySdk;
+    private final @Nullable String myPackageName;
+    private final @Nullable String myPythonVersion;
+    private final @Nullable String myInterpreterPath;
+    private final @Nullable Sdk mySdk;
 
     public PyPackageInstallationErrorDescription(@NotNull @DetailedDescription String message,
                                                  @Nullable String command,
@@ -445,8 +429,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
       myInterpreterPath = sdk != null ? sdk.getHomePath() : null;
     }
 
-    @Nullable
-    public static PyPackageInstallationErrorDescription createFromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
+    public static @Nullable PyPackageInstallationErrorDescription createFromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
       return message != null ? new PyPackageInstallationErrorDescription(message, null, null, null, null, null) : null;
     }
 

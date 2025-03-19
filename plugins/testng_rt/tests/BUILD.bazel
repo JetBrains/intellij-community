@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.testng.rt.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "testng-rt-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "testng-rt-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-tests:tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/testng",
+    "//plugins/testng:testng_test_lib",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/smRunner",
+    "//platform/smRunner:smRunner_test_lib",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
+    "//java/java-runtime:rt",
+    "//platform/core-ui",
+    "//plugins/testng_rt:testng-rt",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+
+jvm_test(
+  name = "testng-rt-tests_test",
+  runtime_deps = [":testng-rt-tests_test_lib"]
+)
+### auto-generated section `build intellij.testng.rt.tests` end

@@ -5,17 +5,19 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.usageView.UsageViewBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class MergeSameLineUsagesAction extends RuleAction {
 
   public MergeSameLineUsagesAction() {
     super(UsageViewBundle.message("action.merge.same.line"), AllIcons.Toolbar.Filterdups);
-    setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK)));
+    setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK)));
   }
 
   @Override

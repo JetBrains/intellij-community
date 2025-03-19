@@ -5,8 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 @ApiStatus.Internal
 public interface VcsLogModifiableIndex extends VcsLogIndex {
 
@@ -15,6 +13,4 @@ public interface VcsLogModifiableIndex extends VcsLogIndex {
   void markForIndexing(int commit, @NotNull VirtualFile root);
 
   void markCorrupted();
-
-  @NotNull Set<VirtualFile> getIndexingRoots();
 }

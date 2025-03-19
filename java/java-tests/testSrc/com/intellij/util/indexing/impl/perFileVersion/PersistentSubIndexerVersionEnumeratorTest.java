@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Key;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
+@SuppressWarnings("FieldMayBeStatic")
 public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsightFixtureTestCase {
   private TempDirTestFixture myDirTestFixture;
   private Path myRoot;
@@ -168,7 +169,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
     VirtualFile file = file(attribute);
     file.putUserData(ATTRIBUTE_KEY, attribute);
     try {
-      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())) == FileIndexingState.UP_TO_DATE;
+      return myMap.getSubIndexerState(((VirtualFileWithId)file).getId(), new IndexedFileImpl(file, getProject())).isUpToDate();
     }
     catch (IOException e) {
       LOG.error(e);

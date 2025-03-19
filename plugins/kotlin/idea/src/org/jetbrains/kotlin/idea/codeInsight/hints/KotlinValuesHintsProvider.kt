@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
+@Deprecated("Use org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinValuesHintsProvider")
 class KotlinValuesHintsProvider : KotlinAbstractHintsProvider<KotlinValuesHintsProvider.Settings>() {
 
     data class Settings(

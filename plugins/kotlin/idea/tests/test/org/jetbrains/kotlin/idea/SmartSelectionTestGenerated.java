@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/smartSelection")
 public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
     }
@@ -38,9 +45,19 @@ public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
         runTest("testData/smartSelection/afterRightParenthesis3.kt");
     }
 
+    @TestMetadata("beforeComma.kt")
+    public void testBeforeComma() throws Exception {
+        runTest("testData/smartSelection/beforeComma.kt");
+    }
+
     @TestMetadata("beforeComment.kt")
     public void testBeforeComment() throws Exception {
         runTest("testData/smartSelection/beforeComment.kt");
+    }
+
+    @TestMetadata("beforeDot.kt")
+    public void testBeforeDot() throws Exception {
+        runTest("testData/smartSelection/beforeDot.kt");
     }
 
     @TestMetadata("beforeKDocComment.kt")

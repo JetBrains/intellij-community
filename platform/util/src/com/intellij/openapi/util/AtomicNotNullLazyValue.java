@@ -1,23 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
-
 @ApiStatus.NonExtendable
 public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   private volatile T myValue;
 
-  /** @deprecated Use {@link NotNullLazyValue#atomicLazy(Supplier)} */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  protected AtomicNotNullLazyValue() { }
+  /**
+   * Use {@link NotNullLazyValue#atomicLazy} instead
+   */
+  @ApiStatus.Internal
+  AtomicNotNullLazyValue() { }
 
   @Override
-  @NotNull
-  public final T getValue() {
+  public final @NotNull T getValue() {
     T value = myValue;
     if (value == null) {
       //noinspection SynchronizeOnThis

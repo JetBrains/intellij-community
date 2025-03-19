@@ -3,8 +3,10 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.IndentGuideDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class IndentsPassFilterUtils {
   public static boolean shouldRunIndentsPass(@NotNull Editor editor) {
     for (IndentsPassFilter indentsPassFilter : IndentsPassFilter.EXTENSION_POINT.getExtensionList()) {

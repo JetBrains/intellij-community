@@ -4,17 +4,29 @@ package com.jetbrains.python.packaging.conda
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonPackageSpecificationBase
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 
-class CondaPackage(name: String, version: String, val installedWithPip: Boolean = false) : PythonPackage(name, version)
+class CondaPackage(
+  name: String, version: String,
+  editableMode: Boolean,
+  val installedWithPip: Boolean = false,
+) : PythonPackage(name, version, editableMode) {
+  override fun toString(): String {
+    return "CondaPackage(name='$name', version='$version', installedWithPip=$installedWithPip)"
+  }
+}
 
-
-class CondaPackageSpecification(override val name: String,
-                                override val version: String?) : PythonPackageSpecification {
+class CondaPackageSpecification(name: String,
+                                version: String?,
+                                relation: PyRequirementRelation? = null) : PythonPackageSpecificationBase(name, version, relation, CondaPackageRepository) {
   override val repository: PyPackageRepository = CondaPackageRepository
+  override var versionSpecs: String? = null
+    get() = if (field != null) "${field}" else if (version != null) "${relation?.presentableText ?: "="}$version" else ""
 
   override fun buildInstallationString(): List<String> {
-    return listOf("$name${if (version != null) "=$version" else ""}")
+    return listOf("$name$versionSpecs")
   }
 }
 
@@ -31,7 +43,7 @@ class CondaPackageDetails(override val name: String,
 }
 
 object CondaPackageRepository : PyPackageRepository("Conda", "", "") {
-  override fun createPackageSpecification(packageName: String, version: String?): PythonPackageSpecification {
-    return CondaPackageSpecification(packageName, null)
+  override fun createPackageSpecification(packageName: String, version: String?, relation: PyRequirementRelation?): PythonPackageSpecification {
+    return CondaPackageSpecification(packageName, version, relation)
   }
 }

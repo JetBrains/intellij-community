@@ -34,3 +34,5 @@ public class JavaClass {
         }
     }
 }
+
+// IGNORE_K2

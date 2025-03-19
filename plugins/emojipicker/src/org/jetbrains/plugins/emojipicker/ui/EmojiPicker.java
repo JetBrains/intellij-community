@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-
-public class EmojiPicker extends JLayeredPane {
+public final class EmojiPicker extends JLayeredPane {
   private static final JBDimension DEFAULT_SIZE = new JBDimension(358, 415);
 
   private final List<EmojiCategory> myCategories;

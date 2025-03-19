@@ -1,80 +1,54 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
-  private static final Logger LOG = Logger.getInstance(JavaWithTryFinallySurrounder.class);
-
+public class JavaWithTryFinallySurrounder extends JavaStatementsModCommandSurrounder {
+  @SuppressWarnings("DialogTitleCapitalization")
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.try.finally.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) throws IncorrectOperationException{
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) {
+    Project project = context.project();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     statements = SurroundWithUtil.moveDeclarationsOut(container, statements, false);
-    if (statements.length == 0){
-      return null;
-    }
+    if (statements.length == 0) return;
 
-    @NonNls String text = "try{\n}finally{\n\n}";
+    @NonNls String text = "try{\n}finally{\nst;\n}";
     PsiTryStatement tryStatement = (PsiTryStatement)factory.createStatementFromText(text, null);
     tryStatement = (PsiTryStatement)codeStyleManager.reformat(tryStatement);
 
     tryStatement = (PsiTryStatement)addAfter(tryStatement, container, statements);
 
     PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-    if (tryBlock == null) {
-      return null;
-    }
+    if (tryBlock == null) return;
     SurroundWithUtil.indentCommentIfNecessary(tryBlock, statements);
     addRangeWithinContainer(tryBlock, container, statements, true);
     container.deleteChildRange(statements[0], statements[statements.length - 1]);
 
     PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-    if (finallyBlock == null) {
-      return null;
-    }
-    moveCaretToFinallyBlock(project, editor, finallyBlock);
-    return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
-  }
-
-  public static void moveCaretToFinallyBlock(Project project, Editor editor, PsiCodeBlock finallyBlock) {
-    Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
-    TextRange finallyBlockRange = finallyBlock.getTextRange();
-    int newLineOffset = finallyBlockRange.getStartOffset() + 2;
-    editor.getCaretModel().moveToOffset(newLineOffset);
-    editor.getSelectionModel().removeSelection();
-    CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
-    PsiDocumentManager.getInstance(project).commitDocument(document);
+    if (finallyBlock == null) return;
+    finallyBlock = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(finallyBlock);
+    if (finallyBlock == null) return;
+    TextRange range = finallyBlock.getStatements()[0].getTextRange();
+    finallyBlock.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    updater.select(TextRange.from(range.getStartOffset(), 0));
   }
 }

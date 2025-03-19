@@ -5,14 +5,12 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import binascii
 import os
 
 from .i18n import _
 from .node import hex
-from .pycompat import getattr
 
 from . import (
     bundle2,
@@ -22,8 +20,10 @@ from . import (
     encoding,
     error,
     exchange,
+    hook,
     pushkey as pushkeymod,
     pycompat,
+    repoview,
     requirements as requirementsmod,
     streamclone,
     util,
@@ -61,7 +61,7 @@ def clientcompressionsupport(proto):
 # wire protocol command can either return a string or one of these classes.
 
 
-def getdispatchrepo(repo, proto, command):
+def getdispatchrepo(repo, proto, command, accesshidden=False):
     """Obtain the repo used for processing wire protocol commands.
 
     The intent of this function is to serve as a monkeypatch point for
@@ -69,11 +69,21 @@ def getdispatchrepo(repo, proto, command):
     specialized circumstances.
     """
     viewconfig = repo.ui.config(b'server', b'view')
+
+    # Only works if the filter actually supports being upgraded to show hidden
+    # changesets.
+    if (
+        accesshidden
+        and viewconfig is not None
+        and viewconfig + b'.hidden' in repoview.filtertable
+    ):
+        viewconfig += b'.hidden'
+
     return repo.filtered(viewconfig)
 
 
-def dispatch(repo, proto, command):
-    repo = getdispatchrepo(repo, proto, command)
+def dispatch(repo, proto, command, accesshidden=False):
+    repo = getdispatchrepo(repo, proto, command, accesshidden=accesshidden)
 
     func, spec = commands[command]
     args = proto.getargs(spec)
@@ -146,12 +156,6 @@ def wireprotocommand(name, args=None, permission=b'push'):
     transports = {
         k for k, v in wireprototypes.TRANSPORTS.items() if v[b'version'] == 1
     }
-
-    # Because SSHv2 is a mirror of SSHv1, we allow "batch" commands through to
-    # SSHv2.
-    # TODO undo this hack when SSH is using the unified frame protocol.
-    if name == b'batch':
-        transports.add(wireprototypes.SSHV2)
 
     if permission not in (b'push', b'pull'):
         raise error.ProgrammingError(
@@ -242,7 +246,7 @@ def between(repo, proto, pairs):
 def branchmap(repo, proto):
     branchmap = repo.branchmap()
     heads = []
-    for branch, nodes in pycompat.iteritems(branchmap):
+    for branch, nodes in branchmap.items():
         branchname = urlreq.quote(encoding.fromlocal(branch))
         branchnodes = wireprototypes.encodelist(nodes)
         heads.append(b'%s %s' % (branchname, branchnodes))
@@ -260,8 +264,60 @@ def branches(repo, proto, nodes):
     return wireprototypes.bytesresponse(b''.join(r))
 
 
+@wireprotocommand(b'get_cached_bundle_inline', b'path', permission=b'pull')
+def get_cached_bundle_inline(repo, proto, path):
+    """
+    Server command to send a clonebundle to the client
+    """
+    if hook.hashook(repo.ui, b'pretransmit-inline-clone-bundle'):
+        hook.hook(
+            repo.ui,
+            repo,
+            b'pretransmit-inline-clone-bundle',
+            throw=True,
+            clonebundlepath=path,
+        )
+
+    bundle_dir = repo.vfs.join(bundlecaches.BUNDLE_CACHE_DIR)
+    clonebundlepath = repo.vfs.join(bundle_dir, path)
+    if not repo.vfs.exists(clonebundlepath):
+        raise error.Abort(b'clonebundle %s does not exist' % path)
+
+    clonebundles_dir = os.path.realpath(bundle_dir)
+    if not os.path.realpath(clonebundlepath).startswith(clonebundles_dir):
+        raise error.Abort(b'clonebundle %s is using an illegal path' % path)
+
+    def generator(vfs, bundle_path):
+        with vfs(bundle_path) as f:
+            length = os.fstat(f.fileno())[6]
+            yield util.uvarintencode(length)
+            for chunk in util.filechunkiter(f):
+                yield chunk
+
+    stream = generator(repo.vfs, clonebundlepath)
+    return wireprototypes.streamres(gen=stream, prefer_uncompressed=True)
+
+
 @wireprotocommand(b'clonebundles', b'', permission=b'pull')
 def clonebundles(repo, proto):
+    """A legacy version of clonebundles_manifest
+
+    This version filtered out new url scheme (like peer-bundle-cache://) to
+    avoid confusion in older clients.
+    """
+    manifest_contents = bundlecaches.get_manifest(repo)
+    # Filter out peer-bundle-cache:// entries
+    modified_manifest = []
+    for line in manifest_contents.splitlines():
+        if line.startswith(bundlecaches.CLONEBUNDLESCHEME):
+            continue
+        modified_manifest.append(line)
+    modified_manifest.append(b'')
+    return wireprototypes.bytesresponse(b'\n'.join(modified_manifest))
+
+
+@wireprotocommand(b'clonebundles_manifest', b'*', permission=b'pull')
+def clonebundles_2(repo, proto, args):
     """Server command for returning info for available bundles to seed clones.
 
     Clients will parse this response and determine what bundle to fetch.
@@ -269,10 +325,13 @@ def clonebundles(repo, proto):
     Extensions may wrap this command to filter or dynamically emit data
     depending on the request. e.g. you could advertise URLs for the closest
     data center given the client's IP address.
+
+    The only filter on the server side is filtering out inline clonebundles
+    in case a client does not support them.
+    Otherwise, older clients would retrieve and error out on those.
     """
-    return wireprototypes.bytesresponse(
-        repo.vfs.tryread(bundlecaches.CB_MANIFEST_FILE)
-    )
+    manifest_contents = bundlecaches.get_manifest(repo)
+    return wireprototypes.bytesresponse(manifest_contents)
 
 
 wireprotocaps = [
@@ -306,7 +365,7 @@ def _capabilities(repo, proto):
     if streamclone.allowservergeneration(repo):
         if repo.ui.configbool(b'server', b'preferuncompressed'):
             caps.append(b'stream-preferred')
-        requiredformats = repo.requirements & repo.supportedformats
+        requiredformats = streamclone.streamed_requirements(repo)
         # if our local revlogs are just revlogv1, add 'stream' cap
         if not requiredformats - {requirementsmod.REVLOGV1_REQUIREMENT}:
             caps.append(b'stream')
@@ -387,7 +446,7 @@ def find_pullbundle(repo, proto, opts, clheads, heads, common):
     if not manifest:
         return None
     res = bundlecaches.parseclonebundlesmanifest(repo, manifest)
-    res = bundlecaches.filterclonebundleentries(repo, res)
+    res = bundlecaches.filterclonebundleentries(repo, res, pullbundles=True)
     if not res:
         return None
     cl = repo.unfiltered().changelog
@@ -439,7 +498,7 @@ def getbundle(repo, proto, others):
     opts = options(
         b'getbundle', wireprototypes.GETBUNDLE_ARGUMENTS.keys(), others
     )
-    for k, v in pycompat.iteritems(opts):
+    for k, v in opts.items():
         keytype = wireprototypes.GETBUNDLE_ARGUMENTS[k]
         if keytype == b'nodes':
             opts[k] = wireprototypes.decodelist(v)
@@ -662,7 +721,7 @@ def unbundle(repo, proto, heads):
                 r = exchange.unbundle(
                     repo, gen, their_heads, b'serve', proto.client()
                 )
-                if util.safehasattr(r, b'addpart'):
+                if hasattr(r, 'addpart'):
                     # The return looks streamable, we are in the bundle2 case
                     # and should return a stream.
                     return wireprototypes.streamreslegacy(gen=r.getchunks())

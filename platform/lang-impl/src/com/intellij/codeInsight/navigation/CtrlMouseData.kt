@@ -4,8 +4,8 @@ package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
-import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
+import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.project.Project
@@ -55,13 +55,13 @@ internal fun symbolCtrlMouseData(
     return targetCtrlMouseData(
       ranges,
       isNavigatable = declared || isNavigatableQuickDoc(elementAtOffset, psi),
-      target = psiDocumentationTarget(psi, elementAtOffset)
+      target = psiDocumentationTargets(psi, elementAtOffset).first() //TODO support multi-targeting
     )
   }
   return targetCtrlMouseData(
     ranges,
     true, // non-PSI are always navigatable
-    target = symbolDocumentationTarget(project, symbol),
+    target = symbolDocumentationTargets(project, symbol).firstOrNull(),
   )
 }
 
@@ -72,7 +72,7 @@ internal fun psiCtrlMouseData(
   return targetCtrlMouseData(
     ranges = getReferenceRanges(leafElement),
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
-    target = psiDocumentationTarget(targetElement, leafElement)
+    target = psiDocumentationTargets(targetElement, leafElement).first() //TODO support multi-targeting
   )
 }
 

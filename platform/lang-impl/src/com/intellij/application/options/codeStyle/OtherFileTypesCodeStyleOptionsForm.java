@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -25,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,12 +21,13 @@ import java.awt.*;
 /**
  * Used for non-language settings (if file type is not supported by Intellij IDEA), for example, plain text.
  */
-public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
+@ApiStatus.Internal
+public final class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   private final IndentOptionsEditorWithSmartTabs myIndentOptionsEditor;
   private JPanel myIndentOptionsPanel;
   private JPanel myTopPanel;
 
-  protected OtherFileTypesCodeStyleOptionsForm(@NotNull CodeStyleSettings settings) {
+  OtherFileTypesCodeStyleOptionsForm(@NotNull CodeStyleSettings settings) {
     super(settings);
     myIndentOptionsEditor = new IndentOptionsEditorWithSmartTabs();
     myIndentOptionsPanel.add(myIndentOptionsEditor.createPanel(), BorderLayout.CENTER);
@@ -51,21 +39,18 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
-  @NotNull
   @Override
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return FileTypes.PLAIN_TEXT;
   }
 
-  @Nullable
   @Override
-  protected String getPreviewText() {
+  protected @Nullable String getPreviewText() {
     return null;
   }
 
@@ -79,9 +64,8 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
     return myIndentOptionsEditor.isModified(settings, settings.OTHER_INDENT_OPTIONS);
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myTopPanel;
   }
 
@@ -91,7 +75,7 @@ public class OtherFileTypesCodeStyleOptionsForm extends CodeStyleAbstractPanel {
   }
 }
 
-class IndentOptionsEditorWithSmartTabs extends IndentOptionsEditor {
+final class IndentOptionsEditorWithSmartTabs extends IndentOptionsEditor {
   private JCheckBox myCbSmartTabs;
 
   @Override

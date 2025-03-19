@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
-public class EmptyIterator<T> implements Iterator<T> {
+class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
 
   public static <T> EmptyIterator<T> getInstance() {
@@ -34,14 +34,17 @@ public class EmptyIterator<T> implements Iterator<T> {
     return INSTANCE;
   }
 
+  @Override
   public boolean hasNext() {
     return false;
   }
 
+  @Override
   public T next() {
     throw new NoSuchElementException();
   }
 
+  @Override
   public void remove() {
     throw new IllegalStateException();
   }

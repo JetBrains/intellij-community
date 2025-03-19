@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
+public final class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerAndConfigurationSettings> implements
                                                                                                          TargetAwareRunConfigurationEditor {
 
   private final RunConfigurationFragmentedEditor<RunConfigurationBase<?>> myConfigurationEditor;

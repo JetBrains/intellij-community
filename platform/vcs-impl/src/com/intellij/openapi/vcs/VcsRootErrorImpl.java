@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class VcsRootErrorImpl implements VcsRootError {
+@ApiStatus.Internal
+public final class VcsRootErrorImpl implements VcsRootError {
 
   private final @NotNull Type myType;
   private final @NotNull VcsDirectoryMapping myMapping;
@@ -16,14 +18,12 @@ public class VcsRootErrorImpl implements VcsRootError {
   }
 
   @Override
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 
   @Override
-  @NotNull
-  public VcsDirectoryMapping getMapping() {
+  public @NotNull VcsDirectoryMapping getMapping() {
     return myMapping;
   }
 

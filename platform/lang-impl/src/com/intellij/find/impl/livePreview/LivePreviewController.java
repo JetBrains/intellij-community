@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.*;
@@ -27,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
+public final class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate {
   public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
   public static final int MATCHES_LIMIT = 10000;
-  protected EditorSearchSession myComponent;
+  private final SearchSession myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
@@ -68,7 +68,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private final DocumentListener myDocumentListener = new BulkAwareDocumentListener.Simple() {
     @Override
-    public void afterDocumentChange(@NotNull final Document document) {
+    public void afterDocumentChange(final @NotNull Document document) {
       if (!myTrackingDocument) {
         myChanged = true;
         return;
@@ -107,7 +107,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return cursor == last;
   }
 
-  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchSession component, @NotNull Disposable parentDisposable) {
+  public LivePreviewController(SearchResults searchResults, @Nullable SearchSession component, @NotNull Disposable parentDisposable) {
     mySearchResults = searchResults;
     myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
@@ -153,8 +153,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return null;
   }
 
-  @Nullable
-  public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
+  public @Nullable TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
     Project project = mySearchResults.getProject();
     if (!ReadonlyStatusHandler.ensureDocumentWritable(project, editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
@@ -269,7 +268,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
       myChanged = false;
     }
 
-    setLivePreview(new LivePreview(mySearchResults));
+    var presentation = new EditorLivePreviewPresentation(getEditor().getColorsScheme());
+    setLivePreview(new LivePreview(mySearchResults, presentation));
   }
 
   public void off() {

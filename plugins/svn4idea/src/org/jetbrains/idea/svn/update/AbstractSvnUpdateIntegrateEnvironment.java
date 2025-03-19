@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
   private final ProjectLevelVcsManager myVcsManager;
-  @NonNls public static final String REPLACED_ID = "replaced";
+  public static final @NonNls String REPLACED_ID = "replaced";
 
   protected AbstractSvnUpdateIntegrateEnvironment(final SvnVcs vcs) {
     myVcs = vcs;
@@ -50,10 +50,9 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
   }
 
   @Override
-  @NotNull
-  public UpdateSession updateDirectories(final FilePath @NotNull [] contentRoots,
-                                         final UpdatedFiles updatedFiles,
-                                         final ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context)
+  public @NotNull UpdateSession updateDirectories(final FilePath @NotNull [] contentRoots,
+                                                  final UpdatedFiles updatedFiles,
+                                                  final ProgressIndicator progressIndicator, final @NotNull Ref<SequentialUpdatesContext> context)
     throws ProcessCanceledException {
 
     if (context.isNull()) {
@@ -155,7 +154,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
       public void run() {
         final LocalFileSystem lfs = LocalFileSystem.getInstance();
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(FileGroup.MERGED_WITH_TREE_CONFLICT);
-        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<String> conflictedFiles = conflictedGroup == null ? null : conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
@@ -225,8 +224,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
         return writable;
       }
 
-      @Nullable
-      protected abstract List<VirtualFile> merge();
+      protected abstract @Nullable List<VirtualFile> merge();
 
       @Override
       public void run() {
@@ -255,7 +253,7 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
       protected void fillAndRefreshFiles() {
         final FileGroup conflictedGroup = myUpdatedFiles.getGroupById(groupId);
-        final Collection<String> conflictedFiles = conflictedGroup.getFiles();
+        final Collection<String> conflictedFiles = conflictedGroup == null ? null : conflictedGroup.getFiles();
         final Collection<VirtualFile> parents = new ArrayList<>();
 
         if ((conflictedFiles != null) && (! conflictedFiles.isEmpty())) {
@@ -292,6 +290,5 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
                                                  ArrayList<VcsException> exceptions, UpdatedFiles updatedFiles);
 
   @Override
-  @Nullable
-  public abstract Configurable createConfigurable(Collection<FilePath> collection);
+  public abstract @Nullable Configurable createConfigurable(Collection<FilePath> collection);
 }

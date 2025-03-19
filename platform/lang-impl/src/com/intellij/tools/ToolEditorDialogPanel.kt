@@ -3,6 +3,7 @@ package com.intellij.tools
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.JBCheckBox
@@ -20,7 +21,7 @@ private const val ADVANCED_OPTIONS_EXPANDED_DEFAULT = false
 internal class ToolEditorDialogPanel {
 
   @JvmField
-  val panel = panel {
+  val panel: DialogPanel = panel {
     row(ToolsBundle.message("label.tool.name")) {
       nameField = textField()
         .align(AlignX.FILL)
@@ -44,7 +45,7 @@ internal class ToolEditorDialogPanel {
 
     group(ToolsBundle.message("border.title.tool.settings")) {
       row(ToolsBundle.message("label.tool.program")) {
-        programField = textFieldWithBrowseButton()
+        programField = cell(TextFieldWithBrowseButton())
           .align(AlignX.FILL)
           .component
       }
@@ -54,7 +55,7 @@ internal class ToolEditorDialogPanel {
           .component
       }
       row(ToolsBundle.message("label.tool.working.directory")) {
-        workingDirField = textFieldWithBrowseButton()
+        workingDirField = cell(TextFieldWithBrowseButton())
           .align(AlignX.FILL)
           .component
       }

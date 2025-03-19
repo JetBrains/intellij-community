@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -16,19 +15,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class SurroundWithAction extends BaseCodeInsightAction {
-  public SurroundWithAction() {
+final class SurroundWithAction extends BaseCodeInsightAction {
+  SurroundWithAction() {
     setEnabledInModalContext(true);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new SurroundWithHandler();
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
     final Language language = file.getLanguage();
     if (!LanguageSurrounders.INSTANCE.allForLanguage(language).isEmpty()) {
       return true;

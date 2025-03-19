@@ -29,10 +29,16 @@ class 'pkg/TestPrimitiveNarrowing' {
    method 'invocations ()V' {
       0      7
       1      7
+      2      7
+      3      7
       4      8
       5      8
+      6      8
+      7      8
       8      9
       9      9
+      a      9
+      b      9
       10      10
       15      11
    }

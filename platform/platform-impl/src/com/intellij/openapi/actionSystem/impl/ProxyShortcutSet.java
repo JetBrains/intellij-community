@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -21,8 +21,7 @@ public final class ProxyShortcutSet implements ShortcutSet {
     return manager != null ? manager.getActiveKeymap().getShortcuts(myActionId) : Shortcut.EMPTY_ARRAY;
   }
 
-  @NotNull
-  public String getActionId() {
+  public @NotNull String getActionId() {
     return myActionId;
   }
 }

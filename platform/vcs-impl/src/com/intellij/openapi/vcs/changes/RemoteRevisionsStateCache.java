@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -17,8 +18,9 @@ import java.util.*;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static com.intellij.vcsUtil.VcsUtil.getVcsRootFor;
 
+@ApiStatus.Internal
 public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
-  private final static long DISCRETE = 3600000;
+  private static final long DISCRETE = 3600000;
   // All files that were checked during cache update and were not invalidated.
   // pair.First - if file is changed (true means changed)
   // pair.Second - vcs root where file belongs to

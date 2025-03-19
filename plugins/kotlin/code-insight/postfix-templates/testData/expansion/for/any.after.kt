@@ -1,3 +1,3 @@
 fun test(value: Any) {
-    value.for
+    value.for   <caret>
 }

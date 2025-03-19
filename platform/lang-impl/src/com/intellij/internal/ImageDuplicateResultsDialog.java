@@ -1,16 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.codeInsight.hint.ImplementationViewComponent;
 import com.intellij.codeInsight.hint.PsiImplementationViewElement;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PropertyName;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
@@ -18,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +48,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-public class ImageDuplicateResultsDialog extends DialogWrapper {
+public final class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<? extends VirtualFile> myImages;
   private final Map<String, Set<VirtualFile>> myDuplicates;
@@ -102,28 +100,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    final JPanel panel = new JPanel(new BorderLayout());
-    DataManager.registerDataProvider(panel, dataId -> {
-      final TreePath path = myTree.getSelectionPath();
-      if (path != null) {
-        Object component = path.getLastPathComponent();
-        VirtualFile file = null;
-        if (component instanceof MyFileNode) {
-          component = ((MyFileNode)component).getParent();
-        }
-        if (component instanceof MyDuplicatesNode) {
-          file = ((MyDuplicatesNode)component).getUserObject().iterator().next();
-        }
-        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-          return file;
-        }
-        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
-          return new VirtualFile[]{file};
-        }
-      }
-      return null;
-    });
-
+    JPanel panel = new JPanel(new BorderLayout());
     JBList<String> list = new JBList<>(new ResourceModules().getModuleNames());
     final NotNullFunction<Object, JComponent> modulesRenderer =
       dom -> new JLabel(dom instanceof Module ? ((Module)dom).getName() : dom.toString(), PlatformIcons.SOURCE_FOLDERS_ICON, SwingConstants.LEFT);
@@ -193,6 +170,12 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
                 .setResizable(true)
                 .setMovable(true)
                 .setRequestFocus(false)
+                .addListener(new JBPopupListener() {
+                  @Override
+                  public void onClosed(@NotNull LightweightWindowEvent event) {
+                    viewComponent.cleanup();
+                  }
+                })
                 .setCancelCallback(() -> {
                   myTree.removeTreeSelectionListener(listener);
                   return true;
@@ -213,7 +196,16 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     final JLabel label = new JLabel(
       "<html>Press <b>Enter</b> to preview image<br>Total images found: " + myImages.size() + ". Total duplicates found: " + total+"</html>");
     panel.add(label, BorderLayout.SOUTH);
-    return panel;
+    return UiDataProvider.wrapComponent(panel, sink -> uiDataSnapshot(sink));
+  }
+
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath path = myTree.getSelectionPath();
+    Object component = path == null ? null : path.getLastPathComponent();
+    if (component instanceof MyFileNode o) component = o.getParent();
+    VirtualFile file = component instanceof MyDuplicatesNode o ? o.getUserObject().iterator().next() : null;
+    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, file == null ? null : new VirtualFile[]{file});
   }
 
   @Override
@@ -226,8 +218,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     return myTree;
   }
 
-  @Nullable
-  private VirtualFile getFileFromSelection() {
+  private @Nullable VirtualFile getFileFromSelection() {
     final TreePath path = myTree.getSelectionPath();
     if (path != null) {
       Object component = path.getLastPathComponent();
@@ -252,7 +243,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
   }
 
 
-  private static class MyDuplicatesNode extends DefaultMutableTreeNode {
+  private static final class MyDuplicatesNode extends DefaultMutableTreeNode {
 
     MyDuplicatesNode(DefaultMutableTreeNode node, Set<? extends VirtualFile> files) {
       super(files);
@@ -266,7 +257,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     }
   }
 
-  private static class MyFileNode extends DefaultMutableTreeNode {
+  private static final class MyFileNode extends DefaultMutableTreeNode {
     MyFileNode(DefaultMutableTreeNode node, VirtualFile file) {
       super(file);
       setParent(node);
@@ -278,7 +269,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     }
   }
 
-  private class MyCellRenderer extends ColoredTreeCellRenderer {
+  private final class MyCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
@@ -325,7 +316,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
 
 
-  static class ResourceModules {
+  static final class ResourceModules {
     @PropertyName(value = "resource.modules", defaultValue = "icons")
     public String modules;
 

@@ -7,5 +7,6 @@ class Klass : java.io.Serializable {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     Klass()
 }

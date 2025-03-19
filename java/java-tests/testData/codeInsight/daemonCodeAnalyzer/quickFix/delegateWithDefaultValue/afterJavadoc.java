@@ -3,9 +3,9 @@ class Test {
     /**
      *
      */
-  void foo() {
-      foo(0);
-  }
+    void foo() {
+        foo(0);
+    }
 
     /**
    * @param i

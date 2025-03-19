@@ -9,3 +9,7 @@ package com.intellij.execution.target
  * @see TargetEnvironment.localPortBindings
  */
 data class ResolvedPortBinding(val localEndpoint: HostPort, val targetEndpoint: HostPort)
+
+val ResolvedPortBinding.localPort: Int get() = localEndpoint.port
+
+val ResolvedPortBinding.targetPort: Int get() = targetEndpoint.port

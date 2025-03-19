@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.ex
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 
 interface FileEditorProviderManager {
   companion object {
@@ -20,10 +19,11 @@ interface FileEditorProviderManager {
    * @return All providers that can create editor for the specified `file` or empty array if there are none.
    * Please note that a returned array is constructed with respect to editor policies.
    */
-  @RequiresBlockingContext
   fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider>
 
   suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider>
+
+  suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider>
 
   /**
    * @return `null` if no provider with specified `editorTypeId` exists.

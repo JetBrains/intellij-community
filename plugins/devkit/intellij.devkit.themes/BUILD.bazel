@@ -1,0 +1,69 @@
+### auto-generated section `build intellij.devkit.themes` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "themes_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "themes",
+  module_name = "intellij.devkit.themes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:guava",
+    "//spellchecker",
+    "//platform/ide-core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":themes_resources"]
+)
+
+jvm_library(
+  name = "themes_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":themes"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//json",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//plugins/devkit/devkit-core:core",
+    "//xml/xml-psi-api:psi",
+    "//xml/dom-openapi:dom",
+    "//java/testFramework",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":themes_resources"]
+)
+
+jvm_test(
+  name = "themes_test",
+  runtime_deps = [":themes_test_lib"]
+)
+### auto-generated section `build intellij.devkit.themes` end

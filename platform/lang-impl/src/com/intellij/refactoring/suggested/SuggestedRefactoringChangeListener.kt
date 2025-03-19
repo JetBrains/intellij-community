@@ -6,10 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ProjectDisposeAwareDocumentListener
-import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
@@ -18,6 +15,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.hasErrorElementInRange
+import com.intellij.util.SlowOperations
 
 class SuggestedRefactoringChangeListener(
   private val project: Project,
@@ -219,8 +217,8 @@ class SuggestedRefactoringChangeListener(
       if (state.signatureRangeMarker.document != event.document) return true
       if (state.importRangeMarker != null && !state.importRangeMarker.isValid) return true
 
-      val signatureRange = state.signatureRangeMarker.range!!
-      val importRange = state.importRangeMarker?.range
+      val signatureRange = state.signatureRangeMarker.asTextRange!!
+      val importRange = state.importRangeMarker?.asTextRange
 
       if (event.oldRange !in signatureRange && (importRange == null || event.oldRange !in importRange)) {
         return event.oldFragment.isNotBlank() || event.newFragment.isNotBlank()
@@ -255,7 +253,7 @@ class SuggestedRefactoringChangeListener(
       isActionOnAllCommittedScheduled = false
 
       val editingState = editingState ?: return
-      val watchedRange = editingState.signatureRangeMarker.range
+      val watchedRange = editingState.signatureRangeMarker.asTextRange
       if (watchedRange == null) {
         reset()
         return
@@ -285,7 +283,9 @@ class SuggestedRefactoringChangeListener(
       }
 
       if (!editingState.isRefactoringSuppressed) {
-        watcher.nextSignature(anchor, refactoringSupport)
+        SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
+          watcher.nextSignature(anchor, refactoringSupport)
+        }
       }
     }
   }

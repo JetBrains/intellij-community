@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -16,23 +16,20 @@ import org.jetbrains.annotations.Nullable;
 /**
  * check locks according to http://www.javaconcurrencyinpractice.com/annotations/doc/net/jcip/annotations/GuardedBy.html
  */
-public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.concurrency.annotation.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "UnknownGuard";
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
   }
 

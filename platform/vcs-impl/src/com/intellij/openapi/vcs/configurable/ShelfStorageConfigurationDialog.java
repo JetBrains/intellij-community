@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,6 +20,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +35,16 @@ import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.get
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.*;
 
+@ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
-  @NotNull private final Project myProject;
-  @NotNull private final VcsConfiguration myVcsConfiguration;
-  @NotNull private final JBRadioButton myUseCustomShelfDirectory;
-  @NotNull private final JBRadioButton myUseDefaultShelfDirectory;
-  @NotNull private final TextFieldWithBrowseButton myShelfDirectoryPath;
-  @NotNull private final JBCheckBox myMoveShelvesCheckBox;
+  private static final Logger LOG = Logger.getInstance(ShelfStorageConfigurationDialog.class);
+
+  private final @NotNull Project myProject;
+  private final @NotNull VcsConfiguration myVcsConfiguration;
+  private final @NotNull JBRadioButton myUseCustomShelfDirectory;
+  private final @NotNull JBRadioButton myUseDefaultShelfDirectory;
+  private final @NotNull TextFieldWithBrowseButton myShelfDirectoryPath;
+  private final @NotNull JBCheckBox myMoveShelvesCheckBox;
 
 
   protected ShelfStorageConfigurationDialog(@NotNull Project project) {
@@ -53,10 +58,9 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     }
     myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.default.label"), true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.message("shelf.tab"),
-                                                 VcsBundle.message("change.shelves.location.dialog.location.browser.title"),
-                                                 myProject,
-                                                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShelfDirectoryPath.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(VcsBundle.message("shelf.tab"))
+      .withDescription(VcsBundle.message("change.shelves.location.dialog.location.browser.title")));
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
     setOKButtonText(VcsBundle.message("change.shelves.location.dialog.action.button"));
     initComponents();
@@ -90,9 +94,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     myShelfDirectoryPath.setEditable(enabled);
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout(DEFAULT_HGAP, DEFAULT_VGAP));
     JBLabel label = new JBLabel(VcsBundle.message("change.shelves.location.dialog.group.title"));
     contentPanel.add(label, BorderLayout.NORTH);
@@ -107,22 +110,19 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return contentPanel;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return null;
   }
 
-  @NotNull
-  private JPanel createCustomShelveLocationPanel() {
+  private @NotNull JPanel createCustomShelveLocationPanel() {
     JPanel customPanel = new JPanel(new BorderLayout());
     customPanel.add(myUseCustomShelfDirectory, BorderLayout.WEST);
     customPanel.add(myShelfDirectoryPath, BorderLayout.CENTER);
     return customPanel;
   }
 
-  @NotNull
-  private JPanel createDefaultLocationPanel() {
+  private @NotNull JPanel createDefaultLocationPanel() {
     JPanel defaultPanel = new JPanel(new BorderLayout());
     defaultPanel.add(myUseDefaultShelfDirectory, BorderLayout.WEST);
     JLabel infoLabel = new JLabel(getDefaultShelfPresentationPath(myProject));
@@ -132,9 +132,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return defaultPanel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.dialogs.vcs.shelf.settings";
   }
 
@@ -157,6 +156,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     Path toFile = nowCustom ? Paths.get(customPath) : getDefaultShelfPath(myProject);
 
     if (!FileUtil.pathsEqual(fromFile.toString(), toFile.toString())) {
+      LOG.info(String.format("Migrating shelve location from '%s' to '%s'", fromFile, toFile));
+
       myProject.save();
       if (wasCustom) {
         ApplicationManager.getApplication().saveSettings();
@@ -173,9 +174,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     return true;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     updateOkAction();
     if (myUseCustomShelfDirectory.isSelected()) {
       File toFile = new File(myShelfDirectoryPath.getText());

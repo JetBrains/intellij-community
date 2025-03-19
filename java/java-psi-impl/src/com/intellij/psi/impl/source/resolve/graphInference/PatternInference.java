@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Utility class for pattern inference
  */
-public class PatternInference {
+public final class PatternInference {
   /**
    * @param resolveResult result of deconstruction pattern type element resolve before the inference
    * @param pattern deconstruction pattern itself, which has no type arguments specified 
@@ -64,6 +64,19 @@ public class PatternInference {
       List<PsiWildcardType> wildcardTypes = new ArrayList<>();
       PsiType[] arguments = classType.getParameters();
       PsiTypeParameter[] parameters = gClass.getTypeParameters();
+      if (arguments.length == 0 && parameters.length != 0) {
+        //18.5.5
+        //An initial bound set, B0, is generated from the declared bounds of P1, ..., Pn, as described in §18.1.3.
+        //remark: usually, it is covered by `arguments` (see later), but in this case, a set of arguments is empty
+        PsiManager manager = recordClass.getManager();
+        for (PsiTypeParameter parameter : parameters) {
+          PsiReferenceList extendsList = parameter.getExtendsList();
+          for (PsiClassType referencedType : extendsList.getReferencedTypes()) {
+            wildcardTypeParams.add(parameter);
+            wildcardTypes.add(PsiWildcardType.createExtends(manager, referencedType));
+          }
+        }
+      }
       for (int i = 0; i < arguments.length; i++) {
         PsiType argument = arguments[i];
         if (argument instanceof PsiWildcardType && i < parameters.length) {

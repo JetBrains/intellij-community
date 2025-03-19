@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker;
 
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.util.ChronoUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -15,15 +16,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author shkate@jetbrains.com
  */
-public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
+public final class JavaSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
   private final MethodNameTokenizerJava myMethodNameTokenizer = new MethodNameTokenizerJava();
   private final DocCommentTokenizer myDocCommentTokenizer = new DocCommentTokenizer();
   private final LiteralExpressionTokenizer myLiteralExpressionTokenizer = new LiteralExpressionTokenizer();
   private final NamedElementTokenizer myNamedElementTokenizer = new NamedElementTokenizer();
 
-  @NotNull
   @Override
-  public Tokenizer getTokenizer(PsiElement element) {
+  public @NotNull Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiMethod) {
       return myMethodNameTokenizer;
     }
@@ -31,8 +31,7 @@ public class JavaSpellcheckingStrategy extends SpellcheckingStrategy {
       return myDocCommentTokenizer;
     }
     if (element instanceof PsiLiteralExpression literalExpression) {
-      if (SuppressManager.isSuppressedInspectionName(literalExpression) ||
-          ChronoUtil.isPatternForDateFormat(literalExpression)) {
+      if (ChronoUtil.isPatternForDateFormat(literalExpression) || SuppressManager.isSuppressedInspectionName(literalExpression)) {
         return EMPTY_TOKENIZER;
       }
       return myLiteralExpressionTokenizer;

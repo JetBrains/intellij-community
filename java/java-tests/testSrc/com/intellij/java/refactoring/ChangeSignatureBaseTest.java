@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -104,8 +104,11 @@ public abstract class ChangeSignatureBaseTest extends LightRefactoringTestCase {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    if (targetElement instanceof PsiClass) {
-      targetElement = JavaPsiRecordUtil.findCanonicalConstructor((PsiClass)targetElement);
+    if (targetElement instanceof PsiClass aClass) {
+      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+    }
+    if (targetElement instanceof PsiRecordComponent component) {
+      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(component.getContainingClass());
     }
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;

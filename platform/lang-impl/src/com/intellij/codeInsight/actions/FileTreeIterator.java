@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.module.Module;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class FileTreeIterator {
+public final class FileTreeIterator {
   private Queue<PsiFile> myCurrentFiles = new LinkedList<>();
   private Queue<PsiDirectory> myCurrentDirectories = new LinkedList<>();
 
@@ -31,16 +31,13 @@ public class FileTreeIterator {
     expandDirectoriesUntilFilesNotEmpty();
   }
 
-  @NotNull
-  public static List<PsiDirectory> collectProjectDirectories(@NotNull Project project) {
-    List<PsiDirectory> directories = new ArrayList<>();
-
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    for (Module module : modules) {
-      directories.addAll(collectModuleDirectories(module));
+  public @NotNull PsiFile next() {
+    if (myCurrentFiles.isEmpty()) {
+      throw new NoSuchElementException();
     }
-
-    return directories;
+    PsiFile current = myCurrentFiles.poll();
+    expandDirectoriesUntilFilesNotEmpty();
+    return current;
   }
 
   public FileTreeIterator(@NotNull PsiDirectory directory) {
@@ -53,14 +50,15 @@ public class FileTreeIterator {
     myCurrentDirectories = new LinkedList<>(fileTreeIterator.myCurrentDirectories);
   }
 
-  @NotNull
-  public PsiFile next() {
-    if (myCurrentFiles.isEmpty()) {
-      throw new NoSuchElementException();
+  public static @NotNull List<PsiDirectory> collectProjectDirectories(@NotNull Project project) {
+    List<PsiDirectory> directories = new ArrayList<>();
+
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      directories.addAll(collectModuleDirectories(module));
     }
-    PsiFile current = myCurrentFiles.poll();
-    expandDirectoriesUntilFilesNotEmpty();
-    return current;
+
+    return directories;
   }
 
   public boolean hasNext() {
@@ -79,8 +77,7 @@ public class FileTreeIterator {
     Collections.addAll(myCurrentDirectories, dir.getSubdirectories());
   }
 
-  @NotNull
-  public static List<PsiDirectory> collectModuleDirectories(Module module) {
+  public static @NotNull List<PsiDirectory> collectModuleDirectories(Module module) {
     List<PsiDirectory> dirs = new ArrayList<>();
 
     VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();

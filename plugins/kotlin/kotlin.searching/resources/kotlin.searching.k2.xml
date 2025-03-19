@@ -18,6 +18,8 @@
                     serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2FindUsagesSupport"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2SearchUsagesSupport"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.search.ExpectActualSupport"
+                    serviceImplementation="org.jetbrains.kotlin.idea.searching.kmp.KotlinK2ExpectActualSupport"/>
     <usageTypeProvider implementation="org.jetbrains.kotlin.idea.searching.usages.KotlinK2UsageTypeProvider"/>
 
     <lang.findUsagesProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesProviderBase"/>

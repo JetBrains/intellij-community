@@ -1,0 +1,41 @@
+### auto-generated section `build intellij.java.compiler.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "compiler-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "compiler-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = ["//java/compiler/impl:java-compiler-impl"],
+  deps = [
+    "//java/compiler/openapi:java-compiler",
+    "//java/testFramework",
+    "//java/openapi:java",
+    "@lib//:junit4",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/idea-ui:ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//jps/model-impl",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "//jps/jps-builders-6:build-javac-rt",
+    "//platform/core-ui",
+    "//platform/workspace/jps",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/backend/workspace",
+  ],
+  runtime_deps = ["//spellchecker"]
+)
+
+jvm_test(
+  name = "compiler-tests_test",
+  runtime_deps = [":compiler-tests_test_lib"]
+)
+### auto-generated section `build intellij.java.compiler.tests` end

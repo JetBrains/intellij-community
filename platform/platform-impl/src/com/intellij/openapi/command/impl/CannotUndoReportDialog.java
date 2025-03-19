@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.command.impl;
 
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collection;
 
-public class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
+@ApiStatus.Internal
+public final class CannotUndoReportDialog extends DialogWrapper implements DataProvider {
   private static final int FILE_TEXT_PREVIEW_CHARS_LIMIT = 40;
   private final Project myProject;
 
@@ -77,14 +79,12 @@ public class CannotUndoReportDialog extends DialogWrapper implements DataProvide
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       DocumentReference value = myProblemFilesList.getSelectedValue();
       VirtualFile file = value != null ? value.getFile() : null;

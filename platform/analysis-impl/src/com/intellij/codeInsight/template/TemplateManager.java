@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -29,20 +29,20 @@ public abstract class TemplateManager {
 
   public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template);
 
-  public abstract void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template);
+  public abstract void startTemplate(@NotNull Editor editor, @Nullable String selectionString, @NotNull Template template);
 
-  public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template, TemplateEditingListener listener);
+  public abstract void startTemplate(@NotNull Editor editor, @NotNull Template template, @Nullable TemplateEditingListener listener);
 
-  public abstract void startTemplate(@NotNull final Editor editor,
-                                     @NotNull final Template template,
+  public abstract void startTemplate(@NotNull Editor editor,
+                                     @NotNull Template template,
                                      boolean inSeparateCommand,
-                                     Map<String, String> predefinedVarValues,
+                                     @Nullable Map<String, String> predefinedVarValues,
                                      @Nullable TemplateEditingListener listener);
 
   public abstract void startTemplate(@NotNull Editor editor,
                                      @NotNull Template template,
-                                     TemplateEditingListener listener,
-                                     final PairProcessor<? super String, ? super String> callback);
+                                     @Nullable TemplateEditingListener listener,
+                                     @Nullable PairProcessor<? super String, ? super String> callback);
 
   public abstract boolean startTemplate(@NotNull Editor editor, char shortcutChar);
 
@@ -50,8 +50,7 @@ public abstract class TemplateManager {
 
   public abstract Template createTemplate(@NotNull String key, @NotNull String group, @NonNls String text);
 
-  @Nullable
-  public abstract Template getActiveTemplate(@NotNull Editor editor);
+  public abstract @Nullable Template getActiveTemplate(@NotNull Editor editor);
 
   /**
    * Finished a live template in the given editor, if it's present

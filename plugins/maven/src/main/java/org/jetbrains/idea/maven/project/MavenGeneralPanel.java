@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
@@ -29,7 +29,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
   private JCheckBox checkboxProduceExceptionErrorMessages;
   private JComboBox checksumPolicyCombo;
   private JComboBox failPolicyCombo;
-  private JCheckBox checkboxUsePluginRegistry;
   private JCheckBox checkboxRecursive;
   private MavenEnvironmentForm mavenPathsForm;
   private JBLabel myMultiProjectBuildFailPolicyLabel;
@@ -96,7 +95,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     mavenPathsForm.setData(data);
 
     data.setPrintErrorStackTraces(checkboxProduceExceptionErrorMessages.isSelected());
-    data.setUsePluginRegistry(checkboxUsePluginRegistry.isSelected());
     data.setNonRecursive(!checkboxRecursive.isSelected());
 
     data.setOutputLevel((MavenExecutionOptions.LoggingLevel)ComboBoxUtil.getSelectedValue(outputLevelComboModel));
@@ -121,7 +119,6 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     mavenPathsForm.initializeFormData(data, project);
 
     checkboxProduceExceptionErrorMessages.setSelected(data.isPrintErrorStackTraces());
-    checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));
@@ -134,8 +131,7 @@ public class MavenGeneralPanel implements PanelWithAnchor {
     useMavenConfigCheckBox.setSelected(data.isUseMavenConfig());
   }
 
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return CommonBundle.message("tab.title.general");
   }
 

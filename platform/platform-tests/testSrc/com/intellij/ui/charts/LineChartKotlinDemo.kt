@@ -1,10 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.charts
 
-import com.intellij.ide.ui.laf.IntelliJLaf
+import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.charts.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -327,7 +328,7 @@ fun zoom() = lineChart<Int, Double> {
 }
 
 fun main() {
-  UIManager.setLookAndFeel(IntelliJLaf())
+  UIManager.setLookAndFeel(DarculaLaf())
   SwingUtilities.invokeLater {
     object: DialogWrapper(false) {
       init {
@@ -357,7 +358,7 @@ fun main() {
         val zoomPane = BorderLayoutPanel()
         val zoom = zoom()
         zoomPane.addToCenter(zoom.component)
-        val box = Box(BoxLayout.X_AXIS)
+        val box = JBBox(BoxLayout.X_AXIS)
         box .add(JButton("Zoom in (+)").apply {
           addActionListener {
             val xChange = (zoom.grid.xMax - zoom.grid.xMin) / 4

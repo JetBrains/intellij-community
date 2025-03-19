@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -11,15 +11,14 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalAnnotationsRefactoringListenerProvider implements RefactoringElementListenerProvider {
-  @Nullable
+public final class ExternalAnnotationsRefactoringListenerProvider implements RefactoringElementListenerProvider {
   @Override
-  public RefactoringElementListener getListener(PsiElement element) {
+  public @Nullable RefactoringElementListener getListener(PsiElement element) {
     if (element instanceof PsiModifierListOwner modifierListOwner) {
       Project project = element.getProject();
       ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
       PsiAnnotation[] annotations = externalAnnotationsManager.findExternalAnnotations(modifierListOwner);
-      if (annotations != null) {
+      if (annotations.length > 0) {
         String oldExternalName = PsiFormatUtil.getExternalName(modifierListOwner, false, Integer.MAX_VALUE);
         if (oldExternalName == null) {
           return null;

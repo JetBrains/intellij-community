@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class WindowWatcher implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance(WindowWatcher.class);
   private final Object myLock = new Object();
@@ -37,7 +39,7 @@ public final class WindowWatcher implements PropertyChangeListener {
    * Contains last focused window for each project.
    */
   private final Set<Window> myFocusedWindows = new HashSet<>();
-  @NonNls private static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
+  private static final @NonNls String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher() {}
 
@@ -93,8 +95,7 @@ public final class WindowWatcher implements PropertyChangeListener {
 
   void dispatchComponentEvent(final ComponentEvent e) {
     int id = e.getID();
-    if (WindowEvent.WINDOW_CLOSED == id ||
-        (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
+    if (WindowEvent.WINDOW_CLOSED == id || (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
       dispatchHiddenOrClosed((Window)e.getSource());
     }
     // clear obsolete reference on root frame

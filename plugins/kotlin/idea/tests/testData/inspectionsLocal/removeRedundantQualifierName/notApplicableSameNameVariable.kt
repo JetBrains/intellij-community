@@ -7,4 +7,4 @@ sealed class Foo {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

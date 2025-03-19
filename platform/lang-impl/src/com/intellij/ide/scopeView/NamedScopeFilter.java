@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
@@ -12,6 +12,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx.getAllScope;
 
+@ApiStatus.Internal
 public final class NamedScopeFilter implements VirtualFileFilter {
   private static final Logger LOG = Logger.getInstance(NamedScopeFilter.class);
   private final NamedScopesHolder holder;
@@ -31,19 +33,16 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     this.string = scope + "; " + scope.getClass();
   }
 
-  @NotNull
-  public NamedScopesHolder getHolder() {
+  public @NotNull NamedScopesHolder getHolder() {
     return holder;
   }
 
-  @NotNull
-  public NamedScope getScope() {
+  public @NotNull NamedScope getScope() {
     return scope;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return string;
   }
 
@@ -64,8 +63,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
     return !(scope instanceof NonProjectFilesScope || scope == getAllScope());
   }
 
-  @NotNull
-  static List<NamedScopeFilter> list(NamedScopesHolder... holders) {
+  static @NotNull List<NamedScopeFilter> list(NamedScopesHolder... holders) {
     List<NamedScopeFilter> list = new ArrayList<>();
     NamedScope scratchesScope = null;
     for (NamedScopesHolder holder : holders) {

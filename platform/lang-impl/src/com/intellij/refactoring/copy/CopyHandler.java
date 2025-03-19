@@ -5,8 +5,11 @@ package com.intellij.refactoring.copy;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -16,7 +19,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.content.Content;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +52,19 @@ public final class CopyHandler {
 
   public static void doCopy(PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     if (elements.length == 0) return;
+    Project project = elements[0].getProject();
     for(CopyHandlerDelegate delegate: CopyHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canCopy(elements)) {
-        delegate.doCopy(elements, defaultTargetDirectory);
+        if (!DumbService.getInstance(project).isUsableInCurrentContext(delegate)) {
+          DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
+            RefactoringBundle.message("refactoring.dumb.mode.notification"),
+            DumbModeBlockedFunctionality.Refactoring);
+          return;
+        }
+        //todo warn that something can be broken https://youtrack.jetbrains.com/issue/IJPL-402
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          delegate.doCopy(elements, defaultTargetDirectory);
+        }
         break;
       }
     }

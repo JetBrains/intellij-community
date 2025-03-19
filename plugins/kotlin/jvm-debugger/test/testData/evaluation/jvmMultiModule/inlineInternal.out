@@ -1,0 +1,20 @@
+LineBreakpoint created at call.kt:11
+LineBreakpoint created at call.kt:16
+LineBreakpoint created at call.kt:21
+LineBreakpoint created at call.kt:26
+LineBreakpoint created at call.kt:31
+Run Java
+Connected to the target VM
+call.kt:11
+Compile bytecode for topLevelFunc{1}
+Compile bytecode for topLevelProperty
+Compile bytecode for c.memberFunc{3}
+Compile bytecode for c.memberProperty
+Compile bytecode for val delegate by C(); delegate
+call.kt:16
+resuming call.kt:21
+resuming call.kt:26
+resuming call.kt:31
+Disconnected from the target VM
+
+Process finished with exit code 0

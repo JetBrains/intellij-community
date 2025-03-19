@@ -100,9 +100,7 @@ class DefaultConstructor(
 
     other as DefaultConstructor
 
-    if (myConstructedClass != other.myConstructedClass) return false
-
-    return true
+    return myConstructedClass == other.myConstructedClass
   }
 
   override fun hashCode(): Int {

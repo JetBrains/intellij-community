@@ -3,10 +3,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -23,13 +25,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyAbstractClassInspection extends PyInspection {
+public final class PyAbstractClassInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -90,18 +91,16 @@ public class PyAbstractClassInspection extends PyInspection {
       return false;
     }
 
-    private static class AddABCToSuperclassesQuickFix implements LocalQuickFix {
+    private static class AddABCToSuperclassesQuickFix extends PsiUpdateModCommandQuickFix {
 
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
         return PyPsiBundle.message("INSP.abstract.class.add.to.superclasses", PyNames.ABC);
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PyClass cls = PyUtil.as(descriptor.getPsiElement().getParent(), PyClass.class);
+      public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PyClass cls = PyUtil.as(element.getParent(), PyClass.class);
         if (cls == null) return;
 
         final PyClass abcClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC, cls);
@@ -111,18 +110,16 @@ public class PyAbstractClassInspection extends PyInspection {
       }
     }
 
-    private static class SetABCMetaAsMetaclassQuickFix implements LocalQuickFix {
+    private static class SetABCMetaAsMetaclassQuickFix extends PsiUpdateModCommandQuickFix {
 
-      @Nls(capitalization = Nls.Capitalization.Sentence)
-      @NotNull
       @Override
-      public String getFamilyName() {
+      public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
         return PyPsiBundle.message("INSP.abstract.class.set.as.metaclass", PyNames.ABC_META);
       }
 
       @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PyClass cls = PyUtil.as(descriptor.getPsiElement().getParent(), PyClass.class);
+      public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+        final PyClass cls = PyUtil.as(element.getParent(), PyClass.class);
         if (cls == null) return;
 
         final PyClass abcMetaClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC_META, cls);

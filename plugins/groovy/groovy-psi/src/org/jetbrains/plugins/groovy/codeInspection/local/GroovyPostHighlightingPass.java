@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
@@ -61,7 +61,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
   }
 
   @Override
-  public void doCollectInformation(@NotNull final ProgressIndicator progress) {
+  public void doCollectInformation(final @NotNull ProgressIndicator progress) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
     if (!fileIndex.isInContent(virtualFile)) {
@@ -102,7 +102,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
             String name = ((GrNamedElement)element).getName();
             if (element instanceof GrTypeDefinition && !UnusedSymbolUtil.isClassUsed(myProject,
                                                                                      element.getContainingFile(), (GrTypeDefinition)element,
-                                                                                     progress, usageHelper
+                                                                                     usageHelper
             )) {
               HighlightInfo.Builder builder = UnusedSymbolUtil
                 .createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message("text.class.0.is.unused", name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
@@ -115,7 +115,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 usageHelper.shouldCheckContributors = false;
               }
               try {
-                if (!UnusedSymbolUtil.isMethodReferenced(method.getProject(), method.getContainingFile(), method, progress, usageHelper)) {
+                if (!UnusedSymbolUtil.isMethodUsed(method.getProject(), method.getContainingFile(), method, usageHelper)) {
                   String message;
                   if (method.isConstructor()) {
                     message = GroovyBundle.message("text.constructor.0.is.unused", name);
@@ -132,7 +132,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 usageHelper.shouldCheckContributors = true;
               }
             }
-            else if (element instanceof GrField && isFieldUnused((GrField)element, progress, usageHelper)) {
+            else if (element instanceof GrField && isFieldUnused((GrField)element, usageHelper)) {
               HighlightInfo.Builder builder =
                 UnusedSymbolUtil.createUnusedSymbolInfoBuilder(nameId, GroovyBundle.message("text.property.0.is.unused", name), HighlightInfoType.UNUSED_SYMBOL, GroovyUnusedDeclarationInspection.SHORT_NAME);
               IntentionAction action = QuickFixFactory.getInstance().createSafeDeleteFix(element);
@@ -175,7 +175,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
     myUnusedDeclarations = unusedDeclarations;
     List<HighlightInfo> infos = convertUnusedImportsToInfos(unusedDeclarations, unusedImports);
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(), infos, getColorsScheme(), getId());
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(), infos, getId());
   }
 
   @Override
@@ -196,8 +196,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         !PsiClassImplUtil.isMainOrPremainMethod(method);
   }
 
-  private static boolean isFieldUnused(GrField field, ProgressIndicator progress, GlobalUsageHelper usageHelper) {
-    if (!UnusedSymbolUtil.isFieldUnused(field.getProject(), field.getContainingFile(), field, progress, usageHelper)) return false;
+  private static boolean isFieldUnused(GrField field, GlobalUsageHelper usageHelper) {
+    if (UnusedSymbolUtil.isFieldUsed(field.getProject(), field.getContainingFile(), field, usageHelper)) return false;
     final GrAccessorMethod[] getters = field.getGetters();
     final GrAccessorMethod setter = field.getSetter();
 
@@ -230,9 +230,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
-                                                          @NotNull Set<? extends GrImportStatement> unusedImports) {
+  private static @NotNull List<HighlightInfo> convertUnusedImportsToInfos(@NotNull List<? extends HighlightInfo> unusedDeclarations,
+                                                                          @NotNull Set<? extends GrImportStatement> unusedImports) {
     List<HighlightInfo> infos = new ArrayList<>(unusedDeclarations);
     for (GrImportStatement unusedImport : unusedImports) {
       IntentionAction action = GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false);

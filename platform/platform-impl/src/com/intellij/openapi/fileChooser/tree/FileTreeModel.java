@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -28,6 +28,8 @@ import com.intellij.util.ui.tree.AbstractTreeModel;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -75,9 +77,8 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     });
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return invoker;
   }
 
@@ -96,7 +97,11 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
     else if (object instanceof Node) {
       Entry<Node> entry = getEntry((Node)object, true);
-      if (entry != null) return entry.getChild(index);
+      if (entry != null) {
+        Node child = entry.getChild(index);
+        child.ensureInitialized();
+        return child;
+      }
     }
     return null;
   }
@@ -197,7 +202,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     for (VirtualFile parent : parents) {
       for (Root root : roots) {
         Entry<Node> entry = root.tree.findEntry(parent);
-        if (entry != null) {
+        if (entry != null && !entry.isLoadingRequired()) {
           UpdateResult<Node> update = root.updateChildren(state, entry);
           //TODO:listeners.isEmpty
           boolean removed = !update.getRemoved().isEmpty();
@@ -289,7 +294,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       return jar == null ? VirtualFile.EMPTY_ARRAY : jar.getChildren();
     }
 
-    private List<Root> getRoots() {
+    private @Unmodifiable List<Root> getRoots() {
       if (!model.invoker.isValidThread()) {
         LOG.error(new IllegalStateException(Thread.currentThread().getName()));
       }
@@ -348,7 +353,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
       addRoots(model.roots, rootsToAdd);
     }
 
-    private static @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
+    private static @Unmodifiable @NotNull List<VirtualFile> toRootFiles(@NotNull List<Root> roots) {
       return ContainerUtil.map(roots, FileNode::getFile);
     }
 
@@ -364,7 +369,7 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     }
 
     private void addRoots(@NotNull List<Root> roots, @NotNull List<Root> rootsToAdd) {
-      if (rootsToAdd.size() > 0) {
+      if (!rootsToAdd.isEmpty()) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Adding " + toRootFiles(rootsToAdd));
         }
@@ -395,11 +400,13 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
   }
 
   private static class Node extends FileNode {
+    private final @Nullable FileRefresher myRefresher;
+    private boolean myInitialized;
     private boolean invalid;
 
     private Node(State state, VirtualFile file) {
       super(file);
-      if (state.refresher != null && !state.refresher.isRecursive()) state.refresher.register(file);
+      this.myRefresher = state.refresher;
       updateContent(state);
     }
 
@@ -428,6 +435,12 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
     public String toString() {
       return getName();
     }
+
+    void ensureInitialized() {
+      if (myInitialized) return;
+      myInitialized = true;
+      if (myRefresher != null && !myRefresher.isRecursive()) myRefresher.register(getFile());
+    }
   }
 
   private static final class Root extends Node {
@@ -435,7 +448,6 @@ public final class FileTreeModel extends AbstractTreeModel implements InvokerSup
 
     private Root(State state, VirtualFile file) {
       super(state, file);
-      if (state.refresher != null && state.refresher.isRecursive()) state.refresher.register(file);
       tree = new MapBasedTree<>(false, node -> node.getFile(), state.path);
       tree.onInsert(node -> markDirtyInternal(node.getFile()));
       tree.updateRoot(Pair.create(this, state.isLeaf(file)));

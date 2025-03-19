@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.JbXmlOutputter
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -20,12 +21,14 @@ internal class ForbidSensitiveInformationTest {
   @Rule
   @JvmField
   val disposableRule = DisposableRule()
+
   @Before
   fun before() {
     DefaultLogger.disableStderrDumping(disposableRule.disposable)
   }
+
   @Test
-  fun `do not store password as attribute`() {
+  fun `do not store password as attribute`(): Unit = rethrowLoggedErrorsIn {
     @Tag("bean")
     class Bean {
       @Attribute
@@ -46,10 +49,16 @@ internal class ForbidSensitiveInformationTest {
       val xmlWriter = JbXmlOutputter()
       xmlWriter.output(element, StringWriter())
     }.hasMessage("Attribute bean.@password probably contains sensitive information")
+
+    // No exception if 'password' has no value
+    bean.password = null
+    val element2 = assertSerializer(bean, "<bean foo=\"module\" />")
+    val xmlWriter = JbXmlOutputter()
+    xmlWriter.output(element2, StringWriter())
   }
 
   @Test
-  fun `do not store password as element`() {
+  fun `do not store password as element`(): Unit = rethrowLoggedErrorsIn {
     @Tag("component")
     class Bean {
       var password: String? = null
@@ -74,6 +83,55 @@ internal class ForbidSensitiveInformationTest {
         storageFilePathForDebugPurposes = "${FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome())}/foo/bar.xml")
       xmlWriter.output(element, StringWriter())
     }.hasMessage("""Element component@someComponent.option.@name=password probably contains sensitive information (file: ~/foo/bar.xml)""")
+
+    // No exception if 'password' has no value
+    bean.password = null
+    val element2 = assertSerializer(bean, """
+        <component name="someComponent">
+          <option name="password" />
+        </component>
+      """.trimIndent())
+    val xmlWriter = JbXmlOutputter()
+    xmlWriter.output(element2, StringWriter())
+  }
+
+  @Test
+  fun `do not store password as tag`(): Unit = rethrowLoggedErrorsIn {
+    @Tag("server")
+    class Server {
+      @Tag("password")
+      var password: String? = null
+
+      @Attribute
+      var name: String? = null
+    }
+
+    val server = Server()
+    server.name = "youtrack"
+    server.password = "ab"
+    // it is not part of XML bindings to ensure that even if you will use JDOM directly, you cannot output sensitive data
+    // so, testSerializer must not throw error
+    val element = assertSerializer(server, """
+        <server name="youtrack">
+          <password>ab</password>
+        </server>
+      """.trimIndent())
+
+    assertThatThrownBy {
+      val xmlWriter = JbXmlOutputter(
+        storageFilePathForDebugPurposes = "${FileUtilRt.toSystemIndependentName(SystemProperties.getUserHome())}/foo/bar.xml")
+      xmlWriter.output(element, StringWriter())
+    }.hasMessage("""Element server.password probably contains sensitive information (file: ~/foo/bar.xml)""")
+
+    // No exception if 'password' has no value
+    server.password = null
+    val element2 = assertSerializer(server, """
+        <server name="youtrack">
+          <password />
+        </server>
+      """.trimIndent())
+    val xmlWriter = JbXmlOutputter()
+    xmlWriter.output(element2, StringWriter())
   }
 
   @Test

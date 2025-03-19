@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool, LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), LocalInspectionToolWrapper.class, InspectionEP::getShortName));
+    super(tool, InspectionToolRegistrar.getInstance().findInspectionEP(tool));
   }
 
   public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
@@ -51,6 +51,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
 
   public boolean runForWholeFile() {
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
+  }
+
+  public boolean isDumbAware() {
+    return getTool().isDumbAware();
   }
 
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,

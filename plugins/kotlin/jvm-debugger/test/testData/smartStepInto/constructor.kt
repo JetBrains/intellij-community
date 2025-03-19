@@ -1,5 +1,5 @@
 fun foo() {
-    println("${A()} ${B()} ${C(1)} ${D()} ${E(1)} ${F()} ${G()} ${J()} ${K(1)} ${L()}")<caret>
+    println("${A()} ${B()} ${C(1)} ${D()} ${E(1)} ${F()} ${G(1)} ${J()} ${K(1)} ${L()}")<caret>
 }
 
 class A
@@ -41,5 +41,13 @@ class L {
     }
 }
 
-// EXISTS: constructor B(), constructor C(Int), constructor D(), constructor E(Int), constructor F(), constructor G(Int), constructor J(), constructor K(Int), constructor L()
-// IGNORE_K2
+// EXISTS: constructor A()
+// EXISTS: constructor B()
+// EXISTS: constructor C(Int)
+// EXISTS: constructor D()
+// EXISTS: constructor E(Int)
+// EXISTS: constructor F()
+// EXISTS: constructor G(Int)
+// EXISTS: constructor J()
+// EXISTS: constructor K(Int)
+// EXISTS: constructor L()

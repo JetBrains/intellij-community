@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions;
 import com.intellij.util.LocaleSensitiveApplicationCacheService;
 import org.jetbrains.annotations.NotNull;
@@ -204,8 +205,8 @@ final class CodeStyleSettingsPresentations {
 
     result = new LinkedHashMap<>();
     result.put(new CodeStyleSettingPresentation.SettingsGroup(null), List.of(
-      new CodeStyleBoundedIntegerSettingPresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 0, 999,
-                                                     -1,
+      new CodeStyleBoundedIntegerSettingPresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 
+                                                     0, CodeStyleConstraints.MAX_RIGHT_MARGIN, -1,
                                                      ApplicationBundle.message("settings.code.style.default.general")),
       new CodeStyleSelectSettingPresentation("WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), WRAP_ON_TYPING_VALUES,
                                              customizableOptions.WRAP_ON_TYPING_OPTIONS),
@@ -333,6 +334,9 @@ final class CodeStyleSettingsPresentations {
                                              customizableOptions.BRACE_OPTIONS),
       new CodeStyleSettingPresentation("WHILE_ON_NEW_LINE", ApplicationBundle.message("wrapping.while.on.new.line"))
     ));
+
+    putGroupTop(result, "SWITCH_EXPRESSIONS_WRAP", customizableOptions.WRAPPING_SWITCH_STATEMENT, WRAP_VALUES,
+                customizableOptions.WRAP_OPTIONS);
 
     result.put(new CodeStyleSettingPresentation.SettingsGroup(customizableOptions.WRAPPING_SWITCH_STATEMENT), List.of(
       new CodeStyleSettingPresentation("INDENT_CASE_FROM_SWITCH", ApplicationBundle.message("wrapping.indent.case.from.switch")),

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.impl;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ShowRecentFindUsagesGroup extends ActionGroup {
+@ApiStatus.Internal
+public final class ShowRecentFindUsagesGroup extends ActionGroup {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -63,7 +65,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
       String text = usageTarget.getLongDescriptiveName();
       AnAction action = new AnAction(text, description, null) {
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           findUsagesManager.rerunAndRecallFromHistory(usageTarget);
         }
       };

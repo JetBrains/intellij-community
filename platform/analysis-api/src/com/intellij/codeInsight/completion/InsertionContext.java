@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -23,8 +23,8 @@ public class InsertionContext {
   private boolean myAddCompletionChar;
 
   public InsertionContext(final OffsetMap offsetMap, final char completionChar, final LookupElement[] elements,
-                          @NotNull final PsiFile file,
-                          @NotNull final Editor editor, final boolean addCompletionChar) {
+                          final @NotNull PsiFile file,
+                          final @NotNull Editor editor, final boolean addCompletionChar) {
     myOffsetMap = offsetMap;
     myCompletionChar = completionChar;
     myElements = elements;
@@ -42,13 +42,11 @@ public class InsertionContext {
     return myOffsetMap.getOffset(TAIL_OFFSET);
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
@@ -56,8 +54,7 @@ public class InsertionContext {
     PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
   }
 
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return getEditor().getDocument();
   }
 
@@ -87,8 +84,7 @@ public class InsertionContext {
     return myElements;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myFile.getProject();
   }
 
@@ -96,12 +92,11 @@ public class InsertionContext {
     return myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
   }
 
-  @Nullable
-  public Runnable getLaterRunnable() {
+  public @Nullable Runnable getLaterRunnable() {
     return myLaterRunnable;
   }
 
-  public void setLaterRunnable(@Nullable final Runnable laterRunnable) {
+  public void setLaterRunnable(final @Nullable Runnable laterRunnable) {
     myLaterRunnable = laterRunnable;
   }
 

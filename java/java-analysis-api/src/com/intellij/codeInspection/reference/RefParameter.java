@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiParameter;
@@ -39,11 +39,10 @@ public interface RefParameter extends RefJavaElement {
   int getIndex();
 
   /**
-   * @see RefParameter#getActualConstValue()
+   * @deprecated Use {@link RefParameter#getActualConstValue()) instead
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  default String getActualValueIfSame() {
+  default @Nullable String getActualValueIfSame() {
     throw new UnsupportedOperationException();
   }
 
@@ -55,8 +54,7 @@ public interface RefParameter extends RefJavaElement {
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  @Nullable
-  default Object getActualConstValue() {
+  default @Nullable Object getActualConstValue() {
     //noinspection deprecation
     return getActualValueIfSame();
   }

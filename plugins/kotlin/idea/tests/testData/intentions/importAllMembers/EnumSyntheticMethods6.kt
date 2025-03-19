@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 import A.*
 
 enum class A { A1, A2 }

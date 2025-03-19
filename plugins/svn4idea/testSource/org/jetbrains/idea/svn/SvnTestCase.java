@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.RunAll;
@@ -46,7 +47,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.openapi.application.PluginPathManager.getPluginHomePath;
 import static com.intellij.openapi.util.io.FileUtil.*;
@@ -140,6 +141,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     vcs = SvnVcs.getInstance(myProject);
     myGate = new MockChangeListManagerGate(changeListManager);
 
+    VfsUtil.markDirtyAndRefresh(false, true, true, myRepoRoot);
     refreshSvnMappingsSynchronously();
     refreshChanges();
   }
@@ -157,10 +159,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     return svnExecutable.getParentFile();
   }
 
-  protected void refreshSvnMappingsSynchronously() {
-    CountDownLatch done = new CountDownLatch(1);
-    vcs.getSvnFileUrlMappingImpl().scheduleRefresh(() -> done.countDown());
-    RunAll.runAll(() -> done.await());
+  protected void refreshSvnMappingsSynchronously() throws TimeoutException {
+    vcs.getSvnFileUrlMappingImpl().scheduleRefresh();
+    vcs.getSvnFileUrlMappingImpl().waitForRefresh();
   }
 
   protected void refreshChanges() {
@@ -355,7 +356,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     String branchUrl = myRepoUrl + "/branches/b1";
 
     withDisabledChangeListManager(() -> {
-      assertTrue(delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
+      runWithRetries(() -> {
+        deleteRecursively(new File(myWorkingCopyDir.getPath() + File.separator + ".svn").toPath());
+      });
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());

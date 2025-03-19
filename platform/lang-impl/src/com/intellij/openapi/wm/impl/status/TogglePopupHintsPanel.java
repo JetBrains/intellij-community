@@ -29,6 +29,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
   public static final String ID = "InspectionProfile";
 

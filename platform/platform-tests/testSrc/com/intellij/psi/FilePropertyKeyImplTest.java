@@ -75,22 +75,7 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
   }
 
   @Test
-  public void testReadFromFile_PersistenceDisabled() {
-    Assume.assumeFalse(FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE());
-    VirtualFile file = createVirtualFile("Foo.java", "");
-    TestCase.assertTrue("Write sample1 to file", key.setPersistentValue(file, sample1));
-    TestCase.assertEquals(sample1, key.getPersistentValue(file));
-
-    memKey.set(file, null); // clear memory data
-
-    TestCase.assertNull("Should read null from memory (before write)", key.getPersistentValue(file));
-    TestCase.assertFalse("Should not update sample1>sample1 value in file", key.setPersistentValue(file, sample1));
-    TestCase.assertEquals("Should read sample1 from memory (after write)", sample1, key.getPersistentValue(file));
-  }
-
-  @Test
   public void testReadFromFile_PersistenceEnabled() {
-    Assume.assumeTrue(FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE());
     VirtualFile file = createVirtualFile("Foo.java", "");
     TestCase.assertTrue("Write sample1 to file", key.setPersistentValue(file, sample1));
     TestCase.assertEquals(sample1, key.getPersistentValue(file));
@@ -151,7 +136,6 @@ public class FilePropertyKeyImplTest<T> extends LightPlatformTestCase {
       assertFalse("Should not update to the same string: '" + value + "'", STRING_KEY.setPersistentValue(file, value));
       assertEquals("Should read exactly the same string (read from memory)", value, STRING_KEY.getPersistentValue(file));
 
-      if (!FilePropertyKeyImpl.getREAD_PERSISTENT_VALUE()) continue;
       memKey.set(file, null); // clear memory data
       assertEquals("Should read exactly the same string (read from file)", value, STRING_KEY.getPersistentValue(file));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -12,10 +12,13 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.statistics.DebuggerStatistics;
+import com.intellij.debugger.statistics.Engine;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -26,6 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
@@ -58,10 +62,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
-  @NotNull
-  private Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
+  private @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
     var res = new AsyncPromise<List<SmartStepTarget>>();
-    session.getProcess().getManagerThread().schedule(new DebuggerContextCommandImpl(session.getContextManager().getContext()) {
+    DebuggerContextImpl context = session.getContextManager().getContext();
+    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Promises.compute(res, () ->
@@ -81,24 +85,21 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return res;
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
     return findSmartStepTargetsAsync(position, session, true);
   }
 
-  @NotNull
   @Override
-  public Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
+  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
     if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
       return findSmartStepTargetsAsync(position, session, false);
     }
     return Promises.rejectedPromise();
   }
 
-  @NotNull
   @Override
-  public List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
+  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
     throw new IllegalStateException("Should not be used");
   }
 
@@ -115,19 +116,21 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
                                                    boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList(); // the document has been changed
     }
 
     final PsiFile file = position.getFile();
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile == null) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       // the file is not physical
       return Collections.emptyList();
     }
 
     final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-    if (doc == null) return Collections.emptyList();
-    if (line >= doc.getLineCount()) {
+    if (doc == null || line >= doc.getLineCount()) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList(); // the document has been changed
     }
     TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
@@ -136,17 +139,20 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     final TextRange lineRange = (body != null) ? curLineRange.intersection(body.getTextRange()) : curLineRange;
 
     if (lineRange == null || lineRange.isEmpty() || element == null || element instanceof PsiCompiledElement) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
       return Collections.emptyList();
     }
 
-    do {
-      final PsiElement parent = element.getParent();
-      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-        break;
-      }
-      element = parent;
+    final PsiElement initial = element;
+    element = getTopmostParentAfterOffset(element, lineRange.getStartOffset());
+
+    final PsiElement statementParent = PsiTreeUtil.getParentOfType(initial, PsiStatement.class, false);
+    if (statementParent != null
+        && (body == null || body.getTextRange().contains(statementParent.getTextRange()))
+        // take only wider statements
+        && statementParent.getTextRange().contains(element.getTextRange())) {
+      element = statementParent;
     }
-    while (true);
 
     final List<SmartStepTarget> targets = new ArrayList<>();
 
@@ -158,13 +164,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       private int myNextLambdaExpressionOrdinal = 0;
       private boolean myInsideLambda = false;
 
-      @Nullable
-      private String getCurrentParamName() {
+      private @Nullable String getCurrentParamName() {
         return myParamNameStack.peekFirst();
       }
 
       @Override
       public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        if (!matchLine(aClass)) return;
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (argumentList != null) {
           argumentList.accept(this);
@@ -180,6 +186,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         myInsideLambda = true;
         super.visitLambdaExpression(expression);
         myInsideLambda = inLambda;
+        if (!matchLine(expression)) return;
         targets.add(0, new LambdaSmartStepTarget(expression,
                                                  getCurrentParamName(),
                                                  expression.getBody(),
@@ -191,7 +198,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         PsiElement element = expression.resolve();
-        if (element instanceof PsiMethod) {
+        if (matchLine(expression) && element instanceof PsiMethod) {
           PsiElement navMethod = element.getNavigationElement();
           if (navMethod instanceof PsiMethod) {
             targets.add(0, new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
@@ -267,12 +274,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
         TextRange range = expression.getTextRange();
         if (lineRange.intersects(range)) {
-          if (expand) {
+          if (expand && matchLine(expression)) {
             textRange.set(textRange.get().union(range));
           }
           return true;
         }
         return false;
+      }
+
+      boolean matchLine(@NotNull PsiElement elem) {
+        return lineRange.getStartOffset() <= elem.getTextRange().getStartOffset();
       }
 
       @Override
@@ -286,10 +297,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           final PsiExpression[] expressions = expressionList.getExpressions();
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (int idx = 0; idx < expressions.length; idx++) {
+            final PsiExpression argExpression = expressions[idx];
+            if (!matchLine(argExpression)) continue;
             final String paramName =
               (idx < parameters.length && !parameters[idx].isVarArgs()) ? parameters[idx].getName() : "arg" + (idx + 1);
             myParamNameStack.push(methodName + ": " + paramName + ".");
-            final PsiExpression argExpression = expressions[idx];
             try {
               argExpression.accept(this);
             }
@@ -321,15 +333,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           myContextStack.push(psiMethod);
         }
         try {
-          if (psiMethod != null) {
+          PsiElement callExpression = expression instanceof PsiMethodCallExpression callExpr
+                                      ? callExpr.getMethodExpression().getReferenceNameElement()
+                                      : expression instanceof PsiNewExpression newExpr
+                                        ? newExpr.getClassOrAnonymousClassReference()
+                                        : expression;
+          if (psiMethod != null && (callExpression == null || matchLine(callExpression))) {
             MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
               null,
-              expression instanceof PsiMethodCallExpression callExpr
-                ? callExpr.getMethodExpression().getReferenceNameElement()
-                : expression instanceof PsiNewExpression newExpr
-                  ? newExpr.getClassOrAnonymousClassReference()
-                  : expression,
+              callExpression,
               myInsideLambda || (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null),
               null
             );
@@ -363,6 +376,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       sibling.accept(methodCollector);
     }
     if (targets.isEmpty()) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.NO_TARGETS);
       return Collections.emptyList();
     }
 
@@ -379,12 +393,19 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
     StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
     if (frameProxy == null) {
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
       return targets;
     }
 
     VirtualMachineProxyImpl virtualMachine = frameProxy.getVirtualMachine();
     if (!virtualMachine.canGetConstantPool() || !virtualMachine.canGetBytecodes()) {
-      return smart ? targets : Collections.emptyList();
+      if (smart) {
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
+        return targets;
+      } else {
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE);
+        return Collections.emptyList();
+      }
     }
 
     try {
@@ -394,6 +415,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       ArrayList<SmartStepTarget> all = new ArrayList<>(targets);
 
+      final List<SmartStepTarget> targetsWithCollisions = new ArrayList<>();
       // collect bytecode offsets of the calls
       final Set<Integer> finalLines = lines;
       class BytecodeVisitor extends MethodVisitor implements MethodBytecodeUtil.InstructionOffsetReader {
@@ -405,7 +427,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         final Set<SmartStepTarget> foundTargets = new HashSet<>();
         final Set<SmartStepTarget> alreadyExecutedTargets = new HashSet<>();
         final Set<SmartStepTarget> anotherBasicBlockTargets = new HashSet<>();
-        boolean hasCollisions = false;
 
         BytecodeVisitor() {
           super(Opcodes.API_VERSION);
@@ -469,8 +490,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               PsiMethod method = mt.getMethod();
               if (DebuggerUtilsEx.methodMatches(method, owner.replace("/", "."), name, desc, debugProcess)) {
                 if (foundTargets.contains(mt)) {
-                  hasCollisions = true;
-                  LOG.debug("Target occurred multiple times in bytecode: " + mt);
+                  targetsWithCollisions.add(mt);
                 }
                 else {
                   foundTargets.add(mt);
@@ -490,15 +510,27 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       MethodBytecodeUtil.visit(location.method(), bytecodeVisitor, true);
 
       // sanity check
-      boolean hasNoOffset = false;
+      List<SmartStepTarget> notFoundTargets = new ArrayList<>();
       for (SmartStepTarget t : targets) {
         if (isImmediateMethodCall(t) && !bytecodeVisitor.foundTargets.contains(t)) {
-          LOG.debug("Target was not found in bytecode: " + t);
-          hasNoOffset = true;
+          notFoundTargets.add(t);
         }
       }
-      if (bytecodeVisitor.hasCollisions || hasNoOffset) {
-        // logging was done above
+
+      StringBuilder errorMessage = new StringBuilder();
+      if (!targetsWithCollisions.isEmpty()) {
+        errorMessage.append("Target occurred multiple times in bytecode: ")
+          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(targetsWithCollisions));
+      }
+      if (!notFoundTargets.isEmpty()) {
+        if (!errorMessage.isEmpty()) errorMessage.append('\n');
+        errorMessage.append("Target not found in bytecode: ")
+          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(notFoundTargets));
+      }
+
+      if (!errorMessage.isEmpty()) {
+        JvmSmartStepIntoErrorReporter.report(element, debuggerContext.getDebuggerSession(), position, errorMessage.toString());
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.TARGETS_MISMATCH);
         return Collections.emptyList();
       }
 
@@ -530,13 +562,28 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           });
       }
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
+      return targets;
     }
     catch (Exception e) {
-      LOG.info(e);
+      DebuggerUtilsImpl.logError(e);
+      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR);
       return Collections.emptyList();
     }
+  }
 
-    return targets;
+  /**
+   * Find the topmost parent element whose range starts after the target offset.
+   */
+  private static PsiElement getTopmostParentAfterOffset(PsiElement element, int offset) {
+    if (element == null) return null;
+    while (true) {
+      final PsiElement parent = element.getParent();
+      if (parent == null || (parent.getTextRange().getStartOffset() < offset)) {
+        return element;
+      }
+      element = parent;
+    }
   }
 
   private static boolean isImmediateMethodCall(SmartStepTarget target) {
@@ -550,6 +597,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets).filter(t -> t.getMethod().equals(psiMethod));
+    return immediateMethodCalls(targets)
+      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
   }
 }

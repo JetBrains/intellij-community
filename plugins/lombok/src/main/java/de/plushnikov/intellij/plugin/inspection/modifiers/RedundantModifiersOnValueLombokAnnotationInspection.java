@@ -8,7 +8,7 @@ import static com.intellij.psi.PsiModifier.*;
 /**
  * @author Rowicki Michał
  */
-public class RedundantModifiersOnValueLombokAnnotationInspection extends LombokRedundantModifierInspection {
+public final class RedundantModifiersOnValueLombokAnnotationInspection extends LombokRedundantModifierInspection {
 
   public RedundantModifiersOnValueLombokAnnotationInspection() {
     super(

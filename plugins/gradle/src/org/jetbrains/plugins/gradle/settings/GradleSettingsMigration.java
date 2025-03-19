@@ -1,10 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static org.jetbrains.plugins.gradle.settings.TestRunner.PLATFORM;
 
+@Service(Service.Level.PROJECT)
 @State(name = "GradleMigrationSettings", storages = @Storage("gradle.xml"))
 public final class GradleSettingsMigration implements PersistentStateComponent<Element> {
   private Element myElement = new Element("settings");
@@ -24,9 +22,8 @@ public final class GradleSettingsMigration implements PersistentStateComponent<E
     myElement.setAttribute("migrationVersion", String.valueOf(version));
   }
 
-  @NotNull
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     return myElement;
   }
 
@@ -37,11 +34,10 @@ public final class GradleSettingsMigration implements PersistentStateComponent<E
 
   @State(name = "DefaultGradleProjectSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
   public static class LegacyDefaultGradleProjectSettings implements PersistentStateComponent<LegacyDefaultGradleProjectSettings.MyState> {
-    @Nullable private MyState myState = null;
+    private @Nullable MyState myState = null;
 
-    @Nullable
     @Override
-    public MyState getState() {
+    public @Nullable MyState getState() {
       return myState;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -67,14 +67,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
@@ -90,6 +87,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     super(project);
   }
 
+  @ApiStatus.Internal
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
@@ -132,13 +130,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  @Nullable
-  public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                      String title,
-                                                      @Nullable String prompt,
-                                                      @Nullable String singleFileTitle,
-                                                      @Nullable String singleFilePromptTemplate,
-                                                      @NotNull VcsShowConfirmationOption confirmationOption) {
+  public @Nullable Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
+                                                                String title,
+                                                                @Nullable String prompt,
+                                                                @Nullable String singleFileTitle,
+                                                                @Nullable String singleFilePromptTemplate,
+                                                                @NotNull VcsShowConfirmationOption confirmationOption) {
     if (files == null || files.isEmpty()) {
       return null;
     }
@@ -173,15 +170,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                       String title,
-                                                       @Nullable String prompt,
-                                                       @Nullable String singleFileTitle,
-                                                       @Nullable String singleFilePromptTemplate,
-                                                       @NotNull VcsShowConfirmationOption confirmationOption,
-                                                       @Nullable String okActionName,
-                                                       @Nullable String cancelActionName) {
+  public @Nullable Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
+                                                                 String title,
+                                                                 @Nullable String prompt,
+                                                                 @Nullable String singleFileTitle,
+                                                                 @Nullable String singleFilePromptTemplate,
+                                                                 @NotNull VcsShowConfirmationOption confirmationOption,
+                                                                 @Nullable String okActionName,
+                                                                 @Nullable String cancelActionName) {
     if (files.size() == 1 && singleFileTitle != null && singleFilePromptTemplate != null) {
       final String filePrompt = format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
       if (requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle,
@@ -198,18 +194,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
-                                                       String title,
-                                                       @Nullable String prompt,
-                                                       @Nullable String singleFileTitle,
-                                                       @Nullable String singleFilePromptTemplate,
-                                                       @NotNull VcsShowConfirmationOption confirmationOption) {
+  public @Nullable Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
+                                                                 String title,
+                                                                 @Nullable String prompt,
+                                                                 @Nullable String singleFileTitle,
+                                                                 @Nullable String singleFilePromptTemplate,
+                                                                 @NotNull VcsShowConfirmationOption confirmationOption) {
     return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption, null, null);
   }
 
   @Override
-  public void showErrors(final List<? extends VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
+  public void showErrors(final List<? extends VcsException> abstractVcsExceptions, final @NotNull String tabDisplayName) {
     showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName,
                    vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
   }
@@ -350,8 +345,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       textFileEditor = ((TextEditor)fileEditor);
     }
     else {
-      FileEditor[] editors = FileEditorManager.getInstance(myProject).getEditors(file);
-      textFileEditor = ContainerUtil.findInstance(editors, TextEditor.class);
+      textFileEditor = ContainerUtil.findInstance(FileEditorManager.getInstance(myProject).getEditorList(file), TextEditor.class);
     }
 
     Editor editor;
@@ -401,10 +395,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  @NotNull
-  public List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
-                                           @NotNull MergeProvider provider,
-                                           @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
+  public @NotNull List<VirtualFile> showMergeDialog(@NotNull List<? extends VirtualFile> files,
+                                                    @NotNull MergeProvider provider,
+                                                    @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
     RefreshVFsSynchronously.refreshVirtualFiles(files);
     final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
@@ -425,7 +418,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       ChangeBrowserSettings settings = filterDialog.getSettings();
 
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
-          (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+          (!ModalityState.nonModal().equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
@@ -485,7 +478,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     extraActions.add(new CloseTabToolbarAction() {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         contentManager.removeContent(content);
       }
     });
@@ -497,11 +490,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void loadAndShowCommittedChangesDetails(@NotNull final Project project,
-                                                 @NotNull final VcsRevisionNumber revision,
-                                                 @NotNull final VirtualFile virtualFile,
+  public void loadAndShowCommittedChangesDetails(final @NotNull Project project,
+                                                 final @NotNull VcsRevisionNumber revision,
+                                                 final @NotNull VirtualFile virtualFile,
                                                  @NotNull VcsKey vcsKey,
-                                                 @Nullable final RepositoryLocation location,
+                                                 final @Nullable RepositoryLocation location,
                                                  final boolean isNonLocal) {
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
     if (vcs == null) return;
@@ -539,17 +532,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public static boolean showCommittedChangesAsTab() {
     return Registry.is("vcs.show.affected.files.as.tab") &&
-           ModalityState.current() == ModalityState.NON_MODAL;
+           ModalityState.current() == ModalityState.nonModal();
   }
 
-  @NotNull
-  private static LoadingCommittedChangeListPanel.ChangelistData loadCommittedChanges(
+  private static @NotNull LoadingCommittedChangeListPanel.ChangelistData loadCommittedChanges(
     @NotNull VcsRevisionNumber revision,
     @NotNull FilePath filePath,
     @NotNull CommittedChangeListProvider changelistProvider) throws VcsException {
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
-      if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
+      if (pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
 
       CommittedChangeList changeList = pair.getFirst();
       FilePath targetPath = pair.getSecond();
@@ -562,16 +554,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  @Nullable
-  private static Pair<CommittedChangeList, FilePath> getAffectedChanges(@NotNull CommittedChangesProvider provider,
-                                                                        @NotNull VirtualFile virtualFile,
-                                                                        @NotNull VcsRevisionNumber revision,
-                                                                        @Nullable RepositoryLocation location,
-                                                                        boolean isNonLocal) throws VcsException {
+  private static @NotNull Pair<CommittedChangeList, FilePath> getAffectedChanges(@NotNull CommittedChangesProvider provider,
+                                                                                 @NotNull VirtualFile virtualFile,
+                                                                                 @NotNull VcsRevisionNumber revision,
+                                                                                 @Nullable RepositoryLocation location,
+                                                                                 boolean isNonLocal) throws VcsException {
     if (!isNonLocal) {
       //noinspection unchecked
       Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
       if (pair != null) return pair;
+
+      throw new VcsException(VcsBundle.message("error.cant.load.affected.files", virtualFile.getPath(), revision.asString()));
     }
     else {
       if (location != null) {
@@ -584,44 +577,46 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         if (changes.size() == 1) {
           return Pair.create(changes.get(0), null);
         }
+        else {
+          throw new VcsException(VcsBundle.message("error.cant.load.affected.files", virtualFile.getPath(), revision.asString()));
+        }
       }
       else {
         CommittedChangeList list = getRemoteList(provider, revision, virtualFile);
-        if (list != null) return Pair.create(list, null);
+        return Pair.create(list, null);
       }
     }
-    LOG.warn(String.format("Can't get affected files: path: %s; revision: %s; location: %s; nonLocal: %s",
-                           virtualFile.getPath(), revision.asString(), location, isNonLocal), new Throwable());
-    return null;
   }
 
-  @Nullable
-  public static CommittedChangeList getRemoteList(@NotNull CommittedChangesProvider provider,
-                                                  @NotNull VcsRevisionNumber revision,
-                                                  @NotNull VirtualFile nonLocal) throws VcsException {
-    final RepositoryLocation local = provider.getForNonLocal(nonLocal);
-    if (local != null) {
-      final String number = revision.asString();
-      final ChangeBrowserSettings settings = provider.createDefaultSettings();
-      //noinspection unchecked
-      final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, local, provider.getUnlimitedCountValue());
-      for (CommittedChangeList change : changes) {
-        if (number.equals(String.valueOf(change.getNumber()))) {
-          return change;
-        }
+  public static @NotNull CommittedChangeList getRemoteList(@NotNull CommittedChangesProvider provider,
+                                                           @NotNull VcsRevisionNumber revision,
+                                                           @NotNull VirtualFile nonLocal) throws VcsException {
+    final RepositoryLocation location = provider.getForNonLocal(nonLocal);
+    if (location == null) {
+      throw new VcsException(VcsBundle.message("error.cant.get.local.file.for.non.local", nonLocal));
+    }
+
+    final String number = revision.asString();
+    final ChangeBrowserSettings settings = provider.createDefaultSettings();
+    //noinspection unchecked
+    final List<CommittedChangeList> changes = provider.getCommittedChanges(settings, location, provider.getUnlimitedCountValue());
+    for (CommittedChangeList change : changes) {
+      if (number.equals(String.valueOf(change.getNumber()))) {
+        return change;
       }
     }
-    return null;
+    LOG.warn(String.format("Cannot load affected files for location '%s' in revision '%s' with limit %s (found %s)",
+                           location, revision.asString(), provider.getUnlimitedCountValue(), changes.size()), new Throwable());
+    throw new VcsException(VcsBundle.message("error.cant.load.affected.files", nonLocal.getPath(), revision.asString()));
   }
 
-  @NotNull
-  private static @Nls String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
+  private static @NotNull @Nls String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
     return VcsBundle.message("impl.show.all.affected.files.for.path.at.revision.failed", filePath.getPath(), revision.asString());
   }
 
   private static final class AsynchronousListsLoader extends Task.Backgroundable {
-    @NotNull private final CommittedChangesProvider myProvider;
-    @NotNull private final RepositoryLocation myLocation;
+    private final @NotNull CommittedChangesProvider myProvider;
+    private final @NotNull RepositoryLocation myLocation;
     private final ChangeBrowserSettings mySettings;
     private final ChangesBrowserDialog myDlg;
     private final List<VcsException> myExceptions;
@@ -646,7 +641,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       final AsynchConsumer<List<CommittedChangeList>> appender = myDlg.getAppender();
       final BufferedListConsumer<CommittedChangeList> bufferedListConsumer = new BufferedListConsumer<>(10, appender, -1);
 
@@ -694,7 +689,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public interface CommittedChangeListProvider {
-    @Nullable
+    @NotNull
     Pair<? extends CommittedChangeList, FilePath> loadChangelist() throws VcsException;
   }
 }

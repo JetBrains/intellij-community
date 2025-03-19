@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ex.EntryPointsManager
@@ -18,24 +17,24 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.core.canBePrivate
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
 
@@ -97,10 +96,10 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         val useScope = declaration.useScope
         val name = declaration.name ?: return false
         val restrictedScope = if (useScope is GlobalSearchScope) {
-            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
                 PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return false
                 PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> return false
-                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSources(useScope, declaration.project)
+                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> KotlinSourceFilterScope.projectSourcesAndResources(useScope, declaration.project)
             }
         } else useScope
 
@@ -120,6 +119,13 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
                     otherUsageFound = true
                     return@Processor false
                 }
+            }
+            // Do not privatize functions referenced by callable references
+            if (usage.getStrictParentOfType<KtCallableReferenceExpression>() != null) {
+                // Consider the reference is used outside of the class,
+                // as KFunction#call would fail even on references inside that same class
+                otherUsageFound = true
+                return@Processor false
             }
             val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
                 true, KtNamedFunction::class.java, KtPropertyAccessor::class.java
@@ -157,7 +163,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             declaration.visibilityModifier() ?: nameElement,
             KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFixFE10(modifierListOwner, KtTokens.PRIVATE_KEYWORD))
+            AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD).asQuickFix()
         )
     }
 }

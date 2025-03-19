@@ -10,6 +10,7 @@ class A : I {
     }
 }
 
+// IGNORE_K2
 // ABSENT: abstractFun
 // ABSENT: abstractVal
 // EXIST: { itemText: "nonAbstractFun", attributes: "bold" }

@@ -1,21 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
-import java.util.Iterator;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class OutputFileObject extends JpsFileObject {
   @Nullable
   private final JpsJavacFileManager.Context myContext;
@@ -30,7 +25,7 @@ public final class OutputFileObject extends JpsFileObject {
   private final String myEncodingName;
   private final boolean myIsGenerated;
 
-  public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
+  OutputFileObject(@Nullable JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
                           String relativePath,
                           @NotNull File file,
@@ -74,17 +69,6 @@ public final class OutputFileObject extends JpsFileObject {
 
   public boolean isGenerated() {
     return myIsGenerated;
-  }
-
-  /**
-   * @deprecated In general, an output object may be generated from several source files. Use {@link OutputFileObject#getSourceFiles()} method instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @Nullable
-  public File getSourceFile() {
-    final Iterator<File> it = getSourceFiles().iterator();
-    return it.hasNext()? it.next() : null;
   }
 
   @NotNull

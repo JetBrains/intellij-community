@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -25,12 +11,13 @@ import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ILightStubFileElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.CharTable;
+import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,19 +39,35 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
   }
 
   @Override
-  @NotNull
-  public CharTable getCharTable() {
+  public @NotNull CharTable getCharTable() {
     return myCharTable;
   }
 
-  @NotNull
   @Override
-  public LighterAST getLighterAST() {
-    IElementType contentType = getElementType();
-    if (!isParsed() && contentType instanceof ILightStubFileElementType) {
-      return new FCTSBackedLighterAST(getCharTable(), ((ILightStubFileElementType<?>)contentType).parseContentsLight(this));
+  public @NotNull LighterAST getLighterAST() {
+    if (!isParsed()) {
+      LightLanguageStubDefinition lightStubFactory = getLightStubFactory();
+      if (lightStubFactory != null) {
+        FlyweightCapableTreeStructure<@NotNull LighterASTNode> structure = lightStubFactory.parseContentsLight(this);
+        return new FCTSBackedLighterAST(getCharTable(), structure);
+      }
     }
     return new TreeBackedLighterAST(this);
+  }
+
+  private @Nullable LightLanguageStubDefinition getLightStubFactory() {
+    Language language = getElementType().getLanguage();
+    LanguageStubDescriptor stubDescriptor = StubElementRegistryService.getInstance().getStubDescriptor(language);
+    if (stubDescriptor == null) {
+      return null;
+    }
+
+    LanguageStubDefinition stubDefinition = stubDescriptor.getStubDefinition();
+    if (!(stubDefinition instanceof LightLanguageStubDefinition)) {
+      return null;
+    }
+
+    return (LightLanguageStubDefinition)stubDefinition;
   }
 
   public FileElement(@NotNull IElementType type, CharSequence text) {
@@ -97,15 +100,18 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
     myStubbedSpine = null;
   }
 
-  @NotNull
-  public final AstSpine getStubbedSpine() {
+  @ApiStatus.Internal
+  public final @NotNull AstSpine getStubbedSpine() {
     AstSpine result = myStubbedSpine;
     if (result == null) {
       PsiFileImpl file = (PsiFileImpl)getPsi();
-      IStubFileElementType type = file.getElementTypeForStubBuilder();
-      if (type == null) return AstSpine.EMPTY_SPINE;
+      LanguageStubDescriptor descriptor = file.getStubDescriptor();
+      if (descriptor == null) return AstSpine.EMPTY_SPINE;
 
-      result = RecursionManager.doPreventingRecursion(file, false, () -> new AstSpine(calcStubbedDescendants(type.getBuilder())));
+      result = RecursionManager.doPreventingRecursion(file, false, () -> {
+        return new AstSpine(calcStubbedDescendants(descriptor.getStubDefinition().getBuilder()));
+      });
+
       if (result == null) {
         throw new StackOverflowPreventedException("Endless recursion prevented");
       }
@@ -127,7 +133,8 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
         }
 
         IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType<?, ?>)type).shouldCreateStub(node)) {
+        StubElementFactory<?, ?> factory = StubElementRegistryService.getInstance().getStubFactory(type);
+        if (factory != null && factory.shouldCreateStub(node)) {
           result.add(node);
         }
 

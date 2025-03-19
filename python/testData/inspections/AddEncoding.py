@@ -1,1 +1,2 @@
-<warning descr="No encoding specified for file"><caret></warning>c = "string"
+<warning descr="No encoding specified for file">c = "string"
+</warning>

@@ -32,7 +32,7 @@ import org.jetbrains.lang.manifest.header.impl.StandardHeaderParser;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaFxManifestHeaderParsers implements HeaderParserProvider {
+public final class JavaFxManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public JavaFxManifestHeaderParsers() {
@@ -44,9 +44,8 @@ public class JavaFxManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("JavaFX-Fallback-Class", StandardHeaderParser.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public Map<String, HeaderParser> getHeaderParsers() {
+  public @NotNull Map<String, HeaderParser> getHeaderParsers() {
     return myParsers;
   }
 }

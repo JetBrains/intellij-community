@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.URL;
 import java.util.Set;
@@ -20,12 +21,11 @@ public final class LibraryJarStatisticsService implements DumbAware {
   private static final LibraryJarStatisticsService ourInstance = new LibraryJarStatisticsService();
   private LibraryJarDescriptor[] ourDescriptors;
 
-  @NotNull
-  public static LibraryJarStatisticsService getInstance() {
+  public static @NotNull LibraryJarStatisticsService getInstance() {
     return ourInstance;
   }
 
-  public Set<String> getLibraryNames() {
+  public @Unmodifiable Set<String> getLibraryNames() {
     return ContainerUtil.map2Set(getTechnologyDescriptors(), descriptor -> descriptor.myName);
   }
 
@@ -40,8 +40,7 @@ public final class LibraryJarStatisticsService implements DumbAware {
     return ourDescriptors;
   }
 
-  @Nullable
-  private static LibraryJarDescriptors deserialize(@Nullable URL url) {
+  private static @Nullable LibraryJarDescriptors deserialize(@Nullable URL url) {
     if (url == null) return null;
 
     LibraryJarDescriptors libraryJarDescriptors = null;
@@ -54,8 +53,7 @@ public final class LibraryJarStatisticsService implements DumbAware {
     return libraryJarDescriptors;
   }
 
-  @Nullable
-  private static URL createVersionsUrl() {
+  private static @Nullable URL createVersionsUrl() {
     return LibraryJarDescriptor.class.getResource("/com/intellij/internal/statistic/libraryJar/library-jar-statistics.xml");
   }
 }

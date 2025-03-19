@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -39,16 +39,16 @@ import java.util.List;
 public class RadFormLayoutManager extends RadAbstractGridLayoutManager implements AlignPropertyProvider {
   private FormLayoutColumnProperties myPropertiesPanel;
 
-  @NonNls private static final String ENCODED_FORMSPEC_GROW = "d:grow";
+  private static final @NonNls String ENCODED_FORMSPEC_GROW = "d:grow";
   private static final Size DEFAULT_NOGROW_SIZE = new BoundedSize(Sizes.DEFAULT, new ConstantSize(4, ConstantSize.PIXEL), null);
 
   @Override
-  @Nullable public String getName() {
+  public @Nullable String getName() {
     return UIFormXmlConstants.LAYOUT_FORM;
   }
 
-  @Override @Nullable
-  public LayoutManager createLayout() {
+  @Override
+  public @Nullable LayoutManager createLayout() {
     return new FormLayout(ENCODED_FORMSPEC_GROW, ENCODED_FORMSPEC_GROW);
   }
 
@@ -246,8 +246,8 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return -1;
   }
 
-  @NotNull @Override
-  public ComponentDropLocation getDropLocation(@NotNull RadContainer container, @Nullable final Point location) {
+  @Override
+  public @NotNull ComponentDropLocation getDropLocation(@NotNull RadContainer container, final @Nullable Point location) {
     FormLayout formLayout = getFormLayout(container);
     if (formLayout.getRowCount() == 0 || formLayout.getColumnCount() == 0) {
       if (location != null) {
@@ -634,8 +634,8 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return groupIndices;
   }
 
-  @Override @Nullable
-  public String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
+  @Override
+  public @Nullable String getCellResizeTooltip(RadContainer container, boolean isRow, int cell, int newSize) {
     final String size = getUpdatedSize(container, isRow, cell, newSize).toString();
     return isRow
            ? UIDesignerBundle.message("tooltip.resize.row", cell+getCellIndexBase(), size)

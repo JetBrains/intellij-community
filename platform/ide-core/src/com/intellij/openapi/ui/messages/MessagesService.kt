@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.messages
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
+import com.intellij.openapi.ui.ExitActionType
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
@@ -33,17 +34,38 @@ interface MessagesService {
       ?: MessagesService::class.java.classLoader.loadClass("com.intellij.ui.messages.MessagesServiceImpl").getDeclaredConstructor().newInstance() as MessagesService
   }
 
-  fun showMessageDialog(project: Project?,
-                        parentComponent: Component? = null,
-                        @DialogMessage message: String?,
-                        @NlsContexts.DialogTitle title: String?,
-                        options: Array<String>,
-                        defaultOptionIndex: Int = 0,
-                        focusedOptionIndex: Int = -1,
-                        icon: Icon?,
-                        doNotAskOption: DoNotAskOption?,
-                        alwaysUseIdeaUI: Boolean = false,
-                        helpId: String? = null): Int
+  fun showMessageDialog(
+    project: Project?,
+    parentComponent: Component? = null,
+    @DialogMessage message: String?,
+    @NlsContexts.DialogTitle title: String?,
+    options: Array<String>,
+    defaultOptionIndex: Int = 0,
+    focusedOptionIndex: Int = -1,
+    icon: Icon?,
+    doNotAskOption: DoNotAskOption?,
+    alwaysUseIdeaUI: Boolean = false,
+    helpId: String? = null
+  ): Int {
+    return showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, alwaysUseIdeaUI, helpId, null)
+  }
+
+  fun showMessageDialog(
+    project: Project?,
+    parentComponent: Component? = null,
+    @DialogMessage message: String?,
+    @NlsContexts.DialogTitle title: String?,
+    options: Array<String>,
+    defaultOptionIndex: Int = 0,
+    focusedOptionIndex: Int = -1,
+    icon: Icon?,
+    doNotAskOption: DoNotAskOption?,
+    alwaysUseIdeaUI: Boolean = false,
+    helpId: String? = null,
+    invocationPlace: String? = null,
+    exitActionTypes: Array<ExitActionType> = emptyArray()
+  ): Int
+
 
   fun showMoreInfoMessageDialog(project: Project?,
                                 @DialogMessage message: String?,

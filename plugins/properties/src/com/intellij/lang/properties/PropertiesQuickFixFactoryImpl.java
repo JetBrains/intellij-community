@@ -21,6 +21,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.CreatePropertyFix;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -31,12 +32,12 @@ public class PropertiesQuickFixFactoryImpl extends PropertiesQuickFixFactory {
   }
 
   @Override
-  public IntentionAction createRemovePropertyFix(Property property) {
-    return new RemovePropertyFix(property);
+  public IntentionAction createRemovePropertyFix(@NotNull Property property) {
+    return new RemovePropertyFix(property).asIntention();
   }
 
   @Override
-  public LocalQuickFix createRemovePropertyLocalFix() {
-    return new RemovePropertyLocalFix();
+  public LocalQuickFix createRemovePropertyLocalFix(@NotNull Property property) {
+    return LocalQuickFix.from(new RemovePropertyFix(property));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.smartPointers;
 
@@ -20,8 +20,9 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.stubs.LanguageStubDescriptor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,8 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
-class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+@ApiStatus.Internal
+public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance(SmartPsiElementPointerImpl.class);
 
   private Reference<E> myElement;
@@ -64,14 +66,12 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myManager.getProject();
   }
 
   @Override
-  @Nullable
-  public E getElement() {
+  public @Nullable E getElement() {
     if (getProject().isDisposed()) return null;
 
     E element = getCachedElement();
@@ -129,17 +129,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return myElementInfo.getRange(myManager);
   }
 
-  @Nullable
   @Override
-  public Segment getPsiRange() {
+  public @Nullable Segment getPsiRange() {
     return myElementInfo.getPsiRange(myManager);
   }
 
-  @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
-                                                                                  @NotNull E element,
-                                                                                  @Nullable PsiFile containingFile,
-                                                                                  boolean forInjected) {
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
+                                                                                           @NotNull E element,
+                                                                                           @Nullable PsiFile containingFile,
+                                                                                           boolean forInjected) {
     SmartPointerElementInfo elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       PsiElement restoredElement = elementInfo.restoreElement(manager);
@@ -157,11 +155,10 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     return elementInfo;
   }
 
-  @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
-                                                                                    @NotNull E element,
-                                                                                    @Nullable PsiFile containingFile,
-                                                                                    boolean forInjected) {
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo doCreateElementInfo(@NotNull Project project,
+                                                                                             @NotNull E element,
+                                                                                             @Nullable PsiFile containingFile,
+                                                                                             boolean forInjected) {
     if (element instanceof PsiDirectory) {
       return new DirElementInfo((PsiDirectory)element);
     }
@@ -248,15 +245,14 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
            PsiTreeUtil.findElementOfClassAtRange(containingFile, range.getStartOffset(), range.getEndOffset(), element.getClass()) != element;
   }
 
-  @Nullable
-  private static SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
+  private static @Nullable SmartPointerElementInfo createAnchorInfo(@NotNull PsiElement element, @NotNull PsiFile containingFile) {
     if (element instanceof StubBasedPsiElement && containingFile instanceof PsiFileImpl) {
-      IStubFileElementType<?> stubType = ((PsiFileImpl)containingFile).getElementTypeForStubBuilder();
-      if (stubType != null && stubType.shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
+      LanguageStubDescriptor stubType = ((PsiFileImpl)containingFile).getStubDescriptor();
+      if (stubType != null && stubType.getStubDefinition().shouldBuildStubFor(containingFile.getViewProvider().getVirtualFile())) {
         StubBasedPsiElement<?> stubPsi = (StubBasedPsiElement<?>)element;
         int stubId = PsiAnchor.calcStubIndex(stubPsi);
         if (stubId != -1) {
-          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getElementType());
+          return new AnchorElementInfo(element, (PsiFileImpl)containingFile, stubId, stubPsi.getIElementType());
         }
       }
     }

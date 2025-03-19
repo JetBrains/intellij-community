@@ -14,8 +14,8 @@ class OsRegistryConfigProvider(private val configName: String) {
   companion object {
     private val logger = logger<OsRegistryConfigProvider>()
     private const val configJsonFilename = "config.json"
-    const val etcXdgPath = "/etc/xdg/"
-    fun getConfigSubDirectoryPath(configName: String) = "JetBrains/$configName"
+    const val etcXdgPath: String = "/etc/xdg/"
+    fun getConfigSubDirectoryPath(configName: String): String = "JetBrains/$configName"
   }
 
   init {
@@ -79,7 +79,7 @@ class OsRegistryConfigProvider(private val configName: String) {
 
     logger.info("Looking for '$regValue' value in ${uris.map { it.readable() }}")
 
-    return uris.mapNotNull {
+    return uris.firstNotNullOfOrNull {
       val uri = try {
         logger.debug("Searching for '${it.readable()}' in registry")
         it.second()
@@ -104,7 +104,7 @@ class OsRegistryConfigProvider(private val configName: String) {
       else {
         null
       }
-    }.firstOrNull()
+    }
   }
 
   // https://specifications.freedesktop.org/basedir-spec/basedir-spec-0.6.html

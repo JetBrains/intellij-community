@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaClassElementType;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.stubs.StubBase;
@@ -25,7 +26,10 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private static final int LOCAL_CLASS_INNER = 0x200;
   private static final int HAS_DOC_COMMENT = 0x400;
   private static final int RECORD = 0x800;
+  private static final int IMPLICIT = 0x1000;
+  private static final int VALUE_CLASS = 0x2000;
 
+  private final @NotNull TypeInfo myTypeInfo;
   private final String myQualifiedName;
   private final String myName;
   private final String myBaseRefText;
@@ -33,13 +37,23 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   private String mySourceFileName;
 
   public PsiClassStubImpl(@NotNull JavaClassElementType type,
-                          final StubElement parent,
-                          @Nullable final String qualifiedName,
-                          @Nullable final String name,
-                          @Nullable final String baseRefText,
-                          final short flags) {
+                          StubElement parent,
+                          @Nullable String qualifiedName,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
+    this(type, parent, TypeInfo.fromString(qualifiedName), name, baseRefText, flags);
+  }
+
+  public PsiClassStubImpl(@NotNull JavaClassElementType type,
+                          StubElement parent,
+                          @NotNull TypeInfo typeInfo,
+                          @Nullable String name,
+                          @Nullable String baseRefText,
+                          short flags) {
     super(parent, type);
-    myQualifiedName = qualifiedName;
+    myTypeInfo = typeInfo;
+    myQualifiedName = typeInfo.text();
     myName = name;
     myBaseRefText = baseRefText;
     myFlags = flags;
@@ -53,7 +67,11 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   public String getName() {
     return myName;
   }
-
+  
+  public @NotNull TypeInfo getQualifiedNameTypeInfo() {
+    return myTypeInfo;
+  }
+  
   @Override
   public String getQualifiedName() {
     return myQualifiedName;
@@ -90,12 +108,26 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
   }
 
   @Override
+  public boolean isImplicit() {
+    return BitUtil.isSet(myFlags, IMPLICIT);
+  }
+
+  @Override
+  public boolean isValueClass() {
+    return BitUtil.isSet(myFlags, VALUE_CLASS);
+  }
+
+  @Override
   public boolean isEnumConstantInitializer() {
     return isEnumConstInitializer(myFlags);
   }
 
-  public static boolean isEnumConstInitializer(final short flags) {
+  public static boolean isEnumConstInitializer(short flags) {
     return BitUtil.isSet(flags, ENUM_CONSTANT_INITIALIZER);
+  }
+
+  public static boolean isImplicit(short flags) {
+    return BitUtil.isSet(flags, IMPLICIT);
   }
 
   @Override
@@ -103,7 +135,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     return isAnonymous(myFlags);
   }
 
-  public static boolean isAnonymous(final short flags) {
+  public static boolean isAnonymous(short flags) {
     return BitUtil.isSet(flags, ANONYMOUS);
   }
 
@@ -157,6 +189,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                      anonymousInner,
                      localClassInner,
                      hasDocComment,
+                     false,
+                     false,
                      false);
   }
 
@@ -171,7 +205,9 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
                                 boolean anonymousInner,
                                 boolean localClassInner,
                                 boolean hasDocComment,
-                                boolean isRecord) {
+                                boolean isRecord,
+                                boolean isImplicit,
+                                boolean isValueClass) {
     short flags = 0;
     if (isDeprecated) flags |= DEPRECATED;
     if (isInterface) flags |= INTERFACE;
@@ -185,6 +221,8 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
     if (isRecord) flags |= RECORD;
+    if (isImplicit) flags |= IMPLICIT;
+    if (isValueClass) flags |= VALUE_CLASS;
     return flags;
   }
 

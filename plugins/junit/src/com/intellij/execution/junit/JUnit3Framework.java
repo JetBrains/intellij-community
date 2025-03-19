@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
@@ -10,9 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnit3Framework extends JUnitTestFramework {
+
   @Override
-  @NotNull
-  public String getName() {
+  public boolean isDumbAware() {
+    return this.getClass().isAssignableFrom(JUnit3Framework.class);
+  }
+
+  @Override
+  public @NotNull String getName() {
     return "JUnit3";
   }
 
@@ -28,7 +33,10 @@ public class JUnit3Framework extends JUnitTestFramework {
 
   @Override
   public boolean isSuiteClass(PsiClass psiClass) {
-    return JUnitUtil.findSuiteMethod(psiClass) != null;
+    if (psiClass == null) return false;
+    return callWithAlternateResolver(psiClass.getProject(), () -> {
+      return JUnitUtil.findSuiteMethod(psiClass) != null;
+    }, false);
   }
 
   @Override
@@ -36,51 +44,52 @@ public class JUnit3Framework extends JUnitTestFramework {
     return "junit.framework.TestCase";
   }
 
-  @Nullable
   @Override
-  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+  public @Nullable ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
     return JUnitExternalLibraryDescriptor.JUNIT3;
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return "junit.framework.TestCase";
   }
 
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (JUnitUtil.isJUnit3TestClass(clazz)) {
-      return true;
-    }
-    return JUnitUtil.findSuiteMethod(clazz) != null;
+    if (clazz == null) return false;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (JUnitUtil.isJUnit3TestClass(clazz)) {
+        return true;
+      }
+      return JUnitUtil.findSuiteMethod(clazz) != null;
+    }, false);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
 
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("setUp")) return each;
-    }
-    return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("setUp")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
-
-    for (PsiMethod each : clazz.getMethods()) {
-      if (each.getName().equals("tearDown")) return each;
-    }
-    return null;
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (!JUnitUtil.isJUnit3TestClass(clazz)) return null;
+      for (PsiMethod each : clazz.getMethods()) {
+        if (each.getName().equals("tearDown")) return each;
+      }
+      return null;
+    }, null);
   }
 
   @Override
-  @Nullable
-  protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+  protected @Nullable PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
     final PsiManager manager = clazz.getManager();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
@@ -120,8 +129,7 @@ public class JUnit3Framework extends JUnitTestFramework {
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit3 Test Method.java");
   }
 }

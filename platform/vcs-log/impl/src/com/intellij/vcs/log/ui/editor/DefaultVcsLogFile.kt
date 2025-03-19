@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
-import com.intellij.ide.actions.SplitAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -16,6 +16,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
+import com.intellij.vcs.log.impl.VcsLogTabsManager.Companion.onDisplayNameChange
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
@@ -23,9 +24,9 @@ import javax.swing.JComponent
 
 internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.VcsLogComplexPath,
                                  private var filters: VcsLogFilterCollection? = null) :
-  VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
+  VcsLogFile(VcsLogTabsUtil.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
-  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
+  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
 
   internal var tabName: String
@@ -33,21 +34,21 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     set(value) = service<VcsLogEditorTabNameCache>().putTabName(path, value)
 
   init {
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
   }
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
-      val tabsManager = projectLog.tabManager
+      val tabsManager = projectLog.tabManager ?: return@runWhenVcsAndLogIsReady
 
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
+        val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
-        tabName = VcsLogTabsManager.generateDisplayName(ui)
-        ui.filterUi.addFilterListener {
-          tabName = VcsLogTabsManager.generateDisplayName(ui)
+        tabName = VcsLogTabsUtil.generateDisplayName(ui)
+        ui.onDisplayNameChange {
+          tabName = VcsLogTabsUtil.generateDisplayName(ui)
           VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null
@@ -76,9 +77,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
     other as DefaultVcsLogFile
 
-    if (tabId != other.tabId) return false
-
-    return true
+    return tabId == other.tabId
   }
 
   override fun hashCode(): Int {
@@ -90,7 +89,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
   }
 }
 
-class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
+internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
@@ -105,7 +104,7 @@ class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
 @Service(Service.Level.APP)
 @State(name = "Vcs.Log.Editor.Tab.Names", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
+private class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
 
   fun getTabName(path: String) = state.pathToTabName[path]
 

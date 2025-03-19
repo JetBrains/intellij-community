@@ -4,6 +4,7 @@ package com.jetbrains.env;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -24,11 +25,12 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.extensions.ModuleExtKt;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -41,10 +43,13 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -80,8 +85,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
-  public static final int LONG_TIMEOUT = 120000;
-  protected int myTimeout = NORMAL_TIMEOUT;
   protected CodeInsightTestFixture myFixture;
 
   @Nullable
@@ -114,15 +117,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return myFixture.getProject();
   }
 
-  @Override
-  public void useNormalTimeout() {
-    myTimeout = NORMAL_TIMEOUT;
-  }
-
-  @Override
-  public void useLongTimeout() {
-    myTimeout = LONG_TIMEOUT;
-  }
 
   /**
    * Returns virt file by path. May be relative or not.
@@ -231,11 +225,11 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   }
 
   protected boolean waitFor(ProcessHandler p) {
-    return p.waitFor(myTimeout);
+    return p.waitFor(NORMAL_TIMEOUT);
   }
 
   protected boolean waitFor(@NotNull Semaphore s) throws InterruptedException {
-    return waitFor(s, myTimeout);
+    return waitFor(s, NORMAL_TIMEOUT);
   }
 
   protected static boolean waitFor(@NotNull Semaphore s, long timeout) throws InterruptedException {
@@ -276,7 +270,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     public EmptyModuleBuilder createModuleBuilder() {
       return new EmptyModuleBuilder() {
         @Override
-        public ModuleType getModuleType() {
+        public ModuleType<?> getModuleType() {
           return getInstance();
         }
       };
@@ -292,12 +286,33 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * @return sdk
    */
   @NotNull
-  protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
-    throws InvalidSdkException {
+  protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType) throws InvalidSdkException {
 
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
-    final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule(), myFixture.getTestRootDisposable());
+
+    // There can't be two SDKs with same path
+    removeSdkIfExists(sdkHomeFile.toNioPath());
+
+    CompletableFuture<Sdk> sdkRef = new CompletableFuture<>();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        sdkRef.complete(PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule(), myFixture.getTestRootDisposable()));
+      }
+      catch (InvalidSdkException e) {
+        sdkRef.completeExceptionally(e);
+      }
+    });
+    Sdk sdk;
+    try {
+      sdk = sdkRef.join();
+    }
+    catch (CompletionException err) {
+      if (err.getCause() instanceof InvalidSdkException cause) throw cause;
+      if (err.getCause() instanceof Error cause) throw cause;
+      if (err.getCause() instanceof RuntimeException cause) throw cause;
+      throw err;
+    }
     // We use gradle script to create environment. This script utilizes Conda.
     // Conda supports 2 types of package installation: conda native and pip. We use pip.
     // PyCharm Conda support ignores packages installed via pip ("conda list -e" does it, see PyCondaPackageManagerImpl)
@@ -308,6 +323,19 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
       ((PyCondaPackageManagerImpl)packageManager).useConda = false;
     }
     return sdk;
+  }
+
+  private static void removeSdkIfExists(@NotNull Path sdkHomePath) {
+    var sdkTable = ProjectJdkTable.getInstance();
+    var existingSdk =
+      ContainerUtil.find(sdkTable.getAllJdks(), sdk -> sdkHomePath.equals(Path.of(sdk.getHomePath().trim())));
+    if (existingSdk != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        WriteAction.run(() -> {
+          sdkTable.removeJdk(existingSdk);
+        });
+      });
+    }
   }
 
 

@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class TemplateLineStartEndHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
   private final boolean myIsHomeHandler;

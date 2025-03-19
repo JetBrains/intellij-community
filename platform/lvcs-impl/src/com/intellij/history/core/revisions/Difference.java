@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Difference {
+public final class Difference {
   private final boolean myIsFile;
   private final Entry myLeft;
   private final Entry myRight;
@@ -22,6 +22,10 @@ public class Difference {
 
   public Difference(boolean isFile, Entry left, Entry right) {
     this(isFile, left, right, false);
+  }
+
+  public Difference(@Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
+    this(isFile(left, right), left, right, isRightContentCurrent);
   }
 
   public Difference(boolean isFile, @Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
@@ -35,12 +39,18 @@ public class Difference {
     return myIsFile;
   }
 
-  public Entry getLeft() {
+  public @Nullable Entry getLeft() {
     return myLeft;
   }
 
-  public Entry getRight() {
+  public @Nullable Entry getRight() {
     return myRight;
+  }
+
+  public @Nullable FilePath getFilePath() {
+    if (myRight != null) return getFilePath(myRight);
+    if (myLeft != null) return getFilePath(myLeft);
+    return null;
   }
 
   public ContentRevision getLeftContentRevision(IdeaGateway gw) {
@@ -63,8 +73,7 @@ public class Difference {
 
     return new ByteBackedContentRevision() {
       @Override
-      @Nullable
-      public String getContent() {
+      public @Nullable String getContent() {
         if (e.isDirectory()) return null;
         return e.getContent().getString(e, gw);
       }
@@ -76,16 +85,24 @@ public class Difference {
       }
 
       @Override
-      @NotNull
-      public FilePath getFile() {
-        return Paths.createDvcsFilePath(e.getPath(), e.isDirectory());
+      public @NotNull FilePath getFile() {
+        return getFilePath(e);
       }
 
       @Override
-      @NotNull
-      public VcsRevisionNumber getRevisionNumber() {
+      public @NotNull VcsRevisionNumber getRevisionNumber() {
         return VcsRevisionNumber.NULL;
       }
     };
+  }
+
+  private static @NotNull FilePath getFilePath(@NotNull Entry entry) {
+    return Paths.createDvcsFilePath(entry.getPath(), entry.isDirectory());
+  }
+
+  private static boolean isFile(@Nullable Entry left, @Nullable Entry right) {
+    if (left != null) return !left.isDirectory();
+    if (right != null) return !right.isDirectory();
+    return false;
   }
 }

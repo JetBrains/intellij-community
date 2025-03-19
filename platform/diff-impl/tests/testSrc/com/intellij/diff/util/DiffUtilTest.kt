@@ -47,7 +47,7 @@ class DiffUtilTest : DiffTestCase() {
 
       val sortedIndexes = DiffUtil.getSortedIndexes(list, comparator)
       val expected = ContainerUtil.sorted(list, comparator)
-      val actual = (0..values.size - 1).map { values[sortedIndexes[it]] }
+      val actual = values.indices.map { values[sortedIndexes[it]] }
 
       assertOrderedEquals(expected, actual)
       assertEquals(sortedIndexes.toSet().size, list.size)

@@ -1,2 +1,2 @@
-def foo(x: bool<caret>, y: bool) -> object:
+def foo(x: bool<caret>, y: bool) -> str:
     return "42"

@@ -32,7 +32,7 @@ interface EditorCodePreview: Disposable {
 
     fun create(editor: Editor): EditorCodePreview {
       require(getActivePreview(editor) == null)
-      val codePreview = if (ApplicationManager.getApplication().isUnitTestMode) EditorCodePreviewTestImpl() else EditorCodePreviewImpl(editor)
+      val codePreview = if (ApplicationManager.getApplication().isHeadlessEnvironment) EditorCodePreviewHeadlessImpl() else EditorCodePreviewImpl(editor)
       EditorUtil.disposeWithEditor(editor, codePreview)
       editor.putUserData(EDITOR_PREVIEW_KEY, codePreview)
       Disposer.register(codePreview, Disposable { editor.putUserData(EDITOR_PREVIEW_KEY, null) })
@@ -173,7 +173,7 @@ private class EditorCodePreviewImpl(val editor: Editor): EditorCodePreview, Disp
 
 }
 
-private class EditorCodePreviewTestImpl: EditorCodePreview {
+private class EditorCodePreviewHeadlessImpl: EditorCodePreview {
   override fun addPreview(lines: IntRange, onClickAction: () -> Unit) {}
   override fun dispose() {}
 }

@@ -29,7 +29,7 @@ import java.util.Objects;
 /**
  * Highlights class definitions, functrion definitions, and decorators.
  */
-public class PyDefinitionsAnnotator extends PyAnnotator {
+public final class PyDefinitionsAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyClass(@NotNull PyClass node) {

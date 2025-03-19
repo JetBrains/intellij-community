@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -37,7 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
+public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
   private final CardLayout myLayout = new CardLayout();
   private final JPanel mySettingsPanel = new JPanel(myLayout);
 
@@ -58,8 +59,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     }
   };
 
-  @NonNls
-  private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
+  private static final @NonNls String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
   private final PropertiesComponent myProperties;
 
@@ -144,16 +144,15 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     onCurrentSchemeChanged();
   }
 
-  @NotNull
-  private JComponent createLinkComponent() {
+  private @NotNull JComponent createLinkComponent() {
     ActionLink link = new ActionLink(mySetFromAction);
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
-    Box linkBox = new Box(BoxLayout.Y_AXIS);
+    JBBox linkBox = new JBBox(BoxLayout.Y_AXIS);
     linkBox.add(Box.createVerticalGlue());
     linkBox.add(link);
 
-    Box row = new Box(BoxLayout.X_AXIS);
+    JBBox row = new JBBox(BoxLayout.X_AXIS);
     row.add(Box.createRigidArea(new JBDimension(0, 12)));
     row.add(Box.createHorizontalGlue());
     row.add(linkBox);
@@ -198,7 +197,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
   }
 
   public boolean isModified() {
-    if (myModel.isSchemeListModified()) return true;
     final NewCodeStyleSettingsPanel[] panels = getPanels();
     for (NewCodeStyleSettingsPanel panel : panels) {
       //if (!panel.isMultiLanguage()) mySchemesPanel.setPredefinedEnabled(false);
@@ -225,9 +223,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     }
   }
 
-  @NonNls
-  @Nullable
-  public String getHelpTopic() {
+  public @NonNls @Nullable String getHelpTopic() {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
     return selectedPanel != null
            ? selectedPanel.getHelpTopic()
@@ -286,8 +282,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
     return panel.getOptionIndexer();
@@ -301,8 +296,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     }
   }
 
-  @NotNull
-  private static String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
+  private static @NotNull String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
     Language language = panel.getDefaultLanguage();
     return language != null ? SELECTED_TAB + "." + language.getID() : SELECTED_TAB;
   }

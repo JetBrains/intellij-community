@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -20,9 +20,12 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -31,6 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
@@ -39,12 +43,15 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.checkEnvFiles;
+
 public class ApplicationConfiguration extends JavaRunConfigurationBase
   implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
-             FusAwareRunConfiguration {
+             FusAwareRunConfiguration, EnvFilesOptions {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -72,17 +79,15 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   // backward compatibility (if 3rd-party plugin extends ApplicationConfigurationType but uses own factory without options class)
   @Override
-  @NotNull
-  protected final Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
+  protected final @NotNull Class<? extends JvmMainMethodRunConfigurationOptions> getDefaultOptionsClass() {
     return JvmMainMethodRunConfigurationOptions.class;
   }
 
   /**
    * Because we have to keep backward compatibility, never use `getOptions()` to get or set values - use only designated getters/setters.
    */
-  @NotNull
   @Override
-  protected JvmMainMethodRunConfigurationOptions getOptions() {
+  protected @NotNull JvmMainMethodRunConfigurationOptions getOptions() {
     return (JvmMainMethodRunConfigurationOptions)super.getOptions();
   }
 
@@ -95,7 +100,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) throws ExecutionException {
     final JavaCommandLineState state = new JavaApplicationCommandLineState<>(this, env);
     JavaRunConfigurationModule module = getConfigurationModule();
     state.setConsoleBuilder(TextConsoleBuilderFactory.getInstance().createBuilder(getProject(), module.getSearchScope()));
@@ -103,8 +108,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @NotNull
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     if (Registry.is("ide.new.run.config", true)) {
       return new JavaApplicationSettingsEditor(this);
     }
@@ -123,20 +127,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @Nullable
-  public PsiClass getMainClass() {
+  public @Nullable PsiClass getMainClass() {
     return getConfigurationModule().findClass(getMainClassName());
   }
 
-  @NlsSafe
-  @Nullable
-  public String getMainClassName() {
+  public @NlsSafe @Nullable String getMainClassName() {
     return MAIN_CLASS_NAME;
   }
 
   @Override
-  @Nullable
-  public String suggestedName() {
+  public @Nullable String suggestedName() {
     String mainClassName = getMainClassName();
     if (mainClassName == null) {
       return null;
@@ -177,16 +177,28 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     }
     final JavaRunConfigurationModule configurationModule = checkClass();
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), configurationModule.getModule());
+    checkEnvFiles(this);
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
-  @NotNull
-  public JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
+  public @NotNull JavaRunConfigurationModule checkClass() throws RuntimeConfigurationException {
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass =
-      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
-    if (!PsiMethodUtil.hasMainMethod(psiClass)) {
-      throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
+    final String mainClass = getMainClassName();
+    if (getOptions().isImplicitClassConfiguration()) {
+      if (mainClass != null && !DumbService.isDumb(getProject())) {
+        try {
+          final boolean matchingClass = ImplicitClassSearch.search(mainClass, getProject(), configurationModule.getSearchScope())
+                                          .findFirst() != null;
+          if (!matchingClass) {
+            throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
+          }
+        } catch (IndexNotReadyException ignored) {}
+      }
+    } else {
+      final PsiClass psiClass = configurationModule.checkModuleAndClassName(mainClass, ExecutionBundle.message("no.main.class.specified.error.text"));
+      if (psiClass == null || !PsiMethodUtil.hasMainMethod(psiClass)) {
+        throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", mainClass));
+      }
     }
     return configurationModule;
   }
@@ -232,8 +244,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return getOptions().getEnv();
   }
 
@@ -248,14 +259,22 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  @Nullable
-  public String getRunClass() {
+  public @NotNull List<String> getEnvFilePaths() {
+    return getOptions().getEnvFilePaths();
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> paths) {
+    getOptions().setEnvFilePaths(paths);
+  }
+
+  @Override
+  public @Nullable String getRunClass() {
     return getMainClassName();
   }
 
   @Override
-  @Nullable
-  public String getPackage() {
+  public @Nullable String getPackage() {
     return null;
   }
 
@@ -272,9 +291,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     onAlternativeJreChanged(changed, getProject());
   }
 
-  @Nullable
   @Override
-  public String getAlternativeJrePath() {
+  public @Nullable String getAlternativeJrePath() {
     return ALTERNATIVE_JRE_PATH;
   }
 
@@ -291,15 +309,13 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
   }
 
-  @Nullable
   @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
   }
 
-  @Nullable
   @Override
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return getOptions().getRemoteTarget();
   }
 
@@ -314,7 +330,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public @NotNull List<EventPair<?>> getAdditionalUsageData() {
+  public @Unmodifiable @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
     List<EventPair<?>> additionalUsageData = super.getAdditionalUsageData();
     if (mainClass == null) {
@@ -337,13 +353,17 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     getOptions().setIncludeProvidedScope(value);
   }
 
+  public boolean isImplicitClassConfiguration() { return getOptions().isImplicitClassConfiguration(); }
+
+  public void setImplicitClassConfiguration(boolean value) { getOptions().setImplicitClassConfiguration(value); }
+
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getMainClassName());
   }
 
   @Override
-  public void readExternal(@NotNull final Element element) {
+  public void readExternal(final @NotNull Element element) {
     super.readExternal(element);
 
     syncOldStateFields();
@@ -356,7 +376,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
     String workingDirectory = options.getWorkingDirectory();
     if (workingDirectory == null) {
-      workingDirectory = PathUtil.toSystemDependentName(getProject().getBasePath());
+      workingDirectory = ProgramParametersUtil.getWorkingDirectoryByModule(this);
     }
     else {
       workingDirectory = FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(workingDirectory));
@@ -382,9 +402,8 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
-  @Nullable
   @Override
-  public ShortenCommandLine getShortenCommandLine() {
+  public @Nullable ShortenCommandLine getShortenCommandLine() {
     return getOptions().getShortenClasspath();
   }
 
@@ -393,14 +412,16 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     getOptions().setShortenClasspath(mode);
   }
 
-  @NotNull
   @Override
-  public InputRedirectOptions getInputRedirectOptions() {
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
     return getOptions().getRedirectOptions();
   }
 
   @Override
   public Module getDefaultModule() {
+    if (ModuleManager.getInstance(getProject()).getModules().length < 2) {
+      return super.getDefaultModule();
+    }
     PsiClass mainClass = getMainClass();
     if (mainClass != null) {
       Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);
@@ -410,7 +431,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
-    public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
+    public JavaApplicationCommandLineState(final @NotNull T configuration, final ExecutionEnvironment environment) {
       super(configuration, environment);
     }
     

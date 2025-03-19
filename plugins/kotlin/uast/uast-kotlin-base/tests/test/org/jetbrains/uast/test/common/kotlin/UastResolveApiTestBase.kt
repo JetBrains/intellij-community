@@ -1,21 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.common.kotlin
 
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.uast.*
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
-import java.lang.IllegalStateException
 
-interface UastResolveApiTestBase : UastPluginSelection {
+interface UastResolveApiTestBase : ExpectedPluginModeProvider {
 
     fun checkCallbackForDoWhile(filePath: String, uFile: UFile) {
         val facade = uFile.findFacade()
@@ -48,8 +49,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitPrefixExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals) are invisible", 0, resolvedBinaryOperators.size)
-        Assert.assertEquals("Kotlin built-in ++ (int.inc) is invisible", 0, resolvedUnaryOperators.size)
+        Assert.assertEquals("Kotlin built-in >= (int.compareTo) and == (int.equals) are not resolvable", 0, resolvedBinaryOperators.size)
+        Assert.assertEquals("Kotlin built-in ++ (int.inc), ++i and ++j are not resolvable", 0, resolvedUnaryOperators.size)
     }
 
     fun checkCallbackForIf(filePath: String, uFile: UFile) {
@@ -64,7 +65,7 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitBinaryExpression(node)
             }
         })
-        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus) are invisible", 0, resolvedOperators.size)
+        Assert.assertEquals("Kotlin built-in * (int.times) and + (int.plus) are not resolvable", 0, resolvedOperators.size)
     }
 
     fun checkCallbackForMethodReference(filePath: String, uFile: UFile) {
@@ -95,6 +96,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
             }
             val resolvedImport = uImport.resolve()
                 ?: throw IllegalStateException("Unresolved import: ${uImport.asRenderString()}")
+
+            val isK2PluginMode = pluginMode == KotlinPluginMode.K2
             val expected = when (resolvedImport) {
                 is PsiClass -> {
                     // import java.lang.Thread.*
@@ -102,23 +105,21 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 }
                 is PsiMethod -> {
                     // import java.lang.Thread.currentThread
-                    resolvedImport.name == "currentThread" ||
-                            // import kotlin.collections.emptyList
-                            (!isFirUastPlugin && resolvedImport.name == "emptyList")
+                    resolvedImport.name == "currentThread" || resolvedImport.name == "emptyList"
                 }
                 is PsiField -> {
                     // import java.lang.Thread.NORM_PRIORITY
                     resolvedImport.name == "NORM_PRIORITY" ||
                             // import kotlin.Int.Companion.SIZE_BYTES
-                            (!isFirUastPlugin && resolvedImport.name == "SIZE_BYTES")
+                            (!isK2PluginMode && resolvedImport.name == "SIZE_BYTES")
                 }
                 is KtNamedFunction -> {
                     // import kotlin.collections.emptyList
-                    isFirUastPlugin && resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
+                    isK2PluginMode && resolvedImport.isTopLevel && resolvedImport.name == "emptyList"
                 }
                 is KtProperty -> {
                     // import kotlin.Int.Companion.SIZE_BYTES
-                    isFirUastPlugin && resolvedImport.name == "SIZE_BYTES"
+                    isK2PluginMode && resolvedImport.name == "SIZE_BYTES"
                 }
                 else -> false
             }
@@ -139,7 +140,8 @@ interface UastResolveApiTestBase : UastPluginSelection {
                 return super.visitThisExpression(node)
             }
         })
-        Assert.assertNull("plain `this` has `null` label", thisReference)
+        Assert.assertNotNull("plain `this` has `null` label, but resolved to extension receiver", thisReference)
+        TestCase.assertEquals("java.lang.String", (thisReference as PsiParameter).type.canonicalText)
     }
 
     fun checkCallbackForResolve(uFilePath: String, uFile: UFile) {

@@ -1,4 +1,4 @@
-// WITH_LIBRARY: KotlinLibrary
+// WITH_LIBRARY: ../KotlinLibrary
 package a
 
 import d.*

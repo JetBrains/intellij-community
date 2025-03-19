@@ -1,48 +1,27 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class NonCancelableIndicator implements NonCancelableSection, StandardProgressIndicator {
-  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator() {
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-  };
+@ApiStatus.Internal
+public final class NonCancelableIndicator implements StandardProgressIndicator {
+  static final NonCancelableIndicator INSTANCE = new NonCancelableIndicator();
 
-  NonCancelableIndicator() {
+  private NonCancelableIndicator() {
   }
 
   @Override
-  public void done() {
-    ProgressIndicator currentIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (currentIndicator != this) {
-      throw new AssertionError("Trying do .done() NonCancelableSection, which is already done");
-    }
+  public int hashCode() {
+    return 0;
   }
 
   @Override
-  public final void checkCanceled() {
+  public void checkCanceled() {
     ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(this);
   }
 
@@ -62,12 +41,12 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
   }
 
   @Override
-  public final void cancel() {
+  public void cancel() {
 
   }
 
   @Override
-  public final boolean isCanceled() {
+  public boolean isCanceled() {
     return false;
   }
 
@@ -116,10 +95,9 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
     return false;
   }
 
-  @NotNull
   @Override
-  public ModalityState getModalityState() {
-    return ModalityState.NON_MODAL;
+  public @NotNull ModalityState getModalityState() {
+    return ModalityState.nonModal();
   }
 
   @Override
@@ -145,5 +123,10 @@ class NonCancelableIndicator implements NonCancelableSection, StandardProgressIn
   @Override
   public boolean isShowing() {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return "NonCancelableIndicator.INSTANCE: "+super.toString();
   }
 }

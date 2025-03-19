@@ -1,0 +1,3 @@
+rootProject.name ="ide-starter-bus"
+
+includeBuild "../intellij.tools.ide.starter.bus"

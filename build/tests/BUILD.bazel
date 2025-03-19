@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.idea.community.build.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//build",
+    "//platform/build-scripts/testFramework:buildScripts-testFramework",
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "//platform/util",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+  ]
+)
+
+jvm_test(
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
+)
+### auto-generated section `build intellij.idea.community.build.tests` end

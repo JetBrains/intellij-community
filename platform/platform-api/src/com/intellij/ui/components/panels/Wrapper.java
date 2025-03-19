@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
@@ -8,7 +8,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Wrapper extends JPanel implements NullableComponent {
-
   private JComponent myVerticalSizeReferent;
   private JComponent myHorizontalSizeReferent;
 
@@ -55,6 +54,7 @@ public class Wrapper extends JPanel implements NullableComponent {
       add(wrapped, BorderLayout.CENTER);
     }
     revalidate();
+    repaint();
   }
 
   @Override
@@ -121,7 +121,7 @@ public class Wrapper extends JPanel implements NullableComponent {
     return size;
   }
 
-  public static class North extends Wrapper {
+  public static final class North extends Wrapper {
     public North(JComponent wrapped) {
       super(new BorderLayout());
       add(wrapped, BorderLayout.NORTH);

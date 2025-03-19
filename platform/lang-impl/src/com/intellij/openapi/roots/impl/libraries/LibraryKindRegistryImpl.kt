@@ -10,9 +10,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
 import com.intellij.openapi.roots.libraries.*
 
-internal class LibraryKindRegistryImpl private constructor() : LibraryKindRegistry() {
+internal class LibraryKindRegistryImpl : LibraryKindRegistry() {
   init {
-    //todo[nik] this is temporary workaround for IDEA-98118: we need to initialize all library types to ensure that their kinds are created and registered in LibraryKind.ourAllKinds
+    //todo this is temporary workaround for IDEA-98118: we need to initialize all library types to ensure that their kinds are created and registered in LibraryKind.ourAllKinds
     //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to intellij.platform.projectModel.impl module
     LibraryType.EP_NAME.extensionList
 

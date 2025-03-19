@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,29 +28,22 @@ import java.util.function.Function;
 public class DataNode<T> implements UserDataHolderEx, Serializable {
   private static final Logger LOG = Logger.getInstance(DataNode.class);
 
-  @SuppressWarnings("NullableProblems") @NotNull
-  private Key<T> key;
+  @SuppressWarnings("NullableProblems") private @NotNull Key<T> key;
 
-  @SuppressWarnings("FieldMayBeFinal")
-  @Nullable
-  private volatile transient UserDataHolderBase internalUserDataOrNull = null;
+  @SuppressWarnings("FieldMayBeFinal") private transient volatile @Nullable UserDataHolderBase internalUserDataOrNull = null;
   private static final AtomicFieldUpdater<DataNode, UserDataHolderBase> userDataUpdater
     = AtomicFieldUpdater.forFieldOfType(DataNode.class, UserDataHolderBase.class);
 
-  @Nullable
-  private T data;
+  private @Nullable T data;
 
   private boolean ignored;
 
   private transient volatile boolean ready;
 
-  @Nullable
-  private DataNode<?> parent;
+  private @Nullable DataNode<?> parent;
 
-  @Nullable
-  private List<DataNode<?>> children;
-  @Nullable
-  private transient List<DataNode<?>> childrenView;
+  private @Nullable List<DataNode<?>> children;
+  private transient @Nullable List<DataNode<?>> childrenView;
 
   public DataNode(@NotNull Key<T> key, @NotNull T data, @Nullable DataNode<?> parent) {
     this.key = key;
@@ -66,25 +59,21 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   private DataNode() {
   }
 
-  @Nullable
-  public DataNode<?> getParent() {
+  public @Nullable DataNode<?> getParent() {
     return parent;
   }
 
-  @NotNull
-  public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
+  public @NotNull <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<>(key, data, this);
     doAddChild(result);
     return result;
   }
 
-  @NotNull
-  public Key<T> getKey() {
+  public @NotNull Key<T> getKey() {
     return key;
   }
 
-  @NotNull
-  public T getData() {
+  public @NotNull T getData() {
     return data;
   }
 
@@ -119,8 +108,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
    * @return data stored for the current key and available via the current node (if any)
    */
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <T> T getData(@NotNull Key<T> key) {
+  public @Nullable <T> T getData(@NotNull Key<T> key) {
     if (this.key.equals(key)) {
       return (T)data;
     }
@@ -133,8 +121,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <T> DataNode<T> getDataNode(@NotNull Key<T> key) {
+  public @Nullable <T> DataNode<T> getDataNode(@NotNull Key<T> key) {
     if (this.key.equals(key)) {
       return (DataNode<T>)this;
     }
@@ -147,8 +134,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  public <P> DataNode<P> getParent(@NotNull Class<P> dataClass) {
+  public @Nullable <P> DataNode<P> getParent(@NotNull Class<P> dataClass) {
     if (dataClass.isInstance(data)) {
       return (DataNode<P>)this;
     }
@@ -176,13 +162,12 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     }
   }
 
-  private void initChildren(@Nullable List<DataNode<?>> children) {
+  private void initChildren(@Nullable ArrayList<DataNode<?>> children) {
     this.children = children;
     this.childrenView = null;
   }
 
-  @NotNull
-  public Collection<DataNode<?>> getChildren() {
+  public @NotNull Collection<DataNode<?>> getChildren() {
     if (children == null || children.isEmpty()) return Collections.emptyList();
 
     List<DataNode<?>> result = childrenView;
@@ -244,19 +229,16 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     initChildren(null);
   }
 
-  @NotNull
-  public DataNode<T> graphCopy() {
+  public @NotNull DataNode<T> graphCopy() {
     return copy(this, null);
   }
 
-  @NotNull
-  public DataNode<T> nodeCopy() {
+  public @NotNull DataNode<T> nodeCopy() {
     return nodeCopy(this);
   }
 
-  @Nullable
   @Override
-  public <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
+  public @Nullable <U> U getUserData(@NotNull com.intellij.openapi.util.Key<U> key) {
     UserDataHolderBase holder = getUserDataHolder();
     return holder == null ? null : holder.getUserData(key);
   }
@@ -270,9 +252,8 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     getOrCreateUserDataHolder().putUserData(key, null);
   }
 
-  @NotNull
   @Override
-  public <D> D putUserDataIfAbsent(@NotNull com.intellij.openapi.util.Key<D> key, @NotNull D value) {
+  public @NotNull <D> D putUserDataIfAbsent(@NotNull com.intellij.openapi.util.Key<D> key, @NotNull D value) {
     return getOrCreateUserDataHolder().putUserDataIfAbsent(key, value);
   }
 
@@ -301,8 +282,7 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     return ready;
   }
 
-  @NotNull
-  public static <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode) {
+  public static @NotNull <T> DataNode<T> nodeCopy(@NotNull DataNode<T> dataNode) {
     DataNode<T> copy = new DataNode<>();
     copy.key = dataNode.key;
     copy.data = dataNode.data;
@@ -314,13 +294,11 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     return copy;
   }
 
-  @Nullable
-  private UserDataHolderBase getUserDataHolder() {
+  private @Nullable UserDataHolderBase getUserDataHolder() {
     return internalUserDataOrNull;
   }
 
-  @NotNull
-  private UserDataHolderBase getOrCreateUserDataHolder() {
+  private @NotNull UserDataHolderBase getOrCreateUserDataHolder() {
     if (internalUserDataOrNull == null) {
       userDataUpdater.compareAndSet(this, null, new UserDataHolderBase());
     }
@@ -328,12 +306,11 @@ public class DataNode<T> implements UserDataHolderEx, Serializable {
     return internalUserDataOrNull;
   }
 
-  @NotNull
-  private static <T> DataNode<T> copy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
+  private static @NotNull <T> DataNode<T> copy(@NotNull DataNode<T> dataNode, @Nullable DataNode<?> newParent) {
     DataNode<T> copy = nodeCopy(dataNode);
     copy.parent = newParent;
     if (dataNode.children != null) {
-      copy.initChildren(ContainerUtil.map(dataNode.children, child -> copy(child, copy)));
+      copy.initChildren(new ArrayList<>(ContainerUtil.map(dataNode.children, child -> copy(child, copy))));
     }
     return copy;
   }

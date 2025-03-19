@@ -4,10 +4,12 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 
 
+@ApiStatus.Internal
 public abstract class ChangesFileNameDecorator {
   public static ChangesFileNameDecorator getInstance(Project project) {
     return project.getService(ChangesFileNameDecorator.class);

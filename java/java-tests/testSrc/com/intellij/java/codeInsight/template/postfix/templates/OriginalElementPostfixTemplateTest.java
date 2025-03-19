@@ -11,6 +11,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.LazyKt;
 import kotlin.Lazy;
 import org.jdom.Element;
@@ -54,6 +55,7 @@ public class OriginalElementPostfixTemplateTest extends PostfixTemplateTestCase 
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "Not created as DumbAware")
   public void testOriginalElement() {
     doTest();
   }

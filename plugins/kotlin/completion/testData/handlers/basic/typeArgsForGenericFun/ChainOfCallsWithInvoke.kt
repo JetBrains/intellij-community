@@ -7,4 +7,5 @@ class SimpleClass<T>(val f: T) {
     val one: List<Int> = SimpleClass("one").self().self()().<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: asReversed

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractInterface;
 
 import com.intellij.history.LocalHistory;
@@ -74,6 +74,12 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
       return;
     }
 
+    if (myClass instanceof PsiImplicitClass) {
+      String message = RefactoringBundle.message("error.interface.cannot.be.extracted.from.implicit.class");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.EXTRACT_INTERFACE);
+      return;
+    }
+
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myClass)) return;
 
     final Set<PsiElement> selectedMembers = new HashSet<>();
@@ -130,8 +136,7 @@ public class ExtractInterfaceHandler implements ElementsHandler, ContextAwareAct
     }
   }
 
-  @Nls
-  private String getCommandName() {
+  private @Nls String getCommandName() {
     return RefactoringBundle.message("extract.interface.command.name", myInterfaceName, DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 

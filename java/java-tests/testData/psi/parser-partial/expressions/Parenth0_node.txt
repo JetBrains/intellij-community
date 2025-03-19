@@ -1,0 +1,8 @@
+test.java.file
+  PARENTH_EXPRESSION
+    LPARENTH
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    RPARENTH

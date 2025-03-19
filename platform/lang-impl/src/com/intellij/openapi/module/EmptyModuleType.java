@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -23,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
-  @NonNls public static final String EMPTY_MODULE = "EMPTY_MODULE";
+public final class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
+  public static final @NonNls String EMPTY_MODULE = "EMPTY_MODULE";
   //private static final EmptyModuleType ourInstance = new EmptyModuleType();
 
   public static EmptyModuleType getInstance() {
@@ -36,31 +22,27 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
     this(EMPTY_MODULE);
   }
 
-  protected EmptyModuleType(@NonNls String id) {
+  private EmptyModuleType(@NonNls String id) {
     super(id);
   }
 
-  @NotNull
   @Override
-  public EmptyModuleBuilder createModuleBuilder() {
+  public @NotNull EmptyModuleBuilder createModuleBuilder() {
     return new EmptyModuleBuilder();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return ProjectBundle.message("module.type.empty.name");
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return ProjectBundle.message("module.type.empty.description");
   }
 
-  @NotNull
   @Override
-  public Icon getNodeIcon(boolean isOpened) {
+  public @NotNull Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Module;
   }
 }

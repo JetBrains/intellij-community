@@ -14,29 +14,29 @@ data class StarterLanguage(
   @NlsSafe val title: String,
   val languageId: String,
   val isBuiltIn: Boolean = false,
-  @NlsSafe val description: String? = null
+  @NlsSafe val description: String? = null,
 )
 
 data class StarterTestRunner(
   val id: String,
-  @NlsSafe val title: String
+  @NlsSafe val title: String,
 )
 
 data class StarterProjectType(
   val id: String,
   @NlsSafe val title: String,
-  @NlsSafe val description: String? = null
+  @NlsSafe val description: String? = null,
 )
 
 data class StarterAppType(
   val id: String,
-  @NlsSafe val title: String
+  @NlsSafe val title: String,
 )
 
 data class StarterAppPackaging(
   val id: String,
   @NlsSafe val title: String,
-  @NlsSafe val description: String? = null
+  @NlsSafe val description: String? = null,
 )
 
 data class StarterLanguageLevel(
@@ -45,7 +45,7 @@ data class StarterLanguageLevel(
   /**
    * Version string that can be parsed with [JavaSdkVersion.fromVersionString].
    */
-  val javaVersion: String
+  val javaVersion: String,
 )
 
 class CustomizedMessages {
@@ -67,12 +67,13 @@ class StarterWizardSettings(
   val packagingTypes: List<StarterAppPackaging>,
   val applicationTypes: List<StarterAppType>,
   val testFrameworks: List<StarterTestRunner>,
-  val customizedMessages: CustomizedMessages?
+  val customizedMessages: CustomizedMessages?,
+  val showProjectTypes: Boolean,
 )
 
 class PluginRecommendation(
   val pluginId: String,
-  val dependencyIds: List<String>
+  val dependencyIds: List<String>,
 ) {
   constructor(pluginId: String, vararg dependencyIds: String) : this(pluginId, dependencyIds.toList())
 }
@@ -91,7 +92,7 @@ class LibraryLink(
   @NlsSafe
   val url: String,
   @NlsSafe
-  val title: String? = null
+  val title: String? = null,
 )
 
 const val DEFAULT_MODULE_NAME: String = "demo"
@@ -135,7 +136,7 @@ class DependencyUnavailable(
   @Nls(capitalization = Nls.Capitalization.Sentence)
   val message: String?,
   @NlsSafe
-  val hint: String? = null
+  val hint: String? = null,
 ) : DependencyState()
 
 object DependencyAvailable : DependencyState()

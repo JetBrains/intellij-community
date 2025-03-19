@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,9 +21,7 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.JavaPsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.*;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -71,6 +69,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
       ModuleRootModificationUtil.addModuleLibrary(myModule, myClsDir1.getUrl());
       PsiTestUtil.addSourceRoot(myModule, mySrcDir3);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   public void testCreateFile() {
@@ -507,7 +506,7 @@ public class PsiEventsTest extends JavaPsiTestCase {
     setFileText(file, "aaa");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiFile psiFile = fileManager.findFile(file);
-    psiFile.getText();
+    assertNotNull(psiFile.getText()); // Trigger PSI loading
 
     EventsTestListener listener = new EventsTestListener();
     myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
@@ -742,30 +741,33 @@ public class PsiEventsTest extends JavaPsiTestCase {
 
   public void testSuccessfulRecoveryAfterTreeChangePreprocessorThrowsException() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      PsiFile psiFile = createFile("a.xml", "<tag/>");
+      VirtualFile vFile = psiFile.getVirtualFile();
+      Document document = FileDocumentManager.getInstance().getDocument(vFile);
+      assert document != null;
 
-    PsiFile psiFile = createFile("a.xml", "<tag/>");
-    VirtualFile vFile = psiFile.getVirtualFile();
-    Document document = FileDocumentManager.getInstance().getDocument(vFile);
-    assert document != null;
-
-    PsiTreeChangePreprocessor preprocessor = event -> {
-      if (!event.getCode().name().startsWith("BEFORE") && !event.isGenericChange()) {
-        throw new NullPointerException();
+      PsiTreeChangePreprocessor preprocessor = event -> {
+        if (!event.getCode().name().startsWith("BEFORE") && !event.isGenericChange()) {
+          throw new NullPointerException();
+        }
+      };
+      ((PsiManagerImpl)getPsiManager()).addTreeChangePreprocessor(preprocessor);
+      try {
+        WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        fail("NPE expected");
       }
-    };
-    ((PsiManagerImpl)getPsiManager()).addTreeChangePreprocessor(preprocessor);
-    try {
+      catch (AssertionError e) {
+        assertInstanceOf(e.getCause(), NullPointerException.class);
+      }
+      finally {
+        ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
+      }
+
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      fail("NPE expected");
-    } catch (AssertionError e) {
-      assertInstanceOf(e.getCause(), NullPointerException.class);
-    } finally {
-      ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
-    }
-
-    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
+      assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
+    });
   }
 }

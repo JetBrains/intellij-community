@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.lang.Language;
@@ -31,24 +31,20 @@ public abstract class EncapsulateFieldHelper {
 
   public abstract PsiField @NotNull [] getApplicableFields(@NotNull PsiClass aClass);
 
-  @NotNull
-  public abstract String suggestSetterName(@NotNull PsiField field);
+  public abstract @NotNull String suggestSetterName(@NotNull PsiField field);
 
-  @NotNull
-  public abstract String suggestGetterName(@NotNull PsiField field);
+  public abstract @NotNull String suggestGetterName(@NotNull PsiField field);
 
-  @Nullable
-  public abstract PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter);
+  public abstract @Nullable PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter);
 
   public abstract boolean processUsage(@NotNull EncapsulateFieldUsageInfo usage,
                                        @NotNull EncapsulateFieldsDescriptor descriptor,
                                        PsiMethod setter,
                                        PsiMethod getter);
 
-  @Nullable
-  public abstract EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
-                                                        @NotNull FieldDescriptor fieldDescriptor,
-                                                        @NotNull PsiReference reference);
+  public abstract @Nullable EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
+                                                                  @NotNull FieldDescriptor fieldDescriptor,
+                                                                  @NotNull PsiReference reference);
 
   public static EncapsulateFieldHelper getHelper(@NotNull Language lang) {
     return INSTANCE.forLanguage(lang);

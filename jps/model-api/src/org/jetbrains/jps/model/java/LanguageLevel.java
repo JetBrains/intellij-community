@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java;
 
 import com.intellij.util.lang.JavaVersion;
@@ -26,9 +26,15 @@ public enum LanguageLevel {
   JDK_18(18), JDK_18_PREVIEW(18),
   JDK_19(19), JDK_19_PREVIEW(19),
   JDK_20(20), JDK_20_PREVIEW(20),
-  JDK_X(21);
+  JDK_21(21), JDK_21_PREVIEW(21),
+  JDK_22(22), JDK_22_PREVIEW(22),
+  JDK_23(23), JDK_23_PREVIEW(23),
+  JDK_24(24), JDK_24_PREVIEW(24),
+  JDK_X(24),
+  
+  ;
 
-  public static final LanguageLevel HIGHEST = JDK_20;
+  public static final LanguageLevel HIGHEST = JDK_23;
 
   private final JavaVersion myVersion;
 
@@ -36,12 +42,18 @@ public enum LanguageLevel {
     myVersion = JavaVersion.compose(major);
   }
 
-  @NotNull
-  public JavaVersion toJavaVersion() {
+  public @NotNull JavaVersion toJavaVersion() {
     return myVersion;
   }
 
+  /**
+   * @return the language level feature number (like 8 for {@link #JDK_1_8}).
+   */
+  public int feature() {
+    return myVersion.feature;
+  }
+
   public boolean isPreview() {
-    return name().endsWith("_PREVIEW");
+    return name().endsWith("_PREVIEW") || name().endsWith("_X");
   }
 }

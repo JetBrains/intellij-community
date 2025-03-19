@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -7,31 +7,35 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.lang.LanguageAnnotators;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.LanguageInjector;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +47,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-@HardwareAgentRequired
+/**
+ * tests the daemon performance during highlighting interruptions/typing
+ */
 public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCase {
   private static final boolean DEBUG = false;
 
@@ -55,13 +61,13 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     text.append(".toString();<caret>}");
     configureByText(JavaFileType.INSTANCE, text.toString());
 
-    PlatformTestUtil.startPerformanceTest(getName(), 100_000, () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
       type("k");
       assertNotEmpty(highlightErrors());
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).start();
   }
 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
@@ -75,15 +81,15 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
 
     PlatformTestUtil.maskExtensions(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, getProject(), Collections.emptyList(), getTestRootDisposable());
     ExtensionTestUtil.maskExtensions(LanguageInjector.EXTENSION_POINT_NAME, Collections.emptyList(), getTestRootDisposable());
-    ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(((ExtensionPointImpl<?>)LanguageAnnotators.INSTANCE.getPoint()).getName()), Collections.emptyList(), getTestRootDisposable());
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 11_000, () -> {
+    ExtensionTestUtil.maskExtensions(new ExtensionPointName<>(LanguageAnnotators.INSTANCE.getName()), Collections.emptyList(), getTestRootDisposable());
+    Benchmark.newBenchmark("highlighting many string literals", () -> {
       assertEmpty(highlightErrors());
 
       type("k");
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).start();
   }
 
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
@@ -98,14 +104,14 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
                   ".toString(); } }";
     configureByText(JavaFileType.INSTANCE, text);
 
-    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 50_000, () -> {
+    Benchmark.newBenchmark("highlighting deep call chain", () -> {
       assertEmpty(highlightErrors());
 
       type("k");
       assertNotEmpty(highlightErrors());
 
       backspace();
-    }).usesAllCPUCores().assertTiming();
+    }).start();
   }
 
   public void testReactivityPerformance() throws Throwable {
@@ -120,7 +126,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     LOG.debug("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
-      codeAnalyzer.restart();
+      codeAnalyzer.restart(getTestName(false));
       final int finalI = i;
       final long start = System.currentTimeMillis();
       final AtomicLong typingStart = new AtomicLong();
@@ -169,14 +175,15 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           long end = System.currentTimeMillis();
           long interruptTime = end - now;
           interruptTimes[finalI] = interruptTime;
-          assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
+          DaemonProgressIndicator indicator = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
+          assertTrue(String.valueOf(indicator), indicator == null || indicator.isCanceled());
           System.out.println(interruptTime);
           throw new ProcessCanceledException();
         };
         long hiStart = System.currentTimeMillis();
         codeAnalyzer.runPasses(file, editor.getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, false, interrupt);
         long hiEnd = System.currentTimeMillis();
-        DaemonProgressIndicator progress = codeAnalyzer.getUpdateProgress().values().iterator().next();
+        DaemonProgressIndicator progress = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
         String message = "Should have been interrupted: " + progress + "; Elapsed: " + (hiEnd - hiStart) + "ms";
         dumpThreadsToConsole();
         throw new RuntimeException(message);
@@ -230,7 +237,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     LOG.debug("N = " + N);
     final long[] interruptTimes = new long[N];
     for (int i = 0; i < N; i++) {
-      codeAnalyzer.restart();
+      codeAnalyzer.restart(getTestName(false));
       final int finalI = i;
       final long start = System.currentTimeMillis();
       Runnable interrupt = () -> {
@@ -239,7 +246,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
           // wait to engage all highlighting threads
           return;
         }
-        // uncomment to debug what's causing pauses
+        // set DEBUG=true to see what's causing pauses
         AtomicBoolean finished = new AtomicBoolean();
         if (DEBUG) {
           AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
@@ -253,7 +260,8 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
         finished.set(true);
         long interruptTime = end - now;
         interruptTimes[finalI] = interruptTime;
-        assertTrue(codeAnalyzer.getUpdateProgress().values().iterator().next().isCanceled());
+        DaemonProgressIndicator indicator = ContainerUtil.getFirstItem(new ArrayList<>(codeAnalyzer.getUpdateProgress().values()));
+        assertTrue(String.valueOf(indicator), indicator == null || indicator.isCanceled());
         throw new ProcessCanceledException();
       };
       try {
@@ -298,7 +306,7 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
     type(' ');
     for (int i=0; i<100; i++) {
       backspace();
-      codeAnalyzer.restart();
+      codeAnalyzer.restart(getTestName(false));
       try {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -316,5 +324,32 @@ public class DaemonRespondToChangesPerformanceTest extends DaemonAnalyzerTestCas
       }
       fail("PCE must have been thrown");
     }
+  }
+
+  // highlights everything at the file level
+  static class MyHugeAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {
+    static final AtomicBoolean finished = new AtomicBoolean();
+    static final String myText = "blah.MyHugeAnnotator";
+    @Override
+    public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+      if (element instanceof PsiFile) {
+        for (int i=0;i<element.getTextLength();i++) {
+          holder.newAnnotation(HighlightSeverity.WARNING, myText).range(new TextRange(i, i+1)).create();
+        }
+        iDidIt();
+        finished.set(true);
+      }
+    }
+  }
+
+  public void testRogueToolGeneratingZillionsOfAnnotationsAtTheSameLevelMustNotFreeze_Performance() {
+    int N = 1_000_000;
+    configureByText(PlainTextFileType.INSTANCE, " ".repeat(N));
+    // just checks that highlighting doesn't freeze because there are no quadratics inside anymore
+    DaemonAnnotatorsRespondToChangesTest.useAnnotatorsIn(PlainTextLanguage.INSTANCE, new DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator[]{new MyHugeAnnotator()}, ()->{
+      assertEquals(N, ContainerUtil.count(doHighlighting(), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
+      type(' ');
+      assertEquals(N+1, ContainerUtil.count(doHighlighting(), h -> MyHugeAnnotator.myText.equals(h.getDescription())));
+    });
   }
 }

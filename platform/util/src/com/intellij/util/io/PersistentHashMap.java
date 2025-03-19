@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,10 +33,7 @@ import static com.intellij.util.io.PersistentMapBuilder.newBuilder;
  * @see PersistentMapBuilder
  **/
 public final class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Key, Value>, MeasurableIndexStore {
-  @NonNls
-  static final String DATA_FILE_EXTENSION = ".values";
-
-  @NotNull private final PersistentMapBase<Key, Value> myImpl;
+  private final @NotNull PersistentMapBase<Key, Value> myImpl;
 
   PersistentHashMap(@NotNull PersistentMapBuilder<Key, Value> builder, boolean checkInheritedMembers) throws IOException {
     if (checkInheritedMembers) {
@@ -58,6 +56,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   /**
    * @deprecated Use {@link PersistentHashMap#PersistentHashMap(Path, KeyDescriptor, DataExternalizer)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public PersistentHashMap(@NotNull File file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
@@ -86,6 +85,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
     this(newBuilder(file, keyDescriptor, valueExternalizer).withInitialSize(initialSize).withVersion(version), true);
   }
 
+  @Internal
   public PersistentHashMap(@NotNull Path file,
                            @NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer,
@@ -174,8 +174,7 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @NotNull
-  public Collection<Key> getAllKeysWithExistingMapping() throws IOException {
+  public @NotNull Collection<Key> getAllKeysWithExistingMapping() throws IOException {
     List<Key> result = new ArrayList<>();
     myImpl.processExistingKeys(new CommonProcessors.CollectProcessor<>(result));
     return result;
@@ -208,12 +207,19 @@ public final class PersistentHashMap<Key, Value> implements AppendablePersistent
   }
 
   @Override
-  public void force() {
+  public void force() throws UncheckedIOException {
     try {
       myImpl.force();
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      //TODO (fixme if you're brave enough): Forceable.force() _declares_ throwing IOException -- but this implementation initially
+      //         didn't declare IOException. This is quite natural to 'flush'-like method to throw IOException, so I've tried to
+      //         change that -- but there is HUGE amount of code that is not ready for that -- there are dozens of flush/force-like
+      //         methods across the codebase that do not declare, nor process IOException.
+      //         Have no idea that have been their authors thinking about 'flushing data on disk with no chance of errors' :)
+      //         Anyway, declaring IOException here requires too big refactoring, without clear benefit, so I just go with
+      //         UncheckedIOException for now. Do the next step if you're young and brave
+      throw new UncheckedIOException(e);
     }
   }
 

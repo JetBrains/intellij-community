@@ -1,18 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ProjectLevelVcsManagerSerialization {
-  @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
-  @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
-  @NonNls private static final String VALUE_ATTTIBUTE = "value";
-  @NonNls private static final String ID_ATTRIBUTE = "id";
+  private static final @NonNls String OPTIONS_SETTING = "OptionsSetting";
+  private static final @NonNls String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
+  private static final @NonNls String VALUE_ATTTIBUTE = "value";
+  private static final @NonNls String ID_ATTRIBUTE = "id";
 
   public static void readExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations)
     throws InvalidDataException {

@@ -1,0 +1,27 @@
+### auto-generated section `build kotlin.compiler-plugins.scripting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-compiler-plugins-scripting_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-scripting",
+  module_name = "kotlin.compiler-plugins.scripting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
+    "//platform/lang-api:lang",
+    "//plugins/gradle:gradle-common",
+  ],
+  runtime_deps = [":kotlin-compiler-plugins-scripting_resources"]
+)
+### auto-generated section `build kotlin.compiler-plugins.scripting` end

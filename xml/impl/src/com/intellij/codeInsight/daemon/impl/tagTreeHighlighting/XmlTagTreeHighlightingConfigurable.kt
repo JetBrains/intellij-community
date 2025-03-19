@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.tagTreeHighlighting
 
 import com.intellij.application.options.editor.WebEditorOptions
@@ -25,7 +11,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.xml.XmlBundle
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel
 
-class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
+internal class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
 
   override fun Panel.createContent() {
     val options = WebEditorOptions.getInstance()
@@ -57,18 +43,17 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
     }
   }
 
-  companion object {
-    private fun clearTagTreeHighlighting() {
-      for (project in ProjectManager.getInstance().openProjects) {
-        for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
-          if (fileEditor is TextEditor) {
-            val editor = fileEditor.editor
-            XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project)
-            val breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor)
-            breadcrumbs?.queueUpdate()
-          }
+  private fun clearTagTreeHighlighting() {
+    for (project in ProjectManager.getInstance().openProjects) {
+      for (fileEditor in FileEditorManager.getInstance(project).allEditors) {
+        if (fileEditor is TextEditor) {
+          val editor = fileEditor.editor
+          XmlTagTreeHighlightingPass.clearHighlightingAndLineMarkers(editor, project)
+          val breadcrumbs = BreadcrumbsPanel.getBreadcrumbsComponent(editor)
+          breadcrumbs?.queueUpdate()
         }
       }
     }
   }
+
 }

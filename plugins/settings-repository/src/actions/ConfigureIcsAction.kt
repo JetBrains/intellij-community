@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.actions
 
-import com.intellij.configurationStore.StateStorageManagerImpl
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -26,8 +25,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       var urlTextField: TextFieldWithBrowseButton by Delegates.notNull()
       val panel = panel {
         row(icsMessage("settings.upstream.url")) {
-          urlTextField = textFieldWithBrowseButton(browseDialogTitle = icsMessage("configure.ics.choose.local.repository.dialog.title"),
-                                                   fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+          urlTextField = textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(icsMessage("configure.ics.choose.local.repository.dialog.title")))
             .text(icsManager.repositoryManager.getUpstream() ?: "")
             .align(AlignX.FILL)
             .component
@@ -56,7 +54,7 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.isExclusivelyEnabled
+    e.presentation.isEnabledAndVisible = icsManager.isActive || !(application.stateStore.storageManager).streamProvider.let { it.isExclusive && it.enabled }
     if (!e.presentation.isEnabledAndVisible && ActionPlaces.MAIN_MENU == e.place) {
       e.presentation.isVisible = true
     }

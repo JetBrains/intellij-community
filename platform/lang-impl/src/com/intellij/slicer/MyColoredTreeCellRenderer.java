@@ -15,10 +15,12 @@
  */
 package com.intellij.slicer;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public interface MyColoredTreeCellRenderer {
   void customizeCellRenderer(@NotNull SliceUsageCellRendererBase renderer,
                              @NotNull JTree tree,

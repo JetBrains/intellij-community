@@ -1,0 +1,8 @@
+- name: lib/javaFX-community.jar
+  modules:
+  - name: intellij.javaFX.community
+  contentModules:
+  - name: intellij.javaFX.properties
+- name: lib/modules/intellij.javaFX.jar
+  contentModules:
+  - name: intellij.javaFX

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
@@ -9,9 +9,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class PyElementGenerator {
+public abstract class PyElementGenerator extends PyAstElementGenerator {
+  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PyElementGenerator getInstance(Project project) {
-    return project.getService(PyElementGenerator.class);
+    return (PyElementGenerator)PyAstElementGenerator.getInstance(project);
+  }
+
+  public PyElementGenerator(Project project) {
+    super(project);
   }
 
   public abstract ASTNode createNameIdentifier(String name, LanguageLevel languageLevel);
@@ -28,10 +33,14 @@ public abstract class PyElementGenerator {
    * @param destination where the literal is destined to; used to determine the encoding.
    * @param unescaped   the string
    * @param preferUTF8 try to use UTF8 (would use ascii if false)
+   * @param preferDoubleQuotes try to use double/single quotes
    * @return a newly created literal
    */
-  public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped,
-                                                                          boolean preferUTF8);
+  protected abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination,
+                                                                          @NotNull String unescaped,
+                                                                          boolean preferUTF8, boolean preferDoubleQuotes);
+
+  public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped, boolean preferDoubleQuotes);
 
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
@@ -39,17 +48,16 @@ public abstract class PyElementGenerator {
 
   public abstract PyListLiteralExpression createListLiteral();
 
-  public abstract ASTNode createComma();
-
   public abstract ASTNode createDot();
 
   public abstract PyBinaryExpression createBinaryExpression(String s, PyExpression expr, PyExpression listLiteral);
 
-  @NotNull
-  public abstract PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
-  
-  @NotNull
-  public abstract PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
+  @Override
+  public @NotNull PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException {
+    return (PyExpression)super.createExpressionFromText(languageLevel, text);
+  }
+
+  public abstract @NotNull PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) throws IncorrectOperationException;
 
   /**
    * Adds elements to list inserting required commas.
@@ -60,8 +68,7 @@ public abstract class PyElementGenerator {
    * @param toInsert  what to insert
    * @return newly inserted element
    */
-  @NotNull
-  public abstract PsiElement insertItemIntoListRemoveRedundantCommas(
+  public abstract @NotNull PsiElement insertItemIntoListRemoveRedundantCommas(
     @NotNull PyElement list,
     @Nullable PyExpression afterThis,
     @NotNull PyExpression toInsert);
@@ -69,8 +76,7 @@ public abstract class PyElementGenerator {
   public abstract PsiElement insertItemIntoList(PyElement list, @Nullable PyExpression afterThis, PyExpression toInsert)
     throws IncorrectOperationException;
 
-  @NotNull
-  public abstract PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
+  public abstract @NotNull PyCallExpression createCallExpression(final LanguageLevel langLevel, String functionName);
 
   public abstract PyImportElement createImportElement(@NotNull LanguageLevel languageLevel, @NotNull String name, @Nullable String alias);
 
@@ -78,25 +84,6 @@ public abstract class PyElementGenerator {
                                             String propertyName,
                                             String fieldName,
                                             AccessDirection accessDirection);
-
-  @NotNull
-  public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
-
-  @NotNull
-  public abstract <T> T createPhysicalFromText(LanguageLevel langLevel, Class<T> aClass, final String text);
-
-  /**
-   * Creates an arbitrary PSI element from text, by creating a bigger construction and then cutting the proper subelement.
-   * Will produce all kinds of exceptions if the path or class would not match the PSI tree.
-   *
-   * @param langLevel the language level to use for parsing the text
-   * @param aClass    class of the PSI element; may be an interface not descending from PsiElement, as long as target node can be cast to it
-   * @param text      text to parse
-   * @param path      a sequence of numbers, each telling which child to select at current tree level; 0 means first child, etc.
-   * @return the newly created PSI element
-   */
-  @NotNull
-  public abstract <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path);
 
   public abstract PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
                                                    @NotNull LanguageLevel level);
@@ -106,31 +93,28 @@ public abstract class PyElementGenerator {
   /**
    * @param text parameters list already in parentheses, e.g. {@code (foo, *args, **kwargs)}.
    */
-  @NotNull
-  public abstract PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+  public abstract @NotNull PyParameterList createParameterList(@NotNull LanguageLevel languageLevel, @NotNull String text);
 
   /**
    * @param text argument list already in parentheses, e.g. {@code (1, 2, *xs)}.
    */
-  @NotNull
-  public abstract PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text);
+  public abstract @NotNull PyArgumentList createArgumentList(@NotNull LanguageLevel languageLevel, @NotNull String text);
 
   public abstract PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value);
 
-  public abstract PsiFile createDummyFile(LanguageLevel langLevel, String contents);
-
-  public abstract PyExpressionStatement createDocstring(String content);
+  @Override
+  public PyExpressionStatement createDocstring(String content) {
+    return (PyExpressionStatement)super.createDocstring(content);
+  }
 
   public abstract PyPassStatement createPassStatement();
 
-  @NotNull
-  public abstract PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
+  public abstract @NotNull PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
   /**
    * Creates new line whitespace
    */
-  @NotNull
-  public abstract PsiElement createNewLine();
+  public abstract @NotNull PsiElement createNewLine();
 
   /**
    * Creates import statement of form {@code from qualifier import name as alias}.
@@ -141,8 +125,7 @@ public abstract class PyElementGenerator {
    * @param alias         optional alias for {@code as alias} part
    * @return created {@link PyFromImportStatement}
    */
-  @NotNull
-  public abstract PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
+  public abstract @NotNull PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
                                                                   @NotNull String qualifier,
                                                                   @NotNull String name,
                                                                   @Nullable String alias);
@@ -155,14 +138,13 @@ public abstract class PyElementGenerator {
    * @param alias         optional alias for {@code as alias} part
    * @return created {@link PyImportStatement}
    */
-  @NotNull
-  public abstract PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
+  public abstract @NotNull PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
                                                           @NotNull String name,
                                                           @Nullable String alias);
 
-  @NotNull
-  public abstract PyNoneLiteralExpression createEllipsis();
+  public abstract @NotNull PyNoneLiteralExpression createEllipsis();
 
-  @NotNull
-  public abstract PySingleStarParameter createSingleStarParameter();
+  public abstract @NotNull PySingleStarParameter createSingleStarParameter();
+
+  public abstract @NotNull PySlashParameter createSlashParameter();
 }

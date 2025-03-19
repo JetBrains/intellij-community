@@ -16,4 +16,6 @@ public interface LongRunningTask extends AutoCloseable {
 
   @Override
   void close();
+
+  MavenServerConsoleIndicatorImpl getIndicator();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -65,7 +66,7 @@ public final class GroovyMarkerTypes {
       boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
       boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
-      @NonNls final String key;
+      final @NonNls String key;
       if (isSuperAbstract && !isAbstract) {
         key = "method.implements.in";
       }
@@ -128,8 +129,9 @@ public final class GroovyMarkerTypes {
       PsiElement parent = element.getParent();
       if (!(parent instanceof GrField field)) return;
       if (DumbService.isDumb(element.getProject())) {
-        DumbService.getInstance(element.getProject()).showDumbModeNotification(
-          GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable")
+        DumbService.getInstance(element.getProject()).showDumbModeNotificationForFunctionality(
+          GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable"),
+          DumbModeBlockedFunctionality.GroovyMarkers
         );
         return;
       }
@@ -168,7 +170,7 @@ public final class GroovyMarkerTypes {
                                                                          boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
                                                                          final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
-                                                                         @NonNls final String key;
+                                                                         final @NonNls String key;
                                                                          if (isSuperAbstract && !isAbstract){
                                                                            key = sameSignature ? "method.implements" : "method.implements.in";
                                                                          }
@@ -234,8 +236,9 @@ public final class GroovyMarkerTypes {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod method)) return;
         if (DumbService.isDumb(element.getProject())) {
-          DumbService.getInstance(element.getProject()).showDumbModeNotification(
-            GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable"));
+          DumbService.getInstance(element.getProject()).showDumbModeNotificationForFunctionality(
+            GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable"),
+            DumbModeBlockedFunctionality.GroovyMarkers);
           return;
         }
 
@@ -316,7 +319,7 @@ public final class GroovyMarkerTypes {
     }
 
     @Override
-    public void run(@NotNull final ProgressIndicator indicator) {
+    public void run(final @NotNull ProgressIndicator indicator) {
       super.run(indicator);
       for (PsiMethod method : PsiImplUtil.getMethodOrReflectedMethods(myMethod)) {
         OverridingMethodsSearch.search(method).forEach(

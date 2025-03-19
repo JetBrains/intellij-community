@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.containers.CollectionFactory;
@@ -12,36 +12,30 @@ import java.util.Set;
 public final class UserDictionary implements EditableDictionary {
   private final String name;
 
-  @NotNull
-  private final Set<String> words = CollectionFactory.createSmallMemoryFootprintSet();
+  private final @NotNull Set<String> words = CollectionFactory.createSmallMemoryFootprintSet();
 
   public UserDictionary(@NotNull String name) {
     this.name = name;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
   @Override
-  @Nullable
-  public Boolean contains(@NotNull String word) {
+  public @Nullable Boolean contains(@NotNull String word) {
     boolean contains = words.contains(word);
-    if (contains) return true;
-    return null;
+    return contains ? true : null;
   }
 
-  @NotNull
   @Override
-  public Set<String> getWords() {
+  public @NotNull Set<String> getWords() {
     return words;
   }
 
   @Override
-  @NotNull
-  public Set<String> getEditableWords() {
+  public @NotNull Set<String> getEditableWords() {
     return words;
   }
 
@@ -97,9 +91,8 @@ public final class UserDictionary implements EditableDictionary {
     return name.hashCode();
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';
   }
 }

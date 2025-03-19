@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.tools.JavaFileManager;
@@ -12,6 +13,7 @@ import java.nio.CharBuffer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@ApiStatus.Internal
 public final class ZipFileObject extends JpsFileObject {
   private final ZipFile myZip;
   private final ZipEntry myEntry;
@@ -46,11 +48,6 @@ public final class ZipFileObject extends JpsFileObject {
   @Override
   public InputStream openInputStream() throws IOException {
     return new BufferedInputStream(myZip.getInputStream(myEntry));
-  }
-
-  @Override
-  public OutputStream openOutputStream() throws IOException {
-    return super.openOutputStream();
   }
 
   @Override

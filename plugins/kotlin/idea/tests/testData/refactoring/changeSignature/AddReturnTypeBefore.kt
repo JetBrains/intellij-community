@@ -1,3 +1,3 @@
 fun x(a: Int) {
-    <caret>x(1);
+    <caret>x(1)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -9,8 +9,6 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -20,36 +18,47 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
+@ApiStatus.Internal
+public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
-  private final AnnotationHolderImpl myAnnotationHolder;
-  private final boolean myMainHighlightingPass;
-  private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
+  private final List<MyData<?,?>> myAnnotationData = Collections.synchronizedList(new ArrayList<>());
+  private volatile @NotNull List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
+  private volatile boolean externalUpdateTaskCompleted; // true when the task in ExternalAnnotatorManager.getInstance().queue() was completed
 
-  private static class MyData<K,V> {
-    final ExternalAnnotator<K,V> annotator;
-    final PsiFile psiRoot;
-    final K collectedInfo;
+  private static final class MyData<K,V> {
+    final @NotNull ExternalAnnotator<K,V> annotator;
+    final @NotNull PsiFile psiRoot;
+    final @NotNull K collectedInfo;
     volatile V annotationResult;
+    volatile AnnotationHolderImpl annotationHolder;
 
     MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
       this.annotator = annotator;
@@ -63,11 +72,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    @Nullable Editor editor,
                    int startOffset,
                    int endOffset,
-                   @NotNull HighlightInfoProcessor processor,
-                   boolean mainHighlightingPass) {
+                   @NotNull HighlightInfoProcessor processor) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
-    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
-    myMainHighlightingPass = mainHighlightingPass;
   }
 
   @Override
@@ -111,7 +117,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
     setProgressLimit(externalAnnotatorsInRoots);
 
-    boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument);
+    boolean errorFound = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().wasErrorFound(myDocument, getContext());
     Editor editor = getEditor();
 
     DumbService dumbService = DumbService.getInstance(myProject);
@@ -121,12 +127,14 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       for (ExternalAnnotator<?,?> annotator : annotators) {
         progress.checkCanceled();
 
-        if (dumbService.isDumb() && !DumbService.isDumbAware(annotator)) {
+        if (!dumbService.isUsableInCurrentContext(annotator)) {
           continue;
         }
         Object collectedInfo = null;
         try {
           collectedInfo = editor == null ? annotator.collectInformation(psiRoot) : annotator.collectInformation(psiRoot, editor, errorFound);
+        }
+        catch (IndexNotReadyException ignore) {
         }
         catch (Throwable t) {
           processError(t, annotator, psiRoot);
@@ -141,47 +149,61 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    Update update = new Update(myFile) {
+    ExternalAnnotatorManager.getInstance().queue(new Update(myFile) {
       @Override
       public void setRejected() {
-        super.setRejected();
-        doFinish(getHighlights());
+        try {
+          super.setRejected();
+          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+            doFinish();
+          }
+        }
+        finally {
+          externalUpdateTaskCompleted = true;
+        }
       }
 
       @Override
       public void run() {
-        if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
+        try {
+          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+            return;
+          }
+
+          // have to instantiate new indicator because the old one (progress) might have already been canceled
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
           BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
             // run annotators outside the read action because they could start OSProcessHandler
-            runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
+            runChangeAware(myDocument, () -> doAnnotate());
             ReadAction.run(() -> {
               ProgressManager.checkCanceled();
               if (!documentChanged(modificationStampBefore)) {
                 doApply();
-                doFinish(getHighlights());
+                doFinish();
               }
             });
-          });
+          }, indicator);
+        }
+        finally {
+          externalUpdateTaskCompleted = true;
         }
       }
-    };
-    ExternalAnnotatorManager.getInstance().queue(update);
+    });
   }
 
-  @NotNull
   @Override
-  public List<HighlightInfo> getInfos() {
-    if (myProject.isDisposed()) {
-      return Collections.emptyList();
+  public @NotNull List<HighlightInfo> getInfos() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    long deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(60);
+
+    while (!externalUpdateTaskCompleted) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(1);
+      Thread.yield();
+      if (System.currentTimeMillis() > deadline) break;
     }
-    if (myMainHighlightingPass) {
-      doAnnotate();
-      return ReadAction.compute(() -> {
-        doApply();
-        return getHighlights();
-      });
-    }
-    return super.getInfos();
+    //noinspection unchecked
+    return (List<HighlightInfo>)myHighlightInfos;
   }
 
   @Override
@@ -200,7 +222,13 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   private static <K, V> void doAnnotate(@NotNull MyData<K, V> data) {
     try {
-      data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+      AnnotationSessionImpl.computeWithSession(data.psiRoot, false, data.annotator, annotationHolder -> {
+        data.annotationHolder = (AnnotationHolderImpl)annotationHolder;
+        data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+        return null;
+      });
+    }
+    catch (IndexNotReadyException ignore) {
     }
     catch (Throwable t) {
       processError(t, data.annotator, data.psiRoot);
@@ -211,13 +239,12 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     for (MyData<?,?> data : myAnnotationData) {
       doApply(data);
     }
-    myAnnotationHolder.assertAllAnnotationsCreated();
   }
 
-  private <K,V> void doApply(@NotNull MyData<K,V> data) {
-    if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
+  private static <K, V> void doApply(@NotNull MyData<K, V> data) {
+    if (data.annotationResult != null && data.psiRoot.isValid()) {
       try {
-        myAnnotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
+        data.annotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotationResult);
       }
       catch (Throwable t) {
         processError(t, data.annotator, data.psiRoot);
@@ -225,24 +252,23 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<HighlightInfo> getHighlights() {
-    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
-    for (Annotation annotation : myAnnotationHolder) {
-      infos.add(HighlightInfo.fromAnnotation(annotation));
-    }
-    return infos;
-  }
-
-  private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
-    int start = myRestrictRange.getStartOffset();
-    int end = myRestrictRange.getEndOffset();
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
-    DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
+  @RequiresBackgroundThread
+  private void doFinish() {
+    List<HighlightInfo> highlights = myAnnotationData.stream()
+      .flatMap(data ->
+        ContainerUtil.notNullize(data.annotationHolder).stream().map(annotation -> HighlightInfo.fromAnnotation(data.annotator, annotation, getDocument())))
+      .toList();
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myDocument, myProject, true);
+    HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
+      // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
+      BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId());
+      myHighlightInfos = highlights;
+    });
   }
 
   private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
-    if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
+    if (t instanceof ProcessCanceledException pce) throw pce;
 
     VirtualFile file = root.getVirtualFile();
     String path = file != null ? file.getPath() : root.getName();

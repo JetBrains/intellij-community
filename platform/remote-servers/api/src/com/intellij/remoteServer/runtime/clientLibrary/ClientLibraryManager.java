@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.runtime.clientLibrary;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,11 +9,9 @@ import java.io.IOException;
 import java.util.List;
 
 public abstract class ClientLibraryManager {
-  @NotNull
-  public static ClientLibraryManager getInstance() {
+  public static @NotNull ClientLibraryManager getInstance() {
     return ApplicationManager.getApplication().getService(ClientLibraryManager.class);
   }
 
-  @NotNull
-  public abstract List<File> download(@NotNull ClientLibraryDescription libraryDescription) throws IOException;
+  public abstract @NotNull List<File> download(@NotNull ClientLibraryDescription libraryDescription) throws IOException;
 }

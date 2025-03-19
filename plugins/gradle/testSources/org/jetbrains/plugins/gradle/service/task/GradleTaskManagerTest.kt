@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -14,16 +14,17 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
-import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase.requireJdkHome
+import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
 
@@ -45,8 +46,8 @@ class GradleTaskManagerTest: UsefulTestCase() {
     taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID,
                                              ExternalSystemTaskType.EXECUTE_TASK,
                                              myProject)
-    gradleExecSettings = GradleExecutionSettings(null, null,
-                                                     DistributionType.WRAPPED, false)
+    gradleExecSettings = GradleExecutionSettings()
+    gradleExecSettings.distributionType = DistributionType.WRAPPED
   }
 
   override fun tearDown() {
@@ -65,10 +66,17 @@ class GradleTaskManagerTest: UsefulTestCase() {
   @Test
   fun `test task manager calls Operation Helper Extension`() {
     val executed: AtomicReference<Boolean> = AtomicReference(false)
-    val ext = TestOperationHelperExtension(prepareExec = {
-      executed.set(true)
-    })
-    ExtensionTestUtil.maskExtensions(GradleOperationHelperExtension.EP_NAME, listOf(ext), testRootDisposable, false)
+    val extension = object : GradleExecutionHelperExtension {
+      override fun prepareForExecution(
+        id: ExternalSystemTaskId,
+        operation: LongRunningOperation,
+        settings: GradleExecutionSettings,
+        buildEnvironment: BuildEnvironment?,
+      ) {
+        executed.set(true)
+      }
+    }
+    ExtensionTestUtil.maskExtensions(GradleExecutionHelperExtension.EP_NAME, listOf(extension), testRootDisposable, false)
     runHelpTask(GradleVersion.version("4.8.1"))
     assertTrue(executed.get())
   }
@@ -77,19 +85,18 @@ class GradleTaskManagerTest: UsefulTestCase() {
   fun `test gradle-version-specific init scripts executed`() {
 
     val oldMessage = "this should be executed for gradle 3.0"
-    val oldVer = VersionSpecificInitScript("""println('$oldMessage')""") { v ->
+    val oldVer = PredefinedVersionSpecificInitScript("""println('$oldMessage')""") { v ->
       v == GradleVersion.version("3.0")
     }
     val intervalMessage = "this should be executed for gradle between 4 and 6"
-    val intervalVer = VersionSpecificInitScript("println('$intervalMessage')") { v ->
+    val intervalVer = PredefinedVersionSpecificInitScript("println('$intervalMessage')") { v ->
       v > GradleVersion.version("4.0") && v <= GradleVersion.version("6.0")
     }
     val newerVerMessage = "this should be executed for gradle 4.8 and newer"
-    val newerVer = VersionSpecificInitScript("println('$newerVerMessage')") { v ->
-      v >= GradleVersion.version("4.8")
-    }
+    val newerVer = LazyVersionSpecificInitScript({ "println('$newerVerMessage')" }) { v -> v >= GradleVersion.version("4.8") }
+    val never = LazyVersionSpecificInitScript({ throw IllegalStateException("Should never be invoked") }) { _ -> false }
 
-    val initScripts = listOf(oldVer, intervalVer, newerVer)
+    val initScripts = listOf(oldVer, intervalVer, newerVer, never)
     gradleExecSettings.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, initScripts)
 
     val output = runHelpTask(GradleVersion.version("4.9"))
@@ -109,12 +116,12 @@ class GradleTaskManagerTest: UsefulTestCase() {
         .createChildData(this, "gradle-wrapper.properties")
 
       VfsUtil.saveText(wrapperProps, """
-      distributionBase=GRADLE_USER_HOME
-      distributionPath=wrapper/dists
-      distributionUrl=${AbstractModelBuilderTest.DistributionLocator().getDistributionFor(GradleVersion.version("4.8"))}
-      zipStoreBase=GRADLE_USER_HOME
-      zipStorePath=wrapper/dists
-    """.trimIndent())
+        distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=${GradleUtil.getWrapperDistributionUri(GradleVersion.version("4.8"))}
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists
+      """.trimIndent())
     }
 
     val output = runHelpTask(GradleVersion.version("4.9"))
@@ -129,21 +136,19 @@ class GradleTaskManagerTest: UsefulTestCase() {
       withPrefix {
         call("wrapper") {
           assign("gradleVersion", gradleVersion.version)
+          assign("distributionUrl" , GradleUtil.getWrapperDistributionUri(gradleVersion).toString())
         }
       }
     }
 
-    gradleExecSettings.javaHome = GradleImportingTestCase.requireJdkHome(gradleVersion)
+    gradleExecSettings.javaHome = requireJdkHome(gradleVersion, JavaVersionRestriction.NO)
+
+    val settings = GradleExecutionSettings(gradleExecSettings).apply {
+      tasks = listOf("help")
+    }
 
     val listener = TaskExecutionOutput()
-    tm.executeTasks(
-      taskId,
-      listOf("help"),
-      myProject.basePath!!,
-      gradleExecSettings,
-      null,
-      listener
-    )
+    tm.executeTasks(myProject.basePath!!, taskId, settings, listener)
     return listener
   }
 
@@ -155,24 +160,11 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 }
 
-class TaskExecutionOutput: ExternalSystemTaskNotificationListenerAdapter() {
+class TaskExecutionOutput : ExternalSystemTaskNotificationListener {
   private val storage = mutableListOf<String>()
   override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
     storage.add(text)
   }
 
   fun anyLineContains(something: String): Boolean = storage.any { it.contains(something) }
-}
-
-class TestOperationHelperExtension(val prepareSync: () -> Unit = {},
-                                   val prepareExec: () -> Unit = {}): GradleOperationHelperExtension {
-  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {
-    prepareSync()
-  }
-
-  override fun prepareForExecution(id: ExternalSystemTaskId,
-                                   operation: LongRunningOperation,
-                                   gradleExecutionSettings: GradleExecutionSettings) {
-    prepareExec()
-  }
 }

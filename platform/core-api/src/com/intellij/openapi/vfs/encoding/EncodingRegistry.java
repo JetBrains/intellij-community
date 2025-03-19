@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.util.Comparing;
@@ -16,8 +16,7 @@ public abstract class EncodingRegistry {
   /**
    * @return charset configured in Settings|File Encodings|IDE encoding
    */
-  @NotNull
-  public abstract Charset getDefaultCharset();
+  public abstract @NotNull Charset getDefaultCharset();
 
   /**
    * @param virtualFile  file to get encoding for
@@ -26,13 +25,11 @@ public abstract class EncodingRegistry {
    *         if useParentDefaults is true, encoding configured for nearest parent of virtualFile or,
    *         null if there is no configured encoding found.
    */
-  @Nullable
-  public abstract Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
+  public abstract @Nullable Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults);
 
   public abstract void setEncoding(@Nullable("null means project") VirtualFile virtualFileOrDir, @Nullable("null means remove mapping") Charset charset);
 
-  @Nullable("null means 'use system-default'")
-  public Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
+  public @Nullable("null means 'use system-default'") Charset getDefaultCharsetForPropertiesFiles(@Nullable VirtualFile virtualFile) {
     return null;
   }
 

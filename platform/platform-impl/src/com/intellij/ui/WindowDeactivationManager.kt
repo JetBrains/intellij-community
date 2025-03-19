@@ -60,9 +60,8 @@ class WindowDeactivationManager {
         wasOpened = true
 
         Frame.getFrames().asSequence().filter { it is IdeFrame && it.project === project }.forEach {
-          it.addWindowFocusListener(focusListener)
-          Disposer.register(disposable) {
-            it.removeWindowFocusListener(focusListener)
+          if (Disposer.tryRegister(disposable) { it.removeWindowFocusListener(focusListener) }) {
+            it.addWindowFocusListener(focusListener)
           }
         }
       }

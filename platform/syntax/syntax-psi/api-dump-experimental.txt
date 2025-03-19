@@ -1,0 +1,67 @@
+*:com.intellij.platform.syntax.psi.ElementTypeConverter
+- a:convert(com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- a:convert(com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+- a:convert(com.intellij.platform.syntax.SyntaxElementType[]):com.intellij.psi.tree.IElementType[]
+*:com.intellij.platform.syntax.psi.ElementTypeConverterFactory
+- a:getElementTypeConverter():com.intellij.platform.syntax.psi.ElementTypeConverter
+*f:com.intellij.platform.syntax.psi.ElementTypeConverterKt
+- sf:asTokenSet(java.util.Set,com.intellij.platform.syntax.psi.ElementTypeConverter):com.intellij.psi.tree.TokenSet
+- sf:compositeElementTypeConverter(java.util.List):com.intellij.platform.syntax.psi.ElementTypeConverter
+- sf:convertNotNull(com.intellij.platform.syntax.psi.ElementTypeConverter,com.intellij.platform.syntax.SyntaxElementType):com.intellij.psi.tree.IElementType
+- sf:convertNotNull(com.intellij.platform.syntax.psi.ElementTypeConverter,com.intellij.psi.tree.IElementType):com.intellij.platform.syntax.SyntaxElementType
+- sf:elementTypeConverterOf(kotlin.Pair[]):com.intellij.platform.syntax.psi.ElementTypeConverter
+*f:com.intellij.platform.syntax.psi.ElementTypeConverters
+- sf:INSTANCE:com.intellij.platform.syntax.psi.ElementTypeConverters
+- f:getConverter(com.intellij.lang.Language):com.intellij.platform.syntax.psi.ElementTypeConverter
+*:com.intellij.platform.syntax.psi.LanguageSyntaxDefinition
+- a:getCommentTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
+- a:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getWhitespaceTokens():com.intellij.platform.syntax.SyntaxElementTypeSet
+*f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+- com.intellij.lang.LanguageExtension
+- *sf:Companion:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions$Companion
+- <init>():V
+- sf:getINSTANCE():com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+*f:com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions$Companion
+- f:getINSTANCE():com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions
+*f:com.intellij.platform.syntax.psi.ParsingDiagnostics
+- *sf:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
+- *sf:registerParse(com.intellij.platform.syntax.psi.PsiSyntaxBuilder,com.intellij.lang.Language,J):V
+*:com.intellij.platform.syntax.psi.ParsingDiagnosticsHandler
+- a:registerParse(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.lang.Language,J):V
+*:com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- com.intellij.openapi.util.UserDataHolder
+- a:getLightTree():com.intellij.util.diff.FlyweightCapableTreeStructure
+- a:getSyntaxTreeBuilder():com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- a:getTreeBuilt():com.intellij.lang.ASTNode
+- a:setDebugMode(Z):V
+*:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+- *sf:Companion:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
+- a:createBuilder(com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- a:createBuilder(com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- bs:createBuilder$default(com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory,com.intellij.lang.ASTNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence,I,java.lang.Object):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- bs:createBuilder$default(com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory,com.intellij.lang.LighterLazyParseableNode,com.intellij.platform.syntax.lexer.Lexer,com.intellij.lang.Language,java.lang.CharSequence,I,java.lang.Object):com.intellij.platform.syntax.psi.PsiSyntaxBuilder
+- s:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*f:com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory$Companion
+- f:getInstance():com.intellij.platform.syntax.psi.PsiSyntaxBuilderFactory
+*c:com.intellij.platform.syntax.psi.lexer.LexerAdapter
+- com.intellij.lexer.Lexer
+- <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- getCurrentPosition():com.intellij.lexer.LexerPosition
+- f:getElementTypeConverter():com.intellij.platform.syntax.psi.ElementTypeConverter
+- f:getLexer():com.intellij.platform.syntax.lexer.Lexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.psi.tree.IElementType
+- restore(com.intellij.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.psi.lexer.LexerPositionAdapter
+- com.intellij.lexer.LexerPosition
+- <init>(com.intellij.platform.syntax.lexer.LexerPosition):V
+- getOffset():I
+- f:getPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- getState():I

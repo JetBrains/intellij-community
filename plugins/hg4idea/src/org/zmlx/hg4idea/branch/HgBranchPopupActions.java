@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.branch;
 
 import com.intellij.CommonBundle;
@@ -58,8 +58,8 @@ import static org.zmlx.hg4idea.util.HgUtil.getSortedNamesWithoutHashes;
 
 public class HgBranchPopupActions {
 
-  @NotNull private final Project myProject;
-  @NotNull private final HgRepository myRepository;
+  private final @NotNull Project myProject;
+  private final @NotNull HgRepository myRepository;
 
   HgBranchPopupActions(@NotNull Project project, @NotNull HgRepository repository) {
     myProject = project;
@@ -116,7 +116,7 @@ public class HgBranchPopupActions {
   }
 
   public static class HgNewBranchAction extends NewBranchAction<HgRepository> {
-    @NotNull final HgRepository myPreselectedRepo;
+    final @NotNull HgRepository myPreselectedRepo;
 
     public HgNewBranchAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(project, repositories);
@@ -137,7 +137,7 @@ public class HgBranchPopupActions {
       }.queue();
     }
 
-    public void createNewBranchInCurrentThread(@NotNull final String name) {
+    public void createNewBranchInCurrentThread(final @NotNull String name) {
       for (final HgRepository repository : myRepositories) {
         try {
           HgCommandResult result = new HgBranchCreateCommand(myProject, repository.getRoot(), name).executeInCurrentThread();
@@ -161,8 +161,8 @@ public class HgBranchPopupActions {
   }
 
   public static class HgCloseBranchAction extends DumbAwareAction {
-    @NotNull private final List<HgRepository> myRepositories;
-    @NotNull final HgRepository myPreselectedRepo;
+    private final @NotNull List<HgRepository> myRepositories;
+    final @NotNull HgRepository myPreselectedRepo;
 
     HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(HgBundle.messagePointer("action.hg4idea.branch.close", repositories.size()),
@@ -181,7 +181,7 @@ public class HgBranchPopupActions {
         () -> commitAndCloseBranch(project));
     }
 
-    private void commitAndCloseBranch(@NotNull final Project project) {
+    private void commitAndCloseBranch(final @NotNull Project project) {
       final LocalChangeList activeChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
       HgVcs vcs = HgVcs.getInstance(project);
       assert vcs != null;
@@ -210,8 +210,8 @@ public class HgBranchPopupActions {
   }
 
   public static class HgNewBookmarkAction extends DumbAwareAction {
-    @NotNull protected final List<HgRepository> myRepositories;
-    @NotNull final HgRepository myPreselectedRepo;
+    protected final @NotNull List<HgRepository> myRepositories;
+    final @NotNull HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
       super(HgBundle.messagePointer("action.hg4idea.bookmark.new"),
@@ -245,9 +245,9 @@ public class HgBranchPopupActions {
   }
 
   public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup implements DumbAware {
-    @NotNull final HgRepository myRepository;
-    @NotNull final String myCurrentBranchName;
-    @NotNull final Collection<Hash> myHeads;
+    final @NotNull HgRepository myRepository;
+    final @NotNull String myCurrentBranchName;
+    final @NotNull Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
       super(Presentation.NULL_STRING, true);
@@ -257,8 +257,7 @@ public class HgBranchPopupActions {
       myHeads = filterUnnamedHeads();
     }
 
-    @NotNull
-    private Collection<Hash> filterUnnamedHeads() {
+    private @NotNull Collection<Hash> filterUnnamedHeads() {
       Collection<Hash> branchWithHashes = myRepository.getBranches().get(myCurrentBranchName);
       String currentHead = myRepository.getCurrentRevision();
       if (branchWithHashes == null || currentHead == null || myRepository.getState() != Repository.State.NORMAL) {
@@ -289,7 +288,7 @@ public class HgBranchPopupActions {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       if (myRepository.isFresh() || myHeads.isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }

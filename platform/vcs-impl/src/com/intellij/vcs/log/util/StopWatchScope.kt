@@ -4,4 +4,4 @@ package com.intellij.vcs.log.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val StopWatchScope = Scope("stopWatch")
+internal val StopWatchScope: Scope = Scope("stopWatch")

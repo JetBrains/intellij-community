@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.ActionLink
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class SpeedSearchAdvertiser : ComponentAdvertiser() {
   fun addSpeedSearchAdvertisement(): JComponent? {
     if (!Registry.`is`("popup.advertiser.speed.search")) {
@@ -43,13 +45,13 @@ class SpeedSearchAdvertiser : ComponentAdvertiser() {
 
     val label = JLabel(IdeBundle.message("speed.search.got.it.text"))
       .apply {
-        foreground = JBUI.CurrentTheme.Advertiser.foreground();
+        foreground = JBUI.CurrentTheme.Advertiser.foreground()
         font = adFont()
       }
 
     panel.add(label)
     panel.add(actionLink)
-    panel.background  = JBUI.CurrentTheme.Advertiser.background();
+    panel.background  = JBUI.CurrentTheme.Advertiser.background()
 
     addComponentAdvertiser(panel)
 

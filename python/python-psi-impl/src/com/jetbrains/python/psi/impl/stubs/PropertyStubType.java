@@ -18,20 +18,20 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubInputStream;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 
-public class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
-  @Nullable
+public final class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
   @Override
-  public PropertyStubStorage createStub(PyTargetExpression psi) {
+  public @Nullable PropertyStubStorage createStub(@NotNull PyTargetExpression psi) {
     return PropertyStubStorage.fromCall(psi.findAssignedValue());
   }
 
   @Override
-  public PropertyStubStorage deserializeStub(StubInputStream stream) throws IOException {
+  public PropertyStubStorage deserializeStub(@NotNull StubInputStream stream) throws IOException {
     return PropertyStubStorage.deserialize(stream);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.issueLinks;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -18,7 +18,7 @@ import java.util.Objects;
 
 public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
   private final ColoredTreeCellRenderer myRenderer;
-  protected WeakReference<TreeNode> myLastHitNode;
+  private WeakReference<Object> myLastHitNode;
 
   public TreeLinkMouseListener(final ColoredTreeCellRenderer renderer) {
     myRenderer = renderer;
@@ -32,26 +32,32 @@ public class TreeLinkMouseListener extends LinkMouseListenerBase<Object> {
     }
   }
 
-  @Nullable
   @Override
-  protected Object getTagAt(@NotNull final MouseEvent e) {
+  protected @Nullable Object getTagAt(final @NotNull MouseEvent e) {
     JTree tree = (JTree)e.getSource();
     Object tag = null;
     HaveTooltip haveTooltip = null;
     final TreePath path = tree.getPathForLocation(e.getX(), e.getY());
     if (path != null) {
       int dx = getRendererRelativeX(e, tree, path);
-      final TreeNode treeNode = (TreeNode)path.getLastPathComponent();
+      final Object node = path.getLastPathComponent();
+
+      boolean isLeaf;
+      if (node instanceof TreeNode treeNode) {
+        isLeaf = treeNode.isLeaf();
+      } else {
+        isLeaf = tree.getModel().isLeaf(node);
+      }
       AppUIUtil.targetToDevice(myRenderer, tree);
-      if (myLastHitNode == null || myLastHitNode.get() != treeNode || e.getButton() != MouseEvent.NOBUTTON) {
+      if (myLastHitNode == null || myLastHitNode.get() != node || e.getButton() != MouseEvent.NOBUTTON) {
         if (doCacheLastNode()) {
-          myLastHitNode = new WeakReference<>(treeNode);
+          myLastHitNode = new WeakReference<>(node);
         }
-        myRenderer.getTreeCellRendererComponent(tree, treeNode, false, false, treeNode.isLeaf(), tree.getRowForPath(path), false);
+        myRenderer.getTreeCellRendererComponent(tree, node, false, false, isLeaf, tree.getRowForPath(path), false);
       }
       tag = myRenderer.getFragmentTagAt(dx);
-      if (tag != null && treeNode instanceof HaveTooltip) {
-        haveTooltip = (HaveTooltip)treeNode;
+      if (tag != null && node instanceof HaveTooltip) {
+        haveTooltip = (HaveTooltip)node;
       }
     }
     showTooltip(tree, e, haveTooltip);

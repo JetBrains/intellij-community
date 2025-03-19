@@ -7,10 +7,7 @@ import com.intellij.execution.ui.layout.LayoutStateDefaults;
 import com.intellij.execution.ui.layout.LayoutViewOptions;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithActions;
 import com.intellij.openapi.util.ActionCallback;
@@ -22,15 +19,13 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.switcher.QuickActionProvider;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
-public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions, DataProvider {
+public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions {
   private final RunnerLayout myLayout;
   private final RunnerContentUi myContentUI;
 
@@ -50,14 +45,11 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
     Disposer.register(this, myContentUI);
 
     myViewsContentManager = getContentFactory().createContentManager(myContentUI.getContentUI(), true, project);
-    myViewsContentManager.addDataProvider(this);
+    myViewsContentManager.addDataProvider((EdtNoGetDataProvider)sink -> {
+      sink.set(QuickActionProvider.KEY, myContentUI);
+      sink.set(RunnerContentUi.KEY, myContentUI);
+    });
     Disposer.register(this, myViewsContentManager);
-  }
-
-  @Override
-  @Deprecated
-  public @NotNull LayoutViewOptions setTopToolbar(@NotNull ActionGroup actions, @NotNull String place) {
-    return setTopLeftToolbar(actions, place);
   }
 
   @Override
@@ -169,6 +161,10 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   @Override
   public void dispose() {
+  }
+
+  public @NotNull RunnerContentUi getContentUI() {
+    return myContentUI;
   }
 
   @Override
@@ -339,8 +335,9 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   @Override
   public AnAction @NotNull [] getSettingsActionsList() {
-    final ActionGroup group = (ActionGroup)getSettingsActions();
-    return group.getChildren(null);
+    ActionGroup group = (ActionGroup)getSettingsActions();
+    return group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
+           group.getChildren(null);
   }
 
   @Override
@@ -352,16 +349,12 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
     return contents;
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (QuickActionProvider.KEY.is(dataId) || RunnerContentUi.KEY.is(dataId)) {
-      return myContentUI;
-    }
-    return null;
-  }
-
   public void setLeftToolbarVisible(boolean value) {
     myContentUI.setLeftToolbarVisible(value);
+  }
+
+  public void setTopLeftActionsBefore(boolean value) {
+    myContentUI.setTopLeftActionsBefore(value);
   }
 
   public void setContentToolbarBefore(boolean value) {
@@ -370,9 +363,5 @@ public final class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayout
 
   public void setTopLeftActionsVisible(boolean value) {
     myContentUI.setTopLeftActionsVisible(value);
-  }
-
-  public List<AnAction> getActions() {
-    return myContentUI.getActions(true);
   }
 }

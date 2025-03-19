@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder
 import com.intellij.ui.SearchTextField
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -16,10 +18,8 @@ import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.plaf.PanelUI
 
-/**
- * Component is not finished yet
- */
-@ApiStatus.Experimental
+private const val UI_CLASS_ID = "SearchFieldWithExtensionUI"
+
 class SearchFieldWithExtension(
   extensionComponent: JComponent,
   private val searchTextField: SearchTextField
@@ -55,22 +55,18 @@ class SearchFieldWithExtension(
   }
 
   override fun getUIClassID(): String = UI_CLASS_ID
-  override fun getUI(): DarculaSearchFieldWithExtensionUI = super.getUI() as DarculaSearchFieldWithExtensionUI
+
+  override fun getUI(): PanelUI = super.getUI() as DarculaSearchFieldWithExtensionUI
 
   override fun requestFocus(): Unit = textField.requestFocus()
 
-  override fun setBackground(bg: Color?) = super.setBackground(UIUtil.getTextFieldBackground())
+  override fun setBackground(bg: Color?): Unit = super.setBackground(UIUtil.getTextFieldBackground())
 
   override fun hasFocus(): Boolean = textField.hasFocus()
-
-  companion object {
-    private const val UI_CLASS_ID = "SearchFieldWithExtensionUI"
-  }
 }
 
 @Suppress("unused")
-@ApiStatus.Experimental
-class DarculaSearchBorder : DarculaTextBorder() {
+internal class DarculaSearchBorder : DarculaTextBorder() {
   override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     if (c !is SearchFieldWithExtension) return
     val enabled = c.textField.isEnabled && c.textField.isEditable
@@ -80,12 +76,24 @@ class DarculaSearchBorder : DarculaTextBorder() {
 }
 
 @Suppress("unused")
-@ApiStatus.Experimental
-class DarculaSearchFieldWithExtensionUI : PanelUI() {
+internal class DarculaSearchFieldWithExtensionBorder : DarculaTextBorder() {
+  override fun paintBorder(c: Component?, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
+    if (c !is SearchFieldWithExtension) return
+
+    val r = Rectangle(x, y, width, height)
+    val enabled = c.textField.isEnabled && c.textField.isEditable
+    JBInsets.removeFrom(r, getBorderInsets(c))
+    DarculaNewUIUtil.fillInsideComponentBorder(g, r, c.background)
+    DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c), c.hasFocus(), enabled)
+  }
+}
+
+@Suppress("unused")
+internal class DarculaSearchFieldWithExtensionUI : PanelUI() {
   companion object {
     @JvmStatic
     @Suppress("UNUSED_PARAMETER")
-    fun createUI(c: JComponent?) = DarculaSearchFieldWithExtensionUI()
+    fun createUI(c: JComponent?): DarculaSearchFieldWithExtensionUI = DarculaSearchFieldWithExtensionUI()
   }
 
   override fun installUI(c: JComponent?) {

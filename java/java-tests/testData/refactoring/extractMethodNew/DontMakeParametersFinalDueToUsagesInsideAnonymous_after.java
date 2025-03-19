@@ -6,8 +6,7 @@ class Box {
         System.out.println(data);
     }
 
-    @NotNull
-    private Data newMethod(String str1, String str2) {
+    private @NotNull Data newMethod(String str1, String str2) {
         return new Data() {
             @Override
             public String getA() {

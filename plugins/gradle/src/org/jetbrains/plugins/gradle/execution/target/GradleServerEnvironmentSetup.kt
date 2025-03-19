@@ -2,14 +2,37 @@
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.openapi.util.UserDataHolder
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.value.TargetValue
+import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
+import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
 
-@ApiStatus.Experimental
-interface GradleServerEnvironmentSetup : UserDataHolder {
-  val javaParameters: SimpleJavaParameters
-  val environmentConfiguration: TargetEnvironmentConfiguration
+@ApiStatus.Internal
+interface GradleServerEnvironmentSetup {
+
+  fun prepareEnvironment(
+    targetBuildParametersBuilder: TargetBuildParameters.Builder<*>,
+    consumerOperationParameters: ConsumerOperationParameters,
+    progressIndicator: GradleServerProgressIndicator,
+  ): TargetedCommandLine
+
+  fun getJavaParameters(): SimpleJavaParameters
+
+  fun getEnvironmentConfiguration(): TargetEnvironmentConfiguration
+
+  fun getTargetEnvironment(): TargetEnvironment
+
+  fun getTargetIntermediateResultHandler(): TargetIntermediateResultHandler
+
+  fun getTargetBuildParameters(): TargetBuildParameters
+
+  fun getProjectUploadRoot(): TargetEnvironment.UploadRoot
+
+  fun getServerBindingPort(): TargetValue<Int>?
 
   companion object {
     val targetJavaExecutablePathMappingKey

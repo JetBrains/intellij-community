@@ -27,49 +27,6 @@ object IOSSinglePlatformModuleConfigurator : IOSSinglePlatformModuleConfigurator
     }
 }
 
-object IOSSinglePlatformCocoaPodsModuleConfigurator : IOSSinglePlatformModuleConfiguratorBase() {
-    override val moduleTemplatePath: String get() = "singleplatformCocoaPodsProject"
-    override val canContainSubModules: Boolean
-        get() = false
-
-    override fun doRunArbitraryTask(
-        writer: Writer,
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): TaskResult<Unit> = compute {
-        super.doRunArbitraryTask(writer, configurationData, module, modulePath)
-        with(writer) {
-            GradlePlugin.gradleProperties.addValues("kotlin.native.cocoapods.generate.wrapper" to true)
-        }
-    }
-
-    override fun Reader.createTemplates(
-        configurationData: ModulesToIrConversionData,
-        module: Module,
-        modulePath: Path
-    ): List<FileTemplate> {
-        val settings = createTemplatesSettingValues(module)
-
-        fun fileTemplate(path: Path) = FileTemplate(descriptor(path, module.name), modulePath, settings)
-
-        return buildList {
-            +fileTemplate(DEFAULT_APP_NAME / "$DEFAULT_APP_NAME.swift.vm")
-            +fileTemplate(DEFAULT_APP_NAME / "ContentView.swift.vm")
-
-            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "Contents.json")
-            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "AppIcon.appiconset" / "Contents.json")
-            +fileTemplate(DEFAULT_APP_NAME / "Assets.xcassets" / "AccentColor.colorset" / "Contents.json")
-            +fileTemplate(DEFAULT_APP_NAME / "Preview Content" / "Preview Assets.xcassets" / "Contents.json")
-
-            +fileTemplate("$DEFAULT_APP_NAME.xcodeproj" / "project.pbxproj")
-            +fileTemplate(DEFAULT_APP_NAME / "Info.plist")
-
-            +fileTemplate("Podfile.vm".asPath())
-        }
-    }
-}
-
 abstract class IOSSinglePlatformModuleConfiguratorBase : SinglePlatformModuleConfigurator,
     ModuleConfiguratorSettings(),
     ModuleConfiguratorProperties,

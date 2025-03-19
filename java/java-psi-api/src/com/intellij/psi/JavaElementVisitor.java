@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.psi.javadoc.*;
@@ -160,9 +160,11 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
   public void visitForeachPatternStatement(@NotNull PsiForeachPatternStatement statement) {
     visitForeachStatementBase(statement);
   }
+
   public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
     visitForeachStatementBase(statement);
   }
+
   public void visitForeachStatementBase(@NotNull PsiForeachStatementBase statement) {
     visitStatement(statement);
   }
@@ -171,8 +173,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitGuardedPattern(@NotNull PsiGuardedPattern pattern) {
-    visitPattern(pattern);
+  public void visitFragment(@NotNull PsiFragment fragment) {
+    visitElement(fragment);
   }
 
   public void visitIdentifier(@NotNull PsiIdentifier identifier) {
@@ -183,12 +185,20 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitImplicitClass(@NotNull PsiImplicitClass aClass) {
+    visitClass(aClass);
+  }
+
   public void visitImplicitVariable(@NotNull ImplicitVariable variable) {
     visitLocalVariable(variable);
   }
 
   public void visitImportList(@NotNull PsiImportList list) {
     visitElement(list);
+  }
+
+  public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
+    visitElement(statement);
   }
 
   public void visitImportStatement(@NotNull PsiImportStatement statement) {
@@ -237,6 +247,14 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
     visitVariable(variable);
+  }
+
+  public void visitMarkdownCodeBlock(@NotNull PsiMarkdownCodeBlock block) {
+    visitElement(block);
+  }
+
+  public void visitMarkdownReferenceLink(@NotNull PsiMarkdownReferenceLink referenceLink) {
+    visitElement(referenceLink);
   }
 
   public void visitMethod(@NotNull PsiMethod method) {
@@ -299,15 +317,9 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
-  public void visitParenthesizedPattern(@NotNull PsiParenthesizedPattern pattern) {
-    visitPattern(pattern);
-  }
-
   public void visitPattern(@NotNull PsiPattern pattern) {
     visitElement(pattern);
   }
-
-  public void visitPatternGuard(@NotNull PsiPatternGuard guard) { visitElement(guard); }
 
   public void visitPatternVariable(@NotNull PsiPatternVariable variable) {
     visitParameter(variable);
@@ -436,6 +448,14 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
+  public void visitTemplate(@NotNull PsiTemplate template) {
+    visitElement(template);
+  }
+
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    visitExpression(expression);
+  }
+
   public void visitThisExpression(@NotNull PsiThisExpression expression) {
     visitExpression(expression);
   }
@@ -470,6 +490,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
 
   public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
     visitExpression(expression);
+  }
+
+  public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
+    visitPattern(pattern);
   }
 
   public void visitUsesStatement(@NotNull PsiUsesStatement statement) {

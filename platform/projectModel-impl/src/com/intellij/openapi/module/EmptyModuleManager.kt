@@ -3,9 +3,11 @@ package com.intellij.openapi.module
 
 import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class EmptyModuleManager(private val project: Project) : ModuleManager() {
   override fun hasModuleGroups(): Boolean = false
 
@@ -28,7 +30,7 @@ class EmptyModuleManager(private val project: Project) : ModuleManager() {
 
   override fun moduleDependencyComparator(): Nothing = throw UnsupportedOperationException()
 
-  override fun getModuleDependentModules(module: Module): List<Module> = emptyList<Module>()
+  override fun getModuleDependentModules(module: Module): List<Module> = emptyList()
 
   override fun isModuleDependent(@NotNull module: Module, @NotNull onModule: Module): Boolean = false
 

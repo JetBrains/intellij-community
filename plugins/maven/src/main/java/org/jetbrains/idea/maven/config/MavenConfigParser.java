@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.config;
 
 import com.intellij.util.ArrayUtil;
@@ -11,9 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,18 +26,17 @@ import java.util.stream.Collectors;
 public final class MavenConfigParser {
   private MavenConfigParser() {}
 
-  @Nullable
-  public static MavenConfig parse(@NotNull String baseDir) {
+  public static @Nullable MavenConfig parse(@NotNull String baseDir) {
     Options options = new Options();
     for (MavenConfigSettings value : MavenConfigSettings.values()) {
       options.addOption(value.toOption());
     }
 
-    File configFile = new File(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+    Path configFile = Path.of(baseDir, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
     List<String> configArgs = new ArrayList<>();
     try {
-      if (configFile.isFile()) {
-        for (String arg : Files.readString(configFile.toPath(), Charset.defaultCharset()).split("\\s+")) {
+      if (Files.exists(configFile) && !Files.isDirectory(configFile)) {
+        for (String arg : Files.readString(configFile, Charset.defaultCharset()).split("\\s+")) {
           if (!arg.isEmpty()) {
             configArgs.add(arg);
           }
@@ -49,7 +48,7 @@ public final class MavenConfigParser {
       }
     }
     catch (Exception e) {
-      MavenLog.LOG.error("error read maven config " + configFile.getAbsolutePath(), e);
+      MavenLog.LOG.error("error read maven config " + configFile.toAbsolutePath(), e);
     }
     return null;
   }

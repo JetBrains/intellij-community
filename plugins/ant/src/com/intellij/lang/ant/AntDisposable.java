@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 
-@Service
+@Service({Service.Level.APP, Service.Level.PROJECT})
 public final class AntDisposable implements Disposable {
   @Override
   public void dispose() {

@@ -290,6 +290,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/return";
 
     configureByFile(path + "/before3.java");
+    type('\n');
     checkResultByFile(path + "/after3.java");
   }
 
@@ -307,6 +308,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after2.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testGenerics3() {
     String path = "/generics";
 
@@ -314,6 +316,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(path + "/after3.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testGenerics4() {
     String path = "/generics";
 
@@ -394,6 +397,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/Silly1.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testVarargs1() { doTest('\n'); }
 
   public void testEnumConstInSwitch() { doTest(); }
@@ -442,6 +446,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testThrowRuntimeException() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testParameterizedConstructor() { doTest(); }
 
   public void testNewInnerClassNameShortPrefix() { doTest('\n'); }
@@ -460,6 +465,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayAccessIndex() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary(reason = "Need to resolve java.lang.String")
   public void testThrowExceptionConstructor() { doTest('\n'); }
 
   public void testJavadocThrows() { doTest(); }
@@ -471,6 +477,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testArrayIndexTailType() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testPrivateOverloads() { doTest(); }
   public void testInaccessibleMethodArgument() { doTest(); }
 
@@ -587,6 +594,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testConstructorNoPairBracketSemicolon() { doTestNoPairBracket(';'); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodNoPairBracketComma() { doTestNoPairBracket(','); }
 
   public void testAbstractClassTwice() {
@@ -615,6 +623,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testMethodCallDot() { doTest('\n'); }
   public void testNegateVariable() { doTest(); }
 
@@ -639,6 +648,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testInstanceMethodParametersFromStaticContext() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testInstanceMethodParametersFromStaticContext2() { doTest(); }
 
   public void testBeforeCastToArray() { doTest(); }
@@ -855,6 +865,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSameNamedArgumentsDelegation() {
     configureByTestName();
     getLookup().setCurrentItem(getLookup().getItems().get(1));
@@ -867,6 +878,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSameSignatureWithoutClosingParen() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "someString", "someString, number");

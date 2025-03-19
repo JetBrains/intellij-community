@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.ui.SpeedSearchBase;
@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.ui.table.column.VcsLogMetadataColumn;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.AbstractList;
 import java.util.List;
 import java.util.ListIterator;
 
+@ApiStatus.Internal
 public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   public VcsLogSpeedSearch(@NotNull VcsLogGraphTable component) {
     super(component, null);
@@ -47,7 +49,9 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
     return isMatchingMetadata(pattern, metadata, getColumnsForSpeedSearch());
   }
 
-  protected boolean isMatchingMetadata(String pattern, @Nullable VcsCommitMetadata metadata, @NotNull List<? extends VcsLogMetadataColumn> columns) {
+  protected boolean isMatchingMetadata(String pattern,
+                                       @Nullable VcsCommitMetadata metadata,
+                                       @NotNull List<? extends VcsLogMetadataColumn> columns) {
     if (metadata == null) return false;
     return ContainerUtil.exists(columns, column -> compare(column.getValue(myComponent.getModel(), metadata), pattern));
   }
@@ -65,7 +69,7 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   @Override
   protected void selectElement(@Nullable Object row, @NotNull String selectedText) {
     if (row == null) return;
-    myComponent.jumpToRow((Integer)row, true);
+    myComponent.jumpToGraphRow((Integer)row, true);
   }
 
   private class MyRowsList extends AbstractList<Object> {

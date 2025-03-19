@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.Editor
@@ -19,7 +18,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.util.ui.HtmlPanel
@@ -120,6 +118,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     var firstDiffSplitter: DiffSplitter? = null
     task {
       text(GitLessonsBundle.message("git.annotate.choose.show.diff", strong(showDiffText)))
+      @Suppress("UnresolvedPluginConfigReference", "InjectedReferences") // no Action ID available
       trigger("com.intellij.openapi.vcs.actions.ShowDiffFromAnnotation")
       restoreByUi(openFirstDiffTaskId, delayMillis = defaultRestoreDelay)
       test { clickShowDiffAction() }
@@ -249,7 +248,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
     task("EditorEscape") {
       text(GitLessonsBundle.message("git.annotate.close.all.windows",
-                                    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) 0 else 1, action(it)))
+                                    if (DiffEditorTabFilesManager.isDiffInWindow) 0 else 1, action(it)))
       stateCheck {
         firstDiffSplitter?.isShowing != true && secondDiffSplitter?.isShowing != true
       }
@@ -279,7 +278,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
         text(GitLessonsBundle.message("git.annotate.close.annotations") + " "
              + GitLessonsBundle.message("git.annotate.invoke.manually.2", strong(closeAnnotationsText)))
         triggerAndBorderHighlight().componentPart { ui: EditorGutterComponentEx ->
-          if (CommonDataKeys.EDITOR.getData(ui as DataProvider) == editor) {
+          if (ui.editor == editor) {
             Rectangle(ui.x + ui.annotationsAreaOffset, ui.y, ui.annotationsAreaWidth, ui.height)
           }
           else null
@@ -318,7 +317,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
   private fun EditorGutterComponentEx.checkInsideSplitterAndRightEditor(splitter: DiffSplitter?, partOfEditorText: String): Boolean {
     if (splitter != null && !isInsideSplitter(splitter, this)) return false
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: return false
     return editor.document.charsSequence.contains(partOfEditorText)
   }
 
@@ -330,7 +328,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   }
 
   private fun EditorGutterComponentEx.getAnnotationRect(partOfLineText: String, rightOriented: Boolean): Rectangle? {
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: return null
     val offset = editor.document.charsSequence.indexOf(partOfLineText)
     if (offset == -1) return null
     return invokeAndWaitIfNeeded {

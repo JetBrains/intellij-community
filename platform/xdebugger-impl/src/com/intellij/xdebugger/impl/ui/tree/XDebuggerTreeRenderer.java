@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.ide.HelpTooltipManager;
@@ -23,8 +23,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.util.ui.tree.TreeUtil.getNodeRowX;
 
-class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
+public class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
   private final MyColoredTreeCellRenderer myLink = new MyColoredTreeCellRenderer();
+  private final Project myProject;
   private boolean myHaveLink;
   private int myLinkOffset;
   private int myLinkWidth;
@@ -34,14 +35,15 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   private final MyLongTextHyperlink myLongTextLink = new MyLongTextHyperlink();
 
-  XDebuggerTreeRenderer() {
+  public XDebuggerTreeRenderer(@NotNull Project project) {
+    myProject = project;
     getIpad().right = 0;
     myLink.getIpad().left = 0;
     myUsedCustomSpeedSearchHighlighting = true;
   }
 
   @Override
-  public void customizeCellRenderer(@NotNull final JTree tree,
+  public void customizeCellRenderer(final @NotNull JTree tree,
                                     final Object value,
                                     final boolean selected,
                                     final boolean expanded,
@@ -76,7 +78,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
           Rectangle screen = ScreenUtil.getScreenRectangle(treeRightSideOnScreen);
           // text may fit the screen in ExpandableItemsHandler
           if (screen.x + screen.width < treeRightSideOnScreen.x + notFittingWidth) {
-            myLongTextLink.setupComponent(rawValue, ((XDebuggerTree)tree).getProject());
+            myLongTextLink.setupComponent(rawValue, myProject);
             append(myLongTextLink.getLinkText(), myLongTextLink.getTextAttributes(), myLongTextLink);
             setupLinkDimensions(treeVisibleRect, rowX);
             myLinkWidth = 0;
@@ -85,7 +87,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     putClientProperty(ExpandableItemsHandler.RENDERER_DISABLED, myHaveLink);
-    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)this, false, selected);
+    SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, this, false, selected);
   }
 
   @Override
@@ -138,7 +140,7 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && ((XDebuggerTreeNodeHyperlink)tag).alwaysOnScreen()) {
+    if (tag instanceof XDebuggerTreeNodeHyperlink tagValue && tagValue.alwaysOnScreen()) {
       myHaveLink = true;
       myLink.append(fragment, attributes, tag);
 
@@ -183,9 +185,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @NotNull
   @Override
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (myHaveLink) {
       size.width += myLinkWidth;
@@ -193,9 +194,8 @@ class XDebuggerTreeRenderer extends ColoredTreeCellRenderer {
     return size;
   }
 
-  @Nullable
   @Override
-  public Object getFragmentTagAt(int x) {
+  public @Nullable Object getFragmentTagAt(int x) {
     if (myHaveLink) {
       Object linkTag = myLink.getFragmentTagAt(x - myLinkOffset);
       if (linkTag != null) {

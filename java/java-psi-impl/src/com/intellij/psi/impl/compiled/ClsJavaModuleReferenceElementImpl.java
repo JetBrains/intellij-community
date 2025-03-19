@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
@@ -34,13 +34,12 @@ class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJav
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODULE_REFERENCE);
   }
 
-  @NotNull
   @Override
-  public String getReferenceText() {
+  public @NotNull String getReferenceText() {
     return myText;
   }
 

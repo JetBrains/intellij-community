@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -31,13 +32,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   implements PersistentStateComponent<GradleSettings.MyState> {
 
   private boolean isOfflineMode = false;
+  private boolean isParallelModelFetch = Experiments.getInstance().isFeatureEnabled("gradle.parallel.model.fetch");
 
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
   }
 
-  @NotNull
-  public static GradleSettings getInstance(@NotNull Project project) {
+  public static @NotNull GradleSettings getInstance(@NotNull Project project) {
     return project.getService(GradleSettings.class);
   }
 
@@ -50,13 +51,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   protected void copyExtraSettingsFrom(@NotNull GradleSettings settings) {
   }
 
-  @Nullable
   @Override
-  public GradleSettings.MyState getState() {
+  public @Nullable GradleSettings.MyState getState() {
     MyState state = new MyState();
     fillState(state);
 
     state.setOfflineMode(isOfflineWork());
+    state.setParallelModelFetch(isParallelModelFetch());
 
     return state;
   }
@@ -66,6 +67,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     super.loadState(state);
 
     setOfflineWork(state.isOfflineMode());
+    setParallelModelFetch(state.isParallelModelFetch());
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
@@ -95,9 +97,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
    * is a possible situation when a user wants to configure particular directory to be excluded from anti-virus protection
    * in order to increase performance
    */
-  @Nullable
-  @NlsSafe
-  public String getServiceDirectoryPath() {
+  public @Nullable @NlsSafe String getServiceDirectoryPath() {
     return GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
   }
 
@@ -109,8 +109,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     }
   }
 
-  @Nullable
-  public String getGradleVmOptions() {
+  public @Nullable String getGradleVmOptions() {
     return GradleSystemSettings.getInstance().getGradleVmOptions();
   }
 
@@ -138,10 +137,21 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(value);
   }
 
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
+  }
+
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
     if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
       getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
+    }
+    if (!Objects.equals(old.getGradleJvm(), current.getGradleJvm())) {
+      getPublisher().onGradleJvmChange(old.getGradleJvm(), current.getGradleJvm(), current.getExternalProjectPath());
     }
     if (old.getDistributionType() != current.getDistributionType()) {
       getPublisher().onGradleDistributionTypeChange(current.getDistributionType(), current.getExternalProjectPath());
@@ -160,8 +170,10 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   }
 
   public static class MyState implements State<GradleProjectSettings> {
+
     private final Set<GradleProjectSettings> myProjectSettings = new TreeSet<>();
     private boolean isOfflineMode = false;
+    private boolean isParallelModelFetch = Experiments.getInstance().isFeatureEnabled("gradle.parallel.model.fetch");
 
     @Override
     @XCollection(elementTypes = GradleProjectSettings.class)
@@ -182,6 +194,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     public void setOfflineMode(boolean isOfflineMode) {
       this.isOfflineMode = isOfflineMode;
+    }
+
+    public boolean isParallelModelFetch() {
+      return isParallelModelFetch;
+    }
+
+    public void setParallelModelFetch(boolean parallelModelFetch) {
+      isParallelModelFetch = parallelModelFetch;
     }
   }
 }

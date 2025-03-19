@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pass;
 import com.intellij.ui.ClickListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,12 +18,6 @@ import java.util.function.Consumer;
 
 public final class TrackRunningTestUtil {
   private TrackRunningTestUtil() { }
-
-  /** @deprecated use {@link #installStopListeners(JTree, Disposable, Consumer)} */
-  @Deprecated(forRemoval = true)
-  public static void installStopListeners(JTree tree, Disposable parentDisposable, Pass<? super AbstractTestProxy> setSelection) {
-    installStopListeners(tree, parentDisposable, (Consumer<? super AbstractTestProxy>)setSelection);
-  }
 
   public static void installStopListeners(JTree tree, Disposable parentDisposable, Consumer<? super AbstractTestProxy> setSelection) {
     final ClickListener userSelectionListener = new ClickListener() {
@@ -56,8 +49,7 @@ public final class TrackRunningTestUtil {
     });
   }
 
-  @Nullable
-  private static AbstractTestProxy getUserSelection(JTree tree) {
+  private static @Nullable AbstractTestProxy getUserSelection(JTree tree) {
     TreePath treePath = tree.getSelectionPath();
     if (treePath != null) {
       final Object component = treePath.getLastPathComponent();

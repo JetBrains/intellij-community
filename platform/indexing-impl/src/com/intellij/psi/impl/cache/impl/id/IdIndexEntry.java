@@ -1,33 +1,33 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
+/**
+ * Entry of {@link IdIndex}.
+ * Conceptually it represents a single identifier from a code file, e.g. class or variable name.
+ * Identifiers could be case-sensitive/insensitive, depending on source language rules.
+ * <p>
+ * Implementation-wise, for memory-efficiency, the identifier itself is not stored -- it's hash code (=int32) stored instead.
+ * That opens a possibility of collisions -- i.e. IdIndex lookup could return 'false positives', i.e. files that really don't
+ * contain identifier queried, but contain another identifier with the same hash instead. Which is fine, since we always re-check
+ * all the files found by IdIndex to really contain requested identifier.
+ * <p>
+ * In current implementation case-sensitive hash uses algo == {@link String#hashCode()}, while case-insensitive is the same but
+ * string is converted to lower-case first, see {@link #getWordHash(CharSequence, int, int, boolean)}
+ */
 @ApiStatus.Internal
 public final class IdIndexEntry {
-  private static final boolean ourUseStrongerHash =
-    !TrigramIndex.isEnabled() || SystemProperties.getBooleanProperty("idea.id.index.use.stronger.hash", true);
+  private static final boolean USE_STRONGER_HASH = !TrigramIndex.isEnabled() || getBooleanProperty("idea.id.index.use.stronger.hash", true);
+
   private final int myWordHashCode;
-  
+
   public IdIndexEntry(@NotNull String word, boolean caseSensitive) {
     this(word, 0, word.length(), caseSensitive);
   }
@@ -63,16 +63,16 @@ public final class IdIndexEntry {
 
   @Override
   public String toString() {
-    return "IdIndexEntry[hash: " + myWordHashCode +"]";
+    return "IdIndexEntry[hash: " + myWordHashCode + "]";
   }
 
   static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
     if (useStrongerHash()) {
-      // use stronger hash
-      return caseSensitive ? StringUtil.stringHashCode(line, start, end) : StringUtil.stringHashCodeInsensitive(line, start, end);
+      return caseSensitive ? StringUtil.stringHashCode(line, start, end)
+                           : StringUtil.stringHashCodeInsensitive(line, start, end);
     }
     else {
-      // use more compact hash
+      // use more compact hash, based on just <length> and first and last chars:
       if (start == end) return 0;
       char firstChar = line.charAt(start);
       char lastChar = line.charAt(end - 1);
@@ -80,7 +80,7 @@ public final class IdIndexEntry {
         firstChar = StringUtil.toLowerCase(firstChar);
         lastChar = StringUtil.toLowerCase(lastChar);
       }
-      return (firstChar << 8) + (lastChar << 4) + end - start;
+      return (firstChar << 8) + (lastChar << 4) + (end - start);
     }
   }
 
@@ -90,6 +90,6 @@ public final class IdIndexEntry {
 
   @ApiStatus.Internal
   public static boolean useStrongerHash() {
-    return ourUseStrongerHash;
+    return USE_STRONGER_HASH;
   }
 }

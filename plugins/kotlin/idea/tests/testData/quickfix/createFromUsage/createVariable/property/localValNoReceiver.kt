@@ -1,11 +1,12 @@
 // "Create property 'foo'" "false"
-// ACTION: Create local variable 'foo'
-// ACTION: Create parameter 'foo'
-// ACTION: Rename reference
+// K2_ACTION: "Create property 'foo'" "true"
 // ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: Property must be initialized.
 
 fun test() {
     fun nestedTest(): Int {
         return <caret>foo
     }
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreatePropertyFromUsageBuilder$CreatePropertyFromUsageAction

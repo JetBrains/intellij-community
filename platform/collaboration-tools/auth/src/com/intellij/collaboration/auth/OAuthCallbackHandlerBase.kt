@@ -1,83 +1,61 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.auth
 
+import com.intellij.collaboration.auth.services.OAuthCallbackHandler
 import com.intellij.collaboration.auth.services.OAuthService
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Computable
 import com.intellij.util.Url
-import com.intellij.util.concurrency.AppExecutorUtil
-import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.http.*
+import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.ide.RestService
-import org.jetbrains.io.response
-import org.jetbrains.io.send
-import java.util.concurrent.CompletableFuture
 
-/**
- * The base class of the callback handler for authorization services
- */
 abstract class OAuthCallbackHandlerBase : RestService() {
-  protected val service: OAuthService<*> get() = oauthService()
 
-  abstract fun oauthService(): OAuthService<*>
+  protected abstract fun oauthService(): OAuthService<*>
 
-  override fun getServiceName(): String = service.name
-
-  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
-    val channel = context.channel()
-
-    val indicator = EmptyProgressIndicator()
-    channel.closeFuture().addListener {
-      indicator.cancel()
-    }
-
-    fun handle(indicator: EmptyProgressIndicator): AcceptCodeHandleResult? =
-      ProgressManager.getInstance().runProcess(Computable {
-        val isCodeAccepted = service.handleServerCallback(urlDecoder.path(), urlDecoder.parameters())
-        handleAcceptCode(isCodeAccepted)
-      }, indicator)
-
-    val executor = AppExecutorUtil.getAppExecutorService()
-    CompletableFuture.supplyAsync({ handle(indicator) }, executor).handle { res, err ->
-      if (err != null) {
-        if (err is ProcessCanceledException) {
-          channel.close()
-        }
-        else {
-          LOG.warn(err)
-          sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, false, channel)
-        }
-      }
-      else if (res != null) {
-        when (res) {
-          is AcceptCodeHandleResult.Page -> {
-            response("text/html", Unpooled.wrappedBuffer(res.html.toByteArray(Charsets.UTF_8)))
-              .send(context.channel(), request)
-          }
-          is AcceptCodeHandleResult.Redirect -> {
-            sendRedirect(request, context, res.url)
-          }
-        }
-      }
-      else {
-        sendStatus(HttpResponseStatus.NO_CONTENT, false, channel)
-      }
-    }
-    return null
+  @Deprecated("Use handleOAuthResult instead", ReplaceWith("handleOAuthResult"))
+  protected open fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult {
+    throw UnsupportedOperationException()
   }
 
-  protected abstract fun handleAcceptCode(isAccepted: Boolean): AcceptCodeHandleResult
+  protected open fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult =
+    try {
+      handleAcceptCode(oAuthResult.isAccepted)
+    }
+    catch (e: UnsupportedOperationException) {
+      callbackHandler.handleAcceptCode(oAuthResult.isAccepted).let { AcceptCodeHandleResult.convertFromBase(it) }
+    }
 
-  private fun sendRedirect(request: FullHttpRequest, context: ChannelHandlerContext, url: Url) {
-    val headers = DefaultHttpHeaders().set(HttpHeaderNames.LOCATION, url.toExternalForm())
-    HttpResponseStatus.FOUND.send(context.channel(), request, null, headers)
+  private val callbackHandler = object : OAuthCallbackHandler() {
+    override fun oauthService(): OAuthService<*> = this@OAuthCallbackHandlerBase.oauthService()
+
+    override fun handleOAuthResult(oAuthResult: OAuthService.OAuthResult<*>): AcceptCodeHandleResult {
+      return this@OAuthCallbackHandlerBase.handleOAuthResult(oAuthResult).convertToBase()
+    }
   }
+
+  override fun getServiceName(): String =
+    callbackHandler.getServiceName()
+
+  override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? =
+    callbackHandler.execute(urlDecoder, request, context)
 
   protected sealed class AcceptCodeHandleResult {
+    companion object {
+      fun convertFromBase(baseResult: OAuthCallbackHandler.AcceptCodeHandleResult): AcceptCodeHandleResult =
+        when (baseResult) {
+          is OAuthCallbackHandler.AcceptCodeHandleResult.Page -> Page(baseResult.html)
+          is OAuthCallbackHandler.AcceptCodeHandleResult.Redirect -> Redirect(baseResult.url)
+        }
+    }
+
     class Redirect(val url: Url) : AcceptCodeHandleResult()
     class Page(val html: String) : AcceptCodeHandleResult()
+
+    fun convertToBase(): OAuthCallbackHandler.AcceptCodeHandleResult =
+      when (this) {
+        is Page -> OAuthCallbackHandler.AcceptCodeHandleResult.Page(html)
+        is Redirect -> OAuthCallbackHandler.AcceptCodeHandleResult.Redirect(url)
+      }
   }
 }

@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
@@ -27,8 +25,8 @@ import com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.components.DropDownLink
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import training.dsl.*
@@ -36,11 +34,11 @@ import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openCommitWindow
 import training.git.GitLessonsUtil.restoreByUiAndBackgroundTask
 import training.git.GitLessonsUtil.restoreCommitWindowStateInformer
 import training.git.GitLessonsUtil.showWarningIfCommitWindowClosed
-import training.git.GitLessonsUtil.showWarningIfModalCommitEnabled
 import training.git.GitLessonsUtil.showWarningIfStagingAreaEnabled
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
@@ -67,21 +65,20 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
   override val lessonContent: LessonContext.() -> Unit = {
     val defaultChangelistName = VcsBundle.message("changes.default.changelist.name")
-    prepareRuntimeTask(ModalityState.NON_MODAL) {
+    prepareRuntimeTask(ModalityState.nonModal()) {
       resetChangelistsState(project)
       removeShelvedChangeLists(project)
       modifyFile(virtualFile)
       PsiDocumentManager.getInstance(project).commitAllDocuments()
     }
 
-    showWarningIfModalCommitEnabled()
     showWarningIfStagingAreaEnabled()
 
     lateinit var highlightLineMarkerTaskId: TaskContext.TaskId
     task {
       highlightLineMarkerTaskId = taskId
       triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+        if (ui.editor != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
     }
@@ -90,13 +87,14 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       text(GitLessonsBundle.message("git.changelists.shelf.introduction"))
       text(GitLessonsBundle.message("git.changelists.shelf.click.line.marker.balloon"),
            LearningBalloonConfig(Balloon.Position.below, 0))
-      triggerAndBorderHighlight().component { ui: DropDownLink<*> ->
-        ui.text?.contains(defaultChangelistName) == true
+      triggerAndBorderHighlight().component { ui: ActionButton ->
+        val group = ui.action as? ActionGroup ?: return@component false
+        group.getChildren(null).any { it.templateText == VcsBundle.message("ex.new.changelist") }
       }
       test {
         ideFrame {
           val gutter = findComponentWithTimeout(defaultTimeout) { ui: EditorGutterComponentEx ->
-            CommonDataKeys.EDITOR.getData(ui as DataProvider) == editor
+            ui.editor == editor
           }
           val rect = gutter.getLineMarkerRect(commentText) ?: error("Failed to find '$commentText' in the editor")
           robot.click(gutter, Point(rect.centerX.toInt(), rect.centerY.toInt()))
@@ -106,15 +104,15 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
 
     task {
       val newChangelistText = VcsBundle.message("ex.new.changelist")
-      text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist",
-                                    strong(defaultChangelistName), strong(newChangelistText)))
+      text(GitLessonsBundle.message("git.changelists.shelf.choose.new.changelist", strong(newChangelistText)))
       triggerUI().component { ui: EditorComponentImpl ->
         ui.text.contains(defaultChangelistName)
       }
       restoreByUi(highlightLineMarkerTaskId)
       test {
         ideFrame {
-          button(defaultChangelistName).click()
+          val changelistsButton = previous.ui as? ActionButton ?: return@ideFrame
+          jComponent(changelistsButton).click()
           jList(newChangelistText).clickItem(newChangelistText)
         }
       }
@@ -147,11 +145,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       HintManager.getInstance().hideAllHints()  // to close the context menu of line marker
     }
 
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Commit")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.COMMIT)
 
     task("CheckinProject") {
       openCommitWindow(GitLessonsBundle.message("git.changelists.shelf.open.commit.window"))
@@ -331,7 +325,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   }
 
   private fun EditorGutterComponentEx.getLineMarkerRect(partOfLine: String): Rectangle? {
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: error("Not found editor for gutter component")
     val offset = editor.document.charsSequence.indexOf(partOfLine)
     if (offset == -1) {
       thisLogger().warn("Failed to find '${partOfLine}' in the editor text:\n${editor.document.charsSequence}")
@@ -341,7 +334,8 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       val line = editor.offsetToVisualLine(offset, true)
       editor.visualLineToY(line)
     }
-    return Rectangle(this.x + JBUI.scale(5), y, JBUI.scale(8), editor.lineHeight)
+    val highlightingWidth = JBUI.scale(8)
+    return Rectangle(this.x + this.width - highlightingWidth, y, highlightingWidth, editor.lineHeight)
   }
 
   override val helpLinks: Map<String, String> get() = mapOf(

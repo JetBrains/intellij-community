@@ -4,6 +4,7 @@ package com.intellij.ide.externalComponents;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
  * Keeps track of the external components and component sources that can be updated.
  */
+@ApiStatus.Internal
 @Service
 public final class ExternalComponentManager {
   public static @NotNull ExternalComponentManager getInstance() {

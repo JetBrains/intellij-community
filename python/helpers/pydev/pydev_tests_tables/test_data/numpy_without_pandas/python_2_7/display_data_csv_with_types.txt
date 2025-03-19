@@ -1,0 +1,1 @@
+u'~id~name~age~score\n0~1.0~Alice~23.0~85.0\n1~2.0~Bob~25.0~92.0\n2~3.0~Charlie~22.0~67.0'

@@ -8,9 +8,11 @@ import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 // This service exists for Rider and CWM to override.
@@ -21,13 +23,41 @@ public interface IdeDocumentationTargetProvider {
     return project.getService(IdeDocumentationTargetProvider.class);
   }
 
+  @ApiStatus.OverrideOnly
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
-  @Nullable DocumentationTarget documentationTarget(
+  @SuppressWarnings("unused")
+  default @Nullable DocumentationTarget documentationTarget(
     @NotNull Editor editor,
     @NotNull PsiFile file,
     @NotNull LookupElement lookupElement
-  );
+  ) {
+    throw new IllegalStateException("Override this or documentationTargets(Editor, PsiFile, LookupElement)");
+  }
+
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargets(
+    @NotNull Editor editor,
+    @NotNull PsiFile file,
+    @NotNull LookupElement lookupElement
+  ) {
+    DocumentationTarget target = documentationTarget(editor, file, lookupElement);
+    return target == null ? Collections.emptyList() : List.of(target);
+  }
+
+  // I am really sorry that I have to extend the API in such a way, but, I guess, all people who ever wanted to extend it, did so
+  // with a default implementation. This is going to be used in Rider, see README.MD in com.jetbrains.rdclient.quickDoc.mixproj
+  @ApiStatus.Internal
+  @RequiresReadLock
+  @RequiresBackgroundThread(generateAssertion = false)
+  default @NotNull List<? extends @NotNull DocumentationTarget> documentationTargetsForInlineDoc(
+    @NotNull Editor editor,
+    @NotNull PsiFile file,
+    int offset
+  ) {
+    return documentationTargets(editor, file, offset);
+  }
 
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.concurrency.ThreadContext.currentThreadContext;
+import static com.intellij.openapi.application.CoroutinesKt.isBackgroundWriteAction;
 
 public final class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance(TransactionGuardImpl.class);
@@ -30,7 +34,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   private boolean myErrorReported;
 
   public TransactionGuardImpl() {
-    myWriteSafeModalities.put(ModalityState.NON_MODAL, true);
+    myWriteSafeModalities.put(ModalityState.nonModal(), true);
     myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
   }
 
@@ -38,9 +42,9 @@ public final class TransactionGuardImpl extends TransactionGuard {
   public void submitTransaction(@NotNull Disposable parentDisposable,
                                 @Nullable TransactionId expectedContext,
                                 @NotNull Runnable transaction) {
-    ModalityState modality = expectedContext == null ? ModalityState.NON_MODAL : ((TransactionIdImpl)expectedContext).myModality;
+    ModalityState modality = expectedContext == null ? ModalityState.nonModal() : ((TransactionIdImpl)expectedContext).modality;
     Application app = ApplicationManager.getApplication();
-    if (app.isWriteIntentLockAcquired() && myWritingAllowed && !ModalityState.current().dominates(modality)) {
+    if (app.isWriteIntentLockAcquired() && myWritingAllowed && ModalityState.current().accepts(modality)) {
       if (!Disposer.isDisposed(parentDisposable)) {
         transaction.run();
       }
@@ -51,7 +55,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionAndWait(@NotNull final Runnable runnable) throws ProcessCanceledException {
+  public void submitTransactionAndWait(final @NotNull Runnable runnable) throws ProcessCanceledException {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
@@ -90,7 +94,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
    */
   @ApiStatus.Internal
   public void performUserActivity(Runnable activity) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     performActivity(true, activity);
   }
 
@@ -106,7 +110,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
       return;
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     try {
@@ -119,7 +123,11 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   @Override
   public boolean isWritingAllowed() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    Application app = ApplicationManager.getApplication();
+    // Check to suppress LOG.error() about implicit lock
+    if (!app.isWriteIntentLockAcquired()) {
+      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    }
     return myWritingAllowed;
   }
 
@@ -129,7 +137,11 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   public void assertWriteActionAllowed() {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    Application app = ApplicationManager.getApplication();
+    if (isBackgroundWriteAction(currentThreadContext()) && app.isWriteAccessAllowed()) {
+      return;
+    }
+    app.assertWriteIntentLockAcquired();
     if (!myWritingAllowed && areAssertionsEnabled() && !myErrorReported) {
       // please assign exceptions here to Peter
       LOG.error(reportWriteUnsafeContext(ModalityState.current()));
@@ -157,13 +169,13 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   @Override
-  public void submitTransactionLater(@NotNull final Disposable parentDisposable, @NotNull final Runnable transaction) {
-    TransactionIdImpl ctx = getContextTransaction();
-    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.NON_MODAL : ctx.myModality);
+  public void submitTransactionLater(@NotNull Disposable parentDisposable, @NotNull Runnable transaction) {
+    TransactionId ctx = getContextTransaction();
+    ApplicationManager.getApplication().invokeLaterOnWriteThread(transaction, ctx == null ? ModalityState.nonModal() : ((TransactionIdImpl)ctx).modality);
   }
 
   @Override
-  public TransactionIdImpl getContextTransaction() {
+  public TransactionId getContextTransaction() {
     if (ApplicationManager.getApplication().isWriteIntentLockAcquired()) {
       if (!myWritingAllowed) {
         return null;
@@ -181,13 +193,32 @@ public final class TransactionGuardImpl extends TransactionGuard {
     myWriteSafeModalities.put(modality, myWritingAllowed);
   }
 
-  @NotNull
-  public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
+  public @NotNull Runnable wrapLaterInvocation(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     return new Runnable() {
       @Override
       public void run() {
         if (isWriteSafeModality(modalityState)) {
           ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+          runWithWritingAllowed(runnable);
+        }
+        else {
+          runnable.run();
+        }
+      }
+
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Runnable wrapCoroutineInvocation(final @NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (isWriteSafeModality(modalityState)) {
           runWithWritingAllowed(runnable);
         }
         else {
@@ -219,15 +250,15 @@ public final class TransactionGuardImpl extends TransactionGuard {
   }
 
   private static final class TransactionIdImpl implements TransactionId {
-    final ModalityState myModality;
+    final ModalityState modality;
 
     private TransactionIdImpl(ModalityState modality) {
-      myModality = modality;
+      this.modality = modality;
     }
 
     @Override
     public String toString() {
-      return myModality.toString();
+      return modality.toString();
     }
 
     @Override
@@ -235,12 +266,12 @@ public final class TransactionGuardImpl extends TransactionGuard {
       if (this == o) return true;
       if (!(o instanceof TransactionIdImpl)) return false;
       TransactionIdImpl id = (TransactionIdImpl)o;
-      return Objects.equals(myModality, id.myModality);
+      return Objects.equals(modality, id.modality);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myModality);
+      return Objects.hash(modality);
     }
   }
 }

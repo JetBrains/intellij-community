@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -21,6 +21,8 @@ import javax.swing.text.Position;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -30,8 +32,31 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     setEditable(false);
     setOpaque(false);
     putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
-    addHyperlinkListener(this);
+    addHyperlinkListener(new FilteringHyperlinkListener());
     setEditorKit(new HTMLEditorKitBuilder().withWordWrapViewFactory().build());
+  }
+
+  private final class FilteringHyperlinkListener implements HyperlinkListener {
+
+    @Override
+    public void hyperlinkUpdate(HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && isToTheLeftOrAboveTheText(e.getInputEvent())) {
+        return;
+      }
+      HtmlPanel.this.hyperlinkUpdate(e);
+    }
+
+    /** Filters out clicks to the left or above the text, which are interpreted as clicking the link if the text starts with one. */
+    private boolean isToTheLeftOrAboveTheText(InputEvent event) {
+      if (event instanceof MouseEvent mouseEvent) {
+        var insets = getInsets();
+        if (insets == null) {
+          return false;
+        }
+        return mouseEvent.getX() < insets.left || mouseEvent.getY() < insets.top;
+      }
+      return false;
+    }
   }
 
   @Override
@@ -71,14 +96,11 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     }
   }
 
-  @NotNull
-  protected Font getBodyFont() {
+  protected @NotNull Font getBodyFont() {
     return FontUtil.getCommitMessageFont();
   }
 
-  @NotNull
-  @Nls
-  protected abstract String getBody();
+  protected abstract @NotNull @Nls String getBody();
 
   @Override
   public void updateUI() {

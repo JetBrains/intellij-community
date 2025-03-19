@@ -9,8 +9,7 @@ class C {
         throw new RuntimeException();
     }
 
-    @Nullable
-    private Integer newMethod(int id) {
+    private @Nullable Integer newMethod(int id) {
         for (int n : list) {
             if (n == id) {
                 return n <= 0 ? 0 : n;

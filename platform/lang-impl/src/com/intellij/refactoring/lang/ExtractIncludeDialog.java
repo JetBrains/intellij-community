@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.lang;
 
 import com.intellij.ide.util.DirectoryUtil;
@@ -83,9 +83,9 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
     myTargetDirectoryField = new TextFieldWithBrowseButton();
     myTargetDirectoryField.setText(myCurrentDirectory.getVirtualFile().getPresentableUrl());
-    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                   RefactoringBundle.message("select.target.directory.description"),
-                                                   null, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myTargetDirectoryField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(RefactoringBundle.message("select.target.directory"))
+      .withDescription(RefactoringBundle.message("select.target.directory.description")));
 
     myTargetDirLabel.setText(RefactoringBundle.message("extract.to.directory"));
     panel.add(myTargetDirectoryField);
@@ -108,12 +108,12 @@ public class ExtractIncludeDialog extends DialogWrapper {
 
   private void validateOKButton() {
     final String fileName = myNameField.getText().trim();
-    setOKActionEnabled(myTargetDirectoryField.getText().trim().length() > 0 &&
-                       fileName.length() > 0 && fileName.indexOf(File.separatorChar) < 0 &&
+    setOKActionEnabled(!myTargetDirectoryField.getText().trim().isEmpty() &&
+                       !fileName.isEmpty() && fileName.indexOf(File.separatorChar) < 0 &&
                        !StringUtil.containsAnyChar(fileName, "*?><\":;|") && fileName.indexOf(".") != 0);
   }
 
-  private static boolean isFileExist(@NotNull final String directory, @NotNull final String fileName) {
+  private static boolean isFileExist(final @NotNull String directory, final @NotNull String fileName) {
     return LocalFileSystem.getInstance().findFileByIoFile(new File(directory, fileName)) != null;
   }
 

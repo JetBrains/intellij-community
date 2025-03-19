@@ -3,21 +3,28 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.PsiStatement;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiExpression> {
+  private static final Logger LOG = Logger.getInstance(ConvertExpressionToReturnFix.class);
+  
   public ConvertExpressionToReturnFix(@NotNull PsiExpression expression) {
     super(expression);
+    PsiElement parent = expression.getParent();
+    if (!(parent instanceof PsiStatement)) {
+      LOG.error("Parent is not a statement but " + parent.getClass());
+    }
   }
 
   @Override
@@ -28,7 +35,7 @@ public class ConvertExpressionToReturnFix extends PsiUpdateModCommandAction<PsiE
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
     CommentTracker tracker = new CommentTracker();
     tracker.replaceAndRestoreComments(expression.getParent(), "return " + tracker.text(expression) + ";");
   }

@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -43,58 +42,45 @@ import java.util.List;
 import static com.jetbrains.python.psi.LanguageLevel.getDefault;
 
 
-public class PyPsiFacadeImpl extends PyPsiFacade {
+public final class PyPsiFacadeImpl extends PyPsiFacade {
   private final Project myProject;
 
   public PyPsiFacadeImpl(Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context) {
+  public @NotNull List<PsiElement> resolveQualifiedName(@NotNull QualifiedName name, @NotNull PyQualifiedNameResolveContext context) {
     return PyResolveImportUtil.resolveQualifiedName(name, context);
   }
 
-  @NotNull
   @Override
-  public PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
+  public @NotNull PyQualifiedNameResolveContext createResolveContextFromFoothold(@NotNull PsiElement foothold) {
     return PyResolveImportUtil.fromFoothold(foothold);
   }
 
-  @Nullable
   @Override
-  public PyClass findClass(String qName) {
-    return PyClassNameIndex.findClass(qName, myProject);
-  }
-
-  @NotNull
-  @Override
-  public PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition) {
+  public @NotNull PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition) {
     return new PyClassTypeImpl(pyClass, isDefinition);
   }
 
-  @Nullable
   @Override
-  public PyType createUnionType(@NotNull Collection<PyType> members) {
+  public @Nullable PyType createUnionType(@NotNull Collection<PyType> members) {
     return PyUnionType.union(members);
   }
 
-  @Nullable
   @Override
-  public PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor) {
+  public @Nullable PyType createTupleType(@NotNull List<PyType> members, @NotNull PsiElement anchor) {
     return PyTupleType.create(anchor, members);
   }
 
-  @Nullable
   @Override
-  public PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
+  public @Nullable PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
     return PyTypeParser.getTypeByName(anchor, annotation);
   }
 
-  @Nullable
   @Override
-  public final PyClass createClassByQName(@NotNull final String qName, @NotNull final PsiElement anchor) {
+  public @Nullable PyClass createClassByQName(final @NotNull String qName, final @NotNull PsiElement anchor) {
     final QualifiedName qualifiedName = QualifiedName.fromDottedString(qName);
     // Only built-in classes can be found by their unqualified names.
     if (qualifiedName.getComponentCount() == 1) {
@@ -112,15 +98,13 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
       .orElse(null);
   }
 
-  @Nullable
   @Override
-  public String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
+  public @Nullable String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
     return QualifiedNameFinder.findShortestImportableName(anchor, targetFile);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
+  public @NotNull LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory directory) {
       return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
     }

@@ -1,14 +1,17 @@
 package com.intellij.remoteDev.tracing
 
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
+import com.intellij.platform.diagnostic.telemetry.IJTracer
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanKind
 import io.opentelemetry.context.Context
 import java.time.Instant
 import java.util.concurrent.TimeUnit
 
-const val RDCT_INSTRUMENTER_NAME = "rdct"
-suspend fun <T> Span.use(delta: Long, block: suspend Span.() -> T): T {
+private val RDCT_INSTRUMENTER = Scope("rdct")
+
+inline fun <T> Span.use(delta: Long, block: Span.() -> T): T {
   try {
     return block()
   }
@@ -20,13 +23,13 @@ suspend fun <T> Span.use(delta: Long, block: suspend Span.() -> T): T {
   }
 }
 
-suspend fun <T> withSpan(message: String,
+inline fun <T> withSpan(message: String,
                          kind: SpanKind,
                          parent: Context = Context.current(),
                          delta: Long = 0,
-                         action: suspend Span.() -> T): T {
+                         action: Span.() -> T): T {
   val startTime = currentTimeWithAdjustment(delta)
-  return TelemetryTracer.getInstance().getTracer(RDCT_INSTRUMENTER_NAME).spanBuilder(message)
+  return rdctTracer().spanBuilder(message)
     .setSpanKind(kind)
     .setParent(parent)
     .setAttribute("start time", startTime)
@@ -35,6 +38,8 @@ suspend fun <T> withSpan(message: String,
       action(this)
     }
 }
+
+fun rdctTracer(): IJTracer = TelemetryManager.getTracer(RDCT_INSTRUMENTER)
 
 fun currentTimeWithAdjustment(delta: Long): Long {
   return getCurrentTime() - delta

@@ -1,18 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Objects;
 
 public class AssignmentExprent extends Exprent {
 
@@ -36,7 +39,7 @@ public class AssignmentExprent extends Exprent {
   private Exprent right;
   private int condType = CONDITION_NONE;
 
-  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecodeOffsets) {
+  public AssignmentExprent(Exprent left, Exprent right, BitSet bytecodeOffsets) {
     super(EXPRENT_ASSIGNMENT);
     this.left = left;
     this.right = right;
@@ -45,8 +48,13 @@ public class AssignmentExprent extends Exprent {
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return left.getExprType();
+  }
+
+  @Override
+  public void inferExprType(VarType upperBounds) {
+    left.inferExprType(upperBounds);
   }
 
   @Override
@@ -70,8 +78,7 @@ public class AssignmentExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
     lst.add(left);
     lst.add(right);
     return lst;
@@ -89,7 +96,9 @@ public class AssignmentExprent extends Exprent {
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    left.inferExprType(null);
     VarType leftType = left.getExprType();
+    right.inferExprType(leftType);
     VarType rightType = right.getExprType();
 
     boolean fieldInClassInit = false, hiddenField = false;
@@ -128,14 +137,8 @@ public class AssignmentExprent extends Exprent {
 
     TextBuffer res = right.toJava(indent, tracer);
 
-    if (condType == CONDITION_NONE &&
-        !leftType.isSuperset(rightType) &&
-        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) {
-      if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res.enclose("(", ")");
-      }
-
-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType, Collections.emptyList()) + ")");
+    if (condType == CONDITION_NONE) {
+      this.wrapInCast(leftType, rightType, res, right.getPrecedence());
     }
 
     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
@@ -163,6 +166,13 @@ public class AssignmentExprent extends Exprent {
     return Objects.equals(left, as.getLeft()) &&
            Objects.equals(right, as.getRight()) &&
            condType == as.getCondType();
+  }
+
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, left);
+    measureBytecode(values, right);
+    measureBytecode(values);
   }
 
   // *****************************************************************************

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.model.impl;
 
 import com.intellij.openapi.project.Project;
@@ -43,8 +29,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     myProject = project;
   }
 
-  @Nullable
-  public M getModel(@NotNull C context){
+  public @Nullable M getModel(@NotNull C context){
     final PsiFile psiFile = context.getContainingFile();
     if (psiFile instanceof XmlFile) {
       return getModelByConfigFile((XmlFile)psiFile);
@@ -52,8 +37,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-  @Nullable
-  protected M computeModel(@NotNull XmlFile psiFile, @Nullable S scope) {
+  protected @Nullable M computeModel(@NotNull XmlFile psiFile, @Nullable S scope) {
     if (scope == null) {
       return null;
     }
@@ -67,9 +51,8 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return null;
   }
 
-  @Nullable
   @Override
-  public M getModelByConfigFile(@Nullable XmlFile file) {
+  public @Nullable M getModelByConfigFile(@Nullable XmlFile file) {
     if (file == null) return null;
     final XmlFile originalFile = (XmlFile)file.getOriginalFile();
     final S scope = getModelScope(originalFile);
@@ -87,8 +70,7 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
 
   protected abstract S getModelScope(final XmlFile file);
 
-  @Nullable
-  protected abstract List<M> computeAllModels(@NotNull S scope);
+  protected abstract @Nullable List<M> computeAllModels(@NotNull S scope);
 
   protected abstract M createCombinedModel(Set<XmlFile> configFiles, DomFileElement<T> mergedModel, M firstModel, final S scope);
 
@@ -108,9 +90,8 @@ public abstract class BaseDomModelFactory<S extends UserDataHolder, T extends Do
     return xmlFiles;
   }
 
-  @Nullable
   @Override
-  public M getCombinedModel(@Nullable S s) {
+  public @Nullable M getCombinedModel(@Nullable S s) {
     if (s == null) return null;
     final List<M> models = getAllModels(s);
     return switch (models.size()) {

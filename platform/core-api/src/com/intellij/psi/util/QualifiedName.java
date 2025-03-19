@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,7 @@ import java.util.List;
 
 
 public final class QualifiedName implements Comparable<QualifiedName> {
-  @NotNull private final List<String> myComponents;
+  private final @NotNull List<String> myComponents;
 
   private QualifiedName(int count) {
     myComponents = new ArrayList<>(count);
@@ -30,8 +31,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return qName;
   }
 
-  @NotNull
-  public static QualifiedName fromComponents(String... components) {
+  public static @NotNull QualifiedName fromComponents(String... components) {
     for (String component : components) {
       assertNoDots(component);
     }
@@ -54,13 +54,11 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public QualifiedName removeLastComponent() {
+  public @NotNull QualifiedName removeLastComponent() {
     return removeTail(1);
   }
 
-  @NotNull
-  public QualifiedName removeTail(int count) {
+  public @NotNull QualifiedName removeTail(int count) {
     int size = myComponents.size();
     QualifiedName result = new QualifiedName(size);
     result.myComponents.addAll(myComponents);
@@ -70,8 +68,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public QualifiedName removeHead(int count) {
+  public @NotNull QualifiedName removeHead(int count) {
     int size = myComponents.size();
     QualifiedName result = new QualifiedName(size);
     result.myComponents.addAll(myComponents);
@@ -81,8 +78,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return result;
   }
 
-  @NotNull
-  public List<String> getComponents() {
+  public @NotNull List<String> getComponents() {
     return Collections.unmodifiableList(myComponents);
   }
 
@@ -131,8 +127,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     }
   }
 
-  @Nullable
-  public static QualifiedName deserialize(StubInputStream dataStream) throws IOException {
+  public static @Nullable QualifiedName deserialize(StubInputStream dataStream) throws IOException {
     QualifiedName qName;
     int size = dataStream.readVarInt();
     if (size == 0) {
@@ -147,24 +142,23 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return qName;
   }
 
-  @Nullable
-  public String getFirstComponent() {
+  public @Nullable String getFirstComponent() {
     if (myComponents.isEmpty()) {
       return null;
     }
     return myComponents.get(0);
   }
 
-  @Nullable
-  public String getLastComponent() {
+  public @Nullable String getLastComponent() {
     if (myComponents.isEmpty()) {
       return null;
     }
     return myComponents.get(myComponents.size()-1);
   }
 
+  @Contract(pure = true)
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     return join(".");
   }
 
@@ -172,8 +166,7 @@ public final class QualifiedName implements Comparable<QualifiedName> {
     return StringUtil.join(myComponents, separator);
   }
 
-  @NotNull
-  public static QualifiedName fromDottedString(@NotNull String refName) {
+  public static @NotNull QualifiedName fromDottedString(@NotNull String refName) {
     return fromComponents(refName.split("\\."));
   }
 

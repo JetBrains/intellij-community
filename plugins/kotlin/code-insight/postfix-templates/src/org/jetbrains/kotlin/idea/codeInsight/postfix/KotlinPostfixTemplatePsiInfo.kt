@@ -4,10 +4,14 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -15,6 +19,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getStartOffsetIn
 
 internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
@@ -36,7 +41,7 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     }
 
     @RequiresReadLock
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
     private fun negateExpression(element: KtElement, factory: KtPsiFactory): PsiElement {
         fun replaceChild(parent: PsiElement, old: PsiElement, newText: String): KtExpression {
             val parentText = parent.text
@@ -82,22 +87,16 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
             } else if (KtPsiUtil.isFalseConstant(element)) {
                 return factory.createExpression(KtTokens.TRUE_KEYWORD.value)
             }
-        } else if (element is KtCallExpression) {
-            val calleeExpression = element.calleeExpression
+        } else if (element is KtExpression && element.getPossiblyQualifiedCallExpression() != null) {
+            val callExpression = element.getPossiblyQualifiedCallExpression()
+            val calleeExpression = callExpression?.calleeExpression
             if (calleeExpression is KtNameReferenceExpression) {
                 allowAnalysisOnEdt {
-                    analyze(element) {
-                        val call = element.resolveCall().singleCallOrNull<KtCall>()
-                        if (call is KtSimpleFunctionCall) {
-                            val functionSymbol = call.partiallyAppliedSymbol.symbol
-                            val callableId = functionSymbol.callableIdIfNonLocal
-                            if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
-                                for (overriddenSymbol in functionSymbol.getAllOverriddenSymbols()) {
-                                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableIdIfNonLocal]
-                                    if (mappedCallableId != null) {
-                                        return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
-                                    }
-                                }
+                    allowAnalysisFromWriteAction {
+                        analyze(element) {
+                            val mappedCallableId = resolveToMappedCallableId(callExpression)
+                            if (mappedCallableId != null) {
+                                return replaceChild(element, calleeExpression, mappedCallableId.callableName.asString())
                             }
                         }
                     }
@@ -119,6 +118,24 @@ internal object KotlinPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
         }
 
         return factory.createExpression("!" + element.text)
+    }
+
+    private fun KaSession.resolveToMappedCallableId(element: KtElement): CallableId? {
+        val call = element.resolveToCall()?.singleCallOrNull<KaCall>()
+        if (call is KaSimpleFunctionCall) {
+            val functionSymbol = call.partiallyAppliedSymbol.symbol
+            val callableId = functionSymbol.callableId
+            if (callableId != null && callableId.callableName in MAPPED_CALLABLE_NAMES) {
+                for (overriddenSymbol in functionSymbol.allOverriddenSymbolsWithSelf) {
+                    val mappedCallableId = CALLABLE_MAPPINGS[overriddenSymbol.callableId]
+                    if (mappedCallableId != null) {
+                        return mappedCallableId
+                    }
+                }
+            }
+        }
+
+        return null
     }
 
     private fun shouldWrapOnNegation(element: KtElement): Boolean {

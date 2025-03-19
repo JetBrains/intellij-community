@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.dataFlow.jvm;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
-import com.intellij.codeInspection.dataFlow.java.JavaClassDef;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.EnterFinallyTrap;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.TryCatchAllTrap;
@@ -28,14 +27,6 @@ public class TrapTracker {
   private @NotNull FList<Trap> myTrapStack = FList.emptyList();
   private final @NotNull DfaValueFactory myFactory;
   private final @NotNull Map<String, ExceptionTransfer> myExceptionCache;
-
-  /**
-   * @deprecated use {@link #TrapTracker(DfaValueFactory, TypeConstraints.TypeConstraintFactory)}
-   */
-  @Deprecated(forRemoval = true)
-  public TrapTracker(@NotNull DfaValueFactory factory, @NotNull PsiElement context) {
-    this(factory, JavaClassDef.typeConstraintFactory(context));
-  }
 
   public TrapTracker(@NotNull DfaValueFactory factory, @NotNull TypeConstraints.TypeConstraintFactory typeConstraintFactory) {
     myFactory = factory;

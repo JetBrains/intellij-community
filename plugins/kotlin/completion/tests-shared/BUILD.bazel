@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.completion.tests.shared` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-completion-tests-shared",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-completion-tests-shared_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "@lib//:gson",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/completion/api:kotlin-completion-api",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/analysis-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-completion-tests-shared_test",
+  runtime_deps = [":kotlin-completion-tests-shared_test_lib"]
+)
+### auto-generated section `build kotlin.completion.tests.shared` end

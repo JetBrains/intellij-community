@@ -76,4 +76,6 @@ public interface ToolWindowEx extends ToolWindow {
   default @Nullable StatusText getEmptyText() {
     return null;
   }
+
+  default void updateContentUi() {}
 }

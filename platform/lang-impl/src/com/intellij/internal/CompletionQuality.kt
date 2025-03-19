@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
@@ -55,6 +55,7 @@ import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.*
 import javax.swing.DefaultComboBoxModel
@@ -156,7 +157,7 @@ internal class CompletionQualityStatsAction : AnAction() {
               val descriptor = OpenFileDescriptor(project, file)
               newEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true) ?:
                           throw Exception("Can't open text editor for file: ${file.name}")
-            }, ModalityState.NON_MODAL)
+            }, ModalityState.nonModal())
 
             val text = document.text
             try {
@@ -357,13 +358,13 @@ internal class CompletionQualityStatsAction : AnAction() {
         catch (e: Throwable) {
           LOG.error(e)
         }
-                                                        }, ModalityState.NON_MODAL)
+                                                        }, ModalityState.nonModal())
 
       return Pair(result, total)
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.project != null
@@ -371,6 +372,7 @@ internal class CompletionQualityStatsAction : AnAction() {
   }
 }
 
+@ApiStatus.Internal
 class CompletionQualityDialog(project: Project, editor: Editor?) : DialogWrapper(project) {
   private var fileTypeCombo: JComboBox<FileType>
 

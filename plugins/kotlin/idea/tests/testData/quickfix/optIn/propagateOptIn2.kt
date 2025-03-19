@@ -1,6 +1,6 @@
 // "Propagate 'UnstableApi' opt-in requirement to containing class 'Derived'" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
+// PRIORITY: HIGH
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn
 annotation class UnstableApi
@@ -14,3 +14,5 @@ interface Base {
 abstract class Derived : Base {
     override fun foo<caret>(){}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

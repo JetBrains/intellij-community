@@ -2,7 +2,6 @@
 package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -10,6 +9,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.DialogManager
+import git4idea.GitOperationsCollector
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
@@ -25,7 +27,7 @@ private val LOG = Logger.getInstance("Git.Interactive.Rebase.Using.Log")
 internal fun getEntriesUsingLog(
   repository: GitRepository,
   commit: VcsShortCommitDetails,
-  logData: VcsLogData
+  logData: VcsLogData,
 ): List<GitRebaseEntryGeneratedUsingLog> {
   val traverser: GitHistoryTraverser = GitHistoryTraverserImpl(repository.project, logData)
   val details = mutableListOf<VcsCommitMetadata>()
@@ -52,7 +54,7 @@ internal fun getEntriesUsingLog(
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.UNEXPECTED_HASH)
   }
 
-  if (details.any { it.subject.startsWith("fixup!") || it.subject.startsWith("squash!") }) {
+  if (details.any { detail -> GitSquashedCommitsMessage.isAutosquashCommitMessage(detail.subject) }) {
     throw CantRebaseUsingLogException(CantRebaseUsingLogException.Reason.FIXUP_SQUASH)
   }
 
@@ -78,7 +80,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
     override fun onSuccess() {
       generatedEntries?.let { entries ->
         val dialog = GitInteractiveRebaseDialog(project, root, entries)
-        dialog.show()
+        DialogManager.show(dialog)
         if (dialog.isOK) {
           startInteractiveRebase(repository, commit, GitInteractiveRebaseUsingLogEditorHandler(repository, entries, dialog.getModel()))
         }
@@ -90,20 +92,32 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
 internal fun startInteractiveRebase(
   repository: GitRepository,
   commit: VcsShortCommitDetails,
-  editorHandler: GitRebaseEditorHandler? = null
+  editorHandler: GitRebaseEditorHandler? = null,
 ) {
   object : Task.Backgroundable(repository.project, GitBundle.message("rebase.progress.indicator.title")) {
     override fun run(indicator: ProgressIndicator) {
-      val params = GitRebaseParams.editCommits(repository.vcs.version, commit.parents.first().asString(), editorHandler, false)
+      val base = getRebaseUpstreamFor(commit)
+      val params = GitRebaseParams.editCommits(repository.vcs.version, base, editorHandler, false)
       GitRebaseUtils.rebase(repository.project, listOf(repository), params, indicator)
     }
   }.queue()
 }
 
+internal fun getRebaseUpstreamFor(commit: VcsShortCommitDetails): GitRebaseParams.RebaseUpstream {
+  when {
+    commit.parents.isEmpty() -> return GitRebaseParams.RebaseUpstream.Root
+    commit.parents.size == 1 -> return GitRebaseParams.RebaseUpstream.Commit(commit.parents.single())
+    else -> {
+      LOG.warn(Throwable("Unexpected rebase of a merge commit: $commit, parents: ${commit.parents.joinToString(" ")}"))
+      return GitRebaseParams.RebaseUpstream.Commit(commit.parents.first())
+    }
+  }
+}
+
 private class GitInteractiveRebaseUsingLogEditorHandler(
-  repository: GitRepository,
+  private val repository: GitRepository,
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
-  private val rebaseTodoModel: GitRebaseTodoModel<GitRebaseEntryGeneratedUsingLog>
+  private val rebaseTodoModel: GitRebaseTodoModel<GitRebaseEntryGeneratedUsingLog>,
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
   private var rebaseFailed = false
 
@@ -111,22 +125,37 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     if (rebaseFailed) {
       return super.collectNewEntries(entries)
     }
+    if (validateEntries(entries)) {
+      processModel(rebaseTodoModel)
+      return rebaseTodoModel.convertToEntries()
+    }
+    else {
+      myRebaseEditorShown = false
+      rebaseFailed = true
+      GitOperationsCollector.rebaseViaLogInvalidEntries(repository.project,
+                                                        expectedCommitsNumber = entries.size,
+                                                        actualCommitsNumber = entriesGeneratedUsingLog.size)
+      LOG.warn("Incorrect git-rebase-todo file was generated.\n" +
+               "Actual - ${entriesGeneratedUsingLog.toLog()}\n" +
+               "Expected - ${entries.toLog()}")
+      throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+    }
+  }
+
+  private fun validateEntries(entries: List<GitRebaseEntry>): Boolean {
+    if (entriesGeneratedUsingLog.size != entries.size) return false
+
     entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
       val realEntry = entries[i]
       if (!generatedEntry.equalsWithReal(realEntry)) {
-        myRebaseEditorShown = false
-        rebaseFailed = true
-        LOG.error(
-          "Incorrect git-rebase-todo file was generated",
-          Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
-          Attachment("expected.txt", entries.joinToString("\n"))
-        )
-        throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
+        return false
       }
     }
-    processModel(rebaseTodoModel)
-    return rebaseTodoModel.convertToEntries()
+    return true
   }
+
+  private fun List<GitRebaseEntry>.toLog(): String =
+    joinToString(", ", prefix = "[", postfix = "]") { "${it.commit} (${it.action.command})" }
 }
 
 @VisibleForTesting
@@ -144,7 +173,8 @@ internal class GitRebaseEntryGeneratedUsingLog(details: VcsCommitMetadata) :
   GitRebaseEntryWithDetails(GitRebaseEntry(Action.PICK, details.id.asString(), details.subject.trimStart()), details) {
 
   fun equalsWithReal(realEntry: GitRebaseEntry) =
-    action == realEntry.action &&
-    commit.startsWith(realEntry.commit) &&
-    subject == realEntry.subject
+    if (VcsLogUtil.HASH_PREFIX_REGEX.matcher(realEntry.commit).matches()) {
+      action == realEntry.action && (commit.startsWith(realEntry.commit) || realEntry.commit.startsWith(commit))
+    }
+    else false
 }

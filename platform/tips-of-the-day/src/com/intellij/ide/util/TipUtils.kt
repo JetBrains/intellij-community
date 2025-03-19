@@ -4,7 +4,6 @@
 package com.intellij.ide.util
 
 import com.intellij.CommonBundle
-import com.intellij.DynamicBundle
 import com.intellij.featureStatistics.FeatureDescriptor
 import com.intellij.featureStatistics.ProductivityFeaturesRegistry
 import com.intellij.ide.IdeBundle
@@ -12,12 +11,13 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.util.TipUiSettings.imageBorderColor
 import com.intellij.ide.util.TipUiSettings.imageMaxWidth
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.Trinity
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.ui.icons.loadImageByClassLoader
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
@@ -53,7 +53,7 @@ private val ENTITIES: List<TipEntity> = ApplicationInfo.getInstance().let { appI
     TipEntity("settingsPath", CommonBundle.settingsActionPath()))
 }
 
-object TipUtils {
+internal object TipUtils {
   fun getTip(feature: FeatureDescriptor?): TipAndTrickBean? {
     if (feature == null) {
       return null
@@ -100,7 +100,7 @@ object TipUtils {
 
   fun checkTipFileExist(tip: TipAndTrickBean): Boolean {
     val retrievers = getTipRetrievers(tip)
-    for (retriever in retrievers) {
+    for (retriever in retrievers.tipRetrievers) {
       if (retriever.getTipUrl(tip.fileName) != null) {
         return true
       }
@@ -110,13 +110,16 @@ object TipUtils {
 }
 
 private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?, isStrict: Boolean): List<TextParagraph> {
-  val result = loadTip(tip = tip, isStrict = isStrict)
-  val text = result.first
-  val loader = result.second
-  val tipsPath = result.third
-  val tipHtml = Jsoup.parse(text)
+  val currentTip = loadTip(tip = tip, isStrict = isStrict)
+  val tipHtml = Jsoup.parse(currentTip.tipContent)
   val tipContent = tipHtml.body()
-  val icons = loadImages(tipContent, loader, tipsPath, contextComponent, isStrict)
+
+  val icons = loadImages(tipContent,
+                         currentTip.tipImagesLoader,
+                         currentTip.tipContentLoader,
+                         currentTip.imagesLocation,
+                         contextComponent,
+                         isStrict)
   inlineProductInfo(tipContent)
   val paragraphs = TipContentConverter(tipContent, icons, isStrict).convert()
   if (paragraphs.isEmpty()) {
@@ -130,24 +133,30 @@ private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?,
   return paragraphs
 }
 
-private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): Trinity<String, ClassLoader?, String?> {
+private data class LoadedTipInfo(val tipContent: @Nls String,
+                                 val imagesLocation: String? = null,
+                                 val tipContentLoader: ClassLoader? = null,
+                                 val tipImagesLoader: ClassLoader? = tipContentLoader)
+
+private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): LoadedTipInfo {
   if (tip == null) {
-    return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null)
+    return LoadedTipInfo(IdeBundle.message("no.tip.of.the.day"))
   }
 
   try {
     val tipFile = Path.of(tip.fileName)
     if (tipFile.isAbsolute && Files.exists(tipFile)) {
-      val content = Files.readString(tipFile)
-      return Trinity.create(content, null, tipFile.parent.toString())
+      @Suppress("HardCodedStringLiteral") val content = Files.readString(tipFile)
+      return LoadedTipInfo(content, tipFile.parent.toString())
     }
     else {
-      val retrievers = getTipRetrievers(tip)
-      for (retriever in retrievers) {
+      val retrieversInfo = getTipRetrievers(tip)
+      for (retriever in retrieversInfo.tipRetrievers) {
         val tipContent = retriever.getTipContent(tip.fileName)
         if (tipContent != null) {
-          val tipImagesLocation = "/${retriever.path}/${if (retriever.subPath.isNotEmpty()) "${retriever.subPath}/" else ""}"
-          return Trinity.create(tipContent, retriever.loader, tipImagesLocation)
+          val imagesTipRetriever = retrieversInfo.imagesTipRetriever
+          val tipImagesLocation = "${imagesTipRetriever.path}/${if (imagesTipRetriever.subPath.isNotEmpty()) "${imagesTipRetriever.subPath}/" else ""}"
+          return LoadedTipInfo(tipContent, tipImagesLocation, retriever.loader, imagesTipRetriever.loader)
         }
       }
     }
@@ -156,38 +165,63 @@ private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): Trinity<String, C
     handleError(e, isStrict)
   }
   //All retrievers have failed or error occurred, return error.
-  return Trinity.create(getCantReadText(tip), null, null)
+  return LoadedTipInfo(getCantReadText(tip))
 }
 
-private fun getTipRetrievers(tip: TipAndTrickBean): List<TipRetriever> {
-  val fallbackLoader = TipUtils::class.java.classLoader
-  val pluginDescriptor = tip.pluginDescriptor
-  val langBundle = DynamicBundle.findLanguageBundle()
+//mainClassLoader will always point to the loader that was used to start IDE, and it will be able to retrieve
+//images from english tips of the day resources
+private data class TipRetrieversInfo(val imagesTipRetriever: TipRetriever,
+                                     var tipRetrievers: List<TipRetriever>)
 
-  //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
-  var tipLoader: ClassLoader? = null
-  if (langBundle != null) {
-    val langBundleLoader = langBundle.pluginDescriptor
-    if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
-  }
-  if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.pluginClassLoader != null) {
-    tipLoader = pluginDescriptor.pluginClassLoader
-  }
-  if (tipLoader == null) tipLoader = fallbackLoader
-  var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
-  //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
-  if (ideCode.contains("ic")) ideCode = "iu"
-  //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
+private val productCodeTipMap = mapOf(Pair("iu", "ij"),
+                                      Pair("pc", "py_ce"),
+                                      Pair("ds", "py_ds"))
+private const val tipDirectory = "tips"
+
+
+private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
+  // descriptor can be null if the provided tip is not registered as an extension
+  // such tips are not present in the tips of the day list, but shown in the productivity guide
+  val defaultLoader = tip.pluginDescriptor?.pluginClassLoader ?: TipUtils::class.java.classLoader
+
   val retrievers: MutableList<TipRetriever> = ArrayList()
-  retrievers.add(TipRetriever(tipLoader, "tips", ideCode))
-  retrievers.add(TipRetriever(tipLoader, "tips", "misc"))
-  retrievers.add(TipRetriever(tipLoader, "tips", ""))
-  retrievers.add(TipRetriever(fallbackLoader, "tips", ""))
-  return retrievers
+  val locale = LocalizationUtil.getLocaleOrNullForDefault()
+  if (locale != null) {
+    //tips from locally placed localization
+    retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
+    val localizationPluginLoader: ClassLoader? = LocalizationUtil.getPluginClassLoader()
+    if (localizationPluginLoader != null) {
+      var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
+      //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+      if (ideCode.contains("ic")) ideCode = "iu"
+      //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
+      val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
+      //tips from language plugin
+      listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
+    }
+  }
+  val defaultRetriever = TipRetriever(defaultLoader, tipDirectory, "")
+  retrievers.add(defaultRetriever)
+  return TipRetrieversInfo(defaultRetriever, retrievers)
 }
 
+private fun getLocalizationTipRetrievers(loader: ClassLoader): List<TipRetriever> {
+  val result = mutableListOf<TipRetriever>()
+  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(tipDirectory)
+  val suffixes = LocalizationUtil.getLocalizationSuffixes()
+  //folder paths and suffix paths should have the same size, because their elements depend on locale (if it contains a region or not)
+  for (i in folderPaths.indices) {
+    folderPaths.getOrNull(i)?.let {result.add(TipRetriever(loader, it, ""))}
+    suffixes.getOrNull(i)?.let {result.add(TipRetriever(loader, tipDirectory, "", it))}
+  }
+  return result
+}
+
+//Because images are not localized, we're always loading them from main classloader, but some of the images might not be present there
+//so we're providing a secondary loader as backup to try plugin resources (e.g. Kotlin) that might have brought these images along.
 private fun loadImages(tipContent: Element,
-                       loader: ClassLoader?,
+                       primaryImagesLoader: ClassLoader?,
+                       secondaryImagesLoader: ClassLoader?,
                        tipsPath: String?,
                        contextComponent: Component?,
                        isStrict: Boolean): Map<String, Icon> {
@@ -204,7 +238,7 @@ private fun loadImages(tipContent: Element,
 
     val path = imgElement.attr("src")
     var image: Image? = null
-    if (loader == null) {
+    if (primaryImagesLoader == null) {
       // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
       try {
         val imageUrl = File(tipsPath, path).toURI().toURL()
@@ -225,7 +259,13 @@ private fun loadImages(tipContent: Element,
       }
     }
     else {
-      image = loadImageByClassLoader(path = "$tipsPath$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
+      image = loadImageByClassLoader(path = "$tipsPath$path",
+                                     classLoader = primaryImagesLoader,
+                                     scaleContext = ScaleContext.create(contextComponent))
+      if (image == null && secondaryImagesLoader != null)
+        image = loadImageByClassLoader(path = "$tipsPath$path",
+                                       classLoader = secondaryImagesLoader,
+                                       scaleContext = ScaleContext.create(contextComponent))
     }
     if (image != null) {
       var icon: Icon = JBImageIcon(image)
@@ -271,11 +311,12 @@ private fun handleError(t: Throwable, isStrict: Boolean) {
   }
 }
 
-private fun getCantReadText(bean: TipAndTrickBean): String {
+private fun getCantReadText(bean: TipAndTrickBean): @Nls String {
   val plugin = getPoweredByText(bean)
-  var product = ApplicationNamesInfo.getInstance().fullProductName
-  if (!plugin.isEmpty()) {
-    product += " and $plugin plugin"
+  val product: @Nls String = if (!plugin.isEmpty()) {
+    IdeBundle.message("product.and.plugin", ApplicationNamesInfo.getInstance().fullProductName, plugin)
+  } else {
+    ApplicationNamesInfo.getInstance().fullProductName
   }
   return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product)
 }
@@ -285,20 +326,21 @@ private fun getPoweredByText(tip: TipAndTrickBean): @NlsSafe String {
   return if (descriptor == null || PluginManagerCore.CORE_ID == descriptor.pluginId) "" else descriptor.name
 }
 
-private class TipEntity(private val name: String, private val value: String) {
-  fun inline(where: String): String {
+private class TipEntity(private val name: @NlsSafe String, private val value: @NlsSafe String) {
+  fun inline(where: @Nls String): @Nls String {
     return where.replace("&$name;", value)
   }
 }
 
-private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String) {
-  fun getTipContent(tipName: String?): String? {
+private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String, val suffix: String = "") {
+  fun getTipContent(tipName: String?): @Nls String? {
     if (tipName == null) {
       return null
     }
 
     val tipUrl = getTipUrl(tipName) ?: return null
     try {
+      @Suppress("HardCodedStringLiteral")
       return ResourceUtil.loadText(tipUrl.openStream())
     }
     catch (ignored: IOException) {
@@ -308,13 +350,21 @@ private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val pat
 
   fun getTipUrl(tipName: String): URL? {
     val tipLocation = "/$path/${if (subPath.isNotEmpty()) "$subPath/" else ""}"
-    val tipUrl = ResourceUtil.getResource(loader!!, tipLocation, tipName)
+    val fileName = addSuffixToFileName(tipName, suffix)
+    val tipUrl = ResourceUtil.getResource(loader!!, tipLocation, fileName)
     // tip is not found, but if its name starts with prefix, try without as a safety measure
     @Suppress("SpellCheckingInspection")
     if (tipUrl == null && tipName.startsWith("neue-")) {
-      return ResourceUtil.getResource(loader, tipLocation, tipName.substring(5))
+      return ResourceUtil.getResource(loader, tipLocation, fileName.substring(5))
     }
     return tipUrl
+  }
+
+  private fun addSuffixToFileName(filename: String, suffix: String): String {
+    if (suffix.isEmpty()) return filename
+    val nameWithoutExtension = FileUtilRt.getNameWithoutExtension(filename)
+    val extension = FileUtilRt.getExtension(filename)
+    return "$nameWithoutExtension$suffix.$extension"
   }
 }
 

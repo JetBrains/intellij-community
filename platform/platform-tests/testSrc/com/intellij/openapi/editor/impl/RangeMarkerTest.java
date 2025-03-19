@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -28,10 +30,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
 import com.intellij.testFramework.*;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -990,6 +994,9 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     RangeMarker m3 = document.createRangeMarker(2, 5);
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
     deleteString(document, 4, 5);
+    DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzerImpl.getInstanceEx(getProject());
+    myDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    myDaemonCodeAnalyzer.getFileStatusMap().disposeDirtyDocumentRangeStorage(document);
     assertTrue(m1.isValid());
     assertTrue(m2.isValid());
     assertTrue(m3.isValid());
@@ -1007,6 +1014,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersSize());
     assertEquals(2, ((DocumentImpl)document).getRangeMarkersNodeSize());
   }
+
   public void testRangeHighlightersRecreateBug() {
     Document document = EditorFactory.getInstance().createDocument("[xxxxxxxxxxxxxx]");
 
@@ -1118,7 +1126,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(null, N / 2, N / 2 + 1, 0, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PlatformTestUtil.startPerformanceTest("highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
+    Benchmark.newBenchmark("highlighters lookup", () -> {
       List<RangeHighlighterEx> list = new ArrayList<>();
       CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<>(list);
       for (int i=0; i<N-1;i++) {
@@ -1126,7 +1134,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
         assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testRangeHighlighterIteratorOrder() {
@@ -1324,7 +1332,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 15000, ()->{
+    Benchmark.newBenchmark("RM.getStartOffset", ()->{
       insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
         for (RangeMarker rm : markers) {
@@ -1334,7 +1342,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
       deleteString(doc, 0, 1);
-    }).assertTiming();
+    }).start();
   }
 
   public void testGetOffsetDuringModificationsPerformance() {
@@ -1347,7 +1355,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("RM.getStartOffset", 20000, ()->{
+    Benchmark.newBenchmark("RM.getStartOffset", ()->{
       insertString(doc, 0, " ");
       for (int i=0; i<1000; i++) {
         for (int j = 0; j < markers.size(); j++) {
@@ -1359,7 +1367,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         }
       }
       deleteString(doc, 0, 1);
-    }).assertTiming();
+    }).start();
   }
 
   public void testDocModificationPerformance() {
@@ -1372,12 +1380,12 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest("insert/delete string", 2000, ()->{
+    Benchmark.newBenchmark("insert/delete string", ()->{
       for (int i=0; i<15000; i++) {
         insertString(doc, 0, " ");
         deleteString(doc, 0, 1);
       }
-    }).assertTiming();
+    }).start();
     for (RangeMarker rm : markers) {
       assertTrue(rm.isValid());
     }
@@ -1387,7 +1395,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 100_000;
     List<RangeMarker> markers = new ArrayList<>(N);
-    PlatformTestUtil.startPerformanceTest("createRM", 2000, ()->{
+    Benchmark.newBenchmark("createRM", ()->{
       for (int i = 0; i < N; i++) {
         int start = i % doc.getTextLength();
         int end = start + 1;
@@ -1397,7 +1405,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       for (RangeMarker marker : markers) {
         marker.dispose();
       }
-    }).assertTiming();
+    }).start();
   }
 
   public void testProcessOverlappingPerformance() {
@@ -1410,14 +1418,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       RangeMarker marker = doc.createRangeMarker(start, end);
       markers.add(marker);
     }
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 7_000, ()->{
+    Benchmark.newBenchmark(getTestName(false), ()->{
       for (int it = 0; it < 2_000; it++) {
         for (int i = 1; i < doc.getTextLength() - 1; i++) {
           boolean result = doc.processRangeMarkersOverlappingWith(i, i + 1, __ -> false);
           assertFalse(result);
         }
       }
-    }).assertTiming();
+    }).start();
     assertNotEmpty(markers);
   }
 
@@ -1446,21 +1454,24 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   }
 
   private void gcDocument() {
+    EDT.assertIsEdt();
     FileDocumentManager.getInstance().saveAllDocuments();
     assertNotNull(document);
     Reference<Document> ref = new WeakReference<>(document);
     psiFile = null;
     fileNode = null;
     document = null;
-    TestTimeOut t = TestTimeOut.setTimeout(60, TimeUnit.SECONDS);
-    while (ref.get() != null && !t.isTimedOut()) {
-      GCUtil.tryGcSoftlyReachableObjects();
+    TestTimeOut t = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    GCUtil.tryGcSoftlyReachableObjects(() -> {
       UIUtil.dispatchAllInvocationEvents();
-    }
+      return ref.get() == null || t.isTimedOut();
+    });
     Document d = ref.get();
     if (t.isTimedOut() && d != null) {
       int hashCode = System.identityHashCode(d);
       Class<?> aClass = d.getClass();
+      //Help GC, even in interpreter mode
+      //noinspection UnusedAssignment
       d = null;
       LeakHunter.checkLeak(LeakHunter.allRoots(), aClass, leakedDoc -> System.identityHashCode(leakedDoc) == hashCode);
       fail("Unable to gc the document");
@@ -1543,6 +1554,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker[0]);
     marker[0] = null;
     persistentMarker[0] = null;
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).waitForUpdateFileStatusBackgroundQueueInTests();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
       GCUtil.tryGcSoftlyReachableObjects();
@@ -1669,13 +1681,14 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       });
   }
 
-  private void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
+  private static void createRemoveCheck(Supplier<? extends RangeMarker> creator, Consumer<? super RangeMarker> remover) {
     RangeMarker marker = creator.get();
     assertTrue(marker.isValid());
     TextRange range = marker.getTextRange();
     remover.accept(marker);
     assertFalse(marker.isValid());
     assertEquals(range, marker.getTextRange());
+    assertEquals(TextRangeScalarUtil.toScalarRange(range), ((RangeMarkerImpl)marker).getScalarRange());
   }
 
   public void testInvalidOffsetMustThrow() {

@@ -1,7 +1,7 @@
 PyFile:ExpressionsInDecorators.py
   PyFunction('say_whee')
     PyDecoratorList
-      PyDecorator: @x[0]
+      PyDecorator: @null
         PsiElement(Py:AT)('@')
         PySubscriptionExpression
           PyReferenceExpression: x
@@ -11,7 +11,7 @@ PyFile:ExpressionsInDecorators.py
             PsiElement(Py:INTEGER_LITERAL)('0')
           PsiElement(Py:RBRACKET)(']')
       PsiWhiteSpace('\n')
-      PyDecorator: @y:=x[0]
+      PyDecorator: @null
         PsiElement(Py:AT)('@')
         PyAssignmentExpression
           PyTargetExpression: y

@@ -1,10 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,10 +11,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+@Service(Service.Level.PROJECT)
 @State(name = "GradleLocalSettings", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public final class GradleLocalSettings extends AbstractExternalSystemLocalSettings<GradleLocalSettings.MyState>
   implements PersistentStateComponent<GradleLocalSettings.MyState> {
@@ -26,18 +25,15 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     super(GradleConstants.SYSTEM_ID, project, new MyState());
   }
 
-  @NotNull
-  public static GradleLocalSettings getInstance(@NotNull Project project) {
+  public static @NotNull GradleLocalSettings getInstance(@NotNull Project project) {
     return project.getService(GradleLocalSettings.class);
   }
 
-  @Nullable
-  public String getGradleHome(String linkedProjectPath) {
+  public @Nullable String getGradleHome(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleHomes).get(linkedProjectPath);
   }
 
-  @Nullable
-  public String getGradleVersion(String linkedProjectPath) {
+  public @Nullable String getGradleVersion(String linkedProjectPath) {
     return ContainerUtil.notNullize(state.myGradleVersions).get(linkedProjectPath);
   }
 
@@ -49,12 +45,11 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
     if (state.myGradleVersions == null) {
       state.myGradleVersions = new HashMap<>();
     }
-    state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(gradleHome));
+    state.myGradleVersions.put(linkedProjectPath, GradleInstallationManager.getGradleVersion(Path.of(gradleHome)));
   }
 
   @ApiStatus.Internal
-  @Nullable
-  public String getGradleUserHome() {
+  public @Nullable String getGradleUserHome() {
     return state.myGradleUserHome;
   }
 
@@ -90,6 +85,17 @@ public final class GradleLocalSettings extends AbstractExternalSystemLocalSettin
       state.myGradleUserHome = serviceDirectoryPath;
     }
     // ----
+  }
+
+  @Override
+  public void invalidateCaches() {
+    super.invalidateCaches();
+    if (state.myGradleHomes != null) {
+      state.myGradleHomes.clear();
+    }
+    if (state.myGradleVersions != null) {
+      state.myGradleVersions.clear();
+    }
   }
 
   public static class MyState extends AbstractExternalSystemLocalSettings.State {

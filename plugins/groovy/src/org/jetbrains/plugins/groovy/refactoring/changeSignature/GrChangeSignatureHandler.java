@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -52,15 +52,14 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, editor, elements[0]);
   }
 
-  @Nullable
   @Override
-  public String getTargetNotFoundMessage() {
+  public @Nullable String getTargetNotFoundMessage() {
     return null;
   }
 
@@ -84,8 +83,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiElement targetMember = findTargetMember(element);
     if (targetMember != null) return targetMember;
@@ -98,8 +96,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  @Nullable
-  public PsiElement findTargetMember(@Nullable PsiElement element) {
+  public @Nullable PsiElement findTargetMember(@Nullable PsiElement element) {
     if (element == null) return null;
 
     final GrParameterList parameterList = PsiTreeUtil.getParentOfType(element, GrParameterList.class);

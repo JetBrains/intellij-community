@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class TypeVariableUnspecToSelfUnspec<
@@ -41,98 +40,82 @@ class TypeVariableUnspecToSelfUnspec<
     NullChildOfParametricT extends @Nullable ParametricT,
     //
     UnusedT> {
-  @NullnessUnspecified
-  Never1T x0(@NullnessUnspecified Never1T x) {
+  @NullnessUnspecified Never1T x0(@NullnessUnspecified Never1T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfNever1T x1(@NullnessUnspecified ChildOfNever1T x) {
+  @NullnessUnspecified ChildOfNever1T x1(@NullnessUnspecified ChildOfNever1T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfNever1T x2(@NullnessUnspecified UnspecChildOfNever1T x) {
+  @NullnessUnspecified UnspecChildOfNever1T x2(@NullnessUnspecified UnspecChildOfNever1T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfNever1T x3(@NullnessUnspecified NullChildOfNever1T x) {
+  @NullnessUnspecified NullChildOfNever1T x3(@NullnessUnspecified NullChildOfNever1T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  Never2T x4(@NullnessUnspecified Never2T x) {
+  @NullnessUnspecified Never2T x4(@NullnessUnspecified Never2T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfNever2T x5(@NullnessUnspecified ChildOfNever2T x) {
+  @NullnessUnspecified ChildOfNever2T x5(@NullnessUnspecified ChildOfNever2T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfNever2T x6(@NullnessUnspecified UnspecChildOfNever2T x) {
+  @NullnessUnspecified UnspecChildOfNever2T x6(@NullnessUnspecified UnspecChildOfNever2T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfNever2T x7(@NullnessUnspecified NullChildOfNever2T x) {
+  @NullnessUnspecified NullChildOfNever2T x7(@NullnessUnspecified NullChildOfNever2T x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecT x8(@NullnessUnspecified UnspecT x) {
+  @NullnessUnspecified UnspecT x8(@NullnessUnspecified UnspecT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfUnspecT x9(@NullnessUnspecified ChildOfUnspecT x) {
+  @NullnessUnspecified ChildOfUnspecT x9(@NullnessUnspecified ChildOfUnspecT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfUnspecT x10(@NullnessUnspecified UnspecChildOfUnspecT x) {
+  @NullnessUnspecified UnspecChildOfUnspecT x10(@NullnessUnspecified UnspecChildOfUnspecT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfUnspecT x11(@NullnessUnspecified NullChildOfUnspecT x) {
+  @NullnessUnspecified NullChildOfUnspecT x11(@NullnessUnspecified NullChildOfUnspecT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  ParametricT x12(@NullnessUnspecified ParametricT x) {
+  @NullnessUnspecified ParametricT x12(@NullnessUnspecified ParametricT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  ChildOfParametricT x13(@NullnessUnspecified ChildOfParametricT x) {
+  @NullnessUnspecified ChildOfParametricT x13(@NullnessUnspecified ChildOfParametricT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  UnspecChildOfParametricT x14(@NullnessUnspecified UnspecChildOfParametricT x) {
+  @NullnessUnspecified UnspecChildOfParametricT x14(@NullnessUnspecified UnspecChildOfParametricT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }
 
-  @NullnessUnspecified
-  NullChildOfParametricT x15(@NullnessUnspecified NullChildOfParametricT x) {
+  @NullnessUnspecified NullChildOfParametricT x15(@NullnessUnspecified NullChildOfParametricT x) {
     // jspecify_nullness_not_enough_information
     return x;
   }

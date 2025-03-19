@@ -1,0 +1,78 @@
+<html>
+<body>
+<p>
+    Reports delegation when the delegate object is an instance of a class that overrides (in the case of
+    <code>final</code> and <code>sealed</code> classes) or may override (in the case of <code>open</code>
+    and <code>abstract</code> classes) Java default methods.
+</p>
+<p>
+    By design, Kotlin delegation does not override Java default methods, which can lead to subtle bugs,
+    especially in cases of deep inheritance hierarchies.
+</p>
+<p><b>Example:</b></p>
+<pre><code lang="java">
+// Base.java:
+public interface Base {
+  default void print() {
+    System.out.println("Base");
+  }
+}
+</code></pre>
+<pre><code lang="kotlin">
+// BaseImpl.kt:
+class BaseImpl : Base {
+  override fun print() {
+    println("BaseImpl")
+  }
+}
+</code></pre>
+<pre><code lang="kotlin">
+// Main.kt:
+fun main() {
+  val inherited = BaseImpl()
+  val delegated = object : Base by inherited {}
+  inherited.print() // Outputs: BaseImpl
+  delegated.print() // Outputs: Base
+}
+</code></pre>
+<p>
+    Developers typically expect that all methods, including default methods overridden in the delegate, are
+    forwarded. Instead, Java default methods are called, which can lead to unexpected results.
+</p>
+<p>
+    One quick-fix overrides Java default methods by delegating their implementation to the delegate object:
+</p>
+<pre><code>
+// Main.kt:
+fun main() {
+  val inherited = BaseImpl()
+  val delegated = object : Base by inherited {
+    override fun print() {
+      inherited.print()
+    }
+  }
+  inherited.print() // Outputs: BaseImpl
+  delegated.print() // Outputs: BaseImpl
+}
+</code></pre>
+<p>
+    Another quick-fix overrides Java default methods by explicitly delegating their implementation to the
+    superclass:
+</p>
+<pre><code>
+// Main.kt:
+fun main() {
+  val inherited = BaseImpl()
+  val delegated = object : Base by inherited {
+    override fun print() {
+      super.print()
+    }
+  }
+  inherited.print() // Outputs: BaseImpl
+  delegated.print() // Outputs: Base
+}
+</code></pre>
+<!-- tooltip end -->
+<p><small>New in 2025.1</small></p>
+</body>
+</html>

@@ -7,7 +7,7 @@ Value file: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 Navigation item #0: CLASS
 Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 Navigation item #1: CLASS
-Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotations.kt
+Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation/Annotations.kt
 
 
 -Project
@@ -46,8 +46,10 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotation
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
+     +PsiDirectory: uuid
      _Assertions
      BuilderInference
+     ConsistentCopyVisibility
      ContextFunctionTypeParams
      DeepRecursiveFunction
      DeepRecursiveScope
@@ -60,8 +62,10 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotation
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExposedCopyVisibility
      ExtensionFunctionType
      Function
+     IgnorableReturnValue
      InitializedLazyImpl
      kotlin.kotlin_builtins
      KotlinNothingValueException
@@ -71,6 +75,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotation
      Lazy
      LazyThreadSafetyMode
      Metadata
+     MustUseReturnValue
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn
@@ -144,4 +149,4 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/kotlin/annotation/Annotation
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.jar
+   +PsiDirectory: kotlin-stdlib-common.klib

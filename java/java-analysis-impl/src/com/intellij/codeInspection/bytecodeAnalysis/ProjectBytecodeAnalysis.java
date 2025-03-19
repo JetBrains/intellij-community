@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -69,8 +69,27 @@ public class ProjectBytecodeAnalysis {
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
   }
 
-  @Nullable
-  public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+  /**
+   * @param accessor accessor method getter or setter
+   * @return field that this method reads or writes; null if the method is not identified as a getter
+   * or setter
+   */
+  public @Nullable PsiField findFieldForAccessor(@NotNull PsiMethod accessor) {
+    int count = accessor.getParameterList().getParametersCount();
+    Direction direction = count == 0 ? Out : new In(0, true);
+    EKey eKey = getKey(accessor);
+    if (eKey == null) return null;
+    EKey accessKey = myEquationProvider.adaptKey(eKey);
+    for (Equations equation : myEquationProvider.getEquations(accessKey.member)) {
+      if (equation.find(direction).orElse(null) instanceof FieldAccess access) {
+        PsiClass containingClass = accessor.getContainingClass();
+        return containingClass != null ? containingClass.findFieldByName(access.name(), false) : null;
+      }
+    }
+    return null;
+  }
+
+  public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return null;
     }
@@ -228,8 +247,7 @@ public class ProjectBytecodeAnalysis {
     return PsiAnnotation.EMPTY_ARRAY;
   }
 
-  @Nullable
-  private static String generateAnnotationAttributesText(Map<String, String> attributesMap) {
+  private static @Nullable String generateAnnotationAttributesText(Map<String, String> attributesMap) {
     if (attributesMap.isEmpty()) {
       return null;
     }
@@ -274,8 +292,7 @@ public class ProjectBytecodeAnalysis {
     return cache.get(contractValue);
   }
 
-  @Nullable
-  public EKey getKey(@NotNull PsiModifierListOwner owner) {
+  public @Nullable EKey getKey(@NotNull PsiModifierListOwner owner) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     EKey key = null;
     if (owner instanceof PsiMethod) {
@@ -411,7 +428,11 @@ public class ProjectBytecodeAnalysis {
           trivialSolver.addEquation(key, new Effects(returnValue, Effects.TOP_EFFECTS));
           return trivialSolver;
         }
-        combined.dependencies().filter(queued::add).forEach(queue::push);
+        combined.processDependencies(dep -> {
+          if (queued.add(dep)) {
+            queue.push(dep);
+          }
+        });
         puritySolver.addEquation(withStability(curKey, stable), combined);
       }
     }
@@ -437,8 +458,15 @@ public class ProjectBytecodeAnalysis {
 
       for (Equations equations : myEquationProvider.getEquations(curKey.member)) {
         Result result = equations.find(curKey.getDirection()).orElseGet(solver::getUnknownResult);
+        if (result instanceof FieldAccess) {
+          continue;
+        }
         solver.addEquation(new Equation(withStability(curKey, equations.stable), result));
-        result.dependencies().filter(queued::add).forEach(queue::push);
+        result.processDependencies(dep -> {
+          if (queued.add(dep)) {
+            queue.push(dep);
+          }
+        });
       }
     }
   }
@@ -452,8 +480,7 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  @NotNull
-  private PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
+  private @NotNull PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
@@ -598,14 +625,21 @@ public class ProjectBytecodeAnalysis {
     if (alwaysNotNullParameters.cardinality() != 0) {
       allContracts.replaceAll(smc -> {
         ValueConstraint[] constraints = smc.getConstraints().toArray(new ValueConstraint[0]);
-        alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = ValueConstraint.ANY_VALUE);
+        for (int i = 0; i < constraints.length; i++) {
+          if (alwaysNotNullParameters.get(i)) {
+            if (constraints[i] == ValueConstraint.NULL_VALUE) {
+              return null;
+            }
+            constraints[i] = ValueConstraint.ANY_VALUE;
+          }
+        }
         return new StandardMethodContract(constraints, smc.getReturnValue());
       });
+      allContracts.removeIf(Objects::isNull);
     }
   }
 
-  @NotNull
-  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
+  private static @NotNull List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
     // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
     // then trivial contract should be used like "_,_->true"
     StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
@@ -634,7 +668,7 @@ public class ProjectBytecodeAnalysis {
     return new StandardMethodContract(constraints, returnValue);
   }
 
-  static abstract class EquationProvider<T extends MemberDescriptor> {
+  abstract static class EquationProvider<T extends MemberDescriptor> {
     final Map<T, List<Equations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
     final Project myProject;
 

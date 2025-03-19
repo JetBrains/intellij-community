@@ -5,11 +5,16 @@ import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import org.jetbrains.annotations.NotNull;
 
-final class ViewObsoleteNavBarAction extends ToggleAction implements DumbAware {
+final class ViewObsoleteNavBarAction extends DumbAwareToggleAction implements ActionRemoteBehaviorSpecification.Frontend {
+
+  ViewObsoleteNavBarAction() {
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+  }
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {

@@ -1,11 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.project.Project;
@@ -25,13 +22,14 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+@Service(Service.Level.PROJECT)
 @State(name = "VcsManagerConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsConfiguration implements PersistentStateComponent<VcsConfiguration> {
   private static final Logger LOG = Logger.getInstance(VcsConfiguration.class);
-  public final static long ourMaximumFileForBaseRevisionSize = 500 * 1000;
+  public static final long ourMaximumFileForBaseRevisionSize = 500 * 1000;
 
-  @NonNls public static final String PATCH = "patch";
-  @NonNls public static final String DIFF = "diff";
+  public static final @NonNls String PATCH = "patch";
+  public static final @NonNls String DIFF = "diff";
 
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
@@ -59,7 +57,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_DIRTY_RECURSIVELY = false;
   public boolean LIMIT_HISTORY = true;
   public int MAXIMUM_HISTORY_ROWS = 1000;
-  @NlsSafe public String UPDATE_FILTER_SCOPE_NAME = null;
+  public @NlsSafe String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = true;
@@ -87,13 +85,11 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     private final String myId;
     private final String myKey;
 
-    @NonNls
-    public String getId() {
+    public @NonNls String getId() {
       return myId;
     }
 
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -108,17 +104,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
       myKey = key;
     }
 
-    @NotNull
-    private final String myId;
+    private final @NotNull String myId;
     private final String myKey;
 
-    @NotNull
-    public String getId() {
+    public @NotNull String getId() {
       return myId;
     }
 
-    @Nls
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return VcsBundle.message(myKey);
     }
   }
@@ -129,6 +122,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public @Nullable String LAST_COMMIT_MESSAGE = null;
+  public @NotNull String LAST_CHUNK_COMMIT_MESSAGE = "";
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
   public boolean PRESELECT_EXISTING_CHANGELIST = false;
 
@@ -144,6 +138,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
   public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
+
+  public boolean NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS = true;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
@@ -171,6 +167,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     });
   }
 
+  public void saveTempChunkCommitMessage(final @NotNull String comment) {
+    LAST_CHUNK_COMMIT_MESSAGE = comment;
+  }
+
+  public @NotNull String getTempChunkCommitMessage() {
+    return LAST_CHUNK_COMMIT_MESSAGE;
+  }
+
   private static void addCommitMessage(@NotNull List<? super String> recentMessages, @NotNull String comment) {
     if (recentMessages.size() >= MAX_STORED_MESSAGES) {
       recentMessages.remove(0);
@@ -182,9 +186,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return ContainerUtil.getLastItem(myLastCommitMessages);
   }
 
-  @NotNull
   @CalledInAny
-  public ArrayList<String> getRecentMessages() {
+  public @NotNull ArrayList<String> getRecentMessages() {
     return new ArrayList<>(myLastCommitMessages);
   }
 
@@ -219,48 +222,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   /**
    * @deprecated Always start progress in background
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PerformInBackgroundOption getUpdateOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getCommitOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getEditOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated
-  public PerformInBackgroundOption getCheckoutOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated
-  public PerformInBackgroundOption getAddRemoveOption() {
-    return PerformInBackgroundOption.ALWAYS_BACKGROUND;
-  }
-
-  /**
-   * @deprecated Always start progress in background
-   */
-  @Deprecated(forRemoval = true)
-  public PerformInBackgroundOption getRollbackOption() {
     return PerformInBackgroundOption.ALWAYS_BACKGROUND;
   }
 

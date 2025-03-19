@@ -1,29 +1,26 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ui.CheckedTreeNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
-  @NotNull
-  private final PostfixTemplateProvider myTemplateProvider;
-  @NotNull
-  private PostfixTemplate myTemplate;
+  private final @NotNull PostfixTemplateProvider myTemplateProvider;
+  private @NotNull PostfixTemplate myTemplate;
 
-  @Nullable
-  private PostfixTemplate myInitialTemplate;
+  private @Nullable PostfixTemplate myInitialTemplate;
   private final boolean myNew;
 
-  @NotNull
-  public PostfixTemplate getTemplate() {
+  public @NotNull PostfixTemplate getTemplate() {
     return myTemplate;
   }
 
-  @NotNull
-  public PostfixTemplateProvider getTemplateProvider() {
+  public @NotNull PostfixTemplateProvider getTemplateProvider() {
     return myTemplateProvider;
   }
 

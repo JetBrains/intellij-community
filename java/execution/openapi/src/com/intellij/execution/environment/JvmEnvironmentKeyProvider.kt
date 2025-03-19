@@ -5,17 +5,18 @@ import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
+import java.util.function.Supplier
 
 class JvmEnvironmentKeyProvider : EnvironmentKeyProvider {
 
-  companion object {
+  object Keys {
     val JDK_KEY = EnvironmentKey.create("project.jdk")
     val JDK_NAME = EnvironmentKey.create("project.jdk.name")
   }
 
-  override fun getKnownKeys(): Map<EnvironmentKey, String> =
-    mapOf(JDK_KEY to JavaBundle.message("environment.key.description.project.jdk"),
-          JDK_NAME to JavaBundle.message("environment.key.description.project.jdk.name"),
+  override val knownKeys: Map<EnvironmentKey, Supplier<String>> =
+    mapOf(Keys.JDK_KEY to JavaBundle.messagePointer("environment.key.description.project.jdk"),
+          Keys.JDK_NAME to JavaBundle.messagePointer("environment.key.description.project.jdk.name"),
     )
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()

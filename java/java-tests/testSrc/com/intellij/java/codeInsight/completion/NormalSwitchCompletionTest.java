@@ -2,6 +2,10 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +14,7 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_21;
   }
 
   public void testDefaultInRuleSwitch() { doTest(); }
@@ -49,10 +53,6 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   public void testCompleteNullInSwitchExpr() { doTest(); }
 
-  public void testCompleteDefaultInSwitchStmt() { doTest(); }
-
-  public void testCompleteDefaultInSwitchExpr() { doTest(); }
-
   public void testCompletePatternVariableSwitchStmt() { doTest(); }
 
   public void testCompletePatternVariableSwitchExpr() { doTest(); }
@@ -70,6 +70,16 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
 
   public void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion(); }
 
+  public void testCompleteSwitchPrimitiveSelectorPostfix() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(),
+                           () -> doTestPostfixCompletion());
+  }
+
+  public void testCompleteSwitchPrimitiveSelectorPostfixLowerLanguageLevel() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_11,
+                           () -> doTestPostfixCompletion());
+  }
+
   public void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion(); }
 
   @NeedsIndex.ForStandardLibrary
@@ -81,11 +91,38 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   public void testCompleteFinalInsideSwitch() { doTest("\n"); }
 
   public void testCompleteYieldInsideSwitch() { doTest(); }
+  public void testWhenInSwitchRule() { doTest(); }
 
+  public void testQualifierEnumConstantInSwitch1() { doTest(); }
+  public void testQualifierEnumConstantInSwitch2() { doTest(); }
+  public void testQualifierEnumConstantInSwitch3() { doTest(); }
+  public void testQualifierEnumConstantInSwitch4() { doTest(); }
+  @NeedsIndex.ForStandardLibrary
+  public void testQualifierEnumConstantInSwitchWithObject() { doTest(); }
+  @NeedsIndex.ForStandardLibrary
+  public void testQualifierEnumConstantInSwitchWithObjectInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
+  public void testQualifierEnumConstantInSwitchInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
+  public void testClassPatternInSwitch1() { doTest(); }
+  public void testClassPatternInSwitch2() { doTest(); }
+  public void testClassEnumInSwitch() { doTest(); }
+  public void testDefaultAfterNull() { doTest(); }
+  public void testDefaultAfterNullInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
+  public void testDefaultAfterNotNull() { doTest(); }
+  public void testDefaultAfterDefault() { doTest(); }
+  public void testClassEnumInSwitchInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
   private void doTestPostfixCompletion() {
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
     configure();
     myFixture.type('\t');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 }

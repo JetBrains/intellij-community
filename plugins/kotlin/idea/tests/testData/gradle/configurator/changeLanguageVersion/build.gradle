@@ -11,7 +11,7 @@ buildscript {
 apply plugin: 'kotlin'
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
 }
 compileKotlin {
     kotlinOptions {

@@ -6,7 +6,8 @@ import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -21,11 +22,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usages.impl.UsageModelTracker;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,7 +34,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 
-class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider {
+class PreviewPanel extends BorderLayoutPanel implements Disposable, UiDataProvider {
   private final Project myProject;
   private final PreviewTree myTree;
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
@@ -73,31 +74,23 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     Disposer.register(this, myDiffPanel);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
-      return myExclusionHandler;
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      List<FragmentNode> selectedNodes = myTree.getSelectedNodes();
-      if (selectedNodes.size() == 1) {
-        return Optional.ofNullable(selectedNodes.get(0))
-                       .map(FragmentNode::getNavigatable)
-                       .map(n -> new Navigatable[]{n})
-                       .orElse(null);
-      }
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<FragmentNode> selectedNodes = myTree.getSelectedNodes();
-      if (!selectedNodes.isEmpty()) {
-        return StreamEx.of(selectedNodes)
-                       .map(FragmentNode::getNavigatable)
-                       .nonNull()
-                       .toArray(Navigatable[]::new);
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<FragmentNode> selectedNodes = myTree.getSelectedNodes();
+    sink.set(ExclusionHandler.EXCLUSION_HANDLER, myExclusionHandler);
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      if (selectedNodes.size() != 1) return null;
+      return Optional.ofNullable(selectedNodes.get(0))
+        .map(FragmentNode::getNavigatable)
+        .orElse(null);
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      if (selectedNodes.isEmpty()) return null;
+      return StreamEx.of(selectedNodes)
+        .map(FragmentNode::getNavigatable)
+        .nonNull()
+        .toArray(Navigatable[]::new);
+    });
   }
 
   public void setContent(Content content) {
@@ -153,7 +146,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   private void updateImmediately() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myProject.isDisposed()) return;
 
     boolean isModified = myDiffPanel.isModified();

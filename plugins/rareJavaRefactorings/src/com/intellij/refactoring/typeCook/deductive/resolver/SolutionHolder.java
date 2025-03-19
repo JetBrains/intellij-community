@@ -9,16 +9,16 @@ public class SolutionHolder {
   public void putSolution(final Binding b1) {
     for (final Binding b2 : mySolutions) {
       switch (b1.compare(b2)) {
-        case Binding.WORSE:
-        case Binding.SAME:
+        case Binding.WORSE, Binding.SAME -> {
           return;
-
-        case Binding.BETTER:
+        }
+        case Binding.BETTER -> {
           mySolutions.remove(b2);
           mySolutions.addFirst(b1);
           return;
-
-        case Binding.NONCOMPARABLE:
+        }
+        case Binding.NONCOMPARABLE -> {
+        }
       }
     }
 

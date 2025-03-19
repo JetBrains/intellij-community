@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.ide.JavaUiBundle;
@@ -26,7 +12,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.util.*;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,17 +34,17 @@ public abstract class AbstractImportFromExternalSystemControl<
   SystemSettings extends AbstractExternalSystemSettings<SystemSettings, ProjectSettings, L>>
   extends AbstractSettingsControl
 {
-  @NotNull private final SystemSettings  mySystemSettings;
-  @NotNull private final ProjectSettings myProjectSettings;
+  private final @NotNull SystemSettings  mySystemSettings;
+  private final @NotNull ProjectSettings myProjectSettings;
 
-  @NotNull private final PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
-  @NotNull private final NamePathComponent myLinkedProjectPathField;
-  @Nullable private final HideableTitledPanel hideableSystemSettingsPanel;
-  @NotNull private final ProjectFormatPanel myProjectFormatPanel;
+  private final @NotNull PaintAwarePanel           myComponent              = new PaintAwarePanel(new GridBagLayout());
+  private final @NotNull NamePathComponent myLinkedProjectPathField;
+  private final @Nullable HideableTitledPanel hideableSystemSettingsPanel;
+  private final @NotNull ProjectFormatPanel myProjectFormatPanel;
 
-  @NotNull private final  ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
-  @NotNull private final  ProjectSystemId                                myExternalSystemId;
-  @Nullable private final ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
+  private final @NotNull ExternalSystemSettingsControl<ProjectSettings> myProjectSettingsControl;
+  private final @NotNull ProjectSystemId                                myExternalSystemId;
+  private final @Nullable ExternalSystemSettingsControl<SystemSettings>  mySystemSettingsControl;
 
   private boolean myShowProjectFormatPanel;
   private final JLabel myProjectFormatLabel;
@@ -94,9 +79,8 @@ public abstract class AbstractImportFromExternalSystemControl<
     myLinkedProjectPathField.setNameComponentVisible(false);
     myLinkedProjectPathField.setNameValue("untitled");
 
-    FileChooserDescriptor fileChooserDescriptor = manager.getExternalProjectDescriptor();
-    final BrowseFilesListener browseButtonActionListener = new BrowseFilesListener(
-      myLinkedProjectPathField.getPathComponent(), projectPathTitle, "", fileChooserDescriptor);
+    var fileChooserDescriptor = manager.getExternalProjectDescriptor().withTitle(projectPathTitle);
+    var browseButtonActionListener = new BrowseFilesListener(myLinkedProjectPathField.getPathComponent(), fileChooserDescriptor);
 
     myLinkedProjectPathField.getPathPanel().setBrowseButtonActionListener(browseButtonActionListener);
     myLinkedProjectPathField.getPathComponent().getDocument().addDocumentListener(new DocumentListener() {
@@ -169,8 +153,7 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @param settings  target external project settings
    * @return          control for managing given project settings
    */
-  @NotNull
-  protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
+  protected abstract @NotNull ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
 
   /**
    * Creates a control for managing given system-level settings (if any).
@@ -179,21 +162,17 @@ public abstract class AbstractImportFromExternalSystemControl<
    * @return          a control for managing given system-level settings;
    *                  {@code null} if current external system doesn't have system-level settings (only project-level settings)
    */
-  @Nullable
-  protected abstract ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
+  protected abstract @Nullable ExternalSystemSettingsControl<SystemSettings> createSystemSettingsControl(@NotNull SystemSettings settings);
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 
-  @NotNull
-  public ExternalSystemSettingsControl<ProjectSettings> getProjectSettingsControl() {
+  public @NotNull ExternalSystemSettingsControl<ProjectSettings> getProjectSettingsControl() {
     return myProjectSettingsControl;
   }
 
-  @Nullable
-  public ExternalSystemSettingsControl<SystemSettings> getSystemSettingsControl() {
+  public @Nullable ExternalSystemSettingsControl<SystemSettings> getSystemSettingsControl() {
     return mySystemSettingsControl;
   }
 
@@ -202,13 +181,11 @@ public abstract class AbstractImportFromExternalSystemControl<
     myLinkedProjectPathField.setPath(path);
   }
 
-  @NotNull
-  public SystemSettings getSystemSettings() {
+  public @NotNull SystemSettings getSystemSettings() {
     return mySystemSettings;
   }
 
-  @NotNull
-  public ProjectSettings getProjectSettings() {
+  public @NotNull ProjectSettings getProjectSettings() {
     return myProjectSettings;
   }
 
@@ -249,8 +226,7 @@ public abstract class AbstractImportFromExternalSystemControl<
     }
   }
 
-  @Nullable
-  public ProjectFormatPanel getProjectFormatPanel() {
+  public @Nullable ProjectFormatPanel getProjectFormatPanel() {
     return myShowProjectFormatPanel ? myProjectFormatPanel : null;
   }
 

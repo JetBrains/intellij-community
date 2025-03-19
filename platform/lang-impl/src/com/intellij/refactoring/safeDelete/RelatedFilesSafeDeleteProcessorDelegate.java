@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.projectView.impl.NestingTreeStructureProvider;
@@ -26,6 +12,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -39,7 +26,8 @@ import java.util.List;
  * suggests to delete child files as well. Example: when deleting foo.ts file user is suggested to delete generated foo.js and foo.js.map
  * files as well.
  */
-public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
+@ApiStatus.Internal
+public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
   @Override
   public boolean handlesElement(final PsiElement element) {
     return element instanceof PsiFile &&
@@ -50,7 +38,7 @@ public class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProces
   }
 
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
+  public Collection<PsiElement> getAdditionalElementsToDelete(final @NotNull PsiElement element,
                                                               final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();

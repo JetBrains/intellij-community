@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.util.Couple;
@@ -13,9 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
-  @NlsSafe private static final String INDEX = "index";
-  @NlsSafe private static final String ARG_NUM = "argNum";
+public final class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
+  private static final @NlsSafe String INDEX = "index";
+  private static final @NlsSafe String ARG_NUM = "argNum";
 
 
   @Override
@@ -23,11 +23,10 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     return "groovy.transform.stc.MapEntryOrKeyValue";
   }
 
-  @NotNull
   @Override
-  public List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
-                                                 @NotNull PsiSubstitutor substitutor,
-                                                 String @NotNull [] options) {
+  public @NotNull List<PsiType[]> inferExpectedSignatures(@NotNull PsiMethod method,
+                                                          @NotNull PsiSubstitutor substitutor,
+                                                          String @NotNull [] options) {
     int argNum = extractArgNum(options);
     boolean index = extractIndex(options);
 
@@ -107,8 +106,7 @@ public class MapEntryOrKeyValueHintProcessor extends SignatureHintProcessor {
     return null;
   }
 
-  @Nullable
-  private static Couple<String> parseValue(String value) {
+  private static @Nullable Couple<String> parseValue(String value) {
     String[] split = value.split("=");
     return split.length == 2 ? Couple.of(split[0].trim(), split[1].trim()) : null;
   }

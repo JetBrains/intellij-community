@@ -4,12 +4,12 @@
     <remote-repository>
       <option name="id" value="repositoryReleases" />
       <option name="name" value="repositoryReleases" />
-      <option name="url" value="$TEST_REMOTE_REPOSITORIES_ROOT$/repositoryReleases" />
+      <option name="url" value="$REPOSITORY_LIBRARY_UTILS_TEST_REMOTE_REPOSITORIES_ROOT$/repositoryReleases" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="repositorySnapshots" />
       <option name="name" value="repositorySnapshots" />
-      <option name="url" value="$TEST_REMOTE_REPOSITORIES_ROOT$/repositorySnapshots" />
+      <option name="url" value="$REPOSITORY_LIBRARY_UTILS_TEST_REMOTE_REPOSITORIES_ROOT$/repositorySnapshots" />
     </remote-repository>
   </component>
 </project>

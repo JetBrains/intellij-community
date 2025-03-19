@@ -10,6 +10,7 @@ object RemoteDevPaths {
   fun getLocalActiveProjectsDir(): Path = localCacheRootDir() / "active"
   fun getLocalRecentProjectsDir(): Path = localCacheRootDir() / "recent"
   fun getLocalDistDir(): Path = localCacheRootDir() / "dist"
+  fun getUserProvidedDistDir(): Path = localCacheRootDir() / "userProvidedDist"
 }
 
 //val REMOTE_DEV_CACHE_LOCATION = listOf(".cache", "JetBrains", "RemoteDev")

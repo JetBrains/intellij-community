@@ -1,1 +1,1 @@
-name: JupyterCore
+name: JupyterPlugin

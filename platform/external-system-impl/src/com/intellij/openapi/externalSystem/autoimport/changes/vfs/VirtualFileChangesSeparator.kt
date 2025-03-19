@@ -7,8 +7,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 internal class VirtualFileChangesSeparator(listener: VirtualFileChangesListener, events: List<VFileEvent>) {
 
   private val beforeAppliers = ArrayList<() -> Unit>()

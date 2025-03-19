@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -23,16 +23,19 @@ import java.util.Objects;
  * A variable descriptor that represents 'this' reference
  */
 public final class ThisDescriptor extends PsiVarDescriptor {
-  @NotNull
-  private final PsiClass myQualifier;
+  private final @NotNull PsiClass myQualifier;
 
-  private ThisDescriptor(@NotNull PsiClass qualifier) {
-    myQualifier = qualifier;
+  /**
+   * Creates a descriptor that represents accessible 'this' variable of a specific class type
+   * 
+   * @param psiClass PSI class designating the corresponding 'this' variable. In case of an inner class, may refer to an outer one.
+   */
+  public ThisDescriptor(@NotNull PsiClass psiClass) {
+    myQualifier = psiClass;
   }
 
-  @NotNull
   @Override
-  public String toString() {
+  public @NotNull String toString() {
     if (myQualifier instanceof PsiAnonymousClass) {
       return "(anonymous " + ((PsiAnonymousClass)myQualifier).getBaseClassReference().getText() + ").this";
     }
@@ -57,11 +60,6 @@ public final class ThisDescriptor extends PsiVarDescriptor {
 
   @Override
   public boolean isStable() {
-    return true;
-  }
-
-  @Override
-  public boolean isImplicitReadPossible() {
     return true;
   }
 
@@ -110,5 +108,11 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   public static DfaVariableValue createThisValue(@NotNull DfaValueFactory factory, @Nullable PsiClass aClass) {
     if (aClass == null) return null;
     return factory.getVarFactory().createVariableValue(new ThisDescriptor(aClass));
+  }
+
+  @Override
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
+    if (qualifier != null) return factory.getUnknown();
+    return factory.getVarFactory().createVariableValue(this);
   }
 }

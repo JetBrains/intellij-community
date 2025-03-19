@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
@@ -47,8 +47,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser.collectChanges;
@@ -64,8 +64,8 @@ import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.loadChangeLis
 public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final ListTableModel<SvnChangeList> myRevisionsModel;
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull ListTableModel<SvnChangeList> myRevisionsModel;
   private TableView<SvnChangeList> myRevisionsList;
   private CommittedChangesBrowser myRepositoryChangesBrowser;
   private Splitter mySplitter;
@@ -145,7 +145,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myDisposed = true;
   }
 
-  private void refreshListStatus(@NotNull final List<SvnChangeList> changeLists) {
+  private void refreshListStatus(final @NotNull List<SvnChangeList> changeLists) {
     if (myDisposed) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       int cnt = 10;
@@ -167,8 +167,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     });
   }
 
-  @NotNull
-  private static ListMergeStatus toListMergeStatus(@NotNull MergeCheckResult mergeCheckResult) {
+  private static @NotNull ListMergeStatus toListMergeStatus(@NotNull MergeCheckResult mergeCheckResult) {
     return switch (mergeCheckResult) {
       case MERGED -> ListMergeStatus.MERGED;
       case NOT_EXISTS -> ListMergeStatus.ALIEN;
@@ -191,8 +190,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  public List<SvnChangeList> getSelected() {
+  public @NotNull List<SvnChangeList> getSelected() {
     Set<Long> selected = myWiseSelection.getSelected();
     Set<Long> unselected = myWiseSelection.getUnselected();
     // todo: can be made faster
@@ -280,15 +278,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     myPanel.add(mySplitter, BorderLayout.CENTER);
   }
 
-  @NotNull
-  private ActionToolbar createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup actions = new DefaultActionGroup(new MySelectAll(), new MyUnselectAll(), myMore100Action, myMore500Action);
 
     return ActionManager.getInstance().createActionToolbar("SvnToBeMerged", actions, true);
   }
 
-  @NotNull
-  private List<Change> getAlreadyMergedPaths(@NotNull SvnChangeList svnChangeList) {
+  private @NotNull List<Change> getAlreadyMergedPaths(@NotNull SvnChangeList svnChangeList) {
     Collection<String> notMerged = myMergeChecker.getNotMergedPaths(svnChangeList);
 
     return isEmpty(notMerged) ? ContainerUtil.emptyList() : svnChangeList.getAffectedPaths().stream()

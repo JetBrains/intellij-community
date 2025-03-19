@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.siblings
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.dfs
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
@@ -21,12 +24,14 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
+@IntellijInternalApi
 class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = MyVisitor(holder)
 
     var reportEvenObviousCases: Boolean = false
 
-    override fun getOptionsPane() = OptPane.pane(
+    override fun getOptionsPane(): OptPane = OptPane.pane(
         OptPane.checkbox(this@UnclearPrecedenceOfBinaryExpressionInspection::reportEvenObviousCases.name,
                          KotlinBundle.message("unclear.precedence.of.binary.expression.report.even.obvious.cases.checkbox"))
     )
@@ -67,10 +72,8 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         }
     }
 
-    private class AddParenthesesFix(private val putParenthesesInObviousCases: Boolean) : LocalQuickFix {
-        override fun getName() = KotlinBundle.message("unclear.precedence.of.binary.expression.quickfix")
-
-        override fun getFamilyName() = name
+    private class AddParenthesesFix(private val putParenthesesInObviousCases: Boolean) : PsiUpdateModCommandQuickFix() {
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("unclear.precedence.of.binary.expression.quickfix")
 
         private fun addParenthesisRecursive(psi: PsiElement, out: StringBuilder) {
             val unified = psi.toUnified()
@@ -105,11 +108,10 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             .takeWhile { it is PsiWhiteSpace || it is PsiComment }
             .joinToString("") { it.text }
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val psi = descriptor.psiElement ?: return
+        override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
             val builder = StringBuilder()
-            addParenthesisRecursive(psi, builder)
-            psi.replace(KtPsiFactory(project).createExpression(builder.toString()))
+            addParenthesisRecursive(element, builder)
+            element.replace(KtPsiFactory(project).createExpression(builder.toString()))
         }
     }
 

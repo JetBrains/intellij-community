@@ -27,6 +27,10 @@ internal class DirectKotlinClassDelegatedSearcher : Searcher<DirectKotlinClassIn
             //enum inheritors may be found in the same class only, kotlin class
             return null
         }
+        if (baseClass.isSealed()) {
+            // Implementations of Kotlin sealed class can only be defined in Kotlin
+            return null
+        }
         val lightClass = baseClass.toLightClass() ?: baseClass.toFakeLightClass()
         val params =
             DirectClassInheritorsSearch.SearchParameters(lightClass, parameters.searchScope, parameters.includeAnonymous, true)

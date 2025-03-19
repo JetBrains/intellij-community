@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -26,19 +27,20 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.ConcurrencyUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class HighlightManagerImpl extends HighlightManager {
   public static final int OCCURRENCE_LAYER = HighlighterLayer.SELECTION - 1;
@@ -69,11 +71,8 @@ public final class HighlightManagerImpl extends HighlightManager {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
-    Set<RangeHighlighter> highlighters = editor.getUserData(HIGHLIGHTER_SET_KEY);
-    if (highlighters == null && toCreate) {
-      highlighters = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHTER_SET_KEY, new HashSet<>());
-    }
-    return highlighters;
+    return toCreate ? ConcurrencyUtil.computeIfAbsent(editor, HIGHLIGHTER_SET_KEY, () -> new HashSet<>())
+                    : editor.getUserData(HIGHLIGHTER_SET_KEY);
   }
 
   public @NotNull RangeHighlighter @NotNull [] getHighlighters(@NotNull Editor editor) {
@@ -167,26 +166,33 @@ public final class HighlightManagerImpl extends HighlightManager {
                                              @Nullable Collection<? super RangeHighlighter> outHighlighters,
                                              @Nullable Color scrollMarkColor) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
-    markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
-                                                       HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
+    RangeHighlighterEx result = markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE, false,
+           highlighter -> {
 
-        Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
-        highlighters.add(highlighter);
-        setHideFlags(highlighter, flags);
+             addEditorHighlighterWithHideFlags(editor, highlighter, flags);
 
-        highlighter.setVisibleIfFolded(true);
-        if (outHighlighters != null) {
-          outHighlighters.add(highlighter);
-        }
+             highlighter.setVisibleIfFolded(true);
 
-        if (forcedAttributes != null) {
-          highlighter.setTextAttributes(forcedAttributes);
-        }
+             if (forcedAttributes != null) {
+               highlighter.setTextAttributes(forcedAttributes);
+             }
 
-        if (scrollMarkColor != null) {
-          highlighter.setErrorStripeMarkColor(scrollMarkColor);
-        }
-      });
+             if (scrollMarkColor != null) {
+               highlighter.setErrorStripeMarkColor(scrollMarkColor);
+             }
+           });
+    if (outHighlighters != null) {
+      outHighlighters.add(result);
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void addEditorHighlighterWithHideFlags(@NotNull Editor editor,
+                                                       @NotNull RangeHighlighter highlighter,
+                                                       @HideFlags @Nullable Integer flags) {
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
+    highlighters.add(highlighter);
+    setHideFlags(highlighter, flags);
   }
 
   @Override
@@ -255,15 +261,6 @@ public final class HighlightManagerImpl extends HighlightManager {
   @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
                                       PsiElement @NotNull [] elements,
-                                      @NotNull TextAttributes attributes,
-                                      boolean hideByTextChange,
-                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, elements, attributes, null, hideByTextChange, outHighlighters);
-  }
-
-  @Override
-  public void addOccurrenceHighlights(@NotNull Editor editor,
-                                      PsiElement @NotNull [] elements,
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
                                       @Nullable Collection<? super RangeHighlighter> outHighlighters) {
@@ -303,8 +300,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     return Math.min(offset, textLength);
   }
 
-  @Nullable
-  private static Color getScrollMarkColor(@Nullable TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
+  private static @Nullable Color getScrollMarkColor(@Nullable TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
     if (attributes == null) return null;
     if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
     if (attributes.getBackgroundColor() != null) {
@@ -362,7 +358,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     highlighter.putUserData(HIGHLIGHT_FLAGS_KEY, flags);
   }
 
-  private class MyAnActionListener implements AnActionListener {
+  private final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       requestHideHighlights(event.getDataContext());

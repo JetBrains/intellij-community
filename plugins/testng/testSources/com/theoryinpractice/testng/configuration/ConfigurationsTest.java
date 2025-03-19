@@ -42,7 +42,8 @@ public class ConfigurationsTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    JavaTestFixtureFactory.getFixtureFactory();   // registers Java module fixture builder
+    //noinspection ResultOfMethodCallIgnored -- registers Java module fixture builder
+    JavaTestFixtureFactory.getFixtureFactory();
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getClass().getSimpleName());
     myFixture = fixtureFactory.createTempDirTestFixture();

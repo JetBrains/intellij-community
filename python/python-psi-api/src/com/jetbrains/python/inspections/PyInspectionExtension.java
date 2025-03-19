@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,7 +20,7 @@ public abstract class PyInspectionExtension {
     return false;
   }
 
-  public boolean ignoreShadowed(@NotNull final PsiElement element) {
+  public boolean ignoreShadowed(final @NotNull PsiElement element) {
     return false;
   }
 
@@ -83,7 +83,7 @@ public abstract class PyInspectionExtension {
    * @param context    type eval to be used
    * @return true if ignore
    */
-  public boolean ignoreProtectedSymbol(@NotNull final PyReferenceExpression expression, @NotNull final TypeEvalContext context) {
+  public boolean ignoreProtectedSymbol(final @NotNull PyReferenceExpression expression, final @NotNull TypeEvalContext context) {
     return false;
   }
 

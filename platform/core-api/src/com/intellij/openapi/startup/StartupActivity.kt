@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface StartupActivity {
   companion object {
     @Internal
-    val POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.postStartupActivity")
+    val POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = ExtensionPointName("com.intellij.postStartupActivity")
   }
 
   fun runActivity(project: Project)
@@ -39,12 +40,17 @@ interface StartupActivity {
   /**
    * See **obsolescence notice** on [StartupActivity].
    */
-  @Deprecated("Use ProjectPostStartupActivity")
+  @Deprecated("Use ProjectActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
 
 /**
  * Runs an activity after project open.
+ * In production mode [execute] gets called inside a coroutine scope spanning from project opening to project closing (or plugin unloading).
+ * Flow and any other long-running activities are allowed and natural.
+ *
+ * Note: in test mode ([com.intellij.openapi.application.Application.isUnitTestMode]) [execute] can be called from an outer coroutine scope.
+ * In this case, flow collectors and long-running activities can block project opening and cause timeout.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
@@ -53,9 +59,6 @@ interface StartupActivity {
 interface ProjectActivity {
   suspend fun execute(project: Project)
 }
-
-@Deprecated("Use ProjectActivity", level = DeprecationLevel.ERROR)
-interface ProjectPostStartupActivity : ProjectActivity
 
 /**
  * `initProjectActivity` activity must be defined only by a core and requires approval by core team.
@@ -69,5 +72,7 @@ interface InitProjectActivity {
 abstract class InitProjectActivityJavaShim : InitProjectActivity {
   abstract fun runActivity(project: Project)
 
-  override suspend fun run(project: Project) = runActivity(project)
+  override suspend fun run(project: Project) : Unit = blockingContext {
+    runActivity(project)
+  }
 }

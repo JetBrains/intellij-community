@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
+import com.intellij.history.LocalHistory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
@@ -8,12 +9,13 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.commit.AbstractCommitter
 import com.intellij.vcs.commit.commitWithoutChangesRoots
-import com.intellij.vcsUtil.VcsFileUtil
-import git4idea.GitUtil
+import com.intellij.vcs.commit.getLocalHistoryEventName
 import git4idea.GitUtil.getRepositoryForFile
 import git4idea.checkin.*
+import git4idea.index.ui.stagingAreaActionInvoked
 import git4idea.repo.GitRepository
 import git4idea.repo.isSubmodule
 import git4idea.util.GitFileUtils.addPaths
@@ -62,18 +64,21 @@ internal class GitStageCommitter(
     }
     finally {
       refreshChanges()
+      LocalHistory.getInstance().putEventLabel(project, getLocalHistoryEventName(commitContext, commitMessage), VcsActivity.Commit)
+      stagingAreaActionInvoked()
     }
   }
 
   private fun refreshChanges() {
     for (repository in successfulRepositories) {
-      GitUtil.getRepositoryManager(project).updateRepository(repository.root)
+      repository.update()
       if (repository.isSubmodule()) {
         VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root.parent)
       }
     }
-
-    VcsFileUtil.markFilesDirty(project, commitState.roots)
+    for (root in commitState.roots) {
+      VcsDirtyScopeManager.getInstance(project).rootDirty(root)
+    }
   }
 
   @Throws(VcsException::class)

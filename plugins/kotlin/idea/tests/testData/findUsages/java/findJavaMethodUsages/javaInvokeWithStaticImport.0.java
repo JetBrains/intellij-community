@@ -11,4 +11,3 @@ public class JavaClassWI {
     }
 }
 
-// IGNORE_FIR_LOG

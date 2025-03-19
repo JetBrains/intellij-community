@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -86,7 +86,7 @@ public abstract class AutoScrollFromSourceHandler {
   private void updateCurrentSelection() {
     FileEditor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
     if (selectedEditor != null) {
-      ApplicationManager.getApplication().invokeLater(() -> selectInAlarm(selectedEditor), ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> selectInAlarm(selectedEditor), ModalityState.nonModal(), myProject.getDisposed());
     }
   }
 
@@ -100,7 +100,7 @@ public abstract class AutoScrollFromSourceHandler {
     }
 
     @Override
-    public boolean isSelected(@NotNull final AnActionEvent event) {
+    public boolean isSelected(final @NotNull AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
@@ -110,7 +110,7 @@ public abstract class AutoScrollFromSourceHandler {
     }
 
     @Override
-    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public void setSelected(final @NotNull AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
       updateCurrentSelection();
     }

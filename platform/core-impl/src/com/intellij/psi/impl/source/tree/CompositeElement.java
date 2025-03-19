@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -8,6 +8,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
@@ -32,26 +33,26 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
+  private static final Key<Integer> OUR_HC_KEY = Key.create("OUR_HC_KEY");
+
   public static final CompositeElement[] EMPTY_ARRAY = new CompositeElement[0];
 
   private TreeElement firstChild;
   private TreeElement lastChild;
 
   private volatile int myCachedLength = -1;
-  private volatile int myHC = -1;
+
   private volatile PsiElement myWrapper;
   private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
     myWrapperUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
-  private static final boolean ASSERT_THREADING = true;//DebugUtil.CHECK || ApplicationManagerEx.getApplicationEx().isInternal() || ApplicationManagerEx.getApplicationEx().isUnitTestMode();
 
 
   public CompositeElement(@NotNull IElementType type) {
     super(type);
   }
 
-  @NotNull
   @Override
-  public CompositeElement clone() {
+  public @NotNull CompositeElement clone() {
     CompositeElement clone = (CompositeElement)super.clone();
 
     clone.firstChild = null;
@@ -87,17 +88,14 @@ public class CompositeElement extends TreeElement {
   public void clearCaches() {
     myCachedLength = -1;
 
-    myHC = -1;
+    this.putUserData(OUR_HC_KEY, null);
 
     clearRelativeOffsets(rawFirstChild());
   }
 
   private static void assertThreading(@NotNull PsiFile file) {
-    if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected(file);
-      if (!ok) {
-        LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
-      }
+    if (!ApplicationManager.getApplication().isWriteAccessAllowed() && !isNonPhysicalOrInjected(file)) {
+      LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
     }
   }
 
@@ -152,14 +150,12 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  @Nullable
-  public PsiElement findPsiChildByType(@NotNull IElementType type) {
+  public @Nullable PsiElement findPsiChildByType(@NotNull IElementType type) {
     ASTNode node = findChildByType(type);
     return node == null ? null : node.getPsi();
   }
 
-  @Nullable
-  public PsiElement findPsiChildByType(@NotNull TokenSet types) {
+  public @Nullable PsiElement findPsiChildByType(@NotNull TokenSet types) {
     ASTNode node = findChildByType(types);
     return node == null ? null : node.getPsi();
   }
@@ -186,8 +182,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet types) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       assertReadAccessAllowed();
     }
@@ -198,25 +193,43 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       assertReadAccessAllowed();
     }
     return TreeUtil.findSibling(anchor, typesSet);
   }
 
+  /**
+   * @implNote Optimization. Instead of just calling new {@code String(textToCharArray())} we try to delegate the text computation to the
+   * first child, if there's only one, in hope it has optimized its own {@code getText()} and we thus can skip allocating buffer in
+   * {@link AstBufferUtil}
+   */
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
+    TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode == null) {
+      return "";
+    }
+    else if (firstChildNode == getLastChildNode()) {
+      if (firstChildNode instanceof ForeignLeafPsiElement) {
+        return "";
+      }
+      return firstChildNode.getText();
+    }
     return new String(textToCharArray());
   }
 
-  @NotNull
   @Override
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
+    TreeElement firstChildNode = getFirstChildNode();
+    if (firstChildNode == null) {
+      return "";
+    }
+    else if (firstChildNode == getLastChildNode()) {
+      return firstChildNode.getChars();
+    }
     return getText();
-    //return new CharArrayCharSequence(textToCharArray());
   }
 
   @Override
@@ -329,15 +342,13 @@ public class CompositeElement extends TreeElement {
     return curOffset[0];
   }
 
-  @Nullable
-  public final PsiElement findChildByRoleAsPsiElement(int role) {
+  public final @Nullable PsiElement findChildByRoleAsPsiElement(int role) {
     ASTNode element = findChildByRole(role);
     if (element == null) return null;
     return SourceTreeToPsiMap.treeElementToPsi(element);
   }
 
-  @Nullable
-  public ASTNode findChildByRole(int role) {
+  public @Nullable ASTNode findChildByRole(int role) {
     // assert ChildRole.isUnique(role);
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       if (getChildRole(child) == role) return child;
@@ -473,16 +484,19 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int hc() {
-    int hc = myHC;
-    if (hc == -1) {
-      hc = 0;
-      TreeElement child = firstChild;
-      while (child != null) {
-        hc += child.hc();
-        child = child.getTreeNext();
-      }
-      myHC = hc;
+    Integer cached = getUserData(OUR_HC_KEY);
+    if (cached != null) {
+      return cached;
     }
+
+    int hc = 0;
+    TreeElement child = firstChild;
+    while (child != null) {
+      hc += child.hc();
+      child = child.getTreeNext();
+    }
+    putUserDataIfAbsent(OUR_HC_KEY, hc);
+
     return hc;
   }
 
@@ -491,8 +505,7 @@ public class CompositeElement extends TreeElement {
     return myCachedLength;
   }
 
-  @NotNull
-  private static TreeElement drillDown(@NotNull TreeElement start) {
+  private static @NotNull TreeElement drillDown(@NotNull TreeElement start) {
     TreeElement cur = start;
     while (cur.getCachedLength() < 0) {
       TreeElement child = cur.getFirstChildNode();
@@ -607,7 +620,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, @Nullable ASTNode firstWhichStayInTree) {
     removeChildrenInner((TreeElement)first, (TreeElement)firstWhichStayInTree);
   }
 
@@ -666,7 +679,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, @Nullable ASTNode lastChild, @Nullable ASTNode anchorBefore) {
     ASTNode next;
     for (ASTNode f = firstChild; f != lastChild; f = next) {
       next = f.getTreeNext();
@@ -677,8 +690,7 @@ public class CompositeElement extends TreeElement {
   /**
    * Don't call this method, it's here for implementation reasons.
    */
-  @Nullable
-  final PsiElement getCachedPsi() {
+  final @Nullable PsiElement getCachedPsi() {
     return myWrapper;
   }
 
@@ -777,8 +789,7 @@ public class CompositeElement extends TreeElement {
     DebugUtil.checkTreeStructure(this);
   }
 
-  @NotNull
-  static TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
+  static @NotNull TreeElement rawSetParents(@NotNull TreeElement child, @NotNull CompositeElement parent) {
     child.rawRemoveUpToWithoutNotifications(null, false);
     while (true) {
       child.setTreeParent(parent);
@@ -806,7 +817,7 @@ public class CompositeElement extends TreeElement {
     parent.rawAddChildren(first);
   }
 
-  private static void remove(@NotNull TreeChangeEventImpl destinationTreeChange, TreeElement first, TreeElement last) {
+  private static void remove(@NotNull TreeChangeEventImpl destinationTreeChange, @Nullable TreeElement first, @Nullable TreeElement last) {
     if (first != null) {
       destinationTreeChange.addElementaryChange(first.getTreeParent());
       first.rawRemoveUpTo(last);
@@ -827,7 +838,7 @@ public class CompositeElement extends TreeElement {
     removeChildrenInner(child, child.getTreeNext());
   }
 
-  private static void removeChildrenInner(@NotNull TreeElement first, TreeElement last) {
+  private static void removeChildrenInner(@NotNull TreeElement first, @Nullable TreeElement last) {
     FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
       ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {

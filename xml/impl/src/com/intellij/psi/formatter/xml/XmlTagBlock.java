@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -168,12 +154,11 @@ public class XmlTagBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @Nullable
-  protected ASTNode processChild(@NotNull List<Block> result,
-                                 final @NotNull ASTNode child,
-                                 final Wrap wrap,
-                                 final Alignment alignment,
-                                 final Indent indent) {
+  protected @Nullable ASTNode processChild(@NotNull List<Block> result,
+                                           final @NotNull ASTNode child,
+                                           final Wrap wrap,
+                                           final Alignment alignment,
+                                           final Indent indent) {
     IElementType type = child.getElementType();
     if (type == XmlElementType.XML_TEXT) {
       List<Block> injections = new SmartList<>();
@@ -397,15 +382,14 @@ public class XmlTagBlock extends AbstractXmlBlock {
         || syntheticBlock1.isTagDescription() && syntheticBlock2.containsCDATA()) {
       int lineFeeds = 0;
       switch (myXmlFormattingPolicy.getWhiteSpaceAroundCDATAOption()) {
-        case XmlCodeStyleSettings.WS_AROUND_CDATA_NONE:
-          break;
-        case XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES:
-          lineFeeds = 1;
-          break;
-        case XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE:
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_NONE -> { }
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_NEW_LINES -> lineFeeds = 1;
+        case XmlCodeStyleSettings.WS_AROUND_CDATA_PRESERVE -> {
           return Spacing.getReadOnlySpacing();
-        default:
+        }
+        default -> {
           assert false : "Unexpected whitespace around CDATA code style option.";
+        }
       }
       return Spacing.createSpacing(0, 0, lineFeeds, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
@@ -497,8 +481,7 @@ public class XmlTagBlock extends AbstractXmlBlock {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     if (isAfterAttribute(newChildIndex)) {
       List<Block> subBlocks = getSubBlocks();
       Block subBlock = subBlocks.get(newChildIndex - 1);

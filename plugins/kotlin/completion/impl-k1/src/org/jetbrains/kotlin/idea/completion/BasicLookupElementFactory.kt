@@ -253,7 +253,7 @@ class BasicLookupElementFactory(
             appendContainerAndReceiverInformation(descriptor) { element = element.appendTailText(it, true) }
 
             val dslTextAttributes = DslKotlinHighlightingVisitorExtension.dslCustomTextStyle(descriptor)?.let {
-                EditorColorsManager.getInstance().globalScheme.getAttributes(it)
+                EditorColorsManager.getInstance().globalScheme.getAttributes(it.attributesKey)
             }
             if (dslTextAttributes != null) {
                 isMarkedAsDsl = true
@@ -277,7 +277,7 @@ class BasicLookupElementFactory(
         }
 
         if ((insertHandler as? KotlinFunctionInsertHandler.Normal)?.lambdaInfo != null) {
-            element.putUserData(KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE, Unit)
+            element.acceptOpeningBrace = true
         }
 
         val result = element.withIconFromLookupObject()

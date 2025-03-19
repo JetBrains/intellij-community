@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.tools.jps.build.standalone` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tools-jps-build-standalone",
+  module_name = "intellij.tools.jps.build.standalone",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:org-codehaus-groovy-groovy",
+    "//jps/jps-builders:build",
+    "//jps/model-api:model",
+    "//platform/util",
+    "@lib//:cli-parser",
+    "//jps/model-serialization",
+    "//jps/jps-builders-6:build-javac-rt",
+    "@lib//:protobuf",
+  ]
+)
+### auto-generated section `build intellij.tools.jps.build.standalone` end

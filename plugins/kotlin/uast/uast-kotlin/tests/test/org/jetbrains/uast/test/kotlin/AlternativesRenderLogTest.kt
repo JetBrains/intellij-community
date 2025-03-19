@@ -5,6 +5,7 @@ package org.jetbrains.uast.test.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UFile
@@ -14,6 +15,8 @@ import java.io.File
 
 class AlternativesRenderLogTest : AbstractKotlinUastTest() {
 
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     fun testClassAnnotation() = doTest("ClassAnnotation")
 

@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.vcs.impl.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-impl-frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-impl-frontend",
+  module_name = "intellij.platform.vcs.impl.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+    "//platform/diagnostic",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-impl",
+    "//platform/util/jdom",
+    "//platform/kernel/shared:kernel",
+    "//platform/lang-core",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/project/shared:project",
+    "//platform/util/coroutines",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+  ],
+  runtime_deps = [":vcs-impl-frontend_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.impl.frontend` end

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,31 +23,44 @@ public interface FileSystemInterface {
   boolean isDirectory(@NotNull VirtualFile file);
 
   long getTimeStamp(@NotNull VirtualFile file);
+
   void setTimeStamp(@NotNull VirtualFile file, long timeStamp) throws IOException;
 
   boolean isWritable(@NotNull VirtualFile file);
+
   void setWritable(@NotNull VirtualFile file, boolean writableFlag) throws IOException;
 
   boolean isSymLink(@NotNull VirtualFile file);
+
   @Nullable String resolveSymLink(@NotNull VirtualFile file);
 
   /**
    * Returns all virtual files under which the given path is known in the VFS, starting with virtual file for the passed path.
    * Please note, that it is guaranteed to find all aliases only if path is canonical.
    */
-  default @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+  default @Unmodifiable @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
     return Collections.emptyList();
   }
 
   @NotNull VirtualFile createChildDirectory(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+
   @NotNull VirtualFile createChildFile(@Nullable Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
 
   void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
+
   void moveFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) throws IOException;
+
   void renameFile(Object requestor, @NotNull VirtualFile file, @NotNull String newName) throws IOException;
 
-  @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
+  @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName)
+    throws IOException;
 
+  /**
+   * Returns content of a virtual file as a byte array. File content can be obtained eiter from VFS cache or real file system. Side
+   * effect of this method is that the content may be cached in the VFS cache.
+   *
+   * @see com.intellij.openapi.vfs.newvfs.persistent.PersistentFS#contentsToByteArray(VirtualFile, boolean)
+   */
   byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
   /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */

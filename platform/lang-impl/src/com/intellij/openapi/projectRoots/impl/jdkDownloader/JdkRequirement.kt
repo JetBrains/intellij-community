@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.diagnostic.logger
@@ -6,15 +6,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Predicate
 
-
+@Internal
 interface JdkRequirement {
   fun matches(sdk: Sdk): Boolean
   fun matches(sdk: JdkItem): Boolean
   fun matches(sdk: UnknownSdkLocalSdkFix): Boolean
 }
 
+@Internal
 object JdkRequirements {
   private val LOG = logger<JdkRequirements>()
 

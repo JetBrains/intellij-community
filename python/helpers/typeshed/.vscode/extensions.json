@@ -1,0 +1,41 @@
+// ⚠ Disclaimer: The typeshed team doesn't commit to maintaining this file. It exists purely for your ease of use.
+// Keep in alphabetical order
+{
+    "recommendations": [
+        "bierner.github-markdown-preview",
+        "charliermarsh.ruff",
+        "editorconfig.editorconfig",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-python.mypy-type-checker",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+    ],
+    "unwantedRecommendations": [
+        /*
+        * Don't recommend by default for this workspace
+        */
+        "christian-kohler.npm-intellisense",
+        /*
+        * Must disable in this workspace
+        * https://github.com/microsoft/vscode/issues/40239
+        */
+        // even-better-toml has format on save
+        "bungcip.better-toml",
+        // Don't use two mypy extensions simultaneously
+        "matangover.mypy",
+        // Use Ruff instead
+        "ms-python.isort",
+        // We use Black
+        "ms-python.autopep8",
+        // Not using pylint
+        "ms-python.pylint",
+        // VSCode has implemented an optimized version
+        "coenraads.bracket-pair-colorizer",
+        "coenraads.bracket-pair-colorizer-2",
+        // Obsoleted by Pylance
+        "ms-pyright.pyright",
+    ],
+}

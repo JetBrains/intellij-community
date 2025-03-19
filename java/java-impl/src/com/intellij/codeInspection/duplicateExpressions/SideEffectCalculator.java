@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -181,6 +182,9 @@ final class SideEffectCalculator {
     }
     if ("java.nio.file.Paths".equals(className)) {
       return !"get".equals(method.getName());
+    }
+    if (method.getParameterList().getParametersCount() == 0 && new GetterDescriptor(method).isStable()) {
+      return false;
     }
     return true;
   }

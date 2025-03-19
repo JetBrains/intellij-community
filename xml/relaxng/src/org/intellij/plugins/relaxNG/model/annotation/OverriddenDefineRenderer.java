@@ -31,13 +31,12 @@ import org.intellij.plugins.relaxNG.model.Grammar;
 import org.intellij.plugins.relaxNG.model.resolve.GrammarFactory;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
+final class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
 
   private final Define myDefine;
 
@@ -46,14 +45,12 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.OverridenMethod;
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @NotNull AnAction getClickAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -73,7 +70,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
           grammar.acceptChildren(searcher);
         }
 
-        if (result.size() > 0) {
+        if (!result.isEmpty()) {
           OverridingDefineRenderer.doClickAction(e, result, RelaxngBundle.message("relaxng.gutter.go-to-overriding-defines"));
         }
       }
@@ -86,8 +83,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @NotNull String getTooltipText() {
     return RelaxngBundle.message("relaxng.gutter.is-overridden");
   }
 

@@ -14,12 +14,14 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.StartTagEndTokenProvider;
 import com.intellij.psi.xml.XmlElementType;
-import com.intellij.psi.xml.XmlEntityDecl;
+import com.intellij.psi.xml.XmlEntityContextType;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
+
+import static com.intellij.xml.testFramework.XmlElementTypeServiceHelper.registerXmlElementTypeServices;
 
 public class DtdParsingTest extends ParsingTestCase {
 
@@ -30,6 +32,7 @@ public class DtdParsingTest extends ParsingTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    registerXmlElementTypeServices(getApplication(), getTestRootDisposable());
     addExplicitExtension(LanguageASTFactory.INSTANCE, XMLLanguage.INSTANCE, new XmlASTFactory());
     addExplicitExtension(LanguageASTFactory.INSTANCE, DTDLanguage.INSTANCE, new XmlASTFactory());
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider.class);
@@ -67,13 +70,13 @@ public class DtdParsingTest extends ParsingTestCase {
 
   public void testManualEmptyAttributeParsing() {
     String value = "<a><b c=\"\" > </b> </a>";
-    final CompositeElement element = parseManually(value, XmlElementType.XML_ELEMENT_DECL, XmlEntityDecl.EntityContextType.GENERIC_XML);
+    final CompositeElement element = parseManually(value, XmlElementType.XML_ELEMENT_DECL, XmlEntityContextType.GENERIC_XML);
     checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, true));
   }
 
   private static CompositeElement parseManually(final String value,
                                                 final IElementType xmlElementDecl,
-                                                XmlEntityDecl.EntityContextType parseType) {
+                                                XmlEntityContextType parseType) {
     return (CompositeElement)new DtdParsing(value, xmlElementDecl, parseType, null).parse();
   }
 
@@ -177,7 +180,7 @@ public class DtdParsingTest extends ParsingTestCase {
   public void testEntityDeclaration2() {
     String s = "| %pre.qname; | %blockquote.qname; | %address.qname;";
     CompositeElement element =
-      parseManually(s, XmlElementType.XML_ELEMENT_CONTENT_SPEC, XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC);
+      parseManually(s, XmlElementType.XML_ELEMENT_CONTENT_SPEC, XmlEntityContextType.ELEMENT_CONTENT_SPEC);
     checkResult("testEntityDeclaration2.txt", DebugUtil.treeToString(element, true));
   }
 

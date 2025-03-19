@@ -1,0 +1,39 @@
+### auto-generated section `build intellij.platform.buildScripts.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "buildScripts-testFramework",
+  module_name = "intellij.platform.buildScripts.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/build-scripts:buildScripts",
+    "@lib//:kotlin-stdlib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "@lib//:grpc-netty-shaded",
+    "@lib//:grpc-core",
+    "@lib//:grpc-protobuf",
+    "@lib//:grpc-stub",
+    "@lib//:jackson-jr-objects",
+    "//jps/model-api:model",
+    "//platform/util",
+    "//platform/runtime/repository",
+    "//platform/testFramework/core",
+    "//java/java-runtime:rt",
+    "//build/tasks",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//tools/reproducibleBuilds.diff:reproducibleBuilds-diff",
+    "//jps/jps-builders:build",
+    "//platform/runtime/product",
+    "@lib//:devkit-runtime-module-repository-jps",
+    "//platform/util/xmlDom",
+    "@lib//:tc_service_messages",
+    "//platform/buildData",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.testFramework` end

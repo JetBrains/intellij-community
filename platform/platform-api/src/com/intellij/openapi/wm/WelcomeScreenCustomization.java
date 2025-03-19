@@ -26,7 +26,7 @@ public interface WelcomeScreenCustomization {
   /**
    * @deprecated Use {@link #createQuickAccessActions(Disposable)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   default @Nullable Component createQuickAccessComponent(@NotNull Disposable parentDisposable) {
     return null;
   }
@@ -42,6 +42,11 @@ public interface WelcomeScreenCustomization {
    * @return toolbar shown below the main panel (selected tab) of the {@link WelcomeScreen}
    */
   default @Nullable JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  default @Nullable JComponent createMainEmptyState(@NotNull Disposable parentDisposable) {
     return null;
   }
 }

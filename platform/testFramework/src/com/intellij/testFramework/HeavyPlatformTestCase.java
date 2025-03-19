@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
@@ -77,6 +76,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -234,12 +234,13 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
                                         ApplicationManager.getApplication() == null ||
                                         ApplicationManager.getApplication() instanceof MockApplication);
 
-    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(CodeStyle::getDefaultSettings) : null;
+    myCodeStyleSettingsTracker = isTrackCodeStyleChanges ? new CodeStyleSettingsTracker(() -> CodeStyle.getDefaultSettings()) : null;
     ourTestCase = this;
     if (myProject != null) {
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
       ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+      IndexingTestUtil.waitUntilIndexesAreReady(myProject, getIndexingTimeout().toMillis());
     }
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -274,6 +275,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LightPlatformTestCase.clearUncommittedDocuments(getProject());
 
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject, getIndexingTimeout().toMillis());
+  }
+
+  protected @NotNull Duration getIndexingTimeout() {
+    return Duration.ofMinutes(10);
   }
 
   protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
@@ -322,19 +328,38 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected @NotNull Module doCreateRealModule(@NotNull String moduleName) {
-    return doCreateRealModuleIn(moduleName, myProject, getModuleType());
+    return doCreateRealModuleIn(moduleName, myProject, getModuleType(), getIndexingTimeout());
   }
 
-  protected final @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
-    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
+  protected static @NotNull Module doCreateRealModuleIn(@NotNull String moduleName,
+                                                        @NotNull Project project,
+                                                        @NotNull ModuleType<?> moduleType) {
+    return doCreateRealModuleIn(moduleName, project, moduleType, Duration.ofMillis(IndexingTestUtil.DEFAULT_TIMEOUT_MS));
   }
 
-  protected final @NotNull Module createModuleAt(@NotNull String moduleName,
-                                                 @NotNull Project project,
-                                                 @NotNull ModuleType<?> moduleType,
-                                                 @NotNull Path path) {
+  protected static @NotNull Module doCreateRealModuleIn(@NotNull String moduleName,
+                                                        @NotNull Project project,
+                                                        @NotNull ModuleType<?> moduleType,
+                                                        @NotNull Duration timeout) {
+    return createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath(), timeout);
+  }
+
+  protected static @NotNull Module createModuleAt(@NotNull String moduleName,
+                                                  @NotNull Project project,
+                                                  @NotNull ModuleType<?> moduleType,
+                                                  @NotNull Path path) {
+    return createModuleAt(moduleName, project, moduleType, path, Duration.ofMillis(IndexingTestUtil.DEFAULT_TIMEOUT_MS));
+  }
+
+  protected static @NotNull Module createModuleAt(@NotNull String moduleName,
+                                                  @NotNull Project project,
+                                                  @NotNull ModuleType<?> moduleType,
+                                                  @NotNull Path path,
+                                                  @NotNull Duration timeout) {
     Path moduleFile = path.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    return WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    Module module = WriteAction.computeAndWait(() -> ModuleManager.getInstance(project).newModule(moduleFile, moduleType.getId()));
+    IndexingTestUtil.waitUntilIndexesAreReady(project, timeout.toMillis());
+    return module;
   }
 
   protected @NotNull ModuleType<?> getModuleType() {
@@ -342,6 +367,29 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void cleanupApplicationCaches(@Nullable Project project) {
+    var app = ApplicationManager.getApplication();
+    if (app == null) {
+      return;
+    }
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    var undoManager = (UndoManagerImpl)UndoManager.getGlobalInstance();
+    if (undoManager != null) {
+      app.runWriteIntentReadAction(() -> { undoManager.dropHistoryInTests(); return null; });
+    }
+
+    var docRefManager = (DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance();
+    if (docRefManager != null) {
+      docRefManager.cleanupForNextTest();
+    }
+
+    cleanupProjectDependentCaches(project);
+
+    TestApplicationKt.cleanupApplicationCaches(app);
+  }
+
+  public static void cleanupProjectDependentCaches(@Nullable Project project) {
     Application app = ApplicationManager.getApplication();
     if (app == null) {
       return;
@@ -349,19 +397,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
-    UndoManagerImpl globalInstance = (UndoManagerImpl)UndoManager.getGlobalInstance();
-    if (globalInstance != null) {
-      globalInstance.dropHistoryInTests();
-    }
-
     if (project != null && !project.isDisposed()) {
       ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-      ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
-
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
-
-    TestApplicationKt.cleanupApplicationCaches(app);
   }
 
   private static @NotNull Set<VirtualFile> eternallyLivingFiles() {
@@ -460,6 +499,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (myThreadTracker != null) {
+          VfsTestUtil.waitForFileWatcher();
           myThreadTracker.checkLeak();
         }
       },
@@ -607,20 +647,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
 
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
     if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(runnable);
+      EdtTestUtil.runInEdtAndWait(wrapTestRunnable(runnable));
     }
     else {
       runnable.run();
     }
-  }
-
-  /**
-   * @deprecated do not use. instead, start write action where necessary for the shortest time possible
-   */
-  @Deprecated(forRemoval = true)
-  protected boolean isRunInWriteAction() {
-    PluginException.reportDeprecatedUsage("this method", "do not use. instead, start write action where necessary for the shortest time possible");
-    return false;
   }
 
   @Override
@@ -656,8 +687,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return dir.toFile();
   }
 
-  @NotNull
-  protected static VirtualFile getVirtualFile(@NotNull File file) {
+  protected static @NotNull VirtualFile getVirtualFile(@NotNull File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 

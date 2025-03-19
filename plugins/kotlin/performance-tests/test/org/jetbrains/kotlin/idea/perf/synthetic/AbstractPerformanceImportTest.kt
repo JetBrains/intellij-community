@@ -9,6 +9,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
@@ -39,7 +40,7 @@ abstract class AbstractPerformanceImportTest : KotlinLightCodeInsightFixtureTest
             val dependencySuffixes = listOf(".dependency.kt", ".dependency.java", ".dependency1.kt", ".dependency2.kt")
             for (suffix in dependencySuffixes) {
                 val dependencyPath = fileName().replace(".kt", suffix)
-                if (File(testDataPath, dependencyPath).exists()) {
+                if (File(testDataDirectory, dependencyPath).exists()) {
                     fixture.configureByFile(dependencyPath)
                 }
             }

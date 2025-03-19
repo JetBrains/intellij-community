@@ -4,4 +4,3 @@
 package ccc
 
 val x = <caret>TestObject
-/* IGNORE_FIR */

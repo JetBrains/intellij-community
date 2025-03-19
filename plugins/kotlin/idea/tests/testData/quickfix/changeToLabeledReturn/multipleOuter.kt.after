@@ -1,7 +1,7 @@
 // "Change to 'return@foo'" "true"
 // ACTION: Change to 'return@foo'
 // ACTION: Change to 'return@forEach'
-// ACTION: Do not show implicit receiver and parameter hints
+// ACTION: Enable option 'Implicit receivers and parameters' for 'Lambdas' inlay hints
 // WITH_STDLIB
 
 fun foo(f:()->Int){}
@@ -15,3 +15,5 @@ fun bar() {
         return@foo 1
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix

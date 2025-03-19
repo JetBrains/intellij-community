@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 /**
 * If Run Dashboard is not configured for [configurationTypes], show [Notification] allowing to enable dashboard for those configurations.
 **/
-fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection<ConfigurationType>) {
+internal fun promptUserToUseRunDashboard(project: Project, configurationTypes: Collection<ConfigurationType>) {
   ApplicationManager.getApplication().invokeLater {
     val currentTypes = RunDashboardManager.getInstance(project).types
     val typesToAdd = configurationTypes.filter {

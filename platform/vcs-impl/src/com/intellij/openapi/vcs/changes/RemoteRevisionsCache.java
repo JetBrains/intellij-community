@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
@@ -15,8 +16,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Service(Service.Level.PROJECT)
 public final class RemoteRevisionsCache implements VcsListener {
+
+  @Topic.ProjectLevel
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
+
   public static final int DEFAULT_REFRESH_INTERVAL = 3 * 60 * 1000;
 
   private final RemoteRevisionsNumbersCache myRemoteRevisionsNumbersCache;
@@ -24,7 +29,7 @@ public final class RemoteRevisionsCache implements VcsListener {
 
   private final ProjectLevelVcsManager myVcsManager;
 
-  @NotNull private final RemoteStatusChangeNodeDecorator myChangeDecorator;
+  private final @NotNull RemoteStatusChangeNodeDecorator myChangeDecorator;
   private final Project myProject;
   private final ControlledCycle myControlledCycle;
 
@@ -50,7 +55,7 @@ public final class RemoteRevisionsCache implements VcsListener {
         boolean somethingChanged = myRemoteRevisionsNumbersCache.updateStep();
         somethingChanged |= myRemoteRevisionsStateCache.updateStep();
         if (somethingChanged) {
-          BackgroundTaskUtil.syncPublisher(myProject, REMOTE_VERSION_CHANGED).run();
+          myProject.getMessageBus().syncPublisher(REMOTE_VERSION_CHANGED).run();
         }
       }
       return shouldBeDone;
@@ -153,8 +158,7 @@ public final class RemoteRevisionsCache implements VcsListener {
     }
   }
 
-  @NotNull
-  public RemoteStatusChangeNodeDecorator getChangesNodeDecorator() {
+  public @NotNull RemoteStatusChangeNodeDecorator getChangesNodeDecorator() {
     return myChangeDecorator;
   }
 }

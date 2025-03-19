@@ -30,11 +30,11 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-val PICKER_BACKGROUND_COLOR = JBColor(Color(252, 252, 252), Color(64, 64, 64))
-val PICKER_TEXT_COLOR = Color(186, 186, 186)
+val PICKER_BACKGROUND_COLOR: JBColor = JBColor(Color(252, 252, 252), Color(64, 64, 64))
+val PICKER_TEXT_COLOR: Color = Color(186, 186, 186)
 
-const val PICKER_PREFERRED_WIDTH = 300
-const val HORIZONTAL_MARGIN_TO_PICKER_BORDER = 14
+const val PICKER_PREFERRED_WIDTH: Int = 300
+const val HORIZONTAL_MARGIN_TO_PICKER_BORDER: Int = 14
 
 private val PICKER_BORDER = JBUI.Borders.emptyBottom(10)
 
@@ -46,7 +46,7 @@ private const val SEPARATOR_HEIGHT = 5
 class ColorPickerBuilder(private val showAlpha: Boolean = false, private val showAlphaAsPercent: Boolean = true) {
 
   private val componentsToBuild = mutableListOf<JComponent>()
-  val model = ColorPickerModel()
+  val model: ColorPickerModel = ColorPickerModel()
   private var originalColor: Color? = null
   private var requestFocusWhenDisplay = false
   private var focusCycleRoot = false
@@ -55,21 +55,21 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
   private val colorListeners = mutableListOf<ColorListenerInfo>()
   private var popupCloseListener: ColorPickerPopupCloseListener? = null
 
-  fun setOriginalColor(originalColor: Color?) = apply { this.originalColor = originalColor }
+  fun setOriginalColor(originalColor: Color?): ColorPickerBuilder = apply { this.originalColor = originalColor }
 
-  fun addSaturationBrightnessComponent() = apply { componentsToBuild.add(SaturationBrightnessComponent(model)) }
+  fun addSaturationBrightnessComponent(): ColorPickerBuilder = apply { componentsToBuild.add(SaturationBrightnessComponent(model)) }
 
   @JvmOverloads
-  fun addColorAdjustPanel(colorPipetteProvider: ColorPipetteProvider = GraphicalColorPipetteProvider()) = apply {
+  fun addColorAdjustPanel(colorPipetteProvider: ColorPipetteProvider = GraphicalColorPipetteProvider()): ColorPickerBuilder = apply {
     componentsToBuild.add(ColorAdjustPanel(model, colorPipetteProvider, showAlpha))
   }
 
-  fun addColorValuePanel() = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha, showAlphaAsPercent)) }
+  fun addColorValuePanel(): ColorPickerBuilder = apply { componentsToBuild.add(ColorValuePanel(model, showAlpha, showAlphaAsPercent)) }
 
   /**
    * If both [okOperation] and [cancelOperation] are null, [IllegalArgumentException] will be raised.
    */
-  fun addOperationPanel(okOperation: ((Color) -> Unit)?, cancelOperation: ((Color) -> Unit)?) = apply {
+  fun addOperationPanel(okOperation: ((Color) -> Unit)?, cancelOperation: ((Color) -> Unit)?): ColorPickerBuilder = apply {
     componentsToBuild.add(OperationPanel(model, okOperation, cancelOperation))
     if (cancelOperation != null) {
       addKeyAction(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, true), object : AbstractAction() {
@@ -81,9 +81,9 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
   /**
    * Add the custom components in to color picker.
    */
-  fun addCustomComponent(provider: ColorPickerComponentProvider) = apply { componentsToBuild.add(provider.createComponent(model)) }
+  fun addCustomComponent(provider: ColorPickerComponentProvider): ColorPickerBuilder = apply { componentsToBuild.add(provider.createComponent(model)) }
 
-  fun addSeparator() = apply {
+  fun addSeparator(): ColorPickerBuilder = apply {
     val separator = JSeparator(JSeparator.HORIZONTAL)
     separator.border = JBUI.Borders.empty()
     separator.preferredSize = JBUI.size(PICKER_PREFERRED_WIDTH, SEPARATOR_HEIGHT)
@@ -95,7 +95,7 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
    *
    * The default value is **false**
    */
-  fun focusWhenDisplay(focusWhenDisplay: Boolean) = apply { requestFocusWhenDisplay = focusWhenDisplay }
+  fun focusWhenDisplay(focusWhenDisplay: Boolean): ColorPickerBuilder = apply { requestFocusWhenDisplay = focusWhenDisplay }
 
   /**
    * Set if Color Picker is the root of focus cycle.<br>
@@ -106,20 +106,20 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false, private val sho
    *
    * @see Component.isFocusCycleRoot
    */
-  fun setFocusCycleRoot(focusCycleRoot: Boolean) = apply { this.focusCycleRoot = focusCycleRoot }
+  fun setFocusCycleRoot(focusCycleRoot: Boolean): ColorPickerBuilder = apply { this.focusCycleRoot = focusCycleRoot }
 
   /**
    * When getting the focus, focus to the last added component.<br>
    * If this function is called multiple times, only the last time effects.<br>
    * By default, nothing is focused in ColorPicker.
    */
-  fun withFocus() = apply { focusedComponentIndex = componentsToBuild.size - 1 }
+  fun withFocus(): ColorPickerBuilder = apply { focusedComponentIndex = componentsToBuild.size - 1 }
 
-  fun addKeyAction(keyStroke: KeyStroke, action: Action) = apply { actionMap[keyStroke] = action }
+  fun addKeyAction(keyStroke: KeyStroke, action: Action): ColorPickerBuilder = apply { actionMap[keyStroke] = action }
 
-  fun addColorListener(colorListener: ColorListener) = addColorListener(colorListener, true)
+  fun addColorListener(colorListener: ColorListener): ColorPickerBuilder = addColorListener(colorListener, true)
 
-  fun addColorListener(colorListener: ColorListener, invokeOnEveryColorChange: Boolean) = apply {
+  fun addColorListener(colorListener: ColorListener, invokeOnEveryColorChange: Boolean): ColorPickerBuilder = apply {
     colorListeners.add(ColorListenerInfo(colorListener, invokeOnEveryColorChange))
   }
 

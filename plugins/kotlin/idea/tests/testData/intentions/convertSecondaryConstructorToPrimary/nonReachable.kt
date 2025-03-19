@@ -1,3 +1,4 @@
+// "Convert to primary constructor" "false"
 // IS_APPLICABLE: false
 
 class NonReachableConstructor {

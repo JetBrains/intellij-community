@@ -36,22 +36,17 @@ public final class RncFileType extends LanguageFileType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "RNG Compact";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return RelaxngBundle.message("filetype.relaxng.compact-syntax.description");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return "rnc";
   }
 

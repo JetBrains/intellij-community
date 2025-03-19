@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -32,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,28 +42,27 @@ import java.util.List;
 
 /**
  * A base class for PSI elements that support both stub and AST substrates. The purpose of stubs is to hold the most important information
- * (like element names, access modifiers, function parameters etc), save it in the index and use it during code analysis instead of parsing
- * the AST, which can be quite expensive. Ideally, only the files loaded in the editor should ever be parsed, all other information that's
- * needed e.g. for resolving references in those files, should be taken from stub-based PSI.<p/>
+ * (like element names, access modifiers, function parameters, etc.), save it in the index and use it during code analysis instead of
+ * parsing the AST, which can be quite expensive. Ideally, only the files loaded in the editor should ever be parsed, all other information
+ * needed (e.g., for resolving references in these files) should be taken from stub-based PSI.<p/>
  *
- * During indexing, this element is created from text (using {@link #StubBasedPsiElementBase(ASTNode)}),
- * then a stub with relevant information is built from it
- * ({@link IStubElementType#createStub(PsiElement, StubElement)}), and this stub is saved in the
- * index. Then a StubIndex query returns an instance of this element based on a stub
- * (created with {@link #StubBasedPsiElementBase(StubElement, IStubElementType)} constructor. To the clients, such element looks exactly
- * like the one created from AST, all the methods should work the same way.<p/>
+ * During indexing, this element is created from text (using {@link #StubBasedPsiElementBase(ASTNode)}), then a stub with relevant
+ * information is built from it ({@link IStubElementType#createStub(PsiElement, StubElement)}), and this stub is saved in the index.
+ * Then a StubIndex query returns an instance of this element based on a stub created with {@link #StubBasedPsiElementBase(StubElement, IStubElementType)}
+ * constructor. To the clients, such an element looks exactly like the one created from AST, and all the methods should work the same way.<p/>
  *
  * Code analysis clients should be careful not to invoke methods on this class that can't be implemented using only the information from
- * stubs. Such case is supported: {@link #getNode()} will switch the implementation from stub to AST substrate and get this information, but
- * this is slow performance-wise. So stubs should be designed so that they hold all the information that's relevant for
+ * stubs. Such a case is supported: {@link #getNode()} will switch the implementation from stub to AST substrate and get this information,
+ * but this is slow performance-wise. Thus, stubs should be designed so that they hold all the information that's relevant for
  * reference resolution and other code analysis.<p/>
  *
  * The subclasses should be careful not to switch to AST prematurely. For example, {@link #getParentByStub()} should be used as much
  * as possible in overridden {@link #getParent()}, and getStubOrPsiChildren methods should be preferred over {@link #getChildren()}.<p/>
  *
- * After switching to AST, {@link #getStub()} will return null, but {@link #getGreenStub()} can still be used to retrieve stub objects if they're needed.
- * The AST itself is not held on a strong reference and can be garbage-collected. This makes it possible to hold many stub-based PSI elements
- * in the memory at once, but results in occasionally expensive {@link #getNode()} calls that have to load and parse the AST anew.
+ * After switching to AST, {@link #getStub()} will return null, but {@link #getGreenStub()} can still be used to retrieve stub objects
+ * if they're needed. The AST itself is not held on a strong reference and can be garbage-collected. This makes it possible to hold many
+ * stub-based PSI elements in the memory at once, but results in occasionally expensive {@link #getNode()} calls that have to load and parse
+ * the AST anew.
  *
  * @see IStubElementType
  * @see com.intellij.psi.impl.source.PsiFileWithStubSupport
@@ -74,6 +74,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   private final IElementType myElementType;
 
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType<?,?> nodeType) {
+    mySubstrateRef = new SubstrateRef.StubRef(stub);
+    myElementType = nodeType;
+  }
+
+  @ApiStatus.Experimental
+  public StubBasedPsiElementBase(@NotNull T stub, @NotNull IElementType nodeType) {
     mySubstrateRef = new SubstrateRef.StubRef(stub);
     myElementType = nodeType;
   }
@@ -113,8 +119,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * to be switched from stub to AST. So, after this call {@link #getStub()} will return null.
    */
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     if (mySubstrateRef instanceof SubstrateRef.StubRef) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
       PsiFileImpl file = (PsiFileImpl)getContainingFile();
@@ -134,14 +139,14 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return mySubstrateRef.getNode();
   }
 
-  private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, @NotNull final FileElement fileElement) {
+  private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, final @NotNull FileElement fileElement) {
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
     final String stubString = stubTree != null ? ((PsiFileStubImpl<?>)stubTree.getRoot()).printTree() : null;
     final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true,
                                                                     () -> DebugUtil.treeToString(fileElement, false));
 
-    @NonNls final String message = "Failed to bind stub to AST for element " + getClass() + " in " +
+    final @NonNls String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                                    (vFile == null ? "<unknown file>" : vFile.getPath()) +
                                    "\nFile:\n" + file + "@" + System.identityHashCode(file);
 
@@ -161,8 +166,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     throw new RuntimeExceptionWithAttachments(message, attachments.toArray(Attachment.EMPTY_ARRAY));
   }
 
-  @NotNull
-  private String dumpCreationTraces(@NotNull FileElement fileElement) {
+  private @NotNull String dumpCreationTraces(@NotNull FileElement fileElement) {
     @NonNls StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
     traces.append("My creation trace:\n").append(getUserData(CREATION_TRACE));
     traces.append("AST creation traces:\n");
@@ -215,6 +219,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * Don't invoke this method, it's public for implementation reasons.
    */
+  @ApiStatus.Internal
   public final void setNode(@NotNull ASTNode node) {
     setSubstrateRef(SubstrateRef.createAstStrongRef(node));
   }
@@ -222,19 +227,18 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * Don't invoke this method, it's public for implementation reasons.
    */
+  @ApiStatus.Internal
   public final void setSubstrateRef(@NotNull SubstrateRef substrateRef) {
     mySubstrateRef = substrateRef;
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myElementType.getLanguage();
   }
 
   @Override
-  @NotNull
-  public PsiFile getContainingFile() {
+  public @NotNull PsiFile getContainingFile() {
     try {
       return mySubstrateRef.getContainingFile();
     }
@@ -267,8 +271,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
       return project;
@@ -319,12 +322,28 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     return SourceTreeToPsiMap.treeElementToPsi(getNode().getTreeParent());
   }
 
-  @NotNull
-  public IStubElementType getElementType() {
+  /**
+   * @deprecated implement and use {{@link com.intellij.psi.StubBasedPsiElement#getIElementType()}} instead.
+   *             Use {@link #getElementTypeImpl)} to access {@link #myElementType}.
+   *
+   */
+  @Deprecated
+  public @NotNull IStubElementType getElementType() {
     if (!(myElementType instanceof IStubElementType)) {
-      throw new ClassCastException("Not a stub type: " + myElementType + " in " + getClass());
+      throw new ClassCastException("Don't use #getElementType method. It is deprecated.\n" +
+                                   "Implement and use #getIElementType with the help of #getElementTypeImpl.\n" +
+                                   "Not a stub type: " + myElementType + " in " + getClass());
     }
     return (IStubElementType<?, ?>)myElementType;
+  }
+
+  /**
+   * Can't be renamed to `getIElementType`. It breaks compilation of this class's inheritors written in Kotlin.
+   */
+  @SuppressWarnings("unused")
+  @ApiStatus.Experimental
+  protected final @NotNull IElementType getElementTypeImpl() {
+    return myElementType;
   }
 
   /**
@@ -333,8 +352,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    * if the file text was loaded from the very beginning, or if it was loaded via {@link #getNode()} on this or any other element
    * in the containing file.
    */
-  @Nullable
-  public T getStub() {
+  public @Nullable T getStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     //noinspection unchecked
     return (T)mySubstrateRef.getStub();
@@ -343,10 +361,13 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * Like {@link #getStub()}, but can return a non-null value after the element has been switched to AST. Can be used
    * to retrieve the information which is cheaper to get from a stub than by tree traversal.
+   * <p>
+   * Implementation note: green stub is erased in the files that are changed after they had been switched to AST mode.
+   * So it is recommended to cache long computations performed in AST mode.
+   *
    * @see PsiFileImpl#getGreenStub()
    */
-  @Nullable
-  public final T getGreenStub() {
+  public final @Nullable T getGreenStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     //noinspection unchecked
     return (T)mySubstrateRef.getGreenStub();
@@ -355,31 +376,38 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @Nullable
-  public <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
+  @ApiStatus.Experimental
+  public final @Nullable PsiElement getStubOrPsiChild(@NotNull IElementType elementType) {
     T stub = getGreenStub();
     if (stub != null) {
-      //noinspection unchecked
-      final StubElement<Psi> element = stub.findChildStubByType(elementType);
+      StubElement<?> element = stub.findChildStubByElementType(elementType);
       if (element != null) {
         return element.getPsi();
       }
     }
     else {
-      final ASTNode childNode = getNode().findChildByType(elementType);
+      ASTNode childNode = getNode().findChildByType(elementType);
       if (childNode != null) {
-        //noinspection unchecked
-        return (Psi)childNode.getPsi();
+        return childNode.getPsi();
       }
     }
     return null;
   }
 
   /**
+   * @return a child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
+   * @deprecated use {@link #getStubOrPsiChild(IElementType)} instead
+   */
+  @Deprecated
+  public @Nullable <Psi extends PsiElement> Psi getStubOrPsiChild(@NotNull IStubElementType<? extends StubElement, Psi> elementType) {
+    //noinspection unchecked
+    return (Psi)getStubOrPsiChild((IElementType)elementType);
+  }
+
+  /**
    * @return a not-null child of specified type, taken from stubs (if this element is currently stub-based) or AST (otherwise).
    */
-  @NotNull
-  public <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
+  public @NotNull <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
     if (result == null) {
       throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, true));
@@ -470,8 +498,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   /**
    * @return a first ancestor of specified type, in stub hierarchy (if this element is currently stub-based) or AST hierarchy (otherwise).
    */
-  @Nullable
-  protected <E extends PsiElement> E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
+  protected @Nullable <E extends PsiElement> E getStubOrPsiParentOfType(@NotNull Class<E> parentClass) {
     T stub = getStub();
     if (stub != null) {
       //noinspection unchecked

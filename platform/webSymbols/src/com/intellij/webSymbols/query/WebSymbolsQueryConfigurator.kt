@@ -8,17 +8,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
 interface WebSymbolsQueryConfigurator {
 
-  fun getScope(project: Project, element: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =
+  fun getScope(project: Project, location: PsiElement?, context: WebSymbolsContext, allowResolve: Boolean): List<WebSymbolsScope> =
     emptyList()
 
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<WebSymbolsContextRulesProvider> =
     emptyList()
 
-  fun getNameConversionRulesProviders(project: Project, element: PsiElement?, context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
+  fun getNameConversionRulesProviders(project: Project,
+                                      element: PsiElement?,
+                                      context: WebSymbolsContext): List<WebSymbolNameConversionRulesProvider> =
     emptyList()
 
   fun beforeQueryExecutorCreation(project: Project) {
@@ -27,7 +30,8 @@ interface WebSymbolsQueryConfigurator {
   companion object {
 
     @TestOnly
-    val EP_NAME = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
+    @Internal
+    val EP_NAME: ExtensionPointName<WebSymbolsQueryConfigurator> = ExtensionPointName<WebSymbolsQueryConfigurator>("com.intellij.webSymbols.queryConfigurator")
 
   }
 

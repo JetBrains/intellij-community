@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -79,8 +79,7 @@ class EclipseOutputParser {
     }
   }
 
-  @Nullable
-  private CompilerMessage parseMessage(@NlsSafe String msgText) {
+  private @Nullable CompilerMessage parseMessage(@NlsSafe String msgText) {
     // message should look like this:
     //        1. WARNING in /Users/andrew/git-repos/foo/src/main/java/packAction.java (at line 47)
     //            public abstract class AbstractScmTagAction extends TaskAction implements BuildBadgeAction {
@@ -90,7 +89,11 @@ class EclipseOutputParser {
     int dotIndex = msgText.indexOf('.');
     BuildMessage.Kind kind;
     boolean isNormal = false;
-    if (dotIndex > 0) {
+    if (msgText.startsWith("Error")) {
+      // since we are now also launching greclipse in a separate process, we may also face the errors from java
+      kind = BuildMessage.Kind.ERROR;
+    }
+    else if (dotIndex > 0) {
       if (msgText.substring(dotIndex).startsWith(". WARNING")) {
         kind = BuildMessage.Kind.WARNING;
         isNormal = true;

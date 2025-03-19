@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.python.community` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "community_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community",
+  module_name = "intellij.python.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jsoup",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/eel",
+  ],
+  exports = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [":community_resources"]
+)
+
+jvm_library(
+  name = "community_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":community"],
+  deps = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jsoup",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:junit5",
+    "//platform/eel",
+  ],
+  runtime_deps = [":community_resources"]
+)
+
+jvm_test(
+  name = "community_test",
+  runtime_deps = [":community_test_lib"]
+)
+### auto-generated section `build intellij.python.community` end

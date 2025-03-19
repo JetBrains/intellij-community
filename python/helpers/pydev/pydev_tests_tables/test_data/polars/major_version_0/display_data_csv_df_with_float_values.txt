@@ -1,0 +1,1 @@
+'int_col~float_col\n1~1.0\n2~2.0\n3~null'

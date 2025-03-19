@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.utils.LibraryUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyInstanceMethodNamingConventionInspection extends ConventionInspection {
+public final class GroovyInstanceMethodNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -41,8 +41,7 @@ public class GroovyInstanceMethodNamingConventionInspection extends ConventionIn
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... args) {
+  public @NotNull String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
       return GroovyBundle.message("inspection.message.instance.method.name.ref.too.short");
@@ -67,9 +66,8 @@ public class GroovyInstanceMethodNamingConventionInspection extends ConventionIn
     return DEFAULT_MAX_LENGTH;
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 

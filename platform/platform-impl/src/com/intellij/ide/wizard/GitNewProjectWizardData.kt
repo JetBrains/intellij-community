@@ -9,7 +9,7 @@ interface GitNewProjectWizardData {
 
   companion object {
 
-    val KEY = Key.create<GitNewProjectWizardData>(GitNewProjectWizardData::class.java.name)
+    val KEY: Key<GitNewProjectWizardData> = Key.create(GitNewProjectWizardData::class.java.name)
 
     @JvmStatic
     val NewProjectWizardStep.gitData: GitNewProjectWizardData?

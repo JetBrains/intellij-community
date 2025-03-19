@@ -7,9 +7,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-
-import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -17,10 +14,6 @@ import java.util.List;
 public class ShowGradleDaemonsAction extends DumbAwareAction {
 
   private DaemonsUi myUi;
-
-  public ShowGradleDaemonsAction() {
-    super(GradleBundle.messagePointer("gradle.daemons.gradle.daemons.show"));
-  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -37,8 +30,7 @@ public class ShowGradleDaemonsAction extends DumbAwareAction {
         myUi = null;
       }
     };
-    List<DaemonState> daemonsStatus = GradleDaemonServices.getDaemonsStatus();
-    myUi.show(daemonsStatus);
+    myUi.show();
   }
 
   @Override

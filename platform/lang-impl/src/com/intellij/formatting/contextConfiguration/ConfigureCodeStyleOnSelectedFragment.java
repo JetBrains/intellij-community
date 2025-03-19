@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,20 +41,16 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.Cod
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
+public final class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return getFamilyName();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
   }
 
@@ -76,19 +72,17 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
            CodeFragmentCodeStyleSettingsPanel.hasOptionsToShow(provider);
   }
 
-  @Nullable
-  private static LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
+  private static @Nullable LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
     Language language = PsiUtilBase.getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), file.getProject());
     return language != null ? guessSettingsProviderForLanguage(language) : null;
   }
 
-  @Nullable
-  private static LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
+  private static @Nullable LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
     return LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(language);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
@@ -109,7 +103,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     return false;
   }
 
-  static class FragmentCodeStyleSettingsDialog extends DialogWrapper {
+  static final class FragmentCodeStyleSettingsDialog extends DialogWrapper {
     private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final Editor myEditor;
     private final Document myDocument;
@@ -117,7 +111,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
     private final CodeStyleSettings mySettings;
 
 
-    FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
+    FragmentCodeStyleSettingsDialog(final @NotNull Editor editor,
                                     @NotNull SelectedTextFormatter selectedTextFormatter,
                                     @NotNull LanguageCodeStyleSettingsProvider settingsProvider,
                                     CodeStyleSettings settings,
@@ -147,15 +141,13 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       init();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myTabbedLanguagePanel.getPreferredFocusedComponent();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myTabbedLanguagePanel.getPanel();
     }
 
@@ -187,7 +179,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       super.doCancelAction();
     }
 
-    private class DialogPositionProvider {
+    private final class DialogPositionProvider {
       private static final int PREFERRED_PADDING = 100;
 
       private final JComponent myEditorComponent;
@@ -336,7 +328,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
       }
     }
 
-    private class ApplyToSettingsAndReformat extends AbstractAction {
+    private final class ApplyToSettingsAndReformat extends AbstractAction {
       ApplyToSettingsAndReformat() {
         super(InspectionsBundle.message("inspection.adjust.code.style.settings.save.and.reformat.file"));
       }

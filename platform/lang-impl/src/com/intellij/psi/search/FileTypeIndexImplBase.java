@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -6,29 +6,29 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
-import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntConsumer;
 
+@Internal
 public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
                                                        MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImplBase.class);
@@ -40,7 +40,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache =
     ConcurrentCollectionFactory.createConcurrentIntObjectMap(); // Ref is here to store nulls
   protected final @NotNull AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  protected final @NotNull FileTypeIndex.IndexChangeListener myIndexChangedPublisher;
+  protected final @NotNull FileTypeIndexChangeNotifier myIndexChangeNotifier;
 
   public FileTypeIndexImplBase(@NotNull FileBasedIndexExtension<FileType, Void> extension) throws IOException {
     myExtension = extension;
@@ -49,7 +49,8 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     myIndexId = extension.getName();
     myFileTypeEnumerator = new SimpleStringPersistentEnumerator(getStorageFile().resolveSibling("fileType.enum"));
-    myIndexChangedPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
+    var syncPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FileTypeIndex.INDEX_CHANGE_TOPIC);
+    myIndexChangeNotifier = new FileTypeIndexChangeNotifier(syncPublisher);
   }
 
   protected abstract int getIndexedFileTypeId(int fileId) throws StorageException;
@@ -63,9 +64,24 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   protected @Nullable FileType getFileTypeById(int id) {
     Ref<FileType> fileType = myId2FileTypeCache.get(id);
     if (fileType == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Filetype is not cached for fileTypeId=" + id);
+      }
+
       String fileTypeName = myFileTypeEnumerator.valueOf(id);
       FileType fileTypeByName = fileTypeName == null ? null : FileTypeManager.getInstance().findFileTypeByName(fileTypeName);
+
+      if ((fileTypeName == null || fileTypeByName == null) && LOG.isDebugEnabled()) {
+        LOG.debug("fileTypeName=" + fileTypeName + ", " +
+                  "fileTypeByName=" + fileTypeByName + ", " +
+                  "fileTypeId=" + id);
+        LOG.debug("Current list of filetypes: " + myFileTypeEnumerator.dumpToString());
+      }
       myId2FileTypeCache.put(id, fileType = Ref.create(fileTypeByName));
+    }
+
+    if (fileType.get() == null && LOG.isDebugEnabled()) {
+      LOG.debug("No filetype for FileTypeId=" + id);
     }
     return fileType.get();
   }
@@ -105,14 +121,12 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public @NotNull ReadWriteLock getLock() {
-    return myLock;
-  }
-
-  @Override
   public @NotNull Map<FileType, Void> getIndexedFileData(int fileId) throws StorageException {
     int foundData = getIndexedFileTypeId(fileId);
     if (foundData == 0) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("FileTypeId is 0 for fileId=" + fileId);
+      }
       return Collections.emptyMap();
     }
     return Collections.singletonMap(getFileTypeById(foundData), null);
@@ -124,13 +138,15 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data, boolean isProvidedByInfrastructureExtension) {
+    assert !isProvidedByInfrastructureExtension : "File type index should not be provided by infrastructure extensions";
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId, isProvidedByInfrastructureExtension);
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    assert !isProvidedByInfrastructureExtension : "File type index should not be provided by infrastructure extensions";
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId, isProvidedByInfrastructureExtension);
   }
 
   @Override
@@ -144,22 +160,23 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public @NotNull FileIndexingState getIndexingStateForFile(int fileId,
-                                                            @NotNull IndexedFile file) {
-    @NotNull FileIndexingState isIndexed = IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
-    if (isIndexed != FileIndexingState.UP_TO_DATE) return isIndexed;
+  public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId,
+                                                                           @NotNull IndexedFile file) {
+    @NotNull FileIndexingStateWithExplanation isIndexed = IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
+    if (isIndexed.updateRequired()) return isIndexed;
     try {
       int indexedFileTypeId = getIndexedFileTypeId(fileId);
-      if (indexedFileTypeId == 0) return FileIndexingState.NOT_INDEXED;
+      if (indexedFileTypeId == 0) return FileIndexingStateWithExplanation.notIndexed();
       int actualFileTypeId = getFileTypeId(file.getFileType());
 
       return indexedFileTypeId == actualFileTypeId
-             ? FileIndexingState.UP_TO_DATE
-             : FileIndexingState.OUT_DATED;
+             ? FileIndexingStateWithExplanation.upToDate()
+             : FileIndexingStateWithExplanation.outdated(
+               () -> "indexedFileTypeId(" + indexedFileTypeId + ") != actualFileTypeId(" + actualFileTypeId + ")");
     }
     catch (StorageException e) {
       LOG.error(e);
-      return FileIndexingState.OUT_DATED;
+      return FileIndexingStateWithExplanation.outdated("Storage exception");
     }
   }
 
@@ -183,7 +200,7 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<FileType, Void> updateData) {
+  public void updateWith(@NotNull UpdateData<FileType, Void> updateData) {
     throw new UnsupportedOperationException();
   }
 
@@ -193,30 +210,25 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
   }
 
   @Override
-  public void cleanupMemoryStorage() { }
-
-  @Override
-  public void cleanupForNextTest() { }
-
-  @Override
-  public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<FileType, Void> data) {
+  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<FileType, Void> data) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
+  public <E extends Exception> boolean withData(@NotNull FileType type,
+                                                @NotNull ValueContainerProcessor<Void, E> processor) throws StorageException, E {
     int fileTypeId = getFileTypeId(type);
-    ValueContainerImpl<Void> result = new ValueContainerImpl<>(false);
 
-    myLock.readLock().lock();
+    ValueContainerImpl<Void> container = ValueContainerImpl.createNewValueContainer();
+    Lock readLock = myLock.readLock();
+    readLock.lock();
     try {
-      processFileIdsForFileTypeId(fileTypeId, id -> result.addValue(id, null));
+      processFileIdsForFileTypeId(fileTypeId, id -> container.addValue(id, null));
+      return processor.process(container);
     }
     finally {
-      myLock.readLock().unlock();
+      readLock.unlock();
     }
-
-    return result;
   }
 
   protected void notifyInvertedIndexChangedForFileTypeId(int id) {
@@ -225,7 +237,35 @@ public abstract class FileTypeIndexImplBase implements UpdatableIndex<FileType, 
     }
     var fileType = getFileTypeById(id);
     if (fileType != null) {
-      myIndexChangedPublisher.onChangedForFileType(fileType);
+      myIndexChangeNotifier.enqueueNotification(fileType);
     }
+  }
+
+  @Override
+  public void cleanupMemoryStorage() {
+    myIndexChangeNotifier.clearPending();
+    myId2FileTypeCache.clear();
+  }
+
+  @Override
+  @TestOnly
+  public void cleanupForNextTest() {
+    processPendingNotifications();
+    myId2FileTypeCache.clear();
+  }
+
+  @TestOnly
+  public void processPendingNotifications() {
+    myIndexChangeNotifier.notifyPending();
+  }
+
+  @Override
+  public void dispose() {
+    myIndexChangeNotifier.close();
+  }
+
+  @Override
+  public void clear() throws StorageException {
+    cleanupMemoryStorage();
   }
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,15 +20,10 @@ public class JpsMavenModuleExtensionImpl extends JpsElementBase<JpsMavenModuleEx
     return myAnnotationProcessorModules;
   }
 
-  @NotNull
   @Override
-  public JpsMavenModuleExtensionImpl createCopy() {
+  public @NotNull JpsMavenModuleExtensionImpl createCopy() {
     JpsMavenModuleExtensionImpl extension = new JpsMavenModuleExtensionImpl();
     extension.myAnnotationProcessorModules.addAll(this.myAnnotationProcessorModules);
     return extension;
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsMavenModuleExtensionImpl modified) {
   }
 }

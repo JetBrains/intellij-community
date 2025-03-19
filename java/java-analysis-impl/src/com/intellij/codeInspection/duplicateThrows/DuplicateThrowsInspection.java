@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateThrows;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
@@ -18,19 +18,17 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreSubclassing;
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "DuplicateThrows";
   }
 
@@ -41,8 +39,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override public void visitMethod(@NotNull PsiMethod method) {
@@ -79,7 +76,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
               }
             }
             if (problem != null) {
-              holder.registerProblem(ref, problem, new MethodThrowsFix.RemoveFirst(method, type, false));
+              holder.problem(ref, problem).fix(new MethodThrowsFix.RemoveFirst(method, type, false)).register();
             }
           }
         }

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -28,24 +29,61 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private volatile Charset myCharset;
   private final Object LOCK = new Object();
 
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
   public VcsVirtualFile(@NotNull String path,
                         @Nullable VcsFileRevision revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    super(path, fileSystem);
+                        @NotNull VirtualFileSystem ignored) {
+    this(path, revision);
+  }
+
+  public VcsVirtualFile(@NotNull String path,
+                        @Nullable VcsFileRevision revision) {
+    super(path);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem fileSystem) {
-    super(parent, name, fileSystem);
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem ignored) {
+    this(parent, name, revision);
+  }
+
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
+    super(parent, name);
     myFileRevision = revision;
+  }
+
+  public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(parent, path);
+    myFileRevision = revision;
+  }
+
+  public VcsVirtualFile(@NotNull FilePath path, @Nullable VcsFileRevision revision) {
+    super(path);
+    myFileRevision = revision;
+  }
+
+  /**
+   * @deprecated {@link VcsFileSystem} cannot be overwritten
+   */
+  @Deprecated
+  public VcsVirtualFile(@NotNull String path,
+                        byte @NotNull [] content,
+                        @Nullable String revision,
+                        @NotNull VirtualFileSystem ignored) {
+    this(path, content, revision);
   }
 
   public VcsVirtualFile(@NotNull String path,
                         byte @NotNull [] content,
-                        @Nullable String revision,
-                        @NotNull VirtualFileSystem fileSystem) {
-    this(path, null, fileSystem);
-    myContent = content;
+                        @Nullable String revision) {
+    this(path, null);
+    setContent(content);
     setRevision(revision);
   }
 
@@ -87,14 +125,16 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
     }
   }
 
-  @Nullable
-  public VcsFileRevision getFileRevision() {
+  public void setContent(byte[] content) {
+    myContent = content;
+  }
+
+  public @Nullable VcsFileRevision getFileRevision() {
     return myFileRevision;
   }
 
-  @NotNull
   @Override
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     if (myCharset != null) return myCharset;
     return super.getCharset();
   }

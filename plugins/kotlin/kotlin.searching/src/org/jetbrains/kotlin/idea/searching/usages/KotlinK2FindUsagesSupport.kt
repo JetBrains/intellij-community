@@ -1,40 +1,39 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.searching.usages
 
-import com.intellij.ide.IdeBundle
-import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
-import com.intellij.psi.util.PsiFormatUtil
-import com.intellij.psi.util.PsiFormatUtilBase
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.util.Processor
-import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
-import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getImplicitReceivers
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.base.util.CHECK_SUPER_METHODS_YES_NO_DIALOG
-import org.jetbrains.kotlin.idea.base.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
@@ -65,37 +64,39 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         })
     }
 
-    private fun KtAnalysisSession.callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
-        if (call !is KtCallableMemberCall<*, *>) return false
-        val dispatchReceiver = call.partiallyAppliedSymbol.dispatchReceiver
-        val extensionReceiver = call.partiallyAppliedSymbol.extensionReceiver
-        val companionObjectSymbol = companionObject.getSymbol()
-        return (dispatchReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol ||
-                (extensionReceiver as? KtImplicitReceiverValue)?.symbol == companionObjectSymbol
+    context(KaSession)
+    private fun callReceiverRefersToCompanionObject(call: KaCall, companionObject: KtObjectDeclaration): Boolean {
+        if (call !is KaCallableMemberCall<*, *>) return false
+        val implicitReceivers = call.getImplicitReceivers()
+        val companionObjectSymbol = companionObject.symbol
+        return companionObjectSymbol in implicitReceivers.map { it.symbol }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String {
         return KotlinPsiDeclarationRenderer.render(declaration) ?: analyzeInModalWindow(declaration, KotlinBundle.message(
           "find.usages.prepare.dialog.progress")) {
-            declaration.getSymbol().render(noAnnotationsShortNameRenderer())
+            declaration.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
-    private fun noAnnotationsShortNameRenderer(): KtDeclarationRenderer {
-        return KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+    @KaExperimentalApi
+    private fun noAnnotationsShortNameRenderer(): KaDeclarationRenderer {
+        return KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
             annotationRenderer = annotationRenderer.with {
-                annotationFilter = KtRendererAnnotationsFilter.NONE
+                annotationFilter = KaRendererAnnotationsFilter.NONE
             }
         }
     }
 
-    override fun formatJavaOrLightMethod(method: PsiMethod): String {
-        val unwrapped = method.unwrapped as KtDeclaration
-        return KotlinPsiDeclarationRenderer.render(unwrapped) ?: analyzeInModalWindow(unwrapped, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-            unwrapped.getSymbol().render(noAnnotationsShortNameRenderer())
+    @OptIn(KaExperimentalApi::class)
+    override fun renderDeclaration(method: KtDeclaration): String {
+        return KotlinPsiDeclarationRenderer.render(method) ?: analyzeInModalWindow(method, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
+            method.symbol.render(noAnnotationsShortNameRenderer())
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
         val element = psiReference.element
         if (element !is KtElement) return false
@@ -108,112 +109,53 @@ internal class KotlinK2FindUsagesSupport : KotlinFindUsagesSupport {
         }
 
         val psiToResolve = adaptSuperCall(element) ?: element
+        return analyze(psiToResolve) {
+            // The element cannot refer classes from unrelated sessions
+            if (!ktClassOrObject.canBeAnalysed()) return false
 
-        return withResolvedCall(psiToResolve) { call ->
-            when (call) {
-                is KtFunctionCall<*> -> {
-                    val constructorSymbol = call.symbol as? KtConstructorSymbol ?: return@withResolvedCall false
-                    val constructedClassSymbol =
-                        constructorSymbol.getContainingSymbol() as? KtClassifierSymbol ?: return@withResolvedCall false
-                    constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
+            withResolvedCall(psiToResolve) { call ->
+                when (call) {
+                    is KaFunctionCall<*> -> {
+                        val constructorSymbol = call.symbol as? KaConstructorSymbol ?: return@withResolvedCall false
+                        val constructedClassSymbol =
+                            constructorSymbol.containingDeclaration as? KaClassLikeSymbol ?: return@withResolvedCall false
+                        val classOrObjectSymbol = ktClassOrObject.classSymbol
+
+                        fun KaClassLikeSymbol.getExpectsOrSelf(): List<KaDeclarationSymbol> = (listOf(this).takeIf { isExpect } ?: getExpectsForActual())
+
+                        constructedClassSymbol == classOrObjectSymbol ||
+                                constructedClassSymbol.getExpectsOrSelf() == classOrObjectSymbol?.getExpectsOrSelf()
+                    }
+
+                    else -> false
                 }
-
-                else -> false
-            }
-        } ?: false
+            } == true
+        }
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return emptyList()
         return analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
-            (declaration.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()?.mapNotNull { it.psi }?.toList().orEmpty()
+            (declaration.symbol as? KaCallableSymbol)?.allOverriddenSymbols?.mapNotNull { it.psi }?.toList().orEmpty()
         }
     }
 
-    override fun checkSuperMethods(
-        declaration: KtDeclaration,
-        ignore: Collection<PsiElement>?,
-        @Nls actionString: String
-    ): List<PsiElement> {
-        if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
+    override fun searchOverriders(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement> = (element as? KtCallableDeclaration)?.findAllOverridings(searchScope) ?: emptySequence()
 
-        data class AnalyzedModel(
-            val declaredClassRender: String,
-            val overriddenDeclarationsAndRenders: Map<PsiElement, String>
-        )
+    override fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchDeeply: Boolean,
+    ): Sequence<PsiElement> = when (element) {
+        is KtClass -> if (searchDeeply) element.findAllInheritors(searchScope) else DirectKotlinClassInheritorsSearch.search(
+            element, searchScope
+        ).asIterable().asSequence()
 
-        fun getClassDescription(overriddenElement: PsiElement, containingSymbol: KtSymbolWithKind?): String =
-            when (overriddenElement) {
-                is KtNamedFunction, is KtProperty, is KtParameter -> (containingSymbol as? KtNamedSymbol)?.name?.asString()
-                    ?: "Unknown"  //TODO render symbols
-                is PsiMethod -> {
-                    val psiClass = overriddenElement.containingClass ?: error("Invalid element: ${overriddenElement.text}")
-                    formatPsiClass(psiClass, markAsJava = true, inCode = false)
-                }
+        is PsiClass -> ClassInheritorsSearch.search(element, searchScope, searchDeeply).asIterable().asSequence()
 
-                else -> error("Unexpected element: ${overriddenElement.getElementTextWithContext()}")
-            }.let { "    $it\n" }
-
-
-        val analyzeResult = analyzeInModalWindow(declaration, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) {
-            (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
-                callableSymbol.originalContainingClassForOverride?.let { containingClass ->
-                    val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
-
-                    val renderToPsi = overriddenSymbols.mapNotNull {
-                        it.psi?.let { psi ->
-                            psi to getClassDescription(psi, it.originalContainingClassForOverride)
-                        }
-                    }
-
-                    val filteredDeclarations =
-                        if (ignore != null) renderToPsi.filter { !ignore.contains(it.first) } else renderToPsi
-
-                    val renderedClass = containingClass.name?.asString() ?: SpecialNames.ANONYMOUS_STRING //TODO render class
-
-                    AnalyzedModel(renderedClass, filteredDeclarations.toMap())
-                }
-            }
-        } ?: return listOf(declaration)
-
-        if (analyzeResult.overriddenDeclarationsAndRenders.isEmpty()) return listOf(declaration)
-
-        val message = KotlinBundle.message(
-            "override.declaration.x.overrides.y.in.class.list",
-            analyzeResult.declaredClassRender,
-            "\n${analyzeResult.overriddenDeclarationsAndRenders.values.joinToString(separator = "")}",
-            actionString
-        )
-
-        val exitCode = showYesNoCancelDialog(
-            CHECK_SUPER_METHODS_YES_NO_DIALOG,
-            declaration.project, message, IdeBundle.message("title.warning"), Messages.getQuestionIcon(), Messages.YES
-        )
-
-        return when (exitCode) {
-            Messages.YES -> analyzeResult.overriddenDeclarationsAndRenders.keys.toList()
-            Messages.NO -> listOf(declaration)
-            else -> emptyList()
-        }
+        else -> emptySequence()
     }
-
-}
-
-// temp duplicate of org.jetbrains.kotlin.idea.refactoring.formatPsiClass
-private fun formatPsiClass(
-    psiClass: PsiClass,
-    markAsJava: Boolean,
-    inCode: Boolean
-): String {
-    fun wrapOrSkip(s: String, inCode: Boolean) = if (inCode) "<code>$s</code>" else s
-    var description: String
-
-    val kind = if (psiClass.isInterface) "interface " else "class "
-    description = kind + PsiFormatUtil.formatClass(
-        psiClass,
-        PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS or PsiFormatUtilBase.SHOW_TYPE
-    )
-    description = wrapOrSkip(description, inCode)
-
-    return if (markAsJava) "[Java] $description" else description
 }

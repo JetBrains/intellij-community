@@ -11,12 +11,10 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
-import git4idea.push.GitPushOperation
-import git4idea.push.GitPushSource
-import git4idea.push.GitPushSupport
-import git4idea.push.GitPushTarget
+import git4idea.push.*
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.validators.GitRefNameValidator
@@ -24,6 +22,7 @@ import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
 
 object GitPushUtil {
+  @RequiresEdt
   @JvmStatic
   fun findOrPushRemoteBranch(project: Project,
                              progressIndicator: ProgressIndicator,
@@ -75,6 +74,7 @@ object GitPushUtil {
     return future
   }
 
+  @RequiresEdt
   private fun inputPushTarget(repository: GitRepository,
                               remote: GitRemote,
                               localBranch: GitLocalBranch,
@@ -86,7 +86,7 @@ object GitPushUtil {
                                                                    dialogMessages.inputComment)
                      ?: return null
     //always set tracking
-    return GitPushTarget(GitStandardRemoteBranch(remote, GitRefNameValidator.getInstance().cleanUpBranchName(branchName)), true)
+    return GitPushTarget(GitStandardRemoteBranch(remote, GitRefNameValidator.getInstance().cleanUpBranchName(branchName)), true, GitPushTargetType.TRACKING_BRANCH)
   }
 
   data class BranchNameInputDialogMessages(
@@ -102,7 +102,7 @@ object GitPushUtil {
              ?.takeIf { it.remote == remote }
              // use tracking information only for branches with the same local and remote name
              ?.takeIf { it.remoteBranch.nameForRemoteOperations == branch.name }
-             ?.let { GitPushTarget(it.remoteBranch, false) }
+             ?.let { GitPushTarget(it.remoteBranch, false, GitPushTargetType.TRACKING_BRANCH) }
   }
 }
 

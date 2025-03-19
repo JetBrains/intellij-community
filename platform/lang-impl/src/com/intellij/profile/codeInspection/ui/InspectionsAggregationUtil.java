@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
@@ -13,8 +15,9 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionsAggregationUtil {
-  public static List<HighlightDisplayKey> getInspectionsKeys(@NotNull InspectionConfigTreeNode node) {
+  public static @Unmodifiable List<HighlightDisplayKey> getInspectionsKeys(@NotNull InspectionConfigTreeNode node) {
     return ContainerUtil.map(getInspectionsNodes(node), node1 -> node1.getKey());
   }
 

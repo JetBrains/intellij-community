@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -11,13 +11,13 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-final class ObjectNode {
+@ApiStatus.Internal
+public final class ObjectNode {
   @VisibleForTesting
-  static final int REASONABLY_BIG = 500;
+  public static final int REASONABLY_BIG = 500;
 
   private final Disposable myObject;
-  @NotNull
-  private NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock
+  private @NotNull NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock
   private Throwable myTrace; // guarded by ObjectTree.treeLock
 
   private ObjectNode(@NotNull Disposable object, boolean parentIsRoot) {
@@ -40,8 +40,8 @@ final class ObjectNode {
         "Memory leak detected: '" + object + "' (" + object.getClass() + ") was registered in Disposer" +
         " as a child of '"+getObject()+"' (" + getObject().getClass() + ")"+
         " but wasn't disposed.\n" +
-        "Register it with a proper parentDisposable or ensure that it's always disposed by direct Disposer.dispose call.\n" +
-        "See https://jetbrains.org/intellij/sdk/docs/basics/disposers.html for more details.\n" +
+        "Register it with a proper 'parentDisposable' or ensure that it's always disposed by direct Disposer.dispose() call.\n" +
+        "See https://plugins.jetbrains.com/docs/intellij/disposers.html for more details.\n" +
         "The corresponding Disposer.register() stacktrace is shown as the cause:\n";
       RuntimeException exception = new RuntimeException(message, trace);
       if (throwError) {
@@ -55,8 +55,7 @@ final class ObjectNode {
     return myObject == ROOT_DISPOSABLE;
   }
 
-  @NotNull
-  static ObjectNode createRootNode() {
+  static @NotNull ObjectNode createRootNode() {
     return new ObjectNode();
   }
 
@@ -109,8 +108,7 @@ final class ObjectNode {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return isRootNode() ? "ROOT" : "Node: " + myObject;
   }
 
@@ -145,12 +143,17 @@ final class ObjectNode {
     return childNode;
   }
 
+  @TestOnly
+  void clean() {
+    myChildren = EMPTY;
+  }
+
   // must not override hasCode/equals because ObjectNode must have identity semantics
 
-  private static class MapNodeChildren implements NodeChildren {
+  private static final class MapNodeChildren implements NodeChildren {
     private final Map<Disposable, ObjectNode> myChildren;
 
-    MapNodeChildren(@NotNull List<? extends ObjectNode> children) {
+    MapNodeChildren(@NotNull List<ObjectNode> children) {
       Reference2ObjectLinkedOpenHashMap<Disposable, ObjectNode> map = new Reference2ObjectLinkedOpenHashMap<>(children.size());
       for (ObjectNode child : children) {
         map.put(child.getObject(), child);
@@ -188,14 +191,13 @@ final class ObjectNode {
     }
 
     @Override
-    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+    public @NotNull Collection<ObjectNode> getAllNodes() {
       return myChildren.values();
     }
   }
 
-  private static class ListNodeChildren implements NodeChildren {
-    @NotNull
-    private final List<ObjectNode> myChildren;
+  private static final class ListNodeChildren implements NodeChildren {
+    private final @NotNull List<ObjectNode> myChildren;
 
     ListNodeChildren(@NotNull ObjectNode node) {
       myChildren = new SmartList<>(node);
@@ -204,7 +206,7 @@ final class ObjectNode {
     @Override
     public ObjectNode removeChildNode(@NotNull Disposable nodeToDelete) {
       List<ObjectNode> children = myChildren;
-      // optimisation: iterate backwards
+      // optimization: iterate backwards
       for (int i = children.size() - 1; i >= 0; i--) {
         ObjectNode node = children.get(i);
         if (node.getObject() == nodeToDelete) {
@@ -243,7 +245,7 @@ final class ObjectNode {
     }
 
     @Override
-    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+    public @NotNull Collection<ObjectNode> getAllNodes() {
       return myChildren;
     }
   }
@@ -258,16 +260,16 @@ final class ObjectNode {
 
     @Nullable ObjectNode findChildNode(@NotNull Disposable object);
 
-    @NotNull // return a new instance of NodeChildren when the underlying data-structure changed, e.g. list->map
+    @NotNull // return a new instance of NodeChildren when the underlying data-structure changed, e.g., list->map
     NodeChildren addChildNode(@NotNull ObjectNode node);
 
     void removeChildren(@Nullable Predicate<? super Disposable> condition, @NotNull Consumer<? super ObjectNode> deletedNodeConsumer);
 
     @NotNull
-    Collection<? extends ObjectNode> getAllNodes();
+    Collection<ObjectNode> getAllNodes();
   }
 
-  private final static NodeChildren EMPTY = new NodeChildren() {
+  private static final NodeChildren EMPTY = new NodeChildren() {
     @Override
     public ObjectNode removeChildNode(@NotNull Disposable object) {
       return null;
@@ -288,7 +290,7 @@ final class ObjectNode {
     }
 
     @Override
-    public @NotNull Collection<? extends ObjectNode> getAllNodes() {
+    public @NotNull Collection<ObjectNode> getAllNodes() {
       return Collections.emptyList();
     }
   };

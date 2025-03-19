@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
+public final class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   /**
    * @noinspection PublicField, WeakerAccess
    */
@@ -43,14 +43,12 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  protected String buildErrorString(Object... args) {
+  protected @Nullable String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.nested.assignment");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

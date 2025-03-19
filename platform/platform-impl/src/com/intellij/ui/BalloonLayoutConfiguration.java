@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class BalloonLayoutConfiguration {
   public final int iconPanelWidth;
   public final Dimension iconOffset;
@@ -39,8 +41,7 @@ public final class BalloonLayoutConfiguration {
     return JBUIScale.scale(350);
   }
 
-  @NotNull
-  public static String MaxFullContentWidthStyle() {
+  public static @NotNull String MaxFullContentWidthStyle() {
     return "width:" + MaxFullContentWidth() + "px;";
   }
 
@@ -85,10 +86,9 @@ public final class BalloonLayoutConfiguration {
     return "width:" + JBUIScale.scale(RawStyleWidth) + "px;";
   }
 
-  @NotNull
-  public static BalloonLayoutConfiguration create(@NotNull Notification notification,
-                                                  @NotNull BalloonLayoutData layoutData,
-                                                  boolean actions) {
+  public static @NotNull BalloonLayoutConfiguration create(@NotNull Notification notification,
+                                                           @NotNull BalloonLayoutData layoutData,
+                                                           boolean actions) {
     boolean hasTitle = notification.hasTitle();
     boolean hasContent = notification.hasContent();
     if (hasTitle && hasContent && actions) {
@@ -100,21 +100,18 @@ public final class BalloonLayoutConfiguration {
     return twoLines();
   }
 
-  @NotNull
-  public BalloonLayoutConfiguration replace(int topSpaceHeight, int bottomSpaceHeight) {
+  public @NotNull BalloonLayoutConfiguration replace(int topSpaceHeight, int bottomSpaceHeight) {
     return new BalloonLayoutConfiguration(iconPanelWidth, iconOffset, topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight,
                                           titleActionsSpaceHeight, bottomSpaceHeight, actionGap, null, 0, 0, 0);
   }
 
-  @NotNull
-  private static BalloonLayoutConfiguration twoLines() {
+  private static @NotNull BalloonLayoutConfiguration twoLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 11),
                                           JBUIScale.scale(11), JBUIScale.scale(5), JBUIScale.scale(5), JBUIScale.scale(5),
                                           JBUIScale.scale(14));
   }
 
-  @NotNull
-  private static BalloonLayoutConfiguration treeLines() {
+  private static @NotNull BalloonLayoutConfiguration treeLines() {
     return new BalloonLayoutConfiguration(new JBDimension(10, 7),
                                           JBUIScale.scale(7), JBUIScale.scale(3), JBUIScale.scale(7), 0, JBUIScale.scale(8));
   }
@@ -125,10 +122,9 @@ public final class BalloonLayoutConfiguration {
                                      int contentActionsSpaceHeight,
                                      int titleActionsSpaceHeight,
                                      int bottomSpaceHeight) {
-    this(JBUIScale.scale(32), iconOffset,
-         topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight, bottomSpaceHeight,
-         JBUIScale.scale(16),
-         new JBDimension(8, 6), JBUIScale.scale(7), JBUIScale.scale(5), JBUIScale.scale(15));
+    this(JBUIScale.scale(32), iconOffset, topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight, titleActionsSpaceHeight,
+         bottomSpaceHeight, JBUIScale.scale(16), ExperimentalUI.isNewUI() ? new JBDimension(9, 9) : new JBDimension(8, 6),
+         JBUIScale.scale(7), JBUIScale.scale(5), JBUIScale.scale(15));
   }
 
   private BalloonLayoutConfiguration(int iconPanelWidth,

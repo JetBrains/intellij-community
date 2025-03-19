@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -37,10 +37,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -51,7 +48,7 @@ import java.util.stream.Collectors;
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
 public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element>, Disposable {
   private static final @NonNls String PROJECT_URL = "PROJECT";
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
@@ -77,7 +74,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   public EncodingProjectManagerImpl(@NotNull Project project) {
     myProject = project;
-    myIdeEncodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
+    myIdeEncodingManager = (EncodingManagerImpl)getInstance();
   }
 
   @Override
@@ -176,15 +173,19 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public @Nullable Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     if (virtualFile != null) {
       for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getIterable()) {
-        Charset encoding = encodingProvider.getEncoding(virtualFile);
+        Charset encoding = encodingProvider.getEncoding(virtualFile, myProject);
         if (encoding != null) return encoding;
       }
     }
-    VirtualFile parent = virtualFile;
-    while (parent != null) {
-      Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
-      if (charset != null || !useParentDefaults) return charset;
-      parent = parent.getParent();
+    if (!myMapping.isEmpty()) {
+      VirtualFile parent = virtualFile;
+      while (parent != null) {
+        //TODO RC: parent.getUrl() creates A LOT of dummy allocations -- seems like we could
+        //         organise the mapping hierarchically instead
+        Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
+        if (charset != null || !useParentDefaults) return charset;
+        parent = parent.getParent();
+      }
     }
 
     return getDefaultCharset();
@@ -229,7 +230,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try (AccessToken ignored = ProjectLocator.withPreferredProject(virtualFile, project)) {
-        documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+        documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0));
       }
     });
   }
@@ -250,8 +251,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     result.add(StandardCharsets.UTF_16);
     result.add(StandardCharsets.ISO_8859_1);
     result.add(StandardCharsets.US_ASCII);
-    result.add(EncodingManager.getInstance().getDefaultCharset());
-    result.add(EncodingManager.getInstance().getDefaultCharsetForPropertiesFiles(null));
+    result.add(getInstance().getDefaultCharset());
+    result.add(getInstance().getDefaultCharsetForPropertiesFiles(null));
     result.remove(null);
     return result;
   }
@@ -506,7 +507,12 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
 
   @Override
   public void setDefaultCharsetName(@NotNull String name) {
-    setEncoding(null, name.isEmpty() ? null : CharsetToolkit.forName(name));
+    Charset oldCharset = getDefaultCharset();
+    Charset newCharset = CharsetToolkit.forName(name);
+    if (!Comparing.equal(oldCharset, newCharset)) {
+      setEncoding(null, name.isEmpty() ? null : newCharset);
+      EncodingManagerImpl.firePropertyChange(null, PROP_DEFAULT_FILES_ENCODING, oldCharset, newCharset);
+    }
   }
 
   @Override
@@ -570,8 +576,8 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     myBomForNewUtf8Files = option;
   }
 
-  @NotNull
-  BOMForNewUTF8Files getBOMForNewUTF8Files() {
+  @ApiStatus.Internal
+  public @NotNull BOMForNewUTF8Files getBOMForNewUTF8Files() {
     return myBomForNewUtf8Files;
   }
 

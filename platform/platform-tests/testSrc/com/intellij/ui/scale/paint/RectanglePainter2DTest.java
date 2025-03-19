@@ -21,8 +21,8 @@ import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
  */
 public class RectanglePainter2DTest extends AbstractPainter2DTest {
   private static final int RECT_SIZE = 10;
-  private static final double ARC_SIZE = RECT_SIZE / 3;
-
+  private static final double ARC_SIZE = RECT_SIZE / 3.0;
+  
   @Test
   @Override
   public void testGoldenImages() {

@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.notification.impl.NotificationIdsHolder
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VcsNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(
@@ -16,8 +18,8 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       COMMIT_FINISHED,
       COMMIT_FINISHED_WITH_WARNINGS,
       COMMIT_CHECKS_FAILED,
-      COMMIT_CHECKS_ONLY_FAILED,
       POST_COMMIT_CHECKS_FAILED,
+      COMMIT_CHECKS_ONLY_FAILED,
       COMPARE_FAILED,
       COULD_NOT_COMPARE_WITH_BRANCH,
       INACTIVE_RANGES_DAMAGED,

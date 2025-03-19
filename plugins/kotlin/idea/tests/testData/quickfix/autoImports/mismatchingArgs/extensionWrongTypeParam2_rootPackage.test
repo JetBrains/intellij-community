@@ -1,0 +1,24 @@
+// FILE: first.before.kt
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
+fun <T> foo() {}
+
+fun main() {
+    foo<caret>()
+}
+
+// FILE: second.kt
+package sub
+
+fun foo() {}
+
+// FILE: first.after.kt
+import sub.foo
+
+// "Import function 'foo'" "true"
+// ERROR: Not enough information to infer type variable T
+fun <T> foo() {}
+
+fun main() {
+    foo<caret>()
+}

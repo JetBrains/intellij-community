@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.settings.pandoc
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.util.ExecUtil
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -14,7 +14,7 @@ import com.intellij.util.EnvironmentUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.io.File
 
-object PandocExecutableDetector {
+internal object PandocExecutableDetector {
   private const val WIN_EXECUTABLE = "pandoc.exe"
   private const val WIN_PANDOC_DIR_NAME = "Pandoc"
   private const val UNIX_EXECUTABLE = "pandoc"
@@ -28,12 +28,14 @@ object PandocExecutableDetector {
     )
   }
 
+  private val PANDOC_VERSION_OUTPUT_FIRST_LINE = "pandoc(?:.exe)? .*".toRegex()
+
   fun obtainPandocVersion(project: Project, executable: String = "pandoc"): String? {
     return ProgressManager.getInstance().run(GetVersionPandocTask(project, executable))
   }
 
   fun detect(project: Project): String? {
-    if (!project.isTrusted()) return null
+    if (!TrustedProjects.isProjectTrusted(project)) return null
 
     val executableFromPath = PathEnvironmentVariableUtil.findInPath(
       if (SystemInfo.isWindows) WIN_EXECUTABLE else UNIX_EXECUTABLE,
@@ -65,11 +67,10 @@ object PandocExecutableDetector {
 
     private fun extractVersion(lines: List<String>): String? {
       val line = lines.first()
-      val firstLinePrefix = "pandoc "
-      if (!line.startsWith(firstLinePrefix)) {
+      if (!line.matches(PANDOC_VERSION_OUTPUT_FIRST_LINE)) {
         return null
       }
-      return line.substringAfter(firstLinePrefix)
+      return line.substringAfter(' ')
     }
   }
 

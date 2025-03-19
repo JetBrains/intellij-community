@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
@@ -157,7 +157,10 @@ abstract class ImageResourcesTestBase {
       val home = getHomePath(root)
       return model.project.modules
         .filter {
-          !(root == TestRoot.ULTIMATE && isCommunityModule(home, it)) && !it.name.startsWith("fleet.") && it.name != "fleet"
+          !(root == TestRoot.ULTIMATE && isCommunityModule(home, it)) &&
+          !it.name.startsWith("fleet.") &&
+          it.name != "fleet" &&
+          !it.name.startsWith("toolbox.")
         }
     }
 
@@ -227,7 +230,9 @@ private class MyIconClassFileChecker(private val projectHome: Path, private val 
     generator.getModifiedClasses().forEach { (module, file, details) ->
       failures.add(FailedTest(module, "icon class file should be regenerated using " +
                                       "\"Icons processing | Generate icon classes\" run configuration, " +
-                                      "or new icons be ignored via 'icon-robots.txt'", file, details))
+                                      "or make these files ignored by adding them into 'icon-robots.txt' file. " +
+                                      "You can create the new file or add the icons into the existing one if it has already been there. " +
+                                      "Please, search for 'icon-robots.txt' examples in the project to know the format.", file, details))
     }
   }
 }

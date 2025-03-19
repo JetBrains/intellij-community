@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.impl;
 
@@ -31,11 +31,11 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
-public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
+public final class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
   private final List<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
@@ -79,7 +79,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
         }
       }
 
-      if (myRunnerEditors.size() > 0) {
+      if (!myRunnerEditors.isEmpty()) {
         myCompound.addEditor(getRunnersTabName(),
                              new CompositeSettingsEditor<>(getFactory()) {
                                @Override
@@ -101,8 +101,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
-  @Nullable
-  private static ProgramRunner<RunnerSettings> getRunner(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
+  private static @Nullable ProgramRunner<RunnerSettings> getRunner(@NotNull Executor executor, @NotNull RunConfiguration configuration) {
     if (executor instanceof ExecutorGroup<?>) {
       for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
         ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(childExecutor.getId(), configuration);
@@ -114,8 +113,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return ProgramRunner.getRunner(executor.getId(), configuration);
   }
 
-  @Nullable
-  private JComponent createCompositePerRunnerSettings(@NotNull Executor executor, @NotNull ProgramRunner<RunnerSettings> runner) {
+  private @Nullable JComponent createCompositePerRunnerSettings(@NotNull Executor executor, @NotNull ProgramRunner<RunnerSettings> runner) {
     final SettingsEditor<ConfigurationPerRunnerSettings> configEditor = myConfiguration.getRunnerSettingsEditor(runner);
     SettingsEditor<RunnerSettings> runnerEditor;
     try {
@@ -208,9 +206,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     myConfiguration = settings.getConfiguration();
   }
 
-  @NotNull
   @Override
-  public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
+  public @NotNull RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getFactory().create();
     settings.setName(myConfiguration.getName());
     if (myConfigurationEditor instanceof CheckableRunConfigurationEditor) {
@@ -235,7 +232,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   }
 
   private static final class RunnersEditorComponent {
-    @NonNls private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
+    private static final @NonNls String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
 
     private JList<Executor> myRunnersList;
     private JPanel myRunnerPanel;
@@ -290,7 +287,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
-  private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
+  private final class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
     implements TargetAwareRunConfigurationEditor {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
@@ -316,8 +313,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
 
     @Override
-    @NotNull
-    public JComponent createEditor() {
+    public @NotNull JComponent createEditor() {
       JComponent component = myConfigEditor.getComponent();
       if (myConfigEditor instanceof AdjustingTabSettingsEditor) {
         JPanel panel = new JPanel(new BorderLayout());
@@ -363,8 +359,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
-  @TabTitle
-  private static String getRunnersTabName() {
+  private static @TabTitle String getRunnersTabName() {
     return ExecutionBundle.message("run.configuration.startup.connection.rab.title");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,25 +12,22 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ProblematicWhitespaceInspection extends LocalInspectionTool {
+public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
 
-  private static class ShowWhitespaceFix implements LocalQuickFix {
+  private static final class ShowWhitespaceFix implements LocalQuickFix {
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return LangBundle.message("problematic.whitespace.show.whitespaces.quickfix");
     }
 
@@ -53,7 +50,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
   }
 
-  private static class ReformatFileFix implements LocalQuickFix {
+  private static final class ReformatFileFix implements LocalQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -70,13 +67,12 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ProblematicWhitespaceVisitor(holder, isOnTheFly);
   }
 
-  private class ProblematicWhitespaceVisitor extends PsiElementVisitor {
+  private final class ProblematicWhitespaceVisitor extends PsiElementVisitor {
 
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -135,7 +131,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (registerError(file, startOffset, true)) {
+                if (!isSpaceBeforeCommentStar(file, j, line) && registerError(file, startOffset, true)) {
                   return;
                 }
               }
@@ -158,6 +154,11 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
           }
         }
       }
+    }
+
+    private static boolean isSpaceBeforeCommentStar(@NotNull PsiFile file, int j, String line) {
+      return j + 1 < line.length() && line.charAt(j + 1) == '*'
+             && PsiTreeUtil.getParentOfType(file.findElementAt(j), PsiComment.class, false) != null;
     }
 
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {

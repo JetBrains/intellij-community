@@ -3,6 +3,7 @@ import sys  # @NoMove
 import pytest
 
 from _pydevd_bundle import pydevd_reload
+from _pydevd_bundle.pydevd_constants import IS_PY310_OR_GREATER
 import tempfile
 import unittest
 
@@ -146,7 +147,7 @@ class Test(unittest.TestCase):
         self.assertEqual(F().m1(), 10)
 
 
-
+    @pytest.mark.xfail(IS_PY310_OR_GREATER, reason='PCQA-777')
     def test_if_code_obj_equals(self):
         class F:
             def m1(self):

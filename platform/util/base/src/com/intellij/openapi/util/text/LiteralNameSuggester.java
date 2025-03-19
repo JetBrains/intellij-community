@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -12,7 +13,8 @@ import java.util.stream.Collectors;
 /**
  * A utility class to suggest variable names for literals based on their content
  */
-public class LiteralNameSuggester {
+@Internal // consider integrating into NameUtilCore
+public final class LiteralNameSuggester {
   private static final class PatternBasedSuggestions {
     private final @NotNull Pattern pattern;
     private final @NotNull List<@NotNull String> names;

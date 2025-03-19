@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.vcs.impl.exec` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-impl-exec_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-impl-exec",
+  module_name = "intellij.platform.vcs.impl.exec",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-impl",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/execution",
+  ],
+  runtime_deps = [":vcs-impl-exec_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.impl.exec` end

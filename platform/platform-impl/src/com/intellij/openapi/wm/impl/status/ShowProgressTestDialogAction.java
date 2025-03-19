@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
-public class ShowProgressTestDialogAction extends AnAction implements DumbAware {
+public final class ShowProgressTestDialogAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     new MyDialogWrapper(e.getProject()).show();
@@ -30,7 +32,7 @@ public class ShowProgressTestDialogAction extends AnAction implements DumbAware 
     return ActionUpdateThread.BGT;
   }
 
-  private static class MyDialogWrapper extends DialogWrapper {
+  private static final class MyDialogWrapper extends DialogWrapper {
     private final List<JProgressBar> pbList = new ArrayList<>();
     private final Alarm alarm = new Alarm(getDisposable());
 
@@ -39,9 +41,8 @@ public class ShowProgressTestDialogAction extends AnAction implements DumbAware 
       init();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 

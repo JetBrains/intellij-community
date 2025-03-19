@@ -2,10 +2,12 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.lang.reflect.Field;
 
+@ApiStatus.Internal
 public final class FontSubpixelResolution {
   private static final Logger LOG = Logger.getInstance(FontSubpixelResolution.class);
 
@@ -15,9 +17,14 @@ public final class FontSubpixelResolution {
   static {
     Dimension resolution;
     try {
-      //noinspection JavaReflectionMemberAccess
-      Field field = Class.forName("sun.font.FontUtilities")
-        .getDeclaredField("supplementarySubpixelGlyphResolution");
+      Field field;
+      Class<?> clazz = Class.forName("sun.font.FontUtilities");
+      try {
+        field = clazz.getDeclaredField("subpixelResolution");
+      } catch (NoSuchFieldException ignore) {
+        //noinspection JavaReflectionMemberAccess
+        field = clazz.getDeclaredField("supplementarySubpixelGlyphResolution");
+      }
       field.setAccessible(true);
       resolution = (Dimension)field.get(null);
     }

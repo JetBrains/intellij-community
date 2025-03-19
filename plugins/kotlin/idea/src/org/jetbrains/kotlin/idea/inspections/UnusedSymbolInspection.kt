@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.options.JavaInspectionButtons
 import com.intellij.codeInsight.options.JavaInspectionControls
@@ -13,10 +12,12 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
 import com.intellij.codeInspection.options.OptPane
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult
@@ -27,6 +28,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.util.Processor
+import com.siyeh.ig.psiutils.SerializationUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -53,7 +55,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES_IN_JAVA
+import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFunction
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
@@ -66,7 +70,7 @@ import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.search.findScriptsWithUsages
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -146,7 +150,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val project = declaration.project
             val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
-            if (!findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
+            if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) {
+                    DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }
+                && !ApplicationManager.getApplication().isUnitTestMode) {
                 // Not all script configuration are loaded; behave like it is used
                 return TOO_MANY_OCCURRENCES
             }
@@ -158,7 +164,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         listOfNotNull(declaration.getClassNameForCompanionObject())
                 for (name in list) {
                     if (name == null) continue
-                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope, null, null)) {
+                    when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
                         ZERO_OCCURRENCES -> {
                         } // go on, check other names
                         FEW_OCCURRENCES -> zeroOccurrences = false
@@ -224,7 +230,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             } else {
                 ownerObject.toLightClass()
             } ?: return false
-            return lightClass.fields.any { it.name == name && HighlightUtil.isSerializationImplicitlyUsedField(it) }
+            return lightClass.fields.any { it.name == name && SerializationUtils.isSerializationImplicitlyUsedField(it) }
         }
 
         private fun KtNamedFunction.isSerializationImplicitlyUsedMethod(): Boolean =
@@ -360,9 +366,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                 }
             }
             if (declaration.hasActualModifier()) {
-                KotlinSourceFilterScope.projectSources(project.projectScope(), project)
+                KotlinSourceFilterScope.projectSourcesAndResources(project.projectScope(), project)
             } else {
-                KotlinSourceFilterScope.projectSources(useScope, project)
+                KotlinSourceFilterScope.projectSourcesAndResources(useScope, project)
             }
         } else useScope
 
@@ -377,7 +383,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
                 val containingClassSearchScope = GlobalSearchScope.projectScope(project)
                 val isRequiredToCallFunction =
-                    ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, containingClassSearchScope)).any { ref ->
+                    ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, containingClassSearchScope)).asIterable().any { ref ->
                         val userType = ref.element.parent as? KtUserType ?: return@any false
                         val typeArguments = userType.typeArguments
                         if (typeArguments.isEmpty()) return@any false
@@ -390,7 +396,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
                         if (typeParameters.isEmpty()) return@any false
                         if (typeArguments.none { it.text in typeParameters }) return@any false
 
-                        ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).any {
+                        ReferencesSearch.search(KotlinReferencesSearchParameters(callableDeclaration, containingClassSearchScope)).asIterable().any {
                             val callElement = it.element.parent as? KtCallElement
                             callElement != null && callElement.typeArgumentList == null
                         }
@@ -478,7 +484,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
 
         if (declaration is KtSecondaryConstructor) {
             val containingClass = declaration.containingClass()
-            if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).any {
+            if (containingClass != null && ReferencesSearch.search(KotlinReferencesSearchParameters(containingClass, useScope)).asIterable().any {
                     it.element.getStrictParentOfType<KtTypeAlias>() != null ||
                             it.element.getStrictParentOfType<KtCallExpression>()?.resolveToCall()?.resultingDescriptor == descriptor
                 }) return true
@@ -506,6 +512,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
     private fun hasBuiltInEnumFunctionReference(enumClass: KtClass?, useScope: SearchScope): Boolean {
         if (enumClass == null) return false
         val isFoundEnumFunctionReferenceViaSearch = ReferencesSearch.search(KotlinReferencesSearchParameters(enumClass, useScope))
+            .asIterable()
             .any { hasBuiltInEnumFunctionReference(it, enumClass) }
 
         return isFoundEnumFunctionReferenceViaSearch || hasEnumFunctionReferenceInEnumClass(enumClass)
@@ -552,8 +559,14 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         return this.parent as? KtImportDirective
     }
 
+    /**
+     * The function normalizes two possible variants of KtQualifiedExpression:
+     * 1) EnumClass.enumFun() - doesn't need normalization;
+     * 2) packageName.EnumClass - will be normalized to EnumClass.enumFun().
+     * Otherwise, the function returns null.
+     */
     private fun KtQualifiedExpression.normalizeEnumQualifiedExpression(enumClass: KtClass): KtQualifiedExpression? {
-        if (this.parent !is KtQualifiedExpression && this.receiverExpression.text == enumClass.name) return this
+        if (this.receiverExpression.text == enumClass.name) return this
         if (this.selectorExpression?.text == enumClass.name) return this.parent as? KtQualifiedExpression
         return null
     }
@@ -632,7 +645,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         val descriptor = declaration.toDescriptor() as? CallableMemberDescriptor ?: return false
         if (descriptor.modality == Modality.ABSTRACT) return false
         val lightMethods = declaration.toLightMethods()
-        return DefinitionsScopedSearch.search(ownerClass, useScope).any { element: PsiElement ->
+        return DefinitionsScopedSearch.search(ownerClass, useScope).asIterable().any { element: PsiElement ->
 
             when (element) {
                 is KtLightClass -> {

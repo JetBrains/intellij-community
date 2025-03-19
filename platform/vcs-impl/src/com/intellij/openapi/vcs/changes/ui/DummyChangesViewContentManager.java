@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public class DummyChangesViewContentManager implements ChangesViewContentI {
   @Override
   public void attachToolWindow(@NotNull ToolWindow toolWindow) {
@@ -33,9 +35,8 @@ public class DummyChangesViewContentManager implements ChangesViewContentI {
   public void setSelectedContent(@NotNull Content content, boolean requestFocus) {
   }
 
-  @Nullable
   @Override
-  public <T> T getActiveComponent(@NotNull Class<T> aClass) {
+  public @Nullable <T> T getActiveComponent(@NotNull Class<T> aClass) {
     return null;
   }
 
@@ -43,9 +44,8 @@ public class DummyChangesViewContentManager implements ChangesViewContentI {
   public void selectContent(@NotNull String tabName) {
   }
 
-  @NotNull
   @Override
-  public List<Content> findContents(@NotNull Predicate<Content> predicate) {
+  public @NotNull List<Content> findContents(@NotNull Predicate<Content> predicate) {
     return Collections.emptyList();
   }
 

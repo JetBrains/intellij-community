@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -15,7 +15,6 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
@@ -23,10 +22,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -64,34 +63,35 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
   private JPanel panel;
 
-  private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<ModuleDescriptionsComboBox> moduleClasspath;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> classField;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> moduleClasspath;
   private JrePathEditor alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JComboBox<TestType> myTestKind;
   private JBLabel myTestLabel;
   private final TestNGConfigurationModel model;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> methodField;
-  private LabeledComponent<EditorTextFieldWithBrowseButton> packageField;
-  private LabeledComponent<TextFieldWithBrowseButton.NoPathCompletion> groupField;
-  private LabeledComponent<TextFieldWithBrowseButton> suiteField;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> methodField;
+  private LabeledComponentNoThrow<EditorTextFieldWithBrowseButton> packageField;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton.NoPathCompletion> groupField;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> suiteField;
   private JComponent anchor;
   private JRadioButton packagesInProject;
   private JRadioButton packagesInModule;
   private JRadioButton packagesAcrossModules;
   private JPanel packagePanel;
   private TestNGParametersTableModel propertiesTableModel;
-  private LabeledComponent<TextFieldWithBrowseButton> propertiesFile;
-  private LabeledComponent<TextFieldWithBrowseButton> outputDirectory;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> propertiesFile;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> outputDirectory;
   private TableView propertiesTableView;
   private JPanel commonParametersPanel;//temp compilation problems
   private JList myListenersList;
   private JCheckBox myUseDefaultReportersCheckBox;
-  private LabeledComponent<JPanel> myPattern;
+  private LabeledComponentNoThrow<JPanel> myPattern;
   private JPanel myPropertiesPanel;
   private JPanel myListenersPanel;
-  private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
-  private LabeledComponent<JCheckBox> myUseModulePath;
+  private LabeledComponentNoThrow<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
+  private LabeledComponentNoThrow<JCheckBox> myUseModulePath;
+  private LabeledComponentNoThrow<JCheckBox> myAsyncStackTraceForExceptions;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -108,7 +108,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
         protected void onClassChoosen(PsiClass psiClass) {
           final JTextField textField = myPatternTextField.getTextField();
           final String text = textField.getText();
-          textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+          textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
         }
 
         @Override
@@ -186,6 +186,10 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseModulePath.setAnchor(moduleClasspath.getLabel());
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
+
+    myAsyncStackTraceForExceptions.setAnchor(outputDirectory.getLabel());
+    myAsyncStackTraceForExceptions.getComponent().setText(TestngBundle.message("async.stack.trace.for.exceptions.label"));
+    myAsyncStackTraceForExceptions.getComponent().setSelected(true);
   }
 
   private void evaluateModuleClassPath() {
@@ -284,6 +288,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
     myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(config.isUseModulePath());
+    myAsyncStackTraceForExceptions.getComponent().setSelected(config.isPrintAsyncStackTraceForExceptions());
     if (!project.isDefault()) {
       SwingUtilities.invokeLater(() ->
                                    ReadAction.nonBlocking(() -> FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(project)).length > 0)
@@ -327,15 +332,16 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     config.setShortenCommandLine(myShortenCommandLineCombo.getComponent().getSelectedItem());
 
     config.setUseModulePath(myUseModulePath.isVisible() && myUseModulePath.getComponent().isSelected());
+
+    config.setPrintAsyncStackTraceForExceptions(myAsyncStackTraceForExceptions.getComponent().isSelected());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {
     return moduleSelector;
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return panel;
   }
 
@@ -358,7 +364,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   private void createUIComponents() {
-    myShortenCommandLineCombo = new LabeledComponent<>();
+    myShortenCommandLineCombo = new LabeledComponentNoThrow<>();
   }
 
   private static void registerListener(JRadioButton[] buttons, ChangeListener changelistener) {
@@ -379,7 +385,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
       try {
         if (declaration instanceof PsiClass &&
-            new TestClassBrowser(project, TestNGConfigurationEditor.this).getFilter().isAccepted((PsiClass)declaration)) {
+            new TestClassBrowser(project, this).getFilter().isAccepted((PsiClass)declaration)) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }
       }
@@ -403,8 +409,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     TextFieldWithBrowseButton outputDirectoryButton = new TextFieldWithBrowseButton();
     outputDirectory.setComponent(outputDirectoryButton);
-    outputDirectoryButton.addBrowseFolderListener(TestngBundle.message("testng.output.directory.button.title"), TestngBundle.message("testng.select.output.directory"), project,
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    outputDirectoryButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(TestngBundle.message("testng.output.directory.button.title"))
+      .withDescription(TestngBundle.message("testng.select.output.directory")));
     moduleClasspath.setEnabled(true);
 
     propertiesTableModel = new TestNGParametersTableModel();
@@ -413,16 +420,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     TextFieldWithBrowseButton textFieldWithBrowseButton = new TextFieldWithBrowseButton();
     propertiesFile.setComponent(textFieldWithBrowseButton);
 
-    FileChooserDescriptor propertiesFileDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile virtualFile, boolean showHidden) {
-        if (!showHidden && virtualFile.getName().charAt(0) == '.') return false;
-        return virtualFile.isDirectory() || "properties".equals(virtualFile.getExtension());
-      }
-    };
-
-    textFieldWithBrowseButton
-      .addBrowseFolderListener(TestngBundle.message("testng.browse.button.title"), TestngBundle.message("testng.select.properties.file"), project, propertiesFileDescriptor);
+    textFieldWithBrowseButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(TestngBundle.message("testng.browse.button.title"))
+      .withDescription(TestngBundle.message("testng.select.properties.file")));
 
     propertiesTableView = new TableView(propertiesTableModel);
 
@@ -510,16 +510,14 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private class AddActionButtonRunnable implements AnActionButtonRunnable {
     private final Logger LOGGER = Logger.getInstance("TestNG Runner");
 
-    @Nullable
-    protected GlobalSearchScope getSearchScope(Module[] modules) {
+    protected @Nullable GlobalSearchScope getSearchScope(Module[] modules) {
       if (modules == null || modules.length == 0) return null;
       GlobalSearchScope[] scopes =
         ContainerUtil.map2Array(modules, GlobalSearchScope.class, GlobalSearchScope::moduleWithDependenciesAndLibrariesScope);
       return GlobalSearchScope.union(scopes);
     }
 
-    @Nullable
-    protected String selectListenerClass() {
+    protected @Nullable String selectListenerClass() {
       GlobalSearchScope searchScope = getSearchScope(config.getModules());
       if (searchScope == null) {
         searchScope = GlobalSearchScope.allScope(project);

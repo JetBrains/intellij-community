@@ -8,7 +8,10 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.storage.StorageManager
 
 class CompositeAnalyzerServices(val services: List<PlatformDependentAnalyzerServices>) : PlatformDependentAnalyzerServices() {
-    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(services.map { it.platformConfigurator })
+    // In case of a common source set with multiple native targets a composite platform may duplicate platformConfigurator; we use a set
+    // to deduplicate
+    val uniquePlatformConfigurators: List<PlatformConfigurator> = services.mapTo(linkedSetOf()) { it.platformConfigurator }.toList()
+    override val platformConfigurator: PlatformConfigurator = CompositePlatformConfigurator(uniquePlatformConfigurators)
 
     override fun computePlatformSpecificDefaultImports(storageManager: StorageManager, result: MutableList<ImportPath>) {
         val intersectionOfDefaultImports = services.map { service ->

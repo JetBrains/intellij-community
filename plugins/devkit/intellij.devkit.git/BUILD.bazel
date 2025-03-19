@@ -1,0 +1,81 @@
+### auto-generated section `build intellij.devkit.git` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "git_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "vcs-core_provided",
+  lib = "//platform/vcs-api/vcs-api-core:vcs-core"
+)
+
+jvm_provided_library(
+  name = "vcs-log_provided",
+  lib = "//platform/vcs-log/api:vcs-log"
+)
+
+jvm_provided_library(
+  name = "vcs-dvcs-impl_provided",
+  lib = "//platform/dvcs-impl:vcs-dvcs-impl"
+)
+
+jvm_provided_library(
+  name = "vcs-git_provided",
+  lib = "//plugins/git4idea:vcs-git"
+)
+
+jvm_library(
+  name = "git",
+  module_name = "intellij.devkit.git",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/ide-core",
+    "//plugins/devkit/devkit-core:core",
+    ":vcs-core_provided",
+    ":vcs-log_provided",
+    ":vcs-dvcs-impl_provided",
+    ":vcs-git_provided",
+  ],
+  runtime_deps = [":git_resources"]
+)
+
+jvm_library(
+  name = "git_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":git"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/ide-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//plugins/devkit/devkit-core:core",
+    "@lib//:junit4",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":git_resources"]
+)
+
+jvm_test(
+  name = "git_test",
+  runtime_deps = [":git_test_lib"]
+)
+### auto-generated section `build intellij.devkit.git` end

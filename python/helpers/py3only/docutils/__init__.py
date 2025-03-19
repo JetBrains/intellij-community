@@ -1,4 +1,4 @@
-# $Id: __init__.py 7756 2014-07-06 11:48:05Z grubert $
+# $Id: __init__.py 9649 2024-04-23 18:54:26Z grubert $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -35,8 +35,8 @@ Subpackages:
 - readers: Context-specific input handlers which understand the data
   source and manage a parser.
 
-- transforms: Modules used by readers and writers to modify DPS
-  doctrees.
+- transforms: Modules used by readers and writers to modify
+  the Docutils document tree.
 
 - utils: Contains the ``Reporter`` system warning class and miscellaneous
   utilities used by readers, writers, and transforms.
@@ -50,30 +50,85 @@ Subpackages:
 - writers: Format-specific output translators.
 """
 
+from collections import namedtuple
+
 __docformat__ = 'reStructuredText'
 
-__version__ = '0.12'
-"""``major.minor.micro`` version number.  The micro number is bumped for API
-changes, for new functionality, and for interim project releases.  The minor
-number is bumped whenever there is a significant project release.  The major
-number will be bumped when the project is feature-complete, and perhaps if
-there is a major change in the design."""
+__version__ = '0.21.2'
+"""Docutils version identifier (complies with PEP 440)::
 
-__version_details__ = 'release'
-"""Extra version details (e.g. 'snapshot 2005-05-29, r3410', 'repository',
-'release'), modified automatically & manually."""
+    major.minor[.micro][releaselevel[serial]][.dev]
 
-import sys
+For version comparison operations, use `__version_info__` (see, below)
+rather than parsing the text of `__version__`.
 
-class ApplicationError(Exception):
-    # Workaround:
-    # In Python < 2.6, unicode(<exception instance>) calls `str` on the
-    # arg and therefore, e.g., unicode(StandardError(u'\u234')) fails
-    # with UnicodeDecodeError.
-    if sys.version_info < (2,6):
-        def __unicode__(self):
-            return ', '.join(self.args)
+https://docutils.sourceforge.io/docs/dev/policies.html#version-identification
+"""
 
+__version_details__ = ''
+"""Optional extra version details (e.g. 'snapshot 2005-05-29, r3410').
+
+For development and release status, use `__version__ and `__version_info__`.
+"""
+
+
+class VersionInfo(namedtuple('VersionInfo',
+                             'major minor micro releaselevel serial release')):
+
+    def __new__(cls, major=0, minor=0, micro=0,
+                releaselevel='final', serial=0, release=True):
+        releaselevels = ('alpha', 'beta', 'candidate', 'final')
+        if releaselevel not in releaselevels:
+            raise ValueError('releaselevel must be one of %r.'
+                             % (releaselevels, ))
+        if releaselevel == 'final':
+            if not release:
+                raise ValueError('releaselevel "final" must not be used '
+                                 'with development versions (leads to wrong '
+                                 'version ordering of the related __version__')
+                # cf. https://peps.python.org/pep-0440/#summary-of-permitted-suffixes-and-relative-ordering  # noqa
+            if serial != 0:
+                raise ValueError('"serial" must be 0 for final releases')
+
+        return super().__new__(cls, major, minor, micro,
+                               releaselevel, serial, release)
+
+    def __lt__(self, other):
+        if isinstance(other, tuple):
+            other = VersionInfo(*other)
+        return tuple.__lt__(self, other)
+
+    def __gt__(self, other):
+        if isinstance(other, tuple):
+            other = VersionInfo(*other)
+        return tuple.__gt__(self, other)
+
+    def __le__(self, other):
+        if isinstance(other, tuple):
+            other = VersionInfo(*other)
+        return tuple.__le__(self, other)
+
+    def __ge__(self, other):
+        if isinstance(other, tuple):
+            other = VersionInfo(*other)
+        return tuple.__ge__(self, other)
+
+
+__version_info__ = VersionInfo(
+    major=0,
+    minor=21,
+    micro=2,
+    releaselevel='final',  # one of 'alpha', 'beta', 'candidate', 'final'
+    serial=0,  # pre-release number (0 for final releases and snapshots)
+    release=True  # True for official releases and pre-releases
+    )
+"""Comprehensive version information tuple.
+
+https://docutils.sourceforge.io/docs/dev/policies.html#version-identification
+"""
+
+
+class ApplicationError(Exception): pass
 class DataError(ApplicationError): pass
 
 
@@ -85,6 +140,17 @@ class SettingsSpec:
     SettingsSpec subclass objects used by `docutils.frontend.OptionParser`.
     """
 
+    # TODO: replace settings_specs with a new data structure
+    # Backwards compatiblity:
+    #   Drop-in components:
+    #   Sphinx supplies settings_spec in the current format in some places
+    #   Myst parser provides a settings_spec tuple
+    #
+    #   Sphinx reads a settings_spec in order to set a default value
+    #   in writers/html.py:59
+    #   https://github.com/sphinx-doc/sphinx/blob/4.x/sphinx/writers/html.py
+    #   This should be changed (before retiring the old format)
+    #   to use `settings_default_overrides` instead.
     settings_spec = ()
     """Runtime settings specification.  Override in subclasses.
 
@@ -131,7 +197,7 @@ class SettingsSpec:
 
     settings_default_overrides = None
     """A dictionary of auxiliary defaults, to override defaults for settings
-    defined in other components.  Override in subclasses."""
+    defined in other components' `setting_specs`.  Override in subclasses."""
 
     relative_path_settings = ()
     """Settings containing filesystem paths.  Override in subclasses.
@@ -151,18 +217,21 @@ class SettingsSpec:
 
 
 class TransformSpec:
-
     """
     Runtime transform specification base class.
 
-    TransformSpec subclass objects used by `docutils.transforms.Transformer`.
+    Provides the interface to register "transforms" and helper functions
+    to resolve references with a `docutils.transforms.Transformer`.
+
+    https://docutils.sourceforge.io/docs/ref/transforms.html
     """
 
     def get_transforms(self):
         """Transforms required by this class.  Override in subclasses."""
         if self.default_transforms != ():
             import warnings
-            warnings.warn('default_transforms attribute deprecated.\n'
+            warnings.warn('TransformSpec: the "default_transforms" attribute '
+                          'will be removed in Docutils 2.0.\n'
                           'Use get_transforms() method instead.',
                           DeprecationWarning)
             return list(self.default_transforms)
@@ -172,11 +241,13 @@ class TransformSpec:
     default_transforms = ()
 
     unknown_reference_resolvers = ()
-    """List of functions to try to resolve unknown references.  Unknown
-    references have a 'refname' attribute which doesn't correspond to any
-    target in the document.  Called when the transforms in
-    `docutils.tranforms.references` are unable to find a correct target.  The
-    list should contain functions which will try to resolve unknown
+    """List of functions to try to resolve unknown references.
+
+    Unknown references have a 'refname' attribute which doesn't correspond
+    to any target in the document.  Called when the transforms in
+    `docutils.transforms.references` are unable to find a correct target.
+
+    The list should contain functions which will try to resolve unknown
     references, with the following signature::
 
         def reference_resolver(node):
@@ -193,7 +264,10 @@ class TransformSpec:
 
         reference_resolver.priority = 100
 
-    Override in subclasses."""
+    This hook is provided for 3rd party extensions.
+    Example use case: the `MoinMoin - ReStructured Text Parser`
+    in ``sandbox/mmgilbe/rst.py``.
+    """
 
 
 class Component(SettingsSpec, TransformSpec):
@@ -205,7 +279,7 @@ class Component(SettingsSpec, TransformSpec):
     subclasses."""
 
     supported = ()
-    """Names for this component.  Override in subclasses."""
+    """Name and aliases for this component.  Override in subclasses."""
 
     def supports(self, format):
         """

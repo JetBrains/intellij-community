@@ -10,17 +10,17 @@ class ConstructorParamCount {
     Constructor c2 = cls.getConstructor(int.class, String.class);
     Constructor c3 = cls.getConstructor(int.class, String.class, String.class);
 
-    c1.newInstance<warning descr="One argument is expected">(42, "abc")</warning>;
+    c1.newInstance(<warning descr="Reflectively called method requires one argument">42, "abc"</warning>);
     c2.newInstance(42, "abc");
-    c3.newInstance<warning descr="3 arguments are expected">(42, "abc")</warning>;
+    c3.newInstance(<warning descr="Reflectively called method requires 3 arguments">42, "abc"</warning>);
 
     c1.newInstance(<warning descr="Single-item array is expected">new Object[]{42, "abc"}</warning>);
     c2.newInstance(new Object[]{42, "abc"});
     c3.newInstance(<warning descr="3 array items are expected">new Object[]{42, "abc"}</warning>);
 
-    c1.newInstance<warning descr="One argument is expected">()</warning>;
-    c2.newInstance<warning descr="2 arguments are expected">()</warning>;
-    c3.newInstance<warning descr="3 arguments are expected">()</warning>;
+    c1.newInstance<warning descr="Reflectively called method requires one argument">()</warning>;
+    c2.newInstance<warning descr="Reflectively called method requires 2 arguments">()</warning>;
+    c3.newInstance<warning descr="Reflectively called method requires 3 arguments">()</warning>;
 
     cls.getConstructor(String.class).newInstance(new String[] {"abc"});
   }
@@ -32,17 +32,17 @@ class ConstructorParamCount {
     Constructor c2 = cls.getConstructor(new Class[]{int.class, String.class});
     Constructor c3 = cls.getConstructor(new Class[]{int.class, String.class, String.class});
 
-    c1.newInstance<warning descr="One argument is expected">(42, "abc")</warning>;
+    c1.newInstance(<warning descr="Reflectively called method requires one argument">42, "abc"</warning>);
     c2.newInstance(42, "abc");
-    c3.newInstance<warning descr="3 arguments are expected">(42, "abc")</warning>;
+    c3.newInstance(<warning descr="Reflectively called method requires 3 arguments">42, "abc"</warning>);
 
     c1.newInstance(<warning descr="Single-item array is expected">new Object[]{42, "abc"}</warning>);
     c2.newInstance(new Object[]{42, "abc"});
     c3.newInstance(<warning descr="3 array items are expected">new Object[]{42, "abc"}</warning>);
 
-    c1.newInstance<warning descr="One argument is expected">()</warning>;
-    c2.newInstance<warning descr="2 arguments are expected">()</warning>;
-    c3.newInstance<warning descr="3 arguments are expected">()</warning>;
+    c1.newInstance<warning descr="Reflectively called method requires one argument">()</warning>;
+    c2.newInstance<warning descr="Reflectively called method requires 2 arguments">()</warning>;
+    c3.newInstance<warning descr="Reflectively called method requires 3 arguments">()</warning>;
 
     cls.getConstructor(new Class[]{String.class}).newInstance(new String[] {"abc"});
   }
@@ -57,7 +57,7 @@ class ConstructorParamCount {
     Constructor m4 = cls.getConstructor(int.class, short.class, long.class, float.class);
     Constructor m5 = cls.getConstructor(int.class, short.class, long.class, float.class, double.class);
 
-    m0.newInstance<warning descr="No arguments are expected">(0, 0)</warning>;
+    m0.newInstance(<warning descr="Reflectively called method requires no arguments">0, 0</warning>);
     m1.newInstance(<warning descr="Argument is not assignable to 'int'">"abc"</warning>);
     m2.newInstance(0, <warning descr="Argument is not assignable to 'short'">"abc"</warning>);
     m3.newInstance(0, <warning descr="Argument is not assignable to 'short'">0</warning>, <warning descr="Argument is not assignable to 'long'">"abc"</warning>);

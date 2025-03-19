@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.icons.AllIcons;
@@ -188,8 +188,7 @@ public final class PythonCommandQueuePanel extends JPanel {
     mySplitter.setSecondComponent(myQueueEditor.getComponent());
   }
 
-  @NotNull
-  public EditorEx getQueueEditor() {
+  public @NotNull EditorEx getQueueEditor() {
     return myQueueEditor;
   }
 
@@ -202,16 +201,14 @@ public final class PythonCommandQueuePanel extends JPanel {
       .first();
   }
 
-  @NotNull
-  private EditorEx createEmptyEditor() {
+  private @NotNull EditorEx createEmptyEditor() {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(false);
     UndoUtil.disableUndoFor(document);
     return (EditorEx)createEditor();
   }
 
-  @NotNull
-  private Editor createEditor() {
+  private @NotNull Editor createEditor() {
     PsiFile consoleFile = myConsole.getFile();
     Language language = consoleFile.getLanguage();
     Project project = consoleFile.getProject();

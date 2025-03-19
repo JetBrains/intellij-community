@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,10 @@ public abstract class FileStatusManager {
       return new DefaultFileStatusManager();
     }
     return project.getService(FileStatusManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected FileStatusManager() {
   }
 
   /**
@@ -53,8 +58,7 @@ public abstract class FileStatusManager {
   public void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable) {
   }
 
-  @Nullable
-  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+  public @Nullable Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
     return getRecursiveStatus(file).getColor();
   }
 
@@ -63,6 +67,5 @@ public abstract class FileStatusManager {
    * @see FileStatus#NOT_CHANGED_IMMEDIATE
    * @see FileStatus#NOT_CHANGED_RECURSIVE
    */
-  @NotNull
-  public abstract FileStatus getRecursiveStatus(@NotNull VirtualFile file);
+  public abstract @NotNull FileStatus getRecursiveStatus(@NotNull VirtualFile file);
 }

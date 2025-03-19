@@ -147,6 +147,10 @@
       "key": "CheckBox.select"
     },
     {
+      "key": "CheckBox.textIconGap",
+      "description": "Space between CheckBox icon and text"
+    },
+    {
       "key": "CheckBoxMenuItem.acceleratorForeground",
       "description": "The JBCheckboxMenuItem component. Example: context menu for the editor status icon"
     },
@@ -249,6 +253,10 @@
     {
       "key": "Component.arc",
       "description": "Corner radius for combo boxes and spinners"
+    },
+    {
+      "key": "Component.arrowAreaWidth",
+      "description": "Width of area with arrows in components like ComboBox, Spinner, OptionButton"
     },
     {
       "key": "Component.borderColor",
@@ -525,6 +533,10 @@
     {
       "key": "List.selectionBackground",
       "description": "Also used for ActionMenuItem (used in context and main menus) as default"
+    },
+    {
+      "key": "List.rowHeight",
+      "description": "Line height for a regular list in pixels (zero or less means that a row calculates its height by itself)"
     },
     {
       "key": "List.selectionForeground"

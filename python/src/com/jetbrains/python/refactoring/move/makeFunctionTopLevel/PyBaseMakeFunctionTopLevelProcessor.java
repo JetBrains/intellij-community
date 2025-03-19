@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.codeInsight.controlflow.ControlFlow;
@@ -50,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.*;
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
 
 /**
  * @author Mikhail Golubev
@@ -72,9 +59,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     mySourceFile = myFunction.getContainingFile();
   }
 
-  @NotNull
   @Override
-  protected final UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected final @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -93,9 +79,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return PyPsiIndexUtil.findUsages(myFunction, false).toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  @NotNull
   @Override
-  protected final String getCommandName() {
+  protected final @NotNull String getCommandName() {
     return getRefactoringName();
   }
 
@@ -105,7 +90,8 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
 
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
+    boolean isNamespace = isInNamespacePackage(myFunction);
+    final PyFile targetFile = PyClassRefactoringUtil.getOrCreateFile(myDestinationPath, myProject, isNamespace);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
         PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
@@ -161,19 +147,15 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     }
   }
 
-  @NotNull
-  protected abstract @Nls String getRefactoringName();
+  protected abstract @NotNull @Nls String getRefactoringName();
 
-  @NotNull
-  protected abstract List<String> collectNewParameterNames();
+  protected abstract @NotNull List<String> collectNewParameterNames();
 
   protected abstract void updateUsages(@NotNull Collection<String> newParamNames, UsageInfo @NotNull [] usages);
   
-  @NotNull
-  protected abstract PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
+  protected abstract @NotNull PyFunction createNewFunction(@NotNull Collection<String> newParamNames);
 
-  @NotNull
-  protected final PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
+  protected final @NotNull PyParameterList addParameters(@NotNull PyParameterList paramList, @NotNull Collection<String> newParameters) {
     if (!newParameters.isEmpty()) {
       final String commaSeparatedNames = StringUtil.join(newParameters, ", ");
       final StringBuilder paramListText = new StringBuilder(paramList.getText());
@@ -184,8 +166,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return paramList;
   }
 
-  @NotNull
-  protected PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
+  protected @NotNull PyArgumentList addArguments(@NotNull PyArgumentList argList, @NotNull Collection<String> newArguments) {
     if (!newArguments.isEmpty()) {
       final String commaSeparatedNames = StringUtil.join(newArguments, ", ");
       final StringBuilder argListText = new StringBuilder(argList.getText());
@@ -196,8 +177,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return argList;
   }
 
-  @NotNull
-  protected PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
+  protected @NotNull PyFunction insertFunction(@NotNull PyFunction newFunction, @NotNull PyFile newFile, @Nullable PsiElement anchor) {
     if (mySourceFile == newFile) {
       // In the same file try inserting generated function at the top level but preferably right after the original scope owner
       final PsiElement surroundingStatement = PyPsiUtils.getParentRightBefore(myFunction, mySourceFile);
@@ -209,8 +189,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     return (PyFunction)newFile.addBefore(newFunction, anchor);
   }
 
-  @NotNull
-  protected AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
+  protected @NotNull AnalysisResult analyseScope(@NotNull ScopeOwner owner) {
     final ControlFlow controlFlow = ControlFlowCache.getControlFlow(owner);
     final AnalysisResult result = new AnalysisResult();
     for (Instruction instruction : controlFlow.getInstructions()) {

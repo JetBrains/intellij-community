@@ -2,8 +2,8 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -15,17 +15,15 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class PyMoveExceptQuickFix implements LocalQuickFix {
+public class PyMoveExceptQuickFix extends PsiUpdateModCommandQuickFix {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.move.except.up");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyExceptPart part = PsiTreeUtil.getParentOfType(element, PyExceptPart.class);
     if (part == null) return;
     final PyExpression exceptClassExpression = part.getExceptClass();

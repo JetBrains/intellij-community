@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.build;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -62,12 +48,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
+public final class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static final Logger LOG = Logger.getInstance(AntArtifactBuildTaskProvider.class);
 
-  @NotNull
   @Override
-  public List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
+  public @NotNull List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase) {
     JpsAntArtifactExtension extension = getBuildExtension(artifact, buildPhase);
     if (extension != null && extension.isEnabled() && !StringUtil.isEmpty(extension.getFileUrl())) {
       return Collections.singletonList(new AntArtifactBuildTask(extension));
@@ -75,8 +60,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
+  private static @Nullable JpsAntArtifactExtension getBuildExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
     switch (buildPhase) {
       case PRE_PROCESSING:
         return JpsAntExtensionService.getPreprocessingExtension(artifact);
@@ -87,8 +71,8 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
     }
   }
 
-  private static class AntArtifactBuildTask extends BuildTask {
-    @NlsSafe public static final String BUILDER_NAME = "ant";
+  private static final class AntArtifactBuildTask extends BuildTask {
+    public static final @NlsSafe String BUILDER_NAME = "ant";
     private final JpsAntArtifactExtension myExtension;
 
     AntArtifactBuildTask(@NotNull JpsAntArtifactExtension extension) {
@@ -194,7 +178,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         }
         BaseOSProcessHandler handler = new BaseOSProcessHandler(process, commandLineString, null);
         final AtomicBoolean hasErrors = new AtomicBoolean();
-        @NlsSafe final StringBuilder errorOutput = new StringBuilder();
+        final @NlsSafe StringBuilder errorOutput = new StringBuilder();
         handler.addProcessListener(new ProcessAdapter() {
           @Override
           public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {

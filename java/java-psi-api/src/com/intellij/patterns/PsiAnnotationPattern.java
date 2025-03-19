@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.psi.PsiAnnotation;
@@ -20,21 +20,21 @@ public final class PsiAnnotationPattern extends PsiElementPattern<PsiAnnotation,
   public PsiAnnotationPattern qName(final ElementPattern<String> pattern) {
     return with(new PatternCondition<PsiAnnotation>("qName") {
       @Override
-      public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiAnnotation psiAnnotation, final ProcessingContext context) {
         return pattern.accepts(psiAnnotation.getQualifiedName(), context);
       }
     });
   }
-  public PsiAnnotationPattern qName(@NonNls final String qname) {
+  public PsiAnnotationPattern qName(final @NonNls String qname) {
     return with(new PatternCondition<PsiAnnotation>("qName") {
       @Override
-      public boolean accepts(@NotNull final PsiAnnotation psiAnnotation, final ProcessingContext context) {
+      public boolean accepts(final @NotNull PsiAnnotation psiAnnotation, final ProcessingContext context) {
         return psiAnnotation.hasQualifiedName(qname);
       }
     });
   }
 
-  public PsiAnnotationPattern insideAnnotationAttribute(@NotNull final String attributeName, @NotNull final ElementPattern<? extends PsiAnnotation> parentAnnoPattern) {
+  public PsiAnnotationPattern insideAnnotationAttribute(final @NotNull String attributeName, final @NotNull ElementPattern<? extends PsiAnnotation> parentAnnoPattern) {
     return with(new PatternCondition<PsiAnnotation>("insideAnnotationAttribute") {
       final PsiNameValuePairPattern attrPattern = psiNameValuePair().withName(attributeName).withSuperParent(2, parentAnnoPattern);
 

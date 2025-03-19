@@ -83,20 +83,17 @@ public class XsltTemplateImpl extends XsltElementImpl implements XsltTemplate {
     }
 
     @Override
-    @Nullable
-    public XsltParameter getParameter(String name) {
+    public @Nullable XsltParameter getParameter(String name) {
         return (XsltParameter)ResolveUtil.resolve(new ParamMatcher(getTag(), name));
     }
 
     @Override
-    @Nullable
-    public XPathExpression getMatchExpression() {
+    public @Nullable XPathExpression getMatchExpression() {
         return XsltCodeInsightUtil.getXPathExpression(this, "match");
     }
 
     @Override
-    @Nullable
-    public QName getMode() {
+    public @Nullable QName getMode() {
       final String mode = getTag().getAttributeValue("mode");
       return mode != null ? QNameUtil.createQName(mode, getTag()) : null;
     }

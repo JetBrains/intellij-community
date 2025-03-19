@@ -2,7 +2,6 @@
 // FILE: first.before.kt
 // "Import property 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 import foo.Bar
 
 open class Base {
@@ -27,7 +26,6 @@ public class Bar {
 // FILE: first.after.kt
 // "Import property 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 import foo.Bar
 import foo.Bar.foobar
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.values;
 
 import com.intellij.psi.codeStyle.extractor.Utils;
@@ -18,7 +18,7 @@ public final class Generation {
   private int myAge;
   private final int myParentKind;
 
-  private Generation(@NotNull final Gens bestGens) {
+  private Generation(final @NotNull Gens bestGens) {
     myParentKind = -1;
     myGensPool = new ArrayList<>(GENERATION_POOL_SIZE);
     for (int i = 0; i < GENERATION_POOL_SIZE; ++i) {
@@ -63,8 +63,7 @@ public final class Generation {
     }
   }
 
-  @NotNull
-  public static Generation createZeroGeneration(@NotNull Gens gens) {
+  public static @NotNull Generation createZeroGeneration(@NotNull Gens gens) {
     return new Generation(gens);
   }
 

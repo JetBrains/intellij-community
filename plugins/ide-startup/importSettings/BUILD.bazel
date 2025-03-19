@@ -1,0 +1,97 @@
+### auto-generated section `build intellij.ide.startup.importSettings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "ide-startup-importSettings_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-startup-importSettings",
+  module_name = "intellij.ide.startup.importSettings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "@lib//:rd-core",
+    "@lib//:rd-swing",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "//platform/observable:ide-observable",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:jna",
+    "@lib//:sqlite",
+    "@lib//:classgraph",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//platform/util/progress",
+    "//platform/platform-impl/ui:ide-ui",
+  ],
+  runtime_deps = [":ide-startup-importSettings_resources"]
+)
+
+jvm_library(
+  name = "ide-startup-importSettings_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":ide-startup-importSettings"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "@lib//:rd-core",
+    "@lib//:rd-swing",
+    "//platform/rd-platform-community:rd-community",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/code-style-api:codeStyle",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util/jdom",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "//platform/observable:ide-observable",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:jna",
+    "@lib//:sqlite",
+    "@lib//:classgraph",
+    "//platform/util:util-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/lang-impl",
+    "//platform/util/progress",
+    "//platform/platform-impl/ui:ide-ui",
+  ],
+  runtime_deps = [":ide-startup-importSettings_resources"]
+)
+
+jvm_test(
+  name = "ide-startup-importSettings_test",
+  runtime_deps = [":ide-startup-importSettings_test_lib"]
+)
+### auto-generated section `build intellij.ide.startup.importSettings` end

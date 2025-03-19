@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getAvailableIndexers
 import com.intellij.vcs.log.impl.VcsLogManager
 import git4idea.GitVcs
 
@@ -30,7 +30,7 @@ internal fun Project.getGitRoots() = ProjectLevelVcsManager.getInstance(this).al
 
 internal fun Project.anyGitRootsForIndexing(): Boolean {
   val gitRoots = this.getGitRoots()
-  val rootsForIndex = VcsLogPersistentIndex.getRootsForIndexing(VcsLogManager.findLogProviders(gitRoots, this))
+  val rootsForIndex = getAvailableIndexers(VcsLogManager.findLogProviders(gitRoots, this)).keys
 
   return rootsForIndex.isNotEmpty()
 }

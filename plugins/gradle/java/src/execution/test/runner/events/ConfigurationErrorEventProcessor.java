@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.ide.BrowserUtil;
@@ -26,24 +26,20 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.event.HyperlinkEvent;
 
-/**
- * @author Vladislav.Soroka
- */
-public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor {
-
+public final class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor {
   public ConfigurationErrorEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 
   @Override
-  public void process(@NotNull final TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
-    @NlsSafe final String errorTitle = xml.getEventTitle();
+  public void process(final @NotNull TestEventXmlView xml) throws TestEventXmlView.XmlParserException {
+    final @NlsSafe String errorTitle = xml.getEventTitle();
     final String configurationErrorMsg = xml.getEventMessage();
     final boolean openSettings = xml.isEventOpenSettings();
     final Project project = getProject();
     assert project != null;
     final String message = getConfigurationErrorMessage(configurationErrorMsg, openSettings);
-    GradleNotification.NOTIFICATION_GROUP
+    GradleNotification.getGradleNotificationGroup()
       .createNotification(errorTitle, message, NotificationType.WARNING)
       .setDisplayId(GradleNotificationIdsHolder.configurationError)
       .setListener(new NotificationListener() {
@@ -66,8 +62,7 @@ public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor
   }
 
 
-  @Nls
-  private String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
+  private static @Nls String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
     if (openSettings) {
       return new HtmlBuilder()
         .append(HtmlChunk.br())

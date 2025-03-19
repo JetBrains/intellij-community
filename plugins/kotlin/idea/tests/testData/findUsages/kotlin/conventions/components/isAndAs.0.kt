@@ -17,4 +17,4 @@ fun y(o: Any) {
 }
 
 
-// IGNORE_FIR_LOG
+

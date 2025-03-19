@@ -1,4 +1,5 @@
-// DISABLE-ERRORS
+// IGNORE_K2
+// DISABLE_ERRORS
 class A(val n: Int) {
     fun plus(m: Int) = A(n + m)
 }

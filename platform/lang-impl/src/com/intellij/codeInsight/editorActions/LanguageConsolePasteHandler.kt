@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.wm.IdeFocusManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LanguageConsolePasteHandler(val originalHandler: EditorActionHandler) : EditorActionHandler() {
 
   override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {

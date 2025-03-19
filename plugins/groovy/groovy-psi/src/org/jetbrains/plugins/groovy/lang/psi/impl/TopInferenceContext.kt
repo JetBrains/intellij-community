@@ -23,7 +23,7 @@ class TopInferenceContext : InferenceContext {
     return ResolveCache.getInstance(ref.element.project).resolveWithCaching(ref, resolver, true, incomplete)
   }
 
-  override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType>): PsiType? {
+  override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType?>): PsiType? {
     return CachedValuesManager.getProjectPsiDependentCache(element, calculator)
   }
 }

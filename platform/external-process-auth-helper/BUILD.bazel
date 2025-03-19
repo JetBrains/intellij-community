@@ -1,0 +1,59 @@
+### auto-generated section `build intellij.platform.externalProcessAuthHelper` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "externalProcessAuthHelper_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "externalProcessAuthHelper",
+  module_name = "intellij.platform.externalProcessAuthHelper",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+  ],
+  exports = ["//platform/built-in-server:builtInServer-impl"],
+  runtime_deps = [":externalProcessAuthHelper_resources"]
+)
+
+jvm_library(
+  name = "externalProcessAuthHelper_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":externalProcessAuthHelper"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/external-process-auth-helper/rt:externalProcessAuthHelper-rt",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [":externalProcessAuthHelper_resources"]
+)
+
+jvm_test(
+  name = "externalProcessAuthHelper_test",
+  runtime_deps = [":externalProcessAuthHelper_test_lib"]
+)
+### auto-generated section `build intellij.platform.externalProcessAuthHelper` end

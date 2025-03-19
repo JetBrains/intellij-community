@@ -2,21 +2,22 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
+@Service(Service.Level.PROJECT)
 internal class DaemonBoundCodeVisionCacheService {
   companion object {
     private val key = Key<FileCache>("daemon.bound.code.vision.cache")
 
-    fun getInstance(project: Project): DaemonBoundCodeVisionCacheService {
-      return project.getService(DaemonBoundCodeVisionCacheService::class.java)
-    }
+    fun getInstance(project: Project): DaemonBoundCodeVisionCacheService = project.service<DaemonBoundCodeVisionCacheService>()
   }
 
   /**
@@ -39,8 +40,7 @@ internal class DaemonBoundCodeVisionCacheService {
 
   private fun getFileCache(editor: Editor): FileCache {
     // needed to avoid races in cache creation
-    val userDataHolderEx = editor as UserDataHolderEx
-    return userDataHolderEx.putUserDataIfAbsent(key, FileCache())
+    return ConcurrencyUtil.computeIfAbsent(editor, key) { FileCache() }
   }
 
   // methods are protected with application RW lock (update under W, get under R)

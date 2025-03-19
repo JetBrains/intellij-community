@@ -13,4 +13,6 @@ class B : A(), X {
         return agr
     }
 }
-/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameParameterToMatchOverriddenMethodFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RenameParameterToMatchOverriddenMethodFix

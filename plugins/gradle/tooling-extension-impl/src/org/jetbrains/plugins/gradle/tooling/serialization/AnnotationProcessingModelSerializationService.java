@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import com.intellij.util.ThrowableConsumer;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
-import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 
@@ -61,17 +59,7 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   private static void writeConfigs(final IonWriter writer,
                                    final WriteContext context,
                                    Map<String, AnnotationProcessingConfig> configs) throws IOException {
-    writeMap(writer, "configs", configs, new ThrowableConsumer<String, IOException>() {
-      @Override
-      public void consume(String s) throws IOException {
-        writer.writeString(s);
-      }
-    }, new ThrowableConsumer<AnnotationProcessingConfig, IOException>() {
-      @Override
-      public void consume(AnnotationProcessingConfig config) throws IOException {
-        writeConfig(writer, context, config);
-      }
-    });
+    writeMap(writer, "configs", configs, s -> writer.writeString(s), config -> writeConfig(writer, context, config));
   }
 
   private static void writeConfig(final IonWriter writer,
@@ -112,17 +100,7 @@ public final class AnnotationProcessingModelSerializationService implements Seri
   }
 
   private static Map<String, AnnotationProcessingConfig> readConfigs(final IonReader reader, final ReadContext context) {
-    return readMap(reader, new Supplier<String>() {
-      @Override
-      public String get() {
-        return readString(reader, null);
-      }
-    }, new Supplier<AnnotationProcessingConfig>() {
-      @Override
-      public AnnotationProcessingConfig get() {
-        return readConfig(reader, context);
-      }
-    });
+    return readMap(reader, null, () -> readString(reader, null), () -> readConfig(reader, context));
   }
 
   private static AnnotationProcessingConfig readConfig(final IonReader reader, final ReadContext context) {
@@ -133,8 +111,8 @@ public final class AnnotationProcessingModelSerializationService implements Seri
         .computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new IntObjectMap.SimpleObjectFactory<AnnotationProcessingConfigImpl>() {
           @Override
           public AnnotationProcessingConfigImpl create() {
-            List<String> args = readStringList(reader);
-            List<File> files = readFiles(reader);
+            List<String> args = readStringList(reader, null);
+            List<File> files = readFileList(reader, null);
             String output = readString(reader, "output");
             boolean isTest = readBoolean(reader,"isTestSources");
             return new AnnotationProcessingConfigImpl(files, args, output, isTest);

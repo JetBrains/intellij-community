@@ -1,5 +1,5 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 abstract class C {
     abstract var <caret>foo: String? = null
 }

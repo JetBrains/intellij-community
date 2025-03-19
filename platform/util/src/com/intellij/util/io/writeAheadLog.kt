@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.CompressionUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
-import org.apache.commons.compress.utils.IOUtils
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -31,14 +32,14 @@ internal enum class WalOpCode(internal val code: Int) {
   APPEND(2);
 
   companion object {
-    val size = values().size
+    val size: Int = values().size
   }
 }
 
 private val checksumGen = { CRC32() }
 
 @Volatile
-var debugWalRecords = false
+var debugWalRecords: Boolean = false
 
 private val log = logger<WalRecord>()
 
@@ -53,11 +54,11 @@ internal class PersistentEnumeratorWal<Data> @Throws(IOException::class) @JvmOve
                                                                                                    compact: Boolean = false) : Closeable {
   private val underlying = PersistentMapWal(dataDescriptor, integerExternalizer, useCompression, file, walIoExecutor, compact)
 
-  fun enumerate(data: Data, id: Int) = underlying.put(data, id)
+  fun enumerate(data: Data, id: Int): Unit = underlying.put(data, id)
 
-  fun flush() = underlying.flush()
+  fun flush(): Unit = underlying.flush()
 
-  override fun close() = underlying.close()
+  override fun close(): Unit = underlying.close()
 }
 
 internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads constructor(private val keyDescriptor: KeyDescriptor<K>,
@@ -231,6 +232,7 @@ fun <Data> restoreMemoryEnumeratorFromWal(walFile: Path,
   }).toList()
 }
 
+@Internal
 @Throws(IOException::class)
 fun <Data> restorePersistentEnumeratorFromWal(walFile: Path,
                                               outputMapFile: Path,
@@ -395,7 +397,7 @@ private class WalRecord(val opCode: WalOpCode,
       val checksum = DataInputOutputUtil.readLONG(input)
       val payloadLength = DataInputOutputUtil.readINT(input)
       val cis = ChecksumInputStream(input, checksumGen)
-      val data = IOUtils.readRange(cis, payloadLength)
+      val data = StreamUtil.readBytes(cis, payloadLength)
       val actualChecksum = cis.checksum()
       if (actualChecksum != checksum) {
         throw CorruptionException("checksum is wrong for log record: expected = $checksum but actual = $actualChecksum")
@@ -476,7 +478,7 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
   }
 
   @Throws(IOException::class)
-  override fun close() = input.close()
+  override fun close(): Unit = input.close()
 
   @Throws(IOException::class)
   private fun readNextEvent(): WalEvent<K, V>? {

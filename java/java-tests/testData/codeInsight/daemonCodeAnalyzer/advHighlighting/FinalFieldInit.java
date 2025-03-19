@@ -4,16 +4,16 @@ import java.io.*;
 class a  {
   /**
    * javadoc should not be highlighted
-   */ 
-  <error descr="Variable 'javaDoced' might not have been initialized">final int javaDoced</error>;
+   */
+  <error descr="Field 'javaDoced' might not have been initialized">final int javaDoced</error>;
 
-  <error descr="Variable 'sfi1' might not have been initialized">static final int sfi1</error>;
-  <error descr="Variable 'sfi2' might not have been initialized">static final int sfi2</error>;
-  <error descr="Variable 'fi1' might not have been initialized">final int fi1</error>;
-  <error descr="Variable 'fi2' might not have been initialized">final int fi2</error>;
+  <error descr="Field 'sfi1' might not have been initialized">static final int sfi1</error>;
+  <error descr="Field 'sfi2' might not have been initialized">static final int sfi2</error>;
+  <error descr="Field 'fi1' might not have been initialized">final int fi1</error>;
+  <error descr="Field 'fi2' might not have been initialized">final int fi2</error>;
 
   class inner {
-    <error descr="Variable 'fii' might not have been initialized">final int fii</error>;
+    <error descr="Field 'fii' might not have been initialized">final int fii</error>;
   }
   final int fi3;
   final int fi4;
@@ -21,7 +21,7 @@ class a  {
 
   static final int csfi1 = 0;
   static final int csfi2 = csfi1 + 13 / 5;
-  static final int csfi3; 
+  static final int csfi3;
   static {
    if (csfi1 < 13) {
      csfi3 = csfi2 + (csfi1 == 4 ? 5 : csfi2/13);
@@ -37,9 +37,9 @@ class a  {
   final int cifi2 = ff();
   final int cifi3;
 
-  int ff() { 
+  int ff() {
     int i = cifi1 + cifi2 + cifi3 + fi3 + fi4;
-    return i; 
+    return i;
   }
 
   {
@@ -97,7 +97,7 @@ class Test {
     }
 }
 
-// multiple initalizers
+// multiple initializers
 class c1 {
  private final String x;
  {
@@ -106,7 +106,7 @@ class c1 {
 
  private final String y;
  {
-   y = x; 
+   y = x;
  }
  void f() {
    String s = x+y;
@@ -114,7 +114,7 @@ class c1 {
 }
 
 class c2 {
-    static { 
+    static {
     }
     private static final int limit;
     static {
@@ -140,7 +140,7 @@ class c2 {
 }
 
 class UninitializedFinal2 {
-    <error descr="Variable 's' might not have been initialized">private final String s</error>;
+    <error descr="Field 's' might not have been initialized">private final String s</error>;
 
     UninitializedFinal2(){
         try {
@@ -151,7 +151,7 @@ class UninitializedFinal2 {
 }
 class UninitedFinalFied {
 
-	<error descr="Variable 'string' might not have been initialized">private final String string</error>;
+	<error descr="Field 'string' might not have been initialized">private final String string</error>;
 
 	public UninitedFinalFied() throws IOException {
 		init();
@@ -202,7 +202,7 @@ class correct {
         o = new Object();
         new Object() {
           { o.toString(); }
-        }; 
+        };
     }
 }
 
@@ -228,11 +228,11 @@ class Y {
 class IDEA100237 {
     static class Foo {
         final int bar;
-    
+
         Foo() {
             bar = 1;
         }
-    
+
         final Object baz = new Object() {
             final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
         };
@@ -277,7 +277,7 @@ class InitializedInClassInitializerUsedInTheFollowingFieldInitializer {
 }
 
 class AssignInAssert {
-  <error descr="Variable 'b' might not have been initialized">private final boolean b</error>;
+  <error descr="Field 'b' might not have been initialized">private final boolean b</error>;
 
   AssignInAssert() {
     assert b = true;
@@ -382,4 +382,14 @@ class InsideAnAnonymousClass {
       _s = s;
     }
   }
+}
+class ItMight {
+  final int a;
+  final int b = a = <error descr="Variable 'a' might not have been initialized">a</error>;
+}
+class Key {
+
+  private static final int COUNT;
+
+  private static final int count = <error descr="Variable 'COUNT' might not have been initialized">COUNT</error>++;
 }

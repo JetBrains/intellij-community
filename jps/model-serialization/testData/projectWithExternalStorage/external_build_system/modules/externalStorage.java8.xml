@@ -1,0 +1,15 @@
+<module>
+  <component name="DeprecatedModuleOptionManager">
+    <option key="type" value="JAVA_MODULE" />
+  </component>
+  <component name="ExternalSystem" externalSystem="GRADLE" externalSystemModuleGroup="org.example" externalSystemModuleVersion="unspecified" linkedProjectId=":java8" linkedProjectPath="$MODULE_DIR$/../../../java8" rootProjectPath="$MODULE_DIR$/../../.." />
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../java8">
+      <excludeFolder url="file://$MODULE_DIR$/../../../java8/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/../../../java8/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

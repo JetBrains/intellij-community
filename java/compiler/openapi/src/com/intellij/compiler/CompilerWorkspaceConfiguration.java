@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -6,10 +6,7 @@
 package com.intellij.compiler;
 
 import com.intellij.build.BuildWorkspaceConfiguration;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
@@ -18,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Service(Service.Level.PROJECT)
 @State(name = "CompilerWorkspaceConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
   private static final Logger LOG = Logger.getInstance(CompilerWorkspaceConfiguration.class);
@@ -34,9 +32,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   /**
    * @deprecated use {@link CompilerConfiguration#isParallelCompilationEnabled()}
    */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public Boolean PARALLEL_COMPILATION = null;
+  @Deprecated(forRemoval = true) public @Nullable Boolean PARALLEL_COMPILATION = null;
 
   public int COMPILER_PROCESS_HEAP_SIZE = 0;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = "";
@@ -62,7 +58,7 @@ public final class CompilerWorkspaceConfiguration implements PersistentStateComp
   }
 
   @ApiStatus.Internal
-  static class JavaBuildWorkspaceConfiguration implements BuildWorkspaceConfiguration {
+  static final class JavaBuildWorkspaceConfiguration implements BuildWorkspaceConfiguration {
     private final @NotNull Project myProject;
 
     JavaBuildWorkspaceConfiguration(@NotNull Project project) {

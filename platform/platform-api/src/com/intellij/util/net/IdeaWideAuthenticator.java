@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.ide.IdeBundle;
@@ -12,8 +12,13 @@ import org.jetbrains.annotations.NotNull;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 
+/**
+ * @deprecated use {@link JdkProxyProvider#getAuthenticator()} or {@link IdeProxyAuthenticator}
+ */
+@SuppressWarnings("removal")
+@Deprecated
 public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
-  private final static Logger LOG = Logger.getInstance(IdeaWideAuthenticator.class);
+  private static final Logger LOG = Logger.getInstance(IdeaWideAuthenticator.class);
   private final HttpConfigurable myHttpConfigurable;
 
   public IdeaWideAuthenticator(@NotNull HttpConfigurable configurable) {
@@ -21,10 +26,12 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
   }
 
   @Override
-  public PasswordAuthentication getPasswordAuthentication() {
+  public synchronized PasswordAuthentication getPasswordAuthentication() {
     final String host = CommonProxy.getHostNameReliably(getRequestingHost(), getRequestingSite(), getRequestingURL());
     // java.base/java/net/SocksSocketImpl.java:176 : there is SOCKS proxy auth, but without RequestorType passing
     final boolean isProxy = Authenticator.RequestorType.PROXY.equals(getRequestorType()) || "SOCKS authentication".equals(getRequestingPrompt());
+    // FIXME prefix for server auth is never used since 7ea74ea400b03cf92d1621ea0e8aa1d386cb886a.
+    //  This means that this class manages strictly proxy authentication since 2013
     final String prefix = isProxy ? IdeBundle.message("prompt.proxy.authentication") : IdeBundle.message("prompt.server.authentication");
     Application application = ApplicationManager.getApplication();
     if (isProxy) {
@@ -50,6 +57,7 @@ public final class IdeaWideAuthenticator extends NonStaticAuthenticator {
       }
     }
 
+    // FIXME dead logic, all ends up with return null
     // do not try to show any dialogs if application is exiting
     if (application == null || application.isDisposed()) {
       return null;

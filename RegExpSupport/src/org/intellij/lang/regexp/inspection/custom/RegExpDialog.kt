@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.lang.regexp.inspection.custom;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
 import com.intellij.find.FindModel
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -25,13 +26,8 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
 import org.intellij.lang.regexp.RegExpFileType
@@ -105,7 +101,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       row {
         label(RegExpBundle.message("regexp.dialog.search.template"))
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
         val fileTypes = mutableListOf(UnknownFileType.INSTANCE)
         fileTypes.addAll(
           FileTypeManager.getInstance().registeredFileTypes.filterNotNull()
@@ -123,13 +119,12 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         filterButton = actionButton(MyFilterAction())
           .component
       }
-    }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
 
     row {
       searchEditor = cell(createEditor(true))
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL)
+        .align(Align.FILL)
         .applyToComponent { addFocusListener(object : FocusAdapter() {
           override fun focusGained(e: FocusEvent?) {
             replaceEditorFocusedLast = false
@@ -142,19 +137,19 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       row {
         replaceLabel = label(RegExpBundle.message("regexp.dialog.replace.template"))
           .resizableColumn()
-          .horizontalAlign(HorizontalAlign.FILL)
+          .align(AlignX.FILL)
           .component
         replaceButton = button(if (replace) RegExpBundle.message("button.search.only") else RegExpBundle.message("button.enable.replace")) {
           replace = !replace
         }.component
       }
-    }.customize(UnscaledGaps(10, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(10, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
 
     replaceRow = row {
       replaceEditor = cell(createEditor(false))
         .resizableColumn()
-        .horizontalAlign(HorizontalAlign.FILL)
-        .verticalAlign(VerticalAlign.FILL).applyToComponent { addFocusListener(object : FocusAdapter() {
+        .align(Align.FILL)
+        .applyToComponent { addFocusListener(object : FocusAdapter() {
           override fun focusGained(e: FocusEvent?) {
             replaceEditorFocusedLast = true
           }
@@ -206,7 +201,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyEditorTextField(document: Document, val search: Boolean) : EditorTextField(document, project, RegExpFileType.INSTANCE, false, false) {
+  private inner class MyEditorTextField(document: Document, val search: Boolean) 
+    : EditorTextField(document, project, if (search) RegExpFileType.INSTANCE else PlainTextFileType.INSTANCE, false, false) {
     override fun createEditor(): EditorEx {
       return super.createEditor().apply {
         setHorizontalScrollbarVisible(true)
@@ -214,7 +210,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         val outerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, if (search) 1 else 0, 0)
         scrollPane.border = CompoundBorder(
           outerBorder,
-          JBUI.Borders.empty(6, 8, 6, 8)
+          JBUI.Borders.empty(6, 8)
         )
         isEmbeddedIntoDialogWrapper = true
       }

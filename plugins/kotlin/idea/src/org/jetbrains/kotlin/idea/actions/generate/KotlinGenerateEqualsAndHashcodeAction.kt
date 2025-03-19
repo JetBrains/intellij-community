@@ -10,15 +10,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
@@ -216,7 +217,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
                     append('\n')
 
-                    variablesForEquals.forEach {
+                    variablesForEquals.sortedWithPrimitivesFirst().forEach {
                         val isNullable = TypeUtils.isNullableType(it.type)
                         val isArray = KotlinBuiltIns.isArrayOrPrimitiveArray(it.type)
                         val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
@@ -267,7 +268,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
                 KotlinBuiltIns.isArrayOrPrimitiveArray(type) -> {
                     val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
                     val shouldWrapInLet = isNullable && !canUseArrayContentFunctions
-                    val hashCodeArg = if (shouldWrapInLet) "it" else ref
+                    val hashCodeArg = if (shouldWrapInLet) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier else ref
                     val hashCodeCall = generateArrayHashCodeCall(this, canUseArrayContentFunctions, hashCodeArg)
                     if (shouldWrapInLet) "$ref?.let { $hashCodeCall }" else hashCodeCall
                 }
@@ -291,7 +292,8 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
             val hashCodeFun = generateFunctionSkeleton(superHashCode, targetClass)
             val builtins = superHashCode.builtIns
 
-            val propertyIterator = variablesForHashCode.iterator()
+            // Sort variables in `hashCode()` to preserve the same order as in `equals()`
+            val propertyIterator = variablesForEquals.sortedWithPrimitivesFirst().iterator()
             val initialValue = when {
                 !builtins.isMemberOfAny(superHashCode) -> "super.hashCode()"
                 propertyIterator.hasNext() -> propertyIterator.next().genVariableHashCode(false)
@@ -300,7 +302,7 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
 
             val bodyText = if (propertyIterator.hasNext()) {
                 val validator = CollectingNameValidator(variablesForEquals.map { it.name.asString().quoteIfNeeded() })
-                val resultVarName = Fe10KotlinNameSuggester.suggestNameByName("result", validator)
+                val resultVarName = KotlinNameSuggester.suggestNameByName("result", validator)
                 StringBuilder().apply {
                     append("var $resultVarName = $initialValue\n")
                     propertyIterator.forEach { append("$resultVarName = 31 * $resultVarName + ${it.genVariableHashCode(true)}\n") }
@@ -324,4 +326,8 @@ class KotlinGenerateEqualsAndHashcodeAction : KotlinGenerateMemberActionBase<Kot
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
         return insertMembersAfterAndReformat(editor, targetClass, prototypes, anchor)
     }
+}
+
+private fun List<VariableDescriptor>.sortedWithPrimitivesFirst(): List<VariableDescriptor> = sortedBy {
+    !KotlinBuiltIns.isPrimitiveTypeOrNullablePrimitiveType(it.type)
 }

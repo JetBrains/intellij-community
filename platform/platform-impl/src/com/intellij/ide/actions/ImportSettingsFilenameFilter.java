@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -12,6 +13,7 @@ import java.util.stream.Stream;
 /**
  * This class is serialized into StartupActionScript stream and must thus reside in bootstrap module.
  */
+@ApiStatus.Internal
 public final class ImportSettingsFilenameFilter implements Predicate<String>, Serializable {
   public static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 

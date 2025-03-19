@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -9,18 +9,19 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
+import java.beans.PropertyChangeListenerProxy;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -39,88 +40,66 @@ public final class Presentation implements Cloneable {
   private static final Logger LOG = Logger.getInstance(Presentation.class);
 
   public static final Supplier<String> NULL_STRING = () -> null;
+  public static final Supplier<TextWithMnemonic> NULL_TEXT_WITH_MNEMONIC = () -> null;
 
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * value: String
-   */
-  @NonNls public static final String PROP_TEXT = "text";
-  /**
-   * Defines tool tip for button at toolbar or text for element at menu
-   * that includes mnemonic suffix, like "Git(G)"
-   * value: String
-   */
-  @NonNls public static final String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
-  /**
-   * value: Integer
-   */
-  @NonNls public static final String PROP_MNEMONIC_KEY = "mnemonicKey";
-  /**
-   * value: Integer
-   */
-  @NonNls public static final String PROP_MNEMONIC_INDEX = "mnemonicIndex";
-  /**
-   * value: String
-   */
-  @NonNls public static final String PROP_DESCRIPTION = "description";
-  /**
-   * value: Icon
-   */
-  @NonNls public static final String PROP_ICON = "icon";
-  /**
-   * value: Icon
-   */
-  @NonNls public static final String PROP_DISABLED_ICON = "disabledIcon";
-  /**
-   * value: Icon
-   */
-  @NonNls public static final String PROP_SELECTED_ICON = "selectedIcon";
-  /**
-   * value: Icon
-   */
-  @NonNls public static final String PROP_HOVERED_ICON = "hoveredIcon";
-  /**
-   * value: Boolean
-   */
-  @NonNls public static final String PROP_VISIBLE = "visible";
-  /**
-   * The actual value is a Boolean.
-   */
-  @NonNls public static final String PROP_ENABLED = "enabled";
+  // Property keys for the PropertyChangeListener API
+  public static final @NonNls String PROP_TEXT = "text";
+  public static final @NonNls String PROP_TEXT_WITH_SUFFIX = "textWithSuffix";
+  public static final @NonNls String PROP_MNEMONIC_KEY = "mnemonicKey";
+  public static final @NonNls String PROP_MNEMONIC_INDEX = "mnemonicIndex";
+  public static final @NonNls String PROP_DESCRIPTION = "description";
+  public static final @NonNls String PROP_ICON = "icon";
+  public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
+  public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
+  public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
+  public static final @NonNls String PROP_VISIBLE = "visible";
+  public static final @NonNls String PROP_ENABLED = "enabled";
+  // Do not add Key constants here, especially with PROP_ prefix. Find a better place.
 
-  @NonNls public static final Key<@Nls String> PROP_VALUE = Key.create("value");
+  /** Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#SECONDARY_TEXT} instead */
+  @Deprecated(forRemoval = true)
+  public static final @NonNls Key<@Nls String> PROP_VALUE = Key.create("SECONDARY_TEXT");
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double DEFAULT_WEIGHT = 0;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double HIGHER_WEIGHT = 42;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
   private static final int IS_ENABLED = 0x1;
   private static final int IS_VISIBLE = 0x2;
-  private static final int IS_MULTI_CHOICE = 0x4;
+  private static final int IS_KEEP_POPUP_IF_REQUESTED = 0x4;
+  private static final int IS_KEEP_POPUP_IF_PREFERRED = 0x8;
   private static final int IS_POPUP_GROUP = 0x10;
   private static final int IS_PERFORM_GROUP = 0x20;
   private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
   private static final int IS_DISABLE_GROUP_IF_EMPTY = 0x80;
+  private static final int IS_APPLICATION_SCOPE = 0x100;
+  private static final int IS_PREFER_INJECTED_PSI = 0x200;
+  private static final int IS_ENABLED_IN_MODAL_CONTEXT = 0x400;
   private static final int IS_TEMPLATE = 0x1000;
 
   private int myFlags = IS_ENABLED | IS_VISIBLE | IS_DISABLE_GROUP_IF_EMPTY;
-  private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
-  private @NotNull Supplier<? extends TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
+  private @NotNull Supplier<@ActionDescription String> descriptionSupplier = NULL_STRING;
+  private @NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier = NULL_TEXT_WITH_MNEMONIC;
   private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
 
-  private Icon myIcon;
-  private Icon myDisabledIcon;
-  private Icon myHoveredIcon;
-  private Icon mySelectedIcon;
+  private @Nullable Supplier<? extends @Nullable Icon> icon;
+  private Icon disabledIcon;
+  private Icon hoveredIcon;
+  private Icon selectedIcon;
 
-  private PropertyChangeSupport myChangeSupport;
-  private double myWeight = DEFAULT_WEIGHT;
+  private @NotNull FList<PropertyChangeListener> myListeners = FList.emptyList();
 
-  private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
+  private static final @NotNull NotNullLazyValue<Boolean> outRemoveMnemonics = NotNullLazyValue.createValue(() -> {
     return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
   });
 
-  public static Presentation newTemplatePresentation() {
+  public static @NotNull Presentation newTemplatePresentation() {
     Presentation presentation = new Presentation();
     presentation.myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, true);
     return presentation;
@@ -130,26 +109,20 @@ public final class Presentation implements Cloneable {
   }
 
   public Presentation(@NotNull @ActionText String text) {
-    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(text);
+    TextWithMnemonic textWithMnemonic = TextWithMnemonic.fromPlainText(text);
+    textWithMnemonicSupplier = () -> textWithMnemonic;
   }
 
   public Presentation(@NotNull Supplier<@ActionText String> dynamicText) {
-    myTextWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
+    textWithMnemonicSupplier = () -> TextWithMnemonic.fromPlainText(dynamicText.get());
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = myChangeSupport;
-    if (support == null) {
-      myChangeSupport = support = new PropertyChangeSupport(this);
-    }
-    support.addPropertyChangeListener(l);
+    myListeners = myListeners.prepend(l);
   }
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener l) {
-    PropertyChangeSupport support = myChangeSupport;
-    if (support != null) {
-      support.removePropertyChangeListener(l);
-    }
+    myListeners = myListeners.without(l);
   }
 
   /**
@@ -169,8 +142,13 @@ public final class Presentation implements Cloneable {
   }
 
   public @ActionText String getText(boolean withSuffix) {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.getText(withSuffix);
+  }
+
+  @ApiStatus.Internal
+  public boolean hasText() {
+    return textWithMnemonicSupplier.get() != null;
   }
 
   /**
@@ -180,8 +158,7 @@ public final class Presentation implements Cloneable {
    * @param mayContainMnemonic if true, the text has {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format, otherwise
    *                           it's a plain text and no mnemonic will be used.
    */
-  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text,
-                      boolean mayContainMnemonic) {
+  public void setText(@NotNull @Nls(capitalization = Nls.Capitalization.Title) Supplier<String> text, boolean mayContainMnemonic) {
     setTextWithMnemonic(getTextWithMnemonic(text, mayContainMnemonic));
   }
 
@@ -196,17 +173,21 @@ public final class Presentation implements Cloneable {
     setTextWithMnemonic(getTextWithMnemonic(() -> text, mayContainMnemonic));
   }
 
-  @NotNull
-  public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
-                                                        boolean mayContainMnemonic) {
-    if (mayContainMnemonic) {
+  public @NotNull Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
+                                                                 boolean mayContainMnemonic) {
+    if (text == NULL_STRING) {
+      return NULL_TEXT_WITH_MNEMONIC;
+    }
+    else if (mayContainMnemonic) {
       return () -> {
         String s = text.get();
-        if (s == null) return null;
+        if (s == null) {
+          return null;
+        }
         TextWithMnemonic parsed = TextWithMnemonic.parse(s);
         UISettings uiSettings = UISettings.getInstanceOrNull();
         boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
-        return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
+        return mnemonicsDisabled ? parsed.dropMnemonic(outRemoveMnemonics.getValue()) : parsed;
       };
     }
     else {
@@ -222,12 +203,17 @@ public final class Presentation implements Cloneable {
    *
    * @param textWithMnemonicSupplier text with mnemonic to set
    */
-  public void setTextWithMnemonic(@NotNull Supplier<? extends TextWithMnemonic> textWithMnemonicSupplier) {
+  public void setTextWithMnemonic(@NotNull Supplier<TextWithMnemonic> textWithMnemonicSupplier) {
+    if (myListeners.isEmpty()) {
+      this.textWithMnemonicSupplier = textWithMnemonicSupplier;
+      return;
+    }
+
     String oldText = getText();
     String oldTextWithSuffix = getText(true);
     int oldMnemonic = getMnemonic();
     int oldIndex = getDisplayedMnemonicIndex();
-    myTextWithMnemonicSupplier = textWithMnemonicSupplier;
+    this.textWithMnemonicSupplier = textWithMnemonicSupplier;
 
     fireObjectPropertyChange(PROP_TEXT, oldText, getText());
     fireObjectPropertyChange(PROP_TEXT_WITH_SUFFIX, oldTextWithSuffix, getText(true));
@@ -251,19 +237,26 @@ public final class Presentation implements Cloneable {
     setText(text, true);
   }
 
+  @ApiStatus.Internal
+  public void setFallbackPresentationText(@NotNull Supplier<String> supplier) {
+    Supplier<TextWithMnemonic> original = textWithMnemonicSupplier;
+    Supplier<TextWithMnemonic> fallback = getTextWithMnemonic(supplier, true);
+    textWithMnemonicSupplier = () -> {
+      TextWithMnemonic result = original.get();
+      return result == null ? fallback.get() : result;
+    };
+  }
+
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
-  @ActionText
-  @Nullable
-  public String getTextWithMnemonic() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+  public @ActionText @Nullable String getTextWithMnemonic() {
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? null : textWithMnemonic.toString();
   }
 
-  @NotNull
-  public Supplier<? extends TextWithMnemonic> getTextWithPossibleMnemonic() {
-    return myTextWithMnemonicSupplier;
+  public @NotNull Supplier<TextWithMnemonic> getTextWithPossibleMnemonic() {
+    return textWithMnemonicSupplier;
   }
 
   public void restoreTextWithMnemonic(Presentation presentation) {
@@ -271,66 +264,111 @@ public final class Presentation implements Cloneable {
   }
 
   public @ActionDescription String getDescription() {
-    return myDescriptionSupplier.get();
+    return descriptionSupplier.get();
   }
 
   public void setDescription(@NotNull Supplier<@ActionDescription String> dynamicDescription) {
-    Supplier<String> oldDescription = myDescriptionSupplier;
-    myDescriptionSupplier = dynamicDescription;
-    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), myDescriptionSupplier.get());
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = dynamicDescription;
+      return;
+    }
+    Supplier<String> oldDescription = descriptionSupplier;
+    descriptionSupplier = dynamicDescription;
+    fireObjectPropertyChange(PROP_DESCRIPTION, oldDescription.get(), descriptionSupplier.get());
   }
 
   public void setDescription(@ActionDescription String description) {
-    Supplier<String> oldDescriptionSupplier = myDescriptionSupplier;
-    myDescriptionSupplier = () -> description;
+    if (myListeners.isEmpty()) {
+      descriptionSupplier = () -> description;
+      return;
+    }
+    Supplier<String> oldDescriptionSupplier = descriptionSupplier;
+    descriptionSupplier = () -> description;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
   }
 
-  public Icon getIcon() {
-    return myIcon;
+  public @Nullable Icon getIcon() {
+    Supplier<? extends Icon> icon = this.icon;
+    return icon == null ? null : icon.get();
+  }
+
+  public @Nullable Supplier<? extends @Nullable Icon> getIconSupplier() {
+    return icon;
+  }
+
+  @ApiStatus.Internal // do not expose
+  public void copyUnsetTemplateProperties(@NotNull Presentation other) {
+    if (icon == null) {
+      icon = other.icon;
+    }
+    if (Strings.isEmpty(getText()) && Strings.isNotEmpty(other.getText())) {
+      textWithMnemonicSupplier = other.textWithMnemonicSupplier;
+    }
+    if (Strings.isEmpty(descriptionSupplier.get()) && Strings.isNotEmpty(other.descriptionSupplier.get())) {
+      descriptionSupplier = other.descriptionSupplier;
+    }
+    myUserMap = myUserMap.plusAll(other.myUserMap);
   }
 
   public void setIcon(@Nullable Icon icon) {
-    Icon oldIcon = myIcon;
-    myIcon = icon;
-    fireObjectPropertyChange(PROP_ICON, oldIcon, myIcon);
+    if (myListeners.isEmpty()) {
+      this.icon = icon == null ? null : () -> icon;
+      return;
+    }
+
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
+    this.icon = () -> icon;
+    fireObjectPropertyChange(PROP_ICON, oldIcon, icon);
   }
 
-  public Icon getDisabledIcon() {
-    return myDisabledIcon;
+  public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    if (myListeners.isEmpty()) {
+      this.icon = icon;
+      return;
+    }
+
+    Icon oldIcon = this.icon == null ? null : this.icon.get();
+    this.icon = icon;
+    Icon newIcon = icon == null ? null : icon.get();
+    if (Objects.equals(oldIcon, newIcon)) return;
+    fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
+  }
+
+  public @Nullable Icon getDisabledIcon() {
+    return disabledIcon;
   }
 
   public void setDisabledIcon(@Nullable Icon icon) {
-    Icon oldDisabledIcon = myDisabledIcon;
-    myDisabledIcon = icon;
-    fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, myDisabledIcon);
+    Icon oldDisabledIcon = disabledIcon;
+    disabledIcon = icon;
+    fireObjectPropertyChange(PROP_DISABLED_ICON, oldDisabledIcon, disabledIcon);
   }
 
-  public Icon getHoveredIcon() {
-    return myHoveredIcon;
+  public @Nullable Icon getHoveredIcon() {
+    return hoveredIcon;
   }
 
-  public void setHoveredIcon(@Nullable final Icon hoveredIcon) {
-    Icon old = myHoveredIcon;
-    myHoveredIcon = hoveredIcon;
-    fireObjectPropertyChange(PROP_HOVERED_ICON, old, myHoveredIcon);
+  public void setHoveredIcon(@Nullable Icon hoveredIcon) {
+    Icon old = this.hoveredIcon;
+    this.hoveredIcon = hoveredIcon;
+    fireObjectPropertyChange(PROP_HOVERED_ICON, old, this.hoveredIcon);
   }
 
-  public Icon getSelectedIcon() {
-    return mySelectedIcon;
+  public @Nullable Icon getSelectedIcon() {
+    return selectedIcon;
   }
 
-  public void setSelectedIcon(Icon selectedIcon) {
-    Icon old = mySelectedIcon;
-    mySelectedIcon = selectedIcon;
-    fireObjectPropertyChange(PROP_SELECTED_ICON, old, mySelectedIcon);
+  public void setSelectedIcon(@Nullable Icon selectedIcon) {
+    Icon old = this.selectedIcon;
+    this.selectedIcon = selectedIcon;
+    fireObjectPropertyChange(PROP_SELECTED_ICON, old, this.selectedIcon);
   }
 
   /**
    * @return an extended key code for a mnemonic character, or {@code KeyEvent.VK_UNDEFINED} if mnemonic is not set
    */
   public int getMnemonic() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? 0 : textWithMnemonic.getMnemonicCode();
   }
 
@@ -338,7 +376,7 @@ public final class Presentation implements Cloneable {
    * @return a mnemonic index in the whole text, or {@code -1} if mnemonic is not set
    */
   public int getDisplayedMnemonicIndex() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
+    TextWithMnemonic textWithMnemonic = textWithMnemonicSupplier.get();
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();
   }
 
@@ -365,7 +403,7 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is a popup group or not.
    * A popup action group is shown as a submenu, a toolbar button that shows a popup when clicked, etc.
-   * A non-popup action group child actions are injected into the group parent group.
+   * A non-popup action group child actions are injected into the parent group.
    */
   public void setPopupGroup(boolean popup) {
     myFlags = BitUtil.set(myFlags, IS_POPUP_GROUP, popup);
@@ -379,8 +417,8 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is "performable" as an ordinary action or not.
    *
-   * @see com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU
-   * @see com.intellij.openapi.actionSystem.impl.ActionButton#HIDE_DROPDOWN_ICON
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#SUPPRESS_SUBMENU
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#HIDE_DROPDOWN_ICON
    */
   public void setPerformGroup(boolean performing) {
     myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);
@@ -410,6 +448,78 @@ public final class Presentation implements Cloneable {
    */
   public void setDisableGroupIfEmpty(boolean disable) {
     myFlags = BitUtil.set(myFlags, IS_DISABLE_GROUP_IF_EMPTY, disable);
+  }
+
+  /** @see Presentation#setApplicationScope(boolean) */
+  public boolean isApplicationScope() {
+    return BitUtil.isSet(myFlags, IS_APPLICATION_SCOPE);
+  }
+
+  /**
+   * For an action presentation sets whether the action is to be performed in the application scope.
+   * In the application scope, action activities can outlast a project where the action is performed.
+   * The default is {@code false}.
+   */
+  public void setApplicationScope(boolean applicationScope) {
+    myFlags = BitUtil.set(myFlags, IS_APPLICATION_SCOPE, applicationScope);
+  }
+
+  /**
+   * For an action presentation in a popup sets whether a popup is closed or kept open
+   * when the action is performed.
+   * <p>
+   * {@link com.intellij.openapi.actionSystem.ToggleAction} use {@link KeepPopupOnPerform#Always} by default.
+   * The behavior is controlled by the {@link UISettings#getKeepPopupsForToggles} property.
+   *
+   * @see KeepPopupOnPerform
+   * @see UISettings#getKeepPopupsForToggles
+   */
+  public void setKeepPopupOnPerform(@NotNull KeepPopupOnPerform mode) {
+    boolean requestedBit = mode == KeepPopupOnPerform.IfRequested || mode == KeepPopupOnPerform.Always;
+    boolean preferredBit = mode == KeepPopupOnPerform.IfPreferred || mode == KeepPopupOnPerform.Always;
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_REQUESTED, requestedBit);
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_PREFERRED, preferredBit);
+  }
+
+  /** @see Presentation#setKeepPopupOnPerform(KeepPopupOnPerform) */
+  public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
+    boolean requestedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED);
+    boolean preferedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED);
+    return requestedBit && preferedBit ? KeepPopupOnPerform.Always :
+           requestedBit ? KeepPopupOnPerform.IfRequested :
+           preferedBit ? KeepPopupOnPerform.IfPreferred :
+           KeepPopupOnPerform.Never;
+  }
+
+  /** @see Presentation#setPreferInjectedPsi(boolean) */
+  @ApiStatus.Internal
+  public boolean isPreferInjectedPsi() {
+    return BitUtil.isSet(myFlags, IS_PREFER_INJECTED_PSI);
+  }
+
+  /**
+   * For an action presentation sets whether the action prefers to be updated and performed with the injected {@code DataContext}.
+   * Injected data context returns {@link InjectedDataKeys} data for regular data keys, if present.
+   * The default is {@code false}.
+   */
+  @ApiStatus.Internal
+  public void setPreferInjectedPsi(boolean preferInjectedPsi) {
+    myFlags = BitUtil.set(myFlags, IS_PREFER_INJECTED_PSI, preferInjectedPsi);
+  }
+
+  /** @see Presentation#setEnabledInModalContext(boolean) */
+  @ApiStatus.Internal
+  public boolean isEnabledInModalContext() {
+    return BitUtil.isSet(myFlags, IS_ENABLED_IN_MODAL_CONTEXT);
+  }
+
+  /**
+   * For an action presentation sets whether the action can be performed in the modal context.
+   * The default is {@code false}.
+   */
+  @ApiStatus.Internal
+  public void setEnabledInModalContext(boolean enabledInModalContext) {
+    myFlags = BitUtil.set(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, enabledInModalContext);
   }
 
   /**
@@ -443,17 +553,26 @@ public final class Presentation implements Cloneable {
     setVisible(enabled);
   }
 
-  private void fireBooleanPropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    PropertyChangeSupport support = myChangeSupport;
-    if (oldValue != newValue && support != null) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
-    }
+  private void fireBooleanPropertyChange(@NotNull String propertyName, boolean oldValue, boolean newValue) {
+    if (myListeners.isEmpty() || oldValue == newValue) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
   }
 
-  private void fireObjectPropertyChange(String propertyName, Object oldValue, Object newValue) {
-    PropertyChangeSupport support = myChangeSupport;
-    if (support != null && !Objects.equals(oldValue, newValue)) {
-      support.firePropertyChange(propertyName, oldValue, newValue);
+  private void fireObjectPropertyChange(@NotNull String propertyName, Object oldValue, Object newValue) {
+    if (myListeners.isEmpty() || Objects.equals(oldValue, newValue)) return;
+    PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, oldValue, newValue);
+    doFirePropertyChange(event, myListeners);
+  }
+
+  private static void doFirePropertyChange(@NotNull PropertyChangeEvent event,
+                                           @NotNull FList<PropertyChangeListener> listeners) {
+    for (PropertyChangeListener listener : listeners.size() == 1 ? listeners : ContainerUtil.reverse(listeners)) {
+      if (listener instanceof PropertyChangeListenerProxy p &&
+          !event.getPropertyName().equals(p.getPropertyName())) {
+        continue;
+      }
+      listener.propertyChange(event);
     }
   }
 
@@ -468,7 +587,7 @@ public final class Presentation implements Cloneable {
     try {
       Presentation clone = (Presentation)super.clone();
       clone.myFlags = BitUtil.set(clone.myFlags, IS_TEMPLATE, false);
-      clone.myChangeSupport = null;
+      clone.myListeners = FList.emptyList();
       return clone;
     }
     catch (CloneNotSupportedException e) {
@@ -492,7 +611,10 @@ public final class Presentation implements Cloneable {
                         @Nullable Component customComponent,
                         boolean forceNullComponent,
                         boolean allFlags) {
-    if (presentation == this) return;
+    if (presentation == this) {
+      return;
+    }
+
     boolean oldEnabled = isEnabled(), oldVisible = isVisible();
     if (allFlags) {
       myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, isTemplate());
@@ -505,12 +627,13 @@ public final class Presentation implements Cloneable {
     fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, isVisible());
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
-    setDescription(presentation.myDescriptionSupplier);
-    setIcon(presentation.getIcon());
+    setDescription(presentation.descriptionSupplier);
+
+    setIconSupplier(presentation.icon);
+
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
-    setWeight(presentation.getWeight());
 
     if (!myUserMap.equals(presentation.myUserMap)) {
       Set<String> allKeys = new HashSet<>(presentation.myUserMap.keySet());
@@ -528,8 +651,7 @@ public final class Presentation implements Cloneable {
     }
   }
 
-  @Nullable
-  public <T> T getClientProperty(@NotNull Key<T> key) {
+  public @Nullable <T> T getClientProperty(@NotNull Key<T> key) {
     //noinspection unchecked
     return (T)myUserMap.get(key.toString());
   }
@@ -540,8 +662,7 @@ public final class Presentation implements Cloneable {
 
   /** @deprecated Use {@link #getClientProperty(Key)} instead */
   @Deprecated
-  @Nullable
-  public Object getClientProperty(@NonNls @NotNull String key) {
+  public @Nullable Object getClientProperty(@NonNls @NotNull String key) {
     return myUserMap.get(key);
   }
 
@@ -560,37 +681,52 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(key, oldValue, value);
   }
 
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
   public double getWeight() {
-    return myWeight;
+    return DEFAULT_WEIGHT;
   }
 
-  /**
-   * Some action groups (like 'New...') may filter out actions with non-highest priority.
-   *
-   * @param weight please use {@link #HIGHER_WEIGHT} or {@link #EVEN_HIGHER_WEIGHT}
-   */
-  public void setWeight(double weight) {
-    myWeight = weight;
+  /** @deprecated The feature is dropped. See {@link com.intellij.ide.actions.WeighingActionGroup} */
+  @Deprecated(forRemoval = true)
+  public void setWeight(double ignore) {
   }
 
   public boolean isEnabledAndVisible() {
     return isEnabled() && isVisible();
   }
 
-  /**
-   * Sets if multiple actions or toggles can be performed in the same menu or popup.
-   */
-  public void setMultiChoice(boolean b) {
-    myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
-  }
-
-  public boolean isMultiChoice() {
-    return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
-  }
-
-  @Nls
   @Override
-  public String toString() {
-    return getText() + " (" + myDescriptionSupplier.get() + ")";
+  public @NonNls String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(getText()).append(" (").append(descriptionSupplier.get()).append(")");
+    sb.append(", flags=[");
+    int start = sb.length();
+    appendFlag(myFlags, IS_TEMPLATE, sb, start, "template");
+    appendFlag(myFlags, IS_ENABLED, sb, start, "enabled");
+    appendFlag(myFlags, IS_VISIBLE, sb, start, "visible");
+    if (BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED) &&
+        BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED)) {
+      appendFlag(1, 1, sb, start, "keep_popup_always");
+    }
+    else {
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_REQUESTED, sb, start, "keep_popup_if_requested");
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_PREFERRED, sb, start, "keep_popup_if_preferred");
+    }
+    appendFlag(myFlags, IS_POPUP_GROUP, sb, start, "popup_group");
+    appendFlag(myFlags, IS_PERFORM_GROUP, sb, start, "perform_group");
+    appendFlag(myFlags, IS_HIDE_GROUP_IF_EMPTY, sb, start, "hide_group_if_empty");
+    appendFlag(myFlags, IS_DISABLE_GROUP_IF_EMPTY, sb, start, "disable_group_if_empty");
+    appendFlag(myFlags, IS_APPLICATION_SCOPE, sb, start, "application_scope");
+    appendFlag(myFlags, IS_PREFER_INJECTED_PSI, sb, start, "prefer_injected_psi");
+    appendFlag(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, sb, start, "enabled_in_modal_context");
+    sb.append("]");
+    return sb.toString();
+  }
+
+  private static void appendFlag(int flags, int mask, @NotNull StringBuilder sb, int start, @NotNull String maskName) {
+    if (!BitUtil.isSet(flags, mask)) return;
+    if (sb.length() > start) sb.append(", ");
+    sb.append(maskName);
   }
 }

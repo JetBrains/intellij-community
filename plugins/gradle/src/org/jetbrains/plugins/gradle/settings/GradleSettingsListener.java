@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
@@ -12,10 +12,12 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are not obliged to be thread-safe.
  */
 public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
+
+  @Topic.ProjectLevel
   Topic<GradleSettingsListener> TOPIC = new Topic<>(GradleSettingsListener.class, Topic.BroadcastDirection.NONE);
 
   /**
-   * Is expected to be invoked when gradle home path is changed.
+   * Is expected to be invoked when a gradle home path is changed.
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
@@ -23,21 +25,21 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param newPath            new path (if any)
    * @param linkedProjectPath  target linked gradle project path
    */
-  void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath);
+  default void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath) { }
 
   /**
-   * Is expected to be invoked when 'gradle distribution type' setting is changed (generally this
-   * switches tooling api to different gradle version).
+   * Is expected to be invoked when the "gradle distribution type" setting is changed (generally this
+   * switches tooling api to a different gradle version).
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
    * @param currentValue       current value
    * @param linkedProjectPath  target linked gradle project path
    */
-  void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath);
+  default void onGradleDistributionTypeChange(DistributionType currentValue, @NotNull String linkedProjectPath) { }
 
   /**
-   * Is expected to be invoked when service directory path is changed.
+   * Is expected to be invoked when a service directory path is changed.
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
@@ -45,7 +47,15 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param newPath  new path (if any)
    * @see GradleSettings#getServiceDirectoryPath()
    */
-  void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath);
+  default void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { }
+
+  /**
+   * Is expected to be called when gradle JVM is changed by end-user.
+   *
+   * @param oldGradleJvm  old gradleJvm (if any)
+   * @param newGradleJvm  new gradleJvm (if any)
+   */
+  default void onGradleJvmChange(@Nullable String oldGradleJvm, @Nullable String newGradleJvm, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be called when gradle JVM options are changed by end-user.
@@ -53,7 +63,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param oldOptions  old options (if any)
    * @param newOptions  new option (if any)
    */
-  void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions);
+  default void onGradleVmOptionsChange(@Nullable String oldOptions, @Nullable String newOptions) { }
 
   /**
    * Is expected to be called when build delegation setting is changed by end-user.
@@ -61,7 +71,7 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param delegatedBuild    current value
    * @param linkedProjectPath target linked gradle project path
    */
-  void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath);
+  default void onBuildDelegationChange(boolean delegatedBuild, @NotNull String linkedProjectPath) { }
 
   /**
    * Is expected to be called when test runner setting is changed by end-user.
@@ -69,5 +79,5 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener<G
    * @param currentTestRunner current value
    * @param linkedProjectPath target linked gradle project path
    */
-  void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath);
+  default void onTestRunnerChange(@NotNull TestRunner currentTestRunner, @NotNull String linkedProjectPath) { }
 }

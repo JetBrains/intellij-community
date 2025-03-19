@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.diagnostic.CoreAttachmentFactory;
@@ -8,10 +8,12 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 
-public class AlignmentHelper {
+@ApiStatus.Internal
+public final class AlignmentHelper {
   private static final Logger LOG = Logger.getInstance(AlignmentHelper.class);
 
   private static final Map<Alignment.Anchor, BlockAlignmentProcessor> ALIGNMENT_PROCESSORS = new EnumMap<>(Alignment.Anchor.class);
@@ -51,7 +53,7 @@ public class AlignmentHelper {
   private final Map<LeafBlockWrapper, Set<LeafBlockWrapper>> myBackwardShiftedAlignedBlocks = new HashMap<>();
   private final Map<AbstractBlockWrapper, Set<AbstractBlockWrapper>> myAlignmentMappings = new HashMap<>();
 
-  public AlignmentHelper(Document document, MultiMap<Alignment, Block> blocksToAlign, BlockIndentOptions options) {
+  AlignmentHelper(Document document, MultiMap<Alignment, Block> blocksToAlign, BlockIndentOptions options) {
     myDocument = document;
     myBlockIndentOptions = options;
     int totalBlocks = blocksToAlign.values().size();
@@ -62,7 +64,7 @@ public class AlignmentHelper {
     ASTNode node = context.targetBlock().getNode();
     Language language = node != null ? node.getPsi().getLanguage() : null;
     String message = (language != null ? language.getDisplayName() + ": " : "") + "Can't align block " + context.targetBlock();
-    LOG.error(message, new Throwable(), CoreAttachmentFactory.createAttachment(context.document()));
+    LOG.error(message, new Throwable(message), CoreAttachmentFactory.createAttachment(context.document()));
   }
 
   LeafBlockWrapper applyAlignment(final AlignmentImpl alignment, final LeafBlockWrapper currentBlock) {

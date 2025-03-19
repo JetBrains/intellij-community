@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.java.frontback.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontback-psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontback-psi",
+  module_name = "intellij.java.frontback.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+  ],
+  exports = ["//platform/core-api:core"],
+  runtime_deps = [":frontback-psi_resources"]
+)
+### auto-generated section `build intellij.java.frontback.psi` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
 import com.intellij.openapi.application.runWriteAction
@@ -14,12 +14,16 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IndexableSetContributor
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
+import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -138,7 +142,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     // ClassFile.java and SourceFile.java are iterated by only one of the "file iterators"
     // So they must be skipped when iterating for the second time.
     assertIndexableFiles(expectedNumberOfSkippedFiles = 2,
-      expectedFiles = arrayOf(classFile.file, sourceFile.file, firstLibraryFile.file))
+                         expectedFiles = arrayOf(classFile.file, sourceFile.file, firstLibraryFile.file))
   }
 
   @Test
@@ -202,6 +206,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
         setOf(additionalRootsFile)
     }
     maskIndexableSetContributors(contributor)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
     assertIndexableFiles(additionalProjectRootJava.file, additionalRootJava.file)
     assertIdIndexContainsWord(additionalRootJava.file, "AdditionalRoot")
     assertIdIndexContainsWord(additionalProjectRootJava.file, "AdditionalProjectRoot")
@@ -316,6 +321,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       }
     }
     ModuleRootModificationUtil.addContentRoot(module, contentRootDirSpec.file.path)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertFilesInIndexableFilesFilter(contentFile, sourceFile)
 
@@ -328,6 +334,7 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
       sourceFile2 = file("SourceFile2.java", "class SourceFile2 {}")
     }
     ModuleRootModificationUtil.addContentRoot(module, secondContentRoot.path)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     assertFilesInIndexableFilesFilter(contentFile, sourceFile, contentFile2, sourceFile2)
   }
@@ -385,6 +392,8 @@ class IndexableFilesRegularTest : IndexableFilesBaseTest() {
     }
     val fileBasedIndexEx = FileBasedIndex.getInstance() as FileBasedIndexEx
     val providers = fileBasedIndexEx.getIndexableFilesProviders(project)
-    UsefulTestCase.assertSize(1, providers)
+
+    assertSameElements(providers.filter { it.origin is LibraryOrigin }.map { it.origin },
+                       IndexableEntityProviderMethods.createLibraryIterators("libraryName", project).map { it.origin })
   }
 }

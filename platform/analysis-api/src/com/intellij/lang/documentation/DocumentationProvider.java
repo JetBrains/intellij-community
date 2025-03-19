@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -66,8 +67,7 @@ public interface DocumentationProvider {
    * @return the documentation to show, or {@code null} if the provider can't provide any documentation for this element. Documentation can contain
    * HTML markup. If HTML special characters need to be shown in popup, they should be properly escaped.
    */
-  @Nullable
-  default @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  default @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
@@ -83,8 +83,7 @@ public interface DocumentationProvider {
    * For {@link ExternalDocumentationProvider}, first URL, yielding non-empty result in
    * {@link ExternalDocumentationProvider#fetchExternalDocumentation(Project, PsiElement, List, boolean)} will be used.
    */
-  @Nullable
-  default List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
+  default @Unmodifiable @Nullable List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     return null;
   }
 
@@ -111,8 +110,7 @@ public interface DocumentationProvider {
    * @return target element's documentation, or {@code null} if provider is unable to generate documentation
    * for the given element
    */
-  @Nullable
-  default @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nullable @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
     return null;
   }
 
@@ -122,8 +120,7 @@ public interface DocumentationProvider {
    * At the moment it's only invoked to get initial on-hover documentation. If user navigates any link in that documentation,
    * {@link #generateDoc(PsiElement, PsiElement)} will be used to fetch corresponding content.
    */
-  @Nullable
-  default @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
+  default @Nullable @Nls String generateHoverDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     return generateDoc(element, originalElement);
   }
 
@@ -160,8 +157,7 @@ public interface DocumentationProvider {
     return comment == null || !range.equals(comment.getTextRange()) ? null : comment;
   }
 
-  @Nullable
-  default PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  default @Nullable PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null;
   }
 
@@ -175,8 +171,7 @@ public interface DocumentationProvider {
    * @return the navigation target, or {@code null} if the link couldn't be resolved.
    * @see DocumentationManagerUtil#createHyperlink(StringBuilder, String, String, boolean)
    */
-  @Nullable
-  default PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+  default @Nullable PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
   }
 
@@ -191,14 +186,28 @@ public interface DocumentationProvider {
    * @return target PSI element to show documentation for, or {@code null} if it should be determined by standard platform's logic (default
    * behaviour)
    */
-  @Nullable
-  default PsiElement getCustomDocumentationElement(@NotNull final Editor editor,
-                                                   @NotNull final PsiFile file,
+  default @Nullable PsiElement getCustomDocumentationElement(final @NotNull Editor editor,
+                                                   final @NotNull PsiFile file,
                                                    @Nullable PsiElement contextElement,
                                                    int targetOffset) {
     //noinspection deprecation
     return (this instanceof DocumentationProviderEx)
            ? ((DocumentationProviderEx)this).getCustomDocumentationElement(editor, file, contextElement)
            : null;
+  }
+
+  default @Nullable DocumentationParts getDocumentationParts(@NotNull PsiElement element, PsiElement originalElement) {
+    String doc = generateDoc(element, originalElement);
+    return doc == null ? null : new DocumentationParts(doc, null);
+  }
+
+  class DocumentationParts {
+    public final @Nls String doc;
+    public final String definitionDetails;
+
+    public DocumentationParts(@Nls String doc, String definitionDetails) {
+      this.doc = doc;
+      this.definitionDetails = definitionDetails;
+    }
   }
 }

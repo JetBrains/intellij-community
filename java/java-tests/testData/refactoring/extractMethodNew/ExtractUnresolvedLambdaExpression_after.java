@@ -8,8 +8,7 @@ class Test {
     b(newMethod());
   }
 
-    @NotNull
-    private Supplier newMethod() {
+    private @NotNull Supplier newMethod() {
         return (s) -> {
             System.out.println(s);
         };

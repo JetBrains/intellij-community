@@ -1,10 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AsyncResult;
@@ -34,6 +31,10 @@ public abstract class DataManager {
   }
 
   private static final String CLIENT_PROPERTY_DATA_PROVIDER = "DataProvider";
+
+  @ApiStatus.Internal
+  protected DataManager() {
+  }
 
   /**
    * @return {@link DataContext} constructed by the currently focused component
@@ -75,8 +76,14 @@ public abstract class DataManager {
   /**
    * Returns data from the provided data context customized with the provided data provider.
    */
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   public abstract @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider);
+
+  /**
+   * Use {@link com.intellij.openapi.actionSystem.CustomizedDataContext#customize} instead
+   */
+  @ApiStatus.Internal
+  public abstract @NotNull DataContext customizeDataContext(@NotNull DataContext dataContext, @NotNull Object provider);
 
   /**
    * Save doesn't work during fast action update to prevent caching of yet invalid data
@@ -94,8 +101,20 @@ public abstract class DataManager {
    */
   public abstract @Nullable <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
+  /**
+   * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} on a component directly
+   * and use separate {@link com.intellij.openapi.actionSystem.UiDataRule} to add specific UI data.
+   * <p>
+   * Use {@link UiDataProvider#wrapComponent(JComponent, UiDataProvider)} for simple cases.
+   * Use {@link EdtNoGetDataProvider} as a temporary type-safe and performant solution.
+   */
+  @ApiStatus.Obsolete
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
-    if (component instanceof DataProvider) {
+    if (component instanceof UiDataProvider) {
+      LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing UiDataProvider. " +
+                             "The key will be ignored. Component: %s", component), new Throwable());
+    }
+    else if (component instanceof DataProvider) {
       LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing DataProvider. " +
                              "The key will be ignored. Component: %s", component), new Throwable());
     }
@@ -107,10 +126,14 @@ public abstract class DataManager {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
+  /** Most components now implement {@link UiDataProvider} */
+  @ApiStatus.Obsolete
   public static @Nullable DataProvider getDataProvider(@NotNull JComponent component) {
     return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
   }
 
+  /** Most components now implement {@link UiDataProvider} */
+  @ApiStatus.Obsolete
   public static void removeDataProvider(@NotNull JComponent component) {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, null);
   }

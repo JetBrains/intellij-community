@@ -1,11 +1,11 @@
 package sample
 
-expect class <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'")!>Sample<!>() {
-    fun <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'")!>checkMe<!>(): Int
+expect class <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js); (text=jvm)]")!>Sample<!>() {
+    fun <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js); (text=jvm)]")!>checkMe<!>(): Int
 }
 
-expect object <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'")!>Platform<!> {
-    val <!LINE_MARKER("descr='Has actuals in [jvm, js] modules'")!>name<!>: String
+expect object <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js); (text=jvm)]")!>Platform<!> {
+    val <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js); (text=jvm)]")!>name<!>: String
 }
 
 fun hello(): String = "Hello from ${Platform.name}"

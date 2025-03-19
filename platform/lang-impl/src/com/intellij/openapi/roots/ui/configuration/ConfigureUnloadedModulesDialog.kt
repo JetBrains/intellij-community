@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.impl.ModuleGroup
 import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.module.ModuleManager
@@ -32,6 +33,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -42,7 +44,9 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.math.max
 
+@ApiStatus.Internal
 class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
   private val unloadedModulesTree = ModuleDescriptionsTree(project)
@@ -116,7 +120,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     statusLabel.text = XmlStringUtil.wrapInHtml(ProjectBundle.message("module.unloaded.explanation"))
     mainPanel.add(statusLabel, BorderLayout.SOUTH)
     //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
-    mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
+    mainPanel.preferredSize = Dimension(max(treesPanel.preferredSize.width, statusLabel.preferredSize.width * 2 / 5), treesPanel.preferredSize.height)
     return mainPanel
   }
 
@@ -201,7 +205,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
 
   override fun doOKAction() {
     val unloadedModuleNames = unloadedModulesTree.getAllModules().map { it.name }
-    project.coroutineScope.launch {
+    (project as ComponentManagerEx).getCoroutineScope().launch {
       ModuleManager.getInstance(project).setUnloadedModules(unloadedModuleNames)
     }
     super.doOKAction()
@@ -226,7 +230,7 @@ private class ModuleDescriptionsTree(project: Project) {
         ?.mapNotNull { it.lastPathComponent }
         ?.filterIsInstance<ModuleDescriptionTreeNode>()
         ?.flatMap { getAllModulesUnder(it) }
-        ?: emptyList<ModuleDescription>()
+        ?: emptyList()
 
   fun getAllModules() = getAllModulesUnder(root)
 
@@ -244,12 +248,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun getAllModulesUnder(node: ModuleDescriptionTreeNode): List<ModuleDescription> {
     val modules = ArrayList<ModuleDescription>()
-    TreeUtil.traverse(node, { node ->
+    TreeUtil.traverse(node) { node ->
       if (node is ModuleDescriptionNode) {
         modules.add(node.moduleDescription)
       }
       return@traverse true
-    })
+    }
     return modules
   }
 
@@ -268,7 +272,7 @@ private class ModuleDescriptionsTree(project: Project) {
   }
 
   fun removeModules(modules: Collection<ModuleDescription>) {
-    val names = modules.mapTo(HashSet<String>()) { it.name }
+    val names = modules.mapTo(HashSet()) { it.name }
     val toRemove = findNodes { it.moduleDescription.name in names }
     for (node in toRemove) {
       helper.removeNode(node, root, model)
@@ -278,12 +282,12 @@ private class ModuleDescriptionsTree(project: Project) {
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {
     val result = ArrayList<ModuleDescriptionNode>()
-    TreeUtil.traverse(root, { node ->
+    TreeUtil.traverse(root) { node ->
       if (node is ModuleDescriptionNode && condition(node)) {
         result.add(node)
       }
       return@traverse true
-    })
+    }
     return result
   }
 

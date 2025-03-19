@@ -44,9 +44,8 @@ public final class GitIgnoreLanguage extends IgnoreLanguage {
    *
    * @return {@link GitIgnoreFileType} instance
    */
-  @NotNull
   @Override
-  public IgnoreFileType getFileType() {
+  public @NotNull IgnoreFileType getFileType() {
     return GitIgnoreFileType.INSTANCE;
   }
 }

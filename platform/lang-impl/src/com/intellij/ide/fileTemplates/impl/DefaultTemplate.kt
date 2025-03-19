@@ -1,59 +1,42 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl
 
-import com.intellij.DynamicBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.text.Strings
 import com.intellij.reference.SoftReference
-import com.intellij.util.ResourceUtil
 import java.io.IOException
 import java.lang.ref.Reference
-import java.net.MalformedURLException
-import java.net.URL
-import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import java.util.function.Function
-import java.util.function.Supplier
+import kotlin.io.path.invariantSeparatorsPathString
 
-class DefaultTemplate constructor(val name: String,
-                                  val extension: String,
-                                  private val textSupplier: Supplier<String>,
-                                  private val descriptionLoader: Function<String, String>?,
-                                  private val descriptionPath: String?) {
+class DefaultTemplate constructor(
+  val name: String,
+  val extension: String,
+  private val textLoader: Function<String, String?>,
+  private val descriptionLoader: Function<String, String?>?,
+  private val descriptionPath: String?,
+  private val templatePath: Path,
+  @JvmField internal val pluginDescriptor: PluginDescriptor,
+) {
   private var text: Reference<String?>? = null
 
   //NON-NLS
   private var descriptionText: Reference<String>? = null
-
-  @Deprecated("Use {@link #DefaultTemplate(String, String, Supplier, Function, String)}")
-  constructor(name: String, extension: String, templateUrl: URL, descriptionUrl: URL?) : this(name, extension, Supplier<String> {
-    try {
-      ResourceUtil.loadText(templateUrl.openStream())
-    }
-    catch (e: IOException) {
-      logger<DefaultTemplate>().error(e)
-      ""
-    }
-  }, if (descriptionUrl == null) null else Function {
-    try {
-      ResourceUtil.loadText(descriptionUrl.openStream())
-    }
-    catch (e: IOException) {
-      logger<DefaultTemplate>().error(e)
-      ""
-    }
-  }, null)
 
   val qualifiedName: String
     get() = FileTemplateBase.getQualifiedName(name, this.extension)
 
   fun getText(): String {
     var text = SoftReference.dereference(this.text)
+    if (text != null) return text
+    text = textLoader.apply(templatePath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
+    this.text = java.lang.ref.SoftReference(text)
     if (text == null) {
-      text = StringUtil.convertLineSeparators(textSupplier.get())
-      this.text = java.lang.ref.SoftReference(text)
+      logger<DefaultTemplate>().error("Cannot find file template by path: $templatePath")
     }
-    return text
+    return text ?: ""
   }
 
   fun getDescriptionText(): String {
@@ -66,38 +49,29 @@ class DefaultTemplate constructor(val name: String,
       return text
     }
 
+    val fullPath = descriptionPath?.let { Path.of(FileTemplatesLoader.TEMPLATES_DIR).resolve(it) }
     try {
-      val langBundleLoader = DynamicBundle.findLanguageBundle()?.pluginDescriptor?.pluginClassLoader
-      if (langBundleLoader != null && descriptionPath != null) {
-        text = ResourceUtil.getResourceAsBytes("${FileTemplatesLoader.TEMPLATES_DIR}/$descriptionPath", langBundleLoader)
-          ?.toString(StandardCharsets.UTF_8)
+      if (fullPath != null) {
+        text = descriptionLoader.apply(fullPath.invariantSeparatorsPathString)?.let { Strings.convertLineSeparators(it) }
       }
 
       if (text == null) {
         // descriptionPath is null if deprecated constructor is used - in this case descriptionPath doesn't matter
-        text = Strings.convertLineSeparators(descriptionLoader.apply(descriptionPath ?: ""))
+        text = descriptionLoader.apply(fullPath?.invariantSeparatorsPathString ?: "")?.let { Strings.convertLineSeparators(it) }
       }
     }
     catch (e: IOException) {
-      logger<DefaultTemplate>().error(e)
-      text = ""
+      logger<DefaultTemplate>().info(e)
     }
-
     descriptionText = java.lang.ref.SoftReference(text)
-    return text!!
+
+    if (text == null) {
+      logger<DefaultTemplate>().error("Cannot find file by path: $fullPath")
+      return "Unexpected error occurred"
+    }
+    return text
   }
 
-  // the only external usage - https://github.com/wrdv/testme-idea/blob/8e314aea969619f43f0c6bb17f53f1d95b1072be/src/main/java/com/weirddev/testme/intellij/ui/template/FTManager.java#L200
-  @Deprecated("Do not use.")
-  fun getTemplateURL(): URL {
-    try {
-      return URL("https://not.relevant")
-    }
-    catch (e: MalformedURLException) {
-      throw RuntimeException(e)
-    }
-  }
-
-  override fun toString() = textSupplier.toString()
+  override fun toString(): String = "$name: $extension ($templatePath)"
 }
 

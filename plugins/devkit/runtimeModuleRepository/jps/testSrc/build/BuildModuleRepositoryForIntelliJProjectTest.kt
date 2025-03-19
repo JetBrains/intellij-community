@@ -21,6 +21,7 @@ class BuildModuleRepositoryForIntelliJProjectTest : JpsBuildTestCase() {
     if (!Files.exists(ultimateRoot.resolve(".idea"))) return
     loadProject(ultimateRoot.pathString)
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
-    doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget)).assertSuccessful()
+    val buildResult = doBuild(CompileScopeTestBuilder.make().targetTypes(RuntimeModuleRepositoryTarget))
+    buildResult.assertSuccessful()
   }
 }

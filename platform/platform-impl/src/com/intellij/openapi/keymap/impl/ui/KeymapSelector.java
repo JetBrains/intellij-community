@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
@@ -15,6 +15,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,27 +56,23 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     });
   }
 
-  @NotNull
-  public KeymapSchemeManager getManager() {
+  public @NotNull KeymapSchemeManager getManager() {
     if (manager == null) manager = new KeymapSchemeManager(this);
     return manager;
   }
 
-  @NotNull
   @Override
-  public SchemesModel<KeymapScheme> getModel() {
+  public @NotNull SchemesModel<KeymapScheme> getModel() {
     return getManager();
   }
 
-  @Nullable
   @Override
-  protected String getComboBoxLabel() {
+  protected @Nullable String getComboBoxLabel() {
     return null;
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<KeymapScheme> createSchemeActions() {
+  protected @NotNull AbstractSchemeActions<KeymapScheme> createSchemeActions() {
     return getManager();
   }
 
@@ -121,12 +118,12 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
           settings.select(settings.find("preferences.pluginManager"), "/tag:Keymap");
         }
       });
-    Box row = new Box(BoxLayout.X_AXIS);
+    JBBox row = new JBBox(BoxLayout.X_AXIS);
     row.add(Box.createRigidArea(new JBDimension(2, 0)));
     row.add(link);
     row.add(Box.createHorizontalGlue());
 
-    Box box = new Box(BoxLayout.Y_AXIS);
+    JBBox box = new JBBox(BoxLayout.Y_AXIS);
     box.add(Box.createRigidArea(new JBDimension(0, 5)));
     box.add(row);
     box.add(Box.createRigidArea(new JBDimension(0, 12)));

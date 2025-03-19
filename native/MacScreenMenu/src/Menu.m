@@ -8,8 +8,9 @@ static jclass sjc_Menu = NULL;
 // Menu (NSMenu wrapper)
 //
 
-static NSDate * sLastUpdate = nil; // used only in AppKit
-static bool sUpdateInProgress = false; // used only in AppKit
+static NSTimeInterval sLastUpdate = -1; // Used only in AppKit.
+static bool sUpdateInProgress = false; // Used only in AppKit.
+static const int RELAX_AFTER_UPDATE_MS = 500;
 
 @implementation Menu
 
@@ -60,9 +61,7 @@ static bool sUpdateInProgress = false; // used only in AppKit
     DECLARE_METHOD(jm_Menu_menuNeedsUpdate, sjc_Menu, "menuNeedsUpdate", "()V");
 
     @try {
-        if (sLastUpdate != nil)
-            [sLastUpdate release];
-        sLastUpdate = [[NSDate date] retain];
+        sLastUpdate = [[NSDate date] timeIntervalSinceReferenceDate];
         sUpdateInProgress = true;
         (*env)->CallVoidMethod(env, javaPeer, jm_Menu_menuNeedsUpdate);
     }
@@ -263,7 +262,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
 @public
     Menu * menu;
     jsize length;
-    long * newItemsPtrs;
+    jlong * newItemsPtrs;
 }
 
 - (id)initWithNewItems:(jlong)menuObj items:(jlongArray)newItems jniEnv:(JNIEnv *)env;
@@ -287,7 +286,7 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
             length = (*env)->GetArrayLength(env, newItems);
             if (length > 0) {
                 size_t lengthInBytes = length * sizeof(long);
-                newItemsPtrs = (long *) malloc(lengthInBytes);
+                newItemsPtrs = (jlong *) malloc(lengthInBytes);
                 jlong *ptrs = (*env)->GetLongArrayElements(env, newItems, NULL);
                 memcpy(newItemsPtrs, ptrs, lengthInBytes);
                 (*env)->ReleaseLongArrayElements(env, newItems, ptrs, 0);
@@ -322,11 +321,11 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeInsertItem
         if (sUpdateInProgress) {
             // Don't change hierachy when update in progress
             defer = true;
-        } else if (sLastUpdate != nil) {
-            NSTimeInterval delta = [[NSDate date] timeIntervalSinceDate:sLastUpdate];
+        } else if (sLastUpdate > 0) {
+            NSTimeInterval delta = [[NSDate date] timeIntervalSinceReferenceDate] - sLastUpdate;
             long deltaMs = delta*1000;
-            if (deltaMs < 500) {
-                // Don't change hierachy in 500 ms after last update
+            if (deltaMs < RELAX_AFTER_UPDATE_MS) {
+                // Don't change hierachy immediately after last update
                 defer = true;
             }
         }

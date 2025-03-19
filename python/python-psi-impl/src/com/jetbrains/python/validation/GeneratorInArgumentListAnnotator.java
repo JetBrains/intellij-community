@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.PyGeneratorExpression;
 import org.jetbrains.annotations.NotNull;
 
 
-public class GeneratorInArgumentListAnnotator extends PyAnnotator {
+public final class GeneratorInArgumentListAnnotator extends PyAnnotator {
   @Override
   public void visitPyArgumentList(@NotNull PyArgumentList node) {
     if (node.getArguments().length > 1) {

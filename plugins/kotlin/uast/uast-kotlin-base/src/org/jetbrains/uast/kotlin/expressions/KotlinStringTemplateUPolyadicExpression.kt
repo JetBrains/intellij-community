@@ -19,15 +19,20 @@ class KotlinStringTemplateUPolyadicExpression(
     KotlinUElementWithType,
     KotlinEvaluatableUElement,
     UInjectionHost {
-    override val operands: List<UExpression> by lz {
-        sourcePsi.entries.map {
-            baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
-                it,
-                this,
-                DEFAULT_EXPRESSION_TYPES_LIST
-            )!!
-        }.takeIf { it.isNotEmpty() } ?: listOf(KotlinStringULiteralExpression(sourcePsi, this, ""))
-    }
+
+    private val operandsPart = UastLazyPart<List<UExpression>>()
+
+    override val operands: List<UExpression>
+        get() = operandsPart.getOrBuild {
+            sourcePsi.entries.map {
+                baseResolveProviderService.baseKotlinConverter.convertStringTemplateEntry(
+                    it,
+                    this,
+                    DEFAULT_EXPRESSION_TYPES_LIST
+                )!!
+            }.takeIf { it.isNotEmpty() } ?: listOf(KotlinStringULiteralExpression(sourcePsi, this, ""))
+        }
+
     override val operator = UastBinaryOperator.PLUS
 
     override val psiLanguageInjectionHost: PsiLanguageInjectionHost get() = sourcePsi
@@ -41,12 +46,19 @@ class KotlinStringTemplateUPolyadicExpression(
         val dotQualifiedExpression = uParent.sourcePsi as? KtDotQualifiedExpression
         if (dotQualifiedExpression != null) {
             val callExpression = dotQualifiedExpression.selectorExpression as? KtCallExpression ?: return this
-            val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
-            if (resolvedFunctionName == "trimIndent" || resolvedFunctionName == "trimMargin")
-                return uParent
+            if (KotlinUFunctionCallExpression.methodNameCanBeOneOf(callExpression, TRIM_METHOD_NAMES)) {
+                val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
+                if (resolvedFunctionName in TRIM_METHOD_NAMES)
+                    return uParent
+            }
         }
+
         if (uParent is UPolyadicExpression && uParent.operator == UastBinaryOperator.PLUS)
             return uParent
+
         return super.getStringRoomExpression()
     }
 }
+
+
+private val TRIM_METHOD_NAMES: List<String> = listOf("trimIndent", "trimMargin")

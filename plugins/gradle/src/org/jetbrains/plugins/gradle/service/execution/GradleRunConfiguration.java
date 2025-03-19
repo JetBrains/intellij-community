@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.Executor;
@@ -39,6 +39,7 @@ public class GradleRunConfiguration
 
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
   public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
+  public static final Key<Boolean> IS_TEST_TASK_RERUN_KEY = Key.create("IS_TEST_TASK_RERUN");
 
   private boolean isDebugAllEnabled = false;
   private boolean isRunAsTest = false;
@@ -65,6 +66,7 @@ public class GradleRunConfiguration
   public void setRunAsTest(boolean runAsTest) {
     isRunAsTest = runAsTest;
     putUserData(RUN_AS_TEST_KEY, runAsTest);
+    putUserData(IS_TEST_TASK_RERUN_KEY, runAsTest);
   }
 
   public @NotNull String getRawCommandLine() {
@@ -116,9 +118,8 @@ public class GradleRunConfiguration
     writeExternalBoolean(element, RUN_AS_TEST_NAME, isRunAsTest());
   }
 
-  @NotNull
   @Override
-  public SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
+  public @NotNull SMTRunnerConsoleProperties createTestConsoleProperties(@NotNull Executor executor) {
     return GradleIdeManager.getInstance().createTestConsoleProperties(getProject(), executor, this);
   }
 

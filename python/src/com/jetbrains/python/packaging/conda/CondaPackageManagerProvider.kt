@@ -3,8 +3,10 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import org.jetbrains.annotations.ApiStatus
@@ -14,7 +16,14 @@ class CondaPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
     val additionalData = sdk.sdkAdditionalData as PythonSdkAdditionalData
 
-    return if (additionalData.flavorAndData.data is PyCondaFlavorData) CondaPackageManager(project, sdk)
+    val manager = if (Registry.`is`("python.packaging.conda.chain.installation")) {
+      CompositePythonPackageManager(project, sdk, listOf(CondaPackageManager(project, sdk), PipPythonPackageManager(project, sdk)))
+    }
+    else {
+      CondaPackageManager(project, sdk)
+    }
+
+    return if (additionalData.flavorAndData.data is PyCondaFlavorData) manager
     else null
   }
 }

@@ -2,28 +2,31 @@
 package com.intellij.tool
 
 import com.intellij.TestCaseLoader
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.*
 
-object Cache {
-  private val responsesCache: ConcurrentHashMap<String, String> = ConcurrentHashMap()
-
-  /**
-   * Process with cache might be spawn / killed multiple times during aggregator test run.
-   * Disk cache is used to store the data, that already has been requested.
-   */
-  private val cacheDir = Paths.get("CacheDir").apply {
+/**
+ * Process with cache might be spawn / killed multiple times during aggregator test run.
+ * Disk cache is used to store the data, that already has been requested.
+ */
+object NastradamusCache : Cache(
+  cacheDir = Paths.get("CacheDir").apply {
     createDirectories()
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED)
       println("Creating cache dir ${this.toRealPath()}")
   }.toRealPath()
+)
+
+abstract class Cache(val cacheDir: Path) {
+  private val dataCache: ConcurrentHashMap<String, String> = ConcurrentHashMap()
 
   init {
     /**
      * Try to initialize cache from cache directory
      */
-    if (responsesCache.isEmpty()) {
+    if (dataCache.isEmpty()) {
       val cacheEntries = cacheDir.listDirectoryEntries()
 
       if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
@@ -31,13 +34,13 @@ object Cache {
       }
 
       cacheEntries.forEach { filePath ->
-        responsesCache[filePath.nameWithoutExtension] = filePath.readText()
+        dataCache[filePath.nameWithoutExtension] = filePath.readText()
       }
     }
   }
 
   fun eraseCache() {
-    responsesCache.clear()
+    dataCache.clear()
     cacheDir.listDirectoryEntries().forEach { it.toFile().deleteRecursively() }
   }
 
@@ -46,7 +49,7 @@ object Cache {
   fun <T> put(key: T, value: String): Unit {
     val hashedKey = getHashedKey(key)
 
-    responsesCache[hashedKey] = value
+    dataCache[hashedKey] = value
     cacheDir.resolve(hashedKey).apply {
       createFile()
       writeText(value)
@@ -56,7 +59,7 @@ object Cache {
   fun <T> get(key: T): String? {
     val hashedKey = getHashedKey(key)
 
-    val value = responsesCache[hashedKey]
+    val value = dataCache[hashedKey]
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED && value != null) {
       println("Returning cached result for $key / hashed as: $hashedKey")

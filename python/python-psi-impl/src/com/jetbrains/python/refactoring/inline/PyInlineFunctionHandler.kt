@@ -44,12 +44,17 @@ class PyInlineFunctionHandler : InlineActionHandler() {
   }
 
   override fun inlineElement(project: Project?, editor: Editor?, element: PsiElement?) {
+    invoke(project, editor, element)
+  }
+
+  fun invoke(project: Project?, editor: Editor?, element: PsiElement?, showDialog: Boolean = true,
+             inlineThisOnly: Boolean = false) {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
       element.isAsync -> PyPsiBundle.message("refactoring.inline.function.async")
       element.isGenerator -> PyPsiBundle.message("refactoring.inline.function.generator")
-      PyUtil.isInitOrNewMethod(element) -> PyPsiBundle.message("refactoring.inline.function.constructor")
+      PyUtil.isConstructorLikeMethod(element) -> PyPsiBundle.message("refactoring.inline.function.constructor")
       PyBuiltinCache.getInstance(element).isBuiltin(element) -> PyPsiBundle.message("refactoring.inline.function.builtin")
       isSpecialMethod(element) -> PyPsiBundle.message("refactoring.inline.function.special.method")
       isUnderSkeletonDir(element) -> PyPsiBundle.message("refactoring.inline.function.skeleton.only")
@@ -68,10 +73,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
       CommonRefactoringUtil.showErrorHint(project, editor, error, PyPsiBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
       return
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode){
+    if (showDialog && !ApplicationManager.getApplication().isUnitTestMode) {
       PyRefactoringUiService.getInstance().showPyInlineFunctionDialog(project, editor, element, findReference(editor))
-    } else {
-      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), false, true)
+    }
+    else {
+      val processor = PyInlineFunctionProcessor(project, editor, element, findReference(editor), inlineThisOnly, true)
       processor.setPreviewUsages(false)
       processor.run()
     }
@@ -113,8 +119,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     ifStatement.elifParts.forEach { if (checkLastStatement(it.statementList, cache)) return true }
 
     val parentIfStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement::class.java)
-    if (parentIfStatement != null && checkInterruptsControlFlow(parentIfStatement, cache)) return true
-    return false
+    return parentIfStatement != null && checkInterruptsControlFlow(parentIfStatement, cache)
   }
 
   private fun checkLastStatement(statementList: PyStatementList, cache: MutableSet<PyIfStatement>): Boolean {
@@ -131,11 +136,11 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun overridesMethod(function: PyFunction, project: Project): Boolean {
     return function.containingClass != null
-           && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).any()
+           && PySuperMethodsSearch.search(function, TypeEvalContext.codeAnalysis(project, function.containingFile)).asIterable().any()
   }
 
   private fun isOverridden(function: PyFunction): Boolean {
-    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).any()
+    return function.containingClass != null && PyOverridingMethodsSearch.search(function, true).asIterable().any()
   }
 
   private fun hasStarArgs(function: PyFunction): Boolean {

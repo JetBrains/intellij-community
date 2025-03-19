@@ -1,4 +1,4 @@
-<idea-plugin package="org.toml">
+<idea-plugin package="org.toml" allow-bundled-update="true">
     <id>org.toml.lang</id>
     <name>Toml</name>
     <vendor>JetBrains</vendor>
@@ -14,6 +14,7 @@
 
     <content>
         <module name="intellij.toml.json"/>
+        <module name="intellij.toml.grazie"/>
     </content>
 
     <resource-bundle>messages.TomlBundle</resource-bundle>
@@ -24,7 +25,7 @@
                   implementationClass="org.toml.lang.psi.TomlFileType"
                   fieldName="INSTANCE"
                   extensions="toml"
-                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock"/>
+                  fileNames="Cargo.lock;Cargo.toml.orig;Gopkg.lock;Pipfile;poetry.lock;uv.lock"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
@@ -40,6 +41,8 @@
         <lang.formatter language="TOML" implementationClass="org.toml.ide.formatter.TomlFormattingModelBuilder"/>
         <langCodeStyleSettingsProvider
             implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
+        <enterBetweenBracesDelegate language="TOML"
+                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
 
         <!-- Folding -->
         <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
@@ -69,6 +72,5 @@
         </intentionAction>
 
         <registryKey key="org.toml.json.schema" defaultValue="true" description="JSON schemas support for TOML"/>
-        <iconMapper mappingFile="TomlIconMappings.json"/>
     </extensions>
 </idea-plugin>

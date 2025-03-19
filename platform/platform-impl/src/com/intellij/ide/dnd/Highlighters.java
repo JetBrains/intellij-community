@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.icons.AllIcons;
@@ -8,13 +8,15 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Highlighters implements DnDEvent.DropTargetHighlightingType {
+@ApiStatus.Internal
+public final class Highlighters implements DnDEvent.DropTargetHighlightingType {
   private static final List<DropTargetHighlighter> ourHightlighters = new ArrayList<>();
 
   private static final ArrayList<DropTargetHighlighter> ourCurrentHighlighters = new ArrayList<>();
@@ -81,10 +83,10 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   static boolean isVisible() {
-    return ourCurrentHighlighters.size() > 0;
+    return !ourCurrentHighlighters.isEmpty();
   }
 
-  private static abstract class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
+  private abstract static class AbstractComponentHighlighter extends JPanel implements DropTargetHighlighter {
 
     protected AbstractComponentHighlighter() {
       setOpaque(false);
@@ -131,7 +133,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
       if (!Registry.is("ide.dnd.textHints")) return;
 
       final String result = aEvent.getExpectedDropResult();
-      if (result != null && result.length() > 0) {
+      if (result != null && !result.isEmpty()) {
         RelativePoint point  = null;
         for (DropTargetHighlighter each : ourHightlighters) {
           if (each instanceof AbstractComponentHighlighter) {
@@ -164,7 +166,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
 
   }
 
-  public static class TextHighlighter extends BaseTextHighlighter {
+  public static final class TextHighlighter extends BaseTextHighlighter {
 
     public TextHighlighter() {
       super(MessageType.INFO);
@@ -176,7 +178,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class ErrorTextHighlighter extends BaseTextHighlighter {
+  private static final class ErrorTextHighlighter extends BaseTextHighlighter {
     ErrorTextHighlighter() {
       super(MessageType.ERROR);
     }
@@ -187,7 +189,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class FilledRectangleHighlighter extends AbstractComponentHighlighter {
+  private static final class FilledRectangleHighlighter extends AbstractComponentHighlighter {
     FilledRectangleHighlighter() {
       super();
       setOpaque(true);
@@ -206,7 +208,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class RectangleHighlighter extends AbstractComponentHighlighter {
+  private static final class RectangleHighlighter extends AbstractComponentHighlighter {
     RectangleHighlighter() {
       super();
       setOpaque(false);
@@ -231,7 +233,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
+  private static final class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
 
     @Override
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
@@ -253,7 +255,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
+  private static final class VerticalLinesHighlighter extends AbstractComponentHighlighter {
     private static final Icon TOP = AllIcons.General.ArrowDown;
     private static final Icon BOTTOM = AllIcons.General.ArrowUp;
 
@@ -276,7 +278,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
-  private static class BottomHighlighter extends AbstractComponentHighlighter {
+  private static final class BottomHighlighter extends AbstractComponentHighlighter {
     BottomHighlighter() {
       super();
       setOpaque(false);

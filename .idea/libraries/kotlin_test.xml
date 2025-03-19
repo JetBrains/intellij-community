@@ -1,17 +1,21 @@
 <component name="libraryTable">
   <library name="kotlin-test" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-test:1.8.20">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-test:2.1.20-RC2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.1.20-RC2/kotlin-test-2.1.20-RC2.jar">
+          <sha256sum>0d47f4fc320f27cd5473efe5268398ce7295c490a7cabe36bfb030cccba020b4</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
-        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.8.20/kotlin-test-1.8.20.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.1.20-RC2/kotlin-test-2.1.20-RC2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/1.8.20/kotlin-test-1.8.20-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.1.20-RC2/kotlin-test-2.1.20-RC2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

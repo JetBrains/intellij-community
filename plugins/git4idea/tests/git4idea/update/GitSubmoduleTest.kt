@@ -5,8 +5,7 @@ import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.Executor.cd
-import com.intellij.openapi.vcs.Executor.echo
+import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import git4idea.config.UpdateMethod.MERGE
@@ -14,6 +13,7 @@ import git4idea.config.UpdateMethod.REBASE
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import java.nio.file.Path
+import java.util.Locale
 
 class GitSubmoduleTest : GitSubmoduleTestBase() {
   private lateinit var main: GitRepository
@@ -131,9 +131,88 @@ class GitSubmoduleTest : GitSubmoduleTestBase() {
     }
   }
 
+  fun `test modified submodule marks parent as dirty`() {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    touch("a", "content\n")
+    addCommit("initial in submodule")
+
+    cd(projectPath)
+    addCommit("initial")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    overwrite("a", "new content\n")
+    dirtyScopeManager.fileDirty(childPath("a"))
+    changeListManager.waitUntilRefreshed()
+
+    cd(projectPath)
+    assertChanges {
+      modified("sub")
+      modified("sub/a")
+    }
+
+    cd(sub)
+    overwrite("a", "content\n")
+    dirtyScopeManager.fileDirty(childPath("a"))
+    changeListManager.waitUntilRefreshed()
+    changeListManager.waitUntilRefreshed() // two refreshes needed
+
+    cd(projectPath)
+    assertNoChanges()
+  }
+
+  fun `test commit into submodule and parent at once`() {
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    touch("a", "content\n")
+    addCommit("initial in submodule")
+
+    cd(projectPath)
+    touch("b", "content\n")
+    addCommit("initial")
+
+    dirtyScopeManager.markEverythingDirty()
+    changeListManager.waitUntilRefreshed()
+    assertNoChanges()
+
+    cd(sub)
+    overwrite("a", "new content\n")
+
+    cd(projectPath)
+    overwrite("b", "new content\n")
+
+    val changes = assertChangesWithRefresh {
+      modified("b")
+      modified("sub")
+      modified("sub/a")
+    }
+
+    commit(changes)
+    assertNoChanges()
+
+    sub.assertCommitted {
+      modified("sub/a")
+    }
+    main.assertCommitted {
+      modified("b")
+      modified("sub")
+    }
+  }
+
+
   private fun insertLogMarker(title: String) {
     LOG.info("")
-    LOG.info("--------- STARTING ${title.toUpperCase()} -----------")
+    LOG.info("--------- STARTING ${title.uppercase(Locale.getDefault())} -----------")
     LOG.info("")
   }
 }

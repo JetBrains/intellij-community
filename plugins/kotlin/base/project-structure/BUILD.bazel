@@ -1,0 +1,109 @@
+### auto-generated section `build kotlin.base.project-structure` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-base-project-structure_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-project-structure",
+  module_name = "kotlin.base.project-structure",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/lang-impl",
+    "//platform/external-system-api:externalSystem",
+    "//java/openapi:java",
+    "//java/java-psi-impl:psi-impl",
+    "//java/idea-ui:ui",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:caffeine",
+    "//platform/util/jdom",
+    "//java/java-impl:impl",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":kotlin-base-project-structure_resources"]
+)
+
+jvm_library(
+  name = "kotlin-base-project-structure_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":kotlin-base-project-structure"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/lang-impl",
+    "//platform/external-system-api:externalSystem",
+    "//java/openapi:java",
+    "//java/java-psi-impl:psi-impl",
+    "//java/idea-ui:ui",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:caffeine",
+    "//platform/util/jdom",
+    "//java/java-impl:impl",
+    "@lib//:junit4",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":kotlin-base-project-structure_resources"]
+)
+
+jvm_test(
+  name = "kotlin-base-project-structure_test",
+  runtime_deps = [":kotlin-base-project-structure_test_lib"]
+)
+### auto-generated section `build kotlin.base.project-structure` end

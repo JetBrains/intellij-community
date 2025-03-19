@@ -15,7 +15,7 @@ public class NullableCheckBreakDuplicate {
     }
 
     @Nullable
-    private Pojo newMethod() {
+    private NullableCheckBreakDuplicate.Pojo newMethod() {
         Pojo x = things.get(0);
 
         if (x.it > 0) return null;

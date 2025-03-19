@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -12,6 +12,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPo
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
+import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -190,21 +192,16 @@ public final class DomHelper {
     return ret;
   }
 
-  public static RootStatement parseGraph(ControlFlowGraph graph) {
+  public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
 
     RootStatement root = graphToStatement(graph);
 
-    if (!processStatement(root, new HashMap<>())) {
-
-      //			try {
-      //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
-      //			} catch (Exception ex) {
-      //				ex.printStackTrace();
-      //			}
+    if (!processStatement(root, new LinkedHashMap<>())) {
+      DotExporter.toDotFile(graph, mt, "parseGraphFail", true);
       throw new RuntimeException("parsing failure!");
     }
 
-    LabelHelper.lowContinueLabels(root, new HashSet<>());
+    LabelHelper.lowContinueLabels(root, new LinkedHashSet<>());
 
     SequenceHelper.condenseSequences(root);
     root.buildMonitorFlags();
@@ -452,11 +449,11 @@ public final class DomHelper {
 
         boolean same = (post == head);
 
-        HashSet<Statement> setNodes = new HashSet<>();
+        HashSet<Statement> setNodes = new LinkedHashSet<>();
         HashSet<Statement> setPreds = new HashSet<>();
 
         // collect statement nodes
-        HashSet<Statement> setHandlers = new HashSet<>();
+        HashSet<Statement> setHandlers = new LinkedHashSet<>();
         setHandlers.add(head);
         while (true) {
 
@@ -466,7 +463,7 @@ public final class DomHelper {
               continue;
             }
 
-            boolean addhd = (setNodes.size() == 0); // first handler == head
+            boolean addhd = (setNodes.isEmpty()); // first handler == head
             if (!addhd) {
               List<Statement> hdsupp = handler.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
               addhd = (setNodes.containsAll(hdsupp) && (setNodes.size() > hdsupp.size()
@@ -526,7 +523,7 @@ public final class DomHelper {
           Statement res;
 
           setPreds.removeAll(setNodes);
-          if (setPreds.size() == 0) {
+          if (setPreds.isEmpty()) {
             if ((setNodes.size() > 1 ||
                  head.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {
@@ -601,7 +598,7 @@ public final class DomHelper {
               set.removeAll(setOldNodes);
 
               if (setOldNodes.contains(key)) {
-                mapExtPost.computeIfAbsent(newid, k -> new HashSet<>()).addAll(set);
+                mapExtPost.computeIfAbsent(newid, k -> new LinkedHashSet<>()).addAll(set);
                 mapExtPost.remove(key);
               }
               else {

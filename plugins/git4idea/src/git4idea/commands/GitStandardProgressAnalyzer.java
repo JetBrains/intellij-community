@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.MathUtil;
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -21,13 +22,14 @@ public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
   // but it looks simpler than storing current operation, checking that there was no skipped, etc.
   private final Object2DoubleOpenHashMap<Operation> myOperationsProgress = new Object2DoubleOpenHashMap<>(4);
 
-  public static GitLineHandlerListener createListener(@NotNull final ProgressIndicator indicator) {
+  public static GitLineHandlerListener createListener(final @NotNull ProgressIndicator indicator) {
     final GitStandardProgressAnalyzer progressAnalyzer = new GitStandardProgressAnalyzer();
     return new GitLineHandlerListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         final double fraction = progressAnalyzer.analyzeProgress(line);
         if (fraction >= 0) {
+          indicator.setIndeterminate(false);
           indicator.setFraction(fraction);
           indicator.setText2(line);
         }
@@ -105,6 +107,6 @@ public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
     for (Object2DoubleMap.Entry<Operation> entry : myOperationsProgress.object2DoubleEntrySet()) {
       totalProgress += entry.getKey().myFractionInTotal * entry.getDoubleValue();
     }
-    return totalProgress;
+    return MathUtil.clamp(totalProgress, 0, 1);
   }
 }

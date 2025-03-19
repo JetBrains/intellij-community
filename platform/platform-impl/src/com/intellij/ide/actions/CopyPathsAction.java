@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -8,13 +8,15 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.KEYBOARD_SHORTCUT;
 
-public class CopyPathsAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class CopyPathsAction extends AnAction implements DumbAware {
   public CopyPathsAction() {
     setEnabledInModalContext(true);
   }
@@ -30,7 +32,7 @@ public class CopyPathsAction extends AnAction implements DumbAware {
   private static String getPaths(VirtualFile[] files) {
     StringBuilder buf = new StringBuilder(files.length * 64);
     for (VirtualFile file : files) {
-      if (buf.length() > 0) buf.append('\n');
+      if (!buf.isEmpty()) buf.append('\n');
       buf.append(file.getPresentableUrl());
     }
     return buf.toString();

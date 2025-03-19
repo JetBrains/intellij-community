@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="Kotlin2JsCompilerArguments">
+    <option name="moduleKind" value="plain" />
+  </component>
   <component name="Kotlin2JvmCompilerArguments">
     <option name="jvmTarget" value="17" />
   </component>
   <component name="KotlinCommonCompilerArguments">
-    <option name="apiVersion" value="1.8" />
-    <option name="languageVersion" value="1.8" />
+    <option name="apiVersion" value="2.0" />
+    <option name="languageVersion" value="2.0" />
   </component>
   <component name="KotlinCompilerSettings">
-    <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction" />
+    <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
   </component>
   <component name="KotlinJpsPluginSettings">
-    <option name="version" value="1.8.20" />
+    <option name="version" value="2.1.20-RC2" />
   </component>
 </project>

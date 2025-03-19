@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.service.execution.configuration.*
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.addTag
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
 import com.intellij.openapi.project.Project
@@ -12,7 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 class GradleRunConfigurationExtension
   : ExternalSystemReifiedRunConfigurationExtension<GradleRunConfiguration>(GradleRunConfiguration::class.java) {
 
-  override fun SettingsFragmentsContainer<GradleRunConfiguration>.configureFragments(configuration: GradleRunConfiguration) {
+  override fun SettingsEditorFragmentContainer<GradleRunConfiguration>.configureFragments(configuration: GradleRunConfiguration) {
     val project = configuration.project
     addBeforeRunFragment(GradleBeforeRunTaskProvider.ID)
     val workingDirectoryField = addWorkingDirectoryFragment(project).component().component
@@ -51,14 +53,14 @@ class GradleRunConfigurationExtension
     )
   }
 
-  private fun SettingsFragmentsContainer<GradleRunConfiguration>.addWorkingDirectoryFragment(
+  private fun SettingsEditorFragmentContainer<GradleRunConfiguration>.addWorkingDirectoryFragment(
     project: Project
   ) = addWorkingDirectoryFragment(
     project,
     ExternalSystemWorkingDirectoryInfo(project, SYSTEM_ID)
   )
 
-  private fun SettingsFragmentsContainer<GradleRunConfiguration>.addCommandLineFragment(
+  private fun SettingsEditorFragmentContainer<GradleRunConfiguration>.addCommandLineFragment(
     project: Project,
     workingDirectoryField: WorkingDirectoryField
   ) = addCommandLineFragment(

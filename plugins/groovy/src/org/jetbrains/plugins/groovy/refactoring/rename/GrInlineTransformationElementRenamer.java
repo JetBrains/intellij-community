@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
 import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
-public class GrInlineTransformationElementRenamer extends RenamePsiElementProcessor {
+public final class GrInlineTransformationElementRenamer extends RenamePsiElementProcessor {
 
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {

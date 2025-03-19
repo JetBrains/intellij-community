@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.ide.util.scopeChooser.ScopeIdMapper;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.java.JavaBundle;
@@ -19,7 +19,7 @@ import java.util.List;
 import static com.intellij.find.findUsages.JavaFindUsagesCollector.*;
 
 public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> extends CommonFindUsagesDialog {
-  private StateRestoringCheckBox myCbIncludeOverloadedMethods;
+  protected StateRestoringCheckBox myCbIncludeOverloadedMethods;
   private boolean myIncludeOverloadedMethodsAvailable;
 
   protected JavaFindUsagesDialog(@NotNull PsiElement element,
@@ -34,8 +34,12 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
 
   @Override
   protected void init() {
-    myIncludeOverloadedMethodsAvailable = myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
+    myIncludeOverloadedMethodsAvailable = isIncludeOverloadedMethodsAvailable();
     super.init();
+  }
+
+  public boolean isIncludeOverloadedMethodsAvailable() {
+    return myPsiElement instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)myPsiElement);
   }
 
   public void calcFindUsagesOptions(T options) {
@@ -68,7 +72,7 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   protected void doOKAction() {
     if (shouldDoOkAction()) {
       if (myIncludeOverloadedMethodsAvailable) {
-        FindSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
+        FindUsagesSettings.getInstance().setSearchOverloadedMethods(myCbIncludeOverloadedMethods.isSelected());
       }
     }
     else {
@@ -78,22 +82,24 @@ public abstract class JavaFindUsagesDialog<T extends JavaFindUsagesOptions> exte
   }
 
   @Override
-  protected void addUsagesOptions(JPanel optionsPanel) {
-    super.addUsagesOptions(optionsPanel);
+  protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
     if (myIncludeOverloadedMethodsAvailable) {
       myCbIncludeOverloadedMethods = addCheckboxToPanel(JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
-                                                        FindSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
+                                                        FindUsagesSettings.getInstance().isSearchOverloadedMethods(), optionsPanel, false);
 
     }
+    addDefaultOptions(optionsPanel);
   }
 
-  @NotNull
-  protected final PsiElement getPsiElement() {
+  protected void addDefaultOptions(@NotNull JPanel optionsPanel) {
+    super.addUsagesOptions(optionsPanel);
+  }
+
+  protected final @NotNull PsiElement getPsiElement() {
     return myPsiElement;
   }
 
-  @NotNull
-  protected T getFindUsagesOptions() {
+  protected @NotNull T getFindUsagesOptions() {
     return (T)myFindUsagesOptions;
   }
 }

@@ -16,7 +16,7 @@ interface TestFixtureExtension {
         fun loadFixture(className: String, module: Module): TestFixtureExtension {
             instances[className]?.let { return it }
 
-            return (Class.forName(className).newInstance() as TestFixtureExtension).apply {
+            return (Class.forName(className).getDeclaredConstructor().newInstance() as TestFixtureExtension).apply {
                 this.setUp(module)
                 instances = instances.plus(className, this)
             }

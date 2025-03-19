@@ -7,10 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.resources" />
-    <orderEntry type="module" module-name="intellij.regexp" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.resources.en" />
   </component>
   <component name="copyright">
     <Base>

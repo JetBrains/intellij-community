@@ -1,17 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
@@ -20,8 +20,8 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
   }
 
   private class ReassignedVariableVisitor extends JavaElementVisitor {
-    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocalVariableProblems = new HashMap<>();
-    private final Map<PsiParameter, Boolean> myParameterIsReassigned = new HashMap<>();
+    private final Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> myLocalVariableProblems = new ConcurrentHashMap<>();
+    private final Map<PsiParameter, Boolean> myParameterIsReassigned = new ConcurrentHashMap<>();
     private final @NotNull ProblemsHolder myHolder;
 
     private ReassignedVariableVisitor(@NotNull ProblemsHolder holder) {
@@ -42,7 +42,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
       PsiIdentifier nameIdentifier = variable.getNameIdentifier();
       if (nameIdentifier != null &&
           !variable.hasModifierProperty(PsiModifier.FINAL) &&
-          HighlightControlFlowUtil.isReassigned(variable, myLocalVariableProblems)) {
+          ControlFlowUtil.isReassigned(variable, myLocalVariableProblems)) {
         myHolder.registerProblem(nameIdentifier, getReassignedMessage(variable));
         return true;
       }
@@ -60,13 +60,12 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
             !((PsiVariable)resolved).hasModifierProperty(PsiModifier.FINAL) &&
             !SuppressionUtil.inspectionResultSuppressed(resolved, ReassignedVariableInspection.this)) {
           if (resolved instanceof PsiLocalVariable) {
-            if (HighlightControlFlowUtil.isReassigned((PsiVariable)resolved, myLocalVariableProblems)) {
+            if (ControlFlowUtil.isReassigned((PsiVariable)resolved, myLocalVariableProblems)) {
               myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolved));
             }
           }
           else {
-            Boolean isReassigned = myParameterIsReassigned.computeIfAbsent((PsiParameter)resolved,
-                                                                           HighlightControlFlowUtil::isAssigned);
+            Boolean isReassigned = myParameterIsReassigned.computeIfAbsent((PsiParameter)resolved, VariableAccessUtils::variableIsAssigned);
             if (isReassigned) {
               myHolder.registerProblem(referenceNameElement, getReassignedMessage((PsiVariable)resolved));
             }
@@ -75,8 +74,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
       }
     }
 
-    @NotNull
-    private String getReassignedMessage(PsiVariable variable) {
+    private static @NotNull String getReassignedMessage(PsiVariable variable) {
       return JavaBundle.message(
         variable instanceof PsiLocalVariable ? "tooltip.reassigned.local.variable" : "tooltip.reassigned.parameter");
     }

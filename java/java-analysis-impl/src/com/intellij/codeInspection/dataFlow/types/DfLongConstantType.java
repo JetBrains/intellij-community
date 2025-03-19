@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -16,9 +16,8 @@ public class DfLongConstantType extends DfConstantType<Long> implements DfLongTy
     myWideRange = wideRange;
   }
 
-  @NotNull
   @Override
-  public LongRangeSet getWideRange() {
+  public @NotNull LongRangeSet getWideRange() {
     return myWideRange == null ? getRange() : myWideRange;
   }
 
@@ -32,9 +31,8 @@ public class DfLongConstantType extends DfConstantType<Long> implements DfLongTy
     return DfLongType.super.meet(other);
   }
 
-  @NotNull
   @Override
-  public LongRangeSet getRange() {
+  public @NotNull LongRangeSet getRange() {
     return LongRangeSet.point(getValue());
   }
 

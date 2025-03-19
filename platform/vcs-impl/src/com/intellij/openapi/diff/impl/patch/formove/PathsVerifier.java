@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class PathsVerifier {
   // in
   private final Project myProject;
@@ -45,7 +47,7 @@ public final class PathsVerifier {
   // out
   private final List<PatchAndFile> myTextPatches = new ArrayList<>();
   private final List<PatchAndFile> myBinaryPatches = new ArrayList<>();
-  @NotNull private final List<VirtualFile> myWritableFiles = new ArrayList<>();
+  private final @NotNull List<VirtualFile> myWritableFiles = new ArrayList<>();
   private final ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped = new ArrayList<>();
   private DelayedPrecheckContext myDelayedPrecheckContext;
@@ -171,8 +173,7 @@ public final class PathsVerifier {
     return myDeletedPaths;
   }
 
-  @NotNull
-  public Collection<FilePatch> filterBadFileTypePatches() {
+  public @NotNull Collection<FilePatch> filterBadFileTypePatches() {
     List<PatchAndFile> failedTextPatches =
       ContainerUtil.findAll(myTextPatches, textPatch -> !isFileTypeOk(textPatch.getFile()));
     myTextPatches.removeAll(failedTextPatches);
@@ -512,8 +513,7 @@ public final class PathsVerifier {
     return myBinaryPatches;
   }
 
-  @NotNull
-  public List<VirtualFile> getWritableFiles() {
+  public @NotNull List<VirtualFile> getWritableFiles() {
     return myWritableFiles;
   }
 
@@ -530,7 +530,7 @@ public final class PathsVerifier {
     private final VirtualFile myCurrent;
     private final String myNewName;
 
-    private MovedFileData(@NotNull final VirtualFile newParent, @NotNull final VirtualFile current, @NotNull final String newName) {
+    private MovedFileData(final @NotNull VirtualFile newParent, final @NotNull VirtualFile current, final @NotNull String newName) {
       myNewParent = newParent;
       myCurrent = current;
       myNewName = newName;

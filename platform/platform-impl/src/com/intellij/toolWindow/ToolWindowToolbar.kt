@@ -2,38 +2,46 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBPanel
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Point
-import java.awt.Rectangle
+import org.jetbrains.annotations.ApiStatus
+import java.awt.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.math.max
 
-internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPanel<ToolWindowToolbar>() {
+@ApiStatus.Internal
+abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
   lateinit var defaults: List<String>
 
-  abstract val bottomStripe: StripeV2
-  abstract val topStripe: StripeV2
+  internal abstract val bottomStripe: AbstractDroppableStripe
+  internal abstract val topStripe: AbstractDroppableStripe
 
-  abstract val moreButton: MoreSquareStripeButton
+  internal abstract val moreButton: MoreSquareStripeButton
 
-  protected fun init() {
-    layout = BorderLayout()
+  private val myResizeManager = ResizeStripeManager(this)
+
+  private var hasVisibleButtons = false
+  private val visibleButtonsListeners = mutableListOf<() -> Unit>()
+
+  protected open fun init() {
+    layout = myResizeManager.createLayout()
     isOpaque = true
     background = JBUI.CurrentTheme.ToolWindow.background()
 
@@ -48,24 +56,60 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)
     add(bottomStripe, BorderLayout.SOUTH)
+
+    topStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
+    bottomStripe.addButtonAddedRemovedListener { updateVisibleButtons() }
+    moreButton.addComponentListener(object : ComponentAdapter() {
+      override fun componentShown(e: ComponentEvent?) {
+        updateVisibleButtons()
+      }
+
+      override fun componentHidden(e: ComponentEvent?) {
+        updateVisibleButtons()
+      }
+    })
+    updateVisibleButtons()
   }
 
-  fun initMoreButton() {
+  private fun updateVisibleButtons() {
+    val hasVisibleButtons = hasButtons() || moreButton.isVisible
+    if (this.hasVisibleButtons != hasVisibleButtons) {
+      this.hasVisibleButtons = hasVisibleButtons
+      visibleButtonsListeners.forEach { it() }
+    }
+  }
+
+  internal fun addVisibleButtonsListener(listener: () -> Unit) {
+    this.visibleButtonsListeners.add(listener)
+  }
+
+  fun initMoreButton(project: Project) {
     if (isPrimary) {
       topStripe.parent?.add(moreButton, BorderLayout.CENTER)
+      moreButton.updateState(project)
+    }
+  }
+
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {
+    myResizeManager.updateState(toolbar)
+  }
+
+  fun updateNamedState() {
+    if (isVisible && ResizeStripeManager.isShowNames()) {
+      myResizeManager.updateNamedState()
     }
   }
 
   open fun createBorder():Border = JBUI.Borders.empty()
   open fun getBorderColor(): Color? = JBUI.CurrentTheme.ToolWindow.borderColor()
 
-  abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
+  internal abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
 
-  fun getButtonFor(toolWindowId: String): StripeButtonManager? {
+  internal fun getButtonFor(toolWindowId: String): StripeButtonManager? {
     return topStripe.getButtons().find { it.id == toolWindowId } ?: bottomStripe.getButtons().find { it.id == toolWindowId }
   }
 
-  open fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
+  internal open fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? {
     if (!isShowing) {
       return null
     }
@@ -78,7 +122,9 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
     return null
   }
 
-  fun hasButtons() = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
+  fun hasButtons(): Boolean = topStripe.getButtons().isNotEmpty() || bottomStripe.getButtons().isNotEmpty()
+
+  fun hasVisibleButtons(): Boolean = hasVisibleButtons
 
   fun reset() {
     topStripe.reset()
@@ -90,9 +136,9 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
     repaint()
   }
 
-  fun stopDrag() = startDrag()
+  fun stopDrag(): Unit = startDrag()
 
-  fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
+  internal fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
     val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
     if (sideDistance > 0) {
       data.dragInsertPosition = -1
@@ -109,7 +155,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       panel.repaint()
     }
 
-    fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
+    internal fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
       val component = panel.components.firstOrNull { it is SquareStripeButton && it.toolWindow.id == toolWindow.id } ?: return
       panel.remove(component)
       panel.revalidate()
@@ -120,7 +166,10 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
   internal class StripeV2(private val toolBar: ToolWindowToolbar,
                           paneId: String,
                           override val anchor: ToolWindowAnchor,
-                          override val split: Boolean = false) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
+                          override val split: Boolean = false,
+                          layout : LayoutManager = VerticalFlowLayout(0, 0)
+  ) : AbstractDroppableStripe(paneId, layout) {
+    var bottomAnchorDropAreaComponent: JComponent? = null
     override val isNewStripes: Boolean
       get() = true
 
@@ -165,7 +214,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
         val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
-        val toolWindowHeight = getFirstVisibleToolWindowSize(false)
+        val toolWindowHeight = max(getFirstVisibleToolWindowSize(false), height + JBUI.scale(40))
         val bounds = Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight - getStatusBarHeight(),
                                rootBounds.width / 2, toolWindowHeight)
         if (split) {
@@ -213,15 +262,15 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
         return Rectangle(locationOnScreen.x  - toolWindowSize, locationOnScreen.y, toolWindowSize, size.height)
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
-        val rootPane = (rootPane as IdeRootPane).getToolWindowPane()
-        val rootBounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+        val pane = bottomAnchorDropAreaComponent ?: rootPane
+        val rootBounds = Rectangle(pane.locationOnScreen, pane.size)
         val toolWindowHeight = getFirstVisibleToolWindowSize(false)
         return Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight, rootBounds.width, toolWindowHeight)
       }
       return super.getToolWindowDropAreaScreenBounds()
     }
 
-    override fun getButtonFor(toolWindowId: String) = toolBar.getButtonFor(toolWindowId)
+    override fun getButtonFor(toolWindowId: String): StripeButtonManager? = toolBar.getButtonFor(toolWindowId)
 
     override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
       toolBar.tryDroppingOnGap(data, gap, dropRectangle) {
@@ -229,7 +278,7 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
       }
     }
 
-    override fun toString() = "StripeNewUi(anchor=$anchor)"
+    override fun toString(): String = "StripeNewUi(anchor=$anchor)"
   }
 
   protected open val accessibleGroupName: @NlsSafe String get() = UIBundle.message("toolbar.group.default.accessible.group.name")
@@ -242,6 +291,6 @@ internal abstract class ToolWindowToolbar(private val isPrimary: Boolean) : JBPa
   }
 
   private inner class AccessibleToolWindowToolbar : AccessibleJPanel() {
-    override fun getAccessibleRole(): AccessibleRole = AccessibleRole.GROUP_BOX
+    override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
 }

@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl
 
-import com.intellij.debugger.streams.trace.dsl.CodeBlock
-import com.intellij.debugger.streams.trace.dsl.StatementFactory
-import com.intellij.debugger.streams.trace.dsl.impl.common.TryBlockBase
+import com.intellij.debugger.streams.core.trace.dsl.CodeBlock
+import com.intellij.debugger.streams.core.trace.dsl.StatementFactory
+import com.intellij.debugger.streams.core.trace.dsl.impl.common.TryBlockBase
 
 class KotlinTryBlock(private val block: CodeBlock, statementFactory: StatementFactory) : TryBlockBase(statementFactory) {
     override fun toCode(indent: Int): String {

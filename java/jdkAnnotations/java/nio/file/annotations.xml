@@ -10,6 +10,30 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.FileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -18,6 +42,7 @@
   </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -25,14 +50,31 @@
   <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files V getFileAttributeView(java.nio.file.Path, java.lang.Class&lt;V&gt;, java.nio.file.LinkOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files boolean deleteIfExists(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files boolean deleteIfExists(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files boolean exists(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files boolean exists(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files boolean isDirectory(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isDirectory(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Files boolean isExecutable(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -45,6 +87,10 @@
   </item>
   <item name='java.nio.file.Files boolean isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files boolean isRegularFile(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Files boolean isSameFile(java.nio.file.Path, java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -61,6 +107,10 @@
   <item name='java.nio.file.Files boolean notExists(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files boolean notExists(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files byte[] read(java.io.InputStream, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -70,11 +120,27 @@
   <item name='java.nio.file.Files byte[] readAllBytes(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_-&gt;new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path, java.nio.charset.Charset)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path, java.nio.charset.Charset) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.io.BufferedReader newBufferedReader(java.nio.file.Path, java.nio.charset.Charset) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -82,14 +148,39 @@
   <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.charset.Charset, java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.BufferedWriter newBufferedWriter(java.nio.file.Path, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.io.InputStream newInputStream(java.nio.file.Path, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files java.io.OutputStream newOutputStream(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.io.OutputStream newOutputStream(java.nio.file.Path, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Files java.lang.Object getAttribute(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -97,7 +188,26 @@
   <item name='java.nio.file.Files java.lang.Object getAttribute(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.lang.Object getAttribute(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files java.lang.String probeContentType(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String readString(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String readString(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String readString(java.nio.file.Path, java.nio.charset.Charset)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String readString(java.nio.file.Path, java.nio.charset.Charset) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.lang.String readString(java.nio.file.Path, java.nio.charset.Charset) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...)'>
@@ -106,13 +216,30 @@
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.util.Set&lt;? extends java.nio.file.OpenOption&gt;, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.util.Set&lt;? extends java.nio.file.OpenOption&gt;, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
   </item>
-  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path) 0'>
+  <item
+    name='java.nio.file.Files java.nio.channels.SeekableByteChannel newByteChannel(java.nio.file.Path, java.util.Set&lt;? extends java.nio.file.OpenOption&gt;, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path)'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.lang.String) 0'>
@@ -121,14 +248,25 @@
   <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.nio.file.DirectoryStream.Filter&lt;? super java.nio.file.Path&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.nio.file.DirectoryStream.Filter&lt;? super java.nio.file.Path&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.DirectoryStream&lt;java.nio.file.Path&gt; newDirectoryStream(java.nio.file.Path, java.nio.file.DirectoryStream.Filter&lt;? super java.nio.file.Path&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
   </item>
   <item name='java.nio.file.Files java.nio.file.FileStore getFileStore(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;param2&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -136,14 +274,58 @@
   <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.file.Path copy(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createDirectories(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path createDirectories(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createDirectories(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createDirectory(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path createDirectory(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createDirectory(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createFile(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path createFile(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createFile(java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path createLink(java.nio.file.Path, java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path createLink(java.nio.file.Path, java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -151,17 +333,79 @@
   <item name='java.nio.file.Files java.nio.file.Path createLink(java.nio.file.Path, java.nio.file.Path) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createSymbolicLink(java.nio.file.Path, java.nio.file.Path, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.nio.file.Path, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.nio.file.Path, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempDirectory(java.nio.file.Path, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempFile(java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempFile(java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempFile(java.nio.file.Path, java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path createTempFile(java.nio.file.Path, java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path createTempFile(java.nio.file.Path, java.lang.String, java.lang.String, java.nio.file.attribute.FileAttribute&lt;?&gt;...) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;param2&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -169,8 +413,19 @@
   <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.file.Path move(java.nio.file.Path, java.nio.file.Path, java.nio.file.CopyOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path readSymbolicLink(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -178,8 +433,28 @@
   <item name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path setAttribute(java.nio.file.Path, java.lang.String, java.lang.Object, java.nio.file.LinkOption...) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setLastModifiedTime(java.nio.file.Path, java.nio.file.attribute.FileTime)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path setLastModifiedTime(java.nio.file.Path, java.nio.file.attribute.FileTime) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setLastModifiedTime(java.nio.file.Path, java.nio.file.attribute.FileTime) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path setOwner(java.nio.file.Path, java.nio.file.attribute.UserPrincipal)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path setOwner(java.nio.file.Path, java.nio.file.attribute.UserPrincipal) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -187,26 +462,43 @@
   <item name='java.nio.file.Files java.nio.file.Path setOwner(java.nio.file.Path, java.nio.file.attribute.UserPrincipal) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path setPosixFilePermissions(java.nio.file.Path, java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path setPosixFilePermissions(java.nio.file.Path, java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path setPosixFilePermissions(java.nio.file.Path, java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path walkFileTree(java.nio.file.Path, java.util.Set&lt;java.nio.file.FileVisitOption&gt;, int, java.nio.file.FileVisitor&lt;? super java.nio.file.Path&gt;) 3'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1/*"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -214,11 +506,94 @@
   <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, byte[], java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.charset.Charset, java.nio.file.OpenOption...) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path write(java.nio.file.Path, java.lang.Iterable&lt;? extends java.lang.CharSequence&gt;, java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.charset.Charset, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_,_-&gt;param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.charset.Charset, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.charset.Charset, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.charset.Charset, java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.charset.Charset, java.nio.file.OpenOption...) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.file.OpenOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_,_,_ -&gt; param1&quot;"/>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.file.OpenOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.file.OpenOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.nio.file.Path writeString(java.nio.file.Path, java.lang.CharSequence, java.nio.file.OpenOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -226,8 +601,27 @@
   <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.FileTime getLastModifiedTime(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.UserPrincipal getOwner(java.nio.file.Path, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.nio.file.attribute.UserPrincipal getOwner(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.nio.file.attribute.UserPrincipal getOwner(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path, java.nio.charset.Charset)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item name='java.nio.file.Files java.util.List&lt;java.lang.String&gt; readAllLines(java.nio.file.Path, java.nio.charset.Charset) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -241,8 +635,110 @@
   <item name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item
+    name='java.nio.file.Files java.util.Map&lt;java.lang.String,java.lang.Object&gt; readAttributes(java.nio.file.Path, java.lang.String, java.nio.file.LinkOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt; getPosixFilePermissions(java.nio.file.Path, java.nio.file.LinkOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt; getPosixFilePermissions(java.nio.file.Path, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.Set&lt;java.nio.file.attribute.PosixFilePermission&gt; getPosixFilePermissions(java.nio.file.Path, java.nio.file.LinkOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.lang.String&gt; lines(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.lang.String&gt; lines(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.lang.String&gt; lines(java.nio.file.Path, java.nio.charset.Charset)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.lang.String&gt; lines(java.nio.file.Path, java.nio.charset.Charset) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.lang.String&gt; lines(java.nio.file.Path, java.nio.charset.Charset) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; find(java.nio.file.Path, int, java.util.function.BiPredicate&lt;java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes&gt;, java.nio.file.FileVisitOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; find(java.nio.file.Path, int, java.util.function.BiPredicate&lt;java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes&gt;, java.nio.file.FileVisitOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; find(java.nio.file.Path, int, java.util.function.BiPredicate&lt;java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes&gt;, java.nio.file.FileVisitOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/2"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; find(java.nio.file.Path, int, java.util.function.BiPredicate&lt;java.nio.file.Path,java.nio.file.attribute.BasicFileAttributes&gt;, java.nio.file.FileVisitOption...) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; list(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; list(java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...) 1'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, int, java.nio.file.FileVisitOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, java.nio.file.FileVisitOption...)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, java.nio.file.FileVisitOption...) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.nio.file.Files java.util.stream.Stream&lt;java.nio.file.Path&gt; walk(java.nio.file.Path, java.nio.file.FileVisitOption...) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -250,14 +746,38 @@
   <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files long copy(java.io.InputStream, java.nio.file.Path, java.nio.file.CopyOption...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item name='java.nio.file.Files long copy(java.nio.file.Path, java.io.OutputStream)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.nio.file.Files long copy(java.nio.file.Path, java.io.OutputStream) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Files long copy(java.nio.file.Path, java.io.OutputStream) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.file.Files long mismatch(java.nio.file.Path, java.nio.file.Path) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files long mismatch(java.nio.file.Path, java.nio.file.Path) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name='java.nio.file.Files long size(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Files void delete(java.nio.file.Path)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;io&quot;"/>
+    </annotation>
   </item>
   <item name='java.nio.file.Files void delete(java.nio.file.Path) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -393,6 +913,7 @@
   <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...) 1'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path of(java.net.URI)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -479,6 +1000,7 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path toRealPath(java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;...)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -488,6 +1010,7 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
   </item>
   <item
     name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...)'>
@@ -500,9 +1023,15 @@
   <item
     name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/[]"/>
+  </item>
+  <item
+    name='java.nio.file.Path java.nio.file.WatchKey register(java.nio.file.WatchService, java.nio.file.WatchEvent.Kind&lt;?&gt;[], java.nio.file.WatchEvent.Modifier...) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Path java.util.Iterator&lt;java.nio.file.Path&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -523,6 +1052,44 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.nio.file.Paths java.nio.file.Path get(java.net.URI) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult postVisitDirectory(T, java.io.IOException) 1'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item
+    name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item
+    name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult preVisitDirectory(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFile(T, java.nio.file.attribute.BasicFileAttributes) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.SimpleFileVisitor java.nio.file.FileVisitResult visitFileFailed(T, java.io.IOException) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>

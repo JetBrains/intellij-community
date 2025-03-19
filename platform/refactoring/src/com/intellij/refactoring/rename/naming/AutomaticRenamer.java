@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,15 +133,14 @@ public abstract class AutomaticRenamer {
     }
     String canonicalName = nameToCanonicalName(name, element);
     final String newCanonicalName = suggester.suggestName(canonicalName);
-    if (newCanonicalName.length() == 0) {
+    if (newCanonicalName.isEmpty()) {
       LOG.error("oldClassName = " + oldClassName + ", newClassName = " + newClassName + ", name = " + name + ", canonicalName = " +
                 canonicalName + ", newCanonicalName = " + newCanonicalName);
     }
     return canonicalNameToName(newCanonicalName, element);
   }
 
-  @NonNls
-  protected String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
+  protected @NonNls String canonicalNameToName(@NonNls String canonicalName, PsiNamedElement element) {
     return canonicalName;
   }
 
@@ -157,12 +156,9 @@ public abstract class AutomaticRenamer {
     return false;
   }
 
-  @NlsContexts.DialogTitle
-  public abstract String getDialogTitle();
+  public abstract @NlsContexts.DialogTitle String getDialogTitle();
 
-  @NlsContexts.Button
-  public abstract String getDialogDescription();
+  public abstract @NlsContexts.Label String getDialogDescription();
 
-  @NlsContexts.ColumnName
-  public abstract String entityName();
+  public abstract @NlsContexts.ColumnName String entityName();
 }

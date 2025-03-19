@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -20,27 +21,19 @@ public class CreateAction extends BaseRunConfigurationAction {
     this(null);
   }
 
-  public CreateAction(Icon icon) {
+  public CreateAction(@Nullable Icon icon) {
     super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, icon);
     getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
   }
 
   @Override
-  protected void perform(final ConfigurationContext context) {
-    RunnerAndConfigurationSettings configuration = context.findExisting();
-    if (configuration == null) {
-      configuration = context.getConfiguration();
-    }
-    choosePolicy(context).perform(configuration, context);
-  }
-
-  @Override
-  protected void perform(RunnerAndConfigurationSettings configurationSettings, ConfigurationContext context) {
+  protected void perform(@NotNull RunnerAndConfigurationSettings configurationSettings,
+                         @NotNull ConfigurationContext context) {
     choosePolicy(context).perform(configurationSettings, context);
   }
 
   @Override
-  protected void updatePresentation(final Presentation presentation, @NotNull final String actionText, final ConfigurationContext context) {
+  protected void updatePresentation(@NotNull Presentation presentation, final @NotNull String actionText, final ConfigurationContext context) {
     choosePolicy(context).update(presentation, context, actionText);
   }
 
@@ -55,8 +48,8 @@ public class CreateAction extends BaseRunConfigurationAction {
     return Holder.EDIT;
   }
 
-  private static abstract class BaseCreatePolicy {
-    public void update(final Presentation presentation, final ConfigurationContext context, @NotNull final String actionText) {
+  private abstract static class BaseCreatePolicy {
+    public void update(final Presentation presentation, final ConfigurationContext context, final @NotNull String actionText) {
       updateText(presentation, actionText);
     }
     
@@ -84,7 +77,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
   }
 
-  private static class EditPolicy extends CreateAndEditPolicy {
+  private static final class EditPolicy extends CreateAndEditPolicy {
     @Override
     protected void perform(RunnerAndConfigurationSettings configuration, ConfigurationContext context) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -94,7 +87,7 @@ public class CreateAction extends BaseRunConfigurationAction {
     }
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final BaseCreatePolicy CREATE_AND_EDIT = new CreateAndEditPolicy();
     private static final BaseCreatePolicy EDIT = new EditPolicy();
     private static final BaseCreatePolicy DISABLED = new BaseCreatePolicy() {

@@ -8,14 +8,20 @@
     />
   </extensionPoints>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <irGenerationExtension implementation="org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension"/>
-    <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeResolveExtension"/>
-    <storageComponentContainerContributor
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeDeclarationCheckerComponentContainerContributor"/>
+<!-- This flag is a temporary safety measure and should be removed later to always enable the default provider -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            key="kotlin.parcelize.support.availabilityProvider.default.enabled"
+            description="Enables default implementation of 'ParcelizeAvailabilityProvider', allows to use kotlin-parcelize compiler plugin with JPS."
+            defaultValue="false"
+    />
+  </extensions>
 
-    <ultraLightClassModifierExtension
-            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeUltraLightClassModifierExtension"/>
-    <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeQuickFixContributor"/>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idea.compilerPlugin.parcelize.availabilityProvider
+            id="DefaultParcelizeAvailabilityProvider"
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeAvailabilityProvider$Default"
+            order="last"
+    />
   </extensions>
 </idea-plugin>

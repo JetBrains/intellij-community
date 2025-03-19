@@ -23,14 +23,12 @@ import org.jetbrains.annotations.NonNls;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ExternalEditorOptions extends Cloneable {
-    @NonNls
-    String ATTR_PREFIX = "ExternalEditor.";
-    @NonNls
-    String ATTR_EXECUTABLE_PATH = ATTR_PREFIX + "executablePath";
+  @NonNls String ATTR_PREFIX = "ExternalEditor.";
+  @NonNls String ATTR_EXECUTABLE_PATH = ATTR_PREFIX + "executablePath";
 
-    String getExecutablePath();
+  String getExecutablePath();
 
-    void inject(ExternalEditorOptions options);
+  void inject(ExternalEditorOptions options);
 
-    boolean setOption(String name, Object value);
+  boolean setOption(String name, Object value);
 }

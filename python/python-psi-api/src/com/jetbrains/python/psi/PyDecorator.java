@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.ast.PyAstDecorator;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,12 +14,14 @@ import org.jetbrains.annotations.Nullable;
  * as decorator. In {@code @foo(...)} form, these very methods are related to the call that returns the decorator
  * to be applied. In either case, they are related to an invocation of {@code foo}.
  */
-public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
+public interface PyDecorator extends PyAstDecorator, PyCallExpression, StubBasedPsiElement<PyDecoratorStub> {
   /**
    * @return the function being decorated, or null.
    */
-  @Nullable
-  PyFunction getTarget();
+  @Override
+  default @Nullable PyFunction getTarget() {
+    return (PyFunction)PyAstDecorator.super.getTarget();
+  }
 
   /**
    * Return the expression directly after "@" or {@code null} if there is none.
@@ -42,11 +30,14 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    * were relaxed in PEP 614, this method is expected to return either a plain reference expression
    * (i.e. {@code foo.bar}, not {@code foo[0].bar}) or a call on such a reference.
    */
-  @Nullable
-  PyExpression getExpression();
+  @Override
+  default @Nullable PyExpression getExpression() {
+    return (PyExpression)PyAstDecorator.super.getExpression();
+  }
 
   /**
    * True if the annotating function is a builtin, useful together with getName(). Implementation uses stub info.
+   *
    * @see PyElement#getName()
    */
   boolean isBuiltin();
@@ -56,29 +47,13 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    */
   boolean hasArgumentList();
 
-  /**
-   * If {@link #getCallee()} result for this decorator is a reference expression, return its
-   * {@link PyReferenceExpression#asQualifiedName()} and {@code null} otherwise.
-   * <p>
-   * Effectively, it means that the result is {@code null} for any non-trivial reference or a call target.
-   * <p>
-   * Examples:
-   * <ul>
-   *   <li>{@code @foo.bar} -> {@code foo.bar}</li>
-   *   <li>{@code @foo.bar(42)} -> {@code foo.bar}</li>
-   *   <li>{@code @(foo.bar)} -> {@code null}</li>
-   *   <li>{@code @foo.bar[42]} -> {@code null}</li>
-   *   <li>{@code @foo[42].bar} -> {@code null}</li>
-   * </ul>
-   * <p>
-   * In a syntactically correct program prior Python 3.9, this method is expected to return a non-null value.
-   * <p>
-   * This value is persisted in stubs as {@link PyDecoratorStub#getQualifiedName()}.
-   *
-   * @see #getCallee()
-   * @see PyReferenceExpression#asQualifiedName()
-   * @see PyDecoratorStub#getQualifiedName()
-   */
-  @Nullable
-  QualifiedName getQualifiedName();
+  @Override
+  default @Nullable PyArgumentList getArgumentList() {
+    return (PyArgumentList)PyAstDecorator.super.getArgumentList();
+  }
+
+  @Override
+  default @Nullable PyExpression getCallee() {
+    return (PyExpression)PyAstDecorator.super.getCallee();
+  }
 }

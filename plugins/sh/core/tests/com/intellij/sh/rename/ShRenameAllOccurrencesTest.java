@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.sh.highlighting.ShHighlightUsagesTest;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,11 @@ public class ShRenameAllOccurrencesTest extends LightPlatformCodeInsightTestCase
   }
 
   public void testKeyword2() {
+    doTest(null);
+  }
+
+  public void testSuppressedRename() {
+    ShHighlightUsagesTest.suppressOccurrences(getTestRootDisposable());
     doTest(null);
   }
 

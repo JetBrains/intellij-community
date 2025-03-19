@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NonNls;
 import org.junit.*;
@@ -23,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -409,55 +412,93 @@ public class DisposerTest  {
   }
 
   @Test
-  public void testDisposeDespiteExceptions() {
+  public void testDisposeDespiteExceptions() throws Exception {
     DefaultLogger.disableStderrDumping(myRoot);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable parent = Disposer.newDisposable();
+      Disposable first = Disposer.newDisposable();
+      Disposable last = Disposer.newDisposable();
 
-    Disposable parent = Disposer.newDisposable();
-    Disposable first = Disposer.newDisposable();
-    Disposable last = Disposer.newDisposable();
+      Disposer.register(parent, first);
+      Disposer.register(parent, () -> {
+        throw new AssertionError("Expected");
+      });
 
-    Disposer.register(parent, first);
-    Disposer.register(parent, () -> { throw new AssertionError("Expected"); });
-    Disposer.register(parent, () -> { throw new ProcessCanceledException() {
-      @Override
-      public String getMessage() {
-        return "Expected";
-      }
-    }; });
-    Disposer.register(parent, last);
+      Disposer.register(parent, last);
 
-    UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
+      UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
 
-    assertTrue(Disposer.isDisposed(parent));
-    assertTrue(Disposer.isDisposed(first));
-    assertTrue(Disposer.isDisposed(last));
+      assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(first));
+      assertTrue(Disposer.isDisposed(last));
+    });
   }
 
   @Test
-  public void testMustNotAllowToRegisterDuringParentDisposal() {
+  public void testDisposeDespitePCE() throws Exception {
     DefaultLogger.disableStderrDumping(myRoot);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Disposable parent = Disposer.newDisposable();
+      Disposable first = Disposer.newDisposable();
+      Disposable last = Disposer.newDisposable();
 
-    Disposable parent = Disposer.newDisposable("parent");
-    Disposable last = Disposer.newDisposable("child");
+      Disposer.register(parent, first);
+      Disposer.register(parent, () -> {
+        throw new ProcessCanceledException() {
+          @Override
+          public String getMessage() {
+            return "Expected";
+          }
+        };
+      });
 
-    Disposer.register(parent, () -> Disposer.register(parent, last));
+      Disposer.register(parent, last);
 
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
+      UsefulTestCase.assertThrows(RuntimeException.class, "PCE must not be thrown from a dispose() implementation",
+                                  () -> Disposer.dispose(parent));
 
-    assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(parent));
+      assertTrue(Disposer.isDisposed(first));
+      assertTrue(Disposer.isDisposed(last));
+    });
   }
 
-  @Test(timeout = 60 * 1000)
+  @Test
+  public void testMustNotAllowToRegisterDuringParentDisposal() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      DefaultLogger.disableStderrDumping(myRoot);
+
+      Disposable parent = Disposer.newDisposable("parent");
+      Disposable last = Disposer.newDisposable("child");
+
+      Disposer.register(parent, () -> Disposer.register(parent, last));
+
+      UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
+
+      assertTrue(Disposer.isDisposed(parent));
+    });
+  }
+
+  @Test
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
-    try {
-      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
-    }
-    catch (AssertionError e) {
-      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start", e);
-    }
+    long elapsed = TimeoutUtil.measureExecutionTime(() -> {
+      AtomicLong leakHash = new AtomicLong();
+      try {
+        LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class, leak -> {
+          leakHash.set(System.identityHashCode(leak));
+          return true;
+        });
+      }
+      catch (AssertionError e) {
+        Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
+                                 "myRoot=" + myRoot + "; ihc(myRoot)=" + System.identityHashCode(myRoot) + "; leakHash=" + leakHash, e);
+      }
+    });
+    Assume.assumeTrue("Too long time (" + elapsed+ "ms) spent hunting memory leak, your heap must be huge! I refuse to continue", elapsed<30_000);
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
 
-    for (int i = 0; i < 1000; i++) {
+    long deadline = System.currentTimeMillis() + 3 * 60 * 1000;
+    for (int i=0; i < 1000 && System.currentTimeMillis() < deadline; i++) {
       myDisposeActions.clear();
       myDisposedObjects.clear();
       MyLoggingDisposable parent = new MyLoggingDisposable("parent"+i);
@@ -661,8 +702,8 @@ public class DisposerTest  {
     int N = 1_000_000;
     Disposable root = Disposer.newDisposable("test_root");
 
-    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child "+i)).toArray(Disposable[]::new);
-    PlatformTestUtil.startPerformanceTest(name.getMethodName(), 10_000, () -> {
+    Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
+    Benchmark.newBenchmark(name.getMethodName(), () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }
@@ -674,6 +715,6 @@ public class DisposerTest  {
         Disposer.dispose(root);
         Disposer.register(myRoot, root);
       })
-      .assertTiming();
+      .start();
   }
 }

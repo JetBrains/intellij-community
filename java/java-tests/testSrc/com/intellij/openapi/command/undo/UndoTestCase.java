@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 public abstract class UndoTestCase extends JavaCodeInsightTestCase {
-  private CurrentEditorProvider myOldEditorProvider;
-
   protected UndoManagerImpl myManager;
   protected VirtualFile myRoot;
 
@@ -37,7 +34,6 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
-    myOldEditorProvider = myManager.getEditorProvider();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -52,9 +48,8 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myManager.setEditorProvider(myOldEditorProvider);
+      myManager.setOverriddenEditorProvider(null);
       myManager = null;
-      myOldEditorProvider = null;
     }
     catch (Throwable e) {
       addSuppressedException(e);

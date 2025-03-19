@@ -12,6 +12,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,8 +33,11 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
 
   @Override
   protected boolean supportAnnotationVariant(@NotNull PsiAnnotation psiAnnotation) {
+    String prefix = "prefix";
+    //it can help for dumb mode or incomplete mode
+    if (null != psiAnnotation.findDeclaredAttributeValue(prefix)) return true;
     // old version of @FieldNameConstants has attributes "prefix" and "suffix", the new one not
-    return null != psiAnnotation.findAttributeValue("prefix");
+    return null != psiAnnotation.findAttributeValue(prefix);
   }
 
   @Override
@@ -69,17 +73,17 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     final PsiClass psiClass = psiField.getContainingClass();
     if (null != psiClass) {
       target.add(createFieldNameConstant(psiField, psiClass, psiAnnotation));
     }
   }
 
-  @NotNull
-  public static PsiField createFieldNameConstant(@NotNull PsiField psiField,
-                                                 @NotNull PsiClass psiClass,
-                                                 @NotNull PsiAnnotation psiAnnotation) {
+  public static @NotNull PsiField createFieldNameConstant(@NotNull PsiField psiField,
+                                                          @NotNull PsiClass psiClass,
+                                                          @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager manager = psiClass.getContainingFile().getManager();
     final PsiType psiFieldType = PsiType.getJavaLangString(manager, GlobalSearchScope.allScope(psiClass.getProject()));
 
@@ -101,8 +105,7 @@ public final class FieldNameConstantsFieldProcessor extends AbstractFieldProcess
     return fieldNameConstant;
   }
 
-  @NotNull
-  private static String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+  private static @NotNull String calcFieldConstantName(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     String prefix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "prefix", CONFIG_DEFAULT);
     String suffix = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "suffix", CONFIG_DEFAULT);
 

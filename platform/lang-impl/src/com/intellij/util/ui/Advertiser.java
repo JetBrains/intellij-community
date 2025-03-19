@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.RelativeFont;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -79,7 +80,7 @@ public class Advertiser {
   }
 
   public void clearAdvertisements() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myTexts.clear();
     myCurrentItem.set(0);
     updateAdvertisements();
@@ -92,7 +93,7 @@ public class Advertiser {
   }
 
   public void addAdvertisement(@PopupAdvertisement @NotNull String text, @Nullable Icon icon) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myTexts.add(new Item(text, icon));
     updateAdvertisements();
   }
@@ -102,7 +103,7 @@ public class Advertiser {
   }
 
   public void setForeground(@Nullable Color foreground) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     
     if (foreground != null) {
       myForeground = foreground;
@@ -120,13 +121,13 @@ public class Advertiser {
     return myComponent;
   }
 
-  public List<String> getAdvertisements() {
+  public @Unmodifiable List<String> getAdvertisements() {
     return ContainerUtil.map(myTexts, item -> item.text);
   }
 
   // ------------------------------------------------------
   // Custom layout
-  private class AdvertiserLayout implements LayoutManager {
+  private final class AdvertiserLayout implements LayoutManager {
     @Override
     public void addLayoutComponent(String name, Component comp) {}
 
@@ -180,7 +181,7 @@ public class Advertiser {
     }
   }
 
-  private class Item {
+  private final class Item {
     private final @PopupAdvertisement String text;
     private final                     Icon   icon;
 

@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.grazie.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "json_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "json",
+  module_name = "intellij.grazie.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+    "//platform/core-api:core",
+    "//json",
+    "//platform/util-ex",
+  ],
+  runtime_deps = [":json_resources"]
+)
+### auto-generated section `build intellij.grazie.json` end

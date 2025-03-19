@@ -1,3 +1,0 @@
-fragment userInfo on User {
-  ...actorInfo
-}

@@ -84,7 +84,7 @@ public final class RelativeFont implements PropertyChangeListener {
    * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
    * over the current instance.
    */
-  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
+  public @NotNull RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset) {
     return fromResource(propertyName, defaultOffset, MINIMUM_FONT_SIZE);
   }
 
@@ -92,7 +92,7 @@ public final class RelativeFont implements PropertyChangeListener {
    * @return an instance from resource integer that represents number of <code>large</code> (>0) or <code>small</code> (<0) operations
    * over the current instance. Use custom minimum font size limit.
    */
-  public RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset, float minSize) {
+  public @NotNull RelativeFont fromResource(@NonNls @NotNull String propertyName, int defaultOffset, float minSize) {
     int offset = JBUI.getInt(propertyName, defaultOffset);
     return offset == 0 ? this : scale(offset, minSize);
   }
@@ -100,14 +100,14 @@ public final class RelativeFont implements PropertyChangeListener {
   /**
    * @see #scale(int, float)
    */
-  public RelativeFont scale(int offset) {
+  public @NotNull RelativeFont scale(int offset) {
     return scale(offset, MINIMUM_FONT_SIZE);
   }
 
   /**
    * Returns an instance that represents larger (>0) or smaller (<0) font over the current instance
    */
-  public RelativeFont scale(int offset, float minSize) {
+  public @NotNull RelativeFont scale(int offset, float minSize) {
     float multiplier = (float)Math.pow(MULTIPLIER, offset);
     return new RelativeFont(myFamily, myStyle, mySize != null ? mySize * multiplier : multiplier, minSize);
   }

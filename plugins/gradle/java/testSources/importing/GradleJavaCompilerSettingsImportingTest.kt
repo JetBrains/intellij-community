@@ -5,9 +5,9 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.SystemProperties
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.util.isSupported
 import org.junit.Assume
 import org.junit.Ignore
 import org.junit.Test
@@ -79,7 +79,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
     val javaVersion = nonPreviewLevel.toJavaVersion()
     val feature = javaVersion.feature
 
-    Assume.assumeTrue(isSupported(currentGradleVersion, javaVersion))
+    Assume.assumeTrue(GradleJvmSupportMatrix.isSupported(currentGradleVersion, javaVersion))
 
     createJavaGradleSubProject(
       projectSourceCompatibility = "$feature",
@@ -172,7 +172,7 @@ class GradleJavaCompilerSettingsImportingTest : GradleJavaCompilerSettingsImport
 
 
   @Test
-  @Ignore // the test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.
+  @Ignore("The test is too slow: it downloads two JDKs. Proper stubs are TBD with Gradle.")
   @TargetVersions("6.7+")
   fun `update toolchain in build script should update it in IDEA`() {
     VfsRootAccess.allowRootAccess(testRootDisposable, SystemProperties.getUserHome() + "/.gradle/jdks")

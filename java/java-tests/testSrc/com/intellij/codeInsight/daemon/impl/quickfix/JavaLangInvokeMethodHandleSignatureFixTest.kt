@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.JavaTestUtil
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatur
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.DEFAULT_SIGNATURE
 import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection.POSSIBLE_SIGNATURES
 import com.intellij.java.JavaBundle.message
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.ReflectiveSignature
@@ -27,25 +28,25 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
 
   override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/methodHandle"
 
-  fun testConstructor() = doTestConstructor(INT)
-  fun testConstructor2() = doTestConstructor(INT)
-  fun testConstructor3() = doTestConstructor()
-  fun testConstructor4() = doTestConstructor()
+  fun testConstructor(): Unit = doTestConstructor(INT)
+  fun testConstructor2(): Unit = doTestConstructor(INT)
+  fun testConstructor3(): Unit = doTestConstructor()
+  fun testConstructor4(): Unit = doTestConstructor()
 
-  fun testGenericMethod() = doTestMethod(OBJECT, OBJECT)
-  fun testGenericMethod2() = doTestMethod(OBJECT, OBJECT, OBJECT_ARRAY)
-  fun testGenericMethod3() = doTestMethod(OBJECT, OBJECT, STRING)
-  fun testGenericMethod4() = doTestMethod(OBJECT, OBJECT)
+  fun testGenericMethod(): Unit = doTestMethod(OBJECT, OBJECT)
+  fun testGenericMethod2(): Unit = doTestMethod(OBJECT, OBJECT, OBJECT_ARRAY)
+  fun testGenericMethod3(): Unit = doTestMethod(OBJECT, OBJECT, STRING)
+  fun testGenericMethod4(): Unit = doTestMethod(OBJECT, OBJECT)
 
-  fun testStaticMethod() = doTestMethod(VOID)
-  fun testStaticMethod2() = doTestMethod(STRING, STRING)
-  fun testStaticMethod3() = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testStaticMethod4() = doTestReplace("findStatic")
+  fun testStaticMethod(): Unit = doTestMethod(VOID)
+  fun testStaticMethod2(): Unit = doTestMethod(STRING, STRING)
+  fun testStaticMethod3(): Unit = doTestMethod(STRING, STRING, STRING_ARRAY)
+  fun testStaticMethod4(): Unit = doTestReplace("findStatic")
 
-  fun testVirtualMethod() = doTestMethod(VOID)
-  fun testVirtualMethod2() = doTestMethod(STRING, STRING)
-  fun testVirtualMethod3() = doTestMethod(STRING, STRING, STRING_ARRAY)
-  fun testVirtualMethod4() = doTestReplace("findVirtual")
+  fun testVirtualMethod(): Unit = doTestMethod(VOID)
+  fun testVirtualMethod2(): Unit = doTestMethod(STRING, STRING)
+  fun testVirtualMethod3(): Unit = doTestMethod(STRING, STRING, STRING_ARRAY)
+  fun testVirtualMethod4(): Unit = doTestReplace("findVirtual")
 
 
   private fun doTestMethod(vararg withSignature: String) = doTest(USE_METHOD, *withSignature)
@@ -60,6 +61,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightJavaCodeInsightFixtureTe
     val signature = ReflectiveSignature.create(listOf(*withSignature)) ?: ReflectiveSignature.NO_ARGUMENT_CONSTRUCTOR_SIGNATURE
 
     val lookupElements = launchAction(action, signature)
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     checkLookupElements(file, lookupElements)
     myFixture.checkResultByFile("after$testName.java")
   }

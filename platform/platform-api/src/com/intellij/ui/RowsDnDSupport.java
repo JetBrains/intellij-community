@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.dnd.*;
@@ -18,26 +18,28 @@ public final class RowsDnDSupport {
   private RowsDnDSupport() {
   }
 
-  public static void install(@NotNull final JTable table, @NotNull final EditableModel model) {
+  public static void install(final @NotNull JTable table, final @NotNull EditableModel model) {
     if (GraphicsEnvironment.isHeadless()) return;
     table.setDragEnabled(true);
     installImpl(table, model);
   }
 
-  public static void install(@NotNull final JList list, @NotNull final EditableModel model) {
+  public static void install(final @NotNull JList list, final @NotNull EditableModel model) {
     if (GraphicsEnvironment.isHeadless()) return;
     list.setDragEnabled(true);
     installImpl(list, model);
   }
 
-  public static void install(@NotNull final JTree tree, @NotNull final EditableModel model) {
+  public static void install(final @NotNull JTree tree, final @NotNull EditableModel model) {
     if (GraphicsEnvironment.isHeadless()) return;
     tree.setDragEnabled(true);
     installImpl(tree, model);
   }
 
-  private static void installImpl(@NotNull final JComponent component, @NotNull final EditableModel model) {
+  private static void installImpl(final @NotNull JComponent component, final @NotNull EditableModel model) {
     component.setTransferHandler(new TransferHandler(null));
+    SmoothAutoScroller.installDropTargetAsNecessary(component);
+
     DnDSupport.createBuilder(component)
       .setBeanProvider(info -> {
         final Point p = info.getPoint();

@@ -41,26 +41,22 @@ class SelfReference implements PsiReference {
   }
 
   @Override
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myValue;
   }
 
   @Override
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     return TextRange.from(1 + myStartOffset, myValue.getTextLength() - (2 + myStartOffset));
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myValue.isValid() ? myTarget : null;
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return myValue.getText();
   }
 

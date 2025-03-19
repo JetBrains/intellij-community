@@ -7,8 +7,8 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import com.intellij.webSymbols.WebSymbolsBundle
+import com.intellij.webSymbols.references.WebSymbolReferenceProblem
 import org.jetbrains.annotations.Nls
 
 internal class WebSymbolsInspectionToolMappingEP : PluginAware {
@@ -46,6 +46,7 @@ internal class WebSymbolsInspectionToolMappingEP : PluginAware {
   var bundleName: String? = null
 
   @Attribute("messageKey")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @JvmField
   var messageKey: String? = null
 

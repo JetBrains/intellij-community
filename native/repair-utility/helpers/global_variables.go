@@ -53,7 +53,11 @@ var (
 		"linux":   ".tar.gz",
 		"windows": ".exe",
 	}
-	possibleBaseFileNames = []string{"appcode", "clion", "datagrip", "dataspell", "goland", "idea", "phpstorm", "pycharm", "rubymine", "webstorm", "rider", "Draft", "aqua"}
+	possibleBaseFileNames = []string{
+	  "appcode", "clion", "datagrip", "dataspell", "goland", "idea",
+	  "phpstorm", "pycharm", "rubymine", "webstorm", "rider", "Draft", "aqua",
+	  "rustrover",
+	}
 	possibleBinariesPaths = map[string][]string{
 		"darwin":  {"$HOME/Applications/*.app/Contents/MacOS/{possibleBaseFileName}", "/Applications/*.app/Contents/MacOS/{possibleBaseFileName}", "$HOME/Library/Application Support/JetBrains/Toolbox/apps/*/ch-*/*/*.app/Contents/MacOS/{possibleBaseFileName}"},
 		"linux":   {"$HOME/.local/share/JetBrains/Toolbox/apps/*/ch-*/*/bin/{possibleBaseFileName}.sh", "$HOME/.local/share/JetBrains/Toolbox/apps/*/bin/{possibleBaseFileName}.sh"},

@@ -1,16 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
-public class TestEditorTabGroup {
+@ApiStatus.Internal
+public final class TestEditorTabGroup {
   private final String name;
 
   private final LinkedHashMap<VirtualFile, Pair<FileEditor, FileEditorProvider>> myOpenedTabs = new LinkedHashMap<>();
@@ -25,14 +27,13 @@ public class TestEditorTabGroup {
   }
 
   public void openTab(VirtualFile virtualFile, FileEditor fileEditor, FileEditorProvider fileEditorProvider) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myOpenedTabs.put(virtualFile, Pair.pair(fileEditor, fileEditorProvider));
     myOpenedFile = virtualFile;
   }
 
-  @Nullable
-  public Pair<FileEditor, FileEditorProvider> getOpenedEditor(){
+  public @Nullable Pair<FileEditor, FileEditorProvider> getOpenedEditor(){
     VirtualFile openedFile = getOpenedFile();
     if (openedFile == null) {
       return null;
@@ -41,25 +42,23 @@ public class TestEditorTabGroup {
     return myOpenedTabs.get(openedFile);
   }
 
-  @Nullable
-  public VirtualFile getOpenedFile() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public @Nullable VirtualFile getOpenedFile() {
+    ThreadingAssertions.assertEventDispatchThread();
     return myOpenedFile;
   }
 
   public void setOpenedFile(VirtualFile file) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myOpenedFile = file;
   }
 
   public void closeTab(VirtualFile virtualFile) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myOpenedFile = null;
     myOpenedTabs.remove(virtualFile);
   }
 
-  @Nullable
-  public Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
+  public @Nullable Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
     return myOpenedTabs.get(file);
   }
 

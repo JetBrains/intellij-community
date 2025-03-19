@@ -5,3 +5,5 @@ class A
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun A.bar(): Unit = asDynamic().bar()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix

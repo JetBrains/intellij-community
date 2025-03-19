@@ -16,6 +16,7 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.XMLCatalogConfigurable;
 import com.intellij.javaee.XMLCatalogManager;
@@ -114,5 +115,11 @@ public class XMLCatalogManagerTest extends BasePlatformTestCase {
   @Override
   protected boolean isCommunity() {
     return true;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
   }
 }

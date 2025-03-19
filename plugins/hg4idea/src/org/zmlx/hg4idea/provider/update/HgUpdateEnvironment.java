@@ -45,10 +45,9 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @NotNull
-  public UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
-                                         UpdatedFiles updatedFiles, ProgressIndicator indicator,
-                                         @NotNull Ref<SequentialUpdatesContext> context) {
+  public @NotNull UpdateSession updateDirectories(FilePath @NotNull [] contentRoots,
+                                                  UpdatedFiles updatedFiles, ProgressIndicator indicator,
+                                                  @NotNull Ref<SequentialUpdatesContext> context) {
 
     List<VcsException> exceptions = new LinkedList<>();
 
@@ -96,9 +95,8 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
       this.updateConfiguration = updateConfiguration;
     }
 
-    @Nls
     @Override
-  public String getDisplayName() {
+    public @Nls String getDisplayName() {
     return HgBundle.message("configurable.UpdateConfigurable.display.name");
   }
 

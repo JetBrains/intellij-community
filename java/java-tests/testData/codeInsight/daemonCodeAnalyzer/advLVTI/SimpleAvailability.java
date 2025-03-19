@@ -7,14 +7,19 @@ class Main {
         <error descr="'var' is not allowed as an element type of an array">var</error> d[] = new int[4];
         var d1 = new int[] {4};
         var d2 = new int[4];
-        <error descr="Cannot infer type: 'var' on variable without initializer">var</error> e;
+        <error descr="Cannot infer type: 'var' on variable without an initializer">var</error> e;
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
         var g = (<error descr="Cannot infer type for 'g', it is used in its own variable initializer">g</error> = 7);
         var x = (<error descr="Cannot infer type for 'x', it is used in its own variable initializer">x</error> = 1) + 1;
         var y = new Object[] {<error descr="Cannot infer type for 'y', it is used in its own variable initializer">y</error> = null};
         var z = baz(<error descr="Cannot infer type for 'z', it is used in its own variable initializer">z</error> = 1);
+        var zz = <error descr="Cannot infer type for 'zz', it is used in its own variable initializer">zz</error>;
+        zz.<error descr="Cannot resolve method 'hashCode()'">hashCode</error>();
+        System.out.println(zz.<error descr="Cannot resolve symbol 'zz'">zz</error>);
+        var v =<error descr="Expression expected"> </error>;
+        var w =<EOLError descr="Expression expected"></EOLError>
     }
-    
+
     static int baz(Object o) {return 42;}
 
     private static  void localVariableType() {
@@ -33,9 +38,10 @@ class Main {
         int el = e.compareTo("");
 
         <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> f = () -> "hello";
+        <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> fp = (() -> "hello");
         <error descr="Cannot infer type: method reference requires an explicit target type">var</error> m = Main::localVariableDeclaration;
         <error descr="Cannot infer type: variable initializer is 'null'">var</error> g = null;
-        var runnable = true ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;
+        var runnable = true ? <error descr="Unexpected lambda expression">() -> {}</error> : <error descr="Unexpected lambda expression">() -> {}</error>;
 
         Function<String, String> f1 = (<error descr="Cannot resolve symbol 'var'">var</error> var) -> var;
 

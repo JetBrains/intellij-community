@@ -1,16 +1,17 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices.archetype
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.systemIndependentPath
 import java.net.URL
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
-@State(name = "MavenCatalogManager", storages = [Storage(value = "maven-catalogs.xml")])
+@State(name = "MavenCatalogManager",
+       category = SettingsCategory.TOOLS,
+       exportable = true,
+       storages = [Storage(value = "maven-catalogs.xml", roamingType = RoamingType.DISABLED)])
 class MavenCatalogManager : PersistentStateComponent<MavenCatalogManager.State> {
 
   private var localCatalogs = CopyOnWriteArrayList<MavenCatalog.Local>()
@@ -56,7 +57,7 @@ class MavenCatalogManager : PersistentStateComponent<MavenCatalogManager.State> 
   }
 
   private fun MavenCatalog.Local.asState(): State.Local {
-    return State.Local(name, path.systemIndependentPath)
+    return State.Local(name, path.invariantSeparatorsPathString)
   }
 
   private fun MavenCatalog.Remote.asState(): State.Remote {

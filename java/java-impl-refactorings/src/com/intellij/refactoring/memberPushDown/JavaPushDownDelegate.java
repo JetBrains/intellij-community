@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -200,7 +201,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
       if (list.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isLocalOrAnonymousClass(targetClass)) {
-        for (final PsiReference reference : ReferencesSearch.search(member)) {
+        for (final PsiReference reference : ReferencesSearch.search(member).asIterable()) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
@@ -302,9 +303,12 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           inlineSuperCall(memberInfo, methodBySignature);
         }
       }
-      else if (member instanceof PsiClass) {
+      else if (member instanceof PsiClass aClass) {
         if (sourceClass.isInterface() && !targetClass.isInterface()) {
           PsiUtil.setModifierProperty(member, PsiModifier.PUBLIC, true);
+          if (!aClass.isRecord() && !aClass.isInterface() && !aClass.isEnum()) {
+            PsiUtil.setModifierProperty(member, PsiModifier.STATIC, true);
+          }
         }
         if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
           final PsiClass psiClass = (PsiClass)memberInfo.getMember();
@@ -408,8 +412,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     if (methodBySignature == null) return false;
     final PsiMethod[] superMethods = methodBySignature.findDeepestSuperMethods();
     if (superMethods.length == 0) return false;
-    final boolean is15 = !PsiUtil.isLanguageLevel6OrHigher(methodBySignature);
-    if (is15) {
+    if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, methodBySignature)) {
       for (PsiMethod psiMethod : superMethods) {
         final PsiClass psiClass = psiMethod.getContainingClass();
         if (psiClass != null && psiClass.isInterface()) {
@@ -430,10 +433,10 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   private static void encodeRef(final PsiClass aClass,
-                                @Nullable final PsiElement resolved,
-                                @NotNull final Set<PsiMember> movedMembers,
-                                @NotNull final PsiElement toPut,
-                                @Nullable final PsiElement qualifier) {
+                                final @Nullable PsiElement resolved,
+                                final @NotNull Set<PsiMember> movedMembers,
+                                final @NotNull PsiElement toPut,
+                                final @Nullable PsiElement qualifier) {
 
     for (PsiMember movedMember : movedMembers) {
       if (movedMember.equals(resolved)) {

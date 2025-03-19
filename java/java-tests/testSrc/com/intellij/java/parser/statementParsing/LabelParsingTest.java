@@ -15,12 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class LabelParsingTest extends JavaParsingTestCase {
+public class LabelParsingTest extends AbstractBasicLabelParsingTest {
   public LabelParsingTest() {
-    super("parser-full/statementParsing/label");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSimple() { doTest(true); }
 }

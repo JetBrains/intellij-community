@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -15,13 +16,14 @@ import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public /* not final for Android Studio tests */ class MockPsiManager extends PsiManagerEx {
+public final /* not final for Android Studio tests */ class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new HashMap<>();
   private MockFileManager myMockFileManager;
@@ -36,20 +38,30 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  public PsiFile findFile(@NotNull VirtualFile file) {
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable PsiFile findFile(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
   @Override
-  @Nullable
-  public
+  public @Nullable
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public @Nullable FileViewProvider findViewProvider(@NotNull VirtualFile file, @NotNull CodeInsightContext context) {
     return null;
   }
 
@@ -80,8 +92,7 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
-  @NotNull
-  public PsiModificationTracker getModificationTracker() {
+  public @NotNull PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
       myPsiModificationTracker = new PsiModificationTrackerImpl(myProject);
     }
@@ -131,6 +142,11 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return null;
+  }
+
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
@@ -151,8 +167,7 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
-  @NotNull
-  public FileManager getFileManager() {
+  public @NotNull FileManager getFileManager() {
     if (myMockFileManager == null) {
       myMockFileManager = new MockFileManager(this);
     }
@@ -160,11 +175,11 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
-  public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
+  public void beforeChildRemoval(final @NotNull PsiTreeChangeEventImpl event) {
   }
 
   @Override
-  public void beforeChildReplacement(@NotNull final PsiTreeChangeEventImpl event) {
+  public void beforeChildReplacement(final @NotNull PsiTreeChangeEventImpl event) {
   }
 
   @Override

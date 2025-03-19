@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -71,8 +72,7 @@ public final class PsiAdapter {
      * @param name  name of method to find
      * @return the found method, null if none exist
      */
-    @Nullable
-    public static PsiMethod findMethodByName(PsiClass clazz, String name) {
+    public static @Nullable PsiMethod findMethodByName(PsiClass clazz, String name) {
         PsiMethod[] methods = clazz.getMethods();
 
         // use reverse to find from bottom as the duplicate conflict resolution policy requires this
@@ -207,21 +207,14 @@ public final class PsiAdapter {
     }
 
     /**
-     * Is the given field a {@link Boolean} type or a primitive boolean type?
+     * Is the given type a {@link Boolean} or a primitive boolean?
      *
-     * @param factory element factory.
+     * @param factory unused.
      * @param type    type.
      * @return true if it's a Boolean or boolean type.
      */
     public static boolean isBooleanType(PsiElementFactory factory, PsiType type) {
-        if (isPrimitiveType(type)) {
-            // test for simple type of boolean
-            String s = type.getCanonicalText();
-            return "boolean".equals(s);
-        } else {
-            // test for Object type of Boolean
-            return isTypeOf(factory, type, JAVA_LANG_BOOLEAN);
-        }
+      return PsiTypes.booleanType().equals(type) || type.equalsToText("java.lang.Boolean");
     }
 
     /**
@@ -318,8 +311,7 @@ public final class PsiAdapter {
      * @return the fully qualified classname, null if the field is a primitive.
      * @see #getTypeClassName(PsiType) for the non qualified version.
      */
-    @Nullable
-    public static String getTypeQualifiedClassName(PsiType type) {
+    public static @Nullable String getTypeQualifiedClassName(PsiType type) {
         if (isPrimitiveType(type)) {
             return null;
         }
@@ -340,8 +332,7 @@ public final class PsiAdapter {
      * @return the classname, null if the field is a primitive.
      * @see #getTypeQualifiedClassName(PsiType) for the qualified version.
      */
-    @Nullable
-    public static String getTypeClassName(PsiType type) {
+    public static @Nullable String getTypeClassName(PsiType type) {
         String name = getTypeQualifiedClassName(type);
 
         // return null if it was a primitive type
@@ -358,8 +349,7 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    @Nullable
-    public static PsiMethod findPublicStaticVoidMainMethod(PsiClass clazz) {
+    public static @Nullable PsiMethod findPublicStaticVoidMainMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("main", false);
 
         // is it public static void main(String[] args)
@@ -408,8 +398,7 @@ public final class PsiAdapter {
      * @return the added/replace javadoc comment, null if the was an existing javadoc and it should <b>not</b> be replaced.
      * @throws IncorrectOperationException is thrown if error adding/replacing the javadoc comment.
      */
-    @Nullable
-    public static PsiComment addOrReplaceJavadoc(PsiMethod method, String javadoc, boolean replace) {
+    public static @Nullable PsiComment addOrReplaceJavadoc(PsiMethod method, String javadoc, boolean replace) {
         final Project project = method.getProject();
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         PsiComment comment = factory.createCommentFromText(javadoc, null);
@@ -457,15 +446,7 @@ public final class PsiAdapter {
      * @return true if a getter method, false if not.
      */
     public static boolean isGetterMethod(PsiMethod method) {
-        // must not be a void method
-        if (isTypeOfVoid(method.getReturnType())) {
-            return false;
-        }
-        final PsiParameterList parameterList = method.getParameterList();
-        if (!parameterList.isEmpty()) {
-            return false;
-        }
-        return true;
+        return PropertyUtil.isSimpleGetter(method);
     }
 
     /**
@@ -481,11 +462,10 @@ public final class PsiAdapter {
      *
      *
      * @param method  the method
-     * @return the fieldname if this is a getter method.
+     * @return the field name if this is a getter method.
      * @see #isGetterMethod(PsiMethod) for the getter check
      */
-    @Nullable
-    public static String getGetterFieldName(PsiMethod method) {
+    public static @Nullable String getGetterFieldName(PsiMethod method) {
         // must be a getter
         if (!isGetterMethod(method)) {
             return null;
@@ -520,8 +500,7 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    @Nullable
-    public static PsiMethod findEqualsMethod(PsiClass clazz) {
+    public static @Nullable PsiMethod findEqualsMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("equals", false);
 
         // is it public boolean equals(Object o)
@@ -567,8 +546,7 @@ public final class PsiAdapter {
      * @param clazz the class.
      * @return the method if it exists, null if not.
      */
-    @Nullable
-    public static PsiMethod findHashCodeMethod(PsiClass clazz) {
+    public static @Nullable PsiMethod findHashCodeMethod(PsiClass clazz) {
         PsiMethod[] methods = clazz.findMethodsByName("hashCode", false);
 
         // is it public int hashCode()

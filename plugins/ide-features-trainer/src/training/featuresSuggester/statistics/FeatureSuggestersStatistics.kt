@@ -2,52 +2,71 @@ package training.featuresSuggester.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.openapi.util.registry.Registry
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTER_ID_VALIDATION_RULE
+import com.intellij.lang.Language
 import training.featuresSuggester.suggesters.FeatureSuggester
 
-class FeatureSuggesterStatistics : CounterUsagesCollector() {
-  override fun getGroup() = GROUP
+internal enum class AltClickSuggesterResult {
+  SUGGESTED,
+  FILE_IS_NOT_OPENED,
+  NO_EVALUATE_BOX_FOUND,
+  NO_ALT_CLICK_SHORTCUT,
+  SUGGESTER_WAS_SHOWN_RECENTLY,
+  QUICK_EVALUATE_ACTION_USED_RECENTLY,
+}
 
-  companion object {
-    private const val GROUP_ID = "feature_suggester"
-    private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
-    private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
-    private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
-    private const val SUGGESTION_FOUND = "suggestion_found"
-    private const val SUGGESTER_ID_FIELD = "suggester_id"
-    const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
+internal object FeatureSuggesterStatistics : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup(GROUP_ID, 4)
+  private const val GROUP_ID = "feature_suggester"
 
-    private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
+  private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
+  private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
+  private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
+  private const val SUGGESTION_FOUND = "suggestion_found"
+  private const val SUGGESTER_ID_FIELD = "suggester_id"
+  private const val SUGGESTION_WOULD_BE_SHOWN_FIELD = "suggestion_would_be_shown"
+  private const val DAYS_PASSED_LAST_USED_FIELD = "days_passed_last_used"
+  const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
 
-    private val notificationShowedEvent = GROUP.registerEvent(NOTIFICATION_SHOWED_EVENT_ID, suggesterIdField)
-    private val notificationDontSuggestEvent = GROUP.registerEvent(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggesterIdField)
-    private val notificationLearnMoreEvent = GROUP.registerEvent(NOTIFICATION_LEARN_MORE_EVENT_ID, suggesterIdField)
-    private val suggestionFoundEvent = GROUP.registerEvent(SUGGESTION_FOUND, suggesterIdField)
+  private val GROUP = EventLogGroup(GROUP_ID, 6)
 
-    fun logNotificationShowed(suggesterId: String) = sendStatistics(notificationShowedEvent, suggesterId)
-    fun logNotificationDontSuggest(suggesterId: String) = sendStatistics(notificationDontSuggestEvent, suggesterId)
-    fun logNotificationLearnMore(suggesterId: String) = sendStatistics(notificationLearnMoreEvent, suggesterId)
-    fun logSuggestionFound(suggesterId: String) = sendStatistics(suggestionFoundEvent, suggesterId)
+  private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, FeatureSuggesterIdRuleValidator::class.java)
+  private val suggestionWouldBeShownField = EventFields.Boolean(SUGGESTION_WOULD_BE_SHOWN_FIELD)
+  private val daysPassedLastUsedField = EventFields.Int(DAYS_PASSED_LAST_USED_FIELD)
 
-    private fun sendStatistics(event: EventId1<String?>, suggesterId: String) {
-      if (Registry.`is`("feature.suggester.send.statistics", false)) {
-        event.log(suggesterId)
-      }
-    }
+  private val notificationShowedEvent = GROUP.registerEvent(NOTIFICATION_SHOWED_EVENT_ID, suggesterIdField)
+  private val notificationDontSuggestEvent = GROUP.registerEvent(NOTIFICATION_DONT_SUGGEST_EVENT_ID, suggesterIdField)
+  private val notificationLearnMoreEvent = GROUP.registerEvent(NOTIFICATION_LEARN_MORE_EVENT_ID, suggesterIdField)
+
+  private val suggestionFoundEvent = GROUP.registerEvent(SUGGESTION_FOUND, suggesterIdField, suggestionWouldBeShownField, daysPassedLastUsedField)
+
+  fun logNotificationShowed(suggesterId: String) = notificationShowedEvent.log(suggesterId)
+  fun logNotificationDontSuggest(suggesterId: String) = notificationDontSuggestEvent.log(suggesterId)
+  fun logNotificationLearnMore(suggesterId: String) = notificationLearnMoreEvent.log(suggesterId)
+
+  fun logSuggestionFound(suggesterId: String, suggestionWouldBeShown: Boolean, daysPassedFromLastUsage: Int) {
+      suggestionFoundEvent.log(suggesterId, suggestionWouldBeShown, daysPassedFromLastUsage)
+  }
+
+  // TO check the specific QuickEvaluateSuggester behavior
+  private val altClickSuggesterResultEvent = GROUP.registerEvent(
+    "alt_click_suggester",
+    EventFields.Enum<AltClickSuggesterResult>("alt_click_suggester_result"),
+    EventFields.Language
+  )
+
+  fun altClickSuggesterResult(result: AltClickSuggesterResult, language: Language) {
+    altClickSuggesterResultEvent.log(result, language)
   }
 }
 
 class FeatureSuggesterIdRuleValidator : CustomValidationRule() {
-  override fun getRuleId(): String = SUGGESTER_ID_VALIDATION_RULE
+  override fun getRuleId(): String = FeatureSuggesterStatistics.SUGGESTER_ID_VALIDATION_RULE
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val suggesterIds = FeatureSuggester.suggesters.filter { getPluginInfo(it::class.java).isDevelopedByJetBrains() }

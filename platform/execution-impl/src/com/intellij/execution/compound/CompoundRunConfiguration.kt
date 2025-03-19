@@ -20,6 +20,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
@@ -95,6 +96,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     isInitialized = true
   }
 
+  @ApiStatus.Internal
   override fun getConfigurationEditor() = CompoundRunConfigurationSettingsEditor(project)
 
   override fun checkConfiguration() {
@@ -137,6 +139,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
+  @ApiStatus.Internal
   override fun getState(): CompoundRunConfigurationOptions {
     if (isDirty.compareAndSet(true, false)) {
       options.configurations.clear()
@@ -147,6 +150,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     return options
   }
 
+  @ApiStatus.Internal
   override fun loadState(state: CompoundRunConfigurationOptions) {
     options.configurations.clear()
     options.configurations.addAll(state.configurations)
@@ -204,12 +208,14 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
   }
 }
 
+@ApiStatus.Internal
 class CompoundRunConfigurationOptions : BaseState() {
   @get:XCollection
   @get:Property(surroundWithTag = false)
   val configurations by list<TypeNameTarget>()
 }
 
+@ApiStatus.Internal
 @Tag("toRun")
 @Property(style = Property.Style.ATTRIBUTE)
 class TypeNameTarget() : BaseState() {

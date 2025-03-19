@@ -73,8 +73,7 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
       }, parameters.getSearchScope());
   }
 
-  @Nullable
-  static NavigationItem wrap(@Nullable PsiElement item) {
+  static @Nullable NavigationItem wrap(@Nullable PsiElement item) {
     if (!(item instanceof NavigationItem)) return null;
     PsiMetaData metaData0 = item instanceof PsiMetaOwner ? ((PsiMetaOwner)item).getMetaData() : null;
     PsiPresentableMetaData metaData = metaData0 instanceof PsiPresentableMetaData ? (PsiPresentableMetaData)metaData0 : null;
@@ -84,21 +83,18 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
         return metaData.getName();
       }
 
-      @NotNull
       @Override
-      public String getLocationString() {
+      public @NotNull String getLocationString() {
         return MyNavigationItem.getLocationString(item);
       }
 
       @Override
-      @Nullable
-      public Icon getIcon(boolean open) {
+      public @Nullable Icon getIcon(boolean open) {
         return metaData.getIcon();
       }
 
-      @Nullable
       @Override
-      public TextAttributesKey getTextAttributesKey() {
+      public @Nullable TextAttributesKey getTextAttributesKey() {
         ItemPresentation p = ((NavigationItem)item).getPresentation();
         return p instanceof ColoredItemPresentation ? ((ColoredItemPresentation)p).getTextAttributesKey() : null;
       }
@@ -109,10 +105,12 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
   private static final class MyNavigationItem implements PsiElementNavigationItem, ItemPresentation {
     final NavigationItem myItem;
     final ItemPresentation myPresentation;
+    final String myLocationString;
 
-    private MyNavigationItem(NavigationItem item, @NotNull final ItemPresentation presentation) {
+    private MyNavigationItem(NavigationItem item, final @NotNull ItemPresentation presentation) {
       myItem = item;
       myPresentation = presentation;
+      myLocationString = getLocationString((PsiElement)myItem);
     }
 
     @Override
@@ -121,9 +119,8 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     }
 
     @Override
-    @Nullable
-    public String getLocationString() {
-      return getLocationString((PsiElement)myItem);
+    public @Nullable String getLocationString() {
+      return myLocationString;
     }
 
     private static String getLocationString(PsiElement element) {
@@ -131,13 +128,11 @@ public class GotoSymbolContributor implements ChooseByNameContributorEx {
     }
 
     @Override
-    @Nullable
-    public Icon getIcon(boolean open) {
+    public @Nullable Icon getIcon(boolean open) {
       return myPresentation.getIcon(open);
     }
 
-    @Nullable
-    public TextAttributesKey getTextAttributesKey() {
+    public @Nullable TextAttributesKey getTextAttributesKey() {
       return myPresentation instanceof ColoredItemPresentation ? ((ColoredItemPresentation)myPresentation).getTextAttributesKey() : null;
     }
 

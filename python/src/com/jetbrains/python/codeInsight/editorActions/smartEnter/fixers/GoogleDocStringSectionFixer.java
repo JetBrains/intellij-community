@@ -20,10 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
-import com.jetbrains.python.documentation.docstrings.DocStringFormat;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.documentation.docstrings.GoogleCodeStyleDocStringBuilder;
-import com.jetbrains.python.documentation.docstrings.SectionBasedDocString;
+import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.PyIndentUtil;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +36,7 @@ public class GoogleDocStringSectionFixer extends PyFixer<PyStringLiteralExpressi
   @Override
   protected boolean isApplicable(@NotNull Editor editor, @NotNull PyStringLiteralExpression pyString) {
     return DocStringUtil.getParentDefinitionDocString(pyString) == pyString &&
-           DocStringUtil.guessDocStringFormat(pyString.getText(), pyString) == DocStringFormat.GOOGLE;
+           DocStringParser.guessDocStringFormat(pyString.getText(), pyString) == DocStringFormat.GOOGLE;
   }
 
   @Override

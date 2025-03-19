@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.python.community.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "community-core-impl",
+  module_name = "intellij.python.community.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//python/python-psi-api:psi",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//RegExpSupport:regexp",
+    "@lib//:guava",
+    "//python/python-psi-impl:psi-impl",
+    "//python/python-sdk:sdk",
+  ]
+)
+### auto-generated section `build intellij.python.community.core.impl` end

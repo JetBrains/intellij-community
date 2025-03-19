@@ -3,8 +3,6 @@ package parametersOfInlineFunSeveralOnLine
 
 fun main(args: Array<String>) {
     val a = A()
-    // RESUME: 3
-    //Breakpoint!
     a.foo { 1 + 1 }.bar { 1 + 1 }
 }
 
@@ -14,6 +12,8 @@ inline fun A.foo(f: (i: Int) -> Unit): A {
 }
 
 inline fun A.bar(f: (s: String) -> Unit): A {
+    // STEP_INTO: 1
+    //Breakpoint!
     f("str")
     return this
 }

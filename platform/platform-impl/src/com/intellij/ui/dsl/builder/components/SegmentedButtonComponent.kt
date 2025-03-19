@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.util.whenKeyReleased
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.UserActivityProviderComponent
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
@@ -29,7 +30,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -37,17 +37,24 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.swing.Icon
 import javax.swing.JPanel
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 private const val PLACE = "SegmentedButton"
 
-internal val NO_TOOLTIP_RENDERER: (Any?) -> @Nls String? = { null }
-
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(items: Collection<T>,
-                                           private val renderer: (T) -> @Nls String,
-                                           private val tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
+class SegmentedButtonComponent<T>(private val presentation: (T) -> com.intellij.ui.dsl.builder.SegmentedButton.ItemPresentation)
+  : JPanel(GridLayout()), UserActivityProviderComponent {
+
+  var items: Collection<T> = emptyList()
+    set(value) {
+      field = value
+      rebuild()
+    }
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -65,24 +72,20 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
         for (listener in listenerList.getListeners(ModelListener::class.java)) {
           listener.onItemSelected()
         }
+        for (listener in listenerList.getListeners(ChangeListener::class.java)) {
+          listener.stateChanged(ChangeEvent(this))
+        }
 
         repaint()
       }
-    }
-
-  var items: Collection<T> = emptyList()
-    set(value) {
-      field = value
-      rebuild()
     }
 
   init {
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(size = DarculaUIUtil.BW.unscaled.roundToInt()))
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
 
-    this.items = items
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
         repaint()
@@ -97,6 +100,8 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
     actionLeft.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-left"), this)
     val actionRight = DumbAwareAction.create { moveSelection(1) }
     actionRight.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-right"), this)
+
+    rebuild()
   }
 
   fun addModelListener(l: ModelListener) {
@@ -136,14 +141,14 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
     }
   }
 
-  private fun rebuild() {
+  fun rebuild() {
     removeAll()
     val presentationFactory = PresentationFactory()
     val builder = RowsGridBuilder(this)
     for (item in items) {
-      val action = SegmentedButtonAction(this, item, renderer.invoke(item))
+      val presentation = presentation(item)
+      val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTipText, presentation.icon, presentation.enabled)
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
-      button.toolTipText = tooltipRenderer.invoke(item)
 
       builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }
@@ -154,6 +159,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
   }
 
   private fun setSelectedState(item: T?, selectedState: Boolean) {
+    if (item == null) return
     val componentIndex = items.indexOf(item)
     val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
     segmentedButton?.selectedState = selectedState
@@ -180,6 +186,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
       }
       whenItemSelected {
         mutex.lockOrSkip {
+          if (property.get() == it) return@whenItemSelected
           property.set(it)
         }
       }
@@ -249,15 +256,31 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>,
   }
 
   @ApiStatus.Internal
-  internal interface ModelListener : EventListener {
+  interface ModelListener : EventListener {
     fun onItemSelected() {}
 
     fun onRebuild() {}
   }
+
+  override fun addChangeListener(changeListener: ChangeListener) {
+    listenerList.add(ChangeListener::class.java, changeListener)
+  }
+
+  override fun removeChangeListener(changeListener: ChangeListener) {
+    listenerList.remove(ChangeListener::class.java, changeListener)
+  }
 }
 
-private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText itemText: String)
-  : ToggleAction(itemText, null, null), DumbAware {
+private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText text: String?,
+                                       @NlsActions.ActionDescription description: String?,
+                                       icon: Icon?,
+                                       private val enabled: Boolean)
+  : ToggleAction(text, description, icon), DumbAware {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabled = enabled
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return parent.selectedItem == item
@@ -296,8 +319,9 @@ private class SegmentedButton<T>(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2,
-                     preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2)
+    val height = max(preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2,
+                     JBUI.CurrentTheme.Button.minimumSize().height - JBUIScale.scale(2))
+    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2, height)
   }
 
   override fun actionPerformed(event: AnActionEvent) {

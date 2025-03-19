@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.PsiMethod;
@@ -61,8 +61,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   @Override
-  @NotNull
-  public TypeInfo getReturnTypeText() {
+  public @NotNull TypeInfo getReturnTypeText() {
     return myReturnType;
   }
 
@@ -84,7 +83,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public PsiParameterStub findParameter(final int idx) {
     PsiParameterListStub list = null;
-    for (StubElement child : getChildrenStubs()) {
+    for (StubElement<?> child : getChildrenStubs()) {
       if (child instanceof PsiParameterListStub) {
         list = (PsiParameterListStub)child;
         break;
@@ -92,7 +91,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     }
 
     if (list != null) {
-      final List<StubElement> params = list.getChildrenStubs();
+      final List<StubElement<?>> params = list.getChildrenStubs();
       return (PsiParameterStub)params.get(idx);
     }
 

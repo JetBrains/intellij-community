@@ -1,0 +1,7 @@
+{
+  "mainFile": "bar/test.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "fooBar",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

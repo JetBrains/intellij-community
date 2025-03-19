@@ -1,21 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
-import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 
-class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitchElement) : GroovyFix() {
+class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitchElement) : ModCommandQuickFix() {
   private val elementsToInsert = expressions.map(SmartPointerManager::createPointer)
   private val switchElement = SmartPointerManager.createPointer(switch)
 
@@ -24,15 +22,6 @@ class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitc
     is PsiClass -> element.name ?: "null"
     is GrEnumConstant -> element.name
     else -> element.text
-  }
-
-  override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-    val copiedElements = elementsToInsert.mapNotNull { it.element?.let { PsiTreeUtil.findSameElementInCopy(it, target) } }
-    if (copiedElements.size != elementsToInsert.size) {
-      return null
-    }
-    val switchCopy = switchElement.element?.let { PsiTreeUtil.findSameElementInCopy(it, target) } ?: return null
-    return GrAddMissingCaseSectionsFix(copiedElements, switchCopy)
   }
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.missing.case.branches")
@@ -44,11 +33,7 @@ class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitc
     else -> GroovyBundle.message("intention.name.insert.missing.branches")
   }
 
-  companion object {
-    const val body = "throw new IllegalStateException()"
-  }
-
-  override fun doFix(project: Project, descriptor: ProblemDescriptor) {
+  override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
     val elements = elementsToInsert.mapNotNull { it.element }
     val namesToInsert = elements.map {
       when (it) {
@@ -57,16 +42,19 @@ class GrAddMissingCaseSectionsFix(expressions: List<PsiElement>, switch: GrSwitc
         else -> it.text
       }
     }
-    val switch = switchElement.element ?: return
+    val switch = switchElement.element ?: return ModCommand.nop()
     val styleToken = switch.caseSections.firstOrNull()?.colon?.let { ":" } ?: " ->"
     val factory = GroovyPsiElementFactory.getInstance(project)
+    val body = "throw new IllegalStateException()"
     val stringsToInsert = when (elements.size) {
       0 -> listOf(factory.createSwitchSection("default$styleToken $body"))
       else -> namesToInsert.map { factory.createSwitchSection("case $it$styleToken $body") }
     }
-    val anchor = switch.lastChild // closing curly bracket
-    for (elem in stringsToInsert) {
-      switch.addBefore(elem, anchor)
+    return ModCommand.psiUpdate(switch) { s ->
+      val anchor = s.lastChild // closing curly bracket
+      for (elem in stringsToInsert) {
+        s.addBefore(elem, anchor)
+      }
     }
   }
 }

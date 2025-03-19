@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.execution.ExecutionException;
@@ -30,7 +30,7 @@ final class UniformIdentifierUtil {
    * Known system file types
    * See <a href="https://developer.apple.com/library/archive/documentation/Miscellaneous/Reference/UTIRef/Articles/System-DeclaredUniformTypeIdentifiers.html>System-Declared Uniform Type Identifiers</a>
    */
-  private final static Map<String,String[]> TYPE_MAP          = new HashMap<>();
+  private static final Map<String,String[]> TYPE_MAP          = new HashMap<>();
   public static final String                CONTENT_TYPE_ATTR = "kMDItemContentType";
 
   static {
@@ -73,8 +73,7 @@ final class UniformIdentifierUtil {
     }
   }
 
-  @Nullable
-  private static String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, OSFileAssociationException {
+  private static @Nullable String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, OSFileAssociationException {
     File file = FileUtil.createTempFile("content_", "." + extension);
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath("/usr/bin/mdls");
@@ -110,8 +109,7 @@ final class UniformIdentifierUtil {
     return contentTypeValue.get();
   }
 
-  @Nullable
-  private static String extractContentTypeValue(@NotNull String contentType) {
+  private static @Nullable String extractContentTypeValue(@NotNull String contentType) {
     int eqPos = contentType.indexOf("=");
     if (eqPos > 0) {
       String result = contentType.substring(eqPos + 1).trim();

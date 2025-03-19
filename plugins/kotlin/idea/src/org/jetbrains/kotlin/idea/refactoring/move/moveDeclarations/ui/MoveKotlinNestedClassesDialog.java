@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui;
 
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionTable;
@@ -56,8 +56,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
     private KotlinMemberSelectionTable memberTable;
     private PsiElement targetClass;
 
-    @Nullable
-    private PsiDirectory targetDirectory;
+    private @Nullable PsiDirectory targetDirectory;
     private GlobalSearchScope searchScope;
 
     public MoveKotlinNestedClassesDialog(
@@ -119,9 +118,8 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                                 null,
                                 true
                         ) {
-                            @Nullable
                             @Override
-                            protected PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
+                            protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
                                 PsiClass psiClass = super.getSelectedFromTreeUserObject(node);
                                 if (psiClass != null) return psiClass;
 
@@ -156,7 +154,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtClassOrObject) && KotlinRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtClassOrObject) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }
@@ -214,7 +212,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                 declaration -> {
                     if (!(declaration instanceof KtClassOrObject classOrObject)) return null;
 
-                  if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
+                    if (classOrObject instanceof KtClass && ((KtClass) classOrObject).isInner()) return null;
                     if (classOrObject instanceof KtObjectDeclaration && ((KtObjectDeclaration) classOrObject).isCompanion()) {
                         return null;
                     }
@@ -268,7 +266,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
              modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 

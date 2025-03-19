@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -44,24 +45,32 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return getRuleId().equals(ruleId);
   }
 
-  @NotNull
-  public String getRuleId() {
+  public @NotNull String getRuleId() {
     throw new UnsupportedOperationException(String.format("The method getRuleId must be overridden in %s", getClass()));
   }
 
-  public static <T extends CustomValidationRule> T getCustomValidationRuleInstance(Class<T> clazz) {
-    Optional<CustomValidationRule> optionalCustomValidationRule = EP_NAME.getExtensionList()
+  public static String getRuleId(Class<?> clazz) {
+    Optional<String> optionalCustomValidationRule = EP_NAME.getExtensionList()
       .stream()
       .filter(customValidationRule -> customValidationRule.getClass() == clazz)
+      .map(rule -> rule.getRuleId())
       .findFirst();
-    if (optionalCustomValidationRule.isEmpty())
-      throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
-    //noinspection unchecked
-    return  (T) optionalCustomValidationRule.get();
+
+    if (optionalCustomValidationRule.isEmpty()) {
+      optionalCustomValidationRule = Arrays.stream(CustomValidationRuleFactory.EP_NAME.getExtensions())
+        .filter(factory -> factory.getRuleClass() == clazz)
+        .map(factory -> factory.getRuleId())
+        .findFirst();
+
+      if (optionalCustomValidationRule.isEmpty()) {
+        throw new IllegalStateException(String.format("CustomValidationRule instance is not found for class %s.", clazz.getName()));
+      }
+    }
+
+    return optionalCustomValidationRule.get();
   }
 
-  @NotNull
-  protected static ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {
+  protected static @NotNull ValidationResultType acceptWhenReportedByPluginFromPluginRepository(@NotNull EventContext context) {
     final Object pluginType = context.eventData.get("plugin_type");
     final PluginType type = pluginType != null ? PluginInfoDetectorKt.findPluginTypeByValue(pluginType.toString()) : null;
     if (type == null || !type.isSafeToReport()) {
@@ -74,8 +83,7 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return ValidationResultType.REJECTED;
   }
 
-  @NotNull
-  protected static ValidationResultType acceptWhenReportedByJetBrainsPlugin(@NotNull EventContext context) {
+  protected static @NotNull ValidationResultType acceptWhenReportedByJetBrainsPlugin(@NotNull EventContext context) {
     return isReportedByJetBrainsPlugin(context) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
   }
 
@@ -109,14 +117,12 @@ public abstract class CustomValidationRule extends PerformanceCareRule implement
     return pluginId != null && PluginInfoDetectorKt.getPluginInfoById(pluginId).isSafeToReport();
   }
 
-  @Nullable
-  protected Language getLanguage(@NotNull EventContext context) {
+  protected @Nullable Language getLanguage(@NotNull EventContext context) {
     final Object id = context.eventData.get("lang");
     return id instanceof String ? Language.findLanguageByID((String)id) : null;
   }
 
-  @Nullable
-  protected String getEventDataField(@NotNull EventContext context, @NotNull String name) {
+  protected @Nullable String getEventDataField(@NotNull EventContext context, @NotNull String name) {
     return context.eventData.containsKey(name) ? context.eventData.get(name).toString() : null;
   }
 }

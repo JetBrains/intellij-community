@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -15,13 +15,13 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
@@ -36,19 +36,32 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   }
 
   @Override
+  public boolean isAlwaysShowPlus() {
+    return true;
+  }
+
+  @Override
+  public boolean isIncludedInExpandAll() {
+    return false;
+  }
+
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     Project project = Objects.requireNonNull(getProject());
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     return index.isInLibrary(file) && someChildContainsFile(file, false);
   }
 
-  @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     Project project = Objects.requireNonNull(getProject());
+    Module[] modules = ModuleManager.getInstance(project).getModules();
+    return getChildren(project, modules);
+  }
+
+  protected @NotNull List<AbstractTreeNode<?>> getChildren(@NotNull Project project, Module[] modules) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
-    Module[] modules = ModuleManager.getInstance(project).getModules();
     Map<String, List<Library>> processedLibraries = new HashMap<>();
     Set<Sdk> processedSdk = new HashSet<>();
 
@@ -68,7 +81,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           if (!hasExternalEntries(fileIndex, libraryOrderEntry)) continue;
 
           final String libraryName = library.getName();
-          if (libraryName == null || libraryName.length() == 0) {
+          if (libraryName == null || libraryName.isEmpty()) {
             addLibraryChildren(libraryOrderEntry, children, project, this);
           }
           else {
@@ -85,7 +98,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
         }
       }
     }
-    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary library : libraries) {
         if (library.isShowInExternalLibrariesNode()) {
@@ -101,7 +114,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<ExternalLibrariesWorkspaceModelNodesProvider<?>> extensionList =
       ExternalLibrariesWorkspaceModelNodesProvider.EP.getExtensionList();
     if (!extensionList.isEmpty()) {
-      EntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
+      ImmutableEntityStorage current = WorkspaceModel.getInstance(project).getCurrentSnapshot();
       for (ExternalLibrariesWorkspaceModelNodesProvider<?> provider : extensionList) {
         handleProvider(provider, project, current, children);
       }
@@ -111,7 +124,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
 
   private <T extends WorkspaceEntity> void handleProvider(ExternalLibrariesWorkspaceModelNodesProvider<T> provider,
                                                           @NotNull Project project,
-                                                          EntityStorage storage,
+                                                          ImmutableEntityStorage storage,
                                                           List<? super AbstractTreeNode<?>> children) {
     Sequence<T> sequence = storage.entities(provider.getWorkspaceClass());
     for (T entity : SequencesKt.asIterable(sequence)) {

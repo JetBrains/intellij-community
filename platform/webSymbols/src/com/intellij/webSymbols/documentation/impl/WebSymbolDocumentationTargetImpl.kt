@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
@@ -23,8 +23,10 @@ import java.awt.Image
 import java.awt.image.BufferedImage
 import javax.swing.Icon
 
-internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
-                                                override val location: PsiElement?)
+internal class WebSymbolDocumentationTargetImpl(
+  override val symbol: WebSymbol,
+  override val location: PsiElement?,
+)
   : WebSymbolDocumentationTarget {
 
   override fun createPointer(): Pointer<out DocumentationTarget> {
@@ -42,6 +44,7 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
 
       @Suppress("HardCodedStringLiteral")
       val contents = StringBuilder()
+        .appendHeader(doc)
         .appendDefinition(doc, url2ImageMap)
         .appendDescription(doc)
         .appendSections(doc)
@@ -49,6 +52,7 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
         .toString()
         .loadLocalImages(origin, url2ImageMap)
       return DocumentationResult.documentation(contents).images(url2ImageMap).externalUrl(doc.docUrl)
+        .definitionDetails(doc.definitionDetails)
     }
 
     private fun StringBuilder.appendDefinition(doc: WebSymbolDocumentation, url2ImageMap: MutableMap<String, Image>): StringBuilder =
@@ -79,10 +83,6 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
             if (value.isNotBlank()) {
               if (!name.endsWith(":"))
                 append(':')
-              // Workaround misalignment of monospace font
-              if (value.contains("<code")) {
-                append("<code> </code>")
-              }
               append(DocumentationMarkup.SECTION_SEPARATOR)
                 .append(value)
             }
@@ -103,6 +103,13 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
           .append('\n')
       } ?: this
 
+    private fun StringBuilder.appendHeader(doc: WebSymbolDocumentation): StringBuilder =
+      doc.header?.let {
+        append("<div class='" + DocumentationMarkup.CLASS_TOP + "'>")
+          .append(it)
+          .append("</div>\n")
+      } ?: this
+
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
         if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
@@ -111,6 +118,10 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
             is WebSymbolApiStatus.Deprecated -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
               status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
+            }
+            is WebSymbolApiStatus.Obsolete -> {
+              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Obsolete")] = status.message ?: ""
+              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.ObsoleteSince")] = it }
             }
             is WebSymbolApiStatus.Experimental -> {
               sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""

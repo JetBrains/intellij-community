@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyAccessibilityInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
+public final class GroovyAccessibilityInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
 
   private static final String SHORT_NAME = "GroovyAccessibility";
 
@@ -37,8 +37,7 @@ public class GroovyAccessibilityInspection extends LocalInspectionTool implement
     return getInspectionProfile(project).getErrorLevel(findDisplayKey(), ref);
   }
 
-  @NotNull
-  private static InspectionProfile getInspectionProfile(@NotNull Project project) {
+  private static @NotNull InspectionProfile getInspectionProfile(@NotNull Project project) {
     return InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
   }
 

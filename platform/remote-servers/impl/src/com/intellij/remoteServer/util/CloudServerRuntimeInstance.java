@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.agent.RemoteAgentManager;
@@ -13,6 +13,7 @@ import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.util.Collections;
@@ -90,7 +91,7 @@ public abstract class CloudServerRuntimeInstance
   }
 
   @Override
-  public void computeDeployments(@NotNull final ComputeDeploymentsCallback callback) {
+  public void computeDeployments(final @NotNull ComputeDeploymentsCallback callback) {
     getTaskExecutor().submit(() -> {
       try {
         for (CloudApplicationRuntime application : getApplications()) {
@@ -109,7 +110,7 @@ public abstract class CloudServerRuntimeInstance
     }, callback);
   }
 
-  protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
+  protected @Unmodifiable List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
     return getAgentTaskExecutor().execute(() -> {
       CloudRemoteApplication[] applications = getAgent().getApplications();
       if (applications == null) {

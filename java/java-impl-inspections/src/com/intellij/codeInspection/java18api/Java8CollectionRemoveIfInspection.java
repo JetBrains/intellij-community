@@ -1,12 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.ForEachCollectionTraversal;
 import com.intellij.codeInspection.util.IterableTraversal;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -24,28 +28,29 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ADVANCED_COLLECTIONS_API);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       void handleIteratorLoop(PsiLoopStatement statement, PsiJavaToken endToken, IteratorDeclaration declaration) {
         if (endToken == null || declaration == null || !declaration.isCollection()) return;
         PsiStatement[] statements = ControlFlowUtils.unwrapBlock(statement.getBody());
-        if (statements.length == 2 && statements[1] instanceof PsiIfStatement) {
+        if (statements.length == 2 && statements[1] instanceof PsiIfStatement ifStatement) {
           PsiVariable element = declaration.getNextElementVariable(statements[0]);
           if (element == null) return;
-          PsiIfStatement ifStatement = (PsiIfStatement)statements[1];
           if(checkAndExtractCondition(declaration, ifStatement) == null) return;
           registerProblem(statement);
         }
-        else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
-          PsiIfStatement ifStatement = (PsiIfStatement)statements[0];
+        else if (statements.length == 1 && statements[0] instanceof PsiIfStatement ifStatement){
           PsiExpression condition = checkAndExtractCondition(declaration, ifStatement);
           if (condition == null) return;
           PsiElement ref = declaration.findOnlyIteratorRef(condition);
@@ -78,8 +83,7 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
                                new ReplaceWithRemoveIfQuickFix());
       }
 
-      @Nullable
-      private static PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
+      private static @Nullable PsiExpression checkAndExtractCondition(IterableTraversal traversal, PsiIfStatement ifStatement) {
         PsiExpression condition = ifStatement.getCondition();
         if (condition == null || ifStatement.getElseBranch() != null) return null;
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
@@ -122,18 +126,15 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class ReplaceWithRemoveIfQuickFix implements LocalQuickFix {
-    @Nls
-    @NotNull
+  private static class ReplaceWithRemoveIfQuickFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return QuickFixBundle.message("java.8.collection.removeif.inspection.fix.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement().getParent();
-      if(!(element instanceof PsiLoopStatement loop)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if(!(element.getParent() instanceof PsiLoopStatement loop)) return;
       PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
       PsiIfStatement ifStatement = tryCast(ArrayUtil.getLastElement(statements), PsiIfStatement.class);
       if (ifStatement == null) return;
@@ -181,9 +182,8 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @NotNull
-    private static String generateRemoveIf(IterableTraversal traversal, CommentTracker ct,
-                                           PsiExpression condition, String paramName) {
+    private static @NotNull String generateRemoveIf(IterableTraversal traversal, CommentTracker ct,
+                                                    PsiExpression condition, String paramName) {
       return (traversal.getIterable() == null ? "" : ct.text(traversal.getIterable()) + ".") +
              "removeIf(" + paramName + "->" + ct.text(condition) + ");";
     }

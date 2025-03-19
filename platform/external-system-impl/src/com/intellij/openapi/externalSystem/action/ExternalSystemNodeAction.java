@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -50,17 +51,18 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     if (data == null) return;
 
     ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
-    perform(project, projectSystemId, data, e);
+
+    ExternalSystemTelemetryUtil.runWithSpan(projectSystemId, "Perform Action " + getClass().getSimpleName(), __ -> {
+      perform(project, projectSystemId, data, e);
+    });
   }
 
-  @Nullable
-  protected ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
+  protected @Nullable ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
     return e.getData(ExternalSystemDataKeys.UI_AWARE);
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  protected <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
+  protected @Nullable <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(e.getData(ExternalSystemDataKeys.SELECTED_NODES));
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
@@ -70,8 +72,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();
   }
 
-  @Nullable
-  protected VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
+  protected @Nullable VirtualFile getExternalConfig(@NotNull ExternalConfigPathAware data, ProjectSystemId externalSystemId) {
     String path = data.getLinkedExternalProjectPath();
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     VirtualFile externalSystemConfigPath = fileSystem.refreshAndFindFileByPath(path);

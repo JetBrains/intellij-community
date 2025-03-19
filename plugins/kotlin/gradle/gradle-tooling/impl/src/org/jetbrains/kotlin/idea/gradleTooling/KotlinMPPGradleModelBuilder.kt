@@ -17,15 +17,20 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_M
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 
 class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder
-            .create(project, e, "Gradle import errors")
-            .withDescription("Unable to build Kotlin project configuration")
+
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build Kotlin project configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean {
@@ -50,6 +55,8 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 modelBuilderContext = builderContext ?: return null
             )
 
+            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
+
             val sourceSets = buildSourceSets(importingContext)
             importingContext.initializeSourceSets(sourceSets)
 
@@ -62,14 +69,13 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             val coroutinesState = getCoroutinesState(project)
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: NO_KOTLIN_NATIVE_HOME
 
-            val dependenciesContainer = buildIdeaKotlinDependenciesContainer(importingContext, kotlinExtensionReflection)
 
             val model = KotlinMPPGradleModelImpl(
                 sourceSetsByName = filterOrphanSourceSets(importingContext),
                 targets = importingContext.targets,
                 extraFeatures = ExtraFeaturesImpl(
                     coroutinesState = coroutinesState,
-                    isHMPPEnabled = importingContext.getProperty(IS_HMPP_ENABLED),
+                    isHMPPEnabled = importingContext.isHMPPEnabled,
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
@@ -123,7 +129,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {
         for (sourceSet in importingContext.sourceSets) {
-            if (!importingContext.getProperty(IS_HMPP_ENABLED)) {
+            if (!importingContext.isHMPPEnabled) {
                 val name = sourceSet.name
                 if (name == COMMON_MAIN_SOURCE_SET_NAME) {
                     sourceSet.isTestComponent = false
@@ -159,7 +165,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             return
         }
 
-        if (!getProperty(IS_HMPP_ENABLED) && !isDeclaredSourceSet(sourceSet)) {
+        if (!isHMPPEnabled && !isDeclaredSourceSet(sourceSet)) {
             // intermediate source sets should be common if HMPP is disabled
             sourceSet.actualPlatforms.pushPlatforms(KotlinPlatform.COMMON)
             return
@@ -172,7 +178,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun MultiplatformModelImportingContext.shouldCoerceToCommon(sourceSet: KotlinSourceSetImpl): Boolean {
-        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
         val coerceRootSourceSetsToCommon = getProperty(COERCE_ROOT_SOURCE_SETS_TO_COMMON)
         val isRoot = sourceSet.name == COMMON_MAIN_SOURCE_SET_NAME || sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
 

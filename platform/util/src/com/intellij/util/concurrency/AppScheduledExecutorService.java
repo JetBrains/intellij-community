@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,12 +8,13 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
 
-import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContext;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -23,8 +24,8 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  */
 @ApiStatus.Internal
 public final class AppScheduledExecutorService extends SchedulingWrapper {
-  static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
-  @NotNull private final String myName;
+  public static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
+  private final @NotNull String myName;
   private final LowMemoryWatcherManager myLowMemoryWatcherManager;
 
   private static final class Holder {
@@ -35,7 +36,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return Holder.INSTANCE;
   }
 
-  AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
+  @VisibleForTesting
+  public AppScheduledExecutorService(@NotNull String name, long keepAliveTime, @NotNull TimeUnit unit) {
     super(new BackendThreadPoolExecutor(new MyThreadFactory(), keepAliveTime, unit), new AppDelayQueue());
     myName = name;
     myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
@@ -49,9 +51,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     private BiConsumer<? super Thread, ? super Runnable> newThreadListener;
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
-    @NotNull
     @Override
-    public Thread newThread(@NotNull final Runnable r) {
+    public @NotNull Thread newThread(final @NotNull Runnable r) {
       Thread thread = myThreadFactory.newThread(r);
       thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
@@ -74,9 +75,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     getCountingThreadFactory().setNewThreadListener(threadListener);
   }
 
-  @NotNull
   @Override
-  public List<Runnable> shutdownNow() {
+  public @NotNull List<Runnable> shutdownNow() {
     return notAllowedMethodCall();
   }
 
@@ -85,7 +85,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     notAllowedMethodCall();
   }
 
-  static List<Runnable> notAllowedMethodCall() {
+  @ApiStatus.Internal
+  public static @NotNull List<Runnable> notAllowedMethodCall() {
     throw new IncorrectOperationException("You must not call this method on the global app pool");
   }
 
@@ -94,13 +95,14 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superShutdown();
   }
 
-  void shutdownAppScheduledExecutorService() {
+  @ApiStatus.Internal
+  public void shutdownAppScheduledExecutorService() {
     // LowMemoryWatcher starts background threads so stop it now to avoid RejectedExecutionException
     myLowMemoryWatcherManager.shutdown();
     doShutdown();
     delayQueue.shutdown(new SchedulingWrapper.MyScheduledFutureTask<Void>(()->{}, null, 0) {
         @Override
-        boolean executeMeInBackendExecutor() {
+        public boolean executeMeInBackendExecutor() {
           set(null);
           return false;
         }
@@ -118,9 +120,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     return super.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  @NotNull
   @TestOnly
-  public String statistics() {
+  public @NotNull String statistics() {
     return myName + " threads created counter = " + getCountingThreadFactory().counter;
   }
 
@@ -134,12 +135,13 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   @TestOnly
-  void setBackendPoolCorePoolSize(int size) {
+  @ApiStatus.Internal
+  public void setBackendPoolCorePoolSize(int size) {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor implements ContextPropagatingExecutor {
-
+  @ApiStatus.Internal
+  public static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
                               @NotNull TimeUnit unit) {
@@ -147,13 +149,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    public void executeRaw(@NotNull Runnable command) {
-      super.execute(command);
-    }
-
-    @Override
     public void execute(@NotNull Runnable command) {
-      executeRaw(capturePropagationAndCancellationContext(command));
+      super.execute(capturePropagationAndCancellationContext(command));
     }
 
     @Override
@@ -177,8 +174,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       super.shutdown();
     }
 
-    @NotNull
-    private List<Runnable> superShutdownNow() {
+    private @NotNull List<Runnable> superShutdownNow() {
       return super.shutdownNow();
     }
 
@@ -188,9 +184,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       notAllowedMethodCall();
     }
 
-    @NotNull
     @Override
-    public List<Runnable> shutdownNow() {
+    public @NotNull List<Runnable> shutdownNow() {
       return notAllowedMethodCall();
     }
 
@@ -239,16 +234,24 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   }
 
   public static @NotNull Runnable capturePropagationAndCancellationContext(@NotNull Runnable command) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return command;
     }
-    return Propagation.capturePropagationAndCancellationContext(command);
+    return Propagation.capturePropagationContext(command, false);
+  }
+
+  /**
+   * This function intentionally has a scary name so that no one would try to use it.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Runnable captureContextCancellationForRunnableThatDoesNotOutliveContextScope(@NotNull Runnable r) {
+    return Propagation.capturePropagationContext(r, true);
   }
 
   public static <T> @NotNull FutureTask<T> capturePropagationAndCancellationContext(@NotNull Callable<T> callable) {
-    if (!propagateContextOrCancellation()) {
+    if (!propagateContext()) {
       return new FutureTask<>(callable);
     }
-    return Propagation.capturePropagationAndCancellationContext(callable);
+    return Propagation.capturePropagationContext(callable);
   }
 }

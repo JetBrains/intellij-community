@@ -18,3 +18,4 @@ typealias New = NewClass
 fun foo() {
     <caret>Old()
 }
+

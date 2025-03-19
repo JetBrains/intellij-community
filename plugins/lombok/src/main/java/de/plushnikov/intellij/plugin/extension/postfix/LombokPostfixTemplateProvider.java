@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
+public final class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
 
   private final Set<PostfixTemplate> lombokTemplates = new HashSet<>();
 
@@ -22,9 +22,8 @@ public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
     lombokTemplates.add(new LombokVarPostfixTemplate());
   }
 
-  @NotNull
   @Override
-  public Set<PostfixTemplate> getTemplates() {
+  public @NotNull Set<PostfixTemplate> getTemplates() {
     return lombokTemplates;
   }
 
@@ -41,11 +40,9 @@ public class LombokPostfixTemplateProvider implements PostfixTemplateProvider {
   public void afterExpand(@NotNull PsiFile file, @NotNull Editor editor) {
   }
 
-  @NotNull
   @Override
-  public PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
-    Document document = copyFile.getViewProvider().getDocument();
-    assert document != null;
+  public @NotNull PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset) {
+    Document document = copyFile.getFileDocument();
     CharSequence sequence = document.getCharsSequence();
     StringBuilder fileContentWithSemicolon = new StringBuilder(sequence);
     if (isSemicolonNeeded(copyFile, realEditor)) {

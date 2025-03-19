@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.build.events.impl.*
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentsManager
 import com.intellij.execution.wsl.WSLUtil
@@ -12,43 +11,39 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CANCELED
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState.CANCELING
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.gradle.issue.IncorrectGradleJdkIssue
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleBundle.PATH_TO_BUNDLE
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
-import java.io.File
-import java.lang.System.currentTimeMillis
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
 
 @ApiStatus.Internal
 class LocalGradleExecutionAware : GradleExecutionAware {
@@ -77,18 +72,18 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   override fun getDefaultBuildLayoutParameters(project: Project): BuildLayoutParameters = LocalBuildLayoutParameters(project, null)
 
-  override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters =
+  override fun getBuildLayoutParameters(project: Project, projectPath: Path): BuildLayoutParameters =
     LocalBuildLayoutParameters(project, projectPath)
 
-  override fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean {
-    val libs = File(homePath, "lib")
-    if (!libs.isDirectory) {
+  override fun isGradleInstallationHomeDir(project: Project, homePath: Path): Boolean {
+    val libs = homePath.resolve("lib")
+    if (libs != null && !libs.isDirectory()) {
       if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
         LOG.info("Gradle sdk check failed for the path '$homePath'. Reason: it doesn't have a child directory named 'lib'")
       }
       return false
     }
-    val found = findGradleJar(libs.listFiles()) != null
+    val found = findGradleJar(libs) != null
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       LOG.info("Gradle home check ${if (found) "passed" else "failed"} for the path '$homePath'")
     }
@@ -102,39 +97,66 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     taskNotificationListener: ExternalSystemTaskNotificationListener,
     project: Project
   ): SdkInfo? {
-    val settings = use(project) { GradleSettings.getInstance(it) }
+    val settings = project.lock { GradleSettings.getInstance(it) }
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath) ?: return null
 
+    // Projects using Daemon JVM criteria with a compatible Gradle version will skip any
+    // Gradle JDK configuration validation since this will be delegated to Gradle
+    if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return null
+
+    val sdkInfo = resolveGradleJvmInfo(project, projectSettings, task, taskNotificationListener)
+    checkGradleJvmInfo(projectSettings, task, sdkInfo)
+    return sdkInfo
+  }
+
+  private fun resolveGradleJvmInfo(
+    project: Project,
+    projectSettings: GradleProjectSettings,
+    task: ExternalSystemTask,
+    taskNotificationListener: ExternalSystemTaskNotificationListener,
+  ): SdkInfo? {
     val originalGradleJvm = projectSettings.gradleJvm
-    val provider = use(project) { getGradleJvmLookupProvider(it, projectSettings) }
-    var sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, originalGradleJvm) }
-    if (sdkInfo is SdkInfo.Undefined || sdkInfo is SdkInfo.Unresolved || sdkInfo is SdkInfo.Resolving) {
-      waitForGradleJvmResolving(provider, task, taskNotificationListener)
-      if (projectSettings.gradleJvm == null) {
-        projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
-      }
-      sdkInfo = use(project) { provider.nonblockingResolveGradleJvmInfo(it, externalProjectPath, projectSettings.gradleJvm) }
+
+    val provider = project.lock { getGradleJvmLookupProvider(it, projectSettings) }
+
+    var sdkInfo = project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+    if (sdkInfo is SdkInfo.Resolved) return sdkInfo
+
+    waitForGradleJvmResolving(provider, task, taskNotificationListener)
+
+    /**
+     * FL-12899 fallback to any Gradle JVM if it isn't defined.
+     */
+    if (projectSettings.gradleJvm == null) {
+      projectSettings.gradleJvm = originalGradleJvm ?: ExternalSystemJdkUtil.USE_PROJECT_JDK
     }
 
+    return project.lock { provider.nonblockingResolveGradleJvmInfo(it, projectSettings.externalProjectPath, projectSettings.gradleJvm) }
+  }
+
+  private fun checkGradleJvmInfo(
+    projectSettings: GradleProjectSettings,
+    task: ExternalSystemTask,
+    sdkInfo: SdkInfo?,
+  ) {
     val gradleJvm = projectSettings.gradleJvm
     if (sdkInfo !is SdkInfo.Resolved) {
       LOG.warn("Gradle JVM ($gradleJvm) isn't resolved: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    val homePath = sdkInfo.homePath ?: run {
+    val homePath = sdkInfo.homePath?.let { Path.of(it) } ?: run {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    checkForWslJdkOnWindows(homePath, externalProjectPath, task)
-    if (!JdkUtil.checkForJdk(homePath)) {
-      if (JdkUtil.checkForJre(homePath)) {
-        LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
-        throw jdkConfigurationException("gradle.jvm.is.jre")
-      }
+    checkForWslJdkOnWindows(homePath.toCanonicalPath(), projectSettings.externalProjectPath, task)
+    if (!JdkUtil.checkForJdk(homePath, isWindowsJDKRequired(projectSettings.externalProjectPath))) {
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    return sdkInfo
+    if (!JdkUtil.checkForJre(homePath)) {
+      LOG.warn("Gradle JVM ($gradleJvm) is JRE instead JDK: $sdkInfo")
+      throw jdkConfigurationException("gradle.jvm.is.jre")
+    }
   }
 
   private fun checkForWslJdkOnWindows(homePath: String, externalProjectPath: String, task: ExternalSystemTask) {
@@ -145,6 +167,13 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
       throw BuildIssueException(IncorrectGradleJdkIssue(externalProjectPath, homePath, message, isResolveProjectTask))
     }
+  }
+
+  private fun isWindowsJDKRequired(externalProjectPath: String): Boolean {
+    if (WSLUtil.isSystemCompatible() && WslPath.isWslUncPath(externalProjectPath)) {
+      return false
+    }
+    return SystemInfo.isWindows
   }
 
   private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {
@@ -166,12 +195,16 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       }
     else null
 
-  private fun <R> use(project: Project, action: (Project) -> R): R {
+  /**
+   * Critical execution section.
+   * An explicit WriteAction is required to prevent the project from disposing.
+   */
+  private fun <R> Project.lock(action: (Project) -> R): R {
     return invokeAndWaitIfNeeded {
       runWriteAction {
-        when (project.isDisposed) {
+        when (isDisposed) {
           true -> throw ProcessCanceledException()
-          else -> action(project)
+          else -> action(this)
         }
       }
     }
@@ -188,7 +221,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     lookupProvider: SdkLookupProvider,
     task: ExternalSystemTask,
     taskNotificationListener: ExternalSystemTaskNotificationListener
-  ): Sdk? {
+  ) {
     if (ApplicationManager.getApplication().isDispatchThread) {
       LOG.error("Do not perform synchronous wait for sdk downloading in EDT - causes deadlock.")
       throw jdkConfigurationException("gradle.jvm.is.being.resolved.error")
@@ -200,24 +233,23 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       submitProgressStatus(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.is.being.resolved"))
     }
     whenTaskCanceled(task) { progressIndicator.cancel() }
-    val result = lookupProvider.blockingGetSdk()
+    lookupProvider.waitForLookup()
     submitProgressFinished(task, taskNotificationListener, progressIndicator, progressIndicator, GradleBundle.message("gradle.jvm.has.been.resolved"))
-    return result
   }
 
 
-  private fun findGradleJar(files: Array<File?>?): File? {
-    if (files == null) return null
-
-    for (file in files) {
-      if (GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(file!!.name).matches()) {
-        return file
-      }
+  private fun findGradleJar(targetFolder: Path): Path? {
+    val gradleJar = targetFolder.listDirectoryEntries().find {
+      val fileName = it.fileName.toString()
+      GradleInstallationManager.GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
+    }
+    if (gradleJar != null) {
+      return gradleJar
     }
     if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
       val filesInfo = StringBuilder()
-      for (file in files) {
-        filesInfo.append(file!!.absolutePath).append(';')
+      targetFolder.listDirectoryEntries().forEach {
+        filesInfo.append(it.absolutePathString()).append(';')
       }
       if (filesInfo.isNotEmpty()) {
         filesInfo.setLength(filesInfo.length - 1)

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -212,15 +211,6 @@ public class EditMigrationDialog extends DialogWrapper {
       @Override
       public Class<String> getColumnClass(int c) {
         return String.class;
-      }
-
-      @Override
-      public boolean isCellEditable(int row, int col) {
-        return false;
-      }
-
-      @Override
-      public void setValueAt(Object aValue, int row, int column) {
       }
     };
 

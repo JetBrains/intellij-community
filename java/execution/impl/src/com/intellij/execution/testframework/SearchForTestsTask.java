@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -48,9 +48,9 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   private final ServerSocket myServerSocket;
   private ProgressIndicator myProcessIndicator;
   private boolean myAllowIndexInDumbMode;
-  @NotNull private Runnable myIncompleteIndexUsageCallback = EmptyRunnable.getInstance();
+  private @NotNull Runnable myIncompleteIndexUsageCallback = EmptyRunnable.getInstance();
 
-  public SearchForTestsTask(@Nullable final Project project,
+  public SearchForTestsTask(final @Nullable Project project,
                             final ServerSocket socket) {
     super(project, ExecutionBundle.message("searching.test.progress.title"), true);
     myServerSocket = socket;
@@ -90,13 +90,13 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   public void attachTaskToProcess(final OSProcessHandler handler) {
     handler.addProcessListener(new ProcessAdapter() {
       @Override
-      public void processTerminated(@NotNull final ProcessEvent event) {
+      public void processTerminated(final @NotNull ProcessEvent event) {
         handler.removeProcessListener(this);
         ensureFinished();
       }
 
       @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
+      public void startNotified(final @NotNull ProcessEvent event) {
         startSearch();
       }
     });
@@ -109,6 +109,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   @Override
   public void run(@NotNull ProgressIndicator indicator) {
     try {
+      LOG.debug("Waiting for connection on port " + myServerSocket.getLocalPort());
       mySocket = myServerSocket.accept();
       final ExecutionException[] ex = new ExecutionException[1];
       NonBlockingReadAction<Void> readAction = ReadAction.nonBlocking(() -> performWithIncompleteIndex(this::search, ex));

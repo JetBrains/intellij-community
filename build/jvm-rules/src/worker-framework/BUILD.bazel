@@ -1,0 +1,56 @@
+load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_proto_library(
+    name = "worker_protocol_java_proto",
+    deps = ["@bazel_worker_api//:worker_protocol_proto"],
+)
+
+kt_jvm_library(
+    name = "worker-framework",
+    srcs = glob(["*.kt"], exclude = ["*Test.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "@lib//:kotlin-stdlib",
+        "@lib//:opentelemetry",
+        "@lib//:opentelemetry-semconv",
+        "//:opentelemetry-exporter-logging-otlp",
+        "//:opentelemetry-exporter-otlp",
+        "@lib//:kotlinx-coroutines-core",
+        "//:protobuf-java",
+        "@lib//:netty-buffer",
+        "@lib//:jetbrains-annotations",
+    ],
+    runtime_deps = [
+        "@lib//:opentelemetry-exporter-otlp-common",
+        "@lib//:jackson",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+kt_jvm_library(
+    name = "worker_test_lib",
+    srcs = ["WorkRequestHandlerTest.kt"],
+    associates = [":worker-framework"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    deps = [
+        "@lib//:kotlin-stdlib",
+        ":worker_protocol_java_proto",
+        "@junit_jupiter_api//jar",
+        "@assertj//jar",
+    ],
+    runtime_deps = [
+        "@junit_platform_commons//jar",
+        "@opentest4j//jar",
+        "@junit_jupiter_engine//jar",
+        "@junit_platform_engine//jar",
+        "@junit_platform_reporting//jar",
+        "@junit_platform_launcher//jar",
+    ],
+)
+
+# java_junit5_test(
+#     name = "worker_test",
+#     test_class = "org.jetbrains.bazel.jvm.WorkRequestHandlerTest",
+#     runtime_deps = [":worker_test_lib"],
+# )

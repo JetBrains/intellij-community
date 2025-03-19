@@ -8,11 +8,10 @@ import com.intellij.openapi.wm.ToolWindowManager
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 
-class SingletonNotificationManager(groupId: String, private val type: NotificationType) {
-  private val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
+class SingletonNotificationManager(private val groupId: String, private val type: NotificationType) {
   private val notification = AtomicReference<Notification>()
 
-  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?) =
+  fun notify(@NotificationTitle title: String, @NotificationContent content: String, project: Project?): Unit =
     notify(title, content, project) { }
 
   fun notify(@NotificationTitle title: String,
@@ -27,7 +26,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
       oldNotification.expire()
     }
 
-    val newNotification = object : Notification(group.displayId, title, content, type) {
+    val newNotification = object : Notification(groupId, title, content, type) {
       override fun expire() {
         super.expire()
         notification.compareAndSet(this, null)
@@ -44,6 +43,7 @@ class SingletonNotificationManager(groupId: String, private val type: Notificati
   }
 
   private fun isVisible(notification: Notification, project: Project?): Boolean {
+    val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
     val balloon = when {
       group.displayType != NotificationDisplayType.TOOL_WINDOW -> notification.balloon
       project != null -> ToolWindowManager.getInstance(project).getToolWindowBalloon(group.toolWindowId!!)

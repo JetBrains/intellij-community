@@ -7,8 +7,7 @@ class Test {
         return 12;
     }
 
-    @Nullable
-    private Integer newMethod() {
+    private @Nullable Integer newMethod() {
         try {
             if(cond1) return 0;
             else if(cond2) return 1;

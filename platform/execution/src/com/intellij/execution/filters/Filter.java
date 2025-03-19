@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.Application;
@@ -9,8 +9,11 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ui.NamedColorUtil;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public interface Filter {
+public interface Filter extends PossiblyDumbAware {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
@@ -132,17 +135,18 @@ public interface Filter {
   }
 
   class ResultItem {
-    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = new ConcurrentHashMap<>(2);
-
-    static {
-      Application application = ApplicationManager.getApplication();
-      if (application != null) {
-        application.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, __ -> {
-          // invalidate cache on Appearance Theme/Editor Scheme change
-          GRAYED_BY_NORMAL_CACHE.clear();
-        });
-      }
-    }
+    private static final Lazy<Map<TextAttributesKey, TextAttributes>> GRAYED_BY_NORMAL_CACHE =
+      LazyKt.lazy(() -> {
+        ConcurrentHashMap<TextAttributesKey, TextAttributes> map = new ConcurrentHashMap<>(2);
+        Application application = ApplicationManager.getApplication();
+        if (application != null) {
+          application.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, __ -> {
+            // invalidate cache on Appearance Theme/Editor Scheme change
+            map.clear();
+          });
+        }
+        return map;
+      });
 
     private final int highlightStartOffset;
     private final int highlightEndOffset;
@@ -212,7 +216,7 @@ public interface Filter {
     }
 
     private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
-      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
+      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.getValue().get(normalHyperlinkAttrsKey);
       if (grayedHyperlinkAttrs == null) {
         EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
         TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
@@ -220,7 +224,7 @@ public interface Filter {
           grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();
           grayedHyperlinkAttrs.setForegroundColor(NamedColorUtil.getInactiveTextColor());
           grayedHyperlinkAttrs.setEffectColor(NamedColorUtil.getInactiveTextColor());
-          GRAYED_BY_NORMAL_CACHE.put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
+          GRAYED_BY_NORMAL_CACHE.getValue().put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
         }
       }
       return grayedHyperlinkAttrs;

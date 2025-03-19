@@ -13,27 +13,38 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import com.intellij.util.xml.highlighting.RemoveDomElementQuickFix
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToLightServiceFix
+import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.toUElement
 
 internal class LightServiceMigrationXMLInspection : DevKitPluginXmlInspectionBase() {
+
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     if (element !is Extension) return
-    if (LightServiceMigrationUtil.isVersion193OrHigher(element) ||
-        ApplicationManager.getApplication().isUnitTestMode) {
-      val (aClass, level) = LightServiceMigrationUtil.getServiceImplementation(element) ?: return
+    if (!isAllowed(holder)) return
+
+    if (isVersion193OrHigher(element) || ApplicationManager.getApplication().isUnitTestMode) {
+      val (aClass, level) = getServiceImplementation(element) ?: return
       if (!aClass.hasModifier(JvmModifier.FINAL) || isLibraryClass(aClass)) return
       if (level == Service.Level.APP &&
           JvmInheritanceUtil.isInheritor(aClass, PersistentStateComponent::class.java.canonicalName)) {
         return
       }
+      if (locateExtensionsByPsiClass(aClass).size != 1) return
+      val uClass = aClass.toUElement(UClass::class.java)
+      if (uClass == null || containsUnitTestOrHeadlessModeCheck(uClass)) return
       if (aClass.hasAnnotation(Service::class.java.canonicalName)) {
         val message = DevKitBundle.message("inspection.light.service.migration.already.annotated.message")
-        holder.createProblem(element, ProblemHighlightType.ERROR, message, null)
+        holder.createProblem(element, ProblemHighlightType.ERROR, message, null, RemoveDomElementQuickFix(element))
       }
       else {
-        val message = LightServiceMigrationUtil.getMessage(level)
-        holder.createProblem(element, message)
+        val message = DevKitBundle.message("inspection.light.service.migration.message")
+        val fix = ConvertToLightServiceFix(aClass, element.xmlTag, level)
+        holder.createProblem(element, message, fix)
       }
     }
   }

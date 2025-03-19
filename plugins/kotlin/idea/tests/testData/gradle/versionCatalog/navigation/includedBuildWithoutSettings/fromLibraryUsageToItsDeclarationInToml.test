@@ -1,0 +1,12 @@
+// FILE: includedBuildWithoutSettings/build.gradle.kts
+libs.some.t<caret>est.library
+
+// FILE: settings.gradle.kts
+// this is the settings file for the root build of a composite build
+includeBuild("includedBuildWithoutSettings")
+
+// FILE: includedBuildWithoutSettings/gradle/libs.versions.toml
+# EXPECTED
+# notice that this version catalog belongs to the included build, not the root build
+[libraries]
+some_test-library = { module = "org.junit.jupiter:junit-jupiter"}

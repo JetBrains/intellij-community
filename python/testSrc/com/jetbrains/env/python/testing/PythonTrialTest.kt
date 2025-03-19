@@ -34,7 +34,9 @@ internal class PythonTrialTest : PythonUnitTestingLikeTest<PyTrialTestProcessRun
     runPythonTest(object : PyUnitTestLikeProcessWithConsoleTestTask<PyTrialTestProcessRunner>(
       relativePathToTestData = "/testRunner/env/trial/",
       myScriptName = "test_exception.py",
-      processRunnerCreator = Function { createTestRunner(it) }) {
+      processRunnerCreator = Function { createTestRunner(it) },
+      isToFullPath = true) {
+
       override fun checkTestResults(runner: PyTrialTestProcessRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
         Assert.assertEquals(
           "Exception broke test tree",

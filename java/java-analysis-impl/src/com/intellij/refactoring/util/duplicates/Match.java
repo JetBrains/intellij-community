@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util.duplicates;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -19,6 +19,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +32,11 @@ public final class Match {
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();
   private final Map<PsiVariable, List<PsiElement>> myParameterOccurrences = new HashMap<>();
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<>();
+  private final ControlFlow myControlFlow;
   private ReturnValue myReturnValue;
   private Ref<PsiExpression> myInstanceExpression;
-  final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
+  @ApiStatus.Internal
+  public final Map<PsiVariable, PsiType> changedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
   private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
   private final Map<DuplicatesFinder.Parameter, List<Pair.NonNull<PsiExpression, PsiExpression>>> myFoldedExpressionMappings = new HashMap<>();
@@ -43,6 +46,16 @@ public final class Match {
     myMatchStart = start;
     myMatchEnd = end;
     myIgnoreParameterTypes = ignoreParameterTypes;
+    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(getMatchStart());
+    ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment),
+                                                ControlFlowOptions.NO_CONST_EVALUATE);
+    }
+    catch (AnalysisCanceledException e) {
+      controlFlow = null;
+    }
+    myControlFlow = controlFlow;
   }
 
 
@@ -61,8 +74,7 @@ public final class Match {
                    .toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  public List<PsiElement> getParameterValues(PsiVariable parameter) {
+  public @Nullable List<PsiElement> getParameterValues(PsiVariable parameter) {
     return myParameterValues.get(parameter);
   }
 
@@ -125,7 +137,7 @@ public final class Match {
       else {
         if (isVararg) {
           if (!((PsiEllipsisType)psiVariable.getType()).getComponentType().isAssignableFrom(type) && !((PsiEllipsisType)psiVariable.getType()).toArrayType().equals(type)) {
-            myChangedParams.put(psiVariable, new PsiEllipsisType(parameterType));
+            changedParams.put(psiVariable, new PsiEllipsisType(parameterType));
           }
         } else {
           if (!myIgnoreParameterTypes && !parameterType.isAssignableFrom(type)) return false;  //todo
@@ -265,42 +277,34 @@ public final class Match {
   }
 
   private void declareLocalVariables() throws IncorrectOperationException {
-    final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(getMatchStart());
-    try {
-      final Project project = getMatchStart().getProject();
-      final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeFragment, new LocalsControlFlowPolicy(codeFragment), 
-                                                                        ControlFlowOptions.NO_CONST_EVALUATE);
-      final int endOffset = controlFlow.getEndOffset(getMatchEnd());
-      final int startOffset = controlFlow.getStartOffset(getMatchStart());
-      final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(controlFlow, endOffset, controlFlow.getSize());
-      Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(controlFlow, endOffset, controlFlow.getSize());
-      final Collection<PsiVariable> outVariables = ControlFlowUtil.getWrittenVariables(controlFlow, startOffset, endOffset, false);
-      for (PsiVariable variable : usedVariables) {
-        if (!outVariables.contains(variable)) {
-          final PsiIdentifier identifier = variable.getNameIdentifier();
-          if (identifier != null) {
-            final TextRange textRange = checkRange(identifier);
-            final TextRange startRange = checkRange(getMatchStart());
-            final TextRange endRange = checkRange(getMatchEnd());
-            if (textRange.getStartOffset() >= startRange.getStartOffset() && textRange.getEndOffset() <= endRange.getEndOffset()) {
-              final String name = variable.getName();
-              LOG.assertTrue(name != null);
-              PsiDeclarationStatement statement =
-                  JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement(name, variable.getType(), null);
-              if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
-                final PsiElement[] psiElements = statement.getDeclaredElements();
-                final PsiModifierList modifierList = ((PsiVariable)psiElements[0]).getModifierList();
-                LOG.assertTrue(modifierList != null);
-                modifierList.setModifierProperty(PsiModifier.FINAL, false);
-              }
-              getMatchStart().getParent().addBefore(statement, getMatchStart());
+    final Project project = getMatchStart().getProject();
+    final int endOffset = myControlFlow.getEndOffset(getMatchEnd());
+    final int startOffset = myControlFlow.getStartOffset(getMatchStart());
+    final List<PsiVariable> usedVariables = ControlFlowUtil.getUsedVariables(myControlFlow, endOffset, myControlFlow.getSize());
+    Collection<ControlFlowUtil.VariableInfo> reassigned = ControlFlowUtil.getInitializedTwice(myControlFlow, endOffset, myControlFlow.getSize());
+    final Collection<PsiVariable> outVariables = ControlFlowUtil.getWrittenVariables(myControlFlow, startOffset, endOffset, false);
+    for (PsiVariable variable : usedVariables) {
+      if (!outVariables.contains(variable)) {
+        final PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier != null) {
+          final TextRange textRange = checkRange(identifier);
+          final TextRange startRange = checkRange(getMatchStart());
+          final TextRange endRange = checkRange(getMatchEnd());
+          if (textRange.getStartOffset() >= startRange.getStartOffset() && textRange.getEndOffset() <= endRange.getEndOffset()) {
+            final String name = variable.getName();
+            LOG.assertTrue(name != null);
+            PsiDeclarationStatement statement =
+                JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement(name, variable.getType(), null);
+            if (reassigned.contains(new ControlFlowUtil.VariableInfo(variable, null))) {
+              final PsiElement[] psiElements = statement.getDeclaredElements();
+              final PsiModifierList modifierList = ((PsiVariable)psiElements[0]).getModifierList();
+              LOG.assertTrue(modifierList != null);
+              modifierList.setModifierProperty(PsiModifier.FINAL, false);
             }
+            getMatchStart().getParent().addBefore(statement, getMatchStart());
           }
         }
       }
-    }
-    catch (AnalysisCanceledException e) {
-      //skip match
     }
   }
 
@@ -325,8 +329,7 @@ public final class Match {
     return new TextRange(startRange.getStartOffset(), endRange.getEndOffset());
   }
 
-  @Nullable
-  public PsiType getChangedReturnType(final PsiMethod psiMethod) {
+  public @Nullable PsiType getChangedReturnType(final PsiMethod psiMethod) {
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType != null) {
       PsiElement parent = getMatchEnd().getParent();
@@ -398,7 +401,7 @@ public final class Match {
     return null;
   }
 
-  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, @NotNull final PsiType currentType) {
+  private static boolean weakerType(final PsiMethod psiMethod, final PsiType returnType, final @NotNull PsiType currentType) {
     final PsiTypeParameter[] typeParameters = psiMethod.getTypeParameters();
     final PsiSubstitutor substitutor =
         JavaPsiFacade.getInstance(psiMethod.getProject()).getResolveHelper().inferTypeArguments(typeParameters, new PsiType[]{returnType}, new PsiType[]{currentType}, PsiUtil.getLanguageLevel(psiMethod));
@@ -418,8 +421,7 @@ public final class Match {
     myExtractedParameters.add(parameter);
   }
 
-  @NotNull
-  public List<ExtractedParameter> getExtractedParameters() {
+  public @NotNull List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
   }
 
@@ -429,8 +431,7 @@ public final class Match {
     myFoldedExpressionMappings.computeIfAbsent(parameter, unused -> new ArrayList<>()).add(Pair.createNonNull(pattern, candidate));
   }
 
-  @Nullable
-  public List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
+  public @Nullable List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
     return myFoldedExpressionMappings.get(parameter);
   }
 }

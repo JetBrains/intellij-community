@@ -1,4 +1,4 @@
-package <error descr="Package 'stream' exists in another module: java.base">java.util.stream</error>;
+package <error descr="Package 'java.util.stream' exists in another module: java.base">java.util.stream</error>;
 
 import java.util.List;
 import java.util.Iterator;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.JavaValue;
@@ -7,6 +7,7 @@ import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiType;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Experimental
-public class ShowCollectionHistoryAction extends XFetchValueActionBase {
+public class ShowCollectionHistoryAction extends XFetchValueActionBase implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (!Registry.is("debugger.collection.watchpoints.enabled")) {
@@ -41,9 +42,8 @@ public class ShowCollectionHistoryAction extends XFetchValueActionBase {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
   @Override
-  protected ValueCollector createCollector(@NotNull AnActionEvent e) {
+  protected @NotNull ValueCollector createCollector(@NotNull AnActionEvent e) {
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
     XValueNodeImpl node = getNode(e);
     return new ValueCollector(XDebuggerTree.getTree(e.getDataContext())) {

@@ -18,7 +18,9 @@ package com.intellij.openapi.module.impl
 import com.intellij.openapi.module.LoadedModuleDescription
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LoadedModuleDescriptionImpl(private val module: Module): LoadedModuleDescription {
   override fun getModule(): Module = module
 

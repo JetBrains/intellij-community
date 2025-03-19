@@ -1,22 +1,25 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter2D
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 
+@ApiStatus.Internal
 open class CodeVisionVisionTextPainter<T>(
   val printer: (T) -> String = { it.toString() },
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<T> {
-
-  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
+  private val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   override fun paint(
     editor: Editor,
@@ -25,7 +28,8 @@ open class CodeVisionVisionTextPainter<T>(
     value: T,
     point: Point,
     state: RangeCodeVisionModel.InlayState,
-    hovered: Boolean
+    hovered: Boolean,
+    hoveredEntry: CodeVisionEntry?
   ) {
     g as Graphics2D
     val themeInfoProvider = service<CodeVisionThemeInfoProvider>()

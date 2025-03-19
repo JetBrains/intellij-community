@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -15,13 +15,12 @@ final class SlowLineMarkersPassFactory implements TextEditorHighlightingPassFact
                                                  false, Pass.SLOW_LINE_MARKERS);
   }
 
-  @NotNull
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(file.getProject())).isSerializeCodeInsightPasses();
+      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(psiFile.getProject())).isSerializeCodeInsightPasses();
 
     LineMarkersPass.Mode myMode = serializeCodeInsightPasses ? LineMarkersPass.Mode.SLOW : LineMarkersPass.Mode.NONE;
-    return LineMarkersPassFactory.createLineMarkersPass(file, editor, myMode, Pass.SLOW_LINE_MARKERS);
+    return LineMarkersPassFactory.createLineMarkersPass(psiFile, editor, myMode, Pass.SLOW_LINE_MARKERS);
   }
 }

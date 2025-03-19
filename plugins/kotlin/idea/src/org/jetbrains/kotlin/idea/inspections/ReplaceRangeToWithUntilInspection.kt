@@ -6,10 +6,10 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Companion.isPossibleToUseRangeUntil
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Util.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.idea.intentions.getArguments
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext

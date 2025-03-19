@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,10 +35,10 @@ public final class TextRangeUtil {
    * @param excludedRanges The list of ranges to exclude.
    * @return A list of ranges after excluded ranges have been applied.
    */
-  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull List<? extends TextRange> excludedRanges) {
+  public static Iterable<TextRange> excludeRanges(@NotNull TextRange original, @NotNull @Unmodifiable List<? extends TextRange> excludedRanges) {
     if (!excludedRanges.isEmpty()) {
       if (excludedRanges.size() > 1) {
-        excludedRanges.sort(RANGE_COMPARATOR);
+        excludedRanges = ContainerUtil.sorted(excludedRanges, RANGE_COMPARATOR);
       }
       int enabledRangeStart = original.getStartOffset();
       List<TextRange> enabledRanges = new ArrayList<>();
@@ -63,8 +65,7 @@ public final class TextRangeUtil {
    * @param textRanges The list of ranges to process
    * @return least text range that contains all of passed text ranges
    */
-  @NotNull
-  public static TextRange getEnclosingTextRange(@NotNull List<? extends TextRange> textRanges) {
+  public static @NotNull TextRange getEnclosingTextRange(@NotNull List<? extends TextRange> textRanges) {
     if(textRanges.isEmpty())
       return TextRange.EMPTY_RANGE;
     int lowerBound = textRanges.get(0).getStartOffset();

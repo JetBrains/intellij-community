@@ -18,15 +18,14 @@ import java.util.*;
  *
  * @author alanachtenberg
  */
-public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends AbstractFieldNameConstantsProcessor {
+public final class FieldNameConstantsPredefinedInnerClassFieldProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsPredefinedInnerClassFieldProcessor() {
     super(PsiField.class, LombokClassNames.FIELD_NAME_CONSTANTS);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     if (psiClass.getParent() instanceof PsiClass parentClass) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(parentClass, getSupportedAnnotationClasses());
       if (null != psiAnnotation && supportAnnotationVariant(psiAnnotation)) {
@@ -34,7 +33,7 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
         if (super.validate(psiAnnotation, parentClass, problemBuilder)) {
           final String typeName = FieldNameConstantsHandler.getTypeName(parentClass, psiAnnotation);
           if (typeName.equals(psiClass.getName())
-            && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+            && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
             && validate(psiAnnotation, parentClass, problemBuilder)) {
 
             List<? super PsiElement> result = new ArrayList<>();
@@ -62,7 +61,8 @@ public class FieldNameConstantsPredefinedInnerClassFieldProcessor extends Abstra
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 

@@ -1,0 +1,53 @@
+NavigationItem:
+    name: testGlobal
+ItemPresentation:
+    presentableText: testGlobal
+    locationString: (in PropertiesKt)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testGlobal = 12
+QualifiedName: PropertiesKt.testGlobal
+
+NavigationItem:
+    name: testGlobal
+ItemPresentation:
+    presentableText: testGlobal
+    locationString: null
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testGlobal = 12
+QualifiedName: null.testGlobal
+
+NavigationItem:
+    name: testInClass
+ItemPresentation:
+    presentableText: testInClass
+    locationString: (in Some)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testInClass = 12
+QualifiedName: (in Some).testInClass
+
+NavigationItem:
+    name: testInClassObject
+ItemPresentation:
+    presentableText: testInClassObject
+    locationString: (in Some.Companion)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testInClassObject = 12
+QualifiedName: (in Some.Companion).testInClassObject
+
+NavigationItem:
+    name: testInInterface
+ItemPresentation:
+    presentableText: testInInterface
+    locationString: (in SomeInterface)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testInInterface
+QualifiedName: (in SomeInterface).testInInterface
+
+NavigationItem:
+    name: testInPrimary
+ItemPresentation:
+    presentableText: testInPrimary
+    locationString: (in SomePrimary)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Public])
+TargetElement: val testInPrimary: Int
+QualifiedName: (in SomePrimary).testInPrimary

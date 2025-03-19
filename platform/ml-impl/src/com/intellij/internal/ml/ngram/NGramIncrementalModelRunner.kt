@@ -5,7 +5,9 @@ import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Double,
                                   model: NGramModel, vocabulary: VocabularyWithLimit) : ModelRunner(model, vocabulary) {
 
@@ -40,7 +42,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
     assert(vocabulary.maxVocabularySize >= nGramOrder && vocabulary.recentSequence.maxSequenceLength >= nGramOrder)
   }
 
-  internal var prevTokens: MutableList<String> = arrayListOf()
+  internal val prevTokens: MutableList<String> = arrayListOf()
 
   fun learnNextToken(token: String) {
     updatePrevTokens(token)
@@ -56,7 +58,8 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 
   fun createScorer(): NGramModelScorer {
-    val prefix = if (prevTokens.size > 1) prevTokens.subList(1, prevTokens.size).toTypedArray() else emptyArray()
+    val prevTokensSnapshot = prevTokens.toList()  // IDEA-343644 - Without the snapshot, subList may throw ConcurrentModificationException
+    val prefix = if (prevTokensSnapshot.size > 1) prevTokensSnapshot.subList(1, prevTokensSnapshot.size).toTypedArray() else emptyArray()
     return NGramModelScorer({ scoreTokens(it) }, prefix)
   }
 
@@ -86,6 +89,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 }
 
+@ApiStatus.Internal
 class NGramModelScorer(private val scoringFunction: (List<String>) -> Double, prefix: Array<String>) {
   private val tokens: MutableList<String> = mutableListOf(*prefix, "!placeholder!")
 

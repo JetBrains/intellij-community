@@ -3,17 +3,37 @@
 package org.jetbrains.kotlin
 
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.formatter.KotlinPackageEntry
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.util.ClassImportFilter
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+
+    protected var userNotificationInfo: String? = null
+
+    private fun findAfterFile(testPath: File): File {
+        val regularAfterFile = testPath.resolveSibling(testPath.name + ".after")
+
+        if (pluginMode == KotlinPluginMode.K2) {
+            val k2AfterFileName = IgnoreTests.deriveK2FileName(regularAfterFile.name, IgnoreTests.FileExtension.K2)
+            val k2AfterFile = testPath.resolveSibling(k2AfterFileName)
+
+            if (k2AfterFile.exists()) return k2AfterFile
+        }
+
+        return regularAfterFile
+    }
 
     protected open fun doTest(unused: String) {
         val testPath = dataFilePath(fileName())
@@ -60,13 +80,20 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                 codeStyleSettings.PACKAGES_TO_USE_STAR_IMPORTS.addEntry(KotlinPackageEntry(it.trim(), true))
             }
 
+            InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// CLASS_IMPORT_FILTER_VETO_REGEX:").forEach {
+                val regex = Regex(".*${it.trim()}.*")
+                val filterExtension = ClassImportFilter { classInfo, _ -> !classInfo.fqName.asString().matches(regex) }
+                ClassImportFilter.EP_NAME.point.registerExtension(filterExtension, testRootDisposable)
+            }
+
             val log = if (runTestInWriteCommand) {
                 project.executeWriteCommand<String?>("") { doTest(file) }
             } else {
                 doTest(file)
             }
 
-            KotlinTestUtils.assertEqualsToFile(File("$testPath.after"), myFixture.file.text)
+            val afterFile = findAfterFile(File(testPath))
+            KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.file.text)
             if (log != null) {
                 val logFile = File("$testPath.log")
                 if (log.isNotEmpty()) {
@@ -75,6 +102,16 @@ abstract class AbstractImportsTest : KotlinLightCodeInsightFixtureTestCase() {
                     TestCase.assertFalse(logFile.exists())
                 }
             }
+
+            val message = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// WITH_MESSAGE: ")
+            if (message != null) {
+                assertNotNull("No user notification info was provided", userNotificationInfo)
+                assertEquals(message, userNotificationInfo)
+            }
+
+            // Make sure that PSI is modified 
+            // correctly and consistently during tests 
+            PsiTestUtil.checkStubsMatchText(file)
         }
     }
 

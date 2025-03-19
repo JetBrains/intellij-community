@@ -15,14 +15,17 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.JpsElement;
 
 public interface JpsJavaProjectExtension extends JpsElement {
   String getOutputUrl();
 
+  @ApiStatus.Internal
   void setOutputUrl(String outputUrl);
 
   LanguageLevel getLanguageLevel();
 
+  @ApiStatus.Internal
   void setLanguageLevel(LanguageLevel languageLevel);
 }

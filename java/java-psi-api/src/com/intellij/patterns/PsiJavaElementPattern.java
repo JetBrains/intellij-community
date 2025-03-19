@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.psi.*;
@@ -24,28 +10,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElementPattern<T,Self>> extends PsiElementPattern<T,Self> {
-  @NonNls private static final String VALUE = "value";
+  private static final @NonNls String VALUE = "value";
 
   public PsiJavaElementPattern(final Class<T> aClass) {
     super(aClass);
   }
 
-  public PsiJavaElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  public PsiJavaElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
-  public Self annotationParam(@NonNls final String annotationQualifiedName, @NonNls final String parameterName) {
+  public Self annotationParam(final @NonNls String annotationQualifiedName, final @NonNls String parameterName) {
     return withParent(
       PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
           PsiJavaPatterns.psiAnnotation().qName(annotationQualifiedName))));
   }
 
-  public Self annotationParam(@NonNls final String annotationQualifiedName) {
+  public Self annotationParam(final @NonNls String annotationQualifiedName) {
     return annotationParam(annotationQualifiedName, VALUE);
   }
 
-  public Self annotationParam(final ElementPattern<String> annotationQualifiedName, @NonNls final String parameterName) {
+  public Self annotationParam(final ElementPattern<String> annotationQualifiedName, final @NonNls String parameterName) {
     return withParent(
       PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
@@ -64,7 +50,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(annotation)));
   }
 
-  public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName, @NonNls final String parameterName) {
+  public Self insideAnnotationParam(final ElementPattern<String> annotationQualifiedName, final @NonNls String parameterName) {
     return withAncestor(3,   // can be array initializer
                         PsiJavaPatterns.psiNameValuePair().withName(parameterName).withParent(
         PlatformPatterns.psiElement(PsiAnnotationParameterList.class).withParent(
@@ -86,7 +72,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   public Self nameIdentifierOf(final ElementPattern<? extends PsiMember> pattern) {
     return with(new PatternCondition<T>("nameIdentifierOf") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         if (!(t instanceof PsiIdentifier)) return false;
 
         final PsiElement parent = t.getParent();
@@ -104,7 +90,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
 
     return with(new PatternCondition<T>("methodCallParameter") {
       @Override
-      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {
           return hasIndex(literal, index) && checkCall(context, (PsiExpressionList)parent, methodPattern, nameCondition);
@@ -129,12 +115,12 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
     });
   }
 
-  public Self methodCallParameter(@NotNull final ElementPattern<? extends PsiMethod> methodPattern) {
+  public Self methodCallParameter(final @NotNull ElementPattern<? extends PsiMethod> methodPattern) {
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
     return with(new PatternCondition<T>("methodCallParameter") {
       @Override
-      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         return parent instanceof PsiExpressionList && checkCall(context, (PsiExpressionList)parent, methodPattern, nameCondition);
       }
@@ -164,7 +150,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   public Self constructorParameter(final int index, final String... fqns) {
     return with(new PatternCondition<T>("constructorParameter") {
       @Override
-      public boolean accepts(@NotNull final T literal, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T literal, final ProcessingContext context) {
         final PsiElement parent = literal.getParent();
         if (parent instanceof PsiExpressionList) {
           final PsiExpressionList psiExpressionList = (PsiExpressionList)parent;
@@ -190,7 +176,7 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
       super(aClass);
     }
 
-    public Capture(@NotNull final InitialPatternCondition<T> condition) {
+    public Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
   }

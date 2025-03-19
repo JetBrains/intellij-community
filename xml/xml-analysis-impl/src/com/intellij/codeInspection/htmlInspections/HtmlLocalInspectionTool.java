@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -34,25 +20,24 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     return true;
   }
 
-  protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkTag(final @NotNull XmlTag tag, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
-  protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkAttribute(final @NotNull XmlAttribute attribute, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
-  protected void checkAttributeValue(@NotNull final XmlAttributeValue attributeValue, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkAttributeValue(final @NotNull XmlAttributeValue attributeValue, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
-  protected void checkText(@NotNull final XmlText text, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected void checkText(final @NotNull XmlText text, final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
       public void visitXmlToken(final @NotNull XmlToken token) {

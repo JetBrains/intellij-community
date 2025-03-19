@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -15,7 +15,7 @@ import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FailedTestsNavigator implements OccurenceNavigator {
+class FailedTestsNavigator implements OccurenceNavigator {
   private TestFrameworkRunningModel myModel;
 
   @Override
@@ -59,15 +59,13 @@ public class FailedTestsNavigator implements OccurenceNavigator {
                              result.getDefectsCount());
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return getNextName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return getPreviousName();
   }
 
@@ -79,7 +77,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
     return new PreviousFailedTestInfo().execute();
   }
 
-  protected abstract class FailedTestInfo {
+  private abstract class FailedTestInfo {
     private AbstractTestProxy myDefect = null;
     private List<AbstractTestProxy> myAllTests;
     private List<AbstractTestProxy> myDefects;
@@ -92,7 +90,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return myDefect == null ? getDefectsCount() : myDefects.indexOf(myDefect) + 1;
     }
 
-    public FailedTestInfo execute() {
+    FailedTestInfo execute() {
       myAllTests = new ArrayList<>();
       collectTests(myAllTests, (TreeNode)myModel.getTreeView().getModel().getRoot());
       myDefects = Filter.DEFECTIVE_LEAF.select(myAllTests);
@@ -117,7 +115,7 @@ public class FailedTestsNavigator implements OccurenceNavigator {
       return this;
     }
 
-    private void collectTests(List<? super AbstractTestProxy> tests, TreeNode node) {
+    private static void collectTests(List<? super AbstractTestProxy> tests, TreeNode node) {
       if (node == null) return;
       Object elementFor = TreeUtil.getUserObject(node);
       if (elementFor instanceof BaseTestProxyNodeDescriptor) {

@@ -1,0 +1,3 @@
+public void m(LocalDate value) {
+  <spot>value</spot>$key
+}

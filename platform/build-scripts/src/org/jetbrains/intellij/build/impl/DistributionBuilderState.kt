@@ -1,27 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.module.JpsModuleReference
 
 suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val pluginsToPublishEffective = pluginsToPublish.toMutableSet()
   filterPluginsToPublish(pluginsToPublishEffective, context)
-  val platform = createPlatformLayout(pluginsToPublishEffective, context)
-  return DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublishEffective, context = context)
+  val platform = createPlatformLayout(context)
+  return DistributionBuilderState(platform, pluginsToPublishEffective, context)
 }
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
-  val platform = createPlatformLayout(pluginsToPublish = emptySet(), context = context)
-  return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
+  val platform = createPlatformLayout(context)
+  return DistributionBuilderState(platform, pluginsToPublish = emptySet(), context)
 }
 
-class DistributionBuilderState(@JvmField val platform: PlatformLayout,
-                               @JvmField val pluginsToPublish: Set<PluginLayout>,
-                               private val context: BuildContext) {
+class DistributionBuilderState internal constructor(
+  @JvmField val platform: PlatformLayout,
+  @JvmField val pluginsToPublish: Set<PluginLayout>,
+  context: BuildContext,
+) {
   init {
     val releaseDate = context.applicationInfo.majorReleaseDate
     require(!releaseDate.startsWith("__")) {
@@ -29,19 +27,8 @@ class DistributionBuilderState(@JvmField val platform: PlatformLayout,
     }
   }
 
-  val platformModules: Collection<String>
-    get() = (platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()).toList()
-
-  fun getModulesForPluginsToPublish(): Set<String> {
-    return getModulesForPluginsToPublish(platform, pluginsToPublish)
-  }
-}
-
-internal fun getModulesForPluginsToPublish(platform: PlatformLayout, pluginsToPublish: Set<PluginLayout>): Set<String> {
-  val result = LinkedHashSet<String>()
-  result.addAll((platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()))
-  pluginsToPublish.flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
-  return result
+  val platformModules: Sequence<String>
+    get() = platform.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
 }
 
 internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: BuildContext) {
@@ -73,13 +60,6 @@ internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: 
 }
 
 /**
- * @return module names which are required to run necessary tools from build scripts
+ * @return module names which are required to run the necessary tools from build scripts
  */
-internal fun getToolModules(): List<String> {
-  return java.util.List.of("intellij.java.rt", "intellij.platform.main",
-                           /*required to build searchable options index*/ "intellij.platform.updater")
-}
-
-internal fun isProjectLibraryUsedByPlugin(library: JpsLibrary, plugin: BaseLayout): Boolean {
-  return library.createReference().parentReference !is JpsModuleReference && !plugin.hasLibrary(library.name)
-}
+internal fun getToolModules(): List<String> = listOf("intellij.java.rt", "intellij.platform.starter", "intellij.tools.updater")

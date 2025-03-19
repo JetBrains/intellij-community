@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.util.SequentialTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
 /**
  * Defines common interface for receiving events about formatting progress.
  */
+@ApiStatus.Internal
 public interface FormattingProgressCallback {
 
   enum EventType { SUCCESS, CANCEL }

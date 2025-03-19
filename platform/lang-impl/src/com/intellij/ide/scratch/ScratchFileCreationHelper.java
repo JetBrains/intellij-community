@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.ide.IdeView;
@@ -39,24 +37,23 @@ public abstract class ScratchFileCreationHelper {
   public void beforeCreate(@NotNull Project project, @NotNull Context context) {
   } 
   
-  public static class Context {
-    @NotNull
-    public String text = "";
+  public static final class Context {
+    public @NotNull String text = "";
     public Language language;
     public int caretOffset;
     
     public String filePrefix;
     public Factory<Integer> fileCounter;
     public String fileExtension;
+    public @NotNull RootType defaultRootType = ScratchRootType.getInstance();
     
     public ScratchFileService.Option createOption = ScratchFileService.Option.create_new_always;
     public IdeView ideView;
   }
 
-  @Nullable
-  public static PsiFile parseHeader(@NotNull Project project,
-                                    @NotNull Language language,
-                                    @NotNull String text) {
+  public static @Nullable PsiFile parseHeader(@NotNull Project project,
+                                              @NotNull Language language,
+                                              @NotNull String text) {
     LanguageFileType fileType = language.getAssociatedFileType();
     CharSequence fileSnippet = StringUtil.first(text, 10 * 1024, false);
     PsiFileFactory fileFactory = PsiFileFactory.getInstance(project);
@@ -65,10 +62,9 @@ public abstract class ScratchFileCreationHelper {
       language, fileSnippet);
   }
 
-  @NotNull
-  public static String reformat(@NotNull Project project,
-                                @NotNull Language language,
-                                @NotNull String text) {
+  public static @NotNull String reformat(@NotNull Project project,
+                                         @NotNull Language language,
+                                         @NotNull String text) {
     return WriteCommandAction.runWriteCommandAction(project, (Computable<String>)() -> {
       PsiFile psi = parseHeader(project, language, text);
       if (psi != null) CodeStyleManager.getInstance(project).reformat(psi);

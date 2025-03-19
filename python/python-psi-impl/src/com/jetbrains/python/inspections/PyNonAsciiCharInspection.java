@@ -44,13 +44,12 @@ import static com.jetbrains.python.inspections.PyMandatoryEncodingInspection.enc
 /**
  * User : catherine
  */
-public class PyNonAsciiCharInspection extends PyInspection {
+public final class PyNonAsciiCharInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

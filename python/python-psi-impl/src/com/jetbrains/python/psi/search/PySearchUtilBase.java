@@ -31,7 +31,6 @@ public class PySearchUtilBase {
    * <ul>
    *   <li>Standard library tests</li>
    *   <li>Stubs for third-party packages in Typeshed</li>
-   *   <li>Stubs in python-skeletons</li>
    *   <li>Bundled tests of third-party packages</li>
    *   <li>Bundled dependencies of third-party packages</li>
    * </ul>
@@ -39,11 +38,9 @@ public class PySearchUtilBase {
    * @param anchor element to detect the corresponding Python SDK
    * @see PySearchScopeBuilder
    */
-  @NotNull
-  public static GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
+  public static @NotNull GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
     return PySearchScopeBuilder.forPythonSdkOf(anchor)
       .excludeStandardLibraryTests()
-      .excludeThirdPartyPackageTypeShedStubs()
       .excludePythonSkeletonsStubs()
       .excludeThirdPartyPackageTests()
       .excludeThirdPartyPackageBundledDependencies()
@@ -58,27 +55,23 @@ public class PySearchUtilBase {
    * @param project the project for which the scope should be calculated
    * @return the resulting scope
    */
-  @NotNull
-  public static GlobalSearchScope excludeSdkTestsScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope excludeSdkTestsScope(@NotNull Project project) {
     return excludeSdkTestScope(ProjectScope.getAllScope(project));
   }
 
-  @NotNull
-  public static GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
+  public static @NotNull GlobalSearchScope excludeSdkTestScope(@NotNull GlobalSearchScope scope) {
     Project project = Objects.requireNonNull(scope.getProject());
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     // TODO cache the scope in project userdata (update when SDK paths change or different project SDK is selected)
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       return scope.intersectWith(PySearchScopeBuilder.forPythonSdk(project, sdk)
                                    .excludeStandardLibraryTests()
-                                   .excludeThirdPartyPackageTypeShedStubs()
                                    .build());
     }
     return scope;
   }
 
-  @Nullable
-  public static VirtualFile findLibDir(@NotNull Sdk sdk) {
+  public static @Nullable VirtualFile findLibDir(@NotNull Sdk sdk) {
     return findLibDir(ReadAction.compute(() -> sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
   }
 
@@ -117,8 +110,7 @@ public class PySearchUtilBase {
     return null;
   }
 
-  @Nullable
-  private static VirtualFile findLibDir(VirtualFile[] files) {
+  private static @Nullable VirtualFile findLibDir(VirtualFile[] files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         continue;

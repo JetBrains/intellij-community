@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.util.NotNullFunction;
@@ -53,8 +53,7 @@ public class OpeningExpander extends AbstractOpeningExpander {
     }
 
     @Override
-    @NotNull
-    public Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
+    public @NotNull Expander fun(final RepositoryBrowserComponent repositoryBrowserComponent) {
       return new OpeningExpander(myPath, repositoryBrowserComponent, mySelectionPath);
     }
   }

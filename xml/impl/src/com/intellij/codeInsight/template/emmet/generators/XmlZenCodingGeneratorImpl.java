@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
@@ -24,15 +10,12 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -50,24 +33,24 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
   }
 
   @Override
-  @NotNull
-  public String toString(@NotNull XmlTag tag,
-                         @NotNull Map<String, String> attributes,
-                         boolean hasChildren,
-                         @NotNull PsiElement context) {
+  public @NotNull String toString(@NotNull XmlTag tag,
+                                  @NotNull Map<String, String> attributes,
+                                  boolean hasChildren,
+                                  @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
+    PsiFile file = tag.getContainingFile();
     if (isTrueXml(fileType)) {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> closeUnclosingTags(tag));
+      closeUnclosingTags(tag);
     }
-    return tag.getContainingFile().getText();
+
+    return file.getText();
   }
 
   @Override
-  @NotNull
-  public String buildAttributesString(@NotNull Map<String, String> attributes,
-                                      boolean hasChildren,
-                                      int numberInIteration,
-                                      int totalIterations, @Nullable String surroundedText) {
+  public @NotNull String buildAttributesString(@NotNull Map<String, String> attributes,
+                                               boolean hasChildren,
+                                               int numberInIteration,
+                                               int totalIterations, @Nullable String surroundedText) {
     StringBuilder result = new StringBuilder();
     for (Map.Entry<String, String> entry : attributes.entrySet()) {
       String name = entry.getKey();
@@ -122,25 +105,18 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
         }
       }
     });
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
-      final XmlTag tag = pointer.getElement();
-      if (tag != null) {
-        final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-        if (child != null) {
-          final int offset = child.getTextRange().getStartOffset();
-          VirtualFile file = tag.getContainingFile().getVirtualFile();
-          if (file != null) {
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-              documentManager.doPostponedOperationsAndUnblockDocument(document);
-              ApplicationManager.getApplication().runWriteAction(() -> {
-                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-                documentManager.commitDocument(document);
-              });
-            }
-          }
-        }
+    for (SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
+      XmlTag element = pointer.getElement();
+      if (element == null) continue;
+
+      String elementText = element.getText();
+      if (!elementText.endsWith(">")) continue;
+
+      PsiFile text = PsiFileFactory.getInstance(root.getProject())
+        .createFileFromText("dummy.html", root.getLanguage(), StringUtil.trimEnd(element.getText(), ">") + "/>", false, true);
+      XmlTag newTag = PsiTreeUtil.findChildOfType(text, XmlTag.class);
+      if (newTag != null) {
+        element.replace(newTag);
       }
     }
   }

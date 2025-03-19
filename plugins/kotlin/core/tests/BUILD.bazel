@@ -1,0 +1,71 @@
+### auto-generated section `build kotlin.core.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+java_library(
+  name = "kotlin-core-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-core-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:vavr",
+    "//platform/util/jdom",
+    "@lib//:javax-inject",
+    "@lib//:guava",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "//plugins/kotlin/plugin/k1:kotlin-plugin-k1",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//java/openapi:java",
+    "//java/java-indexing-impl:indexing-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/lang-impl",
+    "//platform/projectModel-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/diff-impl",
+    "//java/java-impl:impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/manifest",
+    "//java/manifest:manifest_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-core-tests_test",
+  runtime_deps = [":kotlin-core-tests_test_lib"]
+)
+### auto-generated section `build kotlin.core.tests` end

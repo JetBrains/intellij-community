@@ -1,4 +1,0 @@
-import java.util.concurrent.atomic.AtomicInteger;
-public class X {
-  final AtomicInteger count = new AtomicInteger(0);
-}

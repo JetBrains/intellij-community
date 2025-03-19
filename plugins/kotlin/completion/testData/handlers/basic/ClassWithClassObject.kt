@@ -1,5 +1,7 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
+package test
+
 class AClass {
     companion object {}
 }

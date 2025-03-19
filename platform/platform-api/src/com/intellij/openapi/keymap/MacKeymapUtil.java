@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -47,8 +47,7 @@ public final class MacKeymapUtil {
   public static final String POWER3	 = "\u233D";
   public static final String NUM_PAD     = "\u2328";
 
-  @NotNull
-  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
+  public static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
     StringJoiner buf = new StringJoiner(delimiter != null ? delimiter : "");
     if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.add(get(CONTROL, "Ctrl+"));
     if ((modifiers & InputEvent.ALT_MASK) != 0) buf.add(get(OPTION, "Alt+"));
@@ -61,13 +60,11 @@ public final class MacKeymapUtil {
 
   }
 
-  @NotNull
-  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     return getModifiersText(modifiers, null);
   }
 
-  @NotNull
-  public static String getKeyText(int code) {
+  public static @NotNull String getKeyText(int code) {
     if (!isNativeShortcutSymbolsDisabled()) {
       return switch (code) {
         case KeyEvent.VK_BACK_SPACE -> get(BACKSPACE, "Backspace");
@@ -108,8 +105,7 @@ public final class MacKeymapUtil {
     return KeyEvent.getKeyText(code);
   }
 
-  @NotNull
-  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke, String delimiter, boolean onlyDelimIntoModifiersAndKey) {
+  public static @NotNull String getKeyStrokeText(@NotNull KeyStroke keyStroke, String delimiter, boolean onlyDelimIntoModifiersAndKey) {
     String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
 
@@ -124,13 +120,11 @@ public final class MacKeymapUtil {
     return modifiers + key;
   }
 
-  @NotNull
-  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
+  public static @NotNull String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
     return getKeyStrokeText(keyStroke, null, true);
   }
 
-  @NotNull
-  private static String get(@NotNull String value, @NotNull String replacement) {
+  private static @NotNull String get(@NotNull String value, @NotNull String replacement) {
     if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
@@ -141,8 +135,7 @@ public final class MacKeymapUtil {
     return AdvancedSettings.getInstanceIfCreated() != null && AdvancedSettings.getBoolean("ide.macos.disable.native.shortcut.symbols");
   }
 
-  @NotNull
-  public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
+  public static @NotNull String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
     if ((modifiers & InputEvent.META_MASK) != 0) {
       buf.append("\u2318");

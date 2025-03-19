@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.openapi.util.TextRange;
@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,25 +17,24 @@ import java.util.Set;
 /**
  * Contains utility methods for core formatter processing.
  */
+@ApiStatus.Internal
 public final class CoreFormatterUtil {
 
   private CoreFormatterUtil() {
   }
 
-  @NotNull
-  public static FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
-                                           @NotNull PsiElement element,
-                                           @NotNull TextRange range,
-                                           @NotNull CodeStyleSettings settings,
-                                           @NotNull FormattingMode mode) {
+  public static @NotNull FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
+                                                    @NotNull PsiElement element,
+                                                    @NotNull TextRange range,
+                                                    @NotNull CodeStyleSettings settings,
+                                                    @NotNull FormattingMode mode) {
       return builder.createModel(FormattingContext.create(element, range, settings, mode));
   }
 
-  @NotNull
-  public static FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
-                                           @NotNull PsiElement element,
-                                           @NotNull CodeStyleSettings settings,
-                                           @NotNull FormattingMode mode) {
+  public static @NotNull FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
+                                                    @NotNull PsiElement element,
+                                                    @NotNull CodeStyleSettings settings,
+                                                    @NotNull FormattingMode mode) {
     return builder.createModel(FormattingContext.create(element, settings, mode));
   }
 
@@ -45,8 +45,7 @@ public final class CoreFormatterUtil {
    * @param block     target block
    * @return          alignment object to use during adjusting white space of the given block if any; {@code null} otherwise
    */
-  @Nullable
-  public static AlignmentImpl getAlignment(final @NotNull AbstractBlockWrapper block) {
+  public static @Nullable AlignmentImpl getAlignment(final @NotNull AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block;
     while (true) {
       AlignmentImpl alignment = current.getAlignment();
@@ -99,8 +98,7 @@ public final class CoreFormatterUtil {
    *
    * @return closest block to the given block that contains line feeds if any; {@code null} otherwise
    */
-  @Nullable
-  public static AbstractBlockWrapper getIndentedParentBlock(@NotNull AbstractBlockWrapper block) {
+  public static @Nullable AbstractBlockWrapper getIndentedParentBlock(@NotNull AbstractBlockWrapper block) {
     AbstractBlockWrapper current = block.getParent();
     while (current != null) {
       if (current.getStartOffset() != block.getStartOffset() && current.getWhiteSpace().containsLineFeeds()) return current;
@@ -233,11 +231,12 @@ public final class CoreFormatterUtil {
     if (indent.getType() == Indent.Type.LABEL) return new IndentData(options.LABEL_INDENT_SIZE);
     if (indent.getType() == Indent.Type.NONE) return new IndentData(0);
     if (indent.getType() == Indent.Type.SPACES) return new IndentData(indent.getSpaces(), 0);
+    if (indent.getType() == Indent.Type.OUTDENT_NORMAL) return new IndentData(-options.INDENT_SIZE, 0);
+    if (indent.getType() == Indent.Type.OUTDENT_SPACES) return new IndentData(0, -indent.getSpaces());
     return new IndentData(options.INDENT_SIZE);
   }
 
-  @NotNull
-  public static LeafBlockWrapper getFirstLeaf(@NotNull AbstractBlockWrapper block) {
+  public static @NotNull LeafBlockWrapper getFirstLeaf(@NotNull AbstractBlockWrapper block) {
     if (block instanceof LeafBlockWrapper) {
       return (LeafBlockWrapper)block;
     }

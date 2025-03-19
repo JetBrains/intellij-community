@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.binding;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -9,7 +11,11 @@ import java.lang.reflect.Field;
 
 /**
  * @author Dmitry Avdeev
-*/
+ *
+ * @deprecated Use Kotlin UI DSL with bindings
+ */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class BeanValueAccessor extends ValueAccessor {
 
   public static BeanValueAccessor createAccessor(Object bean, final String propertyName) {

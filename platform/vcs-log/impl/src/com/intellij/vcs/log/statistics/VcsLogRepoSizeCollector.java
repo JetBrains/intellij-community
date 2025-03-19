@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -19,6 +19,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.data", 5);
   private static final EventId DATA_INITIALIZED = GROUP.registerEvent("dataInitialized");
@@ -36,7 +38,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
   public static final StringEventField VCS_FIELD = new StringEventField("vcs") {
     @Override
     public @NotNull List<String> getValidationRule() {
-      return List.of("{enum#vcs}", "{enum:third.party}");
+      return getVcsValidationRule();
     }
   };
   private static final EventId2<Integer, String>
@@ -44,7 +46,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
 
   @Override
   public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
-    if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
+    if (!TrustedProjects.isProjectTrusted(project)) return Collections.emptySet();
 
     VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
     if (projectLog == null) return Collections.emptySet();
@@ -71,11 +73,15 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return Collections.emptySet();
   }
 
-  private static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
+  public static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
     if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
       return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
     }
     return "third.party";
+  }
+
+  static @NotNull List<String> getVcsValidationRule() {
+    return List.of("{enum#vcs}", "{enum:third.party}");
   }
 
   private static @NotNull MultiMap<VcsKey, VirtualFile> groupRootsByVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers) {

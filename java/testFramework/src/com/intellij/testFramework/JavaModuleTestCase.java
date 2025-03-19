@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.highlighter.ModuleFileType;
@@ -62,25 +62,25 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
     }
   }
 
-  @NotNull
-  protected Module createModule(@NotNull Path moduleFile) {
+  protected @NotNull Module createModule(@NotNull Path moduleFile) {
     return createModule(moduleFile, StdModuleTypes.JAVA);
   }
 
   protected @NotNull Module createModule(@NotNull Path moduleFile, @NotNull ModuleType<?> moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(moduleFile, moduleType.getId()));
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
   protected @NotNull Module createModule(@NotNull String path, @NotNull ModuleType<?> moduleType) {
     Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId()));
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
-  @NotNull
-  protected Module loadModule(@NotNull VirtualFile file) {
+  protected @NotNull Module loadModule(@NotNull VirtualFile file) {
     return loadModule(file.toNioPath());
   }
 
@@ -97,16 +97,15 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
     }
 
     myModulesToDispose.add(module);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     return module;
   }
 
-  @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) {
+  protected @Nullable Module loadAllModulesUnder(@NotNull VirtualFile rootDir) {
     return loadAllModulesUnder(rootDir, null);
   }
 
-  @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<? super Module> moduleConsumer) {
+  protected @Nullable Module loadAllModulesUnder(@NotNull VirtualFile rootDir, final @Nullable Consumer<? super Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
     VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor<Void>() {
@@ -123,7 +122,9 @@ public abstract class JavaModuleTestCase extends JavaProjectTestCase {
       }
     });
 
-    return result.get();
+    Module module = result.get();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    return module;
   }
 
   protected final @NotNull Module createModuleFromTestData(@NotNull String dirInTestData,

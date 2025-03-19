@@ -9,4 +9,3 @@ fun f1() = 1..2
 fun f2() {}
 
 // EXISTS: f1()
-// IGNORE_K2

@@ -4,7 +4,6 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
 
-
 /**
  * Creates step which delegates all calls to [steps] in order from first to last.
  *

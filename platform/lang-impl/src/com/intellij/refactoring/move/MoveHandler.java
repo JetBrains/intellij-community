@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbService;
@@ -26,12 +27,13 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class MoveHandler implements RefactoringActionHandler {
+public final class MoveHandler implements RefactoringActionHandler {
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -162,11 +164,12 @@ public class MoveHandler implements RefactoringActionHandler {
    * target container can be null => means that container is not determined yet and must be specified by the user
    */
   public static boolean canMove(PsiElement @NotNull [] elements, PsiElement targetContainer) {
-    return findDelegate(elements, targetContainer, null) != null;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326650, EA-659473")) {
+      return findDelegate(elements, targetContainer, null) != null;
+    }
   }
 
-  @Nullable
-  private static MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
+  private static @Nullable MoveHandlerDelegate findDelegate(PsiElement @NotNull [] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     for (MoveHandlerDelegate delegate: MoveHandlerDelegate.EP_NAME.getExtensionList()) {
       if (delegate.canMove(elements, targetContainer, reference)) {
         return delegate;
@@ -176,8 +179,7 @@ public class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @Nullable
-  public static @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
+  public static @Nullable @NlsActions.ActionText String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       Project project = dataContext.getData(CommonDataKeys.PROJECT);
@@ -221,8 +223,7 @@ public class MoveHandler implements RefactoringActionHandler {
     return null;
   }
 
-  @NotNull
-  private static List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
+  private static @Unmodifiable @NotNull List<MoveHandlerDelegate> findHandlersForLanguage(@NotNull PsiElement element) {
     return ContainerUtil.filter(MoveHandlerDelegate.EP_NAME.getExtensionList(),
                                 (delegate) -> delegate.supportsLanguage(element.getLanguage()));
   }

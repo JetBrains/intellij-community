@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -9,14 +8,15 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +31,8 @@ import static com.intellij.ide.fileTemplates.JavaTemplateUtil.INTERNAL_MODULE_IN
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_CLASS;
 
 public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
+  private static final String DEFAULT_MODULE_NAME = "module_name";
+
   public CreateModuleInfoAction() {
     super(JavaBundle.messagePointer("action.create.new.module-info.title"), JavaBundle.messagePointer("action.create.new.module-info.description"), AllIcons.FileTypes.Java);
   }
@@ -45,12 +47,12 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     IdeView view = LangDataKeys.IDE_VIEW.getData(ctx);
     PsiDirectory target = view != null && e.getProject() != null ? getTargetDirectory(ctx, view) : null;
-    if (target == null || !PsiUtil.isLanguageLevel9OrHigher(target)) {
+    if (target == null || !PsiUtil.isAvailable(JavaFeature.MODULES, target)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
       e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(JavaModuleGraphUtil.findDescriptorByElement(target) == null);
+      e.getPresentation().setEnabled(JavaPsiModuleUtil.findDescriptorByElement(target) == null);
     }
   }
 
@@ -85,6 +87,8 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   @Override
   protected Map<String, String> getLiveTemplateDefaults(@NotNull DataContext ctx, @NotNull PsiFile file) {
     Module module = PlatformCoreDataKeys.MODULE.getData(ctx);
-    return Collections.singletonMap("MODULE_NAME", module != null ? LightJavaModule.moduleName(module.getName()) : "module_name");
+    String moduleName = module != null ? LightJavaModule.moduleName(module.getName()) : DEFAULT_MODULE_NAME;
+    moduleName = PsiNameHelper.isValidModuleName(moduleName, file) ? moduleName : DEFAULT_MODULE_NAME;
+    return Collections.singletonMap("MODULE_NAME", moduleName);
   }
 }

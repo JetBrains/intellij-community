@@ -5,11 +5,13 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentType;
 import com.intellij.openapi.options.BoundConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
+@ApiStatus.Internal
+public final class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFactory {
 
   @Override
   public @NotNull BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,

@@ -169,7 +169,7 @@ public class BytecodeAnalysisTest extends LightJavaCodeInsightFixtureTestCase {
       fail(message + ": @NotNull inferred, but not expected");
     }
   }
-
+  
   private void checkCompoundIds(String className) throws IOException {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(getModule());
     PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass(PACKAGE_NAME + '.' + className, scope);

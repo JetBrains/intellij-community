@@ -86,15 +86,20 @@ fun foo6(a: Boolean, b: Boolean, c: Boolean) {
     }
 }
 
-fun foo7(a: Boolean, <warning descr="[UNUSED_PARAMETER] Parameter 'b' is never used">b</warning>: Boolean, <warning descr="[UNUSED_PARAMETER] Parameter 'c' is never used">c</warning>: Boolean) {
+fun foo7(a: Boolean, b: Boolean, c: Boolean) {
     if (a || <warning descr="Condition 'a' is always false when reached">a</warning>) {
         println()
     }
+    println(b)
+    println(c)
 }
 
 fun foo1Fp(a: Boolean) {
-    val <warning descr="[UNUSED_VARIABLE] Variable 'x' is never used">x</warning> = if (a) 1 else 0
-    val <warning descr="[UNUSED_VARIABLE] Variable 'y' is never used">y</warning> = if (a) 2 else 3
+    val x = if (a) 1 else 0
+    val y = if (a) 2 else 3
+    
+    println(x)
+    println(y)
 }
 
 fun foo2Fp(a: Boolean, o: Any): Int {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
@@ -41,7 +41,6 @@ import com.intellij.usages.UsagePresentation;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +80,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     myRootsTree = new MyTree();
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
-    StructureTreeModel<?> model = new StructureTreeModel<>(structure, AlphaComparator.INSTANCE, this);
+    StructureTreeModel<?> model = new StructureTreeModel<>(structure, AlphaComparator.getInstance(), this);
     myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
@@ -266,7 +265,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     Disposer.register(content, this);
   }
 
-  private static final class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements UiDataProvider {
     @Override
     protected void paintComponent(final Graphics g) {
       DuplicateNodeRenderer.paintDuplicateNodesBackground(g, this);
@@ -274,24 +273,18 @@ public final class MigrationPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        final DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
-        if (selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode node) {
-          return (DataProvider)slowId -> CommonDataKeys.PSI_ELEMENT.is(dataId) ? node.getInfo().getElement() : null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
+      if (selectedNodes.length == 1 && selectedNodes[0].getUserObject() instanceof MigrationNode node) {
+        sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> node.getInfo().getElement());
+      }
+      Set<TypeMigrationUsageInfo> usageInfos = new HashSet<>();
+      for (DefaultMutableTreeNode selectedNode : selectedNodes) {
+        if (selectedNode.getUserObject() instanceof MigrationNode node) {
+          collectInfos(usageInfos, node);
         }
       }
-      if (MIGRATION_USAGES_KEY.is(dataId)) {
-        DefaultMutableTreeNode[] selectedNodes = getSelectedNodes(DefaultMutableTreeNode.class, null);
-        final Set<TypeMigrationUsageInfo> usageInfos = new HashSet<>();
-        for (DefaultMutableTreeNode selectedNode : selectedNodes) {
-          if (selectedNode.getUserObject() instanceof MigrationNode node) {
-            collectInfos(usageInfos, node);
-          }
-        }
-        return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
-      }
-      return null;
+      sink.set(MIGRATION_USAGES_KEY, usageInfos.toArray(new TypeMigrationUsageInfo[0]));
     }
 
     private static void collectInfos(final Set<? super TypeMigrationUsageInfo> usageInfos, final MigrationNode currentNode) {
@@ -319,7 +312,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
   private class IncludeAction extends ExcludeIncludeActionBase {
     IncludeAction() {
       super(JavaRefactoringBundle.message("type.migration.include.action.text"));
-      registerCustomShortcutSet(CommonShortcuts.INSERT, myRootsTree);
+      registerCustomShortcutSet(CommonShortcuts.getInsert(), myRootsTree);
     }
 
     @Override
@@ -328,7 +321,7 @@ public final class MigrationPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final DefaultMutableTreeNode[] selectedNodes = myRootsTree.getSelectedNodes(DefaultMutableTreeNode.class, null);
@@ -377,16 +370,20 @@ public final class MigrationPanel extends JPanel implements Disposable {
 
   private static class MigrationRootsTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(@NotNull final JTree tree,
+    public void customizeCellRenderer(final @NotNull JTree tree,
                                       final Object value,
                                       final boolean selected,
                                       final boolean expanded,
                                       final boolean leaf,
                                       final int row,
                                       final boolean hasFocus) {
-      final Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
-      if (!(userObject instanceof MigrationNode)) return;
-      final TypeMigrationUsageInfo usageInfo = ((MigrationNode)userObject).getInfo();
+      ReadAction.run(() -> doCustomize((DefaultMutableTreeNode)value));
+    }
+
+    private void doCustomize(DefaultMutableTreeNode value) {
+      final Object userObject = value.getUserObject();
+      if (!(userObject instanceof MigrationNode migrationNode)) return;
+      final TypeMigrationUsageInfo usageInfo = migrationNode.getInfo();
       if (usageInfo != null) {
         final PsiElement element = usageInfo.getElement();
         if (element != null) {

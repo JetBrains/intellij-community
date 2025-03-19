@@ -1,8 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.javadoc.JavaDocHighlightingManagerImpl;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +27,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param skipFirstMember {@code true} to skip a method (or field) name in the link to element
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
                                                              @NotNull String prefix,
                                                              boolean skipFirstMember,
                                                              @Nullable String actionId) {
@@ -39,8 +41,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    * @param pressMessageKey JavaBundle key to retrieve context help message with shortcut
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
                                                              @NotNull String prefix,
                                                              boolean skipFirstMember,
                                                              @Nullable String actionId,
@@ -58,8 +59,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
    * @param skipFirstMemberOfElement a function that returns {@code true} to skip a method (or field) name for the current element
    * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public static <E extends PsiElement> String getTooltipText(@NotNull Collection<? extends E> elements,
+  public static @NotNull <E extends PsiElement> String getTooltipText(@NotNull Collection<? extends E> elements,
                                                              @NotNull Function<? super E, String> elementToPrefix,
                                                              @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                              @Nullable String actionId) {
@@ -85,8 +85,7 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
   }
 
   @Override
-  @Nullable
-  protected PsiElement getContainingElement(@NotNull PsiElement element) {
+  protected @Nullable PsiElement getContainingElement(@NotNull PsiElement element) {
     PsiMember member = getStubOrPsiParentOfType(element, PsiMember.class);
     if (member == null && element instanceof PsiMember) {
       member = ((PsiMember)element).getContainingClass();
@@ -95,16 +94,39 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
   }
 
   @Override
-  @Nullable
-  protected String getPresentableName(@NotNull PsiElement element) {
+  protected @Nullable String getPresentableName(@NotNull PsiElement element) {
     if (element instanceof PsiEnumConstantInitializer initializer) {
-      return initializer.getEnumConstant().getName();
+      return QuickDocHighlightingHelper.getStyledFragment(
+        initializer.getEnumConstant().getName(),
+        JavaDocHighlightingManagerImpl.getInstance().getEnumNameAttributes()
+      );
     }
     if (element instanceof PsiAnonymousClass) {
-      return JavaBundle.message("tooltip.anonymous");
+      return QuickDocHighlightingHelper.getStyledFragment(
+        JavaBundle.message("tooltip.anonymous"),
+        JavaDocHighlightingManagerImpl.getInstance().getAnonymousClassNameAttributes());
     }
     if (element instanceof PsiNamedElement named) {
-      return named.getName();
+      TextAttributes attributes = null;
+      if (element instanceof PsiClass cls) {
+        attributes = JavaDocHighlightingManagerImpl.getInstance().getClassDeclarationAttributes(cls);
+      }
+      else if (element instanceof PsiMethod method) {
+        attributes = JavaDocHighlightingManagerImpl.getInstance().getMethodDeclarationAttributes(method);
+      }
+      else if (element instanceof PsiParameter) {
+        attributes = JavaDocHighlightingManagerImpl.getInstance().getParameterAttributes();
+      }
+      else if (element instanceof PsiField field) {
+        attributes = JavaDocHighlightingManagerImpl.getInstance().getFieldDeclarationAttributes(field);
+      }
+      String name = named.getName();
+      if (attributes != null && name != null) {
+        return QuickDocHighlightingHelper.getStyledFragment(name, attributes);
+      }
+      else {
+        return name;
+      }
     }
     return null;
   }
@@ -116,5 +138,10 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
     if (file instanceof PsiClassOwner) {
       appendPackageName(sb, ((PsiClassOwner)file).getPackageName());
     }
+  }
+
+  @Override
+  protected boolean isDeprecated(@NotNull PsiElement element) {
+    return element instanceof PsiDocCommentOwner owner && owner.isDeprecated();
   }
 }

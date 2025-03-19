@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.uast.UFile
@@ -46,17 +46,17 @@ class JavaUastPerformanceTest : AbstractJavaUastTest() {
           }
       }
     """.trimIndent())
-    PlatformTestUtil.startPerformanceTest("convert each element to uast first time", 1000) {
+    Benchmark.newBenchmark("convert each element to uast first time") {
       val walker = EachPsiToUastWalker()
       clazz.accept(walker)
       TestCase.assertEquals(4019, walker.totalCount)
-    }.attempts(1).assertTiming()
+    }.attempts(1).start()
   }
 
   @Test
   fun testConvertAllElementsWithNaiveToUElement() {
     myFixture.configureByFile("Performance/Thinlet.java")
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 13_000, object : ThrowableRunnable<Throwable?> {
+    Benchmark.newBenchmark(getTestName(false), object : ThrowableRunnable<Throwable?> {
       var hash = 0
       override fun run() {
         for (i in 0..99) {
@@ -72,6 +72,6 @@ class JavaUastPerformanceTest : AbstractJavaUastTest() {
     })
       .setup { PsiManager.getInstance(project).dropPsiCaches() }
       .warmupIterations(1)
-      .assertTiming()
+      .start()
   }
 }

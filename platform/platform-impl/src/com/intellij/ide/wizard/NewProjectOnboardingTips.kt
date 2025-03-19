@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus
 @JvmDefaultWithCompatibility
 interface NewProjectOnboardingTips {
   @RequiresEdt
-  fun installTips(project: Project, simpleSampleText: String)
+  fun installTips(project: Project, info: OnboardingTipsInstallationInfo)
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<NewProjectOnboardingTips>("com.intellij.newProject.onboarding.tips")
+    val EP_NAME: ExtensionPointName<NewProjectOnboardingTips> = ExtensionPointName("com.intellij.newProject.onboarding.tips")
   }
 }

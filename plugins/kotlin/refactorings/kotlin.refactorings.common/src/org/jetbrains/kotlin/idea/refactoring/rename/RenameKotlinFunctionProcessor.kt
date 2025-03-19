@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -11,21 +12,20 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.*
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 
 class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
@@ -72,9 +72,8 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.unwrapped as? KtNamedFunction ?: return
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
-            renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
-            renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-            renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          checkRedeclarationConflicts(declaration, newName, collisions)
+          renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
         }
     }
 
@@ -86,33 +85,33 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     private fun substituteForExpectOrActual(element: PsiElement?) =
-        (element?.namedUnwrappedElement as? KtNamedDeclaration)?.let {
-            renameRefactoringSupport.liftToExpected(it)
+        (element?.namedUnwrappedElement as? KtNamedDeclaration)?.let { el ->
+            ActionUtil.underModalProgress(el.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) { ExpectActualUtils.liftToExpect(el) }
         }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement? {
         substituteForExpectOrActual(element)?.let { return it }
 
-        val wrappedMethod = wrapPsiMethod(element) ?: return element
-
-        val deepestSuperMethods = runProcessWithProgressSynchronously(
-            KotlinBundle.message("rename.searching.for.super.declaration"),
-            canBeCancelled = true,
-            element.project
-        ) {
-            runReadAction {
-                findDeepestSuperMethodsKotlinAware(wrappedMethod)
+        val deepestSuperMethods =
+            runProcessWithProgressSynchronously(
+                KotlinBundle.message("rename.searching.for.super.declaration"),
+                canBeCancelled = true,
+                element.project
+            ) {
+                runReadAction {
+                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
+                }
             }
-        }
 
         val substitutedJavaElement = when {
             deepestSuperMethods.isEmpty() -> return element
-            wrappedMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction -> {
-                javaMethodProcessorInstance.substituteElementToRename(wrappedMethod, editor)
+            element is PsiMethod -> {
+                javaMethodProcessorInstance.substituteElementToRename(element, editor)
             }
             else -> {
-                val chosenElements = KotlinFindUsagesSupport.getInstance(element.project).checkSuperMethods(element, null, KotlinBundle.message("text.rename.as.part.of.phrase"))
-                if (chosenElements.size > 1) FunctionWithSupersWrapper(element, chosenElements) else wrappedMethod
+                val declaration = element.unwrapped as? KtNamedFunction ?: return element
+                val chosenElements = checkSuperMethods(declaration, deepestSuperMethods)
+                if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element
             }
         }
 
@@ -122,7 +121,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         val canRename = try {
             PsiElementRenameHandler.canRename(element.project, editor, substitutedJavaElement)
-        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+        } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
             false
         }
 
@@ -136,35 +135,34 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             } else {
                 substitutedJavaElement
             }
+            (elementToProcess as? FunctionWithSupersWrapper)?.supers?.forEach {
+                if (!PsiElementRenameHandler.canRename(element.getProject(), editor, it)) return
+            }
+            if (!PsiElementRenameHandler.canRename(element.getProject(), editor, elementToProcess)) return
             renameCallback.accept(elementToProcess)
         }
 
         substituteForExpectOrActual(element)?.let { return preprocessAndPass(it) }
 
-        val wrappedMethod = wrapPsiMethod(element)
         val deepestSuperMethods = runProcessWithProgressSynchronously(
             KotlinBundle.message("rename.searching.for.super.declaration"),
             canBeCancelled = true,
             element.project
         ) {
             runReadAction {
-                if (wrappedMethod != null) {
-                    findDeepestSuperMethodsKotlinAware(wrappedMethod)
-                } else {
-                    KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
-                }
+                KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping(element)
             }
         }
 
         when {
             deepestSuperMethods.isEmpty() -> preprocessAndPass(element)
-            wrappedMethod != null && (wrappedMethod.isConstructor || element !is KtNamedFunction) -> {
-                javaMethodProcessorInstance.substituteElementToRename(wrappedMethod, editor, Pass.create(::preprocessAndPass))
+            element is PsiMethod -> {
+                javaMethodProcessorInstance.substituteElementToRename(element, editor, Pass.create(::preprocessAndPass))
             }
             else -> {
-                val declaration = element.unwrapped as? KtNamedFunction ?: return
-                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) {
-                    preprocessAndPass(if (it.size > 1) FunctionWithSupersWrapper(declaration, it) else wrappedMethod ?: element)
+                val declaration = element as? KtNamedFunction ?: return
+                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) { chosenElements ->
+                    preprocessAndPass(if (chosenElements.size > 1) FunctionWithSupersWrapper(declaration, chosenElements) else chosenElements.firstOrNull() ?: element)
                 }
             }
         }
@@ -184,19 +182,17 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
-        super.prepareRenaming(element, newName, allRenames, scope)
-
         if (element is KtLightMethod && getJvmName(element) == null) {
             (element.kotlinOrigin as? KtNamedFunction)?.let { allRenames[it] = newName }
         }
         if (element is FunctionWithSupersWrapper) {
             allRenames.remove(element)
         }
-        val originalName = (element.unwrapped as? KtNamedFunction)?.name ?: return
+        val namedFunction = element.unwrapped as? KtNamedFunction
+        val originalName = namedFunction?.name ?: return
+        val safeNewName = newName.quoteIfNeeded()
         for (declaration in ((element as? FunctionWithSupersWrapper)?.supers ?: listOf(element))) {
-            val psiMethod = wrapPsiMethod(declaration) ?: continue
-            allRenames[declaration] = newName
-            val baseName = psiMethod.name
+            val baseName = (declaration as? PsiNamedElement)?.name ?: originalName
             val newBaseName = if (renameRefactoringSupport.demangleInternalName(baseName) == originalName) {
                 renameRefactoringSupport.mangleInternalName(
                     newName,
@@ -204,54 +200,21 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
                 )
             } else newName
 
-            if (psiMethod.containingClass != null) {
-                val overriders = runProcessWithProgressSynchronously(
-                    KotlinBundle.message("rename.searching.for.all.overrides"),
-                    canBeCancelled = true,
-                    psiMethod.project
-                ) {
-                    renameRefactoringSupport.findAllOverridingMethods(psiMethod, scope)
-                }
-
-                for (originalOverrider in overriders) {
-                    // for possible Groovy wrappers
-                    val overrider = (originalOverrider as? PsiMirrorElement)?.prototype as? PsiMethod ?: originalOverrider
-
-                    if (overrider is SyntheticElement) continue
-
-                    val overriderName = overrider.name
-                    val newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newBaseName)
-                    if (newOverriderName != null) {
-                        RenameUtil.assertNonCompileElement(overrider)
-                        allRenames[overrider] = newOverriderName
-                    }
-                }
-            }
+            prepareOverrideRenaming(declaration, baseName, newBaseName.quoteIfNeeded(), safeNewName, allRenames)
         }
-        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
 
-        val file = element.containingFile as? KtFile ?: return
-
-        if (file.declarations.singleOrNull() == element) {
-            file.virtualFile?.let { virtualFile ->
-                val nameWithoutExtensions = virtualFile.nameWithoutExtension
-                if (nameWithoutExtensions == originalName) {
-                    val newFileName = newName + "." + virtualFile.extension
-                    allRenames[file] = newFileName
-                    forElement(file).prepareRenaming(file, newFileName, allRenames)
-                }
-            }
-        }
+        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {
+        val wasRequiredOverride = (element.unwrapped as? KtNamedFunction)?.let { renameRefactoringSupport.overridesNothing(it) } != true
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
         val simpleImportUsages = SmartList<UsageInfo>()
-        renameRefactoringSupport.processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
+        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = { usage ->
             if (usage is LostDefaultValuesInOverridingFunctionUsageInfo) {
                 usage.apply()
-                return@processForeignUsages
+                return@processAll
             }
 
             when (usage.importState()) {
@@ -272,17 +235,11 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         usages.forEach { (it as? KtResolvableCollisionUsageInfo)?.apply() }
 
-        (element.unwrapped as? KtNamedDeclaration)?.let {
-            renameRefactoringSupport.dropOverrideKeywordIfNecessary(it)
+        if (wasRequiredOverride) {
+            (element.unwrapped as? KtNamedDeclaration)?.let {
+                renameRefactoringSupport.dropOverrideKeywordIfNecessary(it)
+            }
         }
-    }
-
-    private fun wrapPsiMethod(element: PsiElement?): PsiMethod? = when (element) {
-        is PsiMethod -> element
-        is KtNamedFunction, is KtSecondaryConstructor -> runReadAction {
-            LightClassUtil.getLightClassMethod(element as KtFunction)
-        }
-        else -> throw IllegalStateException("Can't be for element $element there because of canProcessElement()")
     }
 
     override fun findReferences(

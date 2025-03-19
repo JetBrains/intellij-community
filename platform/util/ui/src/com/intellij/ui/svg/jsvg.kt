@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.svg
 
 import com.github.weisj.jsvg.attributes.font.SVGFont
@@ -36,7 +36,7 @@ internal inline fun <T> withSvgSize(document: SVG, baseWidth: Float, baseHeight:
   return consumer(w, h)
 }
 
-fun renderSvgWithSize(document: SVG, width: Float, height: Float, defaultEm: Float = SVGFont.defaultFontSize()): BufferedImage {
+internal fun renderSvgWithSize(document: SVG, width: Float, height: Float, defaultEm: Float = SVGFont.defaultFontSize()): BufferedImage {
   @Suppress("UndesirableClassUsage")
   val result = BufferedImage((width + 0.5f).toInt(), (height + 0.5f).toInt(), BufferedImage.TYPE_INT_ARGB)
   val g = result.createGraphics()

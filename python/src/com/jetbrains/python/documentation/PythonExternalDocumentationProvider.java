@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.documentation;
 
 import com.google.common.base.Suppliers;
@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class PythonExternalDocumentationProvider extends PythonDocumentationProvider implements ExternalDocumentationProvider {
+public final class PythonExternalDocumentationProvider extends PythonDocumentationProvider implements ExternalDocumentationProvider {
   private static final Logger LOG = Logger.getInstance(PythonExternalDocumentationProvider.class);
 
   @Override
@@ -146,6 +145,6 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
       if (rc == Messages.OK) {
         ShowSettingsUtilImpl.showSettingsDialog(project, DOCUMENTATION_CONFIGURABLE_ID , "");
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 }

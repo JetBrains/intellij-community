@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -9,26 +9,28 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class ClickLinkAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class ClickLinkAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor == null) return;
     HyperlinkInfo hyperlink = getLink(editor, project);
-
-    assert hyperlink != null;
+    if (hyperlink == null) return;
 
     hyperlink.navigate(project);
   }
 
-  @Nullable
-  private static HyperlinkInfo getLink(@Nullable Editor editor, @Nullable Project project) {
+  private static @Nullable HyperlinkInfo getLink(@Nullable Editor editor, @Nullable Project project) {
     if (editor != null && project != null) {
       int offset = editor.getCaretModel().getOffset();
       return EditorHyperlinkSupport.get(editor).getHyperlinkAt(offset);

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/referenceInJava/binaryAndSource")
     public static class BinaryAndSource extends AbstractReferenceResolveInJavaTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -30,9 +37,64 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
             runTest("testData/resolve/referenceInJava/binaryAndSource/Class.java");
         }
 
+        @TestMetadata("ClassCompanionJvmField.java")
+        public void testClassCompanionJvmField() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassCompanionJvmField.java");
+        }
+
+        @TestMetadata("ClassFieldExplicit.java")
+        public void testClassFieldExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassFieldExplicit.java");
+        }
+
+        @TestMetadata("ClassJvmField.java")
+        public void testClassJvmField() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassJvmField.java");
+        }
+
+        @TestMetadata("ClassJvmFieldCompanionExplicit.java")
+        public void testClassJvmFieldCompanionExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassJvmFieldCompanionExplicit.java");
+        }
+
+        @TestMetadata("ClassJvmFieldCompanionImplicit.java")
+        public void testClassJvmFieldCompanionImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ClassJvmFieldCompanionImplicit.java");
+        }
+
         @TestMetadata("ClassObjectField.java")
         public void testClassObjectField() throws Exception {
             runTest("testData/resolve/referenceInJava/binaryAndSource/ClassObjectField.java");
+        }
+
+        @TestMetadata("CompanionAndClassJvmFieldExplicit.java")
+        public void testCompanionAndClassJvmFieldExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionAndClassJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionAndClassJvmFieldImplicit.java")
+        public void testCompanionAndClassJvmFieldImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionAndClassJvmFieldImplicit.java");
+        }
+
+        @TestMetadata("CompanionFieldExplicit.java")
+        public void testCompanionFieldExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionFieldImplicit.java")
+        public void testCompanionFieldImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionFieldImplicit.java");
+        }
+
+        @TestMetadata("CompanionJvmFieldExplicit.java")
+        public void testCompanionJvmFieldExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("CompanionJvmFieldImplicit.java")
+        public void testCompanionJvmFieldImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/CompanionJvmFieldImplicit.java");
         }
 
         @TestMetadata("Constructor.java")
@@ -43,6 +105,16 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
         @TestMetadata("EnumEntry.java")
         public void testEnumEntry() throws Exception {
             runTest("testData/resolve/referenceInJava/binaryAndSource/EnumEntry.java");
+        }
+
+        @TestMetadata("FacadeProperty.java")
+        public void testFacadeProperty() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/FacadeProperty.java");
+        }
+
+        @TestMetadata("FacadePropertyJvmField.java")
+        public void testFacadePropertyJvmField() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/FacadePropertyJvmField.java");
         }
 
         @TestMetadata("Field.java")
@@ -90,6 +162,26 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
             runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectInstance.java");
         }
 
+        @TestMetadata("ObjectPropertyExplicit.java")
+        public void testObjectPropertyExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyExplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyImplicit.java")
+        public void testObjectPropertyImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyImplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyJvmFieldExplicit.java")
+        public void testObjectPropertyJvmFieldExplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyJvmFieldExplicit.java");
+        }
+
+        @TestMetadata("ObjectPropertyJvmFieldImplicit.java")
+        public void testObjectPropertyJvmFieldImplicit() throws Exception {
+            runTest("testData/resolve/referenceInJava/binaryAndSource/ObjectPropertyJvmFieldImplicit.java");
+        }
+
         @TestMetadata("PlatformStaticFun.java")
         public void testPlatformStaticFun() throws Exception {
             runTest("testData/resolve/referenceInJava/binaryAndSource/PlatformStaticFun.java");
@@ -109,6 +201,12 @@ public abstract class ReferenceResolveInJavaTestGenerated extends AbstractRefere
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/referenceInJava/sourceOnly")
     public static class SourceOnly extends AbstractReferenceResolveInJavaTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

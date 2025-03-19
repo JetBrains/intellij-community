@@ -1,0 +1,5 @@
+fun foo(list: List<String>) {
+    for (<selection>s<caret></selection> in list.reversed()) {
+
+    }
+}

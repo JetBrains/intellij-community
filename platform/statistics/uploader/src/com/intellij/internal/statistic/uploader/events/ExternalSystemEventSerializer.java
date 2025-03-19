@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader.events;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,7 @@ import static com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.es
 
 public final class ExternalSystemEventSerializer {
 
-  @NotNull
-  public static String serialize(@NotNull ExternalSystemEvent event) {
+  public static @NotNull String serialize(@NotNull ExternalSystemEvent event) {
     String prefix = event.getTimestamp() + " " + event.getEventType().name() + " " + event.getRecorderId();
     if (event instanceof ExternalUploadFinishedEvent failed) {
       if (isNotEmpty(failed.getError())) {
@@ -33,13 +32,12 @@ public final class ExternalSystemEventSerializer {
              " " + hashedFiles + " " + errors;
     }
     else if (event instanceof ExternalSystemErrorEvent error) {
-      return prefix + " " + escape(error.getEvent()) + " " + escape(error.getErrorClass());
+      return prefix + " " + escape(error.getErrorClass());
     }
     return prefix;
   }
 
-  @Nullable
-  public static ExternalSystemEvent deserialize(@NotNull String line, int version) {
+  public static @Nullable ExternalSystemEvent deserialize(@NotNull String line, int version) {
     int payloadStartIndex = version == 0 ? 2 : 3;
     String[] parts = line.split(" ");
     int length = parts.length;
@@ -69,26 +67,22 @@ public final class ExternalSystemEventSerializer {
     else if (type == ExternalSystemEventType.STARTED && length == payloadStartIndex) {
       return new ExternalUploadStartedEvent(timestamp, recorderId);
     }
-    else if (type == ExternalSystemEventType.ERROR && length == payloadStartIndex + 2) {
-      String event = parts[payloadStartIndex].trim();
-      String errorClass = parts[payloadStartIndex + 1].trim();
-      return new ExternalSystemErrorEvent(timestamp, event, errorClass, recorderId);
+    else if (type == ExternalSystemEventType.ERROR && length == payloadStartIndex + 1) {
+      String errorClass = parts[payloadStartIndex].trim();
+      return new ExternalSystemErrorEvent(timestamp, errorClass, recorderId);
     }
     return null;
   }
 
-  @NotNull
-  private static List<String> parseSentFiles(@NotNull String part) {
+  private static @NotNull List<String> parseSentFiles(@NotNull String part) {
     return parseValues(part, value -> new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8));
   }
 
-  @NotNull
-  private static List<Integer> parseErrors(@NotNull String part) {
+  private static @NotNull List<Integer> parseErrors(@NotNull String part) {
     return parseValues(part, value -> parseInt(value));
   }
 
-  @NotNull
-  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<? super String, ? extends V> processor) {
+  private static @NotNull <V> List<V> parseValues(@NotNull String part, @NotNull Function<? super String, ? extends V> processor) {
     try {
       if (part.startsWith("[") && part.endsWith("]")) {
         String unwrappedPart = part.substring(1, part.length() - 1);
@@ -105,13 +99,11 @@ public final class ExternalSystemEventSerializer {
     }
   }
 
-  @NotNull
-  private static String filesToString(@NotNull List<String> files) {
+  private static @NotNull String filesToString(@NotNull List<String> files) {
     return valuesToString(files, path -> Base64.getEncoder().encodeToString(path.getBytes(StandardCharsets.UTF_8)));
   }
 
-  @NotNull
-  private static String errorsToString(@NotNull List<Integer> errors) {
+  private static @NotNull String errorsToString(@NotNull List<Integer> errors) {
     return valuesToString(errors, error -> String.valueOf(error));
   }
 

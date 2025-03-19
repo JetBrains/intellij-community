@@ -2,22 +2,57 @@
 
 package org.jetbrains.kotlin.idea.codeInsight
 
+import com.intellij.lang.LanguageExpressionTypes
+import com.intellij.openapi.application.runReadAction
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import com.intellij.testFramework.runInEdtAndGet
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.Directives
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractExpressionTypeTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractExpressionTypeTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
 
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-    protected fun doTest(path: String) {
-        myFixture.configureByFile(fileName())
-        val expressionTypeProvider = KotlinExpressionTypeProviderDescriptorsImpl()
-        val elementAtCaret = myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!!
-        val expressions = expressionTypeProvider.getExpressionsAt(elementAtCaret)
-        val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
-        val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, "// TYPE: ")
-        UsefulTestCase.assertOrderedEquals(types, expectedTypes)
+    override fun runInDispatchThread(): Boolean = false
+
+    private fun findKotlinExpressionTypeProvider(): KotlinExpressionTypeProvider {
+        val providers = LanguageExpressionTypes.INSTANCE
+            .allForLanguage(KotlinLanguage.INSTANCE)
+            .filterIsInstance<KotlinExpressionTypeProvider>()
+
+        assertSize(1, providers)
+
+        return providers.single()
+    }
+
+    private val expectedTypeDirective: String
+        get() = when (pluginMode) {
+            KotlinPluginMode.K1 -> "// K1_TYPE: "
+            KotlinPluginMode.K2 -> "// K2_TYPE: "
+        }
+
+    override fun doMultiFileTest(
+        files: List<PsiFile>,
+        globalDirectives: Directives
+    ) {
+        val mainFile = files.first() as KtFile
+
+        myFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
+        val expressionTypeProvider = findKotlinExpressionTypeProvider()
+        val elementAtCaret = runReadAction { myFixture.file.findElementAt(myFixture.editor.caretModel.offset)!! }
+        val expressions = runInEdtAndGet { expressionTypeProvider.getExpressionsAt(elementAtCaret) }
+        runReadAction {
+            val types = expressions.map { "${it.text.replace('\n', ' ')} -> ${expressionTypeProvider.getInformationHint(it)}" }
+            val expectedTypes = InTextDirectivesUtils.findLinesWithPrefixesRemoved(myFixture.file.text, expectedTypeDirective)
+            UsefulTestCase.assertOrderedEquals(types, expectedTypes)
+        }
     }
 }
+
+abstract class AbstractK1ExpressionTypeTest : AbstractExpressionTypeTest()

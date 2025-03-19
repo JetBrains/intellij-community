@@ -79,6 +79,7 @@ public class Config {
     bAddErrorStripe = b;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -96,6 +97,7 @@ public class Config {
     return contextAttributes.equals(config.contextAttributes);
   }
 
+  @Override
   public int hashCode() {
     int result = (OPEN_NEW_TAB ? 1 : 0);
     result = 29 * result + (HIGHLIGHT_RESULTS ? 1 : 0);

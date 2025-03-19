@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.markdown.xml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "xml_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "xml",
+  module_name = "intellij.markdown.xml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//xml/xml-parser:parser",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/backend",
+  ],
+  runtime_deps = [":xml_resources"]
+)
+### auto-generated section `build intellij.markdown.xml` end

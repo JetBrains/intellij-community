@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.platform.testFramework.teamCity` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "teamCity",
+  module_name = "intellij.platform.testFramework.teamCity",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.teamCity` end

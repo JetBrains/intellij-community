@@ -9,6 +9,7 @@ import com.intellij.util.io.URLUtil
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -71,8 +72,8 @@ object JpsProjectUtils {
       // they're ok with missing output directory and a known case
       val m = allOutputDirectories[root]
       if (m != null) {
-        val moduleWithEmptySources = m.sourceRoots.isEmpty() ||
-          m.sourceRoots.all { !it.path.exists() || it.path.listDirectoryEntries().isEmpty() }
+        val moduleWithEmptySources = m.getSourceRoots(JavaSourceRootType.SOURCE).none() ||
+                                     m.sourceRoots.all { !it.path.exists() || it.path.listDirectoryEntries().isEmpty() }
         if (moduleWithEmptySources) {
           // skip it without error
           return@filter false

@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>com.intellij</id>
   <name>IDEA CORE</name>
@@ -8,17 +9,24 @@
   <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="PlatformLangComponents.xml"/>
-  <xi:include href="/idea/PlatformLangActionManager.xml"/>
-  <xi:include href="/META-INF/coverage-common-plugin.xml">
-    <xi:fallback/>
-  </xi:include>
+  <xi:include href="/idea/PriorityEditorLangActions.xml"/>
+  <xi:include href="/idea/PlatformActions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
+  <xi:include href="/idea/ExecutionActions.xml"/>
+  <xi:include href="/idea/XDebuggerActions.xml"/>
+  <xi:include href="/idea/LangActions.xml"/>
+  <xi:include href="/idea/UsageViewActions.xml"/>
+  <xi:include href="/idea/ProblemsViewActions.xml"/>
 
   <xi:include href="/META-INF/Core.xml"/>
   <xi:include href="/META-INF/CoreImpl.xml"/>
   <xi:include href="/META-INF/Analysis.xml"/>
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
+  <xi:include href="/META-INF/WorkspaceModel.xml"/>
+  <xi:include href="/META-INF/WorkspaceModelImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
+  <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>
@@ -46,13 +54,28 @@
   <xi:include href="/META-INF/LangExtensionPoints.xml"/>
 
   <xi:include href="/META-INF/PlatformExtensions.xml"/>
+  <xi:include href="/META-INF/PlatformExecutionExtensions.xml"/>
+
+  <xi:include href="/META-INF/credential-store.xml">
+    <xi:fallback/>
+  </xi:include>
+
   <xi:include href="/META-INF/LangExtensions.xml"/>
-  <xi:include href="/META-INF/OTelExtensions.xml"/>
+  <xi:include href="/META-INF/OpenTelemetryExtensions.xml"/>
 
   <xi:include href="/META-INF/WorkspaceModelExtensions.xml"/>
 
   <xi:include href="intellij.platform.feedback.xml"/>
-  <xi:include href="intellij.platform.tips.xml"/>
+
+  <xi:include href="/META-INF/IJent.xml"/>
+
+  <xi:include href="intellij.platform.bookmarks.xml"/>
+
+  <xi:include href="intellij.platform.todo.xml"/>
+
+  <xi:include href="/META-INF/intellij.platform.syntax.psi.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
@@ -63,7 +86,15 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
+    <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTableProjectViewProvider"
+                    serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTableProjectViewProviderImpl"/>
+
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkTableBridgeRegistryImpl"/>
+    <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
+
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
+    <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkHeadlessActivity"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
@@ -76,8 +107,6 @@
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
-
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
     <projectService serviceImplementation="com.intellij.ide.todo.nodes.TodoTreeHelper"/>
@@ -87,7 +116,6 @@
     <projectService serviceInterface="com.intellij.refactoring.RefactoringFactory"
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.actions.NextBookmarkService"/>
     <projectService serviceInterface="com.intellij.ide.bookmark.BookmarksManager"
                     serviceImplementation="com.intellij.ide.bookmark.BookmarksManagerImpl"/>
     <bookmarkProvider implementation="com.intellij.ide.favoritesTreeView.AbstractUrlBookmarkProvider" order="first"/>
@@ -97,23 +125,22 @@
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.BookmarkListProvider"/>
     <bookmarksListProvider implementation="com.intellij.ide.bookmark.ui.tree.GroupListProvider"/>
     <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
-    <projectService serviceImplementation="com.intellij.ide.bookmark.BookmarksListProviderService"/>
     <advancedSetting id="show.line.bookmarks.in.popup" default="true"
                      bundle="messages.BookmarkBundle" groupKey="group.advanced.settings.bookmarks"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last" id="platform"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil$ImplService"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil$ImplServiceImpl"/>
     <multiHostInjector id="adapter" implementation="com.intellij.psi.impl.source.tree.injected.LanguageInjectionPerformerAdapter" order="last"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
 
-    <applicationInitializedListener implementation="com.intellij.ide.LanguageBundleListener"/>
-
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler" id="copyFilesOrDirectories"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
 
-    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer"/>
+    <treeStructureProvider implementation="com.intellij.platform.ProjectConfigurationDirectoryConcealer" id="ProjectConfigurationDirectoryConcealer"/>
 
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
     <applicationService serviceInterface="com.intellij.execution.ui.ExecutionUiService"
@@ -126,22 +153,31 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEscapeHandler" order="last"/>
+    <editorActionHandler action="EditorEnter" implementationClass="com.intellij.refactoring.suggested.SuggestedRefactoringEditorEnterHandler" order="last"/>
+    <advancedSetting id="promote.suggested.refactoring.in.editor" default="false"
+                     groupKey="suggested.refactoring.group.key"
+                     bundle="messages.RefactoringBundle"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.EditorWindowTracker"
-                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTracker"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
 
-    <applicationInitializedListener implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
+    <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
+
+    <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
+                        serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
+
+    <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
+                 description="Switches submenu in File - New to popup step" />
   </extensions>
 
-  <xi:include href="/META-INF/VCS.xml">
+  <xi:include href="/META-INF/diff-impl.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/lvcs.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/collaboration-tools.xml">
+
+  <xi:include href="/META-INF/compose.xml">
     <xi:fallback/>
   </xi:include>
 
@@ -160,9 +196,6 @@
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/smRunner.xml">
-    <xi:fallback/>
-  </xi:include>
-  <xi:include href="/META-INF/smRunnerVcs.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/duplicates-analysis.xml">

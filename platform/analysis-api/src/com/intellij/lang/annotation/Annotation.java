@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
+import com.intellij.codeInspection.LocalQuickFixBackedByIntentionAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -29,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Defines an annotation, which is displayed as a gutter bar mark or an extra highlight in the editor.
@@ -49,8 +37,11 @@ import java.util.List;
 public final class Annotation implements Segment {
   private final int myStartOffset;
   private final int myEndOffset;
+  @NotNull
   private final HighlightSeverity mySeverity;
   private final @NlsContexts.DetailedDescription String myMessage;
+  @NotNull
+  List<@NotNull Consumer<? super QuickFixActionRegistrar>> myLazyQuickFixes = List.of();
 
   private ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
   private TextAttributesKey myEnforcedAttributesKey;
@@ -62,27 +53,33 @@ public final class Annotation implements Segment {
   private boolean myAfterEndOfLine;
   private boolean myIsFileLevelAnnotation;
   private GutterIconRenderer myGutterIconRenderer;
-  @Nullable
-  private ProblemGroup myProblemGroup;
+  private @Nullable ProblemGroup myProblemGroup;
   private List<QuickFixInfo> myBatchFixes;
-  private PsiReference unresolvedReference;
 
-  public static class QuickFixInfo {
-    @NotNull
-    public final IntentionAction quickFix;
-    @NotNull
-    public final TextRange textRange;
+  public static final class QuickFixInfo {
+    public final @NotNull IntentionAction quickFix;
+    private final @NotNull LocalQuickFix localQuickFix;
+    public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
-    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
+      this(fix, fix instanceof LocalQuickFix lqf ? lqf : new LocalQuickFixBackedByIntentionAction(fix), range, key);
+    }
+
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull LocalQuickFix localQuickFix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
+      this.localQuickFix = localQuickFix;
       textRange = range;
     }
 
     @Override
     public String toString() {
       return quickFix.toString();
+    }
+
+    public @NotNull LocalQuickFix getLocalQuickFix() {
+      return localQuickFix;
     }
   }
 
@@ -103,8 +100,8 @@ public final class Annotation implements Segment {
   public Annotation(int startOffset,
                     int endOffset,
                     @NotNull HighlightSeverity severity,
-                    @NlsContexts.DetailedDescription String message,
-                    @NlsContexts.Tooltip String tooltip) {
+                    @NlsContexts.DetailedDescription @Nullable String message,
+                    @NlsContexts.Tooltip @Nullable String tooltip) {
     assert startOffset <= endOffset : startOffset + ":" + endOffset;
     assert startOffset >= 0 : "Start offset must not be negative: " +startOffset;
     myStartOffset = startOffset;
@@ -154,7 +151,7 @@ public final class Annotation implements Segment {
     if (myQuickFixes == null) {
       myQuickFixes = new ArrayList<>();
     }
-    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
+    myQuickFixes.add(new QuickFixInfo(QuickFixWrapper.wrap(problemDescriptor, fix), fix, range, key));
   }
 
   /**
@@ -167,7 +164,7 @@ public final class Annotation implements Segment {
    * @param key HighlightDisplayKey of the inspection which provided this fix
    */
   @Deprecated
-  public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, final @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
     List<QuickFixInfo> fixes = myQuickFixes;
     if (fixes == null) {
@@ -176,8 +173,7 @@ public final class Annotation implements Segment {
     fixes.add(new QuickFixInfo(fix, range, key));
   }
 
-  @NotNull
-  private TextRange notNullize(@Nullable TextRange range) {
+  private @NotNull TextRange notNullize(@Nullable TextRange range) {
     return range == null ? new TextRange(myStartOffset, myEndOffset) : range;
   }
 
@@ -192,13 +188,18 @@ public final class Annotation implements Segment {
    */
   @Deprecated
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
+    registerBatchFix(fix, fix, range, key);
+  }
+
+  @Deprecated
+  public void registerBatchFix(@NotNull IntentionAction action, @NotNull LocalQuickFix fix, @Nullable TextRange range, @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
 
     List<QuickFixInfo> fixes = myBatchFixes;
     if (fixes == null) {
       myBatchFixes = fixes = new ArrayList<>();
     }
-    fixes.add(new QuickFixInfo(fix, range, key));
+    fixes.add(new QuickFixInfo(action, fix, range, key));
   }
 
   /**
@@ -206,7 +207,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link AnnotationBuilder#newFix(IntentionAction)} instead
    */
   @Deprecated
-  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, final @Nullable HighlightDisplayKey key) {
     registerBatchFix(fix, range, key);
     registerFix(fix, range, key);
   }
@@ -264,8 +265,7 @@ public final class Annotation implements Segment {
    *
    * @return the annotation severity.
    */
-  @NotNull
-  public HighlightSeverity getSeverity() {
+  public @NotNull HighlightSeverity getSeverity() {
     return mySeverity;
   }
 
@@ -275,8 +275,7 @@ public final class Annotation implements Segment {
    *
    * @return the common problem type.
    */
-  @NotNull
-  public ProblemHighlightType getHighlightType() {
+  public @NotNull ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
@@ -287,8 +286,7 @@ public final class Annotation implements Segment {
    *
    * @return the text attribute key used for highlighting
    */
-  @NotNull
-  public TextAttributesKey getTextAttributes() {
+  public @NotNull TextAttributesKey getTextAttributes() {
     if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 
     return switch (myHighlightType) {
@@ -327,13 +325,11 @@ public final class Annotation implements Segment {
    * @return the list of quick fixes, or null if none have been registered.
    */
 
-  @Nullable
-  public List<QuickFixInfo> getQuickFixes() {
+  public @Nullable List<QuickFixInfo> getQuickFixes() {
     return myQuickFixes;
   }
 
-  @Nullable
-  public List<QuickFixInfo> getBatchFixes() {
+  public @Nullable List<QuickFixInfo> getBatchFixes() {
     return myBatchFixes;
   }
 
@@ -369,7 +365,7 @@ public final class Annotation implements Segment {
   /**
    * If the annotation matches one of commonly encountered problem types, sets the ID of that
    * problem type so that an appropriate color can be used for highlighting the annotation.
-   * @deprecated use {@link AnnotationBuilder#highlightType(ProblemHighlightType)} isntead
+   * @deprecated use {@link AnnotationBuilder#highlightType(ProblemHighlightType)} instead
    *
    * @param highlightType the ID of the problem type.
    */
@@ -435,8 +431,7 @@ public final class Annotation implements Segment {
    *
    * @return the gutter icon renderer instance.
    */
-  @Nullable
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 
@@ -447,7 +442,7 @@ public final class Annotation implements Segment {
    * @param gutterIconRenderer the gutter icon renderer instance.
    */
   @Deprecated
-  public void setGutterIconRenderer(@Nullable final GutterIconRenderer gutterIconRenderer) {
+  public void setGutterIconRenderer(final @Nullable GutterIconRenderer gutterIconRenderer) {
     myGutterIconRenderer = gutterIconRenderer;
   }
 
@@ -456,8 +451,7 @@ public final class Annotation implements Segment {
    *
    * @return the problem group
    */
-  @Nullable
-  public ProblemGroup getProblemGroup() {
+  public @Nullable ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
@@ -467,13 +461,13 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "Annotation(" +
            "message='" + myMessage + "'" +
            ", severity='" + mySeverity + "'" +
@@ -481,20 +475,12 @@ public final class Annotation implements Segment {
            ")";
   }
 
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
-   */
   @ApiStatus.Internal
-  @Deprecated
-  public void setUnresolvedReference(PsiReference reference) {
-    unresolvedReference = reference;
+  public @NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> getLazyQuickFixes() {
+    return myLazyQuickFixes;
   }
-  /**
-   * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
-   */
   @ApiStatus.Internal
-  @Deprecated
-  public PsiReference getUnresolvedReference() {
-    return unresolvedReference;
+  public void registerLazyQuickFixes(@NotNull List<@NotNull Consumer<? super QuickFixActionRegistrar>> lazyQuickFixes) {
+    myLazyQuickFixes = lazyQuickFixes;
   }
 }

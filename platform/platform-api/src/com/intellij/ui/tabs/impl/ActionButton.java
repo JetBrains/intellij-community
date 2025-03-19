@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 
@@ -112,7 +113,7 @@ class ActionButton implements ActionListener {
     if (changed) {
       myInplaceButton.setIcons(myIconButton);
       String tooltipText = KeymapUtil.createTooltipText(p.getText(), myAction);
-      myInplaceButton.setToolTipText(tooltipText.length() > 0 ? tooltipText : null);
+      myInplaceButton.setToolTipText(!tooltipText.isEmpty() ? tooltipText : null);
       myInplaceButton.setVisible(p.isEnabled() && p.isVisible());
     }
 
@@ -150,16 +151,12 @@ class ActionButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myInplaceButton);
-    DataContext compound = dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        Object object = myTabInfo.getObject();
-        if (object instanceof VirtualFile) return object;
-      }
-      return context.getData(dataId);
-    };
-    return new AnActionEvent(inputEvent, compound, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
-                             ActionManager.getInstance(), modifiers);
+    DataContext parent = DataManager.getInstance().getDataContext(myInplaceButton);
+    DataContext dataContext = CustomizedDataContext.withSnapshot(parent, sink -> {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, ObjectUtils.tryCast(myTabInfo.getObject(), VirtualFile.class));
+    });
+    return new AnActionEvent(dataContext, presentation, myPlace != null ? myPlace : ActionPlaces.UNKNOWN,
+                             ActionUiKind.TOOLBAR, inputEvent, modifiers, ActionManager.getInstance());
   }
 
   public void setAutoHide(final boolean autoHide) {

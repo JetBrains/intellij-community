@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.pom.java.LanguageLevel
 
 class JpsLanguageLevelQuickFixTest : MavenTestCase() {
   private val jpsLanguageLevelQuickFix = JpsLanguageLevelQuickFix()

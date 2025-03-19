@@ -1,4 +1,4 @@
-# $Id: parts.py 7308 2012-01-06 12:08:43Z milde $
+# $Id: parts.py 8993 2022-01-29 13:20:04Z milde $
 # Authors: David Goodger <goodger@python.org>; Dmitry Jemerov
 # Copyright: This module has been placed in the public domain.
 
@@ -9,9 +9,9 @@ Directives for document parts.
 __docformat__ = 'reStructuredText'
 
 from docutils import nodes, languages
+from docutils.transforms import parts
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
-from docutils.transforms import parts
 
 
 class Contents(Directive):
@@ -41,7 +41,7 @@ class Contents(Directive):
                    'local': directives.flag,
                    'backlinks': backlinks,
                    'class': directives.class_option}
-    
+
     def run(self):
         if not (self.state_machine.match_titles
                 or isinstance(self.state_machine.node, nodes.sidebar)):

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -7,7 +7,7 @@ import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils.selectProjectErrorsTab
 import com.intellij.codeHighlighting.HighlightDisplayLevel
-import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
+import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithPsi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,13 +15,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
-import org.jetbrains.kotlin.resolve.source.getPsi
 import javax.swing.Icon
 
-@Service
+@Service(Service.Level.PROJECT)
 class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsProvider {
   private var currentProblems = emptyList<WorkspaceModelCodeGenerationProblem>()
   
@@ -49,11 +48,10 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
   }
 
   private fun GenerationProblem.toProblem(): WorkspaceModelCodeGenerationProblem {
-    val sourceElement = when (val problemLocation = location) {
-      is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithSource).sourceElement
-      is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithSource).sourceElement
-    }
-    val psiElement = sourceElement.getPsi() ?: return WorkspaceModelCodeGenerationProblem(this) 
+    val psiElement = when (val problemLocation = location) {
+      is ProblemLocation.Class -> (problemLocation.objClass as ObjMetaElementWithPsi).sourcePsi
+      is ProblemLocation.Property -> (problemLocation.property as ObjMetaElementWithPsi).sourcePsi
+    } ?: return WorkspaceModelCodeGenerationProblem(this)
     val psiToHighlight = (psiElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psiElement
     val file = psiToHighlight.containingFile.virtualFile
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return WorkspaceModelCodeGenerationProblem(this)
@@ -84,4 +82,3 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
     override val column: Int
   ) : WorkspaceModelCodeGenerationProblem(originalProblem), FileProblem
 }
-

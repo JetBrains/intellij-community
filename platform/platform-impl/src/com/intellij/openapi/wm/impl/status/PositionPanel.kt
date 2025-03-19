@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.EditorGotoLineNumberDialog
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
@@ -14,7 +15,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.TextWidgetPresentation
 import com.intellij.openapi.wm.WidgetPresentationDataContext
 import com.intellij.ui.UIBundle
@@ -37,14 +37,15 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
                          scope: CoroutineScope,
                          protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
   private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    .also { it.tryEmit(Unit) }
   private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   companion object {
     @JvmField
-    val DISABLE_FOR_EDITOR = Key<Any>("positionPanel.disableForEditor")
+    val DISABLE_FOR_EDITOR: Key<Any> = Key<Any>("positionPanel.disableForEditor")
 
-    const val SPACE = "     "
-    const val SEPARATOR = ":"
+    const val SPACE: String = "     "
+    const val SEPARATOR: String = ":"
     private const val CHAR_COUNT_SYNC_LIMIT = 500_000
     private const val CHAR_COUNT_UNKNOWN = "..."
   }
@@ -111,10 +112,10 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     val toolTip = UIBundle.message("go.to.line.command.name")
     val shortcut = gotoShortcutText
     @Suppress("SpellCheckingInspection")
-    return if (shortcut.isNotEmpty() && !Registry.`is`("ide.helptooltip.enabled")) "$toolTip ($shortcut)" else toolTip
+    return if (shortcut.isNotEmpty() && !UISettings.isIdeHelpTooltipEnabled()) "$toolTip ($shortcut)" else toolTip
   }
 
-  override suspend fun getShortcutText() = gotoShortcutText
+  override suspend fun getShortcutText(): String = gotoShortcutText
 
   override fun getClickConsumer(): (MouseEvent) -> Unit {
     return h@{

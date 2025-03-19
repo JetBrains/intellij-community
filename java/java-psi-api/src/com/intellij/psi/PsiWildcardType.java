@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +33,7 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
   }
 
   public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
-    PsiWildcardType unboundedWildcard = manager.getUserData(UNBOUNDED_WILDCARD);
-    if (unboundedWildcard == null) {
-      unboundedWildcard = manager.putUserDataIfAbsent(UNBOUNDED_WILDCARD, new PsiWildcardType(manager, false, null));
-    }
-    return unboundedWildcard;
+    return ConcurrencyUtil.computeIfAbsent(manager, UNBOUNDED_WILDCARD, () -> new PsiWildcardType(manager, false, null));
   }
 
   public static @NotNull PsiWildcardType createExtends(@NotNull PsiManager manager, @NotNull PsiType bound) {

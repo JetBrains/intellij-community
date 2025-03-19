@@ -11,7 +11,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -21,10 +20,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,14 +33,14 @@ import java.util.Set;
  * doesn't require a not-null value for the parameter
  * OR
  * 2. If the parameter has a reassignment while one of any method execution.
- *
+ * <p>
  * All remaining violated parameters is required to be not-null for successful method execution.
  */
 final class NullParameterConstraintChecker {
   static PsiParameter @NotNull [] checkMethodParameters(PsiMethod method) {
     if (method.getBody() == null) return PsiParameter.EMPTY_ARRAY;
 
-    final Collection<PsiParameter> nullableParameters = new SmartList<>();
+    final Set<PsiParameter> nullableParameters = new HashSet<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int index = 0; index < parameters.length; index++) {
       PsiParameter parameter = parameters[index];
@@ -59,7 +56,13 @@ final class NullParameterConstraintChecker {
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(method.getBody(), factory, true);
     if (flow == null) return PsiParameter.EMPTY_ARRAY;
     var interpreter = new NullParameterCheckerInterpreter(flow, nullableParameters);
-    interpreter.interpret(new MyDfaMemoryState(factory, interpreter.myPossiblyViolatedParameters));
+    flow.keepVariables(desc -> desc.getPsiElement() instanceof PsiParameter psi && nullableParameters.contains(psi));
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
+    for (PsiParameter parameter : nullableParameters) {
+      state.applyCondition(PlainDescriptor.createVariableValue(factory, parameter).eq(DfaNullability.NULLABLE.asDfType()));
+    }
+
+    interpreter.interpret(state);
 
     return interpreter.myPossiblyViolatedParameters
       .stream()
@@ -68,45 +71,14 @@ final class NullParameterConstraintChecker {
       .toArray(PsiParameter[]::new);
   }
 
-  private static class MyDfaMemoryState extends JvmDfaMemoryStateImpl {
-    final Set<PsiParameter> myPossiblyViolatedParameters;
-
-    protected MyDfaMemoryState(DfaValueFactory factory, Set<PsiParameter> possiblyViolatedParameters) {
-      super(factory);
-      myPossiblyViolatedParameters = possiblyViolatedParameters;
-      for (PsiParameter parameter : myPossiblyViolatedParameters) {
-        recordVariableType(PlainDescriptor.createVariableValue(getFactory(), parameter),
-                           DfaNullability.NULLABLE.asDfType());
-      }
-    }
-
-    protected MyDfaMemoryState(MyDfaMemoryState toCopy) {
-      super(toCopy);
-      myPossiblyViolatedParameters = toCopy.myPossiblyViolatedParameters;
-    }
-
-    @Override
-    public void flushVariable(@NotNull DfaVariableValue variable, boolean canonicalize) {
-      final PsiElement psi = variable.getPsiVariable();
-      if (psi instanceof PsiParameter && myPossiblyViolatedParameters.contains(psi)) return;
-      super.flushVariable(variable, canonicalize);
-    }
-
-    @NotNull
-    @Override
-    public DfaMemoryStateImpl createCopy() {
-      return new MyDfaMemoryState(this);
-    }
-  }
-
   private static class NullParameterCheckerInterpreter extends StandardDataFlowInterpreter {
     final Set<PsiParameter> myPossiblyViolatedParameters;
     final Set<PsiParameter> myUsedParameters;
     final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
 
-    private NullParameterCheckerInterpreter(ControlFlow flow, Collection<PsiParameter> nullableParameters) {
+    private NullParameterCheckerInterpreter(ControlFlow flow, Set<PsiParameter> nullableParameters) {
       super(flow, DfaListener.EMPTY);
-      myPossiblyViolatedParameters = new HashSet<>(nullableParameters);
+      myPossiblyViolatedParameters = nullableParameters;
       myUsedParameters = new HashSet<>();
       myParametersWithSuccessfulExecutionInNotNullState = new HashSet<>();
     }

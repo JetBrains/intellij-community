@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.keymap.Keymap;
@@ -36,10 +37,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -54,8 +52,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
@@ -63,15 +61,15 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.iterateFiles;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 
-public class CommittedChangesTreeBrowser extends JPanel implements DataProvider, Disposable, DecoratorManager {
+public class CommittedChangesTreeBrowser extends JPanel implements UiDataProvider, Disposable, DecoratorManager {
   private static final Border RIGHT_BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
 
   private final Project myProject;
-  @NotNull private final ChangesBrowserTree myChangesTree;
+  private final @NotNull ChangesBrowserTree myChangesTree;
   private final MyRepositoryChangesViewer myDetailsView;
   private List<CommittedChangeList> myChangeLists;
   private List<CommittedChangeList> mySelectedChangeLists;
-  @NotNull private ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
+  private @NotNull ChangeListGroupingStrategy myGroupingStrategy = new DateChangeListGroupingStrategy();
   private final CompositeChangeListFilteringStrategy myFilteringStrategy = new CompositeChangeListFilteringStrategy();
   private final JPanel myLeftPanel;
   private final FilterChangeListener myFilterChangeListener = new FilterChangeListener();
@@ -80,16 +78,19 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   private final TreeExpander myTreeExpander;
   private String myHelpId;
 
+  @Topic.ProjectLevel
   public static final Topic<CommittedChangesReloadListener> ITEMS_RELOADED =
     new Topic<>("ITEMS_RELOADED", CommittedChangesReloadListener.class);
 
   private final List<CommittedChangeListDecorator> myDecorators;
 
-  @NonNls public static final String ourHelpId = "reference.changesToolWindow.incoming";
+  public static final @NonNls String ourHelpId = "reference.changesToolWindow.incoming";
 
   private WiseSplitter myInnerSplitter;
   private final MessageBusConnection myConnection;
   private TreeState myState;
+
+  public static final DataKey<CommittedChangesTreeBrowser> COMMITTED_CHANGES_TREE_DATA_KEY = DataKey.create("CommittedChangesTreeBrowser");
 
   public CommittedChangesTreeBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
     super(new BorderLayout());
@@ -131,7 +132,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     CustomShortcutSet quickdocShortcuts = new CustomShortcutSet(keymap.getShortcuts(IdeActions.ACTION_QUICK_JAVADOC));
-    EmptyAction.registerWithShortcutSet("CommittedChanges.Details", quickdocShortcuts, this);
+    ActionUtil.wrap("CommittedChanges.Details").registerCustomShortcutSet(quickdocShortcuts, this);
 
     myCopyProvider = new TreeCopyProvider(myChangesTree);
     myTreeExpander = new DefaultTreeExpander(myChangesTree);
@@ -181,7 +182,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.nonModal());
     }
   }
 
@@ -229,7 +230,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     myDetailsView.setUseCase(useCase);
     myChangeLists = new ArrayList<>(items);
     myFilteringStrategy.setFilterBase(items);
-    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
     updateModel();
   }
 
@@ -246,13 +247,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     updateModel();
   }
 
-  @NotNull
-  public ChangeListGroupingStrategy getGroupingStrategy() {
+  public @NotNull ChangeListGroupingStrategy getGroupingStrategy() {
     return myGroupingStrategy;
   }
 
-  @NotNull
-  public Tree getChangesTree() {
+  public @NotNull Tree getChangesTree() {
     return myChangesTree;
   }
 
@@ -274,9 +273,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     }
   }
 
-  @NotNull
-  public static List<Change> collectChanges(final List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
-    selectedChangeLists.sort(CommittedChangeListByDateComparator.ASCENDING);
+  public static @NotNull List<Change> collectChanges(@Unmodifiable List<? extends CommittedChangeList> selectedChangeLists, final boolean withMovedTrees) {
+    selectedChangeLists = ContainerUtil.sorted(selectedChangeLists, CommittedChangeListByDateComparator.ASCENDING);
 
     List<Change> changes = new ArrayList<>();
     for (CommittedChangeList cl : selectedChangeLists) {
@@ -289,8 +287,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
    * Zips changes by removing duplicates (changes in the same file) and compounding the diff.
    * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
    */
-  @NotNull
-  public static List<Change> zipChanges(@NotNull List<? extends Change> changes) {
+  public static @NotNull List<Change> zipChanges(@NotNull List<? extends Change> changes) {
     // TODO: further improvements needed
     // We may want to process collisions more consistent
 
@@ -393,7 +390,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     return false;
   }
 
-  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, @Nullable final ActionGroup tailGroup,
+  public ActionToolbar createGroupFilterToolbar(final Project project, final ActionGroup leadGroup, final @Nullable ActionGroup tailGroup,
                                                 final List<? extends AnAction> extra) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(leadGroup);
@@ -417,30 +414,26 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     return ActionManager.getInstance().createActionToolbar("CommittedChangesTree", toolbarGroup, true);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (VcsDataKeys.CHANGES.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), false).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      List<CommittedChangeList> changeLists = getSelectedChangeLists();
-      return !changeLists.isEmpty() ? changeLists.toArray(new CommittedChangeList[0]) : null;
-    }
-    if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
-      return myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      return getNavigatableArray(myProject, iterateFiles(changes));
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return myHelpId;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<CommittedChangeList> changeLists = getSelectedChangeLists();
+    Collection<Change> changes = collectChanges(changeLists, false);
+    sink.set(COMMITTED_CHANGES_TREE_DATA_KEY, this);
+    sink.set(VcsDataKeys.CHANGES, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.CHANGE_LISTS, !changeLists.isEmpty() ? changeLists.toArray(new CommittedChangeList[0]) : null);
+    sink.set(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, iterateFiles(changes)));
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
+  }
+
+  public Change @NotNull [] collectChangesWithMovedChildren() {
+    return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
+  }
+
+  public Change @NotNull [] collectSelectedChangesWithMovedChildren() {
+    // to ensure directory flags for SVN are initialized
+    collectChanges(getSelectedChangeLists(), true);
+    return myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
   }
 
   public TreeExpander getTreeExpander() {
@@ -497,7 +490,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     state.applyTo(myChangesTree, myChangesTree.getModel().getRoot());
     TreeUtil.expandAll(myChangesTree);
-    BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
+    myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
   }
 
   public static class MoreLauncher implements Runnable {
@@ -527,7 +520,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     }
   }
 
-  private class ChangesBrowserTree extends Tree implements DataProvider {
+  private class ChangesBrowserTree extends Tree implements UiDataProvider {
     ChangesBrowserTree() {
       super(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
     }
@@ -537,17 +530,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       return true;
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) return myCopyProvider;
-      if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return myTreeExpander;
-      if (VcsDataKeys.SELECTED_CHANGES.is(dataId) ||
-          VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId) ||
-          CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
-        return myDetailsView.getData(dataId);
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+      sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
+      DataSink.uiDataSnapshot(sink, myDetailsView);
     }
 
     public void invalidateNodeSizes() {
@@ -561,7 +548,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   }
 
   public void setLoading(final boolean value) {
-    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
+    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.nonModal(), myProject);
   }
 
   private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {
@@ -572,9 +559,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       setViewerBorder(RIGHT_BORDER);
     }
 
-    @Nullable
     @Override
-    protected JComponent createHeaderPanel() {
+    protected @Nullable JComponent createHeaderPanel() {
       return myHeaderPanel;
     }
 

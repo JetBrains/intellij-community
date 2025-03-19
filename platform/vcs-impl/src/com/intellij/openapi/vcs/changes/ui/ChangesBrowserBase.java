@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.DiffPreview;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
@@ -24,11 +23,13 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -39,11 +40,11 @@ import java.util.List;
 /**
  * Consider using {@link AsyncChangesBrowserBase} to avoid potentially-expensive tree building operations on EDT.
  */
-public abstract class ChangesBrowserBase extends JPanel implements DataProvider {
+public abstract class ChangesBrowserBase extends JPanel implements UiCompatibleDataProvider {
   public static final DataKey<ChangesBrowserBase> DATA_KEY =
     DataKey.create("com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase");
 
-  @NotNull protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected final ChangesTree myViewer;
 
@@ -54,8 +55,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
 
-  @Nullable private Runnable myInclusionChangedListener;
-  @Nullable private DiffPreview myDiffPreview;
+  private @Nullable Runnable myInclusionChangedListener;
+  private @Nullable DiffPreview myDiffPreview;
 
 
   protected ChangesBrowserBase(@NotNull Project project,
@@ -65,7 +66,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
-    myToolbar.setTargetComponent(this);
+    myToolbar.setTargetComponent(myViewer);
     myToolbarAnchor = getToolbarAnchor();
     myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
 
@@ -77,8 +78,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myShowDiffAction = new MyShowDiffAction();
   }
 
-  @NotNull
-  protected ChangesTree createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+  protected @NotNull ChangesTree createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     return new ChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems);
   }
 
@@ -106,30 +106,14 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     add(createCenterPanel(), BorderLayout.CENTER);
 
     myToolBarGroup.addAll(createToolbarActions());
+    myToolBarGroup.addAll(createLastToolbarActions());
     myPopupMenuGroup.addAll(createPopupMenuActions());
-
-    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
-    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
-      myToolBarGroup.addSeparator();
-      myToolBarGroup.add(groupByAction);
-    }
-
-    if (isVerticalToolbar()) {
-      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
-      boolean hasTreeActions = ContainerUtil.exists(treeActions,
-                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
-      if (!hasTreeActions) {
-        myToolBarGroup.addSeparator();
-        myToolBarGroup.addAll(treeActions);
-      }
-    }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
     DiffUtil.recursiveRegisterShortcutSet(myToolBarGroup, this, null);
   }
 
-  @NotNull
-  protected Border createViewerBorder() {
+  protected @NotNull Border createViewerBorder() {
     return IdeBorderFactory.createBorder(SideBorder.ALL);
   }
 
@@ -158,17 +142,14 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myToolbarAnchor == SwingConstants.LEFT || myToolbarAnchor == SwingConstants.RIGHT;
   }
 
-  @NotNull
-  protected JComponent createToolbarComponent() {
+  protected @NotNull JComponent createToolbarComponent() {
     return myToolbar.getComponent();
   }
 
-  @NotNull
-  protected abstract DefaultTreeModel buildTreeModel();
+  protected abstract @NotNull DefaultTreeModel buildTreeModel();
 
 
-  @Nullable
-  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
+  protected @Nullable ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
     if (userObject instanceof Change) {
       return ChangeDiffRequestProducer.create(myProject, (Change)userObject);
     }
@@ -176,23 +157,30 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
 
-  @Nullable
-  protected JComponent createHeaderPanel() {
+  protected @Nullable JComponent createHeaderPanel() {
     return null;
   }
 
-  @NotNull
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     return myViewerScrollPane;
   }
 
-  @NotNull
-  protected List<AnAction> createToolbarActions() {
+  protected @NotNull @Unmodifiable List<AnAction> createToolbarActions() {
     return Collections.singletonList(myShowDiffAction);
   }
 
-  @NotNull
-  protected List<AnAction> createPopupMenuActions() {
+  protected @NotNull List<AnAction> createLastToolbarActions() {
+    List<AnAction> result = new ArrayList<>();
+    result.add(Separator.getInstance());
+    result.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    if (isVerticalToolbar()) {
+      result.add(Separator.getInstance());
+      result.addAll(TreeActionsToolbarPanel.createTreeActions());
+    }
+    return result;
+  }
+
+  protected @NotNull @Unmodifiable List<AnAction> createPopupMenuActions() {
     List<AnAction> actions = new ArrayList<>();
     actions.add(myShowDiffAction);
     ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Diff.ShowStandaloneDiff"));
@@ -200,8 +188,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return actions;
   }
 
-  @NotNull
-  protected List<AnAction> createDiffActions() {
+  protected @NotNull List<AnAction> createDiffActions() {
     return Collections.emptyList();
   }
 
@@ -232,44 +219,35 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
 
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public ActionToolbar getToolbar() {
+  public @NotNull ActionToolbar getToolbar() {
     return myToolbar;
   }
 
-  @NotNull
-  public JScrollPane getViewerScrollPane() {
+  public @NotNull JScrollPane getViewerScrollPane() {
     return myViewerScrollPane;
   }
 
-  @NotNull
-  public ChangesTree getViewer() {
+  public @NotNull ChangesTree getViewer() {
     return myViewer;
   }
 
-  @NotNull
-  public ChangesGroupingPolicyFactory getGrouping() {
+  public @NotNull ChangesGroupingPolicyFactory getGrouping() {
     return myViewer.getGrouping();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    Object viewerData = myViewer.getData(dataId);
-    return viewerData != null ? viewerData : VcsTreeModelData.getData(myProject, myViewer, dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
+    DataSink.uiDataSnapshot(sink, myViewer);
+    VcsTreeModelData.uiDataSnapshot(sink, myProject, myViewer);
   }
 
 
-  @NotNull
-  public AnAction getDiffAction() {
+  public @NotNull AnAction getDiffAction() {
     return myShowDiffAction;
   }
 
@@ -278,8 +256,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
-  @Nullable
-  protected DiffPreview getShowDiffActionPreview() {
+  protected @Nullable DiffPreview getShowDiffActionPreview() {
     return myDiffPreview;
   }
 
@@ -288,9 +265,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public void showDiff() {
-    EditorTabDiffPreviewManager previewManager = EditorTabDiffPreviewManager.getInstance(myProject);
     DiffPreview diffPreview = getShowDiffActionPreview();
-    if (diffPreview != null && previewManager.isEditorDiffPreviewAvailable()) {
+    if (diffPreview != null) {
       diffPreview.performDiffAction();
     }
     else {
@@ -316,6 +292,14 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   public static void selectObjectWithTag(@NotNull ChangesTree tree,
                                          @NotNull Object userObject,
                                          @Nullable ChangesBrowserNode.Tag tag) {
+    TreePath path = findPathToObjectWithTag(tree, userObject, tag);
+    if (path == null) return;
+    TreeUtil.selectPath(tree, path, false);
+  }
+
+  public static @Nullable TreePath findPathToObjectWithTag(@NotNull ChangesTree tree,
+                                                           @NotNull Object userObject,
+                                                           @Nullable ChangesBrowserNode.Tag tag) {
     DefaultMutableTreeNode root = tree.getRoot();
     if (tag != null) {
       DefaultMutableTreeNode tagNode = TreeUtil.findNodeWithObject(root, tag);
@@ -324,8 +308,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       }
     }
     DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
-    if (node == null) return;
-    TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false);
+    if (node == null) return null;
+    return TreeUtil.getPathFromRoot(node);
   }
 
   public static class ShowStandaloneDiff implements AnActionExtensionProvider {
@@ -348,8 +332,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      ChangesBrowserBase changesBrowser = e.getRequiredData(DATA_KEY);
-      Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      ChangesBrowserBase changesBrowser = e.getData(DATA_KEY);
+      if (changesBrowser == null) return;
 
       showStandaloneDiff(project, changesBrowser);
     }
@@ -381,7 +367,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   private static class ChangesBrowserTreeList extends ChangesTree {
-    @NotNull private final ChangesBrowserBase myBrowser;
+    private final @NotNull ChangesBrowserBase myBrowser;
 
     ChangesBrowserTreeList(@NotNull ChangesBrowserBase browser,
                            @NotNull Project project,

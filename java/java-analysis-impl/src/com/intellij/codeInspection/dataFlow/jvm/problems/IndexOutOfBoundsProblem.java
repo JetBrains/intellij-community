@@ -45,14 +45,21 @@ public interface IndexOutOfBoundsProblem extends UnsatisfiedConditionProblem {
     interpreter.getListener().onCondition(this, index, failed, stateBefore);
     if (alwaysOutOfBounds) {
       if (outOfBoundsTransfer != null) {
-        List<DfaInstructionState> states = outOfBoundsTransfer.dispatch(stateBefore, interpreter);
-        for (DfaInstructionState state : states) {
-          state.getMemoryState().markEphemeral();
-        }
+        List<DfaInstructionState> states = dispatchTransfer(interpreter, stateBefore, outOfBoundsTransfer);
         return states.toArray(DfaInstructionState.EMPTY_ARRAY);
       }
       return DfaInstructionState.EMPTY_ARRAY;
     }
     return null;
+  }
+
+  static @NotNull List<DfaInstructionState> dispatchTransfer(@NotNull DataFlowInterpreter interpreter,
+                                                             @NotNull DfaMemoryState stateBefore,
+                                                             @NotNull DfaControlTransferValue outOfBoundsTransfer) {
+    List<DfaInstructionState> states = outOfBoundsTransfer.dispatch(stateBefore, interpreter);
+    for (DfaInstructionState state : states) {
+      state.getMemoryState().markEphemeral();
+    }
+    return states;
   }
 }

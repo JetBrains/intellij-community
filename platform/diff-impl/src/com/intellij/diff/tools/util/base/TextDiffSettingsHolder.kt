@@ -14,6 +14,9 @@ import com.intellij.util.xmlb.annotations.Transient
 import com.intellij.util.xmlb.annotations.XMap
 import org.jetbrains.annotations.NonNls
 import java.util.*
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty
 
 @State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))], category = SettingsCategory.CODE)
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
@@ -27,9 +30,13 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var CONTEXT_RANGE: Int = 4,
 
     var MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES: Boolean = false,
+    var MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS: Boolean = false,
     var MERGE_LST_GUTTER_MARKERS: Boolean = true,
     var ENABLE_ALIGNING_CHANGES_MODE: Boolean = false
-  )
+  ) {
+    @Transient
+    val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
+  }
 
   data class PlaceSettings(
     // Diff settings
@@ -49,6 +56,9 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var EXPAND_BY_DEFAULT: Boolean = true
   ) {
     @Transient
+    var ENABLE_SYNC_SCROLL: Boolean = true
+
+    @Transient
     val eventDispatcher: EventDispatcher<TextDiffSettings.Listener> = EventDispatcher.create(TextDiffSettings.Listener::class.java)
   }
 
@@ -58,87 +68,95 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     constructor() : this(SharedSettings(), PlaceSettings(), null)
 
     fun addListener(listener: Listener, disposable: Disposable) {
+      SHARED_SETTINGS.eventDispatcher.addListener(listener, disposable)
       PLACE_SETTINGS.eventDispatcher.addListener(listener, disposable)
     }
 
     // Presentation settings
 
-    var isEnableSyncScroll: Boolean = true
+    var isEnableSyncScroll: Boolean by placeDelegate(PlaceSettings::ENABLE_SYNC_SCROLL) { scrollingChanged() }
 
-    var isEnableAligningChangesMode: Boolean
-      get() = SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE
-      set(value) { SHARED_SETTINGS.ENABLE_ALIGNING_CHANGES_MODE = value }
+    var isEnableAligningChangesMode: Boolean by sharedDelegate(SharedSettings::ENABLE_ALIGNING_CHANGES_MODE) { alignModeChanged() }
 
     // Diff settings
 
     var highlightPolicy: HighlightPolicy = PLACE_SETTINGS.HIGHLIGHT_POLICY
       set(value) {
-        field = value
-        if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
-          PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+        if (field != value) {
+          field = value
+          if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
+            PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+          }
+          PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
         }
-        PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
       }
 
-    var ignorePolicy: IgnorePolicy
-      get()      = PLACE_SETTINGS.IGNORE_POLICY
-      set(value) { PLACE_SETTINGS.IGNORE_POLICY = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.ignorePolicyChanged() }
+    var ignorePolicy: IgnorePolicy by placeDelegate(PlaceSettings::IGNORE_POLICY) { ignorePolicyChanged() }
 
     //
     // Merge
     //
 
-    var isAutoApplyNonConflictedChanges: Boolean
-      get()      = SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES
-      set(value) { SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value }
+    var isAutoApplyNonConflictedChanges: Boolean by sharedDelegate(SharedSettings::MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES)
 
-    var isEnableLstGutterMarkersInMerge: Boolean
-      get()      = SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS
-      set(value) { SHARED_SETTINGS.MERGE_LST_GUTTER_MARKERS = value }
+    var isAutoResolveImportConflicts: Boolean by sharedDelegate(SharedSettings::MERGE_AUTO_RESOLVE_IMPORT_CONFLICTS) { resolveConflictsInImportsChanged() }
+
+    var isEnableLstGutterMarkersInMerge: Boolean by sharedDelegate(SharedSettings::MERGE_LST_GUTTER_MARKERS)
 
     // Editor settings
 
-    var isShowLineNumbers: Boolean
-      get()      = PLACE_SETTINGS.SHOW_LINE_NUMBERS
-      set(value) { PLACE_SETTINGS.SHOW_LINE_NUMBERS = value }
+    var isShowLineNumbers: Boolean by placeDelegate(PlaceSettings::SHOW_LINE_NUMBERS)
 
-    var isShowWhitespaces: Boolean
-      get()      = PLACE_SETTINGS.SHOW_WHITESPACES
-      set(value) { PLACE_SETTINGS.SHOW_WHITESPACES = value }
+    var isShowWhitespaces: Boolean by placeDelegate(PlaceSettings::SHOW_WHITESPACES)
 
-    var isShowIndentLines: Boolean
-      get()      = PLACE_SETTINGS.SHOW_INDENT_LINES
-      set(value) { PLACE_SETTINGS.SHOW_INDENT_LINES = value }
+    var isShowIndentLines: Boolean by placeDelegate(PlaceSettings::SHOW_INDENT_LINES)
 
-    var isUseSoftWraps: Boolean
-      get()      = PLACE_SETTINGS.USE_SOFT_WRAPS
-      set(value) { PLACE_SETTINGS.USE_SOFT_WRAPS = value }
+    var isUseSoftWraps: Boolean by placeDelegate(PlaceSettings::USE_SOFT_WRAPS)
 
-    var highlightingLevel: HighlightingLevel
-      get()      = PLACE_SETTINGS.HIGHLIGHTING_LEVEL
-      set(value) { PLACE_SETTINGS.HIGHLIGHTING_LEVEL = value }
+    var highlightingLevel: HighlightingLevel by placeDelegate(PlaceSettings::HIGHLIGHTING_LEVEL)
 
-    var contextRange: Int
-      get()      = SHARED_SETTINGS.CONTEXT_RANGE
-      set(value) { SHARED_SETTINGS.CONTEXT_RANGE = value }
+    var contextRange: Int by sharedDelegate(SharedSettings::CONTEXT_RANGE) { foldingChanged() }
 
-    var isExpandByDefault: Boolean
-      get()      = PLACE_SETTINGS.EXPAND_BY_DEFAULT
-      set(value) { PLACE_SETTINGS.EXPAND_BY_DEFAULT = value }
+    var isExpandByDefault: Boolean by placeDelegate(PlaceSettings::EXPAND_BY_DEFAULT) { foldingChanged() }
 
-    var isReadOnlyLock: Boolean
-      get()      = PLACE_SETTINGS.READ_ONLY_LOCK
-      set(value) { PLACE_SETTINGS.READ_ONLY_LOCK = value }
+    var isReadOnlyLock: Boolean by placeDelegate(PlaceSettings::READ_ONLY_LOCK)
 
-    var breadcrumbsPlacement: BreadcrumbsPlacement
-      get()      = PLACE_SETTINGS.BREADCRUMBS_PLACEMENT
-      set(value) { PLACE_SETTINGS.BREADCRUMBS_PLACEMENT = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.breadcrumbsPlacementChanged() }
+    var breadcrumbsPlacement: BreadcrumbsPlacement by placeDelegate(PlaceSettings::BREADCRUMBS_PLACEMENT) { breadcrumbsPlacementChanged() }
 
     //
     // Impl
     //
+
+    private fun <T> sharedDelegate(accessor: KMutableProperty1<SharedSettings, T>,
+                                   onChange: Listener.() -> Unit = {}): ReadWriteProperty<Any?, T> {
+      return object : ReadWriteProperty<Any?, T> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+          return accessor.get(SHARED_SETTINGS)
+        }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+          if (value == accessor.get(SHARED_SETTINGS)) return
+          accessor.set(SHARED_SETTINGS, value)
+          onChange(SHARED_SETTINGS.eventDispatcher.multicaster)
+        }
+      }
+    }
+
+    private fun <T> placeDelegate(accessor: KMutableProperty1<PlaceSettings, T>,
+                                  onChange: Listener.() -> Unit = {}): ReadWriteProperty<Any?, T> {
+      return object : ReadWriteProperty<Any?, T> {
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+          return accessor.get(PLACE_SETTINGS)
+        }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+          if (value == accessor.get(PLACE_SETTINGS)) return
+          accessor.set(PLACE_SETTINGS, value)
+          onChange(PLACE_SETTINGS.eventDispatcher.multicaster)
+        }
+      }
+    }
+
 
     companion object {
       @JvmField val KEY: Key<TextDiffSettings> = Key.create("TextDiffSettings")
@@ -152,7 +170,11 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     interface Listener : EventListener {
       fun highlightPolicyChanged() {}
       fun ignorePolicyChanged() {}
+      fun resolveConflictsInImportsChanged() {}
       fun breadcrumbsPlacementChanged() {}
+      fun foldingChanged() {}
+      fun scrollingChanged() {}
+      fun alignModeChanged() {}
 
       abstract class Adapter : Listener
     }

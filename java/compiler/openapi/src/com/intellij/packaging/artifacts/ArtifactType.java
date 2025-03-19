@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -42,16 +42,13 @@ public abstract class ArtifactType {
     return myTitle.get();
   }
 
-  @NotNull
-  public abstract Icon getIcon();
+  public abstract @NotNull Icon getIcon();
 
-  @Nullable
-  public String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
+  public @Nullable String getDefaultPathFor(@NotNull PackagingSourceItem sourceItem) {
     return getDefaultPathFor(sourceItem.getKindOfProducedElements());
   }
 
-  @Nullable
-  public abstract @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
+  public abstract @Nullable @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
     return true;
@@ -70,20 +67,17 @@ public abstract class ArtifactType {
     return null;
   }
 
-  @NotNull
-  public abstract CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
+  public abstract @NotNull CompositePackagingElement<?> createRootElement(@NotNull String artifactName);
 
-  @NotNull
-  public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
+  public @NotNull List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
     return Collections.emptyList();
   }
 
   public void checkRootElement(@NotNull CompositePackagingElement<?> rootElement, @NotNull Artifact artifact, @NotNull ArtifactProblemsHolder manager) {
   }
 
-  @Nullable
-  public List<? extends PackagingElement<?>> getSubstitution(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context,
-                                                             @NotNull ArtifactType parentType) {
+  public @Nullable List<? extends PackagingElement<?>> getSubstitution(@NotNull Artifact artifact, @NotNull PackagingElementResolvingContext context,
+                                                                       @NotNull ArtifactType parentType) {
     return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiElement;
@@ -11,8 +11,7 @@ public final class PsiMatchers {
   private PsiMatchers() {
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasName(@NotNull final String name) {
+  public static @NotNull PsiMatcherExpression hasName(final @NotNull String name) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -22,8 +21,7 @@ public final class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasText(@NotNull final String text) {
+  public static @NotNull PsiMatcherExpression hasText(final @NotNull String text) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -33,8 +31,7 @@ public final class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasText(final String @NotNull ... texts) {
+  public static @NotNull PsiMatcherExpression hasText(final String @NotNull ... texts) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -44,8 +41,7 @@ public final class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasClass(@NotNull final Class<?> aClass) {
+  public static @NotNull PsiMatcherExpression hasClass(final @NotNull Class<?> aClass) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {
@@ -55,8 +51,7 @@ public final class PsiMatchers {
     };
   }
 
-  @NotNull
-  public static PsiMatcherExpression hasClass(final Class @NotNull ... classes) {
+  public static @NotNull PsiMatcherExpression hasClass(final Class<?> @NotNull ... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

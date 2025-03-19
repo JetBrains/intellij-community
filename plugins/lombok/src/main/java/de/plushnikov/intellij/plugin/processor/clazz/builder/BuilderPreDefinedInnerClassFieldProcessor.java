@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  *
  * @author Michail Plushnikov
  */
-public class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
+public final class BuilderPreDefinedInnerClassFieldProcessor extends AbstractBuilderPreDefinedInnerClassProcessor {
 
   public BuilderPreDefinedInnerClassFieldProcessor() {
     super(PsiField.class, LombokClassNames.BUILDER);

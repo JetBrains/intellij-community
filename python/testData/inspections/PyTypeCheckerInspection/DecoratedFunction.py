@@ -5,4 +5,4 @@ def decorator(f):
 def foo():
     return 'foo'
 
-print(<warning descr="Expected type 'int', got '() -> Union[str, Any]' instead">foo</warning> + 3) # we know type at least
+print(<warning descr="Expected type 'int', got '() -> str' instead">foo</warning> + 3) # we know type at least

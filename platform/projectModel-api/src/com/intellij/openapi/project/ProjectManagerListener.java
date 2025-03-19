@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,15 +14,14 @@ public interface ProjectManagerListener extends EventListener {
 
   /**
    * @deprecated Do not use.
-   * <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html#comintellijpoststartupactivity">Post start-up activity</a>
-   * maybe an alternative.
+   * Consider using <a href="https://plugins.jetbrains.com/docs/intellij/plugin-components.html#project-open">Post start-up activity</a>.
    */
   @Deprecated(forRemoval = true)
   default void projectOpened(@NotNull Project project) {
   }
 
   /**
-   * @deprecated Use {@link VetoableProjectManagerListener} instead
+   * @deprecated Use {@link VetoableProjectManagerListener} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
@@ -32,16 +31,16 @@ public interface ProjectManagerListener extends EventListener {
 
   /**
    * Invoked on project close.
-   *
-   * Consider using {@link ProjectCloseListener}
+   * <p>
+   * Consider using {@link ProjectCloseListener}.
    */
   default void projectClosed(@NotNull Project project) {
   }
 
   /**
    * Invoked on project close before any closing activities.
-   *
-   * Consider using {@link ProjectCloseListener}
+   * <p>
+   * Consider using {@link ProjectCloseListener}.
    */
   default void projectClosing(@NotNull Project project) {
   }

@@ -1,36 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.ByteBufferUtil;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.Page;
+import com.intellij.util.io.pagecache.PageUnsafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * {@link Page} implementation. PageImpl is internal for file page cache implementation, so even
- * though the class itself and a lot of its methods are public, they are intended to be used only
- * by the file page cache machinery. Only {@link Page} implementation methods are 'public' for
- * use outside page cache implementation.
+ * Base for {@link Page} implementations -- implements fundamental parts of {@link Page} functionality,
+ * and defines internal methods to be used by file page cache machinery. {@link PageImpl} is internal for
+ * file page cache implementation, so even though the class itself and a lot of its methods are public,
+ * they are intended to be used only by the file page cache machinery. Only {@link Page} implementation
+ * methods are 'public' for use outside page cache implementation.
  * <p>
- * Page contains 3 pieces of information: page state, page data (buffer + modified region), and
- * 'tokens of usefulness' (used by page cache for page eviction/reclamation). Page state and tokens
- * of usefulness are lock-free (modified with CAS), while page data buffer & modified region are
- * protected with pageLock.
+ * {@link PageImpl} consists of 3 pieces: page state (and transitions), page data (buffer + modified
+ * region), and 'tokens of usefulness' (used by page cache for page eviction/reclamation). Page state
+ * and tokens of usefulness are lock-free (modified with CAS), while page data buffer & modified region are
+ * protected with pageLock FIXME this part is to be moved down to implementations
  * <p>
  * <b>Page state</b>: (see {@link #statePacked}) is a pair
- * <code>(NOT_READY_YET | USABLE | ABOUT_TO_UNMAP | PRE_TOMBSTONE | TOMBSTONE)x(usageCount)</code>,
+ * <code>(NOT_READY_YET | LOADING | USABLE | ABOUT_TO_UNMAP | PRE_TOMBSTONE | TOMBSTONE)x(usageCount)</code>,
  * there usageCount is number of clients using page right now. During its lifecycle, the page goes
  * through those states in the same order:
+ * FIXME RC: ABOUT_TO_UNMAP state changed so it is only with usageCount==0 -- adjust docs below accordingly.
  * <pre>
- *    NOT_READY_YET   (usageCount == 0) page buffer allocation & data loading
+ *    NOT_READY_YET   (usageCount == 0) page has no buffer and no data
+ * -> LOADING         (usageCount == 0) page buffer is allocating and content is loading from disk
  * -> USABLE          (usageCount >= 0) page is used by clients
  * -> ABOUT_TO_UNMAP  (usageCount >= 0) not accept new clients, but current clients continue to use it
  * -> PRE_TOMBSTONE   (usageCount == 0) cleanup: flush, reclaim page buffer...
@@ -40,6 +44,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * <pre>
  * NOT_READY_YET   (usageCount: 0                                 )
  *                              ↓
+ * LOADING         (usageCount: 0                                 )
+ *                              ↓
  * USABLE          (usageCount: 0 <-> 1 <-> 2 <-> 3 <-> 4 <-> ... )
  *                              ↓     ↓     ↓     ↓     ↓     ↓
  * ABOUT_TO_UNMAP  (usageCount: 0 <-  1 <-  2 <-  3 <-  4 <-  ... )
@@ -48,17 +54,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *                              ↓
  * TOMBSTONE       (usageCount: 0                                 )
  * </pre>
- * (there is also a 'shortcut' transition NOT_READY_YET -> PRE_TOMBSTONE which is used on storage close)
+ * (there is also a 'short-circuit' transition NOT_READY_YET -> PRE_TOMBSTONE which is used on storage close)
  * <p>
  * Page is only visible to the 'clients' within state USABLE and ABOUT_TO_UNMAP -- other states are
- * used only internally. Because only USABLE and ABOUT_TO_UNMAP could be visible to the clients, only
- * in those 2 states .usageCount could be >0.
+ * used only internally, and a well-behaving client should not have access to the pages in such a states.
+ * (Well-behaving client is the client that follows API spec, e.g. doesn't use the page after {@link #release()})
+ * Because only USABLE and ABOUT_TO_UNMAP could be visible to the clients, only in those 2 states
+ * .usageCount could be >0.
  * <p>
  * Transition graph is uni-directional: e.g. there is no way for page to return from ABOUT_TO_UNMAP to
  * USABLE. So pages are not re-usable: page _buffers_ could be reused, but as the page transitions to
- * ABOUT_TO_UNMAP, there is no way back -- page will inevitably go towards TOMBSTONE, after which it
- * could be only thrown away to GC. This 'equifinality' is an important property of the state graph,
- * implementation relies on it in many places.
+ * ABOUT_TO_UNMAP, there is no way back -- page eventually but inevitably go towards TOMBSTONE, after
+ * which it could only be thrown away to GC. This 'equifinality' is an important property of the state
+ * graph: implementation relies on it in many places.
+ * FIXME RC: doc needs to be adjusted: NOT_READY_YET <-> LOADING transition is actually bi-directional
+ * now -- page could be returned to NOT_READY_YET state if loading failed somehow.
  * <p>
  * Transitions between states are implemented with CAS, so they could be tried concurrently, and only
  * one thread 'wins' the transition -- this is the thread that is responsible for some actions attached
@@ -68,10 +78,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  *
  * @see FilePageCacheLockFree
  * @see PagesTable
- * @see com.intellij.util.io.PagedFileStorageLockFree
+ * @see PagedFileStorageWithRWLockedPageContent
  */
 @ApiStatus.Internal
-public class PageImpl implements Page {
+public abstract class PageImpl implements Page, Flushable, PageUnsafe {
 
   /**
    * Initial state page is created with. Page buffer is not yet allocated, page data is not yet
@@ -84,10 +94,22 @@ public class PageImpl implements Page {
   public static final int STATE_NOT_READY_YET = 0;
 
   /**
-   * Page is allocated, loaded, and could be used. In this state {usageCount=0...}.
+   * Page is in this state while it's content is loaded from disk and other things are set up.
+   * In this state the page is not usable yet (hence usageCount=0), and should not yet be visible
+   * for the clients.
+   * This state introduced to restrict loading to a single thread without using locking: the
+   * page in this state is exclusively owned by the thread which 'wins' the CAS-transition from
+   * NOT_READY_YET, and no other threads are allowed to interfere. See general description of
+   * page states & transitions in class javadoc, and PRE_TOMBSTONE state description for another
+   * use of the same idea.
+   */
+  public static final int STATE_LOADING = 1;
+
+  /**
+   * Page is allocated, loaded, and could be used. In this state, usageCount could be >=0.
    * Only transition to STATE_ABOUT_TO_UNMAP is allowed.
    */
-  public static final int STATE_USABLE = 1;
+  public static final int STATE_USABLE = 2;
 
   /**
    * Page is prepared to unmap and release/reclaim. Clients who already get the Page before transition
@@ -95,7 +117,7 @@ public class PageImpl implements Page {
    * in this state .usageCount could be >0, but could not increase anymore -- only decrease.
    * Only transition to STATE_PRE_TOMBSTONE is allowed.
    */
-  public static final int STATE_ABOUT_TO_UNMAP = 2;
+  public static final int STATE_ABOUT_TO_UNMAP = 3;
 
   /**
    * Intermediate state between (ABOUT_TO_UNMAP, usedCount=0) and TOMBSTONE. Only transition to
@@ -115,14 +137,14 @@ public class PageImpl implements Page {
    * which is non-blocking, CAS-based. One thread wins that CAS, and follows along with the
    * cleanups without any interference, while other threads are free to do anything else.
    */
-  public static final int STATE_PRE_TOMBSTONE = 3;
+  public static final int STATE_PRE_TOMBSTONE = 4;
 
   /**
    * Page is unmapped, its buffer is released/reclaimed -- i.e. there no page anymore, only remnant.
    * Terminal state: no transition allowed, tombstone Page occupies slot in a PageTable until it is
    * either replaced with another Page, or removed during resize/rehash.
    */
-  public static final int STATE_TOMBSTONE = 4;
+  public static final int STATE_TOMBSTONE = 5;
 
   private static final AtomicIntegerFieldUpdater<PageImpl> STATE_UPDATER = AtomicIntegerFieldUpdater.newUpdater(
     PageImpl.class,
@@ -134,8 +156,6 @@ public class PageImpl implements Page {
     "tokensOfUsefulness"
   );
 
-
-  private static final long EMPTY_MODIFIED_REGION = 0;
 
   /** Mask to extract 'usageCount' from {@link #statePacked} */
   private static final int USAGE_COUNT_MASK = 0x00FF_FFFF;
@@ -153,10 +173,13 @@ public class PageImpl implements Page {
    * is state{STATE_NOT_READY_YET | STATE_USABLE | STATE_OUT}, lowest 3 bytes ({@link #USAGE_COUNT_MASK})
    * are usageCount -- number of clients currently using this page ({@link #tryAcquireForUse(Object)}/{@link #release()})
    */
-  private volatile int statePacked = 0;
+  private volatile int statePacked = packState(STATE_NOT_READY_YET, /*usageCount: */ 0);
 
-  /** Mostly guards access to .data buffer */
-  private transient final ReentrantReadWriteLock pageLock = new ReentrantReadWriteLock();
+  /**
+   * During page lifecycle some additional information could be put here, such as exceptions
+   * swallowed, or the thread currently operating on the page.
+   */
+  private volatile Object auxDebugData = null;
 
   /**
    * The buffer position/limit shouldn't be touched, since it is hard to make that concurrent:
@@ -167,23 +190,14 @@ public class PageImpl implements Page {
    * [USABLE and ABOUT_TO_UNMAP] states, and should be accessed in those states only.
    */
   //@GuardedBy("pageLock")
-  private ByteBuffer data = null;
+  protected ByteBuffer data = null;
+
 
   /**
-   * Modified region [minOffsetModified, maxOffsetModified) of {@linkplain #data}, packed into a
-   * single long for lock-free reads.
-   * <p>
-   * {@code modifiedRegionPacked = (maxOffsetModified<<32) | minOffsetModified}
-   * <p>
-   * maxOffsetModified is basically ~ buffer.position(), i.e. first byte to store,
-   * maxOffsetModifiedExclusive is ~ buffer.limit() -- i.e. the _next_ byte after
-   * the last byte to store.
-   * <p>
-   * Modified under 'this' intrinsic lock, same as guard the .flush() method
+   * Page needs to inform storage about changes in its state, and also ask storage to flush its data on disk
+   * -- this handle is an interface for that.
    */
-  private volatile long modifiedRegionPacked = EMPTY_MODIFIED_REGION;
-
-  private final @NotNull PageToStorageHandle pageToStorageHandle;
+  protected final @NotNull PageToStorageHandle storageHandle;
 
 
   /** for reclamation management */
@@ -201,7 +215,7 @@ public class PageImpl implements Page {
   private PageImpl(final long offsetInFile,
                    final int pageIndex,
                    final int pageSize,
-                   final @NotNull PageToStorageHandle pageToStorageHandle) {
+                   final @NotNull PageToStorageHandle storageHandle) {
     if (offsetInFile < 0) {
       throw new IllegalArgumentException("offsetInFile(=" + offsetInFile + ") must be >=0");
     }
@@ -214,21 +228,13 @@ public class PageImpl implements Page {
     this.offsetInFile = offsetInFile;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.pageToStorageHandle = pageToStorageHandle;
+    this.storageHandle = storageHandle;
   }
 
-  public PageImpl(final int pageIndex,
-                  final int pageSize,
-                  final @NotNull PageToStorageHandle pageToStorageHandle) {
-    this(pageIndex * (long)pageSize, pageIndex, pageSize, pageToStorageHandle);
-  }
-
-  public static PageImpl notReady(final int index,
-                                  final int pageSize,
-                                  final @NotNull PageToStorageHandle pageToStorageHandle) {
-    final PageImpl page = new PageImpl(index, pageSize, pageToStorageHandle);
-    page.statePacked = packState(STATE_NOT_READY_YET, 0);
-    return page;
+  protected PageImpl(final int pageIndex,
+                     final int pageSize,
+                     final @NotNull PageToStorageHandle storageHandle) {
+    this(pageIndex * (long)pageSize, pageIndex, pageSize, storageHandle);
   }
 
   @Override
@@ -250,36 +256,14 @@ public class PageImpl implements Page {
   }
 
 
-  //===== locking methods: ====================================
-
-  @Override
-  public void lockPageForWrite() {
-    pageLock.writeLock().lock();
-  }
-
-  @Override
-  public void unlockPageForWrite() {
-    pageLock.writeLock().unlock();
-  }
-
-  @Override
-  public void lockPageForRead() {
-    pageLock.readLock().lock();
-  }
-
-  @Override
-  public void unlockPageForRead() {
-    pageLock.readLock().unlock();
-  }
-
-  public ReentrantReadWriteLock pageLock() {
-    return pageLock;
-  }
-
   //========= Page.state management methods: ==================
 
   public boolean isNotReadyYet() {
     return inState(STATE_NOT_READY_YET);
+  }
+
+  public boolean isLoading() {
+    return inState(STATE_LOADING);
   }
 
   @Override
@@ -303,28 +287,56 @@ public class PageImpl implements Page {
     return unpackState(statePacked) == expectedState;
   }
 
+  protected int state() {
+    return unpackState(this.statePacked);
+  }
+
   public int usageCount() {
     return unpackUsageCount(this.statePacked);
   }
 
   /**
-   * [NOT_READY_YET => USABLE] page transition: sets buffer with data, and set state to
-   * {@linkplain #STATE_USABLE}. Page must be in {@linkplain #STATE_NOT_READY_YET} before
-   * call to this method, otherwise {@linkplain AssertionError} will be thrown
+   * [NOT_READY_YET => USABLE] page transition: tries to transition page into a LOADING state, and if
+   * succeed -- load and assigns the page buffer, and set state to {@linkplain #STATE_USABLE}.
+   * Method returns true if page was actually loaded -- i.e. we won CAS transition [NOT_READY_YET => LOADING],
+   * and really load page content. If page is not NOT_READY_YET, or we lost the [NOT_READY_YET => LOADING]
+   * transition (i.e. somebody else loads the page) -- method returns false.
    */
-  public void prepareForUse(final @NotNull PageContentLoader contentLoader) throws IOException {
-    pageLock.writeLock().lock();
-    try {
-      if (!inState(STATE_NOT_READY_YET)) {
-        throw new AssertionError("Bug: page must be NOT_READY_YET for .prepareToUse(), but: " + this);
+  public boolean tryPrepareForUse(final @NotNull PageContentLoader contentLoader) throws IOException {
+    final int packedState = this.statePacked;
+    final int state = unpackState(packedState);
+    if (state == STATE_NOT_READY_YET) {
+      final int usageCount = unpackUsageCount(packedState);
+      if (usageCount != 0) {
+        throw new AssertionError("Bug: usageCount(=" + usageCount + ") must be 0 in NOT_READ_YET: " + this);
       }
 
-      this.data = contentLoader.loadPageContent(this);
-      this.statePacked = packState(STATE_USABLE, 0);
+      final int newPackedState = packState(STATE_LOADING, 0);
+
+      if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
+        this.auxDebugData = Thread.currentThread();
+        try {
+          this.data = contentLoader.loadPageContent(this);
+          //Current thread exclusively owns the page in LOADING state, so no need for CAS here:
+          this.statePacked = packState(STATE_USABLE, 0);
+          return true;
+        }
+        catch (Throwable e) {
+          //MAYBE RC: it is better to immediately transition page to TOMBSTONE? This simplifies logic:
+          //          no 'backward' transitions, page either loaded, or failed and entombed, and it is
+          //          up PagedStorage implementation to decide do another attempt to load page or not.
+          //          Downside is that now (* -> TOMBSTONE) transition is confined to housekeeper thread,
+          //          and that confinement become broken -- needs to investigate consequences.
+
+          //return the page to NOT_READY_YET state, so it could be either re-tried to load, or entombed
+          this.statePacked = packState(STATE_NOT_READY_YET, 0);
+          //MAYBE RC: log the exception?
+          this.auxDebugData = e;
+          throw e;
+        }
+      }
     }
-    finally {
-      pageLock.writeLock().unlock();
-    }
+    return false;
   }
 
   /**
@@ -332,29 +344,36 @@ public class PageImpl implements Page {
    * Page should not be accessed externally without this method called prior to what.
    * {@link #release()}/{@link #close()} must be called after this method to release the page.
    * <p>
-   * Method returns false if page is NOT_READY_YET -- because in this case page likely becomes
-   * USABLE after a while, and it is worth to try acquiring it again later.
+   * Method returns false if the page is NOT_READY_YET | LOADING -- because in this case page
+   * likely becomes USABLE after a while, and it is worth to try acquiring it again later.
    * <p>
-   * Contrary to that, if page state is [ABOUT_TO_RECLAIM | TOMBSTONE] -- method throws IOException,
-   * because in those cases repeating is useless, page will never become USABLE.
+   * Contrary to that, if the page state is [ABOUT_TO_RECLAIM | TOMBSTONE] -- method throws
+   * IOException, because in those cases repeating is useless: the page will never become
+   * USABLE again.
    *
    * @param acquirer who acquires the page.
    *                 Argument is not utilized now, reserved for debug leaking pages purposes.
-   * @return false if page can't be acquired because it is NOT_READY_YET, true if page is acquired
-   * for use
-   * @throws IOException if page state is [ABOUT_TO_RECLAIM | TOMBSTONE]
+   * @return false if page can't be acquired because it is not USABLE yet (so it is worth to
+   * try acquiring again), true if page is acquired for use
+   * @throws IOException if page state is [ABOUT_TO_RECLAIM | TOMBSTONE], so it is not worth
+   *                     to try acquiring again
    */
-  public boolean tryAcquireForUse(final Object acquirer) throws IOException {
+  public boolean tryAcquireForUse(@SuppressWarnings("unused") final Object acquirer) throws IOException {
     while (true) {//CAS loop:
       final int packedState = statePacked;
       final int state = unpackState(packedState);
       final int usageCount = unpackUsageCount(packedState);
-      if (state == STATE_NOT_READY_YET) {
+      if (state < STATE_USABLE) {
         return false;
       }
-      else if (state != STATE_USABLE) {
+      else if (state > STATE_ABOUT_TO_UNMAP) {
         throw new IOException("Page.state[=" + state + "] != USABLE");
       }
+      else if (state == STATE_ABOUT_TO_UNMAP) {
+        throw new IOException("Page.state[=" + state + "] != USABLE");
+      }
+      //else -> try to acquire:
+
       final int newUsageCount = usageCount + 1;
       if (newUsageCount > USAGE_COUNT_MASK) {
         throw new AssertionError("Too many usages: " + newUsageCount
@@ -368,12 +387,26 @@ public class PageImpl implements Page {
   }
 
   @Override
+  public boolean tryAcquire(final Object acquirer) {
+    try {
+      if (tryAcquireForUse(acquirer)) {
+        return true;
+      }//else: not ready yet
+    }
+    catch (IOException ignored) {
+      //already on reclamation path
+    }
+
+    return false;
+  }
+
+  @Override
   public void release() {
     while (true) {
       final int packedState = statePacked;
       final int state = unpackState(packedState);
       final int usageCount = unpackUsageCount(packedState);
-      if (state == STATE_NOT_READY_YET || state == STATE_TOMBSTONE) {
+      if (state != STATE_USABLE && state != STATE_ABOUT_TO_UNMAP) {
         throw new AssertionError("Bug: .release() must be called on {USABLE|ABOUT_TO_UNMAP} page only, but .state[=" + state + "]");
       }
       if (usageCount == 0) {
@@ -403,9 +436,6 @@ public class PageImpl implements Page {
       switch (state) {
         case STATE_NOT_READY_YET: {
           if (entombYoung) {
-            if (!pageLock.writeLock().isHeldByCurrentThread()) {
-              throw new AssertionError(".writeLock must be held for entombYoung[NOT_READY_YET=>TOMBSTONE] transition");
-            }
             final int newPackedState = packState(STATE_PRE_TOMBSTONE, 0);
             if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
               return true;
@@ -413,15 +443,24 @@ public class PageImpl implements Page {
           }
           return false;
         }
+        case STATE_LOADING: {
+          //page in this state is exclusively owned by the thread won [NOT_READY_YET=>LOADING] transition
+          return false;
+        }
         case STATE_USABLE: {
-          final int newPackedState = packState(STATE_ABOUT_TO_UNMAP, usageCount);
+          if (usageCount > 0) {
+            return false;
+          }
+          final int newPackedState = packState(STATE_ABOUT_TO_UNMAP, 0);
           if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
             continue;
           }
+          return false;
         }
         case STATE_ABOUT_TO_UNMAP: {
           if (usageCount > 0) {
-            return false;
+            //return false;
+            throw new AssertionError("Page[ABOUT_TO_UNMAP].usageCount=" + usageCount + " -- must be 0. " + this);
           }
           final int newPackedState = packState(STATE_PRE_TOMBSTONE, 0);
           if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
@@ -459,7 +498,7 @@ public class PageImpl implements Page {
       throw new AssertionError("Bug: page.usageCount(=" + usageCount + ") must be 0. page: " + this);
     }
     if (state != STATE_PRE_TOMBSTONE) {
-      throw new AssertionError("Bug: page.state be PRE_TOMBSTONE, but " + state + ", page: " + this);
+      throw new AssertionError("Bug: page.state(=" + state + ") be PRE_TOMBSTONE. " + this);
     }
 
     final int newPackedState = packState(STATE_TOMBSTONE, 0);
@@ -469,27 +508,21 @@ public class PageImpl implements Page {
   }
 
   /**
-   * Detaches .data buffer from the page: returns .data and assign .data=null
-   * Page must be [TOMBSTONE] to call this method. Method can be invoked only once -- subsequent
-   * invocations will throw an exception.
+   * Detaches .data buffer from the page: returns .data and assign .data=null.
+   * Page must be [PRE_TOMBSTONE] to call this method, hence page is exclusively owned by a
+   * thread promoting it to PRE_TOMBSTONE, hence no synchronization required.
+   * Method can be invoked only once -- subsequent invocations will throw an exception.
    */
   public ByteBuffer detachTombstoneBuffer() {
     if (!isPreTombstone()) {
-      throw new AssertionError("Bug: only PRE_TOMBSTONES could detach buffer");
+      throw new AssertionError("Bug: only PRE_TOMBSTONES could detach buffer. " + this);
     }
-    //Lock to avoid races with .prepareForUse() & .flush()
-    pageLock.writeLock().lock();
-    try {
-      final ByteBuffer buffer = this.data;
-      if (buffer == null) {
-        throw new AssertionError("Bug: buffer already detached, .data is null " + this);
-      }
-      this.data = null;
-      return buffer;
+    final ByteBuffer buffer = this.data;
+    if (buffer == null) {
+      throw new AssertionError("Bug: buffer already detached, .data is null. " + this);
     }
-    finally {
-      pageLock.writeLock().unlock();
-    }
+    this.data = null;
+    return buffer;
   }
 
 
@@ -508,12 +541,23 @@ public class PageImpl implements Page {
 
   // ====================================================================
 
+  public abstract boolean isDirty();
+
+  @Override
+  public abstract void flush() throws IOException;
+
+  /**
+   * Method tries flushing page content on disk, but only if there is a way to do so without waiting for
+   * some writes to finish -- i.e. page is not write-locked in any way. Otherwise method just returns false.
+   */
+  public abstract boolean tryFlush() throws IOException;
+
   @Override
   public void close() {
     release();
   }
 
-  // ====================================================================
+  /* ========= page utility accounting: ============================================================= */
 
   public int addTokensOfUsefulness(final int tokensToAdd) {
     assert tokensToAdd >= 0 : "tokensToAdd(" + tokensToAdd + ") must be >=0";
@@ -554,180 +598,7 @@ public class PageImpl implements Page {
     tokensOfUsefulnessLocal = tokensOfUsefulness;
   }
 
-  // ================ dirty region/flush control: =================================
-
-  @Override
-  public boolean isDirty() {
-    return modifiedRegionPacked != EMPTY_MODIFIED_REGION;
-  }
-
-  @Override
-  public void flush() throws IOException {
-    //RC: flush is logically a read-op, hence only readLock is needed. But we also need to update
-    //    a modified region, which is a write-op.
-    //    There are few ways to deal with dirty region updates: e.g. update modifiedRegion with CAS.
-    //    Together (readLock + CAS update) implicitly avoids concurrent flushes: by holding readLock
-    //    we already ensure nobody _modifies_ page concurrently with us. The only possible contender
-    //    is another .flush() call -- and by CAS-ing modifiedRegion to empty _before_ actual
-    //    .flushBytes() we ensure such competing .flush() will short-circuit. This is the 'most
-    //    concurrent' approach, but it has issues with consistency: namely, storage is notified
-    //    about dirty page 'flushed' only after actual CAS updates modifiedRegion to empty. This
-    //    means what other thread could see page.isDirty()=false, but at the same time
-    //    storage.isDirty() = true, since page flush is not yet propagated to storage. Even worse:
-    //    another thread could call page.flush() and still see storage.isDirty()=true -- because
-    //    .flush() is short-circuit on early .isDirty() check.
-    //
-    //    This is a trade-off: 'more concurrent' data structures have 'less consistent' state --
-    //    basically, state becomes more distributed. But such a tradeoff seems unjustified here:
-    //    really, we don't need concurrent flushes, while 'eventually consistent' .isDirty() could
-    //    create a lot of confusion for storage users. Hence, I've chosen another approach: use
-    //    additional lock inside .flush() to completely avoid concurrent flushes. This lock allows
-    //    to reset dirty region _after_ actual .flushBytes().
-    //
-    //    This still creates an 'inconsistency' though: another thread could see storage.isDirty()
-    //    = false, while some page.isDirty()=true -- but I tend to think there are fewer possibilities
-    //    for confusion here. Let's see how it goes.
-
-    flushWithAdditionalLock();
-  }
-
-  private void flushWithAdditionalLock() throws IOException {
-    if (isDirty()) {
-      //RC: flush is logically a read-op, hence only readLock is needed. But we also need to update
-      //    a modified region, which is write-op. By holding readLock we already ensure nobody
-      //    _modifies_ page concurrently with us. The only possible contender is another .flush()
-      //    call -- hence we use 'this' lock to avoid concurrent flushes.
-      lockPageForRead();
-      try {
-        //'this' lock is mostly uncontended: other than here, it is guarded .regionModified() --
-        // which is invoked only under pageLock.writeLock, so 'this' never contended there.
-        // Here it _could_ be contended, but only against concurrent .flush() invocations,
-        // which are possible, but rare. This is why I use lock instead of update modifiedRegion
-        // with CAS: uncontended lock is cheap and simpler to use, and I need some lock to prevent
-        // concurrent .flush() anyway.
-        synchronized (this) {
-          final long modifiedRegion = modifiedRegionPacked;
-          if (modifiedRegion == EMPTY_MODIFIED_REGION) {
-            //competing flush: somebody else already did the job
-            return;
-          }
-          final int minOffsetModified = unpackMinOffsetModified(modifiedRegion);
-          final int maxOffsetModifiedExclusive = unpackMaxOffsetModifiedExclusive(modifiedRegion);
-
-          //we won the CAS competition: execute the flush
-          final ByteBuffer sliceToSave = data.duplicate()
-            .order(data.order());
-          sliceToSave.position(minOffsetModified)
-            .limit(maxOffsetModifiedExclusive);
-
-          pageToStorageHandle.flushBytes(sliceToSave, offsetInFile + minOffsetModified);
-          pageToStorageHandle.pageBecomeClean();
-          modifiedRegionPacked = EMPTY_MODIFIED_REGION;
-        }
-      }
-      finally {
-        unlockPageForRead();
-      }
-    }
-  }
-
-  //@GuardedBy(pageLock.writeLock)
-  @Override
-  public void regionModified(final int startOffsetModified,
-                             final int length) {
-    assert pageLock.writeLock().isHeldByCurrentThread() : "writeLock must be held while calling this method";
-
-    final long modifiedRegionNew;
-    final long modifiedRegionOld;
-    synchronized (this) {
-      modifiedRegionOld = modifiedRegionPacked;
-      final int minOffsetModifiedOld = unpackMinOffsetModified(modifiedRegionOld);
-      final int maxOffsetModifiedOld = unpackMaxOffsetModifiedExclusive(modifiedRegionOld);
-
-      final int minOffsetModifiedNew = Math.min(minOffsetModifiedOld, startOffsetModified);
-      final int endOffset = startOffsetModified + length;
-      final int maxOffsetModifiedNew = Math.max(maxOffsetModifiedOld, endOffset);
-
-      if (minOffsetModifiedOld == minOffsetModifiedNew
-          && maxOffsetModifiedOld == maxOffsetModifiedNew) {
-        return;
-      }
-
-
-      modifiedRegionNew = ((long)minOffsetModifiedNew)
-                          | (((long)maxOffsetModifiedNew) << Integer.SIZE);
-      this.modifiedRegionPacked = modifiedRegionNew;
-    }
-
-    pageToStorageHandle.modifiedRegionUpdated(
-      offsetInFile() + startOffsetModified,
-      length
-    );
-    if (modifiedRegionOld == 0 && modifiedRegionNew != 0) {
-      pageToStorageHandle.pageBecomeDirty();
-    }
-  }
-
-  private static int unpackMinOffsetModified(final long modifiedRegionPacked) {
-    return (int)modifiedRegionPacked;
-  }
-
-  private static int unpackMaxOffsetModifiedExclusive(final long modifiedRegionPacked) {
-    return (int)(modifiedRegionPacked >> Integer.SIZE);
-  }
-
   /* =============== content access methods: ======================================================== */
-
-  //RC: I'd expect generic read/write methods to be the main API for accessing page, because
-  //    they are range-lock-friendly -- if we needed to move to range locks instead of current
-  //    per-page locks, read/write methods are a natural fit.
-
-  @Override
-  public <OUT, E extends Exception> OUT read(final int startOffsetOnPage,
-                                             final int length,
-                                             final ThrowableNotNullFunction<ByteBuffer, OUT, E> reader) throws E {
-    pageLock.readLock().lock();
-    try {
-      checkPageIsValidForAccess();
-
-      //RC: need to upgrade language level to 13 to use .slice(index, length)
-      final ByteBuffer slice = data.duplicate()
-        .order(data.order())
-        .asReadOnlyBuffer();
-      slice.position(startOffsetOnPage)
-        .limit(startOffsetOnPage + length);
-      return reader.fun(slice);
-    }
-    finally {
-      pageLock.readLock().unlock();
-    }
-  }
-
-  @Override
-  public <OUT, E extends Exception> OUT write(final int startOffsetOnPage,
-                                              final int length,
-                                              final ThrowableNotNullFunction<ByteBuffer, OUT, E> writer) throws E {
-    pageLock.writeLock().lock();
-    try {
-      checkPageIsValidForAccess();
-
-      //RC: need to upgrade language level to 13 to use .slice(index, length)
-      final ByteBuffer slice = data.duplicate()
-        .order(data.order());
-      slice.position(startOffsetOnPage)
-        .limit(startOffsetOnPage + length);
-      try {
-        return writer.fun(slice);
-      }
-      finally {
-        regionModified(startOffsetOnPage, length);
-        checkPageIsValidForAccess();
-      }
-    }
-    finally {
-      pageLock.writeLock().unlock();
-    }
-  }
 
   @Override
   public byte get(final int offsetInPage) {
@@ -890,8 +761,9 @@ public class PageImpl implements Page {
   //         resize -- on split, or regular insert. Better to have dedicated Page.copyRangeTo(Page) method
   //         for that, since now one need to acquire page locks, and they must be acquired in
   //         stable order to avoid deadlocks
-  @Deprecated
-  protected ByteBuffer duplicate() {
+  @Override
+  @ApiStatus.Obsolete
+  public ByteBuffer duplicate() {
     checkPageIsValidForAccess();
     return data.duplicate().order(data.order());
   }
@@ -902,7 +774,7 @@ public class PageImpl implements Page {
    *
    * @throws IllegalStateException if page is not in a state there it could be accessed (read/write)
    */
-  private void checkPageIsValidForAccess() {
+  protected void checkPageIsValidForAccess() {
     if (!isUsable() && !isAboutToUnmap()) {
       throw new IllegalStateException("Page state must be in { USABLE | ABOUT_TO_UNMAP } for accessing, but: " + this);
     }
@@ -913,14 +785,12 @@ public class PageImpl implements Page {
 
   @Override
   public String toString() {
-    final long modifiedRegion = modifiedRegionPacked;
     final int packedState = statePacked;
     return "Page[#" + pageIndex + ", size: " + pageSize + "b, offsetInFile: " + offsetInFile + "b]" +
            "{" +
            "state: " + unpackState(packedState) + ", " +
            "inUse: " + unpackUsageCount(packedState) +
-           "}, dirtyRegion: " +
-           "[" + unpackMinOffsetModified(modifiedRegion) + ".." + unpackMaxOffsetModifiedExclusive(modifiedRegion) + ") ";
+           "}" + ((auxDebugData != null) ? ", aux: " + auxDebugData : "");
   }
 
   @Override

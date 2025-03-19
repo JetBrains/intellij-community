@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
@@ -25,9 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
@@ -53,6 +52,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -61,19 +61,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public abstract class XDebuggerEditorBase implements Expandable {
+  public static final Key<Boolean> XDEBUGGER_EDITOR_KEY = Key.create("is.xdebugger.editor");
+
   private final Project myProject;
   private final XDebuggerEditorsProvider myDebuggerEditorsProvider;
-  @NotNull private final EvaluationMode myMode;
-  @Nullable private final String myHistoryId;
-  @Nullable private XSourcePosition mySourcePosition;
+  private final @NotNull EvaluationMode myMode;
+  private final @Nullable String myHistoryId;
+  private @Nullable XSourcePosition mySourcePosition;
   private int myHistoryIndex = -1;
-  @Nullable private PsiElement myContext;
+  private @Nullable PsiElement myContext;
 
   private final LanguageChooser myLanguageChooser = new LanguageChooser();
   private final JLabel myExpandButton = new JLabel(AllIcons.General.ExpandComponent);
@@ -86,11 +86,21 @@ public abstract class XDebuggerEditorBase implements Expandable {
                                 @NotNull EvaluationMode mode,
                                 @Nullable @NonNls String historyId,
                                 final @Nullable XSourcePosition sourcePosition) {
+    this(project, debuggerEditorsProvider, mode, historyId, sourcePosition, null);
+  }
+
+  XDebuggerEditorBase(final Project project,
+                                @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                @NotNull EvaluationMode mode,
+                                @Nullable @NonNls String historyId,
+                                final @Nullable XSourcePosition sourcePosition,
+                                @Nullable PsiElement psiContext) {
     myProject = project;
     myDebuggerEditorsProvider = debuggerEditorsProvider;
     myMode = mode;
     myHistoryId = historyId;
     mySourcePosition = sourcePosition;
+    myContext = psiContext;
 
     // setup expand button
     myExpandButton.setToolTipText(KeymapUtil.createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"));
@@ -117,8 +127,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     });
   }
 
-  @NotNull
-  private Collection<Language> getSupportedLanguages() {
+  private @NotNull @Unmodifiable Collection<Language> getSupportedLanguages() {
     XDebuggerEditorsProvider editorsProvider = getEditorsProvider();
     if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase) {
       return ((XDebuggerEditorsProviderBase)editorsProvider).getSupportedLanguages(myContext);
@@ -153,7 +162,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(JBColor.lazy(() -> component.getBackground()));
+    panel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(component.getBackground(), UIUtil.getPanelBackground())));
     panel.addToRight(myLanguageChooser);
     return panel;
   }
@@ -200,13 +209,11 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  @NotNull
-  public EvaluationMode getMode() {
+  public @NotNull EvaluationMode getMode() {
     return myMode;
   }
 
-  @Nullable
-  public abstract Editor getEditor();
+  public abstract @Nullable Editor getEditor();
 
   public abstract JComponent getComponent();
 
@@ -245,8 +252,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   public abstract XExpression getExpression();
 
-  @Nullable
-  public abstract JComponent getPreferredFocusedComponent();
+  public abstract @Nullable JComponent getPreferredFocusedComponent();
 
   public void requestFocusInEditor() {
     JComponent preferredFocusedComponent = getPreferredFocusedComponent();
@@ -281,8 +287,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  @NotNull
-  protected FileType getFileType(@NotNull XExpression expression) {
+  protected @NotNull FileType getFileType(@NotNull XExpression expression) {
     FileType fileType = LanguageUtil.getLanguageFileType(expression.getLanguage());
     if (fileType != null) {
       return fileType;
@@ -335,23 +340,41 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  protected static void foldNewLines(EditorEx editor) {
-    editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
-    editor.reinitSettings();
-    FoldingModelEx foldingModel = editor.getFoldingModel();
-    CharSequence text = editor.getDocument().getCharsSequence();
-    foldingModel.runBatchFoldingOperation(() -> {
-      foldingModel.clearFoldRegions();
-      for (int i = 0; i < text.length(); i++) {
-        if (text.charAt(i) == '\n') {
-          foldingModel.createFoldRegion(i, i + 1, "\u23ce", null, true);
+  public static void foldNewLines(EditorEx editor) {
+    WriteIntentReadAction.run((Runnable)() -> {
+      editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
+      editor.reinitSettings();
+      FoldingModelEx foldingModel = editor.getFoldingModel();
+      CharSequence text = editor.getDocument().getCharsSequence();
+      foldingModel.runBatchFoldingOperation(() -> {
+        foldingModel.clearFoldRegions();
+
+        // Fold the whitespaces at the beginning of a string
+        int start = 0;
+        while (start < text.length() && Character.isWhitespace(text.charAt(start))) {
+          start++;
         }
-      }
+        if (start > 0) {
+          foldingModel.createFoldRegion(0, start, "", null, true);
+        }
+
+        for (int i = start; i < text.length(); i++) {
+          if (text.charAt(i) == '\n') {
+            // Fold the whitespaces after a newline character
+            int j = i + 1;
+            while (j < text.length() && Character.isWhitespace(text.charAt(j))) {
+              j++;
+            }
+            foldingModel.createFoldRegion(i, j, "\u23ce", null, true);
+          }
+        }
+      });
     });
   }
 
   protected void prepareEditor(EditorEx editor) {
     editor.putUserData(EditorImpl.DISABLE_REMOVE_ON_DROP, Boolean.TRUE);
+    editor.putUserData(XDEBUGGER_EDITOR_KEY, Boolean.TRUE);
   }
 
   protected final void setExpandable(Editor editor) {
@@ -369,7 +392,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
     XDebuggerExpressionEditor expressionEditor =
       new XDebuggerExpressionEditor(myProject, myDebuggerEditorsProvider, myHistoryId, mySourcePosition,
-                                    getExpression(), true, true, false) {
+                                    getExpression(), true, true, false, myContext) {
         @Override
         protected JComponent decorate(JComponent component, boolean multiline, boolean showEditor) {
           return component;
@@ -382,7 +405,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
 
     JComponent component = expressionEditor.getComponent();
-    component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
+    // Don't set custom width here to support expand popup in RD/CWM
+    // Component will be stretched with `setStretchToOwnerWidth`
+    component.setPreferredSize(new Dimension(0, 100));
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
@@ -391,6 +416,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setResizable(true)
       .setRequestFocus(true)
       .setLocateByContent(true)
+      .setStretchToOwnerWidth(true)
       .setCancelOnWindowDeactivation(false)
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
@@ -401,7 +427,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
             new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK))))
-      .setCancelCallback(() -> {
+      .setCancelCallback(() -> WriteIntentReadAction.compute((Computable<Boolean>)()-> { //maybe readaction
         setExpression(expressionEditor.getExpression());
         requestFocusInEditor();
         Editor baseEditor = getEditor();
@@ -415,7 +441,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
         myExpandedPopup = null;
         return true;
-      }).createPopup();
+      })).createPopup();
 
     myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
 
@@ -484,8 +510,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }});
   }
 
-  @NotNull
-  private static @NlsContexts.Label String getAdText() {
+  private static @NotNull @NlsContexts.Label String getAdText() {
     return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
                                    NlsMessages.formatAndList(Arrays.asList(
                                      KeymapUtil.getKeystrokeText(KeymapUtil.getKeyStroke(CommonShortcuts.MOVE_DOWN)),
@@ -512,8 +537,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   private class LanguageChooser extends JLabel {
     @SuppressWarnings("UseJBColor")
-    final Color ENABLED_COLOR = new Color(0x787878);
-    final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
+    static final Color ENABLED_COLOR = new Color(0x787878);
+    static final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
 
     private Collection<Language> myLanguages = Collections.emptyList();
     private WeakReference<ListPopup> myPopup;

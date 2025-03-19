@@ -14,9 +14,6 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.platform.externalSystem.testFramework.TestExternalProjectSettings;
-import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings;
-import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -26,6 +23,9 @@ import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.externalSystem.testFramework.TestExternalProjectSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.ProjectTaskRunner;
 import com.intellij.testFramework.ExtensionTestUtil;
@@ -40,8 +40,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
-import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 import static java.util.Collections.emptyList;
 
 public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
@@ -136,7 +136,7 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
     }
 
     @Override
-    public Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
+    public @NotNull Class<? extends ExternalSystemTaskManager<TestExternalSystemExecutionSettings>> getTaskManagerClass() {
       return TestTaskManager.class;
     }
   }
@@ -167,22 +167,24 @@ public class ExternalSystemTaskActivatorTest extends HeavyPlatformTestCase {
   public static class TestTaskManager implements ExternalSystemTaskManager<TestExternalSystemExecutionSettings> {
 
     @Override
-    public void executeTasks(@NotNull ExternalSystemTaskId id,
-                             @NotNull List<String> taskNames,
-                             @NotNull String projectPath,
-                             @Nullable TestExternalSystemExecutionSettings settings,
-                             @Nullable String jvmParametersSetup,
-                             @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+    public void executeTasks(
+      @NotNull String projectPath,
+      @NotNull ExternalSystemTaskId id,
+      @NotNull TestExternalSystemExecutionSettings settings,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
       StringBuilder builder = TASKS_TRACE.get(id.findProject());
-      if (builder.length() != 0) {
+      if (!builder.isEmpty()) {
         builder.append(",");
       }
-      builder.append(StringUtil.join(taskNames, ","));
+      builder.append(StringUtil.join(settings.getTasks(), ","));
     }
 
     @Override
-    public boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
-      throws ExternalSystemException {
+    public boolean cancelTask(
+      @NotNull ExternalSystemTaskId id,
+      @NotNull ExternalSystemTaskNotificationListener listener
+    ) throws ExternalSystemException {
       return false;
     }
   }

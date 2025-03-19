@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -36,7 +37,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return myList;
   }
 
-  protected JList myList;
+  protected JList<Object> myList;
   protected JavaVisibilityPanel myVisibilityPanel;
   protected final @NlsContexts.DialogTitle String myRefactoringName;
 
@@ -72,8 +73,8 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return hBox;
   }
 
-  protected JList createTargetVariableChooser() {
-    final JList list = new JBList(new MyListModel());
+  protected JList<Object> createTargetVariableChooser() {
+    final JList<Object> list = new JBList<>(new MyListModel());
     list.setCellRenderer(new MyListCellRenderer());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setSelectedIndex(0);
@@ -87,7 +88,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return list;
   }
 
-  protected void updateOnChanged(JList list) {
+  protected void updateOnChanged(JList<?> list) {
     getOKAction().setEnabled(!list.getSelectionModel().isSelectionEmpty());
   }
 
@@ -98,7 +99,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
   }
 
   protected boolean verifyTargetClass (PsiClass targetClass) {
-    if (targetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) {
+    if (targetClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, targetClass)) {
       final Project project = getProject();
       if (ClassInheritorsSearch.search(targetClass, false).findFirst() == null) {
         final String message = JavaRefactoringBundle.message("0.is.an.interface.that.has.no.implementing.classes", DescriptiveNameUtil
@@ -119,7 +120,7 @@ public abstract class MoveInstanceMethodDialogBase extends MoveDialogBase {
     return true;
   }
 
-  private class MyListModel extends AbstractListModel {
+  private class MyListModel extends AbstractListModel<Object> {
     @Override
     public int getSize() {
       return myVariables.length;

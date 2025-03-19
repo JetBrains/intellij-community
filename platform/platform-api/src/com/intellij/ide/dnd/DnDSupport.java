@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.Disposable;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.dnd.DragSourceDropEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -74,7 +75,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     if (myImageProvider != null) {
       final DnDImage image = myImageProvider.fun(new DnDActionInfo(action, dragOrigin));
       if (image != null) {
@@ -86,7 +87,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   @Override
-  public void dragDropEnd() {
+  public void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
     if (myDropEndedCallback != null) {
       myDropEndedCallback.run();
     }
@@ -131,7 +132,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
   }
 
   private static final class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
-    @NotNull private final DnDSupport myTarget;
+    private final @NotNull DnDSupport myTarget;
 
     private DnDNativeTargetWrapper(@NotNull DnDSupport target) {
       myTarget = target;
@@ -158,8 +159,7 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
     }
   }
 
-  @NotNull
-  public static DnDSupportBuilder createBuilder(@NotNull JComponent component) {
+  public static @NotNull DnDSupportBuilder createBuilder(@NotNull JComponent component) {
     final JComponent myComponent = component;
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -34,45 +34,48 @@ import java.util.function.Function;
  * Thread-safe.
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
-  private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
-  private static final boolean READY = init();
-
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider} methods.
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
-    return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
-  }
+  private static volatile Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS;
+  private static volatile boolean READY;
 
   SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);
   }
 
-  @SuppressWarnings("unchecked")
-  private static boolean init() {
-    // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
-    // Please perform corresponding settings tuning if that assumption is broken in the future.
-
-    Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
-    for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
-      try {
-        LocalInspectionTool tool = inspectionClass.newInstance();
-        SPELL_CHECK_TOOLS.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
+  private static @NotNull Map<String, LocalInspectionToolWrapper> getSpellCheckTools() {
+    Map<String, LocalInspectionToolWrapper> tools = SPELL_CHECK_TOOLS;
+    if (tools == null) {
+      tools = new HashMap<>();
+      // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
+      // Please perform corresponding settings tuning if that assumption is broken in the future.
+      Class<LocalInspectionTool>[] inspectionClasses = (Class<LocalInspectionTool>[])new Class<?>[]{SpellCheckingInspection.class};
+      for (Class<LocalInspectionTool> inspectionClass : inspectionClasses) {
+        try {
+          LocalInspectionTool tool = inspectionClass.newInstance();
+          tools.put(tool.getShortName(), new LocalInspectionToolWrapper(tool));
+        }
+        catch (Throwable e) {
+          READY = false;
+          return Map.of();
+        }
       }
-      catch (Throwable e) {
-        return false;
-      }
+      SPELL_CHECK_TOOLS = tools;
+      READY = true;
     }
-    return true;
+    return tools;
+  }
+
+  private static boolean isReady() {
+    if (SPELL_CHECK_TOOLS == null) {
+      getSpellCheckTools();
+    }
+    return READY;
   }
 
   @Override
   public void customize(@NotNull EditorEx editor) {
     boolean apply = isEnabled();
 
-    if (!READY) {
+    if (!isReady()) {
       return;
     }
 
@@ -81,7 +84,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
       return;
     }
 
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    PsiFile file = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()));
     if (file == null) {
       return;
     }
@@ -115,19 +118,18 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     return strategy instanceof MyInspectionProfileStrategy && !((MyInspectionProfileStrategy)strategy).myUseSpellCheck;
   }
 
-  public static Set<String> getSpellCheckingToolNames() {
-    return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
+  static Set<String> getSpellCheckingToolNames() {
+    return Collections.unmodifiableSet(getSpellCheckTools().keySet());
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
-    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers =
-      ContainerUtil.createConcurrentWeakKeySoftValueMap();
+    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers
+      = CollectionFactory.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
-    @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
-      if (!READY) {
+    public @NotNull InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
+      if (!isReady()) {
         return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }
       MyInspectionProfileWrapper wrapper = myWrappers.get(profile);
@@ -151,7 +153,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
-      return SPELL_CHECK_TOOLS.containsKey(key.toString()) ? myUseSpellCheck : super.isToolEnabled(key, element);
+      return (key != null && getSpellCheckTools().containsKey(key.getShortName()) ? myUseSpellCheck : super.isToolEnabled(key, element));
     }
   }
 }

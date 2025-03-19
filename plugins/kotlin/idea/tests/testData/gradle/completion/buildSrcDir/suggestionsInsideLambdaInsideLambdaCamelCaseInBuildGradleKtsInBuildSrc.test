@@ -1,0 +1,17 @@
+// FILE: buildSrc/build.gradle.kts
+// "EXPECTED-SUGGESTION": "compilerOptions"
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    jvm()
+    sourceSets {
+        com<caret>
+    }
+}
+

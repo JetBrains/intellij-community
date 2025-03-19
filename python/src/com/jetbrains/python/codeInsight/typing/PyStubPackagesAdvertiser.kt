@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -15,6 +15,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
@@ -26,7 +27,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Companion.StubPackagesForSource
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
+import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
@@ -48,7 +49,9 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
+    private val BALLOON_NOTIFICATIONS = Cancellation.forceNonCancellableSectionInClassInitializer {
+      NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
+    }
   }
 
   var ignoredPackages: MutableList<String> = mutableListOf()
@@ -301,7 +304,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
-      return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
+      return PyInstallRequirementsFix(name, module, sdk, reqs, args)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {

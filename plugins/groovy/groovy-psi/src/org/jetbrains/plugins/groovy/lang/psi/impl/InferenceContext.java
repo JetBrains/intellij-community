@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.psi.PsiPolyVariantReference;
@@ -39,13 +39,12 @@ public interface InferenceContext {
     return results == null || results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
   }
 
-  @NotNull
-  default <T extends GroovyReference>
+  default @NotNull <T extends GroovyReference>
   Collection<? extends GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
     GroovyResolveResult[] results = resolveWithCaching(ref, resolver, incomplete);
     return results == null ? Collections.emptyList() : new SmartList<>(results);
   }
 
   <T extends GroovyPsiElement>
-  @Nullable PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
+  @Nullable PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends @Nullable PsiType> calculator);
 }

@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-object RemoteDevStatisticsCollector : CounterUsagesCollector() {
+internal object RemoteDevStatisticsCollector : CounterUsagesCollector() {
   private const val GROUP_ID = "cwm.gateway"
   private val EVENT_GROUP = EventLogGroup(GROUP_ID, 2)
 
@@ -21,12 +21,11 @@ object RemoteDevStatisticsCollector : CounterUsagesCollector() {
     finishEventAdditionalFields = arrayOf(IS_SUCCEEDED_FIELD)
   )
 
-  override fun getGroup(): EventLogGroup = EVENT_GROUP
-
-  fun onGuestDownloadStarted(): StructuredIdeActivity = 
-    GUEST_DOWNLOAD_EVENT.started(null)
+  fun onGuestDownloadStarted(): StructuredIdeActivity = GUEST_DOWNLOAD_EVENT.started(null)
 
   fun onGuestDownloadFinished(activity: StructuredIdeActivity?, isSucceeded: Boolean) {
     activity?.finished { listOf(EventPair(IS_SUCCEEDED_FIELD, isSucceeded)) }
   }
+
+  override fun getGroup(): EventLogGroup = EVENT_GROUP
 }

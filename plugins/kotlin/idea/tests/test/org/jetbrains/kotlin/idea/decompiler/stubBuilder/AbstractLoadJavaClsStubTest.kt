@@ -11,10 +11,10 @@ import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
-import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
+import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
@@ -32,75 +32,70 @@ abstract class AbstractLoadJavaClsStubTest : KotlinLightCodeInsightFixtureTestCa
         val ktFile = myFixture.file as KtFile
         val analysisResult = ktFile.analyzeWithAllCompilerChecks()
 
-        val configuration = CompilerConfiguration().apply { languageVersionSettings = file.languageVersionSettings }
+        val configuration = CompilerConfiguration().apply {
+            languageVersionSettings = file.languageVersionSettings
+            put(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT, true)
+        }
 
-        val state = GenerationState.Builder(
-            project, ClassBuilderFactories.BINARIES, analysisResult.moduleDescriptor,
-            analysisResult.bindingContext, listOf(ktFile), configuration
-        ).build()
+        val state = GenerationState(project, analysisResult.moduleDescriptor, configuration)
 
-        try {
-            KotlinCodegenFacade.compileCorrectFiles(state)
-            val outputFiles = state.factory
+        JvmIrCodegenFactory(configuration).convertAndGenerate(listOf(ktFile), state, analysisResult.bindingContext)
 
-            val lightFiles = HashMap<String, VirtualFile>()
+        val lightFiles = HashMap<String, VirtualFile>()
 
-            fun addDirectory(filePath: String) {
-                assert(filePath.startsWith('/'))
+        fun addDirectory(filePath: String) {
+            assert(filePath.startsWith('/'))
 
-                lightFiles.getOrPut(filePath) {
-                    object : LightVirtualFile(filePath) {
-                        override fun isDirectory() = true
-                        override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
-                        override fun findChild(name: String) = lightFiles["$filePath/$name"]
-                    }
-                }
-            }
-
-            fun addFile(filePath: String, content: ByteArray) {
-                assert(filePath.startsWith('/'))
-
-                val pathSegments = filePath.drop(1).split('/')
-                repeat(pathSegments.size) { i ->
-                    addDirectory("/" + pathSegments.take(i).joinToString("/"))
-                }
-
-                lightFiles[filePath] = object : BinaryLightVirtualFile(filePath, content) {
+            lightFiles.getOrPut(filePath) {
+                object : LightVirtualFile(filePath) {
+                    override fun isDirectory() = true
                     override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
+                    override fun findChild(name: String) = lightFiles["$filePath/$name"]
                 }
             }
+        }
 
-            addDirectory("/")
+        fun addFile(filePath: String, content: ByteArray) {
+            assert(filePath.startsWith('/'))
 
-            for (file in outputFiles.asList()) {
-                if (!file.relativePath.endsWith(".class")) {
-                    continue
-                }
-
-                addFile("/" + file.relativePath, file.asByteArray())
+            val pathSegments = filePath.drop(1).split('/')
+            repeat(pathSegments.size) { i ->
+                addDirectory("/" + pathSegments.take(i).joinToString("/"))
             }
 
-            val psiManager = PsiManager.getInstance(project)
-
-            for (lightFile in lightFiles.values) {
-                if (lightFile.isDirectory) {
-                    continue
-                }
-
-                val fileContent = FileContentImpl.createByFile(lightFile)
-                val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(fileContent) ?: continue
-
-                val decompiledProvider = KotlinDecompiledFileViewProvider(psiManager, lightFile, false, ::KtClsFile)
-                val stubsFromDeserializedDescriptors = KtFileStubBuilder().buildStubTree(KtClsFile(decompiledProvider))
-
-                Assert.assertEquals(
-                    "File: ${lightFile.name}",
-                    stubsFromDeserializedDescriptors.serializeToString(),
-                    stubTreeFromCls.serializeToString()
-                )
+            lightFiles[filePath] = object : BinaryLightVirtualFile(filePath, content) {
+                override fun getParent() = lightFiles[PathUtil.getParentPath(filePath)]
             }
-        } finally {
-            state.destroy()
+        }
+
+        addDirectory("/")
+
+        for (file in state.factory.asList()) {
+            if (!file.relativePath.endsWith(".class")) {
+                continue
+            }
+
+            addFile("/" + file.relativePath, file.asByteArray())
+        }
+
+        val psiManager = PsiManager.getInstance(project)
+
+        for (lightFile in lightFiles.values) {
+            if (lightFile.isDirectory) {
+                continue
+            }
+
+            val fileContent = FileContentImpl.createByFile(lightFile)
+            val stubTreeFromCls = KotlinClsStubBuilder().buildFileStub(fileContent) ?: continue
+
+            val decompiledProvider = KotlinDecompiledFileViewProvider(psiManager, lightFile, false, ::KtClsFile)
+            val stubsFromDeserializedDescriptors = KtFileStubBuilder().buildStubTree(KtClsFile(decompiledProvider))
+
+            Assert.assertEquals(
+                "File: ${lightFile.name}",
+                stubsFromDeserializedDescriptors.serializeToString(),
+                stubTreeFromCls.serializeToString()
+            )
         }
     }
 }

@@ -15,14 +15,21 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.visible.CommitCountStageKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgVcs;
-import org.zmlx.hg4idea.execution.*;
+import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.execution.HgLineProcessListener;
+import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 import org.zmlx.hg4idea.log.HgFileRevisionLogParser;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
@@ -34,12 +41,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import static org.zmlx.hg4idea.HgNotificationIdsHolder.LOG_CMD_EXEC_ERROR;
+
 public class HgLogCommand {
 
   private static final Logger LOG = Logger.getInstance(HgLogCommand.class.getName());
 
-  @NotNull private final Project myProject;
-  @NotNull private HgVersion myVersion;
+  private final @NotNull Project myProject;
+  private @NotNull HgVersion myVersion;
   private boolean myIncludeRemoved;
   private boolean myFollowCopies;
   private boolean myLogFile = true;
@@ -75,8 +84,7 @@ public class HgLogCommand {
     return execute(hgFile, limit, includeFiles, null);
   }
 
-  @NotNull
-  public HgVersion getVersion() {
+  public @NotNull HgVersion getVersion() {
     return myVersion;
   }
 
@@ -84,6 +92,19 @@ public class HgLogCommand {
    * @param limit Pass -1 to set no limits on history
    */
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd) {
+    try {
+      return executeOrFail(hgFile, limit, includeFiles, argsForCmd);
+    }
+    catch (VcsException e) {
+      VcsNotifier.getInstance(myProject).notifyError(LOG_CMD_EXEC_ERROR,
+                                                     HgBundle.message("hg4idea.error.log.command.execution"),
+                                                     e.getMessage());
+      return Collections.emptyList();
+    }
+  }
+
+  public final List<HgFileRevision> executeOrFail(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
+    throws VcsException {
     if ((limit <= 0 && limit != -1) || hgFile == null) {
       return Collections.emptyList();
     }
@@ -94,12 +115,11 @@ public class HgLogCommand {
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
-    return HgHistoryUtil.getCommitRecords(myProject, result,
-                                          new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
+    return HgHistoryUtil.getCommitRecordsOrFail(myProject, result,
+                                                new HgFileRevisionLogParser(myProject, originalHgFile, myVersion));
   }
 
-  @NotNull
-  private List<String> createArguments(@NotNull String template, int limit, @Nullable HgFile hgFile, @Nullable List<String> argsForCmd) {
+  private @NotNull List<String> createArguments(@NotNull String template, int limit, @Nullable HgFile hgFile, @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
@@ -120,7 +140,7 @@ public class HgLogCommand {
     }
     arguments.add("--template");
     arguments.add(template);
-    if (limit != -1) {
+    if (!CommitCountStageKt.isAll(limit)) {
       arguments.add("--limit");
       arguments.add(String.valueOf(limit));
     }
@@ -134,9 +154,8 @@ public class HgLogCommand {
     return arguments;
   }
 
-  @Nullable
-  public HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
-                                 @Nullable List<String> argsForCmd) {
+  public @Nullable HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, @Nullable HgFile hgFile,
+                                           @Nullable List<String> argsForCmd) {
     ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(false);
     boolean success = execute(repo, template, limit, hgFile, argsForCmd, collector);
     return success ? collector.getResult() : null;

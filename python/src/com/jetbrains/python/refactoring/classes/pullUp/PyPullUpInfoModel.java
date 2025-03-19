@@ -1,37 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Dependencies model for PyPullUp refactoring
-* @author Ilya.Kazakevich
 */
-class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
-  @NotNull
-  private final PyPullUpView myView;
+@ApiStatus.Internal
+public final class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
+  private final @NotNull PyPullUpView myView;
 
 
-  PyPullUpInfoModel(@NotNull final PyClass classUnderRefactoring,
-                    @NotNull final PyPullUpView view) {
+  PyPullUpInfoModel(final @NotNull PyClass classUnderRefactoring,
+                    final @NotNull PyPullUpView view) {
     super(classUnderRefactoring, null, false);
     myView = view;
   }
@@ -42,13 +28,13 @@ class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement,
   }
 
   @Override
-  public int checkForProblems(@NotNull final PyMemberInfo<PyElement> member) {
+  public int checkForProblems(final @NotNull PyMemberInfo<PyElement> member) {
     return member.isChecked() ? OK : super.checkForProblems(member);
   }
 
 
   @Override
-  protected int doCheck(@NotNull final PyMemberInfo<PyElement> memberInfo, final int problem) {
+  protected int doCheck(final @NotNull PyMemberInfo<PyElement> memberInfo, final int problem) {
     return problem;
   }
 

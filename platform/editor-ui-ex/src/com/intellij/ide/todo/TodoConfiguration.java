@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import com.intellij.psi.search.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.Topic;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,19 +24,25 @@ import java.util.List;
 
 @State(name = "TodoConfiguration", storages = @Storage("editor.xml"), category = SettingsCategory.CODE)
 public class TodoConfiguration implements PersistentStateComponent<Element> {
+
+  @Topic.ProjectLevel
   public static final Topic<PropertyChangeListener> PROPERTY_CHANGE = new Topic<>("TodoConfiguration changes", PropertyChangeListener.class);
+
+  public static TodoConfiguration getInstance() {
+    return ApplicationManager.getApplication().getService(TodoConfiguration.class);
+  }
+
+  @ApiStatus.Internal public static final @NonNls String PROP_MULTILINE = "multiLine";
+  @ApiStatus.Internal public static final @NonNls String PROP_TODO_PATTERNS = "todoPatterns";
+  @ApiStatus.Internal public static final @NonNls String PROP_TODO_FILTERS = "todoFilters";
+  private                    static final @NonNls String ELEMENT_MULTILINE = "multiLine";
+  private                    static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private                    static final @NonNls String ELEMENT_FILTER = "filter";
 
   private boolean myMultiLine = true;
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
-
-  @NonNls public static final String PROP_MULTILINE = "multiLine";
-  @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
-  @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
-  @NonNls private static final String ELEMENT_MULTILINE = "multiLine";
-  @NonNls private static final String ELEMENT_PATTERN = "pattern";
-  @NonNls private static final String ELEMENT_FILTER = "filter";
 
   public TodoConfiguration() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
@@ -45,10 +52,6 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
       }
     });
     resetToDefaultTodoPatterns();
-  }
-
-  public static TodoConfiguration getInstance() {
-    return ApplicationManager.getApplication().getService(TodoConfiguration.class);
   }
 
   public void resetToDefaultTodoPatterns() {

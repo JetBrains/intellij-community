@@ -33,7 +33,7 @@ public class JsonStructureViewTest extends JsonTestCase {
 
   private void doTestTreeStructure(@NotNull Consumer<StructureViewModel> consumer) {
     myFixture.configureByFile(getTestName(false) + ".json");
-    final StructureViewBuilder builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(myFixture.getFile());
+    final StructureViewBuilder builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(myFixture.getFile());
     assertNotNull(builder);
     StructureViewComponent component = null;
     try {

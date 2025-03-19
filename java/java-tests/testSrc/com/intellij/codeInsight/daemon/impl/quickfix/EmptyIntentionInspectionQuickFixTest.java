@@ -94,6 +94,6 @@ public class EmptyIntentionInspectionQuickFixTest extends LightQuickFixTestCase 
         return;
       }
     }
-    fail("Missed inspection setting action");
+    fail("Missing EditInspectionToolsSettingsAction; all emptyActions="+emptyActions);
   }
 }

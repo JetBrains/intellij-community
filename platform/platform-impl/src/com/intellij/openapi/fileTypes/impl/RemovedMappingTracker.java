@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,10 +17,12 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class RemovedMappingTracker {
+@ApiStatus.Internal
+public final class RemovedMappingTracker {
   private static final Logger LOG = Logger.getInstance(RemovedMappingTracker.class);
 
-  static final class RemovedMapping {
+  @ApiStatus.Internal
+  public static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
     private final boolean myApproved;
@@ -71,10 +74,10 @@ final class RemovedMappingTracker {
 
   private final MultiMap<FileNameMatcher, RemovedMapping> myRemovedMappings = new MultiMap<>();
 
-  @NonNls private static final String ELEMENT_REMOVED_MAPPING = "removed_mapping";
+  private static final @NonNls String ELEMENT_REMOVED_MAPPING = "removed_mapping";
   /** Applied for removed mappings approved by user */
-  @NonNls private static final String ATTRIBUTE_APPROVED = "approved";
-  @NonNls private static final String ATTRIBUTE_TYPE = "type";
+  private static final @NonNls String ATTRIBUTE_APPROVED = "approved";
+  private static final @NonNls String ATTRIBUTE_TYPE = "type";
 
   void clear() {
     myRemovedMappings.clear();
@@ -112,8 +115,7 @@ final class RemovedMappingTracker {
     }
   }
 
-  @NotNull
-  static List<RemovedMapping> readRemovedMappings(@NotNull Element e) {
+  static @NotNull List<RemovedMapping> readRemovedMappings(@NotNull Element e) {
     List<Element> children = e.getChildren(ELEMENT_REMOVED_MAPPING);
     if (children.isEmpty()) {
       return Collections.emptyList();

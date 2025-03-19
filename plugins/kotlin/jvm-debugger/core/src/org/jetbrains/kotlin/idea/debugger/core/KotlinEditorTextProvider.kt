@@ -8,17 +8,18 @@ import com.intellij.debugger.impl.EditorTextProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.util.parents
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.registryFlag
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -94,14 +95,18 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
 
         val isAllowed = when (target) {
-            is KtBinaryExpressionWithTypeRHS, is KtIsExpression -> true
-            is KtOperationExpression -> isReferenceAllowed(target.operationReference, allowMethodCalls)
+            is KtBinaryExpressionWithTypeRHS, is KtIsExpression, is KtDoubleColonExpression, is KtThisExpression -> true
+            is LeafPsiElement -> target.elementType == KtTokens.IDENTIFIER
             is KtReferenceExpression -> isReferenceAllowed(target, allowMethodCalls)
+            is KtOperationExpression -> {
+                isReferenceAllowed(target.operationReference, allowMethodCalls) &&
+                        allowMethodCalls // TODO: check operation arguments: allowMethodCalls || arguments.all { it.isSafe }
+            }
             is KtQualifiedExpression -> {
                 val selector = target.selectorExpression
                 selector is KtReferenceExpression && isReferenceAllowed(selector, allowMethodCalls)
             }
-            else -> true
+            else -> allowMethodCalls
         }
 
         return if (isAllowed) target else findEvaluationTarget(target.parent, allowMethodCalls)
@@ -110,7 +115,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
     private tailrec fun calculateCandidate(originalElement: PsiElement?, allowMethodCalls: Boolean): PsiElement? {
         val candidate = originalElement?.getParentOfType<KtExpression>(strict = false) ?: return null
 
-        if (!isAcceptedAsCodeFragmentContext(candidate)) {
+        if (!isAcceptedAsCandidate(candidate)) {
             return null
         }
 
@@ -120,7 +125,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             is KtObjectDeclaration -> if (candidate.isObjectLiteral()) candidate else null
             is KtDeclaration, is KtFile -> null
             is KtIfExpression -> if (candidate.`else` != null) candidate else null
-            is KtStatementExpression, is KtLabeledExpression -> null
+            is KtStatementExpression, is KtLabeledExpression, is KtLabelReferenceExpression -> null
             is KtStringTemplateExpression -> if (isStringTemplateAllowed(candidate, allowMethodCalls)) candidate else null
             is KtConstantExpression -> calculateCandidate(candidate.parent, allowMethodCalls)
             else -> when (val parent = candidate.parent) {
@@ -142,25 +147,25 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         }
     }
 
-    private fun isReferenceAllowed(reference: KtReferenceExpression, allowMethodCalls: Boolean): Boolean = analyze(reference) {
+    private fun isReferenceAllowed(reference: KtReferenceExpression, allowMethodCalls: Boolean): Boolean = runDumbAnalyze(reference, fallback = false) f@ {
         when {
-            reference is KtBinaryExpressionWithTypeRHS -> return true
-            reference is KtOperationReferenceExpression && reference.operationSignTokenType == KtTokens.ELVIS -> return true
-            reference is KtCollectionLiteralExpression -> return false
+            reference is KtBinaryExpressionWithTypeRHS -> return@f true
+            reference is KtOperationReferenceExpression && reference.operationSignTokenType == KtTokens.ELVIS -> return@f true
+            reference is KtCollectionLiteralExpression -> return@f false
             reference is KtCallExpression -> {
-                val callInfo = reference.resolveCall() as? KtSuccessCallInfo ?: return false
+                val callInfo = reference.resolveToCall() as? KaSuccessCallInfo ?: return@f false
 
-                return when (val call = callInfo.call) {
-                    is KtAnnotationCall -> {
+                return@f when (val call = callInfo.call) {
+                    is KaAnnotationCall -> {
                         val languageVersionSettings = reference.languageVersionSettings
                         languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses)
                     }
-                    is KtFunctionCall<*> -> {
+                    is KaFunctionCall<*> -> {
                         val functionSymbol = call.partiallyAppliedSymbol.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
-                    is KtCompoundVariableAccessCall -> {
-                        val functionSymbol = call.compoundAccess.operationPartiallyAppliedSymbol.symbol
+                    is KaCompoundVariableAccessCall -> {
+                        val functionSymbol = call.compoundOperation.operationPartiallyAppliedSymbol.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     else -> false
@@ -168,16 +173,16 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
             }
             else -> {
                 val symbol = reference.mainReference.resolveToSymbol()
-                return symbol == null || isSymbolAllowed(symbol, allowMethodCalls)
+                return@f symbol == null || isSymbolAllowed(symbol, allowMethodCalls)
             }
         }
     }
 
-    private fun isSymbolAllowed(symbol: KtSymbol, allowMethodCalls: Boolean): Boolean {
+    private fun isSymbolAllowed(symbol: KaSymbol, allowMethodCalls: Boolean): Boolean {
         return when (symbol) {
-            is KtClassOrObjectSymbol -> symbol.classKind.isObject
-            is KtFunctionLikeSymbol -> allowMethodCalls
-            is KtVariableSymbol, is KtValueParameterSymbol, is KtEnumEntrySymbol -> true
+            is KaClassSymbol -> symbol.classKind.isObject
+            is KaFunctionSymbol -> allowMethodCalls
+            is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol, is KaValueParameterSymbol, is KaEnumEntrySymbol -> true
             else -> false
         }
     }
@@ -186,17 +191,31 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
         !candidate.text.startsWith("\"\"\"") || allowMethodCalls
 
 
-    private val NOT_ACCEPTED_AS_CONTEXT_TYPES = arrayOf(
+    private val FORBIDDEN_PARENT_TYPES = setOf(
         KtUserType::class.java,
         KtImportDirective::class.java,
         KtPackageDirective::class.java,
         KtValueArgumentName::class.java,
         KtTypeAlias::class.java,
-        KtAnnotationEntry::class.java
+        KtAnnotationEntry::class.java,
+        KtDeclarationModifierList::class.java
     )
 
+    private fun isAcceptedAsCandidate(element: PsiElement): Boolean {
+        return isAccepted(element, FORBIDDEN_PARENT_TYPES)
+    }
+
     override fun isAcceptedAsCodeFragmentContext(element: PsiElement): Boolean {
-        return !NOT_ACCEPTED_AS_CONTEXT_TYPES.contains(element::class.java as Class<*>)
-                && PsiTreeUtil.getParentOfType(element, *NOT_ACCEPTED_AS_CONTEXT_TYPES) == null
+        return isAccepted(element, FORBIDDEN_PARENT_TYPES)
+    }
+
+    private fun isAccepted(element: PsiElement, forbiddenTypes: Set<Class<*>>): Boolean {
+        for (parent in element.parents(withSelf = true)) {
+            if (parent::class.java in forbiddenTypes) {
+                return false
+            }
+        }
+
+        return true
     }
 }

@@ -44,6 +44,7 @@ public enum EventAction {
     myKey = key;
   }
 
+  @Override
   public String toString() {
     return myKey;
   }

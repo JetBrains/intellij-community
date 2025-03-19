@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,10 +11,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+@ApiStatus.Internal
 class MessageMergeViewer implements MergeTool.MergeViewer {
-  @NotNull private final MergeContext myMergeContext;
+  private final @NotNull MergeContext myMergeContext;
 
-  @NotNull private final JPanel myPanel;
+  private final @NotNull JPanel myPanel;
 
   MessageMergeViewer(@NotNull MergeContext context, @NotNull @Nls String message) {
     myMergeContext = context;
@@ -22,27 +24,23 @@ class MessageMergeViewer implements MergeTool.MergeViewer {
     myPanel.add(DiffUtil.createMessagePanel(message), BorderLayout.CENTER);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return null;
   }
 
-  @NotNull
   @Override
-  public MergeTool.ToolbarComponents init() {
+  public @NotNull MergeTool.ToolbarComponents init() {
     return new MergeTool.ToolbarComponents();
   }
 
-  @Nullable
   @Override
-  public Action getResolveAction(@NotNull final MergeResult result) {
+  public @Nullable Action getResolveAction(final @NotNull MergeResult result) {
     if (result != MergeResult.CANCEL) return null;
 
     String caption = MergeUtil.getResolveActionTitle(result, null, myMergeContext);

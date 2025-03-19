@@ -16,7 +16,9 @@ import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.cleanActionText
 import com.intellij.vcs.commit.getProjectCommitMode
 import com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RollbackFilesAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -41,11 +43,11 @@ class RollbackFilesAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     if (!Manager.checkClmActive(e)) return
 
-    val project = e.project!!
-    val changes = e.getRequiredData(VcsDataKeys.CHANGES).asList()
+    val project = e.project ?: return
+    val changes = e.getData(VcsDataKeys.CHANGES) ?: return
 
     FileDocumentManager.getInstance().saveAllDocuments()
-    RollbackChangesDialog.rollbackChanges(project, changes)
+    RollbackChangesDialog.rollbackChanges(project, changes.asList())
   }
 
   object Manager {

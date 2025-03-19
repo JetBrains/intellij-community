@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.navigation;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,6 +26,12 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers")
         public static class Classfiers extends AbstractKotlinNavigationToLibrarySourceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -32,6 +39,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
             @TestMetadata("actualTypeAlias.kt")
             public void testActualTypeAlias() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/actualTypeAlias.kt");
+            }
+
+            @TestMetadata("annotations.kt")
+            public void testAnnotations() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/annotations.kt");
             }
 
             @TestMetadata("builtinType.kt")
@@ -44,6 +56,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/class.kt");
             }
 
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/enumEntry.kt");
+            }
+
             @TestMetadata("unnamedCompanion.kt")
             public void testUnnamedCompanion() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/unnamedCompanion.kt");
@@ -53,8 +70,19 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/constructors")
         public static class Constructors extends AbstractKotlinNavigationToLibrarySourceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractList.kt")
+            public void testAbstractList() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/constructors/abstractList.kt");
             }
 
             @TestMetadata("byteArrayPrimaryConstructorCall.kt")
@@ -71,6 +99,12 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/functions")
         public static class Functions extends AbstractKotlinNavigationToLibrarySourceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -114,8 +148,24 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties")
         public static class Properties extends AbstractKotlinNavigationToLibrarySourceTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ctorParameter.kt")
+            public void testCtorParameter() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/ctorParameter.kt");
+            }
+
+            @TestMetadata("dataClass.kt")
+            public void testDataClass() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/dataClass.kt");
             }
 
             @TestMetadata("list_size.kt")

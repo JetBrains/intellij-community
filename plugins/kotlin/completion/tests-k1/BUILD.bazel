@@ -1,0 +1,55 @@
+### auto-generated section `build kotlin.completion.tests.k1` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-completion-tests-k1",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-completion-tests-k1_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:guava",
+    "@lib//:gson",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//plugins/kotlin/completion/impl-k1:kotlin-completion-impl-k1",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
+    "//platform/lang-impl",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+    "//plugins/turboComplete",
+    "//plugins/turboComplete/languages/kotlin/k1:turboComplete-languages-kotlin-k1",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "@lib//:junit4",
+  ],
+  runtime_deps = ["//plugins/kotlin/plugin/k1:kotlin-plugin-k1"]
+)
+
+jvm_test(
+  name = "kotlin-completion-tests-k1_test",
+  runtime_deps = [":kotlin-completion-tests-k1_test_lib"]
+)
+### auto-generated section `build kotlin.completion.tests.k1` end

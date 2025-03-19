@@ -2,7 +2,9 @@
 package com.intellij.textMatching
 
 import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PrefixMatchingUtil {
   const val baseName = "prefix"
 

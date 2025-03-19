@@ -23,12 +23,11 @@ class CommonModuleResolveScopeEnlarger : ResolveScopeEnlarger() {
     override fun getAdditionalResolveScope(file: VirtualFile, project: Project): SearchScope? {
         val modulesWithFacet = ProjectFacetManager.getInstance(project).getModulesWithFacet(KotlinFacetType.TYPE_ID)
         if (modulesWithFacet.isEmpty()) return null
-        val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: return null
+        val projectFileIndex = ProjectFileIndex.getInstance(project)
+        val module = projectFileIndex.getModuleForFile(file) ?: return null
         if (!module.platform.isCommon()) return null
-
-        val moduleFileIndex = ModuleRootManager.getInstance(module).fileIndex
-
-        if (moduleFileIndex.getKotlinSourceRootType(file) == null) {
+        
+        if (projectFileIndex.getKotlinSourceRootType(file) == null) {
             return null
         }
 

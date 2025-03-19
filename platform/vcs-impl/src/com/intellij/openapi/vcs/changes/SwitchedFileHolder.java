@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.collect.Iterables;
@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class SwitchedFileHolder implements FileHolder {
   private final Project myProject;
   private final ProjectLevelVcsManager myVcsManager;
@@ -39,7 +41,7 @@ public class SwitchedFileHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     if (myProject.isDisposed()) return;
     final Iterator<VirtualFile> iterator = myMap.keySet().iterator();
     while (iterator.hasNext()) {
@@ -59,7 +61,7 @@ public class SwitchedFileHolder implements FileHolder {
   private boolean fileDropped(final VirtualFile file) {
     return !file.isValid() || myVcsManager.getVcsFor(file) == null;
   }
-  
+
   public Map<VirtualFile, String> getFilesMapCopy() {
     final HashMap<VirtualFile, String> result = new HashMap<>();
     for (final VirtualFile vf : myMap.keySet()) {
@@ -72,8 +74,7 @@ public class SwitchedFileHolder implements FileHolder {
     return myMap.isEmpty();
   }
 
-  @NotNull
-  public Collection<VirtualFile> values() {
+  public @NotNull Collection<VirtualFile> values() {
     return myMap.keySet();
   }
 
@@ -82,7 +83,7 @@ public class SwitchedFileHolder implements FileHolder {
     myMap.put(file, new Pair<>(recursive, branch));
   }
 
-  public void removeFile(@NotNull final VirtualFile file) {
+  public void removeFile(final @NotNull VirtualFile file) {
     myMap.remove(file);
   }
 
@@ -94,7 +95,7 @@ public class SwitchedFileHolder implements FileHolder {
     return result;
   }
 
-  public synchronized boolean containsFile(@NotNull final VirtualFile file) {
+  public synchronized boolean containsFile(final @NotNull VirtualFile file) {
     final VirtualFile floor = myMap.floorKey(file);
     if (floor == null) return false;
     final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor, true);
@@ -107,8 +108,7 @@ public class SwitchedFileHolder implements FileHolder {
     return false;
   }
 
-  @Nullable
-  public String getBranchForFile(final VirtualFile file) {
+  public @Nullable String getBranchForFile(final VirtualFile file) {
     final VirtualFile floor = myMap.floorKey(file);
     if (floor == null) return null;
     final SortedMap<VirtualFile, Pair<Boolean, String>> floorMap = myMap.headMap(floor);
@@ -120,6 +120,7 @@ public class SwitchedFileHolder implements FileHolder {
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -128,6 +129,7 @@ public class SwitchedFileHolder implements FileHolder {
     return Iterables.elementsEqual(myMap.entrySet(), that.myMap.entrySet());
   }
 
+  @Override
   public int hashCode() {
     return myMap.hashCode();
   }

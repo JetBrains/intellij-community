@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/breakpointApplicability")
 public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointApplicabilityTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -43,6 +50,11 @@ public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointAppl
         runTest("testData/breakpointApplicability/inlineOnly.kt");
     }
 
+    @TestMetadata("lambdaProperty.kt")
+    public void testLambdaProperty() throws Exception {
+        runTest("testData/breakpointApplicability/lambdaProperty.kt");
+    }
+
     @TestMetadata("locals.kt")
     public void testLocals() throws Exception {
         runTest("testData/breakpointApplicability/locals.kt");
@@ -51,6 +63,16 @@ public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointAppl
     @TestMetadata("properties.kt")
     public void testProperties() throws Exception {
         runTest("testData/breakpointApplicability/properties.kt");
+    }
+
+    @TestMetadata("return.kt")
+    public void testReturn() throws Exception {
+        runTest("testData/breakpointApplicability/return.kt");
+    }
+
+    @TestMetadata("script.kts")
+    public void testScript() throws Exception {
+        runTest("testData/breakpointApplicability/script.kts");
     }
 
     @TestMetadata("simple.kt")

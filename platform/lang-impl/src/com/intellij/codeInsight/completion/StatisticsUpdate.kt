@@ -4,11 +4,13 @@ package com.intellij.codeInsight.completion
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
+import com.intellij.featureStatistics.FeatureStatisticsUpdateListener
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.WeakReferenceDisposableWrapper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -18,8 +20,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.Alarm
+import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
+@ApiStatus.Internal
 class StatisticsUpdate
     private constructor(private val myInfo: StatisticsInfo) : Disposable {
   private var mySpared: Int = 0
@@ -44,6 +49,7 @@ class StatisticsUpdate
     }
     if (spared > 0) {
       mySpared += spared
+      application.messageBus.syncPublisher(FeatureStatisticsUpdateListener.TOPIC).completionStatUpdated(spared)
     }
   }
 
@@ -75,7 +81,10 @@ class StatisticsUpdate
 
     ourStatsAlarm.addRequest({
                                if (ourPendingUpdate === this) {
-                                 applyLastCompletionStatisticsUpdate()
+                                 //readaction is not enough
+                                 WriteIntentReadAction.run {
+                                   applyLastCompletionStatisticsUpdate()
+                                 }
                                }
                              }, 20 * 1000)
 

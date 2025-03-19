@@ -1,11 +1,11 @@
-import lombok.Delegate;
+import lombok.experimental.Delegate;
 
 abstract class DelegateOnMethods {
 
-	@Delegate
-	public abstract Bar getBar();
+  @Delegate
+  public abstract Bar getBar();
 
-	public static interface Bar {
-		void bar(java.util.ArrayList<java.lang.String> list);
-	}
+  public static interface Bar {
+    void bar(java.util.ArrayList<java.lang.String> list);
+  }
 }

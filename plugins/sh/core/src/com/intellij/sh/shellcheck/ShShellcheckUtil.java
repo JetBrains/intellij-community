@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.shellcheck;
 
 import com.intellij.execution.ExecutionException;
@@ -8,10 +8,8 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -21,31 +19,36 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.sh.ShLanguage;
+import com.intellij.platform.eel.EelPlatform;
 import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.utils.ExternalServicesUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.text.SemVer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Collections;
-import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.intellij.platform.eel.EelPlatformKt.*;
+import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
+import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
-import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP;
+import static com.intellij.sh.ShNotification.NOTIFICATION_GROUP;
 import static com.intellij.sh.statistics.ShCounterUsagesCollector.EXTERNAL_ANNOTATOR_DOWNLOADED_EVENT_ID;
 
 public final class ShShellcheckUtil {
@@ -53,60 +56,71 @@ public final class ShShellcheckUtil {
 
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHELLCHECK_UPDATE");
           static final @NlsSafe String SHELLCHECK = "shellcheck";
-          static final @NlsSafe String SHELLCHECK_BIN = SystemInfo.isWindows ? SHELLCHECK + ".exe" : SHELLCHECK;
-  private static final String SHELLCHECK_VERSION = "0.7.1";
+  private static final String SHELLCHECK_VERSION = "0.10.0";
   private static final String SHELLCHECK_ARTIFACT_VERSION = SHELLCHECK_VERSION + "-1";
   private static final String SHELLCHECK_ARCHIVE_EXTENSION = ".tar.gz";
   private static final String SHELLCHECK_URL =
     "https://cache-redirector.jetbrains.com/intellij-dependencies/org/jetbrains/intellij/deps/shellcheck/shellcheck/";
 
-  public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  public static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
   }
 
-  private static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
-    File directory = new File(PathManager.getPluginsPath(), ShLanguage.INSTANCE.getID());
-    if (!directory.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      directory.mkdirs();
-    }
+  static @NotNull String spellcheckBin(@NotNull EelPlatform platform) {
+    return isWindows(platform) ? SHELLCHECK + ".exe" : SHELLCHECK;
+  }
 
-    File shellcheck = new File(directory, SHELLCHECK_BIN);
-    File oldShellcheck = new File(directory, "old_" + SHELLCHECK_BIN);
-    if (shellcheck.exists()) {
-      if (withReplace) {
-        boolean successful = renameOldShellcheck(shellcheck, oldShellcheck, onFailure);
-        if (!successful) return;
-      }
-      else {
-        setupShellcheckPath(shellcheck, onSuccess, onFailure);
-        return;
-      }
-    }
-
-    String url = getShellcheckDistributionLink();
-    if (StringUtil.isEmpty(url)) {
-      LOG.debug("Unsupported OS for shellcheck");
-      return;
-    }
-
-    String downloadName = SHELLCHECK + SHELLCHECK_ARCHIVE_EXTENSION;
-    DownloadableFileService service = DownloadableFileService.getInstance();
-    DownloadableFileDescription description = service.createFileDescription(url, downloadName);
-    FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
-
+  private static void download(@NotNull Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure, boolean withReplace) {
     Task.Backgroundable task = new Task.Backgroundable(project, message("sh.shellcheck.download.label.text")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
+        final var eelDescriptor = getEelDescriptor(project);
+        final var eel = upgradeBlocking(eelDescriptor);
+
+        final var downloadPath = ExternalServicesUtil.computeDownloadPath(eel);
+
+        if (!Files.exists(downloadPath)) {
+          try {
+            Files.createDirectory(downloadPath);
+          }
+          catch (IOException e) {
+            //
+          }
+        }
+        final var shellcheck = downloadPath.resolve(spellcheckBin(eel.getPlatform()));
+        final var oldShellcheck = downloadPath.resolve("old_" + spellcheckBin(eel.getPlatform()));
+
+        if (Files.exists(shellcheck)) {
+          if (withReplace) {
+            boolean successful = renameOldShellcheck(shellcheck.toFile(), oldShellcheck.toFile(), onFailure);
+            if (!successful) return;
+          }
+          else {
+            setupShellcheckPath(project, shellcheck.toFile(), onSuccess, onFailure);
+            return;
+          }
+        }
+
+        String url = getShellcheckDistributionLink(eel.getPlatform());
+        if (StringUtil.isEmpty(url)) {
+          LOG.debug("Unsupported OS for shellcheck");
+          return;
+        }
+
+        String downloadName = SHELLCHECK + SHELLCHECK_ARCHIVE_EXTENSION;
+        DownloadableFileService service = DownloadableFileService.getInstance();
+        DownloadableFileDescription description = service.createFileDescription(url, downloadName);
+        FileDownloader downloader = service.createDownloader(Collections.singletonList(description), downloadName);
+
         try {
-          List<Pair<File, DownloadableFileDescription>> pairs = downloader.download(directory);
-          Pair<File, DownloadableFileDescription> first = ContainerUtil.getFirstItem(pairs);
-          File file = first != null ? first.first : null;
+          final var pairs = downloader.download(downloadPath.toFile());
+          final var first = ContainerUtil.getFirstItem(pairs);
+          final var file = first != null ? first.first : null;
           if (file != null) {
-            String path = decompressShellcheck(file, directory);
+            String path = decompressShellcheck(file, downloadPath.toFile(), eel.getPlatform());
             if (StringUtil.isNotEmpty(path)) {
               FileUtil.setExecutable(new File(path));
-              ShSettings.setShellcheckPath(path);
+              ShSettings.setShellcheckPath(project, path);
               if (withReplace) {
                 LOG.debug("Remove old shellcheck");
                 FileUtil.delete(oldShellcheck);
@@ -118,7 +132,7 @@ public final class ShShellcheckUtil {
         }
         catch (IOException e) {
           LOG.warn("Can't download shellcheck", e);
-          if (withReplace) rollbackToOldShellcheck(shellcheck, oldShellcheck);
+          if (withReplace) rollbackToOldShellcheck(shellcheck.toFile(), oldShellcheck.toFile());
           ApplicationManager.getApplication().invokeLater(onFailure);
         }
       }
@@ -128,15 +142,15 @@ public final class ShShellcheckUtil {
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator);
   }
 
-  private static void setupShellcheckPath(@NotNull File shellcheck, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
+  private static void setupShellcheckPath(@NotNull Project project, @NotNull File shellcheck, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     try {
-      String path = ShSettings.getShellcheckPath();
+      String path = ShSettings.getShellcheckPath(project);
       String shellcheckPath = shellcheck.getPath();
       if (StringUtil.isNotEmpty(path) && path.equals(shellcheckPath)) {
         LOG.debug("Shellcheck already downloaded");
       }
       else {
-        ShSettings.setShellcheckPath(shellcheckPath);
+        ShSettings.setShellcheckPath(project, shellcheckPath);
       }
       if (!shellcheck.canExecute()) FileUtil.setExecutable(shellcheck);
       ApplicationManager.getApplication().invokeLater(onSuccess);
@@ -198,66 +212,110 @@ public final class ShShellcheckUtil {
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!isNewVersionAvailable()) return;
-    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.update.question"),
-                                                 NotificationType.INFORMATION);
+    Pair<String, String> newVersionAvailable = getVersionUpdate(project);
+    if (newVersionAvailable == null) return;
+
+    String currentVersion = newVersionAvailable.first;
+    String newVersion = newVersionAvailable.second;
+
+    Notification notification = NOTIFICATION_GROUP.createNotification(
+      message("sh.shell.script"),
+      message("sh.shellcheck.update.question", currentVersion, newVersion),
+      NotificationType.INFORMATION);
     notification.setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK);
     notification.setSuggestionType(true);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.success.update"),
-                                            NotificationType.INFORMATION)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_SUCCESS)),
-                 () -> Notifications.Bus
-                   .notify(NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
-                                            NotificationType.ERROR)
-                             .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_ERROR)),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.success.update"),
+                                                             NotificationType.INFORMATION)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_SUCCESS)
+                   .notify(project),
+                 () -> NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
+                                                             NotificationType.ERROR)
+                   .setDisplayId(ShNotificationDisplayIds.UPDATE_SHELLCHECK_ERROR)
+                   .notify(project),
                  true);
       }));
     notification.addAction(NotificationAction.createSimple(messagePointer("sh.skip.version"), () -> {
       notification.expire();
       ShSettings.setSkippedShellcheckVersion(SHELLCHECK_VERSION);
     }));
-    Notifications.Bus.notify(notification, project);
+    notification.notify(project);
   }
 
-  private static boolean isNewVersionAvailable() {
-    String path = ShSettings.getShellcheckPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return false;
+  /**
+   * @return pair of old and new versions or null if there's no update
+   */
+  private static Pair<String, String> getVersionUpdate(@NotNull Project project) {
+    final String updateVersion = SHELLCHECK_VERSION;
+    final SemVer updateVersionVer = SemVer.parseFromText(updateVersion);
+    if (updateVersionVer == null) return null;
+    if (ShSettings.getSkippedShellcheckVersion().equals(updateVersion)) return null;
+
+    String path = ShSettings.getShellcheckPath(project);
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return null;
     File file = new File(path);
-    if (!file.canExecute()) return false;
-    if (!file.getName().contains(SHELLCHECK)) return false;
+    if (!file.canExecute()) return null;
+    if (!file.getName().contains(SHELLCHECK)) return null;
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHELLCHECK_VERSION) && !ShSettings.getSkippedShellcheckVersion().equals(SHELLCHECK_VERSION);
+      String current = getVersionFromStdOut(stdout);
+      if (current == null) {
+        current = "unknown";
+        return Pair.create(current, updateVersion);
+      }
+      SemVer currentVersion = SemVer.parseFromText(current);
+      if (currentVersion == null || updateVersionVer.isGreaterThan(currentVersion)) {
+        return Pair.create(current, updateVersion);
+      }
+      return null;
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
     }
-    return false;
+    return null;
   }
 
-  static @NotNull String decompressShellcheck(File tarPath, File directory) throws IOException {
+  private static String getVersionFromStdOut(String stdout) {
+    String[] lines = StringUtil.splitByLines(stdout);
+    for (String line : lines) {
+      line = line.trim().toLowerCase(Locale.ENGLISH);
+      String prefix = "version:";
+      if (line.contains(prefix)) {
+        return line.substring(prefix.length()).trim();
+      }
+    }
+    return null;
+  }
+
+  static @NotNull String decompressShellcheck(File tarPath, File directory, @NotNull EelPlatform eelPlatform) throws IOException {
     new Decompressor.Tar(tarPath).extract(directory);
 
     FileUtil.delete(tarPath);  // cleaning up
 
-    File shellcheck = new File(directory, SHELLCHECK_BIN);
+    File shellcheck = new File(directory, spellcheckBin(eelPlatform));
     return shellcheck.exists() ? shellcheck.getPath() : "";
   }
 
-  static @NlsSafe @Nullable String getShellcheckDistributionLink() {
-    String platform = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : SystemInfo.isLinux ? "linux" : null;
-    if (platform == null) return null;
-    return SHELLCHECK_URL + SHELLCHECK_ARTIFACT_VERSION + "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platform + SHELLCHECK_ARCHIVE_EXTENSION;
+  static @NlsSafe @Nullable String getShellcheckDistributionLink(@NotNull EelPlatform platform) {
+    String platformString = isMac(platform) ? "mac" : isWindows(platform) ? "windows" : isLinux(platform) ? "linux" : null;
+    if (platformString == null) return null;
+    String arch = isArm64(platform) ? "arm64" : "amd64";
+    if (platformString.equals("windows") && arch.equals("arm64")) {
+      // Unsupported OS + Arch
+      return null;
+    }
+    return SHELLCHECK_URL +
+           SHELLCHECK_ARTIFACT_VERSION +
+           "/shellcheck-" + SHELLCHECK_ARTIFACT_VERSION + '-' + platformString + '-' + arch + SHELLCHECK_ARCHIVE_EXTENSION;
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   public static final Map<@NlsSafe String, @Nls String> SHELLCHECK_CODES = new TreeMap<>(){{
     put("SC1000", message("check1000.is.not.used.specially.and.should.therefore.be.escaped"));
     put("SC1001", message("check1001.this.o.will.be.a.regular.o.in.this.context"));

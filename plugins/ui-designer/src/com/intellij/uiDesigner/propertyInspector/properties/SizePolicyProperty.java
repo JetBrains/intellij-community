@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -17,7 +17,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
   private final Property[] myChildren;
   private final SizePolicyRenderer myRenderer;
 
-  public SizePolicyProperty(@NonNls final String name){
+  public SizePolicyProperty(final @NonNls String name){
     super(null, name);
     myChildren=new Property[]{
       new MyBooleanProperty("Can Shrink", GridConstraints.SIZEPOLICY_CAN_SHRINK),
@@ -47,7 +47,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
   }
 
   @Override
-  @NotNull public final PropertyRenderer<Integer> getRenderer(){
+  public final @NotNull PropertyRenderer<Integer> getRenderer(){
     return myRenderer;
   }
 
@@ -73,7 +73,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     private final BooleanEditor myEditor;
     private final int myPropertyMask;
 
-    MyBooleanProperty(@NonNls final String name, final int propertyMask) {
+    MyBooleanProperty(final @NonNls String name, final int propertyMask) {
       super(SizePolicyProperty.this, name);
       myPropertyMask = propertyMask;
       myRenderer=new BooleanRenderer();
@@ -99,8 +99,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     }
 
     @Override
-    @NotNull
-    public final PropertyRenderer<Boolean> getRenderer(){
+    public final @NotNull PropertyRenderer<Boolean> getRenderer(){
       return myRenderer;
     }
 

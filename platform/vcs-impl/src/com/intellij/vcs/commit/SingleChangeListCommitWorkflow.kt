@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.LocalChangeList
@@ -24,13 +25,11 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 class SingleChangeListCommitWorkflow(
   project: Project,
   affectedVcses: Set<AbstractVcs>,
-  val initiallyIncluded: Collection<*>,
   val initialChangeList: LocalChangeList?,
   executors: List<CommitExecutor>,
   override val isDefaultCommitEnabled: Boolean,
-  initialCommitMessage: String?,
-  private val resultHandler: CommitResultHandler?
-) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
+  private val resultHandler: CommitResultHandler?,
+) : CommitChangeListDialogWorkflow(project) {
 
   init {
     updateVcses(affectedVcses)
@@ -54,7 +53,7 @@ class SingleChangeListCommitWorkflow(
   private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, DIALOG_TITLE)
+    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, VcsBundle.message("activity.name.commit"))
     addCommonResultHandlers(sessionInfo, committer)
     if (resultHandler != null) {
       committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
@@ -81,24 +80,8 @@ class SingleChangeListCommitWorkflow(
 
 abstract class CommitChangeListDialogWorkflow(
   project: Project,
-  initialCommitMessage: String?
 ) : AbstractCommitWorkflow(project) {
-
   abstract val isPartialCommitEnabled: Boolean
 
-  internal val commitMessagePolicy: SingleChangeListCommitMessagePolicy = SingleChangeListCommitMessagePolicy(project, initialCommitMessage)
-
   lateinit var commitState: ChangeListCommitState
-
-  override fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
-    super.addCommonResultHandlers(sessionInfo, committer)
-    committer.addResultHandler(ChangeListDescriptionCleaner(commitMessagePolicy, commitState))
-  }
-}
-
-private class ChangeListDescriptionCleaner(val commitMessagePolicy: SingleChangeListCommitMessagePolicy,
-                                           val commitState: ChangeListCommitState) : CommitterResultHandler {
-  override fun onSuccess() {
-    commitMessagePolicy.onAfterCommit(commitState)
-  }
 }

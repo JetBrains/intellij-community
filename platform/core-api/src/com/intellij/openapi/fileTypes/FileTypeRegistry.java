@@ -1,12 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.lang.Language;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,18 +37,41 @@ import java.util.function.Supplier;
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
  */
 public abstract class FileTypeRegistry {
-  private static Supplier<? extends FileTypeRegistry> instanceGetter;
+  private static volatile FileTypeRegistry instance;
+  static {
+    ApplicationManager.registerCleaner(() -> instance = null);
+  }
 
   @ApiStatus.Internal
-  public static Supplier<? extends FileTypeRegistry> setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier) {
-    Supplier<? extends FileTypeRegistry> oldValue = instanceGetter;
-    instanceGetter = supplier;
-    return oldValue;
+  public static void setInstanceSupplier(@NotNull Supplier<? extends FileTypeRegistry> supplier, @NotNull Disposable parentDisposable) {
+    FileTypeRegistry oldInstance = instance;
+    instance = supplier.get();
+    Disposer.register(parentDisposable, () -> {
+      instance = oldInstance;
+    });
+  }
+
+  public FileTypeRegistry() {
+    Application application = ApplicationManager.getApplication();
+    MessageBus messageBus;
+    if (application != null && !application.isDisposed() && !(messageBus = application.getMessageBus()).isDisposed()) {
+      messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+        @Override
+        public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+          CharsetUtil.clearFileTypeCaches();
+        }
+
+        @Override
+        public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+          CharsetUtil.clearFileTypeCaches();
+        }
+      });
+    }
   }
 
   @ApiStatus.Internal
   public static boolean isInstanceSupplierSet() {
-    return instanceGetter != null;
+    return instance != null;
   }
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
@@ -59,13 +88,20 @@ public abstract class FileTypeRegistry {
   }
 
   public static FileTypeRegistry getInstance() {
-    Supplier<? extends FileTypeRegistry> instanceGetter = FileTypeRegistry.instanceGetter;
-    if (instanceGetter == null) {
-      // in tests FileTypeManager service maybe not preloaded, so, ourInstanceGetter is not set
-      //noinspection deprecation
-      return ApplicationManager.getApplication().getServiceByClassName("com.intellij.openapi.fileTypes.FileTypeManager");
+    FileTypeRegistry cached = instance;
+    if (cached == null) {
+      // in tests FileTypeManager service maybe not preloaded, so, instance is not set
+      Application application = ApplicationManager.getApplication();
+      Class<? extends FileTypeRegistry> aClass = null;
+      try {
+        aClass = (Class<? extends FileTypeRegistry>)Class.forName("com.intellij.openapi.fileTypes.FileTypeManager");
+      }
+      catch (ClassNotFoundException ignored) {
+      }
+      instance = cached = application == null || aClass == null || !application.hasComponent(aClass)
+                          ? new EmptyFileTypeRegistry() : application.getService(aClass);
     }
-    return instanceGetter.get();
+    return cached;
   }
 
   /**

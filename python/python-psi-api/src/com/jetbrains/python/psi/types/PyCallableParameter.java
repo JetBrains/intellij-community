@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
@@ -32,8 +32,7 @@ public interface PyCallableParameter {
   @Nullable
   PyParameter getParameter();
 
-  @Nullable
-  default PsiElement getDeclarationElement() {
+  default @Nullable PsiElement getDeclarationElement() {
     return getParameter();
   }
 
@@ -56,8 +55,7 @@ public interface PyCallableParameter {
    * @return canonical representation of parameter.
    * Includes asterisks for *param and **param.
    */
-  @NotNull
-  default String getPresentableText(boolean includeDefaultValue) {
+  default @NotNull String getPresentableText(boolean includeDefaultValue) {
     return getPresentableText(includeDefaultValue, null);
   }
 

@@ -12,3 +12,8 @@ class ChildTarget : ParentTarget() {
         <selection><caret>super.targetFun()</selection>
     }
 }
+
+// MEMBER: "targetFun(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

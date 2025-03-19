@@ -30,10 +30,12 @@ class InlayProviderOption {
 
   @Attribute("descriptionKey")
   @RequiredElement
+  @Nls
   var descriptionBundleKey: String? = null
 
   @Attribute("nameKey")
   @RequiredElement
+  @Nls(capitalization = Nls.Capitalization.Title)
   var nameKey: String? = null
 
   fun getDescription(bean: InlayHintsProviderExtensionBean): @Nls String? {

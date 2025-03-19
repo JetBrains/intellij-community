@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.diff.DiffEditorTitleCustomizer;
@@ -42,8 +42,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   enum ScrollToPolicy {
     FIRST_CHANGE, LAST_CHANGE;
 
-    @Nullable
-    public <T> T select(@NotNull List<T> changes) {
+    public @Nullable <T> T select(@NotNull List<T> changes) {
       if (this == FIRST_CHANGE) return ContainerUtil.getFirstItem(changes);
       if (this == LAST_CHANGE) return ContainerUtil.getLastItem(changes);
       throw new IllegalStateException();
@@ -77,6 +76,8 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
 
   Key<ActionToolbar> LEFT_TOOLBAR = Key.create("Diff.LeftToolbar");
 
+  Key<Runnable> PATCH_FILE_PREVIEW_MODIFICATION_SWITCH = Key.create("Diff.PatchFilePreviewModificationSwitch");
+
   /**
    * Add panel to the bottom of diff window.
    * If passed panel implements Disposable, it will be disposed when window is closed.
@@ -98,9 +99,9 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<Float> TWO_SIDE_SPLITTER_PROPORTION = Key.create("Diff.TwoSideSplitterProportion");
 
   /**
-   * Marker flag for viewers embedded into FileEditor tab, that should not be disposed on tab close.
+   * Callback for viewers embedded into FileEditor tab, that should not be disposed on tab close.
    */
-  Key<Boolean> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
+  Key<Runnable> DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE = Key.create("Diff.DiffInEditor.ExplicitDisposable");
 
   Key<Boolean> DIFF_NEW_TOOLBAR = Key.create("Diff.NewToolbar");
 
@@ -125,6 +126,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<@Nls String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
   Key<@Nls String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
   Key<@Nls String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
+  Key<@Nls String> VCS_DIFF_EDITOR_TAB_TITLE = Key.create("Diff.Editor.Tab.Title");
 
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Left.Action.Text");
@@ -132,4 +134,6 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_LEFT_ACTION_TEXT = Key.create("Diff.Accept.Base.Left.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_RIGHT_TO_BASE_ACTION_TEXT = Key.create("Diff.Accept.Right.Base.Action.Text");
   Key<@NlsActions.ActionText String> VCS_DIFF_ACCEPT_BASE_TO_RIGHT_ACTION_TEXT = Key.create("Diff.Accept.Base.Right.Action.Text");
+
+  Key<CombinedDiffToggle> COMBINED_DIFF_TOGGLE = Key.create("Diff.CombinedDiffToggle");
 }

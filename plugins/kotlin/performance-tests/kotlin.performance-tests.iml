@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
@@ -16,9 +16,17 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.plugin.k1" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.project-model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.platforms" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
@@ -31,15 +39,14 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
-    <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.completion.impl.k1" />
+    <orderEntry type="module" module-name="kotlin.completion.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-jps-common" level="project" />
-    <orderEntry type="module" module-name="kotlin.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.jvm.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index" scope="TEST" />
@@ -51,5 +58,7 @@
     <orderEntry type="library" scope="TEST" name="jackson" level="project" />
     <orderEntry type="library" scope="TEST" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.j2k.shared" scope="TEST" />
   </component>
 </module>

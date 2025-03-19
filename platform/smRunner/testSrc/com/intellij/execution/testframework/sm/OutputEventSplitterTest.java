@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.hamcrest.core.IsCollectionContaining;
 import org.jetbrains.annotations.NotNull;
@@ -79,6 +79,19 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
     mySplitter.flush();
     final String[] strings = myOutput.get(stdout).toArray();
     Assert.assertArrayEquals(new String[]{"hello\n", "world\n", message+ "\n", "hi"}, strings);
+  }
+
+  public void testTcMessageCrLf() {
+    mySplitter = createEventSplitter(false, true);
+    final ProcessOutputType stdout = ProcessOutputType.STDOUT;
+    mySplitter.process("hello\r\n", stdout);
+    mySplitter.process("world\r\n", stdout);
+    final String message = ServiceMessage.asString("testStart", Collections.emptyMap());
+    mySplitter.process("\r\n" + message + "\r\n", stdout);
+    mySplitter.process("hi", stdout);
+    mySplitter.flush();
+    final String[] strings = myOutput.get(stdout).toArray();
+    Assert.assertArrayEquals(new String[]{"hello\r\n", "world\r\n", message + "\r\n", "hi"}, strings);
   }
 
   public void testLongMessage() throws ParseException {
@@ -356,14 +369,13 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
   }
 
   public void testPerformanceWithLotsOfFragments() {
-    PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 10, mySplitter::flush)
+    Benchmark.newBenchmark("Flushing lot's of fragments", mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {
           mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         }
       })
-      .useLegacyScaling()
-      .assertTiming();
+      .start();
   }
 
   public void testPerformanceSimple() {
@@ -374,12 +386,12 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
       }
     };
-    PlatformTestUtil.startPerformanceTest("print newlines with backspace", 5000, () -> {
+    Benchmark.newBenchmark("print newlines with backspace", () -> {
       for (int i = 0; i < 2_000_000; i++) {
         mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static Future<?> execute(final Runnable runnable) {

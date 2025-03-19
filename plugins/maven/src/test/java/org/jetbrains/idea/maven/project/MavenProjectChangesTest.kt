@@ -2,43 +2,36 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenProjectChangesTest : UsefulTestCase() {
   @Test
-  fun `test basics`() {
-    TestCase.assertTrue(MavenProjectChanges.ALL.hasChanges())
-    TestCase.assertTrue(MavenProjectChanges.ALL.hasDependencyChanges())
-    TestCase.assertTrue(MavenProjectChanges.ALL.hasPackagingChanges())
+  fun `test basics`() = runBlocking {
+    assertTrue(MavenProjectChanges.ALL.hasChanges())
+    assertTrue(MavenProjectChanges.ALL.hasDependencyChanges())
+    assertTrue(MavenProjectChanges.ALL.hasPackagingChanges())
 
-    TestCase.assertFalse(MavenProjectChanges.NONE.hasChanges())
-    TestCase.assertFalse(MavenProjectChanges.NONE.hasDependencyChanges())
-    TestCase.assertFalse(MavenProjectChanges.NONE.hasPackagingChanges())
-
-    TestCase.assertTrue(MavenProjectChanges.DEPENDENCIES.hasChanges())
-    TestCase.assertTrue(MavenProjectChanges.DEPENDENCIES.hasDependencyChanges())
-    TestCase.assertFalse(MavenProjectChanges.DEPENDENCIES.hasPackagingChanges())
+    assertFalse(MavenProjectChanges.NONE.hasChanges())
+    assertFalse(MavenProjectChanges.NONE.hasDependencyChanges())
+    assertFalse(MavenProjectChanges.NONE.hasPackagingChanges())
   }
 
   @Test
-  fun `test builder`() {
+  fun `test builder`() = runBlocking {
     val builder = MavenProjectChangesBuilder()
     assertFalse(builder.hasChanges())
 
     builder.setHasSourceChanges(true)
-    TestCase.assertTrue(builder.hasChanges())
-    TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
+    assertTrue(builder.hasChanges())
+    assertTrue(builder.hasSourceChanges())
 
     builder.setAllChanges(false)
-    TestCase.assertFalse(builder.hasChanges())
-    TestCase.assertFalse(builder.hasSourceChanges())
-    TestCase.assertFalse(builder.sources)
+    assertFalse(builder.hasChanges())
+    assertFalse(builder.hasSourceChanges())
 
     builder.setAllChanges(true)
-    TestCase.assertTrue(builder.hasChanges())
-    TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
+    assertTrue(builder.hasChanges())
+    assertTrue(builder.hasSourceChanges())
   }
 }

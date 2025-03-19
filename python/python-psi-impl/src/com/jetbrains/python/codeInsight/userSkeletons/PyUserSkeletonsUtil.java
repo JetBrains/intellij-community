@@ -16,7 +16,6 @@
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.google.common.collect.ImmutableSet;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -75,19 +74,17 @@ public final class PyUserSkeletonsUtil {
     "sys.py"
   );
 
-  @Nullable private static VirtualFile ourUserSkeletonsDirectory;
+  private static @Nullable VirtualFile ourUserSkeletonsDirectory;
   private static boolean ourNoSkeletonsErrorReported = false;
 
-  @NotNull
-  private static List<String> getPossibleUserSkeletonsPaths() {
+  private static @NotNull List<String> getPossibleUserSkeletonsPaths() {
     final List<String> result = new ArrayList<>();
     result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
-    result.add(PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
+    result.add(PythonHelpersLocator.findPathStringInHelpers(USER_SKELETONS_DIR));
     return result;
   }
 
-  @Nullable
-  public static VirtualFile getUserSkeletonsDirectory() {
+  public static @Nullable VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
       for (String path : getPossibleUserSkeletonsPaths()) {
         ourUserSkeletonsDirectory = StandardFileSystems.local().findFileByPath(path);
@@ -111,13 +108,12 @@ public final class PyUserSkeletonsUtil {
     return isUnderUserSkeletonsDirectory(virtualFile);
   }
 
-  public static boolean isUnderUserSkeletonsDirectory(@NotNull final VirtualFile virtualFile) {
+  public static boolean isUnderUserSkeletonsDirectory(final @NotNull VirtualFile virtualFile) {
     final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
-  @NotNull
-  public static GlobalSearchScope getUserSkeletonsDirectoryScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getUserSkeletonsDirectoryScope(@NotNull Project project) {
     VirtualFile userSkeletonsDirectory = getUserSkeletonsDirectory();
     if (userSkeletonsDirectory != null) {
       return new GlobalSearchScopesCore.DirectoryScope(project, userSkeletonsDirectory, true);
@@ -132,8 +128,7 @@ public final class PyUserSkeletonsUtil {
     if (skeletonsDir == null) {
       return false;
     }
-    final String relativePath =
-      VfsUtilCore.getRelativePath(virtualFile, ModelBranchUtil.obtainCopyFromTheSameBranch(virtualFile, skeletonsDir), '/');
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
     // not under skeletons directory
     if (relativePath == null) {
       return false;
@@ -142,12 +137,10 @@ public final class PyUserSkeletonsUtil {
     return STDLIB_SKELETONS.contains(firstComponent);
   }
 
-  @Nullable
-  public static <T extends PyElement> T getUserSkeleton(@NotNull T element) {
+  public static @Nullable <T extends PyElement> T getUserSkeleton(@NotNull T element) {
     return getUserSkeletonWithContext(element, null);
   }
-  @Nullable
-  public static <T extends PyElement> T getUserSkeletonWithContext(@NotNull T element, @Nullable final TypeEvalContext context) {
+  public static @Nullable <T extends PyElement> T getUserSkeletonWithContext(@NotNull T element, final @Nullable TypeEvalContext context) {
     final PsiFile file = element.getContainingFile();
     if (file instanceof PyFile) {
       final PyFile skeletonFile = getUserSkeletonForFile((PyFile)file);
@@ -162,8 +155,7 @@ public final class PyUserSkeletonsUtil {
     return null;
   }
 
-  @Nullable
-  public static PyFile getUserSkeletonForModuleQName(@NotNull String qName, @NotNull PsiElement foothold) {
+  public static @Nullable PyFile getUserSkeletonForModuleQName(@NotNull String qName, @NotNull PsiElement foothold) {
     final Sdk sdk = PythonSdkUtil.findPythonSdk(foothold);
     if (sdk != null) {
       final Project project = foothold.getProject();
@@ -195,8 +187,7 @@ public final class PyUserSkeletonsUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiElement getUserSkeleton(@NotNull PyElement element, @NotNull PyFile skeletonFile, @Nullable TypeEvalContext context) {
+  private static @Nullable PsiElement getUserSkeleton(@NotNull PyElement element, @NotNull PyFile skeletonFile, @Nullable TypeEvalContext context) {
     if (element instanceof PyFile) {
       return skeletonFile;
     }
@@ -225,8 +216,7 @@ public final class PyUserSkeletonsUtil {
     return null;
   }
 
-  @Nullable
-  private static PyFile getUserSkeletonForFile(@NotNull PyFile file) {
+  private static @Nullable PyFile getUserSkeletonForFile(@NotNull PyFile file) {
     final Boolean hasSkeleton = file.getUserData(HAS_SKELETON);
     if (hasSkeleton != null && !hasSkeleton) {
       return null;

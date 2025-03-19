@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressModel;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
 
@@ -173,7 +176,7 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @Nullable StatusBar createChild(@NotNull Disposable disposable,
+    public @Nullable StatusBar createChild(@NotNull CoroutineScope coroutineScope,
                                            @NotNull IdeFrame frame,
                                            @NotNull Function0<? extends FileEditor> editorProvider) {
       return null;
@@ -196,7 +199,7 @@ public final class TestWindowManager extends WindowManagerEx {
     public void addProgress(@NotNull ProgressIndicatorEx indicator, @NotNull TaskInfo info) { }
 
     @Override
-    public List<Pair<TaskInfo, ProgressIndicator>> getBackgroundProcesses() {
+    public List<Pair<TaskInfo, ProgressModel>> getBackgroundProcessModels() {
       return Collections.emptyList();
     }
 

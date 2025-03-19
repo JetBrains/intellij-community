@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,7 +20,8 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public class DetachDirectoryAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class DetachDirectoryAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -56,13 +58,11 @@ public class DetachDirectoryAction extends DumbAwareAction {
     }
   }
 
-  @NlsSafe
-  protected String getTitle(int directoriesAmount) {
+  private static @NlsSafe String getTitle(int directoriesAmount) {
     return IdeBundle.message("detach.directory.action.text.detach.0", directoriesAmount);
   }
 
-  @NlsSafe
-  protected String getConfirmDetachDialogTitle() {
+  private static @NlsSafe String getConfirmDetachDialogTitle() {
     return IdeBundle.message("detach.directory.dialog.title.detach");
   }
 

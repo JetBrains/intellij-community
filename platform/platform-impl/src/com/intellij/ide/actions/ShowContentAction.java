@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -22,7 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class ShowContentAction extends AnAction implements DumbAware {
-  @NonNls public static final String ACTION_ID = "ShowContent";
+  public static final @NonNls String ACTION_ID = "ShowContent";
 
   private ToolWindow myWindow;
 
@@ -58,8 +55,7 @@ public final class ShowContentAction extends AnAction implements DumbAware {
     }
   }
 
-  @Nullable
-  private ToolWindow getWindow(@NotNull AnActionEvent event) {
+  private @Nullable ToolWindow getWindow(@NotNull AnActionEvent event) {
     if (myWindow != null) {
       return myWindow;
     }
@@ -76,11 +72,11 @@ public final class ShowContentAction extends AnAction implements DumbAware {
 
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
     String toolWindowId = manager.getActiveToolWindowId();
-    ToolWindow window = toolWindowId == null ? null : manager.getToolWindow(toolWindowId);
+    ToolWindow window = toolWindowId == null ? event.getData(PlatformDataKeys.TOOL_WINDOW) : manager.getToolWindow(toolWindowId);
     if (window == null) {
       return null;
     }
 
-    return SwingUtilities.isDescendingFrom(window.getComponent(), context) ? window : null;
+    return SwingUtilities.isDescendingFrom(context, window.getComponent()) ? window : null;
   }
 }

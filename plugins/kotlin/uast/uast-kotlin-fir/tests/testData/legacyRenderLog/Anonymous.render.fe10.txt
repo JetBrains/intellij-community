@@ -6,7 +6,7 @@ public final class AnonymousKt {
         var runnable: <ErrorType> = anonymous object : Runnable { override fun run() {} }
         runnable.run()
         var runnable2: java.lang.Runnable = Runnable({
-            println()
+            return println()
         })
         runnable2.run()
         var closeableRunnable: <ErrorType> = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }

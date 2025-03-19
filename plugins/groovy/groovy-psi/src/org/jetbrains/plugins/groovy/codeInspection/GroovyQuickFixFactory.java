@@ -54,7 +54,7 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract GroovyFix createRenameFix();
 
-  public abstract GroovyFix createReplaceWithImportFix();
+  public abstract LocalQuickFix createReplaceWithImportFix();
 
   public abstract LocalQuickFix createGrMoveToDirFix(@NlsSafe String actual);
 
@@ -72,13 +72,13 @@ public abstract class GroovyQuickFixFactory {
 
   public abstract IntentionAction createInvestigateFix(@DetailedDescription String reason);
 
-  public abstract GroovyFix createMultipleAssignmentFix(int size);
+  public abstract LocalQuickFix createMultipleAssignmentFix(int size);
 
-  public abstract GroovyFix createSpreadArgumentFix(int size);
+  public abstract LocalQuickFix createSpreadArgumentFix(int size);
 
-  public abstract GroovyFix createMapConstructorFix();
+  public abstract LocalQuickFix createMapConstructorFix();
 
-  public abstract GroovyFix createQualifyExpressionFix();
+  public abstract LocalQuickFix createQualifyExpressionFix();
 
-  public abstract GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement);
+  public abstract LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement);
 }

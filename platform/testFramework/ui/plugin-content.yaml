@@ -1,0 +1,11 @@
+- name: lib/intellij.remoterobot.remote.fixtures.jar
+- name: lib/intellij.remoterobot.robot.server.core.jar
+- name: lib/platform-testFramework-ui.jar
+  projectLibraries:
+  - name: okhttp
+    files:
+    - name: $MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5/okhttp-5.jar
+    - name: $MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3/okio-jvm-3.jar
+    reason: withProjectLibrary
+  modules:
+  - name: intellij.platform.testFramework.ui

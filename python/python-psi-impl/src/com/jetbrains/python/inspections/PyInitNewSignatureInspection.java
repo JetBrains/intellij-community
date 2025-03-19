@@ -23,13 +23,12 @@ import java.util.List;
 /**
  * Detect and report incompatibilities between __new__ and __init__ signatures.
  */
-public class PyInitNewSignatureInspection extends PyInspection {
+public final class PyInitNewSignatureInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -61,8 +60,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
       }
     }
 
-    @NotNull
-    private List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
+    private @NotNull List<PyFunction> findComplementaryMethods(@NotNull PyClass cls, @NotNull PyFunction original) {
       final String complementaryName = PyUtil.isNewMethod(original) ? PyNames.INIT : PyNames.NEW;
       final List<PyFunction> complementaryMethods = cls.multiFindMethodByName(complementaryName, true, myTypeEvalContext);
 

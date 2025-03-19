@@ -1,0 +1,405 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.grid.core.impl"/>
+    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.libraries.microba"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.valueEditorTab" interface="com.intellij.database.run.ui.ValueEditorTab" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.datagrid.cellViewerFactory" interface="com.intellij.database.run.ui.CellViewerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.database.minimizedFormatDetector" interface="com.intellij.database.run.ui.MinimizedFormatDetector" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" fileType="CSV/TSV" isDocumentRequired="true"/>
+    <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
+    <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
+    <statusBarWidgetFactory id="GridPosition" implementation="com.intellij.database.datagrid.GridPositionWidget$Factory" order="before Position"/>
+    <notificationGroup id="Extractors" displayType="BALLOON" bundle="messages.DataGridBundle" key="notification.title.grid.extractors"/>
+    <notificationGroup id="GridPaste" displayType="BALLOON" bundle="messages.DataGridBundle" key="notification.title.grid.paste" isLogByDefault="false"/>
+    <postStartupActivity implementation="com.intellij.database.datagrid.DataGridStartupActivity" order="last"/>
+
+    <registryKey key="database.grid.render.cache" defaultValue="true"
+                 description="Cache cell images for speed"/>
+    <registryKey key="database.grid.render.cache.fast.scroll" defaultValue="true"
+                 description="Reduce font quality for speed when fast-scrolling over a background image"/>
+    <registryKey key="database.grid.cache.factor" defaultValue="3"
+                 description="Factor for cache size for rendered table cells"/>
+    <registryKey key="database.grid.show.chart.tab" defaultValue="true" restartRequired="false"
+                 description="Adds 'Show Chart' action to DG tables in editor, inlay and services."/>
+    <applicationService serviceInterface="com.intellij.database.extensions.ExtensionsService" serviceImplementation="com.intellij.database.extensions.ExtensionsServiceImpl"/>
+    <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.AggregateValueEditorTab"/>
+    <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.EditorValueEditorTab"/>
+    <database.datagrid.valueEditorTab implementation="com.intellij.database.run.ui.RecordViewTab"/>
+
+    <colorSettingsPage implementation="com.intellij.database.editor.DataGridColorSettingsPage"/>
+
+    <applicationConfigurable id="database.data.csv.formats" groupId="tools"
+                             bundle="messages.DataGridBundle"
+                             key="configurable.DatabaseSettingsConfigurable.CsvFormats.display.name"
+                             instance="com.intellij.database.settings.CsvSettingsConfigurable"/>
+
+    <applicationConfigurable id="database.data.views.appearance" groupId="appearance"
+                             bundle="messages.IdeBundle"
+                             key="configurable.DatabaseSettingsConfigurable.DataViews.display.name"
+                             groupWeight="100"
+                             instance="com.intellij.database.settings.DataGridAppearanceConfigurable"/>
+
+    <projectService serviceImplementation="com.intellij.database.datagrid.GridDataHookUpManager"/>
+    <search.optionContributor implementation="com.intellij.database.settings.DataGridAppearanceOptionContributor"/>
+    <customizableActionGroupProvider implementation="com.intellij.database.run.ui.table.TableFloatingToolbar$CustomizableGroupProvider"/>
+  </extensions>
+
+  <actions resource-bundle="messages.DataGridBundle">
+    <action id="DecreaseColumnWidth" class="com.intellij.database.actions.ColumnsWidthAction$DecreaseColumnsWidthAction"
+            use-shortcut-of="ResizeToolWindowLeft"/>
+    <action id="IncreaseColumnWidth" class="com.intellij.database.actions.ColumnsWidthAction$IncreaseColumnsWidthAction"
+            use-shortcut-of="ResizeToolWindowRight"/>
+    <action id="ResetColumnsWidth" class="com.intellij.database.actions.ResetColumnsWidth"
+            use-shortcut-of="ResizeToolWindowUp"/>
+    <action id="TableResult.GrowSelection" class="com.intellij.database.actions.GrowSelectionAction"
+            use-shortcut-of="EditorSelectWord"/>
+    <action id="TableResult.ShrinkSelection" class="com.intellij.database.actions.ShrinkSelectionAction"
+            use-shortcut-of="EditorUnSelectWord"/>
+    <action id="TableResult.SelectNextOccurrence"
+            class="com.intellij.database.actions.GridOccurrenceSelectionAction$SelectNextOccurrenceAction"
+            use-shortcut-of="SelectNextOccurrence"/>
+    <action id="TableResult.UnselectPreviousOccurrence"
+            class="com.intellij.database.actions.GridOccurrenceSelectionAction$UnselectPreviousOccurrenceAction"
+            use-shortcut-of="UnselectPreviousOccurrence"/>
+    <action id="TableResult.SelectAllOccurrences"
+            class="com.intellij.database.actions.GridOccurrenceSelectionAction$SelectAllOccurrencesAction"
+            use-shortcut-of="SelectAllOccurrences"/>
+    <action id="Console.TableResult.SwitchTo.TableView" class="com.intellij.database.actions.SwitchToTableAction"
+            icon="AllIcons.Nodes.DataTables"/>
+    <action id="Console.TableResult.Copy.Csv.Settings" class="com.intellij.database.run.actions.ShowCsvFormatsAction"
+            icon="AllIcons.Actions.Properties"/>
+    <action id="Console.TableResult.Copy.Csv.Settings.ForImport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForImport"/>
+
+    <action id="Console.TableResult.ChangeCellEditorFileEncoding" class="com.intellij.database.run.actions.ChangeCellEditorFileEncodingAction"
+            use-shortcut-of="ChangeFileEncodingAction"/>
+    <action id="Console.TableResult.DeleteRows" class="com.intellij.database.run.actions.DeleteRowsAction"
+            use-shortcut-of="EditorDeleteLine"/>
+    <action class="com.intellij.database.run.actions.LoadFileAction" id="Console.TableResult.LoadFile"/>
+    <action id="GotoRow" class="com.intellij.database.editor.GotoRowAction"
+            use-shortcut-of="GotoLine">
+      <add-to-group group-id="GoToMenu" anchor="before" relative-to-action="GotoLine"/>
+      <add-to-group group-id="EditorPopupMenu.GoTo" anchor="last"/>
+    </action>
+    <action class="com.intellij.database.actions.GotoReferencingResultAction" id="Console.TableResult.GotoReferencingResult"
+            use-shortcut-of="GotoDeclaration">
+      <add-to-group group-id="EditorPopupMenu.GoTo" anchor="last"/>
+    </action>
+    <action class="com.intellij.database.actions.GotoReferencedResultAction" id="Console.TableResult.GotoReferencedResult">
+      <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="ENTER"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt ENTER"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+    </action>
+    <action class="com.intellij.database.actions.ShowEditMaximizedAction" id="Console.TableResult.EditValueMaximized">
+      <keyboard-shortcut keymap="$default" first-keystroke="shift ENTER"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift ENTER"/>
+    </action>
+    <action class="com.intellij.database.actions.ShowAggregateViewAction" id="Console.TableResult.AggregateView"/>
+    <action id="Console.TableResult.ShowRecordView" class="com.intellij.database.actions.ShowRecordViewAction"
+            icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.SingleRecordView">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift ENTER"/>
+    </action>
+    <group id="Console.TableResult.ChooseAggregators.ScriptedGroup" class="com.intellij.database.run.actions.ChooseAggregatorsAction$ScriptedGroup" popup="false"/>
+    <action id="Console.TableResult.GoToAggregatorsScriptsDirectory"
+            class="com.intellij.database.run.actions.ChooseAggregatorsAction$GoToScriptsDirectoryAction"
+            icon="AllIcons.Nodes.Folder"/>
+    <action id="Console.TableResult.EnableAllAggregators"
+            class="com.intellij.database.run.actions.ChooseAggregatorsAction$EnableAllAggregatorsAction"/>
+    <action id="Console.TableResult.DisableAllAggregators"
+            class="com.intellij.database.run.actions.ChooseAggregatorsAction$DisableAllAggregatorsAction"/>
+    <action class="com.intellij.database.actions.CopyAggregatorResult" id="Console.TableResult.CopyAggregatorResult"
+            icon="AllIcons.Actions.Copy"
+            use-shortcut-of="CopyPaths"/>
+    <group id="Console.TableResult.ColumnDisplayTypeChange" class="com.intellij.database.run.actions.ChangeColumnDisplayTypeAction"/>
+    <group id="Console.TableResult.ColumnActions" popup="false">
+      <action id="Console.TableResult.ColumnVisibility" class="com.intellij.database.run.actions.ColumnAction$Visibility">
+        <keyboard-shortcut keymap="$default" first-keystroke="SPACE"/>
+      </action>
+      <group id="Console.TableResult.ColumnSortingActions" popup="true">
+        <action id="Console.TableResult.ColumnSortAsc" class="com.intellij.database.run.actions.ColumnAction$SortAsc"
+                use-shortcut-of="MoveLineUp">
+        </action>
+        <action id="Console.TableResult.ColumnSortDesc" class="com.intellij.database.run.actions.ColumnAction$SortDesc"
+                use-shortcut-of="MoveLineDown">
+        </action>
+        <action id="Console.TableResult.ColumnSortAddAsc" class="com.intellij.database.run.actions.ColumnAction$SortAddAsc"/>
+        <action id="Console.TableResult.ColumnSortAddDesc" class="com.intellij.database.run.actions.ColumnAction$SortAddDesc"/>
+        <action id="Console.TableResult.ColumnSortReset" class="com.intellij.database.run.actions.ColumnAction$SortReset">
+          <keyboard-shortcut keymap="$default" first-keystroke="control alt shift BACK_SPACE"/>
+        </action>
+      </group>
+
+      <add-to-group group-id="StructureViewPopupMenu" anchor="last"/>
+    </group>
+    <action id="Console.TableResult.AddColumn" class="com.intellij.database.run.actions.AddColumnAction"
+            use-shortcut-of="EditorToggleColumnMode" icon="AllIcons.General.Add"/>
+    <action id="Console.TableResult.DeleteColumns" class="com.intellij.database.run.actions.DeleteColumnsAction" icon="AllIcons.General.Remove">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift DELETE"/>
+    </action>
+    <action id="Console.TableResult.CloneColumn" icon="AllIcons.Actions.Copy" class="com.intellij.database.run.actions.CloneColumnAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift d"/>
+    </action>
+    <action id="Console.TableResult.ChangeColumnLanguage" class="com.intellij.database.run.actions.ChangeColumnLanguageAction"/>
+    <group id="Console.TableResult.ColumnHeaderPopup" popup="true">
+      <action id="Console.TableResult.Csv.SetFirstRowIsHeader" class="com.intellij.database.run.actions.SetFirstRowIsHeaderAction"/>
+      <action id="Console.TableResult.CopyColumnName" class="com.intellij.database.run.actions.CopyColumnNameAction"/>
+      <action id="Console.TableResult.RenameColumn" class="com.intellij.database.run.actions.RenameColumnAction"/>
+      <action id="TableResult.SelectColumn" class="com.intellij.database.actions.SelectColumnAction"
+              use-shortcut-of="EditorSelectWord"/>
+      <separator/>
+      <action id="Console.TableResult.HideColumn" class="com.intellij.database.run.actions.HideColumnAction"/>
+      <action id="Console.TableResult.HideOtherColumns" class="com.intellij.database.run.actions.HideOtherColumnsAction"/>
+      <action id="Console.TableResult.ShowAllColumns" class="com.intellij.database.run.actions.ShowAllColumnsAction"/>
+      <action id="Console.TableResult.ColumnsList" class="com.intellij.database.run.actions.ColumnsListAction"
+              use-shortcut-of="FileStructurePopup"/>
+      <separator/>
+      <reference ref="Console.TableResult.AddColumn"/>
+      <reference ref="Console.TableResult.CloneColumn"/>
+      <reference ref="Console.TableResult.DeleteColumns"/>
+      <separator text="ORDER BY"/>
+      <reference ref="Console.TableResult.ColumnSortAsc"/>
+      <reference ref="Console.TableResult.ColumnSortDesc"/>
+      <separator text="Add to ORDER BY"/>
+      <reference ref="Console.TableResult.ColumnSortAddAsc"/>
+      <reference ref="Console.TableResult.ColumnSortAddDesc"/>
+      <separator/>
+      <action id="Console.TableResult.ColumnLocalFilter" class="com.intellij.database.run.actions.ColumnLocalFilterAction"/>
+      <separator/>
+      <reference ref="Console.TableResult.ColumnSortReset"/>
+      <separator/>
+      <action id="Console.TableResult.Header.ChangeColumnLanguage" class="com.intellij.database.run.actions.ChangeColumnLanguageAction"/>
+      <reference ref="Console.TableResult.ColumnDisplayTypeChange"/>
+    </group>
+    <action id="Console.TableResult.CompareCells" class="com.intellij.database.run.actions.CompareCellsAction">
+      <keyboard-shortcut first-keystroke="control shift D" keymap="$default"/>
+    </action>
+    <action id="Console.TableResult.RevertSelected" class="com.intellij.database.run.actions.RevertMutations"
+            use-shortcut-of="ChangesView.Revert" icon="AllIcons.General.Reset"/>
+    <group id="Console.TableResult.Pagination.Group">
+      <action id="Console.TableResult.FirstPage" class="com.intellij.database.run.actions.PageAction$First" icon="AllIcons.Actions.Play_first"/>
+      <action id="Console.TableResult.PreviousPage" class="com.intellij.database.run.actions.PageAction$Previous" icon="AllIcons.Actions.Play_back">
+        <keyboard-shortcut keymap="$default" first-keystroke="control alt UP"/>
+      </action>
+      <group id="Console.TableResult.ChangePageSize" class="com.intellij.database.run.actions.ChangePageSizeActionGroup"/>
+      <action id="Console.TableResult.CountRows" class="com.intellij.database.run.actions.CountRowsAction"/>
+      <action id="Console.TableResult.NextPage" class="com.intellij.database.run.actions.PageAction$Next" icon="AllIcons.Actions.Play_forward">
+        <keyboard-shortcut keymap="$default" first-keystroke="control alt DOWN"/>
+      </action>
+      <action id="Console.TableResult.LastPage" class="com.intellij.database.run.actions.PageAction$Last" icon="AllIcons.Actions.Play_last"/>
+    </group>
+    <group id="Console.TableResult.Pagination.Floating.Group">
+      <reference ref="Console.TableResult.Pagination.Group"/>
+    </group>
+    <group id="Console.TableResult.Pagination.Floating.MoreGroup">
+      <action id="Console.TableResult.MoveGridFloatingPaging.GridLeft" class="com.intellij.database.run.actions.MoveGridFloatingPagingAction$GridLeft"/>
+      <action id="Console.TableResult.MoveGridFloatingPaging.GridRight" class="com.intellij.database.run.actions.MoveGridFloatingPagingAction$GridRight"/>
+      <action id="Console.TableResult.MoveGridFloatingPaging.GridCenter" class="com.intellij.database.run.actions.MoveGridFloatingPagingAction$GridCenter"/>
+      <action id="Console.TableResult.MoveGridFloatingPaging.EditorToolbar" class="com.intellij.database.run.actions.MoveGridFloatingPagingAction$EditorToolbar"/>
+    </group>
+    <group id="Console.TableResult.Navigate.Group" searchable="false">
+      <add-to-group group-id="EditorPopupMenu.GoTo" anchor="first"/>
+      <reference ref="Console.TableResult.FirstPage"/>
+      <reference ref="Console.TableResult.PreviousPage"/>
+      <reference ref="Console.TableResult.NextPage"/>
+      <reference ref="Console.TableResult.LastPage"/>
+      <separator/>
+    </group>
+    <group id="Console.TableResult.GoTo" popup="true" searchable="false">
+      <!-- replacement of EditorPopupMenu.GoTo for tables to avoid rubbish actions -->
+      <reference ref="Console.TableResult.Navigate.Group"/>
+      <reference ref="ShowNavBar"/>
+      <reference ref="GotoRow"/>
+      <reference ref="Console.TableResult.GotoReferencingResult"/>
+    </group>
+    <group id="Console.TableResult.PopupGroup">
+      <reference ref="Console.TableResult.Csv.SetFirstRowIsHeader"/>
+      <reference ref="Console.TableResult.GotoReferencedResult"/>
+      <action id="Console.TableResult.EditValue" class="com.intellij.database.run.actions.EditValueAction">
+        <keyboard-shortcut keymap="$default" first-keystroke="ENTER"/>
+        <keyboard-shortcut keymap="$default" first-keystroke="alt ENTER"/>
+        <keyboard-shortcut keymap="$default" first-keystroke="F2"/>
+      </action>
+      <separator/>
+      <reference ref="Console.TableResult.ShowRecordView"/>
+      <reference ref="Console.TableResult.EditValueMaximized"/>
+      <reference ref="Console.TableResult.AggregateView"/>
+      <separator/>
+      <reference ref="Console.TableResult.RevertSelected"/>
+      <reference ref="Console.TableResult.ChangeColumnLanguage"/>
+      <reference ref="Console.TableResult.ColumnDisplayTypeChange"/>
+      <separator/>
+      <group id="Console.TableResult.PopupGroup.CellActions" popup="false">
+        <reference ref="Console.TableResult.LoadFile"/>
+      </group>
+      <separator/>
+      <action id="Console.TableResult.Copy" class="com.intellij.database.actions.GridCopyAction"
+              use-shortcut-of="$Copy" icon="AllIcons.Actions.Copy"/>
+      <group id="Console.TableResult.ChooseExtractor" class="com.intellij.database.run.actions.ChooseExtractorAction"/>
+      <reference ref="Console.TableResult.CopyAggregatorResult"/>
+      <reference ref="$Paste"/>
+      <separator/>
+      <action id="Console.TableResult.AddRow" icon="AllIcons.General.Add" class="com.intellij.database.run.actions.AddRowAction"
+              use-shortcut-of="Generate"/>
+      <reference ref="Console.TableResult.DeleteRows"/>
+      <action id="Console.TableResult.CloneRow" icon="AllIcons.Actions.Copy" class="com.intellij.database.run.actions.CloneRowAction"
+              use-shortcut-of="EditorDuplicate"/>
+      <separator/>
+      <reference ref="Console.TableResult.AddColumn"/>
+      <reference ref="Console.TableResult.CloneColumn"/>
+      <reference ref="Console.TableResult.DeleteColumns"/>
+      <separator/>
+      <reference ref="Console.TableResult.CompareCells"/>
+      <separator/>
+      <reference ref="Console.TableResult.GoTo"/>
+    </group>
+    <group id="Console.TableResult.Inlay.Chart.Switch">
+      <reference ref="Console.TableResult.SwitchTo.TableView"/>
+    </group>
+    <group id="Console.TableResult.Inlay.Chart">
+      <reference ref="Console.TableResult.Inlay.Chart.Switch"/>
+      <separator/>
+    </group>
+    <group id="StatisticsPanel.Show" popup="true" icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.StatisticsPanel" class="com.intellij.database.run.actions.StatisticsShowActionGroup">
+      <action id="StatisticsPanel.Show.Off" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowOff"/>
+      <action id="StatisticsPanel.Show.Compact" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowCompact"/>
+      <action id="StatisticsPanel.Show.Detailed" class="com.intellij.database.run.actions.StatisticsShowAction$StatisticsShowDetailed"/>
+    </group>
+    <!--suppress PluginXmlCapitalization -->
+    <group id="Console.TableResult.ViewAs" popup="true" icon="AllIcons.Actions.Show">
+      <action id="Console.TableResult.Transpose" class="com.intellij.database.run.actions.ViewAsAction$TransposeViewAction"/>
+      <separator/>
+      <action id="Console.TableResult.ViewAsTable" class="com.intellij.database.run.actions.ViewAsAction$ViewAsTableAction"/>
+      <action id="Console.TableResult.ViewAsTreeTable" class="com.intellij.database.run.actions.ViewAsAction$ViewAsTreeTableAction"/>
+      <action id="Console.TableResult.ViewAsExtractor" class="com.intellij.database.run.actions.ViewAsAction$ViewAsExtractorAction"/>
+    </group>
+    <action class="com.intellij.database.actions.HideEditMaximizedAction" id="Console.TableResult.HideEditMaximized"
+            icon="AllIcons.Actions.Cancel"
+            use-shortcut-of="HideActiveWindow"/>
+    <group id="Console.TableResult.Options" popup="true" icon="AllIcons.General.GearPlain">
+      <reference ref="Console.TableResult.EditValueMaximized"/>
+      <reference ref="Console.TableResult.AggregateView"/>
+      <reference ref="Console.TableResult.HideEditMaximized"/>
+      <reference ref="Console.TableResult.ColumnsList"/>
+      <separator/>
+      <action id="Console.TableResult.ToggleFilters" class="com.intellij.database.run.actions.ToggleFilterComponentAction"/>
+      <group id="Console.TableResult.PasteFormat" class="com.intellij.database.run.actions.ChoosePasteFormatAction"/>
+      <separator/>
+      <action id="Console.TableResult.ResetView" class="com.intellij.database.run.actions.ResetViewAction"/>
+      <separator/>
+      <action id="DataViews.Settings.Appearance" class="com.intellij.database.run.actions.ShowDataViewsAppearanceSettingsAction" icon="AllIcons.General.Settings"/>
+    </group>
+    <group id="Console.TableResult.Group.Secondary">
+      <reference ref="Console.TableResult.ViewAs"/>
+      <reference ref="Console.TableResult.Options"/>
+    </group>
+    <group id="Console.TableResult.NavigationAndEditing.Group">
+      <reference ref="Console.TableResult.Pagination.Group"/>
+      <separator/>
+      <action id="Console.TableResult.Reload" class="com.intellij.database.run.actions.PageAction$Reload"
+              icon="com.intellij.util.PlatformIcons.SYNCHRONIZE_ICON"
+              use-shortcut-of="Refresh" />
+      <separator/>
+      <reference ref="Console.TableResult.AddRow"/>
+      <reference ref="Console.TableResult.DeleteRows"/>
+      <reference ref="Console.TableResult.RevertSelected"/>
+    </group>
+    <group id="Console.InEditorTableResult.Horizontal.Group">
+      <reference ref="Console.TableResult.Pagination.Group"/>
+      <separator/>
+      <reference ref="Console.TableResult.Reload"/>
+      <separator/>
+      <reference ref="Console.TableResult.RevertSelected"/>
+    </group>
+    <group id="Console.TableResult.Group.Common">
+      <reference ref="Console.TableResult.NavigationAndEditing.Group"/>
+    </group>
+    <group id="Console.EditorTableResult.Group">
+      <reference ref="Console.TableResult.Group.Common"/>
+      <action id="Console.TableResult.FindInGrid" class="com.intellij.database.run.actions.FindInGridAction"
+              icon="AllIcons.Actions.Find"  use-shortcut-of="Find"/>
+      <action id="Console.TableResult.ColumnLocalFilterToggle" class="com.intellij.database.run.actions.ColumnLocalFilterToggleAction"
+              icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.ColumnFilter" />
+      <action id="Console.TableResult.ToggleRecordView" class="com.intellij.database.actions.ToggleEditMaximizedViewAction"
+              icon="com.intellij.grid.core.impl.icons.GridCoreImplIcons.SingleRecordView"/>
+    </group>
+    <reference ref="Console.TableResult.ChooseExtractor"/>
+    <group id="Console.TableResult.ChooseExtractor.Group">
+      <group id="Console.TableResult.BuiltInExtractor.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$BuiltInGroup" popup="false"/>
+      <separator/>
+      <group id="Console.TableResult.CsvExtractors.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$CsvGroup" popup="false"/>
+      <action id="Console.TableResult.Copy.Csv.Settings.ForExport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForExport"/>
+      <group id="Console.TableResult.ScriptedExtractors.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$ScriptedGroup" popup="false"/>
+      <action id="Console.TableResult.GoToExtractorsScriptsDirectory"
+              class="com.intellij.database.run.actions.ChooseExtractorAction$GoToScriptsDirectoryAction"
+              icon="AllIcons.Nodes.Folder"/>
+    </group>
+    <group id="Console.TableResult.Csv.PreviewPopupGroup">
+      <reference ref="Console.TableResult.Csv.SetFirstRowIsHeader"/>
+      <reference ref="Console.TableResult.EditValue"/>
+    </group>
+    <group id="Console.TableResult.Csv.PreviewColumnHeaderPopup" popup="true">
+      <reference ref="Console.TableResult.Csv.SetFirstRowIsHeader"/>
+      <reference ref="Console.TableResult.CopyColumnName"/>
+    </group>
+    <action id="Console.TableResult.ShowPaginationAction" class="com.intellij.database.run.actions.ShowPaginationAction"
+            icon="AllIcons.Table.Pagination"/>
+    <action id="Console.TableResult.EditMaximized.MoveToRight" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToRightAction" icon="AllIcons.Actions.MoveToRightTop"/>
+    <action id="Console.TableResult.EditMaximized.MoveToBottom" class="com.intellij.database.actions.MoveEditMaximizedAction$MoveEditMaximizedToBottomAction" icon="AllIcons.Actions.MoveToBottomRight"/>
+    <group id="Console.TableResult.EditMaximized.Value.Group">
+      <action id="Console.TableResult.EditMaximized.ToggleFormattedMode" class="com.intellij.database.actions.ToggleFormattedModeInEditMaximize" icon="AllIcons.Actions.PrettyPrint"/>
+      <action id="Console.TableResult.EditMaximized.ToggleSoftWrap" class="com.intellij.database.actions.ToggleSoftWrapsInEditMaximize" icon="AllIcons.Actions.ToggleSoftWrap"/>
+      <separator/>
+      <group popup="true" icon="AllIcons.General.GearPlain">
+        <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
+        <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+      </group>
+      <reference ref="Console.TableResult.HideEditMaximized"/>
+    </group>
+    <group id="Console.TableResult.EditMaximized.Aggregates.Group">
+      <group popup="true" icon="AllIcons.General.GearPlain">
+        <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
+        <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+        <reference ref="Console.TableResult.EnableAllAggregators"/>
+        <reference ref="Console.TableResult.DisableAllAggregators"/>
+        <reference ref="Console.TableResult.ChooseAggregators.ScriptedGroup"/>
+        <reference ref="Console.TableResult.GoToAggregatorsScriptsDirectory"/>
+      </group>
+      <reference ref="Console.TableResult.HideEditMaximized"/>
+    </group>
+    <group id="Console.TableResult.EditMaximized.Record.Group">
+      <group popup="true" icon="AllIcons.General.GearPlain">
+        <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
+        <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+        <action id="Console.TableResult.EditMaximized.Record.ToggleLayout" class="com.intellij.database.actions.ToggleRecordViewLayoutAction"/>
+      </group>
+      <reference ref="Console.TableResult.HideEditMaximized"/>
+    </group>
+    <group id="Console.TableResult.EditMaximized.Chart.Group">
+      <group id="Console.TableResult.EditMaximized.Chart.Group.Properties" popup="true" icon="AllIcons.General.GearPlain">
+        <reference ref="Console.TableResult.EditMaximized.MoveToRight"/>
+        <reference ref="Console.TableResult.EditMaximized.MoveToBottom"/>
+      </group>
+      <reference ref="Console.TableResult.HideEditMaximized"/>
+    </group>
+    <group id="Console.AggregateView.PopupGroup" popup="true">
+      <reference ref="$Copy"/>
+    </group>
+    <group id="Console.TableResult.FloatingToolbarGroup"/>
+    <group id="Console.TableResult.FloatingToolbar.MoreGroup">
+      <action id="Console.TableResult.DisableGridFloatingToolbar" class="com.intellij.database.run.actions.DisableGridFloatingToolbarAction"/>
+      <action id="Console.TableResult.CustomizeGridFloatingToolbar" class="com.intellij.database.run.actions.CustomizeGridFloatingToolbarAction"/>
+    </group>
+
+    <action id="Console.TableResult.ShowDumpDialogGrid" icon="AllIcons.Actions.Download" class="com.intellij.database.dump.ShowDumpDialogGridAction"/>
+    <action id="Console.TableResult.ColumnLocalFilterWithCell"
+            class="com.intellij.database.run.actions.ColumnLocalFilterWithCellAction"/>
+    <group id="Console.TableResult.AggregatorViewGroup"/>
+  </actions>
+</idea-plugin>

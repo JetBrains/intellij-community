@@ -4,5 +4,6 @@ import kotlin.jvm.JvmOverloads
 fun foo(s: String = "")
 
 fun main(args: Array<String>) {
+    println(args)
     foo()
 }

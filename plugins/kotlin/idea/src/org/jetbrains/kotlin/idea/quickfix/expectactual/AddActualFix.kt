@@ -7,20 +7,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
+import org.jetbrains.kotlin.idea.core.expectActual.KotlinTypeInaccessibleException
+import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
-import org.jetbrains.kotlin.idea.refactoring.getExpressionShortText
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -50,9 +52,9 @@ class AddActualFix(
         for (missedDeclaration in missedDeclarationPointers.mapNotNull { it.element }) {
             val actualDeclaration = try {
                 when (missedDeclaration) {
-                    is KtClassOrObject -> psiFactory.generateClassOrObject(project, false, missedDeclaration, checker)
+                    is KtClassOrObject -> ExpectActualGenerationUtils.generateClassOrObject(project, psiFactory, false, missedDeclaration, checker)
                     is KtFunction, is KtProperty -> missedDeclaration.toDescriptor()?.safeAs<CallableMemberDescriptor>()?.let {
-                        generateCallable(project, false, missedDeclaration, it, element, checker = checker)
+                        ExpectActualGenerationUtils.generateCallable(project, false, missedDeclaration, it, element, checker = checker)
                     }
                     else -> null
                 } ?: continue

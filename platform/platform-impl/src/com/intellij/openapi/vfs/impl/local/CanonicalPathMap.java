@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -23,7 +24,8 @@ import static com.intellij.util.PathUtil.getParentPath;
 /**
  * Unless stated otherwise, all paths are {@link org.jetbrains.annotations.SystemDependent @SystemDependent}.
  */
-final class CanonicalPathMap {
+@ApiStatus.Internal
+public final class CanonicalPathMap {
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "CanonicalPathMap", ProcessIOExecutorService.INSTANCE, Runtime.getRuntime().availableProcessors());
 
@@ -36,9 +38,11 @@ final class CanonicalPathMap {
   private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
-  CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
-                   @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
+  public CanonicalPathMap(
+    @NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
+    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
+    @NotNull Collection<Pair<String, String>> initialPathMappings
+  ) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
     myInitialPathMappings = initialPathMappings;
@@ -135,7 +139,7 @@ final class CanonicalPathMap {
    * then filters out those that do not fall under watched roots.
    *
    * <h3>Exactness</h3>
-   * Some watchers (e.g. the native one on macOS) report a parent directory as dirty instead of the "exact" file path.
+   * Some watchers (e.g., the native one on macOS) report a parent directory as dirty instead of the "exact" file path.
    * <p>
    * For flat roots, it means that if and only if the exact dirty file path is returned, we should compare the parent to the flat roots,
    * otherwise we should compare to a path given to us because it is already the parent of the actual dirty path.

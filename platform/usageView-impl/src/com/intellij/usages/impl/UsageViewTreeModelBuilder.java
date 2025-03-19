@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,14 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
-public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
+final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final GroupNode.Root myRootNode;
 
   private final @Nullable TargetsRootNode myTargetsNode;
   private final UsageTarget[] myTargets;
   private UsageTargetNode[] myTargetNodes;
 
-  public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
+  UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, UsageTarget @NotNull [] targets) {
     super(GroupNode.createRoot());
     myRootNode = (GroupNode.Root)root;
 
@@ -52,9 +53,8 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
       return false;
     }
 
-    @NotNull
     @Override
-    protected String getNodeText() {
+    protected @NotNull String getNodeText() {
       return getUserObject().toString();
     }
   }
@@ -63,7 +63,7 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     if (myTargetsNode == null || myTargets.length == 0) {
       return;
     }
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myTargetNodes = new UsageTargetNode[myTargets.length];
     myTargetsNode.removeAllChildren();
     for (int i = 0; i < myTargets.length; i++) {
@@ -77,26 +77,15 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   UsageNode getFirstUsageNode() {
-    return (UsageNode)getFirstChildOfType(myRootNode, UsageNode.class);
+    return getFirstUsageNode(myRootNode);
   }
 
-  @Nullable GroupNode getFirstGroupNode() {
-    return (GroupNode)getFirstChildOfType(myRootNode, GroupNode.class);
-  }
-
-  private static TreeNode getFirstChildOfType(@NotNull TreeNode parent, @NotNull Class<?> type) {
-    int childCount = parent.getChildCount();
-    for (int idx = 0; idx < childCount; idx++) {
-      TreeNode child = parent.getChildAt(idx);
-      if (type.isAssignableFrom(child.getClass())) {
-        return child;
-      }
-      TreeNode firstChildOfType = getFirstChildOfType(child, type);
-      if (firstChildOfType != null) {
-        return firstChildOfType;
-      }
+  private static UsageNode getFirstUsageNode(@NotNull GroupNode parent) {
+    Node found;
+    synchronized (parent) {
+      found = ContainerUtil.find(parent.getChildren(), c -> c instanceof UsageNode || c instanceof GroupNode);
     }
-    return null;
+    return (found instanceof GroupNode groupNode) ? getFirstUsageNode(groupNode) : (UsageNode)found;
   }
 
   boolean areTargetsValid() {
@@ -114,62 +103,61 @@ public final class UsageViewTreeModelBuilder extends DefaultTreeModel {
   }
 
   @Override
-  @NotNull
-  public Object getRoot() {
+  public @NotNull Object getRoot() {
     return myRootNode;
   }
 
   @Override
   public void nodeChanged(TreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.nodeChanged(node);
   }
 
   @Override
   public void nodesWereInserted(TreeNode node, int[] childIndices) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.nodesWereInserted(node, childIndices);
   }
 
   @Override
   public void nodesWereRemoved(TreeNode node, int[] childIndices, Object[] removedChildren) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.nodesWereRemoved(node, childIndices, removedChildren);
   }
 
   @Override
   public void nodesChanged(TreeNode node, int[] childIndices) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.nodesChanged(node, childIndices);
   }
 
   @Override
   public void nodeStructureChanged(TreeNode node) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.nodeStructureChanged(node);
   }
 
   @Override
   protected void fireTreeNodesChanged(Object source, Object[] path, int[] childIndices, Object[] children) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.fireTreeNodesChanged(source, path, childIndices, children);
   }
 
   @Override
   protected void fireTreeNodesInserted(Object source, Object[] path, int[] childIndices, Object[] children) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.fireTreeNodesInserted(source, path, childIndices, children);
   }
 
   @Override
   protected void fireTreeNodesRemoved(Object source, Object[] path, int[] childIndices, Object[] children) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.fireTreeNodesRemoved(source, path, childIndices, children);
   }
 
   @Override
   protected void fireTreeStructureChanged(Object source, Object[] path, int[] childIndices, Object[] children) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.fireTreeStructureChanged(source, path, childIndices, children);
   }
 }

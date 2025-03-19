@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -33,8 +33,6 @@ import org.jetbrains.kotlin.resolve.scopes.utils.chainImportingScopes
 import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
-
-data class ReplaceWithData(val pattern: String, val imports: List<String>, val replaceInWholeProject: Boolean)
 
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
@@ -91,7 +89,7 @@ object ReplaceWithAnnotationAnalyzer {
         val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
         val typeResolver = resolutionFacade.getFrontendService(TypeResolver::class.java)
-        val bindingTrace = BindingTraceContext()
+        val bindingTrace = BindingTraceContext(resolutionFacade.project)
         typeResolver.resolvePossiblyBareType(TypeResolutionContext(scope, bindingTrace, false, true, false), typeReference)
 
         val typesToQualify = ArrayList<Pair<KtNameReferenceExpression, FqName>>()

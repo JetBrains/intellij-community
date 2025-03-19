@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy.view;
 
 import com.intellij.openapi.editor.richcopy.FontMapper;
@@ -14,7 +14,7 @@ import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.datatransfer.DataFlavor;
 
-public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransferableData {
+public final class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransferableData {
   public static final int PRIORITY = 100;
   public static final DataFlavor FLAVOR = new DataFlavor("text/rtf;class=java.io.InputStream", "RTF text");
 
@@ -31,7 +31,7 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
   }
 
   @Override
-  protected void build(@NotNull final StringBuilder holder, final int maxLength) {
+  protected void build(final @NotNull StringBuilder holder, final int maxLength) {
     holder.append(HEADER_PREFIX);
 
     holder.append("{\\colortbl;");
@@ -88,9 +88,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     return (int)(component * 255 + 0.5f);
   }
 
-  @NotNull
   @Override
-  protected String getCharset() {
+  protected @NotNull String getCharset() {
     return "US-ASCII";
   }
 
@@ -103,9 +102,9 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
     return PRIORITY;
   }
 
-  private static class MyVisitor implements MarkupHandler {
-    @NotNull private final StringBuilder myBuffer;
-    @NotNull private final String        myRawText;
+  private static final class MyVisitor implements MarkupHandler {
+    private final @NotNull StringBuilder myBuffer;
+    private final @NotNull String        myRawText;
     private final int myMaxLength;
     private final int myDefaultBackgroundId;
     private final float myFontSize;

@@ -17,23 +17,72 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
-open class ProjectResolveModel(val modules: List<ResolveModule>) {
+open class ProjectResolveModel(
+    val mode: ProjectResolveMode,
+    val modules: List<ResolveModule>
+) {
     open class Builder {
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         val modules: MutableList<ResolveModule.Builder> = mutableListOf()
 
-        open fun build(): ProjectResolveModel = ProjectResolveModel(modules.map { it.build() })
+        open fun build(): ProjectResolveModel = ProjectResolveModel(
+            mode = mode, modules = modules.map { it.build() }
+        )
     }
 
 }
 
+
+enum class ProjectResolveMode {
+    /**
+     * Like a simple jps or Kotlin/JVM project
+     */
+    SinglePlatform,
+
+    /**
+     * Also equal to HMPP (Hierarchical Multiplatform or MPPv3)
+     */
+    MultiPlatform
+}
+
 open class ResolveModule(
     val name: String,
-    val root: File,
+    rootProvider: () -> File,
     val platform: TargetPlatform,
     val dependencies: List<ResolveDependency>,
-    val testRoot: File? = null,
-    val additionalCompilerArgs: String? = null
+    testRootProvider: () -> File? = { null },
+    val additionalCompilerArgs: String? = null,
+    val sourceRootProvider: () -> File? = { null },
 ) {
+    val root: File by lazy {
+        rootProvider()
+    }
+
+    val testRoot: File? by lazy {
+        testRootProvider()
+    }
+
+    val sourceRoot: File? by lazy {
+        sourceRootProvider()
+    }
+
+    constructor(
+        name: String,
+        root: File,
+        platform: TargetPlatform,
+        dependencies: List<ResolveDependency>,
+        testRoot: File? = null,
+        additionalCompilerArgs: String? = null,
+        sourceRoot: File? = null,
+    ) : this(
+        name,
+        rootProvider = { root },
+        platform,
+        dependencies,
+        testRootProvider = { testRoot },
+        additionalCompilerArgs,
+        sourceRootProvider = { sourceRoot })
+
     final override fun toString(): String {
         return buildString { renderDescription(Printer(this)) }
     }
@@ -43,20 +92,17 @@ open class ResolveModule(
         printer.pushIndent()
         printer.println("platform=$platform")
         printer.println("root=${root.absolutePath}")
-        if (testRoot != null) printer.println("testRoot=${testRoot.absolutePath}")
+        sourceRoot?.let { printer.println("sourceRoot=${it.absolutePath}") }
+        testRoot?.let { testRoot -> printer.println("testRoot=${testRoot.absolutePath}") }
         printer.println("dependencies=${dependencies.joinToString { it.to.name }}")
-        if (additionalCompilerArgs != null)  printer.println("additionalCompilerArgs=$additionalCompilerArgs")
+        if (additionalCompilerArgs != null) printer.println("additionalCompilerArgs=$additionalCompilerArgs")
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ResolveModule
-
-        if (name != other.name) return false
-
-        return true
+        return other is ResolveModule && name == other.name
     }
 
     override fun hashCode(): Int {
@@ -67,6 +113,7 @@ open class ResolveModule(
         private var state: State = State.NOT_BUILT
         private var cachedResult: ResolveModule? = null
 
+        var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
         var name: String? = null
         var root: File? = null
         var platform: TargetPlatform? = null
@@ -81,7 +128,8 @@ open class ResolveModule(
             state = State.BUILDING
 
             val builtDependencies = dependencies.map { it.build() }
-            cachedResult = ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs= additionalCompilerArgs)
+            cachedResult =
+                ResolveModule(name!!, root!!, platform!!, builtDependencies, testRoot, additionalCompilerArgs = additionalCompilerArgs)
             state = State.BUILT
 
             return cachedResult!!
@@ -97,10 +145,14 @@ open class ResolveModule(
 
 sealed class ResolveLibrary(
     name: String,
-    root: File,
+    rootProvider: () -> File,
     platform: TargetPlatform,
-    val kind: PersistentLibraryKind<*>?
-) : ResolveModule(name, root, platform, emptyList()) {
+    val kind: PersistentLibraryKind<*>?,
+    sourceRootProvider: () -> File? = { null },
+) : ResolveModule(name, rootProvider = rootProvider, platform, dependencies = emptyList(), sourceRootProvider = sourceRootProvider) {
+
+    constructor(name: String, root: File, platform: TargetPlatform, kind: PersistentLibraryKind<*>?) : this(name, { root }, platform, kind)
+
     class Builder(val target: ResolveLibrary) : ResolveModule.Builder() {
         override fun build(): ResolveModule = target
     }
@@ -108,70 +160,74 @@ sealed class ResolveLibrary(
 
 sealed class Stdlib(
     name: String,
-    root: File,
+    rootProvider: () -> File,
     platform: TargetPlatform,
-    kind: PersistentLibraryKind<*>?
-) : ResolveLibrary(name, root, platform, kind) {
+    kind: PersistentLibraryKind<*>?,
+    sourceRootProvider: () -> File? = { null }
+) : ResolveLibrary(name, rootProvider, platform, kind, sourceRootProvider = sourceRootProvider) {
 
     object CommonStdlib : Stdlib(
         "stdlib-common",
-        TestKotlinArtifacts.kotlinStdlibCommon,
+        { TestKotlinArtifacts.kotlinStdlibCommon },
         CommonPlatforms.defaultCommonPlatform,
-        KotlinCommonLibraryKind
+        KotlinCommonLibraryKind,
+        sourceRootProvider = { TestKotlinArtifacts.kotlinStdlibCommonSources }
     )
+
     object NativeStdlib : Stdlib(
         "stdlib-native-by-host",
-        TestKotlinArtifacts.kotlinStdlibNative,
+        { TestKotlinArtifacts.kotlinStdlibNative },
         NativePlatforms.nativePlatformBySingleTarget(HostManager.host),
-        KotlinNativeLibraryKind
+        KotlinNativeLibraryKind,
     )
 
     object JvmStdlib : Stdlib(
         "stdlib-jvm",
-        TestKotlinArtifacts.kotlinStdlib,
+        { TestKotlinArtifacts.kotlinStdlib },
         JvmPlatforms.defaultJvmPlatform,
-        null
+        null,
+        sourceRootProvider = { TestKotlinArtifacts.kotlinStdlibSources }
     )
 
     object JsStdlib : Stdlib(
         "stdlib-js",
-        TestKotlinArtifacts.kotlinStdlibJs,
+        { TestKotlinArtifacts.kotlinStdlibJs },
         JsPlatforms.defaultJsPlatform,
-        KotlinJavaScriptLibraryKind
+        KotlinJavaScriptLibraryKind,
     )
 }
 
 sealed class KotlinTest(
     name: String,
-    root: File,
+    rootProvider: () -> File,
     platform: TargetPlatform,
     kind: PersistentLibraryKind<*>?
-) : ResolveLibrary(name, root, platform, kind) {
+) : ResolveLibrary(name, rootProvider, platform, kind) {
 
     object JsKotlinTest : KotlinTest(
         "kotlin-test-js",
-        TestKotlinArtifacts.kotlinTestJs,
+        { TestKotlinArtifacts.kotlinTestJs },
         JsPlatforms.defaultJsPlatform,
         KotlinJavaScriptLibraryKind
     )
 
     object JvmKotlinTest : KotlinTest(
         "kotlin-test-jvm",
-        TestKotlinArtifacts.kotlinTestJunit,
+        { TestKotlinArtifacts.kotlinTestJunit },
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 
     object JustKotlinTest : KotlinTest(
         "kotlin-test",
-        TestKotlinArtifacts.kotlinTest,
+        { TestKotlinArtifacts.kotlinTest },
         JvmPlatforms.defaultJvmPlatform,
         null
     )
 
     object Junit : KotlinTest(
         "junit",
-        File("$IDEA_TEST_DATA_DIR/lib/junit-4.12.jar"),
+        { File("$IDEA_TEST_DATA_DIR/lib/junit-4.12.jar") },
         JvmPlatforms.defaultJvmPlatform,
         null
     )

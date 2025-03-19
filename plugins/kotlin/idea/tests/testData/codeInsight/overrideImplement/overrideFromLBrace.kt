@@ -16,3 +16,5 @@ class Other <caret>{
     }
 }
 
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "toString(): String"

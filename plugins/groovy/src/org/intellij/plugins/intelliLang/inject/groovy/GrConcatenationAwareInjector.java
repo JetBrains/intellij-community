@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.groovy;
 
 import com.intellij.lang.Language;
@@ -42,7 +42,7 @@ import java.util.*;
 
 public final class GrConcatenationAwareInjector implements ConcatenationAwareInjector {
   @Override
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
+  public void getLanguagesToInject(final @NotNull MultiHostRegistrar registrar, final PsiElement @NotNull ... operands) {
     if (operands.length == 0) return;
 
     final PsiFile file = operands[0].getContainingFile();
@@ -77,8 +77,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
     }.processInjections();
   }
 
-  @NotNull
-  private static String getStringPresentation(@Nullable PsiElement operand) {
+  private static @NotNull String getStringPresentation(@Nullable PsiElement operand) {
     if (operand instanceof GrStringInjection) {
       return operand.getText();
     }
@@ -108,7 +107,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
       places.add(firstOperand);
       final GrInjectionUtil.AnnotatedElementVisitor visitor = new GrInjectionUtil.AnnotatedElementVisitor() {
         @Override
-        public boolean visitMethodParameter(GrExpression expression, GrCall methodCall) {
+        public boolean visitMethodParameter(@NotNull GrExpression expression, @NotNull GrCall methodCall) {
           final GrArgumentList list = methodCall.getArgumentList();
           assert list != null;
 
@@ -147,7 +146,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitMethodReturnStatement(GrReturnStatement parent, PsiMethod method) {
+        public boolean visitMethodReturnStatement(@NotNull GrReturnStatement parent, @NotNull PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
           }
@@ -155,7 +154,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitVariable(PsiVariable variable) {
+        public boolean visitVariable(@NotNull PsiVariable variable) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
               final PsiElement element = psiReference.getElement();
@@ -178,7 +177,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitAnnotationParameter(GrAnnotationNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
+        public boolean visitAnnotationParameter(@NotNull GrAnnotationNameValuePair nameValuePair, @NotNull PsiAnnotation psiAnnotation) {
           final String paramName = nameValuePair.getName();
           final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
           if (areThereInjectionsWithName(methodName, false)) {
@@ -192,7 +191,7 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
         }
 
         @Override
-        public boolean visitReference(GrReferenceExpression expression) {
+        public boolean visitReference(@NotNull GrReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
           final PsiElement e = expression.resolve();
           if (e instanceof PsiVariable && !(e instanceof GrBindingVariable)) {
@@ -210,6 +209,15 @@ public final class GrConcatenationAwareInjector implements ConcatenationAwareInj
             visitVariable((PsiVariable)e);
           }
           return !myShouldStop;
+        }
+
+        @Override
+        public boolean visitBinaryExpression(@NotNull GrBinaryExpression expression) {
+          PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
+          PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
+
+          if (method != null && parameter != null) process(parameter, method, 0);
+          return false;
         }
       };
 

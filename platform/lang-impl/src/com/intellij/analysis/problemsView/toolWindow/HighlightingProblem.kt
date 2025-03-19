@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.CommonBundle
@@ -8,10 +8,11 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
@@ -22,13 +23,16 @@ import javax.swing.Icon
 internal class HighlightingProblem(
   override val provider: ProblemsProvider,
   override val file: VirtualFile,
-  val highlighter: RangeHighlighterEx
-) : FileProblem {
+  val highlighter: RangeHighlighter) : FileProblem {
 
   private fun getIcon(level: HighlightDisplayLevel): Icon? = when {
     text.isEmpty() || asyncDescriptionRequested.get() -> AnimatedIcon.Default.INSTANCE
     severity >= level.severity.myVal -> level.icon
     else -> null
+  }
+
+  override fun toString(): String {
+    return file.name+": "+highlighter
   }
 
   private var asyncDescriptionRequested = AtomicBoolean(false)
@@ -81,6 +85,11 @@ internal class HighlightingProblem(
       return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.findById(id))
     }
 
+  override val contextGroup: CodeInsightContext?
+    get() {
+      return info?.highlighter?.codeInsightContext
+    }
+
   override val description: String?
     get() {
       val text = info?.description ?: return null
@@ -93,9 +102,9 @@ internal class HighlightingProblem(
   val severity: Int
     get() = info?.severity?.myVal ?: -1
 
-  override fun hashCode() = highlighter.hashCode()
+  override fun hashCode(): Int = highlighter.hashCode()
 
-  override fun equals(other: Any?) = other is HighlightingProblem && other.highlighter == highlighter
+  override fun equals(other: Any?): Boolean = other is HighlightingProblem && other.highlighter == highlighter
 
   override val line: Int
     get() = position?.line ?: -1
@@ -111,7 +120,7 @@ internal class HighlightingProblem(
 
   private fun computePosition(offset: Int): CachedPosition? {
     if (offset < 0) return null
-    val document = ProblemsView.getDocument(provider.project, file) ?: return null
+    val document = highlighter.document
     if (offset > document.textLength) return null
     val line = document.getLineNumber(offset)
     return CachedPosition(offset, line, offset - document.getLineStartOffset(line))

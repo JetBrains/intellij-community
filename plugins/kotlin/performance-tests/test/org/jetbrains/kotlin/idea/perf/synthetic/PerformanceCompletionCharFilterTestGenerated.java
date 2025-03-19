@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../completion/testData/handlers/charFilter")
 public class PerformanceCompletionCharFilterTestGenerated extends AbstractPerformanceCompletionCharFilterTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
     }
@@ -166,6 +173,16 @@ public class PerformanceCompletionCharFilterTestGenerated extends AbstractPerfor
     @TestMetadata("Space.kt")
     public void testSpace() throws Exception {
         runTest("../completion/testData/handlers/charFilter/Space.kt");
+    }
+
+    @TestMetadata("SuperEntry.kt")
+    public void testSuperEntry() throws Exception {
+        runTest("../completion/testData/handlers/charFilter/SuperEntry.kt");
+    }
+
+    @TestMetadata("SuperEntry2.kt")
+    public void testSuperEntry2() throws Exception {
+        runTest("../completion/testData/handlers/charFilter/SuperEntry2.kt");
     }
 
     @TestMetadata("VariableAndTypeLateinit.kt")

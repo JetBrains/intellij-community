@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
@@ -34,13 +34,13 @@ import java.io.File;
 import java.util.Objects;
 
 @State(name = "DevKit.ModuleBuildProperties")
-public class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
+public final class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
   private final Module myModule;
   private final ConfigFileContainer myPluginXmlContainer;
   private VirtualFilePointer myManifestFilePointer;
   private boolean myUseUserManifest = false;
-  @NonNls private static final String META_INF = "META-INF";
-  @NonNls private static final String PLUGIN_XML = "plugin.xml";
+  private static final @NonNls String META_INF = "META-INF";
+  private static final @NonNls String PLUGIN_XML = "plugin.xml";
 
   private State state = new State();
 
@@ -50,12 +50,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     Disposer.register(module, myPluginXmlContainer);
   }
 
-  @Nullable
-  public static PluginBuildConfiguration getInstance(@NotNull Module module) {
+  public static @Nullable PluginBuildConfiguration getInstance(@NotNull Module module) {
     return ModuleType.is(module, PluginModuleType.getInstance()) ? module.getService(PluginBuildConfiguration.class) : null;
   }
 
-  static class State {
+  public static class State {
     @Attribute
     String url;
 
@@ -83,9 +82,8 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     }
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     state.url = getPluginXmlUrl();
     state.manifest = myManifestFilePointer == null ? null : myManifestFilePointer.getUrl();
     return state;
@@ -102,8 +100,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     }
   }
 
-  @Nullable
-  public ConfigFile getPluginXML() {
+  public @Nullable ConfigFile getPluginXML() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
@@ -124,13 +121,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
                                                false);
   }
 
-  @Nullable
-  public ConfigFile getPluginXmlConfigFile() {
+  public @Nullable ConfigFile getPluginXmlConfigFile() {
     return myPluginXmlContainer.getConfigFile(PluginDescriptorConstants.META_DATA);
   }
 
-  @Nullable
-  private String getPluginXmlUrl() {
+  private @Nullable String getPluginXmlUrl() {
     ConfigFile configFile = getPluginXmlConfigFile();
     return configFile != null ? configFile.getUrl() : null;
   }
@@ -139,8 +134,7 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     return new File(myModule.getModuleFilePath()).getParent() + File.separator + META_INF + File.separator + PLUGIN_XML;
   }
 
-  @NotNull
-  public @NlsSafe String getPluginXmlPath() {
+  public @NotNull @NlsSafe String getPluginXmlPath() {
     String url = getPluginXmlUrl();
     if (url == null) {
       return getDefaultLocation();
@@ -170,13 +164,11 @@ public class PluginBuildConfiguration implements PersistentStateComponent<Plugin
     }
   }
 
-  @Nullable
-  public @NlsSafe String getManifestPath() {
+  public @Nullable @NlsSafe String getManifestPath() {
     return myManifestFilePointer != null ? FileUtil.toSystemDependentName(myManifestFilePointer.getPresentableUrl()) : null;
   }
 
-  @Nullable
-  public VirtualFile getManifest(){
+  public @Nullable VirtualFile getManifest(){
     return myManifestFilePointer != null ? myManifestFilePointer.getFile() : null;
   }
 

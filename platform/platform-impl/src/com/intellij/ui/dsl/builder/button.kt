@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selected
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.ApiStatus
@@ -13,10 +13,11 @@ import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.AbstractButton
 import javax.swing.JCheckBox
+import javax.swing.JToggleButton
 import kotlin.reflect.KMutableProperty0
 import com.intellij.openapi.observable.util.whenStateChangedFromUi as whenStateChangedFromUiImpl
 
-fun <T : JBCheckBox> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {
+fun <T : JToggleButton> Cell<T>.bindSelected(property: ObservableMutableProperty<Boolean>): Cell<T> {
   installValidationRequestor(property)
   return applyToComponent { bind(property) }
 }
@@ -48,7 +49,7 @@ fun <T : AbstractButton> Cell<T>.actionListener(actionListener: (event: ActionEv
   return this
 }
 
-val Cell<AbstractButton>.selected
+val Cell<AbstractButton>.selected: ComponentPredicate
   get() = component.selected
 
 @ApiStatus.Experimental

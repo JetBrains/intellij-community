@@ -2,9 +2,11 @@
 package com.intellij.configurationStore
 
 import org.jdom.DocType
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.Writer
 
+@ApiStatus.Internal
 abstract class BaseXmlOutputter(protected val lineSeparator: String) {
   companion object {
     fun doesNameSuggestSensitiveInformation(name: String): Boolean {

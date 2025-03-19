@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.ide.RecentProjectsManager
@@ -63,7 +63,9 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     val wizard = IdeWizard(Plugins.allPlugins, IdeaServices.PROJECT_INDEPENDENT, isUnitTestMode = false)
     private val uiEditorUsagesStats = UiEditorUsageStats()
 
-    override fun isOpenProjectSettingsAfter(): Boolean = false
+    override val isOpenProjectSettingsAfter: Boolean
+        get() = false
+
     override fun canCreateModule(): Boolean = false
     override fun getPresentableName(): String = moduleType.name
     override fun getDescription(): String = moduleType.description
@@ -104,10 +106,13 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
         model: ModifiableModuleModel?,
         modulesProvider: ModulesProvider?
     ): List<IdeaModule>? {
-        runWriteAction {
-            wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
+        if (isCreatingNewProject()) {
+            runWriteAction {
+                wizard.jdk?.let { jdk -> JavaSdkUtil.applyJdkToProject(project, jdk) }
+            }
         }
         val modulesModel = model ?: ModuleManager.getInstance(project).getModifiableModel()
+        wizard.setIsCreatingNewProject(isCreatingNewProject())
         val success = wizard.apply(
             services = buildList {
                 +IdeaServices.createScopeDependent(project)
@@ -129,6 +134,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             wizard.buildSystemType == BuildSystemType.Jps -> runWriteAction {
                 modulesModel.modules.toList().onEach { setupModule(it) }
             }
+
             else -> emptyList()
         }
     }
@@ -144,6 +150,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             val pathname = project.basePath ?: return
             val projectPath = File(pathname)
 
+            @Suppress("RemoveExplicitTypeArguments")
             val wizardModules = wizard.context.read { KotlinPlugin.modules.settingValue }
                 .flatMap { module ->
                     buildList<Module> {
@@ -161,6 +168,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
                 }
 
             ApplicationManager.getApplication().invokeLater {
+                if (project.isDisposed) return@invokeLater
                 filesToOpen.forEach {
                     FileEditorManager.getInstance(project).openFile(it, true)
                 }
@@ -298,7 +306,7 @@ class ModuleNewWizardFirstStep(wizard: IdeWizard, disposable: Disposable) : Wiza
     private fun suggestGroupId(): String {
         val username = SystemProperties.getUserName() ?: return DEFAULT_GROUP_ID
         if (!username.matches("[\\w\\s]+".toRegex())) return DEFAULT_GROUP_ID
-        val usernameAsGroupId = username.trim().toLowerCase(Locale.US).split("\\s+".toRegex()).joinToString(separator = ".")
+      val usernameAsGroupId = username.trim().lowercase(Locale.US).split("\\s+".toRegex()).joinToString(separator = ".")
         return "me.$usernameAsGroupId"
     }
 

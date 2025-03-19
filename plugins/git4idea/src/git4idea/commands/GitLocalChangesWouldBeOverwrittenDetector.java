@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,18 +30,26 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
     ".*Your local changes to '(.*)' would be overwritten by merge.*"
   );
 
-  private static final Pattern[] RESET_PATTERNS = new Pattern[]{Pattern.compile(
-    ".*Entry '(.*)' not uptodate. Cannot merge.*"
-  ),
-  Pattern.compile(
-    ".*Entry '(.*)' would be overwritten by merge.*"
-  )};
+  private static final Pattern[] RESET_PATTERNS = new Pattern[]{
+    Pattern.compile(
+      ".*Entry '(.*)' not uptodate. Cannot merge.*"
+    ),
+    Pattern.compile(
+      ".*Entry '(.*)' would be overwritten by merge.*"
+    )};
 
   // common for checkout and merge
-  public static final Event NEW_PATTERN = new Event("LocalChangesDetector",
-    "Your local changes to the following files would be overwritten by", "commit your changes or stash them before");
+  public static final Event NEW_PATTERN = new Event(
+    "LocalChangesDetector",
+    List.of(Pattern.compile(".*Your local changes to the following files would be overwritten by.*")),
+    List.of(Pattern.compile(".*commit your changes or stash them before.*"),
+            Pattern.compile(".*Merge with strategy .* failed.*"),
+            Pattern.compile(".*No merge strategy handled the merge.*"))
+  );
 
-  @NotNull private final Operation myOperation;
+  private final @NotNull Operation myOperation;
+
+  private boolean singleLineAffectedFilesOutput = false;
 
   public enum Operation {
     CHECKOUT(OLD_CHECKOUT_PATTERN),
@@ -75,7 +73,34 @@ public class GitLocalChangesWouldBeOverwrittenDetector extends GitMessageWithFil
   }
 
   @Override
+  public @NotNull Set<String> getRelativeFilePaths() {
+    if (singleLineAffectedFilesOutput) {
+      String onlyLine = ContainerUtil.getOnlyItem(myAffectedFiles);
+      if (onlyLine != null) {
+        myAffectedFiles.clear();
+        myAffectedFiles.addAll(Arrays.asList(onlyLine.split(" ")));
+        singleLineAffectedFilesOutput = false;
+      }
+    }
+
+    return super.getRelativeFilePaths();
+  }
+
+  @Override
   public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
+    if (myOperation == Operation.MERGE && myMessageOutputType != null) {
+      // In case of merge the error message is not necessary formatted as 1 line per 1 file name
+      // For instance:
+      // error: Your local changes to the following files would be overwritten by merge:
+      // <file1> <file2>
+      // <stdin>:7: trailing whitespace.
+      // ...
+      if (line.matches("^<stdin>:\\d+:.*") && myAffectedFiles.size() == 1) {
+        // Ignore further lines
+        myMessageOutputType = null;
+        singleLineAffectedFilesOutput = true;
+      }
+    }
     super.onLineAvailable(line, outputType);
     for (Pattern pattern : myOperation.getPatterns()) {
       Matcher m = pattern.matcher(line);

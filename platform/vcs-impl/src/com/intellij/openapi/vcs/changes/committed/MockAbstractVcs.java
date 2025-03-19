@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.project.Project;
@@ -9,13 +9,14 @@ import com.intellij.openapi.vcs.changes.ChangeProvider;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class MockAbstractVcs extends AbstractVcs {
   private static final String NAME = "mock"; // NON-NLS
   private static final VcsKey ourKey = createKey(NAME);
-  private boolean myMarkExternalChangesAsCurrent = false;
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
@@ -47,23 +48,13 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getName(); //NON-NLS
   }
 
   @Override
   public ChangeProvider getChangeProvider() {
     return myChangeProvider;
-  }
-
-  @Override
-  public boolean markExternalChangesAsUpToDate() {
-    return myMarkExternalChangesAsCurrent ;
-  }
-
-  public void setMarkExternalChangesAsCurrent(boolean value){
-    myMarkExternalChangesAsCurrent = value;
   }
 
   @Override
@@ -80,8 +71,7 @@ public class MockAbstractVcs extends AbstractVcs {
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
+  public @Nullable VcsRevisionNumber parseRevisionNumber(final String revisionNumberString) {
     return new VcsRevisionNumber.Int(Integer.parseInt(revisionNumberString));
   }
 

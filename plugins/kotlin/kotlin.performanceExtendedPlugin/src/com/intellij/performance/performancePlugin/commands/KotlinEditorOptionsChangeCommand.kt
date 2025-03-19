@@ -9,7 +9,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 
-class KotlinEditorOptionsChangeCommand(text: String, line: Int) : AbstractCommand(text, line) {
+internal class KotlinEditorOptionsChangeCommand(text: String, line: Int) : AbstractCommand(text, line) {
 
     companion object {
         const val PREFIX: @NonNls String = CMD_PREFIX + "changeKotlinEditorOptions"

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,24 +18,12 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
-  /**
-   * @deprecated use {@link #getCalleeType()}
-   */
-  @Deprecated
-  @NonNls public static final String CALLEE_TYPE = "Callees of {0}";
-  /**
-   * @deprecated use {@link #getCallerType()}
-   */
-  @Deprecated
-  @NonNls public static final String CALLER_TYPE = "Callers of {0}";
-
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {
     super(project, method);
   }
 
   @Override
-  @Nullable
-  protected JPanel createLegendPanel() {
+  protected @Nullable JPanel createLegendPanel() {
     return null;
   }
 
@@ -53,20 +40,17 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  @NotNull
-  protected String getActionPlace() {
+  protected @NotNull String getActionPlace() {
     return ActionPlaces.CALL_HIERARCHY_VIEW_TOOLBAR;
   }
 
   @Override
-  @NotNull
-  protected String getPrevOccurenceActionNameImpl() {
+  protected @NotNull String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.prev.occurence.name");
   }
 
   @Override
-  @NotNull
-  protected String getNextOccurenceActionNameImpl() {
+  protected @NotNull String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.call.next.occurence.name");
   }
 
@@ -87,13 +71,15 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public boolean isSelected(@NotNull AnActionEvent event) {
-      return myTypeName.equals(getCurrentViewType());
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
+    public boolean isSelected(@NotNull AnActionEvent event) {
+      String currentType = event.getUpdateSession().compute(
+        this, "getCurrentViewType", ActionUpdateThread.EDT, () -> getCurrentViewType());
+      return myTypeName.equals(currentType);
     }
 
     @Override
@@ -113,7 +99,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.messagePointer("action.base.on.this.method"), LanguageCallHierarchy.INSTANCE);
+      super(LanguageCallHierarchy.INSTANCE);
     }
   }
 

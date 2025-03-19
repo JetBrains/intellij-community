@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.GeneralSettings;
@@ -9,13 +9,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
 
 final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
   @Override
-  public @NotNull Collection<OptionDescription> getOptions() {
+  public @Unmodifiable @NotNull Collection<OptionDescription> getOptions() {
     return ContainerUtil.concat(
       GeneralSettingsConfigurableKt.getAllOptionDescriptors(),
       List.of(

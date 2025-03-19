@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,21 +12,27 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
+public final class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(BlockJoinLinesHandler.class);
 
   @Override
-  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(@NotNull Document document, @NotNull PsiFile psiFile, int start, int end) {
     PsiElement elementAtStartLineEnd = psiFile.findElementAt(start);
     PsiElement elementAtNextLineStart = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
-    if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.LBRACE)) {
-      return -1;
-    }
+    if (!PsiUtil.isJavaToken(elementAtStartLineEnd, JavaTokenType.LBRACE)) return -1;
     final PsiElement codeBlock = elementAtStartLineEnd.getParent();
     if (!(codeBlock instanceof PsiCodeBlock)) return -1;
-    if (!(codeBlock.getParent() instanceof PsiBlockStatement)) return -1;
-    final PsiElement parentStatement = codeBlock.getParent().getParent();
+    PsiElement parent = codeBlock.getParent();
+    if (parent instanceof PsiLambdaExpression) {
+      PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(codeBlock);
+      if (expression != null) {
+        PsiElement newElement = codeBlock.replace(expression);
+        return newElement.getTextRange().getStartOffset();
+      }
+    }
+    if (!(parent instanceof PsiBlockStatement)) return -1;
+    final PsiElement parentStatement = parent.getParent();
 
     if (getForceBraceSetting(parentStatement) == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS) {
       return CANNOT_JOIN;
@@ -56,12 +48,11 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
       foundStatement = element;
     }
     if (!(foundStatement instanceof PsiStatement)) return -1;
-    PsiElement parent = codeBlock.getParent();
-    if (isPotentialShortIf(foundStatement) && parent instanceof PsiBlockStatement) {
+    if (isPotentialShortIf(foundStatement)) {
       PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiIfStatement &&
-          ((PsiIfStatement)grandParent).getThenBranch() == parent &&
-          ((PsiIfStatement)grandParent).getElseBranch() != null) {
+      if (grandParent instanceof PsiIfStatement ifStatement &&
+          ifStatement.getThenBranch() == parent &&
+          ifStatement.getElseBranch() != null) {
         /*
          like "if(...) {if(...){...}} else {...}"
          unwrapping the braces of outer 'if' then-branch will cause semantics change
@@ -71,7 +62,6 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
     }
     try {
       final PsiElement newStatement = parent.replace(foundStatement);
-
       return newStatement.getTextRange().getStartOffset();
     }
     catch (IncorrectOperationException e) {
@@ -83,8 +73,8 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static boolean isPotentialShortIf(PsiElement statement) {
     while (true) {
       // JLS 14.5
-      if (statement instanceof PsiLabeledStatement) {
-        statement = ((PsiLabeledStatement)statement).getStatement();
+      if (statement instanceof PsiLabeledStatement labeled) {
+        statement = labeled.getStatement();
       }
       else if (statement instanceof PsiForStatement || statement instanceof PsiForeachStatement || statement instanceof PsiWhileStatement) {
         statement = ((PsiLoopStatement)statement).getBody();

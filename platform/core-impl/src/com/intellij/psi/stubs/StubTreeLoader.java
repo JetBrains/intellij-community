@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -15,11 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +28,11 @@ public abstract class StubTreeLoader {
     return ApplicationManager.getApplication().getService(StubTreeLoader.class);
   }
 
-  @Nullable
-  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
+  public abstract @Nullable ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
-  @Nullable
-  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
+  public abstract @Nullable ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
-  @Nullable
-  public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
+  public abstract @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
 
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
@@ -48,8 +42,7 @@ public abstract class StubTreeLoader {
     return false;
   }
 
-  @Nullable
-  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+  protected @Nullable IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -58,38 +51,48 @@ public abstract class StubTreeLoader {
   }
 
   /**
-   * Creates exception with full description. Should be used when requesting indexes is safe,
-   * in particular counting indexes for changed files won't need some already taken lock.
+   * Creates exception with full description.
+   * Should be used when requesting indexes is safe, in particular, counting indexes for changed files won't need some already taken lock.
    * <p/>
    * From under lock, which may be needed to compute indexes for changed files,
-   * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)}
+   * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
    * and invoke {@link StubTreeAndIndexUnmatchCoarseException#createCompleteException()} outside the lock.
    */
-  @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                     @NotNull PsiFileWithStubSupport psiFile,
-                                                     @Nullable Throwable cause) {
+  @ApiStatus.Internal
+  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause).doCreateCompleteException();
+      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source).doCreateCompleteException();
     });
   }
 
   /**
-   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)
+   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
    */
-  @NotNull
-  public StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                                                                @NotNull PsiFileWithStubSupport psiFile,
-                                                                                                @Nullable Throwable cause) {
+  @ApiStatus.Internal
+  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause);
+      return doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, psiFile, cause, source);
     });
   }
 
-  @NotNull
-  private StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                                                                   @NotNull PsiFileWithStubSupport psiFile,
-                                                                                                   @Nullable Throwable cause) {
+  private @NotNull StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(
+    @Nullable ObjectStubTree<?> stubTree,
+    @NotNull PsiFileWithStubSupport psiFile,
+    @Nullable Throwable cause,
+    @NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source
+  ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -107,6 +110,7 @@ public abstract class StubTreeLoader {
       msg += ", file.class=" + psiFile.getClass();
       msg += ", file.lang=" + psiFile.getLanguage();
       msg += ", modStamp=" + psiFile.getModificationStamp();
+      msg += ", psi.length=" + psiFile.getTextLength();
 
       if (!compiled) {
         String text = psiFile.getText();
@@ -139,14 +143,17 @@ public abstract class StubTreeLoader {
       }
 
       msg += "\nindexing info: " + indexingStampInfo;
+      msg += "\nref: 20250127";
 
       ArrayList<Attachment> attachments = createAttachments(stubTree, psiFile, file);
+      StubInconsistencyReporter.getInstance().reportStubTreeAndIndexDoNotMatch(psiFile.getProject(), source);
       return new StubTreeAndIndexUnmatchCoarseException(psiFile, file, msg, attachments, upToDate, cause, stubTree);
     });
   }
 
   /**
-   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)
+   * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
+   * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
    */
   public static class StubTreeAndIndexUnmatchCoarseException extends Exception {
     private final @NotNull Project project;
@@ -179,15 +186,13 @@ public abstract class StubTreeLoader {
     }
 
 
-    @NotNull
-    public RuntimeException createCompleteException() {
+    public @NotNull RuntimeException createCompleteException() {
       return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
         return doCreateCompleteException();
       });
     }
 
-    @NotNull
-    private RuntimeException doCreateCompleteException() {
+    private @NotNull RuntimeException doCreateCompleteException() {
       StubTreeLoader instance = getInstance();
       StubTree stubTreeFromIndex = (StubTree)instance.readFromVFile(project, file);
 
@@ -237,9 +242,9 @@ public abstract class StubTreeLoader {
 
   public static @NonNls String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
     Function<PsiFile, String> fileClassName = file -> file.getClass().getSimpleName();
-    Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
-      pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
-    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
+    Function<Pair<LanguageStubDescriptor, PsiFile>, String> stubRootToString =
+      pair -> "(" + pair.first.getFileElementType() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
+    List<Pair<LanguageStubDescriptor, PsiFile>> roots = StubTreeBuilder.getStubbedRootDescriptors(provider);
     return ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +

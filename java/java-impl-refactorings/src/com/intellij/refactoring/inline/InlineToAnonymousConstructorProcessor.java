@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -254,7 +255,7 @@ class InlineToAnonymousConstructorProcessor {
     try {
       final PsiDeclarationStatement declaration = myElementFactory.createVariableDeclarationStatement(localName, type, initializer);
       PsiLocalVariable variable = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-      if (!PsiUtil.isLanguageLevel8OrHigher(myNewExpression) ||
+      if (!PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, myNewExpression) ||
           JavaCodeStyleSettings.getInstance(initializer.getContainingFile()).GENERATE_FINAL_LOCALS) {
         PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
       }
@@ -353,7 +354,7 @@ class InlineToAnonymousConstructorProcessor {
   }
 
   private PsiElement replaceParameterReferences(PsiElement argument,
-                                                @Nullable final List<? super PsiReferenceExpression> localVarRefs,
+                                                final @Nullable List<? super PsiReferenceExpression> localVarRefs,
                                                 final boolean replaceFieldsWithInitializers) throws IncorrectOperationException {
     if (argument instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiParameter parameter) {
       if (myLocalsForParameters.containsKey(parameter)) {

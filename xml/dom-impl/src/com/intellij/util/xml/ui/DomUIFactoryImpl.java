@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
-import com.intellij.codeInsight.daemon.impl.DefaultHighlightInfoProcessor;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -32,12 +32,11 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.lang.reflect.Type;
 
-public class DomUIFactoryImpl extends DomUIFactory {
-
+final class DomUIFactoryImpl extends DomUIFactory {
   private final ClassMap<Function<DomWrapper<String>, BaseControl>> myCustomControlCreators = new ClassMap<>();
   private final ClassMap<Function<DomElement, TableCellEditor>> myCustomCellEditorCreators = new ClassMap<>();
 
-  public DomUIFactoryImpl() {
+  DomUIFactoryImpl() {
     final Function<DomElement, TableCellEditor> booleanCreator = domElement -> new BooleanTableCellEditor();
     registerCustomCellEditor(Boolean.class, booleanCreator);
     registerCustomCellEditor(boolean.class, booleanCreator);
@@ -60,7 +59,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public final @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
+  public @NotNull UserActivityWatcher createEditorAwareUserActivityWatcher() {
     return new UserActivityWatcher() {
       private final DocumentListener myListener = new DocumentListener() {
         @Override
@@ -112,8 +111,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  @Nullable
-  public BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
+  public @Nullable BaseControl createCustomControl(final Type type, DomWrapper<String> wrapper, final boolean commitOnEveryChange) {
     final Function<DomWrapper<String>, BaseControl> factory = myCustomControlCreators.get(ClassUtil.getRawType(type));
     return factory == null ? null : factory.fun(wrapper);
   }
@@ -132,7 +130,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
       editor.commit();
 
       return TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
-        .instantiateMainPasses(psiFile, document, new DefaultHighlightInfoProcessor()).toArray(HighlightingPass.EMPTY_ARRAY);
+        .instantiateMainPasses(psiFile, document, HighlightInfoProcessor.getEmpty()).toArray(HighlightingPass.EMPTY_ARRAY);
     };
   }
 
@@ -147,7 +145,7 @@ public class DomUIFactoryImpl extends DomUIFactory {
   }
 
   @Override
-  public void registerCustomCellEditor(@NotNull final Class aClass, final Function<DomElement, TableCellEditor> creator) {
+  public void registerCustomCellEditor(final @NotNull Class aClass, final Function<DomElement, TableCellEditor> creator) {
     myCustomCellEditorCreators.put(aClass, creator);
   }
 

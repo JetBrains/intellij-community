@@ -11,19 +11,21 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.ui.AbstractFontCombo
-import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.util.function.Consumer
 import javax.swing.JComponent
+import javax.swing.JLabel
 
+@ApiStatus.Internal
 open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : AbstractFontOptionsPanel() {
 
-  protected val defaultPreferences = FontPreferencesImpl()
+  protected val defaultPreferences: FontPreferencesImpl = FontPreferencesImpl()
 
   private var regularWeightCombo: FontWeightCombo? = null
   private var boldWeightCombo: FontWeightCombo? = null
@@ -68,21 +70,11 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   }
 
   override fun createPrimaryFontCombo(): AbstractFontCombo<*>? {
-    return if (isAdvancedFontFamiliesUI()) {
-      FontFamilyCombo(true)
-    }
-    else {
-      super.createPrimaryFontCombo()
-    }
+    return FontFamilyCombo(true)
   }
 
   override fun createSecondaryFontCombo(): AbstractFontCombo<*>? {
-    return if (isAdvancedFontFamiliesUI()) {
-      FontFamilyCombo(false)
-    }
-    else {
-      super.createSecondaryFontCombo()
-    }
+    return FontFamilyCombo(false)
   }
 
   override fun addControls() {
@@ -137,23 +129,21 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private fun Panel.createTypographySettings() {
     collapsibleGroup(ApplicationBundle.message("settings.editor.font.typography.settings"), indent = false) {
-      if (isAdvancedFontFamiliesUI()) {
-        row(ApplicationBundle.message("settings.editor.font.main.weight")) {
-          val component = createRegularWeightCombo()
-          regularWeightCombo = component
-          cell(component)
-        }
-
-        row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
-          val component = createBoldWeightCombo()
-          boldWeightCombo = component
-          val boldFontHint = createBoldFontHint()
-          cell(component)
-            .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
-        }.bottomGap(BottomGap.SMALL)
+      row(ApplicationBundle.message("settings.editor.font.main.weight")) {
+        val component = createRegularWeightCombo()
+        regularWeightCombo = component
+        cell(component)
       }
 
-      val secondaryFont = Label(ApplicationBundle.message("secondary.font"))
+      row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
+        val component = createBoldWeightCombo()
+        boldWeightCombo = component
+        val boldFontHint = createBoldFontHint()
+        cell(component)
+          .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
+      }.bottomGap(BottomGap.SMALL)
+
+      val secondaryFont = JLabel(ApplicationBundle.message("secondary.font"))
       setSecondaryFontLabel(secondaryFont)
       row(secondaryFont) {
         cell(secondaryCombo)
@@ -207,22 +197,22 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private class RegularFontWeightCombo : FontWeightCombo(false) {
 
-    public override fun getSubFamily(preferences: FontPreferences): String? {
+    override fun getSubFamily(preferences: FontPreferences): String? {
       return preferences.regularSubFamily
     }
 
-    public override fun getRecommendedSubFamily(family: String): String {
+    override fun getRecommendedSubFamily(family: String): String {
       return FontFamilyService.getRecommendedSubFamily(family)
     }
   }
 
   private inner class BoldFontWeightCombo : FontWeightCombo(true) {
 
-    public override fun getSubFamily(preferences: FontPreferences): String? {
+    override fun getSubFamily(preferences: FontPreferences): String? {
       return preferences.boldSubFamily
     }
 
-    public override fun getRecommendedSubFamily(family: String): String {
+    override fun getRecommendedSubFamily(family: String): String {
       return FontFamilyService.getRecommendedBoldSubFamily(
         family,
         ObjectUtils.notNull(regularWeightCombo?.selectedSubFamily, FontFamilyService.getRecommendedSubFamily(family)))
@@ -234,10 +224,6 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     regularWeightCombo?.isEnabled = !isReadOnly
     boldWeightCombo?.isEnabled = !isReadOnly
   }
-}
-
-private fun isAdvancedFontFamiliesUI(): Boolean {
-  return AppEditorFontOptions.NEW_FONT_SELECTOR
 }
 
 private const val FONT_WEIGHT_COMBO_WIDTH = 250

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.validate;
 
 import com.intellij.javaee.UriUtil;
@@ -57,8 +57,7 @@ public class ValidateXmlActionHandler implements ValidateXmlHandler {
   private SAXParser myParser;
   private XmlResourceResolver myXmlResourceResolver;
   private final boolean myForceChecking;
-  @NonNls
-  private static final String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
+  private static final @NonNls String ENTITY_RESOLVER_PROPERTY_NAME = "http://apache.org/xml/properties/internal/entity-resolver";
 
   public ValidateXmlActionHandler(boolean _forceChecking) {
     myForceChecking = _forceChecking;
@@ -252,7 +251,7 @@ public class ValidateXmlActionHandler implements ValidateXmlHandler {
           parser.setProperty(JAXPConstants.JAXP_SCHEMA_LANGUAGE,JAXPConstants.W3C_XML_SCHEMA);
           parser.getXMLReader().setFeature(SCHEMA_FULL_CHECKING_FEATURE_ID, true);
 
-          if (Boolean.TRUE.equals(Boolean.getBoolean(XmlResourceResolver.HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY))) {
+          if (Boolean.getBoolean(XmlResourceResolver.HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY)) {
             parser.getXMLReader().setFeature("http://apache.org/xml/features/honour-all-schemaLocations", true);
           }
 
@@ -287,8 +286,7 @@ public class ValidateXmlActionHandler implements ValidateXmlHandler {
     return grammarPool;
   }
 
-  @Nullable
-  public static XMLGrammarPool getGrammarPool(XmlFile file) {
+  public static @Nullable XMLGrammarPool getGrammarPool(XmlFile file) {
     return file.getUserData(GRAMMAR_POOL_KEY);
   }
 

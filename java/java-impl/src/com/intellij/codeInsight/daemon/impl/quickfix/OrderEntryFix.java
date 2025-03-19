@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver;
 import com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver.ExternalClassResolveResult;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -10,9 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToTestRootFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -23,6 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -34,6 +32,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -48,8 +47,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     myReferencePointer = createReferencePointer(reference);
   }
 
-  @Nullable
-  private static SmartPsiFileRange createReferencePointer(@NotNull PsiReference reference) {
+  private static @Nullable SmartPsiFileRange createReferencePointer(@NotNull PsiReference reference) {
     PsiElement element = reference.getElement();
     int offset = element.getTextRange().getStartOffset() + reference.getRangeInElement().getStartOffset();
     PsiFile file = element.getContainingFile();
@@ -78,37 +76,32 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getText();
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
 
-  @NotNull
-  public static List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
+  public static @NotNull List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return registerFixes(reference, registrar, shortReferenceName -> {
       Project project = reference.getElement().getProject();
       return PsiShortNamesCache.getInstance(project).getClassesByName(shortReferenceName, GlobalSearchScope.allScope(project));
     });
   }
 
-  @NotNull
-  public static List<@NotNull LocalQuickFix> registerFixes(
-    @NotNull PsiReference reference,
-    @NotNull List<? super IntentionAction> registrar,
-    @NotNull Function<? super String, PsiClass[]> shortReferenceNameToClassesLookup
-    ) {
+  public static @NotNull List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference,
+                                                                    @NotNull List<? super IntentionAction> registrar,
+                                                                    @NotNull Function<? super String, PsiClass[]> shortReferenceNameToClassesLookup) {
     PsiElement psiElement = reference.getElement();
     String shortReferenceName = reference.getRangeInElement().substring(psiElement.getText());
 
     Project project = psiElement.getProject();
     PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return Collections.emptyList();
-    VirtualFile refVFile = containingFile.getVirtualFile();
+    VirtualFile refVFile = containingFile.getOriginalFile().getVirtualFile();
     if (refVFile == null) return Collections.emptyList();
 
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -117,9 +110,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
     DependencyScope scope = fileIndex.isInTestSourceContent(refVFile) ? DependencyScope.TEST : DependencyScope.COMPILE;
 
-    if (reference instanceof PsiJavaModuleReference) {
+    if (reference instanceof PsiJavaModuleReference moduleReference) {
       List<LocalQuickFix> result = new SmartList<>();
-      createModuleFixes((PsiJavaModuleReference)reference, currentModule, scope, result);
+      createModuleFixes(moduleReference, currentModule, scope, result);
       result.forEach(fix -> registrar.add((IntentionAction)fix));
       return result;
     }
@@ -137,8 +130,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (allowedDependencies.isEmpty()) {
       return result;
     }
-    if (reference instanceof PsiJavaCodeReferenceElement) {
-      String qualifiedName = getQualifiedName((PsiJavaCodeReferenceElement)reference, shortReferenceName, containingFile);
+    if (reference instanceof PsiJavaCodeReferenceElement codeReference) {
+      String qualifiedName = getQualifiedName(codeReference, shortReferenceName, containingFile);
       if (qualifiedName != null) {
         allowedDependencies.removeIf(aClass -> !qualifiedName.equals(aClass.getQualifiedName()));
       }
@@ -177,8 +170,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
           }
           OrderEntry entryForFile = moduleFileIndex.getOrderEntryForFile(virtualFile);
           if (entryForFile != null) {
-            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry && 
-                                                   ((ExportableOrderEntry)entryForFile).getScope() == DependencyScope.TEST && 
+            boolean testScopeLibraryInProduction = entryForFile instanceof ExportableOrderEntry exportableOrderEntry &&
+                                                   exportableOrderEntry.getScope() == DependencyScope.TEST &&
                                                    !moduleFileIndex.isInTestSourceContent(refVFile);
             if (testScopeLibraryInProduction) {
               withTestScope.add(library);
@@ -223,16 +216,15 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
-  @Nullable
-  private static String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference,
-                                         String shortReferenceName,
-                                         PsiFile containingFile) {
+  private static @Nullable String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference,
+                                                   String shortReferenceName,
+                                                   PsiFile containingFile) {
     String qualifiedName = null;
     if (reference.isQualified()) {
       qualifiedName = reference.getQualifiedName();
     }
-    else if (containingFile instanceof PsiJavaFile) {
-      PsiImportList list = ((PsiJavaFile)containingFile).getImportList();
+    else if (containingFile instanceof PsiJavaFile psiJavaFile) {
+      PsiImportList list = psiJavaFile.getImportList();
       if (list != null) {
         PsiImportStatementBase statement = list.findSingleImportStatement(shortReferenceName);
         if (statement != null) {
@@ -244,7 +236,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return qualifiedName;
   }
 
-  private static void createModuleFixes(@NotNull PsiJavaModuleReference reference,
+  private static void createModuleFixes(@NotNull PsiPolyVariantReference reference,
                                         @NotNull Module currentModule,
                                         @NotNull DependencyScope scope,
                                         @NotNull List<? super @NotNull LocalQuickFix> result) {
@@ -254,8 +246,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       .filter(Objects::nonNull).toList();
 
     PsiElement statement = reference.getElement().getParent();
-    boolean exported = statement instanceof PsiRequiresStatement &&
-                       ((PsiRequiresStatement)statement).hasModifierProperty(PsiModifier.TRANSITIVE);
+    boolean exported = statement instanceof PsiRequiresStatement requires && requires.hasModifierProperty(PsiModifier.TRANSITIVE);
 
     Set<Module> modules = targets.stream()
       .map(e -> !(e instanceof PsiCompiledElement) ? e.getContainingFile() : null)
@@ -268,15 +259,28 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       result.add(0, new AddModuleDependencyFix(reference, currentModule, modules, scope, exported));
     }
 
-    Set<Library> libraries = targets.stream()
-      .map(e -> e instanceof LightJavaModule ? ((LightJavaModule)e).getRootVirtualFile() : null)
+    Set<Library> lightLibraries = targets.stream()
+      .map(e -> e instanceof LightJavaModule light ? light.getRootVirtualFile() : null)
       .flatMap(vf -> vf != null ? index.getOrderEntriesForFile(vf).stream() : Stream.empty())
-      .map(e -> e instanceof LibraryOrderEntry ? ((LibraryOrderEntry)e).getLibrary() : null)
+      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
       .filter(Objects::nonNull)
       .collect(Collectors.toSet());
-    if (!libraries.isEmpty()) {
+    if (!lightLibraries.isEmpty()) {
       result.add(new AddLibraryDependencyFix(reference, currentModule,
-                                             ContainerUtil.map2Map(libraries, library -> Pair.create(library, "")), scope, exported));
+                                             ContainerUtil.map2Map(lightLibraries, library -> Pair.create(library, "")), scope, exported));
+    }
+
+    Set<Library> clsLibraries = targets.stream()
+      .map(e -> e instanceof PsiCompiledElement ? e.getContainingFile() : null)
+      .map(f -> f != null ? f.getVirtualFile() : null)
+      .filter(vf -> vf != null && !index.isInSource(vf))
+      .flatMap(vf -> index.getOrderEntriesForFile(vf).stream())
+      .map(e -> e instanceof LibraryOrderEntry lib ? lib.getLibrary() : null)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+    if (!clsLibraries.isEmpty()) {
+      result.add(new AddLibraryDependencyFix(reference, currentModule,
+                                             ContainerUtil.map2Map(clsLibraries, library -> Pair.create(library, "")), scope, exported));
     }
   }
 
@@ -290,18 +294,21 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(currentModule.getProject());
     String fullReferenceText = reference.getCanonicalText();
     ThreeState refToAnnotation = isReferenceToAnnotation(psiElement);
-    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensions()) {
+    for (ExternalLibraryResolver resolver : ExternalLibraryResolver.EP_NAME.getExtensionList()) {
       ExternalClassResolveResult resolveResult = resolver.resolveClass(shortReferenceName, refToAnnotation, currentModule);
       OrderEntryFix fix = null;
       if (resolveResult != null &&
           facade.findClass(resolveResult.getQualifiedClassName(), currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
-        fix = new AddExtLibraryDependencyFix(reference, currentModule, resolveResult.getLibraryDescriptor(), scope, resolveResult.getQualifiedClassName());
+        final ExternalLibraryDescriptor descriptor = resolveResult.getLibraryDescriptor();
+        final DependencyScope useScope = Objects.requireNonNullElse(descriptor.getPreferredScope(), scope);
+        fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, useScope, resolveResult.getQualifiedClassName());
       }
-      else if (!fullReferenceText.equals(shortReferenceName) && 
+      else if (!fullReferenceText.equals(shortReferenceName) &&
                facade.findClass(fullReferenceText, currentModule.getModuleWithDependenciesAndLibrariesScope(true)) == null) {
         ExternalLibraryDescriptor descriptor = resolver.resolvePackage(fullReferenceText);
         if (descriptor != null) {
-          fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, scope, null);
+          final DependencyScope useScope = Objects.requireNonNullElse(descriptor.getPreferredScope(), scope);
+          fix = new AddExtLibraryDependencyFix(reference, currentModule, descriptor, useScope, null);
         }
       }
       if (fix != null) {
@@ -324,9 +331,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return result;
   }
 
-  @NotNull
-  private static ThreeState isReferenceToAnnotation(final @NotNull PsiElement psiElement) {
-    if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
+  private static @NotNull ThreeState isReferenceToAnnotation(final @NotNull PsiElement psiElement) {
+    if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiElement)) {
       return ThreeState.NO;
     }
     UElement uElement = UastContextKt.toUElement(psiElement);
@@ -345,19 +351,6 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return ThreeState.NO;
   }
 
-  public static void importClass(@NotNull Module currentModule, @Nullable Editor editor, @Nullable PsiReference reference, @Nullable String className) {
-    Project project = currentModule.getProject();
-    if (editor != null && reference != null && className != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
-        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-        if (aClass != null) {
-          new AddImportAction(project, reference, editor, aClass).execute();
-        }
-      });
-    }
-  }
-
   public static void addJarToRoots(@NotNull String jarPath, final @NotNull Module module, @Nullable PsiElement location) {
     addJarsToRoots(Collections.singletonList(jarPath), null, module, location);
   }
@@ -368,13 +361,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     ModuleRootModificationUtil.addModuleLibrary(module, libraryName, urls, Collections.emptyList(), scope);
   }
 
-  @NotNull
-  public static List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
+  public static @Unmodifiable @NotNull List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
     return ContainerUtil.map(jarPaths, OrderEntryFix::refreshAndConvertToUrl);
   }
 
-  @NotNull
-  public static DependencyScope suggestScopeByLocation(@NotNull Module module, @Nullable PsiElement location) {
+  public static @NotNull DependencyScope suggestScopeByLocation(@NotNull Module module, @Nullable PsiElement location) {
     if (location != null) {
       final VirtualFile vFile = location.getContainingFile().getVirtualFile();
       if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInTestSourceContent(vFile)) {
@@ -384,8 +375,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     return DependencyScope.COMPILE;
   }
 
-  @NotNull
-  private static String refreshAndConvertToUrl(String jarPath) {
+  private static @NotNull String refreshAndConvertToUrl(String jarPath) {
     final File libraryRoot = new File(jarPath);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
     return VfsUtil.getUrlForLibraryRoot(libraryRoot);

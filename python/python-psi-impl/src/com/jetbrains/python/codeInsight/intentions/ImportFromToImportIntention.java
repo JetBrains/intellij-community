@@ -33,7 +33,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br><small>
  * </small>
  */
-public class ImportFromToImportIntention extends PyBaseIntentionAction {
+public final class ImportFromToImportIntention extends PyBaseIntentionAction {
   /**
    * This class exists to extract bunches of info we can't store in our stateless instance.
    * Instead, we store it per thread.
@@ -44,8 +44,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     String myModuleName = null;
     int myRelativeLevel = 0;
 
-    @NotNull
-    public @IntentionName String getText() {
+    public @NotNull @IntentionName String getText() {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
@@ -72,8 +71,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
     }
   }
 
-  @Nullable
-  private static PsiElement getElementFromEditor(Editor editor, PsiFile file) {
+  private static @Nullable PsiElement getElementFromEditor(Editor editor, PsiFile file) {
     PsiElement element = null;
     Document doc = editor.getDocument();
     PsiFile a_file = file;
@@ -114,8 +112,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 
@@ -217,8 +214,8 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
       } while (feeler != null);
       String top_name = top_qualifier.getName();
       Collection<PsiReference> possible_targets = references.keySet();
-      if (star_references.size() > 0) {
-        possible_targets = new ArrayList<>(references.keySet().size() + star_references.size());
+      if (!star_references.isEmpty()) {
+        possible_targets = new ArrayList<>(references.size() + star_references.size());
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }

@@ -1,27 +1,21 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
 public class ForceStepIntoAction extends XDebuggerActionBase {
+  private static final XDebuggerSuspendedActionHandler ourHandler = new XDebuggerSuspendedActionHandler() {
+    @Override
+    protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+      session.forceStepInto();
+    }
+  };
+
   @Override
-  @NotNull
-  protected DebuggerActionHandler getHandler(@NotNull final DebuggerSupport debuggerSupport) {
-    return debuggerSupport.getForceStepIntoHandler();
+  protected @NotNull DebuggerActionHandler getHandler(final @NotNull DebuggerSupport debuggerSupport) {
+    return ourHandler;
   }
 }

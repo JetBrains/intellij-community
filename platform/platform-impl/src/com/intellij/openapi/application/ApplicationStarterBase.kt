@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
-import com.intellij.idea.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
+import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
@@ -15,9 +15,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.system.exitProcess
 
-/**
- * @author Konstantin Bulenkov
- */
 @Internal
 abstract class ApplicationStarterBase protected constructor(private vararg val argsCount: Int) : ModernApplicationStarter() {
   abstract val usageMessage: @NlsContexts.DialogMessage String?
@@ -27,19 +24,18 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
 
   companion object {
     @JvmStatic
-    protected fun saveIfNeeded(file: VirtualFile?) {
-      if (file == null) {
-        return
+    fun saveIfNeeded(file: VirtualFile?) {
+      if (file != null) {
+        val documentManager = FileDocumentManager.getInstance()
+        documentManager.getCachedDocument(file)?.let(documentManager::saveDocument)
       }
-      FileDocumentManager.getInstance().getCachedDocument(file)?.let(FileDocumentManager.getInstance()::saveDocument)
     }
   }
 
   override fun canProcessExternalCommandLine(): Boolean = true
 
   override suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
-    @Suppress("DEPRECATION")
-    val commandName = commandName
+    val commandName = commandNameFromExtension
     if (!checkArguments(args)) {
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       withContext(Dispatchers.EDT) {
@@ -51,11 +47,9 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     try {
       return executeCommand(args, currentDirectory)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
-      e.printStackTrace() // The dialog may sometimes not be shown, e.g. in remote dev scenarios.
+      e.printStackTrace() // The dialog may sometimes not be shown, e.g., in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
       val message = ApplicationBundle.message("app.command.exec.error", commandName, e.message)
       withContext(Dispatchers.EDT) {
@@ -65,10 +59,8 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     }
   }
 
-  protected open fun checkArguments(args: List<String>): Boolean {
-    @Suppress("DEPRECATION")
-    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandName == args[0]
-  }
+  protected open fun checkArguments(args: List<String>): Boolean =
+    Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
 
@@ -82,21 +74,21 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   final override suspend fun start(args: List<String>) {
     try {
       val exitCode: Int = try {
-        val result = executeCommand(args = args, currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR))
+        val result = executeCommand(args, currentDirectory = null)
         result.message?.let(::println)
         result.exitCode
       }
       finally {
         withContext(Dispatchers.EDT) {
-          FileDocumentManager.getInstance().saveAllDocuments()
+          writeIntentReadAction {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
         }
         saveSettings(ApplicationManager.getApplication())
       }
       exitProcess(exitCode)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
       e.printStackTrace()
       exitProcess(1)

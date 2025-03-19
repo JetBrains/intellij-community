@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.JetgroovyIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -61,6 +61,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@Service(Service.Level.PROJECT)
 public final class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 
@@ -311,8 +312,7 @@ public final class DynamicToolWindowWrapper {
 
     RefactoringListenerManager.getInstance(myProject).addListenerProvider(new RefactoringElementListenerProvider() {
       @Override
-      @Nullable
-      public RefactoringElementListener getListener(final PsiElement element) {
+      public @Nullable RefactoringElementListener getListener(final PsiElement element) {
         if (element instanceof PsiClass) {
           final String qualifiedName = ((PsiClass)element).getQualifiedName();
 
@@ -474,8 +474,7 @@ public final class DynamicToolWindowWrapper {
     myTreeTableModel.nodesWereRemoved(parent, new int[]{idx}, new TreeNode[]{child});
   }
 
-  @Nullable
-  private TreeTableTree getTree() {
+  private @Nullable TreeTableTree getTree() {
     return myTreeTable != null ? myTreeTable.getTree() : null;
   }
 
@@ -624,49 +623,38 @@ public final class DynamicToolWindowWrapper {
     }
   }
 
-  private class MyTreeTable extends TreeTable implements DataProvider {
+  private class MyTreeTable extends TreeTable implements UiDataProvider {
     MyTreeTable(TreeTableModel treeTableModel) {
       super(treeTableModel);
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        TreePath path = getTree().getSelectionPath();
-        return path == null ? null : (DataProvider)slowId -> getSlowData(slowId, path);
-      }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        return new DeleteProvider() {
-          @Override
-          public @NotNull ActionUpdateThread getActionUpdateThread() {
-            return ActionUpdateThread.EDT;
-          }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
-          @Override
-          public void deleteElement(@NotNull DataContext dataContext) {
-            deleteRow();
-          }
+        @Override
+        public void deleteElement(@NotNull DataContext dataContext) {
+          deleteRow();
+        }
 
-          @Override
-          public boolean canDeleteElement(@NotNull DataContext dataContext) {
-            return myTreeTable.getTree().getSelectionPaths() != null;
-          }
-        };
-      }
-
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull TreePath path) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        @Override
+        public boolean canDeleteElement(@NotNull DataContext dataContext) {
+          return myTreeTable.getTree().getSelectionPaths() != null;
+        }
+      });
+      TreePath path = getTree().getSelectionPath();
+      if (path == null) return;
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getElementFromPath(path);
-      }
-      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+      });
+      sink.lazy(CommonDataKeys.PSI_FILE, () -> {
         PsiElement element = getElementFromPath(path);
         return element == null ? null : element.getContainingFile();
-      }
-      return null;
+      });
     }
 
     private @Nullable PsiElement getElementFromPath(@NotNull TreePath path) {

@@ -125,7 +125,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
     CachedValue<XmlNSDescriptor> cachedValue = defaultDescriptorsCache.get(namespace);
     if (cachedValue == null) {
-      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl<>(getManager(), () -> {
+      defaultDescriptorsCache.put(namespace, cachedValue = new PsiCachedValueImpl.Soft<>(getManager(), () -> {
         final XmlNSDescriptor defaultNSDescriptorInner = XmlNsDescriptorUtil.getDefaultNSDescriptor(this, namespace, strict);
 
         if (isGeneratedFromDtd(this, defaultNSDescriptorInner)) {

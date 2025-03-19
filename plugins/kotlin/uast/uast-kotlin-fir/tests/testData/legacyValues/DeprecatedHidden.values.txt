@@ -10,5 +10,6 @@ UFile (package = test.pkg) [package test.pkg...]
                         USimpleNameReferenceExpression (identifier = DeprecationLevel) [DeprecationLevel] = external DeprecationLevel()
                         USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] = HIDDEN (enum entry)
                 UNamedExpression (name = message) [message = "nothing"] = Undetermined
-                    ULiteralExpression (value = "nothing") ["nothing"] = "nothing"
+                    UPolyadicExpression (operator = +) ["nothing"] = "nothing"
+                        ULiteralExpression (value = "nothing") ["nothing"] = "nothing"
             UBlockExpression [{...}] = Undetermined

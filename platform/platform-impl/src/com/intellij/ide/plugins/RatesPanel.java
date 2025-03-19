@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +13,8 @@ import java.awt.*;
 /**
 * @author Konstantin Bulenkov
 */
-public class RatesPanel extends JPanel {
+@ApiStatus.Internal
+public final class RatesPanel extends JPanel {
   public static final int MAX_RATE = 5;
 
   private static final Icon STAR = AllIcons.Ide.Rating;

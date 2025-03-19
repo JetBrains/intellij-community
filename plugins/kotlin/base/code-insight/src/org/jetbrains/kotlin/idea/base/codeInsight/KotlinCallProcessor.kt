@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
 import com.intellij.openapi.progress.ProgressManager
@@ -6,13 +6,18 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.*
-import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -20,9 +25,9 @@ import org.jetbrains.kotlin.psi.*
 
 sealed interface CallTarget {
     val caller: KtElement
-    val call: KtCall
-    val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<KtCallableSymbol, KtCallableSignature<KtCallableSymbol>>
-    val symbol: KtCallableSymbol
+    val call: KaCall
+    val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>
+    val symbol: KaCallableSymbol
 
     val anchor: PsiElement
         get() = when (val element = caller) {
@@ -38,27 +43,55 @@ sealed interface CallTarget {
         }
 }
 
-sealed interface TypedCallTarget<out S : KtCallableSymbol, out C : KtCallableSignature<S>> : CallTarget {
-    override val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<S, C>
+sealed interface TypedCallTarget<out S : KaCallableSymbol, out C : KaCallableSignature<S>> : CallTarget {
+    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<S, C>
     override val symbol: S
 }
 
 class VariableCallTarget(
     override val caller: KtElement,
-    override val call: KtCall,
-    override val partiallyAppliedSymbol: KtPartiallyAppliedVariableSymbol<KtVariableLikeSymbol>
-) : TypedCallTarget<KtVariableLikeSymbol, KtVariableLikeSignature<KtVariableLikeSymbol>> {
-    override val symbol: KtVariableLikeSymbol
+    override val call: KaCall,
+    override val partiallyAppliedSymbol: KaPartiallyAppliedVariableSymbol<KaVariableSymbol>
+) : TypedCallTarget<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> {
+    override val symbol: KaVariableSymbol
         get() = partiallyAppliedSymbol.symbol
 }
 
 class FunctionCallTarget(
     override val caller: KtElement,
-    override val call: KtCall,
-    override val partiallyAppliedSymbol: KtPartiallyAppliedFunctionSymbol<KtFunctionLikeSymbol>
-) : TypedCallTarget<KtFunctionLikeSymbol, KtFunctionLikeSignature<KtFunctionLikeSymbol>> {
-    override val symbol: KtFunctionLikeSymbol
+    override val call: KaCall,
+    override val partiallyAppliedSymbol: KaPartiallyAppliedFunctionSymbol<KaFunctionSymbol>
+) : TypedCallTarget<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> {
+    override val symbol: KaFunctionSymbol
         get() = partiallyAppliedSymbol.symbol
+}
+
+interface KotlinCallTargetProcessor {
+    /**
+     * Processes a successfully resolved [CallTarget].
+     * If false is returned from this function, no further elements will be processed.
+     */
+    fun KaSession.processCallTarget(target: CallTarget): Boolean
+
+    /**
+     * Processes a call that resolved as an error.
+     * If false is returned from this function, no further elements will be processed.
+     */
+    fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean
+}
+
+private fun (KaSession.(CallTarget) -> Unit).toCallTargetProcessor(): KotlinCallTargetProcessor {
+    val processor = this
+    return object : KotlinCallTargetProcessor {
+        override fun KaSession.processCallTarget(target: CallTarget): Boolean {
+            processor(target)
+            return true
+        }
+
+        override fun KaSession.processUnresolvedCall(element: KtElement, callInfo: KaCallInfo?): Boolean {
+            return true
+        }
+    }
 }
 
 object KotlinCallProcessor {
@@ -71,13 +104,12 @@ object KotlinCallProcessor {
         KDoc::class.java
     )
 
-    fun process(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
-        val containingFile = element.containingFile
-        if (containingFile is KtCodeFragment) {
-            return
-        }
+    fun process(element: PsiElement, processor: KaSession.(CallTarget) -> Unit) {
+        process(element, processor.toCallTargetProcessor())
+    }
 
-        when (element) {
+    fun process(element: PsiElement, processor: KotlinCallTargetProcessor): Boolean {
+        return when (element) {
             is KtArrayAccessExpression -> handle(element, processor)
             is KtCallExpression -> handle(element, processor)
             is KtUnaryExpression -> handle(element, processor)
@@ -88,8 +120,12 @@ object KotlinCallProcessor {
             is KtNameReferenceExpression -> {
                 if (shouldHandleNameReference(element)) {
                     handle(element, processor)
+                } else {
+                    true
                 }
             }
+
+            else -> true
         }
     }
 
@@ -122,66 +158,123 @@ object KotlinCallProcessor {
         return current
     }
 
-    private fun handle(element: KtElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+    private object ReadAccess : KaSimpleVariableAccess.Read
+
+    private class SpecialPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>>(
+        private val backingSignature: C
+    ) : KaPartiallyAppliedSymbol<S, C> {
+        override val signature: C get() = withValidityAssertion { backingSignature }
+        override val dispatchReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+        override val extensionReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+
+        @KaExperimentalApi
+        override val contextArguments: List<KaReceiverValue> get() = withValidityAssertion { emptyList() }
+        override val token: KaLifetimeToken get() = backingSignature.token
+    }
+
+    @OptIn(KaExperimentalApi::class)
+    private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
-            fun handleSpecial(element: KtElement, filter: (KtSymbol) -> Boolean) {
-                val symbols = element.mainReference?.resolveToSymbols() ?: return
+            fun handleSpecial(element: KtElement, filter: (KaSymbol) -> Boolean): Boolean {
+                val symbols = element.mainReference?.resolveToSymbols() ?: return true
                 for (symbol in symbols) {
                     if (!filter(symbol)) {
                         continue
                     }
 
-                    if (symbol is KtFunctionLikeSymbol) {
-                        val signature = symbol.asSignature()
-                        val partiallyAppliedSymbol = KtPartiallyAppliedFunctionSymbol(signature, null, null)
-                        val call = KtSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), _isImplicitInvoke = false)
-                        processor(FunctionCallTarget(element, call, partiallyAppliedSymbol))
-                    } else if (symbol is KtVariableLikeSymbol) {
-                        val signature = symbol.asSignature()
-                        val partiallyAppliedSymbol = KtPartiallyAppliedVariableSymbol(signature, null, null)
-                        val call = KtSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KtSimpleVariableAccess.Read)
-                        processor(VariableCallTarget(element, call, partiallyAppliedSymbol))
+                    @OptIn(KaImplementationDetail::class)
+                    val shouldContinue = with(processor) {
+                        when (symbol) {
+                            is KaFunctionSymbol -> {
+                                val signature = symbol.asSignature()
+                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+                                val call = object : KaSimpleFunctionCall {
+                                    override val isImplicitInvoke: Boolean get() = withValidityAssertion { false }
+                                    override val argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> get() = withValidityAssertion { emptyMap() }
+                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
+                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
+                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
+                                }
+
+                                processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
+                            }
+
+                            is KaVariableSymbol -> {
+                                val signature = symbol.asSignature()
+                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+                                val call = object : KaSimpleVariableAccessCall {
+                                    override val simpleAccess: KaSimpleVariableAccess.Read get() = withValidityAssertion { ReadAccess }
+                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
+                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
+                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
+                                }
+
+                                processCallTarget(VariableCallTarget(element, call, partiallyAppliedSymbol))
+                            }
+
+                            else -> true
+                        }
+                    }
+                    if (!shouldContinue) {
+                        return false
                     }
                 }
+                return true
             }
 
             if (element is KtForExpression) {
-                handleSpecial(element) { it is KtFunctionLikeSymbol }
-                return
+                return handleSpecial(element) { it is KaFunctionSymbol }
             }
 
             if (element is KtDestructuringDeclarationEntry) {
-                handleSpecial(element) { !(it is KtLocalVariableSymbol && it.psi == element) }
-                return
+                return handleSpecial(element) { !(it is KaLocalVariableSymbol && it.psi == element) }
             }
 
-            val call = element.resolveCall()?.successfulCallOrNull<KtCall>()
+            val callInfo = element.resolveToCall()
+            val call = callInfo?.successfulCallOrNull<KaCall>()
 
-            if (call != null) {
-                when (call) {
-                    is KtDelegatedConstructorCall -> processor(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                    is KtSimpleFunctionCall -> processor(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                    is KtCompoundVariableAccessCall -> {
-                        processor(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                        processor(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
+            return with(processor) {
+                if (call != null) {
+                    when (call) {
+                        is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                        is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                        is KaCompoundVariableAccessCall -> {
+                            processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
+                        }
+
+                        is KaSimpleVariableAccessCall -> {
+                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
+                        }
+
+                        is KaCompoundArrayAccessCall -> {
+                            processCallTarget(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
+                        }
+
+                        else -> true
                     }
-                    is KtSimpleVariableAccessCall -> {
-                        processor(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                    }
-                    is KtCompoundArrayAccessCall -> {
-                        processor(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
-                        processor(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
-                    }
-                    else -> {}
+                } else {
+                    processUnresolvedCall(element, callInfo)
                 }
             }
         }
     }
 }
 
-fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KtAnalysisSession.(CallTarget) -> Unit) {
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KaSession.(CallTarget) -> Unit) {
+    process(elements, processor.toCallTargetProcessor())
+}
+
+fun KotlinCallProcessor.process(elements: Collection<PsiElement>, processor: KotlinCallTargetProcessor) {
+    process(elements.asSequence(), processor)
+}
+
+fun KotlinCallProcessor.process(elements: Sequence<PsiElement>, processor: KotlinCallTargetProcessor) {
     for (element in elements) {
         ProgressManager.checkCanceled()
-        process(element, processor)
+        if (!process(element, processor)) {
+            return
+        }
     }
 }

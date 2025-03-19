@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -10,14 +9,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
-public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
-  private static final UISettings ourUISettings = UISettings.getInstance();
-
+@ApiStatus.Internal
+public final class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     super(process);
   }
@@ -30,12 +29,11 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
 
   @Override
   protected boolean isAlphaSorted() {
-    return ourUISettings.getSortLookupElementsLexicographically();
+    return UISettings.getInstance().getSortLookupElementsLexicographically();
   }
 
-  @NotNull
   @Override
-  protected List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
+  protected @NotNull List<LookupElement> getExactMatches(List<? extends LookupElement> items) {
     String selectedText =
       InjectedLanguageEditorUtil.getTopLevelEditor(myProcess.getParameters().getEditor()).getSelectionModel().getSelectedText();
     List<LookupElement> exactMatches = new SmartList<>();
@@ -59,7 +57,7 @@ public class CompletionLookupArrangerImpl extends BaseCompletionLookupArranger {
   @Override
   protected void removeItem(@NotNull LookupElement element, @NotNull ProcessingContext context) {
     super.removeItem(element, context);
-    AsyncRendering.cancelRendering(element);
+    AsyncRendering.Companion.cancelRendering(element);
   }
 
   private static boolean isSuddenLiveTemplate(LookupElement element) {

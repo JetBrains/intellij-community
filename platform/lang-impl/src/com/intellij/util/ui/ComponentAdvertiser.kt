@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.ActionLink
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
@@ -13,12 +14,13 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 open class ComponentAdvertiser {
-  val component = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-  protected val multiPanel = MyPanel()
-  protected var currentIndex = AtomicInteger(0)
+  val component: JPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+  protected val multiPanel: MyPanel = MyPanel()
+  protected var currentIndex: AtomicInteger = AtomicInteger(0)
 
-  protected val nextLabel = ActionLink(CodeInsightBundle.message("label.next.tip")) {
+  protected val nextLabel: ActionLink = ActionLink(CodeInsightBundle.message("label.next.tip")) {
     val i = currentIndex.incrementAndGet()
     multiPanel.select(currentIndex.updateAndGet { i % multiPanel.list.size }, true).isDone
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,14 +29,12 @@ public enum LineSeparator {
     myBytes = separatorString.getBytes(StandardCharsets.UTF_8);
   }
 
-  @NlsSafe
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     return super.toString();
   }
 
-  @NotNull
-  public static LineSeparator fromString(@NotNull String string) {
+  public static @NotNull LineSeparator fromString(@NotNull String string) {
     for (LineSeparator separator : values()) {
       if (separator.getSeparatorString().equals(string)) {
         return separator;
@@ -46,8 +44,7 @@ public enum LineSeparator {
     return getSystemLineSeparator();
   }
 
-  @NotNull
-  public String getSeparatorString() {
+  public @NotNull String getSeparatorString() {
     return mySeparatorString;
   }
 
@@ -55,8 +52,7 @@ public enum LineSeparator {
     return myBytes;
   }
 
-  @NotNull
-  public static LineSeparator getSystemLineSeparator() {
+  public static @NotNull LineSeparator getSystemLineSeparator() {
     return SystemInfo.isWindows ? CRLF : LF;
   }
 }

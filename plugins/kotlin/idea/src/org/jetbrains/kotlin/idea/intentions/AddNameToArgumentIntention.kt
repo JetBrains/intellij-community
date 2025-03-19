@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
@@ -26,7 +26,7 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtValueArgument, caretOffset: Int): Boolean {
         val expression = element.getArgumentExpression() ?: return false
-        val name = detectNameToAdd(
+        val name = Holder.detectNameToAdd(
             element,
             shouldBeLastUnnamed = !element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         ) ?: return false
@@ -46,10 +46,10 @@ class AddNameToArgumentIntention : SelfTargetingIntention<KtValueArgument>(
             super.skipProcessingFurtherElementsAfter(element)
 
     override fun applyTo(element: KtValueArgument, editor: Editor?) {
-        apply(element, givenResolvedCall = null)
+        Holder.apply(element, givenResolvedCall = null)
     }
 
-    companion object {
+    object Holder {
         fun apply(element: KtValueArgument, givenResolvedCall: ResolvedCall<*>?) {
             val name = detectNameToAdd(element, shouldBeLastUnnamed = false, givenResolvedCall = givenResolvedCall) ?: return
             addArgumentName(element, name)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -62,8 +63,10 @@ public final class ColorSettingsUtil {
     return true;
   }
 
-  public static ArrayList<Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
-    final ArrayList<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
+  @NotNull
+  @Unmodifiable
+  public static List<@NotNull Pair<TextAttributesKey, @Nls String>> getErrorTextAttributes() {
+    List<Pair<TextAttributesKey, @Nls String>> attributes = new ArrayList<>(
       List.of(
        new Pair<>(CodeInsightColors.ERRORS_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.error")),
        new Pair<>(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol")),
@@ -87,7 +90,7 @@ public final class ColorSettingsUtil {
       }
     }
 
-    return attributes;
+    return List.copyOf(attributes);
   }
 
   private static void addInspectionSeverityAttributes(List<? super AttributesDescriptor> descriptors) {
@@ -96,8 +99,7 @@ public final class ColorSettingsUtil {
     }
   }
 
-  @NotNull
-  private static @NlsContexts.AttributeDescriptor String toDisplayName(@NotNull TextAttributesKey attributesKey) {
+  private static @NotNull @NlsContexts.AttributeDescriptor String toDisplayName(@NotNull TextAttributesKey attributesKey) {
     return OptionsBundle.message(
       "options.java.attribute.descriptor.errors.group",
       StringUtil.capitalize(StringUtil.toLowerCase(attributesKey.getExternalName()).replaceAll("_", " ")));

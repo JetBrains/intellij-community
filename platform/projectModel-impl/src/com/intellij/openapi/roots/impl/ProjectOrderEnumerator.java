@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -20,7 +20,7 @@ final class ProjectOrderEnumerator extends OrderEnumeratorBase {
   private final Project myProject;
 
   ProjectOrderEnumerator(@NotNull Project project, @Nullable OrderRootsCache rootsCache) {
-    super(rootsCache);
+    super(project, rootsCache);
     myProject = project;
   }
 
@@ -33,7 +33,7 @@ final class ProjectOrderEnumerator extends OrderEnumeratorBase {
   }
 
   @Override
-  protected void forEach(@NotNull final PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
+  protected void forEach(final @NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
     myRecursively = false;
     myWithoutDepModules = true;
     Set<Module> processed = new HashSet<>();

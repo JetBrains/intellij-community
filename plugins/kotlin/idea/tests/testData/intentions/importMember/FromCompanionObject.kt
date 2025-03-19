@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // INTENTION_TEXT: "Add import for 'kotlin.text.Regex.Companion.escape'"
 // WITH_STDLIB
 

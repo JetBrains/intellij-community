@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -15,16 +15,15 @@ import com.intellij.util.VisibilityUtil
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
 import org.jetbrains.kotlin.idea.j2k.j2k
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor.Kind
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinCallableParameterTableModel
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinChangeSignatureDialog.Companion.getTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallerUsage
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -52,7 +51,7 @@ open class KotlinChangeInfo(
     val context: PsiElement,
     primaryPropagationTargets: Collection<PsiElement> = emptyList(),
     var checkUsedParameters: Boolean = false,
-) : ChangeInfo, UserDataHolder by UserDataHolderBase() {
+) : KotlinModifiableChangeInfo<KotlinParameterInfo>, UserDataHolder by UserDataHolderBase() {
     private val innerChangeInfo: MutableList<KotlinChangeInfo> = mutableListOf()
 
     fun registerInnerChangeInfo(changeInfo: KotlinChangeInfo) {
@@ -73,10 +72,17 @@ open class KotlinChangeInfo(
         }
     }
 
+    override fun setType(type: String) {
+        newReturnTypeInfo = KtPsiFactory(method.project).createTypeCodeFragment(
+                type,
+                KotlinCallableParameterTableModel.getTypeCodeFragmentContext(method),
+        ).getTypeInfo(true, true)
+    }
+
     private val originalReturnTypeInfo = methodDescriptor.returnTypeInfo
     private val originalReceiverTypeInfo = methodDescriptor.receiver?.originalTypeInfo
 
-    var receiverParameterInfo: KotlinParameterInfo? = receiver
+    override var receiverParameterInfo: KotlinParameterInfo? = receiver
         set(value) {
             if (value != null && value !in newParameters) {
                 newParameters.add(value)
@@ -97,6 +103,18 @@ open class KotlinChangeInfo(
         parameters.indices.forEach { i -> map[parameters[i].name.asString()] = i }
 
         map
+    }
+
+    override fun setNewVisibility(visibility: Visibility) {
+        newVisibility =  when (visibility) {
+            Visibilities.Public -> DescriptorVisibilities.PUBLIC
+            Visibilities.Private -> DescriptorVisibilities.PRIVATE
+            Visibilities.PrivateToThis -> DescriptorVisibilities.PRIVATE_TO_THIS
+            Visibilities.Protected -> DescriptorVisibilities.PROTECTED
+            Visibilities.Internal -> DescriptorVisibilities.INTERNAL
+            Visibilities.Local -> DescriptorVisibilities.LOCAL
+            else -> error("Unknown visibility: $this")
+        }
     }
 
     private val isParameterSetOrOrderChangedLazy: Boolean by lazy {
@@ -155,12 +173,15 @@ open class KotlinChangeInfo(
         return receiverParameterInfo?.let { receiver -> newParameters.filter { it != receiver } } ?: newParameters
     }
 
-    fun setNewParameter(index: Int, parameterInfo: KotlinParameterInfo) {
+    override fun setNewParameter(index: Int, parameterInfo: KotlinParameterInfo) {
         newParameters[index] = parameterInfo
     }
 
-    @JvmOverloads
-    fun addParameter(parameterInfo: KotlinParameterInfo, atIndex: Int = -1) {
+    fun addParameter(parameterInfo: KotlinParameterInfo) {
+        addParameter(parameterInfo, -1)
+    }
+
+    override fun addParameter(parameterInfo: KotlinParameterInfo, atIndex: Int) {
         if (atIndex >= 0) {
             newParameters.add(atIndex, parameterInfo)
         } else {
@@ -168,14 +189,14 @@ open class KotlinChangeInfo(
         }
     }
 
-    fun removeParameter(index: Int) {
+    override fun removeParameter(index: Int) {
         val parameterInfo = newParameters.removeAt(index)
         if (parameterInfo == receiverParameterInfo) {
             receiverParameterInfo = null
         }
     }
 
-    fun clearParameters() {
+    override fun clearParameters() {
         newParameters.clear()
         receiverParameterInfo = null
     }
@@ -187,7 +208,7 @@ open class KotlinChangeInfo(
 
     override fun getNewName(): String = name.takeIf { it != "<no name provided>" }?.quoteIfNeeded() ?: name
 
-    fun setNewName(value: String) {
+    override fun setNewName(value: String) {
         name = value
     }
 
@@ -211,7 +232,7 @@ open class KotlinChangeInfo(
     var propagationTargetUsageInfos: List<UsageInfo> = ArrayList()
         private set
 
-    var primaryPropagationTargets: Collection<PsiElement> = emptyList()
+    override var primaryPropagationTargets: Collection<PsiElement> = emptyList()
         set(value) {
             field = value
 
@@ -234,7 +255,7 @@ open class KotlinChangeInfo(
 
             for (caller in value) {
                 add(caller)
-                OverridingMethodsSearch.search(caller.getRepresentativeLightMethod() ?: continue).forEach(::add)
+                OverridingMethodsSearch.search(caller.getRepresentativeLightMethod() ?: continue).asIterable().forEach(::add)
             }
 
             propagationTargetUsageInfos = result.toList()

@@ -70,11 +70,9 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static final Key<Manifest> MANIFEST = Key.create("MANIFEST");
   private static final Key<String> ACCESS_TOKEN = Key.create("access token");
 
-  @NonNls
-  private static final String SAXON_6_JAR = "saxon.jar";
+  private static final @NonNls String SAXON_6_JAR = "saxon.jar";
 
-  @NonNls
-  private static final String SAXON_9_JAR = "saxon9he.jar";
+  private static final @NonNls String SAXON_9_JAR = "saxon9he.jar";
 
   @Override
   protected boolean supports(XsltRunConfiguration config, boolean debugger) {
@@ -204,8 +202,7 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     parameters.getClassPath().addTail(absolutePath.toString());
   }
 
-  @Nullable
-  private static Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
+  private static @Nullable Boolean isValidXalanPresent(SimpleJavaParameters parameters) {
     final List<VirtualFile> files = parameters.getClassPath().getVirtualFiles();
     for (VirtualFile file : files) {
       if (file.getName().matches(".*xalan.*\\.jar")) {
@@ -254,13 +251,14 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
   private static void addXalan(SimpleJavaParameters parameters, Path xsltDebuggerClassesRoot) {
     if (!Files.isDirectory(xsltDebuggerClassesRoot)) {
       Path rtDir = xsltDebuggerClassesRoot.getParent().resolve("rt");
-      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.2.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, rtDir.resolve("serializer-2.7.3.jar"));
     }
     else {
       //running from sources
       Path xalanInM2 = Paths.get(SystemProperties.getUserHome(), ".m2", "repository", "xalan");
-      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.2/xalan-2.7.2.jar"));
-      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.2/serializer-2.7.2.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("xalan/2.7.3/xalan-2.7.3.jar"));
+      addPathToClasspath(parameters, xalanInM2.resolve("serializer/2.7.3/serializer-2.7.3.jar"));
     }
   }
 
@@ -275,8 +273,7 @@ public final class XsltDebuggerExtension extends XsltRunnerExtension {
     return transformerFile;
   }
 
-  @NotNull
-  private static Path getPluginEngineDirInSources() {
+  private static @NotNull Path getPluginEngineDirInSources() {
     Path path = PluginPathManager.getPluginHome("xslt-debugger").toPath().resolve("engine");
     assert Files.isDirectory(path) : path.toString();
     return path;

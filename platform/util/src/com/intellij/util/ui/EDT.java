@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -24,6 +27,18 @@ import java.lang.reflect.Method;
  */
 public final class EDT {
   private static Thread myEventDispatchThread;
+
+  private static boolean disableEdtChecks = false;
+
+  @ApiStatus.Internal
+  public static void disableEdtChecks() {
+    disableEdtChecks = true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDisableEdtChecks() {
+    return disableEdtChecks;
+  }
 
   private EDT() { }
 
@@ -48,6 +63,11 @@ public final class EDT {
     return myEventDispatchThread;
   }
 
+  @ApiStatus.Internal
+  public static @Nullable Thread getEventDispatchThreadOrNull() {
+    return myEventDispatchThread;
+  }
+
   /**
    * Checks whether the current thread is EDT.
    *
@@ -60,11 +80,12 @@ public final class EDT {
    */
   public static boolean isCurrentThreadEdt() {
     // actually, this `if` is not required, but it makes the class work correctly before `IdeEventQueue` initialization
-    return myEventDispatchThread == null ? EventQueue.isDispatchThread() : isEdt(Thread.currentThread());
+    Thread thread = myEventDispatchThread;
+    return thread == null ? EventQueue.isDispatchThread() : Thread.currentThread() == thread;
   }
 
   public static void assertIsEdt() {
-    if (!isCurrentThreadEdt()) {
+    if (!isCurrentThreadEdt() && !disableEdtChecks) {
       Logger.getInstance(EDT.class).error("Assert: must be called on EDT");
     }
   }
@@ -80,6 +101,12 @@ public final class EDT {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      dispatchAllInvocationEventsImpl();
+    }
+  }
+
+  private static void dispatchAllInvocationEventsImpl() {
     assertIsEdt();
 
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -120,7 +147,8 @@ public final class EDT {
           // todo temporary hack to diagnose hanging builds
           try {
             Object application =
-              ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication").invoke(null);
+              ReflectionUtil.getMethod(Class.forName("com.intellij.openapi.application.ApplicationManager"), "getApplication")
+                .invoke(null);
             System.err.println("Application=" + application + "\n" + ThreadDumper.dumpThreadsToString());
           }
           catch (Exception e) {

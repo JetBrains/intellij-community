@@ -62,6 +62,7 @@
    },
    {
     name-part: "foo",
+    display-name: "event",
     priority: HIGH,
     symbol: {
      matchedName: "js/events/<pattern>",
@@ -80,6 +81,7 @@
    },
    {
     name-part: "in",
+    display-name: "event",
     priority: HIGH,
     symbol: {
      matchedName: "js/events/<pattern>",

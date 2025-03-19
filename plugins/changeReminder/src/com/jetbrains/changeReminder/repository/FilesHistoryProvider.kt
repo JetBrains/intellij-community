@@ -3,10 +3,10 @@ package com.jetbrains.changeReminder.repository
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.jetbrains.changeReminder.retainAll
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitHistoryTraverser
-import git4idea.history.TraverseCommitId
 
 data class Commit(val id: Int, val time: Long, val author: String, val files: Set<FilePath>)
 
@@ -16,14 +16,14 @@ internal class FilesHistoryProvider(val traverser: GitHistoryTraverser) {
     private const val MAX_HISTORY_COMMIT_SIZE = 15
   }
 
-  private val filesHistoryCache = HashMap<FilePath, Collection<TraverseCommitId>>()
+  private val filesHistoryCache = HashMap<FilePath, Collection<VcsLogCommitStorageIndex>>()
 
   private fun getCommitsData(root: VirtualFile, files: Collection<FilePath>): Collection<Commit> {
     val commitsWithFiles = files.mapNotNull { filesHistoryCache[it] }.flatten()
     val commitsData = mutableSetOf<Commit>()
 
     val requirements = GitCommitRequirements(
-      diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NoRenames,
+      diffRenames = GitCommitRequirements.DiffRenames.NoRenames,
       diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.NO_DIFF
     )
     var commitsWithFilesCount = 0

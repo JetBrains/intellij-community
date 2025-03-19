@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.getShortName;
 
-final public class FindDivergedExceptionLineHandler extends AnAction {
+public final class FindDivergedExceptionLineHandler extends AnAction {
 
   private static final String LAMBDA_KEYWORD = "lambda$";
   private final PsiFile myPsiFile;
@@ -141,8 +141,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
   }
 
   @VisibleForTesting
-  @NotNull
-  public Supplier<Collection<PsiElement>> collector() {
+  public @NotNull Supplier<Collection<PsiElement>> collector() {
     return () -> {
       Set<PsiElement> result = new HashSet<>();
       List<PsiElement> startPoints = new ArrayList<>();
@@ -243,14 +242,13 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     });
   }
 
-  @Nullable
-  public static FindDivergedExceptionLineHandler getFindMethodHandler(@Nullable PsiFile file,
-                                                                      @Nullable String className,
-                                                                      @Nullable String methodName,
-                                                                      @Nullable ExceptionLineRefiner refiner,
-                                                                      int lineStart,
-                                                                      int lineEnd,
-                                                                      @Nullable Editor targetEditor) {
+  public static @Nullable FindDivergedExceptionLineHandler getFindMethodHandler(@Nullable PsiFile file,
+                                                                                @Nullable String className,
+                                                                                @Nullable String methodName,
+                                                                                @Nullable ExceptionLineRefiner refiner,
+                                                                                int lineStart,
+                                                                                int lineEnd,
+                                                                                @Nullable Editor targetEditor) {
 
     //it can be ambiguous to find lambda anonymous classes
     if (file == null || className == null || methodName == null || refiner == null || targetEditor == null) {
@@ -302,8 +300,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
   }
 
-  @NotNull
-  private static MetaInfoCallType findInitCallType(@NotNull String methodName, @NotNull MetaInfoCallType callType) {
+  private static @NotNull MetaInfoCallType findInitCallType(@NotNull String methodName, @NotNull MetaInfoCallType callType) {
     if (callType == MetaInfoCallType.ORDINARY) {
       if ("<init>".equals(methodName)) {
         callType = MetaInfoCallType.NON_STATIC_INIT;
@@ -328,8 +325,9 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
         PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiField.class);
         if (parent != null) {
-          int lineNumberStart = document.getLineNumber(parent.getTextOffset());
-          int lineNumberEnd = document.getLineNumber(parent.getTextOffset() + parent.getTextLength());
+          int startOffset = parent.getTextRange().getStartOffset();
+          int lineNumberStart = document.getLineNumber(startOffset);
+          int lineNumberEnd = document.getLineNumber(startOffset + parent.getTextLength());
           if (lineNumberStart != lineNumberEnd) {
             return true;
           }
@@ -362,7 +360,7 @@ final public class FindDivergedExceptionLineHandler extends AnAction {
     int classAdditionalInfoIndex = className.indexOf("$");
     if (classAdditionalInfoIndex != -1) {
       String shortName = getShortName(className, '$');
-      if (shortName.length() == 0) {
+      if (shortName.isEmpty()) {
         return true;
       }
       if (Character.isDigit(shortName.charAt(0))) {

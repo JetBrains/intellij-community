@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.DumbAware
 import org.jetbrains.kotlin.tools.projectWizard.core.Context
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.TitleComponentAlignmen
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.IdeaBasedComponentValidator
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.SettingComponent
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndicator
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension
 import java.awt.Insets
@@ -90,7 +94,7 @@ class BuildSystemTypeSettingComponent(
         horizontal: Boolean
     ) : ActionToolbarImplWrapper(place, actionGroup, horizontal) {
         init {
-            layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+            layoutStrategy = ToolbarLayoutStrategy.WRAP_STRATEGY
         }
 
         override fun createToolbarButton(

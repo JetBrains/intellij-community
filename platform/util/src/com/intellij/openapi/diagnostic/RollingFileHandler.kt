@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedOutputStream
 import java.io.IOException
 import java.io.OutputStream
@@ -10,6 +11,7 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
 
+@ApiStatus.Internal
 class RollingFileHandler @JvmOverloads constructor(
   val logPath: Path,
   val limit: Long,
@@ -18,6 +20,7 @@ class RollingFileHandler @JvmOverloads constructor(
   private val onRotate: Runnable? = null
 ) : StreamHandler() {
   @Volatile private lateinit var meter: MeteredOutputStream
+  private var rotateFailed: Boolean = false
 
   private class MeteredOutputStream(private val delegate: OutputStream, @Volatile var written: Long) : OutputStream() {
     override fun write(b: Int) {
@@ -78,8 +81,7 @@ class RollingFileHandler @JvmOverloads constructor(
       }
     }
     catch (e: IOException) {
-      // rotate failed, keep writing to existing log
-      super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
+      logRotateFailed(e)
       return
     }
 
@@ -95,7 +97,18 @@ class RollingFileHandler @JvmOverloads constructor(
 
     open(false)
 
-    if (e != null) {
+    if (e == null) {
+      rotateFailed = false
+    }
+    else {
+      logRotateFailed(e)
+    }
+  }
+
+  private fun logRotateFailed(e: IOException) {
+    if (!rotateFailed) {
+      // rotate failed, keep writing to existing log
+      rotateFailed = true
       super.publish(LogRecord(Level.SEVERE, "Log rotate failed: ${e.message}").also { it.thrown = e })
     }
   }

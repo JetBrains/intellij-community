@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.project.Project
@@ -198,13 +198,13 @@ internal fun getFileStatus(status: StatusCode): FileStatus? {
 
 typealias StatusCode = Char
 
-internal fun isIgnored(status: StatusCode) = status == '!'
-internal fun isUntracked(status: StatusCode) = status == '?'
+fun isIgnored(status: StatusCode) = status == '!'
+fun isUntracked(status: StatusCode) = status == '?'
 fun isRenamed(status: StatusCode) = status == 'R' || status == 'C'
-internal fun isAdded(status: StatusCode) = status == 'A'
-internal fun isIntendedToBeAdded(index: StatusCode, workTree: StatusCode) = index == ' ' && workTree == 'A'
-internal fun isDeleted(status: StatusCode) = status == 'D'
-internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
+fun isAdded(status: StatusCode) = status == 'A'
+fun isIntendedToBeAdded(index: StatusCode, workTree: StatusCode) = index == ' ' && workTree == 'A'
+fun isDeleted(status: StatusCode) = status == 'D'
+fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
   return (index == 'D' && workTree == 'D') ||
          (index == 'A' && workTree == 'A') ||
          (index == 'T' && workTree == 'T') ||
@@ -214,7 +214,7 @@ internal fun isConflicted(index: StatusCode, workTree: StatusCode): Boolean {
 sealed class LightFileStatus {
   internal abstract fun getFileStatus(): FileStatus
 
-  object Blank : LightFileStatus() {
+  data object Blank : LightFileStatus() {
     override fun getFileStatus(): FileStatus = FileStatus.NOT_CHANGED
   }
 

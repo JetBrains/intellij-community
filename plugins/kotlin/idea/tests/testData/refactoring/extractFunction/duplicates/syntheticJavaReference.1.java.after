@@ -1,0 +1,7 @@
+public class J {
+    public String getFoo() {
+        return "";
+    }
+
+    public void setFoo(String foo) {}
+}

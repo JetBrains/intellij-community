@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
@@ -101,8 +101,7 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
   private volatile boolean myConflict;
 
   // return Pair(classes, locals) or null if there was conflict
-  @Nullable
-  private Couple<Set<String>> buildMaps() {
+  private @Nullable Couple<Set<String>> buildMaps() {
     Set<String> set1 = myClassesSet;
     Set<String> set2 = myVariablesSet;
     boolean wasConflict = myConflict;
@@ -180,14 +179,14 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.LBRACE:
         return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
         return TreeUtil.findChildBackward(this, JavaTokenType.RBRACE);
+
+      default:
+        return null;
     }
   }
 
@@ -264,7 +263,7 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
     }
 
     if (child == null) {
-      child = ((PsiElement)this).getLastChild();
+      child = this.getLastChild();
     }
 
     while (child != null) {
@@ -275,11 +274,5 @@ public final class PsiCodeBlockImpl extends LazyParseablePsiElement implements P
       child = child.getPrevSibling();
     }
     return true;
-  }
-
-  @Override
-  public boolean shouldChangeModificationCount(PsiElement place) {
-    PsiElement parent = getParent();
-    return !(parent instanceof PsiMethod || parent instanceof PsiClassInitializer);
   }
 }

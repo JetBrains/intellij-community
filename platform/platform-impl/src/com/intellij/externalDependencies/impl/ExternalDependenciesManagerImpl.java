@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalDependencies.impl;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,15 +40,13 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
 
   private final List<ProjectExternalDependency> myDependencies = new ArrayList<>();
 
-  @NotNull
   @Override
-  public <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
+  public @Unmodifiable @NotNull <T extends ProjectExternalDependency> List<T> getDependencies(@NotNull Class<T> aClass) {
     return ContainerUtil.filterIsInstance(myDependencies, aClass);
   }
 
-  @NotNull
   @Override
-  public List<ProjectExternalDependency> getAllDependencies() {
+  public @NotNull List<ProjectExternalDependency> getAllDependencies() {
     return Collections.unmodifiableList(myDependencies);
   }
 
@@ -58,9 +57,8 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
     myDependencies.sort(DEPENDENCY_COMPARATOR);
   }
 
-  @NotNull
   @Override
-  public ExternalDependenciesState getState() {
+  public @NotNull ExternalDependenciesState getState() {
     ExternalDependenciesState state = new ExternalDependenciesState();
     for (DependencyOnPlugin dependency : getDependencies(DependencyOnPlugin.class)) {
       state.myDependencies.add(new DependencyOnPluginState(dependency));

@@ -17,6 +17,7 @@ package com.intellij.task.impl;
 
 import com.intellij.task.BuildTask;
 import com.intellij.task.ProjectTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public abstract class AbstractBuildTask extends AbstractProjectTask implements BuildTask {
   private final boolean myIsIncrementalBuild;
 

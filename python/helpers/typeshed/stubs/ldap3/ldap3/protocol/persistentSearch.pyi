@@ -1,18 +1,14 @@
-from typing import Any
-from typing_extensions import TypeAlias
+from pyasn1.type.namedtype import NamedTypes
+from pyasn1.type.namedval import NamedValues
+from pyasn1.type.univ import Enumerated, Sequence
 
-# Enable when pyasn1 gets stubs:
-# from pyasn1.type.univ import Enumerated, Sequence
-_Enumerated: TypeAlias = Any
-_Sequence: TypeAlias = Any
+class PersistentSearchControl(Sequence):
+    componentType: NamedTypes
 
-class PersistentSearchControl(_Sequence):
-    componentType: Any
+class ChangeType(Enumerated):
+    namedValues: NamedValues
 
-class ChangeType(_Enumerated):
-    namedValues: Any
+class EntryChangeNotificationControl(Sequence):
+    componentType: NamedTypes
 
-class EntryChangeNotificationControl(_Sequence):
-    componentType: Any
-
-def persistent_search_control(change_types, changes_only: bool = ..., return_ecs: bool = ..., criticality: bool = ...): ...
+def persistent_search_control(change_types, changes_only: bool = True, return_ecs: bool = True, criticality: bool = False): ...

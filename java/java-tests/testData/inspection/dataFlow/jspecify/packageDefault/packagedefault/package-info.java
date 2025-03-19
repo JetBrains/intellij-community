@@ -17,4 +17,4 @@
 @NullMarked
 package packagedefault;
 
-import org.jspecify.nullness.NullMarked;
+import org.jspecify.annotations.NullMarked;

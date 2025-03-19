@@ -4,6 +4,7 @@ package com.intellij.ide.impl
 import com.intellij.ide.environment.EnvironmentService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
@@ -62,12 +63,14 @@ class SelectProjectOpenProcessorDialog(
         app != null && app.isUnitTestMode -> testShowAndGetChoice(processors, file)
         else -> {
           val environmentService = service<EnvironmentService>()
-          val id = environmentService.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR)
+          val id = environmentService.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR)
           val processor = processors.find { it.name == id }
           if (processor != null) {
             return processor
           }
-          SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
+          writeIntentReadAction {
+            SelectProjectOpenProcessorDialog(processors, file).showAndGetChoice()
+          }
         }
       }
     }

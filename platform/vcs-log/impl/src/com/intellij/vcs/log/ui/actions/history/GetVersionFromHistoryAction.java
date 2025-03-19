@@ -29,9 +29,11 @@ import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
   private static final AnAction myDelegate = new Delegate();
 
@@ -79,7 +81,9 @@ public class GetVersionFromHistoryAction implements AnActionExtensionProvider {
       VcsFileRevision revision = model.createRevision(detail);
 
       if (!VcsHistoryUtil.isEmpty(revision)) {
-        GetVersionAction.doGet(project, revision, e.getRequiredData(VcsDataKeys.FILE_PATH));
+        FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+        if (filePath == null) return;
+        GetVersionAction.doGet(project, revision, filePath);
       }
     }
   }

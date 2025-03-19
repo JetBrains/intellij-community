@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -20,10 +20,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfoOrNull
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
-import org.jetbrains.kotlin.idea.base.facet.implementingModules as implementingModulesNew
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.types.typeUtil.closure
+import org.jetbrains.kotlin.utils.closure
 
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.facet.isNewMultiPlatformModule' instead.",
@@ -55,15 +54,6 @@ val Module.sourceType: SourceType?
 @Suppress("unused")
 val Module.isMPPModule: Boolean
     get() = isMultiPlatformModule
-
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.facet.implementingModules' instead.",
-    ReplaceWith("implementingModules", imports = ["org.jetbrains.kotlin.idea.base.facet"]),
-    level = DeprecationLevel.ERROR
-)
-@Suppress("unused")
-val Module.implementingModules: List<Module>
-    get() = implementingModulesNew
 
 val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     get() {

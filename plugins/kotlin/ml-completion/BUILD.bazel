@@ -1,0 +1,31 @@
+### auto-generated section `build kotlin.ml-completion` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ml-completion_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ml-completion",
+  module_name = "kotlin.ml-completion",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/preferences",
+    "//platform/projectModel-api:projectModel",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:kotlin-ml-completion-completion-ranking-kotlin",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+  ],
+  runtime_deps = [":ml-completion_resources"]
+)
+### auto-generated section `build kotlin.ml-completion` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.diff.DiffDialogHints;
@@ -56,7 +56,8 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     ListSelection<Change> selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
@@ -65,7 +66,7 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(e.getData(CommittedChangesBrowserUseCase.DATA_KEY));
@@ -78,6 +79,10 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
   }
 
   public static @Nullable Change getChangeWithLocal(@NotNull Change c, boolean useBeforeVersion) {
+    return getChangeWithLocal(c, useBeforeVersion, true);
+  }
+
+  public static @Nullable Change getChangeWithLocal(@NotNull Change c, boolean useBeforeVersion, boolean isAfterRevisionLocal) {
     ContentRevision revision = useBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
     ContentRevision otherRevision = useBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
 
@@ -87,11 +92,13 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     ContentRevision localRevision = file != null ? CurrentContentRevision.create(VcsUtil.getFilePath(file)) : null;
     if (revision == null && localRevision == null) return null;
 
-    return new Change(revision, localRevision);
+    if (isAfterRevisionLocal) {
+      return new Change(revision, localRevision);
+    }
+    return new Change(localRevision, revision);
   }
 
-  @Nullable
-  private static VirtualFile getLocalVirtualFileFor(@Nullable ContentRevision revision) {
+  private static @Nullable VirtualFile getLocalVirtualFileFor(@Nullable ContentRevision revision) {
     if (revision == null) return null;
     FilePath filePath = revision.getFile();
     if (filePath.isNonLocal() || filePath.isDirectory()) return null;

@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("use com.intellij.openapi.application.runReadAction", ReplaceWith("com.intellij.openapi.application.runReadAction"))
 fun <T> runReadAction(action: () -> T): T {
     return ApplicationManager.getApplication().runReadAction<T>(action)
@@ -50,7 +51,7 @@ fun Project.executeWriteCommand(@NlsContexts.Command name: String, command: () -
 }
 
 fun <T> Project.executeWriteCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {
-    return executeCommand<T>(name, groupId) { runWriteAction(command) }
+    return executeCommand(name, groupId) { runWriteAction(command) }
 }
 
 fun <T> Project.executeCommand(@NlsContexts.Command name: String, groupId: Any? = null, command: () -> T): T {
@@ -64,10 +65,6 @@ fun <T> runWithCancellationCheck(block: () -> T): T = CancellationCheck.runWithC
 
 inline fun executeOnPooledThread(crossinline action: () -> Unit) =
     ApplicationManager.getApplication().executeOnPooledThread { action() }
-
-@Deprecated("use com.intellij.openapi.application.invokeLater", ReplaceWith("com.intellij.openapi.application.invokeLater"))
-inline fun invokeLater(crossinline action: () -> Unit) =
-    ApplicationManager.getApplication().invokeLater { action() }
 
 inline fun invokeLater(expired: Condition<*>, crossinline action: () -> Unit) =
     ApplicationManager.getApplication().invokeLater({ action() }, expired)

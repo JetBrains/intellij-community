@@ -1,17 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -33,8 +35,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return JavaAnalysisBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
   }
 
@@ -89,7 +90,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     int index = ArrayUtilRt.find(parameters, parameter);
 
-    return AnnotateMethodFix.processModifiableInheritorsUnderProgress(method, psiMethod -> {
+    return processModifiableInheritorsUnderProgress(method, psiMethod -> {
       PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
       if (index < psiParameters.length) {
         consumer.accept(psiParameters[index]);
@@ -98,8 +99,19 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaAnalysisBundle.message("annotate.overridden.methods.parameters.family.name");
+  }
+
+  public static boolean processModifiableInheritorsUnderProgress(@NotNull PsiMethod method, @NotNull Consumer<? super PsiMethod> consumer) {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      for (PsiMethod psiMethod : OverridingMethodsSearch.search(method).asIterable()) {
+        ReadAction.run(() -> {
+          if (psiMethod.isPhysical() && !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
+            consumer.accept(psiMethod);
+          }
+        });
+      }
+    }, JavaAnalysisBundle.message("searching.for.overriding.methods"), true, method.getProject());
   }
 }

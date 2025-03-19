@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.PlainTextFormatter;
@@ -18,34 +18,26 @@ import java.io.IOException;
 public abstract class AbstractInspectionCmdlineOptions implements InspectionToolCmdlineOptions {
   private static final Logger LOG = Logger.getInstance(AbstractInspectionCmdlineOptions.class);
 
-  @Nullable
-  protected abstract String getProfileNameOrPathProperty();
+  protected abstract @Nullable String getProfileNameOrPathProperty();
 
-  @Nullable
-  protected abstract String getProjectPathProperty();
+  protected abstract @Nullable String getProjectPathProperty();
 
-  @Nullable
-  protected abstract String getOutputPathProperty();
+  protected abstract @Nullable String getOutputPathProperty();
 
-  @Nullable
-  protected abstract String getDirToInspectProperty();
+  protected abstract @Nullable String getDirToInspectProperty();
 
-  @Nullable
-  protected abstract String getOutputFormatProperty();
+  protected abstract @Nullable String getOutputFormatProperty();
 
-  @Nullable
-  protected abstract String getXSLTSchemePathProperty();
+  protected abstract @Nullable String getXSLTSchemePathProperty();
 
-  @Nullable
-  protected abstract Boolean getErrorCodeRequiredProperty();
+  protected abstract @Nullable Boolean getErrorCodeRequiredProperty();
 
-  @Nullable
-  protected abstract Boolean getRunWithEditorSettingsProperty();
+  protected abstract @Nullable Boolean getRunWithEditorSettingsProperty();
 
   protected abstract String @NotNull [] optionsBanner();
 
   @Override
-  public void initApplication(InspectionApplication app) {
+  public void initApplication(InspectionApplicationBase app) {
     app.myHelpProvider = this;
     app.myProjectPath = determineProjectPath();
     app.myProfileName = getProfileNameOrPathProperty();
@@ -104,14 +96,14 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     final String outputFormat = getOutputFormatProperty();
     if (outputFormat != null) {
       StringBuilder builder = new StringBuilder();
-      for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensions()) {
+      for (InspectionsReportConverter converter : InspectionsReportConverter.EP_NAME.getExtensionList()) {
         final String converterFormat = converter.getFormatName();
         if (outputFormat.equals(converterFormat)) {
           builder = null;
           break;
         }
         else {
-          if (builder.length() != 0) {
+          if (!builder.isEmpty()) {
             builder.append(", ");
           }
           builder.append(converterFormat);
@@ -124,8 +116,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     }
   }
 
-  @Nullable
-  protected String determineOutputPath() {
+  protected @Nullable String determineOutputPath() {
     final String outputPathProperty = getOutputPathProperty();
 
     // if plain formatter and output path not specified - use STDOUT
@@ -145,14 +136,12 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     System.exit(1);
   }
 
-  @Nullable
-  protected String determineProjectPath() {
+  protected @Nullable String determineProjectPath() {
     final String projectPath = getProjectPathProperty();
     return projectPath != null ? projectPath : getDefaultProjectPath();
   }
 
-  @Nullable
-  protected String determineDirectoryToInspect(@Nullable final String projectPath) {
+  protected @Nullable String determineDirectoryToInspect(final @Nullable String projectPath) {
     final String dirToInspect = getDirToInspectProperty();
 
     if (dirToInspect == null) {
@@ -182,8 +171,7 @@ public abstract class AbstractInspectionCmdlineOptions implements InspectionTool
     return getOutputPathProperty() + "/results";
   }
 
-  @Nullable
-  protected String getDefaultProjectPath() {
+  protected @Nullable String getDefaultProjectPath() {
     return null;
   }
 }

@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -28,30 +28,30 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSaverDialog {
   protected final JTextField myFileName = new JTextField(20);
-  protected final JComboBox myExtensions = new JComboBox();
+  protected final JComboBox<String> myExtensions = new ComboBox<>();
   protected final FileSaverDescriptor myDescriptor;
 
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     super(descriptor, parent);
     myDescriptor = descriptor;
-    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
-      myExtensions.addItem(ext);
-    }
+    fillExtensions(descriptor);
     setTitle(getChooserTitle(descriptor));
   }
 
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
     super(descriptor, project);
     myDescriptor = descriptor;
-    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
-      myExtensions.addItem(ext);
-    }
+    fillExtensions(descriptor);
     setTitle(getChooserTitle(descriptor));
+  }
+
+  private void fillExtensions(FileSaverDescriptor descriptor) {
+    var extFilter = descriptor.getExtensionFilter();
+    if (extFilter != null) {
+      extFilter.second.forEach(ext -> myExtensions.addItem(ext));
+    }
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileSaverDescriptor descriptor) {
@@ -101,13 +101,12 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   }
 
   @Override
-  @Nullable
-  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
+  public @Nullable VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
     init();
     restoreSelection(baseDir);
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
       @Override
-      public void selectionChanged(@NotNull final List<? extends VirtualFile> selection) {
+      public void selectionChanged(final @NotNull List<? extends VirtualFile> selection) {
         updateFileName(selection);
         updateOkButton();
       }
@@ -143,16 +142,17 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     boolean correctExt = true;
-    for (String ext : myDescriptor.getFileExtensions()) {
-      correctExt = path.endsWith("." + ext);
-      if (correctExt) break;
+    var extFilter = myDescriptor.getExtensionFilter();
+    if (extFilter != null) {
+      var _path = path;
+      correctExt = extFilter.second.stream().anyMatch(ext -> Strings.endsWithIgnoreCase(_path, '.' + ext));
     }
 
     if (!correctExt) {
       Object obj = myExtensions.getSelectedItem();
       String selectedExtension = obj == null ? null : obj.toString();
       if (!Strings.isEmpty(selectedExtension)) {
-        path += "." + selectedExtension;
+        path += '.' + selectedExtension;
       }
     }
 
@@ -212,7 +212,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   private boolean isFileNameExist() {
     if (myPathTextField == null) return false;
     final String path = myPathTextField.getTextFieldText();
-    return path != null && new File(path.trim()).exists() && myFileName.getText().trim().length() > 0;
+    return path != null && new File(path.trim()).exists() && !myFileName.getText().trim().isEmpty();
   }
 
   protected void updateOkButton() {

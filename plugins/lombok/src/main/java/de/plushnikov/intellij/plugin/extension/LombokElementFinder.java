@@ -5,11 +5,12 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import de.plushnikov.intellij.plugin.util.DumbIncompleteModeUtil;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokElementFinder extends PsiElementFinder {
+public final class LombokElementFinder extends PsiElementFinder {
 
   private final JavaFileManager myFileManager;
   private final Project myProject;
@@ -19,10 +20,10 @@ public class LombokElementFinder extends PsiElementFinder {
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (!LombokLibraryUtil.hasLombokLibrary(myProject)) {
+  public @Nullable PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+    if (!LombokLibraryUtil.hasLombokLibrary(myProject) &&
+        !DumbIncompleteModeUtil.isIncompleteMode(myProject)) {
       return null;
     }
 

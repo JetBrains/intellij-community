@@ -2,9 +2,11 @@
 package com.intellij.openapi.editor.markup;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.io.DataInput;
 import java.util.Map;
 
 /**
@@ -61,6 +63,12 @@ public class UnmodifiableTextAttributes extends TextAttributes {
 
   @Override
   public void readExternal(@NotNull Element element) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public void readExternal(@NotNull DataInput in) {
     throw new UnsupportedOperationException();
   }
 }

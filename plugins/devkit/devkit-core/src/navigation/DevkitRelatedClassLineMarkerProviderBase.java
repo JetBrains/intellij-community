@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -28,7 +28,7 @@ abstract class DevkitRelatedClassLineMarkerProviderBase extends DevkitRelatedLin
       return;
     }
 
-    process(identifier, uClass.getPsi(), result);
+    process(identifier, uClass.getJavaPsi(), result);
   }
 
   protected abstract void process(@NotNull PsiElement identifier,

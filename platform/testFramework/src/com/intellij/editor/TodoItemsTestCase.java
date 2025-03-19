@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.editor;
 
 import com.intellij.codeHighlighting.Pass;
@@ -33,6 +33,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,11 +58,10 @@ public abstract class TodoItemsTestCase extends LightPlatformCodeInsightTestCase
     }
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    int[] toIgnore = {Pass.UPDATE_FOLDING, Pass.LOCAL_INSPECTIONS, Pass.WHOLE_FILE_LOCAL_INSPECTIONS};
+    int[] toIgnore = {Pass.UPDATE_FOLDING, Pass.LOCAL_INSPECTIONS};
     Editor editor = getEditor();
     PsiFile file = getFile();
     if (editor instanceof EditorWindow) {

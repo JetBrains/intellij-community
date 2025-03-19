@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.kotlin.idea.base.psi
 
 import com.google.common.collect.HashMultimap
@@ -10,19 +12,20 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.JvmNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object KotlinPsiHeuristics {
     @JvmStatic
     fun unwrapImportAlias(file: KtFile, aliasName: String): Collection<String> {
+        if (!file.hasImportAlias()) return emptyList()
+
         return file.aliasImportMap[aliasName]
     }
 
@@ -34,6 +37,8 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun getImportAliases(file: KtFile, names: Set<String>): Set<String> {
+        if (!file.hasImportAlias()) return emptySet()
+
         val result = LinkedHashSet<String>()
         for ((aliasName, name) in file.aliasImportMap.entries()) {
             if (name in names) {
@@ -71,6 +76,7 @@ object KotlinPsiHeuristics {
         val file = type.containingKotlinFileStub?.psi as? KtFile ?: return false
 
         // TODO: support type aliases
+        if (!file.hasImportAlias()) return false
         return file.aliasImportMap[referencedName].contains("Nothing")
     }
 
@@ -96,7 +102,7 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun getPackageName(file: KtFile): FqName? {
-        val entry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmNames.JVM_PACKAGE_NAME_SHORT) ?: return null
+        val entry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmStandardClassIds.JVM_PACKAGE_NAME_SHORT) ?: return null
         val customPackageName = JvmFileClassUtil.getLiteralStringFromAnnotation(entry)
         if (customPackageName != null) {
             return FqName(customPackageName)
@@ -216,17 +222,17 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun hasJvmFieldAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
+        return hasAnnotation(declaration,  JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmOverloadsAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_OVERLOADS_FQ_NAME)
+        return hasAnnotation(declaration, JvmStandardClassIds.JVM_OVERLOADS_FQ_NAME)
     }
 
     @JvmStatic
     fun hasJvmStaticAnnotation(declaration: KtAnnotated): Boolean {
-        return hasAnnotation(declaration, JVM_STATIC_ANNOTATION_FQ_NAME)
+        return hasAnnotation(declaration, JvmStandardClassIds.JVM_STATIC_FQ_NAME)
     }
 
     private val PUBLISHED_API_FQN = FqName("kotlin.PublishedApi")
@@ -262,11 +268,7 @@ object KotlinPsiHeuristics {
         }
 
         val name = declaration.name ?: return false
-        if (!OperatorConventions.isConventionName(Name.identifier(name))) {
-            return false
-        }
-
-        return true
+        return OperatorConventions.isConventionName(Name.identifier(name))
     }
 
     /**

@@ -303,39 +303,40 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              VARIABLE
+                PsiElement(var)('$first')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('-eq')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              NUMBER
+                PsiElement(int)('0')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
           PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            VARIABLE
-              PsiElement(var)('$first')
+          PsiElement(&&)('&&')
           PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            PsiElement(word)('-eq')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            NUMBER
-              PsiElement(int)('0')
-          PsiWhiteSpace(' ')
-          PsiElement(])(']')
-        PsiWhiteSpace(' ')
-        PsiElement(&&)('&&')
-        PsiWhiteSpace(' ')
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            VARIABLE
-              PsiElement(var)('$second')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            PsiElement(word)('-eq')
-          PsiWhiteSpace(' ')
-          LITERAL_CONDITION
-            NUMBER
-              PsiElement(int)('0')
-          PsiWhiteSpace(' ')
-          PsiElement(])(']')
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              VARIABLE
+                PsiElement(var)('$second')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              PsiElement(word)('-eq')
+            PsiWhiteSpace(' ')
+            LITERAL_CONDITION
+              NUMBER
+                PsiElement(int)('0')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
         PsiElement(\n)('\n')
       THEN_CLAUSE
         PsiElement(then)('then')

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
@@ -23,8 +23,8 @@ fun testExceptions(): Nothing {
   val ce = assertThrows<CancellationException> {
     requireNotNull(Cancellation.currentJob()).ensureActive()
   }
-  val jce = assertThrows<JobCanceledException> {
-    ProgressManager.checkCanceled()
+  val jce = assertThrows<CeProcessCanceledException> {
+    Cancellation.checkCancelled()
   }
   assertSame(ce, jce.cause)
   throw jce
@@ -32,7 +32,7 @@ fun testExceptions(): Nothing {
 
 private fun testNonCancellableSection() {
   ProgressManager.getInstance().executeNonCancelableSection {
-    assertThrows<JobCanceledException> {
+    assertDoesNotThrow {
       Cancellation.checkCancelled()
     }
     assertDoesNotThrow {
@@ -42,11 +42,11 @@ private fun testNonCancellableSection() {
 }
 
 fun testExceptionsAndNonCancellableSection(): Nothing {
-  assertThrows<JobCanceledException> {
+  assertThrows<CeProcessCanceledException> {
     testExceptions()
   }
   testNonCancellableSection()
-  throw assertThrows<JobCanceledException> {
+  throw assertThrows<CeProcessCanceledException> {
     testExceptions()
   }
 }

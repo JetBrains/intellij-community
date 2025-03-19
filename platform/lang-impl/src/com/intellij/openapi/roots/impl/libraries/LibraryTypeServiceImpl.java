@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class LibraryTypeServiceImpl extends LibraryTypeService {
+public final class LibraryTypeServiceImpl extends LibraryTypeService {
   private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 
   @Override
@@ -45,8 +45,7 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     return doCreate(type, name, roots);
   }
 
-  @NotNull
-  private static <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<? extends OrderRoot> roots) {
+  private static @NotNull <P extends LibraryProperties<?>> NewLibraryConfiguration doCreate(final LibraryType<P> type, final String name, final List<? extends OrderRoot> roots) {
     return new NewLibraryConfiguration(name, type, type != null ? type.getKind().createDefaultProperties() : null) {
       @Override
       public void addRoots(@NotNull LibraryEditor editor) {
@@ -55,17 +54,15 @@ public class LibraryTypeServiceImpl extends LibraryTypeService {
     };
   }
 
-  @NotNull
-  public static String suggestLibraryName(VirtualFile @NotNull [] classesRoots) {
+  public static @NotNull String suggestLibraryName(VirtualFile @NotNull [] classesRoots) {
     if (classesRoots.length >= 1) {
       return FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(classesRoots[0].getPath()));
     }
     return DEFAULT_LIBRARY_NAME;
   }
 
-  @NotNull
-  public static String suggestLibraryName(@NotNull List<? extends OrderRoot> roots) {
-    if (roots.size() >= 1) {
+  public static @NotNull String suggestLibraryName(@NotNull List<? extends OrderRoot> roots) {
+    if (!roots.isEmpty()) {
       return FileUtilRt.getNameWithoutExtension(PathUtil.getFileName(roots.get(0).getFile().getPath()));
     }
     return DEFAULT_LIBRARY_NAME;

@@ -1,9 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,8 +11,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -23,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -67,8 +66,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return switch (myFixType) {
       case MAKE_FINAL -> {
         Collection<PsiVariable> vars = getVariablesToFix();
@@ -80,14 +78,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
                                  vars.size() == 1 ? 0 : 1);
       }
       case COPY_TO_FINAL -> JavaBundle.message("intention.name.copy.to.final.temp.variable", myVariable.getName(),
-                               !PsiUtil.isLanguageLevel8OrHigher(myContext) ? 0 : 1);
+                               !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, myContext) ? 0 : 1);
       default -> "";
     };
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("make.final.family");
   }
 
@@ -128,22 +125,17 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     }
   }
 
-  @NotNull
-  private Collection<PsiVariable> getVariablesToFix() {
-    Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
-    if (vars == null) {
-      vars = ((UserDataHolderEx)myContext).putUserDataIfAbsent(VARS[myFixType], ContainerUtil.createConcurrentWeakMap());
-    }
-    final Map<PsiVariable, Boolean> finalVars = vars;
+  private @NotNull Collection<PsiVariable> getVariablesToFix() {
+    final Map<PsiVariable, Boolean> finalVars =
+      ConcurrencyUtil.computeIfAbsent(myContext, VARS[myFixType], () -> ContainerUtil.createConcurrentWeakMap());
     return new AbstractCollection<>() {
       @Override
       public boolean add(PsiVariable psiVariable) {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;
       }
 
-      @NotNull
       @Override
-      public Iterator<PsiVariable> iterator() {
+      public @NotNull Iterator<PsiVariable> iterator() {
         return finalVars.keySet().iterator();
       }
 
@@ -207,7 +199,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiDeclarationStatement copyDecl = factory.createVariableDeclarationStatement(newName, type, initializer);
     PsiVariable newVariable = (PsiVariable)copyDecl.getDeclaredElements()[0];
     final boolean mustBeFinal =
-      !PsiUtil.isLanguageLevel8OrHigher(context) || JavaCodeStyleSettings.getInstance(context.getContainingFile()).GENERATE_FINAL_LOCALS;
+      !PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, context) || JavaCodeStyleSettings.getInstance(context.getContainingFile()).GENERATE_FINAL_LOCALS;
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, mustBeFinal);
     PsiElement statement = getStatementToInsertBefore(variable, context);
     if (statement == null) return;
@@ -299,7 +291,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     int type = MAKE_FINAL;
     for (PsiReferenceExpression expression : outerReferences) {
       // if it happens that variable referenced from another inner class, make sure it can be make final from there
-      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, expression);
+      PsiElement innerScope = ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, expression);
 
       if (innerScope != null) {
         @FixType int thisType = MAKE_FINAL;
@@ -323,11 +315,14 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     for (PsiReferenceExpression expression : references) {
       if (ControlFlowUtil.isVariableAssignedInLoop(expression, variable)) return false;
-      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, variable, uninitializedVarProblems,
-                                                                                                 variable.getContainingFile());
-      if (highlightInfo != null) return false;
-      highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
-      if (highlightInfo != null) return false;
+      if (!ControlFlowUtil.isInitializedBeforeUsage(
+        expression, variable, uninitializedVarProblems, false)) {
+        return false;
+      }
+      if (ControlFlowUtil.findFinalVariableAlreadyInitializedProblem(variable, expression, finalVarProblems) !=
+          ControlFlowUtil.DoubleInitializationProblem.NO_PROBLEM) {
+        return false;
+      }
       if (variable instanceof PsiParameter && PsiUtil.isAccessedForWriting(expression)) return false;
     }
     return true;

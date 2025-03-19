@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 
@@ -6,13 +6,14 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
+import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccess
-import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -48,46 +49,34 @@ fun KtExpression?.isSimpleName(name: Name): Boolean {
     return this is KtNameReferenceExpression && this.getQualifiedExpressionForSelector() == null && this.getReferencedNameAsName() == name
 }
 
-fun KtCallableDeclaration.hasUsages(inElement: KtElement): Boolean {
-    assert(inElement.isPhysical)
-    return hasUsages(listOf(inElement))
-}
-
-fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean {
-    assert(this.isPhysical)
-    // TODO: it's a temporary workaround about strange dead-lock when running inspections
-    return inElements.any { ReferencesSearch.search(this, LocalSearchScope(it)).any() }
-//    return ReferencesSearch.search(this, LocalSearchScope(inElements.toTypedArray())).any()
-}
-
 fun KtVariableDeclaration.hasWriteUsages(): Boolean {
     assert(this.isPhysical)
     if (!isVar) return false
-    return ReferencesSearch.search(this, codeUsageScope()).any {
+    return ReferencesSearch.search(this, codeUsageScope()).asIterable().any {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
 
 fun KtCallableDeclaration.countUsages(inElement: KtElement): Int {
     assert(this.isPhysical)
-    return ReferencesSearch.search(this, LocalSearchScope(inElement)).count()
+    return ReferencesSearch.search(this, LocalSearchScope(inElement)).asIterable().count()
 }
 
 fun KtCallableDeclaration.countUsages(inElements: Collection<KtElement>): Int {
     assert(this.isPhysical)
     // TODO: it's a temporary workaround about strange dead-lock when running inspections
-    return inElements.sumOf { ReferencesSearch.search(this, LocalSearchScope(it)).count() }
+    return inElements.sumOf { ReferencesSearch.search(this, LocalSearchScope(it)).asIterable().count() }
 }
 
 fun KtCallableDeclaration.countUsages(): Int {
     assert(this.isPhysical)
-    return ReferencesSearch.search(this, codeUsageScope()).count()
+    return ReferencesSearch.search(this, codeUsageScope()).asIterable().count()
 }
 
 fun KtVariableDeclaration.countWriteUsages(): Int {
     assert(this.isPhysical)
     if (!isVar) return 0
-    return ReferencesSearch.search(this, codeUsageScope()).count {
+    return ReferencesSearch.search(this, codeUsageScope()).asIterable().count {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -95,7 +84,7 @@ fun KtVariableDeclaration.countWriteUsages(): Int {
 fun KtVariableDeclaration.countWriteUsages(inElement: KtElement): Int {
     assert(this.isPhysical)
     if (!isVar) return 0
-    return ReferencesSearch.search(this, LocalSearchScope(inElement)).count {
+    return ReferencesSearch.search(this, LocalSearchScope(inElement)).asIterable().count {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -103,7 +92,7 @@ fun KtVariableDeclaration.countWriteUsages(inElement: KtElement): Int {
 fun KtVariableDeclaration.hasWriteUsages(inElement: KtElement): Boolean {
     assert(this.isPhysical)
     if (!isVar) return false
-    return ReferencesSearch.search(this, LocalSearchScope(inElement)).any {
+    return ReferencesSearch.search(this, LocalSearchScope(inElement)).asIterable().any {
         (it as? KtSimpleNameReference)?.element?.readWriteAccess(useResolveForReadWrite = true)?.isWrite == true
     }
 }
@@ -140,13 +129,6 @@ fun KtExpression.nextStatement(): KtExpression? {
     val statement = unwrapIfLabeled()
     if (statement.parent !is KtBlockExpression) return null
     return statement.siblings(forward = true, withItself = false).firstIsInstanceOrNull()
-}
-
-fun KtExpression.unwrapIfLabeled(): KtExpression {
-    var statement = this
-    while (true) {
-        statement = statement.parent as? KtLabeledExpression ?: return statement
-    }
 }
 
 fun KtLoopExpression.deleteWithLabels() {

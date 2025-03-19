@@ -14,15 +14,15 @@ class RunToolbarProcessData {
   companion object {
     @ApiStatus.Internal
     @JvmField
-    val RW_SLOT = DataKey.create<String>("RunWidgetSlot")
+    val RW_SLOT: DataKey<String> = DataKey.create("RunWidgetSlot")
 
     @ApiStatus.Internal
     @JvmField
-    val RW_MAIN_CONFIGURATION_ID = Key<String>("RunWidgetMainRunConfigurationId")
+    val RW_MAIN_CONFIGURATION_ID: Key<String> = Key<String>("RunWidgetMainRunConfigurationId")
 
     @ApiStatus.Internal
     @JvmField
-    val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
+    val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY: Key<Boolean> = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
 
     @ApiStatus.Internal
     @JvmStatic
@@ -36,13 +36,13 @@ class RunToolbarProcessData {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<in ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
+    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
       return Consumer { ee: ExecutionEnvironment ->
         val runManager = getInstance(project)
         if (runManager.isRiderRunWidgetActive()) {
           ee.putUserData(RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY, true)
         }
-      }
+      }.mix(addition)
     }
 
     private fun Consumer<ExecutionEnvironment>.mix(addition: Consumer<ExecutionEnvironment>?): Consumer<ExecutionEnvironment> {

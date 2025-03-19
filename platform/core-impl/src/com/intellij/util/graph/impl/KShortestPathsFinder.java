@@ -10,6 +10,7 @@ import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.*;
  * Algorithm to search k shortest paths between two vertices in unweighted directed graph.
  * Based on article "Finding the k shortest paths" by D. Eppstein, 1997.
  */
+@ApiStatus.Internal
 public final class KShortestPathsFinder<Node> {
   private static final Logger LOG = Logger.getInstance(KShortestPathsFinder.class);
   private final InboundSemiGraph<Node> myGraph;
@@ -167,7 +169,7 @@ public final class KShortestPathsFinder<Node> {
 
       final Heap<Node> heap = myHeaps.get(myStart);
       if (heap != null) {
-        queue.add(new Sidetracks<>(0, FList.<HeapNode<Node>>emptyList().prepend(heap.getRoot())));
+        queue.add(new Sidetracks<>(0, FList.singleton(heap.getRoot())));
         for (int i = 2; i <= k; i++) {
           if (queue.isEmpty()) break;
           myProgressIndicator.checkCanceled();

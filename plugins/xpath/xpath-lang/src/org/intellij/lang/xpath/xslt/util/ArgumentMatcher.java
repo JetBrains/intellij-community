@@ -41,8 +41,7 @@ public class ArgumentMatcher implements ResolveUtil.Matcher {
     }
 
     @Override
-    @Nullable
-    public Result match(XmlTag element) {
+    public @Nullable Result match(XmlTag element) {
         if (element.getLocalName().equals("with-param") && XsltSupport.isXsltTag(element)) {
             return Result.create(transform(element));
         }

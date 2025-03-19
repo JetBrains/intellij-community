@@ -4,22 +4,17 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ui.ImageUtil
 import org.jetbrains.annotations.ApiStatus
-import org.w3c.dom.Element
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
-import javax.swing.Icon
 import kotlin.math.max
-
-private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
 private val iconMaxSize: Float by lazy {
   var maxSize = Integer.MAX_VALUE.toFloat()
@@ -37,7 +32,7 @@ private val iconMaxSize: Float by lazy {
  */
 @ApiStatus.Internal
 object SVGLoader {
-  const val ICON_DEFAULT_SIZE = 16
+  const val ICON_DEFAULT_SIZE: Int = 16
 
   @Throws(IOException::class)
   @JvmStatic
@@ -57,7 +52,8 @@ object SVGLoader {
   }
 
   /**
-   * Loads an image with the specified `width` and `height` (in user space). Size specified in svg file is ignored.
+   * Loads an image with the specified `width` and `height` (in user space).
+   * Size specified in the svg file is ignored.
    * Note: always pass `url` when it is available.
    */
   @Throws(IOException::class)
@@ -101,47 +97,15 @@ object SVGLoader {
       IconLoader.clearCache()
     }
 
-  @JvmStatic
-  fun setSelectionColorPatcherProvider(colorPatcher: SvgElementColorPatcherProvider?) {
-    selectionColorPatcher = colorPatcher
-    IconLoader.clearCache()
-  }
-
-  @JvmStatic
-  fun paintIconWithSelection(icon: Icon, c: Component?, g: Graphics?, x: Int, y: Int) {
-    val patcher = selectionColorPatcher
-    if (patcher == null || !Registry.`is`("ide.patch.icons.on.selection", false)) {
-      icon.paintIcon(c, g, x, y)
-    }
-    else {
-      IconLoader.colorPatchedIcon(icon, patcher).paintIcon(c, g, x, y)
-    }
-  }
-
-  interface SvgElementColorPatcher {
-    fun patchColors(svg: Element) {
-    }
+  interface SvgElementColorPatcherProvider {
+    fun attributeForPath(path: String): SvgAttributePatcher? = null
 
     /**
-     * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching
+     * Returns a digest of the current SVG color patcher.
+     *
+     * Consider using a two-element array, where the first element is a hash of the input data for the patcher,
+     * and the second is an ID of the patcher (see [com.intellij.ui.icons.ColorPatcherIdGenerator]).
      */
-    fun digest(): ByteArray?
-  }
-
-  interface SvgElementColorPatcherProvider {
-    @Suppress("DeprecatedCallableAddReplaceWith")
-    @Deprecated("Implement attributeForPath")
-    fun forPath(path: String?): SvgElementColorPatcher? {
-      return null
-    }
-
-    fun attributeForPath(path: String?): SvgAttributePatcher? {
-      return null
-    }
-
-    fun digest(): LongArray? = null
-
-    @Deprecated("Implement digest", ReplaceWith("digest"))
-    fun wholeDigest(): ByteArray? = null
+    fun digest(): LongArray
   }
 }

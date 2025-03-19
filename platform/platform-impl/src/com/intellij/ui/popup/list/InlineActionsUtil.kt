@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.ui.popup.list
 
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -11,7 +14,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 
 private const val INLINE_BUTTON_WIDTH = 16
-const val INLINE_BUTTON_MARKER = "inlineButtonMarker"
+const val INLINE_BUTTON_MARKER: String = "inlineButtonMarker"
 
 fun createExtraButton(icon: Icon, active: Boolean): JComponent {
   val label = JLabel(icon)

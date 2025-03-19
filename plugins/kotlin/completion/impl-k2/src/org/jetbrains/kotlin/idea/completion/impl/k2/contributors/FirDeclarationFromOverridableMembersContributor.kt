@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-package org.jetbrains.kotlin.idea.completion.contributors
-
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirValueParameterPositionContext
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinValueParameterPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -32,19 +32,25 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * @see OverrideKeywordHandler
  */
 internal class FirDeclarationFromOverridableMembersContributor(
-    basicContext: FirBasicCompletionContext,
-    priority: Int,
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
+    priority: Int = 0,
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
+
+    context(KaSession)
+    override fun complete(
+        positionContext: KotlinRawPositionContext,
+        weighingContext: WeighingContext,
+    ) {
         val declaration = when (positionContext) {
-            is FirValueParameterPositionContext -> positionContext.ktParameter
+            is KotlinValueParameterPositionContext -> positionContext.ktParameter
             // In a fake file a callable declaration under construction is appended with "X.f$", which is parsed as a type reference.
-            is FirTypeNameReferencePositionContext -> positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) }
+            is KotlinTypeNameReferencePositionContext -> positionContext.typeReference?.let { getDeclarationFromReceiverTypeReference(it) }
             else -> null
         } ?: return
 
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-            val elements = with(OverrideKeywordHandler(basicContext)) { createOverrideMemberLookups(parameters, declaration, project) }
+            val elements = OverrideKeywordHandler(importStrategyDetector).createOverrideMemberLookups(parameters, declaration, project)
             sink.addAllElements(elements)
         }
     }

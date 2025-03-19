@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -27,16 +27,24 @@ private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
  * [com.intellij.internal.statistic.IdeActivityDefinition.startedAsync] to record start events,
  * and [com.intellij.internal.statistic.StructuredIdeActivity.finished] to record finish events.
  *
- * See example in dev-guide/fus-collectors.md.
+ * See example in [FUS Collectors](https://youtrack.jetbrains.com/articles/IJPL-A-153/Fus-Collectors).
  */
 @ApiStatus.Internal
 class StructuredIdeActivity internal constructor(private val projectOrNullForApplication: Project?,
-                                                 private val ideActivityDefinition: IdeActivityDefinition,
+                                                 internal val ideActivityDefinition: IdeActivityDefinition,
                                                  private val parentActivity: StructuredIdeActivity? = null) {
-  internal val id: Int = parentActivity?.id ?: counter.incrementAndGet()
+  val id: Int = parentActivity?.id ?: counter.incrementAndGet()
+  private val stepsCounter: AtomicInteger by lazy { AtomicInteger(0) }
+  val stepId: Int by lazy {
+    if (parentActivity == null) return@lazy -1 // fail safe
+    var rootParentActivity: StructuredIdeActivity = parentActivity
+    while (rootParentActivity.parentActivity != null) rootParentActivity = rootParentActivity.parentActivity!!
+    rootParentActivity.stepsCounter.incrementAndGet()
+  }
 
   private var state = IdeActivityState.NOT_STARTED
-  private var startedTimestamp = 0L
+  var startedTimestamp = 0L
+    private set
 
   private val innerActivities: MutableSet<StructuredIdeActivity> = Collections.synchronizedSet(SmartHashSet())
 
@@ -48,7 +56,7 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     state = IdeActivityState.STARTED
     parentActivity?.addInnerActivity(this)
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
+    val data: MutableList<EventPair<*>> = createDataWithIDs()
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
@@ -66,7 +74,7 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     parentActivity?.addInnerActivity(this)
     startedTimestamp = System.nanoTime()
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
+    val data: MutableList<EventPair<*>> = createDataWithIDs()
 
     dataSupplier().then { additionalData ->
       data.addAll(additionalData)
@@ -81,7 +89,7 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     if (parentNotStarted(parentActivity)) return this
     if (!LOG.assertTrue(state == IdeActivityState.STARTED, state.name)) return this
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
+    val data: MutableList<EventPair<*>> = createDataWithIDs()
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
@@ -99,7 +107,7 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     parentActivity?.removeInnerActivity(this)
     innerActivities.toList().forEach { it.finished() }
 
-    val data: MutableList<EventPair<*>> = mutableListOf(IdeActivityDefinition.activityId.with(id))
+    val data: MutableList<EventPair<*>> = createDataWithIDs()
     if (dataSupplier != null) {
       data.addAll(dataSupplier())
     }
@@ -107,6 +115,13 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
     data.add(EventFields.DurationMs.with(TimeoutUtil.getDurationMillis(startedTimestamp)))
     ideActivityDefinition.finished.log(projectOrNullForApplication, data)
     return this
+  }
+
+  private fun createDataWithIDs(): MutableList<EventPair<*>> {
+    return listOfNotNull(
+      IdeActivityDefinition.activityId.with(id),
+      if (ideActivityDefinition.subStepWithStepId && parentActivity != null) IdeActivityDefinition.stepId.with(stepId) else null
+    ).toMutableList()
   }
 
   private fun addInnerActivity(inner: StructuredIdeActivity) {
@@ -130,12 +145,13 @@ class StructuredIdeActivity internal constructor(private val projectOrNullForApp
 }
 
 class IdeActivityDefinition internal constructor(val group: EventLogGroup,
-                                                 private val parentActivityDefinition: IdeActivityDefinition? = null,
-                                                 internal var activityName: String?,
-                                                 startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
-                                                 finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
-  val started = group.registerVarargEvent(appendActivityName(activityName, "started"), activityId, *startEventAdditionalFields)
-  val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs, *finishEventAdditionalFields)
+                                                               private val parentActivityDefinition: IdeActivityDefinition? = null,
+                                                               internal var activityName: String?,
+                                                               startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                                                               finishEventAdditionalFields: Array<EventField<*>> = emptyArray(),
+                                                               internal val subStepWithStepId: Boolean = false) {
+  val started = group.registerVarargEvent(appendActivityName(activityName, "started"), *notNull(activityId, stepIdField(), *startEventAdditionalFields))
+  val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), *notNull(activityId, stepIdField(), EventFields.DurationMs, *finishEventAdditionalFields))
 
   @JvmOverloads
   fun started(project: Project?, dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
@@ -147,7 +163,7 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
   fun startedWithParent(project: Project?,
                         parentActivity: StructuredIdeActivity,
                         dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
-    logIfParentNotRegistered()
+    logIfParentNotRegistered(parentActivity)
     return StructuredIdeActivity(project, this, parentActivity).started(dataSupplier)
   }
 
@@ -156,11 +172,17 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
     return StructuredIdeActivity(project, this).startedAsync(dataSupplier)
   }
 
+  fun startedAsyncWithParent(project: Project?, parentActivity: StructuredIdeActivity, dataSupplier: () -> Promise<List<EventPair<*>>>): StructuredIdeActivity {
+    logIfParentNotRegistered(parentActivity)
+    return StructuredIdeActivity(project, this, parentActivity).startedAsync(dataSupplier)
+  }
+
   private fun logIfShouldBeStartedWithParent() {
     LOG.assertTrue(parentActivityDefinition == null, "Use startedWithParent/startedAsyncWithParent")
   }
 
-  private fun logIfParentNotRegistered() {
+  private fun logIfParentNotRegistered(parentActivity: StructuredIdeActivity) {
+    if (parentActivity.ideActivityDefinition == this) return // use self as parent is allowed
     LOG.assertTrue(parentActivityDefinition != null, "Use started/startedAsync or register parent activity")
   }
 
@@ -172,9 +194,18 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
 
   @JvmOverloads
   fun registerStage(stageName: String, additionalFields: Array<EventField<*>> = emptyArray()): VarargEventId =
-    group.registerVarargEvent(appendActivityName(activityName, stageName), activityId, *additionalFields)
+    group.registerVarargEvent(appendActivityName(activityName, stageName), *notNull(activityId, stepIdField(), *additionalFields))
+
+  private fun notNull(vararg fields: EventField<*>?): Array<EventField<*>> {
+    return fields.filterNotNull().toTypedArray()
+  }
+
+  private fun stepIdField(): EventField<Int>? {
+    return if (subStepWithStepId) stepId else null
+  }
 
   companion object {
     val activityId = EventFields.Int("ide_activity_id")
+    val stepId = EventFields.Int("step_id")
   }
 }

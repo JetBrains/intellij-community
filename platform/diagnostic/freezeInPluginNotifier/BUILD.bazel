@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.diagnostic.freezes` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "freezes_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "freezes",
+  module_name = "intellij.platform.diagnostic.freezes",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/threadDumpParser",
+    "//platform/diagnostic/freezeAnalyzer",
+    "//platform/core-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/statistics",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":freezes_resources"]
+)
+### auto-generated section `build intellij.platform.diagnostic.freezes` end

@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.application.options
 
 import com.intellij.openapi.application.PathMacroContributor
@@ -7,39 +9,45 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader.PathVariablesSerializer
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
+@ApiStatus.Internal
 @State(
   name = "PathMacrosImpl",
-  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME, roamingType = RoamingType.DISABLED, usePathMacroManager = false)],
+  category = SettingsCategory.SYSTEM,
+  exportable = true,
+  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME,
+                      roamingType = RoamingType.DISABLED,
+                      usePathMacroManager = false,
+                      useSaveThreshold = ThreeState.NO
+  )],
   useLoadedStateAsExisting = false,
   reportStatistic = false,
 )
 open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
   @Volatile
-  private var legacyMacros: Map<String, String> = emptyMap()
+  private var legacyMacros: Map<String, String> = java.util.Map.of()
 
   @Volatile
-  private var macros: Map<String, String> = emptyMap()
+  private var macros: Map<String, String> = java.util.Map.of()
   private val modificationStamp = AtomicLong()
   private val ignoredMacros = ContainerUtil.createLockFreeCopyOnWriteList<String>()
 
   companion object {
-    @JvmStatic
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
-    @JvmStatic
     private val LOG = logger<PathMacrosImpl>()
 
     const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
     const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @JvmStatic
     private val SYSTEM_MACROS: Set<String> = java.util.Set.of(
       PathMacroUtil.APPLICATION_HOME_DIR,
       PathMacroUtil.APPLICATION_PLUGINS_DIR,
@@ -50,7 +58,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     )
 
     @JvmStatic
-    fun getInstanceEx() = getInstance() as PathMacrosImpl
+    fun getInstanceEx(): PathMacrosImpl = getInstance() as PathMacrosImpl
   }
 
   override fun getUserMacroNames() = macros.keys
@@ -180,7 +188,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       if (value.lastOrNull() == '/') {
         value = value.substring(0, value.length - 1)
       }
-      newMacros[name] = value
+      newMacros.put(name, value)
     }
 
     val newIgnoredMacros = mutableListOf<String>()
@@ -197,15 +205,15 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     }
 
     for (forcedMacro in forcedMacros) {
-      if (newMacros[forcedMacro.key] != forcedMacro.value) {
+      if (newMacros.get(forcedMacro.key) != forcedMacro.value) {
         modificationStamp.incrementAndGet()
         break
       }
     }
     newMacros.putAll(forcedMacros)
 
-    macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)
-    legacyMacros = if (newLegacyMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newLegacyMacros)
+    macros = if (newMacros.isEmpty()) java.util.Map.of() else Collections.unmodifiableMap(newMacros)
+    legacyMacros = if (newLegacyMacros.isEmpty()) java.util.Map.of() else Collections.unmodifiableMap(newLegacyMacros)
     ignoredMacros.clear()
     ignoredMacros.addAll(newIgnoredMacros)
     LOG.info("Loaded path macros: $macros") //temporary added to debug IDEA-256482; LOG.debug cannot be used due to IDEA-256647

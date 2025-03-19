@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -22,7 +22,7 @@ import java.util.Set;
 public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionType extends PostfixTemplateExpressionCondition>
   extends EditablePostfixTemplate {
 
-  @NotNull protected final Set<? extends ConditionType> myExpressionConditions;
+  protected final @NotNull Set<? extends ConditionType> myExpressionConditions;
   protected final boolean myUseTopmostExpression;
 
   protected EditablePostfixTemplateWithMultipleExpressions(@NotNull String templateId,
@@ -50,8 +50,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
     myUseTopmostExpression = useTopmostExpression;
   }
 
-  @NotNull
-  protected static TemplateImpl createTemplate(@NotNull String templateText) {
+  protected static @NotNull TemplateImpl createTemplate(@NotNull String templateText) {
     TemplateImpl template = new TemplateImpl("fakeKey", templateText, "");
     template.setToReformat(true);
     template.parseSegments();
@@ -59,20 +58,17 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
   }
 
 
-  @NotNull
   @Override
-  protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+  protected @NotNull PsiElement getElementToRemove(@NotNull PsiElement element) {
     if (myUseTopmostExpression) {
       return getTopmostExpression(element);
     }
     return element;
   }
 
-  @NotNull
-  protected abstract PsiElement getTopmostExpression(@NotNull PsiElement element);
+  protected abstract @NotNull PsiElement getTopmostExpression(@NotNull PsiElement element);
 
-  @NotNull
-  public Set<? extends ConditionType> getExpressionConditions() {
+  public @NotNull Set<? extends ConditionType> getExpressionConditions() {
     return Collections.unmodifiableSet(myExpressionConditions);
   }
 
@@ -90,8 +86,7 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
            Objects.equals(myExpressionConditions, that.myExpressionConditions);
   }
 
-  @NotNull
-  protected Condition<PsiElement> getExpressionCompositeCondition() {
+  protected @NotNull Condition<PsiElement> getExpressionCompositeCondition() {
     return e -> {
       for (ConditionType condition : myExpressionConditions) {
         //noinspection unchecked

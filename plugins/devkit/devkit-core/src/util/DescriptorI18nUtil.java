@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
@@ -23,8 +24,7 @@ import java.util.List;
 
 public final class DescriptorI18nUtil {
 
-  @NonNls
-  public static final String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";
+  public static final @NonNls String CORE_ACTIONS_BUNDLE = "messages.ActionsBundle";
 
   public static @Nullable PropertiesFile findBundlePropertiesFile(@Nullable DomElement domElement) {
     XmlElement bundleXmlElement = null;
@@ -64,7 +64,7 @@ public final class DescriptorI18nUtil {
     final Module module = actions.getModule();
     if (module == null) return false;
 
-    if (PsiUtil.isIdeaProject(module.getProject()) &&
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject()) &&
         (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode())) {
       return true;
     }
@@ -96,6 +96,6 @@ public final class DescriptorI18nUtil {
     else {
       actionsBundleFiles = propertiesReferenceManager.findPropertiesFiles(resourcesModule, CORE_ACTIONS_BUNDLE);
     }
-    return ObjectUtils.tryCast(ContainerUtil.getOnlyItem(actionsBundleFiles), PropertiesFile.class);
+    return ContainerUtil.getOnlyItem(actionsBundleFiles);
   }
 }

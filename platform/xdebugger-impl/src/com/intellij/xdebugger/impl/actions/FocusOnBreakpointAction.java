@@ -16,9 +16,12 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ui.actions.AbstractFocusOnAction;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import org.jetbrains.annotations.ApiStatus;
 
-public class FocusOnBreakpointAction extends AbstractFocusOnAction {
+@ApiStatus.Internal
+public class FocusOnBreakpointAction extends AbstractFocusOnAction implements ActionRemoteBehaviorSpecification.Frontend {
   public FocusOnBreakpointAction() {
     super(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
   }

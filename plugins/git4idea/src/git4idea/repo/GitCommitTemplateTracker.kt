@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.util.ObjectUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
@@ -23,6 +22,9 @@ import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
+import git4idea.config.GitExecutableManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -31,11 +33,15 @@ import java.io.IOException
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<GitCommitTemplateTracker>()
 
 @Service(Service.Level.PROJECT)
-internal class GitCommitTemplateTracker(private val project: Project) : GitConfigListener, AsyncVfsEventsListener, Disposable {
+internal class GitCommitTemplateTracker(
+  private val project: Project,
+  coroutineScope: CoroutineScope,
+) : GitConfigListener, AsyncVfsEventsListener, Disposable {
   private val commitTemplates = mutableMapOf<GitRepository, GitCommitTemplate>()
   private val TEMPLATES_LOCK = ReentrantReadWriteLock()
 
@@ -43,8 +49,8 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   val initPromise: Promise<Unit> get() = _initPromise
 
   init {
-    project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, this)
-    AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
+    project.messageBus.connect(coroutineScope).subscribe(GitConfigListener.TOPIC, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
   }
 
   fun templatesCount(): Int {
@@ -79,10 +85,12 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     trackCommitTemplate(repository)
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (TEMPLATES_LOCK.read { commitTemplates.isEmpty() }) {
+      return
+    }
 
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) { processEvents(events) }
+    processEvents(events)
   }
 
   @VisibleForTesting
@@ -98,15 +106,15 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     }
   }
 
-  private fun processEvents(events: List<VFileEvent>) {
+  private suspend fun processEvents(events: List<VFileEvent>) {
     val allTemplates = TEMPLATES_LOCK.read { commitTemplates.toMap() }
     if (allTemplates.isEmpty()) return
 
     for (event in events) {
-      ProgressManager.checkCanceled()
+      coroutineContext.ensureActive()
 
       for ((repository, template) in allTemplates) {
-        ProgressManager.checkCanceled()
+        coroutineContext.ensureActive()
         val watchedTemplatePath = template.watchedRoot.rootPath
 
         var templateChanged = false
@@ -158,7 +166,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
   private fun loadTemplateContent(repository: GitRepository, commitTemplateFilePath: String): String? {
     try {
-      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncoding(project, repository.root))
+      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncodingCharset(project, repository.root))
       if (fileContent.isBlank()) {
         LOG.warn("Empty or blank commit template detected for repository $repository by path $commitTemplateFilePath")
       }
@@ -173,16 +181,24 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   private fun resolveCommitTemplatePath(repository: GitRepository): String? {
     val gitCommitTemplatePath = Git.getInstance().config(repository, COMMIT_TEMPLATE).outputAsJoinedString
     if (gitCommitTemplatePath.isBlank()) return null
+    if (gitCommitTemplatePath.endsWith('/')) return null
 
-    return if (FileUtil.exists(gitCommitTemplatePath)) {
-      gitCommitTemplatePath
-    }
-    else
-      ObjectUtils.chooseNotNull(getPathRelativeToUserHome(gitCommitTemplatePath),
-                                repository.findPathRelativeToRootDirs(gitCommitTemplatePath))
+    return resolvePathAsAbsolute(repository, gitCommitTemplatePath)
+           ?: resolvePathRelativeToUserHome(gitCommitTemplatePath)
+           ?: resolvePathRelativeToRootDirs(repository, gitCommitTemplatePath)
   }
 
-  private fun getPathRelativeToUserHome(fileNameOrPath: String): String? {
+  private fun resolvePathAsAbsolute(repository: GitRepository, gitCommitTemplatePath: String): String? {
+    val executable = GitExecutableManager.getInstance().getExecutable(repository.project)
+    val localPath = executable.convertFilePathBack(gitCommitTemplatePath, File(repository.root.path))
+    if (localPath.exists()) {
+      return localPath.path
+    }
+
+    return null
+  }
+
+  private fun resolvePathRelativeToUserHome(fileNameOrPath: String): String? {
     if (fileNameOrPath.startsWith('~')) {
       val fileAtUserHome = File(SystemProperties.getUserHome(), fileNameOrPath.substring(1))
       if (fileAtUserHome.exists()) {
@@ -193,10 +209,10 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     return null
   }
 
-  private fun GitRepository.findPathRelativeToRootDirs(relativeFilePath: String): String? {
-    if (relativeFilePath.startsWith('/') || relativeFilePath.endsWith('/')) return null
+  private fun resolvePathRelativeToRootDirs(repository: GitRepository, relativeFilePath: String): String? {
+    if (relativeFilePath.startsWith('/')) return null
 
-    for (rootDir in repositoryFiles.rootDirs) {
+    for (rootDir in repository.repositoryFiles.rootDirs) {
       val rootDirParent = rootDir.parent?.path ?: continue
       val templateFile = File(rootDirParent, relativeFilePath)
       if (templateFile.exists()) return templateFile.path
@@ -269,9 +285,9 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   }
 
   internal class GitCommitTemplateTrackerStartupActivity : ProjectActivity {
-    override suspend fun execute(project: Project) {
+    override suspend fun execute(project: Project): Unit = blockingContext {
       ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
-        project.service<GitCommitTemplateTracker>().start()
+        getInstance(project).start()
       }
     }
   }

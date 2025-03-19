@@ -1,0 +1,35 @@
+### auto-generated section `build intellij.platform.navbar.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.navbar.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util/coroutines",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/service-container:serviceContainer",
+    "//platform/statistics",
+    "//platform/navbar/shared:navbar",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+  ],
+  exports = ["//platform/navbar/shared:navbar"],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.platform.navbar.frontend` end

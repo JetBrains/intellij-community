@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +45,7 @@ import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.editor.ImageDocument;
 import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
@@ -56,6 +58,7 @@ import org.intellij.images.thumbnail.actions.ShowBorderAction;
 import org.intellij.images.ui.ImageComponent;
 import org.intellij.images.ui.ImageComponentDecorator;
 import org.intellij.images.vfs.IfsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +75,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Objects;
 
 import static java.lang.Math.pow;
 
@@ -80,16 +84,13 @@ import static java.lang.Math.pow;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator, Disposable {
-  @NonNls
-  private static final String IMAGE_PANEL = "image";
-  @NonNls
-  private static final String ERROR_PANEL = "error";
-  @NonNls
-  private static final String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
+@ApiStatus.Internal
+public final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider, ImageComponentDecorator, Disposable {
+  private static final @NonNls String IMAGE_PANEL = "image";
+  private static final @NonNls String ERROR_PANEL = "error";
+  private static final @NonNls String ZOOM_FACTOR_PROP = "ImageEditor.zoomFactor";
 
-  @Nullable
-  private final ImageEditor editor;
+  private final @Nullable ImageEditor editor;
   private final DeleteProvider deleteProvider;
   private final CopyPasteSupport copyPasteSupport;
 
@@ -158,7 +159,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       actionToolbar.setTargetComponent(this);
 
       toolbarPanel = actionToolbar.getComponent();
-      toolbarPanel.setBackground(JBColor.lazy(() -> getBackground()));
+      toolbarPanel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(getBackground(), UIUtil.getPanelBackground())));
       toolbarPanel.addMouseListener(new FocusRequester());
     }
 
@@ -214,7 +215,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       String format = document.getFormat();
       if (format == null) {
         format = editor != null ? ImagesBundle.message("unknown.format") : "";
-      } else {
+      }
+      else {
         format = StringUtil.toUpperCase(format);
       }
       VirtualFile file = editor != null ? editor.getFile() : null;
@@ -222,7 +224,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         ImagesBundle.message("image.info",
                              image.getWidth(), image.getHeight(), format,
                              colorModel.getPixelSize(), file != null ? StringUtil.formatFileSize(file.getLength()) : ""));
-    } else {
+    }
+    else {
       infoLabel.setText(null);
     }
   }
@@ -243,6 +246,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     removeAll();
   }
+
   @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     imageComponent.setTransparencyChessboardVisible(visible);
@@ -325,6 +329,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     ImageContainerPane(final ImageComponent imageComponent) {
       this.imageComponent = imageComponent;
+      setLayout(new Layout());
       add(imageComponent);
 
       putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
@@ -350,14 +355,31 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     @Override
-    public void invalidate() {
-      centerComponents();
-      super.invalidate();
-    }
-
-    @Override
     public Dimension getPreferredSize() {
       return imageComponent.getSize();
+    }
+
+    private class Layout implements LayoutManager {
+      @Override
+      public void addLayoutComponent(String name, Component comp) { }
+
+      @Override
+      public void removeLayoutComponent(Component comp) { }
+
+      @Override
+      public Dimension preferredLayoutSize(Container parent) {
+        return imageComponent.getPreferredSize();
+      }
+
+      @Override
+      public Dimension minimumLayoutSize(Container parent) {
+        return imageComponent.getMinimumSize();
+      }
+
+      @Override
+      public void layoutContainer(Container parent) {
+        centerComponents();
+      }
     }
   }
 
@@ -570,58 +592,41 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class FocusRequester extends MouseAdapter {
     @Override
     public void mousePressed(@NotNull MouseEvent e) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(ImageEditorUI.this, true));
     }
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return editor != null ? editor.getProject() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return editor != null ? editor.getFile() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
-      return copyPasteSupport.getCutProvider();
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return deleteProvider;
-    }
-    else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return editor != null ? editor : this;
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    sink.set(DATA_KEY, editor != null ? editor : this);
+    if (editor == null) return;
+    sink.set(ImageDocument.IMAGE_DOCUMENT_DATA_KEY, editor.getDocument());
+    Project project = editor.getProject();
+    VirtualFile file = editor.getFile();
 
-  private @Nullable Object getSlowData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return findPsiFile();
+    sink.set(CommonDataKeys.PROJECT, project);
+    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{file});
+    if (copyPasteSupport != null) {
+      sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteSupport.getCutProvider());
     }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      PsiElement psi = findPsiFile();
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, deleteProvider);
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      PsiElement psi = findPsiFile(project, file);
       return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
-    }
-    return null;
+    });
   }
 
-  @Nullable
-  private PsiFile findPsiFile() {
-    VirtualFile file = editor != null ? editor.getFile() : null;
-    return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
+  private static @Nullable PsiFile findPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
   }
 
   @Override
@@ -655,7 +660,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     @Override
     public DataFlavor[] getTransferDataFlavors() {
-      return new DataFlavor[] { DataFlavor.imageFlavor };
+      return new DataFlavor[]{DataFlavor.imageFlavor};
     }
 
     @Override
@@ -675,7 +680,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   private class OptionsChangeListener implements PropertyChangeListener {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-      Options options = (Options) evt.getSource();
+      Options options = (Options)evt.getSource();
       EditorOptions editorOptions = options.getEditorOptions();
       TransparencyChessboardOptions chessboardOptions = editorOptions.getTransparencyChessboardOptions();
       GridOptions gridOptions = editorOptions.getGridOptions();
@@ -688,5 +693,4 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.setGridLineColor(gridOptions.getLineColor());
     }
   }
-
 }

@@ -1,0 +1,16 @@
+// IGNORE_K1
+
+class Test {
+    val test1 = Test()
+
+    fun foo(a: Test) {}
+
+    companion object {
+        fun test(test3: Test) {
+            val test: Int = 5
+            test3.foo(test3.test1)
+            test3.foo(test3)
+            class test2
+        }
+    }
+}

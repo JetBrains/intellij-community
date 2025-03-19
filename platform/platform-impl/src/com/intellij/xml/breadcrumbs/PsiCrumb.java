@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -52,9 +52,8 @@ final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltip
     return element != null ? element.getTextOffset() : -1;
   }
 
-  @Nullable
   @Override
-  public TextRange getHighlightRange() {
+  public @Nullable TextRange getHighlightRange() {
     PsiElement element = anchor.retrieve();
     return element != null ? element.getTextRange() : null;
   }

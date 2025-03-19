@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -53,14 +39,12 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return CommonBundle.message("title.pull.up");
   }
 
@@ -108,12 +92,12 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         navigator.navigate(editor, JavaBundle.message("choose.super.class.popup.title"), processor);
       }
       else {
-        navigator.performSilently(project, processor);
+        navigator.performSilently(processor);
       }
 
       if (noClassesFound.get()) {
         //check visibility
-        var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+        var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
         var handler = supportProvider.getExtractInterfaceHandler();
         if (handler == null)  {
           throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
@@ -138,12 +122,12 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     var handler = (JavaPullUpHandlerBase)supportProvider.getPullUpHandler();
     if (handler == null)  {
       throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
     }
-    handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
+    handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy(DocCommentPolicy.ASIS));
   }
 
   @Override
@@ -180,13 +164,13 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     registrar.add(new PullAsAbstractUpFix(methodWithOverrides, name));
     if (canBePulledUp) {
-      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
       registrar.add(new RunRefactoringAction(supportProvider.getPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
     }
 
 
     if (! (containingClass instanceof PsiAnonymousClass)){
-      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
 
       registrar.add(new RunRefactoringAction(supportProvider.getExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
       registrar.add(new RunRefactoringAction(supportProvider.getExtractSuperClassHandler(), JavaBundle.message("extract.superclass.command.name")));

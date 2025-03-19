@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaCodeVisionUsageCollector extends CounterUsagesCollector {
+public final class JavaCodeVisionUsageCollector extends CounterUsagesCollector {
   public static final String CLASS_LOCATION = "class";
   public static final String METHOD_LOCATION = "method";
 

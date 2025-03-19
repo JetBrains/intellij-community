@@ -5,4 +5,4 @@ class C {
     val prop: <caret>Foo.
 }
 
-// REF: (<root>).Foo
+// REF: Foo

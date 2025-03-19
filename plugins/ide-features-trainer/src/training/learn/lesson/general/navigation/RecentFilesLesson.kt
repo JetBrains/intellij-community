@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.navigation
 
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.Switcher
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -48,7 +48,11 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("GotoDeclaration") {
       text(LessonsBundle.message("recent.files.first.transition", code(transitionMethodName), action(it)))
-      stateCheck { virtualFile.name.contains(transitionFileName) }
+      stateCheck {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@stateCheck false
+        val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return@stateCheck false
+        file.name.contains(transitionFileName)
+      }
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }
@@ -78,25 +82,26 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task("rfd") {
-      text(LessonsBundle.message("recent.files.search.typing", code(it)))
+    task {
+      val prefixes = "rfd"
+      text(LessonsBundle.message("recent.files.search.typing", code(prefixes)))
       triggerUI().component { ui: ExtendableTextField ->
         ui.javaClass.name.contains("SpeedSearchBase\$SearchField")
       }
-      stateCheck { checkRecentFilesSearch(it) }
+      stateCheck { checkRecentFilesSearch(prefixes) }
       restoreByUi()
       test {
         ideFrame {
-          waitComponent(Switcher.SwitcherPanel::class.java)
+          waitComponent(JBListWithOpenInRightSplit::class.java)
         }
-        type(it)
+        type(prefixes)
       }
     }
 
     task {
       text(LessonsBundle.message("recent.files.search.jump", LessonUtil.rawEnter()))
       stateCheck { virtualFile.name == sampleFilePath.substringAfterLast("/") }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentFilesSearch("rfd") || previous.ui?.isShowing != true
       }
       test(waitEditorToBeReady = false) {
@@ -146,16 +151,16 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       test { actions(it) }
     }
 
-    task(stringForRecentFilesSearch) {
-      text(LessonsBundle.message("recent.files.locations.search.typing", code(it)))
-      stateCheck { checkRecentLocationsSearch(it) }
+    task {
+      text(LessonsBundle.message("recent.files.locations.search.typing", code(stringForRecentFilesSearch)))
+      stateCheck { checkRecentLocationsSearch(stringForRecentFilesSearch) }
       triggerUI().component { _: SearchTextField -> true } // needed in next task to restore if search field closed
       restoreByUi()
       test {
         ideFrame {
           waitComponent(JBList::class.java)
         }
-        type(it)
+        type(stringForRecentFilesSearch)
       }
     }
 
@@ -165,7 +170,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
         item.isToStringContains(transitionFileName)
       }
       stateCheck { virtualFile.name.contains(transitionFileName) }
-      restoreState {
+      restoreState(delayMillis = defaultRestoreDelay) {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
       test {
@@ -185,7 +190,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
             val files = curFile.parent?.children?.filter { it.name != curFile.name }
                         ?: throw IllegalStateException("Not found neighbour files for ${curFile.name}")
             for (i in 0 until min(countOfFilesToOpen - 1, files.size)) {
-              invokeAndWaitIfNeeded(ModalityState.NON_MODAL) {
+              invokeAndWaitIfNeeded(ModalityState.nonModal()) {
                 if (!indicator.isCanceled) {
                   FileEditorManager.getInstance(project).openFile(files[i], true)
                   indicator.fraction = (i + 1).toDouble() / (countOfFilesToOpen - 1)
@@ -202,8 +207,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   }
 
   private fun TaskRuntimeContext.checkRecentFilesSearch(expected: String): Boolean {
-    val focusOwner = UIUtil.getParentOfType(Switcher.SwitcherPanel::class.java, focusOwner)
-    return focusOwner != null && checkWordInSearch(expected, focusOwner)
+    return UIUtil.uiParents(focusOwner, false).any { it is JComponent && checkWordInSearch(expected, it) }
   }
 
   private fun TaskRuntimeContext.checkRecentLocationsSearch(expected: String): Boolean {

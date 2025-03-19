@@ -8,11 +8,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.scripting.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.scripting.getTargetPlatformVersion
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptSearchScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -23,10 +26,11 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
+@K1ModeProjectStructureApi
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?
 
-    override val name = Name.special("<Script dependencies>")
+    override val name: Name get() = Name.special("<Script dependencies>")
 
     override val displayedName: String
         get() = KotlinBaseScriptingBundle.message("script.dependencies")
@@ -60,38 +64,60 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
         val scriptFile: VirtualFile,
         val scriptDefinition: ScriptDefinition
     ) : ScriptDependenciesInfo(project), LanguageSettingsOwner {
+
+        init {
+            check(!KotlinPluginModeProvider.isK2Mode()) {
+                "ScriptDependenciesInfo.ForFile should not be used for K2 Scripting"
+            }
+        }
+
         override val sdk: Sdk?
-            get() = ScriptConfigurationManager.getInstance(project).getScriptSdk(scriptFile)
+            get() = ScriptDependencyAware.getInstance(project).getScriptSdk(scriptFile)
 
         override val languageVersionSettings: LanguageVersionSettings
-            get() = ScriptingTargetPlatformDetector.getLanguageVersionSettings(project, scriptFile, scriptDefinition)
+            get() = getLanguageVersionSettings(project, scriptFile, scriptDefinition)
 
         override val targetPlatformVersion: TargetPlatformVersion
-            get() = ScriptingTargetPlatformDetector.getTargetPlatformVersion(project, scriptFile, scriptDefinition)
+            get() = getTargetPlatformVersion(project, scriptFile, scriptDefinition)
 
         override val contentScope: GlobalSearchScope
             get() {
                 // TODO: this is not very efficient because KotlinSourceFilterScope already checks if the files are in scripts classpath
                 val scriptKtFile = PsiManager.getInstance(project).findFile(scriptFile) as KtFile
                 val scriptVFile = scriptKtFile.virtualFile ?: scriptKtFile.viewProvider.virtualFile
+
                 return KotlinSourceFilterScope.libraryClasses(
-                    ScriptConfigurationManager.getInstance(project).getScriptDependenciesClassFilesScope(scriptVFile), project
- )
+                    ScriptDependencyAware.getInstance(project).getScriptDependenciesClassFilesScope(scriptVFile), project
+                )
             }
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is ForFile) return false
+            if (!super.equals(other)) return false
+
+            if (scriptFile != other.scriptFile) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = super.hashCode()
+            result = 31 * result + scriptFile.hashCode()
+            return result
+        }
     }
 
     // we do not know which scripts these dependencies are
     class ForProject(project: Project) : ScriptDependenciesInfo(project) {
         override val sdk: Sdk?
-            get() {
-                return ScriptConfigurationManager.getInstance(project).getFirstScriptsSdk()
-            }
+            get() = ScriptDependencyAware.getInstance(project).getFirstScriptsSdk()
 
         override val contentScope: GlobalSearchScope
-            get() {
-                return KotlinSourceFilterScope.libraryClasses(
-                  ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope(), project)
-            }
+            get() = KotlinSourceFilterScope.libraryClasses(
+                ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope(),
+                project
+            )
 
         companion object {
             fun createIfRequired(project: Project, moduleInfos: List<IdeaModuleInfo>): IdeaModuleInfo? =

@@ -2,7 +2,6 @@
 package com.intellij.java.psi.search;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -21,6 +20,7 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.concurrency.ThreadingAssertions;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -46,7 +46,7 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testStressInPresenceOfPCEs() {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // no write action can go through while we test
+    ThreadingAssertions.assertEventDispatchThread(); // no write action can go through while we test
     int N = 1000;
     PsiClassOwner file0 = (PsiJavaFile)myFixture.addFileToProject("C0.java", "class C0 { }");
     for (int i=1;i<N ;i++) {
@@ -113,6 +113,25 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
                          }""");
     assertSize(5, ClassInheritorsSearch.search(myFixture.findClass("one.Test.A")).findAll());
     assertSize(4, ClassInheritorsSearch.search(myFixture.findClass("one.Test.B")).findAll());
+  }
+  
+  public void testClassExposedViaContainingClassSubclass() {
+    myFixture.addClass("""
+      package one;
+      interface OuterSuper {
+        interface Inner {}
+      }
+      """);
+    myFixture.addClass("""
+      package one;
+      public interface Child extends OuterSuper {
+      }
+      """);
+    myFixture.addClass("""
+      package two;
+      interface InnerChild extends one.Child.Inner {}
+      """);
+    assertSize(1, ClassInheritorsSearch.search(myFixture.findClass("one.OuterSuper.Inner")).findAll());
   }
 
   public void testInheritorsInAnotherModuleWithNoDirectDependency() throws IOException {

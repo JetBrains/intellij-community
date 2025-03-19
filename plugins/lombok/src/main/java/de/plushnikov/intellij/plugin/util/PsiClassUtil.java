@@ -23,8 +23,7 @@ public final class PsiClassUtil {
    * @param psiClass psiClass to collect all of methods from
    * @return all intern methods of the class
    */
-  @NotNull
-  public static Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
       return new ArrayList<>(((PsiExtensibleClass) psiClass).getOwnMethods());
     } else {
@@ -38,8 +37,7 @@ public final class PsiClassUtil {
    * @param psiClass psiClass to collect all of fields from
    * @return all intern fields of the class
    */
-  @NotNull
-  public static Collection<PsiField> collectClassFieldsIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiField> collectClassFieldsIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnFields();
     } else {
@@ -53,8 +51,7 @@ public final class PsiClassUtil {
    * @param psiClass psiClass to collect all inner classes from
    * @return all inner classes of the class
    */
-  @NotNull
-  public static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnInnerClasses();
     } else {
@@ -62,8 +59,7 @@ public final class PsiClassUtil {
     }
   }
 
-  @NotNull
-  public static Collection<PsiMember> collectClassMemberIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiMember> collectClassMemberIntern(@NotNull PsiClass psiClass) {
     return Arrays.stream(psiClass.getChildren()).filter(e -> e instanceof PsiField || e instanceof PsiMethod).map(PsiMember.class::cast).collect(Collectors.toList());
   }
 
@@ -71,32 +67,29 @@ public final class PsiClassUtil {
     return Arrays.stream(psiClass.getChildren()).filter(desiredClass::isInstance).map(desiredClass::cast).collect(Collectors.toList());
   }
 
-  @NotNull
-  public static Collection<PsiMethod> collectClassConstructorIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiMethod> collectClassConstructorIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
     return ContainerUtil.filter(psiMethods, PsiMethod::isConstructor);
   }
 
-  @NotNull
-  public static Collection<PsiMethod> collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
+  public static @NotNull Collection<PsiMethod> collectClassStaticMethodsIntern(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> psiMethods = collectClassMethodsIntern(psiClass);
     return ContainerUtil.filter(psiMethods, psiMethod -> psiMethod.hasModifierProperty(PsiModifier.STATIC));
   }
 
-  public static boolean hasSuperClass(@NotNull final PsiClass psiClass) {
+  public static boolean hasSuperClass(final @NotNull PsiClass psiClass) {
     final PsiClass superClass = psiClass.getSuperClass();
     return (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())
       || !superTypesIsEmptyOrObjectOnly(psiClass));
   }
 
-  private static boolean superTypesIsEmptyOrObjectOnly(@NotNull final PsiClass psiClass) {
+  private static boolean superTypesIsEmptyOrObjectOnly(final @NotNull PsiClass psiClass) {
     // It returns abstract classes, but also Object.
     final PsiClassType[] superTypes = psiClass.getSuperTypes();
     return superTypes.length != 1 || CommonClassNames.JAVA_LANG_OBJECT.equals(superTypes[0].getCanonicalText());
   }
 
-  @NotNull
-  public static PsiClassType getWildcardClassType(@NotNull PsiClass psiClass) {
+  public static @NotNull PsiClassType getWildcardClassType(@NotNull PsiClass psiClass) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     if (psiClass.hasTypeParameters()) {
       PsiType[] wildcardTypes = new PsiType[psiClass.getTypeParameters().length];
@@ -109,8 +102,7 @@ public final class PsiClassUtil {
   /**
    * Creates a PsiType for a PsiClass enriched with generic substitution information if available
    */
-  @NotNull
-  public static PsiClassType getTypeWithGenerics(@NotNull PsiClass psiClass) {
+  public static @NotNull PsiClassType getTypeWithGenerics(@NotNull PsiClass psiClass) {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     if (psiClass.hasTypeParameters()) {
       final PsiType[] psiTypes = Stream.of(psiClass.getTypeParameters()).map(factory::createType).toArray(PsiType[]::new);

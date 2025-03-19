@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -24,8 +25,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     super(project, value, viewSettings);
   }
 
-  @NotNull
-  protected Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
+  protected @Unmodifiable @NotNull Collection<AbstractTreeNode<?>> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {
         try {
@@ -92,12 +92,10 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return result;
   }
 
-  @NotNull
-  protected abstract AbstractTreeNode<?> createModuleGroup(@NotNull Module module)
+  protected abstract @NotNull AbstractTreeNode<?> createModuleGroup(@NotNull Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
-  @Nullable
-  private AbstractTreeNode<?> createModuleNode(final ModuleDescription moduleDescription)
+  private @Nullable AbstractTreeNode<?> createModuleNode(final ModuleDescription moduleDescription)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     if (moduleDescription instanceof LoadedModuleDescription) {
       return createModuleGroup(((LoadedModuleDescription)moduleDescription).getModule());
@@ -112,8 +110,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return null;
   }
 
-  @NotNull
-  protected abstract AbstractTreeNode<?> createModuleGroupNode(@NotNull ModuleGroup moduleGroup)
+  protected abstract @NotNull AbstractTreeNode<?> createModuleGroupNode(@NotNull ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Override

@@ -47,6 +47,7 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
   override fun isModified(): Boolean = targetConfigurable.isModified || pythonInterpreterDetailsDialogPanel.isModified()
 
   override fun apply() {
+    val targetConfigurableWasModified = targetConfigurable.isModified
     targetConfigurable.apply()
     // this updates `pythonInterpreterPath`
     pythonInterpreterDetailsDialogPanel.apply()
@@ -54,6 +55,9 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
     val sdkModificator = sdk.sdkModificator
     sdkModificator.sdkAdditionalData = newSdkAdditionalData
     sdkModificator.updatePythonInterpreterPath(pythonInterpreterPath)
+    if (targetConfigurableWasModified) {
+      newSdkAdditionalData.notifyTargetEnvironmentConfigurationChanged()
+    }
     // note that after committing the changes `sdkModificator` becomes unusable
     runWriteAction { sdkModificator.commitChanges() }
 

@@ -1,6 +1,6 @@
 public final class Ea101715Kt {
     public static final fun a() : void {
-        var a: <ErrorType> = <anonymous class>(555)
+        var a: <ErrorType> = UIdentifier (Identifier (Obj))(555)
     }
 }
 

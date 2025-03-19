@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 /**
  * @param xyzzy This is a xyzzy
  * @param <caret>

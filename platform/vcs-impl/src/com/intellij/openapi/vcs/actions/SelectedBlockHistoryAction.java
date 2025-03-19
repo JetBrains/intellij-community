@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -18,17 +18,49 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SelectedBlockHistoryAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class SelectedBlockHistoryAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
-  private static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    final Project project = event.getProject();
+    assert project != null;
+
+    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+    assert selection != null;
+
+    showHistoryForSelection(selection, project);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    Presentation presentation = event.getPresentation();
+
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    if (editor == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
+
+    presentation.setEnabled(isEnabled(project, selection));
+    if (selection != null) {
+      presentation.setText(selection.getActionName());
+    }
+  }
+
+  public static boolean isEnabled(@Nullable Project project, @Nullable VcsSelection selection) {
     if (project == null || selection == null) return false;
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
@@ -45,14 +77,7 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
     return true;
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getProject();
-    assert project != null;
-
-    final VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
-    assert selection != null;
-
+  public static void showHistoryForSelection(VcsSelection selection, Project project) {
     final VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
     assert file != null;
 
@@ -74,24 +99,5 @@ public class SelectedBlockHistoryAction extends DumbAwareAction {
                                                                      Math.max(selectionStart, selectionEnd),
                                                                      selection.getDialogTitle());
     dialog.show();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-
-    Editor editor = event.getData(CommonDataKeys.EDITOR);
-    if (editor == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
-    }
-
-    Project project = event.getData(CommonDataKeys.PROJECT);
-    VcsSelection selection = VcsSelectionUtil.getSelection(this, event);
-
-    presentation.setEnabled(isEnabled(project, selection));
-    if (selection != null) {
-      presentation.setText(selection.getActionName());
-    }
   }
 }

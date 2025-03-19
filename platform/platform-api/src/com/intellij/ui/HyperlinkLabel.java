@@ -3,11 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -211,7 +213,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     updateOnTextChange();
   }
 
-  public void setHyperlinkTarget(@NonNls @Nullable final String url) {
+  public void setHyperlinkTarget(final @NonNls @Nullable String url) {
     if (myHyperlinkListener != null) {
       removeHyperlinkListener(myHyperlinkListener);
     }
@@ -231,15 +233,17 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
-  @NotNull
-  public @LinkLabel String getText() {
+  @Override
+  public @NotNull @LinkLabel String getText() {
     return myHighlightedText.getText();
   }
 
   protected void fireHyperlinkEvent(@Nullable InputEvent inputEvent) {
     HyperlinkEvent e = new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, null, null, null, inputEvent);
-    for (HyperlinkListener listener : myListeners) {
-      listener.hyperlinkUpdate(e);
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+      for (HyperlinkListener listener : myListeners) {
+        listener.hyperlinkUpdate(e);
+      }
     }
   }
 
@@ -289,13 +293,6 @@ public class HyperlinkLabel extends HighlightableComponent {
       parent.repaint();
     }
     adjustSize();
-  }
-
-  public static class Croppable extends HyperlinkLabel {
-    @Override
-    protected void adjustSize() {
-      // ignore, keep minimum size default
-    }
   }
 
   @Override
@@ -387,7 +384,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
 
     @Override public EffectType getEffectType() {
-      return !isEnabled() || myMouseHover || myMousePressed ? EffectType.LINE_UNDERSCORE : null;
+      return isEnabled() && (myMouseHover || myMousePressed) ? EffectType.LINE_UNDERSCORE : null;
     }
 
     @Override public void setForegroundColor(Color color) {

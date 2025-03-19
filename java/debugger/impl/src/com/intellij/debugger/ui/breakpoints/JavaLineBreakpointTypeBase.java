@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -46,15 +46,13 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     return true;
   }
 
-  @NotNull
   @Override
-  public final XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
+  public final @NotNull XBreakpointCustomPropertiesPanel<XLineBreakpoint<P>> createCustomRightPropertiesPanel(@NotNull Project project) {
     return new JavaBreakpointFiltersPanel<>(project);
   }
 
-  @NotNull
   @Override
-  public final XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
+  public final @NotNull XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<P> breakpoint, @NotNull Project project) {
     return new JavaDebuggerEditorsProvider();
   }
 
@@ -62,14 +60,25 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
   public String getDisplayText(XLineBreakpoint<P> breakpoint) {
     BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.getJavaBreakpoint(breakpoint);
     if (javaBreakpoint != null) {
-      return javaBreakpoint.getDescription();
+      return javaBreakpoint.getDisplayName();
     }
     else {
       return super.getDisplayText(breakpoint);
     }
   }
 
-  protected static boolean canPutAtElement(@NotNull final VirtualFile file,
+  @Override
+  public List<@Nls String> getPropertyXMLDescriptions(XLineBreakpoint<P> breakpoint) {
+    BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)BreakpointManager.getJavaBreakpoint(breakpoint);
+    if (javaBreakpoint != null) {
+      return javaBreakpoint.getPropertyXMLDescriptions();
+    }
+    else {
+      return super.getPropertyXMLDescriptions(breakpoint);
+    }
+  }
+
+  protected static boolean canPutAtElement(final @NotNull VirtualFile file,
                                            final int line,
                                            @NotNull Project project,
                                            @NotNull BiFunction<? super PsiElement, ? super Document, Boolean> processor) {
@@ -89,7 +98,7 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       XDebuggerUtil.getInstance().iterateLine(project, document, line, element -> {
         // avoid comments
         if ((element instanceof PsiWhiteSpace)
-            || (PsiTreeUtil.getParentOfType(element, PsiComment.class, PsiImportStatementBase.class, PsiPackageStatement.class) != null)) {
+            || (PsiTreeUtil.getNonStrictParentOfType(element, PsiComment.class, PsiImportStatementBase.class, PsiPackageStatement.class) != null)) {
           return true;
         }
         PsiElement parent = element;

@@ -1,0 +1,3 @@
+- name: lib/color-scheme-twilight.jar
+  modules:
+  - name: intellij.color.scheme.twilight

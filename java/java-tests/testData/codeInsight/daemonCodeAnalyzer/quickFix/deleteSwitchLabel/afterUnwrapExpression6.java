@@ -10,9 +10,13 @@ class Main {
           // 5
           // 6
           // 7
-          case 42, default -> {
+          case 42 -> {
           System.out.println("something");
           yield "Six by nine"; // 42
+        }
+        default -> {
+          System.out.println("something");
+          yield "many";
         }
       });
     }

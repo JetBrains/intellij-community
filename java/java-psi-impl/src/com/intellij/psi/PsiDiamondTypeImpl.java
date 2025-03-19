@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -39,21 +38,18 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     myTypeElement = psiTypeElement;
   }
 
-  @NotNull
   @Override
-  public String getPresentableText() {
+  public @NotNull String getPresentableText() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return "";
   }
 
-  @NotNull
   @Override
-  public String getInternalCanonicalText() {
+  public @NotNull String getInternalCanonicalText() {
     return "Diamond Type";
   }
 
@@ -72,9 +68,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return visitor.visitDiamondType(this);
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return GlobalSearchScope.allScope(myManager.getProject());
   }
 
@@ -106,9 +101,8 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return null;
   }
 
-  @Nullable
   @Override
-  public JavaResolveResult getStaticFactory() {
+  public @Nullable JavaResolveResult getStaticFactory() {
     final PsiNewExpression newExpression = getNewExpression();
     return newExpression != null ? getStaticFactory(newExpression, newExpression) : null;
   }
@@ -197,7 +191,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       //http://www.oracle.com/technetwork/java/javase/8-compatibility-guide-2156366.html#A999198 REF 7144506
       if (!PsiUtil.isLanguageLevel8OrHigher(newExpression) && PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionList) {
         for (PsiTypeParameter ignored : parameters) {
-          result.addInferredType(PsiType.getJavaLangObject(newExpression.getManager(), GlobalSearchScope.allScope(newExpression.getProject())));
+          result.addInferredType(getJavaLangObject(newExpression.getManager(), GlobalSearchScope.allScope(newExpression.getProject())));
         }
       }
       return result;
@@ -251,8 +245,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     });
   }
 
-  @Nullable
-  public static List<CandidateInfo> collectStaticFactories(PsiNewExpression newExpression) {
+  public static @Nullable List<CandidateInfo> collectStaticFactories(PsiNewExpression newExpression) {
     return CachedValuesManager.getCachedValue(newExpression,
                                               () -> new CachedValueProvider.Result<>(collectStaticFactoriesInner(newExpression),
                                                                                      PsiModificationTracker.MODIFICATION_COUNT));
@@ -311,8 +304,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return processor.getResults();
   }
 
-  @Nullable
-  private static PsiClass findClass(PsiNewExpression newExpression) {
+  private static @Nullable PsiClass findClass(PsiNewExpression newExpression) {
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
     if (classReference != null) {
       final String text = classReference.getReferenceName();
@@ -338,33 +330,29 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return null;
   }
 
-  @Nullable
-  private static PsiMethod generateStaticFactory(@Nullable PsiMethod constructor,
-                                                 PsiClass containingClass,
-                                                 PsiTypeParameter[] params,
-                                                 PsiJavaCodeReferenceElement reference) {
+  private static @Nullable PsiMethod generateStaticFactory(@Nullable PsiMethod constructor,
+                                                           PsiClass containingClass,
+                                                           PsiTypeParameter[] typeParameters,
+                                                           PsiJavaCodeReferenceElement reference) {
     final StringBuilder buf = new StringBuilder();
     final String modifier = VisibilityUtil.getVisibilityModifier(constructor != null ? constructor.getModifierList() : containingClass.getModifierList());
     if (!PsiModifier.PACKAGE_LOCAL.equals(modifier)) {
       buf.append(modifier);
       buf.append(" ");
     }
-    buf.append("static ");
-    buf.append("<");
+    buf.append("static <");
     //it's possible that constructor type parameters and class type parameters are same named:
-    //it's important that class type parameters names are preserved(they are first in the list),
+    //it's important that class type parameters names are preserved (they are first in the list),
     //though constructor parameters would be renamed in case of conflicts
     final UniqueNameGenerator generator = new UniqueNameGenerator();
-    buf.append(StringUtil.join(params, psiTypeParameter -> {
-      String extendsList = "";
-      if (psiTypeParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-        final PsiClassType[] extendsListTypes = psiTypeParameter.getExtendsListTypes();
-        if (extendsListTypes.length > 0) {
-          final Function<PsiClassType, String> canonicalTypePresentationFun = type -> type.getCanonicalText();
-          extendsList = " extends " + StringUtil.join(extendsListTypes, canonicalTypePresentationFun, "&");
-        }
+    buf.append(StringUtil.join(typeParameters, typeParameter -> {
+      String result = generator.generateUniqueName(typeParameter.getName());
+      final PsiClassType[] extendsListTypes = typeParameter.getSuperTypes();
+      if (extendsListTypes.length > 0 &&
+          (extendsListTypes.length != 1 || !CommonClassNames.JAVA_LANG_OBJECT.equals(extendsListTypes[0].getCanonicalText()))) {
+        result += " extends " + StringUtil.join(extendsListTypes, PsiType::getCanonicalText, "&");
       }
-      return generator.generateUniqueName(psiTypeParameter.getName()) + extendsList;
+      return result;
     }, ", "));
     buf.append(">");
 
@@ -431,7 +419,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   }
 
 
-  private static MethodCandidateInfo createMethodCandidate(@NotNull final MethodCandidateInfo staticFactoryMethod,
+  private static MethodCandidateInfo createMethodCandidate(final @NotNull MethodCandidateInfo staticFactoryMethod,
                                                            final PsiElement parent,
                                                            final boolean varargs,
                                                            final PsiExpressionList argumentList) {
@@ -462,7 +450,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     };
   }
 
-  public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
+  public static boolean hasDefaultConstructor(final @NotNull PsiClass psiClass) {
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod method : constructors) {
       if (method.getParameterList().isEmpty()) return true;
@@ -470,7 +458,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return constructors.length == 0;
   }
 
-  public static boolean haveConstructorsGenericsParameters(@NotNull final PsiClass psiClass) {
+  public static boolean haveConstructorsGenericsParameters(final @NotNull PsiClass psiClass) {
     for (final PsiMethod method : psiClass.getConstructors()) {
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
         final PsiType type = parameter.getType();
@@ -522,27 +510,23 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       myExpression = expression;
     }
 
-    @Nullable
     @Override
-    public Boolean visitType(@NotNull PsiType type) {
+    public @Nullable Boolean visitType(@NotNull PsiType type) {
       return true;
     }
 
-    @Nullable
     @Override
-    public Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
+    public @Nullable Boolean visitCapturedWildcardType(@NotNull PsiCapturedWildcardType capturedWildcardType) {
       return false;
     }
 
-    @Nullable
     @Override
-    public Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
+    public @Nullable Boolean visitIntersectionType(@NotNull PsiIntersectionType intersectionType) {
       return false;
     }
 
-    @Nullable
     @Override
-    public Boolean visitClassType(@NotNull PsiClassType classType) {
+    public @Nullable Boolean visitClassType(@NotNull PsiClassType classType) {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
       if (psiClass != null) {

@@ -9,10 +9,10 @@ internal class KotlinSystemOutPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "sout",
         /* example = */ "println(expr)",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { !it.isUnit }),
+        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { !it.isUnitType }),
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.io.println(\$expr$)\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.io.println(\$expr$)\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

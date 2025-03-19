@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -7,6 +7,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,8 +95,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return getViewProvider().getVirtualFile().getName();
   }
 
@@ -124,8 +124,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     return getContainingDirectory();
   }
 
@@ -148,8 +147,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return myOriginalFile == null ? this : myOriginalFile;
   }
 
@@ -168,15 +166,18 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
+  }
+
+  @Override
+  public final @NotNull Document getFileDocument() {
+    return PsiFileEx.super.getFileDocument();
   }
 
   @Override
@@ -185,8 +186,7 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     final PsiManager manager = getManager();
     if (manager == null) throw new PsiInvalidElementAccessException(this);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
@@ -10,12 +10,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class OffsetTranslator implements Disposable {
   static final Key<OffsetTranslator> RANGE_TRANSLATION = Key.create("completion.rangeTranslation");
 
@@ -78,8 +80,7 @@ public class OffsetTranslator implements Disposable {
     return offset;
   }
 
-  @Nullable
-  private static Integer translateOffset(int offset, DocumentEvent event) {
+  private static @Nullable Integer translateOffset(int offset, DocumentEvent event) {
     if (event.getOffset() < offset && offset < event.getOffset() + event.getNewLength()) {
       if (event.getOldLength() == 0) {
         return event.getOffset();

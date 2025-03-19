@@ -16,4 +16,3 @@ fun foo() {
 
 
 
-// IGNORE_FIR_LOG

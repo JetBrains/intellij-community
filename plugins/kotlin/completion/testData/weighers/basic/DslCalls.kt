@@ -10,7 +10,7 @@ fun main() {
         foo<caret>
     }
 }
-
+// IGNORE_K2
 // ORDER: foo2
 // ORDER: foo4
 // ORDER: fooloooooong

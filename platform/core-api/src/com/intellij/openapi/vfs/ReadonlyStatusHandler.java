@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.editor.Document;
@@ -45,22 +45,18 @@ public abstract class ReadonlyStatusHandler {
 
     public abstract boolean hasReadonlyFiles();
 
-    @NotNull
-    public abstract @NlsContexts.DialogMessage String getReadonlyFilesMessage();
+    public abstract @NotNull @NlsContexts.DialogMessage String getReadonlyFilesMessage();
 
-    @Nullable
-    public HyperlinkListener getHyperlinkListener() { return null; }
+    public @Nullable HyperlinkListener getHyperlinkListener() { return null; }
   }
 
   /**
    * @deprecated Use {@link #ensureFilesWritable(Collection)}
    */
   @Deprecated
-  @NotNull
-  public OperationStatus ensureFilesWritable(VirtualFile @NotNull ... files) {
+  public @NotNull OperationStatus ensureFilesWritable(VirtualFile @NotNull ... files) {
     return ensureFilesWritable(Arrays.asList(files));
   }
 
-  @NotNull
-  public abstract OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files);
+  public abstract @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> files);
 }

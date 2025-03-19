@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -54,8 +54,7 @@ public interface CodeBlockSupportHandler {
   /**
    * Attempts to find code block range using extension points.
    */
-  @NotNull
-  static TextRange findCodeBlockRange(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  static @NotNull TextRange findCodeBlockRange(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     int offset = TargetElementUtil.adjustOffset(psiFile, editor.getDocument(), editor.getCaretModel().getOffset());
     PsiElement contextElement = psiFile.findElementAt(offset);
     if (contextElement == null) return EMPTY_RANGE;

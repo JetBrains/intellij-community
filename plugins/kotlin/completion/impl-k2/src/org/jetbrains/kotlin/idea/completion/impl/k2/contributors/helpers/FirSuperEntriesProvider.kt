@@ -5,24 +5,27 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.nextLeafs
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
+import org.jetbrains.kotlin.lexer.KtSingleValueToken
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object FirSuperEntriesProvider {
-    fun KtAnalysisSession.getSuperClassesAvailableForSuperCall(context: PsiElement): List<KtNamedClassOrObjectSymbol> {
+    context(KaSession)
+    fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
-        val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
+        val containingClassSymbol = containingClass.classSymbol ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
-            val classType = superType as? KtNonErrorClassType ?: return@mapNotNull null
-            classType.classSymbol as? KtNamedClassOrObjectSymbol
+            val classType = superType as? KaClassType ?: return@mapNotNull null
+            classType.symbol as? KaNamedClassSymbol
         }
     }
 }
@@ -32,7 +35,7 @@ internal object SuperCallInsertionHandler : InsertHandler<LookupElement> {
         val lookupObject = item.`object` as SuperCallLookupObject
 
         replaceWithClassIdAndShorten(lookupObject, context)
-        context.insertSymbolAndInvokeCompletion(symbol = ".")
+        if (context.completionChar != '.') context.insertStringAndInvokeCompletion(stringToInsert = ".")
     }
 
     private fun replaceWithClassIdAndShorten(
@@ -40,14 +43,36 @@ internal object SuperCallInsertionHandler : InsertHandler<LookupElement> {
         context: InsertionContext
     ) {
         val replaceTo = lookupObject.replaceTo ?: return
-        context.document.replaceString(context.startOffset, context.tailOffset, replaceTo)
-        context.commitDocument()
+        context.tailOffset = getCorrectedTailOffsetForSuperCall(context) ?: context.tailOffset
 
         if (lookupObject.shortenReferencesInReplaced) {
-            val targetFile = context.file as KtFile
-            shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
+            context.insertAndShortenReferencesInStringUsingTemporarySuffix(replaceTo)
+        } else {
+            context.document.replaceString(context.startOffset, context.tailOffset, replaceTo)
+            context.commitDocument()
         }
     }
+
+    /**
+     * Returns corrected offset in case there is an existing super type qualifier, which should be replaced with the new one.
+     * For example, in `super<caret><A>.foo()` the corrected offset is the end offset of the dot.
+     */
+    private fun getCorrectedTailOffsetForSuperCall(context: InsertionContext): Int? {
+        val tokenAtPosition = context.file.findElementAt(context.startOffset) ?: return null
+
+        val gtToken = tokenAtPosition.skipTokensAndGetExpectedTokenOrNull(TOKENS_BEFORE_CLOSING_ANGLE_BRACKET, KtTokens.GT)
+        val dotToken = gtToken?.skipTokensAndGetExpectedTokenOrNull(KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET, KtTokens.DOT)
+
+        return dotToken?.endOffset ?: gtToken?.endOffset
+    }
+
+    private fun PsiElement.skipTokensAndGetExpectedTokenOrNull(tokensToSkip: TokenSet, expectedToken: KtSingleValueToken): PsiElement? =
+        nextLeafs.firstOrNull { it.node.elementType !in tokensToSkip }?.takeIf { it.node.elementType == expectedToken }
+
+    private val TOKENS_BEFORE_CLOSING_ANGLE_BRACKET = TokenSet.orSet(
+        TokenSet.create(KtTokens.IDENTIFIER, KtTokens.DOT, KtTokens.LT),
+        KtTokens.WHITE_SPACE_OR_COMMENT_BIT_SET
+    )
 }
 
 internal interface SuperCallLookupObject {

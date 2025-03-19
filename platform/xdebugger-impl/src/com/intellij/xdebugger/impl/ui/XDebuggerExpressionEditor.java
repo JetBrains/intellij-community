@@ -1,14 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -37,10 +41,23 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
                                    final boolean multiline,
                                    boolean editorFont,
                                    boolean showEditor) {
-    super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition);
+    this(project, debuggerEditorsProvider, historyId, sourcePosition, text, multiline, editorFont, showEditor, null);
+  }
+
+  protected XDebuggerExpressionEditor(Project project,
+                                      @NotNull XDebuggerEditorsProvider debuggerEditorsProvider,
+                                      @Nullable @NonNls String historyId,
+                                      @Nullable XSourcePosition sourcePosition,
+                                      @NotNull XExpression text,
+                                      final boolean multiline,
+                                      boolean editorFont,
+                                      boolean showEditor,
+                                      @Nullable PsiElement psiContext) {
+    super(project, debuggerEditorsProvider, multiline ? EvaluationMode.CODE_FRAGMENT : EvaluationMode.EXPRESSION, historyId, sourcePosition,
+          psiContext);
     myExpression = XExpressionImpl.changeMode(text, getMode());
-    myEditorTextField =
-      new EditorTextField(createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
+    myEditorTextField = new EditorTextField(
+      createDocument(myExpression), project, debuggerEditorsProvider.getFileType(), false, !multiline) {
       @Override
       protected @NotNull EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
@@ -64,24 +81,13 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         return editor;
       }
 
-        @Override
-        public Object getData(@NotNull String dataId) {
-          if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) {
-            return new Language[]{myExpression.getLanguage()};
-          }
-          else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-            return (DataProvider)slowId -> getSlowData(slowId);
-          }
-          return super.getData(dataId);
-        }
-
-        private @Nullable Object getSlowData(@NotNull String dataId) {
-          if (CommonDataKeys.PSI_FILE.is(dataId)) {
-            return PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument());
-          }
-          return null;
-        }
-      };
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        sink.lazy(LangDataKeys.CONTEXT_LANGUAGES, () -> new Language[]{myExpression.getLanguage()});
+        sink.lazy(CommonDataKeys.PSI_FILE, () -> PsiDocumentManager.getInstance(getProject()).getPsiFile(getDocument()));
+      }
+    };
     if (editorFont) {
       myEditorTextField.setFontInheritedFromLAF(false);
       myEditorTextField.setFont(EditorUtil.getEditorFont());
@@ -118,8 +124,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   }
 
   @Override
-  @Nullable
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     final Editor editor = myEditorTextField.getEditor();
     return editor != null ? editor.getContentComponent() : null;
   }
@@ -130,9 +135,8 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     UIUtil.setEnabled(myComponent, enable, true);
   }
 
-  @Nullable
   @Override
-  public Editor getEditor() {
+  public @Nullable Editor getEditor() {
     return myEditorTextField.getEditor();
   }
 

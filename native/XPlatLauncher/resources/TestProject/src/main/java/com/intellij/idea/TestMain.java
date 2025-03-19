@@ -4,7 +4,9 @@ package com.intellij.idea;
 import com.google.gson.GsonBuilder;
 import one.profiler.AsyncProfiler;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,39 +15,44 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 public class TestMain {
-  @SuppressWarnings("RedundantLabeledSwitchRuleCodeBlock")
   public static void main(String[] args) throws Exception {
+    if (args.length > 0 && "serverMode".equals(args[0])) {
+      System.out.println("Started in server mode");
+      args = Arrays.copyOfRange(args, 1, args.length);
+    }
+
     if (args.length > 0) {
       switch (args[0]) {
-        case "dump-launch-parameters" -> {
-          dumpLaunchParameters(args);
-        }
-        case "async-profiler" -> {
-          asyncProfiler();
-        }
-        case "exit-code" -> {
-          exitCode(args);
-        }
-        case "exception" -> {
-          exception();
-        }
-        case "sigsegv" -> {
-          segmentationViolation();
-        }
+        case "dump-launch-parameters" -> dumpLaunchParameters(args);
+        case "print-env-var" -> printEnvironmentVariable(args);
+        case "print-cwd" -> printCwd();
+        case "async-profiler" -> asyncProfiler();
+        case "exit-code" -> exitCode(args);
+        case "exception" -> exception();
+        case "sigsegv" -> segmentationViolation();
+        case "main-class" -> mainClassName();
+        case "remoteDevStatus" -> checkStatus();
         default -> {
           System.err.println(
             "unexpected command: " + Arrays.toString(args) + '\n' +
             "usage: " + TestMain.class.getName() + " [command [options ...]]\n" +
             "commands:\n" +
             "  dump-launch-parameters [test-args ...] --output /path/to/output/file\n" +
-            "  vm-options-overloading <property>\n" +
+            "  print-env-var [test-args ...] ENV_VAR_NAME\n" +
+            "  print-cwd\n" +
             "  async-profiler\n" +
             "  exit-code <number>\n" +
-            "  sigsegv");
+            "  sigsegv\n" +
+            "  main-class");
           System.exit(1);
         }
       }
     }
+  }
+
+  private static void printEnvironmentVariable(String[] args) {
+    String varName = args[args.length - 1];
+    System.out.println(varName + "=" + System.getenv(varName));
   }
 
   private static void dumpLaunchParameters(String[] args) throws IOException {
@@ -73,10 +80,12 @@ public class TestMain {
 
     var gson = new GsonBuilder().setPrettyPrinting().create();
     var jsonText = gson.toJson(dump);
-    System.out.println(jsonText);
-
     Files.writeString(outputFile, jsonText);
-    System.out.println("Dumped to " + outputFile.toAbsolutePath());
+    System.out.println("Dumped to " + outputFile.getFileName());
+  }
+
+  private static void printCwd() {
+    System.out.println("CWD=" + Path.of(".").toAbsolutePath());
   }
 
   @SuppressWarnings("SpellCheckingInspection")
@@ -111,5 +120,33 @@ public class TestMain {
     f.setAccessible(true);
     var unsafe = (sun.misc.Unsafe) f.get(null);
     unsafe.putAddress(0, 0);
+  }
+
+  private static void mainClassName() {
+    var stdout = System.out;
+    try {
+      var buffer = new ByteArrayOutputStream();
+      System.setOut(new PrintStream(buffer));
+      sun.tools.jps.Jps.main(new String[]{"-l"});
+      var pid = String.valueOf(ProcessHandle.current().pid());
+      var name = buffer.toString().lines()
+        .filter(l -> l.startsWith(pid))
+        .map(l -> l.substring(pid.length()).trim())
+        .findFirst()
+        .orElseThrow(() -> new IllegalStateException("No " + pid + " in: <<<\n" + buffer.toString().trim() + "\n>>>"));
+      stdout.println("main.class=" + name);
+    }
+    finally {
+      System.setOut(stdout);
+    }
+  }
+
+  private static void checkStatus() {
+    var vmOptions = ManagementFactory.getRuntimeMXBean().getInputArguments();
+    var debugOption = vmOptions.stream().filter(o -> o.startsWith("-agentlib:jdwp=")).findFirst();
+    if (debugOption.isPresent()) {
+      System.err.println("VM options contain the debug option: " + debugOption.get());
+      System.exit(1);
+    }
   }
 }

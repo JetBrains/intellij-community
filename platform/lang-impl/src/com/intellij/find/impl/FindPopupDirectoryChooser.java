@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -20,13 +21,13 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +41,12 @@ import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
-public class FindPopupDirectoryChooser extends JPanel {
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final ComboBox<String> myDirectoryComboBox;
+@ApiStatus.Internal
+public final class FindPopupDirectoryChooser extends JPanel {
+  private final @NotNull FindUIHelper myHelper;
+  private final @NotNull Project myProject;
+  private final @NotNull FindPopupPanel myFindPopupPanel;
+  private final @NotNull ComboBox<String> myDirectoryComboBox;
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
@@ -101,7 +103,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     });
 
     MyRecursiveDirectoryAction recursiveDirectoryAction = new MyRecursiveDirectoryAction();
-    int mnemonicModifiers = SystemInfo.isMac ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
+    int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
     RowBuilder builder = new RowBuilder(this);
@@ -130,18 +132,15 @@ public class FindPopupDirectoryChooser extends JPanel {
     }
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return myDirectoryComboBox;
   }
 
-  @NotNull
-  public String getDirectory() {
+  public @NotNull String getDirectory() {
     return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
-  @Nullable
-  public ValidationInfo validate(@NotNull FindModel model) {
+  public @Nullable ValidationInfo validate(@NotNull FindModel model) {
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
     if (directory == null) {
       return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);
@@ -149,7 +148,7 @@ public class FindPopupDirectoryChooser extends JPanel {
     return null;
   }
 
-  private class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
+  private final class MyRecursiveDirectoryAction extends DumbAwareToggleAction {
     MyRecursiveDirectoryAction() {
       super(FindBundle.messagePointer("find.recursively.hint"), Presentation.NULL_STRING, AllIcons.Actions.ShowAsTree);
     }

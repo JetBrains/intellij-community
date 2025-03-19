@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -41,9 +41,9 @@ public class PyIntroduceDialog extends DialogWrapper {
   private final PyExpression myExpression;
   private final String myHelpId;
 
-  public PyIntroduceDialog(@NotNull final Project project,
-                           @NotNull final @DialogTitle String caption,
-                           @NotNull final IntroduceValidator validator,
+  public PyIntroduceDialog(final @NotNull Project project,
+                           final @NotNull @DialogTitle String caption,
+                           final @NotNull IntroduceValidator validator,
                            final String helpId,
                            final IntroduceOperation operation) {
     super(project, true);
@@ -92,7 +92,7 @@ public class PyIntroduceDialog extends DialogWrapper {
       public void actionPerformed(ActionEvent e) {
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameComboBox, true));
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, KeyEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
     for (@Nls String possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
@@ -129,10 +129,9 @@ public class PyIntroduceDialog extends DialogWrapper {
     return myContentPane;
   }
 
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     final Object item = myNameComboBox.getEditor().getItem();
-    if ((item instanceof String) && ((String)item).length() > 0) {
+    if ((item instanceof String) && !((String)item).isEmpty()) {
       return ((String)item).trim();
     }
     return null;

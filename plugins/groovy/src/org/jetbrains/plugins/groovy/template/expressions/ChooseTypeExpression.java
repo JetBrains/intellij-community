@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.template.expressions;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +61,7 @@ public class ChooseTypeExpression extends Expression {
     mySelectDef = selectDef;
   }
 
-  @NotNull
-  private static List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
+  private static @NotNull List<SmartTypePointer> createItems(TypeConstraint @NotNull [] constraints, @NotNull SmartTypePointerManager typePointerManager) {
     List<SmartTypePointer> result = new ArrayList<>();
 
     for (TypeConstraint constraint : constraints) {
@@ -85,15 +85,17 @@ public class ChooseTypeExpression extends Expression {
     }
   }
 
-  @NotNull
-  private static PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
+  private static @NotNull PsiType chooseType(TypeConstraint @NotNull [] constraints, @NotNull GlobalSearchScope scope, @NotNull PsiManager manager) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
     return PsiType.getJavaLangObject(manager, scope);
   }
 
   @Override
   public Result calculateResult(ExpressionContext context) {
-    PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
+    Editor editor = context.getEditor();
+    if (editor != null) {
+      PsiDocumentManager.getInstance(context.getProject()).commitDocument(editor.getDocument());
+    }
     PsiType type = myTypePointer.getType();
     if (type != null) {
       if (myAddDefType && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {

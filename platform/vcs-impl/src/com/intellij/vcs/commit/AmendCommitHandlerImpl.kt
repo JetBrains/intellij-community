@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil.equalsIgnoreWhitespaces
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 
 private val AMEND_DATA_KEY = Key.create<AmendData>("Vcs.Commit.AmendData")
 private var CommitContext.amendData: AmendData? by commitProperty(AMEND_DATA_KEY, null)
@@ -20,6 +21,7 @@ private class AmendData(val beforeAmendMessage: String, val amendMessage: String
 
 private val LOG = logger<AmendCommitHandlerImpl>()
 
+@ApiStatus.Internal
 open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWorkflowHandler<*, *>) : AmendCommitHandler {
   private val amendCommitEventDispatcher = EventDispatcher.create(AmendCommitModeListener::class.java)
 

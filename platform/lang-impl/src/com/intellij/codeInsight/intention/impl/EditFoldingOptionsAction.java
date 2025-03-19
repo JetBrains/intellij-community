@@ -11,10 +11,12 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @SuppressWarnings("IntentionDescriptionNotFoundInspection")
-public class EditFoldingOptionsAction implements IntentionAction, LowPriorityAction {
+public final class EditFoldingOptionsAction implements IntentionAction, LowPriorityAction {
   @Override
   public @NotNull String getText() {
     return ApplicationBundle.message("edit.code.folding.options");

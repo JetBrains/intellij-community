@@ -2,11 +2,14 @@
 package git4idea.remote.hosting
 
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -43,36 +46,25 @@ class SingleHostedGitRepositoryConnectionManagerImpl<
 
   private val _connectionState = MutableStateFlow<C?>(null)
   override val connectionState: StateFlow<C?> = _connectionState.asStateFlow()
-
-  init {
-    // nullize when connection is closed
-    cs.launch {
-      connectionState.collectLatest {
-        if (it != null) {
-          it.awaitClose()
-          _connectionState.compareAndSet(it, null)
-        }
-      }
-    }
-  }
+  private val connectionStateGuard = Mutex()
 
   override suspend fun openConnection(repo: M, account: A): C? =
     withContext(cs.coroutineContext) {
-      _connectionState.updateAndGet {
-        if (it == null || it.repo != repo || it.account != account) {
-          connectionFactory.connect(cs, repo, account)
+      connectionStateGuard.withLock {
+        val current = _connectionState.value
+        if (current == null || current.repo != repo || current.account != account) {
+          current?.close()
+          _connectionState.value = connectionFactory.connect(cs, repo, account)
         }
-        else {
-          it
-        }
+        _connectionState.value
       }
     }
 
   override suspend fun closeConnection() =
     withContext(cs.coroutineContext) {
-      _connectionState.update {
-        it?.close()
-        null
+      connectionStateGuard.withLock {
+        _connectionState.value?.close()
+        _connectionState.value = null
       }
     }
 }

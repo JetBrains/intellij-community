@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.serialization
@@ -8,6 +8,7 @@ import com.amazon.ion.IonType
 import com.amazon.ion.system.IonReaderBuilder
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.lang.reflect.Constructor
 import java.lang.reflect.Type
 import java.util.concurrent.CancellationException
 import kotlin.reflect.full.primaryConstructor
@@ -20,7 +21,10 @@ private val structReaderBuilder by lazy {
 
 private const val ID_FIELD_NAME = "@id"
 
-internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Binding {
+internal class BeanBinding(private val beanClass: Class<*>) : Binding {
+  @Volatile
+  private var constructor: Constructor<*>? = null
+
   private lateinit var bindings: Array<Binding>
   private lateinit var nameToBindingIndex: Object2IntOpenHashMap<String>
   private lateinit var properties: List<MutableAccessor>
@@ -55,6 +59,19 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     }
   }
 
+  @Throws(SecurityException::class, NoSuchMethodException::class)
+  private fun resolveConstructor(): Constructor<*> {
+    var constructor = constructor
+    if (constructor != null) {
+      return constructor
+    }
+
+    constructor = beanClass.getDeclaredConstructor()
+    constructor.isAccessible = true
+    this.constructor = constructor
+    return constructor
+  }
+
   override fun serialize(obj: Any, context: WriteContext) {
     val writer = context.writer
 
@@ -70,7 +87,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     writer.stepIn(IonType.STRUCT)
 
     if (objectIdWriter != null) {
-      // id as field because annotation supports only string, but it is not efficient
+      // id as field because the annotation supports only string, but it is not efficient
       writer.setFieldName(ID_FIELD_NAME)
       writer.writeInt(objectIdWriter.registerObject(obj).toLong())
     }
@@ -127,7 +144,7 @@ internal class BeanBinding(beanClass: Class<*>) : BaseBeanBinding(beanClass), Bi
     }
 
     // we cannot read all field values before creating an instance because some field value can reference to parent - our instance,
-    // so, first, create instance, and only then read rest of fields
+    // so, first, create instance, and only then read the rest of fields
     var id = -1
     val out = doReadAndMakeCopyIfSecondPassIsNeeded { reader ->
       val subReadContext = context.createSubContext(reader)

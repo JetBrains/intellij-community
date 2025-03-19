@@ -165,4 +165,6 @@ public class MyJavaClass {
         return 1;
     }
 }
-// IGNORE_K2
+
+// JVM_DEFAULT_MODE: disable
+// ^ After fixing IDEA-367937, please provide a copy of this test with the 'enable' mode.

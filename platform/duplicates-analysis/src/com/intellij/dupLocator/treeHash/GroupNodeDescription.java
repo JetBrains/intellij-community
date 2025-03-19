@@ -2,13 +2,13 @@ package com.intellij.dupLocator.treeHash;
 
 import org.jetbrains.annotations.Nls;
 
-public class GroupNodeDescription {
+class GroupNodeDescription {
   private final int myFilesCount;
   private final @Nls String myTitle;
   private final @Nls String myComment;
 
 
-  public GroupNodeDescription(final int filesCount, final @Nls String title, final @Nls String comment) {
+  GroupNodeDescription(final int filesCount, final @Nls String title, final @Nls String comment) {
     myFilesCount = filesCount;
     myTitle = title;
     myComment = comment;

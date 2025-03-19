@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.gradle.java.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "gradle-java-maven_resources",
+  files = glob(["plugin-resources/**/*"]),
+  strip_prefix = "plugin-resources"
+)
+
+jvm_library(
+  name = "gradle-java-maven",
+  module_name = "intellij.gradle.java.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/gradle/java",
+    "//plugins/maven",
+    "//plugins/groovy",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//plugins/repository-search",
+  ],
+  runtime_deps = [":gradle-java-maven_resources"]
+)
+
+jvm_library(
+  name = "gradle-java-maven_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  associates = [":gradle-java-maven"],
+  deps = [
+    "//plugins/gradle/java",
+    "//plugins/maven",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-impl",
+    "//plugins/repository-search",
+    "//plugins/repository-search:repository-search_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":gradle-java-maven_resources"]
+)
+
+jvm_test(
+  name = "gradle-java-maven_test",
+  runtime_deps = [":gradle-java-maven_test_lib"]
+)
+### auto-generated section `build intellij.gradle.java.maven` end

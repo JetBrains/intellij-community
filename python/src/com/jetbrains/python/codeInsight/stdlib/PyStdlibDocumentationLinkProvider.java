@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -27,7 +26,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 
-public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
+public final class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
   private static final Map<String, String> py2LibraryModulesToWebpageName = new MyBuilder()
     .put("BaseHTTPServer", "basehttpserver")
@@ -953,12 +952,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return null;
   }
 
-  @NotNull
-  private static String getExternalDocumentationRoot(@NotNull Sdk sdk) {
+  private static @NotNull String getExternalDocumentationRoot(@NotNull Sdk sdk) {
     final String versionString = sdk.getVersionString();
-    if (versionString != null && StringUtil.startsWithIgnoreCase(versionString, "jython")) {
-      return "http://jython.org/docs/library/";
-    }
     final String pyVersion = PythonDocumentationProvider.pyVersion(versionString);
     StringBuilder urlBuilder = new StringBuilder("https://docs.python.org/");
     if (pyVersion != null) {
@@ -973,9 +968,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return urlBuilder.toString();
   }
 
-  @Nullable
   @Override
-  public Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
+  public @Nullable Function<Document, @NlsSafe String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 

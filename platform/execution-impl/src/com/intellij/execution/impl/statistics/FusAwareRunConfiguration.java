@@ -4,6 +4,7 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -19,5 +20,6 @@ import java.util.List;
  * @see RunConfigurationTypeLanguageExtension
  */
 public interface FusAwareRunConfiguration {
+  @Unmodifiable
   @NotNull List<EventPair<?>> getAdditionalUsageData();
 }

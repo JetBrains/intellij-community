@@ -11,6 +11,19 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlin.test.assertNotEquals
 
 class EventLogConfigurationTest : BasePlatformTestCase() {
+
+  // Test that two different recorders can have same machine/device id if the alternative recorder id is provided
+  fun testMachineIdDeviceIdAlternativeRecorder() {
+    val configuration = EventLogConfiguration.getInstance().getOrCreate("ABC", null)
+    val alternativeConfiguration = EventLogConfiguration.getInstance().getOrCreate("DEF", "ABC")
+
+    assertNotNull(configuration.deviceId)
+    assertNotNull(configuration.machineId)
+
+    assertEquals(configuration.deviceId, alternativeConfiguration.deviceId)
+    assertEquals(configuration.machineId, alternativeConfiguration.machineId)
+  }
+
   fun testMachineIdRegeneration() {
     doTestRegenerate({ it.machineId }, hashMapOf(MACHINE_ID_SALT to "newSalt",
                                                  MACHINE_ID_SALT_REVISION to "2"))

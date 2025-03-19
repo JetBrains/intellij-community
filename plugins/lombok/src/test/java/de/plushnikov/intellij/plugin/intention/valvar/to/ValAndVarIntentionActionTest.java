@@ -16,8 +16,8 @@ public class ValAndVarIntentionActionTest extends AbstractLombokLightCodeInsight
 
   public void testValAndVar() {
     loadToPsiFile(getTestName(false) + ".java");
-    IntentionAction replaceExplicitTypeWithValIntentionAction = new ReplaceExplicitTypeWithValIntentionAction();
-    IntentionAction replaceExplicitTypeWithVarIntentionAction = new ReplaceExplicitTypeWithVarIntentionAction();
+    IntentionAction replaceExplicitTypeWithValIntentionAction = new ReplaceExplicitTypeWithValIntentionAction().asIntention();
+    IntentionAction replaceExplicitTypeWithVarIntentionAction = new ReplaceExplicitTypeWithVarIntentionAction().asIntention();
     boolean foundVal = false;
     boolean foundVar = false;
     for (IntentionAction availableIntention : myFixture.getAvailableIntentions()) {

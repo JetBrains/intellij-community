@@ -553,9 +553,15 @@ def _is_int(filename):
     except:
         return False
 
+
 def is_real_file(filename):
     # Check for Jupyter cells
     return not _is_int(filename) and not filename.startswith("<ipython-input")
+
+
+def is_jupyter_cell(frame):
+    return frame.f_code.co_name == '<ipython cell>'
+
 
 # For given file f returns tuple of its absolute path, real path and base name
 def get_abs_path_real_path_and_base_from_file(f):
@@ -587,6 +593,11 @@ def get_abs_path_real_path_and_base_from_frame(frame):
     except:
         # This one is just internal (so, does not need any kind of client-server translation)
         f = frame.f_code.co_filename
+
+        if is_jupyter_cell(frame):
+            NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename] = f
+            return f
+
         if f is not None and f.startswith (('build/bdist.', 'build\\bdist.')):
             # files from eggs in Python 2.7 have paths like build/bdist.linux-x86_64/egg/<path-inside-egg>
             f = frame.f_globals['__file__']

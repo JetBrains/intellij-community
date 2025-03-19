@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Predicates;
@@ -6,6 +6,7 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.visible.EmptyVisibleGraph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public class EmptyPermanentGraph implements PermanentGraph<Integer> {
 
   private static final PermanentGraph<Integer> INSTANCE = new EmptyPermanentGraph();
@@ -24,7 +26,8 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   }
 
   @Override
-  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull SortType sortType, @Nullable Set<? extends Integer> headsOfVisibleBranches,
+  public @NotNull VisibleGraph<Integer> createVisibleGraph(@NotNull Options options,
+                                                           @Nullable Set<? extends Integer> headsOfVisibleBranches,
                                                            @Nullable Set<? extends Integer> filter) {
     return EmptyVisibleGraph.getInstance();
   }

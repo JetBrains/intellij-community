@@ -1,4 +1,4 @@
-// IS_APPLICABLE: true
+// FIX: Remove explicit type arguments
 // AFTER-WARNING: Parameter 't' is never used
 // AFTER-WARNING: Parameter 'v' is never used
 // AFTER-WARNING: Variable 'x' is never used

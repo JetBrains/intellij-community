@@ -17,9 +17,11 @@ abstract class ImportInsertHelper {
 
     abstract fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean
 
-    abstract fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean
-
-    abstract fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath>
+    abstract fun mayImportOnShortenReferences(
+        descriptor: DeclarationDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean
 
     abstract fun importDescriptor(
         element: KtElement,
@@ -45,11 +47,4 @@ enum class ImportDescriptorResult {
     FAIL,
     IMPORT_ADDED,
     ALREADY_IMPORTED
-}
-
-@Suppress("unused")
-@Deprecated("Use `runImmediately` flag instead.")
-enum class ActionRunningMode {
-    RUN_IN_CURRENT_THREAD,
-    RUN_IN_EDT
 }

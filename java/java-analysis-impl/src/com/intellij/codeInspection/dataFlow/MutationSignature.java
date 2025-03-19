@@ -25,15 +25,44 @@ import java.util.stream.Stream;
  * Represents method mutation signature
  */
 public final class MutationSignature {
+  private enum Kind {
+    /**
+     * Does not mutate anything, including private fields
+     */
+    TRANSPARENT,
+    /**
+     * Does not mutate publicly visible state, may mutate private fields (e.g., to cache something)
+     */
+    PURE,
+    /**
+     * Mutation signature is unknown: anything can be mutated
+     */
+    MUTATES_ANYTHING,
+    /**
+     * Any other specific case described by other fields (mutates either 'this', or parameters, or io) 
+     */
+    OTHER
+  }
+  
   public static final String ATTR_MUTATES = "mutates";
-  static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
-  static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
-  private static final MutationSignature MUTATES_THIS_ONLY = new MutationSignature(true, new boolean[0]);
+  static final MutationSignature UNKNOWN = new MutationSignature(Kind.MUTATES_ANYTHING, false, false, new boolean[0]);
+  private static final MutationSignature PURE = new MutationSignature(Kind.PURE, false, false, new boolean[0]);
+  private static final MutationSignature TRANSPARENT = new MutationSignature(Kind.TRANSPARENT, false, false, new boolean[0]);
+  private static final MutationSignature MUTATES_THIS_ONLY = new MutationSignature(Kind.OTHER, true, false, new boolean[0]);
+  private final @NotNull Kind myKind;
   private final boolean myThis;
+  private final boolean myIo;
   private final boolean[] myParameters;
 
-  private MutationSignature(boolean mutatesThis, boolean[] params) {
+  private MutationSignature(@NotNull Kind kind, boolean mutatesThis, boolean io, boolean[] params) {
+    if (kind == Kind.PURE || kind == Kind.TRANSPARENT || kind == Kind.MUTATES_ANYTHING) {
+      if (mutatesThis || io || params.length != 0) {
+        throw new IllegalArgumentException();
+      }
+    }
+    myKind = kind;
     myThis = mutatesThis;
+    myIo = io;
     myParameters = params;
   }
 
@@ -42,6 +71,13 @@ public final class MutationSignature {
    */
   public boolean mutatesThis() {
     return myThis;
+  }
+
+  /**
+   * @return true if the method may perform input/output operations
+   */
+  public boolean performsIO() {
+    return myIo;
   }
 
   /**
@@ -72,7 +108,7 @@ public final class MutationSignature {
    */
   public MutationSignature alsoMutatesThis() {
     return this == UNKNOWN || myThis ? this :
-           isPure() ? MUTATES_THIS_ONLY : new MutationSignature(true, myParameters);
+           isPure() ? MUTATES_THIS_ONLY : new MutationSignature(Kind.OTHER, true, myIo, myParameters);
   }
 
   /**
@@ -83,35 +119,49 @@ public final class MutationSignature {
     if (myParameters.length > n && myParameters[n]) return this;
     boolean[] params = Arrays.copyOf(myParameters, Math.max(n + 1, myParameters.length));
     params[n] = true;
-    return new MutationSignature(myThis, params);
+    return new MutationSignature(Kind.OTHER, myThis, myIo, params);
   }
 
   /**
    * @return true if this signature represents a pure method
    */
   public boolean isPure() {
-    return this == PURE;
+    return myKind == Kind.PURE || myKind == Kind.TRANSPARENT;
+  }
+
+  /**
+   * @return true if this signature represents a pure method which doesn't mutate even the private state of the object
+   */
+  public boolean isTransparent() {
+    return myKind == Kind.TRANSPARENT;
   }
 
   @Override
   public int hashCode() {
-    return (myThis ? 137 : 731) + Arrays.hashCode(myParameters);
+    int result = myKind.hashCode();
+    result = 31 * result + Boolean.hashCode(myThis);
+    result = 31 * result + Boolean.hashCode(myIo);
+    result = 31 * result + Arrays.hashCode(myParameters);
+    return result;
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    if ((this == UNKNOWN) != (obj == UNKNOWN)) return false;
-    return obj instanceof MutationSignature && ((MutationSignature)obj).myThis == myThis &&
-           Arrays.equals(((MutationSignature)obj).myParameters, myParameters);
+    return obj instanceof MutationSignature signature && signature.myKind == myKind &&
+           signature.myThis == myThis && signature.myIo == myIo &&
+           Arrays.equals(signature.myParameters, myParameters);
   }
 
   @Override
   public String toString() {
-    if (isPure()) return "(pure)";
-    if (this == UNKNOWN) return "(unknown)";
-    return IntStreamEx.range(myParameters.length).mapToEntry(idx -> "param" + (idx + 1), idx -> myParameters[idx])
-      .prepend("this", myThis).filterValues(b -> b).keys().joining(",");
+    return switch (myKind) {
+      case TRANSPARENT -> "(transparent)";
+      case PURE -> "(pure)";
+      case MUTATES_ANYTHING -> "(unknown)";
+      case OTHER -> IntStreamEx.range(myParameters.length).mapToEntry(idx -> "param" + (idx + 1), idx -> myParameters[idx])
+        .prepend("this", myThis).prepend("io", myIo).filterValues(b -> b).keys().joining(",");
+    };
   }
 
   /**
@@ -137,10 +187,10 @@ public final class MutationSignature {
   }
 
   /**
-   * @return true if known to mutate any parameter or receiver; false if pure or not known
+   * @return true if known to mutate any parameter or receiver, or performs an input/output; false if pure or not known
    */
   public boolean mutatesAnything() {
-    if (myThis) return true;
+    if (myThis || myIo) return true;
     for (boolean parameter : myParameters) {
       if (parameter) return true;
     }
@@ -157,11 +207,15 @@ public final class MutationSignature {
       return UNKNOWN;
     }
     boolean mutatesThis = false;
+    boolean mutatesIO = false;
     boolean[] args = {};
     for (String part : signature.split(",")) {
       part = part.trim();
       if (part.equals("this")) {
         mutatesThis = true;
+      }
+      else if (part.equals("io")) {
+        mutatesIO = true;
       }
       else if (part.equals("param")) {
         if (args.length == 0) {
@@ -184,7 +238,7 @@ public final class MutationSignature {
         throw new IllegalArgumentException(JavaAnalysisBundle.message("mutation.signature.problem.invalid.token", part));
       }
     }
-    return new MutationSignature(mutatesThis, args);
+    return new MutationSignature(Kind.OTHER, mutatesThis, mutatesIO, args);
   }
 
   /**
@@ -274,6 +328,13 @@ public final class MutationSignature {
    */
   public static @NotNull MutationSignature pure() {
     return PURE;
+  }
+
+  /**
+   * @return a signature of the pure method, which doesn't mutate anything, including private fields
+   */
+  public static @NotNull MutationSignature transparent() {
+    return TRANSPARENT;
   }
 
   /**

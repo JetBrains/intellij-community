@@ -1,0 +1,2 @@
+# Tests should not be part of the stubs
+capturer.tests.*

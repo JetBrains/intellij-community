@@ -1,7 +1,8 @@
 version: 1.0
+linter: jetbrains/qodana-jvm:2024.2
+disableSanityInspections: true
+properties:
+  shared.index.git.hashes: false
+  idea.batch.inspections.inspect.injected.psi: false
 profile:
-  name: idea.fatal.errors
-exclude:
-  - name: All
-    paths:
-      - lib
+  path: .idea/inspectionProfiles/idea_fatal_errors.yml

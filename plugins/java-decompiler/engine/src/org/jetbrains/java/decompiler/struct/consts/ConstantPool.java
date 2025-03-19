@@ -94,7 +94,8 @@ public class ConstantPool implements NewClassNameBuilder {
     int size = in.readUnsignedShort();
 
     for (int i = 1; i < size; i++) {
-      switch (in.readUnsignedByte()) {
+      byte tag = (byte)in.readUnsignedByte();
+      switch (tag) {
         case CodeConstants.CONSTANT_Utf8 -> in.readUTF();
         case CodeConstants.CONSTANT_Integer, CodeConstants.CONSTANT_Float, CodeConstants.CONSTANT_Fieldref, CodeConstants.CONSTANT_Methodref, CodeConstants.CONSTANT_InterfaceMethodref, CodeConstants.CONSTANT_NameAndType, CodeConstants.CONSTANT_Dynamic, CodeConstants.CONSTANT_InvokeDynamic ->
           in.discard(4);
@@ -102,8 +103,9 @@ public class ConstantPool implements NewClassNameBuilder {
           in.discard(8);
           i++;
         }
-        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType -> in.discard(2);
+        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType, CodeConstants.CONSTANT_Module, CodeConstants.CONSTANT_Package -> in.discard(2);
         case CodeConstants.CONSTANT_MethodHandle -> in.discard(3);
+        default -> throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
       }
     }
   }
@@ -158,14 +160,14 @@ public class ConstantPool implements NewClassNameBuilder {
         (ln.type == CodeConstants.CONSTANT_Fieldref ||
          ln.type == CodeConstants.CONSTANT_Methodref ||
          ln.type == CodeConstants.CONSTANT_InterfaceMethodref)) {
-      String newClassName = buildNewClassname(ln.classname);
-      String newElement = interceptor.getName(ln.classname + ' ' + ln.elementname + ' ' + ln.descriptor);
+      String newClassName = buildNewClassname(ln.className);
+      String newElement = interceptor.getName(ln.className + ' ' + ln.elementName + ' ' + ln.descriptor);
       String newDescriptor = buildNewDescriptor(ln.type == CodeConstants.CONSTANT_Fieldref, ln.descriptor);
       //TODO: Fix newElement being null caused by ln.classname being a leaf class instead of the class that declared the field/method.
       //See the comments of IDEA-137253 for more information.
       if (newClassName != null || newElement != null || newDescriptor != null) {
-        String className = newClassName == null ? ln.classname : newClassName;
-        String elementName = newElement == null ? ln.elementname : newElement.split(" ")[1];
+        String className = newClassName == null ? ln.className : newClassName;
+        String elementName = newElement == null ? ln.elementName : newElement.split(" ")[1];
         String descriptor = newDescriptor == null ? ln.descriptor : newDescriptor;
         ln = new LinkConstant(ln.type, className, elementName, descriptor);
       }

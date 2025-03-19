@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.util
 
+
+
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
@@ -94,6 +97,8 @@ val ClassifierDescriptorWithTypeParameters.kind: ClassKind?
         else -> null
     }
 
+@get:Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
+@get:ApiStatus.ScheduledForRemoval
 val DeclarationDescriptor.isJavaDescriptor
     get() = this is JavaClassDescriptor || this is JavaCallableMemberDescriptor
 
@@ -104,3 +109,9 @@ fun FunctionDescriptor.shouldNotConvertToProperty(notProperties: Set<FqNameUnsaf
 
 fun SyntheticJavaPropertyDescriptor.suppressedByNotPropertyList(set: Set<FqNameUnsafe>) =
     getMethod.shouldNotConvertToProperty(set) || setMethod?.shouldNotConvertToProperty(set) ?: false
+
+fun DeclarationDescriptor.unwrapIfTypeAlias(): DeclarationDescriptor? =
+    when(this) {
+        is TypeAliasDescriptor -> this.classDescriptor?.unwrapIfTypeAlias()
+        else -> this
+    }

@@ -1,119 +1,138 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginEnabledState
-import com.intellij.ide.plugins.enums.PluginsGroupType
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performInstalledTabSearch
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performMarketplaceSearch
+import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector
+import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum
 import com.intellij.ide.plugins.marketplace.statistics.enums.SignatureVerificationResult
 import com.intellij.ide.plugins.newui.PluginsGroup
-import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.eventLog.events.BaseEventId
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
-import com.intellij.internal.statistic.utils.getPluginInfoById
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
-class PluginManagerUsageCollector : CounterUsagesCollector() {
-  override fun getGroup(): EventLogGroup = EVENT_GROUP
+/*
+  Collects plugin manager usage statistics:
+    - Data about search requests on the Marketplace and Installed tabs and search resets actions will be collected
+      by [PluginManagerMPCollector].
+    - Data about opening plugin cards, installing/removing plugins and plugin state changes will be collected by
+      both [PluginManagerMPCollector] and [PluginManagerFUSCollector] for backward compatibility.
+ */
 
-  companion object {
-    private val EVENT_GROUP = EventLogGroup("plugin.manager", 6)
-    private val PLUGINS_GROUP_TYPE = EventFields.Enum<PluginsGroupType>("group")
-    private val ENABLE_DISABLE_ACTION = EventFields.Enum<PluginEnabledState>("enabled_state")
-    private val ACCEPTANCE_RESULT = EventFields.Enum<DialogAcceptanceResultEnum>("acceptance_result")
-    private val PLUGIN_SOURCE = EventFields.Enum<InstallationSourceEnum>("source")
-    private val PREVIOUS_VERSION = PluginVersionEventField("previous_version")
-    private val SIGNATURE_CHECK_RESULT = EventFields.Enum<SignatureVerificationResult>("signature_check_result")
+@ApiStatus.Internal
+object PluginManagerUsageCollector {
+  private val fusCollector = PluginManagerFUSCollector()
+  private val mpCollector = PluginManagerMPCollector()
 
-    private val PLUGIN_CARD_OPENED = EVENT_GROUP.registerEvent(
-      "plugin.search.card.opened", EventFields.PluginInfo, PLUGINS_GROUP_TYPE, EventFields.Int("index")
-    )
-    private val THIRD_PARTY_ACCEPTANCE_CHECK = EVENT_GROUP.registerEvent("plugin.install.third.party.check", ACCEPTANCE_RESULT)
-    private val PLUGIN_SIGNATURE_WARNING = EVENT_GROUP.registerEvent(
-      "plugin.signature.warning.shown", EventFields.PluginInfo, ACCEPTANCE_RESULT
-    )
-    private val PLUGIN_SIGNATURE_CHECK_RESULT = EVENT_GROUP.registerEvent(
-      "plugin.signature.check.result", EventFields.PluginInfo, SIGNATURE_CHECK_RESULT
-    )
-    private val PLUGIN_STATE_CHANGED = EVENT_GROUP.registerEvent(
-      "plugin.state.changed", EventFields.PluginInfo, ENABLE_DISABLE_ACTION
-    )
-    private val PLUGIN_INSTALLATION_STARTED = EVENT_GROUP.registerEvent(
-      "plugin.installation.started", PLUGIN_SOURCE, EventFields.PluginInfo, PREVIOUS_VERSION
-    )
-    private val PLUGIN_INSTALLATION_FINISHED = EVENT_GROUP.registerEvent("plugin.installation.finished", EventFields.PluginInfo)
-    private val PLUGIN_REMOVED = EVENT_GROUP.registerEvent("plugin.was.removed", EventFields.PluginInfo)
+  // Plugin manager search session identifier which is unique within one IDE session
+  private val sessionId = AtomicInteger(-1)
+  // Search index within one plugin manager search session. The order corresponds to the order of query updates
+  private val searchIndex = AtomicInteger(0)
 
-    @JvmStatic
-    fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) = group?.let {
-      PLUGIN_CARD_OPENED.log(getPluginInfoByDescriptor(descriptor), it.type, it.getPluginIndex(descriptor.pluginId))
-    }
+  private val installedPluginInSession = AtomicBoolean(false)
 
-    @JvmStatic
-    fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) {
-      THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
-    }
-
-    @JvmStatic
-    fun pluginsStateChanged(
-      descriptors: Collection<IdeaPluginDescriptor>,
-      enable: Boolean,
-      project: Project? = null,
-    ) {
-      PLUGIN_STATE_CHANGED.getIfInitializedOrNull()?.let { event ->
-        descriptors.forEach { descriptor ->
-          event.log(
-            project,
-            getPluginInfoByDescriptor(descriptor),
-            PluginEnabledState.getState(enable, descriptor.isOnDemand),
-          )
-        }
-      }
-    }
-
-    @JvmStatic
-    fun pluginRemoved(pluginId: PluginId) = PLUGIN_REMOVED.getIfInitializedOrNull()?.log(getPluginInfoById(pluginId))
-
-    @JvmStatic
-    fun pluginInstallationStarted(
-      descriptor: IdeaPluginDescriptor,
-      source: InstallationSourceEnum,
-      previousVersion: String? = null
-    ) {
-      val pluginInfo = getPluginInfoByDescriptor(descriptor)
-      PLUGIN_INSTALLATION_STARTED.getIfInitializedOrNull()?.log(source, pluginInfo, if (pluginInfo.isSafeToReport()) previousVersion else null)
-    }
-
-    @JvmStatic
-    fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) = getPluginInfoByDescriptor(descriptor).let {
-      PLUGIN_INSTALLATION_FINISHED.getIfInitializedOrNull()?.log(it)
-    }
-
-    fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) =
-      PLUGIN_SIGNATURE_CHECK_RESULT.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
-
-    fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) =
-      PLUGIN_SIGNATURE_WARNING.getIfInitializedOrNull()?.log(getPluginInfoByDescriptor(descriptor), result)
+  @JvmStatic
+  fun sessionStarted(): Int {
+    searchIndex.set(0)
+    installedPluginInSession.set(false)
+    return sessionId.getAndIncrement()
   }
 
-  private data class PluginVersionEventField(override val name: String): PrimitiveEventField<String?>() {
-    override val validationRule: List<String>
-      get() = listOf("{util#plugin_version}")
+  /**
+   * Event that happens on search restart intention, before receiving the list with plugins.
+   * Unlike with [performMarketplaceSearch] and [performInstalledTabSearch],
+   * the order of these events corresponds to the order of query updates.
+   */
+  @JvmStatic
+  fun updateAndGetSearchIndex(): Int {
+    // If we perform search after installing a plugin, we consider this as a new search session:
+    if (installedPluginInSession.compareAndSet(true, false)) sessionStarted()
+    return searchIndex.getAndIncrement()
+  }
 
-    override fun addData(fuData: FeatureUsageData, value: String?) {
-      if (!value.isNullOrEmpty()) {
-        fuData.addData(name, value)
-      }
-    }
+  fun performMarketplaceSearch(
+    project: Project?,
+    query: SearchQueryParser.Marketplace,
+    results: List<IdeaPluginDescriptor>,
+    searchIndex: Int,
+    pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
+  ) {
+    mpCollector.performMarketplaceSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  }
+
+  @JvmStatic
+  fun performInstalledTabSearch(
+    project: Project?,
+    query: SearchQueryParser.Installed,
+    results: List<IdeaPluginDescriptor>,
+    searchIndex: Int,
+    pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
+  ) {
+    mpCollector.performInstalledTabSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  }
+
+  fun searchReset() {
+    mpCollector.searchReset(sessionId.get())
+  }
+
+  @JvmStatic
+  fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) {
+    fusCollector.pluginCardOpened(descriptor, group, sessionId.get())
+    mpCollector.pluginCardOpened(descriptor, group, sessionId.get())
+  }
+
+  @JvmStatic
+  fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) {
+    fusCollector.thirdPartyAcceptanceCheck(result, sessionId.get())
+    mpCollector.thirdPartyAcceptanceCheck(result, sessionId.get())
+  }
+
+  @JvmStatic
+  fun pluginsStateChanged(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    enable: Boolean,
+    project: Project? = null,
+  ) {
+    fusCollector.pluginsStateChanged(descriptors, enable, project, sessionId.get())
+    mpCollector.pluginsStateChanged(descriptors, enable, project, sessionId.get())
+  }
+
+  @JvmStatic
+  fun pluginRemoved(pluginId: PluginId) {
+    fusCollector.pluginRemoved(pluginId, sessionId.get())
+    mpCollector.pluginRemoved(pluginId, sessionId.get())
+  }
+
+  @JvmStatic
+  fun pluginInstallationStarted(
+    descriptor: IdeaPluginDescriptor,
+    source: InstallationSourceEnum,
+    previousVersion: String? = null
+  ) {
+    fusCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), previousVersion)
+    mpCollector.pluginInstallationStarted(descriptor, source, sessionId.get(), previousVersion)
+  }
+
+  @JvmStatic
+  fun pluginInstallationFinished(descriptor: IdeaPluginDescriptor) {
+    installedPluginInSession.set(true)
+    fusCollector.pluginInstallationFinished(descriptor, sessionId.get())
+    mpCollector.pluginInstallationFinished(descriptor, sessionId.get())
+  }
+
+  fun signatureCheckResult(descriptor: IdeaPluginDescriptor, result: SignatureVerificationResult) {
+    fusCollector.signatureCheckResult(descriptor, result, sessionId.get())
+    mpCollector.signatureCheckResult(descriptor, result, sessionId.get())
+  }
+
+  fun signatureWarningShown(descriptor: IdeaPluginDescriptor, result: DialogAcceptanceResultEnum) {
+    fusCollector.signatureWarningShown(descriptor, result, sessionId.get())
+    mpCollector.signatureWarningShown(descriptor, result, sessionId.get())
   }
 }
-
-// We don't want to log actions when app did not initialize yet (e.g. migration process)
-private fun <T: BaseEventId> T.getIfInitializedOrNull(): T? = if (ApplicationManager.getApplication() == null) null else this

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util;
 
@@ -11,13 +11,12 @@ import java.util.Iterator;
 public class CollectionQuery<T> implements Query<T> {
   private final Collection<T> myCollection;
 
-  public CollectionQuery(@NotNull final Collection<T> collection) {
+  public CollectionQuery(final @NotNull Collection<T> collection) {
     myCollection = collection;
   }
 
   @Override
-  @NotNull
-  public Collection<T> findAll() {
+  public @NotNull Collection<T> findAll() {
     return myCollection;
   }
 
@@ -28,7 +27,7 @@ public class CollectionQuery<T> implements Query<T> {
   }
 
   @Override
-  public boolean forEach(@NotNull final Processor<? super T> consumer) {
+  public boolean forEach(final @NotNull Processor<? super T> consumer) {
     return ContainerUtil.process(myCollection, consumer);
   }
 }

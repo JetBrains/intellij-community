@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.vfs.VirtualFile
@@ -25,7 +26,7 @@ import javax.swing.JComponent
 
 private const val PROMO_DISMISSED_KEY = "git.editor.promo.dismissed"
 
-private class GitEditorPromo : EditorNotificationProvider {
+private class GitEditorPromo : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (!isEnabled() || !CommandLineWaitingManager.getInstance().hasHookFor(file) || file.name != GitRepositoryFiles.COMMIT_EDITMSG) {
       return null
@@ -47,7 +48,7 @@ private class GitEditorPromo : EditorNotificationProvider {
       panel.add(
         InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
           PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
-          EditorNotifications.getInstance(project).updateNotifications(this)
+          EditorNotifications.getInstance(project).removeNotificationsForProvider(this)
         }, BorderLayout.EAST)
       panel
     }

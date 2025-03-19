@@ -1,19 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
+public final class InlineStreamMapAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(InlineStreamMapAction.class.getName());
   public static final class Holder {
     private static final Set<String> MAP_METHODS =
@@ -35,21 +35,23 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       .of("flatMap", "flatMapToInt", "flatMapToLong", "flatMapToDouble", "forEach", "forEachOrdered", "anyMatch", "noneMatch", "allMatch")
       .append(MAP_METHODS).toSet();
   }
+  
+  public InlineStreamMapAction() {
+    super(PsiIdentifier.class);
+  }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
-    if (!(element instanceof PsiIdentifier)) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     final PsiElement parent = element.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) return false;
+    if (!(parent instanceof PsiReferenceExpression)) return null;
     final PsiElement gParent = parent.getParent();
-    if (!(gParent instanceof PsiMethodCallExpression curCall)) return false;
-    if (!isMapCall(curCall)) return false;
+    if (!(gParent instanceof PsiMethodCallExpression curCall)) return null;
+    if (!isMapCall(curCall)) return null;
     PsiMethodCallExpression nextCall = getNextExpressionToMerge(curCall);
-    if(nextCall == null) return false;
+    if(nextCall == null) return null;
     String key = curCall.getArgumentList().isEmpty() || nextCall.getArgumentList().isEmpty() ?
                  "intention.inline.map.merge.text" : "intention.inline.map.inline.text";
-    setText(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
-    return true;
+    return Presentation.of(JavaBundle.message(key, element.getText(), nextCall.getMethodExpression().getReferenceName()));
   }
 
   private static boolean isMapCall(@NotNull PsiMethodCallExpression methodCallExpression) {
@@ -68,8 +70,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     return InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression getNextExpressionToMerge(PsiMethodCallExpression methodCallExpression) {
+  private static @Nullable PsiMethodCallExpression getNextExpressionToMerge(PsiMethodCallExpression methodCallExpression) {
     PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(methodCallExpression);
     if (nextCall == null) return null;
     String nextName = nextCall.getMethodExpression().getReferenceName();
@@ -92,8 +93,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
    * @param nextCall next call (assumed to be in NEXT_METHODS)
    * @return a name of the resulting method
    */
-  @Nullable
-  private static String translateName(@NotNull PsiMethodCallExpression prevCall, @NotNull PsiMethodCallExpression nextCall) {
+  private static @Nullable String translateName(@NotNull PsiMethodCallExpression prevCall, @NotNull PsiMethodCallExpression nextCall) {
     PsiMethod nextMethod = nextCall.resolveMethod();
     if (nextMethod == null) return null;
     String nextName = nextMethod.getName();
@@ -134,8 +134,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   }
 
   @Contract(pure = true)
-  @Nullable
-  private static String mapToFlatMap(String mapMethod) {
+  private static @Nullable String mapToFlatMap(String mapMethod) {
     return switch (mapMethod) {
       case "map" -> "flatMap";
       case "mapToInt" -> "flatMapToInt";
@@ -148,8 +147,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   }
 
   @Contract(pure = true)
-  @NotNull
-  private static String translateMap(String nextMethod) {
+  private static @NotNull String translateMap(String nextMethod) {
     return switch (nextMethod) {
       case "boxed" -> "mapToObj";
       case "asLongStream" -> "mapToLong";
@@ -159,13 +157,12 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.inline.map.family");
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     PsiMethodCallExpression mapCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if(mapCall == null) return;
 
@@ -190,7 +187,7 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
 
     CommentTracker ct = new CommentTracker();
 
-    if (!lambda.isPhysical() && !IntentionPreviewUtils.isPreviewElement(lambda)) {
+    if (lambda.getContainingFile() instanceof DummyHolder) {
       lambda = (PsiLambdaExpression)nextCall.getArgumentList().add(lambda);
     }
     PsiElement body = lambda.getBody();
@@ -201,8 +198,8 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     LOG.assertTrue(nextParameters.length == 1);
     PsiParameter[] prevParameters = previousLambda.getParameterList().getParameters();
     LOG.assertTrue(prevParameters.length == 1);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0], body)) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    for(PsiReferenceExpression ref : VariableAccessUtils.getVariableReferences(nextParameters[0])) {
       PsiExpression replacement = ct.markUnchanged(previousBody);
       if (ref.getParent() instanceof PsiExpression &&
           ParenthesesUtils.areParenthesesNeeded(previousBody, (PsiExpression)ref.getParent(), false)) {
@@ -221,11 +218,10 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
     } else {
       ct.replaceAndRestoreComments(nextQualifier, prevQualifier);
     }
-    CodeStyleManager.getInstance(project).reformat(lambda);
+    CodeStyleManager.getInstance(context.project()).reformat(lambda);
   }
 
-  @Nullable
-  private static PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
+  private static @Nullable PsiLambdaExpression getLambda(PsiMethodCallExpression call) {
     PsiExpression[] expressions = call.getArgumentList().getExpressions();
     if(expressions.length == 1) {
       PsiExpression expression = expressions[0];

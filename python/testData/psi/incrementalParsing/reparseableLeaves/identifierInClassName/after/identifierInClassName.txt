@@ -1,0 +1,14 @@
+Original text:
+---------------
+class ClassA():
+
+    def __init__(self):
+        print("HW!")
+---------------
+Subtree: Language: Python
+---------------
+class <reparse>ClassB</reparse>():
+
+    def __init__(self):
+        print("HW!")
+---------------

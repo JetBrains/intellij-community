@@ -27,11 +27,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
 public class XPathHighlighter extends SyntaxHighlighterBase {
-    private static final Map keys1;
-    private static final Map keys1_2;
-    private static final Map keys2;
+  private static final Map<IElementType, TextAttributesKey> keys1;
+  private static final Map<IElementType, TextAttributesKey> keys1_2;
 
   private final boolean myXPath2Syntax;
 
@@ -40,15 +38,14 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-    public Lexer getHighlightingLexer() {
-        return XPathLexer.create(myXPath2Syntax);
-    }
+  public @NotNull Lexer getHighlightingLexer() {
+    return XPathLexer.create(myXPath2Syntax);
+  }
 
-    static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(
-      "XPATH.KEYWORD",
-      DefaultLanguageHighlighterColors.KEYWORD
-    );
+  static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(
+    "XPATH.KEYWORD",
+    DefaultLanguageHighlighterColors.KEYWORD
+  );
 
   static final TextAttributesKey XPATH_STRING = TextAttributesKey.createTextAttributesKey(
     "XPATH.STRING",
@@ -101,40 +98,39 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
   );
 
   static {
-        keys1 = new HashMap();
-        keys2 = new HashMap();
+    keys1 = new HashMap<>();
 
-        fillMap(keys1, XPathTokenTypes.BINARY_OPERATIONS, XPATH_OPERATION_SIGN);
-        fillMap(keys1, XPathTokenTypes.KEYWORDS, XPATH_KEYWORD);
+    fillMap(keys1, XPathTokenTypes.BINARY_OPERATIONS, XPATH_OPERATION_SIGN);
+    fillMap(keys1, XPathTokenTypes.KEYWORDS, XPATH_KEYWORD);
 
-        fillMap(keys1, XPathTokenTypes.REST, XPATH_TEXT);
+    fillMap(keys1, XPathTokenTypes.REST, XPATH_TEXT);
 
-        keys1.put(XPathTokenTypes.NCNAME, XPATH_NAME);
-        keys1.put(XPathTokenTypes.AT, XPATH_NAME);
+    keys1.put(XPathTokenTypes.NCNAME, XPATH_NAME);
+    keys1.put(XPathTokenTypes.AT, XPATH_NAME);
 
-        keys1.put(XPathTokenTypes.NUMBER, XPATH_NUMBER);
-        keys1.put(XPathTokenTypes.STRING_LITERAL, XPATH_STRING);
-        keys1.put(XPathTokenTypes.FUNCTION_NAME, XPATH_FUNCTION);
-        keys1.put(XPathTokenTypes.EXT_PREFIX, XPATH_PREFIX);
+    keys1.put(XPathTokenTypes.NUMBER, XPATH_NUMBER);
+    keys1.put(XPathTokenTypes.STRING_LITERAL, XPATH_STRING);
+    keys1.put(XPathTokenTypes.FUNCTION_NAME, XPATH_FUNCTION);
+    keys1.put(XPathTokenTypes.EXT_PREFIX, XPATH_PREFIX);
 
-        keys1.put(XPathTokenTypes.DOLLAR, XPATH_VARIABLE);
-        keys1.put(XPathTokenTypes.VARIABLE_NAME, XPATH_VARIABLE);
-        keys1.put(XPathTokenTypes.VARIABLE_PREFIX, XPATH_PREFIX);
+    keys1.put(XPathTokenTypes.DOLLAR, XPATH_VARIABLE);
+    keys1.put(XPathTokenTypes.VARIABLE_NAME, XPATH_VARIABLE);
+    keys1.put(XPathTokenTypes.VARIABLE_PREFIX, XPATH_PREFIX);
 
-        keys1.put(XPathTokenTypes.LPAREN, XPATH_PARENTH);
-        keys1.put(XPathTokenTypes.LBRACKET, XPATH_BRACKET);
-        keys1.put(XPathTokenTypes.RPAREN, XPATH_PARENTH);
-        keys1.put(XPathTokenTypes.RBRACKET, XPATH_BRACKET);
+    keys1.put(XPathTokenTypes.LPAREN, XPATH_PARENTH);
+    keys1.put(XPathTokenTypes.LBRACKET, XPATH_BRACKET);
+    keys1.put(XPathTokenTypes.RPAREN, XPATH_PARENTH);
+    keys1.put(XPathTokenTypes.RBRACKET, XPATH_BRACKET);
 
-        keys1.put(XPathTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
-        keys1.put(XPathTokenTypes.BAD_AXIS_NAME, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+    keys1.put(XPathTokenTypes.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
+    keys1.put(XPathTokenTypes.BAD_AXIS_NAME, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
 
-      keys1_2 = new HashMap(keys1);
-      fillMap(keys1_2, XPath2TokenTypes.KEYWORDS, XPATH_KEYWORD);
-    }
+    keys1_2 = new HashMap<>(keys1);
+    fillMap(keys1_2, XPath2TokenTypes.KEYWORDS, XPATH_KEYWORD);
+  }
 
-    @Override
-    public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-        return pack(((TextAttributesKey)(myXPath2Syntax ? keys1_2 : keys1).get(tokenType)), ((TextAttributesKey)keys2.get(tokenType)));
-    }
+  @Override
+  public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
+    return pack((myXPath2Syntax ? keys1_2 : keys1).get(tokenType));
+  }
 }

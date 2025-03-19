@@ -1,0 +1,13 @@
+LineBreakpoint created at inlineFunctionWithDefaultArguments.kt:8
+Run Java
+Connected to the target VM
+inlineFunctionWithDefaultArguments.kt:8
+Compile bytecode for x + y
+InlineStackFrame f (inlineFunctionWithDefaultArguments.kt:8)
+    JavaValue[local] x: int = 2 (inlineFunctionWithDefaultArguments.kt:4)
+    JavaValue[local] y: int = 3 (inlineFunctionWithDefaultArguments.kt:5)
+InlineStackFrame g (inlineFunctionWithDefaultArguments.kt:3)
+KotlinStackFrame (inlineFunctionWithDefaultArguments.kt:16)
+Disconnected from the target VM
+
+Process finished with exit code 0

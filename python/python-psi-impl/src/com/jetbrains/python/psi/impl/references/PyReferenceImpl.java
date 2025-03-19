@@ -46,16 +46,14 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     myContext = context;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     final ASTNode nameElement = myElement.getNameElement();
     return nameElement != null ? nameElement.getPsi().getTextRangeInParent() : TextRange.from(0, myElement.getTextLength());
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -68,8 +66,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * @see #resolveInner().
    */
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final ResolveResult[] results = multiResolve(false);
     return results.length >= 1 && !(results[0] instanceof ImplicitResolveResult) ? results[0].getElement() : null;
   }
@@ -110,11 +107,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return RatedResolveResult.sorted(targets).toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static ResolveResultList resolveToLatestDefs(@NotNull List<Instruction> instructions,
-                                                       @NotNull PsiElement element,
-                                                       @NotNull String name,
-                                                       @NotNull TypeEvalContext context) {
+  private static @NotNull ResolveResultList resolveToLatestDefs(@NotNull List<Instruction> instructions,
+                                                                @NotNull PsiElement element,
+                                                                @NotNull String name,
+                                                                @NotNull TypeEvalContext context) {
     final ResolveResultList ret = new ResolveResultList();
     for (Instruction instruction : instructions) {
       final PsiElement definition = instruction.getElement();
@@ -163,8 +159,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  @NotNull
-  private static RatedResolveResult changePropertyMethodToSameNameGetter(@NotNull RatedResolveResult resolveResult, @NotNull String name) {
+  private static @NotNull RatedResolveResult changePropertyMethodToSameNameGetter(@NotNull RatedResolveResult resolveResult, @NotNull String name) {
     final PsiElement element = resolveResult.getElement();
     if (element instanceof PyFunction) {
       final Property property = ((PyFunction)element).getProperty();
@@ -198,8 +193,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
    * @return resolution result.
    * @see #resolve()
    */
-  @NotNull
-  protected List<RatedResolveResult> resolveInner() {
+  protected @NotNull List<RatedResolveResult> resolveInner() {
     final ResolveResultList overriddenResult = resolveByOverridingReferenceResolveProviders();
     if (!overriddenResult.isEmpty()) {
       return overriddenResult;
@@ -231,38 +225,38 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   protected final List<RatedResolveResult> getResultsFromProcessor(@NotNull String referencedName,
                                                                    @NotNull PyResolveProcessor processor,
-                                                                   @Nullable PsiElement realContext,
+                                                                   @Nullable PsiElement referenceAnchor,
                                                                    @Nullable PsiElement resolveRoof) {
     boolean unreachableLocalDeclaration = false;
     Supplier<ScopeOwner> resolveInParentScope = null;
     final ResolveResultList resultList = new ResolveResultList();
-    final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(realContext);
+    final ScopeOwner referenceOwner = ScopeUtil.getScopeOwner(referenceAnchor);
     final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
     final ScopeOwner resolvedOwner = processor.getOwner();
 
     final Collection<PsiElement> resolvedElements = processor.getElements();
     if (resolvedOwner != null && !resolvedElements.isEmpty() && !ControlFlowCache.getScope(resolvedOwner).isGlobal(referencedName)) {
-      if (resolvedOwner == referenceOwner) {
-        final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, realContext);
+      if (resolvedOwner == referenceOwner && referenceAnchor != null) {
+        final List<Instruction> instructions = getLatestDefinitions(referencedName, resolvedOwner, referenceAnchor);
         // TODO: Use the results from the processor as a cache for resolving to latest defs
-        final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
+        final ResolveResultList latestDefs = resolveToLatestDefs(instructions, referenceAnchor, referencedName, typeEvalContext);
         if (!latestDefs.isEmpty()) {
           return StreamEx.of(latestDefs)
             .flatMap(r -> {
               if (r.getClass() != RatedResolveResult.class || !(r.getElement() instanceof PyFunction pyFunction)) {
                 return StreamEx.of(r);
               }
-              int adjustedRate = r.getRate() == RatedResolveResult.RATE_PY_FILE_OVERLOAD ?
-                                 RatedResolveResult.RATE_LIFTED_PY_FILE_OVERLOAD : r.getRate();
-              return StreamEx.of(PyiUtil.getOverloads(pyFunction, typeEvalContext))
+              List<PyFunction> overloads = PyiUtil.getOverloads(pyFunction, typeEvalContext);
+              if (overloads.isEmpty()) {
+                return StreamEx.of(r);
+              }
+              return StreamEx.of(overloads)
                 .map(overload -> new RatedResolveResult(getRate(overload, typeEvalContext), overload))
-                .prepend(StreamEx.ofNullable(
-                  PyiUtil.isInsideStub(myElement) ? null : new RatedResolveResult(adjustedRate, pyFunction)
-                ));
+                .prepend(StreamEx.ofNullable(PyiUtil.isOverload(pyFunction, typeEvalContext) ? null : r));
             })
             .toImmutableList();
         }
-        else if (resolvedOwner instanceof PyClass) {
+        else if (resolvedOwner instanceof PyClass && !(referenceAnchor instanceof PyTargetExpression)) {
           resolveInParentScope = () -> PyResolveUtil.parentScopeForUnresolvedClassLevelName((PyClass)resolvedOwner, referencedName);
         }
         else if (instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
@@ -278,7 +272,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
           if (outermostNestedClass != null) {
             final List<Instruction> instructions =
-              PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, outermostNestedClass, false, true);
+              PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, outermostNestedClass, false, true, typeEvalContext);
 
             return resolveToLatestDefs(instructions, outermostNestedClass, referencedName, typeEvalContext);
           }
@@ -306,7 +300,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement resolved = entry.getKey();
         final PyImportedNameDefiner definer = entry.getValue();
         if (resolved != null) {
-          if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(realContext, resolved)) {
+          if (typeEvalContext.maySwitchToAST(resolved) && isInnerComprehension(referenceAnchor, resolved)) {
             continue;
           }
           if (definer == null) {
@@ -330,11 +324,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolveByReferenceResolveProviders();
   }
 
-  @NotNull
-  protected List<Instruction> getLatestDefinitions(@NotNull String referencedName,
-                                                   @Nullable ScopeOwner resolvedOwner,
-                                                   @Nullable PsiElement realContext) {
-    return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, realContext, false, true);
+  protected @NotNull List<Instruction> getLatestDefinitions(@NotNull String referencedName,
+                                                            @NotNull ScopeOwner resolvedOwner,
+                                                            @NotNull PsiElement referenceAnchor) {
+    return PyDefUseUtil.getLatestDefs(resolvedOwner, referencedName, referenceAnchor, false, true, myContext.getTypeEvalContext());
   }
 
   private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
@@ -346,8 +339,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
                                 provider -> provider.allowsForwardOutgoingReferencesInClass(element));
   }
 
-  @Nullable
-  private static PyClass outermostNestedClass(@NotNull ScopeOwner referenceOwner, @NotNull ScopeOwner resolvedOwner) {
+  private static @Nullable PyClass outermostNestedClass(@NotNull ScopeOwner referenceOwner, @NotNull ScopeOwner resolvedOwner) {
     PyClass current  = PyUtil.as(referenceOwner, PyClass.class);
     ScopeOwner outer = ScopeUtil.getScopeOwner(current);
 
@@ -360,8 +352,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return current;
   }
 
-  @NotNull
-  private ResolveResultList resolveByOverridingReferenceResolveProviders() {
+  private @NotNull ResolveResultList resolveByOverridingReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
     final TypeEvalContext context = myContext.getTypeEvalContext();
 
@@ -373,8 +364,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return results;
   }
 
-  @NotNull
-  private ResolveResultList resolveByReferenceResolveProviders() {
+  private @NotNull ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
     final TypeEvalContext context = myContext.getTypeEvalContext();
     for (PyReferenceResolveProvider provider : PyReferenceResolveProvider.EP_NAME.getExtensionList()) {
@@ -444,8 +434,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return getRangeInElement().substring(getElement().getText());
   }
 
@@ -468,8 +457,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  @Nullable
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+  public @Nullable PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
@@ -569,8 +557,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return false;
   }
 
-  @Nullable
-  private static PsiElement findContainer(@NotNull PsiElement element) {
+  private static @Nullable PsiElement findContainer(@NotNull PsiElement element) {
     final PyElement parent = PsiTreeUtil.getParentOfType(element, ScopeOwner.class, PyComprehensionElement.class);
     if (parent instanceof PyListCompExpression && LanguageLevel.forElement(element).isPython2()) {
       return findContainer(parent);
@@ -655,8 +642,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = new ArrayList<>();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PyQualifiedExpression originalElement = CompletionUtilCoreImpl.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+    final PyQualifiedExpression element = CompletionUtilCoreImpl.getOriginalOrSelf(myElement);
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
     final LanguageLevel languageLevel = LanguageLevel.forElement(myElement);
@@ -666,18 +652,17 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           return false;
         }
 
-        final String name = e instanceof PyElement ? ((PyElement)e).getName() : null;
+        final String name = e instanceof PyElement pyElement ? pyElement.getName() : null;
         if (PyUtil.getInitialUnderscores(name) == 1) {
           return false;
         }
 
-        if (languageLevel.isPython2() && PyNames.PRINT.equals(name)) {
-          final PyFile file = PyUtil.as(myElement.getContainingFile(), PyFile.class);
-          if (file != null && !file.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
-            return false;
-          }
+        if (languageLevel.isPython2() && PyNames.PRINT.equals(name) &&
+            myElement.getContainingFile() instanceof PyFile pyFile && !pyFile.hasImportFromFuture(FutureFeature.PRINT_FUNCTION)) {
+          return false;
         }
-      } else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
+      }
+      else if (ScopeUtil.getScopeOwner(e) == ScopeUtil.getScopeOwner(element)) {
         return PyDefUseUtil.isDefinedBefore(e, element);
       }
       return true;
@@ -759,8 +744,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   @Override
-  @Nullable
-  public String getUnresolvedDescription() {
+  public @Nullable String getUnresolvedDescription() {
     return null;
   }
 
@@ -771,7 +755,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     public static final CachingResolver INSTANCE = new CachingResolver();
 
     @Override
-    public ResolveResult @NotNull [] resolve(@NotNull final PyReferenceImpl ref, final boolean incompleteCode) {
+    public ResolveResult @NotNull [] resolve(final @NotNull PyReferenceImpl ref, final boolean incompleteCode) {
       return ref.multiResolveInner();
     }
   }

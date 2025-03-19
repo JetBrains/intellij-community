@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -57,7 +57,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod method)) return;
     String message = null;
     if (!method.getManager().isInProject(method)) {
@@ -122,8 +122,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);
   }
 
-  @Nullable
-  private static @NlsContexts.DialogMessage String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
+  private static @Nullable @NlsContexts.DialogMessage String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
     final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());

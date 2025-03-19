@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -35,30 +34,44 @@ final class ValueContainerMap<Key, Value> {
                     boolean isReadonly,
                     boolean compactOnClose) throws IOException {
     myPersistentMap = new PersistentMapImpl<>(PersistentMapBuilder
-            .newBuilder(file, keyDescriptor, new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
-            .withReadonly(isReadonly)
-            .withCompactOnClose(compactOnClose));
+                                                .newBuilder(file, keyDescriptor,
+                                                            new ValueContainerExternalizer<>(valueExternalizer, inputRemapping))
+                                                .withReadonly(isReadonly)
+                                                .withCompactOnClose(compactOnClose));
     myValueExternalizer = valueExternalizer;
     myKeyDescriptor = keyDescriptor;
     myKeyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
   }
 
-  void merge(Key key, UpdatableValueContainer<Value> valueContainer) throws IOException {
-    // try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files
-    // note that keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for particular
-    // file) and there is no benefit to accumulate values for particular key because only one value exists
+  void merge(Key key,
+             ChangeTrackingValueContainer<Value> valueContainer) throws IOException {
+    // Try to accumulate index value calculated for particular key to avoid fragmentation: usually keys are scattered across many files.
+    // Note: keys unique for indexed file have their value calculated at once (e.g. key is file id, index calculates something for
+    // particular file) and there is no benefit to accumulate values for particular key because only one value exists.
     if (!valueContainer.needsCompacting() && !myKeyIsUniqueForIndexedFile) {
       myPersistentMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
-        public void append(@NotNull final DataOutput out) throws IOException {
-          valueContainer.saveTo(out, myValueExternalizer);
+        public void append(final @NotNull DataOutput out) throws IOException {
+          valueContainer.saveDiffTo(out, myValueExternalizer);
         }
       });
     }
-    else {
-      // rewrite the value container for defragmentation
-      myPersistentMap.put(key, valueContainer);
+    else {//needsCompacting || keyIsUniqueForIndexedFile
+      //FIXME RC: here WAS a hack -- this branch processed a case (keyIsUniqueForIndexedFile=true && !needsCompacting)
+      //          i.e. with diff and without mergedSnapshot. In this case the diff WAS written, but diff == snapshot
+      //          because keyIsUnique.
+      //          Currently CTValueContainer.saveTo() always store a merged snapshot -- which in this case creates a useless
+      //          overhead, because it involves _reading_ the current content first -- just for it to be entirely overwritten
+      //          by the new value.
+
+      //rewrite the value container for defragmentation
+      put(key, valueContainer);
     }
+  }
+
+  void put(Key key,
+           UpdatableValueContainer<Value> valueContainer) throws IOException {
+    myPersistentMap.put(key, valueContainer);
   }
 
   void remove(Key key) throws IOException {
@@ -76,11 +89,11 @@ final class ValueContainerMap<Key, Value> {
   @NotNull
   ChangeTrackingValueContainer<Value> getModifiableValueContainer(final Key key) {
     return new ChangeTrackingValueContainer<>(() -> {
-      ValueContainer<Value> value;
+      UpdatableValueContainer<Value> value;
       try {
         value = myPersistentMap.get(key);
         if (value == null) {
-          value = new ValueContainerImpl<>();
+          value = ValueContainerImpl.createNewValueContainer();
         }
       }
       catch (IOException e) {

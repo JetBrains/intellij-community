@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,8 +28,7 @@ final class GuavaPredicatesUtil {
   public static final Set<String> PREDICATES_METHOD_NAMES =
     ContainerUtil.newHashSet("alwaysTrue", "alwaysFalse", "isNull", "notNull", "equalTo", "not", "or", "and");
 
-  @Nullable
-  static TypeConversionDescriptorBase tryConvertIfPredicates(PsiMethod method, PsiExpression context) {
+  static @Nullable TypeConversionDescriptorBase tryConvertIfPredicates(PsiMethod method, PsiExpression context) {
     final String name = method.getName();
     switch (name) {
       case "alwaysTrue", "alwaysFalse" -> {
@@ -56,8 +55,7 @@ final class GuavaPredicatesUtil {
     return null;
   }
 
-  @NotNull
-  private static TypeConversionDescriptorWithLocalVariable createConstantPredicate(String methodName, boolean value) {
+  private static @NotNull TypeConversionDescriptorWithLocalVariable createConstantPredicate(String methodName, boolean value) {
     return new TypeConversionDescriptorWithLocalVariable(methodName, "$x$ -> " + value);
   }
 

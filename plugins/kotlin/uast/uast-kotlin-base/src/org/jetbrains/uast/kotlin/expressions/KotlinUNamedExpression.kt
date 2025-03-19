@@ -12,10 +12,13 @@ class KotlinUNamedExpression private constructor(
     override val name: String?,
     override val sourcePsi: PsiElement?,
     givenParent: UElement?,
-    expressionProducer: (UElement) -> UExpression
+    private val expressionProducer: (UElement) -> UExpression
 ) : KotlinAbstractUElement(givenParent), UNamedExpression {
 
-    override val expression: UExpression by lz { expressionProducer(this) }
+    private val expressionPart = UastLazyPart<UExpression>()
+
+    override val expression: UExpression
+        get() = expressionPart.getOrBuild { expressionProducer(this) }
 
     override val uAnnotations: List<UAnnotation> = emptyList()
 
@@ -31,7 +34,8 @@ class KotlinUNamedExpression private constructor(
         ): UNamedExpression {
             val expression = valueArgument.getArgumentExpression()
             return KotlinUNamedExpression(name, valueArgument.asElement(), uastParent) { expressionParent ->
-                expression?.let { expressionParent.getLanguagePlugin().convertOpt(it, expressionParent) }
+                val languagePlugin = UastFacade.findPlugin(expressionParent.lang)
+                expression?.let { languagePlugin?.convertOpt(it, expressionParent) }
                     ?: UastEmptyExpression(expressionParent)
             }
         }

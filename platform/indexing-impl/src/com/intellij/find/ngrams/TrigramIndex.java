@@ -1,71 +1,89 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
 import com.intellij.openapi.util.text.TrigramBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.KeyDescriptor;
-import org.jetbrains.annotations.ApiStatus;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntCollection;
+import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+
+import static com.intellij.util.SystemProperties.getIntProperty;
+import static com.intellij.util.indexing.storage.sharding.ShardableIndexExtension.determineShardsCount;
 
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Trigram">trigram index</a> for fast text search.
- *
+ * <p>
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
-public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
+public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer>,
+                                                                                 ShardableIndexExtension {
+  public static final ID<Integer, Void> INDEX_ID = ID.create("Trigram.Index");
 
-  @ApiStatus.Internal
+  @Internal
+  public static final int SHARDS = determineShardsCount(getIntProperty("idea.indexes.trigram-index-shards", 0));
+
+  @Internal
+  public TrigramIndex() {
+  }
+
+  @Internal
   public static boolean isEnabled() {
     return TrigramTextSearchService.useIndexingSearchExtensions();
   }
 
-  @ApiStatus.Internal
-  public static boolean isIndexable(FileType fileType) {
-    return !fileType.isBinary() &&
-           isEnabled() &&
-           (!FileBasedIndex.IGNORE_PLAIN_TEXT_FILES || fileType != PlainTextFileType.INSTANCE);
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
-  @NotNull
+  @Internal
+  public static boolean isIndexable(@NotNull VirtualFile file, @NotNull Project project) {
+    IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+    TrigramIndexFilter trigramIndexFilter = ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
+    return trigramIndexFilter.acceptInput(indexedFile);
+  }
+
   @Override
-  public ID<Integer, Void> getName() {
+  public @NotNull ID<Integer, Void> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Integer, Void, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Integer, Void, FileContent> getIndexer() {
     return new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<Integer, Void> map(@NotNull FileContent inputData) {
+      public @NotNull Map<Integer, Void> map(@NotNull FileContent inputData) {
         return TrigramBuilder.getTrigramsAsMap(inputData.getContentAsText());
       }
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Integer> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Integer> getKeyDescriptor() {
     return EnumeratorIntegerDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> isIndexable(file.getFileType());
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return ApplicationManager.getApplication().getService(TrigramIndexFilter.class);
   }
 
   @Override
@@ -75,12 +93,13 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4 + (SHARDS - 1);
   }
 
   @Override
-  public boolean hasSnapshotMapping() {
-    return true;
+  @Internal
+  public int shardsCount() {
+    return SHARDS;
   }
 
   @Override
@@ -90,34 +109,39 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
 
   private static final ThreadLocalCachedIntArray SPARE_BUFFER_LOCAL = new ThreadLocalCachedIntArray();
 
-  @NotNull
   @Override
-  public DataExternalizer<Collection<Integer>> createExternalizer() {
+  @Internal
+  public @NotNull DataExternalizer<Collection<Integer>> createExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, @NotNull Collection<Integer> value) throws IOException {
-        final int numberOfValues = value.size();
+        int numberOfValues = value.size();
 
         int[] buffer = SPARE_BUFFER_LOCAL.getBuffer(numberOfValues);
         int ptr = 0;
-        for (Integer i : value) {
-          buffer[ptr++] = i;
+        if (value instanceof IntCollection intCollection) {
+          buffer = intCollection.toArray(buffer);
+        }
+        else {
+          for (Integer i : value) {
+            buffer[ptr++] = i;
+          }
         }
         Arrays.sort(buffer, 0, numberOfValues);
 
         DataInputOutputUtil.writeINT(out, numberOfValues);
         int prev = 0;
         for (ptr = 0; ptr < numberOfValues; ++ptr) {
-          DataInputOutputUtil.writeLONG(out, (long)buffer[ptr] - prev);
-          prev = buffer[ptr];
+          int cur = buffer[ptr];
+          DataInputOutputUtil.writeLONG(out, (long)cur - prev);
+          prev = cur;
         }
       }
 
-      @NotNull
       @Override
-      public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+      public @NotNull Collection<Integer> read(@NotNull DataInput in) throws IOException {
         int size = DataInputOutputUtil.readINT(in);
-        List<Integer> result = new ArrayList<>(size);
+        IntList result = new IntArrayList(size);
         int prev = 0;
         while (size-- > 0) {
           int l = (int)(DataInputOutputUtil.readLONG(in) + prev);

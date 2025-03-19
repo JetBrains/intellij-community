@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("WslExecution")
+@file:ApiStatus.Internal
 
 package com.intellij.execution.wsl
 
@@ -15,7 +16,12 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
+
+private const val prefixText = "intellij: executing command..."
+// It could be \n or \r\n depending on terminal, see `stty(1)` for `onlcr`
+private val PATTERN = Regex("$prefixText\r?\n")
 
 @JvmOverloads
 @Throws(ExecutionException::class)
@@ -29,7 +35,6 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   // When command is executed in interactive/login shell, the result stdout may contain additional output
   // produced by shell configuration files, for example, "Message Of The Day".
   // Let's print some unique message before executing the command to know where command output begins in the result output.
-  val prefixText = "intellij: executing command..."
   options.addInitCommand("echo " + CommandLineUtil.posixQuote(prefixText))
   if (options.isExecuteCommandInInteractiveShell) {
     // Disable oh-my-zsh auto update on shell initialization
@@ -38,9 +43,8 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
   }
   val output: ProcessOutput = executeOnWsl(commandLine, options, timeout, processHandlerCustomizer)
   val stdout = output.stdout
-  val markerText = prefixText + LineSeparator.LF.separatorString
-  val index = stdout.indexOf(markerText)
-  if (index < 0) {
+  val match = PATTERN.find(stdout)
+  if (match == null) {
     val application = ApplicationManager.getApplication()
     if (application == null || application.isInternal || application.isUnitTestMode) {
       LOG.error("Cannot find '$prefixText' in stdout: $output, command: ${commandLine.commandLineString}")
@@ -55,7 +59,7 @@ fun WSLDistribution.executeInShellAndGetCommandOnlyStdout(commandLine: GeneralCo
     }
     return output
   }
-  return ProcessOutput(stdout.substring(index + markerText.length),
+  return ProcessOutput(stdout.substring(match.range.last + 1),
                        output.stderr,
                        output.exitCode,
                        output.isTimeout,

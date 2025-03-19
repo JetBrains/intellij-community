@@ -43,7 +43,7 @@ enum class SqliteErrorCode(@JvmField val code: Int, @JvmField val message: Strin
   SQLITE_LOCKED(6, "A table in the database is locked"),
   SQLITE_NOMEM(7, "A malloc() failed"),
   SQLITE_READONLY(8, "Attempt to write a readonly database"),
-  SQLITE_INTERRUPT(9, "Operation terminated by sqlite3_interrupt()"),
+  SQLITE_INTERRUPT(SqliteCodes.SQLITE_INTERRUPT, "Operation terminated by sqlite3_interrupt()"),
   SQLITE_IOERR(10, "Some kind of disk I/O error occurred"),
   SQLITE_CORRUPT(11, "The database disk image is malformed"),
   SQLITE_NOTFOUND(12, "NOT USED. Table or record not found"),

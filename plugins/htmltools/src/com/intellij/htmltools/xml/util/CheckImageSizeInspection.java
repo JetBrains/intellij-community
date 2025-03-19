@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Maxim Mossienko
  */
-public class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
+public final class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(CheckImageSizeInspection.class);
 
   @Override
@@ -50,8 +50,7 @@ public class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return myFamilyName;
     }
 
@@ -71,8 +70,7 @@ public class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         XmlTag parent = attribute.getParent();
@@ -121,9 +119,7 @@ public class CheckImageSizeInspection extends XmlSuppressableInspectionTool {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "CheckImageSize";
   }
 }

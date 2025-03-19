@@ -1,26 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac
 
-import com.intellij.openapi.Disposable
+import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomisedActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.headertoolbar.blockingComputeMainActionGroups
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.MacUtil
+import kotlinx.coroutines.CoroutineScope
 import javax.swing.JFrame
 
 /**
  * @author Alexander Lobas
  */
-object MacFullScreenControlsManager {
-  fun enabled() = Registry.`is`("apple.awt.newFullScreeControls", true)
+internal object MacFullScreenControlsManager {
+  fun enabled(): Boolean = ExperimentalUI.isNewUI() && Registry.`is`("apple.awt.newFullScreenControls", true)
 
-  fun configureEnable(parentDisposable: Disposable, block: () -> Unit) {
-    val rKey = Registry.get("apple.awt.newFullScreeControls")
+  fun configureEnable(coroutineScope: CoroutineScope, block: () -> Unit) {
+    val rKey = Registry.get("apple.awt.newFullScreenControls")
     System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
     rKey.addListener(
       object : RegistryValueListener {
@@ -28,16 +36,21 @@ object MacFullScreenControlsManager {
           System.setProperty(rKey.key, java.lang.Boolean.toString(rKey.asBoolean()))
           block()
         }
-      }, parentDisposable)
+      }, coroutineScope)
 
     if (enabled()) {
       configureColors()
+    }
+
+    if (DistractionFreeModeController.isDistractionFreeModeEnabled() || !UISettings.getInstance().showNewMainToolbar) {
+      updateForDistractionFreeMode(true)
     }
   }
 
   private fun configureColors() {
     val color = JBColor.namedColor("MainWindow.FullScreeControl.Background", JBColor(0x7A7B80, 0x575A5C))
     System.setProperty("apple.awt.newFullScreeControls.background", "${color.rgb}")
+    System.setProperty("apple.awt.newFullScreenControls.background", "${color.rgb}")
   }
 
   fun updateColors(frame: JFrame) {
@@ -76,25 +89,80 @@ object MacFullScreenControlsManager {
     }
   }
 
+  fun configureForLightEdit(enterFullScreen: Boolean) {
+    if (enabled()) {
+      configureForDistractionFreeMode(enterFullScreen)
+    }
+  }
+
+  fun configureForEmptyToolbarHeader(enter: Boolean) {
+    if (enter) {
+      if (enabled() && blockingComputeMainActionGroups(CustomActionsSchema.getInstance()).all { isEmptyGroup(it.first) }) {
+        configureForDistractionFreeMode(true)
+      }
+    }
+    else if (!DistractionFreeModeController.isDistractionFreeModeEnabled() && UISettings.getInstance().showNewMainToolbar) {
+      configureForDistractionFreeMode(false)
+    }
+  }
+
+  private fun isEmptyGroup(group: ActionGroup): Boolean {
+    if (group is DefaultActionGroup) {
+      return group.childActionsOrStubs.isEmpty()
+    }
+    if (group is CustomisedActionGroup) {
+      return group.getDefaultChildrenOrStubs().isEmpty()
+    }
+    return group.getChildren(null).isEmpty()
+  }
+
+  private fun configureForDistractionFreeMode(enter: Boolean) {
+    if (enter) {
+      System.setProperty("apple.awt.distraction.free.mode", "true")
+    }
+    else {
+      System.clearProperty("apple.awt.distraction.free.mode")
+    }
+  }
+
+  fun updateForNewMainToolbar(show: Boolean) {
+    if (enabled()) {
+      if (show) {
+        if (!DistractionFreeModeController.isDistractionFreeModeEnabled()) {
+          configureForDistractionFreeMode(false)
+          updateFullScreenButtons(false)
+        }
+      }
+      else {
+        configureForDistractionFreeMode(true)
+        updateFullScreenButtons(true)
+      }
+    }
+  }
+
   fun updateForDistractionFreeMode(enter: Boolean) {
     if (enabled()) {
       if (enter) {
-        System.setProperty("apple.awt.distraction.free.mode", "true")
+        configureForDistractionFreeMode(true)
+        updateFullScreenButtons(true)
       }
-      else {
-        System.clearProperty("apple.awt.distraction.free.mode")
+      else if (UISettings.getInstance().showNewMainToolbar) {
+        configureForDistractionFreeMode(false)
+        updateFullScreenButtons(false)
       }
+    }
+  }
 
-      ApplicationManager.getApplication().invokeLater {
-        val frames = getAllFrameWindows()
-        Foundation.executeOnMainThread(true, false) {
-          val selector = Foundation.createSelector("updateFullScreenButtons:")
-          for (frameOrTab in frames) {
-            val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
-            val delegate = Foundation.invoke(window, "delegate")
-            if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
-              Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
-            }
+  private fun updateFullScreenButtons(enter: Boolean) {
+    ApplicationManager.getApplication().invokeLater {
+      val frames = getAllFrameWindows()
+      Foundation.executeOnMainThread(true, false) {
+        val selector = Foundation.createSelector("updateFullScreenButtons:")
+        for (frameOrTab in frames) {
+          val window = MacUtil.getWindowFromJavaWindow((frameOrTab as ProjectFrameHelper).frame)
+          val delegate = Foundation.invoke(window, "delegate")
+          if (Foundation.invoke(delegate, "respondsToSelector:", selector).booleanValue()) {
+            Foundation.invoke(delegate, "updateFullScreenButtons:", if (enter) 1 else 0)
           }
         }
       }

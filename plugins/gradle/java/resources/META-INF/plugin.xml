@@ -36,18 +36,25 @@
     <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
     </extensionPoint>
+    <extensionPoint name="initScriptGenerator" interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+
+    <taskManager implementation="org.jetbrains.plugins.gradle.service.task.JavaGradleTaskManagerExtension"/>
+
+    <syncContributor implementation="org.jetbrains.plugins.gradle.service.syncContributor.GradleSourceRootSyncContributor"/>
+
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.MavenRepositoriesProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleManifestResolver"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
 
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
     <targetEnvironmentAware implementation="org.jetbrains.plugins.gradle.execution.target.GradleServerDebugAware" />
-    <taskResultListener implementation="org.jetbrains.plugins.gradle.service.GradleProjectOutputsUpdater"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -67,11 +74,9 @@
 
     <compiler.updateResourcesBuildContributor
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.plugins.gradle.config.GradleResourceConfigurationGeneratorCompileTask"/>
 
-    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
-    <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.InternalGradleModuleBuilder"/>
+    <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.action.GradleAttachSourcesProvider"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.JavaGradleProjectImportProvider"/>
 
     <defender.config implementation="org.jetbrains.plugins.gradle.util.GradleWindowsDefenderCheckerExt"/>
@@ -92,13 +97,21 @@
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
                               order="last"/>
 
+    <externalSystemCoordinateContributor implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleCoordinateContributor"/>
+
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.ExternalAnnotationsModuleLibrariesService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.MavenRepositoriesDataService"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.AnnotationProcessingDataService"/>
 
+    <documentation.documentationDownloader
+      implementation="org.jetbrains.plugins.gradle.codeInsight.documentation.GradleDocumentationDownloader"/>
+
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleVersionValidationRule"/>
+
+    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.GradleProjectOutputsUpdater"/>
     <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizard"/>
@@ -138,4 +151,9 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleDeprecatedConfigurationInspection"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.plugins.gradle.service.editor.GradleDownloadSourceEditorListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
 </idea-plugin>

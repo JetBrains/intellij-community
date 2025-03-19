@@ -5,9 +5,16 @@
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.fe10.core.Fe10KotlinDebuggerLegacyFacade"/>
 
-    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionProvider"/>
-    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.CodeFragmentContextTuner"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.K1CodeFragmentContextTuner"/>
+
     <debugger.frameExtraVarsProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinFrameExtraVariablesProvider"/>
+    <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinK1CodeFragmentFactory"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentCompiler"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.evaluate.K1KotlinCodeFragmentCompiler"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -17,7 +24,6 @@
   <!-- Evaluation -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <debugger.codeFragmentFactory implementation="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory"/>
 
     <debugger.dfaAssistProvider
             language="kotlin"
@@ -30,7 +36,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <syntheticScopeProviderExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldSyntheticScopeProvider"/>
-    <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldExpressionCodegenExtension"/>
     <completionInformationProvider implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldCompletionInformationProvider" />
     <kotlinIndicesHelperExtension implementation="org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldKotlinIndicesHelperExtension"/>
   </extensions>

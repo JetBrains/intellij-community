@@ -6,53 +6,36 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.TextAccessor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.Component
-import javax.swing.SwingUtilities
 
 /**
  * Creates "browse" dialog for WSL.
- * @param linuxPathField field with wsl path
+ *
+ * [linuxPathField] field with wsl path
+ *
+ * User can choose either ``\\wsl$`` path for [distro] or Windows path (only if [accessWindowsFs] set).
+ * [customFileDescriptor] adds additional filters, and accomplished with roots (according to [accessWindowsFs])
  */
-class WslPathBrowser(private val linuxPathField: TextAccessor) {
-
-  /**
-   * User can choose either ``\\wsl$`` path for [distro] or Windows path (only if [accessWindowsFs] set).
-   * [customFileDescriptor] adds additional filters, and accomplished with roots (according to [accessWindowsFs])
-   */
-  fun browsePath(distro: WSLDistribution,
-                 parent: Component,
-                 accessWindowsFs: Boolean = true,
-                 customFileDescriptor: FileChooserDescriptor? = null) {
-    val windowsPath = ProgressManager.getInstance().runUnderProgress(IdeBundle.message("wsl.opening_wsl")) {
-      getBestWindowsPathFromLinuxPath(distro, linuxPathField.text)
-    }
-    if (windowsPath == null) {
-      JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
-    }
-
-    val roots = getRootsForFileDescriptor(distro, accessWindowsFs)
-    val descriptor = (customFileDescriptor ?: FileChooserDescriptorFactory.createAllButJarContentsDescriptor()).apply {
-      withRoots(roots)
-    }
-    val dialog = FileChooserDialogImpl(descriptor, parent)
-    val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
-    val linuxPath = files.firstOrNull()?.let { distro.getWslPath(it.path) } ?: return
-    linuxPathField.text = linuxPath
+@RequiresEdt
+fun browseWslPath(linuxPathField: TextAccessor,
+                  distro: WSLDistribution,
+                  parent: Component,
+                  accessWindowsFs: Boolean = true,
+                  customFileDescriptor: FileChooserDescriptor? = null) {
+  val windowsPath = getBestWindowsPathFromLinuxPath(distro, linuxPathField.text)
+  if (windowsPath == null) {
+    JBPopupFactory.getInstance().createMessage(IdeBundle.message("wsl.no_path")).show(parent)
   }
+
+  val roots = getRootsForFileDescriptor(distro, accessWindowsFs)
+  val descriptor = (customFileDescriptor ?: FileChooserDescriptorFactory.createAllButJarContentsDescriptor()).apply {
+    withRoots(roots)
+  }
+  val dialog = FileChooserDialogImpl(descriptor, parent)
+  val files = if (windowsPath != null) dialog.choose(null, windowsPath) else dialog.choose(null)
+  val linuxPath = files.firstOrNull()?.let { distro.getWslPath(it.toNioPath()) } ?: return
+  linuxPathField.text = linuxPath
 }
-
-private fun <T> ProgressManager.runUnderProgress(@NlsContexts.DialogTitle title: String, code: () -> T): T =
-  if (SwingUtilities.isEventDispatchThread()) {
-    run(object : Task.WithResult<T, Exception>(null, title, false) {
-      override fun compute(indicator: ProgressIndicator) = code()
-    })
-  }
-  else {
-    code()
-  }

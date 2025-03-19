@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DottedBorder;
@@ -68,7 +69,7 @@ public abstract class JBListTable {
   private static void installPaddingAndBordersForEditors(JBTableRowEditor editor) {
     final List<EditorTextField> editors = UIUtil.findComponentsOfType(editor, EditorTextField.class);
     for (EditorTextField textField : editors) {
-      textField.putClientProperty("JComboBox.isTableCellEditor", Boolean.FALSE);
+      textField.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.FALSE);
       textField.putClientProperty("JBListTable.isTableCellEditor", Boolean.TRUE);
     }
   }
@@ -129,7 +130,7 @@ public abstract class JBListTable {
     return panel;
   }
 
-  private class MyCellEditor extends AbstractTableCellEditor {
+  private final class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
     MyCellEditor(JBTableRowEditor editor) {
@@ -305,7 +306,7 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTable extends JBTable {
+  private final class MyTable extends JBTable {
 
     MyTable() {
       super(new MyTableModel(myInternalTable.getModel()));
@@ -487,7 +488,7 @@ public abstract class JBListTable {
     }
   }
 
-  private class MyTableModel extends JBListTableModel {
+  private final class MyTableModel extends JBListTableModel {
 
     MyTableModel(TableModel model) {
       super(model);

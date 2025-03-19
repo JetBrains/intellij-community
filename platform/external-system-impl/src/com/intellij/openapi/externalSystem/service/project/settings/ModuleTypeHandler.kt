@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.service.project.settings
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ModuleTypeHandler: ConfigurationHandler {
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {

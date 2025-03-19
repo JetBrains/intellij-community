@@ -25,7 +25,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
     return QualifiedName.fromComponents(qualifiedName)
   }
 
-  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<out CustomTargetExpressionStub>> {
+  override fun getTypeClass(): Class<PyTypingNewTypeStubType> {
     return PyTypingNewTypeStubType::class.java
   }
 
@@ -34,7 +34,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
   override fun getClassType(): String = baseClassName
 
   override fun toString(): String {
-    return "PyTypingNewTypeStub(qualifiedName=$qualifiedName, baseClass=$baseClassName)"
+    return "PyTypingNewTypeStub(qualifiedName='$qualifiedName', baseClass='$baseClassName')"
   }
 
   companion object {
@@ -47,7 +47,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
       if (isTypingNewType(expression)) {
         val newTypeName = PyResolveUtil.resolveStrArgument(expression, 0, "name")
         if (newTypeName != null) {
-          val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, PyExpression::class.java))
+          val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, "tp", PyExpression::class.java))
           if (secondArgument != null) {
             return PyTypingNewTypeStubImpl(newTypeName, secondArgument.text)
           }

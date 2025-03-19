@@ -5,24 +5,30 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Util.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.idea.statistics.NewAndDeprecatedFeaturesInspectionData
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.RANGE_UNTIL
-import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.UNTIL
+import org.jetbrains.kotlin.idea.util.WasExperimentalOptInsNecessityCheckerFe10
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.nj2k.EXPERIMENTAL_STDLIB_API_ANNOTATION
-import org.jetbrains.kotlin.nj2k.areKotlinVersionsSufficientToUseRangeUntil
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -76,7 +82,7 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection(
         }
     }
 
-    companion object {
+    object Util {
         @ApiStatus.Internal
         fun KtElement.isPossibleToUseRangeUntil(context: Lazy<BindingContext>?): Boolean {
             val annotationFqName = FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION)
@@ -87,21 +93,44 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection(
                                 isOptInAllowed(annotationFqName, languageVersionSettings, it.value)
                     } == true
         }
-
-        private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
-            val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context)
-                ?: return false
-            return rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)
-        }
-
-        private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
-            val descriptor = getResolvedCall(context)?.resultingDescriptor
-            val receiverType = descriptor?.receiverType() ?: return null
-
-            // Opt-in will be removed simultaneously on all rangeUntil, so no need to search for matching overload.
-            return receiverType.memberScope
-                .getContributedFunctions(Name.identifier("rangeUntil"), NoLookupLocation.FROM_IDE)
-                .firstOrNull { it.isOperator }
-        }
     }
 }
+
+private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
+    val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context) ?: return false
+    if (rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)) {
+        return true
+    }
+    val necessaryOptIns = WasExperimentalOptInsNecessityCheckerFe10.getNecessaryOptInsFromWasExperimental(
+        rangeUntilFunctionDescriptor.annotations, findModuleDescriptor(), languageVersionSettings.apiVersion
+    )
+    return annotationFqName in necessaryOptIns
+}
+
+private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
+    val descriptor = getResolvedCall(context)?.resultingDescriptor
+    val receiverType = descriptor?.receiverType() ?: return null
+
+    // Opt-in will be removed simultaneously on all rangeUntil, so no need to search for matching overload.
+    return receiverType.memberScope
+        .getContributedFunctions(Name.identifier("rangeUntil"), NoLookupLocation.FROM_IDE)
+        .firstOrNull { it.isOperator }
+}
+
+private const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
+
+/**
+ * Checks that compilerVersion and languageVersion (or -XXLanguage:+RangeUntilOperator) versions are high enough to use rangeUntil
+ * operator.
+ *
+ * Note that this check is not enough. You also need to check for OptIn (because stdlib declarations are annotated with OptIn)
+ */
+private fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: Module, project: Project): Boolean {
+    val compilerVersion = ExternalCompilerVersionProvider.get(module)
+        ?: IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
+        ?: return false
+    // `rangeUntil` is added to languageVersion 1.8 only since 1.7.20-Beta compiler
+    return compilerVersion >= COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT && supportsFeature(LanguageFeature.RangeUntilOperator)
+}
+
+private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.application.ReadAction;
@@ -24,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyElement;
 
-public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
+public final class JavaFxMethodSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super PsiReference> consumer) {
+  public boolean execute(final @NotNull ReferencesSearch.SearchParameters queryParameters,
+                         final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiMethod) {
       searchMethod((PsiMethod)elementToSearch, queryParameters, consumer);

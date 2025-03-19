@@ -1,0 +1,10 @@
+// WITH_STDLIB
+fun main() {
+    run label@{
+        when {
+     <caret>       true ->
+                return@label 42
+            else -> return@label 42
+        }
+    }
+}

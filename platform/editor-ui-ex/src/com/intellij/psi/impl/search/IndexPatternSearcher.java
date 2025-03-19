@@ -29,6 +29,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -36,6 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+@Internal
 public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   private static final String WHITESPACE = " \t";
 
@@ -62,20 +64,26 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
     }
   }
 
-  protected static void executeImpl(IndexPatternSearch.SearchParameters queryParameters, Processor<? super IndexPatternOccurrence> consumer) {
+  protected static void executeImpl(IndexPatternSearch.SearchParameters queryParameters,
+                                    Processor<? super IndexPatternOccurrence> consumer) {
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
-    final PsiFile file = queryParameters.getFile();
-    final CharSequence chars = file.getViewProvider().getContents();
+    PsiFile file = queryParameters.getFile();
+
+
+    final CharSequence chars;
+    FileViewProvider viewProvider = file.getViewProvider();
+
+    chars = viewProvider.getContents();
     boolean multiLine = queryParameters.isMultiLine();
     List<CommentRange> commentRanges = findCommentTokenRanges(file, chars, queryParameters.getRange(), multiLine);
     IntList occurrences = new IntArrayList(1);
     IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns()
-                                                      : new IndexPattern[] {queryParameters.getPattern()};
+                                                      : new IndexPattern[]{queryParameters.getPattern()};
 
     for (int i = 0; i < commentRanges.size(); i++) {
       occurrences.clear();
 
-      for (int j = patterns.length - 1; j >=0; --j) {
+      for (int j = patterns.length - 1; j >= 0; --j) {
         if (!collectPatternMatches(patterns, patterns[j], chars, commentRanges, i, file, queryParameters.getRange(), consumer,
                                    occurrences, multiLine)) {
           return;
@@ -99,7 +107,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         return findComments(lexer, chars, range, COMMENT_TOKENS, null, multiLine);
       }
       else {
-        return Collections.singletonList(new CommentRange(0, file.getTextLength()));
+        return Collections.singletonList(new CommentRange(0, chars.length()));
       }
     }
     else {
@@ -159,7 +167,9 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       if (range != null) {
         if (lexer.getTokenEnd() <= range.getStartOffset()) continue;
         if (lexer.getTokenStart() >= range.getEndOffset() &&
-            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) break;
+            (!multiLine || lastEndOffset < 0 || !containsOneLineBreak(chars, lastEndOffset, lexer.getTokenStart()))) {
+          break;
+        }
       }
 
       boolean isComment = commentTokens.contains(tokenType) || CacheUtil.isInComments(tokenType);
@@ -203,7 +213,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
                                                Processor<? super IndexPatternOccurrence> consumer,
                                                IntList matches,
                                                boolean multiLine
-                                               ) {
+  ) {
     CommentRange commentRange = commentRanges.get(commentNum);
     int commentStart = commentRange.startOffset;
     int commentEnd = commentRange.endOffset;
@@ -277,7 +287,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
         break;
       }
       CharSequence commentText = StringPattern.newBombedCharSequence(text.subSequence(commentStartOffset, continuationEndOffset));
-      for (IndexPattern pattern: allIndexPatterns) {
+      for (IndexPattern pattern : allIndexPatterns) {
         Pattern p = pattern.getPattern();
         if (p != null && p.matcher(commentText).find()) break outer;
       }

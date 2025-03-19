@@ -6,14 +6,16 @@ import com.intellij.codeInspection.ui.OptionAccessor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,33 +39,34 @@ public class ShellcheckOptionsPanel {
   ShellcheckOptionsPanel(Set<String> disabledInspections, BiConsumer<String, Boolean> inspectionsChangeListener) {
     myInspectionsChangeListener = inspectionsChangeListener;
     myDisabledInspections = disabledInspections;
-    myProject = ProjectUtil.guessCurrentProject(getPanel());
+    myProject = ProjectUtil.getProject(getPanel());
 
-    myShellcheckSelector.addBrowseFolderListener(ShBundle.message("sh.shellcheck.path.label"), "", myProject,
-                                                 FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShellcheckSelector.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor()
+      .withTitle(ShBundle.message("sh.shellcheck.path.label")));
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
         String shellcheckPath = myShellcheckSelector.getText();
-        ShSettings.setShellcheckPath(shellcheckPath);
+        ShSettings.setShellcheckPath(myProject, shellcheckPath);
         myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
         myErrorLabel.setVisible(false);
       }
     });
 
-    String shellcheckPath = ShSettings.getShellcheckPath();
+    String shellcheckPath = ShSettings.getShellcheckPath(myProject);
     myShellcheckSelector.setText(shellcheckPath);
     myWarningPanel.setVisible(!ShShellcheckUtil.isValidPath(shellcheckPath));
     myErrorLabel.setForeground(JBColor.RED);
 
-    ShShellcheckUtil.SHELLCHECK_CODES.forEach((key, value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
+    ShShellcheckUtil.SHELLCHECK_CODES.forEach(
+      (@NlsSafe String key, @Nls String value) -> myInspectionsCheckboxPanel.addCheckbox(key + " " + value, key));
     myWarningLabel.setIcon(AllIcons.General.Warning);
   }
 
   private void createUIComponents() {
     myShellcheckDownloadLink = new ActionLink(ShBundle.message("sh.shellcheck.download.label.text"), e -> {
         ShShellcheckUtil.download(myProject,
-                                  () -> myShellcheckSelector.setText(ShSettings.getShellcheckPath()),
+                                  () -> myShellcheckSelector.setText(ShSettings.getShellcheckPath(myProject)),
                                   () -> myErrorLabel.setVisible(true));
         EditorNotifications.getInstance(myProject).updateAllNotifications();
     });

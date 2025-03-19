@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.augment;
 
 import com.intellij.diagnostic.PluginException;
@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>
  * N.B. during indexing, only {@link DumbAware} providers are run.
  */
-public abstract class PsiAugmentProvider {
+public abstract class PsiAugmentProvider implements PossiblyDumbAware {
   private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
   private static final @NotNull NotNullLazyValue<ExtensionPoint<PsiAugmentProvider>> EP = NotNullLazyValue.lazy(() -> EP_NAME.getPoint());
@@ -52,8 +53,7 @@ public abstract class PsiAugmentProvider {
    *                 Implementations can ignore this parameter or use it for optimizations.
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  @NotNull
-  protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
+  protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element,
                                                            @NotNull Class<Psi> type,
                                                            @Nullable String nameHint) {
     if (nameHint == null) return getAugments(element, type);
@@ -82,8 +82,7 @@ public abstract class PsiAugmentProvider {
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
   @Deprecated
-  @NotNull
-  protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
+  protected @NotNull <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
     return Collections.emptyList();
   }
 
@@ -91,8 +90,7 @@ public abstract class PsiAugmentProvider {
    * Extends {@link PsiTypeElement#getType()} so that a type could be retrieved from external place
    * (e.g. inferred from a variable initializer).
    */
-  @Nullable
-  protected PsiType inferType(@NotNull PsiTypeElement typeElement) {
+  protected @Nullable PsiType inferType(@NotNull PsiTypeElement typeElement) {
     return null;
   }
 
@@ -116,8 +114,7 @@ public abstract class PsiAugmentProvider {
   /**
    * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
    */
-  @NotNull
-  protected Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
+  protected @NotNull Set<String> transformModifiers(@NotNull PsiModifierList modifierList, @NotNull Set<String> modifiers) {
     return modifiers;
   }
 
@@ -125,9 +122,8 @@ public abstract class PsiAugmentProvider {
 
   //<editor-fold desc="API and the inner kitchen.">
 
-  @NotNull
-  public static <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type,
-                                                                   @Nullable String nameHint) {
+  public static @NotNull <Psi extends PsiElement> List<Psi> collectAugments(@NotNull PsiElement element, @NotNull Class<? extends Psi> type,
+                                                                            @Nullable String nameHint) {
     List<Psi> result = new SmartList<>();
 
     forEach(element.getProject(), provider -> {
@@ -153,8 +149,7 @@ public abstract class PsiAugmentProvider {
   }
 
   @ApiStatus.Experimental
-  @NotNull
-  public static List<PsiExtensionMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
+  public static @NotNull List<PsiExtensionMethod> collectExtensionMethods(PsiClass aClass, @NotNull String nameHint, PsiElement context) {
     List<PsiExtensionMethod> extensionMethods = new SmartList<>();
     forEach(aClass.getProject(), provider -> {
       List<PsiExtensionMethod> methods = provider.getExtensionMethods(aClass, nameHint, context);
@@ -175,8 +170,7 @@ public abstract class PsiAugmentProvider {
     return extensionMethods;
   }
 
-  @Nullable
-  public static PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
+  public static @Nullable PsiType getInferredType(@NotNull PsiTypeElement typeElement) {
     Ref<PsiType> result = Ref.create();
 
     forEach(typeElement.getProject(), provider -> {
@@ -235,10 +229,9 @@ public abstract class PsiAugmentProvider {
     return result.get();
   }
 
-  @NotNull
-  public static Set<String> transformModifierProperties(@NotNull PsiModifierList modifierList,
-                                                        @NotNull Project project,
-                                                        @NotNull Set<String> modifiers) {
+  public static @NotNull Set<String> transformModifierProperties(@NotNull PsiModifierList modifierList,
+                                                                 @NotNull Project project,
+                                                                 @NotNull Set<String> modifiers) {
     Ref<Set<String>> result = Ref.create(modifiers);
 
     forEach(project, provider -> {
@@ -250,9 +243,8 @@ public abstract class PsiAugmentProvider {
   }
 
   private static void forEach(Project project, Processor<? super PsiAugmentProvider> processor) {
-    boolean dumb = DumbService.isDumb(project);
     for (PsiAugmentProvider provider : EP.getValue().getExtensionList()) {
-      if (!dumb || DumbService.isDumbAware(provider)) {
+      if (DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
         try {
           boolean goOn = processor.process(provider);
           if (!goOn) break;

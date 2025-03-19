@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -12,11 +12,11 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
+public final class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private ExcludedFilesScopeForm myForm;
   private DefaultComboBoxModel<String> myScopeListModel;
 
-  public final static int EDIT_SCOPES = NEXT_USER_EXIT_CODE;
+  public static final int EDIT_SCOPES = NEXT_USER_EXIT_CODE;
 
   private final Action myEditAction;
   private final List<? extends NamedScope> myAvailableScopes;
@@ -24,8 +24,8 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   /**
    * @param availableScopes editable scopes, means that names are @NlsSafe
    */
-  protected ExcludedFilesScopeDialog(@NotNull Project project,
-                                     @NotNull List<? extends NamedScope> availableScopes) {
+  ExcludedFilesScopeDialog(@NotNull Project project,
+                           @NotNull List<? extends NamedScope> availableScopes) {
     super(project);
     myAvailableScopes = availableScopes;
     setTitle(LangBundle.message("dialog.title.add.scope"));
@@ -50,9 +50,8 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   }
 
 
-  @Nullable
   @Override
-  public FileSetDescriptor getDescriptor() {
+  public @Nullable FileSetDescriptor getDescriptor() {
     int selectedIndex = myForm.getScopesList().getSelectedIndex();
     String scopeName = selectedIndex >= 0 ? myScopeListModel.getElementAt(selectedIndex) : null;
     if (scopeName != null) {
@@ -65,9 +64,8 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
     return null;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     myForm = new ExcludedFilesScopeForm();
     return myForm.getTopPanel();
   }

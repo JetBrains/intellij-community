@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2007 David Crawshaw <david@zentus.com>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #include <jni.h>
 /* Header for class org_sqlite__NativeDB */
 
@@ -228,6 +244,8 @@ JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1null
 JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_bind_1int
   (JNIEnv *, jobject, jlong, jint, jint);
 
+JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_executeBatch(JNIEnv *, jobject, jlong, jint, jint, jintArray);
+
 /*
  * Class:     org_jetbrains_sqlite_NativeDB
  * Method:    bind_long
@@ -315,86 +333,6 @@ JNIEXPORT void JNICALL Java_org_jetbrains_sqlite_NativeDB_result_1int
  */
 JNIEXPORT void JNICALL Java_org_jetbrains_sqlite_NativeDB_result_1error_1utf8
   (JNIEnv *, jobject, jlong, jbyteArray);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_text_utf8
- * Signature: (Lorg/sqlite/Function;I)Ljava/nio/ByteBuffer;
- */
-JNIEXPORT jobject JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1text_1utf8
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_blob
- * Signature: (Lorg/sqlite/Function;I)[B
- */
-JNIEXPORT jbyteArray JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1blob
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_double
- * Signature: (Lorg/sqlite/Function;I)D
- */
-JNIEXPORT jdouble JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1double
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_long
- * Signature: (Lorg/sqlite/Function;I)J
- */
-JNIEXPORT jlong JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1long
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_int
- * Signature: (Lorg/sqlite/Function;I)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1int
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    value_type
- * Signature: (Lorg/sqlite/Function;I)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_value_1type
-  (JNIEnv *, jobject, jobject, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    create_function_utf8
- * Signature: ([BLorg/sqlite/Function;II)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_create_1function_1utf8
-  (JNIEnv *, jobject, jbyteArray, jobject, jint, jint);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    destroy_function_utf8
- * Signature: ([B)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_destroy_1function_1utf8
-  (JNIEnv *, jobject, jbyteArray);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    create_collation_utf8
- * Signature: ([BLorg/sqlite/Collation;)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_create_1collation_1utf8
-  (JNIEnv *, jobject, jbyteArray, jobject);
-
-/*
- * Class:     org_jetbrains_sqlite_NativeDB
- * Method:    destroy_collation_utf8
- * Signature: ([B)I
- */
-JNIEXPORT jint JNICALL Java_org_jetbrains_sqlite_NativeDB_destroy_1collation_1utf8
-  (JNIEnv *, jobject, jbyteArray);
 
 /*
  * Class:     org_jetbrains_sqlite_NativeDB

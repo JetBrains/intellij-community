@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,8 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Konstantin Bulenkov
  * @see KeyWithDefaultValue
  */
-@NonNls
-public class Key<T> {
+public @NonNls class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createIntKeyWeakValueMap();
   private final int myIndex = ourKeysCounter.getAndIncrement();
@@ -60,13 +56,12 @@ public class Key<T> {
     return myName;
   }
 
-  @NotNull
-  public static <T> Key<T> create(@NonNls @NotNull String name) {
+  public static @NotNull <T> Key<T> create(@NonNls @NotNull String name) {
     return new Key<>(name);
   }
 
   @Contract("null -> null")
-  public T get(@Nullable UserDataHolder holder) {
+  public @UnknownNullability T get(@Nullable UserDataHolder holder) {
     return holder == null ? null : holder.getUserData(this);
   }
 
@@ -76,8 +71,7 @@ public class Key<T> {
     return t == null ? defaultValue : t;
   }
 
-  @NotNull
-  public T getRequired(@NotNull UserDataHolder holder) {
+  public @NotNull T getRequired(@NotNull UserDataHolder holder) {
     return Objects.requireNonNull(holder.getUserData(this));
   }
 
@@ -94,8 +88,7 @@ public class Key<T> {
     }
   }
 
-  @Nullable("can become null if the key has been gc-ed")
-  public static <T> Key<T> getKeyByIndex(int index) {
+  public static @Nullable("can become null if the key has been gc-ed") <T> Key<T> getKeyByIndex(int index) {
     synchronized (allKeys) {
       //noinspection unchecked
       return (Key<T>)allKeys.get(index);
@@ -106,8 +99,7 @@ public class Key<T> {
    * @deprecated access to a key via its name is a dirty hack; use Key instance directly instead
    */
   @Deprecated
-  @Nullable
-  public static Key<?> findKeyByName(@NotNull String name) {
+  public static @Nullable Key<?> findKeyByName(@NotNull String name) {
     synchronized (allKeys) {
       for (Key<?> key : allKeys.values()) {
         if (name.equals(key.myName)) {

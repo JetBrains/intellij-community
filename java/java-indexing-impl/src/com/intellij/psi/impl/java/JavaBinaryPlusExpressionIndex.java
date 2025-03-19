@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.TokenList;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -26,19 +27,19 @@ import java.util.Map;
 
 import static com.intellij.psi.JavaTokenType.PLUS;
 
-public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
+public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
 
-  @NotNull
   @Override
-  public ID<Boolean, PlusOffsets> getName() {
+  public @NotNull ID<Boolean, PlusOffsets> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public DataIndexer<Boolean, PlusOffsets, FileContent> getIndexer() {
+  public @NotNull DataIndexer<Boolean, PlusOffsets, FileContent> getIndexer() {
     return inputData -> {
+      if (Strings.indexOf(inputData.getContentAsText(), '+') < 0) return Map.of();
+
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
 
       IntList result = new IntArrayList();
@@ -58,15 +59,13 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     };
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<Boolean> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<Boolean> getKeyDescriptor() {
     return BooleanDataDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<PlusOffsets> getValueExternalizer() {
+  public @NotNull DataExternalizer<PlusOffsets> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, PlusOffsets value) throws IOException {
@@ -103,9 +102,8 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
     return false;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(JavaFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile file) {

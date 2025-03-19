@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * editor viewport. {@link #savePosition()} method should be called before the operation, to save scrolling position, and
  * {@link #restorePosition(boolean)} method - after the operation, to restore the position.
  */
-public class EditorScrollingPositionKeeper implements Disposable {
+public final class EditorScrollingPositionKeeper implements Disposable {
   private final Editor myEditor;
   private int myViewportShift;
   private RangeMarker myTopLeftCornerMarker;
@@ -30,6 +30,8 @@ public class EditorScrollingPositionKeeper implements Disposable {
   }
 
   public void savePosition() {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     disposeMarker();
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleAreaOnScrollingFinished();
     int caretY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
@@ -45,6 +47,8 @@ public class EditorScrollingPositionKeeper implements Disposable {
   }
 
   public void restorePosition(boolean stopAnimation) {
+    if (myEditor instanceof ImaginaryEditor) return;
+
     int newY;
     if (myTopLeftCornerMarker == null) {
       newY = myEditor.visualLineToY(myEditor.getCaretModel().getVisualPosition().line);
@@ -109,7 +113,7 @@ public class EditorScrollingPositionKeeper implements Disposable {
   /**
    * Same as {@link EditorScrollingPositionKeeper}, but tracking all editors for a given document.
    */
-  public static class ForDocument implements Disposable {
+  public static final class ForDocument implements Disposable {
     private final List<EditorScrollingPositionKeeper> myKeepers;
 
     public ForDocument(@Nullable Document document) {

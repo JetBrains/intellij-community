@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.PsiElement;
@@ -6,13 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleMatch {
+public final class SimpleMatch {
   PsiElement myStartElement;
   PsiElement myEndElement;
   private final Map<String, String> myChangedParameters;
   private String myChangedOutput;
 
-  public SimpleMatch(@NotNull final PsiElement start, @NotNull final PsiElement endElement) {
+  public SimpleMatch(final @NotNull PsiElement start, final @NotNull PsiElement endElement) {
     myStartElement = start;
     myEndElement = endElement;
     myChangedParameters = new HashMap<>();
@@ -30,11 +31,11 @@ public class SimpleMatch {
     return myChangedParameters;
   }
 
-  public void changeParameter(@NotNull final String from, @NotNull final String to) {
+  public void changeParameter(final @NotNull String from, final @NotNull String to) {
     myChangedParameters.put(from, to);
   }
 
-  public void changeOutput(@NotNull final String to) {
+  public void changeOutput(final @NotNull String to) {
     myChangedOutput = to;
   }
 

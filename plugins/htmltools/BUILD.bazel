@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.html.tools` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "html-tools_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "html-tools",
+  module_name = "intellij.html.tools",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/impl",
+    "//platform/webSymbols",
+    "//platform/lang-impl",
+    "//images",
+    "//platform/platform-impl:ide-impl",
+    "//xml/xml-parser:parser",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":html-tools_resources"]
+)
+### auto-generated section `build intellij.html.tools` end
+
+### auto-generated section `build intellij.html.tools.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "html-tools-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "html-tools-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/htmltools:html-tools",
+    "//xml/impl",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//xml/tests:tests_test_lib",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "html-tools-tests_test",
+  runtime_deps = [":html-tools-tests_test_lib"]
+)
+### auto-generated section `build intellij.html.tools.tests` end

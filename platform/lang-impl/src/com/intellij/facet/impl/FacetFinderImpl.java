@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -36,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FacetFinderImpl extends FacetFinder {
+public final class FacetFinderImpl extends FacetFinder {
   private static final Logger LOG = Logger.getInstance(FacetFinderImpl.class);
   private final Map<FacetTypeId, AllFacetsOfTypeModificationTracker> myAllFacetTrackers = new HashMap<>();
   private final Map<FacetTypeId, CachedValue<Map<VirtualFile, List<Facet>>>> myCachedMaps =
@@ -76,8 +61,7 @@ public class FacetFinderImpl extends FacetFinder {
     return value;
   }
 
-  @NotNull
-  private <F extends Facet&FacetRootsProvider> Map<VirtualFile, List<Facet>> computeRootToFacetsMap(final FacetTypeId<F> type) {
+  private @NotNull <F extends Facet&FacetRootsProvider> Map<VirtualFile, List<Facet>> computeRootToFacetsMap(final FacetTypeId<F> type) {
     final Module[] modules = myModuleManager.getModules();
     final HashMap<VirtualFile, List<Facet>> map = new HashMap<>();
     for (Module module : modules) {
@@ -97,16 +81,13 @@ public class FacetFinderImpl extends FacetFinder {
   }
 
   @Override
-  @Nullable
-  public <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
+  public @Nullable <F extends Facet<?> & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
     final List<F> list = findFacets(file, type);
-    return list.size() > 0 ? list.get(0) : null;
+    return !list.isEmpty() ? list.get(0) : null;
   }
 
   @Override
-  @NotNull
-  public <F extends Facet<?> & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
-    file = ModelBranchUtil.findOriginalFile(file);
+  public @NotNull <F extends Facet<?> & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
     final Map<VirtualFile, List<Facet>> map = getRootToFacetsMap(type);
     if (!map.isEmpty()) {
       while (file != null) {
@@ -121,23 +102,23 @@ public class FacetFinderImpl extends FacetFinder {
     return Collections.emptyList();
   }
 
-  private static class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
+  private static final class AllFacetsOfTypeModificationTracker<F extends Facet> extends SimpleModificationTracker implements Disposable, ProjectWideFacetListener<F> {
     AllFacetsOfTypeModificationTracker(final Project project, final FacetTypeId<F> type) {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 
     @Override
-    public void facetAdded(@NotNull final F facet) {
+    public void facetAdded(final @NotNull F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetRemoved(@NotNull final F facet) {
+    public void facetRemoved(final @NotNull F facet) {
       incModificationCount();
     }
 
     @Override
-    public void facetConfigurationChanged(@NotNull final F facet) {
+    public void facetConfigurationChanged(final @NotNull F facet) {
       incModificationCount();
     }
 

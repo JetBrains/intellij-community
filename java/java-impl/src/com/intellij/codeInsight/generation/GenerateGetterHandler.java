@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.java.JavaBundle;
@@ -27,21 +27,22 @@ public class GenerateGetterHandler extends GenerateGetterSetterHandlerBase {
     return super.chooseOriginalMembers(aClass, project);
   }
 
-  @Nullable
   @Override
-  protected JComponent getHeaderPanel(final Project project) {
+  protected @Nullable JComponent getHeaderPanel(final Project project) {
     return getHeaderPanel(project, GetterTemplatesManager.getInstance(), JavaBundle.message("generate.equals.hashcode.template"));
   }
 
   @Override
   protected GenerationInfo[] generateMemberPrototypes(PsiClass aClass, ClassMember original) throws IncorrectOperationException {
+    if (aClass == null) return GenerationInfo.EMPTY_ARRAY;
     if (original instanceof PropertyClassMember propertyClassMember) {
-      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass);
+      final GenerationInfo[] getters = propertyClassMember.generateGetters(aClass, getOptions());
       if (getters != null) {
         return getters;
       }
-    } else if (original instanceof EncapsulatableClassMember encapsulatableClassMember) {
-      final GenerationInfo getter = encapsulatableClassMember.generateGetter();
+    }
+    else if (original instanceof EncapsulatableClassMember encapsulatableClassMember) {
+      final GenerationInfo getter = encapsulatableClassMember.generateGetter(getOptions());
       if (getter != null) {
         return new GenerationInfo[]{getter};
       }

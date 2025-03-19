@@ -34,7 +34,7 @@ enum class RecordType(val value: Int) {
 
   companion object {
     private val map = values().associateBy(RecordType::value)
-    fun fromInt(type: Int) = map[type]!!
+    fun fromInt(type: Int): RecordType = map[type]!!
   }
 
 }

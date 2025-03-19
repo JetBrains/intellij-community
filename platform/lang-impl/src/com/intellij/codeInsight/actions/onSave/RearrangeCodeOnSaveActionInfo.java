@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.application.options.CodeStyleConfigurableWrapper;
@@ -19,6 +19,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +28,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
+@ApiStatus.Internal
+public final class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
   private static final String REARRANGE_CODE_ON_SAVE_PROPERTY = "rearrange.code.on.save";
   private static final boolean REARRANGE_CODE_ON_SAVE_DEFAULT = false;
 
@@ -66,8 +68,7 @@ public class RearrangeCodeOnSaveActionInfo extends ActionOnSaveInfoBase {
         }
       })
       .setItemChosenCallback(tabInfo -> {
-        String configurableId = CodeStyleConfigurableWrapper.getConfigurableId(tabInfo.configurableId);
-        Configurable configurable = getSettings().find(configurableId);
+        Configurable configurable = getSettings().find(tabInfo.configurableId);
         getSettings().select(configurable).doWhenDone(() -> {
           if (configurable instanceof CodeStyleConfigurableWrapper) {
             ((CodeStyleConfigurableWrapper)configurable).selectTab(ApplicationBundle.message("arrangement.title.settings.tab"));

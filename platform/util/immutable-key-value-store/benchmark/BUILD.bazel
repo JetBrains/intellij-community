@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "util-immutableKeyValueStore-benchmark_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jmh-core",
+    "@lib//:jmh-generator-annprocess",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/zip",
+    "//platform/util/rt-java8",
+    "@rules_jvm//zip:build-zip",
+    "@lib//:hash4j",
+  ]
+)
+### auto-generated section `build intellij.platform.util.immutableKeyValueStore.benchmark` end

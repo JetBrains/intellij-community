@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.util.Key;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.xml.XmlEntityCache;
-import com.intellij.psi.impl.source.xml.XmlEntityRefImpl;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
@@ -14,6 +13,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IdempotenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +24,7 @@ import java.util.Set;
 
 public final class XmlPsiUtil {
   private static final Key<CachedValue<PsiElement>> PARSED_DECL_KEY = Key.create("PARSED_DECL_KEY");
-  @NonNls public static final String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
+  public static final @NonNls String XINCLUDE_URI = "http://www.w3.org/2001/XInclude";
 
   public static boolean processXmlElements(XmlElement element, PsiElementProcessor<? super PsiElement> processor, boolean deepFlag) {
     return processXmlElements(element, processor, deepFlag, false);
@@ -70,8 +70,7 @@ public final class XmlPsiUtil {
     return true;
   }
 
-  @Nullable
-  public static XmlElement findElement(@NotNull final XmlElement parent, @NotNull final IElementType.Predicate predicate) {
+  public static @Nullable XmlElement findElement(final @NotNull XmlElement parent, final @NotNull IElementType.Predicate predicate) {
     final Ref<XmlElement> result = new Ref<>();
     parent.processElements(new PsiElementProcessor<>() {
       @Override
@@ -163,7 +162,7 @@ public final class XmlPsiUtil {
   }
 
   private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = getContextType(ref);
+    XmlEntityContextType type = getContextType(ref);
 
     {
       final XmlEntityDecl entityDecl = ref.resolve(targetFile);
@@ -200,27 +199,27 @@ public final class XmlPsiUtil {
     return null;
   }
 
-  private static XmlEntityDecl.EntityContextType getContextType(XmlEntityRef ref) {
-    XmlEntityDecl.EntityContextType type = XmlEntityDecl.EntityContextType.GENERIC_XML;
+  private static XmlEntityContextType getContextType(XmlEntityRef ref) {
+    XmlEntityContextType type = XmlEntityContextType.GENERIC_XML;
     PsiElement temp = ref;
     while (temp != null) {
       if (temp instanceof XmlAttributeDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTRIBUTE_SPEC;
+        type = XmlEntityContextType.ATTRIBUTE_SPEC;
       }
       else if (temp instanceof XmlElementDecl) {
-        type = XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC;
+        type = XmlEntityContextType.ELEMENT_CONTENT_SPEC;
       }
       else if (temp instanceof XmlAttlistDecl) {
-        type = XmlEntityDecl.EntityContextType.ATTLIST_SPEC;
+        type = XmlEntityContextType.ATTLIST_SPEC;
       }
       else if (temp instanceof XmlEntityDecl) {
-        type = XmlEntityDecl.EntityContextType.ENTITY_DECL_CONTENT;
+        type = XmlEntityContextType.ENTITY_DECL_CONTENT;
       }
       else if (temp instanceof XmlEnumeratedType) {
-        type = XmlEntityDecl.EntityContextType.ENUMERATED_TYPE;
+        type = XmlEntityContextType.ENUMERATED_TYPE;
       }
       else if (temp instanceof XmlAttributeValue) {
-        type = XmlEntityDecl.EntityContextType.ATTR_VALUE;
+        type = XmlEntityContextType.ATTR_VALUE;
       }
       else {
         temp = temp.getContext();
@@ -233,19 +232,15 @@ public final class XmlPsiUtil {
 
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
-                                            final XmlEntityDecl.EntityContextType type,
+                                            final XmlEntityContextType type,
                                             final XmlEntityRef entityRef) {
-    CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
-
-    if (value == null) {
-      value = CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
+    CachedValue<PsiElement> value = ConcurrencyUtil.computeIfAbsent(entityRef, PARSED_DECL_KEY, () ->
+      CachedValuesManager.getManager(entityDecl.getProject()).createCachedValue(() -> {
         final PsiElement res = entityDecl.parse(targetFile, type, entityRef);
         if (res == null) return new CachedValueProvider.Result<>(null, targetFile);
         if (!entityDecl.isInternalReference()) XmlEntityCache.copyEntityCaches(res.getContainingFile(), targetFile);
         return new CachedValueProvider.Result<>(res, res.getUserData(XmlElement.DEPENDING_ELEMENT), entityDecl, targetFile, entityRef);
-      }, false);
-      value = ((XmlEntityRefImpl)entityRef).putUserDataIfAbsent(PARSED_DECL_KEY, value);
-    }
+      }, false));
 
     return value.getValue();
   }

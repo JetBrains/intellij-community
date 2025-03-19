@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 /**
  * author ven
  */
-public class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class AccessorReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public AccessorReferencesSearcher() {
     super(true);

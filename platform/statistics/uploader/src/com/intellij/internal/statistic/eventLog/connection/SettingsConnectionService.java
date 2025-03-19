@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException;
@@ -26,50 +26,42 @@ import java.util.Objects;
 import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
-  @Nullable
-  private final String myConfigUrl;
+  private final @NotNull EventLogApplicationInfo myApplicationInfo;
 
-  @NotNull
-  private final EventLogApplicationInfo myApplicationInfo;
+  private final @NotNull Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
 
-  @NotNull
-  private final Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
-
-  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull String recorderId,
+  protected SettingsConnectionService(@NotNull Supplier<@Nullable String> settingsUrlSupplier, @NotNull String recorderId,
                                       @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
-    myConfigUrl = settingsUrl;
     myApplicationInfo = appInfo;
     myCachedExternalSettings = new StatisticsCachingSupplier<>(
-      () -> myConfigUrl != null ? loadSettings(recorderId, myConfigUrl, myApplicationInfo.getProductVersion()) : null,
+      () -> {
+        final String url = settingsUrlSupplier.get();
+        return url != null ? loadSettings(recorderId, url, myApplicationInfo.getProductVersion()) : null;
+      },
       settingsCacheTimeoutMs
     );
   }
 
-  @Nullable
-  protected EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
+  protected @Nullable EventLogSendConfiguration getConfiguration(@NotNull EventLogBuildType type) {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getConfiguration(type) : null;
   }
 
-  @Nullable
-  protected String getEndpointValue(@NotNull String attribute) {
+  protected @Nullable String getEndpointValue(@NotNull String attribute) {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getEndpoint(attribute) : null;
   }
 
-  @NotNull
-  public Map<String, String> getOptions() {
+  public @NotNull Map<String, String> getOptions() {
     EventLogExternalSendSettings settings = getExternalSettings();
     return settings != null ? settings.getOptions() : Collections.emptyMap();
   }
 
-  @Nullable
-  protected synchronized EventLogExternalSendSettings getExternalSettings() {
+  protected synchronized @Nullable EventLogExternalSendSettings getExternalSettings() {
     return myCachedExternalSettings.get();
   }
 
-  @Nullable
-  public EventLogExternalSendSettings loadSettings(@NotNull String recorderId, @NotNull String configUrl, @NotNull String appVersion) {
+  public @Nullable EventLogExternalSendSettings loadSettings(@NotNull String recorderId, @NotNull String configUrl, @NotNull String appVersion) {
     try {
       return StatsHttpRequests.request(configUrl, myApplicationInfo.getConnectionSettings()).send(r -> {
         try {
@@ -102,6 +94,6 @@ public abstract class SettingsConnectionService {
     } else {
       myApplicationInfo.getLogger().warn(message, e);
     }
-    myApplicationInfo.getEventLogger().logErrorEvent(recorderId, "loading.config.failed", e);
+    myApplicationInfo.getEventLogger().logLoadingConfigFailed(recorderId, e);
   }
 }

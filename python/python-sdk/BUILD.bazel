@@ -1,0 +1,87 @@
+### auto-generated section `build intellij.python.sdk` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "sdk_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "sdk",
+  module_name = "intellij.python.sdk",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:gson",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//python/openapi:community",
+    "//python/python-psi-api:psi",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/projectModel-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core",
+    "//platform/execution",
+    "//platform/remote-core",
+    "@lib//:jna",
+    "@lib//:caffeine",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/progress/shared:ide-progress",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+  ],
+  runtime_deps = [":sdk_resources"]
+)
+
+jvm_library(
+  name = "sdk_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":sdk"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:gson",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/analysis-api:analysis",
+    "//platform/analysis-impl",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/platform-util-io:ide-util-io",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//python/python-psi-api:psi",
+    "//python/python-psi-impl:psi-impl",
+    "//platform/projectModel-impl",
+    "//platform/util/jdom",
+    "//platform/ide-core",
+    "//platform/execution",
+    "//platform/remote-core",
+    "@lib//:jna",
+    "@lib//:junit4",
+    "@lib//:caffeine",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/progress/shared:ide-progress",
+    "@lib//:junit5",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+  ],
+  runtime_deps = [":sdk_resources"]
+)
+
+jvm_test(
+  name = "sdk_test",
+  runtime_deps = [":sdk_test_lib"]
+)
+### auto-generated section `build intellij.python.sdk` end

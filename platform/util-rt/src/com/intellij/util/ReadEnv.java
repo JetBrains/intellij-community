@@ -1,16 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
+@Internal
 public final class ReadEnv {
   public static void main(String[] args) throws Exception {
-    try (Writer out = new BufferedWriter(new OutputStreamWriter(System.out,
-                                                                StandardCharsets.UTF_8))) {
+    try (Writer out = new BufferedWriter(createWriter(args))) {
       for (Map.Entry<String, String> each : System.getenv().entrySet()) {
         // On Windows, the environment may include variables that start with '=' (https://stackoverflow.com/questions/30102750).
         // Such variables break the output parser and are unimportant, hence are filtered out.
@@ -21,6 +24,16 @@ public final class ReadEnv {
         out.write(each.getValue());
         out.write('\0');
       }
+    }
+  }
+
+  @NotNull
+  private static OutputStreamWriter createWriter(String[] args) throws IOException {
+    if( args.length > 0) {
+      return new OutputStreamWriter(Files.newOutputStream(Paths.get(args[0])), StandardCharsets.UTF_8);
+    } else {
+      return new OutputStreamWriter(System.out,
+                                    StandardCharsets.UTF_8);
     }
   }
 }

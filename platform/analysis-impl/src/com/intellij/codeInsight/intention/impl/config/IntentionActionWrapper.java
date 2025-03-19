@@ -1,29 +1,30 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.ToolLanguageUtil;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
-                                                     Comparable<IntentionAction> {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, Comparable<IntentionAction> {
   private final IntentionActionBean extension;
   private IntentionAction instance;
   private String fullFamilyName;
@@ -38,7 +39,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDescriptionDirectoryName(getImplementationClassName());
   }
 
-  static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
+  @ApiStatus.Internal
+  public static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
@@ -102,16 +104,11 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   }
 
   @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(getDelegate());
-  }
-
-  @Override
   public @NotNull IntentionAction getDelegate() {
     if (instance == null) {
       CommonIntentionAction base = extension.getInstance();
       instance = base instanceof IntentionAction action ? action :
-                 ((ModCommandAction)base).asIntention();
+                 base.asIntention();
     }
     return instance;
   }
@@ -121,7 +118,8 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return extension.className;
   }
 
-  @NotNull ClassLoader getImplementationClassLoader() {
+  @ApiStatus.Internal
+  public @NotNull ClassLoader getImplementationClassLoader() {
     return extension.getLoaderForClass();
   }
 
@@ -134,7 +132,9 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     catch (PsiInvalidElementAccessException e) {
       text = e.getMessage();
     }
-    return "Intention: (" + getDelegate().getClass() + "): '" + text + "'";
+    ModCommandAction modCommand = asModCommandAction();
+    Class<?> cls = modCommand == null ? getDelegate().getClass() : modCommand.getClass();
+    return "Intention: (" + cls.getName() + "): '" + text + "'";
   }
 
   @Override

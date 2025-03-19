@@ -10,6 +10,8 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.ui.CommitIconTableCellRenderer
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.JBColor
@@ -22,6 +24,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.paint.PaintParameters
+import git4idea.i18n.GitBundle
 import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.DEFAULT_CELL_HEIGHT
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView.Companion.GRAPH_COLOR
@@ -105,6 +108,20 @@ internal open class GitRebaseCommitsTableView(
   protected open fun onEditorCreate() {}
 
   override fun removeEditor() {
+    val editingRow = getEditingRow()
+    val cellValue = getCellEditor()?.cellEditorValue
+    if (editingRow != -1 && cellValue != null && model.getCommitMessage(editingRow) != cellValue) {
+      val cancelEditing = MessageDialogBuilder.yesNo(
+        GitBundle.message("rebase.interactive.dialog.cancel.reword.warning.title"),
+        GitBundle.message("rebase.interactive.dialog.cancel.reword.warning.body"))
+        .yesText(GitBundle.message("rebase.interactive.dialog.cancel.reword.warning.cancel"))
+        .noText(GitBundle.message("rebase.interactive.dialog.cancel.reword.warning.continue"))
+        .icon(Messages.getWarningIcon())
+        .ask(project)
+
+      if (!cancelEditing) return
+    }
+
     onEditorRemove()
     if (editingRow in 0 until rowCount) {
       setRowHeight(editingRow, DEFAULT_CELL_HEIGHT)
@@ -256,7 +273,7 @@ private class SubjectRenderer : ColoredTableCellRenderer() {
         else -> {
         }
       }
-      append(IndexedDetails.getSubject(commitsTable.model.getCommitMessage(row)), attributes, true)
+      append(IndexedDetails.getSubject(commitsTable.model.getPresentation(row)), attributes, true)
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
     }
   }

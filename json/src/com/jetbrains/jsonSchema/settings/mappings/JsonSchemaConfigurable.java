@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.json.JsonBundle;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -30,10 +31,10 @@ import java.io.File;
 
 public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSchemaConfiguration> {
   private final Project myProject;
-  @NotNull private final String mySchemaFilePath;
-  @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
-  @Nullable private final TreeUpdater myTreeUpdater;
-  @NotNull private final Function<? super String, String> myNameCreator;
+  private final @NotNull String mySchemaFilePath;
+  private final @NotNull UserDefinedJsonSchemaConfiguration mySchema;
+  private final @Nullable TreeUpdater myTreeUpdater;
+  private final @NotNull Function<? super String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private @ConfigurableName String myDisplayName;
   private @Nls String myError;
@@ -55,8 +56,7 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
     myDisplayName = mySchema.getName();
   }
 
-  @NotNull
-  public UserDefinedJsonSchemaConfiguration getSchema() {
+  public @NotNull UserDefinedJsonSchemaConfiguration getSchema() {
     return mySchema;
   }
 
@@ -101,9 +101,8 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
     return myDisplayName.equals(mySchema.getName()) && myDisplayName.equals(mySchema.getGeneratedName());
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return myDisplayName;
   }
 
@@ -130,7 +129,7 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
 
-  public static boolean isValidURL(@NotNull final String url) {
+  public static boolean isValidURL(final @NotNull String url) {
     return JsonFileResolver.isHttpPath(url) && Urls.parse(url, false) != null;
   }
 
@@ -181,7 +180,9 @@ public final class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJ
   }
 
   private void logErrorForUser(@NotNull @NotificationContent String error) {
-    JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.WARNING).notify(myProject);
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup("JSON Schema")
+      .createNotification(error, MessageType.WARNING).notify(myProject);
   }
 
   @Override

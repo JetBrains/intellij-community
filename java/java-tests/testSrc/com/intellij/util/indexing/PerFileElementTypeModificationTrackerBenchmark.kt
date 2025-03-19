@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.lang.java.JavaParserDefinition
@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexEx
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.psi.tree.StubFileElementType
+import com.intellij.psi.tree.IFileElementType
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.writeChild
 import com.intellij.util.io.write
@@ -105,14 +105,14 @@ class PerFileElementTypeModificationTrackerBenchmark : HeavyPlatformTestCase() {
       val finishMs = System.currentTimeMillis()
       durations += (finishMs - startMs).toDouble() / 1e3
     }
-    System.out.println("src = ${StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE}, mean = ${"%.4f".format(durations.sum() / durations.size)} s, data = ${durations}" )
+    println("src = ${StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE}, mean = ${"%.4f".format(durations.sum() / durations.size)} s, data = ${durations}" )
   }
 
   private fun ensureIndexUpToDate() {
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project))
   }
 
-  private fun getModCount(elementType: StubFileElementType<*>) =
+  private fun getModCount(elementType: IFileElementType) =
     (StubIndex.getInstance() as StubIndexEx)
       .getPerFileElementTypeModificationTracker(elementType).modificationCount
 }

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.presentation.*
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.PlatformTestUtil
@@ -15,7 +14,7 @@ import java.io.File
 import javax.imageio.ImageIO
 
 class PresentationUITest : LightPlatformCodeInsightTestCase() {
-  val factory by lazy { PresentationFactory(editor as EditorImpl) }
+  val factory: PresentationFactory by lazy { PresentationFactory(editor) }
 
   override fun setUp() {
     super.setUp()
@@ -95,6 +94,6 @@ class PresentationUITest : LightPlatformCodeInsightTestCase() {
   }
 
   companion object {
-    var REPLACE_WITH_ACTUAL = false
+    var REPLACE_WITH_ACTUAL: Boolean = false
   }
 }

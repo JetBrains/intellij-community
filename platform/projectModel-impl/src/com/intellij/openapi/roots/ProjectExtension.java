@@ -19,7 +19,10 @@ public abstract class ProjectExtension {
   public void projectSdkChanged(@Nullable Sdk sdk) {
   }
 
-  public abstract void readExternal(@NotNull Element element);
+  /**
+   * Returns true if the state was changed after read
+   */
+  public abstract boolean readExternalElement(@NotNull Element element);
 
   public abstract void writeExternal(@NotNull Element element);
 }

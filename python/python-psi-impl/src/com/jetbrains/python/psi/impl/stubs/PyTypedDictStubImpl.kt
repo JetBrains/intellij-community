@@ -9,19 +9,18 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
 import java.io.IOException
 import java.util.*
 
 class PyTypedDictStubImpl private constructor(private val myCalleeName: QualifiedName,
                                               override val name: String,
-                                              override val fields: LinkedHashMap<String, Optional<String>>,
+                                              override val fields: List<PyTypedDictFieldStub>,
                                               override val isRequired: Boolean = true) : PyTypedDictStub {
 
-  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<*>> {
+  override fun getTypeClass(): Class<PyTypedDictStubType> {
     return PyTypedDictStubType::class.java
   }
 
@@ -32,9 +31,10 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     stream.writeBoolean(isRequired)
     stream.writeVarInt(fields.size)
 
-    for ((key, value) in fields) {
-      stream.writeName(key)
-      stream.writeName(value.orElse(null))
+    for ((name, type, isReadOnly) in fields) {
+      stream.writeName(name)
+      stream.writeName(type)
+      stream.writeBoolean(isReadOnly)
     }
   }
 
@@ -56,24 +56,18 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
 
     fun create(expression: PyCallExpression): PyTypedDictStub? {
       val calleeReference = expression.callee as? PyReferenceExpression ?: return null
+      val calleeName = getCalleeName(calleeReference) ?: return null
 
-      val calleeName = getCalleeName(calleeReference)
+      val arguments = expression.arguments
+      val typeName = PyResolveUtil.resolveStrArgument(arguments.getOrNull(0)) ?: return null
 
-      if (calleeName != null) {
-        val name = PyResolveUtil.resolveStrArgument(expression, 0, TYPED_DICT_NAME_PARAMETER) ?: return null
+      val fieldsArg = PyPsiUtils.flattenParens(arguments.getOrNull(1))
+      val fields = if (fieldsArg is PyDictLiteralExpression) getTypedDictFieldsFromDictLiteral(fieldsArg) else emptyList()
 
-        val fieldsArgument = expression.getArgument(1, TYPED_DICT_FIELDS_PARAMETER, PyDictLiteralExpression::class.java) ?: return null
-
-        val fields = getTypingTDFieldsFromIterable(fieldsArgument)
-        if (fields != null) {
-          return PyTypedDictStubImpl(calleeName,
-                                     name,
-                                     fields,
-                                     PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
-        }
-      }
-
-      return null
+      return PyTypedDictStubImpl(calleeName,
+                                 typeName,
+                                 fields,
+                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true))
     }
 
     @Throws(IOException::class)
@@ -102,35 +96,30 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
     }
 
     @Throws(IOException::class)
-    private fun deserializeFields(stream: StubInputStream, fieldsSize: Int): LinkedHashMap<String, Optional<String>> {
-      val fields = LinkedHashMap<String, Optional<String>>(fieldsSize)
+    private fun deserializeFields(stream: StubInputStream, fieldsCount: Int): List<PyTypedDictFieldStub> {
+      val fields =  ArrayList<PyTypedDictFieldStub>(fieldsCount)
 
-      for (i in 0 until fieldsSize) {
+      for (i in 0 until fieldsCount) {
         val name = stream.readNameString()
         val type = stream.readNameString()
+        val readOnly = stream.readBoolean()
 
         if (name != null) {
-          fields[name] = Optional.ofNullable(type)
+          fields.add(PyTypedDictFieldStub(name, type, readOnly))
         }
       }
 
       return fields
     }
 
-    private fun getTypingTDFieldsFromIterable(fields: PySequenceExpression): LinkedHashMap<String, Optional<String>>? {
-      val result = LinkedHashMap<String, Optional<String>>()
-
-      fields.elements.forEach {
-        if (it !is PyKeyValueExpression) return null
-
-        val name: PyExpression = it.key
-        val type: PyExpression? = it.value
-
-        if (name !is PyStringLiteralExpression) return null
-
-        result[name.stringValue] = Optional.ofNullable(type?.text)
+    private fun getTypedDictFieldsFromDictLiteral(expression: PyDictLiteralExpression): List<PyTypedDictFieldStub> {
+      val result = mutableListOf<PyTypedDictFieldStub>()
+      expression.elements.forEach {
+        val key = it.key
+        if (key is PyStringLiteralExpression) {
+          result.add(PyTypedDictFieldStub(key.stringValue, it.value?.text, true))
+        }
       }
-
       return result
     }
   }

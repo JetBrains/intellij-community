@@ -44,7 +44,7 @@ public class TopCommitsCache {
         isBroken = true;
         continue; // means some error happened (and reported) earlier, nothing we can do here
       }
-      if (result.size() < VcsLogData.RECENT_COMMITS_COUNT * 2) {
+      if (result.size() < VcsLogData.getRecentCommitsCount() * 2) {
         result.add(detail);
         myCache.put(index, detail);
       }

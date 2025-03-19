@@ -1,22 +1,47 @@
-fun foo1() { /// M
-    // We don't support function breakpoints for local functions yet
-    fun local() { /// L
+fun localFun() { /// M
+    fun local() { /// L, M
         println() /// L
     } /// L
 } /// L
 
-fun foo2() { /// M
-    val local = fun() { /// *, L, λ
+fun functionalLiteral() { /// M
+    val local = fun() { /// L
         println() /// L
     } /// L
 } /// L
 
-fun foo3() { /// M
-    val local = { /// *, L, λ
+fun functionalLiteralOneLiner() { /// M
+    val local = fun() { println() } /// *, L, λ
+} /// L
+
+fun functionalLiteralExpression() { /// M
+    val local = fun() = /// L
+        println() /// L
+} /// L
+
+fun functionalLiteralOneLinerExpression() { /// M
+    val local = fun() = println()  /// *, L, λ
+} /// L
+
+fun lambdaLiteral() { /// M
+    val local = { /// L
         println() /// L
     } /// L
 } /// L
 
-fun foo4() { /// M
-    fun local(block: () -> Unit = { println() }) {} /// *, L, λ
+fun lambdaLiteralOneLine() { /// M
+    val local = { println() } /// *, L, λ
+} /// L
+
+fun defaultArgumentLambda() { /// M
+    fun local(block: () -> Unit = { println() }) {} /// *, L, M, λ
+} /// L
+
+fun localClass() { /// M
+    class Local { /// M
+        fun foo() { /// L, M
+            println() /// L
+        } /// L
+    }
+    Local().foo() /// L
 } /// L

@@ -6,4 +6,3 @@ public class Small {
     }
 }
 
-// IGNORE_FIR_LOG

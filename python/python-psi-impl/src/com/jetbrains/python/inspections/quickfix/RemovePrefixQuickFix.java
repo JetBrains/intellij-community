@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -27,28 +28,26 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class RemovePrefixQuickFix implements LocalQuickFix {
+public class RemovePrefixQuickFix extends PsiUpdateModCommandQuickFix {
   private final String myPrefix;
 
   public RemovePrefixQuickFix(String prefix) {
     myPrefix = prefix;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return PyPsiBundle.message("QFIX.remove.string.prefix", myPrefix);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.string.prefix");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyStringLiteralExpression pyString = as(descriptor.getPsiElement(), PyStringLiteralExpression.class);
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    final PyStringLiteralExpression pyString = as(element, PyStringLiteralExpression.class);
     if (pyString != null) {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       for (ASTNode node : pyString.getStringNodes()) {

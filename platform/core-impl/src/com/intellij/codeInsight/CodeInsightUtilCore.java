@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.Language;
@@ -30,13 +30,12 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return findElementInRange(file, startOffset, endOffset, klass, language, null);
   }
 
-  @Nullable
-  private static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
-                                                             int startOffset,
-                                                             int endOffset,
-                                                             @NotNull Class<T> klass,
-                                                             @NotNull Language language,
-                                                             @Nullable PsiElement initialElement) {
+  private static @Nullable <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
+                                                                       int startOffset,
+                                                                       int endOffset,
+                                                                       @NotNull Class<T> klass,
+                                                                       @NotNull Language language,
+                                                                       @Nullable PsiElement initialElement) {
     PsiElement element1 = file.getViewProvider().findElementAt(startOffset, language);
     PsiElement element2 = file.getViewProvider().findElementAt(endOffset - 1, language);
     if (element1 instanceof PsiWhiteSpace) {
@@ -63,13 +62,11 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return element;
   }
 
-  @Nullable
-  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element) {
+  public static @Nullable <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element) {
     return forcePsiPostprocessAndRestoreElement(element, false);
   }
 
-  @Nullable
-  public static <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element, boolean useFileLanguage) {
+  public static @Nullable <T extends PsiElement> T forcePsiPostprocessAndRestoreElement(@NotNull T element, boolean useFileLanguage) {
     final PsiFile psiFile = element.getContainingFile();
     final Document document = psiFile.getViewProvider().getDocument();
     //if (document == null) return element;
@@ -108,8 +105,7 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
    *                      the index of returnValue[i] character in the source literal
    * @return String literal value, or null, if the literal is invalid
    */
-  @Nullable
-  public static CharSequence parseStringCharacters(@NotNull String chars, int @Nullable [] sourceOffsets) {
+  public static @Nullable CharSequence parseStringCharacters(@NotNull String chars, int @Nullable [] sourceOffsets) {
     LOG.assertTrue(sourceOffsets == null || sourceOffsets.length == chars.length() + 1);
     if (noEscape(chars, sourceOffsets)) {
       return chars;

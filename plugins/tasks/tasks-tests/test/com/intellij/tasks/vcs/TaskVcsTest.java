@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.vcs;
 
 import com.intellij.icons.AllIcons;
@@ -28,6 +28,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.CheckinHandlersNotifier;
@@ -342,6 +343,8 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
 
     committer.addResultHandler(new CheckinHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
+
+    EDT.dispatchAllInvocationEvents(); // wait com.intellij.vcs.commit.Committer.finishCommit
   }
 
   private LocalChangeList addChangeList(String title) {
@@ -464,7 +467,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(dumpChangeListManager(), activeTask.getSummary(), activeTask.getShelfName());
 
     List<ShelvedChangeList> lists = ShelveChangesManager.getInstance(getProject()).getShelvedChangeLists();
-    assertTrue(lists.stream().anyMatch(list -> list.DESCRIPTION.equals(activeTask.getShelfName())));
+    assertTrue(lists.stream().anyMatch(list -> list.getDescription().equals(activeTask.getShelfName())));
 
     assertEmpty(myChangeListManager.getDefaultChangeList().getChanges());
     //avoid overwrite file conflict
@@ -510,6 +513,11 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
       dialog.close(DialogWrapper.OK_EXIT_CODE);
     }
     UIUtil.dispatchAllInvocationEvents();
+  }
+
+  public void testChangelistNameWithoutId() {
+    LocalTaskImpl task = new LocalTaskImpl("", "foo");
+    assertEquals("foo", myTaskManager.getChangelistName(task));
   }
 
   @Override

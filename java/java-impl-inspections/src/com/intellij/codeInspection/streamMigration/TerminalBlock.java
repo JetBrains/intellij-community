@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,11 +99,9 @@ final class TerminalBlock {
     return getSingleExpression(PsiMethodCallExpression.class);
   }
 
-  @Nullable
-  private TerminalBlock extractFilter() {
+  private @Nullable TerminalBlock extractFilter() {
     PsiStatement single = getSingleStatement();
-    if (single instanceof PsiIfStatement) {
-      PsiIfStatement ifStatement = (PsiIfStatement)single;
+    if (single instanceof PsiIfStatement ifStatement) {
       PsiExpression condition = ifStatement.getCondition();
       if(ifStatement.getElseBranch() == null && condition != null) {
         PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -138,8 +136,7 @@ final class TerminalBlock {
     return null;
   }
 
-  @Nullable
-  private TerminalBlock fromCondition(PsiExpression condition, boolean negated, PsiStatement... statements) {
+  private @Nullable TerminalBlock fromCondition(PsiExpression condition, boolean negated, PsiStatement... statements) {
     TerminalBlock result = new TerminalBlock(this, new FilterOp(condition, myVariable, negated), myVariable, statements);
     List<PsiPatternVariable> vars = JavaPsiPatternUtil.getExposedPatternVariables(condition);
     if (!vars.isEmpty()) {
@@ -164,8 +161,7 @@ final class TerminalBlock {
    *
    * @return extracted operation or null if extraction is not possible
    */
-  @Nullable
-  private TerminalBlock extractOperation() {
+  private @Nullable TerminalBlock extractOperation() {
     TerminalBlock withFilter = extractFilter();
     if(withFilter != null) return withFilter;
     // extract flatMap
@@ -207,8 +203,7 @@ final class TerminalBlock {
         if(ifStatement.getElseBranch() == null && condition != null) {
           PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
           PsiStatement sourceStatement = getStreamSourceStatement();
-          if( sourceStatement instanceof PsiLoopStatement && ControlFlowUtils.statementBreaksLoop(thenStatement,
-                                                                                                  (PsiLoopStatement)sourceStatement)) {
+          if(sourceStatement instanceof PsiLoopStatement loop && ControlFlowUtils.statementBreaksLoop(thenStatement, loop)) {
             TakeWhileOp op = new TakeWhileOp(condition, myVariable, true);
             PsiStatement[] leftOver = Arrays.copyOfRange(myStatements, 1, myStatements.length);
             return new TerminalBlock(this, op, myVariable, leftOver);
@@ -264,8 +259,8 @@ final class TerminalBlock {
       tb = new TerminalBlock(myOperations, myVariable, Arrays.copyOfRange(myStatements, count, myStatements.length)).extractFilter();
     }
     PsiStatement sourceStatement = getStreamSourceStatement();
-    if (tb == null || (sourceStatement instanceof PsiLoopStatement && !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(),
-                                                                                                            (PsiLoopStatement)sourceStatement))) return this;
+    if (tb == null || (sourceStatement instanceof PsiLoopStatement loop && 
+                       !ControlFlowUtils.statementBreaksLoop(tb.getSingleStatement(), loop))) return this;
     FilterOp filter = tb.getLastOperation(FilterOp.class);
     if (filter == null) return this;
     PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(filter.getExpression()), PsiBinaryExpression.class);
@@ -275,30 +270,25 @@ final class TerminalBlock {
     boolean flipped = false;
     int delta = 0;
     switch (comparison) {
-      case "==":
-      case ">=":
-        break;
-      case ">":
-        delta = 1;
-        break;
-      case "<":
+      case "==", ">=" -> { }
+      case ">" -> delta = 1;
+      case "<" -> {
         delta = 1;
         flipped = true;
-        break;
-      case "<=":
-        flipped = true;
-        break;
-      default:
+      }
+      case "<=" -> flipped = true;
+      default -> {
         return this;
+      }
     }
     PsiExpression countExpression = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
     if(countExpression == null || VariableAccessUtils.variableIsUsed(myVariable, countExpression)) return this;
     PsiExpression incrementedValue = extractIncrementedLValue(countExpression);
     PsiLocalVariable var = null;
     if (dedicatedCounter) {
-      if (!(incrementedValue instanceof PsiReferenceExpression)) return this;
-      var = tryCast(((PsiReferenceExpression)incrementedValue).resolve(), PsiLocalVariable.class);
-      if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
+      if (!(incrementedValue instanceof PsiReferenceExpression ref)) return this;
+      var = tryCast(ref.resolve(), PsiLocalVariable.class);
+      if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || VariableAccessUtils.getVariableReferences(var).size() != 1) return this;
     }
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
     if(!ExpressionUtils.isSafelyRecomputableExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
@@ -321,8 +311,7 @@ final class TerminalBlock {
     return block.add(new LimitOp(block.getVariable(), countExpression, limit, var, delta));
   }
 
-  @Nullable
-  private PsiLocalVariable extractCollectionAdditionVariable() {
+  private @Nullable PsiLocalVariable extractCollectionAdditionVariable() {
     PsiMethodCallExpression call = getSingleMethodCall();
     if (!isCallOf(call, CommonClassNames.JAVA_UTIL_COLLECTION, "add")) return null;
     PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -341,8 +330,7 @@ final class TerminalBlock {
     return var;
   }
 
-  @NotNull
-  private TerminalBlock replace(Operation orig, Operation replacement) {
+  private @NotNull TerminalBlock replace(Operation orig, Operation replacement) {
     int idx = ArrayUtil.indexOf(myOperations, orig);
     if(idx == -1) {
       throw new NoSuchElementException(orig.toString());
@@ -415,8 +403,7 @@ final class TerminalBlock {
    * Extract all possible intermediate operations
    * @return the terminal block with all possible terminal operations extracted (may return this if no operations could be extracted)
    */
-  @NotNull
-  private TerminalBlock extractOperations() {
+  private @NotNull TerminalBlock extractOperations() {
     return StreamEx.iterate(this, Objects::nonNull, TerminalBlock::extractOperation).reduce((a, b) -> b).orElse(this);
   }
 
@@ -509,18 +496,15 @@ final class TerminalBlock {
     return StreamEx.of(myOperations).map(operation -> operation.createReplacement(ct)).joining();
   }
 
-  @NotNull
-  static TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
+  static @NotNull TerminalBlock from(StreamSource source, @NotNull PsiStatement body) {
     return fromStatements(source, body);
   }
 
-  @NotNull
-  static TerminalBlock fromStatements(StreamSource source, PsiStatement @NotNull ... statements) {
+  static @NotNull TerminalBlock fromStatements(StreamSource source, PsiStatement @NotNull ... statements) {
     return new TerminalBlock(null, source, source.myVariable, statements).extractOperations().tryPeelLimit(false).tryExtractDistinct();
   }
 
-  @NotNull
-  static TerminalBlock from(StreamSource source, @NotNull PsiCodeBlock block) {
+  static @NotNull TerminalBlock from(StreamSource source, @NotNull PsiCodeBlock block) {
     return fromStatements(source, block.getStatements());
   }
 

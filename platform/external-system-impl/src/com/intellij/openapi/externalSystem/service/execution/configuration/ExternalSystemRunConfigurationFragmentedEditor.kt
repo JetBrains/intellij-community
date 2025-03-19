@@ -4,7 +4,10 @@ package com.intellij.openapi.externalSystem.service.execution.configuration
 import com.intellij.diagnostic.logging.LogsGroupFragment
 import com.intellij.execution.ui.*
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ExternalSystemRunConfigurationFragmentedEditor(
   runConfiguration: ExternalSystemRunConfiguration
 ) : RunConfigurationFragmentedEditor<ExternalSystemRunConfiguration>(
@@ -12,7 +15,7 @@ class ExternalSystemRunConfigurationFragmentedEditor(
   ExternalSystemRunConfigurationExtensionManager.getInstance()
 ) {
   override fun createRunFragments(): List<SettingsEditorFragment<ExternalSystemRunConfiguration, *>> {
-    return SettingsFragmentsContainer.fragments {
+    return SettingsEditorFragmentContainer.fragments {
       add(CommonParameterFragments.createRunHeader())
       addAll(BeforeRunFragment.createGroup())
       add(CommonTags.parallelRun())

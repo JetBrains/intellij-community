@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -14,13 +14,16 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
+@ApiStatus.Internal
+public final class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   private static final Key<Integer> CARET_SHIFT = Key.create("tab.out.caret.shift");
 
   @Override
@@ -109,11 +112,9 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
 
     private List<RangeMarker> getCurrentScopes(boolean create) {
       Caret currentCaret = myEditor.getCaretModel().getCurrentCaret();
-      List<RangeMarker> result = currentCaret.getUserData(TRACKED_SCOPES);
-      if (result == null && create) {
-        result = currentCaret.putUserDataIfAbsent(TRACKED_SCOPES, ContainerUtil.createLockFreeCopyOnWriteList());
-      }
-      return result;
+      return create ?
+             ConcurrencyUtil.computeIfAbsent(currentCaret, TRACKED_SCOPES, ()->ContainerUtil.createLockFreeCopyOnWriteList())
+             : currentCaret.getUserData(TRACKED_SCOPES);
     }
 
     private void registerScope(final int offsetStart, final int offsetEnd, final int caretShift) {

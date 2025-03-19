@@ -1,1 +1,0 @@
-ldap3.protocol.sasl.kerberos  # requires gssapi package to import

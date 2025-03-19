@@ -4,11 +4,13 @@ package com.intellij.openapi.module.impl
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("module-renaming")
 class ModuleRenamingHistoryState {
   @Property(surroundWithTag = false)
   @XMap(entryTagName = "module", keyAttributeName = "old-name", valueAttributeName = "new-name")
   @JvmField
-  var oldToNewName: HashMap<String, String> = HashMap<String, String>()
+  var oldToNewName: HashMap<String, String> = HashMap()
 }

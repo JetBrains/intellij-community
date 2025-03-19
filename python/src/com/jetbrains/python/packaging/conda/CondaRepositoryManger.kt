@@ -2,17 +2,21 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackageVersion
+import com.jetbrains.python.packaging.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.pip.PipBasedRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
-class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
+@ApiStatus.Internal
+internal class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryManager(project, sdk) {
 
   override val repositories: List<PyPackageRepository>
     get() = listOf(CondaPackageRepository) + super.repositories
@@ -41,15 +45,36 @@ class CondaRepositoryManger(project: Project, sdk: Sdk) : PipBasedRepositoryMana
     return super.buildPackageDetails(rawInfo, spec)
   }
 
-  override suspend fun initCaches() {
-    super.initCaches()
-    service<CondaPackageCache>().apply {
-      if (isEmpty()) refreshAll(sdk, project)
+  override suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion? {
+    if (spec is CondaPackageSpecification) {
+      if (spec.name == "python") return null
+      val versions = service<CondaPackageCache>()[spec.name]
+      if (versions.isNullOrEmpty()) {
+        thisLogger().info("No versions in conda cache for package ${spec.name}")
+        return null
+      }
+      return PyPackageVersionNormalizer.normalize(versions.first())
     }
+    return super.getLatestVersion(spec)
   }
 
-  override suspend fun refreshCashes() {
-    super.refreshCashes()
-    service<CondaPackageCache>().refreshAll(sdk, project)
+  override suspend fun refreshCaches() {
+    super.refreshCaches()
+    service<CondaPackageCache>().forceReloadCache(sdk, project)
+  }
+
+  override suspend fun initCaches() {
+    super.initCaches()
+    service<CondaPackageCache>().reloadCache(sdk, project)
+  }
+
+  override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {
+    return if (repository is CondaPackageRepository) {
+      service<CondaPackageCache>().packages
+        .filter { StringUtil.containsIgnoreCase(it, query) }
+    }
+    else {
+      super.searchPackages(query, repository)
+    }
   }
 }

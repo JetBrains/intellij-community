@@ -2,6 +2,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -14,12 +15,13 @@ import javax.swing.JComponent
 internal interface ToolWindowButtonManager {
   val isNewUi: Boolean
 
-  fun add(pane: JComponent)
+  fun setupToolWindowPane(pane: JComponent)
 
-  fun addToToolWindowPane(pane: JComponent) {
-  }
+  fun wrapWithControls(pane: ToolWindowPane): JComponent
 
-  fun initMoreButton() {}
+  fun initMoreButton(project: Project) {}
+
+  fun updateResizeState(toolbar: ToolWindowToolbar?) {}
 
   fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean
 

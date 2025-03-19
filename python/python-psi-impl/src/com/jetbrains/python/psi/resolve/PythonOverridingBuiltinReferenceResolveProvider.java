@@ -27,11 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverridingReferenceResolveProvider {
+public final class PythonOverridingBuiltinReferenceResolveProvider implements PyOverridingReferenceResolveProvider {
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+  public @NotNull List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
 
     // resolve implicit __class__ inside method

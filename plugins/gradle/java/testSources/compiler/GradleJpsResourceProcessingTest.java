@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -345,12 +346,18 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -391,12 +398,18 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -439,12 +452,18 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -485,12 +504,19 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
         }"""
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertTestSources("project.integrationTest", "java");
-    assertTestResources("project.integrationTest", "resources");
+
+    assertSourceRoots("project.main", it -> it
+      .sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      .sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    );
+    assertSourceRoots("project.test", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    );
+    assertSourceRoots("project.integrationTest", it -> it
+      .sourceRoots(ExternalSystemSourceType.TEST, path("src/integrationTest/java"))
+      .sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/integrationTest/resources"))
+    );
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -498,8 +524,8 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     assertCopied("out/production/resources/dir/file.properties");
     assertCopied("out/test/resources/dir/file-test.properties");
     assertCopied("out/test/classes/Test.class");
-    assertCopied("out/test/resources/dir/file-integrationTest.properties");
-    assertCopied("out/test/classes/IntegrationTest.class");
+    assertCopied("out/integrationTest/resources/dir/file-integrationTest.properties");
+    assertCopied("out/integrationTest/classes/IntegrationTest.class");
   }
 
   private void createFilesForIncludesAndExcludesTest() throws IOException {

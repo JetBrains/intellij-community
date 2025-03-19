@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +22,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public class ActionTracer implements UiDebuggerExtension, AnActionListener {
+public final class ActionTracer implements UiDebuggerExtension, AnActionListener {
   private static final Logger LOG = Logger.getInstance("ActionTracer");
 
   private JTextArea myText;

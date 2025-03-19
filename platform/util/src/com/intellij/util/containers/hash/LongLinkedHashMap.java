@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
+import it.unimi.dsi.fastutil.HashCommon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +15,7 @@ import java.util.*;
  * NOTE: not the same as {@link java.util.LinkedHashMap} -- this implementation supports .accessOrder,
  * which re-orders entries on .get() 
  */
+@ApiStatus.Internal
 public class LongLinkedHashMap<V> {
   private static final long NULL_KEY = 0L;
 
@@ -139,7 +142,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private void init(int capacity) {
-    table = new Entry[HashUtil.adjustTableSize((int)(capacity / loadFactor))];
+    table = new Entry[HashCommon.arraySize(capacity, loadFactor)];
     top = back = null;
     this.capacity = capacity;
   }
@@ -209,7 +212,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private void rehash(int capacity) {
-    table = new Entry[HashUtil.adjustTableSize((int)(capacity / loadFactor))];
+    table = new Entry[HashCommon.arraySize(capacity, loadFactor)];
     this.capacity = capacity;
     final Entry<V>[] table = this.table;
     final int tableLen = table.length;
@@ -330,7 +333,7 @@ public class LongLinkedHashMap<V> {
   }
 
   private static int hashCode(long value) {
-    return ((int)(value ^ (value >>> 32))) & 0x7fffffff;
+    return Long.hashCode(value) & 0x7fffffff;
   }
 
   private final class Values extends AbstractCollection<V> {

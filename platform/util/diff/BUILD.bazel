@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.util.diff` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "diff",
+  module_name = "intellij.platform.util.diff",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/util/base",
+    "//platform/util-rt",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:fastutil-min",
+  ]
+)
+### auto-generated section `build intellij.platform.util.diff` end

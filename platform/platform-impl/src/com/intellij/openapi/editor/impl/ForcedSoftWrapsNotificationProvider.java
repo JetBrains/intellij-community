@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,12 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public final class ForcedSoftWrapsNotificationProvider implements EditorNotificationProvider, DumbAware {
+final class ForcedSoftWrapsNotificationProvider implements EditorNotificationProvider, DumbAware {
   private static final String DISABLED_NOTIFICATION_KEY = "disable.forced.soft.wraps.notification";
 
   @Override
-  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                 @NotNull VirtualFile file) {
+  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                @NotNull VirtualFile file) {
     return fileEditor -> {
       if (!(fileEditor instanceof TextEditor)) return null;
       final Editor editor = ((TextEditor)fileEditor).getEditor();

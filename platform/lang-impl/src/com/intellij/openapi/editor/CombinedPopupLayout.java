@@ -3,12 +3,14 @@ package com.intellij.openapi.editor;
 
 import com.intellij.ui.WidthBasedLayout;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-final class CombinedPopupLayout implements LayoutManager {
+@ApiStatus.Internal
+public final class CombinedPopupLayout implements LayoutManager {
 
   private static final int MAX_POPUP_WIDTH = 950;
 
@@ -28,6 +30,11 @@ final class CombinedPopupLayout implements LayoutManager {
 
   @Override
   public Dimension preferredLayoutSize(Container parent) {
+    // QuickDoc contents can be updated,
+    // we need to clear the preferred size cache
+    if (quickDocComponent != null) {
+      quickDocComponent.setPreferredSize(null);
+    }
     int w1 = WidthBasedLayout.getPreferredWidth(highlightInfoComponent);
     int w2 = WidthBasedLayout.getPreferredWidth(quickDocComponent);
     int preferredWidth = Math.min(JBUI.scale(MAX_POPUP_WIDTH), Math.max(w1, w2));
@@ -54,9 +61,31 @@ final class CombinedPopupLayout implements LayoutManager {
       highlightInfoComponent.setBounds(0, 0, width, height);
     }
     else {
-      int h1 = Math.min(height, highlightInfoComponent.getPreferredSize().height);
-      highlightInfoComponent.setBounds(0, 0, width, h1);
-      quickDocComponent.setBounds(0, h1, width, height - h1);
+      int h1 = WidthBasedLayout.getPreferredHeight(highlightInfoComponent, width);
+      int h2 = WidthBasedLayout.getPreferredHeight(quickDocComponent, width);
+
+      int h1Res;
+      int h2Res;
+      if (h1 + h2 <= height) {
+        h1Res = h1;
+        h2Res = height - h1;
+      }
+      else if (h1 < height / 2) {
+        h1Res = h1;
+        h2Res = height - h1;
+      }
+      else if (h2 < height / 2) {
+        h1Res = height - h2;
+        h2Res = h2;
+      }
+      else {
+        double h1Fraction = ((double) h1) / (h1 + h2);
+        h1Res = (int) (h1Fraction * height);
+        h2Res = height - h1Res;
+      }
+
+      highlightInfoComponent.setBounds(0, 0, width, h1Res);
+      quickDocComponent.setBounds(0, h1Res, width, h2Res);
     }
   }
 }

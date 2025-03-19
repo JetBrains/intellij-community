@@ -100,10 +100,6 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                  SwingUtilities.class
                 -PsiPackage: META-INF
                  MANIFEST.MF
-                 MANIFEST.MF
-                -PsiPackage: org
-                 +PsiPackage: intellij.lang.annotations
-                 +PsiPackage: jetbrains.annotations
                 LICENSE
              """
       , 4);
@@ -151,10 +147,6 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                 SwingUtilities.class
                -PsiPackage: META-INF
                 MANIFEST.MF
-                MANIFEST.MF
-               -PsiPackage: org
-                +PsiPackage: intellij.lang.annotations
-                +PsiPackage: jetbrains.annotations
                LICENSE
              """
       , 3);

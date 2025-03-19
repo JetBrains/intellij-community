@@ -1,0 +1,11 @@
+// "Create extension function 'String.plus2More'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+
+private fun Int.toMyText2(): String {
+    return "".plus2More();
+}
+
+private fun String.plus2More(): String {
+    <selection>TODO("Not yet implemented")<caret></selection>
+}

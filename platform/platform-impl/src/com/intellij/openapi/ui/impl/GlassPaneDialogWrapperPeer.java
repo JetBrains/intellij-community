@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -24,13 +24,17 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.ShadowJava2DPainter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,6 +43,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.WeakReference;
 import java.util.concurrent.CompletableFuture;
 
+@ApiStatus.Internal
 public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   private static final Logger LOG = Logger.getInstance(GlassPaneDialogWrapperPeer.class);
 
@@ -232,14 +237,13 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     throw new UnsupportedOperationException("Not implemented in " + getClass().getCanonicalName());
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
   @Override
-  public void setLocation(@NotNull final Point p) {
+  public void setLocation(final @NotNull Point p) {
     setLocation(p.x, p.y);
   }
 
@@ -332,7 +336,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     });
   }
 
-  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, DataProvider {
+  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, UiDataProvider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -348,8 +352,9 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     private MyDialog(IdeGlassPaneEx pane, DialogWrapper wrapper) {
       setLayout(new BorderLayout());
       setOpaque(false);
-      setBorder(BorderFactory.createEmptyBorder(AllIcons.Ide.Shadow.Top.getIconHeight(), AllIcons.Ide.Shadow.Left.getIconWidth(),
-                                                AllIcons.Ide.Shadow.Bottom.getIconHeight(), AllIcons.Ide.Shadow.Right.getIconWidth()));
+
+      Insets insets = ShadowJava2DPainter.Type.IDE.getInsets();
+      setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
 
       myPane = pane;
       myDialogWrapper = new WeakReference<>(wrapper);
@@ -569,12 +574,9 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(@NotNull @NonNls final String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       DialogWrapper wrapper = myDialogWrapper.get();
-      if (wrapper instanceof DataProvider) {
-        return ((DataProvider)wrapper).getData(dataId);
-      }
-      return null;
+      DataSink.uiDataSnapshot(sink, wrapper);
     }
 
     @Override
@@ -658,7 +660,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
   }
 
-  public static class GlasspanePeerUnavailableException extends Exception {
+  public static final class GlasspanePeerUnavailableException extends Exception {
   }
 
   public static final class TransparentLayeredPane extends JBLayeredPane {

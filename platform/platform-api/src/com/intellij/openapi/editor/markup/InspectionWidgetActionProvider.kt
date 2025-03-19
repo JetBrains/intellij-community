@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.markup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface InspectionWidgetActionProvider {
   companion object {
@@ -17,6 +18,9 @@ interface InspectionWidgetActionProvider {
    * All groups will be flattened upon adding to the inspection widget toolbar.
    *
    * May return null if no action should be created for the given editor.
+   *
+   * AnAction may implement Disposable, its `dispose` method will be called on editor disposal on the action unregistration
    */
+  @RequiresEdt
   fun createAction(editor: Editor): AnAction?
 }

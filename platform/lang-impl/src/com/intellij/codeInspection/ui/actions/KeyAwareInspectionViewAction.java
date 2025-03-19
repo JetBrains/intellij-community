@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -20,6 +20,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import java.util.function.Supplier;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public abstract class KeyAwareInspectionViewAction extends InspectionViewActionBase {
   private static final Logger LOG = Logger.getInstance(KeyAwareInspectionViewAction.class);
 
@@ -47,7 +49,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     return wrapper != null && HighlightDisplayKey.find(wrapper.getShortName()) != null;
   }
 
-  public static class DisableInspection extends KeyAwareInspectionViewAction {
+  public static final class DisableInspection extends KeyAwareInspectionViewAction {
     public DisableInspection() {
       super(DisableInspectionToolAction.getNameText());
     }
@@ -96,7 +98,7 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
     }
   }
 
-  public static class RunInspectionOn extends KeyAwareInspectionViewAction {
+  public static final class RunInspectionOn extends KeyAwareInspectionViewAction {
     public RunInspectionOn() {
       super(InspectionsBundle.messagePointer("run.inspection.on.file.intention.text"));
     }

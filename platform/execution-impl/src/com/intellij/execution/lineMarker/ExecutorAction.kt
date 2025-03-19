@@ -2,17 +2,19 @@
 package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
-import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
- * @param order corresponding sorting happens here: [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
+ * @param order corresponding sorting happens here:
+ * [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
  */
 class ExecutorAction private constructor(val origin: AnAction,
                                          val executor: Executor,
                                          val order: Int) :
-  ActionGroup(), ActionWithDelegate<AnAction> {
+  ActionGroup(), DataSnapshotProvider, ActionWithDelegate<AnAction> {
   init {
     copyFrom(origin)
     if (origin !is ActionGroup) {
@@ -21,11 +23,24 @@ class ExecutorAction private constructor(val origin: AnAction,
     }
   }
 
-  override fun getActionUpdateThread() = origin.actionUpdateThread
+  override fun getDelegate(): AnAction = origin
+
+  override fun isDumbAware() = origin.isDumbAware
+
+  override fun getActionUpdateThread() = ActionWrapperUtil.getActionUpdateThread(this, origin)
+
+  override fun dataSnapshot(sink: DataSink) {
+    if (order != 0) {
+      sink[orderKey] = order
+    }
+  }
 
   companion object {
+    private val LOG = logger<ExecutorAction>()
+
     @JvmStatic
     val orderKey: DataKey<Int> = DataKey.create("Order")
+
     @JvmStatic
     @JvmOverloads
     fun getActions(order: Int = 0) = getActionList(order).toTypedArray()
@@ -34,78 +49,64 @@ class ExecutorAction private constructor(val origin: AnAction,
     @JvmOverloads
     fun getActionList(order: Int = 0): List<AnAction> {
       val actionManager = ActionManager.getInstance()
-      val createAction = actionManager.getAction("CreateRunConfiguration")
+
+      val extraActionsGroup = actionManager.getAction("RunLineMarkerExtraActions")
+      val extraActions = (extraActionsGroup as? DefaultActionGroup)?.getChildren(actionManager) ?: run {
+        LOG.error("extraActionsGroup doesn't inherit DefaultActionGroup. extraActionsGroup.class=${extraActionsGroup.javaClass.name}")
+        emptyArray<AnAction>()
+      }
       val extensions = Executor.EXECUTOR_EXTENSION_NAME.extensionList
-      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 2))
+      val result = ArrayList<AnAction>(extensions.size + extraActions.size)
+
       extensions
         .mapNotNullTo(result) { executor ->
           actionManager.getAction(executor.contextActionId)?.let {
             ExecutorAction(it, executor, order)
           }
         }
-      if (createAction != null) {
-        result.add(object : ActionGroupWrapper(createAction as ActionGroup) {
-          override fun update(e: AnActionEvent) {
-            super.update(wrapEvent(e, order))
-          }
 
-          override fun actionPerformed(e: AnActionEvent) {
-            super.actionPerformed(wrapEvent(e, order))
-          }
+      for (extraAction in extraActions) {
+        if (extraAction is ActionGroup) {
+          result.add(object : ActionGroupWrapper(extraAction), DataSnapshotProvider {
+            override fun dataSnapshot(sink: DataSink) {
+              sink[orderKey] = order
+            }
 
-          override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-            return super.getChildren(e?.let { wrapEvent(e, order)})
-          }
+            override fun equals(other: Any?): Boolean {
+              return other is ActionGroupWrapper && delegate == other.delegate
+            }
 
-          override fun equals(other: Any?): Boolean {
-            return other is ActionGroupWrapper && delegate == other.delegate;
-          }
-
-          override fun hashCode(): Int {
-            return createAction.hashCode()
-          }
-        })
+            override fun hashCode(): Int {
+              return delegate.hashCode()
+            }
+          })
+        }
       }
+
       return result
     }
 
-    private fun wrapEvent(e: AnActionEvent, order : Int): AnActionEvent {
-      val dataContext = wrapContext(e.dataContext, order)
-      return AnActionEvent(e.inputEvent, dataContext, e.place, e.presentation, e.actionManager, e.modifiers)
-    }
-
-    private fun wrapContext(dataContext: DataContext, order : Int): DataContext {
-      return if (order == 0) dataContext else MyDataContext(dataContext, order)
-    }
-
+    @ApiStatus.Internal
     @JvmStatic
-    fun wrap(runContextAction: RunContextAction, order: Int): AnAction {
-      return ExecutorAction(runContextAction, runContextAction.executor, order)
+    fun wrap(runContextAction: AnAction, executor: Executor, order: Int): AnAction {
+      return ExecutorAction(runContextAction, executor, order)
     }
-  }
-
-  override fun getDelegate(): AnAction {
-    return origin
   }
 
   override fun update(e: AnActionEvent) {
-    origin.update(wrapEvent(e, order))
+    ActionWrapperUtil.update(e, this, origin)
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (origin !is ActionGroup) return EMPTY_ARRAY
+    return ActionWrapperUtil.getChildren(e, this, origin)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    origin.actionPerformed(wrapEvent(e, order))
+    ActionWrapperUtil.actionPerformed(e, this, origin)
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = (origin as? ActionGroup)?.getChildren(e?.let { wrapEvent(it, order) }) ?: AnAction.EMPTY_ARRAY
-
-  override fun isDumbAware() = origin.isDumbAware
-
-  override fun isPopup() = origin !is ActionGroup || origin.isPopup
-
-  override fun hideIfNoVisibleChildren() = origin is ActionGroup && origin.hideIfNoVisibleChildren()
-
-  override fun disableIfNoVisibleChildren() = origin is ActionGroup && origin.disableIfNoVisibleChildren()
-
+  // for EquatableTooltipProvider
   override fun equals(other: Any?): Boolean {
     if (this === other) {
       return true
@@ -126,14 +127,5 @@ class ExecutorAction private constructor(val origin: AnAction,
     result = 31 * result + executor.hashCode()
     result = 31 * result + order
     return result
-  }
-  
-  private class MyDataContext(delegate: DataContext, val order: Int) : DataContextWrapper(delegate) {
-    override fun getRawCustomData(dataId: String): Any? {
-      if (orderKey.`is`(dataId)) {
-        return order
-      }
-      return null
-    }
   }
 }

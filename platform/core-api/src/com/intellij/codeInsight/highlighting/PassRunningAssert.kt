@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicLong
 
 @Internal
-class PassRunningAssert(val assertMessage: String) {
+class PassRunningAssert(private val assertMessage: String) {
 
   private val passIsRunning = ThreadLocal<Boolean>()
 

@@ -36,7 +36,5 @@ class WebSymbolsContextProviderExtensionPoint : BaseKeyedLazyInstance<WebSymbols
     return implementation
   }
 
-  override fun getKey(): String? {
-    return "$kind:$name"
-  }
+  override fun getKey(): String = "$kind:$name"
 }

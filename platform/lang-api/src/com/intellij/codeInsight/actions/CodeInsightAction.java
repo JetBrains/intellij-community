@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,21 +38,25 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     Project project = e.getProject();
     if (project != null) {
       Editor editor = getEditor(e.getDataContext(), project, false);
-      actionPerformedImpl(project, editor);
+      actionPerformedImpl(project, editor, e.getDataContext());
     }
   }
 
-  @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
-  public void actionPerformedImpl(@NotNull final Project project, final Editor editor) {
+  public void actionPerformedImpl(final @NotNull Project project, final Editor editor) {
+    actionPerformedImpl(project, editor, DataContext.EMPTY_CONTEXT);
+  }
+
+  private void actionPerformedImpl(final @NotNull Project project, final Editor editor, @NotNull DataContext dataContext) {
     if (editor == null) return;
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
-    final CodeInsightActionHandler handler = getHandler();
+    final CodeInsightActionHandler handler = getHandler(dataContext);
+
     PsiElement elementToMakeWritable = handler.getElementToMakeWritable(psiFile);
     if (elementToMakeWritable != null &&
         !(EditorModificationUtil.checkModificationAllowed(editor) &&
@@ -89,7 +94,7 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     final DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext, project, true);
     if (editor == null) {
-      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
+      presentation.setVisible(!e.isFromContextMenu());
       presentation.setEnabled(false);
       return;
     }
@@ -116,8 +121,15 @@ public abstract class CodeInsightAction extends AnAction implements PerformWithD
     return true;
   }
 
-  @NotNull
-  protected abstract CodeInsightActionHandler getHandler();
+  /**
+   * Use {@link CodeInsightAction#getHandler(DataContext)}
+   */
+  @ApiStatus.Obsolete
+  protected abstract @NotNull CodeInsightActionHandler getHandler();
+
+  protected @NotNull CodeInsightActionHandler getHandler(@NotNull DataContext dataContext) {
+    return getHandler();
+  }
 
   protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();

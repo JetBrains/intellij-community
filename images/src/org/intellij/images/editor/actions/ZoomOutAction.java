@@ -32,26 +32,26 @@ import org.jetbrains.annotations.NotNull;
  * @see ImageEditor#getZoomModel
  */
 public final class ZoomOutAction extends AnAction implements DumbAware {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-        ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
-        if (decorator != null) {
-            ImageZoomModel zoomModel = decorator.getZoomModel();
-            zoomModel.zoomOut();
-        }
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+    if (decorator != null) {
+      ImageZoomModel zoomModel = decorator.getZoomModel();
+      zoomModel.zoomOut();
     }
+  }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-        if (ImageEditorActionUtil.setEnabled(e)) {
-            ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
-            ImageZoomModel zoomModel = decorator.getZoomModel();
-            e.getPresentation().setEnabled(zoomModel.canZoomOut());
-        }
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (ImageEditorActionUtil.setEnabled(e)) {
+      ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
+      ImageZoomModel zoomModel = decorator.getZoomModel();
+      e.getPresentation().setEnabled(zoomModel.canZoomOut());
     }
+  }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

@@ -1,14 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.BitUtil;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.platform.win32.WinNT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +70,20 @@ public final class NioFiles {
   }
 
   /**
+   * Same as {@link Files#size(Path)}, but returns {@code -1} instead of throwing {@link IOException}.
+   */
+  public static long sizeIfExists(@NotNull Path path) {
+    try {
+      return Files.size(path);
+    }
+    catch (IOException e) {
+      return -1;
+    }
+  }
+
+  /**
    * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
-   * I.e. this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
+   * I.e., this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */
   public static @NotNull Path createDirectories(@NotNull Path path) throws IOException {
     try {
@@ -98,6 +112,33 @@ public final class NioFiles {
         throw e;
       }
     }
+  }
+
+  /**
+   * Creates all parent directories of the given path; returns the argument.
+   * Example: {@code Files.newOutputStream(NioFiles.createParentDirectories(file))}.
+   */
+  public static @NotNull Path createParentDirectories(@NotNull Path path) throws IOException {
+    Path parent = path.getParent();
+    if (parent != null) createDirectories(parent);
+    return path;
+  }
+
+  /**
+   * An accompaniment for {@link Files#createFile} that doesn't fret upon existing files (and symlinks to),
+   * and also creates missing directories.
+   */
+  public static @NotNull Path createIfNotExists(@NotNull Path path) throws IOException {
+    createParentDirectories(path);
+    try {
+      Files.createFile(path);
+    }
+    catch (FileAlreadyExistsException e) {
+      if (!Files.isRegularFile(path)) {
+        throw e;
+      }
+    }
+    return path;
   }
 
   /**
@@ -199,15 +240,87 @@ public final class NioFiles {
   }
 
   /**
-   * <p>Recursively deletes the given directory or file, if it exists. Does not follow symlinks or junctions
-   * (i.e. deletes just links, not targets). Invokes the callback before deleting a file or a directory
-   * (the latter - after deleting it's content). Fails fast (throws an exception right after meeting a problematic file and
-   * does not tries to delete the rest first).</p>
+   * <p>Recursively deletes the given directory or file if it exists.
+   * Does not follow symlinks or junctions (i.e., deletes just links, not targets).
+   * Invokes the callback before deleting a file or a directory (the latter - after deleting its content).
+   * Fails fast (throws an exception right after meeting a problematic file and does not try to delete the rest first).</p>
    *
    * <p>Implementation detail: the method tries to delete a file up to 10 times with 10 ms pause between attempts -
    * usually it's enough to overcome intermittent file lock on Windows.</p>
    */
   public static void deleteRecursively(@NotNull Path fileOrDirectory, @NotNull Consumer<? super Path> callback) throws IOException {
     FileUtilRt.deleteRecursively(fileOrDirectory, callback::accept);
+  }
+
+  /**
+   * See {@link #copyRecursively(Path, Path, Consumer)}.
+   */
+  @ApiStatus.Experimental
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to) throws IOException {
+    copyRecursively(from, to, null);
+  }
+
+  /**
+   * <p>Recursively copies the given directory or file; for files, copies attributes.
+   * Does not follow symlinks (i.e., copies just links, not targets).
+   * Merges with an existing directory structure under {@code to} (if any), but does not overwrite existing files.
+   * Invokes the callback before copying a file or a directory.
+   * Fails fast (throws an exception right after meeting a problematic file or directory); does not try to delete an incomplete copy.</p>
+   */
+  @ApiStatus.Experimental
+  public static void copyRecursively(@NotNull Path from, @NotNull Path to, @Nullable Consumer<? super Path> callback) throws IOException {
+    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        if (callback != null) callback.accept(dir);
+        Path copy = dir == from ? to : to.resolve(from.relativize(dir));
+        createDirectories(copy);
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (callback != null) callback.accept(file);
+        Path copy = file == from ? to : to.resolve(from.relativize(file));
+        Files.copy(file, copy, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+  }
+
+  /**
+   * A handy stub for building tree stats collecting visitors (e.g., for estimating the number of files before deletion).
+   * It ignores exceptions and skips symlinks and NTFS reparse points.
+   */
+  public abstract static class StatsCollectingVisitor extends SimpleFileVisitor<Path> {
+    protected abstract void countDirectory(Path dir, BasicFileAttributes attrs);
+    protected abstract void countFile(Path file, BasicFileAttributes attrs);
+
+    @Override
+    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+      countDirectory(dir, attrs);
+      if (attrs.isSymbolicLink() || SystemInfoRt.isWindows && attrs.isOther() /*probably an NTFS reparse point*/) {
+        return FileVisitResult.SKIP_SUBTREE;
+      }
+      else {
+        return FileVisitResult.CONTINUE;
+      }
+    }
+
+    @Override
+    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+      countFile(file, attrs);
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+      return FileVisitResult.CONTINUE;
+    }
+
+    @Override
+    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+      return FileVisitResult.CONTINUE;
+    }
   }
 }

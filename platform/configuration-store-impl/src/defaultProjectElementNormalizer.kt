@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.configurationStore
@@ -13,10 +13,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.outputStream
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.io.path.exists
 
 internal fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   // first, process all known in advance components, because later all not known component names will be moved to misc.xml
@@ -41,8 +41,12 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
 
       "libraryTable" -> {
         iterator.remove()
-        val librariesDir = projectConfigDir.resolve("libraries")
-        convertProfiles(component.getChildren("library").iterator(), componentName, librariesDir) { library ->
+        val libraryDir = projectConfigDir.resolve("libraries")
+        convertProfiles(
+          profileIterator = component.getChildren("library").iterator(),
+          componentName = componentName,
+          schemeDir = libraryDir,
+        ) { library ->
           library.getAttributeValue("name")
         }
       }
@@ -56,9 +60,8 @@ internal fun normalizeDefaultProjectElement(defaultProject: Project, element: El
   moveComponentConfiguration(defaultProject, element, { it }) { projectConfigDir.resolve(it) }
 }
 
-private fun getProfileName(profile: Element): String? {
-  return profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
-}
+private fun getProfileName(profile: Element): String? =
+  profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value")
 
 private fun writeProfileSettings(schemeDir: Path, componentName: String, component: Element) {
   component.removeAttribute("name")
@@ -119,11 +122,11 @@ internal fun moveComponentConfiguration(defaultProject: Project,
     }
   }
 
-  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllImplementationClasses { aClass, _ ->
-    processComponents(aClass)
+  (defaultProject.actualComponentManager as ComponentManagerImpl).processAllHolders { _, componentClass, _ ->
+    processComponents(componentClass)
   }
 
-  // fileResolver may return the same file for different storage names (e.g. for IPR project)
+  // fileResolver may return the same file for different storage names (e.g., for .ipr)
   val storagePathToComponentStates = HashMap<Path, MutableList<Element>>()
   val iterator = componentElements.iterator()
   cI@ for (componentElement in iterator) {
@@ -156,7 +159,7 @@ private fun writeConfigFile(elements: List<Element>, file: Path) {
   }
 
   var wrapper = Element("project").setAttribute("version", "4")
-  if (file.exists()) {
+  if (Files.exists(file)) {
     try {
       wrapper = JDOMUtil.load(file)
     }

@@ -1,18 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SpellCheckingInspection")
-
 package com.intellij.util.text
 
 import com.intellij.util.text.StringOperation.*
-import groovy.transform.CompileStatic
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-@CompileStatic
 class StringOperationTest {
-
   @Test
-  fun `operations equivalence`() {
+  fun `operation equivalence`() {
     assertEquals(replace(1, 1, "x"), insert(1, "x"))
     assertEquals(replace(1, 2, ""), remove(1, 2))
   }

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
@@ -26,7 +26,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * QuickFix to replace chained comparisons with more simple version
  * For instance, a < b and b < c  --> a < b < c
  */
-public class ChainedComparisonsQuickFix implements LocalQuickFix {
+public class ChainedComparisonsQuickFix extends PsiUpdateModCommandQuickFix {
 
   private final boolean myCommonIsInLeftLeft;
   private final boolean myCommonIsInRightLeft;
@@ -46,15 +46,14 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.chained.comparison");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PyBinaryExpression expression = as(descriptor.getPsiElement(), PyBinaryExpression.class);
-    if (isLogicalAndExpression(expression) && expression.isWritable()) {
+  public void applyFix(final @NotNull Project project, final @NotNull PsiElement element, final @NotNull ModPsiUpdater updater) {
+    final PyBinaryExpression expression = as(element, PyBinaryExpression.class);
+    if (isLogicalAndExpression(expression)) {
       final PyBinaryExpression rightExpression = as(expression.getRightExpression(), PyBinaryExpression.class);
       PyBinaryExpression leftExpression = as(expression.getLeftExpression(), PyBinaryExpression.class);
       if (isLogicalAndExpression(leftExpression)) {
@@ -98,8 +97,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     rightExpression.delete();
   }
 
-  @NotNull
-  private static PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
+  private static @NotNull PyExpression makePsiConsistentBinaryExpression(@NotNull Project project, @NotNull PyBinaryExpression binaryExpression) {
     final ArrayList<PyExpression> elements = new ArrayList<>();
     final ArrayList<String> operators = new ArrayList<>();
     collectExpressionsDfs(elements, operators, binaryExpression);
@@ -129,10 +127,9 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     }
   }
 
-  @Nullable
-  private static PyExpression buildResultExpression(@NotNull Project project,
-                                                    @NotNull ArrayList<PyExpression> elements,
-                                                    @NotNull ArrayList<String> operators) {
+  private static @Nullable PyExpression buildResultExpression(@NotNull Project project,
+                                                              @NotNull ArrayList<PyExpression> elements,
+                                                              @NotNull ArrayList<String> operators) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final int size = elements.size();
     if (elements.isEmpty()) return null;
@@ -148,8 +145,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
   }
 
 
-  @NotNull
-  private static PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {
+  private static @NotNull PsiElement getLeftestOperator(@NotNull PyBinaryExpression expression) {
     PsiElement op = expression.getPsiOperator();
     while (isComparisonExpression(expression.getLeftExpression())) {
       expression = (PyBinaryExpression)expression.getLeftExpression();
@@ -159,8 +155,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     return op;
   }
 
-  @NotNull
-  private static PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
+  private static @NotNull PyExpression invertExpression(@NotNull PyBinaryExpression expression, @NotNull PyElementGenerator elementGenerator) {
     if (isComparisonExpression(expression)) {
       final PyExpression left = expression.getLeftExpression();
       final PyExpression right = expression.getRightExpression();
@@ -175,8 +170,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     }
   }
 
-  @NotNull
-  private static String invertOperator(@NotNull PsiElement op) {
+  private static @NotNull String invertOperator(@NotNull PsiElement op) {
     if (op.getText().equals(">")) {
       return "<";
     }
@@ -192,8 +186,7 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
     return op.getText();
   }
 
-  @Nullable
-  static private PyExpression getLargeRightExpression(@NotNull PyBinaryExpression expression, @NotNull Project project) {
+  private static @Nullable PyExpression getLargeRightExpression(@NotNull PyBinaryExpression expression, @NotNull Project project) {
     final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PyExpression left = expression.getLeftExpression();
     PyExpression right = expression.getRightExpression();

@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.platform.statistics.uploader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "uploader_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "uploader",
+  module_name = "intellij.platform.statistics.uploader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/statistics/config",
+    "@lib//:ap-validation",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+  ],
+  exports = ["//platform/statistics/config"],
+  runtime_deps = [":uploader_resources"]
+)
+### auto-generated section `build intellij.platform.statistics.uploader` end

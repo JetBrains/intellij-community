@@ -26,9 +26,9 @@ class EclipseColorSchemeImportTest : LightPlatformTestCase() {
     val input = VfsUtil.findFile(eclipseTestDataRoot / "import" / "colorSchemes" / "eclipseColorTheme.xml", false)!!
     val importer = EclipseColorSchemeImporter()
     val imported = importer.importScheme(project, input, EditorColorsManager.getInstance().globalScheme) {
-      val scheme = EditorColorsSchemeImpl(EmptyColorScheme.INSTANCE)
+      val scheme = EditorColorsSchemeImpl(EmptyColorScheme.getEmptyScheme())
       scheme.name = "EclipseColorSchemeImportTestScheme"
-      scheme.setDefaultMetaInfo(EmptyColorScheme.INSTANCE)
+      scheme.setDefaultMetaInfo(EmptyColorScheme.getEmptyScheme())
       scheme
     }!!
 

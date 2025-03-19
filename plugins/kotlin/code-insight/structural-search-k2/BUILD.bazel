@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.code-insight.structural-search.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.analysis.api.KaIdeApi"]
+)
+
+jvm_resources(
+  name = "kotlin-code-insight-structural-search-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-structural-search-k2",
+  module_name = "kotlin.code-insight.structural-search.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:guava",
+    "//platform/core-ui",
+    "//platform/core-impl",
+    "//platform/ide-core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/structuralsearch:structuralSearch",
+    "//platform/editor-ui-api:editor-ui",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+  ],
+  runtime_deps = [":kotlin-code-insight-structural-search-k2_resources"]
+)
+### auto-generated section `build kotlin.code-insight.structural-search.k2` end

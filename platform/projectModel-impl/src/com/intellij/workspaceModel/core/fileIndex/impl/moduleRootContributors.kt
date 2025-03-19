@@ -1,14 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistry
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.annotations.ApiStatus
 
 class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRootEntity>, PlatformInternalWorkspaceFileIndexContributor {
@@ -32,14 +38,14 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     val module = entity.contentRoot.module.findModule(storage)
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
-      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootType)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
+      val kind = if (SourceRootTypeRegistry.getInstance().findTypeById(entity.rootTypeId)?.isForTests == true) WorkspaceFileKind.TEST_CONTENT else WorkspaceFileKind.CONTENT
       val javaProperties = entity.asJavaSourceRoot()
       val resourceProperties = entity.asJavaResourceRoot()
       val packagePrefix = javaProperties?.packagePrefix
                           ?: resourceProperties?.relativeOutputPath?.replace('/', '.')
                           ?: ""
       val forGeneratedSources = javaProperties != null && javaProperties.generated || resourceProperties != null && resourceProperties.generated
-      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix, forGeneratedSources))
+      registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootTypeId, packagePrefix, forGeneratedSources))
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
   }
@@ -79,7 +85,7 @@ interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 /**
  * Marks files sets which correspond to JVM packages. This interface will be removed from the platform when we get rid of Java-specific
  * methods like [com.intellij.openapi.roots.ProjectFileIndex.getPackageNameByDirectory] in the platform API, so plugins must use
- * [com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData] instead. 
+ * [com.intellij.java.workspace.fileIndex.JvmPackageRootData] instead. 
  */
 @ApiStatus.Internal
 interface JvmPackageRootDataInternal: WorkspaceFileSetData {
@@ -91,7 +97,7 @@ internal data class ModuleContentRootData(override val module: Module, override 
 internal data class ModuleSourceRootData(
   override val module: Module,
   override val customContentRoot: VirtualFile?,
-  val rootType: String,
+  val rootTypeId: SourceRootTypeId,
   override val packagePrefix: String,
   val forGeneratedSources: Boolean
 ) : ModuleContentOrSourceRootData, ModuleOrLibrarySourceRootData, JvmPackageRootDataInternal

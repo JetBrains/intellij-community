@@ -7,6 +7,12 @@ repositories {
 }
 
 kotlin {
+    /* Waiting for compilerOptions API to get back */
+    @Suppress("INVISIBLE_MEMBER")
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvm {
         withJava()
     }

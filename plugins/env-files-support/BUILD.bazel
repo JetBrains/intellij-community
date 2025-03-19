@@ -1,0 +1,57 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "dotenv-docker_resources",
+  files = glob(["docker/resources/**/*"]),
+  strip_prefix = "docker/resources",
+  visibility = ["//visibility:public"],
+)
+
+jvm_resources(
+  name = "dotenv-go_resources",
+  files = glob(["go/resources/**/*"]),
+  strip_prefix = "go/resources",
+  visibility = ["//visibility:public"],
+)
+
+jvm_resources(
+  name = "dotenv-ruby_resources",
+  files = glob(["ruby/resources/**/*"]),
+  strip_prefix = "ruby/resources",
+  visibility = ["//visibility:public"],
+)
+
+jvm_resources(
+  name = "dotenv-php_resources",
+  files = glob(["php/resources/**/*"]),
+  strip_prefix = "php/resources",
+  visibility = ["//visibility:public"],
+)
+
+### auto-generated section `build intellij.dotenv` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "dotenv_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "dotenv",
+  module_name = "intellij.dotenv",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/gen/**/*.kt", "src/main/gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/refactoring",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":dotenv_resources"]
+)
+### auto-generated section `build intellij.dotenv` end

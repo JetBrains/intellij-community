@@ -1,8 +1,8 @@
 class MyClass {
     fun test() {
-        <caret>this.test()
+        this.<caret>test()
     }
 }
 
 // DISALLOW_METHOD_CALLS
-// EXPECTED: this
+// EXPECTED: null

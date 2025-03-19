@@ -1,0 +1,26 @@
+NavigationItem:
+    name: testFunInClass
+ItemPresentation:
+    presentableText: testFunInClass()
+    locationString: (in Some)
+    icon: RowIcon(icons=[Method, Public])
+TargetElement: fun testFunInClass() = 12
+QualifiedName: (in Some).testFunInClass
+
+NavigationItem:
+    name: testFunction
+ItemPresentation:
+    presentableText: testFunction()
+    locationString: (in FunctionsKt)
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: fun testFunction() {
+QualifiedName: FunctionsKt.testFunction
+
+NavigationItem:
+    name: testFunction
+ItemPresentation:
+    presentableText: testFunction()
+    locationString: null
+    icon: RowIcon(icons=[Function, Public])
+TargetElement: fun testFunction() {
+QualifiedName: null.testFunction

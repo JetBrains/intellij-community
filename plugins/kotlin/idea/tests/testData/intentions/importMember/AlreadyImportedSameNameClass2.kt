@@ -1,3 +1,4 @@
+// IGNORE_K2
 // IS_APPLICABLE: false
 package foo.bar
 

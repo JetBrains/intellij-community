@@ -1,37 +1,48 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.getStableNameFor
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.addArgumentName
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddArgumentNamesUtils.getArgumentNameIfCanBeUsedForCalls
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNameToArgumentIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
-    LowPriorityAction {
+    KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class) {
 
-    class Context(val argumentName: Name)
+    data class Context(
+        val argumentName: Name,
+    )
 
-    override fun getFamilyName(): String = KotlinBundle.message("add.name.to.argument")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("add.name.to.argument")
 
-    override fun getActionName(element: KtValueArgument, context: Context): String =
-        KotlinBundle.message("add.0.to.argument", context.argumentName)
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtValueArgument,
+    ): Presentation? {
+        val (argumentName) = getElementContext(context, element)
+            ?: return null
+        return Presentation.of(KotlinBundle.message("add.0.to.argument", argumentName))
+            .withPriority(PriorityAction.Priority.LOW)
+    }
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.VALUE_ARGUMENT_EXCLUDING_LAMBDA
+    override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =
+        ApplicabilityRanges.valueArgumentExcludingLambda(element)
 
     override fun isApplicableByPsi(element: KtValueArgument): Boolean {
         if (element.isNamed()) return false
@@ -46,21 +57,20 @@ internal class AddNameToArgumentIntention :
                 element == argumentList.arguments.last { !it.isNamed() }
     }
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtValueArgument): Context? {
-        val callElement = element.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
-
-        if (!resolvedCall.symbol.hasStableParameterNames) {
-            return null
-        }
-
-        return getArgumentNameIfCanBeUsedForCalls(element, resolvedCall)?.let { Context(it) }
+    override fun KaSession.prepareContext(element: KtValueArgument): Context? {
+        return getStableNameFor(element)?.let { Context(it) }
     }
 
-    override fun apply(element: KtValueArgument, context: Context, project: Project, editor: Editor?) =
-        addArgumentName(element, context.argumentName)
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtValueArgument,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        addArgumentName(element, elementContext.argumentName)
+    }
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) =
-        element is KtValueArgumentList || element is KtContainerNode || super.skipProcessingFurtherElementsAfter(element)
+    override fun stopSearchAt(element: PsiElement, context: ActionContext): Boolean {
+        return element is KtValueArgumentList || element is KtContainerNode || super.stopSearchAt(element, context)
+    }
 }

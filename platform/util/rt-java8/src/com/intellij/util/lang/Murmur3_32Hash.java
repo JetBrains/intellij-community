@@ -13,6 +13,7 @@
  */
 package com.intellij.util.lang;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
  * @author Dimitris Andreou
  * @author Kurt Alfred Kluever
  */
+@ApiStatus.Internal
 public final class Murmur3_32Hash {
   public static final Murmur3_32Hash MURMUR3_32 = new Murmur3_32Hash(0);
 

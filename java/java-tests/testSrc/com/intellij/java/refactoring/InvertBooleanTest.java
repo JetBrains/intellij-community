@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.refactoring.invertBoolean.InvertBooleanProcessor;
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData/refactoring/invertBoolean/")
 public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
@@ -45,7 +46,7 @@ public class InvertBooleanTest extends LightRefactoringParameterizedTestCase {
   }
 
   @Override
-  public String getFileSuffix(String beforeFile) {
+  public String getFileSuffix(@NotNull String beforeFile) {
     return !beforeFile.contains(AFTER_PREFIX) && !beforeFile.endsWith(CONFLICTS_SUFFIX) ? beforeFile : null;
   }
 }

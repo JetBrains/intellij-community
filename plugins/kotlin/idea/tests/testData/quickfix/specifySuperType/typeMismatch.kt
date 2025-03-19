@@ -1,6 +1,6 @@
 // "Specify supertype" "true"
 // SHOULD_DIFFER_FROM_FE10
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 interface Z {
     fun foo(): CharSequence = ""
 }
@@ -16,3 +16,6 @@ class Test : Z, Y() {
         return <caret>super.foo()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifySuperTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SpecifySuperTypeFixFactory$SpecifySuperTypeQuickFix

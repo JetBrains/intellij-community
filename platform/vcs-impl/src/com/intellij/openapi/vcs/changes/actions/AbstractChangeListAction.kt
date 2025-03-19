@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
-import com.intellij.openapi.actionSystem.ActionPlaces.isPopupPlace
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -9,11 +8,13 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class AbstractChangeListAction : DumbAwareAction() {
   protected fun updateEnabledAndVisible(e: AnActionEvent, enabled: Boolean, contextMenuVisible: Boolean = true) = with(e.presentation) {
     isEnabled = enabled
-    isVisible = !isPopupPlace(e.place) || enabled && contextMenuVisible
+    isVisible = !e.isFromContextMenu || enabled && contextMenuVisible
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

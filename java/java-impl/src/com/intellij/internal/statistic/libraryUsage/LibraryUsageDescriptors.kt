@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 
-internal object LibraryUsageDescriptors {
+object LibraryUsageDescriptors {
   private val descriptors: List<LibraryDescriptor> = downloadLibraryDescriptors()
   private val libraryDescriptorFinder: LibraryLayer = LibraryLayer.create(downloadLibraryDescriptors())
 

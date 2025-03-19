@@ -9,8 +9,10 @@ import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public final class CurrentProjectHintedCachedFileContentLoader implements CachedFileContentLoader {
   private final Project myProject;
 
@@ -19,6 +21,7 @@ public final class CurrentProjectHintedCachedFileContentLoader implements Cached
   }
 
   @Override
+  @Internal
   public @NotNull CachedFileContent loadContent(@NotNull VirtualFile file) throws FailedToLoadContentException, TooLargeContentException {
     CachedFileContent content = new CachedFileContent(file);
     if (file.isDirectory() || !file.isValid() || file.is(VFileProperty.SPECIAL) || VfsUtilCore.isBrokenLink(file)) {

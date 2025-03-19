@@ -1,0 +1,9 @@
+LineBreakpoint created at jvmNameConstEvaluation.kt:18
+Run Java
+Connected to the target VM
+jvmNameConstEvaluation.kt:18
+Compile bytecode for f1()
+Compile bytecode for prop = 1; prop
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -5,5 +5,6 @@ fun useLinux() {
     <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: produceCommonMainExpect'")!>produceCommonMainExpect<!>()
 
     // NB: Kotlin/Native stdlib is imported and usable even though other dependencies partially failed!
+    @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
     val x: CpuArchitecture = CpuArchitecture.ARM64
 }

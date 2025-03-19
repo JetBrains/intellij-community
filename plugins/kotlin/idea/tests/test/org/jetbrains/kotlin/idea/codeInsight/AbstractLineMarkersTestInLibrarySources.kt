@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.ThrowableRunnable
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.test.MockLibraryFacility
 import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 import java.nio.file.Files
+import kotlin.io.path.createFile
 
 abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest() {
     private var libraryCleanPath: String? = null
@@ -29,12 +30,12 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
             val libraryClean = Files.createTempDirectory("lineMarkers_library")
             libraryCleanPath = libraryClean.toString()
 
-            for (file in libraryOriginal.walkTopDown().filter { !it.isDirectory }) {
-                val text = file.readText().replace("</?lineMarker.*?>".toRegex(), "")
-                val cleanFile = libraryClean.resolve(file.relativeTo(libraryOriginal).path)
-                cleanFile.createFile()
-                cleanFile.write(text)
-            }
+          for (file in libraryOriginal.walkTopDown().filter { !it.isDirectory }) {
+            val text = file.readText().replace("</?lineMarker.*?>".toRegex(), "")
+            val cleanFile = libraryClean.resolve(file.relativeTo(libraryOriginal).path)
+            cleanFile.createParentDirectories().createFile()
+            cleanFile.write(text)
+          }
             this.libraryClean = File(libraryCleanPath)
         }
 

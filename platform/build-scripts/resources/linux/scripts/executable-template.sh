@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -97,43 +97,53 @@ if [ -n "$__product_uc___PROPERTIES" ]; then
   IDE_PROPERTIES_PROPERTY="-Didea.properties.file=$__product_uc___PROPERTIES"
 fi
 
+# shellcheck disable=SC2034
+IDE_CACHE_DIR="${XDG_CACHE_HOME:-${HOME}/.cache}/__product_vendor__/__system_selector__"
+
+# <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
 VM_OPTIONS_FILE=""
-USER_VM_OPTIONS_FILE=""
-# shellcheck disable=SC2154
-if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
-  # 1. $<IDE_NAME>_VM_OPTIONS
-  VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
+if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then
+  VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__64.vmoptions"
 else
-  # 2. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions ...
-  if [ -r "${IDE_BIN_HOME}/__vm_options__64.vmoptions" ]; then
-    VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__64.vmoptions"
-  else
-    test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
-    if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions" ]; then
-      VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions"
-    fi
-  fi
-  # ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
-  if [ -r "${IDE_HOME}.vmoptions" ]; then
-    USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
-  elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions" ]; then
-    USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions"
+  test "${OS_TYPE}" = "Darwin" && OS_SPECIFIC="mac" || OS_SPECIFIC="linux"
+  if [ -r "${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions" ]; then
+    VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__64.vmoptions"
   fi
 fi
 
-VM_OPTIONS=""
-USER_GC=""
-if [ -n "$USER_VM_OPTIONS_FILE" ]; then
-  grep -E -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" && USER_GC="yes"
+# ... [+ $<IDE_NAME>_VM_OPTIONS || <IDE_HOME>.vmoptions (Toolbox) || <config_directory>/<bin_name>.vmoptions]
+USER_VM_OPTIONS_FILE=""
+if [ -n "$__product_uc___VM_OPTIONS" ] && [ -r "$__product_uc___VM_OPTIONS" ]; then
+  USER_VM_OPTIONS_FILE="$__product_uc___VM_OPTIONS"
+elif [ -r "${IDE_HOME}.vmoptions" ]; then
+  USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
+elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions" ]; then
+  USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__64.vmoptions"
 fi
-if [ -n "$VM_OPTIONS_FILE" ] || [ -n "$USER_VM_OPTIONS_FILE" ]; then
-  if [ -z "$USER_GC" ] || [ -z "$VM_OPTIONS_FILE" ]; then
+
+VM_OPTIONS=""
+if [ -z "$VM_OPTIONS_FILE" ] && [ -z "$USER_VM_OPTIONS_FILE" ]; then
+  message "Cannot find a VM options file"
+elif [ -z "$USER_VM_OPTIONS_FILE" ]; then
+  VM_OPTIONS=$(grep -E -v -e "^#.*" "$VM_OPTIONS_FILE")
+elif [ -z "$VM_OPTIONS_FILE" ]; then
+  VM_OPTIONS=$(grep -E -v -e "^#.*" "$USER_VM_OPTIONS_FILE")
+else
+  VM_FILTER=""
+  if grep -E -q -e "-XX:\+.*GC" "$USER_VM_OPTIONS_FILE" ; then
+    VM_FILTER="-XX:\+.*GC|"
+  fi
+  if grep -E -q -e "-XX:InitialRAMPercentage=" "$USER_VM_OPTIONS_FILE" ; then
+    VM_FILTER="${VM_FILTER}-Xms|"
+  fi
+  if grep -E -q -e "-XX:(Max|Min)RAMPercentage=" "$USER_VM_OPTIONS_FILE" ; then
+    VM_FILTER="${VM_FILTER}-Xmx|"
+  fi
+  if [ -z "$VM_FILTER" ]; then
     VM_OPTIONS=$(cat "$VM_OPTIONS_FILE" "$USER_VM_OPTIONS_FILE" 2> /dev/null | grep -E -v -e "^#.*")
   else
-    VM_OPTIONS=$({ grep -E -v -e "-XX:\+Use.*GC" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | grep -E -v -e "^#.*")
+    VM_OPTIONS=$({ grep -E -v -e "(${VM_FILTER%'|'})" "$VM_OPTIONS_FILE"; cat "$USER_VM_OPTIONS_FILE"; } 2> /dev/null | grep -E -v -e "^#.*")
   fi
-else
-  message "Cannot find a VM options file"
 fi
 
 __class_path__

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,7 +15,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
@@ -48,7 +47,7 @@ public class SetPropertyDialog extends DialogWrapper {
   private final boolean myIsRecursionAllowed;
   private final SvnVcs myVCS;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.property";
+  private static final @NonNls String HELP_ID = "vcs.subversion.property";
   private JPanel myMainPanel;
 
   public SetPropertyDialog(Project project, File[] files, @NlsSafe @Nullable String name, boolean allowRecursion) {
@@ -145,8 +144,7 @@ public class SetPropertyDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private PropertyValue getProperty(@NotNull File file, @NotNull String name) {
+  private @Nullable PropertyValue getProperty(@NotNull File file, @NotNull String name) {
     PropertyValue result;
 
     try {

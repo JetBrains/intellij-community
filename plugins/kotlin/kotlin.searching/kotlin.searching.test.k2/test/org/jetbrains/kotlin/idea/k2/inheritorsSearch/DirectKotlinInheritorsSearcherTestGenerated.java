@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.inheritorsSearch;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/kotlinClass")
     public static class KotlinClass extends AbstractDirectKotlinInheritorsSearcherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestKotlinClass, this, testDataFilePath);
         }
@@ -44,6 +51,12 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/javaClass")
     public static class JavaClass extends AbstractDirectKotlinInheritorsSearcherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestJavaClass, this, testDataFilePath);
         }
@@ -55,15 +68,50 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inheritorsSearch/javaMethod")
+    public static class JavaMethod extends AbstractDirectKotlinInheritorsSearcherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestJavaMethod, this, testDataFilePath);
+        }
+
+        @TestMetadata("fromJavaMethod.java")
+        public void testFromJavaMethod() throws Exception {
+            runTest("../testData/inheritorsSearch/javaMethod/fromJavaMethod.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/kotlinFunction")
     public static class KotlinFunction extends AbstractDirectKotlinInheritorsSearcherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCallable, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumEntryInheritor.kt")
+        public void testEnumEntryInheritor() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/enumEntryInheritor.kt");
         }
 
         @TestMetadata("hierarchyWithMissedLevel.kt")
         public void testHierarchyWithMissedLevel() throws Exception {
             runTest("../testData/inheritorsSearch/kotlinFunction/hierarchyWithMissedLevel.kt");
+        }
+
+        @TestMetadata("inEnum.kt")
+        public void testInEnum() throws Exception {
+            runTest("../testData/inheritorsSearch/kotlinFunction/inEnum.kt");
         }
 
         @TestMetadata("objectLiteralInheritor.kt")
@@ -95,6 +143,12 @@ public abstract class DirectKotlinInheritorsSearcherTestGenerated extends Abstra
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inheritorsSearch/allInheritors")
     public static class AllInheritors extends AbstractDirectKotlinInheritorsSearcherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestFindAllOverridings, this, testDataFilePath);
         }

@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix.makefinal;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,14 +83,13 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     if (initializer instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable refTarget) {
       if (PsiUtil.isJvmLocalVariable(refTarget) && !refTarget.hasModifierProperty(PsiModifier.FINAL)) {
         PsiElement block = PsiUtil.getVariableCodeBlock(refTarget, null);
-        return block == null || !HighlightControlFlowUtil.isEffectivelyFinal(refTarget, block, null);
+        return block == null || !ControlFlowUtil.isEffectivelyFinal(refTarget, block);
       }
     }
     return false;
   }
 
-  @Nullable
-  private static Branched extractInitMode(@NotNull PsiLocalVariable var) {
+  private static @Nullable Branched extractInitMode(@NotNull PsiLocalVariable var) {
     List<PsiExpressionStatement> initializers = initializers(var);
     if (initializers.isEmpty()) return null;
     if (!(var.getParent() instanceof PsiDeclarationStatement decl)) return null;
@@ -105,8 +104,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
     return branched;
   }
 
-  @Nullable
-  private static PsiIfStatement getTopLevelIfStatement(PsiCodeBlock block, PsiElement commonParent) {
+  private static @Nullable PsiIfStatement getTopLevelIfStatement(PsiCodeBlock block, PsiElement commonParent) {
     while (true) {
       PsiIfStatement ifStatement = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiIfStatement.class);
       if (ifStatement == null) return null;
@@ -117,9 +115,7 @@ final class MoveInitializerToIfBranchFixer implements EffectivelyFinalFixer {
   }
 
   private static @NotNull List<PsiExpressionStatement> initializers(@NotNull PsiLocalVariable var) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-    if (block == null) return List.of();
-    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var, block);
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(var);
     List<PsiExpressionStatement> initializers = new ArrayList<>();
     for (PsiReferenceExpression reference : references) {
       if (!PsiUtil.isAccessedForWriting(reference)) continue;

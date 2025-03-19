@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -26,10 +13,13 @@ import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T extends BuildTarget<R>> implements DirtyFilesHolder<R, T> {
   protected final CompileContext myContext;
 
@@ -40,9 +30,9 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
   @Override
   public boolean hasDirtyFiles() throws IOException {
     final Ref<Boolean> hasDirtyFiles = Ref.create(false);
-    processDirtyFiles(new FileProcessor<R, T>() {
+    processDirtyFiles(new FileProcessor<>() {
       @Override
-      public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) throws IOException {
+      public boolean apply(@NotNull T target, @NotNull File file, @NotNull R root) {
         hasDirtyFiles.set(true);
         return false;
       }
@@ -52,20 +42,25 @@ public abstract class DirtyFilesHolderBase<R extends BuildRootDescriptor, T exte
 
   @Override
   public boolean hasRemovedFiles() {
-    Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
+    Map<BuildTarget<?>, Collection<Path>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
     return map != null && !map.isEmpty();
   }
 
-  @NotNull
   @Override
-  public Collection<String> getRemovedFiles(@NotNull T target) {
-    Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
+  public @NotNull Collection<Path> getRemoved(@NotNull T target) {
+    Map<BuildTarget<?>, Collection<Path>> map = Utils.REMOVED_SOURCES_KEY.get(myContext);
     if (map != null) {
-      Collection<String> paths = map.get(target);
+      Collection<Path> paths = map.get(target);
       if (paths != null) {
         return paths;
       }
     }
-    return Collections.emptyList();
+    return List.of();
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  @Override
+  public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
+    return getRemoved(target).stream().map(Path::toString).collect(Collectors.toList());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.SerializationFilter;
@@ -14,7 +14,7 @@ public @interface Property {
   boolean surroundWithTag() default true;
 
   /**
-   * Serialize into parent element. Allowed only for bean properties (not primitive types).
+   * Serialize into a parent element. Allowed only for bean properties (not primitive types).
    */
   boolean flat() default false;
 

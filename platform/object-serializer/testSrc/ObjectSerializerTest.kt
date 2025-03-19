@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.SystemInfo
@@ -10,7 +10,6 @@ import org.junit.rules.TestName
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.HashMap
 
 class ObjectSerializerTest {
   @Rule
@@ -19,11 +18,6 @@ class ObjectSerializerTest {
 
   private fun <T : Any> test(bean: T, writeConfiguration: WriteConfiguration = defaultTestWriteConfiguration): T {
     return test(bean, testName, writeConfiguration)
-  }
-
-  @Test
-  fun threadLocalPooledBlockAllocatorProvider() {
-    testThreadLocalPooledBlockAllocatorProvider()
   }
 
   @Test

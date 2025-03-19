@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
@@ -58,7 +59,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       else {
         enabled = !elements.isEmpty();
         plural = elements.size() > 1;
-        paths = ContainerUtil.and(elements, el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
+        paths = ContainerUtil.and(elements, el -> el instanceof PsiFileSystemItem && FqnUtil.getQualifiedNameFromProviders(el) == null);
       }
       if (calcQualifiedName) {
         e.getPresentation().putClientProperty(CopyPathProvider.QUALIFIED_NAME, getQualifiedName(editor, elements));
@@ -69,7 +70,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     e.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(enabled);
     }
     else {
@@ -89,8 +90,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  protected List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
+  protected @Unmodifiable @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
     return getElementsToCopy(editor, dataContext);
   }
 
@@ -109,7 +109,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
       if (file != null) {
-        String toCopy = getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
+        String toCopy = FqnUtil.getFileFqn(file) + ":" + (editor.getCaretModel().getLogicalPosition().line + 1);
         CopyPasteManager.getInstance().setContents(new StringSelection(toCopy));
         setStatusBarText(project, LangBundle.message("status.bar.text.reference.has.been.copied", toCopy));
       }

@@ -1,163 +1,463 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PersistentHashMapValueStorage;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.tracing.Tracer;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
-import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.builders.storage.StorageProvider;
-import org.jetbrains.jps.cmdline.BuildRunner;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.impl.Containers;
+import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
+import org.jetbrains.jps.dependency.impl.LoggingDependencyGraph;
+import org.jetbrains.jps.dependency.impl.PathSourceMapper;
+import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.incremental.storage.dataTypes.LibraryRoots;
+import org.jetbrains.jps.javac.Iterators;
 
-import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
-/**
- * @author Eugene Zhuravlev
- */
-public class BuildDataManager {
-  private static final int VERSION = 39 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
+public final class BuildDataManager {
   private static final Logger LOG = Logger.getInstance(BuildDataManager.class);
+
+  public static final String PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY = "compiler.process.constants.non.incremental";
+
   private static final String SRC_TO_FORM_STORAGE = "src-form";
   private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
-  private final ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>(16, 0.75f, getConcurrencyLevel());
-  private final OneToManyPathsMapping mySrcToFormMap;
+
+  private final @NotNull ConcurrentMap<BuildTarget<?>, BuildTargetStorages> myTargetStorages = new ConcurrentHashMap<>();
+  // not used for a new single-db storage
+  private final @NotNull ConcurrentMap<BuildTarget<?>, SourceToOutputMappingWrapper> buildTargetToSourceToOutputMapping = new ConcurrentHashMap<>();
+  private final @Nullable BuildDataProvider newDataManager;
+
+  private @Nullable ProjectStamps myFileStampService;
+  private final LibraryRoots myLibraryRoots;
+
+  private final @Nullable OneToManyPathsMapping sourceToFormMap;
   private final Mappings myMappings;
+  private final Object myGraphManagementLock = new Object();
+  private DependencyGraph myDepGraph;
+  private final NodeSourcePathMapper myDepGraphPathMapper;
   private final BuildDataPaths myDataPaths;
-  private final BuildTargetsState myTargetsState;
-  private final OutputToTargetRegistry myOutputToTargetRegistry;
-  private final File myVersionFile;
+  private final BuildTargetsState targetStateManager;
+  private final @Nullable OutputToTargetRegistry outputToTargetMapping;
+  private final BuildDataVersionManager versionManager;
   private final PathRelativizerService myRelativizer;
+  private boolean myProcessConstantsIncrementally = !Boolean.parseBoolean(System.getProperty(PROCESS_CONSTANTS_NON_INCREMENTAL_PROPERTY, "false"));
 
-  private final StorageProvider<SourceToOutputMappingImpl> SRC_TO_OUT_MAPPING_PROVIDER = new StorageProvider<>() {
-    @NotNull
-    @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir) throws IOException {
-      return createStorage(targetDataDir, myRelativizer);
-    }
+  @ApiStatus.Internal
+  @TestOnly
+  public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, @NotNull PathRelativizerService relativizer) throws IOException {
+    this(dataPaths, targetsState, relativizer, null, null, null);
+  }
 
-    @NotNull
-    @Override
-    public SourceToOutputMappingImpl createStorage(File targetDataDir, PathRelativizerService relativizer) throws IOException {
-      return new SourceToOutputMappingImpl(new File(new File(targetDataDir, SRC_TO_OUTPUT_STORAGE), SRC_TO_OUTPUT_FILE_NAME), relativizer);
-    }
-  };
+  @ApiStatus.Internal
+  public BuildDataManager(@NotNull BuildDataPaths dataPaths,
+                          @NotNull BuildTargetsState targetsState,
+                          @NotNull PathRelativizerService relativizer,
+                          @Nullable StorageManager storageManager) throws IOException {
+    this(dataPaths,
+         targetsState,
+         relativizer,
+         storageManager == null ? null : new ExperimentalBuildDataManager(storageManager, relativizer),
+         storageManager != null || ProjectStamps.PORTABLE_CACHES ? null : new ProjectStamps(dataPaths.getDataStorageDir(), targetsState.impl),
+         null);
+  }
 
-  public BuildDataManager(BuildDataPaths dataPaths, BuildTargetsState targetsState, PathRelativizerService relativizer) throws IOException {
+  @SuppressWarnings("unused")
+  @ApiStatus.Internal
+  public static BuildDataManager createSingleDb(@NotNull BuildDataPaths dataPaths,
+                                                @NotNull BuildTargetStateManager targetStateManager,
+                                                @NotNull PathRelativizerService relativizer,
+                                                @NotNull BuildDataVersionManager versionManager,
+                                                @NotNull BuildDataProvider buildDataProvider) throws IOException {
+    return new BuildDataManager(dataPaths,
+                                new BuildTargetsState(targetStateManager),
+                                relativizer,
+                                buildDataProvider,
+                                null,
+                                versionManager);
+  }
+
+  private BuildDataManager(@NotNull BuildDataPaths dataPaths,
+                           BuildTargetsState targetsState,
+                           @NotNull PathRelativizerService relativizer,
+                           @Nullable BuildDataProvider buildDataProvider,
+                           @Nullable ProjectStamps projectStamps,
+                           @Nullable BuildDataVersionManager versionManager) throws IOException {
     myDataPaths = dataPaths;
-    myTargetsState = targetsState;
-    mySrcToFormMap = new OneToManyPathsMapping(new File(getSourceToFormsRoot(), "data"), relativizer);
-    myOutputToTargetRegistry = new OutputToTargetRegistry(new File(getOutputToSourceRegistryRoot(), "data"), relativizer);
-    myMappings = new Mappings(getMappingsRoot(myDataPaths.getDataStorageRoot()), relativizer);
-    myVersionFile = new File(myDataPaths.getDataStorageRoot(), "version.dat");
+    targetStateManager = targetsState;
+    myFileStampService = projectStamps;
+    myLibraryRoots = new LibraryRoots(dataPaths, relativizer);
+    Path dataStorageRoot = dataPaths.getDataStorageDir();
+    try {
+      if (buildDataProvider == null) {
+        newDataManager = null;
+        sourceToFormMap = new OneToManyPathsMapping(getSourceToFormsRoot().resolve("data"), relativizer);
+        outputToTargetMapping = new OutputToTargetRegistry(getOutputToSourceRegistryRoot().resolve("data"), relativizer);
+      }
+      else {
+        newDataManager = buildDataProvider;
+        sourceToFormMap = null;
+        outputToTargetMapping = null;
+      }
+
+      Path mappingsRoot = getMappingsRoot(dataStorageRoot);
+      if (JavaBuilderUtil.isDepGraphEnabled()) {
+        myMappings = null;
+        createDependencyGraph(mappingsRoot, false);
+        // delete older mappings data if available
+        FileUtilRt.deleteRecursively(getMappingsRoot(dataStorageRoot, false));
+        LOG.info("Using DependencyGraph-based build incremental analysis");
+      }
+      else {
+        myMappings = new Mappings(mappingsRoot.toFile(), relativizer);
+        FileUtilRt.deleteRecursively(getMappingsRoot(dataStorageRoot, true)); // delete dep-graph data if available
+        myMappings.setProcessConstantsIncrementally(isProcessConstantsIncrementally());
+      }
+    }
+    catch (IOException e) {
+      try {
+        close();
+      }
+      catch (Throwable ignored) {
+      }
+      throw e;
+    }
+
+    this.versionManager = versionManager == null ? new BuildDataVersionManagerImpl(dataStorageRoot.resolve("version.dat")) : versionManager;
+    myDepGraphPathMapper = new PathSourceMapper(relativizer::toFull, relativizer::toRelative);
     myRelativizer = relativizer;
   }
 
-  public BuildTargetsState getTargetsState() {
-    return myTargetsState;
+  @ApiStatus.Internal
+  public LibraryRoots getLibraryRoots() {
+    return myLibraryRoots;
   }
 
-  public OutputToTargetRegistry getOutputToTargetRegistry() {
-    return myOutputToTargetRegistry;
+  @ApiStatus.Internal
+  // todo: method to allow using externally-created ProjectStamps; to be removed after KotlinTests for JPS are updated
+  public void setFileStampService(@Nullable ProjectStamps fileStampService) {
+    myFileStampService = fileStampService;
   }
 
-  public SourceToOutputMapping getSourceToOutputMap(final BuildTarget<?> target) throws IOException {
-    final SourceToOutputMappingImpl map = getStorage(target, SRC_TO_OUT_MAPPING_PROVIDER);
-    return new SourceToOutputMappingWrapper(map, myTargetsState.getBuildTargetId(target));
+  @ApiStatus.Internal
+  public void clearCache() {
+    if (newDataManager != null) {
+      newDataManager.clearCache();
+    }
   }
 
-  public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
+  public void setProcessConstantsIncrementally(boolean processInc) {
+    myProcessConstantsIncrementally = processInc;
+    Mappings mappings = myMappings;
+    if (mappings != null) {
+      mappings.setProcessConstantsIncrementally(processInc);
+    }
   }
 
-  @NotNull
-  public <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
-    final BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
+  public boolean isProcessConstantsIncrementally() {
+    return myProcessConstantsIncrementally;
+  }
+
+  /**
+   * @deprecated Use {@link #getTargetStateManager()} or, preferably, avoid using internal APIs.
+   */
+  @Deprecated
+  public @NotNull BuildTargetsState getTargetsState() {
+    return targetStateManager;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull BuildTargetStateManager getTargetStateManager() {
+    return targetStateManager.impl;
+  }
+
+  public void cleanStaleTarget(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) throws IOException {
+    try {
+      FileUtilRt.deleteRecursively(getDataPaths().getTargetDataRoot(targetType, targetId));
+      if (newDataManager != null) {
+        newDataManager.removeStaleTarget(targetId, targetType.getTypeId());
+      }
+    }
+    finally {
+      getTargetStateManager().cleanStaleTarget(targetType, targetId);
+    }
+  }
+
+  @ApiStatus.Internal
+  public @NotNull OutputToTargetMapping getOutputToTargetMapping() {
+    return newDataManager == null ? Objects.requireNonNull(outputToTargetMapping) : newDataManager.getOutputToTargetMapping();
+  }
+
+  /**
+   * @deprecated Use {@link #getOutputToTargetMapping()}
+   * @return
+   */
+  @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
+  public @NotNull OutputToTargetRegistry getOutputToTargetRegistry() {
+    return Objects.requireNonNull(outputToTargetMapping);
+  }
+
+  public @NotNull SourceToOutputMapping getSourceToOutputMap(@NotNull BuildTarget<?> target) throws IOException {
+    if (newDataManager == null) {
+      try {
+        return buildTargetToSourceToOutputMapping.computeIfAbsent(target, this::createSourceToOutputMap);
+      }
+      catch (BuildDataCorruptedException e) {
+        LOG.info(e);
+        throw e.getCause();
+      }
+    }
+    else {
+      return newDataManager.getSourceToOutputMapping(target);
+    }
+  }
+
+  private @NotNull SourceToOutputMappingWrapper createSourceToOutputMap(@NotNull BuildTarget<?> target) {
+    SourceToOutputMappingImpl map;
+    try {
+      Path file = myDataPaths.getTargetDataRootDir(target).resolve(SRC_TO_OUTPUT_STORAGE).resolve(SRC_TO_OUTPUT_FILE_NAME);
+      map = new SourceToOutputMappingImpl(file, myRelativizer);
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      throw new BuildDataCorruptedException(e);
+    }
+    return new SourceToOutputMappingWrapper(map, targetStateManager.impl.getBuildTargetId(target), outputToTargetMapping);
+  }
+
+  public @Nullable StampsStorage<?> getFileStampStorage(@NotNull BuildTarget<?> target) {
+    if (newDataManager != null) {
+      return newDataManager.getFileStampStorage(target);
+    }
+    return myFileStampService == null ? null : myFileStampService.getStampStorage();
+  }
+
+  /**
+   * @deprecated Use {@link BuildDataManager#getFileStampStorage(BuildTarget)}.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated(forRemoval = true)
+  public @Nullable ProjectStamps getFileStampService() {
+    return myFileStampService;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(
+    @NotNull BuildTargetType<?> targetType,
+    @NotNull String targetId
+  ) throws IOException {
+    return new SourceToOutputMappingImpl(getSourceToOutputMapRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_FILE_NAME), myRelativizer);
+  }
+
+  public @NotNull <S extends StorageOwner> S getStorage(@NotNull BuildTarget<?> target, @NotNull StorageProvider<S> provider) throws IOException {
+    BuildTargetStorages targetStorages = myTargetStorages.computeIfAbsent(target, t -> new BuildTargetStorages(t, myDataPaths));
     return targetStorages.getOrCreateStorage(provider, myRelativizer);
   }
 
-  public OneToManyPathsMapping getSourceToFormMap() {
-    return mySrcToFormMap;
+  @ApiStatus.Internal
+  public @NotNull OneToManyPathMapping getSourceToFormMap(@NotNull BuildTarget<?> target) {
+    return newDataManager == null ? Objects.requireNonNull(sourceToFormMap) : newDataManager.getSourceToForm(target);
   }
 
+  @ApiStatus.Internal
   public Mappings getMappings() {
     return myMappings;
   }
 
-  public void cleanTargetStorages(BuildTarget<?> target) throws IOException {
+  public @Nullable GraphConfiguration getDependencyGraph() {
+    synchronized (myGraphManagementLock) {
+      DependencyGraph depGraph = myDepGraph;
+      return depGraph == null? null : new GraphConfiguration() {
+        @Override
+        public @NotNull NodeSourcePathMapper getPathMapper() {
+          return myDepGraphPathMapper;
+        }
+
+        @Override
+        public @NotNull DependencyGraph getGraph() {
+          return depGraph;
+        }
+      };
+    }
+  }
+
+  public void cleanTargetStorages(@NotNull BuildTarget<?> target) throws IOException {
     try {
-      BuildTargetStorages storages = myTargetStorages.remove(target);
-      if (storages != null) {
-        storages.close();
+      try {
+        BuildTargetStorages storages = myTargetStorages.remove(target);
+        if (storages != null) {
+          storages.close();
+        }
+      }
+      finally {
+        if (newDataManager == null) {
+          SourceToOutputMappingWrapper sourceToOutput = buildTargetToSourceToOutputMapping.remove(target);
+          if (sourceToOutput != null && sourceToOutput.myDelegate != null) {
+            sourceToOutput.myDelegate.close();
+          }
+        }
+        else {
+          newDataManager.closeTargetMaps(target);
+        }
       }
     }
     finally {
-      // delete all data except src-out mapping which is cleaned in a special way
-      final File[] targetData = myDataPaths.getTargetDataRoot(target).listFiles();
-      if (targetData != null) {
-        final File srcOutputMapRoot = getSourceToOutputMapRoot(target);
-        for (File dataFile : targetData) {
-          if (!FileUtil.filesEqual(dataFile, srcOutputMapRoot)) {
-            FileUtil.delete(dataFile);
+      // delete all data except src-out mapping which is cleaned specially
+      List<Path> targetData = NioFiles.list(myDataPaths.getTargetDataRootDir(target));
+      if (!targetData.isEmpty()) {
+        Path srcOutputMapRoot = getSourceToOutputMapRoot(target);
+        for (Path dataFile : targetData) {
+          if (!dataFile.equals(srcOutputMapRoot)) {
+            NioFiles.deleteRecursively(dataFile);
           }
         }
       }
     }
   }
 
-  public void clean(Consumer<Future<?>> asyncTaskCollector) throws IOException {
+  public void clean(@NotNull Consumer<Future<?>> asyncTaskCollector) throws IOException {
+    if (myFileStampService != null) {
+      try {
+        myFileStampService.clean();
+      }
+      catch (Throwable e) {
+        LOG.error(new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.timestamps.storage"), e));
+      }
+    }
+
+    try {
+      myLibraryRoots.clean();
+    }
+    catch (Throwable e) {
+      LOG.error(new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.library.roots.storage"), e));
+    }
+
     try {
       allTargetStorages(asyncTaskCollector).clean();
       myTargetStorages.clear();
+      if (newDataManager == null) {
+        buildTargetToSourceToOutputMapping.clear();
+      }
+      else {
+        newDataManager.removeAllMaps();
+      }
     }
     finally {
       try {
-        wipeStorage(getSourceToFormsRoot(), mySrcToFormMap);
+        if (sourceToFormMap != null) {
+          wipeStorage(getSourceToFormsRoot(), sourceToFormMap);
+        }
       }
       finally {
         try {
-          wipeStorage(getOutputToSourceRegistryRoot(), myOutputToTargetRegistry);
+          if (outputToTargetMapping != null) {
+            wipeStorage(getOutputToSourceRegistryRoot(), outputToTargetMapping);
+          }
         }
         finally {
-          final Mappings mappings = myMappings;
+          Path mappingsRoot = getMappingsRoot(myDataPaths.getDataStorageDir());
+          Mappings mappings = myMappings;
           if (mappings != null) {
             synchronized (mappings) {
               mappings.clean();
             }
           }
           else {
-            FileUtil.delete(getMappingsRoot(myDataPaths.getDataStorageRoot()));
+            FileUtilRt.deleteRecursively(mappingsRoot);
+          }
+
+          if (JavaBuilderUtil.isDepGraphEnabled()) {
+            createDependencyGraph(mappingsRoot, true);
           }
         }
       }
-      myTargetsState.clean();
+      targetStateManager.impl.clean();
     }
     saveVersion();
   }
 
+  public void createDependencyGraph(@NotNull Path mappingsRoot, boolean deleteExisting) throws IOException {
+    try {
+      synchronized (myGraphManagementLock) {
+        DependencyGraph depGraph = myDepGraph;
+        if (depGraph == null) {
+          if (deleteExisting) {
+            FileUtil.delete(mappingsRoot);
+          }
+          myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.toString())));
+        }
+        else {
+          try {
+            depGraph.close();
+          }
+          finally {
+            if (deleteExisting) {
+              FileUtil.delete(mappingsRoot);
+            }
+            myDepGraph = asSynchronizedGraph(new DependencyGraphImpl(Containers.createPersistentContainerFactory(mappingsRoot.toString())));
+          }
+        }
+      }
+    }
+    catch (RuntimeException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof IOException) {
+        throw (IOException)cause;
+      }
+      throw e;
+    }
+  }
+
   public void flush(boolean memoryCachesOnly) {
+    if (newDataManager != null) {
+      if (!memoryCachesOnly) {
+        newDataManager.commit();
+      }
+    }
+
+    if (myFileStampService != null) {
+      myFileStampService.flush(memoryCachesOnly);
+    }
+
+    myLibraryRoots.flush(memoryCachesOnly);
+    
+    if (outputToTargetMapping != null) {
+      outputToTargetMapping.flush(memoryCachesOnly);
+    }
+
+    if (sourceToFormMap != null) {
+      sourceToFormMap.flush(memoryCachesOnly);
+    }
+
     allTargetStorages().flush(memoryCachesOnly);
-    myOutputToTargetRegistry.flush(memoryCachesOnly);
-    mySrcToFormMap.flush(memoryCachesOnly);
-    final Mappings mappings = myMappings;
+
+    Mappings mappings = myMappings;
     if (mappings != null) {
       synchronized (mappings) {
         mappings.flush(memoryCachesOnly);
@@ -166,28 +466,43 @@ public class BuildDataManager {
   }
 
   public void close() throws IOException {
-    try {
-      myTargetsState.save();
-      try {
-        allTargetStorages().close();
-      }
-      finally {
+    IOOperation.execAll(IOException.class,
+      IOOperation.adapt(targetStateManager, state -> state.impl.save()),
+      IOOperation.adapt(allTargetStorages(), StorageOwner::close),
+      () -> {
         myTargetStorages.clear();
-      }
-    }
-    finally {
-      try {
-        myOutputToTargetRegistry.close();
-      }
-      finally {
-        try {
-          closeStorage(mySrcToFormMap);
+        buildTargetToSourceToOutputMapping.clear();
+      },
+      IOOperation.adapt(newDataManager, BuildDataProvider::close),
+      IOOperation.adapt(myFileStampService, StorageOwner::close),
+      IOOperation.adapt(myLibraryRoots, StorageOwner::close),
+      IOOperation.adapt(outputToTargetMapping, StorageOwner::close),
+
+      () -> {
+        if (sourceToFormMap != null) {
+          synchronized (sourceToFormMap) {
+            sourceToFormMap.close();
+          }
         }
-        finally {
-          final Mappings mappings = myMappings;
-          if (mappings != null) {
+      },
+
+      () -> {
+        Mappings mappings = myMappings;
+        if (mappings != null) {
+          try {
+            mappings.close();
+          }
+          catch (BuildDataCorruptedException e) {
+            throw e.getCause();
+          }
+        }
+
+        synchronized (myGraphManagementLock) {
+          DependencyGraph depGraph = myDepGraph;
+          if (depGraph != null) {
+            myDepGraph = null;
             try {
-              mappings.close();
+              depGraph.close();
             }
             catch (BuildDataCorruptedException e) {
               throw e.getCause();
@@ -195,46 +510,80 @@ public class BuildDataManager {
           }
         }
       }
-    }
+    );
   }
 
-  public void closeSourceToOutputStorages(Collection<? extends BuildTargetChunk> chunks) throws IOException {
-    IOException ex = null;
-    for (BuildTargetChunk chunk : chunks) {
-      for (BuildTarget<?> target : chunk.getTargets()) {
+  private interface IOOperation<T extends Throwable> {
+
+    void exec() throws T;
+
+    interface Call<T, E extends Throwable> {
+      void execute(T target) throws E;
+    }
+
+    static <Obj, E extends Throwable> IOOperation<E> adapt(@Nullable Obj caller, Call<Obj, E> op) {
+      return () -> {
+        if (caller != null) op.execute(caller);
+      };
+    }
+
+    static <T extends Throwable> void execAll(Class<T> errorClass, IOOperation<T>... operations) throws T {
+      execAll(errorClass, Arrays.asList(operations));
+    }
+
+    static <T extends Throwable> void execAll(Class<T> errorClass, Iterable<IOOperation<T>> operations) throws T {
+      Throwable error = null;
+      for (IOOperation<T> operation : operations) {
         try {
-          final BuildTargetStorages targetStorages = myTargetStorages.get(target);
-          if (targetStorages != null) {
-            targetStorages.close(SRC_TO_OUT_MAPPING_PROVIDER);
-          }
+          operation.exec();
         }
-        catch (IOException e) {
+        catch (Throwable e) {
           LOG.info(e);
-          if (ex == null) {
-            ex = e;
+          if (error == null) {
+            error = e;
           }
         }
       }
+      if (errorClass.isInstance(error)) {
+        throw errorClass.cast(error);
+      }
+      if (error != null) {
+        throw new RuntimeException(error);
+      }
     }
-    if (ex != null) {
-      throw ex;
-    }
   }
 
-  private File getSourceToOutputMapRoot(BuildTarget<?> target) {
-    return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
+  @ApiStatus.Internal
+  public void closeSourceToOutputStorages(@NotNull Collection<? extends BuildTarget<?>> targets) throws IOException {
+    Tracer.Span flush = Tracer.start("closeSourceToOutputStorages");
+
+    IOOperation.execAll(IOException.class, Iterators.map(targets, target -> {
+      if (newDataManager == null) {
+        SourceToOutputMappingWrapper wrapper = buildTargetToSourceToOutputMapping.remove(target);
+        return IOOperation.adapt(wrapper == null ? null : wrapper.myDelegate, StorageOwner::close);
+      }
+      else {
+        return () -> newDataManager.closeTargetMaps(target);
+      }
+    }));
+
+    flush.complete();
   }
 
-  private File getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
-    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), SRC_TO_OUTPUT_STORAGE);
+  private @NotNull Path getSourceToOutputMapRoot(BuildTarget<?> target) {
+    return myDataPaths.getTargetDataRootDir(target).resolve(SRC_TO_OUTPUT_STORAGE);
   }
 
-  private File getSourceToFormsRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), SRC_TO_FORM_STORAGE);
+  private Path getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
+    return myDataPaths.getTargetDataRoot(targetType, targetId).resolve(SRC_TO_OUTPUT_STORAGE);
   }
 
-  private File getOutputToSourceRegistryRoot() {
-    return new File(myDataPaths.getDataStorageRoot(), OUT_TARGET_STORAGE);
+  private @NotNull Path getSourceToFormsRoot() {
+    return myDataPaths.getDataStorageDir().resolve(SRC_TO_FORM_STORAGE);
+  }
+
+  private @NotNull Path getOutputToSourceRegistryRoot() {
+    return myDataPaths.getDataStorageDir().resolve(OUT_TARGET_STORAGE);
   }
 
   public BuildDataPaths getDataPaths() {
@@ -245,113 +594,109 @@ public class BuildDataManager {
     return myRelativizer;
   }
 
-  public static File getMappingsRoot(final File dataStorageRoot) {
-    return new File(dataStorageRoot, MAPPINGS_STORAGE);
+  public static @NotNull Path getMappingsRoot(@NotNull Path dataStorageRoot) {
+    return getMappingsRoot(dataStorageRoot, JavaBuilderUtil.isDepGraphEnabled());
   }
 
-  private static void wipeStorage(File root, @Nullable AbstractStateStorage<?, ?> storage) {
+  private static Path getMappingsRoot(@NotNull Path dataStorageRoot, boolean forDepGraph) {
+    return dataStorageRoot.resolve(forDepGraph? MAPPINGS_STORAGE + "-graph" : MAPPINGS_STORAGE);
+  }
+
+  private static void wipeStorage(@NotNull Path root, @Nullable StorageOwner storage) {
     if (storage != null) {
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (storage) {
-        storage.wipe();
+        try {
+          storage.clean();
+        }
+        catch (IOException ignore) {
+        }
       }
     }
     else {
-      FileUtil.delete(root);
-    }
-  }
-
-  private static void closeStorage(@Nullable AbstractStateStorage<?, ?> storage) throws IOException {
-    if (storage != null) {
-      synchronized (storage) {
-        storage.close();
+      try {
+        FileUtilRt.deleteRecursively(root);
+      }
+      catch (IOException ignore) {
+      }
+      catch (Exception e) {
+        LOG.warn(e);
       }
     }
   }
 
-  private Boolean myVersionDiffers = null;
-
   public boolean versionDiffers() {
-    final Boolean cached = myVersionDiffers;
-    if (cached != null) {
-      return cached;
-    }
-    try (DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile))) {
-      final boolean diff = is.readInt() != VERSION;
-      myVersionDiffers = diff;
-      return diff;
-    }
-    catch (FileNotFoundException ignored) {
-      return false; // treat it as a new dir
-    }
-    catch (IOException ex) {
-      LOG.info(ex);
-    }
-    return true;
+    return versionManager.versionDiffers();
   }
 
   public void saveVersion() {
-    final Boolean differs = myVersionDiffers;
-    if (differs == null || differs) {
-      FileUtil.createIfDoesntExist(myVersionFile);
-      try (DataOutputStream os = new DataOutputStream(new FileOutputStream(myVersionFile))) {
-        os.writeInt(VERSION);
-        myVersionDiffers = Boolean.FALSE;
-      }
-      catch (IOException ignored) {
-      }
-    }
+    versionManager.saveVersion();
   }
 
   public void reportUnhandledRelativizerPaths() {
     myRelativizer.reportUnhandledPaths();
   }
 
-  public static int getConcurrencyLevel() {
-    return BuildRunner.isParallelBuildEnabled() ? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
+  private @NotNull StorageOwner allTargetStorages(@NotNull Consumer<Future<?>> asyncTaskCollector) {
+    return new CompositeStorageOwner() {
+      @Override
+      public void clean() throws IOException {
+        try {
+          close();
+        }
+        finally {
+          asyncTaskCollector.accept(FileUtil.asyncDelete(myDataPaths.getTargetsDataRoot().toFile()));
+        }
+      }
+
+      @Override
+      protected Iterable<? extends StorageOwner> getChildStorages() {
+        return Iterators.flat(
+          myTargetStorages.values(),
+          Iterators.filter(Iterators.map(buildTargetToSourceToOutputMapping.values(), w -> w.myDelegate), Objects::nonNull)
+        );
+      }
+    };
   }
 
-  private final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
-    private final SourceToOutputMapping myDelegate;
-    private final int myBuildTargetId;
+  private @NotNull StorageOwner allTargetStorages() {
+    return allTargetStorages(f -> {});
+  }
 
-    SourceToOutputMappingWrapper(SourceToOutputMapping delegate, int buildTargetId) {
+  private static final class SourceToOutputMappingWrapper implements SourceToOutputMapping {
+    private final SourceToOutputMappingImpl myDelegate;
+    private final int myBuildTargetId;
+    private final OutputToTargetRegistry outputToTargetMapping;
+
+    SourceToOutputMappingWrapper(SourceToOutputMappingImpl delegate, int buildTargetId, OutputToTargetRegistry outputToTargetMapping) {
       myDelegate = delegate;
       myBuildTargetId = buildTargetId;
+      this.outputToTargetMapping = outputToTargetMapping;
     }
 
     @Override
-    public void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException {
+    public void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull Path> outputs) throws IOException {
       try {
-        myDelegate.setOutputs(srcPath, outputs);
+        myDelegate.setOutputs(sourceFile, outputs);
       }
       finally {
-        myOutputToTargetRegistry.addMapping(outputs, myBuildTargetId);
+        outputToTargetMapping.addMappings(myBuildTargetId, outputs);
       }
     }
 
     @Override
-    public void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
+    public void appendOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException {
       try {
-        myDelegate.setOutput(srcPath, outputPath);
+        myDelegate.appendOutput(sourcePath, outputPath);
       }
       finally {
-        myOutputToTargetRegistry.addMapping(outputPath, myBuildTargetId);
+        outputToTargetMapping.addMapping(outputPath, myBuildTargetId);
       }
     }
 
     @Override
-    public void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException {
-      try {
-        myDelegate.appendOutput(srcPath, outputPath);
-      }
-      finally {
-        myOutputToTargetRegistry.addMapping(outputPath, myBuildTargetId);
-      }
-    }
-
-    @Override
-    public void remove(@NotNull String srcPath) throws IOException {
-      myDelegate.remove(srcPath);
+    public void remove(@NotNull Path sourceFile) throws IOException {
+      myDelegate.remove(sourceFile);
     }
 
     @Override
@@ -360,51 +705,120 @@ public class BuildDataManager {
     }
 
     @Override
-    @NotNull
-    public Collection<String> getSources() throws IOException {
-      return myDelegate.getSources();
+    public @Nullable Collection<String> getOutputs(@NotNull String sourcePath) throws IOException {
+      return myDelegate.getOutputs(sourcePath);
     }
 
     @Override
-    @Nullable
-    public Collection<String> getOutputs(@NotNull String srcPath) throws IOException {
-      return myDelegate.getOutputs(srcPath);
+    public @Nullable @Unmodifiable Collection<@NotNull Path> getOutputs(@NotNull Path sourceFile) throws IOException {
+      return myDelegate.getOutputs(sourceFile);
     }
 
     @Override
-    public @NotNull Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
-      return myDelegate.getOutputsIterator(srcPath);
+    public @NotNull Iterator<@NotNull Path> getSourceFileIterator() throws IOException {
+      return myDelegate.getSourceFileIterator();
     }
 
     @Override
-    @NotNull
-    public Iterator<String> getSourcesIterator() throws IOException {
+    public @NotNull Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();
     }
+
+    @Override
+    public @NotNull SourceToOutputMappingCursor cursor() throws IOException {
+      return myDelegate.cursor();
+    }
   }
 
-  @NotNull
-  private StorageOwner allTargetStorages() {
-    return allTargetStorages(f -> {});
-  }
-  
-  private StorageOwner allTargetStorages(Consumer<Future<?>> asyncTaskCollector) {
-    return new CompositeStorageOwner() {
+  private static DependencyGraph asSynchronizedGraph(DependencyGraph graph) {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    DependencyGraph delegate = new LoggingDependencyGraph(graph, msg -> LOG.info(msg));
+    return new DependencyGraph() {
+      private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
       @Override
-      public void clean() throws IOException {
+      public Delta createDelta(Iterable<NodeSource> sourcesToProcess, Iterable<NodeSource> deletedSources, boolean isSourceOnly) throws IOException {
+        lock.readLock().lock();
         try {
-          close();
+          return delegate.createDelta(sourcesToProcess, deletedSources, isSourceOnly);
         }
         finally {
-          asyncTaskCollector.accept(FileUtil.asyncDelete(myDataPaths.getTargetsDataRoot()));
+          lock.readLock().unlock();
         }
       }
 
       @Override
-      protected Iterable<BuildTargetStorages> getChildStorages() {
-        return () -> myTargetStorages.values().iterator();
+      public DifferentiateResult differentiate(Delta delta, DifferentiateParameters params) {
+        lock.readLock().lock();
+        try {
+          return delegate.differentiate(delta, params);
+        }
+        finally {
+          lock.readLock().unlock();
+        }
+      }
+
+      @Override
+      public void integrate(@NotNull DifferentiateResult diffResult) {
+        lock.writeLock().lock();
+        try {
+          delegate.integrate(diffResult);
+        }
+        finally {
+          lock.writeLock().unlock();
+        }
+      }
+
+      @Override
+      public Iterable<BackDependencyIndex> getIndices() {
+        return delegate.getIndices();
+      }
+
+      @Override
+      public @Nullable BackDependencyIndex getIndex(String name) {
+        return delegate.getIndex(name);
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
+        return delegate.getSources(id);
+      }
+
+      @Override
+      public Iterable<ReferenceID> getRegisteredNodes() {
+        return delegate.getRegisteredNodes();
+      }
+
+      @Override
+      public Iterable<NodeSource> getSources() {
+        return delegate.getSources();
+      }
+
+      @Override
+      public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
+        return delegate.getNodes(source);
+      }
+
+      @Override
+      public <T extends Node<T, ?>> Iterable<T> getNodes(NodeSource src, Class<T> nodeSelector) {
+        return delegate.getNodes(src, nodeSelector);
+      }
+
+      @Override
+      public @NotNull Iterable<ReferenceID> getDependingNodes(@NotNull ReferenceID id) {
+        return delegate.getDependingNodes(id);
+      }
+
+      @Override
+      public void close() throws IOException {
+        lock.writeLock().lock();
+        try {
+          delegate.close();
+        }
+        finally {
+          lock.writeLock().unlock();
+        }
       }
     };
   }
-
 }

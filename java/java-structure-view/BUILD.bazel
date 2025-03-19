@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.java.structureView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "structureView_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structureView",
+  module_name = "intellij.java.structureView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/structure-view-impl:structureView-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util:util-ui",
+    "//java/java-analysis-impl:analysis-impl",
+  ],
+  runtime_deps = [":structureView_resources"]
+)
+### auto-generated section `build intellij.java.structureView` end

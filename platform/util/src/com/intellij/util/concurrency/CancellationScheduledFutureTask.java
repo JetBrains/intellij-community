@@ -3,27 +3,50 @@ package com.intellij.util.concurrency;
 
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 final class CancellationScheduledFutureTask<V> extends SchedulingWrapper.MyScheduledFutureTask<V> {
 
-  private final @NotNull Job myJob;
+  private final @Nullable Job myJob;
+  private final @NotNull ChildContext myChildContext;
+  private final @NotNull AtomicBoolean myExecutionTracker;
 
-  CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Callable<V> callable, long ns) {
+  CancellationScheduledFutureTask(@NotNull SchedulingWrapper self,
+                                  @NotNull ChildContext context,
+                                  @Nullable Job job,
+                                  @NotNull AtomicBoolean executionTracker,
+                                  @NotNull Callable<V> callable,
+                                  long ns) {
     self.super(callable, ns);
     myJob = job;
+    myChildContext = context;
+    myExecutionTracker = executionTracker;
   }
 
-  CancellationScheduledFutureTask(@NotNull SchedulingWrapper self, @NotNull Job job, @NotNull Runnable r, long ns, long period) {
+  CancellationScheduledFutureTask(@NotNull SchedulingWrapper self,
+                                  @NotNull ChildContext context,
+                                  @Nullable Job job,
+                                  @NotNull Runnable r,
+                                  long ns,
+                                  long period) {
     self.super(r, null, ns, period);
     myJob = job;
+    myChildContext = context;
+    myExecutionTracker = new AtomicBoolean(false);
   }
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     boolean result = super.cancel(mayInterruptIfRunning);
-    myJob.cancel(null);
+    if (myJob != null) {
+      myJob.cancel(null);
+    }
+    if (!myExecutionTracker.getAndSet(true)) {
+      myChildContext.cancelAllIntelliJElements();
+    }
     return result;
   }
 }

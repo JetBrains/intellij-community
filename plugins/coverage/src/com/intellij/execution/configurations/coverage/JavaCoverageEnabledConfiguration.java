@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.*;
@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for java run configurations with enabled code coverage
@@ -35,15 +36,13 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   private boolean myIsMergeWithPreviousResults = false;
   private String mySuiteToMergeWith;
 
-  @NonNls private static final String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
-  @NonNls private static final String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
-  @NonNls private static final String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
+  private static final @NonNls String COVERAGE_PATTERN_ELEMENT_NAME = "pattern";
+  private static final @NonNls String COVERAGE_MERGE_ATTRIBUTE_NAME = "merge";
+  private static final @NonNls String COVERAGE_MERGE_SUITE_ATT_NAME = "merge_suite";
 
 
-  public JavaCoverageEnabledConfiguration(final RunConfigurationBase configuration,
-                                          final JavaCoverageEngine coverageProvider) {
-    super(configuration);
-    setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
+  public JavaCoverageEnabledConfiguration(RunConfigurationBase configuration) {
+    super(configuration, Objects.requireNonNull(CoverageRunner.getInstance(IDEACoverageRunner.class)));
   }
 
   public void downloadReport(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator indicator) throws IOException {
@@ -54,8 +53,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     }
   }
 
-  @Nullable
-  public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase configuration) {
+  public static @Nullable JavaCoverageEnabledConfiguration getFrom(final @NotNull RunConfigurationBase<?> configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;
@@ -63,29 +61,29 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     return null;
   }
 
-  public void appendCoverageArgument(@NotNull RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
-    final CoverageRunner runner = getCoverageRunner();
+  public void appendCoverageArgument(@NotNull CoverageSuite suite, final SimpleJavaParameters javaParameters) {
+    final CoverageRunner runner = suite.getRunner();
     if (runner instanceof JavaCoverageRunner javaCoverageRunner) {
-      final String path = getCoverageFilePath();
+      final String path = suite.getCoverageDataFileName();
       assert path != null; // cannot be null here if runner != null
 
       String sourceMapPath = null;
-      if (JavaCoverageEngine.isSourceMapNeeded(configuration)) {
+      if (JavaCoverageEngine.isSourceMapNeeded(getConfiguration())) {
         sourceMapPath = getSourceMapPath(path);
       }
 
       final String[] patterns = getPatterns();
       final String[] excludePatterns = getExcludePatterns();
-      final Project project = configuration.getProject();
-      CoverageLogger.logStarted(javaCoverageRunner, isTracingEnabled(), isTrackPerTestCoverage(),
+      final Project project = getConfiguration().getProject();
+      CoverageLogger.logStarted(runner, suite.isBranchCoverage(), suite.isCoverageByTestEnabled(),
                                 patterns == null ? 0 : patterns.length,
                                 excludePatterns == null ? 0 : excludePatterns.length);
       javaCoverageRunner.appendCoverageArgument(new File(path).getAbsolutePath(),
                                                 patterns,
                                                 excludePatterns,
                                                 javaParameters,
-                                                isTrackPerTestCoverage() && isTracingEnabled(),
-                                                isTracingEnabled(),
+                                                suite.isCoverageByTestEnabled(),
+                                                suite.isBranchCoverage(),
                                                 sourceMapPath,
                                                 project);
     }
@@ -100,21 +98,21 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
   }
 
   public String @Nullable [] getPatterns() {
-    if (myCoveragePatterns != null) {
-      List<String> patterns = new ArrayList<>();
-      for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
-      }
-      return ArrayUtilRt.toStringArray(patterns);
-    }
-    return null;
+    return getPatterns(true);
   }
 
   public String @Nullable [] getExcludePatterns() {
+    return getPatterns(false);
+  }
+
+  private String @Nullable [] getPatterns(boolean include) {
     if (myCoveragePatterns != null) {
       List<String> patterns = new ArrayList<>();
       for (ClassFilter coveragePattern : myCoveragePatterns) {
-        if (coveragePattern.isEnabled() && !coveragePattern.isInclude()) patterns.add(coveragePattern.getPattern());
+        if (coveragePattern == null) continue;
+        if (coveragePattern.isEnabled() && coveragePattern.isInclude() == include) {
+          patterns.add(coveragePattern.getPattern());
+        }
       }
       return ArrayUtilRt.toStringArray(patterns);
     }
@@ -136,7 +134,7 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
 
     // coverage patters
     List<Element> children = element.getChildren(COVERAGE_PATTERN_ELEMENT_NAME);
-    if (children.size() > 0) {
+    if (!children.isEmpty()) {
       myCoveragePatterns = new ClassFilter[children.size()];
       for (int i = 0; i < children.size(); i++) {
         Element e = children.get(i);
@@ -180,21 +178,12 @@ public final class JavaCoverageEnabledConfiguration extends CoverageEnabledConfi
     // patterns
     if (myCoveragePatterns != null) {
       for (ClassFilter pattern : myCoveragePatterns) {
-        @NonNls final Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
+        if (pattern == null) continue;
+        final @NonNls Element patternElement = new Element(COVERAGE_PATTERN_ELEMENT_NAME);
         pattern.writeExternal(patternElement);
         element.addContent(patternElement);
       }
     }
-  }
-
-  @Override
-  @Nullable
-  public String getCoverageFilePath() {
-    if (myCoverageFilePath != null ) {
-      return myCoverageFilePath;
-    }
-    myCoverageFilePath = createCoverageFile();
-    return myCoverageFilePath;
   }
 
   public void setUpCoverageFilters(@Nullable String className, @Nullable String packageName) {

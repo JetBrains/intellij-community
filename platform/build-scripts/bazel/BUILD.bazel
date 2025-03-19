@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.buildScripts.bazel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "buildScripts-bazel",
+  module_name = "intellij.platform.buildScripts.bazel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//jps/model-serialization",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/jdom",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kaml",
+    "@lib//:hash4j",
+    "@rules_jvm//zip:build-zip",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+  ],
+  runtime_deps = [
+    "//jps/model-impl",
+    "@lib//:okhttp",
+  ]
+)
+### auto-generated section `build intellij.platform.buildScripts.bazel` end

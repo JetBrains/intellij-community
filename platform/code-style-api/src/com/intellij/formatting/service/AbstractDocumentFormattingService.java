@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.application.options.CodeStyle;
@@ -24,7 +24,7 @@ import java.util.Set;
  * Base class for synchronous document formatting services.
  */
 public abstract class AbstractDocumentFormattingService implements FormattingService {
-  private final static Key<Document> DOCUMENT_KEY = Key.create("formatting.service.document");
+  private static final Key<Document> DOCUMENT_KEY = Key.create("formatting.service.document");
 
   @Override
   public final @NotNull PsiElement formatElement(@NotNull PsiElement element, boolean canChangeWhiteSpaceOnly) {

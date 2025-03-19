@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Base class for light tests.
  * <p/>
- * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform SDK DevGuide.
+ * Please see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins</a> in IntelliJ Platform Plugin SDK Docs.
  *
  * @see CodeInsightFixtureTestCase for "heavy" tests that require access to the real FS or changes project roots.
  */
@@ -38,21 +38,26 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
-    IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
+    myFixture = createMyFixture();
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
   }
 
+  protected CodeInsightTestFixture createMyFixture() {
+    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
+    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
+      factory.createLightFixtureBuilder(getProjectDescriptor(), getTestName(false));
+    IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
+
+    return IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirTestFixture());
+  }
+
   protected TempDirTestFixture createTempDirTestFixture() {
     IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
     return policy != null
-        ? policy.createTempDirTestFixture()
-        : new LightTempDirTestFixtureImpl(true);
+           ? policy.createTempDirTestFixture()
+           : new LightTempDirTestFixtureImpl(true);
   }
 
   @Override
@@ -71,6 +76,8 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
 
   /**
    * Returns relative path to the test data.
+   *
+   * @see #getTestDataPath()
    */
   protected String getBasePath() {
     return "";
@@ -80,21 +87,26 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
     return null;
   }
 
-   /**
-    * Return absolute path to the test data. Not intended to be overridden in tests written as part of the IntelliJ IDEA codebase;
-    * must be overridden in plugins which use the test framework.
-    *
-    * @see #getBasePath()
-    */
-   protected String getTestDataPath() {
-     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
-     return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
-            StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
-   }
+  /**
+   * Returns the absolute path to the test data.
+   * Not intended to be overridden in tests written as part of the IntelliJ IDEA codebase;
+   * it must be overridden in plugins which use the test framework.
+   *
+   * @see #getBasePath()
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/test-project-and-testdata-directories.html">Test Project and Testdata Directories</a>
+   */
+  protected String getTestDataPath() {
+    String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
+           StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
+  }
 
-   protected boolean isCommunity() {
-     return false;
-   }
+  /**
+   * For IntelliJ IDEA codebase only.
+   */
+  protected boolean isCommunity() {
+    return false;
+  }
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsagePresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 
+@ApiStatus.Internal
 public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usage {
   private final String myExplanationText;
 
@@ -45,18 +47,16 @@ public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usag
       modulesText);
   }
 
-  @NotNull
   @Override
-  public UsagePresentation getPresentation() {
+  public @NotNull UsagePresentation getPresentation() {
     return new UsagePresentation() {
       @Override
       public TextChunk @NotNull [] getText() {
         return new TextChunk[] {new TextChunk(SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes(), myExplanationText)};
       }
 
-      @NotNull
       @Override
-      public String getPlainText() {
+      public @NotNull String getPlainText() {
         return myExplanationText;
       }
 

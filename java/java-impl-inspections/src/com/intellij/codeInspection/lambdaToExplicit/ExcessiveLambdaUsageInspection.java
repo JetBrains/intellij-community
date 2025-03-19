@@ -1,14 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -18,18 +23,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_REPLACE_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_LIST, "replaceAll").parameterTypes("java.util.function.UnaryOperator");
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
@@ -63,7 +71,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  static class RemoveExcessiveLambdaFix implements LocalQuickFix {
+  static class RemoveExcessiveLambdaFix extends PsiUpdateModCommandQuickFix {
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
@@ -72,23 +80,19 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.name", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = Context.from(descriptor.getStartElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      Context context = Context.from(element);
       if (context == null) return;
       ExpressionUtils.bindCallTo(context.myCall, myInfo.getExplicitMethodName(context.myCall));
       CommentTracker ct = new CommentTracker();
@@ -96,15 +100,15 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  static class ReplaceWithCollectionsFillFix implements LocalQuickFix {
+  static class ReplaceWithCollectionsFillFix extends PsiUpdateModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.excessive.lambda.fix.name", "Collections.fill()");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = Context.from(descriptor.getStartElement());
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      Context context = Context.from(element);
       if (context == null) return;
       PsiExpression expression = ExpressionUtils.getEffectiveQualifier(context.myCall.getMethodExpression());
       if (expression == null) return;
@@ -119,9 +123,9 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class Context {
-    private @NotNull final PsiMethodCallExpression myCall;
-    private @NotNull final PsiLambdaExpression myLambda;
-    private @NotNull final PsiElement myBody;
+    private final @NotNull PsiMethodCallExpression myCall;
+    private final @NotNull PsiLambdaExpression myLambda;
+    private final @NotNull PsiElement myBody;
 
     private Context(@NotNull PsiMethodCallExpression call,
                     @NotNull PsiLambdaExpression lambda,
@@ -131,8 +135,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
       myBody = body;
     }
 
-    @Nullable
-    static Context from(@Nullable PsiElement element) {
+    static @Nullable Context from(@Nullable PsiElement element) {
       if (!(element instanceof PsiLambdaExpression lambda)) return null;
       PsiElement body = lambda.getBody();
       if (body == null) return null;

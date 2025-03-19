@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -20,12 +20,12 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.List;
-import java.util.StringJoiner;
 
 /**
  * @author Dmitry Avdeev
@@ -43,15 +43,13 @@ public class ProjectTemplateList extends JPanel {
     add(myPanel, BorderLayout.CENTER);
 
     GroupedItemsListRenderer<ProjectTemplate> renderer = new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<ProjectTemplate>() {
-      @NotNull
       @Override
-      public String getTextFor(ProjectTemplate value) {
+      public @NotNull String getTextFor(ProjectTemplate value) {
         return value.getName();
       }
 
-      @Nullable
       @Override
-      public Icon getIconFor(ProjectTemplate value) {
+      public @Nullable Icon getIconFor(ProjectTemplate value) {
         return value.getIcon();
       }
     }) {
@@ -93,8 +91,8 @@ public class ProjectTemplateList extends JPanel {
     myDescriptionPane.setText(descriptionHtml.toString());
   }
 
-  public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
-    list.sort((o1, o2) -> Boolean.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
+  public void setTemplates(@Unmodifiable List<? extends ProjectTemplate> list, boolean preserveSelection) {
+    list = ContainerUtil.sorted(list, (o1, o2) -> Boolean.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     myList.setModel(new CollectionListModel<>(list));
@@ -104,8 +102,7 @@ public class ProjectTemplateList extends JPanel {
     updateSelection();
   }
 
-  @Nullable
-  public ProjectTemplate getSelectedTemplate() {
+  public @Nullable ProjectTemplate getSelectedTemplate() {
     return myList.getSelectedValue();
   }
 
@@ -147,10 +144,6 @@ public class ProjectTemplateList extends JPanel {
     myList.addListSelectionListener(listener);
   }
 
-  public void setPaintBusy(boolean b) {
-    myList.setPaintBusy(b);
-  }
-
   @TestOnly
   boolean setSelectedTemplate(@NotNull String name) {
     ListModel<ProjectTemplate> model1 = myList.getModel();
@@ -162,15 +155,5 @@ public class ProjectTemplateList extends JPanel {
     }
 
     return false;
-  }
-
-  @TestOnly
-  public String availableProjectTemplatesToString() {
-    ListModel<ProjectTemplate> model = myList.getModel();
-    StringJoiner builder = new StringJoiner(", ");
-    for (int i = 0; i < model.getSize(); i++) {
-      builder.add(model.getElementAt(i).getName());
-    }
-    return builder.toString();
   }
 }

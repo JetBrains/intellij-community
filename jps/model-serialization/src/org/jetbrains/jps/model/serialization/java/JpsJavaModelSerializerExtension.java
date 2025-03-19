@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsPathMapper;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.java.compiler.*;
@@ -36,7 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
+public final class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension {
   private static final Logger LOG = Logger.getInstance(JpsJavaModelSerializerExtension.class);
 
   public static final String EXPORTED_ATTRIBUTE = "exported";
@@ -78,9 +79,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Arrays.asList(new JavaProjectExtensionSerializer(),
                          new JpsJavaCompilerConfigurationSerializer(),
                          new JpsValidationSerializer(),
@@ -92,9 +92,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new RmicCompilerOptionsSerializer("RmicSettings", "Rmic"));
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
+  public @NotNull List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Arrays.asList(JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER,
                          new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID),
                          new JavaResourceRootPropertiesSerializer(JavaResourceRootType.RESOURCE, JAVA_RESOURCE_ROOT_ID),
@@ -125,24 +124,21 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new JpsLibraryRootTypeSerializer("NATIVE", JpsNativeLibraryRootType.INSTANCE, false));
   }
 
-  @NotNull
   @Override
-  public List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
+  public @NotNull List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
     return Arrays.asList(new JpsLibraryRootTypeSerializer("javadocPath", JpsOrderRootType.DOCUMENTATION, true),
                          new JpsLibraryRootTypeSerializer("annotationsPath", JpsAnnotationRootType.INSTANCE, true));
   }
 
-  @NotNull
   @Override
-  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
+  public @NotNull List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(),
                          new JpsTestModuleOutputPackagingElementSerializer(),
                          new JpsModuleSourcePackagingElementSerializer());
   }
 
   @Override
-  @NotNull
-  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
+  public @NotNull List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.singletonList(new JpsRepositoryLibraryPropertiesSerializer());
   }
 
@@ -234,7 +230,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return defaultLevel;
   }
 
-  private static class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
+  private static final class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
     JavaProjectExtensionSerializer() {
       super(null, "ProjectRootManager");
     }
@@ -263,7 +259,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
     @Override
     public JavaSourceRootProperties loadProperties(@NotNull Element sourceRootTag) {
-      String packagePrefix = StringUtil.notNullize(sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE));
+      String packagePrefix = sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, "");
       boolean isGenerated = Boolean.parseBoolean(sourceRootTag.getAttributeValue(IS_GENERATED_ATTRIBUTE));
       return getService().createSourceRootProperties(packagePrefix, isGenerated);
     }
@@ -306,7 +302,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
+  private static final class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
     private static final String MAVEN_ID_ATTRIBUTE = "maven-id";
     private static final String INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE = "include-transitive-deps";
     private static final String EXCLUDE_TAG = "exclude";
@@ -327,12 +323,11 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
 
     @Override
-    public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem) {
-      return JpsElementFactory.getInstance().createSimpleElement(loadDescriptor(elem));
+    public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem, @NotNull JpsPathMapper pathMapper) {
+      return JpsElementFactory.getInstance().createSimpleElement(loadDescriptor(elem, pathMapper));
     }
 
-    @NotNull
-    private static JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem) {
+    private static @NotNull JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem, @NotNull JpsPathMapper pathMapper) {
       if (elem == null) return new JpsMavenRepositoryLibraryDescriptor(null);
       String mavenId = elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null);
 
@@ -343,14 +338,15 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       Element excludeTag = elem.getChild(EXCLUDE_TAG);
       List<Element> dependencyTags = excludeTag != null ? excludeTag.getChildren(DEPENDENCY_TAG) : Collections.emptyList();
       List<String> excludedDependencies = ContainerUtil.map(dependencyTags, it -> it.getAttributeValue(MAVEN_ID_ATTRIBUTE));
-      var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG));
+      var verificationProperties = loadArtifactsVerificationProperties(mavenId, elem.getChild(VERIFICATION_TAG), pathMapper);
       return new JpsMavenRepositoryLibraryDescriptor(mavenId,
                                                      includeTransitiveDependencies, excludedDependencies,
                                                      verificationProperties,
                                                      jarRepositoryId);
     }
 
-    private static List<ArtifactVerification> loadArtifactsVerificationProperties(@Nullable String mavenId, @Nullable Element element) {
+    private static List<ArtifactVerification> loadArtifactsVerificationProperties(@Nullable String mavenId, @Nullable Element element,
+                                                                                  @NotNull JpsPathMapper pathMapper) {
       if (element == null) {
         return Collections.emptyList();
       }
@@ -366,7 +362,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
           if (sha256sum == null) {
             LOG.warn("Missing sha256sum attribute for verification artifact tag for descriptor maven-id=" + mavenId);
           } else {
-            result.add(new ArtifactVerification(artifactUrl, sha256sum));
+            result.add(new ArtifactVerification(pathMapper.mapUrl(artifactUrl), sha256sum));
           }
         } else {
           LOG.warn("Missing url attribute for verification artifact tag for descriptor maven-id=" + mavenId);

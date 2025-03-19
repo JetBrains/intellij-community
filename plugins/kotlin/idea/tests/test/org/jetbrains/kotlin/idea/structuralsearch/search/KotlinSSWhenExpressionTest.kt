@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "whenExpression"
-
     fun testWhenVariableSubject() {
         doTest(
             """
@@ -14,7 +12,16 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
                 true -> b = false
                 false -> b = true
             }
-            """
+            """, """
+            fun a(): Boolean {
+                var b = false
+                <warning descr="SSR">when(b) {
+                    true -> b = false
+                    false -> b = true
+                }</warning>
+                return b
+            }
+        """.trimIndent()
         )
     }
 
@@ -25,7 +32,14 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
                 true -> println(b)
                 false ->  println(b)
             }
-            """
+            """, """
+            fun a() {
+                <warning descr="SSR">when(val b = false) {
+                    true -> println(b)
+                    false -> println(b)
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -36,7 +50,14 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
                 in 3..10 -> '_
                 else -> '_
             }
-            """
+            """, """
+            fun a() {
+                <warning descr="SSR">when(10) {
+                    in 3..10 -> Unit
+                    else -> Unit
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -47,7 +68,16 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
                 a == b -> return true
                 else ->  return false
             }
-            """
+            """, """
+            fun a(): Boolean {
+                val a = 3
+                val b = 4
+                <warning descr="SSR">when {
+                    a == b -> return true
+                    else ->  return false
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -59,7 +89,16 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
                 is String -> return true
                 else ->  return false
             }
-            """
+            """, """
+            fun a(): Boolean {
+                val a: Any = 3
+                <warning descr="SSR">when(a) {
+                    is Int -> return true
+                    is String -> return true
+                    else ->  return false
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -69,7 +108,14 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
             when (i) {
                 '_ -> '_
              }
-            """.trimIndent()
+            """.trimIndent(), """
+            fun a() {
+                val i = 0
+                <warning descr="SSR">when (i) {
+                    1 -> Unit
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -79,7 +125,20 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
             when ('_) {
                 '_ -> '_
              }
-            """.trimIndent()
+            """.trimIndent(), """
+            fun foo(x: Any): Any = x.hashCode()
+
+            fun a() {
+                val i = 0
+                <warning descr="SSR">when (foo(i)) {
+                    is Int -> Unit
+                    else -> Unit
+                }</warning>
+                <warning descr="SSR">when (i) {
+                    1 -> Unit
+                }</warning>
+            }
+        """.trimIndent()
         )
     }
 
@@ -89,7 +148,22 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
             when ('_?) {
                 else -> println()
             }
-            """
+            """, """
+                fun main() {
+                    val a = 2
+                    val b = 3
+
+                    when (b) {
+                        a -> println()
+                        in 1..4 -> println()
+                    }
+
+                    <warning descr="SSR">when (b) {
+                        a -> println()
+                        else -> println()
+                    }</warning>
+                }
+            """.trimIndent()
         )
     }
 
@@ -99,7 +173,14 @@ class KotlinSSWhenExpressionTest : KotlinStructuralSearchTest() {
             when('_a) {
                 '_a -> '_b
             }
-            """.trimIndent()
+            """.trimIndent(), """
+            fun x() {
+                val x = 1
+                when(x) {
+                    4 -> println()
+                }
+            }
+        """.trimIndent()
         )
     }
 }

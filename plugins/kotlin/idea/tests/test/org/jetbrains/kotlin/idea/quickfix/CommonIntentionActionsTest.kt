@@ -378,9 +378,19 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
                 |import pkg.myannotation.NestedJavaAnnotation
                 |
                 |class Foo {
-                |   @JavaAnnotation(NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1), NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]), param = 3)
+                |   @JavaAnnotation(
+                |       NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 1),
+                |       NestedJavaAnnotation(nestedParam = 2, value = ["foo21", "foo22", "foo23"]),
+                |       param = 3
+                |   )
                 |   fun bar(){}
-                |   @JavaAnnotation(param = 1, value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(nestedParam = 3, value = ["foo21", "foo22", "foo23"])])
+                |   @JavaAnnotation(
+                |       param = 1,
+                |       value = [NestedJavaAnnotation("foo11", "foo12", "foo13", nestedParam = 2), NestedJavaAnnotation(
+                |           nestedParam = 3,
+                |           value = ["foo21", "foo22", "foo23"]
+                |       )]
+                |   )
                 |   fun baz(){}
                 |}""".trim().trimMargin(), true
         )
@@ -484,6 +494,249 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
             "KtUltraLightMethodForSourceDeclaration -> org.jetbrains.annotations.NotNull," +
                     " KtUltraLightFieldForSourceDeclaration -> pkg.myannotation.JavaAnnotation, org.jetbrains.annotations.NotNull",
             annotationsString(myFixture.findElementByText("bar", KtModifierListOwner::class.java))
+        )
+    }
+
+    fun testChangeAnnotationAttributeActionsWithJavaAnnotation() {
+        myFixture.addJavaFileToProject(
+            "pkg/myannotation/JavaAnnotation.java", """
+            package pkg.myannotation;
+
+            public @interface JavaAnnotation {
+                String[] value();
+                String description() default "";
+            }
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """import pkg.myannotation.JavaAnnotation
+                |
+                |class Foo {
+                |   @JavaAnnotation
+                |   fun empty(){}
+                |   @JavaAnnotation(description = "stay")
+                |   fun emptyWithDescription(){}
+                |   
+                |   @JavaAnnotation("before")
+                |   fun single(){}
+                |   @JavaAnnotation(value = ["before"])
+                |   fun singleExplicit(){}
+                |   
+                |   @JavaAnnotation("before", "before")
+                |   fun multiple(){}
+                |   @JavaAnnotation(value = ["before", "before", "before"])
+                |   fun multipleExplicit(){}
+                |   
+                |   @JavaAnnotation("before", "before", description = "stay")
+                |   fun multipleDescription(){}
+                |   @JavaAnnotation(value = ["before", "before", "before"], description = "stay")
+                |   fun multipleDescriptionExplicit(){}
+                |}""".trim().trimMargin(),
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("empty").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("emptyWithDescription").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("single").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("singleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multiple").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("during"), StringValue("during"), StringValue("during"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleDescription").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"), StringValue("after3"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleDescriptionExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("during"), StringValue("during"), StringValue("during"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleDescriptionExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("after1"), StringValue("after2"))),
+                "Change annotation attribute", "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.checkResult(
+            """import pkg.myannotation.JavaAnnotation
+                |
+                |class Foo {
+                |   @JavaAnnotation("after1", "after2", "after3")
+                |   fun empty(){}
+                |   @JavaAnnotation("after1", "after2", "after3", description = "stay")
+                |   fun emptyWithDescription(){}
+                |   
+                |   @JavaAnnotation("after1", "after2", "after3")
+                |   fun single(){}
+                |   @JavaAnnotation("after1", "after2", "after3")
+                |   fun singleExplicit(){}
+                |   
+                |   @JavaAnnotation("after1", "after2", "after3")
+                |   fun multiple(){}
+                |   @JavaAnnotation("after1", "after2")
+                |   fun multipleExplicit(){}
+                |   
+                |   @JavaAnnotation("after1", "after2", "after3", description = "stay")
+                |   fun multipleDescription(){}
+                |   @JavaAnnotation("after1", "after2", description = "stay")
+                |   fun multipleDescriptionExplicit(){}
+                |}""".trim().trimMargin(), true
+        )
+    }
+
+    fun testChangeAnnotationAttributeActionsWithKotlinAnnotation() {
+        myFixture.addKotlinFileToProject(
+            "pkg/myannotation/KotlinAnnotation.kt", """
+            package pkg.myannotation
+
+            annotation class KotlinAnnotation(
+                val value: Array<String>
+            )
+        """.trimIndent()
+        )
+
+        myFixture.configureByText(
+            "foo.kt", """import pkg.myannotation.KotlinAnnotation
+                |
+                |class Foo {
+                |   @KotlinAnnotation(["foo1"])
+                |   fun single(){}
+                |   @KotlinAnnotation(value = ["foo1"])
+                |   fun singleExplicit(){}
+                |   @KotlinAnnotation(["foo1", "foo2"])
+                |   fun multiple(){}
+                |   @KotlinAnnotation(value = ["foo1", "foo2", "foo3"])
+                |   fun multipleExplicit(){}
+                |}""".trim().trimMargin(),
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("single").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3"))),
+                "Change 'value' attribute of 'JavaAnnotation' annotation",
+                "Change annotation attribute"
+            ).single()
+        )
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("singleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3"))),
+                "Change 'value' attribute of 'JavaAnnotation' annotation",
+                "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multiple").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3"))),
+                "Change 'value' attribute of 'JavaAnnotation' annotation",
+                "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"))),
+                "Change 'value' attribute of 'JavaAnnotation' annotation",
+                "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.launchAction(
+            createChangeAnnotationAttributeActions(
+                myFixture.findMethod("multipleExplicit").annotations.single(),
+                0,
+                arrayAttribute("value", listOf(StringValue("foo1"), StringValue("foo2"), StringValue("foo3"))),
+                "Change 'value' attribute of 'JavaAnnotation' annotation",
+                "Change annotation attribute"
+            ).single()
+        )
+
+        myFixture.checkResult(
+            """import pkg.myannotation.KotlinAnnotation
+                |
+                |class Foo {
+                |   @KotlinAnnotation(value = ["foo1", "foo2", "foo3"])
+                |   fun single(){}
+                |   @KotlinAnnotation(value = ["foo1", "foo2", "foo3"])
+                |   fun singleExplicit(){}
+                |   @KotlinAnnotation(value = ["foo1", "foo2", "foo3"])
+                |   fun multiple(){}
+                |   @KotlinAnnotation(value = ["foo1", "foo2", "foo3"])
+                |   fun multipleExplicit(){}
+                |}""".trim().trimMargin(), true
         )
     }
 
@@ -1154,6 +1407,12 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         )
     }
 
+
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    private fun List<IntentionAction>.findWithText(text: String): IntentionAction =
+        this.filter { it.isAvailable(myFixture.project, myFixture.editor, myFixture.file) }.firstOrNull { it.text == text }
+            ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
+
     private fun CodeInsightTestFixture.addJavaFileToProject(relativePath: String, @Language("JAVA") fileText: String) =
         this.addFileToProject(relativePath, fileText)
 
@@ -1164,6 +1423,9 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
 
     private fun expectedParams(vararg psyTypes: PsiType) =
         psyTypes.mapIndexed { index, psiType -> expectedParameter(expectedTypes(psiType), "param$index") }
+
+    private fun CodeInsightTestFixture.findMethod(name: String): JvmMethod =
+        this.findElementByText(name, KtModifierListOwner::class.java).toLightElements().single() as JvmMethod
 
     class FieldRequest(
         private val project: Project,
@@ -1198,11 +1460,5 @@ private class TestModifierRequest(private val _modifier: JvmModifier, private va
     override fun isValid(): Boolean = true
     override fun getModifier(): JvmModifier = _modifier
 }
-
-@Suppress("CAST_NEVER_SUCCEEDS")
-internal fun List<IntentionAction>.findWithText(text: String): IntentionAction =
-    this.firstOrNull { it.text == text }
-        ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
-
 
 

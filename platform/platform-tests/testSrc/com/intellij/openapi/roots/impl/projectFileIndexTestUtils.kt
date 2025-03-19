@@ -31,11 +31,11 @@ object ProjectFileIndexScopes {
   fun ProjectFileIndex.assertInModule(file: VirtualFile,
                                       module: Module,
                                       contentRoot: VirtualFile,
-                                      @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int = IN_CONTENT) {
+                                      @MagicConstant(flagsFromClass = ProjectFileIndexScopes::class) scope: Int = IN_CONTENT) {
     assertScope(file, scope, module, contentRoot)
   }
   
-  fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int) {
+  fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexScopes::class) scope: Int) {
     assertScope(file, scope, null, null)
   }
   
@@ -44,7 +44,7 @@ object ProjectFileIndexScopes {
     assertEquals(moduleName, getUnloadedModuleNameForFile(file))
   }
   
-  private fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexPerformanceTest::class) scope: Int = IN_CONTENT,
+  private fun ProjectFileIndex.assertScope(file: VirtualFile, @MagicConstant(flagsFromClass = ProjectFileIndexScopes::class) scope: Int = IN_CONTENT,
                                            module: Module?, contentRoot: VirtualFile?) {
     val inContent = scope and IN_CONTENT != 0
     val inLibrary = scope and IN_LIBRARY != 0

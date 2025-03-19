@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 
-public class PyDirectoryIconProvider extends IconProvider {
+public final class PyDirectoryIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
     if (element instanceof PsiDirectory directory) {

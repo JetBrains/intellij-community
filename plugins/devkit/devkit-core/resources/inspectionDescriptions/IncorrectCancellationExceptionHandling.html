@@ -1,0 +1,83 @@
+<html>
+<body>
+Reports <code>ProcessCanceledException</code> and <code>CancellationException</code> handled incorrectly.
+
+<p>
+  <code>ProcessCanceledException</code> and its inheritors must not be caught, swallowed, logged, or handled in any way.
+  Instead, it must be rethrown so that the IntelliJ Platform infrastructure can handle it correctly.
+</p>
+<p>
+  <code>CancellationException</code> must not be caught, swallowed, logged, or handled in any way in coroutine context.
+  Instead, it must be rethrown so that the coroutines infrastructure can handle it correctly.
+</p>
+
+<p>
+  Inspection reports both explicit <code>ProcessCanceledException</code> (including inheritors) and <code>CancellationException</code>catching,
+  as well as catching <code>RuntimeException</code>, <code>Exception</code> and <code>Throwable</code> covering cancellation exceptions.
+</p>
+
+<h3>Examples:</h3>
+
+<h4><code>ProcessCanceledException</code>:</h4>
+
+<pre><code lang="java">
+// bad:
+try {
+  // ...
+} catch (ProcessCanceledException e) { // exception should not be swallowed
+}
+
+// bad:
+try {
+  // ...
+} catch (ProcessCanceledException e) {
+  LOG.error("Error occurred", e); // exception should not be logged
+  throw e;
+}
+
+
+// good:
+try {
+  // ...
+} catch (ProcessCanceledException e) {
+  // additional actions
+  throw e;
+}
+</code></pre>
+
+<h4><code>CancellationException</code>:</h4>
+<pre><code lang="kotlin">
+// bad:
+cs.launch {
+  try {
+    // ...
+  } catch (e: CancellationException) { // exception should not be swallowed
+  }
+}
+
+// bad:
+suspend fun suspendingFunction() {
+  try {
+    // ...
+  } catch (ProcessCanceledException e) {
+    LOG.error("Error occurred", e); // exception should not be logged
+    throw e;
+  }
+}
+
+
+// good:
+cs.launch {
+  try {
+    // ...
+  } catch (ProcessCanceledException e) {
+    // additional actions
+    throw e;
+  }
+}
+</code></pre>
+
+<!-- tooltip end -->
+<p><small>New in 2023.2</small></p>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -56,7 +56,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
   /**
    * @deprecated Use {@link SdkListPresenter#create} instead. Wrapping is handled by {@code listItemSupplier}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
     return new ListCellRenderer<>() {
       @Override
@@ -139,8 +139,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
                                        boolean hasFocus) {
     setIcon(EMPTY_ICON);    // to fix vertical size
     getAccessibleContext().setAccessibleName(null);
-    if (value instanceof InvalidSdkItem) {
-      InvalidSdkItem item = (InvalidSdkItem)value;
+    if (value instanceof InvalidSdkItem item) {
       String str = ProjectBundle.message("jdk.combo.box.invalid.item", item.sdkName);
       append(str, SimpleTextAttributes.ERROR_ATTRIBUTES);
     }
@@ -156,8 +155,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
         append(ProjectBundle.message("jdk.combo.box.project.item"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
     }
-    else if (value instanceof SuggestedItem) {
-      SuggestedItem item = (SuggestedItem)value;
+    else if (value instanceof SuggestedItem item) {
       SdkType type = item.sdkType;
       String home = item.homePath;
       String version = item.version;
@@ -169,8 +167,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
       append(" ");
       append(version, SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
-    else if (value instanceof ActionItem) {
-      ActionItem item = (ActionItem)value;
+    else if (value instanceof ActionItem item) {
       Presentation template = item.action.getTemplatePresentation();
       //this is a sub-menu item
       SdkType sdkType = item.action.getSdkType();
@@ -190,8 +187,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
         append(item.action.getListItemText());
       }
     }
-    else if (value instanceof GroupItem) {
-      GroupItem item = (GroupItem)value;
+    else if (value instanceof GroupItem item) {
       setIcon(item.icon);
       append(item.caption);
     }
@@ -231,8 +227,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     }
   }
 
-  @NotNull
-  public static @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
+  public static @NotNull @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
     return presentDetectedSdkPath(home, 50, 30);
   }
 
@@ -253,7 +248,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     return accessibleContext;
   }
 
-  static private class AccessibleSdkListPresenter extends AccessibleContextDelegate {
+  private static final class AccessibleSdkListPresenter extends AccessibleContextDelegate {
     private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {

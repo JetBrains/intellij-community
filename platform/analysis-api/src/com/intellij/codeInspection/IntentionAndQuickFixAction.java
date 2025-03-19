@@ -26,21 +26,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class IntentionAndQuickFixAction implements LocalQuickFix, IntentionAction {
 
   @Override
-  @IntentionName
-  @NotNull
-  public abstract String getName();
+  public abstract @IntentionName @NotNull String getName();
 
   @Override
-  @IntentionFamilyName
-  @NotNull
-  public abstract String getFamilyName();
+  public abstract @IntentionFamilyName @NotNull String getFamilyName();
 
   public abstract void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor);
 
   @Override
-  @IntentionName
-  @NotNull
-  public String getText() {
+  public @IntentionName @NotNull String getText() {
     return getName();
   }
 

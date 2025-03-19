@@ -1,0 +1,11 @@
+- name: lib/jacoco.jar
+- name: lib/java-coverage-rt.jar
+  modules:
+  - name: intellij.java.coverage.rt
+- name: lib/java-coverage.jar
+  modules:
+  - name: intellij.java.coverage
+    libraries:
+      coverage-report:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1/coverage-report-1.jar
+      - name: $MAVEN_REPOSITORY$/org/freemarker/freemarker/2/freemarker-2.jar

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -51,10 +51,9 @@ public class ModuleRootEventImpl extends ModuleRootEvent {
    * provided meaningfully only for rootsChangedEvent.
    * Full reindex is detected by having {@link RootsChangeRescanningInfo#TOTAL_RESCAN} in list
    */
-  @NotNull
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public List<? extends RootsChangeRescanningInfo> getInfos() {
+  public @NotNull List<? extends RootsChangeRescanningInfo> getInfos() {
     return myInfos;
   }
 }

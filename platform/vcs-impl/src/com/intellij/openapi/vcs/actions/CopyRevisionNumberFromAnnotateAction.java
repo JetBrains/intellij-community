@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,10 +14,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction {
+final class CopyRevisionNumberFromAnnotateAction extends DumbAwareAction {
   private final FileAnnotation myAnnotation;
 
-  public CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
+  CopyRevisionNumberFromAnnotateAction(FileAnnotation annotation) {
     super(VcsBundle.messagePointer("copy.revision.number.action"));
     myAnnotation = annotation;
   }

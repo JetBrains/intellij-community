@@ -1,0 +1,17 @@
+NavigationItem:
+    name: EnumClass
+ItemPresentation:
+    presentableText: EnumClass
+    locationString: (some.small)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
+TargetElement: public enum class EnumClass {
+QualifiedName: some.small.EnumClass
+
+NavigationItem:
+    name: EnumClassTrue
+ItemPresentation:
+    presentableText: EnumClassTrue
+    locationString: (in some.small.EnumClass)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/enumKotlin.svg, Public])
+TargetElement: EnumClassTrue
+QualifiedName: some.small.EnumClass.EnumClassTrue

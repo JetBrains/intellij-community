@@ -13,21 +13,21 @@ class A {
 class B extends A {
   int bi;
   B(int h) {
-    super(<error descr="Cannot reference 'B.bi' before supertype constructor has been called">bi</error>);
+    super(<error descr="Cannot reference 'B.bi' before superclass constructor is called">bi</error>);
   }
   B() {
-    this(<error descr="Cannot reference 'B.bi' before supertype constructor has been called">bi</error>);
+    this(<error descr="Cannot reference 'B.bi' before superclass constructor is called">bi</error>);
   }
 
   B(String s) {
-    super(<error descr="Cannot reference 'B.db()' before supertype constructor has been called">db</error>(1) );
+    super(<error descr="Cannot call 'B.db()' before superclass constructor is called">db</error>(1) );
   }
 
   B(int i, int j) {
-    super(<error descr="Cannot reference 'A.f()' before supertype constructor has been called">f</error>());
+    super(<error descr="Cannot call 'A.f()' before superclass constructor is called">f</error>());
   }
   B(int i, int j, int k) {
-    super(<error descr="Cannot reference 'A.f()' before supertype constructor has been called">super.f</error>());
+    super(<error descr="Cannot reference 'super' before superclass constructor is called">super</error>.f());
   }
 
   B(String s, int i) {
@@ -35,11 +35,11 @@ class B extends A {
   }
 
   B(int s, int i, char j) {
-    super(<error descr="Cannot reference 'A.fi' before supertype constructor has been called">super.fi</error> );
+    super(<error descr="Cannot reference 'super' before superclass constructor is called">super</error>.fi );
   }
 
   B(double d) {
-    super(new <error descr="Cannot reference 'Inner' before supertype constructor has been called">Inner</error>() );
+    super(new <error descr="Cannot reference 'Inner' before superclass constructor is called">Inner</error>() );
   }
   class Inner extends A {
     Inner(){
@@ -63,7 +63,7 @@ class Enc {
     }
 
     Bb(int i, int j) {
-      super(<error descr="Cannot reference 'Bb.this' before supertype constructor has been called">Enc.Bb.this</error>.ibb );
+      super(<error descr="Cannot reference 'Bb.this' before superclass constructor is called">Enc.Bb.this</error>.ibb );
     }
 
     Bb(int i, String s) {
@@ -71,12 +71,12 @@ class Enc {
     }
 
     Bb(int i, char j) {
-      super(<error descr="Cannot reference 'this' before supertype constructor has been called">this</error> );
+      super(<error descr="Cannot reference 'this' before superclass constructor is called">this</error> );
     }
   }
 
   Enc() {
-    this(new <error descr="Cannot reference 'Bb' before supertype constructor has been called">Bb</error>());
+    this(new <error descr="Cannot reference 'Bb' before superclass constructor is called">Bb</error>());
   }
   Enc(Bb b) {}
 }
@@ -117,7 +117,7 @@ class YellinBug extends Base {
         super(new Callback() {
 
             public void call() {
-               <error descr="Cannot reference 'YellinBug.this' before supertype constructor has been called">YellinBug.this</error>.f();
+               <error descr="Cannot reference 'YellinBug.this' before superclass constructor is called">YellinBug.this</error>.f();
             }
         });
     }
@@ -139,17 +139,17 @@ class Outer {
   class UseIt extends Inner{
     Outer o;
     UseIt() {
-      <error descr="Cannot reference 'UseIt.o' before supertype constructor has been called">o</error>.super();
+      <error descr="Cannot reference 'UseIt.o' before superclass constructor is called">o</error>.super();
     }
 
     Outer geto() {
      return null;
     }
     UseIt(int x) {
-      <error descr="Cannot reference 'UseIt.geto()' before supertype constructor has been called">geto</error>().super();
+      <error descr="Cannot call 'UseIt.geto()' before superclass constructor is called">geto</error>().super();
     }
     UseIt(Outer x) {
-      <error descr="Cannot reference 'this' before supertype constructor has been called">this</error>.super();
+      <error descr="Cannot reference 'this' before superclass constructor is called">this</error>.super();
     }
   }
 }
@@ -188,16 +188,32 @@ class InnerClassRefInsideAnonymous {
       Child(Foo foo) {
         super(new Foo() {
           public String toString() {
-            AFoo afoo = new <error descr="Cannot reference 'AFoo' before supertype constructor has been called">AFoo</error>();
+            AFoo afoo = new <error descr="Cannot reference 'AFoo' before superclass constructor is called">AFoo</error>();
             return super.toString();
           }
         });
       }
 
       Child(String s, Foo foo) {
-        super(s, new <error descr="Cannot reference 'AFoo' before supertype constructor has been called">AFoo</error>());
+        super(s, new <error descr="Cannot reference 'AFoo' before superclass constructor is called">AFoo</error>());
       }
 
       class AFoo extends Foo {} 
     }
+}
+
+interface MarkerInterface { }
+
+class Enclosing {
+  class Inner { }
+
+  Enclosing() {
+    Inner inner = new Inner();
+
+    class MyLocal implements MarkerInterface {
+      MyLocal() {
+        super();
+      }
+    }
+  }
 }

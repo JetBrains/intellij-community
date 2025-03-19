@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
@@ -12,9 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
-  @NotNull
   @Override
-  protected String getVcsName() {
+  protected @NotNull String getVcsName() {
     return GitVcs.NAME;
   }
 
@@ -27,7 +26,10 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Unstash", manager, actions);
 
     add("ChangesView.AddUnversioned", manager, actions);
+    add("Vcs.CopyCurrentBranchName", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
+
+    add("Git.Unshallow", manager, actions);
     return actions;
   }
 

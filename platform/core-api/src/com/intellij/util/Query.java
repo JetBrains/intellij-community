@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -122,11 +125,64 @@ public interface Query<Result> extends Iterable<Result> {
     return this;
   }
 
-  @Override
-  default @NotNull Iterator<Result> iterator() {
-    return findAll().iterator();
+  /**
+   * @deprecated don't use Query as Iterable. Call {@link #findAll} explicitly, but first,
+   * consider whether it's necessary to find all results at once, e.g., use {@link #anyMatch} or {@link #allMatch}
+   */
+  @Deprecated
+  default Iterable<Result> asIterable() {
+    return findAll();
   }
 
+  /**
+   * @see Iterable#iterator
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
+  @Override
+  default @NotNull Iterator<Result> iterator() {
+    return asIterable().iterator();
+  }
+
+  /**
+   * @see Iterable#forEach
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
+  @Override
+  default void forEach(Consumer<? super Result> action) {
+    asIterable().forEach(action);
+  }
+
+  /**
+   * @see Iterable#spliterator
+   * @deprecated don't use Query as Iterable, the results are computed eagerly, which defeats the purpose
+   */
+  @ScheduledForRemoval
+  @Deprecated
+  @Override
+  default Spliterator<Result> spliterator() {
+    return asIterable().spliterator();
+  }
+
+  @Experimental
+  default @NotNull Query<Result> interceptWith(@NotNull QueryExecutionInterceptor interceptor) {
+    Query<Result> query = this;
+    return new AbstractQuery<Result>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<? super Result> consumer) {
+        return interceptor.intercept(() -> delegateProcessResults(query, consumer));
+      }
+    };
+  }
+
+  /**
+   * @deprecated use {@link #interceptWith}
+   */
+  @ScheduledForRemoval
+  @Deprecated
   @Experimental
   default @NotNull Query<Result> wrap(@NotNull QueryWrapper<Result> wrapper) {
     Query<Result> query = this;

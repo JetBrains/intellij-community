@@ -22,7 +22,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyMethodParameterCountInspection extends GroovyMethodParameterCountInspectionBase {
+public final class GroovyMethodParameterCountInspection extends GroovyMethodParameterCountInspectionBase {
 
   @Override
   public @NotNull OptPane getGroovyOptionsPane() {

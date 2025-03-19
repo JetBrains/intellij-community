@@ -1,0 +1,48 @@
+### auto-generated section `build intellij.grid.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = ["java.desktop/sun.swing=ALL-UNNAMED"]
+)
+
+jvm_resources(
+  name = "impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.grid.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "//grid/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/diff-api:diff",
+    "//xml/xml-parser:parser",
+    "//platform/ide-core-impl",
+    "//platform/refactoring",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//xml/xml-psi-api:psi",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/execution-impl",
+    "//platform/platform-api:ide",
+    "//platform/util/jdom",
+    "//platform/util/coroutines",
+    "//libraries/microba",
+    "//platform/platform-impl/ui:ide-ui",
+    "@lib//:kotlinx-html-jvm",
+  ],
+  runtime_deps = [":impl_resources"]
+)
+### auto-generated section `build intellij.grid.impl` end

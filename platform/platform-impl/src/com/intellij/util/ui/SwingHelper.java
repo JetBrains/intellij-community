@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -62,6 +62,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class SwingHelper {
 
@@ -76,23 +77,19 @@ public final class SwingHelper {
    * @param children        children components
    * @return created panel
    */
-  @NotNull
-  public static JPanel newVerticalPanel(float childAlignmentX, Component... children) {
+  public static @NotNull JPanel newVerticalPanel(float childAlignmentX, Component... children) {
     return newGenericBoxPanel(true, childAlignmentX, children);
   }
 
-  @NotNull
-  public static JPanel newLeftAlignedVerticalPanel(Component... children) {
+  public static @NotNull JPanel newLeftAlignedVerticalPanel(Component... children) {
     return newVerticalPanel(Component.LEFT_ALIGNMENT, children);
   }
 
-  @NotNull
-  public static JPanel newLeftAlignedVerticalPanel(@NotNull Collection<Component> children) {
+  public static @NotNull JPanel newLeftAlignedVerticalPanel(@NotNull Collection<Component> children) {
     return newVerticalPanel(Component.LEFT_ALIGNMENT, children);
   }
 
-  @NotNull
-  public static JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
+  public static @NotNull JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
     return newVerticalPanel(childAlignmentX, children.toArray(new Component[0]));
   }
 
@@ -104,8 +101,7 @@ public final class SwingHelper {
    * @param children        children components
    * @return created panel
    */
-  @NotNull
-  public static JPanel newHorizontalPanel(float childAlignmentY, Component... children) {
+  public static @NotNull JPanel newHorizontalPanel(float childAlignmentY, Component... children) {
     return newGenericBoxPanel(false, childAlignmentY, children);
   }
 
@@ -129,15 +125,13 @@ public final class SwingHelper {
     return panel;
   }
 
-  @NotNull
-  public static JPanel wrapWithoutStretch(@NotNull JComponent component) {
+  public static @NotNull JPanel wrapWithoutStretch(@NotNull JComponent component) {
     JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     panel.add(component);
     return panel;
   }
 
-  @NotNull
-  public static JPanel wrapWithHorizontalStretch(@NotNull JComponent component) {
+  public static @NotNull JPanel wrapWithHorizontalStretch(@NotNull JComponent component) {
     JPanel panel = new JPanel(new BorderLayout(0, 0));
     panel.add(component, BorderLayout.NORTH);
     return panel;
@@ -225,7 +219,7 @@ public final class SwingHelper {
     });
   }
 
-  private static void doWithDialogWrapper(@NotNull final JComponent component, @NotNull final Consumer<? super DialogWrapper> consumer) {
+  private static void doWithDialogWrapper(final @NotNull JComponent component, final @NotNull Consumer<? super DialogWrapper> consumer) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (component.getClientProperty(DIALOG_RESIZED_TO_FIT_TEXT) != null) {
         return;
@@ -320,8 +314,8 @@ public final class SwingHelper {
     });
   }
 
-  public static void addHistoryOnExpansion(@NotNull final TextFieldWithHistory textFieldWithHistory,
-                                           @NotNull final NotNullProducer<? extends List<String>> historyProvider) {
+  public static void addHistoryOnExpansion(final @NotNull TextFieldWithHistory textFieldWithHistory,
+                                           final @NotNull NotNullProducer<? extends List<String>> historyProvider) {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -392,41 +386,61 @@ public final class SwingHelper {
     }
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithHistoryWithBrowseButton textFieldWithHistoryWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithHistoryWithBrowseButton,
-              textFieldWithHistoryWithBrowseButton.getChildComponent().getTextEditor(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithHistoryWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
   }
 
-  public static void installFileCompletionAndBrowseDialog(@Nullable Project project,
-                                                          @NotNull TextFieldWithBrowseButton textFieldWithBrowseButton,
-                                                          @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                          @NotNull FileChooserDescriptor fileChooserDescriptor) {
-    doInstall(project,
-              textFieldWithBrowseButton,
-              textFieldWithBrowseButton.getTextField(),
-              browseDialogTitle,
-              fileChooserDescriptor,
-              TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithHistoryWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getChildComponent().getTextEditor(), fileChooserDescriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
   }
 
-  private static <T extends JComponent> void doInstall(@Nullable Project project,
-                                                       @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
-                                                       @NotNull JTextField textField,
-                                                       @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
-                                                       @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                       @NotNull TextComponentAccessor<T> textComponentAccessor) {
+  /**
+   * @deprecated use {@link #installFileCompletionAndBrowseDialog(Project, TextFieldWithBrowseButton, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    installFileCompletionAndBrowseDialog(project, textField, fileChooserDescriptor.withTitle(browseDialogTitle));
+  }
+
+  public static void installFileCompletionAndBrowseDialog(
+    @Nullable Project project,
+    @NotNull TextFieldWithBrowseButton textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor
+  ) {
+    doInstall(project, textField, textField.getTextField(), fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  }
+
+  private static <T extends JComponent> void doInstall(
+    @Nullable Project project,
+    @NotNull ComponentWithBrowseButton<T> componentWithBrowseButton,
+    @NotNull JTextField textField,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @NotNull TextComponentAccessor<T> textComponentAccessor
+  ) {
     ComponentsKt.installFileCompletionAndBrowseDialog(
       project,
       componentWithBrowseButton,
       textField,
-      browseDialogTitle,
       fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix),
       textComponentAccessor
     );
@@ -436,8 +450,7 @@ public final class SwingHelper {
    * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NlsSafe @NotNull String url) {
+  public static @NotNull HyperlinkLabel createWebHyperlink(@NlsSafe @NotNull String url) {
     return createWebHyperlink(url, url);
   }
 
@@ -445,8 +458,7 @@ public final class SwingHelper {
    * @deprecated use {@link com.intellij.ui.components.BrowserLink} instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
+  public static @NotNull HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
     HyperlinkLabel hyperlink = new HyperlinkLabel(text);
     hyperlink.setHyperlinkTarget(url);
 
@@ -507,7 +519,7 @@ public final class SwingHelper {
     }
   }
 
-  public static class HtmlViewerBuilder {
+  public static final class HtmlViewerBuilder {
     private boolean myCarryTextOver;
     private String myDisabledHtml;
     private Font myFont;
@@ -595,11 +607,10 @@ public final class SwingHelper {
     }
   }
 
-  @NotNull
-  public static JEditorPane createHtmlViewer(boolean lineWrap,
-                                             @Nullable Font font,
-                                             @Nullable Color background,
-                                             @Nullable Color foreground) {
+  public static @NotNull JEditorPane createHtmlViewer(boolean lineWrap,
+                                                      @Nullable Font font,
+                                                      @Nullable Color background,
+                                                      @Nullable Color foreground) {
     final JEditorPane textPane;
     if (lineWrap) {
       textPane = new JEditorPane() {
@@ -616,7 +627,7 @@ public final class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
-    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAATextInfoForSwingComponent());
     textPane.setFont(font != null ? font : StartupUiUtil.getLabelFont());
     textPane.setEditorKit(HTMLEditorKitBuilder.simple());
     textPane.setEditable(false);
@@ -640,8 +651,7 @@ public final class SwingHelper {
     ));
   }
 
-  @NotNull
-  public static @Nls String buildHtml(@NotNull @Nls String headInnerHtml, @NotNull @Nls String bodyInnerHtml) {
+  public static @NotNull @Nls String buildHtml(@NotNull @Nls String headInnerHtml, @NotNull @Nls String bodyInnerHtml) {
     if (bodyInnerHtml.contains("<html>")) {
       bodyInnerHtml = UIUtil.getHtmlBody(bodyInnerHtml);
     }
@@ -651,18 +661,31 @@ public final class SwingHelper {
     ).toString();
   }
 
-  @NotNull
-  public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
-                                                                                                @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
-                                                                                                @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                                                                @Nullable NotNullProducer<? extends List<String>> historyProvider) {
-    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
+  /**
+   * @deprecated use {@link #createTextFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, Supplier)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @SuppressWarnings("UsagesOfObsoleteApi") @Nullable NotNullProducer<? extends List<String>> historyProvider
+  ) {
+    return createTextFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), historyProvider);
   }
 
-  @NotNull
-  public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
-                                                                                       @NlsContexts.Tooltip @NotNull String infoButtonTooltip,
-                                                                                       @NotNull ActionListener listener) {
+  public static @NotNull TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(
+    @Nullable Project project,
+    @NotNull FileChooserDescriptor fileChooserDescriptor,
+    @Nullable Supplier<? extends List<String>> historyProvider
+  ) {
+    return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor, historyProvider != null ? () -> historyProvider.get() : null);
+  }
+
+  public static @NotNull <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(final @NotNull C component,
+                                                                                                @NlsContexts.Tooltip @NotNull String infoButtonTooltip,
+                                                                                                @NotNull ActionListener listener) {
     ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<>(component, listener);
     FixedSizeButton uiHelpButton = comp.getButton();
     uiHelpButton.setToolTipText(infoButtonTooltip);
@@ -722,7 +745,7 @@ public final class SwingHelper {
     }
   }
 
-  public final static String ELLIPSIS = "...";
+  public static final String ELLIPSIS = "...";
   public static final String ERROR_STR = "www";
   public static @Nls String truncateStringWithEllipsis(final @Nls String text, final int maxWidth, final FontMetrics fm) {
     return truncateStringWithEllipsis(text, maxWidth, new WidthCalculator() {
@@ -743,7 +766,7 @@ public final class SwingHelper {
     int charWidth(final char c);
   }
 
-  public static @Nls String truncateStringWithEllipsis(@Nls @NotNull final String text, final int maxWidth, final WidthCalculator fm) {
+  public static @Nls String truncateStringWithEllipsis(final @Nls @NotNull String text, final int maxWidth, final WidthCalculator fm) {
     final int error = fm.stringWidth(ERROR_STR);
     final int wholeWidth = fm.stringWidth(text) + error;
     if (wholeWidth <= maxWidth || text.isEmpty()) return text;
@@ -805,8 +828,7 @@ public final class SwingHelper {
     return pane;
   }
 
-  @Nullable
-  public static Component getComponentFromRecentMouseEvent() {
+  public static @Nullable Component getComponentFromRecentMouseEvent() {
     AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
     if (event instanceof MouseEvent mouseEvent) {
       Component component = mouseEvent.getComponent();

@@ -6,12 +6,15 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -19,12 +22,31 @@ import java.util.Map;
 public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> {
   // Use this its own map, because check in PyReachingDefsDfaSemilattice is important
   public static final DFAMap<ScopeVariable> INITIAL_MAP = new DFAMap<>();
+  public static final DFAMap<ScopeVariable> UNREACHABLE_MARKER = new DFAMap<>();
+
+  private final TypeEvalContext myContext;
+
+  public PyReachingDefsDfaInstance(@NotNull TypeEvalContext typeEvalContext) {
+    myContext = typeEvalContext;
+  }
 
   @Override
   public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
+    if (map == UNREACHABLE_MARKER)  return map;
     final PsiElement element = instruction.getElement();
     if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
       return processReducedMap(map, instruction, element);
+    }
+    var scope = ScopeUtil.getScopeOwner(element);
+    if (scope != null) {
+      if (ControlFlowCache.getDataFlow(scope, myContext).isUnreachable(instruction)) {
+        return UNREACHABLE_MARKER;
+      }
+    }
+    if (instruction instanceof CallInstruction callInstruction) {
+      if (callInstruction.isNoReturnCall(myContext)) {
+        return UNREACHABLE_MARKER;
+      }
     }
     // Scope reduction
     final DFAMap<ScopeVariable> reducedMap = new DFAMap<>();
@@ -97,8 +119,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   }
 
   @Override
-  @NotNull
-  public DFAMap<ScopeVariable> initial() {
+  public @NotNull DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;
   }
 }

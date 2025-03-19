@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -12,6 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.ShadowAction
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,6 +20,7 @@ import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
@@ -31,10 +32,12 @@ import java.awt.geom.Ellipse2D
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class CloseTab(component: JComponent,
-                        private val file: VirtualFile,
-                        private val editorWindow: EditorWindow,
-                        parentDisposable: Disposable) : AnAction(), DumbAware {
+internal class CloseTab(
+  component: JComponent,
+  private val file: VirtualFile,
+  private val editorWindow: EditorWindow,
+  parentDisposable: Disposable,
+) : AnAction(), DumbAware {
 
   init {
     ShadowAction(this, IdeActions.ACTION_CLOSE, component, parentDisposable)
@@ -44,7 +47,9 @@ internal class CloseTab(component: JComponent,
 
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
-    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && isModified())
+    val modified = isModified()
+    e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, modified)
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && modified)
     e.presentation.icon = getIcon(isHovered = false)
     e.presentation.hoveredIcon = getIcon(isHovered = true)
 
@@ -59,7 +64,8 @@ internal class CloseTab(component: JComponent,
       }
       else {
         shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE)
-        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+        e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text",
+                                                        if (SystemInfo.isMac) "⌥" else "Alt+"))
       }
     }
   }
@@ -129,13 +135,8 @@ internal class CloseTab(component: JComponent,
           showModifiedIcon -> {
             if (pinned) {
               val pinIcon = AllIcons.Actions.PinTab
-              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-                override fun getX(): Double = 0.7
-
-                override fun getY(): Double = 0.2
-
-                override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-              })
+              val provider = BadgeDotProvider(x = 0.7, y = 0.2, radius = 3.0 / pinIcon.iconWidth)
+              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, provider)
             }
             else {
               DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)
@@ -175,7 +176,7 @@ private class DotIcon(private val color: Color) : Icon {
  }
 
 private val CLOSE_ICON: Icon
-  get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmall else AllIcons.Actions.Close
+  get() = AllIcons.Actions.Close
 
 private val CLOSE_HOVERED_ICON: Icon
-  get() = (if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmallHovered else AllIcons.Actions.CloseHovered)
+  get() = AllIcons.Actions.CloseHovered

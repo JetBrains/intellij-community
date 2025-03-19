@@ -14,9 +14,11 @@ import git4idea.config.GitExecutableProblemsNotifier.BadGitExecutableNotificatio
 import org.jetbrains.annotations.Nls
 
 internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
-  override fun showError(@Nls(capitalization = Nls.Capitalization.Sentence) text: String,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
-                         fixOption: ErrorNotifier.FixOption?) {
+  override fun showError(
+    @Nls(capitalization = Nls.Capitalization.Sentence) text: String,
+    @Nls(capitalization = Nls.Capitalization.Sentence) description: String?,
+    fixOption: ErrorNotifier.FixOption?,
+  ) {
     val notification = createNotification(text, description)
     if (fixOption != null) {
       notification.addAction(NotificationAction.createSimpleExpiring(fixOption.text) {
@@ -27,7 +29,7 @@ internal class NotificationErrorNotifier(val project: Project) : ErrorNotifier {
   }
 
   private fun createNotification(text: @NlsContexts.NotificationTitle String, description: @NlsContexts.NotificationContent String?): BadGitExecutableNotification {
-    val notification = BadGitExecutableNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+    val notification = BadGitExecutableNotification(VcsNotifier.importantNotification().displayId,
                                                     getErrorTitle(text, description),
                                                     getErrorMessage(text, description),
                                                     NotificationType.ERROR)

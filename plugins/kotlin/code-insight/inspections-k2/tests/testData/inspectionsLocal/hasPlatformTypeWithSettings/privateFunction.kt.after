@@ -1,0 +1,4 @@
+// WITH_STDLIB
+// FIX: Specify return type explicitly
+
+private fun foo(): String = java.lang.String.valueOf(1)

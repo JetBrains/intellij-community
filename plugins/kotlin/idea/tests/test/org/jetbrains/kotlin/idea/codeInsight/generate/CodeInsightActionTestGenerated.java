@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/generate/secondaryConstructors")
 public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -28,9 +35,29 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/empty.kt");
     }
 
+    @TestMetadata("emptyClass.kt")
+    public void testEmptyClass() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClass.kt");
+    }
+
+    @TestMetadata("emptyClassWithComment.kt")
+    public void testEmptyClassWithComment() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithComment.kt");
+    }
+
+    @TestMetadata("emptyClassWithCommentAfter.kt")
+    public void testEmptyClassWithCommentAfter() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/emptyClassWithCommentAfter.kt");
+    }
+
     @TestMetadata("emptyExists.kt")
     public void testEmptyExists() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");
+    }
+
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/enumClass.kt");
     }
 
     @TestMetadata("javaSupers.kt")
@@ -66,6 +93,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
     @TestMetadata("propertiesWithSupers.kt")
     public void testPropertiesWithSupers() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/propertiesWithSupers.kt");
+    }
+
+    @TestMetadata("superInvisible.kt")
+    public void testSuperInvisible() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/superInvisible.kt");
     }
 
     @TestMetadata("supers.kt")

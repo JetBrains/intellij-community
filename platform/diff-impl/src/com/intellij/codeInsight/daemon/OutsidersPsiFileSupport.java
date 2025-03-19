@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -11,8 +11,12 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +30,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class OutsidersPsiFileSupport {
   private static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
-  private static final Key<String> FILE_PATH_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
+  private static final Key<String> VFS_URL_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
 
+  @ApiStatus.Internal
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
     public boolean accept(@NotNull HighlightInfo info, @Nullable PsiFile file) {
@@ -37,6 +42,7 @@ public final class OutsidersPsiFileSupport {
     }
   }
 
+  @ApiStatus.Internal
   public static class IntentionFilter implements IntentionActionFilter {
     @Override
     public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
@@ -44,10 +50,10 @@ public final class OutsidersPsiFileSupport {
     }
   }
 
+  @ApiStatus.Internal
   public static class HighlightingSettingProvider extends DefaultHighlightingSettingProvider {
-    @Nullable
     @Override
-    public FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
+    public @Nullable FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
       if (!isOutsiderFile(file)) return null;
       return FileHighlightingSetting.SKIP_INSPECTION;
     }
@@ -55,14 +61,26 @@ public final class OutsidersPsiFileSupport {
 
 
   public static void markFile(@NotNull VirtualFile file) {
-    markFile(file, null);
+    markFileWithUrl(file, null);
+  }
+
+  public static void markFile(@NotNull VirtualFile file, @Nullable FilePath originalPath) {
+    markFile(file, originalPath != null ? originalPath.getPath() : null);
   }
 
   public static void markFile(@NotNull VirtualFile file, @Nullable String originalPath) {
-    file.putUserData(KEY, Boolean.TRUE);
-    if (originalPath != null) file.putUserData(FILE_PATH_KEY, FileUtil.toSystemIndependentName(originalPath));
+    var vfsUrl = originalPath != null ? VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, originalPath) : null;
+    markFileWithUrl(file, vfsUrl);
   }
 
+  /**
+   * @param originalVfsUrl The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the
+   *                       outsider doesn't have an original file.
+   */
+  public static void markFileWithUrl(@NotNull VirtualFile file, @Nullable String originalVfsUrl) {
+    file.putUserData(KEY, Boolean.TRUE);
+    if (originalVfsUrl != null) file.putUserData(VFS_URL_KEY, FileUtil.toSystemIndependentName(originalVfsUrl));
+  }
 
   public static boolean isOutsiderFile(@Nullable PsiFile file) {
     return file != null && isOutsiderFile(file.getVirtualFile());
@@ -72,8 +90,16 @@ public final class OutsidersPsiFileSupport {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 
-  @Nullable
-  public static String getOriginalFilePath(@NotNull VirtualFile file) {
-    return file.getUserData(FILE_PATH_KEY);
+  /**
+   * @return The VFS URL of the outsider file's original file as defined by {@link VirtualFile#getUrl}, or `null` if the outsider doesn't
+   *         have an original file.
+   */
+  public static @Nullable String getOriginalFileUrl(@NotNull VirtualFile file) {
+    return file.getUserData(VFS_URL_KEY);
+  }
+
+  public static @Nullable String getOriginalFilePath(@NotNull VirtualFile file) {
+    var vfsUrl = getOriginalFileUrl(file);
+    return vfsUrl != null ? VirtualFileManager.extractPath(vfsUrl) : null;
   }
 }

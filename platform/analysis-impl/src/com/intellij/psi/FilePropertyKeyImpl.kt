@@ -25,37 +25,45 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
   @Contract("null -> null")
   override fun getPersistentValue(virtualFile: VirtualFile?): T? {
     if (virtualFile == null) return null
-    val raw = getRaw(virtualFile, false)
+    val raw = getRaw(virtualFile)
     return raw?.let { fromRaw(it) }
   }
 
-  private fun getRaw(virtualFile: VirtualFile, forceReadPersistence: Boolean): RAW? {
+  private fun getRaw(virtualFile: VirtualFile): RAW? {
     @Suppress("UNCHECKED_CAST")
-    val memValue = userDataKey[virtualFile] as RAW?
+    val memValue = virtualFile.getUserData(userDataKey) as RAW?
     if (memValue != null) {
       return if (memValue === NULL_MARKER) null else memValue
     }
 
-    if (forceReadPersistence || READ_PERSISTENT_VALUE) {
-      val persisted = readValue(virtualFile)
-      userDataKey[virtualFile] = persisted ?: NULL_MARKER
-      return persisted
-    }
-    else {
-      return null
-    }
+    val persisted = readValue(virtualFile)
+    // Value in virtualFile can be null only before the very first assignment,
+    // so we can be sure that we don't overwrite a value of a set operation that happened in the middle of get operation.
+    virtualFile.replace(userDataKey, null, persisted ?: NULL_MARKER)
+    return persisted
   }
 
   override fun setPersistentValue(virtualFile: VirtualFile?, newValue: T?): Boolean {
     if (virtualFile == null) return false
-    val oldValue = getRaw(virtualFile, true)
+    val oldValue = getRaw(virtualFile)
     val rawNewValue = newValue?.let { toRaw(it) }
     if (keysEqual(oldValue, rawNewValue)) {
       return false
     }
     else {
       writeValue(virtualFile, rawNewValue)
-      userDataKey[virtualFile] = if (newValue == null) NULL_MARKER else rawNewValue
+      if (!virtualFile.replace(userDataKey, oldValue ?: NULL_MARKER, if (newValue == null) NULL_MARKER else rawNewValue)) {
+        // Concurrent update is not supported.
+        // At this point it's not known in which order calls to writeValue were executed and which value was actually persisted to disk.
+        // And therefore we don't know which value should be written to VirtualFile.
+
+        // todo: Check why concurrent update happens and uncomment the LOG.error()
+        //       Check SqlImportStateTest, SqlJoinCardinalityInlayTest
+        //       But in general this doesn't seem to lead to problems because value is updated to same same value concurrently,
+        //       so result is deterministic.
+        //LOG.error("Value for key $userDataKey in file $virtualFile is updated concurrently. Trying to update it from $oldValue to $rawNewValue. " +
+        //          "Current value is ${getRaw(virtualFile)}")
+      }
       return true
     }
   }
@@ -107,11 +115,6 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
   protected abstract fun toRaw(value: T): RAW
 
   companion object {
-    @JvmStatic
-    @get:VisibleForTesting
-    val READ_PERSISTENT_VALUE: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      Registry.`is`("retrieve.pushed.properties.from.vfs", true) or Registry.`is`("scanning.in.smart.mode", true)
-    }
 
     @JvmStatic
     private val NULL_MARKER by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -143,7 +146,18 @@ abstract class FilePropertyKeyImpl<T, RAW> protected constructor(name: String,
     fun createPersistentIntKey(userDataName: String,
                                persistentDataName: String,
                                persistentDataVersion: Int): FilePropertyKey<Int> {
-      return FilePropertyIntKey(userDataName, FileAttribute(persistentDataName, persistentDataVersion, true), { t -> t }, { t -> t })
+      return FilePropertyIntKey(userDataName,
+                                persistentAttribute = FileAttribute(persistentDataName, persistentDataVersion, true),
+                                fnToRaw = { t -> t },
+                                fnFromRaw = { t -> t })
+    }
+
+    @JvmStatic
+    fun createPersistentBooleanKey(userDataName: String, persistentDataName: String, persistentDataVersion: Int): FilePropertyKey<Boolean> {
+      return FilePropertyIntKey(userDataName,
+                                persistentAttribute = FileAttribute(persistentDataName, persistentDataVersion, true),
+                                fnToRaw = { t -> if (t) 1 else 0 },
+                                fnFromRaw = { t -> t != 0 })
     }
 
     @JvmStatic

@@ -6,7 +6,8 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.getAffectedCallables
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.isCaller
+import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
@@ -43,7 +44,7 @@ class KotlinCallerCallUsage(element: KtCallElement) : KotlinUsageInfo<KtCallElem
             .filter { it.isNewParameter }
             .forEach {
                 val parameterName = it.name
-                val argumentExpression = if (element.isInsideOfCallerBody(allUsages)) {
+                val argumentExpression = if (element.isInsideOfCallerBody(allUsages) { isCaller(allUsages) }) {
                     psiFactory.createExpression(parameterName)
                 } else {
                     it.defaultValueForCall ?: psiFactory.createExpression("_")

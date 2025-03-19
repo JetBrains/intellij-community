@@ -3,7 +3,7 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.google.common.collect.Iterables;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
-import com.jetbrains.NotNullPredicate;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;

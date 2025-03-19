@@ -1,4 +1,4 @@
-// "Create method 'test'" "false"
+// "Create @interface method 'test()'" "false"
 public class Test {
     @Attr(te<caret>st= {"", 1})
     public Test() {

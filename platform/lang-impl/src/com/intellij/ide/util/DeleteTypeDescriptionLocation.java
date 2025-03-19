@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
@@ -24,9 +24,8 @@ public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocat
 
   private static final ElementDescriptionProvider ourDefaultProvider = new DefaultProvider();
 
-  @NotNull
   @Override
-  public ElementDescriptionProvider getDefaultProvider() {
+  public @NotNull ElementDescriptionProvider getDefaultProvider() {
     return ourDefaultProvider;
   }
 
@@ -34,9 +33,9 @@ public final class DeleteTypeDescriptionLocation extends ElementDescriptionLocat
     return myPlural;
   }
 
-  private static class DefaultProvider implements ElementDescriptionProvider {
+  private static final class DefaultProvider implements ElementDescriptionProvider {
     @Override
-    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+    public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
       if (location instanceof DeleteTypeDescriptionLocation) {
         final boolean plural = ((DeleteTypeDescriptionLocation)location).isPlural();
         final int count = plural ? 2 : 1;

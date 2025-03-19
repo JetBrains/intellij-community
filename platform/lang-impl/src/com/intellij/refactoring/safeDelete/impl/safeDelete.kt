@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete.impl
 
 import com.intellij.model.Pointer
@@ -17,6 +17,7 @@ import com.intellij.refactoring.safeDelete.api.*
 import com.intellij.util.Query
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 internal fun safeDelete(
@@ -45,11 +46,11 @@ private fun safeDelete(
   }
 }
 
-fun findDependentTargets(rootTarget: SafeDeleteTarget, targets: MutableSet<Pointer<out SafeDeleteTarget>>, project: Project) {
+private fun findDependentTargets(rootTarget: SafeDeleteTarget, targets: MutableSet<Pointer<out SafeDeleteTarget>>, project: Project) {
   if (targets.add(rootTarget.createPointer())) {
     SearchService.getInstance().searchParameters(
       SafeDeleteAdditionalTargetsSearchParameters(rootTarget, project)
-    ).forEach {
+    ).asIterable().forEach {
       findDependentTargets(it, targets, project)
     }
   }
@@ -180,12 +181,13 @@ internal fun buildUsageQuery(project: Project, target: SafeDeleteTarget): Query<
   return SearchService.getInstance().merge(queries)
 }
 
-fun PsiSafeDeleteUsage.isInside(target: PsiSafeDeleteDeclarationUsage): Boolean {
+private fun PsiSafeDeleteUsage.isInside(target: PsiSafeDeleteDeclarationUsage): Boolean {
   if (file != target.file) return false
   return target.range.contains(range)
 }
 
 @TestOnly
+@ApiStatus.Internal
 fun safeDeleteAndWait(
   project: Project,
   targetPointer: Pointer<out SafeDeleteTarget>

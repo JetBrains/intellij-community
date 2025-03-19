@@ -1,20 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public interface PersistentFSRecordsStorage {
+public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage, CleanableStorage, AutoCloseable {
   int NULL_ID = FSRecords.NULL_FILE_ID;
   int MIN_VALID_ID = NULL_ID + 1;
 
   /**
    * @return id of newly allocated record
    */
-  int allocateRecord();
+  int allocateRecord() throws IOException;
 
   void setAttributeRecordId(int fileId, int recordId) throws IOException;
 
@@ -26,7 +27,8 @@ public interface PersistentFSRecordsStorage {
 
   int getNameId(int fileId) throws IOException;
 
-  void setNameId(int fileId, int nameId) throws IOException;
+  /** @return previous value of nameId */
+  int updateNameId(int fileId, int nameId) throws IOException;
 
   /**
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
@@ -53,36 +55,19 @@ public interface PersistentFSRecordsStorage {
 
   int getModCount(int fileId) throws IOException;
 
-  //TODO RC: why we need this method? Record modification is detected by actual modification -- there
+  //TODO RC: do we need this method? Record modification is tracked by storage, by actual modification -- there
   //         are (seems to) no way to modify record bypassing it.
-  //         We use the method to mark file record modified there something derived is modified -- e.g.
-  //         children attribute or content. This looks suspicious to me: why we need to update _file_
-  //         record version in those cases?
   void markRecordAsModified(int fileId) throws IOException;
 
   int getContentRecordId(int fileId) throws IOException;
 
   boolean setContentRecordId(int fileId, int recordId) throws IOException;
 
-  @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
-
-  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
-  //         it makes it harder to implement a storage in a lock-free way
+  @PersistentFS.Attributes
+  int getFlags(int fileId) throws IOException;
 
   /**
-   * Fills all record fields in one shot
-   */
-  void fillRecord(int fileId,
-                  long timestamp,
-                  long length,
-                  int flags,
-                  int nameId,
-                  int parentId,
-                  boolean overwriteAttrRef) throws IOException;
-
-  /**
-   * @throws IndexOutOfBoundsException if fileId is outside of valid range: <=0 or > max recordId
-   *                                   allocated so far
+   * @throws IndexOutOfBoundsException if fileId is outside of range (0..max] of the fileIds allocated so far
    */
   void cleanRecord(int fileId) throws IOException;
 
@@ -90,9 +75,17 @@ public interface PersistentFSRecordsStorage {
 
   long getTimestamp() throws IOException;
 
-  void setConnectionStatus(int code) throws IOException;
+  /**
+   * @return true if storage was closed properly (i.e. by {@link #close()} in a last session, or false if last session was
+   * finished without calling {@link #close()} -- storage content may be inconsistent or corrupted.
+   * The property describes events in a _previous_ session, so it is immutable during current session: changes to storage
+   * doesn't affect this property's value
+   */
+  boolean wasClosedProperly() throws IOException;
 
-  int getConnectionStatus() throws IOException;
+  int getErrorsAccumulated() throws IOException;
+
+  void setErrorsAccumulated(int errors) throws IOException;
 
   void setVersion(int version) throws IOException;
 
@@ -100,31 +93,32 @@ public interface PersistentFSRecordsStorage {
 
   int getGlobalModCount();
 
-  /**
-   * @return length of underlying file storage, in bytes
-   * @deprecated TODO RC: this method has very little utility: different implementation use different
-   * pagination and pre-allocation strategies -- file length is very implementation-specific. The only
-   * current usage (in checkSanity() method) is really incorrect, since it relies on specific
-   * implementation allocation strategy. Method .recordsCount() has clearer semantics and doesn't
-   * expose implementation details.
-   */
-  long length();
-
+  @Override
   int recordsCount();
 
+  /** @return max fileId already allocated by this storage */
+  int maxAllocatedID();
+
+  /** @return true if fileId is valid for the storage -- points to valid record */
+  boolean isValidFileId(int fileId);
+
+  @Override
   boolean isDirty();
 
 
   // TODO add a synchronization or requirement to be called on the loading
   @SuppressWarnings("UnusedReturnValue")
-  boolean processAllRecords(@NotNull PersistentFSRecordsStorage.FsRecordProcessor processor) throws IOException;
+  boolean processAllRecords(@NotNull FsRecordProcessor processor) throws IOException;
 
+  @Override
   void force() throws IOException;
 
+  @Override
   void close() throws IOException;
 
   /** Close the storage and remove all its data files */
-  void closeAndRemoveAllFiles() throws IOException;
+  @Override
+  void closeAndClean() throws IOException;
 
   @FunctionalInterface
   interface FsRecordProcessor {

@@ -12,7 +12,7 @@ interface LocalZipModelProvider {
   companion object {
     private val EP_NAME = ExtensionPointName.create<LocalZipModelProvider>("com.intellij.completion.ml.localModelProvider")
 
-    internal fun findModelProvider(zipFile: ZipFile): LocalZipModelProvider? {
+    fun findModelProvider(zipFile: ZipFile): LocalZipModelProvider? {
       return EP_NAME.extensionList.singleOrNull { it.isSupportedFormat(zipFile) }
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.FacetType;
@@ -18,12 +18,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 @State(name = "FacetEditorsStateManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
+public final class FacetEditorsStateManagerImpl extends FacetEditorsStateManager implements PersistentStateComponent<FacetEditorsStateManagerImpl.FacetEditorsStateBean>{
   private final Map<String, Object> myFacetTypeStates = new HashMap<>();
   private FacetEditorsStateBean myBean = new FacetEditorsStateBean();
 
   @Override
-  public <T> void saveState(@NotNull final FacetType<?, ?> type, final T state) {
+  public <T> void saveState(final @NotNull FacetType<?, ?> type, final T state) {
     String id = type.getStringId();
     if (state != null) {
       myFacetTypeStates.put(id, state);
@@ -35,8 +35,7 @@ public class FacetEditorsStateManagerImpl extends FacetEditorsStateManager imple
   }
 
   @Override
-  @Nullable
-  public <T> T getState(@NotNull final FacetType<?, ?> type, @NotNull final Class<T> aClass) {
+  public @Nullable <T> T getState(final @NotNull FacetType<?, ?> type, final @NotNull Class<T> aClass) {
     String id = type.getStringId();
     //noinspection unchecked
     T state = (T)myFacetTypeStates.get(id);

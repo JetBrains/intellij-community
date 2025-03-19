@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.CheckUtil;
@@ -48,6 +49,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(TRANSITIVE, JavaTokenType.TRANSITIVE_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(VALUE, JavaTokenType.VALUE_KEYWORD);
 
     KEYWORD_TYPE_TO_NAME_MAP = new HashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
@@ -108,11 +110,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     Set<String> implicitModifiers = new HashSet<>();
     PsiElement parent = getParent();
     if (parent instanceof PsiClass) {
+      PsiClass aClass = (PsiClass)parent;
       PsiElement grandParent = parent.getContext();
       if (grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {
         Collections.addAll(implicitModifiers, PUBLIC, STATIC);
       }
-      if (((PsiClass)parent).isInterface()) {
+      if (aClass.isInterface()) {
         implicitModifiers.add(ABSTRACT);
 
         // nested or local interface is implicitly static
@@ -120,19 +123,26 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(STATIC);
         }
       }
-      if (((PsiClass)parent).isRecord()) {
+      else {
+        if (explicitModifiers.contains(VALUE) && !explicitModifiers.contains(ABSTRACT)) {
+          implicitModifiers.add(FINAL);
+        }
+      }
+      if (aClass.isRecord()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
         implicitModifiers.add(FINAL);
       }
-      if (((PsiClass)parent).isEnum()) {
+      if (aClass.isEnum()) {
         if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
-        List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
-                                                                     : Arrays.asList(((PsiClass)parent).getFields());
-        boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
+        List<PsiField> fields = parent instanceof PsiExtensibleClass
+                                ? ((PsiExtensibleClass)parent).getOwnFields()
+                                : Arrays.asList(aClass.getFields());
+        Condition<PsiField> condition = field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null;
+        boolean hasSubClass = ContainerUtil.find(fields, condition) != null;
         if (hasSubClass) {
           implicitModifiers.add(SEALED);
         }
@@ -140,8 +150,9 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           implicitModifiers.add(FINAL);
         }
 
-        List<PsiMethod> methods = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnMethods()
-                                                                       : Arrays.asList(((PsiClass)parent).getMethods());
+        List<PsiMethod> methods = parent instanceof PsiExtensibleClass
+                                  ? ((PsiExtensibleClass)parent).getOwnMethods()
+                                  : Arrays.asList(aClass.getMethods());
         for (PsiMethod method : methods) {
           if (method.hasModifierProperty(ABSTRACT)) {
             implicitModifiers.add(ABSTRACT);
@@ -173,8 +184,13 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       }
       else {
         PsiClass aClass = ((PsiField)parent).getContainingClass();
-        if (aClass != null && aClass.isInterface()) {
-          Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+        if (aClass != null) {
+          if (aClass.isInterface()) {
+            Collections.addAll(implicitModifiers, PUBLIC, STATIC, FINAL);
+          }
+          else if (aClass.isValueClass()) {
+            implicitModifiers.add(FINAL);
+          }
         }
       }
     }
@@ -308,8 +324,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     return (PsiAnnotation)addAfter(JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText("@" + qualifiedName, this), null);
   }
 
@@ -329,10 +344,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   }
 
   private static class ModifierCache {
-    static final Interner<List<String>> ourInterner = Interner.createWeakInterner();
-    final PsiFile file;
-    final List<String> modifiers;
-    final long modCount;
+    private static final Interner<List<String>> ourInterner = Interner.createWeakInterner();
+    private final PsiFile file;
+    private final List<String> modifiers;
+    private final int modCount;
 
     ModifierCache(@NotNull PsiFile file, @NotNull Set<String> modifiers) {
       this.file = file;
@@ -341,8 +356,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       this.modCount = getModCount();
     }
 
-    private long getModCount() {
-      return file.getManager().getModificationTracker().getModificationCount() + file.getModificationStamp();
+    private int getModCount() {
+      return (int)(file.getManager().getModificationTracker().getModificationCount() + file.getModificationStamp());
     }
 
     boolean isUpToDate() {

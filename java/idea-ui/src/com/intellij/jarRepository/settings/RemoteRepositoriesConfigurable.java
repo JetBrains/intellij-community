@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository.settings;
 
 import com.intellij.ide.JavaUiBundle;
@@ -16,15 +16,16 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +41,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.*;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.countBindLibraries;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.updateLibrariesRepositoryId;
 import static com.intellij.ui.ListUtil.removeSelectedItems;
 
-public class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
 
   private JBList<String> myServiceList;
@@ -76,7 +78,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
 
   @Override
   public boolean isModified() {
-    return isServiceListModified() || isRepoListModified() || myMutableEntityStorage.hasChanges();
+    return isServiceListModified() || isRepoListModified() || ((MutableEntityStorageInstrumentation)myMutableEntityStorage).hasChanges();
   }
 
   private boolean isServiceListModified() {
@@ -209,7 +211,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                                   final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
+    list.setCellRenderer(BuilderKt.textListCellRenderer(adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -277,8 +279,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getClass().getName();
   }
 
@@ -295,7 +296,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     RemoteRepositoriesConfiguration.getInstance(myProject).setRepositories(myReposModel.getItems());
     applyMutableEntityStorageChanges();
 
-    if (!newUrls.containsAll(oldUrls) || myMutableEntityStorage.hasChanges()) {
+    if (!newUrls.containsAll(oldUrls) || ((MutableEntityStorageInstrumentation)myMutableEntityStorage).hasChanges()) {
       RepositoryLibrariesReloaderKt.reloadAllRepositoryLibraries(myProject);
     }
 
@@ -327,7 +328,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       WriteAction.run(() -> {
         myWorkspaceModel.updateProjectModel(
           "Update libraries bindings to remote repositories on repository remove", it -> {
-            it.addDiff(myMutableEntityStorage);
+            it.applyChangesFrom(myMutableEntityStorage);
             return null;
           });
       });

@@ -1,0 +1,56 @@
+### auto-generated section `build kotlin.uast.uast-kotlin.k2.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-uast-uast-kotlin-k2-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-uast-uast-kotlin-k2-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//java/testFramework",
+    "@lib//:asm",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests:kotlin-uast-uast-kotlin-base-tests_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "@lib//:kotlinc-analysis-api-impl-base-tests",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+    "//uast/testFramework",
+  ],
+  runtime_deps = [
+    "//plugins/kotlin/fir",
+    "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-uast-kotlin-idea-k2",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-uast-uast-kotlin-k2-tests_test",
+  runtime_deps = [":kotlin-uast-uast-kotlin-k2-tests_test_lib"]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin.k2.tests` end

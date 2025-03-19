@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -16,6 +15,7 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -24,7 +24,8 @@ import java.util.*;
 /**
  * A persistent {@code Set<VirtualFile>} or persistent {@code Map<VirtualFile, String>}
  */
-abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public abstract class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private static final String FILE_ELEMENT = "file";
   private static final String URL_ATTR = "url";
   private static final String VALUE_ATTR = "value";
@@ -78,7 +79,7 @@ abstract class PersistentFileSetManager implements PersistentStateComponent<Elem
   private static void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
     // later because component load could be performed in background
     ApplicationManager.getApplication().invokeLater(() -> {
-      WriteAction.run(() -> CachedFileType.clearCache());
+      CachedFileType.clearCache();
       FileContentUtilCore.reparseFiles(files);
     });
   }

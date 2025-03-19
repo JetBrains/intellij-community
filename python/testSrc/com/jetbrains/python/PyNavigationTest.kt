@@ -6,6 +6,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -78,6 +79,19 @@ class PyNavigationTest : PyTestCase() {
                                          "var = 42\n" +
                                          "var = 'spam'\n" +
                                          "print(va<caret>r)")
+  }
+
+  // PY-71972
+  fun testGotToDeclarationOrUsagesOnInstanceAttributeDefinitionShowsUsages() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.SU, """
+          class C:
+              def __init__(self, val):
+                  self.va<caret>l = val
+          
+              def __str__(self):
+                  return f"{self.val} {self.val}"
+          """.trimIndent()
+    )
   }
 
   fun testGotoDeclarationOnInitialization() {
@@ -218,9 +232,105 @@ class PyNavigationTest : PyTestCase() {
     checkPyNotPyi(target?.containingFile)
   }
 
+  // PY-54905
+  fun testGoToImplementationFunctionInPackageWithInitPy() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationClassInPackageWithInitPy() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905 PY-54620
+  fun testGoToImplementationClassInPackageWithInitPyi() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationFunctionInPyNotPyi() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-54905
+  fun testGoToImplementationNameReExportedThroughAssignmentInPyiStub() {
+    doTestGotoImplementationNavigatesToPyNotPyi()
+  }
+
+  // PY-61740
+  fun testGoToDeclarationNameReExportedThroughAssignmentInPyiStub() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  // PY-61740
+  fun testGoToDeclarationNameReExportedThroughAssignmentInPyiStubTwice() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  // PY-54905
+  fun testGoToImplementationFunctionOverrides() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-54905
+  fun testGoToImplementationClassInherits() {
+    doTestGotoImplementationNavigatesToPyNotPyi(2)
+  }
+
+  // PY-61740
+  fun testGoToDeclarationClassInPackageWithInitPyi() {
+    doTestGotoDeclarationNavigatesToPyNotPyi()
+  }
+
+  // PY-63372
+  fun testGotoDeclarationOrUsagesOnNewStyleTypeAliasDefinitionShowsUsages() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.SU,
+                                         """
+                                           type Al<caret>ias[T] = dict[str, T]
+                                           x: Alias
+                                           """)
+  }
+
+  // PY-51687
+  fun testNavigationToTypedDictClass() {
+    myFixture.configureByText(
+      "a.py",
+      "from typing import TypedDict\n" +
+      "\n" +
+      "\n" +
+      "class Foo(TypedDict):\n" +
+      "    bar: int\n" +
+      "    baz: str\n" +
+      "\n" +
+      "\n" +
+      "f = F<caret>oo(bar=1, baz=\"baz\")"
+    )
+    val target = PyTypedDictGoToDeclarationProvider().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    assertInstanceOf(target, PyClass::class.java)
+    assertEquals("Foo", (target as PyClass).name)
+  }
+
+  private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(elementAtCaret, myFixture.editor)
+    checkPyNotPyi(target!!.containingFile)
+  }
+
+  private fun doTestGotoImplementationNavigatesToPyNotPyi(numTargets: Int = 1) {
+    myFixture.copyDirectoryToProject(getTestName(true), "")
+    myFixture.configureByFile("test.py")
+    val gotoData = CodeInsightTestUtil.gotoImplementation(myFixture.editor, myFixture.file)
+    assertSize(numTargets, gotoData.targets)
+    for (target in gotoData.targets) {
+      checkPyNotPyi(target.containingFile)
+    }
+  }
+
   private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
     myFixture.configureByText("a.py", text)
-    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(myFixture.editor, myFixture.file,
+                                                                                              myFixture.caretOffset)
     assertEquals(expectedOutcome, actualOutcome)
   }
 

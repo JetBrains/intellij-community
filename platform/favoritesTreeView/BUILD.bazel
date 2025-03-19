@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.ide.favoritesTreeView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-favoritesTreeView",
+  module_name = "intellij.platform.ide.favoritesTreeView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util/jdom",
+    "//platform/core-ui",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "@lib//:kotlin-stdlib",
+    "//platform/usageView",
+    "//platform/util:util-ui",
+    "//platform/usageView-impl",
+    "//platform/foldings",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.favoritesTreeView` end

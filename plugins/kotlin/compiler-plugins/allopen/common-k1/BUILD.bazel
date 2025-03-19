@@ -1,0 +1,21 @@
+### auto-generated section `build kotlin.compiler-plugins.allopen.common.k1` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compiler-plugins-allopen-common-k1",
+  module_name = "kotlin.compiler-plugins.allopen.common.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-allopen-compiler-plugin",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
+    "//platform/util",
+    "//java/java-psi-api:psi",
+    "//platform/core-impl",
+  ]
+)
+### auto-generated section `build kotlin.compiler-plugins.allopen.common.k1` end

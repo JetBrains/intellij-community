@@ -2,7 +2,6 @@
 package com.intellij.collaboration.api.json
 
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
 
 @ApiStatus.Experimental
 interface JsonDataSerializer {

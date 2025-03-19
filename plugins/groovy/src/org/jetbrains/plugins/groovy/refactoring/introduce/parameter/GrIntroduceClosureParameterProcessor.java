@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -91,8 +91,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(final UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -429,8 +428,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
   }
 
-  @Nullable
-  private static GrExpression getAnchorForArgument(GrExpression[] oldArgs, boolean isVarArg, PsiParameterList parameterList) {
+  private static @Nullable GrExpression getAnchorForArgument(GrExpression[] oldArgs, boolean isVarArg, PsiParameterList parameterList) {
     if (!isVarArg) return ArrayUtil.getLastElement(oldArgs);
 
     final PsiParameter[] parameters = parameterList.getParameters();
@@ -575,9 +573,8 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
     });
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("introduce.parameter.command", DescriptiveNameUtil.getDescriptiveName(mySettings.getToReplaceIn()));
   }
 

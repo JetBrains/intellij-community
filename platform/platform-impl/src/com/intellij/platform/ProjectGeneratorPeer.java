@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -10,16 +10,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public interface ProjectGeneratorPeer<T> {
-  @NotNull
-  default JComponent getComponent(@NotNull final TextFieldWithBrowseButton myLocationField, @NotNull final Runnable checkValid) {
+  /**
+   * Returns a new project settings component.
+   * If a component is a dialog panel from Kotlin DSL UI, its validation state will be used
+   */
+  default @NotNull JComponent getComponent(final @NotNull TextFieldWithBrowseButton myLocationField, final @NotNull Runnable checkValid) {
     return getComponent();
   }
 
   /**
-   * Returns new project settings component
+   * @deprecated implement {@link #getComponent(TextFieldWithBrowseButton, Runnable)} instead
    */
-  @NotNull
-  JComponent getComponent();
+  @Deprecated
+  default @NotNull JComponent getComponent() {
+    throw new RuntimeException("Do not use this method, use the one above instead");
+  }
 
   void buildUI(@NotNull SettingsStep settingsStep);
 
@@ -30,7 +35,10 @@ public interface ProjectGeneratorPeer<T> {
   T getSettings();
 
   /**
-   * @return {@code null} if OK
+   * if {@link #getComponent(TextFieldWithBrowseButton, Runnable)} is Kotlin DSL UI panel, then it will also be validated,
+   * and this method must check only things not covered by the panel.
+   *
+   * @return {@code null} if OK.
    */
   @Nullable
   ValidationInfo validate();
@@ -58,5 +66,5 @@ public interface ProjectGeneratorPeer<T> {
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
-  default void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener) {}
+  default void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener) { }
 }

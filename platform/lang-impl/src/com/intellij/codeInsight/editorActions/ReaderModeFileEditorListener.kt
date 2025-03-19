@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.editorActions
 
 import com.intellij.codeInsight.actions.ReaderModeSettings
+import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -31,7 +33,9 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
               return@Runnable
             }
 
-            ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
+            ClientId.withExplicitClientId(ClientEditorManager.getClientId(fileEditor.editor)) {
+              ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
+            }
           }, modalityState, project.disposed)
         }
       }
@@ -54,7 +58,9 @@ private class ReaderModeEditorColorListener : EditorColorsListener {
 
       for (editor in (project.serviceIfCreated<FileEditorManager>() ?: continue).allEditors) {
         if (editor is PsiAwareTextEditorImpl) {
-          ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+          ClientId.withExplicitClientId(ClientEditorManager.getClientId(editor.editor)) {
+            ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+          }
         }
       }
     }

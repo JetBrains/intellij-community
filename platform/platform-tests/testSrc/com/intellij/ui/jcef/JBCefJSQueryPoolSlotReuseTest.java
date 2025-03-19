@@ -87,7 +87,7 @@ public class JBCefJSQueryPoolSlotReuseTest {
       return null;
     });
 
-    invokeAndWaitForLatch(latch, () -> {
+    invokeAndWaitForLatch(latch, "executeJavaScript -> wait js callback", () -> {
       String code = jsQuery.inject("'" + expectedResult + "'");
       System.out.println("Executing JBCefJSQuery: " + code);
       browser.getCefBrowser().executeJavaScript(code, browser.getCefBrowser().getURL(), 0);

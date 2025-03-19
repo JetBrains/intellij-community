@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion;
 
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class FilePathCompletionContributor extends CompletionContributor {
+public final class FilePathCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(FilePathCompletionContributor.class);
 
   public FilePathCompletionContributor() {
@@ -67,14 +67,14 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
     CompletionProvider<CompletionParameters> provider = new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
+      protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
-                                    @NotNull final CompletionResultSet _result) {
+                                    final @NotNull CompletionResultSet _result) {
         if (!parameters.isExtendedCompletion()) {
           return;
         }
 
-        @NotNull final CompletionResultSet result = _result.caseInsensitive();
+        final @NotNull CompletionResultSet result = _result.caseInsensitive();
         final PsiElement e = parameters.getPosition();
         final Project project = e.getProject();
 
@@ -190,12 +190,12 @@ public class FilePathCompletionContributor extends CompletionContributor {
                                                      String prefix,
                                                      FileType[] suitableFileTypes,
                                                      int invocationCount) {
-    boolean prefixMatched = prefix.length() == 0 || StringUtil.startsWithIgnoreCase(fileName, prefix);
+    boolean prefixMatched = prefix.isEmpty() || StringUtil.startsWithIgnoreCase(fileName, prefix);
     if (prefixMatched && (suitableFileTypes.length == 0 || invocationCount > 2)) return true;
 
     if (prefixMatched) {
       String extension = FileUtilRt.getExtension(fileName);
-      if (extension.length() == 0) return false;
+      if (extension.isEmpty()) return false;
 
       for (FileType fileType : suitableFileTypes) {
         for (FileNameMatcher matcher : FileTypeManager.getInstance().getAssociations(fileType)) {
@@ -222,9 +222,9 @@ public class FilePathCompletionContributor extends CompletionContributor {
     return path.substring(0, index);
   }
 
-  private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file,
+  private static boolean fileMatchesPathPrefix(final @Nullable PsiFileSystemItem file,
                                                @Nullable VirtualFile stopParent,
-                                               @NotNull final List<String> pathPrefix) {
+                                               final @NotNull List<String> pathPrefix) {
     if (file == null) return false;
 
     final List<String> contextParts = new ArrayList<>();
@@ -232,14 +232,14 @@ public class FilePathCompletionContributor extends CompletionContributor {
     PsiFileSystemItem parent;
     while ((parent = parentFile.getParent()) != null &&
            (stopParent == null || !Objects.equals(parent.getVirtualFile(), stopParent))) {
-      if (parent.getName().length() > 0) contextParts.add(0, StringUtil.toLowerCase(parent.getName()));
+      if (!parent.getName().isEmpty()) contextParts.add(0, StringUtil.toLowerCase(parent.getName()));
       parentFile = parent;
     }
 
     final String path = StringUtil.join(contextParts, "/");
 
     int nextIndex = 0;
-    for (@NonNls final String s : pathPrefix) {
+    for (final @NonNls String s : pathPrefix) {
       if ((nextIndex = path.indexOf(StringUtil.toLowerCase(s), nextIndex)) == -1) return false;
     }
 
@@ -265,8 +265,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     }
   }
 
-  @Nullable
-  private static Pair<FileReference, Boolean> getReference(final PsiReference original) {
+  private static @Nullable Pair<FileReference, Boolean> getReference(final PsiReference original) {
     if (original == null) {
       return null;
     }
@@ -292,7 +291,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static class FilePathLookupItem extends LookupElement {
+  public static final class FilePathLookupItem extends LookupElement {
     private final String myName;
     private final String myPath;
     private final String myInfo;
@@ -300,7 +299,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     private final PsiFile myFile;
     private final List<? extends FileReferenceHelper> myHelpers;
 
-    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final List<? extends FileReferenceHelper> helpers) {
+    public FilePathLookupItem(final @NotNull PsiFile file, final @NotNull List<? extends FileReferenceHelper> helpers) {
       myName = file.getName();
       myPath = file.getVirtualFile().getPath();
 
@@ -317,15 +316,13 @@ public class FilePathCompletionContributor extends CompletionContributor {
       return String.format("%s%s", myName, myInfo == null ? "" : " (" + myInfo + ")");
     }
 
-    @NotNull
     @Override
-    public Object getObject() {
+    public @NotNull Object getObject() {
       return myFile;
     }
 
     @Override
-    @NotNull
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myName;
     }
 
@@ -367,21 +364,20 @@ public class FilePathCompletionContributor extends CompletionContributor {
         sb.append(relativePath);
       }
 
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append(')');
       }
 
       presentation.setItemText(myName);
 
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         presentation.setTailText(sb.toString(), true);
       }
 
       presentation.setIcon(myIcon);
     }
 
-    @Nullable
-    private String getRelativePath() {
+    private @Nullable String getRelativePath() {
       final VirtualFile virtualFile = myFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       for (FileReferenceHelper helper : myHelpers) {

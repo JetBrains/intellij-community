@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.crossLanguage
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
@@ -20,6 +22,7 @@ import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -35,7 +38,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.appendModifier
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.quickfix.MakeFieldPublicFix
 import org.jetbrains.kotlin.idea.quickfix.MakeMemberStaticFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
@@ -51,11 +54,11 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.types.TypeUtils.makeNullableAsSpecified
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -71,7 +74,10 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
 
         internal fun ExpectedTypes.toKotlinTypeInfo(resolutionFacade: ResolutionFacade): TypeInfo {
             val candidateTypes = flatMapTo(LinkedHashSet()) {
-                val ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
+                var ktType = (it.theType as? PsiType)?.resolveToKotlinType(resolutionFacade) ?: return@flatMapTo emptyList()
+                if (it.asSafely<ExpectedTypeWithNullability>()?.nullability == Nullability.NULLABLE) {
+                    ktType = makeNullableAsSpecified(ktType, true)
+                }
                 when (it.theKind) {
                     ExpectedType.Kind.EXACT, ExpectedType.Kind.SUBTYPE -> listOf(ktType)
                     ExpectedType.Kind.SUPERTYPE -> listOf(ktType) + ktType.supertypes()
@@ -216,11 +222,11 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         shouldBePresent: Boolean
     ): List<IntentionAction> {
         val action = if (shouldBePresent) {
-            AddModifierFixFE10.createIfApplicable(modifierListOwners, token)
+            AddModifierFixMpp.createIfApplicable(modifierListOwners, token)
         } else {
             RemoveModifierFixBase(modifierListOwners, token, false)
         }
-        return listOfNotNull(action)
+        return listOfNotNull(action?.asIntention())
     }
 
     override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
@@ -272,7 +278,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         propertyType: JvmType,
         propertyName: String,
         setterRequired: Boolean,
-        classOrFileName: String?
+        classOrFileName: String?,
+        annotations: List<AnnotationRequest>
     ): List<IntentionAction> {
         val modifierBuilder = ModifierBuilder(targetContainer).apply { addJvmModifiers(modifiers) }
         if (!modifierBuilder.isValid) return emptyList()
@@ -284,6 +291,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             propertyName = propertyName,
             setterRequired = setterRequired,
             isLateinitPreferred = false,
+            annotations = annotations,
             classOrFileName = classOrFileName
         )
 
@@ -295,6 +303,7 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                     propertyType = propertyType,
                     propertyName = propertyName,
                     setterRequired = true,
+                    annotations = annotations,
                     classOrFileName = classOrFileName
                 )
             )
@@ -362,7 +371,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
                     propertyType.theType,
                     nameAndKind.first,
                     setterRequired,
-                    targetClass.name
+                    targetClass.name,
+                    request.annotations.toList()
                 )
             }
         }
@@ -372,7 +382,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             modifierList = modifierBuilder.modifierList,
             familyName = KotlinBundle.message("add.method"),
             providedText = KotlinBundle.message("add.method.0.to.1", methodName, targetClassName.toString()),
-            targetContainer = targetContainer
+            targetContainer = targetContainer,
+            annotations = request.annotations.toList()
         )
 
         return listOf(addMethodAction)
@@ -445,8 +456,8 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         @IntentionFamilyName private val familyName: String
     ) : IntentionAction {
 
-        private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
-        private val qualifiedName: String
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry> = annotationEntry.createSmartPointer()
+        private val qualifiedName: String = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
 
         override fun startInWriteAction(): Boolean = true
 
@@ -467,28 +478,89 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
 
         private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
-            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
-            val isKotlinAnnotation = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language == KotlinLanguage.INSTANCE
+            val facade = JavaPsiFacade.getInstance(project)
+            val language = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language
             val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
             val psiFactory = KtPsiFactory(project)
-            val annotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { isKotlinAnnotation }
-            val dummyArgumentList = psiFactory.createAnnotationEntry(annotationText).valueArgumentList!!
+            val dummyAnnotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { language == KotlinLanguage.INSTANCE }
+            val dummyArgumentList = psiFactory.createAnnotationEntry(dummyAnnotationText).valueArgumentList!!
             val argumentList = annotationEntry.valueArgumentList
+
             if (argumentList == null) {
                 annotationEntry.add(dummyArgumentList)
+                ShortenReferences.DEFAULT.process(annotationEntry)
+                return
             }
-            else {
-                val dummyArgument = dummyArgumentList.arguments[0]
-                val attribute = findAttribute(annotationEntry, request.name, attributeIndex)
-                if (attribute != null) {
-                    argumentList.addArgumentBefore(dummyArgument, attribute.value)
-                    argumentList.removeArgument(attribute.index + 1)
-                }
-                else {
-                    argumentList.addArgument(dummyArgument)
-                }
+
+            when (language) {
+              JavaLanguage.INSTANCE -> changeJava(annotationEntry, argumentList, dummyArgumentList)
+              KotlinLanguage.INSTANCE -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
+              else -> changeKotlin(annotationEntry, argumentList, dummyArgumentList)
             }
             ShortenReferences.DEFAULT.process(annotationEntry)
+        }
+
+        private fun changeKotlin(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {
+            val dummyArgument = dummyArgumentList.arguments[0]
+            val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
+            if (oldAttribute == null) {
+                argumentList.addArgument(dummyArgument)
+                return
+            }
+
+            argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+
+            if (isAttributeDuplicated(oldAttribute)) {
+                argumentList.removeArgument(oldAttribute.value)
+            }
+        }
+
+        private fun changeJava(annotationEntry: KtAnnotationEntry, argumentList: KtValueArgumentList, dummyArgumentList: KtValueArgumentList) {
+            if (request.name == "value") {
+                val anchorAfterVarargs: KtValueArgument? = removeVarargsAttribute(argumentList)
+
+                for (renderedArgument in dummyArgumentList.arguments) {
+                    argumentList.addArgumentBefore(renderedArgument, anchorAfterVarargs)
+                }
+
+                return
+            }
+
+            val oldAttribute = findAttribute(annotationEntry, request.name, attributeIndex)
+            if (oldAttribute != null) {
+                for (dummyArgument in dummyArgumentList.arguments) {
+                    argumentList.addArgumentBefore(dummyArgument, oldAttribute.value)
+                }
+
+                if (isAttributeDuplicated(oldAttribute)) {
+                    argumentList.removeArgument(oldAttribute.value)
+                }
+                return
+            }
+
+            for (dummyArgument in dummyArgumentList.arguments) {
+                argumentList.addArgument(dummyArgument)
+            }
+        }
+
+        private fun removeVarargsAttribute(argumentList: KtValueArgumentList): KtValueArgument? {
+            for (attribute in argumentList.arguments) {
+                val attributeName = attribute.getArgumentName()?.asName?.identifier
+
+                if (attributeName == null || attributeName == "value") {
+                    argumentList.removeArgument(attribute)
+                    continue
+                }
+
+                return attribute
+            }
+
+            return null
+        }
+
+        private fun isAttributeDuplicated(attribute: IndexedValue<KtValueArgument>): Boolean {
+            val name = attribute.value.getArgumentName()?.asName?.identifier ?: return true
+            return name == request.name
         }
 
         private fun findAttribute(annotationEntry: KtAnnotationEntry, name: String, index: Int): IndexedValue<KtValueArgument>? {
@@ -500,11 +572,6 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
             }
             val valueArgument = arguments.getOrNull(index) ?: return null
             return IndexedValue(index, valueArgument)
-        }
-
-        init {
-            pointer = annotationEntry.createSmartPointer()
-            qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
         }
     }
 
@@ -686,7 +753,7 @@ internal fun addAnnotationEntry(
     return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
-private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
+internal fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {
     val javaPsiFacade = JavaPsiFacade.getInstance(target.project)
     fun isKotlinAnnotation(annotation: AnnotationRequest): Boolean =
         javaPsiFacade.findClass(annotation.qualifiedName, target.resolveScope)?.language == KotlinLanguage.INSTANCE

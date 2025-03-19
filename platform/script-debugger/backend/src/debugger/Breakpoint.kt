@@ -15,11 +15,14 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * A breakpoint in the browser JavaScript virtual machine. The `set*`
  * method invocations will not take effect until
  * [.flush] is called.
  */
+@ApiStatus.Internal
 interface Breakpoint {
   companion object {
     /**
@@ -67,6 +70,7 @@ interface Breakpoint {
 /**
  * Visitor interface that includes all extensions.
  */
+@ApiStatus.Internal
 interface TargetExtendedVisitor<R> : FunctionVisitor<R>, ScriptRegExpSupportVisitor<R>
 
 
@@ -74,6 +78,7 @@ interface TargetExtendedVisitor<R> : FunctionVisitor<R>, ScriptRegExpSupportVisi
  * Additional interface that user visitor may implement for [BreakpointTarget.accept]
  * method.
  */
+@ApiStatus.Internal
 interface FunctionVisitor<R> : BreakpointTarget.Visitor<R> {
   fun visitFunction(expression: String): R
 }

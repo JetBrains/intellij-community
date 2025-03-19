@@ -74,6 +74,13 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
   public static void assertVariable(@NotNull Collection<? extends XValue> vars,
                                     @Nullable String name,
                                     @Nullable String type,
+                                    @Nullable String value) {
+    assertVariable(vars, name, type, value, null, null);
+  }
+
+  public static void assertVariable(@NotNull Collection<? extends XValue> vars,
+                                    @Nullable String name,
+                                    @Nullable String type,
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren) {
     assertVariable(vars, name, type, value, hasChildren, null);
@@ -320,11 +327,6 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     assertNotNull("full value evaluator should be not null", node.myFullValueEvaluator);
     CompletableFuture<String> result = new CompletableFuture<>();
     node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
-      @Override
-      public void evaluated(@NotNull String fullValue) {
-        result.complete(fullValue);
-      }
-
       @Override
       public void evaluated(@NotNull String fullValue, @Nullable Font font) {
         result.complete(fullValue);

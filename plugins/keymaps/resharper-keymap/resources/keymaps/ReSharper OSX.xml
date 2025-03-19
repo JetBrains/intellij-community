@@ -135,8 +135,8 @@
   <action id="GotoNextBookmark"/>
   <action id="GotoPreviousBookmark"/>
   <action id="ShowNavBar">
-    <keyboard-shortcut first-keystroke="alt HOME"/>
     <keyboard-shortcut first-keystroke="control alt Left"/>
+    <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
   <action id="GotoPreviousError">
     <keyboard-shortcut first-keystroke="shift F12"/>
@@ -183,6 +183,9 @@
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
   </action>
   <action id="ShowTypeBookmarks"/>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
 
   <!--  Rider-specific actions-->
 

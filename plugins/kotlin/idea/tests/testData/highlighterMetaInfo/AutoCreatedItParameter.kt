@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 fun test() {
     val vect = MyIterable<Int>()
 

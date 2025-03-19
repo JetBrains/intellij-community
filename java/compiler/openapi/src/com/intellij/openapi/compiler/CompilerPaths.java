@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -161,7 +161,7 @@ public class CompilerPaths {
       }
 
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-      for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensions()) {
+      for (OrderEnumerationHandler.Factory handlerFactory : OrderEnumerationHandler.EP_NAME.getExtensionList()) {
         if (handlerFactory.isApplicable(module)) {
           OrderEnumerationHandler handler = handlerFactory.createHandler(module);
           List<String> outputUrls = new SmartList<>();

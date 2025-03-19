@@ -30,14 +30,14 @@ public final class TopLevelClass {
         return TODO()
     }
     public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
-        <init>()
+        Object()
     }
     public static final class NestedClass {
         public fun NestedClass() = UastEmptyExpression
     }
 }
 
-public enum MyBooleanEnum {
+public final enum MyBooleanEnum {
     @null TRUE
     @null FALSE
     private fun MyBooleanEnum() = UastEmptyExpression

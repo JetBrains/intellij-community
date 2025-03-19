@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -21,8 +21,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class DebuggerTreeNodeExpression {
-  @Nullable
-  public static PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
+  public static @Nullable PsiExpression substituteThis(@Nullable PsiElement expressionWithThis, PsiExpression howToEvaluateThis, Value howToEvaluateThisValue)
     throws EvaluateException {
     if (!(expressionWithThis instanceof PsiExpression)) return null;
     PsiExpression result = (PsiExpression)expressionWithThis.copy();

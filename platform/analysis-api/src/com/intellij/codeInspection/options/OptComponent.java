@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Basic interface for all the components that could be displayed in options panel
+ * Basic interface for all the components that could be displayed in an options panel
  */
 public sealed interface OptComponent permits OptControl, OptRegularComponent, OptTab {
   /**

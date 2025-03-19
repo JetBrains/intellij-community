@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.core.JavaPsiBundle;
@@ -15,8 +14,10 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightJavaToken;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -90,7 +92,7 @@ final class VariableExtractor {
     }
     PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
     final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
-      mySettings.getSelectedType());
+      PsiTypesUtil.removeExternalAnnotations(mySettings.getSelectedType()));
     initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(initializer);
@@ -207,8 +209,7 @@ final class VariableExtractor {
                          : declaration);
   }
 
-  @NotNull
-  private PsiElement createDeclaration(@NotNull PsiType type, @NotNull String name, PsiExpression initializer) {
+  private @NotNull PsiElement createDeclaration(@NotNull PsiType type, @NotNull String name, PsiExpression initializer) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     if (myAnchor instanceof PsiInstanceOfExpression && initializer instanceof PsiTypeCastExpression) {
       PsiTypeElement castType = Objects.requireNonNull(((PsiTypeCastExpression)initializer).getCastType());
@@ -296,26 +297,27 @@ final class VariableExtractor {
     if (type == null) {
       throw new IncorrectOperationException("Unexpected empty type pointer");
     }
-
-    PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
-      .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
-    Project project = expression.getProject();
-    NullabilityAnnotationInfo nullabilityAnnotationInfo =
-      NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
-    NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
-    if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
-        // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
-        // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
-        ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
-      return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+    if (!DumbService.isDumb(expression.getProject())) {
+      // NullableNotNullManager doesn't work well in dumb mode
+      PsiDeclarationStatement probe = JavaPsiFacade.getElementFactory(expression.getProject())
+        .createVariableDeclarationStatement("x", TypeUtils.getObjectType(expression), null, expression);
+      Project project = expression.getProject();
+      NullabilityAnnotationInfo nullabilityAnnotationInfo =
+        NullableNotNullManager.getInstance(project).findExplicitNullability((PsiLocalVariable)probe.getDeclaredElements()[0]);
+      NullabilityAnnotationInfo info = DfaPsiUtil.getTypeNullabilityInfo(type);
+      if (info != null && nullabilityAnnotationInfo != null && info.getNullability() != nullabilityAnnotationInfo.getNullability() &&
+          // The type nullability could be inherited from hierarchy. E.g. if the type is type parameter T,
+          // which is defined as <T extends @NotNull Foo>. In this case we should not add @NotNull explicitly
+          ArrayUtil.contains(info.getAnnotation(), type.getAnnotations())) {
+        return type.annotate(TypeAnnotationProvider.Static.create(new PsiAnnotation[]{info.getAnnotation()}));
+      }
     }
     return type.annotate(TypeAnnotationProvider.EMPTY);
   }
 
-  @NotNull
-  private static PsiElement correctAnchor(@NotNull PsiExpression expr,
-                                          @NotNull PsiElement anchor,
-                                          PsiExpression @NotNull [] occurrences) {
+  private static @NotNull PsiElement correctAnchor(@NotNull PsiExpression expr,
+                                                   @NotNull PsiElement anchor,
+                                                   PsiExpression @NotNull [] occurrences) {
     if (!expr.isPhysical()) {
       expr = ObjectUtils.tryCast(expr.getUserData(ElementToWorkOn.PARENT), PsiExpression.class);
       if (expr == null) return anchor;
@@ -333,7 +335,7 @@ final class VariableExtractor {
     }
     Set<PsiExpression> allOccurrences = StreamEx.of(occurrences).filter(PsiElement::isPhysical).append(expr).toSet();
     PsiExpression firstOccurrence = Collections.min(allOccurrences, Comparator.comparing(e -> e.getTextRange().getStartOffset()));
-    if (HighlightingFeature.PATTERNS.isAvailable(anchor)) {
+    if (PsiUtil.isAvailable(JavaFeature.PATTERNS, anchor)) {
       PsiTypeCastExpression cast = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(firstOccurrence), PsiTypeCastExpression.class);
       if (cast != null) {
         PsiType castType = cast.getType();
@@ -434,13 +436,12 @@ final class VariableExtractor {
     return child;
   }
 
-  @Nullable
-  public static PsiVariable introduce(final @NotNull Project project,
-                                      final @NotNull PsiExpression expr,
-                                      final @Nullable Editor editor,
-                                      final @NotNull PsiElement anchorStatement,
-                                      final PsiExpression @NotNull [] occurrences,
-                                      final @NotNull IntroduceVariableSettings settings) {
+  public static @Nullable PsiVariable introduce(final @NotNull Project project,
+                                                final @NotNull PsiExpression expr,
+                                                final @Nullable Editor editor,
+                                                final @NotNull PsiElement anchorStatement,
+                                                final PsiExpression @NotNull [] occurrences,
+                                                final @NotNull IntroduceVariableSettings settings) {
     Computable<SmartPsiElementPointer<PsiVariable>> computation =
       new VariableExtractor(project, expr, editor, anchorStatement, occurrences, settings)::extractVariable;
     PsiFile file = expr.getContainingFile();

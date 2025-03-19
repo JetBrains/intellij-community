@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.tips` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tips_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tips",
+  module_name = "intellij.platform.tips",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "@lib//:jsoup",
+    "@lib//:fastutil-min",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "//platform/ide-core-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/feedback",
+  ],
+  runtime_deps = [":tips_resources"]
+)
+### auto-generated section `build intellij.platform.tips` end

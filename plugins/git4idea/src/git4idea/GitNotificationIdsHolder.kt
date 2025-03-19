@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.notification.impl.NotificationIdsHolder
@@ -6,6 +6,12 @@ import com.intellij.notification.impl.NotificationIdsHolder
 class GitNotificationIdsHolder : NotificationIdsHolder {
   override fun getNotificationIds(): List<String> {
     return listOf(
+      APPLY_CHANGES_SUCCESS,
+      APPLY_CHANGES_CONFLICTS,
+      APPLY_CHANGES_ERROR,
+      APPLY_CHANGES_LOCAL_CHANGES_DETECTED,
+      BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED,
+      BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS,
       BRANCH_CHECKOUT_FAILED,
       BRANCH_CREATION_FAILED,
       BRANCH_DELETED,
@@ -38,7 +44,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       DELETE_BRANCH_ON_MERGE,
       FETCH_ERROR,
       FETCH_SUCCESS,
-      FETCH_CANCELLED,
       FETCH_DETAILS,
       FETCH_RESULT,
       FETCH_RESULT_ERROR,
@@ -60,7 +65,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       PROJECT_PARTIALLY_UPDATED,
       PULL_FAILED,
       PUSH_RESULT,
-      PUSH_NOT_SUPPORTED,
       REBASE_ABORT_FAILED,
       REBASE_ABORT,
       REBASE_ABORT_SUCCESS,
@@ -84,8 +88,11 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       REVERT_ABORT_SUCCESS,
       STAGE_COMMIT_ERROR,
       STAGE_COMMIT_SUCCESS,
+      STAGE_OPERATION_ERROR,
+      STASH_SUCCESSFUL,
       STASH_FAILED,
       STASH_LOCAL_CHANGES_DETECTED,
+      STASH_NON_EMPTY_INDEX_DETECTED,
       TAG_CREATED,
       TAG_NOT_CREATED,
       TAG_DELETED,
@@ -107,11 +114,24 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       REBASE_STOPPED_ON_EDITING,
       REBASE_FAILED,
       UNTRACKED_FIES_OVERWITTEN,
-      TAGS_LOADING_FAILED
+      TAGS_LOADING_FAILED,
+      OPEN_IN_BROWSER_ERROR,
+      IGNORE_FILE_GENERATION_ERROR,
+      UNSHALLOW_SUCCESS,
+      GPG_AGENT_CONFIGURATION_SUCCESS,
+      GPG_AGENT_CONFIGURATION_ERROR,
+      GPG_AGENT_CONFIGURATION_PROPOSE,
+      GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION,
     )
   }
 
   companion object {
+    const val APPLY_CHANGES_SUCCESS = "git.apply.changes.success"
+    const val APPLY_CHANGES_CONFLICTS = "git.apply.changes.conflicts"
+    const val APPLY_CHANGES_ERROR = "git.apply.changes.error"
+    const val APPLY_CHANGES_LOCAL_CHANGES_DETECTED = "git.apply.changes.local.changes.detected"
+    const val BRANCH_UPDATE_FORCE_PUSHED_BRANCH_NOT_ALL_CHERRY_PICKED = "git.update.force.pushed.branch.not.all.cherry.picked"
+    const val BRANCH_UPDATE_FORCE_PUSHED_BRANCH_SUCCESS = "git.update.force.pushed.branch.success"
     const val BRANCH_CHECKOUT_FAILED = "git.branch.checkout.failed"
     const val BRANCH_CREATION_FAILED = "git.branch.creation.failed"
     const val BRANCH_DELETED = "git.branch.deleted"
@@ -144,7 +164,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val DELETE_BRANCH_ON_MERGE = "git.delete.branch.on.merge"
     const val FETCH_ERROR = "git.fetch.error"
     const val FETCH_SUCCESS = "git.fetch.success"
-    const val FETCH_CANCELLED = "git.fetch.cancelled"
     const val FETCH_DETAILS = "git.fetch.details"
     const val FETCH_RESULT = "git.fetch.result"
     const val FETCH_RESULT_ERROR = "git.fetch.result.error"
@@ -166,7 +185,6 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val PROJECT_PARTIALLY_UPDATED = "git.project.partially.updated"
     const val PULL_FAILED = "git.pull.failed"
     const val PUSH_RESULT = "git.push.result"
-    const val PUSH_NOT_SUPPORTED = "git.push.not.supported"
     const val REBASE_ABORT_FAILED = "git.rebase.abort.failed"
     const val REBASE_ABORT = "git.rebase.abort"
     const val REBASE_ABORT_SUCCESS = "git.rebase.abort.succeeded"
@@ -190,8 +208,11 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val REVERT_ABORT_SUCCESS = "git.revert.abort.success"
     const val STAGE_COMMIT_ERROR = "git.stage.commit.error"
     const val STAGE_COMMIT_SUCCESS = "git.stage.commit.successful"
+    const val STAGE_OPERATION_ERROR = "git.stage.operation.error"
+    const val STASH_SUCCESSFUL = "git.stash.successful"
     const val STASH_FAILED = "git.stash.failed"
     const val STASH_LOCAL_CHANGES_DETECTED = "git.stash.local.changes.detected"
+    const val STASH_NON_EMPTY_INDEX_DETECTED = "git.stash.non.empty.index.detected"
     const val TAG_CREATED = "git.tag.created"
     const val TAG_NOT_CREATED = "git.tag.not.created"
     const val TAG_DELETED = "git.tag.deleted"
@@ -214,5 +235,12 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val REBASE_FAILED = "git.rebase.failed"
     const val UNTRACKED_FIES_OVERWITTEN = "untracked.files.overwritten"
     const val TAGS_LOADING_FAILED = "git.tags.loading.failed"
+    const val OPEN_IN_BROWSER_ERROR: String = "git.open.in.browser.error"
+    const val IGNORE_FILE_GENERATION_ERROR: String = "git.ignore.file.generation.error"
+    const val UNSHALLOW_SUCCESS = "git.unshallow.success"
+    const val GPG_AGENT_CONFIGURATION_SUCCESS = "git.gpg.agent.configuration.success"
+    const val GPG_AGENT_CONFIGURATION_ERROR = "git.gpg.agent.configuration.error"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE = "git.gpg.agent.configuration.propose"
+    const val GPG_AGENT_CONFIGURATION_PROPOSE_SUGGESTION = "git.gpg.agent.configuration.propose.suggestion"
   }
 }

@@ -2,7 +2,10 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class ChangeParameterClassTest extends LightQuickFixParameterizedTestCase {
 
@@ -12,8 +15,8 @@ public class ChangeParameterClassTest extends LightQuickFixParameterizedTestCase
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_1_5;
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 }
 

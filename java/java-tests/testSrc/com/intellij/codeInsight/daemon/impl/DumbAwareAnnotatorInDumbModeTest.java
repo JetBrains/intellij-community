@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public class DumbAwareAnnotatorInDumbModeTest extends LightJavaCodeInsightFixtur
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, dumbAwareAnnotator);
     ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
     try {
-      DumbServiceImpl.getInstance(getProject()).runInDumbMode(() -> {
+      DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
         myFixture.testHighlighting();
       });
     }

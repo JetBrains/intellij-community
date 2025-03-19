@@ -6,7 +6,9 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FileBasedIndexTreeChangePreprocessor : PsiTreeChangePreprocessor {
   private val vfsEventsMerger by lazy {
     val fileBasedIndex = FileBasedIndex.getInstance()

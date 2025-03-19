@@ -13,19 +13,21 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xdebugger.impl.actions.handlers.XAddToWatchesFromEditorActionHandler.getTextToEvaluate;
 
+@ApiStatus.Internal
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     return editor != null && Registry.is("debugger.watches.inline.enabled");
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 

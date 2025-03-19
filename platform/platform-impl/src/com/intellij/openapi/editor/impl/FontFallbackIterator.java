@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -22,7 +8,6 @@ import com.intellij.util.text.CharSequenceIterator;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.font.CharToGlyphMapper;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -49,7 +34,7 @@ import java.text.CharacterIterator;
  *   }
  * </pre></code>
  */
-public class FontFallbackIterator {
+public final class FontFallbackIterator {
   private static final char COMPLEX_CHAR_START = 0x300; // start of Combining Diacritical Marks block
   
   private final BreakAtEveryCharacterIterator myTrivialBreaker = new BreakAtEveryCharacterIterator();
@@ -189,20 +174,18 @@ public class FontFallbackIterator {
     return myEnd;
   }
 
-  @NotNull
-  public FontInfo getFontInfo() {
+  public @NotNull FontInfo getFontInfo() {
     if (myFontRenderContext == null) {
       throw new IllegalStateException("FontRenderContext must be set to generate FontInfo");
     }
     return myFontInfo;
   }
   
-  @NotNull
-  public Font getFont() {
+  public @NotNull Font getFont() {
     return myFontInfo.getFont();
   }
 
-  private static class BreakAtEveryCharacterIterator extends BreakIterator {
+  private static final class BreakAtEveryCharacterIterator extends BreakIterator {
     private int myStart;
     private int myEnd;
     private int myCurrent;

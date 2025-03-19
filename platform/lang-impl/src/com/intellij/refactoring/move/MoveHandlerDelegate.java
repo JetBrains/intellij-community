@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.move;
 
@@ -31,7 +31,7 @@ public abstract class MoveHandlerDelegate {
    * @param reference        null, if refactoring is performed on the declaration.
    * @return {@code true} if delegate can process {@code elements}.
    */
-  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
+  public boolean canMove(PsiElement[] elements, final @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     return canMove(elements, targetContainer);
   }
 
@@ -39,7 +39,7 @@ public abstract class MoveHandlerDelegate {
    * @deprecated Please overload {@link #canMove(PsiElement[], PsiElement, PsiReference)} instead.
    */
   @Deprecated
-  public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
+  public boolean canMove(PsiElement[] elements, final @Nullable PsiElement targetContainer) {
     return isValidTarget(targetContainer, elements);
   }
 
@@ -56,7 +56,7 @@ public abstract class MoveHandlerDelegate {
    * @param sources         elements which are moved.
    * @param targetElement   element under mouse.
    */
-  public boolean isValidTarget(@Nullable final PsiElement targetElement, PsiElement[] sources) {
+  public boolean isValidTarget(final @Nullable PsiElement targetElement, PsiElement[] sources) {
     return false;
   }
 
@@ -71,7 +71,7 @@ public abstract class MoveHandlerDelegate {
    *                         to clear some data ({@link CopyPasteDelegator.MyEditable#pasteAfterCut(DataContext, PsiElement[], PsiElement)}) 
    */
   public void doMove(final Project project, final PsiElement[] elements,
-                     @Nullable final PsiElement targetContainer, @Nullable final MoveCallback callback) {
+                     final @Nullable PsiElement targetContainer, final @Nullable MoveCallback callback) {
   }
 
   /**
@@ -93,7 +93,7 @@ public abstract class MoveHandlerDelegate {
    * @return true if the delegate is able to move an element.
    */
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext,
-                           @Nullable final PsiReference reference, final Editor editor) {
+                           final @Nullable PsiReference reference, final Editor editor) {
     return false;
   }
 
@@ -116,9 +116,7 @@ public abstract class MoveHandlerDelegate {
   /**
    * @return custom name for "Move" refactoring based on passed {@code elements} e.g., "Move Members".
    */
-  @Nullable
-  @NlsActions.ActionText
-  public String getActionName(PsiElement @NotNull [] elements) {
+  public @Nullable @NlsActions.ActionText String getActionName(PsiElement @NotNull [] elements) {
     return null;
   }
 

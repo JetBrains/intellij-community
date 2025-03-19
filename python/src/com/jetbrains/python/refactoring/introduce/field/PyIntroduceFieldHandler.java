@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.introduce.field;
 
 import com.intellij.lang.ASTNode;
@@ -9,9 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,6 +18,7 @@ import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
@@ -129,7 +128,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           final PyParameter[] parameters = function.getParameterList().getParameters();
           if (parameters.length > 0 && result == parameters[0]) {
             final PyFunction.Modifier modifier = function.getModifier();
-            if (modifier != PyFunction.Modifier.STATICMETHOD) {
+            if (modifier != PyAstFunction.Modifier.STATICMETHOD) {
               // 'self' is not a local scope dependency
               return;
             }
@@ -140,9 +139,8 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
   }
 
-  @Nullable
   @Override
-  protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
+  protected @Nullable PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     assert clazz != null;
@@ -168,8 +166,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     return false;
   }
 
-  @NotNull
-  private static PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
+  private static @NotNull PsiElement addFieldToSetUp(PyClass clazz, Function<String, PyStatement> callback) {
     final PyFunction init = clazz.findMethodByName(PyNames.TESTCASE_SETUP_NAME, false, null);
     if (init != null) {
       return AddFieldQuickFix.appendToMethod(init, callback);
@@ -253,7 +250,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyFunction containingMethod = PsiTreeUtil.getParentOfType(element, PyFunction.class, false, PyClass.class);
     if (containingMethod != null) {
       final PyFunction.Modifier modifier = containingMethod.getModifier();
-      return modifier == PyFunction.Modifier.STATICMETHOD;
+      return modifier == PyAstFunction.Modifier.STATICMETHOD;
     }
     return false;
   }
@@ -315,6 +312,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   private static class PyInplaceFieldIntroducer extends InplaceVariableIntroducer<PsiElement> {
     private final PyTargetExpression myTarget;
+    private final SmartPsiElementPointer<PyTargetExpression> myTargetSmartPointer;
     private final IntroduceOperation myOperation;
     private final PyIntroduceFieldPanel myPanel;
 
@@ -324,6 +322,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
       super(target, operation.getEditor(), operation.getProject(), RefactoringBundle.message("introduce.field.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
+      myTargetSmartPointer = SmartPointerManager.createPointer(target);
       myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {
         myPanel = new PyIntroduceFieldPanel(myProject, operation.getAvailableInitPlaces());
@@ -347,7 +346,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     protected void moveOffsetAfter(boolean success) {
       if (success && (myPanel != null && myPanel.getInitPlace() != InitPlace.SAME_METHOD) || myOperation.getInplaceInitPlace() != InitPlace.SAME_METHOD) {
         WriteAction.run(() -> {
-          final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
+          final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTargetSmartPointer.getElement(), PyAssignmentStatement.class);
           assert initializer != null;
           final Function<String, PyStatement> callback = __ -> initializer;
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
@@ -358,7 +357,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
           else if (initPlace == InitPlace.SET_UP) {
             addFieldToSetUp(pyClass, callback);
           }
-          if (myOperation.getOccurrences().size() > 0) {
+          if (!myOperation.getOccurrences().isEmpty()) {
             initializer.delete();
           }
           else {

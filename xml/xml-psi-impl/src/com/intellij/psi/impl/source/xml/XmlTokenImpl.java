@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -8,7 +8,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.xml.IDTDElementType;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
@@ -35,17 +34,13 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
   @Override
   public String toString() {
-    if(getTokenType() instanceof IDTDElementType){
-      return "DTDToken:" + getTokenType().toString();
-    }
-    return "XmlToken:" + getTokenType().toString();
+    return "XmlToken:" + getTokenType();
   }
 
 // Implementation specific
 
-  @NotNull
   @Override
-  public IElementType getTokenType() {
+  public @NotNull IElementType getTokenType() {
     return getElementType();
   }
 

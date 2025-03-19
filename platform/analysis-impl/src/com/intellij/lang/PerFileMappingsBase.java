@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -16,23 +16,21 @@ import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.NonPhysicalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -58,17 +56,14 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   public void dispose() {
   }
 
-  @Nullable
-  protected FilePropertyPusher<T> getFilePropertyPusher() {
+  protected @Nullable FilePropertyPusher<T> getFilePropertyPusher() {
     return null;
   }
 
-  @Nullable
-  protected Project getProject() { return myProject; }
+  protected @Nullable Project getProject() { return myProject; }
 
-  @NotNull
   @Override
-  public Map<VirtualFile, T> getMappings() {
+  public @Unmodifiable @NotNull Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       ensureStateLoaded();
       cleanup();
@@ -76,8 +71,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  private @NotNull Map<VirtualFile, T> doGetMappings() {
-    return Collections.unmodifiableMap(ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value())));
+  private @Unmodifiable @NotNull Map<VirtualFile, T> doGetMappings() {
+    return ContainerUtil.map2Map(myMappings.keySet(), it -> Pair.create(it, myMappings.get(it).value()));
   }
 
   private void cleanup() {
@@ -93,29 +88,25 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Override
-  @Nullable
-  public T getMapping(@Nullable VirtualFile file) {
+  public @Nullable T getMapping(@Nullable VirtualFile file) {
     T t = getConfiguredMapping(file);
     return t == null ? getDefaultMapping(file) : t;
   }
 
-  @Nullable
-  public T getConfiguredMapping(@Nullable VirtualFile file) {
+  public @Nullable T getConfiguredMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
     return getMappingInner(file, pusher == null ? null : pusher.getFilePropertyKey(), false);
   }
 
-  @Nullable
-  public T getDirectlyConfiguredMapping(@Nullable VirtualFile file) {
+  public @Nullable T getDirectlyConfiguredMapping(@Nullable VirtualFile file) {
     return getMappingInner(file, null, true);
   }
 
-  @Nullable
-  private T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
+  private @Nullable T getMappingInner(@Nullable VirtualFile file, @Nullable FilePropertyKey<T> pusherKey, boolean forHierarchy) {
     if (file instanceof VirtualFileWindow window) {
       file = window.getDelegate();
     }
-    VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;
+    VirtualFile originalFile = ObjectUtils.doIfNotNull(file, VirtualFileUtil::originalFile);
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
@@ -137,8 +128,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  protected T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
+  protected @Nullable T getNotInHierarchy(@Nullable VirtualFile file, @NotNull Map<VirtualFile, T> mappings) {
     if (getProject() == null || file == null ||
         file.getFileSystem() instanceof NonPhysicalFileSystem ||
         !getProject().isDefault() && ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
@@ -156,8 +146,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   @Override
-  @Nullable
-  public T getDefaultMapping(@Nullable VirtualFile file) {
+  public @Nullable T getDefaultMapping(@Nullable VirtualFile file) {
     return null;
   }
 
@@ -165,8 +154,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return false;
   }
 
-  @Nullable
-  public T getImmediateMapping(@Nullable VirtualFile file) {
+  public @Nullable T getImmediateMapping(@Nullable VirtualFile file) {
     synchronized (myMappings) {
       ensureStateLoaded();
       return doGetImmediateMapping(file);
@@ -241,11 +229,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @NotNull
-  public abstract List<T> getAvailableValues();
+  public abstract @Unmodifiable @NotNull List<T> getAvailableValues();
 
-  @Nullable
-  protected abstract String serialize(@NotNull T t);
+  protected abstract @Nullable String serialize(@NotNull T t);
 
   @Override
   public Element getState() {
@@ -277,15 +263,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  protected T handleUnknownMapping(@Nullable VirtualFile file, String value) {
+  protected @Nullable T handleUnknownMapping(@Nullable VirtualFile file, String value) {
     return null;
   }
 
-  @NotNull
-  @Deprecated
   // better to not override
-  protected String getValueAttribute() {
+  @Deprecated
+  protected @NotNull String getValueAttribute() {
     return "value";
   }
 

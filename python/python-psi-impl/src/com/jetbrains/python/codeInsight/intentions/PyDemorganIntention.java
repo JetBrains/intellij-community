@@ -15,12 +15,11 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -28,45 +27,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyDemorganIntention extends PyBaseIntentionAction {
-  @NotNull
+public final class PyDemorganIntention extends PsiUpdateModCommandAction<PyBinaryExpression> {
+  PyDemorganIntention() {
+    super(PyBinaryExpression.class);
+  }
+
   @Override
-  public String getText() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.demorgan.law");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
-    return getText();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PyBinaryExpression element) {
+    final PyElementType op = element.getOperator();
+    if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
+      return super.getPresentation(context, element);
+    }
+    return null;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
-      return false;
-    }
-
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                      PyBinaryExpression.class);
-    if (expression != null) {
-      final PyElementType op = expression.getOperator();
-      if (op == PyTokenTypes.AND_KEYWORD || op == PyTokenTypes.OR_KEYWORD) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PyBinaryExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
-                                                                      PyBinaryExpression.class);
-    assert expression != null;
-    final PyElementType op = expression.getOperator();
+  protected void invoke(@NotNull ActionContext context, @NotNull PyBinaryExpression element, @NotNull ModPsiUpdater updater) {
+    final PyElementType op = element.getOperator();
     assert op != null;
-    final String converted = convertConjunctionExpression(expression, op);
-    replaceExpression(converted, expression);
+    final String converted = convertConjunctionExpression(element, op);
+    replaceExpression(converted, element);
   }
 
   private static void replaceExpression(String newExpression, PyBinaryExpression expression) {
@@ -84,8 +69,7 @@ public class PyDemorganIntention extends PyBaseIntentionAction {
     // TODO codeStyleManager.reformat(insertedElement)
   }
 
-  @NotNull
-  private static String convertConjunctionExpression(@NotNull PyBinaryExpression exp, @NotNull PyElementType tokenType) {
+  private static @NotNull String convertConjunctionExpression(@NotNull PyBinaryExpression exp, @NotNull PyElementType tokenType) {
     final PyExpression lhs = exp.getLeftExpression();
     final String lhsText;
     final String rhsText;
@@ -108,8 +92,7 @@ public class PyDemorganIntention extends PyBaseIntentionAction {
     return lhsText + flippedConjunction + rhsText;
   }
 
-  @NotNull
-  private static String convertLeafExpression(@Nullable PyExpression condition) {
+  private static @NotNull String convertLeafExpression(@Nullable PyExpression condition) {
     if (condition == null) {
       return "";
     }
@@ -128,8 +111,7 @@ public class PyDemorganIntention extends PyBaseIntentionAction {
     }
   }
 
-  @Nullable
-  private static PyExpression getNegated(@NotNull PyExpression expression) {
+  private static @Nullable PyExpression getNegated(@NotNull PyExpression expression) {
     return ((PyPrefixExpression)expression).getOperand();  // TODO strip ()
   }
 

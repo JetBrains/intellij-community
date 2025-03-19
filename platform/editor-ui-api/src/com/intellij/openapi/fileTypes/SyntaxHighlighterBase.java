@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +37,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, TextAttributesKey @NotNull [] base) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(@Nullable TextAttributesKey key, @NotNull TextAttributesKey @NotNull [] base) {
     if (key == null) return base;
     TextAttributesKey[] result = new TextAttributesKey[base.length + 1];
     System.arraycopy(base, 0, result, 1, base.length);
@@ -45,7 +45,7 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
+  public static @NotNull TextAttributesKey @NotNull [] pack(TextAttributesKey @NotNull [] base, @Nullable TextAttributesKey t1, @Nullable TextAttributesKey t2) {
     int add = 0;
     if (t1 != null) add++;
     if (t2 != null) add++;
@@ -57,11 +57,11 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     return result;
   }
 
-  public static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, @NotNull TokenSet keys, TextAttributesKey value) {
+  public static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TokenSet keys, @NotNull TextAttributesKey value) {
     fillMap(map, value, keys.getTypes());
   }
 
-  protected static void fillMap(@NotNull Map<IElementType, TextAttributesKey> map, TextAttributesKey value, IElementType @NotNull ... types) {
+  protected static void fillMap(@NotNull Map<? super IElementType, ? super TextAttributesKey> map, @NotNull TextAttributesKey value, @NotNull IElementType @NotNull ... types) {
     for (IElementType type : types) {
       map.put(type, value);
     }
@@ -71,9 +71,9 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given keys with a given value.
    * Throws error if the map already contains different mapping for one of given keys.
    */
-  protected static void safeMap(@NotNull final Map<IElementType, TextAttributesKey> map,
-                                @NotNull final TokenSet keys,
-                                @NotNull final TextAttributesKey value) {
+  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
+                                final @NotNull TokenSet keys,
+                                final @NotNull TextAttributesKey value) {
     for (final IElementType type : keys.getTypes()) {
       safeMap(map, type, value);
     }
@@ -83,9 +83,9 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given key with a given value.
    * Throws error if the map already contains different mapping for given key.
    */
-  protected static void safeMap(@NotNull final Map<IElementType, TextAttributesKey> map,
-                                @NotNull final IElementType type,
-                                @NotNull final TextAttributesKey value) {
+  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
+                                final @NotNull IElementType type,
+                                final @NotNull TextAttributesKey value) {
     final TextAttributesKey oldVal = map.put(type, value);
     if (oldVal != null && !oldVal.equals(value)) {
       LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);

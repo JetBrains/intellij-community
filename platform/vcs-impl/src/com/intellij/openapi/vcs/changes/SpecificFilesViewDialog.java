@@ -1,69 +1,50 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.application.AppUIExecutor;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.util.List;
+import java.util.Collection;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 
-abstract class SpecificFilesViewDialog extends DialogWrapper {
+@ApiStatus.Internal
+public abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected final JPanel myPanel;
-  protected final ChangesListView myView;
+  protected final AsyncChangesTree myView;
   protected final Project myProject;
-
-  private final BackgroundRefresher<@NotNull Runnable> myBackgroundRefresher;
 
   protected SpecificFilesViewDialog(@NotNull Project project,
                                     @NotNull @NlsContexts.DialogTitle String title,
-                                    @NotNull DataKey<Iterable<FilePath>> shownDataKey) {
+                                    @NotNull AsyncChangesTree tree) {
     super(project, true);
     setTitle(title);
     myProject = project;
 
-    myBackgroundRefresher = new BackgroundRefresher<>(getClass().getSimpleName() + " refresh", getDisposable());
-    myView = new ChangesListView(project, false) {
-
-      @Nullable
-      @Override
-      public Object getData(@NotNull String dataId) {
-        if (shownDataKey.is(dataId)) {
-          return VcsTreeModelData.selected(this)
-            .iterateUserObjects(FilePath.class);
-        }
-        return super.getData(dataId);
-      }
-
-      @Override
-      public void onGroupingChanged() {
-        refreshView();
-      }
-    };
+    myView = tree;
+    myView.setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
 
     final Runnable closer = () -> close(0);
     EditSourceOnEnterKeyHandler.install(myView, closer);
@@ -71,26 +52,25 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myView.setMinimumSize(new JBDimension(100, 100));
     myPanel = createPanel();
-    setOKButtonText(CommonBundle.getCancelButtonText());
+    setOKButtonText(CommonBundle.getCloseButtonText());
 
     init();
 
     ChangeListAdapter changeListListener = new ChangeListAdapter() {
       @Override
       public void changeListUpdateDone() {
-        refreshView();
+        myView.rebuildTree();
       }
     };
     ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener, myDisposable);
 
-    refreshView();
+    myView.rebuildTree();
   }
 
   @Override
   protected Action @NotNull [] createActions() {
     return new Action[]{getOKAction()};
   }
-
 
   private JPanel createPanel() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -134,6 +114,125 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     return myPanel;
   }
 
+  protected interface FilesSupplier<F> {
+    @NotNull
+    @RequiresBackgroundThread
+    Collection<F> getFiles();
+  }
+
+  public abstract static class SpecificFilePathsViewDialog extends SpecificFilesViewDialog {
+    protected SpecificFilePathsViewDialog(@NotNull Project project,
+                                          @NotNull @NlsContexts.DialogTitle String title,
+                                          @NotNull DataKey<Iterable<FilePath>> shownDataKey,
+                                          @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
+      super(project, title, new MyFilePathsTree(project, shownDataKey, filesSupplier));
+    }
+  }
+
+  private static final class MyFilePathsTree extends MyChangesTree {
+    private final @NotNull DataKey<Iterable<FilePath>> myShownDataKey;
+    private final @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> myFilesSupplier;
+
+    MyFilePathsTree(@NotNull Project project,
+                    @NotNull DataKey<Iterable<FilePath>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<FilePath> filesSupplier) {
+      super(project);
+      myShownDataKey = key;
+      myFilesSupplier = filesSupplier;
+    }
+
+    @Override
+    protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+      return SimpleAsyncChangesTreeModel.create(grouping -> {
+        Collection<FilePath> files = myFilesSupplier.getFiles();
+        return TreeModelBuilder.buildFromFilePaths(myProject, grouping, files);
+      });
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+
+      VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+      sink.set(myShownDataKey, treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(VcsDataKeys.FILE_PATHS, treeSelection.iterateUserObjects(FilePath.class));
+    }
+  }
+
+  abstract static class SpecificVirtualFilesViewDialog extends SpecificFilesViewDialog {
+    protected SpecificVirtualFilesViewDialog(@NotNull Project project,
+                                             @NotNull @NlsContexts.DialogTitle String title,
+                                             @NotNull DataKey<Iterable<VirtualFile>> shownDataKey,
+                                             @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
+      super(project, title, new MyFilesTree(project, shownDataKey, filesSupplier));
+    }
+
+    private static final class MyFilesTree extends MyChangesTree {
+      private final @NotNull DataKey<Iterable<VirtualFile>> myShownDataKey;
+      private final @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> myFilesSupplier;
+
+      MyFilesTree(@NotNull Project project,
+                  @NotNull DataKey<Iterable<VirtualFile>> key, @NotNull SpecificFilesViewDialog.FilesSupplier<VirtualFile> filesSupplier) {
+        super(project);
+        myShownDataKey = key;
+        myFilesSupplier = filesSupplier;
+      }
+
+      @Override
+      protected @NotNull AsyncChangesTreeModel getChangesTreeModel() {
+        return SimpleAsyncChangesTreeModel.create(grouping -> {
+          Collection<VirtualFile> files = myFilesSupplier.getFiles();
+          return TreeModelBuilder.buildFromVirtualFiles(myProject, grouping, files);
+        });
+      }
+
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+        sink.set(myShownDataKey, treeSelection.iterateUserObjects(VirtualFile.class));
+        sink.set(VcsDataKeys.VIRTUAL_FILES, treeSelection.iterateUserObjects(VirtualFile.class));
+      }
+    }
+  }
+
+  private abstract static class MyChangesTree extends AsyncChangesTree {
+
+    MyChangesTree(@NotNull Project project) {
+      super(project, false, true);
+    }
+
+    @Override
+    public int getToggleClickCount() {
+      return 2;
+    }
+
+    @Override
+    public void installPopupHandler(@NotNull ActionGroup group) {
+      PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
+    }
+
+    @Override
+    public void resetTreeState() {
+      ChangesBrowserNode<?> root = getRoot();
+      if (root.getChildCount() == 1) {
+        TreeNode child = root.getChildAt(0);
+        expandPath(TreeUtil.getPathFromRoot(child));
+      }
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      VcsTreeModelData.uiDataSnapshot(sink, myProject, this);
+
+      VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+      sink.lazy(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY, () ->
+        VcsTreeModelData.mapToExactVirtualFile(exactSelection));
+      sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
+      sink.set(PlatformCoreDataKeys.HELP_ID, ChangesListView.HELP_ID);
+    }
+  }
+
   private class Expander implements TreeExpander {
     @Override
     public void expandAll() {
@@ -156,32 +255,4 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       return !myView.getGroupingSupport().isNone();
     }
   }
-
-  private void updateTreeModel(@NotNull DefaultTreeModel treeModel) {
-    final TreeState state = TreeState.createOn(myView);
-
-    myView.setModel(treeModel);
-    myView.expandPath(new TreePath(myView.getRoot().getPath()));
-
-    state.applyTo(myView);
-  }
-
-  private @NotNull DefaultTreeModel buildTreeModel() {
-    List<FilePath> files = getFiles();
-    return TreeModelBuilder.buildFromFilePaths(myProject, myView.getGrouping(), files);
-  }
-
-  protected void refreshView() {
-    myView.setPaintBusy(true);
-    ModalityState modalityState = ModalityState.stateForComponent(myView);
-    myBackgroundRefresher.requestRefresh(0, () -> {
-        DefaultTreeModel treeModel = buildTreeModel();
-        return () -> updateTreeModel(treeModel);
-      })
-      .thenAsync(callback -> AppUIExecutor.onUiThread(modalityState).submit(callback))
-      .onProcessed(__ -> myView.setPaintBusy(false));
-  }
-
-  @NotNull
-  protected abstract List<FilePath> getFiles();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,9 +7,9 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 
-public class TextRevisionNumber implements ShortVcsRevisionNumber {
-  @NotNull private final String myFullRevisionNumber;
-  @NotNull private final String myShortRevisionNumber;
+public final class TextRevisionNumber implements ShortVcsRevisionNumber {
+  private final @NotNull String myFullRevisionNumber;
+  private final @NotNull String myShortRevisionNumber;
 
   public TextRevisionNumber(@NotNull String fullRevisionNumber) {
     this(fullRevisionNumber, fullRevisionNumber.substring(0, Math.min(7, fullRevisionNumber.length())));
@@ -20,21 +20,18 @@ public class TextRevisionNumber implements ShortVcsRevisionNumber {
     myShortRevisionNumber = shortRevisionNumber;
   }
 
-  @NotNull
   @Override
-  @NlsSafe
-  public String asString() {
+  public @NotNull @NlsSafe String asString() {
     return myFullRevisionNumber;
   }
 
   @Override
-  public int compareTo(@NotNull final VcsRevisionNumber o) {
+  public int compareTo(final @NotNull VcsRevisionNumber o) {
     return Comparing.compare(myFullRevisionNumber, ((TextRevisionNumber) o).myFullRevisionNumber);
   }
 
   @Override
-  @NlsSafe
-  public String toShortString() {
+  public @NlsSafe String toShortString() {
     return myShortRevisionNumber;
   }
 

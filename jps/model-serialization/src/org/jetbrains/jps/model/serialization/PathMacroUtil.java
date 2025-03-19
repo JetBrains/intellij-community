@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
@@ -6,32 +6,38 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public final class PathMacroUtil {
-  @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
-  @NonNls public static final String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
+  @ApiStatus.Internal public static final @NonNls String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+  @ApiStatus.Internal public static final @NonNls String PROJECT_NAME_MACRO_NAME = "PROJECT_NAME";
 
-  @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @ApiStatus.Internal public static final @NonNls String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  @ApiStatus.Internal
   public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
+  @ApiStatus.Internal
   public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+  @ApiStatus.Internal
   public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
 
-  @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
-  @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
-  @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
-  @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
-  @NonNls public static final String USER_HOME_NAME = "USER_HOME";
+  @ApiStatus.Internal public static final @NonNls String DIRECTORY_STORE_NAME = ".idea";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
+  @ApiStatus.Internal public static final @NonNls String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
+  @ApiStatus.Internal public static final @NonNls String USER_HOME_NAME = "USER_HOME";
 
   private static volatile Map<String, String> ourGlobalMacrosForIde;
-  private static volatile Map<String, String> ourGlobalMacrosForStandalone;
+  private static volatile Map<String, String> globalMacrosForStandalone;
+
+  private PathMacroUtil() {
+  }
 
   public static @Nullable String getModuleDir(@NotNull String moduleFilePath) {
     String moduleDir = PathUtilRt.getParentPath(moduleFilePath);
@@ -69,14 +75,14 @@ public final class PathMacroUtil {
       return ourGlobalMacrosForIde;
     }
     else {
-      if (ourGlobalMacrosForStandalone == null) {
-        ourGlobalMacrosForStandalone = computeGlobalPathMacrosForStandaloneCode();
+      if (globalMacrosForStandalone == null) {
+        globalMacrosForStandalone = computeGlobalPathMacrosForStandaloneCode();
       }
-      return ourGlobalMacrosForStandalone;
+      return globalMacrosForStandalone;
     }
   }
 
-  private static Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
+  private static @NotNull Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
     Map<String, String> result = new HashMap<>();
     String homePath = PathManager.getHomePath(false);
     if (homePath != null) {
@@ -85,7 +91,7 @@ public final class PathMacroUtil {
       result.put(APPLICATION_PLUGINS_DIR, FileUtilRt.toSystemIndependentName(PathManager.getPluginsPath()));
     }
     result.put(USER_HOME_NAME, computeUserHomePath());
-    return Collections.unmodifiableMap(result);
+    return Map.copyOf(result);
   }
 
   private static Map<String, String> computeGlobalPathMacrosInsideIde() {

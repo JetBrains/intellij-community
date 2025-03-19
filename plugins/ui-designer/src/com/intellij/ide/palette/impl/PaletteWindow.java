@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.palette.impl;
 
 import com.intellij.designer.LightToolWindowContent;
@@ -33,7 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 
 
-public class PaletteWindow extends JPanel implements LightToolWindowContent, DataProvider {
+public class PaletteWindow extends JPanel implements LightToolWindowContent, UiDataProvider {
   private final Project myProject;
   private final ArrayList<PaletteGroupHeader> myGroupHeaders = new ArrayList<>();
   private final PaletteItemProvider[] myProviders;
@@ -44,7 +44,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   private final MyListSelectionListener myListSelectionListener = new MyListSelectionListener();
   private PaletteGroupHeader myLastFocusedGroup;
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.palette";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.palette";
 
   private final DragSourceListener myDragSourceListener = new DragSourceAdapter() {
     @Override
@@ -201,8 +201,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     notifySelectionChanged(event);
   }
 
-  @Nullable
-  public PaletteItem getActiveItem() {
+  public @Nullable PaletteItem getActiveItem() {
     for (PaletteGroupHeader groupHeader : myGroupHeaders) {
       if (groupHeader.isSelected() && groupHeader.getComponentList().getSelectedValue() != null) {
         return (PaletteItem)groupHeader.getComponentList().getSelectedValue();
@@ -211,8 +210,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
     return null;
   }
 
-  @Nullable
-  public <T extends PaletteItem> T getActiveItem(Class<T> cls) {
+  public @Nullable <T extends PaletteItem> T getActiveItem(Class<T> cls) {
     PaletteItem item = getActiveItem();
     if (item != null && item.getClass().isInstance(item)) {
       //noinspection unchecked
@@ -246,32 +244,11 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      PaletteItem item = getActiveItem();
-      PaletteGroup group = getActiveGroup();
-      DataProvider provider1 = item == null ? null : (DataProvider)item.getData(myProject, dataId);
-      DataProvider provider2 = group == null ? null : (DataProvider)group.getData(myProject, dataId);
-      if (provider1 == null && provider2 == null) return null;
-      return provider1 == null ? provider2 : CompositeDataProvider.compose(provider1, provider2);
-    }
-    PaletteItem item = getActiveItem();
-    if (item != null) {
-      Object data = item.getData(myProject, dataId);
-      if (data != null) return data;
-    }
-    PaletteGroup group = getActiveGroup();
-    if (group != null) {
-      return group.getData(myProject, dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    DataSink.uiDataSnapshot(sink, getActiveItem());
+    DataSink.uiDataSnapshot(sink, getActiveGroup());
   }
 
   public Project getProject() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -8,9 +8,9 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
-  private final ASTNode myNode;
+  private final @NotNull ASTNode myNode;
 
-  public ASTWrapperPsiElement(@NotNull final ASTNode node) {
+  public ASTWrapperPsiElement(@NotNull ASTNode node) {
     myNode = node;
   }
 
@@ -20,8 +20,7 @@ public class ASTWrapperPsiElement extends ASTDelegatePsiElement {
   }
 
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myNode;
   }
 

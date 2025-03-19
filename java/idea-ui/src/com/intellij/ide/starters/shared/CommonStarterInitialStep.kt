@@ -1,28 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
-import com.intellij.ide.IdeBundle
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.generators.JdkDownloadService
+import com.intellij.ide.projectWizard.projectWizardJdkComboBox
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.shared.ValidationFunctions.*
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleBuilderListener
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.bindBooleanStorage
-import com.intellij.openapi.observable.util.joinSystemDependentPath
-import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.observable.util.trim
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -31,6 +37,7 @@ import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -50,9 +57,13 @@ abstract class CommonStarterInitialStep(
   protected val entityNameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
   private val locationProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestLocationByName)
   private val canonicalPathProperty = locationProperty.joinSystemDependentPath(entityNameProperty)
+
   protected val groupIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { starterContext.group }
+    .bindStorage(GROUP_ID_PROPERTY_NAME)
+
   protected val artifactIdProperty: GraphProperty<String> = propertyGraph.lazyProperty { entityName }
   protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.lazyProperty { null }
+  protected val sdkDownloadTaskProperty: GraphProperty<SdkDownloadTask?> = propertyGraph.lazyProperty { null }
 
   protected val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.lazyProperty { starterContext.language }
   protected val projectTypeProperty: GraphProperty<StarterProjectType> = propertyGraph.lazyProperty {
@@ -130,15 +141,40 @@ abstract class CommonStarterInitialStep(
 
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
-      sdkComboBox = sdkComboBox(wizardContext, sdkProperty, StdModuleTypes.JAVA.id, moduleBuilder::isSuitableSdkType)
-        .columns(COLUMNS_MEDIUM)
-        .component
+      projectWizardJdkComboBox(
+        this, sdkProperty, sdkDownloadTaskProperty,
+        locationProperty,
+        { sdk -> wizardContext.projectJdk = sdk },
+        wizardContext.disposable,
+        wizardContext.projectJdk,
+        { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
+      )
+
+      moduleBuilder.addListener(object : ModuleBuilderListener {
+        override fun moduleCreated(module: Module) {
+          val downloadTask = sdkDownloadTaskProperty.get() ?: return
+          val downloadService = module.project.service<JdkDownloadService>()
+          val jdk = downloadService.setupInstallableSdk(downloadTask)
+          if (wizardContext.isCreatingNewProject) {
+            ProjectRootManager.getInstance(module.project).projectSdk = jdk
+          } else {
+            ModuleRootModificationUtil.setModuleSdk(module, jdk)
+          }
+          downloadService.downloadSdk(jdk)
+        }
+      })
     }.bottomGap(BottomGap.SMALL)
   }
 
   protected fun Panel.addGroupArtifactUi() {
-    row(JavaStartersBundle.message("title.project.group.label")) {
+    row {
       groupRow = this
+
+      layout(RowLayout.LABEL_ALIGNED)
+      label(JavaStartersBundle.message("title.project.group.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
 
       textField()
         .bindText(groupIdProperty)
@@ -147,8 +183,15 @@ abstract class CommonStarterInitialStep(
                                *getCustomValidationRules(GROUP_ID_PROPERTY))
     }.bottomGap(BottomGap.SMALL)
 
-    row(JavaStartersBundle.message("title.project.artifact.label")) {
+    row {
       artifactRow = this
+
+      layout(RowLayout.LABEL_ALIGNED)
+      label(JavaStartersBundle.message("title.project.artifact.label"))
+        .applyToComponent { horizontalTextPosition = JBLabel.LEFT }
+        .applyToComponent { icon = AllIcons.General.ContextHelp }
+        .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.artifact.id.help",
+                                                                       wizardContext.presentationName) }
 
       textField()
         .bindText(artifactIdProperty)
@@ -192,15 +235,13 @@ abstract class CommonStarterInitialStep(
     return withValidation(this, errorValidationUnits, warningValidationUnit, validatedTextComponents, parentDisposable)
   }
 
-  private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
-                                       wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
-    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-      .withFileFilter { it.isDirectory }
+  private fun Row.projectLocationField(locationProperty: GraphProperty<String>, wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(message("title.select.project.file.directory", wizardContext.presentationName))
       .withPathToTextConvertor(::getPresentablePath)
       .withTextToPathConvertor(::getCanonicalPath)
-    val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
     val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-    return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor)
+    return textFieldWithBrowseButton(fileChooserDescriptor, wizardContext.project)
       .bindText(property)
   }
 }

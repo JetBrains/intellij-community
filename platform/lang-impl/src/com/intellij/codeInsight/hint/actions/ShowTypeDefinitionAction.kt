@@ -21,9 +21,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 
+@ApiStatus.Internal
 open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
@@ -86,19 +88,18 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
     companion object {
 
       private fun searchTypeDefinitions(element: PsiElement): List<PsiImplementationViewElement> {
-        val search = ThrowableComputable<List<PsiElement>, Exception> {
+        val search = ThrowableComputable<List<PsiImplementationViewElement>, Exception> {
           TypeDeclarationProvider.EP_NAME.extensionList.asSequence()
             .mapNotNull { provider ->
-              ReadAction.compute<List<PsiElement>?, Throwable> {
-                provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }
+              ReadAction.compute<List<PsiImplementationViewElement>?, Throwable> {
+                provider.getSymbolTypeDeclarations(element)?.mapNotNull { it?.navigationElement }?.map(::PsiImplementationViewElement)
               }
             }
             .firstOrNull()
           ?: emptyList()
         }
         val message = CodeInsightBundle.message("searching.for.definitions")
-        val definitions = ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
-        return definitions.map(::PsiImplementationViewElement)
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
       }
     }
   }
@@ -108,7 +109,7 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
     fun runForTests(context: Component): List<PsiElement> {
       val showTypeDefinitionAction = ShowTypeDefinitionActionForTest()
       showTypeDefinitionAction.performForContext(DataManager.getInstance().getDataContext(context))
-      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).psiElement }
+      return showTypeDefinitionAction.definitions.get().map { element -> (element as PsiImplementationViewElement).getPsiElement()!! }
     }
 
     private class ShowTypeDefinitionActionForTest(val definitions: Ref<List<ImplementationViewElement>> = Ref()) : ShowTypeDefinitionAction() {

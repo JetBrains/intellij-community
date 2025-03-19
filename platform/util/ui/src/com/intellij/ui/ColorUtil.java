@@ -10,10 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.function.Supplier;
 
-import static com.intellij.util.MathUtil.clamp;
-import static java.lang.Math.round;
-import static java.lang.Math.sqrt;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -115,7 +111,7 @@ public final class ColorUtil {
     });
   }
 
-  private static Color wrap(@NotNull Color color, Supplier<? extends Color> func) {
+  private static Color wrap(@NotNull Color color, @NotNull Supplier<? extends @NotNull Color> func) {
     return color instanceof JBColor ? JBColor.lazy(func) : func.get();
   }
 
@@ -125,7 +121,7 @@ public final class ColorUtil {
   }
 
   public static @NotNull Color shift(final @NotNull Color c, final double d) {
-    Supplier<Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+    Supplier<@NotNull Color> func = () -> new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
     return wrap(c, func);
   }
 
@@ -142,7 +138,7 @@ public final class ColorUtil {
 
   public static @NotNull Color toAlpha(@Nullable Color color, final int a) {
     final Color c = color == null ? Color.black : color;
-    Supplier<Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    Supplier<@NotNull Color> func = () -> new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
     return wrap(c, func);
   }
 
@@ -151,17 +147,11 @@ public final class ColorUtil {
   }
 
   public static @NotNull String toHex(final @NotNull Color c, final boolean withAlpha) {
-    final String R = Integer.toHexString(c.getRed());
-    final String G = Integer.toHexString(c.getGreen());
-    final String B = Integer.toHexString(c.getBlue());
-
-    final String rgbHex = (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
-    if (!withAlpha) {
-      return rgbHex;
-    }
-
-    final String A = Integer.toHexString(c.getAlpha());
-    return rgbHex + (A.length() < 2 ? "0" : "") + A;
+    String result = withAlpha
+                    ? Integer.toHexString(((c.getRGB() & 0xFFFFFF) << 8) /*RGB*/ + c.getAlpha())
+                    : Integer.toHexString(c.getRGB() & 0xFFFFFF);
+    int expectedLength = 3 * 2 + (withAlpha ? 2 : 0);
+    return "0".repeat(expectedLength - result.length()) + result;
   }
 
   public static @NotNull @NlsSafe String toHtmlColor(final @NotNull Color c) {
@@ -235,8 +225,7 @@ public final class ColorUtil {
   /**
    * Returns the color that is the result of having a foreground color on top of a background color
    */
-  @NotNull
-  public static Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color alphaBlending(@NotNull Color foreground, @NotNull Color background) {
     return new Color(
       alphaBlendingComponent(foreground.getRed(), foreground.getAlpha(), background.getRed(), background.getAlpha()),
       alphaBlendingComponent(foreground.getGreen(), foreground.getAlpha(), background.getGreen(), background.getAlpha()),
@@ -266,9 +255,9 @@ public final class ColorUtil {
     int red = blendRgb(bg.getRed(), fg.getRed(), value);
     int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
     int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
-    return new Color(clamp(red, 0, 255),
-                     clamp(green, 0, 255),
-                     clamp(blue, 0, 255));
+    return new Color(MathUtil.clamp(red, 0, 255),
+                     MathUtil.clamp(green, 0, 255),
+                     MathUtil.clamp(blue, 0, 255));
   }
 
   /**
@@ -278,14 +267,13 @@ public final class ColorUtil {
    * @return interpolation of bg and fg values with given coefficient normalized to 0..255
    */
   private static int blendRgb(int bg, int fg, double value) {
-    return (int)round(sqrt(bg * bg * (1 - value) + fg * fg * value));
+    return (int)Math.round(Math.sqrt(bg * bg * (1 - value) + fg * fg * value));
   }
 
   /**
    * Returns the color that, placed underneath the colors background and foreground, would result in the worst contrast
    */
-  @NotNull
-  public static Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
+  public static @NotNull Color worstContrastColor(@NotNull Color foreground, @NotNull Color background) {
     int backgroundAlpha = background.getAlpha();
     int r = worstContrastComponent(foreground.getRed(), background.getRed(), backgroundAlpha);
     int g = worstContrastComponent(foreground.getGreen(), background.getGreen(), backgroundAlpha);
@@ -325,5 +313,23 @@ public final class ColorUtil {
       return colorValue / 12.92;
     }
     return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
+  }
+
+  /**
+   * taken from: http://www.compuphase.com/cmetric.htm
+   */
+  public static double getColorDistance(Color c1, Color c2) {
+    double rmean = (c1.getRed() + c2.getRed()) / 2.0;
+    int r = c1.getRed() - c2.getRed();
+    int g = c1.getGreen() - c2.getGreen();
+    int b = c1.getBlue() - c2.getBlue();
+    double weightR = 2 + rmean / 256;
+    double weightG = 4.0;
+    double weightB = 2 + (255 - rmean) / 256;
+    return Math.sqrt(weightR * r * r + weightG * g * g + weightB * b * b);
+  }
+
+  public static @NotNull Color faded(@NotNull Color color) {
+    return withAlpha(color, 0.45f);
   }
 }

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -12,6 +13,8 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,11 +41,26 @@ public abstract class MoveDirectoryWithClassesHelper {
                                List<? super PsiFile> movedFiles,
                                RefactoringElementListener listener);
 
+  /**
+   * @return unprocessed usages
+   */
+  public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usageInfos, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
+    return usageInfos;
+  }
+
   public abstract void postProcessUsages(UsageInfo[] usages, Function<? super PsiDirectory, ? extends PsiDirectory> newDirMapper);
 
   public abstract void beforeMove(PsiFile psiFile);
 
   public abstract void afterMove(PsiElement newElement);
+
+  public void preprocessUsages(Project project,
+                               Set<PsiFile> files,
+                               Ref<UsageInfo[]> infos,
+                               PsiDirectory targetDirectory,
+                               MultiMap<PsiElement, String> conflicts) {
+    preprocessUsages(project, files, infos.get(), targetDirectory, conflicts);
+  }
 
   public void preprocessUsages(Project project,
                                Set<PsiFile> files,
@@ -65,15 +83,21 @@ public abstract class MoveDirectoryWithClassesHelper {
                            boolean searchInNonJavaFiles,
                            Project project) {
       for (PsiFile file : filesToMove) {
-        for (PsiReference reference : ReferencesSearch.search(file)) {
+        for (PsiReference reference : ReferencesSearch.search(file).asIterable()) {
           result.add(new MoveDirectoryUsageInfo(reference, file));
         }
       }
       for (PsiDirectory psiDirectory : directoriesToMove) {
-        for (PsiReference reference : ReferencesSearch.search(psiDirectory)) {
+        for (PsiReference reference : ReferencesSearch.search(psiDirectory).asIterable()) {
           result.add(new MoveDirectoryUsageInfo(reference, psiDirectory));
         }
       }
+    }
+
+    @Override
+    public @NotNull @Unmodifiable List<UsageInfo> retargetUsages(@NotNull @Unmodifiable List<UsageInfo> usages, @NotNull Map<PsiElement, PsiElement> oldToNewMap) {
+      CommonMoveUtil.retargetUsages(usages.toArray(UsageInfo.EMPTY_ARRAY), oldToNewMap);
+      return usages;
     }
 
     @Override
@@ -113,6 +137,8 @@ public abstract class MoveDirectoryWithClassesHelper {
       listener.elementMoved(psiFile);
       return true;
     }
+
+
 
     @Override
     public void beforeMove(PsiFile psiFile) {

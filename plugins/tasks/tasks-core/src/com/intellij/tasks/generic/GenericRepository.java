@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
@@ -20,6 +20,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -36,29 +37,26 @@ import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
  * @author Evgeny.Zakrevsky
  */
 @Tag("Generic")
-public class GenericRepository extends BaseRepositoryImpl {
-  @NonNls public static final String SERVER_URL = "serverUrl";
-  @NonNls public static final String USERNAME = "username";
-  @NonNls public static final String PASSWORD = "password";
+public final class GenericRepository extends BaseRepositoryImpl {
+  public static final @NonNls String SERVER_URL = "serverUrl";
+  public static final @NonNls String USERNAME = "username";
+  public static final @NonNls String PASSWORD = "password";
 
   private final FactoryVariable myServerTemplateVariable = new FactoryVariable(SERVER_URL) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
   private final FactoryVariable myUserNameTemplateVariable = new FactoryVariable(USERNAME) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
   private final FactoryVariable myPasswordTemplateVariable = new FactoryVariable(PASSWORD, true) {
-    @NotNull
     @Override
-    public String getValue() {
+    public @NotNull String getValue() {
       return GenericRepository.this.getPassword();
     }
   };
@@ -76,7 +74,7 @@ public class GenericRepository extends BaseRepositoryImpl {
 
   private ResponseType myResponseType = ResponseType.JSON;
 
-  private EnumMap<ResponseType, ResponseHandler> myResponseHandlersMap = new EnumMap<>(ResponseType.class);
+  private EnumMap<ResponseType, ResponseHandler> responseHandlerMap = new EnumMap<>(ResponseType.class);
 
   private List<TemplateVariable> myTemplateVariables = new ArrayList<>();
 
@@ -113,11 +111,11 @@ public class GenericRepository extends BaseRepositoryImpl {
     myTemplateVariables = other.getTemplateVariables();
     mySubtypeName = other.getSubtypeName();
     myDownloadTasksInSeparateRequests = other.getDownloadTasksInSeparateRequests();
-    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
-    for (Map.Entry<ResponseType, ResponseHandler> e : other.myResponseHandlersMap.entrySet()) {
+    responseHandlerMap = new EnumMap<>(ResponseType.class);
+    for (Map.Entry<ResponseType, ResponseHandler> e : other.responseHandlerMap.entrySet()) {
       ResponseHandler handler = e.getValue().clone();
       handler.setRepository(this);
-      myResponseHandlersMap.put(e.getKey(), handler);
+      responseHandlerMap.put(e.getKey(), handler);
     }
   }
 
@@ -131,15 +129,14 @@ public class GenericRepository extends BaseRepositoryImpl {
     mySingleTaskMethodType = HTTPMethod.GET;
     myResponseType = ResponseType.JSON;
     myTemplateVariables = new ArrayList<>();
-    myResponseHandlersMap = new EnumMap<>(ResponseType.class);
-    myResponseHandlersMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
-    myResponseHandlersMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
-    myResponseHandlersMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
+    responseHandlerMap = new EnumMap<>(ResponseType.class);
+    responseHandlerMap.put(ResponseType.XML, getXmlResponseHandlerDefault());
+    responseHandlerMap.put(ResponseType.JSON, getJsonResponseHandlerDefault());
+    responseHandlerMap.put(ResponseType.TEXT, getTextResponseHandlerDefault());
   }
 
-  @NotNull
   @Override
-  public GenericRepository clone() {
+  public @NotNull GenericRepository clone() {
     return new GenericRepository(this);
   }
 
@@ -173,7 +170,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable final String query, final int max, final long since) throws Exception {
+  public Task[] getIssues(final @Nullable String query, final int max, final long since) throws Exception {
     if (StringUtil.isEmpty(myTasksListUrl)) {
       throw new Exception(TaskBundle.message("task.list.url.configuration.parameter.is.mandatory"));
     }
@@ -233,18 +230,16 @@ public class GenericRepository extends BaseRepositoryImpl {
     return getHttpMethod(requestUrl, myLoginMethodType);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull final String id) throws Exception {
+  public @Nullable Task findTask(final @NotNull String id) throws Exception {
     List<TemplateVariable> variables = concat(getAllTemplateVariables(), new TemplateVariable("id", id));
     String requestUrl = substituteTemplateVariables(getSingleTaskUrl(), variables);
     HttpMethod method = getHttpMethod(requestUrl, mySingleTaskMethodType);
     return getActiveResponseHandler().parseIssue(executeMethod(method));
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
       @Override
       protected void doTest() throws Exception {
@@ -320,7 +315,7 @@ public class GenericRepository extends BaseRepositoryImpl {
   /**
    * Returns all template variables including both predefined and defined by user
    */
-  public List<TemplateVariable> getAllTemplateVariables() {
+  public @Unmodifiable List<TemplateVariable> getAllTemplateVariables() {
     return ContainerUtil.concat(myPredefinedTemplateVariables, getTemplateVariables());
   }
 
@@ -349,11 +344,11 @@ public class GenericRepository extends BaseRepositoryImpl {
   }
 
   public ResponseHandler getResponseHandler(ResponseType type) {
-    return myResponseHandlersMap.get(type);
+    return responseHandlerMap.get(type);
   }
 
   public ResponseHandler getActiveResponseHandler() {
-    return myResponseHandlersMap.get(myResponseType);
+    return responseHandlerMap.get(myResponseType);
   }
 
   @XCollection(
@@ -363,22 +358,19 @@ public class GenericRepository extends BaseRepositoryImpl {
       RegExResponseHandler.class
     }
   )
-  public List<ResponseHandler> getResponseHandlers() {
-    if (myResponseHandlersMap.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return Collections.unmodifiableList(new ArrayList<>(myResponseHandlersMap.values()));
+  public @NotNull List<ResponseHandler> getResponseHandlers() {
+    return responseHandlerMap.isEmpty() ? Collections.emptyList() : List.copyOf(responseHandlerMap.values());
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void setResponseHandlers(List<ResponseHandler> responseHandlers) {
-    myResponseHandlersMap.clear();
+  public void setResponseHandlers(@NotNull List<ResponseHandler> responseHandlers) {
+    responseHandlerMap.clear();
     for (ResponseHandler handler : responseHandlers) {
-      myResponseHandlersMap.put(handler.getResponseType(), handler);
+      responseHandlerMap.put(handler.getResponseType(), handler);
     }
     // ResponseHandler#repository field is excluded from serialization to prevent
-    // circular dependency so it has to be done manually during serialization process
-    for (ResponseHandler handler : myResponseHandlersMap.values()) {
+    // circular dependency, so it has to be done manually during a serialization process
+    for (ResponseHandler handler : responseHandlerMap.values()) {
       handler.setRepository(this);
     }
   }

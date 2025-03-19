@@ -1,27 +1,28 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PredefinedConfigurationUtil {
-  @NotNull
-  public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                  @NotNull @NonNls String refName,
-                                                  @NotNull @NonNls String criteria,
-                                                  @NotNull String category,
-                                                  @NotNull LanguageFileType fileType) {
+  public static @NotNull Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                                           @NotNull @NonNls String refName,
+                                                           @NotNull @NonNls String criteria,
+                                                           @NotNull String category,
+                                                           @NotNull LanguageFileType fileType) {
     return createConfiguration(name, refName, criteria, category, fileType, null);
   }
 
-  @NotNull
-  public static Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                  @NotNull @NonNls String refName,
-                                                  @NotNull @NonNls String criteria,
-                                                  @NotNull String category,
-                                                  @NotNull LanguageFileType fileType) {
+  public static @NotNull Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                                                 @NotNull @NonNls String refName,
+                                                                 @NotNull @NonNls String criteria,
+                                                                 @NotNull String category,
+                                                                 @NotNull LanguageFileType fileType) {
     return createLegacyConfiguration(name, refName, criteria, category, fileType, null);
   }
 
@@ -31,8 +32,7 @@ public final class PredefinedConfigurationUtil {
    * @param name localizable name of the template
    * @param refName unique template identifier (within the configurations of its language) used by the reference filter
    */
-  @NotNull
-  public static Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+  public static @NotNull Configuration createConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,
@@ -47,8 +47,7 @@ public final class PredefinedConfigurationUtil {
    * If you are creating a new configuration, use
    * {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
    */
-  @NotNull
-  public static Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+  public static @NotNull Configuration createLegacyConfiguration(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name,
                                                   @NotNull @NonNls String refName,
                                                   @NotNull @NonNls String criteria,
                                                   @NotNull String category,

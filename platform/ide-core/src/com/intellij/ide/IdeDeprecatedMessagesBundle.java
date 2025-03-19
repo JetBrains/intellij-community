@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * some external plugins. It isn't supposed to be used by plugins directly.
  */
 @ApiStatus.Internal
-public class IdeDeprecatedMessagesBundle extends AbstractBundle {
+public class IdeDeprecatedMessagesBundle extends DynamicBundle {
   private static final @NonNls String BUNDLE = "messages.IdeDeprecatedMessagesBundle";
   private static final IdeDeprecatedMessagesBundle INSTANCE = new IdeDeprecatedMessagesBundle();
 

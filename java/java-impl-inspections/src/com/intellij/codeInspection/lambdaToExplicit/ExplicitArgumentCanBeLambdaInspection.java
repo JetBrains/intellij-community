@@ -1,27 +1,34 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.lambdaToExplicit;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
+import java.util.Set;
 
-  @NotNull
+public final class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
+
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -37,7 +44,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     };
   }
 
-  private static class ConvertExplicitCallToLambdaFix implements LocalQuickFix {
+  private static class ConvertExplicitCallToLambdaFix extends PsiUpdateModCommandQuickFix {
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
@@ -46,23 +53,19 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
       myName = name;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.explicit.argument.can.be.lambda.fix.name", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.explicit.argument.can.be.lambda.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpression arg = ObjectUtils.tryCast(element, PsiExpression.class);
       if (arg == null) return;
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(arg, PsiMethodCallExpression.class);
       if (call == null) return;

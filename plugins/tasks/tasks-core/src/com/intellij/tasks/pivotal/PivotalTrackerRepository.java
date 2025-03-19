@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.pivotal;
 
 import com.google.gson.Gson;
@@ -87,15 +87,13 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     setProjectId(other.myProjectId);
   }
 
-  @NotNull
   @Override
-  public String getRestApiPathPrefix() {
+  public @NotNull String getRestApiPathPrefix() {
     return API_V5_PATH;
   }
 
-  @Nullable
   @Override
-  protected HttpRequestInterceptor createRequestInterceptor() {
+  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
     return new HttpRequestInterceptor() {
       @Override
       public void process(HttpRequest request, HttpContext context) throws HttpException, IOException {
@@ -104,9 +102,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     };
   }
 
-  @Nullable
   @Override
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return new HttpTestConnection(new HttpGet()) {
       @Override
       protected void doTest() throws Exception {
@@ -131,8 +128,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return ContainerUtil.map2Array(stories, PivotalTrackerTask.class, story -> new PivotalTrackerTask(this, story));
   }
 
-  @NotNull
-  protected HttpGet createStoriesRequest(@Nullable String query, int offset, int limit, boolean withClosed) throws URISyntaxException {
+  protected @NotNull HttpGet createStoriesRequest(@Nullable String query, int offset, int limit, boolean withClosed) throws URISyntaxException {
     URI endpointUrl = new URIBuilder(getRestApiUrl("projects", myProjectId, "stories"))
       .addParameter("filter", (withClosed ? "" : "state:started,unstarted,unscheduled,rejected") +
                               (StringUtil.isEmpty(query) ? "" : " \"" + query + "\""))
@@ -143,9 +139,8 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     return new HttpGet(endpointUrl);
   }
 
-  @Nullable
   @Override
-  public Task findTask(@NotNull final String id) throws Exception {
+  public @Nullable Task findTask(final @NotNull String id) throws Exception {
     final Matcher matcher = TASK_ID_REGEX.matcher(id);
     if (!matcher.matches()) {
       LOG.warn("Illegal PivotalTracker ID pattern " + id);
@@ -159,8 +154,7 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
   }
 
   @Override
-  @Nullable
-  public String extractId(@NotNull final String taskName) {
+  public @Nullable String extractId(final @NotNull String taskName) {
     Matcher matcher = TASK_ID_REGEX.matcher(taskName);
     return matcher.matches() ? taskName : null;
   }
@@ -180,15 +174,13 @@ public class PivotalTrackerRepository extends NewBaseRepositoryImpl {
     getHttpClient().execute(request);
   }
 
-  @NotNull
   @Override
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     return ContainerUtil.map2Set(STANDARD_STORY_STATES, name -> new CustomTaskState(name, name));
   }
 
-  @NotNull
   @Override
-  public BaseRepository clone() {
+  public @NotNull BaseRepository clone() {
     return new PivotalTrackerRepository(this);
   }
 

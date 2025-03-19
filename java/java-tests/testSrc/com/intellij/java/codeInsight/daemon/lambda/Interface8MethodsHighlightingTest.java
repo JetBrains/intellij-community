@@ -128,6 +128,10 @@ public class Interface8MethodsHighlightingTest extends LightJavaCodeInsightFixtu
     doTest();
   }
 
+  public void testInheritedStaticMethodOverrideAnotherInterface() {
+    doTest();
+  }
+
   public void testAmbiguousStaticCall() {
     myFixture.addClass("""
                          package sample;

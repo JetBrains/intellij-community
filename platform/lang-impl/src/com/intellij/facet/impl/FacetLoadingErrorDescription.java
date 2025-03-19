@@ -8,10 +8,12 @@ import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class FacetLoadingErrorDescription extends ConfigurationErrorDescription {
 
   public static final class FacetErrorType extends ConfigurationErrorType {

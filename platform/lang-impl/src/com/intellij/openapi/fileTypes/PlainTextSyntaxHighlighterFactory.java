@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -20,7 +6,9 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.highlighter.custom.AbstractCustomLexer;
-import com.intellij.ide.highlighter.custom.tokens.*;
+import com.intellij.ide.highlighter.custom.tokens.BraceTokenParser;
+import com.intellij.ide.highlighter.custom.tokens.TokenParser;
+import com.intellij.ide.highlighter.custom.tokens.WhitespaceParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -33,14 +21,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
-public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+public final class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @Override
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
     return new SyntaxHighlighterBase() {
-      @NotNull
       @Override
-      public Lexer getHighlightingLexer() {
+      public @NotNull Lexer getHighlightingLexer() {
         return createPlainTextLexer();
       }
 
@@ -51,8 +37,7 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
     };
   }
 
-  @NotNull
-  public static Lexer createPlainTextLexer() {
+  public static @NotNull Lexer createPlainTextLexer() {
     ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
 

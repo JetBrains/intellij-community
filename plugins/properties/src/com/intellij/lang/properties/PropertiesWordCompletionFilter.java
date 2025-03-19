@@ -26,6 +26,6 @@ import com.intellij.psi.tree.IElementType;
 public class PropertiesWordCompletionFilter extends DefaultWordCompletionFilter {
   @Override
   public boolean isWordCompletionEnabledIn(final IElementType element) {
-    return super.isWordCompletionEnabledIn(element) || element == PropertiesElementTypes.PROPERTY;
+    return super.isWordCompletionEnabledIn(element) || element == PropertiesElementTypes.PROPERTY_TYPE;
   }
 }

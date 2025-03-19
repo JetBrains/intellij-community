@@ -3,6 +3,7 @@ package com.intellij.warmup
 
 import com.intellij.openapi.project.Project
 import com.intellij.task.ProjectTaskManager
+import com.intellij.task.impl.ProjectTaskManagerImpl
 import org.jetbrains.concurrency.asDeferred
 
 internal class PlatformBuildWarmupSupport(val project: Project) : ProjectBuildWarmupSupport {
@@ -13,6 +14,7 @@ internal class PlatformBuildWarmupSupport(val project: Project) : ProjectBuildWa
   }
 
   override suspend fun buildProjectWithStatus(rebuild: Boolean): WarmupBuildStatus.InvocationStatus {
+    ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
     val projectTaskManager = ProjectTaskManager.getInstance(project)
 
     val result = (if (rebuild) projectTaskManager.rebuildAllModules() else projectTaskManager.buildAllModules()).asDeferred().await()

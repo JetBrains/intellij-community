@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang
 
 import com.intellij.lang.Language
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
@@ -20,6 +21,10 @@ import org.intellij.plugins.intelliLang.inject.config.InjectionPlace
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport
 
 class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_21
+  }
 
   fun testAnnotationInjection() {
     myFixture.configureByText("Foo.java", """
@@ -54,6 +59,51 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
     |          void baz(@Language("JSON") String json){}
     |      }
     |    """.trimMargin())
+
+    assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
+    UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
+
+    assertInjectedLangAtCaret(null)
+  }
+
+  fun testAnnotationInjectionStringTemplate() {
+    myFixture.configureByText("Foo.java", """
+      public class Hello {
+          void test(String name, String message) {
+              String s = STR.""${'"'}
+                      <caret>class \{name} {
+                          void main() {
+                              System.out.println("\{message}");
+                          }
+                      }""${'"'};
+          }
+      }""".trimIndent())
+
+    StoringFixPresenter().apply {
+      InjectLanguageAction.invokeImpl(project,
+                                      myFixture.editor,
+                                      myFixture.file,
+                                      Injectable.fromLanguage(Language.findLanguageByID("JAVA")),
+                                      this
+      )
+    }.process()
+
+    assertInjectedLangAtCaret("JAVA")
+
+    myFixture.checkResult("""
+      import org.intellij.lang.annotations.Language;
+
+      public class Hello {
+          void test(String name, String message) {
+              @Language("JAVA") String s = STR.""${'"'}
+                      class \{name} {
+                          void main() {
+                              System.out.println("\{message}");
+                          }
+                      }""${'"'};
+          }
+      }
+      """.trimIndent())
 
     assertNotNull(myFixture.getAvailableIntention("Uninject language or reference"))
     UnInjectLanguageAction.invokeImpl(project, topLevelEditor, topLevelFile)
@@ -184,7 +234,154 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
     """)
       injectionTestFixture.assertInjectedContent("{'id':1,'boo': 3}")
     }
-  } 
+  }
+  
+  fun testTemplatePlainString() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.Language;
+
+      class Hello {
+        @Language("JAVA")
+        private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+
+        void test() {
+          String plainString = JAVA."class Test {\n  void main() {\n    System.out.println(\"Hello world\");\n  }\n}";
+        }
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""class Test {\n  void main() {\n    System.out.println(\"Hello world\");\n  }\n}""")
+  }
+  
+  fun testTemplatePlainBlock() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.Language;
+
+      class Hello {
+        @Language("JAVA")
+        private static final StringTemplate.Processor<String, RuntimeException> JAVA = STR;
+
+        void test() {
+          String plainTextBlock = JAVA.""${'"'}
+              class Test {
+                void main() {
+                  System.out.println("Hello world");
+                }
+              }""${'"'};
+        }
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""
+      class Test {
+        void main() {
+          System.out.println("Hello world");
+        }
+      }""".trimIndent())
+  }
+  
+  fun testTemplateWithVars() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.Language;
+
+      class Hello {
+        void test(String name, String message) {
+          @Language("JAVA")
+          String s = STR."class \{name} { void main() { System.out.println(\"\{message}\") }  }";
+        }
+      }
+    """.trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""class missingValue { void main() { System.out.println(\"missingValue\") }  }""")
+  }
+  
+  fun testTemplateBlockWithVars() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+        void test(@Subst("ClassName") String name, String message) {
+          String s = javaProcessor().""${'"'}
+                class \{name} {
+                    void main() {
+                      System.out.println("\{message}");
+                    }
+                }""${'"'};
+        }
+            
+        @Language("JAVA")
+        private static StringTemplate.Processor<String, RuntimeException> javaProcessor() {
+          return STR;
+        }
+    }""".trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""
+      class ClassName {
+          void main() {
+            System.out.println("missingValue");
+          }
+      }""".trimIndent())
+  }
+  
+  fun testTemplateBlockWithVarsAndTrailingSlash() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+        void test(@Subst("ClassName") String name, String message) {
+          String s = javaProcessor().""${'"'}
+                class \{name} {
+                    void main() {
+                      System.out.\
+                println("\{message}");
+                    }
+                }""${'"'};
+        }
+        
+        interface MyProcessor extends StringTemplate.Processor<String, RuntimeException> {} 
+            
+        @Language("JAVA")
+        private static native MyProcessor javaProcessor();
+    }""".trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""
+      class ClassName {
+          void main() {
+            System.out.println("missingValue");
+          }
+      }""".trimIndent())
+  }
+
+  fun testJavaInjectionWithLeadingNewLines() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+        void test() {
+          createClass(""${'"'}
+
+
+
+
+                      class Foo {
+                        static void foo(int a) {}
+                        static void foo(int a, int b) {}
+                      }""${'"'});
+       }
+        
+          private static void createClass(@Language("JAVA") String text){};
+    }""".trimIndent())
+    myFixture.checkHighlighting()
+    injectionTestFixture.assertInjectedContent("""
+      
+      
+      
+      
+      class Foo {
+        static void foo(int a) {}
+        static void foo(int a, int b) {}
+      }""".trimIndent())
+  }
   
   fun testRegexJsonNotSingle() {
     Configuration.getInstance().withInjections(listOf(jsonToPrintlnInjection().apply { 

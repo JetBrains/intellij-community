@@ -1,0 +1,1 @@
+Property c uses constructor C() which will be inaccessible after move

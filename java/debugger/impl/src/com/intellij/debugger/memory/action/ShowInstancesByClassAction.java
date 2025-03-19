@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.action;
 
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.memory.filtering.ClassInstancesProvider;
 import com.intellij.debugger.memory.ui.InstancesWindow;
-import com.intellij.debugger.memory.ui.JavaReferenceInfo;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -16,9 +15,9 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
+/**
+ * See the frontend version of the action: com.intellij.java.debugger.impl.frontend.actions.FrontendShowInstancesByClassAction
+ */
 public class ShowInstancesByClassAction extends DebuggerTreeAction {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -45,10 +44,7 @@ public class ShowInstancesByClassAction extends DebuggerTreeAction {
       final ObjectReference ref = getObjectReference(node);
       if (debugSession != null && ref != null) {
         final ReferenceType referenceType = ref.referenceType();
-        new InstancesWindow(debugSession, l -> {
-          final List<ObjectReference> instances = referenceType.instances(l);
-          return instances == null ? Collections.emptyList() : ContainerUtil.map(instances, JavaReferenceInfo::new);
-        }, referenceType.name()).show();
+        new InstancesWindow(debugSession, new ClassInstancesProvider(referenceType), referenceType).show();
       }
     }
   }

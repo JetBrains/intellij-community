@@ -1,13 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.ModCommands;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -40,17 +37,17 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     int offset = context.offset();
 
     PsiElement element = findElement(context.file(), offset);
-    if (element == null) return ModCommands.nop();
+    if (element == null) return ModCommand.nop();
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
-    if (unhandledExceptions.isEmpty()) return ModCommands.nop();
+    if (unhandledExceptions.isEmpty()) return ModCommand.nop();
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
-    return ModCommands.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
+    return ModCommand.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
   }
   
-  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull EditorUpdater updater) {
+  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
     PsiFile file = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 
@@ -78,8 +75,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     }
   }
 
-  @NotNull
-  protected Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
+  protected @NotNull Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
     Collection<PsiClassType> exceptions = ExceptionUtil.collectUnhandledExceptions(element, topElement);
     if(!myUncaughtOnly && exceptions.isEmpty()) {
       exceptions = ExceptionUtil.getThrownExceptions(element);
@@ -165,8 +161,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     return Presentation.of(QuickFixBundle.message("add.catch.clause.text"));
   }
 
-  @Nullable
-  private PsiElement findElement(final PsiFile file, final int offset) {
+  private @Nullable PsiElement findElement(final PsiFile file, final int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
@@ -203,8 +198,7 @@ public class AddExceptionToCatchFix implements ModCommandAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.catch.clause.family");
   }
 }

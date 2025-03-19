@@ -15,13 +15,10 @@
  */
 package com.intellij.java.parser.statementParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class CodeBlockParsingTest extends JavaParsingTestCase {
+public class CodeBlockParsingTest extends AbstractBasicCodeBlockParsingTest {
   public CodeBlockParsingTest() {
-    super("parser-full/statementParsing/codeBlock");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSimple() { doTest(true); }
-  public void testAnonymousInSmartCompletion() { doTest(true); }
 }

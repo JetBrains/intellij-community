@@ -9,6 +9,7 @@ public class MaybeYieldInstruction extends InstructionImpl implements MaybeInter
     super(element);
   }
 
+  @Override
   public String toString() {
     return super.toString() + " MAYBE_YIELD";
   }

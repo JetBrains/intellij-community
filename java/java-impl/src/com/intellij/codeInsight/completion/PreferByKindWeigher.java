@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -22,6 +22,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -71,8 +72,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     myExpectedTypes = expectedTypes;
   }
 
-  @NotNull
-  private static Function<PsiClass, MyResult> createSuitabilityCondition(final PsiElement position) {
+  private static @NotNull Function<PsiClass, MyResult> createSuitabilityCondition(final PsiElement position) {
     if (isExceptionPosition(position)) {
       PsiElement container = PsiTreeUtil.getParentOfType(position, PsiTryStatement.class, PsiMethod.class);
       List<PsiClass> thrownExceptions = new ArrayList<>();
@@ -115,7 +115,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return aClass -> MyResult.classNameOrGlobalStatic;
   }
 
-  static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
+  static @Unmodifiable List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
     PsiElement typeParent = typeElement.getParent();
     if (typeParent instanceof PsiReferenceParameterList) {
       int index = Arrays.asList(((PsiReferenceParameterList)typeParent).getTypeParameterElements()).indexOf(typeElement);
@@ -139,8 +139,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
            JavaDocCompletionContributor.THROWS_TAG_EXCEPTION.accepts(position);
   }
 
-  @NotNull
-  private static MyResult preferClassIf(boolean condition) {
+  private static @NotNull MyResult preferClassIf(boolean condition) {
     return condition ? MyResult.suitableClass : MyResult.classNameOrGlobalStatic;
   }
 
@@ -179,9 +178,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     improbableKeyword,
   }
 
-  @NotNull
   @Override
-  public MyResult weigh(@NotNull LookupElement item) {
+  public @NotNull MyResult weigh(@NotNull LookupElement item) {
     final Object object = item.getObject();
 
     if (object instanceof PsiKeyword) {
@@ -324,8 +322,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return erasure == null || erasure.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
-  @NotNull
-  private ThreeState isProbableKeyword(String keyword) {
+  private @NotNull ThreeState isProbableKeyword(String keyword) {
     PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
     if (PsiKeyword.RETURN.equals(keyword)) {
       if (isLastStatement(parentStatement) &&

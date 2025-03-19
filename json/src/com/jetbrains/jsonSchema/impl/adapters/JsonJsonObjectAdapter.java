@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.adapters;
 
 import com.intellij.json.psi.JsonObject;
@@ -26,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JsonJsonObjectAdapter implements JsonObjectValueAdapter {
-  @NotNull private final JsonObject myValue;
+public final class JsonJsonObjectAdapter implements JsonObjectValueAdapter {
+  private final @NotNull JsonObject myValue;
 
   public JsonJsonObjectAdapter(@NotNull JsonObject value) {myValue = value;}
 
@@ -56,27 +42,23 @@ public class JsonJsonObjectAdapter implements JsonObjectValueAdapter {
     return false;
   }
 
-  @NotNull
   @Override
-  public PsiElement getDelegate() {
+  public @NotNull PsiElement getDelegate() {
     return myValue;
   }
 
-  @Nullable
   @Override
-  public JsonObjectValueAdapter getAsObject() {
+  public @Nullable JsonObjectValueAdapter getAsObject() {
     return this;
   }
 
-  @Nullable
   @Override
-  public JsonArrayValueAdapter getAsArray() {
+  public @Nullable JsonArrayValueAdapter getAsArray() {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<JsonPropertyAdapter> getPropertyList() {
+  public @NotNull List<JsonPropertyAdapter> getPropertyList() {
     return myValue.getPropertyList().stream().filter(p -> p != null)
       .map(p -> new JsonJsonPropertyAdapter(p)).collect(Collectors.toList());
   }

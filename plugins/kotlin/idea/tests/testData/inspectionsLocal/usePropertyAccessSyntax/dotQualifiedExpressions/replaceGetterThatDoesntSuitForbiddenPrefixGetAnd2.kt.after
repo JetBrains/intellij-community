@@ -1,0 +1,4 @@
+// FIX: Use property access syntax
+fun foo(foo: Foo) {
+    foo.andy
+}

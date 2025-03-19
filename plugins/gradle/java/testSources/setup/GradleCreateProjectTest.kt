@@ -1,16 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.setup
 
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.use
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.useProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.withProjectAsync
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -19,8 +24,8 @@ import org.junit.jupiter.api.Test
 class GradleCreateProjectTest : GradleCreateProjectTestCase() {
 
   @Test
-  fun `test project create`() {
-    runBlocking {
+  fun `test project re-create`() = runBlocking {
+    Disposer.newDisposable().use { disposable ->
       val projectInfo = projectInfo("project") {
         withJavaBuildFile()
         withSettingsFile {
@@ -35,18 +40,23 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           withJavaBuildFile()
         }
       }
+
+      WorkspaceModelCacheImpl.forceEnableCaching(disposable)
       createProjectByWizard(projectInfo)
         .useProjectAsync(save = true) { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
       createProjectByWizard(projectInfo)
         .useProjectAsync(save = true) { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
       deleteProject(projectInfo)
       createProjectByWizard(projectInfo)
         .useProjectAsync { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
     }
   }
@@ -63,6 +73,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       createProjectByWizard(projectInfo)
         .useProjectAsync { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
     }
   }
@@ -79,6 +90,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       createProjectByWizard(projectInfo)
         .useProjectAsync { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
     }
   }
@@ -103,6 +115,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       createProjectByWizard(projectInfo)
         .useProjectAsync { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
     }
   }
@@ -127,21 +140,43 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
       createProjectByWizard(projectInfo)
         .useProjectAsync { project ->
           assertProjectState(project, projectInfo)
+          assertBuildFiles(projectInfo)
         }
     }
   }
 
   @Test
+  @RegistryKey("gradle.daemon.jvm.criteria.new.project", "true")
+  fun `test project generation with Gradle daemon JVM criteria`() = runBlocking {
+    val projectInfo = projectInfo("project") {
+      withJavaBuildFile()
+      withSettingsFile {
+        withFoojayPlugin()
+        setProjectName("project")
+        include("module")
+      }
+      moduleInfo("project.module", "module") {
+        withJavaBuildFile()
+      }
+    }
+    createProjectByWizard(projectInfo)
+      .useProjectAsync { project ->
+        assertProjectState(project, projectInfo)
+        assertBuildFiles(projectInfo)
+        assertDaemonJvmProperties(project)
+      }
+  }
+
+  @Test
   fun `test NPW properties suggestion`() {
     runBlocking {
-      createProjectByWizard(NEW_EMPTY_PROJECT, wait = false) {
+      createProjectByWizard(NEW_EMPTY_PROJECT, numProjectSyncs = 0) {
         baseData!!.name = "project"
-        baseData!!.path = testRoot.path
+        baseData!!.path = testPath.toCanonicalPath()
       }.withProjectAsync { project ->
         assertModules(project, "project")
-        createModuleByWizard(project) {
-          baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
+          baseData!!.path = testPath.resolve("project").toCanonicalPath()
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -149,9 +184,8 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
           Assertions.assertNull(javaGradleData!!.parentData)
         }
-        createModuleByWizard(project) {
-          baseData!!.path = testRoot.path + "/project"
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
+          baseData!!.path = testPath.resolve("project").toCanonicalPath()
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.addSampleCode = false
 
@@ -165,26 +199,26 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
           "untitled1", "untitled1.main", "untitled1.test"
         )
       }.useProjectAsync { project ->
-        val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled")!!
-        val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, testRoot.path + "/project/untitled1")!!
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        val projectPath1 = testPath.resolve("project/untitled").toCanonicalPath()
+        val projectPath2 = testPath.resolve("project/untitled1").toCanonicalPath()
+        val projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, projectPath1)!!
+        val projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, projectPath2)!!
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode1.data
           javaGradleData!!.addSampleCode = false
 
           Assertions.assertEquals("untitled2", baseData!!.name)
-          Assertions.assertEquals(testRoot.path + "/project/untitled", baseData!!.path)
+          Assertions.assertEquals(projectPath1, baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
-        createModuleByWizard(project) {
-          languageData!!.language = "Java"
+        createModuleByWizard(project, JAVA) {
           javaBuildSystemData!!.buildSystem = "Gradle"
           javaGradleData!!.parentData = projectNode2.data
           javaGradleData!!.addSampleCode = false
 
           Assertions.assertEquals("untitled2", baseData!!.name)
-          Assertions.assertEquals(testRoot.path + "/project/untitled1", baseData!!.path)
+          Assertions.assertEquals(projectPath2, baseData!!.path)
           Assertions.assertEquals(GradleDsl.KOTLIN, javaGradleData!!.gradleDsl)
         }
         assertModules(

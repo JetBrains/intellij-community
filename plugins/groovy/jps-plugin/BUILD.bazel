@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.groovy.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.groovy.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/jps-builders-6:build-javac-rt",
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//plugins/groovy/rt-constants:constants-rt",
+    "//jps/model-serialization",
+    "//jps/model-impl",
+    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@lib//:ecj-4-25-provided",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:asm",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ],
+  runtime_deps = [":jps_resources"]
+)
+### auto-generated section `build intellij.groovy.jps` end
+
+### auto-generated section `build intellij.groovy.jps.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "jps-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "jps-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/groovy/jps-plugin:jps",
+    "//plugins/groovy/rt-constants:constants-rt",
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "jps-tests_test",
+  runtime_deps = [":jps-tests_test_lib"]
+)
+### auto-generated section `build intellij.groovy.jps.tests` end

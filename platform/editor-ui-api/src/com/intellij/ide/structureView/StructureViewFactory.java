@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,8 +18,7 @@ public abstract class StructureViewFactory {
    * @param project    the project containing the file for which the structure view is requested.
    * @return the structure view instance.
    */
-  @NotNull
-  public abstract StructureView createStructureView(FileEditor fileEditor,
+  public abstract @NotNull StructureView createStructureView(FileEditor fileEditor,
                                                     @NotNull StructureViewModel treeModel,
                                                     @NotNull Project project);
 
@@ -31,13 +31,16 @@ public abstract class StructureViewFactory {
    * @param showRootNode pass {@code false} if root node of the structure built should not actually be shown in result tree.
    * @return the structure view instance.
    */
-  @NotNull
-  public abstract StructureView createStructureView(FileEditor fileEditor,
+  public abstract @NotNull StructureView createStructureView(FileEditor fileEditor,
                                                     @NotNull StructureViewModel treeModel,
                                                     @NotNull Project project,
                                                     boolean showRootNode);
 
   public static StructureViewFactory getInstance(Project project) {
     return project.getService(StructureViewFactory.class);
+  }
+
+  @ApiStatus.Internal
+  protected StructureViewFactory() {
   }
 }

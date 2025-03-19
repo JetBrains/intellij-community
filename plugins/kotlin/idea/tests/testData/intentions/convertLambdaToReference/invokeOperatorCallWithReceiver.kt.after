@@ -9,3 +9,5 @@ class C(val k: InvokeContainer)
 fun test(c: C) {
     myInvoke(c.k::invoke)
 }
+
+// IGNORE_K2

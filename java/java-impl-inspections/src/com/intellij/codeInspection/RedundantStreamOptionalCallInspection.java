@@ -1,16 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
@@ -31,7 +35,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
-public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
   private static final CallMatcher NATURAL_OR_REVERSED_COMPARATOR = anyOf(
     staticCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "naturalOrder", "reverseOrder").parameterCount(0),
@@ -91,12 +95,13 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       checkbox("USELESS_BOXING_IN_STREAM_MAP", JavaBundle.message("inspection.redundant.stream.optional.call.option.streamboxing")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -122,7 +127,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
           PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
           if (STREAM_MAP.test(qualifierCall) && qualifierCall.getMethodExpression().getTypeParameters().length == 0 &&
               !isIdentityMapping(qualifierCall.getArgumentList().getExpressions()[0], false)) {
-            String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", name) +
+            String message = JavaBundle.message("inspection.call.message", name) +
                              ": " + JavaBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
             holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                    new RemoveCallFix(name, "map"));
@@ -279,15 +284,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
-                         : JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
+                         : JavaBundle.message("inspection.call.message", methodName);
         holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };
   }
 
-  @Nullable
-  private static PsiMethodCallExpression findCallThatSpoilsSorting(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable PsiMethodCallExpression findCallThatSpoilsSorting(@NotNull PsiMethodCallExpression call) {
     PsiMethodCallExpression furtherCall = call;
     do {
       furtherCall = findSubsequentCall(furtherCall, o ->
@@ -334,8 +338,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_SET);
   }
 
-  @NotNull
-  static TextRange getRange(PsiMethodCallExpression call) {
+  static @NotNull TextRange getRange(PsiMethodCallExpression call) {
     PsiReferenceExpression expression = call.getMethodExpression();
     PsiElement nameElement = expression.getReferenceNameElement();
     LOG.assertTrue(nameElement != null);
@@ -368,7 +371,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       return isBoxUnboxMethod(call.resolveMethod());
     }
     if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression methodRef)) return false;
-    if (!BOX_UNBOX_NAMES.contains(methodRef.getReferenceName())) return false;
+    String referenceName = methodRef.getReferenceName();
+    if (referenceName == null || !BOX_UNBOX_NAMES.contains(referenceName)) return false;
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
     return isBoxUnboxMethod(method);
   }
@@ -399,7 +403,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     return false;
   }
 
-  private static class RemoveCallFix implements LocalQuickFix {
+  static class RemoveCallFix extends PsiUpdateModCommandQuickFix {
     private final @NotNull String myMethodName;
     private final @Nullable String myBindPreviousCall;
 
@@ -412,26 +416,22 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       myBindPreviousCall = bindPreviousCall;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       if (myBindPreviousCall != null) {
         return JavaBundle.message("inspection.redundant.stream.optional.call.fix.bind.name", myMethodName, myBindPreviousCall);
       }
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.name", myMethodName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getNonStrictParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
@@ -444,10 +444,14 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
   }
 
-  private record ReplaceTerminalCallFix(String newName) implements LocalQuickFix, HighPriorityAction {
+  private static final class ReplaceTerminalCallFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
+    private final String myNewName;
+
+    private ReplaceTerminalCallFix(String newName) { this.myNewName = newName; }
+
     @Override
     public @NotNull String getName() {
-      return JavaBundle.message("inspection.redundant.stream.optional.call.fix.replace.terminal.text", newName);
+      return JavaBundle.message("inspection.redundant.stream.optional.call.fix.replace.terminal.text", myNewName);
     }
 
     @Override
@@ -456,27 +460,25 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!(descriptor.getStartElement() instanceof PsiMethodCallExpression call)) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (!(element instanceof PsiMethodCallExpression call)) return;
       PsiMethodCallExpression furtherCall = findCallThatSpoilsSorting(call);
       if (furtherCall == null) return;
       String name = furtherCall.getMethodExpression().getReferenceName();
-      if (name == null || !newName.equals(CALLS_MAKING_SORT_USELESS_PARALLEL.get(name))) return;
-      ExpressionUtils.bindCallTo(furtherCall, newName);
+      if (name == null || !myNewName.equals(CALLS_MAKING_SORT_USELESS_PARALLEL.get(name))) return;
+      ExpressionUtils.bindCallTo(furtherCall, myNewName);
     }
   }
 
-  private static class CollectToOrderedSetFix implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+  private static class CollectToOrderedSetFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.stream.optional.call.fix.collect.to.ordered.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression sortCall = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression sortCall = tryCast(element, PsiMethodCallExpression.class);
       if (sortCall == null) return;
       PsiMethodCallExpression collector =
         findSubsequentCall(sortCall, c -> false, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);

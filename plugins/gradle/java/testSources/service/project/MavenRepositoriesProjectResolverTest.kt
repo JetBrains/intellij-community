@@ -7,17 +7,16 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.gradle.internal.impldep.org.apache.commons.lang.NotImplementedException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel
-import org.jetbrains.plugins.gradle.model.RepositoriesModel
+import org.jetbrains.plugins.gradle.model.RepositoryModels
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 
 class MavenRepositoriesProjectResolverTest {
 
@@ -34,7 +33,7 @@ class MavenRepositoriesProjectResolverTest {
     myResolver.nextResolver = mock(GradleProjectResolverExtension::class.java)
 
     myRepoList.clear()
-    val fakeModel = MyRepositoriesModel(myRepoList)
+    val fakeModel = TestRepositoryModels(myRepoList)
 
     myProject = mock(IdeaProject::class.java)
     myModule = mock(IdeaModule::class.java)
@@ -48,8 +47,8 @@ class MavenRepositoriesProjectResolverTest {
     myModuleNode = DataNode(ProjectKeys.MODULE, moduleData, myProjectNode)
 
     val fakeContext = mock(ProjectResolverContext::class.java)
-    `when`<RepositoriesModel>(fakeContext.getExtraProject(RepositoriesModel::class.java)).thenReturn(fakeModel)
-    `when`<RepositoriesModel>(fakeContext.getExtraProject(myModule, RepositoriesModel::class.java)).thenReturn(fakeModel)
+    `when`<RepositoryModels>(fakeContext.getRootModel(RepositoryModels::class.java)).thenReturn(fakeModel)
+    `when`<RepositoryModels>(fakeContext.getExtraProject(myModule, RepositoryModels::class.java)).thenReturn(fakeModel)
     myResolver.setProjectResolverContext(fakeContext)
   }
 
@@ -77,11 +76,15 @@ class MavenRepositoriesProjectResolverTest {
   fun testRepositoriesDeduplicated() {
     val mavenRepo1 = MyMavenRepoModel("name", "http://some.host")
     myRepoList.add(mavenRepo1)
+    myRepoList.add(mavenRepo1)
+    myRepoList.add(mavenRepo1)
 
     myResolver.populateProjectExtraModels(myProject, myProjectNode)
 
     val mavenRepo2 = MyMavenRepoModel("name1", "http://some.other.host")
     myRepoList.apply {
+      add(MyMavenRepoModel("name", "http://some.host"))
+      add(MyMavenRepoModel("name", "http://some.host"))
       add(MyMavenRepoModel("name", "http://some.host"))
       add(mavenRepo2)
     }
@@ -95,7 +98,6 @@ class MavenRepositoriesProjectResolverTest {
     assertEquals(myProjectNode.mavenRepositories(), mavenRepoModels.toMavenRepoData())
   }
 
-
   private fun DataNode<*>.mavenRepositories(): Collection<MavenRepositoryData> =
     ExternalSystemApiUtil.getChildren(this, MavenRepositoryData.KEY).map { it.data }
 
@@ -108,11 +110,7 @@ class MavenRepositoriesProjectResolverTest {
     override fun getUrl(): String = myUrl
   }
 
-  private class MyRepositoriesModel(private val myRepositories: Collection<MavenRepositoryModel>) : RepositoriesModel {
-    override fun add(model: MavenRepositoryModel) {
-      throw NotImplementedException("Method not implemented for test stub")
-    }
-
-    override fun getAll(): Collection<MavenRepositoryModel> = myRepositories
+  private class TestRepositoryModels(private val myRepositories: List<MavenRepositoryModel>) : RepositoryModels {
+    override fun getRepositories(): List<MavenRepositoryModel> = myRepositories
   }
 }

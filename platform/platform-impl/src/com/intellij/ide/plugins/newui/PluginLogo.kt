@@ -1,38 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.newui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JetBrainsProtocolHandler
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.svg.loadWithSizes
-import com.intellij.util.Urls.newFromEncoded
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.sanitizeFileName
-import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.ui.JBImageIcon
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Files
@@ -42,6 +41,7 @@ import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.swing.Icon
 import kotlin.coroutines.CoroutineContext
+import com.intellij.util.lang.ZipFile as IntelliJZipFile
 
 private val iconCache = CollectionFactory.createConcurrentWeakValueMap<String, Pair<PluginLogoIconProvider?, PluginLogoIconProvider?>>()
 private val MISSING: Pair<PluginLogoIconProvider?, PluginLogoIconProvider?> = Pair(null, null)
@@ -98,6 +98,7 @@ object PluginLogo {
     service<PluginLogoLoader>().endBatchMode()
   }
 
+  @JvmName("getDefault")
   internal fun getDefault(): PluginLogoIconProvider {
     if (Default == null) {
       Default = if (AllIcons.Plugins.PluginLogo is CachedImageIcon) {
@@ -147,9 +148,19 @@ internal fun reloadPluginIcon(icon: Icon, width: Int, height: Int): Icon {
 
 internal fun getPluginIconFileName(light: Boolean): String = PluginManagerCore.META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
 
-private fun tryLoadIcon(zipFile: com.intellij.util.lang.ZipFile, light: Boolean): PluginLogoIconProvider? {
-  val data = zipFile.getData(getPluginIconFileName(light))
-  return if (data == null) null else loadFileIcon(data)
+private fun tryLoadIcon(zipFile: IntelliJZipFile, light: Boolean): PluginLogoIconProvider? {
+  val pluginIconFileName = getPluginIconFileName(light)
+  try {
+    return zipFile.getData(pluginIconFileName)?.let { loadFileIcon(it) }
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Cannot load plugin icon (zipFile=$zipFile, pluginIconFileName=$pluginIconFileName)")
+    LOG.debug(e)
+    return null
+  }
 }
 
 private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
@@ -164,15 +175,9 @@ private fun getIdForKey(descriptor: IdeaPluginDescriptor): String {
          }
 }
 
-private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider? {
-  try {
-    val images = loadWithSizes(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
-    return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
-  }
-  catch (e: IOException) {
-    LOG.debug(e)
-    return null
-  }
+private fun loadFileIcon(data: ByteArray): PluginLogoIconProvider {
+  val images = loadWithSizes(listOf(PLUGIN_ICON_SIZE, PLUGIN_ICON_SIZE_SCALED), data)
+  return HiDPIPluginLogoIcon(JBImageIcon(images.get(0)), JBImageIcon(images.get(1)))
 }
 
 private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIcon, coroutineContext: CoroutineContext) {
@@ -180,19 +185,11 @@ private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIco
   val cache = Path.of(PathManager.getPluginTempPath(), CACHE_DIR)
   val lightFile = cache.resolve("$idFileName.svg")
   val darkFile = cache.resolve(idFileName + "_dark.svg")
-  if (Files.exists(cache)) {
-    val light = tryLoadIcon(lightFile)
-    val dark = tryLoadIcon(darkFile)
-    if (light != null || dark != null) {
-      putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
-      return
-    }
-  }
 
   coroutineContext.ensureActive()
   try {
-    downloadFile(idPlugin, lightFile, "")
-    downloadFile(idPlugin, darkFile, "&theme=DARCULA")
+    downloadOrCheckUpdateFile(idPlugin, lightFile, "")
+    downloadOrCheckUpdateFile(idPlugin, darkFile, "&theme=DARCULA")
   }
   catch (e: Exception) {
     LOG.debug(e)
@@ -204,6 +201,24 @@ private fun loadPluginIconsFromUrl(idPlugin: String, lazyIcon: LazyPluginLogoIco
   val light = tryLoadIcon(lightFile)
   val dark = tryLoadIcon(darkFile)
   putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
+}
+
+private fun loadPluginIconsFromExploded(paths: Collection<Path>, idPlugin: String, lazyIcon: LazyPluginLogoIcon) {
+  for (path in paths) {
+    if (Files.isDirectory(path)) {
+      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path)) {
+        return
+      }
+    }
+    else {
+      // todo why some JARs do not have pluginIcon.svg packed?
+      if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = path, put = false)) {
+        return
+      }
+    }
+  }
+
+  putMissingIcon(idPlugin = idPlugin)
 }
 
 private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: LazyPluginLogoIcon) {
@@ -222,10 +237,10 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
     val files = try {
       Files.newDirectoryStream(libFile).use { it.toList() }
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       null
     }
-    catch (e: NotDirectoryException) {
+    catch (_: NotDirectoryException) {
       null
     }
     catch (e: Exception) {
@@ -239,7 +254,7 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
     }
 
     for (file in files) {
-      if (tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
+      if (!file.toString().endsWith(".jar") && tryLoadDirIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file)) {
         return
       }
       if (tryLoadJarIcons(idPlugin = idPlugin, lazyIcon = lazyIcon, path = file, put = false)) {
@@ -256,28 +271,31 @@ private fun loadPluginIconsFromFile(path: Path, idPlugin: String, lazyIcon: Lazy
 }
 
 private fun tryLoadDirIcons(idPlugin: String, lazyIcon: LazyPluginLogoIcon, path: Path): Boolean {
-  val light = tryLoadIcon(dirFile = path, light = true)
-  val dark = tryLoadIcon(dirFile = path, light = false)
-  if (light != null || dark != null) {
-    putIcon(idPlugin, lazyIcon, light, dark)
-    return true
+  val light = tryLoadIcon(path.resolve(getPluginIconFileName(light = true)))
+  val dark = tryLoadIcon(path.resolve(getPluginIconFileName(light = false)))
+  if (light == null && dark == null) {
+    return false
   }
-  return false
+
+  putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
+  return true
 }
 
-private fun tryLoadJarIcons(idPlugin: String,
-                                    lazyIcon: LazyPluginLogoIcon,
-                                    path: Path,
-                                    put: Boolean): Boolean {
+private fun tryLoadJarIcons(
+  idPlugin: String,
+  lazyIcon: LazyPluginLogoIcon,
+  path: Path,
+  put: Boolean,
+): Boolean {
   val pathString = path.toString()
   if (!(pathString.endsWith(".zip", ignoreCase = true) || pathString.endsWith(".jar", ignoreCase = true)) || !Files.exists(path)) {
     return false
   }
 
   try {
-    ImmutableZipFile.load(path).use { zipFile ->
-      val light = tryLoadIcon(zipFile, true)
-      val dark = tryLoadIcon(zipFile, false)
+    IntelliJZipFile.load(path).use { zipFile ->
+      val light = tryLoadIcon(zipFile = zipFile, light = true)
+      val dark = tryLoadIcon(zipFile = zipFile, light = false)
       if (put || light != null || dark != null) {
         putIcon(idPlugin = idPlugin, lazyIcon = lazyIcon, light = light, dark = dark)
         return true
@@ -290,11 +308,11 @@ private fun tryLoadJarIcons(idPlugin: String,
   return false
 }
 
-private fun downloadFile(idPlugin: String, file: Path, theme: String) {
+private fun downloadOrCheckUpdateFile(idPlugin: String, file: Path, theme: String) {
   try {
-    val url = newFromEncoded(ApplicationInfoImpl.getShadowInstance().pluginManagerUrl +
-                             "/api/icon?pluginId=" + URLUtil.encodeURIComponent(idPlugin) + theme)
-    HttpRequests.request(url).productNameAsUserAgent().saveToFile(file, null)
+    val url = MarketplaceUrls.getPluginManagerUrl() + "/api/icon?pluginId=" +
+              URLUtil.encodeURIComponent(idPlugin) + theme
+    MarketplaceRequests.readOrUpdateFile(file, url, null, "", InputStream::close)
   }
   catch (ignore: HttpRequests.HttpStatusException) {
   }
@@ -327,7 +345,7 @@ private fun getOrLoadIcon(descriptor: IdeaPluginDescriptor): Pair<PluginLogoIcon
 
 private fun putIcon(idPlugin: String, lazyIcon: LazyPluginLogoIcon, light: PluginLogoIconProvider?, dark: PluginLogoIconProvider?) {
   if (light == null && dark == null) {
-    iconCache.put(idPlugin, Pair(PluginLogo.getDefault(), null))
+    iconCache.put(idPlugin, Pair(PluginLogo.getDefault(), PluginLogo.getDefault()))
     return
   }
 
@@ -340,18 +358,18 @@ private fun putMissingIcon(idPlugin: String) {
   iconCache.put(idPlugin, MISSING)
 }
 
-private fun tryLoadIcon(dirFile: Path, light: Boolean): PluginLogoIconProvider? {
-  return tryLoadIcon(dirFile.resolve(getPluginIconFileName(light)))
-}
-
 private fun tryLoadIcon(iconFile: Path): PluginLogoIconProvider? {
   try {
     val data = Files.readAllBytes(iconFile)
-    return if (data.isEmpty()) null else loadFileIcon(Files.readAllBytes(iconFile))
+    return if (data.isEmpty()) null else loadFileIcon(data)
   }
   catch (ignore: NoSuchFileException) {
   }
-  catch (e: Exception) {
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Cannot load plugin icon (file=$iconFile)")
     LOG.debug(e)
   }
   return null
@@ -387,6 +405,10 @@ private class PluginLogoLoader(private val coroutineScope: CoroutineScope) {
           val path = info.first.pluginPath
           if (path == null) {
             loadPluginIconsFromUrl(idPlugin = idPlugin, lazyIcon = info.second, coroutineContext = coroutineContext)
+          }
+          else if (AppMode.isDevServer()) {
+            val descriptor = info.first as? IdeaPluginDescriptorImpl
+            loadPluginIconsFromExploded(paths = descriptor?.jarFiles ?: listOf(path), idPlugin = idPlugin, lazyIcon = info.second)
           }
           else {
             loadPluginIconsFromFile(path = path, idPlugin = idPlugin, lazyIcon = info.second)

@@ -1,4 +1,7 @@
+import logging
 import pathlib
+
+logger: logging.Logger
 
 class PlaysoundException(Exception): ...
 

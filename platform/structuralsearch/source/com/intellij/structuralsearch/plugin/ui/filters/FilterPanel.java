@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.ide.DataManager;
@@ -50,7 +50,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   final JBListTable myFilterTable;
   final ListTableModel<Filter> myTableModel;
 
-  @NotNull final Project myProject;
+  final @NotNull Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
   LanguageFileType myFileType;
@@ -75,9 +75,8 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     myScriptFilter.setTable(this);
 
     myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
-      @Nullable
       @Override
-      public Filter valueOf(Filter s) {
+      public @Nullable Filter valueOf(Filter s) {
         return s;
       }
     }}, new SmartList<>());
@@ -186,8 +185,8 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final StringBuilder builder = new StringBuilder();
     for (FilterAction filter : myFilters) {
       final String text = filter.getShortText(variable);
-      if (text.length() > 0) {
-        if (builder.length() > 0) builder.append(", ");
+      if (!text.isEmpty()) {
+        if (!builder.isEmpty()) builder.append(", ");
         builder.append(text);
       }
     }
@@ -195,14 +194,12 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   }
 
   @Override
-  @Nullable
-  public StructuralSearchProfile getProfile() {
+  public @Nullable StructuralSearchProfile getProfile() {
     return StructuralSearchUtil.getProfileByFileType(myFileType);
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 

@@ -6,7 +6,7 @@ package com.intellij.searchEverywhereMl.typos
  *
  * See test cases in [com.intellij.searchEverywhereMl.typos.SearchEverywhereStringTokenizerTest] for more examples.
  */
-internal fun splitText(text: String): Sequence<SearchEverywhereStringToken> {
+internal fun splitText(text: CharSequence): Sequence<SearchEverywhereStringToken> {
   return sequence {
     val builder = StringBuilder()
     text.forEachIndexed { index, c ->

@@ -15,11 +15,11 @@ internal class SimpleFieldRequest(
   private val isConstant: Boolean,
 ) : CreateFieldRequest {
   override fun isValid(): Boolean = true
-  override fun getFieldName() = fieldName
-  override fun getAnnotations() = annotations
-  override fun getModifiers() = modifiers
-  override fun getFieldType() = fieldType
-  override fun getTargetSubstitutor() = targetSubstitutor
+  override fun getFieldName(): String = fieldName
+  override fun getAnnotations(): Collection<AnnotationRequest> = annotations
+  override fun getModifiers(): Collection<JvmModifier> = modifiers
+  override fun getFieldType(): ExpectedTypes = fieldType
+  override fun getTargetSubstitutor(): JvmSubstitutor = targetSubstitutor
   override fun getInitializer(): JvmValue? = initializer
   override fun isConstant(): Boolean = isConstant
 }

@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.java.uast.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-uast-ide",
+  module_name = "intellij.java.uast.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-impl:impl",
+    "//uast/uast-java:java-uast",
+  ],
+  exports = ["//uast/uast-java:java-uast"]
+)
+### auto-generated section `build intellij.java.uast.ide` end

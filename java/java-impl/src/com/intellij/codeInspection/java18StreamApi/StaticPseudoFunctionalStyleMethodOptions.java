@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,8 +33,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
     elements.add(new PipelineElement(guavaLists, "transform", PseudoLambdaReplaceTemplate.MAP));
   }
 
-  @NotNull
-  public Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
+  public @Unmodifiable @NotNull Collection<PipelineElement> findElementsByMethodName(final @NotNull String methodName) {
     return ContainerUtil.filter(myElements, element -> methodName.equals(element.methodName()));
   }
 

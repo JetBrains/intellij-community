@@ -1,0 +1,47 @@
+### auto-generated section `build kotlin.jvm-debugger.evaluation.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["org.jetbrains.kotlin.analysis.api.KaNonPublicApi"]
+)
+
+jvm_library(
+  name = "kotlin-jvm-debugger-evaluation-k1",
+  module_name = "kotlin.jvm-debugger.evaluation.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//java/debugger/openapi:java-debugger",
+    "//plugins/kotlin/jvm-debugger/evaluation:kotlin-jvm-debugger-evaluation",
+    "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
+    "//plugins/kotlin/jvm-debugger/core:kotlin-jvm-debugger-core",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/j2k/k1.old:kotlin-j2k-k1-old",
+    "//plugins/kotlin/idea",
+    "//java/java-analysis-impl:analysis-impl",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/j2k/shared:kotlin-j2k-shared",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:asm",
+    "@lib//:guava",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-analysis-api-fe10",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/jvm-debugger/eval4j:kotlin-jvm-debugger-eval4j",
+    "@lib//:kotlinc-scripting-compiler-plugin",
+  ]
+)
+### auto-generated section `build kotlin.jvm-debugger.evaluation.k1` end

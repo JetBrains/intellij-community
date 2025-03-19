@@ -3,28 +3,28 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.tooling.BuildController
-import org.gradle.tooling.model.Model
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
 class KotlinDslScriptModelProvider : ProjectImportModelProvider {
     private val kotlinDslScriptModelClass: Class<*> = KotlinDslScriptsModel::class.java
 
-    override fun populateBuildModels(
+    override fun populateModels(
         controller: BuildController,
-        buildModel: GradleBuild,
-        consumer: ProjectImportModelProvider.BuildModelConsumer
+        buildModels: Collection<GradleBuild>,
+        modelConsumer: GradleModelConsumer
     ) {
-        buildModel.projects.forEach {
+        buildModels.flatMap { it.projects }.forEach {
             if (it.parent == null) {
                 try {
                     val model = controller.findModel(it, kotlinDslScriptModelClass)
                     if (model != null) {
-                        consumer.consumeProjectModel(it, model, kotlinDslScriptModelClass)
+                        modelConsumer.consumeProjectModel(it, model, kotlinDslScriptModelClass)
                     }
                 } catch (e: Throwable) {
-                    consumer.consumeProjectModel(
+                    modelConsumer.consumeProjectModel(
                         it,
                         BrokenKotlinDslScriptsModel(e), kotlinDslScriptModelClass
                     )
@@ -32,10 +32,4 @@ class KotlinDslScriptModelProvider : ProjectImportModelProvider {
             }
         }
     }
-
-    override fun populateProjectModels(
-        controller: BuildController,
-        projectModel: Model,
-        modelConsumer: ProjectImportModelProvider.ProjectModelConsumer
-    ) = Unit
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
@@ -24,8 +24,7 @@ public abstract class ErrorTreeElement {
     myKind = kind;
   }
 
-  @NotNull
-  public ErrorTreeElementKind getKind() {
+  public @NotNull ErrorTreeElementKind getKind() {
     return myKind;
   }
 
@@ -45,23 +44,19 @@ public abstract class ErrorTreeElement {
 
   public abstract String getExportTextPrefix();
 
-  @Nullable
-  public CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
+  public @Nullable CustomizeColoredTreeCellRenderer getLeftSelfRenderer() {
     return null;
   }
 
-  @Nullable
-  public CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
+  public @Nullable CustomizeColoredTreeCellRenderer getRightSelfRenderer() {
     return null;
   }
   
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return getKind().getIcon();
   }
   
-  @NotNull
-  public @Nls String getPresentableText() {
+  public @NotNull @Nls String getPresentableText() {
     return getKind().getPresentableText();
   }
 }

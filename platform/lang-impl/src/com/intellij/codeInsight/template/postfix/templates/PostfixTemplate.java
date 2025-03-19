@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaDat
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -42,7 +43,7 @@ import java.util.Objects;
  * @see PostfixTemplateProvider
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/postfix-templates.html">Postfix Templates (IntelliJ Platform Docs)</a>
  */
-public abstract class PostfixTemplate {
+public abstract class PostfixTemplate implements PossiblyDumbAware {
   private final @NotNull @NonNls String myId;
   private final @NotNull @NlsSafe String myPresentableName;
   private final @NotNull @NlsSafe String myKey;
@@ -79,8 +80,7 @@ public abstract class PostfixTemplate {
     myProvider = provider;
   }
 
-  @NotNull
-  protected @NlsContexts.DetailedDescription String calcDescription() {
+  protected @NotNull @NlsContexts.DetailedDescription String calcDescription() {
     String defaultDescription = CodeInsightBundle.message("postfix.template.description.under.construction");
     try {
       return PostfixTemplateMetaData.createMetaData(this).getDescription().getText();
@@ -95,40 +95,35 @@ public abstract class PostfixTemplate {
   /**
    * @return identifier used for saving the settings related to this template
    */
-  @NotNull
-  public @NonNls String getId() {
+  public @NotNull @NonNls String getId() {
     return myId;
   }
 
   /**
    * @return key used for expanding the template in the editor
    */
-  @NotNull
-  public final @NlsSafe String getKey() {
+  public final @NotNull @NlsSafe String getKey() {
     return myKey;
   }
 
   /**
    * @return template name displayed in UI
    */
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * @return template description displayed in UI
    */
-  @NotNull
-  public @NlsContexts.DetailedDescription String getDescription() {
+  public @NotNull @NlsContexts.DetailedDescription String getDescription() {
     return myLazyDescription.getValue();
   }
 
   /**
    * @return short example of the expanded form shown in the completion popup and templates tree on the configuration page
    */
-  @NotNull
-  public @NlsSafe String getExample() {
+  public @NotNull @NlsSafe String getExample() {
     return myExample;
   }
 
@@ -166,8 +161,7 @@ public abstract class PostfixTemplate {
   /**
    * @return the {@link PostfixTemplateProvider} that provided this template
    */
-  @Nullable
-  public PostfixTemplateProvider getProvider() {
+  public @Nullable PostfixTemplateProvider getProvider() {
     return myProvider;
   }
 

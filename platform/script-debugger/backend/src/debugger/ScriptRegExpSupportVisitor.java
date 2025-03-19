@@ -15,12 +15,14 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Additional interface that user visitor may implement for {@link BreakpointTarget#accept}
  * method.
  */
+@ApiStatus.Internal
 public interface ScriptRegExpSupportVisitor<R> extends BreakpointTarget.Visitor<R> {
   R visitRegExp(@NotNull ScriptRegExpBreakpointTarget target);
 }

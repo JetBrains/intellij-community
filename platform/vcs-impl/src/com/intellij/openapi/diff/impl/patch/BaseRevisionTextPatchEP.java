@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.project.ProjectKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class BaseRevisionTextPatchEP implements PatchEP {
   public static final Key<Boolean> ourProvideStoredBaseRevisionTextKey =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey");
@@ -29,9 +31,8 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
   private static final Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP";
   }
 
@@ -100,13 +101,11 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
     return null;
   }
 
-  @NotNull
-  private static String getStoredTextKey(@NotNull Project project, @NotNull String path) {
+  private static @NotNull String getStoredTextKey(@NotNull Project project, @NotNull String path) {
     return resolvePatchPath(project, path).toString();
   }
 
-  @NotNull
-  private static Path resolvePatchPath(@NotNull Project project, @NotNull String path) {
+  private static @NotNull Path resolvePatchPath(@NotNull Project project, @NotNull String path) {
     return ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
   }
 }

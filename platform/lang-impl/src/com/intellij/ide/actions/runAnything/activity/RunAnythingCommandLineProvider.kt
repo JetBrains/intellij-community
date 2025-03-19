@@ -14,7 +14,7 @@ abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<St
 
   protected abstract fun run(dataContext: DataContext, commandLine: CommandLine): Boolean
 
-  override fun getCommand(value: String) = value
+  override fun getCommand(value: String): String = value
 
   private fun getHelpCommands() = listOf(helpCommand) + getHelpCommandAliases()
 
@@ -69,6 +69,6 @@ abstract class RunAnythingCommandLineProvider : RunAnythingNotifiableProvider<St
     val toComplete: String
   ) {
     private val parameterSet by lazy { completedParameters.toSet() }
-    operator fun contains(command: String) = command in parameterSet
+    operator fun contains(command: String): Boolean = command in parameterSet
   }
 }

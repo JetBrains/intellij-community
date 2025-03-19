@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -27,23 +27,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
+public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConvertFieldToThreadLocalIntention.class);
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return TypeMigrationBundle.message("convert.to.threadlocal.family.name");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return false;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiField field)) return false;
@@ -57,7 +55,7 @@ public class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     LOG.assertTrue(psiField != null);
 
@@ -95,8 +93,7 @@ public class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntent
                                                "ThreadLocal<" + genericArg + "> " + fieldName + " = ThreadLocal.withInitial(...)");
   }
 
-  @Nullable
-  private static PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
+  private static @Nullable PsiClassType getMigrationTargetType(@NotNull PsiType fromType, @NotNull Project project, @NotNull PsiElement context) {
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass threadLocalClass = psiFacade.findClass(ThreadLocal.class.getName(), GlobalSearchScope.allScope(project));
     if (threadLocalClass == null) {//show warning

@@ -1,38 +1,49 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 
-object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
-    override fun isKotlinTestDeclaration(declaration: KtClassOrObject): Boolean {
-        analyze(declaration) {
-            val symbol = declaration.getClassOrObjectSymbol()
-            return symbol != null && isTestDeclaration(symbol)
+internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProvider() {
+
+    override fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean {
+        return analyze(declaration) {
+            val symbol = when (declaration) {
+                is KtClassOrObject -> declaration.classSymbol
+                is KtNamedFunction -> declaration.symbol
+                else -> null
+            } ?: return false
+            isTestDeclaration(symbol)
         }
     }
 
-    private fun KtAnalysisSession.isTestDeclaration(symbol: KtAnnotatedSymbol): Boolean {
+    context(KaSession)
+    private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
-            symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
-            symbol is KtClassOrObjectSymbol -> symbol.getDeclaredMemberScope().getCallableSymbols().any { isTestDeclaration(it) }
+            (symbol as? KaDeclarationSymbol)?.visibility != KaSymbolVisibility.PUBLIC -> false
+            KotlinTestAvailabilityChecker.TEST_FQ_NAME in symbol.annotations -> true
+            symbol is KaClassSymbol -> symbol.declaredMemberScope.callables.any { isTestDeclaration(it) }
             else -> false
         }
     }
 
-    private tailrec fun KtAnalysisSession.isIgnored(symbol: KtAnnotatedSymbol): Boolean {
-        if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
+    context(KaSession)
+    private tailrec fun isIgnored(symbol: KaAnnotatedSymbol): Boolean {
+        if (KotlinTestAvailabilityChecker.IGNORE_FQ_NAME in symbol.annotations) {
             return true
         }
 
-        val containingSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return false
+        val containingSymbol = symbol.containingDeclaration as? KaClassSymbol ?: return false
         return isIgnored(containingSymbol)
     }
 }

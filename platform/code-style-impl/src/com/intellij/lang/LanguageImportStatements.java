@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.application.options.CodeStyle;
@@ -18,8 +18,7 @@ public final class LanguageImportStatements extends LanguageExtension<ImportOpti
     super("com.intellij.lang.importOptimizer");
   }
 
-  @NotNull
-  public Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
+  public @NotNull Set<ImportOptimizer> forFile(@NotNull PsiFile file) {
     CodeStyleSettings settings = CodeStyle.getSettings(file);
     if (settings.getExcludedFiles().contains(file)) {
       return Collections.emptySet();

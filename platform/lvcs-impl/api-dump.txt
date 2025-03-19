@@ -1,0 +1,512 @@
+a:com.intellij.history.core.Content
+- <init>():V
+- equals(java.lang.Object):Z
+- a:getBytes():B[]
+- getBytesIfAvailable():B[]
+- getString(com.intellij.history.core.tree.Entry,com.intellij.history.integration.IdeaGateway):java.lang.String
+- a:isAvailable():Z
+- a:release():V
+- write(java.io.DataOutput):V
+c:com.intellij.history.core.LocalHistoryFacade
+- f:accept(com.intellij.history.core.changes.ChangeVisitor):V
+- f:addChangeInTests(com.intellij.history.core.changes.StructuralChange):V
+- f:addListener(com.intellij.history.core.LocalHistoryFacade$Listener,com.intellij.openapi.Disposable):V
+- f:beginChangeSet():V
+- f:created(java.lang.String,Z):V
+- f:deleted(java.lang.String,com.intellij.history.core.tree.Entry):V
+- f:endChangeSet(java.lang.String):V
+- f:endChangeSet(java.lang.String,com.intellij.history.ActivityId):V
+- bs:endChangeSet$default(com.intellij.history.core.LocalHistoryFacade,java.lang.String,com.intellij.history.ActivityId,I,java.lang.Object):V
+- f:forceBeginChangeSet():V
+- f:moved(java.lang.String,java.lang.String):V
+- f:putLabelInTests(com.intellij.history.core.changes.PutLabelChange):V
+- f:readOnlyStatusChanged(java.lang.String,Z):V
+- f:removeListener(com.intellij.history.core.LocalHistoryFacade$Listener):V
+- f:renamed(java.lang.String,java.lang.String):V
+a:com.intellij.history.core.LocalHistoryFacade$Listener
+- <init>():V
+- changeAdded(com.intellij.history.core.changes.Change):V
+- changeSetFinished(com.intellij.history.core.changes.ChangeSet):V
+f:com.intellij.history.core.LocalHistoryFacadeKt
+f:com.intellij.history.core.Paths
+- sf:DELIM:C
+- <init>():V
+- s:appended(java.lang.String,java.lang.String):java.lang.String
+- s:createDvcsFilePath(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FilePath
+- s:createDvcsFilePath(java.lang.String,Z):com.intellij.openapi.vcs.FilePath
+- s:equals(java.lang.String,java.lang.String):Z
+- s:getNameOf(java.lang.String):java.lang.String
+- s:getParentOf(java.lang.String):java.lang.String
+- s:isCaseSensitive():Z
+- s:isParent(java.lang.String,java.lang.String):Z
+- s:isParentOrChild(java.lang.String,java.lang.String):Z
+- s:relativeIfUnder(java.lang.String,java.lang.String):java.lang.String
+- s:renamed(java.lang.String,java.lang.String):java.lang.String
+- s:reparented(java.lang.String,java.lang.String):java.lang.String
+- s:setCaseSensitive(Z):V
+- s:split(java.lang.String):java.lang.Iterable
+- s:useSystemCaseSensitivity():V
+f:com.intellij.history.core.RevisionsCollector
+- <init>():V
+- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String):java.util.List
+- s:collect(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,java.lang.String,com.intellij.history.core.HistoryPathFilter,Z):java.util.List
+a:com.intellij.history.core.changes.Change
+- p:<init>(J):V
+- p:<init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- a:affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
+- a:affectsMatching(java.util.regex.Pattern):Z
+- a:affectsPath(java.lang.String):Z
+- a:affectsProject(java.lang.String):Z
+- f:equals(java.lang.Object):Z
+- a:getContentsToPurge():java.util.List
+- getId():J
+- f:hashCode():I
+- a:isCreationalFor(java.lang.String):Z
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.ChangeSet
+- <init>(J,J):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- addChange(com.intellij.history.core.changes.Change):V
+- anyChangeMatches(java.util.function.Predicate):Z
+- equals(java.lang.Object):Z
+- getActivityId():com.intellij.history.ActivityId
+- getAffectedPaths():java.util.List
+- getChanges():java.util.List
+- getContentsToPurge():java.util.List
+- getFirstChange():com.intellij.history.core.changes.Change
+- getId():J
+- getLabel():java.lang.String
+- getLabelColor():I
+- getLastChange():com.intellij.history.core.changes.Change
+- getName():java.lang.String
+- getTimestamp():J
+- hashCode():I
+- isContentChangeOnly():Z
+- isEmpty():Z
+- isLabelOnly():Z
+- isSystemLabelOnly():Z
+- lock():V
+- setActivityId(com.intellij.history.ActivityId):V
+- setName(java.lang.String):V
+- write(java.io.DataOutput):V
+a:com.intellij.history.core.changes.ChangeVisitor
+- <init>():V
+- begin(com.intellij.history.core.changes.ChangeSet):V
+- end(com.intellij.history.core.changes.ChangeSet):V
+- finished():V
+- p:stop():V
+- visit(com.intellij.history.core.changes.ContentChange):V
+- visit(com.intellij.history.core.changes.CreateEntryChange):V
+- visit(com.intellij.history.core.changes.DeleteChange):V
+- visit(com.intellij.history.core.changes.MoveChange):V
+- visit(com.intellij.history.core.changes.PutLabelChange):V
+- visit(com.intellij.history.core.changes.ROStatusChange):V
+- visit(com.intellij.history.core.changes.RenameChange):V
+- visit(com.intellij.history.core.changes.StructuralChange):V
+f:com.intellij.history.core.changes.ChangeVisitor$StopVisitingException
+- java.lang.Exception
+- <init>():V
+f:com.intellij.history.core.changes.ContentChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String,com.intellij.history.core.Content,J):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- getContentsToPurge():java.util.List
+- getOldContent():com.intellij.history.core.Content
+- getOldTimestamp():J
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.CreateDirectoryChange
+- com.intellij.history.core.changes.CreateEntryChange
+- <init>(J,java.lang.String):V
+- <init>(java.io.DataInput):V
+a:com.intellij.history.core.changes.CreateEntryChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- isCreationalFor(java.lang.String):Z
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+f:com.intellij.history.core.changes.CreateFileChange
+- com.intellij.history.core.changes.CreateEntryChange
+- <init>(J,java.lang.String):V
+- <init>(java.io.DataInput):V
+f:com.intellij.history.core.changes.DeleteChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String,com.intellij.history.core.tree.Entry):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- getContentsToPurge():java.util.List
+- getDeletedEntry():com.intellij.history.core.tree.Entry
+- isDeletionOf(java.lang.String):Z
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.MoveChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String,java.lang.String):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- getOldParent():java.lang.String
+- getOldPath():java.lang.String
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- write(java.io.DataOutput):V
+c:com.intellij.history.core.changes.PutLabelChange
+- com.intellij.history.core.changes.Change
+- <init>(J,java.lang.String,java.lang.String):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
+- affectsMatching(java.util.regex.Pattern):Z
+- affectsPath(java.lang.String):Z
+- affectsProject(java.lang.String):Z
+- getContentsToPurge():java.util.List
+- getName():java.lang.String
+- getProjectId():java.lang.String
+- isCreationalFor(java.lang.String):Z
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.PutSystemLabelChange
+- com.intellij.history.core.changes.PutLabelChange
+- <init>(J,java.lang.String,java.lang.String,I):V
+- <init>(java.io.DataInput):V
+- getColor():I
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.ROStatusChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String,Z):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- getOldStatus():Z
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.changes.RenameChange
+- com.intellij.history.core.changes.StructuralChange
+- <init>(J,java.lang.String,java.lang.String):V
+- <init>(java.io.DataInput):V
+- accept(com.intellij.history.core.changes.ChangeVisitor):V
+- getOldName():java.lang.String
+- getOldPath():java.lang.String
+- revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- write(java.io.DataOutput):V
+a:com.intellij.history.core.changes.StructuralChange
+- com.intellij.history.core.changes.Change
+- pf:myPath:java.lang.String
+- p:<init>(J,java.lang.String):V
+- p:<init>(java.io.DataInput):V
+- affectsMatching(com.intellij.history.core.HistoryPathFilter):Z
+- affectsMatching(java.util.regex.Pattern):Z
+- affectsPath(java.lang.String):Z
+- affectsProject(java.lang.String):Z
+- p:cannotRevert(java.lang.String,Z):V
+- p:getAffectedPaths():java.lang.String[]
+- getContentsToPurge():java.util.List
+- getOldPath():java.lang.String
+- getPath():java.lang.String
+- isCreationalFor(java.lang.String):Z
+- p:removeEntry(com.intellij.history.core.tree.Entry):V
+- a:revertOn(com.intellij.history.core.tree.RootEntry,Z):V
+- revertPath(java.lang.String):java.lang.String
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.revisions.ChangeRevision
+- com.intellij.history.core.revisions.Revision
+- <init>(com.intellij.history.core.LocalHistoryFacade,com.intellij.history.core.tree.RootEntry,java.lang.String,com.intellij.history.core.changes.ChangeSet,Z):V
+- findEntry():com.intellij.history.core.tree.Entry
+- getAffectedFileNames():com.intellij.openapi.util.Pair
+- getChangeSetId():java.lang.Long
+- getChangeSetName():java.lang.String
+- getLabel():java.lang.String
+- getLabelColor():I
+- getRoot():com.intellij.history.core.tree.RootEntry
+- getTimestamp():J
+f:com.intellij.history.core.revisions.CurrentRevision
+- com.intellij.history.core.revisions.Revision
+- <init>(com.intellij.history.core.tree.RootEntry,java.lang.String):V
+- equals(java.lang.Object):Z
+- findEntry():com.intellij.history.core.tree.Entry
+- getRoot():com.intellij.history.core.tree.RootEntry
+- getTimestamp():J
+- hashCode():I
+f:com.intellij.history.core.revisions.Difference
+- <init>(com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry,Z):V
+- <init>(Z,com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry):V
+- <init>(Z,com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry,Z):V
+- getFilePath():com.intellij.openapi.vcs.FilePath
+- getLeft():com.intellij.history.core.tree.Entry
+- getLeftContentRevision(com.intellij.history.integration.IdeaGateway):com.intellij.openapi.vcs.changes.ContentRevision
+- getRight():com.intellij.history.core.tree.Entry
+- getRightContentRevision(com.intellij.history.integration.IdeaGateway):com.intellij.openapi.vcs.changes.ContentRevision
+- isFile():Z
+a:com.intellij.history.core.revisions.Revision
+- <init>():V
+- a:findEntry():com.intellij.history.core.tree.Entry
+- getAffectedFileNames():com.intellij.openapi.util.Pair
+- getChangeSetId():java.lang.Long
+- getChangeSetName():java.lang.String
+- s:getDifferencesBetween(com.intellij.history.core.revisions.Revision,com.intellij.history.core.revisions.Revision):java.util.List
+- getLabel():java.lang.String
+- getLabelColor():I
+- a:getRoot():com.intellij.history.core.tree.RootEntry
+- a:getTimestamp():J
+- isLabel():Z
+a:com.intellij.history.core.tree.Entry
+- <init>(I):V
+- <init>(java.io.DataInput):V
+- <init>(java.lang.String):V
+- addChild(com.intellij.history.core.tree.Entry):V
+- addChildren(java.util.Collection):V
+- ps:calcNameHash(java.lang.CharSequence):I
+- pa:collectCreatedDifferences(java.util.function.BiConsumer):V
+- pa:collectDeletedDifferences(java.util.function.BiConsumer):V
+- pa:collectDifferencesWith(com.intellij.history.core.tree.Entry,java.util.function.BiConsumer):V
+- a:copy():com.intellij.history.core.tree.Entry
+- findChild(java.lang.String):com.intellij.history.core.tree.Entry
+- findEntry(java.lang.String):com.intellij.history.core.tree.Entry
+- getChildren():java.util.List
+- s:getDifferencesBetween(com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry):java.util.List
+- s:getDifferencesBetween(com.intellij.history.core.tree.Entry,com.intellij.history.core.tree.Entry,Z):java.util.List
+- getEntry(java.lang.String):com.intellij.history.core.tree.Entry
+- getName():java.lang.String
+- getNameHash():I
+- getNameId():I
+- getNameSequence():java.lang.CharSequence
+- getParent():com.intellij.history.core.tree.Entry
+- getPath():java.lang.String
+- a:getTimestamp():J
+- hasEntry(java.lang.String):Z
+- hasUnavailableContent():Z
+- hasUnavailableContent(java.util.List):Z
+- isDirectory():Z
+- isOutdated(J):Z
+- isReadOnly():Z
+- nameEquals(java.lang.String):Z
+- pathEquals(java.lang.String):Z
+- removeChild(com.intellij.history.core.tree.Entry):V
+- setName(java.lang.String):V
+- setReadOnly(Z):V
+- ps:toNameId(java.lang.String):I
+- write(java.io.DataOutput):V
+f:com.intellij.history.core.tree.RootEntry
+- com.intellij.history.core.tree.Entry
+- <init>():V
+- copy():com.intellij.history.core.tree.RootEntry
+- ensureDirectoryExists(java.lang.String):com.intellij.history.core.tree.Entry
+- write(java.io.DataOutput):V
+c:com.intellij.history.integration.IdeaGateway
+- <init>():V
+- acquireAndClearCurrentContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
+- acquireAndUpdateActualContent(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document):com.intellij.openapi.util.Pair
+- areContentChangesVersioned(com.intellij.openapi.vfs.VirtualFile):Z
+- areContentChangesVersioned(java.lang.String):Z
+- createEntryForDeletion(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
+- createTransientEntry(com.intellij.openapi.vfs.VirtualFile):com.intellij.history.core.tree.Entry
+- createTransientRootEntry():com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPath(java.lang.String,Z):com.intellij.history.core.tree.RootEntry
+- createTransientRootEntryForPaths(java.util.Collection,Z):com.intellij.history.core.tree.RootEntry
+- ensureFilesAreWritable(com.intellij.openapi.project.Project,java.util.List):Z
+- findOrCreateFileSafely(com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
+- findOrCreateFileSafely(java.lang.String,Z):com.intellij.openapi.vfs.VirtualFile
+- findVirtualFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- getDocument(java.lang.String):com.intellij.openapi.editor.Document
+- getFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- s:getInstance():com.intellij.history.integration.IdeaGateway
+- s:getNameOrUrlPart(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getPathOrUrl(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- ps:getVersionedFilterData():com.intellij.history.integration.IdeaGateway$VersionedFilterData
+- isVersioned(com.intellij.openapi.vfs.VirtualFile):Z
+- isVersioned(com.intellij.openapi.vfs.VirtualFile,Z):Z
+- s:iterateDBChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
+- s:loadAndIterateChildren(com.intellij.openapi.vfs.VirtualFile):java.lang.Iterable
+- registerUnsavedDocuments(com.intellij.history.core.LocalHistoryFacade):V
+- runWithVfsEventsDispatchContext(java.util.List,Z,java.lang.Runnable):V
+- saveAllUnsavedDocuments():V
+- stringFromBytes(B[],java.lang.String):java.lang.String
+pf:com.intellij.history.integration.IdeaGateway$VersionedFilterData
+f:com.intellij.history.integration.LocalHistoryBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+a:com.intellij.history.integration.LocalHistoryEx
+- com.intellij.history.LocalHistory
+- com.intellij.openapi.Disposable
+- a:getFacade():com.intellij.history.core.LocalHistoryFacade
+f:com.intellij.history.integration.revertion.DifferenceReverter
+- com.intellij.history.integration.revertion.Reverter
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.List,com.intellij.history.core.revisions.Revision):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.List,java.util.function.Supplier):V
+- doRevert(Z):V
+a:com.intellij.history.integration.revertion.Reverter
+- pf:myGateway:com.intellij.history.integration.IdeaGateway
+- p:myVcs:com.intellij.history.core.LocalHistoryFacade
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.core.LocalHistoryFacade,com.intellij.history.integration.IdeaGateway,java.util.function.Supplier):V
+- p:askForReadOnlyStatusClearing():Z
+- askUserForProceeding():java.util.List
+- checkCanRevert():java.util.List
+- pa:doRevert():V
+- getCommandName():java.lang.String
+- pa:getFilesToClearROStatus():java.util.List
+- s:getRevertCommandName(com.intellij.history.core.revisions.Revision):java.lang.String
+- revert():V
+c:com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
+- com.intellij.history.integration.ui.models.HistoryDialogModel
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
+- createReverter():com.intellij.history.integration.revertion.Reverter
+- createRevisionReverter(java.util.List):com.intellij.history.integration.revertion.Reverter
+c:com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
+- com.intellij.history.integration.ui.models.FileHistoryDialogModel
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
+- getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel
+a:com.intellij.history.integration.ui.models.FileDifferenceModel
+- pf:myGateway:com.intellij.history.integration.IdeaGateway
+- pf:myProject:com.intellij.openapi.project.Project
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,Z):V
+- s:createRequest(com.intellij.history.integration.ui.models.FileDifferenceModel,com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.requests.ContentDiffRequest
+- pa:getEditableRightDiffContent(com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
+- getLeftDiffContent(com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
+- pa:getLeftEntry():com.intellij.history.core.tree.Entry
+- getLeftTitle(com.intellij.history.integration.ui.models.RevisionProcessingProgress):java.lang.String
+- pa:getReadOnlyLeftDiffContent(com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
+- pa:getReadOnlyRightDiffContent(com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
+- getRightDiffContent(com.intellij.history.integration.ui.models.RevisionProcessingProgress):com.intellij.diff.contents.DiffContent
+- pa:getRightEntry():com.intellij.history.core.tree.Entry
+- getRightTitle(com.intellij.history.integration.ui.models.RevisionProcessingProgress):java.lang.String
+- getTitle():java.lang.String
+- pa:isLeftContentAvailable(com.intellij.history.integration.ui.models.RevisionProcessingProgress):Z
+- pa:isRightContentAvailable(com.intellij.history.integration.ui.models.RevisionProcessingProgress):Z
+a:com.intellij.history.integration.ui.models.FileHistoryDialogModel
+- com.intellij.history.integration.ui.models.HistoryDialogModel
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
+- createReverter():com.intellij.history.integration.revertion.Reverter
+- filterContents(java.lang.String):java.util.Set
+- a:getDifferenceModel():com.intellij.history.integration.ui.models.FileDifferenceModel
+a:com.intellij.history.integration.ui.models.HistoryDialogModel
+- p:myBefore:Z
+- pf:myFile:com.intellij.openapi.vfs.VirtualFile
+- pf:myGateway:com.intellij.history.integration.IdeaGateway
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myVcs:com.intellij.history.core.LocalHistoryFacade
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile):V
+- canPerformCreatePatch():Z
+- clearRevisions():V
+- p:createChange(com.intellij.history.core.revisions.Difference):com.intellij.openapi.vcs.changes.Change
+- a:createReverter():com.intellij.history.integration.revertion.Reverter
+- p:createRootEntry():com.intellij.history.core.tree.RootEntry
+- getChanges():java.util.List
+- getCurrentRevision():com.intellij.history.core.revisions.Revision
+- p:getDifferences():java.util.List
+- p:getLeftEntry():com.intellij.history.core.tree.Entry
+- getLeftRevision():com.intellij.history.core.revisions.Revision
+- getRevisions():java.util.List
+- p:getRightEntry():com.intellij.history.core.tree.Entry
+- getRightRevision():com.intellij.history.core.revisions.Revision
+- getTitle():java.lang.String
+- isCreatePatchEnabled():Z
+- isCurrentRevisionSelected():Z
+- isRevertEnabled():Z
+- myFilter():java.lang.String
+- processContents(com.intellij.util.PairProcessor):V
+- resetSelection():Z
+- selectRevisions(I,I):Z
+- setFilter(java.lang.String):V
+f:com.intellij.history.integration.ui.models.RevisionItem
+- f:labels:java.util.LinkedList
+- f:revision:com.intellij.history.core.revisions.Revision
+- <init>(com.intellij.history.core.revisions.Revision):V
+com.intellij.history.integration.ui.models.RevisionProcessingProgress
+- sf:EMPTY:com.intellij.history.integration.ui.models.RevisionProcessingProgress
+- a:processingLeftRevision():V
+- a:processingRightRevision():V
+c:com.intellij.history.integration.ui.models.RevisionProcessingProgress$Empty
+- com.intellij.history.integration.ui.models.RevisionProcessingProgress
+- <init>():V
+- processed(I):V
+- processingLeftRevision():V
+- processingRightRevision():V
+c:com.intellij.history.integration.ui.views.DirectoryHistoryDialog
+- com.intellij.history.integration.ui.views.HistoryDialog
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,Z):V
+- p:createDiffPanel(javax.swing.JPanel,com.intellij.ui.ExcludingTraversalPolicy):com.intellij.openapi.util.Pair
+- p:createModel(com.intellij.history.core.LocalHistoryFacade):com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
+- p:doUpdateDiffs(com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel):java.lang.Runnable
+- p:getHelpId():java.lang.String
+- p:setDiffBorder(javax.swing.border.Border):V
+- p:showSearchField():Z
+- p:updateActions():V
+c:com.intellij.history.integration.ui.views.FileHistoryDialog
+- com.intellij.history.integration.ui.views.HistoryDialog
+- <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,Z):V
+- p:addExtraToolbar(javax.swing.JPanel):V
+- p:createDiffPanel(javax.swing.JPanel,com.intellij.ui.ExcludingTraversalPolicy):com.intellij.openapi.util.Pair
+- p:createDifference(com.intellij.history.integration.ui.models.FileDifferenceModel):com.intellij.diff.requests.ContentDiffRequest
+- p:createModel(com.intellij.history.core.LocalHistoryFacade):com.intellij.history.integration.ui.models.FileHistoryDialogModel
+- dispose():V
+- p:doUpdateDiffs(com.intellij.history.integration.ui.models.FileHistoryDialogModel):java.lang.Runnable
+- s:findLeftEditor(javax.swing.JComponent):com.intellij.openapi.editor.Editor
+- p:getHelpId():java.lang.String
+- p:setDiffBorder(javax.swing.border.Border):V
+- s:updateEditorSearch(com.intellij.openapi.project.Project,javax.swing.text.JTextComponent,com.intellij.openapi.editor.Editor):V
+a:com.intellij.history.integration.ui.views.HistoryDialog
+- com.intellij.openapi.ui.FrameWrapper
+- pf:myFile:com.intellij.openapi.vfs.VirtualFile
+- p:myForceUpdateDiff:Z
+- pf:myGateway:com.intellij.history.integration.IdeaGateway
+- p:myModel:com.intellij.history.integration.ui.models.HistoryDialogModel
+- pf:myProject:com.intellij.openapi.project.Project
+- p:myRevisionsList:com.intellij.history.integration.ui.views.RevisionsList
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,Z):V
+- p:addExtraToolbar(javax.swing.JPanel):V
+- p:createComponent():javax.swing.JComponent
+- pa:createDiffPanel(javax.swing.JPanel,com.intellij.ui.ExcludingTraversalPolicy):com.intellij.openapi.util.Pair
+- p:createDifference(com.intellij.history.integration.ui.models.FileDifferenceModel):com.intellij.diff.requests.ContentDiffRequest
+- pa:createModel(com.intellij.history.core.LocalHistoryFacade):com.intellij.history.integration.ui.models.HistoryDialogModel
+- dispose():V
+- pa:doUpdateDiffs(com.intellij.history.integration.ui.models.HistoryDialogModel):java.lang.Runnable
+- p:getDimensionKey():java.lang.String
+- pa:getHelpId():java.lang.String
+- p:getRevisions():java.util.List
+- p:init():V
+- p:revert():V
+- p:revert(com.intellij.history.integration.revertion.Reverter):V
+- p:scheduleRevisionsUpdate(com.intellij.util.Consumer):V
+- pa:setDiffBorder(javax.swing.border.Border):V
+- showError(java.lang.String):V
+- p:showRevisionsList():Z
+- p:updateActions():V
+pa:com.intellij.history.integration.ui.views.HistoryDialog$MyAction
+- com.intellij.openapi.actionSystem.AnAction
+- p:<init>(com.intellij.history.integration.ui.views.HistoryDialog,java.lang.String,java.lang.String,javax.swing.Icon):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pa:doPerform(com.intellij.history.integration.ui.models.HistoryDialogModel):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:isEnabled(com.intellij.history.integration.ui.models.HistoryDialogModel):Z
+- performIfEnabled():V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.history.integration.ui.views.RevisionsList
+- sf:RECENT_PERIOD:I
+- <init>(com.intellij.history.integration.ui.views.RevisionsList$SelectionListener):V
+- getComponent():javax.swing.JComponent
+- isEmpty():Z
+- moveSelection(Z):V
+- setFilteredRevisions(java.util.Set):V
+- updateData(com.intellij.history.integration.ui.models.HistoryDialogModel):V
+f:com.intellij.history.integration.ui.views.RevisionsList$MyCellRenderer
+- javax.swing.table.TableCellRenderer
+- <init>(com.intellij.ui.table.JBTable):V
+- getTableCellRendererComponent(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
+com.intellij.history.integration.ui.views.RevisionsList$SelectionListener
+- a:revisionsSelected(I,I):V
+a:com.intellij.history.utils.RunnableAdapter
+- java.lang.Runnable
+- <init>():V
+- a:doRun():V
+- run():V
+f:com.intellij.openapi.command.impl.FileUndoProvider
+- com.intellij.openapi.command.impl.UndoProvider
+- com.intellij.openapi.vfs.newvfs.BulkFileListener
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- <init>():V
+- after(java.util.List):V
+- before(java.util.List):V
+- commandFinished(com.intellij.openapi.project.Project):V
+- commandStarted(com.intellij.openapi.project.Project):V

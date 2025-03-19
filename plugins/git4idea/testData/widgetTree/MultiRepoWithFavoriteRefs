@@ -1,0 +1,20 @@
+-Update Project...
+-Commit…
+-Push…
+------
+-New Branch…
+-Checkout Tag or Revision…
+------
+-bro-repo
+-project
+------
+-Common Local Branches
+ master
+ b
+ e
+ a
+ c
+ d
+-Common Remote Branches
+ -origin
+  master

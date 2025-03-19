@@ -4,8 +4,6 @@ PyFile:shellError.py
       PsiElement(Py:IDENTIFIER)('int')
     PsiErrorElement:End of statement expected
       <empty list>
-  PsiElement(Py:PLING)('!')
-  PsiErrorElement:Identifier expected
-    <empty list>
-  PsiErrorElement:Statement expected, found Py:PLING
+  PsiElement(Py:SHELL_COMMAND)('!')
+  PsiErrorElement:Statement expected, found Py:SHELL_COMMAND
     <empty list>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.util;
 
 import com.intellij.icons.AllIcons;
@@ -30,6 +30,11 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * @see MasterController
+ * @deprecated not used anymore, and is internal
+ */
+@Deprecated(forRemoval = true)
 public final class MasterDetailPopupBuilder implements MasterController {
   private static final Color BORDER_COLOR = Gray._135;
 
@@ -53,8 +58,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
     myProject = project;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setList(@NotNull JBList list) {
+  public @NotNull MasterDetailPopupBuilder setList(@NotNull JBList list) {
     myChooserComponent = list;
     myDetailController.setList(list);
 
@@ -138,51 +142,43 @@ public final class MasterDetailPopupBuilder implements MasterController {
     }
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setDelegate(@NotNull Delegate delegate) {
+  public @NotNull MasterDetailPopupBuilder setDelegate(@NotNull Delegate delegate) {
     myDelegate = delegate;
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setDetailView(@NotNull DetailView detailView) {
+  public @NotNull MasterDetailPopupBuilder setDetailView(@NotNull DetailView detailView) {
     myDetailView = detailView;
     myDetailController.setDetailView(myDetailView);
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
+  public @NotNull MasterDetailPopupBuilder setDimensionServiceKey(@Nullable String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setAddDetailViewToEast(boolean addDetailViewToEast) {
+  public @NotNull MasterDetailPopupBuilder setAddDetailViewToEast(boolean addDetailViewToEast) {
     myAddDetailViewToEast = addDetailViewToEast;
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setActionsGroup(@Nullable ActionGroup actions) {
+  public @NotNull MasterDetailPopupBuilder setActionsGroup(@Nullable ActionGroup actions) {
     myActions = actions;
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<? super IPopupChooserBuilder> tuner) {
+  public @NotNull MasterDetailPopupBuilder setPopupTuner(@Nullable Consumer<? super IPopupChooserBuilder> tuner) {
     myPopupTuner = tuner;
     return this;
   }
 
-  @NotNull
-  public MasterDetailPopupBuilder setDoneRunnable(@Nullable Runnable doneRunnable) {
+  public @NotNull MasterDetailPopupBuilder setDoneRunnable(@Nullable Runnable doneRunnable) {
     myDoneRunnable = doneRunnable;
     return this;
   }
 
-  @NotNull
-  public JBPopup createMasterDetailPopup() {
+  public @NotNull JBPopup createMasterDetailPopup() {
     if (myChooserComponent instanceof JList) {
       ((JList<?>)myChooserComponent).setCellRenderer(new ListItemRenderer(myProject, myDelegate));
     }
@@ -245,12 +241,12 @@ public final class MasterDetailPopupBuilder implements MasterController {
       if (SystemInfoRt.isMac && !StartupUiUtil.isUnderDarcula()) {
         JButton done = new JButton(LangBundle.message("button.done"));
         done.setOpaque(false);
+        //noinspection HardCodedStringLiteral
         done.setMnemonic('o');
         done.addActionListener(actionListener);
         builder.setCommandButton(new ActiveComponent.Adapter() {
-          @NotNull
           @Override
-          public JComponent getComponent() {
+          public @NotNull JComponent getComponent() {
             return done;
           }
         });
@@ -319,7 +315,7 @@ public final class MasterDetailPopupBuilder implements MasterController {
   }
 
   @Override
-  public JLabel getPathLabel() {
+  public @Nullable JLabel getPathLabel() {
     return myPathLabel;
   }
 

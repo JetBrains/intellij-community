@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -44,14 +44,12 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public PsiTypeElement getTypeElement() {
+  public @Nullable PsiTypeElement getTypeElement() {
     return PsiImplUtil.getOrCreateTypeElement(getTypeElementGroovy());
   }
 
   @Override
-  @Nullable
-  public PsiExpression getInitializer() {
+  public @Nullable PsiExpression getInitializer() {
     return null;
   }
 
@@ -65,8 +63,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return null;
   }
 
@@ -97,15 +94,13 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiType type = getDeclaredType();
     return type != null ? type : TypesUtil.getJavaLangObject(this);
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
+  public @Nullable GrTypeElement getTypeElementGroovy() {
     T stub = getStub();
     if (stub != null) {
       return stub.getTypeElement();
@@ -120,8 +115,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     GrTypeElement typeElement = getTypeElementGroovy();
     PsiType declaredType = null;
     if (typeElement != null) {
@@ -177,8 +171,7 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     PsiElement ident = findChildByType(TokenSets.PROPERTY_NAMES);
     assert ident != null : getText();
     return ident;
@@ -201,16 +194,14 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     final GrVariableDeclarationOwner owner = PsiTreeUtil.getParentOfType(this, GrVariableDeclarationOwner.class);
     if (owner != null) return new LocalSearchScope(owner);
     return super.getUseScope();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     T stub = getGreenStub();
     if (stub != null) {
       String name = stub.getName();
@@ -222,21 +213,18 @@ public abstract class GrVariableBaseImpl<T extends GrVariableStubBase> extends G
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return PsiUtil.getJavaNameIdentifier(this);
   }
 
   @Override
-  @Nullable
-  public GrModifierList getModifierList() {
+  public @Nullable GrModifierList getModifierList() {
     final GrVariableDeclaration variableDeclaration = getDeclaration();
     if (variableDeclaration != null) return variableDeclaration.getModifierList();
     return null;
   }
 
-  @Nullable
-  private GrVariableDeclaration getDeclaration() {
+  private @Nullable GrVariableDeclaration getDeclaration() {
     PsiElement parent = getParent();
     if (parent instanceof GrVariableDeclaration) {
       return (GrVariableDeclaration)parent;

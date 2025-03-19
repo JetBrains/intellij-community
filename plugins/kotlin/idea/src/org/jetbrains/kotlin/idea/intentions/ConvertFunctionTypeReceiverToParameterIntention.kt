@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -9,10 +9,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -32,7 +34,6 @@ import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.psi.*
@@ -155,7 +156,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
 
             val lambdaParameterList = lambda.getOrCreateParameterList()
             if (lambda.valueParameters.isEmpty() && lambdaDescriptor.valueParameters.isNotEmpty()) {
-                val parameterToAdd = psiFactory.createLambdaParameterList("it").parameters.first()
+                val parameterToAdd = psiFactory.createLambdaParameterList(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier).parameters.first()
                 lambdaParameterList.addParameterBefore(parameterToAdd, lambdaParameterList.parameters.firstOrNull())
             }
 
@@ -245,7 +246,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
 
             if (body != null) {
                 val functionParameter = callable.valueParameters.getOrNull(parameterIndex) ?: return
-                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body))) {
+                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body)).asIterable()) {
                     val element = ref.element as? KtSimpleNameExpression ?: continue
                     val callExpression = element.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression } ?: continue
                     usages += ParameterCallInfo(callExpression)
@@ -332,7 +333,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         element.getConversionData()?.let { Converter(it, editor, element.project).run() }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = ConvertFunctionTypeReceiverToParameterIntention()
     }
 }

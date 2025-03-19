@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.ide.JavaUiBundle;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class ProjectStructureProblemsHolderImpl implements ProjectStructureProblemsHolder {
@@ -78,8 +78,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     }
   }
 
-  @Nullable
-  public List<ProjectStructureProblemDescription> getProblemDescriptions() {
+  public @Nullable List<ProjectStructureProblemDescription> getProblemDescriptions() {
     return myProblemDescriptions;
   }
 }

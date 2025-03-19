@@ -8,6 +8,7 @@ import com.intellij.lexer.XmlLexer;
 import com.intellij.testFramework.LexerTestCase;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -15,17 +16,17 @@ import java.io.IOException;
 
 public class XmlLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new XmlLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return "/xml/tests/testData/lexer/xml";
   }
 
   @Override
-  protected @NotNull String getPathToTestDataFile(String extension) {
+  protected @NotNull String getPathToTestDataFile(@NotNull String extension) {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 
@@ -47,14 +48,14 @@ public class XmlLexerTest extends LexerTestCase {
 
 
   public void testPerformance1() throws IOException {
-    doTestPerformance("pallada.xml", 200);
+    doTestPerformance("pallada.xml");
   }
 
   public void testPerformance2() throws IOException {
-    doTestPerformance("performance2.xml", 400);
+    doTestPerformance("performance2.xml");
   }
 
-  private static void doTestPerformance(String fileName, int expectedMs) throws IOException {
+  private static void doTestPerformance(String fileName) throws IOException {
     final String text = ParsingTestCase.loadFileDefault(
       PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/psi/xml",
       fileName);
@@ -62,12 +63,12 @@ public class XmlLexerTest extends LexerTestCase {
     final FilterLexer filterLexer = new FilterLexer(new XmlLexer(),
                                                     new FilterLexer.SetFilter(new XMLParserDefinition().getWhitespaceTokens()));
 
-    PlatformTestUtil.startPerformanceTest("XML Lexer Performance on " + fileName, expectedMs, () -> {
+    Benchmark.newBenchmark("XML Lexer Performance on " + fileName, () -> {
       for (int i = 0; i < 10; i++) {
         doLex(lexer, text);
         doLex(filterLexer, text);
       }
-    }).assertTiming();
+    }).start();
   }
 
   private static void doLex(Lexer lexer, final String text) {

@@ -28,4 +28,5 @@ fun test() {
     B().p = 1
 }
 
-// FIR_IGNORE
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code

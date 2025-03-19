@@ -3,11 +3,8 @@ package com.intellij.execution
 
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
@@ -33,9 +30,11 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
     assertThat(runConfigurations).isEmpty()
     val module = projectModel.createModule("m")
     ModuleRootModificationUtil.addContentRoot(module, file.parent.path)
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(runConfigurations.single().name).isEqualTo("a")
     projectModel.removeModule(module)
     runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(runConfigurations).isEmpty()
   }
   @Test
@@ -48,11 +47,13 @@ class UpdateRCInArbitraryFilesAfterProjectModelChangesTest {
     PsiTestUtil.addSourceRoot(module, srcRoot)
     PsiTestUtil.addExcludedRoot(module, excludedRoot)
     projectModel.baseProjectDir.newVirtualFile("m/exc/src/b.run.xml", generateRunXmlFileText("b"))
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
 
     assertThat(runConfigurations.single().name).isEqualTo("b")
     
     PsiTestUtil.removeSourceRoot(module, srcRoot)
     runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
+    IndexingTestUtil.waitUntilIndexesAreReady(projectModel.project)
     assertThat(runConfigurations).isEmpty()
   }
   

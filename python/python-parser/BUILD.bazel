@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.python.parser` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "parser_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "parser",
+  module_name = "intellij.python.parser",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:fastutil-min",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":parser_resources"]
+)
+### auto-generated section `build intellij.python.parser` end

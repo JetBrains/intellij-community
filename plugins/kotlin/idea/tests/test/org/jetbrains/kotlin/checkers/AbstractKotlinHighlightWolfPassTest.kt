@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.codeInsight.AbstractOutOfBlockModificationTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils.checkForUnexpectedErrors
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtureTestCase() {
 
@@ -55,7 +55,7 @@ abstract class AbstractKotlinHighlightWolfPassTest: KotlinLightCodeInsightFixtur
         myFixture.doHighlighting()
         // have to analyze file before any change to support incremental analysis
         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
-        checkForUnexpectedErrors(ktFile, diagnosticsProvider)
+        checkForUnexpectedErrors(ktFile, diagnosticsProvider = diagnosticsProvider)
         val wolf = WolfTheProblemSolver.getInstance(project)
         val virtualFile = ktFile.virtualFile
         val initialWolfErrors = wolfErrors(myFixture)

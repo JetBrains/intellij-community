@@ -1,0 +1,38 @@
+### auto-generated section `build kotlin.migration` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "migration_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "migration",
+  module_name = "kotlin.migration",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/formatter",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/statistics",
+  ],
+  runtime_deps = [":migration_resources"]
+)
+### auto-generated section `build kotlin.migration` end

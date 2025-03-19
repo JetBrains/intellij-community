@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -19,23 +22,17 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
+import com.intellij.toolWindow.ToolWindowHeader;
 import com.intellij.toolWindow.ToolWindowPane;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.MouseDragHelper;
-import com.intellij.ui.PopupHandler;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.*;
-import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
-import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
-import com.intellij.ui.layout.migLayout.patched.MigLayout;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
@@ -54,16 +51,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
-public final class ToolWindowContentUi implements ContentUI, DataProvider {
-  // when client property is put in toolwindow component, hides toolwindow label
-  @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
-  @NonNls public static final Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
-  @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataProvider {
+  // when client property is put in a toolwindow component, hides toolwindow label
+  public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
+  public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
+  // when client property is set to true in a toolwindow component, the toolbar is always visible in the tool window header
+  public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
+  private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
+  @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
+
+  @ApiStatus.Experimental
+  public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -93,11 +95,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public Predicate<Point> isResizableArea = __ -> true;
 
   private final JPanel tabComponent = new TabPanel();
-
-  @NotNull
-  public JPanel getTabComponent() {
-    return tabComponent;
-  }
+  private final DefaultActionGroup tabActionGroup = new DefaultActionGroup();
+  private ActionToolbar tabToolbar = null;
 
   public ToolWindowContentUi(@NotNull ToolWindowImpl window,
                              @NotNull ContentManager contentManager,
@@ -128,18 +127,15 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       public void contentAdded(@NotNull ContentManagerEvent event) {
         Content content = event.getContent();
         ContentManager manager = content.getManager();
-        // merge subContents to main content if they are together inside one content manager
+        // merge subContents to the main content if they are together inside one content manager
         if (manager != null && !(content instanceof SingleContentLayout.SubContent)) {
-          List<Content> contents = manager instanceof ContentManagerImpl managerImpl
-                                   ? managerImpl.getContentsRecursively()
-                                   : Arrays.asList(manager.getContents());
+          List<Content> contents = manager.getContentsRecursively();
           List<Content> mainContents = contents.stream().filter(c -> !(c instanceof SingleContentLayout.SubContent)).toList();
           List<Content> subContents = contents.stream().filter(c -> c instanceof SingleContentLayout.SubContent).toList();
           if (mainContents.size() == 1) {
             Content mainContent = mainContents.get(0);
             JComponent component = mainContent.getComponent();
-            SingleContentSupplier supplier = component instanceof DataProvider provider
-                                             ? SingleContentSupplier.KEY.getData(provider) : null;
+            SingleContentSupplier supplier = SingleContentSupplier.Companion.getSupplierFrom(component);
             if (supplier != null && supplier.getSubContents().containsAll(subContents)) {
               for (Content subContent : subContents) {
                 ContentManager m = subContent.getManager();
@@ -161,7 +157,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        if (window.isDisposed() || window.getToolWindowManager().getProject().isDisposed()) {
+        if (window.isDisposed() || window.toolWindowManager.getProject().isDisposed()) {
           return;
         }
 
@@ -188,7 +184,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           else {
             return;
           }
-          window.getToolWindowManager()
+          window.toolWindowManager
             .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
@@ -204,7 +200,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     };
     contentManager.addContentManagerListener(contentManagerListener);
     // some tool windows clients can use contentManager.removeAllContents(true)
-    // - ensure that we don't receive such events if window is already disposed
+    // - ensure that we don't receive such events if a window is already disposed
     Disposer.register(window.getDisposable(), new Disposable() {
       @Override
       public void dispose() {
@@ -224,14 +220,42 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
-  @NotNull
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return window.getId();
   }
 
-  @NotNull
-  public ToolWindow getWindow() {
+  public @NotNull ToolWindow getWindow() {
     return window;
+  }
+
+  public @NotNull JPanel getTabComponent() {
+    return tabComponent;
+  }
+
+  public @NotNull DefaultActionGroup getTabToolbarActions() {
+    return tabActionGroup;
+  }
+
+  public @Nullable ActionToolbar getTabToolbar() {
+    return tabToolbar;
+  }
+
+  /**
+   * Adds tab toolbar to the tab panel.
+   */
+  public void connectTabToolbar() {
+    if (tabToolbar != null) {
+      tabComponent.add(tabToolbar.getComponent());
+    }
+  }
+
+  /**
+   * Removes tab toolbar from the tab panel.
+   */
+  public void disconnectTabToolbar() {
+    if (tabToolbar != null) {
+      tabComponent.remove(tabToolbar.getComponent());
+    }
   }
 
   private boolean isResizeable() {
@@ -245,7 +269,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       return false;
     }
 
-    ToolWindowManagerImpl manager = window.getToolWindowManager();
+    ToolWindowManagerImpl manager = window.toolWindowManager;
     for (String id : manager.getIdsOn(window.getAnchor())) {
       if (id.equals(window.getId())) {
         continue;
@@ -277,8 +301,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     rebuild();
   }
 
-  @NotNull
-   public ContentLayout getCurrentLayout() {
+  @ApiStatus.Internal
+  public @NotNull ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
     }
@@ -365,27 +389,23 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return getCurrentLayout().getCloseActionName();
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return getCurrentLayout().getCloseAllButThisActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return getCurrentLayout().getPreviousContentActionName();
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
   }
 
@@ -434,14 +454,12 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       private void arm(Component c) {
         Component component = c != null ? getActualSplitter() : null;
-        if (component instanceof ThreeComponentsSplitter) {
-          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+        if (component instanceof ThreeComponentsSplitter splitter) {
           myIsLastComponent.set(SwingUtilities.isDescendingFrom(c, splitter.getLastComponent()));
           myInitialHeight.set(myIsLastComponent.get() ? splitter.getLastSize() : splitter.getFirstSize());
           return;
         }
-        if (component instanceof Splitter) {
-          Splitter splitter = (Splitter)component;
+        if (component instanceof Splitter splitter) {
           myIsLastComponent.set(true);
           myInitialHeight.set(splitter.getSecondComponent().getHeight());
           return;
@@ -472,16 +490,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
-            ToolWindowManagerEx manager = ui.window.getToolWindowManager();
-            manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
-          }
-        }
-      }
-
-      @Override
       public void mouseReleased(@NotNull MouseEvent e) {
         if (!e.isPopupTrigger()) {
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
@@ -508,7 +516,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) {
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) {
           return false;
         }
 
@@ -519,7 +527,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         }
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM ||
             SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() >
-            ToolWindowPane.Companion.getHeaderResizeArea$intellij_platform_ide_impl()) {
+            ToolWindowPane.Companion.getHeaderResizeArea()) {
           return true;
         }
         //it's drag, not resize!
@@ -540,8 +548,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();
         if (isToolWindowDrag(e)) return;//it's drag, not resize!
-        if (component instanceof ThreeComponentsSplitter) {
-          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+        if (component instanceof ThreeComponentsSplitter splitter) {
           if (myIsLastComponent.get() == Boolean.TRUE) {
             splitter.setLastSize(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y);
           }
@@ -549,8 +556,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
             splitter.setFirstSize(myInitialHeight.get() + myLastPoint.get().y - myPressPoint.get().y);
           }
         }
-        if (component instanceof Splitter) {
-          Splitter splitter = (Splitter)component;
+        if (component instanceof Splitter splitter) {
           splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
         }
         if (component instanceof ToolWindowPane) {
@@ -634,15 +640,14 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     if (toolWindowGroup != null) {
-      group.addAll(toolWindowGroup);
+      group.add(toolWindowGroup);
     }
 
     final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, group);
     popupMenu.getComponent().show(comp, x, y);
   }
 
-  @NotNull
-  private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
+  private static @NotNull AnAction createSplitTabsAction(@NotNull TabbedContent content) {
     return new DumbAwareAction(IdeBundle.message("action.text.split.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -651,8 +656,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     };
   }
 
-  @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+  private static @NotNull AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
     return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -694,32 +698,44 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
-      return window;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformDataKeys.TOOL_WINDOW, window);
+    sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
+    sink.set(CommonDataKeys.PROJECT, window.toolWindowManager.getProject());
+    sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
+    if (getCurrentLayout() instanceof MorePopupAware o) {
+      sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);
     }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return window.getHelpId();
+    if (type == ToolWindowContentUiType.TABBED) {
+      sink.set(SELECTED_CONTENT_TAB_LABEL, tabsLayout.findTabLabelByContent(contentManager.getSelectedContent()));
     }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return window.getToolWindowManager().getProject();
-    }
-    else if (CloseAction.CloseTarget.KEY.is(dataId)) {
-      return computeCloseTarget();
-    }
-    else if (MorePopupAware.KEY_TOOLWINDOW_TITLE.is(dataId)) {
-      ContentLayout layout = getCurrentLayout();
-      return  (layout instanceof MorePopupAware) ? layout : null;
-    }
-    else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
-      return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
-    }
-    return null;
   }
 
-  @NotNull
-  private CloseAction.CloseTarget computeCloseTarget() {
+  public void setTabActions(@NotNull List<AnAction> actions) {
+    if (tabToolbar == null) {
+      tabToolbar =
+          ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(tabActionGroup), true);
+      ActionToolbarImpl tabToolbarImpl = (ActionToolbarImpl)tabToolbar;
+      ToolWindowHeader header = ComponentUtil.getParentOfType(ToolWindowHeader.class, tabComponent);
+      tabToolbarImpl.setTargetComponent(header);
+      tabToolbarImpl.setForceMinimumSize(true);
+      tabToolbarImpl.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
+      tabToolbarImpl.setReservePlaceAutoPopupIcon(false);
+      tabToolbarImpl.setOpaque(false);
+      tabToolbarImpl.setBorder(JBUI.Borders.empty());
+      if (tabComponent.isShowing()) {
+        tabComponent.add(tabToolbarImpl);
+      }
+    }
+    tabActionGroup.removeAll();
+    tabActionGroup.addSeparator();
+    tabActionGroup.addAll(actions);
+    if (tabComponent.isShowing()) {
+      tabToolbar.updateActionsAsync();
+    }
+  }
+
+  private @NotNull CloseAction.CloseTarget computeCloseTarget() {
     if (contentManager.canCloseContents()) {
       Content selected = contentManager.getSelectedContent();
       if (selected != null && selected.isCloseable()) {
@@ -778,9 +794,13 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
   }
 
+  /** Checks if the selected content component or one of its descendants has focus. */
+  @ApiStatus.Internal public Boolean isActive() {
+    return UIUtil.isFocusAncestor(contentComponent);
+  }
+
   public final class TabPanel extends NonOpaquePanel implements UISettingsListener {
     private TabPanel() {
-      super(new MigLayout(MigLayoutUtilKt.createLayoutConstraints(0, 0).noVisualPadding().fillY()));
       setBorder(JBUI.Borders.emptyRight(2));
       if (ExperimentalUI.isNewUI()) {
         setBorder(JBUI.Borders.empty());
@@ -817,7 +837,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       size.width = TabContentLayout.getTabLayoutStart() + getInsets().left + getInsets().right;
       for (int i = 0; i < getComponentCount(); i++) {
         final Component each = getComponent(i);
-        if (each.isVisible()) {
+        if (each.isVisible() || tabToolbar != null && each == tabToolbar.getComponent()) {
           size.height = Math.max(each.getPreferredSize().height, size.height);
           size.width += each.getPreferredSize().width;
         }

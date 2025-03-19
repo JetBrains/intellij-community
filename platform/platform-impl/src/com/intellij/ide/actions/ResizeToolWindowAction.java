@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -14,8 +14,9 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ResizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
 
   @Override
@@ -42,7 +44,14 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
       return;
     }
     ToolWindow window = getToolWindow(e);
-    Window windowAncestor = window == null ? null : UIUtil.getWindow(window.getComponent());
+    Window windowAncestor;
+    if (window == null) {
+      windowAncestor = null;
+    }
+    else {
+      @Nullable Component component = window.getComponent();
+      windowAncestor = ComponentUtil.getWindow(component);
+    }
     if (windowAncestor instanceof JWindow) {
       windowAncestor = windowAncestor.getOwner(); //SearchEverywhere popup case
     }
@@ -98,7 +107,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Left extends ResizeToolWindowAction {
+  public static final class Left extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -110,7 +119,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Right extends ResizeToolWindowAction {
+  public static final class Right extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(!window.getAnchor().isHorizontal());
@@ -122,7 +131,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Up extends ResizeToolWindowAction {
+  public static final class Up extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());
@@ -134,7 +143,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     }
   }
 
-  public static class Down extends ResizeToolWindowAction {
+  public static final class Down extends ResizeToolWindowAction {
     @Override
     protected void update(@NotNull AnActionEvent event, @NotNull ToolWindow window) {
       event.getPresentation().setEnabled(window.getAnchor().isHorizontal());

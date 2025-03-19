@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -7,38 +7,32 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ImmutableCharSequence implements CharSequence {
 
   @Contract(pure = true)
-  public static CharSequence asImmutable(@NotNull final CharSequence cs) {
+  public static CharSequence asImmutable(final @NotNull CharSequence cs) {
     return isImmutable(cs) ? cs : cs.toString();
   }
 
-  private static boolean isImmutable(@NotNull final CharSequence cs) {
+  private static boolean isImmutable(final @NotNull CharSequence cs) {
     return cs instanceof ImmutableCharSequence ||
            cs instanceof CharSequenceSubSequence && isImmutable(((CharSequenceSubSequence)cs).getBaseSequence());
   }
 
   @Contract(pure = true)
-  @NotNull
-  public abstract ImmutableCharSequence concat(@NotNull CharSequence sequence);
+  public abstract @NotNull ImmutableCharSequence concat(@NotNull CharSequence sequence);
 
   @Contract(pure = true)
-  @NotNull
-  public abstract ImmutableCharSequence insert(int index, @NotNull CharSequence seq);
+  public abstract @NotNull ImmutableCharSequence insert(int index, @NotNull CharSequence seq);
 
   @Contract(pure = true)
-  @NotNull
-  public abstract ImmutableCharSequence delete(int start, int end);
+  public abstract @NotNull ImmutableCharSequence delete(int start, int end);
 
   @Contract(pure = true)
-  @NotNull
-  public abstract ImmutableCharSequence subtext(int start, int end);
+  public abstract @NotNull ImmutableCharSequence subtext(int start, int end);
 
   @Contract(pure = true)
-  @NotNull
-  public ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
+  public @NotNull ImmutableCharSequence replace(int start, int end, @NotNull CharSequence seq) {
     return delete(start, end).insert(start, seq);
   }
 
-  @NotNull
   @Override
-  public abstract String toString();
+  public abstract @NotNull String toString();
 }

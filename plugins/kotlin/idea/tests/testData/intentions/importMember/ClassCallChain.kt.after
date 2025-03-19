@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // INTENTION_TEXT: "Add import for 'pack.name.Fixtures'"
 
 package pack.name

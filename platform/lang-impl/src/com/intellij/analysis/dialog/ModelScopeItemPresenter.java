@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
@@ -32,16 +30,14 @@ public interface ModelScopeItemPresenter {
 
   boolean isApplicable(ModelScopeItem model);
 
-  @Nullable
-  default ModelScopeItem tryCreate(@NotNull Project project,
-                                   @NotNull AnalysisScope scope,
-                                   @Nullable Module module,
-                                   @Nullable PsiElement context) {
+  default @Nullable ModelScopeItem tryCreate(@NotNull Project project,
+                                             @NotNull AnalysisScope scope,
+                                             @Nullable Module module,
+                                             @Nullable PsiElement context) {
     return null;
   }
 
-  @NotNull
-  static List<ModelScopeItemView> createOrderedViews(List<? extends ModelScopeItem> models, Disposable dialogDisposable) {
+  static @NotNull List<ModelScopeItemView> createOrderedViews(List<? extends ModelScopeItem> models, Disposable dialogDisposable) {
     List<ModelScopeItemView> result = new ArrayList<>();
     for (ModelScopeItemPresenter presenter : EP_NAME.getExtensions()) {
       for (ModelScopeItem model : models) {

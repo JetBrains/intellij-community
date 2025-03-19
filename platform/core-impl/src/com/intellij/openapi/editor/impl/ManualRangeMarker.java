@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.DocumentEventUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * A range marker that has to be manually updated with {@link #getUpdatedRange(DocumentEvent, FrozenDocument)}.
  * Can hold PSI-based range and be updated when the document is committed.
  */
+@ApiStatus.Internal
 public class ManualRangeMarker implements Segment {
   private final boolean myGreedyLeft;
   private final boolean myGreedyRight;
@@ -34,8 +36,7 @@ public class ManualRangeMarker implements Segment {
     myLinesCols = linesCols;
   }
 
-  @Nullable
-  public ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
+  public @Nullable ManualRangeMarker getUpdatedRange(@NotNull DocumentEvent event, @NotNull FrozenDocument documentBefore) {
     if (mySurviveOnExternalChange && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, myRange)) {
       PersistentRangeMarker.LinesCols linesCols = myLinesCols != null ? myLinesCols
                                                                       : PersistentRangeMarker.storeLinesAndCols(documentBefore, myRange);

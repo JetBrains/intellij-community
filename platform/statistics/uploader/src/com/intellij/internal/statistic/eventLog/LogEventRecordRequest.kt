@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
-import com.google.gson.JsonSyntaxException
+import com.fasterxml.jackson.core.exc.StreamReadException
+import com.fasterxml.jackson.databind.DatabindException
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
@@ -51,7 +52,11 @@ class LogEventRecordRequest(val recorder: String, val product : String, val devi
         }
         return LogEventRecordRequest(recorder, product, user, records, internal)
       }
-      catch (e: JsonSyntaxException) {
+
+      catch (e: StreamReadException) {
+        logger.warn(e.message ?: "", e)
+      }
+      catch (e: DatabindException) {
         logger.warn(e.message ?: "", e)
       }
       catch (e: IOException) {
@@ -129,9 +134,7 @@ class LogEventRecord(val events: List<LogEvent>) {
 
     other as LogEventRecord
 
-    if (events != other.events) return false
-
-    return true
+    return events == other.events
   }
 
   override fun hashCode(): Int {

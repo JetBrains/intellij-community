@@ -1,8 +1,6 @@
-// "Create type parameter in class 'X'" "false"
-// ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Introduce import alias
-// ERROR: No type arguments expected for class X
+// "Create type parameter in class 'X'" "true"
 
 class X
 
 fun foo(x: <caret>X<String>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.CreateTypeParameterFromUsageFix

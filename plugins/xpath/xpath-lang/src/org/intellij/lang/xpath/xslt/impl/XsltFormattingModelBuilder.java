@@ -52,8 +52,7 @@ final class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   }
 
   @Override
-  @Nullable
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+  public @Nullable TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return myBuilder.getRangeAffectingIndent(file, offset, elementAtOffset);
   }
 

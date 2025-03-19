@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -8,9 +8,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -20,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.psi.impl.java.stubs.PsiJavaModuleStub.*;
+import static com.intellij.util.BitUtil.isSet;
+
 public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   private final PsiJavaModuleReferenceElement myReference;
 
@@ -28,33 +33,28 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     myReference = new ClsJavaModuleReferenceElementImpl(this, stub.getName());
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiRequiresStatement> getRequires() {
+  public @NotNull Iterable<PsiRequiresStatement> getRequires() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getExports() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getExports() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiPackageAccessibilityStatement> getOpens() {
+  public @NotNull Iterable<PsiPackageAccessibilityStatement> getOpens() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.OPENS_STATEMENT, PsiPackageAccessibilityStatement.EMPTY_ARRAY));
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiUsesStatement> getUses() {
+  public @NotNull Iterable<PsiUsesStatement> getUses() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.USES_STATEMENT, PsiUsesStatement.EMPTY_ARRAY));
   }
 
-  @NotNull
   @Override
-  public Iterable<PsiProvidesStatement> getProvides() {
+  public @NotNull Iterable<PsiProvidesStatement> getProvides() {
     return JBIterable.of(getStub().getChildrenByType(JavaElementType.PROVIDES_STATEMENT, PsiProvidesStatement.EMPTY_ARRAY));
   }
 
@@ -83,7 +83,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.MODULE);
 
     PsiJavaModule mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
@@ -102,16 +102,34 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     setMirrors(ContainerUtil.newArrayList(stubs), ContainerUtil.newArrayList(mirrors));
   }
 
-  @NotNull
   @Override
-  public PsiJavaModuleReferenceElement getNameIdentifier() {
+  public @NotNull PsiJavaModuleReferenceElement getNameIdentifier() {
     return myReference;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myReference.getReferenceText();
+  }
+
+  @Override
+  public boolean doNotResolveByDefault() {
+    return isSet(getStub().getResolution(), DO_NOT_RESOLVE_BY_DEFAULT);
+  }
+
+  @Override
+  public boolean warnDeprecated() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED);
+  }
+
+  @Override
+  public boolean warnDeprecatedForRemoval() {
+    return isSet(getStub().getResolution(), WARN_DEPRECATED_FOR_REMOVAL);
+  }
+
+  @Override
+  public boolean warnIncubating() {
+    return isSet(getStub().getResolution(), WARN_INCUBATING);
   }
 
   @Override
@@ -131,9 +149,8 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     return modifierList != null && modifierList.hasModifierProperty(name);
   }
 
-  @Nullable
   @Override
-  public PsiDocComment getDocComment() {
+  public @Nullable PsiDocComment getDocComment() {
     return null;
   }
 
@@ -142,9 +159,8 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     return ItemPresentationProviders.getItemPresentation(this);
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     PsiElement parent = getParent();
     if (parent instanceof PsiClassOwner) {
       PsiElement file = parent.getNavigationElement();
@@ -172,5 +188,13 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   @Override
   public String toString() {
     return "PsiJavaModule:" + getName();
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    return JavaResolveUtil.processJavaModuleExports(this, processor, state, lastParent, place);
   }
 }

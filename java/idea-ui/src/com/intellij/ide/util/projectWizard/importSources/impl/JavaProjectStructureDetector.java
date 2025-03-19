@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -19,17 +19,15 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaProjectStructureDetector extends JavaSourceRootDetector {
+public final class JavaProjectStructureDetector extends JavaSourceRootDetector {
 
-  @NotNull
   @Override
-  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName() {
+  protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName() {
     return JavaBundle.message("options.java.display.name");
   }
 
-  @NotNull
   @Override
-  protected String getFileExtension() {
+  protected @NotNull String getFileExtension() {
     return JavaFileType.DEFAULT_EXTENSION;
   }
 
@@ -52,8 +50,7 @@ public class JavaProjectStructureDetector extends JavaSourceRootDetector {
   }
 
   @Override
-  @NotNull
-  protected NullableFunction<CharSequence, String> getPackageNameFetcher() {
+  protected @NotNull NullableFunction<CharSequence, String> getPackageNameFetcher() {
     return charSequence -> JavaSourceRootDetectionUtil.getPackageName(charSequence);
   }
 }

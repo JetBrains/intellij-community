@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.ui.content.Content
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 private class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
   override fun updateInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {
     e.presentation.isEnabledAndVisible = !TerminalToolWindowManager.getInstance(project).isSplitTerminal(terminalWidget)
+                                         && !Registry.`is`("toolwindow.open.tab.in.editor")
   }
 
   override fun actionPerformedInTerminalToolWindow(e: AnActionEvent, project: Project, content: Content, terminalWidget: TerminalWidget) {

@@ -8,11 +8,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.custom.options.ContentLayoutStateSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
+@ApiStatus.Internal
+public final class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
 
   private final Content myContent;
   private final ContentLayoutStateSettings myLayoutSettings;
@@ -42,17 +44,18 @@ public class RestoreViewAction extends DumbAwareToggleAction implements ViewLayo
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setText(myLayoutSettings.getDisplayName(), false);
     e.getPresentation().setEnabled(myLayoutSettings.isEnabled());
   }
 
+  @Override
   public @NotNull Content getContent() {
     return myContent;
   }
 
-  private static class DefaultContentStateSettings implements ContentLayoutStateSettings {
+  private static final class DefaultContentStateSettings implements ContentLayoutStateSettings {
 
     private final RunnerContentUi myUi;
     private final Content myContent;

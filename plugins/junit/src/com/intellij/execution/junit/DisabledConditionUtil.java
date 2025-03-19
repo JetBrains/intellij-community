@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.MetaAnnotationUtil;
@@ -39,8 +39,7 @@ public final class DisabledConditionUtil {
     "org.junit.jupiter.api.condition.EnabledOnOs"
   };
 
-  @Nullable
-  public static String getDisabledConditionValue(JUnitConfiguration configuration) {
+  public static @Nullable String getDisabledConditionValue(JUnitConfiguration configuration) {
     JUnitConfiguration.Data data = configuration.getPersistentData();
     if (data == null) return null;
 

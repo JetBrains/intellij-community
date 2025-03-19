@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -43,6 +30,8 @@ public abstract class BaseSplitter implements Splitter {
     if (tooShort) {
       return;
     }
+
+    ProgressManager.checkCanceled();
     consumer.consume(found);
   }
 
@@ -67,18 +56,15 @@ public abstract class BaseSplitter implements Splitter {
     return false;
   }
 
-  @NotNull
-  protected static TextRange matcherRange(@NotNull TextRange range, @NotNull Matcher matcher) {
+  protected static @NotNull TextRange matcherRange(@NotNull TextRange range, @NotNull Matcher matcher) {
     return subRange(range, matcher.start(), matcher.end());
   }
 
-  @NotNull
-  protected static TextRange matcherRange(@NotNull TextRange range, @NotNull Matcher matcher, int group) {
+  protected static @NotNull TextRange matcherRange(@NotNull TextRange range, @NotNull Matcher matcher, int group) {
     return subRange(range, matcher.start(group), matcher.end(group));
   }
 
-  @NotNull
-  protected static TextRange subRange(@NotNull TextRange range, int start, int end) {
+  protected static @NotNull TextRange subRange(@NotNull TextRange range, int start, int end) {
     return TextRange.from(range.getStartOffset() + start, end - start);
   }
 
@@ -87,16 +73,17 @@ public abstract class BaseSplitter implements Splitter {
     return l <= MIN_RANGE_LENGTH;
   }
 
-  @NotNull
-  static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
+  protected static @NotNull List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
     List<TextRange> toCheck = new SmartList<>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
+
     try {
       Matcher matcher = toExclude.matcher(newBombedCharSequence(text, range));
       while (matcher.find()) {
-        checkCancelled();
+        ProgressManager.checkCanceled();
+
         TextRange found = matcherRange(range, matcher);
         till = found.getStartOffset();
         if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
@@ -122,32 +109,47 @@ public abstract class BaseSplitter implements Splitter {
       }
       return toCheck;
     }
-    catch (ProcessCanceledException e) {
+    catch (TooLongBombedMatchingException e) {
       return Collections.singletonList(range);
     }
   }
 
+  private static final int PROCESSING_TIME_LIMIT_MS = 500;
+
+  /**
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
+   */
   protected static CharSequence newBombedCharSequence(String text, TextRange range) {
     return newBombedCharSequence(range.substring(text));
   }
 
-  protected static CharSequence newBombedCharSequence(final String substring) {
-    final long myTime = System.currentTimeMillis() + 500;
+  /**
+   * @throws TooLongBombedMatchingException in case processing is longer than {@link #PROCESSING_TIME_LIMIT_MS}
+   */
+  protected static CharSequence newBombedCharSequence(String substring) {
     return new StringUtil.BombedCharSequence(substring) {
+      final long myTime = System.currentTimeMillis() + PROCESSING_TIME_LIMIT_MS;
+
       @Override
       protected void checkCanceled() {
-        //todo[anna] if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
         long l = System.currentTimeMillis();
         if (l >= myTime) {
-          throw new ProcessCanceledException();
+          throw new TooLongBombedMatchingException();
         }
       }
     };
   }
 
+  /**
+   * @deprecated Use {@link ProgressManager#checkCanceled()}.
+   */
+  @Deprecated(forRemoval = true)
   public static void checkCancelled() {
     if (ApplicationManager.getApplication() != null) {
       ProgressIndicatorProvider.checkCanceled();
     }
+  }
+
+  public static class TooLongBombedMatchingException extends ProcessCanceledException {
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter
 
@@ -10,35 +10,30 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
-import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
-import org.jetbrains.kotlin.idea.refactoring.removeTemplateEntryBracesIfPossible
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -58,68 +53,8 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
-data class IntroduceParameterDescriptor(
-    val originalRange: KotlinPsiRange,
-    val callable: KtNamedDeclaration,
-    val callableDescriptor: FunctionDescriptor,
-    val newParameterName: String,
-    val newParameterTypeText: String,
-    val argumentValue: KtExpression,
-    val withDefaultValue: Boolean,
-    val parametersUsages: MultiMap<KtElement, KtElement>,
-    val occurrencesToReplace: List<KotlinPsiRange>,
-    val parametersToRemove: List<KtElement> = getParametersToRemove(withDefaultValue, parametersUsages, occurrencesToReplace),
-    val occurrenceReplacer: IntroduceParameterDescriptor.(KotlinPsiRange) -> Unit = {}
-) {
-    val newArgumentValue: KtExpression by lazy {
-        if (argumentValue.mustBeParenthesizedInInitializerPosition()) {
-            KtPsiFactory(callable.project).createExpressionByPattern("($0)", argumentValue)
-        } else {
-            argumentValue
-        }
-    }
 
-    val originalOccurrence: KotlinPsiRange
-        get() = occurrencesToReplace.first { it.textRange.intersects(originalRange.textRange) }
-
-    val valVar: KotlinValVar = if (callable is KtClass) {
-        val modifierIsUnnecessary: (PsiElement) -> Boolean = {
-            when {
-                it.parent != callable.body -> false
-                it is KtAnonymousInitializer -> true
-              it is KtProperty && it.initializer?.textRange?.intersects(originalRange.textRange) ?: false -> true
-                else -> false
-            }
-        }
-
-        if (occurrencesToReplace.all { PsiTreeUtil.findCommonParent(it.elements)?.parentsWithSelf?.any(modifierIsUnnecessary) == true })
-            KotlinValVar.None
-        else
-            KotlinValVar.Val
-    } else
-        KotlinValVar.None
-}
-
-fun getParametersToRemove(
-    withDefaultValue: Boolean,
-    parametersUsages: MultiMap<KtElement, KtElement>,
-    occurrencesToReplace: List<KotlinPsiRange>
-): List<KtElement> {
-    if (withDefaultValue) return Collections.emptyList()
-
-    val occurrenceRanges = occurrencesToReplace.map { it.textRange }
-    return parametersUsages.entrySet()
-        .asSequence()
-        .filter {
-            it.value.all { paramUsage ->
-                occurrenceRanges.any { occurrenceRange -> occurrenceRange.contains(paramUsage.textRange) }
-            }
-        }
-        .map { it.key }
-        .toList()
-}
-
-fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onExit: (() -> Unit)? = null) {
+fun IntroduceParameterDescriptor<FunctionDescriptor>.performRefactoring(editor: Editor? = null, onExit: (() -> Unit)? = null) {
     val config = object : KotlinChangeSignatureConfiguration {
         override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
             return originalDescriptor.modify { methodDescriptor ->
@@ -136,7 +71,7 @@ fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onEx
                         .forEach { methodDescriptor.removeParameter(it) }
                 }
 
-                val defaultValue = if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue
+                val defaultValue = (if (newArgumentValue is KtProperty) (newArgumentValue as KtProperty).initializer else newArgumentValue)?.let { KtPsiUtil.safeDeparenthesize(it) }
                 val parameterInfo = KotlinParameterInfo(
                     callableDescriptor = callableDescriptor,
                     name = newParameterName,
@@ -150,7 +85,7 @@ fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onEx
             }
         }
 
-        override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = true
+        override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = true
     }
 
     val project = callable.project
@@ -169,43 +104,8 @@ fun IntroduceParameterDescriptor.performRefactoring(editor: Editor? = null, onEx
     }.run()
 }
 
-fun selectNewParameterContext(
-    editor: Editor,
-    file: KtFile,
-    continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
-) {
-    selectElementsWithTargetParent(
-        operationName = INTRODUCE_PARAMETER,
-        editor = editor,
-        file = file,
-        title = KotlinBundle.message("title.introduce.parameter.to.declaration"),
-        elementKinds = listOf(ElementKind.EXPRESSION),
-        elementValidator = ::validateExpressionElements,
-        getContainers = { _, parent ->
-            val parents = parent.parents
-            val stopAt = (parent.parents.zip(parent.parents.drop(1)))
-                .firstOrNull { isObjectOrNonInnerClass(it.first) }
-                ?.second
-
-            (if (stopAt != null) parent.parents.takeWhile { it != stopAt } else parents)
-                .filter {
-                    ((it is KtClass && !it.isInterface() && it !is KtEnumEntry) || it is KtNamedFunction || it is KtSecondaryConstructor) &&
-                            ((it as KtNamedDeclaration).getValueParameterList() != null || it.nameIdentifier != null)
-                }
-                .toList()
-        },
-        continuation = continuation
-    )
-}
-
-interface KotlinIntroduceParameterHelper {
-    object Default : KotlinIntroduceParameterHelper
-
-    fun configure(descriptor: IntroduceParameterDescriptor): IntroduceParameterDescriptor = descriptor
-}
-
 open class KotlinIntroduceParameterHandler(
-    val helper: KotlinIntroduceParameterHelper = KotlinIntroduceParameterHelper.Default
+    val helper: KotlinIntroduceParameterHelper<FunctionDescriptor> = KotlinIntroduceParameterHelper.Default()
 ) : RefactoringActionHandler {
     open operator fun invoke(project: Project, editor: Editor, expression: KtExpression, targetParent: KtNamedDeclaration) {
         val physicalExpression = expression.substringContextOrThis
@@ -219,7 +119,7 @@ open class KotlinIntroduceParameterHandler(
         val expressionType = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
             context[BindingContext.VARIABLE, physicalExpression]?.type
         } else {
-            expression.extractableSubstringInfo?.type ?: context.getType(physicalExpression)
+            (expression.extractableSubstringInfo as? K1ExtractableSubstringInfo)?.type ?: context.getType(physicalExpression)
         }
 
         if (expressionType == null) {
@@ -269,7 +169,7 @@ open class KotlinIntroduceParameterHandler(
             ?: Collections.emptyList()
 
         val occurrencesToReplace = if (expression is KtProperty) {
-            ReferencesSearch.search(expression).mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
+            ReferencesSearch.search(expression).asIterable().mapNotNullTo(SmartList(expression.toRange())) { it.element.toRange() }
         } else {
             expression.toRange()
                 .match(targetParent, KotlinPsiUnifier.DEFAULT)
@@ -303,11 +203,11 @@ open class KotlinIntroduceParameterHandler(
                         && expression.extractableSubstringInfo == null
                         && !expression.mustBeParenthesizedInInitializerPosition()
 
-                val originalExpression = KtPsiUtil.safeDeparenthesize(expression)
+                val originalExpression = expression
                 val psiFactory = KtPsiFactory(project)
                 val introduceParameterDescriptor =
                     helper.configure(
-                        IntroduceParameterDescriptor(
+                        IntroduceParameterDescriptor<FunctionDescriptor>(
                             originalRange = originalExpression.toRange(),
                             callable = targetParent,
                             callableDescriptor = functionDescriptor,
@@ -436,7 +336,7 @@ private fun findInternalUsagesOfParametersAndReceiver(
             targetParent.getValueParameters()
                 .filter { !it.hasValOrVar() }
                 .forEach {
-                    val paramUsages = ReferencesSearch.search(it).map { reference -> reference.element as KtElement }
+                    val paramUsages = ReferencesSearch.search(it).asIterable().map { reference -> reference.element as KtElement }
                     if (paramUsages.isNotEmpty()) {
                         usages.put(it, paramUsages)
                     }
@@ -473,14 +373,17 @@ private fun findInternalUsagesOfParametersAndReceiver(
     return usages
 }
 
-interface KotlinIntroduceLambdaParameterHelper : KotlinIntroduceParameterHelper {
-    object Default : KotlinIntroduceLambdaParameterHelper
+interface KotlinIntroduceLambdaParameterHelper<Descriptor> : KotlinIntroduceParameterHelper<Descriptor> {
+    class Default<D> : KotlinIntroduceLambdaParameterHelper<D>{
+        override fun configure(descriptor: IntroduceParameterDescriptor<D>): IntroduceParameterDescriptor<D> = descriptor
+        override fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = descriptor
+    }
 
-    fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor = descriptor
+    fun configureExtractLambda(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptor
 }
 
 open class KotlinIntroduceLambdaParameterHandler(
-    helper: KotlinIntroduceLambdaParameterHelper = KotlinIntroduceLambdaParameterHelper.Default
+    helper: KotlinIntroduceLambdaParameterHelper<FunctionDescriptor> = KotlinIntroduceLambdaParameterHelper.Default()
 ) : KotlinIntroduceParameterHandler(helper) {
     private val extractLambdaHelper = object : ExtractionEngineHelper(INTRODUCE_LAMBDA_PARAMETER) {
         private fun createDialog(
@@ -552,10 +455,3 @@ open class KotlinIntroduceLambdaParameterHandler(
         ExtractionEngine(extractLambdaHelper).run(editor, extractionData)
     }
 }
-
-val INTRODUCE_PARAMETER: String
-    @Nls
-    get() = KotlinBundle.message("name.introduce.parameter1")
-val INTRODUCE_LAMBDA_PARAMETER: String
-    @Nls
-    get() = KotlinBundle.message("name.introduce.lambda.parameter")

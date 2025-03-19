@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JacksonUtil")
+@file:ApiStatus.Internal
 package com.intellij.util.io.jackson
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.Reader
-import kotlin.jvm.Throws
 
 inline fun JsonGenerator.obj(fieldName: String? = null, writer: () -> Unit) {
   fieldName?.let {
@@ -30,9 +29,10 @@ inline fun JsonGenerator.array(fieldName: String? = null, writer: () -> Unit) {
   writeEndArray()
 }
 
+@ApiStatus.Internal
 open class IntelliJPrettyPrinter : DefaultPrettyPrinter() {
   companion object {
-    @JvmField val UNIX_LINE_FEED_INSTANCE = DefaultIndenter("  ", "\n")
+    @JvmField val UNIX_LINE_FEED_INSTANCE: DefaultIndenter = DefaultIndenter("  ", "\n")
   }
 
   init {

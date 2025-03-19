@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -26,12 +27,13 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +43,8 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
 
-public class LocalHintManager implements ClientHintManager {
-
+@ApiStatus.Internal
+public final class LocalHintManager implements ClientHintManager {
   private static final Logger LOG = Logger.getInstance(LocalHintManager.class);
 
   private final EditorMouseListener myEditorMouseListener;
@@ -56,12 +58,11 @@ public class LocalHintManager implements ClientHintManager {
 
   private final List<HintManagerImpl.HintInfo> myHintsStack = ContainerUtil.createLockFreeCopyOnWriteList();
   private Editor myLastEditor;
-  private final Alarm myHideAlarm = new Alarm();
   private boolean myRequestFocusForNextHint;
 
   @Override
   public boolean canShowQuestionAction(QuestionAction action) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myQuestionAction == null || HintManagerImpl.getPriority(myQuestionAction) <= HintManagerImpl.getPriority(action);
   }
 
@@ -129,7 +130,8 @@ public class LocalHintManager implements ClientHintManager {
 
   /**
    * Sets whether the next {@code showXxx} call will request the focus to the
-   * newly shown tooltip. Note the flag applies only to the next call, i.e. is
+   * newly shown tooltip.
+   * Note the flag applies only to the next call, i.e., is
    * reset to {@code false} after any {@code showXxx} is called.
    *
    * <p>Note: This method was created to avoid the code churn associated with
@@ -143,7 +145,7 @@ public class LocalHintManager implements ClientHintManager {
 
   @Override
   public boolean performCurrentQuestionAction() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myQuestionAction != null && myQuestionHint != null) {
       if (myQuestionHint.isVisible()) {
         if (LOG.isDebugEnabled()) {
@@ -188,6 +190,27 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
+  public void showGutterHint(@NotNull LightweightHint hint,
+                             @NotNull Editor editor,
+                             @NotNull HintHint hintInfo,
+                             int lineNumber,
+                             int horizontalOffset,
+                             int flags,
+                             int timeout,
+                             boolean reviveOnEditorChange,
+                             @Nullable Runnable onHintHidden) {
+    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(lineNumber, 0), HintManager.UNDER);
+    EditorGutterComponentEx gutterComponent = (EditorGutterComponentEx)editor.getGutter();
+    final JRootPane rootPane = gutterComponent.getRootPane();
+    if (rootPane != null) {
+      JLayeredPane layeredPane = rootPane.getLayeredPane();
+      point.x = SwingUtilities.convertPoint(gutterComponent, horizontalOffset, point.y, layeredPane).x;
+    }
+
+    showEditorHint(hint, editor, hintInfo, point, flags, timeout, reviveOnEditorChange, onHintHidden);
+  }
+
+  @Override
   public void showEditorHint(@NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull HintHint hintInfo,
@@ -197,7 +220,6 @@ public class LocalHintManager implements ClientHintManager {
                              boolean reviveOnEditorChange,
                              @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
-    myHideAlarm.cancelAllRequests();
 
     hideHints(HintManager.HIDE_BY_OTHER_HINT, false, false);
 
@@ -222,19 +244,6 @@ public class LocalHintManager implements ClientHintManager {
     }
     HintManagerImpl.doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-    ListenerUtil.addFocusListener(component, new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-
     if (BitUtil.isSet(flags, HintManager.HIDE_BY_MOUSEOVER)) {
       ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
         @Override
@@ -253,9 +262,8 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
-  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
+  public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
-    myHideAlarm.cancelAllRequests();
 
     hideHints(HintManager.HIDE_BY_OTHER_HINT, false, false);
 
@@ -271,19 +279,6 @@ public class LocalHintManager implements ClientHintManager {
 
     final JBPopup popup = builder.createPopup();
     popup.show(p);
-
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-    ListenerUtil.addFocusListener(component, new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
 
     final HintManagerImpl.HintInfo info = new HintManagerImpl.HintInfo(new LightweightHint(component) {
       @Override
@@ -317,7 +312,7 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   /**
-   * @return coordinates in layered pane coordinate system.
+   * @return coordinates in a layered pane coordinate system.
    */
   @Override
   public Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @HintManager.PositionFlags short constraint) {
@@ -377,15 +372,15 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   @Override
-  public void showQuestionHint(@NotNull final Editor editor,
-                               @NotNull final Point p,
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final @NotNull Point p,
                                final int offset1,
                                final int offset2,
-                               @NotNull final LightweightHint hint,
+                               final @NotNull LightweightHint hint,
                                int flags,
-                               @NotNull final QuestionAction action,
+                               final @NotNull QuestionAction action,
                                @HintManager.PositionFlags short constraint) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     hideQuestionHint();
     RangeHighlighter highlighter;
     if (offset1 != offset2) {
@@ -421,7 +416,7 @@ public class LocalHintManager implements ClientHintManager {
   }
 
   private void hideQuestionHint() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myQuestionHint != null) {
       myQuestionHint.hide();
       myQuestionHint = null;
@@ -429,7 +424,7 @@ public class LocalHintManager implements ClientHintManager {
     }
   }
 
-  protected void updateLastEditor(final Editor editor) {
+  private void updateLastEditor(final Editor editor) {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);
@@ -450,7 +445,7 @@ public class LocalHintManager implements ClientHintManager {
     }
   }
 
-  private class MyAnActionListener implements AnActionListener {
+  private final class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (action instanceof HintManagerImpl.ActionToIgnore) return;

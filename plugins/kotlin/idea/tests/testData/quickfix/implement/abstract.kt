@@ -7,3 +7,5 @@ private abstract class <caret>Base {
 
     abstract fun toInt(arg: String): Int
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.CreateKotlinSubClassIntention

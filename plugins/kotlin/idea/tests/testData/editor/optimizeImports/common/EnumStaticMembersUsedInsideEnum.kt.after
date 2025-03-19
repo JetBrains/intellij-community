@@ -1,0 +1,12 @@
+package test
+
+enum class MyEnum {
+    ENTRY;
+
+    companion object {
+        val firstEntry = ENTRY
+        val myEntries = entries
+        val myValueOf = valueOf("ENTRY")
+        val myValues = values()
+    }
+}

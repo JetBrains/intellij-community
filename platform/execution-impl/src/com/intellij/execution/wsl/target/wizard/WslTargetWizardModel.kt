@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 class WslTargetWizardModel(override val project: Project,
                            override val subject: WslTargetEnvironmentConfiguration,
                            runtimeType: LanguageRuntimeType<*>?,
-                           var distribution: WSLDistribution?) : TargetWizardModel {
+                           var distribution: WSLDistribution?) : TargetWizardModel() {
   internal var isCustomToolConfiguration: Boolean = false
 
   override var languageConfigForIntrospection: LanguageRuntimeConfiguration? = runtimeType?.createDefaultConfig()
@@ -20,12 +20,10 @@ class WslTargetWizardModel(override val project: Project,
     languageConfigForIntrospection = languageConfigForIntrospection?.getRuntimeType()?.createDefaultConfig()
   }
 
-  override fun save() {
+  override fun applyChanges() {
     subject.distribution = distribution
     subject.displayName = guessName()
   }
-
-  override fun commit() = save()
 
   @Nls
   fun guessName(): String {

@@ -28,8 +28,7 @@ public final class DeclarationConflictChecker {
    * @param ignored if an element defining the name is also listed here, ignore it.
    * @return a list of pairs (referring element, element that defines name).
    */
-  @NotNull
-  public static List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
+  public static @NotNull List<Pair<PsiElement, PsiElement>> findDefinitions(@NotNull String name,
                                                                    @NotNull Collection<? extends PsiReference> references,
                                                                    @NotNull Set<PsiElement> ignored) {
     final List<Pair<PsiElement, PsiElement>> conflicts = new ArrayList<>();

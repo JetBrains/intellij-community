@@ -51,13 +51,13 @@ class RegionPaintIcon(
     }
   }
 
-  override fun getIconWidth() = scaled(width)
+  override fun getIconWidth(): Int = scaled(width)
 
-  override fun getIconHeight() = scaled(height)
+  override fun getIconHeight(): Int = scaled(height)
 
   private fun scaled(size: Int) = if (size > 0) ceil(scaleVal(size.toDouble())).toInt() else 0
 
-  override fun toString() = painter.toString()
+  override fun toString(): String = painter.toString()
 
   override fun hashCode(): Int = Objects.hash(width, height, painter)
 

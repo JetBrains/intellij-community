@@ -20,4 +20,14 @@ class TomlAutoIndentTest : TomlTypingTestBase() {
             <caret>
         ]
     """)
+
+    fun `test array brackets`() = doTestByText("""
+        [key]
+        foo = [<caret>]
+    """, """
+        [key]
+        foo = [
+            <caret>
+        ]
+    """)
 }

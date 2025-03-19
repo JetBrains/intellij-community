@@ -176,8 +176,8 @@ public final class FileAttributes {
   @Override
   public int hashCode() {
     int result = flags;
-    result = 31 * result + (int)(length ^ (length >>> 32));
-    result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
+    result = 31 * result + Long.hashCode(length);
+    result = 31 * result + Long.hashCode(lastModified);
     return result;
   }
 
@@ -211,6 +211,7 @@ public final class FileAttributes {
 
     boolean isHidden = false;
     boolean isWritable = false;
+    // TODO KN: We should look at the OS of a Path, not at the OS of the IDE.
     if (SystemInfo.isWindows) {
       isHidden = path.getParent() != null && ((DosFileAttributes)attrs).isHidden();
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
@@ -223,6 +224,9 @@ public final class FileAttributes {
     long lastModified = attrs.lastModifiedTime().toMillis();
 
     boolean isSpecial = attrs.isOther() && !(SystemInfo.isWindows && attrs.isDirectory());  // reparse points are directories (not special files)
-    return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
+    CaseSensitivity caseSensitivity = attrs.isDirectory() && attrs instanceof CaseSensitivityAttribute
+                                      ? ((CaseSensitivityAttribute)attrs).getCaseSensitivity()
+                                      : CaseSensitivity.UNKNOWN;
+    return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable, caseSensitivity);
   }
 }

@@ -1,32 +1,34 @@
 class Test {
+    val age by lazy { 15 + 10 }
+    val color: String
+        get() = "Purple"
     var serial: String = ""
         set(value) {
             field = value.toUpperCase()
         }
     var name: String = ""
-    val age by lazy { 15 + 10 }
-    val color: String
-        get() = "Purple"
-
+    var id = 42
     <caret>override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as Test
 
+        if (age != other.age) return false
+        if (id != other.id) return false
+        if (color != other.color) return false
         if (serial != other.serial) return false
         if (name != other.name) return false
-        if (age != other.age) return false
-        if (color != other.color) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = serial.hashCode()
-        result = 31 * result + name.hashCode()
-        result = 31 * result + age
+        var result = age
+        result = 31 * result + id
         result = 31 * result + color.hashCode()
+        result = 31 * result + serial.hashCode()
+        result = 31 * result + name.hashCode()
         return result
     }
 

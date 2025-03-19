@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
@@ -19,7 +19,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
+public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance(MultipleFacetSettingsEditor.class);
   private final List<AbstractBinding> myBindings = new ArrayList<>();
 
@@ -64,11 +64,11 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     myBindings.clear();
   }
 
-  private static abstract class AbstractBinding {
+  private abstract static class AbstractBinding {
     public abstract void unbind();
   }
 
-  private static class CheckBoxBinding extends AbstractBinding implements ActionListener {
+  private static final class CheckBoxBinding extends AbstractBinding implements ActionListener {
     private final ThreeStateCheckBox myCommon;
     private final List<? extends JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
@@ -145,7 +145,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
 
       myListener = new DocumentAdapter() {
         @Override
-        protected void textChanged(@NotNull final DocumentEvent e) {
+        protected void textChanged(final @NotNull DocumentEvent e) {
           TextFieldBinding.this.textChanged();
         }
       };
@@ -155,7 +155,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     private void textChanged() {
       String value = myCommon.getText();
       for (int i = 0; i < myTextFields.size(); i++) {
-        myTextFields.get(i).setText(value.length() == 0 ? myInitialValues.get(i) : value);
+        myTextFields.get(i).setText(value.isEmpty() ? myInitialValues.get(i) : value);
       }
     }
 
@@ -165,7 +165,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class CombobBoxBinding extends AbstractBinding implements ItemListener {
+  private static final class CombobBoxBinding extends AbstractBinding implements ItemListener {
     private final JComboBox myCommon;
     private final List<? extends JComboBox> myComponentsList;
     private final List<Object> myInitialValues;

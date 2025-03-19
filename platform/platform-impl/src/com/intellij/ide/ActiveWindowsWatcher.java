@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -7,14 +7,16 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+@ApiStatus.Internal
 public final class ActiveWindowsWatcher {
-  private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
+  private static final LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 
   public static boolean isTheCurrentWindowOnTheActivatedList(Window w) {
     updateActivatedWindowSet();

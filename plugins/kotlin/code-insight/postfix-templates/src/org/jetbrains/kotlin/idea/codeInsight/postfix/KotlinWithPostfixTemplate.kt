@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.psi.*
 
 internal class KotlinWithPostfixTemplate : StringBasedPostfixTemplate {
@@ -16,8 +16,8 @@ internal class KotlinWithPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "kotlin.with(\$expr$) {\n\$END$\n}"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "kotlin.with(\$expr$) {\n\$END$\n}"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private object WhenTargetFilter : (KtExpression) -> Boolean {
@@ -38,6 +38,7 @@ private object WhenTargetFilter : (KtExpression) -> Boolean {
     }
 }
 
-private fun KtAnalysisSession.isWithTargetType(type: KtType): Boolean {
-    return !type.isUnit && !type.isMarkedNullable && !type.isPrimitive
+context(KaSession)
+private fun isWithTargetType(type: KaType): Boolean {
+    return !type.isUnitType && !type.isMarkedNullable && !type.isPrimitive
 }

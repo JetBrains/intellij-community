@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,8 +16,8 @@ class PluginDescriptorsDebugData {
   /** stores relative paths to files which content was included into the descriptor */
   private val includedPaths = ConcurrentHashMap<String, MutableList<String>>()
 
-  internal fun recordDescriptorPath(pluginDescriptor: IdeaPluginDescriptor, rawPluginDescriptor: RawPluginDescriptor, path: String) {
-    val paths = includedPaths.computeIfAbsent(pluginDescriptor.uniqueId) { ArrayList() }
+  internal fun recordDescriptorPath(descriptor: IdeaPluginDescriptor, rawPluginDescriptor: RawPluginDescriptor, path: String) {
+    val paths = includedPaths.computeIfAbsent(descriptor.uniqueId) { ArrayList() }
     paths.add(path)
     includedInRawDescriptor.remove(rawPluginDescriptor)?.let { paths.addAll(it) }
   }

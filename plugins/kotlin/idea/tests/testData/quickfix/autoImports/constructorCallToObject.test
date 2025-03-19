@@ -1,0 +1,16 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Expression 'MyObject' of type 'MyObject' cannot be invoked as a function. The function 'invoke()' is not found
+import second.MyObject
+
+val f = <caret>MyObject()
+
+//-----------------------
+
+
+// FILE: second.kt
+package second
+
+object MyObject
+
+//-----------------------

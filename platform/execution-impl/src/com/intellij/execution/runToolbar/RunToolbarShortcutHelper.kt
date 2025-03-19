@@ -1,21 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.runToolbar.data.RWActiveListener
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.project.Project
 
-class RunToolbarShortcutHelper(val project: Project) : RWActiveListener {
-
+internal class RunToolbarShortcutHelper(val project: Project) : RWActiveListener {
   override fun enabled() {
-    val actionManager = ActionManager.getInstance()
-    RunToolbarProcess.getProcesses().forEach { process ->
+    val actionManager = ActionManagerEx.getInstanceEx()
+    for (process in RunToolbarProcess.getProcesses()) {
       ExecutorRegistry.getInstance().getExecutorById(process.executorId)?.let { executor ->
         actionManager.getAction(executor.id)?.let {
           actionManager.getAction(process.getMainActionId())?.let {
-            KeymapManager.getInstance().bindShortcuts(executor.id, process.getMainActionId())
+            actionManager.bindShortcuts(executor.id, process.getMainActionId())
           }
         }
       }
@@ -23,11 +21,11 @@ class RunToolbarShortcutHelper(val project: Project) : RWActiveListener {
   }
 
   override fun disabled() {
-    val actionManager = ActionManager.getInstance()
-    RunToolbarProcess.getProcesses().forEach { process ->
-      ExecutorRegistry.getInstance().getExecutorById(process.executorId)?.let { executor ->
+    val actionManager = ActionManagerEx.getInstanceEx()
+    for (process in RunToolbarProcess.getProcesses()) {
+      ExecutorRegistry.getInstance().getExecutorById(process.executorId)?.let {
         actionManager.getAction(process.getMainActionId())?.let {
-          KeymapManager.getInstance().unbindShortcuts(process.getMainActionId())
+          actionManager.unbindShortcuts(process.getMainActionId())
         }
       }
     }

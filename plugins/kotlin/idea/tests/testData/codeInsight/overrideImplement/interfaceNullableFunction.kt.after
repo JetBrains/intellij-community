@@ -8,3 +8,5 @@ class SomeOther : Some {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "foo(some: Int?): Int"

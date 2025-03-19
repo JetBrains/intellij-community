@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -16,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.Strings;
@@ -23,6 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,19 +93,29 @@ public final class IdeBackgroundUtil {
       }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters$intellij_platform_ide_impl(paintersName) : null;
+    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) {
       return MyGraphics.unwrap(g);
     }
     return MyGraphics.wrap(g, helper, component);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  static void addFallbackBackgroundPainter(IdeGlassPaneImpl glassPane, @NotNull Painter fallbackBackgroundPainter) {
+    PainterHelper painters = glassPane.getNamedPainters(EDITOR_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+
+    painters = glassPane.getNamedPainters(FRAME_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+  }
+
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters$intellij_platform_ide_impl(EDITOR_PROP));
+    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper painters = glassPane.getNamedPainters$intellij_platform_ide_impl(FRAME_PROP);
+    PainterHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {
@@ -126,23 +136,24 @@ public final class IdeBackgroundUtil {
     }, null);
   }
 
+  public static void resetBackgroundImagePainters() {
+    PainterHelper.resetWallpaperPainterCache();
+    repaintAllWindows();
+  }
+
   public static @NotNull Color getIdeBackgroundColor() {
     return JBColor.lazy(() -> {
-      Color light = ColorUtil.darker(JBColor.PanelBackground, 3);
-      return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
+      return StartupUiUtil.isUnderDarcula() ? Gray._40 : ColorUtil.darker(JBColor.PanelBackground, 3);
     });
   }
 
   public static void createTemporaryBackgroundTransform(@NotNull JPanel root, String tmp, @NotNull Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     PainterHelper.initWallpaperPainter(tmp, paintersHelper);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) return v;
-      return MyGraphics.wrap(v, paintersHelper, t);
-    }));
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
   }
 
-  public static void createTemporaryBackgroundTransform(JPanel root,
+  public static void createTemporaryBackgroundTransform(JComponent root,
                                                         Image image,
                                                         Fill fill,
                                                         Anchor anchor,
@@ -151,11 +162,54 @@ public final class IdeBackgroundUtil {
                                                         Disposable disposable) {
     PainterHelper paintersHelper = new PainterHelper(root);
     paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
-    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
-      if (!UIUtil.isAncestor(root, t)) {
-        return v;
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  /**
+   * Allows painting anything as a background for component and its children
+   */
+  @ApiStatus.Experimental
+  public static void createTemporaryBackgroundTransform(JComponent root,
+                                                        Painter painter,
+                                                        Disposable disposable) {
+    PainterHelper paintersHelper = new PainterHelper(root);
+    // In order not to expose MyGraphics class, we need to have a delegate that unwraps MyGraphics to Graphics2D
+    paintersHelper.addPainter(new Painter() {
+      @Override
+      public boolean needsRepaint() {
+        return painter.needsRepaint();
       }
-      return MyGraphics.wrap(v, paintersHelper, t);
+
+      @Override
+      public void paint(Component component, Graphics2D g) {
+        painter.paint(component, MyGraphics.unwrap(g));
+      }
+
+      @Override
+      public void addListener(@NotNull Listener listener) {
+        painter.addListener(listener);
+      }
+
+      @Override
+      public void removeListener(Listener listener) {
+        painter.removeListener(listener);
+      }
+    }, root);
+    createTemporaryBackgroundTransform(root, paintersHelper, disposable);
+  }
+
+  private static void createTemporaryBackgroundTransform(JComponent root, PainterHelper painterHelper, Disposable disposable) {
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((c, g) -> {
+      if (!UIUtil.isAncestor(root, c)) {
+        return g;
+      }
+
+      Boolean noBackground = ClientProperty.get(c, NO_BACKGROUND);
+      if (Boolean.TRUE.equals(noBackground)) {
+        return MyGraphics.unwrap(g);
+      }
+
+      return MyGraphics.wrap(g, painterHelper, c);
     }));
   }
 
@@ -179,6 +233,14 @@ public final class IdeBackgroundUtil {
   }
 
   static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Boolean;
+    }
+  };
+
+  @ApiStatus.Internal
+  public static final RenderingHints.Key NO_BACKGROUND_HINT = new RenderingHints.Key(2) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;
@@ -209,6 +271,11 @@ public final class IdeBackgroundUtil {
     @Override
     public @NotNull Graphics create() {
       return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
+    }
+
+    private Boolean isNoBackground() {
+      Object obj = getRenderingHint(NO_BACKGROUND_HINT);
+      return obj != null && Boolean.TRUE.equals(obj);
     }
 
     @Override
@@ -312,7 +379,7 @@ public final class IdeBackgroundUtil {
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
-      if (width <= 1 || height <= 1) return;
+      if (width <= 1 || height <= 1 || isNoBackground()) return;
       boolean hasAlpha;
       if (reason instanceof Color) {
         hasAlpha = ((Color)reason).getAlpha() < 255;
@@ -356,8 +423,13 @@ public final class IdeBackgroundUtil {
       }
 
       Editor editor = obtainEditor(c);
-      if (editor != null) {
-        if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return original;
+      if (editor instanceof EditorImpl editorImpl) {
+        if (c instanceof EditorComponentImpl && (editorImpl.isDumb() || editorImpl.isStickyLinePainting())) {
+          return original;
+        }
+        if (c instanceof EditorGutterComponentEx && editorImpl.isStickyLinePainting()) {
+          return original;
+        }
       }
 
       Graphics2D gg = withEditorBackground(original, c);
@@ -369,9 +441,8 @@ public final class IdeBackgroundUtil {
 
     private static @Nullable Editor obtainEditor(@Nullable JComponent c) {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-      //noinspection CastConflictsWithInstanceof
-      return view instanceof EditorComponentImpl ? ((EditorComponentImpl)view).getEditor() :
-             view instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)view) :
+      return view instanceof EditorComponentImpl o ? o.getEditor() :
+             view instanceof EditorGutterComponentEx o ? o.getEditor() :
              null;
     }
 

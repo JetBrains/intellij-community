@@ -22,8 +22,9 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import static java.lang.String.format;
 
@@ -50,7 +52,7 @@ public abstract class Entry {
   public Entry(int nameId) {
     this(nameId, calcNameHash(fromNameId(nameId)));
   }
-  
+
   private Entry(int nameId, int nameHash) {
     myNameId = nameId;
     myNameHash = nameHash;
@@ -62,13 +64,13 @@ public abstract class Entry {
   protected static int toNameId(@NonNls String name) {
     if (name == null) return NULL_NAME_ID;
     if (name.isEmpty()) return EMPTY_NAME_ID;
-    return FileNameCache.storeName(name);
+    return FSRecords.getInstance().getNameId(name);
   }
 
   private static CharSequence fromNameId(int nameId) {
     if (nameId == NULL_NAME_ID) return null;
     if (nameId == EMPTY_NAME_ID) return "";
-    return FileNameCache.getVFileName(nameId);
+    return FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   public Entry(DataInput in) throws IOException {
@@ -81,8 +83,7 @@ public abstract class Entry {
     DataStreamUtil.writeString(out, getName());
   }
 
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe String getName() {
     CharSequence sequence = fromNameId(myNameId);
     if (sequence != null && !(sequence instanceof String)) {
       return sequence.toString();
@@ -90,21 +91,19 @@ public abstract class Entry {
     return (String)sequence;
   }
 
-  @NlsSafe
-  public CharSequence getNameSequence() {
+  public @NlsSafe CharSequence getNameSequence() {
     return fromNameId(myNameId);
   }
 
   public int getNameId() {
     return myNameId;
   }
-  
+
   public int getNameHash() {
     return myNameHash;
   }
 
-  @NlsSafe
-  public String getPath() {
+  public @NlsSafe String getPath() {
     StringBuilder builder = new StringBuilder();
     buildPath(this, builder);
     return builder.toString();
@@ -115,7 +114,7 @@ public abstract class Entry {
     Entry parent = e.getParent();
     buildPath(parent, builder);
     String pName = parent == null ? "" : parent.getName();
-    if (builder.length() > 0 && (pName.length() != 1 || pName.charAt(0) != Paths.DELIM)) {
+    if (!builder.isEmpty() && (pName.length() != 1 || pName.charAt(0) != Paths.DELIM)) {
       builder.append(Paths.DELIM);
     }
     builder.append(e.getNameSequence());
@@ -143,6 +142,7 @@ public abstract class Entry {
     return getTimestamp() != timestamp;
   }
 
+  @ApiStatus.Internal
   public Content getContent() {
     throw new UnsupportedOperationException(formatPath());
   }
@@ -159,6 +159,7 @@ public abstract class Entry {
     return myParent;
   }
 
+  @ApiStatus.Internal
   protected void setParent(DirectoryEntry parent) {
     myParent = parent;
   }
@@ -179,8 +180,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatAddRemove(child));
   }
 
-  @NonNls
-  private String formatAddRemove(Entry child) {
+  private @NonNls String formatAddRemove(Entry child) {
     return "add/remove " + child.formatPath() + " to " + formatPath();
   }
 
@@ -204,8 +204,7 @@ public abstract class Entry {
     return findEntry(path) != null;
   }
 
-  @NotNull
-  public Entry getEntry(@NonNls String path) {
+  public @NotNull Entry getEntry(@NonNls String path) {
     Entry result = findEntry(path);
     if (result == null) {
       throw new RuntimeException(format("entry '%s' not found", path));
@@ -213,8 +212,7 @@ public abstract class Entry {
     return result;
   }
 
-  @Nullable
-  public Entry findEntry(@NonNls String relativePath) {
+  public @Nullable Entry findEntry(@NonNls String relativePath) {
     Iterable<String> parts = Paths.split(relativePath);
     Entry result = this;
     for (String each : parts) {
@@ -225,8 +223,7 @@ public abstract class Entry {
     return result;
   }
 
-  @NotNull
-  public abstract Entry copy();
+  public abstract @NotNull Entry copy();
 
   public void setName(@NonNls String newName) {
     if (myParent != null) myParent.checkDoesNotExist(this, newName);
@@ -234,36 +231,47 @@ public abstract class Entry {
     myNameHash = calcNameHash(newName);
   }
 
+  @ApiStatus.Internal
   public void setContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException(formatPath());
   }
 
-  public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
+  public static List<Difference> getDifferencesBetween(@Nullable Entry left, @Nullable Entry right) {
     return getDifferencesBetween(left, right, false);
   }
 
-  public static List<Difference> getDifferencesBetween(Entry left, Entry right, boolean isRightContentCurrent) {
+  public static @NotNull List<Difference> getDifferencesBetween(@Nullable Entry left,
+                                                                @Nullable Entry right,
+                                                                boolean isRightContentCurrent) {
     List<Difference> result = new SmartList<>();
+    BiConsumer<Entry, Entry> consumer = (leftEntry, rightEntry) -> {
+      result.add(new Difference(leftEntry, rightEntry, isRightContentCurrent));
+    };
 
-    if (left == null) right.collectCreatedDifferences(result, isRightContentCurrent);
-    else if (right == null) left.collectDeletedDifferences(result, isRightContentCurrent);
-    else left.collectDifferencesWith(right, result, isRightContentCurrent);
+    if (left != null && right != null) {
+      left.collectDifferencesWith(right, consumer);
+    }
+    else if (right != null) {
+      right.collectCreatedDifferences(consumer);
+    }
+    else if (left != null) {
+      left.collectDeletedDifferences(consumer);
+    }
     return result;
   }
 
-  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull BiConsumer<Entry, Entry> consumer);
 
-  protected abstract void collectCreatedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectCreatedDifferences(@NotNull BiConsumer<Entry, Entry> consumer);
 
-  protected abstract void collectDeletedDifferences(@NotNull List<? super Difference> result, boolean isRightContentCurrent);
+  protected abstract void collectDeletedDifferences(@NotNull BiConsumer<Entry, Entry> consumer);
 
   @Override
   public String toString() {
     return getName();
   }
 
-  @NonNls
-  private String formatPath() {
+  private @NonNls String formatPath() {
     String type = isDirectory() ? "dir: " : "file: ";
     return type + getPath();
   }

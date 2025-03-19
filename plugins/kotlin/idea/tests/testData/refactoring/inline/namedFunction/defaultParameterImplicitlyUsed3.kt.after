@@ -1,0 +1,5 @@
+fun newFun(x: String, y: Int = x.length, z: String? = x) {}
+
+fun foo() {
+    newFun("a")
+}

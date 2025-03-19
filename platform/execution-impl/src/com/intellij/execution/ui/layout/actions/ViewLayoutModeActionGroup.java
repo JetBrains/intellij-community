@@ -8,12 +8,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOption;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class ViewLayoutModeActionGroup extends DefaultActionGroup implements ViewLayoutModificationAction {
+@ApiStatus.Internal
+public final class ViewLayoutModeActionGroup extends DefaultActionGroup implements ViewLayoutModificationAction {
 
-  @NotNull
-  private final Content myContent;
+  private final @NotNull Content myContent;
 
   public ViewLayoutModeActionGroup(
     @NotNull Content content,
@@ -38,7 +39,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     return myContent;
   }
 
-  public static class ViewLayoutModeAction extends DumbAwareToggleAction {
+  public static final class ViewLayoutModeAction extends DumbAwareToggleAction {
 
     private final CustomContentLayoutOption myOption;
 
@@ -76,7 +77,7 @@ public class ViewLayoutModeActionGroup extends DefaultActionGroup implements Vie
     }
   }
 
-  public static class HideContentLayoutModeOption implements CustomContentLayoutOption {
+  public static final class HideContentLayoutModeOption implements CustomContentLayoutOption {
 
     private final Content myContent;
     private final CustomContentLayoutOptions myOptions;

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.psi.tree.IElementType;
@@ -7,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 public class ToggleItalicAction extends BaseToggleStateAction {
 
   @Override
-  @NotNull
-  protected String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
+  protected @NotNull String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
     return isWord(text, selectionStart, selectionEnd) ? "_" : "*";
   }
 
@@ -18,8 +18,7 @@ public class ToggleItalicAction extends BaseToggleStateAction {
   }
 
   @Override
-  @NotNull
-  protected IElementType getTargetNodeType() {
+  protected @NotNull IElementType getTargetNodeType() {
     return MarkdownElementTypes.EMPH;
   }
 

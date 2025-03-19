@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -247,7 +247,7 @@ public final class PullUpConflictsUtil {
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) continue;
         PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-        MethodSignature signature = ((PsiMethod) member).getSignature(superSubstitutor);
+        MethodSignature signature = method.getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(superClass, signature, false);
         if (superClassMethod != null && !superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
           superMember = superClassMethod;
@@ -265,7 +265,7 @@ public final class PullUpConflictsUtil {
       if (member instanceof PsiMethod method) {
         final PsiModifierList modifierList = method.getModifierList();
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
-          for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
+          for (PsiClass subClass : ClassInheritorsSearch.search(superClass).asIterable()) {
             if (method.getContainingClass() != subClass) {
               MethodSignature signature =
                 ((PsiMethod)member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));

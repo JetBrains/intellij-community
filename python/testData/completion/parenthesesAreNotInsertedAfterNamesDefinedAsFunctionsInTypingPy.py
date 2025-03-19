@@ -1,0 +1,1 @@
+class Movie(TypedDi<caret>)

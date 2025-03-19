@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.psi.PsiClass;
@@ -33,9 +32,7 @@ import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Class FQN or ID -> entry in {@code plugin.xml}.
@@ -43,15 +40,15 @@ import java.util.Map;
  * <ul>
  *   <li>Application/Project/Module-component class - {@link Component#getInterfaceClass()} / {@link Component#getImplementationClass()} / {@link Component#getHeadlessImplementationClass()}</li>
  *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
- *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
+ *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getEffectiveId()}</li>
  *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
  *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
  */
 @SuppressWarnings("UnusedReturnValue")
-public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
+public final class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 8;
+  private static final int INDEX_VERSION = 9;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -75,9 +72,8 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     }
   };
 
-  @NotNull
   @Override
-  public ID<String, List<RegistrationEntry>> getName() {
+  public @NotNull ID<String, List<RegistrationEntry>> getName() {
     return NAME;
   }
 
@@ -86,21 +82,19 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return new RegistrationIndexer(plugin).indexFile();
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
+  public @NotNull DataExternalizer<List<RegistrationEntry>> getValueExternalizer() {
     return myValueExternalizer;
   }
 
   @Override
   public int getVersion() {
-    return INDEX_VERSION;
+    return BASE_INDEX_VERSION + INDEX_VERSION;
   }
 
   public static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope) {
@@ -184,7 +178,9 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   public static boolean processAllActionOrGroup(@NotNull Project project,
                                                 GlobalSearchScope scope,
                                                 Processor<? extends ActionOrGroup> processor) {
-    return FileBasedIndex.getInstance().processAllKeys(NAME, s -> processActionOrGroup(project, s, scope, processor), scope, null);
+    Set<String> keys = new HashSet<>();
+    FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
+    return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
   }
 
   public static boolean processActionOrGroupClass(@NotNull Project project,

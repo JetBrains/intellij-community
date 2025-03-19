@@ -1,14 +1,12 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithSymbolicId
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 
 interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val version: Int
@@ -20,25 +18,27 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
     get() = SimpleId(name)
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : SimpleSymbolicIdEntity, WorkspaceEntity.Builder<SimpleSymbolicIdEntity>, ObjBuilder<SimpleSymbolicIdEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<SimpleSymbolicIdEntity> {
     override var entitySource: EntitySource
-    override var version: Int
-    override var name: String
-    override var related: SimpleId
-    override var sealedClassWithLinks: SealedClassWithLinks
+    var version: Int
+    var name: String
+    var related: SimpleId
+    var sealedClassWithLinks: SealedClassWithLinks
   }
 
-  companion object : Type<SimpleSymbolicIdEntity, Builder>() {
+  companion object : EntityType<SimpleSymbolicIdEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(version: Int,
-                        name: String,
-                        related: SimpleId,
-                        sealedClassWithLinks: SealedClassWithLinks,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): SimpleSymbolicIdEntity {
+    operator fun invoke(
+      version: Int,
+      name: String,
+      related: SimpleId,
+      sealedClassWithLinks: SealedClassWithLinks,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.version = version
       builder.name = name
@@ -53,9 +53,12 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: SimpleSymbolicIdEntity,
-                                      modification: SimpleSymbolicIdEntity.Builder.() -> Unit) = modifyEntity(
-  SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifySimpleSymbolicIdEntity(
+  entity: SimpleSymbolicIdEntity,
+  modification: SimpleSymbolicIdEntity.Builder.() -> Unit,
+): SimpleSymbolicIdEntity {
+  return modifyEntity(SimpleSymbolicIdEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class SimpleId(val name: String) : SymbolicEntityId<SimpleSymbolicIdEntity> {
@@ -71,5 +74,4 @@ sealed class SealedClassWithLinks {
     data class Ordered(val list: List<SimpleId>) : Many()
     data class Unordered(val set: Set<SimpleId>) : Many()
   }
-
 }

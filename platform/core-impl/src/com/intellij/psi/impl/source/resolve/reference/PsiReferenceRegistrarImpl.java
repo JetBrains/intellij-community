@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.Disposable;
@@ -14,9 +14,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -24,6 +26,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
   private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new HashMap<>();
@@ -115,7 +118,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
 
         @Override
         public String toString() {
-          return "PsiReferenceRegistrarImpl cleanuper for " + provider;
+          return "PsiReferenceRegistrarImpl cleanuper for " + provider +" ("+provider.getClass()+")";
         }
       };
       Disposer.register(parentDisposable, disposable);
@@ -177,8 +180,9 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   @ApiStatus.Internal
-  public @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
-                                                                                          @NotNull PsiReferenceService.Hints hints) {
+  @Unmodifiable
+  @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
+                                                                                   @NotNull PsiReferenceService.Hints hints) {
     ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
@@ -187,5 +191,10 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       binding.addAcceptableReferenceProviders(element, ret, hints);
     }
     return ret;
+  }
+  @ApiStatus.Internal
+  public @Unmodifiable @NotNull List<PsiReferenceProvider> getPsiReferenceProvidersByElement(@NotNull PsiElement element,
+                                                                                             @NotNull PsiReferenceService.Hints hints) {
+    return ContainerUtil.map(getPairsByElement(element, hints), info -> info.provider);
   }
 }

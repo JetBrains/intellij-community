@@ -13,8 +13,7 @@ class Test {
     }
   }
 
-    @Nullable
-    private Pojo newMethod() {
+    private @Nullable Pojo newMethod() {
         Pojo x = things.get(0);
 
         if(x.it > 0) {

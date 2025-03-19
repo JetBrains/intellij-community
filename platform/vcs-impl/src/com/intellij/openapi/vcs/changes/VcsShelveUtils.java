@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,16 +33,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class VcsShelveUtils {
   private static final Logger LOG = Logger.getInstance(VcsShelveUtils.class.getName());
 
-  @NotNull
-  public static ApplyPatchStatus doSystemUnshelve(final Project project,
-                                                  final ShelvedChangeList shelvedChangeList,
-                                                  @Nullable final LocalChangeList targetChangeList,
-                                                  final ShelveChangesManager shelveManager,
-                                                  @NlsContexts.Label @Nullable final String leftConflictTitle,
-                                                  @NlsContexts.Label @Nullable final String rightConflictTitle) {
+  public static @NotNull ApplyPatchStatus doSystemUnshelve(final Project project,
+                                                           final ShelvedChangeList shelvedChangeList,
+                                                           final @Nullable LocalChangeList targetChangeList,
+                                                           final ShelveChangesManager shelveManager,
+                                                           final @NlsContexts.Label @Nullable String leftConflictTitle,
+                                                           final @NlsContexts.Label @Nullable String rightConflictTitle,
+                                                           boolean reportLocalHistoryActivity) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";
@@ -55,16 +57,16 @@ public final class VcsShelveUtils {
     // Refresh files that might be affected by unshelve
     refreshFilesBeforeUnshelve(projectPath, changes, binaryFiles);
 
-    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList);
-    // we pass null as target change list for Patch Applier to do NOTHING with change lists
+    LOG.info("Unshelving shelvedChangeList: " + shelvedChangeList + " into " + targetChangeList);
     ApplyPatchStatus status = shelveManager.unshelveChangeList(shelvedChangeList, changes, binaryFiles, targetChangeList, false, true,
-                                                               true, leftConflictTitle, rightConflictTitle, true);
+                                                               true, leftConflictTitle, rightConflictTitle, true,
+                                                               reportLocalHistoryActivity);
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
     return status;
   }
 
   @RequiresEdt
-  private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
+  private static void markUnshelvedFilesNonUndoable(final @NotNull Project project,
                                                     @NotNull List<ShelvedChange> changes) {
     final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
     if (undoManager != null && !changes.isEmpty()) {
@@ -105,8 +107,7 @@ public final class VcsShelveUtils {
    * @param description the description of for the shelve
    * @return created shelved change list or null in case failure
    */
-  @Nullable
-  public static ShelvedChangeList shelveChanges(final Project project,
+  public static @Nullable ShelvedChangeList shelveChanges(final Project project,
                                                 Collection<? extends Change> changes,
                                                 final @Nls String description,
                                                 boolean rollback,

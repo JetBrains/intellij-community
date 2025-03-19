@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -12,7 +12,7 @@ import java.util.List;
 public class ReferenceNode implements DependencyNode, Serializable {
   private final long id;
 
-  @PropertyMapping({"id"})
+  @PropertyMapping("id")
   public ReferenceNode(long id) {this.id = id;}
 
   @Override
@@ -20,27 +20,23 @@ public class ReferenceNode implements DependencyNode, Serializable {
     return id;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return "*";
   }
 
-  @Nullable
   @Override
-  public ResolutionState getResolutionState() {
+  public @Nullable ResolutionState getResolutionState() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getSelectionReason() {
+  public @Nullable String getSelectionReason() {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<DependencyNode> getDependencies() {
+  public @NotNull List<DependencyNode> getDependencies() {
     return Collections.emptyList();
   }
 
@@ -55,6 +51,6 @@ public class ReferenceNode implements DependencyNode, Serializable {
 
   @Override
   public int hashCode() {
-    return (int)(id ^ (id >>> 32));
+    return Long.hashCode(id);
   }
 }

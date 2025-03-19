@@ -1,0 +1,1 @@
+type ExampleType = int | str

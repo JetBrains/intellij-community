@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.gradle.native.tooling` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = 8,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "gradle-native-tooling_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "gradle-native-tooling",
+  module_name = "intellij.gradle.native.tooling",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "@lib//:gradle",
+    "//platform/object-serializer:objectSerializer-annotations",
+  ],
+  runtime_deps = [":gradle-native-tooling_resources"]
+)
+### auto-generated section `build intellij.gradle.native.tooling` end
+
+### auto-generated section `build intellij.gradle.native.tooling.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "gradle-native-tooling-tests_test",
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:junit4",
+    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test_lib",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+  ]
+)
+### auto-generated section `build intellij.gradle.native.tooling.tests` end

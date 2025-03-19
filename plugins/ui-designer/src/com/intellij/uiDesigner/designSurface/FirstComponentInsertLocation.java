@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -22,9 +22,9 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   protected final int myXPart;
   protected final int myYPart;
 
-  public FirstComponentInsertLocation(@NotNull final RadContainer container,
+  public FirstComponentInsertLocation(final @NotNull RadContainer container,
                                       final Point targetPoint,
-                                      @NotNull final Rectangle cellRect) {
+                                      final @NotNull Rectangle cellRect) {
     super(container, 0, 0);
     myCellRect = cellRect;
     int midX1 = myCellRect.x + myCellRect.width / 3;
@@ -51,7 +51,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
     }
   }
 
-  public FirstComponentInsertLocation(@NotNull final RadContainer container,
+  public FirstComponentInsertLocation(final @NotNull RadContainer container,
                                       final Rectangle cellRect,
                                       final int xPart,
                                       final int yPart) {
@@ -182,8 +182,7 @@ public class FirstComponentInsertLocation extends GridDropLocation {
   }
 
   @Override
-  @Nullable
-  public ComponentDropLocation getAdjacentLocation(Direction direction) {
+  public @Nullable ComponentDropLocation getAdjacentLocation(Direction direction) {
     if (direction == Direction.DOWN && myYPart < 2) {
       return createAdjacentLocation(myXPart, myYPart+1);
     }

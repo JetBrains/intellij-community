@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 val array = Array(2) { it }
 operator fun <T> Array<T>.contains(t: T): Boolean = false
 

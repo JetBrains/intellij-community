@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.ide.core.plugins` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-core-plugins",
+  module_name = "intellij.platform.ide.core.plugins",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/settings",
+    "//platform/ide-core",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.core.plugins` end

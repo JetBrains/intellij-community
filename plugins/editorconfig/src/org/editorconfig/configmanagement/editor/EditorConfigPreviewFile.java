@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.editor;
 
 import com.intellij.application.options.CodeStyle;
@@ -38,7 +38,7 @@ final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyl
     myProject = project;
     myOriginalPath = originalFile.getPath();
     myDocument = document;
-    final Language language = EditorConfigEditorProvider.getLanguage(originalFile);
+    final Language language = EditorConfigEditorProvider.Companion.getLanguage(originalFile);
     if (language != null) {
       super.setLanguage(language);
     }
@@ -75,7 +75,7 @@ final class EditorConfigPreviewFile extends LightVirtualFile implements CodeStyl
             CodeStyleSettings settings = CodeStyle.getSettings(originalPsiFile);
             PsiFile psiFile = createPsi(originalPsiFile.getFileType());
             psiFile.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsiFile);
-            CodeStyle.doWithTemporarySettings(
+            CodeStyle.runWithLocalSettings(
               myProject, settings, () -> CodeStyleManager.getInstance(myProject).reformatText(psiFile, 0, psiFile.getTextLength()));
             myDocument.replaceString(0, myDocument.getTextLength(), psiFile.getText());
           }

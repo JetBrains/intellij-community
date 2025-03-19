@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.containers.ContainerUtil
 import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTextRange
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
@@ -202,7 +202,7 @@ object TableModificationUtils {
     columnIndex: Int,
     after: Boolean = true,
     alignment: CellAlignment = CellAlignment.NONE,
-    columnWidth: Int = 5
+    columnWidth: Int = 3
   ) {
     val cells = getColumnCells(columnIndex, withHeader = false)
     val headerCell = headerRow?.getCell(columnIndex)!!

@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.*
@@ -126,15 +125,18 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   protected fun addLocalFile(name: String, content: String): VirtualFile {
-    val file = runWriteAction {
+    val file = createLocalFile(name, content)
+    assertFalse(changeProvider.files.contains(file))
+    changeProvider.files.add(file)
+    return file
+  }
+
+  protected fun createLocalFile(name: String, content: String): VirtualFile {
+    return runWriteAction {
       val file = testRoot.createChildData(this, name)
       VfsUtil.saveText(file, parseInput(content))
       file
     }
-
-    assertFalse(changeProvider.files.contains(file))
-    changeProvider.files.add(file)
-    return file
   }
 
   protected fun removeLocalFile(name: String) {
@@ -198,12 +200,12 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
 
 
   fun runBatchFileChangeOperation(task: () -> Unit) {
-    BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onFreeze()
+    project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onFreeze()
     try {
       task()
     }
     finally {
-      BackgroundTaskUtil.syncPublisher(project, VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
+      project.messageBus.syncPublisher(VcsFreezingProcess.Listener.TOPIC).onUnfreeze()
     }
   }
 

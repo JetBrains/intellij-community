@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -64,7 +64,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       final JLabel label = new JLabel(text);
       //label.setFont(label.getFont().deriveFont(Font.ITALIC));
       label.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : NamedColorUtil.getInactiveTextColor());
@@ -82,9 +82,8 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
     return myField.getText();
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     return myComponent;
   }
 

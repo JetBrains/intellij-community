@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +15,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Possible places in the IDE user interface where an action can appear.
+ * Common action place values where an action can appear.
+ * <p>
+ * To alter logic for an action prefer {@link AnActionEvent#getUiKind()}.
+ * The {@link AnActionEvent#getPlace()} is intended for stats, logging and debugging.
+ *
+ * @see AnActionEvent#getPlace()
+ * @see AnActionEvent#getUiKind()
  */
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
@@ -32,6 +39,8 @@ public abstract class ActionPlaces {
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
 
+  public static final String CUSTOMIZE_ACTIONS_PANEL = "CustomizeActionsPanel";
+
   public static final String EDITOR_FLOATING_TOOLBAR = "EditorFloatingToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
@@ -39,6 +48,7 @@ public abstract class ActionPlaces {
   public static final String EDITOR_GUTTER = "ICON_NAVIGATION";
   public static final String EDITOR_GUTTER_POPUP = "ICON_NAVIGATION_SECONDARY_BUTTON";
   public static final String EDITOR_ANNOTATIONS_AREA_POPUP = "EditorAnnotationsAreaPopup";
+  public static final String EDITOR_NOTIFICATION_POPUP = "EDITOR_NOTIFICATION_POPUP";
   public static final String EDITOR_INLAY = "EditorInlay";
   public static final String RIGHT_EDITOR_GUTTER_POPUP = "RightEditorGutterPopup";
   public static final String COMMANDER_POPUP = "CommanderPopup";
@@ -55,6 +65,8 @@ public abstract class ActionPlaces {
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
+
+  public static final String REVEAL_IN_POPUP = "RevealInPopup";
 
   /** @deprecated replaced by {@link #BOOKMARKS_VIEW_POPUP} */
   @Deprecated(forRemoval = true)
@@ -87,6 +99,7 @@ public abstract class ActionPlaces {
   public static final String SHOW_USAGES_POPUP_TOOLBAR = "ShowUsagesPopupToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
+  public static final String STRUCTURE_VIEW_FLOATING_TOOLBAR = "StructureViewFloatingToolbar";
   public static final String NAVIGATION_BAR_POPUP = "NavBar";
   public static final String NAVIGATION_BAR_TOOLBAR = "NavBarToolbar";
   public static final String RUN_TOOLBAR_LEFT_SIDE = "RunToolbarLeftSide";
@@ -94,6 +107,8 @@ public abstract class ActionPlaces {
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
+  public static final String PROBLEMS_VIEW_POPUP = "ProblemsViewPopup";
+  public static final String PROBLEMS_VIEW_TOOLBAR = "ProblemsViewToolbar";
 
   public static final String COPY_REFERENCE_POPUP = "CopyReferencePopup";
 
@@ -131,6 +146,7 @@ public abstract class ActionPlaces {
 
   public static final String DATABASE_VIEW_TOOLBAR = "DatabaseViewToolbar";
   public static final String DATABASE_VIEW_POPUP = "DatabaseViewPopup";
+  public static final String GRID_FLOATING_PAGING_TOOLBAR = "GridFloatingPagingToolbar";
 
   public static final String REMOTE_HOST_VIEW_POPUP = "RemoteHostPopup";
   public static final String REMOTE_HOST_DIALOG_POPUP = "RemoteHostDialogPopup";
@@ -161,6 +177,7 @@ public abstract class ActionPlaces {
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
   public static final String SERVICES_POPUP = "ServicesPopup";
   public static final String SERVICES_TOOLBAR = "ServicesToolbar";
+  public static final String SERVICES_TREE_TOOLBAR = "ServicesToolbar";
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
@@ -181,6 +198,8 @@ public abstract class ActionPlaces {
   public static final String SETTINGS_HISTORY = "SettingsHistory";
 
   public static final String PROJECT_WIDGET_POPUP = "ProjectWidgetPopup";
+
+  public static final String NEW_UI_ONBOARDING = "NewUiOnboarding";
 
   // Vcs Log
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
@@ -203,17 +222,25 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
+  // Marker to avoid executing editor action on backend for patch engine
+  @ApiStatus.Internal
+  public static final Key<Boolean> EXECUTE_EDITOR_ACTION_ON_FRONTEND = Key.create("EXECUTE_EDITOR_ACTION_ON_FRONTEND");
+
+  public static final String IMPORT_SETTINGS_DIALOG = "Import.Settings.Dialog";
+
+  public static final String JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP = "Editor.Jupyter.Cell.Output.Popup";
+
+  /** @deprecated Use {@link AnActionEvent#getUiKind()} and {@link AnActionEvent#getInputEvent()} instead */
+  @Deprecated
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
            place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
   }
 
+  /** @deprecated Use {@link AnActionEvent#getInputEvent()} instead */
+  @Deprecated
   public static boolean isShortcutPlace(String place) {
     return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
-  }
-
-  public static boolean isMainToolbar(String place) {
-    return MAIN_TOOLBAR.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces;
@@ -239,14 +266,18 @@ public abstract class ActionPlaces {
     CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
-    EDITOR_ANNOTATIONS_AREA_POPUP,
+    EDITOR_ANNOTATIONS_AREA_POPUP, EDITOR_NOTIFICATION_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
-    PROJECT_WIDGET_POPUP
+    PROJECT_WIDGET_POPUP,
+    JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP,
+    REVEAL_IN_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
 
+  /** @deprecated Use {@link AnActionEvent#getUiKind()} or {@link AnActionEvent#isFromContextMenu()} instead */
+  @Deprecated
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
   }
@@ -256,8 +287,8 @@ public abstract class ActionPlaces {
            place.startsWith(POPUP_PREFIX) && isCommonPlace(place.substring(POPUP_PREFIX.length()));
   }
 
-  public static @NotNull String getActionGroupPopupPlace(@Nullable String actionId) {
-    return actionId == null ? POPUP : POPUP_PREFIX + actionId;
+  public static @NotNull String getActionGroupPopupPlace(@Nullable String place) {
+    return place == null ? POPUP : POPUP_PREFIX + place;
   }
 
   public static @NotNull String getPopupPlace(@Nullable String place) {
@@ -270,6 +301,6 @@ public abstract class ActionPlaces {
    */
   @ApiStatus.Internal
   public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
-    return SystemInfo.isMac && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
+    return SystemInfo.isMac && (e.isFromMainMenu() || e.getInputEvent() != null);
   }
 }

@@ -6,22 +6,44 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import java.io.File
 
 abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
+
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("multiModuleFindUsages")
+
+    protected fun getTestdataFile(): File =
+        File(testDataPath + getTestName(true).removePrefix("test"))
 
     protected val mainFile: KtFile
         get() = project.allKotlinFiles().single { file ->
             file.text.contains("// ")
         }
 
-    protected open fun doFindUsagesTest() {
+    open val ignoreLog: Boolean = false
+
+    open fun doTest(path: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(
+            getTestdataFile().toPath().resolve("directives.txt"),
+            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+        ) {
+            doTestInternal(path)
+        }
+    }
+
+    protected fun doTestInternal(path: String) {
+        setupMppProjectFromDirStructure(File(path))
+
         val virtualFile = mainFile.virtualFile!!
         configureByExistingFile(virtualFile)
 
@@ -44,6 +66,11 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
         UsefulTestCase.assertInstanceOf(caretElement!!, caretElementClass)
 
         val options = parser?.parse(mainFileText, project)
+        val testType = when (pluginMode) {
+            KotlinPluginMode.K1 -> FindUsageTestType.DEFAULT
+            KotlinPluginMode.K2 -> FindUsageTestType.FIR
+        }
+
         findUsagesAndCheckResults(
             mainFileText,
             prefix,
@@ -52,7 +79,8 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
             options,
             project,
             alwaysAppendFileName = true,
-            testType = if (isFirPlugin()) FindUsageTestType.FIR else FindUsageTestType.DEFAULT,
+            testType = testType,
+            ignoreLog = ignoreLog
         )
     }
 }

@@ -4,28 +4,23 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
-import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectStartupActivity
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.util.io.toNioPath
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findOrCreateDirectory
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
-import com.intellij.testFramework.openProjectAsync
-import com.intellij.testFramework.utils.module.assertModules
+import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.utils.vfs.deleteRecursively
-import com.intellij.testFramework.utils.vfs.getDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
@@ -34,40 +29,11 @@ import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
+import java.nio.file.Path
 import kotlin.io.path.name
 
 
 abstract class GradleTestCase : GradleBaseTestCase() {
-
-  suspend fun openProject(relativePath: String, wait: Boolean = true): Project {
-    val projectRoot = testRoot.getDirectory(relativePath)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        openProjectAsync(projectRoot, UnlinkedProjectStartupActivity())
-      }
-    }
-  }
-
-  suspend fun linkProject(project: Project, relativePath: String) {
-    val projectRoot = testRoot.getDirectory(relativePath)
-    awaitAnyGradleProjectReload {
-      linkAndRefreshGradleProject(projectRoot.path, project)
-    }
-  }
-
-  suspend fun reloadProject(
-    project: Project,
-    relativePath: String,
-    configure: ImportSpecBuilder.() -> Unit
-  ) {
-    awaitAnyGradleProjectReload {
-      ExternalSystemUtil.refreshProject(
-        testRoot.getDirectory(relativePath).path,
-        ImportSpecBuilder(project, SYSTEM_ID)
-          .apply(configure)
-      )
-    }
-  }
 
   suspend fun initProject(projectInfo: ProjectInfo) =
     initProject(testRoot, projectInfo)
@@ -77,7 +43,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       initProject(root, compositeInfo)
     }
     for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = writeAction {
+      val moduleRoot = edtWriteAction {
         root.findOrCreateDirectory(moduleInfo.relativePath)
       }
       moduleInfo.filesConfiguration.createFiles(moduleRoot)
@@ -92,7 +58,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       deleteProject(root, compositeInfo)
     }
     withContext(Dispatchers.EDT) {
-      writeAction {
+      edtWriteAction {
         for (moduleInfo in projectInfo.modules) {
           root.deleteRecursively(moduleInfo.relativePath)
         }
@@ -103,16 +69,16 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
     assertNotificationIsVisible(project, false)
     assertProjectStructure(project, *projectsInfo)
+    assertProjectClasspathSaved(project)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
-      assertBuildFiles(projectInfo)
     }
   }
 
   fun assertProjectStructure(project: Project, vararg projectsInfo: ProjectInfo) {
     val settings = ExternalSystemApiUtil.getSettings(project, SYSTEM_ID)
     Assertions.assertEquals(projectsInfo.size, settings.linkedProjectsSettings.size)
-    val modulesInfo = projectsInfo.flatMap { getModulesInfo(it) }
+    val modulesInfo = projectsInfo.flatMap { getModuleInfos(it) }
     assertModules(
       project,
       *modulesInfo.map { it.ideName }.toTypedArray(),
@@ -120,12 +86,19 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     )
   }
 
-  private fun getModulesInfo(projectInfo: ProjectInfo): List<ModuleInfo> {
-    return projectInfo.modules + projectInfo.composites.flatMap { getModulesInfo(it) }
+  fun assertProjectClasspathSaved(project: Project) {
+    val cp = project.service<ProjectBuildClasspathManager>()
+    Assertions.assertFalse(cp.getProjectBuildClasspath().isEmpty()) {
+      "Assert classpath entity is saved to the workspace model"
+    }
+  }
+
+  private fun getModuleInfos(projectInfo: ProjectInfo): List<ModuleInfo> {
+    return projectInfo.modules + projectInfo.composites.flatMap { getModuleInfos(it) }
   }
 
   fun assertDefaultProjectSettings(project: Project, projectInfo: ProjectInfo) {
-    val externalProjectPath = testRoot.getDirectory(projectInfo.relativePath).path
+    val externalProjectPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
     val settings = GradleSettings.getInstance(project)
     val projectSettings = settings.getLinkedProjectSettings(externalProjectPath)
     val rootModule = project.modules.first { it.name == projectInfo.name }
@@ -136,27 +109,10 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     Assertions.assertEquals(projectSettings.externalProjectPath, externalProjectPath)
     Assertions.assertTrue(settings.storeProjectFilesExternally)
     Assertions.assertTrue(projectSettings.isResolveModulePerSourceSet)
-    Assertions.assertTrue(projectSettings.isResolveExternalAnnotations)
+    Assertions.assertFalse(projectSettings.isResolveExternalAnnotations)
     Assertions.assertTrue(projectSettings.delegatedBuild)
     Assertions.assertEquals(TestRunner.GRADLE, projectSettings.testRunner)
     Assertions.assertTrue(projectSettings.isUseQualifiedModuleNames)
-  }
-
-  fun assertBuildFiles(projectInfo: ProjectInfo) {
-    for (compositeInfo in projectInfo.composites) {
-      assertBuildFiles(compositeInfo)
-    }
-    for (moduleInfo in projectInfo.modules) {
-      val moduleRoot = testRoot.getDirectory(moduleInfo.relativePath)
-      moduleInfo.filesConfiguration.assertContentsAreEqual(moduleRoot)
-    }
-  }
-
-  fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {
-    val notificationAware = AutoImportProjectNotificationAware.getInstance(project)
-    Assertions.assertEquals(isNotificationVisible, notificationAware.isNotificationVisible()) {
-      notificationAware.getProjectsWithNotification().toString()
-    }
   }
 
   fun projectInfo(
@@ -164,16 +120,16 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     useKotlinDsl: Boolean = true,
     configure: ProjectInfo.Builder.() -> Unit = {}
   ) = ProjectInfo.create(
-    relativePath.toNioPath().name,
+    Path.of(relativePath).name,
     relativePath,
-    useKotlinDsl,
+    GradleDsl.valueOf(useKotlinDsl),
     configure
   )
 
   fun getSimpleProjectInfo(relativePath: String) =
     projectInfo(relativePath) {
       withSettingsFile {
-        setProjectName(relativePath.toNioPath().name)
+        setProjectName(Path.of(relativePath).name)
       }
       withBuildFile {
         withJavaPlugin()
@@ -211,11 +167,15 @@ abstract class GradleTestCase : GradleBaseTestCase() {
       }
     }
 
-  fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withSettingsFile(useKotlinDsl = useKotlinDsl, configure = configure)
+  fun ModuleInfo.Builder.withFile(relativePath: String, content: String) {
+    filesConfiguration.withFile(relativePath, content)
   }
 
-  fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
-    filesConfiguration.withBuildFile(gradleVersion, useKotlinDsl = useKotlinDsl, configure = configure)
+  fun ModuleInfo.Builder.withSettingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit) {
+    filesConfiguration.withSettingsFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
+  }
+
+  open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+    filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 }

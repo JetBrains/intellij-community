@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.Lookup;
@@ -10,13 +10,15 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
+@ApiStatus.Internal
+public final class LookupActionsStep extends BaseListPopupStep<LookupElementAction> implements ClosableByLeftArrow {
   private final LookupImpl myLookup;
   private final LookupElement myLookupElement;
   private final Icon myEmptyIcon;
@@ -38,7 +40,7 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
   }
 
   @Override
-  public PopupStep onChosen(LookupElementAction selectedValue, boolean finalChoice) {
+  public PopupStep<?> onChosen(LookupElementAction selectedValue, boolean finalChoice) {
     UIEventLogger.LookupExecuteElementAction.log(myLookup.getProject());
 
     final LookupElementAction.Result result = selectedValue.performLookupAction();
@@ -60,9 +62,8 @@ public class LookupActionsStep extends BaseListPopupStep<LookupElementAction> im
     return LookupCellRenderer.augmentIcon(myLookup.getEditor(), aValue.getIcon(), myEmptyIcon);
   }
 
-  @NotNull
   @Override
-  public String getTextFor(LookupElementAction value) {
+  public @NotNull String getTextFor(LookupElementAction value) {
     return value.getText();
   }
 }

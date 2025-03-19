@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.copyright;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,37 +20,53 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/update")
 public class UpdateKotlinCopyrightTestGenerated extends AbstractUpdateKotlinCopyrightTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("ClassDocComment.kt")
+    @TestMetadata("classDocComment.kt")
     public void testClassDocComment() throws Exception {
-        runTest("testData/update/ClassDocComment.kt");
+        runTest("testData/update/classDocComment.kt");
     }
 
-    @TestMetadata("Empty.kt")
+    @TestMetadata("empty.kt")
     public void testEmpty() throws Exception {
-        runTest("testData/update/Empty.kt");
+        runTest("testData/update/empty.kt");
     }
 
-    @TestMetadata("MultiComments.kt")
+    @TestMetadata("multiComments.kt")
     public void testMultiComments() throws Exception {
-        runTest("testData/update/MultiComments.kt");
+        runTest("testData/update/multiComments.kt");
     }
 
-    @TestMetadata("NoPackage.kt")
+    @TestMetadata("noPackage.kt")
     public void testNoPackage() throws Exception {
-        runTest("testData/update/NoPackage.kt");
+        runTest("testData/update/noPackage.kt");
     }
 
-    @TestMetadata("Script.kts")
+    @TestMetadata("script.kts")
     public void testScript() throws Exception {
-        runTest("testData/update/Script.kts");
+        runTest("testData/update/script.kts");
     }
 
-    @TestMetadata("Simple.kt")
+    @TestMetadata("scriptWithShebang.kts")
+    public void testScriptWithShebang() throws Exception {
+        runTest("testData/update/scriptWithShebang.kts");
+    }
+
+    @TestMetadata("scriptWithShebangAndComment.kts")
+    public void testScriptWithShebangAndComment() throws Exception {
+        runTest("testData/update/scriptWithShebangAndComment.kts");
+    }
+
+    @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
-        runTest("testData/update/Simple.kt");
+        runTest("testData/update/simple.kt");
     }
 }

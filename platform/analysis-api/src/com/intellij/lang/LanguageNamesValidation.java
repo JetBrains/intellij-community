@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.lang.refactoring.NamesValidator;
@@ -14,14 +14,13 @@ public final class LanguageNamesValidation extends LanguageExtension<NamesValida
   }
 
   @Override
-  @NotNull
-  public NamesValidator forLanguage(@NotNull Language l) {
+  public @NotNull NamesValidator forLanguage(@NotNull Language l) {
     return super.forLanguage(l);
   }
 
-  protected static class DefaultNamesValidator implements NamesValidator {
+  protected static final class DefaultNamesValidator implements NamesValidator {
     @Override
-    public boolean isIdentifier(@NotNull final String name, final Project project) {
+    public boolean isIdentifier(final @NotNull String name, final Project project) {
       final int len = name.length();
       if (len == 0) return false;
 
@@ -35,7 +34,7 @@ public final class LanguageNamesValidation extends LanguageExtension<NamesValida
     }
 
     @Override
-    public boolean isKeyword(@NotNull final String name, final Project project) {
+    public boolean isKeyword(final @NotNull String name, final Project project) {
       return false;
     }
   }

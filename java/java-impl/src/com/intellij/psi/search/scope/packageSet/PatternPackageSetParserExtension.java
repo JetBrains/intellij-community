@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.util.containers.ContainerUtil;
 
-public class PatternPackageSetParserExtension implements PackageSetParserExtension {
+public final class PatternPackageSetParserExtension implements PackageSetParserExtension {
 
   @Override
   public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
@@ -72,7 +72,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
       lexer.advance();
     }
 
-    if (pattern.length() == 0) {
+    if (pattern.isEmpty()) {
       error(CodeInsightBundle.message("error.package.set.pattern.expectations"), lexer);
     }
 

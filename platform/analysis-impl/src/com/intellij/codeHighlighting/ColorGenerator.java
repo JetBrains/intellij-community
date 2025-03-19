@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.ui.JBColor;
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -10,9 +11,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ColorGenerator {
-  @NotNull
-  public static List<Color> generateLinearColorSequence(@NotNull List<? extends Color> anchorColors, int colorsBetweenAnchors) {
+  public static @NotNull List<Color> generateLinearColorSequence(@NotNull List<? extends Color> anchorColors, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;
     if (anchorColors.isEmpty()) return Collections.singletonList(JBColor.GRAY);
     if (anchorColors.size() == 1) return Collections.singletonList(anchorColors.get(0));
@@ -33,8 +34,7 @@ public final class ColorGenerator {
     return result;
   }
 
-  @NotNull
-  static List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
+  static @NotNull List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;
 
     List<Color> result = new ArrayList<>(colorsBetweenAnchors + 2);

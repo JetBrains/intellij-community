@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -12,12 +12,14 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
+import org.jetbrains.idea.maven.project.MavenPluginWithArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -26,7 +28,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
-import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 
@@ -69,7 +70,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        if(MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
+        if (MavenUtil.INTELLIJ_PLUGIN_ID.equals(pluginDescriptor.getPluginId().getIdString())) {
           isUnloading = true;
         }
       }
@@ -135,9 +136,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
-  @NotNull
   @Override
-  public RootNode getRootElement() {
+  public @NotNull RootNode getRootElement() {
     return myRoot;
   }
 
@@ -236,7 +236,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void accept(@NotNull TreeVisitor visitor) {
-    ((AsyncTreeModel)myTree.getModel()).accept(visitor);
+    ((TreeVisitor.Acceptor)myTree.getModel()).accept(visitor);
   }
 
   public void updateGoals() {
@@ -257,14 +257,16 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   public void select(SimpleNode node) {
-    myModel.select(node, myTree, treePath -> {});
+    myModel.select(node, myTree, treePath -> {
+    });
   }
 
   private ProjectNode findNodeFor(MavenProject project) {
     return myProjectToNodeMapping.get(project);
   }
 
-  enum DisplayKind {
+  @ApiStatus.Internal
+  public enum DisplayKind {
     ALWAYS, NEVER, NORMAL
   }
 
@@ -303,30 +305,28 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     NONE, ERROR
   }
 
-  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPlugin> plugins) {
-    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, plugins));
+  void updatePluginsTree(PluginsNode pluginsNode, List<MavenPluginWithArtifact> pluginInfos) {
+    boundedUpdateService.execute(new MavenProjectsStructure.UpdatePluginsTreeTask(pluginsNode, pluginInfos));
   }
 
   private class UpdatePluginsTreeTask implements Runnable {
-    @NotNull private final PluginsNode myParentNode;
-    private final List<MavenPlugin> myPlugins;
+    private final @NotNull PluginsNode myParentNode;
+    private final List<MavenPluginWithArtifact> myPluginInfos;
 
-    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPlugin> plugins) {
+    UpdatePluginsTreeTask(@NotNull PluginsNode parentNode, List<MavenPluginWithArtifact> pluginInfos) {
       myParentNode = parentNode;
-      myPlugins = plugins;
+      myPluginInfos = pluginInfos;
     }
 
 
     @Override
     public void run() {
-      File localRepository = getProjectsManager().getLocalRepository();
-
       List<PluginNode> pluginInfos = new ArrayList<>();
-      Iterator<MavenPlugin> iterator = myPlugins.iterator();
-      while(!isUnloading && iterator.hasNext()){
-        MavenPlugin next = iterator.next();
-        var pluginInfo = MavenArtifactUtil.readPluginInfo(localRepository, next.getMavenId());
-        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next, pluginInfo);
+      var iterator = myPluginInfos.iterator();
+      while (!isUnloading && iterator.hasNext()) {
+        var next = iterator.next();
+        var pluginInfo = MavenArtifactUtil.readPluginInfo(next.getArtifact());
+        var pluginNode = new PluginNode(MavenProjectsStructure.this, myParentNode, next.getPlugin(), pluginInfo);
         pluginInfos.add(pluginNode);
       }
       updateNodesInEDT(pluginInfos);
@@ -335,11 +335,17 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private void updateNodesInEDT(List<PluginNode> pluginNodes) {
       ApplicationManager.getApplication().invokeLater(() -> {
         myParentNode.getPluginNodes().clear();
-        if(isUnloading) return;
+        if (isUnloading) return;
         myParentNode.getPluginNodes().addAll(pluginNodes);
         myParentNode.sort(myParentNode.getPluginNodes());
         myParentNode.childrenChanged();
       });
     }
+  }
+
+  public void updateRepositoryStatus(@NotNull MavenIndexUpdateState state) {
+    myProjectToNodeMapping.values().forEach(pn -> {
+      pn.getRepositoriesNode().updateStatus(state);
+    });
   }
 }

@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
+import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-class Catch {
+abstract class Catch {
   void x() {
     try {
       throw new Exception();
@@ -25,5 +24,28 @@ class Catch {
       e.printStackTrace();
       // TODO(cpovirk): Edit README to permit referencing java.lang.Exception. Or remove this.
     }
+
+    try {
+      doWork();
+    } catch (SomeError | SomeRuntimeException e) {
+    } catch (Throwable e) {
+      e.printStackTrace();
+    }
+
+    try {
+      throw new RuntimeException();
+    } catch (RuntimeException | Error e) {
+      handleException(e);
+    }
   }
+
+  abstract void handleException(Throwable t);
+
+  abstract void doWork() throws SomeException;
+
+  static class SomeException extends Exception {}
+
+  static class SomeRuntimeException extends RuntimeException {}
+
+  static class SomeError extends Error {}
 }

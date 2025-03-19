@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -55,8 +55,7 @@ public final class BraceMatchingUtil {
   /**
    * @see #computeHighlightingAndNavigationContext(Editor, PsiFile, int)
    */
-  @Nullable
-  public static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
+  public static @Nullable BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
                                                                                               @NotNull PsiFile file) {
     return computeHighlightingAndNavigationContext(editor, file, editor.getCaretModel().getOffset());
   }
@@ -67,10 +66,9 @@ public final class BraceMatchingUtil {
    * @param offset offset we are computing for. Some implementations may need to compute this not only for caret position, but for other offsets, e.g. skipping spaces behind or ahead.
    * @return a context should be used or null if there is no matching braces at offset
    * @apiNote this method contains a logic for selecting braces in different complicated situations, like {@code (<caret>(} and so on.
-   * It does not looks forward/behind skipping spaces, like highlighting does.
+   * It does not look forward/behind skipping spaces, like highlighting does.
    */
-  @Nullable
-  static BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
+  static @Nullable BraceHighlightingAndNavigationContext computeHighlightingAndNavigationContext(@NotNull Editor editor,
                                                                                        @NotNull PsiFile file,
                                                                                        int offset) {
     EditorHighlighter highlighter = BraceHighlightingHandler.getLazyParsableHighlighterIfAny(file.getProject(), editor, file);
@@ -125,12 +123,11 @@ public final class BraceMatchingUtil {
     return null;
   }
 
-  @NotNull
-  public static FileType getFileType(PsiFile file, int offset) {
+  public static @NotNull FileType getFileType(PsiFile file, int offset) {
     return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
   }
 
-  private static class MatchBraceContext {
+  private static final class MatchBraceContext {
     private final CharSequence fileText;
     private final FileType fileType;
     private final HighlighterIterator iterator;
@@ -141,8 +138,7 @@ public final class BraceMatchingUtil {
     private final String brace1TagName;
     private final boolean isStrict;
     private final boolean isCaseSensitive;
-    @NotNull
-    private final BraceMatcher myMatcher;
+    private final @NotNull BraceMatcher myMatcher;
 
     private final Stack<IElementType> myBraceStack = new Stack<>();
     private final Stack<String> myTagNameStack = new Stack<>();
@@ -411,23 +407,20 @@ public final class BraceMatchingUtil {
     }
   }
 
-  private static class BraceMatcherHolder {
+  private static final class BraceMatcherHolder {
     private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull HighlighterIterator iterator) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull HighlighterIterator iterator) {
     IElementType tokenType = iterator.getTokenType();
     return tokenType == null ? BraceMatcherHolder.ourDefaultBraceMatcher : getBraceMatcher(fileType, tokenType);
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull IElementType type) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull IElementType type) {
     return getBraceMatcher(fileType, type.getLanguage());
   }
 
-  @NotNull
-  public static BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull Language lang) {
+  public static @NotNull BraceMatcher getBraceMatcher(@NotNull FileType fileType, @NotNull Language lang) {
     PairedBraceMatcher matcher = LanguageBraceMatching.INSTANCE.forLanguage(lang);
     if (matcher != null) {
       if (matcher instanceof XmlAwareBraceMatcher) {
@@ -465,8 +458,7 @@ public final class BraceMatchingUtil {
     return BraceMatcherHolder.ourDefaultBraceMatcher;
   }
 
-  @Nullable
-  private static BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
+  private static @Nullable BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
     BraceMatcher matcher = FileTypeBraceMatcher.getInstance().forFileType(fileType);
     if (matcher != null) return matcher;
 
@@ -488,13 +480,12 @@ public final class BraceMatchingUtil {
     return matcher instanceof XmlAwareBraceMatcher && ((XmlAwareBraceMatcher)matcher).areTagsCaseSensitive(fileType, tokenGroup);
   }
 
-  @Nullable
-  private static String getTagName(@NotNull BraceMatcher matcher, @NotNull CharSequence fileText, @NotNull HighlighterIterator iterator) {
+  private static @Nullable String getTagName(@NotNull BraceMatcher matcher, @NotNull CharSequence fileText, @NotNull HighlighterIterator iterator) {
     if (matcher instanceof XmlAwareBraceMatcher) return ((XmlAwareBraceMatcher)matcher).getTagName(fileText, iterator);
     return null;
   }
 
-  private static class DefaultBraceMatcher implements BraceMatcher {
+  private static final class DefaultBraceMatcher implements BraceMatcher {
     @Override
     public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
       return UNDEFINED_TOKEN_GROUP;

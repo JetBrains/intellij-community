@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.ide.DataManager;
@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class XDebuggerPopupPanel {
   protected final @NotNull BorderLayoutPanel myContent = JBUI.Panels.simplePanel();
   protected final @NotNull BorderLayoutPanel myMainPanel = JBUI.Panels.simplePanel();
@@ -98,16 +99,15 @@ public abstract class XDebuggerPopupPanel {
     fillContentPanel(content, myToolbar);
   }
 
-  @NotNull
-  private ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
-                                          @NotNull String actionsPlace,
-                                          @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull ActionToolbarImpl createToolbar(@NotNull DefaultActionGroup toolbarActions,
+                                                   @NotNull String actionsPlace,
+                                                   @Nullable Component toolbarActionsDataProvider) {
     toolbarActions.add(new Separator());
     DefaultActionGroup wrappedActions = wrapActions(toolbarActions, actionsPlace, toolbarActionsDataProvider);
 
     var toolbarImpl = new ActionToolbarImpl(actionsPlace, wrappedActions, true);
     toolbarImpl.setTargetComponent(null);
-    for (AnAction action : wrappedActions.getChildren(null)) {
+    for (AnAction action : wrappedActions.getChildren(ActionManager.getInstance())) {
       action.registerCustomShortcutSet(action.getShortcutSet(), myMainPanel);
     }
 
@@ -126,12 +126,11 @@ public abstract class XDebuggerPopupPanel {
       .addToBottom(toolbar);
   }
 
-  @NotNull
-  private DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
-                                         @NotNull String actionsPlace,
-                                         @Nullable Component toolbarActionsDataProvider) {
+  private @NotNull DefaultActionGroup wrapActions(@NotNull DefaultActionGroup toolbarActions,
+                                                  @NotNull String actionsPlace,
+                                                  @Nullable Component toolbarActionsDataProvider) {
     DefaultActionGroup wrappedActions = new DefaultActionGroup();
-    for (AnAction action : toolbarActions.getChildren(null)) {
+    for (AnAction action : toolbarActions.getChildren(ActionManager.getInstance())) {
       ActionWrapper actionLink = new ActionWrapper(action, actionsPlace);
       actionLink.setDataProvider(toolbarActionsDataProvider);
       wrappedActions.add(actionLink);
@@ -184,12 +183,20 @@ public abstract class XDebuggerPopupPanel {
 
   private static class ActionLinkButton extends AnActionLink {
 
+    final Component contextComponent;
+
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
-                     @Nullable DataProvider contextComponent) {
+                     @Nullable Component contextComponent) {
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
-      setDataProvider(contextComponent);
+      this.contextComponent = contextComponent;
       setFont(UIUtil.getToolTipFont());
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      super.uiDataSnapshot(sink);
+      DataSink.uiDataSnapshot(sink, contextComponent);
     }
   }
 
@@ -247,9 +254,7 @@ public abstract class XDebuggerPopupPanel {
 
       myDelegate.applyTextOverride(myActionPlace, presentation);
 
-      DataProvider dataProvider = myProvider instanceof DataProvider ? (DataProvider)myProvider : null;
-
-      ActionLinkButton button = new ActionLinkButton(this, presentation, dataProvider);
+      ActionLinkButton button = new ActionLinkButton(this, presentation, myProvider);
       ClientProperty.put(button, InplaceEditor.IGNORE_MOUSE_EVENT, true);
       JPanel actionPanel = createCustomToolbarComponent(this, button);
 

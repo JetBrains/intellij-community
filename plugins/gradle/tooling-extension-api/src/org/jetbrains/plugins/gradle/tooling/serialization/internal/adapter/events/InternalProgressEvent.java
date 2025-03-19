@@ -34,6 +34,7 @@ public abstract class InternalProgressEvent implements ProgressEvent, Serializab
     return this.descriptor;
   }
 
+  @Override
   public String toString() {
     return this.getDisplayName();
   }

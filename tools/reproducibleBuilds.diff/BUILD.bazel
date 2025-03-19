@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.tools.reproducibleBuilds.diff` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "reproducibleBuilds-diff_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "reproducibleBuilds-diff",
+  module_name = "intellij.tools.reproducibleBuilds.diff",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:gson",
+  ],
+  runtime_deps = [
+    ":reproducibleBuilds-diff_resources",
+    "@lib//:commons-compress",
+  ]
+)
+### auto-generated section `build intellij.tools.reproducibleBuilds.diff` end

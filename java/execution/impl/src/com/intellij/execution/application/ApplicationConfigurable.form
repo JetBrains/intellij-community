@@ -14,7 +14,7 @@
         </constraints>
         <properties/>
       </component>
-      <component id="50d08" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClass" custom-create="true">
+      <component id="50d08" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myMainClass" custom-create="true">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
             <preferred-size width="-1" height="20"/>
@@ -25,7 +25,7 @@
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.main.class.label"/>
         </properties>
       </component>
-      <component id="c45d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
+      <component id="c45d2" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myModule">
         <constraints>
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -46,7 +46,7 @@
           <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
         </constraints>
       </vspacer>
-      <component id="c452d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myShortenClasspathModeCombo" custom-create="true">
+      <component id="c452d2" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myShortenClasspathModeCombo" custom-create="true">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -55,7 +55,7 @@
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.shorten.command.line.label"/>
         </properties>
       </component>
-      <component id="241cb" class="com.intellij.openapi.ui.LabeledComponent" binding="myIncludeProvidedDeps">
+      <component id="241cb" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myIncludeProvidedDeps">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>

@@ -17,11 +17,11 @@ import kotlin.math.min
 @ApiStatus.Internal
 internal class GridImpl : Grid {
 
-  override val resizableColumns = mutableSetOf<Int>()
-  override val resizableRows = mutableSetOf<Int>()
+  override val resizableColumns: MutableSet<Int> = mutableSetOf()
+  override val resizableRows: MutableSet<Int> = mutableSetOf()
 
-  override val columnsGaps = mutableListOf<UnscaledGapsX>()
-  override val rowsGaps = mutableListOf<UnscaledGapsY>()
+  override val columnsGaps: MutableList<UnscaledGapsX> = mutableListOf()
+  override val rowsGaps: MutableList<UnscaledGapsY> = mutableListOf()
 
   val visible: Boolean
     get() = cells.any { it.visible }
@@ -35,6 +35,19 @@ internal class GridImpl : Grid {
     }
 
     cells.add(ComponentCell(constraints, component))
+  }
+
+  fun setConstraints(component: JComponent, constraints: Constraints) {
+    for ((i, cell) in cells.withIndex()) {
+      if (cell is ComponentCell && cell.component === component) {
+        if (!isEmpty(constraints, cell.constraints)) {
+          throw UiDslException("Some cells are occupied already: $constraints")
+        }
+
+        cells[i] = ComponentCell(constraints, component)
+        return
+      }
+    }
   }
 
   fun registerSubGrid(constraints: Constraints): Grid {
@@ -197,13 +210,13 @@ internal class GridImpl : Grid {
       val layoutCellData: LayoutCellData
       with(cell.constraints) {
         layoutCellData = LayoutCellData(cell = cell,
-          preferredSize = preferredSize,
-          columnGaps = HorizontalGaps(
-            left = JBUIScale.scale(columnsGaps.getOrNull(x)?.left ?: 0),
-            right = JBUIScale.scale(columnsGaps.getOrNull(x + width - 1)?.right ?: 0)),
-          rowGaps = VerticalGaps(
-            top = JBUIScale.scale(rowsGaps.getOrNull(y)?.top ?: 0),
-            bottom = JBUIScale.scale(rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0))
+                                        preferredSize = preferredSize,
+                                        unscaledColumnGaps = UnscaledGapsX(
+                                          left = columnsGaps.getOrNull(x)?.left ?: 0,
+                                          right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
+                                        unscaledRowGaps = UnscaledGapsY(
+                                          top = rowsGaps.getOrNull(y)?.top ?: 0,
+                                          bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0)
         )
 
         columnsCount = max(columnsCount, x + width)
@@ -366,20 +379,31 @@ internal class GridImpl : Grid {
   }
 
   fun getConstraints(component: JComponent): Constraints? {
-    for (cell in cells) {
-      when(cell) {
-        is ComponentCell -> {
-          if (cell.component == component) {
-            return cell.constraints
-          }
-        }
+    return recurseFind(onGrid = { null },
+                       onCell = { componentCell -> if (componentCell.component === component) componentCell.constraints else null })
+  }
 
+  fun getConstraints(grid: Grid): Constraints? {
+    return recurseFind(onGrid = { gridCell -> if (gridCell.content === grid) gridCell.constraints else null },
+                       onCell = { null })
+  }
+
+  private fun <T> recurseFind(onGrid: (GridCell) -> T?, onCell: (ComponentCell) -> T?): T? {
+    for (cell in cells) {
+      var result: T?
+      when (cell) {
+        is ComponentCell -> {
+          result = onCell(cell)
+        }
         is GridCell -> {
-          val constraints = cell.content.getConstraints(component)
-          if (constraints != null) {
-            return constraints
+          result = onGrid(cell)
+          if (result == null) {
+            result = cell.content.recurseFind(onGrid, onCell)
           }
         }
+      }
+      if (result != null) {
+        return result
       }
     }
     return null
@@ -395,7 +419,7 @@ internal class GridImpl : Grid {
     val visualPaddings = layoutCellData.scaledVisualPaddings
     val paddedWidth = layoutData.getPaddedWidth(layoutCellData)
     val fullPaddedWidth = layoutData.getFullPaddedWidth(layoutCellData)
-    val x = layoutData.columnsCoord[constraints.x] + gaps.left + layoutCellData.columnGaps.left - visualPaddings.left +
+    val x = layoutData.columnsCoord[constraints.x] + gaps.left + JBUIScale.scale(layoutCellData.unscaledColumnGaps.left) - visualPaddings.left +
             when (constraints.horizontalAlign) {
               HorizontalAlign.LEFT -> 0
               HorizontalAlign.CENTER -> (fullPaddedWidth - paddedWidth) / 2
@@ -411,7 +435,7 @@ internal class GridImpl : Grid {
     val y: Int
     val baseline = layoutCellData.baseline
     if (baseline == null) {
-      y = layoutData.rowsCoord[constraints.y] + layoutCellData.rowGaps.top + gaps.top - visualPaddings.top +
+      y = layoutData.rowsCoord[constraints.y] + JBUIScale.scale(layoutCellData.unscaledRowGaps.top) + gaps.top - visualPaddings.top +
           when (constraints.verticalAlign) {
             VerticalAlign.TOP -> 0
             VerticalAlign.CENTER -> (fullPaddedHeight - paddedHeight) / 2
@@ -441,10 +465,11 @@ internal class GridImpl : Grid {
            }
   }
 
-  private fun isEmpty(constraints: Constraints): Boolean {
+  private fun isEmpty(constraints: Constraints, skipConstraints: Constraints? = null): Boolean {
     for (cell in cells) {
       with(cell.constraints) {
-        if (constraints.x + constraints.width > x &&
+        if (this !== skipConstraints &&
+            constraints.x + constraints.width > x &&
             x + width > constraints.x &&
             constraints.y + constraints.height > y &&
             y + height > constraints.y
@@ -505,7 +530,7 @@ private class LayoutData {
    * 3. In parents that also use [GridLayout]: aligning by visual padding is corrected according [outsideGaps] together with insets,
    * so components in parent and this container are aligned together
    */
-  var outsideGaps = Gaps.EMPTY
+  var outsideGaps = Gaps(0, 0, 0, 0)
 
   fun getPaddedWidth(layoutCellData: LayoutCellData): Int {
     val fullPaddedWidth = getFullPaddedWidth(layoutCellData)
@@ -543,17 +568,17 @@ private class LayoutData {
  * For sub-grids height of [preferredSize] calculated on late steps of [LayoutData] calculations
  */
 private data class LayoutCellData(val cell: Cell, val preferredSize: Dimension,
-                                  val columnGaps: HorizontalGaps, val rowGaps: VerticalGaps) {
+                                  val unscaledColumnGaps: UnscaledGapsX, val unscaledRowGaps: UnscaledGapsY) {
   /**
    * Calculated on step 3
    */
   var baseline: Int? = null
 
   val gapWidth: Int
-    get() = scaledGaps.width + columnGaps.left + columnGaps.right
+    get() = scaledGaps.width + JBUIScale.scale(unscaledColumnGaps.left) + JBUIScale.scale(unscaledColumnGaps.right)
 
   val gapHeight: Int
-    get() = scaledGaps.height + rowGaps.top + rowGaps.bottom
+    get() = scaledGaps.height + JBUIScale.scale(unscaledRowGaps.top) + JBUIScale.scale(unscaledRowGaps.bottom)
 
   /**
    * Cell width including gaps and excluding visualPaddings
@@ -598,9 +623,9 @@ private class BaselineData {
     val rowBaselineData = getOrCreate(layoutCellData)
 
     rowBaselineData.maxAboveBaseline = max(rowBaselineData.maxAboveBaseline,
-      baseline + layoutCellData.rowGaps.top + constraintsGaps.top - constraintsVisualPaddings.top)
+                                           baseline + JBUIScale.scale(layoutCellData.unscaledRowGaps.top) + constraintsGaps.top - constraintsVisualPaddings.top)
     rowBaselineData.maxBelowBaseline = max(rowBaselineData.maxBelowBaseline,
-      layoutCellData.preferredSize.height - baseline + layoutCellData.rowGaps.bottom + constraintsGaps.bottom - constraintsVisualPaddings.bottom)
+                                           layoutCellData.preferredSize.height - baseline + JBUIScale.scale(layoutCellData.unscaledRowGaps.bottom) + constraintsGaps.bottom - constraintsVisualPaddings.bottom)
   }
 
   /**
@@ -641,10 +666,10 @@ internal class PreCalculationData(val minimumSize: Dimension, val preferredSize:
   /**
    * Preferred size based on minimum/preferred sizes and size groups
    */
-  var calculatedPreferredSize = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
+  var calculatedPreferredSize: Dimension = Dimension(max(minimumSize.width, preferredSize.width), max(minimumSize.height, preferredSize.height))
 }
 
 @ApiStatus.Internal
 internal data class PreferredSizeData(val preferredSize: Dimension, val outsideGaps: Gaps)
 
-private fun UnscaledGaps.scale(): Gaps = JBGaps(top = top, left = left, bottom = bottom, right = right)
+private fun UnscaledGaps.scale(): Gaps = Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))

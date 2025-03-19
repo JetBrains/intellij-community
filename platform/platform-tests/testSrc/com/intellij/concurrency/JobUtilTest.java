@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -40,6 +39,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,10 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.intellij.util.TestTimeOut.setTimeout;
-
 public class JobUtilTest extends LightPlatformTestCase {
-  private static final Logger LOG = Logger.getInstance(JobUtilTest.class);
   private static final AtomicInteger COUNT = new AtomicInteger();
   private TestTimeOut t;
 
@@ -65,9 +62,9 @@ public class JobUtilTest extends LightPlatformTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     COUNT.set(0);
-    t = setTimeout(2, TimeUnit.MINUTES);
+    t = TestTimeOut.setTimeout(2, TimeUnit.MINUTES);
     int parallelism = JobSchedulerImpl.getJobPoolParallelism();
-    Assume.assumeTrue("Too low parallelism: " + parallelism + ", I give up", parallelism >= 4);
+    Assume.assumeTrue("Too low parallelism: " + parallelism + ", but I need at least 4, I give up", parallelism >= 4);
   }
 
   public void testUnbalancedTaskJobUtilPerformance() {
@@ -141,7 +138,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testJobUtilProcessesAllItemsStress() throws Throwable {
     List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       COUNT.set(0);
       logElapsed(()->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, __ -> {
@@ -154,13 +151,14 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
 
   private static void logElapsed(@NotNull Runnable r) {
-    LOG.debug("Elapsed: " + TimeoutUtil.measureExecutionTime(r::run) + "ms");
+    long ms = TimeoutUtil.measureExecutionTime(() -> r.run());
+    LOG.debug("Elapsed: " + ms + "ms");
   }
 
   public void testJobUtilRecursiveStress() {
     int N = Timings.adjustAccordingToMySpeed(40, true);
     List<String> list = Collections.nCopies(N, null);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       COUNT.set(0);
       logElapsed(()->
       JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, __ -> {
@@ -191,11 +189,9 @@ public class JobUtilTest extends LightPlatformTestCase {
       ThrowableRunnable<RuntimeException> runnable = () -> {
           try {
             if (objects.size() <= 1 || JobSchedulerImpl.getJobPoolParallelism() <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
-              ApplicationManager.getApplication().assertIsDispatchThread();
+              ThreadingAssertions.assertEventDispatchThread();
             }
-            else {
-              // generally we know nothing about current thread since FJP can help others task to execute while in current context
-            }
+            // else, in general, we know nothing about the current thread since FJP can help other tasks to execute while in the current context
             ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
             if (progress == null) {
               assertNotNull(actualIndicator);
@@ -206,7 +202,7 @@ public class JobUtilTest extends LightPlatformTestCase {
               ProgressIndicator original = ((SensitiveProgressWrapper)actualIndicator).getOriginalProgressIndicator();
               assertSame(progress, original);
             }
-            // there can be read access even if we didn't ask for it (e.g., when task under read action steals others work)
+            // there can be read access even if we didn't ask for it (e.g., when the task under read action steals others work)
             assertTrue(!runInReadAction || ApplicationManager.getApplication().isReadAccessAllowed());
           }
           catch (Throwable e) {
@@ -289,7 +285,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testRecursiveCancel() {
     List<Integer> list = IntStream.range(0, 100).boxed().collect(Collectors.toList());
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       int fingerPrint = i;
       COUNT.set(0);
       LOG.debug("--- " + i+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
@@ -314,8 +310,8 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testSaturation() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
-    List<Job<?>> jobs = new ArrayList<>();
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    List<Job> jobs = new ArrayList<>();
+    for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       jobs.add(JobLauncher.getInstance().submitToJobThread(() -> {
         try {
           latch.await();
@@ -329,7 +325,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
     try {
       boolean scheduled = latch.await(3, TimeUnit.SECONDS);
-      assertFalse(scheduled); // pool saturated, no thread can be scheduled
+      assertFalse(scheduled); // the pool is saturated, no thread can be scheduled
     }
     finally {
       latch.countDown();
@@ -337,11 +333,11 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  private static void cancelAndWait(List<? extends Job<?>> jobs) throws Exception {
-    for (Job<?> job : jobs) {
+  private static void cancelAndWait(List<? extends Job> jobs) throws Exception {
+    for (Job job : jobs) {
       job.cancel();
     }
-    for (Job<?> job : jobs) {
+    for (Job job : jobs) {
       try {
         job.waitForCompletion(100_000);
       }
@@ -358,7 +354,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       return next % 100 != 0;
     };
     int N = Timings.adjustAccordingToMySpeed(10_000, true);
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       processed.set(0);
       ProgressIndicator indicator = new ProgressIndicatorBase();
       boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""), indicator, processor);
@@ -373,14 +369,14 @@ public class JobUtilTest extends LightPlatformTestCase {
       return true;
     };
     int N = Timings.adjustAccordingToMySpeed(300, true);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       COUNT.set(0);
       ProgressIndicator indicator = new EmptyProgressIndicator();
       AtomicBoolean runReads = new AtomicBoolean(true);
       Semaphore startedReads = new Semaphore(1);
       Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
         startedReads.up();
-        while (runReads.get() && !t.timedOut()) {
+        while (runReads.get() && checkTestTimeout(this)) {
           JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""),
                                                                     indicator, true, false, processor);
           assertFalse(indicator.isCanceled());
@@ -407,21 +403,21 @@ public class JobUtilTest extends LightPlatformTestCase {
     // schedule huge number of write actions interrupting processQueue
     Future<?> interrupts = EdtScheduledExecutorService.getInstance().scheduleWithFixedDelay(() ->
         WriteAction.run(() -> { }), 1, 1, TimeUnit.MICROSECONDS);
-    for (int i = 0; i<10 && !t.timedOut(i); i++) {
+    for (int i = 0; i<10 && checkTestTimeout(i); i++) {
       BlockingQueue<String> queue = new ArrayBlockingQueue<>(10);
       int N_ELEMENTS = 10000;
       COUNT.set(0);
       Future<?> supplyFuture = supplyElementsInBatchesInBackground(queue, N_ELEMENTS, TOMB_STONE);
       Queue<String> failedQueue = new LinkedBlockingQueue<>();
       Future<?> background = AppExecutorUtil.getAppExecutorService().submit(() -> processQueueInBackground(TOMB_STONE, queue, failedQueue));
-      while (!background.isDone() && !t.timedOut()) {
+      while (!background.isDone() && checkTestTimeout(i)) {
         UIUtil.dispatchAllInvocationEvents();
       }
       supplyFuture.get();
       assertEquals(COUNT.get(), N_ELEMENTS);
     }
     interrupts.cancel(true);
-    while (!interrupts.isDone() && !t.timedOut()) {
+    while (!interrupts.isDone() && checkTestTimeout(this)) {
       UIUtil.dispatchAllInvocationEvents();
     }
   }
@@ -489,10 +485,10 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinishedStress() throws Exception {
     Random random = new Random();
-    for (int i = 0; i<100 && !t.timedOut(i); i++) {
+    for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
@@ -500,16 +496,21 @@ public class JobUtilTest extends LightPlatformTestCase {
       assertFalse(job.isDone());
       TimeoutUtil.sleep(random.nextInt(100));
       job.cancel();
+      TestTimeOut waitForStart = TestTimeOut.setTimeout(1, TimeUnit.SECONDS);
 
-      while (!started.get() && !t.timedOut(i)) {
+      while (!started.get() && !waitForStart.isTimedOut() && checkTestTimeout(i)) {
         // need to test cancel() after started
       }
-      while (!t.timedOut(i)) {
+      if (!started.get()) {
+        // we are lucky to be able to cancel future before it started executing, nothing interesting
+        continue;
+      }
+      while (checkTestTimeout(i)) {
         boolean isDone = job.isDone();
         boolean isFinished = finished.get();
 
         // the only forbidden state is isDone == 1, isFinished == 0
-        assertFalse(isDone && !isFinished);
+        assertFalse("isDone:"+isDone+"; isFinished:"+isFinished, isDone && !isFinished);
         if (isDone) {
           break;
         }
@@ -518,18 +519,23 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
+  // returns true if the current test is still ok
+  private boolean checkTestTimeout(Object progress) {
+    return !t.timedOut(progress);
+  }
+
   public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished() throws Exception {
-    for (int i=0; i<100 && !t.timedOut(i); i++) {
+    for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
       }, null);
       assertFalse(job.isDone());
       while (!started.get()) {
-        assertFalse(t.timedOut(i));
+        assertTrue(checkTestTimeout(i));
       }
       assertTrue(started.get());
       job.cancel();
@@ -547,7 +553,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     int N_JOBS = 10_000 * JobSchedulerImpl.getJobPoolParallelism();
     ProgressIndicator indicator = new DaemonProgressIndicator();
 
-    Job<Void> job = JobLauncher.getInstance().submitToJobThread(
+    Job job = JobLauncher.getInstance().submitToJobThread(
       () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, __ -> {
         jobsStarted.incrementAndGet();
         TimeoutUtil.sleep(10);
@@ -555,20 +561,18 @@ public class JobUtilTest extends LightPlatformTestCase {
       }), null);
 
     for (int i = 0; i < N_EVENTS; i++) {
-      TestTimeOut n = setTimeout(10, TimeUnit.SECONDS);
+      TestTimeOut n = TestTimeOut.setTimeout(10, TimeUnit.SECONDS);
       int finalI = i;
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         int jobs0 = jobsStarted.get();
         while (jobsStarted.get() < jobs0 + JobSchedulerImpl.getJobPoolParallelism() && jobsStarted.get() < N_JOBS) {
           if (n.timedOut(finalI)) {
-            System.err.println(ThreadDumper.dumpThreadsToString());
+            System.out.println(ThreadDumper.dumpThreadsToString());
             fail();
             break;
           }
         }
-        //int jobs1 = jobsStarted.get();
-        //System.out.println("jobs0 = "+jobs0+"; jobs1 = "+jobs1);
       });
       UIUtil.dispatchAllInvocationEvents();
     }
@@ -588,7 +592,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
     // and cancel the indicator in the meantime
     // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-    Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
+    Job job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
         assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
           TimeoutUtil.sleep(1);
           counter.incrementAndGet();
@@ -603,7 +607,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasksStress() throws Throwable {
     int COARSENESS = 100_000;
-    List<Job<?>> jobs = new ArrayList<>();
+    List<Job> jobs = new ArrayList<>();
     // try to repeat until got into the right thread; but not for too long
     try {
       for (int i=0; i<1000; i++) {
@@ -616,7 +620,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
           // and cancel the indicator in the meantime
           // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-          Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+          Job job = JobLauncher.getInstance().submitToJobThread(() -> {
             // to ensure lengthy task executes in thread other that the one which called invokeConcurrentlyUnderProgress()
             // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread, and we can't do anything
             mainThread.set(Thread.currentThread());
@@ -656,8 +660,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           jobs.add(job);
 
           boolean ok = run.waitFor(30_000);
-          String threadDump = ThreadDumper.dumpThreadsToString();
-          assertTrue(threadDump, ok);
+          assertTrue(ThreadDumper.dumpThreadsToString(), ok);
           cancelAndWait(Collections.singletonList(job));
         }));
         if (exception != null) throw exception;
@@ -673,7 +676,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testInvokeConcurrentlyMustExecuteMultipleTasksConcurrentlyEvenIfOneOfThemIsWildlySlowStress() {
     int parallelism = JobSchedulerImpl.getJobPoolParallelism();
-    // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some shot-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
+    // values higher than this can lead to too coarse tasks in FJP queue which means some of them may contain more than one element which means long-delay task and some short-delay tasks can be scheduled to one chunk which means some of the tasks will not be stolen for a (relatively)long time.
     // so it's a TODO for ApplierCompleter
     int N = 1 << parallelism;
     Integer[] times = new Integer[N];
@@ -686,7 +689,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       AtomicInteger executed = new AtomicInteger();
       DaemonProgressIndicator progress = new DaemonProgressIndicator();
       UsefulTestCase.assertThrows(MyException.class, "myMsg", () -> {
-        TestTimeOut deadline = setTimeout(2, TimeUnit.SECONDS);
+        TestTimeOut deadline = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(times.clone()), progress, time -> {
           while ((time -= 100) >= 0) {
             ProgressManager.checkCanceled();
@@ -707,31 +710,225 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished2Stress() {
+  public void test2JobWaitForTerminationAfterReturningFalseInTheMiddleOfTheExecutionWaitsUntilAllOtherTasksFinished_Stress() {
     List<Integer> ints = IntStream.range(1, 123_271*JobSchedulerImpl.getJobPoolParallelism()/11).boxed().collect(Collectors.toList());
-    for (int i=0; i<10 && !t.timedOut(i); i++) {
+
+    // N tests in parallel
+    int N = 100;
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), new EmptyProgressIndicator(), __ -> {
       AtomicInteger executed = new AtomicInteger();
-      AtomicBoolean returnedFalse = new AtomicBoolean();
-      boolean result =
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), n -> {
-          if (!returnedFalse.get()) {
-            TimeoutUtil.sleep(ThreadLocalRandom.current().nextBoolean() ? 1 : 0);
-          }
-          executed.incrementAndGet();
-          if (n % 10_000 == 0) {
-            returnedFalse.set(true);
-            return false;
-          }
-          return true;
-        });
+      boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), n -> {
+        executed.incrementAndGet();
+        return n % 10_000 != 0;
+      });
 
       int count = executed.get();
       assertFalse(result);
 
-      TestTimeOut w = setTimeout(1000, TimeUnit.MILLISECONDS);
+      TestTimeOut w = TestTimeOut.setTimeout(1, TimeUnit.SECONDS);
       while (!w.isTimedOut()) {
+        //String dump = ThreadDumper.dumpThreadsToString();
         assertEquals(count, executed.get());
       }
+      return true;
+    });
+  }
+  public void testPCEThrownFromProcessorMustPropagateOutwards() {
+    List<Integer> ints = IntStream.range(1, 123_271).boxed().collect(Collectors.toList());
+    int N = 100;
+    for (int i=0; i<N; i++) {
+      assertThrows(ProcessCanceledException.class, () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), n -> {
+        throw new ProcessCanceledException(new RuntimeException("xxx"));
+      }));
+    }
+  }
+  public void testExceptionThrownFromProcessorMustPropagateOutwards() {
+    List<Integer> ints = IntStream.range(1, 123_271).boxed().collect(Collectors.toList());
+    int N = 100;
+    for (int i=0; i<N; i++) {
+      assertThrows(RuntimeException.class, "xxx", () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), n -> {
+        throw new RuntimeException("xxx");
+      }));
+    }
+  }
+  public void _testJobWaitForTerminationAfterReturningFalseInTheMiddleOfTheExecutionWaitsUntilAllOtherTasksFinished_Stress() {
+    List<Integer> ints = IntStream.range(1, 123_271*JobSchedulerImpl.getJobPoolParallelism()/11).boxed().collect(Collectors.toList());
+
+    // N tests in parallel
+    int N = 100;
+    for (int i=0; i<N; i++) {
+      AtomicInteger executed = new AtomicInteger();
+      boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), n -> {
+        executed.incrementAndGet();
+        return n % 10_000 != 0;
+      });
+
+      int count = executed.get();
+      assertFalse(result);
+
+      TestTimeOut w = TestTimeOut.setTimeout(1, TimeUnit.SECONDS);
+      while (!w.isTimedOut()) {
+        String dump = ThreadDumper.dumpThreadsToString();
+        assertEquals(dump, count, executed.get());
+      }
+    }
+  }
+
+  public void testEvenTwoJobsAreParallelized() {
+    ThreadingAssertions.assertEventDispatchThread();
+    TestTimeOut w = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    ForkJoinPool pool = new ForkJoinPool(4);
+    JobLauncherImpl launcher = new JobLauncherImpl(pool);
+    try {
+      for (int i = 0; i < 1000; i++) {
+        LOG.debug(String.valueOf(i));
+        int finali = i;
+        record R(AtomicBoolean hold, ForkJoinTask<?> future, AtomicBoolean started) {
+        }
+        R[] r = new R[3];
+        // saturate half of the pool, start invokeConcurrentlyUnderProgress() which will stuck because of not enough thread workers, then free one worker
+        for (int k = 0; k < r.length; k++) {
+          AtomicBoolean started = new AtomicBoolean();
+          AtomicBoolean hold = new AtomicBoolean(true);
+          ForkJoinTask<?> f = pool.submit(() -> {
+            started.set(true);
+            while (hold.get()) Thread.yield();
+          });
+          r[k] = new R(hold, f, started);
+          while (!started.get()) {
+            Thread.yield();
+          }
+        }
+
+        try {
+          AtomicBoolean ready1 = new AtomicBoolean();
+          AtomicBoolean ready2 = new AtomicBoolean();
+          LOG.debug("before submit "+pool);
+          ForkJoinTask<Boolean> future =
+            pool.submit(() -> {
+              LOG.debug("F: finali=" + finali + "; r=" + Arrays.toString(r));
+              return launcher.invokeConcurrentlyUnderProgress(List.of(ready1, ready2), new DaemonProgressIndicator(), item -> {
+                item.set(true);
+                while (!ready1.get() || !ready2.get()) {
+                  r[2].hold().set(false);
+                  // wait
+                  if (w.timedOut()) throw new RuntimeException(ThreadDumper.dumpThreadsToString());
+                }
+                return true;
+              });
+            });
+          LOG.debug("after  submit "+pool+"; future:"+future);
+          Boolean res;
+          try {
+            res = future.get(20, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+          }
+          assertTrue(res);
+        }
+        finally {
+          for (R value : r) {
+            value.hold().set(false);
+            value.future().join();
+          }
+        }
+      }
+    }
+    finally {
+      pool.shutdownNow();
+    }
+  }
+
+  public void test2EvenTwoJobsAreParallelized() {
+    ThreadingAssertions.assertEventDispatchThread();
+    TestTimeOut w = TestTimeOut.setTimeout(100, TimeUnit.SECONDS);
+    ForkJoinPool pool = new ForkJoinPool(4);
+    try {
+      for (int i = 0; i < 1000; i++) {
+        LOG.debug(String.valueOf(i));
+        int finali = i;
+        record R(AtomicBoolean hold, ForkJoinTask<?> future, AtomicBoolean started) {
+        }
+        R[] r = new R[3];
+        // saturate half of the pool, start invokeConcurrentlyUnderProgress() which will stuck because of not enough thread workers, then free one worker
+        for (int k = 0; k < r.length; k++) {
+          AtomicBoolean started = new AtomicBoolean();
+          AtomicBoolean hold = new AtomicBoolean(true);
+          ForkJoinTask<?> f = pool.submit(() -> {
+            started.set(true);
+            try {
+              ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
+                @Override
+                public boolean block() {
+                  while (hold.get()) {
+                    if (w.timedOut()) throw new RuntimeException();
+                    Thread.yield();
+                  }
+                  return true;
+                }
+
+                @Override
+                public boolean isReleasable() {
+                  return false;
+                }
+              });
+            }
+            catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
+          r[k] = new R(hold, f, started);
+          while (!started.get()) {
+            if (w.timedOut()) throw new RuntimeException();
+            Thread.yield();
+          }
+        }
+
+        try {
+          LOG.debug("before submit "+pool);
+
+          ForkJoinTask<Boolean> future =
+            pool.submit(() -> {
+              try {
+                ForkJoinPool.managedBlock(new ForkJoinPool.ManagedBlocker() {
+                  @Override
+                  public boolean block() {
+                    LOG.debug("F: finali=" + finali + "; r=" + Arrays.toString(r));
+                    return true;
+                  }
+
+                  @Override
+                  public boolean isReleasable() {
+                    return false;
+                  }
+                });
+                return true;
+              }
+              catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+            });
+          LOG.debug("after  submit "+pool+"; future:"+future);
+          Boolean res;
+          try {
+            res = future.get(20, TimeUnit.SECONDS);
+          }
+          catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new RuntimeException(e);
+          }
+          assertTrue(res);
+        }
+        finally {
+          for (R value : r) {
+            value.hold().set(false);
+            value.future().join();
+          }
+        }
+      }
+    }
+    finally {
+      pool.shutdownNow();
     }
   }
 }

@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 class FileSetTest {
   @Test
@@ -123,7 +122,7 @@ class FileSetTest {
     val expectedPaths = expected.map { root.resolve(it) }.sorted().joinToString("", postfix = "\n")
     val actualPaths = actual.sorted().joinToString("", postfix = "\n")
 
-    Assertions.assertEquals(expectedPaths, actualPaths)
+    assertEquals(expectedPaths, actualPaths)
   }
 
   private fun createExample(root: Path) {

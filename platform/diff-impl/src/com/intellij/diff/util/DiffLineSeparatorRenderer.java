@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer;
@@ -23,6 +23,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,12 +34,13 @@ import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer, ActiveGutterRenderer {
   private static Object[] ourCachedImageKey = null;
   private static BufferedImage outCachedImage = null;
 
-  @NotNull private final Editor myEditor;
-  @NotNull private final SeparatorPresentation myPresentation;
+  private final @NotNull Editor myEditor;
+  private final @NotNull SeparatorPresentation myPresentation;
 
   public DiffLineSeparatorRenderer(@NotNull Editor editor, @NotNull SeparatorPresentation presentation) {
     myEditor = editor;
@@ -223,9 +225,8 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
                            scheme.getAttributes(HighlighterColors.TEXT), null);
   }
 
-  @NotNull
   @Override
-  public LineMarkerRendererEx.Position getPosition() {
+  public @NotNull LineMarkerRendererEx.Position getPosition() {
     return LineMarkerRendererEx.Position.CUSTOM;
   }
 
@@ -263,8 +264,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
   }
 
   @SuppressWarnings("UnnecessaryLocalVariable")
-  @NotNull
-  private static BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, boolean isHovered, int step, int height) {
+  private static @NotNull BufferedImage createImage(@NotNull Graphics2D g, @NotNull Color color, boolean isHovered, int step, int height) {
     Object[] key = new Object[]{color.getRGB(), JBUIScale.sysScale(g), isHovered, step, height};
     if (Arrays.equals(ourCachedImageKey, key) && outCachedImage != null) return outCachedImage;
 
@@ -341,8 +341,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
     return 1; // gap for proper AA rendering
   }
 
-  @NotNull
-  private static Color getWaveColor(@Nullable EditorColorsScheme scheme) {
+  private static @NotNull Color getWaveColor(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(FOREGROUND);
     if (color != null) return color;

@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.color.scheme.all_hallows_eve` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "color-scheme-all_hallows_eve_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "color-scheme-all_hallows_eve",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":color-scheme-all_hallows_eve_resources"]
+)
+### auto-generated section `build intellij.color.scheme.all_hallows_eve` end

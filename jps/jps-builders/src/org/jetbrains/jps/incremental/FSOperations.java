@@ -1,12 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
@@ -14,6 +17,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -22,28 +26,30 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class FSOperations {
   private static final Logger LOG = Logger.getInstance(FSOperations.class);
-  public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
+  public static final GlobalContextKey<Set<Path>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGETS_COMPLETELY_MARKED_DIRTY = GlobalContextKey.create("_targets_completely_marked_dirty_");
 
   /**
    * @return true if file is marked as "dirty" in the specified compilation round
    */
-  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      return pd.fsState.isMarkedForRecompilation(context, round, rd, file);
+  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, Path file) {
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file.toFile());
+    if (rootDescriptor == null) {
+      return false;
     }
-    return false;
+    return context.getProjectDescriptor().fsState.isMarkedForRecompilation(context, round, rootDescriptor, file);
   }
 
   /**
@@ -57,19 +63,30 @@ public final class FSOperations {
     markDirty(context, CompilationRound.NEXT, file);
   }
 
-  public static void markDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, round, file, rd, pd.getProjectStamps().getStampStorage(), false);
+  public static void markDirty(@NotNull CompileContext context, @NotNull CompilationRound round, @NotNull File file) throws IOException {
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.markDirty(context,
+                                          round,
+                                          file.toPath(),
+                                          rootDescriptor,
+                                          projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target),
+                                          false);
     }
   }
 
-  public static void markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage());
+  public static void markDirtyIfNotDeleted(@NotNull CompileContext context,
+                                           @NotNull CompilationRound round,
+                                           @NotNull Path file) throws IOException {
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file.toFile());
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.markDirtyIfNotDeleted(context,
+                                                      round,
+                                                      file,
+                                                      rootDescriptor,
+                                                      projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target));
     }
   }
 
@@ -79,7 +96,11 @@ public final class FSOperations {
      * If the file was marked dirty as a result of this operation or had been already marked dirty,
      * the file is stored internally in the builder
      */
-    DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, File file) throws IOException;
+    DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, @NotNull File file) throws IOException;
+
+    default DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, @NotNull Path file) throws IOException {
+      return markDirtyFile(target, file.toFile());
+    }
 
     /**
      * @return an object accumulating information about files marked with this builder
@@ -95,26 +116,31 @@ public final class FSOperations {
    * @return a builder object that marks dirty files and collects data about files marked
    */
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>> DirtyFilesHolderBuilder<R, T> createDirtyFilesHolderBuilder(CompileContext context, final CompilationRound round) {
-    return new DirtyFilesHolderBuilder<R, T>() {
+    return new DirtyFilesHolderBuilder<>() {
       private final Map<T, Map<R, Set<File>>> dirtyFiles = new HashMap<>();
+
       @Override
-      public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, File file) throws IOException {
-        final ProjectDescriptor pd = context.getProjectDescriptor();
-        final R rd = pd.getBuildRootIndex().findParentDescriptor(file, Collections.singleton(target.getTargetType()), context);
-        if (rd != null) {
-          if (pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage()) || pd.fsState.isMarkedForRecompilation(context, round, rd, file)) {
-            Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
-            if (targetFiles == null) {
-              targetFiles = new HashMap<>();
-              dirtyFiles.put(target, targetFiles);
-            }
-            Set<File> rootFiles = targetFiles.get(rd);
-            if (rootFiles == null) {
-              rootFiles = FileCollectionFactory.createCanonicalFileSet();
-              targetFiles.put(rd, rootFiles);
-            }
-            rootFiles.add(file);
+      public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, @NotNull File file) throws IOException {
+        ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+        R rootDescriptor = projectDescriptor.getBuildRootIndex().findParentDescriptor(file, List.of(target.getTargetType()), context);
+        if (rootDescriptor == null) {
+          return this;
+        }
+
+        Path nioPath = file.toPath();
+        if (projectDescriptor.fsState.markDirtyIfNotDeleted(context, round, nioPath, rootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target)) ||
+            projectDescriptor.fsState.isMarkedForRecompilation(context, round, rootDescriptor, nioPath)) {
+          Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
+          if (targetFiles == null) {
+            targetFiles = new HashMap<>();
+            dirtyFiles.put(target, targetFiles);
           }
+          Set<File> rootFiles = targetFiles.get(rootDescriptor);
+          if (rootFiles == null) {
+            rootFiles = FileCollectionFactory.createCanonicalFileSet();
+            targetFiles.put(rootDescriptor, rootFiles);
+          }
+          rootFiles.add(file);
         }
         return this;
       }
@@ -126,7 +152,7 @@ public final class FSOperations {
           public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
             for (Map.Entry<T, Map<R, Set<File>>> entry : dirtyFiles.entrySet()) {
               final T target = entry.getKey();
-              for (Map.Entry<R, Set<File>>  targetEntry: entry.getValue().entrySet()) {
+              for (Map.Entry<R, Set<File>> targetEntry : entry.getValue().entrySet()) {
                 final R rd = targetEntry.getKey();
                 for (File file : targetEntry.getValue()) {
                   processor.apply(target, file, rd);
@@ -147,30 +173,51 @@ public final class FSOperations {
 
           @Override
           public @NotNull Collection<String> getRemovedFiles(@NotNull T target) {
-            return Collections.emptyList();
+            return List.of();
+          }
+
+          @Override
+          public @NotNull @Unmodifiable Collection<@NotNull Path> getRemoved(@NotNull T target) {
+            return List.of();
           }
         };
       }
     };
   }
 
+  // used externally
+  @SuppressWarnings({"unused", "IO_FILE_USAGE"})
   public static void markDeleted(CompileContext context, File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(context, rd.target, file, pd.getProjectStamps().getStampStorage());
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.registerDeleted(context,
+                                                rootDescriptor.target,
+                                                file.toPath(),
+                                                projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target));
     }
   }
 
-  public static void markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
+  public static void markDirty(@NotNull CompileContext context,
+                               @NotNull CompilationRound round,
+                               @NotNull ModuleChunk chunk,
+                               @Nullable FileFilter filter) throws IOException {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       markDirty(context, round, target, filter);
     }
   }
 
-  public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    markDirtyFiles(context, target, round, pd.getProjectStamps().getStampStorage(), true, null, filter);
+  public static void markDirty(@NotNull CompileContext context,
+                               @NotNull CompilationRound round,
+                               @NotNull ModuleBuildTarget target,
+                               @Nullable FileFilter filter) throws IOException {
+    markDirtyFiles(context,
+                   target,
+                   round,
+                   context.getProjectDescriptor().dataManager.getFileStampStorage(target),
+                   true,
+                   null,
+                   filter);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {
@@ -221,11 +268,11 @@ public final class FSOperations {
 
     removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = context.getProjectDescriptor().getProjectStamps().getStampStorage();
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, round, stampsStorage, true, null, filter);
+      StampsStorage<?> stampStorage = dataManager.getFileStampStorage(target);
+      markDirtyFiles(context, target, round, stampStorage, true, null, filter);
     }
-
   }
 
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
@@ -242,24 +289,24 @@ public final class FSOperations {
     context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 
-  static void markDirtyFiles(CompileContext context,
-                             BuildTarget<?> target,
-                             final CompilationRound round,
-                             StampsStorage<? extends StampsStorage.Stamp> stampsStorage,
+  static void markDirtyFiles(@NotNull CompileContext context,
+                             @NotNull BuildTarget<?> target,
+                             @NotNull CompilationRound round,
+                             @Nullable StampsStorage<?> stampStorage,
                              boolean forceMarkDirty,
-                             @Nullable Set<? super File> currentFiles,
+                             @Nullable Set<? super Path> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
     boolean completelyMarkedDirty = true;
-    for (BuildRootDescriptor rd : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
-      if (!rd.getRootFile().exists() ||
+    for (BuildRootDescriptor rootDescriptor : context.getProjectDescriptor().getBuildRootIndex().getTargetRoots(target, context)) {
+      if (!rootDescriptor.getRootFile().exists() ||
           //temp roots are managed by compilers themselves
-          (rd instanceof JavaSourceRootDescriptor && ((JavaSourceRootDescriptor)rd).isTemp)) {
+          (rootDescriptor instanceof JavaSourceRootDescriptor && ((JavaSourceRootDescriptor)rootDescriptor).isTemp)) {
         continue;
       }
       if (filter == null) {
-        context.getProjectDescriptor().fsState.clearRecompile(rd);
+        context.getProjectDescriptor().fsState.clearRecompile(rootDescriptor);
       }
-      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), stampsStorage, forceMarkDirty, currentFiles, filter);
+      completelyMarkedDirty &= traverseRecursively(context, rootDescriptor, round, rootDescriptor.getRootFile(), stampStorage, forceMarkDirty, currentFiles, filter);
     }
 
     if (completelyMarkedDirty) {
@@ -272,44 +319,57 @@ public final class FSOperations {
    * @return {@code true} if all compilable files were marked dirty and {@code false} if some of them were skipped because they weren't accepted
    * by {@code filter} or wasn't modified
    */
-  private static boolean traverseRecursively(CompileContext context,
-                                             final BuildRootDescriptor rd,
-                                             final CompilationRound round,
-                                             final File file,
-                                             @NotNull final StampsStorage<? extends StampsStorage.Stamp> stampStorage,
-                                             final boolean forceDirty,
-                                             @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
-
-    var fileConsumer = new FileConsumer() {
+  private static boolean traverseRecursively(@NotNull CompileContext context,
+                                             @NotNull BuildRootDescriptor rootDescriptor,
+                                             @NotNull CompilationRound round,
+                                             @NotNull File file,
+                                             @Nullable StampsStorage<?> stampStorage,
+                                             boolean forceDirty,
+                                             @Nullable Set<? super Path> currentFiles,
+                                             @Nullable FileFilter filter) throws IOException {
+    var fileConsumer = new BiConsumer<Path, BasicFileAttributes>() {
       boolean allFilesMarked = true;
+
       @Override
-      public void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException {
-        if (filter != null && !filter.accept(file)) {
+      public void accept(@NotNull Path file, @Nullable BasicFileAttributes attrs) {
+        if (filter != null && filter != FileFilters.EVERYTHING && !filter.accept(file.toFile())) {
           allFilesMarked = false;
+          return;
         }
-        else {
-          boolean markDirty = forceDirty;
-          if (!markDirty) {
-            markDirty = attrs != null?
-              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file, attrs) :
-              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file);
+
+        boolean markDirty = forceDirty;
+        if (!markDirty) {
+          try {
+            markDirty = stampStorage == null || stampStorage.getCurrentStampIfUpToDate(file, rootDescriptor.getTarget(), attrs) == null;
           }
-          if (markDirty) {
-            // if it is full project rebuild, all storages are already completely cleared;
-            // so passing null because there is no need to access the storage to clear non-existing data
-            final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild()? null : stampStorage;
-            context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
+          catch (IOException e) {
+            throw new UncheckedIOException(e);
           }
-          if (currentFiles != null) {
-            currentFiles.add(file);
+        }
+        if (markDirty) {
+          // if it is a full project rebuild, all storages are already completely cleared;
+          // so passing null because there is no need to access the storage to clear non-existing data
+          StampsStorage<?> marker = JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) ? null : stampStorage;
+          try {
+            context.getProjectDescriptor().fsState.markDirty(context, round, file, rootDescriptor, marker, false);
           }
-          if (!markDirty) {
-            allFilesMarked = false;
+          catch (IOException e) {
+            throw new UncheckedIOException(e);
           }
+        }
+        if (currentFiles != null) {
+          currentFiles.add(file);
+        }
+        if (!markDirty) {
+          allFilesMarked = false;
         }
       }
     };
-    traverseRecursively(context.getProjectDescriptor().getBuildRootIndex(), rd, file, fileConsumer);
+    BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
+    traverseRecursively(file.toPath(),
+                        f -> rootIndex.isDirectoryAccepted(f, rootDescriptor),
+                        f -> rootIndex.isFileAccepted(f, rootDescriptor),
+                        fileConsumer);
     return fileConsumer.allFilesMarked;
   }
 
@@ -317,13 +377,12 @@ public final class FSOperations {
   public interface FileConsumer {
     void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException;
   }
-  
-  public static void traverseRecursively(BuildRootIndex rootIndex, final BuildRootDescriptor rd, final File fromFile, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    traverseRecursively(fromFile, f -> rootIndex.isDirectoryAccepted(f, rd), f -> rootIndex.isFileAccepted(f, rd), processor);
-  }
 
-  private static void traverseRecursively(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    Files.walkFileTree(fromFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+  private static void traverseRecursively(@NotNull Path fromFile,
+                                          @NotNull Predicate<Path> dirFilter,
+                                          @NotNull Predicate<Path> fileFilter,
+                                          @NotNull BiConsumer<Path, BasicFileAttributes> processor) throws IOException {
+    Files.walkFileTree(fromFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
         if (e instanceof NoSuchFileException) {
@@ -331,8 +390,8 @@ public final class FSOperations {
         }
         if (e instanceof FileSystemLoopException) {
           LOG.info(e);
-          // in some cases (e.g. Google Drive File Stream) loop detection for directories works incorrectly
-          // fallback: try to traverse in the old IO-way
+          // In some cases (e.g., Google Drive File Stream) loop detection for directories works incorrectly.
+          // Fallback: try to traverse in the old IO way.
           traverseRecursivelyIO(file.toFile(), dirFilter, fileFilter, processor);
           return FileVisitResult.SKIP_SUBTREE;
         }
@@ -341,61 +400,73 @@ public final class FSOperations {
 
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-        return dirFilter.accept(dir.toFile())? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
+        return dirFilter.test(dir) ? FileVisitResult.CONTINUE : FileVisitResult.SKIP_SUBTREE;
       }
 
       @Override
       public FileVisitResult visitFile(Path f, BasicFileAttributes attrs) throws IOException {
-        final File _file = f.toFile();
-        if (fileFilter.accept(_file)) {
-          processor.consume(_file, attrs);
+        if (fileFilter.test(f)) {
+          processor.accept(f, attrs);
         }
         return FileVisitResult.CONTINUE;
       }
     });
   }
 
-  private static void traverseRecursivelyIO(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    final File[] children = fromFile.listFiles();
-    if (children != null) { // is a directory
-      if (children.length > 0 && dirFilter.accept(fromFile)) {
+  private static void traverseRecursivelyIO(@NotNull File fromFile,
+                                            @NotNull Predicate<Path> dirFilter,
+                                            @NotNull Predicate<Path> fileFilter,
+                                            @NotNull BiConsumer<Path, BasicFileAttributes> processor) throws IOException {
+    File[] children = fromFile.listFiles();
+    if (children == null) {
+      // is a file
+      if (fileFilter.test(fromFile.toPath())) {
+        processor.accept(fromFile.toPath(), null);
+      }
+    }
+    else {
+      // is a directory
+      if (children.length > 0 && dirFilter.test(fromFile.toPath())) {
         for (File child : children) {
           traverseRecursivelyIO(child, dirFilter, fileFilter, processor);
         }
       }
     }
-    else { // is a file
-      if (fileFilter.accept(fromFile)) {
-        processor.consume(fromFile, null);
-      }
-    }
   }
 
-  public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
+  public static void pruneEmptyDirs(@NotNull CompileContext context, @Unmodifiable @Nullable Set<Path> dirsToDelete) {
     if (dirsToDelete == null || dirsToDelete.isEmpty()) {
       return;
     }
 
-    Set<File> doNotDelete = ALL_OUTPUTS_KEY.get(context);
+    Set<Path> doNotDelete = ALL_OUTPUTS_KEY.get(context);
     if (doNotDelete == null) {
-      doNotDelete = FileCollectionFactory.createCanonicalFileSet();
+      doNotDelete = FileCollectionFactory.createCanonicalPathSet();
       for (BuildTarget<?> target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets()) {
-        doNotDelete.addAll(target.getOutputRoots(context));
+        for (File root : target.getOutputRoots(context)) {
+          doNotDelete.add(root.toPath());
+        }
       }
       ALL_OUTPUTS_KEY.set(context, doNotDelete);
     }
 
-    Set<File> additionalDirs = null;
-    Set<File> toDelete = dirsToDelete;
+    Set<Path> additionalDirs = null;
+    Set<Path> toDelete = dirsToDelete;
     while (toDelete != null) {
-      for (File file : toDelete) {
+      for (Path file : toDelete) {
         // important: do not force deletion if the directory is not empty!
-        final boolean deleted = !doNotDelete.contains(file) && file.delete();
+        boolean deleted;
+        try {
+          deleted = !doNotDelete.contains(file) && Files.deleteIfExists(file);
+        }
+        catch (IOException e) {
+          deleted = false;
+        }
         if (deleted) {
-          final File parentFile = file.getParentFile();
+          Path parentFile = file.getParent();
           if (parentFile != null) {
             if (additionalDirs == null) {
-              additionalDirs = FileCollectionFactory.createCanonicalFileSet();
+              additionalDirs = FileCollectionFactory.createCanonicalPathSet();
             }
             additionalDirs.add(parentFile);
           }
@@ -413,11 +484,12 @@ public final class FSOperations {
     }
   }
 
-  public static long lastModified(File file) {
+  public static long lastModified(@NotNull File file) {
     return lastModified(file.toPath());
   }
 
-  private static long lastModified(Path path) {
+  @ApiStatus.Internal
+  public static long lastModified(Path path) {
     try {
       return Files.getLastModifiedTime(path).toMillis();
     }
@@ -429,9 +501,27 @@ public final class FSOperations {
     return 0L;
   }
 
+  @ApiStatus.Internal
+  public static long lastModified(Path path, BasicFileAttributes attribs) {
+    return attribs != null && attribs.isRegularFile()? attribs.lastModifiedTime().toMillis() : lastModified(path);
+  }
+
+  @ApiStatus.Internal
+  public static BasicFileAttributes getAttributes(Path path) {
+    try {
+      return Files.readAttributes(path, BasicFileAttributes.class);
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    return null;
+  }
+
   public static void copy(File fromFile, File toFile) throws IOException {
-    final Path from = fromFile.toPath();
-    final Path to = toFile.toPath();
+    Path from = fromFile.toPath();
+    Path to = toFile.toPath();
     try {
       try {
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
@@ -468,7 +558,8 @@ public final class FSOperations {
     }
   }
 
-  private static void addCompletelyMarkedDirtyTarget(CompileContext context, BuildTarget<?> target) {
+  @ApiStatus.Internal
+  public static void addCompletelyMarkedDirtyTarget(CompileContext context, BuildTarget<?> target) {
     synchronized (TARGETS_COMPLETELY_MARKED_DIRTY) {
       Set<BuildTarget<?>> marked = TARGETS_COMPLETELY_MARKED_DIRTY.get(context);
       if (marked == null) {

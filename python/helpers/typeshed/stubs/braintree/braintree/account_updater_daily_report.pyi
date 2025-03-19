@@ -1,9 +1,8 @@
-from typing import Any
+from _typeshed import Incomplete
 
-from braintree.configuration import Configuration as Configuration
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class AccountUpdaterDailyReport(Resource):
-    report_url: Any
-    report_date: Any
+    report_url: Incomplete
+    report_date: Incomplete
     def __init__(self, gateway, attributes) -> None: ...

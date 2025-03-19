@@ -49,8 +49,8 @@ class ChangeFunctionLiteralSignatureFix private constructor(
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = false
-                override fun forcePerformForSelectedFunctionOnly() = false
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = false
+                override fun isForcePerformForSelectedFunctionOnly() = false
             },
             element,
             commandName

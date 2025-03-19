@@ -1,8 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 
-import com.intellij.ide.NewProjectWizardLegacy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -18,6 +17,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -28,8 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private static final Logger LOG = Logger.getInstance(JavaModuleBuilder.class);
@@ -50,9 +52,16 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   public List<Pair<String,String>> getSourcePaths() {
     if (mySourcePaths == null) {
       final List<Pair<String, String>> paths = new ArrayList<>();
-      @NonNls final String path = getContentEntryPath() + File.separator + "src";
-      new File(path).mkdirs();
-      paths.add(Pair.create(path, ""));
+      String contentEntry = Objects.requireNonNull(getContentEntryPath());
+      final @NonNls Path path = Path.of(contentEntry).resolve("src");
+      try {
+        NioFiles.createDirectories(path);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+        new File(path.toString()).mkdirs(); // maybe this will succeed...
+      }
+      paths.add(Pair.create(path.toString(), ""));
       return paths;
     }
     return mySourcePaths;
@@ -60,7 +69,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public boolean isAvailable() {
-    return NewProjectWizardLegacy.isAvailable();
+    return false;
   }
 
   @Override
@@ -77,7 +86,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return StdModuleTypes.JAVA;
   }
 
@@ -86,9 +95,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     return sdkType instanceof JavaSdkType && !((JavaSdkType)sdkType).isDependent();
   }
 
-  @Nullable
   @Override
-  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+  public @Nullable ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return StdModuleTypes.JAVA.modifySettingsStep(settingsStep, this);
   }
 
@@ -149,9 +157,8 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     }
   }
 
-  @Nullable
   @Override
-  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  public @Nullable List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     LanguageLevelProjectExtension extension = LanguageLevelProjectExtension.getInstance(ProjectManager.getInstance().getDefaultProject());
     Boolean aDefault = extension.getDefault();
     LOG.debug("commit: aDefault=" + aDefault);
@@ -183,8 +190,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
     myModuleLibraries.add(Pair.create(moduleLibraryPath,sourcePath));
   }
 
-  @Nullable
-  protected static String getPathForOutputPathStep() {
+  protected static @Nullable String getPathForOutputPathStep() {
     return null;
   }
 

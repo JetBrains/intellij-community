@@ -7,12 +7,13 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.Modifier
+import java.util.Locale
 
 interface KaptSourceSetModel : Serializable {
     val sourceSetName: String
@@ -47,24 +48,30 @@ class KaptGradleModelImpl(
 ) : KaptGradleModel
 
 
-class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.Ex  {
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder.create(project, e, "Gradle import errors")
-            .withDescription("Unable to build kotlin-kapt plugin configuration")
+class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService  {
+
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build kotlin-kapt plugin configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
     override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
-        return buildAll(project, null)
+        return buildAll(project, builderContext = null, parameter = null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl? {
-        return buildAll(project, builderContext)
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        return buildAll(project, builderContext, parameter)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl? {
-        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, parameter?.value)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
 
         val kaptPlugin: Plugin<*>? = project.plugins.findPlugin("kotlin-kapt")
@@ -85,7 +92,7 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
                 }
 
                 val sourceSetName = compileTask.getSourceSetName()
-                val isTest = sourceSetName.toLowerCase().endsWith("test")
+                val isTest = sourceSetName.lowercase(Locale.getDefault()).endsWith("test")
 
                 val kaptGeneratedSourcesDir = getKaptDirectory("getKaptGeneratedSourcesDir", project, sourceSetName)
                 val kaptGeneratedClassesDir = getKaptDirectory("getKaptGeneratedClassesDir", project, sourceSetName)

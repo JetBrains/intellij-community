@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -88,8 +88,7 @@ public final class NettyUtil {
     return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: "));
   }
 
-  @NotNull
-  public static Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
+  public static @NotNull Bootstrap nioClientBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
     Bootstrap bootstrap = new Bootstrap().group(eventLoopGroup).channel(NioSocketChannel.class);
     bootstrap.option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
     return bootstrap;

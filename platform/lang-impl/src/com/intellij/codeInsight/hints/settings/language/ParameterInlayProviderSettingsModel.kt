@@ -14,13 +14,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language
 ) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ParameterInlayProviderSettingsModel.ID, language) {
   companion object {
-    val ID = "parameter.hints.old"
+    val ID: String = "parameter.hints.old"
   }
 
   override val mainCheckBoxLabel: String
@@ -44,7 +46,7 @@ class ParameterInlayProviderSettingsModel(
     return provider.getProperty("inlay.parameters." + case.id)
   }
 
-  override val component by lazy {
+  override val component: ParameterHintsSettingsPanel by lazy {
     ParameterHintsSettingsPanel(
       language = language,
       excludeListSupported = provider.isBlackListSupported
@@ -64,7 +66,9 @@ class ParameterInlayProviderSettingsModel(
   }
 
   override fun collectData(editor: Editor, file: PsiFile): Runnable {
-    val pass = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+    fun createPass() = ParameterHintsPass(file, editor, HintInfoFilter { true }, true)
+
+    val pass = createPass()
     ProgressManager.getInstance().runProcess({
                                                val backup = ParameterInlayProviderSettingsModel(provider, language)
                                                val enabled = ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
@@ -82,8 +86,10 @@ class ParameterInlayProviderSettingsModel(
                                                  setShowParameterHintsForLanguage(enabled, language)
                                                }
                                              }, DaemonProgressIndicator())
+
+    val passToCleanupHints = createPass()
     return Runnable {
-      ParameterHintsPass(file, editor, HintInfoFilter { true }, true).doApplyInformationToEditor() // clean up hints
+      passToCleanupHints.doApplyInformationToEditor()
       pass.doApplyInformationToEditor()
     }
   }

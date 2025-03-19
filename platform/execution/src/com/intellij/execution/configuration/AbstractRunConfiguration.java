@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -23,12 +23,11 @@ public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<
     super(new RunConfigurationModule(project), factory);
   }
 
-  @NotNull
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myEnvs;
   }
 
-  public void setEnvs(@NotNull final Map<String, String> envs) {
+  public void setEnvs(final @NotNull Map<String, String> envs) {
     myEnvs.clear();
     myEnvs.putAll(envs);
   }

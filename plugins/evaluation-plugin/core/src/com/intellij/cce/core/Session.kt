@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
 import java.util.*
@@ -5,10 +6,9 @@ import java.util.*
 data class Session(val offset: Int,
                    val expectedText: String,
                    val completableLength: Int,
-                   val content: String?,
                    private var _properties: TokenProperties,
                    val id: String = UUID.randomUUID().toString()) {
-  constructor(other: Session) : this(other.offset, other.expectedText, other.completableLength, other.content, other._properties, other.id)
+  constructor(other: Session) : this(other.offset, other.expectedText, other.completableLength, other._properties, other.id)
 
   private val _lookups = mutableListOf<Lookup>()
 
@@ -17,8 +17,6 @@ data class Session(val offset: Int,
 
   val properties: TokenProperties
     get() = _properties
-
-  var success = false
 
   fun addLookup(lookup: Lookup) {
     _lookups.add(lookup)

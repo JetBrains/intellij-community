@@ -1,18 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+/** @deprecated use {@link com.intellij.openapi.vfs.newvfs.ArchiveFileSystem} instead */
+@Deprecated
+@ApiStatus.ScheduledForRemoval
 public interface LocalFileProvider {
-  /** @deprecated use {@link com.intellij.openapi.vfs.newvfs.ArchiveFileSystem#getLocalByEntry(VirtualFile)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  VirtualFile getLocalVirtualFileFor(@Nullable VirtualFile entryVFile);
-
-  /** @deprecated use {@code ArchiveFileSystem.findFileByPath(path)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  VirtualFile findLocalVirtualFileByPath(@NotNull String path);
 }

@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
   <component name="copyright">
     <Base>

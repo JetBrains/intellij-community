@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.lang.LangBundle;
@@ -12,11 +12,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class RestoreBundledExtensionsAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class RestoreBundledExtensionsAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.compiler.impl.CompilerUtil;
@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -24,14 +25,12 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
@@ -54,8 +53,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return UIDesignerBundle.message("component.gui.designer.form.to.source.compiler");
   }
 
@@ -67,7 +65,9 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   @Override
   public ProcessingItem @NotNull [] getProcessingItems(final @NotNull CompileContext context) {
     final Project project = context.getProject();
-    if (GuiDesignerConfiguration.getInstance(project).INSTRUMENT_CLASSES) {
+    GuiDesignerConfiguration designerConfiguration = GuiDesignerConfiguration.getInstance(project);
+
+    if (designerConfiguration.INSTRUMENT_CLASSES || designerConfiguration.GENERATE_SOURCES_ON_SAVE) {
       return ProcessingItem.EMPTY_ARRAY;
     }
 
@@ -80,11 +80,17 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       final BindingsCache bindingsCache = new BindingsCache(project);
 
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(context.getProject());
+
       try {
         final HashMap<String, VirtualFile> class2form = new HashMap<>();
 
         for (final VirtualFile formFile : formFiles) {
           if (compilerManager.isExcludedFromCompilation(formFile)) {
+            continue;
+          }
+
+          if (!fileIndex.isUnderSourceRootOfType(formFile, Set.of(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
             continue;
           }
 
@@ -192,7 +198,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           generator.generate(formFile);
           final ArrayList<FormErrorInfo> errors = generator.getErrors();
-          if (errors.size() == 0) {
+          if (errors.isEmpty()) {
             compiledItems.add(item);
           }
           else {
@@ -202,7 +208,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
           }
         }), "", null);
         FileDocumentManager.getInstance().saveAllDocuments();
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     CompilerUtil.refreshIOFiles(filesToRefresh);
@@ -228,19 +234,18 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
   }
 
   private static final class MyInstrumentationItem implements ProcessingItem {
-    @NotNull private final VirtualFile mySourceFile;
+    private final @NotNull VirtualFile mySourceFile;
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
 
-    MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
+    MyInstrumentationItem(final @NotNull VirtualFile sourceFile, final VirtualFile formFile) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
       myState = new TimestampValidityState(formFile.getTimeStamp());
     }
 
     @Override
-    @NotNull
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return mySourceFile;
     }
 

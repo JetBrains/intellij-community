@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -12,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class NamingConventionWithFallbackBean extends NamingConventionBean {
+public final class NamingConventionWithFallbackBean extends NamingConventionBean {
   public boolean inheritDefaultSettings = false;
 
   public NamingConventionWithFallbackBean(@RegExp @NonNls String regex, int minLength, int maxLength, String... predefinedNames) {
@@ -47,9 +45,8 @@ public class NamingConventionWithFallbackBean extends NamingConventionBean {
     ); 
   }
 
-  @NotNull
   @Override
-  public OptionController getOptionController() {
+  public @NotNull OptionController getOptionController() {
     return super.getOptionController()
       .onValue("inheritDefaultSettings", () -> !inheritDefaultSettings, val -> inheritDefaultSettings = !val);
   }

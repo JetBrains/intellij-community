@@ -17,19 +17,20 @@ package git4idea.repo
 
 import com.intellij.openapi.diagnostic.logger
 import org.ini4j.Ini
-import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 class GitModulesFileReader {
   private val LOG = logger<GitModulesFileReader>()
   private val MODULE_SECTION = Pattern.compile("submodule \"(.*)\"", Pattern.CASE_INSENSITIVE)
 
-  fun read(file: File): Collection<GitSubmoduleInfo> {
-    if (!file.exists()) return listOf()
-
+  fun read(file: Path): Collection<GitSubmoduleInfo> {
     val ini: Ini
     try {
+      if (!Files.exists(file)) return listOf()
+
       ini = loadIniFile(file)
     }
     catch (e: IOException) {

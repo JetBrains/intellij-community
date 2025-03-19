@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +13,6 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiPredicate;
 
@@ -543,29 +541,6 @@ public final class ArrayUtil {
     return true;
   }
 
-  /**
-   * @deprecated Use {@link Arrays#equals(Object[], Object[], Comparator)}
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static <T> boolean equals(T @NotNull [] a1, T @NotNull [] a2, @NotNull Comparator<? super T> comparator) {
-    //noinspection ArrayEquality
-    if (a1 == a2) {
-      return true;
-    }
-    int length = a2.length;
-    if (a1.length != length) {
-      return false;
-    }
-
-    for (int i = 0; i < length; i++) {
-      if (comparator.compare(a1[i], a2[i]) != 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   @Contract(pure=true)
   public static <T> T @NotNull [] reverseArray(T @NotNull [] array) {
     T[] newArray = array.clone();
@@ -656,6 +631,12 @@ public final class ArrayUtil {
     array[i1] = t;
   }
 
+  /**
+   * @param objects array to search in
+   * @param object an object to search
+   * @return an index of the first occurrence of an {@code object} inside the {@code objects} array, or -1, if no object is found.
+   * Objects are compared using {@link Object#equals(Object)}.
+   */
   @Contract(pure=true)
   public static int indexOf(Object @NotNull [] objects, @Nullable Object object) {
     return ArrayUtilRt.indexOf(objects, object, 0, objects.length);
@@ -671,6 +652,14 @@ public final class ArrayUtil {
     return -1;
   }
 
+  /**
+   * @param objects array to search in
+   * @param object an object to search
+   * @param comparator a predicate which returns true for equal objects
+   * @param <T> type of the objects in the array
+   * @return an index of the first occurrence of an {@code object} inside the {@code objects} array, according to the comparator.
+   * Returns -1, if no object is found.
+   */
   @Contract(pure=true)
   public static <T> int indexOf(T @NotNull [] objects, T object, @NotNull BiPredicate<? super T, ? super T> comparator) {
     for (int i = 0; i < objects.length; i++) {
@@ -788,21 +777,47 @@ public final class ArrayUtil {
     return newArray(getComponentType(sample), count);
   }
 
+  /**
+   * Returns the first element of the given array, or null if the array is null or empty.
+   *
+   * @param array the array from which to retrieve the first element, may be null.
+   * @return the first element of the array, or null if the array is null or empty.
+   */
   @Contract(value = "null -> null", pure = true)
-  public static @Nullable <T> T getFirstElement(T @Nullable [] array) {
+  public static <T> @Nullable T getFirstElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
+  /**
+   * Returns the last element of the provided array.
+   *
+   * @param array the array from which the last element is requested. It can be null.
+   * @return the last element of the array, or null if the array is null or empty.
+   */
   @Contract(value = "null -> null", pure=true)
-  public static <T> T getLastElement(T @Nullable [] array) {
+  public static <T> @Nullable T getLastElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
   }
 
+  /**
+   * Returns the last element of the given array. If the array is null or empty,
+   * the default value is returned.
+   *
+   * @param array the array from which to get the last element
+   * @param defaultValue the value to be returned if the array is null or empty
+   * @return the last element of the array, or the default value if the array is null or empty
+   */
   @Contract(pure=true)
   public static int getLastElement(int @Nullable [] array, int defaultValue) {
     return array == null || array.length == 0 ? defaultValue : array[array.length - 1];
   }
 
+  /**
+   * Checks if the given array is null or has no elements.
+   *
+   * @param array the array to check
+   * @return true if the array is null or empty, false otherwise
+   */
   @Contract(value = "null -> true", pure=true)
   public static <T> boolean isEmpty(T @Nullable [] array) {
     return array == null || array.length == 0;
@@ -976,7 +991,7 @@ public final class ArrayUtil {
   /**
    * Checks the equality of two arrays, according to a custom condition. Like {@code Arrays#equals} but doesn't
    * require a comparator.
-   * 
+   *
    * @param arr1 first array
    * @param arr2 second array
    * @param equalityCondition BiPredicate that returns true if two elements are considered to be equal. Must return true
@@ -992,5 +1007,4 @@ public final class ArrayUtil {
     }
     return true;
   }
-
 }

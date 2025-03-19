@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
 import com.intellij.psi.tree.IElementType;
@@ -15,12 +16,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodReferenceElementType extends FunctionalExpressionElementType<PsiMethodReferenceExpression> {
   //prevents cyclic static variables initialization
-  private final static NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.lazy(() -> {
+  private static final NotNullLazyValue<TokenSet> EXCLUDE_FROM_PRESENTABLE_TEXT = NotNullLazyValue.lazy(() -> {
     return TokenSet.orSet(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TokenSet.create(JavaElementType.REFERENCE_PARAMETER_LIST));
   });
 
   public MethodReferenceElementType() {
-    super("METHOD_REF_EXPRESSION");
+    super("METHOD_REF_EXPRESSION", BasicJavaElementType.BASIC_METHOD_REF_EXPRESSION);
   }
 
   @Override
@@ -33,9 +34,8 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
     return new PsiMethodReferenceExpressionImpl(stub);
   }
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new CompositeElement(this) {
       @Override
       public void replaceChildInternal(@NotNull ASTNode child, @NotNull TreeElement newElement) {
@@ -53,9 +53,8 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
     };
   }
 
-  @NotNull
   @Override
-  protected String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
+  protected @NotNull String getPresentableText(@NotNull LighterAST tree, @NotNull LighterASTNode funExpr) {
     return LightTreeUtil.toFilteredString(tree, funExpr, EXCLUDE_FROM_PRESENTABLE_TEXT.getValue());
   }
 }

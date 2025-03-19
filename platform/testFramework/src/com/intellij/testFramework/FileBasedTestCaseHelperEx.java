@@ -16,9 +16,12 @@
 package com.intellij.testFramework;
 
 
+import org.jetbrains.annotations.NotNull;
+
 public interface FileBasedTestCaseHelperEx extends FileBasedTestCaseHelper {
   /**
    * @return path related to the test data root according to {@link LightPlatformCodeInsightTestCase#getTestDataPath()}
    */
+  @NotNull
   String getRelativeBasePath();
 }

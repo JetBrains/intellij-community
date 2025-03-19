@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.lombok.maven
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
 import org.jetbrains.kotlin.lombok.LombokPluginNames.CONFIG_OPTION_NAME
 import org.jetbrains.kotlin.lombok.LombokPluginNames.PLUGIN_ID
@@ -36,9 +36,7 @@ class LombokMavenProjectImportHandler : AbstractMavenImportHandler() {
             }
         }
     }
-
-    companion object {
-        private const val MAVEN_SUBPLUGIN_NAME = "lombok"
-        private val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:$CONFIG_OPTION_NAME="
-    }
 }
+
+private const val MAVEN_SUBPLUGIN_NAME = "lombok"
+private const val CONFIG_FILE_PREFIX = "$MAVEN_SUBPLUGIN_NAME:$CONFIG_OPTION_NAME="

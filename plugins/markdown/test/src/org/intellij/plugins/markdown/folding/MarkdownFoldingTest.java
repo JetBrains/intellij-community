@@ -100,6 +100,14 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testTableOfContents() {
+    doTest();
+  }
+
+  public void testFrontMatter() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.testFolding(getTestDataPath() + "/" + getTestName(true) + ".md");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
@@ -10,6 +10,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
@@ -20,8 +21,8 @@ import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 public class AssertAllInliner implements CallInliner {
   private static final CallMatcher ASSERT_ALL =
     anyOf(
-      staticCall("org.junit.jupiter.api.Assertions", "assertAll").parameterTypes("org.junit.jupiter.api.function.Executable..."),
-      staticCall("org.junit.jupiter.api.Assertions", "assertAll")
+      staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertAll").parameterTypes("org.junit.jupiter.api.function.Executable..."),
+      staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertAll")
         .parameterTypes(CommonClassNames.JAVA_LANG_STRING, "org.junit.jupiter.api.function.Executable...")
     );
 
@@ -47,6 +48,7 @@ public class AssertAllInliner implements CallInliner {
       builder
         .doTry(call)
         .invokeFunction(0, arg)
+        .pop()
         .catchAll()
         .assignAndPop(result, DfTypes.TRUE)
         .end();

@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.lang.Language;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.AbstractStringEnumerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,31 +21,31 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class LazyStubList extends StubList {
   private final AtomicReferenceArray<StubBase<?>> myStubs;
-  private final ObjectStubSerializer myRootSerializer;
+  private final ObjectStubSerializer<?, ?> myRootSerializer;
   private int mySize;
   private final AtomicInteger myInstantiated = new AtomicInteger(1);
   private volatile LazyStubData myData;
 
-  LazyStubList(int size, StubBase<?> root, ObjectStubSerializer rootSerializer) {
+  LazyStubList(int size, StubBase<?> root, ObjectStubSerializer<?, ?> rootSerializer) {
     super(size);
     myStubs = new AtomicReferenceArray<>(size);
     myRootSerializer = rootSerializer;
     myStubs.set(0, root);
-    root.myStubList = this;
+    root.setStubList(this);
   }
 
   @Override
-  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
-    // stub is lazily created, so we already know all structure, so do nothing
+  public void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IElementType type) {
+    // stub is lazily created, so we already know all structures, so do nothing
   }
 
-  void addLazyStub(IElementType type, int childIndex, int parentIndex) {
+  public void addLazyStub(IElementType type, int childIndex, int parentIndex) {
     addStub(childIndex, parentIndex, type.getIndex());
     mySize++;
   }
 
   @Override
-  boolean areChildrenNonAdjacent(int childId, int parentId) {
+  public boolean areChildrenNonAdjacent(int childId, int parentId) {
     return false;
   }
 
@@ -69,12 +73,12 @@ final class LazyStubList extends StubList {
 
   @Nullable
   @Override
-  StubBase<?> getCachedStub(int index) {
+  @ApiStatus.Internal
+  public StubBase<?> getCachedStub(int index) {
     return myStubs.get(index);
   }
 
-  @NotNull
-  private StubBase<?> instantiateStub(int index) {
+  private @NotNull StubBase<?> instantiateStub(int index) {
     LazyStubData data = myData;
     if (data == null) {
       StubBase<?> stub = getCachedStub(index);
@@ -85,7 +89,12 @@ final class LazyStubList extends StubList {
 
     try {
       StubBase<?> parent = get(data.getParentIndex(index));
-      StubBase<?> stub = data.deserializeStub(index, parent, getStubType(index));
+      IElementType elementType = getStubElementType(index);
+      ObjectStubSerializer<?, Stub> serializer = StubElementRegistryService.getInstance().getStubSerializer(elementType);
+      if (serializer == null) {
+          throw new IllegalStateException("Stub serializer is null for the element type: " + elementType);
+      }
+      StubBase<?> stub = data.deserializeStub(index, parent, serializer, elementType);
       stub.id = index;
       return stub;
     }
@@ -93,7 +102,11 @@ final class LazyStubList extends StubList {
       throw e;
     }
     catch (Exception | Error e) {
-      throw new RuntimeException(StubSerializationUtil.brokenStubFormat(myRootSerializer), e);
+      PsiFileStub<?> fileStub = myStubs.get(0).getContainingFileStub();
+      PsiFile file = fileStub == null ? null : fileStub.getPsi();
+      PluginDescriptor plugin = PluginManager.getPluginByClass(myRootSerializer.getClass());
+      String message = StubSerializationUtil.brokenStubFormat(myRootSerializer, file);
+      throw new PluginException(message, e, plugin == null ? null : plugin.getPluginId());
     }
   }
 
@@ -102,7 +115,6 @@ final class LazyStubList extends StubList {
       myData = data;
     }
   }
-
 }
 
 final class LazyStubData {
@@ -126,9 +138,14 @@ final class LazyStubData {
     return myParentsAndStarts.get(index * 2 + 1);
   }
 
-  StubBase<?> deserializeStub(int index, StubBase<?> parent, IStubElementType<?, ?> type) throws IOException {
+  @NotNull StubBase<?> deserializeStub(
+    int index,
+    @Nullable StubBase<?> parent,
+    @NotNull ObjectStubSerializer<?, ? super Stub> serializer,
+    @NotNull IElementType type
+  ) throws IOException {
     StubInputStream stream = new StubInputStream(stubBytes(index), myStorage);
-    StubBase<?> stub = (StubBase<?>)type.deserialize(stream, parent);
+    StubBase<?> stub = (StubBase<?>)serializer.deserialize(stream, parent);
     int available = stream.available();
     if (available > 0) {
       if (available != 1) {
@@ -148,8 +165,7 @@ final class LazyStubData {
     return new ByteArrayInputStream(mySerializedStubs, start - 1, end - start);
   }
 
-  @NotNull
-  private static String getSerializeDeserializerMismatchMessage(@NotNull IStubElementType<?, ?> type) {
+  private static @NotNull String getSerializeDeserializerMismatchMessage(@NotNull IElementType type) {
     return "Stub serializer/deserialize mismatch for StubElementType: " +
            "name = " + type.getDebugName() +
            ", language = " + type.getLanguage();

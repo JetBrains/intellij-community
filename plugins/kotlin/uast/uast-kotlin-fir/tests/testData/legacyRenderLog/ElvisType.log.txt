@@ -7,7 +7,6 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (bar))
-                        USimpleNameReferenceExpression (identifier = bar, resolvesTo = null)
                         UExpressionList (elvis)
                             UDeclarationsExpression
                                 ULocalVariable (name = var63c495f9)

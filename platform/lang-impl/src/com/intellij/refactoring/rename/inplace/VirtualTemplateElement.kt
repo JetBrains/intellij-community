@@ -31,6 +31,7 @@ interface VirtualTemplateElement {
   fun onSelect(templateState: TemplateState)
 }
 
+@ApiStatus.Internal
 class SelectVirtualTemplateElement : EditorAction(Handler()) {
   private class Handler : EditorActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {

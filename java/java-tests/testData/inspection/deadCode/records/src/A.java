@@ -3,7 +3,7 @@ record A(int i) {
     System.out.println(new A(1));
   }
 }
-record R() {}
+record R(int i) {}
 public record MyRec(String name) {
     public MyRec {
        System.out.println("Constructing");

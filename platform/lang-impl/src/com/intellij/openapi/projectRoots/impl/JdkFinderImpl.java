@@ -1,22 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkFinder;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.LocalEelDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JdkFinderImpl implements JdkFinder {
-  @NotNull
+@ApiStatus.Internal
+public final class JdkFinderImpl implements JdkFinder {
   @Override
-  public List<String> suggestHomePaths() {
+  public @NotNull List<String> suggestHomePaths() {
     return JavaHomeFinder.suggestHomePaths();
   }
 
-  @Nullable
   @Override
-  public String defaultJavaLocation() {
-    return JavaHomeFinder.defaultJavaLocation();
+  public @Nullable String defaultJavaLocation() {
+    return JavaHomeFinder.defaultJavaLocation(null);
+  }
+
+  @Override
+  public @NotNull List<@NotNull String> suggestHomePaths(@Nullable Project project) {
+    return JavaHomeFinder.suggestHomePaths(project == null ? LocalEelDescriptor.INSTANCE : EelProviderUtil.getEelDescriptor(project),
+                                           false);
   }
 }

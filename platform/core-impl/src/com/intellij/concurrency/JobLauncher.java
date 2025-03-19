@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.diagnostic.PluginException;
@@ -88,6 +88,19 @@ public abstract class JobLauncher {
    * This will cause deadlock since this thread pool is an easily exhaustible resource.
    * Use {@link com.intellij.openapi.application.Application#executeOnPooledThread(Runnable)} instead
    */
-  @NotNull
-  public abstract Job<Void> submitToJobThread(@NotNull final Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+  @ApiStatus.Internal
+  public abstract @NotNull Job submitToJobThread(final @NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback);
+
+  /**
+   * Process each element in {@code items} with {@code thingProcessor} under {@code progress} in a background in an async manner,
+   * while running {@code runnable} synchronously.
+   * All processing is finished when the method returns, unless PCE is thrown, in which case there are no guarantees
+   */
+  @ApiStatus.Internal
+  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
+                                              @NotNull List<? extends T> items,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runnable) throws ProcessCanceledException {
+    return false;
+  }
 }

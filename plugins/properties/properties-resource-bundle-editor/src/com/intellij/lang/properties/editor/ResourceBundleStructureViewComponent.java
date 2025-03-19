@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -7,7 +7,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
@@ -31,14 +30,14 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import javax.swing.tree.TreePath;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
+public final class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
+  private static final Logger LOG = Logger.getInstance(ResourceBundleStructureViewComponent.class);
 
   private final ResourceBundle myResourceBundle;
 
@@ -51,16 +50,15 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     showToolbar();
   }
 
-  @NotNull
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     final DefaultActionGroup result = (DefaultActionGroup) super.createActionGroup();
     result.add(new ContextHelpAction(getHelpID()), Constraints.LAST);
     return result;
   }
 
   @Override
-  protected void addGroupByActions(@NotNull final DefaultActionGroup result) {
+  protected void addGroupByActions(final @NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(createSettingsActionGroup());
     result.add(new NewPropertyAction(true), Constraints.FIRST);
@@ -102,125 +100,115 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (ResourceBundle.ARRAY_DATA_KEY.is(dataId)) {
-      return new ResourceBundle[]{myResourceBundle};
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      DataProvider superProvider = (DataProvider)super.getData(dataId);
-      JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreeUtil::getLastUserObject);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection, myResourceBundle), superProvider);
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return new DeleteProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(ResourceBundle.ARRAY_DATA_KEY, new ResourceBundle[]{myResourceBundle});
 
-        @Override
-        public void deleteElement(@NotNull DataContext dataContext) {
-          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-          if (selectedPsiElements == null) return;
-          List<PsiFile> psiFiles = ContainerUtil.findAll(selectedPsiElements, PsiFile.class);
-          DeleteProvider delegate;
-          if (!psiFiles.isEmpty()) {
-            delegate = new ResourceBundleDeleteProvider();
-          }
-          else {
-            IProperty[] properties = IProperty.ARRAY_KEY.getData(dataContext);
-            if (properties != null && properties.length != 0) {
-              delegate = new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
-            }
-            else {
-              return;
-            }
-          }
-          delegate.deleteElement(dataContext);
-        }
-
-        @Override
-        public boolean canDeleteElement(@NotNull DataContext dataContext) {
-          return CommonDataKeys.PROJECT.getData(dataContext) != null;
-        }
-      };
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return new CopyProvider() {
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return ActionUpdateThread.BGT;
-        }
-
-        @Override
-        public void performCopy(@NotNull DataContext dataContext) {
-          PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
-          if (selectedPsiElements != null) {
-            List<String> names = new ArrayList<>(selectedPsiElements.length);
-            for (PsiElement element : selectedPsiElements) {
-              if (element instanceof PsiNamedElement) {
-                names.add(((PsiNamedElement)element).getName());
-              }
-            }
-            CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(names, "\n")));
-          }
-        }
-
-        @Override
-        public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-          return true;
-        }
-
-        @Override
-        public boolean isCopyVisible(@NotNull DataContext dataContext) {
-          return true;
-        }
-      };
-    }
-    return super.getData(dataId);
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId,
-                                              @NotNull JBIterable<Object> selection,
-                                              @NotNull ResourceBundle resourceBundle) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return new ResourceBundleAsVirtualFile(resourceBundle);
-    }
-    else if (IProperty.ARRAY_KEY.is(dataId)) {
+    JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreeUtil::getLastUserObject);
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new MyDeleteProvider());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, new MyCopyProvider());
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return new ResourceBundleAsVirtualFile(myResourceBundle);
+    });
+    sink.lazy(IProperty.ARRAY_KEY, () -> {
       List<IProperty> list = selection
         .filterMap(StructureViewComponent::unwrapWrapper)
         .filter(ResourceBundleEditorViewElement.class)
         .flatten(o -> JBIterable.of(o.getProperties()))
         .toList();
       return list.isEmpty() ? null : list.toArray(IProperty.EMPTY_ARRAY);
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      List<PsiElement> list = selection
-        .filterMap(StructureViewComponent::unwrapWrapper)
-        .filter(ResourceBundleEditorViewElement.class)
-        .flatten(o -> JBIterable.<PsiElement>of(o.getFiles())
-          .append(JBIterable.of(o.getProperties())
-                    .map(IProperty::getPsiElement)
-                    .filter(PsiElement::isValid)))
-        .toList();
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      List<PsiElement> list = getPsiElements(selection);
       return list.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    else if (UsageView.USAGE_TARGETS_KEY.is(dataId)) {
-      PsiElement[] chosenElements = (PsiElement[])getSlowData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getName(), selection, resourceBundle);
-      if (chosenElements != null) {
-        UsageTarget[] usageTargets = new UsageTarget[chosenElements.length];
-        for (int i = 0; i < chosenElements.length; i++) {
-          usageTargets[i] = new PsiElement2UsageTargetAdapter(chosenElements[i], true);
-        }
-        return usageTargets;
-      }
-    }
-    return null;
+    });
+    sink.lazy(UsageView.USAGE_TARGETS_KEY, () -> {
+      List<PsiElement> chosenElements = getPsiElements(selection);
+      if (chosenElements.isEmpty()) return null;
+      return ContainerUtil.map2Array(
+        chosenElements, UsageTarget.EMPTY_ARRAY,
+        o -> new PsiElement2UsageTargetAdapter(o, true));
+    });
+  }
+
+  private static @Unmodifiable @NotNull List<PsiElement> getPsiElements(JBIterable<Object> selection) {
+    return selection
+      .filterMap(StructureViewComponent::unwrapWrapper)
+      .filter(ResourceBundleEditorViewElement.class)
+      .flatten(o -> JBIterable.<PsiElement>of(o.getFiles())
+        .append(JBIterable.of(o.getProperties())
+                  .map(IProperty::getPsiElement)
+                  .filter(PsiElement::isValid)))
+      .toList();
   }
 
   @Override
   protected boolean showScrollToFromSourceActions() {
     return false;
+  }
+
+  private static class MyCopyProvider implements CopyProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      if (selectedPsiElements != null) {
+        List<String> names = new ArrayList<>(selectedPsiElements.length);
+        for (PsiElement element : selectedPsiElements) {
+          if (element instanceof PsiNamedElement) {
+            names.add(((PsiNamedElement)element).getName());
+          }
+        }
+        CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(names, "\n")));
+      }
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return true;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return true;
+    }
+  }
+
+  private class MyDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
+    public void deleteElement(@NotNull DataContext dataContext) {
+      PsiElement[] selectedPsiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      if (selectedPsiElements == null) return;
+      List<PsiFile> psiFiles = ContainerUtil.findAll(selectedPsiElements, PsiFile.class);
+      DeleteProvider delegate;
+      if (!psiFiles.isEmpty()) {
+        delegate = new ResourceBundleDeleteProvider();
+      }
+      else {
+        IProperty[] properties = IProperty.ARRAY_KEY.getData(dataContext);
+        if (properties != null && properties.length != 0) {
+          delegate = new PropertiesDeleteProvider(((ResourceBundleEditor)getFileEditor()).getPropertiesInsertDeleteManager(), properties);
+        }
+        else {
+          return;
+        }
+      }
+      delegate.deleteElement(dataContext);
+    }
+
+    @Override
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
+      return CommonDataKeys.PROJECT.getData(dataContext) != null;
+    }
   }
 
   private final class PropertiesDeleteProvider implements DeleteProvider {
@@ -238,7 +226,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
 
     @Override
-    public void deleteElement(@NotNull final DataContext dataContext) {
+    public void deleteElement(final @NotNull DataContext dataContext) {
       final List<PropertiesFile> bundlePropertiesFiles = myResourceBundle.getPropertiesFiles();
 
       final List<PsiElement> toDelete = new ArrayList<>();
@@ -261,14 +249,13 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     }
 
     @Override
-    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
+    public boolean canDeleteElement(final @NotNull DataContext dataContext) {
       return true;
     }
   }
 
   @Override
-  @NonNls
-  public String getHelpID() {
+  public @NonNls String getHelpID() {
     return "editing.propertyFile.bundleEditor";
   }
 }

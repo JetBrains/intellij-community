@@ -1,7 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.ide.ConsentOptionsProvider;
+import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogInternalSendConfig;
+import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService;
@@ -15,10 +19,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
+
 public final class StatisticsUploadAssistant {
   private static final String IDEA_HEADLESS_ENABLE_STATISTICS = "idea.headless.enable.statistics";
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
+  private static final String USE_TEST_STATISTICS_SEND_ENDPOINT = "idea.use.test.statistics.send.endpoint";
   private static final String USE_TEST_STATISTICS_CONFIG = "idea.use.test.statistics.config";
   private static final String DISABLE_COLLECT_STATISTICS = "idea.disable.collect.statistics";
 
@@ -33,8 +40,7 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
 
-    UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return settings != null && settings.isAllowed();
+    return isAllowedByUserConsent();
   }
 
   public static boolean isCollectAllowed() {
@@ -42,39 +48,34 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
 
+    if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {
+      if (isAllowedByUserConsent() || isLocalStatisticsWithoutReport()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isAllowedByUserConsent() {
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return !isDisableCollectStatistics() && !isCollectionForceDisabled() &&
-           ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
+    if (settings != null && settings.isAllowed()) {
+      return true;
+    }
+
+    ConsentOptionsProvider consentsProvider = ApplicationManager.getApplication().getService(ConsentOptionsProvider.class);
+    if (consentsProvider != null && consentsProvider.isActivatedWithFreeLicense()) {
+      return true;
+    }
+
+    return false;
   }
 
   private static boolean isForceCollectEnabled() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled();
+    return StatisticsEventLogProviderUtil.forceLoggingAlwaysEnabled();
   }
 
   public static boolean isCollectAllowedOrForced() {
     return isCollectAllowed() || isForceCollectEnabled();
-  }
-
-  /**
-   * @deprecated see {@link ExternalEventLogSettings#isSendAllowedOverride()}
-   */
-  @Deprecated(since = "2023.1")
-  public static boolean getSendAllowedOverride() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null)
-      return externalEventLogSettings.isSendAllowedOverride();
-    else
-      return false;
-  }
-
-  /**
-   * @deprecated see {@link ExternalEventLogSettings#isCollectAllowedOverride()}
-   * */
-  @Deprecated(since = "2023.1")
-  public static boolean getCollectAllowedOverride() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
   }
 
   public static boolean isCollectionForceDisabled() {
@@ -82,8 +83,7 @@ public final class StatisticsUploadAssistant {
     return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
 
-  @NlsContexts.DetailedDescription
-  public static @Nullable String getConsentWarning() {
+  public static @NlsContexts.DetailedDescription @Nullable String getConsentWarning() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings == null ? null : externalEventLogSettings.getConsentWarning();
   }
@@ -95,6 +95,7 @@ public final class StatisticsUploadAssistant {
   public static boolean isTestStatisticsEnabled() {
     return isLocalStatisticsWithoutReport()
            || isTeamcityDetected()
+           || isUseTestStatisticsSendEndpoint()
            || isUseTestStatisticsConfig();
   }
 
@@ -106,21 +107,20 @@ public final class StatisticsUploadAssistant {
                              int totalLocalFiles) {
         int success = successfullySentFiles.size();
         int failed = errors.size();
-        EventLogSystemLogger.logFilesSend(
-          recorderId, totalLocalFiles, success, failed, false, successfullySentFiles, errors
-        );
+        getEventLogProvider(recorderId).getEventLogSystemLogger$intellij_platform_statistics()
+          .logFilesSend(totalLocalFiles, success, failed, false, successfullySentFiles, errors);
       }
     };
 
     return new EventLogStatisticsService(
       EventLogInternalSendConfig.createByRecorder(recorderId, true),
-      new EventLogInternalApplicationInfo(recorderId, isUseTestStatisticsConfig()),
+      new EventLogInternalApplicationInfo(isUseTestStatisticsConfig(), isUseTestStatisticsSendEndpoint()),
       listener
     );
   }
 
-  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTest, long cacheTimeoutMs) {
-    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(recorderId, isTest), cacheTimeoutMs);
+  public static EventLogUploadSettingsService createExternalSettings(@NotNull String recorderId, boolean isTestConfig, boolean isTestSendEndpoint, long cacheTimeoutMs) {
+    return new EventLogUploadSettingsService(recorderId, new EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint), cacheTimeoutMs);
   }
 
   public static boolean isTeamcityDetected() {
@@ -133,6 +133,10 @@ public final class StatisticsUploadAssistant {
 
   public static boolean isLocalStatisticsWithoutReport() {
     return Boolean.getBoolean(ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT);
+  }
+
+  public static boolean isUseTestStatisticsSendEndpoint() {
+    return Boolean.getBoolean(USE_TEST_STATISTICS_SEND_ENDPOINT);
   }
 
   public static boolean isUseTestStatisticsConfig() {

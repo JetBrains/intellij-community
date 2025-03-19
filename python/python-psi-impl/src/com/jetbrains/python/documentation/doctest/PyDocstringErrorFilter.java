@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * Do not highlight syntax errors in doctests
  */
-public class PyDocstringErrorFilter extends HighlightErrorFilter {
+public final class PyDocstringErrorFilter extends HighlightErrorFilter {
 
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {

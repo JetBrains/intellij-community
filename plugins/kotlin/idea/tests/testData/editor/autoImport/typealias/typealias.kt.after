@@ -1,0 +1,5 @@
+import pkg.TestAlias
+
+fun test() {
+    val n: TestAlias = 1
+}

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.actions.styling;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,9 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class ToggleCodeSpanAction extends BaseToggleStateAction {
 
-  @NotNull
   @Override
-  protected String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
+  protected @NotNull String getBoundString(@NotNull CharSequence text, int selectionStart, int selectionEnd) {
     int maxBacktickSequenceSeen = 0;
     int curBacktickSequence = 0;
     for (int i = selectionStart; i < selectionEnd; ++i) {
@@ -26,9 +26,8 @@ public class ToggleCodeSpanAction extends BaseToggleStateAction {
     return StringUtil.repeat("`", maxBacktickSequenceSeen + 1);
   }
 
-  @Nullable
   @Override
-  protected String getExistingBoundString(@NotNull CharSequence text, int startOffset) {
+  protected @Nullable String getExistingBoundString(@NotNull CharSequence text, int startOffset) {
     int to = startOffset;
     while (to < text.length() && text.charAt(to) == '`') {
       to++;
@@ -42,9 +41,8 @@ public class ToggleCodeSpanAction extends BaseToggleStateAction {
     return false;
   }
 
-  @NotNull
   @Override
-  protected IElementType getTargetNodeType() {
+  protected @NotNull IElementType getTargetNodeType() {
     return MarkdownElementTypes.CODE_SPAN;
   }
 }

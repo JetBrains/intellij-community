@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -15,23 +15,25 @@ import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Represents code block IR (list of instructions)
  */
 public final class ControlFlow {
-  private @NotNull final List<Instruction> myInstructions;
-  private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;
-  private @NotNull final Object2IntMap<PsiElement> myElementToEndOffsetMap;
-  private @NotNull final DfaValueFactory myFactory;
-  private @NotNull final PsiElement myPsiAnchor;
+  private final @NotNull List<Instruction> myInstructions;
+  private final @NotNull Object2IntMap<PsiElement> myElementToStartOffsetMap;
+  private final @NotNull Object2IntMap<PsiElement> myElementToEndOffsetMap;
+  private final @NotNull DfaValueFactory myFactory;
+  private final @NotNull PsiElement myPsiAnchor;
   private int[] myLoopNumbers;
 
-  public ControlFlow(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
+  public ControlFlow(final @NotNull DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
     myFactory = factory;
     myPsiAnchor = psiAnchor;
     myInstructions = new ArrayList<>();
@@ -81,11 +83,11 @@ public final class ControlFlow {
     return new FixedOffset(myInstructions.size());
   }
 
-  public void startElement(PsiElement psiElement) {
+  public void startElement(@NotNull PsiElement psiElement) {
     myElementToStartOffsetMap.put(psiElement, myInstructions.size());
   }
 
-  public void finishElement(PsiElement psiElement) {
+  public void finishElement(@NotNull PsiElement psiElement) {
     myElementToEndOffsetMap.put(psiElement, myInstructions.size());
   }
 
@@ -123,6 +125,7 @@ public final class ControlFlow {
     return new FromMapOffset(element, myElementToEndOffsetMap);
   }
 
+  @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
     final List<Instruction> instructions = myInstructions;
@@ -167,6 +170,24 @@ public final class ControlFlow {
   }
 
   /**
+   * Modify this control flow to ensure that given variable values are always tracked,
+   * even if they are not de-facto used.
+   * 
+   * @param predicate predicate to test whether a given variable should be kept.
+   *                  It's not specified whether the predicate is called for a particular
+   *                  variable. E.g., an implementation may keep all the variables anyway,
+   *                  and this method may do nothing in this case.
+   */
+  @Contract(mutates = "this")
+  public void keepVariables(@NotNull Predicate<@NotNull VariableDescriptor> predicate) {
+    for (Instruction inst : getInstructions()) {
+      if (inst instanceof FinishElementInstruction finishInstruction) {
+        finishInstruction.removeFromFlushList(predicate);
+      }
+    }
+  }
+
+  /**
    * Checks whether supplied variable is a temporary variable created previously via {@link #createTempVariable(DfType)}
    *
    * @param variable to check
@@ -186,15 +207,14 @@ public final class ControlFlow {
     return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), dfType));
   }
 
-  public @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
+  public @NotNull List<VariableDescriptor> getSynthetics(PsiElement element) {
     int startOffset = getStartOffset(element).getInstructionOffset();
-    List<DfaVariableValue> synthetics = new ArrayList<>();
+    List<VariableDescriptor> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue var) {
-        VariableDescriptor descriptor = var.getDescriptor();
-        if (descriptor instanceof Synthetic && ((Synthetic)descriptor).myLocation >= startOffset) {
-          synthetics.add(var);
-        }
+      if (value instanceof DfaVariableValue var &&
+          var.getDescriptor() instanceof Synthetic synthetic &&
+          synthetic.myLocation >= startOffset) {
+        synthetics.add(synthetic);
       }
     }
     return synthetics;

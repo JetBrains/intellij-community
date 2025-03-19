@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -9,9 +9,11 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,12 +36,14 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
-class ComponentModuleRegistrationChecker(private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlDomInspection.PluginModuleSet>>,
-                                         private val ignoredClasses: MutableList<String>,
-                                         private val annotationHolder: DomElementAnnotationHolder) {
+internal class ComponentModuleRegistrationChecker(
+  private val moduleToModuleSet: SynchronizedClearableLazy<MutableMap<String, PluginXmlRegistrationCheckInspection.PluginModuleSet>>,
+  private val ignoredClasses: MutableList<String>,
+  private val annotationHolder: DomElementAnnotationHolder,
+) {
+
   fun checkProperModule(extensionPoint: ExtensionPoint) {
     val effectiveEpClass = extensionPoint.effectiveClass
     if (shouldCheckExtensionPointClassAttribute(effectiveEpClass) &&
@@ -53,7 +57,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
 
     val psiSearchHelper = PsiSearchHelper.getInstance(project)
     val scope = GlobalSearchScope.projectScope(project)
-    if (psiSearchHelper.isCheapEnoughToSearch(shortName, scope, null, null) == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
+    if (psiSearchHelper.isCheapEnoughToSearch(shortName, scope, null) == PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES) {
       var extensionPointClass: PsiClass? = null
       psiSearchHelper.processElementsWithWord(
         { element, _ ->
@@ -128,6 +132,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
   fun checkProperXmlFileForClass(element: DomElement, psiClass: PsiClass?): Boolean {
     if (psiClass == null) return false
     if (ignoredClasses.contains(psiClass.qualifiedName)) return false
+    if (psiClass.hasAnnotation(InternalIgnoreDependencyViolation::class.java.canonicalName)) return false
 
     val definingModule = psiClass.let { ModuleUtilCore.findModuleForPsiElement(it) } ?: return false
 
@@ -158,7 +163,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return true
     }
-    if (module == null || !PsiUtil.isIdeaProject(module.project)) {
+    if (module == null || !IntelliJProjectUtil.isIntelliJPlatformProject(module.project)) {
       return false
     }
     val contentRoots = ModuleRootManager.getInstance(module).contentRoots
@@ -197,8 +202,10 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Synchron
     return null
   }
 
-  inner class MoveRegistrationQuickFix(private val myTargetModule: Module,
-                                       private val myTargetFileName: String) : LocalQuickFix {
+  inner class MoveRegistrationQuickFix(
+    private val myTargetModule: Module,
+    private val myTargetFileName: String,
+  ) : LocalQuickFix {
 
     override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
       return IntentionPreviewInfo.EMPTY

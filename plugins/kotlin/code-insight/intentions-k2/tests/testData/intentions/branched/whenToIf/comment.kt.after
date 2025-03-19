@@ -1,8 +1,8 @@
+// PRIORITY: LOW
 // AFTER-WARNING: The expression is unused
 // AFTER-WARNING: The expression is unused
 fun foo(b: Boolean) {
-    // comment 1
-    // comment 2
-    if (b) 1
+    if (// comment 1
+        b) 1 // comment 2
     else 2
 }

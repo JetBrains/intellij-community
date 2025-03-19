@@ -1,12 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -21,15 +22,18 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public final class TrailingSpacesStripper implements FileDocumentManagerListener {
   private static final Key<Boolean> DISABLE_FOR_FILE_KEY = Key.create("DISABLE_TRAILING_SPACE_STRIPPER_FOR_FILE_KEY");
@@ -50,7 +54,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     strip(document);
   }
 
-  private void strip(@NotNull final Document document) {
+  private void strip(final @NotNull Document document) {
     TrailingSpacesOptions options = getOptions(document);
     if (options == null) return;
 
@@ -130,10 +134,9 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
   }
 
   // clears line modification flags except lines which was not stripped because the caret was in the way
+  @ApiStatus.Internal
   public void clearLineModificationFlags(@NotNull Document document) {
-    if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow)document).getDelegate();
-    }
+    document = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (!(document instanceof DocumentImpl)) {
       return;
     }
@@ -177,8 +180,14 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     if (localEditor != null) {
       activeEditors.add(localEditor);
     }
-    for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, false)) {
-      manager.editors().filter(e -> UIUtil.hasFocus(e.getContentComponent()) && e.getDocument() == document).forEach(activeEditors::add);
+    for (ClientEditorManager manager : application.getServices(ClientEditorManager.class, ClientKind.REMOTE)) {
+      Iterator<Editor> iterator = manager.editorsSequence().iterator();
+      while (iterator.hasNext()) {
+        Editor editor = iterator.next();
+        if (UIUtil.hasFocus(editor.getContentComponent()) && editor.getDocument() == document) {
+          activeEditors.add(editor);
+        }
+      }
     }
     return activeEditors;
   }
@@ -193,10 +202,9 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     return activeEditor;
   }
 
+  @ApiStatus.Internal
   public static boolean strip(@NotNull Document document, boolean inChangedLinesOnly, boolean skipCaretLines) {
-    if (document instanceof DocumentWindow) {
-      document = ((DocumentWindow)document).getDelegate();
-    }
+    document = PsiDocumentManagerBase.getTopLevelDocument(document);
     if (!(document instanceof DocumentImpl)) {
       return true;
     }
@@ -217,7 +225,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     boolean markAsNeedsStrippingLater = ((DocumentImpl)document)
       .stripTrailingSpaces(getProject(document, activeEditors), inChangedLinesOnly, skipCaretLines ? caretOffsets : null);
 
-    if (!activeEditors.isEmpty() && !ShutDownTracker.isShutdownHookRunning()) {
+    if (!activeEditors.isEmpty() && !ShutDownTracker.isShutdownStarted()) {
       runBatchCaretOperation(activeEditors, () -> {
         for (int i = 0; i < carets.size(); i++) {
           Caret caret = carets.get(i);
@@ -245,8 +253,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     });
   }
 
-  @Nullable
-  private static Project getProject(@NotNull Document document, @NotNull List<? extends Editor> editors) {
+  private static @Nullable Project getProject(@NotNull Document document, @NotNull List<? extends Editor> editors) {
     for (Editor editor : editors) {
       Project project = editor.getProject();
       if (project != null) {
@@ -255,11 +262,14 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      return ProjectUtil.guessProjectForFile(file);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-323372, EA-857522")) {
+        return ProjectUtil.guessProjectForFile(file);
+      }
     }
     return null;
   }
 
+  @ApiStatus.Internal
   public void documentDeleted(@NotNull Document doc) {
     myDocumentsToStripLater.remove(doc);
   }
@@ -273,12 +283,13 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     DISABLE_FOR_FILE_KEY.set(file, enabled ? null : Boolean.TRUE);
   }
 
+  @ApiStatus.Internal
   public static boolean isEnabled(@NotNull VirtualFile file) {
     return !Boolean.TRUE.equals(DISABLE_FOR_FILE_KEY.get(file));
   }
 
-  @Nullable
-  public static TrailingSpacesOptions getOptions(@NotNull Document document) {
+  @ApiStatus.Internal
+  public static @Nullable TrailingSpacesOptions getOptions(@NotNull Document document) {
     if (document.isWritable()) {
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       VirtualFile file = fileDocumentManager.getFile(document);

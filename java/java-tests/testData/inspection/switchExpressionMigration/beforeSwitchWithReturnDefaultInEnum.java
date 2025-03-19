@@ -1,4 +1,4 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with 'switch' expression" "true-preview"
 
 class X {
     int test(E e) {
@@ -7,7 +7,7 @@ class X {
                 return 3;
             case B:
                 return 1;
-            case default:
+            default:
                 return 2;
         }
     }

@@ -1,28 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class EmptyFileBasedIndex extends FileBasedIndexEx {
@@ -189,8 +186,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   private static final class EmptyIndex<Key, Value> implements UpdatableIndex<Key, Value, FileContent, Void>, MeasurableIndexStore {
     @SuppressWarnings("rawtypes")
     private static final EmptyIndex INSTANCE = new EmptyIndex();
-    private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
-
 
     @SuppressWarnings("unchecked")
     static <Key, Value> EmptyIndex<Key, Value> getInstance() {
@@ -205,11 +200,6 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull ReadWriteLock getLock() {
-      return myLock;
-    }
-
-    @Override
     public @NotNull Map<Key, Value> getIndexedFileData(int fileId) {
       return Collections.emptyMap();
     }
@@ -220,12 +210,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
+    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 
@@ -240,7 +230,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+    public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -264,7 +254,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) {
+    public void updateWith(@NotNull UpdateData<Key, Value> updateData) {
       throw new UnsupportedOperationException();
     }
 
@@ -281,17 +271,23 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
-      return SnapshotSingleValueIndexStorage.empty();
+    public boolean isDirty() {
+      return false;
     }
 
     @Override
-    public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
+    public <E extends Exception> boolean withData(@NotNull Key key,
+                                                  @NotNull ValueContainerProcessor<Value, E> processor) throws E {
+      return processor.process(ValueContainer.emptyContainer());
+    }
+
+    @Override
+    public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+    public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
       throw new UnsupportedOperationException();
     }
 

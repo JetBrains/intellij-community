@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.wordSelection;
 
@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,7 +30,8 @@ import static com.intellij.util.ObjectUtils.notNull;
  * and cause long freezes. If the selectioner improperly behaves with a specific language
  * construct please improve it.
  */
-public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
+@ApiStatus.Internal
+public final class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
@@ -75,8 +77,7 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
     return segments;
   }
 
-  @NotNull
-  private static PsiElement findValueElement(@NotNull PsiElement host, @NotNull TextRange valueRange) {
+  private static @NotNull PsiElement findValueElement(@NotNull PsiElement host, @NotNull TextRange valueRange) {
     return notNull(
       PsiTreeUtil.findFirstParent(
         host.getContainingFile().findElementAt(valueRange.getStartOffset()), false,
@@ -84,12 +85,11 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
       host);
   }
 
-  @NotNull
-  private static List<TextRange> buildSegments(@NotNull CharSequence editorText,
-                                               final int cursorOffset,
-                                               @NotNull TextRange range,
-                                               @NotNull BitSet charEscapeLocations,
-                                               @NotNull BitSet compositeIndexes) {
+  private static @NotNull List<TextRange> buildSegments(@NotNull CharSequence editorText,
+                                                        final int cursorOffset,
+                                                        @NotNull TextRange range,
+                                                        @NotNull BitSet charEscapeLocations,
+                                                        @NotNull BitSet compositeIndexes) {
     if (range.getLength() == 0) {
       return Collections.emptyList();
     }
@@ -152,8 +152,7 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
     return segments;
   }
 
-  @NotNull
-  private static BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
+  private static @NotNull BitSet createCompositeIndexesSet(@NotNull PsiElement valueElement, int indexesOffset) {
     return StreamEx.of(valueElement.getChildren())
       .filter(child -> !(child instanceof LeafPsiElement))
       .map(PsiElement::getTextRange)
@@ -163,8 +162,7 @@ public class InjectedFileReferenceSelectioner extends AbstractWordSelectioner {
       .toBitSet();
   }
 
-  @NotNull
-  private static TextRange limitToCurrentLineAndStripWhiteSpace(@NotNull CharSequence text, int cursor, @NotNull TextRange range) {
+  private static @NotNull TextRange limitToCurrentLineAndStripWhiteSpace(@NotNull CharSequence text, int cursor, @NotNull TextRange range) {
 
     int subsequenceOffset = range.getStartOffset();
     CharSequence rangeText = new CharSequenceSubSequence(text, subsequenceOffset, range.getEndOffset());

@@ -1,0 +1,31 @@
+{
+  "name": "hcl",
+  "version": "0.5.0",
+  "description": "HashiCorp HCL syntax",
+  "license": "MPL-2.0",
+  "contributes": {
+    "languages": [
+      {
+        "id": "hcl",
+        "aliases": [
+          "HCL"
+        ],
+        "extensions": [
+          ".hcl"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./assets/HashiCorp_Icon_Black_RGB.svg",
+          "dark": "./assets/HashiCorp_Icon_White_RGB.svg"
+        }
+      }
+    ],
+    "grammars": [
+      {
+        "language": "hcl",
+        "scopeName": "source.hcl",
+        "path": "./syntaxes/hcl.tmGrammar.json"
+      }
+    ]
+  }
+}

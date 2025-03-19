@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -12,7 +12,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ObservableConsoleView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
@@ -47,6 +46,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TitlePanel;
@@ -58,7 +58,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.actions.CommandQueueListener;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
@@ -71,6 +70,7 @@ import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -83,6 +83,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -104,7 +105,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private XStandaloneVariablesView mySplitView;
   private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
-  @Nullable private String mySdkHomePath;
+  private @Nullable String mySdkHomePath;
   private PydevConsoleRunner myRunner;
 
   private final Map<String, Map<String, PyDebugValueDescriptor>> myDescriptorsCache = Maps.newConcurrentMap();
@@ -114,6 +115,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private Dimension commandQueueDimension;
   private boolean isShowQueue;
 
+  private @Nullable OnClearCallback myOnClearCallback;
+
   private ActionToolbar myToolbar;
   private boolean myIsToolwindowHorizontal = true;
 
@@ -122,19 +125,39 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    */
   private @Nullable TargetEnvironment myTargetEnvironment;
 
+  /**
+   * Context psi file for Python Console Editor. Needs for static code completion.
+   */
+  private final PsiFile myHistoryPsiFile = new PyExpressionCodeFragmentImpl(getProject(), "dummy.py", "", true);
+
+  public PsiFile getHistoryPsiFile() {
+    return myHistoryPsiFile;
+  }
+
+  private static @NotNull Helper createHelper(@NotNull Project project, String title) {
+    return new Helper(project, Objects.requireNonNull(PsiUtilCore.getVirtualFile(new PyExpressionCodeFragmentImpl(project, title + ".py", "", true))));
+  }
+
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
-    super(project, title, PythonLanguage.getInstance());
+  public PythonConsoleView(final Project project, final String title, final @Nullable Sdk sdk, final boolean testMode) {
+    super(createHelper(project, title));
+    if (PsiUtilCore.getPsiFile(project, getVirtualFile()) instanceof PyExpressionCodeFragmentImpl codeFragment) {
+      codeFragment.setContext(myHistoryPsiFile);
+    }
+
+    getConsoleEditor().setFile(getVirtualFile());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
     PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
-    // Mark editor as console one, to prevent autopopup completion
-    getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    // Mark editor as console one, to prevent autopopup completion if runtime completion is enabled
+    if (PyConsoleOptions.getInstance(getProject()).isRuntimeCodeCompletion()) {
+      getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    }
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     getHistoryViewer().putUserData(COUNTER_LINE_NUMBER, new HashMap<>());
     super.setPrompt(null);
@@ -208,8 +231,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
    * @param addOnce If true, folding will be added once when an appropriate area is found.
    *                Otherwise, folding can be expanded by newly added text.
    */
-  @Nullable
-  private PyConsoleStartFolding createConsoleFolding(boolean addOnce) {
+  private @Nullable PyConsoleStartFolding createConsoleFolding(boolean addOnce) {
     PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this, addOnce);
     myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
     Editor editor = getEditor();
@@ -280,7 +302,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
-  public void executeCode(final @Nullable String code, @Nullable final Editor editor) {
+  public void executeCode(final @Nullable String code, final @Nullable Editor editor) {
     myInitialized.doWhenDone(() -> executeCodeImpl(code));
   }
 
@@ -297,7 +319,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       else {
         ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
           @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
+          public void run(final @NotNull ProgressIndicator indicator) {
             while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
               if (indicator.isCanceled()) {
                 break;
@@ -317,7 +339,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
 
-  public void executeInConsole(@NotNull final String code) {
+  public void executeInConsole(final @NotNull String code) {
     CountDownLatch latch = new CountDownLatch(1);
 
     TransactionGuard.submitTransaction(this, () -> {
@@ -368,7 +390,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   @Override
-  public void print(@NotNull String text, @NotNull final ConsoleViewContentType outputType) {
+  public void print(@NotNull String text, final @NotNull ConsoleViewContentType outputType) {
     if (myTestMode) {
       text = PyTestsSharedKt.processTCMessage(text);
     }
@@ -578,9 +600,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     commandQueueDimension = myCommandQueue.getSize();
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterComponent() {
+  protected @NotNull JComponent createCenterComponent() {
     //workaround for extra lines appearing in the console
     JComponent centerComponent = super.createCenterComponent();
     getHistoryViewer().getSettings().setAdditionalLinesCount(0);
@@ -630,8 +651,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  @Nullable
-  public String getSdkHomePath() {
+  public @Nullable String getSdkHomePath() {
     return mySdkHomePath;
   }
 
@@ -671,19 +691,33 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return myRunner;
   }
 
-  @Nullable
   @TestOnly
-  public XDebuggerTreeNode getDebuggerTreeRootNode() {
+  public @Nullable XDebuggerTreeNode getDebuggerTreeRootNode() {
     return mySplitView.getTree().getRoot();
+  }
+
+  public void setOnClearCallback(@Nullable OnClearCallback onClearCallback) {
+    myOnClearCallback = onClearCallback;
+  }
+
+  @Override
+  public void clear() {
+    super.clear();
+    OnClearCallback onClearCallback = myOnClearCallback;
+    if (onClearCallback != null) {
+      onClearCallback.onClear();
+    }
   }
 
   @Override
   public void dispose() {
     super.dispose();
 
-    ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
-    if (communication != null) {
-      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+    if (!getProject().isDisposed()) {
+      ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
+      if (communication != null) {
+        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+      }
     }
 
     var editor = myCommandQueuePanel.getQueueEditor();
@@ -702,8 +736,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   // needs for correctly display the queue's name after renaming
-  @Nullable
-  private static String getConsoleDisplayName(@NotNull Project project) {
+  private static @Nullable String getConsoleDisplayName(@NotNull Project project) {
     ToolWindow window = PythonConsoleToolWindow.getInstance(project).getToolWindow();
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
@@ -717,8 +750,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  @Nullable
-  public Integer getExecutionCounterLineNumber(int counter) {
+  public @Nullable Integer getExecutionCounterLineNumber(int counter) {
     Map<Integer, Integer> counterMap = getHistoryViewer().getUserData(COUNTER_LINE_NUMBER);
     if (counterMap != null) {
       return counterMap.getOrDefault(counter, null);
@@ -726,8 +758,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return null;
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return super.getActionUpdateThread();
+  public interface OnClearCallback {
+    void onClear();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.batch;
 
 import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix;
@@ -15,6 +15,7 @@ import com.intellij.lang.properties.psi.ResourceBundleManager;
 import com.intellij.lang.properties.references.I18nUtil;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
@@ -22,6 +23,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -59,8 +61,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -69,7 +71,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
   private static final @NonNls String LAST_USED_PROPERTIES_FILE = "LAST_USED_PROPERTIES_FILE";
   private static final @NonNls String LAST_USED_CONTEXT = "I18N_FIX_LAST_USED_CONTEXT";
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final List<I18nizedPropertyData<D>> myKeyValuePairs;
   private final @NotNull Function<? super D, ? extends List<UsageInfo>> myUsagePreviewProvider;
   private final Set<Module> myContextModules;
@@ -217,7 +219,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     renderer.putClientProperty("html.disable", Boolean.TRUE);
     myTable.setDefaultRenderer(String.class, renderer);
     myTable.getSelectionModel().addListSelectionListener(e -> {
-      updateUsagePreview(myTable);
+      updateUsagePreview(myProject, myTable);
     });
 
     AnActionButtonRunnable removeAction = new AnActionButtonRunnable() {
@@ -225,13 +227,13 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
       public void run(AnActionButton button) {
         TableUtil.removeSelectedItems(myTable);
         myTable.repaint();
-        updateUsagePreview(myTable);
+        updateUsagePreview(myProject, myTable);
       }
     };
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTable).setRemoveAction(removeAction);
     if (myMarkAsNonNlsButtonIcon != null) {
-      AnActionButton markAsNonNls = new AnActionButton(JavaI18nBundle.message("action.text.mark.as.nonnls"), myMarkAsNonNlsButtonIcon) {
+      AnAction markAsNonNls = new DumbAwareAction(JavaI18nBundle.message("action.text.mark.as.nonnls"), null, myMarkAsNonNlsButtonIcon) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TableUtil.stopEditing(myTable);
@@ -244,7 +246,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
         }
 
         @Override
-        public void updateButton(@NotNull AnActionEvent e) {
+        public void update(@NotNull AnActionEvent e) {
           List<Pair<Integer, I18nizedPropertyData<D>>> selection = getSelectedDataWithIndices();
           e.getPresentation().setEnabled(!selection.isEmpty());
           e.getPresentation().setText(shouldMarkAsNonNls(selection)
@@ -262,7 +264,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
           return !ContainerUtil.and(selection, data -> data.second.markAsNonNls());
         }
       };
-      markAsNonNls.setShortcut(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
+      markAsNonNls.setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_DOWN_MASK)));
       decorator.addExtraAction(markAsNonNls);
     }
     splitter.setFirstComponent(decorator.createPanel());
@@ -270,8 +272,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     return splitter;
   }
 
-  @NotNull
-  private List<Pair<Integer, I18nizedPropertyData<D>>> getSelectedDataWithIndices() {
+  private @NotNull List<Pair<Integer, I18nizedPropertyData<D>>> getSelectedDataWithIndices() {
     int[] rows = myTable.getSelectedRows();
     List<Pair<Integer, I18nizedPropertyData<D>>> selection = new ArrayList<>(rows.length);
     for (int row : rows) {
@@ -282,13 +283,13 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     return selection;
   }
 
-  private void updateUsagePreview(JBTable table) {
+  private void updateUsagePreview(@NotNull Project project, JBTable table) {
     int index = table.getSelectionModel().getLeadSelectionIndex();
     if (index != -1 && index < myKeyValuePairs.size()) {
-      myUsagePreviewPanel.updateLayout(myUsagePreviewProvider.apply(myKeyValuePairs.get(index).contextData()));
+      myUsagePreviewPanel.updateLayout(project, myUsagePreviewProvider.apply(myKeyValuePairs.get(index).contextData()));
     }
     else {
-      myUsagePreviewPanel.updateLayout(null);
+      myUsagePreviewPanel.updateLayout(project, null);
     }
   }
 
@@ -303,8 +304,7 @@ public final class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
     super.doOKAction();
   }
 
-  @Nullable
-  private String getContextString() {
+  private @Nullable String getContextString() {
     return myContextModules.stream().map(Module::getName).min(Comparator.naturalOrder()).orElse(null);
   }
 

@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>test</id>
   <vendor
-      url="<error descr="Do not use template text 'http://www.yourcompany.com'">http://www.yourcompany.com</error>"
+      url="<error descr="Do not use template text 'https://www.yourcompany.com'">https://www.yourcompany.com</error>"
       email="<error descr="Do not use template text 'support@yourcompany.com'">support@yourcompany.com</error>"
   ><error descr="Do not use template text 'YourCompany'">YourCompany</error></vendor>
   <version>1.0</version>

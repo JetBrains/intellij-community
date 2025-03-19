@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.testFramework.util
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.findOrCreateFile
-import com.intellij.openapi.util.io.toNioPath
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
@@ -13,7 +12,7 @@ fun dumpThreads(name: String, stripCoroutineDump: Boolean = true): Path {
   val threadInfos = ThreadDumper.getThreadInfos()
   val threadDumpInfo = ThreadDumper.getThreadDumpInfo(threadInfos, stripCoroutineDump)
   val currentTime = System.currentTimeMillis()
-  return PathManager.getLogPath().toNioPath()
+  return Path.of(PathManager.getLogPath())
     .findOrCreateFile("$name-$currentTime.thread-dump")
     .apply { writeText(threadDumpInfo.rawDump) }
 }

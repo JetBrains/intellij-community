@@ -10,7 +10,8 @@ import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
@@ -20,8 +21,9 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.GraphicsUtil
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
@@ -29,11 +31,12 @@ import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.selectColumn
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
+import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.useCopy
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -78,9 +81,11 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     if (isInvalid) {
       return
     }
-    GraphicsUtil.setupAntialiasing(graphics)
-    GraphicsUtil.setupRoundedBorderAntialiasing(graphics)
-    paintBars(graphics)
+    graphics.useCopy { local ->
+      GraphicsUtil.setupAntialiasing(local)
+      GraphicsUtil.setupRoundedBorderAntialiasing(local)
+      paintBars(local)
+    }
   }
 
   override fun toString() = "HorizontalBarPresentation"
@@ -138,7 +143,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   private fun calculatePositions(header: MarkdownTableRow, document: Document, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
     val separators = header.firstChild.siblings(forward = true, withSelf = true)
-      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
+      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
       .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
@@ -179,7 +184,9 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   }
 
   private fun showToolbar(columnIndex: Int) {
-    val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(table, columnIndex))
+    val targetComponent = ToolbarUtils.createTargetComponent(editor) { sink ->
+      uiDataSnapshot(sink, table, columnIndex)
+    }
     ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = columnActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
@@ -282,15 +289,10 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
       return editor.contentComponent.getFontMetrics(font)
     }
 
-    private fun createDataProvider(table: MarkdownTable, columnIndex: Int): DataProvider {
-      val tableReference = WeakReference(table)
-      return DataProvider {
-        when {
-          TableActionKeys.COLUMN_INDEX.`is`(it) -> columnIndex
-          TableActionKeys.ELEMENT.`is`(it) -> tableReference
-          else -> null
-        }
-      }
+    private fun uiDataSnapshot(sink: DataSink, table: MarkdownTable, columnIndex: Int) {
+      val tableReference = WeakReference<PsiElement>(table)
+      sink.lazy(TableActionKeys.COLUMN_INDEX) { columnIndex }
+      sink.lazy(TableActionKeys.ELEMENT) { tableReference }
     }
   }
 }

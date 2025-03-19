@@ -1,10 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +17,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.LinkedList;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
@@ -254,8 +259,7 @@ public final class PaintUtil {
    * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
-  @Nullable
-  public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
+  public static @Nullable AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
       if (isFractionalScale(tx) && (tx.getType() & AffineTransform.TYPE_MASK_ROTATION) == 0) {
@@ -295,8 +299,7 @@ public final class PaintUtil {
    * @param whRM the rounding mode to apply to the clip's width/height
    * @return the original graphics clip when aligned, otherwise null
    */
-  @Nullable
-  public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
+  public static @Nullable Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
     AffineTransform transform = g.getTransform();
     double scaleX = transform.getScaleX();
     double scaleY = transform.getScaleY();
@@ -356,8 +359,7 @@ public final class PaintUtil {
    * }
    * </pre>
    */
-  @NotNull
-  public static Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
+  public static @NotNull Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
     if (!comp.isShowing() || !isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform())) return new Point2D.Double();
     int x = 0;
     int y = 0;
@@ -375,8 +377,7 @@ public final class PaintUtil {
   /**
    * Returns negated Point2D instance.
    */
-  @NotNull
-  public static Point2D negate(@NotNull Point2D pt) {
+  public static @NotNull Point2D negate(@NotNull Point2D pt) {
     return new Point2D.Double(-pt.getX(), -pt.getY());
   }
 
@@ -410,8 +411,57 @@ public final class PaintUtil {
     }
   }
 
-  @NotNull
-  public static Point2D insets2offset(@Nullable Insets in) {
+  public static @NotNull Point2D insets2offset(@Nullable Insets in) {
     return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
+  }
+
+  /**
+   * Calculates the width of the specified text string when drawn using the provided Graphics context and FontMetrics.
+   * This method provides a more accurate measurement compared to the metrics.stringWidth(...) method, as it takes into account the Graphics context.
+   *
+   * @param text    The text string whose width needs to be calculated.
+   * @param g       The Graphics context used for rendering the text.
+   * @param metrics The FontMetrics object associated with the font used for rendering the text.
+   * @return The width of the text string in pixels when drawn using the specified Graphics context and FontMetrics.
+   */
+  public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
+    return metrics.getStringBounds(text, g).getBounds().width;
+  }
+  
+  @ApiStatus.Internal
+  @Contract("!null, _, _ -> !null")
+  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+    if (text == null) return null;
+
+    if (text.startsWith("(") && text.endsWith(")")) {
+      text = text.substring(1, text.length() - 1);
+    }
+
+    if (maxWidth < 0) return text;
+
+    boolean in = text.startsWith("in ");
+    if (in) text = text.substring(3);
+    String left = in ? "in " : "";
+    String adjustedText = left + text;
+
+    int fullWidth = fm.stringWidth(adjustedText);
+    if (fullWidth < maxWidth) return adjustedText;
+
+    String separator = text.contains("/") ? "/" :
+                       SystemInfo.isWindows && text.contains("\\") ? "\\" :
+                       text.contains(".") ? "." :
+                       text.contains("-") ? "-" : " ";
+    LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
+    int index;
+    while (parts.size() > 1) {
+      index = parts.size() / 2 - 1;
+      parts.remove(index);
+      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
+        parts.add(index, "...");
+        return left + StringUtil.join(parts, separator);
+      }
+    }
+    int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
+    return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 }

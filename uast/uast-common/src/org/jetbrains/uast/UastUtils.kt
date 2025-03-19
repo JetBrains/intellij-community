@@ -80,7 +80,7 @@ fun <T : UElement> UElement.getParentOfType(
 @JvmOverloads
 fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? {
   if (this == null) return null
-  var u: UElement? = this;
+  var u: UElement? = this
   for (i in 1..searchLimit) {
     if (u == null) break
     if (u is UCallExpression) return u
@@ -217,6 +217,8 @@ fun getUParentForIdentifier(identifier: PsiElement): UElement? {
 }
 
 /**
+ * @see UCallExpression.getArgumentForParameter
+ *
  * @param arg expression in call arguments list of [this]
  * @return parameter that corresponds to the [arg] in declaration to which [this] resolves
  */
@@ -226,7 +228,7 @@ fun UCallExpression.getParameterForArgument(arg: UExpression): PsiParameter? {
 
   return parameters.withIndex().find { (i, p) ->
     val argumentForParameter = getArgumentForParameter(i) ?: return@find false
-    if (wrapULiteral(argumentForParameter) == wrapULiteral(arg)) return@find true
+    if (argumentForParameter == arg) return@find true
     if (p.isVarArgs && argumentForParameter is UExpressionList) return@find argumentForParameter.expressions.contains(arg)
     return@find false
   }?.value

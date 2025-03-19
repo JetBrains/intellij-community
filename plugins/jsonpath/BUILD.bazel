@@ -1,0 +1,67 @@
+### auto-generated section `build intellij.jsonpath` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "jsonpath_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jsonpath",
+  module_name = "intellij.jsonpath",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jsonpath",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//json",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+  ],
+  runtime_deps = [":jsonpath_resources"]
+)
+
+jvm_library(
+  name = "jsonpath_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":jsonpath"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jsonpath",
+    "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//json",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "@lib//:assert_j",
+    "//platform/lang-impl",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "@lib//:guava",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/IntelliLang:langInjection",
+    "//platform/testFramework/extensions:testExtensions",
+  ],
+  runtime_deps = [":jsonpath_resources"]
+)
+
+jvm_test(
+  name = "jsonpath_test",
+  runtime_deps = [":jsonpath_test_lib"]
+)
+### auto-generated section `build intellij.jsonpath` end

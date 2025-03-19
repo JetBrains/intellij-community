@@ -6,11 +6,18 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
+/**
+ * Provides information about which part of the project configuration a file belongs. It's supposed to be used only inside a stripped 
+ * version of IntelliJ platform where {@link com.intellij.openapi.roots.ProjectFileIndex ProjectFileIndex} isn't available. 
+ * Regular code running inside full IDE should use {@link com.intellij.openapi.roots.ProjectFileIndex ProjectFileIndex} directly.
+ */
 public abstract class FileIndexFacade {
   protected final Project myProject;
 
@@ -25,11 +32,17 @@ public abstract class FileIndexFacade {
   public abstract boolean isInContent(@NotNull VirtualFile file);
   public abstract boolean isInSource(@NotNull VirtualFile file);
   public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibrary(@NotNull VirtualFile file);
   public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
   public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
   public abstract boolean isExcludedFile(@NotNull VirtualFile file);
   public abstract boolean isUnderIgnored(@NotNull VirtualFile file);
+  
+  @ApiStatus.Internal
+  public boolean isUnderSourceRootOfType(@NotNull VirtualFile file, @NotNull Set<?> rootTypes) {
+    return isInSource(file);
+  }
 
   public abstract @Nullable Module getModuleForFile(@NotNull VirtualFile file);
 
@@ -52,8 +65,10 @@ public abstract class FileIndexFacade {
   public abstract @NotNull Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 
   /**
-   * @return true if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}
+   * Returns {@code true} if the {@code file} is {@link #isInContent} except when it's in {@link #isInLibraryClasses} and not in {@link #isInLibrarySource}.
+   * This method isn't supposed to be used from plugins, use {@link #isInContent(VirtualFile)} instead.
    */
+  @ApiStatus.Internal
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     if (isInLibraryClasses(file) && !isInSourceContent(file)) return false;
 

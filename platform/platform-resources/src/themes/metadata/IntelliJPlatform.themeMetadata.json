@@ -105,12 +105,139 @@
       "description": "Used in tool buttons bars and the navigation bar"
     },
     {
+      "key": "Button.minimumSize",
+      "description": "Minimum size of buttons"
+    },
+    {
+      "key": "Button.loadingForeground",
+      "description": "The color of button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
+      "key": "Button.default.loadingForeground",
+      "description": "The color of default button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
       "key": "Button.Split.default.separatorColor",
       "description": "Separator color for default split button"
     },
     {
       "key": "Button.Split.default.iconColor",
       "description": "Chevron arrow color for default split button"
+    },
+    {
+      "key": "CheckBox.iconSize",
+      "description": "Size of CheckBox icon"
+    },
+    {
+      "key": "ComboBox.minimumSize",
+      "description": "Minimum size of ComboBox"
+    },
+    {
+      "key": "Code.Inline.backgroundColor",
+      "description": "Inline code elements background",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.backgroundOpacity",
+      "description": "Inline code elements background opacity in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.foregroundColor",
+      "description": "Inline code elements foreground",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderColor",
+      "description": "Inline code elements border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderWidth",
+      "description": "Inline code elements border width in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Inline.borderRadius",
+      "description": "Inline code elements border radius in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.backgroundColor",
+      "description": "Block code elements background",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.backgroundOpacity",
+      "description": "Block code elements background opacity in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.EditorPane.backgroundColor",
+      "description": "Block code elements background in editor inline QuickDoc",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.EditorPane.backgroundOpacity",
+      "description": "Block code elements background opacity in editor inline QuickDoc in percents",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.EditorPane.borderColor",
+      "description": "Block code elements background in editor inline QuickDoc",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.foregroundColor",
+      "description": "Block code elements foreground",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderColor",
+      "description": "Block code elements border color",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderWidth",
+      "description": "Block code elements border width in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "Code.Block.borderRadius",
+      "description": "Block code elements border radius in pixels",
+      "since": "2024.1"
+    },
+    {
+      "key": "CombinedDiff.mainToolbarInsets",
+      "description": "Main toolbar insets of the Combined (All in One) Diff",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.fileToolbarInsets",
+      "description": "File toolbar insets of the Combined (All in One) Diff",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.gapBetweenBlocks",
+      "description": "Vertical gap between the Combined (All in One) Diff blocks",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.leftRightBlockInset",
+      "description": "Horizontal insets around the Combined (All in One) Diff blocks",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.BlockBorder.selectedActiveColor",
+      "description": "Active border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
+    },
+    {
+      "key": "CombinedDiff.BlockBorder.selectedInactiveColor",
+      "description": "Inactive border color around current (selected) Combined (All in One) Diff block",
+      "since": "2023.3"
     },
     {
       "key": "ComboPopup.border",
@@ -143,8 +270,13 @@
     },
     {
       "key": "CompletionPopup.Body.insets",
-      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then bottom inset is not applied",
+      "description": "Insets around body  (experimental UI only). If bottom panel with advertiser is visible then BodyWithAdvertiser.insets is used instead",
       "since": "2022.2"
+    },
+    {
+      "key": "CompletionPopup.BodyWithAdvertiser.insets",
+      "description": "Insets around body  (experimental UI only). Used only when the advertiser (bottom panel) is visible",
+      "since": "2024.2"
     },
     {
       "key": "CompletionPopup.infoForeground",
@@ -202,6 +334,81 @@
       "since": "2022.2"
     },
     {
+      "key": "DisclosureButton.arc",
+      "description": "Arc of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.defaultBackground",
+      "description": "Background of disclosure button",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.hoverOverlay",
+      "description": "Hover overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.pressedOverlay",
+      "description": "Pressed overlay color, which is painted over background for hover state",
+      "since": "2024.2"
+    },
+    {
+      "key": "DisclosureButton.textRightIconGap",
+      "description": "Gap between text and right icon",
+      "since": "2024.2"
+    },
+    {
+      "key": "FindPopup.scopesPanelInsets",
+      "description": "Inner insets of the scope selection panel in the Find in Files / Replace in Files popups",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "FindPopup.bottomPanelInsets",
+      "description": "Inner insets of the bottom panel in the Find in Files / Replace in Files popups",
+      "since": "2023.1.1"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.foreground",
+      "description": "Presentation Assistant popup bright foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.PopupBackground",
+      "description": "Presentation Assistant popup bright background (experimental UI only). PopupBackground name is used to not apply the '*.background' pattern default color",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.border",
+      "description": "Presentation Assistant popup bright border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.keymapLabel",
+      "description": "Presentation Assistant keymap label bright text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.foreground",
+      "description": "Presentation Assistant popup pale foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.PopupBackground",
+      "description": "Presentation Assistant popup pale background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.border",
+      "description": "Presentation Assistant popup pale border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.keymapLabel",
+      "description": "Presentation Assistant keymap label pale text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
       "key": "ContextHelp.fontSizeOffset",
       "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
       "since": "2022.1",
@@ -219,9 +426,19 @@
       "description": "A breakpoint popup that opens on right-click"
     },
     {
+      "key": "DebuggerTabs.fontSizeOffset",
+      "description": "Debugger tool window tab font size offset",
+      "since": "2024.1"
+    },
+    {
       "key": "DebuggerTabs.selectedBackground",
       "description": "Background of the selected tab in the Debugger tool window. The foreground is EditorTabs.underlinedTabForeground.",
       "deprecated": true
+    },
+    {
+      "key": "DebuggerTabs.tabHeight",
+      "description": "Debugger tab height",
+      "since": "2023.1"
     },
     {
       "key": "DebuggerTabs.underlineHeight",
@@ -331,6 +548,16 @@
       "key": "Editor.shortcutForeground"
     },
     {
+      "key": "Editor.Notification.borderInsets",
+      "description": "Editor notification banner insets with a status icon",
+      "since": "2023.2"
+    },
+    {
+      "key": "Editor.Notification.WithoutStatus.borderInsets",
+      "description": "Editor notification banner insets without a status icon",
+      "since": "2024.1"
+    },
+    {
       "key": "Editor.SearchField.borderInsets",
       "description": "Additional insets around editor search/replace fields in Experimental UI"
     },
@@ -339,8 +566,43 @@
       "description": "Editor inplace search/replace fields background color"
     },
     {
+      "key": "Editor.ReplaceToolbar.borderInsets",
+      "description": "Insets around editor replace panel",
+      "since": "2023.3.1"
+    },
+    {
+      "key": "Editor.SearchReplaceModePanel.borderInsets",
+      "description": "Insets around the button that toggles search/replace mode in the editor",
+      "since": "2023.3.1"
+    },
+    {
+      "key": "Editor.SearchToolbar.borderInsets",
+      "description": "Insets around editor search panel",
+      "since": "2023.3.1"
+    },
+    {
       "key": "Editor.Toolbar.borderColor",
       "description": "Editor header component border"
+    },
+    {
+      "key": "Editor.Gutter.emptyAnnotationAreaWidth",
+      "description": "Editor gutter annotation area width when the annotations are hidden",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterVcsMarkersWidth",
+      "description": "Editor gutter gap width after the VCS annotation markers",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterLineNumbersWidth",
+      "description": "Editor gutter gap width after the line numbers",
+      "since": "2024.1"
+    },
+    {
+      "key": "Editor.Gutter.gapAfterIconsWidth",
+      "description": "Editor gutter gap width after the icons",
+      "since": "2024.1"
     },
     {
       "key": "EditorTabs.background",
@@ -353,6 +615,11 @@
       "since": "2019.2"
     },
     {
+      "key": "EditorTabs.fontSizeOffset",
+      "description": "The editor tabs font size offset",
+      "since": "2024.1"
+    },
+    {
       "key": "EditorTabs.hoverColor",
       "deprecated": true
     },
@@ -360,6 +627,21 @@
       "key": "EditorTabs.hoverBackground",
       "since": "2019.2",
       "description": "Transparent overlay on editor tab hover. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on editor tab hover when editor is not focused. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab. If value isn't specified the #00000000 will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab when editor is not focused. If value isn't specified the #00000000 will be used"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
@@ -371,7 +653,6 @@
       "since": "2019.2",
       "description": "Selected tab underline color when the tab is not in focus. If value isn't specified the value of DefaultTabs.inactiveUnderlineColor will be used"
     },
-
     {
       "key": "EditorTabs.selectedBackground",
       "description": "Background for all tabs in 2019.1",
@@ -396,6 +677,21 @@
       "key": "EditorTabs.underlinedTabBackground",
       "description": "Background for the selected tab. If value isn't specified the value of DefaultTabs.underlinedTabBackground will be used",
       "since": "2019.2"
+    },
+    {
+      "key": "EditorTabs.tabContentActionsLeftInsets",
+      "description": "Editor tab label insets when the tab actions buttons are on the left",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.tabContentActionsRightInsets",
+      "description": "Editor tab label insets when the tab actions buttons are on the right",
+      "since": "2024.1"
+    },
+    {
+      "key": "EditorTabs.tabContentActionsNoneInsets",
+      "description": "Editor tab label insets when there are no action buttons",
+      "since": "2024.1"
     },
     {
       "key": "EditorTabs.tabInsets",
@@ -541,6 +837,10 @@
       "description": "GotIt tooltip border color if different from ToolTip.borderColor"
     },
     {
+      "key": "GotItTooltip.borderSimplifiedColor",
+      "description": "GotIt tooltip border color if enabled power save mode or we are in RDP session"
+    },
+    {
       "key": "GotItTooltip.linkForeground",
       "description": "GotIt tooltip link foreground color if different from Link.activeForeground"
     },
@@ -563,6 +863,16 @@
       "key": "GotItTooltip.stepForeground",
       "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
       "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageBorderColor",
+      "description": "GotIt tooltip image rounded border color if different from GotItTooltip.background",
+      "since": "2023.2.1"
+    },
+    {
+      "key": "GotItTooltip.animationBackground",
+      "description": "GotIt tooltip animation background color if different from GotItTooltip.background",
+      "since": "2023.2.1"
     },
     {
       "key": "GotItTooltip.Header.foreground",
@@ -757,12 +1067,21 @@
       "description": "Red text color for inline error messages. See the \"Validation Dialog Test\" action in internal mode (press Enter for validation in the dialog)"
     },
     {
+      "key": "Label.warningForeground",
+      "description": "Text color for inline warning messages"
+    },
+    {
       "key": "Label.infoForeground",
       "description": "Gray info text appearing under UI controls. See the \"Show Standard Panels\" action in internal mode"
     },
     {
       "key": "Link.secondaryForeground",
       "description": "Light-colored links. Used in the Variables tab of the Debugger tool window. Can be seen when a tree line is long, does not fit into the tab's width, and its popup on hover goes beyond the right monitor side."
+    },
+    {
+      "key": "MainMenu.transparentSelectionBackground",
+      "description": "Selection background in colorful header mode",
+      "since": "2023.2"
     },
     {
       "key": "MemoryIndicator.usedBackground",
@@ -797,6 +1116,16 @@
     {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
+    },
+    {
+      "key": "NavBar.Breadcrumbs.itemInsets",
+      "description": "Navigation bar insets when displayed in the top location",
+      "since": "2023.1"
+    },
+    {
+      "key": "NewUiOnboarding.Dialog.background",
+      "description": "Background of the dialog with proposal to start the onboarding to the New UI",
+      "since": "2023.2.1"
     },
     {
       "key": "Notification.background",
@@ -904,7 +1233,7 @@
       "key": "NotificationsToolwindow.Notification.hoverBackground"
     },
     {
-      "key" : "OnePixelDivider.background",
+      "key": "OnePixelDivider.background",
       "description": "One pixel divider color"
     },
     {
@@ -1029,6 +1358,11 @@
       "key": "ProgressIcon.color",
       "description": "Color of the spinning icon",
       "since": "2022.1"
+    },
+    {
+      "key": "ComplexPopup.innerBorderInsets",
+      "description": "Complex popup (like Show Usages) header inner insets",
+      "since": "2023.1.1"
     },
     {
       "key": "ComplexPopup.Header.background",
@@ -1188,6 +1522,10 @@
       "key": "ProgressBar.warningEndColor"
     },
     {
+      "key": "RadioButton.iconSize",
+      "description": "Size of RadioButton icon"
+    },
+    {
       "key": "SearchEverywhere.Advertiser.background",
       "description": "The hint text area at the bottom of a popup"
     },
@@ -1266,6 +1604,52 @@
       "description": "Color of the border around highlighted items when searching in the Settings dialog"
     },
     {
+      "key": "Settings.Spotlight.backgroundColor",
+      "description": "Color of the overlay area around highlighted items when searching in the Settings dialog",
+      "since": "2025.1"
+    },
+    {
+      "key": "Shortcut.background",
+      "description": "Shortcut elements background",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.backgroundOpacity",
+      "description": "Shortcut elements background opacity in percents",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.foreground",
+      "description": "Shortcut elements foreground"
+    },
+    {
+      "key": "Shortcut.borderColor",
+      "description": "Shortcut elements border color",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderWidth",
+      "description": "Shortcut elements border width in pixels",
+      "since": "2024.2"
+    },
+    {
+      "key": "Shortcut.borderRadius",
+      "description": "Shortcut elements border radius in pixels",
+      "since": "2024.2"
+    },
+    {
+      "key": "Abbreviation.background",
+      "description": "Abbreviation elements background"
+    },
+    {
+      "key": "Abbreviation.foreground",
+      "description": "Abbreviation elements foreground"
+    },
+    {
+      "key": "Abbreviation.borderColor",
+      "description": "Abbreviation elements border color"
+    },
+    {
       "key": "SidePanel.background",
       "description": "Left-side tree background in the Settings and Project Structure dialogs"
     },
@@ -1283,7 +1667,6 @@
       "key": "Slider.trackColor",
       "description": "Slider track color",
       "since": "2019.3"
-
     },
     {
       "key": "Slider.tickColor",
@@ -1303,6 +1686,40 @@
     },
     {
       "key": "SpeedSearch.foreground"
+    },
+    {
+      "key": "Spinner.minimumSize",
+      "description": "Minimum size of spinners"
+    },
+    {
+      "key": "StatusBar.fontSizeOffset",
+      "description": "Status bar font size offset",
+      "since": "2024.1"
+    },
+    {
+      "key": "StatusBar.Breadcrumbs.navBarInsets",
+      "description": "Navigation bar insets when displayed in the status bar",
+      "since": "2023.1"
+    },
+    {
+      "key": "StatusBar.Widget.widgetInsets",
+      "description": "Insets around status bar widgets",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.size",
+      "description": "Tool window stripe button size",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.iconSize",
+      "description": "Tool window stripe button icon size",
+      "since": "2023.1"
+    },
+    {
+      "key": "StripeToolbar.Button.iconPadding",
+      "description": "Tool window stripe button icon padding",
+      "since": "2023.1"
     },
     {
       "key": "List.hoverBackground",
@@ -1350,9 +1767,18 @@
       "description": "Foreground for tags in list items"
     },
     {
+      "key": "TabbedPane.tabHeight",
+      "since": "2023.1.1",
+      "description": "TabbedPane tab height"
+    },
+    {
       "key": "TabbedPane.tabSelectionArc",
       "since": "2022.2",
       "description": "Selection border corners radius of TabbedPane underline"
+    },
+    {
+      "key": "TextField.minimumSize",
+      "description": "Minimum size of text fields"
     },
     {
       "key": "Tree.hoverBackground",
@@ -1363,6 +1789,11 @@
       "key": "Tree.hoverInactiveBackground",
       "since": "2020.3",
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
+    },
+    {
+      "key": "Tree.forceFocusedSelectionForeground",
+      "since": "2023.2",
+      "description": "Does it need to use Tree.selectionForeground instead of custom element foreground"
     },
     {
       "key": "Tree.Selection.arc",
@@ -1412,6 +1843,11 @@
       "key": "TitlePane.Button.hoverBackground",
       "description": "Borderless mode. Window buttons (close, minimize, maximize, restore) hover color",
       "since": "2019.3"
+    },
+    {
+      "key": "TitlePane.Button.preferredSize",
+      "description": "Borderless mode. Window buttons (close, minimize, maximize, restore) size",
+      "since": "2023.1"
     },
     {
       "key": "TitlePane.inactiveBackground",
@@ -1532,6 +1968,16 @@
       "key": "ToolWindow.Header.borderColor"
     },
     {
+      "key": "ToolWindow.Header.fontSizeOffset",
+      "description": "Tool window header font size offset",
+      "since": "2024.1"
+    },
+    {
+      "key": "ToolWindow.Header.height",
+      "description": "Tool window header height",
+      "since": "2023.1"
+    },
+    {
       "key": "ToolWindow.Header.inactiveBackground",
       "description": "Inactive tool window header"
     },
@@ -1592,6 +2038,126 @@
       "key": "Tooltip.separatorColor",
       "description": "Used for horizontal separators in editor tooltips (error/warning/documentation)",
       "since": "2019.3"
+    },
+    {
+      "key": "TrialWidget.Default.foreground",
+      "description": "Foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.background",
+      "description": "Background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.borderColor",
+      "description": "Border color of trial widget in default state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverForeground",
+      "description": "Hover foreground of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBackground",
+      "description": "Hover background of trial widget in default state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Default.hoverBorderColor",
+      "description": "Hover border color of trial widget in default state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.foreground",
+      "description": "Foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.background",
+      "description": "Background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.borderColor",
+      "description": "Border color of trial widget in active state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverForeground",
+      "description": "Hover foreground of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBackground",
+      "description": "Hover background of trial widget in active state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Active.hoverBorderColor",
+      "description": "Hover border color of trial widget in active state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.foreground",
+      "description": "Foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.background",
+      "description": "Background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.borderColor",
+      "description": "Border color of trial widget in alert state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverForeground",
+      "description": "Hover foreground of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBackground",
+      "description": "Hover background of trial widget in alert state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Alert.hoverBorderColor",
+      "description": "Hover border color of trial widget in alert state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.foreground",
+      "description": "Foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.background",
+      "description": "Background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.borderColor",
+      "description": "Border color of trial widget in expiring state. Use transparent color if no border needed",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverForeground",
+      "description": "Hover foreground of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBackground",
+      "description": "Hover background of trial widget in expiring state",
+      "since": "2025.1"
+    },
+    {
+      "key": "TrialWidget.Expiring.hoverBorderColor",
+      "description": "Hover border color of trial widget in expiring state. Use transparent color if no border needed",
+      "since": "2025.1"
     },
     {
       "key": "UiDesigner.Panel.background",
@@ -1729,6 +2295,21 @@
       "since": "2023.1"
     },
     {
+      "key": "VersionControl.Log.Commit.verticalPadding",
+      "description": "Vertical padding that is added to the calculated height of a commit log row",
+      "since": "2023.1"
+    },
+    {
+      "key": "VersionControl.Log.Graph.saturation",
+      "description": "Saturation of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
+      "key": "VersionControl.Log.Graph.brightness",
+      "description": "Brightness of the graph in the Version Control | Log tab (a floating point number between 0 and 1)",
+      "since": "2024.2"
+    },
+    {
       "key": "VersionControl.RefLabel.backgroundBase",
       "description": "Reference label background base color",
       "since": "2019.1"
@@ -1757,6 +2338,11 @@
       "key": "VersionControl.MarkerPopup.Toolbar.background",
       "description": "Color of toolbar background in the Vcs Marker Popup",
       "since": "2022.3"
+    },
+    {
+      "key": "VersionControl.Merge.Status.NoConflicts.foreground",
+      "description": "Color for the status label when all conflicts are resolved",
+      "since": "2024.2"
     },
     {
       "key": "WelcomeScreen.background"
@@ -1818,8 +2404,16 @@
       "description": "Border color of selected action"
     },
     {
+      "key": "WelcomeScreen.LearnTab.CourseCard.hover",
+      "description": ""
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "Window.undecorated.border",
+      "description": "Used as window border in case the window has no border, decoration and shadow. Used on Linux in non-fullscreen mode only. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
       "key": "RunToolbar.Run.activeBackground",
@@ -1943,9 +2537,34 @@
       "since": "2022.3"
     },
     {
+      "key": "MainToolbar.fontSizeOffset",
+      "description": "Main toolbar widgets font size offset",
+      "since": "2024.1"
+    },
+    {
+      "key": "MainToolbar.Button.size",
+      "description": "Size of buttons on the Main Toolbar",
+      "since": "2023.1"
+    },
+    {
+      "key": "MainToolbar.Button.iconSize",
+      "description": "Size of button icons on the Main Toolbar",
+      "since": "2023.1"
+    },
+    {
       "key": "MainToolbar.Dropdown.maxWidth",
       "description": "Max width for Combo Widgets",
       "since": "2023.1"
+    },
+    {
+      "key": "MainToolbar.Icon.insets",
+      "description": "Insets around buttons on the Main Toolbar",
+      "since": "2023.2"
+    },
+    {
+      "key": "RunWidget.configurationSelectorFontSizeOffset",
+      "description": "Run configuration font size offset in the Main Toolbar",
+      "since": "2024.1"
     },
     {
       "key": "RunWidget.foreground",
@@ -1956,18 +2575,6 @@
       "key": "RunWidget.iconColor",
       "description": "Color for non-debug/stop icons like More Actions or spinning icon",
       "since": "2023.2"
-    },
-    {
-      "key": "RunWidget.disabledForeground",
-      "description": "Foreground for run widget components and stroke icons in disable state in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
-    },
-    {
-      "key": "RunWidget.background",
-      "description": "Background for the contrast run widget in non-running state",
-      "since": "2022.3",
-      "deprecated": true
     },
     {
       "key": "RunWidget.runningBackground",
@@ -1981,19 +2588,13 @@
     },
     {
       "key": "RunWidget.hoverBackground",
-      "description": "Background for hover state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for hover state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
     },
     {
       "key": "RunWidget.pressedBackground",
-      "description": "Background for pressed state in run widget. Will be applied over RunWidget.background or RunWidget.runningBackground.",
+      "description": "Background for pressed state in run widget. Will be applied over RunWidget.runningBackground.",
       "since": "2022.3"
-    },
-    {
-      "key": "RunWidget.separatorColor",
-      "description": "The color for separator in the contrast run widget",
-      "since": "2022.3",
-      "deprecated": true
     },
     {
       "key": "RunWidget.runIconColor",
@@ -2003,6 +2604,26 @@
     {
       "key": "RunWidget.stopBackground",
       "description": "Background for the stop button in the run widget",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.toolbarHeight",
+      "description": "The height of the run widget toolbar and its buttons",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.actionButtonWidth",
+      "description": "The width of the run widget buttons",
+      "since": "2023.1"
+    },
+    {
+      "key": "RunWidget.toolbarBorderDirectionalGap",
+      "description": "The horizontal gap between run widget buttons",
+      "since": "2024.1"
+    },
+    {
+      "key": "RunWidget.toolbarBorderHeight",
+      "description": "The gaps above and below run widget buttons",
       "since": "2023.1"
     },
     {
@@ -2034,6 +2655,34 @@
     },
     {
       "key": "MainWindow.FullScreeControl.Background"
+    },
+    {
+      "key": "LicenseDialog.termsAndConditionsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.waitingLabelForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.separatorColor",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.licenseDetailsForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.licenseIdForeground",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseList.separatorColor",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseServer.separatorColor",
+      "since": "2024.2"
     }
   ]
 }

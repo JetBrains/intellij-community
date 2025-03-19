@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.ActivityTracker
@@ -8,8 +8,10 @@ import com.intellij.ide.structureView.StructureView
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.StructureViewWrapper
 import com.intellij.ide.structureView.TextEditorBasedStructureViewModel
+import com.intellij.ide.structureView.StructureViewEventsCollector
 import com.intellij.ide.structureView.impl.StructureViewComposite
 import com.intellij.ide.structureView.impl.StructureViewComposite.StructureViewDescriptor
+import com.intellij.ide.structureView.impl.StructureViewState
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.lang.LangBundle
 import com.intellij.lang.PsiStructureViewFactory
@@ -17,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,12 +30,15 @@ import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.ProjectManagerImpl.Companion.isLight
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.PersistentFSConstants
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isTooLargeForIntellijSense
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
@@ -42,9 +48,11 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerEvent.ContentOperation
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.BitUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.TimerUtil
@@ -55,13 +63,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Container
 import java.awt.KeyboardFocusManager
 import java.awt.event.HierarchyEvent
-import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -69,18 +75,17 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
-/**
- * @author Eugene Belyaev
- */
 @OptIn(FlowPreview::class)
-class StructureViewWrapperImpl(private val myProject: Project,
-                               private val myToolWindow: ToolWindow,
-                               private val coroutineScope: CoroutineScope) : StructureViewWrapper, Disposable {
+class StructureViewWrapperImpl(
+  private val project: Project,
+  private val myToolWindow: ToolWindow,
+  private val coroutineScope: CoroutineScope,
+) : StructureViewWrapper, Disposable {
   private var myFile: VirtualFile? = null
   private var myStructureView: StructureView? = null
   private var myFileEditor: FileEditor? = null
   private var myModuleStructureComponent: ModuleStructureComponent? = null
-  private var myPanels: List<JPanel> = emptyList()
+  private var panels: List<JPanel> = emptyList()
   private var pendingSelectionFunc: AtomicReference<(suspend () -> Unit)?> = AtomicReference()
   private var myFirstRun = true
   private var myActivityCount = 0
@@ -92,7 +97,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
     val component = myToolWindow.component
 
     @Suppress("TestOnlyProblems")
-    if (isLight(myProject)) {
+    if (isLight(project)) {
       LOG.error("StructureViewWrapperImpl must be not created for light project.")
     }
 
@@ -104,9 +109,11 @@ class StructureViewWrapperImpl(private val myProject: Project,
       if (count == myActivityCount) return@createNamedTimer
 
       val state = ModalityState.stateForComponent(component)
-      if (ModalityState.current().dominates(state)) return@createNamedTimer
+      if (!ModalityState.current().accepts(state)) return@createNamedTimer
 
-      val successful = loggedRun("check if update needed") { checkUpdate() }
+      val successful = WriteIntentReadAction.compute<Boolean, Throwable> {
+        loggedRun("check if update needed") { checkUpdate() }
+      }
       if (successful) myActivityCount = count // to check on the next turn
     }
     LOG.debug("timer to check if update needed: add")
@@ -123,7 +130,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
           loggedRun("update file") { checkUpdate() }
           scheduleRebuild()
         }
-        else if (!myProject.isDisposed) {
+        else if (!project.isDisposed) {
           myFile = null
           rebuildNow("clear a structure on hide")
         }
@@ -134,13 +141,20 @@ class StructureViewWrapperImpl(private val myProject: Project,
       scheduleRebuild()
     }
     myToolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
+      var currentIndex = -1 // to distinguish event "another tab selected" from "contents were removed and added"
       override fun selectionChanged(event: ContentManagerEvent) {
         if (myStructureView is StructureViewComposite) {
           val views = (myStructureView as StructureViewComposite).structureViews
-          for (view in views) {
+          views.forEachIndexed { i, view ->
             if (view.title == event.content.tabName) {
-              updateHeaderActions(view.structureView)
-              break
+              coroutineScope.launch {
+                updateHeaderActions(view.structureView)
+              }
+              if (myToolWindow.contentManager.contentCount == 2 && i != currentIndex && event.operation == ContentOperation.add) {
+                if (i != -1) StructureViewEventsCollector.logTabSelected(view)
+                currentIndex = i
+              }
+              return@forEachIndexed
             }
           }
         }
@@ -154,6 +168,13 @@ class StructureViewWrapperImpl(private val myProject: Project,
     PsiStructureViewFactory.EP_NAME.addChangeListener({ clearCaches() }, this)
     StructureViewBuilder.EP_NAME.addChangeListener({ clearCaches() }, this)
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(STRUCTURE_CHANGED, Runnable { clearCaches() })
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosingBeforeSave(project: Project) {
+        myToolWindow.contentManager.selectedContent?.tabName
+          ?.takeIf { it.isNotEmpty() }
+          ?.let { StructureViewState.getInstance(project).selectedTab = it }
+      }
+    })
 
     coroutineScope.launch {
       rebuildRequests
@@ -170,7 +191,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
   }
 
   private fun clearCaches() {
-    StructureViewComponent.clearStructureViewState(myProject)
+    StructureViewComponent.clearStructureViewState(project)
     if (myStructureView != null) {
       myStructureView!!.disableStoreState()
     }
@@ -178,7 +199,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
   }
 
   private fun checkUpdate() {
-    if (myProject.isDisposed) return
+    if (project.isDisposed) return
     val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     val insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.component, owner)
     if (insideToolwindow) LOG.debug("inside structure view")
@@ -187,7 +208,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
     }
     val dataContext = DataManager.getInstance().getDataContext(owner)
     if (WRAPPER_DATA_KEY.getData(dataContext) === this) return
-    if (CommonDataKeys.PROJECT.getData(dataContext) !== myProject) return
+    if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return
     if (insideToolwindow) {
       if (myFirstRun) {
         setFileFromSelectionHistory()
@@ -195,55 +216,95 @@ class StructureViewWrapperImpl(private val myProject: Project,
       }
     }
     else {
-      val asyncDataContext = Utils.wrapDataContext(dataContext)
+      val asyncDataContext = Utils.createAsyncDataContext(dataContext)
       ReadAction.nonBlocking<VirtualFile?> { getTargetVirtualFile(asyncDataContext) }
         .coalesceBy(this, owner)
         .finishOnUiThread(ModalityState.defaultModalityState()) { file: VirtualFile? ->
-          if (file != null) {
-            setFile(file)
-          }
-          else if (myFirstRun) {
-            setFileFromSelectionHistory()
-          }
-          else {
-            setFile(null)
-          }
+          val firstRun = myFirstRun
           myFirstRun = false
+
+          coroutineScope.launch {
+            if (file != null) {
+              setFile(file)
+            }
+            else if (firstRun) {
+              setFileFromSelectionHistory()
+            }
+            else {
+              setFile(null)
+            }
+          }
         }
         .submit(AppExecutorUtil.getAppExecutorService())
     }
   }
 
   private fun setFileFromSelectionHistory() {
-    val editorManager = FileEditorManager.getInstance(myProject) as FileEditorManagerImpl
-    val history = editorManager.getSelectionHistory()
-    if (!history.isEmpty()) {
-      setFile(history[0].getFirst())
+    val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
+    val firstInHistory = editorManager.getSelectionHistoryList().firstOrNull()
+    if (firstInHistory != null) {
+      coroutineScope.launch {
+        setFile(firstInHistory.first)
+      }
     }
   }
 
-  private fun setFile(file: VirtualFile?) {
-    var forceRebuild = !Comparing.equal(file, myFile)
-    if (!forceRebuild && myStructureView != null) {
-      val model = myStructureView!!.treeModel
-      if (model is TextEditorBasedStructureViewModel && !model.isValid) {
-        forceRebuild = true
+  private suspend fun setFile(file: VirtualFile?) {
+    if (file?.fileSystem is NonPhysicalFileSystem && PlatformUtils.isIdeaUltimate()) {
+      val notInEditor = withContext(Dispatchers.EDT) {
+        !project.serviceAsync<FileEditorManager>().selectedFiles.contains(file)
       }
-      else {
-        val treeElement = model.root
-        val value = treeElement.value
-        if (value == null || value is PsiElement && !value.isValid || myStructureView is StructureViewComposite && (myStructureView as StructureViewComposite).isOutdated) {
-          forceRebuild = true
-        }
-        else if (file != null) {
-          forceRebuild = FileEditorManager.getInstance(myProject).getSelectedEditor(file) !== myFileEditor
-        }
-      }
+      if (notInEditor) return
     }
-    if (forceRebuild) {
+
+    suspend fun setFileAndRebuild() = withContext(Dispatchers.EDT) {
+      // myFile access on EDT
       myFile = file
       LOG.debug("show structure for file: ", file)
       scheduleRebuild()
+    }
+
+    // File is different
+    val differentFiles = withContext(Dispatchers.EDT) { !Comparing.equal(file, myFile) }
+    if (differentFiles) {
+      setFileAndRebuild()
+      return
+    }
+
+    // structure view is outdated
+    val structureView = myStructureView ?: return
+    if (structureView is StructureViewComposite && readAction { structureView.isOutdated }) {
+      setFileAndRebuild()
+      return
+    }
+
+    // tree model is not valid (checking isValid is costly and requires PSI)
+    val model = structureView.treeModel
+    if (model is TextEditorBasedStructureViewModel && readAction { !model.isValid }) {
+      setFileAndRebuild()
+      return
+    }
+
+    // root element invalid
+    val rootTreeElementInvalid = readAction {
+      val treeElement = model.root
+      val value = treeElement.value
+      return@readAction value == null || (value is PsiElement && !value.isValid)
+    }
+    if (rootTreeElementInvalid) {
+      setFileAndRebuild()
+      return
+    }
+
+    // editor is different
+    if (file != null) {
+      val editorIsDifferent = withContext(Dispatchers.EDT) {
+        project.serviceAsync<FileEditorManager>().getSelectedEditor(file) !== myFileEditor
+      }
+      if (editorIsDifferent) {
+        setFileAndRebuild()
+        return
+      }
     }
   }
 
@@ -299,7 +360,7 @@ class StructureViewWrapperImpl(private val myProject: Project,
   }
 
   @Deprecated(message = "Every update/rebuild is async now, use scheduleRebuild() to do rebuild at earliest possible time")
-  fun rebuild() = scheduleRebuild()
+  fun rebuild(): Unit = scheduleRebuild()
 
   private fun scheduleRebuild(delay: RebuildDelay, why: String) {
     LOG.debug("request to rebuild a structure view $delay: $why")
@@ -307,27 +368,35 @@ class StructureViewWrapperImpl(private val myProject: Project,
     check(rebuildRequests.tryEmit(delay))
   }
 
-  private suspend fun rebuildImpl() = withContext(Dispatchers.EDT) {
+  private suspend fun rebuildImpl() {
     val container: Container = myToolWindow.component
-    val wasFocused = UIUtil.isFocusAncestor(container)
-    if (myStructureView != null) {
-      myStructureView!!.storeState()
-      Disposer.dispose(myStructureView!!)
-      myStructureView = null
-      myFileEditor = null
-    }
-    if (myModuleStructureComponent != null) {
-      Disposer.dispose(myModuleStructureComponent!!)
-      myModuleStructureComponent = null
-    }
     val contentManager = myToolWindow.contentManager
-    contentManager.removeAllContents(true)
+    var wasFocused: Boolean
+    withContext(Dispatchers.EDT) {
+      wasFocused = UIUtil.isFocusAncestor(container)
+      if (myStructureView != null) {
+        myStructureView!!.storeState()
+        contentManager.selectedContent?.tabName
+          ?.takeIf { it.isNotEmpty() }
+          ?.let { StructureViewState.getInstance(project).selectedTab = it }
+        Disposer.dispose(myStructureView!!)
+        myStructureView = null
+        myFileEditor = null
+      }
+      if (myModuleStructureComponent != null) {
+        Disposer.dispose(myModuleStructureComponent!!)
+        myModuleStructureComponent = null
+      }
+      if (!isStructureViewShowing) {
+        contentManager.removeAllContents(true)
+      }
+    }
     if (!isStructureViewShowing) {
-      return@withContext
+      return
     }
 
     val file = myFile ?: run {
-      val selectedFiles = FileEditorManager.getInstance(myProject).selectedFiles
+      val selectedFiles = project.serviceAsync<FileEditorManager>().selectedFiles
       if (selectedFiles.isNotEmpty()) selectedFiles[0] else null
     }
 
@@ -335,91 +404,123 @@ class StructureViewWrapperImpl(private val myProject: Project,
     if (file != null && file.isValid) {
       if (file.isDirectory) {
         val module = readAction {
-          if (!ProjectRootsUtil.isModuleContentRoot(file, myProject)) {
+          if (!ProjectRootsUtil.isModuleContentRoot(file, project)) {
             null
           }
           else {
-            ModuleUtilCore.findModuleForFile(file, myProject)
+            ModuleUtilCore.findModuleForFile(file, project)
           }
         }
 
         if (module != null && !ModuleType.isInternal(module)) {
-          myModuleStructureComponent = ModuleStructureComponent(module)
-          createSinglePanel(myModuleStructureComponent!!.component!!)
-          Disposer.register(this@StructureViewWrapperImpl, myModuleStructureComponent!!)
+          withContext(Dispatchers.EDT) {
+            myModuleStructureComponent = ModuleStructureComponent(module)
+            createSinglePanel(myModuleStructureComponent!!.component!!)
+            Disposer.register(this@StructureViewWrapperImpl, myModuleStructureComponent!!)
+          }
         }
       }
       else {
-        val editor = FileEditorManager.getInstance(myProject).getSelectedEditor(file)
+        val editor = project.serviceAsync<FileEditorManager>().getSelectedEditor(file)
         val structureViewBuilder = if (editor != null && editor.isValid)
-          editor.structureViewBuilder else createStructureViewBuilder(file)
+          readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
-          val structureView = structureViewBuilder.createStructureView(editor, myProject)
-          myStructureView = structureView
+          val structureView = structureViewBuilder.createStructureViewSuspend(editor, project)
+          withContext(Dispatchers.EDT) {
+            writeIntentReadAction {
+              myStructureView = structureView
 
-          myFileEditor = editor
-          Disposer.register(this@StructureViewWrapperImpl, structureView)
-          if (structureView is StructureViewComposite) {
-            val views: Array<StructureViewDescriptor> = structureView.structureViews
-            names = views.map { it.title }.toTypedArray()
-            myPanels = views.map { createContentPanel(it.structureView.component) }
+              myFileEditor = editor
+              Disposer.register(this@StructureViewWrapperImpl, structureView)
+              val previouslySelectedTab = StructureViewState.getInstance(project).selectedTab
+              if (structureView is StructureViewComposite) {
+                val views: Array<StructureViewDescriptor> = structureView.structureViews
+                names = views.map { it.title }.toTypedArray()
+                panels = views.map {
+                  if (previouslySelectedTab == it.title) {
+                    StructureViewEventsCollector.logBuildStructure(it)
+                  }
+                  createContentPanel(it.structureView.component)
+                }
+              }
+              else {
+                createSinglePanel(structureView.component)
+              }
+              structureView.restoreState()
+              structureView.centerSelectedRow()
+            }
           }
-          else {
-            createSinglePanel(structureView.component)
-          }
-          structureView.restoreState()
-          structureView.centerSelectedRow()
         }
       }
     }
-    updateHeaderActions(myStructureView)
-    if (myModuleStructureComponent == null && myStructureView == null) {
-      val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
-        override fun getBackground(): Color {
-          return UIUtil.getTreeBackground()
+    withContext(Dispatchers.EDT) {
+      contentManager.removeAllContents(true)
+      updateHeaderActions(myStructureView)
+      if (myModuleStructureComponent == null && myStructureView == null) {
+        val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
+          override fun getBackground(): Color {
+            return UIUtil.getTreeBackground()
+          }
+        }
+        panel.emptyText.setText(LangBundle.message("panel.empty.text.no.structure"))
+        createSinglePanel(panel)
+      }
+      for (i in panels.indices) {
+        val content = ContentFactory.getInstance().createContent(panels[i], names[i], false)
+        contentManager.addContent(content)
+        val previouslySelectedTab = StructureViewState.getInstance(project).selectedTab
+        if (panels.size > 1 && names[i] == previouslySelectedTab) {
+          contentManager.setSelectedContent(content)
+        }
+        if (i == 0 && myStructureView != null) {
+          Disposer.register(content, myStructureView!!)
         }
       }
-      panel.emptyText.setText(LangBundle.message("panel.empty.text.no.structure"))
-      createSinglePanel(panel)
-    }
-    for (i in myPanels.indices) {
-      val content = ContentFactory.getInstance().createContent(myPanels[i], names[i], false)
-      contentManager.addContent(content)
-      if (i == 0 && myStructureView != null) {
-        Disposer.register(content, myStructureView!!)
+
+      pendingRebuild.set(false)
+      val pendingSelection = pendingSelectionFunc.getAndSet(null)
+      if (pendingSelection != null) {
+        pendingSelection()
       }
-    }
 
-    pendingRebuild.set(false)
-    val pendingSelection = pendingSelectionFunc.getAndSet(null)
-    if (pendingSelection != null) {
-      pendingSelection()
-    }
-
-    if (wasFocused) {
-      val policy = container.focusTraversalPolicy
-      val component = policy?.getDefaultComponent(container)
-      if (component != null) IdeFocusManager.getInstance(myProject).requestFocusInProject(component, myProject)
+      if (wasFocused) {
+        val policy = container.focusTraversalPolicy
+        val component = policy?.getDefaultComponent(container)
+        if (component != null) IdeFocusManager.getInstance(project).requestFocusInProject(component, project)
+      }
     }
   }
 
-  private fun updateHeaderActions(structureView: StructureView?) {
+  @ApiStatus.Internal
+  fun queueUpdate() {
+    if (myStructureView is StructureViewComponent) {
+      (myStructureView as StructureViewComponent).queueUpdate()
+    }
+    if (myStructureView is StructureViewComposite) {
+      ((myStructureView as StructureViewComposite).selectedStructureView as? StructureViewComponent)?.queueUpdate()
+    }
+  }
+
+  private suspend fun updateHeaderActions(structureView: StructureView?) {
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
       if (ExperimentalUI.isNewUI()) {
-        listOf(structureView.viewActions)
+        readAction { listOf(structureView.viewActions) }
       }
       else {
-        structureView.addExpandCollapseActions()
+        withContext(Dispatchers.EDT) { structureView.addExpandCollapseActions() }
       }
     }
     else {
       emptyList()
     }
-    myToolWindow.setTitleActions(titleActions)
+
+    withContext(Dispatchers.EDT) {
+      myToolWindow.setTitleActions(titleActions)
+    }
   }
 
   private fun createSinglePanel(component: JComponent) {
-    myPanels = listOf(createContentPanel(component))
+    panels = listOf(createContentPanel(component))
   }
 
   private fun createContentPanel(component: JComponent): ContentPanel {
@@ -429,48 +530,47 @@ class StructureViewWrapperImpl(private val myProject: Project,
     return panel
   }
 
-  private fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
-    if (file.length > PersistentFSConstants.getMaxIntellisenseFileSize()) return null
-    val providers = getInstance().getProviderList(myProject, file)
+  private suspend fun createStructureViewBuilder(file: VirtualFile): StructureViewBuilder? {
+    if (file.isTooLargeForIntellijSense()) return null
+    val providers = getInstance().getProvidersAsync(project, file)
     val provider = (if (providers.isEmpty()) null else providers[0]) ?: return null
     if (provider is StructureViewFileEditorProvider) {
-      return (provider as StructureViewFileEditorProvider).getStructureViewBuilder(myProject, file)
+      return readAction { (provider as StructureViewFileEditorProvider).getStructureViewBuilder(project, file) }
     }
-    val editor = provider.createEditor(myProject, file)
+    val editor = withContext(Dispatchers.EDT) { provider.createEditor (project, file) }
     return try {
-      editor.structureViewBuilder
+      readAction { editor.structureViewBuilder }
     }
     finally {
-      Disposer.dispose(editor)
+      withContext(Dispatchers.EDT) { Disposer.dispose(editor) }
     }
   }
 
   private val isStructureViewShowing: Boolean
     get() {
-      val windowManager = getInstance(myProject)
+      val windowManager = getInstance(project)
       val toolWindow = windowManager.getToolWindow(ToolWindowId.STRUCTURE_VIEW)
       // it means that window is registered
       return toolWindow != null && toolWindow.isVisible
     }
 
-  private inner class ContentPanel : JPanel(BorderLayout()), DataProvider {
-    override fun getData(dataId: @NonNls String): Any? {
-      if (WRAPPER_DATA_KEY.`is`(dataId)) return this@StructureViewWrapperImpl
-      return if (QuickActionProvider.KEY.`is`(dataId)) {
-        if (myStructureView is QuickActionProvider) myStructureView else null
-      }
-      else null
+  private inner class ContentPanel : JPanel(BorderLayout()), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[WRAPPER_DATA_KEY] = this@StructureViewWrapperImpl
+      sink[QuickActionProvider.KEY] = myStructureView as? QuickActionProvider
     }
   }
 
   companion object {
     @JvmField
-    val STRUCTURE_CHANGED = Topic("structure view changed", Runnable::class.java,
-                                  Topic.BroadcastDirection.NONE)
+    @Topic.AppLevel
+    val STRUCTURE_CHANGED: Topic<Runnable> = Topic("structure view changed", Runnable::class.java,
+                                                   Topic.BroadcastDirection.NONE)
 
     @ApiStatus.Experimental
     @JvmField
-    val STRUCTURE_VIEW_TARGET_FILE_KEY = DataKey.create<Optional<VirtualFile?>>("STRUCTURE_VIEW_TARGET_FILE_KEY")
+    val STRUCTURE_VIEW_TARGET_FILE_KEY: DataKey<Optional<VirtualFile?>> = DataKey.create("STRUCTURE_VIEW_TARGET_FILE_KEY")
+    private val STRUCTURE_VIEW_SELECTED_TAB_KEY: Key<String> = Key.create("STRUCTURE_VIEW_SELECTED_TAB")
 
     private val LOG = Logger.getInstance(StructureViewWrapperImpl::class.java)
     private val WRAPPER_DATA_KEY = DataKey.create<StructureViewWrapper>("WRAPPER_DATA_KEY")

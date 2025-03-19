@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -11,9 +11,10 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
-
-public class VcsKeymapExtension implements KeymapExtension {
+@ApiStatus.Internal
+public final class VcsKeymapExtension implements KeymapExtension {
   @Override
   public KeymapGroup createGroup(final Condition<? super AnAction> filtered, final Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("version.control.group.title"));

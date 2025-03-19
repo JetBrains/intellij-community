@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -25,6 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,7 +206,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
   }
 
   private void validateRecentNames() {
-    final Collection<FileTemplateBase> allTemplates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> allTemplates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
     final List<String> allNames = new ArrayList<>(allTemplates.size());
     for (FileTemplate fileTemplate : allTemplates) {
       allNames.add(fileTemplate.getName());
@@ -223,6 +224,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
       catch (Exception e) {
         LOG.error("Can't find template " + bean.name, new PluginException(e, pluginDescriptor.getPluginId()));
       }
+      return Unit.INSTANCE;
     });
     return result.toArray(FileTemplate.EMPTY_ARRAY);
   }
@@ -307,7 +309,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getAllPatterns() {
-    final Collection<FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
     return allTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
@@ -318,13 +320,13 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
 
   @Override
   public FileTemplate @NotNull [] getAllCodeTemplates() {
-    final Collection<FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
   public FileTemplate @NotNull [] getAllJ2eeTemplates() {
-    final Collection<FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
+    Collection<? extends FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
     return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 

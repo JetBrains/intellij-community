@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -28,7 +28,7 @@ import java.util.Map;
 
 public final class LibraryCompositionSettings implements Disposable {
   private final CustomLibraryDescription myLibraryDescription;
-  @NotNull private final NotNullComputable<String> myPathProvider;
+  private final @NotNull NotNullComputable<String> myPathProvider;
   private FrameworkLibraryVersionFilter myVersionFilter;
   private final List<? extends FrameworkLibraryVersion> myAllVersions;
   private LibrariesContainer.LibraryLevel myNewLibraryLevel;
@@ -104,18 +104,15 @@ public final class LibraryCompositionSettings implements Disposable {
     return libraryEditor;
   }
 
-  @NotNull
-  public CustomLibraryDescription getLibraryDescription() {
+  public @NotNull CustomLibraryDescription getLibraryDescription() {
     return myLibraryDescription;
   }
 
-  @Nullable
-  public LibraryDownloadSettings getDownloadSettings() {
+  public @Nullable LibraryDownloadSettings getDownloadSettings() {
     return myDownloadSettings;
   }
 
-  @NotNull
-  public String getBaseDirectoryPath() {
+  public @NotNull String getBaseDirectoryPath() {
     return myPathProvider.compute();
   }
 
@@ -149,8 +146,7 @@ public final class LibraryCompositionSettings implements Disposable {
     return myDownloadLibraries || myNewLibraryEditor != null || mySelectedLibrary != null || myLibraryProvider != null;
   }
 
-  @Nullable
-  private Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
+  private @Nullable Library createLibrary(final ModifiableRootModel rootModel, @Nullable LibrariesContainer additionalContainer) {
     if (myNewLibraryEditor != null) {
       return LibrariesContainerFactory.createLibrary(additionalContainer, LibrariesContainerFactory.createContainer(rootModel),
                                                      myNewLibraryEditor, getLibraryLevel());
@@ -166,9 +162,8 @@ public final class LibraryCompositionSettings implements Disposable {
     return myNewLibraryLevel;
   }
 
-  @Nullable
-  public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<? super Library> addedLibraries,
-                              final @Nullable LibrariesContainer librariesContainer) {
+  public @Nullable Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<? super Library> addedLibraries,
+                                        final @Nullable LibrariesContainer librariesContainer) {
     Library newLibrary = createLibrary(rootModel, librariesContainer);
 
     if (newLibrary != null) {

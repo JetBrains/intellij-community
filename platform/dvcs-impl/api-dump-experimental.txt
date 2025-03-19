@@ -1,0 +1,12 @@
+f:com.intellij.dvcs.push.PushController
+- com.intellij.openapi.Disposable
+- *:createCustomPanels(java.util.Collection):java.util.Map
+*:com.intellij.dvcs.push.ui.CommitNodeUiRenderExtension
+- a:render(com.intellij.openapi.project.Project,com.intellij.ui.ColoredTreeCellRenderer,com.intellij.dvcs.push.ui.CommitNode):V
+c:com.intellij.dvcs.push.ui.VcsPushDialog
+- com.intellij.openapi.ui.DialogWrapper
+- com.intellij.dvcs.push.ui.VcsPushUi
+- com.intellij.openapi.actionSystem.DataProvider
+- *:getCustomParams():java.util.Map
+com.intellij.dvcs.push.ui.VcsPushUi
+- *:hasWarnings():Z

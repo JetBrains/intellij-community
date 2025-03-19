@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -6,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.DocumentUtil.isLineEmpty;
@@ -13,12 +15,13 @@ import static com.intellij.util.DocumentUtil.isLineEmpty;
 /**
  * Emulates Emacs 'backward-paragraph' action
  */
-public class BackwardParagraphAction extends EditorAction {
+@ApiStatus.Internal
+public final class BackwardParagraphAction extends EditorAction {
   public BackwardParagraphAction() {
     super(new Handler(false));
   }
 
-  static class Handler extends EditorActionHandler.ForEachCaret {
+  static final class Handler extends EditorActionHandler.ForEachCaret {
     private final boolean myWithSelection;
 
     Handler(boolean withSelection) {

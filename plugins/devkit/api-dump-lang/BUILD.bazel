@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.devkit.apiDump.lang` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "apiDump-lang_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "apiDump-lang",
+  module_name = "intellij.devkit.apiDump.lang",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//platform/usageView",
+    "//platform/util",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//plugins/devkit/api-dump:apiDump",
+    "//java/java-impl:impl",
+  ],
+  runtime_deps = [":apiDump-lang_resources"]
+)
+
+jvm_library(
+  name = "apiDump-lang_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":apiDump-lang"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//platform/usageView",
+    "//platform/util",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//plugins/devkit/api-dump:apiDump",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":apiDump-lang_resources"]
+)
+
+jvm_test(
+  name = "apiDump-lang_test",
+  runtime_deps = [":apiDump-lang_test_lib"]
+)
+### auto-generated section `build intellij.devkit.apiDump.lang` end

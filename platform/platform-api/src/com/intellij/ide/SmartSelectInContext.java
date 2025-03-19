@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
@@ -37,8 +37,15 @@ public class SmartSelectInContext extends FileSelectInContext {
     return pointer.getElement();
   }
 
-  @Nullable public PsiFile getPsiFile() {
+  public @Nullable PsiFile getPsiFile() {
     Object selector = pointer.getElement();
     return selector instanceof PsiFile ? (PsiFile)selector : null;
+  }
+
+  @Override
+  public String toString() {
+    return "SmartSelectInContext{" +
+           "pointer=" + pointer +
+           "} " + super.toString();
   }
 }

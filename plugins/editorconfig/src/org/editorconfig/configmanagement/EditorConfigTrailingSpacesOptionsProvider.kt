@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement
 
 import com.intellij.openapi.fileEditor.TrailingSpacesOptionsProvider
@@ -7,12 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.ec4j.core.ResourceProperties
 import org.editorconfig.Utils
 import org.editorconfig.Utils.configValueForKey
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 
-class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider, StandardEditorConfigProperties {
+internal class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider, StandardEditorConfigProperties {
   override fun getOptions(project: Project, file: VirtualFile): TrailingSpacesOptionsProvider.Options? {
     if (Utils.isEnabledFor(project, file)) {
-      val properties = SettingsProviderComponent.getInstance(project).getProperties(file)
+      val properties = EditorConfigPropertiesService.getInstance(project).getProperties(file)
       val trimTrailingWhitespace = getBooleanValue(properties, StandardEditorConfigProperties.TRIM_TRAILING_WHITESPACE)
       val insertFinalNewline = getBooleanValue(properties, StandardEditorConfigProperties.INSERT_FINAL_NEWLINE)
       if (trimTrailingWhitespace != null || insertFinalNewline != null) {
@@ -45,14 +45,13 @@ class EditorConfigTrailingSpacesOptionsProvider : TrailingSpacesOptionsProvider,
     }
   }
 
-  companion object {
-    private fun getBooleanValue(properties: ResourceProperties, key: String): Boolean? {
-      val rawValue = properties.configValueForKey(key)
-      return when {
-        "false".equals(rawValue, ignoreCase = true) -> false
-        "true".equals(rawValue, ignoreCase = true) -> true
-        else -> null
-      }
+  private fun getBooleanValue(properties: ResourceProperties, key: String): Boolean? {
+    val rawValue = properties.configValueForKey(key)
+    return when {
+      "false".equals(rawValue, ignoreCase = true) -> false
+      "true".equals(rawValue, ignoreCase = true) -> true
+      else -> null
     }
+
   }
 }

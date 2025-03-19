@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.java.rareRefactorings` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-rareRefactorings_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-rareRefactorings",
+  module_name = "intellij.java.rareRefactorings",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/usageView",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":java-rareRefactorings_resources"]
+)
+
+jvm_test(
+  name = "java-rareRefactorings_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":java-rareRefactorings"],
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/core-ui",
+    "//java/testFramework",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//java/openapi:java",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/usageView",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "@lib//:stream_ex",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":java-rareRefactorings_resources"]
+)
+### auto-generated section `build intellij.java.rareRefactorings` end

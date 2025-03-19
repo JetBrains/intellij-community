@@ -1,0 +1,35 @@
+UFile (package = test.pkg)
+    UClass (name = AnnotationOnLocalKt)
+        UMethod (name = test)
+            UParameter (name = x)
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable)
+            UBlockExpression
+                UDeclarationsExpression
+                    UVariable (name = localFunction)
+                        ULambdaExpression
+                            UAnnotation (fqName = kotlin.Suppress)
+                                UNamedExpression (name = names)
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "SdCardPath1")
+                            UBlockExpression
+                                UQualifiedReferenceExpression
+                                    USimpleNameReferenceExpression (identifier = x)
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                        UIdentifier (Identifier (toString))
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                    UIdentifier (Identifier (localFunction))
+                UDeclarationsExpression
+                    ULocalVariable (name = lambda)
+                        ULambdaExpression
+                            UAnnotation (fqName = kotlin.Suppress)
+                                UNamedExpression (name = names)
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "SdCardPath2")
+                            UBlockExpression
+                                UReturnExpression
+                                    UQualifiedReferenceExpression
+                                        USimpleNameReferenceExpression (identifier = x)
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                            UIdentifier (Identifier (toString))
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                    UIdentifier (Identifier (lambda))

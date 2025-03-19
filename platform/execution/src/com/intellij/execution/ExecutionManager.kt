@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.messages.Topic
@@ -21,14 +22,14 @@ import java.util.function.Consumer
 abstract class ExecutionManager {
   companion object {
     @JvmField
-    val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
+    val EXECUTION_SESSION_ID_KEY: Key<Any> = Key.create("EXECUTION_SESSION_ID_KEY")
 
     @JvmField
-    val EXECUTION_SKIP_RUN = Key.create<Boolean>("EXECUTION_SKIP_RUN")
+    val EXECUTION_SKIP_RUN: Key<Boolean> = Key.create("EXECUTION_SKIP_RUN")
 
     @JvmField
     @Topic.ProjectLevel
-    val EXECUTION_TOPIC = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+    val EXECUTION_TOPIC: Topic<ExecutionListener> = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManager {
@@ -108,12 +109,19 @@ abstract class ExecutionManager {
   abstract fun restartRunProfile(environment: ExecutionEnvironment)
 
   fun isStarting(environment: ExecutionEnvironment): Boolean {
-    return isStarting(environment.executor.id, environment.runner.runnerId)
+    return isStarting(environment.runnerAndConfigurationSettings?.uniqueID ?: "",
+                      environment.executor.id, environment.runner.runnerId)
   }
 
   @ApiStatus.Internal
-  abstract fun isStarting(executorId: String, runnerId: String): Boolean
+  abstract fun isStarting(configurationId: String, executorId: String, runnerId: String): Boolean
 
   @ApiStatus.Experimental
   abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>
+
+  @ApiStatus.Internal
+  abstract fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor>
+
+  @ApiStatus.Internal
+  abstract fun getExecutors(descriptor: RunContentDescriptor): Set<Executor>
 }

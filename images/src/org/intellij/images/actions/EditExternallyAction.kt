@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -31,7 +30,7 @@ import java.io.IOException
  */
 internal class EditExternallyAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val imageFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
+    val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
     var executablePath = PropertiesComponent.getInstance().getValue(EditExternalImageEditorAction.EXT_PATH_KEY, "")
     if (!StringUtil.isEmpty(executablePath)) {
       EnvironmentUtil.getEnvironmentMap().forEach { (varName, varValue) ->
@@ -79,7 +78,7 @@ internal class EditExternallyAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val enabled = file != null && ImageFileTypeManager.getInstance().isImage(file)
-    if (ActionPlaces.isPopupPlace(e.place)) {
+    if (e.isFromContextMenu) {
       e.presentation.isVisible = enabled
     }
 

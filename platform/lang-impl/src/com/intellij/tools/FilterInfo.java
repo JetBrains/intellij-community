@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -9,17 +9,17 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Objects;
 
-public class FilterInfo implements JDOMExternalizable {
-  @NonNls private static final String FILTER_NAME = "NAME";
-  @NonNls private static final String FILTER_DESCRIPTION = "DESCRIPTION";
-  @NonNls private static final String FILTER_REGEXP = "REGEXP";
+public final class FilterInfo implements JDOMExternalizable {
+  private static final @NonNls String FILTER_NAME = "NAME";
+  private static final @NonNls String FILTER_DESCRIPTION = "DESCRIPTION";
+  private static final @NonNls String FILTER_REGEXP = "REGEXP";
 
   private String myName = ToolsBundle.message("tools.filters.name.default");
   private String myDescription;
   private String myRegExp;
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_OPTION = "option";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
 
   public FilterInfo() {
   }
@@ -54,12 +54,14 @@ public class FilterInfo implements JDOMExternalizable {
     myRegExp = regExp;
   }
 
+  @Override
   public int hashCode() {
     return Comparing.hashcode(myName) +
            Comparing.hashcode(myDescription) +
            Comparing.hashcode(myRegExp);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof FilterInfo other)) return false;
     return Objects.equals(myName, other.myName) &&

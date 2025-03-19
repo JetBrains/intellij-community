@@ -36,9 +36,26 @@ def h(x) -> int:
 def i() -> Union[int, str]:
     pass
 
-def j(x) -> <warning descr="Expected to return 'int | str', got no return">Union[int, str]</warning>:
+def j(x) -> <warning descr="Expected type 'int | str', got 'None' instead">Union[int, str]</warning>:
     x = 42
 
 def k() -> None:
     if True:
         pass
+
+def l(x) -> <warning descr="Expected type 'int', got 'int | None' instead">int</warning>:
+    if x == 1:
+        return 42
+    
+def m(x) -> None:
+    """Does not display warning about implicit return, because annotated '-> None' """
+    if x:
+        return
+
+def n() -> Generator[int, Any, str]:
+    yield 13
+    return 42
+
+def o(val) -> int:
+    assert val is int
+    return val

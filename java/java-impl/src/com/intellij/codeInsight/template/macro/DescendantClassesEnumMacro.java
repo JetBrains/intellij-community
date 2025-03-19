@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -32,7 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DescendantClassesEnumMacro extends Macro {
+public final class DescendantClassesEnumMacro extends Macro {
   @Override
   public String getName() {
     return "descendantClassesEnum";
@@ -46,7 +32,7 @@ public class DescendantClassesEnumMacro extends Macro {
   @Override
   public Result calculateResult(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
     Result[] results = calculateResults(classes);
 
     return results[0];
@@ -62,8 +48,7 @@ public class DescendantClassesEnumMacro extends Macro {
     return results;
   }
 
-  @Nullable
-  private static List<PsiClass> findDescendants(ExpressionContext context, Expression[] params) {
+  private static @Nullable List<PsiClass> findDescendants(ExpressionContext context, Expression[] params) {
     if (params == null || params.length == 0) return null;
     PsiManager instance = PsiManager.getInstance(context.getProject());
 
@@ -99,7 +84,7 @@ public class DescendantClassesEnumMacro extends Macro {
   @Override
   public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
     Result[] results = calculateResults(classes);
 
     return results[0];
@@ -108,14 +93,14 @@ public class DescendantClassesEnumMacro extends Macro {
   @Override
   public LookupElement[] calculateLookupItems(Expression @NotNull [] params, ExpressionContext context) {
     final List<PsiClass> classes = findDescendants(context, params);
-    if (classes == null || classes.size() == 0) return null;
+    if (classes == null || classes.isEmpty()) return null;
 
     Set<LookupElement> set = new LinkedHashSet<>();
     boolean isShortName = params.length > 1 && !Boolean.parseBoolean(params[1].calculateResult(context).toString());
 
     for (PsiClass object : classes) {
       final String name = isShortName ? object.getName() : object.getQualifiedName();
-      if (name != null && name.length() > 0) {
+      if (name != null && !name.isEmpty()) {
         set.add(LookupElementBuilder.create(name));
       }
     }

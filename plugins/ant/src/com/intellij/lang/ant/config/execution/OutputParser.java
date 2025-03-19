@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacOutputParser;
@@ -29,7 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.rt.ant.execution.IdeaAntLogger2;
+import com.intellij.rt.ant.execution.AntLoggerConstants;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -122,50 +108,50 @@ public class OutputParser{
   }
 
 
-  protected final void processTag(char tagName, @NlsSafe final String tagValue, @AntMessage.Priority int priority) {
+  protected final void processTag(char tagName, final @NlsSafe String tagValue, @AntMessage.Priority int priority) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.valueOf(tagName) + priority + "=" + tagValue);
     }
 
-    if (IdeaAntLogger2.TARGET == tagName) {
+    if (AntLoggerConstants.TARGET == tagName) {
       setProgressStatistics(AntBundle.message("target.tag.name.status.text", tagValue));
     }
-    else if (IdeaAntLogger2.TASK == tagName) {
+    else if (AntLoggerConstants.TASK == tagName) {
       setProgressText(AntBundle.message("executing.task.tag.value.status.text", tagValue));
       if (JAVAC.equals(tagValue)) {
         myJavacMessages = new ArrayList<>();
       }
     }
 
-    if (myJavacMessages != null && (IdeaAntLogger2.MESSAGE == tagName || IdeaAntLogger2.ERROR == tagName)) {
+    if (myJavacMessages != null && (AntLoggerConstants.MESSAGE == tagName || AntLoggerConstants.ERROR == tagName)) {
       myJavacMessages.add(tagValue);
       return;
     }
 
-    if (IdeaAntLogger2.MESSAGE == tagName) {
+    if (AntLoggerConstants.MESSAGE == tagName) {
       myMessageView.outputMessage(tagValue, priority);
     }
-    else if (IdeaAntLogger2.TARGET == tagName) {
+    else if (AntLoggerConstants.TARGET == tagName) {
       myMessageView.startTarget(tagValue);
     }
-    else if (IdeaAntLogger2.TASK == tagName) {
+    else if (AntLoggerConstants.TASK == tagName) {
       myMessageView.startTask(tagValue);
     }
-    else if (IdeaAntLogger2.ERROR == tagName) {
+    else if (AntLoggerConstants.ERROR == tagName) {
       myMessageView.outputError(tagValue, priority);
     }
-    else if (IdeaAntLogger2.EXCEPTION == tagName) {
-      String exceptionText = tagValue.replace(IdeaAntLogger2.EXCEPTION_LINE_SEPARATOR, '\n');
+    else if (AntLoggerConstants.EXCEPTION == tagName) {
+      String exceptionText = tagValue.replace(AntLoggerConstants.EXCEPTION_LINE_SEPARATOR, '\n');
       myMessageView.outputException(exceptionText);
     }
-    else if (IdeaAntLogger2.BUILD == tagName) {
+    else if (AntLoggerConstants.BUILD == tagName) {
       myMessageView.startBuild(myBuildName);
     }
-    else if (IdeaAntLogger2.TARGET_END == tagName || IdeaAntLogger2.TASK_END == tagName) {
+    else if (AntLoggerConstants.TARGET_END == tagName || AntLoggerConstants.TASK_END == tagName) {
       final List<String> javacMessages = myJavacMessages;
       myJavacMessages = null;
       processJavacMessages(javacMessages, myMessageView, myProject);
-      if (IdeaAntLogger2.TARGET_END == tagName) {
+      if (AntLoggerConstants.TARGET_END == tagName) {
         myMessageView.finishTarget();
       }
       else {
@@ -197,8 +183,7 @@ public class OutputParser{
       private int myIndex = -1;
 
       @Override
-      @Nullable
-      public String getCurrentLine() {
+      public @Nullable String getCurrentLine() {
         if (myIndex >= javacMessages.size()) {
           return null;
         }

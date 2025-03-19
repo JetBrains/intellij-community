@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
@@ -30,8 +30,8 @@ import java.util.Map;
 /**
  * Allows to set default colors for multiple languages.
  */
-public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
-  private final static TextAttributesKey FAKE_BAD_CHAR =
+public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
+  private static final TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
   private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = RainbowHighlighter.createRainbowHLM();
@@ -89,7 +89,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     INLINE_ELEMENTS.put("inlay_text_without_background", DefaultLanguageHighlighterColors.INLAY_DEFAULT);
   }
 
-  private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+  private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
     new AttributesDescriptor(
@@ -130,6 +130,12 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.messagePointer("options.language.defaults.doc.tag"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.doc.tag.value"), DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.tips.shortcut"), DefaultLanguageHighlighterColors.DOC_TIPS_SHORTCUT),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.block"), DefaultLanguageHighlighterColors.DOC_CODE_BLOCK),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.language.defaults.doc.code.inline"), DefaultLanguageHighlighterColors.DOC_CODE_INLINE),
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.language.defaults.label"), DefaultLanguageHighlighterColors.LABEL),
     new AttributesDescriptor(
@@ -189,6 +195,16 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.default"),
       DefaultLanguageHighlighterColors.INLAY_DEFAULT),
+
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.default"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_DEFAULT),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.focused"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_FOCUSED),
+    new AttributesDescriptor(
+      OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.inlay.button.hovered"),
+      DefaultLanguageHighlighterColors.INLAY_BUTTON_HOVERED),
 
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.attribute.descriptor.inlay.hint.text.without.background"),

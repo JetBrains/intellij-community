@@ -6,8 +6,10 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.findFileOrDirectory
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
@@ -18,9 +20,10 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
+import kotlin.io.path.pathString
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class IteratingContentUnderExcludedTest {
   @JvmField
   @RegisterExtension
@@ -138,11 +141,41 @@ class IteratingContentUnderExcludedTest {
   }
 
   @Test
+  fun `iterate over recursive symlink under excluded directories`() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val excludedDir = projectModel.baseProjectDir.newVirtualDirectory("root/excluded")
+    val contentFile = projectModel.baseProjectDir.newVirtualFile("root/file.txt")
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, contentRoot)
+    PsiTestUtil.addExcludedRoot(module, excludedDir)
+    val linkPath = excludedDir.toNioPath().resolve("link")
+    IoTestUtil.createSymLink(contentRoot.toNioPath().pathString, linkPath.pathString)
+    PsiTestUtil.addSourceRoot(module, VirtualFileManager.getInstance().refreshAndFindFileByNioPath(linkPath)!!)
+    assertIteratedContent(fileIndex, contentRoot, listOf(contentFile), listOf(excludedDir))
+  }
+  
+  @Test
+  fun `iterate over recursive symlink from excluded directory`() {
+    IoTestUtil.assumeSymLinkCreationIsSupported()
+    val contentRoot = projectModel.baseProjectDir.newVirtualDirectory("root")
+    val contentFile = projectModel.baseProjectDir.newVirtualFile("root/file.txt")
+    val module = projectModel.createModule()
+    PsiTestUtil.addContentRoot(module, contentRoot)
+    val excludedPath = contentRoot.toNioPath().resolve("excluded")
+    IoTestUtil.createSymLink(contentRoot.toNioPath().pathString, excludedPath.pathString)
+    val excludedRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(excludedPath)!!
+    PsiTestUtil.addExcludedRoot(module, excludedRoot)
+    PsiTestUtil.addExcludedRoot(module, contentRoot.findFileOrDirectory("excluded/excluded/excluded/excluded/excluded/excluded/excluded/excluded/excluded/excluded/excluded/")!!)
+    assertIteratedContent(fileIndex, contentRoot, listOf(contentFile), listOf(excludedRoot))
+  }
+
+  @Test
   fun testTraversingNonProjectFilesShouldBeFast() {
     IoTestUtil.assumeSymLinkCreationIsSupported()
     val root = projectModel.baseProjectDir.virtualFileRoot
     generateSymlinkExplosion(VfsUtilCore.virtualToIoFile(root), 17)
-    PlatformTestUtil.startPerformanceTest("traversing non-project roots", 100) { checkIterate(root) }.assertTiming()
+    Benchmark.newBenchmark("traversing non-project roots") { checkIterate(root) }.start()
   }
 
   companion object {

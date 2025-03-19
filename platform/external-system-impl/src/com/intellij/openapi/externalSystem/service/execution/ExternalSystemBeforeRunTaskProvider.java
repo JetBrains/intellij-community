@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -28,9 +28,9 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskProvider<ExternalSystemBeforeRunTask> {
-  @NotNull private final ProjectSystemId mySystemId;
-  @NotNull private final Project myProject;
-  @NotNull private final Key<ExternalSystemBeforeRunTask> myId;
+  private final @NotNull ProjectSystemId mySystemId;
+  private final @NotNull Project myProject;
+  private final @NotNull Key<ExternalSystemBeforeRunTask> myId;
 
   public ExternalSystemBeforeRunTaskProvider(@NotNull ProjectSystemId systemId,
                                              @NotNull Project project,
@@ -41,8 +41,7 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
   }
 
   @Override
-  @NotNull
-  public Key<ExternalSystemBeforeRunTask> getId() {
+  public @NotNull Key<ExternalSystemBeforeRunTask> getId() {
     return myId;
   }
 

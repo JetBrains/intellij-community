@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.history.Label;
@@ -34,6 +34,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -50,8 +51,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public static final DataKey<FilePath> UPDATE_VIEW_SELECTED_PATH =
@@ -62,7 +63,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public static final DataKey<Label> LABEL_AFTER = DataKey.create("LABEL_AFTER");
 
   private final Tree myTree = new Tree();
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final UpdatedFiles myUpdatedFiles;
   private final VcsConfiguration myVcsConfiguration;
   private UpdateRootNode myRoot;
@@ -76,8 +77,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private JLabel myLoadingChangeListsLabel;
   private List<? extends CommittedChangeList> myCommittedChangeLists;
   private final JPanel myCenterPanel = new JPanel(new CardLayout());
-  @NonNls private static final String CARD_STATUS = "Status";
-  @NonNls private static final String CARD_CHANGES = "Changes";
+  private static final @NonNls String CARD_STATUS = "Status";
+  private static final @NonNls String CARD_CHANGES = "Changes";
   private CommittedChangesTreeBrowser myTreeBrowser;
   private final TreeExpander myTreeExpander;
   private final MyTreeIterable myTreeIterable;
@@ -198,40 +199,29 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
-      return null;
+      return;
     }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFilePointer pointer = getSelectedFilePointer();
+    VirtualFilePointer pointer = getSelectedFilePointer();
+    sink.set(VcsDataKeys.FILE_PATHS, getFilePathIterable());
+    sink.set(PlatformDataKeys.TREE_EXPANDER,
+             myGroupByChangeList ? myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null : myTreeExpander);
+    sink.set(UPDATE_VIEW_SELECTED_PATH,
+             pointer != null ? getFilePath(pointer) : null);
+    sink.set(UPDATE_VIEW_FILES_ITERABLE, myTreeIterable);
+    sink.set(LABEL_BEFORE, myBefore);
+    sink.set(LABEL_AFTER, myAfter);
+
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (pointer == null || !pointer.isValid()) return null;
       VirtualFile selectedFile = pointer.getFile();
       return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return getVirtualFileArray();
-    }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
-      return getFileArray();
-    } else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      if (myGroupByChangeList) {
-        return myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null;
-      }
-      else {
-        return myTreeExpander;
-      }
-    } else if (UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
-      VirtualFilePointer pointer = getSelectedFilePointer();
-      return pointer != null ? getFilePath(pointer) : null;
-    } else if (UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
-      return myTreeIterable;
-    } else if (LABEL_BEFORE.is(dataId)) {
-      return myBefore;
-    }  else if (LABEL_AFTER.is(dataId)) {
-      return myAfter;
-    }
-
-    return super.getData(dataId);
+    });
   }
 
   private final class MyTreeIterator implements Iterator<Pair<FilePath, FileStatus>> {
@@ -285,8 +275,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
 
-    @Nullable
-    private GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
+    private static @Nullable GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
       TreeNode currentNode = treeNode;
       while (currentNode != null && !(currentNode instanceof GroupTreeNode)) {
         currentNode = currentNode.getParent();
@@ -307,8 +296,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  @Nullable
-  private VirtualFilePointer getSelectedFilePointer() {
+  private @Nullable VirtualFilePointer getSelectedFilePointer() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
     AbstractTreeNode treeNode = (AbstractTreeNode)path.getLastPathComponent();
@@ -327,17 +315,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private File @Nullable [] getFileArray() {
-    ArrayList<File> result = new ArrayList<>();
+  private @Nullable Iterable<FilePath> getFilePathIterable() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
-        result.addAll(treeNode.getFiles());
-      }
+    if (selectionPaths == null) return null;
+
+    List<File> result = new ArrayList<>();
+    for (TreePath selectionPath : selectionPaths) {
+      AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
+      result.addAll(treeNode.getFiles());
     }
     if (result.isEmpty()) return null;
-    return result.toArray(new File[0]);
+    return ContainerUtil.map(result, ioFile -> VcsUtil.getFilePath(ioFile));
   }
 
   int getFilteredFilesCount() {
@@ -411,7 +399,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList);
     }
@@ -446,7 +434,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(myCanGroupByChangeList);
     }
@@ -460,8 +448,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myAfter = after;
   }
 
-  @Nullable
-  private Pair<PackageSetBase, NamedScopesHolder> getScopeFilter() {
+  private @Nullable Pair<PackageSetBase, NamedScopesHolder> getScopeFilter() {
     String scopeName = getFilterScopeName();
     if (scopeName != null) {
       for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
@@ -477,8 +464,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return null;
   }
 
-  @Nullable
-  private String getFilterScopeName() {
+  private @Nullable String getFilterScopeName() {
     return myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME;
   }
 
@@ -517,8 +503,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  @Nullable
-  private static FilePath getFilePath(@NotNull VirtualFilePointer filePointer) {
+  private static @Nullable FilePath getFilePath(@NotNull VirtualFilePointer filePointer) {
     String path = VirtualFileManager.extractPath(filePointer.getUrl());
     if (StringUtil.isEmpty(path)) return null; // pointer disposed
     return VcsUtil.getFilePath(path, false);

@@ -1,11 +1,12 @@
-from _typeshed import Self, SupportsRichComparison
+from _typeshed import Incomplete, SupportsRichComparison, sentinel
 from collections import deque
-from collections.abc import Callable, Container, Iterable, Sequence
+from collections.abc import Callable, Container, Iterable, Iterator, Mapping, MutableMapping, Sequence
 from typing import Any
-from typing_extensions import TypeAlias
+from typing_extensions import Self, TypeAlias, deprecated
 
-from jsonschema import _utils, protocols
-from jsonschema._types import TypeChecker
+from ._types import TypeChecker
+from ._utils import Unset
+from .protocols import Validator
 
 _RelevanceFuncType: TypeAlias = Callable[[ValidationError], SupportsRichComparison]
 
@@ -20,27 +21,27 @@ class _Error(Exception):
     relative_schema_path: deque[str | int]
     context: list[ValidationError] | None
     cause: Exception | None
-    validator: protocols.Validator | None
-    validator_value: Any
-    instance: Any
-    schema: Any
+    validator: Validator | Unset
+    validator_value: Any | Unset
+    instance: Any | Unset
+    schema: Mapping[str, Any] | bool | Unset
     parent: _Error | None
     def __init__(
         self,
         message: str,
-        validator: _utils.Unset | None | protocols.Validator = ...,
-        path: Sequence[str | int] = ...,
-        cause: Any | None = ...,
-        context: Sequence[ValidationError] = ...,
-        validator_value=...,
-        instance: Any = ...,
-        schema: Any = ...,
-        schema_path: Sequence[str | int] = ...,
-        parent: _Error | None = ...,
-        type_checker: _utils.Unset | TypeChecker = ...,
+        validator: str | Unset = sentinel,
+        path: Iterable[str | int] = (),
+        cause: Exception | None = None,
+        context: Sequence[ValidationError] = (),
+        validator_value: Any | Unset = sentinel,
+        instance: Any | Unset = sentinel,
+        schema: Mapping[str, Any] | bool | Unset = sentinel,
+        schema_path: Iterable[str | int] = (),
+        parent: _Error | None = None,
+        type_checker: TypeChecker | Unset = sentinel,
     ) -> None: ...
     @classmethod
-    def create_from(cls: type[Self], other: _Error) -> Self: ...
+    def create_from(cls, other: _Error) -> Self: ...
     @property
     def absolute_path(self) -> Sequence[str | int]: ...
     @property
@@ -49,7 +50,7 @@ class _Error(Exception):
     def json_path(self) -> str: ...
     # TODO: this type could be made more precise using TypedDict to
     # enumerate the types of the members
-    def _contents(self) -> dict[str, Any]: ...
+    def _contents(self) -> dict[str, Incomplete]: ...
 
 class ValidationError(_Error): ...
 class SchemaError(_Error): ...
@@ -58,28 +59,29 @@ class RefResolutionError(Exception):
     def __init__(self, cause: str) -> None: ...
 
 class UndefinedTypeCheck(Exception):
-    type: Any
+    type: Incomplete
     def __init__(self, type) -> None: ...
 
 class UnknownType(Exception):
-    type: Any
-    instance: Any
-    schema: Any
+    type: Incomplete
+    instance: Incomplete
+    schema: Incomplete
     def __init__(self, type, instance, schema) -> None: ...
 
 class FormatError(Exception):
-    message: Any
-    cause: Any
-    def __init__(self, message, cause: Any | None = ...) -> None: ...
+    message: Incomplete
+    cause: Incomplete
+    def __init__(self, message, cause: Incomplete | None = None) -> None: ...
 
 class ErrorTree:
-    errors: Any
-    def __init__(self, errors=...) -> None: ...
-    def __contains__(self, index): ...
+    errors: MutableMapping[str, ValidationError]
+    def __init__(self, errors: Iterable[ValidationError] = ()) -> None: ...
+    def __contains__(self, index: object) -> bool: ...
     def __getitem__(self, index): ...
-    def __setitem__(self, index, value) -> None: ...
-    def __iter__(self): ...
-    def __len__(self): ...
+    @deprecated("ErrorTree.__setitem__ is deprecated without replacement.")
+    def __setitem__(self, index: str | int, value: ErrorTree) -> None: ...
+    def __iter__(self) -> Iterator[str]: ...
+    def __len__(self) -> int: ...
     @property
     def total_errors(self): ...
 

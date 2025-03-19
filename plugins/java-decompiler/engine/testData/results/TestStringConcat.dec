@@ -12,16 +12,29 @@ public class TestStringConcat {
 
 class 'pkg/TestStringConcat' {
    method 'test1 (Ljava/lang/String;I)Ljava/lang/String;' {
+      7      4
+      b      4
       f      4
+      10      4
+      11      4
       12      4
    }
 
    method 'test2 (Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;' {
       7      8
+      8      8
+      c      8
       10      8
+      11      8
+      15      8
       19      8
+      1a      8
+      1e      8
       22      8
+      23      8
       27      8
+      28      8
+      29      8
       2a      8
    }
 }

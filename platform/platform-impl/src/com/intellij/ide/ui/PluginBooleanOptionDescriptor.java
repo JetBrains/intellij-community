@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,9 +30,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription
-  implements BooleanOptionDescription.RequiresRebuild,
-             NotABooleanOptionDescription {
+  implements BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
 
   private static final AtomicReference<Notification> ourPreviousNotification = new AtomicReference<>();
 
@@ -60,7 +61,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
       return;
     }
 
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
                                                                          getDependenciesToEnable(descriptors, pluginIdMap) :
                                                                          getDependentsToDisable(descriptors, pluginIdMap);
@@ -106,7 +107,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
     Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
 
-    DisabledPluginsState.addDisablePluginListener(new Runnable() {
+    DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
       @Override
       public void run() {
         Condition<? super PluginId> condition = pluginEnabler::isDisabled;
@@ -120,7 +121,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         Balloon balloon = switchNotification.getBalloon();
         if (balloon == null || balloon.isDisposed()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            DisabledPluginsState.removeDisablePluginListener(this);
+            DisabledPluginsState.Companion.removeDisablePluginListener(this);
           });
         }
       }
@@ -139,11 +140,12 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
+        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
         dependency.isEnabled() ||
         !result.add(dependency) ?
-        FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process it's dependencies */ :
+        FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */ :
         FileVisitResult.CONTINUE);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -36,9 +36,8 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     super(JavaBundle.messagePointer("action.create.new.package-info.title"), JavaBundle.messagePointer("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
-  @Nullable
   @Override
-  protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
+  protected @Nullable PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     final PsiDirectory[] directories = view.getDirectories();
     for (PsiDirectory directory : directories) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
@@ -104,9 +103,8 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
     return ActionUpdateThread.BGT;
   }
 
-  @Nullable
   @Override
-  public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
+  public @Nullable AttributesDefaults getAttributesDefaults(DataContext dataContext) {
     return new AttributesDefaults(INTERNAL_PACKAGE_INFO_TEMPLATE_NAME).withFixedName(true);
   }
 

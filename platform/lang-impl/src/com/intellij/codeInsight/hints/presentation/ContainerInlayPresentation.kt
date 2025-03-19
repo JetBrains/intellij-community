@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.presentation
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics2D
@@ -56,7 +57,7 @@ class ContainerInlayPresentation(
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     handleMouse(translated) { point ->
-      presentation.mouseClicked(event, point)
+      presentation.mouseMoved(event, point)
     }
   }
 

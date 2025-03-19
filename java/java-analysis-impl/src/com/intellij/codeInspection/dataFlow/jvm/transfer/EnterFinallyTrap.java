@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.jvm.transfer;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
@@ -10,9 +10,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiResourceList;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
@@ -35,22 +35,21 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
   }
 
   @Override
-  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                                     @NotNull DataFlowInterpreter interpreter,
-                                                     DfaControlTransferValue.@NotNull TransferTarget target,
-                                                     @NotNull FList<DfaControlTransferValue.Trap> nextTraps) {
+  public @Unmodifiable @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                                   @NotNull DataFlowInterpreter interpreter,
+                                                                   DfaControlTransferValue.@NotNull TransferTarget target,
+                                                                   @NotNull FList<DfaControlTransferValue.Trap> nextTraps) {
     state.push(interpreter.getFactory().controlTransfer(target, nextTraps));
     return List.of(new DfaInstructionState(interpreter.getInstruction(myJumpOffset.getInstructionOffset()), state));
   }
 
   @Override
-  public @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-    return List.of(myJumpOffset.getInstructionOffset());
+  public int @NotNull [] getPossibleTargets() {
+    return new int[] {myJumpOffset.getInstructionOffset()};
   }
 
-  @NotNull
   @Override
-  public PsiElement getAnchor() {
+  public @NotNull PsiElement getAnchor() {
     return myAnchor;
   }
 
@@ -69,10 +68,10 @@ public class EnterFinallyTrap implements DfaControlTransferValue.Trap {
     }
 
     @Override
-    public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
-                                                       @NotNull DataFlowInterpreter interpreter,
-                                                       DfaControlTransferValue.@NotNull TransferTarget target,
-                                                       @NotNull FList<DfaControlTransferValue.Trap> nextTraps) {
+    public @Unmodifiable @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                                     @NotNull DataFlowInterpreter interpreter,
+                                                                     DfaControlTransferValue.@NotNull TransferTarget target,
+                                                                     @NotNull FList<DfaControlTransferValue.Trap> nextTraps) {
       if (target instanceof ExceptionTransfer) {
         return DfaControlTransferValue.dispatch(state, interpreter, target, nextTraps);
       }

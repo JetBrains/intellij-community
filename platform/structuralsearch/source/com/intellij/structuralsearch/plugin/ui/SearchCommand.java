@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindManager;
@@ -20,10 +20,8 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 public class SearchCommand {
-  @NotNull
-  protected final SearchContext mySearchContext;
-  @NotNull
-  protected final Configuration myConfiguration;
+  protected final @NotNull SearchContext mySearchContext;
+  protected final @NotNull Configuration myConfiguration;
   private FindUsagesProcessPresentation myProcessPresentation;
 
   public SearchCommand(@NotNull Configuration configuration, @NotNull SearchContext searchContext) {
@@ -31,8 +29,7 @@ public class SearchCommand {
     mySearchContext = searchContext;
   }
 
-  @NotNull
-  protected UsageViewContext createUsageViewContext() {
+  protected @NotNull UsageViewContext createUsageViewContext() {
     final Runnable searchStarter = () -> new SearchCommand(myConfiguration, mySearchContext).startSearching();
     return new UsageViewContext(myConfiguration, mySearchContext, searchStarter);
   }

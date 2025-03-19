@@ -1,28 +1,45 @@
 // PROBLEM: none
-// API_VERSION: 1.8
+// WITH_STDLIB
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+// ERROR: This annotation is not repeatable
+
+@file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn(message = "Interfaces in this library are experimental for implementation")
-annotation class UnstableApi
+annotation class UnstableApiA
 
-@SubclassOptInRequired(UnstableApi::class)
+@RequiresOptIn(message = "Interfaces in this library are experimental for implementation")
+annotation class UnstableApiB
+
+@SubclassOptInRequired(UnstableApiA::class, UnstableApiB::class)
 interface CoreLibraryApi
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 interface SomeImplementationInterface : CoreLibraryApi
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 object SomeImplementationObject : CoreLibraryApi
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 class SomeImplementationClass : CoreLibraryApi
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 enum class SomeImplementationEnum : CoreLibraryApi
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 val apiUseSiteProperty = object : CoreLibraryApi {}
 
-@OptIn(UnstableApi::class)
+@OptIn(UnstableApiA::class)
+@OptIn(UnstableApiB::class)
 fun test() {
     val apiUseSiteProperty = object : CoreLibraryApi {}
 }

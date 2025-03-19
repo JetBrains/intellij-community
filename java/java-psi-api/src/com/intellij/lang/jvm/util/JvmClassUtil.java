@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -20,8 +20,7 @@ public final class JvmClassUtil {
 
   private JvmClassUtil() {}
 
-  @Nullable
-  public static String getJvmClassName(@NotNull JvmClass aClass) {
+  public static @Nullable String getJvmClassName(@NotNull JvmClass aClass) {
     final List<String> parts = new SmartList<>();
 
     JvmClass current = aClass;
@@ -45,8 +44,7 @@ public final class JvmClassUtil {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static Comparator<JvmClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
+  public static @NotNull Comparator<JvmClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
     return (c1, c2) -> {
       VirtualFile file1 = PsiUtilCore.getVirtualFile(c1.getSourceElement());
       VirtualFile file2 = PsiUtilCore.getVirtualFile(c2.getSourceElement());

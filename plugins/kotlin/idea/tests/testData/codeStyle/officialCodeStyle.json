@@ -45,6 +45,7 @@
         "kotlin.**",
         "^"
       ],
+      "indent_before_arrow_on_new_line": true,
       "indent_size": 4,
       "indent_style": "space",
       "insert_whitespaces_in_simple_one_line_method": true,
@@ -87,6 +88,7 @@
       "space_before_while_parentheses": true,
       "spaces_around_additive_operators": true,
       "spaces_around_assignment_operators": true,
+      "spaces_around_elvis": true,
       "spaces_around_equality_operators": true,
       "spaces_around_function_type_arrow": true,
       "spaces_around_logical_operators": true,

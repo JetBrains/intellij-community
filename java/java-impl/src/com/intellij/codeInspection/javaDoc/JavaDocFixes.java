@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -7,8 +7,9 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -25,7 +26,7 @@ public class JavaDocFixes {
   private JavaDocFixes(){
   }
 
-  public static class AddMissingTagFix implements LocalQuickFix {
+  public static class AddMissingTagFix extends PsiUpdateModCommandQuickFix {
     private final String myTag;
     private final String myValue;
 
@@ -35,45 +36,37 @@ public class JavaDocFixes {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocComment docComment = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocComment.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
       if (docComment != null) {
         PsiDocTag tag = JavaPsiFacade.getElementFactory(project).createDocTagFromText("@" + myTag + " " + myValue);
 
         PsiElement addedTag;
-        PsiElement anchor = getAnchor(descriptor);
+        PsiElement anchor = getAnchor(element);
         if (anchor != null) {
           addedTag = docComment.addBefore(tag, anchor);
         }
         else {
           addedTag = docComment.add(tag);
         }
-        moveCaretAfter(addedTag);
+        PsiElement sibling = addedTag.getNextSibling();
+        if (sibling != null) {
+          updater.moveCaretTo(sibling);
+        }
       }
     }
 
-    @Nullable
-    protected PsiElement getAnchor(ProblemDescriptor descriptor) {
+    protected @Nullable PsiElement getAnchor(PsiElement element) {
       return null;
     }
 
-    private static void moveCaretAfter(PsiElement newCaretPosition) {
-      if (!newCaretPosition.isPhysical()) return;
-      PsiElement sibling = newCaretPosition.getNextSibling();
-      if (sibling != null) {
-        ((Navigatable)sibling).navigate(true);
-      }
-    }
-
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.javadoc.problem.add.tag", myTag, myValue);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
@@ -86,16 +79,13 @@ public class JavaDocFixes {
       myName = name;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.javadoc.problem.add.param.tag.family");
     }
 
     @Override
-    @Nullable
-    protected PsiElement getAnchor(ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected @Nullable PsiElement getAnchor(PsiElement element) {
       PsiElement parent = element == null ? null : element.getParent();
       if (!(parent instanceof PsiDocComment docComment)) return null;
       final PsiJavaDocumentedElement owner = docComment.getOwner();
@@ -141,8 +131,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
   }
@@ -163,8 +152,7 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return QuickFixBundle.message("add.docTag.to.custom.tags", myTag);
     }
 
@@ -179,47 +167,41 @@ public class JavaDocFixes {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       //noinspection DialogTitleCapitalization
       return QuickFixBundle.message("fix.javadoc.family");
     }
   }
 
-  public static class RemoveTagFix implements LocalQuickFix {
+  public static class RemoveTagFix extends PsiUpdateModCommandQuickFix {
     private final String myTagName;
 
     RemoveTagFix(String tagName) {
       myTagName = tagName;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return JavaBundle.message("quickfix.text.remove.javadoc.0", myTagName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.remove.javadoc.tag");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag tag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (tag != null) {
         tag.delete();
       }
     }
   }
 
-  private static abstract class AbstractUnknownTagFix implements LocalQuickFix {
+  private abstract static class AbstractUnknownTagFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element == null) return;
-
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement enclosingTag = element.getParent();
       if (enclosingTag == null) return;
 

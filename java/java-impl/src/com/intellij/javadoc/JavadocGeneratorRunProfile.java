@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.io.*;
@@ -68,9 +69,8 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     return new MyJavaCommandLineState(myConfiguration, myProject, myGenerationScope, env);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaBundle.message("javadoc.settings.title");
   }
 
@@ -98,8 +98,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     }
 
     @Override
-    @NotNull
-    protected OSProcessHandler startProcess() throws ExecutionException {
+    protected @NotNull OSProcessHandler startProcess() throws ExecutionException {
       OSProcessHandler handler = JavaCommandLineStateUtil.startProcess(createCommandLine());
       ProcessTerminatedListener.attach(handler, myProject, JavaBundle.message("javadoc.generate.exited"));
       handler.addProcessListener(new ProcessAdapter() {
@@ -146,7 +145,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       }
       cmdLine.setExePath(tool.getPath());
 
-      if (myConfiguration.HEAP_SIZE != null && myConfiguration.HEAP_SIZE.trim().length() != 0) {
+      if (myConfiguration.HEAP_SIZE != null && !myConfiguration.HEAP_SIZE.trim().isEmpty()) {
         String param = JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_1_2) ? "-J-Xmx" : "-J-mx";
         cmdLine.getParametersList().prepend(param + myConfiguration.HEAP_SIZE + "m");
       }
@@ -156,7 +155,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
     private void setParameters(Sdk jdk, GeneralCommandLine cmdLine) throws CantRunException {
       ParametersList parameters = cmdLine.getParametersList();
 
-      if (myConfiguration.LOCALE != null && myConfiguration.LOCALE.length() > 0) {
+      if (myConfiguration.LOCALE != null && !myConfiguration.LOCALE.isEmpty()) {
         parameters.add("-locale");
         parameters.add(myConfiguration.LOCALE);
       }
@@ -251,7 +250,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
           LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
           if (languageLevel.isPreview()) {
             parameters.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
-            parameters.add("--source", String.valueOf(languageLevel.toJavaVersion().feature));
+            parameters.add("--source", String.valueOf(languageLevel.feature()));
             break;
           }
         }
@@ -320,8 +319,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       cmdLine.setCharset(cs);
     }
 
-    @NotNull
-    private static File createTempArgsFile() throws CantRunException {
+    private static @NotNull File createTempArgsFile() throws CantRunException {
       File argsFile;
       try {
         argsFile = FileUtil.createTempFile("javadoc_args", null);
@@ -332,8 +330,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return argsFile;
     }
 
-    @NotNull
-    private List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
+    private @Unmodifiable @NotNull List<VirtualFile> findSourceRoots(@NotNull Set<Module> modules) {
       OrderEnumerator sourcePathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules);
       if (!myConfiguration.OPTION_INCLUDE_LIBS) {
         sourcePathEnumerator = sourcePathEnumerator.withoutSdk().withoutLibraries();
@@ -344,8 +341,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return sourcePathEnumerator.getSourcePathsList().getRootDirs();
     }
 
-    @NotNull
-    private List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
+    private @Unmodifiable @NotNull List<VirtualFile> findClassRoots(@NotNull Set<Module> modules, @NotNull Sdk jdk) {
       OrderEnumerator classPathEnumerator = ProjectRootManager.getInstance(myProject).orderEntries(modules).withoutModuleSourceEntries();
       if (jdk.getSdkType() instanceof JavaSdk) {
         classPathEnumerator = classPathEnumerator.withoutSdk();
@@ -361,8 +357,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
      *
      * @see <a href="https://docs.oracle.com/javase/9/tools/javadoc.htm">javadoc tool guide</a>
      */
-    @Nullable
-    private static String computeModuleSourcePath(@NotNull Map<Module, VirtualFile> moduleDescriptors) {
+    private static @Nullable String computeModuleSourcePath(@NotNull Map<Module, VirtualFile> moduleDescriptors) {
       if (moduleDescriptors.isEmpty()) return null;
       Set<String> moduleSourcePathParts = new SmartHashSet<>();
       for (var entry : moduleDescriptors.entrySet()) {
@@ -376,8 +371,7 @@ public final class JavadocGeneratorRunProfile implements ModuleRunProfile {
       return String.join(File.pathSeparator, moduleSourcePathParts);
     }
 
-    @NotNull
-    private static String localPath(@NotNull VirtualFile root) {
+    private static @NotNull String localPath(@NotNull VirtualFile root) {
       // @argfile require forward slashes in quoted paths
       return VfsUtil.getLocalFile(root).getPath();
     }

@@ -7,7 +7,7 @@ import com.intellij.openapi.options.ConfigurationException;
 /**
  * @author Dmitry Avdeev
  */
-class TemplateConfigurable extends BaseRCSettingsConfigurable {
+final class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;
 
   TemplateConfigurable(RunnerAndConfigurationSettings template) {

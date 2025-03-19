@@ -4,6 +4,7 @@ package com.intellij.ui.content;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.NlsActions.ActionText;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -80,6 +82,13 @@ public interface ContentManager extends Disposable, BusyObject {
 
   Content @NotNull [] getContents();
 
+  /**
+   * Returns combined contents of this content manager and all nested content managers.
+   */
+  default @NotNull List<@NotNull Content> getContentsRecursively() {
+    return Arrays.asList(getContents());
+  }
+
   Content findContent(String displayName);
 
   @Nullable
@@ -131,6 +140,11 @@ public interface ContentManager extends Disposable, BusyObject {
   @NotNull
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
+  /**
+   * Implement {@link com.intellij.openapi.actionSystem.UiDataProvider#uiDataSnapshot(DataSink)}
+   * in some component instead, or use separate {@link com.intellij.openapi.actionSystem.UiDataRule}.
+   */
+  @ApiStatus.Obsolete
   void addDataProvider(@NotNull DataProvider provider);
 
   @NotNull

@@ -1,0 +1,25 @@
+### auto-generated section `build kotlin.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "copyright_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "kotlin.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//plugins/copyright",
+  ],
+  runtime_deps = [":copyright_resources"]
+)
+### auto-generated section `build kotlin.copyright` end

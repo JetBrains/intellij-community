@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public final class MultiSelectionEventHandler extends EventHandler {
   private PluginsGroupComponent myContainer;
   private PagePluginLayout myLayout;
@@ -91,10 +90,12 @@ public final class MultiSelectionEventHandler extends EventHandler {
           }
 
           DefaultActionGroup group = new DefaultActionGroup();
-          component.createPopupMenu(group, getSelection());
+          component.createPopupMenu(group, getSelectionWithoutEssential());
           if (group.getChildrenCount() == 0) {
             return;
           }
+
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreatePopupMenu(component, group, getSelectionWithoutEssential());
 
           ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("PluginManagerConfigurable", group);
           popupMenu.setTargetComponent(component);
@@ -185,7 +186,9 @@ public final class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(event, getSelection());
+          component.handleKeyAction(event, getSelectionWithoutEssential());
+
+          PluginsViewCustomizerKt.getListPluginComponentCustomizer().processHandleKeyAction(component, event, getSelectionWithoutEssential());
         }
       }
 
@@ -285,6 +288,11 @@ public final class MultiSelectionEventHandler extends EventHandler {
   public @NotNull List<ListPluginComponent> getSelection() {
     return myComponents.stream()
       .filter(component -> component.getSelection() == SelectionType.SELECTION).toList();
+  }
+
+  private @NotNull List<ListPluginComponent> getSelectionWithoutEssential() {
+    return getSelection().stream()
+      .filter(pluginComponent -> !pluginComponent.isEssential()).toList();
   }
 
   @Override

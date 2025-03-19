@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -40,8 +40,7 @@ public class ShowRelatedStackAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(stack != null);
   }
 
-  @Nullable
-  private static List<StackFrameItem> getRelatedStack(AnActionEvent e) {
+  private static @Nullable List<StackFrameItem> getRelatedStack(AnActionEvent e) {
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
       ValueDescriptorImpl descriptor = values.get(0).getDescriptor();

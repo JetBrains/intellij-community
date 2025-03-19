@@ -1,0 +1,7 @@
+{
+  "mainFile": "one/delegate/MovingComponent.kt",
+  "type": "MOVE_FILES",
+  "targetPackage": "zero",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

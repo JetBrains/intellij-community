@@ -8,14 +8,14 @@ class ConfigMigrationTest : BasePlatformTestCase() {
   fun `test global LT id migration`() {
     val before = GrazieConfig.State(
       enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.GERMANY_GERMAN),
-      userEnabledRules = setOf("PUNCTUATION_PARAGRAPH_END", "ENTSCHEIDEN_ENTSCHEIDEND", "InvalidRuleId"),
+      userEnabledRules = setOf("PUNCTUATION_PARAGRAPH_END", "ENTSCHEIDEN_ENTSCHEIDEND_SPELLING_RULE", "InvalidRuleId"),
       userDisabledRules = setOf("COMMA_WHICH", "Some.Other")
     )
     val after = GrazieConfig.migrateLTRuleIds(before)
     assertSameElements(
       after.userEnabledRules,
       "LanguageTool.EN.PUNCTUATION_PARAGRAPH_END",
-      "LanguageTool.DE.PUNCTUATION_PARAGRAPH_END", "LanguageTool.DE.ENTSCHEIDEN_ENTSCHEIDEND"
+      "LanguageTool.DE.PUNCTUATION_PARAGRAPH_END", "LanguageTool.DE.ENTSCHEIDEN_ENTSCHEIDEND_SPELLING_RULE"
     )
     assertSameElements(after.userDisabledRules, "LanguageTool.EN.COMMA_WHICH", "Some.Other")
   }

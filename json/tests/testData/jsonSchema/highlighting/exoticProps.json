@@ -1,12 +1,22 @@
 {
-  "a": <warning>5</warning>,
-  "b": <warning>"a"</warning>,
-  "c": <warning>"a"</warning>,
-  "d": <warning>"a"</warning>,
-  "e": <warning>5</warning>,
-  "f": <warning>5</warning>,
-  "g": <warning>5</warning>,
-  "h": <warning>"a"</warning>,
-  "i": <warning>"a"</warning>,
-  "j": <warning>"a"</warning>
+  "a": <warning descr="Incompatible types.
+ Required: string. Actual: integer.">5</warning>,
+  "b": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>,
+  "c": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>,
+  "d": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>,
+  "e": <warning descr="Incompatible types.
+ Required: string. Actual: integer.">5</warning>,
+  "f": <warning descr="Incompatible types.
+ Required: string. Actual: integer.">5</warning>,
+  "g": <warning descr="Incompatible types.
+ Required: string. Actual: integer.">5</warning>,
+  "h": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>,
+  "i": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>,
+  "j": <warning descr="Incompatible types.
+ Required: number. Actual: string.">"a"</warning>
 }

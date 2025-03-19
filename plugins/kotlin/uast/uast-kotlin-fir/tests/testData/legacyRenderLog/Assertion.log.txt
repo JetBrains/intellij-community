@@ -4,7 +4,8 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = s)
-                        ULiteralExpression (value = "Not Null")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "Not Null")
                 UReturnExpression
                     UPostfixExpression (operator = !!)
                         USimpleNameReferenceExpression (identifier = s)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
 import com.intellij.compiler.CompilerConfiguration
@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 
 
-class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project?>() {
+internal class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project?>() {
   override fun getTargetDataKey(): Key<JavaModuleData> = JavaModuleData.KEY
 
   override fun importData(
@@ -32,29 +32,45 @@ class JavaModuleDataService : AbstractProjectDataService<JavaModuleData, Project
 
       importLanguageLevel(module, javaModuleData, modelsProvider)
       importTargetBytecodeVersion(module, javaModuleData)
+      importCompilerArguments(module, javaModuleData)
     }
   }
 
   private fun importLanguageLevel(module: Module, javaModuleData: JavaModuleData, modelsProvider: IdeModifiableModelsProvider) {
-    val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
-    val languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(module.project)
-    val languageLevelModuleExtension = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
-    val languageLevel = javaModuleData.languageLevel?.let { JavaProjectDataService.adjustLevelAndNotify(module.project, it) }
-    val projectLanguageLevel = languageLevelProjectExtension.languageLevel
-    languageLevelModuleExtension.languageLevel =
-      when (languageLevel) {
-        projectLanguageLevel -> null
-        else -> languageLevel
-      }
+    val projectLanguageLevelExtension = LanguageLevelProjectExtension.getInstance(module.project)
+    val projectLanguageLevel = projectLanguageLevelExtension.languageLevel
+    val moduleModel = modelsProvider.getModifiableRootModel(module)
+    val moduleLanguageLevelExtension = moduleModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
+    val moduleLanguageLevel = javaModuleData.languageLevel?.let { JavaProjectDataServiceUtil.adjustLevelAndNotify(module.project, it) }
+    if (moduleLanguageLevel == projectLanguageLevel) {
+      moduleLanguageLevelExtension.languageLevel = null
+    }
+    else {
+      moduleLanguageLevelExtension.languageLevel = moduleLanguageLevel
+    }
   }
 
   private fun importTargetBytecodeVersion(module: Module, javaModuleData: JavaModuleData) {
     val compilerConfiguration = CompilerConfiguration.getInstance(module.project)
     val projectTargetBytecodeVersion = compilerConfiguration.projectBytecodeTarget
-    val targetBytecodeVersion = javaModuleData.targetBytecodeVersion
-    compilerConfiguration.setBytecodeTargetLevel(module, when (targetBytecodeVersion) {
-      projectTargetBytecodeVersion -> null
-      else -> targetBytecodeVersion
-    })
+    val moduleTargetBytecodeVersion = javaModuleData.targetBytecodeVersion
+    if (moduleTargetBytecodeVersion == projectTargetBytecodeVersion) {
+      compilerConfiguration.setBytecodeTargetLevel(module, null)
+    }
+    else {
+      compilerConfiguration.setBytecodeTargetLevel(module, moduleTargetBytecodeVersion)
+    }
+  }
+
+  private fun importCompilerArguments(module: Module, javaModuleData: JavaModuleData) {
+    val compilerConfiguration = CompilerConfiguration.getInstance(module.project)
+    val projectCompilerArguments = compilerConfiguration.getAdditionalOptions()
+    val moduleCompilerArguments = javaModuleData.compilerArguments
+    if (moduleCompilerArguments == projectCompilerArguments) {
+      compilerConfiguration.removeAdditionalOptions(module)
+    }
+    else {
+      compilerConfiguration.setAdditionalOptions(module, moduleCompilerArguments)
+    }
   }
 }

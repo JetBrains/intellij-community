@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public abstract class LocalTerminalCustomizer {
    * @param envs    mutable map of environment variables
    * @return new command to run. Original {@code command} should be returned if no alterations performed
    * @apiNote terminal starting shell session with user-specified shell. Under the hood we are running shell with custom rcfile, e.g.:
-   * {@code /usr/bin/bash --rcfile PATH_TO/community/plugins/terminal/resources/bash/jediterm-bash.in}. See the {@code jediterm-bash.in} script
+   * {@code /usr/bin/bash --rcfile PATH_TO/bash-integration.bash}. See the {@code bash-integration.bash} script
    * for more information on how to alter the execution process.
    */
   public String[] customizeCommandAndEnvironment(@NotNull Project project,
@@ -44,6 +45,14 @@ public abstract class LocalTerminalCustomizer {
    * @return configurable for customizer-specific options
    */
   public @Nullable UnnamedConfigurable getConfigurable(@NotNull Project project) {
+    return null;
+  }
+
+  /**
+   * @return settings that will be shown together with other New Terminal settings.
+   */
+  @ApiStatus.Experimental
+  public @Nullable UnnamedConfigurable getBlockTerminalConfigurable(@NotNull Project project) {
     return null;
   }
 

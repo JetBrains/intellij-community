@@ -3,7 +3,6 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -37,7 +36,7 @@ interface PythonConsoleRemoteProcessCreator<T> {
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>(
+    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create(
       "Pythonid.remoteConsoleProcessCreator")
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -23,6 +9,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -83,8 +70,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
   }
 
   @Override
-  @NotNull
-  public JComponent createEditor() {
+  public @NotNull JComponent createEditor() {
     myModules.fillModules(myPRC.getProject(), PluginModuleType.getInstance());
     JPanel wholePanel = new JPanel(new GridBagLayout());
     myVMParameters.setText(DevKitBundle.message("vm.parameters"));
@@ -117,7 +103,7 @@ public class PluginRunConfigurationEditor extends SettingsEditor<PluginRunConfig
     wholePanel.add(myJrePathEditor, gc);
     gc.weighty = 1;
     gc.gridy = 5;
-    wholePanel.add(Box.createVerticalBox(), gc);
+    wholePanel.add(JBBox.createVerticalBox(), gc);
     return wholePanel;
   }
 

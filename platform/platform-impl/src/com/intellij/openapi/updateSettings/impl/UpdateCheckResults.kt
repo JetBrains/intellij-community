@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.externalComponents.ExternalComponentSource
@@ -16,8 +16,7 @@ class UpdateChain internal constructor(
 
 @ApiStatus.Internal
 sealed class PlatformUpdates {
-
-  object Empty : PlatformUpdates()
+  data object Empty : PlatformUpdates()
 
   data class Loaded @JvmOverloads internal constructor(
     val newBuild: BuildInfo,
@@ -35,18 +34,20 @@ sealed class PlatformUpdates {
  *
  * [incompatible] - plugins that would become incompatible and don't have updates compatible with the specified build
  */
+// TODO separation into enabled and disabled as part of this class seems unnecessary
 @ApiStatus.Internal
 data class PluginUpdates @JvmOverloads internal constructor(
   val allEnabled: Collection<PluginDownloader> = emptyList(),
   val allDisabled: Collection<PluginDownloader> = emptyList(),
   val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
 ) {
-
   val all: List<PluginDownloader> by lazy {
     allEnabled + allDisabled
   }
 }
 
+// FIXME InternalPluginResults should not be exposed as a return value from non-internal API (or should be an interface instead) :(
+//       this also applies to neighbor classes
 @ApiStatus.Internal
 data class InternalPluginResults @JvmOverloads internal constructor(
   val pluginUpdates: PluginUpdates,

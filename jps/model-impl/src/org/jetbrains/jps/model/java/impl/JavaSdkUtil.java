@@ -1,13 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -17,10 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class JavaSdkUtil {
-  /** @deprecated use {@link #getJdkClassesRoots(Path, boolean)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<File> getJdkClassesRoots(@NotNull File home, boolean isJre) {
-    return ContainerUtil.map(getJdkClassesRoots(home.toPath(), isJre), Path::toFile);
+  private JavaSdkUtil() {
   }
 
   public static @NotNull List<Path> getJdkClassesRoots(@NotNull Path home, boolean isJre) {
@@ -72,14 +67,15 @@ public final class JavaSdkUtil {
       }
     }
 
-    if (ContainerUtil.exists(rootFiles, path -> path.getFileName().toString().startsWith("ibm"))) {
+    if (rootFiles.stream().map(path -> path.getFileName().toString()).anyMatch(name -> name.startsWith("ibm"))) {
       // ancient IBM JDKs split JRE classes between `rt.jar` and `vm.jar`, and the latter might be anywhere
       try (var paths = Files.walk(isJre ? home : home.resolve("jre"))) {
         paths.filter(path -> path.getFileName().toString().equals("vm.jar"))
           .findFirst()
           .ifPresent(rootFiles::add);
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     Path classesZip = home.resolve("lib/classes.zip");

@@ -22,14 +22,6 @@ public final class TestActionEvent extends AnActionEvent {
   }
 
   /**
-   * @deprecated use {@link #createTestEvent(AnAction)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public TestActionEvent(@NotNull AnAction action) {
-    this(DataManager.getInstance().getDataContext(), action);
-  }
-
-  /**
    * @deprecated use {@link #createTestEvent(DataContext)} instead
    */
   @Deprecated(forRemoval = true)
@@ -65,13 +57,14 @@ public final class TestActionEvent extends AnActionEvent {
   public static @NotNull AnActionEvent createTestEvent(@Nullable AnAction action,
                                                        @Nullable DataContext context,
                                                        @Nullable InputEvent inputEvent) {
-    return AnActionEvent.createFromInputEvent(
-      inputEvent, PLACE, action == null ? null : action.getTemplatePresentation().clone(),
-      context != null ? context : DataManager.getInstance().getDataContext(), false, false);
+    return createEvent(
+      context != null ? context : DataManager.getInstance().getDataContext(),
+      action == null ? null : action.getTemplatePresentation().clone(),
+      PLACE, ActionUiKind.NONE, inputEvent);
   }
 
   public static @NotNull AnActionEvent createTestToolbarEvent(@Nullable Presentation presentation) {
-    return AnActionEvent.createFromInputEvent(
-      null, PLACE, presentation, DataManager.getInstance().getDataContext(), false, true);
+    DataContext dataContext = DataManager.getInstance().getDataContext();
+    return createEvent(dataContext, presentation, PLACE, ActionUiKind.TOOLBAR, null);
   }
 }

@@ -6,17 +6,13 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
-import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.core.targetDescriptors
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
+import org.jetbrains.kotlin.idea.imports.KotlinIdeDefaultImportProvider
 import org.jetbrains.kotlin.idea.imports.getImportableTargets
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -34,35 +30,52 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.utils.*
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport as _addImport
 
 class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper() {
     private fun getCodeStyleSettings(contextFile: KtFile): KotlinCodeStyleSettings = contextFile.kotlinCustomSettings
-
-    override fun getImportSortComparator(contextFile: KtFile): Comparator<ImportPath> = ImportPathComparator(
-        getCodeStyleSettings(contextFile).PACKAGES_IMPORT_LAYOUT
-    )
 
     override fun isImportedWithDefault(importPath: ImportPath, contextFile: KtFile): Boolean =
         isInDefaultImports(importPath, contextFile)
 
     override fun isImportedWithLowPriorityDefaultImport(importPath: ImportPath, contextFile: KtFile): Boolean {
-        val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
-        return importPath.isImported(analyzerServices.defaultLowPriorityImports, analyzerServices.excludedImports)
+        return KotlinIdeDefaultImportProvider.getInstance().isImportedWithLowPriorityDefaultImport(importPath, contextFile)
     }
 
-    override fun mayImportOnShortenReferences(descriptor: DeclarationDescriptor, contextFile: KtFile): Boolean {
-        return when (descriptor.getImportableDescriptor()) {
+    override fun mayImportOnShortenReferences(
+        descriptor: DeclarationDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean {
+        return when (val importableDescriptor = descriptor.getImportableDescriptor()) {
             is PackageViewDescriptor -> false // now package cannot be imported
 
-            is ClassDescriptor -> {
-                descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor || getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES
-            }
+            is ClassDescriptor -> allowClassImport(importableDescriptor, contextFile, overrideAllowImportOfNestedDeclarations)
 
-            else -> descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
+            else -> overrideAllowImportOfNestedDeclarations || descriptor.getImportableDescriptor().containingDeclaration is PackageFragmentDescriptor // do not import members (e.g. java static members)
         }
+    }
+
+    private fun allowClassImport(
+        classDescriptor: ClassDescriptor,
+        contextFile: KtFile,
+        overrideAllowImportOfNestedDeclarations: Boolean,
+    ): Boolean {
+        val nested = classDescriptor.containingDeclaration !is PackageFragmentDescriptor
+        // If nested classes are blanket-prohibited from being imported, don't import any.
+        if (nested) {
+            if (!overrideAllowImportOfNestedDeclarations && !getCodeStyleSettings(contextFile).IMPORT_NESTED_CLASSES) return false
+        }
+        val classInfo = ClassImportFilter.ClassInfo(
+            classDescriptor.fqNameSafe,
+            classDescriptor.kind,
+            classDescriptor.modality,
+            classDescriptor.visibility.delegate,
+            nested,
+        )
+        return ClassImportFilter.allowClassImport(classInfo, contextFile)
     }
 
     override fun importDescriptor(
@@ -260,9 +273,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             if (containerFqName.isRoot) return false
 
             val container = target.containingDeclaration
-            if (container is ClassDescriptor && container.kind == ClassKind.OBJECT) return false // cannot import with '*' from object
-
-            return true
+            return !(container is ClassDescriptor && container.kind == ClassKind.OBJECT) // cannot import with '*' from object
         }
 
         private fun addStarImport(targetDescriptor: DeclarationDescriptor): ImportDescriptorResult {
@@ -296,7 +307,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
             }
 
             val futureCheckMap = HashMap<KtSimpleNameExpression, Pair<FqName, Class<out Any>>>()
-            file.accept(object : KtVisitorVoid() {
+            file.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
                 override fun visitElement(element: PsiElement): Unit = element.acceptChildren(this)
                 override fun visitImportList(importList: KtImportList) {}
                 override fun visitPackageDirective(directive: KtPackageDirective) {}
@@ -398,7 +409,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
             val classesToCheck = importedClasses.associateByTo(mutableMapOf()) { it.name }
             val result = LinkedHashSet<ClassifierDescriptor>()
-            file.accept(object : KtVisitorVoid() {
+            file.accept(object : KtVisitorVoid(), PsiRecursiveVisitor {
                 override fun visitElement(element: PsiElement) {
                     if (classesToCheck.isEmpty()) return
                     element.acceptChildren(this)
@@ -459,74 +470,19 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
     companion object {
         fun isInDefaultImports(importPath: ImportPath, contextFile: KtFile): Boolean {
-            val (defaultImports, excludedImports) = computeDefaultAndExcludedImports(contextFile)
-            return importPath.isImported(defaultImports, excludedImports)
+            return KotlinIdeDefaultImportProvider.getInstance().isImportedWithDefault(importPath, contextFile)
         }
 
         fun computeDefaultAndExcludedImports(contextFile: KtFile): Pair<List<ImportPath>, List<FqName>> {
-            val languageVersionSettings = contextFile.getResolutionFacade().languageVersionSettings
-            val analyzerServices = contextFile.platform.findAnalyzerServices(contextFile.project)
-            val allDefaultImports = analyzerServices.getDefaultImports(languageVersionSettings, includeLowPriorityImports = true)
-
-            val scriptExtraImports = contextFile.takeIf { it.isScript() }?.let { ktFile ->
-                val scriptDependencies = ScriptDependenciesProvider.getInstance(ktFile.project)
-                    ?.getScriptConfiguration(ktFile.originalFile as KtFile)
-                scriptDependencies?.defaultImports?.map { ImportPath.fromString(it) }
-            }.orEmpty()
-
-            return (allDefaultImports + scriptExtraImports) to analyzerServices.excludedImports
+            return KotlinIdeDefaultImportProvider.getInstance().computeDefaultAndExcludedImports(contextFile)
         }
 
+        @Deprecated(
+            "Please use `org.jetbrains.kotlin.idea.base.psi.addImport`",
+            replaceWith = ReplaceWith("this.addImport", "org.jetbrains.kotlin.idea.base.psi.imports.addImport")
+        )
         fun addImport(project: Project, file: KtFile, fqName: FqName, allUnder: Boolean = false, alias: Name? = null): KtImportDirective {
-            val importPath = ImportPath(fqName, allUnder, alias)
-
-            val psiFactory = KtPsiFactory(project)
-            if (file is KtCodeFragment) {
-                val newDirective = psiFactory.createImportDirective(importPath)
-                file.addImportsFromString(newDirective.text)
-                return newDirective
-            }
-
-            val importList = file.importList
-            if (importList != null) {
-                val newDirective = psiFactory.createImportDirective(importPath)
-                val imports = importList.imports
-                return if (imports.isEmpty()) {
-                    val packageDirective = file.packageDirective?.takeIf { it.packageKeyword != null }
-                    packageDirective?.let {
-                        file.addAfter(psiFactory.createNewLine(2), it)
-                    }
-
-                    (importList.add(newDirective) as KtImportDirective).also {
-                        if (packageDirective == null) {
-                            val whiteSpace = importList.nextLeaf(true)
-                            if (whiteSpace is PsiWhiteSpace) {
-                                val newLineBreak = if (whiteSpace.isMultiLine()) {
-                                    psiFactory.createWhiteSpace("\n" + whiteSpace.text)
-                                } else {
-                                    psiFactory.createWhiteSpace("\n\n" + whiteSpace.text)
-                                }
-
-                                whiteSpace.replace(newLineBreak)
-                            } else {
-                                file.addAfter(psiFactory.createNewLine(2), importList)
-                            }
-                        }
-                    }
-                } else {
-                    val importPathComparator = ImportInsertHelperImpl(project).getImportSortComparator(file)
-                    val insertAfter = imports.lastOrNull {
-                        val directivePath = it.importPath
-                        directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
-                    }
-
-                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also {
-                        importList.addBefore(psiFactory.createNewLine(1), it)
-                    }
-                }
-            } else {
-                error("Trying to insert import $fqName into a file ${file.name} of type ${file::class.java} with no import list.")
-            }
+            return file._addImport(fqName, allUnder, alias, project)
         }
     }
 }

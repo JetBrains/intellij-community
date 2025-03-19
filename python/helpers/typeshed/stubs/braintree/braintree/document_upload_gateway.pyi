@@ -1,12 +1,7 @@
-from typing import Any
-
-from braintree.document_upload import DocumentUpload as DocumentUpload
-from braintree.error_result import ErrorResult as ErrorResult
-from braintree.resource import Resource as Resource
-from braintree.successful_result import SuccessfulResult as SuccessfulResult
+from _typeshed import Incomplete
 
 class DocumentUploadGateway:
-    gateway: Any
-    config: Any
+    gateway: Incomplete
+    config: Incomplete
     def __init__(self, gateway) -> None: ...
-    def create(self, params: Any | None = ...): ...
+    def create(self, params: Incomplete | None = None): ...

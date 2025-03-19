@@ -48,8 +48,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JComponent root;
     if (myInputOptions != null && myOutputOptions != null) {
       root = new JBTabbedPane();

@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UExpression;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public interface RefFunctionalExpression extends RefJavaElement, RefOverridable 
    * @return list of parameters of the functional expression
    */
   @NotNull
+  @Unmodifiable
   List<RefParameter> getParameters();
 
   /**
@@ -29,4 +31,6 @@ public interface RefFunctionalExpression extends RefJavaElement, RefOverridable 
    * Note that a method reference always contains a body.
    */
   boolean hasEmptyBody();
+  
+  boolean isMethodReference();
 }

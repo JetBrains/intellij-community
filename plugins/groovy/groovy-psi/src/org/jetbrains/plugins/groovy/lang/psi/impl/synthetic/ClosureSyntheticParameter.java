@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement {
+public class ClosureSyntheticParameter extends GrLightParameter implements NavigationItem, GrRenameableLightElement, SyntheticElement {
   private static final Function<ClosureSyntheticParameter,PsiType> TYPES_CALCULATOR = parameter -> {
     PsiType typeGroovy = GrVariableEnhancer.getEnhancedType(parameter);
     if (typeGroovy instanceof PsiIntersectionType) {
@@ -41,6 +42,15 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    GrClosableBlock block = myClosure.getElement();
+    if (block == null) {
+      throw new IllegalStateException("No parent closure");
+    }
+    return new ClosureSyntheticParameter(PsiTreeUtil.findSameElementInCopy(block, copy), isOptional());
+  }
+
+  @Override
   public PsiElement setName(@NotNull String newName) throws IncorrectOperationException {
     if (!newName.equals(getName())) {
       GrParameter parameter = GroovyPsiElementFactory.getInstance(getProject()).createParameter(newName, (String)null, null);
@@ -54,16 +64,14 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     assert isValid();
 
     return TypeInferenceHelper.getCurrentContext().getExpressionType(this, TYPES_CALCULATOR);
   }
 
   @Override
-  @Nullable
-  public PsiType getDeclaredType() {
+  public @Nullable PsiType getDeclaredType() {
     return null;
   }
 
@@ -73,8 +81,7 @@ public class ClosureSyntheticParameter extends GrLightParameter implements Navig
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     GrClosableBlock closure = myClosure.getElement();
     if (closure == null) {
       throw new IncorrectOperationException("Pointer is invalidated");

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -24,11 +24,11 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -48,7 +48,7 @@ import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
+public final class PyMoveSymbolDelegate extends MoveHandlerDelegate {
   @Override
   public boolean canMove(PsiElement[] elements, @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     if (targetContainer != null && !super.canMove(elements, targetContainer, reference)) {
@@ -160,8 +160,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
     return document.getLineNumber(selectionModel.getSelectionStart()) != document.getLineNumber(selectionModel.getSelectionEnd());
   }
 
-  @NotNull
-  private static List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
+  private static @NotNull List<PyElement> collectAllMovableElementsInSelection(@NotNull Editor editor, @NotNull PyFile pyFile) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
@@ -182,7 +181,7 @@ public class PyMoveSymbolDelegate extends MoveHandlerDelegate {
       return false;
     }
     final String funcName = function.getName();
-    if (funcName == null || PyUtil.isSpecialName(funcName)) {
+    if (funcName == null || PyUtilCore.isSpecialName(funcName)) {
       return false;
     }
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(function.getProject(), function.getContainingFile());

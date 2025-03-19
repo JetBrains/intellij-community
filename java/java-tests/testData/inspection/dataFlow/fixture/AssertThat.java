@@ -140,7 +140,7 @@ class Contracts {
     }
     Assertions.assertThat(array2).isNotEmpty();
     if (<warning descr="Condition 'array2.length == 0' is always 'false'">array2.length == 0</warning>) {}
-    Assertions.assertThat(array2).<warning descr="The call to 'isEmpty' always fails as an argument is out of bounds">isEmpty</warning>();
+    Assertions.assertThat(array2).<warning descr="The call to 'isEmpty' always fails with an exception">isEmpty</warning>();
   }
 
   void testString(String str, String str2) {
@@ -150,7 +150,7 @@ class Contracts {
     }
     Assertions.assertThat(str2).isNotEmpty();
     if (<warning descr="Condition 'str2.length() == 0' is always 'false'">str2.length() == 0</warning>) {}
-    Assertions.assertThat(str2).<warning descr="The call to 'isEmpty' always fails as an argument is out of bounds">isEmpty</warning>();
+    Assertions.assertThat(str2).<warning descr="The call to 'isEmpty' always fails with an exception">isEmpty</warning>();
   }
 
   void testList(List<String> list, List<String> list2) {
@@ -160,7 +160,7 @@ class Contracts {
     }
     Assertions.assertThat(list2).isNotEmpty();
     if (<warning descr="Condition 'list2.size() == 0' is always 'false'">list2.size() == 0</warning>) {}
-    Assertions.assertThat(list2).<warning descr="The call to 'isEmpty' always fails as an argument is out of bounds">isEmpty</warning>();
+    Assertions.assertThat(list2).<warning descr="The call to 'isEmpty' always fails with an exception">isEmpty</warning>();
   }
   
   void testAtomicBoolean() {

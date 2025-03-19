@@ -15,8 +15,10 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.values.ObjectValue
 
+@ApiStatus.Internal
 enum class ScopeType {
   GLOBAL,
   LOCAL,
@@ -28,9 +30,12 @@ enum class ScopeType {
   INSTANCE,
   BLOCK,
   SCRIPT,
+  STACK,
+  MODULE,
   UNKNOWN
 }
 
+@ApiStatus.Internal
 interface Scope {
   val type: ScopeType
 
@@ -44,11 +49,13 @@ interface Scope {
   val isGlobal: Boolean
 }
 
+@ApiStatus.Internal
 abstract class ScopeBase(override val type: ScopeType, override val description: String?) : Scope {
   override val isGlobal: Boolean
     get() = type === ScopeType.GLOBAL || type === ScopeType.LIBRARY
 }
 
+@ApiStatus.Internal
 class ObjectScope(type: ScopeType, private val value: ObjectValue) : ScopeBase(type, value.valueString), Scope {
   override val variablesHost: VariablesHost<*>
     get() = value.variablesHost

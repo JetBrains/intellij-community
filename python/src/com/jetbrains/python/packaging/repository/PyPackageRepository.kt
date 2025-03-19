@@ -9,9 +9,10 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.PythonSimplePackageSpecification
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 open class PyPackageRepository() : BaseState() {
   var name by string("")
   var repositoryUrl by string("")
@@ -59,7 +60,15 @@ open class PyPackageRepository() : BaseState() {
   }
 
   open fun createPackageSpecification(packageName: String,
-                                 version: String? = null): PythonPackageSpecification {
-    return PythonSimplePackageSpecification(packageName, version, this)
+                                      version: String? = null,
+                                      relation: PyRequirementRelation? = null): PythonPackageSpecification {
+    return PythonSimplePackageSpecification(packageName, version, this, relation)
+  }
+
+  open fun createForcedSpecPackageSpecification(packageName: String,
+                                      versionSpecs: String? = null): PythonPackageSpecification {
+    val spec = PythonSimplePackageSpecification(packageName, null, this)
+    spec.versionSpecs = versionSpecs
+    return spec
   }
 }

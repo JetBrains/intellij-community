@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.Disposable;
@@ -92,8 +92,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
   }
 
   private void registerBrowseDialog(@NotNull TextFieldWithBrowseButton component, @NlsContexts.DialogTitle @NotNull String dialogTitle) {
-    component.addBrowseFolderListener(dialogTitle, null, mySvnConfiguration.getProject(),
-                                      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    component.addBrowseFolderListener(mySvnConfiguration.getProject(), FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(dialogTitle));
   }
 
   private void enableOptions(Object source) {
@@ -140,9 +139,8 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     state.sshPrivateKeyPath = myPrivateKeyPathField.getText();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 
@@ -156,8 +154,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration>, Dispo
     setSelected(mySubversionConfigChoice, value);
   }
 
-  @NotNull
-  private SvnConfiguration.SshConnectionType getConnectionChoice() {
+  private @NotNull SvnConfiguration.SshConnectionType getConnectionChoice() {
     JBRadioButton selected = myPasswordChoice.isSelected()
                              ? myPasswordChoice
                              : myPrivateKeyChoice.isSelected()

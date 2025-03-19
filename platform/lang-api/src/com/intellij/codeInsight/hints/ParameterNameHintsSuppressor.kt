@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiFile
 
-internal val PARAMETER_HINTS_SUPPRESSORS_EP = ExtensionPointName<ParameterNameHintsSuppressor>("com.intellij.codeInsight.parameterNameHintsSuppressor")
+internal val PARAMETER_HINTS_SUPPRESSORS_EP: ExtensionPointName<ParameterNameHintsSuppressor> = ExtensionPointName("com.intellij.codeInsight.parameterNameHintsSuppressor")
 
 /**
  * Allows programmatic suppression of parameter hints in specific places.

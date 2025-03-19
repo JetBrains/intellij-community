@@ -26,9 +26,8 @@ public class XPath2RangeExpressionImpl extends XPath2ElementImpl implements XPat
     super(node);
   }
 
-  @NotNull
   @Override
-  public XPathExpression getFrom() {
+  public @NotNull XPathExpression getFrom() {
     return findChildrenByClass(XPathExpression.class)[0];
   }
 
@@ -48,21 +47,18 @@ public class XPath2RangeExpressionImpl extends XPath2ElementImpl implements XPat
     return getTo();
   }
 
-  @NotNull
   @Override
-  public XPathElementType getOperator() {
+  public @NotNull XPathElementType getOperator() {
     return (XPathElementType)XPath2TokenTypes.TO;
   }
 
-  @NotNull
   @Override
-  public String getOperationSign() {
+  public @NotNull String getOperationSign() {
     return "to";
   }
 
-  @NotNull
   @Override
-  public XPathType getType() {
+  public @NotNull XPathType getType() {
     return XPath2SequenceType.create(XPath2Type.INTEGER, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionException;
@@ -12,9 +12,7 @@ public abstract class ProcessProxyFactory {
     return ApplicationManager.getApplication().getService(ProcessProxyFactory.class);
   }
 
-  @Nullable
-  public abstract ProcessProxy createCommandLineProxy(JavaCommandLine javaCmdLine) throws ExecutionException;
+  public abstract @Nullable ProcessProxy createCommandLineProxy(JavaCommandLine javaCmdLine) throws ExecutionException;
 
-  @Nullable
-  public abstract ProcessProxy getAttachedProxy(ProcessHandler processHandler);
+  public abstract @Nullable ProcessProxy getAttachedProxy(ProcessHandler processHandler);
 }

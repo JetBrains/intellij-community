@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.value;
 
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
-class MapTargetValue<S, T> implements TargetValue<T> {
-  @NotNull private final TargetValue<? extends S> myOriginalValue;
-  @NotNull private final Function<? super S, ? extends T> myMapper;
+@ApiStatus.Internal
+public class MapTargetValue<S, T> implements TargetValue<T> {
+  private final @NotNull TargetValue<? extends S> myOriginalValue;
+  private final @NotNull Function<? super S, ? extends T> myMapper;
 
-  MapTargetValue(@NotNull TargetValue<? extends S> originalValue, @NotNull Function<? super S, ? extends T> mapper) {
+  public MapTargetValue(@NotNull TargetValue<? extends S> originalValue, @NotNull Function<? super S, ? extends T> mapper) {
     myOriginalValue = originalValue;
     myMapper = mapper;
   }

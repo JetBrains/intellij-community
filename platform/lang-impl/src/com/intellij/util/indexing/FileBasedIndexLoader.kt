@@ -1,15 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.ApplicationInitializedListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 
-internal class FileBasedIndexLoader : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    withContext(Dispatchers.IO) {
-      (FileBasedIndex.getInstance() as FileBasedIndexImpl).loadIndexes()
+private class FileBasedIndexLoader : ApplicationInitializedListener {
+  init {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
     }
+  }
+
+  override suspend fun execute() {
+    serviceAsync<FileBasedIndex>().loadIndexes()
   }
 }

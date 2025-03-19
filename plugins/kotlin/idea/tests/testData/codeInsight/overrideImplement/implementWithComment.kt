@@ -4,3 +4,5 @@ interface I {
 }
 
 class C<caret> : I // comment
+
+// MEMBER: "foo(): Unit"

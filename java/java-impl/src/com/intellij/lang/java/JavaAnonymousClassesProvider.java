@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
+public final class JavaAnonymousClassesProvider implements AnonymousElementProvider {
   @Override
   public PsiElement @NotNull [] getAnonymousElements(@NotNull PsiElement parent) {
     if (suite(parent)) {

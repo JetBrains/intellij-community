@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.google.common.util.concurrent.SettableFuture;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ExecutionException;
@@ -9,6 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public final class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   private final SettableFuture<V> myFuture;
 
@@ -17,7 +19,7 @@ public final class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
   }
 
   @Override
-  public void addConsumer(@NotNull Executor executor, @NotNull final ResultConsumer<? super V> consumer) {
+  public void addConsumer(@NotNull Executor executor, final @NotNull ResultConsumer<? super V> consumer) {
     myFuture.addListener(() -> {
       try {
         final V result = myFuture.get();

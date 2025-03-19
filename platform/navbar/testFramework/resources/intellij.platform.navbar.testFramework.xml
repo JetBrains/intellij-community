@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.navbar.frontend"/>
+  </dependencies>
+</idea-plugin>

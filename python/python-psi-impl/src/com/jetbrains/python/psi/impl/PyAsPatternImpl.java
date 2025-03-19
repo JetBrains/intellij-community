@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyAsPattern;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PyAsPatternImpl extends PyElementImpl implements PyAsPattern {
   public PyAsPatternImpl(ASTNode astNode) {
@@ -17,12 +19,7 @@ public class PyAsPatternImpl extends PyElementImpl implements PyAsPattern {
   }
 
   @Override
-  public @NotNull PyPattern getPattern() {
-    return findNotNullChildByClass(PyPattern.class);
-  }
-
-  @Override
-  public boolean isIrrefutable() {
-    return getPattern().isIrrefutable();
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+    return context.getType(getPattern());
   }
 }

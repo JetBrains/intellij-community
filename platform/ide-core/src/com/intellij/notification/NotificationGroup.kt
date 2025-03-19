@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts.*
 import org.jetbrains.annotations.ApiStatus
@@ -56,7 +57,11 @@ class NotificationGroup private constructor(val displayId: String,
 
   var isHideFromSettings: Boolean = false
 
-  val pluginId = pluginId ?: ApplicationManager.getApplication()?.let { PluginUtil.getInstance().findPluginId(Throwable()) }
+  val pluginId: PluginId? = pluginId ?: ApplicationManager.getApplication()?.let {
+    Cancellation.forceNonCancellableSectionInClassInitializer {
+      PluginUtil.getInstance().findPluginId(Throwable())
+    }
+  }
 
   init {
     if (registerGroup) {

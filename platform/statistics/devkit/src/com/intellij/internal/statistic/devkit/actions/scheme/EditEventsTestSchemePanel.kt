@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
@@ -19,6 +19,7 @@ import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.awt.BorderLayout
 import java.awt.CardLayout
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -38,7 +39,7 @@ class EditEventsTestSchemePanel(private val project: Project,
   private val CONTENT_KEY = "content"
 
   init {
-    val initialGroup = GroupValidationTestRule("", false)
+    val initialGroup = GroupValidationTestRule("", true)
     groupConfiguration = EventsTestSchemeGroupConfiguration(project, productionGroups, initialGroup, generatedScheme) { group ->
       groupsModel.contentsChanged(group)
     }
@@ -47,9 +48,10 @@ class EditEventsTestSchemePanel(private val project: Project,
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())
       .setAddAction {
-        val newGroup = GroupValidationTestRule("", false)
+        val newGroup = GroupValidationTestRule("", true)
         groupsModel.add(newGroup)
         groupsList.selectedIndex = groupsModel.getElementIndex(newGroup)
+        groupConfiguration.groupIdTextField.grabFocus()
       }
       .setRemoveAction {
         groupsModel.remove(groupsList.selectedIndex)
@@ -58,6 +60,7 @@ class EditEventsTestSchemePanel(private val project: Project,
         }
       }
       .disableUpDownActions()
+      .setMinimumSize(Dimension(200, 300))
       .createPanel()
 
     preferredSize = JBUI.size(700, 500)

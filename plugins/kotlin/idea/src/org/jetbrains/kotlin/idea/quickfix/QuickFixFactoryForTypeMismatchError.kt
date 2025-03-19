@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -139,21 +141,22 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 wrongPrimitiveLiteralFix = WrongPrimitiveLiteralFix(diagnosticElement, expectedType)
                 actions.add(wrongPrimitiveLiteralFix)
             }
-            actions.add(NumberConversionFix(diagnosticElement, expressionType, expectedType, wrongPrimitiveLiteralFix))
-            actions.add(RoundNumberFix(diagnosticElement, expectedType, wrongPrimitiveLiteralFix))
-        }
-
-        if (KotlinBuiltIns.isCharSequenceOrNullableCharSequence(expectedType) || KotlinBuiltIns.isStringOrNullableString(expectedType)) {
-            actions.add(AddToStringFix(diagnosticElement, false))
-            if (expectedType.isMarkedNullable && expressionType.isMarkedNullable) {
-                actions.add(AddToStringFix(diagnosticElement, true))
+            if (wrongPrimitiveLiteralFix?.isAvailable() != true) {
+                val elementContext = prepareNumberConversionElementContext(expressionType, expectedType)
+                actions.add(NumberConversionFix(diagnosticElement, elementContext).asIntention())
+                actions.add(RoundNumberFix(diagnosticElement, expectedType))
             }
         }
 
-        val convertKClassToClassFix = ConvertKClassToClassFix.create(file, expectedType, expressionType, diagnosticElement)
-        if (convertKClassToClassFix != null) {
-            actions.add(convertKClassToClassFix)
+        if (KotlinBuiltIns.isCharSequenceOrNullableCharSequence(expectedType) || KotlinBuiltIns.isStringOrNullableString(expectedType)) {
+            actions.add(AddToStringFix(diagnosticElement, false).asIntention())
+            if (expectedType.isMarkedNullable && expressionType.isMarkedNullable) {
+                actions.add(AddToStringFix(diagnosticElement, true).asIntention())
+            }
         }
+
+        val convertKClassToClassFix = ConvertKClassToClassFixFactory.create(file, expectedType, expressionType, diagnosticElement)
+        actions.addIfNotNull(convertKClassToClassFix)
 
         if (expectedType.isInterface()) {
             val expressionTypeDeclaration = expressionType.constructor.declarationDescriptor?.let {
@@ -164,10 +167,9 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             }
         }
 
-        actions.addAll(WrapWithCollectionLiteralCallFix.create(expectedType, expressionType, diagnosticElement))
-
-        ConvertCollectionFix.getConversionTypeOrNull(expressionType, expectedType)?.let {
-            actions.add(ConvertCollectionFix(diagnosticElement, it))
+        actions.addAll(WrapWithCollectionLiteralCallFixFactory.create(expectedType, expressionType, diagnosticElement))
+        ConvertCollectionFixFactory.createIfAvailable(diagnosticElement, expressionType, expectedType)?.let {
+            actions.add(it)
         }
 
         fun KtExpression.getTopMostQualifiedForSelectorIfAny(): KtExpression {
@@ -197,9 +199,9 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 val checkCalleeExpression =
                     diagnostic.factory == ErrorsJvm.NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS &&
                     targetExpression.parent?.safeAs<KtCallExpression>()?.calleeExpression == targetExpression
-                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it) }
+                getAddExclExclCallFix(targetExpression, checkCalleeExpression)?.let { actions.add(it.asIntention()) }
                 if (expectedType.isBoolean()) {
-                    actions.add(AddEqEqTrueFix(targetExpression))
+                    actions.add(AddEqEqTrueFix(targetExpression).asIntention())
                 }
             }
         }
@@ -293,8 +295,15 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             if (KotlinBuiltIns.isArray(expectedType) && expressionType.isSubtypeOf(expectedType.arguments[0].type)
                 || KotlinBuiltIns.isPrimitiveArray(expectedType)
             ) {
-                actions.add(AddArrayOfTypeFix(diagnosticElement, expectedType))
-                actions.add(WrapWithArrayLiteralFix(diagnosticElement))
+                val prefix = if (KotlinBuiltIns.isArray(expectedType)) {
+                    "arrayOf"
+                } else {
+                    val typeName = DescriptorRenderer.SHORT_NAMES_IN_TYPES.renderType(expectedType)
+                    "${typeName.replaceFirstChar { it.lowercase(Locale.US) }}Of"
+
+                }
+                actions.add(AddArrayOfTypeFix(diagnosticElement, prefix).asIntention())
+                actions.add(WrapWithArrayLiteralFix(diagnosticElement).asIntention())
             }
         }
 
@@ -332,7 +341,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                         && expressionType.arguments.isNotEmpty()
                         && expressionType.arguments[0].type.constructor == expectedType.constructor
                     ) {
-                        actions.add(ChangeToUseSpreadOperatorFix(diagnosticElement))
+                        actions.add(ChangeToUseSpreadOperatorFix(diagnosticElement).asIntention())
                     }
                 }
             }

@@ -1,13 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -20,8 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Service(Service.Level.PROJECT)
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
+public final class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
   private final State mySettings = new State();
 
   public static RunAnythingCache getInstance(Project project) {
@@ -56,9 +54,8 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
     mySettings.myKeys.put(key, visible);
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return mySettings;
   }
 
@@ -80,19 +77,16 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
       .forEach(provider -> settings.myKeys.put(provider.getCompletionGroupTitle(), true));
   }
 
-  public static class State {
-    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag")
-    @NotNull private final Map<String, Boolean> myKeys =
+  public static final class State {
+    @XMap(entryTagName = "visibility", keyAttributeName = "group", valueAttributeName = "flag") private final @NotNull Map<String, Boolean> myKeys =
       StreamEx.of(RunAnythingProvider.EP_NAME.getExtensions())
               .filter(provider -> provider.getCompletionGroupTitle() != null)
               .distinct(RunAnythingProvider::getCompletionGroupTitle)
               .collect(Collectors.toMap(RunAnythingProvider::getCompletionGroupTitle, group -> true));
 
-    @XCollection(elementName = "command")
-    @NotNull private final List<String> myCommands = new ArrayList<>();
+    @XCollection(elementName = "command") private final @NotNull List<String> myCommands = new ArrayList<>();
 
-    @NotNull
-    public List<String> getCommands() {
+    public @NotNull List<String> getCommands() {
       return myCommands;
     }
   }

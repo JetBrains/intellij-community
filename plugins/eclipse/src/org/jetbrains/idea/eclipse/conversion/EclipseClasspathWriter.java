@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.eclipse.conversion;
 
@@ -28,8 +28,7 @@ public class EclipseClasspathWriter {
 
   private final Map<String, Element> myOldEntries = new HashMap<>();
 
-  @NotNull
-  public Element writeClasspath(@NotNull ModuleRootModel model) {
+  public @NotNull Element writeClasspath(@NotNull ModuleRootModel model) {
     Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       createClasspathEntry(orderEntry, classpathElement, model);
@@ -60,7 +59,7 @@ public class EclipseClasspathWriter {
     return classpathElement;
   }
 
-  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, @NotNull final ModuleRootModel model) throws ConversionException {
+  private void createClasspathEntry(@NotNull OrderEntry entry, @NotNull Element classpathRoot, final @NotNull ModuleRootModel model) throws ConversionException {
     EclipseModuleManager eclipseModuleManager = EclipseModuleManagerImpl.getInstance(entry.getOwnerModule());
     if (entry instanceof ModuleSourceOrderEntry) {
       boolean shouldPlaceSeparately = eclipseModuleManager.isExpectedModuleSourcePlace(ArrayUtil.find(model.getOrderEntries(), entry));

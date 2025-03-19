@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider
@@ -14,24 +14,19 @@ import com.intellij.util.Processor
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASKS_ACTION
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 
-/**
- * @author Vladislav.Soroka
- */
-class GradleImplicitUsageProvider : ImplicitUsageProvider {
-  companion object {
-    val taskAnnotations = listOf("org.gradle.api.tasks.Input",
-                                 "org.gradle.api.tasks.InputFile",
-                                 "org.gradle.api.tasks.InputFiles",
-                                 "org.gradle.api.tasks.InputDirectory",
-                                 "org.gradle.api.tasks.OutputDirectory",
-                                 "org.gradle.api.tasks.OutputDirectories",
-                                 "org.gradle.api.tasks.OutputFile",
-                                 "org.gradle.api.tasks.LocalState",
-                                 "org.gradle.api.tasks.Destroys",
-                                 "org.gradle.api.tasks.Classpath",
-                                 "org.gradle.api.tasks.Console")
-  }
+private val taskAnnotations = listOf("org.gradle.api.tasks.Input",
+                                     "org.gradle.api.tasks.InputFile",
+                                     "org.gradle.api.tasks.InputFiles",
+                                     "org.gradle.api.tasks.InputDirectory",
+                                     "org.gradle.api.tasks.OutputDirectory",
+                                     "org.gradle.api.tasks.OutputDirectories",
+                                     "org.gradle.api.tasks.OutputFile",
+                                     "org.gradle.api.tasks.LocalState",
+                                     "org.gradle.api.tasks.Destroys",
+                                     "org.gradle.api.tasks.Classpath",
+                                     "org.gradle.api.tasks.Console")
 
+private class GradleImplicitUsageProvider : ImplicitUsageProvider {
   override fun isImplicitUsage(element: PsiElement): Boolean {
     var modifierList: PsiModifierList? = null
     if (element is GrField) {

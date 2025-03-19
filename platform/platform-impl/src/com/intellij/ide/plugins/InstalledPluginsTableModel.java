@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class InstalledPluginsTableModel {
 
-  protected static final boolean HIDE_IMPLEMENTATION_DETAILS = !Boolean.getBoolean("startup.performance.framework");
+  protected static final boolean HIDE_IMPLEMENTATION_DETAILS = !ApplicationManagerEx.isInIntegrationTest();
 
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
@@ -28,7 +29,7 @@ public class InstalledPluginsTableModel {
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
 
-    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       PluginId pluginId = plugin.getPluginId();
       if (appInfo.isEssentialPlugin(pluginId)) {
@@ -83,7 +84,7 @@ public class InstalledPluginsTableModel {
                   (descriptor, pair) -> {
                   });
 
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     List<IdeaPluginDescriptorImpl> impls = descriptors.stream()
       .map(descriptor -> descriptor instanceof IdeaPluginDescriptorImpl ?
                          (IdeaPluginDescriptorImpl)descriptor :
@@ -144,7 +145,7 @@ public class InstalledPluginsTableModel {
                                                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
     ArrayList<IdeaPluginDescriptorImpl> result = new ArrayList<>();
     for (IdeaPluginDescriptorImpl descriptor : descriptors) {
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         PluginEnabledState state = enabledMap.get(dependencyId);
 
@@ -167,14 +168,14 @@ public class InstalledPluginsTableModel {
       .map(IdeaPluginDescriptorImpl::getPluginId)
       .collect(Collectors.toUnmodifiableSet());
 
-    for (IdeaPluginDescriptorImpl descriptor : PluginManagerCore.getPluginSet().allPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : PluginManagerCore.INSTANCE.getPluginSet().allPlugins) {
       PluginId pluginId = descriptor.getPluginId();
       if (pluginIds.contains(pluginId) ||
           isDisabled(pluginId, enabledMap)) {
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         if (!isLoaded(dependencyId, enabledMap)) {
           return FileVisitResult.TERMINATE;

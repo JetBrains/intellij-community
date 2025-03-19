@@ -1,19 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.psi.PsiElement;
 
 /**
- * Elements which support external references should implement this interface.
+ * A marker interface for elements that support external references.
  * <p>
- * There are two kinds of element references: own references and external references.<br/>
- * Own references are references the element knows about, they are usually used by language support.
- * Element doesn't know about external references since, for example, they might be contributed by plugins.
- * External references are used for navigation/Find Usages/etc as well as own references.
+ * There are two kinds of element references:
+ * <ol>
+ *   <li>Own references - known by the element, part of the language.</li>
+ *   <li><b>External references</b> - unknown by the element, contributed by plugins.</li>
+ * </ol>
+ * Own and external references are used for navigation, finding usages, and so on.
  * <p>
  * The element must implement this interface to support hosting external references,
  * so this mechanism is effectively opt-in.
  *
+ * @see PsiSymbolReferenceProvider
  * @see PsiElement#getOwnReferences
  * @see UrlReferenceHost
  */

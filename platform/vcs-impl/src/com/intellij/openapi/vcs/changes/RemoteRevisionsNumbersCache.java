@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import static com.intellij.vcsUtil.VcsUtil.*;
 /**
  * for vcses where it is reasonable to ask revision of each item separately
  */
+@ApiStatus.Internal
 public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   public static final Logger LOG = Logger.getInstance(RemoteRevisionsNumbersCache.class);
 
@@ -39,9 +41,8 @@ public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker
   private final @NotNull Object myLock = new Object();
 
   public static final VcsRevisionNumber NOT_LOADED = new VcsRevisionNumber() {
-    @NotNull
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return "NOT_LOADED";
     }
 
@@ -51,9 +52,8 @@ public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker
     }
   };
   public static final VcsRevisionNumber UNKNOWN = new VcsRevisionNumber() {
-    @NotNull
     @Override
-    public String asString() {
+    public @NotNull String asString() {
       return "UNKNOWN";
     }
 
@@ -203,8 +203,7 @@ public final class RemoteRevisionsNumbersCache implements ChangesOnServerTracker
   }
 
   // +-
-  @NotNull
-  private LazyRefreshingSelfQueue<String> getQueue(final VcsRoot vcsRoot) {
+  private @NotNull LazyRefreshingSelfQueue<String> getQueue(final VcsRoot vcsRoot) {
     synchronized (myLock) {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;

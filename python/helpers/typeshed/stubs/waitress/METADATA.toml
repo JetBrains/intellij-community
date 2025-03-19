@@ -1,2 +1,6 @@
-version = "2.1.*"
-requires = []
+version = "3.0.*"
+upstream_repository = "https://github.com/Pylons/waitress"
+
+[tool.stubtest]
+# linux and darwin are equivalent
+platforms = ["linux", "win32"]

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.codeInsight.daemon.impl.GlobalUsageHelper;
@@ -48,8 +48,7 @@ public final class SpockUtils {
     return CachedValuesManager.getCachedValue(originalMethod, () -> Result.create(createVariableMap(originalMethod), originalMethod));
   }
 
-  @Nullable
-  public static String getNameByReference(@Nullable PsiElement expression) {
+  public static @Nullable String getNameByReference(@Nullable PsiElement expression) {
     if (!(expression instanceof GrReferenceExpression ref)) return null;
 
     PsiElement firstChild = expression.getFirstChild();

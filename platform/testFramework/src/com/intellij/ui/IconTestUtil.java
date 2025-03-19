@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ui.icons.CachedImageIcon;
@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,8 +48,7 @@ public final class IconTestUtil {
     return unwrapRetrievableIcon(icon);
   }
 
-  @NotNull
-  static List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
+  static @NotNull @Unmodifiable List<Icon> autopsyIconsFrom(@NotNull Icon icon) {
     if (icon instanceof RetrievableIcon) {
       return autopsyIconsFrom(((RetrievableIcon)icon).retrieveIcon());
     }
@@ -61,8 +61,7 @@ public final class IconTestUtil {
     return Collections.singletonList(icon);
   }
 
-  @NotNull
-  public static List<Icon> renderDeferredIcon(Icon icon) {
+  public static @NotNull @Unmodifiable List<Icon> renderDeferredIcon(Icon icon) {
     icon.paintIcon(new JLabel(), createMockGraphics(), 0, 0);  // force to eval
     TimeoutUtil.sleep(1000); // give chance to evaluate
     UIUtil.dispatchAllInvocationEvents();
@@ -71,8 +70,7 @@ public final class IconTestUtil {
     return autopsyIconsFrom(icon);
   }
 
-  @NotNull
-  public static Graphics createMockGraphics() {
+  public static @NotNull Graphics createMockGraphics() {
     return new Graphics() {
         @Override
         public Graphics create() {

@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
@@ -14,6 +15,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
+import com.jetbrains.python.packaging.PyPIPackageCache;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
@@ -59,6 +61,17 @@ public class PyQuickFixTest extends PyTestCase {
   public void testAddImportDocComment() {
     doInspectionTest(new String[]{"AddImportDocComment.py", "ImportTarget.py"}, PyUnresolvedReferencesInspection.class,
                      "Import 'ImportTarget'", true, true);
+  }
+
+  // PY-42307
+  public void testInstallAndImportPackageByNameAlias() {
+    //noinspection removal
+    PyPIPackageCache.reload(List.of("pandas", "pd"));
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.configureByText(PythonFileType.INSTANCE, "pd<caret>.array()");
+    myFixture.findSingleIntention("Import 'turtle.pd'"); // standard library
+    myFixture.findSingleIntention("Install and import package 'pd'"); // PyPI
+    myFixture.findSingleIntention("Install and import package 'pandas'"); // 'pd' is a common import alias for 'pandas' from PyPI
   }
 
   public void testImportFromModule() {
@@ -401,6 +414,12 @@ public class PyQuickFixTest extends PyTestCase {
                      PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true);
   }
 
+  public void testUnresolvedRefCreateAsyncFunction() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
+                                                PyPsiBundle.message("QFIX.NAME.unresolved.reference.create.function", "ref"), true, true));
+  }
+
   public void testUnresolvedRefNoCreateFunction() {
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.configureByFile("UnresolvedRefNoCreateFunction.py");
@@ -536,19 +555,19 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-3394
   public void testDocstringParams() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "b"), true, true));
   }
 
   public void testDocstringParams1() {
     getIndentOptions().INDENT_SIZE = 2;
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.remove.parameter", "c"), true, true));
   }
 
   // PY-4964
   public void testDocstringParams2() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT,
+    runWithDocStringFormat(DocStringFormat.REST,
                            () -> doInspectionTest(PyIncorrectDocstringInspection.class, PyPsiBundle.message("QFIX.docstring.add.parameter", "ham"), true, true));
   }
 
@@ -730,40 +749,40 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureKeywordAndPositionalParameters() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo, <b>bar</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of f(x, foo)</html>", true, true);
   }
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
-      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(x, *args, foo)</html>", true, true)
     );
   }
 
   // PY-8174
   public void testChangeSignatureNewParametersNames() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1, <b>i</b>, <b>i3</b>, <b>num</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(i1)</html>", true, true);
   }
 
   // PY-53671
   public void testChangeSignatureOfExportedBoundMethod() {
     runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b, <b>i</b>)</html>", "mod.py");
+      doMultiFilesInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of method(self, a, b)</html>", "mod.py");
     });
   }
 
   // PY-8174
   public void testChangeSignatureParametersDefaultValues() {
-    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func(<b>i</b>, <b>foo</b>)</html>", true, true);
+    doInspectionTest(PyArgumentListInspection.class, "<html>Change the signature of func()</html>", true, true);
   }
 
   public void testAddKwargsToNewMethodIncompatibleWithInit() {
-    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyInitNewSignatureInspection.class, "<html>Change the signature of __new__(cls)</html>", true, true);
   }
 
   public void testAddKwargsToIncompatibleOverridingMethod() {
-    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self, <b>**kwargs</b>)</html>", true, true);
+    doInspectionTest(PyMethodOverridingInspection.class, "<html>Change the signature of m(self)</html>", true, true);
   }
 
   // PY-30789
@@ -825,6 +844,7 @@ public class PyQuickFixTest extends PyTestCase {
       }
       if (applyFix) {
         myFixture.launchAction(intentionActions.get(0));
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
         myFixture.checkResultByFile(graftBeforeExt(testFiles[0], "_after"), true);
       }
     }

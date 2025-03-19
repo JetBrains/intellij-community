@@ -38,7 +38,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 import java.util.*;
 
-public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
+final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = Comparator.comparing(FeatureDescriptor::getDisplayName);
   private static final Comparator<FeatureDescriptor> GROUP_NAME_COMPARATOR = Comparator.comparing(ShowFeatureUsageStatisticsDialog::getGroupName);
   private static final Comparator<FeatureDescriptor> USAGE_COUNT_COMPARATOR = Comparator.comparingInt(FeatureDescriptor::getUsageCount);

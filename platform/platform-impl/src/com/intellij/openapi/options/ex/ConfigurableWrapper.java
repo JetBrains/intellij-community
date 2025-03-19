@@ -1,32 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPoint;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.newEditor.ConfigurableMarkerProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.function.Predicate;
 
 public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable, ConfigurableMarkerProvider {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep) {
     return wrapConfigurable(ep, false);
   }
 
-  @Nullable
-  public static <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
+  public static @Nullable <T extends UnnamedConfigurable> T wrapConfigurable(@NotNull ConfigurableEP<T> ep, boolean settings) {
     if (!ep.canCreateConfigurable()) {
       return null;
     }
@@ -37,20 +35,28 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return createConfigurable(ep, LOG.isDebugEnabled());
   }
 
-  @Nullable
-  private static <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
-    long time = System.currentTimeMillis();
-    T configurable = ep.createConfigurable();
-    if (configurable instanceof Configurable) {
-      ConfigurableCardPanel.warn((Configurable)configurable, "init", time);
-      if (log) {
-        LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
+  private static @Nullable <T extends UnnamedConfigurable> T createConfigurable(@NotNull ConfigurableEP<T> ep, boolean log) {
+    try {
+      long time = System.currentTimeMillis();
+      T configurable = ep.createConfigurable();
+      if (configurable instanceof Configurable) {
+        ConfigurableCardPanel.warn((Configurable)configurable, "init", time);
+        if (log) {
+          LOG.debug("cannot create configurable wrapper for " + configurable.getClass());
+        }
       }
+      return configurable;
     }
-    return configurable;
+    catch (CancellationException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return null;
+    }
   }
 
-  public static <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
+  public static @Unmodifiable <T extends UnnamedConfigurable> List<T> createConfigurables(@NotNull ExtensionPointName<? extends ConfigurableEP<T>> name) {
     Collection<? extends ConfigurableEP<T>> collection = name.getExtensionList();
     if (collection.isEmpty()) {
       return Collections.emptyList();
@@ -85,22 +91,20 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
   }
 
-  @Nullable
-  public static <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+  public static @Nullable <T> T cast(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
     if (configurable instanceof ConfigurableWrapper wrapper) {
       if (wrapper.myConfigurable == null) {
         Class<?> configurableType = wrapper.getExtensionPoint().getConfigurableType();
         if (configurableType != null) {
           if (!type.isAssignableFrom(configurableType)) {
-            return null; // do not create configurable that cannot be cast to the specified type
+            // do not create configurable that cannot be cast to the specified type
+            return null;
           }
         }
       }
       configurable = wrapper.getConfigurable();
     }
-    return type.isInstance(configurable)
-           ? type.cast(configurable)
-           : null;
+    return type.isInstance(configurable) ? type.cast(configurable) : null;
   }
 
   private final ConfigurableEP<?> myEp;
@@ -111,11 +115,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     myWeight = ep.groupWeight;
   }
 
-  @Nullable
-  private UnnamedConfigurable myConfigurable;
+  private @Nullable UnnamedConfigurable myConfigurable;
 
-  @Nullable
-  public UnnamedConfigurable getRawConfigurable() {
+  public @Nullable UnnamedConfigurable getRawConfigurable() {
     return myConfigurable;
   }
 
@@ -123,7 +125,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     if (myConfigurable == null) {
       myConfigurable = createConfigurable(myEp, false);
       if (myConfigurable == null) {
-        LOG.error("Can't instantiate configurable for " + myEp);
+        String message = "Can't instantiate configurable for " + myEp;
+        PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+        if (pluginDescriptor != null) {
+          LOG.error(new PluginException(message, pluginDescriptor.getPluginId()));
+        }
+        else {
+          LOG.error(message);
+        }
       }
       else if (LOG.isDebugEnabled()) {
         LOG.debug("created configurable for " + myConfigurable.getClass());
@@ -137,16 +146,24 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return myWeight;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nullable String getDisplayNameFast() {
+    return myEp.displayName == null && myEp.key == null ? null : myEp.getDisplayName();
+  }
+
+  @Override
+  public @Nls String getDisplayName() {
     if (myEp.displayName == null && myEp.key == null) {
       boolean loaded = myConfigurable != null;
       Configurable configurable = cast(Configurable.class, this);
       if (configurable != null) {
         String name = configurable.getDisplayName();
-        if (!loaded && LOG.isDebugEnabled()) {
-          LOG.debug("XML does not provide displayName for " + configurable.getClass());
+        if (!loaded) {
+          String message = "No display name specified in plugin descriptor XML file for configurable " + configurable.getClass().getName() + ";\n" +
+                           "specify it using 'displayName' or 'key' attribute to avoid necessity to load the configurable class when Settings dialog is opened";
+          PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
+          PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
+          LOG.error(new PluginException(message, pluginId));
         }
         return name;
       }
@@ -158,21 +175,18 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return myEp.providerClass;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myEp.getProject();
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof Configurable ? ((Configurable)configurable).getHelpTopic() : null;
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     UnnamedConfigurable configurable = getConfigurable();
     return configurable == null ? null : configurable.createComponent();
   }
@@ -209,9 +223,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     if (myEp.id != null) {
       return myEp.id;
     }
@@ -232,8 +245,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
              : myEp.implementationClass;
   }
 
-  @NotNull
-  public ConfigurableEP<?> getExtensionPoint() {
+  public @NotNull ConfigurableEP<?> getExtensionPoint() {
     return myEp;
   }
 
@@ -252,16 +264,14 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return getDisplayName();
   }
 
-  @Nullable
   @Override
-  public Runnable enableSearch(String option) {
+  public @Nullable Runnable enableSearch(String option) {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable ? ((SearchableConfigurable)configurable).enableSearch(option) : null;
   }
 
-  @NotNull
   @Override
-  public Class<?> getOriginalClass() {
+  public @NotNull Class<?> getOriginalClass() {
     final UnnamedConfigurable configurable = getConfigurable();
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getOriginalClass()
@@ -282,10 +292,12 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     markerText = text;
   }
 
-  private static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
+  @ApiStatus.Internal
+  public static final class CompositeWrapper extends ConfigurableWrapper implements Configurable.Composite {
 
     private Configurable[] myKids;
     private Comparator<Configurable> myComparator;
+    private Predicate<? super Configurable> myFilter;
     private boolean isInitialized;
 
     private CompositeWrapper(@NotNull ConfigurableEP ep, Configurable... kids) {
@@ -294,13 +306,13 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     }
 
     @Override
-    public Configurable @NotNull [] getConfigurables() {
+    public @NotNull Configurable @NotNull [] getConfigurables() {
       if (isInitialized) {
         return myKids;
       }
 
       long time = System.currentTimeMillis();
-      ArrayList<Configurable> list = new ArrayList<>();
+      ArrayList<@NotNull Configurable> list = new ArrayList<>();
       if (super.myEp.dynamic) {
         Composite composite = cast(Composite.class, this);
         if (composite != null) {
@@ -310,7 +322,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       if (super.myEp.children != null) {
         for (ConfigurableEP<?> ep : super.myEp.getChildren()) {
           if (ep.isAvailable()) {
-            list.add((Configurable)wrapConfigurable(ep));
+            ContainerUtil.addIfNotNull(list, (Configurable)wrapConfigurable(ep));
           }
         }
       }
@@ -329,7 +341,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         if (!extensions.isEmpty()) {
           if (extensions.get(0) instanceof ConfigurableEP) {
             for (Object object : extensions) {
-              list.add((Configurable)wrapConfigurable((ConfigurableEP<?>)object));
+              ContainerUtil.addIfNotNull(list, (Configurable)wrapConfigurable((ConfigurableEP<?>)object));
             }
           }
           else if (!super.myEp.dynamic) {
@@ -351,6 +363,9 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
           }
         }
       }
+      if (myFilter != null) {
+        list.removeIf(Predicate.not(myFilter));
+      }
       myKids = list.toArray(new Configurable[0]);
       isInitialized = true;
       ConfigurableCardPanel.warn(this, "children", time);
@@ -368,6 +383,10 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         myKids = ArrayUtil.append(myKids, configurable);
       }
       return this;
+    }
+
+    public void setFilter(Predicate<? super Configurable> filter) {
+      myFilter = filter;
     }
   }
 }

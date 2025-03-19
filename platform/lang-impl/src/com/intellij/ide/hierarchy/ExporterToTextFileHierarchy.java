@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -12,7 +10,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
-class ExporterToTextFileHierarchy implements ExporterToTextFile {
+final class ExporterToTextFileHierarchy implements ExporterToTextFile {
   private static final Logger LOG = Logger.getInstance(ExporterToTextFileHierarchy.class);
   private final HierarchyBrowserBase myHierarchyBrowserBase;
 
@@ -20,9 +18,8 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     myHierarchyBrowserBase = hierarchyBrowserBase;
   }
 
-  @NotNull
   @Override
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuilder buf = new StringBuilder();
     StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
@@ -30,7 +27,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     return buf.toString();
   }
 
-  private void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
+  private static void appendNode(StringBuilder buf, @NotNull TreeNode node, String lineSeparator, String indent) {
     String childIndent;
     if (node.getParent() != null) {
       childIndent = indent + "    ";
@@ -50,9 +47,8 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     }
   }
   
-  @NotNull
   @Override
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     return state != null && state.EXPORT_FILE_PATH != null ? state.EXPORT_FILE_PATH : "";
   }

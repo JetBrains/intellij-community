@@ -10,17 +10,17 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.module.BasePackageParameterFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.ProjectTemplatesFactory
 import com.intellij.platform.templates.ArchivedTemplatesFactory
 import com.intellij.platform.templates.LocalArchivedTemplate
 import com.intellij.platform.templates.SaveProjectAsTemplateAction
@@ -29,7 +29,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -38,6 +38,7 @@ import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createFile
 
 private const val FOO_BAR_JAVA = "foo/Bar.java"
 private val TEST_DATE = Date(0)
@@ -97,14 +98,16 @@ public class Bar {
     assertThat(project.stateStore.storageScheme).isEqualTo(StorageScheme.DIRECTORY_BASED)
     val root = ProjectRootManager.getInstance(project).contentRoots[0]
     val rootFile = root.toNioPath().resolve(FOO_BAR_JAVA)
-    rootFile.createFile()
+    rootFile.createParentDirectories().createFile()
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile)
     withContext(Dispatchers.EDT) {
-      assertThat(file).isNotNull
-      HeavyPlatformTestCase.setFileText(file!!, initialText)
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
-      val basePackage = BasePackageParameterFactory().detectParameterValue(project)
-      assertEquals("foo", basePackage)
+      writeIntentReadAction {
+        assertThat(file).isNotNull
+        HeavyPlatformTestCase.setFileText(file!!, initialText)
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        val basePackage = BasePackageParameterFactory().detectParameterValue(project)
+        assertEquals("foo", basePackage)
+      }
     }
 
     val zipFile = ArchivedTemplatesFactory.getTemplateFile("foo")
@@ -114,15 +117,12 @@ public class Bar {
     assertThat(zipFile.fileName.toString()).isEqualTo("foo.zip")
     assertThat(Files.size(zipFile)).isGreaterThan(0)
     val fromTemplate = withContext(Dispatchers.EDT) {
-      if (Experiments.getInstance().isFeatureEnabled("new.project.wizard")) {
+      writeIntentReadAction {
         createProject { step ->
           if (step is ProjectTypeStep) {
             assertTrue(step.setSelectedTemplate("foo", null))
           }
         }
-      }
-      else {
-        createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null)
       }
     }
     val descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH)
@@ -144,6 +144,9 @@ public class Bar {
 
   override fun tearDown() {
     try {
+      ProjectJdkTable.getInstance().apply {
+        allJdks.forEach { removeJdk(it) }
+      }
       (FileTemplateManager.getDefaultInstance() as FileTemplateManagerImpl).setTestDate(null)
       PropertiesComponent.getInstance().unsetValue(ProjectTemplateParameterFactory.IJ_BASE_PACKAGE)
     }

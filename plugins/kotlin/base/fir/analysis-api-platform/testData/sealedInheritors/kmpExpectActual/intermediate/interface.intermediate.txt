@@ -1,0 +1,2 @@
+pkg/SealedInterface1
+pkg/SealedInterface2

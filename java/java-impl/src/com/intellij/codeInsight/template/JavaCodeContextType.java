@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.JavaKeywordCompletion;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.highlighter.JavaFileHighlighter;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.JShellLanguage;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -47,13 +48,12 @@ public abstract class JavaCodeContextType extends TemplateContextType {
    * Checks whether the element belongs to this context. Could be called inside the dumb mode!
    * 
    * @param element element to check
-   * @return true if given element belongs to this context.
+   * @return true if the given element belongs to this context.
    */
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
-  @NotNull
   @Override
-  public SyntaxHighlighter createHighlighter() {
+  public @NotNull SyntaxHighlighter createHighlighter() {
     return new JavaFileHighlighter();
   }
 
@@ -69,7 +69,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
   }
   
-  public static class Generic extends JavaCodeContextType {
+  public static final class Generic extends JavaCodeContextType {
     public Generic() {
       super(JavaLanguage.INSTANCE.getDisplayName());
     }
@@ -80,8 +80,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class ConsumerFunction extends JavaCodeContextType {
-    protected ConsumerFunction() {
+  public static final class ConsumerFunction extends JavaCodeContextType {
+    private ConsumerFunction() {
       super(JavaBundle.message("live.template.context.consumer.function"));
     }
 
@@ -98,7 +98,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class Statement extends JavaCodeContextType {
+  public static final class Statement extends JavaCodeContextType {
     public Statement() {
       super(JavaBundle.message("live.template.context.statement"));
     }
@@ -109,13 +109,15 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
 
     private static boolean isStatementContext(PsiElement element) {
+      if (isInJShellContext(element)) {
+        return true;
+      }
       if (isAfterExpression(element) || JavaStringContextType.isStringLiteral(element)) {
         return false;
       }
-      
       PsiElement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiLambdaExpression.class);
-      if (statement instanceof PsiLambdaExpression) {
-        PsiElement body = ((PsiLambdaExpression)statement).getBody();
+      if (statement instanceof PsiLambdaExpression lambda) {
+        PsiElement body = lambda.getBody();
         if (PsiTreeUtil.isAncestor(body, element, false)) {
           statement = body;
         }
@@ -125,7 +127,15 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class ElsePlace extends JavaCodeContextType {
+  private static boolean isInJShellContext(PsiElement element) {
+    if (!(element.getParent() instanceof PsiReferenceExpression ref)) {
+      return false;
+    }
+    PsiElement parent = ref.getParent();
+    return parent != null && parent.getLanguage() == JShellLanguage.INSTANCE;
+  }
+
+  public static final class ElsePlace extends JavaCodeContextType {
     public ElsePlace() {
       super(JavaBundle.message("live.template.context.else"));
     }
@@ -146,7 +156,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
-  public static class Expression extends JavaCodeContextType {
+  public static final class Expression extends JavaCodeContextType {
     public Expression() {
       super(JavaBundle.message("live.template.context.expression"));
     }
@@ -173,7 +183,8 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         PsiElement greatGrandParent = grandParent.getParent();
         if (greatGrandParent instanceof PsiMember ||
             greatGrandParent instanceof PsiReferenceParameterList ||
-            greatGrandParent instanceof PsiRecordHeader) {
+            greatGrandParent instanceof PsiRecordHeader ||
+            greatGrandParent instanceof PsiJavaFile) {
           return false;
         }
       }
@@ -199,27 +210,37 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     return false;
   }
 
-  public static class Declaration extends JavaCodeContextType {
+  public static final class Declaration extends JavaCodeContextType {
     public Declaration() {
       super(JavaBundle.message("live.template.context.declaration"));
     }
 
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
+      if (isInJShellContext(element)) {
+        return true;
+      }
       if (Statement.isStatementContext(element) || Expression.isExpressionContext(element)) {
         return false;
       }
 
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement) {
-        PsiElement grandParent = parent.getParent();
-        if (grandParent instanceof PsiTypeElement && grandParent.getParent() instanceof PsiRecordHeader) {
-          return true;
-        }
-      }
-      return JavaKeywordCompletion.isSuitableForClass(element) ||
+      return isInRecordHeader(element) || 
+             JavaKeywordCompletion.isSuitableForClass(element) ||
              JavaKeywordCompletion.isInsideParameterList(element) ||
              PsiTreeUtil.getParentOfType(element, PsiReferenceParameterList.class) != null;
+    }
+
+    private static boolean isInRecordHeader(@NotNull PsiElement element) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiJavaCodeReferenceElement)) {
+        return false;
+      }
+      PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiTypeElement)) {
+        return false;
+      }
+      PsiElement greatGrandParent = grandParent.getParent();
+      return greatGrandParent instanceof PsiRecordHeader || greatGrandParent instanceof PsiRecordComponent;
     }
   }
 }

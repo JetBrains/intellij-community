@@ -29,15 +29,16 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="Xalan-2.7.2" type="repository">
-        <properties maven-id="xalan:xalan:2.7.2">
-          <exclude>
-            <dependency maven-id="xml-apis:xml-apis" />
-          </exclude>
+      <library name="Xalan-2.7.3" type="repository">
+        <properties include-transitive-deps="false" maven-id="xalan:xalan:2.7.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/xalan/xalan/2.7.3/xalan-2.7.3.jar">
+              <sha256sum>febd48bb133a96c447282213951a6b74ea7fb45c0d896121296c014316bda6b0</sha256sum>
+            </artifact>
+          </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/xalan/xalan/2.7.2/xalan-2.7.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/xalan/serializer/2.7.2/serializer-2.7.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/xalan/2.7.3/xalan-2.7.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -45,5 +46,21 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module-library">
+      <library name="Serializer-2.7.3" type="repository">
+        <properties include-transitive-deps="false" maven-id="xalan:serializer:2.7.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/xalan/serializer/2.7.3/serializer-2.7.3.jar">
+              <sha256sum>5f6804bacdfdb3ccc52d2538536fab8986696d61559b081054a420c653806667</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/xalan/serializer/2.7.3/serializer-2.7.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

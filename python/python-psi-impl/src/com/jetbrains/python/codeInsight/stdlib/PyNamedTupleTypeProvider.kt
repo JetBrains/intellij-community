@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.mapSmartNotNull
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
@@ -74,7 +75,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
         referenceTarget is PyClass && anchor is PyCallExpression -> getNamedTupleTypeForClass(referenceTarget, context, anchor)
         referenceTarget is PyParameter && anchor is PyCallExpression && referenceTarget.isSelf -> {
           PsiTreeUtil.getParentOfType(referenceTarget, PyFunction::class.java)
-            ?.takeIf { it.modifier == PyFunction.Modifier.CLASSMETHOD }
+            ?.takeIf { it.modifier == PyAstFunction.Modifier.CLASSMETHOD }
             ?.let { method ->
               method.containingClass?.let { getNamedTupleTypeForClass(it, context, anchor) }
             }
@@ -199,7 +200,7 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
                               stub.name,
                               parseNamedTupleFields(targetOrCall, fields, context),
                               true,
-                              fields.values.any { it.isPresent },
+                              fields.values.any { it.type != null },
                               getDeclaration(targetOrCall))
     }
 
@@ -288,21 +289,21 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       return fields.stream().collect(toNTFields)
     }
 
-    private fun parseNamedTupleFields(anchor: PsiElement, fields: Map<String, Optional<String>>, context: TypeEvalContext): NTFields {
+    private fun parseNamedTupleFields(anchor: PsiElement, fields: LinkedHashMap<String, PyNamedTupleStub.FieldTypeAndHasDefault>, context: TypeEvalContext): NTFields {
       val result = NTFields()
-      for ((name, type) in fields) {
-        result[name] = parseNamedTupleField(anchor, type.orElse(null), context)
+      for ((name, typeAndDefault) in fields) {
+        result[name] = parseNamedTupleField(anchor, typeAndDefault.type(), typeAndDefault.hasDefault(), context)
       }
       return result
     }
 
     private fun parseNamedTupleField(anchor: PsiElement,
                                      type: String?,
+                                     hasDefault: Boolean,
                                      context: TypeEvalContext): PyNamedTupleType.FieldTypeAndDefaultValue {
-      if (type == null) return PyNamedTupleType.FieldTypeAndDefaultValue(null, null)
-
-      val pyType = Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context))
-      return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null)
+      val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) }
+      val defaultValue = if (hasDefault) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
+      return PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)
     }
 
     private fun getDeclaration(referenceTarget: PsiElement): PyQualifiedNameOwner? {

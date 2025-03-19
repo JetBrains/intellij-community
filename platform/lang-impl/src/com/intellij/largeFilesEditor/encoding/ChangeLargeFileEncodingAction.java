@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.encoding;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,10 +19,9 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.nio.charset.Charset;
 
-class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
+final class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
 
   private static final Logger logger = Logger.getInstance(ChangeLargeFileEncodingAction.class);
 
@@ -63,21 +65,20 @@ class ChangeLargeFileEncodingAction extends ChangeFileEncodingAction {
     e.getPresentation().setEnabledAndVisible(true);
   }
 
-  ListPopup createPopup(VirtualFile vFile, Editor editor, Component componentParent) {
-    DataContext dataContext = wrapInDataContext(vFile, editor, componentParent);
+  @NotNull ListPopup createPopup(@NotNull VirtualFile vFile, @NotNull Editor editor) {
+    DataContext dataContext = wrapInDataContext(vFile, editor);
     DefaultActionGroup group = createActionGroup(vFile, editor, null, null, null);
     return JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
                                                                group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private static DataContext wrapInDataContext(VirtualFile vFile, Editor editor, Component componentParent) {
-    DataContext parent = DataManager.getInstance().getDataContext(componentParent);
+  private static @NotNull DataContext wrapInDataContext(@NotNull VirtualFile vFile, @NotNull Editor editor) {
+    DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
       .setParent(parent)
       .add(CommonDataKeys.VIRTUAL_FILE, vFile)
       .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{vFile})
       .add(CommonDataKeys.PROJECT, editor.getProject())
-      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.getComponent())
       .build();
   }
 }

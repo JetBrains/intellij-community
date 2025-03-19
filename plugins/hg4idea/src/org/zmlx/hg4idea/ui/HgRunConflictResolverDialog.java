@@ -55,8 +55,7 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     setRoots(repositories, selectedRepo);
   }
 
-  @NotNull
-  public HgRepository getRepository() {
+  public @NotNull HgRepository getRepository() {
     return repositorySelector.getRepository();
   }
 

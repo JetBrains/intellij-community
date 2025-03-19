@@ -3,14 +3,15 @@ package com.intellij.ide.gdpr;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.ConsentOptionsProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -31,12 +32,13 @@ import java.awt.*;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Consent>> {
-  final Collection<Pair<JCheckBox, Consent>> consentMapping = new ArrayList<>();
+  final Collection<ConsentStateSupplier> consentMapping = new ArrayList<>();
   private final boolean myPreferencesMode;
 
   public ConsentSettingsUi(boolean preferencesMode) {
@@ -99,12 +101,13 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return "<p style=\"margin-bottom:" + JBUIScale.scale(10) + "px;\">";
   }
 
-  @NotNull
-  private JComponent createConsentElement(Consent consent, boolean addCheckBox) {
+  private @NotNull JComponent createConsentElement(Consent consent, boolean addCheckBox) {
     //TODO: refactor DocumentationComponent to use external link marker here, there and everywhere
     final JPanel pane;
     final boolean dataSharingDisabledExternally = ConsentOptions.getInstance().isUsageStatsConsent(consent)
                                                   && StatisticsUploadAssistant.isCollectionForceDisabled();
+    final boolean dataSharingEnabledByFreeLicense = ConsentOptions.getInstance().isUsageStatsConsent(consent)
+                                                  && isAllowedByFreeLicense();
     if (addCheckBox) {
       String checkBoxText = StringUtil.capitalize(StringUtil.toLowerCase(consent.getName()));
       if (ConsentOptions.getInstance().isEAP()) {
@@ -113,12 +116,20 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
         }
       }
       final JCheckBox cb = new JBCheckBox(checkBoxText, consent.isAccepted());
-      cb.setEnabled(!dataSharingDisabledExternally);
+      ConsentStateSupplier stateSupplier;
+      if (dataSharingDisabledExternally || dataSharingEnabledByFreeLicense) {
+        stateSupplier = new ConsentStateSupplier(consent, () -> consent.isAccepted());
+        cb.setEnabled(false);
+        cb.setSelected(!dataSharingDisabledExternally);
+      }
+      else {
+        stateSupplier = new ConsentStateSupplier(consent, () -> cb.isSelected());
+      }
       //noinspection HardCodedStringLiteral
       pane = UI.PanelFactory.panel(cb).withComment(getParagraphTag()
                                                    +StringUtil.replace(consent.getText(), "\n", "</p>"+getParagraphTag())+"</p>").createPanel();
       cb.setOpaque(false);
-      consentMapping.add(Pair.create(cb, consent));
+      consentMapping.add(stateSupplier);
     } else {
       pane = new JPanel(new BorderLayout());
       final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
@@ -149,16 +160,25 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
       styleSheet.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.Foreground.PRESSED) + ";}");
       viewer.setCaretPosition(0);
       pane.add(viewer, BorderLayout.CENTER);
-      consentMapping.add(Pair.create(null, consent));
+      consentMapping.add(new ConsentStateSupplier(consent, () -> true));
     }
     pane.setOpaque(false);
-    return !dataSharingDisabledExternally ? pane : wrapPanelWithWarning(pane);
+
+    if (dataSharingDisabledExternally) return wrapPanelWithWarning(pane, Objects.requireNonNullElse(StatisticsUploadAssistant.getConsentWarning(),
+                                                                                                    IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning")));
+    if (dataSharingEnabledByFreeLicense) return wrapPanelWithWarning(pane, IdeBundle.message("gdpr.usage.statistics.enabled.for.free.license.warning"));
+    return pane;
   }
 
-  private static JPanel wrapPanelWithWarning(JPanel panel) {
-    final String warningText = Objects.requireNonNullElse(
-      StatisticsUploadAssistant.getConsentWarning(), IdeBundle.message("gdpr.usage.statistics.disabled.externally.warning"));
+  private static JPanel wrapPanelWithWarning(JPanel panel, @NlsContexts.DetailedDescription String warningText) {
     return UI.PanelFactory.panel(panel).withCommentIcon(AllIcons.General.Warning).withComment(warningText).createPanel();
+  }
+
+  private static boolean isAllowedByFreeLicense() {
+    return Optional.ofNullable(ApplicationManager.getApplication())
+      .map(application -> application.getService(ConsentOptionsProvider.class))
+      .map(provider -> provider.isActivatedWithFreeLicense())
+      .orElse(false);
   }
 
   @Contract(pure = true)
@@ -166,12 +186,10 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     return getParagraphTag() + StringUtil.replace(text, "\n", "</p>" + getParagraphTag()) + "</p>";
   }
 
-  @NotNull
-  private List<Consent> getState() {
+  private @NotNull List<Consent> getState() {
     final List<Consent> result = new ArrayList<>();
-    for (Pair<JCheckBox, Consent> pair : consentMapping) {
-      JCheckBox checkBox = pair.first;
-      result.add(pair.second.derive(checkBox == null || checkBox.isSelected()));
+    for (ConsentStateSupplier supplier : consentMapping) {
+      result.add(supplier.consent.derive(supplier.getState()));
     }
     return result;
   }
@@ -197,9 +215,15 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     consents.addAll(getState());
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
+  }
+
+  private record ConsentStateSupplier(Consent consent, Supplier<Boolean> getter) {
+
+    boolean getState() {
+      return getter.get();
+    }
   }
 }

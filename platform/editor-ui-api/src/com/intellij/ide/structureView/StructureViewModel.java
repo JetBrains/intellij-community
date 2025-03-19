@@ -104,4 +104,10 @@ public interface StructureViewModel extends TreeModel, Disposable {
       return 2;
     }
   }
+
+  interface ActionHandler {
+
+    boolean handleClick(StructureViewTreeElement element, int fragmentIndex);
+
+  }
 }

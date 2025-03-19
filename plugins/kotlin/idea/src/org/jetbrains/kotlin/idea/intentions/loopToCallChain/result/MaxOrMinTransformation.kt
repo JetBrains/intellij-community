@@ -111,7 +111,7 @@ class MaxOrMinTransformation(
             isMax: Boolean
         ): TransformationMatch.Result? {
             val functionName = if (isMax) "max" else "min"
-            val arguments = assignment.right.extractStaticFunctionCallArguments("java.lang.Math." + functionName) ?: return null
+            val arguments = assignment.right.extractStaticFunctionCallArguments("java.lang.Math.$functionName") ?: return null
             if (arguments.size != 2) return null
             val value = when {
                 arguments[0].isVariableReference(variableInitialization.variable) -> arguments[1] ?: return null

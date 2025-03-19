@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.target
 
 import com.intellij.execution.target.*
@@ -7,61 +7,51 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.*
 
 /**
  * Aims to replace [com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase].
- * For the transitional period of time the both of them are supposed to be
- * used.
+ * For the transitional period, both of them are supposed to be used.
  */
-class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPropertiesHolder,
-                                                      flavorAndData: PyFlavorAndData<*, *>?,
-                                                      targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : PythonSdkAdditionalData(
-  flavorAndData),
-                                                                                                                                TargetBasedSdkAdditionalData,
-                                                                                                                                RemoteSdkProperties by b,
-                                                                                                                                PyRemoteSdkAdditionalDataMarker {
-
-
+class PyTargetAwareAdditionalData private constructor(
+  private val b: RemoteSdkPropertiesHolder,
+  flavorAndData: PyFlavorAndData<*, *>?,
+  targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null
+) : PythonSdkAdditionalData(flavorAndData), TargetBasedSdkAdditionalData, RemoteSdkProperties by b, PyRemoteSdkAdditionalDataMarker {
   /**
    * The source of truth for the target configuration.
    */
   private var targetState: ContributedConfigurationsList.ContributedStateBase? = null
 
   /**
-   * The backing field for [targetEnvironmentConfiguration].
-   */
-  private var _targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = targetEnvironmentConfiguration
-
-  /**
    * The target configuration.
    *
    * Note that [targetEnvironmentConfiguration] could be `null` even if [targetState] is not `null`, when there is no appropriate
-   * [TargetEnvironmentType] available for deserializing and handling [ContributedStateBase.innerState] of [targetState].
+   * [TargetEnvironmentType] available for deserializing and handling [ContributedConfigurationsList.ContributedStateBase.innerState] of [targetState].
    */
-  override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
-    get() = _targetEnvironmentConfiguration
+  override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = targetEnvironmentConfiguration
     set(value) {
-      targetState = value?.let { ContributedConfigurationsList.ContributedStateBase().apply { loadFromConfiguration(value) } }
-      _targetEnvironmentConfiguration = value
+      field = value
+      notifyTargetEnvironmentConfigurationChanged()
     }
 
-  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
-    RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavorAndData, targetEnvironmentConfiguration)
-
   init {
-    this.targetEnvironmentConfiguration = targetEnvironmentConfiguration
+    notifyTargetEnvironmentConfigurationChanged()
   }
 
+  constructor(flavorAndData: PyFlavorAndData<*, *>, targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) : this(
+    RemoteSdkPropertiesHolder(PyRemoteSdkAdditionalData.PYCHARM_HELPERS), flavorAndData, targetEnvironmentConfiguration)
+
   override fun save(rootElement: Element) {
-    // store "interpeter paths" (i.e. `PYTHONPATH` elements)
+    // store "interpreter paths" (i.e. `PYTHONPATH` elements)
     super.save(rootElement)
     // store `INTERPRETER_PATH`, `HELPERS_PATH`, etc
     b.save(rootElement)
@@ -70,9 +60,8 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   }
 
   override fun load(element: Element?) {
-    // clear the state
-    targetState = null
-    _targetEnvironmentConfiguration = null
+    // clear the state and environment configuration
+    targetEnvironmentConfiguration = null
     // load "interpeter paths" (i.e. `PYTHONPATH` elements)
     super.load(element)
     if (element == null) {
@@ -82,7 +71,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     // load `INTERPRETER_PATH`, `HELPERS_PATH`, etc
     b.load(element)
     // the state that contains information of the target, as for now the target configuration is embedded into the additional data
-    val (loadedState, loadedConfiguration) = loadTargetBasedSdkAdditionalData(element)
+    val (_, loadedConfiguration) = loadTargetBasedSdkAdditionalData(element)
     // add Python language runtime for the loaded configuration
     if (loadedConfiguration != null) {
       val pythonLanguageRuntimeConfiguration = PythonLanguageRuntimeConfiguration()
@@ -91,9 +80,24 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
       }
       loadedConfiguration.addLanguageRuntime(pythonLanguageRuntimeConfiguration)
     }
-    targetState = loadedState
-    _targetEnvironmentConfiguration = loadedConfiguration
+    targetEnvironmentConfiguration = loadedConfiguration
+  }
 
+  /**
+   * Updates [targetState] from [targetEnvironmentConfiguration].
+   *
+   * [TargetEnvironmentConfiguration] might have mutable fields and [targetState] should be properly updated on commit/apply actions.
+   *
+   * @see com.jetbrains.python.configuration.PythonTargetInterpreterDetailsConfigurable.apply
+   * @see com.intellij.docker.remote.compose.target.DockerComposeTargetEnvironmentConfiguration
+   */
+  @ApiStatus.Internal
+  fun notifyTargetEnvironmentConfigurationChanged() {
+    targetState = targetEnvironmentConfiguration?.let { notNullTargetEnvironmentConfiguration ->
+      ContributedConfigurationsList.ContributedStateBase().apply {
+        loadFromConfiguration(notNullTargetEnvironmentConfiguration)
+      }
+    }
   }
 
   /**
@@ -111,8 +115,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
   private val Collection<VirtualFile>.asMappings get() = associate { it.toNioPath() to b.pathMappings.convertToRemote(it.path) }
 
   companion object {
-    private const val DEFAULT_PYCHARM_HELPERS_DIR_NAME = ".pycharm_helpers"
-
     private val LOG = logger<PyTargetAwareAdditionalData>()
 
     /**
@@ -126,7 +128,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
      */
     @JvmStatic
     val PyTargetAwareAdditionalData.pathsRemovedByUser: Map<Path, String> get() = this.excludedPathFiles.asMappings
-
 
     /**
      * Loads target data if it exists in xml. Returns `null` otherwise.
@@ -144,6 +145,4 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
       return if (data.targetEnvironmentConfiguration != null) data else null
     }
   }
-
-  private sealed class DataOrFlavor
 }

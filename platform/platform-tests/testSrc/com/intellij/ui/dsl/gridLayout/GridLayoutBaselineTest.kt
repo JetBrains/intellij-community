@@ -17,7 +17,7 @@ class GridLayoutBaselineTest {
 
   @Test
   fun testBaseline() {
-    for (verticalAlign in VerticalAlign.values()) {
+    for (verticalAlign in VerticalAlign.entries) {
       if (verticalAlign == VerticalAlign.FILL) {
         continue
       }
@@ -46,7 +46,7 @@ class GridLayoutBaselineTest {
 
   @Test
   fun testBaselineWithSubPanels() {
-    for (verticalAlign in VerticalAlign.values()) {
+    for (verticalAlign in VerticalAlign.entries) {
       if (verticalAlign == VerticalAlign.FILL) {
         continue
       }

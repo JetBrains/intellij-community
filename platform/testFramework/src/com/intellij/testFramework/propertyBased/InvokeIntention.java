@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -24,9 +10,13 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,8 +38,10 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
@@ -73,10 +65,10 @@ public class InvokeIntention extends ActionOnFile {
     env.logMessage("Go to " + MadTestingUtil.getPositionDescription(offset, getDocument()));
 
     doInvokeIntention(offset, env);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
-  @Nullable
-  private static IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
+  private static @Nullable IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
     if (actions.isEmpty()) {
       env.logMessage("No intentions found");
       return null;
@@ -125,7 +117,45 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor);
+    var r = new Runnable() {
+      boolean actionSuppressed = false;
+      
+      @Override
+      public void run() {
+        ModCommandAction action = intention.asModCommandAction();
+        if (action == null) {
+          CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor);
+          return;
+        }
+        ActionContext context = ActionContext.from(editor, file);
+        Presentation presentation = ActionUtil.underModalProgress(project, "", () -> action.getPresentation(context));
+        if (presentation == null) {
+          throw new IllegalStateException("Unexpectedly no presentation for " + action.getFamilyName());
+        }
+        ModCommand command = ActionUtil.underModalProgress(project, "", () -> action.perform(context));
+        String validationMessage = validateCommand(command);
+        if (validationMessage != null) {
+          LOG.warn("Skip command: " + presentation.name() + " (" + validationMessage + ")");
+          actionSuppressed = true;
+        } else {
+          CommandProcessor.getInstance().executeCommand(
+            project, () -> ModCommandExecutor.getInstance().executeInteractively(context, command, editor), null, null);
+          UIUtil.dispatchAllInvocationEvents();
+        }
+      }
+
+      private @Nullable String validateCommand(ModCommand command) {
+        List<ModCommand> commands = command.unpack();
+        if (commands.isEmpty()) return "Does nothing";
+        for (ModCommand modCommand : commands) {
+          String error = myPolicy.validateCommand(modCommand);
+          if (error != null) {
+            return error;
+          }
+        }
+        return null;
+      }
+    };
 
     Disposable disposable = Disposer.newDisposable();
     try {
@@ -152,7 +182,8 @@ public class InvokeIntention extends ActionOnFile {
           PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(changedDocument)) {
         throw new AssertionError("Document is left blocked by PSI");
       }
-      if (!hasErrors && stampBefore != null && stampBefore.equals(changedDocument.getModificationStamp())) {
+      if (!hasErrors && !r.actionSuppressed && stampBefore != null &&
+          stampBefore.equals(changedDocument.getModificationStamp())) {
         String message = "No change was performed in the document";
         if (intention.startInWriteAction()) {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
@@ -211,12 +242,11 @@ public class InvokeIntention extends ActionOnFile {
     //       may require explicit formatting
   }
 
-  @NotNull
-  private List<IntentionAction> wrapAndCheck(Environment env,
-                                             Editor editor,
-                                             PsiElement currentElement,
-                                             boolean hasErrors,
-                                             List<IntentionAction> intentions) {
+  private @NotNull List<IntentionAction> wrapAndCheck(Environment env,
+                                                      Editor editor,
+                                                      PsiElement currentElement,
+                                                      boolean hasErrors,
+                                                      List<IntentionAction> intentions) {
     if (currentElement == null) return intentions;
     int offset = editor.getCaretModel().getOffset();
     /*
@@ -329,19 +359,16 @@ public class InvokeIntention extends ActionOnFile {
     }
   }
 
-  @NotNull
-  private static String shortInfoText(HighlightInfo info) {
+  private static @NotNull String shortInfoText(HighlightInfo info) {
     return "'" + info.getDescription() + "'(" + info.startOffset + "," + info.endOffset + ")";
   }
 
-  @NotNull
-  static List<HighlightInfo> highlightErrors(Project project, Editor editor) {
+  static @NotNull @Unmodifiable List<HighlightInfo> highlightErrors(Project project, Editor editor) {
     List<HighlightInfo> infos = RehighlightAllEditors.highlightEditor(editor, project);
     return ContainerUtil.filter(infos, i -> i.getSeverity() == HighlightSeverity.ERROR);
   }
 
-  @Nullable
-  private Document getDocumentToBeChanged(IntentionAction intention) {
+  private @Nullable Document getDocumentToBeChanged(IntentionAction intention) {
     PsiElement changedElement = intention.getElementToMakeWritable(getFile());
     PsiFile changedFile = changedElement == null ? null : changedElement.getContainingFile();
     return changedFile == null ? null : changedFile.getViewProvider().getDocument();

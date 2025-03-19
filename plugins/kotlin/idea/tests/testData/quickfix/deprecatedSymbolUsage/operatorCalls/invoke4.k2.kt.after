@@ -1,0 +1,20 @@
+// "Replace with 'execute(action)'" "true"
+
+class Executor {
+    val self: Executor
+        get() = this
+
+    @Deprecated("Use Executor.execute(Runnable) instead.", ReplaceWith("execute(action)"))
+    operator fun invoke(action: () -> Unit) {}
+
+    fun execute(action: () -> Unit) {}
+}
+
+fun usage(executor: Executor) {
+    executor.self.// do something
+    execute {
+        // do something
+    }
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

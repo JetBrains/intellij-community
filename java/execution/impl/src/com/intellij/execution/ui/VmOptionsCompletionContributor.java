@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
-import com.intellij.codeInsight.CharTailType;
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -34,28 +34,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
+public final class VmOptionsCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Pattern OPTION_SEPARATOR = Pattern.compile("\\s+");
   private static final Pattern OPTION_MATCHER = Pattern.compile("^-XX:[+\\-]?(\\w+)(=.+)?$");
   private static final char OPTION_VALUE_SEPRATOR = '=';
-
-  private static final VMOption[] STANDARD_OPTIONS = {
-    opt("ea", "enable assertions with specified granularity"),
-    opt("enableassertions", "enable assertions with specified granularity"),
-    opt("da", "disable assertions with specified granularity"),
-    opt("disableassertions", "disable assertions with specified granularity"),
-    opt("esa", "enable system assertions"),
-    opt("dsa", "disable system assertions"),
-    opt("agentpath:", "load native agent library by full pathname"),
-    opt("agentlib:", "load native agent library <libname>, e.g. -agentlib:jdwp"),
-    opt("javaagent:", "load Java programming language agent"),
-    opt("D", "set a system property in format <name>=<value>"),
-    opt("XX:", "specify non-standard JVM-specific option")
-  };
-
-  private static VMOption opt(@NotNull String name, @NotNull String doc) {
-    return new VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH, null);
-  }
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
@@ -100,7 +82,6 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
                                      @NotNull JdkOptionsData data) {
     Stream.of(
       data.getOptions().stream().filter(option1 -> option1.getVariant() != VMOptionVariant.XX),
-      Stream.of(STANDARD_OPTIONS),
       settings == null ? null : settings.getKnownVMOptions().stream())
       .flatMap(Function.identity())
       .forEach(option -> {
@@ -114,7 +95,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       }
       else {
         Character suffix = option.getVariant().suffix();
-        TailType tailType = suffix == null ? null : new CharTailType(suffix);
+        TailType tailType = suffix == null ? null : TailTypes.charType(suffix);
         result.addElement(TailTypeDecorator.withTail(builder, tailType));
       }
     });
@@ -142,12 +123,12 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
       Icon icon = option.getKind().icon();
       if ("bool".equals(type)) {
         String lookupString = (booleanStart ? "" : Boolean.parseBoolean(option.getDefaultValue()) ? "-" : "+") + option.getOptionName();
-        tailType = TailType.SPACE;
+        tailType = TailTypes.spaceType();
         e = LookupElementBuilder.create(option.createPointer(), lookupString);
       }
       else if (!booleanStart) {
         String tailText = " = " + option.getDefaultValue();
-        tailType = TailType.EQUALS;
+        tailType = TailTypes.equalsType();
         e = LookupElementBuilder.create(option.createPointer(), option.getOptionName()).withTailText(tailText, true);
       }
       if (e != null) {
@@ -180,8 +161,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
            (offset == xxPrefix.length() || Character.isWhitespace(sequence.charAt(offset - xxPrefix.length() - 1)));
   }
 
-  @Nullable
-  private static String getJrePathForVmOptionsDocument(Document document) {
+  private static @Nullable String getJrePathForVmOptionsDocument(Document document) {
     String path = document.getUserData(EditCustomVmOptionsAction.JRE_PATH_KEY);
     if (path != null) {
       return path;
@@ -191,8 +171,7 @@ public class VmOptionsCompletionContributor extends CompletionContributor implem
     return getJrePath(settings);
   }
 
-  @Nullable
-  private static String getJrePath(JavaRunConfigurationBase settings) {
+  private static @Nullable String getJrePath(JavaRunConfigurationBase settings) {
     String jrePath = null;
     Sdk sdk;
     if (settings.isAlternativeJrePathEnabled()) {

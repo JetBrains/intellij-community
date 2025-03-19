@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -22,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.ui.components.JBBox;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedViewSwingImpl;
 import org.jetbrains.annotations.Nls;
@@ -38,21 +25,18 @@ class PyExtractSuperclassViewSwingImpl
   extends MembersBasedViewSwingImpl<PyExtractSuperclassPresenter, PyExtractSuperclassInitializationInfo>
   implements PyExtractSuperclassView {
 
-  @NotNull
-  private final JTextArea myExtractedSuperNameField = new JTextArea();
-  @NotNull
-  private final FileChooserDescriptor myFileChooserDescriptor;
-  @NotNull
-  private final TextFieldWithBrowseButton myTargetDirField;
+  private final @NotNull JTextArea myExtractedSuperNameField = new JTextArea();
+  private final @NotNull FileChooserDescriptor myFileChooserDescriptor;
+  private final @NotNull TextFieldWithBrowseButton myTargetDirField;
 
-  PyExtractSuperclassViewSwingImpl(@NotNull final PyClass classUnderRefactoring,
-                                   @NotNull final Project project,
-                                   @NotNull final PyExtractSuperclassPresenter presenter) {
+  PyExtractSuperclassViewSwingImpl(final @NotNull PyClass classUnderRefactoring,
+                                   final @NotNull Project project,
+                                   final @NotNull PyExtractSuperclassPresenter presenter) {
     super(project, presenter, RefactoringBundle.message("extract.superclass.from"), true);
     setTitle(PyExtractSuperclassHandler.getRefactoringName());
 
 
-    final Box box = Box.createVerticalBox();
+    final JBBox box = JBBox.createVerticalBox();
 
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel(RefactoringBundle.message("extract.superclass.from")), BorderLayout.NORTH);
@@ -73,14 +57,12 @@ class PyExtractSuperclassViewSwingImpl
     box.add(panel);
     box.add(Box.createVerticalStrut(5));
 
-    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
-
-
-    myFileChooserDescriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
-    myFileChooserDescriptor.withTreeRootVisible(true);
+    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(getFileOrDirectory())
+      .withRoots(ProjectRootManager.getInstance(project).getContentRoots())
+      .withTreeRootVisible(true);
     myTargetDirField = new TextFieldWithBrowseButton();
-    myTargetDirField
-      .addBrowseFolderListener(getFileOrDirectory(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myTargetDirField.addBrowseFolderListener(project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     panel = new JPanel(new BorderLayout());
     final JLabel dirLabel = new JLabel();
@@ -104,27 +86,24 @@ class PyExtractSuperclassViewSwingImpl
   }
 
   @Override
-  public void configure(@NotNull final PyExtractSuperclassInitializationInfo configInfo) {
+  public void configure(final @NotNull PyExtractSuperclassInitializationInfo configInfo) {
     super.configure(configInfo);
     myFileChooserDescriptor.setRoots(configInfo.getRoots());
     myTargetDirField.setText(configInfo.getDefaultFilePath());
   }
 
-  @NotNull
   @Override
-  public String getModuleFile() {
+  public @NotNull String getModuleFile() {
     return myTargetDirField.getText();
   }
 
-  @NotNull
   @Override
-  public String getSuperClassName() {
+  public @NotNull String getSuperClassName() {
     return myExtractedSuperNameField.getText();
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "refactoring.extract.superclass.dialog";
   }
 

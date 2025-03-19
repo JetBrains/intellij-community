@@ -21,10 +21,12 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NlsContexts.Label;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class EditorOptionDescription extends PublicFieldBasedOptionDescription {
   public EditorOptionDescription(String fieldName, @Label String option, String configurableId) {
     super(option, configurableId, fieldName);

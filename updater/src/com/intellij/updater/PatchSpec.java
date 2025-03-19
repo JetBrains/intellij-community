@@ -15,9 +15,7 @@
  */
 package com.intellij.updater;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class PatchSpec {
   private String myOldVersionDescription = "";
@@ -26,16 +24,13 @@ public class PatchSpec {
   private String myNewFolder;
   private String myPatchFile;
   private String myJarFile;
-  private boolean myIsBinary;
   private boolean myIsStrict;
-  private List<String> myIgnoredFiles = Collections.emptyList();
-  private List<String> myCriticalFiles = Collections.emptyList();
+  private List<String> myIgnoredFiles = List.of();
+  private List<String> myCriticalFiles = List.of();
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
-  private List<String> myStrictFiles = Collections.emptyList();
-  private List<String> myOptionalFiles = Collections.emptyList();
-  private boolean myIsNormalized;
-  private Map<String, String> myWarnings = Collections.emptyMap();
-  private List<String> myDeleteFiles = Collections.emptyList();
+  private List<String> myStrictFiles = List.of();
+  private List<String> myOptionalFiles = List.of();
+  private List<String> myDeleteFiles = List.of();
   private String myRoot = "";
   private int myTimeout = 0;
 
@@ -136,33 +131,6 @@ public class PatchSpec {
   public PatchSpec setOptionalFiles(List<String> optionalFiles) {
     myOptionalFiles = optionalFiles;
     return this;
-  }
-
-  public PatchSpec setBinary(boolean binary) {
-    myIsBinary = binary;
-    return this;
-  }
-
-  public boolean isBinary() {
-    return myIsBinary;
-  }
-
-  public boolean isNormalized() {
-    return myIsNormalized;
-  }
-
-  public PatchSpec setNormalized(boolean normalized) {
-    myIsNormalized = normalized;
-    return this;
-  }
-
-  public PatchSpec setWarnings(Map<String, String> warnings) {
-    myWarnings = warnings;
-    return this;
-  }
-
-  public Map<String, String> getWarnings() {
-    return myWarnings;
   }
 
   public PatchSpec setDeleteFiles(List<String> deleteFiles) {

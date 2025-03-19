@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -18,25 +18,23 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.Companion.TYPE_FIELD
+import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.TYPE_FIELD
 
-class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("debugger.breakpoints", 4)
-    private val SUSPEND_POLICY_FIELD = EventFields.Enum("suspendPolicy", SuspendPolicy::class.java)
-    private val NOT_DEFAULT_SUSPEND = GROUP.registerVarargEvent("not.default.suspend", EventFields.Enabled,
-                                                                SUSPEND_POLICY_FIELD, TYPE_FIELD, EventFields.PluginInfo)
-    private val TOTAL = GROUP.registerEvent("total", EventFields.Count)
-    private val TOTAL_DISABLED = GROUP.registerEvent("total.disabled", EventFields.Count)
-    private val TOTAL_NON_SUSPENDING = GROUP.registerEvent("total.non.suspending", EventFields.Count)
-    private val USING_GROUPS = GROUP.registerEvent("using.groups", EventFields.Enabled)
-    private val USING_CONDITION = GROUP.registerEvent("using.condition", EventFields.Enabled)
-    private val USING_LOG_EXPRESSION = GROUP.registerEvent("using.log.expression", EventFields.Enabled)
-    private val USING_TEMPORARY = GROUP.registerEvent("using.temporary", EventFields.Enabled)
-    private val USING_DEPENDENT = GROUP.registerEvent("using.dependent", EventFields.Enabled)
-    private val USING_LOG_MESSAGE = GROUP.registerEvent("using.log.message", EventFields.Enabled)
-    private val USING_LOG_STACK = GROUP.registerEvent("using.log.stack", EventFields.Enabled)
-  }
+private class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
+  private val GROUP = EventLogGroup("debugger.breakpoints", 4)
+  private val SUSPEND_POLICY_FIELD = EventFields.Enum("suspendPolicy", SuspendPolicy::class.java)
+  private val NOT_DEFAULT_SUSPEND = GROUP.registerVarargEvent("not.default.suspend", EventFields.Enabled,
+                                                              SUSPEND_POLICY_FIELD, TYPE_FIELD, EventFields.PluginInfo)
+  private val TOTAL = GROUP.registerEvent("total", EventFields.Count)
+  private val TOTAL_DISABLED = GROUP.registerEvent("total.disabled", EventFields.Count)
+  private val TOTAL_NON_SUSPENDING = GROUP.registerEvent("total.non.suspending", EventFields.Count)
+  private val USING_GROUPS = GROUP.registerEvent("using.groups", EventFields.Enabled)
+  private val USING_CONDITION = GROUP.registerEvent("using.condition", EventFields.Enabled)
+  private val USING_LOG_EXPRESSION = GROUP.registerEvent("using.log.expression", EventFields.Enabled)
+  private val USING_TEMPORARY = GROUP.registerEvent("using.temporary", EventFields.Enabled)
+  private val USING_DEPENDENT = GROUP.registerEvent("using.dependent", EventFields.Enabled)
+  private val USING_LOG_MESSAGE = GROUP.registerEvent("using.log.message", EventFields.Enabled)
+  private val USING_LOG_STACK = GROUP.registerEvent("using.log.stack", EventFields.Enabled)
 
   override fun getGroup(): EventLogGroup {
     return GROUP
@@ -49,8 +47,8 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
 
     val res = XBreakpointType.EXTENSION_POINT_NAME.extensionList
       .asSequence()
-      .filter { it.isSuspendThreadSupported() }
-      .filter { breakpointManager.getBreakpointDefaults(it).getSuspendPolicy() != it.getDefaultSuspendPolicy() }
+      .filter { it.isSuspendThreadSupported }
+      .filter { breakpointManager.getBreakpointDefaults(it).suspendPolicy != it.defaultSuspendPolicy }
       .map {
         ProgressManager.checkCanceled()
         val data = mutableListOf<EventPair<*>>()
@@ -72,11 +70,11 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
     res.add(TOTAL_DISABLED.metric(breakpoints.count { !it.isEnabled }))
     res.add(TOTAL_NON_SUSPENDING.metric(breakpoints.count { it.suspendPolicy == SuspendPolicy.NONE }))
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getConditionExpression()) }) {
+    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.conditionExpression) }) {
       res.add(USING_CONDITION.metric(true))
     }
 
-    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.getLogExpressionObject()) }) {
+    if (breakpoints.any { !XDebuggerUtilImpl.isEmptyExpression(it.logExpressionObject) }) {
       res.add(USING_LOG_EXPRESSION.metric(true))
     }
 
@@ -88,18 +86,18 @@ class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
       res.add(USING_DEPENDENT.metric(true))
     }
 
-    if (breakpoints.any { it.isLogMessage() }) {
+    if (breakpoints.any { it.isLogMessage }) {
       res.add(USING_LOG_MESSAGE.metric(true))
     }
 
-    if (breakpoints.any { it.isLogStack() }) {
+    if (breakpoints.any { it.isLogStack }) {
       res.add(USING_LOG_STACK.metric(true))
     }
     return res
   }
 }
 
-fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
+internal fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
   val data = mutableListOf<EventPair<*>>()
   val info = getPluginInfo(type.javaClass)
   data.add(EventFields.PluginInfo.with(info))
@@ -107,16 +105,16 @@ fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
   return data
 }
 
-class BreakpointsUtilValidator : CustomValidationRule() {
+internal class BreakpointsUtilValidator : CustomValidationRule() {
   override fun getRuleId(): String {
     return "breakpoint"
   }
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    if ("custom".equals(data)) return ValidationResultType.ACCEPTED
+    if ("custom" == data) return ValidationResultType.ACCEPTED
 
-    for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensions) {
-      if (StringUtil.equals(breakpoint.getId(), data)) {
+    for (breakpoint in XBreakpointType.EXTENSION_POINT_NAME.extensionList) {
+      if (StringUtil.equals(breakpoint.id, data)) {
         val info = getPluginInfo(breakpoint.javaClass)
         return if (info.isDevelopedByJetBrains()) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
       }

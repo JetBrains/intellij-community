@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import com.intellij.psi.PsiElement;
@@ -17,8 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 public final class WritesCounterDFAInstance implements DfaInstance<Object2IntMap<GrVariable>> {
   @Contract("null -> null")
-  @Nullable
-  private static GrVariable getVariable(@Nullable PsiElement instructionElement) {
+  private static @Nullable GrVariable getVariable(@Nullable PsiElement instructionElement) {
     final GrVariable variable;
     if (instructionElement instanceof GrReferenceExpression) {
       final PsiElement resolved = ((GrReferenceExpression)instructionElement).resolve();

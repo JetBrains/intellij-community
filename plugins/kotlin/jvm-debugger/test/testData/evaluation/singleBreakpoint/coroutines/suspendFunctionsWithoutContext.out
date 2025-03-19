@@ -2,7 +2,10 @@ LineBreakpoint created at suspendFunctionsWithoutContext.kt:26
 Run Java
 Connected to the target VM
 suspendFunctionsWithoutContext.kt:26
-Compile bytecode for kotlinx.coroutines.runBlocking {
+Compile bytecode for kotlinx.coroutines.runBlocking(
+    @kotlin.OptIn(kotlin.ExperimentalStdlibApi::class)
+    kotlin.coroutines.coroutineContext.minusKey(kotlinx.coroutines.CoroutineDispatcher)
+) {
     one() + two() + three()
 }
 Disconnected from the target VM

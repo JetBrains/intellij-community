@@ -1,5 +1,5 @@
-from _typeshed import Self
 from typing import Any, ClassVar, NamedTuple
+from typing_extensions import Self
 
 __docformat__: str
 __version__: str
@@ -14,13 +14,7 @@ class _VersionInfo(NamedTuple):
 
 class VersionInfo(_VersionInfo):
     def __new__(
-        cls: type[Self],
-        major: int = ...,
-        minor: int = ...,
-        micro: int = ...,
-        releaselevel: str = ...,
-        serial: int = ...,
-        release: bool = ...,
+        cls, major: int = 0, minor: int = 0, micro: int = 0, releaselevel: str = "final", serial: int = 0, release: bool = True
     ) -> Self: ...
 
 __version_info__: VersionInfo

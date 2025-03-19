@@ -2,7 +2,10 @@
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 public final class CoreBundle {
   public static final @NonNls String BUNDLE = "messages.CoreBundle";
@@ -15,8 +18,7 @@ public final class CoreBundle {
     return INSTANCE.getMessage(key, params);
   }
 
-  @ApiStatus.Internal
-  public static void clearCache() {
-    INSTANCE.clearLocaleCache();
+  public static @Nls String messageOrNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.messageOrNull(key, params);
   }
 }

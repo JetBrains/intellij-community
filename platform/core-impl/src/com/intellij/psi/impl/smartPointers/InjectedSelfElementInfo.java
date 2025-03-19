@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -37,12 +23,10 @@ import java.util.List;
 import java.util.Set;
 
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
-  @NotNull
-  private final SmartPsiFileRange myInjectedFileRangeInHostFile;
-  @Nullable private final AffixOffsets myAffixOffsets;
+  private final @NotNull SmartPsiFileRange myInjectedFileRangeInHostFile;
+  private final @Nullable AffixOffsets myAffixOffsets;
   private final Identikit myType;
-  @NotNull
-  private final SmartPsiElementPointer<PsiLanguageInjectionHost> myHostContext;
+  private final @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> myHostContext;
 
   InjectedSelfElementInfo(@NotNull Project project,
                           @NotNull PsiElement injectedElement,
@@ -178,8 +162,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     return getInjectedFileIn(hostContext, hostFile, rangeInHostFile);
   }
 
-  @Nullable
-  private ProperTextRange getInjectedRange(boolean psi) {
+  private @Nullable ProperTextRange getInjectedRange(boolean psi) {
     PsiElement hostContext = myHostContext.getElement();
     if (hostContext == null) return null;
 
@@ -189,8 +172,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     return hostToInjected(psi, hostElementRange, restoreFile((SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject())), myAffixOffsets);
   }
 
-  @Nullable
-  private static ProperTextRange hostToInjected(boolean psi, @NotNull Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {
+  private static @Nullable ProperTextRange hostToInjected(boolean psi, @NotNull Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {
     VirtualFile virtualFile = injectedFile == null ? null : injectedFile.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
       Project project = injectedFile.getProject();
@@ -225,8 +207,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     return ((SmartPsiElementPointerImpl<?>)myHostContext).getElementInfo().elementHashCode();
   }
 
-  @NotNull
-  private Project getProject() {
+  private @NotNull Project getProject() {
     return myHostContext.getProject();
   }
 

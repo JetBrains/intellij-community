@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.Computable;
@@ -8,10 +8,10 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  *
- * @see ReadAction, WriteAction
- * @see CoroutinesKt#writeIntentAction
+ * @see ReadAction
+ * @see WriteAction
  */
 @ApiStatus.Experimental
 public abstract class WriteIntentReadAction {

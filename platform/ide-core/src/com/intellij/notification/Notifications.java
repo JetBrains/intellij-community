@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification;
 
 import com.intellij.openapi.Disposable;
@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,6 +22,9 @@ import java.util.concurrent.TimeUnit;
  * See <a href="https://plugins.jetbrains.com/docs/intellij/notifications.html#top-level-notifications">Notifications</a>.
  */
 public interface Notifications {
+
+  @Topic.AppLevel
+  @Topic.ProjectLevel
   Topic<Notifications> TOPIC = new Topic<>("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
   /**
@@ -42,24 +44,14 @@ public interface Notifications {
                         boolean shouldLog,
                         boolean shouldReadAloud) { }
 
+  default void register(@NotNull String groupDisplayName,
+                        @NotNull NotificationDisplayType defaultDisplayType,
+                        boolean shouldLog,
+                        boolean shouldReadAloud,
+                        @Nullable String toolWindowId) { }
+
   final class Bus {
     private Bus() { }
-
-    /**
-     * Registration is OPTIONAL: BALLOON display type will be used by default.
-     *
-     * @deprecated use {@link NotificationGroup}
-     */
-    @Deprecated(forRemoval = true)
-    public static void register(@NotNull String groupId, @NotNull NotificationDisplayType defaultDisplayType) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      SwingUtilities.invokeLater(() -> {
-        Application app = ApplicationManager.getApplication();
-        if (!app.isDisposed()) {
-          app.getMessageBus().syncPublisher(TOPIC).register(groupId, defaultDisplayType);
-        }
-      });
-    }
 
     /**
      * Use {@link #notify(Notification, Project)} when project is known to show it in its associated frame.

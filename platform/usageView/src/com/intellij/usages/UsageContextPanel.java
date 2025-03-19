@@ -17,8 +17,10 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +33,22 @@ import java.util.List;
  */
 public interface UsageContextPanel extends Disposable {
   // usage selection changes, panel should update its view for the newly select usages
+  void updateLayout(@NotNull Project project, @Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
+
+  default void updateLayout(@NotNull Project project, @NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
+    updateLayout(project, infos);
+  }
+
+  /**
+   * @deprecated Use {@link #updateLayout(Project, List)}
+   */
+  @Deprecated
   void updateLayout(@Nullable("null means there are no usages to show") List<? extends UsageInfo> infos);
 
+  /**
+   * @deprecated Use {@link #updateLayout(Project, List, UsageView)}
+   */
+  @Deprecated
   default void updateLayout(@NotNull List<? extends UsageInfo> infos, @NotNull UsageView usageView) {
     updateLayout(infos);
   }
@@ -41,6 +57,7 @@ public interface UsageContextPanel extends Disposable {
   JComponent createComponent();
 
   interface Provider {
+    @ApiStatus.Internal
     ExtensionPointName<Provider> EP_NAME = ExtensionPointName.create("com.intellij.usageContextPanelProvider");
 
     @NotNull

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.MethodImplementor;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
-import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -18,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SnippetDocTagMethodImplementor implements MethodImplementor {
+public final class SnippetDocTagMethodImplementor implements MethodImplementor {
   @Override
   public PsiMethod @NotNull [] getMethodsToImplement(PsiClass aClass) {
     return PsiMethod.EMPTY_ARRAY;

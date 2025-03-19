@@ -3,7 +3,10 @@ package com.intellij.warmup.util
 
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.text.Formats
+import com.intellij.util.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.time.delay
 import java.io.File
@@ -12,7 +15,7 @@ import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 
-class TimeCookie {
+internal class TimeCookie {
   private val now = System.currentTimeMillis()
   fun formatDuration(): String {
     val duration = max(0L, TimeCookie().now - this.now)
@@ -49,15 +52,15 @@ private class TaskAndLogTimeElement : CoroutineContext.Element {
 @OptIn(DelicateCoroutinesApi::class)
 suspend fun <Y> runTaskAndLogTime(
   progressName: String,
-  action: suspend CoroutineScope.(TimeCookie) -> Y
+  action: suspend CoroutineScope.() -> Y
 ): Y = coroutineScope {
   val cookie = TimeCookie()
-  WarmupLogger.logInfo("Waiting for '$progressName'...")
+  WarmupLogger.logInfo("Started waiting for '$progressName'...")
 
   val stackElement = coroutineContext[TaskAndLogTimeKey] ?: TaskAndLogTimeElement()
   stackElement.push(progressName)
 
-  val loggerJob = GlobalScope.launch(Dispatchers.IO) {
+  val loggerJob = application.service<WarmupScopeService>().launch(Dispatchers.IO) {
     launch {
       while (true) {
         delay(Duration.ofSeconds(5))
@@ -91,7 +94,7 @@ suspend fun <Y> runTaskAndLogTime(
 
   try {
     withContext(stackElement + CoroutineName(progressName)) {
-      action(cookie)
+      action()
     }
   }
   finally {
@@ -100,3 +103,6 @@ suspend fun <Y> runTaskAndLogTime(
     WarmupLogger.logInfo("Completed waiting for '$progressName' in ${cookie.formatDuration()}")
   }
 }
+
+@Service
+private class WarmupScopeService(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope

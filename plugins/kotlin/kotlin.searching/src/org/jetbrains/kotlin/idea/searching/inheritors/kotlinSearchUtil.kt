@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.searching.inheritors
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -12,10 +11,11 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.mappingNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import java.util.*
 
 /**
@@ -51,7 +51,7 @@ fun KtCallableDeclaration.findHierarchyWithSiblings(searchScope: SearchScope = r
 } 
 
 private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean, searchScope: SearchScope): Sequence<PsiElement> {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    if (runReadAction { containingClassOrObject !is KtClass }) return emptySequence()
 
     val queue = ArrayDeque<PsiElement>()
     val visited = HashSet<PsiElement>()
@@ -66,13 +66,13 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
             }
             when (currentMethod) {
                 is KtCallableDeclaration -> {
-                    DirectKotlinOverridingCallableSearch.search(currentMethod, searchScope).forEach {
+                    DirectKotlinOverridingCallableSearch.search(currentMethod, searchScope).asIterable().forEach {
                         queue.offer(it)
                     }
                     if (withFullHierarchy) {
                         analyze(currentMethod) {
-                            val ktCallableSymbol = currentMethod.getSymbol() as? KtCallableSymbol ?: return@analyze
-                            ktCallableSymbol.getDirectlyOverriddenSymbols()
+                            val ktCallableSymbol = currentMethod.symbol as? KaCallableSymbol ?: return@analyze
+                            ktCallableSymbol.directlyOverriddenSymbols
                                 .mapNotNull { it.psi }
                                 .forEach { queue.offer(it) }
                         }
@@ -82,6 +82,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                 is PsiMethod -> {
                     OverridingMethodsSearch.search(currentMethod, searchScope,true)
                         .mappingNotNull { it.unwrapped }
+                        .asIterable()
                         .forEach { queue.offer(it) }
                     if (withFullHierarchy) {
                         currentMethod.findSuperMethods(true)
@@ -110,8 +111,6 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
  */
 @RequiresBackgroundThread(generateAssertion = false)
 fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<PsiElement> {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-
     val queue = ArrayDeque<PsiElement>()
     val visited = HashSet<PsiElement>()
 
@@ -125,7 +124,7 @@ fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<Psi
             }
             when (currentClass) {
                 is KtClass -> {
-                    DirectKotlinClassInheritorsSearch.search(currentClass, searchScope).forEach {
+                    DirectKotlinClassInheritorsSearch.search(currentClass, searchScope).asIterable().forEach {
                         queue.offer(it)
                     }
                 }
@@ -133,6 +132,7 @@ fun KtClass.findAllInheritors(searchScope: SearchScope = useScope): Sequence<Psi
                 is PsiClass -> {
                     ClassInheritorsSearch.search(currentClass, searchScope, /* checkDeep = */ false)
                         .mappingNotNull { it.unwrapped }
+                        .asIterable()
                         .forEach {
                             queue.offer(it)
                         }

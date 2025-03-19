@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.project.Project
@@ -11,13 +11,14 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
-import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
-class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugView() {
+@ApiStatus.Internal
+class XThreadsView(project: Project, session: XDebugSessionImpl) : XDebugView() {
   private val treePanel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, "", null)
 
-  private fun getTree() = treePanel.tree
+  fun getTree() = treePanel.tree
   fun getPanel(): JPanel = treePanel.mainPanel
 
   override fun getMainComponent() = getPanel()
@@ -30,8 +31,8 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
     }
   }
 
-  override fun processSessionEvent(event: XDebugView.SessionEvent, session: XDebugSession) {
-    if (event == XDebugView.SessionEvent.BEFORE_RESUME) {
+  override fun processSessionEvent(event: SessionEvent, session: XDebugSession) {
+    if (event == SessionEvent.BEFORE_RESUME) {
       return
     }
     val suspendContext = session.suspendContext
@@ -39,7 +40,7 @@ class XThreadsView(val project: Project, session: XDebugSessionImpl) : XDebugVie
       requestClear()
       return
     }
-    if (event == XDebugView.SessionEvent.PAUSED) {
+    if (event == SessionEvent.PAUSED) {
       // clear immediately
       cancelClear()
       clear()

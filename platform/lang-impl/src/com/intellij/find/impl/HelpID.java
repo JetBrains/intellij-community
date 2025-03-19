@@ -17,8 +17,10 @@
 
 package com.intellij.find.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public interface HelpID {
   @NonNls String FIND_PACKAGE_USAGES = "reference.dialogs.findUsages.package";
   @NonNls String FIND_CLASS_USAGES = "reference.dialogs.findUsages.class";

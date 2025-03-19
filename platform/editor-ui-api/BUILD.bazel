@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.editor.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "editor-ui_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "editor-ui",
+  module_name = "intellij.platform.editor.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/indexing-api:indexing",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diagnostic",
+  ],
+  runtime_deps = [":editor-ui_resources"]
+)
+### auto-generated section `build intellij.platform.editor.ui` end

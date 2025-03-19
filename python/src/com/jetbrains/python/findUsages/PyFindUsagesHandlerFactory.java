@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.findUsages;
 
 import com.intellij.find.findUsages.*;
@@ -34,14 +20,14 @@ import java.util.Collection;
 /**
  * @author traff
  */
-public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
+public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory implements PyPsiFindUsagesHandlerFactory {
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
     return PyPsiFindUsagesHandlerFactory.super.canFindUsages(element);
   }
 
-  private static @Nullable FindUsagesHandler proxy(@Nullable final FindUsagesHandlerBase base) {
+  private static @Nullable FindUsagesHandler proxy(final @Nullable FindUsagesHandlerBase base) {
     if (base == null) {
       return null;
     }
@@ -59,7 +45,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
 
         @Override
         protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
-          return ((PyFindUsagesHandler)base).isSearchForTextOccurrencesAvailable(psiElement, isSingleFile);
+          return FindUsagesHelper.isSearchForTextOccurrencesAvailable(base, psiElement, isSingleFile);
         }
 
         @Override
@@ -88,7 +74,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
       };
     }
     else {
-      @NonNls String msg = base.toString() + " is of unexpected type.";
+      @NonNls String msg = base + " is of unexpected type.";
       throw new IllegalArgumentException(msg);
     }
   }
@@ -106,14 +92,13 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
   /**
    * Important note: please update PyFindUsagesHandlerFactory#proxy on any changes here.
    */
-  static class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
-    protected PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
+  private static final class PyModuleFindUsagesHandlerUi extends PyModuleFindUsagesHandler implements FindUsagesHandlerUi {
+    PyModuleFindUsagesHandlerUi(@NotNull PsiFileSystemItem file) {
       super(file);
     }
 
-    @NotNull
     @Override
-    public AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
+    public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
       return new CommonFindUsagesDialog(myElement,
                                         getProject(),
                                         getFindUsagesOptions(),
@@ -122,7 +107,7 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
                                         isSingleFile,
                                         this) {
         @Override
-        public void configureLabelComponent(@NonNls @NotNull final SimpleColoredComponent coloredComponent) {
+        public void configureLabelComponent(final @NonNls @NotNull SimpleColoredComponent coloredComponent) {
           coloredComponent.append(myElement instanceof PsiDirectory
                                   ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
                                   : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));

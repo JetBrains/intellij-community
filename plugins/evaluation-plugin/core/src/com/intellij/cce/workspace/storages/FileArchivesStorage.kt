@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.workspace.storages
 
 import java.io.*
@@ -11,8 +12,7 @@ class FileArchivesStorage(private val storageDir: String) : KeyValueStorage<Stri
   val fileExtension: String = ".gz"
 
   init {
-    val storagePath = Paths.get(storageDir)
-    if (!Files.exists(storagePath)) Files.createDirectories(storagePath)
+    ensureDirExists(storageDir)
   }
 
   override fun get(key: String): String {

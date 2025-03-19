@@ -3,27 +3,23 @@ package com.intellij.util.download.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.download.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
-class DownloadableFileServiceImpl extends DownloadableFileService {
-  @NotNull
+final class DownloadableFileServiceImpl extends DownloadableFileService {
   @Override
-  public DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName) {
+  public @NotNull DownloadableFileDescription createFileDescription(@NotNull String downloadUrl, @NotNull String fileName) {
     return new DownloadableFileDescriptionImpl(downloadUrl, FileUtilRt.getNameWithoutExtension(fileName), FileUtilRt.getExtension(fileName));
   }
 
-  @NotNull
   @Override
-  public DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
-                                                                                           URL @NotNull ... localUrls) {
+  public @NotNull DownloadableFileSetVersions<DownloadableFileSetDescription> createFileSetVersions(@Nullable String groupId,
+                                                                                                    URL @NotNull ... localUrls) {
     return new FileSetVersionsFetcherBase<>(groupId, localUrls) {
       @Override
       protected DownloadableFileSetDescription createVersion(Artifact version, List<? extends DownloadableFileDescription> files) {
@@ -37,24 +33,14 @@ class DownloadableFileServiceImpl extends DownloadableFileService {
     };
   }
 
-  @NotNull
   @Override
-  public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description) {
+  public @NotNull FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description) {
     return createDownloader(description.getFiles(), description.getName());
   }
 
-  @NotNull
   @Override
-  public FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
-                                         @NotNull String presentableDownloadName) {
+  public @NotNull FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
+                                                  @NotNull String presentableDownloadName) {
     return new FileDownloaderImpl(fileDescriptions, null, null, presentableDownloadName);
-  }
-
-  @Override
-  @NotNull
-  public FileDownloader createDownloader(final List<? extends DownloadableFileDescription> fileDescriptions,
-                                         final @Nullable Project project,
-                                         JComponent parent, @NotNull String presentableDownloadName) {
-    return new FileDownloaderImpl(fileDescriptions, project, parent, presentableDownloadName);
   }
 }

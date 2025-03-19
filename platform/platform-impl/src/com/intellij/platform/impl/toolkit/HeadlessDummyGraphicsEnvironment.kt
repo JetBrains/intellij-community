@@ -31,9 +31,9 @@ class HeadlessDummyGraphicsEnvironment: ClientGraphicsEnvironment {
     override fun getDefaultConfiguration() = dummyGraphicsConfiguration
   }
 
-  override fun isInitialized() = true
-  override fun getNumScreens() = 1
-  override fun makeScreenDevice(id: Int) = dummyDevice
-  override fun isDisplayLocal() = false
+  override fun isInitialized(): Boolean = true
+  override fun getNumScreens(): Int = 1
+  override fun makeScreenDevice(id: Int): GraphicsDevice = dummyDevice
+  override fun isDisplayLocal(): Boolean = false
   override fun getScreenDevices(): Array<GraphicsDevice> = arrayOf(dummyDevice)
 }

@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.reference;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.util.function.Supplier;
 
 /**
@@ -25,27 +24,16 @@ public class SoftReference<T> extends java.lang.ref.SoftReference<T> implements 
     //myReferent = referent;
   }
 
-  /**
-   * @deprecated use {@link java.lang.ref.SoftReference#SoftReference(Object, ReferenceQueue)}
-   */
-  @Deprecated
-  public SoftReference(final T referent, final ReferenceQueue<? super T> q) {
-    super(referent, q);
-    //myReferent = referent;
-  }
-
   //@Override
   //public T get() {
   //  return myReferent;
   //}
 
-  @Nullable
-  public static <T> T dereference(@Nullable Reference<T> ref) {
+  public static @Nullable <T> T dereference(@Nullable Reference<T> ref) {
     return ref == null ? null : ref.get();
   }
 
-  @Nullable
-  public static <T> T deref(@Nullable Supplier<T> ref) {
+  public static @Nullable <T> T deref(@Nullable Supplier<T> ref) {
     return ref == null ? null : ref.get();
   }
 }

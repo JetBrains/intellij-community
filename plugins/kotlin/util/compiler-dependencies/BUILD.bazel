@@ -1,0 +1,45 @@
+### auto-generated section `build kotlin.util.compiler-dependencies` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "kotlin-util-compiler-dependencies",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "@lib//:kotlinc-kotlin-dist",
+    "@lib//:kotlinc-kotlin-ide-dist",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-kotlin-compiler-cli",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "@lib//:kotlinc-incremental-compilation-impl-tests",
+    "@lib//:kotlinc-kotlin-build-common-tests",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-jps-plugin-classpath",
+    "@lib//:kotlinc-kotlin-gradle-statistics",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-impl-base-tests",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-k2-tests",
+    "@lib//:kotlinc-symbol-light-classes",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlinc-allopen-compiler-plugin",
+    "@lib//:kotlinc-noarg-compiler-plugin",
+    "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
+    "@lib//:kotlinc-assignment-compiler-plugin",
+    "@lib//:kotlinc-android-extensions-compiler-plugin",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
+    "@lib//:kotlinc-lombok-compiler-plugin",
+  ]
+)
+### auto-generated section `build kotlin.util.compiler-dependencies` end

@@ -1,0 +1,99 @@
+### auto-generated section `build intellij.java.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ui_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.java.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-impl:impl",
+    "//platform/ide-core-impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/progress",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//platform/vcs-impl",
+    "//platform/observable:ide-observable",
+    "//platform/diff-api:diff",
+    "@lib//:guava",
+    "@lib//:jna",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "@lib//:stream_ex",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/workspace/jps",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/feedback",
+    "//platform/util/jdom",
+    "//platform/backend/workspace",
+    "//xml/dom-openapi:dom",
+    "//platform/util/coroutines",
+    "//platform/backend/observation",
+    "//platform/eel-provider",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":ui_resources"]
+)
+### auto-generated section `build intellij.java.ui` end
+
+### auto-generated section `build intellij.java.ui.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "ui-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "ui-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/idea-ui:ui",
+    "//java/testFramework",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//aether-dependency-resolver:java-aetherDependencyResolver_test_lib",
+    "//java/execution/impl:java-execution-impl",
+    "@lib//:assert_j",
+    "//platform/platform-tests:tests_test_lib",
+    "//platform/core-ui",
+    "//java/compiler/openapi:java-compiler",
+    "//java/openapi:java",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:kotlin-test",
+    "//platform/util",
+    "@lib//:ktor-server-cio",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel",
+    "//platform/testFramework/junit5/eel:testFramework-junit5-eel_test_lib",
+    "//platform/eel-provider",
+  ]
+)
+
+jvm_test(
+  name = "ui-tests_test",
+  runtime_deps = [":ui-tests_test_lib"]
+)
+### auto-generated section `build intellij.java.ui.tests` end

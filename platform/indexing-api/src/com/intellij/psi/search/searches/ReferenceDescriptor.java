@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.searches;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,11 +7,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public final class ReferenceDescriptor {
-  @NotNull
-  public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
+  public static final @NotNull Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
     final PsiElement element = psiReference.getElement();
     final PsiFile file1 = element.getContainingFile();
     TextRange textRange = element.getTextRange();

@@ -3,14 +3,17 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
+import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
-interface UastCommentLogTestBase : UastPluginSelection, UastFileComparisonTestBase {
+interface UastCommentLogTestBase : UastFileComparisonTestBase,
+                                   ExpectedPluginModeProvider {
+
     private fun getCommentsFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "comments$suffix")
 
     private fun getIdenticalCommentsFile(filePath: String): File = getCommentsFile(filePath, TXT)

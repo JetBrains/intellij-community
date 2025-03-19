@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -23,6 +21,7 @@ import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +42,13 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
  */
-public class CommonCodeStyleSettings {
+public class CommonCodeStyleSettings implements CommentStyleSettings {
   // Dev. notes:
   // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
   // - New options should be added to CodeStyleSettingsCustomizable as well.
   // - Covered by CodeStyleConfigurationsTest.
 
-  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangement";
+  private static final @NonNls String ARRANGEMENT_ELEMENT_NAME = "arrangement";
 
   private final @NotNull String myLangId;
 
@@ -60,9 +59,10 @@ public class CommonCodeStyleSettings {
 
   private final SoftMargins mySoftMargins = new SoftMargins();
 
-  @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+  private static final @NonNls String INDENT_OPTIONS_TAG = "indentOptions";
 
-  private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
+
+  private static final Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
   public CommonCodeStyleSettings(@Nullable Language language) {
     this(ObjectUtils.notNull(language, Language.ANY).getID());
@@ -76,8 +76,7 @@ public class CommonCodeStyleSettings {
     myRootSettings = rootSettings;
   }
 
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     Language language = Language.findLanguageByID(myLangId);
     if (language == null) {
       LOG.error("Can't find the language with ID " + myLangId);
@@ -86,24 +85,20 @@ public class CommonCodeStyleSettings {
     return language;
   }
 
-  @NotNull
-  public IndentOptions initIndentOptions() {
+  public @NotNull IndentOptions initIndentOptions() {
     myIndentOptions = new IndentOptions();
     return myIndentOptions;
   }
 
-  @NotNull
-  public CodeStyleSettings getRootSettings() {
+  public @NotNull CodeStyleSettings getRootSettings() {
     return myRootSettings;
   }
 
-  @Nullable
-  public IndentOptions getIndentOptions() {
+  public @Nullable IndentOptions getIndentOptions() {
     return myIndentOptions;
   }
 
-  @Nullable
-  public ArrangementSettings getArrangementSettings() {
+  public @Nullable ArrangementSettings getArrangementSettings() {
     return myArrangementSettings;
   }
 
@@ -169,6 +164,7 @@ public class CommonCodeStyleSettings {
     LOG.info("Loaded " + getLanguage().getDisplayName() + " common code style settings");
   }
 
+  @ApiStatus.Internal
   public void writeExternal(Element element) {
     LanguageCodeStyleProvider provider = LanguageCodeStyleProvider.forLanguage(getLanguage());
     if (provider != null) {
@@ -176,6 +172,7 @@ public class CommonCodeStyleSettings {
     }
   }
 
+  @ApiStatus.Internal
   public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
     CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
     Set<String> supportedFields = provider.getSupportedFields();
@@ -205,6 +202,22 @@ public class CommonCodeStyleSettings {
       }
     }
   }
+
+  @Override
+  public boolean isLineCommentInTheFirstColumn() {
+    return LINE_COMMENT_AT_FIRST_COLUMN;
+  }
+
+  @Override
+  public boolean isLineCommentFollowedWithSpace() {
+    return LINE_COMMENT_ADD_SPACE;
+  }
+
+  @Override
+  public boolean isBlockCommentIncludesSpace() {
+    return BLOCK_COMMENT_ADD_SPACE;
+  }
+
 
   public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
@@ -240,6 +253,7 @@ public class CommonCodeStyleSettings {
   public boolean BLOCK_COMMENT_ADD_SPACE = false;
 
   public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
+  public boolean LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 
@@ -912,6 +926,9 @@ public class CommonCodeStyleSettings {
 
   @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
+
+  @WrapConstant
+  public int SWITCH_EXPRESSIONS_WRAP = WRAP_AS_NEEDED;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
   // BRACE FORCING
@@ -958,7 +975,7 @@ public class CommonCodeStyleSettings {
   // region Chained Builder Method Calls
   //----------------------------------------------------------------------------------------
 
-  public @NonNls @CommaSeparatedValues String BUILDER_METHODS = "";
+  @CommaSeparatedValues public @NonNls String BUILDER_METHODS = "";
   public boolean KEEP_BUILDER_METHODS_INDENTS = false;
 
   private final @NotNull Set<String> myBuilderMethodsNameCache = new HashSet<>();
@@ -1111,10 +1128,10 @@ public class CommonCodeStyleSettings {
 
     public void copyFrom(IndentOptions other) {
       copyPublicFields(other, this);
+      myOverrideLanguageOptions = other.myOverrideLanguageOptions;
     }
 
-    @Nullable
-    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public @Nullable FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 
@@ -1129,15 +1146,13 @@ public class CommonCodeStyleSettings {
     /**
      * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
      */
-    @Nullable
     @Deprecated
-    public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }
 
-    @Nullable
-    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+    public static @Nullable IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
       return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
@@ -1188,8 +1203,7 @@ public class CommonCodeStyleSettings {
     return Comparing.equal(theseSettings, obj.getArrangementSettings());
   }
 
-  @NotNull
-  public List<Integer> getSoftMargins() {
+  public @NotNull List<Integer> getSoftMargins() {
     return mySoftMargins.getValues();
   }
 

@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.text.StringUtil;
-
 import org.intellij.lang.xpath.psi.XPathType;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,9 +85,8 @@ public class FunctionImpl implements Function {
     return parameters;
   }
 
-  @NotNull
   @Override
-  public XPathType getReturnType() {
+  public @NotNull XPathType getReturnType() {
     return returnType;
   }
 

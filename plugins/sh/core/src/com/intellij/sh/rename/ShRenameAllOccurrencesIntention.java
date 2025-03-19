@@ -10,21 +10,20 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.ShBundle;
+import com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor;
 import com.intellij.sh.psi.ShFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ShRenameAllOccurrencesIntention extends BaseIntentionAction implements ShortcutProvider, HighPriorityAction {
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return ShBundle.message("sh.rename.all.occurrences");
   }
 
@@ -35,7 +34,7 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof ShFile && editor != null
+    return ShOccurrencesHighlightingSuppressor.isOccurrencesHighlightingEnabled(editor, file)
            && ShRenameAllOccurrencesHandler.INSTANCE.isEnabled(editor, editor.getCaretModel().getPrimaryCaret(), null);
   }
 
@@ -46,9 +45,8 @@ public class ShRenameAllOccurrencesIntention extends BaseIntentionAction impleme
     }
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return CommonShortcuts.getRename();
   }
 }

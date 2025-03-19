@@ -29,3 +29,5 @@ fun foo4(a: Int) {
     b = b + 1
     return b - 1
 }
+
+// IGNORE_K2

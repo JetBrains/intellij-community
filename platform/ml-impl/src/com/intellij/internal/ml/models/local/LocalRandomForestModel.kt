@@ -3,6 +3,7 @@ package com.intellij.internal.ml.models.local
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
+import org.jetbrains.annotations.ApiStatus
 
 private class Tree(val thresholds: List<Double>,
                    val values: List<Double>,
@@ -53,6 +54,7 @@ private class TreesModel {
   }
 }
 
+@ApiStatus.Internal
 class LocalRandomForestModel private constructor(metadata: FeaturesInfo, private val treesModel: TreesModel)
   : CompletionRankingModelBase(metadata) {
   override fun predict(features: DoubleArray?): Double = treesModel.predict(features)

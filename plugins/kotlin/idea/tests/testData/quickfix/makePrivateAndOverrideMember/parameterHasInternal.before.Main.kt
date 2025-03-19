@@ -1,8 +1,10 @@
 // "Implements 'getName'" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Convert to secondary constructor
 // ACTION: Create test
 // ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Implement members
+// ACTION: Make 'A' 'abstract'
 // ACTION: Make private
 // ACTION: Make protected
 // ACTION: Make public

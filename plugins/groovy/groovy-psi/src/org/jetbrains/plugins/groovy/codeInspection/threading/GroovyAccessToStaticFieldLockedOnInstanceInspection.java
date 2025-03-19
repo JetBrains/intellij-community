@@ -30,18 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-public class GroovyAccessToStaticFieldLockedOnInstanceInspection
+public final class GroovyAccessToStaticFieldLockedOnInstanceInspection
     extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.access.to.static.field.locked.on.instance.data");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

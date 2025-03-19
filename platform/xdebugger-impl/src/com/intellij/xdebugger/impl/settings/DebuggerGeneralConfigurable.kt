@@ -27,6 +27,13 @@ internal class DebuggerGeneralConfigurable : BoundSearchableConfigurable("", "de
             .bindSelected(Registry.get("debugger.mayBringFrameToFrontOnBreakpoint").toBooleanProperty())
         }
       }
+      if (Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume.supported").asBoolean()) {
+        row {
+          checkBox(XDebuggerBundle.message("setting.show.target.process.window.after.resume"))
+            .bindSelected(Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume").toBooleanProperty())
+          contextHelp(XDebuggerBundle.message("setting.show.target.process.window.after.resume.help.text"))
+        }
+      }
       row {
         checkBox(XDebuggerBundle.message("setting.hide.window.label"))
           .bindSelected(settings::isHideDebuggerOnProcessTermination, settings::setHideDebuggerOnProcessTermination)

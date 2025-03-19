@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.content
 import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabAction
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Point
@@ -12,12 +13,13 @@ import java.awt.Rectangle
 /**
  * @author graann on 08/02/2018
  */
+@ApiStatus.Internal
 abstract class AdditionalIcon(val action: ContentTabAction) {
   val icon: ActiveIcon get() = action.icon
   val afterText: Boolean get() = action.afterText
 
   val available: Boolean get() = action.available
-  fun runAction() = action.runAction()
+  fun runAction(): Unit = action.runAction()
 
   @get:NlsContexts.Tooltip
   val tooltip: String?

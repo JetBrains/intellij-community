@@ -1,19 +1,33 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.xml.dom.XmlElement
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ExtensionDescriptor(@JvmField val implementation: String?,
-                          @JvmField val os: Os?,
-                          @JvmField val orderId: String?,
-                          @JvmField val order: LoadingOrder,
-                          @JvmField var element: XmlElement?,
-                          @JvmField val hasExtraAttributes: Boolean) {
+class ExtensionDescriptor @ApiStatus.Internal constructor(
+  @ApiStatus.Internal @JvmField val implementation: String?,
+  @ApiStatus.Internal @JvmField val os: Os?,
+  @ApiStatus.Internal @JvmField val orderId: String?,
+  @ApiStatus.Internal @JvmField val order: LoadingOrder,
+  @ApiStatus.Internal @JvmField val element: XmlElement?,
+  @ApiStatus.Internal @JvmField val hasExtraAttributes: Boolean,
+) {
   @Suppress("EnumEntryName")
   enum class Os {
-    mac, linux, windows, unix, freebsd
+    mac, linux, windows, unix, freebsd;
+
+    @ApiStatus.Internal
+    fun isSuitableForOs(): Boolean {
+      return when (this) {
+        mac -> SystemInfoRt.isMac
+        linux -> SystemInfoRt.isLinux
+        windows -> SystemInfoRt.isWindows
+        unix -> SystemInfoRt.isUnix
+        freebsd -> SystemInfoRt.isFreeBSD
+        else -> throw IllegalArgumentException("Unknown OS '$this'")
+      }
+    }
   }
 }
 
@@ -22,8 +36,9 @@ class ExtensionPointDescriptor(@JvmField val name: String,
                                @JvmField val isNameQualified: Boolean,
                                @JvmField val className: String,
                                @JvmField val isBean: Boolean,
+                               @JvmField val hasAttributes: Boolean,
                                @JvmField val isDynamic: Boolean) {
-  fun getQualifiedName(pluginDescriptor: PluginDescriptor) = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
+  fun getQualifiedName(pluginDescriptor: PluginDescriptor): String = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
 
   // getQualifiedName() can be used instead, but this method allows avoiding temp string creation
   fun nameEquals(qualifiedName: String, pluginDescriptor: PluginDescriptor): Boolean {

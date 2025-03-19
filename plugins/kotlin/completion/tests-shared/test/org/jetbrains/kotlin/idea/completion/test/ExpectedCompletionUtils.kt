@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test
 
@@ -13,18 +13,18 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.ui.JBColor
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
 import org.jetbrains.kotlin.idea.test.AstAccessControl
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.test.utils.IgnoreTests
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.platform.konan.isNative
 import org.junit.Assert
 import javax.swing.Icon
 
@@ -55,7 +55,7 @@ object ExpectedCompletionUtils {
         }
 
         constructor(json: JsonObject) {
-            map = HashMap<String, String?>()
+            map = HashMap()
             for (entry in json.entrySet()) {
                 val key = entry.key
                 if (key !in validKeys) {
@@ -68,17 +68,9 @@ object ExpectedCompletionUtils {
 
         operator fun get(key: String): String? = map[key]
 
-        fun matches(expectedProposal: CompletionProposal, ignoreProperties: Collection<String>): Boolean {
-            return expectedProposal.map.entries.none { expected ->
-                val actualValues = when (expected.key) {
-                    in ignoreProperties -> return@none false
-                    "lookupString" -> {
-                        // FIR IDE adds `.` after package names in completion
-                        listOf(map[expected.key]?.removeSuffix("."), map[expected.key])
-                    }
-                    else -> listOf(map[expected.key])
-                }
-                expected.value !in actualValues
+        fun matches(expectedProposal: CompletionProposal): Boolean {
+            return expectedProposal.map.entries.all { expected ->
+                expected.value == map[expected.key]
             }
         }
 
@@ -114,13 +106,26 @@ object ExpectedCompletionUtils {
     private const val ABSENT_LINE_PREFIX = "ABSENT:"
     private const val ABSENT_JS_LINE_PREFIX = "ABSENT_JS:"
     private const val ABSENT_JAVA_LINE_PREFIX = "ABSENT_JAVA:"
+    private const val ABSENT_NATIVE_LINE_PREFIX = "ABSENT_NATIVE:"
+    private const val ABSENT_COMMON_LINE_PREFIX = "ABSENT_COMMON:"
 
     private const val EXIST_JAVA_ONLY_LINE_PREFIX = "EXIST_JAVA_ONLY:"
     private const val EXIST_JS_ONLY_LINE_PREFIX = "EXIST_JS_ONLY:"
+    private const val EXIST_NATIVE_ONLY_LINE_PREFIX = "EXIST_NATIVE_ONLY:"
+    private const val EXIST_COMMON_ONLY_LINE_PREFIX = "EXIST_COMMON_ONLY:"
+
+    val EXISTS_PLATFORM_PREFIXES = listOf(
+        EXIST_JAVA_ONLY_LINE_PREFIX,
+        EXIST_JS_ONLY_LINE_PREFIX,
+        EXIST_NATIVE_ONLY_LINE_PREFIX,
+        EXIST_COMMON_ONLY_LINE_PREFIX,
+    )
 
     private const val NUMBER_LINE_PREFIX = "NUMBER:"
     private const val NUMBER_JS_LINE_PREFIX = "NUMBER_JS:"
     private const val NUMBER_JAVA_LINE_PREFIX = "NUMBER_JAVA:"
+    private const val NUMBER_NATIVE_LINE_PREFIX = "NUMBER_NATIVE:"
+    private const val NUMBER_COMMON_LINE_PREFIX = "NUMBER_COMMON:"
 
     private const val NOTHING_ELSE_PREFIX = "NOTHING_ELSE"
     private const val RUN_HIGHLIGHTING_BEFORE_PREFIX = "RUN_HIGHLIGHTING_BEFORE"
@@ -141,11 +146,17 @@ object ExpectedCompletionUtils {
         ABSENT_LINE_PREFIX,
         ABSENT_JS_LINE_PREFIX,
         ABSENT_JAVA_LINE_PREFIX,
+        ABSENT_NATIVE_LINE_PREFIX,
+        ABSENT_COMMON_LINE_PREFIX,
         EXIST_JAVA_ONLY_LINE_PREFIX,
         EXIST_JS_ONLY_LINE_PREFIX,
+        EXIST_NATIVE_ONLY_LINE_PREFIX,
+        EXIST_COMMON_ONLY_LINE_PREFIX,
         NUMBER_LINE_PREFIX,
         NUMBER_JS_LINE_PREFIX,
         NUMBER_JAVA_LINE_PREFIX,
+        NUMBER_NATIVE_LINE_PREFIX,
+        NUMBER_COMMON_LINE_PREFIX,
         INVOCATION_COUNT_PREFIX,
         WITH_ORDER_PREFIX,
         AUTOCOMPLETE_SETTING_PREFIX,
@@ -156,31 +167,59 @@ object ExpectedCompletionUtils {
         BLOCK_CODE_FRAGMENT,
         AstAccessControl.ALLOW_AST_ACCESS_DIRECTIVE,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON,
+        IgnoreTests.DIRECTIVES.IGNORE_K2,
         IgnoreTests.DIRECTIVES.FIR_IDENTICAL,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON_MULTILINE_COMMENT,
-    )
+        IgnoreTests.DIRECTIVES.IGNORE_K1,
+    ) + KMPTestPlatform.entries.map { "// IGNORE_PLATFORM_${it.directiveName}:" }
 
     fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
         platform.isJvm() -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_JAVA_ONLY_LINE_PREFIX)
         platform.isJs() -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_JS_ONLY_LINE_PREFIX)
+        platform.isNative() -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_NATIVE_ONLY_LINE_PREFIX)
         platform == null -> processProposalAssertions(fileText, EXIST_LINE_PREFIX)
-        else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+        else -> processProposalAssertions(fileText, EXIST_LINE_PREFIX, EXIST_COMMON_ONLY_LINE_PREFIX)
     }
 
-    fun itemsShouldAbsent(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {
-        platform.isJvm() -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX, ABSENT_JAVA_LINE_PREFIX, EXIST_JS_ONLY_LINE_PREFIX)
-        platform.isJs() -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX, ABSENT_JS_LINE_PREFIX, EXIST_JAVA_ONLY_LINE_PREFIX)
-        platform == null -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX)
-        else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+    fun itemsShouldAbsent(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> {
+        return when {
+            platform.isJvm() -> processProposalAssertions(
+                fileText,
+                ABSENT_LINE_PREFIX,
+                ABSENT_JAVA_LINE_PREFIX,
+                *(EXISTS_PLATFORM_PREFIXES - EXIST_JAVA_ONLY_LINE_PREFIX).toTypedArray()
+            ).filterOutAllowList(fileText, EXIST_JAVA_ONLY_LINE_PREFIX)
+
+            platform.isJs() -> processProposalAssertions(
+                fileText,
+                ABSENT_LINE_PREFIX,
+                ABSENT_JS_LINE_PREFIX,
+                *(EXISTS_PLATFORM_PREFIXES - EXIST_JS_ONLY_LINE_PREFIX).toTypedArray()
+            ).filterOutAllowList(fileText, EXIST_JS_ONLY_LINE_PREFIX)
+
+            platform.isNative() -> processProposalAssertions(
+                fileText,
+                ABSENT_LINE_PREFIX,
+                ABSENT_NATIVE_LINE_PREFIX,
+                *(EXISTS_PLATFORM_PREFIXES - EXIST_NATIVE_ONLY_LINE_PREFIX).toTypedArray()
+            ).filterOutAllowList(fileText, EXIST_NATIVE_ONLY_LINE_PREFIX)
+
+            platform == null -> processProposalAssertions(fileText, ABSENT_LINE_PREFIX)
+            else -> processProposalAssertions(
+                fileText,
+                ABSENT_LINE_PREFIX,
+                ABSENT_COMMON_LINE_PREFIX,
+                *(EXISTS_PLATFORM_PREFIXES - EXIST_COMMON_ONLY_LINE_PREFIX).toTypedArray()
+            ).filterOutAllowList(fileText, EXIST_COMMON_ONLY_LINE_PREFIX)
+        }
     }
 
     fun processProposalAssertions(fileText: String, vararg prefixes: String): Array<CompletionProposal> {
         val proposals = ArrayList<CompletionProposal>()
         for (proposalStr in InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, *prefixes)) {
             if (proposalStr.startsWith("{")) {
-                val parser = JsonParser()
                 val json: JsonElement? = try {
-                    parser.parse(proposalStr)
+                    JsonParser.parseString(proposalStr)
                 } catch (t: Throwable) {
                     throw RuntimeException("Error parsing '$proposalStr'", t)
                 }
@@ -197,11 +236,22 @@ object ExpectedCompletionUtils {
         return ArrayUtil.toObjectArray(proposals, CompletionProposal::class.java)
     }
 
+    private fun Array<CompletionProposal>.filterOutAllowList(fileText: String, vararg prefixes: String): Array<CompletionProposal> {
+        if (prefixes.isEmpty()) return this
+        val allowProposals = processProposalAssertions(fileText, *prefixes)
+        return toMutableList().apply {
+            for (allow in allowProposals) {
+                removeIf { allow.matches(it) || it.matches(allow) }
+            }
+        }.toTypedArray()
+    }
+
     fun getExpectedNumber(fileText: String, platform: TargetPlatform?): Int? = when {
         platform == null -> InTextDirectivesUtils.getPrefixedInt(fileText, NUMBER_LINE_PREFIX)
         platform.isJvm() -> getPlatformExpectedNumber(fileText, NUMBER_JAVA_LINE_PREFIX)
         platform.isJs() -> getPlatformExpectedNumber(fileText, NUMBER_JS_LINE_PREFIX)
-        else -> throw IllegalArgumentException(UNSUPPORTED_PLATFORM_MESSAGE)
+        platform.isNative() -> getPlatformExpectedNumber(fileText, NUMBER_NATIVE_LINE_PREFIX)
+        else -> getPlatformExpectedNumber(fileText, NUMBER_COMMON_LINE_PREFIX)
     }
 
     fun isNothingElseExpected(fileText: String): Boolean =
@@ -234,7 +284,6 @@ object ExpectedCompletionUtils {
         items: Array<LookupElement>,
         checkOrder: Boolean,
         nothingElse: Boolean,
-        ignoreProperties: Collection<String>,
     ) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
@@ -249,7 +298,7 @@ object ExpectedCompletionUtils {
             for (index in itemsInformation.indices) {
                 val proposal = itemsInformation[index]
 
-                if (proposal.matches(expectedProposal, ignoreProperties)) {
+                if (proposal.matches(expectedProposal)) {
                     isFound = true
 
                     Assert.assertTrue(
@@ -273,7 +322,7 @@ object ExpectedCompletionUtils {
                         val proposal = itemsInformation[index]
 
                         val candidate = CompletionProposal(expectedProposal) { k, _ -> k != CompletionProposal.PRESENTATION_ICON }
-                        if (proposal.matches(candidate, ignoreProperties)) {
+                        if (proposal.matches(candidate)) {
                             closeMatchWithoutIcon = proposal
                             break
                         }
@@ -306,7 +355,7 @@ object ExpectedCompletionUtils {
         return InTextDirectivesUtils.getPrefixedInt(fileText, NUMBER_LINE_PREFIX)
     }
 
-    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>, ignoreProperties: Collection<String>) {
+    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
 
@@ -314,7 +363,7 @@ object ExpectedCompletionUtils {
             for (proposal in itemsInformation) {
                 Assert.assertFalse(
                     "Unexpected '$unexpectedProposal' presented in\n$allItemsString",
-                    proposal.matches(unexpectedProposal, ignoreProperties)
+                    proposal.matches(unexpectedProposal)
                 )
             }
         }
@@ -349,7 +398,7 @@ object ExpectedCompletionUtils {
     }
 
     private fun iconToString(it: Icon): String {
-        return (it.safeAs<RowIcon>()?.allIcons?.firstOrNull() ?: it).toString()
+        return ((it as? RowIcon)?.allIcons?.firstOrNull() ?: it).toString()
             //todo check how do we get not a dummy icon?
             .replace("nodes/property.svg", "Property")
     }

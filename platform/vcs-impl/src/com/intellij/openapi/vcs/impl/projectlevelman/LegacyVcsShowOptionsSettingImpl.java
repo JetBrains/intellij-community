@@ -2,10 +2,12 @@
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.vcs.VcsAbstractSetting;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class LegacyVcsShowOptionsSettingImpl extends VcsAbstractSetting implements PersistentVcsShowSettingOption {
   private final String myId;
   private final OptionsAndConfirmations myOptions;

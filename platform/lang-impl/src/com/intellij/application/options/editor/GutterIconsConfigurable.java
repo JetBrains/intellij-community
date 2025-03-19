@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -40,8 +42,9 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  @NonNls public static final String ID = "editor.preferences.gutterIcons";
+@ApiStatus.Internal
+public final class GutterIconsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static final @NonNls String ID = "editor.preferences.gutterIcons";
 
   private JPanel myPanel;
   private CheckBoxList<GutterIconDescriptor> myList;
@@ -49,21 +52,18 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
   private final List<GutterIconDescriptor> myDescriptors = new ArrayList<>();
   private final Map<GutterIconDescriptor, PluginDescriptor> myFirstDescriptors = new HashMap<>();
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.GutterIconsConfigurable.display.name");
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return "reference.settings.editor.gutter.icons";
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     LanguageExtensionPoint<LineMarkerProvider>[] extensions = LineMarkerProviders.EP_NAME.getExtensions();
     NullableFunction<LanguageExtensionPoint<LineMarkerProvider>, PluginDescriptor> function =
       point1 -> {
@@ -146,13 +146,13 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (myShowGutterIconsJBCheckBox.isSelected() != editorSettings.areGutterIconsShown()) {
       editorSettings.setGutterIconsShown(myShowGutterIconsJBCheckBox.isSelected());
-      EditorOptionsPanel.reinitAllEditors();
+      EditorOptionsPanelKt.reinitAllEditors();
     }
     for (GutterIconDescriptor descriptor : myDescriptors) {
       LineMarkerSettings.getSettings().setEnabled(descriptor, myList.isItemSelected(descriptor));
     }
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DaemonCodeAnalyzer.getInstance(project).restart();
+      DaemonCodeAnalyzerEx.getInstanceEx(project).restart("GutterIconsConfigurable.apply");
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.GUTTER_ICONS_CONFIGURABLE_TOPIC).changesApplied();
   }
@@ -213,9 +213,8 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
         return panel;
       }
 
-      @Nullable
       @Override
-      protected Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
+      protected @Nullable Point findPointRelativeToCheckBox(int x, int y, @NotNull JCheckBox checkBox, int index) {
         return super.findPointRelativeToCheckBoxWithAdjustedRendering(x, y, checkBox, index);
       }
     };
@@ -224,22 +223,20 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     ListSpeedSearch.installOn(myList, JCheckBox::getText);
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @Nullable
   @Override
-  public Runnable enableSearch(String option) {
+  public @Nullable Runnable enableSearch(String option) {
     return () -> Objects.requireNonNull(SpeedSearchSupply.getSupply(myList, true)).findAndSelectElement(option);
   }
 
   @TestOnly
   public List<GutterIconDescriptor> getDescriptors() { return myDescriptors; }
 
-  public static class ShowSettingsAction extends DumbAwareAction {
+  public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
     }
 

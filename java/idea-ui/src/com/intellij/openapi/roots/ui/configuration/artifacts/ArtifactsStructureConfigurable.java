@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.CommonBundle;
@@ -87,9 +87,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     context.getModulesConfigurator().addAllModuleChangeListener(new ModuleEditor.ChangeListener() {
       @Override
       public void moduleStateChanged(ModifiableRootModel moduleRootModel) {
-        for (ProjectStructureElement element : getProjectStructureElements()) {
-          myContext.getDaemonAnalyzer().queueUpdate(element);
-        }
+        myContext.getDaemonAnalyzer().queueUpdates(getProjectStructureElements());
       }
     });
 
@@ -178,8 +176,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("display.name.artifacts");
   }
 
@@ -192,9 +189,8 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     }
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> elements = new ArrayList<>();
     for (Artifact artifact : myPackagingEditorContext.getArtifactModel().getAllArtifactsIncludingInvalid()) {
       elements.add(myPackagingEditorContext.getOrCreateArtifactElement(artifact));
@@ -240,7 +236,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -254,7 +250,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     };
   }
 
-  private AnAction createAddArtifactAction(@NotNull final ArtifactType type) {
+  private AnAction createAddArtifactAction(final @NotNull ArtifactType type) {
     final List<? extends ArtifactTemplate> templates = type.getNewArtifactTemplates(myPackagingEditorContext);
     final ArtifactTemplate emptyTemplate = new ArtifactTemplate() {
       @Override
@@ -287,9 +283,8 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     selectNodeInTree(findNodeByObject(myRoot, artifact));
   }
 
-  @NotNull
   @Override
-  protected List<? extends AnAction> createCopyActions(boolean fromPopup) {
+  protected @NotNull List<? extends AnAction> createCopyActions(boolean fromPopup) {
     final ArrayList<AnAction> actions = new ArrayList<>();
     actions.add(new CopyArtifactAction());
     return actions;
@@ -348,8 +343,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "project.artifacts";
   }
 
@@ -395,7 +389,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Object o = getSelectedObject();
       if (o instanceof Artifact selected) {
         ModifiableArtifactModel artifactModel = myPackagingEditorContext.getOrCreateModifiableArtifactModel();
@@ -413,7 +407,7 @@ public final class ArtifactsStructureConfigurable extends BaseStructureConfigura
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       if (myTree.getSelectionPaths() == null || myTree.getSelectionPaths().length != 1) {
         e.getPresentation().setEnabled(false);
       }

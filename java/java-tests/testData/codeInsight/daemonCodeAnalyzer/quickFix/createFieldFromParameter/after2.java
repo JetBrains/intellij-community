@@ -6,10 +6,10 @@ import java.util.HashMap;
 
 public class TestBefore {
     private String myName;
-    private final HashMap myTest;
+    private final HashMap <caret>myTest;
     private String myPerson;
 
-    public TestBefore(String name, int length, HashMap test<caret>, String person) {
+    public TestBefore(String name, int length, HashMap test, String person) {
         super();
         myName = name;
         myTest = test;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -38,13 +38,11 @@ import java.util.*;
 
 public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin> {
 
-  @NonNls
-  private static final String SUB_DESCRIPTOR_DELIMITER = "/";
-  @NonNls
-  private static final String SUB_DESCRIPTOR_FILENAME_DELIMITER = ".";
+  private static final @NonNls String SUB_DESCRIPTOR_DELIMITER = "/";
+  private static final @NonNls String SUB_DESCRIPTOR_FILENAME_DELIMITER = ".";
 
   @Override
-  public String getErrorMessage(@Nullable String s, ConvertContext context) {
+  public String getErrorMessage(@Nullable String s, @NotNull ConvertContext context) {
     String value = StringUtil.notNullize(s);
 
     String filePath;
@@ -64,7 +62,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
 
   @Override
   public @Nullable IdeaPlugin fromString(@Nullable String s,
-                                         ConvertContext context) {
+                                         @NotNull ConvertContext context) {
     if (StringUtil.isEmpty(s)) return null;
     final Module currentModule = context.getModule();
     if (currentModule == null) return null;
@@ -83,13 +81,12 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   @Override
-  public @Nullable String toString(@Nullable IdeaPlugin plugin, ConvertContext context) {
+  public @Nullable String toString(@Nullable IdeaPlugin plugin, @NotNull ConvertContext context) {
     if (plugin == null) return null;
     return getDisplayName(plugin);
   }
 
-  @NotNull
-  private static String getDisplayName(@NotNull IdeaPlugin plugin) {
+  private static @NotNull String getDisplayName(@NotNull IdeaPlugin plugin) {
     final Module module = Objects.requireNonNull(plugin.getModule());
     final String moduleName = module.getName();
 
@@ -116,7 +113,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   private static final Key<Double> LOOKUP_PRIORITY = Key.create("LOOKUP_PRIORITY");
 
   @Override
-  public @NotNull Collection<? extends IdeaPlugin> getVariants(ConvertContext context) {
+  public @NotNull Collection<? extends IdeaPlugin> getVariants(@NotNull ConvertContext context) {
     final Module currentModule = context.getModule();
     if (currentModule == null) return Collections.emptyList();
     final Project project = context.getProject();
@@ -142,8 +139,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     return variants;
   }
 
-  @Nullable
-  private static IdeaPlugin findDescriptorFile(@NotNull Module module, @NotNull String filePath) {
+  private static @Nullable IdeaPlugin findDescriptorFile(@NotNull Module module, @NotNull String filePath) {
     Ref<IdeaPlugin> ideaPlugin = Ref.create();
     processModuleSourceRoots(module, root -> {
       final VirtualFile candidate = root.findChild(filePath);
@@ -167,8 +163,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     }
   }
 
-  @NotNull
-  private static String getDescriptorFilePath(@NotNull String fileName) {
+  private static @NotNull String getDescriptorFilePath(@NotNull String fileName) {
     return fileName + ".xml";
   }
 
@@ -176,15 +171,13 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
     return StringUtil.contains(value, SUB_DESCRIPTOR_DELIMITER);
   }
 
-  @NotNull
-  private static String getSubDescriptorModuleName(@NotNull String value) {
+  private static @NotNull String getSubDescriptorModuleName(@NotNull String value) {
     final String moduleName = StringUtil.substringBefore(value, SUB_DESCRIPTOR_DELIMITER);
     assert moduleName != null : value;
     return moduleName;
   }
 
-  @NotNull
-  private static String getSubDescriptorFilePath(@NotNull String value) {
+  private static @NotNull String getSubDescriptorFilePath(@NotNull String value) {
     final String moduleName = getSubDescriptorModuleName(value);
     final String fileName = StringUtil.substringAfter(value, SUB_DESCRIPTOR_DELIMITER);
     assert fileName != null : value;

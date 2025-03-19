@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
@@ -76,7 +77,7 @@ class ExternalAnnotationsDataServiceTest: LightIdeaTestCase() {
   override fun tearDown() {
     RunAll(
       ThrowableRunnable { modelsProvider.dispose() },
-      ThrowableRunnable { GradleSettings.getInstance(project).unlinkExternalProject(projectData.linkedExternalProjectPath) },
+      ThrowableRunnable { GradleSettings.getInstance(project).linkedProjectsSettings = listOf<GradleProjectSettings>() },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
@@ -87,6 +88,11 @@ class TestExternalAnnotationsResolver : ExternalAnnotationsArtifactsResolver {
   override fun resolve(project: Project, library: Library, mavenId: String?): Boolean = false
 
   override fun resolve(project: Project, library: Library, annotationsLocation: AnnotationsLocation): Boolean {
+    attemptsCount++
+    return false
+  }
+
+  override fun resolve(project: Project, library: Library, annotationsLocation: AnnotationsLocation, diff: MutableEntityStorage): Boolean {
     attemptsCount++
     return false
   }

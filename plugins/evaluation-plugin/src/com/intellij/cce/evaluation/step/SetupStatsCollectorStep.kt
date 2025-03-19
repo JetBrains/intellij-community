@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.UndoableEvaluationStep
@@ -6,36 +7,33 @@ import com.intellij.cce.evaluation.features.CCEElementFeatureProvider
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiments.ExperimentInfo
+import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.project.Project
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.stats.completion.sender.StatisticSender
 import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.stats.completion.storage.UniqueFilesProvider
-import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 
-class SetupStatsCollectorStep(private val project: Project,
-                              private val experimentGroup: Int?,
-                              private val logLocationAndTextItem: Boolean,
-                              private val isHeadless: Boolean) : UndoableEvaluationStep {
+class SetupStatsCollectorStep(private val experimentGroup: Int?,
+                              private val logLocationAndTextItem: Boolean) : UndoableEvaluationStep {
   companion object {
-    private val LOG = Logger.getInstance(SetupStatsCollectorStep::class.java)
+    private val LOG = thisLogger()
     private const val SEND_LOGS_KEY = "completion.stats.send.logs"
     private const val STATS_COLLECTOR_ID = "com.intellij.stats.completion"
     private const val COLLECT_LOGS_HEADLESS_KEY = "completion.evaluation.headless"
-    fun statsCollectorLogsDirectory(): String = Paths.get(PathManager.getSystemPath(), "completion-stats-data").toString()
+    val statsCollectorLogsDirectory: Path = Paths.get(PathManager.getSystemPath(), "completion-stats-data")
 
     fun deleteLogs() {
-      val logsDirectory = File(statsCollectorLogsDirectory())
+      val logsDirectory = statsCollectorLogsDirectory.toFile()
       if (logsDirectory.exists()) {
         logsDirectory.deleteRecursively()
       }
@@ -71,14 +69,11 @@ class SetupStatsCollectorStep(private val project: Project,
     }
     initSendLogsValue = java.lang.Boolean.parseBoolean(System.getProperty(SEND_LOGS_KEY, "true"))
     System.setProperty(SEND_LOGS_KEY, "false")
-    if (isHeadless) {
-      initCollectLogsInHeadlessValue = java.lang.Boolean.getBoolean(COLLECT_LOGS_HEADLESS_KEY)
-      System.setProperty(COLLECT_LOGS_HEADLESS_KEY, "true")
-    }
+    initCollectLogsInHeadlessValue = java.lang.Boolean.getBoolean(COLLECT_LOGS_HEADLESS_KEY)
+    System.setProperty(COLLECT_LOGS_HEADLESS_KEY, "true")
     val experimentStatus = object : ExperimentStatus {
-      // it allows to collect logs from all sessions (need a more explicit solution in stats-collector)
       override fun forLanguage(language: Language): ExperimentInfo =
-        ExperimentInfo(true,
+        ExperimentInfo(experimentGroup != null,
                        version = experimentGroup ?: 0,
                        shouldRank = false,
                        shouldShowArrows = false,
@@ -109,9 +104,7 @@ class SetupStatsCollectorStep(private val project: Project,
         if (initExperimentStatus != null)
           serviceManager.replaceRegularServiceInstance(ExperimentStatus::class.java, initExperimentStatus)
         System.setProperty(SEND_LOGS_KEY, initSendLogsValue.toString())
-        if (isHeadless) {
-          System.setProperty(COLLECT_LOGS_HEADLESS_KEY, initCollectLogsInHeadlessValue.toString())
-        }
+        System.setProperty(COLLECT_LOGS_HEADLESS_KEY, initCollectLogsInHeadlessValue.toString())
         LOG.runAndLogException { unregisterFeatureProviders() }
         return workspace
       }

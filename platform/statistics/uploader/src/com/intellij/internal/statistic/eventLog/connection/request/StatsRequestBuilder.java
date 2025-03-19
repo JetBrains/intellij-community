@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil;
@@ -56,8 +56,7 @@ public class StatsRequestBuilder {
     myExtraHeaders = settings.getExtraHeaders();
   }
 
-  @NotNull
-  public StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {
+  public @NotNull StatsRequestBuilder withBody(@NotNull String body, @NotNull String contentType, @NotNull Charset charset) {
     if (StatisticsStringUtil.isEmptyOrSpaces(body)) {
       throw new EmptyHttpRequestBody();
     }
@@ -67,14 +66,12 @@ public class StatsRequestBuilder {
     return this;
   }
 
-  @NotNull
-  public StatsRequestBuilder fail(@NotNull StatsResponseHandler processor) {
+  public @NotNull StatsRequestBuilder fail(@NotNull StatsResponseHandler processor) {
     onFail = processor;
     return this;
   }
 
-  @NotNull
-  public StatsRequestBuilder succeed(@NotNull StatsResponseHandler processor) {
+  public @NotNull StatsRequestBuilder succeed(@NotNull StatsResponseHandler processor) {
     onSucceed = processor;
     return this;
   }
@@ -106,11 +103,11 @@ public class StatsRequestBuilder {
     }
   }
 
-  private HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
+  private static HttpResponse<String> trySend(HttpClient client, HttpRequest request) throws IOException, StatsResponseException {
     return trySend(client, request, 0);
   }
 
-  private HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
+  private static HttpResponse<String> trySend(HttpClient client, HttpRequest request, int retryCounter) throws IOException, StatsResponseException {
     try {
       HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
       if (CAN_RETRY_CODES.contains(response.statusCode()) && retryCounter < MAX_RETRIES) {
@@ -163,8 +160,7 @@ public class StatsRequestBuilder {
     }
   }
 
-  @NotNull
-  private HttpRequest newRequest() {
+  private @NotNull HttpRequest newRequest() {
     HttpRequest.Builder builder = HttpRequest.newBuilder().
       setHeader("User-Agent", myUserAgent).
       timeout(Duration.ofSeconds(10)).

@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
+import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
 import com.intellij.internal.statistic.eventLog.config.EventLogExternalApplicationInfo;
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
@@ -13,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -30,7 +34,7 @@ public final class EventLogUploader {
     }
     catch (Throwable e) {
       logger.warn("Failed uploading logs", e);
-      eventsLogger.logSendingLogsFinished("EXCEPTION_OCCURRED");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.EXCEPTION_OCCURRED);
     }
   }
 
@@ -43,7 +47,7 @@ public final class EventLogUploader {
     eventsLogger.logSendingLogsStarted();
     if (args.length == 0) {
       logger.warn("No arguments were found");
-      eventsLogger.logSendingLogsFinished("NO_ARGUMENTS");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_ARGUMENTS);
       return;
     }
 
@@ -51,7 +55,7 @@ public final class EventLogUploader {
     EventLogApplicationInfo appInfo = newApplicationInfo(options, logger, eventsLogger);
     if (appInfo == null) {
       logger.warn("Failed creating application info from arguments");
-      eventsLogger.logSendingLogsFinished("NO_APPLICATION_CONFIG");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.NO_APPLICATION_CONFIG);
       return;
     }
 
@@ -62,7 +66,7 @@ public final class EventLogUploader {
 
     if (!waitForIde(logger, options, 20)) {
       logger.warn("Cannot send logs because IDE didn't close during " + (20 * WAIT_FOR_IDE_MS) + "ms");
-      eventsLogger.logSendingLogsFinished("IDE_NOT_CLOSING");
+      eventsLogger.logSendingLogsFinished(StatisticsResult.ResultCode.IDE_NOT_CLOSING);
       return;
     }
 
@@ -87,9 +91,14 @@ public final class EventLogUploader {
     String recorderId = config.getRecorderId();
     logger.info("[" + recorderId + "] Start uploading...");
     EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
-    logger.info("[" + recorderId + "] {product:" + appInfo.getProductCode() + ", productVersion:" + appInfo.getProductVersion() +
-                ", userAgent:" + connectionSettings.getUserAgent() + ", url: " + appInfo.getTemplateUrl() +
-                ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
+    logger.info("[" + recorderId + "] {"
+                + "product:" + appInfo.getProductCode()
+                + ", productVersion:" + appInfo.getProductVersion()
+                + ", userAgent:" + connectionSettings.getUserAgent()
+                + ", url: " + appInfo.getTemplateUrl()
+                + ", internal:" + appInfo.isInternal()
+                + ", isTestConfig:" + appInfo.isTestConfig()
+                + ", isTestSendEndpoint:" + appInfo.isTestSendEndpoint() + "}");
 
     String logs = config.getFilesToSendProvider().getFilesToSend().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));
@@ -116,27 +125,28 @@ public final class EventLogUploader {
     }
     catch (Exception e) {
       logger.warn("[" + recorderId + "] Failed sending files: " + e.getMessage());
-      eventsLogger.logSendingLogsFinished(recorderId, "ERROR_ON_SEND");
+      eventsLogger.logSendingLogsFinished(recorderId, StatisticsResult.ResultCode.ERROR_ON_SEND);
     }
   }
 
-  @Nullable
-  private static EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
-                                                            DataCollectorDebugLogger logger,
-                                                            DataCollectorSystemEventLogger eventLogger) {
+  private static @Nullable EventLogApplicationInfo newApplicationInfo(Map<String, String> options,
+                                                                      DataCollectorDebugLogger logger,
+                                                                      DataCollectorSystemEventLogger eventLogger) {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String url = options.get(EventLogUploaderOptions.URL_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
     String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
     Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
+    int baselineVersion = Integer.parseInt(options.get(EventLogUploaderOptions.BASELINE_VERSION));
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
-      boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
+      boolean isTestSendEndpoint = options.containsKey(EventLogUploaderOptions.TEST_SEND_ENDPOINT);
+      boolean isTestConfig = options.containsKey(EventLogUploaderOptions.TEST_CONFIG);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
-      );
+        url, productCode, productVersion, userAgent, isInternal, isTestConfig, isTestSendEndpoint, isEAP, extraHeaders, logger, eventLogger,
+        baselineVersion);
     }
     return null;
   }

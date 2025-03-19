@@ -2,6 +2,11 @@
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.Topic
+import com.intellij.vcs.log.data.VcsLogData
+import java.util.*
 
 /**
  * Extension point provides a way to add a new column to VCS Log (e.g. Build Status, Attached Reviews, Commit Verification Status)
@@ -17,8 +22,33 @@ interface VcsLogCustomColumn<T> : VcsLogColumn<T> {
    */
   fun isEnabledByDefault() = true
 
+  /**
+   * Allow to disable non-applicable columns.
+   *
+   * @see VcsLogCustomColumnListener.columnAvailabilityChanged
+   */
+  fun isAvailable(project: Project, roots: Collection<VirtualFile>): Boolean = true
+
   companion object {
     @JvmField
     val KEY = ExtensionPointName<VcsLogCustomColumn<*>>("com.intellij.vcsLogCustomColumn")
+
+    @JvmStatic
+    fun VcsLogCustomColumn<*>.isAvailable(logData: VcsLogData): Boolean {
+      return isAvailable(logData.project, logData.logProviders.keys)
+    }
   }
+}
+
+interface VcsLogCustomColumnListener : EventListener {
+  companion object {
+    @JvmField
+    @Topic.AppLevel
+    val TOPIC = Topic(VcsLogCustomColumnListener::class.java, Topic.BroadcastDirection.NONE)
+  }
+
+  /**
+   * Allows notifying VCS Log that the [VcsLogCustomColumn.isAvailable] might have changed.
+   */
+  fun columnAvailabilityChanged() = Unit
 }

@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.completionMlRanking` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "completionMlRanking_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "completionMlRanking",
+  module_name = "intellij.completionMlRanking",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:ngram-slp",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/analysis-impl",
+    "//platform/ml-impl",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
+    "@lib//:caffeine",
+    "@lib//:jackson-jr-objects",
+    "@lib//:jackson",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlin-reflect",
+    "//platform/util/jdom",
+    "//platform/ml-api:ml",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
+  ],
+  runtime_deps = [":completionMlRanking_resources"]
+)
+### auto-generated section `build intellij.completionMlRanking` end
+
+### auto-generated section `build intellij.completionMlRanking.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "completionMlRanking-tests_test",
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/testFramework",
+    "@lib//:assert_j",
+    "//plugins/completion-ml-ranking:completionMlRanking",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ml-impl",
+    "//platform/ml-impl:ml-impl_test_lib",
+    "//platform/core-ui",
+    "@lib//:ngram-slp",
+    "//platform/platform-impl/internal:ide-internal",
+    "//platform/ml-api:ml",
+  ]
+)
+### auto-generated section `build intellij.completionMlRanking.tests` end

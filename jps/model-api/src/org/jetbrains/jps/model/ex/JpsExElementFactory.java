@@ -16,9 +16,7 @@
 package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementChildRole;
-import org.jetbrains.jps.model.JpsElementCollection;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 public abstract class JpsExElementFactory {
@@ -27,9 +25,16 @@ public abstract class JpsExElementFactory {
   }
 
   public abstract <E extends JpsElement> JpsElementCollection<E> createCollection(JpsElementChildRole<E> role);
+  
+  public abstract <E extends JpsNamedElement> JpsNamedElementCollection<E> createNamedElementCollection(JpsElementChildRole<E> role);
 
   public abstract JpsElementContainerEx createContainer(@NotNull JpsCompositeElementBase<?> parent);
 
+  /**
+   * @deprecated creating copies isn't supported in for all elements in JPS anymore; if you need to create a copy for your element,
+   * write the corresponding code in your class directly.
+   */
+  @Deprecated
   public abstract JpsElementContainerEx createContainerCopy(@NotNull JpsElementContainerEx original,
                                                             @NotNull JpsCompositeElementBase<?> parent);
 

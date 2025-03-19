@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
@@ -77,7 +77,7 @@ public class GitUnstashDialog extends DialogWrapper {
     });
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateDialogState();
       }
     });
@@ -123,7 +123,7 @@ public class GitUnstashDialog extends DialogWrapper {
    */
   private void updateDialogState() {
     String branch = myBranchTextField.getText();
-    if (branch.length() != 0) {
+    if (!branch.isEmpty()) {
       setOKButtonText(GitBundle.message("unstash.button.branch"));
       myPopStashCheckBox.setEnabled(false);
       myPopStashCheckBox.setSelected(true);

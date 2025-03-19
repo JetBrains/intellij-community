@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.codeStyle.CommenterForm;
@@ -32,9 +32,8 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
     myCommenterForm = new CommenterForm(GroovyLanguage.INSTANCE);
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     JPanel membersOrderPanel = ToolbarDecorator.createDecorator(myMembersOrderList).disableAddAction().disableRemoveAction().createPanel();
     membersOrderPanel.setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("title.order.of.members")));
 
@@ -61,9 +60,8 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
     reset(mySettings);
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ApplicationBundle.message("title.code.generation");
   }
 
@@ -81,7 +79,7 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
 
   public static class MembersOrderList extends JBList {
 
-    private static abstract class PropertyManager {
+    private abstract static class PropertyManager {
 
       public final @Nls(capitalization = Sentence) String myName;
 
@@ -108,7 +106,7 @@ public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigura
 
     public void reset(final CodeStyleSettings settings) {
       myModel.removeAllElements();
-      for (var string : getPropertyNames(settings)) {
+      for (@Nls var string : getPropertyNames(settings)) {
         myModel.addElement(string);
       }
 

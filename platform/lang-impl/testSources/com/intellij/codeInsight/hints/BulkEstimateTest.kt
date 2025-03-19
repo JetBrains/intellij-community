@@ -6,19 +6,19 @@ import junit.framework.TestCase
 import java.util.stream.IntStream
 
 class BulkEstimateTest : TestCase() {
-  fun testAddToExisting() = checkChanges(
+  fun testAddToExisting(): Unit = checkChanges(
     existing = intArrayOf(2, 4, 5, 6),
     collected = intArrayOf(1, 2, 3, 4, 5, 6),
     expectedChanges = 2
   )
 
-  fun testRemoveExisting() = checkChanges(
+  fun testRemoveExisting(): Unit = checkChanges(
     existing = intArrayOf(1, 2, 3, 4, 5, 6),
     collected = intArrayOf(2, 4, 5),
     expectedChanges = 3
   )
 
-  fun testRemoveAndAdd() = checkChanges(
+  fun testRemoveAndAdd(): Unit = checkChanges(
     existing = intArrayOf(1, 2, 3, 4, 5, 6),
     collected = intArrayOf(3, 4, 7, 8),
     expectedChanges = 6

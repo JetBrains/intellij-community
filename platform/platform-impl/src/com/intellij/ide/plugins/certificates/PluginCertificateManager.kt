@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.certificates
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooser
-import com.intellij.openapi.fileChooser.FileTypeDescriptor
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.SingleEditorConfiguration
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -20,8 +20,10 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.net.ssl.*
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import com.intellij.util.ui.JBDimension
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.CardLayout
+import java.awt.Dimension
 import java.security.cert.X509Certificate
 import javax.swing.JPanel
 import javax.swing.tree.TreeSelectionModel
@@ -30,13 +32,13 @@ class PluginCertificateManager :
   BoundConfigurable(
     IdeBundle.message("plugin.manager.custom.certificates"),
     "plugin.certificates"
-  ), Configurable.NoScroll, CertificateListener {
+  ), Configurable.NoScroll, CertificateListener, SingleEditorConfiguration {
 
   private val myTree: Tree = Tree()
 
   private val myDetailsPanel: JPanel = JPanel(CardLayout())
 
-  val myRootPanel = panel {
+  val myRootPanel: DialogPanel = panel {
     row {
       val decorator = ToolbarDecorator.createDecorator(myTree)
         .disableUpDownActions()
@@ -59,13 +61,6 @@ class PluginCertificateManager :
     }
   }
 
-  private val CERTIFICATE_DESCRIPTOR = FileTypeDescriptor(
-    IdeBundle.message("settings.certificate.choose.certificate"),
-    ".crt", ".CRT",
-    ".cer", ".CER",
-    ".pem", ".PEM",
-    ".der", ".DER"
-  )
   private val EMPTY_PANEL = "empty.panel"
   private val myTrustManager: MutableTrustManager = PluginCertificateStore.customTrustManager
   private val myTreeBuilder: CertificateTreeBuilder = CertificateTreeBuilder(myTree)
@@ -164,7 +159,7 @@ class PluginCertificateManager :
   }
 
   private fun chooseFileAndAdd() {
-    FileChooser.chooseFile(CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
+    FileChooser.chooseFile(CertificateConfigurable.CERTIFICATE_DESCRIPTOR, null, null) { file: VirtualFile ->
       val path = file.path
       val certificate = CertificateUtil.loadX509Certificate(path)
       when {
@@ -222,4 +217,5 @@ class PluginCertificateManager :
     myDetailsPanel.add(scrollPane, uniqueName)
   }
 
+  override fun getDialogInitialSize(): Dimension = JBUI.DialogSizes.medium()
 }

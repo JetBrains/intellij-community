@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class ThrowExceptionAction extends DebuggerAction {
   @Override
@@ -41,7 +42,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     if (stackFrame == null || project == null) {
       return;
     }
-    final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+    final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if (debugProcess == null) {
       return;
@@ -50,7 +51,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     final StackFrameProxyImpl proxy = stackFrame.getStackFrameProxy();
     final ThreadReferenceProxyImpl thread = proxy.threadProxy();
 
-    debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
+    Objects.requireNonNull(debuggerContext.getManagerThread()).schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().invokeLater(
@@ -68,7 +69,7 @@ public class ThrowExceptionAction extends DebuggerAction {
   private static void throwException(final Value value,
                                      final ThreadReferenceProxyImpl thread,
                                      final DebugProcessImpl debugProcess,
-                                     @Nullable final DialogWrapper dialog) {
+                                     final @Nullable DialogWrapper dialog) {
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
       protected void action() {
@@ -111,7 +112,7 @@ public class ThrowExceptionAction extends DebuggerAction {
                            }
 
                            @Override
-                           public void errorOccurred(@NotNull final String errorMessage) {
+                           public void errorOccurred(final @NotNull String errorMessage) {
                              showError(project, JavaDebuggerBundle.message("error.unable.to.evaluate.expression") + ": " + errorMessage);
                            }
                          }, stackFrame.getSourcePosition());

@@ -1,0 +1,45 @@
+com.intellij.util.lang.Resource
+- getByteBuffer():java.nio.ByteBuffer
+- a:getBytes():B[]
+- a:getInputStream():java.io.InputStream
+- a:getURL():java.net.URL
+c:com.intellij.util.lang.UrlClassLoader
+- java.lang.ClassLoader
+- sf:CLASSPATH_INDEX_PROPERTY_NAME:java.lang.String
+- p:<init>(com.intellij.util.lang.UrlClassLoader$Builder,java.util.function.Function,Z):V
+- p:<init>(com.intellij.util.lang.UrlClassLoader$Builder,Z):V
+- <init>(java.lang.ClassLoader):V
+- f:addURL(java.net.URL):V
+- s:build():com.intellij.util.lang.UrlClassLoader$Builder
+- consumeClassData(java.lang.String,java.nio.ByteBuffer):java.lang.Class
+- consumeClassData(java.lang.String,B[]):java.lang.Class
+- ps:createDefaultBuilderForJdk(java.lang.ClassLoader):com.intellij.util.lang.UrlClassLoader$Builder
+- p:findClass(java.lang.String):java.lang.Class
+- findResource(java.lang.String):java.net.URL
+- findResources(java.lang.String):java.util.Enumeration
+- f:getBaseUrls():java.util.List
+- pf:getClassLoadingLock(java.lang.String):java.lang.Object
+- f:getFiles():java.util.List
+- f:getLoadingStats():java.util.Map
+- getResourceAsBytes(java.lang.String,Z):B[]
+- getResourceAsStream(java.lang.String):java.io.InputStream
+- f:getUrls():java.util.List
+- hasLoadedClass(java.lang.String):Z
+- isByteBufferSupported(java.lang.String):Z
+- p:isPackageDefined(java.lang.String):Z
+- f:processResources(java.lang.String,java.util.function.Predicate,java.util.function.BiConsumer):V
+- ps:registerInClassLoaderValueMap(java.lang.ClassLoader,java.lang.ClassLoader):V
+- ps:toCanonicalPath(java.lang.String):java.lang.String
+- s:urlToFilePath(java.lang.String):java.lang.String
+f:com.intellij.util.lang.UrlClassLoader$Builder
+- allowBootstrapResources():com.intellij.util.lang.UrlClassLoader$Builder
+- allowBootstrapResources(Z):com.intellij.util.lang.UrlClassLoader$Builder
+- allowLock(Z):com.intellij.util.lang.UrlClassLoader$Builder
+- files(java.util.List):com.intellij.util.lang.UrlClassLoader$Builder
+- get():com.intellij.util.lang.UrlClassLoader
+- noPreload():com.intellij.util.lang.UrlClassLoader$Builder
+- parent(java.lang.ClassLoader):com.intellij.util.lang.UrlClassLoader$Builder
+- urls(java.util.List):com.intellij.util.lang.UrlClassLoader$Builder
+- useCache():com.intellij.util.lang.UrlClassLoader$Builder
+- useCache(Z):com.intellij.util.lang.UrlClassLoader$Builder
+- usePersistentClasspathIndexForLocalClassDirectories():com.intellij.util.lang.UrlClassLoader$Builder

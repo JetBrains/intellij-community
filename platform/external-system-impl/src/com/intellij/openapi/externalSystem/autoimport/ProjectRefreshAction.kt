@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.icons.AllIcons
@@ -6,18 +6,21 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 class ProjectRefreshAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    refreshProject(project)
+    Manager.refreshProject(project)
   }
 
   override fun update(e: AnActionEvent) {
@@ -66,13 +69,18 @@ class ProjectRefreshAction : DumbAwareAction() {
   }
 
   companion object {
+    @Deprecated("Use ProjectRefreshAction.Manager explicitly")
+    @ApiStatus.ScheduledForRemoval
+    fun refreshProject(project: Project) = Manager.refreshProject(project)
+  }
+
+  object Manager {
     fun refreshProject(project: Project) {
       val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
       val systemIds = projectNotificationAware.getSystemIds()
-      if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
-        val projectTracker = ExternalSystemProjectTracker.getInstance(project)
-        projectTracker.scheduleProjectRefresh()
-      }
+      ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds)
+      val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+      projectTracker.scheduleProjectRefresh()
     }
   }
 }

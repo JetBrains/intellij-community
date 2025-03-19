@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.caches.trackers.outOfBlockModificationCount
 import org.jetbrains.kotlin.idea.completion.test.withComponentRegistered
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
@@ -90,7 +90,8 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
 
             }
 
-            assertEquals("no library dependencies have to be recalculated",0, resolverTracker.librariesComputed.size)
+            assertEquals("no library dependencies have to be recalculated",0, 
+                         resolverTracker.librariesComputed.filterNot { it.name?.startsWith("org.jetbrains:annotations") ?: false }.size)
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.AbstractBundle;
@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
  * Therefore, do not use groups to create a hierarchy of configurables, especially if there are very few of them.
  * It is recommended to create a hierarchy using {@link com.intellij.openapi.options.ConfigurableEP#parentId ConfigurableEP}.
  */
-final class ConfigurableGroupEP implements PluginAware {
+public final class ConfigurableGroupEP implements PluginAware {
   private static final ExtensionPointName<ConfigurableGroupEP> EP = new ExtensionPointName<>("com.intellij.groupConfigurable");
 
   /**
@@ -32,10 +32,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @RequiredElement
-  @Attribute("id")
-  public String id;
+  @RequiredElement @Attribute("id") public @NonNls String id;
 
   /**
    * This attribute is used to create a hierarchy of settings.
@@ -44,9 +41,7 @@ final class ConfigurableGroupEP implements PluginAware {
    * @see com.intellij.openapi.options.ConfigurableEP#parentId
    * @see com.intellij.openapi.options.ConfigurableEP#groupId
    */
-  @NonNls
-  @Attribute("parentId")
-  public String parentId;
+  @Attribute("parentId") public @NonNls String parentId;
 
   /**
    * This attribute specifies the weight of the configurable group within a parent group.
@@ -61,9 +56,7 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getHelpTopic
    */
-  @NonNls
-  @Attribute("helpTopic")
-  public String helpTopic;
+  @Attribute("helpTopic") public @NonNls String helpTopic;
 
   /**
    * This attribute specifies the resource bundle that contains display name and description.
@@ -78,19 +71,13 @@ final class ConfigurableGroupEP implements PluginAware {
    *
    * @see com.intellij.openapi.options.Configurable#getDisplayName
    */
-  @RequiredElement
-  @Attribute("displayNameKey")
-  @NlsContexts.ConfigurableName
-  public String displayNameKey;
+  @RequiredElement @Attribute("displayNameKey") public @NlsContexts.ConfigurableName String displayNameKey;
 
   /**
    * This attribute specifies the key to retrieve a description from the given {@link #bundle}.
    * Note that it should be HTML-based text to layout a long text in a proper way.
    */
-  @RequiredElement
-  @Attribute("descriptionKey")
-  @NlsContexts.DetailedDescription
-  public String descriptionKey;
+  @RequiredElement @Attribute("descriptionKey") public @NlsContexts.DetailedDescription String descriptionKey;
 
   private PluginDescriptor myPluginDescriptor;
 
@@ -99,11 +86,11 @@ final class ConfigurableGroupEP implements PluginAware {
     myPluginDescriptor = descriptor;
   }
 
-  @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
+  public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return getResourceValue(displayNameKey);
   }
 
-  @NlsContexts.DetailedDescription @NotNull String getDescription() {
+  public @NlsContexts.DetailedDescription @NotNull String getDescription() {
     return getResourceValue(descriptionKey);
   }
 
@@ -123,7 +110,7 @@ final class ConfigurableGroupEP implements PluginAware {
     return message != null ? message : OptionsBundle.message(key);
   }
 
-  static @Nullable ConfigurableGroupEP find(@NotNull String id) {
+  public static @Nullable ConfigurableGroupEP find(@NotNull String id) {
     return EP.findFirstSafe(ep -> id.equals(ep.id));
   }
 }

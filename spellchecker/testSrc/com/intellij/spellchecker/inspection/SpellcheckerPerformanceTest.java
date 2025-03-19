@@ -16,15 +16,15 @@
 package com.intellij.spellchecker.inspection;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.inspections.*;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,11 +55,11 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     runLocalInspections();
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
     int[] toIgnore = ignoreEverythingExceptInspections();
-    PlatformTestUtil.startPerformanceTest("many typos highlighting", 12_000, () -> {
+    Benchmark.newBenchmark("many typos highlighting", () -> {
       assertSize(typoCount, CodeInsightTestFixtureImpl.instantiateAndRun(myFixture.getFile(), myFixture.getEditor(), toIgnore, false));
-    }).assertTiming();
+    }).start();
   }
 
   public void testManyWhitespaces() {
@@ -79,58 +79,58 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     LOG.debug("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4500, () -> {
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    Benchmark.newBenchmark("many whitespaces highlighting", () -> {
+      DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart(getTestName(false));
       assertEmpty(runLocalInspections());
-    }).assertTiming();
+    }).start();
   }
 
   public void testVeryLongEmail() {
     final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 1000000) + "@mail.com\n";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance());
   }
 
   public void testVeryLongURL() {
     final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 1000000) + ".com\n";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 8000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance());
   }
 
   public void testVeryLongHTML() {
     final String text = "\\ LONG_HTML <!--<li>something go here</li>"
                         + StringUtil.repeat("<li>next content</li>", 1000000)
                         + "foooo barrrr <p> text -->";
-    doSplitterPerformanceTest(text, CommentSplitter.getInstance(), 5000);
+    doSplitterPerformanceTest(text, CommentSplitter.getInstance());
   }
 
   public void testVeryLongIdentifier() {
     final String text = StringUtil.repeat("identifier1", 1000000);
-    doSplitterPerformanceTest(text, IdentifierSplitter.getInstance(), 3000);
+    doSplitterPerformanceTest(text, IdentifierSplitter.getInstance());
   }
 
   public void testVeryLongSpecialCharacters() {
     final String text = "word" + StringUtil.repeat("\n\t\r\t\n", 1000000);
-    doSplitterPerformanceTest(text, TextSplitter.getInstance(), 2000);
+    doSplitterPerformanceTest(text, TextSplitter.getInstance());
   }
 
   public void testVeryLongProperty() {
     final String text = StringUtil.repeat("properties.test.properties", 1000000);
-    doSplitterPerformanceTest(text, PropertiesSplitter.getInstance(), 4000);
+    doSplitterPerformanceTest(text, PropertiesSplitter.getInstance());
   }
 
   public void testVeryLongList() {
     final String text = StringUtil.repeat("properties,test,properties", 1000000);
-    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance(), 3000);
+    doSplitterPerformanceTest(text, PlainTextSplitter.getInstance());
   }
 
-  private static void doSplitterPerformanceTest(String text, Splitter splitter, int expectedTime) {
-    PlatformTestUtil.startPerformanceTest("long word for spelling", expectedTime, () -> {
+  private static void doSplitterPerformanceTest(String text, Splitter splitter) {
+    Benchmark.newBenchmark("long word for spelling", () -> {
       try {
         splitter.split(text, TextRange.allOf(text), (textRange) -> {});
       }
       catch (ProcessCanceledException pce) {
         System.err.println("pce is thrown");
       }
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
   }
 
   @NotNull

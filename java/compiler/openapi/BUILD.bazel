@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.java.compiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-compiler_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-compiler",
+  module_name = "intellij.java.compiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//platform/util/jdom",
+    "//platform/util:util-ui",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "//platform/workspace/storage",
+    "//platform/projectModel-api:projectModel",
+    "//platform/workspace/jps",
+  ],
+  exports = [
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+  ],
+  runtime_deps = [":java-compiler_resources"]
+)
+### auto-generated section `build intellij.java.compiler` end

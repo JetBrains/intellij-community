@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -44,8 +45,7 @@ public class ToggleDetailsAction extends ShowDiffPreviewAction {
     return VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
   }
 
-  @Nullable
-  private static ChangesViewManager getChangesViewManager(@NotNull Project project) {
+  private static @Nullable ChangesViewManager getChangesViewManager(@NotNull Project project) {
     ChangesViewI changesView = ChangesViewManager.getInstance(project);
     if (changesView instanceof ChangesViewManager) return (ChangesViewManager)changesView;
     return null;

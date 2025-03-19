@@ -1,37 +1,33 @@
 SHELL_SCRIPT
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
         NUMBER
           PsiElement(int)('1')
-      PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
-        REDIRECTION
-          PsiElement(<)('<')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(OPEN_QUOTE)('"')
-            PsiElement(STRING_CONTENT)('x')
-            PsiElement(CLOSE_QUOTE)('"')
+        PsiWhiteSpace(' ')
+        PsiElement(<)('<')
+        PsiWhiteSpace(' ')
+        STRING
+          PsiElement(OPEN_QUOTE)('"')
+          PsiElement(STRING_CONTENT)('x')
+          PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
         NUMBER
           PsiElement(int)('1')
-      PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
-        REDIRECTION
-          PsiElement(<)('<')
-          PsiWhiteSpace(' ')
-          PsiElement($)('$')
-          SUBSHELL_COMMAND
-            PsiElement(()('(')
-            COMPOUND_LIST
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('a')
-            PsiElement())(')')
+        PsiWhiteSpace(' ')
+        PsiElement(<)('<')
+        PsiWhiteSpace(' ')
+        PsiElement($)('$')
+        SUBSHELL_COMMAND
+          PsiElement(()('(')
+          COMPOUND_LIST
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('a')
+          PsiElement())(')')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND

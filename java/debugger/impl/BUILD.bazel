@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.java.debugger.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "java-debugger-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-debugger-impl",
+  module_name = "intellij.java.debugger.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/debugger/openapi:java-debugger",
+    "//java/openapi:java",
+    "//java/execution/openapi:java-execution",
+    "//resources:java-resources",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/lang-api:lang",
+    "//java/compiler/openapi:java-compiler",
+    "//java/compiler/impl:java-compiler-impl",
+    "//java/java-runtime:rt",
+    "//platform/ide-core-impl",
+    "//java/jsp-openapi:jsp",
+    "//java/java-impl:impl",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//java/debugger/memory-agent:java-debugger-memory-agent",
+    "@lib//:java-debugger-impl-sa-jdwp",
+    "@lib//:jb-jdi",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "//images",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:gson",
+    "@lib//:asm",
+    "//platform/util/jdom",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/feedback",
+    "//platform/util/progress",
+    "@lib//:kotlinx-datetime-jvm",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/util/coroutines",
+    "//platform/threadDumpParser",
+    "//java/debugger/shared:java-debugger-impl-shared",
+    "//platform/eel-provider",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
+  ],
+  runtime_deps = [":java-debugger-impl_resources"]
+)
+### auto-generated section `build intellij.java.debugger.impl` end

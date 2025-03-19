@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import git4idea.GitLocalBranch;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,17 +56,40 @@ public class GitPushSpecParserTest {
 
   @Test
   public void test_one_of_several_specs_matches() {
-    List<String> specs = Arrays.asList("+refs/heads/master:refs/remotes/origin/master",
-                                       "refs/heads/qa/*:refs/remotes/origin/qa/*");
+    List<String> specs = Arrays.asList("refs/heads/qa/*:refs/remotes/origin/qa/*", "+refs/heads/master:refs/remotes/origin/master");
     assertEquals("refs/remotes/origin/qa/ticket1", getTargetRef("qa/ticket1", specs));
     assertEquals("refs/remotes/origin/master", getTargetRef("master", specs));
     assertNull(getTargetRef("feature", specs));
   }
 
+  @Test
+  public void test_tag_specs_ignored() {
+    List<String> specs = Arrays.asList("+refs/heads/master:refs/remotes/origin/master",
+                                       "refs/tags/*:refs/tags/*");
+    assertNull(getTargetRef("qa/ticket1", specs));
+    assertEquals("refs/remotes/origin/master", getTargetRef("master", specs));
+    assertNull(getTargetRef("feature", specs));
+  }
+
+  @Test
+  public void test_refs_heads_matches() {
+    List<String> specs = Arrays.asList("refs/heads/*:refs/heads/pr/*",
+                                       "refs/heads/master:refs/heads/qa/master",
+                                       "refs/tags/*:refs/tags/*");
+    assertEquals("refs/heads/pr/qa/ticket1", getTargetRef("qa/ticket1", specs));
+    assertEquals("refs/heads/qa/master", getTargetRef("master", specs));
+  }
+
+  @Test
+  public void test_short_ref_name_wildcard() {
+    List<String> specs = Arrays.asList("ma*:refs/heads/ma*");
+    assertNull(getTargetRef("qa/ticket1", specs));
+  }
+
   @Nullable
   private static String getTargetRef(@NotNull String sourceBranch, @NotNull List<String> specs) {
     GitRepository myRepo = Mockito.mock(GitRepository.class);
-    return GitPushSpecParser.getTargetRef(myRepo, sourceBranch, specs);
+    return GitPushSpecParser.getTargetRef(myRepo, new GitLocalBranch(sourceBranch), specs);
   }
 
   private static void assertTarget(@NotNull String sourceBranch, @NotNull String spec, @NotNull String expectedTarget) {

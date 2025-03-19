@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -7,11 +7,13 @@ import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.impl.NotificationGroupEP;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
@@ -23,7 +25,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
-import java.nio.file.Paths;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/testData/references/pluginConfigReference")
@@ -43,8 +44,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
-    moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
-      .resolveSibling("intellij.platform.resources").toString());
+    moduleBuilder.addLibrary("platform-resources", PathManager.getResourceRoot(LocalInspectionEP.class, "/defaultFileTypes.xml"));
     moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable.class));
     moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
     moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings.class));
@@ -57,6 +57,8 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testRegistryKeyIdCompletion() {
+    //currently, there are over 1000 keys in registry
+    Registry.get("ide.completion.variant.limit").setValue(10_000, getTestRootDisposable());
     final List<String> variants = myFixture.getCompletionVariants("RegistryKeyIdCompletion.java",
                                                                   "registryKeyId.xml");
     assertContainsElements(variants,

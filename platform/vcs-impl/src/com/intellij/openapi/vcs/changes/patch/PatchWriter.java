@@ -114,23 +114,9 @@ public final class PatchWriter {
       vcsRoot = null;
     }
     else {
-      vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
+      vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor, true));
     }
     return vcsRoot == null ? ProjectKt.getStateStore(project).getProjectBasePath() : vcsRoot.toNioPath();
-  }
-
-  /**
-   * @deprecated Use overload without {@code includeBinaries} parameter.
-   */
-  @Deprecated
-  public static void writePatches(@NotNull Project project,
-                                  @NotNull Path file,
-                                  @Nullable Path basePath,
-                                  @NotNull List<? extends FilePatch> patches,
-                                  @Nullable CommitContext commitContext,
-                                  @NotNull Charset charset,
-                                  boolean includeBinaries) throws IOException {
-    writePatches(project, file, basePath, patches, commitContext, charset);
   }
 
   /**

@@ -1,56 +1,55 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsTree
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.stream.Stream
 
 @ApiStatus.Experimental
 @Suppress("DEPRECATION")
 interface MavenWorkspaceConfigurator {
+  companion object {
+    @JvmField
+    val EXTENSION_POINT_NAME: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName("org.jetbrains.idea.maven.importing.workspaceConfigurator")
+  }
 
   /**
    * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
+   * [com.intellij.platform.workspace.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
    *
    * * Called on a background thread.
    * * Side-effects are not allowed.
    * * WriteActions are not allowed.
    */
   @RequiresBackgroundThread
-  fun getAdditionalSourceFolders(context: FoldersContext): Stream<String> {
+  fun getAdditionalFolders(context: MavenWorkspaceConfigurator.FoldersContext): Stream<AdditionalFolder> {
     return Stream.empty()
   }
 
-  /**
-   * Called for each imported project in order to add
-   * [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es to the corresponding [ModuleEntity]-es.
-   *
-   * * Called on a background thread.
-   * * Side-effects are not allowed.
-   * * WriteActions are not allowed.
-   */
-  @RequiresBackgroundThread
-  fun getAdditionalTestSourceFolders(context: FoldersContext): Stream<String> {
-    return Stream.empty()
-  }
 
   /**
    * Called for each imported project.
-   * Implement this method to prevent creation of [com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
+   * Implement this method to prevent creation of [com.intellij.platform.workspace.storage.bridgeEntities.SourceRootEntity]-es in the corresponding [ModuleEntity]-es.
    * These folders are also marked as 'excluded' in the corresponding [Module]. See [com.intellij.openapi.roots.ExcludeFolder].
    *
    *
@@ -121,7 +120,7 @@ interface MavenWorkspaceConfigurator {
    */
   interface MavenProjectWithModules<M> {
     val mavenProject: MavenProject
-    val changes: MavenProjectChanges
+    val hasChanges: Boolean
     val modules: List<ModuleWithType<M>>
   }
 
@@ -142,6 +141,20 @@ interface MavenWorkspaceConfigurator {
   interface MutableMavenProjectContext : Context<MutableEntityStorage> {
     val mavenProjectWithModules: MavenProjectWithModules<ModuleEntity>
   }
+
+  enum class FolderType {
+    SOURCE, RESOURCE, TEST_SOURCE, TEST_RESOURCE
+  }
+
+  fun JpsModuleSourceRootType<*>.toFolderType(): FolderType {
+    return when (this) {
+      is JavaSourceRootType -> if (isForTests) FolderType.TEST_SOURCE else FolderType.SOURCE
+      is JavaResourceRootType -> if (isForTests) FolderType.TEST_RESOURCE else FolderType.RESOURCE
+      else -> throw IllegalArgumentException("Bad Module source root type")
+    }
+  }
+
+  data class AdditionalFolder(val path: String, val type: FolderType)
 }
 
 @ApiStatus.Experimental
@@ -156,10 +169,33 @@ interface MavenAfterImportConfigurator {
   interface Context : UserDataHolder {
     val project: Project
     val mavenProjectsWithModules: Sequence<MavenWorkspaceConfigurator.MavenProjectWithModules<Module>>
-    val mavenProgressIndicator: MavenProgressIndicator
+    val progressIndicator: ProgressIndicator
+  }
+}
+
+@ApiStatus.Internal
+open class MavenApplicableConfigurator(private val pluginGroupId: String, private val pluginArtifactId: String) {
+  open fun isApplicable(mavenProject: MavenProject): Boolean {
+    return mavenProject.findPlugin(pluginGroupId, pluginArtifactId) != null
+  }
+
+  protected open fun findConfigValue(p: MavenProject, @NonNls path: String): String? {
+    return findChildValueByPath(getConfig(p), path)
+  }
+
+  protected open fun getConfig(p: MavenProject): Element? {
+    return p.getPluginConfiguration(pluginGroupId, pluginArtifactId)
+  }
+
+  protected open fun getConfig(p: MavenProject, @NonNls path: String): Element? {
+    return findChildByPath(getConfig(p), path)
   }
 }
 
 fun <M> MavenWorkspaceConfigurator.MavenProjectWithModules<M>.hasChanges(): Boolean {
-  return this.changes.hasChanges()
+  return this.hasChanges
 }
+
+
+@ApiStatus.Experimental
+interface MavenStaticSyncAware

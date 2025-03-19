@@ -1,19 +1,22 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.charts
 
-import com.intellij.ide.ui.laf.IntelliJLaf
+import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.charts.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.Dimension
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JTabbedPane
+import javax.swing.SwingUtilities
 import javax.swing.border.Border
 import kotlin.math.cos
 import kotlin.system.exitProcess
 
-fun simple() = barChart<Double> {
+fun simple(): HorizontalBarChart<Double> = barChart {
   gap = 20
   datasets {
     dataset {
@@ -49,7 +52,7 @@ fun simple() = barChart<Double> {
   }
 }
 
-fun performance() = barChart<Double> {
+fun performance(): HorizontalBarChart<Double> = barChart {
   val format: (Double) -> String = { v -> "%.2f".format(v) }
   val labels = listOf("macOS Mojave 10.14.6", "Ubuntu 16.04", "Windows 10")
   ranges {
@@ -115,7 +118,7 @@ fun generate() = barChart<Float> {
 
 
 fun main() {
-  UIManager.setLookAndFeel(IntelliJLaf())
+  setEarlyUiLaF()
   SwingUtilities.invokeLater {
     object: DialogWrapper(false) {
       init {

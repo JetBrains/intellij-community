@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.DataWriter
@@ -7,9 +7,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.LineSeparator
 import com.intellij.util.io.*
 import org.jdom.Element
 import java.nio.file.Path
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 
 private val LOG = logger<FileSystemExternalSystemStorage>()
@@ -34,6 +37,7 @@ internal class ModuleFileSystemExternalSystemStorage(project: Project) : FileSys
 
 internal class ProjectFileSystemExternalSystemStorage(project: Project) : FileSystemExternalSystemStorage("project", project)
 
+@OptIn(ExperimentalPathApi::class)
 internal abstract class FileSystemExternalSystemStorage(dirName: String, project: Project) : ExternalSystemStorage {
   protected val dir: Path = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve(dirName)
 
@@ -46,7 +50,11 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       fileAttributes == null -> false
       fileAttributes.isRegularFile -> {
         // old binary format
-        dir.parent.deleteChildrenStartingWith(dir.fileName.toString())
+        val prefix = dir.fileName.toString()
+        val children = dir.parent.directoryStreamIfExists { stream ->
+          stream.filter { it.fileName.toString().startsWith(prefix) }.toList()
+        }
+        children?.forEach { it.deleteRecursively() }
         false
       }
       else -> {
@@ -63,7 +71,7 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       return
     }
 
-    nameToPath(name).delete()
+    nameToPath(name).deleteRecursively()
   }
 
   override fun read(name: String): Element? {
@@ -83,7 +91,7 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
     }
 
     hasSomeData = true
-    nameToPath(name).outputStream().use { dataWriter.write(it, filter = filter) }
+    nameToPath(name).outputStream().use { dataWriter.writeTo(it, LineSeparator.LF, filter) }
   }
 
   override fun rename(oldName: String, newName: String) {

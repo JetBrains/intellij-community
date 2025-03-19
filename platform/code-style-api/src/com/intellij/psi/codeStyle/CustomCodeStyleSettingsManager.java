@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -14,8 +14,7 @@ class CustomCodeStyleSettingsManager {
 
 
   private final Map<String, CustomCodeStyleSettings> myCustomSettings = new HashMap<>();
-  @NotNull
-  private final CodeStyleSettings myRootSettings;
+  private final @NotNull CodeStyleSettings myRootSettings;
   private final Map<String, Element> myUnknownCustomElements = new HashMap<>();
 
   CustomCodeStyleSettingsManager(@NotNull CodeStyleSettings settings) {
@@ -66,8 +65,7 @@ class CustomCodeStyleSettingsManager {
   }
 
 
-  @Nullable
-  private CustomCodeStyleSettings createCustomSettings(@NotNull String customSettingsClassName) {
+  private @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull String customSettingsClassName) {
     for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
       CustomCodeStyleSettings customSettings = factory.createCustomSettings(myRootSettings);
       if (customSettings != null && customSettingsClassName.equals(customSettings.getClass().getName())) {
@@ -157,8 +155,7 @@ class CustomCodeStyleSettingsManager {
     }
   }
 
-  @NotNull
-  private Pair<Collection<CustomCodeStyleSettings>, Map<String,Element>> getMaps() {
+  private @NotNull Pair<Collection<CustomCodeStyleSettings>, Map<String,Element>> getMaps() {
     synchronized (myCustomSettings) {
       return Pair.create(
         new ArrayList<>(myCustomSettings.values()),

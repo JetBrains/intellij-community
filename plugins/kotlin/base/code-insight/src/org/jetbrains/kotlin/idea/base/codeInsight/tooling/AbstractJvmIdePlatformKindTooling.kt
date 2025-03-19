@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight.tooling
 
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
@@ -9,11 +9,10 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.testIntegration.TestFramework
-import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
+import org.jetbrains.kotlin.idea.util.RunConfigurationUtils
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
@@ -24,9 +23,9 @@ import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
 abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
-    override val kind = JvmIdePlatformKind
+    override val kind: JvmIdePlatformKind = JvmIdePlatformKind
 
-    override val mavenLibraryIds = listOf(
+    override val mavenLibraryIds: List<String> = listOf(
       PathUtil.KOTLIN_JAVA_STDLIB_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_NAME,
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK7_NAME,
@@ -34,12 +33,12 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
       PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_NAME
     )
 
-    override val gradlePluginId = "kotlin-platform-jvm"
+    override val gradlePluginId: String get() = "kotlin-platform-jvm"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JVM, KotlinPlatform.ANDROID)
 
-    override val libraryKind: PersistentLibraryKind<*>? = null
+    override val libraryKind: PersistentLibraryKind<*>? get() = null
 
-    override fun acceptsAsEntryPoint(function: KtFunction) = true
+    override fun acceptsAsEntryPoint(function: KtFunction): Boolean = true
 
     override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
         val calculatedTestFrameworkValue = declaration.getUserData(TEST_FRAMEWORK_NAME_KEY)
@@ -47,43 +46,24 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
             // testframework has been provided on `allowSlowOperations=false` state
             return null
         }
-        val testFramework =
-            calculatedTestFrameworkValue?.let { cachedValue ->
-                val name = cachedValue.upToDateOrNull?.get() ?: return@let null
-                TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
-            } ?: TestFramework.EXTENSION_NAME.extensionList.firstOrNull { framework ->
-                if (framework is KotlinPsiBasedTestFramework) {
-                    framework.responsibleFor(declaration)
-                } else if (allowSlowOperations) {
-                    when (declaration) {
-                        is KtClassOrObject -> declaration.toLightClass()?.let(framework::isTestClass) ?: false
-                        is KtNamedFunction -> declaration.toLightMethods().firstOrNull()?.let { framework.isTestMethod(it, false) } ?: false
-                        else -> false
-                    }
-                } else {
-                    false
-                }
-            } ?: run {
-                declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
-                return null
-            }
-        declaration.putUserData(
-            TEST_FRAMEWORK_NAME_KEY,
-            CachedValuesManager.getManager(declaration.project).createCachedValue {
+        val testFramework = calculatedTestFrameworkValue?.let { cachedValue ->
+            val name = cachedValue.upToDateOrNull?.get() ?: return@let null
+            TestFramework.EXTENSION_NAME.extensionList.first { name == it.name }
+        } ?: KotlinPsiBasedTestFramework.findTestFramework(declaration, !allowSlowOperations)
+        return if (testFramework != null) {
+            declaration.putUserData(TEST_FRAMEWORK_NAME_KEY, CachedValuesManager.getManager(declaration.project).createCachedValue {
                 CachedValueProvider.Result.create(
                     testFramework.name,
                     OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker
                 )
-            }
-        )
-        val urls = calculateUrls(declaration)
-
-        return if (urls != null) {
-            KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration)
-        } else if (allowSlowOperations) {
-            testIconProvider.getGenericTestIcon(declaration, emptyList())
+            })
+            val urls = calculateUrls(declaration)
+            if (urls != null) KotlinTestRunLineMarkerContributor.getTestStateIcon(urls, declaration) else null
         } else {
-            null
+            declaration.removeUserData(TEST_FRAMEWORK_NAME_KEY)
+            if (allowSlowOperations) {
+                testIconProvider.getGenericTestIcon(declaration, emptyList())
+            } else null
         }
     }
 
@@ -95,16 +75,25 @@ abstract class AbstractJvmIdePlatformKindTooling : IdePlatformKindTooling() {
         } ?: return null
 
         return when (declaration) {
-            is KtClassOrObject -> listOf("java:suite://$qualifiedName")
-            is KtNamedFunction -> listOf(
-                "java:test://$qualifiedName/${declaration.name}",
-                "java:test://$qualifiedName.${declaration.name}"
-            )
+            is KtClassOrObject -> listOf("$URL_SUITE_PREFIX$qualifiedName")
+            is KtNamedFunction -> {
+                val urlList = listOf(
+                    "$URL_TEST_PREFIX$qualifiedName/${declaration.name}",
+                    "$URL_TEST_PREFIX$qualifiedName.${declaration.name}"
+                )
+                if (RunConfigurationUtils.isGradleRunConfiguration(declaration)) {
+                    urlList + "$URL_SUITE_PREFIX$qualifiedName/${declaration.name}"
+                } else {
+                    urlList
+                }
+            }
             else -> null
         }
     }
 
     private companion object {
-        val TEST_FRAMEWORK_NAME_KEY = Key.create<CachedValue<String>>("TestFramework:name")
+        private const val URL_TEST_PREFIX = "java:test://"
+        private const val URL_SUITE_PREFIX = "java:suite://"
+        val TEST_FRAMEWORK_NAME_KEY: Key<CachedValue<String>?> = Key.create<CachedValue<String>>("TestFramework:name")
     }
 }

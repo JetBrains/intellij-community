@@ -1,14 +1,15 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyKeyValuePattern;
 import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.types.PyTupleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Arrays;
 
 public class PyKeyValuePatternImpl extends PyElementImpl implements PyKeyValuePattern {
   public PyKeyValuePatternImpl(ASTNode astNode) {
@@ -21,17 +22,13 @@ public class PyKeyValuePatternImpl extends PyElementImpl implements PyKeyValuePa
   }
 
   @Override
-  public @NotNull PyPattern getKeyPattern() {
-    return findNotNullChildByClass(PyPattern.class);
-  }
-
-  @Override
-  public @Nullable PyPattern getValuePattern() {
-    return ObjectUtils.tryCast(getLastChild(), PyPattern.class);
-  }
-
-  @Override
-  public boolean isIrrefutable() {
-    return false;
+  public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    final PyType keyType = context.getType(getKeyPattern());
+    final PyPattern value = getValuePattern();
+    PyType valueType = null;
+    if (value != null) {
+      valueType = context.getType(value);
+    }
+    return PyTupleType.create(this, Arrays.asList(keyType, valueType));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.favoritesTreeView;
 
@@ -8,7 +8,7 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -29,12 +29,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
+public final class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider implements AbstractUrlFavoriteConverter {
   @Override
-  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode<?>> getFavoriteNodes(final DataContext context, final @NotNull ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
-    PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
+    PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
       final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
@@ -64,7 +64,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider implement
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, final @NotNull ViewSettings viewSettings) {
     if (element instanceof PsiClass && checkClassUnderSources((PsiElement)element, project)) {
       return new ClassSmartPointerNode(project, (PsiClass)element, viewSettings);
     }
@@ -103,8 +103,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider implement
   }
 
   @Override
-  @NotNull
-  public String getFavoriteTypeId() {
+  public @NotNull String getFavoriteTypeId() {
     return "class";
   }
 

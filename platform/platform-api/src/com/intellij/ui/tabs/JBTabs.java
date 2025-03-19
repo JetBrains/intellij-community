@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ActiveRunnable;
 import com.intellij.ui.DropAreaAware;
@@ -18,6 +19,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public interface JBTabs extends DropAreaAware {
@@ -45,9 +47,13 @@ public interface JBTabs extends DropAreaAware {
   @NotNull
   JBTabsPresentation getPresentation();
 
+  /** Use {@link com.intellij.openapi.actionSystem.DataContext} API instead */
+  @Deprecated(forRemoval = true)
   @Nullable
   DataProvider getDataProvider();
 
+  /** Override {@link com.intellij.openapi.actionSystem.UiDataProvider#uiDataSnapshot(DataSink)} instead */
+  @Deprecated(forRemoval = true)
   JBTabs setDataProvider(@NotNull DataProvider dataProvider);
 
   @NotNull
@@ -77,7 +83,7 @@ public interface JBTabs extends DropAreaAware {
   @Nullable
   TabInfo findInfo(Component component);
 
-  int getIndexOf(@Nullable final TabInfo tabInfo);
+  int getIndexOf(@NotNull TabInfo tabInfo);
 
   void requestFocus();
 
@@ -93,16 +99,15 @@ public interface JBTabs extends DropAreaAware {
   Image startDropOver(TabInfo tabInfo, RelativePoint point);
   void processDropOver(TabInfo over, RelativePoint point);
 
-  Component getTabLabel(TabInfo tabInfo);
+  @Nullable Component getTabLabel(TabInfo tabInfo);
 
   @Override
-  @NotNull
-  default Rectangle getDropArea() {
-    Rectangle r = new Rectangle(getComponent().getBounds());
+  default @NotNull Rectangle getDropArea() {
+    Rectangle r = new Rectangle(new Point(0, 0), getComponent().getSize());
     if (getTabCount() > 0) {
       @SuppressWarnings("UseDPIAwareInsets")
       Insets insets = JBUI.insets(0);
-      Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
+      Rectangle bounds = Objects.requireNonNull(getTabLabel(getTabAt(0))).getBounds();
       switch (getPresentation().getTabsPosition()) {
         case top -> insets.top = bounds.height;
         case left -> insets.left = bounds.width;

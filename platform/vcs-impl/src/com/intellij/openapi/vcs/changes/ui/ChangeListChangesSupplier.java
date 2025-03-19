@@ -4,11 +4,13 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ChangeListChangesSupplier implements Supplier<Iterable<Change>> {
   private final @NotNull List<ChangeList> myChangeLists;
 

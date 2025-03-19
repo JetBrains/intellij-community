@@ -25,4 +25,3 @@ public class JavaClassInvoke {
     }
 }
 
-// IGNORE_FIR_LOG

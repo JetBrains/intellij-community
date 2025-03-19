@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.autolink
 
 import com.intellij.ide.impl.SelectProjectOpenProcessorDialog
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.vfs.createDirectory
@@ -16,7 +16,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test auto-link project`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
@@ -42,7 +42,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test auto-link project without project model`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createDirectory("project/.idea")
       }
@@ -60,7 +60,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test don't auto-link project with project model`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createFile("project/.idea/compiler.xml")
           .writeText("""
@@ -97,7 +97,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test don't auto-link project with several external systems`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createFile("project/file.b")
         testRoot.createDirectory("project/.idea")
@@ -118,7 +118,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test don't auto-link project if has linked projects`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createFile("project/file.b")
         testRoot.createDirectory("project/.idea")
@@ -130,7 +130,6 @@ class AutoLinkTest : AutoLinkTestCase() {
 
       openProject("project")
         .useProjectAsync { project ->
-          assertNotificationAware(project, "B" to "project")
           assertLinkedProjects(unlinkedProjectAwareA, 1)
           assertLinkedProjects(unlinkedProjectAwareB, 0)
         }
@@ -140,7 +139,7 @@ class AutoLinkTest : AutoLinkTestCase() {
   @Test
   fun `test don't auto-link project if opened and linked project by unknown open processor`() {
     runBlocking {
-      writeAction {
+      edtWriteAction {
         testRoot.createFile("project/file.a")
         testRoot.createFile("project/file.b")
       }

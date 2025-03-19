@@ -1,17 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class SplitterAction extends DumbAwareAction {
+@ApiStatus.Internal
+public abstract class SplitterAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   abstract void actionPerformed(@NotNull EditorWindow window);
 
   @Override
@@ -24,7 +26,7 @@ public abstract class SplitterAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(isEnabled(event));
-    presentation.setVisible(presentation.isEnabled() || !ActionPlaces.isPopupPlace(event.getPlace()));
+    presentation.setVisible(presentation.isEnabled() || !event.isFromContextMenu());
   }
 
   @Override
@@ -38,7 +40,7 @@ public abstract class SplitterAction extends DumbAwareAction {
   }
 
 
-  public static abstract class Goto extends SplitterAction {
+  public abstract static class Goto extends SplitterAction {
     abstract EditorWindow getDestination(@NotNull EditorWindow window);
 
     @Override
@@ -71,12 +73,11 @@ public abstract class SplitterAction extends DumbAwareAction {
   static final class Unsplit extends SplitterAction {
     @Override
     void actionPerformed(@NotNull EditorWindow window) {
-      window.getManager().unsplitWindow();
+      window.unsplit(true);
     }
   }
 
-
-  static final class UnsplitAll extends DumbAwareAction {
+  static final class UnsplitAll extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);
@@ -86,7 +87,7 @@ public abstract class SplitterAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent event) {
       FileEditorManagerEx manager = getManager(event);
-      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+      if (event.isFromContextMenu()) {
         event.getPresentation().setVisible(manager != null && manager.getWindowSplitCount() > 2);
       }
       else {

@@ -6,4 +6,4 @@ class A:
 class B(A):
     @classmethod
     def foo(cls):
-        <selection>A.foo(cls)</selection>
+        <selection>super().foo()</selection>

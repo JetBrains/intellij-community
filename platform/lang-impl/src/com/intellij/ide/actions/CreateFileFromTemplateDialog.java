@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -6,20 +6,15 @@ import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel;
 import com.intellij.ide.actions.newclass.CreateWithTemplatesDialogPanel.TemplatePresentation;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
@@ -29,8 +24,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
@@ -42,10 +38,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private JLabel myKindLabel;
   private JLabel myNameLabel;
 
-  private ElementCreator myCreator;
-  private InputValidator myInputValidator;
-  private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
-
   protected CreateFileFromTemplateDialog(@NotNull Project project) {
     super(project, true);
 
@@ -54,29 +46,6 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myUpDownHint.setIcon(PlatformIcons.UP_DOWN_ARROWS);
     setTemplateKindComponentsVisible(false);
     init();
-  }
-
-  @Nullable
-  @Override
-  protected ValidationInfo doValidate() {
-    final String text = myNameField.getText().trim();
-    InputValidator[] validators = {myInputValidator, myExtraValidators.get(getKindCombo().getSelectedName())};
-    for (InputValidator validator : validators) {
-      if (validator != null) {
-        final boolean canClose = validator.canClose(text);
-        if (!canClose) {
-          String errorText = LangBundle.message("incorrect.name");
-          if (validator instanceof InputValidatorEx) {
-            String message = ((InputValidatorEx)validator).getErrorText(text);
-            if (message != null) {
-              errorText = message;
-            }
-          }
-          return new ValidationInfo(errorText, myNameField);
-        }
-      }
-    }
-    return super.doValidate();
   }
 
   protected JTextField getNameField() {
@@ -95,24 +64,9 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     return myNameLabel;
   }
 
-  private String getEnteredName() {
-    final JTextField nameField = getNameField();
-    final String text = nameField.getText().trim();
-    nameField.setText(text);
-    return text;
-  }
-
   @Override
   protected JComponent createCenterPanel() {
     return myPanel;
-  }
-
-  @Override
-  protected void doOKAction() {
-    if (myCreator != null && myCreator.tryCreate(getEnteredName()).length == 0) {
-      return;
-    }
-    super.doOKAction();
   }
 
   @Override
@@ -126,117 +80,12 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     myUpDownHint.setVisible(flag);
   }
 
-  public static Builder createDialog(@NotNull final Project project) {
-    if (Experiments.getInstance().isFeatureEnabled("show.create.new.element.in.popup")) {
-     return new NonBlockingPopupBuilderImpl(project);
-    }
-    else {
-      final CreateFileFromTemplateDialog dialog = new CreateFileFromTemplateDialog(project);
-      return new BuilderImpl(dialog, project);
-    }
-  }
-
-  private static class BuilderImpl implements Builder {
-    private final CreateFileFromTemplateDialog myDialog;
-    private final Project myProject;
-
-    BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
-      myDialog = dialog;
-      myProject = project;
-    }
-
-    @Override
-    public Builder setTitle(@DialogTitle String title) {
-      myDialog.setTitle(title);
-      return this;
-    }
-
-    @Override
-    public Builder setDefaultText(String text) {
-      JTextField nameField = myDialog.getNameField();
-      nameField.setText(text);
-      nameField.selectAll();
-      return this;
-    }
-
-    @Override
-    public Builder addKind(@Nls @NotNull String name, @Nullable Icon icon, @NotNull String templateName,
-                           @Nullable InputValidator extraValidator) {
-      myDialog.getKindCombo().addItem(name, icon, templateName);
-      if (extraValidator != null) {
-        myDialog.myExtraValidators.put(templateName, extraValidator);
-      }
-      if (myDialog.getKindCombo().getComboBox().getItemCount() > 1) {
-        myDialog.setTemplateKindComponentsVisible(true);
-      }
-      return this;
-    }
-
-    @Override
-    public Builder setValidator(InputValidator validator) {
-      myDialog.myInputValidator = validator;
-      return this;
-    }
-
-    @Override
-    public Builder setDialogOwner(@Nullable Component owner) {
-      throw new UnsupportedOperationException("Dialog owner is supposed to be baked in CreateFileFromTemplateDialog passed via constructor");
-    }
-
-    @Override
-    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
-                                         @NotNull final FileCreator<T> creator) {
-      final Ref<SmartPsiElementPointer<T>> created = Ref.create(null);
-      myDialog.getKindCombo().setSelectedName(selectedTemplateName);
-      myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
-
-        @Override
-        protected PsiElement @NotNull [] create(@NotNull String newName) {
-          T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
-          if (element != null) {
-            created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));
-            return new PsiElement[]{element};
-          }
-          return PsiElement.EMPTY_ARRAY;
-        }
-
-        @Override
-        public boolean startInWriteAction() {
-          return creator.startInWriteAction();
-        }
-
-        @Override
-        protected @NotNull String getActionName(@NotNull String newName) {
-          return creator.getActionName(newName, myDialog.getKindCombo().getSelectedName());
-        }
-      };
-
-      myDialog.show();
-      if (myDialog.getExitCode() == OK_EXIT_CODE) {
-        SmartPsiElementPointer<T> pointer = created.get();
-        return pointer == null ? null : pointer.getElement();
-      }
-      return null;
-    }
-
-    @Override
-    public <T extends PsiElement> void show(@NotNull String errorTitle,
-                                            @Nullable String selectedItem,
-                                            @NotNull FileCreator<T> creator,
-                                            Consumer<? super T> elementConsumer) {
-      T element = show(errorTitle, selectedItem, creator);
-      elementConsumer.consume(element);
-    }
-
-    @Nullable
-    @Override
-    public Map<String,String> getCustomProperties() {
-      return null;
-    }
+  public static Builder createDialog(final @NotNull Project project) {
+    return new NonBlockingPopupBuilderImpl(project);
   }
 
   private static final class NonBlockingPopupBuilderImpl implements Builder {
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
 
     private @NlsContexts.PopupTitle String myTitle = LangBundle.message("popup.title.default.title");
     private String myDefaultText = null;
@@ -244,6 +93,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
     private @Nullable Component dialogOwner;
+    private @Nullable BiFunction<? super String, ? super TemplatePresentation, Boolean> myKindSelector;
 
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
@@ -281,9 +131,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
-    @Nullable
     @Override
-    public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator) {
+    public @Nullable <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedItem, @NotNull FileCreator<T> creator) {
       throw new UnsupportedOperationException("Modal dialog is not supported by this builder");
     }
 
@@ -318,6 +167,11 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         textField.setText(myDefaultText);
         textField.selectAll();
       }
+
+      if (myKindSelector != null) {
+        contentPanel.setTemplateSelectorMatcher(myKindSelector);
+      }
+
       contentPanel.setApplyAction(e -> {
         String newElementName = contentPanel.getEnteredName();
         if (StringUtil.isEmptyOrSpaces(newElementName)) return;
@@ -350,14 +204,17 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         popup.showInCenterOf(dialogOwner);
     }
 
-    @Nullable
     @Override
-    public Map<String, String> getCustomProperties() {
+    public @Nullable Map<String, String> getCustomProperties() {
       return null;
     }
 
-    @Nullable
-    private static PsiElement createElement(String newElementName, ElementCreator creator) {
+    @Override
+    public void setKindSelector(@Nullable BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) {
+      myKindSelector = templateMatcher;
+    }
+
+    private static @Nullable PsiElement createElement(String newElementName, ElementCreator creator) {
       PsiElement[] elements = creator.tryCreate(newElementName);
       return elements.length > 0 ? elements[0] : null;
     }
@@ -390,6 +247,8 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
 
     @Nullable
     Map<String,String> getCustomProperties();
+
+    default void setKindSelector(BiFunction<? super String, ? super TemplatePresentation, Boolean> templateMatcher) { }
   }
 
   public interface FileCreator<T> {

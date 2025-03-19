@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Couple;
@@ -8,10 +8,10 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 /**
- * This is a color producer that allows dynamically mix two colors.
+ * This is a color producer that allows to dynamically mix two colors.
  */
-public final class MixedColorProducer implements Supplier<Color> {
-  private final Couple<Color> couple;
+public final class MixedColorProducer implements Supplier<@NotNull Color> {
+  private final Couple<@NotNull Color> couple;
   private double mixer;
   private Color cached;
   private int argb0;
@@ -68,10 +68,11 @@ public final class MixedColorProducer implements Supplier<Color> {
     if (mixer >= 1) return couple.second;
     updateFirstARGB();
     updateSecondARGB();
-    if (cached == null) {
+    Color result = cached;
+    if (result == null) {
       //noinspection UseJBColor
-      cached = new Color(mix(16), mix(8), mix(0), mix(24));
+      cached = result = new Color(mix(16), mix(8), mix(0), mix(24));
     }
-    return cached;
+    return result;
   }
 }

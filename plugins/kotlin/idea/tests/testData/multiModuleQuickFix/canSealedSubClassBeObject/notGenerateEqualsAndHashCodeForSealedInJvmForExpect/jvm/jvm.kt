@@ -4,7 +4,7 @@
 // ACTION: Make internal
 // ACTION: Make protected
 // ERROR: Expected class 'SealedClass' has no actual declaration in module testModule_JVM for JVM
-
+// IGNORE_K2
 expect sealed class SealedClass {
     clas<caret>s Child : SealedClass
 }

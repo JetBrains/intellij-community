@@ -7,12 +7,12 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.idea.completion.ImportableFqNameClassifier
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 internal object NotImportedWeigher {
@@ -25,15 +25,16 @@ internal object NotImportedWeigher {
         NOT_TO_BE_USED_IN_KOTLIN
     }
 
-    fun KtAnalysisSession.addWeight(context: WeighingContext, element: LookupElement, symbol: KtSymbol, availableWithoutImport: Boolean) {
+    context(KaSession)
+fun addWeight(context: WeighingContext, element: LookupElement, symbol: KaSymbol, availableWithoutImport: Boolean) {
         if (availableWithoutImport) return
         val fqName = when (symbol) {
-            is KtClassLikeSymbol -> symbol.classIdIfNonLocal?.asSingleFqName()
-            is KtCallableSymbol -> symbol.callableIdIfNonLocal?.asSingleFqName()
-            is KtPackageSymbol -> symbol.fqName
+            is KaClassLikeSymbol -> symbol.classId?.asSingleFqName()
+            is KaCallableSymbol -> symbol.callableId?.asSingleFqName()
+            is KaPackageSymbol -> symbol.fqName
             else -> null
         } ?: return
-        val weight = when (context.importableFqNameClassifier.classify(fqName, symbol is KtPackageSymbol)) {
+        val weight = when (context.importableFqNameClassifier.classify(fqName, symbol is KaPackageSymbol)) {
             ImportableFqNameClassifier.Classification.siblingImported -> Weight.SIBLING_IMPORTED
             ImportableFqNameClassifier.Classification.notImported -> Weight.NOT_IMPORTED
             ImportableFqNameClassifier.Classification.notToBeUsedInKotlin -> Weight.NOT_TO_BE_USED_IN_KOTLIN

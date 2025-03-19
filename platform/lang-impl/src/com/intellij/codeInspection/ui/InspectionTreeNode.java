@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.BidirectionalMap;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Interner;
+import com.intellij.util.containers.WeakInterner;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.Nls;
@@ -57,8 +59,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   });
 
   final ProblemLevels myProblemLevels = new ProblemLevels();
-  @Nullable
-  volatile Children myChildren;
+  volatile @Nullable Children myChildren;
   final InspectionTreeNode myParent;
 
   protected InspectionTreeNode(InspectionTreeNode parent) {
@@ -69,8 +70,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return null;
   }
 
@@ -80,7 +80,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   void dropProblemCountCaches() {
     InspectionTreeNode current = this;
-    while (current != null && getParent() != null) {
+    while (current != null) {
       current.myProblemLevels.drop();
       current = current.getParent();
     }
@@ -113,8 +113,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTailText() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getTailText() {
     return null;
   }
 
@@ -151,8 +150,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   public abstract @Nls String getPresentableText();
 
-  @NotNull
-  public List<? extends InspectionTreeNode> getChildren() {
+  public @NotNull List<? extends InspectionTreeNode> getChildren() {
     Children children = myChildren;
     return children == null ? Collections.emptyList() : List.of(children.myChildren);
   }
@@ -192,7 +190,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getPresentableText();
   }
 
-  static class Children {
+  static final class Children {
     private static final InspectionTreeNode[] EMPTY_ARRAY = new InspectionTreeNode[0];
 
     volatile InspectionTreeNode[] myChildren = EMPTY_ARRAY;
@@ -204,19 +202,20 @@ public abstract class InspectionTreeNode implements TreeNode {
     }
   }
 
-  class ProblemLevels {
+  final class ProblemLevels {
     private volatile LevelAndCount[] myLevels;
 
     private LevelAndCount @NotNull [] compute() {
       Object2IntMap<HighlightDisplayLevel> counter=new Object2IntOpenHashMap<>();
       visitProblemSeverities(counter);
       LevelAndCount[] arr = new LevelAndCount[counter.size()];
-      final int[] i = {0};
+      int i = 0;
       for (Object2IntMap.Entry<HighlightDisplayLevel> entry : counter.object2IntEntrySet()) {
-        arr[i[0]++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
+        arr[i++] = new LevelAndCount(entry.getKey(), entry.getIntValue());
       }
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
-        .reversed());
+      Comparator<LevelAndCount> comparator =
+        Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity()).reversed();
+      Arrays.sort(arr, comparator);
       return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
 

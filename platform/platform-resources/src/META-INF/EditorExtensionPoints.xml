@@ -17,6 +17,7 @@
     <extensionPoint name="extendWordSelectionHandler" interface="com.intellij.codeInsight.editorActions.ExtendWordSelectionHandler" dynamic="true"/>
     <extensionPoint name="basicWordSelectionFilter" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
     <extensionPoint name="typedHandler" interface="com.intellij.codeInsight.editorActions.TypedHandlerDelegate" dynamic="true"/>
+    <extensionPoint name="nonWriteAccessTypedHandler" interface="com.intellij.codeInsight.editorActions.NonWriteAccessTypedHandler" dynamic="true"/>
     <extensionPoint name="selectionUnquotingFilter" interface="com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler$UnquotingFilter" dynamic="true"/>
     <extensionPoint name="joinLinesHandler" interface="com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate" dynamic="true"/>
     <extensionPoint name="enterHandlerDelegate" interface="com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate" dynamic="true"/>
@@ -73,6 +74,35 @@
     <extensionPoint
       name="inline.completion.provider"
       interface="com.intellij.codeInsight.inline.completion.InlineCompletionProvider"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.partial.accept.handler"
+      interface="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandler"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.element.manipulator"
+      interface="com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.handlerInitializer"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.usage.data"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
+      dynamic="true"/>
+    <extensionPoint name="inline.completion.quoteHandlerEx"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionQuoteHandlerEx"/>
+    </extensionPoint>
+    <extensionPoint
+      name="inline.completion.session.logs"
+      interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionSessionLogsEP"
+      dynamic="true"/>
+    <extensionPoint
+      name="inline.completion.editorTypeResolver"
+      interface="com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorTypeResolver"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

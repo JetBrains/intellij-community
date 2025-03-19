@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +15,23 @@ public class StatEdge {
   public Statement closure;
   public boolean labeled = true;
   public boolean explicit = true;
+  public boolean canInline = true;
+
+  private StatEdge(@NotNull EdgeType type,
+                  Statement source,
+                  Statement destination,
+                  List<String> exceptions,
+                  Statement closure,
+                  boolean labeled,
+                  boolean explicit) {
+    this.type = type;
+    this.source = source;
+    this.destination = destination;
+    this.exceptions = exceptions;
+    this.closure = closure;
+    this.labeled = labeled;
+    this.explicit = explicit;
+  }
 
   public StatEdge(@NotNull EdgeType type, Statement source, Statement destination, Statement closure) {
     this(type, source, destination);
@@ -59,6 +76,9 @@ public class StatEdge {
     return this.exceptions;
   }
 
+  public StatEdge copy() {
+    return new StatEdge(type, source, destination, exceptions, closure, labeled, explicit);
+  }
   /**
    * Type of the edges between statements.
    * @see Statement

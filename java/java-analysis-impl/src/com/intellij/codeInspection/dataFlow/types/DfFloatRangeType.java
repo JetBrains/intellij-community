@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -343,8 +343,7 @@ class DfFloatRangeType implements DfFloatType {
     return formatFrom(from) + " && " + formatTo(to);
   }
 
-  @NotNull
-  private static String formatFrom(float from) {
+  private static @NotNull String formatFrom(float from) {
     float prev = nextDown(from);
     if (Float.toString(prev).length() < Float.toString(from).length()) {
       return "> " + prev;
@@ -352,8 +351,7 @@ class DfFloatRangeType implements DfFloatType {
     return ">= " + from;
   }
 
-  @NotNull
-  private static String formatTo(float to) {
+  private static @NotNull String formatTo(float to) {
     float next = nextUp(to);
     if (Float.toString(next).length() < Float.toString(to).length()) {
       return "< " + next;

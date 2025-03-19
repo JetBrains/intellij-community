@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -31,7 +32,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -109,7 +113,15 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
 
     if (myMain == null) {
       myPanel.setBorder(JBUI.Borders.emptyLeft(5));
-      addLine(new JSeparator());
+      addLine(new JSeparator() {
+        @Override
+        public Dimension getMinimumSize() {
+          Dimension minimumSize = super.getMinimumSize();
+          Dimension preferredSize = getPreferredSize();
+          minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+          return minimumSize;
+        }
+      });
     }
 
     addBeforeRun(beforeRun);
@@ -199,7 +211,30 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   }
 
   protected void addTagPanel(@NotNull List<? extends SettingsEditorFragment<Settings, ?>> tags) {
-    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP)));
+    JPanel tagsPanel = new JPanel(new WrapLayout(FlowLayout.LEADING, JBUI.scale(TAG_HGAP), JBUI.scale(TAG_VGAP))) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension minimumSize = super.getMinimumSize();
+        Dimension preferredSize = getPreferredSize();
+        minimumSize.height = Math.max(minimumSize.height, preferredSize.height);
+        return minimumSize;
+      }
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleJPanel() {
+            @Override
+            public AccessibleRole getAccessibleRole() {
+              return SystemInfoRt.isMac ? AccessibleRole.AWT_COMPONENT : AccessibleRole.PANEL;
+            }
+          };
+          accessibleContext.setAccessibleName(myMain != null ? IdeBundle.message("tag.panel.group.options.accessible.name", myMain.getGroup()) :
+                                              IdeBundle.message("tag.panel.run.options.accessible.name"));
+        }
+        return accessibleContext;
+      }
+    };
     for (SettingsEditorFragment<Settings, ?> tag : tags) {
       tagsPanel.add(tag.getComponent());
     }
@@ -220,7 +255,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
   private void registerShortcuts() {
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = action.getShortcutSet();
-      if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
+      if (action instanceof ToggleFragmentAction && shortcutSet.hasShortcuts()) {
         new DumbAwareAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
@@ -255,10 +290,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
                                                                           callback, -1);
     popup.setHandleAutoSelectionBeforeShow(true);
     popup.addListSelectionListener(e -> {
-      JBPopup jbPopup = PopupUtil.getPopupContainerFor((Component)e.getSource());
-      Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
-      if (selectedItem instanceof AnActionHolder) {
-        jbPopup.setAdText(getHint(((AnActionHolder)selectedItem).getAction()), SwingConstants.LEFT);
+      Component component = (Component)e.getSource();
+      if (component instanceof JList<?> list) {
+        Object selectedItem = list.getSelectedValue();
+        if (selectedItem instanceof AnActionHolder) {
+          JBPopup jbPopup = PopupUtil.getPopupContainerFor(component);
+          jbPopup.setAdText(getHint(((AnActionHolder)selectedItem).getAction()), SwingConstants.LEFT);
+        }
       }
     });
     return popup;
@@ -268,19 +306,16 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myConfigId = configId;
   }
 
-  @NotNull
-  private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
+  private static @NotNull @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
     return (action != null && StringUtil.isNotEmpty(action.getTemplatePresentation().getDescription())) ?
            action.getTemplatePresentation().getDescription() : "";
   }
 
-  @NotNull
-  private DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                                        Ref<? super JComponent> lastSelected) {
-    fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
+  private @NotNull DefaultActionGroup buildGroup(@Unmodifiable List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                                                 Ref<? super JComponent> lastSelected) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;
-    for (SettingsEditorFragment<Settings, ?> fragment : restoreGroups(fragments)) {
+    for (SettingsEditorFragment<Settings, ?> fragment : ContainerUtil.sorted(restoreGroups(fragments), Comparator.comparingInt(SettingsEditorFragment::getMenuPosition))) {
       if (fragment.isRemovable() && !Objects.equals(group, fragment.getGroup())) {
         group = fragment.getGroup();
         actionGroup.add(new Separator(group));
@@ -348,7 +383,7 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
       getTemplatePresentation().setDescription(fragment.getActionHint());
 
       if (fragment.getActionDescription() != null) {
-        getTemplatePresentation().putClientProperty(Presentation.PROP_VALUE, fragment.getActionDescription());
+        getTemplatePresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, fragment.getActionDescription());
       }
     }
 

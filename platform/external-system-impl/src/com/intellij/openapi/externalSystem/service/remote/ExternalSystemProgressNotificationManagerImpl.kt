@@ -3,17 +3,18 @@ package com.intellij.openapi.externalSystem.service.remote
 
 import com.intellij.execution.rmi.RemoteObject
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSystemProgressNotificationManager, RemoteExternalSystemProgressNotificationManager {
   private val dispatcher = EventDispatcher.create(ExternalSystemTaskNotificationListener::class.java)
 
@@ -35,8 +36,8 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     return toRemove.isNotEmpty()
   }
 
-  override fun onStart(id: ExternalSystemTaskId, workingDir: String) {
-    forEachListener { it.onStart(id, workingDir) }
+  override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onStart(projectPath, id) }
   }
 
   override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
@@ -51,9 +52,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     forEachListener { it.onTaskOutput(id, text, stdOut) }
   }
 
-  override fun onEnd(id: ExternalSystemTaskId) {
+  override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
     try {
-      forEachListener { it.onEnd(id) }
+      forEachListener { it.onEnd(projectPath, id) }
     }
     finally {
       val toRemove = dispatcher.listeners.filter { (it as TaskListenerWrapper).taskId === id }
@@ -61,20 +62,20 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     }
   }
 
-  override fun onSuccess(id: ExternalSystemTaskId) {
-    forEachListener { it.onSuccess(id) }
+  override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onSuccess(projectPath, id) }
   }
 
-  override fun onFailure(id: ExternalSystemTaskId, e: Exception) {
-    forEachListener { it.onFailure(id, e) }
+  override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
+    forEachListener { it.onFailure(projectPath, id, exception) }
   }
 
   override fun beforeCancel(id: ExternalSystemTaskId) {
     forEachListener { it.beforeCancel(id) }
   }
 
-  override fun onCancel(id: ExternalSystemTaskId) {
-    forEachListener { it.onCancel(id) }
+  override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
+    forEachListener { it.onCancel(projectPath, id) }
   }
 
   private fun addListener(tasksKey: Any, listener: ExternalSystemTaskNotificationListener, parentDisposable: Disposable? = null): Boolean {
@@ -90,9 +91,11 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
   }
 
   private fun forEachListener(action: (ExternalSystemTaskNotificationListener) -> Unit) {
-    LOG.runAndLogException {
-      action.invoke(dispatcher.multicaster)
-      ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+    ProgressManager.getInstance().executeNonCancelableSection {
+      LOG.runAndLogException {
+        action.invoke(dispatcher.multicaster)
+        ExternalSystemTaskNotificationListener.EP_NAME.forEachExtensionSafe(action::invoke)
+      }
     }
   }
 
@@ -101,14 +104,14 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
     val taskId: Any,
     val delegate: ExternalSystemTaskNotificationListener
   ) : ExternalSystemTaskNotificationListener {
-    override fun onSuccess(id: ExternalSystemTaskId) {
+    override fun onSuccess(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onSuccess(id)
+      delegate.onSuccess(projectPath, id)
     }
 
-    override fun onFailure(id: ExternalSystemTaskId, e: java.lang.Exception) {
+    override fun onFailure(projectPath: String, id: ExternalSystemTaskId, exception: Exception) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onFailure(id, e)
+      delegate.onFailure(projectPath, id, exception)
     }
 
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
@@ -121,14 +124,14 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.onStatusChange(event)
     }
 
-    override fun onCancel(id: ExternalSystemTaskId) {
+    override fun onCancel(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onCancel(id)
+      delegate.onCancel(projectPath, id)
     }
 
-    override fun onEnd(id: ExternalSystemTaskId) {
+    override fun onEnd(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onEnd(id)
+      delegate.onEnd(projectPath, id)
     }
 
     override fun beforeCancel(id: ExternalSystemTaskId) {
@@ -136,15 +139,9 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
       delegate.beforeCancel(id)
     }
 
-    override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
+    override fun onStart(projectPath: String, id: ExternalSystemTaskId) {
       if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      delegate.onStart(id, workingDir)
-    }
-
-    override fun onStart(id: ExternalSystemTaskId) {
-      if (taskId !== ALL_TASKS_KEY && taskId != id) return
-      @Suppress("DEPRECATION")
-      delegate.onStart(id)
+      delegate.onStart(projectPath, id)
     }
 
     override fun onEnvironmentPrepared(id: ExternalSystemTaskId) {
@@ -175,8 +172,7 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
 
     @JvmStatic
     fun getInstanceImpl(): ExternalSystemProgressNotificationManagerImpl {
-      val application = ApplicationManager.getApplication()
-      return application.getService(ExternalSystemProgressNotificationManager::class.java) as ExternalSystemProgressNotificationManagerImpl
+      return ExternalSystemProgressNotificationManager.getInstance() as ExternalSystemProgressNotificationManagerImpl
     }
 
     @JvmStatic

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.notification.*;
@@ -12,10 +12,12 @@ import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class BranchContextTracker implements BranchChangeListener {
 
   public static final NotificationGroup NOTIFICATION = NotificationGroupManager.getInstance().getNotificationGroup("Branch Context group");
@@ -79,7 +81,7 @@ public class BranchContextTracker implements BranchChangeListener {
         new ConfigureBranchContextDialog(myProject).show();
       }
     }).setContextHelpAction(new AnAction(TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.text.what.is.a.workspace"),
-                                         TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.description"), null) {
+                                         TaskBundle.messagePointer("action.BranchContextTracker.Anonymous.description")) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
 
@@ -87,8 +89,7 @@ public class BranchContextTracker implements BranchChangeListener {
     }).notify(myProject);
   }
 
-  @NotNull
-  private static String getContextName(String branchName) {
+  private static @NotNull String getContextName(String branchName) {
     return "__branch_context_" + branchName; //NON-NLS
   }
 

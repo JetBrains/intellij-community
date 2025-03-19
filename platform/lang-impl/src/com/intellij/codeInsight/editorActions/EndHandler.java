@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -28,9 +14,11 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class EndHandler extends EditorActionHandler.ForEachCaret {
+@ApiStatus.Internal
+public final class EndHandler extends EditorActionHandler.ForEachCaret {
   private final EditorActionHandler myOriginalHandler;
 
   public EndHandler(EditorActionHandler originalHandler) {
@@ -38,7 +26,7 @@ public class EndHandler extends EditorActionHandler.ForEachCaret {
   }
 
   @Override
-  protected void doExecute(@NotNull final Editor editor, @NotNull Caret caret, DataContext dataContext) {
+  protected void doExecute(final @NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
     CodeInsightSettings settings = CodeInsightSettings.getInstance();
     if (!settings.SMART_END_ACTION) {
       if (myOriginalHandler != null) {

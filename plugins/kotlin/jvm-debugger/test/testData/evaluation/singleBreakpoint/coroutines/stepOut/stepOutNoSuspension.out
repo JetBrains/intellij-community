@@ -1,0 +1,12 @@
+LineBreakpoint created at stepOutNoSuspension.kt:12
+Run Java
+Connected to the target VM
+stepOutNoSuspension.kt:12
+stepOutNoSuspension.kt:16
+stepOutNoSuspension.kt:20
+stepOutNoSuspension.kt:25
+stepOutNoSuspension.kt:31
+stepOutNoSuspension.kt:37
+Disconnected from the target VM
+
+Process finished with exit code 0

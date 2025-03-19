@@ -824,14 +824,15 @@ def sha256_digest(binary_or_file):
         return acc.hexdigest()
 
 
-def get_relative_path_by_qname(abs_path, qname):
-    abs_path_components = os.path.split(abs_path)
+def get_portable_test_module_path(abs_path, qname):
+    abs_path_components = os.path.normpath(abs_path).split(os.path.sep)
     qname_components_count = len(qname.split('.'))
     if os.path.splitext(abs_path_components[-1])[0] == '__init__':
         rel_path_components_count = qname_components_count + 1
     else:
         rel_path_components_count = qname_components_count
-    return os.path.join(*abs_path_components[-rel_path_components_count:])
+    return '/'.join(abs_path_components[-rel_path_components_count:])
+
 
 def is_text_file(path):
     """

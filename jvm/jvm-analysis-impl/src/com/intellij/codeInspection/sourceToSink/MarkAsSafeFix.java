@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -34,8 +34,7 @@ import static com.intellij.codeInsight.ExternalAnnotationsManager.AnnotationPlac
 
 class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
 
-  @NotNull
-  private final TaintValueFactory myTaintValueFactory;
+  private final @NotNull TaintValueFactory myTaintValueFactory;
 
   protected MarkAsSafeFix(@NotNull PsiElement sourcePsi,
                           @NotNull TaintValueFactory taintValueFactory) {
@@ -70,8 +69,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     markAsSafe(project, elements, myTaintValueFactory);
   }
 
-  @Nullable
-  private List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
+  private @Nullable List<PsiElement> getElementsToMark(@NotNull UExpression uExpression) {
     TaintAnalyzer taintAnalyzer = new TaintAnalyzer(myTaintValueFactory);
     try {
       TaintValue taintValue = taintAnalyzer.analyzeExpression(uExpression, false, TaintValue.TAINTED);
@@ -80,16 +78,11 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     catch (DeepTaintAnalyzerException e) {
       return null;
     }
-    List<PsiElement> elements = new ArrayList<>(ContainerUtil.map(taintAnalyzer.getNonMarkedElements(), e -> e.myNonMarked));
-    ContainerUtil.removeDuplicates(elements);
-    ContainerUtil.sort(elements, Comparator.comparing(element -> {
-      //methods are always last
-      if (element instanceof PsiMethod) {
-        return 1;
-      }
-      return 0;
-    }));
-    return elements;
+    return taintAnalyzer.getNonMarkedElements().stream()
+      .map(e -> (PsiElement)e.myNonMarked)
+      .distinct()
+      .sorted(Comparator.comparing(e -> e instanceof PsiMethod))
+      .toList();
   }
 
   @Override
@@ -171,8 +164,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     run(project, placedElement, taintValueFactory);
   }
 
-  @NotNull
-  private static String getRepresentText(@NotNull PsiElement element) {
+  private static @NotNull String getRepresentText(@NotNull PsiElement element) {
     if (element instanceof JvmNamedElement jvmNamedElement && jvmNamedElement.getName() != null) {
       return jvmNamedElement.getName();
     }
@@ -250,8 +242,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     });
   }
 
-  @Nullable
-  static PsiElement getSourcePsi(@NotNull PsiElement element) {
+  static @Nullable PsiElement getSourcePsi(@NotNull PsiElement element) {
     if (element.isPhysical()) {
       return element;
     }
@@ -269,8 +260,7 @@ class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
     return sourcePsi;
   }
 
-  @Nullable
-  private static PsiFile fileToAnnotate(@NotNull PsiElement element) {
+  private static @Nullable PsiFile fileToAnnotate(@NotNull PsiElement element) {
     PsiElement sourcePsi = getSourcePsi(element);
     if (sourcePsi == null) return null;
     return sourcePsi.getContainingFile();

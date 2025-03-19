@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,9 +14,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class ProjectConversionUtil {
-  @NonNls public static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
-  @NonNls private static final String BACKUP_EXTENSION = "backup";
+  public static final @NonNls String PROJECT_FILES_BACKUP = "projectFilesBackup";
+  private static final @NonNls String BACKUP_EXTENSION = "backup";
 
   private ProjectConversionUtil() {
   }

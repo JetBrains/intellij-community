@@ -17,7 +17,6 @@
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;

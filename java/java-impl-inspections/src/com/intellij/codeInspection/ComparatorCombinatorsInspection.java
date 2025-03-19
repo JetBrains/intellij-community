@@ -1,10 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.impl.RemoveRedundantParameterTypesFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -12,31 +15,29 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ComparatorCombinatorsInspection.class);
 
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
@@ -74,10 +75,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
 
-  @Nullable("when failed to extract")
-  private static List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
-                                                              @NotNull PsiVariable first,
-                                                              @NotNull PsiVariable second) {
+  private static @Nullable("when failed to extract") List<ComparisonBlock> extractComparisonChain(PsiStatement @NotNull [] statements,
+                                                                                                  @NotNull PsiVariable first,
+                                                                                                  @NotNull PsiVariable second) {
     if (statements.length == 0) return null;
     ComparisonBlock firstBlock = ComparisonBlock.extractBlock(statements[0], first, second, null);
     if (firstBlock == null) return null;
@@ -130,8 +130,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
   //res == 0 ? first.compareTo(second) : res
-  @Nullable
-  private static ComparisonBlock extractTernaryComparison(@NotNull PsiVariable first,
+  private static @Nullable ComparisonBlock extractTernaryComparison(@NotNull PsiVariable first,
                                                           @NotNull PsiVariable second,
                                                           PsiVariable lastResult,
                                                           PsiExpression returnExpr) {
@@ -162,8 +161,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
    *                  if(res == 0) {int res = o1.second.compareTo(o2.second);}
    * @return statement of then branch
    */
-  @Nullable
-  private static PsiStatement extractZeroCheckedWay(@Nullable PsiStatement statement, @NotNull PsiVariable last) {
+  private static @Nullable PsiStatement extractZeroCheckedWay(@Nullable PsiStatement statement, @NotNull PsiVariable last) {
     PsiIfStatement ifStatement = tryCast(statement, PsiIfStatement.class);
     if (ifStatement == null || ifStatement.getElseBranch() != null) return null;
     PsiBinaryExpression binOp = tryCast(ifStatement.getCondition(), PsiBinaryExpression.class);
@@ -211,8 +209,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
      * or
      * res = o1.first.compareTo(o2.first);
      */
-    @Nullable
-    static ComparisonBlock extractBlock(@NotNull PsiStatement statement,
+    static @Nullable ComparisonBlock extractBlock(@NotNull PsiStatement statement,
                                         @NotNull PsiVariable firstParam,
                                         @NotNull PsiVariable secondParam,
                                         @Nullable PsiVariable previousResult) {
@@ -232,11 +229,10 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
 
     @Contract("null, _, _, _ -> null")
-    @Nullable
-    private static ComparisonBlock extractBlock(@Nullable PsiExpression expr,
-                                                @NotNull PsiVariable firstParam,
-                                                @NotNull PsiVariable secondParam,
-                                                @NotNull PsiVariable variable) {
+    private static @Nullable ComparisonBlock extractBlock(@Nullable PsiExpression expr,
+                                                          @NotNull PsiVariable firstParam,
+                                                          @NotNull PsiVariable secondParam,
+                                                          @NotNull PsiVariable variable) {
       PsiExpression first = null;
       PsiExpression second = null;
       if (expr instanceof PsiMethodCallExpression call) {
@@ -281,21 +277,19 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
   }
 
-  @NotNull
-  private static String generateComparison(@NotNull String methodName,
-                                           @Nullable PsiType type,
-                                           @NotNull String varName,
-                                           @NotNull PsiExpression expression,
-                                           @NotNull PsiVariable exprVariable) {
+  private static @NotNull String generateComparison(@NotNull String methodName,
+                                                    @Nullable PsiType type,
+                                                    @NotNull String varName,
+                                                    @NotNull PsiExpression expression,
+                                                    @NotNull PsiVariable exprVariable) {
     String lambdaExpr = getExpressionReplacingReferences(expression, varName, exprVariable);
     String parameter =
       type == null ? varName : "(" + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText() + " " + varName + ")";
     return methodName + "(" + parameter + "->" + lambdaExpr + ")";
   }
 
-  @Nullable
-  private static String generateSimpleCombinator(PsiLambdaExpression lambda,
-                                                 PsiParameter leftVar, PsiParameter rightVar) {
+  private static @Nullable String generateSimpleCombinator(PsiLambdaExpression lambda,
+                                                           PsiParameter leftVar, PsiParameter rightVar) {
     PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
     PsiExpression left;
     @NonNls String methodName = null;
@@ -352,10 +346,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return text;
   }
 
-  @Nullable
-  private static String generateChainCombinator(@NotNull List<ComparisonBlock> blocks,
-                                                @NotNull PsiVariable firstVar,
-                                                @NotNull PsiVariable secondVar) {
+  private static @Nullable String generateChainCombinator(@NotNull List<ComparisonBlock> blocks,
+                                                          @NotNull PsiVariable firstVar,
+                                                          @NotNull PsiVariable secondVar) {
     if (blocks.size() < 2) return null;
     ComparisonBlock first = blocks.get(0);
     StringBuilder builder = new StringBuilder();
@@ -389,8 +382,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     return null;
   }
 
-  @Nullable
-  private static String suggestVarName(@NotNull PsiVariable variable) {
+  private static @Nullable String suggestVarName(@NotNull PsiVariable variable) {
     String name = variable.getName();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(variable.getProject());
     SuggestedNameInfo nameCandidate = null;
@@ -417,6 +409,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                                          @NotNull PsiVariable exprVariable) {
     PsiExpression copy = (PsiExpression)expression.copy();
     ReferencesSearch.search(exprVariable, new LocalSearchScope(copy))
+      .asIterable()
       .forEach(reference ->{
         PsiReferenceExpression ref = tryCast(reference.getElement(), PsiReferenceExpression.class);
         if(ref == null) return;
@@ -426,8 +419,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
   }
 
   @Contract(value = "null -> null", pure = true)
-  @Nullable
-  private static String getComparingMethodName(String type) {
+  private static @Nullable String getComparingMethodName(String type) {
     return getComparingMethodName(type, true);
   }
 
@@ -473,18 +465,15 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       myMethodName = name;
     }
 
-    @NotNull
-    public PsiExpression getKeyExtractor() {
+    public @NotNull PsiExpression getKeyExtractor() {
       return myKeyExtractor;
     }
 
-    @NotNull
-    public String getMethodName() {
+    public @NotNull String getMethodName() {
       return myMethodName;
     }
 
-    @Nullable
-    static private PrimitiveComparison from(PsiMethodCallExpression methodCall) {
+    private static @Nullable PrimitiveComparison from(PsiMethodCallExpression methodCall) {
       PsiMethod method = methodCall.resolveMethod();
       if (method != null && method.getName().equals("compare")) {
         PsiClass containingClass = method.getContainingClass();
@@ -504,30 +493,25 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
   }
 
-  static class ReplaceWithComparatorFix implements LocalQuickFix {
+  static class ReplaceWithComparatorFix extends PsiUpdateModCommandQuickFix {
     private final @Nls String myMessage;
 
     ReplaceWithComparatorFix(@Nls String message) {
       myMessage = message;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return myMessage;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("replace.with.comparator.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiLambdaExpression lambda)) return;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       if (parameters.length != 2) return;

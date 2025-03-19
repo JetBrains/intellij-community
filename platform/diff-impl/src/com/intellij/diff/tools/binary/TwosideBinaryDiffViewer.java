@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -25,9 +25,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +40,12 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 
+@ApiStatus.Internal
 public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolder> {
-  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
-  @NotNull private final StatusPanel myStatusPanel;
+  private final @NotNull TransferableFileEditorStateSupport myTransferableStateSupport;
+  private final @NotNull StatusPanel myStatusPanel;
 
-  @NotNull private ComparisonData myComparisonData = ComparisonData.UNKNOWN;
+  private @NotNull ComparisonData myComparisonData = ComparisonData.UNKNOWN;
 
   public TwosideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -96,8 +98,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   }
 
   @Override
-  @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
     try {
       indicator.checkCanceled();
 
@@ -122,7 +123,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
             // Can't trust 0 length, at it might be a lie (and loading empty content into memory shouldn't hurt much).
             contentsEquals = false;
           }
-          else if (FileUtilRt.isTooLarge(length1) || FileUtilRt.isTooLarge(length2)) {
+          else if (VirtualFileUtil.isTooLarge(file1) || VirtualFileUtil.isTooLarge(file2)) {
             return new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("error.files.too.large.to.compare.text"));
           }
           else {
@@ -151,8 +152,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     }
   }
 
-  @NotNull
-  private Runnable applyNotification(@NotNull final ComparisonData comparisonData) {
+  private @NotNull Runnable applyNotification(final @NotNull ComparisonData comparisonData) {
     return () -> {
       clearDiffPresentation();
 
@@ -179,9 +179,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     return getCurrentEditorHolder().getEditor();
   }
 
-  @NotNull
   @Override
-  protected JComponent getStatusPanel() {
+  protected @NotNull JComponent getStatusPanel() {
     return myStatusPanel;
   }
 
@@ -194,9 +193,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   }
 
   private class MyStatusPanel extends StatusPanel {
-    @Nullable
     @Override
-    protected String getMessage() {
+    protected @Nullable String getMessage() {
       if (myComparisonData.isContentsEqual == ThreeState.UNSURE) return null;
       if (myComparisonData.isContentsEqual == ThreeState.YES) {
         return DiffBundle.message("binary.diff.contents.are.identical.message.text");
@@ -212,7 +210,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
   //
 
   private class MyAcceptSideAction extends DumbAwareAction {
-    @NotNull private final Side myBaseSide;
+    private final @NotNull Side myBaseSide;
 
     MyAcceptSideAction(@NotNull Side baseSide) {
       myBaseSide = baseSide;
@@ -250,8 +248,7 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
       }
     }
 
-    @Nullable
-    private VirtualFile getContentFile(@NotNull Side side) {
+    private @Nullable VirtualFile getContentFile(@NotNull Side side) {
       DiffContent content = side.select(myRequest.getContents());
       VirtualFile file = content instanceof FileContent ? ((FileContent)content).getFile() : null;
       return file != null && file.isValid() ? file : null;
@@ -270,8 +267,8 @@ public class TwosideBinaryDiffViewer extends TwosideDiffViewer<BinaryEditorHolde
     public static final ComparisonData UNKNOWN = new ComparisonData(ThreeState.UNSURE, () -> null);
     public static final ComparisonData ERROR = new ComparisonData(ThreeState.UNSURE, () -> DiffBundle.message("diff.cant.calculate.diff"));
 
-    @NotNull public final ThreeState isContentsEqual;
-    @NotNull public final NullableComputable<@Nls String> notification;
+    public final @NotNull ThreeState isContentsEqual;
+    public final @NotNull NullableComputable<@Nls String> notification;
 
     private ComparisonData(@NotNull ThreeState isContentsEqual, @NotNull NullableComputable<@Nls String> notification) {
       this.isContentsEqual = isContentsEqual;

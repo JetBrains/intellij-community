@@ -130,7 +130,7 @@ private val MUTUALLY_EXCLUSIVE_MAP: OneToManyBiMap<String> = OneToManyBiMap(mapO
 ))
 private val TABLES: List<String> = listOf("versions", "libraries", "bundles", "plugins")
 
-class OneToManyBiMap<T> constructor(input: Map<T, Set<T>>) {
+class OneToManyBiMap<T>(input: Map<T, Set<T>>) {
   private val direct = input
   private val reverse = mutableMapOf<T, T>()
 

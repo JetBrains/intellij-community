@@ -1,0 +1,35 @@
+### auto-generated section `build kotlin.plugin-updater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "plugin-updater_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "plugin-updater",
+  module_name = "kotlin.plugin-updater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:jaxb-api",
+    "@lib//:gson",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/project-configuration",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//java/compiler/openapi:java-compiler",
+  ],
+  runtime_deps = [":plugin-updater_resources"]
+)
+### auto-generated section `build kotlin.plugin-updater` end

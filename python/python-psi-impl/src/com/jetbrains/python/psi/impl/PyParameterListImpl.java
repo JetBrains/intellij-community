@@ -18,9 +18,10 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.ArrayUtil;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
@@ -29,14 +30,17 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 
-public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList {
+
+public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> implements PyParameterList, PsiListLikeElement {
   public PyParameterListImpl(ASTNode astNode) {
     super(astNode);
   }
 
   public PyParameterListImpl(final PyParameterListStub stub) {
-    this(stub, PyElementTypes.PARAMETER_LIST);
+    this(stub, PyStubElementTypes.PARAMETER_LIST);
   }
 
   public PyParameterListImpl(final PyParameterListStub stub, IStubElementType nodeType) {
@@ -103,8 +107,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  @Nullable
-  public PyNamedParameter findParameterByName(@NotNull final String name) {
+  public @Nullable PyNamedParameter findParameterByName(final @NotNull String name) {
     final Ref<PyNamedParameter> result = new Ref<>();
     ParamHelper.walkDownParamArray(getParameters(), new ParamHelper.ParamVisitor() {
       @Override
@@ -118,14 +121,12 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   @Override
-  @NotNull
-  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     return ParamHelper.getPresentableText(getParameters(), includeDefaultValue, context);
   }
 
-  @Nullable
   @Override
-  public PyFunction getContainingFunction() {
+  public @Nullable PyFunction getContainingFunction() {
     final PsiElement parent = getParentByStub();
     return parent instanceof PyFunction ? (PyFunction) parent : null;
   }
@@ -136,5 +137,10 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, node.getPsi());
     }
     super.deleteChildInternal(node);
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getParameters());
   }
 }

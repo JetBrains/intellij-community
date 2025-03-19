@@ -1,0 +1,4 @@
+# <13.5 detailedStatus removed
+fragment ciJob on CiJob {
+  name
+}

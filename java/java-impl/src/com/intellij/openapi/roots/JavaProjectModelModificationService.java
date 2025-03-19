@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.module.Module;
@@ -24,19 +24,7 @@ public abstract class JavaProjectModelModificationService {
     return project.getService(JavaProjectModelModificationService.class);
   }
 
-  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to) {
-    return addDependency(from, to, DependencyScope.COMPILE);
-  }
-
-  public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
-    return addDependency(from, to, scope, false);
-  }
-
   public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported);
-
-  public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
-    return addDependency(from, library, scope, false);
-  }
 
   public abstract Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported);
 

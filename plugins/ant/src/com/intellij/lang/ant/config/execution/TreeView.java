@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.ide.OccurenceNavigator;
@@ -48,8 +48,8 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private OccurenceNavigatorSupport myOccurenceNavigatorSupport;
   private final boolean myAutoCollapseTargets;
-  @NonNls public static final String ROOT_TREE_USER_OBJECT = "root";
-  @NonNls public static final String JUNIT_TASK_NAME = "junit";
+  public static final @NonNls String ROOT_TREE_USER_OBJECT = "root";
+  public static final @NonNls String JUNIT_TASK_NAME = "junit";
 
   public TreeView(final Project project, final AntBuildFile buildFile) {
     myProject = project;
@@ -119,15 +119,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
                                    .createNavigatable(myProject, messageNode.getFile(), messageNode.getOffset());
       }
 
-      @NotNull
       @Override
-      public String getNextOccurenceActionName() {
+      public @NotNull String getNextOccurenceActionName() {
         return AntBundle.message("ant.execution.next.error.warning.action.name");
       }
 
-      @NotNull
       @Override
-      public String getPreviousOccurenceActionName() {
+      public @NotNull String getPreviousOccurenceActionName() {
         return AntBundle.message("ant.execution.previous.error.warning.action.name");
       }
     };
@@ -217,8 +215,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     addJavacMessageImpl(message.withText(messagePrefix + message.getText()));
   }
 
-  @NotNull
-  static @NlsSafe String printMessage(@NotNull AntMessage message, @NlsSafe String url) {
+  static @NotNull @NlsSafe String printMessage(@NotNull AntMessage message, @NlsSafe String url) {
     final StringBuilder builder = new StringBuilder();
     final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
@@ -353,18 +350,16 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void popupInvoked(Component component, int x, int y) {
-    final TreePath path = myTree.getLeadSelectionPath();
+    TreePath path = myTree.getLeadSelectionPath();
     if (path == null) return;
-    if (!(path.getLastPathComponent()instanceof MessageNode)) return;
-    if (getData(CommonDataKeys.NAVIGATABLE_ARRAY.getName()) == null) return;
+    if (!(path.getLastPathComponent() instanceof MessageNode)) return;
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_MESSAGES_POPUP, group);
     menu.getComponent().show(component, x, y);
   }
 
-  @Nullable
-  private MessageNode getSelectedItem() {
+  private @Nullable MessageNode getSelectedItem() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
     if (!(path.getLastPathComponent()instanceof MessageNode)) return null;
@@ -372,18 +367,10 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      final MessageNode item = getSelectedItem();
-      return item != null? (DataProvider)id -> getSlowData(id, item) : null;
-    }
-    return null;
-  }
-
-  @Nullable
-  private Object getSlowData(@NonNls @NotNull String dataId, @NotNull final MessageNode item) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    MessageNode item = getSelectedItem();
+    if (item == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (isValid(item.getFile())) {
         return PsiNavigationSupport.getInstance().createNavigatable(myProject, item.getFile(), item.getOffset());
       }
@@ -399,12 +386,11 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
           return descriptor;
         }
       }
-    }
-    return null;
+      return null;
+    });
   }
 
-  @Nullable
-  private Navigatable getDescriptorForTargetNode(MessageNode node) {
+  private @Nullable Navigatable getDescriptorForTargetNode(MessageNode node) {
     final String targetName = node.getText()[0];
     final AntBuildTargetBase target = (AntBuildTargetBase)myBuildFile.getModel().findTarget(targetName);
     return (target == null) ? null : target.getOpenFileDescriptor();
@@ -458,8 +444,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
   }
 
-  @Nullable
-  private static TreePath getFirstErrorPath(TreePath treePath) {
+  private static @Nullable TreePath getFirstErrorPath(TreePath treePath) {
     TreeNode treeNode = (TreeNode)treePath.getLastPathComponent();
     if (treeNode instanceof MessageNode) {
       AntBuildMessageView.MessageType type = ((MessageNode)treeNode).getType();
@@ -555,15 +540,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myAutoScrollToSourceHandler.createToggleAction();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return myOccurenceNavigatorSupport.getNextOccurenceActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return myOccurenceNavigatorSupport.getPreviousOccurenceActionName();
   }
 
@@ -587,7 +570,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     return myOccurenceNavigatorSupport.hasPreviousOccurence();
   }
 
-  private class MyTree extends Tree implements DataProvider {
+  private class MyTree extends Tree implements UiDataProvider {
     MyTree() {
       super(myTreeModel);
     }
@@ -605,27 +588,23 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-        return new TextCopyProvider() {
-          @Override
-          public @NotNull ActionUpdateThread getActionUpdateThread() {
-            return ActionUpdateThread.EDT;
-          }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, new TextCopyProvider() {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
-          @Nullable
-          @Override
-          public Collection<String> getTextLinesToCopy() {
-            TreePath selection = getSelectionPath();
-            Object value = selection == null ? null : selection.getLastPathComponent();
-            if (value instanceof MessageNode messageNode) {
-              return Arrays.asList(messageNode.getText());
-            }
-            return value == null ? null : Collections.singleton(value.toString());
+        @Override
+        public @Nullable Collection<String> getTextLinesToCopy() {
+          TreePath selection = getSelectionPath();
+          Object value = selection == null ? null : selection.getLastPathComponent();
+          if (value instanceof MessageNode messageNode) {
+            return Arrays.asList(messageNode.getText());
           }
-        };
-      }
-      return null;
+          return value == null ? null : Collections.singleton(value.toString());
+        }
+      });
     }
   }
 }

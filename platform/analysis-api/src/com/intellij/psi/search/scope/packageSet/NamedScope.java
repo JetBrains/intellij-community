@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.icons.AllIcons;
@@ -36,42 +36,35 @@ public class NamedScope {
    * @deprecated please use {@link NamedScope#getScopeId()} for search/serialization/mappings and {@link #getPresentableName()} to display in UI
    */
   @Deprecated
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return myScopeId;
   }
 
-  @NonNls
-  public String getScopeId() {
+  public @NonNls String getScopeId() {
     return myScopeId;
   }
 
-  @NlsSafe
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return myPresentableNameSupplier.get();
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return myIcon;
   }
 
-  @Nullable
-  public PackageSet getValue() {
+  public @Nullable PackageSet getValue() {
     return myValue;
   }
 
-  @NotNull
-  public NamedScope createCopy() {
+  public @NotNull NamedScope createCopy() {
     return new NamedScope(myScopeId, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy());
   }
 
-  @Nullable
-  public String getDefaultColorName() {
+  public @Nullable String getDefaultColorName() {
     return null;
   }
 
-  public static class UnnamedScope extends NamedScope {
+  public static final class UnnamedScope extends NamedScope {
     public UnnamedScope(@NotNull PackageSet value) {
       super(value.getText(), () -> value.getText(), AllIcons.Ide.LocalScope, value);
     }

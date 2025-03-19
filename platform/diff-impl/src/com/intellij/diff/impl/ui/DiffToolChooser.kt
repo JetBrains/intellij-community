@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
 import com.intellij.diff.DiffTool
@@ -8,11 +8,17 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.SegmentedButton
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Experimental
 @Suppress("DialogTitleCapitalization")
 abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(), CustomComponentAction {
+  private val segmentedButton = SegmentedButtonComponent { diffTool: DiffTool -> SegmentedButton.createPresentation(text = diffTool.name) }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
@@ -47,13 +53,12 @@ abstract class DiffToolChooser(private val project: Project?) : DumbAwareAction(
   abstract fun getActiveTool(): DiffTool
   abstract fun getForcedDiffTool(): DiffTool?
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent =
-    panel {
-      row {
-        segmentedButton(getTools(), DiffTool::getName).apply {
-          selectedItem = getActiveTool()
-          whenItemSelected { if (project != null) onSelected(project, it) }
-        }
-      }
-    }
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    segmentedButton.items = getTools()
+    segmentedButton.spacing = IntelliJSpacingConfiguration()
+    segmentedButton.selectedItem = getActiveTool()
+    segmentedButton.whenItemSelected { if (project != null) onSelected(project, it) }
+    return segmentedButton
+  }
 }
+

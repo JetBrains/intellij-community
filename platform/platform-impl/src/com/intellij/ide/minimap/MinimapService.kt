@@ -3,6 +3,7 @@ package com.intellij.ide.minimap
 
 import com.intellij.ide.minimap.settings.MinimapSettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -14,10 +15,11 @@ import com.intellij.openapi.util.Key
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
+@Service
 class MinimapService : Disposable {
 
   companion object {
-    fun getInstance() = service<MinimapService>()
+    fun getInstance(): MinimapService = service<MinimapService>()
     private val MINI_MAP_PANEL_KEY: Key<MinimapPanel> = Key.create("com.intellij.ide.minimap.panel")
   }
 

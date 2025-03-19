@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.impl;
 
@@ -28,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -49,8 +34,7 @@ import java.util.*;
  */
 public class DomServiceImpl extends DomService {
 
-  @NotNull
-  private static XmlFileHeader calcXmlFileHeader(@NotNull XmlFile file) {
+  private static @NotNull XmlFileHeader calcXmlFileHeader(@NotNull XmlFile file) {
 
     if (file instanceof PsiFileEx && ((PsiFileEx)file).isContentsLoaded() && file.getNode().isParsed()) {
       return computeHeaderByPsi(file);
@@ -62,11 +46,8 @@ public class DomServiceImpl extends DomService {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree<?> tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
-        if (tree != null) {
-          Stub root = tree.getRoot();
-          if (root instanceof FileStub) {
-            return ((FileStub)root).getHeader();
-          }
+        if (tree != null && tree.getRoot() instanceof FileStub fileStub) {
+          return fileStub.getHeader();
         }
       }
     }
@@ -128,8 +109,7 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  @NotNull
-  public XmlFile getContainingFile(@NotNull DomElement domElement) {
+  public @NotNull XmlFile getContainingFile(@NotNull DomElement domElement) {
     if (domElement instanceof DomFileElement) {
       return ((DomFileElement<?>)domElement).getFile();
     }
@@ -137,14 +117,12 @@ public class DomServiceImpl extends DomService {
   }
 
   @Override
-  @NotNull
-  public EvaluatedXmlName getEvaluatedXmlName(@NotNull final DomElement element) {
+  public @NotNull EvaluatedXmlName getEvaluatedXmlName(final @NotNull DomElement element) {
     return DomManagerImpl.getNotNullHandler(element).getXmlName();
   }
 
   @Override
-  @NotNull
-  public XmlFileHeader getXmlFileHeader(@NotNull XmlFile file) {
+  public @NotNull XmlFileHeader getXmlFileHeader(@NotNull XmlFile file) {
     if (FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() != null) {
       return calcXmlFileHeader(file);
     }

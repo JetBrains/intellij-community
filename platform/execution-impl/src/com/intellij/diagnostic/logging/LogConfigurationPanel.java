@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -6,7 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.LogFileOptions;
 import com.intellij.execution.configurations.PredefinedLogFile;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileSaverDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.TextComponentAccessor;
@@ -32,7 +32,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
+public final class LogConfigurationPanel<T extends RunConfigurationBase> extends SettingsEditor<T> {
   private final TableView<LogFileOptions> myFilesTable;
   private final ListTableModel<LogFileOptions> myModel;
   private JPanel myWholePanel;
@@ -113,10 +113,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
                myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
-    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
-                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
-                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var descriptor = FileSaverDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
+      .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
+    myOutputFile.addFileSaverDialog(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 
@@ -174,7 +174,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   @Override
-  protected void resetEditorFrom(@NotNull final RunConfigurationBase configuration) {
+  protected void resetEditorFrom(final @NotNull RunConfigurationBase configuration) {
     List<LogFileOptions> list = new ArrayList<>();
     final List<LogFileOptions> logFiles = configuration.getLogFiles();
     for (LogFileOptions setting : logFiles) {
@@ -207,7 +207,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   @Override
-  protected void applyEditorTo(@NotNull final RunConfigurationBase configuration) throws ConfigurationException {
+  protected void applyEditorTo(final @NotNull RunConfigurationBase configuration) throws ConfigurationException {
     myFilesTable.stopEditing();
     configuration.removeAllLogFiles();
     configuration.removeAllPredefinedLogFiles();
@@ -242,8 +242,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return myWholePanel;
   }
 
@@ -259,7 +258,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     return false;
   }
 
-  private class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
+  private final class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
     MyLogFileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.log.file.column"));
     }
@@ -267,14 +266,13 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     @Override
     public TableCellRenderer getRenderer(final LogFileOptions p0) {
       return new DefaultTableCellRenderer() {
-        @NotNull
         @Override
-        public Component getTableCellRendererComponent(@NotNull JTable table,
-                                                       Object value,
-                                                       boolean isSelected,
-                                                       boolean hasFocus,
-                                                       int row,
-                                                       int column) {
+        public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                                Object value,
+                                                                boolean isSelected,
+                                                                boolean hasFocus,
+                                                                int row,
+                                                                int column) {
           final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           setText(((LogFileOptions)value).getName());
           setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
@@ -313,8 +311,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
-  private class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsActiveColumnInfo() {
+  private final class MyIsActiveColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+    private MyIsActiveColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.active.column"));
     }
 
@@ -343,8 +341,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
-  private class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
-    protected MyIsSkipColumnInfo() {
+  private final class MyIsSkipColumnInfo extends ColumnInfo<LogFileOptions, Boolean> {
+    private MyIsSkipColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.is.skipped.column"));
     }
 
@@ -369,7 +367,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     }
   }
 
-  private class LogFileCellEditor extends AbstractTableCellEditor {
+  private final class LogFileCellEditor extends AbstractTableCellEditor {
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
     private final LogFileOptions myLogFileOptions;
 

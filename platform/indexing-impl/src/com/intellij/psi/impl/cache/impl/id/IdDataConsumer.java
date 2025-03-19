@@ -1,35 +1,65 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.util.text.CharArrayCharSequence;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
+import java.util.*;
 
-public class IdDataConsumer {
-  @NotNull
-  private final Object2IntMap<IdIndexEntry> myResult = new Object2IntOpenHashMap<>();
+public final class IdDataConsumer {
 
-  @NotNull
-  public Map<IdIndexEntry, Integer> getResult() {
-    return myResult;
+  private final @NotNull IdEntryToScopeMapImpl hashToScopeMap = new IdEntryToScopeMapImpl();
+
+  public @NotNull Map<IdIndexEntry, Integer> getResult() {
+    return hashToScopeMap;
   }
 
   public void addOccurrence(char[] chars, int start, int end, int occurrenceMask) {
-    addOccurrence(new CharArrayCharSequence(chars), start, end, occurrenceMask);
+    addOccurrence(null, chars, start, end, occurrenceMask);
   }
 
   public void addOccurrence(CharSequence charSequence, int start, int end, int occurrenceMask) {
-    if (end == start || occurrenceMask == 0) return;
-    int hash = IdIndexEntry.getWordHash(charSequence, start, end, true);
-    myResult.mergeInt(new IdIndexEntry(hash), occurrenceMask, (prev, cur) -> prev | cur);
+    addOccurrence(charSequence, null, start, end, occurrenceMask);
+  }
 
-    int hashNoCase = IdIndexEntry.getWordHash(charSequence, start, end, false);
+  private void addOccurrence(CharSequence charSequence, char[] chars, int start, int end, int occurrenceMask) {
+    if (end == start || occurrenceMask == 0) return;
+    //calculate both case-sensitive & case-insensitive hashes:
+    int hash, hashNoCase;
+    boolean hasArray = chars != null;
+    if (IdIndexEntry.useStrongerHash()) {
+      hash = hashNoCase = 0;
+      boolean different = false;
+      for (int off = start; off < end; off++) {
+        char c = hasArray ? chars[off] : charSequence.charAt(off);
+        char lowerC = StringUtil.toLowerCase(c);
+        if (!different && c != lowerC) {
+          different = true;
+          hashNoCase = hash;
+        }
+        hash = 31 * hash + c;
+        if (different) {
+          hashNoCase = 31 * hashNoCase + lowerC;
+        }
+      }
+      if (!different) {
+        hashNoCase = hash;
+      }
+    }
+    else {
+      char firstChar = hasArray ? chars[start] : charSequence.charAt(start);
+      char lastChar = hasArray ? chars[end - 1] : charSequence.charAt(end - 1);
+      hash = (firstChar << 8) + (lastChar << 4) + end - start;
+      char firstCharLower = StringUtil.toLowerCase(firstChar);
+      char lastCharLower = StringUtil.toLowerCase(lastChar);
+      hashNoCase = (firstCharLower == firstChar && lastCharLower == lastChar) ? hash :
+                   (firstCharLower << 8) + (lastCharLower << 4) + end - start;
+    }
+    hashToScopeMap.updateMask(hash, occurrenceMask);
+
     if (hashNoCase != hash) {
-      myResult.mergeInt(new IdIndexEntry(hashNoCase), occurrenceMask, (prev, cur) -> prev | cur);
+      hashToScopeMap.updateMask(hashNoCase, occurrenceMask);
     }
   }
 }

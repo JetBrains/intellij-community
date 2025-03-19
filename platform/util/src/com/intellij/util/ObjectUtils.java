@@ -1,12 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Comparator;
 import java.util.List;
@@ -49,9 +46,9 @@ public final class ObjectUtils {
 
   /**
    * Creates an instance of class {@code ofInterface} with its {@link Object#toString()} method returning {@code name}.
-   * No other guarantees about return value behaviour.
+   * No other guarantees about return value behavior.
    * {@code ofInterface} must represent an interface class.
-   * Useful for stubs in generic code, e.g. for storing in {@code List<T>} to represent empty special value.
+   * Useful for stubs in generic code, e.g., for storing in {@code List<T>} to represent empty special value.
    */
   public static @NotNull <T> T sentinel(@NotNull String name, @NotNull Class<T> ofInterface) {
     if (!ofInterface.isInterface()) {
@@ -144,6 +141,7 @@ public final class ObjectUtils {
   /**
    * @deprecated Use {@code if (obj != null) ...} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {
     if (obj != null) {
@@ -152,7 +150,7 @@ public final class ObjectUtils {
   }
 
   /**
-   * @deprecated this method is unnecessary. Just write if statement (use pattern variable when possible).
+   * @deprecated this method is unnecessary. Write if statement (use pattern variable when possible).
    */
   @Deprecated
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, @NotNull Consumer<? super T> consumer) {
@@ -168,7 +166,11 @@ public final class ObjectUtils {
     return condition.test(obj) ? null : obj;
   }
 
-  @Contract("null, _ -> null")
+  /**
+   * @deprecated Use Kotlin takeIf
+   */
+  @ApiStatus.ScheduledForRemoval
+  @Deprecated
   public static @Nullable <T> T nullizeIfDefaultValue(@Nullable T obj, @NotNull T defaultValue) {
     return obj == defaultValue ? null : obj;
   }
@@ -176,7 +178,7 @@ public final class ObjectUtils {
   /**
    * Performs binary search on the range [fromIndex, toIndex)
    * @param indexComparator a comparator which receives a middle index and returns the result of comparison of the value at this index and the goal value
-   *                        (e.g 0 if found, -1 if the value[middleIndex] < goal, or 1 if value[middleIndex] > goal)
+   *                        (e.g., 0 if found, -1 if the value[middleIndex] < goal, or 1 if value[middleIndex] > goal)
    * @return index for which {@code indexComparator} returned 0 or {@code -insertionIndex-1} if wasn't found
    * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)
    * @see java.util.Collections#binarySearch(List, Object, Comparator)

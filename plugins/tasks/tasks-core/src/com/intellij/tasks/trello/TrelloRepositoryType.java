@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.trello;
 
@@ -36,33 +22,28 @@ public class TrelloRepositoryType extends BaseRepositoryType<TrelloRepository> {
   public static final String CLIENT_AUTHORIZATION_URL =
     "https://trello.com/1/authorize?key=" + DEVELOPER_KEY +"&name=JetBrains&expiration=never&response_type=token&scope=read,write";
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Trello";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Trello;
   }
 
-  @Nullable
   @Override
-  public String getAdvertiser() {
+  public @Nullable String getAdvertiser() {
     return TaskBundle.message("html.a.href.0.where.can.i.get.authorization.token.a.html", CLIENT_AUTHORIZATION_URL);
   }
 
-  @NotNull
   @Override
-  public TaskRepositoryEditor createEditor(TrelloRepository repository, Project project, Consumer<? super TrelloRepository> changeListener) {
+  public @NotNull TaskRepositoryEditor createEditor(TrelloRepository repository, Project project, Consumer<? super TrelloRepository> changeListener) {
     return new TrelloRepositoryEditor(project, repository, changeListener);
   }
 
-  @NotNull
   @Override
-  public TaskRepository createRepository() {
+  public @NotNull TaskRepository createRepository() {
     return new TrelloRepository(this);
   }
 

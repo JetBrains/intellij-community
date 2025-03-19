@@ -12,7 +12,7 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LombokPropertyAccessorDetector implements PropertyAccessorDetector {
+public final class LombokPropertyAccessorDetector implements PropertyAccessorDetector {
 
   @Override
   public @Nullable PropertyAccessorInfo detectPropertyAccessor(@NotNull PsiMethod method) {

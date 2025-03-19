@@ -1,15 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.SimpleTreeDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.DefaultChangesTreeDiffPreviewHandler
+import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -37,20 +40,9 @@ object ChangesBrowserToolWindow {
   fun createDiffPreview(project: Project,
                         changesBrowser: ChangesBrowserBase,
                         disposable: Disposable): DiffPreview {
-    val processor = SimpleTreeDiffRequestProcessor(project, "ChangesToolWindowPreview", changesBrowser.viewer, disposable)
-    return object : SimpleTreeEditorDiffPreview(processor, changesBrowser.viewer) {
-      override fun getCurrentName(): String {
-        val changeName = changeViewProcessor.currentChangeName
-        return when {
-          changeName != null -> VcsBundle.message("changes.editor.diff.preview.title", changeName)
-          else -> VcsBundle.message("changes.editor.diff.preview.empty.title")
-        }
-      }
-
-      override fun returnFocusToTree() {
-        ToolWindowManager.getInstance(project).getToolWindow(TOOLWINDOW_ID)?.activate(null)
-      }
-    }
+    val preview = ChangesBrowserToolWindowTreeEditorDiffPreview(changesBrowser.viewer)
+    Disposer.register(disposable, preview)
+    return preview
   }
 
   private fun registerRepositoriesToolWindow(toolWindowManager: ToolWindowManager): ToolWindow {
@@ -58,8 +50,7 @@ object ChangesBrowserToolWindow {
       id = TOOLWINDOW_ID,
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
-      canWorkInDumbMode = true,
-      stripeTitle = { VcsBundle.message("ChangesBrowserToolWindow.toolwindow.name") },
+      stripeTitle = VcsBundle.messagePointer("ChangesBrowserToolWindow.toolwindow.name"),
       icon = getIcon() // Toolwindow icon won't update without restarting IDE
     ))
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
@@ -67,5 +58,19 @@ object ChangesBrowserToolWindow {
     return toolWindow
   }
 
-  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) ExpUiIcons.Toolwindow.Changes else null
+  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindows.Changes else null
+}
+
+private class ChangesBrowserToolWindowTreeEditorDiffPreview(tree: ChangesTree)
+  : TreeHandlerEditorDiffPreview(tree, DefaultChangesTreeDiffPreviewHandler) {
+  override fun getEditorTabName(wrapper: ChangeViewDiffRequestProcessor.Wrapper?): String {
+    return when {
+      wrapper != null -> VcsBundle.message("changes.editor.diff.preview.title", wrapper.presentableName)
+      else -> VcsBundle.message("changes.editor.diff.preview.empty.title")
+    }
+  }
+
+  override fun returnFocusToTree() {
+    ToolWindowManager.getInstance(project).getToolWindow(ChangesBrowserToolWindow.TOOLWINDOW_ID)?.activate(null)
+  }
 }

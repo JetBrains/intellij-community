@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -111,18 +112,15 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     mySetter.accept(s, mySelectedVariant);
   }
 
-  @Nls
-  protected String getVariantName(V variant) {
+  protected @Nls String getVariantName(V variant) {
     return myVariantNameProvider == null ? StringUtil.capitalize(variant.toString()) : myVariantNameProvider.apply(variant); //NON-NLS
   }
 
-  @Nls
-  protected @Nullable String getVariantHint(V variant) {
+  protected @Nls @Nullable String getVariantHint(V variant) {
     return myVariantHintProvider == null ? null : myVariantHintProvider.apply(variant); //NON-NLS
   }
 
-  @Nls
-  protected String getVariantDescription(V variant) {
+  protected @Nls String getVariantDescription(V variant) {
     return myVariantDescriptionProvider == null ? null : myVariantDescriptionProvider.apply(variant); //NON-NLS
   }
 
@@ -142,7 +140,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         var description = getVariantDescription(s);
 
         if (description != null) {
-          e.getPresentation().putClientProperty(Presentation.PROP_VALUE, description);
+          e.getPresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, description);
         }
       }
 
@@ -174,7 +172,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       @Override
       public void update(@NotNull AnActionEvent e) {
         super.update(e);
-        e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+        e.getPresentation().putClientProperty(ActionUtil.SECONDARY_TEXT, getVariantName(mySelectedVariant));
         e.getPresentation().setVisible(isRemovable());
       }
 

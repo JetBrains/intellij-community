@@ -2,11 +2,13 @@
 package com.intellij.openapi.application.impl;
 
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public interface JobProvider extends ModalContextProjectLocator {
   @NotNull Job getJob();
 }

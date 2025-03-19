@@ -12,5 +12,5 @@ kotlin {
         attributes.attribute(attr, "jvm")
     }
 
-    android() // there is no attribute the will conflict with consumer -> androidJvm priority works
+    {{androidTargetPlaceholder}} // there is no attribute the will conflict with consumer -> androidJvm priority works
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -29,6 +29,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -49,13 +50,11 @@ public final class InjectorUtils {
   private InjectorUtils() {
   }
 
-  @Nullable
-  public static Language getLanguage(@NotNull BaseInjection injection) {
+  public static @Nullable Language getLanguage(@NotNull BaseInjection injection) {
     return getLanguageByString(injection.getInjectedLanguageId());
   }
 
-  @Nullable
-  public static Language getLanguageByString(@NotNull String languageId) {
+  public static @Nullable Language getLanguageByString(@NotNull String languageId) {
     Language language = InjectedLanguage.findLanguageById(languageId);
     if (language != null) return language;
     ReferenceInjector injector = ReferenceInjector.findById(languageId);
@@ -171,18 +170,15 @@ public final class InjectorUtils {
     }
   }
 
-  @NotNull
-  public static Collection<String> getActiveInjectionSupportIds() {
+  public static @NotNull @Unmodifiable Collection<String> getActiveInjectionSupportIds() {
     return ContainerUtil.map(LanguageInjectionSupport.EP_NAME.getExtensionList(), LanguageInjectionSupport::getId);
   }
 
-  @NotNull
-  public static Collection<LanguageInjectionSupport> getActiveInjectionSupports() {
+  public static @NotNull Collection<LanguageInjectionSupport> getActiveInjectionSupports() {
     return LanguageInjectionSupport.EP_NAME.getExtensionList();
   }
 
-  @Nullable
-  public static LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
+  public static @Nullable LanguageInjectionSupport findInjectionSupport(@NotNull String id) {
     if (TemporaryPlacesRegistry.SUPPORT_ID.equals(id)) return new TemporaryLanguageInjectionSupport();
     for (LanguageInjectionSupport support : LanguageInjectionSupport.EP_NAME.getExtensionList()) {
       if (id.equals(support.getId())) return support;
@@ -195,8 +191,7 @@ public final class InjectorUtils {
     return support == null ? ArrayUtil.EMPTY_CLASS_ARRAY : support.getPatternClasses();
   }
 
-  @NotNull
-  public static LanguageInjectionSupport findNotNullInjectionSupport(@NotNull String id) {
+  public static @NotNull LanguageInjectionSupport findNotNullInjectionSupport(@NotNull String id) {
     LanguageInjectionSupport result = findInjectionSupport(id);
     if (result == null) {
       throw new IllegalStateException(id + " injector not found");
@@ -204,8 +199,7 @@ public final class InjectorUtils {
     return result;
   }
 
-  @NotNull
-  public static StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
+  public static @NotNull StringBuilder appendStringPattern(@NotNull StringBuilder sb, @NotNull String prefix, @NotNull String text, @NotNull String suffix) {
     sb.append(prefix).append("string().");
     final String[] parts = text.split("[,|\\s]+");
     boolean useMatches = false;
@@ -282,13 +276,11 @@ public final class InjectorUtils {
     return true;
   }
 
-  @Nullable
-  private static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<? super PsiElement> causeRef) {
+  private static @Nullable CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, @Nullable Ref<? super PsiElement> causeRef) {
     return findCommentInjectionData(context, true, causeRef);
   }
 
-  @Nullable
-  public static Pair.NonNull<PsiComment, CommentInjectionData> findClosestCommentInjectionData(@NotNull PsiElement context) {
+  public static @Nullable Pair.NonNull<PsiComment, CommentInjectionData> findClosestCommentInjectionData(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
     if (file == null) return null;
     TreeMap<TextRange, CommentInjectionData> map = getInjectionMap(file);
@@ -300,8 +292,7 @@ public final class InjectorUtils {
     return Pair.createNonNull(psiComment, entry.getValue());
   }
 
-  @Nullable
-  public static CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
+  public static @Nullable CommentInjectionData findCommentInjectionData(@NotNull PsiElement context, boolean treeElementsIncludeComment, @Nullable Ref<? super PsiElement> causeRef) {
     PsiElement target = CompletionUtil.getOriginalOrSelf(context);
     Pair.NonNull<PsiComment, CommentInjectionData> pair = findClosestCommentInjectionData(target);
     if (pair == null) return null;
@@ -343,10 +334,9 @@ public final class InjectorUtils {
     return injectionData;
   }
 
-  @Nullable
-  public static BaseInjection findCommentInjection(@NotNull PsiElement context,
-                                                   @NotNull String supportId,
-                                                   @Nullable Ref<? super PsiElement> causeRef) {
+  public static @Nullable BaseInjection findCommentInjection(@NotNull PsiElement context,
+                                                             @NotNull String supportId,
+                                                             @Nullable Ref<? super PsiElement> causeRef) {
     CommentInjectionData data = findCommentInjectionData(context, causeRef);
     if (data == null) return null;
     BaseInjection injection = new BaseInjection(supportId);
@@ -357,16 +347,14 @@ public final class InjectorUtils {
     return injection;
   }
 
-  @Nullable
-  private static TreeMap<TextRange, CommentInjectionData> getInjectionMap(@NotNull final PsiFile file) {
+  private static @Nullable TreeMap<TextRange, CommentInjectionData> getInjectionMap(final @NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       TreeMap<TextRange, CommentInjectionData> map = calcInjections(file);
       return CachedValueProvider.Result.create(map.isEmpty() ? null : map, file);
     });
   }
 
-  @NotNull
-  private static TreeMap<TextRange,CommentInjectionData> calcInjections(@NotNull PsiFile file) {
+  private static @NotNull TreeMap<TextRange,CommentInjectionData> calcInjections(@NotNull PsiFile file) {
     final TreeMap<TextRange, CommentInjectionData> injectionMap = new TreeMap<>(RANGE_COMPARATOR);
 
     StringSearcher searcher = new StringSearcher("language=", true, true, false);
@@ -391,8 +379,7 @@ public final class InjectorUtils {
   }
 
   private static final Pattern MAP_ENTRY_PATTERN = Pattern.compile("([\\S&&[^=]]+)=(\"(?:[^\"]|\\\\\")*\"|\\S*)");
-  @NotNull
-  private static Map<String, String> decodeMap(@NotNull CharSequence charSequence) {
+  private static @NotNull Map<String, String> decodeMap(@NotNull CharSequence charSequence) {
     if (StringUtil.isEmpty(charSequence)) return Collections.emptyMap();
     final Matcher matcher = MAP_ENTRY_PATTERN.matcher(charSequence);
     final LinkedHashMap<String, String> map = new LinkedHashMap<>();
@@ -403,14 +390,12 @@ public final class InjectorUtils {
     return map;
   }
 
-  @NotNull
-  private static Supplier<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
+  private static @NotNull Supplier<PsiElement> prevWalker(@NotNull PsiElement element, @NotNull PsiElement scope) {
     return new Supplier<>() {
       PsiElement e = element;
 
-      @Nullable
       @Override
-      public PsiElement get() {
+      public @Nullable PsiElement get() {
         if (e == null || e == scope) return null;
         PsiElement prev = e.getPrevSibling();
         if (prev != null) {
@@ -433,29 +418,23 @@ public final class InjectorUtils {
       myDisplayName = displayName;
     }
 
-    @NotNull
-    public String getPrefix() {
+    public @NotNull String getPrefix() {
       return ObjectUtils.notNull(myMap.get("prefix"), "");
     }
 
-    @NotNull
-    public String getSuffix() {
+    public @NotNull String getSuffix() {
       return ObjectUtils.notNull(myMap.get("suffix"), "");
     }
 
-    @NotNull
-    public String getInjectedLanguageId() {
+    public @NotNull String getInjectedLanguageId() {
       return ObjectUtils.notNull(myMap.get("language"), "");
     }
 
-    @NlsSafe
-    @NotNull
-    public String getDisplayName() {
+    public @NlsSafe @NotNull String getDisplayName() {
       return myDisplayName;
     }
 
-    @NotNull
-    public Map<String, String> getValues() {
+    public @NotNull Map<String, String> getValues() {
       return myMap;
     }
   }

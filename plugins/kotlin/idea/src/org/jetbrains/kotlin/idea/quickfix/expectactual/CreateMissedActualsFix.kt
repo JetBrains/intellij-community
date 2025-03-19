@@ -5,9 +5,11 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.wizard.setMinimumWidthForAllRowLabels
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemContentRootContributor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.transform
@@ -27,12 +29,15 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
+import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.base.facet.kotlinSourceRootType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.PureKotlinSourceFoldersHolder
+import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.findOrConfigureKotlinSourceRoots
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -45,17 +50,15 @@ import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.psi.*
-import java.io.File
 import java.nio.file.Path
 import javax.swing.JComponent
 import kotlin.io.path.Path
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
 class CreateMissedActualsFix(
-    val declaration: KtNamedDeclaration,
-    val notActualizedLeafModules: Collection<Module>
+  val declaration: KtNamedDeclaration,
+  private val notActualizedLeafModules: Collection<Module>
 ) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
 
     override fun startInWriteAction(): Boolean = false
@@ -80,14 +83,11 @@ class CreateMissedActualsFix(
                 simpleModuleNames
             ).show()
         } else {
-            val defaultPath = declaration.containingKtFile.let { f ->
-                f.virtualFilePath.removePrefix(f.sourceRoot?.path.orEmpty())
-            }
             generateActualsForSelectedModules(
                 project,
                 editor,
                 declaration,
-                defaultPath,
+                declaration.getDefaultFilePath(),
                 notActualizedLeafModules,
                 simpleModuleNames
             )
@@ -99,7 +99,16 @@ class CreateMissedActualsFix(
         if (this.size < 2) return this.associateWith { it.name }
         val commonPrefix = this.map { it.name }.zipWithNext().map { (a, b) -> a.commonPrefixWith(b) }.minBy { it.length }
         val prefixToRemove = commonPrefix.substringBeforeLast(".", "").let { if (it.isEmpty()) it else "$it." }
-        return this.associateWith { it.name.removePrefix(prefixToRemove) }
+        return this.associateWith {
+            val name = it.name.removePrefix(prefixToRemove)
+
+            when {
+              name == "main" && it.isAndroidModule() && !it.isTestModule -> "androidMain"
+              name == "unitTest" && it.isAndroidModule() && it.isTestModule -> "androidUnitTest"
+              name == "androidTest" && it.isAndroidModule() && it.isTestModule -> "androidInstrumentedTest"
+              else -> name
+            }
+        }
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -125,6 +134,7 @@ class CreateMissedActualsFix(
                 (actualModuleDescriptor.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module
             }
             if (notActualizedLeafModules.isEmpty()) return null
+            if (notActualizedLeafModules.singleOrNull() == declaration.module) return null
             return CreateMissedActualsFix(declaration, notActualizedLeafModules)
         }
     }
@@ -144,11 +154,7 @@ private class CreateMissedActualsDialog(
     private val notActualizedModules = getNotActualizedModules()
 
     private var filePathTextField: JBTextField? = null
-    private val filePathProperty = AtomicProperty(
-        declaration.containingKtFile.let { file ->
-            file.virtualFilePath.removePrefix(file.sourceRoot?.path.orEmpty())
-        }
-    )
+    private val filePathProperty = AtomicProperty(declaration.getDefaultFilePath())
 
     private val selectedModules = mutableListOf<Module>()
     private val selectedModulesListeners = mutableListOf<() -> Unit>()
@@ -159,8 +165,7 @@ private class CreateMissedActualsDialog(
     }
 
     override fun doValidate(): ValidationInfo? {
-        val filePath = getNewFilePathForModule(moduleWithExpect).nameWithoutExtension
-        if (filePath.isBlank()) {
+        if (filePathProperty.get().isBlank()) {
             return ValidationInfo(KotlinBundle.message("text.file.name.cannot.be.empty"), filePathTextField)
         }
 
@@ -215,7 +220,7 @@ private class CreateMissedActualsDialog(
                         icon(AllIcons.Actions.ModuleDirectory)
                         label(simpleModuleNames.getOrDefault(item.module, item.module.name))
                         label("")
-                            .bindText(filePathProperty.transform { File.separator + getNewFilePathForModule(item.module) })
+                            .bindText(filePathProperty.transform { getNewFilePathForModule(item.module).toString() })
                             .enabled(false)
                             .visibleIf(checkbox.selected)
                     }.enabledIf(selectionPredicate)
@@ -282,12 +287,20 @@ private class CreateMissedActualsDialog(
     }
 }
 
+private fun KtNamedDeclaration.getDefaultFilePath() = containingKtFile.let { file ->
+    file.sourceRoot?.toNioPath()?.relativize(Path.of(file.virtualFilePath)).toString()
+}
+
 private fun getNewFilePathForModule(commonFilePath: String, module: Module, simpleModuleNames: Map<Module, String>): Path {
     val simpleName = simpleModuleNames[module].orEmpty()
-    val suffixToRemove = listOf("Main", "Test").firstOrNull { simpleName.endsWith(it) }.orEmpty()
-    val modulePlatformName = simpleName.removeSuffix(suffixToRemove).takeIf { it.isNotBlank() }
+    val modulePlatformName = when {
+        simpleName == "androidUnitTest" || simpleName == "androidInstrumentedTest" -> "android"
+        simpleName.endsWith("Main") -> simpleName.removeSuffix("Main")
+        simpleName.endsWith("Test") -> simpleName.removeSuffix("Test")
+        else -> simpleName
+    }.takeIf { it.isNotBlank() }
     return Path(
-        commonFilePath.removePrefix(File.separator).removeSuffix(".kt") +
+        commonFilePath.removeSuffix(".kt") +
                 modulePlatformName?.let { ".$it" }.orEmpty() + ".kt"
     )
 }
@@ -321,9 +334,21 @@ private fun Module.selectExistingSourceRoot(
 
     if (roots.size < 2) return roots.firstOrNull()
 
-    val root = roots.firstOrNull {
-        it.name.equals("kotlin", true)
-    } ?: roots.first()
+    val root: VirtualFile
+    val rootsWithKotlinName = roots.filter { it.name.equals("kotlin", true) }
+    when (rootsWithKotlinName.size) {
+        0 -> {
+            root = roots.first()
+        }
+        1 -> {
+            root = rootsWithKotlinName.first()
+        }
+        else -> {
+            val rootsWithMainInPath = rootsWithKotlinName.firstOrNull { it.path.contains("Main") }
+            root = rootsWithMainInPath ?: rootsWithKotlinName.first()
+        }
+    }
+
     LOG.warn("${this.name} contains more then one source roots. ${root.name} was selected.")
     return root
 }
@@ -340,7 +365,13 @@ private fun generateActualsForSelectedModules(
     val pureKotlinSourceFoldersHolder = PureKotlinSourceFoldersHolder()
     val moduleSourceRoots = selectedModules.associateWith { module ->
         module.selectExistingSourceRoot(pureKotlinSourceFoldersHolder) ?: run {
-            val newRoot = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder)
+            val contentRootChooser: (List<ExternalSystemContentRootContributor.ExternalContentRoot>) -> Path? = { externalContentRoots ->
+                val exactPath = Path(simpleModuleNames[module]!!, "kotlin")
+                externalContentRoots.firstOrNull { it.path.endsWith(exactPath) }?.path
+                    ?: externalContentRoots.firstOrNull { it.path.name == "kotlin" }?.path
+                    ?: externalContentRoots.firstOrNull()?.path
+            }
+            val newRoot = module.findOrConfigureKotlinSourceRoots(pureKotlinSourceFoldersHolder, contentRootChooser)
                 .also { if (it.size > 1) LOG.warn("In ${module.name} were configured more then one source roots. ${it.first().name} was selected.") }
                 .firstOrNull()
             if (newRoot == null) {
@@ -360,45 +391,47 @@ private fun generateActualsForSelectedModules(
     }
     sourceFolderManager.rescanAndUpdateSourceFolders()
 
-    runWriteAction {
-        selectedModules.forEach { module ->
-            val root = moduleSourceRoots[module] ?: return@forEach
-            val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
-            val dir: PsiDirectory = declaration.manager.findDirectory(
-                root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
-            ) ?: return@forEach
+    executeCommand(project, KotlinBundle.message("fix.create.missing.actual.declarations.title")) {
+        runWriteAction {
+            selectedModules.forEach { module ->
+                val root = moduleSourceRoots[module] ?: return@forEach
+                val moduleFile = getNewFilePathForModule(commonFilePath, module, simpleModuleNames)
+                val dir: PsiDirectory = declaration.manager.findDirectory(
+                    root.findOrCreateDirectory(moduleFile.parent?.pathString.orEmpty())
+                ) ?: return@forEach
 
-            val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
+                val file = getOrCreateKotlinFileForSpecificPackage(moduleFile.name, dir, declaration.containingKtFile.packageFqName)
 
-            if (declaration is KtCallableDeclaration) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
-                    val descriptor = element.toDescriptor() as? CallableMemberDescriptor
+                if (declaration is KtCallableDeclaration) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        val descriptor = element.toDescriptor() as? CallableMemberDescriptor
 
-                    descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
-                }
-            } else if (declaration is KtClassOrObject) {
-                generateExpectOrActualInFile(
-                    project,
-                    editor,
-                    declaration.containingKtFile,
-                    file,
-                    null,
-                    declaration,
-                    module
-                ) block@{ project, checker, element ->
-                    checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
-                    if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
+                        descriptor?.let { ExpectActualGenerationUtils.generateCallable(project, false, element, descriptor, checker = checker) }
+                    }
+                } else if (declaration is KtClassOrObject) {
+                    generateExpectOrActualInFile(
+                        project,
+                        editor,
+                        declaration.containingKtFile,
+                        file,
+                        null,
+                        declaration,
+                        module
+                    ) block@{ project, checker, element ->
+                        checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
+                        if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
 
-                    generateClassOrObject(project, false, element, checker = checker)
+                        ExpectActualGenerationUtils.generateClassOrObject(project, this, false, element, checker = checker)
+                    }
                 }
             }
         }

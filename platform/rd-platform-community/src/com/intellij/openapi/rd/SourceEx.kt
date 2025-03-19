@@ -4,7 +4,9 @@ package com.intellij.openapi.rd
 import com.jetbrains.rd.framework.base.RdReactiveBase
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.ISource
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 enum class RdEventSource {
   Local,
   Remote,
@@ -14,6 +16,7 @@ enum class RdEventSource {
 /**
  * Advise for protocol entities to get information who initiates events
  */
+@ApiStatus.Internal
 fun <T> ISource<T>.advise(lifetime: Lifetime, handler: (T, RdEventSource) -> Unit) {
   val rdSource = this as? RdReactiveBase
   if (rdSource == null) throw UnsupportedOperationException("$this should inherit RdReactiveBase in order to use this advice function.")

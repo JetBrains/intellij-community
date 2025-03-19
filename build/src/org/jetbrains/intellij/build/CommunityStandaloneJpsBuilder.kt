@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.Dispatchers
@@ -19,28 +19,32 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                                                layoutCustomizer: ((BaseLayout) -> Unit) = {}) {
   val layout = PlatformLayout()
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.util",
+    "intellij.platform.util.kmp",
     "intellij.platform.util.classLoader",
     "intellij.platform.util.base",
+    "intellij.platform.util.base.kmp",
     "intellij.platform.util.xmlDom",
     "intellij.platform.util.jdom",
     "intellij.platform.tracing.rt",
     "intellij.platform.util.diff",
     "intellij.platform.util.rt.java8",
+    "intellij.platform.util.trove",
+    "intellij.platform.util.nanoxml",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "util.jar", reason = null) })
 
   layout.withModule("intellij.platform.util.rt", "util_rt.jar")
   layout.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
 
   layout.withModule("intellij.platform.runtime.repository", "platform-runtime-repository.jar")
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.platform.jps.model",
     "intellij.platform.jps.model.impl",
     "intellij.platform.jps.model.serialization",
   ).map { ModuleItem(moduleName = it, relativeOutputFile = "jps-model.jar", reason = null) })
 
-  layout.withModules(listOf(
+  layout.withModules(sequenceOf(
     "intellij.java.guiForms.rt",
     "intellij.java.guiForms.compiler",
     "intellij.java.compiler.instrumentationUtil",
@@ -73,10 +77,33 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
   for (it in listOf(
-    "jna", "OroMatcher", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
-    "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-    "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib",
-    "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
+    "jna",
+    "OroMatcher",
+    "ASM",
+    "protobuf",
+    "cli-parser",
+    "Log4J",
+    "jgoodies-forms",
+    "Eclipse",
+    "netty-jps",
+    "lz4-java",
+    "commons-codec",
+    "commons-logging",
+    "http-client",
+    "slf4j-api",
+    "plexus-utils",
+    "jetbrains-annotations",
+    "gson",
+    "jps-javac-extension",
+    "fastutil-min",
+    "kotlin-stdlib",
+    "commons-lang3",
+    "maven-resolver-provider",
+    "aalto-xml",
+    "caffeine",
+    "mvstore",
+    "kotlin-metadata",
+    "hash4j"
   )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
@@ -96,8 +123,10 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
                      outputDir = tempDir,
                      context = context,
                      layout = layout,
+                     platformLayout = null,
                      isRootDir = false,
                      isCodesignEnabled = false,
+                     moduleOutputPatcher = ModuleOutputPatcher(),
                      dryRun = dryRun)
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")

@@ -3,16 +3,16 @@ package com.intellij.webSymbols.customElements
 
 import com.intellij.webSymbols.WebSymbol
 
-interface CustomElementsSymbol: WebSymbol {
+interface CustomElementsSymbol : WebSymbol {
 
 
   companion object {
 
-    const val NAMESPACE_CUSTOM_ELEMENTS_MANIFEST = "custom-elements-manifest"
+    const val NAMESPACE_CUSTOM_ELEMENTS_MANIFEST: String = "custom-elements-manifest"
 
-    const val KIND_CEM_PACKAGES = "packages"
-    const val KIND_CEM_MODULES = "modules"
-    const val KIND_CEM_DECLARATIONS = "declarations"
+    const val KIND_CEM_PACKAGES: String = "packages"
+    const val KIND_CEM_MODULES: String = "modules"
+    const val KIND_CEM_DECLARATIONS: String = "declarations"
 
   }
 

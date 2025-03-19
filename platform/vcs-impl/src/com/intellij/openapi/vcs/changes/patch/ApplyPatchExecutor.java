@@ -10,6 +10,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,5 +23,5 @@ public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress<?>> {
              @NotNull MultiMap<VirtualFile, T> patchGroupsToApply,
              @Nullable LocalChangeList localList,
              @Nullable String fileName,
-             @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
+             @Nullable ThrowableComputable<@Unmodifiable Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.filters.Filter;
@@ -29,8 +29,7 @@ public final class TestProxyPrinterProvider {
     myFilterProvider = filterProvider;
   }
 
-  @Nullable
-  public Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments) {
+  public @Nullable Printer getPrinterByType(@NotNull String nodeType, @NotNull String nodeName, @Nullable String nodeArguments) {
     Filter filter = myFilterProvider.getFilter(nodeType, nodeName, nodeArguments);
     if (filter != null && !Disposer.isDisposed(myTestOutputConsoleView)) {
       return new HyperlinkPrinter(myTestOutputConsoleView, HyperlinkPrinter.ERROR_CONTENT_TYPE, filter);
@@ -103,8 +102,7 @@ public final class TestProxyPrinterProvider {
       }
     }
 
-    @NotNull
-    private static List<Filter.ResultItem> sort(@NotNull List<Filter.ResultItem> items) {
+    private static @NotNull List<Filter.ResultItem> sort(@NotNull List<Filter.ResultItem> items) {
       if (items.size() <= 1) {
         return items;
       }

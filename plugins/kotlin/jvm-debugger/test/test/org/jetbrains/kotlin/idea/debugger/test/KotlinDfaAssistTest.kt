@@ -25,9 +25,9 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                     if (x in 1..6/*TRUE*/) {
                 
                     }
-                    if (1 in x..10/*FALSE*/) {
+                    if (1 in x..10/*FALSE*/) /*unreachable_start*/{
                 
-                    }
+                    }/*unreachable_end*/
                 }
                 
                 fun main() {
@@ -37,8 +37,8 @@ class KotlinDfaAssistTest : DfaAssistTest() {
 
     fun testSuppression() {
         doTest("""fun test(x: Boolean, y: Boolean) {
-               <caret>if(!x/*FALSE*/) {}
-               if (x/*TRUE*/ || y) {}
+               <caret>if(!x/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
+               if (x/*TRUE*/ /*unreachable_start*/|| y/*unreachable_end*/) {}
                if (y || x/*TRUE*/) {}
                var z: Boolean
                z = x/*TRUE*/
@@ -49,7 +49,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
     fun testWhen() {
         doTest("""fun obj(x: Any) {
                     <caret>when(x) {
-                        is String/*FALSE*/ -> {}
+                        is String/*FALSE*/ -> /*unreachable_start*/{}/*unreachable_end*/
                         is Int/*TRUE*/ -> {}
                     }
                 }
@@ -57,6 +57,115 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 fun main() {
                     obj(5)
                 }""") { vm, frame -> frame.addVariable("x", MockValue.createValue(1, Integer::class.java, vm)) }
+    }
+
+    fun testElvis() {
+        doTest("""fun obj(x: String?) {
+                    <caret>x /*unreachable_start*/?: return/*unreachable_end*/
+                }
+
+                fun main() {
+                    obj("x")
+                }""") { vm, frame -> frame.addVariable("x", MockValue.createValue("x", String::class.java, vm)) }
+    }
+    
+    fun testLet() {
+        doTest("""fun obj(x: String?) {
+                    <caret>x/*unreachable_start*/?.let { println() }/*unreachable_end*/
+                }
+
+                fun main() {
+                    obj(null)
+                }""") { vm, frame -> frame.addVariable(MockLocalVariable(vm, "x", vm.createReferenceType(String::class.java), null)) }
+    }
+    
+    fun testUnreachableWhile() {
+        doTest("""fun test(x: Int) {
+                    <caret>while (x < 0/*FALSE*/) /*unreachable_start*/{
+                        x--
+                    }/*unreachable_end*/
+                }
+                
+                fun main() {
+                    test(5)
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+    
+    fun testUnreachableFor() {
+        doTest("""fun test(x: Int) {
+                    <caret>for (y in 10..x) /*unreachable_start*/{
+                        println()
+                    }/*unreachable_end*/
+                }
+                
+                fun main() {
+                    test(5)
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+    
+    fun testUnreachableTail() {
+        doTest("""fun test(x: Int) {
+                    <caret>if (x > 0/*TRUE*/) {
+                      return
+                    }
+                    /*unreachable_start*/println()
+                    println()
+                    println()
+                    println()/*unreachable_end*/
+                }
+                
+                fun main() {
+                    test(5)
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+  
+    fun testUnreachableTailContract() {
+        doTest("""fun test(x: Int) {
+                        <caret>check(x <= 0/*FALSE*/) { "" }
+                        /*unreachable_start*/println()
+                        println()
+                        println()
+                        println()/*unreachable_end*/
+                    }
+                    fun main() {
+                        test(5)
+                    }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+
+    fun testUnreachableTailInLambda() {
+        doTest("""fun test(x: Int) {
+                    <caret>run {
+                        if (x > 0/*TRUE*/) {
+                          return@run
+                        }
+                        /*unreachable_start*/println()
+                        println()
+                        println()
+                        println()/*unreachable_end*/
+                    }
+                }
+                
+                fun main() {
+                    test(5)
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
+    }
+
+    fun testUnreachableTailInLambda2() {
+        doTest("""fun test(x: Int) {
+                    run {
+                        <caret>if (x > 0/*TRUE*/) {
+                          return@run
+                        }
+                        /*unreachable_start*/println()
+                        println()
+                        println()
+                        println()/*unreachable_end*/
+                    }
+                }
+                
+                fun main() {
+                    test(5)
+                }""") { vm, frame -> frame.addVariable("x", MockIntegerValue(vm, 5)) }
     }
 
     fun testSmartCast() {
@@ -80,8 +189,8 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                     <caret>if (y > 0/*TRUE*/) {
                 
                     }
-                    if (y == 0/*FALSE*/) {}
-                    if (y < 0/*FALSE*/) {}
+                    if (y == 0/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
+                    if (y < 0/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
                 }
                 
                 fun main() {
@@ -107,6 +216,25 @@ class KotlinDfaAssistTest : DfaAssistTest() {
             }
         """) { vm, frame ->
             frame.setThisValue(MockObjectReference.createObjectReference(Nested(5), Nested::class.java, vm))
+        }
+    }
+    
+    private interface I
+    private object O: I
+
+    fun testObject() {
+        doTest("""package org.jetbrains.kotlin.idea.debugger.test
+            class KotlinDfaAssistTest {
+                interface I
+                object O : I
+
+                fun test(i: I) {
+                  <caret>if (i is O/*TRUE*/) {}
+                }
+              }
+            }
+        """) { vm, frame ->
+            frame.addVariable("i", MockObjectReference.createObjectReference(O, O::class.java, vm))
         }
     }
 
@@ -139,7 +267,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
     fun testDeconstruction() {
         doTest("""fun test(x: Pair<Int, Int>) {
                       val (a, b) = x
-                      <caret>if (a > b/*FALSE*/) {}
+                      <caret>if (a > b/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
                   }
                   
                   fun main() {
@@ -202,7 +330,7 @@ class KotlinDfaAssistTest : DfaAssistTest() {
                 
                 class Test {
                   fun test(t : ElementType) {
-                    <caret>if (t == ElementType.PARAMETER/*FALSE*/) {}
+                    <caret>if (t == ElementType.PARAMETER/*FALSE*/) /*unreachable_start*/{}/*unreachable_end*/
                     if (t == ElementType.METHOD/*TRUE*/) {}
                   }
                 }"""

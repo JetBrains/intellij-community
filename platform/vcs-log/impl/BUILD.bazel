@@ -1,0 +1,112 @@
+### auto-generated section `build intellij.platform.vcs.log.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "vcs-log-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-log-impl",
+  module_name = "intellij.platform.vcs.log.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/vcs-impl",
+    "@lib//:guava",
+    "//platform/lang-impl",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "@lib//:miglayout-swing",
+    "//platform/diff-impl",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:gson",
+    "@lib//:caffeine",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-guava",
+    "//platform/diagnostic/telemetry",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/sqlite",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/backend/observation",
+    "//platform/util/coroutines",
+    "//platform/util/storages:io-storages",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/bookmarks",
+  ],
+  runtime_deps = [":vcs-log-impl_resources"]
+)
+
+jvm_library(
+  name = "vcs-log-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":vcs-log-impl"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-log/graph:vcs-log-graph-impl",
+    "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "@lib//:guava",
+    "@lib//:junit4",
+    "//platform/lang-impl",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-test",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/util",
+    "@lib//:assert_j",
+    "@lib//:miglayout-swing",
+    "//platform/diff-impl",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:gson",
+    "@lib//:caffeine",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-guava",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/sqlite",
+    "//platform/sqlite:sqlite_test_lib",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+    "//platform/util/coroutines",
+    "//platform/util/storages:io-storages",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "@lib//:mockito",
+    "//platform/bookmarks",
+  ],
+  runtime_deps = [":vcs-log-impl_resources"]
+)
+
+jvm_test(
+  name = "vcs-log-impl_test",
+  runtime_deps = [":vcs-log-impl_test_lib"]
+)
+### auto-generated section `build intellij.platform.vcs.log.impl` end

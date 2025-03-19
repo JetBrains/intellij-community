@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.ijent.community.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "community-testFramework",
+  module_name = "intellij.platform.ijent.community.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework",
+    "//platform/util/coroutines",
+  ]
+)
+### auto-generated section `build intellij.platform.ijent.community.testFramework` end

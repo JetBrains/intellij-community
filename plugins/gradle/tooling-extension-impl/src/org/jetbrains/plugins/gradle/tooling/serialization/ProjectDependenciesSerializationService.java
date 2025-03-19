@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -275,8 +275,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     writer.stepOut();
   }
 
-  @Nullable
-  private static ProjectDependencies read(final IonReader reader, final ReadContext context) {
+  private static @Nullable ProjectDependencies read(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
 
@@ -309,8 +308,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     return list;
   }
 
-  @Nullable
-  private static ComponentDependencies readComponentDependencies(final IonReader reader, final ReadContext context) {
+  private static @Nullable ComponentDependencies readComponentDependencies(final IonReader reader, final ReadContext context) {
     if (reader.next() == null) return null;
     reader.stepIn();
     ComponentDependencies dependency =

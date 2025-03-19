@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.ide.JavaUiBundle;
@@ -50,7 +50,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
       DnDManager.getInstance().registerSource(this);
     }
 
-    //todo[nik,pegov] fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
+    //todo fix for tooltips in the tree. Otherwise tooltips will be ignored by DnDEnabled
     setToolTipText("");
   }
 
@@ -81,7 +81,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     final List<PackagingElementNode<?>> nodes = getNodesToDrag();
     if (nodes.size() == 1) {
       return DnDAwareTree.getDragImage(this, getPathFor(nodes.get(0)), dragOrigin);
@@ -100,8 +100,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     return new LayoutTreeSelection(this);
   }
 
-  @Nullable
-  public PackagingElement<?> getElementByPath(TreePath path) {
+  public @Nullable PackagingElement<?> getElementByPath(TreePath path) {
     final SimpleNode node = getNodeFor(path);
     if (node instanceof PackagingElementNode) {
       final List<? extends PackagingElement<?>> elements = ((PackagingElementNode<?>)node).getPackagingElements();
@@ -129,8 +128,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
     };
   }
 
-  @NotNull
-  private static Predicate<PackagingElementNode<?>> createCompositeNodeByNameFilter(String name) {
+  private static @NotNull Predicate<PackagingElementNode<?>> createCompositeNodeByNameFilter(String name) {
     return (PackagingElementNode<?> node) -> node instanceof CompositePackagingElementNode
                                              && ((CompositePackagingElementNode)node).getFirstElement().getName().equals(name);
   }

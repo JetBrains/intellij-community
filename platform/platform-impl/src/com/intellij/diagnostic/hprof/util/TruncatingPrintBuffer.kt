@@ -15,15 +15,17 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.util.*
 
+@ApiStatus.Internal
 class TruncatingPrintBuffer(
   private val headLimit: Int,
   private val tailLimit: Int,
   private val printFunc: (String) -> Any
 ) : Closeable {
-  private val queue: Queue<String> = LinkedList<String>()
+  private val queue: Queue<String> = LinkedList()
   private var linesPrinted = 0
   private var linesLost = 0
   private var closed = false

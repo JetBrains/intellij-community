@@ -13,7 +13,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = St
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = filter) -> Decompiled_Method: filter
         UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: isEmpty
         UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isEmpty) -> FUN: isEmpty
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isEmpty) -> Decompiled_Method: isEmpty
 UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = selectItemFunction) -> Kotlin_Light_Value_Parameter: selectItemFunction
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Local) -> null: null

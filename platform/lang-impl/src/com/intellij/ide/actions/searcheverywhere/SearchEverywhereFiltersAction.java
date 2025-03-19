@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.bigPopup.ShowFilterAction;
@@ -60,9 +60,8 @@ public class SearchEverywhereFiltersAction<T> extends ShowFilterAction {
         return filter.getElementText(value);
       }
 
-      @Nullable
       @Override
-      protected Icon getItemIcon(@NotNull T value) {
+      protected @Nullable Icon getItemIcon(@NotNull T value) {
         return filter.getElementIcon(value);
       }
     };

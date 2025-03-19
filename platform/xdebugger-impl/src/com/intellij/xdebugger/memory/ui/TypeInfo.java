@@ -3,6 +3,7 @@ package com.intellij.xdebugger.memory.ui;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ public interface TypeInfo {
   @NlsSafe
   String name();
   @NotNull
+  @Unmodifiable
   List<ReferenceInfo> getInstances(int limit);
   boolean canGetInstanceInfo();
 }

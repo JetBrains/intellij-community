@@ -8,4 +8,9 @@ import javax.swing.Icon
  * Status item to be displayed in the top-right corner of the editor,
  * containing a text (not necessarily a number), possible icon and details text for popup
  */
-data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null)
+data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val detailsText: String? = null, val metadata: StatusItemMetadata? = null)
+
+/**
+ * Represents some additional data for a status item. For example, highlighting severity
+ */
+interface StatusItemMetadata

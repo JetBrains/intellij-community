@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.openapi.util.TextRange
@@ -8,6 +8,7 @@ import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.assertErrorLogged
 import org.junit.Assert
 
 class ProblemDescriptionUtilTest : LightPlatformTestCase() {
@@ -35,11 +36,8 @@ class ProblemDescriptionUtilTest : LightPlatformTestCase() {
     val file = VfsTestUtil.createFile(getSourceRoot(), "foo.bmp")
     val psiFile = PsiManager.getInstance(project).findFile(file)!!
     ProblemDescriptorBase(psiFile, psiFile, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false, false)
-    try {
+    assertErrorLogged<Throwable> {
       ProblemDescriptorBase(psiFile, psiFile, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, TextRange.EMPTY_RANGE, false, false)
-      fail()
-    }
-    catch (ignore: Throwable) {
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -18,7 +18,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
+public final class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
   // TODO: Create an icon for a related user skeleton
   public static final Icon ICON = AllIcons.Gutter.Unique;
 
@@ -45,8 +45,7 @@ public class PyUserSkeletonsLineMarkerProvider implements LineMarkerProvider {
     }
   }
 
-  @Nullable
-  private static PyElement getUserSkeleton(@NotNull PsiElement element) {
+  private static @Nullable PyElement getUserSkeleton(@NotNull PsiElement element) {
     if (element instanceof PyFunction || element instanceof PyTargetExpression) {
       return PyUserSkeletonsUtil.getUserSkeleton((PyElement)element);
     }

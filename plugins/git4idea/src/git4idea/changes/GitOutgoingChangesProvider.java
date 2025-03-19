@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
 import com.intellij.openapi.components.Service;
@@ -28,7 +28,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
 
 @Service(Service.Level.PROJECT)
 public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<CommittedChangeList> {
-  private final static Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
+  private static final Logger LOG = Logger.getInstance(GitOutgoingChangesProvider.class);
   private final Project myProject;
 
   public GitOutgoingChangesProvider(Project project) {
@@ -53,8 +53,7 @@ public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvi
   }
 
   @Override
-  @Nullable
-  public VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
+  public @Nullable VcsRevisionNumber getMergeBaseNumber(final VirtualFile anyFileUnderRoot) throws VcsException {
     LOG.debug("getMergeBaseNumber parameter: " + anyFileUnderRoot.getPath());
     final GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(anyFileUnderRoot);
     if (repository == null) {
@@ -77,8 +76,7 @@ public final class GitOutgoingChangesProvider implements VcsOutgoingChangesProvi
    *
    * @return the common commit or null if the there is no common commit
    */
-  @Nullable
-  private static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
+  private static @Nullable GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root,
                                                 @NotNull GitBranch currentBranch, @NotNull GitBranch branch) throws VcsException {
     return GitHistoryUtils.getMergeBase(project, root, currentBranch.getFullName(), branch.getFullName());
   }

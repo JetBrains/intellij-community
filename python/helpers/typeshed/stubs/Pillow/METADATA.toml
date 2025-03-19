@@ -1,1 +1,8 @@
-version = "9.2.*"
+version = "10.2.*"
+upstream_repository = "https://github.com/python-pillow/Pillow"
+obsolete_since = "10.3.0" # Released on 2024-04-01
+
+[tool.stubtest]
+stubtest_requirements = ["olefile"]
+# darwin checks don't affect stubtest
+platforms = ["linux", "win32"]

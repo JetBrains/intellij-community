@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library.impl.sdk;
 
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -10,6 +9,8 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+
+import java.util.Objects;
 
 public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsSdkImpl<P>> implements JpsSdk<P> {
   private final JpsSdkType<P> mySdkType;
@@ -30,9 +31,8 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
     myVersionString = original.myVersionString;
   }
 
-  @NotNull
   @Override
-  public JpsSdkImpl<P> createCopy() {
+  public @NotNull JpsSdkImpl<P> createCopy() {
     return new JpsSdkImpl<>(this);
   }
 
@@ -51,18 +51,10 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
     return mySdkType;
   }
 
-  @NotNull
   @Override
-  public JpsLibraryImpl<JpsSdk<P>> getParent() {
+  public @NotNull JpsLibraryImpl<JpsSdk<P>> getParent() {
     //noinspection unchecked
     return (JpsLibraryImpl<JpsSdk<P>>)super.getParent();
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsSdkImpl<P> modified) {
-    super.applyChanges(modified);
-    setHomePath(modified.getHomePath());
-    setVersionString(modified.getVersionString());
   }
 
   @Override
@@ -74,7 +66,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setHomePath(String homePath) {
     if (!Objects.equals(myHomePath, homePath)) {
       myHomePath = homePath;
-      fireElementChanged();
     }
   }
 
@@ -87,7 +78,6 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   public void setVersionString(String versionString) {
     if (!Objects.equals(myVersionString, versionString)) {
       myVersionString = versionString;
-      fireElementChanged();
     }
   }
 }

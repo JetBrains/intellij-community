@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.BACKGROUND_COLOR
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.SELECTED_BACKGROUND_COLOR
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
@@ -15,26 +14,26 @@ import com.intellij.openapi.ui.removeKeyboardAction
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.util.height
-import com.intellij.ui.util.width
+import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
 
-class TextCompletionPopup<T>(
+internal class TextCompletionPopup<T>(
   project: Project?,
   private val textComponent: TextCompletionField<T>,
   private val contributor: Contributor<T>,
   private val renderer: TextCompletionRenderer<T>
 ) : ListPopupImpl(project, null, PopupStep(contributor), null) {
-
   override fun getListElementRenderer(): ListCellRenderer<*> = Renderer()
 
   fun update() {
     listModel.updateOriginalList()
 
-    width = textComponent.width
-    height = list.fixedCellHeight * maxOf(1, minOf(list.model.size, list.visibleRowCount))
+    size = Dimension(textComponent.width, list.fixedCellHeight * maxOf(1, minOf(list.model.size, list.visibleRowCount)))
 
     list.revalidate()
   }
@@ -55,8 +54,8 @@ class TextCompletionPopup<T>(
     setRequestFocus(false)
 
     list.prototypeCellValue = Item.None
-    list.background = BACKGROUND_COLOR
-    list.selectionBackground = SELECTED_BACKGROUND_COLOR
+    list.background = LookupCellRenderer.BACKGROUND_COLOR
+    list.selectionBackground = LookupCellRenderer.SELECTED_BACKGROUND_COLOR
     list.selectionMode = ListSelectionModel.SINGLE_SELECTION
     list.border = null
     list.isFocusable = false
@@ -83,9 +82,15 @@ class TextCompletionPopup<T>(
     override fun isSelectable(value: Item<T>): Boolean = value is Item.Just
 
     override fun getValues(): List<Item<T>> {
-      return contributor.getItems()
-        .map { Item.Just(it) }
-        .ifEmpty { listOf(Item.None) }
+      val items = contributor.getItems()
+      if (items.isEmpty()) {
+        return listOf(Item.None)
+      }
+      if (items.size > MAX_COMPLETION_LIST_SIZE) {
+        return items.take(MAX_COMPLETION_LIST_SIZE)
+                 .map { Item.Just(it) } + Item.More
+      }
+      return items.map { Item.Just(it) }
     }
 
     override fun onChosen(selectedValue: Item<T>, finalChoice: Boolean): com.intellij.openapi.ui.popup.PopupStep<*>? {
@@ -111,9 +116,14 @@ class TextCompletionPopup<T>(
 
       myBorder = null
 
+      isEnabled = value is Item.Just
+
       when (value) {
         is Item.None -> {
           append(LangBundle.message("completion.no.suggestions"))
+        }
+        is Item.More -> {
+          append(LangBundle.message("completion.more.suggestions", MAX_COMPLETION_LIST_SIZE))
         }
         is Item.Just -> {
           val cell = TextCompletionRenderer.Cell(this, value.item, list, index, selected, hasFocus)
@@ -125,6 +135,7 @@ class TextCompletionPopup<T>(
 
   private sealed interface Item<out T> {
     object None : Item<Nothing>
+    object More : Item<Nothing>
     class Just<T>(val item: T) : Item<T>
   }
 
@@ -133,5 +144,14 @@ class TextCompletionPopup<T>(
     fun getItems(): List<T>
 
     fun fireItemChosen(item: T)
+  }
+
+  companion object {
+
+    /**
+     * This property used to truncate number of completion variants, which we show to user.
+     * List popup has UI performance issues for huge number of elements.
+     */
+    private const val MAX_COMPLETION_LIST_SIZE = 1000
   }
 }

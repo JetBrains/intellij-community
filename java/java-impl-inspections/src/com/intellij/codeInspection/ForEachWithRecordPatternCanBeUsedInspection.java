@@ -1,11 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
@@ -29,7 +30,7 @@ import java.util.function.BiConsumer;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public final class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
 
   private static final int MAX_LEVEL = 5;
   private static final int MAX_COMPONENT_COUNTS = 10;
@@ -65,10 +66,13 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.RECORD_PATTERNS_IN_FOR_EACH.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.RECORD_PATTERNS_IN_FOR_EACH);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     boolean useVar = IntroduceVariableBase.createVarType() || forceUseVar;
     return new JavaElementVisitor() {
       private final Options options = new Options(maxNotUsedComponentCounts,
@@ -171,16 +175,17 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
           int length = context.recordClass.getRecordComponents().length;
           if (length > 1) {
             fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
-                                         InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length), length - 1));
+              LocalQuickFix.from(new UpdateInspectionOptionFix(
+                ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
+                InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length),
+                length - 1)));
           }
           Integer level = context.level;
           if (level != null && level > 0) {
-            fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
-                                         InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), level - 1));
+            fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+              ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
+              InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), 
+              level - 1)));
           }
           holder.registerProblem(identifier,
                                  InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),
@@ -188,8 +193,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
         }
       }
 
-      @NotNull
-      private LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context) {
+      private @NotNull LocalQuickFix getLocalQuickFix(@NotNull ComponentContext context) {
         return new ForEachWithRecordCanBeUsedFix(context.base, context.currentParameter);
       }
     };
@@ -233,8 +237,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     processor.accept(context, components);
   }
 
-  @Nullable
-  private static ComponentContext createContext(@NotNull PsiForeachStatement statement, @NotNull Options options) {
+  private static @Nullable ComponentContext createContext(@NotNull PsiForeachStatement statement, @NotNull Options options) {
     PsiStatement body = statement.getBody();
     if (body == null) {
       return null;
@@ -263,9 +266,8 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     return new ComponentContext(0, parameter, parameterClass, substitutor, statement, options, new ShowInfoFolder());
   }
 
-  @NotNull
-  private static Map<String, List<PsiElement>> processReferences(@NotNull List<? extends PsiElement> references,
-                                                                 @NotNull ComponentContext context) {
+  private static @NotNull Map<String, List<PsiElement>> processReferences(@NotNull List<? extends PsiElement> references,
+                                                                          @NotNull ComponentContext context) {
     Map<String, List<PsiElement>> result = new HashMap<>();
     for (PsiElement reference : references) {
       PsiElement element = PsiUtil.skipParenthesizedExprUp(reference.getParent());
@@ -308,10 +310,9 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     return result;
   }
 
-  @NotNull
-  private static PsiElement normalizeElement(@NotNull PsiReferenceExpression reference,
-                                             @NotNull PsiRecordComponent component,
-                                             @NotNull ComponentContext context) {
+  private static @NotNull PsiElement normalizeElement(@NotNull PsiReferenceExpression reference,
+                                                      @NotNull PsiRecordComponent component,
+                                                      @NotNull ComponentContext context) {
     PsiElement expectedCallExpression = reference;
     if (PsiUtil.skipParenthesizedExprUp(expectedCallExpression.getParent()) instanceof PsiMethodCallExpression methodCallExpression) {
       expectedCallExpression = methodCallExpression;
@@ -333,7 +334,7 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
     return expectedCallExpression;
   }
 
-  private class ForEachWithRecordCanBeUsedFix implements LocalQuickFix {
+  private class ForEachWithRecordCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     private final SmartPsiElementPointer<PsiForeachStatementBase> myForEachStatement;
     private final SmartPsiElementPointer<PsiParameter> myParameter;
 
@@ -343,30 +344,15 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       myParameter = SmartPointerManager.createPointer(parameter);
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name");
     }
 
-
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiForeachStatementBase foreachStatementBase = myForEachStatement.getElement();
-      PsiParameter parameter = myParameter.getElement();
-      if (foreachStatementBase == null || parameter == null) {
-        return null;
-      }
-      PsiForeachStatementBase foreachInCopy = PsiTreeUtil.findSameElementInCopy(foreachStatementBase, target);
-      PsiParameter parameterInCopy = PsiTreeUtil.findSameElementInCopy(parameter, target);
-      return new ForEachWithRecordCanBeUsedFix(foreachInCopy, parameterInCopy);
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiForeachStatementBase foreachStatementBase = myForEachStatement.getElement();
-      PsiParameter parameter = myParameter.getElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiForeachStatementBase foreachStatementBase = updater.getWritable(myForEachStatement.getElement());
+      PsiParameter parameter = updater.getWritable(myParameter.getElement());
       if (foreachStatementBase == null || parameter == null) {
         return;
       }
@@ -431,9 +417,8 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       }
     }
 
-    @Nullable
-    private static PatternDefinition createPatternDefinition(@NotNull ForEachWithRecordPatternCanBeUsedInspection.ComponentContext context,
-                                                             @NotNull Map<String, List<String>> usedVariable) {
+    private static @Nullable PatternDefinition createPatternDefinition(@NotNull ForEachWithRecordPatternCanBeUsedInspection.ComponentContext context,
+                                                                       @NotNull Map<String, List<String>> usedVariable) {
       PsiClass recordClass = context.recordClass;
       PsiStatement body = context.base.getBody();
       if (body == null) {
@@ -482,9 +467,8 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
       }
     }
 
-    @NotNull
-    private static Map<String, List<String>> deleteVariablesAndMapToMethodCalls(@NotNull Map<String, List<PsiElement>> map,
-                                                                                @NotNull ComponentContext context) {
+    private static @NotNull Map<String, List<String>> deleteVariablesAndMapToMethodCalls(@NotNull Map<String, List<PsiElement>> map,
+                                                                                         @NotNull ComponentContext context) {
       PsiParameter currentElement = context.currentParameter;
       String name = currentElement.getName();
       HashMap<String, List<String>> usedNames = new HashMap<>();

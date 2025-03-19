@@ -13,7 +13,6 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.ScrambledInputStream
 import com.intellij.util.ScrambledOutputStream
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
@@ -24,6 +23,10 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.inputStream
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
   private val units = ArrayList(Collections.nCopies<SoftReference<StatisticsUnit>>(UNIT_COUNT, null))
@@ -39,7 +42,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var useCount = 0
     for (conjunct in info.conjuncts) {
-      useCount = Math.max(doGetUseCount(conjunct), useCount)
+      useCount = max(doGetUseCount(conjunct), useCount)
     }
     return useCount
   }
@@ -57,7 +60,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
 
     var recency = Integer.MAX_VALUE
     for (conjunct in info.conjuncts) {
-      recency = Math.min(doGetRecency(conjunct), recency)
+      recency = min(doGetRecency(conjunct), recency)
     }
     return recency
   }
@@ -76,8 +79,6 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
     if (ApplicationManager.getApplication().isUnitTestMode && !testingStatistics) {
       return
     }
-
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
     for (conjunct in info.conjuncts) {
       doIncUseCount(conjunct)
@@ -169,7 +170,7 @@ private fun loadUnit(unitNumber: Int): StatisticsUnit {
   return unit
 }
 
-private fun getUnitNumber(key1: String) = Math.abs(key1.hashCode() % UNIT_COUNT)
+private fun getUnitNumber(key1: String) = abs(key1.hashCode() % UNIT_COUNT)
 
 private fun getPathToUnit(unitNumber: Int) = storeDir.resolve("unit.$unitNumber")
 

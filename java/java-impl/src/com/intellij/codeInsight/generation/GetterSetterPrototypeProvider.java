@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -7,7 +7,9 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class GetterSetterPrototypeProvider {
   public static final ExtensionPointName<GetterSetterPrototypeProvider> EP_NAME = ExtensionPointName.create("com.intellij.getterSetterProvider");
@@ -40,19 +42,27 @@ public abstract class GetterSetterPrototypeProvider {
   public static PsiMethod[] generateGetterSetters(PsiField field,
                                                   boolean generateGetter,
                                                   boolean ignoreInvalidTemplate) {
+    return generateGetterSetters(field, generateGetter, ignoreInvalidTemplate, GetterSetterGenerationOptions.empty());
+  }
+
+  public static PsiMethod[] generateGetterSetters(PsiField field,
+                                                  boolean generateGetter,
+                                                  boolean ignoreInvalidTemplate,
+                                                  @NotNull GetterSetterGenerationOptions options) {
     for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
       if (provider.canGeneratePrototypeFor(field)) {
         return generateGetter ? provider.generateGetters(field) : provider.generateSetters(field);
       }
     }
-    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate) :
-                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate)};
+    return new PsiMethod[]{generateGetter ? GenerateMembersUtil.generateGetterPrototype(field, ignoreInvalidTemplate, options) :
+                           GenerateMembersUtil.generateSetterPrototype(field, ignoreInvalidTemplate, options)};
   }
 
   public static boolean isReadOnlyProperty(PsiField field) {
     for (GetterSetterPrototypeProvider provider : EP_NAME.getExtensionList()) {
-      if (provider.canGeneratePrototypeFor(field)) {
-        return provider.isReadOnly(field);
+      if (DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(
+        () -> provider.canGeneratePrototypeFor(field) && provider.isReadOnly(field))) {
+        return true;
       }
     }
     return field.hasModifierProperty(PsiModifier.FINAL);

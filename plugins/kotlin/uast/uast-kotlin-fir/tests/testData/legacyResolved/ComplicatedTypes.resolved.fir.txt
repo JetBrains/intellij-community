@@ -31,5 +31,5 @@ internal open class TypeBase<T>: TypeBase
     UBinaryExpressionWithType -> USimpleNameReferenceExpression (identifier = as) -> null: null
     UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) -> USimpleNameReferenceExpression (identifier = ParameterizedType) -> Decompiled_Class: ParameterizedType
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = actualTypeArguments) -> Decompiled_Method: getActualTypeArguments
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = first) -> FUN: first
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = first) -> Decompiled_Method: first
     UPostfixExpression (operator = !!) -> USimpleNameReferenceExpression (identifier = !!) -> null: null

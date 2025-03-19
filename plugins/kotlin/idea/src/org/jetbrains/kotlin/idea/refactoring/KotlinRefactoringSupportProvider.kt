@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.refactoring.RefactoringSupportProvider
-import com.intellij.openapi.util.Condition
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.refactoring.RefactoringActionHandler
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeSignatureHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.KotlinExtractInterfaceHandler
@@ -16,17 +14,15 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.Kotlin
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.canDeleteElement
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtElement
 
 class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isSafeDeleteAvailable(element: PsiElement) = element.canDeleteElement()
 
-    override fun getIntroduceVariableHandler() = KotlinIntroduceVariableHandler
+    override fun getIntroduceVariableHandler() = K1IntroduceVariableHandler
 
     override fun getIntroduceParameterHandler() = KotlinIntroduceParameterHandler()
 
@@ -70,9 +66,4 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
      * @see org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameDispatcherHandler
      */
     override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean = false
-}
-
-class KotlinVetoRenameCondition : Condition<PsiElement> {
-    override fun value(t: PsiElement?): Boolean =
-        t is KtElement && t is PsiNameIdentifierOwner && t.nameIdentifier == null && t !is KtConstructor<*>
 }

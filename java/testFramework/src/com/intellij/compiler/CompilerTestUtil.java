@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManager;
@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IComponentStore;
+import com.intellij.openapi.components.impl.stores.IComponentStoreKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -42,14 +42,13 @@ public final class CompilerTestUtil {
   // should be invoked in EDT
   public static void saveApplicationSettings() {
     IComponentStore store = getApplicationStore();
-    store.saveComponent((PersistentStateComponent<?>)ProjectJdkTable.getInstance());
+    ProjectJdkTable.getInstance().saveOnDisk();
     store.saveComponent((PersistentStateComponent<?>)FileTypeManager.getInstance());
     store.saveComponent((PersistentStateComponent<?>)PathMacros.getInstance());
   }
 
-  @NotNull
-  public static IComponentStore getApplicationStore() {
-    return ServiceKt.getStateStore(ApplicationManager.getApplication());
+  public static @NotNull IComponentStore getApplicationStore() {
+    return IComponentStoreKt.getStateStore(ApplicationManager.getApplication());
   }
 
   @TestOnly
@@ -69,7 +68,7 @@ public final class CompilerTestUtil {
   }
 
   @TestOnly
-  public static void disableExternalCompiler(@NotNull  final Project project) {
+  public static void disableExternalCompiler(final @NotNull Project project) {
     EdtTestUtil.runInEdtAndWait(() -> {
       final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -85,6 +84,7 @@ public final class CompilerTestUtil {
         }
         BuildManager.getInstance().clearState(project);
       });
+      saveApplicationSettings();
     });
   }
 

@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.changes
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
@@ -13,14 +14,16 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
 import com.intellij.ui.SelectionSaver
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 
+@Obsolete
 class CodeReviewChangesTreeFactory(private val project: Project,
                                    private val changesModel: SingleValueModel<out Collection<Change>>) {
 
-  fun create(emptyTextText: @Nls String): AsyncChangesTree {
+  fun create(emptyTextText: @Nls String, preselectFirstChange: Boolean = true): AsyncChangesTree {
     val tree = object : AsyncChangesTree(project, false, false) {
       override val changesTreeModel: AsyncChangesTreeModel = SimpleAsyncChangesTreeModel.create { grouping ->
         TreeModelBuilder.buildFromChanges(project, grouping, changesModel.value, null)
@@ -29,15 +32,23 @@ class CodeReviewChangesTreeFactory(private val project: Project,
       override fun updateTreeModel(model: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>) {
         super.updateTreeModel(model, treeStateStrategy)
 
-        if (isSelectionEmpty && !isEmpty) {
+        if (preselectFirstChange && isSelectionEmpty && !isEmpty) {
           TreeUtil.selectFirstNode(this)
         }
       }
 
-      override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        VcsTreeModelData.uiDataSnapshot(sink, project, this)
+      }
+
+      override fun getToggleClickCount(): Int {
+        return toggleClickCount
+      }
 
     }.apply {
       emptyText.text = emptyTextText
+      toggleClickCount = 2
     }.also {
       ClientProperty.put(it, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
       SelectionSaver.installOn(it)

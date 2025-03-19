@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -46,6 +46,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -55,9 +56,11 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -65,11 +68,12 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.application.ActionsKt.invokeAndWaitIfNeeded;
 import static org.junit.Assert.*;
 
 /**
@@ -111,10 +115,16 @@ public final class EditorTestUtil {
     }
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId) {
     executeAction(editor, actionId, false);
   }
 
+  /**
+   * @see IdeActions
+   */
   public static void executeAction(@NotNull Editor editor, @NotNull String actionId, boolean assertActionIsEnabled) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     AnAction action = actionManager.getAction(actionId);
@@ -124,7 +134,8 @@ public final class EditorTestUtil {
 
   public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    if (event.getPresentation().isEnabled()) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
     else if (assertActionIsEnabled) {
@@ -132,14 +143,20 @@ public final class EditorTestUtil {
     }
   }
 
-  @NotNull
-  private static DataContext createEditorContext(@NotNull Editor editor) {
+  public static boolean checkActionIsEnabled(@NotNull Editor editor, @NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    return event.getPresentation().isEnabled();
+  }
+
+  private static @NotNull DataContext createEditorContext(@NotNull Editor editor) {
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     DataContext parent = DataManager.getInstance().getDataContext(editor.getContentComponent());
     return SimpleDataContext.builder()
       .setParent(parent)
       .add(CommonDataKeys.HOST_EDITOR, hostEditor)
       .add(CommonDataKeys.EDITOR, editor)
+      .add(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile())
       .build();
   }
 
@@ -198,11 +215,11 @@ public final class EditorTestUtil {
     return result.toString();
   }
 
-  public static int getCaretPosition(@NotNull final String content) {
+  public static int getCaretPosition(final @NotNull String content) {
     return getCaretAndSelectionPosition(content)[0];
   }
 
-  public static int[] getCaretAndSelectionPosition(@NotNull final String content) {
+  public static int[] getCaretAndSelectionPosition(final @NotNull String content) {
     int caretPosInSourceFile = content.indexOf(CARET_TAG_PREFIX);
     int caretEndInSourceFile = content.indexOf(">", caretPosInSourceFile);
     int caretLength = caretEndInSourceFile - caretPosInSourceFile;
@@ -314,6 +331,19 @@ public final class EditorTestUtil {
     return !model.getRegisteredSoftWraps().isEmpty();
   }
 
+  @TestOnly
+  public static void releaseAllEditors() {
+    invokeAndWaitIfNeeded(null, () -> {
+      EditorFactory editorFactory = EditorFactory.getInstance();
+      for (Editor editor : editorFactory.getAllEditors()) {
+        if (!editor.isDisposed()) {
+          editorFactory.releaseEditor(editor);
+        }
+      }
+      return Unit.INSTANCE;
+    });
+  }
+
   public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {
     setEditorVisibleSizeInPixels(editor,
                                  widthInChars * EditorUtil.getSpaceWidth(Font.PLAIN, editor),
@@ -330,8 +360,7 @@ public final class EditorTestUtil {
    *
    * @see #extractCaretAndSelectionMarkers(Document, boolean)
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document) {
     return extractCaretAndSelectionMarkers(document, true);
   }
 
@@ -341,13 +370,11 @@ public final class EditorTestUtil {
    *
    * @param processBlockSelection if {@code true}, &lt;block&gt; and &lt;/block&gt; tags describing a block selection state will also be extracted.
    */
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkers(@NotNull Document document, final boolean processBlockSelection) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> extractCaretAndSelectionMarkersImpl(document, processBlockSelection));
   }
 
-  @NotNull
-  public static CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
+  public static @NotNull CaretAndSelectionState extractCaretAndSelectionMarkersImpl(@NotNull Document document, boolean processBlockSelection) {
     List<CaretInfo> carets = new ArrayList<>();
     String fileText = document.getText();
 
@@ -459,6 +486,10 @@ public final class EditorTestUtil {
   }
 
   public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message) {
+    verifyCaretAndSelectionState(editor, caretState, message, null);
+  }
+
+  public static void verifyCaretAndSelectionState(Editor editor, CaretAndSelectionState caretState, String message, String expectedFilePath) {
     boolean hasChecks = false;
     for (int i = 0; i < caretState.carets.size(); i++) {
       EditorTestUtil.CaretInfo expected = caretState.carets.get(i);
@@ -476,8 +507,15 @@ public final class EditorTestUtil {
     }
     catch (AssertionError e) {
       try {
-        assertEquals(e.getMessage(), CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets),
-                     CaretAndSelectionMarkup.renderActualState(editor));
+        String expected = CaretAndSelectionMarkup.renderExpectedState(editor, caretState.carets);
+        String actual = CaretAndSelectionMarkup.renderActualState(editor);
+        if (expectedFilePath != null) {
+          if (!expected.equals(actual)) {
+            throw new FileComparisonFailedError(e.getMessage(), expected, actual, expectedFilePath);
+          }
+        } else {
+          assertEquals(e.getMessage(), expected, actual);
+        }
       }
       catch (AssertionError exception) {
         exception.addSuppressed(e);
@@ -522,11 +560,24 @@ public final class EditorTestUtil {
   }
 
   /**
-   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and comparing them with file from {@code answerFilePath}
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with {@code expected}
+   *
+   * @param allowUnhandledTokens allows to have tokens without highlighting
+   */
+  public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, boolean allowUnhandledTokens, @NotNull String expected) {
+    UsefulTestCase.assertTextEquals(expected, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  /**
+   * Runs syntax highlighter for the {@code testFile}, serializes highlighting results and compares them with file from {@code answerFilePath}
    *
    * @param allowUnhandledTokens allows to have tokens without highlighting
    */
   public static void testFileSyntaxHighlighting(@NotNull PsiFile testFile, @NotNull String answerFilePath, boolean allowUnhandledTokens) {
+    UsefulTestCase.assertSameLinesWithFile(answerFilePath, serializeHighlightingResults(testFile, allowUnhandledTokens));
+  }
+
+  private static String serializeHighlightingResults(@NotNull PsiFile testFile, boolean allowUnhandledTokens) {
     TestCase.assertNotNull("Fixture has no file", testFile);
     final SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(testFile.getFileType(),
                                                                                               testFile.getProject(),
@@ -543,7 +594,7 @@ public final class EditorTestUtil {
     while ((tokenType = highlightingLexer.getTokenType()) != null) {
       final TextAttributesKey[] highlights = syntaxHighlighter.getTokenHighlights(tokenType);
       if (highlights.length > 0) {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append("\n");
         }
         String token = fileText.substring(highlightingLexer.getTokenStart(), highlightingLexer.getTokenEnd());
@@ -566,7 +617,7 @@ public final class EditorTestUtil {
     if (!allowUnhandledTokens && !notHighlightedTokens.isEmpty()) {
       TestCase.fail("Some tokens have no highlighting: " + notHighlightedTokens);
     }
-    UsefulTestCase.assertSameLinesWithFile(answerFilePath, sb.toString());
+    return sb.toString();
   }
 
   private static String serializeTextAttributeKey(@Nullable TextAttributesKey key) {
@@ -715,29 +766,31 @@ public final class EditorTestUtil {
     Project project = editor.getProject();
     assertNotNull(project);
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
-    undoManager.setEditorProvider(() -> fileEditor); // making undo work in test
+    undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+      @Override
+      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+        return fileEditor;
+      }
+    });
     try {
       runnable.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 
   /**
    * @see #getTextWithCaretsAndSelections(Editor, boolean, boolean)
    */
-  @NotNull
-  public static String getTextWithCaretsAndSelections(@NotNull Editor editor) {
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor) {
     return getTextWithCaretsAndSelections(editor, true, true);
   }
 
   /**
    * @return a text from the {@code editor} with optional carets and selections markers.
    */
-  @NotNull
-  public static String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
+  public static @NotNull String getTextWithCaretsAndSelections(@NotNull Editor editor, boolean addCarets, boolean addSelections) {
     StringBuilder sb = new StringBuilder(editor.getDocument().getCharsSequence());
     ContainerUtil.reverse(editor.getCaretModel().getAllCarets()).forEach(
       caret -> ContainerUtil.reverse(getCaretMacros(caret, addCarets, addSelections)).forEach(
@@ -748,8 +801,7 @@ public final class EditorTestUtil {
   /**
    * Return macros describing a {@code caret}
    */
-  @NotNull
-  public static List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
+  public static @NotNull List<Pair<Integer, String>> getCaretMacros(@NotNull Caret caret, boolean position, boolean selection) {
     if (!position && !selection) {
       return Collections.emptyList();
     }
@@ -852,12 +904,10 @@ public final class EditorTestUtil {
   }
 
   public static class CaretInfo {
-    @Nullable
-    public final LogicalPosition position; // column number in this position is calculated in terms of characters,
+    public final @Nullable LogicalPosition position; // column number in this position is calculated in terms of characters,
                                            // not in terms of visual position
                                            // so Tab character always increases the column number by 1
-    @Nullable
-    public final TextRange selection;
+                                           public final @Nullable TextRange selection;
 
     public CaretInfo(@Nullable LogicalPosition position, @Nullable TextRange selection) {
       this.position = position;
@@ -961,7 +1011,7 @@ public final class EditorTestUtil {
   }
 
   public static void buildInitialFoldingsInBackground(@NotNull Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     CodeFoldingState foldingState;
     try {

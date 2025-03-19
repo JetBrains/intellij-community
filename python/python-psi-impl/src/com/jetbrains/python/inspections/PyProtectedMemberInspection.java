@@ -47,15 +47,14 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * protected member (i.e. class member with a name beginning with an underscore)
  * is access outside the class or a descendant of the class where it's defined.
  */
-public class PyProtectedMemberInspection extends PyInspection {
+public final class PyProtectedMemberInspection extends PyInspection {
   public boolean ignoreTestFunctions = true;
   public boolean ignoreAnnotations = false;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -103,7 +102,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       checkReference(node, qualifier);
     }
 
-    private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
+    private void checkReference(final @NotNull PyReferenceExpression node, final @NotNull PyExpression qualifier) {
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<>();
       LocalQuickFix renameElementQuickFix = PythonUiService.getInstance().createPyRenameElementQuickFix(node);
@@ -166,14 +165,12 @@ public class PyProtectedMemberInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
+    private @Nullable PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
       final PyClass owner = getClassOwner(element);
       return owner == null ? null : PyiUtil.getOriginalElementOrLeaveAsIs(owner, PyClass.class);
     }
 
-    @Nullable
-    private PyClass getClassOwner(@Nullable PsiElement element) {
+    private static @Nullable PyClass getClassOwner(@Nullable PsiElement element) {
       for (ScopeOwner owner = ScopeUtil.getScopeOwner(element); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
         if (owner instanceof PyClass) {
           return (PyClass)owner;
@@ -205,8 +202,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         );
     }
 
-    @Nullable
-    private Set<String> collectDunderAlls(@NotNull PyReferenceExpression source) {
+    private @Nullable Set<String> collectDunderAlls(@NotNull PyReferenceExpression source) {
       final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
       final List<List<String>> resolvedDunderAlls = StreamEx

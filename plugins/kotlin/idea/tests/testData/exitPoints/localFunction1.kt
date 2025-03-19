@@ -1,6 +1,6 @@
 fun f(a: Int): Int {
-    fun localFun() {
-        <caret>return
+    <info descr="null">fun</info> localFun() {
+        <info descr="null">~return</info>
     }
 
     if (a < 5) {
@@ -10,6 +10,3 @@ fun f(a: Int): Int {
         return 2
     }
 }
-
-//HIGHLIGHTED: localFun
-//HIGHLIGHTED: return

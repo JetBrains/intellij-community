@@ -18,11 +18,11 @@ interface TitleInfoProvider {
     @Topic.AppLevel
     @ApiStatus.Internal
     @JvmField
-    val TOPIC = Topic(TitleInfoProviderListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<TitleInfoProviderListener> = Topic(TitleInfoProviderListener::class.java, Topic.BroadcastDirection.NONE)
 
     @ApiStatus.Internal
     @JvmField
-    val EP = ExtensionPointName<TitleInfoProvider>("com.intellij.titleInfoProvider")
+    val EP: ExtensionPointName<TitleInfoProvider> = ExtensionPointName("com.intellij.titleInfoProvider")
 
     fun getProviders(): List<TitleInfoProvider> = EP.extensionList
 

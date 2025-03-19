@@ -2,7 +2,6 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -11,14 +10,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-@HardwareAgentRequired
 public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -44,18 +43,18 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
 
   public void testTypingInBigFile() throws Exception {
     configureByFile(getTestName(true) + "/File1.properties");
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 300, () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       type(' ');
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
       backspace();
       PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-    }).assertTiming();
+    }).start();
   }
 
   public void testResolveManyLiterals() throws Exception {
     final PsiClass aClass = generateTestFiles();
     assertNotNull(aClass);
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 4000, () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
+    Benchmark.newBenchmark(getTestName(false), () -> aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         PsiReference[] references = expression.getReferences();
@@ -63,7 +62,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
           reference.resolve();
         }
       }
-    })).useLegacyScaling().assertTiming();
+    })).start();
   }
 
   private PsiClass generateTestFiles() throws IOException {
@@ -89,6 +88,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(src);
     assertNotNull(src, virtualFile);
     virtualFile.refresh(false, true);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     final PsiClass aClass = myJavaFacade.findClass(className, GlobalSearchScope.allScope(myProject));
     assert aClass != null;
@@ -97,6 +97,7 @@ public class PropertiesPerformanceTest extends JavaCodeInsightTestCase {
     aClass.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        //noinspection ResultOfMethodCallIgnored
         expression.getNode();
       }
     });

@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffViewerEx;
 import com.intellij.diff.FrameDiffTool;
-import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffTaskQueue;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,15 +15,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,18 +29,19 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DiffViewerBase implements DiffViewer, DataProvider {
+public abstract class DiffViewerBase implements DiffViewerEx, UiCompatibleDataProvider {
   protected static final Logger LOG = Logger.getInstance(DiffViewerBase.class);
 
-  @NotNull private final List<DiffViewerListener> myListeners = new SmartList<>();
+  private final @NotNull List<DiffViewerListener> listeners = new SmartList<>();
 
-  @Nullable protected final Project myProject;
-  @NotNull protected final DiffContext myContext;
-  @NotNull protected final ContentDiffRequest myRequest;
+  protected final @Nullable Project myProject;
+  protected final @NotNull DiffContext myContext;
+  protected final @NotNull ContentDiffRequest myRequest;
 
-  @NotNull private final DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
-  @NotNull private final Alarm myTaskAlarm = new Alarm();
-  private volatile boolean myDisposed;
+  private final @NotNull DiffTaskQueue myTaskExecutor = new DiffTaskQueue();
+  private final @NotNull Alarm taskAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, null, null, null);
+  private boolean pendingRediff = true;
+  private volatile boolean isDisposed;
 
   public DiffViewerBase(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     myProject = context.getProject();
@@ -63,9 +49,8 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     myRequest = request;
   }
 
-  @NotNull
   @Override
-  public final FrameDiffTool.ToolbarComponents init() {
+  public final @NotNull FrameDiffTool.ToolbarComponents init() {
     if (LOG.isDebugEnabled() && !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         (getComponent().getWidth() <= 0 || getComponent().getHeight() <= 0)) {
       LOG.warn("Diff shown for a hidden component, initial scroll position might be invalid", new Throwable());
@@ -81,7 +66,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    UiNotifyConnector.installOn(getComponent(), new Activatable() {
+    DiffUtil.installShowNotifyListener(getComponent(), new Activatable() {
       private boolean wasNotShownYet = true;
 
       @Override
@@ -102,12 +87,12 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   @Override
   @RequiresEdt
   public final void dispose() {
-    if (myDisposed) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (isDisposed) return;
+    ThreadingAssertions.assertEventDispatchThread();
 
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (myDisposed) return;
-      myDisposed = true;
+      if (isDisposed) return;
+      isDisposed = true;
 
       abortRediff();
       updateContextHints();
@@ -132,15 +117,15 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     abortRediff();
 
-    if (getComponent().isShowing()) {
-      myTaskAlarm.addRequest(this::rediff, ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
+    if (UIUtil.isShowing(getComponent())) {
+      taskAlarm.addRequest(() -> rediff(), ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
     }
   }
 
   @RequiresEdt
   public final void abortRediff() {
     myTaskExecutor.abort();
-    myTaskAlarm.cancelAllRequests();
+    taskAlarm.cancelAllRequests();
     fireEvent(EventType.REDIFF_ABORTED);
   }
 
@@ -154,6 +139,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     if (isDisposed()) return;
     abortRediff();
 
+    pendingRediff = true;
     fireEvent(EventType.BEFORE_REDIFF);
     onBeforeRediff();
 
@@ -165,6 +151,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
         final Runnable callback = performRediff(indicator);
         return () -> {
           callback.run();
+          pendingRediff = false;
           onAfterRediff();
           fireEvent(EventType.AFTER_REDIFF);
         };
@@ -177,23 +164,25 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   // Getters
   //
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public ContentDiffRequest getRequest() {
+  public @NotNull ContentDiffRequest getRequest() {
     return myRequest;
   }
 
-  @NotNull
-  public DiffContext getContext() {
+  public @NotNull DiffContext getContext() {
     return myContext;
   }
 
+  @RequiresEdt
+  public boolean hasPendingRediff() {
+    return pendingRediff;
+  }
+
   public boolean isDisposed() {
-    return myDisposed;
+    return isDisposed;
   }
 
   //
@@ -224,8 +213,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return group;
   }
 
-  @Nullable
-  protected JComponent getStatusPanel() {
+  protected @Nullable JComponent getStatusPanel() {
     return null;
   }
 
@@ -246,17 +234,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @RequiresBackgroundThread
-  @NotNull
-  protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
+  protected abstract @NotNull Runnable performRediff(@NotNull ProgressIndicator indicator);
 
   @RequiresEdt
   protected void onDispose() {
-    Disposer.dispose(myTaskAlarm);
-  }
-
-  @Nullable
-  protected Navigatable getNavigatable() {
-    return null;
+    Disposer.dispose(taskAlarm);
   }
 
   //
@@ -265,23 +247,22 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
   @RequiresEdt
   public void addListener(@NotNull DiffViewerListener listener) {
-    myListeners.add(listener);
+    listeners.add(listener);
   }
 
   @RequiresEdt
   public void removeListener(@NotNull DiffViewerListener listener) {
-    myListeners.remove(listener);
+    listeners.remove(listener);
   }
 
-  @NotNull
   @RequiresEdt
-  protected List<DiffViewerListener> getListeners() {
-    return myListeners;
+  protected @NotNull List<DiffViewerListener> getListeners() {
+    return listeners;
   }
 
   @RequiresEdt
   private void fireEvent(@NotNull EventType type) {
-    for (DiffViewerListener listener : myListeners) {
+    for (DiffViewerListener listener : listeners) {
       switch (type) {
         case INIT -> listener.onInit();
         case DISPOSE -> listener.onDispose();
@@ -296,18 +277,11 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.NAVIGATABLE.is(dataId)) {
-      return getNavigatable();
-    }
-    else if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
-    }
-    else {
-      return null;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DiffDataKeys.NAVIGATABLE, getNavigatable());
+    sink.set(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE, getDifferenceIterable());
+    sink.set(CommonDataKeys.PROJECT, myProject);
   }
 
   private enum EventType {

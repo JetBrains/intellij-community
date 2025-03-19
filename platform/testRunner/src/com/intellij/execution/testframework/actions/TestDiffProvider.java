@@ -1,11 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.actions;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
  * code.
  */
 public interface TestDiffProvider {
+  /**
+   * Please use {@link #getProviderByLanguage(Language)} to retrieve requited provider.
+   */
+  @ApiStatus.Internal
   LanguageExtension<TestDiffProvider> TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION = new LanguageExtension<>("com.intellij.testDiffProvider");
 
   @RequiresWriteLock
@@ -26,4 +32,11 @@ public interface TestDiffProvider {
   @Nullable
   @RequiresReadLock
   PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace, @NotNull String expected);
+
+  /**
+   * Retrieves the TestDiffProvider implementation based on the specified language.
+   */
+  static TestDiffProvider getProviderByLanguage(Language language) {
+    return TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(language);
+  }
 }

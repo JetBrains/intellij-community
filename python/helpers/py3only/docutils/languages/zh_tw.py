@@ -1,44 +1,43 @@
-# -*- coding: utf-8 -*-
-# $Id: zh_tw.py 4564 2006-05-21 20:44:42Z wiemann $
+# $Id: zh_tw.py 9452 2023-09-27 00:11:54Z milde $
 # Author: Joe YS Jaw <joeysj@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
-Traditional Chinese language mappings for language-dependent features of Docutils.
+Traditional Chinese language mappings for language-dependent features.
 """
 
 __docformat__ = 'reStructuredText'
 
 labels = {
-      # fixed: language-dependent
-      'author': '\u4f5c\u8005', # '作者' <-- Chinese word
-      'authors': '\u4f5c\u8005\u7fa4', # '作者群',
-      'organization': '\u7d44\u7e54', # '組織',
-      'address': '\u5730\u5740', # '地址',
-      'contact': '\u9023\u7d61', # '連絡',
-      'version': '\u7248\u672c', # '版本',
-      'revision': '\u4fee\u8a02', # '修訂',
-      'status': '\u72c0\u614b', # '狀態',
-      'date': '\u65e5\u671f', # '日期',
-      'copyright': '\u7248\u6b0a', # '版權',
-      'dedication': '\u984c\u737b', # '題獻',
-      'abstract': '\u6458\u8981', # '摘要',
-      'attention': '\u6ce8\u610f\uff01', # '注意！',
-      'caution': '\u5c0f\u5fc3\uff01', # '小心！',
-      'danger': '\uff01\u5371\u96aa\uff01', # '！危險！',
-      'error': '\u932f\u8aa4', # '錯誤',
-      'hint': '\u63d0\u793a', # '提示',
-      'important': '\u91cd\u8981', # '注意！',
-      'note': '\u8a3b\u91cb', # '註釋',
-      'tip': '\u79d8\u8a23', # '秘訣',
-      'warning': '\u8b66\u544a', # '警告',
-      'contents': '\u76ee\u9304' # '目錄'
-} 
+    # fixed: language-dependent
+    'author': '作者',
+    'authors': '作者群',
+    'organization': '組織',
+    'address': '地址',
+    'contact': '連絡',
+    'version': '版本',
+    'revision': '修訂',
+    'status': '狀態',
+    'date': '日期',
+    'copyright': '版權',
+    'dedication': '題獻',
+    'abstract': '摘要',
+    'attention': '注意！',
+    'caution': '小心！',
+    'danger': '！危險！',
+    'error': '錯誤',
+    'hint': '提示',
+    'important': '重要',
+    'note': '註釋',
+    'tip': '秘訣',
+    'warning': '警告',
+    'contents': '目錄',
+    }
 """Mapping of node class name to label text."""
 
 bibliographic_fields = {
@@ -57,10 +56,6 @@ bibliographic_fields = {
       'abstract (translation required)': 'abstract'}
 """Traditional Chinese to canonical name mapping for bibliographic fields."""
 
-author_separators = [';', ',',
-                     '\uff1b', # '；'
-                     '\uff0c', # '，'
-                     '\u3001', # '、'
-                    ]
+author_separators = [';', ',', '；', '，', '、']
 """List of separator strings for the 'Authors' bibliographic field. Tried in
 order."""

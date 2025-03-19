@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -43,6 +43,16 @@ public final class StreamUtil {
     UnsyncByteArrayOutputStream outputStream = new UnsyncByteArrayOutputStream();
     copy(inputStream, outputStream);
     return outputStream.toByteArray();
+  }
+
+  @ReviseWhenPortedToJDK(value = "11", description = "InputStream#readNBytes")
+  public static byte @NotNull [] readBytes(@NotNull InputStream inputStream, int len) throws IOException {
+    byte[] buffer = new byte[len];
+    int p = 0;
+    while (p < len) {
+      p += inputStream.read(buffer, p, len - p);
+    }
+    return buffer;
   }
 
   public static @NotNull String readText(@NotNull Reader reader) throws IOException {

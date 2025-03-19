@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.visible;
 
 import com.intellij.openapi.util.Key;
@@ -24,11 +24,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class SnapshotVisiblePackBuilder {
+final class SnapshotVisiblePackBuilder {
   private static final int VISIBLE_RANGE = 1000;
   private final @NotNull VcsLogStorage myStorage;
 
-  public SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
+  SnapshotVisiblePackBuilder(@NotNull VcsLogStorage storage) {
     myStorage = storage;
   }
 
@@ -55,7 +55,7 @@ public class SnapshotVisiblePackBuilder {
   private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
                                      @NotNull VisibleGraphImpl<Integer> oldGraph,
                                      @NotNull VcsLogFilterCollection filters,
-                                     @NotNull Map<Key, Object> data) {
+                                     @NotNull Map<Key<?>, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);
@@ -95,6 +95,6 @@ public class SnapshotVisiblePackBuilder {
       Set<VcsRef> refsForRoot = map.get(root);
       refs.put(root, new CompressedRefs(refsForRoot == null ? new HashSet<>() : refsForRoot, myStorage));
     }
-    return new RefsModel(refs, heads, myStorage, providers);
+    return RefsModel.create(refs, heads, myStorage, providers);
   }
 }

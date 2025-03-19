@@ -1,0 +1,3 @@
+Method foo(String) is private and will not be accessible from file noImports.kt.
+Method foo(String) is private and will not be accessible from file onDemandImport.kt.
+Method foo(String) is private and will not be accessible from file specificImport.kt.

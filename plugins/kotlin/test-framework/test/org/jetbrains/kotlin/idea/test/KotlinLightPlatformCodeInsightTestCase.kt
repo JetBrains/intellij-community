@@ -3,19 +3,19 @@
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.util.ThrowableRunnable
 
-abstract class KotlinLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase() {
+abstract class KotlinLightPlatformCodeInsightTestCase : LightPlatformCodeInsightTestCase(),
+                                                        ExpectedPluginModeProvider {
 
     override fun setUp() {
-        super.setUp()
+        setUpWithKotlinPlugin { super.setUp() }
         enableKotlinOfficialCodeStyle(project)
     }
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable { disableKotlinOfficialCodeStyle(project) },
-            ThrowableRunnable { super.tearDown() },
+            { disableKotlinOfficialCodeStyle(project) },
+            { super.tearDown() },
         )
     }
 }

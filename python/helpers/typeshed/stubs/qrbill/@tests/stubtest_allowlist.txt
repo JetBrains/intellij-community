@@ -1,0 +1,7 @@
+# Error: is inconsistent
+# ======================
+# While the method provides default values for all arguments, the first two
+# arguments always need to be provided, so it makes no sense to pretend that
+# they are optional
+qrbill.QRBill.__init__
+qrbill.bill.QRBill.__init__

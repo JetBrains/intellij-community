@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages.InputDialog
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Action
 
 // a very ugly hack to work around the fact that we can neither
@@ -16,6 +17,7 @@ import javax.swing.Action
 private var validatorBeingInitialized: LayoutNameValidator? = null
 // no need for thread safety here as it's pure EDT code
 
+@ApiStatus.Internal
 class LayoutNameInputDialog(
   project: Project,
   @DialogMessage message: String,
@@ -85,7 +87,7 @@ private class LayoutNameValidator : InputValidator {
       isAlreadyExisting = inputString in manager.getLayoutNames()
     }
 
-    // According to the validation guidelines, https://jetbrains.design/intellij/principles/validation_errors/
+    // According to the validation guidelines, https://plugins.jetbrains.com/docs/intellij/validation-errors.html
     // we just disable the OK button if the field is empty,
     // pop up an error message right away when the input is too long (and also disable the button),
     // and pop up an error message when the OK button is pressed if the layout already exists.

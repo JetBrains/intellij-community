@@ -20,10 +20,8 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -130,12 +128,12 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final SchemaType outputType = getOutputType();
     myLineLength.setEnabled(outputType == SchemaType.DTD || outputType == SchemaType.RNC);
 
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
-    final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstFile);
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(RelaxngBundle.message("relaxng.convert-schema.settings.destination.title"))
+      .withDescription(RelaxngBundle.message("relaxng.convert-schema.settings.destination.message"));
+    var module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(firstFile);
     descriptor.putUserData(LangDataKeys.MODULE_CONTEXT, module);
-
-    myOutputDestination.addBrowseFolderListener(RelaxngBundle.message("relaxng.convert-schema.settings.destination.title"),
-                                                RelaxngBundle.message("relaxng.convert-schema.settings.destination.message"), project, descriptor);
+    myOutputDestination.addBrowseFolderListener(project, descriptor);
 
     final JTextField tf = myOutputDestination.getTextField();
     tf.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -167,8 +165,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
   }
 
   @Override
-  @NotNull
-  public SchemaType getOutputType() {
+  public @NotNull SchemaType getOutputType() {
     if (myOutputRng.isSelected()) {
       return SchemaType.RNG;
     } else if (myOutputRnc.isSelected()) {
@@ -193,7 +190,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
 
   private static int parseInt(String s) {
     try {
-      return s.length() > 0 ? Integer.parseInt(s) : -1;
+      return !s.isEmpty() ? Integer.parseInt(s) : -1;
     } catch (NumberFormatException e) {
       return -1;
     }

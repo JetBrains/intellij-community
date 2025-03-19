@@ -1,19 +1,28 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="com.intellij.cce">
   <id>com.intellij.completion.evaluation</id>
-  <name>Code Completion Evaluation</name>
+  <!--suppress PluginXmlValidity -->
+  <name>Evaluation Plugin</name>
   <vendor>JetBrains</vendor>
   <!--suppress PluginXmlValidity -->
   <idea-version since-build="211"/>
   <description><![CDATA[
-           <p>The plugin deals with the quality evaluation of code completion based on artificial queries.</p>
-           <p>Usage:</p>
-           <ul>
-                <li>Select files and/or directories for code completion evaluation.</li>
-                <li>Right click and select "Evaluate Completion For Selected Files"</li>
-                <li>Select strategy for actions generation in opened dialog.</li>
-                <li>After generation and interpretation of actions you will be asked to open the report in the browser.</li>
-           </ul>
-    ]]></description>
+    <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
+  ]]></description>
+  
+  <content>
+    <module name="intellij.evaluationPlugin.languages.java"/>
+    <module name="intellij.evaluationPlugin.languages.python"/>
+    <module name="intellij.evaluationPlugin.languages.kotlin"/>
+  </content>
+
+  <xi:include href="/META-INF/eval-ultimate.xml">
+    <xi:fallback/>
+  </xi:include>
+
+  <dependencies>
+    <plugin id="com.intellij.completion.ml.ranking"/>
+    <plugin id="com.intellij.stats.completion"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="ml-evaluate" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
@@ -21,14 +30,23 @@
     <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
                  description="Disables check that project sdk configured properly" restartRequired="false"/>
     <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
+
+    <toolWindow id="Evaluation Dataset"
+                icon="AllIcons.Toolwindows.ToolWindowDataView"
+                factoryClass="com.intellij.cce.ui.EvaluationDatasetToolWindowFactory"
+                anchor="bottom"
+                canCloseContents="false"/>
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
-                    interface="com.intellij.cce.visitor.CompletionEvaluationVisitor"
+    <extensionPoint qualifiedName="com.intellij.cce.command"
+                    interface="com.intellij.cce.commands.EvaluationCommandExtension"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.cce.completionGolfVisitorFactory"
-                    interface="com.intellij.cce.visitor.CompletionGolfVisitorFactory"
+    <extensionPoint qualifiedName="com.intellij.cce.completionEvaluationVisitor"
+                    interface="com.intellij.cce.visitor.EvaluationVisitor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.lineCompletionVisitorFactory"
+                    interface="com.intellij.cce.visitor.LineCompletionVisitorFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.codeCompletionHandlerFactory" area="IDEA_PROJECT"
                     interface="com.intellij.cce.evaluation.CodeCompletionHandlerFactory"
@@ -42,36 +60,37 @@
     <extensionPoint qualifiedName="com.intellij.cce.setupSdkStep" area="IDEA_PROJECT"
                     interface="com.intellij.cce.evaluation.SetupSdkStep"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.evaluableFeature"
+                    interface="com.intellij.cce.evaluable.EvaluableFeature"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.apiCallExtractor"
+                    interface="com.intellij.cce.metric.ApiCallExtractorProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.exposedApiExtractor"
+                    interface="com.intellij.cce.evaluable.ExposedApiExtractor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.datasetActionProvider"
+                    interface="com.intellij.cce.ui.DatasetActionProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.codeExecutionManager"
+                    interface="com.intellij.cce.execution.manager.CodeExecutionManager"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.extraEvaluationStepProvider"
+                    interface="com.intellij.cce.evaluation.step.ExtraEvaluationStepProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
-  <resource-bundle>messages.EvaluationPluginBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij.cce">
+    <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.docGeneration.DocGenerationFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.actions.ContextCollectionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.standaloneExample.StandaloneExampleFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.conflictResolution.ConflictResolutionFeature"/>
+    <suggestionsProvider implementation="com.intellij.cce.evaluable.completion.DefaultCompletionProvider"/>
+  </extensions>
 
-  <actions>
-    <action id="EvaluateCompletionForSelectedFilesAction"
-            class="com.intellij.cce.actions.EvaluateCompletionForSelectedFilesAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
-    </action>
-    <action id="GenerateEvaluationReportAction"
-            class="com.intellij.cce.actions.GenerateEvaluationReportAction">
-      <add-to-group group-id="ProjectViewPopupMenu" anchor="after"
-                    relative-to-action="EvaluateCompletionForSelectedFilesAction"/>
-    </action>
-    <action id="EvaluateCompletionHereAction"
-            class="com.intellij.cce.actions.EvaluateCompletionHereAction">
-      <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-    </action>
-  </actions>
-
-  <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.completion.ml.ranking</depends>
-  <depends optional="true" config-file="evaluationPlugin-java.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="evaluationPlugin-maven.xml">org.jetbrains.idea.maven</depends>
-  <depends optional="true" config-file="evaluationPlugin-python.xml">com.intellij.modules.python</depends>
-  <depends optional="true" config-file="evaluationPlugin-go.xml">org.jetbrains.plugins.go</depends>
-  <depends optional="true" config-file="evaluationPlugin-js.xml">JavaScript</depends>
-  <depends optional="true" config-file="evaluationPlugin-php.xml">com.jetbrains.php</depends>
-  <depends optional="true" config-file="evaluationPlugin-ruby.xml">org.jetbrains.plugins.ruby</depends>
-  <depends optional="true" config-file="evaluationPlugin-kotlin.xml">org.jetbrains.kotlin</depends>
-  <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
-  <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <supportsKotlinPluginMode supportsK2="true"/>
+  </extensions>
 </idea-plugin>

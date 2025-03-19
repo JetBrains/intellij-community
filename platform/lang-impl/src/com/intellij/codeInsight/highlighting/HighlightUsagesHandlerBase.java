@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -15,14 +16,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
-  @NotNull protected final Editor myEditor;
-  @NotNull protected final PsiFile myFile;
+public abstract class HighlightUsagesHandlerBase<T extends PsiElement> implements PossiblyDumbAware {
+  protected final @NotNull Editor myEditor;
+  protected final @NotNull PsiFile myFile;
 
   protected final List<TextRange> myReadUsages = new ArrayList<>();
   protected final List<TextRange> myWriteUsages = new ArrayList<>();
@@ -72,15 +74,13 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     }
   }
 
-  @NotNull
-  public abstract List<T> getTargets();
+  public abstract @Unmodifiable @NotNull List<T> getTargets();
 
-  @Nullable
-  public String getFeatureId() {
+  public @Nullable String getFeatureId() {
     return null;
   }
 
-  protected abstract void selectTargets(@NotNull List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
+  protected abstract void selectTargets(@NotNull @Unmodifiable List<? extends T> targets, @NotNull Consumer<? super List<? extends T>> selectionConsumer);
 
   public abstract void computeUsages(@NotNull List<? extends T> targets);
 

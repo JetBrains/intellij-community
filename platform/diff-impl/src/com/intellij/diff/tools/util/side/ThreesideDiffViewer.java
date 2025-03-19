@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
@@ -25,6 +11,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.tools.util.DiffTitleHandler;
 import com.intellij.diff.tools.util.FocusTrackerSupport;
 import com.intellij.diff.tools.util.SimpleDiffPanel;
 import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
@@ -33,13 +20,14 @@ import com.intellij.diff.util.ThreeSide;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,14 +36,15 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ThreesideDiffViewer<T extends EditorHolder> extends ListenerDiffViewerBase {
-  @NotNull protected final SimpleDiffPanel myPanel;
-  @NotNull protected final ThreesideContentPanel myContentPanel;
-  @NotNull protected final JBLoadingPanel myLoadingPanel;
+  protected final @NotNull SimpleDiffPanel myPanel;
+  protected final @NotNull ThreesideContentPanel myContentPanel;
+  protected final @NotNull JBLoadingPanel myLoadingPanel;
 
-  @NotNull private final List<T> myHolders;
+  private final @NotNull List<T> myHolders;
 
-  @NotNull private final FocusTrackerSupport<ThreeSide> myFocusTrackerSupport;
+  private final @NotNull FocusTrackerSupport<ThreeSide> myFocusTrackerSupport;
 
   public ThreesideDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request, @NotNull EditorHolderFactory<T> factory) {
     super(context, request);
@@ -68,14 +57,20 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
 
-    myPanel = new SimpleDiffPanel(myLoadingPanel, this, context);
+    myPanel = new SimpleDiffPanel(myLoadingPanel, context) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        DataSink.uiDataSnapshot(sink, ThreesideDiffViewer.this);
+      }
+    };
   }
 
   @Override
   protected void onInit() {
     super.onInit();
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
-    myContentPanel.setTitles(createTitles());
+    DiffTitleHandler.createHandler(() -> createTitles(), myContentPanel, myRequest, this);
   }
 
   @Override
@@ -99,8 +94,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport.updateContextHints(myRequest, myContext);
   }
 
-  @NotNull
-  protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
+  protected @NotNull List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
     List<T> holders = new ArrayList<>(3);
@@ -117,8 +111,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     }
   }
 
-  @NotNull
-  protected List<JComponent> createTitles() {
+  protected @NotNull List<JComponent> createTitles() {
     return DiffUtil.createSimpleTitles(this, myRequest);
   }
 
@@ -126,21 +119,18 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
   // Getters
   //
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     if (!myPanel.isGoodContent()) return null;
     return getCurrentEditorHolder().getPreferredFocusedComponent();
   }
 
-  @NotNull
-  public ThreeSide getCurrentSide() {
+  public @NotNull ThreeSide getCurrentSide() {
     return myFocusTrackerSupport.getCurrentSide();
   }
 
@@ -148,32 +138,26 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myFocusTrackerSupport.setCurrentSide(side);
   }
 
-  @NotNull
-  protected List<T> getEditorHolders() {
+  protected @NotNull List<T> getEditorHolders() {
     return myHolders;
   }
 
-  @NotNull
-  protected T getCurrentEditorHolder() {
+  protected @NotNull T getCurrentEditorHolder() {
     return getCurrentSide().select(getEditorHolders());
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentSide().select(myRequest.getContents());
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CONTENT, getCurrentSide().select(myRequest.getContents()));
   }
 
   //
   // Misc
   //
 
-  @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getCurrentSide().select(getRequest().getContents()).getNavigatable();
   }
 
@@ -200,8 +184,8 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   protected enum PartialDiffMode {LEFT_MIDDLE, RIGHT_MIDDLE, MIDDLE_LEFT, MIDDLE_RIGHT, LEFT_RIGHT}
   protected class ShowPartialDiffAction extends DumbAwareAction {
-    @NotNull protected final ThreeSide mySide1;
-    @NotNull protected final ThreeSide mySide2;
+    protected final @NotNull ThreeSide mySide1;
+    protected final @NotNull ThreeSide mySide2;
 
     public ShowPartialDiffAction(@NotNull PartialDiffMode mode, boolean hasFourSides) {
       String id;
@@ -252,8 +236,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
       DiffManager.getInstance().showDiff(myProject, request, new DiffDialogHints(null, myPanel));
     }
 
-    @NotNull
-    protected SimpleDiffRequest createRequest() {
+    protected @NotNull SimpleDiffRequest createRequest() {
       List<DiffContent> contents = myRequest.getContents();
       List<String> titles = myRequest.getContentTitles();
       return new SimpleDiffRequest(myRequest.getTitle(),

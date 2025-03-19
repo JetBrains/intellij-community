@@ -7,21 +7,21 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.search.ideaExtensions.JavaOverridingMethodsSearcherFromKotlinParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch.SearchParameters
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 object DirectKotlinOverridingCallableSearch {
 
@@ -38,15 +38,15 @@ object DirectKotlinOverridingCallableSearch {
         }
     }
 
-    fun search(ktFunction: KtCallableDeclaration): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration): Query<out PsiElement> {
         return search(ktFunction, runReadAction { ktFunction.useScope })
     }
 
-    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<PsiElement> {
+    fun search(ktFunction: KtCallableDeclaration, searchScope: SearchScope): Query<out PsiElement> {
         return search(SearchParameters(ktFunction, searchScope))
     }
 
-    fun search(parameters: SearchParameters): Query<PsiElement> {
+    fun search(parameters: SearchParameters): Query<out PsiElement> {
         return SearchService.getInstance().searchParameters(parameters)
     }
 
@@ -75,12 +75,13 @@ class DirectKotlinOverridingMethodSearcher : Searcher<SearchParameters, PsiEleme
 
                     analyze(classOrObject) {
                         val superFunction = superDeclarationPointer.element ?: return@runReadAction false
+                        val symbolWithMembers = classOrObject.symbol.getSymbolContainingMemberDeclarations() ?: return@runReadAction true
 
-                        (classOrObject.getSymbol() as KtSymbolWithMembers).getDeclaredMemberScope()
-                            .getCallableSymbols { it == ktCallableDeclarationName }
+                        symbolWithMembers.declaredMemberScope
+                            .callables(ktCallableDeclarationName)
                             .all { overridingSymbol ->
                                 val function = overridingSymbol.psi
-                                if (function != null && overridingSymbol.getDirectlyOverriddenSymbols().any { it.psi == superFunction }) {
+                                if (function != null && overridingSymbol.directlyOverriddenSymbols.any { it.psi == superFunction }) {
                                     consumer.process(function)
                                 } else {
                                     true

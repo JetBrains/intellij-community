@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.java.unscramble` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "unscramble_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "unscramble",
+  module_name = "intellij.java.unscramble",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/execution",
+    "//platform/util:util-ui",
+    "//platform/platform-api:ide",
+    "//java/openapi:java",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/core-ui",
+    "//java/java-impl:impl",
+    "//platform/threadDumpParser",
+  ],
+  runtime_deps = [":unscramble_resources"]
+)
+### auto-generated section `build intellij.java.unscramble` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,7 +61,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     return super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
   }
 
-  private static class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
+  private static final class MyNotSelectedColoredTreeCellRenderer extends SimpleColoredComponent implements ClickableTreeCellRenderer {
     private CustomizeColoredTreeCellRenderer myCurrentCallback;
 
     @Override
@@ -91,8 +91,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
 
     @Override
-    @Nullable
-    public Object getTag() {
+    public @Nullable Object getTag() {
       return myCurrentCallback == null? null : myCurrentCallback.getTag();
     }
 
@@ -101,7 +100,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  private static class MyWrapperRenderer implements TreeCellRenderer {
+  private static final class MyWrapperRenderer implements TreeCellRenderer {
     private final TreeCellRenderer myLeft;
     private final TreeCellRenderer myRight;
     private final MyPanel myPanel;
@@ -163,7 +162,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
      * ("Error") and the right side is a {@link JEditorPane} containing the
      * error message.
      */
-    private class MyPanel extends JPanel implements Accessible {
+    private final class MyPanel extends JPanel implements Accessible {
       private AccessibleContext myDefaultAccessibleContext;
 
       MyPanel(LayoutManager layout) {
@@ -185,10 +184,9 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
         return myDefaultAccessibleContext;
       }
 
-      protected class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
-        @NotNull
+      protected final class AccessibleMyPanel extends AbstractAccessibleContextDelegate {
         @Override
-        protected AccessibleContext getDelegate() {
+        protected @NotNull AccessibleContext getDelegate() {
           // Most of the accessibility properties come from the right component
           if (myPanel.getComponentCount() >= 2) {
             Component c = myPanel.getComponent(1);
@@ -219,8 +217,7 @@ public final class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
   }
 
-  @NotNull
-  public static @Nls String calcPrefix(@Nullable ErrorTreeElement element) {
+  public static @NotNull @Nls String calcPrefix(@Nullable ErrorTreeElement element) {
     if(element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       String prefix = element.getPresentableText();
 

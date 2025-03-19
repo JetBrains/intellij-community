@@ -1,7 +1,6 @@
 // "Create abstract function 'Foo.bar'" "false"
-// ACTION: Create function 'bar'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: bar
+// K2_AFTER_ERROR: Unresolved reference 'bar'.
 
 open class A
 

@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
@@ -23,6 +24,7 @@ public final class FacetState {
   private String myExternalSystemIdInInternalStorage;
   private Element myConfiguration;
 
+  @ApiStatus.Internal
   @Property(surroundWithTag = false)
   @XCollection
   public final List<FacetState> subFacets = new ArrayList<>();

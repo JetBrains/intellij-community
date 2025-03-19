@@ -1,28 +1,31 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import java.util.Date
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
 
 interface UnknownPropertyTypeEntity : WorkspaceEntity {
   val date: Date
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : UnknownPropertyTypeEntity, WorkspaceEntity.Builder<UnknownPropertyTypeEntity>, ObjBuilder<UnknownPropertyTypeEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<UnknownPropertyTypeEntity> {
     override var entitySource: EntitySource
-    override var date: Date
+    var date: Date
   }
 
-  companion object : Type<UnknownPropertyTypeEntity, Builder>() {
+  companion object : EntityType<UnknownPropertyTypeEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(date: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownPropertyTypeEntity {
+    operator fun invoke(
+      date: Date,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.date = date
       builder.entitySource = entitySource
@@ -34,7 +37,10 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: UnknownPropertyTypeEntity,
-                                      modification: UnknownPropertyTypeEntity.Builder.() -> Unit) = modifyEntity(
-  UnknownPropertyTypeEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyUnknownPropertyTypeEntity(
+  entity: UnknownPropertyTypeEntity,
+  modification: UnknownPropertyTypeEntity.Builder.() -> Unit,
+): UnknownPropertyTypeEntity {
+  return modifyEntity(UnknownPropertyTypeEntity.Builder::class.java, entity, modification)
+}
 //endregion

@@ -32,17 +32,6 @@
             area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionContributor"
-            interface="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptTemplatesProvider"
-            interface="org.jetbrains.kotlin.script.ScriptTemplatesProvider"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
             interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
             area="IDEA_PROJECT"
@@ -56,23 +45,15 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider"
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptDependenciesProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings"/>
-
     <cachesInvalidator implementation="org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependenciesFileInvalidator"/>
 
     <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.core.script.dependencies.JavaClassesInScriptDependenciesShortNameCache"/>
 
@@ -83,9 +64,7 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
-    <workspaceModel.cache.version implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptWorkspaceModelCacheVersion"/>
 
-    <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
 
     <registryKey
@@ -117,15 +96,15 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKtModuleFactory"/>
+    <ktModuleFactory implementation="org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptingKaModuleFactory"/>
 
     <idea.base.platforms.targetPlatformDetector implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingTargetPlatformDetector"/>
 
     <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
-    <scriptDefinitionContributor
+    <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
             order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.StandardScriptDefinitionContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
   </extensions>
 </idea-plugin>

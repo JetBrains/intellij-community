@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.platform.serviceContainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "serviceContainer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "serviceContainer",
+  module_name = "intellij.platform.serviceContainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":serviceContainer_resources"]
+)
+
+jvm_library(
+  name = "serviceContainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":serviceContainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/util-ex",
+    "//platform/projectModel-impl",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:fastutil-min",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/instanceContainer",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":serviceContainer_resources"]
+)
+
+jvm_test(
+  name = "serviceContainer_test",
+  runtime_deps = [":serviceContainer_test_lib"]
+)
+### auto-generated section `build intellij.platform.serviceContainer` end

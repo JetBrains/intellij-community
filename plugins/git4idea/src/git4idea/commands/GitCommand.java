@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,8 +24,10 @@ public final class GitCommand {
   public static final GitCommand ADD = write("add");
   public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = read("branch");
+  public static final GitCommand FOR_EACH_REF = read("for-each-ref");
   public static final GitCommand CAT_FILE = read("cat-file");
   public static final GitCommand CHECKOUT = write("checkout");
+  public static final GitCommand SPARSE_CHECKOUT = write("sparse-checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand CHECK_IGNORE = read("check-ignore");
   public static final GitCommand COMMIT = write("commit");
@@ -33,7 +36,7 @@ public final class GitCommand {
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
   public static final GitCommand CLONE = read("clone"); // write, but can't interfere with any other command => should be treated as read
   public static final GitCommand DIFF = read("diff");
-  public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
+  public static final GitCommand FETCH = read("fetch"); // fetch is a read-command, because it doesn't modify the index
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
   public static final GitCommand SHORTLOG = read("shortlog");
@@ -44,7 +47,7 @@ public final class GitCommand {
   public static final GitCommand MERGE_BASE = read("merge-base");
   public static final GitCommand MV = write("mv");
   public static final GitCommand PULL = write("pull");
-  public static final GitCommand PUSH = write("push");
+  public static final GitCommand PUSH = read("push"); // push is a read-command, because it doesn't modify the index. We still benefit from COMMIT & Co being write-commands, preventing HEAD from moving.
   public static final GitCommand REBASE = write("rebase");
   public static final GitCommand REMOTE = read("remote");
   public static final GitCommand RESET = write("reset");
@@ -52,12 +55,12 @@ public final class GitCommand {
   public static final GitCommand REVERT = write("revert");
   public static final GitCommand REV_LIST = read("rev-list");
   public static final GitCommand REV_PARSE = read("rev-parse");
+  public static final GitCommand REF_LOG = read("reflog");
   public static final GitCommand RM = write("rm");
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");
   public static final GitCommand STATUS = readOptional("status");
   public static final GitCommand SUBMODULE = write("submodule"); // NB: it is write command in the submodule, not in the current root which is the submodule's parent
-  public static final GitCommand SUBMODULE_HELPER = read("submodule--helper");
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
   public static final GitCommand UPDATE_REF = write("update-ref");
@@ -75,15 +78,22 @@ public final class GitCommand {
   public static final @NonNls String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
   public static final @NonNls String SSH_ASKPASS_REQUIRE_ENV = "SSH_ASKPASS_REQUIRE";
   public static final @NonNls String DISPLAY_ENV = "DISPLAY";
+  public static final @NonNls String GIT_SSH_ENV = "GIT_SSH";
+  public static final @NonNls String GIT_SSH_COMMAND_ENV = "GIT_SSH_COMMAND";
+  /**
+   * Marker-ENV, that lets git hooks to detect us if needed.
+   */
+  public static final @NonNls String IJ_HANDLER_MARKER_ENV = "INTELLIJ_GIT_EXECUTABLE";
 
-  enum LockingPolicy {
+  @ApiStatus.Internal
+  public enum LockingPolicy {
     READ,
     READ_OPTIONAL_LOCKING,
     WRITE
   }
 
-  @NotNull @NonNls private final String myName; // command name passed to git
-  @NotNull private final LockingPolicy myLocking; // Locking policy for the command
+  private final @NotNull @NonNls String myName; // command name passed to git
+  private final @NotNull LockingPolicy myLocking; // Locking policy for the command
 
   private GitCommand(@NotNull @NonNls String name, @NotNull LockingPolicy lockingPolicy) {
     myLocking = lockingPolicy;
@@ -105,38 +115,31 @@ public final class GitCommand {
    * <p>Use this constructor with care: specifying read-policy on a write operation may result in a conflict during simultaneous
    *    modification of index.</p>
    */
-  @NotNull
-  public GitCommand readLockingCommand() {
+  public @NotNull GitCommand readLockingCommand() {
     return new GitCommand(this, LockingPolicy.READ);
   }
 
-  @NotNull
-  public GitCommand writeLockingCommand() {
+  public @NotNull GitCommand writeLockingCommand() {
     return new GitCommand(this, LockingPolicy.WRITE);
   }
 
-  @NotNull
-  private static GitCommand read(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand read(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ);
   }
 
-  @NotNull
-  private static GitCommand readOptional(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand readOptional(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ_OPTIONAL_LOCKING);
   }
 
-  @NotNull
-  private static GitCommand write(@NotNull @NonNls String name) {
+  private static @NotNull GitCommand write(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.WRITE);
   }
 
-  @NotNull
-  public String name() {
+  public @NotNull String name() {
     return myName;
   }
 
-  @NotNull
-  public LockingPolicy lockingPolicy() {
+  public @NotNull LockingPolicy lockingPolicy() {
     return myLocking;
   }
 

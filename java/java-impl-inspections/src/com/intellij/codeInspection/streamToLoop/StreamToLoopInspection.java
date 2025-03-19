@@ -1,16 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.codeInspection.TrivialFunctionalExpressionUsageInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -32,7 +38,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 
-public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
@@ -54,12 +60,13 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       checkbox("SUPPORT_UNKNOWN_SOURCES", JavaBundle.message("checkbox.iterate.unknown.stream.sources.via.stream.iterator")));
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -94,8 +101,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     };
   }
 
-  @Nullable
-  static Operation createOperationFromCall(ChainVariable outVar, PsiMethodCallExpression call, boolean supportUnknownSources) {
+  static @Nullable Operation createOperationFromCall(ChainVariable outVar, PsiMethodCallExpression call, boolean supportUnknownSources) {
     PsiMethod method = call.resolveMethod();
     if(method == null) return null;
     PsiClass aClass = method.getContainingClass();
@@ -136,8 +142,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return true;
   }
 
-  @Nullable
-  static List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
+  static @Nullable List<OperationRecord> extractIterableForEach(PsiMethodCallExpression terminalCall) {
     if (!ITERABLE_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
@@ -161,8 +166,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return Arrays.asList(sourceRecord, terminalRecord);
   }
 
-  @Nullable
-  static List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
+  static @Nullable List<OperationRecord> extractMapForEach(PsiMethodCallExpression terminalCall) {
     if (!MAP_FOREACH.test(terminalCall) || !ExpressionUtils.isVoidContext(terminalCall)) return null;
     PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(terminalCall.getMethodExpression());
     if (qualifier == null) return null;
@@ -193,10 +197,9 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return Arrays.asList(sourceRecord, terminalRecord);
   }
 
-  @Nullable
-  static List<OperationRecord> extractOperations(ChainVariable outVar,
-                                                 PsiMethodCallExpression terminalCall,
-                                                 boolean supportUnknownSources) {
+  static @Nullable List<OperationRecord> extractOperations(ChainVariable outVar,
+                                                           PsiMethodCallExpression terminalCall,
+                                                           boolean supportUnknownSources) {
     List<OperationRecord> operations = new ArrayList<>();
     PsiMethodCallExpression currentCall = terminalCall;
     ChainVariable lastVar = outVar;
@@ -233,8 +236,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Contract("null -> null")
-  @Nullable
-  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
+  static @Nullable TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -243,28 +245,25 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     return null;
   }
 
-  static class ReplaceStreamWithLoopFix implements LocalQuickFix {
+  static class ReplaceStreamWithLoopFix extends PsiUpdateModCommandQuickFix {
     private final @IntentionName String myMessage;
 
     ReplaceStreamWithLoopFix(@IntentionName String message) {
       myMessage = message;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myMessage;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.stream.api.chain.with.loop");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if(!(element instanceof PsiMethodCallExpression terminalCall)) return;
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(terminalCall);
       if (surrounder == null) return;

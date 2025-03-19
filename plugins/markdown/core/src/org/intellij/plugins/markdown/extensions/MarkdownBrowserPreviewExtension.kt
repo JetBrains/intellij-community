@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base interface for browser-based preview extensions.
  */
+@ApiStatus.Obsolete
 interface MarkdownBrowserPreviewExtension: Comparable<MarkdownBrowserPreviewExtension>, Disposable {
   /**
    * The value on which the resource load order will be based on. Any non-special extension should use [Priority.DEFAULT] value.
@@ -57,6 +59,8 @@ interface MarkdownBrowserPreviewExtension: Comparable<MarkdownBrowserPreviewExte
 
       val all: List<Provider>
         get() = EP.extensionList
+
+      const val OPEN_LINK_EVENT_NAME = "openLink"
     }
   }
 }

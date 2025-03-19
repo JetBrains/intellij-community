@@ -31,7 +31,7 @@ import java.util.Collection;
  * Decorators are indexed by name
  * @author Ilya.Kazakevich
  */
-public class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> {
+public final class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> {
   /**
    * Key to search for python decorators
    */
@@ -45,9 +45,8 @@ public class PyDecoratorStubIndex extends StringStubIndexExtension<PyDecorator> 
     return StubIndex.getElements(KEY, name, project, scope, PyDecorator.class);
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PyDecorator> getKey() {
+  public @NotNull StubIndexKey<String, PyDecorator> getKey() {
     return KEY;
   }
 }

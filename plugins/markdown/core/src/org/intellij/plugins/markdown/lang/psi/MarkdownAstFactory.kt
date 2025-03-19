@@ -28,6 +28,7 @@ class MarkdownAstFactory: ASTFactory() {
       type == MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT -> MarkdownFrontMatterHeaderContent(type, text)
       type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length > 1 -> MarkdownTableSeparatorRow(text)
       type == MarkdownTokenTypes.TABLE_SEPARATOR && text.toString() == "|" -> MarkdownTableSeparator(text)
+      type == MarkdownElementTypes.COMMENT_VALUE -> MarkdownCommentValue(text)
       type in MarkdownTokenTypeSets.AUTO_LINKS -> MarkdownAutoLink(type, text)
       else -> super.createLeaf(type, text)
     }

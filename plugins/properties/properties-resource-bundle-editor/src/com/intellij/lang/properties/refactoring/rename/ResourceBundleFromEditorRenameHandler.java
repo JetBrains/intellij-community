@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.refactoring.rename;
 
 import com.intellij.lang.properties.ResourceBundle;
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.RenameHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -71,7 +72,7 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
     invoke(project, null, null, dataContext);
   }
 
-  private static List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
+  private static @Unmodifiable List<PsiElement> getPsiElementsFromGroup(final PropertiesPrefixGroup propertiesPrefixGroup) {
     return ContainerUtil.mapNotNull(propertiesPrefixGroup.getChildren(), treeElement -> {
       if (treeElement instanceof PropertyStructureViewElement) {
         return ((PropertyStructureViewElement)treeElement).getPsiElement();

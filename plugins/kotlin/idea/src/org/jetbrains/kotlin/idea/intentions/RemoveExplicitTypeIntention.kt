@@ -28,11 +28,13 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
     KotlinBundle.lazyMessage("remove.explicit.type.specification")
 ), HighPriorityAction {
 
-    override fun applicabilityRange(element: KtCallableDeclaration): TextRange? = getRange(element)
+    override fun applicabilityRange(element: KtCallableDeclaration): TextRange? = Holder.getRange(element)
 
-    override fun applyTo(element: KtCallableDeclaration, editor: Editor?) = removeExplicitType(element)
+    override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {
+        Holder.removeExplicitType(element)
+    }
 
-    companion object {
+    object Holder {
         fun removeExplicitType(element: KtCallableDeclaration) {
             val initializer = (element as? KtDeclarationWithInitializer)?.initializer
             val typeArgumentList = initializer?.let { getQualifiedTypeArgumentList(it) }
@@ -70,7 +72,7 @@ class RemoveExplicitTypeIntention : SelfTargetingRangeIntention<KtCallableDeclar
                     element.resolveToDescriptorIfAny()
                 )
             ) return null
-            if (element.isExplicitTypeReferenceNeededForTypeInference()) return null
+            if (element.isExplicitTypeReferenceNeededForTypeInference(typeReference)) return null
 
             return when {
                 initializer != null -> TextRange(element.startOffset, initializer.startOffset - 1)

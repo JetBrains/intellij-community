@@ -2,19 +2,14 @@
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.DialogPanel
-import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import net.miginfocom.layout.*
@@ -24,7 +19,6 @@ import javax.swing.*
 import javax.swing.border.LineBorder
 import javax.swing.text.JTextComponent
 import kotlin.math.max
-import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Mig Layout is going to be removed, IDEA-306719")
@@ -74,7 +68,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   val components: MutableList<JComponent> = SmartList()
-  var rightIndex = Int.MAX_VALUE
 
   private var lastComponentConstraintsWithSplit: CC? = null
 
@@ -99,25 +92,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private var isTrailingSeparator = false
   private var isComment = false
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
-    if (title != null) {
-      label(title)
-      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
-    }
-    builder.withButtonGroup(buttonGroup, body)
-  }
-
-  override fun checkBoxGroup(title: String?, body: () -> Unit) {
-    if (title != null) {
-      label(title)
-      gapAfter = "${spacing.radioGroupTitleVerticalGap}px!"
-    }
-    body()
-  }
-
-  override var enabled = true
+  private var enabled: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -143,7 +118,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var visible = true
+  override var visible: Boolean = true
     set(value) {
       if (field == value) {
         return
@@ -167,40 +142,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsEnabled = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      subRows?.forEach {
-        it.enabled = value
-        it.subRowsEnabled = value
-      }
-
-      components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
-    }
-
-  override var subRowsVisible = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      subRows?.forEach {
-        it.visible = value
-        it.subRowsVisible = value
-        if (it != subRows!!.last()) {
-          it.gapAfter = if (value) null else "0px!"
-        }
-      }
-    }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override var subRowIndent: Int = -1
-
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
@@ -223,16 +164,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent,
+                           indent = newIndent,
                            incrementsIndent = incrementsIndent)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
-      separatorRow.enabled = subRowsEnabled
-      separatorRow.subRowsEnabled = subRowsEnabled
-      separatorRow.visible = subRowsVisible
-      separatorRow.subRowsVisible = subRowsVisible
+      separatorRow.visible = true
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
@@ -245,10 +183,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     subRows.add(insertIndex, row)
 
-    row.enabled = subRowsEnabled
-    row.subRowsEnabled = subRowsEnabled
-    row.visible = subRowsVisible
-    row.subRowsVisible = subRowsVisible
+    row.visible = true
 
     if (label != null) {
       row.addComponent(label)
@@ -271,64 +206,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   override fun titledRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
-    return createBlockRow(title, true, init)
+    return createBlockRow(title, init)
   }
 
-  override fun blockRow(init: Row.() -> Unit): Row {
-    return createBlockRow(null, false, init)
-  }
-
-  private fun createBlockRow(@NlsContexts.Separator title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
-    val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
+  private fun createBlockRow(@NlsContexts.Separator title: String?, init: Row.() -> Unit): Row {
+    val parentRow = createChildRow(indent = indent, title = title, isSeparated = true, incrementsIndent = true)
     parentRow.init()
     val result = parentRow.createChildRow()
     result.internalPlaceholder()
     result.largeGapAfter()
     return result
-  }
-
-  override fun hideableRow(title: String, incrementsIndent: Boolean, init: Row.() -> Unit): Row {
-    val titledSeparator = HideableTitledSeparator(title)
-    val separatorRow = createChildRow()
-    separatorRow.addTitleComponent(titledSeparator, isEmpty = false)
-    builder.hideableRowNestingLevel++
-    try {
-      val panelRow = createChildRow(indent, incrementsIndent = incrementsIndent)
-      panelRow.init()
-      titledSeparator.row = panelRow
-      titledSeparator.collapse()
-      return panelRow
-    }
-    finally {
-      builder.hideableRowNestingLevel--
-    }
-  }
-
-  override fun nestedPanel(title: String?, init: LayoutBuilder.() -> Unit): CellBuilder<DialogPanel> {
-    val nestedBuilder = createLayoutBuilder()
-    nestedBuilder.init()
-
-    val panel = DialogPanel(title, layout = null)
-    nestedBuilder.builder.build(panel, arrayOf())
-
-    builder.validateCallbacks.addAll(nestedBuilder.builder.validateCallbacks)
-    builder.componentValidateCallbacks.putAll(nestedBuilder.builder.componentValidateCallbacks)
-    mergeCallbacks(builder.customValidationRequestors, nestedBuilder.builder.customValidationRequestors)
-    mergeCallbacks(builder.applyCallbacks, nestedBuilder.builder.applyCallbacks)
-    mergeCallbacks(builder.resetCallbacks, nestedBuilder.builder.resetCallbacks)
-    mergeCallbacks(builder.isModifiedCallbacks, nestedBuilder.builder.isModifiedCallbacks)
-
-    lateinit var panelBuilder: CellBuilder<DialogPanel>
-    row {
-      panelBuilder = panel(CCFlags.growX)
-    }
-    return panelBuilder
-  }
-
-  private fun <K, V> mergeCallbacks(map: MutableMap<K, MutableList<V>>, nestedMap: Map<K, List<V>>) {
-    for ((requestor, callbacks) in nestedMap) {
-      map.getOrPut(requestor) { mutableListOf() }.addAll(callbacks)
-    }
   }
 
   private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
@@ -376,11 +263,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return CellBuilderImpl(builder, this, component)
   }
 
-  override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
-    addComponent(viewComponent)
-    return CellBuilderImpl(builder, this, component, viewComponent)
-  }
-
   internal fun addComponent(component: JComponent, cc: CC = CC()) {
     components.add(component)
     builder.componentConstraints.put(component, cc)
@@ -401,10 +283,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (labeled && components.size == 2 && component.border is LineBorder) {
       builder.componentConstraints.get(components.first())?.vertical?.gapBefore = builder.defaultComponentConstraintCreator.vertical1pxGap
-    }
-
-    if (component is JRadioButton) {
-      builder.topButtonGroup?.add(component)
     }
 
     builder.defaultComponentConstraintCreator.addGrowIfNeeded(cc, component, spacing)
@@ -448,10 +326,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private val JComponent.constraints: CC
     get() = builder.componentConstraints.getOrPut(this) { CC() }
 
-  fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean) {
-    addCommentRow(comment, maxLineLength, forComponent, null)
-  }
-
   // not using @JvmOverloads to maintain binary compatibility
   fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean, anchorComponent: JComponent?) {
     val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
@@ -486,54 +360,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
   }
 
-  override fun alignRight() {
-    if (rightIndex != Int.MAX_VALUE) {
-      throw IllegalStateException("right allowed only once")
-    }
-    rightIndex = components.size
-  }
-
-  override fun largeGapAfter() {
+  private fun largeGapAfter() {
     gapAfter = "${spacing.largeVerticalGap}px!"
-  }
-
-  override fun createNoteOrCommentRow(component: JComponent): Row {
-    val cc = CC()
-    cc.vertical.gapBefore = gapToBoundSize(if (subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-
-    val row = createChildRow(label = null, noGrid = true)
-    row.addComponent(component, cc)
-    return row
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  @ApiStatus.Internal
-  override fun radioButton(text: String, comment: String?): CellBuilder<JBRadioButton> {
-    val result = super.radioButton(text, comment)
-    attachSubRowsEnabled(result.component)
-    return result
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override fun radioButton(text: String, prop: KMutableProperty0<Boolean>, comment: String?): CellBuilder<JBRadioButton> {
-    return super.radioButton(text, prop, comment).also { attachSubRowsEnabled(it.component) }
   }
 
   override fun onGlobalApply(callback: () -> Unit): Row {
     builder.applyCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onGlobalReset(callback: () -> Unit): Row {
-    builder.resetCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onGlobalIsModified(callback: () -> Boolean): Row {
-    builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
     return this
   }
 
@@ -564,13 +396,6 @@ private class CellBuilderImpl<T : JComponent>(
   override val component: T,
   private val viewComponent: JComponent = component
 ) : CellBuilder<T> {
-  private var applyIfEnabled = false
-  private var property: GraphProperty<*>? = null
-
-  override fun withGraphProperty(property: GraphProperty<*>): CellBuilder<T> {
-    this.property = property
-    return this
-  }
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
     row.addCommentRow(text, maxLineLength, forComponent, viewComponent)
@@ -589,7 +414,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T> {
     builder.componentValidateCallbacks[component.origin] = { callback(ValidationInfoBuilder(component.origin), component) }
-    property?.let { builder.customValidationRequestors.getOrPut(component.origin, { SmartList() }).add(it::afterPropagation) }
     return this
   }
 
@@ -608,43 +432,6 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  override fun enabled(isEnabled: Boolean) {
-    viewComponent.isEnabled = isEnabled
-  }
-
-  override fun enableIf(predicate: ComponentPredicate): CellBuilder<T> {
-    viewComponent.isEnabled = predicate()
-    predicate.addListener { viewComponent.isEnabled = it }
-    return this
-  }
-
-  override fun visible(isVisible: Boolean) {
-    viewComponent.isVisible = isVisible
-  }
-
-  override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
-    viewComponent.isVisible = predicate()
-    predicate.addListener { viewComponent.isVisible = it }
-    return this
-  }
-
-  override fun applyIfEnabled(): CellBuilder<T> {
-    applyIfEnabled = true
-    return this
-  }
-
-  override fun shouldSaveOnApply(): Boolean {
-    return !(applyIfEnabled && !viewComponent.isEnabled)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
-  override fun sizeGroup(name: String): CellBuilderImpl<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      sizeGroup(name)
-    }
-    return this
-  }
-
   @Deprecated("Use Kotlin UI DSL Version 2")
   override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
@@ -659,27 +446,6 @@ private class CellBuilderImpl<T : JComponent>(
     }
     return this
   }
-
-  override fun withLargeLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
-    }
-    return this
-  }
-
-  override fun withLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
-    }
-    return this
-  }
-
-  override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(gapLeft, true)
-    }
-    return this
-  }
 }
 
 private val JComponent.origin: JComponent
@@ -689,8 +455,3 @@ private val JComponent.origin: JComponent
       else -> this
     }
   }
-
-private fun Row.attachSubRowsEnabled(component: AbstractButton) {
-  subRowsEnabled = component.selected()
-  component.selected.addListener { subRowsEnabled = it }
-}

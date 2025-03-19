@@ -37,7 +37,7 @@ class Test1 {
       if (s.equals("1")) {
         return Option.option(1);
       } else {
-        return <error descr="Incompatible types. Found: 'Test1.Option<java.lang.String>', required: 'Test1.Option<java.lang.Integer>'">Option.option("2");</error>
+        return Option.<error descr="Incompatible types. Found: 'Test1.Option<java.lang.String>', required: 'Test1.Option<java.lang.Integer>'">option</error>("2");
       }
     };
   }

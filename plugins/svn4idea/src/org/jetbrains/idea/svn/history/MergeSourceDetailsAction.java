@@ -37,7 +37,7 @@ public class MergeSourceDetailsAction extends AnAction implements DumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_MASK | InputEvent.CTRL_MASK)), comp);
   }
 
-  private boolean enabled(final AnActionEvent e) {
+  private static boolean enabled(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     final VirtualFile revisionVirtualFile = e.getData(VcsDataKeys.VCS_VIRTUAL_FILE);

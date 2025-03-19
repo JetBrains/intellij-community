@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.nio.file.Path;
 /**
  * to be called after checkout - notifiers extenders on checkout completion
  */
+@ApiStatus.Internal
 public final class CompositeCheckoutListener implements CheckoutProvider.Listener {
   private static final Logger LOG = Logger.getInstance(CompositeCheckoutListener.class);
 
@@ -47,8 +49,9 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           break;
         }
       }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
+      catch (ProcessCanceledException pce) {
+        LOG.info("CompositeCheckoutListener.directoryCheckedOut call has been canceled by: " + pce);
+        break;
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);
@@ -62,9 +65,6 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
           break;
         }
-      }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);
@@ -91,9 +91,6 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
           LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
           break;
         }
-      }
-      catch (ProcessCanceledException ignore) {
-        LOG.info("Checkout listener " + listener + " has been canceled");
       }
       catch (Exception e) {
         LOG.warn("Error in checkout listener: " + listener, e);

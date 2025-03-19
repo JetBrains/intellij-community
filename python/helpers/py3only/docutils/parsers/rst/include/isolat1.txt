@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |Aacute| unicode:: U+000C1 .. LATIN CAPITAL LETTER A WITH ACUTE
 .. |aacute| unicode:: U+000E1 .. LATIN SMALL LETTER A WITH ACUTE

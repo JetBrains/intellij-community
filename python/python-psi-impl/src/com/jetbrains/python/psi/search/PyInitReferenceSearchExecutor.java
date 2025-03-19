@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {
     PsiElement element = queryParameters.getElementToSearch();
@@ -50,8 +50,7 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
 
   private static class ClassInitializationProcessor extends RequestResultProcessor {
 
-    @NotNull
-    private final SingleTargetRequestResultProcessor myProcessor;
+    private final @NotNull SingleTargetRequestResultProcessor myProcessor;
 
     private ClassInitializationProcessor(@NotNull PyClass cls) {
       super(cls);

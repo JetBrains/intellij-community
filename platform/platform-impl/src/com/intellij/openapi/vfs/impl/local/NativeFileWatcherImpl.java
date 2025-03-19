@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.IdeCoreBundle;
@@ -17,11 +18,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.system.CpuArch;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,6 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
@@ -175,7 +179,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (myIsShuttingDown) {
       return;
     }
-    if (ShutDownTracker.isShutdownHookRunning()) {
+    if (ShutDownTracker.isShutdownStarted()) {
       myIsShuttingDown = true;
       return;
     }
@@ -305,8 +309,10 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   @SuppressWarnings("SpellCheckingInspection")
   private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
 
+  @ReviseWhenPortedToJDK(value = "21", description = "drop normalization")
   private final class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
+    private final boolean myNormalizePaths = SystemInfo.isMac && !CurrentJavaVersion.currentJavaVersion().isAtLeast(21);
     private WatcherOp myLastOp;
     private final List<String> myLines = new ArrayList<>();
 
@@ -431,7 +437,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         return;
       }
 
-      if (SystemInfo.isMac) {
+      if (myNormalizePaths) {
         path = Normalizer.normalize(path, Normalizer.Form.NFC);
       }
 
@@ -445,8 +451,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  protected boolean isRepetition(String path) {
-    // debouncing subsequent notifications (happen e.g. on copying of large files); this reduces path checks at least 20% on Windows
+  private boolean isRepetition(String path) {
+    // debouncing sequential notifications (happens on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {
         int last = myLastChangedPathIndex - i - 1;

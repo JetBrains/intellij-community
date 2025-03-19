@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -40,12 +41,31 @@ public class JDParser {
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
 
-  private final static String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
-  private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
-  private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
-  private final static Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
+  private static final String SNIPPET_START_REGEXP = "\\{s*@snippet[^\\}]*";
+  private static final String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
+  private static final Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
+  private static final Pattern SNIPPET_START_PATTERN = Pattern.compile(SNIPPET_START_REGEXP);
 
-  private final static String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
+  // Markdown tokens
+  private static final String CODE_FENCE_BACKTICK = "```";
+  private static final String CODE_FENCE_TILDE = "~~~";
+  private static final String CODE_FENCE_BACKTICK_REGEXP = "`{3,}";
+  private static final String CODE_FENCE_TILDE_REGEXP = "~{3,}";
+  private static final Pattern CODE_FENCE_TILDE_PATTERN = Pattern.compile(CODE_FENCE_TILDE_REGEXP);
+  private static final Pattern CODE_FENCE_BACKTICK_PATTERN = Pattern.compile(CODE_FENCE_BACKTICK_REGEXP);
+
+  private static final String LIST_ITEM_REGEXP = "^\\d+?[).]";
+  private static final Pattern LIST_ITEM_PATTERN = Pattern.compile(LIST_ITEM_REGEXP);
+
+  private static final String LIST_ITEM_START = "- ";
+  private static final String LIST_ITEM_START_2 = "+ ";
+  private static final String LIST_ITEM_START_3 = "* ";
+  private static final String LINE_SEPARATOR = "---";
+  private static final String HEADER_START = "#";
+  private static final String BLOCKQUOTE_START = ">";
+  private static final String TABLE_ROW_START = "|";
+
+  private static final String[] TAGS_TO_KEEP_INDENTS_AFTER = {"table", "ol", "ul", "div", "dl"};
 
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -63,12 +83,11 @@ public class JDParser {
   }
 
   private static boolean isJavadoc(CommentInfo info) {
-    return JAVADOC_HEADER.equals(info.commentHeader);
+    return info.docComment.isMarkdownComment() || JAVADOC_HEADER.equals(info.commentHeader);
   }
 
   private static CommentInfo getElementsCommentInfo(@Nullable PsiElement psiElement) {
-    if (psiElement instanceof PsiDocComment) {
-      PsiDocComment docComment = (PsiDocComment)psiElement;
+    if (psiElement instanceof PsiDocComment docComment) {
 
       PsiJavaDocumentedElement owner = docComment.getOwner();
       if (owner != null) {
@@ -80,8 +99,7 @@ public class JDParser {
         return getCommentInfo(docComment, parent);
       }
     }
-    else if (psiElement instanceof PsiJavaDocumentedElement) {
-      PsiJavaDocumentedElement owner = (PsiJavaDocumentedElement)psiElement;
+    else if (psiElement instanceof PsiJavaDocumentedElement owner) {
       PsiDocComment docComment = owner.getDocComment();
       if (docComment != null) {
         return getCommentInfo(docComment, owner);
@@ -96,45 +114,31 @@ public class JDParser {
     String commentFooter = null;
 
     StringBuilder sb = new StringBuilder();
-    boolean first = true;
-    PsiElement e = docComment;
-    while (true) {
-      if (e instanceof PsiDocComment) {
-        PsiComment cm = (PsiComment)e;
-        String text = cm.getText();
-        if (text.startsWith("//")) {
-          if (!first) sb.append('\n');
-          sb.append(text.substring(2).trim());
-        }
-        else if (text.startsWith("/*")) {
-          int commentHeaderEndOffset = CharArrayUtil.shiftForward(text, 1, "*");
-          int commentFooterStartOffset = CharArrayUtil.shiftBackward(text, text.length() - 2, "*");
+    String text = docComment.getText();
+    if (text.startsWith("///")){
+      sb.append(text);
+    } else if (text.startsWith("/*")) {
+      int commentHeaderEndOffset = CharArrayUtil.shiftForward(text, 1, "*");
+      int commentFooterStartOffset = CharArrayUtil.shiftBackward(text, text.length() - 2, "*");
 
-          if (commentHeaderEndOffset <= commentFooterStartOffset) {
-            commentHeader = text.substring(0, commentHeaderEndOffset);
-            commentFooter = text.substring(commentFooterStartOffset + 1);
-            text = text.substring(commentHeaderEndOffset, commentFooterStartOffset + 1);
-          }
-          else {
-            commentHeader = text.substring(0, commentHeaderEndOffset);
-            text = "";
-            commentFooter = "";
-          }
-          sb.append(text);
-        }
+      if (commentHeaderEndOffset <= commentFooterStartOffset) {
+        commentHeader = text.substring(0, commentHeaderEndOffset);
+        commentFooter = text.substring(commentFooterStartOffset + 1);
+        text = text.substring(commentHeaderEndOffset, commentFooterStartOffset + 1);
       }
-      else if (!(e instanceof PsiWhiteSpace || e instanceof PsiComment)) {
-        break;
+      else {
+        commentHeader = text.substring(0, commentHeaderEndOffset);
+        text = "";
+        commentFooter = "";
       }
-      first = false;
-      e = e.getNextSibling();
+      sb.append(text);
     }
 
     return new CommentInfo(docComment, owner, commentHeader, sb.toString(), commentFooter);
   }
 
   private @NotNull JDComment parse(@NotNull CommentInfo info, @NotNull CommentFormatter formatter) {
-    JDComment comment = createComment(info.commentOwner, formatter);
+    JDComment comment = createComment(info.commentOwner, formatter, info.docComment.isMarkdownComment());
     parse(info.comment, comment);
     if (info.commentHeader != null) {
       comment.setFirstCommentLine(info.commentHeader);
@@ -145,15 +149,15 @@ public class JDParser {
     return comment;
   }
 
-  private static JDComment createComment(@NotNull PsiElement commentOwner, @NotNull CommentFormatter formatter) {
+  private static JDComment createComment(@NotNull PsiElement commentOwner, @NotNull CommentFormatter formatter, boolean isMarkdown) {
     if (commentOwner instanceof PsiClass) {
-      return new JDClassComment(formatter);
+      return new JDClassComment(formatter, isMarkdown);
     }
     else if (commentOwner instanceof PsiMethod) {
-      return new JDMethodComment(formatter);
+      return new JDMethodComment(formatter, isMarkdown);
     }
     else {
-      return new JDComment(formatter);
+      return new JDComment(formatter, isMarkdown);
     }
   }
 
@@ -161,7 +165,7 @@ public class JDParser {
     if (text == null) return;
 
     List<Boolean> markers = new ArrayList<>();
-    List<String> l = toArray(text, markers);
+    List<String> l = toArray(text, markers, comment.getIsMarkdown());
 
     //if it is - we are dealing with multiline comment:
     // /**
@@ -176,23 +180,38 @@ public class JDParser {
     int size = l.size();
     if (size == 0) return;
 
-    // preprocess strings - removes first '*'
+    // preprocess strings - removes leading token
     for (int i = 0; i < size; i++) {
       String line = l.get(i);
       line = line.trim();
       if (!line.isEmpty()) {
-        if (line.charAt(0) == '*') {
-          if ((markers.get(i)).booleanValue()) {
-            if (line.length() > 1 && line.charAt(1) == ' ') {
-              line = line.substring(2);
+        if(!comment.getIsMarkdown()){
+          if (line.charAt(0) == '*') {
+            if ((markers.get(i)).booleanValue()) {
+              if (line.length() > 1 && line.charAt(1) == ' ') {
+                line = line.substring(2);
+              }
+              else {
+                line = line.substring(1);
+              }
             }
             else {
-              line = line.substring(1);
+              line = line.substring(1).trim();
             }
           }
-          else {
-            line = line.substring(1).trim();
+        } else {
+          // Note: Markdown comments are not trimmed like html ones, except for javadoc tags
+          String newLine;
+          int tagStart = CharArrayUtil.shiftForward(line, 3, " \t");
+          if (tagStart != line.length() && line.charAt(tagStart) == '@') {
+            newLine = line.substring(tagStart);
+          } else {
+            newLine = StringUtil.trimStart(line, "/// ");
+            if (Strings.areSameInstance(newLine, line)) {
+              newLine = StringUtil.trimStart(line, "///");
+            }
           }
+          line = newLine;
         }
       }
       l.set(i, line);
@@ -236,14 +255,14 @@ public class JDParser {
           }
         }
         else {
-          if (sb.length() > 0) {
+          if (!sb.isEmpty()) {
             sb.append('\n');
           }
           sb.append(line);
         }
       }
       else {
-        if (sb.length() > 0) {
+        if (!sb.isEmpty()) {
           sb.append('\n');
         }
       }
@@ -259,18 +278,17 @@ public class JDParser {
   /**
    * Breaks the specified string by the specified separators into array of strings
    *
-   * @param s          the specified string
-   * @param markers    if this parameter is not null then it will be filled with Boolean values:
-   *                   true if the corresponding line in returned list is inside &lt;pre&gt; tag,
-   *                   false if it is outside
+   * @param s       the specified string
+   * @param markers if this parameter is not null then it will be filled with Boolean values:
+   *                true if the corresponding line in returned list is inside &lt;pre&gt; tag or a markdown codeblock,
+   *                false if it is outside
    * @return list of strings (lines)
    */
-  @Nullable
-  private List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers) {
+  private @Nullable List<String> toArray(@Nullable String s, @Nullable List<Boolean> markers, boolean markdownComment) {
     if (s == null) return null;
-    s = s.trim();
+    s = markdownComment ? s : s.trim();
     if (s.isEmpty()) return null;
-    boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES;
+    boolean p2nl = markers != null && mySettings.JD_P_AT_EMPTY_LINES && !markdownComment;
     List<String> list = new ArrayList<>();
     StringTokenizer st = new StringTokenizer(s, "\n", true);
     boolean first = true;
@@ -281,12 +299,13 @@ public class JDParser {
     boolean isInMultilineTodo = false;
     boolean isInSnippet = false;
     int snippetBraceBalance = 0;
+    String codeblockType = null;
 
     while (st.hasMoreTokens()) {
       String token = st.nextToken();
       curPos += token.length();
 
-      String lineWithoutAsterisk = getLineWithoutAsterisk(token);
+      String lineWithoutAsterisk = getLineWithoutLeadingTokens(token, markdownComment);
       if (!isInMultilineTodo) {
         if (isMultilineTodoStart(lineWithoutAsterisk)) {
           isInMultilineTodo = true;
@@ -317,7 +336,10 @@ public class JDParser {
           markers.add(preCount > 0 || firstLineToKeepIndents >= 0);
           continue;
         }
-        if (preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) token = token.trim();
+
+        if (!markdownComment && preCount == 0 && firstLineToKeepIndents < 0 && !isInMultilineTodo && snippetBraceBalance == 0) {
+          token = token.trim();
+        }
 
         list.add(token);
 
@@ -328,8 +350,25 @@ public class JDParser {
             snippetBraceBalance += getLineSnippetTagBraceBalance(token);
           }
           if (lineHasUnclosedPreTag(token)) preCount++;
-          markers.add(preCount > 0 || firstLineToKeepIndents >= 0 || isInMultilineTodo || snippetBraceBalance != 0);
+          if (markdownComment && codeblockType == null) {
+            codeblockType = lineGetStartCodeFence(token);
+            if (codeblockType != null) preCount++;
+          }
+
+          markers.add(preCount > 0
+                      || firstLineToKeepIndents >= 0
+                      || isInMultilineTodo
+                      || snippetBraceBalance != 0
+                      || (markdownComment && isStartOfMarkdownHeader(token)) /* Markdown titles cannot be split */);
+
           if (lineHasClosingPreTag(token)) preCount--;
+          if (markdownComment && codeblockType != null) {
+            if (Strings.areSameInstance(codeblockType, CODE_FENCE_BACKTICK) && token.contains(CODE_FENCE_BACKTICK)
+                || Strings.areSameInstance(codeblockType, CODE_FENCE_TILDE) && token.contains(CODE_FENCE_TILDE)) {
+              preCount--;
+              codeblockType = null;
+            }
+          }
         }
 
       }
@@ -382,9 +421,10 @@ public class JDParser {
     return Integer.MAX_VALUE;
   }
 
-  private static String getLineWithoutAsterisk(@NotNull String line) {
-    int asteriskPos = line.indexOf('*');
-    return asteriskPos >= 0 ? line.substring(asteriskPos + 1) : line;
+  private static String getLineWithoutLeadingTokens(@NotNull String line, boolean markdownComment) {
+    String leadingToken = markdownComment ? "///" : "*";
+    int asteriskPos = line.indexOf(leadingToken);
+    return asteriskPos >= 0 ? line.substring(asteriskPos + leadingToken.length()) : line;
   }
 
   private static boolean isParaTag(String token) {
@@ -408,8 +448,7 @@ public class JDParser {
     return false;
   }
 
-  @NotNull
-  private static String removeWhiteSpacesFrom(@NotNull final String token) {
+  private static @NotNull String removeWhiteSpacesFrom(final @NotNull String token) {
     final StringBuilder result = new StringBuilder();
     for (char c : token.toCharArray()) {
       if (c != ' ') result.append(c);
@@ -425,10 +464,10 @@ public class JDParser {
    * @param width width of the wrapped text
    * @return list of strings (lines)
    */
-  @Contract("null, _ -> null")
-  private List<String> toArrayWrapping(@Nullable String s, int width) {
+  @Contract("null, _, _ -> null")
+  private List<String> toArrayWrapping(@Nullable String s, int width, boolean markdownComment) {
     List<String> list = new ArrayList<>();
-    List<Pair<String, Boolean>> pairs = splitToParagraphs(s);
+    List<Pair<String, Boolean>> pairs = splitToParagraphs(s, markdownComment);
     if (pairs == null) {
       return null;
     }
@@ -444,7 +483,7 @@ public class JDParser {
       while (true) {
         if (seq.length() < width || isMarked) {
           // keep remaining line and proceed with next paragraph
-          seq = isMarked ? seq : seq.trim();
+          seq = isMarked || markdownComment ? seq : seq.trim();
           list.add(seq);
           break;
         }
@@ -537,27 +576,24 @@ public class JDParser {
    * @param s   string to process
    * @return    processing result
    */
-  @Contract("null -> null")
-  private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s) {
+  @Contract("null, _ -> null")
+  private List<Pair<String, Boolean>> splitToParagraphs(@Nullable String s, boolean markdownComment) {
     if (s == null) return null;
-    s = s.trim();
+    s = markdownComment ? s : s.trim();
     if (s.isEmpty()) return null;
 
     List<Pair<String, Boolean>> result = new ArrayList<>();
 
     StringBuilder sb = new StringBuilder();
     List<Boolean> markers = new ArrayList<>();
-    List<String> list = toArray(s, markers);
+    List<String> list = toArray(s, markers, markdownComment);
     Boolean[] marks = markers.toArray(new Boolean[0]);
     markers.clear();
     assert list != null;
     for (int i = 0; i < list.size(); i++) {
       String s1 = list.get(i);
       if (marks[i].booleanValue()) {
-        if (sb.length() != 0) {
-          result.add(new Pair<>(sb.toString(), false));
-          sb.setLength(0);
-        }
+        endParagraph(result, sb);
         result.add(Pair.create(s1, marks[i]));
       }
       else {
@@ -566,12 +602,22 @@ public class JDParser {
           result.add(Pair.create(s1, marks[i]));
         }
         else {
-          if (sb.length() != 0) sb.append(' ');
-          sb.append(s1);
+          if (markdownComment && isStartOfMarkdownConstruct(s1)) {
+            endParagraph(result, sb);
+          }
+
+          if (!sb.isEmpty()) sb.append(' ');
+          if (markdownComment && !sb.isEmpty()) {
+            // When fusing lines together, horizontal spacing loses its meaning
+            sb.append(s1.trim());
+          }
+          else {
+            sb.append(s1);
+          }
         }
       }
     }
-    if (!mySettings.JD_PRESERVE_LINE_FEEDS && sb.length() != 0) {
+    if (!mySettings.JD_PRESERVE_LINE_FEEDS && !sb.isEmpty()) {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
@@ -581,8 +627,36 @@ public class JDParser {
     return mySettings.JD_PRESERVE_LINE_FEEDS || HtmlUtil.startsWithTag(line);
   }
 
+  /**
+   * @return Whether there is a star of a markdown construct
+   * That should not be merged into a single paragraph
+   */
+  private static boolean isStartOfMarkdownConstruct(@NotNull String line) {
+    String trimmedLine = line.trim();
+    return trimmedLine.startsWith(BLOCKQUOTE_START)
+           || trimmedLine.startsWith(LINE_SEPARATOR)
+           || isStartOfMarkdownHeader(trimmedLine)
+           || isMarkdownTableRow(trimmedLine)
+           || isStartOfMarkdownListItem(trimmedLine);
+  }
+
+  private static boolean isStartOfMarkdownHeader(@NotNull String line) {
+    return line.trim().startsWith(HEADER_START);
+  }
+
+  private static boolean isStartOfMarkdownListItem(@NotNull String line) {
+    return line.startsWith(LIST_ITEM_START)
+           || line.startsWith(LIST_ITEM_START_2)
+           || line.startsWith(LIST_ITEM_START_3)
+           || LIST_ITEM_PATTERN.matcher(line).find();
+  }
+
+  private static boolean isMarkdownTableRow(@NotNull String line) {
+    return line.startsWith(TABLE_ROW_START) && StringUtil.getOccurrenceCount(line, TABLE_ROW_START) > 1;
+  }
+
   private static void endParagraph(@NotNull List<? super Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       result.add(new Pair<>(sb.toString(), false));
       sb.setLength(0);
     }
@@ -718,6 +792,41 @@ public class JDParser {
     return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
   }
 
+
+  /**
+   * Detects a stating code block fence in a given line
+   *
+   * @return The code fence type, or null if none are found
+   */
+  private static String lineGetStartCodeFence(@NotNull String line) {
+    int backticks = getOccurenceCount(line, CODE_FENCE_BACKTICK_PATTERN);
+    int tildes = getOccurenceCount(line, CODE_FENCE_TILDE_PATTERN);
+
+    boolean hasBacktickStart = backticks % 2 != 0;
+    boolean hasTildeStart = tildes % 2 != 0;
+
+    if (hasBacktickStart && hasTildeStart) {
+      if (backticks == tildes) {
+        // find the first fence
+        int backtickIndex = line.lastIndexOf(CODE_FENCE_BACKTICK);
+        int tildeIndex = line.lastIndexOf(CODE_FENCE_TILDE);
+        return backtickIndex > tildeIndex ? CODE_FENCE_TILDE : CODE_FENCE_BACKTICK;
+      }
+      else {
+        // give back whoever has the least amount of occurrences
+        return backticks > tildes ? CODE_FENCE_TILDE : CODE_FENCE_BACKTICK;
+      }
+    }
+    else if (hasTildeStart) {
+      return CODE_FENCE_BACKTICK;
+    }
+    else if (hasBacktickStart) {
+      return CODE_FENCE_TILDE;
+    }
+    return null;
+  }
+
+
   @SuppressWarnings("SameParameterValue")
   private static int getOccurenceCount(@NotNull String line, @NotNull Pattern pattern) {
     Matcher matcher = pattern.matcher(line);
@@ -728,9 +837,8 @@ public class JDParser {
     return count;
   }
 
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix) {
-    return formatJDTagDescription(str, prefix, prefix);
+  protected @NotNull StringBuilder formatJDTagDescription(@Nullable String str, @NotNull CharSequence prefix, boolean markdownComment) {
+    return formatJDTagDescription(str, prefix, prefix, markdownComment);
   }
 
   /**
@@ -744,10 +852,10 @@ public class JDParser {
    * @param continuationPrefix prefix to be added to lines after the first
    * @return formatted JavaDoc tag description
    */
-  @NotNull
-  protected StringBuilder formatJDTagDescription(@Nullable String str,
+  protected @NotNull StringBuilder formatJDTagDescription(@Nullable String str,
                                                  @NotNull CharSequence firstLinePrefix,
-                                                 @NotNull CharSequence continuationPrefix) {
+                                                 @NotNull CharSequence continuationPrefix,
+                                                          boolean markdownComment) {
     final int rightMargin = myCommonSettings.getRootSettings().getRightMargin(JavaLanguage.INSTANCE);
     final int maxCommentLength = rightMargin - continuationPrefix.length();
     final int firstLinePrefixLength = firstLinePrefix.length();
@@ -760,7 +868,7 @@ public class JDParser {
 
     //If wrap comments selected, comments should be wrapped by the right margin
     if (myCommonSettings.WRAP_COMMENTS && canWrap) {
-      list = toArrayWrapping(str, maxCommentLength);
+      list = toArrayWrapping(str, maxCommentLength, markdownComment);
 
       if (firstLineShorter
           && list != null && !list.isEmpty()
@@ -768,7 +876,7 @@ public class JDParser {
       {
         list = new ArrayList<>();
         //want the first line to be shorter, according to it's prefix
-        String firstLine = toArrayWrapping(str, rightMargin - firstLinePrefixLength).get(0);
+        String firstLine = toArrayWrapping(str, rightMargin - firstLinePrefixLength, markdownComment).get(0);
         //so now first line is exactly same width we need
         list.add(firstLine);
         str = str.substring(firstLine.length());
@@ -779,7 +887,7 @@ public class JDParser {
         }
 
         //getting all another lines according to their prefix
-        List<String> subList = toArrayWrapping(str, maxCommentLength);
+        List<String> subList = toArrayWrapping(str, maxCommentLength, markdownComment);
 
         //removing pre tag
         if (unclosedPreTag && subList != null && !subList.isEmpty()) {
@@ -790,7 +898,7 @@ public class JDParser {
       }
     }
     else {
-      list = toArray(str, new ArrayList<>());
+      list = toArray(str, new ArrayList<>(), markdownComment);
     }
 
     if (list == null) {
@@ -803,7 +911,7 @@ public class JDParser {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
+        if (!markdownComment && line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i) && snippetBraceBalance == 0) {
           sb.append(P_START_TAG);
         }
         else {

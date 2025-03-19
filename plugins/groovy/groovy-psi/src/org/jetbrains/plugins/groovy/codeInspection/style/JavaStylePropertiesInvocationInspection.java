@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -15,10 +15,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isFake;
 
-public class JavaStylePropertiesInvocationInspection extends BaseInspection {
-  @NotNull
+public final class JavaStylePropertiesInvocationInspection extends BaseInspection {
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitMethodCall(@NotNull GrMethodCall methodCall) {
@@ -26,8 +25,8 @@ public class JavaStylePropertiesInvocationInspection extends BaseInspection {
         if (JavaStylePropertiesUtil.isPropertyAccessor(methodCall)) {
           final String message = GroovyBundle.message("java.style.property.access");
           final GrExpression expression = methodCall.getInvokedExpression();
-          if (expression instanceof GrReferenceExpression) {
-            PsiElement referenceNameElement = ((GrReferenceExpression)expression).getReferenceNameElement();
+          if (expression instanceof GrReferenceExpression ref) {
+            PsiElement referenceNameElement = ref.getReferenceNameElement();
             registerError(referenceNameElement, message, myFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

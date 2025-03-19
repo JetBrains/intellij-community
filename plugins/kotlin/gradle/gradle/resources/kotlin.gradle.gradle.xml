@@ -22,21 +22,15 @@
             interface="org.jetbrains.kotlin.idea.gradle.configuration.serialize.KotlinExtrasSerializationService"
             dynamic="true"/>
 
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.mppProjectResolve"
-            interface="org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension"
-            dynamic="true"/>
 
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDiagnosticFixProvider implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptDiagnosticFixProvider"/>
-
-    <scripting.support.checker.provider id="GraldeScriptingSupportCheckerProvider"
-            implementation="org.jetbrains.kotlin.idea.gradle.scripting.GradleScriptingSupportCheckerProvider"/>
-
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
+
+    <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
+    <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.gradle.configuration.GradleModuleDetector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -62,21 +56,12 @@
                  defaultValue="false"
                  restartRequired="false"/>
 
-    <applicationService
-            serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.state.DontShowAgainKotlinAdditionPluginSuggestionService"/>
-
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.gradle.scripting.settings.StandaloneScriptsStorage"/>
     <projectService serviceInterface="org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.gradle.configuration.mpp.ExternalSystemBasedStableModuleNameProvider"/>
 
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger"/>
-    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.diagnostic.KotlinGradleBuildErrorsChecker"/>
+    <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLoggingActivity"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.gradle.statistics.ComposeLibraryUsagesCollector"/>
   </extensions>
-
-  <actions>
-    <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.idea.gradle.actions.ShowKotlinGradleDslLogs">
-    </action>
-  </actions>
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>

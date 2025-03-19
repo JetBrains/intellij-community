@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -8,7 +8,10 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -22,15 +25,14 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
 
-public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String FOR_EACH_METHOD = "forEach";
 
   private static final CallMatcher SET_REMOVE_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_SET, "removeAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -52,7 +54,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
         if (listSizeRange.isEmpty() || listSizeRange.max() <= 2) return;
         if (setSizeRange.min() > listSizeRange.max()) return;
         final LocalQuickFix[] fix;
-        if (PsiUtil.isLanguageLevel8OrHigher(call) && ExpressionUtils.isVoidContext(call)) {
+        if (PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, call) && ExpressionUtils.isVoidContext(call)) {
           final String replacement =
             ParenthesesUtils.getText(arg, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".forEach(" + qualifier.getText() + "::remove)";
           fix = new LocalQuickFix[]{new ReplaceWithListForEachFix(replacement)};
@@ -77,8 +79,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
    * @param collection a collection to get the range of possible values for its size
    * @return the set of possible values for the collection size
    */
-  @NotNull
-  public static LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
+  public static @NotNull LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
     final DfType origType = CommonDataflow.getDfType(collection);
     final DfType length = lengthField.getFromQualifier(origType);
@@ -87,30 +88,26 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     return dfType.getRange();
   }
 
-  private static class ReplaceWithListForEachFix implements LocalQuickFix {
+  private static class ReplaceWithListForEachFix extends PsiUpdateModCommandQuickFix {
     final String myExpressionText;
 
     ReplaceWithListForEachFix(String string) {
       myExpressionText = string;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", myExpressionText);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.slow.abstract.set.remove.all.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       final PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length != 1) return;

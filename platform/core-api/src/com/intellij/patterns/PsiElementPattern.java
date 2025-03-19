@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
@@ -35,78 +35,67 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     super(aClass);
   }
 
-  protected PsiElementPattern(@NotNull final InitialPatternCondition<T> condition) {
+  protected PsiElementPattern(final @NotNull InitialPatternCondition<T> condition) {
     super(condition);
   }
 
   @Override
-  protected PsiElement[] getChildren(@NotNull final PsiElement element) {
+  protected PsiElement[] getChildren(final @NotNull PsiElement element) {
     return element.getChildren();
   }
 
   @Override
-  protected PsiElement getParent(@NotNull final PsiElement element) {
+  protected PsiElement getParent(final @NotNull PsiElement element) {
     if (element instanceof PsiFile && InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment((PsiFile)element)) {
       return element.getParent();
     }
     return element.getContext();
   }
 
-  @NotNull
-  public Self withElementType(IElementType type) {
+  public @NotNull Self withElementType(IElementType type) {
     return withElementType(PlatformPatterns.elementType().equalTo(type));
   }
 
-  @NotNull
-  public Self withElementType(TokenSet type) {
+  public @NotNull Self withElementType(TokenSet type) {
     return withElementType(PlatformPatterns.elementType().tokenSet(type));
   }
 
-  @NotNull
-  public Self afterLeaf(@NlsSafe final String @NotNull ... withText) {
+  public @NotNull Self afterLeaf(final @NlsSafe String @NotNull ... withText) {
     return afterLeaf(psiElement().withText(StandardPatterns.string().oneOf(withText)));
   }
 
-  @NotNull
-  public Self afterLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
+  public @NotNull Self afterLeaf(final @NotNull ElementPattern<? extends PsiElement> pattern) {
     return afterLeafSkipping(psiElement().whitespaceCommentEmptyOrError(), pattern);
   }
 
-  @NotNull
-  public Self beforeLeaf(@NlsSafe final String @NotNull ... withText) {
+  public @NotNull Self beforeLeaf(final @NlsSafe String @NotNull ... withText) {
     return beforeLeaf(psiElement().withText(StandardPatterns.string().oneOf(withText)));
   }
 
-  @NotNull
-  public Self beforeLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
+  public @NotNull Self beforeLeaf(final @NotNull ElementPattern<? extends PsiElement> pattern) {
     return beforeLeafSkipping(psiElement().whitespaceCommentEmptyOrError(), pattern);
   }
 
-  @NotNull
-  public Self whitespace() {
+  public @NotNull Self whitespace() {
     return withElementType(TokenType.WHITE_SPACE);
   }
 
-  @NotNull
-  public Self whitespaceCommentOrError() {
+  public @NotNull Self whitespaceCommentOrError() {
     return andOr(psiElement().whitespace(), psiElement(PsiComment.class), psiElement(PsiErrorElement.class));
   }
 
-  @NotNull
-  public Self whitespaceCommentEmptyOrError() {
+  public @NotNull Self whitespaceCommentEmptyOrError() {
     return andOr(psiElement().whitespace(), psiElement(PsiComment.class), psiElement(PsiErrorElement.class), psiElement().withText(""));
   }
 
-  @NotNull
-  public Self withFirstNonWhitespaceChild(@NotNull final ElementPattern<? extends PsiElement> pattern) {
+  public @NotNull Self withFirstNonWhitespaceChild(final @NotNull ElementPattern<? extends PsiElement> pattern) {
     return withChildren(collection(PsiElement.class).filter(not(psiElement().whitespace()), collection(PsiElement.class).first(pattern)));
   }
 
-  @NotNull
-  public Self withReference(final Class<? extends PsiReference> referenceClass) {
+  public @NotNull Self withReference(final Class<? extends PsiReference> referenceClass) {
     return with(new PatternCondition<T>("withReference") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         for (final PsiReference reference : t.getReferences()) {
           if (referenceClass.isInstance(reference)) {
             return true;
@@ -117,43 +106,39 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self inFile(@NotNull final ElementPattern<? extends PsiFile> filePattern) {
+  public @NotNull Self inFile(final @NotNull ElementPattern<? extends PsiFile> filePattern) {
     return with(new PatternCondition<T>("inFile") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return filePattern.accepts(t.getContainingFile(), context);
       }
     });
   }
 
-  @NotNull
-  public Self inVirtualFile(@NotNull final ElementPattern<? extends VirtualFile> filePattern) {
+  public @NotNull Self inVirtualFile(final @NotNull ElementPattern<? extends VirtualFile> filePattern) {
     return with(new PatternCondition<T>("inVirtualFile") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return filePattern.accepts(t.getContainingFile().getViewProvider().getVirtualFile(), context);
       }
     });
   }
 
-  @NotNull
   @Override
-  public Self equalTo(@NotNull final T o) {
+  public @NotNull Self equalTo(final @NotNull T o) {
     return with(new PatternCondition<T>("equalTo") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return t.getManager().areElementsEquivalent(t, o);
       }
 
     });
   }
 
-  @NotNull
-  public Self withElementType(final ElementPattern<IElementType> pattern) {
+  public @NotNull Self withElementType(final ElementPattern<IElementType> pattern) {
     return with(new PatternCondition<T>("withElementType") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         final ASTNode node = t.getNode();
         return node != null && pattern.accepts(node.getElementType());
       }
@@ -161,33 +146,27 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self withText(@NotNull @NonNls final String text) {
+  public @NotNull Self withText(final @NotNull @NonNls String text) {
     return withText(StandardPatterns.string().equalTo(text));
   }
 
-  @NotNull
-  public Self withoutText(@NotNull final String text) {
+  public @NotNull Self withoutText(final @NotNull String text) {
     return withoutText(StandardPatterns.string().equalTo(text));
   }
 
-  @NotNull
-  public Self withName(@NotNull @NonNls final String name) {
+  public @NotNull Self withName(final @NotNull @NonNls String name) {
     return withName(StandardPatterns.string().equalTo(name));
   }
 
-  @NotNull
-  public Self withName(@NonNls final String @NotNull ... names) {
+  public @NotNull Self withName(final @NonNls String @NotNull ... names) {
     return withName(StandardPatterns.string().oneOf(names));
   }
 
-  @NotNull
-  public Self withName(@NotNull final ElementPattern<String> name) {
+  public @NotNull Self withName(final @NotNull ElementPattern<String> name) {
     return with(new PsiNamePatternCondition<>("withName", name));
   }
 
-  @NotNull
-  public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
+  public @NotNull Self afterLeafSkipping(final @NotNull ElementPattern skip, final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("afterLeafSkipping") {
       @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
@@ -207,8 +186,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self beforeLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
+  public @NotNull Self beforeLeafSkipping(final @NotNull ElementPattern skip, final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("beforeLeafSkipping") {
       @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
@@ -228,8 +206,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self atStartOf(@NotNull final ElementPattern pattern) {
+  public @NotNull Self atStartOf(final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("atStartOf") {
       @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
@@ -245,8 +222,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self withTextLength(@NotNull final ElementPattern lengthPattern) {
+  public @NotNull Self withTextLength(final @NotNull ElementPattern lengthPattern) {
     return with(new PatternConditionPlus<T, Integer>("withTextLength", lengthPattern) {
       @Override
       public boolean processValues(T t,
@@ -257,13 +233,11 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self notEmpty() {
+  public @NotNull Self notEmpty() {
     return withTextLengthLongerThan(0);
   }
 
-  @NotNull
-  public Self withTextLengthLongerThan(final int minLength) {
+  public @NotNull Self withTextLengthLongerThan(final int minLength) {
     return with(new PatternCondition<T>("withTextLengthLongerThan") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -272,13 +246,11 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self withText(@NotNull final ElementPattern text) {
+  public @NotNull Self withText(final @NotNull ElementPattern text) {
     return with(_withText(text));
   }
 
-  @NotNull
-  private PatternCondition<T> _withText(final ElementPattern pattern) {
+  private @NotNull PatternCondition<T> _withText(final ElementPattern pattern) {
     return new PatternConditionPlus<T, String>("_withText", pattern) {
       @Override
       public boolean processValues(T t,
@@ -289,36 +261,32 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     };
   }
 
-  @NotNull
-  public Self withoutText(@NotNull final ElementPattern text) {
+  public @NotNull Self withoutText(final @NotNull ElementPattern text) {
     return without(_withText(text));
   }
 
-  @NotNull
-  public Self withLanguage(@NotNull final Language language) {
+  public @NotNull Self withLanguage(final @NotNull Language language) {
     return with(new PatternCondition<T>("withLanguage") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return t.getLanguage().equals(language);
       }
     });
   }
 
-  @NotNull
-  public Self withMetaData(final ElementPattern<? extends PsiMetaData> metaDataPattern) {
+  public @NotNull Self withMetaData(final ElementPattern<? extends PsiMetaData> metaDataPattern) {
     return with(new PatternCondition<T>("withMetaData") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         return t instanceof PsiMetaOwner && metaDataPattern.accepts(((PsiMetaOwner)t).getMetaData(), context);
       }
     });
   }
 
-  @NotNull
-  public Self referencing(final ElementPattern<? extends PsiElement> targetPattern) {
+  public @NotNull Self referencing(final ElementPattern<? extends PsiElement> targetPattern) {
     return with(new PatternCondition<T>("referencing") {
       @Override
-      public boolean accepts(@NotNull final T t, final ProcessingContext context) {
+      public boolean accepts(final @NotNull T t, final ProcessingContext context) {
         final PsiReference[] references = t.getReferences();
         for (final PsiReference reference : references) {
           if (targetPattern.accepts(reference.resolve(), context)) return true;
@@ -333,8 +301,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self compiled() {
+  public @NotNull Self compiled() {
     return with(new PatternCondition<T>("compiled") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -343,8 +310,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self withTreeParent(final ElementPattern<? extends PsiElement> ancestor) {
+  public @NotNull Self withTreeParent(final ElementPattern<? extends PsiElement> ancestor) {
     return with(new PatternCondition<T>("withTreeParent") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -353,8 +319,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self insideStarting(final ElementPattern<? extends PsiElement> ancestor) {
+  public @NotNull Self insideStarting(final ElementPattern<? extends PsiElement> ancestor) {
     return with(new PatternCondition<PsiElement>("insideStarting") {
       @Override
       public boolean accepts(@NotNull PsiElement start, ProcessingContext context) {
@@ -374,8 +339,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
     });
   }
 
-  @NotNull
-  public Self withLastChildSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
+  public @NotNull Self withLastChildSkipping(final @NotNull ElementPattern skip, final @NotNull ElementPattern pattern) {
     return with(new PatternCondition<T>("withLastChildSkipping") {
       @Override
       public boolean accepts(@NotNull T t, ProcessingContext context) {
@@ -394,7 +358,7 @@ public abstract class PsiElementPattern<T extends PsiElement, Self extends PsiEl
       super(aClass);
     }
 
-    protected Capture(@NotNull final InitialPatternCondition<T> condition) {
+    protected Capture(final @NotNull InitialPatternCondition<T> condition) {
       super(condition);
     }
 

@@ -35,7 +35,7 @@ class ConfigureAssociationsAction extends AnAction {
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
         final Project project = e.getProject();
         if (project == null) return;
 

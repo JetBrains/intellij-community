@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.junit.Test;
 
 import java.util.Random;
@@ -29,7 +29,7 @@ public class StringUtilPerformanceTest {
   public void containsAnyChar() {
     assertTrue(StringUtil.containsAnyChar(TEST_STRING, Integer.toString(new Random().nextInt())));
 
-    PlatformTestUtil.startPerformanceTest("StringUtil.containsAnyChar()", 600, () -> {
+    Benchmark.newBenchmark("StringUtil.containsAnyChar()", () -> {
       for (int i = 0; i < 1_000_000; i++) {
         if (StringUtil.containsAnyChar(TEST_STRING, "XYZ")) {
           throw new AssertionError();
@@ -38,6 +38,6 @@ public class StringUtilPerformanceTest {
           throw new AssertionError();
         }
       }
-    }).assertTiming();
+    }).start();
   }
 }

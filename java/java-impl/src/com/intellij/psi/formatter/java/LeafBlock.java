@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.*;
@@ -53,8 +39,7 @@ public class LeafBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     if (myStartOffset != -1) {
       return new TextRange(myStartOffset, myStartOffset + myNode.getTextLength());
     }
@@ -62,8 +47,7 @@ public class LeafBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     return EMPTY_SUB_BLOCKS;
   }
 
@@ -92,8 +76,7 @@ public class LeafBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(final int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(final int newChildIndex) {
     return new ChildAttributes(getIndent(), null);
   }
 
@@ -113,8 +96,7 @@ public class LeafBlock implements ASTBlock, ExtraRangesProvider {
   }
 
   @Override
-  @Nullable
-  public List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
+  public @Nullable List<TextRange> getExtraRangesToFormat(@NotNull FormattingRangesInfo info) {
     int startOffset = getTextRange().getStartOffset();
     if (info.isOnInsertedLine(startOffset) && myNode.getTextLength() == 1 && myNode.textContains('}')) {
       ASTNode parent = myNode.getTreeParent();

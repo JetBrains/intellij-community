@@ -1,40 +1,40 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
-import com.intellij.idea.Bombed;
 import com.intellij.idea.ExcludeFromTestDiscovery;
-import com.intellij.idea.HardwareAgentRequired;
+import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.nastradamus.NastradamusClient;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.teamcity.TeamCityClient;
 import com.intellij.testFramework.*;
-import com.intellij.util.MathUtil;
+import com.intellij.testFramework.bucketing.*;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.text.StringsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
@@ -44,9 +44,9 @@ public class TestCaseLoader {
   public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
-  public static final String HARDWARE_AGENT_REQUIRED_FLAG = "idea.hardware.agent.required";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
   public static final String FAIR_BUCKETING_FLAG = "idea.fair.bucketing";
+  public static final String IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG = "idea.tests.duration.bucketing.enabled";
   public static final String NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED_FLAG = "idea.enable.nastradamus.test.distributor";
   public static final String NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED_FLAG = "idea.nastradamus.shadow.data.collection.enabled";
 
@@ -55,18 +55,20 @@ public class TestCaseLoader {
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
   private static final boolean RUN_ONLY_AFFECTED_TESTS = Boolean.getBoolean(RUN_ONLY_AFFECTED_TEST_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
-  private static final boolean HARDWARE_AGENT_REQUIRED = Boolean.getBoolean(HARDWARE_AGENT_REQUIRED_FLAG);
   public static final boolean IS_VERBOSE_LOG_ENABLED = Boolean.getBoolean(VERBOSE_LOG_ENABLED_FLAG);
 
   public static final int TEST_RUNNERS_COUNT = Integer.parseInt(System.getProperty(TEST_RUNNERS_COUNT_FLAG, "1"));
   public static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
-  private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
   /**
    * Distribute tests equally among the buckets
    */
   private static final boolean IS_FAIR_BUCKETING = Boolean.getBoolean(FAIR_BUCKETING_FLAG);
+
+  /**
+   * Distribute tests equally among buckets using tests duration data
+   */
+  public static final boolean IS_TESTS_DURATION_BUCKETING_ENABLED = Boolean.getBoolean(IS_TESTS_DURATION_BUCKETING_ENABLED_FLAG);
 
   /**
    * Intelligent test distribution to shorten time of tests run (ultimately - predict what tests to run on a changeset)
@@ -93,45 +95,93 @@ public class TestCaseLoader {
 
   private static final String PLATFORM_LITE_FIXTURE_NAME = "com.intellij.testFramework.PlatformLiteFixture";
 
+  public static final String COMMON_TEST_GROUPS_RESOURCE_NAME = "tests/testGroups.properties";
+
   private final HashSet<Class<?>> myClassSet = new HashSet<>();
   private final List<Throwable> myClassLoadingErrors = new ArrayList<>();
   private Class<?> myFirstTestClass;
   private Class<?> myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
+  private boolean myGetClassesCalled = false;
 
-  private static final AtomicBoolean isNastradamusCacheInitialized = new AtomicBoolean();
+  private static final ThreadLocal<Boolean> ourBucketingSchemeInitRecursionLock = new ThreadLocal<>();
+  private static final Lazy<BucketingScheme> ourBucketingScheme = LazyKt.lazy(() -> {
+    BucketingScheme scheme;
 
-  private static final NastradamusClient nastradamusClient = initNastradamus();
+    if (IS_TESTS_DURATION_BUCKETING_ENABLED) {
+      scheme = new TestsDurationBucketingScheme();
+    }
+    else if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
+      scheme = new NastradamusBucketingScheme();
+    }
+    else if (IS_FAIR_BUCKETING) {
+      scheme = new CyclicCounterBucketingScheme();
+    }
+    else {
+      scheme = new HashingBucketingScheme();
+    }
 
-  static {
-    initFairBuckets(false);
-  }
+    // run tests "as usual", but send the data to Nastradamus
+    if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED && !(scheme instanceof NastradamusBucketingScheme)) {
+      scheme = new NastradamusDataCollectingBucketingScheme(scheme);
+    }
 
+    if (ourBucketingSchemeInitRecursionLock.get() == Boolean.TRUE) throw new IllegalStateException("recursion detected");
+    ourBucketingSchemeInitRecursionLock.set(Boolean.TRUE);
+    try {
+      scheme.initialize();
+    } finally {
+      ourBucketingSchemeInitRecursionLock.remove();
+    }
+    return scheme;
+  });
+
+  /**
+   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
+   */
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
 
+  /**
+   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
+   */
+  @Deprecated(forRemoval = true)
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
-    myForceLoadPerformanceTests = forceLoadPerformanceTests;
-
-    TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
-    TestClassesFilter affectedTestsFilter = affectedTestsFilter();
-    if (affectedTestsFilter != null) {
-      testClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
-    }
-    myTestClassesFilter = testClassesFilter;
-    System.out.println(myTestClassesFilter);
+    this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
   }
 
-  private static TestClassesFilter calcTestClassFilter(String classFilterName) {
-    String patterns = getTestPatterns();
+  private TestCaseLoader(TestClassesFilter filter, boolean forceLoadPerformanceTests) {
+    myForceLoadPerformanceTests = forceLoadPerformanceTests;
+    myTestClassesFilter = filter;
+    System.out.println("Using tests filter: " + myTestClassesFilter);
+  }
+
+  private static TestClassesFilter wrapAsCompositeTestClassesFilter(TestClassesFilter filter) {
+    final TestClassesFilter affectedTestsFilter = affectedTestsFilter();
+    if (affectedTestsFilter != null) {
+      filter = new TestClassesFilter.And(filter, affectedTestsFilter);
+    }
+    final TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+    if (explicitTestsFilter != null) {
+      filter = new TestClassesFilter.And(filter, explicitTestsFilter);
+    }
+    return filter;
+  }
+
+  private static TestClassesFilter calcTestClassFilter(@Nullable String patterns,
+                                                       @Nullable List<@NotNull String> testGroupNames,
+                                                       @Nullable String classFilterName) {
     if (!StringUtil.isEmpty(patterns)) {
       System.out.println("Using patterns: [" + patterns + "]");
       return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
     }
+    if (testGroupNames == null) {
+      testGroupNames = Collections.emptyList();
+    }
 
-    List<String> testGroupNames = getTestGroups();
     if (testGroupNames.contains(ALL_TESTS_GROUP)) {
       System.out.println("Using all classes");
       return TestClassesFilter.ALL_CLASSES;
@@ -164,6 +214,7 @@ public class TestCaseLoader {
     System.out.println("Using test groups: " + testGroupNames);
     Set<String> testGroupNameSet = new HashSet<>(testGroupNames);
     testGroupNameSet.removeAll(groups.keySet());
+    testGroupNameSet.remove(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
     if (!testGroupNameSet.isEmpty()) {
       System.err.println("Unknown test groups: " + testGroupNameSet);
     }
@@ -176,18 +227,16 @@ public class TestCaseLoader {
 
   private static @Nullable TestClassesFilter affectedTestsFilter() {
     if (RUN_ONLY_AFFECTED_TESTS) {
-      System.out.println("Trying to load affected tests.");
-      File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
-      if (affectedTestClasses.exists()) {
-        System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
-        try {
-          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        }
-      }
+      return Stream.of(System.getProperty("intellij.build.test.affected.classes.file", ""),
+                       System.getProperty("idea.home.path", "") + "/discoveredTestClasses.txt")
+        .filter(Predicate.not(StringUtil::isEmptyOrSpaces))
+        .map(Path::of)
+        .filter(Files::isRegularFile)
+        .findFirst()
+        .map(path -> {
+          System.out.println("Loading affected tests patterns from " + path);
+          return loadTestsFilterFromFile(path, true);
+        }).orElse(null);
     }
     else {
       System.out.println("Affected tests discovery is disabled. Will run with the standard test filter");
@@ -195,24 +244,55 @@ public class TestCaseLoader {
     return null;
   }
 
-  private static List<String> getTestGroups() {
+  private static @Nullable TestClassesFilter explicitTestsFilter() {
+    String fileName = System.getProperty("intellij.build.test.list.file");
+    if (fileName != null && !fileName.isBlank()) {
+      Path path = Path.of(fileName);
+      if (Files.isRegularFile(path)) {
+        System.out.println("Loading explicit tests list from " + path);
+        return loadTestsFilterFromFile(path, false);
+      }
+    }
+    return null;
+  }
+
+  private static @Nullable TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
+    try {
+      List<String> lines = Files.readAllLines(path);
+      if (lines.isEmpty()) return null;
+      if (ContainerUtil.and(lines, String::isBlank)) return null;
+      return linesArePatterns ? new PatternListTestClassFilter(lines) : new NameListTestClassFilter(lines);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static @Unmodifiable List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
-  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
+  private boolean isPotentiallyTestCase(String className, String moduleName) {
+    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(classNameWithoutPackage)) return false;
+    if (!myTestClassesFilter.matches(className, moduleName)) return false;
+    if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
+    if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
+    // Ignore those classes even if they're not set as myFirstTestClass and myLastTestClass
+    if (className.equals("_FirstInSuiteTest")) return false;
+    if (className.equals("_LastInSuiteTest")) return false;
+    return true;
+  }
+
+  private boolean isClassTestCase(Class<?> testCaseClass, String moduleName, boolean initializing) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass &&
         testCaseClass != myLastTestClass &&
         TestFrameworkUtil.canRunTest(testCaseClass)) {
 
-      // fair bucketing initialization
-      if (IS_FAIR_BUCKETING && BUCKETS.isEmpty()) return true;
-
-      // warmup caches from nastradamus (if it's not fully initialized)
-      if ((IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)
-          && !isNastradamusCacheInitialized.get()) {
-        return true;
-      }
+      // fair bucketing initialization or warmup caches from nastradamus (if it's not fully initialized)
+      if (initializing) return true;
 
       if (SelfSeedingTestCase.class.isAssignableFrom(testCaseClass) || matchesCurrentBucket(testCaseClass.getName())) {
         return true;
@@ -220,20 +300,6 @@ public class TestCaseLoader {
     }
 
     return false;
-  }
-
-  private static boolean matchesBucketViaNastradamus(@NotNull String testIdentifier) {
-    try {
-      return nastradamusClient.isClassInBucket(testIdentifier, (testClassName) -> matchesCurrentBucketViaHashing(testClassName));
-    }
-    catch (Exception e) {
-      // if fails, just fallback to consistent hashing
-      return matchesCurrentBucketViaHashing(testIdentifier);
-    }
-  }
-
-  static boolean matchesCurrentBucketViaHashing(@NotNull String testIdentifier) {
-    return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
   }
 
   /**
@@ -244,34 +310,15 @@ public class TestCaseLoader {
    * @see TestCaseLoader#TEST_RUNNER_INDEX
    */
   public static boolean matchesCurrentBucket(@NotNull String testIdentifier) {
-    // just run aggregator "as usual", but send the data to Nastradamus
-    if (IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED) {
-      // do not return result until Nastradamus is "production-ready"
-      matchesBucketViaNastradamus(testIdentifier);
-    }
-
-    if (IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) return matchesBucketViaNastradamus(testIdentifier);
-
-    if (!IS_FAIR_BUCKETING) {
-      return matchesCurrentBucketViaHashing(testIdentifier);
-    }
-
-    initFairBuckets(false);
-
-    return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
+    if (!shouldBucketTests()) return true;
+    return ourBucketingScheme.getValue().matchesCurrentBucket(testIdentifier);
   }
 
-  private static List<Class<?>> loadClassesForWarmup() {
-    var groupsTestCaseLoader = new TestCaseLoader("tests/testGroups.properties");
-
-    for (Path classesRoot : TestAll.getClassRoots()) {
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-
-      Collection<String> foundTestClasses = classFinder.getClasses();
-      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses);
-    }
-
-    var testCaseClasses = groupsTestCaseLoader.getClasses();
+  @ApiStatus.Internal
+  public static List<Class<?>> loadClassesForWarmup() {
+    var groupsTestCaseLoader = TestCaseLoader.Builder.fromDefaults().forWarmup().build();
+    groupsTestCaseLoader.fillTestCases("", TestAll.getClassRoots(), true);
+    var testCaseClasses = groupsTestCaseLoader.getClasses(false);
 
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
 
@@ -282,91 +329,23 @@ public class TestCaseLoader {
     return testCaseClasses;
   }
 
-  private static synchronized NastradamusClient initNastradamus() {
-    if (!(IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)) return null;
-
-    if (isNastradamusCacheInitialized.get()) return nastradamusClient;
-
-    var testCaseClasses = loadClassesForWarmup();
-    NastradamusClient nastradamus = null;
-    try {
-      System.out.println("Caching data from Nastradamus and TeamCity ...");
-      nastradamus = new NastradamusClient(
-        new URI(System.getProperty("idea.nastradamus.url")).normalize(),
-        testCaseClasses,
-        new TeamCityClient()
-      );
-      nastradamus.getRankedClasses();
-      System.out.println("Caching data from Nastradamus and TeamCity finished");
-    }
-    catch (Exception e) {
-      System.err.println("Unexpected exception during Nastradamus client instance initialization");
-      e.printStackTrace();
-    }
-
-    isNastradamusCacheInitialized.set(true);
-    return nastradamus;
-  }
-
   public static void sendTestRunResultsToNastradamus() {
-    if (!(IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED || IS_NASTRADAMUS_SHADOW_DATA_COLLECTION_ENABLED)) return;
+    // Don't initialize if it wasn't used
+    if (!ourBucketingScheme.isInitialized()) return;
+
+    BucketingScheme scheme = ourBucketingScheme.getValue();
+    if (!(scheme instanceof NastradamusBucketingScheme)) return;
+    NastradamusClient client = ((NastradamusBucketingScheme)scheme).getNastradamusClient();
+    if (client == null) return;
 
     try {
-      var testRunRequest = nastradamusClient.collectTestRunResults();
-      nastradamusClient.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
+      var testRunRequest = client.collectTestRunResults();
+      client.sendTestRunResults(testRunRequest, IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED);
     }
     catch (Exception e) {
       System.err.println("Unexpected error happened during sending test results to Nastradamus");
       e.printStackTrace();
     }
-  }
-
-  /**
-   * Init fair buckets for all test classes
-   */
-  public static synchronized void initFairBuckets(boolean useAsNastradamusFallback) {
-    if (useAsNastradamusFallback) {
-      // buckets were already initialized
-      if (!BUCKETS.isEmpty()) return;
-    }
-    else if (!IS_FAIR_BUCKETING || !BUCKETS.isEmpty()) return;
-
-    System.out.println("Fair bucketing initialization started ...");
-
-    var testCaseClasses = loadClassesForWarmup();
-
-    testCaseClasses.forEach(testCaseClass -> matchesCurrentBucketFair(testCaseClass.getName(), TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX));
-    System.out.println("Fair bucketing initialization finished.");
-  }
-
-  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier, int testRunnerCount, int testRunnerIndex) {
-    var value = BUCKETS.get(testIdentifier);
-
-    if (value != null) {
-      var isMatchedBucket = value == testRunnerIndex;
-
-      if (IS_VERBOSE_LOG_ENABLED) {
-        System.out.printf(
-          "Fair bucket match: test identifier `%s` (already sieved to buckets), runner count %s, runner index %s, is matching bucket %s%n",
-          testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
-      }
-
-      return isMatchedBucket;
-    }
-    else {
-      BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
-    }
-
-    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
-
-    var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
-
-    if (IS_VERBOSE_LOG_ENABLED) {
-      System.out.printf("Fair bucket match: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s%n",
-                        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
-    }
-
-    return isMatchedBucket;
   }
 
   /**
@@ -389,13 +368,10 @@ public class TestCaseLoader {
   }
 
   private boolean shouldAddTestCase(Class<?> testCaseClass, String moduleName, boolean checkForExclusion) {
-    if ((testCaseClass.getModifiers() & Modifier.ABSTRACT) != 0) return false;
+    if (Modifier.isAbstract(testCaseClass.getModifiers())) return false;
 
     if (checkForExclusion) {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
-
-      boolean isHardwareAgentRequired = getAnnotationInHierarchy(testCaseClass, HardwareAgentRequired.class) != null;
-      if (isHardwareAgentRequired != HARDWARE_AGENT_REQUIRED) return false;
     }
 
     if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
@@ -404,7 +380,7 @@ public class TestCaseLoader {
 
     try {
       final Method suiteMethod = testCaseClass.getMethod("suite");
-      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && (suiteMethod.getModifiers() & Modifier.STATIC) != 0) {
+      if (Test.class.isAssignableFrom(suiteMethod.getReturnType()) && Modifier.isStatic(suiteMethod.getModifiers())) {
         return true;
       }
     }
@@ -420,7 +396,7 @@ public class TestCaseLoader {
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) ||
-           isBombed(testCaseClass) ||
+           testCaseClass.isAnnotationPresent(IJIgnore.class) ||
            testCaseClass.isAnnotationPresent(IgnoreJUnit3.class) ||
            isExcludeFromTestDiscovery(testCaseClass);
   }
@@ -429,17 +405,14 @@ public class TestCaseLoader {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
-  public static boolean isBombed(final AnnotatedElement element) {
-    final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
-    if (bombedAnnotation == null) return false;
-    return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
-  }
-
-  public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
+  private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator, boolean initialization) {
     for (String className : classNamesIterator) {
+      if (!isPotentiallyTestCase(className, moduleName)) {
+        continue;
+      }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
-        if (isClassTestCase(candidateClass, moduleName)) {
+        if (isClassTestCase(candidateClass, moduleName, initialization)) {
           myClassSet.add(candidateClass);
         }
       }
@@ -500,15 +473,20 @@ public class TestCaseLoader {
    * @return Sorted list of loaded classes
    */
   public List<Class<?>> getClasses() {
-    List<Class<?>> result = new ArrayList<>(myClassSet.size());
+    return getClasses(true);
+  }
 
-    if (myFirstTestClass != null) {
+  List<Class<?>> getClasses(boolean includeFirstAndLast) {
+    myGetClassesCalled = true;
+    List<Class<?>> result = new ArrayList<>(myClassSet.size() + (includeFirstAndLast ? 2 : 0));
+
+    if (includeFirstAndLast && myFirstTestClass != null) {
       result.add(myFirstTestClass);
     }
 
     result.addAll(loadTestSorter().sorted(myClassSet.stream().toList(), TestCaseLoader::getRank));
 
-    if (myLastTestClass != null) {
+    if (includeFirstAndLast && myLastTestClass != null) {
       result.add(myLastTestClass);
     }
 
@@ -522,7 +500,7 @@ public class TestCaseLoader {
   private static TestSorter loadTestSorter() {
     String sorter = System.getProperty("intellij.build.test.sorter");
 
-    // use Nostradamus test sorter in case, if no other is specified
+    // use Nastradamus test sorter if no other is specified
     if (sorter == null && IS_NASTRADAMUS_TEST_DISTRIBUTOR_ENABLED) {
       sorter = "com.intellij.nastradamus.NastradamusTestCaseSorter";
     }
@@ -546,7 +524,7 @@ public class TestCaseLoader {
     Comparator<String> classNameComparator = REVERSE_ORDER ? Comparator.reverseOrder() : Comparator.naturalOrder();
     return new TestSorter() {
       @Override
-      public @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
+      public @Unmodifiable @NotNull List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker) {
         return ContainerUtil.sorted(testClasses,
                                     Comparator.<Class<?>>comparingInt(ranker).thenComparing(Class::getName, classNameComparator));
       }
@@ -575,32 +553,89 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, className);
   }
 
-  private static TestClassesFilter ourFilter;
+  // We assume that getPatterns and getTestGroups won't change during execution
+  @ApiStatus.Internal
+  public record TestClassesFilterArgs(
+    @Nullable String patterns, @Nullable List<@NotNull String> testGroupNames, @Nullable String testGroupsResourcePath
+  ) {
+  }
+
+  @ApiStatus.Internal
+  public static TestClassesFilterArgs getCommonTestClassesFilterArgs() {
+    return ourCommonTestClassesFilterArgs.getValue();
+  }
+
+  private static final Lazy<TestClassesFilterArgs> ourCommonTestClassesFilterArgs =
+    LazyKt.lazy(() -> {
+      return new TestClassesFilterArgs(getTestPatterns(), getTestGroups(), COMMON_TEST_GROUPS_RESOURCE_NAME);
+    });
+
+  private static final Lazy<TestClassesFilter> ourCommonTestClassesFilter =
+    LazyKt.lazy(() -> {
+      TestClassesFilterArgs args = ourCommonTestClassesFilterArgs.getValue();
+      TestClassesFilter filter = calcTestClassFilter(args.patterns, args.testGroupNames, args.testGroupsResourcePath);
+      System.out.println("Initialized tests filter: " + filter);
+      return filter;
+    });
+
+  // We assume that getPatterns and getTestGroups won't change during execution
+  private static final Lazy<TestClassesFilter> ourCommonCompositeTestClassesFilter =
+    LazyKt.lazy(() -> {
+      TestClassesFilter filter = wrapAsCompositeTestClassesFilter(ourCommonTestClassesFilter.getValue());
+      System.out.println("Initialized composite tests filter: " + filter);
+      return filter;
+    });
+
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
-  public static boolean isClassIncluded(String className) {
-    if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
-        !className.endsWith("Test")) {
+  public static boolean isClassNameIncluded(String className) {
+    if (!ClassFinder.isSuitableTestClassName(className, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS)) {
+      return false;
+    }
+    if ("_FirstInSuiteTest".equals(className) || "_LastInSuiteTest".equals(className)) {
       return false;
     }
 
-    if (ourFilter == null) {
-      ourFilter = calcTestClassFilter("tests/testGroups.properties");
-    }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
-           ourFilter.matches(className) &&
-           matchesCurrentBucket(className);
+           ourCommonCompositeTestClassesFilter.getValue().matches(className);
+  }
+
+  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
+  @SuppressWarnings("unused")
+  public static boolean isClassIncluded(String className) {
+    // JUnit 5 might rediscover `@Nested` tests if they were previously filtered out by `isClassNameIncluded`,
+    // but their host class was not filtered out. Let's not remove them again based on `ourFilter.matches(className)`,
+    // so not checking for `isClassNameIncluded` here.
+    return matchesCurrentBucket(className);
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
+    fillTestCases(rootPackage, classesRoots, false);
+  }
+
+  private void fillTestCases(String rootPackage, List<? extends Path> classesRoots, boolean warmUpPhase) {
+    if (myGetClassesCalled) {
+      throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
+    }
+    final String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    boolean noRelevantJarsRoot = StringUtil.isEmptyOrSpaces(relevantJarsRoot);
     long t = System.nanoTime();
 
     for (Path classesRoot : classesRoots) {
+      String fileName = classesRoot.getFileName().toString();
+      String moduleName = fileName;
+      if (fileName.endsWith(".jar")) {
+        if (noRelevantJarsRoot || !classesRoot.startsWith(relevantJarsRoot)) {
+          continue;
+        } else {
+          // .../idea-compile-parts-v2/test/intellij.java.compiler.tests/$sha256.jar
+          moduleName = classesRoot.getParent().getFileName().toString();
+        }
+      }
       int count = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot.toFile(), rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      loadTestCases(moduleName, classFinder.getClasses(), warmUpPhase);
       count = getClassesCount() - count;
       if (count > 0) {
         System.out.println("Loaded " + count + " classes from class root " + classesRoot);
@@ -614,7 +649,7 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
+    if (!warmUpPhase && !RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println(
@@ -632,5 +667,87 @@ public class TestCaseLoader {
       current = current.getSuperclass();
     }
     return null;
+  }
+
+  @ApiStatus.Experimental
+  public static class Builder {
+    private String myTestGroupsResourcePath;
+    private String myPatterns;
+    private List<String> myTestGroups;
+    private boolean myForceLoadPerformanceTests = false;
+    private boolean myWarmup = false;
+
+    private Builder() {
+    }
+
+    public static Builder fromEmpty() {
+      return new Builder();
+    }
+
+    public static Builder fromDefaults() {
+      return new Builder().withDefaults();
+    }
+
+    private Builder withDefaults() {
+      myPatterns = getTestPatterns();
+      myTestGroups = getTestGroups();
+      myTestGroupsResourcePath = COMMON_TEST_GROUPS_RESOURCE_NAME;
+      return this;
+    }
+
+    public Builder withTestGroups(List<String> groups) {
+      myTestGroups = groups;
+      return this;
+    }
+
+    public Builder withTestGroupsResourcePath(String resourcePath) {
+      myTestGroupsResourcePath = resourcePath;
+      return this;
+    }
+
+    public Builder withPatterns(String patterns) {
+      myPatterns = patterns;
+      return this;
+    }
+
+    public Builder withForceLoadPerformanceTests(boolean flag) {
+      myForceLoadPerformanceTests = flag;
+      return this;
+    }
+
+    Builder forWarmup() {
+      myWarmup = true;
+      return this;
+    }
+
+    public TestCaseLoader build() {
+      if (myPatterns == null && myTestGroups == null) {
+        throw new IllegalStateException("Either withPatterns, withTestGroups, or fromDefault should be called");
+      }
+      TestClassesFilter filter = getFilter(myPatterns, myTestGroupsResourcePath, myTestGroups, myWarmup);
+      return new TestCaseLoader(filter, myForceLoadPerformanceTests);
+    }
+  }
+
+  private static TestClassesFilter getFilter(@Nullable String patterns,
+                                             @Nullable String testGroupsResourcePath,
+                                             @Nullable List<@NotNull String> testGroups,
+                                             boolean warmup) {
+    TestClassesFilter filter;
+    if (ourCommonTestClassesFilterArgs.getValue().equals(new TestClassesFilterArgs(patterns, testGroups, testGroupsResourcePath))) {
+      if (warmup) {
+        filter = ourCommonTestClassesFilter.getValue();
+      }
+      else {
+        filter = ourCommonCompositeTestClassesFilter.getValue();
+      }
+    }
+    else {
+      filter = calcTestClassFilter(patterns, testGroups, testGroupsResourcePath);
+      if (!warmup) {
+        filter = wrapAsCompositeTestClassesFilter(filter);
+      }
+    }
+    return filter;
   }
 }

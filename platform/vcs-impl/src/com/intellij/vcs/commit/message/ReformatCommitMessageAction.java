@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit.message;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -8,22 +8,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
-
-import static com.intellij.util.ObjectUtils.tryCast;
-import static java.util.stream.Collectors.toList;
 
 public class ReformatCommitMessageAction extends DumbAwareAction {
 
@@ -50,7 +44,8 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = Objects.requireNonNull(e.getProject());
-    Document document = e.getRequiredData(VcsDataKeys.COMMIT_MESSAGE_DOCUMENT);
+    Document document = e.getData(VcsDataKeys.COMMIT_MESSAGE_DOCUMENT);
+    if (document == null) return;
 
     CommandProcessor.getInstance().executeCommand(project, () ->
       WriteAction.run(() -> reformat(project, document)), VcsBundle.message("commit.message.intention.family.name.reformat.commit.message"), null);
@@ -63,8 +58,7 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
     inspections.forEach(inspection -> inspection.reformat(project, document));
   }
 
-  @NotNull
-  private static Stream<BaseCommitMessageInspection> getEnabledInspections(@NotNull Project project) {
+  private static @NotNull Stream<BaseCommitMessageInspection> getEnabledInspections(@NotNull Project project) {
     return CommitMessageInspectionProfile.getInstance(project).getAllEnabledInspectionTools(project).stream()
       .map(Tools::getTool)
       .map(InspectionToolWrapper::getTool)

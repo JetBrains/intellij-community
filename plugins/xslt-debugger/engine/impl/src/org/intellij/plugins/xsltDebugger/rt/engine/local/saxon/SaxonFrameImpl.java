@@ -69,10 +69,12 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     myFrameId = context.getBindery().getFrameId();
   }
 
+  @Override
   public String getInstruction() {
     return myElement.getDisplayName();
   }
 
+  @Override
   public List<Debugger.Variable> getVariables() {
     assert isValid();
 
@@ -87,6 +89,7 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
     return variables;
   }
 
+  @Override
   public Value eval(String expr) throws Debugger.EvaluationException {
     assert isValid();
 
@@ -151,10 +154,12 @@ class SaxonFrameImpl extends AbstractSaxonFrame<Debugger.StyleFrame, StyleElemen
       myType = mapType(type);
     }
 
+    @Override
     public Object getValue() {
       return myValue;
     }
 
+    @Override
     public Type getType() {
       return myType;
     }

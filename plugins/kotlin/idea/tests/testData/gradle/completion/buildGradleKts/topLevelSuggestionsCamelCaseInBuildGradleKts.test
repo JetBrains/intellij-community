@@ -1,0 +1,12 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "getSourceSets"
+// "EXPECTED-SUGGESTION": "sourceSets"
+plugins {
+    id("java")
+}
+
+sourS<caret>
+
+repositories {
+    mavenCentral()
+}

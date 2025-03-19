@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -36,7 +36,7 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import java.util.*;
 
-public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix {
+public final class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeBatchQuickFix.class);
 
 
@@ -54,7 +54,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         if (keyValuePairs.isEmpty()) return null;
         return I18nizeMultipleStringsDialog.getResourceBundleManager(project, contextFiles);
       })
-      .finishOnUiThread(ModalityState.NON_MODAL, bundleManager -> {
+      .finishOnUiThread(ModalityState.nonModal(), bundleManager -> {
         if (keyValuePairs.isEmpty()) return;
         showI18nizeMultipleStringsDialog(project, keyValuePairs, contextFiles, bundleManager);
       })
@@ -237,8 +237,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     return null;
   }
 
-  @Nullable
-  private static String suggestKeyByPlace(String value, @NotNull UExpression expression) {
+  private static @Nullable String suggestKeyByPlace(String value, @NotNull UExpression expression) {
     List<UExpression> usages = I18nInspection.findIndirectUsages(expression, true);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);

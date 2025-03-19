@@ -1,0 +1,43 @@
+*c:com.intellij.execution.configurations.CompositeParameterTargetedValue
+- <init>():V
+- <init>(java.lang.String):V
+- addLocalPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathPart(java.io.File):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addPathSeparator():com.intellij.execution.configurations.CompositeParameterTargetedValue
+- addTargetPart(java.lang.String,org.jetbrains.concurrency.Promise):com.intellij.execution.configurations.CompositeParameterTargetedValue
+- getLocalValue():java.lang.String
+- getParts():java.util.List
+- s:targetizeParameters(java.util.List):java.util.Collection
+*:com.intellij.execution.configurations.ParameterTargetValue
+- a:getLocalValue():java.lang.String
+*a:com.intellij.execution.configurations.ParameterTargetValuePart
+- com.intellij.execution.configurations.ParameterTargetValue
+- getLocalValue():java.lang.String
+- getPathToUpload():java.lang.String
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.lang.String):V
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.io.File):V
+- <init>(java.lang.String):V
+- getPathToUpload():java.lang.String
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- sf:INSTANCE:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
+*f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
+- com.intellij.execution.configurations.ParameterTargetValuePart
+- <init>(java.lang.String,org.jetbrains.concurrency.Promise):V
+- f:getTargetValue():org.jetbrains.concurrency.Promise
+f:com.intellij.execution.configurations.ParametersList
+- java.lang.Cloneable
+- *:add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+- *:getTargetedList():java.util.List
+- *:prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
+c:com.intellij.execution.process.KillableProcessHandler
+- com.intellij.execution.process.OSProcessHandler
+- com.intellij.execution.KillableProcess
+- *:setShouldKillProcessSoftlyWithWinP(Z):V
+com.intellij.execution.process.SelfKiller
+- *:tryDestroyGracefully():Z

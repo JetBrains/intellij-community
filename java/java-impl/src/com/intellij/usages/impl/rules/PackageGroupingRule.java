@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -18,13 +18,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class PackageGroupingRule extends DirectoryGroupingRule {
+public final class PackageGroupingRule extends DirectoryGroupingRule {
   public PackageGroupingRule(@NotNull Project project) {
     super(project);
   }
 
   @Override
-  protected UsageGroup getGroupForFile(@NotNull final VirtualFile dir) {
+  protected UsageGroup getGroupForFile(final @NotNull VirtualFile dir) {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
     if (psiDirectory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
@@ -64,8 +64,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    @NotNull
-    public String getPresentableGroupText() {
+    public @NotNull String getPresentableGroupText() {
       return myPackage.getQualifiedName();
     }
 
@@ -92,15 +91,11 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     }
 
     @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
-
-    @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
       return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof PackageGroup)) return false;
@@ -108,6 +103,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.equals(((PackageGroup)o).myPackage);
     }
 
+    @Override
     public int hashCode() {
       return myPackage.hashCode();
     }

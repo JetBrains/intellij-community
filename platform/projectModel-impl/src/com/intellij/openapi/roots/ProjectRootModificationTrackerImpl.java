@@ -4,10 +4,10 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.project.Project;
 
 
-public class ProjectRootModificationTrackerImpl extends ProjectRootModificationTracker {
+class ProjectRootModificationTrackerImpl extends ProjectRootModificationTracker {
   private final ProjectRootManager myManager;
 
-  public ProjectRootModificationTrackerImpl(Project project) {
+  ProjectRootModificationTrackerImpl(Project project) {
     myManager = ProjectRootManager.getInstance(project);
   }
 

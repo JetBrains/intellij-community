@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.icons.AllIcons;
@@ -24,20 +24,17 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
   }
 
   @Override
-  @NotNull
-  public ModulePointer getModulePointer() {
+  public @NotNull ModulePointer getModulePointer() {
     return myPointer;
   }
 
   @Override
-  @Nullable
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myPointer.getModule();
   }
 
   @Override
-  @Nullable
-  public VirtualFile getContentRoot() {
+  public @Nullable VirtualFile getContentRoot() {
     Module module = myPointer.getModule();
     if (module == null) {
       return null;
@@ -49,9 +46,8 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
     return ArrayUtil.getFirstElement(ModuleRootManager.getInstance(module).getContentRoots());
   }
 
-  @Nullable
   @Override
-  public File getFile() {
+  public @Nullable File getFile() {
     VirtualFile contentRoot = getContentRoot();
     if (contentRoot == null) {
       return null;
@@ -59,9 +55,8 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
     return VfsUtilCore.virtualToIoFile(contentRoot);
   }
 
-  @Nullable
   @Override
-  public String getFilePath() {
+  public @Nullable String getFilePath() {
     File file = getFile();
     if (file == null) {
       return null;
@@ -69,15 +64,13 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
     return file.getAbsolutePath();
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myPointer.getModuleName();
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.Nodes.Module;
   }
 
@@ -104,9 +97,8 @@ public class ModuleDeploymentSourceImpl implements ModuleDeploymentSource {
     return myPointer.hashCode();
   }
 
-  @NotNull
   @Override
-  public DeploymentSourceType<?> getType() {
+  public @NotNull DeploymentSourceType<?> getType() {
     return DeploymentSourceType.EP_NAME.findExtension(ModuleDeploymentSourceType.class);
   }
 }

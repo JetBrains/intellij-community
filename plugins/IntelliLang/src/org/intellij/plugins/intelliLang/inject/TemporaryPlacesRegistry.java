@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
@@ -22,14 +22,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class TemporaryPlacesRegistry {
   private final Project myProject;
   private final List<TempPlace> myTempPlaces = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private volatile long myPsiModificationCounter;
 
-  public final static String SUPPORT_ID = "temp";
+  public static final String SUPPORT_ID = "temp";
 
   public static TemporaryPlacesRegistry getInstance(@NotNull Project project) {
     return project.getService(TemporaryPlacesRegistry.class);
@@ -152,8 +152,7 @@ public final class TemporaryPlacesRegistry {
     return InjectorUtils.findInjectionSupport(SUPPORT_ID);
   }
 
-  @Nullable
-  public InjectedLanguage getLanguageFor(@NotNull PsiLanguageInjectionHost host, PsiFile containingFile) {
+  public @Nullable InjectedLanguage getLanguageFor(@NotNull PsiLanguageInjectionHost host, PsiFile containingFile) {
     PsiLanguageInjectionHost originalHost = CompletionUtilCoreImpl.getOriginalElement(host, containingFile);
     PsiLanguageInjectionHost injectionHost = originalHost == null ? host : originalHost;
     getInjectionPlacesSafe();

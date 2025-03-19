@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.openapi.project.Project;
@@ -35,22 +35,17 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
   }
 
   @Override
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NotNull @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  @NotNull
-  public DeploymentStatus getStatus() {
+  public @NotNull DeploymentStatus getStatus() {
     return myState.getStatus();
   }
 
   @Override
-  @NotNull
-  @Nls
-  public String getStatusText() {
+  public @NotNull @Nls String getStatusText() {
     String statusText = myState.getStatusText();
     return statusText != null ? statusText : myState.getStatus().getPresentableText();
   }
@@ -60,15 +55,13 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return myState.getRuntime();
   }
 
-  @Nullable
   @Override
-  public DeploymentTask<D> getDeploymentTask() {
+  public @Nullable DeploymentTask<D> getDeploymentTask() {
     return myDeploymentTask;
   }
 
-  @NotNull
   @Override
-  public DeploymentLogManager getOrCreateLogManager(@NotNull Project project) {
+  public @NotNull DeploymentLogManager getOrCreateLogManager(@NotNull Project project) {
     return myConnection.getOrCreateLogManager(project, this);
   }
 
@@ -77,19 +70,17 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
   }
 
   @Override
-  public void setStatus(@NotNull final DeploymentStatus status, @Nullable @Nls final String statusText) {
+  public void setStatus(final @NotNull DeploymentStatus status, final @Nullable @Nls String statusText) {
     myConnection.changeDeploymentState(this, getRuntime(), myState.getStatus(), status, statusText);
   }
 
-  @NotNull
   @Override
-  public ServerConnection<?> getConnection() {
+  public @NotNull ServerConnection<?> getConnection() {
     return myConnection;
   }
 
-  @Nullable
   @Override
-  public DeploymentRuntime getParentRuntime() {
+  public @Nullable DeploymentRuntime getParentRuntime() {
     DeploymentRuntime runtime = getRuntime();
     return runtime == null ? null : runtime.getParent();
   }
@@ -105,9 +96,8 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     return false;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return myPresentableName == null ? getName() : myPresentableName;
   }
 
@@ -126,19 +116,15 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
       myRuntime = runtime;
     }
 
-    @NotNull
-    public DeploymentStatus getStatus() {
+    public @NotNull DeploymentStatus getStatus() {
       return myStatus;
     }
 
-    @Nullable
-    @Nls
-    public String getStatusText() {
+    public @Nullable @Nls String getStatusText() {
       return myStatusText;
     }
 
-    @Nullable
-    public DeploymentRuntime getRuntime() {
+    public @Nullable DeploymentRuntime getRuntime() {
       return myRuntime;
     }
   }

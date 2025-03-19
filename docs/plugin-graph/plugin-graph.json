@@ -338,18 +338,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "e7",
-    "name": "intellij.downburst",
-    "n": "i.downburst",
-    "package": "com.intellij.downburst",
-    "sourceModule": "intellij.downburst",
-    "descriptor": "plugins/downburst/resources/META-INF/plugin.xml",
-    "pluginId": "Downburst",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cHS",
     "n": "com.intellij.sisyphus"
   }
@@ -2017,61 +2005,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "cq0",
-    "n": "com.jetbrains.packagesearch.intellij-plugin"
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "q0",
-    "name": "intellij.packageSearch",
-    "n": "i.packageSearch",
-    "package": "com.jetbrains.packagesearch",
-    "sourceModule": "intellij.packageSearch",
-    "descriptor": "community/plugins/package-search/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.packagesearch.intellij-plugin",
-    "parent": "cq0",
-    "type": 2
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "7q",
-    "name": "intellij.packageSearch/gradle",
-    "n": "i.packageSearch/gradle",
-    "package": "com.jetbrains.packagesearch.intellij.plugin.gradle",
-    "sourceModule": "intellij.packageSearch",
-    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.gradle.xml",
-    "parent": "cq0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "En",
-    "name": "intellij.packageSearch/kotlin",
-    "n": "i.packageSearch/kotlin",
-    "package": "com.jetbrains.packagesearch.intellij.plugin.kotlin",
-    "sourceModule": "intellij.packageSearch",
-    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.kotlin.xml",
-    "parent": "cq0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "a0",
-    "name": "intellij.packageSearch/maven",
-    "n": "i.packageSearch/maven",
-    "package": "com.jetbrains.packagesearch.intellij.plugin.maven",
-    "sourceModule": "intellij.packageSearch",
-    "descriptor": "community/plugins/package-search/resources/intellij.packageSearch.maven.xml",
-    "parent": "cq0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cT41",
     "n": "com.jetbrains.performancePlugin"
   }
@@ -2259,7 +2192,7 @@
     "id": "I6",
     "name": "intellij.python.docker",
     "n": "i.python.docker",
-    "package": "com.jetbrains.python.docker",
+    "package": "com.intellij.python.docker",
     "sourceModule": "intellij.python.docker",
     "descriptor": "python/python-docker/resources/intellij.python.docker.xml",
     "parent": "che",
@@ -2886,18 +2819,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "wI",
-    "name": "intellij.space.kotlin",
-    "n": "i.space.kotlin",
-    "package": "com.intellij.space.kotlin",
-    "sourceModule": "intellij.space.kotlin",
-    "descriptor": "plugins/space/kotlin/resources/intellij.space.kotlin.xml",
-    "parent": "cmA",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "wr",
     "name": "intellij.space.index",
     "n": "i.space.index",
@@ -2924,55 +2845,6 @@
   "data": {
     "id": "cA0",
     "n": "jetbrains.team.auth"
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "A0",
-    "name": "intellij.space.auth",
-    "n": "i.space.auth",
-    "package": "com.intellij.auth.jetbrains.team",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/META-INF/plugin.xml",
-    "pluginId": "jetbrains.team.auth",
-    "parent": "cA0",
-    "type": 2
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "hC",
-    "name": "intellij.space.auth/jps-caches",
-    "n": "i.space.auth/jps-caches",
-    "package": "com.intellij.auth.jetbrains.team.jpsCaches",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.jps-caches.xml",
-    "parent": "cA0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "tX",
-    "name": "intellij.space.auth/shared-indices",
-    "n": "i.space.auth/shared-indices",
-    "package": "com.intellij.auth.jetbrains.team.sharedIndexes",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.shared-indices.xml",
-    "parent": "cA0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "d9",
-    "name": "intellij.space.auth/exception-analyzer",
-    "n": "i.space.auth/exception-analyzer",
-    "package": "com.intellij.auth.jetbrains.team.exceptionAnalyzer",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.exception-analyzer.xml",
-    "parent": "cA0",
-    "type": 0
   }
 }, {
   "group": "nodes",
@@ -3577,11 +3449,11 @@
   "group": "nodes",
   "data": {
     "id": "IV",
-    "name": "intellij.vcs.github",
+    "name": "intellij.vcs.github.community",
     "n": "i.vcs.github",
     "package": "org.jetbrains.plugins.github",
-    "sourceModule": "intellij.vcs.github",
-    "descriptor": "community/plugins/github/resources/META-INF/plugin.xml",
+    "sourceModule": "intellij.vcs.github.community",
+    "descriptor": "community/plugins/github/community/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.github",
     "parent": "cIV",
     "type": 2
@@ -3694,18 +3566,6 @@
     "sourceModule": "intellij.wsl.remoteSdk",
     "descriptor": "plugins/wsl-remote-sdk/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.wsl",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "Pc",
-    "name": "intellij.wsl.fs.helper",
-    "n": "i.wsl.fs.helper",
-    "package": "com.intellij.wsl.fs",
-    "sourceModule": "intellij.wsl.fs.helper",
-    "descriptor": "plugins/wsl-file-system-helper/resources/META-INF/plugin.xml",
-    "pluginId": "org.jetbrains.plugins.wsl.fs",
     "type": 1
   }
 }, {

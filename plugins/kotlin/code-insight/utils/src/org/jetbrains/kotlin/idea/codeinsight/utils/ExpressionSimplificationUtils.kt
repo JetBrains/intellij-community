@@ -2,10 +2,13 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -18,16 +21,26 @@ object NegatedBinaryExpressionSimplificationUtils {
     fun KtPrefixExpression.canBeSimplifiedWithoutChangingSemantics(): Boolean {
         if (!canBeSimplified()) return false
         val expression = KtPsiUtil.deparenthesize(baseExpression) as? KtBinaryExpression ?: return true
-        val operation = expression.operationReference.getReferencedNameElementType()
-        if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
 
-        @OptIn(KtAllowAnalysisOnEdt::class)
+        @OptIn(KaAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
-            analyze(expression) {
-                fun KtType?.isFloatingPoint() = this != null && (isFloat || isDouble)
-                return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(expression) {
+                    return expression.canBeInverted()
+                }
             }
         }
+    }
+
+    context(KaSession)
+    fun KtBinaryExpression.canBeInverted(): Boolean {
+        val operation = this.operationReference.getReferencedNameElementType()
+        if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
+
+        fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
+
+        return !left?.expressionType.isFloatingPoint() && !right?.expressionType.isFloatingPoint()
     }
 
     fun KtPrefixExpression.canBeSimplified(): Boolean {

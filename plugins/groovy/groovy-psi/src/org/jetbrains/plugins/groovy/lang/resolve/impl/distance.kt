@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
@@ -11,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.api.CallParameter
 import org.jetbrains.plugins.groovy.lang.resolve.api.DelegateArgumentMapping
 import org.jetbrains.plugins.groovy.lang.sam.samDistance
+import kotlin.math.max
 
 fun <X : CallParameter> compare(left: ArgumentMapping<X>, right: ArgumentMapping<X>): Int {
   if (left is DelegateArgumentMapping) {
@@ -232,9 +233,9 @@ private fun getMaximumInterfaceDistance(argument: PsiClass?, interfaceClass: Psi
   for (anInterface in interfaces) {
     var sub = getMaximumInterfaceDistance(anInterface, interfaceClass)
     if (sub != -1) sub++
-    max = Math.max(max, sub)
+    max = max(max, sub)
   }
   var superClassMax = getMaximumInterfaceDistance(argument.superClass, interfaceClass)
   if (superClassMax != -1) superClassMax++
-  return Math.max(max, superClassMax)
+  return max(max, superClassMax)
 }

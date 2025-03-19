@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -80,8 +81,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return new ExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
   }
 
-  @Nullable
-  private String composeLocalPath(@Nullable String filePath) {
+  private @Nullable String composeLocalPath(@Nullable String filePath) {
     return filePath != null ? getTestDataPath() + "/" + filePath : null;
   }
 
@@ -119,13 +119,11 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     };
   }
 
-  @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     IntList toIgnoreList = new IntArrayList();
@@ -134,7 +132,6 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     }
     if (!doInspections()) {
       toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
-      toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     }
     int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtilRt.EMPTY_INT_ARRAY : toIgnoreList.toIntArray();
     Editor editor = getEditor();
@@ -151,7 +148,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightJavaCodeInsightTe
     return annotatedWith(DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting.class);
   }
 
-  protected List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
+  protected @Unmodifiable List<HighlightInfo> doHighlighting(HighlightSeverity minSeverity) {
     return DaemonAnalyzerTestCase.filter(doHighlighting(), minSeverity);
   }
 

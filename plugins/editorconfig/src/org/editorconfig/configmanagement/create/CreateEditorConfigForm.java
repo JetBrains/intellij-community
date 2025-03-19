@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.create;
 
 import com.intellij.application.options.CodeStyle;
@@ -44,7 +44,7 @@ public class CreateEditorConfigForm {
   private final List<LanguageCheckBoxRec> myLanguageCheckBoxes;
   private final Project                   myProject;
 
-  private final static int MAX_LANGUAGES_ROWS = 10;
+  private static final int MAX_LANGUAGES_ROWS = 10;
 
   public CreateEditorConfigForm(@NotNull Project project) {
     myProject = project;

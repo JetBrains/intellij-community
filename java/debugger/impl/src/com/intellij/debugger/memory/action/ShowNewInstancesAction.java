@@ -44,7 +44,7 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
     final InstancesProvider provider = e.getData(ClassesFilteredView.NEW_INSTANCES_PROVIDER_KEY);
     final XDebugSession session = DebuggerUIUtil.getSession(e);
     if (selectedClass != null && provider != null && session != null) {
-      new InstancesWindow(session, provider, selectedClass.name()).show();
+      new InstancesWindow(session, provider, selectedClass).show();
     }
   }
 }

@@ -17,26 +17,31 @@ package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.navigator.RootReason
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
+import com.intellij.diagnostic.hprof.util.IDMapper
 import com.intellij.diagnostic.hprof.visitors.*
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectMaps
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import java.util.function.LongUnaryOperator
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class HProfMetadata(var classStore: ClassStore, // TODO: private-set, public-get
                     val threads: Long2ObjectMap<ThreadInfo>,
                     var roots: Long2ObjectMap<RootReason>) {
   class RemapException : Exception()
 
-  fun remapIds(remappingFunction: LongUnaryOperator) {
+  fun remapIds(idMapper: IDMapper) {
     // Remap ids in class store
-    classStore = classStore.createStoreWithRemappedIDs(remappingFunction)
+    classStore = classStore.createStoreWithRemappedIDs(idMapper)
 
     // Remap root objects' ids
     val newRoots = Long2ObjectOpenHashMap<RootReason>()
     for (entry in Long2ObjectMaps.fastIterable(roots)) {
       try {
-        val newKey = remappingFunction.applyAsLong(entry.longKey)
+        val newKey = idMapper.getID(entry.longKey)
+        if (newKey == 0L) {
+          continue
+        }
         assert(!newRoots.containsKey(newKey))
         newRoots.put(newKey, entry.value)
       } catch (e: RemapException) {

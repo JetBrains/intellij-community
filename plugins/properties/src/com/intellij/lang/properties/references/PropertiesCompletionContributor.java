@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.completion.*;
@@ -31,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
@@ -60,7 +47,15 @@ public class PropertiesCompletionContributor extends CompletionContributor {
   private static void doAdd(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();
+    PsiElement gParent = parent != null ? parent.getParent() : null;
     PsiReference[] references = parent == null ? position.getReferences() : ArrayUtil.mergeArrays(position.getReferences(), parent.getReferences());
+    if (gParent instanceof PsiLanguageInjectionHost && references.length == 0) {
+      //kotlin
+      PsiReference[] gParentReferences = gParent.getReferences();
+      if (gParentReferences.length > 0) {
+        references = ArrayUtil.mergeArrays(references, gParentReferences);
+      }
+    }
     PropertyReference propertyReference = ContainerUtil.findInstance(references, PropertyReference.class);
     if (propertyReference != null && !hasMoreImportantReference(references, propertyReference)) {
       final int startOffset = parameters.getOffset();
@@ -124,8 +119,7 @@ public class PropertiesCompletionContributor extends CompletionContributor {
       .filter(Objects::nonNull).toArray(LookupElement[]::new);
   }
 
-  @Nullable
-  public static LookupElement createVariant(IProperty property) {
+  public static @Nullable LookupElement createVariant(IProperty property) {
     String key = property.getKey();
     return key == null ? null : LookupElementBuilder.create(property, key).withRenderer(LOOKUP_ELEMENT_RENDERER);
   }

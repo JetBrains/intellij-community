@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.data;
 
 import com.intellij.serialization.PropertyMapping;
@@ -13,12 +13,9 @@ import java.io.Serializable;
 public class WebResource implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
-  private final WarDirectory warDirectory;
-  @NotNull
-  private final String warRelativePath;
-  @NotNull
-  private final File file;
+  private final @NotNull WarDirectory warDirectory;
+  private final @NotNull String warRelativePath;
+  private final @NotNull File file;
 
   @PropertyMapping({"warDirectory", "warRelativePath", "file"})
   public WebResource(@NotNull WarDirectory warDirectory, @NotNull String warRelativePath, @NotNull File file) {
@@ -27,18 +24,15 @@ public class WebResource implements Serializable {
     this.file = file;
   }
 
-  @NotNull
-  public WarDirectory getWarDirectory() {
+  public @NotNull WarDirectory getWarDirectory() {
     return warDirectory;
   }
 
-  @NotNull
-  public String getWarRelativePath() {
+  public @NotNull String getWarRelativePath() {
     return warRelativePath;
   }
 
-  @NotNull
-  public File getFile() {
+  public @NotNull File getFile() {
     return file;
   }
 

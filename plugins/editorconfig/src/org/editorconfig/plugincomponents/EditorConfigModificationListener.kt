@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.editorconfig.EditorConfigRegistry
 
@@ -15,6 +17,7 @@ internal class EditorConfigModificationListener : BulkFileListener {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
+    var isCodeStylePossiblyAffected = false
     for (event in events) {
       val file = event.file
       if (file == null || file.name != ".editorconfig") {
@@ -23,14 +26,19 @@ internal class EditorConfigModificationListener : BulkFileListener {
       for (project in ProjectManager.getInstance().openProjects) {
         if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) ||
             !EditorConfigRegistry.shouldStopAtProjectRoot()) {
-          SettingsProviderComponent.getInstance(project).resourceCache.clear()
-          ApplicationManager.getApplication().invokeLater {
-            SettingsProviderComponent.getInstance(project).incModificationCount()
-            for (editor in EditorFactory.getInstance().allEditors) {
-              if (editor.isDisposed) continue
-              (editor as EditorEx).reinitSettings()
-            }
+          when (event) {
+            is VFileCopyEvent, is VFileCreateEvent -> {}
+            else -> EditorConfigPropertiesService.getInstance(project).clearCache()
           }
+          isCodeStylePossiblyAffected = true
+        }
+      }
+    }
+    if (isCodeStylePossiblyAffected) {
+      ApplicationManager.getApplication().invokeLater {
+        for (editor in EditorFactory.getInstance().allEditors) {
+          if (editor.isDisposed) continue
+          (editor as EditorEx).reinitSettings()
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -19,7 +19,6 @@ import org.jetbrains.org.objectweb.asm.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,7 +36,7 @@ public class GroovyTraitFieldsFileIndex
   implements DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
-  @NonNls public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
+  public static final @NonNls String HELPER_SUFFIX = "$Trait$FieldHelper.class";
 
   private static final InputFilter FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
@@ -59,27 +58,23 @@ public class GroovyTraitFieldsFileIndex
   private static final String PUBLIC_PREFIX = "$1";
   private static final String DELIMITER = "__";
 
-  @NotNull
   @Override
-  public ID<Integer, Collection<TraitFieldDescriptor>> getName() {
+  public @NotNull ID<Integer, Collection<TraitFieldDescriptor>> getName() {
     return INDEX_ID;
   }
 
-  @NotNull
   @Override
-  public SingleEntryIndexer<Collection<TraitFieldDescriptor>> getIndexer() {
+  public @NotNull SingleEntryIndexer<Collection<TraitFieldDescriptor>> getIndexer() {
     return INDEXER;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Collection<TraitFieldDescriptor>> getValueExternalizer() {
+  public @NotNull DataExternalizer<Collection<TraitFieldDescriptor>> getValueExternalizer() {
     return this;
   }
 
-  @NotNull
   @Override
-  public InputFilter getInputFilter() {
+  public @NotNull InputFilter getInputFilter() {
     return FILTER;
   }
 
@@ -142,7 +137,7 @@ public class GroovyTraitFieldsFileIndex
         values.add(new TraitFieldDescriptor(flags, typeString, name, annotations));
       }
 
-      private Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
+      private static Pair<Boolean, String> parse(String prefix, String prefix2, String input) {
         if (input.startsWith(prefix)) {
           return Pair.create(true, input.substring(prefix.length()));
         }
@@ -154,10 +149,11 @@ public class GroovyTraitFieldsFileIndex
         }
       }
 
-      private String fieldType(String desc, String signature) {
+      private static String fieldType(String desc, String signature) {
         if (signature != null) {
           try {
-            return SignatureParsing.parseTypeString(new StringCharacterIterator(signature), StubBuildingVisitor.GUESSING_MAPPER);
+            return SignatureParsing.parseTypeStringToTypeInfo(new SignatureParsing.CharIterator(signature), 
+                                                              StubBuildingVisitor.GUESSING_PROVIDER).text();
           }
           catch (ClsFormatException ignored) { }
         }

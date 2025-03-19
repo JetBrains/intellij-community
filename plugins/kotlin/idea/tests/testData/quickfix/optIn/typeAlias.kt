@@ -1,10 +1,6 @@
 // "Opt in for 'AliasMarker' on 'AliasMarkerUsage'" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
-// ACTION: Add '-opt-in=AliasMarker' to module light_idea_test_case compiler arguments
-// ACTION: Introduce import alias
-// ACTION: Opt in for 'AliasMarker' in containing file 'typeAlias.kt'
-// ACTION: Opt in for 'AliasMarker' on 'AliasMarkerUsage'
+// PRIORITY: HIGH
+
 
 @RequiresOptIn
 annotation class AliasMarker
@@ -13,3 +9,6 @@ annotation class AliasMarker
 class AliasTarget
 
 typealias AliasMarkerUsage = <caret>AliasTarget
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

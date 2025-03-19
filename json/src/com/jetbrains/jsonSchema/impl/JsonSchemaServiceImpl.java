@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -14,26 +14,30 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.*;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -41,14 +45,14 @@ import java.util.function.Supplier;
 public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTracker, Disposable {
   private static final Logger LOG = Logger.getInstance(JsonSchemaServiceImpl.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final MyState myState;
-  @NotNull private final ClearableLazyValue<Set<String>> myBuiltInSchemaIds;
-  @NotNull private final Set<String> myRefs = ConcurrentCollectionFactory.createConcurrentSet();
+  private final @NotNull Project myProject;
+  private final @NotNull MyState myState;
+  private final @NotNull ClearableLazyValue<@Unmodifiable Set<String>> myBuiltInSchemaIds;
+  private final @NotNull Set<String> myRefs = ConcurrentCollectionFactory.createConcurrentSet();
   private final AtomicLong myAnyChangeCount = new AtomicLong(0);
 
-  @NotNull private final JsonSchemaCatalogManager myCatalogManager;
-  @NotNull private final JsonSchemaVfsListener.JsonSchemaUpdater mySchemaUpdater;
+  private final @NotNull JsonSchemaCatalogManager myCatalogManager;
+  private final @NotNull JsonSchemaVfsListener.JsonSchemaUpdater mySchemaUpdater;
   private final JsonSchemaProviderFactories myFactories;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
@@ -56,9 +60,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     myFactories = new JsonSchemaProviderFactories();
     myState = new MyState(() -> myFactories.getProviders(), myProject);
     myBuiltInSchemaIds = new ClearableLazyValue<>() {
-      @NotNull
       @Override
-      protected Set<String> compute() {
+      protected @NotNull Set<String> compute() {
         return ContainerUtil.map2SetNotNull(myState.getFiles(), f -> JsonCachedValues.getSchemaId(f, myProject));
       }
     };
@@ -87,20 +90,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   public void dispose() {
   }
 
-  @NotNull
-  protected List<JsonSchemaProviderFactory> getProviderFactories() {
+  protected @NotNull List<JsonSchemaProviderFactory> getProviderFactories() {
     return JsonSchemaProviderFactory.EP_NAME.getExtensionList();
   }
 
-  @Nullable
   @Override
-  public JsonSchemaFileProvider getSchemaProvider(@NotNull VirtualFile schemaFile) {
+  public @Nullable JsonSchemaFileProvider getSchemaProvider(@NotNull VirtualFile schemaFile) {
     return myState.getProvider(schemaFile);
   }
 
-  @Nullable
   @Override
-  public JsonSchemaFileProvider getSchemaProvider(@NotNull JsonSchemaObject schemaObject) {
+  public @Nullable JsonSchemaFileProvider getSchemaProvider(@NotNull JsonSchemaObject schemaObject) {
     VirtualFile file = resolveSchemaFile(schemaObject);
     return file == null ? null : getSchemaProvider(file);
   }
@@ -115,29 +115,26 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     myState.reset();
     myBuiltInSchemaIds.drop();
     myAnyChangeCount.incrementAndGet();
-    for (Runnable action: myResetActions) {
+    for (Runnable action : myResetActions) {
       action.run();
     }
     DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @Nullable
-  public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
+  public @Nullable VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final VirtualFile file = findBuiltInSchemaByReference(reference);
     if (file != null) return file;
     if (reference.startsWith("#")) return referent;
     return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
   }
 
-  @Nullable
-  private VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
+  private @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
     String id = JsonPointerUtil.normalizeId(reference);
     if (!myBuiltInSchemaIds.getValue().contains(id)) return null;
     for (VirtualFile file : myState.getFiles()) {
@@ -149,13 +146,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   @Override
-  @NotNull
-  public Collection<VirtualFile> getSchemaFilesForFile(@NotNull final VirtualFile file) {
+  public @NotNull Collection<VirtualFile> getSchemaFilesForFile(final @NotNull VirtualFile file) {
     return getSchemasForFile(file, false, false);
   }
 
-  @Nullable
-  public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
+  @Override
+  public @Nullable VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
     return ContentAwareJsonSchemaFileProvider.EP_NAME.getExtensionList().stream()
       .map(provider -> provider.getSchemaFile(psiFile))
       .filter(schemaFile -> schemaFile != null)
@@ -167,8 +163,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return JsonSchemaMappingsProjectConfiguration.getInstance(project).isIgnoredFile(file);
   }
 
-  @NotNull
-  public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
+  public @NotNull Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
     if (shouldIgnoreFile(file, myProject)) return Collections.emptyList();
     String schemaUrl = null;
     if (!onlyUserSchemas) {
@@ -192,6 +187,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     boolean checkSchemaProperty = true;
     if (!onlyUserSchemas && providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
       if (schemaUrl == null) schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
+      if (schemaUrl == null) schemaUrl = JsonSchemaByCommentProvider.getCommentSchema(file, myProject);
       VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
       if (virtualFile != null) return Collections.singletonList(virtualFile);
       checkSchemaProperty = false;
@@ -217,7 +213,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
         if (userSchema.isEmpty()) return ContainerUtil.emptyList();
         selected = userSchema.get();
-      } else selected = providers.get(0);
+      }
+      else {
+        selected = providers.get(0);
+      }
       VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
     }
@@ -246,8 +245,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
   }
 
-  @NotNull
-  public List<JsonSchemaFileProvider> getProvidersForFile(@NotNull VirtualFile file) {
+  public @NotNull List<JsonSchemaFileProvider> getProvidersForFile(@NotNull VirtualFile file) {
     Map<VirtualFile, List<JsonSchemaFileProvider>> map = myState.myData.getValue();
     if (map.isEmpty()) {
       return Collections.emptyList();
@@ -267,8 +265,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return result == null ? Collections.emptyList() : result;
   }
 
-  @Nullable
-  private VirtualFile resolveFromSchemaProperty(@Nullable String schemaUrl, @NotNull VirtualFile file) {
+  private @Nullable VirtualFile resolveFromSchemaProperty(@Nullable String schemaUrl, @NotNull VirtualFile file) {
     if (schemaUrl != null) {
       VirtualFile virtualFile = findSchemaFileByReference(schemaUrl, file);
       if (virtualFile != null) return virtualFile;
@@ -298,7 +295,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     });
 
-    for (JsonSchemaCatalogEntry schema: schemas) {
+    for (JsonSchemaCatalogEntry schema : schemas) {
       final String url = schema.getUrl();
       if (!processedRemotes.containsKey(url)) {
         final JsonSchemaInfo info = new JsonSchemaInfo(url);
@@ -325,20 +322,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return results;
   }
 
-  @Nullable
   @Override
-  public JsonSchemaObject getSchemaObject(@NotNull final VirtualFile file) {
+  public @Nullable JsonSchemaObject getSchemaObject(final @NotNull VirtualFile file) {
     Collection<VirtualFile> schemas = getSchemasForFile(file, true, false);
-    if (schemas.size() == 0) return null;
+    if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
   }
 
 
-  @Nullable
   @Override
-  public JsonSchemaObject getSchemaObject(@NotNull PsiFile file) {
+  public @Nullable JsonSchemaObject getSchemaObject(@NotNull PsiFile file) {
     return JsonCachedValues.computeSchemaForFile(file, this);
   }
 
@@ -355,28 +350,27 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return schemaFile;
   }
 
-  @Nullable
-  public VirtualFile getLocalSchemaByUrl(String url) {
+  public @Nullable VirtualFile getLocalSchemaByUrl(String url) {
     return myState.getFiles().stream()
-                  .filter(f -> {
-                     JsonSchemaFileProvider prov = getSchemaProvider(f);
-                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
-                            && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
-                             || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
-                  }).findFirst().orElse(null);
+      .filter(f -> {
+        JsonSchemaFileProvider prov = getSchemaProvider(f);
+        return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
+               && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
+                   || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
+      }).findFirst().orElse(null);
   }
 
-  @Nullable
   @Override
-  public JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile) {
+  public @Nullable JsonSchemaObject getSchemaObjectForSchemaFile(@NotNull VirtualFile schemaFile) {
     return JsonCachedValues.getSchemaObject(schemaFile, myProject);
   }
 
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return isMappedSchema(file)
-           || isSchemaByProvider(file)
-           || hasSchemaSchema(file);
+    return !file.isDirectory()
+           && (isMappedSchema(file)
+               || isSchemaByProvider(file)
+               || hasSchemaSchema(file));
   }
 
   @Override
@@ -426,27 +420,33 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return getSchemaVersionFromSchemaUrl(file);
   }
 
-  @Nullable
-  private JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
+  private @Nullable JsonSchemaVersion getSchemaVersionFromSchemaUrl(@NotNull VirtualFile file) {
+    String schemaPropertyValue;
+    if (file instanceof  LightVirtualFile || Registry.is("json.schema.object.v2")) {
+      JsonSchemaObject schemaRootOrNull = JsonSchemaObjectStorage.getInstance(myProject).getComputedSchemaRootOrNull(file);
+      if (schemaRootOrNull != null) {
+        schemaPropertyValue = schemaRootOrNull.getSchema();
+        return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
+      }
+    }
     Ref<String> res = Ref.create(null);
     //noinspection CodeBlock2Expr
     ApplicationManager.getApplication().runReadAction(() -> {
       res.set(JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject));
     });
-    if (res.isNull()) return null;
-    return JsonSchemaVersion.byId(res.get());
+    schemaPropertyValue = res.get();
+    return schemaPropertyValue == null ? null : JsonSchemaVersion.byId(schemaPropertyValue);
   }
 
   private boolean hasSchemaSchema(VirtualFile file) {
     return getSchemaVersionFromSchemaUrl(file) != null;
   }
 
-  private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
+  private static boolean isProviderAvailable(final @NotNull VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
     return provider.isAvailable(file);
   }
 
-  @Nullable
-  private VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
+  private @Nullable VirtualFile resolveSchemaFromOtherSources(@NotNull VirtualFile file) {
     return myCatalogManager.getSchemaFileForFile(file);
   }
 
@@ -508,35 +508,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
   }
 
   private static final class MyState {
-    @NotNull private final Supplier<List<JsonSchemaFileProvider>> myFactory;
-    @NotNull private final Project myProject;
-    @NotNull private final ClearableLazyValue<Map<VirtualFile, List<JsonSchemaFileProvider>>> myData;
-    private final AtomicBoolean myIsComputed = new AtomicBoolean(false);
+    private final @NotNull Supplier<List<JsonSchemaFileProvider>> myFactory;
+    private final @NotNull Project myProject;
+    private final @NotNull SynchronizedClearableLazy<Map<VirtualFile, List<JsonSchemaFileProvider>>> myData;
 
-    private MyState(@NotNull final Supplier<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
+    private MyState(final @NotNull Supplier<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
       myProject = project;
-      myData = new ClearableLazyValue<>() {
-        @NotNull
-        @Override
-        public Map<VirtualFile, List<JsonSchemaFileProvider>> compute() {
-          Map<VirtualFile, List<JsonSchemaFileProvider>> map = createFileProviderMap(myFactory.get(), myProject);
-          myIsComputed.set(true);
-          return map;
-        }
-
-        @NotNull
-        @Override
-        public synchronized Map<VirtualFile, List<JsonSchemaFileProvider>> getValue() {
-          return super.getValue();
-        }
-
-        @Override
-        public synchronized void drop() {
-          myIsComputed.set(false);
-          super.drop();
-        }
-      };
+      myData = new SynchronizedClearableLazy<>(() -> createFileProviderMap(myFactory.get(), myProject));
     }
 
     public void reset() {
@@ -554,13 +533,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
     }
 
-    @NotNull
-    public Set<VirtualFile> getFiles() {
+    public @NotNull Set<VirtualFile> getFiles() {
       return myData.getValue().keySet();
     }
 
-    @Nullable
-    public JsonSchemaFileProvider getProvider(@NotNull VirtualFile file) {
+    public @Nullable JsonSchemaFileProvider getProvider(@NotNull VirtualFile file) {
       List<JsonSchemaFileProvider> providers = myData.getValue().get(file);
       if (providers == null || providers.isEmpty()) {
         return null;
@@ -575,12 +552,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
 
     public boolean isComputed() {
-      return myIsComputed.get();
+      return myData.isInitialized();
     }
 
-    @NotNull
-    private static Map<VirtualFile, List<JsonSchemaFileProvider>> createFileProviderMap(@NotNull List<JsonSchemaFileProvider> list,
-                                                                                        @NotNull Project project) {
+    private static @NotNull Map<VirtualFile, List<JsonSchemaFileProvider>> createFileProviderMap(@NotNull List<JsonSchemaFileProvider> list,
+                                                                                                 @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
       Map<VirtualFile, List<JsonSchemaFileProvider>> map = new HashMap<>();
@@ -605,8 +581,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
   }
 
-  @Nullable
-  private static VirtualFile getSchemaForProvider(@NotNull Project project, @NotNull JsonSchemaFileProvider provider) {
+  private static @Nullable VirtualFile getSchemaForProvider(@NotNull Project project, @NotNull JsonSchemaFileProvider provider) {
     if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isPreferRemoteSchemas()) {
       final String source = provider.getRemoteSource();
       if (source != null && !source.endsWith("!") && !JsonFileResolver.isSchemaUrl(source)) {
@@ -616,9 +591,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return provider.getSchemaFile();
   }
 
-  @Nullable
   @Override
-  public VirtualFile resolveSchemaFile(@NotNull JsonSchemaObject schemaObject) {
+  public @Nullable VirtualFile resolveSchemaFile(@NotNull JsonSchemaObject schemaObject) {
     VirtualFile rawFile = schemaObject.getRawFile();
     if (rawFile != null) {
       return rawFile;
@@ -632,7 +606,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return VirtualFileManager.getInstance().findFileByUrl(fileUrl);
   }
 
-  private class JsonSchemaProviderFactories {
+  private final class JsonSchemaProviderFactories {
 
     private volatile List<JsonSchemaFileProvider> myProviders;
 
@@ -652,9 +626,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     private @NotNull List<JsonSchemaFileProvider> getDumbAwareProvidersAndUpdateRestWhenSmart() {
       List<JsonSchemaProviderFactory> readyFactories = new ArrayList<>();
       List<JsonSchemaProviderFactory> notReadyFactories = new ArrayList<>();
-      boolean dumb = DumbService.getInstance(myProject).isDumb();
       for (JsonSchemaProviderFactory factory : getProviderFactories()) {
-        if (!dumb || DumbService.isDumbAware(factory)) {
+        if (DumbService.getInstance(myProject).isUsableInCurrentContext(factory)) {
           readyFactories.add(factory);
         }
         else {

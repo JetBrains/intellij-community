@@ -15,7 +15,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
   companion object {
     private val LOG = logger<MacExecutableProblemHandler>()
 
-    private const val XCODE_LICENSE_ERROR: @NonNls String = "Agreeing to the Xcode/iOS license"
+    private const val XCODE_LICENSE_ERROR: @NonNls String = "xcodebuild -license"
     private const val XCODE_DEVELOPER_PART_ERROR: @NonNls String = "invalid active developer path"
     private const val XCODE_XCRUN: @NonNls String = "xcrun"
   }

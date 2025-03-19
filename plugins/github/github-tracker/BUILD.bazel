@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.vcs.github.tracker` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-github-tracker_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-github-tracker",
+  module_name = "intellij.vcs.github.tracker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//plugins/github/github-core:vcs-github",
+    "//platform/platform-api:ide",
+    "//platform/util:util-ui",
+    "//platform/collaboration-tools:collaborationTools",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":vcs-github-tracker_resources"]
+)
+### auto-generated section `build intellij.vcs.github.tracker` end

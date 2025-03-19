@@ -1,4 +1,4 @@
-// "Convert record to class" "true"
+// "Convert record to class" "true-preview"
 record <caret>Range(int x, int y) {
   static final Range ZERO = new Range(0);
   

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -8,7 +8,10 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -27,8 +30,7 @@ import java.util.Objects;
  * @author max
  */
 class PersistentRangeMarker extends RangeMarkerImpl {
-  @NotNull
-  private LinesCols myLinesCols;
+  private @NotNull LinesCols myLinesCols;
   private volatile boolean documentLoaded;
 
   PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
@@ -52,8 +54,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     documentLoaded = FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null;
   }
 
-  @Nullable
-  static LinesCols storeLinesAndCols(@NotNull Document document, long range) {
+  static @Nullable LinesCols storeLinesAndCols(@NotNull Document document, long range) {
     LineCol start = calcLineCol(document, TextRangeScalarUtil.startOffset(range));
     LineCol end = calcLineCol(document, TextRangeScalarUtil.endOffset(range));
 
@@ -85,8 +86,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
       this.col = col;
     }
   }
-  @Nullable
-  static Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull DocumentEventImpl event, @NotNull LinesCols linesCols) {
+  static @Nullable Pair.NonNull<TextRange, LinesCols> translateViaDiff(@NotNull DocumentEventImpl event, @NotNull LinesCols linesCols) {
     try {
       int myStartLine = event.translateLineViaDiffStrict(linesCols.myStartLine);
       Document document = event.getDocument();

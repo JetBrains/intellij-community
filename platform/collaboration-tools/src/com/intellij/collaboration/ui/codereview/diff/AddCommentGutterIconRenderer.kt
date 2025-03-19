@@ -12,22 +12,21 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.HtmlChunk.html
 import com.intellij.util.ui.EmptyIcon
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Deprecated with the move to ViewModel-based approach")
+@ApiStatus.Internal
+abstract class LineGutterIconRenderer : GutterIconRenderer(), DumbAware, Disposable {
 
   abstract val line: Int
+  abstract var visibleIcon: Icon
 
   var iconVisible = false
 
-  override fun getIcon(): Icon = if (iconVisible) AllIcons.General.InlineAdd else EmptyIcon.ICON_16
-
-  override fun getTooltipText(): @Nls String =
-    html()
-      .addText(CollaborationToolsBundle.message("diff.add.comment.icon.tooltip"))
-      .addRaw(HelpTooltip.getShortcutAsHtml(getFirstKeyboardShortcutText(getShortcut())))
-      .toString()
+  override fun getIcon(): Icon = if (iconVisible) visibleIcon else EmptyIcon.ICON_16
 
   protected open fun getShortcut(): ShortcutSet = CustomShortcutSet.EMPTY
 
@@ -53,4 +52,15 @@ abstract class AddCommentGutterIconRenderer : GutterIconRenderer(), DumbAware, D
   override fun hashCode(): Int {
     return line
   }
+}
+
+@Deprecated("Deprecated with the move to ViewModel-based approach")
+abstract class AddCommentGutterIconRenderer : LineGutterIconRenderer() {
+  override var visibleIcon: Icon = AllIcons.General.InlineAdd
+
+  override fun getTooltipText(): @Nls String =
+    html()
+      .addText(CollaborationToolsBundle.message("diff.add.comment.icon.tooltip"))
+      .addRaw(HelpTooltip.getShortcutAsHtml(getFirstKeyboardShortcutText(getShortcut())))
+      .toString()
 }

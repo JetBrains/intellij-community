@@ -66,7 +66,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
       }
     }
 
-    if (startOffset == endOffset && atoms.size() > 0) {
+    if (startOffset == endOffset && !atoms.isEmpty()) {
       PsiElement[] elements = PsiUtilCore.toPsiElementArray(atoms);
       if ((atoms.size() == 1 || PsiTreeUtil.findCommonParent(elements) == elements[0].getParent())) {
         return elements;
@@ -93,8 +93,7 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
     return false;
   }
 
-  @Nullable
-  private static <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
+  private static @Nullable <T extends RegExpElement> T findElementAtStrict(PsiFile file, int startOffset, int endOffset, Class<T> clazz) {
     T element = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, clazz);
     if (element == null || element.getTextRange().getEndOffset() < endOffset) return null;
     return element;

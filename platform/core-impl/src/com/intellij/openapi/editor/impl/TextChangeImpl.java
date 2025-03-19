@@ -1,15 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Default {@link TextChange} implementation with mutable state.
  */
+@ApiStatus.Internal
 public class TextChangeImpl implements TextChange {
 
   private final StringBuilder myText = new StringBuilder();
@@ -86,8 +88,7 @@ public class TextChangeImpl implements TextChange {
    * @return    text related to the change encapsulated by the current object
    */
   @Override
-  @NotNull
-  public CharSequence getText() {
+  public @NotNull CharSequence getText() {
     return myText;
   }
 

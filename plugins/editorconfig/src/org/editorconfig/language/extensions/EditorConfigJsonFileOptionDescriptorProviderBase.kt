@@ -3,6 +3,7 @@ package org.editorconfig.language.extensions
 
 import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
 import org.editorconfig.language.schema.parser.EditorConfigOptionDescriptorJsonDeserializer
@@ -14,9 +15,9 @@ abstract class EditorConfigJsonFileOptionDescriptorProviderBase : EditorConfigOp
     deserialize(loadFileContent())
   }
 
-  final override fun getOptionDescriptors() = cachedDescriptors
+  override fun getOptionDescriptors(project: Project) = cachedDescriptors
 
-  private fun deserialize(text: String) = try {
+  private fun deserialize(text: String): List<EditorConfigOptionDescriptor> = try {
     EditorConfigOptionDescriptorJsonDeserializer
       .buildGson()
       .fromJson(text, Array<EditorConfigOptionDescriptor?>::class.java)
@@ -25,7 +26,7 @@ abstract class EditorConfigJsonFileOptionDescriptorProviderBase : EditorConfigOp
   catch (ex: JsonSyntaxException) {
     logger<EditorConfigJsonFileOptionDescriptorProviderBase>()
       .warn("Json syntax error in descriptor")
-    emptyList<EditorConfigOptionDescriptor>()
+    emptyList()
   }
 
   private fun loadFileContent(): String {

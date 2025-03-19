@@ -17,7 +17,6 @@
 package org.jetbrains.builtInWebServer.ssi;
 
 import io.netty.buffer.ByteBufUtf8Writer;
-import kotlin.Suppress;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;

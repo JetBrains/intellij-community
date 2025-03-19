@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyAddExceptionSuperClassQuickFix;
 import com.jetbrains.python.psi.*;
@@ -28,13 +29,14 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyExceptionInheritInspection extends PyInspection {
+import java.util.List;
 
-  @NotNull
+public final class PyExceptionInheritInspection extends PyInspection {
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -55,12 +57,14 @@ public class PyExceptionInheritInspection extends PyInspection {
           final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(getResolveContext());
           PsiElement psiElement = reference.resolve();
           if (psiElement instanceof PyClass aClass) {
-            for (PyClassLikeType type : aClass.getAncestorTypes(myTypeEvalContext)) {
+            List<PyClassLikeType> selfAndAncestorTypes = ContainerUtil.prepend(aClass.getAncestorTypes(myTypeEvalContext),
+                                                                               aClass.getType(myTypeEvalContext));
+            for (PyClassLikeType type : selfAndAncestorTypes) {
               if (type == null) {
                 return;
               }
               final String name = type.getName();
-              if (name == null || "BaseException".equals(name) || "Exception".equals(name)) {
+              if (name == null || "BaseException".equals(name)) {
                 return;
               }
             }

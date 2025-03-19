@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uast
 
 import com.intellij.openapi.Disposable
@@ -8,14 +8,14 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiManager
 import org.jetbrains.uast.UastLanguagePlugin
 
-@Service
-class UastModificationTracker internal constructor(val project: Project) : ModificationTracker, Disposable {
+@Service(Service.Level.PROJECT)
+class UastModificationTracker internal constructor(private val project: Project) : ModificationTracker, Disposable {
   private var languageTrackers: List<ModificationTracker>
 
   init {
     languageTrackers = getLanguageTrackers(project)
 
-    UastLanguagePlugin.extensionPointName.addChangeListener(Runnable {
+    UastLanguagePlugin.EP.addChangeListener(Runnable {
       languageTrackers = getLanguageTrackers(project)
     }, this)
   }
@@ -34,11 +34,9 @@ class UastModificationTracker internal constructor(val project: Project) : Modif
       return project.getService(UastModificationTracker::class.java)
     }
 
-    @JvmStatic
     private fun getLanguageTrackers(project: Project): List<ModificationTracker> {
-      val languages = UastMetaLanguage.Holder.getLanguages()
       val psiManager = PsiManager.getInstance(project)
-      return languages.map { psiManager.modificationTracker.forLanguage(it) }
+      return getUastMetaLanguages().map { psiManager.modificationTracker.forLanguage(it) }
     }
   }
 }

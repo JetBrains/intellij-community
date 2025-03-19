@@ -1,14 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,9 @@ import org.jetbrains.annotations.Nullable;
   name = "ExportableFileTemplateSettings",
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
-class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+@ApiStatus.Internal
+public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(FileTemplateSettings.class);
   static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   private static final String ELEMENT_TEMPLATE = "template";
@@ -33,9 +37,8 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     super(project);
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element element = new Element("fileTemplateSettings");
 
     for (FTManager manager : getAllManagers()) {
@@ -70,8 +73,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     return shouldSave || ContainerUtil.or(template.getChildren(), child -> shouldSave((FileTemplateBase)child));
   }
 
-  @NotNull
-  private static Element saveTemplate(FileTemplateBase template) {
+  private static @NotNull Element saveTemplate(FileTemplateBase template) {
     final Element templateElement = new Element(ELEMENT_TEMPLATE);
     templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
     if (!template.getFileName().isEmpty()) {
@@ -101,11 +103,21 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     }
   }
 
+  @Override
+  protected void reloadTemplates() {
+    Element state = getState();
+    super.reloadTemplates();
+    loadState(state);
+  }
+
   private static void loadTemplate(Element element, FTManager manager) {
     final String qName = element.getAttributeValue(ATTRIBUTE_NAME);
     if (qName == null) return;
     final FileTemplateBase template = manager.getTemplate(qName);
-    if (template == null) return;
+    if (template == null) {
+      LOG.warn("Template is missing: " + qName);
+      return;
+    }
     template.setFileName(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_FILE_NAME)));
     template.setReformatCode(Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_REFORMAT)));
     template.setLiveTemplateEnabled(Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));

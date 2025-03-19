@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryUtil;
@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -101,12 +100,10 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
     if (recentEntries != null) {
       myTargetDirectoryField.getChildComponent().setHistory(recentEntries);
     }
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                   RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
-                                                   myProject,
-                                                   descriptor,
-                                                   TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(RefactoringBundle.message("select.target.directory"))
+      .withDescription(RefactoringBundle.message("the.file.will.be.moved.to.this.directory"));
+    myTargetDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
     final JTextField textField = myTargetDirectoryField.getChildComponent().getTextEditor();
     FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, getDisposable());
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -161,7 +158,7 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
 
   @Override
   protected boolean areButtonsValid() {
-    return myTargetDirectoryField.getChildComponent().getText().length() > 0;
+    return !myTargetDirectoryField.getChildComponent().getText().isEmpty();
   }
 
   @Override

@@ -33,8 +33,7 @@ public class HgCatCommand {
     myProject = project;
   }
 
-  @Nullable
-  public HgCommandResult execute(@NotNull HgFile hgFile, @Nullable HgRevisionNumber vcsRevisionNumber, @Nullable Charset charset) {
+  public @Nullable HgCommandResult execute(@NotNull HgFile hgFile, @Nullable HgRevisionNumber vcsRevisionNumber, @Nullable Charset charset) {
     final List<String> arguments = createArguments(vcsRevisionNumber, hgFile.getRelativePath());
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);

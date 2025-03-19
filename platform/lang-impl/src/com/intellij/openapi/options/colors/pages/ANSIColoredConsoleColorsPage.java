@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -16,8 +16,11 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.terminal.BlockTerminalColors;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +30,7 @@ import java.util.Map;
 /**
  * @author oleg, Roman.Chernyatchik
  */
-public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
+public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String DEMO_TEXT =
     """
@@ -65,7 +68,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
       <stdsys>Process finished with exit code 1</stdsys>
       """;
 
-  private static final AttributesDescriptor[] ATTRS = {
+  private static AttributesDescriptor[] ATTRS = {
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
@@ -100,6 +103,11 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
                              JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY),
   };
 
+  private static ColorDescriptor[] COLORS = {
+    new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"),
+                        ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
+  };
+
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
   static {
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdsys", ConsoleViewContentType.SYSTEM_OUTPUT_KEY);
@@ -132,11 +140,95 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
+
+    if (ExperimentalUI.isNewUI()) {
+      AttributesDescriptor[] terminalAttrs = getReworkedTerminalAttributes();
+      ATTRS = ArrayUtil.mergeArrays(ATTRS, terminalAttrs);
+      ColorDescriptor[] terminalColors = getReworkedTerminalColors();
+      COLORS = ArrayUtil.mergeArrays(COLORS, terminalColors);
+    }
   }
 
-  private static final ColorDescriptor[] COLORS = {
-    new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
-  };
+  private static AttributesDescriptor[] getReworkedTerminalAttributes() {
+    return new AttributesDescriptor[]{
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.black"),
+                               BlockTerminalColors.BLACK),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.red"),
+                               BlockTerminalColors.RED),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.green"),
+                               BlockTerminalColors.GREEN),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.yellow"),
+                               BlockTerminalColors.YELLOW),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.blue"),
+                               BlockTerminalColors.BLUE),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.magenta"),
+                               BlockTerminalColors.MAGENTA),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.cyan"),
+                               BlockTerminalColors.CYAN),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.white"),
+                               BlockTerminalColors.WHITE),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.blackBright"),
+                               BlockTerminalColors.BLACK_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.redBright"),
+                               BlockTerminalColors.RED_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.greenBright"),
+                               BlockTerminalColors.GREEN_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.yellowBright"),
+                               BlockTerminalColors.YELLOW_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.blueBright"),
+                               BlockTerminalColors.BLUE_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.magentaBright"),
+                               BlockTerminalColors.MAGENTA_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.cyanBright"),
+                               BlockTerminalColors.CYAN_BRIGHT),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.whiteBright"),
+                               BlockTerminalColors.WHITE_BRIGHT),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.command"),
+                               BlockTerminalColors.COMMAND),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.searchEntry"),
+                               BlockTerminalColors.SEARCH_ENTRY),
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.currentSearchEntry"),
+                               BlockTerminalColors.CURRENT_SEARCH_ENTRY),
+
+      new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.generateCommand.promptText"),
+                               BlockTerminalColors.GENERATE_COMMAND_PROMPT_TEXT),
+    };
+  }
+
+  private static ColorDescriptor[] getReworkedTerminalColors() {
+    return new ColorDescriptor[]{
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.defaultForeground"),
+                          BlockTerminalColors.DEFAULT_FOREGROUND, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.defaultBackground"),
+                          BlockTerminalColors.DEFAULT_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.blockBackground.start"),
+                          BlockTerminalColors.BLOCK_BACKGROUND_START, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.blockBackground.end"),
+                          BlockTerminalColors.BLOCK_BACKGROUND_END, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.hoveredBlockBackground.start"),
+                          BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_START, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.hoveredBlockBackground.end"),
+                          BlockTerminalColors.HOVERED_BLOCK_BACKGROUND_END, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.selectedBlockBackground"),
+                          BlockTerminalColors.SELECTED_BLOCK_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.selectedBlockBorder"),
+                          BlockTerminalColors.SELECTED_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.inactiveSelectedBlockBackground"),
+                          BlockTerminalColors.INACTIVE_SELECTED_BLOCK_BACKGROUND, ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.inactiveSelectedBlockBorder"),
+                          BlockTerminalColors.INACTIVE_SELECTED_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.errorBlockBorder"),
+                          BlockTerminalColors.ERROR_BLOCK_STROKE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.promptSeparator"),
+                          BlockTerminalColors.PROMPT_SEPARATOR_COLOR, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.generateCommand.placeholderForeground"),
+                          BlockTerminalColors.GENERATE_COMMAND_PLACEHOLDER_FOREGROUND, ColorDescriptor.Kind.FOREGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.terminal.generateCommand.caretColor"),
+                          BlockTerminalColors.GENERATE_COMMAND_CARET_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    };
+  }
 
   @Override
   public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {

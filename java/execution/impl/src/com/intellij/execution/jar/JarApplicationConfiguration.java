@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jar;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -36,15 +36,15 @@ import java.util.Map;
 public class JarApplicationConfiguration extends LocatableConfigurationBase implements CommonJavaRunConfigurationParameters,
                                                                                        SearchScopeProvidingRunProfile,
                                                                                        InputRedirectAware,
-                                                                                       TargetEnvironmentAwareRunProfile {
+                                                                                       TargetEnvironmentAwareRunProfile,
+                                                                                       RunProfileWithCompileBeforeLaunchOption {
   private JarApplicationConfigurationBean myBean = new JarApplicationConfigurationBean();
   private Map<String, String> myEnvs = new LinkedHashMap<>();
   private JavaRunConfigurationModule myConfigurationModule;
   private InputRedirectAware.InputRedirectOptionsImpl myInputRedirectOptions = new InputRedirectOptionsImpl();
 
-  @NotNull
   @Override
-  public InputRedirectOptions getInputRedirectOptions() {
+  public @NotNull InputRedirectOptions getInputRedirectOptions() {
     return myInputRedirectOptions;
   }
 
@@ -53,9 +53,13 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myConfigurationModule = new JavaRunConfigurationModule(project, true);
   }
 
-  @NotNull
   @Override
-  public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
+  public boolean isBuildBeforeLaunchAddedByDefault() {
+    return false;
+  }
+
+  @Override
+  public @NotNull SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<JarApplicationConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new JarApplicationConfigurable(getProject()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
@@ -115,20 +119,19 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }
 
+  @Override
   public Module @NotNull [] getModules() {
     Module module = myConfigurationModule.getModule();
     return module != null ? new Module[]{module} : Module.EMPTY_ARRAY;
   }
 
-  @Nullable
   @Override
-  public GlobalSearchScope getSearchScope() {
+  public @Nullable GlobalSearchScope getSearchScope() {
     return ExecutionSearchScopes.executionScope(Arrays.asList(getModules()));
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     return new JarApplicationCommandLineState(this, environment);
   }
 
@@ -160,9 +163,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.ALTERNATIVE_JRE_PATH_ENABLED = enabled;
   }
 
-  @Nullable
   @Override
-  public String getAlternativeJrePath() {
+  public @Nullable String getAlternativeJrePath() {
     return myBean.ALTERNATIVE_JRE_PATH;
   }
 
@@ -171,15 +173,13 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.ALTERNATIVE_JRE_PATH = path;
   }
 
-  @Nullable
   @Override
-  public String getRunClass() {
+  public @Nullable String getRunClass() {
     return null;
   }
 
-  @Nullable
   @Override
-  public String getPackage() {
+  public @Nullable String getPackage() {
     return null;
   }
 
@@ -188,9 +188,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.PROGRAM_PARAMETERS = value;
   }
 
-  @Nullable
   @Override
-  public String getProgramParameters() {
+  public @Nullable String getProgramParameters() {
     return myBean.PROGRAM_PARAMETERS;
   }
 
@@ -199,9 +198,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myBean.WORKING_DIRECTORY = value;
   }
 
-  @Nullable
   @Override
-  public String getWorkingDirectory() {
+  public @Nullable String getWorkingDirectory() {
     return myBean.WORKING_DIRECTORY;
   }
 
@@ -211,9 +209,8 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     myEnvs.putAll(envs);
   }
 
-  @NotNull
   @Override
-  public Map<String, String> getEnvs() {
+  public @NotNull Map<String, String> getEnvs() {
     return myEnvs;
   }
 
@@ -242,15 +239,13 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     return target.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class) != null;
   }
 
-  @Nullable
   @Override
-  public LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
+  public @Nullable LanguageRuntimeType<?> getDefaultLanguageRuntimeType() {
     return LanguageRuntimeType.EXTENSION_NAME.findExtension(JavaLanguageRuntimeType.class);
   }
 
-  @Nullable
   @Override
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return getOptions().getRemoteTarget();
   }
 

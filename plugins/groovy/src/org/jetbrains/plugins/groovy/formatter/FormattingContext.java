@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.Block;
@@ -75,9 +75,9 @@ public class FormattingContext {
     return myForbidNewLineInSpacing;
   }
 
-  public Block createBlock(@NotNull final ASTNode node,
-                           @NotNull final Indent indent,
-                           @Nullable final Wrap wrap) {
+  public Block createBlock(final @NotNull ASTNode node,
+                           final @NotNull Indent indent,
+                           final @Nullable Wrap wrap) {
     return myGroovyBlockProducer.generateBlock(node, indent, wrap, this);
   }
 }

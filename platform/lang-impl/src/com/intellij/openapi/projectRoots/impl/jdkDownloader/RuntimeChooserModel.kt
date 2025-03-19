@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.FileUtil
@@ -12,26 +11,23 @@ import java.nio.file.Paths
 import javax.swing.ComboBoxModel
 import javax.swing.DefaultComboBoxModel
 
+internal sealed class RuntimeChooserItem
 
-abstract class RuntimeChooserItem
-
-object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
-object RuntimeChooserAdvancedSectionSeparator : RuntimeChooserItem()
-object RuntimeChooserCustomSelectedSectionSeparator : RuntimeChooserItem()
-object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
+internal object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
   afterChange(lifetime, action)
 }
 
-class RuntimeChooserModel {
+internal class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
-  val currentRuntime = graph.property<RuntimeChooserCurrentItem?>(null)
+  val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property(null)
 
-  private var downloadableJbs: List<JdkItem> = listOf()
-  private val customJdks = mutableListOf<RuntimeChooserCustomItem>()
+  var downloadableJbs: List<JdkItem> = listOf()
+  val customJdks = mutableListOf<RuntimeChooserCustomItem>()
+  val advancedDownloadItems = mutableListOf<RuntimeChooserDownloadableItem>()
 
   private val myMainComboModel = DefaultComboBoxModel<RuntimeChooserItem>()
 
@@ -52,7 +48,7 @@ class RuntimeChooserModel {
         file = Paths.get(path + "-" + (it + 1))
       }
     }
-    return service<RuntimeChooserJbrInstaller>().defaultInstallDir(item)
+    return RuntimeChooserJbrInstaller.defaultInstallDir(item)
   }
 
   private fun updateMainCombobox(newSelection: RuntimeChooserItem? = null) {
@@ -66,24 +62,23 @@ class RuntimeChooserModel {
       .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    val advancedDownloadItems = downloadableJbs
-      .filterNot { it.isDefaultItem }
-      .map { RuntimeChooserDownloadableItem(it) }
+    advancedDownloadItems.clear()
+    advancedDownloadItems.addAll(
+      downloadableJbs
+        .filterNot { it.isDefaultItem }
+        .map { RuntimeChooserDownloadableItem(it) }
+    )
 
     newList += defaultDownloadableSdks
 
     if (RuntimeChooserCustom.isActionAvailable) {
       if (customJdks.isNotEmpty()) {
-        newList += RuntimeChooserCustomSelectedSectionSeparator
         newList += customJdks
-      } else {
-        newList += RuntimeChooserAdvancedSectionSeparator
       }
       newList += RuntimeChooserAddCustomItem
     }
 
     if (advancedDownloadItems.isNotEmpty()) {
-      newList += RuntimeChooserAdvancedJbrSelectedSectionSeparator
       newList += advancedDownloadItems
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.spi.SPILanguage;
@@ -13,13 +13,13 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class SPIReferencesSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   public SPIReferencesSearcher() {
     super(true);
   }
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters p, final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = p.getElementToSearch();
     if (!element.isValid()) return;
 

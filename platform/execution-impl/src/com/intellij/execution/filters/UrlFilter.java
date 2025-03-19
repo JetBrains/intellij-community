@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.ExecutionBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 public class UrlFilter implements Filter, DumbAware {
   private final Project myProject;
@@ -38,41 +38,59 @@ public class UrlFilter implements Filter, DumbAware {
     myProject = project;
   }
 
-  @Nullable
+  private List<ResultItem> findMatchingItems(String line, Pattern pattern, int textStartOffset) {
+    List<ResultItem> resultList = new ArrayList<>();
+    Matcher matcher = pattern.matcher(line);
+    while (matcher.find()) {
+      resultList.add(
+        new ResultItem(textStartOffset + matcher.start(), textStartOffset + matcher.end(), buildHyperlinkInfo(matcher.group())));
+    }
+    return resultList;
+  }
+
   @Override
-  public Result applyFilter(@NotNull String line, int entireLength) {
+  public @Nullable Result applyFilter(@NotNull String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
-    Pattern pattern = line.contains(LocalFileSystem.PROTOCOL_PREFIX) ? URLUtil.FILE_URL_PATTERN : URLUtil.URL_PATTERN;
-    Matcher m = pattern.matcher(line);
-    ResultItem item = null;
-    List<ResultItem> items = null;
-    while (m.find()) {
-      if (item == null) {
-        item = new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group()));
-      } else {
-        if (items == null) {
-          items = new ArrayList<>(2);
-          items.add(item);
-        }
-        items.add(new ResultItem(textStartOffset + m.start(), textStartOffset + m.end(), buildHyperlinkInfo(m.group())));
-      }
+    List<ResultItem> resultList = new ArrayList<>();
+
+    if (line.contains(LocalFileSystem.PROTOCOL_PREFIX)) {
+      resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN, textStartOffset));
     }
-    return items != null ? new Result(items)
-                         : item != null ? new Result(item.getHighlightStartOffset(), item.getHighlightEndOffset(), item.getHyperlinkInfo())
-                                        : null;
+
+    if (isPotentialUrl(line)) {
+      resultList.addAll(findMatchingItems(line, URLUtil.URL_PATTERN, textStartOffset));
+    }
+
+    if (resultList.isEmpty()) {
+      return null;
+    }
+
+    if (resultList.size() == 1) {
+      ResultItem singleItem = resultList.get(0);
+      return new Result(singleItem.getHighlightStartOffset(), singleItem.getHighlightEndOffset(), singleItem.getHyperlinkInfo());
+    }
+
+    return new Result(resultList);
   }
 
-  @NotNull
-  protected HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
+  private static boolean isPotentialUrl(String input) {
+    return input.contains("www") ||
+           input.contains("http") ||
+           input.contains("mailto") ||
+           input.contains("ftp") ||
+           input.contains("news");
+  }
+
+  protected @NotNull HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
     HyperlinkInfo fileHyperlinkInfo = buildFileHyperlinkInfo(url);
     return fileHyperlinkInfo != null ? fileHyperlinkInfo : new OpenUrlHyperlinkInfo(url);
   }
 
   private @Nullable HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
     if (myProject != null && !url.endsWith(".html") && url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      int documentLine = 0, documentColumn = 0;
+      int documentLine = -1, documentColumn = -1;
       int filePathEndIndex = url.length();
       final int lastColonInd = url.lastIndexOf(':');
       if (lastColonInd > LocalFileSystem.PROTOCOL_PREFIX.length() && lastColonInd < url.length() - 1) {
@@ -126,11 +144,14 @@ public class UrlFilter implements Filter, DumbAware {
     }
   }
 
-  public static class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
-    private @NotNull final String myUrl;
-    final String myFilePath;
-    final int myDocumentLine;
-    final int myDocumentColumn;
+  public static final class FileUrlHyperlinkInfo extends LazyFileHyperlinkInfo implements HyperlinkWithPopupMenuInfo {
+    private final @NotNull String url;
+    @ApiStatus.Internal
+    public final String filePath;
+    @ApiStatus.Internal
+    public final int documentLine;
+    @ApiStatus.Internal
+    public final int documentColumn;
 
     public FileUrlHyperlinkInfo(@NotNull Project project,
                                 @NotNull String filePath,
@@ -139,17 +160,17 @@ public class UrlFilter implements Filter, DumbAware {
                                 @NotNull String url,
                                 boolean useBrowser) {
       super(project, filePath, documentLine, documentColumn, useBrowser);
-      myUrl = url;
-      myFilePath = filePath;
-      myDocumentLine = documentLine;
-      myDocumentColumn = documentColumn;
+      this.url = url;
+      this.filePath = filePath;
+      this.documentLine = documentLine;
+      this.documentColumn = documentColumn;
     }
 
     @Override
     public void navigate(@NotNull Project project) {
       VirtualFile file = getVirtualFile();
       if (file == null || !file.isValid()) {
-        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(myUrl, 150)),
+        Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
                                  IdeBundle.message("title.cannot.open.file"));
         return;
       }
@@ -157,8 +178,8 @@ public class UrlFilter implements Filter, DumbAware {
     }
 
     @Override
-    public @Nullable ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
-      return new OpenUrlHyperlinkInfo(myUrl).getPopupMenuGroup(event);
+    public @NotNull ActionGroup getPopupMenuGroup(@NotNull MouseEvent event) {
+      return new OpenUrlHyperlinkInfo(url).getPopupMenuGroup(event);
     }
   }
 }

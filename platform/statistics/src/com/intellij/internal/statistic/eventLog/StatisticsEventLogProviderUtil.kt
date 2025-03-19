@@ -25,4 +25,27 @@ object StatisticsEventLogProviderUtil {
     }
     return null
   }
+
+  @JvmStatic
+  fun forceLoggingAlwaysEnabled(): Boolean {
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogSettings.EP_NAME)) {
+      val externalEventLogSettings = ExternalEventLogSettings.EP_NAME.findFirstSafe { settings: ExternalEventLogSettings ->
+        getPluginInfo(settings.javaClass).isAllowedToInjectIntoFUS()
+      }
+      if (externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled()) {
+        return true
+      }
+    }
+
+    if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(ExternalEventLogListenerProviderExtension.EP_NAME)) {
+      for (logListenerProvider in ExternalEventLogListenerProviderExtension.EP_NAME.extensionList) {
+        if (getPluginInfo(logListenerProvider.javaClass).isAllowedToInjectIntoFUS() &&
+            logListenerProvider.forceLoggingAlwaysEnabled()) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
 }

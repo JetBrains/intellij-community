@@ -1,19 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.File;
 import java.util.*;
 
 public final class DiffCalculator {
-  public static Result calculate(Map<String, Long> oldChecksums, Map<String, Long> newChecksums) {
-    return calculate(oldChecksums, newChecksums, Collections.emptySet(), Collections.emptySet(), false);
-  }
-
-  public static Result calculate(Map<String, Long> oldChecksums,
-                                 Map<String, Long> newChecksums,
-                                 Set<String> critical,
-                                 Set<String> optional,
-                                 boolean lookForMoved) {
+  public static Result calculate(
+    Map<String, Long> oldChecksums,
+    Map<String, Long> newChecksums,
+    Set<String> critical,
+    Set<String> optional,
+    boolean lookForMoved
+  ) {
     Result result = new Result();
     result.commonFiles = collect(oldChecksums, newChecksums, critical, true);
     result.filesToDelete = withAllRemoved(oldChecksums, newChecksums);

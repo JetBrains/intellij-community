@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
-import com.intellij.execution.target.FullPathOnTarget
-import com.intellij.execution.target.TargetedCommandLineBuilder
-import com.intellij.execution.target.createProcessWithResult
+import com.intellij.execution.target.*
+import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.failure
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.target.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.conda.TargetCommandExecutor
+import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv.Companion.getEnvs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
@@ -20,25 +22,61 @@ import java.util.*
 import kotlin.io.path.exists
 
 /**
- * @see [com.jetbrains.env.conda.PyCondaTest]
+ * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
+ * @see `PyCondaTest`
  */
-data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
-                      val fullCondaPathOnTarget: FullPathOnTarget) {
+data class PyCondaEnv(
+  val envIdentity: PyCondaEnvIdentity,
+  val fullCondaPathOnTarget: FullPathOnTarget,
+) {
+
 
   companion object {
+
+
+    /**
+     * @return unparsed output of conda info --envs --json
+     */
+    private suspend fun getEnvsInfo(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): Result<String> {
+      val output = command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).await()
+      return if (output.exitCode == 0) Result.success(output.stdout) else failure(output.stderr)
+    }
+
+    /**
+     * @return list of conda's envs_dirs directories
+     */
+    @ApiStatus.Internal
+    suspend fun getEnvsDirs(
+      command: TargetCommandExecutor,
+      fullCondaPathOnTarget: FullPathOnTarget,
+    ): Result<Collection<String>> = withContext(Dispatchers.IO) {
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
+      return@withContext runCatching { // External command may return junk
+        val info = Gson().fromJson(json, CondaInfoJson::class.java)
+        info.envs_dirs
+      }
+    }
+
     /**
      * @return list of conda environments
      */
     @ApiStatus.Internal
-    suspend fun getEnvs(command: TargetCommandExecutor,
-                        fullCondaPathOnTarget: FullPathOnTarget): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
-      val json = command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).thenApply { it.stdout }.await()
+    suspend fun getEnvs(
+      command: TargetCommandExecutor,
+      fullCondaPathOnTarget: FullPathOnTarget,
+    ): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
       return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         val fileSeparator = command.targetPlatform.await().platform.fileSeparator
         info.envs.distinctBy { it.trim().lowercase(Locale.getDefault()) }.map { envPath ->
           // Env name is the basename for envs inside of default location
-          val envName = if (info.envs_dirs.any { envPath.startsWith(it) }) envPath.split(fileSeparator).last() else null
+          // envPath should be direct child of envs_dirs to be a NamedEnv
+          val envName = if (info.envs_dirs.any {
+              if (command.local) Path.of(it) == Path.of(envPath).parent
+              else envPath.startsWith(it)
+            }) envPath.split(fileSeparator).last()
+          else null
           val base = envPath.equals(info.conda_prefix, ignoreCase = true)
           PyCondaEnv(envName?.let { PyCondaEnvIdentity.NamedEnv(it) } ?: PyCondaEnvIdentity.UnnamedEnv(envPath, base),
                      fullCondaPathOnTarget)
@@ -48,8 +86,10 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     }
 
     suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+      val (_, env, commandLineBuilder) = withContext(Dispatchers.IO) {
+        command.createRequestEnvAndCommandLine()
+      }.getOrElse { return Result.failure(it) }
 
-      val (_, env, commandLineBuilder) = command.createRequestEnvAndCommandLine().getOrElse { return Result.failure(it) }
 
       val commandLine = commandLineBuilder.apply {
         //conda create -y -n myenv python=3.9
@@ -61,6 +101,9 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
     }
 
   }
+
+  suspend fun createSdkFromThisEnv(targetConfig: TargetEnvironmentConfiguration?, existingSdk: List<Sdk>): Sdk =
+    PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnv(envIdentity, existingSdk, null)
 
 
   /**
@@ -139,6 +182,15 @@ sealed class NewCondaEnvRequest {
   }
 
   /**
+   * Create empty environment with [langlevel] in a specific directory
+   */
+  class EmptyUnnamedEnv(langLevel: LanguageLevel, private val envPrefix: String) : NewCondaEnvRequest() {
+    override val envName: String get() = envPrefix
+
+    override val createEnvArguments: Array<String> = arrayOf("create", "-y", "-p", envPrefix, "python=${langLevel.toPythonVersion()}")
+  }
+
+  /**
    * Create env based om [environmentYaml].
    * Only local target is supported since we do not have an API to read remote file (yet)
    * TODO: Support remote env creation
@@ -154,6 +206,6 @@ sealed class NewCondaEnvRequest {
     }
     override val envName: String get() = lazyName.value
 
-    override val createEnvArguments: Array<String> = arrayOf("env", "create", "--force", "-f", environmentYaml.toFile().path)
+    override val createEnvArguments: Array<String> = arrayOf("env", "create", "-y", "-f", environmentYaml.toFile().path)
   }
 }

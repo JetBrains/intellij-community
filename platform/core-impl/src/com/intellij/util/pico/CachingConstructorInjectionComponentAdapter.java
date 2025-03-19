@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import com.intellij.util.ExceptionUtilRt;
@@ -43,6 +43,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     return componentImplementation;
   }
 
+  @Override
   public String toString() {
     return getClass().getName() + "[" + key + "]";
   }
@@ -231,7 +232,7 @@ final class ComponentParameter {
       }
     }
     found.remove(exclude);
-    if (found.size() == 0) {
+    if (found.isEmpty()) {
       return container.getParent() == null ? null : container.getParent().getComponentAdapterOfType(expectedType);
     }
     else if (found.size() == 1) {

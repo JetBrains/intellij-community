@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -34,8 +34,7 @@ public abstract class ArrayFilterAction extends AnAction {
     return node instanceof MessageTreeNode && ((MessageTreeNode)node).getLink() == ArrayRenderer.Filtered.FILTER_HYPERLINK;
   }
 
-  @Nullable
-  private static MessageTreeNode getFilterNode(AnActionEvent e) {
+  private static @Nullable MessageTreeNode getFilterNode(AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e.getDataContext());
     if (tree != null) {
       TreePath[] paths = tree.getSelectionPaths();

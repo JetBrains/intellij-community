@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -20,14 +20,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
+import org.jetbrains.annotations.ApiStatus
 import java.awt.datatransfer.StringSelection
 
 abstract class CopyPathProvider : AnAction() {
   companion object {
-    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME");
+    @JvmField val QUALIFIED_NAME : Key<@NlsSafe String> = Key.create("QUALIFIED_NAME")
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: run {
@@ -105,8 +106,9 @@ abstract class CopyPathProvider : AnAction() {
 
 abstract class DumbAwareCopyPathProvider : CopyPathProvider(), DumbAware
 
+@ApiStatus.Internal
 class CopyAbsolutePathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) = virtualFile?.presentableUrl
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? = virtualFile?.presentableUrl
 }
 
 class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
@@ -114,28 +116,30 @@ class CopyContentRootPathProvider : DumbAwareCopyPathProvider() {
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     if (virtualFile == null) return null
-
-    val root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
+    val root = ProjectFileIndex.getInstance(project).getContentRootForFile(virtualFile) ?: 
+               WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false) ?: return null
     return VfsUtilCore.getRelativePath(virtualFile, root)
   }
 }
 
+@ApiStatus.Internal
 class CopyFileWithLineNumberPathProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project,
                                 virtualFile: VirtualFile?,
                                 editor: Editor?): String? {
     return if (virtualFile == null) null
-    else editor?.let { CopyReferenceUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
+    else editor?.let { FqnUtil.getVirtualFileFqn(virtualFile, project) + ":" + (editor.caretModel.logicalPosition.line + 1) }
   }
 }
 
 class CopySourceRootPathProvider : DumbAwareCopyPathProvider() {
-  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?) =
+  override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): @NlsSafe String? =
     virtualFile?.let {
       VfsUtilCore.getRelativePath(virtualFile, ProjectFileIndex.getInstance(project).getSourceRootForFile(virtualFile) ?: return null)
     }
 }
 
+@ApiStatus.Internal
 class CopyTBXReferenceProvider : CopyPathProvider() {
   override fun getQualifiedName(project: Project,
                                 elements: List<PsiElement>,
@@ -144,6 +148,7 @@ class CopyTBXReferenceProvider : CopyPathProvider() {
     CopyTBXReferenceAction.createJetBrainsLink(project, elements, editor)
 }
 
+@ApiStatus.Internal
 class CopyFileNameProvider : DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? = virtualFile?.name
 }

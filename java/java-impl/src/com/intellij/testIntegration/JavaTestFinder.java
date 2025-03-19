@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -10,12 +10,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -23,10 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class JavaTestFinder implements TestFinder {
   @Override
@@ -35,8 +34,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findClassesForTest(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -46,7 +44,10 @@ public class JavaTestFinder implements TestFinder {
 
     List<Pair<? extends PsiNamedElement, Integer>> classesWithWeights = new ArrayList<>();
     for (Pair<String, Integer> eachNameWithWeight : TestFinderHelper.collectPossibleClassNamesWithWeights(klass.getName())) {
-      for (PsiClass eachClass : cache.getClassesByName(eachNameWithWeight.first, scope)) {
+      List<PsiClass> explicitClasses = Arrays.asList(cache.getClassesByName(eachNameWithWeight.first, scope));
+      Collection<PsiImplicitClass> implicitClasses =
+        ImplicitClassSearch.search(eachNameWithWeight.first, klass.getProject(), scope).findAll();
+      for (PsiClass eachClass : ContainerUtil.concat(explicitClasses, implicitClasses)) {
         if (isTestSubjectClass(eachClass)) {
           classesWithWeights.add(Pair.create(eachClass, eachNameWithWeight.second));
         }
@@ -77,8 +78,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   @Override
-  @NotNull
-  public Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
+  public @NotNull Collection<PsiElement> findTestsForClass(@NotNull PsiElement element) {
     PsiClass klass = findSourceElement(element);
     if (klass == null) return Collections.emptySet();
 
@@ -119,8 +119,7 @@ public class JavaTestFinder implements TestFinder {
     return eachClass.isPhysical() && (frameworks.isTestClass(eachClass) || eachClass != klass && frameworks.isPotentialTestClass(eachClass));
   }
 
-  @Nullable
-  private static Module getModule(PsiElement element) {
+  private static @Nullable Module getModule(PsiElement element) {
     ProjectFileIndex index = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
     VirtualFile file = PsiUtilCore.getVirtualFile(element);
     return file == null ? null : index.getModuleForFile(file);

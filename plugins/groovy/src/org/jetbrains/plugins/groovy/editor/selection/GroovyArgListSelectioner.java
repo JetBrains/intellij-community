@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 
 import java.util.List;
 
-public class GroovyArgListSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyArgListSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrArgumentList || e.getParent() instanceof GrReferenceExpression && e.getParent().getParent() instanceof GrCall;

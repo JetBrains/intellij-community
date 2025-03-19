@@ -1,30 +1,21 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.concurrency.Job;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,41 +27,46 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
   private final AtomicLong myNextChunkThreshold = new AtomicLong(); // the value myProgressCount should exceed to generate next fireProgressAdvanced event
-  @NotNull
-  private final @Nls String myPresentableName;
+  private final @NotNull @Nls String myPresentableName;
   protected final PsiFile myFile;
-  @Nullable private final Editor myEditor;
-  @NotNull final TextRange myRestrictRange;
-  @NotNull final HighlightInfoProcessor myHighlightInfoProcessor;
-  HighlightingSession myHighlightingSession;
+  private final @Nullable Editor myEditor;
+  @ApiStatus.Internal
+  protected final @NotNull TextRange myRestrictRange;
+  private final HighlightingSession myHighlightingSession;
+  @ApiStatus.Internal
+  private volatile Job myJob;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
                                                    @NotNull Document document,
                                                    @NotNull @Nls String presentableName,
-                                                   @Nullable PsiFile file,
+                                                   @Nullable PsiFile psiFile,
                                                    @Nullable Editor editor,
                                                    @NotNull TextRange restrictRange,
                                                    boolean runIntentionPassAfter,
-                                                   @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+                                                   @Deprecated
+                                                   @Nullable("do not use") HighlightInfoProcessor highlightInfoProcessor) {
     super(project, document, runIntentionPassAfter);
     myPresentableName = presentableName;
-    myFile = file;
+    myFile = psiFile;
     myEditor = editor;
     myRestrictRange = restrictRange;
-    myHighlightInfoProcessor = highlightInfoProcessor;
-    if (file != null) {
-      if (file.getProject() != project) {
-        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is from an alien project (" + file.getProject()+") but expected: "+project);
+    if (psiFile != null) {
+      if (psiFile.getProject() != project) {
+        throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is from an alien project (" + psiFile.getProject()+") but expected: "+project);
       }
-      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
-        throw new IllegalArgumentException("File '" + file +"' ("+file.getClass()+") is an injected fragment but expected top-level");
+      if (InjectedLanguageManager.getInstance(project).isInjectedFragment(psiFile)) {
+        throw new IllegalArgumentException("File '" + psiFile +"' ("+psiFile.getClass()+") is an injected fragment but expected top-level");
       }
+      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
+    }
+    else {
+      myHighlightingSession = null;
+    }
+    if (document instanceof DocumentWindow) {
+      throw new IllegalArgumentException("Document '" + document +" is an injected fragment but expected top-level");
     }
     if (editor != null) {
-      if (editor.getProject() != null && editor.getProject() != project) {
-        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") " +
-                                           "belongs to an alien project '" + editor.getProject() + "' but expected: '" + project + "'");
-      }
+      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
       if (editor.getDocument() != document) {
         throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") has document " +editor.getDocument()+" but expected: "+document);
       }
@@ -89,12 +85,17 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   @Override
   public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
+    ProgressManager.checkCanceled();
     myFinished = false;
-    if (myFile != null) {
-      myHighlightingSession = HighlightingSessionImpl.getFromCurrentIndicator(myFile);
-    }
     try {
-      collectInformationWithProgress(progress);
+      HighlightingSession session = getHighlightingSession();
+      if (session.getProgressIndicator() == progress) {
+        collectInformationWithProgress(progress);
+      }
+      else {
+        // we're running the second copy - wait for the first to complete instead of running it again
+        waitMyJob(progress, session.getProgressIndicator());
+      }
     }
     finally {
       if (myFile != null) {
@@ -109,8 +110,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doApplyInformationToEditor() {
     myFinished = true;
     applyInformationWithProgress();
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
   }
 
   protected abstract void applyInformationWithProgress();
@@ -138,9 +137,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     return myFinished;
   }
 
-  @Nullable("null means do not show progress")
-  @Nls
-  protected String getPresentableName() {
+  @SuppressWarnings("NullableProblems")
+  public @Nullable("null means do not show progress") @Nls String getPresentableName() {
     return myPresentableName;
   }
 
@@ -159,13 +157,14 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       long current = myProgressCount.addAndGet(delta);
       if (current >= myNextChunkThreshold.get() &&
           current >= myNextChunkThreshold.updateAndGet(old -> current >= old ? old+Math.max(1, myProgressLimit / 100) : old)) {
-        myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).progressIsAdvanced(myHighlightingSession, getEditor(), getProgress());
       }
     }
   }
 
-  static class EmptyPass extends TextEditorHighlightingPass {
-    EmptyPass(@NotNull Project project, @NotNull Document document) {
+  @ApiStatus.Internal
+  public static final class EmptyPass extends TextEditorHighlightingPass {
+    public EmptyPass(@NotNull Project project, @NotNull Document document) {
       super(project, document, false);
     }
 
@@ -175,8 +174,34 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
     @Override
     public void doApplyInformationToEditor() {
-      FileStatusMap statusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
-      statusMap.markFileUpToDate(getDocument(), getId());
     }
+  }
+
+  protected @NotNull HighlightingSession getHighlightingSession() {
+    return myHighlightingSession;
+  }
+
+  private void waitMyJob(@NotNull ProgressIndicator progress1, @NotNull ProgressIndicator progress2) {
+    Job job;
+    // a tiny data race is possible between the job is submitted in PassExecutorService.submit and myJov field is updated
+    while ((job = myJob) == null) {
+      progress1.checkCanceled();
+      progress2.checkCanceled();
+    }
+    while(!job.isDone() && !job.isCanceled()) {
+      try {
+        job.waitForCompletion(10);
+      }
+      catch (Exception e) {
+        break;
+      }
+      progress1.checkCanceled();
+      progress2.checkCanceled();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void saveJob(@NotNull Job job) {
+    myJob = job;
   }
 }

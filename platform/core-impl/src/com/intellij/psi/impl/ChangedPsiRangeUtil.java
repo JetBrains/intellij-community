@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -11,11 +11,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ChangedPsiRangeUtil {
   private static int getLeafMatchingLength(CharSequence leafText, CharSequence pattern, int patternIndex, int finalPatternIndex, int direction) {
     int leafIndex = direction == 1 ? 0 : leafText.length() - 1;
@@ -55,8 +57,7 @@ public final class ChangedPsiRangeUtil {
     return result;
   }
 
-  @Nullable
-  public static TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newDocumentText) {
+  public static @Nullable TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newDocumentText) {
     int psiLength = treeElement.getTextLength();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
@@ -71,11 +72,11 @@ public final class ChangedPsiRangeUtil {
     return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 
-  @Nullable
-  static ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
-                                            @NotNull Document document,
-                                            @NotNull CharSequence oldDocumentText,
-                                            @NotNull CharSequence newDocumentText) {
+  @ApiStatus.Internal
+  public static @Nullable ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
+                                                      @NotNull Document document,
+                                                      @NotNull CharSequence oldDocumentText,
+                                                      @NotNull CharSequence newDocumentText) {
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new ProperTextRange(0, psiLength);

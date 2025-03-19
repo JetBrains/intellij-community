@@ -15,24 +15,27 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isTooLarge
 import com.intellij.ui.jcef.*
+import com.intellij.ui.jcef.utils.JBCefLocalRequestHandler
+import com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 import com.intellij.util.IncorrectOperationException
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
-import org.cef.handler.*
+import org.cef.handler.CefLoadHandler
+import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.handler.CefRequestHandler
 import org.intellij.images.ImagesBundle
 import org.intellij.images.editor.ImageZoomModel
 import org.intellij.images.editor.impl.ImageFileEditorState
 import org.intellij.images.options.OptionsManager
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions
-import org.intellij.images.thumbnail.actions.ShowBorderAction
+import org.intellij.images.thumbnail.actions.ShowBorderAction.isBorderVisible
 import org.intellij.images.ui.ImageComponentDecorator
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -45,7 +48,6 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -88,6 +90,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
   private val myUIComponent: JCefImageViewerUI
   private val myViewerStateJSQuery: JBCefJSQuery
   private val myRequestHandler: CefRequestHandler
+  private val myLoadHandler: CefLoadHandler
 
   private var myState = ViewerState()
   private var myEditorState: ImageFileEditorState = ImageFileEditorState(
@@ -132,7 +135,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   override fun dispose() {
     ourCefClient.removeRequestHandler(myRequestHandler, myBrowser.cefBrowser)
-    myViewerStateJSQuery.clearHandlers()
+    ourCefClient.removeLoadHandler(myLoadHandler, myBrowser.cefBrowser)
     myDocument.removeDocumentListener(this)
   }
 
@@ -179,48 +182,49 @@ class JCefImageViewer(private val myFile: VirtualFile,
 
   init {
     myDocument.addDocumentListener(this)
-    myRequestHandler = CefLocalRequestHandler(PROTOCOL, HOST_NAME)
+    myRequestHandler = JBCefLocalRequestHandler(PROTOCOL, HOST_NAME)
 
     myRequestHandler.addResource(VIEWER_PATH) {
       javaClass.getResourceAsStream("resources/image_viewer.html")?.let {
-        CefStreamResourceHandler(it, "text/html", this@JCefImageViewer)
+        JBCefStreamResourceHandler(it, "text/html", this@JCefImageViewer)
       }
     }
 
     myRequestHandler.addResource(OVERLAY_SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceCSS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(OVERLAY_SCROLLBARS_JS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarsSourceJS().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(SCROLLBARS_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(JBCefScrollbarsHelper.getOverlayScrollbarStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(CHESSBOARD_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(buildChessboardStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(GRID_CSS_PATH) {
-      CefStreamResourceHandler(ByteArrayInputStream(buildGridStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
+      JBCefStreamResourceHandler(ByteArrayInputStream(buildGridStyle().toByteArray(StandardCharsets.UTF_8)), "text/css", this)
     }
 
     myRequestHandler.addResource(IMAGE_PATH) {
       var stream: InputStream? = null
       try {
-        stream = if (FileUtilRt.isTooLarge(myFile.length)) myFile.inputStream
+        stream = if (myFile.isTooLarge()) myFile.inputStream
         else ByteArrayInputStream(myDocument.text.toByteArray(StandardCharsets.UTF_8))
       }
       catch (e: IOException) {
         Logger.getInstance(JCefImageViewer::class.java).warn("Failed to read the file", e)
       }
 
-      var resourceHandler: CefStreamResourceHandler? = null
+      var resourceHandler: JBCefStreamResourceHandler? = null
       stream?.let {
         try {
-          resourceHandler = CefStreamResourceHandler(it, mimeType, this@JCefImageViewer)
+          resourceHandler = JBCefStreamResourceHandler(it, mimeType, this@JCefImageViewer,
+                                                       mapOf("Content-Security-Policy" to "script-src 'none'"))
         }
         catch (_: IncorrectOperationException) { // The viewer has been disposed just return null that will reject all requests
         }
@@ -235,15 +239,15 @@ class JCefImageViewer(private val myFile: VirtualFile,
     Disposer.register(this, myUIComponent)
     Disposer.register(this, myBrowser)
 
-    @Suppress("DEPRECATION")
-    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser)
+    myViewerStateJSQuery = JBCefJSQuery.create(myBrowser as JBCefBrowserBase)
+    Disposer.register(this, myViewerStateJSQuery)
     myViewerStateJSQuery.addHandler { s: String ->
       val oldState = myState
       try {
         myState = jsonParser.decodeFromString(s)
       }
       catch (_: Exception) {
-        myUIComponent.showError()
+        SwingUtilities.invokeLater { myUIComponent.showError() }
         return@addHandler JBCefJSQuery.Response(null, 255, "Failed to parse the viewer state")
       }
 
@@ -273,7 +277,7 @@ class JCefImageViewer(private val myFile: VirtualFile,
       JBCefJSQuery.Response(null)
     }
 
-    ourCefClient.addLoadHandler(object : CefLoadHandlerAdapter() {
+    myLoadHandler = object : CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
         if (frame.isMain) {
           reloadStyles()
@@ -281,10 +285,11 @@ class JCefImageViewer(private val myFile: VirtualFile,
           execute("setImageUrl('$IMAGE_URL');")
           isGridVisible = myEditorState.isGridVisible
           isTransparencyChessboardVisible = myEditorState.isBackgroundVisible
-          setBorderVisible(ShowBorderAction.isBorderVisible())
+          setBorderVisible(isBorderVisible())
         }
       }
-    }, myBrowser.cefBrowser)
+    }
+    ourCefClient.addLoadHandler(myLoadHandler, myBrowser.cefBrowser)
 
     if (isDebugMode()) {
       myBrowser.loadURL("$VIEWER_URL?debug")

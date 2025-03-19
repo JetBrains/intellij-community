@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -62,11 +62,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
   protected static class DialogState {
     final VirtualFile selectedRoot;
-    @NlsContexts.ProgressTitle final String progressTitle;
+    final @NlsContexts.ProgressTitle String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;
-    @NotNull final GitBranch selectedBranch;
+    final @NotNull GitBranch selectedBranch;
     final boolean commitAfterMerge;
-    @NotNull final List<String> selectedOptions;
+    final @NotNull List<String> selectedOptions;
 
     DialogState(@NotNull VirtualFile root,
                 @NlsContexts.ProgressTitle @NotNull String title,
@@ -83,9 +83,8 @@ abstract class GitMergeAction extends GitRepositoryAction {
     }
   }
 
-  @Nullable
-  protected abstract DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
-                                               @NotNull VirtualFile defaultRoot);
+  protected abstract @Nullable DialogState displayDialog(@NotNull Project project, @NotNull List<VirtualFile> gitRoots,
+                                                         @NotNull VirtualFile defaultRoot);
 
   protected abstract String getNotificationErrorDisplayId();
 
@@ -127,7 +126,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         boolean setupRebaseEditor = shouldSetupRebaseEditor(project, selectedRoot);
         Ref<GitHandlerRebaseEditorManager> rebaseEditorManager = Ref.create();
-        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
+        try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.merge"), GitActivity.Merge)) {
           GitCommandResult result = git.runCommand(() -> {
             GitLineHandler handler = handlerProvider.get();
 
@@ -177,20 +176,19 @@ abstract class GitMergeAction extends GitRepositoryAction {
                             boolean commitAfterMerge) {
     VirtualFile root = repository.getRoot();
 
-    if (mergeConflictDetector.hasHappened()) {
-      GitMerger merger = new GitMerger(project);
+    if (mergeConflictDetector.isDetected()) {
       new GitConflictResolver(project, singletonList(root), new GitConflictResolver.Params(project)) {
         @Override
         protected boolean proceedAfterAllMerged() throws VcsException {
           if (commitAfterMerge) {
-            merger.mergeCommit(root);
+            new GitMerger(project).mergeCommit(root);
           }
           return true;
         }
       }.merge();
     }
 
-    if (result.success() || mergeConflictDetector.hasHappened()) {
+    if (result.success() || mergeConflictDetector.isDetected()) {
       GitUtil.refreshVfsInRoot(root);
       repository.update();
       if (updatedRanges != null &&
@@ -203,13 +201,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
-          notification = VcsNotifier.STANDARD_NOTIFICATION
+          notification = VcsNotifier.standardNotification()
             .createNotification(title, content, INFORMATION)
             .setDisplayId(GitNotificationIdsHolder.FILES_UPDATED_AFTER_MERGE)
             .addAction(NotificationAction.createSimple(GitBundle.message("action.NotificationAction.GitMergeAction.text.view.commits"), notificationData.getViewCommitAction()));
         }
         else {
-          notification = VcsNotifier.STANDARD_NOTIFICATION
+          notification = VcsNotifier.standardNotification()
             .createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"), INFORMATION)
             .setDisplayId(GitNotificationIdsHolder.FILES_UP_TO_DATE);
         }
@@ -219,11 +217,11 @@ abstract class GitMergeAction extends GitRepositoryAction {
         showUpdates(project, repository, currentRev, beforeLabel, getActionName());
       }
     }
-    else if (localChangesDetector.wasMessageDetected()) {
+    else if (localChangesDetector.isDetected()) {
       LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, LOCAL_CHANGES_DETECTED, repository.getRoot(), getActionName(),
                                                                  localChangesDetector.getRelativeFilePaths());
     }
-    else if (untrackedFilesDetector.wasMessageDetected()) {
+    else if (untrackedFilesDetector.isDetected()) {
       GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.getRelativeFilePaths(),
                                                                 getActionName(), null);
     }

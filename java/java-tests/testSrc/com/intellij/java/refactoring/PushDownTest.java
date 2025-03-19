@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -68,6 +68,8 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testDefaultMethodToClassKeepAbstract() { doTestImplements(true); }
   public void testInterfaceStaticMethodToInterface() { doTest(); }
   public void testInterfaceStaticMethodToClass() { doTest(); }
+  public void testInterfaceInnerRecordToClass() { doTest(); }
+  public void testInterfaceInnerClassToClass() { doTest(); }
   public void testThisSuperExpressions() {doTest();}
   public void testMethodsInheritedFromSuper() {doTest();}
   public void testMethodsInheritedFromSuper1() {doTest();}

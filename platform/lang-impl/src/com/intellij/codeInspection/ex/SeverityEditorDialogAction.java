@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
-public class SeverityEditorDialogAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class SeverityEditorDialogAction extends AnAction implements DumbAware {
   public SeverityEditorDialogAction() {
     super(ActionsBundle.messagePointer("action.SeverityEditorDialogAction.text"));
   }

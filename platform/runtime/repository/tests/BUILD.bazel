@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.runtime.repository.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "runtime-repository-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "runtime-repository-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/runtime/repository",
+    "//platform/util-ex",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "runtime-repository-tests_test",
+  runtime_deps = [":runtime-repository-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.runtime.repository.tests` end

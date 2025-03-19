@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -13,17 +13,7 @@ public interface PresentableChange {
   @NotNull
   FileStatus getFileStatus();
 
-  /**
-   * @deprecated Use {@link #getTag()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  default Object getPopupTag() {
+  default @Nullable ChangesBrowserNode.Tag getTag() {
     return null;
-  }
-
-  @Nullable
-  default ChangesBrowserNode.Tag getTag() {
-    return ChangesBrowserNode.WrapperTag.wrap(getPopupTag());
   }
 }

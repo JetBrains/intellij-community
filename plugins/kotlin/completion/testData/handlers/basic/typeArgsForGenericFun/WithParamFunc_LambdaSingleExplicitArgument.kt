@@ -9,5 +9,6 @@ fun testInsertion() {
     val comp: Comparator<S> = Comparator.comparingInt({ it.a }).<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: reversed
 // TAIL_TEXT: "()"

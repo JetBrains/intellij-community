@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverlyComplexBooleanExpressionInspectionBase {
+public final class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverlyComplexBooleanExpressionInspectionBase {
 
   @Override
   public @NotNull OptPane getGroovyOptionsPane() {

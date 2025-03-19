@@ -16,7 +16,9 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.NonExtendable
 public interface HighlighterColors {
   TextAttributesKey NO_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("DEFAULT");
   TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey("TEXT");

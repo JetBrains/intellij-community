@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.module.Module;
@@ -151,6 +151,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return null;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof DomFileElementImpl that)) return false;
@@ -162,6 +163,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (myFile != null ? myFile.hashCode() : 0);
@@ -195,14 +197,12 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return new ElementPresentation() {
 
       @Override
-      @NonNls
-      public String getElementName() {
+      public @NonNls String getElementName() {
         return "<ROOT>";
       }
 
       @Override
-      @NonNls
-      public String getTypeName() {
+      public @NonNls String getTypeName() {
         return "<ROOT>";
       }
 
@@ -252,8 +252,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   }
 
   @Override
-  @NonNls
-  public @Nullable String getXmlElementNamespaceKey() {
+  public @NonNls @Nullable String getXmlElementNamespaceKey() {
     return null;
   }
 
@@ -280,8 +279,8 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return myRootHandler;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "File " + myFile.toString();
   }
 

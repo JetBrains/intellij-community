@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.ide.IdeEventQueue;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.HashSet;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 final class ChangelistConflictAccessProvider extends WritingAccessProvider {
   private final Project myProject;
 
@@ -25,9 +27,8 @@ final class ChangelistConflictAccessProvider extends WritingAccessProvider {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
+  public @NotNull Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
     ChangelistConflictTracker.Options options = conflictTracker.getOptions();

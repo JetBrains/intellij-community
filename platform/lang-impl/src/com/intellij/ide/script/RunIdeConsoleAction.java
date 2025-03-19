@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.script;
 
 import com.intellij.execution.ExecutionBundle;
@@ -45,6 +45,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class RunIdeConsoleAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(RunIdeConsoleAction.class);
 
@@ -90,7 +92,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
   }
 
   static void chooseScriptEngineAndRun(@NotNull AnActionEvent e,
-                                       @NotNull List<? extends IdeScriptEngineManager.EngineInfo> infos,
+                                       @NotNull List<IdeScriptEngineManager.EngineInfo> infos,
                                        @NotNull Consumer<? super IdeScriptEngineManager.EngineInfo> onChosen) {
     if (infos.size() == 1) {
       onChosen.consume(infos.iterator().next());
@@ -141,7 +143,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     for (FileEditor fileEditor : source.getEditors(file)) {
       if (!(fileEditor instanceof TextEditor)) continue;
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      runAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, editor.getComponent());
+      runAction.registerCustomShortcutSet(CommonShortcuts.getCtrlEnter(), editor.getComponent());
     }
   }
 
@@ -202,8 +204,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     ensureOutputIsRedirected(engine, descriptor);
   }
 
-  @Nullable
-  private static String getProfileText(@NotNull VirtualFile file) {
+  private static @Nullable String getProfileText(@NotNull VirtualFile file) {
     try {
       VirtualFile folder = file.getParent();
       VirtualFile profileChild = folder == null ? null : folder.findChild(".profile." + file.getExtension());
@@ -214,8 +215,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     return null;
   }
 
-  @NotNull
-  private static String getCommandText(@NotNull Project project, @NotNull Editor editor) {
+  private static @NotNull String getCommandText(@NotNull Project project, @NotNull Editor editor) {
     TextRange selectedRange = EditorUtil.getSelectionInAnyMode(editor);
     Document document = editor.getDocument();
     if (!selectedRange.isEmpty()) {
@@ -228,7 +228,8 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
 
     // try to detect a non-trivial composite PSI element if there's a PSI file
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (file != null && !StringUtil.isEmptyOrSpaces(lineText)) {
+    if (file != null && !StringUtil.isEmptyOrSpaces(lineText) &&
+        !"textmate".equals(file.getLanguage().getID())) {
       int start = lineStart, end = lineEnd;
       while (start < end && Character.isWhitespace(lineText.charAt(start - lineStart))) start ++;
       while (end > start && Character.isWhitespace(lineText.charAt(end - 1 - lineStart))) end --;
@@ -250,10 +251,9 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     RunContentManager.getInstance(consoleView.getProject()).toFrontRunContent(executor, descriptor);
   }
 
-  @NotNull
-  private static RunContentDescriptor getConsoleView(@NotNull Project project,
-                                                     @NotNull VirtualFile file,
-                                                     @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
+  private static @NotNull RunContentDescriptor getConsoleView(@NotNull Project project,
+                                                              @NotNull VirtualFile file,
+                                                              @NotNull IdeScriptEngineManager.EngineInfo engineInfo) {
     for (RunContentDescriptor existing : RunContentManager.getInstance(project).getAllDescriptors()) {
       Content content = existing.getAttachedContent();
       if (content == null) continue;
@@ -287,7 +287,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     return descriptor;
   }
 
-  private static class MyRunAction extends DumbAwareAction {
+  private static final class MyRunAction extends DumbAwareAction {
 
     private IdeScriptEngineManager.EngineInfo engineInfo;
 
@@ -366,8 +366,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
       myAnsiEscapeDecoder = new AnsiEscapeDecoder();
     }
 
-    @Nullable
-    public RunContentDescriptor getDescriptor() {
+    public @Nullable RunContentDescriptor getDescriptor() {
       return myDescriptor.get();
     }
 

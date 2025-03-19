@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -96,8 +96,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return fromAnnotationContext(expression.getUastParent(), context);
   }
 
-  @NotNull
-  private static NlsInfo fromEqualityCheck(@NotNull UExpression expression, boolean allowStringModifications) {
+  private static @NotNull NlsInfo fromEqualityCheck(@NotNull UExpression expression, boolean allowStringModifications) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
     if (parent instanceof UCallExpression) {
       String name = ((UCallExpression)parent).getMethodName();

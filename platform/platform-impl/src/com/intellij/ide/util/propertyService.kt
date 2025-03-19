@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.ide.util
@@ -29,7 +29,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   private val keyToString = ConcurrentHashMap<String, String>()
   private val keyToStringList = ConcurrentHashMap<String, List<String>>()
 
-  override fun getStateModificationCount() = tracker.modificationCount
+  override fun getStateModificationCount(): Long = tracker.modificationCount
 
   fun removeIf(predicate: Predicate<String>) {
     keyToString.keys.removeIf(predicate)
@@ -39,19 +39,27 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     keyToString.forEach(consumer)
   }
 
-  private fun doPut(key: String, value: String) {
-    if (keyToString.put(key, value) !== value) {
+  private fun doPut(key: String, value: String): Boolean {
+    if (keyToString.put(key, value) == value) {
+      return false
+    }
+    else {
       tracker.incModificationCount()
+      return true
     }
   }
 
-  override fun getState() = MyState(TreeMap(keyToString), TreeMap(keyToStringList))
+  override fun getState(): MyState = MyState(TreeMap(keyToString), TreeMap(keyToStringList))
 
   override fun loadState(state: MyState) {
     keyToString.clear()
     keyToStringList.clear()
     keyToString.putAll(state.keyToString)
     keyToStringList.putAll(state.keyToStringList)
+  }
+
+  override fun updateValue(name: String, newValue: Boolean): Boolean {
+    return doPut(key = name, value = newValue.toString())
   }
 
   override fun getValue(name: String): String? = keyToString.get(name)
@@ -113,9 +121,9 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun isValueSet(name: String) = keyToString.containsKey(name)
+  override fun isValueSet(name: String): Boolean = keyToString.containsKey(name)
 
-  override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
+  override fun getValues(name: @NonNls String): Array<String>? = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
     if (values == null) {
@@ -127,7 +135,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun getList(name: String) = keyToStringList.get(name)
+  override fun getList(name: String): List<String>? = keyToStringList.get(name)
 
   override fun setList(name: String, values: MutableCollection<String>?) {
     if (values == null) {
@@ -141,10 +149,16 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
-@State(name = "PropertyService", reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
+@State(name = AppPropertyService.COMPONENT_NAME, reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE,
+                                                                              usePathMacroManager = false)])
 @Internal
-class AppPropertyService : BasePropertyService()
+class AppPropertyService : BasePropertyService() {
+  companion object {
+    const val COMPONENT_NAME = "PropertyService"
+  }
+}
 
-@State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE,
+                                                                                  usePathMacroManager = false)])
 @Internal
 internal class ProjectPropertyService : BasePropertyService()

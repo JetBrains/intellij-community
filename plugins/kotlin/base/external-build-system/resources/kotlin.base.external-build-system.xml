@@ -1,0 +1,10 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.base.externalSystem">
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="org.jetbrains.kotlin.idea.base.externalSystem.kotlinBuildSystemFacade"
+      interface="org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade"
+      dynamic="true"
+      />
+
+  </extensionPoints>
+</idea-plugin>

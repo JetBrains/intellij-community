@@ -1,6 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.downloadFileToCacheLocation
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,38 +13,63 @@ import java.util.logging.Logger
  * Provides a current JBR SDK
  */
 object JdkDownloader {
-  @JvmStatic
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, infoLog: (String) -> Unit): Path {
+  fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
+    return runBlocking(Dispatchers.IO) {
+      getJdkHome(communityRoot = communityRoot, jdkBuildNumber = jdkBuildNumber, variation = variation, infoLog = infoLog)
+    }
+  }
+
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
-    return getJdkHome(communityRoot, os, arch, infoLog)
+    val isMusl = LinuxLibcImpl.isLinuxMusl
+    val effectiveVariation = if (isMusl) null else variation
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
   }
 
   @JvmStatic
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot): Path {
-    return getJdkHome(communityRoot) { msg: String? ->
-      Logger.getLogger(JdkDownloader::class.java.name).info(msg)
+  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null): Path {
+    return blockingGetJdkHome(communityRoot, jdkBuildNumber, variation) {
+      Logger.getLogger(JdkDownloader::class.java.name).info(it)
     }
   }
 
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, infoLog: (String) -> Unit): Path {
-    val jdkUrl = getUrl(communityRoot, os, arch)
-    val jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl)
-    val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(
-      communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT)
-    infoLog("jps-bootstrap JDK is at $jdkExtracted")
+  /**
+   * Used by JpsBootstrapMain
+   */
+  @Suppress("unused")
+  @JvmStatic
+  fun getRuntimeHome(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return runBlocking(Dispatchers.IO) {
+      val dependenciesProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+      val runtimeBuild = dependenciesProperties.property("runtimeBuild")
+      getJdkHome(communityRoot, jdkBuildNumber = runtimeBuild, variation = "jbr_jcef") {
+        Logger.getLogger(JdkDownloader::class.java.name).info(it)
+      }
+    }
+  }
 
-    val jdkHome: Path = if (os == OS.MACOSX) {
-      jdkExtracted.resolve("Contents").resolve("Home")
-    }
-    else {
-      jdkExtracted
-    }
-    val executable = getJavaExecutable(jdkHome)
-    infoLog("JDK home is at $jdkHome, executable at $executable")
+  suspend fun getJdkHome(
+    communityRoot: BuildDependenciesCommunityRoot,
+    os: OS,
+    arch: Arch,
+    isMusl: Boolean = false,
+    jdkBuildNumber: String? = null,
+    variation: String? = null,
+    infoLog: (String) -> Unit,
+  ): Path {
+    val effectiveVariation = if (isMusl) null else variation
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, isMusl = isMusl, jdkBuildNumber = jdkBuildNumber, variation = effectiveVariation)
+    val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
+    val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
+                                                                              archiveFile = jdkArchive,
+                                                                              BuildDependenciesExtractOptions.STRIP_ROOT)
+    val jdkHome = if (os == OS.MACOSX) jdkExtracted.resolve("Contents").resolve("Home") else jdkExtracted
+    infoLog("JPS-bootstrap JDK (jdkHome=$jdkHome, executable=${getJavaExecutable(jdkHome)})")
     return jdkHome
   }
 
+  @JvmStatic
   fun getJavaExecutable(jdkHome: Path): Path {
     for (candidateRelative in mutableListOf("bin/java", "bin/java.exe")) {
       val candidate = jdkHome.resolve(candidateRelative)
@@ -52,7 +80,7 @@ object JdkDownloader {
     throw IllegalStateException("No java executables were found under $jdkHome")
   }
 
-  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch): URI {
+  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, isMusl: Boolean = false, jdkBuildNumber: String? = null, variation: String? = null): URI {
     val ext = ".tar.gz"
     val osString: String = when (os) {
       OS.WINDOWS -> "windows"
@@ -64,14 +92,20 @@ object JdkDownloader {
       Arch.ARM64 -> "aarch64"
     }
 
-    val dependenciesProperties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
-    val jdkBuild = dependenciesProperties.property("jdkBuild")
-    val jdkBuildSplit = jdkBuild.split("b".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val jdkBuild = if (jdkBuildNumber == null) {
+      val dependencyProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
+      dependencyProperties.property("jdkBuild")
+    } else {
+      jdkBuildNumber
+    }
+    val jdkBuildSplit = jdkBuild.split("b".toRegex()).dropLastWhile { it.isEmpty() }
     check(jdkBuildSplit.size == 2) { "Malformed jdkBuild property: $jdkBuild" }
     val version = jdkBuildSplit[0]
     val build = "b" + jdkBuildSplit[1]
-    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-" +
+    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/" +
+                      (variation ?: "jbrsdk") + "-" +
                       version + "-" + osString + "-" +
+                      (if (isMusl) "musl-" else "") +
                       archString + "-" + build + ext)
   }
 

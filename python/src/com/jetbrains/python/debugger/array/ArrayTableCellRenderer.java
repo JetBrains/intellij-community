@@ -15,8 +15,8 @@ import java.awt.*;
  */
 class ArrayTableCellRenderer extends DataViewCellRenderer implements ColoredCellRenderer {
   private static final Logger LOG = Logger.getInstance(ArrayTableCellRenderer.class);
-  private double myMin = Double.MIN_VALUE;
-  private double myMax = Double.MIN_VALUE;
+  private double myMin;
+  private double myMax;
   private String myComplexMin;
   private String myComplexMax;
   private boolean myColored = true;

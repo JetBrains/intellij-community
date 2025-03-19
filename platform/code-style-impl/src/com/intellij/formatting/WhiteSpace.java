@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -26,6 +12,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,7 +33,8 @@ import java.util.ArrayList;
  * <p/>
  * Not thread-safe.
  */
-public class WhiteSpace {
+@ApiStatus.Internal
+public final class WhiteSpace {
 
   private static final char LINE_FEED = '\n';
 
@@ -239,8 +227,7 @@ public class WhiteSpace {
    * @param tabSize      tab width in columns
    * @return             information about white space symbols at the target region of the given text
    */
-  @NotNull
-  private static WhiteSpaceInfo parse(@NotNull CharSequence text, int startOffset, int endOffset, int startColumn, int tabSize) {
+  private static @NotNull WhiteSpaceInfo parse(@NotNull CharSequence text, int startOffset, int endOffset, int startColumn, int tabSize) {
     assert startOffset <= endOffset;
 
     int spaces = 0;
@@ -502,7 +489,7 @@ public class WhiteSpace {
    *                start/end offsets managed by the current {@link WhiteSpace} object; {@code false} otherwise
    */
   public boolean equalsToString(CharSequence ws) {
-    if (myInitial == null) return ws.length() == 0;
+    if (myInitial == null) return ws.isEmpty();
     return Comparing.equal(ws, myInitial, true);
   }
 
@@ -647,8 +634,7 @@ public class WhiteSpace {
     return result;
   }
 
-  @NotNull
-  public IndentInside getInitialLastLineIndent() {
+  public @NotNull IndentInside getInitialLastLineIndent() {
     return new IndentInside(myInitialLastLinesSpaces, myInitialLastLinesTabs);
   }
 
@@ -721,7 +707,7 @@ public class WhiteSpace {
    *
    * @return line feed symbols number
    */
-  public final int getLineFeeds() {
+  public int getLineFeeds() {
     return myFlags >>> LF_COUNT_SHIFT;
   }
 

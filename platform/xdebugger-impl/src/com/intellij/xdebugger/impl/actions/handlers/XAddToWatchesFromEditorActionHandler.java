@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -19,9 +20,10 @@ import org.jetbrains.concurrency.Promises;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     Promise<String> textPromise = getTextToEvaluate(dataContext, session);
     // in the case of async expression evaluation just enable the action
     if (textPromise.getState() == Promise.State.PENDING) {
@@ -40,8 +42,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
     }
   }
 
-  @NotNull
-  protected static Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
+  protected static @NotNull Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return Promises.resolvedPromise(null);
@@ -59,7 +60,7 @@ public class XAddToWatchesFromEditorActionHandler extends XDebuggerActionHandler
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         if (text == null) return;

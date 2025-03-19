@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -24,19 +24,16 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 public abstract class DynamicPropertyFix extends GroovyFix implements IntentionAction, LowPriorityAction {
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return GroovyBundle.message("add.dynamic.property", getRefName());
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getText();
   }
 
-  @Nullable
-  protected abstract String getRefName();
+  protected abstract @Nullable String getRefName();
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
@@ -44,8 +41,7 @@ public abstract class DynamicPropertyFix extends GroovyFix implements IntentionA
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return GroovyBundle.message("add.dynamic.element");
   }
 
@@ -64,8 +60,7 @@ public abstract class DynamicPropertyFix extends GroovyFix implements IntentionA
     createDialog().show();
   }
 
-  @NotNull
-  protected abstract DynamicDialog createDialog();
+  protected abstract @NotNull DynamicDialog createDialog();
 
   /**
    * for tests

@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
@@ -119,12 +119,12 @@ final class EditorFragmentRenderer {
     myHintHolder.set(hintInfo);
     if (needDelay && !showInstantly) {
       myDelayed = true;
-      Alarm alarm = new Alarm();
-      alarm.addRequest(() -> {
-        if (myEditorPreviewHint == null || !myDelayed) return;
-        showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
-        myDelayed = false;
-      }, /*Registry.intValue("ide.tooltip.initialDelay")*/300);
+      EdtScheduler.getInstance().schedule(300, () -> {
+        if (myEditorPreviewHint != null && myDelayed) {
+          showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
+          myDelayed = false;
+        }
+      });
     }
     else if (!myDelayed) {
       showEditorHint(hintManager, point, hintInfo);

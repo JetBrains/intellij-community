@@ -1,0 +1,6 @@
+passpy.__main__
+
+# Uses `git` dependency:
+passpy.git
+# Uses `gpg` dependency:
+passpy.gpg

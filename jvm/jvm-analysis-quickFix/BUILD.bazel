@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.jvm.analysis.quickFix` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-quickFix",
+  module_name = "intellij.jvm.analysis.quickFix",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//jvm/jvm-analysis-refactoring:analysis-refactoring",
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-api:psi",
+    "//uast/uast-common:uast",
+    "//platform/lang-api:lang",
+    "//java/java-analysis-api:analysis",
+  ]
+)
+### auto-generated section `build intellij.jvm.analysis.quickFix` end

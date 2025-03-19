@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.openapi.util.Factory;
@@ -145,7 +145,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  private static abstract class ComponentBinding<Comp extends JComponent, Prop extends AbstractProperty> extends UIPropertyBinding {
+  private abstract static class ComponentBinding<Comp extends JComponent, Prop extends AbstractProperty> extends UIPropertyBinding {
     private final Comp myComponent;
     private final Prop myProperty;
 
@@ -204,7 +204,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  private static abstract class ListenerInstaller<Comp extends JComponent, Listener> {
+  private abstract static class ListenerInstaller<Comp extends JComponent, Listener> {
     public static final ListenerInstaller<JToggleButton, ItemListener> TOGGLE_BUTTON =
       new ListenerInstaller<>() {
         @Override
@@ -234,7 +234,7 @@ public abstract class UIPropertyBinding {
 
     public abstract void removeListener(Comp component, Listener changeListener);
 
-    public final static ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
+    public static final ListenerInstaller<JTextComponent, DocumentListener> TEXT_LISTENER_INSTALLER =
       new ListenerInstaller<>() {
         @Override
         public DocumentListener create(final PropertyChangeSupport changeSupport, final @NonNls String propertyName) {
@@ -454,7 +454,7 @@ public abstract class UIPropertyBinding {
     }
   }
 
-  private static abstract class BaseListBinding<Item> extends UIPropertyBinding {
+  private abstract static class BaseListBinding<Item> extends UIPropertyBinding {
     private final List<JComponent> myComponents = new ArrayList<>();
     private final JList myList;
     private final ListProperty<Item> myProperty;
@@ -535,7 +535,7 @@ public abstract class UIPropertyBinding {
         public void actionPerformed(ActionEvent e) {
           List<T> items = factory.create();
           getList().requestFocusInWindow();
-          if (items == null || items.size() == 0) {
+          if (items == null || items.isEmpty()) {
             return;
           }
           for (final T item : items) {

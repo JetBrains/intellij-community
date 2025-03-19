@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -19,23 +18,33 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class Decompressor {
+  private static final Logger LOG = Logger.getInstance(Decompressor.class);
+
   /**
    * The Tar decompressor automatically detects the compression of an input file/stream.
+   * <p>
+   * <b>NOTE</b>: requires {@code commons-compress} and {@code commons-io} libraries to be on the classpath.
    */
   public static final class Tar extends Decompressor {
     public Tar(@NotNull Path file) {
       mySource = file;
     }
 
+    /** @deprecated use {@link #Tar(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Tar(@NotNull File file) {
       mySource = file.toPath();
     }
@@ -64,7 +73,10 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
+      while ((te = myStream.getNextEntry()) != null &&
+             !((te.isFile() && !te.isLink()) // ignore hardlink
+               || te.isDirectory()
+               || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
       if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
@@ -98,16 +110,20 @@ public abstract class Decompressor {
       mySource = file;
     }
 
+    /** @deprecated use {@link #Zip(Path)} instead */
+    @Deprecated
+    @SuppressWarnings("IO_FILE_USAGE")
     public Zip(@NotNull File file) {
       mySource = file.toPath();
     }
 
     /**
-     * <p>Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).</p>
-     * <p><b>NOTE</b>: requires Commons Compress to be on the classpath.</p>
+     * Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).
+     * <p>
+     * <b>NOTE</b>: requires {@code commons-compress} and {@code commons-io} libraries to be on the classpath.
      */
     public @NotNull Decompressor withZipExtensions() {
-      return new CommonsZip(mySource);
+      return new ExtZip(mySource);
     }
 
     //<editor-fold desc="Implementation">
@@ -143,17 +159,18 @@ public abstract class Decompressor {
       myZip.close();
     }
 
-    private static final class CommonsZip extends Decompressor {
+    private static final class ExtZip extends Decompressor {
       private final Path mySource;
       private org.apache.commons.compress.archivers.zip.ZipFile myZip;
       private Enumeration<? extends ZipArchiveEntry> myEntries;
       private ZipArchiveEntry myEntry;
 
-      CommonsZip(Path file) {
+      ExtZip(Path file) {
         mySource = file;
       }
 
       @Override
+      @SuppressWarnings("deprecation")
       protected void openStream() throws IOException {
         myZip = new org.apache.commons.compress.archivers.zip.ZipFile(Files.newByteChannel(mySource));
         myEntries = myZip.getEntries();
@@ -215,7 +232,7 @@ public abstract class Decompressor {
     public static final int DOS_READ_ONLY = 0b01;
     public static final int DOS_HIDDEN = 0b010;
 
-    /** An entry name (separators converted to '/' and trimmed); handle with care */
+    /** An entry name with separators converted to '/' and trimmed; handle with care */
     public final String name;
     public final Type type;
     /** Depending on the source, could be POSIX permissions, DOS attributes, or just {@code 0} */
@@ -240,10 +257,39 @@ public abstract class Decompressor {
     }
   }
 
+  /**
+   * Policy for handling symbolic links which point outside the archive.
+   * <p>Example:</p>
+   * {@code foo -> /opt/foo}
+   * <p>or</p>
+   * {@code foo -> ../foo}
+   */
+  public enum EscapingSymlinkPolicy {
+    /**
+     * Extract as is with no modification or check. Potentially can point to a completely different object
+     * if the archive is transferred from some other host.
+     */
+    ALLOW,
+
+    /**
+     * Check during extraction and throw exception. See {@link Decompressor#verifySymlinkTarget}
+     */
+    DISALLOW,
+
+    /**
+     * <p>Make absolute symbolic links relative from the extraction directory.</p>
+     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
+     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     */
+    RELATIVIZE_ABSOLUTE
+  }
+
   private @Nullable Predicate<? super Entry> myFilter = null;
+  private @NotNull BiFunction<? super Entry, ? super IOException, ErrorHandlerChoice> myErrorHandler = (__, ___) -> ErrorHandlerChoice.BAIL_OUT;
+  private boolean myIgnoreIOExceptions = false;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
-  private boolean myAllowEscapingSymlinks = true;
+  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
   private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -256,13 +302,18 @@ public abstract class Decompressor {
     return this;
   }
 
+  public Decompressor errorHandler(@NotNull BiFunction<? super Entry, ? super IOException, ErrorHandlerChoice> errorHandler) {
+    myErrorHandler = errorHandler;
+    return this;
+  }
+
   public Decompressor overwrite(boolean overwrite) {
     myOverwrite = overwrite;
     return this;
   }
 
-  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
-    myAllowEscapingSymlinks = allowEscapingSymlinks;
+  public Decompressor escapingSymlinkPolicy(@NotNull EscapingSymlinkPolicy policy) {
+    myEscapingSymlinkPolicy = policy;
     return this;
   }
 
@@ -291,6 +342,9 @@ public abstract class Decompressor {
     return this;
   }
 
+  /** @deprecated use {@link #extract(Path)} instead */
+  @Deprecated
+  @SuppressWarnings("IO_FILE_USAGE")
   public final void extract(@NotNull File outputDir) throws IOException {
     extract(outputDir.toPath());
   }
@@ -298,72 +352,128 @@ public abstract class Decompressor {
   public final void extract(@NotNull Path outputDir) throws IOException {
     openStream();
     try {
-      Entry entry;
-      while ((entry = nextEntry()) != null) {
-        if (myFilter != null && !myFilter.test(entry)) {
+      Deque<Path> extractedPaths = new ArrayDeque<>();
+
+      // we'd like to keep a contact to invoke the filter once per entry,
+      // since it was implicit and the introduction of retry breaks the contract
+      boolean proceedToNext = true;
+
+      Entry entry = null;
+      while (!proceedToNext || (entry = nextEntry()) != null) {
+        if (proceedToNext && myFilter != null && !myFilter.test(entry)) {
           continue;
         }
 
-        if (myPathPrefix != null) {
-          entry = mapPathPrefix(entry, myPathPrefix);
-          if (entry == null) continue;
+        proceedToNext = true; // will be set to false if EH returns RETRY
+        try {
+          Path processedEntry = processEntry(outputDir, entry);
+          if (processedEntry != null) {
+            extractedPaths.push(processedEntry);
+          }
         }
-
-        Path outputFile = entryFile(outputDir, entry.name);
-        switch (entry.type) {
-          case DIR:
-            NioFiles.createDirectories(outputFile);
-            break;
-
-          case FILE:
-            if (myOverwrite || !Files.exists(outputFile)) {
-              InputStream inputStream = openEntryStream(entry);
-              try {
-                NioFiles.createDirectories(outputFile.getParent());
-                try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
-                  StreamUtil.copy(inputStream, outputStream);
+        catch (IOException ioException) {
+          if (myIgnoreIOExceptions) {
+            LOG.debug("Skipped exception because "  + ErrorHandlerChoice.SKIP_ALL + " was selected earlier", ioException);
+          } else {
+            switch (myErrorHandler.apply(entry, ioException)) {
+              case ABORT:
+                while (!extractedPaths.isEmpty()) {
+                  Files.delete(extractedPaths.pop());
                 }
-                if (entry.mode != 0) {
-                  setAttributes(entry.mode, outputFile);
-                }
-              }
-              finally {
-                closeEntryStream(inputStream);
-              }
+                return;
+              case BAIL_OUT:
+                throw ioException;
+              case RETRY:
+                proceedToNext = false;
+                break;
+              case SKIP:
+                LOG.debug("Skipped exception", ioException);
+                break;
+              case SKIP_ALL:
+                myIgnoreIOExceptions = true;
+                LOG.debug("SKIP_ALL is selected", ioException);
             }
-            break;
-
-          case SYMLINK:
-            if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
-              throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
-            }
-
-            if (!myAllowEscapingSymlinks) {
-              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
-            }
-
-            if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
-              try {
-                Path outputTarget = Paths.get(entry.linkTarget);
-                NioFiles.createDirectories(outputFile.getParent());
-                Files.deleteIfExists(outputFile);
-                Files.createSymbolicLink(outputFile, outputTarget);
-              }
-              catch (InvalidPathException e) {
-                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
-              }
-            }
-            break;
-        }
-
-        if (myPostProcessor != null) {
-          myPostProcessor.accept(entry, outputFile);
+          }
         }
       }
     }
     finally {
       closeStream();
     }
+  }
+
+  /**
+   * @return Path to an extracted entity
+   */
+  private @Nullable Path processEntry(@NotNull Path outputDir, Entry entry) throws IOException {
+    if (myPathPrefix != null) {
+      entry = mapPathPrefix(entry, myPathPrefix);
+      if (entry == null) return null;
+    }
+
+    Path outputFile = entryFile(outputDir, entry.name);
+    switch (entry.type) {
+      case DIR:
+        NioFiles.createDirectories(outputFile);
+        break;
+
+      case FILE:
+        if (myOverwrite || !Files.exists(outputFile)) {
+          InputStream inputStream = openEntryStream(entry);
+          try {
+            NioFiles.createDirectories(outputFile.getParent());
+            try (OutputStream outputStream = Files.newOutputStream(outputFile)) {
+              StreamUtil.copy(inputStream, outputStream);
+            }
+            if (entry.mode != 0) {
+              setAttributes(entry.mode, outputFile);
+            }
+          }
+          finally {
+            closeEntryStream(inputStream);
+          }
+        }
+        break;
+
+      case SYMLINK:
+        if (entry.linkTarget == null || entry.linkTarget.isEmpty()) {
+          throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
+        }
+
+        String target = entry.linkTarget;
+
+        switch (myEscapingSymlinkPolicy) {
+          case DISALLOW: {
+            verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            break;
+          }
+          case RELATIVIZE_ABSOLUTE: {
+            if (OSAgnosticPathUtil.isAbsolute(target)) {
+              target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+            }
+            break;
+          }
+        }
+
+        if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
+          try {
+            Path outputTarget = Paths.get(target);
+            NioFiles.createDirectories(outputFile.getParent());
+            Files.deleteIfExists(outputFile);
+            Files.createSymbolicLink(outputFile, outputTarget);
+          }
+          catch (InvalidPathException e) {
+            throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
+          }
+        }
+        break;
+    }
+
+    if (myPostProcessor != null) {
+      myPostProcessor.accept(entry, outputFile);
+    }
+
+    return outputFile;
   }
 
   private static void verifySymlinkTarget(String entryName, String linkTarget, Path outputDir, Path outputFile) throws IOException {
@@ -382,7 +492,7 @@ public abstract class Decompressor {
     }
   }
 
-  private @Nullable static Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {
+  private static @Nullable Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {
     List<String> ourPathSplit = normalizePathAndSplit(e.name);
     if (prefix.size() >= ourPathSplit.size() || !ourPathSplit.subList(0, prefix.size()).equals(prefix)) {
       return null;
@@ -432,5 +542,21 @@ public abstract class Decompressor {
   public static @NotNull Path entryFile(@NotNull Path outputDir, @NotNull String entryName) throws IOException {
     ensureValidPath(entryName);
     return outputDir.resolve(StringUtil.trimLeading(entryName, '/'));
+  }
+
+  /**
+   * Specifies an action to be taken from the {@code com.intellij.util.io.Decompressor#errorHandler}.
+   */
+  public enum ErrorHandlerChoice {
+    /** Extraction should be aborted and already extracted entities should be cleaned */
+    ABORT,
+    /** Do not handle error, just rethrow the exception */
+    BAIL_OUT,
+    /** Retry failed entry extraction */
+    RETRY,
+    /** Skip this entry from extraction */
+    SKIP,
+    /** Skip this entry for extraction and ignore any further IOExceptions during this archive extraction */
+    SKIP_ALL
   }
 }

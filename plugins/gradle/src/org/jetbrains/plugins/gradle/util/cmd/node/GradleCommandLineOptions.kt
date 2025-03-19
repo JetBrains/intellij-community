@@ -10,6 +10,4 @@ data class GradleCommandLineOptions(
     List<GradleCommandLineOption> by options {
 
   override val tokens: List<String> = options.flatMap { it.tokens }
-
-  override val text: String = tokens.joinToString(" ")
 }

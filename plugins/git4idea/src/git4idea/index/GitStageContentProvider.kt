@@ -1,16 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.index
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
@@ -23,36 +21,27 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 
 internal class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
-  private var disposable: Disposable? = null
 
-  override fun initContent(): JComponent {
+  override fun initTabContent(content: Content) {
+    val disposable = Disposer.newDisposable("Git Stage Content Provider")
     val tracker = GitStageTracker.getInstance(project)
-    disposable = Disposer.newDisposable("Git Stage Content Provider")
-    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, isEditorDiffPreview = ::isDiffPreviewInEditor, disposable!!) {
+    val gitStagePanel = GitStagePanel(tracker, isVertical = ::isVertical, disposable) {
       ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.activate(null)
     }
     GitStageTabTitleUpdater(tracker, gitStagePanel)
-    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
-      override fun toolWindowMappingChanged() = gitStagePanel.updateLayout()
-    })
-    project.messageBus.connect(disposable!!).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun stateChanged(toolWindowManager: ToolWindowManager) = gitStagePanel.updateLayout()
-    })
 
-    return gitStagePanel
+    val busConnection = project.messageBus.connect(disposable)
+    busConnection.subscribeOnVcsToolWindowLayoutChanges { gitStagePanel.updateLayout() }
+
+    content.component = gitStagePanel
+    content.setDisposer(disposable)
   }
 
-  private fun isDiffPreviewInEditor() = ChangesViewContentManager.isCommitToolWindowShown(project)
-
-  private fun isVertical() = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME)?.anchor?.isHorizontal == false
-
-  override fun disposeContent() {
-    disposable?.let { Disposer.dispose(it) }
-  }
+  private fun isVertical() = ChangesViewContentManager.isToolWindowTabVertical(project, STAGING_AREA_TAB_NAME)
 
   companion object {
     @NonNls
-    val STAGING_AREA_TAB_NAME = "Staging Area"
+    const val STAGING_AREA_TAB_NAME = "Staging Area"
   }
 }
 
@@ -102,14 +91,18 @@ fun showStagingArea(project: Project, commitMessage: String) {
 }
 
 internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
+  showToolWindowTab(project, STAGING_AREA_TAB_NAME) { (it as? GitStagePanel)?.let(consumer) }
+}
+
+internal fun showToolWindowTab(project: Project, tabName: String, contentConsumer: (JComponent) -> Unit) {
   ToolWindowManager.getInstance(project).invokeLater {
-    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return@invokeLater
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, tabName) ?: return@invokeLater
     toolWindow.activate({
                           val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-                          val content = contentManager.findContent(STAGING_AREA_TAB_NAME) ?: return@activate
+                          val content = contentManager.findContent(tabName) ?: return@activate
 
                           contentManager.setSelectedContent(content, true)
-                          (content.component as? GitStagePanel)?.let(consumer)
+                          contentConsumer(content.component)
                         }, true)
   }
 }

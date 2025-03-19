@@ -12,14 +12,14 @@ class UnspecifiedActionPlaces {
     // popup menu:
     actionManager.createActionPopupMenu("asdasd", ActionGroup())
     actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">""</warning>, ActionGroup())
-    actionManager.createActionPopupMenu("<warning descr="Unspecified place for action popup menu">unknown</warning>", ActionGroup())
+    actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">"unknown"</warning>, ActionGroup())
     actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">ActionPlaces.UNKNOWN</warning>, ActionGroup())
     actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">CUSTOM_UNKNOWN</warning>, ActionGroup())
     actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">CUSTOM_UNKNOWN_FROM_PLATFORM_VALUE</warning>, ActionGroup())
     // toolbar:
     actionManager.createActionToolbar("asdasd", ActionGroup(), false)
     actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">""</warning>, ActionGroup(), false)
-    actionManager.createActionToolbar("<warning descr="Unspecified place for action toolbar">unknown</warning>", ActionGroup(), false)
+    actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">"unknown"</warning>, ActionGroup(), false)
     actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">ActionPlaces.UNKNOWN</warning>, ActionGroup(), false)
     actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">CUSTOM_UNKNOWN</warning>, ActionGroup(), false)
     actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">CUSTOM_UNKNOWN_FROM_PLATFORM_VALUE</warning>, ActionGroup(), false)
@@ -32,11 +32,11 @@ fun topLevelFunction() {
   // popup menu:
   actionManager.createActionPopupMenu("asdasd", ActionGroup())
   actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">""</warning>, ActionGroup())
-  actionManager.createActionPopupMenu("<warning descr="Unspecified place for action popup menu">unknown</warning>", ActionGroup())
+  actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">"unknown"</warning>, ActionGroup())
   actionManager.createActionPopupMenu(<warning descr="Unspecified place for action popup menu">ActionPlaces.UNKNOWN</warning>, ActionGroup())
   // toolbar:
   actionManager.createActionToolbar("asdasd", ActionGroup(), false)
   actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">""</warning>, ActionGroup(), false)
-  actionManager.createActionToolbar("<warning descr="Unspecified place for action toolbar">unknown</warning>", ActionGroup(), false)
+  actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">"unknown"</warning>, ActionGroup(), false)
   actionManager.createActionToolbar(<warning descr="Unspecified place for action toolbar">ActionPlaces.UNKNOWN</warning>, ActionGroup(), false)
 }

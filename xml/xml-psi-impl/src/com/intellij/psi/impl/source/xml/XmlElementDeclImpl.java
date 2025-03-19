@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
@@ -9,12 +9,19 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlElementContentSpec;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_DECL;
+import static com.intellij.psi.xml.XmlTokenType.XML_NAME;
+
+public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl {
   public XmlElementDeclImpl() {
     super(XML_ELEMENT_DECL);
   }
@@ -115,8 +122,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 }

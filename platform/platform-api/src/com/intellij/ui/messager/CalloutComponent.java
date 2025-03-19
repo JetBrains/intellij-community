@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messager;
 
 
@@ -35,7 +35,7 @@ public class CalloutComponent {
 
   protected JComponent myTargetComponent;
   protected Window myTargetWindow;
-  protected Pointer myPointerComponent;
+  private Pointer myPointerComponent;
   private final KeyboardFocusManager myKeyboardFocusManager;
 
   public CalloutComponent(JComponent component) {
@@ -48,7 +48,7 @@ public class CalloutComponent {
     myFrame = new JDialog();
     myFrame.setUndecorated(true);
     myFrame.setFocusable(false);
-    myFrame.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     myFrame.setFocusableWindowState(false);
 
     myFrame.getContentPane().setLayout(new BorderLayout());

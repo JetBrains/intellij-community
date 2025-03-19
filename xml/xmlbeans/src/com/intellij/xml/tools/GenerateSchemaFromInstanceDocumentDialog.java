@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.tools;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -69,7 +69,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     detectEnumerationsLimit.setText("10");
 
 
-    UIUtils.configureBrowseButton(project, generateFromUrl, new String[] {"xml"}, XmlBundle.message("select.xml.document.dialog.title"), false);
+    UIUtils.configureBrowseButton(project, generateFromUrl, "xml", XmlBundle.message("select.xml.document.dialog.title"), false);
     doInitFor(generateFromUrlText, generateFromUrl.getTextField());
 
     doInitFor(resultSchemaFileNameText, resultSchemaFileName);
@@ -188,8 +188,7 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return resultSchemaFileName.getText();
   }
 
-  @InspectionMessage
-  private String doValidateWithData() {
+  private @InspectionMessage String doValidateWithData() {
     if (! new File(generateFromUrl.getText()).exists()) {
       return XmlBundle.message("instance.document.file.is.not.exist");
     }
@@ -205,15 +204,14 @@ final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
       return XmlBundle.message("invalid.number.validation.problem");
     }
 
-    if (getTargetSchemaName() == null || getTargetSchemaName().length() == 0) {
+    if (getTargetSchemaName() == null || getTargetSchemaName().isEmpty()) {
       return XmlBundle.message("result.schema.file.name.is.empty.validation.problem");
     }
     return null;
   }
 
   @Override
-  @NotNull
-  protected String getHelpId() {
+  protected @NotNull String getHelpId() {
     return "webservices.GenerateSchemaFromInstanceDocument";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -18,10 +18,10 @@ import java.util.Arrays;
  * @author Dmitry Batkovich
  */
 public abstract class InspectionTreeTailRenderer<E extends Exception> {
-  private final static int MAX_LEVEL_TYPES = 5;
+  private static final int MAX_LEVEL_TYPES = 5;
 
-  private final static JBColor TREE_RED = new JBColor(new Color(184, 66, 55), new Color(204, 102, 102));
-  private final static JBColor TREE_GRAY = new JBColor(Gray._153, Gray._117);
+  private static final JBColor TREE_RED = new JBColor(new Color(184, 66, 55), new Color(204, 102, 102));
+  private static final JBColor TREE_GRAY = new JBColor(Gray._153, Gray._117);
 
   private final GlobalInspectionContextImpl myContext;
 

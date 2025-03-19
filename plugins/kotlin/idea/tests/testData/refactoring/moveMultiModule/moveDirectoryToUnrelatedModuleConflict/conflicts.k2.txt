@@ -1,0 +1,2 @@
+Field foo uses class Foo which will be inaccessible after move
+File J.java uses class Foo which will be inaccessible after move

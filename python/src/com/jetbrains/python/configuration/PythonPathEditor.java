@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
@@ -20,13 +20,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -116,22 +116,17 @@ public class PythonPathEditor extends SdkPathEditor {
   protected ListCellRenderer<VirtualFile> createListCellRenderer(JBList<VirtualFile> list) {
     return SimpleListCellRenderer.create("", value -> {
       String suffix = myPathListModel.getPresentationSuffix(value);
-      if (suffix.length() > 0) suffix = "  " + suffix;
+      if (!suffix.isEmpty()) suffix = "  " + suffix;
       return getPresentablePath(value) + suffix;
     });
   }
 
   @Override
   protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
-    toolbarDecorator.addExtraAction(new AnActionButton(PyBundle.message("sdk.paths.dialog.reload.paths"), AllIcons.Actions.Refresh) {
+    toolbarDecorator.addExtraAction(new DumbAwareAction(PyBundle.message("sdk.paths.dialog.reload.paths"), null, AllIcons.Actions.Refresh) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         fireReloadPathsActionCallbacks();
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
       }
     });
   }
@@ -234,8 +229,7 @@ public class PythonPathEditor extends SdkPathEditor {
       myExcluded = Sets.newHashSet(excluded);
     }
 
-    @Nls
-    public @NotNull String getPresentationSuffix(VirtualFile file) {
+    public @Nls @NotNull String getPresentationSuffix(VirtualFile file) {
       if (myAdded.contains(file)) {
         return PyBundle.message("sdk.paths.dialog.added.by.user.suffix");
       }
@@ -302,6 +296,9 @@ public class PythonPathEditor extends SdkPathEditor {
       else if (PyTypeShed.INSTANCE.isInside(file)) {
         return true;
       }
+      else if (PyBundledStubs.INSTANCE.isInside(file)) {
+        return true;
+      }
       else {
         return false;
       }
@@ -312,8 +309,7 @@ public class PythonPathEditor extends SdkPathEditor {
     }
   }
 
-  @NlsSafe
-  protected String getPresentablePath(VirtualFile value) {
+  protected @NlsSafe String getPresentablePath(VirtualFile value) {
     return value.getPresentableUrl();
   }
 }

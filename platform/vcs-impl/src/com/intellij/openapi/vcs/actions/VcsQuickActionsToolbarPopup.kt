@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePluralized
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
@@ -16,7 +17,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsActions
 import com.intellij.openapi.vcs.VcsBundle
@@ -44,7 +44,7 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
     override fun updateToolTipText() {
       val shortcut = KeymapUtil.getShortcutText("Vcs.QuickListPopupAction")
       val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
-      if (Registry.`is`("ide.helptooltip.enabled")) {
+      if (UISettings.isIdeHelpTooltipEnabled()) {
         HelpTooltip.dispose(this)
         HelpTooltip()
           .setTitle(ActionsBundle.message("action.Vcs.Toolbar.ShowMoreActions.description"))

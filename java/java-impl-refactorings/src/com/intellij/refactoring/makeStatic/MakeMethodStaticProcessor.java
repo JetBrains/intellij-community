@@ -4,8 +4,6 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.java.JavaBundle;
-import com.intellij.model.BranchableUsageInfo;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -27,10 +25,8 @@ import com.intellij.refactoring.util.javadoc.MethodJavaDocHelper;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -300,11 +296,14 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
     final PsiClass memberClass = myMember.getContainingClass();
     if (instanceRef == null || instanceRef instanceof PsiSuperExpression) {
       PsiClass contextClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
-      if (!InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
-        instanceRef = factory.createExpressionFromText(memberClass.getQualifiedName() + ".this", null);
-      } else {
-        instanceRef = factory.createExpressionFromText("this", null);
+      String qualifier = "";
+      if (memberClass != null && !InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
+        String name = memberClass.getQualifiedName();
+        if (name != null) {
+          qualifier = name + ".";
+        }
       }
+      instanceRef = factory.createExpressionFromText(qualifier + "this", null);
       newQualifier = null;
     }
     else {
@@ -407,21 +406,5 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
         result.add(new ChainedCallUsageInfo(containingMethod));
       }
     }
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
-    MakeMethodStaticProcessor processor = new MakeMethodStaticProcessor(
-      myProject, branch.obtainPsiCopy(myMember), mySettings.obtainBranchCopy(branch));
-    if (myAdditionalMethods != null) {
-      processor.myAdditionalMethods = ContainerUtil.map(myAdditionalMethods, branch::obtainPsiCopy);
-    }
-    UsageInfo[] convertedUsages = BranchableUsageInfo.convertUsages(usages, branch);
-    processor.performRefactoring(convertedUsages);
-  }
-
-  @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
   }
 }

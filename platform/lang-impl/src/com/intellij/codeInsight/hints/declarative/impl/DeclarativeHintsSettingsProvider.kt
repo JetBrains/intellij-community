@@ -7,7 +7,9 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     val providerDescriptions = InlayHintsProviderExtensionBean.EP.extensionList
@@ -22,7 +24,7 @@ class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
 
   override fun getSupportedLanguages(project: Project): Collection<Language> {
     return InlayHintsProviderExtensionBean.EP.extensionList.asSequence()
-      .map { Language.findLanguageByID(it.language!!)!! }
+      .mapNotNull { Language.findLanguageByID(it.language!!) ?: error("Language with id ${it.language} not found") }
       .toHashSet()
   }
 }

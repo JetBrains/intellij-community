@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -25,8 +25,8 @@ public class SimpleDuplicatesFinder {
   private final Collection<String> myOutputVariables;
   protected final Map<String, String> myOriginalToDuplicateLocalVariable;
 
-  public SimpleDuplicatesFinder(@NotNull final PsiElement statement1,
-                                @NotNull final PsiElement statement2,
+  public SimpleDuplicatesFinder(final @NotNull PsiElement statement1,
+                                final @NotNull PsiElement statement2,
                                 Collection<String> variables,
                                 AbstractVariableData[] variableData) {
     myOriginalToDuplicateLocalVariable = new HashMap<>();
@@ -46,7 +46,7 @@ public class SimpleDuplicatesFinder {
   }
 
   public List<SimpleMatch> findDuplicates(final @Nullable List<? extends PsiElement> scope,
-                                          @NotNull final PsiElement generatedMethod) {
+                                          final @NotNull PsiElement generatedMethod) {
     final List<SimpleMatch> result = new ArrayList<>();
     annotatePattern();
     if (scope != null) {
@@ -86,8 +86,8 @@ public class SimpleDuplicatesFinder {
     }
   }
 
-  private void findPatternOccurrences(@NotNull final List<? super SimpleMatch> array, @NotNull final PsiElement scope,
-                                      @NotNull final PsiElement generatedMethod) {
+  private void findPatternOccurrences(final @NotNull List<? super SimpleMatch> array, final @NotNull PsiElement scope,
+                                      final @NotNull PsiElement generatedMethod) {
     if (scope == generatedMethod) return;
     final PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
@@ -100,8 +100,7 @@ public class SimpleDuplicatesFinder {
     }
   }
 
-  @Nullable
-  protected SimpleMatch isDuplicateFragment(@NotNull final PsiElement candidate) {
+  protected @Nullable SimpleMatch isDuplicateFragment(final @NotNull PsiElement candidate) {
     if (!canReplace(myReplacement, candidate)) return null;
     for (PsiElement pattern : myPattern) {
       if (PsiTreeUtil.isAncestor(pattern, candidate, false)) return null;
@@ -124,9 +123,9 @@ public class SimpleDuplicatesFinder {
     return match;
   }
 
-  private boolean matchPattern(@Nullable final PsiElement pattern,
-                                      @Nullable final PsiElement candidate,
-                                      @NotNull final SimpleMatch match) {
+  private boolean matchPattern(final @Nullable PsiElement pattern,
+                               final @Nullable PsiElement candidate,
+                               final @NotNull SimpleMatch match) {
     ProgressManager.checkCanceled();
     if (pattern == null || candidate == null) return pattern == candidate;
     final PsiElement[] children1 = PsiEquivalenceUtil.getFilteredChildren(pattern, null, true);

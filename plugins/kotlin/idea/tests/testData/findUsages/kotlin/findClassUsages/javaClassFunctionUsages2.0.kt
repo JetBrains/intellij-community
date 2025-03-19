@@ -1,6 +1,10 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: functionUsages
 // PSI_ELEMENT_AS_TITLE: "class A : X"
+
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code
+
 interface X {
     val a: String
         get() {

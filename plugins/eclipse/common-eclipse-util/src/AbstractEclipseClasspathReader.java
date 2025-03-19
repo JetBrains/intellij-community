@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.components.ExpandMacroToPathMap;
@@ -31,8 +17,8 @@ import java.util.regex.PatternSyntaxException;
 
 public abstract class AbstractEclipseClasspathReader<T> {
   protected final String myRootPath;
-  @Nullable protected final List<String> myCurrentRoots;
-  @Nullable protected final Set<String> myModuleNames;
+  protected final @Nullable List<String> myCurrentRoots;
+  protected final @Nullable Set<String> myModuleNames;
 
   public AbstractEclipseClasspathReader(@NotNull String rootPath, @Nullable List<String> currentRoots, @Nullable Set<String> moduleNames) {
     myRootPath = FileUtil.toSystemIndependentName(rootPath);
@@ -264,13 +250,11 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return srcPath.startsWith("/") ? 1 : 0;
   }
 
-  @NotNull
-  public static String getPresentableName(@NotNull String path) {
+  public static @NotNull String getPresentableName(@NotNull String path) {
     return getPresentableName(path, null);
   }
 
-  @NotNull
-  public static String getPresentableName(@NotNull String path, Set<? super String> names) {
+  public static @NotNull String getPresentableName(@NotNull String path, Set<? super String> names) {
     String pathComponent = getLastPathComponent(path);
     if (pathComponent != null && names != null && !names.add(pathComponent)) {
       return path;
@@ -280,19 +264,16 @@ public abstract class AbstractEclipseClasspathReader<T> {
     }
   }
 
-  @Nullable
-  public static String getLastPathComponent(final String path) {
+  public static @Nullable String getLastPathComponent(final String path) {
     final int idx = path.lastIndexOf('/');
     return idx < 0 || idx == path.length() - 1 ? null : path.substring(idx + 1);
   }
 
-  @NotNull
-  public static String getVariableRelatedPath(@NotNull String var, String path) {
+  public static @NotNull String getVariableRelatedPath(@NotNull String var, String path) {
     return "$" + var + "$" + (path == null ? "" : "/" + path);
   }
 
-  @NotNull
-  protected static @NonNls String pathToUrl(@NotNull String path) {
+  protected static @NotNull @NonNls String pathToUrl(@NotNull String path) {
     return "file://" + FileUtil.toSystemIndependentName(path);
   }
 
@@ -312,9 +293,8 @@ public abstract class AbstractEclipseClasspathReader<T> {
     return prepareValidUrlInsideJar(pathMap.substitute(pathToUrl(getVariableRelatedPath(var.myVariable, var.myRelatedPath)), SystemInfo.isFileSystemCaseSensitive));
   }
 
-  @Nullable
-  public static String expandLinkedResourcesPath(String rootPath, final ExpandMacroToPathMap macroMap,
-                                                 final String path) {
+  public static @Nullable String expandLinkedResourcesPath(String rootPath, final ExpandMacroToPathMap macroMap,
+                                                           final String path) {
     final EclipseProjectFinder.LinkedResource linkedResource = EclipseProjectFinder.findLinkedResource(rootPath, path);
     if (linkedResource != null) {
       if (linkedResource.containsPathVariable()) {
@@ -365,8 +345,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   public static class EPathVariable {
-    @NotNull
-    private final String myVariable;
+    private final @NotNull String myVariable;
     private final String myRelatedPath;
 
     protected EPathVariable(@NotNull String variable, final String relatedPath) {

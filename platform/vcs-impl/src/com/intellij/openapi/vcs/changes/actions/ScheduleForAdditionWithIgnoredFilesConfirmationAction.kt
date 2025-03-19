@@ -23,8 +23,10 @@ import com.intellij.util.Functions.identity
 import com.intellij.util.PairConsumer
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 
 
+@ApiStatus.Internal
 class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditionAction() {
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
@@ -38,7 +40,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val browser = e.getData(ChangesBrowserBase.DATA_KEY)
 
     val changes = e.getData(VcsDataKeys.CHANGES)?.asSequence().orEmpty()
@@ -82,7 +84,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
                             toAdd: Collection<FilePath>,
                             exceptions: MutableList<VcsException>,
                             containsIgnored: Boolean) {
-    VcsUtil.groupByRoots(project, toAdd, identity<FilePath, FilePath>()).forEach { (vcsRoot, paths) ->
+    VcsUtil.groupByRoots(project, toAdd, identity()).forEach { (vcsRoot, paths) ->
       try {
         val actionExtension = getExtensionFor(project, vcsRoot.vcs) ?: return
 
@@ -126,10 +128,10 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     else ScheduleForAdditionActionExtension.EP_NAME.findFirstSafe { it.getSupportedVcs(project) == vcs }
 }
 
-fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
-                        singlePathDialogTitle: (FilePath) -> @NlsContexts.DialogTitle String,
-                        singlePathDialogMessage: (FilePath) -> @NlsContexts.DialogMessage String,
-                        @NlsContexts.DialogTitle multiplePathsDialogTitle: String): List<FilePath> {
+private fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
+                                singlePathDialogTitle: (FilePath) -> @NlsContexts.DialogTitle String,
+                                singlePathDialogMessage: (FilePath) -> @NlsContexts.DialogMessage String,
+                                @NlsContexts.DialogTitle multiplePathsDialogTitle: String): List<FilePath> {
   if (paths.isEmpty()) return paths
 
   if (paths.size == 1) {
@@ -144,7 +146,7 @@ fun confirmAddFilePaths(project: Project, paths: List<FilePath>,
   }
   else {
     val files = paths.mapNotNull(FilePath::getVirtualFile)
-    val dlg = SelectFilesDialog.init(project, files, null, null, true, true,
+    val dlg = SelectFilesDialog.init(project, files, message("confirmation.message.add.ignored.files.or.dirs"), null, true, true,
                                      CommonBundle.getAddButtonText(), CommonBundle.getCancelButtonText())
     dlg.title = multiplePathsDialogTitle
     if (dlg.showAndGet()) {

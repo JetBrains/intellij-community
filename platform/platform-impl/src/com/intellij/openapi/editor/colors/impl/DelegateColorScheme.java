@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.*;
@@ -11,17 +11,21 @@ import java.awt.*;
 import java.util.Properties;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
-
   private EditorColorsScheme myDelegate;
 
-  public DelegateColorScheme(@NotNull final EditorColorsScheme delegate) {
+  public DelegateColorScheme(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
 
-  public EditorColorsScheme getDelegate() {
+  public @NotNull EditorColorsScheme getDelegate() {
     return myDelegate;
   }
-  
+
+  @Override
+  public final boolean isReadOnly() {
+    return myDelegate.isReadOnly();
+  }
+
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;
   }
@@ -37,25 +41,27 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
+  public TextAttributes getAttributes(TextAttributesKey key, boolean useDefaults) {
+    return myDelegate.getAttributes(key, useDefaults);
+  }
+
+  @Override
   public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
     myDelegate.setAttributes(key, attributes);
   }
 
-  @NotNull
   @Override
-  public Color getDefaultBackground() {
+  public @NotNull Color getDefaultBackground() {
     return myDelegate.getDefaultBackground();
   }
 
-  @NotNull
   @Override
-  public Color getDefaultForeground() {
+  public @NotNull Color getDefaultForeground() {
     return myDelegate.getDefaultForeground();
   }
 
-  @Nullable
   @Override
-  public Color getColor(ColorKey key) {
+  public @Nullable Color getColor(ColorKey key) {
     return myDelegate.getColor(key);
   }
 
@@ -64,9 +70,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setColor(key, color);
   }
 
-  @NotNull
   @Override
-  public FontPreferences getFontPreferences() {
+  public @NotNull FontPreferences getFontPreferences() {
     return myDelegate.getFontPreferences();
   }
 
@@ -105,9 +110,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setEditorFontName(fontName);
   }
 
-  @NotNull
   @Override
-  public Font getFont(EditorFontType key) {
+  public @NotNull Font getFont(EditorFontType key) {
     return myDelegate.getFont(key);
   }
 
@@ -135,9 +139,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   public void readExternal(Element element) {
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myDelegate.getName();
   }
 
@@ -146,9 +149,8 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     return myDelegate.clone();
   }
 
-  @NotNull
   @Override
-  public FontPreferences getConsoleFontPreferences() {
+  public @NotNull FontPreferences getConsoleFontPreferences() {
     return myDelegate.getConsoleFontPreferences();
   }
 
@@ -197,15 +199,13 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     myDelegate.setConsoleLineSpacing(lineSpacing);
   }
 
-  @NotNull
   @Override
-  public Properties getMetaProperties()  {
+  public @NotNull Properties getMetaProperties()  {
     return myDelegate.getMetaProperties();
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return myDelegate.getDisplayName();
   }
 }

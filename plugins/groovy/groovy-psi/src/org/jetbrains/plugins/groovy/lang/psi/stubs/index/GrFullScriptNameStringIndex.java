@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-public class GrFullScriptNameStringIndex extends StringStubIndexExtension<GroovyFile> {
+public final class GrFullScriptNameStringIndex extends StringStubIndexExtension<GroovyFile> {
   public static final StubIndexKey<String, GroovyFile> KEY = StubIndexKey.createIndexKey("gr.script.fqn.s");
 
   @Override

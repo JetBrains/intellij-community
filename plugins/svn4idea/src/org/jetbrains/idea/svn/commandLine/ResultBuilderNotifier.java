@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -15,20 +15,20 @@ public class ResultBuilderNotifier extends ProcessAdapter {
   /**
    * the partial line from stdout stream
    */
-  @NotNull private final StringBuilder myStdoutLine = new StringBuilder();
+  private final @NotNull StringBuilder myStdoutLine = new StringBuilder();
   /**
    * the partial line from stderr stream
    */
-  @NotNull private final StringBuilder myStderrLine = new StringBuilder();
+  private final @NotNull StringBuilder myStderrLine = new StringBuilder();
 
-  @NotNull private final LineCommandListener myResultBuilder;
+  private final @NotNull LineCommandListener myResultBuilder;
 
   public ResultBuilderNotifier(@NotNull LineCommandListener resultBuilder) {
     myResultBuilder = resultBuilder;
   }
 
   @Override
-  public void processTerminated(@NotNull final ProcessEvent event) {
+  public void processTerminated(final @NotNull ProcessEvent event) {
     try {
       forceNewLine();
     } finally {
@@ -37,16 +37,16 @@ public class ResultBuilderNotifier extends ProcessAdapter {
   }
 
   private void forceNewLine() {
-    if (myStdoutLine.length() != 0) {
+    if (!myStdoutLine.isEmpty()) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
     }
-    else if (myStderrLine.length() != 0) {
+    else if (!myStderrLine.isEmpty()) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
     }
   }
 
   @Override
-  public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
+  public void onTextAvailable(final @NotNull ProcessEvent event, final @NotNull Key outputType) {
     onTextAvailable(event.getText(), outputType);
   }
 
@@ -62,7 +62,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
 
   private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
     if (!lines.hasNext()) return;
-    if (lineBuilder.length() > 0) {
+    if (!lineBuilder.isEmpty()) {
       lineBuilder.append(lines.next());
       if (lines.hasNext()) {
         // line is complete
@@ -81,7 +81,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
         notifyLine(line, outputType);
       }
       else {
-        if (line != null && line.length() > 0) {
+        if (line != null && !line.isEmpty()) {
           lineBuilder.append(line);
         }
         break;

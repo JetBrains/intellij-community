@@ -1,49 +1,68 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.storage;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMappingCursor;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public interface SourceToOutputMapping {
-  void setOutputs(@NotNull String srcPath, @NotNull Collection<String> outputs) throws IOException;
+  void setOutputs(@NotNull Path sourceFile, @NotNull List<@NotNull Path> outputs) throws IOException;
 
-  void setOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException;
+  void appendOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 
-  void appendOutput(@NotNull String srcPath, @NotNull String outputPath) throws IOException;
+  void remove(@NotNull Path sourceFile) throws IOException;
 
-
-  void remove(@NotNull String srcPath) throws IOException;
+  /**
+   * @deprecated Use {@link #remove(Path)}
+   */
+  @Deprecated
+  default void remove(@NotNull String sourcePath) throws IOException {
+    remove(Path.of(sourcePath));
+  }
 
   void removeOutput(@NotNull String sourcePath, @NotNull String outputPath) throws IOException;
 
-
-  @NotNull
-  Collection<String> getSources() throws IOException;
+  /**
+   * @deprecated Use {@link #getSourcesIterator()}
+   */
+  @Deprecated(forRemoval = true)
+  default @NotNull Collection<@NotNull String> getSources() throws IOException {
+    List<String> result = new ArrayList<>();
+    Iterator<String> iterator = getSourcesIterator();
+    while (iterator.hasNext()) {
+      result.add(iterator.next());
+    }
+    return result;
+  }
 
   @Nullable
-  Collection<String> getOutputs(@NotNull String srcPath) throws IOException;
+  @Unmodifiable
+  Collection<@NotNull String> getOutputs(@NotNull String srcPath) throws IOException;
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable
+  @Unmodifiable
+  Collection<@NotNull Path> getOutputs(@NotNull Path sourceFile) throws IOException;
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @NotNull
+  Iterator<@NotNull Path> getSourceFileIterator() throws IOException;
 
   @NotNull
-  Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException;
+  Iterator<@NotNull String> getSourcesIterator() throws IOException;
 
   @NotNull
-  Iterator<String> getSourcesIterator() throws IOException;
+  @ApiStatus.Internal
+  SourceToOutputMappingCursor cursor() throws IOException;
 }

@@ -15,6 +15,7 @@ import java.util.stream.Stream;
  */
 public class LombokLightParameter extends LightParameter implements SyntheticElement {
   private final LombokLightIdentifier myNameIdentifier;
+  private PsiElement myParent;
 
   public LombokLightParameter(@NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope) {
     this(name, type, declarationScope, JavaLanguage.INSTANCE);
@@ -25,12 +26,12 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
                               @NotNull PsiElement declarationScope,
                               @NotNull Language language) {
     super(name, type, declarationScope, language, new LombokLightModifierList(declarationScope.getManager(), language), type instanceof PsiEllipsisType);
+    getModifierList().withParent(this);
     myNameIdentifier = new LombokLightIdentifier(declarationScope.getManager(), name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myNameIdentifier.getText();
   }
 
@@ -38,6 +39,10 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
   public PsiElement setName(@NotNull String name) {
     myNameIdentifier.setText(name);
     return this;
+  }
+
+  public void setParent(PsiElement parent) {
+    myParent = parent;
   }
 
   @Override
@@ -48,6 +53,11 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
   @Override
   public @NotNull LombokLightModifierList getModifierList() {
     return (LombokLightModifierList)super.getModifierList();
+  }
+
+  public LombokLightParameter withAnnotation(@NotNull String annotation) {
+    getModifierList().addAnnotation(annotation);
+    return this;
   }
 
   @Override
@@ -62,6 +72,11 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     lombokLightModifierList.clearModifiers();
     Stream.of(modifiers).forEach(lombokLightModifierList::addModifier);
     return this;
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return myParent;
   }
 
   @Override

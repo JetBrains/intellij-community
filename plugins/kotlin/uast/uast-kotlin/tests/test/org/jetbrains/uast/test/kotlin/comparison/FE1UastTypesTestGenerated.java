@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.comparison;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../uast-kotlin-fir/tests/testData/type")
 public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -36,6 +43,11 @@ public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
     @TestMetadata("arrayGetAssignMultiIndex.kt")
     public void testArrayGetAssignMultiIndex() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/type/arrayGetAssignMultiIndex.kt");
+    }
+
+    @TestMetadata("callableReferenceWithGeneric.kt")
+    public void testCallableReferenceWithGeneric() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/type/callableReferenceWithGeneric.kt");
     }
 
     @TestMetadata("classLiteral.kt")

@@ -1,21 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -33,7 +32,7 @@ import java.util.List;
 /**
  * Author: msk
  */
-public abstract class RefactoringDialog extends DialogWrapper {
+public abstract class RefactoringDialog extends DialogWrapper implements PossiblyDumbAware {
   private Action myRefactorAction;
   private Action myPreviewAction;
   private boolean myCbPreviewResults;
@@ -70,9 +69,8 @@ public abstract class RefactoringDialog extends DialogWrapper {
         return selected;
       }
 
-      @NotNull
       @Override
-      public String getDoNotShowMessage() {
+      public @NotNull String getDoNotShowMessage() {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
@@ -82,9 +80,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return true;
   }
 
-  @NonNls
-  @NotNull
-  protected String getRefactoringId() {
+  protected @NonNls @NotNull String getRefactoringId() {
     return getClass().getName();
   }
 
@@ -149,9 +145,10 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected final void doOKAction() {
-    if (!DumbService.isDumbAware(this) && DumbService.isDumb(myProject)) {
+    if (!DumbService.getInstance(myProject).isUsableInCurrentContext(this)) {
       Messages.showMessageDialog(myProject, RefactoringBundle.message("refactoring.not.available.indexing"),
                                  RefactoringBundle.message("refactoring.indexing.warning.title"), null);
+      DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.RefactoringDialog);
       return;
     }
 
@@ -166,7 +163,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {
@@ -182,7 +179,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
     catch (ConfigurationException e) {
       enabled = false;
-      setErrorText(e.getMessage());
+      setErrorHtml(e.getMessageHtml());
     }
     getPreviewAction().setEnabled(enabled);
     getRefactorAction().setEnabled(enabled);
@@ -202,7 +199,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
           return e;
         }
       }).finishOnUiThread(modalityState, e -> {
-        setErrorText(e == null ? null : e.getMessage());
+        setErrorHtml(e == null ? null : e.getMessageHtml());
         getPreviewAction().setEnabled(e == null);
         getRefactorAction().setEnabled(e == null);
       })
@@ -239,7 +236,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     return myProject;
   }
 
-  private class RefactorAction extends AbstractAction {
+  private final class RefactorAction extends AbstractAction {
     RefactorAction() {
       super(RefactoringBundle.message("refactor.button"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
@@ -253,7 +250,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     }
   }
 
-  private class PreviewAction extends AbstractAction {
+  private final class PreviewAction extends AbstractAction {
     PreviewAction() {
       super(RefactoringBundle.message("preview.button"));
       if (SystemInfo.isMac) {

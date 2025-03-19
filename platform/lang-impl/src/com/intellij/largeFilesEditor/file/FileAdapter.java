@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.file;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.EOFException;
@@ -15,7 +16,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.locks.ReentrantLock;
 
-class FileAdapter {
+@ApiStatus.Internal
+public final class FileAdapter {
   private static final Logger logger = Logger.getInstance(FileAdapter.class);
   private static final int UNDEFINED = -1;
 
@@ -26,7 +28,7 @@ class FileAdapter {
   private final int pageSize; // in bytes
   private final int maxPageBorderShift; // in bytes
 
-  volatile private long cashedFileSize = UNDEFINED; // in bytes
+  private volatile long cashedFileSize = UNDEFINED; // in bytes
 
   FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
     this.pageSize = pageSize;

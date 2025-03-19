@@ -8,6 +8,7 @@ import com.google.common.base.Preconditions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
@@ -19,6 +20,8 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.codeInsight.typing.isInInlinePackage
 import com.jetbrains.python.codeInsight.typing.isInStubPackage
@@ -48,6 +51,8 @@ import java.util.*
  *
  * @see resolveTopLevelMember
  */
+@RequiresReadLock
+@RequiresBackgroundThread(generateAssertion = false)
 fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   checkAccess()
   if (!context.isValid) {
@@ -144,7 +149,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
                                                        !context.withMembers,
                                                        !context.withPlainDirectories, context.withoutStubs,
                                                        context.withoutForeign)
-      PyUtil.filterTopPriorityResults(children.toTypedArray())
+      PyUtil.filterTopPriorityElements(children)
     }
   }
 }
@@ -195,7 +200,11 @@ private fun foreignResults(name: QualifiedName, context: PyQualifiedNameResolveC
   else
     PyImportResolver.EP_NAME.extensionList
       .asSequence()
-      .map { it.resolveImportReference(name, context, !context.withoutRoots) }
+      .map {
+        DumbService.getInstance(context.project).withAlternativeResolveEnabled {
+          it.resolveImportReference(name, context, !context.withoutRoots)
+        }
+      }
       .filterNotNull()
       .toList()
 
@@ -388,7 +397,7 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (resolved.isEmpty()) return emptyList()
 
   val groupedResults = resolved.groupByTo(sortedMapOf<Priority, MutableList<PsiElement>>()) { resolvedElementPriority(it, module) }
-  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList<PsiElement>()
+  val skeletons = groupedResults.remove(Priority.SKELETON) ?: emptyList()
 
   if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)

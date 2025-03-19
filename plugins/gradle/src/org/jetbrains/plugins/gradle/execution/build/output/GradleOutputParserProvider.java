@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleOutputParserProvider implements ExternalSystemOutputParserProvider {
+public final class GradleOutputParserProvider implements ExternalSystemOutputParserProvider {
   @Override
   public ProjectSystemId getExternalSystemId() {
     return GradleConstants.SYSTEM_ID;
@@ -29,6 +29,7 @@ public class GradleOutputParserProvider implements ExternalSystemOutputParserPro
     if (taskId.getType().equals(ExternalSystemTaskType.RESOLVE_PROJECT)) {
       parsers.add(new GradleSyncOutputParser());
     }
+    parsers.add(new GradleCompilationReportParser());
     parsers.add(new GradleBuildScriptErrorParser());
     parsers.add(new JavacOutputParser("java", "scala"));
     parsers.add(new KotlincOutputParser());

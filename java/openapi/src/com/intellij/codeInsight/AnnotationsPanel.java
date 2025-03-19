@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.core.JavaPsiBundle;
@@ -15,6 +15,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBDimension;
@@ -172,6 +174,7 @@ public class AnnotationsPanel {
     tablePanel.setPreferredSize(new JBDimension(tablePanel.getPreferredSize().width, 200));
 
     myComponent = new JPanel(new GridBagLayout());
+    myComponent.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.anchor = GridBagConstraints.WEST;
     constraints.weightx = 1;
@@ -323,7 +326,7 @@ public class AnnotationsPanel {
   }
 
   private static class SimpleAnnotationPanelModel implements AnnotationPanelModel {
-    private @NonNls final String myName;
+    private final @NonNls String myName;
     private final String myDefaultAnnotation;
     private final List<String> myAnnotations;
     private final List<String> myDefaultAnnotations;

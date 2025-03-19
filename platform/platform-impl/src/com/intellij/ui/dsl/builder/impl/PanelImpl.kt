@@ -1,26 +1,26 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.Label
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.PropertyBinding
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 @ApiStatus.Internal
-internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                         var spacingConfiguration: SpacingConfiguration,
-                         private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
+internal class PanelImpl(
+  private val dialogPanelConfig: DialogPanelConfig,
+  var spacingConfiguration: SpacingConfiguration,
+  private val parent: RowImpl?,
+) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
     get() = _rows
@@ -42,7 +42,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
       return result
     }
     else {
-      return row(Label(label), init)
+      return row(createLabel(label), init)
     }
   }
 
@@ -50,7 +50,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     val result: RowImpl
     if (label == null) {
       result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.INDEPENDENT)
-    } else {
+    }
+    else {
       label.putClientProperty(DslComponentProperty.ROW_LABEL, true)
       result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell(label)
@@ -80,7 +81,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
             column1()
           }
         }
-      }.gap(RightGap.COLUMNS)
+      }.align(AlignY.TOP).gap(RightGap.COLUMNS)
       panel {
         row {
           if (column2 == null) {
@@ -90,7 +91,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
             column2()
           }
         }
-      }
+      }.align(AlignY.TOP)
     }.layout(RowLayout.PARENT_GRID)
   }
 
@@ -133,11 +134,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }.layout(RowLayout.PARENT_GRID)
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun separator(@NlsContexts.Separator title: String?, background: Color?): Row {
-    return createSeparatorRow(title)
-  }
-
   override fun separator(background: Color?): Row {
     return createSeparatorRow(null, background)
   }
@@ -177,36 +173,15 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
         }
       }.align(AlignY.FILL)
     }
-    result.internalTopGap = spacingConfiguration.verticalMediumGap
-    result.internalBottomGap = spacingConfiguration.verticalMediumGap
+    result.internalGaps = UnscaledGapsY(top = spacingConfiguration.verticalMediumGap, bottom = spacingConfiguration.verticalMediumGap)
 
     return result
   }
 
-  @Suppress("OVERRIDE_DEPRECATION")
-  override fun group(@NlsContexts.BorderTitle title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?, init: Panel.() -> Unit): Panel {
-    lateinit var result: Panel
-    val row = row {
-      result = panel {
-        createSeparatorRow(title)
-      }
-    }
-
-    if (indent) {
-      result.indent(init)
-    }
-    else {
-      result.init()
-    }
-
-    setTopGroupGap(row, topGroupGap)
-    setBottomGroupGap(row, bottomGroupGap)
-
-    return result
-  }
-
-  override fun groupRowsRange(title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
-                              init: Panel.() -> Unit): RowsRangeImpl {
+  override fun groupRowsRange(
+    title: String?, indent: Boolean, topGroupGap: Boolean?, bottomGroupGap: Boolean?,
+    init: Panel.() -> Unit,
+  ): RowsRangeImpl {
     val result = createRowRange()
     createSeparatorRow(title)
     if (indent) {
@@ -234,22 +209,13 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
 
     result.expanded = false
-    result.internalTopGap = spacingConfiguration.verticalMediumGap
-    result.internalBottomGap = spacingConfiguration.verticalMediumGap
+    result.internalGaps = UnscaledGapsY(top = spacingConfiguration.verticalMediumGap, bottom = spacingConfiguration.verticalMediumGap)
     _rows.add(result)
 
     return result
   }
 
-  @Deprecated("Use buttonsGroup(...) instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun <T> buttonGroup(binding: PropertyBinding<T>, type: Class<T>, @NlsContexts.BorderTitle title: String?,
-                               indent: Boolean, init: Panel.() -> Unit) {
-    buttonsGroup(title, indent, init)
-      .bind(MutableProperty(binding.get, binding.set), type)
-  }
-
-  override fun buttonsGroup(@NlsContexts.BorderTitle title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
+  override fun buttonsGroup(@NlsContexts.Label title: String?, indent: Boolean, init: Panel.() -> Unit): ButtonsGroupImpl {
     val result = ButtonsGroupImpl(this, _rows.size)
     rowsRanges.add(result)
 
@@ -257,11 +223,10 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     try {
       if (title != null) {
         val row = row {
-          @Suppress("DialogTitleCapitalization")
           label(title)
             .applyToComponent { putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(bottom = false)) }
         }
-        row.internalBottomGap = spacingConfiguration.buttonGroupHeaderBottomGap
+        row.internalGaps = UnscaledGapsY(bottom = spacingConfiguration.buttonGroupHeaderBottomGap)
       }
 
       if (indent) {
@@ -361,13 +326,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return visible && isRowFromVisibleRange(rowIndex) && (parent == null || parent.isVisible())
   }
 
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
-  @ApiStatus.ScheduledForRemoval
-  override fun horizontalAlign(horizontalAlign: HorizontalAlign): PanelImpl {
-    super.horizontalAlign(horizontalAlign)
-    return this
-  }
-
   @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): PanelImpl {
@@ -436,7 +394,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setTopGroupGap(row: RowImpl, topGap: Boolean?) {
     if (topGap == null) {
-      row.internalTopGap = spacingConfiguration.verticalMediumGap
+      row.internalGaps = row.internalGaps.copy(top = spacingConfiguration.verticalMediumGap)
     }
     else {
       row.topGap(if (topGap) TopGap.MEDIUM else TopGap.NONE)
@@ -445,7 +403,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   private fun setBottomGroupGap(row: RowImpl, bottomGap: Boolean?) {
     if (bottomGap == null) {
-      row.internalBottomGap = spacingConfiguration.verticalMediumGap
+      row.internalGaps = row.internalGaps.copy(bottom = spacingConfiguration.verticalMediumGap)
     }
     else {
       row.bottomGap(if (bottomGap) BottomGap.MEDIUM else BottomGap.NONE)
@@ -463,7 +421,7 @@ internal data class PanelContext(
   /**
    * Number of [SpacingConfiguration.horizontalIndent] indents before each row in the panel
    */
-  val indentCount: Int = 0
+  val indentCount: Int = 0,
 )
 
 private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row {
@@ -473,7 +431,7 @@ private fun Panel.createSeparatorRow(@NlsContexts.Separator title: String?): Row
 private fun Panel.createSeparatorRow(title: JBLabel?, background: Color? = null): Row {
   val separator: JComponent
   if (title == null) {
-    separator = SeparatorComponent(0, background ?: OnePixelDivider.BACKGROUND, null)
+    separator = SeparatorComponent(0, 0, background ?: JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground(), null)
   }
   else {
     separator = object : TitledSeparator(title.text) {

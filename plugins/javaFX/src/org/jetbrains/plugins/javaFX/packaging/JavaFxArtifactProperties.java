@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.application.ReadAction;
@@ -35,7 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactProperties> {
+public final class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactProperties> {
 
   private String myTitle;
   private String myVendor;
@@ -63,7 +63,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myMsgOutputLevel = JavaFxPackagerConstants.MsgOutputLevel.Default.name();
 
   @Override
-  public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
+  public void onBuildFinished(final @NotNull Artifact artifact, final @NotNull CompileContext compileContext) {
     if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) {
       return;
     }
@@ -117,9 +117,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     return new JavaFxArtifactPropertiesEditor(this, context.getProject(), context.getArtifact());
   }
 
-  @Nullable
   @Override
-  public JavaFxArtifactProperties getState() {
+  public @Nullable JavaFxArtifactProperties getState() {
     return this;
   }
 
@@ -344,7 +343,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myMsgOutputLevel = msgOutputLevel;
   }
 
-  public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
+  public abstract static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
     private final Project myProject;

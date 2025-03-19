@@ -5,17 +5,23 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection;
 import com.intellij.codeInspection.classCanBeRecord.ClassCanBeRecordInspection.ConversionStrategy;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import org.jetbrains.annotations.NotNull;
 
 public class ClassCanBeRecordInspectionAccessorsRenamingTest extends LightQuickFixParameterizedTestCase {
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.SILENTLY, false)};
+    return new LocalInspectionTool[]{new ClassCanBeRecordInspection(ConversionStrategy.DO_NOT_SUGGEST, false)};
   }
 
   @Override
   protected String getBasePath() {
     return "/inspection/classCanBeRecord/accessorsRenaming";
+  }
+
+  @Override
+  public void runSingle() throws Throwable {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> super.runSingle());
   }
 }

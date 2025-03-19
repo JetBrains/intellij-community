@@ -1,11 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -19,13 +20,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,8 +36,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -60,7 +60,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private ModifiableRootModel myModifiableRootModelProxy;
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-  @NonNls private static final String METHOD_COMMIT = "commit";
+  private static final @NonNls String METHOD_COMMIT = "commit";
   private boolean myEditorsInitialized;
 
   protected History myHistory;
@@ -81,15 +81,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   protected abstract JComponent createCenterPanel();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getSelectedEditor();
+  public abstract @Nullable ModuleConfigurationEditor getSelectedEditor();
 
   public abstract void selectEditor(String displayName);
 
   protected abstract void restoreSelectedEditor();
 
-  @Nullable
-  public abstract ModuleConfigurationEditor getEditor(@NotNull String displayName);
+  public abstract @Nullable ModuleConfigurationEditor getEditor(@NotNull String displayName);
 
   protected abstract void disposeCenterPanel();
 
@@ -97,21 +95,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     void moduleStateChanged(ModifiableRootModel moduleRootModel);
   }
 
+  /**
+   * Listeners are automatically unsubscribed on dispose
+   */
   public void addChangeListener(ChangeListener listener) {
     myEventDispatcher.addListener(listener);
   }
 
-  public void removeChangeListener(ChangeListener listener) {
-    myEventDispatcher.removeListener(listener);
-  }
-
-  @Nullable
-  public Module getModule() {
-    final Module[] all = myModulesProvider.getModules();
-    if (ArrayUtil.contains(myModule, all)) {
-      return myModule;
-    }
-
+  public @Nullable Module getModule() {
     return myModulesProvider.getModule(myName);
   }
 
@@ -204,8 +195,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  @NotNull
-  public ModuleConfigurationState createModuleConfigurationState() {
+  public @NotNull ModuleConfigurationState createModuleConfigurationState() {
     return new ModuleConfigurationStateImpl(myProject, myModulesProvider) {
       @Override
       public ModifiableRootModel getModifiableRootModel() {
@@ -241,8 +231,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return myGenericSettingsPanel;
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     if (myGenericSettingsPanel == null) {
       myGenericSettingsPanel = createPanel();
     }
@@ -292,6 +281,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   @Override
   public void dispose() {
     try {
+      myEventDispatcher.getListeners().clear();
       for (final ModuleConfigurationEditor myEditor : myEditors) {
         myEditor.disposeUIResources();
       }
@@ -332,14 +322,13 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     }
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
   private class ModifiableRootModelInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final ModifiableRootModel myDelegateModel;
-    @NonNls private static final Set<String> myCheckedNames = Set.of(
+    private static final @NonNls Set<String> myCheckedNames = Set.of(
       "addOrderEntry", "addLibraryEntry", "addInvalidLibrary", "addModuleOrderEntry", "addInvalidModuleEntry", "removeOrderEntry",
       "setSdk", "inheritSdk", "inheritCompilerOutputPath", "setExcludeOutput", "replaceEntryOfType", "rearrangeOrderEntries");
 
@@ -376,7 +365,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private class LibraryTableInvocationHandler implements InvocationHandler, ProxyDelegateAccessor {
     private final LibraryTable myDelegateTable;
-    @NonNls private final Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
+    private final @NonNls Set<String> myCheckedNames = new HashSet<>(Collections.singletonList("removeLibrary" /*,"createLibrary"*/));
 
     LibraryTableInvocationHandler(@NotNull LibraryTable table) {
       myDelegateTable = table;
@@ -539,8 +528,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     return unwrappedParams;
   }
 
-  @Nullable
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     if (myEditors.isEmpty()) {
       return null;
     }
@@ -553,17 +541,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     updateImportedModelWarning();
   }
 
-  private class ModuleEditorPanel extends JPanel implements DataProvider{
+  private class ModuleEditorPanel extends JPanel implements UiDataProvider {
     ModuleEditorPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return getModule();
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.MODULE_CONTEXT, getModule());
     }
   }
 }

@@ -18,3 +18,5 @@ fun foo(o: Any) {
         else -> o.hashCode()
     }
 }
+
+// IGNORE_K2

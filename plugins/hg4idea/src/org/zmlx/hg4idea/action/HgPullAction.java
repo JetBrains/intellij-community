@@ -29,7 +29,7 @@ import java.util.Collection;
 public class HgPullAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  protected void execute(@NotNull final Project project,
+  protected void execute(final @NotNull Project project,
                          @NotNull Collection<HgRepository> repos,
                          @Nullable HgRepository selectedRepo,
                          @NotNull DataContext dataContext) {

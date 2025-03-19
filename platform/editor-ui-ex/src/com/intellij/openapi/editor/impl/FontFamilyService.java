@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.util.ui.FontInfo;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -134,7 +134,8 @@ public class FontFamilyService {
   }
 
   private static @NotNull FontFamilyService getInstance() {
-    FontFamilyService instance = ApplicationManager.getApplication().getService(FontFamilyService.class);
+    Application application = ApplicationManager.getApplication();
+    FontFamilyService instance = application != null ? application.getService(FontFamilyService.class) : null;
     return instance == null ? new FontFamilyService() : instance;
   }
 
@@ -146,7 +147,7 @@ public class FontFamilyService {
   }
 
   protected @NotNull List<String> getAvailableFamiliesImpl() {
-    return Arrays.asList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(Locale.ENGLISH));
+    return List.of(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames(Locale.ENGLISH));
   }
 
   protected boolean isMonospacedImpl(@NotNull String family) {
@@ -154,7 +155,7 @@ public class FontFamilyService {
   }
 
   protected @NotNull List<@NotNull String> getSubFamiliesImpl(@NotNull String family) {
-    return Arrays.asList(MAIN_FALLBACK_SUB_FAMILY, BOLD_FALLBACK_SUB_FAMILY);
+    return List.of(MAIN_FALLBACK_SUB_FAMILY, BOLD_FALLBACK_SUB_FAMILY);
   }
 
   protected @NotNull String getRecommendedSubFamilyImpl(@NotNull String family) {
@@ -170,11 +171,16 @@ public class FontFamilyService {
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style) {
     Font font = new Font(family, style, 1);
-    if (font.getFamily().equals(Font.DIALOG) && !Font.DIALOG.equals(family)) {
+    if (font.getFamily().equals(Font.DIALOG) && !isDialogFamily(family)) {
       // requested family isn't available
       return new Font(FontPreferences.DEFAULT_FONT_NAME, style, 1);
     }
     return font;
+  }
+
+  private static boolean isDialogFamily(@NotNull String family) {
+    if (family.equals(Font.DIALOG)) return true;
+    return family.startsWith(Font.DIALOG) && family.charAt(Font.DIALOG.length()) == '.';
   }
 
   protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {

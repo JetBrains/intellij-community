@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -11,7 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
-import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
 import org.jetbrains.annotations.Nls
 
 open class CommitTabTitleUpdater(val tree: ChangesTree,
@@ -25,7 +26,8 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   val project: Project get() = tree.project
 
   open fun start() {
-    doWhenFirstShown(tree, { updateTab() }, this)  // as UI components could be created before tool window `Content`
+    // as UI components could be created before tool window `Content`
+    doWhenFirstShown(component = tree, runnable = { updateTab() }, parent = this)
 
     branchComponent.addChangeListener(this::updateTab, this)
     Disposer.register(this) { setDefaultTitle() }
@@ -34,16 +36,7 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   open fun updateTab() {
     val tab = getTab() ?: return
 
-    val branch = branchComponent.text
-    tab.displayName = when {
-      ExperimentalUI.isNewUI() -> {
-        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
-        if (contentsCount == 1) null else message("tab.title.commit")
-      }
-      branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
-      else -> message("tab.title.commit")
-    }
-
+    tab.displayName = getDisplayTabName(project, tabName, branchComponent.text)
     tab.description = branchComponent.toolTipText
   }
 
@@ -54,8 +47,21 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
     tab.description = null
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+  }
 
-  private fun getTab(): Content? =
-    ChangesViewContentManager.getInstance(project).findContent(tabName)
+  private fun getTab(): Content? = ChangesViewContentManager.getInstance(project).findContent(tabName)
+
+  companion object {
+    fun getDisplayTabName(project: Project, tabName: String, branch: String?): @NlsContexts.TabTitle String? {
+      if (ExperimentalUI.isNewUI()) {
+        val contentsCount = ChangesViewContentManager.getToolWindowFor(project, tabName)?.contentManager?.contentCount ?: 0
+        if (contentsCount == 1) return null else return message("tab.title.commit")
+      }
+
+      if (branch?.isNotBlank() == true) return message("tab.title.commit.to.branch", branch)
+
+      return message("tab.title.commit")
+    }
+  }
 }

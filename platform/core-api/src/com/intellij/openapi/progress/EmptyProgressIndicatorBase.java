@@ -1,15 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ModalityState;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * See {@link ProgressIndicator} notice.
+ * <br/>
+ * In coroutines, cancellation is handled by {@link kotlinx.coroutines.Job Job} lifecycle.
+ * In coroutines, modality state is passed through the coroutine context.
+ * {@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking} and
+ * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress} install the modality into context of the action.
+ * If it's necessary to install {@link ModalityState#current the current modality},
+ * it should be added to the coroutine context of a newly launched coroutine,
+ * see {@link com.intellij.openapi.application.ModalityKt#asContextElement}.
+ * </p>
+ */
 public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
-  @NotNull
-  private final ModalityState myModalityState;
-  @NotNull
-  private volatile RunState myRunState = RunState.VIRGIN;
+  private final @NotNull ModalityState myModalityState;
+  private volatile @NotNull RunState myRunState = RunState.VIRGIN;
 
   private enum RunState {
     VIRGIN, STARTED, STOPPED
@@ -17,10 +32,12 @@ public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
 
   private volatile int myNonCancelableSectionCount;
 
+  @Obsolete
   public EmptyProgressIndicatorBase() {
     this(ModalityState.defaultModalityState());
   }
 
+  @Obsolete
   public EmptyProgressIndicatorBase(@NotNull ModalityState modalityState) {
     myModalityState = modalityState;
   }
@@ -54,7 +71,12 @@ public abstract class EmptyProgressIndicatorBase implements ProgressIndicator {
   @Override
   public final void checkCanceled() {
     if (isCanceled() && myNonCancelableSectionCount == 0 && !Cancellation.isInNonCancelableSection()) {
-      throw new ProcessCanceledException();
+      ProcessCanceledException e = new ProcessCanceledException();
+      if (this instanceof EmptyProgressIndicator) {
+        Throwable cause = Objects.requireNonNull(((EmptyProgressIndicator)this).getCancellationCause());
+        e.addSuppressed(cause);
+      }
+      throw e;
     }
   }
 

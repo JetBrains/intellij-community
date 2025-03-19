@@ -45,8 +45,7 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
         final XPathType declaredType = XsltCodeInsightUtil.getDeclaredType(getTag());
         if (declaredType != null) {
           return declaredType;
@@ -67,24 +66,20 @@ public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
     }
 
     @Override
-    @Nullable
-    public XPathExpression getValue() {
+    public @Nullable XPathExpression getValue() {
         return XsltCodeInsightUtil.getXPathExpression(this, "select");
     }
 
-    @NotNull
     @Override
-    public final SearchScope getUseScope() {
+    public final @NotNull SearchScope getUseScope() {
         return XsltSupport.isTopLevelElement(getTag()) ? getDefaultUseScope() : getLocalUseScope();
     }
 
-    @NotNull
-    protected SearchScope getLocalUseScope() {
+    protected @NotNull SearchScope getLocalUseScope() {
         return new LocalSearchScope(getTag().getParentTag());
     }
 
-    @NotNull
-    protected SearchScope getDefaultUseScope() {
+    protected @NotNull SearchScope getDefaultUseScope() {
         return super.getUseScope();
     }
 

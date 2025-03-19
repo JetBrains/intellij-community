@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ModalityState;
@@ -33,7 +33,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
-  ActiveDecorationLayer(@NotNull final GuiEditor editor) {
+  ActiveDecorationLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myToolTip = new JToolTip();
   }
@@ -167,7 +167,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
       ListenerNavigateButton btn = myNavigateButtons.get(component);
       if (selected) {
         ReadAction.nonBlocking(() -> component.getBinding() != null ? ListenerNavigateButton.prepareActionGroup(component) : null)
-          .finishOnUiThread(ModalityState.NON_MODAL, group -> {
+          .finishOnUiThread(ModalityState.nonModal(), group -> {
             if (group != null && group.getChildrenCount() > 0) {
               ListenerNavigateButton navigateButton = btn;
               if (navigateButton == null) {

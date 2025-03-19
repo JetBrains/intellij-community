@@ -2,12 +2,12 @@
 
 
 class s  {
-    <error descr="Recursive constructor invocation">s()</error> {
-        this();
+    s() {
+        <error descr="Recursive constructor call">this()</error>;
     }
 
-    <error descr="Recursive constructor invocation">s(int i)</error> {
-        this(2);
+    s(int i) {
+        <error descr="Recursive constructor call">this(2)</error>;
     }
 }
 
@@ -16,11 +16,11 @@ class c {
     this(2);
   }
 
-  <error descr="Recursive constructor invocation">c(int i)</error> {
-    this(1,1);
+  c(int i) {
+    <error descr="Recursive constructor call">this(1,1)</error>;
   }
-  <error descr="Recursive constructor invocation">c(int i, int k)</error> {
-    this(1);
+  c(int i, int k) {
+    <error descr="Recursive constructor call">this(1)</error>;
   }
 }
 
@@ -34,4 +34,12 @@ class cv {
   }
 
   cv(int i,int j) {}
+}
+class X {
+  private final int value;
+  
+  X() {
+    <error descr="Recursive constructor call">this()</error>;
+    <error descr="Cannot assign final field 'value' after chained constructor call">value</error> = 1;
+  }
 }

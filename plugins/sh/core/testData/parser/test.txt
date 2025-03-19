@@ -3,30 +3,31 @@ SHELL_SCRIPT
     COMMAND_SUBSTITUTION_COMMAND
       PsiElement(OPEN_BACKQUOTE)('`')
       COMPOUND_LIST
-        TEST_COMMAND
-          PsiElement(test)('test')
-          PsiWhiteSpace(' ')
-          LITERAL
-            PsiElement(word)('-z')
-          PsiWhiteSpace(' ')
-          STRING
-            PsiElement(OPEN_QUOTE)('"')
-            PsiElement($)('$')
-            SHELL_PARAMETER_EXPANSION
-              PsiElement({)('{')
-              PsiElement(word)('DGIF')
-              PsiElement(})('}')
-            PsiElement(CLOSE_QUOTE)('"')
-        PsiWhiteSpace(' ')
-        PsiElement(&&)('&&')
-        PsiWhiteSpace(' ')
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
+        PIPELINE_COMMAND_LIST
+          TEST_COMMAND
+            PsiElement(test)('test')
+            PsiWhiteSpace(' ')
             LITERAL
-              PsiElement(word)('echo')
+              PsiElement(word)('-z')
+            PsiWhiteSpace(' ')
+            STRING
+              PsiElement(OPEN_QUOTE)('"')
+              PsiElement($)('$')
+              SHELL_PARAMETER_EXPANSION
+                PsiElement({)('{')
+                PsiElement(word)('DGIF')
+                PsiElement(})('}')
+              PsiElement(CLOSE_QUOTE)('"')
           PsiWhiteSpace(' ')
-          LITERAL
-            PsiElement(word)('DGIF')
+          PsiElement(&&)('&&')
+          PsiWhiteSpace(' ')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('echo')
+            PsiWhiteSpace(' ')
+            LITERAL
+              PsiElement(word)('DGIF')
       PsiElement(CLOSE_BACKQUOTE)('`')
   PsiElement(\n)('\n')
   COMMANDS_LIST

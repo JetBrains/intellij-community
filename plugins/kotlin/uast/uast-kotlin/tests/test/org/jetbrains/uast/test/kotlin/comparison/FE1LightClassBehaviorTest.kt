@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.LightClassBehaviorTestBase
@@ -10,7 +11,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), LightClassBehaviorTestBase {
-    override val isFirUastPlugin: Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -29,6 +32,16 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testPropertyAccessorModifierListOffsets() {
         checkPropertyAccessorModifierListOffsets(myFixture)
+    }
+
+    fun testLocalClassCaching() {
+        try {
+            checkLocalClassCaching(myFixture)
+            // TODO: KTIJ-26663
+            error("Unmute me")
+        } catch (e: Throwable) {
+            return
+        }
     }
 
     fun testFinalModifierOnEnumMembers() {
@@ -65,5 +78,29 @@ class FE1LightClassBehaviorTest : KotlinLightCodeInsightFixtureTestCase(), Light
 
     fun testUpperBoundWildcardForVar() {
         checkUpperBoundWildcardForVar(myFixture)
+    }
+
+    fun testUpperBoundForRecursiveTypeParameter() {
+        checkUpperBoundForRecursiveTypeParameter(myFixture)
+    }
+
+    fun testDefaultValueOfAnnotation_Kotlin() {
+        checkDefaultValueOfAnnotation_Kotlin(myFixture)
+    }
+
+    fun testDefaultValueOfAnnotation_Java() {
+        checkDefaultValueOfAnnotation_Java(myFixture)
+    }
+
+    fun testAnnotationParameterReference() {
+        checkAnnotationParameterReference(myFixture)
+    }
+
+    fun testContainingFile() {
+        checkContainingFile(myFixture)
+    }
+
+    fun testContainingFileInFacadeFiles() {
+        checkContainingFileInFacadeFiles(myFixture)
     }
 }

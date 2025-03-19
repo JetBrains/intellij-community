@@ -1,0 +1,44 @@
+### auto-generated section `build kotlin.base.resources` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "kotlin-base-resources_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "kotlin-base-resources_resources_1",
+  files = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "kotlin-base-resources",
+  module_name = "kotlin.base.resources",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//java/java-frontback-psi-api:frontback-psi",
+  ],
+  runtime_deps = [
+    ":kotlin-base-resources_resources",
+    ":kotlin-base-resources_resources_1",
+  ]
+)
+### auto-generated section `build kotlin.base.resources` end

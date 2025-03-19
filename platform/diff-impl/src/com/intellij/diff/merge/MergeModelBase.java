@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.util.DiffUtil;
@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +29,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
+@ApiStatus.Internal
 public abstract class MergeModelBase<S extends MergeModelBase.State> implements Disposable {
   private static final Logger LOG = Logger.getInstance(MergeModelBase.class);
 
-  @Nullable private final Project myProject;
-  @NotNull private final Document myDocument;
-  @Nullable private final UndoManager myUndoManager;
+  private final @Nullable Project myProject;
+  private final @NotNull Document myDocument;
+  private final @Nullable UndoManager myUndoManager;
 
-  @NotNull private final IntList myStartLines=new IntArrayList();
-  @NotNull private final IntList myEndLines=new IntArrayList();
+  private final @NotNull IntList myStartLines = new IntArrayList();
+  private final @NotNull IntList myEndLines = new IntArrayList();
 
-  @NotNull private final IntSet myChangesToUpdate = new IntOpenHashSet();
+  private final @NotNull IntSet myChangesToUpdate = new IntOpenHashSet();
   private int myBulkChangeUpdateDepth;
 
   private boolean myInsideCommand;
@@ -143,9 +145,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   // Undo
   //
 
-  @NotNull
   @RequiresEdt
-  protected abstract S storeChangeState(int index);
+  protected abstract @NotNull S storeChangeState(int index);
 
   @RequiresEdt
   protected void restoreChangeState(@NotNull S state) {
@@ -153,9 +154,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     setLineEnd(state.myIndex, state.myEndLine);
   }
 
-  @Nullable
   @RequiresEdt
-  protected S processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
+  protected @Nullable S processDocumentChange(int index, int oldLine1, int oldLine2, int shift) {
     int line1 = getLineStart(index);
     int line2 = getLineEnd(index);
 
@@ -164,12 +164,22 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
     // RangeMarker can be updated in a different way
     boolean rangeAffected = newRange.damaged || (oldLine2 >= line1 && oldLine1 <= line2);
 
+    boolean rangeManuallyEdit = newRange.damaged || (oldLine2 > line1 && oldLine1 < line2);
+    if (rangeManuallyEdit && !isInsideCommand() && (myUndoManager != null && !myUndoManager.isUndoOrRedoInProgress())) {
+      onRangeManuallyEdit(index);
+    }
+
     S oldState = rangeAffected ? storeChangeState(index) : null;
 
     setLineStart(index, newRange.startLine);
     setLineEnd(index, newRange.endLine);
 
     return oldState;
+  }
+
+  @ApiStatus.Internal
+  protected void onRangeManuallyEdit(int index) {
+
   }
 
   private class MyDocumentListener implements DocumentListener {
@@ -258,8 +268,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
   }
 
   private static final class MyUndoableAction extends BasicUndoableAction {
-    @NotNull private final WeakReference<MergeModelBase<?>> myModelRef;
-    @NotNull private final List<? extends State> myStates;
+    private final @NotNull WeakReference<MergeModelBase<?>> myModelRef;
+    private final @NotNull List<? extends State> myStates;
     private final boolean myUndo;
 
     MyUndoableAction(@NotNull MergeModelBase<?> model, @NotNull List<? extends State> states, boolean undo) {
@@ -374,9 +384,8 @@ public abstract class MergeModelBase<S extends MergeModelBase.State> implements 
    *
    * null means all changes could be affected
    */
-  @NotNull
   @RequiresEdt
-  private IntList collectAffectedChanges(@NotNull IntList directChanges) {
+  private @NotNull IntList collectAffectedChanges(@NotNull IntList directChanges) {
     IntList result = new IntArrayList(directChanges.size());
 
     int directArrayIndex = 0;

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.documentation
 
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.model.Pointer
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.psi.PsiElement
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -21,6 +22,8 @@ import java.util.function.Supplier
 internal data class DocumentationContentData internal constructor(
   val html: @Nls String,
   val imageResolver: DocumentationImageResolver?,
+  val definitionDetails: String? = null,
+  val targetElement: PsiElement? = null
 ) : DocumentationContent
 
 @Internal

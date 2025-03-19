@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PySdkTargetPaths")
 
 package com.jetbrains.python.run.target
 
-import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.target.value.targetPath
@@ -15,14 +14,6 @@ import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
 import java.nio.file.Path
-
-@Deprecated("Use Path for localPath")
-fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                           project: Project,
-                                           sdk: Sdk?,
-                                           pathMapper: PyRemotePathMapper?,
-                                           localPath: String): TargetEnvironmentFunction<String> =
-  getTargetPathForPythonConsoleExecution(project, sdk, pathMapper, Path.of(localPath))
 
 /**
  * @param pathMapper corresponds to the path mappings specified in the run configuration
@@ -40,7 +31,7 @@ fun getTargetPathForPythonScriptExecution(project: Project,
 
 private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper {
   val pathMapper = PyRemotePathMapper.cloneMapper(this)
-  val sdkAdditionalData = sdk?.sdkAdditionalData as? RemoteSdkAdditionalData<*>
+  val sdkAdditionalData = sdk?.sdkAdditionalData as? RemoteSdkAdditionalData
   if (sdkAdditionalData != null) {
     appendBasicMappings(project, pathMapper, sdkAdditionalData)
   }

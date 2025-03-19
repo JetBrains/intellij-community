@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.evaluationPlugin.languages` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "evaluationPlugin-languages",
+  module_name = "intellij.evaluationPlugin.languages",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:commons-io",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//plugins/evaluation-plugin/core:evaluationPlugin-core",
+    "//platform/statistics",
+    "//platform/statistics/uploader",
+  ]
+)
+### auto-generated section `build intellij.evaluationPlugin.languages` end

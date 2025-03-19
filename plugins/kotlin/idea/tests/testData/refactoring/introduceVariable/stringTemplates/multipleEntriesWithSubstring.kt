@@ -1,3 +1,4 @@
+// INPLACE_VARIABLE_NAME: s
 fun foo(a: Int): String {
     val x = "_c$a:${a + 1}d_"
     val y = "_$a:${a + 1}d_"

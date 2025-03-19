@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
@@ -15,10 +15,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends LightElement implements PsiVariable, NavigationItem, OriginInfoAwareElement {
   private final String myName;
-  private final PsiType myType;
+  private final Supplier<? extends PsiType> myTypeSupplier;
   private volatile LightModifierList myModifierList;
   private volatile Icon myBaseIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Variable);
   private String myOriginInfo;
@@ -40,7 +41,19 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
                               @NotNull Language language, @NotNull LightModifierList modifierList) {
     super(manager, language);
     myName = name;
-    myType = type;
+    myTypeSupplier = () -> type;
+    myModifierList = modifierList;
+  }
+
+  protected LightVariableBuilder(PsiManager manager,
+                                 @NotNull String name,
+                                 @NotNull Supplier<? extends @NotNull PsiType> typeSupplier,
+                                 @NotNull Language language,
+                                 @NotNull LightModifierList modifierList
+  ) {
+    super(manager, language);
+    myName = name;
+    myTypeSupplier = typeSupplier;
     myModifierList = modifierList;
   }
 
@@ -58,27 +71,23 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return "LightVariableBuilder:" + getName();
   }
 
-  @NotNull
   @Override
-  public PsiType getType() {
-    return myType;
+  public @NotNull PsiType getType() {
+    return myTypeSupplier.get();
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     return myModifierList;
   }
 
-  @NotNull
-  public T setModifiers(@NotNull String @NotNull ... modifiers) {
+  public @NotNull T setModifiers(@NotNull String @NotNull ... modifiers) {
     myModifierList = new LightModifierList(getManager(), getLanguage(), modifiers);
     //noinspection unchecked
     return (T)this;
   }
 
-  @NotNull
-  public T setModifierList(LightModifierList modifierList) {
+  public @NotNull T setModifierList(LightModifierList modifierList) {
     myModifierList = modifierList;
     //noinspection unchecked
     return (T)this;
@@ -89,9 +98,8 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return myModifierList.hasModifierProperty(name);
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -146,9 +154,8 @@ public class LightVariableBuilder<T extends LightVariableBuilder<?>> extends Lig
     return (T)this;
   }
 
-  @Nullable
   @Override
-  public String getOriginInfo() {
+  public @Nullable String getOriginInfo() {
     return myOriginInfo;
   }
 

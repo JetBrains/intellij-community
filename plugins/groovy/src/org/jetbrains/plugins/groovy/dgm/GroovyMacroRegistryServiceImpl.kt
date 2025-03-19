@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.*
 import com.intellij.util.asSafely
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -24,12 +24,12 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.transformations.macro.GroovyMacroRegistryService
 import java.util.concurrent.ConcurrentHashMap
 
-class GroovyMacroRegistryServiceImpl(val project: Project) : GroovyMacroRegistryService, Disposable {
+class GroovyMacroRegistryServiceImpl(val project: Project, val cs: CoroutineScope) : GroovyMacroRegistryService, Disposable {
 
   private val availableModules: MutableMap<Module, CachedValue<Set<SmartPsiElementPointer<PsiMethod>>>> = ConcurrentHashMap()
 
   init {
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, GroovyMacroModuleListener())
+    GroovyAsyncMacroModuleListener(project, cs).subscribe()
   }
 
   override fun resolveAsMacro(call: GrMethodCall): PsiMethod? {

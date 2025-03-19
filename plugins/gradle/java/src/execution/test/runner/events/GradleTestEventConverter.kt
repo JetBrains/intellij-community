@@ -1,8 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events
 
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.intellij.openapi.application.runReadAction
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -39,7 +42,7 @@ internal class GradleTestEventConverter(
 ) {
 
   private val isTestSuite: Boolean by lazy {
-    isSuite && className.isEmpty()
+    isSuite && (className.isEmpty() || suiteName == methodName)
   }
 
   private val isTestClass: Boolean by lazy {
@@ -58,13 +61,23 @@ internal class GradleTestEventConverter(
     isJunit5ParametrizedTestMethod && parentMethodName == null
   }
 
+  private val isEnabledGroovyPlugin: Boolean by lazy {
+    val groovyPluginId = PluginId.findId("org.intellij.groovy")
+    val groovyPlugin = PluginManagerCore.getPluginSet()
+    groovyPluginId != null && groovyPlugin.isPluginEnabled(groovyPluginId)
+  }
+
   private val isSpockTestMethod: Boolean by lazy {
-    isTestMethod && runReadAction {
-      DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
-        val scope = GlobalSearchScope.allScope(project)
-        val psiFacade = JavaPsiFacade.getInstance(project)
-        val psiClass = psiFacade.findClass(convertedClassName, scope)
-        psiClass != null && psiClass.isSpockSpecification()
+    isTestMethod
+    && isEnabledGroovyPlugin
+    && runBlockingMaybeCancellable {
+      readAction {
+        DumbService.getInstance(project).computeWithAlternativeResolveEnabled<Boolean, Throwable> {
+          val scope = GlobalSearchScope.allScope(project)
+          val psiFacade = JavaPsiFacade.getInstance(project)
+          val psiClass = psiFacade.findClass(convertedClassName, scope)
+          psiClass != null && psiClass.isSpockSpecification()
+        }
       }
     }
   }
@@ -126,11 +139,12 @@ internal class GradleTestEventConverter(
     val displayName =
       extractName(displayName, TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR)
       ?: extractName(displayName, TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR)
+      ?: extractName(displayName, TEST_LAUNCHER_CLASS_DISPLAY_NAME_EXTRACTOR)
       ?: extractName(displayName, TEST_LAUNCHER_TEST_DISPLAY_NAME_EXTRACTOR)
       ?: displayName
     when {
       isTestSuite ->
-        extractName(displayName, JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR)
+        extractName(displayName, JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR)
         ?: displayName
       isTestClass ->
         extractName(displayName, JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR)
@@ -155,11 +169,11 @@ internal class GradleTestEventConverter(
   companion object {
     private val TEST_LAUNCHER_SUITE_DISPLAY_NAME_EXTRACTOR = "Test suite '(.+)'".toRegex()
     private val TEST_LAUNCHER_METHOD_DISPLAY_NAME_EXTRACTOR = "Test method (.+)\\(.+\\)".toRegex()
+    private val TEST_LAUNCHER_CLASS_DISPLAY_NAME_EXTRACTOR = "Test class (.+)".toRegex()
     private val TEST_LAUNCHER_TEST_DISPLAY_NAME_EXTRACTOR = "Test (.+)\\(.+\\)".toRegex()
 
-    private val JUNIT5_PARAMETRIZED_SUITE_DISPLAY_NAME_EXTRACTOR = "(.+?)\\s?\\(.*\\)".toRegex()
     private val JUNIT5_METHOD_DISPLAY_NAME_EXTRACTOR = "(.+)\\(\\)".toRegex()
-    private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*\\.([^.]+)".toRegex()
+    private val JUNIT4_CLASS_DISPLAY_NAME_EXTRACTOR = ".*[.$]([^.$]+)".toRegex()
 
     private val JUNIT5_PARAMETER_NAME_EXTRACTOR = ".+\\(.*\\)(\\[\\d+])".toRegex()
     private val JUNIT5_PARAMETRIZED_METHOD_NAME_EXTRACTOR = "(.+)\\(.*\\)\\[\\d+]".toRegex()

@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 
-public class GroovyProblemFileHighlightFilter implements Condition<VirtualFile> {
+public final class GroovyProblemFileHighlightFilter implements Condition<VirtualFile> {
   @Override
   public boolean value(VirtualFile virtualFile) {
     return FileTypeRegistry.getInstance().isFileOfType(virtualFile, GroovyFileType.GROOVY_FILE_TYPE);

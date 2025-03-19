@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.devkit.stacktrace` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "stacktrace_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "stacktrace",
+  module_name = "intellij.devkit.stacktrace",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/devkit/devkit-core:core",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/execution",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//java/unscramble",
+    "//platform/util/coroutines",
+    "//platform/threadDumpParser",
+    "//platform/diagnostic/freezeAnalyzer",
+  ],
+  runtime_deps = [":stacktrace_resources"]
+)
+### auto-generated section `build intellij.devkit.stacktrace` end

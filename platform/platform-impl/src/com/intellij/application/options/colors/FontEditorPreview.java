@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -45,9 +30,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +45,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class FontEditorPreview implements PreviewPanel{
   private static final String PREVIEW_TEXT_KEY = "FontPreviewText";
 
@@ -74,7 +60,7 @@ public class FontEditorPreview implements PreviewPanel{
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  private final static ShortcutSet TOGGLE_BOLD_SHORTCUT = CustomShortcutSet.fromString("control B");
+  private static final ShortcutSet TOGGLE_BOLD_SHORTCUT = CustomShortcutSet.fromString("control B");
 
   public FontEditorPreview(final Supplier<? extends EditorColorsScheme> schemeSupplier, boolean editable) {
     mySchemeSupplier = schemeSupplier;
@@ -117,8 +103,8 @@ public class FontEditorPreview implements PreviewPanel{
       String originalGroupId = editor.getContextMenuGroupId();
       AnAction originalGroup = originalGroupId == null ? null : ActionManager.getInstance().getAction(originalGroupId);
       DefaultActionGroup group = new DefaultActionGroup();
-      if (originalGroup instanceof ActionGroup) {
-        group.addAll(((ActionGroup)originalGroup).getChildren(null));
+      if (originalGroup instanceof ActionGroup o) {
+        group.addAll(o);
       }
       if (restoreAction != null) {
         group.add(restoreAction);
@@ -132,32 +118,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   private static String getIDEDemoText() {
-    return
-      ApplicationNamesInfo.getInstance().getFullProductName() +
-      " is an <bold>Integrated \n" +
-      "Development Environment (IDE)</bold> designed\n" +
-      "to maximize productivity. It provides\n" +
-      "<bold>clever code completion, static code\n" +
-      "analysis, and refactorings,</bold> and lets\n" +
-      "you focus on the bright side of\n" +
-      "software development making\n" +
-      "it an enjoyable experience.\n" +
-      "\n" +
-      "Default:\n" +
-      "abcdefghijklmnopqrstuvwxyz\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
-      " 0123456789 (){}[]\n" +
-      " +-*/= .,;:!? #&$%@|^\n" +
-      "\n" +
-      "<bold>Bold:\n" +
-      "abcdefghijklmnopqrstuvwxyz\n" +
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
-      " 0123456789 (){}[]\n" +
-      " +-*/= .,;:!? #&$%@|^</bold>\n" +
-      "\n" +
-      "<!-- -- != := === >= >- >=> |-> -> <$>\n" +
-      "</> #[ |||> |= ~@\n" +
-      "\n";
+    return FontPreviewService.getInstance().getFontPreviewText();
   }
 
   static void installTrafficLights(@NotNull EditorEx editor) {
@@ -211,7 +172,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   @Override
-  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
+  public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -226,15 +187,14 @@ public class FontEditorPreview implements PreviewPanel{
     EditorFactory.getInstance().releaseEditor(myEditor);
   }
 
-  private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
+  private static final class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
     public @NotNull AnalyzerStatus getStatus() {
       return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", UIController.EMPTY);
     }
   }
 
-  public static class RestorePreviewTextAction extends DumbAwareAction {
-
+  static final class RestorePreviewTextAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -243,7 +203,7 @@ public class FontEditorPreview implements PreviewPanel{
     @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
+      PreviewTextModel textModel = editor == null ? null : editor.getUserData(TEXT_MODEL_KEY);
       e.getPresentation().setEnabledAndVisible(editor != null &&
                                                textModel != null &&
                                                !textModel.isDefault());
@@ -265,8 +225,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  public static class ToggleBoldFontAction extends DumbAwareAction {
-
+  static final class ToggleBoldFontAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
@@ -275,9 +234,8 @@ public class FontEditorPreview implements PreviewPanel{
     @Override
     public void update(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
-      PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it -> it.getUserData(TEXT_MODEL_KEY));
-      e.getPresentation().setEnabledAndVisible(textModel != null &&
-                                               editor.getSelectionModel().hasSelection());
+      PreviewTextModel textModel = editor == null ? null : editor.getUserData(TEXT_MODEL_KEY);
+      e.getPresentation().setEnabledAndVisible(textModel != null && editor.getSelectionModel().hasSelection());
     }
 
     @Override
@@ -290,7 +248,7 @@ public class FontEditorPreview implements PreviewPanel{
   }
 
   private static void toggleBoldFont(@NotNull EditorEx editor) {
-    PreviewTextModel textModel = ObjectUtils.doIfNotNull(editor, it->it.getUserData(TEXT_MODEL_KEY));
+    PreviewTextModel textModel = editor.getUserData(TEXT_MODEL_KEY);
     if (textModel != null) {
       SelectionModel selectionModel = editor.getSelectionModel();
       textModel.toggleBoldFont(TextRange.create(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()));
@@ -298,9 +256,9 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class PreviewTextModel implements DocumentListener {
-    private final static String BOLD_START_MARKER = "<bold>";
-    private final static String BOLD_END_MARKER = "</bold>";
+  private static final class PreviewTextModel implements DocumentListener {
+    private static final String BOLD_START_MARKER = "<bold>";
+    private static final String BOLD_END_MARKER = "</bold>";
 
     private String myText;
     private final List<RangeHighlightingData> myRanges = new ArrayList<>();
@@ -466,7 +424,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class RangeHighlightingData {
+  private static final class RangeHighlightingData {
     private TextRange textRange;
     private final boolean isBold;
 
@@ -488,7 +446,7 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class PreviewHighlighter implements EditorHighlighter {
+  private static final class PreviewHighlighter implements EditorHighlighter {
     private final PreviewTextModel myTextModelModel;
     private final Document myDocument;
 
@@ -507,16 +465,16 @@ public class FontEditorPreview implements PreviewPanel{
     }
   }
 
-  private static class PreviewHighlighterIterator implements HighlighterIterator {
+  private static final class PreviewHighlighterIterator implements HighlighterIterator {
     private final PreviewTextModel myTextModel;
     private final Document myDocument;
 
-    private final static TextAttributes PLAIN_ATTRIBUTES =
+    private static final TextAttributes PLAIN_ATTRIBUTES =
       new TextAttributes(null, null, null, null, Font.PLAIN);
-    private final static TextAttributes BOLD_ATTRIBUTES =
+    private static final TextAttributes BOLD_ATTRIBUTES =
       new TextAttributes(null, null, null, null, Font.BOLD);
 
-    private final static RangeHighlightingData EMPTY_RANGE_DATA = new RangeHighlightingData(0, 0, false);
+    private static final RangeHighlightingData EMPTY_RANGE_DATA = new RangeHighlightingData(0, 0, false);
 
     private int myCurrIndex;
 
@@ -526,9 +484,9 @@ public class FontEditorPreview implements PreviewPanel{
       myCurrIndex = Math.max(myTextModel.getIndexAtOffset(startOffset), 0);
     }
 
-    @NotNull
-    private RangeHighlightingData getData() {
-      return ObjectUtils.notNull(myTextModel.getRangeDataAt(myCurrIndex), EMPTY_RANGE_DATA);
+    private @NotNull RangeHighlightingData getData() {
+      FontEditorPreview.RangeHighlightingData value = myTextModel.getRangeDataAt(myCurrIndex);
+      return value == null ? EMPTY_RANGE_DATA : value;
     }
 
     @Override

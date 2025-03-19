@@ -10,12 +10,16 @@ import com.intellij.find.impl.FindPopupItem
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.core.MouseClickInfo
 import org.assertj.swing.data.TableCell
 import org.assertj.swing.fixture.JTableFixture
 import org.assertj.swing.fixture.JTextComponentFixture
+import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -23,11 +27,16 @@ import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.isToStringContains
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.util.*
 import javax.swing.*
 
-class FindInFilesLesson(override val sampleFilePath: String,
-                        private val helpUrl: String = "finding-and-replacing-text-in-project.html")
+open class FindInFilesLesson(override val sampleFilePath: String,
+                             private val helpUrl: String = "finding-and-replacing-text-in-project.html")
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
+
+  open val confirmReplaceAction: Boolean = true
+
+  private lateinit var replaceTaskId: TaskContext.TaskId
 
   override val lessonContent: LessonContext.() -> Unit = {
     sdkConfigurationTasks()
@@ -40,7 +49,7 @@ class FindInFilesLesson(override val sampleFilePath: String,
     task("FindInPath") {
       showPopupTaskId = taskId
       text(LessonsBundle.message("find.in.files.show.find.popup",
-        action(it), LessonUtil.actionName(it)))
+                                 action(it), LessonUtil.actionName(it)))
       triggerUI().component { popup: FindPopupPanel ->
         !popup.helper.isReplaceState
       }
@@ -49,11 +58,12 @@ class FindInFilesLesson(override val sampleFilePath: String,
       }
     }
 
-    task("apple") {
-      text(LessonsBundle.message("find.in.files.type.to.find", code(it)))
-      stateCheck { getFindPopup()?.stringToFind?.toLowerCase() == it }
+    task {
+      val appleText = "apple"
+      text(LessonsBundle.message("find.in.files.type.to.find", code(appleText)))
+      stateCheck { getFindPopup()?.stringToFind?.lowercase(Locale.getDefault()) == appleText }
       restoreByUi()
-      test { type(it) }
+      test { type(appleText) }
     }
 
     task {
@@ -105,8 +115,16 @@ class FindInFilesLesson(override val sampleFilePath: String,
 
     task {
       text(LessonsBundle.message("find.in.files.go.to.file", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != sampleFilePath.substringAfterLast('/') }
-      restoreState {
+      addFutureStep {
+        project.messageBus.connect(taskDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+            if (file.name != sampleFilePath.substringAfterLast('/')) {
+              completeStep()
+            }
+          }
+        })
+      }
+      restoreState(delayMillis = defaultRestoreDelay) {
         !isSelectedNeededItem(neededText)
       }
       test { invokeActionViaShortcut("ENTER") }
@@ -121,15 +139,16 @@ class FindInFilesLesson(override val sampleFilePath: String,
       test { actions(it) }
     }
 
-    task("orange") {
+    task {
+      val orangeText = "orange"
       text(LessonsBundle.message("find.in.files.type.to.replace",
-                                 code("apple"), code(it)))
+                                 code("apple"), code(orangeText)))
       triggerAndBorderHighlight().component { ui: SearchTextArea ->
-        it.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
+        orangeText.startsWith(ui.textArea.text) && UIUtil.getParentOfType(FindPopupPanel::class.java, ui) != null
       }
       stateCheck {
         getFindPopup()?.helper?.model?.let { model ->
-          model.stringToReplace == it && model.stringToFind == "apple"
+          model.stringToReplace == orangeText && model.stringToFind == "apple"
         } ?: false
       }
       restoreByUi()
@@ -137,7 +156,7 @@ class FindInFilesLesson(override val sampleFilePath: String,
         ideFrame {
           val textArea = findComponentWithTimeout { textArea: JTextArea -> textArea.text == "" }
           JTextComponentFixture(robot(), textArea).click()
-          type(it)
+          type(orangeText)
         }
       }
     }
@@ -157,14 +176,17 @@ class FindInFilesLesson(override val sampleFilePath: String,
     }
 
     val replaceButtonText = FindBundle.message("find.replace.command")
+    val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
     task {
-      val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
+      replaceTaskId = taskId
       text(LessonsBundle.message("find.in.files.press.replace.all", strong(replaceAllButtonText)))
       triggerAndFullHighlight().component { button: JButton ->
         button.text.isToStringContains(replaceAllButtonText)
       }
-      triggerAndFullHighlight().component { button: JButton ->
-        UIUtil.getParentOfType(JDialog::class.java, button)?.isModal == true && button.text.isToStringContains(replaceButtonText)
+      if (confirmReplaceAction) {
+        triggerAndFullHighlight().component { button: JButton ->
+          UIUtil.getParentOfType(JDialog::class.java, button)?.isModal == true && button.text.isToStringContains(replaceButtonText)
+        }
       }
       showWarningIfPopupClosed(true)
       test {
@@ -174,19 +196,26 @@ class FindInFilesLesson(override val sampleFilePath: String,
       }
     }
 
+    if (confirmReplaceAction) {
+      task {
+        addFutureStep {
+          (previous.ui as? JButton)?.addActionListener {
+            completeStep()
+          }
+        }
+        text(LessonsBundle.message("find.in.files.confirm.replace", strong(replaceButtonText)))
+        restoreByUi()
+        test(waitEditorToBeReady = false) {
+          dialog(title = replaceAllButtonText) {
+            button(replaceButtonText).click()
+          }
+        }
+      }
+    }
+
     task {
-      addFutureStep {
-        (previous.ui as? JButton)?.addActionListener {
-          completeStep()
-        }
-      }
-      text(LessonsBundle.message("find.in.files.confirm.replace", strong(replaceButtonText)))
-      restoreByUi()
-      test(waitEditorToBeReady = false) {
-        dialog(title = "Replace All") {
-          button(replaceButtonText).click()
-        }
-      }
+      restoreByUi(taskId)
+      stateCheck { editor.document.text.contains("orange") }
     }
   }
 
@@ -220,7 +249,7 @@ class FindInFilesLesson(override val sampleFilePath: String,
   }
 
   private fun TaskContext.showWarningIfPopupClosed(isReplacePopup: Boolean) {
-    val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
+    @Language("devkit-action-id") val actionId = if (isReplacePopup) "ReplaceInPath" else "FindInPath"
     showWarning(LessonsBundle.message("find.in.files.popup.closed.warning.message", action(actionId), LessonUtil.actionName(actionId))) {
       getFindPopup()?.helper?.isReplaceState != isReplacePopup
     }
@@ -228,10 +257,11 @@ class FindInFilesLesson(override val sampleFilePath: String,
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
 
-  override val helpLinks: Map<String, String> get() = mapOf(
-    Pair(LessonsBundle.message("find.in.files.help.link"),
-         LessonUtil.getHelpLink(helpUrl)),
-  )
+  override val helpLinks: Map<String, String>
+    get() = mapOf(
+      Pair(LessonsBundle.message("find.in.files.help.link"),
+           LessonUtil.getHelpLink(helpUrl)),
+    )
 }
 
 private fun resetFindSettings(project: Project) {

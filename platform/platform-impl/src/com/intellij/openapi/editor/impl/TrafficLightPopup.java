@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.featureStatistics.fusCollectors.InspectionWidgetUsageCollector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.ActionsCollector;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
@@ -24,8 +26,8 @@ import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -41,11 +43,15 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer;
 
 final class TrafficLightPopup {
-  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
+  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
   private final Editor myEditor;
@@ -53,8 +59,7 @@ final class TrafficLightPopup {
   private final JPanel myContent = new JPanel(new GridBagLayout());
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
-  private final Alarm popupAlarm = new Alarm();
-  private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private JBPopup myPopup;
   private boolean insidePopup;
@@ -101,17 +106,15 @@ final class TrafficLightPopup {
   }
 
   void scheduleShow(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> showPopup(event, analyzerStatus), Registry.intValue("ide.tooltip.initialReshowDelay"));
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(event, analyzerStatus));
   }
 
   void scheduleHide() {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> {
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
       if (canClose()) {
         hidePopup();
       }
-    }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+    });
   }
 
   private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
@@ -145,6 +148,7 @@ final class TrafficLightPopup {
                                                       owner.getHeight() + JBUIScale.scale(DELTA_Y)));
 
     myPopup.setSize(size);
+    InspectionWidgetUsageCollector.logPopupShown(myEditor.getProject());
     myPopup.show(point);
   }
 
@@ -167,7 +171,6 @@ final class TrafficLightPopup {
       return;
     }
     myContent.removeAll();
-    levelLinks.clear();
 
     GridBag gc = new GridBag().nextLine().next().
       anchor(GridBagConstraints.LINE_START).
@@ -187,14 +190,10 @@ final class TrafficLightPopup {
       myContent.add(createDetailsPanel(analyzerStatus), gc);
     }
 
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-
     java.util.List<AnAction> actions = controller.getActions();
     if (!actions.isEmpty()) {
       ActionButton menuButton = new ActionButton(new MenuAction(actions, compactViewAction),
-                                                 presentation,
+                                                 null,
                                                  ActionPlaces.EDITOR_POPUP,
                                                  ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
         @Override
@@ -299,7 +298,6 @@ final class TrafficLightPopup {
         // do not create lower panel for code with me guests with no write access
         if (msg == null) {
           DropDownLink<?> link = createDropDownLink(levels.get(0), controller, prefix);
-          levelLinks.add(link);
           panel.add(link, constrains);
         }
         else {
@@ -314,7 +312,6 @@ final class TrafficLightPopup {
           // do not create lower panel for code with me guests with no write access
           if (msg == null) {
             DropDownLink<?> link = createDropDownLink(level, controller, prefix);
-            levelLinks.add(link);
             panel.add(link, constrains);
           }
           else {
@@ -341,6 +338,7 @@ final class TrafficLightPopup {
                               controller.getAvailableLevels(),
                               inspectionsLevel -> {
                                 controller.setHighLightLevel(new LanguageHighlightLevel(level.getLangID(), inspectionsLevel));
+                                InspectionWidgetUsageCollector.logHighlightLevelChangedFromPopup(myEditor.getProject(), Language.findLanguageByID(level.getLangID()), inspectionsLevel );
                                 myContent.revalidate();
 
                                 Dimension size = myContent.getPreferredSize();
@@ -348,25 +346,29 @@ final class TrafficLightPopup {
                                 myPopup.setSize(size);
                               },
                               true) {
-      @NotNull
       @Override
-      protected String itemToString(@NotNull InspectionsLevel item) {
+      protected @NotNull String itemToString(@NotNull InspectionsLevel item) {
         return prefix + item;
+      }
+
+      @Override
+      public @NotNull ListCellRenderer<? super InspectionsLevel> createRenderer() {
+        return textListCellRenderer(level -> level.toString());
       }
     };
   }
 
-  @NotNull
-  private static JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
+  private static @NotNull JLabel createNoChangeLabel(@NotNull LanguageHighlightLevel level, @NotNull @Nls String prefix, @NotNull @Nls String msg) {
     JLabel label = new JLabel(prefix + level.getLevel());
     new HelpTooltip().setDescription(msg).installOn(label);
     return label;
   }
 
-
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {
-      setPopup(true);
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
       addAll(actions);
       add(compactViewAction);
     }

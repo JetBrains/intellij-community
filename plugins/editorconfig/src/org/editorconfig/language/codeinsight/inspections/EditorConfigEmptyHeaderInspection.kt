@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -9,17 +9,15 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigVisitor
 
-class EditorConfigEmptyHeaderInspection : LocalInspectionTool() {
+internal fun EditorConfigHeader.isEmptyHeader(): Boolean = this.textMatches("[]")
+
+internal class EditorConfigEmptyHeaderInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
-      if (!containsIssue(header)) return
+      if (!header.isEmptyHeader()) return
       val message = EditorConfigBundle["inspection.header.empty.message"]
       holder.registerProblem(header, message, EditorConfigRemoveSectionQuickFix(), EditorConfigInsertStarQuickFix())
     }
   }
 
-  companion object {
-    fun containsIssue(header: EditorConfigHeader) =
-      header.textMatches("[]")
-  }
 }

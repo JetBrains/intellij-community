@@ -7,35 +7,37 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmValue
 import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.ExpectedType
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.util.createSmartPointer
 
-internal class CreateFieldFromJavaUsageRequest(
+class CreateFieldFromJavaUsageRequest(
   reference: PsiReferenceExpression,
   private val modifiers: Collection<JvmModifier>,
   private val isConstant: Boolean,
   private val useAnchor: Boolean
 ) : CreateFieldRequest {
 
-  private val myReference = reference.createSmartPointer()
+  private val myReferencePointer = reference.createSmartPointer()
 
-  override fun isValid() = myReference.element?.referenceName != null
+  override fun isValid(): Boolean = reference?.referenceName != null
 
-  val reference get() = myReference.element!!
+  internal val reference: PsiReferenceExpression? get() = myReferencePointer.element
 
-  val anchor: PsiElement? get() = if (useAnchor) reference else null
+  internal val anchor: PsiElement? get() = if (useAnchor) reference else null
 
   override fun getAnnotations(): Collection<AnnotationRequest> = emptyList()
 
-  override fun getModifiers() = modifiers
+  override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-  override fun getFieldName() = reference.referenceName!!
+  override fun getFieldName(): @NlsSafe String = reference?.referenceName ?: ""
 
-  override fun getFieldType() = guessExpectedTypes(reference, false).map(::ExpectedJavaType)
+  override fun getFieldType(): List<ExpectedType> = reference?.let { guessExpectedTypes(it, false).map(::ExpectedJavaType) } ?: listOf()
 
-  override fun getTargetSubstitutor() = PsiJvmSubstitutor(reference.project, getTargetSubstitutor(reference))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myReferencePointer.project, getTargetSubstitutor(reference))
 
   override fun isConstant(): Boolean = isConstant
 

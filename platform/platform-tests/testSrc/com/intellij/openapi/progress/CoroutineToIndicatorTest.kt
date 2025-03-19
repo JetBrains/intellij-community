@@ -1,39 +1,40 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.progress.impl.ProgressState
-import com.intellij.util.timeoutRunBlocking
-import kotlinx.coroutines.CancellationException
+import com.intellij.platform.util.progress.ExpectedState
+import com.intellij.platform.util.progress.progressReporterTest
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.CancellationException
 
 class CoroutineToIndicatorTest : CancellationTest() {
 
   @Test
   fun context(): Unit = timeoutRunBlocking {
-    assertNull(Cancellation.currentJob())
+    assertEquals(coroutineContext.job, Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
 
     val modality = ModalityStateEx()
 
     withContext(modality.asContextElement()) {
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(modality, ModalityState.defaultModalityState())
       coroutineToIndicator {
-        assertNull(Cancellation.currentJob())
+        assertNotNull(Cancellation.currentJob())
         assertNotNull(ProgressManager.getGlobalProgressIndicator())
         assertSame(modality, ModalityState.defaultModalityState())
       }
-      assertSame(ModalityState.NON_MODAL, ModalityState.defaultModalityState())
+      assertSame(modality, ModalityState.defaultModalityState())
     }
 
-    assertNull(Cancellation.currentJob())
+    assertEquals(coroutineContext.job, Cancellation.currentJob())
     assertNull(ProgressManager.getGlobalProgressIndicator())
   }
 
@@ -68,34 +69,30 @@ class CoroutineToIndicatorTest : CancellationTest() {
     assertSame(t, thrown)
   }
 
-  @Test
-  fun `fails if context reporter is not raw`() {
-    assertLogThrows<IllegalStateException> {
-      progressReporterTest {
-        coroutineToIndicator {
-          fail()
-        }
+  private suspend inline fun testRunUnderIndicatorRethrow(t: ProcessCanceledException) {
+    val thrown = assertThrows<ProcessCanceledException> {
+      coroutineToIndicator {
+        throw t
       }
     }
+    assertSame(t, thrown)
   }
 
   @Test
   fun `delegates reporting to context reporter`() {
     progressReporterTest(
-      ProgressState(text = "Hello", details = null, fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = -1.0),
-      ProgressState(text = "Hello", details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = 0.42),
-      ProgressState(text = null, details = "World", fraction = -1.0),
+      ExpectedState(text = "Hello", details = null, fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = null),
+      ExpectedState(text = "Hello", details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = 0.42),
+      ExpectedState(text = null, details = "World", fraction = null),
     ) {
-      withRawProgressReporter {
-        coroutineToIndicator {
-          ProgressManager.progress("Hello", "World")
-          val indicator = ProgressManager.getInstance().progressIndicator
-          indicator.fraction = 0.42
-          indicator.text = null
-          indicator.isIndeterminate = true
-        }
+      coroutineToIndicator {
+        ProgressManager.progress("Hello", "World")
+        val indicator = ProgressManager.getInstance().progressIndicator
+        indicator.fraction = 0.42
+        indicator.text = null
+        indicator.isIndeterminate = true
       }
     }
   }

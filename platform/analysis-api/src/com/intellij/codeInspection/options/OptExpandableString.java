@@ -25,7 +25,7 @@ public record OptExpandableString(@Language("jvm-field-name") @NotNull String bi
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptExpandableString description(@NotNull @NlsContexts.Tooltip String description) {
+  public @NotNull OptExpandableString description(@NotNull @NlsContexts.Tooltip String description) {
     return description(HtmlChunk.text(description));
   }
 
@@ -35,7 +35,7 @@ public record OptExpandableString(@Language("jvm-field-name") @NotNull String bi
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptExpandableString description(@NotNull HtmlChunk description) {
+  public @NotNull OptExpandableString description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
     }

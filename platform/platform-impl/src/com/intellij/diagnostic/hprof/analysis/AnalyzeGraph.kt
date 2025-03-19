@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.diagnostic.hprof.analysis
 
 import com.google.common.base.Stopwatch
@@ -40,6 +42,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintWriter
 import java.util.*
+import kotlin.math.ln
 import kotlin.math.max
 import kotlin.math.min
 
@@ -139,7 +142,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val nominatedClassNames = config.perClassOptions.classNames
     val stopwatch = Stopwatch.createUnstarted()
     nominatedClassNames.forEach { className ->
-      val classDefinition = nav.classStore[className]
+      val classDefinition = nav.classStore.getClassIfExists(className) ?: return@forEach
       val set = nominatedInstances[classDefinition]!!
       progress.fraction = counter.toDouble() / nominatedInstances.size
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress", set.size, classDefinition.prettyName)
@@ -208,7 +211,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
 
     val nominatedClassNames = config.perClassOptions.classNames
     nominatedClassNames.forEach {
-      nominatedInstances[classStore[it]] = IntOpenHashSet()
+      classStore.getClassIfExists(it)?.also { classDefinition ->
+        nominatedInstances[classDefinition] = IntOpenHashSet()
+      }
     }
 
     progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.collect.roots")
@@ -274,9 +279,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val sunMiscCleanerClass = classStore.getClassIfExists("sun.misc.Cleaner")
     val finalizerClass = classStore.getClassIfExists("java.lang.ref.Finalizer")
 
-    while (!toVisit.isEmpty) {
+    while (!toVisit.isEmpty()) {
       for (i in 0 until toVisit.size) {
-        val id = toVisit[i]
+        val id = toVisit.getInt(i)
 
         // Disposer.ourTree is only visited during DisposerTree phase to give opportunity for
         if (includeDisposerRelationships &&
@@ -397,14 +402,14 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       // If no more object to visit at this phase, transition to the next
       while (toVisit.size == 0 && phase != WalkGraphPhase.Finished) {
         // Next state
-        phase = WalkGraphPhase.values()[phase.ordinal + 1]
+        phase = WalkGraphPhase.entries[phase.ordinal + 1]
 
         when (phase) {
-          WalkGraphPhase.StrongReferencesLocalVariables ->
+          WalkGraphPhase.StrongReferencesLocalVariables -> {
             frameRootsSet.forEach { id ->
               addIdToListAndSetParentIfOrphan(toVisit, id, id)
-              true
             }
+          }
           WalkGraphPhase.CleanerFinalizerReferences -> {
             toVisit.addAll(cleanerObjects)
             cleanerObjects.clear()
@@ -465,7 +470,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     rootsSet.clear()
 
     // Assert that any postponed objects have been handled
-    assert(cleanerObjects.isEmpty)
+    assert(cleanerObjects.isEmpty())
     assert(softReferenceIdToParentMap.isEmpty())
     assert(weakReferenceIdToParentMap.isEmpty())
 
@@ -556,8 +561,9 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val childrenStackSizes = listProvider.createIntList("dominatorBuf3", (objectCount + 2).toLong())
     var csEntries = 0
     var poEdgeCount = rootsSet.size
-    for (id in rootsSet) {
-      childrenStack[csEntries++] = id
+    val iterator = rootsSet.iterator()
+    while (iterator.hasNext()) {
+      childrenStack[csEntries++] = iterator.nextInt()
     }
 
     childrenStackSizes[0] = csEntries
@@ -580,8 +586,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
           nav.copyReferencesTo(refList)
           var refsAdded = 0
           for (i in 0 until refList.size) {
-            if (refList[i] != 0L) {
-              childrenStack[csEntries++] = refList[i].toInt()
+            if (refList.getLong(i) != 0L) {
+              childrenStack[csEntries++] = refList.getLong(i).toInt()
               refsAdded++
               poEdgeCount++
             }
@@ -618,7 +624,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
      */
 
     // cards represent as small of a power-of-2 sized range as possible while ensuring that card indices can fit in a short
-    val cardBits = if (maxPonum < 65536) 0 else (Math.log(maxPonum / 65536.0) / Math.log(2.0) + 1).toInt()
+    val cardBits = if (maxPonum < 65536) 0 else (ln(maxPonum / 65536.0) / ln(2.0) + 1).toInt()
     val cardSize = 1 shl cardBits
     val ncards = (maxPonum + cardSize - 1) / cardSize
     val ncardChunks = (ncards + 63) / 64
@@ -647,8 +653,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       }
       outgoingCardListOffsets[i] = ncardrefs
       for (j in 0 until references.size) {
-        if (references[j] != 0L) {
-          val target = postorderNumbers[references[j].toInt()]
+        if (references.getLong(j) != 0L) {
+          val target = postorderNumbers[references.getLong(j).toInt()]
           edgeListOffsets[target]++
           outgoingCardRefs[ncardrefs++] = target shr cardBits
         }
@@ -698,8 +704,8 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
         addEdge(i, rootPonum)
       }
       for (j in 0 until references.size) {
-        if (references[j] != 0L) {
-          val target = postorderNumbers[references[j].toInt()]
+        if (references.getLong(j) != 0L) {
+          val target = postorderNumbers[references.getLong(j).toInt()]
           addEdge(target, i)
         }
       }

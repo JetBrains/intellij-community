@@ -1,26 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.rules;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -29,7 +17,7 @@ import java.util.List;
  * 
  * During indexing, only instances that implement {@link com.intellij.openapi.project.DumbAware} are executed. 
  */
-public interface UsageGroupingRule {
+public interface UsageGroupingRule extends PossiblyDumbAware {
   UsageGroupingRule[] EMPTY_ARRAY = new UsageGroupingRule[0];
 
   /**
@@ -38,8 +26,7 @@ public interface UsageGroupingRule {
    * <p>If the rule returns at most one parent group extend {@link SingleParentUsageGroupingRule} and override
    * {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead.</p>
    */
-  @NotNull
-  default List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+  default @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
     return ContainerUtil.createMaybeSingletonList(groupUsage(usage));
   }
 
@@ -55,8 +42,7 @@ public interface UsageGroupingRule {
    * @deprecated extend {@link SingleParentUsageGroupingRule} and override {@link SingleParentUsageGroupingRule#getParentGroupFor getParentGroupFor} instead
    */
   @Deprecated
-  @Nullable
-  default UsageGroup groupUsage(@NotNull Usage usage) {
+  default @Nullable UsageGroup groupUsage(@NotNull Usage usage) {
     throw new UnsupportedOperationException();
   }
 }

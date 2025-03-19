@@ -1,16 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
+import com.intellij.idea.AppMode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -20,13 +26,19 @@ import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
+
   public static XDebuggerUtil getInstance() {
     return ApplicationManager.getApplication().getService(XDebuggerUtil.class);
   }
+
+  public @Nullable FileEditor getSelectedEditor(Project project, VirtualFile file) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(file);
+  }
+
+  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor);
 
   public abstract XLineBreakpointType<?>[] getLineBreakpointTypes();
 
@@ -62,8 +74,7 @@ public abstract class XDebuggerUtil {
    * @param line 0-based line number
    * @return source position
    */
-  @Nullable
-  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
+  public abstract @Nullable XSourcePosition createPosition(@Nullable VirtualFile file, int line);
 
   /**
    * Create {@link XSourcePosition} instance by line and column number
@@ -73,8 +84,7 @@ public abstract class XDebuggerUtil {
    * @param column 0-based column number
    * @return source position
    */
-  @Nullable
-  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
+  public abstract @Nullable XSourcePosition createPosition(@Nullable VirtualFile file, int line, int column);
 
   /**
    * Create {@link XSourcePosition} instance by line number
@@ -82,32 +92,17 @@ public abstract class XDebuggerUtil {
    * @param offset offset from the beginning of file
    * @return source position
    */
-  @Nullable
-  public abstract XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
+  public abstract @Nullable XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
 
-  @Nullable
-  public abstract XSourcePosition createPositionByElement(@Nullable PsiElement element);
+  public abstract @Nullable XSourcePosition createPositionByElement(@Nullable PsiElement element);
 
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 
   public abstract <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList();
 
-  /**
-   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
-   */
-  @Deprecated
-  public abstract <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(XBreakpointType<B, ?> type);
-
-  /**
-   * @deprecated use {@link XBreakpointType#getBreakpointComparator()}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator();
-
   public abstract <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass);
 
-  @Nullable
-  public abstract XValueContainer getValueContainer(DataContext dataContext);
+  public abstract @Nullable XValueContainer getValueContainer(DataContext dataContext);
 
   /**
    * Process all {@link PsiElement}s on the specified line
@@ -123,11 +118,19 @@ public abstract class XDebuggerUtil {
    */
   public abstract void disableValueLookup(@NotNull Editor editor);
 
-  @Nullable
-  public abstract PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
+  public abstract @Nullable PsiElement findContextElement(@NotNull VirtualFile virtualFile, int offset, @NotNull Project project, boolean checkXml);
 
-  @NotNull
-  public abstract XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
+  public abstract @NotNull XExpression createExpression(@NotNull String text, Language language, String custom, @NotNull EvaluationMode mode);
 
   public abstract void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session);
+
+  public static final String INLINE_BREAKPOINTS_KEY = "debugger.show.breakpoints.inline";
+
+  public static boolean areInlineBreakpointsEnabled(@Nullable VirtualFile file) {
+    return Registry.is(INLINE_BREAKPOINTS_KEY) &&
+           // It's a temporary workaround for completely broken lambda breakpoints in RD, IDEA-358375.
+           !AppMode.isRemoteDevHost() &&
+           !ContainerUtil.exists(InlineBreakpointsDisabler.Companion.getEP().getExtensionList(),
+                                 disabler -> disabler.areInlineBreakpointsDisabled(file));
+  }
 }

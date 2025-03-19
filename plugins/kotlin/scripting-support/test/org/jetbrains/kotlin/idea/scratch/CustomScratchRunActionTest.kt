@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.run.createLibraryWithLongPaths
 import org.jetbrains.kotlin.idea.test.runAll
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -15,14 +16,18 @@ import org.junit.runner.RunWith
 @RunWith(JUnit38ClassRunner::class)
 class CustomScratchRunActionTest : AbstractScratchRunActionTest() {
 
-    fun testLongCommandLineWithRepl() {
-        assertEquals(
-            """|// REPL_MODE: true
-               |// INTERACTIVE_MODE: false
-               |1    // RESULT: res0: kotlin.Int = 1""".trimMargin(),
-            getOutput(true)
-        )
-    }
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
+    // See KTIJ-31394 for the reasoning why this test is ignored
+    //fun testLongCommandLineWithRepl() {
+    //    assertEquals(
+    //        """|// REPL_MODE: true
+    //           |// INTERACTIVE_MODE: false
+    //           |1    // RESULT: res0: kotlin.Int = 1""".trimMargin(),
+    //        getOutput(true)
+    //    )
+    //}
 
     fun testLongCommandLine() {
         assertEquals(

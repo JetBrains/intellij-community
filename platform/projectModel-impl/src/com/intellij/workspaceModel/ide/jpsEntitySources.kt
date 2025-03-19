@@ -3,14 +3,11 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.platform.workspace.jps.JpsImportedEntitySource
+import com.intellij.platform.workspace.storage.EntitySource
+import org.jetbrains.annotations.ApiStatus
 
-/**
- * Represents entities imported from external project system.
- */
-data class ExternalEntitySource(val displayName: String, val id: String) : EntitySource
-
+@ApiStatus.Internal
 fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
 
 /**

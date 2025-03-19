@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.analysis.AnalysisScope;
@@ -20,7 +20,7 @@ import java.awt.*;
 /**
  * @author anna
  */
-public class ShowModuleDependenciesAction extends AnAction {
+public final class ShowModuleDependenciesAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getProject() != null);
@@ -59,11 +59,11 @@ public class ShowModuleDependenciesAction extends AnAction {
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }
 
-  private static class MyModuleOrProjectScope extends DialogWrapper {
+  private static final class MyModuleOrProjectScope extends DialogWrapper {
     private final JRadioButton myProjectScope;
     private final JRadioButton myModuleScope;
 
-    protected MyModuleOrProjectScope(String moduleName) {
+    private MyModuleOrProjectScope(String moduleName) {
       super(false);
       setTitle(CodeInsightBundle.message("module.dependencies.scope.dialog.title"));
       ButtonGroup group = new ButtonGroup();

@@ -31,7 +31,7 @@ class OnArrayTest {
     public static void main(String[] args) {
         Cln s =  int[]::clone;
         IA a =  int[]::new;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.I'">I i = int[]::new;</error>
+        I i = int[]::<error descr="Incompatible types. Found: '<method reference>', required: 'OnArrayTest.I'">new</error>;
         Len<String> strLen = String[]::<error descr="Cannot resolve method 'length'">length</error>;
         ToStr<Integer> toStr = Integer[]::toString;
 
@@ -40,7 +40,7 @@ class OnArrayTest {
         ArrayReturnType<String[]> a3 = <error descr="Bad return type in method reference: cannot convert int[] to java.lang.String[]">int[]::new</error>;
 
         ObjectArrayReturnType a4 = Foo<?>[]::new;
-        ObjectArrayReturnType a5 = <error descr="Generic array creation">Foo<? extends String>[]</error>::new;
+        ObjectArrayReturnType a5 = Foo<error descr="Generic array creation not allowed"><? extends String></error>[]::new;
     }
 }
 
@@ -51,7 +51,7 @@ class IDEA106973 {
 
   {
     Function<Integer, String[]> a  = String[] :: new;
-    <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">Function<String, String[]> a1  = String[] :: new;</error>
+    Function<String, String[]> a1  = String[] :: <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">new</error>;
     Function<Short, String[]> a2  = String[] :: new;
   }
 }

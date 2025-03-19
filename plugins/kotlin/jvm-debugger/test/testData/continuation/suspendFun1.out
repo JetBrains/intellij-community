@@ -1,0 +1,47 @@
+LineBreakpoint created at suspendFun1.kt:16
+Run Java
+Connected to the target VM
+suspendFun1.kt:16
+Thread stack trace:
+	CoroutinePreflightFrame f2:!LINE_NUMBER!, SuspendFun1 (continuation)
+		($completion, $continuation, $result)
+	CoroutineStackFrame invokeSuspend:!LINE_NUMBER!, SuspendFun1Kt$main$1 (continuation)
+		($completion, $continuation, $result)
+	InlineStackFrame lambda 'with' in 'resumeWith':!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame resumeWith$$$capture:!LINE_NUMBER!, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		($i$a$-with-BaseContinuationImpl$resumeWith$1, $this$resumeWith_u24lambda_u240, completion, current, param, result, this)
+	KotlinStackFrame FRAME:resumeWith:-1, BaseContinuationImpl (kotlin.coroutines.jvm.internal)
+		(this)
+Async stack trace
+	CapturedStackFrame <init>:!LINE_NUMBER!, DebugProbesImpl$CoroutineOwner (kotlinx.coroutines.debug.internal)
+		()
+	CapturedStackFrame createOwner:!LINE_NUMBER!, DebugProbesImpl (kotlinx.coroutines.debug.internal)
+		()
+	CapturedStackFrame probeCoroutineCreated$kotlinx_coroutines_core:!LINE_NUMBER!, DebugProbesImpl (kotlinx.coroutines.debug.internal)
+		()
+	CapturedStackFrame probeCoroutineCreated:!LINE_NUMBER!, DebugProbesKt (kotlin.coroutines.jvm.internal)
+		()
+	CapturedStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
+		()
+	CapturedStackFrame startCoroutineCancellable:!LINE_NUMBER!, CancellableKt (kotlinx.coroutines.intrinsics)
+		()
+	CapturedStackFrame invoke:!LINE_NUMBER!, CoroutineStart (kotlinx.coroutines)
+		()
+	CapturedStackFrame start:!LINE_NUMBER!, AbstractCoroutine (kotlinx.coroutines)
+		()
+	CapturedStackFrame runBlocking:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+		()
+	CapturedStackFrame runBlocking:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+		()
+	CapturedStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt__BuildersKt (kotlinx.coroutines)
+		()
+	CapturedStackFrame runBlocking$default:!LINE_NUMBER!, BuildersKt (kotlinx.coroutines)
+		()
+	CapturedStackFrame main:!LINE_NUMBER!, SuspendFun1Kt (continuation)
+		()
+	CapturedStackFrame FRAME:main:-1, SuspendFun1Kt (continuation)
+		()
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,25 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.findUsages;
 
 import com.intellij.lang.HelpID;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
-  @NotNull protected final PsiElement myPsiElement;
-  @Nullable private final String myHelpId;
-  @NotNull protected final FindUsagesHandlerBase myUsagesHandler;
+  protected final @NotNull PsiElement myPsiElement;
+  private final @Nullable String myHelpId;
+  protected final @NotNull FindUsagesHandlerBase myUsagesHandler;
 
   public CommonFindUsagesDialog(@NotNull PsiElement element,
                                 @NotNull Project project,
@@ -44,20 +50,28 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
 
   @Override
   protected boolean isInFileOnly() {
-    return super.isInFileOnly() ||
-           PsiSearchHelper.getInstance(myPsiElement.getProject()).getUseScope(myPsiElement) instanceof LocalSearchScope;
+    if (super.isInFileOnly()) return true;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-347939, EA-976313")) {
+      return ReadAction.compute(() -> {
+        Project project = myPsiElement.getProject();
+        SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(myPsiElement);
+        return useScope instanceof LocalSearchScope;
+      });
+    }
   }
 
   @Override
   public void configureLabelComponent(@NotNull SimpleColoredComponent coloredComponent) {
     coloredComponent.append(StringUtil.capitalize(UsageViewUtil.getType(myPsiElement)));
     coloredComponent.append(" ");
-    coloredComponent.append(DescriptiveNameUtil.getDescriptiveName(myPsiElement), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+    ReadAction.nonBlocking(() -> DescriptiveNameUtil.getDescriptiveName(myPsiElement))
+      .expireWith(getDisposable())
+      .finishOnUiThread(ModalityState.any(), name -> coloredComponent.append(name, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES))
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return myHelpId;
   }
 }

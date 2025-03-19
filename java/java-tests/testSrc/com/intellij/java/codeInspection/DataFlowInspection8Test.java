@@ -6,11 +6,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
@@ -149,26 +146,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
   }
 
-  static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
-    setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
-  }
-
-  private static void setupCustomAnnotations(String pkg, String target, JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface Nullable { }");
-    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface NotNull { }");
-    setCustomAnnotations(fixture.getProject(), fixture.getTestRootDisposable(), pkg + ".NotNull", pkg + ".Nullable");
-  }
-
-  static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {
-    NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(project);
-    nnnManager.setNotNulls(notNull);
-    nnnManager.setNullables(nullable);
-    Disposer.register(parentDisposable, () -> {
-      nnnManager.setNotNulls();
-      nnnManager.setNullables();
-    });
-  }
-
   public void testCapturedWildcardNotNull() { doTest(); }
   public void testVarargNotNull() { doTestWithCustomAnnotations(); }
   public void testIgnoreNullabilityOnPrimitiveCast() { doTestWithCustomAnnotations();}
@@ -184,10 +161,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testArrayComponentAndMethodAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
-  }
-
-  static void setupAmbiguousAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
-    setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 
   public void testTypeUseAmbiguousArrayReturn() {
@@ -280,6 +253,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testObjectsEquals() { doTest(); }
   public void testManyObjectEquals() { doTest(); }
+  public void testManyObjectEquals2() { doTest(); }
   public void testLambdaAfterNullCheck() { doTest(); }
   public void testFlatMapSideEffect() { doTest(); }
   public void testOptionalValueTracking() { doTest(); }
@@ -354,6 +328,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
   public void testGuavaFunction() {
     setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     doTest();
   }
   public void testMethodReferenceNullableToNotNull() {
@@ -381,6 +356,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testDefaultAnnotationForLoopParameter() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
   public void testCheckerDefaultQualifier() {
     addCheckerAnnotations(myFixture);
     doTest();
@@ -395,4 +375,13 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testConsumedStreamDifferentMethods() { doTest(); }
   public void testConsumedStreamWithoutInline()  { doTest(); }
   public void testLocalityAndConditionalExpression() { doTest(); }
+  public void testParallelStreamThreadId() { doTest(); }
+  public void testCompletableFutureWhenComplete() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+  public void testFieldWriteInLambda() { doTest(); }
+  public void testNewMethodReferenceMustBeNonNull() {
+    doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true); 
+  }
 }

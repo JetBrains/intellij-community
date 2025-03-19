@@ -44,6 +44,11 @@ final class VirtualDirectoryCache {
     return myIdToRootCache.get(id);
   }
 
+  @Nullable
+  VirtualFileSystemEntry getCachedRoot(int id) {
+    return myIdToRootCache.get(id);
+  }
+
   void dropNonRootCachedDirs() {
     myIdToDirCache.clear();
   }

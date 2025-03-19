@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -20,6 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * Holds information about the UI and content shown in the Run tool window.
+ */
 public class RunContentDescriptor implements Disposable {
   // Should be used in com.intellij.ui.content.Content
   public static final Key<RunContentDescriptor> DESCRIPTOR_KEY = Key.create("Descriptor");
@@ -27,8 +30,8 @@ public class RunContentDescriptor implements Disposable {
   private ExecutionConsole myExecutionConsole;
   private ProcessHandler myProcessHandler;
   private JComponent myComponent;
-  private final @TabTitle String myDisplayName;
-  private final Icon myIcon;
+  private final MutableReactiveProperty<@TabTitle @Nullable String> myDisplayNameView = new MutableReactiveProperty<>(null);
+  private final MutableReactiveProperty<@Nullable Icon> myIconView = new MutableReactiveProperty<>(null);
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
   private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
@@ -44,8 +47,7 @@ public class RunContentDescriptor implements Disposable {
   private String myContentToolWindowId;
   private final AnAction @NotNull [] myRestartActions;
 
-  @Nullable
-  private final Runnable myActivationCallback;
+  private final @Nullable Runnable myActivationCallback;
 
   public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
                               @Nullable ProcessHandler processHandler,
@@ -66,8 +68,8 @@ public class RunContentDescriptor implements Disposable {
     myExecutionConsole = executionConsole;
     myProcessHandler = processHandler;
     myComponent = component;
-    myDisplayName = displayName;
-    myIcon = icon;
+    myDisplayNameView.setValue(displayName);
+    myIconView.setValue(icon);
     myHelpId = myExecutionConsole instanceof HelpIdProvider ? ((HelpIdProvider)myExecutionConsole).getHelpId() : null;
     myActivationCallback = activationCallback;
     if (myExecutionConsole != null) {
@@ -131,16 +133,31 @@ public class RunContentDescriptor implements Disposable {
 
   /**
    * Returns the icon to show in the Run or Debug toolwindow tab corresponding to this content.
-   *
+   * <p>
+   * Note: This method will return a current snapshot of the icon value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getIconProperty} to obtain a reactive property to track icon changes.
+   * </p>
    * @return the icon to show, or null if the executor icon should be used.
    */
-  @Nullable
-  public Icon getIcon() {
-    return myIcon;
+  public @Nullable Icon getIcon() {
+    return myIconView.getValue();
   }
 
-  @Nullable
-  public ProcessHandler getProcessHandler() {
+  /**
+   * Returns the reactive property for an icon to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the icon property that can be observed for the most recent icon value.
+   */
+  @ApiStatus.Experimental
+  public ReactiveProperty<Icon> getIconProperty() {
+    return myIconView;
+  }
+
+  @ApiStatus.Experimental
+  protected void setIcon(@Nullable Icon icon) {
+    myIconView.setValue(icon);
+  }
+
+  public @Nullable ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
 
@@ -156,17 +173,37 @@ public class RunContentDescriptor implements Disposable {
     return myComponent;
   }
 
-  @BuildEventsNls.Title
-  public String getDisplayName() {
-    return myDisplayName;
+  /**
+   * Returns the title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * <p>
+   * Note: This method will return a current snapshot of the title value. It may change during content execution.
+   * Use {@link RunContentDescriptor#getDisplayNameProperty} to obtain a reactive property to track title changes.
+   * </p>
+   * @return the title to show, or null if the executor name should be used.
+   */
+  public @BuildEventsNls.Title String getDisplayName() {
+    return myDisplayNameView.getValue();
+  }
+
+  /**
+   * Returns the reactive property for a title to show in the Run or Debug toolwindow tab corresponding to this content.
+   * @return the title property that can be observed for the most recent title value.
+   */
+  @ApiStatus.Experimental
+  public ReactiveProperty<@Nullable @BuildEventsNls.Title String> getDisplayNameProperty() {
+    return myDisplayNameView;
+  }
+
+  @ApiStatus.Experimental
+  protected void setDisplayName(@Nullable @TabTitle String displayName) {
+    myDisplayNameView.setValue(displayName);
   }
 
   public String getHelpId() {
     return myHelpId;
   }
 
-  @Nullable
-  public Content getAttachedContent() {
+  public @Nullable Content getAttachedContent() {
     return myContent;
   }
 
@@ -177,8 +214,7 @@ public class RunContentDescriptor implements Disposable {
   /**
    * @return Tool window id where content should be shown. Null if content tool window is determined by executor.
    */
-  @Nullable
-  public String getContentToolWindowId() {
+  public @Nullable String getContentToolWindowId() {
     return myContentToolWindowId;
   }
 
@@ -245,8 +281,7 @@ public class RunContentDescriptor implements Disposable {
    * which only display a single piece of content.
    * @return the RunnerLayoutUi instance or null if this tab does not use RunnerLayoutUi for managing its contents.
    */
-  @Nullable
-  public RunnerLayoutUi getRunnerLayoutUi() {
+  public @Nullable RunnerLayoutUi getRunnerLayoutUi() {
     return myRunnerLayoutUi;
   }
 
@@ -268,8 +303,8 @@ public class RunContentDescriptor implements Disposable {
     return false;
   }
 
-  @NotNull
-  public RunContentDescriptorReusePolicy getReusePolicy() {
+
+  public @NotNull RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;
   }
 

@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow.java.inst;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -12,14 +13,11 @@ import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.codeInspection.dataFlow.value.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -29,12 +27,12 @@ import java.util.Set;
 public class ArrayStoreInstruction extends ExpressionPushingInstruction {
   protected final @Nullable DfaControlTransferValue myOutOfBoundsTransfer;
   protected final @NotNull IndexOutOfBoundsProblem myIndexProblem;
-  protected final @Nullable DfaVariableValue myStaticVariable;
+  protected final @Nullable VariableDescriptor myStaticVariable;
 
   public ArrayStoreInstruction(@Nullable DfaAnchor anchor,
                                @NotNull IndexOutOfBoundsProblem problem,
                                @Nullable DfaControlTransferValue outOfBoundsTransfer,
-                               @Nullable DfaVariableValue variable) {
+                               @Nullable VariableDescriptor variable) {
     super(anchor);
     myIndexProblem = problem;
     myOutOfBoundsTransfer = outOfBoundsTransfer;
@@ -44,8 +42,7 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue transfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
-    DfaVariableValue staticVariable = myStaticVariable == null ? null : myStaticVariable.bindToFactory(factory);
-    return new ArrayStoreInstruction(getDfaAnchor(), myIndexProblem, transfer, staticVariable);
+    return new ArrayStoreInstruction(getDfaAnchor(), myIndexProblem, transfer, myStaticVariable);
   }
 
   @Override
@@ -53,6 +50,10 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     DfaValue valueToStore = stateBefore.pop();
     DfaValue index = stateBefore.pop();
     DfaValue array = stateBefore.pop();
+    List<DfaInstructionState> finalStates = new ArrayList<>();
+    if (myOutOfBoundsTransfer != null) {
+      finalStates.addAll(IndexOutOfBoundsProblem.dispatchTransfer(interpreter, stateBefore.createCopy(), myOutOfBoundsTransfer));
+    }
     DfaInstructionState[] states =
       myIndexProblem.processOutOfBounds(interpreter, stateBefore, index, array, myOutOfBoundsTransfer);
     if (states != null) return states;
@@ -65,13 +66,15 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
     interpreter.getListener().beforeAssignment(valueToStore, arrayElementValue, stateBefore, getDfaAnchor());
     if (arrayElementValue instanceof DfaVariableValue) {
       stateBefore.setVarValue((DfaVariableValue)arrayElementValue, valueToStore);
+      interpreter.getListener().afterAssignment(valueToStore, arrayElementValue, stateBefore, getDfaAnchor());
       pushResult(interpreter, stateBefore, arrayElementValue);
     }
     else {
       stateBefore.flushFieldsQualifiedBy(Set.of(array));
       pushResult(interpreter, stateBefore, valueToStore);
     }
-    return nextStates(interpreter, stateBefore);
+    finalStates.add(nextState(interpreter, stateBefore));
+    return finalStates.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   protected void checkArrayElementAssignability(@NotNull DataFlowInterpreter interpreter,
@@ -81,8 +84,8 @@ public class ArrayStoreInstruction extends ExpressionPushingInstruction {
   }
 
   @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(myStaticVariable);
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return List.of(SpecialField.ARRAY_LENGTH);
   }
 
   @Override

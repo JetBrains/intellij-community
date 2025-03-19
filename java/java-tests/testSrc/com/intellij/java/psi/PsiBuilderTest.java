@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.TestLoggerKt;
 import junit.framework.AssertionFailedError;
 
 public class PsiBuilderTest extends LightIdeaTestCase {
@@ -153,44 +154,48 @@ public class PsiBuilderTest extends LightIdeaTestCase {
     assertTrue(myBuilder.eof());
   }
 
-  public void testAssertionFailureOnUnbalancedMarkers() {
-    myBuilder = createBuilder("foo");
-    myBuilder.setDebugMode(true);
-    PsiBuilder.Marker m = myBuilder.mark();
-    @SuppressWarnings("UnusedDeclaration") PsiBuilder.Marker m1 = myBuilder.mark();
-    myBuilder.getTokenType();
-    myBuilder.advanceLexer();
-    try {
-      m.done(JavaTokenType.PACKAGE_KEYWORD);
-      fail("Assertion must fire");
-    }
-    catch (AssertionFailedError e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      if (!e.getMessage().startsWith("Another not done marker")) {
-        fail("Wrong assertion message");
+  public void testAssertionFailureOnUnbalancedMarkers() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      myBuilder = createBuilder("foo");
+      myBuilder.setDebugMode(true);
+      PsiBuilder.Marker m = myBuilder.mark();
+      @SuppressWarnings("UnusedDeclaration") PsiBuilder.Marker m1 = myBuilder.mark();
+      myBuilder.getTokenType();
+      myBuilder.advanceLexer();
+      try {
+        m.done(JavaTokenType.PACKAGE_KEYWORD);
+        fail("Assertion must fire");
       }
-    }
+      catch (AssertionFailedError e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        if (!e.getMessage().startsWith("Another not done marker")) {
+          fail("Wrong assertion message");
+        }
+      }
+    });
   }
 
-  public void testNotAllTokensProcessed() {
-    myBuilder = createBuilder("foo");
-    myBuilder.setDebugMode(true);
-    final PsiBuilder.Marker m = myBuilder.mark();
-    m.done(JavaTokenType.PACKAGE_KEYWORD);
-    try {
-      myBuilder.getTreeBuilt();
-      fail("Assertion must fire");
-    }
-    catch (AssertionFailedError e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      if (!e.getMessage().startsWith("Tokens [IDENTIFIER] were not inserted into the tree")) {
-        fail("Wrong assertion message");
+  public void testNotAllTokensProcessed() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      myBuilder = createBuilder("foo");
+      myBuilder.setDebugMode(true);
+      final PsiBuilder.Marker m = myBuilder.mark();
+      m.done(JavaTokenType.PACKAGE_KEYWORD);
+      try {
+        myBuilder.getTreeBuilt();
+        fail("Assertion must fire");
       }
-    }
+      catch (AssertionFailedError e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        if (!e.getMessage().startsWith("Tokens [IDENTIFIER] were not inserted into the tree")) {
+          fail("Wrong assertion message");
+        }
+      }
+    });
   }
 
   public void testMergeWhenEmptyElementAfterWhitespaceIsLastChild() {

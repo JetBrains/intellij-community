@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes.actions
 
+import com.intellij.ide.actions.NewFileActionWithCategory
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
 import com.intellij.ide.ui.UIThemeProvider
@@ -30,18 +31,18 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
 
-//TODO better undo support
-class NewThemeAction : AnAction() {
+internal class NewThemeAction : AnAction(), NewFileActionWithCategory {
   private val THEME_JSON_TEMPLATE = "ThemeJson.json"
   private val THEME_PROVIDER_EP_NAME = UIThemeProvider.EP_NAME.name
+
+  override fun getCategory(): String = "Theme"
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val view = e.getData(LangDataKeys.IDE_VIEW) ?: return
     val dir = view.getOrChooseDirectory() ?: return
-
-    val module = e.getRequiredData(PlatformCoreDataKeys.MODULE)
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
     val project = module.project
     lateinit var name: Cell<JBTextField>
     lateinit var isDark: Cell<JBCheckBox>

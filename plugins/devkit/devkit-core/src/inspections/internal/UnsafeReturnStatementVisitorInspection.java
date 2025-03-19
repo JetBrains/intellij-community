@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -10,20 +10,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UParameter;
 
 import java.util.List;
 
-public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+@ApiStatus.Internal
+public final class UnsafeReturnStatementVisitorInspection extends DevKitUastInspectionBase {
 
   private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
   private static final @NonNls String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
@@ -99,16 +98,13 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitUastInspection
       myMethods = methods;
     }
 
-    @IntentionName
-    @NotNull
     @Override
-    public String getName() {
+    public @IntentionName @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.unsafe.return.insert.family.name");
     }
 

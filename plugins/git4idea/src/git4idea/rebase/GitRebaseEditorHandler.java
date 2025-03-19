@@ -17,6 +17,7 @@ package git4idea.rebase;
 
 import git4idea.editor.GitRebaseEditorAppHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -37,17 +38,6 @@ public interface GitRebaseEditorHandler {
    */
   int editCommits(@NotNull File path);
 
-  /**
-   * Tells if the interactive rebase editor (with the list of commits to rebase) was cancelled by user.
-   * @see #wasUnstructuredEditorCancelled()
-   */
-  boolean wasCommitListEditorCancelled();
-
-  /**
-   * Tells if the commit message editor (appearing e.g. during squash or reword) was cancelled by user.
-   * <br/><br/>
-   * Note: Returning true obviously implies that {@link #wasCommitListEditorCancelled()} if false.
-   * @see #wasCommitListEditorCancelled()
-   */
-  boolean wasUnstructuredEditorCancelled();
+  @Nullable
+  GitRebaseEditingResult getEditingResult();
 }

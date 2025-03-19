@@ -16,9 +16,11 @@
 package com.intellij.editor;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -33,11 +35,11 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
     for (int i = 0; i < 3; i++) {
       EditorTestUtil.performTypingAction(getEditor(), '\n');
     }
-    PlatformTestUtil.startPerformanceTest("Xml editor enter", 5000, () -> {
+    Benchmark.newBenchmark("Xml editor enter", () -> {
       for (int i = 0; i < 3; i ++) {
         EditorTestUtil.performTypingAction(getEditor(), '\n');
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     checkResultByFile(getTestFilePath(false));
   }
 
@@ -56,6 +58,7 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
       CodeStyle.getSettings(getProject()),
       clone -> {
         clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        CodeStyleSettingsManager.getInstance(getProject()).notifyCodeStyleSettingsChanged();
         EditorTestUtil.performTypingAction(getEditor(), 'x');
       }
     );
@@ -78,6 +81,8 @@ public class XmlEditorTest extends LightJavaCodeInsightTestCase {
       CodeStyle.getSettings(getProject()),
       clone -> {
         clone.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+        CodeStyleSettingsManager.getInstance(getProject()).notifyCodeStyleSettingsChanged();
+
         EditorTestUtil.performTypingAction(getEditor(), '?');
       }
     );

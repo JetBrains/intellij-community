@@ -14,7 +14,7 @@ abstract class LoginPanelModelBase : TokenLoginPanelModel {
 
   private val _loginState = MutableStateFlow<LoginState>(LoginState.Disconnected)
 
-  override val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
+  final override val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
   final override suspend fun login() {
     _loginState.update { LoginState.Connecting }

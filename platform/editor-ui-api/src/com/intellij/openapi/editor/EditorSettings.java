@@ -1,17 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+@ApiStatus.NonExtendable
 public interface EditorSettings {
   boolean isRightMarginShown();
   void setRightMarginShown(boolean val);
+  
+  boolean isHighlightSelectionOccurrences();
+  void setHighlightSelectionOccurrences(boolean val);
 
   boolean isWhitespacesShown();
   void setWhitespacesShown(boolean val);
@@ -28,7 +33,7 @@ public interface EditorSettings {
   boolean isSelectionWhitespaceShown();
   void setSelectionWhitespaceShown(boolean val);
 
-  int getRightMargin(Project project);
+  int getRightMargin(@Nullable Project project);
   void setRightMargin(int myRightMargin);
 
   /**
@@ -53,6 +58,9 @@ public interface EditorSettings {
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
 
+  boolean isLineNumbersAfterIcons();
+  void setLineNumbersAfterIcons(boolean val);
+
   int getAdditionalLinesCount();
   void setAdditionalLinesCount(int additionalLinesCount);
 
@@ -74,7 +82,7 @@ public interface EditorSettings {
   boolean isUseTabCharacter(Project project);
   void setUseTabCharacter(boolean useTabCharacter);
 
-  int getTabSize(Project project);
+  int getTabSize(@Nullable Project project);
   void setTabSize(int tabSize);
 
   boolean isSmartHome();
@@ -121,6 +129,9 @@ public interface EditorSettings {
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 
+  boolean isFullLineHeightCursor();
+  void setFullLineHeightCursor(boolean fullLineHeightCursor);
+
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
 
@@ -143,6 +154,7 @@ public interface EditorSettings {
 
   boolean isWheelFontChangeEnabled();
   void setWheelFontChangeEnabled(boolean val);
+  void resetWheelFontChangeEnabled();
 
   boolean isMouseClickSelectionHonorsCamelWords();
   void setMouseClickSelectionHonorsCamelWords(boolean val);
@@ -202,17 +214,43 @@ public interface EditorSettings {
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
 
-  /**
-   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
-   */
-  @Deprecated
-  default @Nullable Boolean isShowVisualFormattingLayer() { return null; }
-
-  /**
-   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
-   */
-  @Deprecated
-  default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
+  LineNumerationType getLineNumerationType();
+  void setLineNumerationType(LineNumerationType value);
 
   boolean isInsertParenthesesAutomatically();
+
+  boolean areStickyLinesShown();
+  int getStickyLinesLimit();
+
+  /**
+   * Returns the width of single-width characters
+   *
+   * @see #setCharacterGridWidthMultiplier(Float)
+   * @return the width of single-width characters or {@code null} if cell grid alignment is disabled
+   */
+  @ApiStatus.Internal
+  @Nullable Float getCharacterGridWidthMultiplier();
+
+  /**
+   * Sets the width of single-width characters and enables the character grid mode
+   * <p>
+   *   Settings this to a non-null value enables a special mode in which the editor tries to align all
+   *   characters to a grid of cells with their width determined by multiplying this value
+   *   by {@link com.intellij.openapi.editor.impl.view.EditorView#getMaxCharWidth() EditorView.getMaxCharWidth}.
+   *   Double-width characters take two cells each.
+   * </p>
+   * <p>
+   *   If this mode is enabled, all kinds of grid properties can be queried by calling
+   *   {@link com.intellij.openapi.editor.impl.EditorImpl#getCharacterGrid()}.
+   * </p>
+   * @param value the width of single-width characters or {@code null} to disable cell grid alignment
+   */
+  @ApiStatus.Internal
+  void setCharacterGridWidthMultiplier(@Nullable Float value);
+
+  enum LineNumerationType {
+    ABSOLUTE,
+    RELATIVE,
+    HYBRID,
+  }
 }

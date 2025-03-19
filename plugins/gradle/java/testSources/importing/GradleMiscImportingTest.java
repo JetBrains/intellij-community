@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -19,7 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
@@ -50,6 +54,12 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    AcceptedLanguageLevelsSettings.allowLevel(getTestRootDisposable(), LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
   }
 
   @Test
@@ -99,7 +109,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        sourceCompatibility = 1.5
+        java.sourceCompatibility = 1.5
         compileTestJava {
           sourceCompatibility = 1.8
         }
@@ -114,10 +124,10 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
   @Test
   public void testPreviewLanguageLevel() throws Exception {
-    int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
+    int feature = LanguageLevel.HIGHEST.feature();
     importProject(
       "apply plugin: 'java'\n" +
-      "sourceCompatibility = " + feature+ "\n" +
+      "java.sourceCompatibility = " + feature+ "\n" +
       "apply plugin: 'java'\n" +
       "compileTestJava {\n" +
       "  sourceCompatibility = " + feature +"\n" +
@@ -137,7 +147,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        targetCompatibility = 1.8
+        java.targetCompatibility = 1.8
         compileJava {
           targetCompatibility = 1.5
         }
@@ -151,7 +161,73 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
-  @TargetVersions("3.4+")
+  public void testCompilerArguments() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param1' << '-param2'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion();
+    assertModuleCompilerArgumentsVersion("project");
+    assertModuleCompilerArgumentsVersion("project.main");
+    assertModuleCompilerArgumentsVersion("project.test", "-param1", "-param2");
+
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+      .configureTask("compileTestJava", "JavaCompile", task -> {
+        task.code("options.compilerArgs << '-param'");
+      })
+    ));
+    importProject();
+    assertModules("project", "project.main", "project.test");
+    assertProjectCompilerArgumentsVersion("-param");
+    assertModuleCompilerArgumentsVersion("project", "-param");
+    assertModuleCompilerArgumentsVersion("project.main", "-param");
+    assertModuleCompilerArgumentsVersion("project.test", "-param");
+  }
+
+  @Test
+  public void testCompilerArgumentsProvider() {
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .addPrefix("""
+                   class GStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-DgString=${value}"] }
+                       }
+                   }
+                   
+                   class JavaStringArgumentProvider implements CommandLineArgumentProvider {
+                       @Input
+                       String value
+                   
+                       @Override
+                       Iterable<String> asArguments() {
+                           { return ["-Dstring=" + value] }
+                       }
+                   }
+                   """)
+      .configureTask("compileJava", "JavaCompile", task -> {
+        task.code("options.compilerArgumentProviders.add(new GStringArgumentProvider(value: \"Str1\"))");
+        task.code("options.compilerArgumentProviders.add(new JavaStringArgumentProvider(value: \"Str2\"))");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "-DgString=Str1", "-Dstring=Str2");
+  }
+
+  @Test
   public void testJdkName() throws Exception {
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");
     edt(() -> ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(myJdk, myProject)));
@@ -179,11 +255,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     );
     assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(Collections.singletonList("project.main")));
-    assertModules("project", "project.test");
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(List.of("project", "project.main")));
+    assertModules("project.test");
 
     importProject();
-    assertModules("project", "project.test");
+    assertModules("project.test");
   }
 
   @Test
@@ -292,7 +368,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     createSettingsFile("rootProject.name = 'app'");
     importProject("apply plugin: 'java'\n" +
-                  "group 'my_group'");
+                  "group = 'my_group'");
 
     assertModules("app", "my_group.app.main",
                   "my_group.app", "my_group.app.main~1", "my_group.app.test");
@@ -349,6 +425,24 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
                                     "junit", "junit", "4.0");
+  }
+
+  @Test
+  public void testJarManifestAutomaticModuleName() throws Exception {
+    importProject(
+      """
+        apply plugin: 'java'
+        tasks.named('jar') {
+          manifest {
+            attributes('Automatic-Module-Name': 'my.module.name')
+          }
+        }"""
+    );
+
+    var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
+    var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
+    var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
+    assertEquals("my.module.name", automaticModuleName);
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {

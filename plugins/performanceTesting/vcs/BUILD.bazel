@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.performanceTesting.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.performanceTesting.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/diff-api:diff",
+    "//platform/vcs-impl",
+    "//platform/ide-core",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [
+    ":vcs_resources",
+    "//platform/backend",
+  ]
+)
+### auto-generated section `build intellij.performanceTesting.vcs` end

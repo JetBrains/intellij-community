@@ -1,5 +1,3 @@
-// IGNORE_FIR
-
 class Generic<T>
 
 class C {
@@ -8,4 +6,4 @@ class C {
 
 class Foo
 
-// REF: (<root>).Foo
+// REF: Foo

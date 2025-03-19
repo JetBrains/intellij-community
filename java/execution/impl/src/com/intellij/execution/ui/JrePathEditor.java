@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,9 +6,10 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -42,6 +43,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -124,7 +126,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
             update(e);
           }
 
-          private void update(FocusEvent e) {
+          private static void update(FocusEvent e) {
             Component c = e.getComponent().getParent();
             if (c != null) {
               c.revalidate();
@@ -149,9 +151,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
-    ReadAction.nonBlocking(() -> buildModel(getComponent().isEditable())).coalesceBy(this).
-      expireWhen(() -> !getComponent().isVisible()).
-      finishOnUiThread(ModalityState.any(), consumer).submit(AppExecutorUtil.getAppExecutorService());
+    boolean editable = getComponent().isEditable();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<JreComboBoxItem> items = buildModel(editable);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (getComponent().isVisible()) {
+          consumer.accept(items);
+        }
+      }, ModalityState.any());
+    });
   }
 
   /**
@@ -202,10 +210,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       String homePath = jdk.getHomePath();
 
       if (!SystemInfo.isMac && jdk.getHomePath() != null) {
-        Path path = Path.of(jdk.getHomePath(), "jre");
-        if (Files.isDirectory(path)) {
-          homePath = path.toString();
+        try {
+          Path path = Path.of(jdk.getHomePath(), "jre");
+          if (Files.isDirectory(path)) {
+            homePath = path.toString();
+          }
         }
+        catch (InvalidPathException | SecurityException ignored) { continue; }
       }
       if (jrePaths.add(homePath)) {
         model.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
@@ -217,18 +228,14 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     return model;
   }
 
-  @NotNull
   private Runnable getBrowseRunnable() {
-    return new BrowseFolderRunnable<>(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
-                                      ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                      null,
-                                      BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                      getComponent(),
-                                      JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ExecutionBundle.message("run.configuration.select.alternate.jre.label"))
+      .withDescription(ExecutionBundle.message("run.configuration.select.jre.dir.label"));
+    return new BrowseFolderRunnable<>(null, descriptor, getComponent(), JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
   }
 
-  @Nullable
-  public String getJrePathOrName() {
+  public @Nullable String getJrePathOrName() {
     JreComboBoxItem jre = getSelectedJre();
     if (jre instanceof DefaultJreItem || myRemoteTarget) {
       return myPreviousCustomJrePath;
@@ -307,8 +314,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     @Nullable @NlsSafe
     String getPathOrName();
 
-    @Nullable
-    default String getVersion() { return null; }
+    default @Nullable String getVersion() { return null; }
 
     default @NlsSafe @Nullable String getDescription() { return getPresentableText(); }
 
@@ -486,4 +492,3 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     }
   }
 }
-

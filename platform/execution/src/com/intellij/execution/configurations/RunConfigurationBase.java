@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -40,15 +40,13 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
   private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
 
-  @Nullable
-  private final ConfigurationFactory myFactory;
+  private final @Nullable ConfigurationFactory myFactory;
   private final Project myProject;
   private String myName;
 
   private RunConfigurationOptions myOptions;
 
-  @NotNull
-  private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
+  private @NotNull List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
   protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, @Nullable String name) {
     myProject = project;
@@ -58,20 +56,17 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     myOptions = createOptions();
   }
 
-  @NotNull
-  private RunConfigurationOptions createOptions() {
+  private @NotNull RunConfigurationOptions createOptions() {
     return ReflectionUtil.newInstance(getOptionsClass());
   }
 
-  @NotNull
-  protected RunConfigurationOptions getOptions() {
+  protected @NotNull RunConfigurationOptions getOptions() {
     return myOptions;
   }
 
   @Override
-  @NotNull
   @Transient
-  public List<BeforeRunTask<?>> getBeforeRunTasks() {
+  public @NotNull List<BeforeRunTask<?>> getBeforeRunTasks() {
     return myBeforeRunTasks;
   }
 
@@ -80,9 +75,8 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     myBeforeRunTasks = value;
   }
 
-  @Nullable
   @Override
-  public final ConfigurationFactory getFactory() {
+  public final @Nullable ConfigurationFactory getFactory() {
     return myFactory;
   }
 
@@ -91,9 +85,8 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     myName = name;
   }
 
-  @NotNull
   @Override
-  public final Project getProject() {
+  public final @NotNull Project getProject() {
     return myProject;
   }
 
@@ -111,10 +104,9 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     }
   }
 
-  @NotNull
   @Override
   @Transient
-  public final String getName() {
+  public final @NotNull String getName() {
     // a lot of clients not ready that name can be null and in most cases it is not convenient - just add more work to handle null value
     // in any case for run configuration empty name it is the same as null, we don't need to bother clients and use null
     return StringUtilRt.notNullize(myName);
@@ -167,8 +159,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
-  @Nullable
-  public LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
+  public @Nullable LogFileOptions getOptionsForPredefinedLogFile(PredefinedLogFile predefinedLogFile) {
     return null;
   }
 
@@ -180,8 +171,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     getOptions().getPredefinedLogFiles().add(predefinedLogFile);
   }
 
-  @NotNull
-  public List<PredefinedLogFile> getPredefinedLogFiles() {
+  public @NotNull List<PredefinedLogFile> getPredefinedLogFiles() {
     return getOptions().getPredefinedLogFiles();
   }
 
@@ -196,8 +186,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     return list;
   }
 
-  @NotNull
-  public List<LogFileOptions> getLogFiles() {
+  public @NotNull List<LogFileOptions> getLogFiles() {
     return getOptions().getLogFiles();
   }
 
@@ -222,8 +211,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   public void customizeLogConsole(LogConsole console) {
   }
 
-  @Nullable
-  public T getState() {
+  public @Nullable T getState() {
     //noinspection unchecked
     return (T)getOptions();
   }
@@ -287,8 +275,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   /**
    * Do not override this method, it is intended to support old (not migrated to options class) run configurations.
    */
-  @NotNull
-  protected Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
+  protected @NotNull Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
     return RunConfigurationOptions.class;
   }
 

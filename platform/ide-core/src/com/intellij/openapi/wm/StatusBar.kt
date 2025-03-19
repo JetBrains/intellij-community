@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -7,9 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.wm.StatusBar.Info
-import com.intellij.openapi.wm.StatusBar.StandardWidgets
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -27,7 +26,7 @@ import javax.swing.JComponent
 interface StatusBar : StatusBarInfo {
   object Info {
     @Topic.ProjectLevel
-    val TOPIC = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<StatusBarInfo> = Topic("IdeStatusBar.Text", StatusBarInfo::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmOverloads
     @JvmStatic
@@ -47,16 +46,14 @@ interface StatusBar : StatusBarInfo {
 
   /**
    * Adds the given widget on the right.
-   *
    */
-  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  @Deprecated("Use StatusBarWidgetFactory")
   fun addWidget(widget: StatusBarWidget)
 
   /**
    * Adds the given widget positioned according to given anchor (see [Anchors]).
-   *
    */
-  @Deprecated("Use {@link StatusBarWidgetFactory}")
+  @Deprecated("Use StatusBarWidgetFactory")
   fun addWidget(widget: StatusBarWidget, anchor: @NonNls String)
 
   /**
@@ -88,7 +85,7 @@ interface StatusBar : StatusBarInfo {
   fun fireNotificationPopup(content: JComponent, backgroundColor: Color?)
 
   @Internal
-  fun createChild(disposable: Disposable, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
+  fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar?
 
   val component: JComponent?
 
@@ -106,12 +103,13 @@ interface StatusBar : StatusBarInfo {
   }
 
   object StandardWidgets {
-    const val ENCODING_PANEL = "Encoding"
+    const val ENCODING_PANEL: String = "Encoding"
+
     // keep the old ID for backwards compatibility
-    const val COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"
-    const val READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute"
-    const val POSITION_PANEL = "Position"
-    const val LINE_SEPARATOR_PANEL = "LineSeparator"
+    const val COLUMN_SELECTION_MODE_PANEL: String = "InsertOverwrite"
+    const val READONLY_ATTRIBUTE_PANEL: String = "ReadOnlyAttribute"
+    const val POSITION_PANEL: String = "Position"
+    const val LINE_SEPARATOR_PANEL: String = "LineSeparator"
   }
 
   fun startRefreshIndication(tooltipText: @NlsContexts.Tooltip String?)
@@ -119,7 +117,8 @@ interface StatusBar : StatusBarInfo {
   fun stopRefreshIndication()
 
   @Internal
-  fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {}
+  fun addListener(listener: StatusBarListener, parentDisposable: Disposable) {
+  }
 
   val allWidgets: Collection<StatusBarWidget>?
     get() = null

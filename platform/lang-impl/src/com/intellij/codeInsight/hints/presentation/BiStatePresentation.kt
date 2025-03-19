@@ -31,6 +31,6 @@ open class BiStatePresentation(
 
   companion object {
     @JvmStatic
-    val STATE_MARK = StateMark<State>("BiState")
+    val STATE_MARK: StateMark<State> = StateMark("BiState")
   }
 }

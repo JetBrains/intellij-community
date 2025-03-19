@@ -20,8 +20,6 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.addTypeParameter
 import org.jetbrains.kotlin.idea.core.setDefaultValue
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomGetter
-import org.jetbrains.kotlin.js.translate.declaration.hasCustomSetter
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -319,6 +317,10 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         return this
     }
 
+    private fun KtProperty.hasCustomGetter() = getter?.hasBody() ?: false
+
+    private fun KtProperty.hasCustomSetter() = setter?.hasBody() ?: false
+
     private fun KtProperty.replaceProperty(searchTemplate: KtProperty, match: KtProperty): KtProperty {
         if (initializer == null) equalsToken?.let {  // when count filter = 0 on the initializer
             it.deleteSurroundingWhitespace()
@@ -408,8 +410,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.EXTERNAL_KEYWORD,
             KtTokens.ANNOTATION_KEYWORD,
             KtTokens.CROSSINLINE_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )
@@ -426,8 +426,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.OPERATOR_KEYWORD,
             KtTokens.INFIX_KEYWORD,
             KtTokens.SUSPEND_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )
@@ -440,8 +438,6 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
             KtTokens.LATEINIT_KEYWORD,
             KtTokens.EXTERNAL_KEYWORD,
             KtTokens.CONST_KEYWORD,
-            KtTokens.HEADER_KEYWORD,
-            KtTokens.IMPL_KEYWORD,
             KtTokens.EXPECT_KEYWORD,
             KtTokens.ACTUAL_KEYWORD
         )

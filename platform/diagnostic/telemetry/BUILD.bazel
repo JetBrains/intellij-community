@@ -1,0 +1,45 @@
+### auto-generated section `build intellij.platform.diagnostic.telemetry` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "telemetry",
+  module_name = "intellij.platform.diagnostic.telemetry",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:kotlin-stdlib-provided",
+    "@lib//:kotlinx-coroutines-core-provided",
+    "@lib//:opentelemetry-provided",
+    "@lib//:opentelemetry-semconv-provided",
+    "@lib//:opentelemetry-extension-kotlin-provided",
+    "//platform/util",
+    "//platform/diagnostic",
+  ],
+  exports = ["//platform/diagnostic"]
+)
+
+jvm_library(
+  name = "telemetry_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  associates = [":telemetry"],
+  deps = [
+    "@lib//:kotlin-stdlib-provided",
+    "@lib//:kotlinx-coroutines-core-provided",
+    "@lib//:opentelemetry-provided",
+    "@lib//:opentelemetry-semconv-provided",
+    "@lib//:opentelemetry-extension-kotlin-provided",
+    "//platform/util",
+    "//platform/diagnostic",
+    "@lib//:junit5",
+    "@lib//:kotlin-test-assertions-core-jvm",
+  ]
+)
+
+jvm_test(
+  name = "telemetry_test",
+  runtime_deps = [":telemetry_test_lib"]
+)
+### auto-generated section `build intellij.platform.diagnostic.telemetry` end

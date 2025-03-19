@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +21,7 @@ import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
 public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private JPanel myMainPanel;
 
@@ -47,12 +47,9 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, D
         myConfigurationDirectoryText.setText(path);
       }
     });
-    myCommandLineClient.addBrowseFolderListener(
-      message("dialog.title.select.path.to.subversion.executable"),
-      message("label.select.path.to.subversion.executable"),
-      project,
-      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-    );
+    myCommandLineClient.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(message("dialog.title.select.path.to.subversion.executable"))
+      .withDescription(message("label.select.path.to.subversion.executable")));
     myClearAuthButton.addActionListener(
       e -> SvnAuthenticationNotifier.clearAuthenticationCache(myProject, myMainPanel, myConfigurationDirectoryText.getText()));
     myConfigurationDirectoryText.addActionListener(e -> {
@@ -61,9 +58,8 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, D
     });
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myMainPanel;
   }
 

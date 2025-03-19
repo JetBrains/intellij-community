@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.java.logging
 
 import com.intellij.codeInspection.logging.LoggingPlaceholderCountMatchesArgumentCountInspection
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPlaceholderCountMatchesArgumentCountInspectionTestBase() {
 
@@ -353,8 +353,30 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
           LoggerFactory.getLogger(X.class).atError().log("{} {}", 1, new RuntimeException("test"));
           LoggerFactory.getLogger(X.class).atError().log(<warning descr="More arguments provided (2) than placeholders specified (1)">"{}"</warning>, 1, new RuntimeException("test"));
 
-          builder.log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 1);
-        }
+          builder.log("{} {}", 1);
+        
+          LoggingEventBuilder loggingEventBuilder = logger.atError();
+          loggingEventBuilder
+                  .log("{} {}", 2); //skip, because it can be complex cases
+  
+          logger.atDebug()
+              .log(<warning descr="Fewer arguments provided (1) than placeholders specified (2)">"{} {}"</warning>, 2); //warn
+  
+          logger.atDebug()
+                  .addArgument("s")
+                  .addKeyValue("1", "1")
+                  .log("{} {}", 2);
+                  
+          logger.atError()
+          .setMessage(<warning descr="Fewer arguments provided (0) than placeholders specified (2)">"{} {}"</warning>)
+          .log();
+  
+          logger.atError()
+          .addArgument("")
+          .addArgument("")
+          .setMessage("{} {}")
+          .log();
+        }        
       }
       """.trimIndent())
   }
@@ -578,6 +600,145 @@ class JavaLoggingPlaceholderCountMatchesArgumentCountInspectionTest : LoggingPla
         }
       }
       """.trimIndent())
+  }
+
+  fun `test without arguments`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.apache.logging.log4j.*;
+      class Logging {
+       private static final Logger logger = LogManager.getLogger();
+       public static void test(String t) {
+        logger.info();
+       }
+      }
+      """.trimIndent())
+  }
+
+  fun `test lazy init`() {
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.apache.logging.log4j.LogBuilder;
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+
+      class LazyInitializer {
+      
+          static class StaticInitializer {
+              private static final Logger log;
+      
+              static {
+                  log = LogManager.getLogger();
+              }
+      
+              public StaticInitializer() {
+                log.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class StaticInitializerBuilder {
+              private static final LogBuilder log;
+      
+              static {
+                  log = LogManager.getLogger().atDebug();
+              }
+      
+              public StaticInitializerBuilder() {
+                log.log(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class StaticInitializerBuilder2 {
+              private static final LogBuilder log;
+      
+              static {
+                  if (1 == 1) {
+                      log = LogManager.getLogger().atDebug();
+                  } else {
+                      log = LogManager.getFormatterLogger().atDebug();
+                  }
+              }
+      
+              public StaticInitializerBuilder2() {
+                  log.log("{}");
+              }
+          }
+      
+          static class ConstructorInitializer {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer() {
+                  log = LogManager.getLogger();
+              }
+      
+              public ConstructorInitializer(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                log.info(<warning descr="Fewer arguments provided (0) than placeholders specified (1)">"{}"</warning>);
+              }
+          }
+      
+          static class ConstructorInitializer2 {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer2() {
+                  log = LogManager.getFormatterLogger();
+              }
+      
+              public ConstructorInitializer2(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                  log.info("{}");
+              }
+          }
+      }
+      """.trimIndent())
+  }
+
+  fun `test slf4j structured logging`() {
+    inspection.slf4jToLog4J2Type = LoggingPlaceholderCountMatchesArgumentCountInspection.Slf4jToLog4J2Type.NO
+    myFixture.testHighlighting(JvmLanguage.JAVA, """
+      import org.slf4j.Logger;
+      import org.slf4j.LoggerFactory;
+      import static net.logstash.logback.argument.StructuredArguments.kv;
+      class Demo {
+          public static final Logger log = LoggerFactory.getLogger(Demo.class);
+          public void demo() {
+              log.info(<warning descr="More arguments provided (4) than placeholders specified (2)">"Message1 {} {}"</warning>, 1, //should
+                      kv("k1", "v1"), 2,
+                      kv("k2", "v2")
+              );
+              log.info("Message2 {} {}",  1, 2,
+                      kv("k1", "v1"),
+                      kv("k2", "v2")
+              );      
+              log.info("Message3 {} {}", 1, 2,
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), new RuntimeException());
+              log.info(<warning descr="More arguments provided (5) than placeholders specified (2)">"Message4 {} {}"</warning>, 1, 2,   //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), 3, new RuntimeException());
+              log.info("Message5 {} {}",
+                      kv("k1", "v1"),
+                      kv("k2", "v2")
+              );
+              log.atInfo().log("Message6 {} {}", 1,
+                      kv("k1", "v1"),
+                      kv("k2", "v2"));
+              log.atInfo().log(<warning descr="More arguments provided (4) than placeholders specified (2)">"Message7 {} {}"</warning>, 1,  //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"), 2);
+      
+              log.atInfo().log(<warning descr="More arguments provided (5) than placeholders specified (2)">"Message8 {} {}"</warning>, 1, 2, 3, //should
+                      kv("k1", "v1"),
+                      kv("k2", "v2"));
+          }
+      }
+    """.trimIndent())
   }
 }
 

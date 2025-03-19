@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -12,6 +12,7 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.configurations.RemoteState;
@@ -23,7 +24,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -33,14 +33,16 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.search.JavaVersionBasedScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
-import com.intellij.unscramble.ThreadState;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -48,7 +50,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
@@ -67,7 +69,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private static final Logger LOG = Logger.getInstance(DebuggerSession.class);
   private final MyDebuggerStateManager myContextManager;
 
-  public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, WAIT_EVALUATION, DISPOSED}
+  public enum State {STOPPED, RUNNING, WAITING_ATTACH, PAUSED, IN_STEPPING, WAIT_EVALUATION, DISPOSED}
 
   public enum Event {ATTACHED, DETACHED, RESUME, STEP, PAUSE, REFRESH, CONTEXT, START_WAIT_ATTACH, DISPOSE, REFRESH_WITH_STACK, THREADS_REFRESH}
 
@@ -78,7 +80,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;
   private final DebugEnvironment myDebugEnvironment;
-  private final GlobalSearchScope mySearchScope;
+  private final GlobalSearchScope myBaseScope;
+  private GlobalSearchScope mySearchScope;
   private Sdk myAlternativeJre;
   private final Sdk myRunJre;
 
@@ -86,7 +89,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   /** The thread that the user is currently stepping through. */
   private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
   private final AtomicReference<ThreadReferenceProxyImpl> myLastThread = new AtomicReference<>();
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private boolean myModifiedClassesScanRequired = false;
 
@@ -103,8 +106,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     resetIgnoreStepFiltersFlag();
   }
 
-  @NotNull
-  public GlobalSearchScope getSearchScope() {
+  public @NotNull GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
@@ -114,6 +116,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public void setAlternativeJre(Sdk sdk) {
     myAlternativeJre = sdk;
+    updateScope();
     PsiElementFinder.EP.findExtension(AlternativeJreClassFinder.class, getProject()).clearCache();
   }
 
@@ -140,9 +143,8 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       myDebuggerContext = SESSION_EMPTY_CONTEXT;
     }
 
-    @NotNull
     @Override
-    public DebuggerContextImpl getContext() {
+    public @NotNull DebuggerContextImpl getContext() {
       return myDebuggerContext;
     }
 
@@ -154,11 +156,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
      * In this case, assume that the latter setState is ignored since the thread was resumed.
      */
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context,
+    public void setState(final @NotNull DebuggerContextImpl context,
                          final State state,
                          final Event event,
                          final @NlsContexts.Label String description) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
       final Runnable setStateRunnable = () -> {
@@ -172,11 +174,12 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         fireStateChanged(context, event);
       };
 
-      if (context.getSuspendContext() == null) {
+      SuspendContextImpl suspendContext = context.getSuspendContext();
+      if (suspendContext == null) {
         setStateRunnable.run();
       }
       else {
-        getProcess().getManagerThread().schedule(new SuspendContextCommandImpl(context.getSuspendContext()) {
+        suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
           @Override
           public Priority getPriority() {
             return Priority.HIGH;
@@ -192,7 +195,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
   }
 
-  static DebuggerSession create(@NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment)
+  static DebuggerSession create(final @NotNull DebugProcessImpl debugProcess, DebugEnvironment environment)
     throws ExecutionException {
     DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess, environment);
     try {
@@ -205,26 +208,39 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return session;
   }
 
-  private DebuggerSession(@Nls String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
+  private DebuggerSession(@Nls String sessionName, final @NotNull DebugProcessImpl debugProcess, DebugEnvironment environment) {
     mySessionName = sessionName;
     myDebugProcess = debugProcess;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(this, null, null, null);
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
-    ValueLookupManager.getInstance(getProject()).startListening();
+    ValueLookupManagerController.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
-    mySearchScope = environment.getSearchScope();
+    myBaseScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
     myRunJre = environment.getRunJre();
+    updateScope();
   }
 
-  @NotNull
-  public DebuggerStateManager getContextManager() {
+  private void updateScope() {
+    Sdk jre = myAlternativeJre;
+    if (jre == null) jre = myRunJre;
+    GlobalSearchScope scope = myBaseScope;
+    if (jre != null) {
+      LanguageLevel level = LanguageLevel.parse(jre.getVersionString());
+      if (level != null) {
+        scope = new JavaVersionBasedScope(getProject(), scope, level);
+      }
+    }
+    mySearchScope = scope;
+  }
+
+  public @NotNull DebuggerStateManager getContextManager() {
     return myContextManager;
   }
 
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return getProcess().getProject();
   }
 
@@ -232,8 +248,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return mySessionName;
   }
 
-  @NotNull
-  public DebugProcessImpl getProcess() {
+  public @NotNull DebugProcessImpl getProcess() {
     return myDebugProcess;
   }
 
@@ -259,6 +274,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return switch (myState.myState) {
       case STOPPED, DISPOSED -> JavaDebuggerBundle.message("status.debug.stopped");
       case RUNNING -> JavaDebuggerBundle.message("status.app.running");
+      case IN_STEPPING -> JavaDebuggerBundle.message("status.app.stepping");
       case WAITING_ATTACH -> {
         RemoteConnection connection = getProcess().getConnection();
         yield DebuggerUtilsImpl.getConnectionWaitStatus(connection);
@@ -276,9 +292,12 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOut(int stepSize) {
-    SuspendContextImpl suspendContext = getSuspendContext();
+    stepOut(getSuspendContext(), stepSize);
+  }
+
+  public void stepOut(SuspendContextImpl suspendContext, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOutCommand(suspendContext, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOutCommand(suspendContext, stepSize);
@@ -292,9 +311,12 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void stepOver(boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
-    SuspendContextImpl suspendContext = getSuspendContext();
+    stepOver(getSuspendContext(), ignoreBreakpoints, methodFilter, stepSize);
+  }
+
+  public void stepOver(SuspendContextImpl suspendContext, boolean ignoreBreakpoints, @Nullable MethodFilter methodFilter, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints, methodFilter, stepSize);
@@ -311,10 +333,13 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     stepOver(ignoreBreakpoints, StepRequest.STEP_LINE);
   }
 
-  public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
-    final SuspendContextImpl suspendContext = getSuspendContext();
+  public void stepInto(boolean ignoreFilters, @Nullable MethodFilter smartStepFilter, int stepSize) {
+    stepInto(getSuspendContext(), ignoreFilters, smartStepFilter, stepSize);
+  }
+
+  public void stepInto(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable MethodFilter smartStepFilter, int stepSize) {
     DebugProcessImpl.ResumeCommand cmd =
-      DebuggerUtilsImpl.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+      DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
                                          handler -> handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize));
     if (cmd == null) {
       cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
@@ -327,10 +352,30 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     stepInto(ignoreFilters, smartStepFilter, StepRequest.STEP_LINE);
   }
 
+  public void stepOverInstruction() {
+    SuspendContextImpl suspendContext = getSuspendContext();
+    DebugProcessImpl.ResumeCommand cmd = myDebugProcess.new StepOverCommand(suspendContext, false, null, StepRequest.STEP_MIN) {
+      @Override
+      public @Nullable RequestHint getHint(SuspendContextImpl suspendContext,
+                                           ThreadReferenceProxyImpl stepThread,
+                                           @Nullable RequestHint parentHint) {
+        return null;
+      }
+    };
+    setSteppingThrough(cmd.getContextThread());
+    resumeAction(cmd, Event.STEP);
+  }
+
   public void runToCursor(@NotNull XSourcePosition position, final boolean ignoreBreakpoints) {
     try {
+      SuspendContextImpl suspendContext = getSuspendContext();
       DebugProcessImpl.ResumeCommand runToCursorCommand =
-        myDebugProcess.createRunToCursorCommand(getSuspendContext(), position, ignoreBreakpoints);
+        DebugUtilsKt.computeSafeIfAny(JvmSteppingCommandProvider.EP_NAME,
+                                           handler -> handler.getRunToCursorCommand(suspendContext, position, ignoreBreakpoints));
+      if (runToCursorCommand == null) {
+        runToCursorCommand = myDebugProcess.createRunToCursorCommand(suspendContext, position, ignoreBreakpoints);
+      }
+
       setSteppingThrough(runToCursorCommand.getContextThread());
       resumeAction(runToCursorCommand, Event.STEP);
     }
@@ -343,9 +388,13 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   public void resume() {
     final SuspendContextImpl suspendContext = getSuspendContext();
     if (suspendContext != null) {
-      clearSteppingThrough();
-      resumeAction(myDebugProcess.createResumeCommand(suspendContext), Event.RESUME);
+      resumeSuspendContext(suspendContext, PrioritizedTask.Priority.HIGH);
     }
+  }
+
+  public void resumeSuspendContext(SuspendContextImpl suspendContext, PrioritizedTask.Priority priority) {
+    clearSteppingThrough();
+    resumeAction(myDebugProcess.createResumeCommand(suspendContext, priority), Event.RESUME);
   }
 
   public void resetIgnoreStepFiltersFlag() {
@@ -366,7 +415,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void pause() {
-    myDebugProcess.getManagerThread().schedule(myDebugProcess.createPauseCommand());
+    myDebugProcess.getManagerThread().schedule(myDebugProcess.createPauseCommand(null));
   }
 
   /*Presentation*/
@@ -385,6 +434,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void dispose() {
+    updateAlarm.dispose();
     getProcess().dispose();
     clearSteppingThrough();
     myLastThread.set(null);
@@ -418,7 +468,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   private SuspendContextImpl getSuspendContext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return getContextManager().getContext().getSuspendContext();
   }
 
@@ -432,7 +482,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
       description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
     }
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    });
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {
@@ -457,11 +509,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     public void paused(final SuspendContextImpl suspendContext) {
       LOG.debug("paused");
 
-      ThreadReferenceProxyImpl currentThread = suspendContext.getThread();
+      ThreadReferenceProxyImpl currentThread = suspendContext.getEventThread();
 
       if (!shouldSetAsActiveContext(suspendContext)) {
         notifyThreadsRefresh();
-        ThreadReferenceProxyImpl thread = suspendContext.getThread();
+        ThreadReferenceProxyImpl thread = suspendContext.getEventThread();
         if (thread != null) {
           List<Pair<Breakpoint, com.sun.jdi.event.Event>> descriptors = DebuggerUtilsEx.getEventDescriptors(suspendContext);
           if (!descriptors.isEmpty()) {
@@ -497,14 +549,14 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         }
 
         if (currentThread == null) {
-          Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
+          Collection<ThreadReferenceProxyImpl> allThreads = suspendContext.getVirtualMachineProxy().allThreads();
           ThreadReferenceProxyImpl lastThread = myLastThread.get();
           if (lastThread != null && allThreads.contains(lastThread)) {
             currentThread = lastThread;
           }
           else {
             // heuristics: try to pre-select EventDispatchThread
-            currentThread = ContainerUtil.find(allThreads, thread -> ThreadState.isEDT(thread.name()));
+            currentThread = ContainerUtil.find(allThreads, thread -> ThreadDumper.isEDT(thread.name()));
             if (currentThread == null) {
               // heuristics: try to pre-select the main thread
               currentThread = ContainerUtil.find(allThreads, thread -> "main".equals(thread.name()));
@@ -597,23 +649,25 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         }
       }
 
-      final DebuggerContextImpl debuggerContext =
-        DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, currentThread, null);
-      if (suspendContext.getThread() == currentThread) {
+      if (suspendContext.getThread() == currentThread || suspendContext.getThread() == null) {
+        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, suspendContext, currentThread, null);
         debuggerContext.setPositionCache(position);
+        DebuggerInvocationUtil.invokeLater(getProject(), () -> getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE,
+                                                                                            getDescription(debuggerContext)));
       }
-
-      DebuggerInvocationUtil.invokeLater(getProject(), () -> getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE,
-                                                                                          getDescription(debuggerContext)));
+      else {
+        ThreadReferenceProxyImpl steppingThread = currentThread;
+        DebuggerInvocationUtil.invokeLater(getProject(), () -> switchToActiveSteppingContext(steppingThread));
+      }
     }
 
     private boolean shouldSetAsActiveContext(final SuspendContextImpl suspendContext) {
-      final ThreadReferenceProxyImpl newThread = suspendContext.getThread();
+      final ThreadReferenceProxyImpl newThread = suspendContext.getEventThread();
       if (newThread == null || suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_ALL || isSteppingThrough(newThread)) {
         return true;
       }
       final SuspendContextImpl currentSuspendContext = getContextManager().getContext().getSuspendContext();
-      if (currentSuspendContext == null) {
+      if (currentSuspendContext == null || currentSuspendContext.isResumed()) {
         return mySteppingThroughThread.get() == null;
       }
       if (enableBreakpointsDuringEvaluation()) {
@@ -627,24 +681,14 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     @Override
     public void resumed(SuspendContextImpl suspendContext) {
       SuspendContextImpl context = getProcess().getSuspendManager().getPausedContext();
-      ThreadReferenceProxyImpl steppingThread = null;
-      // single thread stepping
-      if (context != null
-          && suspendContext != null
-          && suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD
-          && isSteppingThrough(suspendContext.getThread())) {
-        steppingThread = suspendContext.getThread();
-      }
-      final DebuggerContextImpl debuggerContext =
-        context != null ?
-        DebuggerContextImpl.createDebuggerContext(DebuggerSession.this,
-                                                  context,
-                                                  steppingThread != null ? steppingThread : context.getThread(),
-                                                  null)
-                        : null;
+      ThreadReferenceProxyImpl steppingThread = getSteppingThread(suspendContext);
 
       DebuggerInvocationUtil.invokeLater(getProject(), () -> {
-        if (debuggerContext != null) {
+        if (steppingThread != null && context != null) {
+          switchToActiveSteppingContext(steppingThread);
+        }
+        else if (context != null) {
+          DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, context, context.getThread(), null);
           getContextManager().setState(debuggerContext, State.PAUSED, Event.CONTEXT, getDescription(debuggerContext));
         }
         else {
@@ -705,18 +749,29 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         clearSteppingThrough();
       }
       DebugProcessImpl debugProcess = (DebugProcessImpl)proc;
-      if (debugProcess.getRequestsManager().getFilterThread() == thread) {
-        DebuggerManagerEx.getInstanceEx(proc.getProject()).getBreakpointManager().applyThreadFilter(debugProcess, null);
+      if (debugProcess.getRequestsManager().getFilterRealThread() == thread) {
+        DebuggerManagerEx.getInstanceEx(proc.getProject()).getBreakpointManager().removeThreadFilter(debugProcess);
       }
     }
 
     private void notifyThreadsRefresh() {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(() -> {
+      updateAlarm.cancelAndRequest(ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, () -> {
         final DebuggerStateManager contextManager = getContextManager();
         contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
-      }, ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, ModalityState.NON_MODAL);
+      });
     }
+  }
+
+  private void switchToActiveSteppingContext(ThreadReferenceProxyImpl steppingThread) {
+    DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(DebuggerSession.this, null, steppingThread, null);
+    getContextManager().setState(debuggerContext, State.IN_STEPPING, Event.CONTEXT, getDescription(debuggerContext));
+  }
+
+  public @Nullable ThreadReferenceProxyImpl getSteppingThread(@NotNull SuspendContextImpl suspendContext) {
+    if (suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD && isSteppingThrough(suspendContext.getThread())) {
+      return suspendContext.getThread();
+    }
+    return null;
   }
 
   private static class BreakpointReachedNotificationListener extends NotificationListener.Adapter {
@@ -738,11 +793,11 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   public static void switchContext(@NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-    debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
+    suspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerSession session = debugProcess.getSession();
-        DebuggerContextImpl debuggerContext = DebuggerContextUtil.createDebuggerContext(session, suspendContext);
+        DebuggerContextImpl debuggerContext = DebuggerContextImpl.createDebuggerContext(session, suspendContext, suspendContext.getEventThread(), null);
         DebuggerInvocationUtil.invokeLater(debugProcess.getProject(),
                                            () -> session.getContextManager().setState(debuggerContext, State.PAUSED, Event.PAUSE, null));
       }
@@ -770,8 +825,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     if (session != null) session.sessionResumed();
   }
 
-  @Nullable
-  public XDebugSession getXDebugSession() {
+  public @Nullable XDebugSession getXDebugSession() {
     JavaDebugProcess process = myDebugProcess.getXdebugProcess();
     return process != null ? process.getSession() : null;
   }

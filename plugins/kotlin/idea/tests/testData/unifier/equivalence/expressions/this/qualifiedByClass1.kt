@@ -19,5 +19,6 @@ class A {
     fun foo() {
         this
         this@A
+        (this@A)
     }
 }

@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.ex.EditorEx
@@ -13,12 +13,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor
-import org.jetbrains.kotlin.idea.codeInsight.ReviewAddedImports
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
+import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScriptConfigurationTest() {
@@ -48,29 +49,27 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
 
         performEditorAction(cutOrCopy)
 
-        KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested = emptyList()
-        ReviewAddedImports.importsToBeReviewed = emptyList()
+        val targetScript = createFileAndSyncDependencies(File(testDataFile, "target.kts"))
+        val targetFile = targetScript.toKtFile()
 
         val importsToBeDeletedFile = File(testDataFile, "imports_to_delete")
-        ReviewAddedImports.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
+        targetFile.importsToBeDeleted = if (importsToBeDeletedFile.exists()) {
             importsToBeDeletedFile.readLines()
         } else {
             emptyList()
         }
 
-        val targetScript = createFileAndSyncDependencies(File(testDataFile, "target.kts"))
         performEditorAction(IdeActions.ACTION_PASTE)
         UIUtil.dispatchAllInvocationEvents()
 
-        val namesToImportDump = KotlinCopyPasteReferenceProcessor.declarationsToImportSuggested.joinToString("\n")
+        val namesToImportDump = targetFile.declarationsSuggestedToBeImported.joinToString("\n")
         KotlinTestUtils.assertEqualsToFile(File(testDataFile, "expected.names"), namesToImportDump)
-        assertEquals(namesToImportDump, ReviewAddedImports.importsToBeReviewed.joinToString("\n"))
+        assertEquals(namesToImportDump, targetFile.importsToBeReviewed.joinToString("\n"))
 
-        val sourceFile = targetScript.toKtFile()
         val sourceText = if (noErrorsDump)
-            sourceFile.text
+            targetFile.text
         else
-            sourceFile.dumpTextWithErrors()
+            targetFile.dumpTextWithErrors()
         KotlinTestUtils.assertEqualsToFile(File(testDataFile, "expected.kts"), sourceText)
     }
 
@@ -80,12 +79,13 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val dataContext = getEditorDataContext()
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
-        val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-        if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            return false
+        val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
+        ActionUtil.performDumbAwareUpdate(action, event, false)
+        if (event.presentation.isEnabled) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+            return true
         }
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-        return true
+        return false
     }
 
     private fun getEditorDataContext() = (editor as EditorEx).dataContext

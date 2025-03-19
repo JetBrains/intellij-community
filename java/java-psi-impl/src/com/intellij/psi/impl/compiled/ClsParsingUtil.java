@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -154,7 +153,7 @@ public final class ClsParsingUtil {
   }
 
   public static boolean isJavaIdentifier(@NotNull String identifier, @NotNull LanguageLevel level) {
-    return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
+    return StringUtil.isJavaIdentifier(identifier) && !PsiUtil.isKeyword(identifier, level);
   }
 
   // expecting the parameter in the "unsigned short" format

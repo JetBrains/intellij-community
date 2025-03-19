@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -32,9 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
+public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiClass> processor) {
+  public boolean execute(final @NotNull DirectClassInheritorsSearch.SearchParameters parameters, final @NotNull Processor<? super PsiClass> processor) {
     if (!parameters.shouldSearchInLanguage(JavaLanguage.INSTANCE)) {
       return true;
     }
@@ -198,7 +198,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     GlobalSearchScope globalUseScope = ReadAction.compute(
       () -> new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
-      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().getOccurrences(baseClassName, project, globalUseScope));
 
     RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(baseClass));
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
@@ -258,7 +258,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance()
+        .getOccurences(baseClassName, project, globalUseScope));
 
     processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
       if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {

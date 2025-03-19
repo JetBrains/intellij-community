@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiMethod> {
+public final class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiMethod> {
   @Override
   public boolean execute(@NotNull PsiMethod method, @NotNull Processor<? super PsiMethod> consumer) {
     return processDeepestSuperMethods(method, consumer);

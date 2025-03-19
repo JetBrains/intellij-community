@@ -1,21 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-public class ClsStubBuilderTest extends LightIdeaTestCase {
+public class ClsStubBuilderTest extends LightJavaCodeInsightTestCase {
   public void testUtilList() { doClassTest("java.util.List"); }
   public void testNullable() { doClassTest("org.jetbrains.annotations.Nullable"); }
   public void testUtilCollections() { doClassTest("java.util.Collections"); }
@@ -32,6 +33,20 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testTestSuite() { doTest(); }
   public void testDoubleTest() { doTest(); /* IDEA-53195 */ }
   public void testTypeAnno() { doTest(); }
+  
+  public void testTypeAnnoOwner() {
+    VirtualFile file = getClassVirtualFile("TypeAnno");
+    PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(file);
+    assertTrue(psiFile instanceof PsiCompiledElement && psiFile instanceof PsiJavaFile);
+    PsiType returnType = ((PsiJavaFile)psiFile).getClasses()[0].findMethodsByName("get1TypeParam", false)[0].getReturnType();
+    PsiAnnotation topAnno = returnType.getAnnotations()[0];
+    assertNotNull(topAnno);
+    assertSame(returnType, topAnno.getOwner());
+    assertTrue(returnType instanceof PsiClassType);
+    PsiType parameter = ((PsiClassType)returnType).getParameters()[0];
+    PsiAnnotation paramAnno = parameter.getAnnotations()[0];
+    assertSame(parameter, paramAnno.getOwner());
+  }
 
   public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
   public void testModuleInfo() { doTest("module-info"); }
@@ -63,10 +78,20 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   }
 
   private void doTest(String clsPath) {
+    VirtualFile clsFile = getClassVirtualFile(clsPath);
+    doTest(clsFile, getTestName(false) + ".txt");
+  }
+
+  private static @NotNull VirtualFile getClassVirtualFile(String clsPath) {
     String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + clsPath + ".class";
     VirtualFile clsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(clsFilePath);
     assertNotNull("Can't find: " + clsFilePath, clsFile);
-    doTest(clsFile, getTestName(false) + ".txt");
+    return clsFile;
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk17();
   }
 
   private static void doTest(VirtualFile clsFile, String resultFileName) {

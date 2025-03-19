@@ -12,8 +12,7 @@ public class Test<R> {
       System.out.println("Custom(" + myVariable.t() + ", " + myVariable.r() + ")");
   }
 
-    @NotNull
-    private <T extends CharSequence> MyResult<T, R> getTrMyResult(T param) {
+    private <T extends CharSequence> @NotNull MyResult<T, R> getTrMyResult(T param) {
         T t = param;
         R r = getR();
         System.out.println();

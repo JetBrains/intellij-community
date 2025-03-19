@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestActionEvent;
@@ -68,6 +69,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myWorkingDirectory = TestFileStructure.createDirectory(getProject(), getSourceRoot(), TEMP_DIR_NAME);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
 
     myRealChangeListManager = ChangeListManager.getInstance(getProject());
     myMockChangeListManager = new MockChangeListManager();

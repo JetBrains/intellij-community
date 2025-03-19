@@ -59,7 +59,6 @@ UFile (package = )
                             UTypeReferenceExpression (name = java.lang.Runnable)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (runRunnable))
-                    USimpleNameReferenceExpression (identifier = runRunnable, resolvesTo = null)
                     ULambdaExpression
                         UBlockExpression
                 UReturnExpression
@@ -75,58 +74,59 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (r))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
         UMethod (name = test1)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = thread1)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                             UIdentifier (Identifier (Thread))
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread)
+                            USimpleNameReferenceExpression (identifier = Thread, resolvesTo = PsiClass: Thread)
                             ULambdaExpression
                                 UBlockExpression
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                        UIdentifier (Identifier (println))
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
-                                        ULiteralExpression (value = "hello1")
+                                    UReturnExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                            UIdentifier (Identifier (println))
+                                            UPolyadicExpression (operator = +)
+                                                ULiteralExpression (value = "hello1")
         UMethod (name = test2)
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = thread2)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                             UIdentifier (Identifier (Thread))
-                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread)
+                            USimpleNameReferenceExpression (identifier = Thread, resolvesTo = PsiClass: Thread)
                             UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                 UIdentifier (Identifier (Runnable))
                                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                                 ULambdaExpression
                                     UBlockExpression
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
-                                            UIdentifier (Identifier (println))
-                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
-                                            ULiteralExpression (value = "hello2")
+                                        UReturnExpression
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                                                UIdentifier (Identifier (println))
+                                                UPolyadicExpression (operator = +)
+                                                    ULiteralExpression (value = "hello2")
         UMethod (name = test3)
             UBlockExpression
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (ambiguousSamAcceptor))
-                    USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                         UIdentifier (Identifier (Supplier))
                         USimpleNameReferenceExpression (identifier = Supplier, resolvesTo = PsiClass: Supplier)
                         ULambdaExpression
                             UBlockExpression
                                 UReturnExpression
-                                    ULiteralExpression (value = "Supplier")
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "Supplier")
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (ambiguousSamAcceptor))
-                    USimpleNameReferenceExpression (identifier = ambiguousSamAcceptor, resolvesTo = null)
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                         UIdentifier (Identifier (Callable))
                         USimpleNameReferenceExpression (identifier = Callable, resolvesTo = PsiClass: Callable)
                         ULambdaExpression
                             UBlockExpression
                                 UReturnExpression
-                                    ULiteralExpression (value = "Callable")
+                                    UPolyadicExpression (operator = +)
+                                        ULiteralExpression (value = "Callable")
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
@@ -134,7 +134,6 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (TODO))
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)
         UMethod (name = ambiguousSamAcceptor)
             UParameter (name = s)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
@@ -142,4 +141,3 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (TODO))
-                        USimpleNameReferenceExpression (identifier = TODO, resolvesTo = null)

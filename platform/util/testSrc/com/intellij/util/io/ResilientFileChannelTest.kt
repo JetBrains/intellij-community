@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 class ResilientFileChannelTest {
   @Rule
   @JvmField
-  val tempDirectory = TempDirectory()
+  val tempDirectory: TempDirectory = TempDirectory()
 
   private val byteBuf1 = ByteBuffer.wrap(byteArrayOf(1, 2, 3, 4))
   private val byteBuf2 = ByteBuffer.wrap(byteArrayOf(5, 6, 7, 8))

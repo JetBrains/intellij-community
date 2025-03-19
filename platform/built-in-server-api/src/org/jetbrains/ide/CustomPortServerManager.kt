@@ -2,14 +2,17 @@
 package org.jetbrains.ide
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * See [Remote Communication](https://youtrack.jetbrains.com/articles/IDEA-A-63/Remote-Communication)
  */
 abstract class CustomPortServerManager {
+  @ApiStatus.Internal
   companion object {
+    @ApiStatus.Internal
     @JvmField
-    val EP_NAME = ExtensionPointName<CustomPortServerManager>("org.jetbrains.customPortServerManager")
+    val EP_NAME: ExtensionPointName<CustomPortServerManager> = ExtensionPointName("org.jetbrains.customPortServerManager")
   }
 
   abstract val port: Int

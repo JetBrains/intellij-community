@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonScripts")
 
 package com.jetbrains.python.run
@@ -21,13 +21,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.isAncestor
 import com.jetbrains.python.HelperPackage
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
+import com.jetbrains.python.run.target.PathMapping
+import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -41,14 +41,14 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
 @JvmOverloads
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
-                                             sdk: Sdk,
+                                             sdk: Sdk?,
                                              interpreterParameters: List<String>,
                                              isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   commandLineBuilder.charset = charset
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
-  sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+  sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
@@ -57,39 +57,46 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {
-    commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
+    val resolvedParameter = parameter.apply(targetEnvironment)
+    if (resolvedParameter != PythonExecution.SKIP_ARGUMENT) {
+      commandLineBuilder.addParameter(resolvedParameter)
+    }
   }
-  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  if (sdk != null) {
+    PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  }
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
   //  environment variables for corresponding interpreters
   if (isUsePty) {
-    commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.DEFAULT)
+    commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.defaults())
   }
 
   // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
   // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
   // Fix must be removed after path merging implementation
-  commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  if (sdk != null) {
+    commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  }
   return commandLineBuilder.build()
 }
 
 
 data class Upload(val localPath: String, val targetPath: TargetEnvironmentFunction<String>)
 
-private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): TargetEnvironmentFunction<String> {
+private fun resolveUploadPath(localPath: String, uploads: List<PathMapping>): TargetEnvironmentFunction<String> {
   val localFileSeparator = Platform.current().fileSeparator
   val matchUploads = uploads.mapNotNull { upload ->
-    if (FileUtil.isAncestor(upload.localPath, localPath, false)) {
-      FileUtil.getRelativePath(upload.localPath, localPath, localFileSeparator)?.let { upload to it }
+    if (FileUtil.isAncestor(upload.localPath.toString(), localPath, false)) {
+      FileUtil.getRelativePath(upload.localPath.toString(), localPath, localFileSeparator)?.let { upload to it }
     }
     else {
       null
@@ -100,7 +107,7 @@ private fun resolveUploadPath(localPath: String, uploads: Iterable<Upload>): Tar
   }
   val (upload, localRelativePath) = matchUploads.firstOrNull()
                                     ?: throw IllegalStateException("Failed to find uploads for the local path '$localPath'")
-  return upload.targetPath.getRelativeTargetPath(localRelativePath)
+  return upload.targetPathFun.getRelativeTargetPath(localRelativePath)
 }
 
 fun prepareHelperScriptExecution(helperPackage: HelperPackage,
@@ -116,26 +123,50 @@ private const val PYTHONPATH_ENV = "PYTHONPATH"
  * Requests the upload of PyCharm helpers root directory to the target.
  */
 fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
   return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
 }
 
 fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): Iterable<Upload> {
-  val localHelpersRootPath = PythonHelpersLocator.getHelpersRoot().absolutePath
+                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
+  return addHelperEntriesToPythonPath(envs, pythonPathEntries, helpersAwareTargetRequest)
+}
+
+/**
+ * @param envs the environment variables to be modified
+ * @param pythonPathEntries the paths located either in PyCharm Community or in PyCharm helpers directories
+ * @param helpersAwareTargetRequest the request
+ * @param failOnError specifies whether the method should fail if one of [pythonPathEntries] is not located within PyCharm helpers dirs
+ *
+ * **Note.** This method assumes that PyCharm Community and PyCharm helpers are uploaded to the same root path on the target.
+ * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
+ */
+fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+                                 pythonPathEntries: List<String>,
+                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+                                 failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
-  val targetUploadPath = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
+  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
-  val uploads = pythonPathEntries.map {
-    // TODO [Targets API] Simplify the paths resolution
-    val relativePath = FileUtil.getRelativePath(localHelpersRootPath, it, Platform.current().fileSeparator)
-                       ?: throw IllegalStateException("Helpers PYTHONPATH entry '$it' cannot be resolved" +
-                                                      " against the root path of PyCharm helpers '$localHelpersRootPath'")
-    Upload(it, targetUploadPath.getRelativeTargetPath(relativePath))
+
+  fun <T> T?.onResolutionFailure(message: String): T? {
+    if (this != null)
+      return this
+    if (failOnError)
+      error(message)
+    LOG.error(message)
+    return null
   }
-  val pythonPathEntriesOnTarget = uploads.map { it.targetPath }
+
+  val uploads = pythonPathEntries.mapNotNull { pythonPathEntry ->
+    pythonPathEntry
+      .tryResolveAsPythonHelperDir(pythonHelpersMappings)
+      .onResolutionFailure(message = "$pythonPathEntry cannot be resolved against Python helpers roots: ${pythonHelpersRoots}")
+  }
+  val pythonPathEntriesOnTarget = uploads.map { it.targetPathFun }
   val pythonPathValue = pythonPathEntriesOnTarget.joinToStringFunction(separator = targetPathSeparator.toString())
-  appendToPythonPath(pythonPathValue, targetPlatform)
+  appendToPythonPath(envs, pythonPathValue, targetPlatform)
   return uploads
 }
 
@@ -221,7 +252,7 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
  */
 fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
-    if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
+    if (uploadVolumes.none { basePath.startsWith(it.localRootPath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }

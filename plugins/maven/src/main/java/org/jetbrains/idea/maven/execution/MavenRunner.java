@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,8 +28,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     return project.getService(MavenRunner.class);
   }
 
-  @Nullable
-  public static MavenRunner getInstanceIfCreated(@NotNull Project project) {
+  public static @Nullable MavenRunner getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenRunner.class);
   }
 
@@ -41,8 +41,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   @Override
-  @NotNull
-  public MavenRunnerSettings getState() {
+  public @NotNull MavenRunnerSettings getState() {
     return mySettings;
   }
 
@@ -52,7 +51,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   }
 
   public void run(final MavenRunnerParameters parameters, final MavenRunnerSettings settings, final Runnable onComplete) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ProgramRunner.Callback callback = descriptor -> {
       ProcessHandler handler = descriptor.getProcessHandler();
@@ -73,7 +72,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, null);
   }
@@ -81,7 +80,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach) {
     return runBatch(commands, coreSettings, runnerSettings, action, indicator, onAttach, false);
@@ -90,7 +89,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
   public boolean runBatch(List<MavenRunnerParameters> commands,
                           @Nullable MavenGeneralSettings coreSettings,
                           @Nullable MavenRunnerSettings runnerSettings,
-                          @Nullable final String action,
+                          final @Nullable String action,
                           @Nullable ProgressIndicator indicator,
                           @Nullable Consumer<? super ProcessHandler> onAttach,
                           boolean isDelegateBuild) {

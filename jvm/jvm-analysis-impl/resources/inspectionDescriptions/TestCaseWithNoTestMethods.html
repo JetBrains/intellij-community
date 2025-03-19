@@ -1,0 +1,16 @@
+<html>
+<body>
+Reports non-<code>abstract</code> test cases without any test methods. Such test cases usually indicate unfinished code or could be a
+refactoring leftover that should be removed.
+<p>Example:</p>
+<pre><code lang="java">
+  public class CrucialTest {
+    @Before
+    public void setUp() {
+      System.out.println("setting up");
+    }
+  }
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

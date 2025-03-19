@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,21 +27,18 @@ public class AllowedItemsResourceWeakRefStorage {
   private static final Logger LOG = Logger.getInstance(AllowedItemsResourceWeakRefStorage.class);
   private final Class<?> resourceHolder;
   private final String relativePath;
-  @NotNull
-  private WeakReference<Set<String>> itemsRef = new WeakReference<>(null);
+  private @NotNull WeakReference<Set<String>> itemsRef = new WeakReference<>(null);
 
   public AllowedItemsResourceWeakRefStorage(@NotNull Class<?> holder, @NotNull String path) {
     resourceHolder = holder;
     relativePath = path;
   }
 
-  @Nullable
-  protected String createValue(@NotNull String value) {
+  protected @Nullable String createValue(@NotNull String value) {
     return value.trim();
   }
 
-  @NotNull
-  protected Set<String> readItems() {
+  protected @NotNull @Unmodifiable Set<String> readItems() {
     try {
       InputStream resourceStream = resourceHolder.getResourceAsStream(relativePath);
       if (resourceStream == null) {
@@ -59,10 +57,10 @@ public class AllowedItemsResourceWeakRefStorage {
     return Collections.emptySet();
   }
 
-  @NotNull
-  public synchronized Set<String> getItems() {
+  public synchronized @NotNull @Unmodifiable Set<String> getItems() {
     Set<String> items = itemsRef.get();
     if (items == null) {
+      //noinspection RedundantUnmodifiable
       items = Collections.unmodifiableSet(readItems());
       itemsRef = new WeakReference<>(items);
     }

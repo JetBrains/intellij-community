@@ -4,9 +4,10 @@ package com.intellij.codeInsight.hints.declarative.impl
 import com.intellij.codeInsight.hints.declarative.CollapseState
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.junit.Assert
+import com.intellij.codeInsight.hints.declarative.TinyTreeDebugNode as DebugNode
 
 class PresentationTreeBuilderTest : UsefulTestCase() {
   fun testText() {
@@ -91,10 +92,30 @@ class PresentationTreeBuilderTest : UsefulTestCase() {
     }
     val tree = treeBuilder.complete()
     val debugTree = DebugNode.buildDebugTree(tree)
-    val firstNode = DebugNode<Any?>(InlayTags.TEXT_TAG, "a".repeat(30) + "...", mutableListOf())
+    val firstNode = DebugNode<Any?>(InlayTags.TEXT_TAG, "a".repeat(30) + "…", mutableListOf())
     val root = DebugNode(InlayTags.LIST_TAG, null, mutableListOf(firstNode))
     TestCase.assertEquals(root, debugTree)
   }
 
   // TODO add tests when there is too long text
+
+  fun testCollapsedWithTooManyChildren() {
+    val treeBuilder = PresentationTreeBuilderImpl.createRoot()
+    with(treeBuilder) {
+      collapsibleList(
+        CollapseState.Collapsed,
+        expandedState = {
+          repeat(PresentationTreeBuilderImpl.MAX_NODE_COUNT) {
+            text("text $it")
+          }
+        },
+        collapsedState = {
+          text("...")
+        }
+      )
+    }
+    val tree = treeBuilder.complete()
+    val entries = PresentationEntryBuilder(tree, PresentationTreeBuilderTest::class.java).buildPresentationEntries()
+    Assert.assertArrayEquals(arrayOf(TextInlayPresentationEntry("...", -1, null)), entries)
+  }
 }

@@ -6,8 +6,8 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.junit.Assert
 
 @JvmField
@@ -19,7 +19,6 @@ fun testCompletion(
     complete: (CompletionType, Int) -> Array<LookupElement>?,
     defaultCompletionType: CompletionType = CompletionType.BASIC,
     defaultInvocationCount: Int = 0,
-    ignoreProperties: Collection<String> = emptyList(),
     additionalValidDirectives: Collection<String> = emptyList()
 ) {
     testWithAutoCompleteSetting(fileText) {
@@ -38,8 +37,8 @@ fun testCompletion(
             "Should be some assertions about completion",
             expected.size != 0 || unexpected.size != 0 || itemsNumber != null || nothingElse
         )
-        ExpectedCompletionUtils.assertContainsRenderedItems(expected, items, ExpectedCompletionUtils.isWithOrder(fileText), nothingElse, ignoreProperties)
-        ExpectedCompletionUtils.assertNotContainsRenderedItems(unexpected, items, ignoreProperties)
+        ExpectedCompletionUtils.assertContainsRenderedItems(expected, items, ExpectedCompletionUtils.isWithOrder(fileText), nothingElse)
+        ExpectedCompletionUtils.assertNotContainsRenderedItems(unexpected, items)
 
         if (itemsNumber != null) {
             val expectedItems = ExpectedCompletionUtils.listToString(ExpectedCompletionUtils.getItemsInformation(items))
@@ -48,7 +47,7 @@ fun testCompletion(
     }
 }
 
-internal fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
+fun testWithAutoCompleteSetting(fileText: String, doTest: () -> Unit) {
     val autoComplete = ExpectedCompletionUtils.getAutocompleteSetting(fileText) ?: false
 
     val settings = CodeInsightSettings.getInstance()

@@ -4,17 +4,23 @@ package org.jetbrains.ide
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asSafely
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.delete
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.addCommonHeaders
 import java.nio.file.Files
@@ -59,6 +65,11 @@ interface ToolboxServiceHandler<T> {
     request: T,
     onResult: (JsonElement) -> Unit,
   )
+
+  /**
+   * Check if a given HTTP method is supported by this specific handler
+   */
+  fun isMethodSupported(method: HttpMethod): Boolean = method == HttpMethod.POST
 }
 
 private fun findToolboxHandlerByUri(requestUri: String): ToolboxServiceHandler<*>? = toolboxHandlerEP.findFirstSafe {
@@ -82,19 +93,27 @@ private fun <T> wrapHandler(handler: ToolboxServiceHandler<T>, request: JsonElem
   }
 }
 
-internal class ToolboxRestServiceConfig : Disposable {
-  override fun dispose() = Unit
+internal class ToolboxRestLauncher : ApplicationActivity {
+  override suspend fun execute() {
+    serviceAsync<ToolboxRestServiceConfig>()
+  }
+}
 
+@Service(Service.Level.APP)
+@OptIn(AwaitCancellationAndInvoke::class)
+internal class ToolboxRestServiceConfig(cs: CoroutineScope) {
   init {
     val toolboxPortFilePath = System.getProperty("toolbox.notification.portFile")
     if (toolboxPortFilePath != null) {
-      AppExecutorUtil.getAppExecutorService().submit {
-        val server = BuiltInServerManager.getInstance()
+      cs.launch {
+        val server = serviceAsync<BuiltInServerManager>()
         val port = server.waitForStart().port
         val portFile = Path.of(toolboxPortFilePath)
+
         runCatching { Files.createDirectories(portFile.parent) }
         runCatching { portFile.writeText("$port") }
-        Disposer.register(this) {
+
+        cs.awaitCancellationAndInvoke {
           runCatching { portFile.delete() }
         }
       }
@@ -103,19 +122,16 @@ internal class ToolboxRestServiceConfig : Disposable {
 }
 
 internal class ToolboxRestService : RestService() {
-  internal companion object {
-    private val LOG = logger<ToolboxRestService>()
-  }
-
   override fun getServiceName() = "toolbox"
 
   override fun isSupported(request: FullHttpRequest): Boolean {
     val requestUri = request.uri().substringBefore('?')
-    if (findToolboxHandlerByUri(requestUri) == null) return false
-    return super.isSupported(request)
+    val handler = findToolboxHandlerByUri(requestUri)
+    if (handler == null) return false
+    return handler.isMethodSupported(request.method()) && super.isSupported(request)
   }
 
-  override fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST
+  override fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST || method == HttpMethod.GET
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val channel = context.channel()

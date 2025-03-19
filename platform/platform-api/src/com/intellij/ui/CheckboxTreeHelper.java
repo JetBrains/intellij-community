@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
@@ -33,7 +33,7 @@ public class CheckboxTreeHelper {
     myEventDispatcher = dispatcher;
   }
 
-  public void initTree(@NotNull final Tree tree, JComponent mainComponent, CheckboxTreeBase.CheckboxTreeCellRendererBase cellRenderer) {
+  public void initTree(final @NotNull Tree tree, JComponent mainComponent, CheckboxTreeBase.CheckboxTreeCellRendererBase cellRenderer) {
     removeTreeListeners(mainComponent);
     tree.setCellRenderer(cellRenderer);
     tree.setRootVisible(false);
@@ -127,16 +127,25 @@ public class CheckboxTreeHelper {
       @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (isToggleEvent(e, mainComponent)) {
+          TreePath[] selectionPaths = tree.getSelectionPaths();
+          if (selectionPaths == null || selectionPaths.length == 0) return;
+
           TreePath treePath = tree.getLeadSelectionPath();
           if (treePath == null) return;
+
+          int nodesToChange = selectionPaths.length - 1;
+          if (!tree.isPathSelected(treePath)) {
+            treePath = selectionPaths[nodesToChange];
+            nodesToChange--;
+          }
+
           final Object o = treePath.getLastPathComponent();
           if (!(o instanceof CheckedTreeNode firstNode)) return;
           if (!firstNode.isEnabled()) return;
           toggleNode(tree, firstNode);
           boolean checked = firstNode.isChecked();
 
-          TreePath[] selectionPaths = tree.getSelectionPaths();
-          for (int i = 0; selectionPaths != null && i < selectionPaths.length; i++) {
+          for (int i = 0; i <= nodesToChange; i++) {
             final TreePath selectionPath = selectionPaths[i];
             final Object o1 = selectionPath.getLastPathComponent();
             if (!(o1 instanceof CheckedTreeNode node)) continue;
@@ -171,7 +180,8 @@ public class CheckboxTreeHelper {
 
         if (checkBounds.height == 0) checkBounds.height = checkBounds.width = rowBounds.height;
 
-        if (checkBounds.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
+        Rectangle clickableArea = myCheckPolicy.checkByRowClick? rowBounds: checkBounds;
+        if (clickableArea.contains(e.getPoint()) && cellRenderer.myCheckbox.isVisible()) {
           if (node.isEnabled()) {
             toggleNode(tree, node);
             tree.setSelectionRow(row);
@@ -195,7 +205,7 @@ public class CheckboxTreeHelper {
     if (remover != null) remover.run();
   }
 
-  public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<? super T> filter, final TreeModel model) {
+  public static <T> T[] getCheckedNodes(final Class<T> nodeType, final @Nullable Tree.NodeFilter<? super T> filter, final TreeModel model) {
     final ArrayList<T> nodes = new ArrayList<>();
     final Object root = model.getRoot();
     if (!(root instanceof CheckedTreeNode)) {

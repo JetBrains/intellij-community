@@ -6,8 +6,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
-import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import java.util.*
 
 fun project(name: String = "project",
@@ -125,7 +125,7 @@ class Module : NamedNode<ModuleData>("module") {
       props["moduleFileDirectoryPath"] = value
     }
 
-  val moduleData by lazy { ModuleData(name, systemId, ModuleTypeId.JAVA_MODULE, name, moduleFileDirectoryPath, externalProjectPath) }
+  val moduleData by lazy { ModuleData(name, systemId, JAVA_MODULE_ENTITY_TYPE_ID_NAME, name, moduleFileDirectoryPath, externalProjectPath) }
 
   fun module(name: String = "module",
              externalProjectPath: String,

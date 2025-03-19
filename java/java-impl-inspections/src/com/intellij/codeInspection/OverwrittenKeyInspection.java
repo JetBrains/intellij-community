@@ -1,23 +1,21 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +27,7 @@ import java.util.function.Function;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher SET_ADD =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_SET, "add").parameterCount(1);
   private static final CallMatcher MAP_PUT =
@@ -46,9 +44,8 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static final CallMatcher MAP_ENTRY =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "entry");
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new OverwrittenKeyVisitor(holder);
   }
 
@@ -170,7 +167,7 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
           PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(nextCall.getMethodExpression()));
         if (nextQualifier == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier, nextQualifier)) break;
         if (qualifierVar != null && VariableAccessUtils.variableIsUsed(qualifierVar, nextCall.getArgumentList())) break;
-        PsiExpression nextArg = nextCall.getArgumentList().getExpressions()[0];
+        PsiExpression nextArg = ArrayUtil.getFirstElement(nextCall.getArgumentList().getExpressions());
         Object nextKey = getKey(nextArg);
         if (nextKey != null) {
           map.computeIfAbsent(nextKey, k -> new ArrayList<>()).add(nextArg);
@@ -197,13 +194,15 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
         for (int i = 0; i < args.size(); i++) {
           PsiExpression arg = args.get(i);
           PsiExpression nextArg = args.get((i + 1) % args.size());
-          LocalQuickFix fix = new NavigateToDuplicateFix(nextArg);
+          LocalQuickFix fix = new NavigateToDuplicateExpressionFix(nextArg);
           myHolder.registerProblem(arg, message, fix);
         }
       }
     }
 
+    @Contract("null -> null")
     private static Object getKey(PsiExpression key) {
+      if (key == null) return null;
       key = PsiUtil.skipParenthesizedExprDown(key);
       Object constant = ExpressionUtils.computeConstantExpression(key);
       if (constant != null) {
@@ -219,40 +218,13 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
           }
           if (PsiUtil.isJvmLocalVariable(var)) {
             PsiElement scope = PsiUtil.getVariableCodeBlock(var, null);
-            if (scope != null && HighlightControlFlowUtil.isEffectivelyFinal(var, scope, null)) {
+            if (scope != null && ControlFlowUtil.isEffectivelyFinal(var, scope)) {
               return var;
             }
           }
         }
       }
       return null;
-    }
-  }
-
-  private static class NavigateToDuplicateFix extends ModCommandQuickFix {
-    private final SmartPsiElementPointer<PsiExpression> myPointer;
-
-    NavigateToDuplicateFix(PsiExpression arg) {
-      myPointer = SmartPointerManager.getInstance(arg.getProject()).createSmartPsiElementPointer(arg);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return JavaBundle.message("navigate.to.duplicate.fix");
-    }
-
-    @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression element = myPointer.getElement();
-      if (element == null) return ModCommands.nop();
-      return ModCommands.select(element);
-    }
-
-    @Override
-    public boolean availableInBatchMode() {
-      return false;
     }
   }
 }

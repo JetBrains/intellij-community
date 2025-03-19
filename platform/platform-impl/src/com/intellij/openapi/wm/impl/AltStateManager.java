@@ -3,12 +3,14 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class AltStateManager implements AWTEventListener {
 
   private static final AltStateManager ourInstance;

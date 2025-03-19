@@ -42,14 +42,14 @@ public class PsiArrayInitializerMemberValueImpl extends CompositePsiElement impl
     LOG.assertTrue(ChildRole.isUnique(role));
 
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.LBRACE:
         return findChildByType(JavaTokenType.LBRACE);
 
       case ChildRole.RBRACE:
         return findChildByType(JavaTokenType.RBRACE);
+
+      default:
+        return null;
     }
   }
 

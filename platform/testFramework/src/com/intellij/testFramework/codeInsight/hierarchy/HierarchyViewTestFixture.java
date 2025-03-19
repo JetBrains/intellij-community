@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.codeInsight.hierarchy;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -6,7 +6,7 @@ import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ public final class HierarchyViewTestFixture {
    * @param treeStructure tree structure to check
    * @param expectedFile an XML file containing expected structure
    * @throws IOException if expectedFile reading failed
-   * @throws FileComparisonFailure if content doesn't match
+   * @throws FileComparisonFailedError if content doesn't match
    */
   public static void doHierarchyTest(@NotNull HierarchyTreeStructure treeStructure,
                                      @NotNull File expectedFile) throws IOException {
@@ -63,20 +63,20 @@ public final class HierarchyViewTestFixture {
     catch (Throwable e) {
       String actual = dump(treeStructure, null, comparator, 0);
       if (!expectedStructure.equals(actual)) {
-        throw new FileComparisonFailure("XML structure comparison for your convenience, actual failure details BELOW",
-                                        expectedStructure, actual,
-                                        expectedFile == null ? null : expectedFile.getAbsolutePath());
+        throw new FileComparisonFailedError("XML structure comparison for your convenience, actual failure details BELOW",
+                                            expectedStructure, actual,
+                                            expectedFile == null ? null : expectedFile.getAbsolutePath());
       }
       throw new RuntimeException(e);
     }
+    //System.out.println(dump(treeStructure, null, comparator, 0));
     checkHierarchyTreeStructure(treeStructure, element, comparator);
   }
 
-  @NotNull
-  public static String dump(@NotNull HierarchyTreeStructure treeStructure,
-                            @Nullable HierarchyNodeDescriptor descriptor,
-                            @Nullable Comparator<? super NodeDescriptor<?>> comparator,
-                            int level) {
+  public static @NotNull String dump(@NotNull HierarchyTreeStructure treeStructure,
+                                     @Nullable HierarchyNodeDescriptor descriptor,
+                                     @Nullable Comparator<? super NodeDescriptor<?>> comparator,
+                                     int level) {
     StringBuilder s = new StringBuilder();
     dump(treeStructure, descriptor, comparator,level, s);
     return s.toString();
@@ -113,10 +113,9 @@ public final class HierarchyViewTestFixture {
     }
   }
 
-  @NotNull
-  private static Object @NotNull [] getSortedChildren(@NotNull HierarchyTreeStructure treeStructure,
-                                                      @NotNull HierarchyNodeDescriptor descriptor,
-                                                      @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
+  private static @NotNull Object @NotNull [] getSortedChildren(@NotNull HierarchyTreeStructure treeStructure,
+                                                               @NotNull HierarchyNodeDescriptor descriptor,
+                                                               @Nullable Comparator<? super NodeDescriptor<?>> comparator) {
     Object[] children = treeStructure.getChildElements(descriptor);
     if (comparator == null) comparator = Comparator.comparingInt(NodeDescriptor::getIndex);
     Arrays.sort(children, (Comparator)comparator);

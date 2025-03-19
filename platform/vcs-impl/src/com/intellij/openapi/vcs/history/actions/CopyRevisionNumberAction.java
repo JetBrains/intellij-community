@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -39,15 +25,13 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
     CopyPasteManager.getInstance().setContents(new StringSelection(getHashesAsString(revisions)));
   }
 
-  @NotNull
-  private static List<VcsRevisionNumber> getRevisionNumbersFromContext(@NotNull AnActionEvent e) {
+  private static @NotNull List<VcsRevisionNumber> getRevisionNumbersFromContext(@NotNull AnActionEvent e) {
     VcsRevisionNumber[] revisionNumbers = e.getData(VcsDataKeys.VCS_REVISION_NUMBERS);
 
     return revisionNumbers != null ? Arrays.asList(revisionNumbers) : Collections.emptyList();
   }
 
-  @NotNull
-  private static String getHashesAsString(@NotNull List<? extends VcsRevisionNumber> revisions) {
+  private static @NotNull String getHashesAsString(@NotNull List<? extends VcsRevisionNumber> revisions) {
     return StringUtil.join(revisions, VcsRevisionNumber::asString, " ");
   }
 

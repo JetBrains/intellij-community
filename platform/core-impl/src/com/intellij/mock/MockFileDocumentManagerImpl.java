@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.editor.Document;
@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import java.util.function.Predicate;
 public class MockFileDocumentManagerImpl extends FileDocumentManager {
   private static final Key<VirtualFile> MOCK_VIRTUAL_FILE_KEY = Key.create("MockVirtualFile");
   private final Function<? super CharSequence, ? extends Document> myFactory;
-  @Nullable private final Key<Document> myCachedDocumentKey;
+  private final @Nullable Key<Document> myCachedDocumentKey;
 
   public MockFileDocumentManagerImpl(@Nullable Key<Document> cachedDocumentKey,
                                      @NotNull Function<? super CharSequence, ? extends Document> factory) {
@@ -35,16 +36,13 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
 
   @Override
   public Document getDocument(@NotNull VirtualFile file) {
-    Document document = file.getUserData(MOCK_DOC_KEY);
-    if (document == null) {
-      if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
-
+    if (file.isDirectory() || isBinaryWithoutDecompiler(file)) return null;
+    return ConcurrencyUtil.computeIfAbsent(file, MOCK_DOC_KEY, () -> {
       CharSequence text = LoadTextUtil.loadText(file);
-      document = myFactory.fun(text);
+      Document document = myFactory.fun(text);
       document.putUserData(MOCK_VIRTUAL_FILE_KEY, file);
-      document = file.putUserDataIfAbsent(MOCK_DOC_KEY, document);
-    }
-    return document;
+      return document;
+    });
   }
 
   @Override
@@ -52,7 +50,7 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
     if (myCachedDocumentKey != null) {
       return file.getUserData(myCachedDocumentKey);
     }
-    return null;
+    return file.getUserData(MOCK_DOC_KEY);
   }
 
   @Override
@@ -101,12 +99,15 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
+  public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
+  }
+
+  @Override
   public void reloadFiles(final VirtualFile @NotNull ... files) {
   }
 
   @Override
-  @NotNull
-  public String getLineSeparator(VirtualFile file, Project project) {
+  public @NotNull String getLineSeparator(VirtualFile file, Project project) {
     return "";
   }
 

@@ -12,7 +12,6 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus
 
 private const val EXTENSION_POINT_NAME = "com.intellij.grazie.grammar.strategy"
 

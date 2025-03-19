@@ -8,9 +8,6 @@
 + -org-jetbrains-plugins-terminal-
 + -org-editorconfig-editorconfigjetbrains-
 + -com-intellij-gradle-
-+ -com-intellij-idea-clion-
-+ -com-intellij-clion-gradle-
-+ -com-intellij-CloudConfig-
 + -XPathView-
 + -hg4idea-
 + -org-jetbrains-plugins-textmate-
@@ -19,8 +16,6 @@
 + -com-jetbrains-plugins-webDeployment-
 + -org-jetbrains-plugins-yaml-
 + -com-intellij-lang-puppet-
-+ -org-jetbrains-plugins-linkerscript-
-+ -com-intellij-clion-embedded-
 + -org-jetbrains-plugins-remote-run-
 + -com-intellij-copyright-
 + -com-intellij-java-
@@ -54,7 +49,6 @@
 + -org-jetbrains-plugins-sass-
 + -W3Validators-
 + -org-intellij-plugins-postcss-
-+ -com-jetbrains-clion-plugins-webDeployment-
 + -com-intellij-reactivestreams-
 + -org-intellij-intelliLang-
 + -org-jetbrains-plugins-javaFX-
@@ -68,8 +62,8 @@
 + -tslint-
 + -com-jetbrains-plugins-yeoman-
 + -intellij-prettierJS-
++ -com.intellij.angularjs-
 + -com-intellij-plugins-webcomponents-
-+ -org-jetbrains-plugins-cidr-intelliLang-
 + -Error-prone plugin-
 + -org-jetbrains-settingsRepository-
 + -JSIntentionPowerPack-
@@ -86,20 +80,16 @@
 + -cucumber-groovy-
 + -com-jetbrains-php-framework-
 + -com-intellij-guice-
-+ -org-jetbrains-plugins-clangConfig-
 + -com-intellij-database-
 + -com-intellij-persistence-
 + -com-jetbrains-performancePlugin-
 + -com-intellij-phing-
 + -org-intellij-plugins-markdown-
-+ -com-intellij-cidr-markdown-
-+ -com-intellij-clion-compdb-
 + -com-intellij-java-ide-
 + -org-jetbrains-plugins-github-
 + -com-android-tools-idea-smali-
 + -AngularJS-
 + -com-jetbrains-sh-
-+ -org-jetbrains-plugins-clangFormat-
 + -org-jetbrains-idea-maven-
 + -Osmorc-
 + -com-intellij-flex-
@@ -126,7 +116,6 @@
 + -JSR45Plugin-
 + -com-intellij-jsf-
 + -com-intellij-spring-
-+ -CloudFoundry-
 + -com-intellij-spring-osgi-
 + -com-intellij-spring-security-
 + -com-intellij-thymeleaf-
@@ -144,7 +133,6 @@
 + -com-intellij-jboss-core-
 + -com-intellij-drools-
 + -com-intellij-jboss-arquillian-
-+ -com-intellij-tcserver-
 + -JavaScriptDebugger-
 + -org-jetbrains-plugins-vue-
 + -com-intellij-gwt-
@@ -165,12 +153,12 @@
 + -org-intellij-grails-
 
 
-Plugin Jupyter Notebook requires plugin com.intellij.modules.pycharm to be installed
-Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
-Plugin Python Docker requires plugin com.intellij.modules.pycharm.professional to be installed
-Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python SSH Interpreter requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Python WSL Support requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Jupyter Notebook requires plugin com.intellij.modules.pycharm to be installed
+Plugin Python BDD support for engines, based on Gherkin (cucumber, behave) requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Python pytest-bdd support requires plugin com.intellij.modules.pycharm.professional to be installed
 Plugin Concurrency Visualiser requires plugin com.intellij.modules.pycharm.professional to be installed
+Plugin Python Docker requires plugin com.intellij.modules.pycharm.professional to be installed
 <a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

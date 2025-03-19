@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.highlighting.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-highlighting-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-highlighting-shared",
+  module_name = "kotlin.highlighting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "@lib//:jetbrains-markdown",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "@lib//:kotlinc-analysis-api",
+  ],
+  exports = ["//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal"],
+  runtime_deps = [":kotlin-highlighting-shared_resources"]
+)
+### auto-generated section `build kotlin.highlighting.shared` end

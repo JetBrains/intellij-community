@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * @author Alexander Lobas
  */
-public class LinkPanel {
+public final class LinkPanel {
   private final JLabel myTextLabel = new JLabel();
   private final JLabel myLinkLabel;
   private Runnable myRunnable;
@@ -36,8 +36,7 @@ public class LinkPanel {
     this(parent, true, tiny, null, null);
   }
 
-  @NotNull
-  private JLabel createLink(boolean icon) {
+  private @NotNull JLabel createLink(boolean icon) {
     LinkLabel<Object> linkLabel = new LinkLabel<>(null, icon ? AllIcons.Ide.External_link_arrow : null, (__, ___) -> myRunnable.run());
     linkLabel.setIconTextGap(0);
     linkLabel.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -66,6 +65,15 @@ public class LinkPanel {
       String url = urlProvider.get();
       BrowserUtil.browse(addAugments ? IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url) : url);
     });
+  }
+
+  public void showWithBrowseUrl(@NotNull @Nls String text,
+                                @NotNull @Nls String linkText,
+                                boolean addAugments,
+                                @NotNull Supplier<String> urlProvider) {
+    showWithBrowseUrl(linkText, addAugments, urlProvider);
+    myTextLabel.setText(text);
+    myTextLabel.setVisible(true);
   }
 
   public void hide() {

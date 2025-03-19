@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
 
 public class AddAnnotationTargetFix extends PsiBasedModCommandAction<PsiAnnotation> {
-  @NotNull private final PsiAnnotation.TargetType myTarget;
+  private final @NotNull PsiAnnotation.TargetType myTarget;
 
   public AddAnnotationTargetFix(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType target) {
     super(annotation);
@@ -29,8 +29,8 @@ public class AddAnnotationTargetFix extends PsiBasedModCommandAction<PsiAnnotati
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiAnnotation annotation) {
     PsiClass origAnnoType = annotation.resolveAnnotationType();
-    if (origAnnoType == null) return ModCommands.nop();
-    return ModCommands.psiUpdate(origAnnoType, annotationType -> {
+    if (origAnnoType == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(origAnnoType, annotationType -> {
       PsiModifierList modifierList = annotationType.getModifierList();
       if (modifierList == null) return;
       PsiAnnotation targetAnnotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);

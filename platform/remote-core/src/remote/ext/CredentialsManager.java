@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,34 +17,33 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public abstract class CredentialsManager {
-
   public static CredentialsManager getInstance() {
     return ApplicationManager.getApplication().getService(CredentialsManager.class);
   }
 
   public abstract List<CredentialsType<?>> getAllTypes();
 
-  public abstract void loadCredentials(String interpreterPath,
-                                       @Nullable Element element,
-                                       RemoteSdkAdditionalData data);
+  public abstract void loadCredentials(String interpreterPath, @Nullable Element element, RemoteSdkAdditionalData data);
 
-  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData<?> data, @Nullable Project project) {
+  public static void updateOutdatedSdk(@NotNull RemoteSdkAdditionalData data, @Nullable Project project) {
     if (!(data.getRemoteConnectionType() instanceof OutdatedCredentialsType)) {
       return;
     }
-    //noinspection unchecked
-    Pair<CredentialsType<Object>, Object> pair = ((OutdatedCredentialsType)data.getRemoteConnectionType())
+    @SuppressWarnings({"unchecked", "rawtypes"}) Pair<CredentialsType<Object>, Object> pair = ((OutdatedCredentialsType)data.getRemoteConnectionType())
       .transformToNewerType(data.connectionCredentials().getCredentials(), project);
     data.setCredentials(pair.getFirst().getCredentialsKey(), pair.getSecond());
   }
 
-  public static void recogniseCredentialType(@NotNull Stream<? extends SdkAdditionalData> additionalData,
-                                             @NotNull CredentialsType<?> credentialsType) {
+  public static void recogniseCredentialType(
+    @NotNull Stream<? extends SdkAdditionalData> additionalData,
+    @NotNull CredentialsType<?> credentialsType
+  ) {
     additionalData.forEach(data -> recogniseCredentialType(data, credentialsType));
   }
 
-  private static void recogniseCredentialType(@Nullable SdkAdditionalData additionalData, @NotNull CredentialsType credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private static void recogniseCredentialType(@Nullable SdkAdditionalData additionalData, CredentialsType credentialsType) {
+    if (!(additionalData instanceof RemoteSdkAdditionalData data)) return;
     if (data.getRemoteConnectionType() != CredentialsType.UNKNOWN) return;
 
     String credentialsId = data.connectionCredentials().getId();
@@ -57,20 +56,22 @@ public abstract class CredentialsManager {
     try {
       credentialsType.getHandler(credentials).load(root);
     }
-    catch (CredentialsCantBeLoaded e) {
+    catch (CannotLoadCredentialsException e) {
       Logger.getInstance(CredentialsManager.class).warn(e);
       return;
     }
     data.setCredentials(credentialsType.getCredentialsKey(), credentials);
   }
 
-  public static void forgetCredentialType(@NotNull Stream<? extends SdkAdditionalData> additionalData,
-                                          @NotNull CredentialsType<?> credentialsType) {
+  public static void forgetCredentialType(
+    @NotNull Stream<? extends SdkAdditionalData> additionalData,
+    @NotNull CredentialsType<?> credentialsType
+  ) {
     additionalData.forEach(data -> forgetCredentialType(data, credentialsType));
   }
 
-  private static void forgetCredentialType(@Nullable SdkAdditionalData additionalData, @NotNull CredentialsType<?> credentialsType) {
-    if (!(additionalData instanceof RemoteSdkAdditionalData<?> data)) return;
+  private static void forgetCredentialType(@Nullable SdkAdditionalData additionalData, CredentialsType<?> credentialsType) {
+    if (!(additionalData instanceof RemoteSdkAdditionalData data)) return;
     if (data.getRemoteConnectionType() != credentialsType) return;
     Element root = new Element("root");
     data.connectionCredentials().save(root);
@@ -80,7 +81,7 @@ public abstract class CredentialsManager {
     try {
       CredentialsType.UNKNOWN.getHandler(unknownCredentials).load(root);
     }
-    catch (CredentialsCantBeLoaded e) {
+    catch (CannotLoadCredentialsException e) {
       Logger.getInstance(CredentialsManager.class).warn(e);
     }
     data.setCredentials(CredentialsType.UNKNOWN.getCredentialsKey(), unknownCredentials);

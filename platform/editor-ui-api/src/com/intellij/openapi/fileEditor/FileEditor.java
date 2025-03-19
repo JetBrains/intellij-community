@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -10,30 +10,32 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {
+
+  FileEditor[] EMPTY_ARRAY = {};
+
   /**
    * @see #isModified()
    */
-  String PROP_MODIFIED = "modified";
+  static @NotNull String getPropModified() {
+    return "modified";
+  }
+
   /**
    * @see #isValid()
    */
-  String PROP_VALID = "valid";
-
-  FileEditor[] EMPTY_ARRAY = {};
+  static @NotNull String getPropValid() {
+    return "valid";
+  }
 
   /**
    * Returns a component which represents the editor in UI.
@@ -64,8 +66,8 @@ public interface FileEditor extends UserDataHolder, Disposable {
   void setState(@NotNull FileEditorState state);
 
   /**
-   * In some cases, it's desirable to set state exactly as requested (e.g. on tab splitting), while in other cases different behaviour is
-   * preferred, e.g. bringing caret into view on text editor opening.
+   * In some cases, it's desirable to set state exactly as requested (e.g., on tab splitting), while in other cases different behavior is
+   * preferred, e.g., bringing caret into view on text editor opening.
    * This method passes an additional flag to {@link FileEditor} to indicate the desired way to set state.
    */
   default void setState(@NotNull FileEditorState state, boolean exactState) {
@@ -144,7 +146,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   /**
    * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler} should be called on frame activation.
    */
-  default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
+  default @Unmodifiable @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
     return ContainerUtil.createMaybeSingletonList(file);
   }

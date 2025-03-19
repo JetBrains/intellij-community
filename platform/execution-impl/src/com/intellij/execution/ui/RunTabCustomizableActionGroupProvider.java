@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider;
 
-public class RunTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
+final class RunTabCustomizableActionGroupProvider extends CustomizableActionGroupProvider {
   @Override
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
     if (UIExperiment.isNewDebuggerUIEnabled()) {

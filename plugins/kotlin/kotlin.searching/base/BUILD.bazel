@@ -1,0 +1,44 @@
+### auto-generated section `build kotlin.searching.base` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+jvm_library(
+  name = "base",
+  module_name = "kotlin.searching.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/analysis-impl",
+    "//platform/usageView",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//platform/ide-core",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//java/java-analysis-api:analysis",
+    "//platform/platform-impl:ide-impl",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+  ]
+)
+### auto-generated section `build kotlin.searching.base` end

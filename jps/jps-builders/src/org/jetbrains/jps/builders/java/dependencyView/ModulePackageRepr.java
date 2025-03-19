@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -11,10 +11,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class ModulePackageRepr extends Proto {
+final class ModulePackageRepr extends Proto {
   private static final DataExternalizer<Integer> INT_EXTERNALIZER = new DataExternalizer<Integer>() {
     @Override
     public void save(@NotNull DataOutput out, Integer value) throws IOException {
@@ -54,6 +51,7 @@ public final class ModulePackageRepr extends Proto {
     RW.save(myModuleNames, INT_EXTERNALIZER, out);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -64,6 +62,7 @@ public final class ModulePackageRepr extends Proto {
     return name == ((ModulePackageRepr)o).name;
   }
 
+  @Override
   public int hashCode() {
     return 31 * name;
   }

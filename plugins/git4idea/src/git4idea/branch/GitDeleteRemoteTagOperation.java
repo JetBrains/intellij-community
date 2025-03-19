@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -25,13 +25,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.TAG_REMOTE_DELETION_ERROR;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 class GitDeleteRemoteTagOperation extends GitBranchOperation {
-  @NotNull private final Map<GitRepository, String> myRepositories;
+  private final @NotNull Map<GitRepository, String> myRepositories;
   private final String myTagName;
 
   GitDeleteRemoteTagOperation(@NotNull Project project, @NotNull Git git,
@@ -117,7 +116,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
   }
 
   private void notifySuccessWithEmptyTitle(@NotNull @NlsContexts.NotificationContent String message) {
-    Notification notification = STANDARD_NOTIFICATION.createNotification(message, NotificationType.INFORMATION);
+    Notification notification = VcsNotifier.standardNotification().createNotification(message, NotificationType.INFORMATION);
     notification.setDisplayId(GitNotificationIdsHolder.TAG_REMOTE_DELETION_SUCCESS);
     VcsNotifier.getInstance(myProject).notify(notification);
   }
@@ -127,21 +126,18 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getSuccessMessage() {
+  protected @NotNull String getSuccessMessage() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getRollbackProposal() {
+  protected @NotNull String getRollbackProposal() {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  protected String getOperationName() {
+  protected @NotNull String getOperationName() {
     throw new UnsupportedOperationException();
   }
 }

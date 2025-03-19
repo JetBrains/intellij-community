@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -15,13 +14,12 @@ import java.util.Collection;
 /**
  * @author Plushnikov Michail
  */
-public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJavaInspectionBase {
+public final class SpringQualifierCopyableLombokAnnotationInspection extends LombokJavaInspectionBase {
 
   private static final String SPRING_QUALIFIER_FQN = "org.springframework.beans.factory.annotation.Qualifier";
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new LombokElementVisitor(holder);
   }
 
@@ -50,8 +48,7 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
               if (!configuredCopyableAnnotations.contains(SPRING_QUALIFIER_FQN)) {
                 holder.registerProblem(annotation,
                                        LombokBundle.message("inspection.message.annotation.not.lombok.copyable",
-                                                            SPRING_QUALIFIER_FQN),
-                                       ProblemHighlightType.WARNING);
+                                                            SPRING_QUALIFIER_FQN));
               }
             }
           }

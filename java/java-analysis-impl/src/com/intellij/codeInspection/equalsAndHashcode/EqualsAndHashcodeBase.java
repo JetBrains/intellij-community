@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -19,8 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     final Project project = holder.getProject();
     Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -33,7 +32,7 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
       PsiMethod myEquals = null;
       PsiMethod myHashCode = null;
       for (PsiMethod method : methods) {
-        @NonNls final String name = method.getName();
+        final @NonNls String name = method.getName();
         if ("equals".equals(name)) {
           myEquals = method;
         }
@@ -89,14 +88,12 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "EqualsAndHashcode";
   }
 

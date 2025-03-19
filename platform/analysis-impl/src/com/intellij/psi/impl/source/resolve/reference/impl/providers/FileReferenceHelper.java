@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -31,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +52,7 @@ public abstract class FileReferenceHelper {
    */
   @ApiStatus.Experimental
   public boolean processContexts(@NotNull FileReferenceSetParameters parameters,
-                                 @NotNull final VirtualFile hostFile,
+                                 final @NotNull VirtualFile hostFile,
                                  boolean bind,
                                  @NotNull Processor<? super PsiFileSystemItem> processor) {
     PsiElement element = parameters.getElement();
@@ -78,22 +65,20 @@ public abstract class FileReferenceHelper {
    *
    * @return roots, which could be used as the start resolution context.
    */
-  @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module, @NotNull VirtualFile hostFile) {
     return getRoots(module);
   }
 
   /**
    * @return true, if the helper can be applied
    */
-  public abstract boolean isMine(@NotNull Project project, @NotNull final VirtualFile hostFile);
+  public abstract boolean isMine(@NotNull Project project, final @NotNull VirtualFile hostFile);
 
   /**
    * @return root which should be used as the context while refactor.
    * Used only for {@link FileReferenceSet#isAbsolutePathReference()} references.
    */
-  @Nullable
-  public PsiFileSystemItem findRoot(@NotNull Project project, @NotNull final VirtualFile dstVFile) {
+  public @Nullable PsiFileSystemItem findRoot(@NotNull Project project, final @NotNull VirtualFile dstVFile) {
     return null;
   }
 
@@ -104,8 +89,7 @@ public abstract class FileReferenceHelper {
    * @see #processContexts(FileReferenceSetParameters, VirtualFile, boolean, Processor) for more generic processing
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called
    */
-  @NotNull
-  public Collection<PsiFileSystemItem> getContexts(@NotNull Project project, @NotNull final VirtualFile hostFile) {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getContexts(@NotNull Project project, final @NotNull VirtualFile hostFile) {
     return emptySet();
   }
 
@@ -141,8 +125,7 @@ public abstract class FileReferenceHelper {
    *
    * @apiNote before running this method {@link #isMine(Project, VirtualFile)} should be called.
    */
-  @NotNull
-  public Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
+  public @Unmodifiable @NotNull Collection<FileTargetContext> getTargetContexts(@NotNull Project project,
                                                          @NotNull VirtualFile hostFile,
                                                          boolean isAbsoluteReference) {
     if (isAbsoluteReference) {
@@ -157,8 +140,7 @@ public abstract class FileReferenceHelper {
     return ContainerUtil.map(getContexts(project, hostFile), FileTargetContext::new);
   }
 
-  @NotNull
-  public String trimUrl(@NotNull String url) {
+  public @NotNull String trimUrl(@NotNull String url) {
     return url;
   }
 
@@ -166,14 +148,12 @@ public abstract class FileReferenceHelper {
     return emptyList();
   }
 
-  @Nullable
-  public PsiFileSystemItem getPsiFileSystemItem(@NotNull Project project, @NotNull final VirtualFile file) {
+  public @Nullable PsiFileSystemItem getPsiFileSystemItem(@NotNull Project project, final @NotNull VirtualFile file) {
     final PsiManager psiManager = PsiManager.getInstance(project);
     return getPsiFileSystemItem(psiManager, file);
   }
 
-  @Nullable
-  public static PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager psiManager, @NotNull VirtualFile file) {
+  public static @Nullable PsiFileSystemItem getPsiFileSystemItem(@NotNull PsiManager psiManager, @NotNull VirtualFile file) {
     return file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
   }
 
@@ -181,8 +161,7 @@ public abstract class FileReferenceHelper {
    * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
    */
   @Deprecated
-  @NotNull
-  public Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return emptyList();
   }
 

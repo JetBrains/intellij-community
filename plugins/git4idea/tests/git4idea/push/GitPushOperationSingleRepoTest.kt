@@ -13,6 +13,8 @@ import com.intellij.openapi.vcs.update.FileGroup
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
+import git4idea.GitTag
+import git4idea.actions.tag.GitPushTagAction
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
@@ -26,6 +28,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import java.io.File
 import java.nio.file.Path
+import java.util.Locale
 import java.util.Collections.singletonMap
 
 class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
@@ -181,7 +184,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertResult(SUCCESS, 1, "master", "origin/master", GitUpdateResult.SUCCESS, result.results[repository]!!)
     cd(repository)
     val commitMessages = StringUtil.splitByLines(log("--pretty=%s"))
-    val mergeCommitsInTheLog = commitMessages.any { it.toLowerCase().contains("merge") }
+    val mergeCommitsInTheLog = commitMessages.any { it.lowercase(Locale.getDefault()).contains("merge") }
     assertFalse("Unexpected merge commits when rebase method is selected", mergeCommitsInTheLog)
   }
 
@@ -409,6 +412,49 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     assertEquals("refs/tags/v1", pushedTags[0])
   }
 
+  fun `test push single tag`() {
+    cd(repository)
+    git("tag v1")
+
+    updateRepositories()
+    val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
+    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val result = pushResult.results[repository]!!
+    val pushedTags = result.pushedTags
+    assertEquals(NEW_BRANCH, result.type)
+    assertEquals(1, pushedTags.size)
+    assertEquals("refs/tags/v1", pushedTags[0])
+
+    val secondPushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val secondResult = secondPushResult.results[repository]!!
+    assertEmpty(secondResult.pushedTags)
+    assertEquals(UP_TO_DATE, secondResult.type)
+  }
+
+  fun `test push existing tag`() {
+    cd(repository)
+    git("tag v1")
+    git("push origin refs/tags/v1")
+    git("tag --delete v1")
+    makeCommit("msg")
+    git("tag v1")
+
+    updateRepositories()
+    val spec = GitPushTagAction.preparePushSpec(GitTag("v1"), repository.remotes.first())
+    val pushResult = GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, false, false).execute()
+    val result = pushResult.results[repository]!!
+    val pushedTags = result.pushedTags
+    assertEquals(REJECTED_OTHER, result.type)
+    assertEmpty(pushedTags)
+  }
+
+  fun `test push with setting upstream`() {
+    push("master", "origin/feature", canChangeUpstream = true)
+    assertUpstream("master", "origin", "feature")
+    push("master", "origin/feature-1", canChangeUpstream = true)
+    assertUpstream("master", "origin", "feature-1")
+  }
+
   fun `test skip pre push hook`() {
     assumeTrue("Not testing: pre-push hooks are not supported in ${vcs.version}", GitVersionSpecialty.PRE_PUSH_HOOK.existsIn(vcs.version))
 
@@ -433,7 +479,8 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     settings.setAutoUpdateIfPushRejected(true)
 
     push("master", "origin/master")
-    assertFalse("Unexpected merge commit: rebase should have happened", log("-1 --pretty=%s").toLowerCase().startsWith("merge"))
+    assertFalse("Unexpected merge commit: rebase should have happened",
+                log("-1 --pretty=%s").lowercase(Locale.getDefault()).startsWith("merge"))
   }
 
   // there is no "branch default" choice in the rejected push dialog
@@ -455,12 +502,12 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     makeCommit("file.txt")
   }
 
-  private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false): GitPushResult {
+  private fun push(from: String, to: String, force: Boolean = false, skipHook: Boolean = false, canChangeUpstream: Boolean = false): GitPushResult {
     updateRepositories()
     refresh()
     updateChangeListManager()
 
-    val spec = makePushSpec(repository, from, to)
+    val spec = makePushSpec(repository, from, to, canChangeUpstream)
     return GitPushOperation(project, pushSupport, singletonMap(repository, spec), null, force, skipHook).execute()
   }
 

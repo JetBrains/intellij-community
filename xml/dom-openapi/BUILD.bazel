@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.xml.dom` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "dom_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "dom",
+  module_name = "intellij.xml.dom",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/openapi:xml",
+    "//platform/lang-api:lang",
+    "//platform/platform-api:ide",
+    "//platform/extensions",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":dom_resources"]
+)
+### auto-generated section `build intellij.xml.dom` end

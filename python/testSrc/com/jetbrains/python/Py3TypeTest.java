@@ -17,6 +17,93 @@ import java.util.Map;
 public class Py3TypeTest extends PyTestCase {
   public static final String TEST_DIRECTORY = "/types/";
 
+  // PY-21069
+  public void testDunderGetattr() {
+    doTest("MyClass", """
+      class MyClass:
+          def __getattr__(self, item) -> 'MyClass':
+              pass
+      
+      expr = MyClass().attr
+      """);
+  }
+
+  // PY-78964
+  public void testFunctionReturnTypeTryFinally() {
+    doTest("str",
+           """
+             def test():
+                 try:
+                     return 42
+                 finally:
+                     return "str"
+             
+                 return True
+             
+             expr = test()
+             """);
+  }
+
+  // PY-20710
+  public void testLambdaGenerator() {
+    doTest("Generator[int, Any, Any]", """
+              expr = (lambda: (yield 1))()
+             """);
+  }
+
+  // PY-20710
+  public void testGeneratorDelegatingToLambdaGenerator() {
+    doTest("Generator[int, Any, str]", """
+              def g():
+                  yield from (lambda: (yield 1))()
+                  return "foo"
+              expr = g()
+             """);
+  }
+
+  // PY-20710
+  public void testYieldExpressionTypeFromGeneratorSendTypeHint() {
+    doTest("int", """
+      from typing import Generator
+      
+      def g() -> Generator[str, int, None]:
+          expr = yield "foo"
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromExpressionTypeFromGeneratorReturnTypeHint() {
+    doTest("int", """
+      from typing import Generator, Any
+      
+      def delegate() -> Generator[None, Any, int]:
+          yield
+          return 42
+
+      def g():
+          expr = yield from delegate()
+      """);
+  }
+
+  // PY-20710
+  public void testYieldFromLambda() {
+    doTest("Generator[int | str, str | Any, bool]",
+           """
+           from typing import Generator
+           
+           def gen1() -> Generator[int, str, bool]:
+               yield 42
+               return True
+           
+           def gen2():
+               yield "str"
+               return True
+     
+           l = lambda: (yield from gen1()) or (yield from gen2())
+           expr = l()
+           """);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     doTest("str | int | float",
@@ -241,22 +328,22 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo')
@@ -264,7 +351,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenText() {
-    doTest("TextIO",
+    doTest("TextIOWrapper",
            """
              import io
              expr = io.open('foo', 'r')
@@ -272,7 +359,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testIoOpenBinary() {
-    doTest("BinaryIO",
+    doTest("BufferedReader",
            """
              import io
              expr = io.open('foo', 'rb')
@@ -323,7 +410,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-20770
   public void testAsyncGeneratorAsend() {
-    doTest("Awaitable[int]",
+    doTest("Coroutine[Any, Any, int]",
            """
              async def asyncgen():
                  yield 42
@@ -490,6 +577,118 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testIsEnumMember() {
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 if v is Answer.Yes or v is Answer.No:
+                     expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+             
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+
+             def foo(v: object):
+                 if v is not Answer.Yes and v is not Answer.No:
+                     raise ValueError("Invalid value")
+                 expr = v
+             """);
+    doTest("Literal[Answer.No, Answer.Yes]",
+           """
+             from enum import Enum
+
+             class Answer(Enum):
+                 Yes = 1
+                 No = 2
+             
+             def foo(v: object):
+                 assert v is Answer.Yes or v is Answer.No
+                 expr = v
+             """);
+  }
+
+  public void testLiteralTypeNarrowingEquals() {
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             def foo(v: str):
+                 if (v == "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"ab\"]",
+           """
+             from typing import Literal
+             def foo(v: Literal["abba", "ab"]):
+                 if (v != "abba"):
+                     expr = v
+             """);
+    doTest("Literal[\"abc\"]",
+           """
+             from typing import Literal
+             abc: Literal["abc"] = "abc"
+             def foo(v: str):
+                 if (v == abc):
+                     expr = v
+             """);
+  }
+
+  public void testLiteralTypeNarrowingIn() {
+    doTest("Literal[1, 2]",
+           """
+             def f(a: int):
+                 if a in (1, 2, ""):
+                     expr = a
+             """);
+    doTest("Literal[-10, \"a\"]",
+           """
+             from enum import Enum
+             class E(Enum):
+                 A = 1
+             def f(a: int | str):
+                 if a in (-10, E.A, "a"):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a in ("abb", True):
+                     expr = a
+             """);
+    doTest("Literal[3, \"ab\"]",
+           """
+             from typing import Literal
+             def f(a: Literal[3, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     expr = a
+             """);
+    doTest("Literal[\"abb\", False]",
+           """
+             from typing import Literal
+             def f(a: Literal[10, "abb", "ab", False]):
+                 if a not in ("abb", False):
+                     pass
+                 else:
+                     expr = a
+             """);
+    doTest("Literal[-1] | None",
+           """
+             def f(v: object):
+                 if v in (-1, None):
+                     expr = v
+             """);
+  }
+
   // PY-21083
   public void testFloatFromhex() {
     doTest("float",
@@ -568,7 +767,7 @@ public class Py3TypeTest extends PyTestCase {
     doTest("int",
            """
              class AIter(object):
-                 def __anext__(self):
+                 async def __anext__(self):
                      return 5
              class A(object):
                  def __aiter__(self):
@@ -576,6 +775,21 @@ public class Py3TypeTest extends PyTestCase {
              a = A()
              async for expr in a:
                  print(expr)""");
+  }
+  
+  // PY-60714
+  public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
+    doTest("bytes", """
+             class AIterator:
+                 def __aiter__(self):
+                     return self
+
+                 async def __anext__(self) -> bytes:
+                     return b"a"
+             
+             async for expr in AIterator():
+                 print(expt)
+             """);
   }
 
   // PY-21655
@@ -954,6 +1168,52 @@ public class Py3TypeTest extends PyTestCase {
                      expr = d""");
   }
 
+  // PY-78006
+  public void testDataclassPostInitParameters() {
+    doTest("tuple[A1, A4, A2, A3, A5, A6]",
+           """
+             from dataclasses import dataclass, InitVar
+             
+             class A1:
+                 pass
+             class A2:
+                 pass
+             class A3:
+                 pass
+             class A4:
+                 pass
+             class A5:
+                 pass
+             class A6:
+                 pass
+             
+             @dataclass
+             class BaseDC:
+                 b1: str
+                 a1: InitVar[A1]
+             
+             @dataclass
+             class DC1(BaseDC):
+                 a2: InitVar[A2]
+                 b2: int
+                 a3: InitVar[A3]
+             
+             @dataclass
+             class DC2(BaseDC):
+                 a4: InitVar[A4]
+                 b3 = 2
+             
+             @dataclass
+             class DC(DC1, DC2):
+                 b4: bool
+                 a5: InitVar[A5]
+                 a6: InitVar[A6]
+             
+                 def __post_init__(self, p1, p2, p3, p4, p5, p6):
+                     expr = (p1, p2, p3, p4, p5, p6)
+             """);
+  }
+
   // PY-27398
   public void testDataclassPostInitParameterNoInit() {
     doTest("Any",
@@ -1046,7 +1306,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-28506
   public void testMixedDataclassPostInitInheritedParameter() {
-    doTest("Any",
+    doTest("str",
            """
              from dataclasses import dataclass, InitVar
 
@@ -1201,7 +1461,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1214,7 +1474,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1231,7 +1491,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doTest("(c: (**P) -> int, **P, **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1245,7 +1505,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
       from mod import func
             
       expr = func
@@ -1275,7 +1535,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClass() {
-    doTest("Y[int, [int, str, bool]]",
+    doTest("Y[int, [q: int, p: str, r: bool]]",
            """
              from typing import TypeVar, Generic, Callable, ParamSpec
 
@@ -1604,6 +1864,41 @@ public class Py3TypeTest extends PyTestCase {
                  pass""");
   }
 
+  // PY-76816
+  public void testEnumDefinitionUsingEnumSubclass() {
+    doTest("Literal[Color.RED]",
+           """
+             from enum import Enum
+
+             class CustomEnum(Enum):
+                 pass
+             
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
+  // PY-76816
+  public void testEnumDefinitionUsingEnumTypeMetaclass() {
+    doTest("Literal[Color.RED]",
+           """
+             from enum import EnumType
+
+             class CustomEnumType(EnumType):
+                 pass
+
+             class CustomEnum(metaclass=CustomEnumType):
+                 pass
+
+             class Color(CustomEnum):
+                 RED = 1
+
+             expr = Color.RED
+             """);
+  }
+
   // PY-55734
   public void testEnumValueType() {
     doTest("int",
@@ -1654,10 +1949,158 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testEnumMembers() {
+    doTest(
+      "tuple[() -> int, (x: int) -> None, Literal[Example.A], Literal[Example.B]]",
+      """
+        from enum import Enum
+        
+        def func(x: int) -> None: ...
+        
+        val = 2
+
+        class Example(Enum):
+            foo = lambda: 1
+            bar = staticmethod(func)
+            A = 1
+            B = val
+
+        expr = Example.foo, Example.bar, Example.A, Example.B
+        """);
+  }
+
+  public void testFlagEnumNotExpanded() {
+    doTest(
+      "MyFlag",
+      """
+        from enum import Flag
+        
+        class MyFlag(Flag):
+            FLAG1 = 1
+            FLAG2 = 2
+        
+        def foo(f: MyFlag):
+            if f is MyFlag.FLAG1:
+                pass
+            else:
+                expr = f
+        """
+    );
+  }
+
+  public void testUnionWithEnumMembers() {
+    doTest(
+      "Color",
+      """
+        from enum import Enum
+        
+        class Color(Enum):
+            R = 1
+            G = 2
+            B = 3
+        
+        def f(v: str | Color):
+            if isinstance(v, str):
+                pass
+            else:
+                expr = v
+        """
+    );
+  }
+
+  public void testEnumMemberNonmember() {
+    doTest(
+      "tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+           """
+             from enum import Enum, member, nonmember
+             
+             def func(x: int) -> None: ...
+             
+             class Example(Enum):
+                 a = nonmember(1)
+                 A = member(lambda: 1)
+                 B = member(staticmethod(func))
+             
+                 @member
+                 def method() -> None: ...
+
+             expr = Example.a, Example.A, Example.B, Example.method
+             """);
+  }
+
+  public void testEnumMemberNonmemberMultiFile() {
+    doMultiFileTest("tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+                    """
+                      from enum_members import Example
+                      
+                      expr = Example.a, Example.A, Example.B, Example.method
+                      """);
+  }
+
+  public void testEnumAuto() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+           """
+             from enum import Enum, auto
+             
+             class Color(Enum):
+                 RED = auto()
+                 BLUE = auto()
+             
+             expr = Color.RED, Color.BLUE
+             """);
+  }
+
+  public void testEnumAutoMultiFile() {
+    doMultiFileTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+                    """
+                      from color import Color
+                      
+                      expr = Color.RED, Color.BLUE
+                      """);
+  }
+
+  public void testEnumMemberAlias() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 RED = 1
+             
+                 R = RED
+                 r = R
+             
+             expr = Color.RED, Color.R, Color.r
+             """);
+    doTest("tuple[Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 @member
+                 def foo(x: int) -> int:
+                     pass
+             
+                 bar = foo
+                 buz = bar
+             
+             expr = Color.foo, Color.bar, Color.buz
+             """);
+  }
+
+  public void testEnumMemberAliasMultiFile() {
+    doMultiFileTest(
+      "tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED], Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+                    """
+                      from color import *
+                      expr = Color.RED, Color.R, Color.r, Color.foo, Color.bar, Color.buz
+                      """);
+  }
+
   // PY-54336
   public void testCyclePreventionDuringGenericsSubstitution() {
-    PyGenericType typeVarT = new PyTypeVarTypeImpl("T", null);
-    PyGenericType typeVarV = new PyTypeVarTypeImpl("V", null);
+    PyTypeVarType typeVarT = new PyTypeVarTypeImpl("T", null);
+    PyTypeVarType typeVarV = new PyTypeVarTypeImpl("V", null);
     TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
     PyType substituted;
 
@@ -1719,7 +2162,7 @@ public class Py3TypeTest extends PyTestCase {
   public void testLiteralStringValidLocations() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("str",
+      () -> doTest("LiteralString",
                    """
                      from typing_extensions import LiteralString
                      def my_function(literal_string: LiteralString) -> LiteralString: ...
@@ -1727,43 +2170,1326 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
-  // PY-59795
-  public void testDictTypeFromValueModificationsConsidersOnlyRelevantAssignments() {
-    doTest("dict[str, int]",
+  // PY-77796
+  public void testTypedDictReadOnlyItemType() {
+    doTest("str",
            """
-             d = {}
-             d['foo'] = 1
-             unrelated = {}
-             unrelated[2] = 'bar'
-             expr = d
+             from typing import TypedDict, ReadOnly
+             class A(TypedDict):
+                 x: ReadOnly[str]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("int",
+           """
+             from typing import TypedDict, Required, ReadOnly
+             class A(TypedDict):
+                 x: Required[ReadOnly[int]]
+             def f(a: A):
+                 expr = a['x']
+             """);
+    doTest("str",
+           """
+             from typing import TypedDict, Required, Annotated, ReadOnly
+             class A(TypedDict):
+                 x: Required[Annotated[ReadOnly[str], 1]]
+             def f(a: A):
+                 expr = a['x']
              """);
   }
 
-  // PY-59795
-  public void testNestedTypedDictFromValueModifications() {
-    myFixture.configureByText(PythonFileType.INSTANCE,
-                              """
-                                d = {}
-                                d['foo'] = {'key': 'value'}
-                                d['bar'] = {'key': 'value'}
-                                expr = d
-                                """);
-    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    TypeEvalContext context = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    PyTypedDictType topLevelTypedDict = assertInstanceOf(context.getType(expr), PyTypedDictType.class);
-    assertSize(2, topLevelTypedDict.getFields().entrySet());
+  // PY-53612
+  public void testLiteralStringConcatenation() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             y: LiteralString
+             expr = x + y""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             y: str
+             expr = x + y""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: str
+             y: LiteralString
+             expr = x + y""");
+  }
 
-    PyTypedDictType.FieldTypeAndTotality fooField = topLevelTypedDict.getFields().get("foo");
-    assertNotNull(fooField);
-    PyTypedDictType fooFieldTypedDict = assertInstanceOf(fooField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(fooFieldTypedDict.getFields().keySet()));
+  // PY-53612
+  public void testLiteralStringJoin() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             xs: list[LiteralString]
+             expr = x.join(xs)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: str
+             xs: list[LiteralString]
+             expr = x.join(xs)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             x: LiteralString
+             xs: list[str]
+             expr = x.join(xs)""");
+  }
 
-    PyTypedDictType.FieldTypeAndTotality barField = topLevelTypedDict.getFields().get("bar");
-    assertNotNull(barField);
-    PyTypedDictType barFieldTypedDict = assertInstanceOf(barField.getType(), PyTypedDictType.class);
-    assertEquals("key", assertOneElement(barFieldTypedDict.getFields().keySet()));
+  // PY-53612
+  public void testLiteralStringInStringFormat() {
+    doTest("LiteralString",
+           """
+             from typing_extensions import LiteralString
+             name: LiteralString = "foo"
+             age: LiteralString = "42"
+             string: LiteralString = "Hello, {name}. You are {age}"
+             expr = string.format(name=name.capitalize(), age=age)""");
+    doTest("str",
+           """
+             from typing_extensions import LiteralString
+             name: LiteralString = "foo"
+             age = str(42)
+             string: LiteralString = "Hello, {name}. You are {age}"
+             expr = string.format(name=name.capitalize(), age=age)""");
+  }
 
-    assertProjectFilesNotParsed(expr.getContainingFile());
+  public void testTypeGuardList() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+  // PY-75961
+  public void testTypeGuardNotAppliedForUnresolvedType() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[Unresolved]:
+                 return all(isinstance(x, str) for x in val)                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardCannotBeReturned() {
+    myFixture.configureByText(PythonFileType.INSTANCE, """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 return is_str_list(val)
+              
+             def func2(val):
+                 expr = func1(val)                    
+             """);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    final Project project = expr.getProject();
+    final PsiFile containingFile = expr.getContainingFile();
+    final PyType type = TypeEvalContext.userInitiated(project, containingFile).getType(expr);
+    assertFalse("type is instance of PyNarrowedType ", type instanceof PyNarrowedType);
+  }
+
+  public void testTypeGuardResultIsAssigned()  {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                                                    
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardResultIsAssignedButValIsReassigned() {
+    doTest("int",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 val = 1
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
+    doTest("list[str] | int",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x:
+                     val = 1
+                 if b:
+                     expr = val
+             """);
+  }
+
+
+
+  public void testTypeGuardPresentation() {
+    doTest("TypeGuard[list[str]]",
+           """
+             from typing import List
+             from typing import TypeGuard
+
+
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+
+             def func1(val: List[object]):
+                 expr = is_str_list(val)
+             """);
+  }
+
+  public void testTypeIsPresentation() {
+    doTest("TypeIs[list[str]]",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+
+             def func1(val: List[object]):
+                 expr = is_str_list(val)
+             """);
+  }
+
+  public void testTypeGuardIsErasedOnReturn() {
+    doTest("bool",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+
+             def func1(val: List[object]):
+                 return is_str_list(val)
+             
+             expr = func1([])
+             """);
+  }
+
+  public void testTypeAliasesWithTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      MyTypeIs = TypeIs[List[str]]
+
+      def is_str_list(val: List[object]) -> MyTypeIs:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeAliasWithGenericTypeIs() {
+    doTest("list[str]", """
+      from typing import List
+      from typing_extensions import TypeIs
+      
+      type MyTypeIs[T] = TypeIs[T]
+
+      def is_str_list(val: List[object]) -> MyTypeIs[List[str]]:
+          return all(isinstance(x, str) for x in val)
+
+      def func1(val: List[object]):
+          if is_str_list(val):
+              expr = val
+      """);
+  }
+
+  public void testTypeIsWithGenerics() {
+    doTest("tuple[str, str]", """
+      from typing_extensions import TypeIs
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      def is_two_element_tuple(val: tuple[T, ...]) -> TypeIs[tuple[T, T]]:
+          return len(val) == 2
+      
+      
+      def func7(names: tuple[str, ...]):
+          if is_two_element_tuple(names):
+              expr = names
+      """);
+  }
+
+
+  public void testTypeGuardListInStringLiteral() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> "TypeGuard[List[str]]":
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardListTypeIsNotChanged() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardListNegation() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  // PY-62078
+  public void ignoreTestTypeGuardAnnotation() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val):
+                 # type: (List[object]) -> TypeGuard[List[str]]
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardDidntChanged() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testTypeGuardDoubleCheck() {
+    doTest("Person",
+           """
+             from typing import TypeGuard
+             class Person(TypedDict):
+                 name: str
+                 age: int
+                                
+             def is_person(val: dict) -> TypeGuard[Person]:
+                 try:
+                     return isinstance(val["name"], str) and isinstance(val["age"], int)
+                 except KeyError:
+                     return False
+                                
+                                
+             def print_age(val: dict, val2: dict):
+                 if is_person(val) and is_person(val2):
+                     expr = val
+                 else:
+                     print("Not a person!")""");
+  }
+
+  public void testTypeIsInCallable() {
+    doTest("str", """
+      from typing import Callable
+      from typing import assert_type
+      from typing_extensions import TypeIs
+     
+      def takes_narrower(x: int | str, narrower: Callable[[object], TypeIs[int]]):
+          if narrower(x):
+              pass
+          else:
+              expr = x
+     """);
+  }
+
+  public void testTypeGuardDoubleCheckNegation() {
+    doTest("Person",
+           """
+             from typing import TypeGuard
+             class Person(TypedDict):
+                 name: str
+                 age: int
+                                
+                                
+             def is_person(val: dict) -> TypeGuard[Person]:
+                 try:
+                     return isinstance(val["name"], str) and isinstance(val["age"], int)
+                 except KeyError:
+                     return False
+                                
+                                
+             def print_age(val: dict, val2: dict):
+                 if not is_person(val) or not is_person(val2):
+                     print("Not a person!");
+                 else:
+                     expr = val
+                     """);
+  }
+
+  public void testFailedTypeGuardCheckDoesntAffectOriginalType() {
+    doTest("list[int] | list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[int] | List[str]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testFailedTypeIsCheckDoesAffectOriginalType() {
+    doTest("list[int]",
+           """
+             from typing import List
+             from typing_extensions import TypeIs
+             
+             def is_str_list(val: List[object]) -> TypeIs[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             def func1(val: List[int] | List[str]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testHandleGenericReturnType() {
+    doTest("list[str]", """
+      from typing import List
+      
+      def create_list_of_type[T](item: T, count: int) -> List[T]:
+          return [item] * count
+      
+      expr = create_list_of_type("foo", 3)
+      """);
+  }
+
+  public void testHandleGenericWithAliasesReturnType() {
+    doTest("int | None", """
+      from typing import Dict, TypeAlias, TypeVar
+      
+      V = TypeVar("V")
+      
+      StringDict = Dict[str, V]
+      
+      def create_dict_of_type[T](item: T,) -> StringDict[T]:
+          return {"foo": item}
+      
+      
+      dict = create_dict_of_type(23)
+      
+      expr = dict.get("foo")
+      """);
+  }
+
+  public void testNoReturn() {
+    doTest("Bar",
+           """
+             from typing import NoReturn
+             
+             class Foo:
+                 def stop(self) -> NoReturn:
+                     raise RuntimeError('no way')
+             
+             class Bar:
+                 ...
+             
+             def foo(x):
+                 f = Foo()
+                 if not isinstance(x, Bar):
+                     f.stop()
+                 expr = x # expr is Bar, not Union[Bar, Any]
+             """);
+  }
+
+  public void testTypeIs1() {
+    doTest("str", """
+             from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+             from typing_extensions import TypeIs
+             
+             
+             def is_str1(val: Union[str, int]) -> TypeIs[str]:
+                 return isinstance(val, str)
+             
+             
+             def func1(val: Union[str, int]):
+                 if is_str1(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testTypeIs2() {
+    doTest("int", """
+             from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+             from typing_extensions import TypeIs
+             
+             
+             def is_str1(val: Union[str, int]) -> TypeIs[str]:
+                 return isinstance(val, str)
+             
+             
+             def func1(val: Union[str, int]):
+                 if is_str1(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeIs3() {
+    doTest("list[str] | list[int]", """
+      from typing import Any, Callable, Literal, Mapping, Sequence, TypeVar, Union
+      from typing_extensions import TypeIs
+      
+      def is_list(val: object) -> TypeIs[list[Any]]:
+          return isinstance(val, list)
+      
+      
+      def func3(val: dict[str, str] | list[str] | list[int] | Sequence[int]):
+          if is_list(val):
+              expr = val
+          else:
+              pass
+      """);
+  }
+
+  // PY-61137
+  public void testLiteralStringIsNotInferredWithoutExplicitAnnotation() {
+    doTest("list[str]",
+           """
+             expr = ['1' + '2']""");
+    doTest("list[str]",
+           """
+             from typing import TypeVar
+             T = TypeVar("T")
+             def same_type(x: T, y: T) -> T:
+                 pass
+             s: str
+             expr = same_type(['foo'], [s])""");
+    doTest("list[str]",
+           "expr = ['foo', 'bar']");
+    doTest("deque[str]",
+           """
+             from collections import deque
+             expr = deque(['foo', 'bar'])""");
+    doTest("LiteralString",
+           "expr = '1' + '2'");
+    doTest("LiteralString",
+           "expr = '%s' % ('a')");
+  }
+
+  // PY-27708
+  public void testDictCompExpressionWithGenerics() {
+    doTest("dict[str, (Any) -> Any]",
+           """
+              from typing import Callable, Dict, Any
+
+              def test(x: Dict[str, Callable[[Any], Any]]):
+                  y = {k: v for k, v in x.items()}
+                  expr = y
+                    
+             """);
+  }
+
+  public void testDictFromKWArgs() {
+    doTest("dict[str, Any]",
+           """
+             def test(**kwargs):
+                 expr = {k: v for k, v in kwargs.items()}
+             """);
+  }
+
+
+  // PY-27708
+  public void testSetCompExpressionWithGenerics() {
+    doTest("set[(Any) -> Any]",
+           """
+             from typing import Callable, Any, Set
+                                
+             def test(x: Set[Callable[[Any], Any]]):
+                 y = {k for k in x}
+                 expr = y
+             """);
+  }
+
+  public void testEnumerateType() {
+    doTest("tuple[int, int]",
+           """
+             a: list[int] = [1, 2, 3]
+             for expr in enumerate(a):
+                 pass
+             """);
+  }
+
+  // PY-61883
+  public void testParamSpecExampleWithPEP695Syntax() {
+    doTest("(a: str, b: bool) -> str",
+           """
+             from typing import Callable
+
+             def changes_return_type_to_str[**P](x: Callable[P, int]) -> Callable[P, str]: ...
+
+             def returns_int(a: str, b: bool) -> int:
+                 return 42
+                 
+             expr = changes_return_type_to_str(returns_int)""");
+  }
+
+  // PY-61883
+  public void testParamSpecInImportedFileWithPEP695Syntax() {
+    doMultiFileTest("(a: str, b: bool) -> str",
+                    """
+                      from a import changes_return_type_to_str
+                            
+                      def returns_int(a: str, b: bool) -> int:
+                          return 42
+
+                      expr = changes_return_type_to_str(returns_int)
+                      """);
+  }
+
+  // PY-61883
+  public void testParamSpecConcatenateTransformWithPEP695Syntax() {
+    doTest("(str, args: tuple[bool, ...]) -> bool",
+           """
+            from typing import Callable, Concatenate
+            
+            def bar(x: int, *args: bool) -> int: ...
+            
+            
+            def transform[**P](
+                    x: Callable[Concatenate[int, P], int]
+            ) -> Callable[Concatenate[str, P], bool]:
+                def inner(s: str, *args: P.args):
+                    return True
+            
+                return inner
+            
+            
+            expr = transform(bar)""");
+  }
+
+  // PY-61883
+  public void testParamSpecUserGenericClassWithPEP695Syntax() {
+    doTest("Y[int, [q: int, p: str, r: bool]]",
+           """
+             from typing import Callable
+
+             class Y[U, **P]:
+                 f: Callable[P, str]
+                 attr: U
+
+                 def __init__(self, f: Callable[P, str], attr: U) -> None:
+                     self.f = f
+                     self.attr = attr
+
+
+             def a(q: int, p: str, r: bool) -> str: ...
+
+
+             expr = Y(a, 1)
+             """);
+  }
+
+  // PY-64474
+  public void testTupleElementAccessedWithNegativeIndex() {
+    doTest("bool",
+           """
+             xs = (1, True, "foo")
+             expr = xs[-2]
+             """);
+  }
+
+  // PY-64474
+  public void testTupleElementAccessedWithOutOfBoundIndex() {
+    doTest("tuple[Any, Any]",
+           """
+             xs = (1, True, "foo")
+             expr = xs[-10], xs[10]
+             """);
+  }
+
+  public void testHomogenousTupleElementAccessedWithOutOfBoundIndex() {
+    doTest("tuple[str, str]",
+           """
+             xs: tuple[str, ...] = tuple(['foo'])
+             expr = xs[-10], xs[10]
+             """);
+  }
+
+  // PY-55044
+  public void testTypedDictKwargs() {
+    doTest("Movie",
+           """
+             from typing import TypedDict, Unpack
+             class Movie(TypedDict):
+                 name: str
+                 year: int
+             def foo(**x: Unpack[Movie]):
+                 expr = x
+             """);
+  }
+
+  // PY-55044
+  public void testKwargsWithUnpackedClassTypeInAnnotation() {
+    doTest("dict[str, Any]",
+           """
+             from typing import Unpack
+             class Movie:
+                 pass
+             def foo(**x: Unpack[Movie]):
+                 expr = x
+             """);
+  }
+
+  // PY-34617
+  public void testTopLevelFunctionUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      doMultiFileTest("str",
+                      """
+                        from mod import foo
+                        expr = foo()
+                        """);
+    });
+  }
+
+  // PY-34617
+  public void testClassMethodUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      doMultiFileTest("float",
+                      """
+                        from mod import Foo
+                        expr = Foo().foo()
+                        """);
+    });
+  }
+
+
+  // PY-73958
+  public void testNoStackOverflow() {
+    doTest("Foo", """
+            class Foo:
+                def foo(self):
+                    pass
+
+            xxx = Foo()
+
+            """ + "xxx.foo()\n".repeat(1000) + """
+            expr = xxx
+            """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptor() {
+    doTest("list", """
+      import typing
+
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: typing.Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member = MyDescriptor(list)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationOnly() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: typing.Any, owner: typing.Any) -> T:
+              raise Exception("Not implemented")
+     
+      class Test:
+          member: MyDescriptor[list]
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorWithTypeAnnotationPriority() {
+    doTest("list", """
+      from typing import Type, Any
+      
+      class MyDescriptor[T]:
+          def __init__(self, requested_type: Type[T]):
+              self.requested_type = requested_type
+          def __get__(self, instance: Any, owner: Any) -> T:
+              raise Exception("Not implemented")
+      
+      class Test:
+          member: MyDescriptor[list] = MyDescriptor(str)
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstance() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstanceNoMatchingOverloads() {
+    doTest("Any", """
+      from typing import Any, overload, Union
+      
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> T: # access via class
+              ...
+          def __get__(self, instance: "Bar", owner: Any) -> Union[str, T]:
+              ...
+      
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      class Bar(Foo):
+          x = MyDescriptor[int]()
+      
+      expr = Foo().x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaInstanceReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> str: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> Any: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      foo = Foo()
+      expr = foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClass() {
+    doTest("int", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> T: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsExplicitAny() {
+    doTest("Any", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> Any: # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> str: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericDescriptorAccessViaClassReturnsNothing() {
+    doTest("None", """
+      from typing import Optional, Any, overload, Union
+
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any): # access via class
+              ...
+          @overload
+          def __get__(self, instance: object, owner: Any) -> T: # access via instance
+              ...
+          def __get__(self, instance: Optional[object], owner: Any) -> Union[str, T]:
+              ...
+     
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      expr = Foo.x
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromParameterizedOnInheritanceDescriptorWithTypeAnnotationOnly() {
+    doTest("str", """
+      from typing import Any
+      
+      class MyDescriptor[T]:
+          def __get__(self, instance: Any, owner: Any) -> T:
+              ...
+      
+      class StrDescriptor(MyDescriptor[str]):
+          pass
+      
+      class Test:
+          member: StrDescriptor
+      
+          def foo(self):
+              test = self.member
+              expr = test
+      """);
+  }
+
+  // PY-26184
+  public void testGenericTypeFromDescriptorDefinedWithTypeAnnotationInExternalFileAccessViaInstance() {
+    doMultiFileTest("str", """
+      from a import Test
+
+      test = Test()
+      expr = test.member
+      """);
+  }
+
+  // PY-71748
+  public void testDictDunderEqAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __eq__(self, other: Any) -> int: ...
+      
+      class B:
+        def __eq__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a == b
+      """);
+  }
+
+  // PY-71748
+  public void testDictDunderNeAppliedFromLeftToRightByDefault() {
+    doTest("int", """
+      class A:
+        def __ne__(self, other: Any) -> int: ...
+      
+      class B:
+        def __ne__(self, other: Any) -> str: ...
+      
+      a = A()
+      b = B()
+      expr = a != b
+      """);
+  }
+
+  // PY-60968
+  public void testCsvDictReaderIteratorType() {
+    doTest("list[dict[str | Any, str | Any]]", """
+          import csv
+          with open("file.csv") as f:
+              reader = csv.DictReader(f)
+              expr = [line for line in reader]
+      """);
+  }
+
+  public void testLiteralAssignmentInImportedFile() {
+    doMultiFileTest("int", """
+      from m import *
+      expr = foo
+      """);
+  }
+
+  // PY-77937
+  public void testListOfLiterals() {
+    doTest("list[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = [num1, num2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = [e1, e2]
+      """);
+
+    doTest("list[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = [e]
+      """);
+
+    doTest("list[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = [Direction.NORTH, Direction.WEST]
+      """);
+  }
+
+  // PY-77937
+  public void testSetOfLiterals() {
+    doTest("set[int]", """
+      from typing import Literal
+      
+      num1: Literal[1] = 1
+      num2: Literal[2] = 2
+      expr = {num1, num2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal
+      
+      e1: Literal[1] = 1
+      e2: Literal["abc"] = "abc"
+      expr = {e1, e2}
+      """);
+
+    doTest("set[int | str]", """
+      from typing import Literal, LiteralString
+      
+      e: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      expr = {e}
+      """);
+
+    doTest("set[Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH, Direction.WEST}
+      """);
+  }
+
+  // PY-77937
+  public void testDictOfLiterals() {
+    doTest("dict[int, str]", """
+      from typing import Literal
+      
+      k1: Literal[1] = 1
+      v1: Literal["2"] = "1"
+      k2: Literal[2] = 2
+      v2: Literal["2"] = "2"
+      expr = {k1: v1, k2: v2}
+      """);
+
+    doTest("dict[int | str, str | bool]", """
+      from typing import Literal, LiteralString
+      
+      k1: Literal[1] = 1
+      v1: Literal["ab"] = "ab"
+      k2: LiteralString = "k2"
+      v2: Literal[True] = True
+      expr = { k1: v1, k2: v2 }
+      """);
+
+    doTest("dict[int | str, int | str]", """
+      from typing import Literal, LiteralString
+      
+      k: Literal[1, "ab"] | LiteralString | Literal["x"] = "abb"
+      v: Literal[1, "ab"] | LiteralString | Literal["x"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[Direction, Direction]", """
+      from enum import Enum
+      
+      class Direction(Enum):
+          NORTH = "N"
+          SOUTH = "S"
+          EAST = "E"
+          WEST = "W"
+      
+      expr = {Direction.NORTH: Direction.SOUTH, Direction.WEST: Direction.EAST}
+      """);
+  }
+
+  // PY-78125
+  public void testDictOfLiteralsWithStringOnlyKeys() {
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      v: Literal[1, "ab"] = 1
+      expr = {"abb": v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal
+
+      k: Literal["abb"] = "abb"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+
+    doTest("dict[str, int | str]", """
+      from typing import Literal, LiteralString
+
+      k: LiteralString = "k"
+      v: Literal[1, "ab"] = 1
+      expr = {k: v}
+      """);
+  }
+
+  public void testFunctionReturnsNone() {
+    doTest("(p: Any) -> None", """
+      def foo(p):
+          assert p
+      expr = foo
+      """);
+  }
+
+  // PY-78044
+  public void testPathlibIterdir() {
+    doTest("Generator[Path, None, None]", """
+      import pathlib
+      expr = pathlib.Path("").iterdir()
+      """);
+  }
+
+  // PY-78653
+  public void testTypeVarConstraints() {
+    doTest("tuple[str, str]", """
+      from typing import TypeVar
+      
+      AnyStr = TypeVar('AnyStr', str, bytes)
+      
+      def concat(x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
+      """);
+    doTest("tuple[str, str]", """
+      def concat[AnyStr: (str, bytes)](x: AnyStr, y: AnyStr) -> AnyStr:
+          return x + y
+      
+      class MyStr(str): ...
+      
+      s1 = concat(MyStr('apple'), MyStr('pie'))
+      s2 = concat(MyStr('apple'), 'pie')
+      expr = (s1, s2)
+      """);
+  }
+
+  public void testShadowingReturnInsideFinally() {
+    doTest("str", """
+      def f():
+          try:
+              return 42
+          finally:
+              return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testNonShadowingReturnInsideFinally() {
+    doTest("int | str", """
+      def f(p):
+          try:
+              return 42
+          finally:
+              if p:
+                  return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testReturnInsideExceptElse() {
+    doTest("str | bool", """
+      def f(p):
+          try:
+              e1()
+          except Exception:
+              return "foo"
+          else:
+              return True
+          finally:
+              pass
+      expr = f()
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

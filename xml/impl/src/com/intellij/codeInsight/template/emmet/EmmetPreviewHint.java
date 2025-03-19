@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -14,17 +16,20 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +41,9 @@ import java.util.function.Supplier;
 
 public final class EmmetPreviewHint extends LightweightHint implements Disposable {
   private static final Key<EmmetPreviewHint> KEY = new Key<>("emmet.preview");
-  @NotNull private final Editor myParentEditor;
-  @NotNull private final Editor myEditor;
-  @NotNull private final Alarm myAlarm = new Alarm(this);
+  private final @NotNull Editor myParentEditor;
+  private final @NotNull Editor myEditor;
+  private final @NotNull Alarm myAlarm = new Alarm(this);
   private boolean isDisposed = false;
 
   private EmmetPreviewHint(@NotNull JBPanel panel, @NotNull Editor editor, @NotNull Editor parentEditor) {
@@ -87,29 +92,39 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
   }
 
-  public void updateText(@NotNull final Supplier<String> contentProducer) {
+  public void updateText(final @NotNull Supplier<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      if (!isDisposed) {
-        final String newText = contentProducer.get();
-        if (StringUtil.isEmpty(newText)) {
-          hide();
-        }
-        else if (!myEditor.getDocument().getText().equals(newText)) {
-          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
-        }
-      }
+      if (isDisposed) return;
+      Project project = myEditor.getProject();
+      if (project == null) return;
+
+      PsiDocumentManager.getInstance(project).commitDocument(myParentEditor.getDocument());
+
+      ReadAction.nonBlocking(() -> {
+          if (isDisposed) return null;
+          return contentProducer.get();
+        }).finishOnUiThread(ModalityState.current(), newText -> {
+          if (isDisposed) return;
+
+          if (StringUtil.isEmpty(newText)) {
+            hide();
+          }
+          else if (!myEditor.getDocument().getText().equals(newText)) {
+            DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
+          }
+        })
+        .expireWith(myAlarm)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }, 100);
   }
 
   @TestOnly
-  @NotNull
-  public String getContent() {
+  public @NotNull String getContent() {
     return myEditor.getDocument().getText();
   }
 
-  @Nullable
-  public static EmmetPreviewHint getExistingHint(@NotNull Editor parentEditor) {
+  public static @Nullable EmmetPreviewHint getExistingHint(@NotNull Editor parentEditor) {
     EmmetPreviewHint emmetPreviewHint = KEY.get(parentEditor);
     if (emmetPreviewHint != null) {
       if (!emmetPreviewHint.isDisposed) {
@@ -120,10 +135,9 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     return null;
   }
 
-  @NotNull
-  public static EmmetPreviewHint createHint(@NotNull final EditorEx parentEditor,
-                                            @NotNull String templateText,
-                                            @NotNull FileType fileType) {
+  public static @NotNull EmmetPreviewHint createHint(final @NotNull EditorEx parentEditor,
+                                                     @NotNull String templateText,
+                                                     @NotNull FileType fileType) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = editorFactory.createDocument(templateText);
     final EditorEx previewEditor = (EditorEx)editorFactory.createEditor(document, parentEditor.getProject(), fileType, true);
@@ -147,9 +161,8 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     previewEditor.setBorder(JBUI.Borders.empty());
 
     JBPanel panel = new JBPanel(new BorderLayout()) {
-      @NotNull
       @Override
-      public Dimension getPreferredSize() {
+      public @NotNull Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         Dimension parentEditorSize = parentEditor.getScrollPane().getSize();
         int maxWidth = (int)parentEditorSize.getWidth() / 3;
@@ -159,9 +172,8 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
         return new Dimension(width, height);
       }
 
-      @NotNull
       @Override
-      public Insets getInsets() {
+      public @NotNull Insets getInsets() {
         return JBUI.insets(1, 2, 0, 0);
       }
     };
@@ -194,8 +206,7 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
     }
   }
 
-  @NotNull
-  private Pair<Point, Short> guessPosition() {
+  private @NotNull Pair<Point, Short> guessPosition() {
     JRootPane rootPane = myParentEditor.getContentComponent().getRootPane();
     JComponent layeredPane = rootPane != null ? rootPane.getLayeredPane() : myParentEditor.getComponent();
     LogicalPosition logicalPosition = myParentEditor.getCaretModel().getLogicalPosition();

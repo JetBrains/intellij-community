@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.lang.Language;
@@ -20,11 +20,10 @@ public class CompletionInitializationContext {
   /**
    * A default string that is inserted into the file before completion to guarantee that there'll always be some non-empty element there
    */
-  public static @NonNls final String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
-  public static @NonNls final String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
+  public static final @NonNls String DUMMY_IDENTIFIER = CompletionUtilCore.DUMMY_IDENTIFIER;
+  public static final @NonNls String DUMMY_IDENTIFIER_TRIMMED = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED;
   private final Editor myEditor;
-  @NotNull
-  private final Caret myCaret;
+  private final @NotNull Caret myCaret;
   private final PsiFile myFile;
   private final CompletionType myCompletionType;
   private final int myInvocationCount;
@@ -73,8 +72,7 @@ public class CompletionInitializationContext {
     myDummyIdentifier = dummyIdentifier;
   }
 
-  @NotNull
-  public Language getPositionLanguage() {
+  public @NotNull Language getPositionLanguage() {
     return Objects.requireNonNull(myPositionLanguage);
   }
 
@@ -82,33 +80,27 @@ public class CompletionInitializationContext {
     return myDummyIdentifier;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public Caret getCaret() {
+  public @NotNull Caret getCaret() {
     return myCaret;
   }
 
-  @NotNull
-  public CompletionType getCompletionType() {
+  public @NotNull CompletionType getCompletionType() {
     return myCompletionType;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myFile.getProject();
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public OffsetMap getOffsetMap() {
+  public @NotNull OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 

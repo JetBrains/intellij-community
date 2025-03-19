@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
@@ -129,7 +129,7 @@ public final class DecHelper {
           Set<Statement> setSucc = stat.getNeighboursSet(EdgeType.DIRECT_ALL, EdgeDirection.FORWARD);
           setSucc.retainAll(setDest);
 
-          if (setSucc.size() > 0) {
+          if (!setSucc.isEmpty()) {
             return false;
           }
           else {
@@ -190,6 +190,26 @@ public final class DecHelper {
     Set<Statement> setHandlers = new HashSet<>(head.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD));
     setHandlers.removeIf(statement -> statement.getPredecessorEdges(EdgeType.EXCEPTION).size() > 1);
     return setHandlers;
+  }
+
+  public static boolean invalidHeadMerge(Statement head) {
+    // Don't build a trycatch around a loop-head if statement, as we know that DoStatement should be built first.
+    // Since CatchStatement's isHead is run after DoStatement's, we can assume that a loop was not able to be built.
+    Statement ifhead = findIfHead(head);
+
+    return ifhead != null && head.getContinueSet().contains(ifhead.getFirst());
+  }
+
+  private static Statement findIfHead(Statement head) {
+    while (head != null && head.type != Statement.StatementType.IF) {
+      if (head.type != Statement.StatementType.SEQUENCE) {
+        return null;
+      }
+
+      head = head.getFirst();
+    }
+
+    return head;
   }
 
   public static List<Exprent> copyExprentList(List<? extends Exprent> lst) {

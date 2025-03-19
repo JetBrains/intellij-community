@@ -3,8 +3,10 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.fileTypes.FileTypeExtension;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
 
+@Internal
 public final class IdIndexers extends FileTypeExtension<IdIndexer> {
   public static final IdIndexers INSTANCE = new IdIndexers();
 

@@ -6,17 +6,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -73,7 +74,7 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
         return result
     }
 
-    private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid() {
+    private class LabelLoopJumpVisitor(private val nearestLoopIfAny: KtLoopExpression?) : KtVisitorVoid(), PsiRecursiveVisitor {
         val labelName: String? by lazy {
             nearestLoopIfAny?.let { loop ->
                 (loop.parent as? KtLabeledExpression)?.getLabelName() ?: AddLoopLabelFix.getUniqueLabelName(loop)
@@ -117,7 +118,7 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
 
     private fun BuilderByPattern<*>.appendElseBlock(block: KtExpression?, unwrapBlockOrParenthesis: Boolean = false) {
         appendFixedText("else->")
-        appendExpression(if (unwrapBlockOrParenthesis) block?.unwrapBlockOrParenthesis() else block)
+        appendExpression(if (unwrapBlockOrParenthesis) block?.getSingleUnwrappedStatementOrThis() else block)
         appendFixedText("\n")
     }
 
@@ -199,11 +200,18 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
             whenExpression = whenExpression.introduceSubject(checkConstants = false) ?: return
         }
 
+        val parent = ifExpression.parent
         val result = ifExpression.replaced(whenExpression)
         editor?.caretModel?.moveToOffset(result.startOffset)
 
         (if (applyFullCommentSaver) fullCommentSaver else elementCommentSaver).restore(result)
-        toDelete.forEach(PsiElement::delete)
+
+        if (toDelete.isNotEmpty()) {
+            parent.deleteChildRange(
+                toDelete.first().let { it.prevSibling as? PsiWhiteSpace ?: it },
+                toDelete.last()
+            )
+        }
 
         result.accept(loopJumpVisitor)
         val labelName = loopJumpVisitor.labelName

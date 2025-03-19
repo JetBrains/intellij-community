@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.annotation;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * DO NOT STORE any state inside annotator.
  * If you absolutely must, clear the state upon exit from the {@link #annotate(PsiElement, AnnotationHolder)} method.
  * <p/>
- * See <a href="https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/syntax_highlighting_and_error_highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html#annotator">Syntax Highlighting and Error Highlighting</a> for an overview.
  * <p>
  * Please note: annotators are executed in arbitrary order.
  * <p>
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see com.intellij.lang.LanguageAnnotators
  */
-public interface Annotator {
+public interface Annotator extends PossiblyDumbAware {
   /**
    * Annotates the specified PSI element.
    * It is guaranteed to be executed in non-reentrant fashion.

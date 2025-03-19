@@ -1,13 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
@@ -29,9 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -49,7 +50,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
         if (isFileNotFoundHandled(newExpression)) return;
         boolean canUseBaseType = TypeConversionUtil.isAssignable(expectedType, streamType.baseType(newExpression));
         if (!canUseBaseType) return;
-        boolean isInfoLevel = PsiUtil.isLanguageLevel10OrHigher(holder.getFile());
+        boolean isInfoLevel = PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_10);
         if (isInfoLevel && !isOnTheFly) return;
         ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.WARNING;
         ReplaceWithNioCallFix fix = new ReplaceWithNioCallFix(streamType.myReplacement, isOnTheFly);
@@ -74,7 +75,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     if (argumentList == null) return null;
     PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length != 1) return null;
-    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arguments[0]), PsiExpression.class);
+    return PsiUtil.skipParenthesizedExprDown(arguments[0]);
   }
 
   private enum StreamType {
@@ -151,7 +152,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
 
       @Override
       public String createReplacement() {
-        return PsiUtil.isLanguageLevel11OrHigher(myStringExpr)
+        return PsiUtil.getLanguageLevel(myStringExpr).isAtLeast(LanguageLevel.JDK_11)
                ? "java.nio.file.Path.of(" + myStringExpr.getText() + ")"
                : "java.nio.file.Paths.get(" + myStringExpr.getText() + ")";
       }
@@ -186,7 +187,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  private static class ReplaceWithNioCallFix implements LocalQuickFix {
+  private static class ReplaceWithNioCallFix extends PsiUpdateModCommandQuickFix {
 
     private final String myReplacement;
     private final boolean myIsOnTheFly;
@@ -202,8 +203,8 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression newExpression = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiNewExpression newExpression = ObjectUtils.tryCast(element, PsiNewExpression.class);
       if (newExpression == null) return;
       IOStreamConstructorModel constructorModel = IOStreamConstructorModel.create(newExpression);
       if (constructorModel == null) return;
@@ -222,7 +223,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       if (occurrences.length < 2) return;
       // maybe we can reuse already created file.toPath() / Path.of(...) variable
       List<PsiVariable> pathVars = Arrays.stream(occurrences).map(o -> findVariableAssignedTo(o))
-        .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, toPathConversion, null))
+        .filter(var -> var != null && ControlFlowUtil.isEffectivelyFinal(var, toPathConversion))
         .toList();
       if (!pathVars.isEmpty()) {
         PsiCodeBlock body = containingMethod.getBody();
@@ -276,11 +277,10 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       if (!(child instanceof PsiReferenceExpression)) return false;
       PsiVariable target = ObjectUtils.tryCast(((PsiReferenceExpression)child).resolve(), PsiVariable.class);
       if (!PsiUtil.isJvmLocalVariable(target)) return false;
-      return HighlightControlFlowUtil.isEffectivelyFinal(target, context, null);
+      return ControlFlowUtil.isEffectivelyFinal(target, context);
     }
 
-    @Nullable
-    private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+    private static @Nullable ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
       try {
         LocalsOrMyInstanceFieldsControlFlowPolicy flowPolicy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
         return ControlFlowFactory.getInstance(block.getProject()).getControlFlow(block, flowPolicy);

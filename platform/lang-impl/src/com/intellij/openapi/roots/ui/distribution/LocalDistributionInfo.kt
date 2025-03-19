@@ -3,9 +3,10 @@ package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
+import org.jetbrains.annotations.NonNls
 
 class LocalDistributionInfo(path: String) : AbstractDistributionInfo() {
-  var path = getCanonicalPath(path)
+  var path: @NonNls String = getCanonicalPath(path)
   var uiPath: String
     get() = getPresentablePath(path)
     set(value) {

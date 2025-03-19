@@ -8,6 +8,8 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,11 +106,15 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                                       }
                                     }, PsiTypeCastExpression.class, Function.identity()),
                                     new InsertTypeCastCommand(file));
-    PropertyChecker
+    PropertyChecker.customized()
+      .withIterationCount(50)
       .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
-  public void testParenthesesDontChangeIntention() {
+  /**
+   * The test is disabled, as we have no resources to monitor and fix the parentheses issues
+   */
+  public void _testParenthesesDontChangeIntention() {
     enableInspections();
     Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
       file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
@@ -117,7 +123,13 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
   }
 
   private @NotNull Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
-    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+    return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"),
+                                                f -> {
+                                                  ProjectFileIndex projectFileIndex =
+                                                    ProjectRootManager.getInstance(myFixture.getProject()).getFileIndex();
+                                                  return projectFileIndex.isInSource(f.getVirtualFile());
+                                                },
+                                                fileActions);
   }
 
   public void _testGenerator() {
@@ -167,7 +179,8 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
                        StringUtil.escapeStringCharacters("(" + type.getCanonicalText() + ")") +
                        "' at " +
                        MadTestingUtil.getPositionDescription(expr.getTextOffset(), getDocument()));
-        WriteCommandAction.runWriteCommandAction(getProject(), () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type));
+        Runnable runnable = () -> AddTypeCastFix.addTypeCast(getProject(), (PsiExpression)expr, type);
+        WriteCommandAction.runWriteCommandAction(getProject(), runnable);
       }
     }
   }

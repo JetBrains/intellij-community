@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -13,11 +13,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class InspectionElement extends FakePsiElement {
+public final class InspectionElement extends FakePsiElement {
   public static final InspectionElement[] EMPTY_ARRAY = new InspectionElement[0];
-  @NotNull private final InspectionToolWrapper myWrapper;
-  @NotNull private final PsiManager myPsiManager;
-  @NotNull private final DummyHolder myDummyHolder;
+  private final @NotNull InspectionToolWrapper myWrapper;
+  private final @NotNull PsiManager myPsiManager;
+  private final @NotNull DummyHolder myDummyHolder;
 
   public InspectionElement(@NotNull InspectionToolWrapper wrapper, @NotNull PsiManager psiManager) {
     myWrapper = wrapper;
@@ -25,8 +25,7 @@ public class InspectionElement extends FakePsiElement {
     myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);
   }
 
-  @NotNull
-  public InspectionToolWrapper getToolWrapper() {
+  public @NotNull InspectionToolWrapper getToolWrapper() {
     return myWrapper;
   }
 
@@ -43,9 +42,8 @@ public class InspectionElement extends FakePsiElement {
         return myWrapper.getDisplayName();
       }
 
-      @Nullable
       @Override
-      public Icon getIcon(boolean unused) {
+      public @Nullable Icon getIcon(boolean unused) {
         return null;
       }
     };

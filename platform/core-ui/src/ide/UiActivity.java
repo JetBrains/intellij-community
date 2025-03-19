@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ public class UiActivity implements ComparableObject {
     return ComparableObjectCheck.equals(this, obj);
   }
 
+  @ApiStatus.Internal
   public final boolean isSameOrGeneralFor(UiActivity other) {
     if (myElements.size() > other.myElements.size()) return false;
 

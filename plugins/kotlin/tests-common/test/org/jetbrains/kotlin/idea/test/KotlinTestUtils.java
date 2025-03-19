@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -15,14 +15,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.TestDataFile;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.util.PathUtil;
 import junit.framework.TestCase;
 import kotlin.collections.CollectionsKt;
@@ -45,6 +42,8 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys;
 import org.jetbrains.kotlin.idea.KotlinLanguage;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
+import org.jetbrains.kotlin.idea.test.kmp.KMPTest;
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestRunner;
 import org.jetbrains.kotlin.idea.test.util.JetTestUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtFile;
@@ -58,13 +57,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
-import static org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.isIgnoredTarget;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.IGNORE_BACKEND_DIRECTIVE_PREFIX;
+import static org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.isIgnoredTarget;
 
 public final class KotlinTestUtils {
     public static final String TEST_MODULE_NAME = "test-module";
@@ -81,7 +81,7 @@ public final class KotlinTestUtils {
     private static final boolean AUTOMATICALLY_UNMUTE_PASSED_TESTS = false;
     private static final boolean AUTOMATICALLY_MUTE_FAILED_TESTS = false;
 
-    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*[!]?([A-Z_]+)(:[ \\t]*(.*))?$", Pattern.MULTILINE);
+    private static final Pattern DIRECTIVE_PATTERN = Pattern.compile("^//\\s*[!]?([A-Z0-9_]+)(:[ \\t]*(.*))?$", Pattern.MULTILINE);
 
     private KotlinTestUtils() {
     }
@@ -145,6 +145,12 @@ public final class KotlinTestUtils {
             return androidSdkRootEnvDir;
         }
 
+        // Try to guess Android SDK location for local development
+        File defaultAndroidSdkLocation = new File(System.getProperty("user.home") + "/Library/Android/sdk");
+        if (defaultAndroidSdkLocation.isDirectory()) {
+            return defaultAndroidSdkLocation;
+        }
+
         throw new RuntimeException(
                 "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
                 "please point it to the android SDK location");
@@ -152,18 +158,6 @@ public final class KotlinTestUtils {
 
     public static String getAndroidSdkSystemIndependentPath() {
         return PathUtil.toSystemIndependentName(findAndroidSdk().getAbsolutePath());
-    }
-
-    public static void mkdirs(@NotNull File file) {
-        if (file.isDirectory()) {
-            return;
-        }
-        if (!file.mkdirs()) {
-            if (file.exists()) {
-                throw new IllegalStateException("Failed to create " + file + ": file exists and not a directory");
-            }
-            throw new IllegalStateException("Failed to create " + file);
-        }
     }
 
     @NotNull
@@ -199,7 +193,7 @@ public final class KotlinTestUtils {
         shortName = shortName.substring(shortName.lastIndexOf('\\') + 1);
         LightVirtualFile virtualFile = new LightVirtualFile(shortName, KotlinLanguage.INSTANCE, StringUtilRt.convertLineSeparators(text));
 
-        virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        virtualFile.setCharset(StandardCharsets.UTF_8);
         PsiFileFactoryImpl factory = (PsiFileFactoryImpl) PsiFileFactory.getInstance(project);
         return (KtFile) factory.trySetupPsiForFile(virtualFile, KotlinLanguage.INSTANCE, true, false);
     }
@@ -226,7 +220,7 @@ public final class KotlinTestUtils {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
 
-        configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
+        configuration.put(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override
             public void clear() {
             }
@@ -379,8 +373,8 @@ public final class KotlinTestUtils {
             String sanitizedActualText = JetTestUtils.trimTrailingWhitespacesAndAddNewlineAtEOF(sanitizer.invoke(actualText));
 
             if (!Objects.equals(sanitizedExpectedText, sanitizedActualText)) {
-                throw new FileComparisonFailure(message + ": " + expectedFile.getName(),
-                                                sanitizedExpectedText, sanitizedActualText, expectedFile.getAbsolutePath());
+                throw new FileComparisonFailedError(message + ": " + expectedFile.getName(),
+                                                    sanitizedExpectedText, sanitizedActualText, expectedFile.getAbsolutePath());
             }
         } catch (IOException e) {
             throw ExceptionUtilsKt.rethrow(e);
@@ -518,7 +512,12 @@ public final class KotlinTestUtils {
     }
 
     public static void runTest(@NotNull DoTest test, @NotNull TestCase testCase, @TestDataFile String testDataFile) throws Exception {
-        runTestImpl(testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX), testCase, testDataFile);
+        TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+            runTestImpl(
+                    testWithCustomIgnoreDirective(test, TargetBackend.ANY, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase),
+                    testCase, testDataFile
+            );
+        });
     }
 
     // In this test runner version the `testDataFile` parameter is annotated by `TestDataFile`.
@@ -537,7 +536,7 @@ public final class KotlinTestUtils {
     // * sometimes, for too common/general names, it shows many variants to navigate
     // * it adds an additional step for navigation -- you must choose an exact file to navigate
     public static void runTest0(DoTest test, TestCase testCase, TargetBackend targetBackend, String testDataFilePath) throws Exception {
-        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, IGNORE_BACKEND_DIRECTIVE_PREFIX), testCase, testDataFilePath);
+        runTestImpl(testWithCustomIgnoreDirective(test, targetBackend, IGNORE_BACKEND_DIRECTIVE_PREFIX, testCase), testCase, testDataFilePath);
     }
 
     private static void runTestImpl(@NotNull DoTest test, @Nullable TestCase testCase, String testDataFilePath) throws Exception {
@@ -558,10 +557,14 @@ public final class KotlinTestUtils {
             }
         }
 
-        test.invoke(absoluteTestDataFilePath);
+        if (testCase instanceof KMPTest) {
+            KMPTestRunner.run(absoluteTestDataFilePath, test, (KMPTest) testCase);
+        } else {
+            test.invoke(absoluteTestDataFilePath);
+        }
     }
 
-    private static DoTest testWithCustomIgnoreDirective(DoTest test, TargetBackend targetBackend, String ignoreDirective) {
+    private static DoTest testWithCustomIgnoreDirective(DoTest test, TargetBackend targetBackend, String ignoreDirective, TestCase testCase) {
         return filePath -> {
             File testDataFile = new File(filePath);
 
@@ -618,20 +621,35 @@ public final class KotlinTestUtils {
             }
 
             if (isIgnored) {
-                if (AUTOMATICALLY_UNMUTE_PASSED_TESTS) {
-                    String text = doLoadFile(testDataFile);
-                    String directive = ignoreDirective + targetBackend.name();
-                    String newText = Pattern.compile("^" + directive + "\n", Pattern.MULTILINE).matcher(text).replaceAll("");
-                    if (!newText.equals(text)) {
-                        System.err.println("\"" + directive + "\" was removed from \"" + testDataFile + "\"");
-                        FileUtil.writeToFile(testDataFile, newText);
-                    }
+                if (testCase instanceof IgnorableTestCase ignorableTestCase) {
+                    ignorableTestCase.setIgnoreIsPassedCallback(() -> {
+                        processIgnoreIsPassed(targetBackend, ignoreDirective, testDataFile);
+                        return null;
+                    });
+                    return;
                 }
-
-                throw new AssertionError(
-                        String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
+                processIgnoreIsPassed(targetBackend, ignoreDirective, testDataFile);
             }
         };
+    }
+
+    private static void processIgnoreIsPassed(TargetBackend targetBackend, String ignoreDirective, File testDataFile) {
+        if (AUTOMATICALLY_UNMUTE_PASSED_TESTS) {
+            try {
+                String text = doLoadFile(testDataFile);
+                String directive = ignoreDirective + targetBackend.name();
+                String newText = Pattern.compile("^" + directive + "\n", Pattern.MULTILINE).matcher(text).replaceAll("");
+                if (!newText.equals(text)) {
+                    System.err.println("\"" + directive + "\" was removed from \"" + testDataFile + "\"");
+                    FileUtil.writeToFile(testDataFile, newText);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        throw new AssertionError(
+                String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
     }
 
     public static String getTestsRoot(@NotNull Class<?> testCaseClass) {
@@ -660,7 +678,7 @@ public final class KotlinTestUtils {
     }
 
     @Nullable
-    private static String getMethodMetadata(Method method) {
+    public static String getMethodMetadata(Method method) {
         TestMetadata testMetadata = method.getAnnotation(TestMetadata.class);
         return (testMetadata != null) ? testMetadata.value() : null;
     }

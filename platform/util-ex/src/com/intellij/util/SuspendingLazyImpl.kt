@@ -1,10 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentSet
-import kotlinx.collections.immutable.persistentHashSetOf
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
@@ -95,13 +91,13 @@ internal class SuspendingLazyImpl<out T>(
     val initCs: CoroutineScope = state.initCs
     val initJob: Job = launch(state)
     return suspendCancellableCoroutine { waiter: CancellableContinuation<Result<Any?>?> ->
-      val newState = InProgress(state, initJob, persistentHashSetOf(waiter))
+      val newState = InProgress(state, initJob, setOf(waiter))
       if (!stateHandle.compareAndSet(this, state, newState)) {
         initJob.cancel() // another thread started the job
         waiter.resume(null) // loop again
         return@suspendCancellableCoroutine
       }
-      if (!checkRecursion(waiter)) {
+      if (!checkRecursion()) {
         initJob.cancel()
         return@suspendCancellableCoroutine
       }
@@ -159,12 +155,12 @@ internal class SuspendingLazyImpl<out T>(
 
   private suspend fun tryAwait(state: InProgress): Result<Any?>? {
     return suspendCancellableCoroutine { waiter: CancellableContinuation<Result<Any?>?> ->
-      val newState = state.copy(waiters = state.waiters.add(waiter))
+      val newState = state.copy(waiters = state.waiters + waiter)
       if (!stateHandle.compareAndSet(this, state, newState)) {
         waiter.resume(null) // loop again
         return@suspendCancellableCoroutine
       }
-      if (!checkRecursion(waiter)) {
+      if (!checkRecursion()) {
         return@suspendCancellableCoroutine
       }
       waiter.invokeOnCancellation {
@@ -193,7 +189,7 @@ internal class SuspendingLazyImpl<out T>(
     loopState { state ->
       when (state) {
         is InProgress -> {
-          val newWaiters = state.waiters.remove(waiter)
+          val newWaiters = state.waiters - waiter
           check(newWaiters !== state.waiters)
           val newState = state.copy(waiters = newWaiters)
           if (!stateHandle.compareAndSet(this, state, newState)) {
@@ -212,28 +208,23 @@ internal class SuspendingLazyImpl<out T>(
     }
   }
 
-  private fun checkRecursion(waiter: CancellableContinuation<Result<Any?>>): Boolean {
-    val cycle = findCycle(waiter.context)
+  private fun checkRecursion(): Boolean {
+    val cycle = findCycle<SuspendingLazyImpl<*>>(this) { callingLazy ->
+      val state = stateHandle.getVolatile(callingLazy)
+      if (state is InProgress) {
+        state.waiters.mapNotNull {
+          it.context[LazyRecursionTrackerElement.Key]?.currentLazy
+        }
+      }
+      else {
+        emptyList()
+      }
+    }
     if (cycle != null) {
       completeWithException(LazyRecursionPreventedException(cycle.toString()))
       return false
     }
     return true
-  }
-
-  private fun findCycle(context: CoroutineContext): List<SLazy>? {
-    val paths = LazyRecursionTrackerElement.traverseCallers(context) { callingLazy: SLazy ->
-      val state = stateHandle.getVolatile(callingLazy) as InProgress
-      state.waiters.map {
-        it.context
-      }
-    }
-    for (path: List<SLazy> in paths) {
-      if (path.last() === this) {
-        return path.asReversed()
-      }
-    }
-    return null
   }
 
   private fun complete(value: Any?) {
@@ -284,7 +275,7 @@ internal class SuspendingLazyImpl<out T>(
   private data class InProgress(
     val initialState: InitialState,
     val initJob: Job,
-    val waiters: PersistentSet<CancellableContinuation<Result<Any?>>>,
+    val waiters: Set<CancellableContinuation<Result<Any?>>>,
   ) {
 
     fun resumeWaiters(result: Result<Any?>) {
@@ -303,30 +294,6 @@ private typealias SLazy = SuspendingLazyImpl<*>
 /**
  * @param currentLazy lazy instance which is being currently initialized
  */
-private class LazyRecursionTrackerElement(private val currentLazy: SLazy) : AbstractCoroutineContextElement(Key) {
-
-  private object Key : CoroutineContext.Key<LazyRecursionTrackerElement>
-
-  companion object {
-
-    fun traverseCallers(callingContext: CoroutineContext, callingContexts: (SLazy) -> List<CoroutineContext>): Sequence<List<SLazy>> {
-      return sequence {
-        traverseCallersInner(persistentListOf(), callingContext, callingContexts)
-      }
-    }
-
-    private suspend fun SequenceScope<List<SLazy>>.traverseCallersInner(
-      parentPath: PersistentList<SLazy>,
-      currentContext: CoroutineContext,
-      callingContexts: (SLazy) -> List<CoroutineContext>,
-    ) {
-      val currentLazy = currentContext[Key]?.currentLazy
-                        ?: return
-      val currentPath = parentPath.add(currentLazy)
-      yield(currentPath)
-      for (callingContext in callingContexts(currentLazy)) {
-        traverseCallersInner(currentPath, callingContext, callingContexts)
-      }
-    }
-  }
+private class LazyRecursionTrackerElement(val currentLazy: SLazy) : AbstractCoroutineContextElement(Key) {
+  object Key : CoroutineContext.Key<LazyRecursionTrackerElement>
 }

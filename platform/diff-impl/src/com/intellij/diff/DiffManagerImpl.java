@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class DiffManagerImpl extends DiffManagerEx {
   @Override
   public void showDiff(@Nullable Project project, @NotNull DiffRequest request) {
@@ -90,19 +92,17 @@ public class DiffManagerImpl extends DiffManagerEx {
     return DialogWrapper.findInstance(IdeFocusManager.getInstance(project).getFocusOwner()) != null;
   }
 
-  @NotNull
   @Override
-  public DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window) {
+  public @NotNull DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window) {
     DiffRequestPanelImpl panel = new DiffRequestPanelImpl(project, window);
     Disposer.register(parent, panel);
     return panel;
   }
 
-  @NotNull
   @Override
-  public List<DiffTool> getDiffTools() {
+  public @NotNull List<DiffTool> getDiffTools() {
     List<DiffTool> result = new ArrayList<>();
-    Collections.addAll(result, DiffTool.EP_NAME.getExtensions());
+    result.addAll(DiffTool.EP_NAME.getExtensionList());
     result.add(SimpleDiffTool.INSTANCE);
     result.add(UnifiedDiffTool.INSTANCE);
     result.add(BinaryDiffTool.INSTANCE);
@@ -110,9 +110,8 @@ public class DiffManagerImpl extends DiffManagerEx {
     return result;
   }
 
-  @NotNull
   @Override
-  public List<MergeTool> getMergeTools() {
+  public @NotNull List<MergeTool> getMergeTools() {
     List<MergeTool> result = new ArrayList<>();
     Collections.addAll(result, MergeTool.EP_NAME.getExtensions());
     result.add(TextMergeTool.INSTANCE);

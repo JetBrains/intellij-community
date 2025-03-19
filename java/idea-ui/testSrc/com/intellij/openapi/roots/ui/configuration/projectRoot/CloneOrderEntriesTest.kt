@@ -11,8 +11,6 @@ import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class CloneOrderEntriesTest : JavaModuleTestCase() {
-  override fun isRunInWriteAction(): Boolean = true
-
   fun `test copied jdk and module source`() {
     WriteAction.run<RuntimeException> {
       val copyToModifiableModel = ModuleRootManager.getInstance(createModule("Copy To Module")).modifiableModel

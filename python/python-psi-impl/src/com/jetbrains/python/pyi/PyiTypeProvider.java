@@ -32,7 +32,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyiTypeProvider extends PyTypeProviderBase {
+public final class PyiTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
@@ -52,9 +52,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
     if (pythonStub instanceof PyCallable) {
       final PyType type = context.getReturnType((PyCallable)pythonStub);
@@ -83,9 +82,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public @Nullable PyType getGenericType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericType(classStub, context);
@@ -93,9 +91,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @NotNull
   @Override
-  public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public @NotNull Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyClass classStub = as(PyiUtil.getPythonStub(cls), PyClass.class);
     if (classStub != null) {
       return new PyTypingTypeProvider().getGenericSubstitutions(classStub, context);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -59,10 +60,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.*;
 
-public final class PropertyInspectorTable extends JBTable implements DataProvider {
+public final class PropertyInspectorTable extends JBTable implements UiDataProvider {
   private static final Logger LOG = Logger.getInstance(PropertyInspectorTable.class);
 
   private static final int PROPERTY_INDENT = 11;
@@ -95,7 +97,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   /**
    * Component to be edited
    */
-  @NotNull private final List<RadComponent> mySelection = new ArrayList<>();
+  private final @NotNull List<RadComponent> mySelection = new ArrayList<>();
   /**
    * If true then inspector will show "expert" properties
    */
@@ -114,9 +116,9 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   private boolean myStoppingEditing;
   private final Project myProject;
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.inspector";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.inspector";
 
-  PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
+  PropertyInspectorTable(Project project, final @NotNull ComponentTree componentTree) {
     myProject = project;
     myClassToBindProperty = new ClassToBindProperty(project);
     myBindingProperty = new BindingProperty(project);
@@ -214,8 +216,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
    * @return currently selected {@link IntrospectedProperty} or {@code null}
    * if nothing selected or synthetic property is selected.
    */
-  @Nullable
-  public IntrospectedProperty getSelectedIntrospectedProperty(){
+  public @Nullable IntrospectedProperty getSelectedIntrospectedProperty(){
     Property property = getSelectedProperty();
     if (!(property instanceof IntrospectedProperty)) {
       return null;
@@ -224,7 +225,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     return (IntrospectedProperty)property;
   }
 
-  @Nullable public Property getSelectedProperty() {
+  public @Nullable Property getSelectedProperty() {
     final int selectedRow = getSelectedRow();
     if(selectedRow < 0 || selectedRow >= getRowCount()){
       return null;
@@ -234,7 +235,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   }
 
   public @Nullable String getSelectedRadComponentClassName() {
-    if (mySelection.size() == 0) return null;
+    if (mySelection.isEmpty()) return null;
     String className = mySelection.get(0).getComponentClassName();
     for (int i = 1; i < mySelection.size(); i++) {
       if (!Objects.equals(mySelection.get(i).getComponentClassName(), className)) {
@@ -245,32 +246,15 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    else if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
-    }
-    else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
-      return designer == null ? null : designer.getEditor();
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      IntrospectedProperty<?> property = getSelectedIntrospectedProperty();
-      String className = getSelectedRadComponentClassName();
-      return (DataProvider)slowId -> getSlowData(slowId, className, property);
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-    return null;
-  }
-
-  private @Nullable Object getSlowData(@NotNull String dataId,
-                                       @Nullable String radComponentClassName,
-                                       @Nullable IntrospectedProperty<?> introspectedProperty) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    GuiEditor designer = myProject.isDisposed() ? null : DesignerToolWindowManager.getInstance(myProject).getActiveFormEditor();
+    sink.set(DATA_KEY, this);
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, designer == null ? null : designer.getEditor());
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    IntrospectedProperty<?> introspectedProperty = getSelectedIntrospectedProperty();
+    String radComponentClassName = getSelectedRadComponentClassName();
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       if (introspectedProperty == null || radComponentClassName == null || myEditor == null) {
         return null;
       }
@@ -284,11 +268,10 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
         return getter;
       }
       return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
-    }
-    else if (CommonDataKeys.PSI_FILE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
       return myEditor != null ? PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile()) : null;
-    }
-    return null;
+    });
   }
 
   /**
@@ -334,9 +317,9 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     super.setUI(ui);
 
     // Customize action and input maps
-    @NonNls final ActionMap actionMap=getActionMap();
-    @NonNls final InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
-    @NonNls final InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    final @NonNls ActionMap actionMap=getActionMap();
+    final @NonNls InputMap focusedInputMap=getInputMap(JComponent.WHEN_FOCUSED);
+    final @NonNls InputMap ancestorInputMap=getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     actionMap.put(TableActions.Up.ID, new MySelectPreviousRowAction());
 
@@ -457,7 +440,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
   private void collectPropertiesForSelection() {
     myProperties.clear();
-    if (mySelection.size() > 0) {
+    if (!mySelection.isEmpty()) {
       collectProperties(mySelection.get(0), myProperties);
 
       for(int propIndex=myProperties.size()-1; propIndex >= 0; propIndex--) {
@@ -706,7 +689,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     else{
       message = exc.getMessage();
     }
-    if (message == null || message.length() == 0) {
+    if (message == null || message.isEmpty()) {
       message = UIDesignerBundle.message("error.no.message");
     }
     Messages.showMessageDialog(UIDesignerBundle.message("error.setting.value", message),
@@ -798,8 +781,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
    * @return first error for the property at the specified row. If component doesn't contain
    * any error then the method returns {@code null}.
    */
-  @Nullable
-  private String getErrorForRow(final int row){
+  private @Nullable String getErrorForRow(final int row){
     LOG.assertTrue(row < myProperties.size());
     final ErrorInfo errorInfo = getErrorInfoForRow(row);
     return errorInfo != null ? errorInfo.myDescription : null;
@@ -815,7 +797,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   }
 
   private Object getSelectionValue(final Property property) {
-    if (mySelection.size() == 0) {
+    if (mySelection.isEmpty()) {
       return null;
     }
     //noinspection unchecked
@@ -871,7 +853,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     }
     catch (Throwable e) {
       LOG.debug(e);
-      String message = ExceptionUtilRt.unwrapInvocationTargetException(e).getMessage();
+      String message = ExceptionUtilRt.unwrapException(e, InvocationTargetException.class).getMessage();
       Messages.showMessageDialog(message, UIDesignerBundle.message("title.invalid.input"), Messages.getErrorIcon());
       return false;
     }
@@ -962,7 +944,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
   private final class MyPropertyEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(@NotNull final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
+    public void valueCommitted(final @NotNull PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError){
       if(isEditing()){
         final Object value;
         final TableCellEditor tableCellEditor = cellEditor;
@@ -984,7 +966,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     }
 
     @Override
-    public void editingCanceled(@NotNull final PropertyEditor source) {
+    public void editingCanceled(final @NotNull PropertyEditor source) {
       if(isEditing()){
         cellEditor.cancelCellEditing();
       }
@@ -1039,7 +1021,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     @Override
     public Component getTableCellRendererComponent(
       final JTable table,
-      @NotNull final Object value,
+      final @NotNull Object value,
       final boolean selected,
       final boolean hasFocus,
       final int row,
@@ -1183,7 +1165,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
   private final class MyCellEditor extends AbstractCellEditor implements TableCellEditor{
     private PropertyEditor myEditor;
 
-    public void setEditor(@NotNull final PropertyEditor editor){
+    public void setEditor(final @NotNull PropertyEditor editor){
       myEditor = editor;
     }
 
@@ -1198,13 +1180,13 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     }
 
     @Override
-    public Component getTableCellEditorComponent(final JTable table, @NotNull final Object value, final boolean isSelected, final int row, final int column){
+    public Component getTableCellEditorComponent(final JTable table, final @NotNull Object value, final boolean isSelected, final int row, final int column){
       final Property property=(Property)value;
       try {
         //noinspection unchecked
         final JComponent c = myEditor.getComponent(mySelection.get(0), getSelectionValue(property), null);
         if (c instanceof JComboBox) {
-          c.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+          c.putClientProperty(ComboBox.IS_TABLE_CELL_EDITOR_PROPERTY, Boolean.TRUE);
         }
 
         return c;
@@ -1350,7 +1332,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
      * Recursively updates renderer and editor UIs of all synthetic
      * properties.
      */
-    private void updateUI(final Property property){
+    private static void updateUI(final Property property){
       final PropertyRenderer renderer = property.getRenderer();
       renderer.updateUI();
       final PropertyEditor editor = property.getEditor();
@@ -1367,7 +1349,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     }
 
     @Override
-    public void lookAndFeelChanged(@NotNull final LafManager source) {
+    public void lookAndFeelChanged(final @NotNull LafManager source) {
       updateUI(myBorderProperty);
       updateUI(MarginProperty.getInstance(myProject));
       updateUI(HGapProperty.getInstance(myProject));

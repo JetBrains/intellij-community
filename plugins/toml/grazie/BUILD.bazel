@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.toml.grazie` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "grazie_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "grazie",
+  module_name = "intellij.toml.grazie",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//plugins/toml/core",
+    "@lib//:kotlin-stdlib",
+    "//plugins/grazie/src:core",
+  ],
+  runtime_deps = [":grazie_resources"]
+)
+### auto-generated section `build intellij.toml.grazie` end

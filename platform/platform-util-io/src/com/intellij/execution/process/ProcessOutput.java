@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,25 +6,32 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public class ProcessOutput {
-  private final StringBuilder myStdoutBuilder = new StringBuilder();
-  private final StringBuilder myStderrBuilder = new StringBuilder();
-  private @Nullable Integer myExitCode;
-  private boolean myTimeout;
-  private boolean myCancelled;
+  private final StringBuilder myStdoutBuilder;
+  private final StringBuilder myStderrBuilder;
+  private volatile @Nullable Integer myExitCode;
+  private volatile boolean myTimeout;
+  private volatile boolean myCancelled;
 
-  public ProcessOutput() { }
+  public ProcessOutput() {
+    this("", "", null, false, false);
+  }
 
   public ProcessOutput(int exitCode) {
-    myExitCode = exitCode;
+    this("", "", exitCode, false, false);
   }
 
   public ProcessOutput(@NotNull String stdout, @NotNull String stderr, int exitCode, boolean timeout, boolean cancelled) {
-    myStdoutBuilder.append(stdout);
-    myStderrBuilder.append(stderr);
+    this(stdout, stderr, Integer.valueOf(exitCode), timeout, cancelled);
+  }
+
+  private ProcessOutput(@NotNull String stdout, @NotNull String stderr, @Nullable Integer exitCode, boolean timeout, boolean cancelled) {
+    myStdoutBuilder = new StringBuilder(stdout);
+    myStderrBuilder = new StringBuilder(stderr);
     myExitCode = exitCode;
     myTimeout = timeout;
     myCancelled = cancelled;
@@ -46,23 +53,23 @@ public class ProcessOutput {
     return myStderrBuilder.toString();
   }
 
-  public @NotNull List<@NlsSafe String> getStdoutLines() {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines() {
     return getStdoutLines(true);
   }
 
-  public @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStdoutLines(boolean excludeEmptyLines) {
     return splitLines(getStdout(), excludeEmptyLines);
   }
 
-  public @NotNull List<@NlsSafe String> getStderrLines() {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines() {
     return getStderrLines(true);
   }
 
-  public @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
+  public @Unmodifiable @NotNull List<@NlsSafe String> getStderrLines(boolean excludeEmptyLines) {
     return splitLines(getStderr(), excludeEmptyLines);
   }
 
-  private static List<String> splitLines(String s, boolean excludeEmptyLines) {
+  private static @Unmodifiable List<String> splitLines(String s, boolean excludeEmptyLines) {
     String converted = StringUtil.convertLineSeparators(s);
     return StringUtil.split(converted, "\n", true, excludeEmptyLines);
   }

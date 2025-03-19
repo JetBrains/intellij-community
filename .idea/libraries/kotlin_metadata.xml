@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlin-metadata" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-metadata-jvm:2.1.20-Beta2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2.jar">
+          <sha256sum>a4d99e5b88eff9972c117b577436aa587e83f78e60cf005cd614065f59ead7a9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2.1.20-Beta2/kotlin-metadata-jvm-2.1.20-Beta2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

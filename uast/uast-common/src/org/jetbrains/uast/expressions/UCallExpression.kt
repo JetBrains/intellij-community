@@ -113,6 +113,8 @@ interface UCallExpression : UExpression, UResolvable {
    * Provides the ability to match the called method parameters with passed arguments.
    * Useful when the order of passed arguments is different to the order of declared parameters (e.g. in Kotlin named arguments).
    *
+   * @see UCallExpression.getParameterForArgument
+   *
    * @param i index of the parameter in the resolved [PsiMethod] declaration
    * @return [UExpression] that corresponds to the [i]-th parameter.
    * If the given parameter is vararg then the corresponding arguments will be returned wrapped into
@@ -132,6 +134,19 @@ interface UCallExpression : UExpression, UResolvable {
     return names.contains(methodName ?: return false)
   }
 
+  /**
+   * Tries to perform optimized name checking for cases when [classReference] requires reference resolution.
+   *
+   * May perform some heavy resolution inside for some languages (e.g., for Kotlin).
+   *
+   * @see classReference
+   */
+  @ApiStatus.Experimental
+  fun isClassConstructorNameOneOf(names: Collection<String>): Boolean {
+    val classReference = classReference ?: return false
+    val name = classReference.resolvedName
+    return names.contains(name ?: return false)
+  }
 }
 
 @Deprecated("useless since IDEA 2019.2, because getArgumentForParameter moved to UCallExpression", ReplaceWith("UCallExpression"))

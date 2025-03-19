@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
-import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,80 +12,56 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class DefaultExternalSourceSet implements ExternalSourceSet {
-  private static final long serialVersionUID = 2L;
 
-  private String name;
-  private Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
-  private final LinkedHashSet<ExternalDependency> dependencies;
-  private Collection<File> artifacts;
-  private String sourceCompatibility;
-  private String targetCompatibility;
+  private static final long serialVersionUID = 3L;
 
-  private String jdkInstallationPath;
-  private boolean isPreview;
+  private @Nullable String name;
+
+  private @Nullable File javaToolchainHome;
+  private @Nullable String sourceCompatibility;
+  private @Nullable String targetCompatibility;
+  private @Nullable List<String> compilerArguments;
+
+  private @NotNull Collection<File> artifacts;
+  private @NotNull Collection<ExternalDependency> dependencies;
+  private @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources;
 
   public DefaultExternalSourceSet() {
-    sources = new HashMap<>(0);
-    dependencies = new LinkedHashSet<>(0);
+    // Collection can be modified outside by mutation methods
     artifacts = new ArrayList<>(0);
-  }
-
-  public DefaultExternalSourceSet(ExternalSourceSet sourceSet) {
-    name = sourceSet.getName();
-    sourceCompatibility = sourceSet.getSourceCompatibility();
-    targetCompatibility = sourceSet.getTargetCompatibility();
-    isPreview = sourceSet.isPreview();
-
-    Set<? extends Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet>> entrySet = sourceSet.getSources().entrySet();
-    sources = new HashMap<>(entrySet.size());
-    for (Map.Entry<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> entry : entrySet) {
-      sources.put(ExternalSystemSourceType.from(entry.getKey()), new DefaultExternalSourceDirectorySet(entry.getValue()));
-    }
-
-    dependencies = new LinkedHashSet<>(sourceSet.getDependencies().size());
-    for (ExternalDependency dependency : sourceSet.getDependencies()) {
-      dependencies.add(ModelFactory.createCopy(dependency));
-    }
-    artifacts = sourceSet.getArtifacts() == null ? new ArrayList<File>(0) : new ArrayList<>(sourceSet.getArtifacts());
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return name;
+    dependencies = new LinkedHashSet<>(0);
+    sources = new HashMap<>(0);
   }
 
   @Override
-  public Collection<File> getArtifacts() {
-    return artifacts;
+  public @NotNull String getName() {
+    return Objects.requireNonNull(name, "The source set's name property has not been initialized");
   }
 
-  public void setArtifacts(Collection<File> artifacts) {
-    this.artifacts = artifacts;
+  public void setName(@NotNull String name) {
+    this.name = name;
   }
 
-  @Nullable
   @Override
-  public String getSourceCompatibility() {
+  public @Nullable File getJavaToolchainHome() {
+    return javaToolchainHome;
+  }
+
+  public void setJavaToolchainHome(@Nullable File javaToolchainHome) {
+    this.javaToolchainHome = javaToolchainHome;
+  }
+
+  @Override
+  public @Nullable String getSourceCompatibility() {
     return sourceCompatibility;
-  }
-
-  @Override
-  public boolean isPreview() {
-    return isPreview;
-  }
-
-  public void setPreview(boolean preview) {
-    isPreview = preview;
   }
 
   public void setSourceCompatibility(@Nullable String sourceCompatibility) {
     this.sourceCompatibility = sourceCompatibility;
   }
 
-  @Nullable
   @Override
-  public String getTargetCompatibility() {
+  public @Nullable String getTargetCompatibility() {
     return targetCompatibility;
   }
 
@@ -95,22 +70,45 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
   }
 
   @Override
-  public Collection<ExternalDependency> getDependencies() {
+  public @NotNull List<String> getCompilerArguments() {
+    return Collections.unmodifiableList(
+      Objects.requireNonNull(compilerArguments, "The source set's compilerArguments property has not been initialized")
+    );
+  }
+
+  public void setCompilerArguments(@NotNull List<String> compilerArguments) {
+    this.compilerArguments = compilerArguments;
+  }
+
+  @Override
+  public @NotNull Collection<File> getArtifacts() {
+    return artifacts;
+  }
+
+  public void setArtifacts(@NotNull Collection<File> artifacts) {
+    this.artifacts = artifacts;
+  }
+
+  @Override
+  public @NotNull Collection<ExternalDependency> getDependencies() {
     return dependencies;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setDependencies(@NotNull Collection<ExternalDependency> dependencies) {
+    this.dependencies = dependencies;
   }
 
-  @NotNull
   @Override
-  public Map<? extends IExternalSystemSourceType, ? extends ExternalSourceDirectorySet> getSources() {
+  public @NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> getSources() {
     return sources;
   }
 
-  public void setSources(Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
-    this.sources = sources;
+  public void setSources(@NotNull Map<ExternalSystemSourceType, DefaultExternalSourceDirectorySet> sources) {
+    this.sources = new LinkedHashMap<>(sources);
+  }
+
+  public void addSource(@NotNull ExternalSystemSourceType sourceType, @NotNull DefaultExternalSourceDirectorySet sourceDirectorySet) {
+    this.sources.put(sourceType, sourceDirectorySet);
   }
 
   @Override
@@ -118,12 +116,4 @@ public final class DefaultExternalSourceSet implements ExternalSourceSet {
     return "sourceSet '" + name + '\'' ;
   }
 
-  @Nullable
-  public String getJdkInstallationPath() {
-    return jdkInstallationPath;
-  }
-
-  public void setJdkInstallationPath(@Nullable String jdkInstallationPath) {
-    this.jdkInstallationPath = jdkInstallationPath;
-  }
 }

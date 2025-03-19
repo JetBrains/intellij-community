@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
@@ -51,14 +51,12 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return myKind;
   }
 
-  @NotNull
   @Override
-  public TailType getTailType() {
+  public @NotNull TailType getTailType() {
     return myTailType;
   }
 
-  @Nullable
-  public String getExpectedName() {
+  public @Nullable String getExpectedName() {
     return expectedNameLazyValue.getValue();
   }
 
@@ -68,17 +66,16 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   }
 
   @Override
-  @NotNull
-  public PsiType getType () {
+  public @NotNull PsiType getType () {
     return myType;
   }
 
   @Override
-  @NotNull
-  public PsiType getDefaultType () {
+  public @NotNull PsiType getDefaultType () {
     return myDefaultType;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof ExpectedTypeInfoImpl that)) return false;
@@ -91,6 +88,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result = myType.hashCode();
     result = 31 * result + myDefaultType.hashCode();
@@ -104,6 +102,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return equals((Object)obj);
   }
 
+  @Override
   public String toString() {
     return "ExpectedTypeInfo[type='" + myType + "' kind='" + myKind + "']";
   }
@@ -166,8 +165,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return this;
   }
 
-  @NotNull
-  private static PsiType fixUnresolvedType(@NotNull PsiElement context, @NotNull PsiType type) {
+  private static @NotNull PsiType fixUnresolvedType(@NotNull PsiElement context, @NotNull PsiType type) {
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
       String className = ((PsiClassType)type).getClassName();
       int typeParamCount = ((PsiClassType)type).getParameterCount();

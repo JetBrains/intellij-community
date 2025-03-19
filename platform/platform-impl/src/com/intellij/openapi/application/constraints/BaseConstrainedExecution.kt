@@ -7,6 +7,7 @@ import com.intellij.util.containers.map2Array
 import kotlinx.coroutines.Runnable
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.BooleanSupplier
+import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * This class is responsible for running a task in a proper context defined using various builder methods of this class and it's
@@ -28,12 +29,12 @@ abstract class BaseConstrainedExecution<E : ConstrainedExecution<E>>(protected v
 
   override fun withConstraint(constraint: ContextConstraint): E = cloneWith(constraints + constraint)
 
-  override fun asExecutor() = ConstrainedTaskExecutor(this, composeCancellationCondition(), composeExpiration())
-  override fun asCoroutineDispatcher() = createConstrainedCoroutineDispatcher(this, composeCancellationCondition(), composeExpiration())
+  override fun asExecutor(): ConstrainedTaskExecutor = ConstrainedTaskExecutor(this, composeCancellationCondition(), composeExpiration())
+  override fun asCoroutineDispatcher(): ContinuationInterceptor = createConstrainedCoroutineDispatcher(this, composeCancellationCondition(), composeExpiration())
   protected open fun composeExpiration(): Expiration? = null
   protected open fun composeCancellationCondition(): BooleanSupplier? = null
 
-  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?) =
+  override fun scheduleWithinConstraints(runnable: Runnable, condition: BooleanSupplier?): Unit =
     scheduleWithinConstraints(runnable, condition, constraints)
 
   companion object {

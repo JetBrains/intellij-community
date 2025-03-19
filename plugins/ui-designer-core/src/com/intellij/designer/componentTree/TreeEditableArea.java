@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.componentTree;
 
 import com.intellij.designer.actions.DesignerActionPanel;
@@ -9,9 +9,11 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
@@ -78,9 +80,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
     }
   }
 
-  @NotNull
   @Override
-  public List<RadComponent> getSelection() {
+  public @NotNull List<RadComponent> getSelection() {
     return new ArrayList<>(getRawSelection());
   }
 
@@ -96,16 +97,16 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void deselect(@NotNull RadComponent component) {
-    Collection<RadComponent> selection = getRawSelection();
+    Collection<RadComponent> selection = new ArrayList<>(getRawSelection());
     selection.remove(component);
     setRawSelection(selection);
   }
 
   @Override
   public void appendSelection(@NotNull RadComponent component) {
-    Collection<RadComponent> selection = getRawSelection();
-    selection.add(component);
-    setRawSelection(selection);
+    List<RadComponent> selection = getRawSelection();
+
+    setRawSelection(ContainerUtil.append(selection, component));
   }
 
   @Override
@@ -115,7 +116,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   @Override
   public void deselect(@NotNull Collection<RadComponent> components) {
-    Collection<RadComponent> selection = getRawSelection();
+    Collection<RadComponent> selection = new ArrayList<>(getRawSelection());
     selection.removeAll(components);
     setRawSelection(selection);
   }
@@ -129,7 +130,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void scrollToSelection() {
   }
 
-  private Collection<RadComponent> getRawSelection() {
+  private @Unmodifiable List<RadComponent> getRawSelection() {
     return TreeUtil.collectSelectedObjectsOfType(myTree, RadComponent.class);
   }
 
@@ -194,9 +195,8 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   public void setDescription(@Nullable String text) {
   }
 
-  @NotNull
   @Override
-  public JComponent getNativeComponent() {
+  public @NotNull JComponent getNativeComponent() {
     return myTree;
   }
 

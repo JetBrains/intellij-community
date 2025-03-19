@@ -8,18 +8,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.core" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.resources.en" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="automaton" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

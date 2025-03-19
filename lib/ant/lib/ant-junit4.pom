@@ -26,26 +26,26 @@
         <groupId>org.apache.ant</groupId>
         <artifactId>ant-parent</artifactId>
         <relativePath>../pom.xml</relativePath>
-        <version>1.10.12</version>
+        <version>1.10.14</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <url>https://ant.apache.org/</url>
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-junit4</artifactId>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
     <name>Apache Ant + JUnit 4</name>
     <description>contains JUnit 4.x support</description>
     <dependencies>
         <dependency>
             <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>1.10.12</version>
+            <version>1.10.14</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

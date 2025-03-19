@@ -226,7 +226,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON38,
       () -> doTestByText(
-        "def f(pos1, <warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
+        "def f(pos1, <warning descr=\"Python versions 2.7, 3.7 do not support positional-only parameters\">/</warning>, pos_or_kwd, *, kwd1):\n" +
         "    pass"
       )
     );
@@ -246,7 +246,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
                              try:
                                print("a")
                              finally:
-                               <warning descr="Python versions 2.7, 3.5, 3.6, 3.7 do not support 'continue' inside 'finally' clause">continue</warning>""")
+                               <warning descr="Python versions 2.7, 3.7 do not support 'continue' inside 'finally' clause">continue</warning>""")
     );
   }
 
@@ -269,6 +269,17 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   public void testStarExpressionInTypeAnnotation() {
     doTest(LanguageLevel.PYTHON311);
   }
+
+  // PY-60767
+  public void testTypeAliasStatements() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
+  // PY-60767
+  public void testTypeParameterLists() {
+    doTest(LanguageLevel.PYTHON311);
+  }
+
 
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);

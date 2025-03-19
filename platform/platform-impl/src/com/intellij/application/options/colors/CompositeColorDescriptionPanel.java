@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.colors.OptionsPanelImpl.ColorDescriptionPanel;
@@ -28,10 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CompositeColorDescriptionPanel extends JPanel implements ColorDescriptionPanel {
-  @NotNull protected final List<ColorDescriptionPanel> myDescriptionPanels = new ArrayList<>();
-  @NotNull protected final List<Condition<? super EditorSchemeAttributeDescriptor>> myConditions = new ArrayList<>();
+  protected final @NotNull List<ColorDescriptionPanel> myDescriptionPanels = new ArrayList<>();
+  protected final @NotNull List<Condition<? super EditorSchemeAttributeDescriptor>> myConditions = new ArrayList<>();
 
-  @NotNull private final List<Listener> myListeners = new ArrayList<>();
+  private final @NotNull List<Listener> myListeners = new ArrayList<>();
 
   private ColorDescriptionPanel myActive;
 
@@ -57,9 +43,8 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
     setPreferredSize(preferredSize);
   }
 
-  @NotNull
   @Override
-  public JComponent getPanel() {
+  public @NotNull JComponent getPanel() {
     return this;
   }
 
@@ -104,8 +89,7 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
     }
   }
 
-  @Nullable
-  private ColorDescriptionPanel getPanelForDescriptor(@NotNull EditorSchemeAttributeDescriptor descriptor) {
+  private @Nullable ColorDescriptionPanel getPanelForDescriptor(@NotNull EditorSchemeAttributeDescriptor descriptor) {
     for (int i = myConditions.size() - 1; i >= 0; i--) {
       Condition<? super EditorSchemeAttributeDescriptor> condition = myConditions.get(i);
       ColorDescriptionPanel panel = myDescriptionPanels.get(i);
@@ -130,7 +114,7 @@ public class CompositeColorDescriptionPanel extends JPanel implements ColorDescr
     myListeners.add(listener);
   }
 
-  private static class PaintLocker {
+  private static final class PaintLocker {
     private final Container myPaintHolder;
     private final boolean myPaintState;
 

@@ -15,12 +15,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * This is mock implementation to be used in null-object pattern where necessary.
  */
+@ApiStatus.Internal
 public final class EmptyMarkupModel implements MarkupModelEx {
   private final Document myDocument;
 

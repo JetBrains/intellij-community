@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -16,8 +16,10 @@ import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -36,10 +38,10 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
 
   private volatile @Nullable GitRebaseSpec myOngoingRebaseSpec;
 
-  public GitRepositoryManager(@NotNull Project project) {
+  public GitRepositoryManager(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     super(project, GitVcs.getKey(), GitUtil.DOT_GIT);
 
-    AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), this);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(new GitUntrackedDirtyScopeListener(this), coroutineScope);
   }
 
   public static @NotNull GitRepositoryManager getInstance(@NotNull Project project) {
@@ -78,10 +80,19 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
     myOngoingRebaseSpec = ongoingRebaseSpec != null && ongoingRebaseSpec.isValid() ? ongoingRebaseSpec : null;
   }
 
-  void notifyListenersAsync(@NotNull GitRepository repository) {
+  void notifyListenersAsync(@NotNull GitRepository repository,
+                            @Nullable GitRepoInfo previousInfo,
+                            @NotNull GitRepoInfo info) {
     myUpdateExecutor.execute(() -> {
       if (!Disposer.isDisposed(repository)) {
         syncPublisher(repository.getProject(), GitRepository.GIT_REPO_CHANGE).repositoryChanged(repository);
+
+        if (previousInfo != null) {
+          syncPublisher(repository.getProject(), GitRepository.GIT_REPO_STATE_CHANGE).repositoryChanged(repository, previousInfo, info);
+        }
+        else {
+          syncPublisher(repository.getProject(), GitRepository.GIT_REPO_STATE_CHANGE).repositoryCreated(repository, info);
+        }
       }
     });
   }
@@ -92,7 +103,7 @@ public final class GitRepositoryManager extends AbstractRepositoryManager<GitRep
    * <p>Currently submodule-dependency is the only one which is taken into account.</p>
    * <p>If repositories are independent of each other, they are sorted {@link DvcsUtil#REPOSITORY_COMPARATOR by path}.</p>
    */
-  public @NotNull List<GitRepository> sortByDependency(@NotNull Collection<? extends GitRepository> repositories) {
+  public @Unmodifiable @NotNull List<GitRepository> sortByDependency(@NotNull @Unmodifiable Collection<? extends GitRepository> repositories) {
     return ContainerUtil.sorted(repositories, DEPENDENCY_COMPARATOR);
   }
 }

@@ -5,8 +5,6 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSFunctionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "function"
-
     fun testFun() { doTest(pattern = "fun a() { '_* }", highlighting = """
         <warning descr="SSR">fun a() { }</warning>
         fun b() { }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +19,15 @@ import java.awt.event.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionLinkSelectionColor;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
 
+@ApiStatus.Internal
 public final class WelcomeScreenFocusManager {
 
-  static void installFocusable(@NotNull final Container parentContainer,
+  static void installFocusable(final @NotNull Container parentContainer,
                                final JComponent comp,
                                final AnAction action,
                                final int nextKeyCode,
                                final int prevKeyCode,
-                               @Nullable final Component focusedOnLeft) {
+                               final @Nullable Component focusedOnLeft) {
     comp.setFocusable(true);
     comp.setFocusTraversalKeysEnabled(true);
     comp.addKeyListener(new KeyAdapter() {

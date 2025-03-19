@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,12 +15,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
-
+@ApiStatus.Internal
 public class VcsHandleType extends HandleType {
   private static final Function<LocalChangeList,String> FUNCTION = list -> list.getName();
   private final AbstractVcs myVcs;
@@ -35,7 +37,8 @@ public class VcsHandleType extends HandleType {
   }
 
   @Override
-  public void processFiles(final Collection<? extends VirtualFile> files, @Nullable final String changelist) {
+  public void processFiles(@NotNull Collection<? extends VirtualFile> files,
+                           final @Nullable String changelist, boolean setChangeListActive) {
     try {
       EditFileProvider provider = myVcs.getEditFileProvider();
       assert provider != null;
@@ -56,6 +59,9 @@ public class VcsHandleType extends HandleType {
         if (list != null) {
           List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
           myChangeListManager.moveChangesTo(list, changes.toArray(Change.EMPTY_CHANGE_ARRAY));
+        }
+        if (setChangeListActive) {
+          myChangeListManager.setDefaultChangeList(changelist);
         }
       });
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.*
@@ -163,9 +163,9 @@ interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
       valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
     }
     initializingClass?.let {
-      appendln(" {")
+      appendLine(" {")
       it.uastDeclarations.forEach { declaration ->
-        appendln(declaration.asRenderString().withMargin)
+        appendLine(declaration.asRenderString().withMargin)
       }
       append("}")
     }

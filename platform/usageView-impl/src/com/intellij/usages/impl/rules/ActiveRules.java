@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.project.Project;
@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +25,7 @@ public final class ActiveRules {
                                                              boolean supportsScopesRule,
                                                              boolean supportsModuleRule) {
     List<UsageGroupingRule> rules = new ArrayList<>();
-    if (supportsNonCodeRule && (presentation == null || !presentation.isDetachedMode())) {
+    if (supportsNonCodeRule && (presentation == null || !presentation.isDetachedMode() && presentation.isNonCodeUsageAvailable())) {
       rules.add(new NonCodeUsageGroupingRule(presentation));
     }
     if (supportsScopesRule && usageViewSettings.isGroupByScope()) {
@@ -113,7 +114,7 @@ public final class ActiveRules {
     return rules.toArray(UsageGroupingRule.EMPTY_ARRAY);
   }
 
-  private static abstract class GroupingRuleExWrapper implements UsageGroupingRuleEx {
+  private abstract static class GroupingRuleExWrapper implements UsageGroupingRuleEx {
     private final UsageGroupingRule myGroupingRule;
 
     protected GroupingRuleExWrapper(@NotNull UsageGroupingRule rule) {
@@ -126,8 +127,7 @@ public final class ActiveRules {
     }
 
     @Override
-    @NotNull
-    public List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+    public @NotNull @Unmodifiable List<UsageGroup> getParentGroupsFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
       return myGroupingRule.getParentGroupsFor(usage, targets);
     }
 

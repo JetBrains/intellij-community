@@ -1,13 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.DataFlowInspectionBase;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection;
@@ -19,12 +20,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -57,9 +56,9 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
-  }; 
-  
-  private static final String PACKAGE_NAME = "org.jspecify.nullness";
+  };
+
+  private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/jspecify/");
   @Parameterized.Parameter
   public String myFileName;
@@ -80,7 +79,6 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
 
   @Before
   public void before() {
-    Registry.get("java.jspecify.annotations.available").setValue(true, getTestRootDisposable());
     mockAnnotations();
   }
 
@@ -90,6 +88,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "Nullable"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE_USE", "NullnessUnspecified"));
     myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE, ElementType.PACKAGE", "NullMarked"));
+    myFixture.addClass(String.format(Locale.ROOT, template, "ElementType.TYPE, ElementType.PACKAGE", "NullUnmarked"));
   }
 
   @Test
@@ -145,13 +144,13 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         }
         String actualText = getActualText(actual, stripped);
         if (!fileText.equals(actualText)) {
-          throw new FileComparisonFailure("Messages don't match ("+data.path.getFileName().toString()+")", 
-                                          fileText, actualText, data.path.toString());
+          throw new FileComparisonFailedError("Messages don't match (" + data.path.getFileName().toString() + ")",
+                                              fileText, actualText, data.path.toString());
         }
       });
     }
   }
-  
+
   private static class JSpecifyNullableStuffInspection extends NullableStuffInspection {
     private final Map<PsiElement, String> warnings;
 
@@ -216,21 +215,25 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
         }
       }
     }
-    
+
     private static @Nullable String getJSpecifyWarning(NullabilityProblemKind.NullabilityProblem<?> problem) {
       PsiExpression expression = problem.getDereferencedExpression();
       if (expression == null) return null;
       if (problem.getKind() == NullabilityProblemKind.passingToNonAnnotatedParameter) return null;
       if (problem.getKind() == NullabilityProblemKind.nullableReturn) {
-        PsiType returnType = PsiTypesUtil.getMethodReturnType(expression);
-        Nullability nullability = DfaPsiUtil.getTypeNullability(returnType);
-        if (nullability == Nullability.NULLABLE) return null;
-        if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
+        final PsiElement methodOrLambda = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiLambdaExpression.class);
+        if (methodOrLambda instanceof PsiMethod method) {
+          NullabilityAnnotationInfo info =
+            NullableNotNullManager.getInstance(methodOrLambda.getProject()).findEffectiveNullabilityInfo(method);
+          Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+          if (nullability == Nullability.NULLABLE) return null;
+          if (nullability == Nullability.UNKNOWN) return "jspecify_nullness_not_enough_information";
+        }
       }
       return problem.hasUnknownNullability() ? "jspecify_nullness_not_enough_information" : "jspecify_nullness_mismatch";
     }
   }
-  
+
   String getActualText(Map<PsiElement, String> actual, String stripped) {
     StringBuilder sb = new StringBuilder();
     int pos = 0;
@@ -243,7 +246,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
       if (!warnings.isEmpty()) {
         sb.append("// ").append(warnings);
       }
-      if (sb.length() > 0) sb.append("\n");
+      if (!sb.isEmpty()) sb.append("\n");
       pos = endPos;
       sb.append(str);
     }

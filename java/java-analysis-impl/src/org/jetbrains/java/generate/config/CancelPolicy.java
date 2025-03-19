@@ -42,6 +42,7 @@ public final class CancelPolicy implements ConflictResolutionPolicy {
         return null;
     }
 
+    @Override
     public String toString() {
         return "Cancel";
     }

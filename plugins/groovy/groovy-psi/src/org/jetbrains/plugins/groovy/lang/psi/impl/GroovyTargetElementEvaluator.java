@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
@@ -31,7 +31,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CollapsingKt.collapseRef
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
+public final class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
 
   public static final Key<Object> NAVIGATION_ELEMENT_IS_NOT_TARGET = Key.create("GroovyTargetElementEvaluator.DONT_FOLLOW_NAVIGATION_ELEMENT");
 
@@ -84,8 +84,7 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
     return null;
   }
 
-  @Nullable
-  public static PsiElement correctSearchTargets(@Nullable PsiElement target) {
+  public static @Nullable PsiElement correctSearchTargets(@Nullable PsiElement target) {
     if (target instanceof ClsMethodImpl) {
       PsiElement mirror = ((ClsMethodImpl)target).getSourceMirrorMethod();
       if (mirror != null) {
@@ -103,9 +102,8 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
     return target;
   }
 
-  @Nullable
   @Override
-  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
+  public @Nullable Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     if (reference instanceof GrReferenceExpression referenceExpression) {
       if (referenceExpression.hasMemberPointer()) {
         GroovyResolveResult[] results = referenceExpression.multiResolve(false);
@@ -117,9 +115,8 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
     return super.getTargetCandidates(reference);
   }
 
-  @Nullable
   @Override
-  public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
+  public @Nullable PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
     if (targetElement instanceof GrPropertyForCompletion) {
       return ((GrPropertyForCompletion)targetElement).getOriginalAccessor();
     }

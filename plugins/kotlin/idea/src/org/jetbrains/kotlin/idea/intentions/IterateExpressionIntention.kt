@@ -8,28 +8,31 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.IterableTypesDetection
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.chooseApplicableComponentFunctions
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.suggestNamesForComponent
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.ideService
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 
 class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
     KtExpression::class.java,
@@ -38,9 +41,14 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
                                    HighPriorityAction {
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
         if (element.parent !is KtBlockExpression) return false
+
+        val resolutionFacade = element.getResolutionFacade()
+        val bindingContext = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
+        if (element.isUsedAsExpression(bindingContext)) return false
+
         val range = element.textRange
         if (caretOffset != range.startOffset && caretOffset != range.endOffset) return false
-        val data = data(element) ?: return false
+        val data = data(element, bindingContext, resolutionFacade) ?: return false
         setTextGetter(
             KotlinBundle.lazyMessage(
                 "iterate.over.0",
@@ -53,9 +61,7 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
 
     private data class Data(val collectionType: KotlinType, val elementType: KotlinType)
 
-    private fun data(expression: KtExpression): Data? {
-        val resolutionFacade = expression.getResolutionFacade()
-        val bindingContext = expression.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
+    private fun data(expression: KtExpression, bindingContext: BindingContext, resolutionFacade: ResolutionFacade): Data? {
         val type = bindingContext.getType(expression) ?: return null
         if (KotlinBuiltIns.isNothing(type)) return null
         val scope = expression.getResolutionScope(bindingContext, resolutionFacade)
@@ -68,13 +74,15 @@ class IterateExpressionIntention : SelfTargetingIntention<KtExpression>(
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
-        val elementType = data(element)!!.elementType
+
+        val resolutionFacade = element.getResolutionFacade()
+        val bindingContext = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+        val elementType = data(element, bindingContext, resolutionFacade)!!.elementType
         val nameValidator = Fe10KotlinNewDeclarationNameValidator(
             element,
             element.siblings(),
             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE
         )
-        val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 
         val project = element.project
         val psiFactory = KtPsiFactory(project)

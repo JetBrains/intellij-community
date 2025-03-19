@@ -1,12 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public abstract class ExternalJavacRunResult implements Future<Boolean> {
   public static final ExternalJavacRunResult FAILURE = new ExternalJavacRunResult() {
     @Override
@@ -14,15 +16,13 @@ public abstract class ExternalJavacRunResult implements Future<Boolean> {
       return true;
     }
 
-    @NotNull
     @Override
-    public Boolean get() {
+    public @NotNull Boolean get() {
       return Boolean.FALSE;
     }
 
-    @NotNull
     @Override
-    public Boolean get(long timeout, @NotNull TimeUnit unit){
+    public @NotNull Boolean get(long timeout, @NotNull TimeUnit unit){
       return Boolean.FALSE;
     }
   };
@@ -38,10 +38,8 @@ public abstract class ExternalJavacRunResult implements Future<Boolean> {
   }
 
   @Override
-  @NotNull
-  public abstract Boolean get();
+  public abstract @NotNull Boolean get();
 
   @Override
-  @NotNull
-  public abstract Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, TimeoutException;
+  public abstract @NotNull Boolean get(long timeout, @NotNull TimeUnit unit) throws InterruptedException, TimeoutException;
 }

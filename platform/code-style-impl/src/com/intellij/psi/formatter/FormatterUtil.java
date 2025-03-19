@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.CodeStyleBundle;
@@ -26,12 +26,6 @@ import java.util.Collections;
 
 public final class FormatterUtil {
 
-  /**
-   * @deprecated Use {@link #getReformatBeforeCommitCommandName()} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = "Reformat Code Before Commit";
-
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.newHashSet(
     CodeStyleBundle.message("process.reformat.code"), getReformatBeforeCommitCommandName()
   ));
@@ -51,18 +45,15 @@ public final class FormatterUtil {
     return ArrayUtil.contains(elementType, types);
   }
 
-  @Nullable
-  public static ASTNode getPrevious(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
+  public static @Nullable ASTNode getPrevious(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
     return getNextOrPrevious(node, false, typesToIgnore);
   }
 
-  @Nullable
-  public static ASTNode getNext(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
+  public static @Nullable ASTNode getNext(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
     return getNextOrPrevious(node, true, typesToIgnore);
   }
 
-  @Nullable
-  private static ASTNode getNextOrPrevious(@Nullable ASTNode node, boolean isNext, IElementType @NotNull ... typesToIgnore) {
+  private static @Nullable ASTNode getNextOrPrevious(@Nullable ASTNode node, boolean isNext, IElementType @NotNull ... typesToIgnore) {
     if (node == null) return null;
 
     ASTNode each = isNext ? node.getTreeNext() : node.getTreePrev();
@@ -83,8 +74,7 @@ public final class FormatterUtil {
     return each;
   }
 
-  @Nullable
-  public static ASTNode getPreviousLeaf(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
+  public static @Nullable ASTNode getPreviousLeaf(@Nullable ASTNode node, IElementType @NotNull ... typesToIgnore) {
     ASTNode prev = getPrevious(node, typesToIgnore);
     if (prev == null) {
       return null;
@@ -103,8 +93,7 @@ public final class FormatterUtil {
     return result;
   }
 
-  @Nullable
-  public static ASTNode getPreviousNonWhitespaceLeaf(@Nullable ASTNode node) {
+  public static @Nullable ASTNode getPreviousNonWhitespaceLeaf(@Nullable ASTNode node) {
     if (node == null) return null;
     ASTNode treePrev = node.getTreePrev();
     if (treePrev != null) {
@@ -126,8 +115,7 @@ public final class FormatterUtil {
     }
   }
 
-  @Nullable
-  public static ASTNode getNextNonWhitespaceLeaf(@Nullable ASTNode node) {
+  public static @Nullable ASTNode getNextNonWhitespaceLeaf(@Nullable ASTNode node) {
     if (node == null) return null;
     ASTNode treeNext = node.getTreeNext();
     if (treeNext != null) {
@@ -149,8 +137,7 @@ public final class FormatterUtil {
     }
   }
 
-  @Nullable
-  public static ASTNode getPreviousNonWhitespaceSibling(@Nullable ASTNode node) {
+  public static @Nullable ASTNode getPreviousNonWhitespaceSibling(@Nullable ASTNode node) {
     ASTNode prevNode = node == null ? null : node.getTreePrev();
     while (prevNode != null && isWhitespaceOrEmpty(prevNode)) {
       prevNode = prevNode.getTreePrev();
@@ -158,8 +145,7 @@ public final class FormatterUtil {
     return prevNode;
   }
 
-  @Nullable
-  public static ASTNode getNextNonWhitespaceSibling(@Nullable ASTNode node) {
+  public static @Nullable ASTNode getNextNonWhitespaceSibling(@Nullable ASTNode node) {
     ASTNode next = node == null ? null : node.getTreeNext();
     while (next != null && isWhitespaceOrEmpty(next)) {
       next = next.getTreeNext();
@@ -294,9 +280,9 @@ public final class FormatterUtil {
    * @param holder             target range holder
    * @param whiteSpaceRange    target range which text should be replaced by the given one
    */
-  public static void replaceInnerWhiteSpace(@NotNull final String newWhiteSpaceText,
-                                            @NotNull final ASTNode holder,
-                                            @NotNull final TextRange whiteSpaceRange)
+  public static void replaceInnerWhiteSpace(final @NotNull String newWhiteSpaceText,
+                                            final @NotNull ASTNode holder,
+                                            final @NotNull TextRange whiteSpaceRange)
   {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(holder);
     StringBuilder newText = createNewLeafChars(holder, whiteSpaceRange, newWhiteSpaceText);
@@ -309,7 +295,7 @@ public final class FormatterUtil {
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
-                                       @Nullable final TextRange textRange) {
+                                       final @Nullable TextRange textRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(leafElement);
 
     if (textRange != null && textRange.getStartOffset() > leafElement.getTextRange().getStartOffset() &&
@@ -379,8 +365,7 @@ public final class FormatterUtil {
     }
   }
 
-  @Nullable
-  private static ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
+  private static @Nullable ASTNode findPreviousWhiteSpace(final ASTNode leafElement, final IElementType whiteSpaceTokenType) {
     final int offset = leafElement.getTextRange().getStartOffset() - 1;
     if (offset < 0) return null;
     final PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(leafElement);
@@ -394,8 +379,7 @@ public final class FormatterUtil {
     return null;
   }
 
-  @Nullable
-  private static ASTNode getWsCandidate(@Nullable ASTNode node) {
+  private static @Nullable ASTNode getWsCandidate(@Nullable ASTNode node) {
     if (node == null) return null;
     ASTNode treePrev = node.getTreePrev();
     if (treePrev != null) {
@@ -495,8 +479,7 @@ public final class FormatterUtil {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());
   }
 
-  @Nls
-  public static String getReformatBeforeCommitCommandName() {
+  public static @Nls String getReformatBeforeCommitCommandName() {
     return CodeStyleBundle.message("process.reformat.code.before.commit");
   }
 }

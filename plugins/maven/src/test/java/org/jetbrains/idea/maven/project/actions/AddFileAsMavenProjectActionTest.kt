@@ -3,41 +3,46 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class AddFileAsMavenProjectActionTest : MavenMultiVersionImportingTestCase() {
-  @Test
-  fun testFilesSavedOnAction() {
-    val projectPom = createProjectPom("<groupId>test</groupId>" +
-                                            "<artifactId>project</artifactId>" +
-                                            "<version>1</version>")
 
-    val psiFile = PsiManager.getInstance(myProject).findFile(projectPom)!!
-    val document = PsiDocumentManager.getInstance(myProject)
-      .getDocument(psiFile)!!
+  @Test
+  fun testFilesSavedOnAction() = runBlocking {
+    val projectPom = createProjectPom("<groupId>test</groupId>" +
+                                      "<artifactId>project</artifactId>" +
+                                      "<version>1</version>")
+
+    val document = readAction {
+      val psiFile = PsiManager.getInstance(project).findFile(projectPom)!!
+      PsiDocumentManager.getInstance(project).getDocument(psiFile)!!
+    }
 
     // make a change but do not save
-    WriteAction.run<Throwable> {
+    edtWriteAction {
       document.setText(createPomXml("<groupId>test</groupId>" +
-                       "<artifactId>project-new</artifactId>" +
-                       "<version>1</version>"))
+                                    "<artifactId>project-new</artifactId>" +
+                                    "<version>1</version>"))
     }
 
     val context = MapDataContext()
-    context.put(CommonDataKeys.PROJECT, myProject)
+    context.put(CommonDataKeys.PROJECT, project)
     context.put(CommonDataKeys.VIRTUAL_FILE, projectPom)
     val event = TestActionEvent.createTestEvent(context)
-    AddFileAsMavenProjectAction().actionPerformed(event)
+    withContext(Dispatchers.EDT) {
+      AddFileAsMavenProjectAction().actionPerformedAsync(event)
+    }
 
-    val promise = myProjectsManager.waitForImportCompletion()
-    myProjectsManager.performScheduledImportInTests()
-    waitForImportCompletion()
-    assertTrue("Import did not succeed", promise.isSucceeded)
     assertModules("project-new")
   }
 

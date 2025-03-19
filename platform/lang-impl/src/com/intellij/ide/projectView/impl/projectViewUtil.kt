@@ -17,6 +17,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 
 internal fun getNodeElement(userObject: Any?): Any? {
   return when (userObject) {
@@ -90,7 +93,7 @@ private fun getUnloadedModuleByContentRoot(project: Project, file: VirtualFile):
   return ModuleManager.getInstance(project).getUnloadedModuleDescription(moduleName)
 }
 
-fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
+internal fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
   if (userObjectsPath == null) {
     return null
   }
@@ -108,3 +111,38 @@ fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
                ?: return null
   return ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(directory.virtualFile) as? LibraryOrderEntry
 }
+
+internal fun getFileAttributes(file: VirtualFile?): BasicFileAttributes? {
+  val ioFile = try {
+    getFilePath(file)
+  }
+  catch (ignored: Exception) {
+    // some implementations don't support this, pretend attributes don't exist
+    null
+  }
+  return getFileAttributes(ioFile)
+}
+
+private fun getFileAttributes(ioFile: Path?): BasicFileAttributes? {
+  val fileAttributes = try {
+    if (ioFile == null) null else Files.readAttributes(ioFile, BasicFileAttributes::class.java)
+  }
+  catch (ignored: Exception) {
+    null
+  }
+  return fileAttributes
+}
+
+internal fun getFileTimestamp(file: VirtualFile?): Long? {
+  val ioFile = try {
+    getFilePath(file)
+  }
+  catch (ignored: Exception) {
+    // some implementations don't support this, use whatever time stamp VirtualFile provides
+    return file?.timeStamp
+  }
+  return getFileAttributes(ioFile)?.lastModifiedTime()?.toMillis()
+}
+
+private fun getFilePath(file: VirtualFile?) =
+  if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()

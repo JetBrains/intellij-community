@@ -16,37 +16,38 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderEx
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.nullPromise
 
-interface AttachStateManager {
-  fun detach(): Promise<*> = nullPromise()
-
-  val isAttached: Boolean
-    get() = true
-}
-
+@ApiStatus.NonExtendable
 interface Vm : UserDataHolderEx {
+  @get:ApiStatus.Internal
   val debugListener: DebugEventListener
 
+  @get:ApiStatus.Internal
   val attachStateManager: AttachStateManager
 
+  @get:ApiStatus.Internal
   val evaluateContext: EvaluateContext?
 
+  @get:ApiStatus.Internal
   val scriptManager: ScriptManager
 
+  @get:ApiStatus.Internal
   val breakpointManager: BreakpointManager
 
+  @get:ApiStatus.Internal
   val suspendContextManager: SuspendContextManager<out CallFrame>
 
   /**
    * Controls whether VM stops on exceptions
    */
+  @ApiStatus.Internal
   fun setBreakOnException(catchMode: ExceptionCatchMode): Promise<*> = nullPromise()
 
+  @get:ApiStatus.Internal
   val presentableName: String
     @Nls get() = ScriptDebuggerBundle.message("debug.vm.title.main.thread")
-
-  val childVMs: MutableList<Vm>
 }

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
@@ -7,11 +8,13 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SwitchToReplace extends DumbAwareAction implements LightEditCompatible {
+@ApiStatus.Internal
+public final class SwitchToReplace extends DumbAwareAction implements LightEditCompatible {
   public SwitchToReplace(@NotNull JComponent shortcutHolder) {
     AnAction replaceAction = ActionManager.getInstance().getAction(IdeActions.ACTION_REPLACE);
     if (replaceAction != null) {
@@ -33,7 +36,8 @@ public class SwitchToReplace extends DumbAwareAction implements LightEditCompati
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);
+    EditorSearchSession search = e.getData(EditorSearchSession.SESSION_KEY);
+    if (search == null) return;
     FindModel findModel = search.getFindModel();
     if (!findModel.isReplaceState()) {
       findModel.setReplaceState(true);

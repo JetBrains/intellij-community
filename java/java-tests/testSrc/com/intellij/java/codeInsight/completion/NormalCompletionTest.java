@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -16,21 +17,22 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
-import one.util.streamex.IntStreamEx;
-import org.intellij.lang.annotations.Language;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +46,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    return JAVA_21;
   }
 
   public void testSimple() throws Exception {
@@ -304,7 +306,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   public void testSwitchEnumLabel() {
     configureByFile("SwitchEnumLabel.java");
-    assertEquals(3, myItems.length);
+    //first B is enum Field, second B is class. They have different presentations and handlers
+    assertEquals("[A, B, C, null, B, Object]", ContainerUtil.map(myItems, LookupElement::getLookupString).toString());
   }
 
   public void testSwitchCaseWithEnumConstant() { doTest(); }
@@ -314,7 +317,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testInsideSwitchCaseWithEnumConstant() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "compareTo", "equals");
+    myFixture.assertPreferredCompletionItems(0, "compareTo", "describeConstable", "equals");
   }
 
   public void testMethodInAnnotation() {
@@ -341,6 +344,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configureByFile("Annotation7.java");
     selectItem(myItems[0]);
     checkResultByFile("Annotation7_after.java");
+  }
+
+  public void testAnnotationAttrBeforeExisting() {
+    doTest("\n");
+  }
+
+  public void testAnnotationAttrBeforeExistingBool() {
+    doTest("\n");
   }
 
   public void testEnumInAnnotation() {
@@ -512,13 +523,15 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testLocalClassTwice() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Zoooz", "Zooooo", "ZipOutputStream");
+    assertOrderedEquals(myFixture.getLookupElementStrings(),
+                        "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testLocalTopLevelConflict() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "Zoooz", "Zooooo", "ZipOutputStream");
+    assertOrderedEquals(myFixture.getLookupElementStrings(),
+                        "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -649,7 +662,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   public void testOnlyKeywordsInsideSwitch() {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems("case", "default");
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertSameElements(strings, "case", "default");
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -957,6 +972,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testNoSemicolonInForUpdate() { doTest("\n"); }
+
   public void testReturningTypeVariable() { doTest(); }
 
   public void testReturningTypeVariable2() { doTest(); }
@@ -971,7 +989,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testCaseTailType() { doTest(); }
+  public void testCaseTailType() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
+  }
 
   private void doPrimitiveTypeTest() {
     configure();
@@ -987,7 +1007,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testFinalInForLoop2() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "finalize", "final");
+    myFixture.assertPreferredCompletionItems(1, "finalize", "final");
   }
 
   public void testOnlyClassesInExtends() {
@@ -1025,7 +1045,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     complete();
     assertStringItems("_bar", "_goo", "_foo");
     getLookup().setCurrentItem(getLookup().getItems().get(2));
-    selectItem(getLookup().getItems().get(2), getLookup().NORMAL_SELECT_CHAR);
+    selectItem(getLookup().getItems().get(2), Lookup.NORMAL_SELECT_CHAR);
     checkResult();
   }
 
@@ -1072,16 +1092,16 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertNull(getLookup());
   }
 
-  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWrapsConstructorCall() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterNoNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterNoNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterWithNewLine() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterWithNewLine() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.SmartMode(reason = "MethodCallFixer.apply needs smart mode to count number of parameters")
-  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterGuessArgumentCount() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
-  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSmartEnterInsideArrayBrackets() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   public void testTabReplacesMethodNameWithLocalVariableName() { doTest("\t"); }
 
@@ -1109,6 +1129,10 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testEnumConstantFromEnumMember() { doTest(); }
 
   public void testPrimitiveMethodParameter() { doTest(); }
+
+  public void testPrimitiveVarargMethodParameter() { doTest("."); }
+
+  public void testPrimitiveVarargMethodParameter2() { doTest("."); }
 
   public void testNewExpectedClassParens() { doTest("\n"); }
 
@@ -1279,7 +1303,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(getLookup().COMPLETE_STATEMENT_SELECT_CHAR)); }
+  public void testSynchronizedArgumentSmartEnter() { doTest(String.valueOf(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)); }
 
   @NeedsIndex.Full
   public void testImportStringValue() {
@@ -1451,8 +1475,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertTrue(strings.contains("new"));
     assertTrue(strings.contains("try"));
 
-    strings.remove("new");
-    assertFalse(strings.contains("new"));
+    int iNew = strings.indexOf("new");
+    assertFalse(strings.subList(iNew+1, strings.size()).contains("new"));
   }
 
   public void testExpressionKeywords() {
@@ -1652,8 +1676,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testImplementViaOverrideCompletion() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...", "public void run");
-    getLookup().setCurrentItem(getLookup().getItems().get(2));
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…", "MustBeInvokedByOverriders", "public void run");
+    getLookup().setCurrentItem(getLookup().getItems().get(4));
     myFixture.type('\n');
     checkResult();
   }
@@ -1661,8 +1685,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsWhenTypingOverrideAnnotation() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
-    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
+    getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
@@ -1671,8 +1695,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsWhenTypingOverrideAnnotationBeforeMethod() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
-    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
+    getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
@@ -1681,8 +1705,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants provides dialog option in smart mode only")
   public void testSuggestToOverrideMethodsInMulticaretMode() {
     configure();
-    myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
-    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    myFixture.assertPreferredCompletionItems(0, "Override", "OverrideOnly", "Override/Implement methods…");
+    getLookup().setCurrentItem(getLookup().getItems().get(2));
     myFixture.type('\n');
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
@@ -1711,6 +1735,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertEquals(2, myFixture.getLookupElementStrings().size());
     getLookup().setSelectedIndex(1);
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1725,6 +1750,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testDontGenerateToStringOnOverrideCompletion() {
     configure();
     type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1808,7 +1834,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.complete(CompletionType.BASIC, 2);
     myFixture.checkResult("""
                             import foo.myClass;
-                                    
+                            
                             class Foo extends myClass
                             """);
   }
@@ -1836,7 +1862,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
         void foo(Foo f) {
           f.<caret>
         }
-      }  
+      }
       """);
     myFixture.completeBasic();
     assertFalse(myFixture.getLookupElementStrings().contains("Inner"));
@@ -1900,7 +1926,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     UIUtil.dispatchAllInvocationEvents();
     myFixture.checkResult("""
                             class Foo {int i;
-                                
+                            
                                 public int getI() {
                                     return this.i;
                                 }
@@ -1937,8 +1963,10 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.Full
   public void testShowNonImportedVarInitializers() {
     configure();
-    myFixture.assertPreferredCompletionItems(1, "Field", "FIELD1", "FIELD2", "FIELD3", "FIELD4");
-    var fieldItems = myFixture.getLookup().getItems().subList(1, 5);
+    // Format.Field, DateFormat.Field, NumberFormat.Field, etc. classes are suggested first
+    myFixture.assertPreferredCompletionItems(5,
+                                             "Field", "Field", "Field", "Field", "Field", "FIELD1", "FIELD2", "FIELD3", "FIELD4");
+    var fieldItems = myFixture.getLookup().getItems().subList(5, 9);
     assertEquals(Arrays.asList("( \"x\") in E", "(\"y\") {...} in E", null, " ( = 42) in E"),
                  ContainerUtil.map(fieldItems, item -> renderElement(item).getTailText()));
     assertTrue(renderElement(fieldItems.get(3)).getTailFragments().get(0).isItalic());
@@ -2172,7 +2200,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testSmartEnterWrapsTypeArguments() {
     myFixture.configureByText("a.java", "class Foo<T> { F<caret>List<String> }");
     myFixture.completeBasic();
-    myFixture.type(getLookup().COMPLETE_STATEMENT_SELECT_CHAR);
+    myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR);
     myFixture.checkResult("class Foo<T> { Foo<List<String>><caret> }");
   }
 
@@ -2258,7 +2286,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     checkResult();
   }
 
-  public void testCaseColonAfterStringConstant() { doTest(); }
+  public void testCaseColonAfterStringConstant() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, this::doTest);
+  }
 
   public void testOneElementArray() {
     configureByTestName();
@@ -2279,52 +2309,6 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testTopLevelPublicClassIdentifierExists() { doTest(); }
 
   public void testTopLevelPublicClassBraceExists() { doTest(); }
-
-  public void testPerformanceWithManyNonMatchingDeclarations() {
-    for (int i = 0; i < 10; i++) {
-      myFixture.addClass("class Foo" + i + " {\n" +
-                         IntStreamEx.range(100).mapToObj(n -> "static int FOO" + n + " = 3;\n").joining() +
-                         "}");
-    }
-    String text = IntStreamEx.range(10).mapToObj(i -> "import static Foo" + i + ".*;\n").joining() +
-                  "class C {\n" +
-                  IntStreamEx.range(100).mapToObj(n -> "String method" + n + "() {}\n").joining() +
-                  "{ " +
-                  "int localVariable = 2;\n" +
-                  "localV<caret>x }" +
-                  "}";
-    myFixture.configureByText("a.java", text);
-    PlatformTestUtil.startPerformanceTest(getName(), 300, () -> {
-      assertEquals(1, myFixture.completeBasic().length);
-    }).setup(() -> {
-      LookupImpl lookup = getLookup();
-      if (lookup != null) lookup.hideLookup(true);
-      myFixture.type("\bV");
-      getPsiManager().dropPsiCaches();
-      assertNull(getLookup());
-    }).assertTiming();
-  }
-
-  public void testPerformanceWithManyMatchingStaticallyImportedDeclarations() {
-    var fieldCount = 7000;
-
-    @Language("JAVA") String constantClass =
-      "interface Constants {" +
-      IntStreamEx.range(fieldCount).mapToObj(n -> "String field" + n + " = \"x\";\n").joining() +
-      "}";
-    myFixture.addClass(constantClass);
-    myFixture.configureByText("a.java", "import static Constants.*; class C { { field<caret>x } }");
-    PlatformTestUtil.startPerformanceTest(getName(), 10_000, () -> {
-      int length = myFixture.completeBasic().length;
-      assertTrue(String.valueOf(length), length > 100);
-    }).setup(() -> {
-      LookupImpl lookup = getLookup();
-      if (lookup != null) lookup.hideLookup(true);
-      myFixture.type("\bd");
-      getPsiManager().dropPsiCaches();
-      assertNull(getLookup());
-    }).assertTiming();
-  }
 
   public void testNoExceptionsWhenCompletingInapplicableClassNameAfterNew() { doTest("\n"); }
 
@@ -2446,12 +2430,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testNoFinalLibraryClassesInExtends() {
     myFixture.configureByText("X.java", "class StriFoo{}final class StriBar{}class X extends Stri<caret>");
     myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), List.of(
+    List<String> expected = List.of(
       "StriFoo", // non-final project class
       "StringIndexOutOfBoundsException", "StringTokenizer", "StringConcatException", "StringReader", "StringWriter",
       // non-final library classes
       "StringBufferInputStream", // deprecated library class
-      "StriBar")); // final project class (red)
+      "StriBar", // final project class (red)
+      "StringTemplate"); // interface (red)
+    assertEquals(expected, myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -2471,10 +2457,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                             }""");
   }
 
+  @NeedsIndex.SmartMode(reason = "CatchLookupElement works only with smart mode")
   public void testAfterTry() {
     myFixture.configureByText("Test.java", "class X{X() {try {}<caret>}}");
     myFixture.completeBasic();
-    assertEquals(myFixture.getLookupElementStrings(), List.of("catch", "finally"));
+    assertEquals(myFixture.getLookupElementStrings(),
+                 List.of("catch", "finally",
+                         "catch (Exception e) {\n    throw new RuntimeException(e);\n}",
+                         "catch (RuntimeException e) {\n    throw new RuntimeException(e);\n}"));
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -2673,7 +2663,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       }""");
     myFixture.completeBasic();
     assertEquals("return", myFixture.getLookupElements()[0].getLookupString());
-    var element = myFixture.getLookupElements()[1];
+    assertEquals("record", myFixture.getLookupElements()[1].getLookupString());
+    var element = myFixture.getLookupElements()[2];
     assertEquals("result", element.getLookupString());
     LookupElementPresentation presentation = renderElement(element);
     assertEquals(" (from if-then block)", presentation.getTailText());
@@ -2796,28 +2787,28 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testPackagePrivateConstantInInterface() {
     myFixture.addClass("""
                          package com.example.x;
-                                                  
+                         
                          public interface Exposed extends PackPrivate {
                              int value();
                          }
                          """);
     myFixture.addClass("""
                          package com.example.x;
-                                                  
+                         
                          interface PackPrivate {
                              Exposed CONSTANT = () -> 5;
                          }
                          """);
     myFixture.configureByText("Main.java", """
       package com.example;
-            
+      
       import com.example.x.Exposed;
-            
+      
       public class Main {
           public static void main(String[] args) {
               test(CONST<caret>);
           }
-            
+      
           private static void test(Exposed exposed) {
           }
       }""");
@@ -2825,14 +2816,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.type('\n');
     myFixture.checkResult("""
       package com.example;
-                                  
+      
       import com.example.x.Exposed;
-                                  
+      
       public class Main {
           public static void main(String[] args) {
               test(Exposed.CONSTANT);
           }
-                                  
+      
           private static void test(Exposed exposed) {
           }
       }""");
@@ -2847,17 +2838,17 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                          }
                          """);
     myFixture.completeBasic();
-    assertEquals(List.of("NonNls", "NotNull"), myFixture.getLookupElementStrings());
+    assertEquals(List.of("NonNls", "NotNull", "UnknownNullability"), myFixture.getLookupElementStrings());
   }
 
   @NeedsIndex.Full
   public void testEnumMapNoTypeParams() {
     myFixture.configureByText("Test.java", """
       import java.util.Map;
-            
+      
       public abstract class SuperClass {
           enum X {A, B, C}
-            
+      
           void run() {
               Map<X, String> map = new EnumM<caret>
           }
@@ -2868,10 +2859,10 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.checkResult("""
                             import java.util.EnumMap;
                             import java.util.Map;
-                                                        
+                            
                             public abstract class SuperClass {
                                 enum X {A, B, C}
-                                                        
+                            
                                 void run() {
                                     Map<X, String> map = new EnumMap<>()
                                 }
@@ -2883,9 +2874,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
       import java.util.HashSet;
-                                        
+      
       public abstract class SuperClass {
-            
+      
           void run() {
               HashSet<Object> objects = new HashSet<>();
               objects.len<caret>;
@@ -2896,9 +2887,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.type('\n');
     myFixture.checkResult("""
                             import java.util.HashSet;
-                                                              
+                            
                             public abstract class SuperClass {
-                                  
+                            
                                 void run() {
                                     HashSet<Object> objects = new HashSet<>();
                                     objects.size();
@@ -2908,13 +2899,46 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
 
   @NeedsIndex.Full
+  public void testTagAddWithoutStatic() {
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+      
+      public abstract class SuperClass {
+      
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.len<caret>;
+          }
+      
+          static void len(HashSet<Object> o){}
+      }
+      """);
+    myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.HashSet;
+                            
+                            public abstract class SuperClass {
+                            
+                                void run() {
+                                    HashSet<Object> objects = new HashSet<>();
+                                    objects.size();
+                                }
+                            
+                                static void len(HashSet<Object> o){}
+                            }
+                            """);
+  }
+
+  @NeedsIndex.Full
   public void testTagAddInvocationCount2() {
     Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
       import java.util.HashSet;
-                                        
+      
       public abstract class SuperClass {
-            
+      
           void run() {
               HashSet<Object> objects = new HashSet<>();
               objects.le<caret>;
@@ -2926,5 +2950,294 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
     lookupElements = myFixture.complete(CompletionType.BASIC, 2);
     assertTrue(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
+  }
+
+  @NeedsIndex.Full
+  public void testTagAddInvocationRestart() {
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+      
+      public abstract class SuperClass {
+      
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.<caret>;
+          }
+      }
+      """);
+    myFixture.complete(CompletionType.BASIC, 1);
+    myFixture.type("l");
+    myFixture.type("e");
+    myFixture.type("n");
+    myFixture.type("g");
+    myFixture.type("t");
+    LookupElement element = ContainerUtil.find(myFixture.getLookupElements(), t -> t.getLookupString().equals("size"));
+    assertNotNull(element);
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    element.renderElement(presentation);
+    assertEquals("size() Tag: length", presentation.getItemText());
+    assertEquals("int", presentation.getTypeText());
+  }
+
+  @NeedsIndex.Full
+  public void testResolveToSubclassMethod() {
+    myFixture.configureByText("Test.java", """
+      import java.util.List;
+
+      public final class Complete {
+        public static void main(String[] args) {
+          SubClass instance;
+              instance.<caret>
+        }
+
+        static class SuperClass<T> {
+          public List<T> list(Object param) {return null;}
+        }
+
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(Object paramName) {
+            return super.list(paramName);
+          }
+        }
+
+      }""");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement listElement = StreamEx.of(elements).collect(MoreCollectors.onlyOne(e -> e.getLookupString().equals("list"))).orElseThrow();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    listElement.renderElement(presentation);
+    assertEquals("(Object paramName)", presentation.getTailText());
+  }
+
+  @NeedsIndex.Full
+  public void testResolveToSubclassMethod2() {
+    myFixture.configureByText("Test.java", """
+      public final class Complete {
+        public static void main(String[] args) {
+          SubClass instance;
+          instance.<caret>
+        }
+      
+        static class SuperClass<T> {
+          public List<? extends Object> list(String param) {
+            return null;
+          }
+        }
+      
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(String paramName) {
+            return null;
+          }
+        }
+      }""");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement listElement = StreamEx.of(elements).collect(MoreCollectors.onlyOne(e -> e.getLookupString().equals("list"))).orElseThrow();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    listElement.renderElement(presentation);
+    assertEquals("(String paramName)", presentation.getTailText());
+    assertEquals("List<String>", presentation.getTypeText());
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testCompleteUnnamed() {
+    myFixture.configureByText("Test.java", """
+      class X {
+        void test() {
+          String _ = "hello";
+          _.t<caret>
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testSwitchUncompletedDefault() {
+    myFixture.configureByText("Test.java", """
+        class Test {
+            void test(Integer o) {
+                switch (o) {
+                    d<caret>:
+                        break;
+                }
+            }
+        }
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+        class Test {
+            void test(Integer o) {
+                switch (o) {
+                    default:
+                        <caret>
+                        break;
+                }
+            }
+        }
+      """);  }
+
+  @NeedsIndex.Full
+  public void testNestedImplicitClass() {
+    myFixture.configureByText("Test.java", """
+        public static class NestedClass{
+      
+        }
+      
+        public static void main(String[] args) {
+             NestedCla<caret>
+        }
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.checkResult("""
+        public static class NestedClass{
+      
+        }
+      
+        public static void main(String[] args) {
+             NestedClass
+        }
+      """);  }
+
+  @NeedsIndex.Full
+  public void testNestedQualifierImplicitClass() {
+    myFixture.configureByText("Test.java", """
+        public static class Nested {
+            public static class Nested2ClassMore {
+            }
+        }
+      
+      
+        public void main(String[] args) {
+            Nested nested = new Nested();
+        }
+      
+        public void t(Nested2ClassMo<caret> nested2) {
+      
+        }
+      """);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+        public static class Nested {
+            public static class Nested2ClassMore {
+            }
+        }
+      
+      
+        public void main(String[] args) {
+            Nested nested = new Nested();
+        }
+      
+        public void t(Nested.Nested2ClassMore nested2) {
+      
+        }
+      """);  }
+
+  public void testOuterVariableNotShadowedByPrivateField() {
+    // IDEA-340271
+    myFixture.configureByText("Test.java", """
+      class Super {
+        private int variable;
+      }
+      class Use {
+        void test(int variable) {
+          //noinspection ResultOfObjectAllocationIgnored
+          new Super() {
+            void m() {
+              System.out.println(var<caret>);
+            }
+          };
+        }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+      class Super {
+        private int variable;
+      }
+      class Use {
+        void test(int variable) {
+          //noinspection ResultOfObjectAllocationIgnored
+          new Super() {
+            void m() {
+              System.out.println(variable);
+            }
+          };
+        }
+      }
+      """);
+  }
+
+  public void testOuterVariableNotShadowedByPrivateField2() {
+    // IDEA-340271
+    myFixture.configureByText("Test.java", """
+      class C {
+        class Super {
+          private int variable;
+        }
+        class Use {
+          void test(int variable) {
+            //noinspection ResultOfObjectAllocationIgnored
+            new Super() {
+              void m() {
+                System.out.println(var<caret>);
+              }
+            };
+          }
+        }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.checkResult("""
+      class C {
+        class Super {
+          private int variable;
+        }
+        class Use {
+          void test(int variable) {
+            //noinspection ResultOfObjectAllocationIgnored
+            new Super() {
+              void m() {
+                System.out.println(variable);
+              }
+            };
+          }
+        }
+      }
+      """);
+  }
+
+  public void testCompletionWithBrokenClass() {
+    myFixture.configureByText("UICallback.java", """
+      public <caret>interface UICallback {
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+    for (LookupElement element : elements) {
+      if (!element.getLookupString().equals("UICallback")) {
+        continue;
+      }
+      selectItem(element);
+      break;
+    }
+
+    myFixture.checkResult("""
+      public UICallbackinterface UICallback {
+      }
+      """);
+  }
+
+  public void testNoSuggestionsAfterDotAtClassLevel() { doAntiTest(); }
+
+  public void testSuggestionsAfterDotAtClassLevel() {
+    configureByTestName();
+    myFixture.completeBasic();
+    assertTrue(myFixture.getLookupElementStrings().contains("A"));
   }
 }

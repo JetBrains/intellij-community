@@ -27,6 +27,6 @@ internal class WebTypesSymbolTypeSupportFactoryEP : CustomLoadingExtensionPointB
 
   override fun getImplementationClassName(): String? = implementation
 
-  override fun getKey(): String? = syntax?.lowercase(Locale.US)
+  override fun getKey(): String = syntax!!.lowercase(Locale.US)
 
 }

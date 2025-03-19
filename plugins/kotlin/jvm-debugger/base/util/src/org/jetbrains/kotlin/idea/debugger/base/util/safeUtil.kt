@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.base.util
 
@@ -6,6 +6,7 @@ import com.intellij.debugger.NoDataException
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
+import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.debugger.engine.evaluation.AbsentInformationEvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -15,6 +16,7 @@ import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.sun.jdi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -91,17 +93,17 @@ fun StackFrameProxyImpl.safeThisObject(): ObjectReference? {
     return wrapEvaluateException { thisObject() }
 }
 
-fun Location.safeSourceName(): String? {
-    return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName() } }
-}
+fun Location.safeSourceName(): String? = DebuggerUtilsEx.getSourceName(this, null)
 
 fun Location.safeSourceName(stratum: String): String? {
     return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourceName(stratum) } }
 }
 
-fun Location.safeLineNumber(): Int {
-    return wrapIllegalArgumentException { DebuggerUtilsEx.getLineNumber(this, false) } ?: -1
+fun Location.safeSourcePath(stratum: String): String? {
+    return wrapIllegalArgumentException { wrapAbsentInformationException { this.sourcePath(stratum) } }
 }
+
+fun Location.safeLineNumber(): Int = DebuggerUtilsEx.getLineNumber(this, false)
 
 fun Location.safeLineNumber(stratum: String): Int {
     return try {
@@ -122,9 +124,7 @@ fun Location.safeKotlinPreferredLineNumber(): Int {
     return safeLineNumber(JAVA_STRATUM)
 }
 
-fun Location.safeMethod(): Method? {
-    return DebuggerUtilsEx.getMethod(this)
-}
+fun Location.safeMethod(): Method? = DebuggerUtilsEx.getMethod(this)
 
 fun LocalVariableProxyImpl.safeType(): Type? {
     return wrapClassNotLoadedException { type }
@@ -138,11 +138,21 @@ fun ValueDescriptorImpl.safeCalcValue(context: EvaluationContextImpl): Value? {
     return wrapEvaluateException { calcValue(context) }
 }
 
+@RequiresBlockingContext
 @ApiStatus.Internal
 fun PositionManager.safeGetSourcePosition(location: Location): SourcePosition? {
     return try {
         getSourcePosition(location)
-    } catch (ex: NoDataException) {
+    } catch (_: NoDataException) {
+        null
+    }
+}
+
+@ApiStatus.Internal
+suspend fun PositionManagerAsync.safeGetSourcePositionAsync(location: Location): SourcePosition? {
+    return try {
+        getSourcePositionAsync(location)
+    } catch (_: NoDataException) {
         null
     }
 }

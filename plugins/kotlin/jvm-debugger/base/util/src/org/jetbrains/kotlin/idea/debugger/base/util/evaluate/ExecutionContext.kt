@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.base.util.evaluate
 
@@ -7,12 +7,12 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
-import com.intellij.debugger.jdi.ClassesByNameProvider
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import com.sun.jdi.request.EventRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.findMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -45,15 +45,11 @@ class DefaultExecutionContext(evaluationContext: EvaluationContextImpl) : BaseEx
         }
         return ref
     }
-
-    val classesCache: ClassesByNameProvider by lazy {
-        ClassesByNameProvider.createCache(vm.allClasses())
-    }
 }
 
 sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) {
     val vm: VirtualMachineProxyImpl
-        get() = evaluationContext.debugProcess.virtualMachineProxy
+        get() = evaluationContext.virtualMachineProxy
 
     val classLoader: ClassLoaderReference?
         get() = evaluationContext.classLoader
@@ -73,12 +69,18 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     @Throws(EvaluateException::class)
-    fun invokeMethod(obj: ObjectReference, method: Method, args: List<Value?>, invocationOptions: Int = 0): Value? {
-        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions)
+    fun invokeMethod(
+        obj: ObjectReference,
+        method: Method,
+        args: List<Value?>,
+        invocationOptions: Int = 0,
+        internalEvaluate: Boolean = false
+    ): Value? {
+        return debugProcess.invokeInstanceMethod(evaluationContext, obj, method, args, invocationOptions, internalEvaluate)
     }
 
-    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>): Value? {
-        return debugProcess.invokeMethod(evaluationContext, type, method, args)
+    fun invokeMethod(type: ClassType, method: Method, args: List<Value?>, internalEvaluate: Boolean = false): Value? {
+        return debugProcess.invokeMethod(evaluationContext, type, method, args, internalEvaluate)
     }
 
     fun invokeMethod(type: InterfaceType, method: Method, args: List<Value?>): Value? {
@@ -88,11 +90,6 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     @Throws(EvaluateException::class)
     fun newInstance(type: ClassType, constructor: Method, args: List<Value?>): ObjectReference {
         return debugProcess.newInstance(evaluationContext, type, constructor, args)
-    }
-
-    @Throws(EvaluateException::class)
-    fun newInstance(arrayType: ArrayType, dimension: Int): ArrayReference {
-        return debugProcess.newInstance(arrayType, dimension)
     }
 
     @Throws(EvaluateException::class)
@@ -131,7 +128,10 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
     }
 
     fun findClassSafe(className: String): ClassType? =
-        hopelessAware { findClass(className) as? ClassType }
+        hopelessAware { findClass(className, classLoader) as? ClassType }
+
+    fun findReferenceTypeSafe(name: String): ReferenceType? =
+        hopelessAware { findClass(name, classLoader) }
 
     fun invokeMethodSafe(type: ClassType, method: Method, args: List<Value?>): Value? {
         return hopelessAware { debugProcess.invokeMethod(evaluationContext, type, method, args) }
@@ -181,30 +181,17 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
         methodSignature: String,
         vararg params: Value
     ): Value? {
-        val method = type.methodsByName(name, methodSignature).single()
-        return invokeMethod(ref, method, params.asList())
+        return invokeMethod(ref, type.findMethod(name, methodSignature), params.asList())
     }
 
     /**
      * static method invocation
      */
     private fun findAndInvoke(type: ClassType, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        val method =
-            if (methodSignature is String)
-                type.methodsByName(name, methodSignature).single()
-            else
-                type.methodsByName(name).single()
-        return invokeMethod(type, method, params.asList())
+        return invokeMethod(type, type.findMethod(name, methodSignature), params.asList())
     }
 
     private fun findAndInvoke(instance: ObjectReference, name: String, methodSignature: String? = null, vararg params: Value): Value? {
-        val type = instance.referenceType()
-        type.allMethods()
-        val method =
-            if (methodSignature is String)
-                type.methodsByName(name, methodSignature).single()
-            else
-                type.methodsByName(name).single()
-        return invokeMethod(instance, method, params.asList())
+        return invokeMethod(instance, instance.referenceType().findMethod(name, methodSignature), params.asList())
     }
 }

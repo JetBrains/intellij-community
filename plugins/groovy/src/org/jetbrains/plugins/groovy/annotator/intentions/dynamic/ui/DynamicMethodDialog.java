@@ -19,7 +19,6 @@ import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.EventObject;
 import java.util.List;
 
 public class DynamicMethodDialog extends DynamicDialog {
@@ -136,11 +135,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     public String getCellEditorValue() {
       //noinspection HardCodedStringLiteral
       return myNameField.getText();
-    }
-
-    @Override
-    public boolean isCellEditable(EventObject e) {
-      return true;
     }
 
     @Override

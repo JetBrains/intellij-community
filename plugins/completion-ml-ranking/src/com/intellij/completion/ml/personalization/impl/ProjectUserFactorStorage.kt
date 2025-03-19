@@ -2,6 +2,7 @@
 
 package com.intellij.completion.ml.personalization.impl
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
@@ -9,5 +10,6 @@ import com.intellij.openapi.components.StoragePathMacros
 /**
  * @author Vitaliy.Bibaev
  */
+@Service(Service.Level.PROJECT)
 @State(name = "ProjectUserFactors", storages = [Storage(StoragePathMacros.CACHE_FILE)], reportStatistic = false)
 class ProjectUserFactorStorage : UserFactorStorageBase()

@@ -96,7 +96,7 @@ class ChangeParameterTypeFix(element: KtParameter, type: KotlinType) : KotlinQui
                 parameters[if (receiver != null) parameterIndex + 1 else parameterIndex].currentTypeInfo = typeInfo
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
         }
         runChangeSignature(element.project, editor, descriptor, configuration, element, commandName)
 

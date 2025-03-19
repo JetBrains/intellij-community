@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.*;
 import com.intellij.facet.ui.FacetDependentToolWindow;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
@@ -12,11 +10,13 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import com.intellij.toolWindow.RegisterToolWindowTaskProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,21 +59,21 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
       }
 
       private void checkIfToolwindowMustBeAdded(FacetType<?, ?> facetType) {
-        ApplicationManager.getApplication().invokeLater(() -> {
+        ToolWindowManager.getInstance(project).invokeLater(() -> {
           for (FacetDependentToolWindow extension : getDependentExtensions(facetType)) {
             ensureToolWindowExists(extension, project);
           }
-        }, ModalityState.NON_MODAL, project.getDisposed());
+        });
       }
 
       private void checkIfToolwindowMustBeRemoved(FacetType<?, ?> removedFacetType) {
-        ApplicationManager.getApplication().invokeLater(() -> {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        toolWindowManager.invokeLater(() -> {
           ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);
           if (facetManager.hasFacets(removedFacetType.getId())) {
             return;
           }
 
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
           for (FacetDependentToolWindow extension : getDependentExtensions(removedFacetType)) {
             ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
             if (toolWindow != null) {
@@ -86,7 +86,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
               toolWindow.remove();
             }
           }
-        }, ModalityState.NON_MODAL, project.getDisposed());
+        });
       }
     }, project);
 
@@ -120,7 +120,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     ToolWindowManagerEx toolWindowManager = ToolWindowManagerEx.getInstanceEx(project);
     ToolWindow toolWindow = toolWindowManager.getToolWindow(extension.id);
     if (toolWindow == null) {
-      toolWindowManager.initToolWindow(extension);
+      ((ToolWindowManagerImpl)toolWindowManager).initToolWindow(extension);
 
       if (!extension.showOnStripeByDefault) {
         toolWindow = toolWindowManager.getToolWindow(extension.id);
@@ -134,7 +134,7 @@ final class FacetDependentToolWindowManager implements RegisterToolWindowTaskPro
     }
   }
 
-  private static @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
+  private static @Unmodifiable @NotNull List<FacetDependentToolWindow> getDependentExtensions(@NotNull FacetType<?, ?> facetType) {
     return ContainerUtil.filter(FacetDependentToolWindow.EXTENSION_POINT_NAME.getExtensionList(),
                                 toolWindowEP -> ArrayUtil.contains(facetType.getStringId(), toolWindowEP.getFacetIds()));
   }

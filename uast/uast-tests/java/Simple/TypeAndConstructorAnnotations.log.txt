@@ -1,0 +1,34 @@
+UFile (package = test.pkg)
+    UClass (name = A)
+        UAnnotation (fqName = java.lang.annotation.Target)
+            UNamedExpression (name = null)
+                UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 2))
+                    UQualifiedReferenceExpression
+                        UQualifiedReferenceExpression
+                            UQualifiedReferenceExpression
+                                UQualifiedReferenceExpression
+                                    USimpleNameReferenceExpression (identifier = java)
+                                    USimpleNameReferenceExpression (identifier = lang)
+                                USimpleNameReferenceExpression (identifier = annotation)
+                            USimpleNameReferenceExpression (identifier = ElementType)
+                        USimpleNameReferenceExpression (identifier = TYPE)
+                    UQualifiedReferenceExpression
+                        UQualifiedReferenceExpression
+                            UQualifiedReferenceExpression
+                                UQualifiedReferenceExpression
+                                    USimpleNameReferenceExpression (identifier = java)
+                                    USimpleNameReferenceExpression (identifier = lang)
+                                USimpleNameReferenceExpression (identifier = annotation)
+                            USimpleNameReferenceExpression (identifier = ElementType)
+                        USimpleNameReferenceExpression (identifier = CONSTRUCTOR)
+    UClass (name = Foo)
+        UAnnotation (fqName = test.pkg.A)
+        UMethod (name = Foo)
+            UAnnotation (fqName = test.pkg.A)
+            UBlockExpression
+        UMethod (name = foo1)
+            UBlockExpression
+        UMethod (name = foo2)
+            UBlockExpression
+        UMethod (name = foo3)
+            UBlockExpression

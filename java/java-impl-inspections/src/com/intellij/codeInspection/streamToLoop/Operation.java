@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.psi.*;
@@ -39,9 +39,8 @@ abstract class Operation {
 
   public void preprocessVariables(StreamToLoopReplacementContext context, ChainVariable inVar, ChainVariable outVar) {}
 
-  @Nullable
-  static Operation createIntermediate(@NotNull String name, PsiExpression @NotNull [] args,
-                                      @NotNull ChainVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
+  static @Nullable Operation createIntermediate(@NotNull String name, PsiExpression @NotNull [] args,
+                                                @NotNull ChainVariable outVar, @NotNull PsiType inType, boolean supportUnknownSources) {
     if(name.equals("distinct") && args.length == 0) {
       return new DistinctOperation();
     }
@@ -91,7 +90,7 @@ abstract class Operation {
     return null;
   }
 
-  static abstract class LambdaIntermediateOperation extends Operation {
+  abstract static class LambdaIntermediateOperation extends Operation {
     final FunctionHelper myFn;
 
     LambdaIntermediateOperation(FunctionHelper fn) {
@@ -280,8 +279,7 @@ abstract class Operation {
       return replacement;
     }
 
-    @Nullable
-    public static FlatMapOperation from(ChainVariable outVar, PsiExpression arg, boolean supportUnknownSources) {
+    public static @Nullable FlatMapOperation from(ChainVariable outVar, PsiExpression arg, boolean supportUnknownSources) {
       FunctionHelper fn = FunctionHelper.create(arg, 1);
       if(fn == null) return null;
       String varName = fn.tryLightTransform();

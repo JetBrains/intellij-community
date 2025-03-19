@@ -21,7 +21,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-class StatementMover extends LineMover {
+final class StatementMover extends LineMover {
   private static final Logger LOG = Logger.getInstance(StatementMover.class);
   private static final Key<PsiElement> STATEMENT_TO_SURROUND_WITH_CODE_BLOCK_KEY = Key.create("STATEMENT_TO_SURROUND_WITH_CODE_BLOCK_KEY");
 

@@ -18,10 +18,13 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.utils.LocalHistoryLog;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -92,11 +95,16 @@ public abstract class StructuralChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(Pattern pattern) {
+  public boolean affectsMatching(@NotNull Pattern pattern) {
     for (String each : getAffectedPaths()) {
-      if ( pattern.matcher(Paths.getNameOf(each)).matches()) return true;
+      if (pattern.matcher(Paths.getNameOf(each)).find()) return true;
     }
     return false;
+  }
+
+  @Override
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
+    return ContainerUtil.exists(getAffectedPaths(), historyPathFilter::affectsMatching);
   }
 
   protected String[] getAffectedPaths() {
@@ -113,6 +121,7 @@ public abstract class StructuralChange extends Change {
     return Collections.emptyList();
   }
 
+  @Override
   public String toString() {
     return getClass().getSimpleName() + ": " + myPath;
   }

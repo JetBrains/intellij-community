@@ -39,43 +39,37 @@ public class XPathBinaryExpressionImpl extends XPathElementImpl implements XPath
     }
 
     @Override
-    @Nullable
-    public XPathExpression getLOperand() {
+    public @Nullable XPathExpression getLOperand() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 0 ? nodes[0].getPsi() : null);
     }
 
     @Override
-    @Nullable
-    public XPathExpression getROperand() {
+    public @Nullable XPathExpression getROperand() {
         final ASTNode[] nodes = getNode().getChildren(XPath2ElementTypes.EXPRESSIONS);
         return (XPathExpression)(nodes.length > 1 ? nodes[1].getPsi() : null);
     }
 
     @Override
-    @NotNull
-    public XPathElementType getOperator() {
+    public @NotNull XPathElementType getOperator() {
         final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
         final XPathElementType elementType = (XPathElementType)(nodes.length > 0 ? nodes[0].getElementType() : null);
         assert elementType != null : unexpectedPsiAssertion();
         return elementType;
     }
 
-    @NotNull
     @Override
-    public String getOperationSign() {
+    public @NotNull String getOperationSign() {
       final ASTNode[] nodes = getNode().getChildren(BINARY_OPERATIONS);
       return nodes[0].getText();
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
         return CachedValuesManager.getCachedValue(this, () ->
           CachedValueProvider.Result.create(calcType(), PsiModificationTracker.MODIFICATION_COUNT));
     }
-    @NotNull
-    private XPathType calcType() {
+    private @NotNull XPathType calcType() {
         final XPathElementType operator = getOperator();
         if (operator == XPathTokenTypes.UNION || XPath2TokenTypes.INTERSECT_EXCEPT.contains(operator)) {
             return XPathType.NODESET;

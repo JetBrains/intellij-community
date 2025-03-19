@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -65,13 +65,14 @@ class KotlinStandaloneScriptRunConfiguration(
 
     override fun suggestedName() = filePath?.substringAfterLast('/')
 
+    override fun isBuildBeforeLaunchAddedByDefault(): Boolean = false
+
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> {
         val group = SettingsEditorGroup<KotlinStandaloneScriptRunConfiguration>()
         group.addEditor(
             ExecutionBundle.message("run.configuration.configuration.tab.title"),
             KotlinStandaloneScriptRunConfigurationEditor(project)
         )
-        JavaRunConfigurationExtensionManager.instance.appendEditors(this, group)
         return group
     }
 
@@ -159,11 +160,11 @@ private class ScriptCommandLineState(
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
 
         val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
-                ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
+            ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.kotlinCompiler)
 
-        val scriptClasspath = ScriptConfigurationManager.getInstance(environment.project).getScriptClasspath(scriptVFile)
+        val scriptClasspath = ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(scriptVFile)
         scriptClasspath.forEach {
             params.classPath.add(it.presentableUrl)
         }
@@ -200,6 +201,7 @@ private class ScriptCommandLineState(
 
     private fun commonParameters(): JavaParameters {
         val params = JavaParameters()
+        JavaParametersUtil.configureConfiguration(params, myConfiguration)
         setupJavaParameters(params)
         val jreHome = if (configuration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
         JavaParametersUtil.configureProject(environment.project, params, JavaParameters.JDK_ONLY, jreHome)

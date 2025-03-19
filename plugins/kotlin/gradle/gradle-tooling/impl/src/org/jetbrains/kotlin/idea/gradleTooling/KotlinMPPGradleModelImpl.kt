@@ -103,6 +103,12 @@ data class KotlinNativeCompilationExtensionsImpl(
     constructor(extensions: KotlinNativeCompilationExtensions) : this(extensions.konanTarget)
 }
 
+data class KotlinWasmCompilationExtensionsImpl(
+    override val wasmTarget: String
+) : KotlinWasmCompilationExtensions {
+    constructor(extensions: KotlinWasmCompilationExtensions) : this(extensions.wasmTarget)
+}
+
 data class KotlinCompilationCoordinatesImpl(
     override val targetName: String,
     override val compilationName: String
@@ -113,7 +119,6 @@ data class KotlinCompilationCoordinatesImpl(
     )
 }
 
-@Suppress("DEPRECATION_ERROR", "OVERRIDE_DEPRECATION")
 data class KotlinCompilationImpl(
     override val name: String,
     override val allSourceSets: Set<KotlinSourceSet>,
@@ -123,8 +128,11 @@ data class KotlinCompilationImpl(
     override val compilerArguments: List<String>?,
     override val kotlinTaskProperties: KotlinTaskProperties,
     override val nativeExtensions: KotlinNativeCompilationExtensions?,
+    override val wasmExtensions: KotlinWasmCompilationExtensions?,
     override val associateCompilations: Set<KotlinCompilationCoordinates>,
-    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty()
+    override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
+    override val isTestComponent: Boolean,
+    override val archiveFile: File?,
 ) : KotlinCompilation {
 
     // create deep copy
@@ -137,8 +145,11 @@ data class KotlinCompilationImpl(
         compilerArguments = kotlinCompilation.compilerArguments?.toList(),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl),
+        wasmExtensions = kotlinCompilation.wasmExtensions?.let(::KotlinWasmCompilationExtensionsImpl),
         associateCompilations = cloneCompilationCoordinatesWithCaching(kotlinCompilation.associateCompilations, cloningCache),
-        extras = IdeaKotlinExtras.copy(kotlinCompilation.extras)
+        extras = IdeaKotlinExtras.copy(kotlinCompilation.extras),
+        isTestComponent = kotlinCompilation.isTestComponent,
+        archiveFile = kotlinCompilation.archiveFile,
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -148,11 +159,6 @@ data class KotlinCompilationImpl(
         internal set
     override lateinit var platform: KotlinPlatform
         internal set
-
-    // TODO: Logic like this is duplicated *and different*
-    override val isTestComponent: Boolean
-        get() = name == KotlinCompilation.TEST_COMPILATION_NAME
-                || platform == KotlinPlatform.ANDROID && name.contains("Test")
 
     override fun toString() = name
 
@@ -177,7 +183,8 @@ data class KotlinCompilationImpl(
 }
 
 data class KotlinTargetJarImpl(
-    override val archiveFile: File?
+    override val archiveFile: File?,
+    override val compilations: Collection<KotlinCompilation>
 ) : KotlinTargetJar
 
 data class KotlinTargetImpl(
@@ -225,7 +232,15 @@ data class KotlinTargetImpl(
                     cloningCache[initialTestTask] = it
                 }
         },
-        KotlinTargetJarImpl(target.jar?.archiveFile),
+        KotlinTargetJarImpl(
+            target.jar?.archiveFile,
+            target.jar?.compilations?.map { initialCompilation ->
+                (cloningCache[initialCompilation] as? KotlinCompilation)
+                    ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
+                        cloningCache[initialCompilation] = it
+                    }
+            }.orEmpty(),
+        ),
         target.konanArtifacts.map { KonanArtifactModelImpl(it) }.toList(),
         IdeaKotlinExtras.copy(target.extras)
     )

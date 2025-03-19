@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -10,6 +10,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -42,7 +43,7 @@ public final class FunctionalExpressionCompletionProvider {
   }
 
   static void addFunctionalVariants(@NotNull CompletionParameters parameters, boolean addInheritors, PrefixMatcher matcher, Consumer<? super LookupElement> result) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(parameters.getOriginalFile()) || !isLambdaContext(parameters.getPosition())) return;
+    if (!PsiUtil.isAvailable(JavaFeature.LAMBDA_EXPRESSIONS, parameters.getOriginalFile()) || !isLambdaContext(parameters.getPosition())) return;
 
     ExpectedTypeInfo[] expectedTypes = JavaSmartCompletionContributor.getExpectedTypes(parameters);
     for (ExpectedTypeInfo expectedType : expectedTypes) {
@@ -194,8 +195,7 @@ class MethodReferenceCompletion {
       .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
   }
 
-  @NotNull
-  private LookupElement createMethodRefOnThis(PsiMethod psiMethod, @Nullable PsiClass outerClass) {
+  private @NotNull LookupElement createMethodRefOnThis(PsiMethod psiMethod, @Nullable PsiClass outerClass) {
     String fullString = (outerClass == null ? "" : outerClass.getName() + ".") + "this::" + psiMethod.getName();
     return LookupElementBuilder
       .create(psiMethod, fullString)
@@ -206,8 +206,7 @@ class MethodReferenceCompletion {
       .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
   }
 
-  @NotNull
-  private LookupElement createMethodRefOnClass(PsiMethod psiMethod, PsiClass qualifierClass) {
+  private @NotNull LookupElement createMethodRefOnClass(PsiMethod psiMethod, PsiClass qualifierClass) {
     String presentableText = qualifierClass.getName() + "::" + psiMethod.getName();
     return LookupElementBuilder
       .create(psiMethod)

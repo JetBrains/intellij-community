@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Referencing;
 import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupPresentationProvider;
-import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupResolveConverter;
+import org.jetbrains.idea.devkit.dom.impl.ActionOrGroupReferencingConverter;
 
 @Presentation(provider = ActionOrGroupPresentationProvider.ForAddToGroup.class)
 public interface AddToGroup extends DomElement {
@@ -18,12 +18,16 @@ public interface AddToGroup extends DomElement {
 
 
   @NotNull
-  @Convert(ActionOrGroupResolveConverter.class)
-  GenericAttributeValue<ActionOrGroup> getRelativeToAction();
+  @Referencing(ActionOrGroupReferencingConverter.class)
+  GenericAttributeValue<String> getRelativeToAction();
 
 
   @NotNull
   @Required
-  @Convert(ActionOrGroupResolveConverter.OnlyGroups.class)
-  GenericAttributeValue<ActionOrGroup> getGroupId();
+  @Referencing(ActionOrGroupReferencingConverter.OnlyGroups.class)
+  GenericAttributeValue<String> getGroupId();
+
+  enum Anchor {
+    first, last, before, after
+  }
 }

@@ -9,3 +9,5 @@ fun some() : A {
 }
 
 // TODO: need better selection and caret
+
+// MEMBER: "method: () -> Unit?"

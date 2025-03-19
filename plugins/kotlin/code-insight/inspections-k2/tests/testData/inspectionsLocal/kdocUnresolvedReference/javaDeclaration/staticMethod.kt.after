@@ -1,0 +1,6 @@
+// RUNTIME_WITH_FULL_JDK
+
+/**
+ * [java.nio.file.Files.createDirectory]
+ */
+fun aaa(){}

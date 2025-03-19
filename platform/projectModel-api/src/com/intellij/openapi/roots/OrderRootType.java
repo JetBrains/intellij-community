@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,8 +65,7 @@ public class OrderRootType {
     }
   }
 
-  @NotNull
-  public String name() {
+  public @NotNull String name() {
     return myName;
   }
 
@@ -75,6 +75,7 @@ public class OrderRootType {
    *
    * @return true if empty root type should be skipped, false otherwise.
    */
+  @ApiStatus.Internal
   public boolean skipWriteIfEmpty() {
     return false;
   }
@@ -91,16 +92,14 @@ public class OrderRootType {
     return ourPersistentOrderRootTypes;
   }
 
-  @NotNull
-  public static List<PersistentOrderRootType> getSortedRootTypes() {
+  public static @NotNull List<PersistentOrderRootType> getSortedRootTypes() {
     List<PersistentOrderRootType> allTypes = new ArrayList<>();
     Collections.addAll(allTypes, getAllPersistentTypes());
     allTypes.sort((o1, o2) -> o1.name().compareToIgnoreCase(o2.name()));
     return allTypes;
   }
 
-  @NotNull
-  protected static <T> T getOrderRootType(@NotNull Class<? extends T> orderRootTypeClass) {
+  protected static @NotNull <T> T getOrderRootType(@NotNull Class<? extends T> orderRootTypeClass) {
     List<OrderRootType> rootTypes = EP_NAME.getExtensionList();
     for (OrderRootType rootType : rootTypes) {
       if (orderRootTypeClass.isInstance(rootType)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -29,6 +29,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import sun.awt.image.SunVolatileImage;
 
 import javax.swing.*;
@@ -45,12 +46,13 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 /**
  * @author Pavel Fatin
  */
-class ImmediatePainter {
+@ApiStatus.Internal
+public final class ImmediatePainter {
   private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
-  static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
+  public static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
+  public static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
   private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
   private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
 
@@ -68,7 +70,7 @@ class ImmediatePainter {
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
+    if (ENABLED.asBoolean() && canPaintImmediately(myEditor) && myEditor.myAdView == null) {
       if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
@@ -134,9 +136,9 @@ class ImmediatePainter {
     final EditorSettings settings = editor.getSettings();
     final boolean isBlockCursor = editor.isInsertMode() == settings.isBlockCursor();
     final int lineHeight = editor.getLineHeight();
+    final int caretHeight = editor.myView.getCaretHeight();
     final int ascent = editor.getAscent();
-    final int topOverhang = editor.myView.getTopOverhang();
-    final int bottomOverhang = editor.myView.getBottomOverhang();
+    final int topOverhang = settings.isFullLineHeightCursor() ? 0 : editor.myView.getTopOverhang();
 
     final char c1 = offset == 0 ? ' ' : document.getCharsSequence().charAt(offset - 1);
 
@@ -175,7 +177,7 @@ class ImmediatePainter {
                                          : JBUIScale.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final float caretShift = isBlockCursor ? 0 : caretWidth <= 1 ? 0 : 1 / JBUIScale.sysScale(g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
+                                                             caretWidth, caretHeight);
 
     final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
     final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);

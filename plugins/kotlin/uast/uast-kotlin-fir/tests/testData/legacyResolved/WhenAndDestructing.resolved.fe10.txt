@@ -1,6 +1,0 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = listOf) -> Decompiled_Method: listOf
-    USwitchExpression -> USimpleNameReferenceExpression (identifier = string) -> Kotlin_Light_Value_Parameter: string
-        ULocalVariable (name = var837f2350) -> USimpleNameReferenceExpression (identifier = arr) -> Kotlin_Light_Variable: arr
-        UReturnExpression -> USimpleNameReferenceExpression (identifier = bindingContext) -> Kotlin_Light_Variable: bindingContext

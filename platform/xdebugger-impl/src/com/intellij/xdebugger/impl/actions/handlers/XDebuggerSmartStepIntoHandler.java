@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -9,20 +9,31 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Hint;
 import com.intellij.ui.LightweightHint;
@@ -44,6 +55,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -58,18 +70,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
   private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
   private static final String COUNTER_PROPERTY = "debugger.smart.chooser.counter";
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return super.isEnabled(session, dataContext) && session.getDebugProcess().getSmartStepIntoHandler() != null;
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
     XSourcePosition position = session.getTopFramePosition();
     if (position != null && handler != null) {
@@ -152,14 +165,13 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
         return aValue.getIcon();
       }
 
-      @NotNull
       @Override
-      public String getTextFor(V value) {
+      public @NotNull String getTextFor(V value) {
         return value.getText();
       }
 
       @Override
-      public PopupStep onChosen(V selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(V selectedValue, boolean finalChoice) {
         session.smartStepInto(handler, selectedValue);
         highlighter.dropHighlight();
         return FINAL_CHOICE;
@@ -206,7 +218,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
 
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
-    for (SmartStepData.VariantInfo info : data.myVariants) {
+    for (SmartStepData<V>.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
       if (range != null) {
         List<RangeHighlighter> highlighters = new SmartList<>();
@@ -221,10 +233,35 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     data.myVariants.stream().filter(v -> v.myVariant == variants.get(0)).findFirst().ifPresent(data::select);
     LOG.assertTrue(data.myCurrentVariant != null);
     editor.putUserData(SMART_STEP_INPLACE_DATA, data);
+    // for the remote development scenario we have to add a fake invisible highlighter on the whole document with extra payload
+    // that will be restored on the client and used to alternate actions availability
+    // see com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt.addActionAvailabilityHint
+    RangeHighlighterEx highlighter =
+      ((MarkupModelEx)editor.getMarkupModel()).addRangeHighlighterAndChangeAttributes(HighlighterColors.NO_HIGHLIGHTING, 0,
+                                                                                      editor.getDocument().getTextLength(),
+                                                                                      HighlighterLayer.LAST,
+                                                                                      HighlighterTargetArea.EXACT_RANGE, false, h -> {
+          // this hints should be added in this lambda in order to be serialized by RD markup machinery
+          EditorActionAvailabilityHintKt.addActionAvailabilityHint(h,
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ENTER, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_TAB, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_ESCAPE, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                                   new EditorActionAvailabilityHint(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+        });
+    data.myActionHintSyntheticHighlighter = highlighter;
 
     session.updateExecutionPosition();
+    if (AppMode.isRemoteDevHost()) {
+      VirtualFile virtualFile = editor.getVirtualFile();
+      // in the case of remote development the ordinary focus request doesn't work, we need to use FileEditorManagerEx api to focus the editor
+      if (virtualFile != null) {
+        FileEditorManagerEx.getInstanceEx(session.getProject()).openFile(virtualFile, true, true);
+      }
+    }
     IdeFocusManager.getGlobalInstance().requestFocus(editor.getContentComponent(), true);
-
     showInfoHint(editor, data);
 
     session.addSessionListener(new XDebugSessionListener() {
@@ -303,6 +340,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     private final Editor myEditor;
     private VariantInfo myCurrentVariant;
     private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+    private RangeHighlighter myActionHintSyntheticHighlighter;
 
     SmartStepData(final XSmartStepIntoHandler<V> handler, List<? extends V> variants, final XDebugSession session, Editor editor) {
       myHandler = handler;
@@ -382,11 +420,14 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       myEditor.putUserData(SMART_STEP_HINT_DATA, null);
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(mySession.getProject());
       highlightManager.hideHighlights(myEditor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_TEXT_CHANGE);
+      // since we don't use HighlightManagerImpl to mark the highlighting with the hide flags it can't be used to remove it as well
+      // just remove it manually
+      if (myActionHintSyntheticHighlighter != null) myEditor.getMarkupModel().removeHighlighter(myActionHintSyntheticHighlighter);
     }
 
     class VariantInfo {
-      @NotNull final V myVariant;
-      @NotNull final Point myStartPoint;
+      final @NotNull V myVariant;
+      final @NotNull Point myStartPoint;
 
       VariantInfo(@NotNull V variant) {
         myVariant = variant;
@@ -395,7 +436,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static abstract class SmartStepEditorActionHandler extends EditorActionHandler {
+  abstract static class SmartStepEditorActionHandler extends EditorActionHandler {
     protected final EditorActionHandler myOriginalHandler;
 
     SmartStepEditorActionHandler(EditorActionHandler originalHandler) {
@@ -424,7 +465,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
                                       SmartStepData stepData);
   }
 
-  static class UpHandler extends SmartStepEditorActionHandler {
+  static final class UpHandler extends SmartStepEditorActionHandler {
     UpHandler(EditorActionHandler original) {
       super(original);
     }
@@ -438,7 +479,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class DownHandler extends SmartStepEditorActionHandler {
+  static final class DownHandler extends SmartStepEditorActionHandler {
     DownHandler(EditorActionHandler original) {
       super(original);
     }
@@ -452,7 +493,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class LeftHandler extends SmartStepEditorActionHandler {
+  static final class LeftHandler extends SmartStepEditorActionHandler {
     LeftHandler(EditorActionHandler original) {
       super(original);
     }
@@ -466,7 +507,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class RightHandler extends SmartStepEditorActionHandler {
+  static final class RightHandler extends SmartStepEditorActionHandler {
     RightHandler(EditorActionHandler original) {
       super(original);
     }
@@ -480,7 +521,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class EscHandler extends SmartStepEditorActionHandler {
+  static final class EscHandler extends SmartStepEditorActionHandler {
     EscHandler(EditorActionHandler original) {
       super(original);
     }
@@ -497,7 +538,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  static class EnterHandler extends SmartStepEditorActionHandler {
+  static final class EnterHandler extends SmartStepEditorActionHandler {
     EnterHandler(EditorActionHandler original) {
       super(original);
     }

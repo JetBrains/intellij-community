@@ -22,7 +22,7 @@ public interface CompilerReferenceService {
   }
 
   static @Nullable CompilerReferenceService getInstanceIfEnabled(@NotNull Project project) {
-    return Registry.is("compiler.ref.index") ? project.getService(CompilerReferenceService.class) : null;
+    return Registry.is("compiler.ref.index") ? getInstance(project) : null;
   }
 
   /**

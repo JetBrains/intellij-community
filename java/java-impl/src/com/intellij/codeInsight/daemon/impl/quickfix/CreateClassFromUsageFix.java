@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -18,8 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
-
+public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
   public CreateClassFromUsageFix(PsiJavaCodeReferenceElement refElement, CreateClassKind kind) {
     super(kind, refElement);
   }
@@ -52,38 +51,40 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final PsiJavaCodeReferenceElement element = getRefElement();
-    if (element == null) return;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-    final String superClassName = getSuperClassName(element);
-    final PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);
-    if (aClass == null) return;
+    PsiJavaCodeReferenceElement element = getRefElement();
+    if (element == null || !FileModificationService.getInstance().preparePsiElementForWrite(element)) {
+      return;
+    }
 
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        PsiJavaCodeReferenceElement refElement = element;
-        try {
-          refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    String superClassName = getSuperClassName(element);
+    PsiClass aClass = CreateFromUsageUtils.createClass(element, myKind, superClassName);
+    if (aClass == null) {
+      return;
+    }
 
-        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
-        PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
-        if (pattern != null) {
-          CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
-        }
-        else {
-          Navigatable descriptor = PsiNavigationSupport.getInstance()
-            .createNavigatable(refElement.getProject(), aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
-          descriptor.navigate(true);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiJavaCodeReferenceElement refElement = element;
+      try {
+        refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
       }
-    );
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+
+      IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+
+      PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
+      if (pattern != null) {
+        CreateInnerClassFromUsageFix.setupRecordFromDeconstructionPattern(aClass, pattern, getText());
+      }
+      else {
+        Navigatable descriptor = PsiNavigationSupport.getInstance()
+          .createNavigatable(refElement.getProject(), aClass.getContainingFile().getVirtualFile(), aClass.getTextOffset());
+        descriptor.navigate(true);
+      }
+    });
   }
 
   @Override

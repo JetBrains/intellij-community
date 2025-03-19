@@ -1,0 +1,8 @@
+f:com.intellij.platform.util.coroutines.CoroutineScopeKt
+f:com.intellij.platform.util.coroutines.flow.FlowKt
+- sf:collectLatestUndispatched(kotlinx.coroutines.flow.SharedFlow,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- sf:debounceBatch-HG0u8IE(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
+- sf:throttle(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
+- sf:zipWithNext(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
+- sf:zipWithNext(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
+f:com.intellij.platform.util.coroutines.sync.OverflowSemaphoreKt

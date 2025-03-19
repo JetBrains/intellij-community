@@ -1,18 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
@@ -20,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -33,9 +32,8 @@ import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
  * It's called "Java" inspection because the name without "Java" already exists.
  */
 public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignmentExpression) {
@@ -55,7 +53,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         }
       }
 
-      public void visitLocation(@Nullable PsiElement location) {
+      private void visitLocation(@Nullable PsiElement location) {
         Context context = getContext(location);
         if (context != null) {
           PsiLocalVariable variable = context.myVariable;
@@ -81,8 +79,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static Context getContext(@Nullable PsiElement element) {
+  private static @Nullable Context getContext(@Nullable PsiElement element) {
     if (element != null) {
       if (!(element instanceof PsiAssignmentExpression) && !(element instanceof PsiLocalVariable)) {
         element = element.getParent();
@@ -98,8 +95,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   }
 
   @Contract("null,_ -> null; _,null -> null")
-  @Nullable
-  private static Context getContext(@Nullable PsiLocalVariable variable, @Nullable PsiAssignmentExpression assignment) {
+  private static @Nullable Context getContext(@Nullable PsiLocalVariable variable, @Nullable PsiAssignmentExpression assignment) {
     if (variable != null && assignment != null) {
       String variableName = variable.getName();
       PsiExpression rExpression = assignment.getRExpression();
@@ -115,8 +111,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     return null;
   }
 
-  @Nullable
-  private static PsiLocalVariable findVariable(@NotNull PsiAssignmentExpression assignmentExpression) {
+  private static @Nullable PsiLocalVariable findVariable(@NotNull PsiAssignmentExpression assignmentExpression) {
     PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getLExpression());
     if (lExpression instanceof PsiReferenceExpression reference &&
         !reference.isQualified() && // optimization: locals aren't qualified
@@ -133,18 +128,16 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     return null;
   }
 
-  @Nullable
-  private static PsiAssignmentExpression findAssignment(@NotNull PsiLocalVariable variable) {
+  private static @Nullable PsiAssignmentExpression findAssignment(@NotNull PsiLocalVariable variable) {
     return findOccurrence(variable.getParent(), variable,
                           PsiTreeUtil::skipWhitespacesAndCommentsForward,
                           JoinDeclarationAndAssignmentJavaInspection::findAssignment);
   }
 
-  @Nullable
-  private static <T> T findOccurrence(@Nullable PsiElement start,
-                                      @NotNull PsiLocalVariable variable,
-                                      @NotNull Function<? super PsiElement, ? extends PsiElement> advance,
-                                      @NotNull BiFunction<? super PsiElement, ? super PsiLocalVariable, ? extends T> search) {
+  private static @Nullable <T> T findOccurrence(@Nullable PsiElement start,
+                                                @NotNull PsiLocalVariable variable,
+                                                @NotNull Function<? super PsiElement, ? extends PsiElement> advance,
+                                                @NotNull BiFunction<? super PsiElement, ? super PsiLocalVariable, ? extends T> search) {
     PsiElement candidate = advance.apply(start);
     T result = search.apply(candidate, variable);
     if (result != null) {
@@ -165,8 +158,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   }
 
   @Contract("null,_ -> null")
-  @Nullable
-  private static PsiAssignmentExpression findAssignment(@Nullable PsiElement candidate, @NotNull PsiVariable variable) {
+  private static @Nullable PsiAssignmentExpression findAssignment(@Nullable PsiElement candidate, @NotNull PsiVariable variable) {
     if (candidate instanceof PsiExpressionStatement exprStatement &&
         exprStatement.getExpression() instanceof PsiAssignmentExpression assignmentExpression &&
         ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable)) {
@@ -175,8 +167,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     return null;
   }
 
-  @Nullable
-  private static PsiAssignmentExpression findNextAssignment(@Nullable PsiElement element, @NotNull PsiVariable variable) {
+  private static @Nullable PsiAssignmentExpression findNextAssignment(@Nullable PsiElement element, @NotNull PsiVariable variable) {
     PsiElement candidate = skipWhitespacesAndCommentsForward(element);
     return findAssignment(candidate, variable);
   }
@@ -186,54 +177,62 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     return initializer == null || !SideEffectChecker.checkSideEffects(initializer, null);
   }
 
+  private static class JoinDeclarationAndAssignmentAction extends PsiUpdateModCommandAction<PsiElement> {
+    protected JoinDeclarationAndAssignmentAction(@NotNull PsiElement element) {
+      super(element);
+    }
 
-  private static class JoinDeclarationAndAssignmentFix implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("delete.initializer.completely");
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext actionContext, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      join(element);
+    }
+
+    private static void join(@NotNull PsiElement element) {
+      Context context = getContext(element);
+      if (context != null) {
+        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
+      }
+    }
+  }
+
+  private static class JoinDeclarationAndAssignmentFix extends ModCommandQuickFix {
+    @Override
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.join.declaration.and.assignment.fix.family.name");
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = getContext(descriptor.getPsiElement());
-      if (context != null) {
-        PsiLocalVariable variable = context.myVariable;
-        PsiAssignmentExpression assignmentExpression = context.myAssignment;
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
-          String textAfter = PsiExpressionTrimRenderer.render(initializer) + ";<br>" +
-                             variable.getTypeElement().getText() + ' ' + variable.getName();
-          if (!RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable, textAfter)) return;
-        }
-
-        if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
-        WriteAction.run(() -> DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment));
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      Context context = getContext(element);
+      if (context == null) return ModCommand.nop();
+      PsiLocalVariable variable = context.myVariable;
+      PsiExpression initializer = variable.getInitializer();
+      List<PsiExpression> sideEffects = initializer == null ||
+                                        context.myAssignment.getOperationTokenType() != JavaTokenType.EQ ? 
+                                        List.of() : SideEffectChecker.extractSideEffectExpressions(initializer);
+      JoinDeclarationAndAssignmentAction action = new JoinDeclarationAndAssignmentAction(element);
+      if (!sideEffects.isEmpty() && !ContainerUtil.exists(sideEffects, se -> variableIsUsed(variable, se))) {
+        List<ModCommandAction> subActions = List.of(
+          new RemoveInitializerFix.SideEffectAwareRemove(initializer, var -> JoinDeclarationAndAssignmentAction.join(var)),
+          action);
+        return ModCommand.chooseAction(JavaBundle.message("inspection.join.declaration.and.assignment.fix.title"), subActions);
       }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      Context context = getContext(previewDescriptor.getPsiElement());
-      if (context != null) {
-        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
-        return IntentionPreviewInfo.DIFF;
-      } else {
-        return IntentionPreviewInfo.EMPTY;
+      else {
+        return action.perform(ActionContext.from(descriptor));
       }
     }
   }
 
   private static class Context {
-    @NotNull final PsiLocalVariable myVariable;
-    @NotNull final PsiAssignmentExpression myAssignment;
-    @NotNull final String myName;
+    final @NotNull PsiLocalVariable myVariable;
+    final @NotNull PsiAssignmentExpression myAssignment;
+    final @NotNull String myName;
     final boolean myIsUpdate;
 
     Context(@NotNull PsiLocalVariable variable, @NotNull PsiAssignmentExpression assignment, @NotNull String name) {

@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.repository
 
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
+import com.jetbrains.python.packaging.PyPIPackageUtil
 import org.jetbrains.annotations.ApiStatus
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -39,4 +40,4 @@ internal fun encodeCredentialsForUrl(login: String, password: String): String {
 object PyEmptyPackagePackageRepository : PyPackageRepository("empty repository", "", "")
 
 @ApiStatus.Experimental
-object PyPIPackageRepository : PyPackageRepository("PyPI", "https://pypi.python.org/simple", "")
+object PyPIPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_LIST_URL, "")

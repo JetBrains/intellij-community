@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.collect.Lists;
@@ -30,9 +30,8 @@ public final class PyRemoteInterpreterUtil {
    * @param nullForUnparsableVersion if version returns by python can't be parsed -- return null instead of exception
    * @return version or null if sdk does not have flavor / version can't be parsed etc
    */
-  @Nullable
-  public static String getInterpreterVersion(@Nullable final Project project,
-                                             @NotNull final PyRemoteSdkAdditionalDataBase data,
+  public static @Nullable String getInterpreterVersion(final @Nullable Project project,
+                                             final @NotNull PyRemoteSdkAdditionalDataBase data,
                                              final boolean nullForUnparsableVersion)
     throws RemoteSdkException {
     final Ref<String> result = Ref.create(null);
@@ -46,11 +45,11 @@ public final class PyRemoteInterpreterUtil {
           ProcessOutput processOutput;
           try {
             try {
-              String[] command = {data.getInterpreterPath(), flavor.getVersionOption()};
+              String[] command = {data.getInterpreterPath(), PythonSdkFlavor.PYTHON_VERSION_ARG};
               processOutput = PyRemoteProcessStarterManagerUtil.getManager(data).executeRemoteProcess(myProject, command, null,
                                                                                                       data, new PyRemotePathMapper());
               if (processOutput.getExitCode() == 0) {
-                final String version = flavor.getVersionStringFromOutput(processOutput);
+                final String version = PythonSdkFlavor.getVersionStringFromOutput(processOutput);
                 if (version != null || nullForUnparsableVersion) {
                   result.set(version);
                   return;
@@ -84,8 +83,7 @@ public final class PyRemoteInterpreterUtil {
     return result.get();
   }
 
-  @NotNull
-  private static RemoteSdkException createException(@NotNull final ProcessOutput processOutput, String @NotNull [] command) {
+  private static @NotNull RemoteSdkException createException(final @NotNull ProcessOutput processOutput, String @NotNull [] command) {
     return RemoteSdkException.cantObtainRemoteCredentials(
       new PyExecutionException(PyBundle.message("python.sdk.can.t.obtain.python.version"),
                                command[0],

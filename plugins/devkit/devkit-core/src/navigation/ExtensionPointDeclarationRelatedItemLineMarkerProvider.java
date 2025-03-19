@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -20,6 +20,7 @@ import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -108,6 +109,10 @@ final class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devki
     }
     if (epNameExpression == null) return null;
 
+    if (epNameExpression instanceof UInjectionHost injectionHost) {
+      return injectionHost.evaluateToString();
+    }
+    // constants
     return UastUtils.evaluateString(epNameExpression);
   }
 

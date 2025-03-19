@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.facet.FacetType;
@@ -21,8 +21,7 @@ public final class FrameworkDetectionUtil {
   private FrameworkDetectionUtil() {
   }
 
-  @Nullable
-  public static FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
+  public static @Nullable FrameworkType findFrameworkTypeForFacetDetector(@NotNull FacetType<?, ?> facetType) {
     for (FrameworkDetector detector : FrameworkDetector.EP_NAME.getExtensionList()) {
       if (detector instanceof FacetBasedFrameworkDetector<?, ?> &&
           ((FacetBasedFrameworkDetector)detector).getFacetType().equals(facetType)) {
@@ -70,7 +69,7 @@ public final class FrameworkDetectionUtil {
                                      final ModifiableModelsProvider modelsProvider, final ModulesProvider modulesProvider) {
     WriteAction.run(() -> {
       List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<>();
-      //todo[nik] perform real sorting
+      //todo perform real sorting
       for (DetectedFrameworkDescription description : descriptions) {
         if (description.getDetector().getUnderlyingFrameworkType() == null) {
           sortedDescriptions.add(description);

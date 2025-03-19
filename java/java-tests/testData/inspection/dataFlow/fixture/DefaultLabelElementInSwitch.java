@@ -4,7 +4,7 @@ class Test {
     switch (d) {
       case MONDAY:
         break;
-      case default:
+       default:
         a = -10;
         break;
     }
@@ -18,7 +18,7 @@ class Test {
     switch (d) {
       case MONDAY:
         break;
-      case default:
+       default:
         a = 10;
         break;
     }

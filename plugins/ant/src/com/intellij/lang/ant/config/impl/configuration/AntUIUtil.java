@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -149,10 +149,10 @@ public final class AntUIUtil {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String jdkName = (String)value;
-      if (jdkName == null || jdkName.length() == 0) jdkName = "";
+      if (jdkName == null || jdkName.isEmpty()) jdkName = "";
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
-        if (myProjectJdkName.length() > 0) {
+        if (!myProjectJdkName.isEmpty()) {
           setIcon(AllIcons.Nodes.PpJdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
                  selected && !(SystemInfoRt.isWindows && UIManager.getLookAndFeel().getName().contains("Windows"))

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,8 +17,8 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class PluginHeaderPanel {
-  private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
+@ApiStatus.Internal
+public final class PluginHeaderPanel {
 
   private IdeaPluginDescriptor myPlugin;
   private JBLabel myCategory;
@@ -56,15 +57,13 @@ public class PluginHeaderPanel {
     myUpdated.setVisible(true);
     myName.setFont(StartupUiUtil.getLabelFont().deriveFont(4f + StartupUiUtil.getLabelFont().getSize()));
 
-    //data
-    //noinspection HardCodedStringLiteral
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getCategory())); //NON-NLS
+    myCategory.setText(plugin.getDisplayCategory() == null ? IdeBundle.message("label.category.unknown") : StringUtil.toUpperCase(plugin.getDisplayCategory()));
     String versionText;
     boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode node) {
       myRating.setRate(node.getRating());
-      myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getDownloads()));
+      myDownloads.setText(IdeBundle.message("label.plugin.0.downloads", node.getPresentableDownloads()));
       versionText = showVersion ? "v" + node.getVersion() : null; //NON-NLS
       myUpdated.setText(IdeBundle.message("label.plugin.updated.0", DateFormatUtil.formatDate(node.getDate())));
       if (node.getRepositoryName() != null) {
@@ -78,7 +77,7 @@ public class PluginHeaderPanel {
       myCategory.setVisible(false);
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
-      if (ourState.wasUpdated(plugin.getPluginId())) {
+      if (InstalledPluginsState.getInstance().wasUpdated(plugin.getPluginId())) {
         versionText = IdeBundle.message("label.new.version.will.be.available.after.restart");
       }
       else if (version != null && showVersion) {

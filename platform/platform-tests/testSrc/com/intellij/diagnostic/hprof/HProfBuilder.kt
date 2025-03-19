@@ -36,8 +36,6 @@ import java.lang.reflect.Array
 import java.lang.reflect.Modifier
 import kotlin.Any
 import kotlin.ByteArray
-import kotlin.IllegalArgumentException
-import kotlin.IllegalStateException
 import kotlin.Int
 import kotlin.Long
 import kotlin.LongArray
@@ -61,6 +59,8 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
   private val idSize = 8
 
   private val writer = HprofWriter(dos, idSize, System.currentTimeMillis())
+
+  private var objectFilter: (Any) -> FilterResult = { _ -> FilterResult.INCLUDE_REFERENCES_AND_INSTANCE };
 
   init {
     addObject(Class::class.java)
@@ -125,11 +125,21 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
     if (o == null) {
       return 0
     }
+    val filterResult = objectFilter.invoke(o)
+    if (filterResult == FilterResult.TREAT_AS_NULL) {
+      return 0;
+    }
     if (objectToIdMap.containsKey(o)) {
       return objectToIdMap.getLong(o)
     }
     val objectID = nextObjectID()
     objectToIdMap.put(o, objectID)
+
+    if (filterResult == FilterResult.INCLUDE_REFERENCES_ONLY) {
+      // Object ID has been assigned, but don't include the object itself.
+      // Other objects can reference it by this ID.
+      return objectID
+    }
 
     val oClass: Class<*> = o.javaClass
     addObject(oClass)
@@ -317,6 +327,19 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
     writer.writeStringInUTF8(id, string)
     stringToIdMap.put(string, id)
     return id
+  }
+
+  enum class FilterResult {
+    INCLUDE_REFERENCES_AND_INSTANCE,
+    INCLUDE_REFERENCES_ONLY,
+    TREAT_AS_NULL
+  }
+
+  /**
+   * Optional filter on objects added to the hprof.
+   */
+  fun setObjectFilter(filter: (Any) -> FilterResult) {
+    objectFilter = filter;
   }
 
   private fun getClassSerialNumber(classObjectId: Long) = classObjectIdToClassSerialNumber[classObjectId]

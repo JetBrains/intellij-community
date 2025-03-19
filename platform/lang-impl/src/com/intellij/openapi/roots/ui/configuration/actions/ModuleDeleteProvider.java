@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.*;
 
-public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
+public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
   public static ModuleDeleteProvider getInstance() {
     return ApplicationManager.getApplication().getService(ModuleDeleteProvider.class);
   }
@@ -126,9 +126,10 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
     }
     removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values());
     if (modules != null) {
+      ProjectAttachProcessor attachProcessor = ProjectAttachProcessor.getProcessor(null, null, null);
       for (final Module module : modules) {
-        for (ProjectAttachProcessor processor : ProjectAttachProcessor.EP_NAME.getExtensionList()) {
-          processor.beforeDetach(module);
+        if (attachProcessor != null) {
+          attachProcessor.beforeDetach(module);
         }
         modifiableModuleModel.disposeModule(module);
       }
@@ -163,16 +164,16 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
                                                        : ProjectBundle.message("action.text.remove.module");
   }
 
-  private static void doRemoveModule(@NotNull final Module moduleToRemove,
-                                @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
-                                @NotNull final ModifiableModuleModel moduleModel) {
+  private static void doRemoveModule(final @NotNull Module moduleToRemove,
+                                     @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
+                                     final @NotNull ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
     moduleModel.disposeModule(moduleToRemove);
   }
 
-  public static void removeModule(@NotNull final Module moduleToRemove,
+  public static void removeModule(final @NotNull Module moduleToRemove,
                                   @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
-                                  @NotNull final ModifiableModuleModel moduleModel) {
+                                  final @NotNull ModifiableModuleModel moduleModel) {
     doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
   }
 

@@ -6,7 +6,7 @@ abstract class Test {
     <caret>switch (o) {
       case String s -> System.out.println("one");
       case Integer i -> System.out.println("two");
-      case default -> System.out.println("default");
+      default -> System.out.println("default");
     }
   }
 }

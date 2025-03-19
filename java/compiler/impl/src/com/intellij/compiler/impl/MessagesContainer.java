@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class MessagesContainer {
+public final class MessagesContainer {
   private static final Logger LOG = Logger.getInstance(MessagesContainer.class);
 
   private static final int JAVAC_TAB_SIZE = 8;
@@ -52,8 +52,7 @@ public class MessagesContainer {
     }
   }
 
-  @NotNull
-  public Collection<CompilerMessage> getMessages(@NotNull CompilerMessageCategory category) {
+  public @NotNull Collection<CompilerMessage> getMessages(@NotNull CompilerMessageCategory category) {
     final Collection<CompilerMessage> collection = myMessages.get(category);
     if (collection == null) {
       return Collections.emptyList();
@@ -61,10 +60,9 @@ public class MessagesContainer {
     return Collections.unmodifiableCollection(collection);
   }
 
-  @Nullable
-  public CompilerMessage addMessage(CompilerMessageCategory category,
-                                    @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                    String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
+  public @Nullable CompilerMessage addMessage(CompilerMessageCategory category,
+                                              @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                              String url, int lineNum, int columnNum, Navigatable navigatable, final Collection<String> moduleNames) {
     CompilerMessageImpl msg = new CompilerMessageImpl(myProject, category, message, findFileByUrl(url), lineNum, columnNum, navigatable, moduleNames);
     if (addMessage(msg)) {
       msg.setColumnAdjuster((m, line, col) -> adjustColumn(m, line, col));
@@ -115,8 +113,7 @@ public class MessagesContainer {
     return messages.add(msg);
   }
 
-  @Nullable
-  private static VirtualFile findFileByUrl(@Nullable String url) {
+  private static @Nullable VirtualFile findFileByUrl(@Nullable String url) {
     if (url == null) {
       return null;
     }
@@ -135,5 +132,4 @@ public class MessagesContainer {
     }
     return myMessages.values().stream().filter(Objects::nonNull).mapToInt(Collection::size).sum();
   }
-
 }

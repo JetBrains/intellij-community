@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.*;
 
@@ -56,6 +57,16 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     this.leansForward = leansForward;
   }
 
+  @VisibleForTesting
+  public int getLine() {
+    return line;
+  }
+
+  @VisibleForTesting
+  public int getColumn() {
+    return column;
+  }
+
   /**
    * Constructs a new {@code LogicalPosition} instance with a given value of {@link #leansForward} flag.
    */
@@ -63,18 +74,20 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
     return new LogicalPosition(line, column, value);
   }
   
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof LogicalPosition logicalPosition)) return false;
 
     return column == logicalPosition.column && line == logicalPosition.line;
   }
 
+  @Override
   public int hashCode() {
     return 29 * line + column;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return "LogicalPosition: (" + line + ", " + column + ")"
            + (leansForward ? "; leans forward" : "");
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.project.DumbService;
@@ -11,8 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 
 public final class GroovyRunnerPsiUtil {
-  @Nullable
-  public static PsiClass getRunningClass(@Nullable PsiElement element) {
+  public static @Nullable PsiClass getRunningClass(@Nullable PsiElement element) {
     if (element == null) return null;
     if (DumbService.isDumb(element.getProject())) return null;
 
@@ -35,7 +34,7 @@ public final class GroovyRunnerPsiUtil {
     return null;
   }
 
-  public static boolean isRunnable(@Nullable final PsiClass psiClass) {
+  public static boolean isRunnable(final @Nullable PsiClass psiClass) {
     if (psiClass == null) return false;
     final PsiClass runnable =
       JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_RUNNABLE, psiClass.getResolveScope());

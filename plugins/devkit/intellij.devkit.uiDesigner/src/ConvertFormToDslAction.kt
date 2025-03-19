@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.uiDesigner
 
 import com.intellij.codeInsight.hint.HintManager
@@ -27,10 +27,10 @@ import org.jetbrains.uast.toUElement
 import java.util.*
 
 
-class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
+internal class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
   fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
-    val psiFile = e.getRequiredData(CommonDataKeys.PSI_FILE) as PsiJavaFile
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+    val psiFile = e.getData(CommonDataKeys.PSI_FILE) as? PsiJavaFile ?: return
     val project = psiFile.project
     val element = psiFile.findElementAt(editor.caretModel.offset)
     val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: run {
@@ -52,7 +52,7 @@ class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
   }
 }
 
-fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
+internal fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
   val project = boundClass.project
   val psiFile = boundClass.containingFile as PsiJavaFile
   val module = ModuleUtil.findModuleForPsiElement(psiFile) ?: return
@@ -169,9 +169,9 @@ private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringB
     optionDescriptors.append("val $propertyName = CheckboxDescriptor(${call.args[0]}, ")
 
     val propertyBindingArg =
-      when {
-        size == 1 -> "TODO()"
-        size == 2 -> "${call.args[1]}.toBinding()"
+      when (size) {
+        1 -> "TODO()"
+        2 -> "${call.args[1]}.toBinding()"
         else -> "PropertyBinding(${call.args[1]}, ${call.args[2]})"
       }
 
@@ -186,7 +186,7 @@ private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringB
   }
 }
 
-class FormCall(
+internal class FormCall(
   val callee: String,
   val args: MutableList<String> = mutableListOf(),
   val contents: MutableList<FormCall> = mutableListOf(),
@@ -242,9 +242,9 @@ class FormCall(
   }
 }
 
-data class ComponentBinding(val name: String, val type: String)
+internal data class ComponentBinding(val name: String, val type: String)
 
-class UiForm(module: Module, val root: FormCall) {
+internal class UiForm(module: Module, val root: FormCall) {
   private val _imports = sortedSetOf<String>()
   private val _componentBindings = mutableListOf<ComponentBinding>()
 
@@ -284,7 +284,7 @@ class UiForm(module: Module, val root: FormCall) {
 
 internal class PropertyBinding(val type: PsiType?, val bindingCallParameters: Array<String>)
 
-class FormToDslConverter(private val module: Module, private val boundInstanceUClass: UClass?) {
+internal class FormToDslConverter(private val module: Module, private val boundInstanceUClass: UClass?) {
   fun convertContainer(container: LwContainer): FormCall {
     val row: FormCall
 
@@ -457,7 +457,7 @@ private fun IComponent.getPropertyValue(name: String): Any? {
   return prop.getPropertyValue(this)
 }
 
-fun FormCall.checkConvertButtonGroup(ids: Array<String>) {
+internal fun FormCall.checkConvertButtonGroup(ids: Array<String>) {
   if (contents.any { it.isRadioButtonRow(ids) }) {
     val firstIndex = contents.indexOfFirst { it.isRadioButtonRow(ids) }
     val lastIndex = contents.indexOfLast { it.isRadioButtonRow(ids) }

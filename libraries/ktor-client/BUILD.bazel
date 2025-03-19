@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.libraries.ktor.client` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "ktor-client_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "ktor-client",
+  visibility = ["//visibility:public"],
+  exports = [
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
+    "@lib//:ktor-client-encoding",
+    "@lib//:ktor-client-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:ktor-client-auth",
+  ],
+  runtime_deps = [
+    ":ktor-client_resources",
+    "@lib//:ktor-client-core",
+    "@lib//:ktor-client-java",
+    "@lib//:ktor-client-encoding",
+    "@lib//:ktor-client-content-negotiation",
+    "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:ktor-client-auth",
+  ]
+)
+### auto-generated section `build intellij.libraries.ktor.client` end

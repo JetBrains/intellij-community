@@ -4,7 +4,6 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.options.ConfigurationException;
@@ -12,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,13 +24,10 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
-  @Nullable
-  protected final WizardMode myMode;
   private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
-  public ProjectNameStep(WizardContext wizardContext, @Nullable final WizardMode mode) {
+  public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;
-    myMode = mode;
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),

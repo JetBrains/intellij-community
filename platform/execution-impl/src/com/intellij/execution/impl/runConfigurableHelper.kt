@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
-import com.intellij.execution.Executor
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 internal class RunConfigurationBean {
   val settings: RunnerAndConfigurationSettings
@@ -22,6 +21,7 @@ internal class RunConfigurationBean {
   override fun toString() = settings.toString()
 }
 
+@ApiStatus.Internal
 enum class RunConfigurableNodeKind {
   CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
 
@@ -29,16 +29,4 @@ enum class RunConfigurableNodeKind {
 
   val isConfiguration: Boolean
     get() = (this == CONFIGURATION) or (this == TEMPORARY_CONFIGURATION)
-}
-
-interface RunDialogBase {
-  fun setOKActionEnabled(isEnabled: Boolean)
-
-  val executor: Executor?
-
-  fun setTitle(title: String?)
-
-  fun clickDefaultButton()
-
-  fun getDisposable(): Disposable
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.actions;
 
@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
   private final Supplier<? extends FileTemplate> myTemplate;
 
@@ -51,8 +50,7 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull
-  public FileTemplate getTemplate() {
+  public @NotNull FileTemplate getTemplate() {
     return myTemplate.get();
   }
 }

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NonNls
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
-  return MetricEvent(eventId, data)
+  return MetricEvent(eventId, data, "FUS")
 }
 
 /**
@@ -25,6 +25,6 @@ fun newMetric(@NonNls eventId: String, data: FeatureUsageData?): MetricEvent {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use EventLogGroup#registerEvent and EventId#metric instead")
 fun newMetric(@NonNls eventId: String, value: String): MetricEvent {
-  return MetricEvent(eventId, FeatureUsageData().addValue(value))
+  return MetricEvent(eventId, FeatureUsageData("FUS").addValue(value), "FUS")
 }
 

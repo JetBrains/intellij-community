@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -13,9 +14,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class XValueMarkers<V extends XValue, M> {
+@ApiStatus.NonExtendable
+public class XValueMarkers<V extends XValue, M> {
   private final XValueMarkerProvider<V, M> myProvider;
   private final Map<M, ValueMarkup> myMarkers;
+
+  // DON'T USE. This constructor is needed for Remote Dev to extend this class
+  @ApiStatus.Internal
+  public XValueMarkers() {
+    myProvider = null;
+    myMarkers = Collections.emptyMap();
+  }
 
   private XValueMarkers(@NotNull XValueMarkerProvider<V, M> provider) {
     myProvider = provider;
@@ -26,8 +35,7 @@ public final class XValueMarkers<V extends XValue, M> {
     return new XValueMarkers<>(provider);
   }
 
-  @Nullable
-  public ValueMarkup getMarkup(@NotNull XValue value) {
+  public @Nullable ValueMarkup getMarkup(@NotNull XValue value) {
     Class<V> valueClass = myProvider.getValueClass();
     if (!valueClass.isInstance(value)) return null;
 

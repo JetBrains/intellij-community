@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.IntentionActionBean;
@@ -13,6 +13,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.ServiceDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReferenceProviderBean;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceContributorEP;
 import com.intellij.psi.stubs.StubElementTypeHolderEP;
@@ -29,6 +30,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -38,17 +40,47 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.dom.impl.LanguageResolvingUtil;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 
-public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
+import java.util.Objects;
+
+@ApiStatus.Internal
+public final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
-  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element,
+                                 @NotNull DomElementAnnotationHolder holder,
+                                 @NotNull DomHighlightingHelper helper) {
     if (!(element instanceof Extension extension)) {
       return;
     }
 
+    if (!isAllowed(holder)) return;
+
     ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    if (extensionPoint == null ||
-        !DomUtil.hasXml(extensionPoint.getBeanClass())) {
+    if (extensionPoint == null) {
+      return;
+    }
+
+    String epFqn = extensionPoint.getEffectiveQualifiedName();
+    if ("com.intellij.statusBarWidgetFactory".equals(epFqn)) {
+      if (hasMissingAttribute(extension, "id")) {
+        holder.createProblem(extension, DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.id.attribute"),
+                             new DefineAttributeQuickFix("id"));
+      }
+      return;
+    }
+
+    if ("com.intellij.applicationConfigurable".equals(epFqn) ||
+        "com.intellij.projectConfigurable".equals(epFqn)) {
+      if (hasMissingAttribute(extension, "displayName") &&
+          hasMissingAttribute(extension, "key")) {
+        holder.createProblem(extension, DevKitBundle.message(
+                               "inspection.plugin.xml.extension.registration.configurable.should.define.displayName.or.key.attribute"),
+                             new DefineAttributeQuickFix("displayName"),
+                             new DefineAttributeQuickFix("key"));
+      }
+    }
+
+    if (!DomUtil.hasXml(extensionPoint.getBeanClass())) {
       return;
     }
 
@@ -73,6 +105,22 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
         }
       }
       return;
+    }
+
+    if (DescriptionTypesKt.INTENTION_ACTION_EP.equals(epFqn)) {
+      GenericDomValue<?> descriptionDirectoryDom = DevKitDomUtil.getTag(extension, DescriptionTypesKt.INTENTION_DESCRIPTION_DIRECTORY_NAME);
+      if (descriptionDirectoryDom != null && DomUtil.hasXml(descriptionDirectoryDom)) {
+        String customDescriptionDirectory = descriptionDirectoryDom.getStringValue();
+        GenericDomValue<?> classNameDom = DevKitDomUtil.getTag(extension, "className");
+        if (classNameDom != null && DomUtil.hasXml(classNameDom)) {
+          PsiClass intentionClass = (PsiClass)classNameDom.getValue();
+          if (intentionClass != null && Objects.equals(customDescriptionDirectory, DescriptionTypeResolver.getDefaultDescriptionDirName(intentionClass))) {
+            highlightRedundant(descriptionDirectoryDom, DevKitBundle.message(
+                                 "inspection.plugin.xml.extension.registration.intention.redundant.description.directory"),
+                               ProblemHighlightType.WARNING, holder);
+          }
+        }
+      }
     }
 
     if (InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
@@ -108,7 +156,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
         if (!DomUtil.hasXml(languageAttributeDescription.getDomAttributeValue(extension))) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.attribute",
-                                                    extensionPoint.getEffectiveQualifiedName()),
+                                                    epFqn),
                                new DefineAttributeQuickFix("language", "", LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
         return;
@@ -121,7 +169,7 @@ public class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlIns
         if (languageTag != null && !DomUtil.hasXml(languageTag)) {
           holder.createProblem(extension,
                                DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.language.tag",
-                                                    extensionPoint.getEffectiveQualifiedName()),
+                                                    epFqn),
                                new AddLanguageTagQuickFix(LanguageResolvingUtil.getAnyLanguageValue(extensionPoint)));
         }
       }

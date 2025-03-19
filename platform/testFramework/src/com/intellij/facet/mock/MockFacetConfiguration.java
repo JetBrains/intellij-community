@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.mock;
 
 import com.intellij.facet.FacetConfiguration;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class MockFacetConfiguration implements FacetConfiguration {
+public final class MockFacetConfiguration implements FacetConfiguration {
   private final List<String> myRootUrls = new ArrayList<>();
   private String myData = "";
   private MockFacetEditorTab myEditor;

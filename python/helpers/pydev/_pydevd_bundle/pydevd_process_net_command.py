@@ -1,34 +1,74 @@
+import json
 import os
 import sys
 import traceback
 
-from _pydev_bundle import pydev_log
-from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
-import pydevd_tracing
 import pydevd_file_utils
-from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
-from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, CMD_THREAD_KILL,
-    CMD_THREAD_SUSPEND, pydevd_find_thread_by_id, CMD_THREAD_RUN, InternalRunThread, CMD_STEP_INTO, CMD_STEP_OVER,
-    CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, InternalStepThread, CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT,
-    CMD_SMART_STEP_INTO, InternalSetNextStatementThread, CMD_RELOAD_CODE, ReloadCodeCommand, CMD_CHANGE_VARIABLE,
-    InternalChangeVariable, CMD_GET_VARIABLE, InternalGetVariable, CMD_GET_ARRAY, InternalGetArray, CMD_GET_COMPLETIONS,
-    InternalGetCompletions, CMD_GET_FRAME, InternalGetFrame, CMD_SET_BREAK, file_system_encoding, CMD_REMOVE_BREAK,
-    CMD_EVALUATE_EXPRESSION, CMD_EXEC_EXPRESSION, InternalEvaluateExpression, CMD_CONSOLE_EXEC, InternalConsoleExec,
-    CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS, CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK,
-    CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK,
-    CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions,
-    CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE,
-    CMD_SHOW_RETURN_VALUES, CMD_SET_UNIT_TEST_DEBUGGING_MODE, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription,
-    InternalLoadFullValue, CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED, CMD_REDIRECT_OUTPUT, CMD_GET_NEXT_STATEMENT_TARGETS,
-    InternalGetNextStatementTargets, CMD_SET_PROJECT_ROOTS, CMD_GET_SMART_STEP_INTO_VARIANTS,
-    CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR, CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS, NetCommand,
-    CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG, InternalGetThreadStack, InternalSmartStepInto, InternalGetSmartStepIntoVariants,
-    CMD_DATAVIEWER_ACTION, InternalDataViewerAction, CMD_TABLE_EXEC, InternalTableCommand, CMD_INTERRUPT_DEBUG_CONSOLE, CMD_SET_USER_TYPE_RENDERERS)
-from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN,
-    NEXT_VALUE_SEPARATOR, IS_WINDOWS, get_current_thread_id)
-from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+import pydevd_tracing
+from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-import json
+from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
+from _pydevd_bundle.pydevd_pep_669_tracing import add_new_breakpoint, remove_breakpoint
+from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
+from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
+from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
+                                        CMD_THREAD_SUSPEND, pydevd_find_thread_by_id,
+                                        CMD_THREAD_RUN, CMD_STEP_INTO, CMD_STEP_OVER,
+                                        CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE,
+                                        InternalStepThread, CMD_RUN_TO_LINE,
+                                        CMD_SET_NEXT_STATEMENT,
+                                        CMD_SMART_STEP_INTO,
+                                        InternalSetNextStatementThread, CMD_RELOAD_CODE,
+                                        ReloadCodeCommand,
+                                        CMD_CHANGE_VARIABLE,
+                                        InternalChangeVariable, CMD_GET_VARIABLE,
+                                        InternalGetVariable, CMD_GET_ARRAY,
+                                        InternalGetArray,
+                                        CMD_GET_COMPLETIONS,
+                                        InternalGetCompletions, CMD_GET_FRAME,
+                                        InternalGetFrame, CMD_SET_BREAK,
+                                        file_system_encoding,
+                                        CMD_REMOVE_BREAK,
+                                        CMD_EVALUATE_EXPRESSION, CMD_EXEC_EXPRESSION,
+                                        InternalEvaluateExpression, CMD_CONSOLE_EXEC,
+                                        InternalConsoleExec,
+                                        CMD_SET_PY_EXCEPTION, CMD_GET_FILE_CONTENTS,
+                                        CMD_SET_PROPERTY_TRACE, CMD_ADD_EXCEPTION_BREAK,
+                                        CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE,
+                                        CMD_ADD_DJANGO_EXCEPTION_BREAK,
+                                        CMD_REMOVE_DJANGO_EXCEPTION_BREAK,
+                                        CMD_EVALUATE_CONSOLE_EXPRESSION,
+                                        InternalEvaluateConsoleExpression,
+                                        InternalConsoleGetCompletions,
+                                        CMD_RUN_CUSTOM_OPERATION,
+                                        InternalRunCustomOperation,
+                                        CMD_IGNORE_THROWN_EXCEPTION_AT,
+                                        CMD_ENABLE_DONT_TRACE,
+                                        CMD_SHOW_RETURN_VALUES,
+                                        CMD_SET_UNIT_TEST_DEBUGGING_MODE,
+                                        CMD_GET_DESCRIPTION,
+                                        InternalGetDescription,
+                                        InternalLoadFullValue, CMD_LOAD_FULL_VALUE,
+                                        CMD_PROCESS_CREATED_MSG_RECEIVED,
+                                        CMD_REDIRECT_OUTPUT,
+                                        CMD_GET_NEXT_STATEMENT_TARGETS,
+                                        InternalGetNextStatementTargets,
+                                        CMD_SET_PROJECT_ROOTS,
+                                        CMD_GET_SMART_STEP_INTO_VARIANTS,
+                                        CMD_GET_THREAD_STACK, CMD_THREAD_DUMP_TO_STDERR,
+                                        CMD_STOP_ON_START, CMD_GET_EXCEPTION_DETAILS,
+                                        NetCommand,
+                                        CMD_SET_PROTOCOL, CMD_PYDEVD_JSON_CONFIG,
+                                        InternalGetThreadStack, InternalSmartStepInto,
+                                        InternalGetSmartStepIntoVariants,
+                                        CMD_DATAVIEWER_ACTION, InternalDataViewerAction,
+                                        CMD_TABLE_EXEC, InternalTableCommand,
+                                        CMD_INTERRUPT_DEBUG_CONSOLE,
+                                        CMD_SET_USER_TYPE_RENDERERS)
+from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
+                                             dict_keys, STATE_RUN,
+                                             NEXT_VALUE_SEPARATOR, IS_WINDOWS,
+                                             get_current_thread_id)
 from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
 
 
@@ -152,6 +192,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     break
 
             elif cmd_id == CMD_THREAD_RUN:
+                py_db.maybe_kill_active_value_resolve_threads()
                 threads = []
                 if text.strip() == '*':
                     threads = pydevd_utils.get_non_pydevd_threads()
@@ -173,6 +214,8 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_STEP_INTO or cmd_id == CMD_STEP_OVER or cmd_id == CMD_STEP_RETURN or \
                     cmd_id == CMD_STEP_INTO_MY_CODE:
                 # we received some command to make a single step
+                py_db.maybe_kill_active_value_resolve_threads()
+
                 t = pydevd_find_thread_by_id(text)
                 if t:
                     thread_id = get_thread_id(t)
@@ -183,6 +226,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     sys.stderr.write("Can't make tasklet step command: %s\n" % (text,))
 
             elif cmd_id in (CMD_RUN_TO_LINE, CMD_SET_NEXT_STATEMENT, CMD_SMART_STEP_INTO):
+                py_db.maybe_kill_active_value_resolve_threads()
                 if cmd_id == CMD_SMART_STEP_INTO:
                     # we received a smart step into command
                     thread_id, frame_id, line, func_name, call_order, start_line, end_line = text.split('\t', 6)
@@ -323,13 +367,13 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if py_db._set_breakpoints_with_id:
                     try:
                         try:
-                            breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint, suspend_policy = text.split('\t', 9)
+                            breakpoint_id, breakpoint_type, file, line, func_name, condition, expression, hit_condition, is_logpoint, suspend_policy = text.split('\t', 9)
                         except ValueError: # not enough values to unpack
                             # No suspend_policy passed (use default).
-                            breakpoint_id, type, file, line, func_name, condition, expression, hit_condition, is_logpoint = text.split('\t', 8)
+                            breakpoint_id, breakpoint_type, file, line, func_name, condition, expression, hit_condition, is_logpoint = text.split('\t', 8)
                         is_logpoint = is_logpoint == 'True'
                     except ValueError: # not enough values to unpack
-                        breakpoint_id, type, file, line, func_name, condition, expression = text.split('\t', 6)
+                        breakpoint_id, breakpoint_type, file, line, func_name, condition, expression = text.split('\t', 6)
 
                     breakpoint_id = int(breakpoint_id)
                     line = int(line)
@@ -344,7 +388,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 else:
                     # Note: this else should be removed after PyCharm migrates to setting
                     # breakpoints by id (and ideally also provides func_name).
-                    type, file, line, func_name, suspend_policy, condition, expression = text.split('\t', 6)
+                    breakpoint_type, file, line, func_name, suspend_policy, condition, expression = text.split('\t', 6)
                     # If we don't have an id given for each breakpoint, consider
                     # the id to be the line.
                     breakpoint_id = line = int(line)
@@ -358,7 +402,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                if pydevd_file_utils.is_real_file(file):
+                if pydevd_file_utils.is_real_file(file) and breakpoint_type != 'jupyter-line':
                     file = pydevd_file_utils.norm_file_to_server(file)
 
                     if not pydevd_file_utils.exists(file):
@@ -375,7 +419,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 if hit_condition is not None and (len(hit_condition) <= 0 or hit_condition == "None"):
                     hit_condition = None
 
-                if type == 'python-line':
+                if breakpoint_type == 'python-line':
                     breakpoint = LineBreakpoint(line, condition, func_name, expression, suspend_policy, hit_condition=hit_condition, is_logpoint=is_logpoint)
                     breakpoints = py_db.breakpoints
                     file_to_id_to_breakpoint = py_db.file_to_id_to_line_breakpoint
@@ -384,7 +428,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     result = None
                     plugin = py_db.get_plugin_lazy_init()
                     if plugin is not None:
-                        result = plugin.add_breakpoint('add_line_breakpoint', py_db, type, file, line, condition, expression, func_name, hit_condition=hit_condition, is_logpoint=is_logpoint)
+                        result = plugin.add_breakpoint('add_line_breakpoint', py_db, breakpoint_type, file, line, condition, expression, func_name, hit_condition=hit_condition, is_logpoint=is_logpoint)
                     if result is not None:
                         supported_type = True
                         breakpoint, breakpoints = result
@@ -393,10 +437,10 @@ def process_net_command(py_db, cmd_id, seq, text):
                         supported_type = False
 
                 if not supported_type:
-                    if type == 'jupyter-line':
+                    if breakpoint_type == 'jupyter-line':
                         return
                     else:
-                        raise NameError(type)
+                        raise NameError(breakpoint_type)
 
                 if DebugInfoHolder.DEBUG_TRACE_BREAKPOINTS > 0:
                     pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
@@ -409,6 +453,10 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                 id_to_pybreakpoint[breakpoint_id] = breakpoint
                 py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
+
+                if py_db.is_pep669_monitoring_enabled:
+                    add_new_breakpoint(breakpoint)
+
                 if py_db.plugin is not None:
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
                     if py_db.has_plugin_line_breaks:
@@ -418,13 +466,13 @@ def process_net_command(py_db, cmd_id, seq, text):
 
             elif cmd_id == CMD_REMOVE_BREAK:
                 #command to remove some breakpoint
-                #text is type\file\tid. Remove from breakpoints dictionary
+                #text is breakpoint_type\file\tid. Remove from breakpoints dictionary
                 breakpoint_type, file, breakpoint_id = text.split('\t', 2)
 
                 if not IS_PY3K:  # In Python 3, the frame object will have unicode for the file, whereas on python 2 it has a byte-array encoded with the filesystem encoding.
                     file = file.encode(file_system_encoding)
 
-                if pydevd_file_utils.is_real_file(file):
+                if pydevd_file_utils.is_real_file(file) and breakpoint_type != 'jupyter-line':
                     file = pydevd_file_utils.norm_file_to_server(file)
 
                 try:
@@ -452,6 +500,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                                 existing = id_to_pybreakpoint[breakpoint_id]
                                 sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
                                     file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
+
+                            if py_db.is_pep669_monitoring_enabled:
+                                remove_breakpoint(id_to_pybreakpoint[breakpoint_id])
 
                             del id_to_pybreakpoint[breakpoint_id]
                             py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
@@ -891,13 +942,14 @@ def process_net_command(py_db, cmd_id, seq, text):
                     parameters = text.split('\t')
                     thread_id, frame_id, init_command, command_type = parameters[:4]
 
-                    start_index, end_index = None, None
+                    start_index, end_index, format = None, None, None
 
-                    if len(parameters) >= 6:
+                    if len(parameters) >= 7:
                         start_index = int(parameters[4])
                         end_index = int(parameters[5])
+                        format = parameters[6]
 
-                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index)
+                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
                     py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()

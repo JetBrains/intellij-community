@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 
-public class MavenFileTypeFactory implements FileTypeUsageSchemaDescriptor {
+public final class MavenFileTypeFactory implements FileTypeUsageSchemaDescriptor {
   @Override
   public boolean describes(@NotNull Project project, @NotNull VirtualFile file) {
     return FileTypeRegistry.getInstance().isFileOfType(file, XmlFileType.INSTANCE) && FileUtil.namesEqual(file.getName(), MavenConstants.POM_XML);

@@ -17,9 +17,13 @@ class KotlinUPostfixExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UPostfixExpression, KotlinUElementWithType, KotlinEvaluatableUElement,
     UResolvable, UMultiResolvable {
-    override val operand by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
-    }
+
+    private val operandPart = UastLazyPart<UExpression>()
+
+    override val operand: UExpression
+        get() = operandPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
+        }
 
     override val operator = when (sourcePsi.operationToken) {
         KtTokens.PLUSPLUS -> UastPostfixOperator.INC

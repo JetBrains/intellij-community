@@ -4,15 +4,16 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.openapi.roots.TestModulePropertiesProvider
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.TestModulePropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TestModulePropertiesBridge(private val currentModule: Module): TestModuleProperties() {
   private val workspaceModel = WorkspaceModel.getInstance(currentModule.project)
 
@@ -27,7 +28,7 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
   }
 
   override fun setProductionModuleName(moduleName: String?) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     val moduleEntity = getModuleEntity() ?: error("Module entity with name: ${currentModule.name} should be available")
     if (moduleEntity.testProperties?.productionModuleId?.name == moduleName) return
     workspaceModel.updateProjectModel("Linking production module with the test") { builder ->
@@ -35,15 +36,15 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
       if (moduleName == null) return@updateProjectModel
       val productionModuleId = ModuleId(moduleName)
       builder.resolve(productionModuleId) ?: error("Can't find module by name: $moduleName")
-      builder.modifyEntity(moduleEntity) {
+      builder.modifyModuleEntity(moduleEntity) {
         this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
       }
     }
   }
 
-  fun setProductionModuleNameToBuilder(moduleName: String?, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    val moduleEntity = builder.resolve(ModuleId(currentModule.name)) ?: error("Module entity with name: ${currentModule.name} should be available")
+  fun setProductionModuleNameToBuilder(moduleName: String?, currentModuleName: String, builder: MutableEntityStorage) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val moduleEntity = builder.resolve(ModuleId(currentModuleName)) ?: error("Module entity with name: ${currentModuleName} should be available")
     if (moduleEntity.testProperties?.productionModuleId?.name == moduleName) return
     moduleEntity.testProperties?.let { builder.removeEntity(it) }
     if (moduleName == null) return
@@ -51,12 +52,18 @@ class TestModulePropertiesBridge(private val currentModule: Module): TestModuleP
     if (builder.resolve(productionModuleId) == null) {
       thisLogger().warn("Can't find module by name: $moduleName, but it can be a valid case e.g at gradle import")
     }
-    builder.modifyEntity(moduleEntity) {
+    builder.modifyModuleEntity(moduleEntity) {
       this.testProperties = TestModulePropertiesEntity(productionModuleId, moduleEntity.entitySource)
     }
   }
 
   private fun getModuleEntity(): ModuleEntity? {
     return workspaceModel.currentSnapshot.resolve(ModuleId(currentModule.name))
+  }
+}
+
+internal class TestModulePropertiesBridgeProvider(val project: Project): TestModulePropertiesProvider {
+  override fun getTestModuleProperties(module: Module): TestModuleProperties {
+    return TestModulePropertiesBridge(module)
   }
 }

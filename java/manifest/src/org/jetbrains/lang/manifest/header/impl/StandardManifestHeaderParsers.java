@@ -35,7 +35,7 @@ import java.util.Map;
 /**
  * @author Robert F. Beeger (robert@beeger.net)
  */
-public class StandardManifestHeaderParsers implements HeaderParserProvider {
+public final class StandardManifestHeaderParsers implements HeaderParserProvider {
   private final Map<String, HeaderParser> myParsers;
 
   public StandardManifestHeaderParsers() {
@@ -71,9 +71,8 @@ public class StandardManifestHeaderParsers implements HeaderParserProvider {
     myParsers.put("Multi-Release", StandardHeaderParser.INSTANCE);
   }
 
-  @NotNull
   @Override
-  public Map<String, HeaderParser> getHeaderParsers() {
+  public @NotNull Map<String, HeaderParser> getHeaderParsers() {
     return myParsers;
   }
 }

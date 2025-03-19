@@ -1,44 +1,33 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
+import com.jetbrains.python.ast.PyAstSubscriptionExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
-
-public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
-
-  @Nullable
-  @Override
-  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
-    return getOperand();
-  }
-
-  @NotNull
-  @Override
-  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
-    if (AccessDirection.of(this) == AccessDirection.WRITE) {
-      final PsiElement parent = getParent();
-      if (parent instanceof PyAssignmentStatement) {
-        return Arrays.asList(getIndexExpression(), ((PyAssignmentStatement)parent).getAssignedValue());
-      }
-    }
-    return Collections.singletonList(getIndexExpression());
-  }
+public interface PySubscriptionExpression extends PyAstSubscriptionExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
   /**
    * @return For {@code spam[x][y][n]} will return {@code spam} regardless number of its dimensions
    */
-  @NotNull
-  PyExpression getRootOperand();
+  @Override
+  default @NotNull PyExpression getRootOperand() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getRootOperand();
+  }
 
-  @NotNull
-  PyExpression getOperand();
+  @Override
+  default @NotNull PyExpression getOperand() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getOperand();
+  }
 
-  @Nullable
-  PyExpression getIndexExpression();
+  @Override
+  default @Nullable PyExpression getIndexExpression() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getIndexExpression();
+  }
+
+  @Override
+  default @Nullable PyExpression getQualifier() {
+    return (PyExpression)PyAstSubscriptionExpression.super.getQualifier();
+  }
 }

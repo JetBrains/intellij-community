@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class XDebuggerSuspendedActionHandler extends XDebuggerActionHandler {
   @Override
-  protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return isEnabled(session);
   }
 
-  public static boolean isEnabled(XDebugSession session) {
+  public static boolean isEnabled(@NotNull XDebugSession session) {
     return !((XDebugSessionImpl)session).isReadOnly() && session.isSuspended();
   }
 }

@@ -1,0 +1,70 @@
+### auto-generated section `build intellij.platform.statistics.devkit` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "devkit_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "devkit",
+  module_name = "intellij.platform.statistics.devkit",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "@lib//:guava",
+    "//platform/statistics",
+    "//platform/util/progress",
+    "//json",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":devkit_resources"]
+)
+
+jvm_library(
+  name = "devkit_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":devkit"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:guava",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/progress",
+    "//json",
+    "//platform/core-ui",
+    "//platform/statistics/uploader",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":devkit_resources"]
+)
+
+jvm_test(
+  name = "devkit_test",
+  runtime_deps = [":devkit_test_lib"]
+)
+### auto-generated section `build intellij.platform.statistics.devkit` end

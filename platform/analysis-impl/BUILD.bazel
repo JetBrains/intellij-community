@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.platform.analysis.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-impl",
+  module_name = "intellij.platform.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/extensions",
+    "//platform/projectModel-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+    "@lib//:gson",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/code-style-api:codeStyle",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:stream_ex",
+    "//platform/util/jdom",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//platform/diagnostic/telemetry",
+    "//platform/util/text-matching",
+    "//platform/diagnostic",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+    "@lib//:jackson-module-kotlin",
+    "//platform/util-class-loader:util-classLoader",
+  ],
+  exports = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
+  ],
+  runtime_deps = [":analysis-impl_resources"]
+)
+### auto-generated section `build intellij.platform.analysis.impl` end

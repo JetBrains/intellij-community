@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.compiler;
 
 import com.intellij.execution.configurations.RunConfiguration;
@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,8 +28,6 @@ public abstract class CompilerManager {
   public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
   public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
 
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Compiler");
-
   /**
    * Returns the compiler manager instance for the specified project.
    *
@@ -37,6 +36,11 @@ public abstract class CompilerManager {
    */
   public static CompilerManager getInstance(@NotNull Project project) {
     return project.getService(CompilerManager.class);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Compiler");
   }
 
   public abstract boolean isCompilationActive();
@@ -104,16 +108,14 @@ public abstract class CompilerManager {
    *
    * @return all tasks to be executed before compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getBeforeTasks();
+  public abstract @NotNull List<CompileTask> getBeforeTasks();
 
   /**
    * Returns the list of all tasks to be executed after compilation.
    *
    * @return all tasks to be executed after compilation.
    */
-  @NotNull
-  public abstract List<CompileTask> getAfterTaskList();
+  public abstract @NotNull List<CompileTask> getAfterTaskList();
 
   /**
    * Compile a set of files.
@@ -169,7 +171,8 @@ public abstract class CompilerManager {
 
   /**
    * Compile all modified files and all files that depend on them from the scope given.
-   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored. All modules must belong to the same project
+   * Files are compiled according to dependencies between the modules they belong to. Compiler excludes are honored.
+   * All modules must belong to the same project.
    *
    * @param scope    a scope to be compiled
    * @param callback a notification callback, or null if no notifications needed
@@ -177,7 +180,7 @@ public abstract class CompilerManager {
   public abstract void make(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
-   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
+   * Same as {@link #make(CompileScope, CompileStatusNotification)} but with a modal progress window instead of background progress.
    */
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
@@ -205,6 +208,16 @@ public abstract class CompilerManager {
    * @param callback a notification callback, or null if no notifications needed
    */
   public abstract void rebuild(@Nullable CompileStatusNotification callback);
+
+
+  /**
+   * Same as rebuild, but build system directory is forcibly removed from the IDE to ensure the build starts on the clean state
+   *
+   * @param callback a notification callback, or null if no notifications needed
+   */
+  public void rebuildClean(@Nullable CompileStatusNotification callback) {
+    rebuild(callback); // default implementation
+  }
 
   /**
    * Execute a custom compile task.
@@ -240,29 +253,23 @@ public abstract class CompilerManager {
   /*
    * Convenience methods for creating frequently-used compile scopes
    */
-  @NotNull
-  public abstract CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
+  public abstract @NotNull CompileScope createFilesCompileScope(VirtualFile @NotNull [] files);
 
-  @NotNull
-  public CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
+  public @NotNull CompileScope createModuleCompileScope(@NotNull Module module, boolean includeDependentModules) {
     return createModulesCompileScope(new Module[] {module}, includeDependentModules);
   }
 
-  @NotNull
-  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules) {
     return createModulesCompileScope(modules, includeDependentModules, false);
   }
 
-  @NotNull
-  public CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
+  public @NotNull CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies){
     return createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies, true);
   }
 
   public abstract CompileScope createModulesCompileScope(Module @NotNull [] modules, boolean includeDependentModules, boolean includeRuntimeDependencies, boolean includeTests);
-  @NotNull
-  public abstract CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
-  @NotNull
-  public abstract CompileScope createProjectCompileScope(@NotNull Project project);
+  public abstract @NotNull CompileScope createModuleGroupCompileScope(@NotNull Project project, Module @NotNull [] modules, boolean includeDependentModules);
+  public abstract @NotNull CompileScope createProjectCompileScope(@NotNull Project project);
 
   public abstract void setValidationEnabled(ModuleType<?> moduleType, boolean enabled);
 
@@ -277,6 +284,5 @@ public abstract class CompilerManager {
                                                           Collection<? extends File> files,
                                                           File outputDir) throws IOException, CompilationException;
 
-  @Nullable
-  public abstract File getJavacCompilerWorkingDir();
+  public abstract @Nullable File getJavacCompilerWorkingDir();
 }

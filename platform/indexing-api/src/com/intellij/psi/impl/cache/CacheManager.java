@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache;
 
@@ -39,23 +39,22 @@ public interface CacheManager {
     }
   }
 
-  @NotNull
-  static CacheManager getInstance(Project project) {
+  static @NotNull CacheManager getInstance(Project project) {
     return project.getService(CacheManager.class);
   }
 
   PsiFile @NotNull [] getFilesWithWord(@NotNull String word,
-                                       short occurenceMask,
+                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                        @NotNull GlobalSearchScope scope,
-                                       final boolean caseSensitively);
+                                       boolean caseSensitively);
 
   VirtualFile @NotNull [] getVirtualFilesWithWord(@NotNull String word,
-                                                  short occurenceMask,
+                                                  @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                                   @NotNull GlobalSearchScope scope,
-                                                  final boolean caseSensitively);
+                                                  boolean caseSensitively);
 
   boolean processVirtualFilesWithAllWords(@NotNull Collection<String> words,
-                                          short occurenceMask,
+                                          @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                           @NotNull GlobalSearchScope scope,
                                           boolean caseSensitively,
                                           @NotNull Processor<? super VirtualFile> processor);
@@ -64,6 +63,5 @@ public interface CacheManager {
                                @NotNull String word,
                                @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurenceMask,
                                @NotNull GlobalSearchScope scope,
-                               final boolean caseSensitively);
+                               boolean caseSensitively);
 }
-

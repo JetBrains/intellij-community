@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.ModifiableFacetModel;
@@ -36,9 +36,8 @@ public class IdeUIModifiableModelsProvider extends AbstractIdeModifiableModelsPr
     myLibrariesModel = configurable.getModelProvider().getModifiableModel();
   }
 
-  @NotNull
   @Override
-  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+  public @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
     return myLibrariesModel;
   }
 

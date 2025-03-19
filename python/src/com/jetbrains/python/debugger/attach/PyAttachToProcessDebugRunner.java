@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -22,12 +21,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.ServerSocket;
 
+import static com.intellij.openapi.options.advanced.AdvancedSettings.getInt;
+
 public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   private final Project myProject;
   private final int myPid;
   private final String mySdkPath;
   private final Sdk mySdk;
-  private static final int CONNECTION_TIMEOUT = 20000;
 
 
   public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable Sdk sdk) {
@@ -45,7 +45,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
   /**
    * @deprecated Use {@link #PyAttachToProcessDebugRunner(Project, int, Sdk)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PyAttachToProcessDebugRunner(@NotNull Project project, int pid, @Nullable String sdkPath) {
     myProject = project;
     myPid = pid;
@@ -78,8 +78,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
     return XDebuggerManager.getInstance(myProject).
       startSessionAndShowTab(String.valueOf(myPid), null, new XDebugProcessStarter() {
         @Override
-        @NotNull
-        public XDebugProcess start(@NotNull final XDebugSession session) {
+        public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
           PyRemoteDebugProcess pyDebugProcess =
             new PyRemoteDebugProcess(session, serverSocket, result.getExecutionConsole(),
                                      result.getProcessHandler(), "") {
@@ -89,7 +88,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
 
               @Override
               public int getConnectTimeout() {
-                return CONNECTION_TIMEOUT;
+                return getInt("python.debugger.attach.timeout");
               }
 
               @Override

@@ -1,21 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
-import com.sun.jdi.ArrayReference
-import com.sun.jdi.ArrayType
 import com.sun.jdi.ClassLoaderReference
-import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.tree.*
-import kotlin.math.min
 
 interface ClassLoadingAdapter {
     companion object {
-        private const val CHUNK_SIZE = 4096
-
         private val ADAPTERS = listOf(
             AndroidOClassLoadingAdapter(),
             OrdinaryClassLoadingAdapter()
@@ -68,7 +62,7 @@ interface ClassLoadingAdapter {
                             return info.copy(containsLoops = true)
                         }
                     }
-                    is TableSwitchInsnNode, is LookupSwitchInsnNode -> {
+                    is TableSwitchInsnNode, is LookupSwitchInsnNode, is InvokeDynamicInsnNode -> {
                         return info.copy(containsCodeUnsupportedInEval4J = true)
                     }
                     is InsnNode -> {
@@ -95,25 +89,4 @@ interface ClassLoadingAdapter {
     fun isApplicable(context: ExecutionContext, info: ClassInfoForEvaluator): Boolean
 
     fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference
-
-    fun mirrorOfByteArray(bytes: ByteArray, context: ExecutionContext): ArrayReference {
-        val classLoader = context.classLoader
-        val arrayClass = context.findClass("byte[]", classLoader) as ArrayType
-        val reference = context.newInstance(arrayClass, bytes.size)
-        context.keepReference(reference)
-
-        val mirrors = ArrayList<Value>(bytes.size)
-        for (byte in bytes) {
-            mirrors += context.vm.mirrorOf(byte)
-        }
-
-        var loaded = 0
-        while (loaded < mirrors.size) {
-            val chunkSize = min(CHUNK_SIZE, mirrors.size - loaded)
-            reference.setValues(loaded, mirrors, loaded, chunkSize)
-            loaded += chunkSize
-        }
-
-        return reference
-    }
 }

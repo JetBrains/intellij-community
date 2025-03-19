@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +44,7 @@ public interface UpdateEnvironment {
    */
   @NotNull
   UpdateSession updateDirectories(FilePath @NotNull [] contentRoots, UpdatedFiles updatedFiles,
-                                  ProgressIndicator progressIndicator, @NotNull final Ref<SequentialUpdatesContext> context) throws ProcessCanceledException;
+                                  ProgressIndicator progressIndicator, final @NotNull Ref<SequentialUpdatesContext> context) throws ProcessCanceledException;
 
   /**
    * Allows to show a settings dialog for the operation.

@@ -57,65 +57,66 @@ SHELL_SCRIPT
               PsiElement())(')')
               PsiWhiteSpace('    ')
               COMPOUND_LIST
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
+                PIPELINE_COMMAND_LIST
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('match .gz')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('match .gz')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('FNAME')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement($)('$')
-                    SHELL_PARAMETER_EXPANSION
-                      PsiElement({)('{')
+                  ASSIGNMENT_COMMAND
+                    LITERAL
                       PsiElement(word)('FNAME')
-                      PsiElement(param_separator)(':')
-                      PsiElement(word)('%.')
-                      PsiElement(param_separator)('+')
-                      PsiElement(word)('(z|Z|gz)')
-                      PsiElement(})('}')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement($)('$')
+                      SHELL_PARAMETER_EXPANSION
+                        PsiElement({)('{')
+                        PsiElement(word)('FNAME')
+                        PsiElement(param_separator)(':')
+                        PsiElement(word)('%.')
+                        PsiElement(param_separator)('+')
+                        PsiElement(word)('(z|Z|gz)')
+                        PsiElement(})('}')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('after fname')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                ASSIGNMENT_COMMAND
-                  LITERAL
-                    PsiElement(word)('DECOMPRESSOR')
-                  PsiElement(=)('=')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('gzip -dc')
-                    PsiElement(CLOSE_QUOTE)('"')
-                PsiElement(;)(';')
-                PsiWhiteSpace(' ')
-                SIMPLE_COMMAND
-                  GENERIC_COMMAND_DIRECTIVE
-                    LITERAL
-                      PsiElement(word)('echo')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('after fname')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
                   PsiWhiteSpace(' ')
-                  STRING
-                    PsiElement(OPEN_QUOTE)('"')
-                    PsiElement(STRING_CONTENT)('after decompresor')
-                    PsiElement(CLOSE_QUOTE)('"')
+                  ASSIGNMENT_COMMAND
+                    LITERAL
+                      PsiElement(word)('DECOMPRESSOR')
+                    PsiElement(=)('=')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('gzip -dc')
+                      PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(;)(';')
+                  PsiWhiteSpace(' ')
+                  SIMPLE_COMMAND
+                    GENERIC_COMMAND_DIRECTIVE
+                      LITERAL
+                        PsiElement(word)('echo')
+                    PsiWhiteSpace(' ')
+                    STRING
+                      PsiElement(OPEN_QUOTE)('"')
+                      PsiElement(STRING_CONTENT)('after decompresor')
+                      PsiElement(CLOSE_QUOTE)('"')
             PsiWhiteSpace(' ')
             PsiElement(;;)(';;')
             CASE_CLAUSE

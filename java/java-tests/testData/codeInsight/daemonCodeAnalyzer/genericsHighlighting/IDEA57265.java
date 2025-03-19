@@ -1,5 +1,5 @@
 class A<T> {
   class B<S> {
-    <error descr="Improper formed type; some type parameters are missing">A<T>.B</error> x;
+    <error descr="Improperly formed type: 'B' needs type arguments because its qualifier has type arguments">A<T>.B</error> x;
   }
 }

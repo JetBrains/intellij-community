@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook;
 
 import com.intellij.psi.PsiElement;
@@ -7,7 +7,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-class TypeCookViewDescriptor implements UsageViewDescriptor {
+final class TypeCookViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElements;
 
   TypeCookViewDescriptor(PsiElement[] elements) {
@@ -24,9 +24,8 @@ class TypeCookViewDescriptor implements UsageViewDescriptor {
     return JavaRareRefactoringsBundle.message("type.cook.elements.header");
   }
 
-  @NotNull
   @Override
-  public String getCodeReferencesText(int usagesCount, int filesCount) {
+  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
     return JavaRareRefactoringsBundle.message("declaration.s.to.be.generified", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 }

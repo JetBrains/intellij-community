@@ -28,7 +28,7 @@ public final class DocumentGuardedTextUtil {
       CharSequence textBefore =
         document.getImmutableCharSequence().subSequence(Math.max(0, startOffset - blockPrefix.length()), startOffset);
 
-      if (blockPrefix.toString().equals(textBefore.toString())) {
+      if (!blockPrefix.isEmpty() && blockPrefix.toString().equals(textBefore.toString())) {
         deleteString(document, startOffset - blockPrefix.length(), endOffset - blockPrefix.length());
       }
       else {
@@ -48,7 +48,7 @@ public final class DocumentGuardedTextUtil {
     }
     catch (ReadOnlyFragmentModificationException ex) {
       String blockPrefix = document.getImmutableCharSequence().subSequence(ex.getGuardedBlock().getStartOffset(), offset).toString();
-      if (s.toString().endsWith(blockPrefix)) {
+      if (!blockPrefix.isEmpty() && s.toString().endsWith(blockPrefix)) {
         int newOffset = offset - blockPrefix.length();
         String newString = blockPrefix + s.subSequence(0, s.length() - blockPrefix.length());
         insertString(document, newOffset, newString);

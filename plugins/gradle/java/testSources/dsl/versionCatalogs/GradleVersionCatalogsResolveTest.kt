@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 
+import com.intellij.idea.IJIgnore
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -9,6 +11,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
@@ -75,6 +78,28 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNavigationToTomlEntry3(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs.groovy.n<caret>io") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "groovy-nio")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationToTomlEntry4(gradleVersion: GradleVersion) {
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("libs.groovy.nio.anot<caret>her") {
+        assertInstanceOf(TomlKeyValue::class.java, it)
+        assertTrue((it as TomlKeyValue).key.text == "groovy-nio-another")
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testNavigationToTomlTable(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs.bun<caret>dles") {
@@ -108,6 +133,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  @IJIgnore(issue = "IDEA-355847")
   fun testNavigationWithCapitalLetters(gradleVersion: GradleVersion) {
     test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
       testGotoDefinition("libs2.getCheck().getCapital().getLe<caret>tter()") {
@@ -117,12 +143,65 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
     }
   }
 
-  companion object {
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromIncludedBuildToItsDefaultToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("includedBuild/build.gradle", "libs.for.inc<caret>luded.build") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "for_included-build",
+                               endOfTomlPath = "includedBuild/gradle/libs.versions.toml")
+      }
+    }
 
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
-      withSettingsFile {
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromIncludedBuildToItsCustomToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("includedBuild/build.gradle", "libsCustom.for.inc<caret>luded.build.custom") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "for_included-build-custom",
+                               endOfTomlPath = "includedBuild/libsCustom.toml")
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromIncludedBuildWithoutSettingsToItsDefaultToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("includedBuildWithoutSettings/build.gradle", "libs.for.build.with<caret>out.settings") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "for_build-without-settings",
+                               endOfTomlPath = "includedBuildWithoutSettings/gradle/libs.versions.toml")
+      }
+    }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testNavigationFromSubprojectToItsParentsDefaultToml(gradleVersion: GradleVersion) =
+    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+      testGotoDefinition("subproject/build.gradle", "libs.groo<caret>vy.core") { psiElement ->
+        verifyNavigationToToml(psiElement,
+                               expectedTomlKey = "groovy-core",
+                               endOfTomlPath = "GradleVersionCatalogs-completion/gradle/libs.versions.toml")
+      }
+    }
+
+  companion object {
+    private fun verifyNavigationToToml(element: PsiElement, expectedTomlKey: String, endOfTomlPath: String) {
+      val tomlKeyValue = assertInstanceOf(TomlKeyValue::class.java, element)
+      assertEquals(expectedTomlKey, tomlKeyValue.key.text)
+      val tomlPath = tomlKeyValue.containingFile.virtualFile.path
+      assertTrue(tomlPath.endsWith(endOfTomlPath))
+    }
+
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") { gradleVersion ->
+      withSettingsFile(gradleVersion) {
         setProjectName("GradleVersionCatalogs-completion")
         addCode("""
+          includeBuild("includedBuild")
+          includeBuild("includedBuildWithoutSettings")
+          include(":subproject")
           dependencyResolutionManagement {
               versionCatalogs {
                   libs2 {
@@ -145,6 +224,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
         groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
         groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
+        groovy-nio-another = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
         commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
 
         [bundles]
@@ -158,6 +238,36 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         aa-bb-cc = { module = "org.apache.groovy:groovy", version = "4.0.0" }
         check-Capital-Letter = { module = "org.apache.groovy:groovy", version = "4.0.0" }
       """.trimIndent())
+
+      // included build without settings
+      withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", /* language=TOML */ """
+        [libraries]
+        for_build-without-settings = { module = "org.junit.jupiter:junit-jupiter" }
+        """.trimIndent()
+      )
+      // included build with settings
+      withSettingsFile(gradleVersion, "includedBuild") {
+        setProjectName("includedBuild")
+        addCode("""
+          dependencyResolutionManagement {
+              versionCatalogs {
+                  libsCustom {
+                      from(files("libsCustom.toml"))
+                  }
+              }
+          }
+        """.trimIndent())
+      }
+      withFile("includedBuild/gradle/libs.versions.toml", /* language=TOML */ """
+        [libraries]
+        for_included-build = { module = "org.junit.jupiter:junit-jupiter" }
+        """.trimIndent()
+      )
+      withFile("includedBuild/libsCustom.toml", /* language=TOML */ """
+        [libraries]
+        for_included-build-custom = { module = "org.junit.jupiter:junit-jupiter" }
+        """.trimIndent()
+      )
     }
   }
 

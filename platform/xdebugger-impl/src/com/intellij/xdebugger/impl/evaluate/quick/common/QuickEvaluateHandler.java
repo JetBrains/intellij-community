@@ -1,13 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -21,11 +21,9 @@ public abstract class QuickEvaluateHandler {
     return isEnabled(project);
   }
 
-  @Nullable
-  public abstract AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type);
+  public abstract @Nullable AbstractValueHint createValueHint(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type);
 
-  @NotNull
-  public CancellableHint createValueHintAsync(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
+  public @NotNull CancellableHint createValueHintAsync(@NotNull Project project, @NotNull Editor editor, @NotNull Point point, ValueHintType type) {
     return CancellableHint.resolved(createValueHint(project, editor, point, type));
   }
 
@@ -33,14 +31,14 @@ public abstract class QuickEvaluateHandler {
 
   public abstract int getValueLookupDelay(final Project project);
 
-  public record CancellableHint(@NotNull Promise<AbstractValueHint> hintPromise, @Nullable Promise<ExpressionInfo> infoPromise) {
+  public record CancellableHint(@NotNull Promise<AbstractValueHint> hintPromise, @Nullable Deferred<ExpressionInfo> infoDeferred) {
     public static CancellableHint resolved(@Nullable AbstractValueHint hint)  {
       return new CancellableHint(Promises.resolvedPromise(hint), null);
     }
 
     public void tryCancel() {
-      if (infoPromise instanceof CancellablePromise<ExpressionInfo>) {
-        ((CancellablePromise<ExpressionInfo>)infoPromise).cancel();
+      if (infoDeferred != null) {
+        infoDeferred.cancel(null);
       }
     }
   }

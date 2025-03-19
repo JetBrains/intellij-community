@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test.weighers;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -25,6 +26,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/contextualReturn/noReturnType")
         public static class NoReturnType extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -88,6 +95,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/weighers/basic/contextualReturn/withReturnType")
         public static class WithReturnType extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -182,6 +195,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/expectedInfo")
     public static class ExpectedInfo extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -264,50 +283,120 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/expectedType")
-    public static class ExpectedType extends AbstractBasicCompletionWeigherTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class ExpectedType extends AbstractBasicCompletionWeigherTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/weighers/basic/expectedType/typesWithInstances")
+        public static class TypesWithInstances extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("companionObjectWithInterface.kt")
+            public void testCompanionObjectWithInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface.kt");
+            }
+
+            @TestMetadata("companionObjectWithInterface_inaccessible.kt")
+            public void testCompanionObjectWithInterface_inaccessible() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface_inaccessible.kt");
+            }
+
+            @TestMetadata("companionObjectWithInterface_vs_CompanionObjectMember.kt")
+            public void testCompanionObjectWithInterface_vs_CompanionObjectMember() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithInterface_vs_CompanionObjectMember.kt");
+            }
+
+            @TestMetadata("companionObjectWithoutInterface.kt")
+            public void testCompanionObjectWithoutInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/companionObjectWithoutInterface.kt");
+            }
+
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/enumEntry.kt");
+            }
+
+            @TestMetadata("objectWithInterface.kt")
+            public void testObjectWithInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/objectWithInterface.kt");
+            }
+
+            @TestMetadata("objectWithoutInterface.kt")
+            public void testObjectWithoutInterface() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typesWithInstances/objectWithoutInterface.kt");
+            }
         }
 
-        @TestMetadata("ifConditionQualified.kt")
-        public void testIfConditionQualified() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/weighers/basic/expectedType")
+        public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
 
-        @TestMetadata("MatchingNullableType.kt")
-        public void testMatchingNullableType() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
-        }
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("returnFromFunction.kt")
-        public void testReturnFromFunction() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
-        }
+            @TestMetadata("ifConditionQualified.kt")
+            public void testIfConditionQualified() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/ifConditionQualified.kt");
+            }
 
-        @TestMetadata("returnFromFunctionQualifiedSelector.kt")
-        public void testReturnFromFunctionQualifiedSelector() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
-        }
+            @TestMetadata("MatchingNullableType.kt")
+            public void testMatchingNullableType() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
+            }
 
-        @TestMetadata("returnFromLambda.kt")
-        public void testReturnFromLambda() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
-        }
+            @TestMetadata("returnFromFunction.kt")
+            public void testReturnFromFunction() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromFunction.kt");
+            }
 
-        @TestMetadata("typeParameter.kt")
-        public void testTypeParameter() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
-        }
+            @TestMetadata("returnFromFunctionQualifiedSelector.kt")
+            public void testReturnFromFunctionQualifiedSelector() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromFunctionQualifiedSelector.kt");
+            }
 
-        @TestMetadata("whileConditionQualified.kt")
-        public void testWhileConditionQualified() throws Exception {
-            runTest("../testData/weighers/basic/expectedType/whileConditionQualified.kt");
+            @TestMetadata("returnFromLambda.kt")
+            public void testReturnFromLambda() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
+            }
+
+            @TestMetadata("safeCallArgument.kt")
+            public void testSafeCallArgument() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/safeCallArgument.kt");
+            }
+
+            @TestMetadata("typeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
+            }
+
+            @TestMetadata("whileConditionQualified.kt")
+            public void testWhileConditionQualified() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/whileConditionQualified.kt");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -356,6 +445,12 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/weighers/basic")
     public static class Uncategorized extends AbstractBasicCompletionWeigherTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -378,6 +473,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("Callables.kt")
         public void testCallables() throws Exception {
             runTest("../testData/weighers/basic/Callables.kt");
+        }
+
+        @TestMetadata("ContravariantType.kt")
+        public void testContravariantType() throws Exception {
+            runTest("../testData/weighers/basic/ContravariantType.kt");
+        }
+
+        @TestMetadata("CovariantType.kt")
+        public void testCovariantType() throws Exception {
+            runTest("../testData/weighers/basic/CovariantType.kt");
         }
 
         @TestMetadata("DelegateToOtherObject.kt")
@@ -425,9 +530,19 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/DslMemberCalls.kt");
         }
 
+        @TestMetadata("ErrorImplicitReceiverType.kt")
+        public void testErrorImplicitReceiverType() throws Exception {
+            runTest("../testData/weighers/basic/ErrorImplicitReceiverType.kt");
+        }
+
         @TestMetadata("ExactMatchForKeyword.kt")
         public void testExactMatchForKeyword() throws Exception {
             runTest("../testData/weighers/basic/ExactMatchForKeyword.kt");
+        }
+
+        @TestMetadata("ImportDirective.kt")
+        public void testImportDirective() throws Exception {
+            runTest("../testData/weighers/basic/ImportDirective.kt");
         }
 
         @TestMetadata("ImportedFirst.kt")
@@ -463,6 +578,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("LambdaSignature.kt")
         public void testLambdaSignature() throws Exception {
             runTest("../testData/weighers/basic/LambdaSignature.kt");
+        }
+
+        @TestMetadata("LocalCallableForLoop.kt")
+        public void testLocalCallableForLoop() throws Exception {
+            runTest("../testData/weighers/basic/LocalCallableForLoop.kt");
         }
 
         @TestMetadata("LocalClass.kt")
@@ -580,11 +700,6 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/ParametersBeforeKeywords.kt");
         }
 
-        @TestMetadata("PreferFromJdk.kt")
-        public void testPreferFromJdk() throws Exception {
-            runTest("../testData/weighers/basic/PreferFromJdk.kt");
-        }
-
         @TestMetadata("PreferGetMethodToProperty.kt")
         public void testPreferGetMethodToProperty() throws Exception {
             runTest("../testData/weighers/basic/PreferGetMethodToProperty.kt");
@@ -598,6 +713,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("PropertiesBeforeKeywords.kt")
         public void testPropertiesBeforeKeywords() throws Exception {
             runTest("../testData/weighers/basic/PropertiesBeforeKeywords.kt");
+        }
+
+        @TestMetadata("RecursiveCall.kt")
+        public void testRecursiveCall() throws Exception {
+            runTest("../testData/weighers/basic/RecursiveCall.kt");
+        }
+
+        @TestMetadata("StarProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("../testData/weighers/basic/StarProjection.kt");
         }
 
         @TestMetadata("StaticMembers.kt")
@@ -618,6 +743,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("UnavailableDslReceiver.kt")
         public void testUnavailableDslReceiver() throws Exception {
             runTest("../testData/weighers/basic/UnavailableDslReceiver.kt");
+        }
+
+        @TestMetadata("WhenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("../testData/weighers/basic/WhenWithSubject.kt");
         }
     }
 }

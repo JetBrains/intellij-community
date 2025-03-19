@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.mock;
 
 import com.intellij.facet.Facet;
@@ -10,16 +9,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
-public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRootsProvider {
+public final class MockFacet extends Facet<MockFacetConfiguration> implements FacetRootsProvider {
   private boolean myInitialized;
   private boolean myDisposed;
   private boolean myConfigured;
   private static int constructorCounter;
 
-  public MockFacet(@NotNull final Module module, final String name) {
+  public MockFacet(final @NotNull Module module, final String name) {
     this(module, name, new MockFacetConfiguration());
   }
 
@@ -71,8 +71,7 @@ public class MockFacet extends Facet<MockFacetConfiguration> implements FacetRoo
   }
 
   @Override
-  @NotNull
-  public Collection<VirtualFile> getFacetRoots() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getFacetRoots() {
     return ContainerUtil.mapNotNull(getConfiguration().getRootUrls(), VirtualFileManager.getInstance()::findFileByUrl);
   }
 

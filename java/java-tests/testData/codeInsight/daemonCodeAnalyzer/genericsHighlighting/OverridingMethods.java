@@ -9,16 +9,16 @@ abstract class C<T> {
     <A> A get() { return null; }
 }
 abstract class D<U> extends C<C<U>> {
-    abstract <error descr="'f(int)' in 'D' clashes with 'f(int)' in 'C'; attempting to use incompatible return type">U</error> f(int t);
+    abstract <error descr="'f(int)' in 'D' clashes with 'f(int)' in 'C'; incompatible return type">U</error> f(int t);
 
     // overloaded, not overrridden
     int ff(int u) { return 0; }
 
-    <error descr="'ff(C<U>)' in 'D' clashes with 'ff(T)' in 'C'; attempting to use incompatible return type">int</error> ff(C<U> u) {
+    <error descr="'ff(C<U>)' in 'D' clashes with 'ff(T)' in 'C'; incompatible return type">int</error> ff(C<U> u) {
       return 0;
     }
 
-    <error descr="'covariant1()' in 'D' clashes with 'covariant1()' in 'C'; attempting to use incompatible return type">Object</error> covariant1() { return null; }
+    <error descr="'covariant1()' in 'D' clashes with 'covariant1()' in 'C'; incompatible return type">Object</error> covariant1() { return null; }
     D covariant2() { return null; }
 
     <A> A get() { return null; }
@@ -43,15 +43,15 @@ class CC<T> {
  int fPrimitive() { return 0; }
 }
 class DD<T> extends CC<T> {
- <error descr="'f()' in 'DD' clashes with 'f()' in 'CC'; attempting to use incompatible return type">DD<String></error> f() { return null; }
+ <error descr="'f()' in 'DD' clashes with 'f()' in 'CC'; incompatible return type">DD<String></error> f() { return null; }
 
  DD<Integer> f2() { return null; }
  CC f3() { return null; }
 
- <P,O> <error descr="'f(O)' in 'DD' clashes with 'f(V)' in 'CC'; attempting to use incompatible return type">O</error> f(O o) { return null; }
+ <P,O> <error descr="'f(O)' in 'DD' clashes with 'f(V)' in 'CC'; incompatible return type">O</error> f(O o) { return null; }
 
  // incompatible although assignable
- <error descr="'fPrimitive()' in 'DD' clashes with 'fPrimitive()' in 'CC'; attempting to use incompatible return type">double</error> fPrimitive() { return 0; }
+ <error descr="'fPrimitive()' in 'DD' clashes with 'fPrimitive()' in 'CC'; incompatible return type">double</error> fPrimitive() { return 0; }
 }
 
 interface Gen<T> {
@@ -500,7 +500,7 @@ interface C extends  A,B {
 }
 
 class s implements C {
-    public <error descr="'f()' in 'ideadev.s' clashes with 'f()' in 'ideadev.B'; attempting to use incompatible return type">A</error> f() {
+    public <error descr="'f()' in 'ideadev.s' clashes with 'f()' in 'ideadev.B'; incompatible return type">A</error> f() {
         return null;
     }
 }

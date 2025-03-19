@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Provides icon description tooltips for {@link SimpleColoredComponent} renderers.
@@ -12,6 +13,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * and {@code .svg} removed and slashes replaced with dots (e.g., {@code /nodes/class.svg} -> {@code icon.nodes.class.tooltip}).
  */
 public final class IconDescriptionBundleEP {
+  @ApiStatus.Internal
   public static final ExtensionPointName<IconDescriptionBundleEP> EP_NAME = new ExtensionPointName<>("com.intellij.iconDescriptionBundle");
 
   /**

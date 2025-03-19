@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -18,26 +18,31 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.PyLazySdk;
+import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkUtil;
+import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.venvReader.VirtualEnvReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
 /**
  * @deprecated This class and all its inheritors are deprecated. Everything should work via {@link PyTargetEnvironmentPackageManager}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
-  private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
+  private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -50,12 +55,11 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
                            true, true, null);
   }
 
-  @NotNull
-  protected String toSystemDependentName(@NotNull final String dirName) {
+  protected @NotNull String toSystemDependentName(final @NotNull String dirName) {
     return FileUtil.toSystemDependentName(dirName);
   }
 
-  protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
+  protected PyPackageManagerImpl(final @NotNull Sdk sdk) {
     super(sdk);
   }
 
@@ -104,8 +108,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw new PyExecutionException(e.getMessage(), "pip", makeSafeToDisplayCommand(simplifiedArgs),
-                                     e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -131,7 +134,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       getHelperResult(args, !canModify, true);
     }
     catch (PyExecutionException e) {
-      throw new PyExecutionException(e.getMessage(), "pip", args, e.getStdout(), e.getStderr(), e.getExitCode(), e.getFixes());
+      throw e.copyWith("pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
@@ -140,9 +143,8 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   }
 
 
-  @Nullable
   @Override
-  public List<PyPackage> getPackages() {
+  public @Nullable List<PyPackage> getPackages() {
     final List<PyPackage> packages = myPackagesCache;
     return packages != null ? Collections.unmodifiableList(packages) : null;
   }
@@ -171,8 +173,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
   }
 
   @Override
-  @NotNull
-  public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
+  public @NotNull String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
     final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
@@ -189,17 +190,24 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
     try {
       getPythonProcessResult(
-        Objects.requireNonNull(getHelperPath(languageLevel.isPython2() ? PY2_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
+        Objects.requireNonNull(getHelperPath(isLegacyPython(languageLevel) ? LEGACY_VIRTUALENV_ZIPAPP_NAME : VIRTUALENV_ZIPAPP_NAME)),
         args, false, true, null, List.of("-S"));
     }
     catch (ExecutionException e) {
       showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
-    final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
+    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Paths.get(destinationDir));
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
 
-    return (binary != null) ? binary : binaryFallback;
+    return (binary != null) ? binary.toString() : binaryFallback;
+  }
+
+  /**
+   * Is it a legacy python version that we still support
+   */
+  private static boolean isLegacyPython(@NotNull LanguageLevel languageLevel) {
+    return languageLevel.isPython2() || languageLevel.isOlderThan(LanguageLevel.PYTHON37);
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
@@ -221,15 +229,13 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     return getPythonProcessResult(helperPath, args, askForSudo, showProgress, parentDir);
   }
 
-  @NotNull
-  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
-                                        boolean showProgress, @Nullable String workingDir) throws ExecutionException {
+  private @NotNull String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                                 boolean showProgress, @Nullable String workingDir) throws ExecutionException {
     return getPythonProcessResult(path, args, askForSudo, showProgress, workingDir, null);
   }
 
-  @NotNull
-  private String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
-                                        boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+  private @NotNull String getPythonProcessResult(@NotNull String path, @NotNull List<String> args, boolean askForSudo,
+                                                 boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
     throws ExecutionException {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir, pyArgs);
     final int exitCode = output.getExitCode();
@@ -242,9 +248,8 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     return output.getStdout();
   }
 
-  @NotNull
-  protected ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
-                                                 boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
+  protected @NotNull ProcessOutput getPythonProcessOutput(@NotNull String helperPath, @NotNull List<String> args, boolean askForSudo,
+                                                          boolean showProgress, @Nullable String workingDir, @Nullable List<String> pyArgs)
     throws ExecutionException {
     final String homePath = getSdk().getHomePath();
     if (homePath == null) {

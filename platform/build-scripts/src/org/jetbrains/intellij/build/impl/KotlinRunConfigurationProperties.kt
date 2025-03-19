@@ -19,7 +19,7 @@ class KotlinRunConfigurationProperties(
       val configuration = getConfiguration(file)
       if (configuration.getAttributeValue("type") != "JetRunConfigurationType" &&
           configuration.getAttributeValue("factoryName") != "Kotlin") {
-        throw RuntimeException("Cannot load configuration from \'" + file.name + "\': only Kotlin run configuration are supported")
+        throw RuntimeException("Cannot load configuration from '${file.name}': only Kotlin run configuration are supported")
       }
 
       val moduleName = getModuleName(configuration)

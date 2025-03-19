@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.navigation.NavigationItem;
@@ -19,12 +19,13 @@ import org.jetbrains.annotations.Nullable;
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
+
+  @Topic.ProjectLevel
   public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<>("FindManager's model changes", FindModelListener.class);
 
   public abstract FindModel createReplaceInFileModel();
 
-  @Nullable
-  public abstract FindModel getPreviousFindModel();
+  public abstract @Nullable FindModel getPreviousFindModel();
 
   public abstract void setPreviousFindModel(FindModel previousFindModel);
 
@@ -73,8 +74,7 @@ public abstract class FindManager {
    *
    * @return the last Find in File settings.
    */
-  @NotNull
-  public abstract FindModel getFindInFileModel();
+  public abstract @NotNull FindModel getFindInFileModel();
 
   /**
    * Returns the settings of the last performed Find in Project operation, or the
@@ -82,8 +82,7 @@ public abstract class FindManager {
    *
    * @return the last Find in Project settings.
    */
-  @NotNull
-  public abstract FindModel getFindInProjectModel();
+  public abstract @NotNull FindModel getFindInProjectModel();
 
   /**
    * Searches for the specified substring in the specified character sequence,
@@ -96,8 +95,7 @@ public abstract class FindManager {
    * @param model  the settings for the search, including the string to find.
    * @return the result of the search.
    */
-  @NotNull
-  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
+  public abstract @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model);
 
   /**
    * Searches for the specified substring in the specified character sequence,
@@ -110,8 +108,7 @@ public abstract class FindManager {
    * @param model  the settings for the search, including the string to find.
    * @return the result of the search.
    */
-  @NotNull
-  public abstract FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
+  public abstract @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model,
                                         @Nullable VirtualFile findContextFile);
 
   /**

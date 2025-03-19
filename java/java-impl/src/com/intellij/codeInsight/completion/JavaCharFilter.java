@@ -23,14 +23,14 @@ import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 
-public class JavaCharFilter extends CharFilter {
+public final class JavaCharFilter extends CharFilter {
 
   private static boolean isWithinLiteral(final Lookup lookup) {
     PsiElement psiElement = lookup.getPsiElement();
@@ -82,7 +82,7 @@ public class JavaCharFilter extends CharFilter {
     if (c == ':') {
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
       PsiElement leaf = file.findElementAt(lookup.getEditor().getCaretModel().getOffset() - 1);
-      if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_8)) {
+      if (PsiUtil.isAvailable(JavaFeature.METHOD_REFERENCES, file)) {
         PsiStatement statement = PsiTreeUtil.getParentOfType(leaf, PsiStatement.class);
         if (statement == null ||
             statement.getTextRange().getStartOffset() != leaf.getTextRange().getStartOffset()) { // not typing a statement label

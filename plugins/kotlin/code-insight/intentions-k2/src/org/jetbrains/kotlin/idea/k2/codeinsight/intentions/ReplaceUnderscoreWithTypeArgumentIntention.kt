@@ -2,38 +2,39 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeErrorType
+import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.isUnderscoreTypeArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.UnderscoreTypeArgumentsUtils.replaceTypeProjection
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.types.Variance
 
 internal class ReplaceUnderscoreWithTypeArgumentIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
-    class Context(var updatedTypeProjection: SmartPsiElementPointer<KtTypeProjection>)
+    KotlinApplicableModCommandAction<KtTypeProjection, ReplaceUnderscoreWithTypeArgumentIntention.Context>(KtTypeProjection::class) {
+
+    data class Context(
+        var updatedTypeProjection: SmartPsiElementPointer<KtTypeProjection>,
+    )
 
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.explicit.type")
 
-    override fun getActionName(element: KtTypeProjection, context: Context): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtTypeProjection> = ApplicabilityRanges.SELF
-
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtTypeProjection): Context? {
+    @OptIn(KaExperimentalApi::class)
+    override fun KaSession.prepareContext(element: KtTypeProjection): Context? {
         val newType = element.resolveType() ?: return null
-        if (newType is KtTypeErrorType) return null
+        if (newType is KaErrorType) return null
 
         // Any of Variance is fine for this case
         val renderedNewType = newType.render(position = Variance.OUT_VARIANCE)
@@ -43,20 +44,26 @@ internal class ReplaceUnderscoreWithTypeArgumentIntention :
         return Context(newTypeProjection.createSmartPointer())
     }
 
-    override fun apply(element: KtTypeProjection, context: Context, project: Project, editor: Editor?) {
-        val updatedTypeProjection = context.updatedTypeProjection.dereference() ?: return
-        val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return
-        shortenReferences(replacedElement)
-    }
+    override fun isApplicableByPsi(element: KtTypeProjection): Boolean =
+        isUnderscoreTypeArgument(element)
 
-    override fun isApplicableByPsi(element: KtTypeProjection): Boolean = isUnderscoreTypeArgument(element)
-
-    context(KtAnalysisSession)
-    private fun KtTypeProjection.resolveType(): KtType? {
+    context(KaSession)
+    private fun KtTypeProjection.resolveType(): KaType? {
         val typeArgumentList = parent as KtTypeArgumentList
-        val call = (typeArgumentList.parent as? KtCallExpression)?.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        val call = (typeArgumentList.parent as? KtCallExpression)?.resolveToCall()?.singleFunctionCallOrNull() ?: return null
         val argumentsTypes = call.typeArgumentsMapping.map { it.value }.toTypedArray()
         val resolvedElementIndex = typeArgumentList.arguments.indexOf(this)
         return argumentsTypes[resolvedElementIndex]
+    }
+
+    override fun invoke(
+      actionContext: ActionContext,
+      element: KtTypeProjection,
+      elementContext: Context,
+      updater: ModPsiUpdater
+    ) {
+        val updatedTypeProjection = elementContext.updatedTypeProjection.dereference() ?: return
+        val replacedElement = element.replace(updatedTypeProjection) as? KtElement ?: return
+        shortenReferences(replacedElement)
     }
 }

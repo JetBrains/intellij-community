@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseMotionListener
 import java.net.URI
+import java.util.Locale
 import javax.swing.JTextPane
 import javax.swing.text.DefaultStyledDocument
 
@@ -52,7 +53,7 @@ class HtmlRtfPane {
 
         val styledDocument = resultPane.document as DefaultStyledDocument
         licenseContentNode.children().forEach {
-            val style = when (it.tagName().toUpperCase()) {
+            val style = when (it.tagName().uppercase(Locale.getDefault())) {
                 "H1" -> Styles.H1
                 "H2" -> Styles.H2
                 "P" -> Styles.PARAGRAPH
@@ -61,7 +62,7 @@ class HtmlRtfPane {
             val start = styledDocument.length
             styledDocument.insertString(styledDocument.length, it.text() + "\n", style)
             styledDocument.setParagraphAttributes(start, it.text().length + 1, style, false)
-            if (it.tagName().toUpperCase() == "P") styleNodes(it, styledDocument, start, linkMap)
+            if (it.tagName().uppercase(Locale.getDefault()) == "P") styleNodes(it, styledDocument, start, linkMap)
         }
         addHyperlinksListeners()
         return styledDocument
@@ -100,7 +101,7 @@ class HtmlRtfPane {
                            offsetInDocument: Int,
                            linkMap: MutableMap<IntRange, String>) {
         var currentOffset = offsetInDocument
-        val style = when (nodeElement.tagName().toUpperCase()) {
+        val style = when (nodeElement.tagName().uppercase(Locale.getDefault())) {
             "STRONG" -> Styles.BOLD
             "A" -> {
                 val linkUrl = nodeElement.attr("href")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff;
 
 import com.intellij.ide.diff.DiffElement;
@@ -24,8 +24,7 @@ public abstract class DirDiffManager {
 
   public abstract boolean canShow(@NotNull DiffElement dir1, @NotNull DiffElement dir2);
 
-  @Nullable
-  public abstract DiffElement createDiffElement(Object obj);
+  public abstract @Nullable DiffElement createDiffElement(Object obj);
 
   public abstract DirDiffModel createDiffModel(DiffElement e1, DiffElement e2, DirDiffSettings settings);
 }

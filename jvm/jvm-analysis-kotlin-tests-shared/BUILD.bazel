@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "analysis-kotlin-tests-shared",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "analysis-kotlin-tests-shared_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/kotlin/plugin/common:kotlin-plugin-common",
+    "//jvm/jvm-analysis-internal-testFramework:analysis-internal-testFramework",
+    "//java/java-tests:tests_test_lib",
+    "//java/java-impl-inspections:impl-inspections",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//java/testFramework",
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "analysis-kotlin-tests-shared_test",
+  runtime_deps = [":analysis-kotlin-tests-shared_test_lib"]
+)
+### auto-generated section `build intellij.jvm.analysis.kotlin.tests.shared` end

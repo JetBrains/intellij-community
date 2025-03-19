@@ -10,11 +10,13 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class FileWatchRequestModifier implements Runnable, Disposable {
   private final Project myProject;
   private final NewMappings myNewMappings;

@@ -5,23 +5,27 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Queues;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.NotNullPredicate;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
 
-public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList {
+public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList, PsiListLikeElement {
 
   // Filters all expressions but keyword arguments
   private static final NoKeyArguments NO_KEY_ARGUMENTS = new NoKeyArguments();
@@ -36,44 +40,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @Override
-  @NotNull
-  public Collection<PyExpression> getArgumentExpressions() {
-    final PyExpression[] arguments = getArguments();
-    final Collection<PyExpression> result = new ArrayList<>(arguments.length);
-    for (final PyExpression expression : arguments) {
-      if (expression instanceof PyKeywordArgument) {
-        final PyExpression valueExpression = ((PyKeywordArgument)expression).getValueExpression();
-        result.add(valueExpression);
-      }
-      if (expression instanceof PyReferenceExpression) {
-        result.add(expression);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public PyExpression @NotNull [] getArguments() {
-    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
-  }
-
-  @Override
-  @Nullable
-  public PyKeywordArgument getKeywordArgument(String name) {
-    ASTNode node = getNode().getFirstChildNode();
-    while (node != null) {
-      if (node.getElementType() == PyElementTypes.KEYWORD_ARGUMENT_EXPRESSION) {
-        PyKeywordArgument arg = (PyKeywordArgument)node.getPsi();
-        String keyword = arg.getKeyword();
-        if (keyword != null && keyword.equals(name)) return arg;
-      }
-      node = node.getTreeNext();
-    }
-    return null;
-  }
-
-  @Override
-  public void addArgument(@NotNull final PyExpression arg) {
+  public void addArgument(final @NotNull PyExpression arg) {
     final PyElementGenerator generator = new PyElementGeneratorImpl(getProject());
 
     // Adds param to appropriate place
@@ -113,8 +80,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   /**
    * @return parameters (as opposite to keyword arguments)
    */
-  @NotNull
-  private Deque<PyExpression> getParameters() {
+  private @NotNull Deque<PyExpression> getParameters() {
     final PyExpression[] childrenOfType = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
     if (childrenOfType == null) {
       return new ArrayDeque<>(0);
@@ -125,8 +91,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   /**
    * @return keyword arguments (as opposite to parameters)
    */
-  @NotNull
-  private Deque<PyKeywordArgument> getKeyWordArguments() {
+  private @NotNull Deque<PyKeywordArgument> getKeyWordArguments() {
     return Queues.newArrayDeque(PsiTreeUtil.findChildrenOfType(this, PyKeywordArgument.class));
   }
 
@@ -168,8 +133,7 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   /**
    * @return newly created comma
    */
-  @NotNull
-  private ASTNode createComma() {
+  private @NotNull ASTNode createComma() {
     return PyElementGenerator.getInstance(getProject()).createComma();
   }
 
@@ -196,14 +160,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     else {
       getNode().addChild(arg.getNode(), par);
     }
-  }
-
-  @Override
-  @Nullable
-  public ASTNode getClosingParen() {
-    ASTNode node = getNode();
-    final ASTNode[] children = node.getChildren(TokenSet.create(PyTokenTypes.RPAR));
-    return children.length == 0 ? null : children[children.length - 1];
   }
 
   private void addArgumentNode(PyExpression arg, ASTNode beforeThis, boolean commaFirst) {
@@ -271,12 +227,6 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   @Override
-  @Nullable
-  public PyCallExpression getCallExpression() {
-    return PsiTreeUtil.getParentOfType(this, PyCallExpression.class);
-  }
-
-  @Override
   public void deleteChildInternal(@NotNull ASTNode node) {
     if (ArrayUtil.contains(node.getPsi(), getArguments())) {
       PyPsiUtils.deleteAdjacentCommaWithWhitespaces(this, node.getPsi());
@@ -285,15 +235,14 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
   }
 
   private static class NoKeyArguments extends NotNullPredicate<PyExpression> {
+
     @Override
-    protected boolean applyNotNull(@NotNull final PyExpression input) {
+    protected boolean applyNotNull(final @NotNull PyExpression input) {
       return (PsiTreeUtil.getParentOfType(input, PyKeywordArgument.class) == null) && !(input instanceof PyKeywordArgument);
     }
   }
-
-  @Nullable
   @Override
-  public PyExpression getValueExpressionForParam(@NotNull final FunctionParameter parameter) {
+  public @Nullable PyExpression getValueExpressionForParam(final @NotNull FunctionParameter parameter) {
     final String parameterName = parameter.getName();
     if (parameterName != null) {
       final PyKeywordArgument kwarg = getKeywordArgument(parameterName);
@@ -315,5 +264,10 @@ public class PyArgumentListImpl extends PyElementImpl implements PyArgumentList 
     }
 
     return null;
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getArguments());
   }
 }

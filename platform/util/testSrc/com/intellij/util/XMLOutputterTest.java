@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -27,7 +27,7 @@ public class XMLOutputterTest extends TestCase {
 
   private static String printElement(Element root) throws IOException {
     XMLOutputter xmlOutputter = JDOMUtil.createOutputter("\n");
-    final Format format = xmlOutputter.getFormat().setOmitDeclaration(true).setOmitEncoding(true).setExpandEmptyElements(true);
+    Format format = xmlOutputter.getFormat().setOmitDeclaration(true).setOmitEncoding(true).setExpandEmptyElements(true);
     xmlOutputter.setFormat(format);
 
     CharArrayWriter writer = new CharArrayWriter();

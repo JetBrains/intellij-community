@@ -4,8 +4,10 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 
+@ApiStatus.Internal
 class BackgroundAsyncSupplier<R>(
   private val supplier: AsyncSupplier<R>,
   private val shouldKeepTasksAsynchronous: () -> Boolean,

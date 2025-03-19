@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.UsefulTestCase;
@@ -152,17 +153,60 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
              end
              """
     );
+
+  }
+
+  public void testFilterMaven4OutputNoColor() {
+    doTest(false, new String[]{
+             "fi",
+             "rst\n",
+             "second\n",
+             "[INFO] [stdout] [IJ]-spy-output-1\n",
+             "[INFO] [stdout] [IJ]-spy-output-2\n",
+             "third\n",
+             "[INFO] [stdout] [IJ]-spy-output-3\n",
+             "end\n"
+           },
+           """
+             first
+             second
+             third
+             end
+             """,
+           true
+    );
+  }
+
+  public void testFilterMaven4OutputColor() {
+    doTest(false, new String[]{
+             "fi",
+             "rst\n",
+             "second\n",
+             "[\u001B[1m\u001B[94mINFO\u001B[0m] [stdout] [IJ]-spy-output-1\n",
+             "[\u001B[1m\u001B[94mINFO\u001B[0m] [stdout] [IJ]-spy-output-1\n",
+             "third\n",
+             "[\u001B[1m\u001B[94mINFO\u001B[0m] [stdout] [IJ]-spy-output-1\n",
+             "end\n"
+           },
+           """
+             first
+             second
+             third
+             end
+             """,
+           true
+    );
   }
 
   public void testAnsiColors() {
-    List<Pair<String, Key<String>>> expected = List.of(
+    List<Pair<String, Key<Object>>> expected = List.of(
       new Pair<>("[", Key.create("color1")),
       new Pair<>("INFO", Key.create("color2")),
       new Pair<>("]\n", Key.create("color1"))
     );
-    List<Pair<String, Key<String>>> actual = new ArrayList<>();
+    List<Pair<String, Key<Object>>> actual = new ArrayList<>();
     MavenSimpleConsoleEventsBuffer buffer =
-      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false);
+      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.add(new Pair<>(l, k)), false, false);
     for (var item : expected) {
       buffer.addText(item.first, item.second);
     }
@@ -170,12 +214,17 @@ public class MavenSimpleConsoleTest extends UsefulTestCase {
   }
 
   private static void doTest(boolean showSpyOutput, String[] text, String expected) {
+    doTest(showSpyOutput, text, expected, false);
+  }
+
+  private static void doTest(boolean showSpyOutput, String[] text, String expected, boolean maven4) {
     StringBuilder actual = new StringBuilder();
     MavenSimpleConsoleEventsBuffer buffer =
-      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.append(l), showSpyOutput);
+      new MavenSimpleConsoleEventsBuffer((l, k) -> actual.append(l), showSpyOutput, maven4);
     for (String s : text) {
-      buffer.addText(s, Key.create("test"));
+      buffer.addText(s, (Key<Object>)ProcessOutputTypes.STDOUT);
     }
     assertEquals(expected, actual.toString());
   }
+
 }

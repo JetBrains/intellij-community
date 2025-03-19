@@ -1,115 +1,68 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyExpression;
+import com.intellij.openapi.util.Ref;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Objects;
 
 /**
- * Type of typing.ParamSpec using in type checker to unify parameters of generic calls
+ * Represents a type parameter substituted with a parameter list of a callable as described in
+ * <a href="https://peps.python.org/pep-0612/">PEP 612 – Parameter Specification Variables</a>.
+ * <p>
+ * Declared with either {@code typing.ParamSpec} instantiation or {@code **P} syntax.
+ * Concrete instantiations of such a parameter are either {@link PyCallableParameterListType} or {@link PyConcatenateType}.
+ *
+ * @see PyCallableParameterListType
+ * @see PyConcatenateType
  */
-public final class PyParamSpecType implements PyTypeParameterType {
-  @NotNull private final String myName;
-  @Nullable private final PyTargetExpression myTargetExpression;
-  @Nullable private final List<PyCallableParameter> myParameters;
-  @Nullable private final PyQualifiedNameOwner myScopeOwner;
+public final class PyParamSpecType implements PyTypeParameterType, PyCallableParameterVariadicType {
+  private final @NotNull String myName;
+  private final @Nullable PyQualifiedNameOwner myDeclarationElement;
+  private final @Nullable Ref<PyCallableParameterVariadicType> myDefaultType;
+  private final @Nullable PyQualifiedNameOwner myScopeOwner;
 
   public PyParamSpecType(@NotNull String name) {
     this(name, null, null, null);
   }
 
   private PyParamSpecType(@NotNull String name,
-                          @Nullable PyTargetExpression target,
-                          @Nullable List<PyCallableParameter> parameters,
+                          @Nullable PyQualifiedNameOwner declarationElement,
+                          @Nullable Ref<PyCallableParameterVariadicType> defaultType,
                           @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
-    myTargetExpression = target;
-    myParameters = parameters;
+    myDeclarationElement = declarationElement;
+    myDefaultType = defaultType;
     myScopeOwner = scopeOwner;
   }
 
-  @NotNull
-  public PyParamSpecType withParameters(@Nullable List<PyCallableParameter> parameters, @NotNull TypeEvalContext context) {
-    return new PyParamSpecType(myName, myTargetExpression, getNonPsiParameters(parameters, context), myScopeOwner);
+  public @NotNull PyParamSpecType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
+    return new PyParamSpecType(myName, declarationElement, myDefaultType, myScopeOwner);
   }
 
-  @NotNull
-  public PyParamSpecType withTargetExpression(@Nullable PyTargetExpression target) {
-    return new PyParamSpecType(myName, target, myParameters, myScopeOwner);
+  public @NotNull PyParamSpecType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyParamSpecType(myName, myDeclarationElement, myDefaultType, scopeOwner);
   }
 
-  @NotNull
-  public PyParamSpecType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyParamSpecType(myName, myTargetExpression, myParameters, scopeOwner);
-  }
-
-  @Nullable
-  private static List<PyCallableParameter> getNonPsiParameters(@Nullable List<PyCallableParameter> parameters,
-                                                               @NotNull TypeEvalContext context) {
-    if (parameters == null) return null;
-    return ContainerUtil.map(parameters, it -> {
-      if (it.isPositionalContainer()) return PyCallableParameterImpl.positionalNonPsi(it.getName(), it.getType(context));
-      if (it.isKeywordContainer()) return PyCallableParameterImpl.keywordNonPsi(it.getName(), it.getType(context));
-      return PyCallableParameterImpl.nonPsi(it.getName(), it.getType(context));
-    });
-  }
-
-  @Nullable
-  public List<PyCallableParameter> getParameters() {
-    return myParameters;
-  }
-
-  @Nullable
-  @Override
-  public PyTargetExpression getDeclarationElement() {
-    return myTargetExpression;
-  }
-
-  @Nullable
-  @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
-    return null;
+  public @NotNull PyParamSpecType withDefaultType(@Nullable Ref<PyCallableParameterVariadicType> defaultType) {
+    return new PyParamSpecType(myName, myDeclarationElement, defaultType, myScopeOwner);
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+  public @Nullable PyQualifiedNameOwner getDeclarationElement() {
+    return myDeclarationElement;
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    if (myParameters == null) {
-      return String.format("ParamSpec(\"%s\")", myName);
-    }
-    else {
-      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(null);
-      return String.format("[%s]",
-                           StringUtil.join(myParameters, param -> {
-                                             if (param != null) {
-                                               final PyType type = param.getType(context);
-                                               return type != null ? type.getName() : PyNames.UNKNOWN_TYPE;
-                                             }
-                                             return PyNames.UNKNOWN_TYPE;
-                                           },
-                                           ", "));
-    }
+  public @NotNull String getName() {
+    return "**" + myName;
+  }
+
+  @Override
+  public String toString() {
+    String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
+    return "PyParamSpecType: " + (scopeName != null ? scopeName + ":" : "") + myName;
   }
 
   @Override
@@ -117,18 +70,13 @@ public final class PyParamSpecType implements PyTypeParameterType {
     return myScopeOwner;
   }
 
-  @NotNull
-  public String getVariableName() {
+  @Override
+  public @Nullable Ref<PyCallableParameterVariadicType> getDefaultType() {
+    return myDefaultType;
+  }
+
+  public @NotNull String getVariableName() {
     return myName;
-  }
-
-  @Override
-  public boolean isBuiltin() {
-    return false;
-  }
-
-  @Override
-  public void assertValid(String message) {
   }
 
   @Override
@@ -146,5 +94,13 @@ public final class PyParamSpecType implements PyTypeParameterType {
   @Override
   public int hashCode() {
     return myName.hashCode();
+  }
+
+  @Override
+  public <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
+    if (visitor instanceof PyTypeVisitorExt<T> visitorExt) {
+      return visitorExt.visitPyParamSpecType(this);
+    }
+    return visitor.visitPyTypeParameterType(this);
   }
 }

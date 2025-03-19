@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -10,6 +12,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class RecursiveFilePathHolderImpl implements FilePathHolder {
 
   private final Project myProject;
@@ -40,7 +43,11 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
   }
 
   @Override
-  public boolean containsFile(@NotNull FilePath file) {
+  public boolean containsFile(@NotNull FilePath file, @NotNull VirtualFile vcsRoot) {
+    return containsFile(file);
+  }
+
+  private boolean containsFile(@NotNull FilePath file) {
     if (myMap.isEmpty()) return false;
     FilePath parent = file;
     while (parent != null) {
@@ -50,14 +57,13 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return false;
   }
 
-  @NotNull
   @Override
-  public Collection<FilePath> values() {
+  public @NotNull Collection<FilePath> values() {
     return myMap;
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     if (myProject.isDisposed()) return;
     final Iterator<FilePath> iterator = myMap.iterator();
     while (iterator.hasNext()) {
@@ -72,6 +78,7 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return scope.belongsTo(filePath);
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -80,6 +87,7 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
     return myMap.equals(that.myMap);
   }
 
+  @Override
   public int hashCode() {
     return myMap.hashCode();
   }

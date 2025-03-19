@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.comparison;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../uast-kotlin-fir/tests/testData/declaration")
 public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -26,6 +33,16 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("annotationOnElvis.kt")
     public void testAnnotationOnElvis() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnElvis.kt");
+    }
+
+    @TestMetadata("annotationOnLocal.kt")
+    public void testAnnotationOnLocal() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnLocal.kt");
+    }
+
+    @TestMetadata("build.gradle.kts")
+    public void testBuild_gradle() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/build.gradle.kts");
     }
 
     @TestMetadata("commentsOnDataClass.kt")
@@ -53,6 +70,36 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorWithJvmOverloads.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_accessors.kt")
+    public void testDeprecatedHiddenProperty_accessors() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_accessors.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_constructor.kt")
+    public void testDeprecatedHiddenProperty_constructor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_constructor.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_getter.kt")
+    public void testDeprecatedHiddenProperty_getter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_getter.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_interface.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
+    public void testDeprecatedHiddenProperty_noAccesor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_noAccesor.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_setter.kt")
+    public void testDeprecatedHiddenProperty_setter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_setter.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/doWhile.kt");
@@ -66,6 +113,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/if.kt");
+    }
+
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
@@ -83,6 +135,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/interfaceCompanionObject.kt");
     }
 
+    @TestMetadata("jvmOverloads.kt")
+    public void testJvmOverloads() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/jvmOverloads.kt");
+    }
+
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/labeledExpression.kt");
@@ -91,6 +148,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("mangling.kt")
     public void testMangling() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/mangling.kt");
+    }
+
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/missingNames.kt");
     }
 
     @TestMetadata("nullabilityOfTypeParameter.kt")
@@ -121,5 +183,15 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("returns.kt")
     public void testReturns() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/returns.kt");
+    }
+
+    @TestMetadata("suspendReturnsResult.kt")
+    public void testSuspendReturnsResult() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/suspendReturnsResult.kt");
+    }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/valueClass.kt");
     }
 }

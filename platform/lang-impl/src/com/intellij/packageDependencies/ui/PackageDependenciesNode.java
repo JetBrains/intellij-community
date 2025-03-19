@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -15,6 +15,7 @@ import com.intellij.ui.Gray;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public PackageDependenciesNode(@NotNull Project project) {
     myProject = project;
+  }
+
+  /**
+   * Called in background to perform potentially slow updates.
+   */
+  @ApiStatus.Experimental
+  public void update() {
   }
 
   public void setEquals(final boolean equals) {
@@ -82,13 +90,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myHasMarked;
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return null;
   }
 
-  @Nullable
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myColor;
   }
 
@@ -169,8 +175,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myRegisteredFiles;
   }
 
-  @Nullable
-  public @NlsSafe String getComment() {
+  public @Nullable @NlsSafe String getComment() {
     return null;
   }
 
@@ -182,9 +187,8 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return mySorted;
   }
 
-  @NlsSafe
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     @NlsSafe String presentableName = super.toString();
     return presentableName;
   }
@@ -197,5 +201,16 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     if (isSorted()) return;
     TreeUtil.sortChildren(this, new DependencyNodeComparator());
     setSorted(true);
+  }
+
+  public void updateAndSortChildren() {
+    if (isSorted()) return;
+    update();
+    TreeUtil.listChildren(this).forEach(node -> {
+      if (node instanceof PackageDependenciesNode packageDependenciesNode) {
+        packageDependenciesNode.update();
+      }
+    });
+    sortChildren();
   }
 }

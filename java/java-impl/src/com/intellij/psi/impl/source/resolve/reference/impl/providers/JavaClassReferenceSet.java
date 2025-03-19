@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -20,6 +6,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
@@ -31,6 +18,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Allows injecting a set of references to a {@link PsiElement} representing a fully qualified Java class reference.
+ * </p>
+ * Invoke {@link #reparse(PsiElement, TextRange)} when the psiElement changes
+ */
 public class JavaClassReferenceSet {
   public static final char DOT = '.';
   public static final char DOLLAR = '$';
@@ -48,29 +40,39 @@ public class JavaClassReferenceSet {
   private final int myStartInElement;
   private final JavaClassReferenceProvider myProvider;
 
-  public JavaClassReferenceSet(@NotNull String str, @NotNull PsiElement element, int startInElement, final boolean isStatic, @NotNull JavaClassReferenceProvider provider) {
+  public JavaClassReferenceSet(@NotNull String str,
+                               @NotNull PsiElement element,
+                               int startInElement,
+                               boolean isStatic,
+                               @NotNull JavaClassReferenceProvider provider) {
     this(str, element, startInElement, isStatic, provider, null);
   }
 
-  private JavaClassReferenceSet(@NotNull String str, @NotNull PsiElement element, int startInElement, final boolean isStatic, @NotNull JavaClassReferenceProvider provider,
-                        JavaClassReferenceSet context) {
+  private JavaClassReferenceSet(@NotNull String str,
+                                @NotNull PsiElement element,
+                                int startInElement,
+                                boolean isStatic,
+                                @NotNull JavaClassReferenceProvider provider,
+                                @Nullable JavaClassReferenceSet context) {
     myStartInElement = startInElement;
     myProvider = provider;
     reparse(str, element, isStatic, context);
   }
 
-  @NotNull
-  public JavaClassReferenceProvider getProvider() {
+  public @NotNull JavaClassReferenceProvider getProvider() {
     return myProvider;
   }
 
-  @NotNull
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     PsiReference[] references = getReferences();
-    return new TextRange(references[0].getRangeInElement().getStartOffset(), references[references.length - 1].getRangeInElement().getEndOffset());
+    return new TextRange(references[0].getRangeInElement().getStartOffset(),
+                         references[references.length - 1].getRangeInElement().getEndOffset());
   }
 
-  private void reparse(@NotNull String str, @NotNull PsiElement element, final boolean isStaticImport, JavaClassReferenceSet context) {
+  private void reparse(@NotNull String str,
+                       @NotNull PsiElement element,
+                       boolean isStaticImport,
+                       @Nullable JavaClassReferenceSet context) {
     myElement = element;
     myContext = context;
     List<JavaClassReference> referencesList = new ArrayList<>();
@@ -95,7 +97,7 @@ public class JavaClassReferenceSet {
 
         if (ch == LT || ch == COMMA) {
           if (!allowGenericsCalculated) {
-            allowGenerics = !isStaticImport && PsiUtil.isLanguageLevel5OrHigher(element);
+            allowGenerics = !isStaticImport && PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element);
             allowGenericsCalculated = true;
           }
 
@@ -201,11 +203,10 @@ public class JavaClassReferenceSet {
     return pos;
   }
 
-  @NotNull
-  protected JavaClassReference createReference(int referenceIndex,
-                                               @NotNull String referenceText, 
-                                               @NotNull TextRange textRange,
-                                               boolean staticImport) {
+  protected @NotNull JavaClassReference createReference(int referenceIndex,
+                                                        @NotNull String referenceText,
+                                                        @NotNull TextRange textRange,
+                                                        boolean staticImport) {
     return new JavaClassReference(this, textRange, referenceIndex, referenceText, staticImport);
   }
 
@@ -222,8 +223,8 @@ public class JavaClassReferenceSet {
     return isAllowDollarInNames() ? c == DOLLAR : c == DOT;
   }
 
-  public void reparse(@NotNull PsiElement element, @NotNull TextRange range) {
-    String text = range.substring(element.getText());
+  public void reparse(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
+    String text = rangeInElement.substring(element.getText());
     reparse(text, element, false, myContext);
   }
 
@@ -234,7 +235,7 @@ public class JavaClassReferenceSet {
   public JavaClassReference @NotNull [] getAllReferences() {
     JavaClassReference[] result = myReferences;
     if (myNestedGenericParameterReferences != null) {
-      for(JavaClassReferenceSet set:myNestedGenericParameterReferences) {
+      for (JavaClassReferenceSet set : myNestedGenericParameterReferences) {
         result = ArrayUtil.mergeArrays(result, set.getAllReferences());
       }
     }
@@ -252,8 +253,7 @@ public class JavaClassReferenceSet {
     return myProvider.isSoft();
   }
 
-  @NotNull
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return myElement;
   }
 
@@ -261,14 +261,12 @@ public class JavaClassReferenceSet {
     return myReferences;
   }
 
-  @Nullable
-  public Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
+  public @Nullable Map<CustomizableReferenceProvider.CustomizationKey, Object> getOptions() {
     return myProvider.getOptions();
   }
 
-  @SuppressWarnings({"UnresolvedPropertyKey"})
-  @NotNull
-  public @InspectionMessage String getUnresolvedMessagePattern(int index){
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public @NotNull @InspectionMessage String getUnresolvedMessagePattern(int index) {
     if (canReferencePackage(index)) {
       return JavaErrorBundle.message("error.cannot.resolve.class.or.package");
     }

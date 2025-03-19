@@ -28,7 +28,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class EncapsulateFieldsTest extends LightJavaCodeInsightFixtureTestCase {
   public void testAlreadyExist() {

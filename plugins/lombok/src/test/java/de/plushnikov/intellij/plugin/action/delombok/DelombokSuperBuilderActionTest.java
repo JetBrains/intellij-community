@@ -18,4 +18,8 @@ public class DelombokSuperBuilderActionTest extends LombokLightActionTestCase {
   public void testSuperBuilderJacksonized() throws Exception {
     doTest();
   }
+
+  public void testSuperBuilderWithBuilderDefault() throws Exception {
+    doTest();
+  }
 }

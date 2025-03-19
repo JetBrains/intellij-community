@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base interface for communication channels with browser-based previews.
@@ -13,8 +14,16 @@ import com.intellij.openapi.Disposable
  * Note: Should be disposed before the actual preview.
  */
 interface BrowserPipe: Disposable {
-  fun interface Handler {
-    fun messageReceived(data: String)
+  interface Handler {
+    @ApiStatus.ScheduledForRemoval
+    @Deprecated(message = "Use #processMessageReceived instead", replaceWith = ReplaceWith("processMessageReceived()"))
+    fun messageReceived(data: String): Unit = throw UnsupportedOperationException()
+
+    fun processMessageReceived(data: String): Boolean {
+      messageReceived(data)
+      // continue to iterate over the rest handlers
+      return true
+    }
   }
 
   /**

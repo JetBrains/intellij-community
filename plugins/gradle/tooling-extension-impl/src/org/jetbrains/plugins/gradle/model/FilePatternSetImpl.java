@@ -25,7 +25,7 @@ public final class FilePatternSetImpl implements FilePatternSet {
   }
 
   public void setIncludes(Set<String> includes) {
-    this.includes = includes;
+    this.includes = new LinkedHashSet<>(includes);
   }
 
   @Override
@@ -34,7 +34,7 @@ public final class FilePatternSetImpl implements FilePatternSet {
   }
 
   public void setExcludes(Set<String> excludes) {
-    this.excludes = excludes;
+    this.excludes = new LinkedHashSet<>(excludes);
   }
 
   @Override

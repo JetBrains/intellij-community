@@ -1,33 +1,41 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class VarExprent extends Exprent {
   public static final int STACK_BASE = 10000;
@@ -37,26 +45,44 @@ public class VarExprent extends Exprent {
   private VarType varType;
   private boolean definition = false;
   private final VarProcessor processor;
-  private final int visibleOffset;
   private int version = 0;
   private boolean classDef = false;
   private boolean stack = false;
+  private LocalVariable lvtEntry = null;
+  private @Nullable VarType inferredType = null;
+  private boolean insideLVT = false;
 
   public VarExprent(int index, VarType varType, VarProcessor processor) {
-    this(index, varType, processor, -1);
+    this(index, varType, processor, null);
   }
 
-  public VarExprent(int index, VarType varType, VarProcessor processor, int visibleOffset) {
+  public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode) {
     super(EXPRENT_VAR);
     this.index = index;
     this.varType = varType;
     this.processor = processor;
-    this.visibleOffset = visibleOffset;
+    this.addBytecodeOffsets(bytecode);
   }
 
   @Override
-  public VarType getExprType() {
+  public @NotNull VarType getExprType() {
     return getVarType();
+  }
+
+  @Override
+  public void inferExprType(VarType upperBound) {
+    if (lvtEntry != null && lvtEntry.getSignature() != null) {
+      // TODO; figure out why it's crashing, ugly fix for now
+      try {
+        inferredType = GenericType.parse(lvtEntry.getSignature());
+      } catch (StringIndexOutOfBoundsException ex) {
+        DecompilerContext.getLogger().writeMessage("Inconsistent data: ",
+                                                   IFernflowerLogger.Severity.WARN, ex);
+      }
+    }
+    else if (lvtEntry != null) {
+      inferredType = lvtEntry.getVarType();
+    }
   }
 
   @Override
@@ -65,17 +91,19 @@ public class VarExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    return new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
+    return lst;
   }
 
   @Override
   public Exprent copy() {
-    VarExprent var = new VarExprent(index, getVarType(), processor, visibleOffset);
+    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode);
     var.setDefinition(definition);
     var.setVersion(version);
     var.setClassDef(classDef);
     var.setStack(stack);
+    var.setLVTEntry(lvtEntry);
+    var.setInsideLVT(insideLVT);
     return var;
   }
 
@@ -91,11 +119,7 @@ public class VarExprent extends Exprent {
       tracer.incrementCurrentSourceLine(buffer.countLines());
     }
     else {
-      VarVersionPair varVersion = getVarVersionPair();
-      String name = null;
-      if (processor != null) {
-        name = processor.getVarName(varVersion);
-      }
+      VarVersion varVersion = getVarVersion();
 
       if (definition) {
         if (processor != null && processor.getVarFinal(varVersion) == VarProcessor.VAR_EXPLICIT_FINAL) {
@@ -105,38 +129,46 @@ public class VarExprent extends Exprent {
         buffer.append(" ");
       }
 
-      buffer.append(name == null ? ("var" + index + (this.version == 0 ? "" : "_" + this.version)) : name);
+      buffer.append(getName());
     }
 
     return buffer;
   }
 
-  public VarVersionPair getVarVersionPair() {
-    return new VarVersionPair(index, version);
+  public int getVisibleOffset() {
+    return bytecode == null ? -1 : bytecode.length();
   }
 
-  public String getDebugName(StructMethod method) {
-    StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
-    if (attr != null && processor != null) {
-      Integer origIndex = processor.getVarOriginalIndex(index);
-      if (origIndex != null) {
-        String name = attr.getName(origIndex, visibleOffset);
-        if (name != null && TextUtil.isValidIdentifier(name, method.getBytecodeVersion())) {
-          return name;
-        }
-      }
-    }
-    return null;
+  public static @NotNull String getName(VarVersion versionPair) {
+    return "var" + versionPair.var + (versionPair.version == 0 ? "" : "_" + versionPair.version);
   }
 
-  private void appendDefinitionType(TextBuffer buffer) {
+  public VarVersion getVarVersion() {
+    return new VarVersion(index, version);
+  }
+
+  public VarType getDefinitionType() {
     if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+
+      if (lvtEntry != null) {
+        if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+          if (lvtEntry.getSignature() != null) {
+            GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvtEntry.getSignature());
+            if (descriptor != null) {
+              return descriptor.type;
+            }
+          }
+        }
+        return getVarType();
+      }
+
       MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
       if (method != null) {
         Integer originalIndex = null;
         if (processor != null) {
           originalIndex = processor.getVarOriginalIndex(index);
         }
+        int visibleOffset = bytecode == null ? -1 : bytecode.length();
         if (originalIndex != null) {
           // first try from signature
           if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
@@ -147,8 +179,7 @@ public class VarExprent extends Exprent {
               if (signature != null) {
                 GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                 if (descriptor != null) {
-                  buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, Collections.emptyList()));
-                  return;
+                  return descriptor.type;
                 }
               }
             }
@@ -159,15 +190,22 @@ public class VarExprent extends Exprent {
           if (attr != null) {
             String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
             if (descriptor != null) {
-              buffer.append(ExprProcessor.getCastTypeName(new VarType(descriptor), Collections.emptyList()));
-              return;
+              return new VarType(descriptor);
             }
           }
         }
       }
     }
+    return getVarType();
+  }
 
-    buffer.append(ExprProcessor.getCastTypeName(getVarType(), Collections.emptyList()));
+  void appendDefinitionType(TextBuffer buffer) {
+    buffer.append(ExprProcessor.getCastTypeName(getDefinitionType(), Collections.emptyList()));
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(index, version);
   }
 
   @Override
@@ -180,6 +218,11 @@ public class VarExprent extends Exprent {
            Objects.equals(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
   }
 
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values);
+  }
+
   public int getIndex() {
     return index;
   }
@@ -188,10 +231,25 @@ public class VarExprent extends Exprent {
     this.index = index;
   }
 
-  public VarType getVarType() {
+  public boolean isInsideLVT() {
+    return insideLVT;
+  }
+
+  public void setInsideLVT(boolean insideLVT) {
+    this.insideLVT = insideLVT;
+  }
+
+  public @NotNull VarType getVarType() {
+    if (inferredType != null) {
+      return inferredType;
+    }
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && lvtEntry != null) {
+      return new VarType(lvtEntry.getDescriptor());
+    }
+
     VarType vt = null;
     if (processor != null) {
-      vt = processor.getVarType(getVarVersionPair());
+      vt = processor.getVarType(getVarVersion());
     }
 
     if (vt == null || (varType != null && varType.getType() != CodeConstants.TYPE_UNKNOWN)) {
@@ -239,6 +297,89 @@ public class VarExprent extends Exprent {
 
   public void setStack(boolean stack) {
     this.stack = stack;
+  }
+
+  public void setLVTEntry(LocalVariable var) {
+    this.lvtEntry = var;
+    if (processor != null && lvtEntry != null) {
+      processor.setVarType(getVarVersion(), lvtEntry.getVarType());
+    }
+  }
+
+  /**
+   * Retrieves the local variable item from local variable table
+   *
+   * @return the local variable item of type LocalVariable.
+   */
+  public LocalVariable getLVTEntry() {
+    return lvtEntry;
+  }
+
+  public String getName() {
+    VarVersion varVersion = getVarVersion();
+    if (lvtEntry != null && TextUtil.isValidIdentifier(lvtEntry.getName(), CodeConstants.BYTECODE_JAVA_22))
+      return lvtEntry.getName();
+
+    if (processor != null) {
+      String ret = processor.getVarName(varVersion);
+      if (ret != null)
+        return ret;
+    }
+
+    return getName(varVersion);
+  }
+
+  @Override
+  public CheckTypesResult checkExprTypeBounds() {
+    if (lvtEntry != null) {
+      CheckTypesResult ret = new CheckTypesResult();
+      ret.addMinTypeExprent(this, lvtEntry.getVarType());
+      return ret;
+    }
+    return null;
+  }
+
+  public boolean isVarReferenced(Statement stat, VarExprent... whitelist) {
+    for (IMatchable obj : stat.getExprentsOrSequentialObjects()) {
+      if (obj instanceof Statement) {
+        if (isVarReferenced((Statement)obj, whitelist)) {
+          return true;
+        }
+      }
+      else if (obj instanceof Exprent) {
+        if (isVarReferenced((Exprent)obj, whitelist)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isVarReferenced(Exprent exp, VarExprent... whitelist) {
+    List<Exprent> lst = exp.getAllExprents(true);
+    lst.add(exp);
+    lst = lst.stream().filter(e -> e != this && e.type == Exprent.EXPRENT_VAR &&
+                                   getVarVersion().equals(((VarExprent)e).getVarVersion()))
+        .collect(Collectors.toList());
+
+    for (Exprent var : lst) {
+      boolean allowed = false;
+      for (VarExprent white : whitelist) {
+        if (var == white) {
+          allowed = true;
+          break;
+        }
+      }
+      if (!allowed) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return "VarExprent[" + index + ',' + version +"]";
   }
 
   // *****************************************************************************

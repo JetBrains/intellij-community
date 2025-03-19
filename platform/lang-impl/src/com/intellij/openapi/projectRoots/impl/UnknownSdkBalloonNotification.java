@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +23,7 @@ import java.util.TreeSet;
 
 import static com.intellij.notification.NotificationAction.createSimple;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 public final class UnknownSdkBalloonNotification {
   public static @NotNull UnknownSdkBalloonNotification getInstance(@NotNull Project project) {

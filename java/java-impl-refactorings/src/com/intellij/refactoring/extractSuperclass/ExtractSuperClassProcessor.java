@@ -34,7 +34,7 @@ public class ExtractSuperClassProcessor extends ExtractSuperBaseProcessor {
   @Override
   protected boolean isInSuper(PsiElement member) {
     if (member instanceof PsiField field) {
-      final PsiClass containingClass = ((PsiField)member).getContainingClass();
+      final PsiClass containingClass = field.getContainingClass();
       if (myClass.isInheritor(containingClass, true)) return true;
       return doMemberInfosContain(field);
     }

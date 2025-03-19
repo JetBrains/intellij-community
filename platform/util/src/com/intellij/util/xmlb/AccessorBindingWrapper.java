@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.xml.dom.XmlElement;
 import com.intellij.util.xmlb.annotations.Property;
+import kotlinx.serialization.json.JsonElement;
+import kotlinx.serialization.json.JsonNull;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,41 +34,105 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @Nullable Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Object value = accessor.read(o);
-    if (value == null) {
-      return null;
+  public @Nullable JsonElement toJson(@NotNull Object bean, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
+    return value == null ? JsonNull.INSTANCE : binding.toJson(value, filter);
+  }
+
+  @Override
+  public void setFromJson(@NotNull Object bean, @NotNull JsonElement element) {
+    Object currentValue = accessor.read(bean);
+    Object value = ((RootBinding)binding).fromJson(currentValue, element);
+    if (currentValue != value) {
+      accessor.set(bean, value);
     }
-    else if (isFlat) {
-      Element element = (Element)context;
+  }
+
+  @Override
+  public void serialize(@NotNull Object bean, @NotNull Element parent, @Nullable SerializationFilter filter) {
+    Object value = accessor.read(bean);
+    if (value == null) {
+      return;
+    }
+
+    if (isFlat) {
       if (beanStyle == Property.Style.ATTRIBUTE && value instanceof Rectangle) {
         Rectangle bounds = (Rectangle)value;
-        assert element != null;
-        element.setAttribute("x", Integer.toString(bounds.x));
-        element.setAttribute("y", Integer.toString(bounds.y));
-        element.setAttribute("width", Integer.toString(bounds.width));
-        element.setAttribute("height", Integer.toString(bounds.height));
+        assert parent != null;
+        parent.setAttribute("x", Integer.toString(bounds.x));
+        parent.setAttribute("y", Integer.toString(bounds.y));
+        parent.setAttribute("width", Integer.toString(bounds.width));
+        parent.setAttribute("height", Integer.toString(bounds.height));
       }
       else {
-        ((BeanBinding)binding).serializeInto(value, element, filter);
+        ((BeanBinding)binding).serializeProperties(value, parent, filter);
       }
-      return null;
     }
     else {
-      return binding.serialize(value, context, filter);
+      binding.serialize(value, parent, filter);
     }
   }
 
-  @SuppressWarnings("DuplicatedCode")
   @Override
-  public Object deserializeUnsafe(Object context, @NotNull Element element) {
+  public @Nullable <T> Object deserialize(@Nullable Object context, @NotNull T element, @NotNull DomAdapter<T> adapter) {
+    if (adapter == JdomAdapter.INSTANCE) {
+      return deserializeUnsafe(context, (Element)element);
+    }
+    else {
+      return deserializeUnsafe(context, (XmlElement)element);
+    }
+  }
+
+  @Override
+  public @Nullable JsonElement deserializeToJson(@NotNull Element element) {
+    return ((RootBinding)binding).deserializeToJson(element);
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  Object deserializeUnsafe(Object context, @NotNull Element element) {
+    Object currentValue = accessor.read(context);
+    if (binding instanceof BeanBinding && !accessor.isWritable()) {
+      ((BeanBinding)binding).deserializeInto(currentValue, element);
+      return context;
+    }
+
+    Object deserializedValue;
+    if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).beanClass == Rectangle.class) {
+      String xA = element.getAttributeValue("x");
+      String yA = element.getAttributeValue("y");
+      String wA = element.getAttributeValue("width");
+      String hA = element.getAttributeValue("height");
+
+      if (xA != null && yA != null && wA != null && hA != null) {
+        int x = StringUtilRt.parseInt(xA, 0);
+        int y = StringUtilRt.parseInt(yA, 0);
+        int h = StringUtilRt.parseInt(hA, 0);
+        int w = StringUtilRt.parseInt(wA, 0);
+        deserializedValue = new Rectangle(x, y, w, h);
+      }
+      else {
+        return context;
+      }
+    }
+    else {
+      deserializedValue = binding.deserialize(currentValue, element, JdomAdapter.INSTANCE);
+    }
+
+    if (currentValue != deserializedValue) {
+      accessor.set(context, deserializedValue);
+    }
+    return context;
+  }
+
+  @SuppressWarnings("DuplicatedCode")
+  Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
     Object currentValue = accessor.read(context);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
       ((BeanBinding)binding).deserializeInto(currentValue, element);
     }
     else {
       Object deserializedValue;
-      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).myBeanClass == Rectangle.class) {
+      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).beanClass == Rectangle.class) {
         String xA = element.getAttributeValue("x");
         String yA = element.getAttributeValue("y");
         String wA = element.getAttributeValue("width");
@@ -84,44 +150,7 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
         }
       }
       else {
-        deserializedValue = binding.deserializeUnsafe(currentValue, element);
-      }
-
-      if (currentValue != deserializedValue) {
-        accessor.set(context, deserializedValue);
-      }
-    }
-    return context;
-  }
-
-  @SuppressWarnings("DuplicatedCode")
-  @Override
-  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
-    Object currentValue = accessor.read(context);
-    if (binding instanceof BeanBinding && !accessor.isWritable()) {
-      ((BeanBinding)binding).deserializeInto(currentValue, element);
-    }
-    else {
-      Object deserializedValue;
-      if (beanStyle == Property.Style.ATTRIBUTE && binding instanceof BeanBinding && ((BeanBinding)binding).myBeanClass == Rectangle.class) {
-        String xA = element.getAttributeValue("x");
-        String yA = element.getAttributeValue("y");
-        String wA = element.getAttributeValue("width");
-        String hA = element.getAttributeValue("height");
-
-        if (xA != null && yA != null && wA != null && hA != null) {
-          int x = StringUtilRt.parseInt(xA, 0);
-          int y = StringUtilRt.parseInt(yA, 0);
-          int h = StringUtilRt.parseInt(hA, 0);
-          int w = StringUtilRt.parseInt(wA, 0);
-          deserializedValue = new Rectangle(x, y, w, h);
-        }
-        else {
-          return context;
-        }
-      }
-      else {
-        deserializedValue = binding.deserializeUnsafe(currentValue, element);
+        deserializedValue = binding.deserialize(currentValue, element, XmlDomAdapter.INSTANCE);
       }
 
       if (currentValue != deserializedValue) {
@@ -132,33 +161,29 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public @NotNull Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<? extends Element> elements) {
-    Object currentValue = accessor.read(context);
+  public @Nullable <T> Object deserializeList(@Nullable Object currentValue, @NotNull List<? extends T> elements, @NotNull DomAdapter<T> adapter) {
+    assert currentValue != null;
+    Object value = accessor.read(currentValue);
     if (binding instanceof BeanBinding && !accessor.isWritable()) {
-      ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
+      ((BeanBinding)binding).deserializeInto(value, elements.get(0), adapter);
     }
     else {
-      Object deserializedValue = Binding.deserializeList(binding, currentValue, elements);
-      if (currentValue != deserializedValue) {
-        accessor.set(context, deserializedValue);
+      Object deserializedValue = MapBindingKt.deserializeList(binding, value, elements, adapter);
+      if (value != deserializedValue) {
+        accessor.set(currentValue, deserializedValue);
       }
     }
-    return context;
+    return null;
   }
 
   @Override
-  public @NotNull Object deserializeList2(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<XmlElement> elements) {
-    Object currentValue = accessor.read(context);
-    if (binding instanceof BeanBinding && !accessor.isWritable()) {
-      ((BeanBinding)binding).deserializeInto(currentValue, elements.get(0));
-    }
-    else {
-      Object deserializedValue = Binding.deserializeList2(binding, currentValue, elements);
-      if (currentValue != deserializedValue) {
-        accessor.set(context, deserializedValue);
-      }
-    }
-    return context;
+  public boolean isSurroundWithTag() {
+    return false;
+  }
+
+  @Override
+  public @NotNull JsonElement doDeserializeListToJson(@NotNull List<? extends Element> elements) {
+    return ((MultiNodeBinding)binding).deserializeListToJson(elements);
   }
 
   @Override
@@ -167,22 +192,12 @@ final class AccessorBindingWrapper implements MultiNodeBinding, NestedBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
+  public <T> boolean isBoundTo(@NotNull T element, @NotNull DomAdapter<T> adapter) {
     if (binding instanceof MapBinding) {
-      return ((MapBinding)binding).isBoundToWithoutProperty(element.getName());
+      return ((MapBinding)binding).isBoundToWithoutProperty(adapter.getName(element));
     }
     else {
-      return binding.isBoundTo(element);
-    }
-  }
-
-  @Override
-  public boolean isBoundTo(@NotNull XmlElement element) {
-    if (binding instanceof MapBinding) {
-      return ((MapBinding)binding).isBoundToWithoutProperty(element.name);
-    }
-    else {
-      return binding.isBoundTo(element);
+      return binding.isBoundTo(element, adapter);
     }
   }
 

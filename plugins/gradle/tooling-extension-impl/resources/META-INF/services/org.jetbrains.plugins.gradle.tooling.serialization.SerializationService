@@ -1,0 +1,13 @@
+# Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel.GradleBuildScriptClasspathSerializationService
+com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskSerialisationService
+com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectSerializationService
+com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetSerialisationService
+com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencySerialisationService
+org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.RepositoriesModelSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.GradleExtensionsSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.ExternalTestsSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.AnnotationProcessingModelSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.ProjectDependenciesSerializationService
+org.jetbrains.plugins.gradle.tooling.serialization.KotlinDslScriptsModelSerializationService

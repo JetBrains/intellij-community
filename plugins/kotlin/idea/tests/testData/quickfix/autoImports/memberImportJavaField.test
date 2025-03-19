@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import property 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 //KT-9009
 
 fun f() {
@@ -21,7 +20,6 @@ import foo.Bar.foobar
 
 // "Import property 'Bar.foobar'" "true"
 // ERROR: Unresolved reference: foobar
-/* IGNORE_FIR */
 //KT-9009
 
 fun f() {

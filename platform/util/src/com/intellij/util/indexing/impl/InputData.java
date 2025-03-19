@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collections;
 import java.util.Map;
@@ -15,15 +17,15 @@ public class InputData<Key, Value> {
     return EMPTY;
   }
 
-  @NotNull
-  private final Map<Key, Value> myKeyValues;
+  private final @NotNull Map<Key, Value> myKeyValues;
 
-  protected InputData(@NotNull Map<Key, Value> values) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public InputData(@NotNull Map<Key, Value> values) {
     myKeyValues = values;
   }
 
-  @NotNull
-  public Map<Key, Value> getKeyValues() {
+  public @NotNull Map<Key, Value> getKeyValues() {
     return myKeyValues;
   }
 }

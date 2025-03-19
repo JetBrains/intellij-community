@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.smartEnter;
 
@@ -24,13 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SmartEnterAction extends EditorAction {
+public final class SmartEnterAction extends EditorAction {
   public SmartEnterAction() {
     super(new Handler());
     setInjectedContext(true);
   }
 
-  private static class Handler extends EditorWriteActionHandler.ForEachCaret {
+  private static final class Handler extends EditorWriteActionHandler.ForEachCaret {
     @Override
     public boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       if (editor instanceof EditorWindow && editor.isOneLineMode()) {

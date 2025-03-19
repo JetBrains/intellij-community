@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -21,12 +21,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
+public final class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
 
-  @NotNull private final ArrangementUiComponent      myGroupingTypeToken;
-  @NotNull private final ArrangementRuleIndexControl myRowIndexControl;
+  private final @NotNull ArrangementUiComponent      myGroupingTypeToken;
+  private final @NotNull ArrangementRuleIndexControl myRowIndexControl;
 
-  @Nullable private final ArrangementUiComponent myOrderTypeToken;
+  private final @Nullable ArrangementUiComponent myOrderTypeToken;
 
   /**
    * Assumes that given token {@link CompositeArrangementSettingsToken#getChildren() has no children} or all its children have
@@ -126,9 +126,8 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     super.paintComponent(g);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -148,8 +147,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     }
   }
 
-  @NotNull
-  public ArrangementSettingsToken getGroupingType() {
+  public @NotNull ArrangementSettingsToken getGroupingType() {
     ArrangementSettingsToken token = myGroupingTypeToken.getToken();
     assert token != null;
     return token;
@@ -169,8 +167,7 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     setBackground(highlight ? UIUtil.getDecoratedRowColor() : UIUtil.getListBackground());
   }
 
-  @Nullable
-  public ArrangementSettingsToken getOrderType() {
+  public @Nullable ArrangementSettingsToken getOrderType() {
     return myOrderTypeToken == null ? null : myOrderTypeToken.getToken();
   }
 

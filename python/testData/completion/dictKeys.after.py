@@ -1,2 +1,2 @@
-tasks = {key: "123"}
-tasks[key]
+tasks = {'xyz': "123"}
+tasks['xyz']

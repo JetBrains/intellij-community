@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.uiDesigner.CutCopyPasteSupport;
@@ -204,11 +204,10 @@ public final class ResizeProcessor extends EventProcessor {
     }
   }
 
-  @Nullable
-  static Rectangle getGridSpanGridRect(final RadContainer grid,
-                                       final GridConstraints originalConstraints,
-                                       final Point point,
-                                       final int resizeMask) {
+  static @Nullable Rectangle getGridSpanGridRect(final RadContainer grid,
+                                                 final GridConstraints originalConstraints,
+                                                 final Point point,
+                                                 final int resizeMask) {
     int rowAtMouse = (resizeMask & (Painter.NORTH_MASK | Painter.SOUTH_MASK)) != 0
                      ? grid.getGridRowAt(point.y)
                      : -1;

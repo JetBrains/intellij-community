@@ -1,0 +1,2 @@
+This module only exists so that the project libraries have a dependent. Project libraries without any dependents may be excluded from
+workspace model indices.

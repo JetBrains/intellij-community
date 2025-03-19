@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.Experiments;
-import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,9 +11,7 @@ import java.util.List;
 
 public final class WSLCommandLineOptions {
 
-  public static final @NlsSafe String DEFAULT_SHELL = "/bin/sh";
-
-  private boolean myLaunchWithWslExe = true;
+  private boolean myLaunchWithWslExe = !WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent();
   private boolean myExecuteCommandInShell = true;
   private boolean myExecuteCommandInInteractiveShell = false;
   private boolean myExecuteCommandInLoginShell = true;
@@ -24,7 +20,6 @@ public final class WSLCommandLineOptions {
   private boolean myPassEnvVarsUsingInterop = false;
   private final List<String> myInitShellCommands = new ArrayList<>();
   private boolean myExecuteCommandInDefaultShell = false;
-  private @Nls @NotNull String myShellPath = DEFAULT_SHELL;
   private double mySleepTimeoutSec = 0;
 
   public boolean isLaunchWithWslExe() {
@@ -96,18 +91,6 @@ public final class WSLCommandLineOptions {
     return this;
   }
 
-  public @Nls @NotNull String getShellPath() {
-    return myShellPath;
-  }
-
-  public @NotNull WSLCommandLineOptions setShellPath(@Nls @NotNull String shellPath) {
-    if (shellPath.isBlank()) {
-      throw new AssertionError("Wrong shell: " + shellPath);
-    }
-    myShellPath = shellPath;
-    return this;
-  }
-
   public boolean isSudo() {
     return mySudo;
   }
@@ -170,6 +153,8 @@ public final class WSLCommandLineOptions {
    * The initialize command is a linux command that runs before the main command.
    * If the initialize command fails (exit code != 0), the main command won't run.
    * For example, it can be used to setup environment before running the app.
+   * Note, that this function <strong>prepends</strong> commands, so calling it with 1 and 2 will
+   * produce <pre>2 && 1</pre>
    * 
    * @param initCommand a linux shell command (may contain shell builtin commands)
    */

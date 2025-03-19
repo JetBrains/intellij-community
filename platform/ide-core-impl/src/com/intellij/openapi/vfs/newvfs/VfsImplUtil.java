@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+
 public final class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
 
@@ -182,17 +184,17 @@ public final class VfsImplUtil {
 
   public record PathFromRoot(@NotNull NewVirtualFile root, @NotNull String pathFromRoot) {}
   /**
-   * @return (file system root, relative path inside that root) or null if the path is invalid or the root is not found
+   * Returns a (file system root, relative path inside that root) pair, or {@code null} when the path is invalid or the root is not found.
    * For example, {@code extractRootFromPath(LocalFileSystem.getInstance, "C:/temp")} -> ("C:", "/temp")
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */
   public static PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    String normalizedPath = vfs.normalize(path);
+    String normalizedPath = NewVirtualFileSystem.normalizePath(vfs, path);
     if (normalizedPath == null || normalizedPath.isBlank()) {
       return null;
     }
 
-    String rootPath = vfs.extractRootPath(normalizedPath);
+    String rootPath = NewVirtualFileSystem.extractRootPath(vfs, normalizedPath);
     if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
       LOG.warn(vfs + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
@@ -231,7 +233,7 @@ public final class VfsImplUtil {
    * </pre></code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    VFileContentChangeEvent event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
+    var event = new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(), -1);
     RefreshQueue.getInstance().processEvents(false, List.of(event));
   }
 
@@ -240,15 +242,10 @@ public final class VfsImplUtil {
   private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap(); // guarded by ourLock; values too
 
-  @ApiStatus.Internal
-  public static @NotNull String getLocalPath(@NotNull ArchiveFileSystem vfs, @NotNull String entryPath) {
-    return vfs.extractLocalPath(entryPath);
-  }
-
   public static @NotNull <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                                  @NotNull VirtualFile entryFile,
                                                                  @NotNull Function<? super String, ? extends T> producer) {
-    String localPath = getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
+    String localPath = ArchiveFileSystem.getLocalPath(vfs, VfsUtilCore.getRootFile(entryFile).getPath());
     checkSubscription();
 
     T handler;
@@ -351,7 +348,7 @@ public final class VfsImplUtil {
     return state;
   }
 
-  private static class InvalidationState {
+  private static final class InvalidationState {
     private Set<Pair<String, ArchiveFileSystem>> myRootsToRefresh;
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
@@ -363,7 +360,7 @@ public final class VfsImplUtil {
       if (myRootsToRefresh != null) {
         List<@NotNull NewVirtualFile> rootsToRefresh = ContainerUtil.mapNotNull(
           myRootsToRefresh,
-          pathAndFs -> ManagingFS.getInstance().findRoot(pathAndFs.second.composeRootPath(pathAndFs.first), pathAndFs.second));
+          pathAndFs -> ManagingFS.getInstance().findRoot(ArchiveFileSystem.composeRootPath(pathAndFs.second, pathAndFs.first), pathAndFs.second));
         for (@NotNull NewVirtualFile root : rootsToRefresh) {
           root.markDirtyRecursively();
         }
@@ -416,7 +413,7 @@ public final class VfsImplUtil {
     VirtualFile local = null;
     if (entryFileSystem instanceof ArchiveFileSystem) {
       local = ((ArchiveFileSystem)entryFileSystem).getLocalByEntry(file);
-      path = local == null ? getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
+      path = local == null ? ArchiveFileSystem.getLocalPath((ArchiveFileSystem)entryFileSystem, path) : local.getPath();
     }
     String[] jarPaths;
     synchronized (ourLock) {
@@ -436,9 +433,9 @@ public final class VfsImplUtil {
       }
       if (entryFileSystem instanceof LocalFileSystem) {
         ArchiveFileSystem fileSystem = handlerPair.first;
-        NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
+        NewVirtualFile root = ManagingFS.getInstance().findRoot(ArchiveFileSystem.composeRootPath(fileSystem, jarPath), fileSystem);
         if (root != null) {
-          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
+          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root);
           Runnable runnable = () -> {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
@@ -461,8 +458,8 @@ public final class VfsImplUtil {
         // for "delete jar://x.jar!/" generate "delete file://x.jar", but
         // for "delete jar://x.jar!/web.xml" generate "changed file://x.jar"
         VFileEvent localJarDeleteEvent = file.getParent() == null ?
-           new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh()) :
-           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp(), event.isFromRefresh());
+           new VFileDeleteEvent(event.getRequestor(), local) :
+           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp());
         events.add(localJarDeleteEvent);
       }
     }

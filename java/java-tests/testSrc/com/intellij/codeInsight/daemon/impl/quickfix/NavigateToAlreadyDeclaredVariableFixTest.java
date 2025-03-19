@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class NavigateToAlreadyDeclaredVariableFixTest extends LightJavaCodeInsightFixtureTestCase {
@@ -11,6 +12,7 @@ public class NavigateToAlreadyDeclaredVariableFixTest extends LightJavaCodeInsig
     IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("navigate.variable.declaration.text", "i"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     assertEquals(14, myFixture.getCaretOffset());
   }
 
@@ -22,6 +24,7 @@ public class NavigateToAlreadyDeclaredVariableFixTest extends LightJavaCodeInsig
     IntentionAction intention = myFixture.findSingleIntention(QuickFixBundle.message("navigate.variable.declaration.text", "element"));
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     assertEquals(51, myFixture.getCaretOffset());
   }
 }

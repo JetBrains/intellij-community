@@ -1,0 +1,32 @@
+{
+  "inspections": [
+    {
+      "id": "UseEllipsisInPropertyInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "AlphaUnsortedPropertiesFile",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrailingSpacesInProperty",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "WrongPropertyKeyValueDelimiter",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnusedProperty",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "DuplicatePropertyInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncompleteProperty",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

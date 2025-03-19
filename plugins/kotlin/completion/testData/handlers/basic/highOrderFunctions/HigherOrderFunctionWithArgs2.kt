@@ -1,4 +1,6 @@
-fun foo(p : (String, Char) -> Boolean){}
+// FIR_COMPARISON
+// FIR_IDENTICAL
+fun foo(p: (String, Char) -> Boolean) {}
 
 fun main(args: Array<String>) {
     fo<caret>

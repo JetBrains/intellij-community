@@ -6,3 +6,5 @@ fun foo() {
     }
 }
 fun bar(i: String) { }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix

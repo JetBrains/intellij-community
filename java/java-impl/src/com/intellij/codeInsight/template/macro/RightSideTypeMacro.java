@@ -9,7 +9,7 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 
-public class RightSideTypeMacro extends Macro {
+public final class RightSideTypeMacro extends Macro {
   @Override
   public String getName() {
     return "rightSideType";

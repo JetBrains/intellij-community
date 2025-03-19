@@ -5,26 +5,31 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
-class TypeLookupElementFactory {
-    fun KtAnalysisSession.createLookup(type: KtType): LookupElement? {
+internal object TypeLookupElementFactory {
+
+    context(KaSession)
+    @OptIn(KaExperimentalApi::class)
+    fun createLookup(type: KaType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
 
@@ -35,49 +40,65 @@ class TypeLookupElementFactory {
             .let { if (symbol != null) withClassifierSymbolInfo(symbol, it) else it }
 
         return when (type) {
-            is KtTypeParameterType -> element
+            is KaTypeParameterType -> element
 
-            is KtUsualClassType -> {
-                val tailText = getTailText(type.classSymbol, usePackageFqName = true, addTypeParameters = false)
+            is KaUsualClassType -> {
+                val tailText = getTailText(type.symbol, usePackageFqName = true, addTypeParameters = false)
                 element.withTailText(tailText)
             }
 
-            is KtFunctionalType -> element.withIcon(KotlinIcons.LAMBDA)
+            is KaFunctionType -> element.withIcon(KotlinIcons.LAMBDA)
 
             else -> null
         }
     }
 
-    fun KtAnalysisSession.createLookup(symbol: KtClassifierSymbol): LookupElement? {
-        val (relativeNameAsString, fqNameAsString) = when (symbol) {
-            is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
+    context(KaSession)
+    fun createLookup(symbol: KaClassifierSymbol): LookupElement? {
+        val relativeName = symbol.name
+            ?: return null
 
-            is KtClassLikeSymbol -> when (val classId = symbol.classIdIfNonLocal) {
-                null -> symbol.name?.asString()?.let { it to it }
-                else -> classId.relativeClassName.asString() to classId.asFqNameString()
-            }
-        } ?: return null
+        val descriptor = when (symbol) {
+            is KaClassLikeSymbol -> symbol.classId
+                ?.let { (packageFqName, relativeClassName, _) ->
+                    ClassDescriptor(
+                        relativeClassName = relativeClassName,
+                        renderedClassId = buildString { // see ClassId::asFqNameString
+                            if (!packageFqName.isRoot) {
+                                append(packageFqName.render())
+                                append(".")
+                            }
+                            append(relativeClassName.render())
+                        },
+                        tailText = getTailText(symbol, usePackageFqName = true),
+                    )
+                }
 
-        val tailText = (symbol as? KtClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
+            else -> null
+        }
 
-        return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
-            .withInsertHandler(TypeInsertHandler)
+        return LookupElementBuilder.create(
+            /* lookupObject = */ TypeLookupObject(descriptor?.renderedClassId ?: relativeName.render()),
+            /* lookupString = */ descriptor?.relativeClassName?.asString() ?: relativeName.asString(),
+        ).withInsertHandler(TypeInsertHandler)
             .let { withClassifierSymbolInfo(symbol, it) }
-            .withTailText(tailText)
+            .withTailText(descriptor?.tailText)
     }
 
-    private fun KtType.getSymbolIfTypeParameterOrUsualClass(): KtClassifierSymbol? = when (this) {
-        is KtTypeParameterType -> symbol
-        is KtUsualClassType -> classSymbol
+    private fun KaType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
+        is KaTypeParameterType -> symbol
+        is KaUsualClassType -> symbol
         else -> null
     }
 
-    private val TYPE_RENDERING_OPTIONS_SHORT_NAMES = KtTypeRendererForSource.WITH_SHORT_NAMES.with {
-        annotationsRenderer = annotationsRenderer.with { annotationFilter = KtRendererAnnotationsFilter.NONE }
+    @KaExperimentalApi
+    private val TYPE_RENDERING_OPTIONS_SHORT_NAMES = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
+        annotationsRenderer = annotationsRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
     }
 
-    private val TYPE_RENDERING_OPTIONS = KtTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
-        annotationsRenderer = annotationsRenderer.with { annotationFilter = KtRendererAnnotationsFilter.NONE }
+    @KaExperimentalApi
+    private val TYPE_RENDERING_OPTIONS = KaTypeRendererForSource.WITH_QUALIFIED_NAMES.with {
+        annotationsRenderer = annotationsRenderer.with { annotationFilter = KaRendererAnnotationsFilter.NONE }
     }
 }
 
@@ -86,11 +107,12 @@ data class TypeLookupObject(val fqRenderedType: String)
 private object TypeInsertHandler : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val lookupObject = item.`object` as TypeLookupObject
-        val targetFile = context.file as? KtFile ?: return
-
-        context.document.replaceString(context.startOffset, context.tailOffset, lookupObject.fqRenderedType)
-        context.commitDocument()
-
-        shortenReferencesInRange(targetFile, TextRange(context.startOffset, context.tailOffset))
+        context.insertAndShortenReferencesInStringUsingTemporarySuffix(lookupObject.fqRenderedType)
     }
 }
+
+private data class ClassDescriptor(
+    val relativeClassName: FqName,
+    val renderedClassId: @NonNls String,
+    val tailText: @NlsSafe String,
+)

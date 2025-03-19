@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
@@ -11,10 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Set;
@@ -26,15 +23,15 @@ import static com.intellij.execution.testframework.sm.runner.ui.SMPoolOfTestIcon
  * @author Roman Chernyatchik
  */
 public final class TestsPresentationUtil {
-  @NonNls private static final String DOUBLE_SPACE = "  ";
+  private static final @NonNls String DOUBLE_SPACE = "  ";
   private static class Holder {
     private static String getNoNameTest() {
       return SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.test.noname");
     }
   }
-  @NonNls private static final String UNKNOWN_TESTS_COUNT = "<...>";
-  @NonNls static final String DEFAULT_TESTS_CATEGORY = "Tests";
-
+  private static final @NonNls String UNKNOWN_TESTS_COUNT = "<...>";
+  @ApiStatus.Internal
+  public static final @NonNls String DEFAULT_TESTS_CATEGORY = "Tests";
 
   private TestsPresentationUtil() {
   }
@@ -44,7 +41,7 @@ public final class TestsPresentationUtil {
                                                    final int testsTotal,
                                                    final int testsCount,
                                                    final int failuresCount,
-                                                   @Nullable final Set<String> allCategories,
+                                                   final @Nullable Set<String> allCategories,
                                                    final boolean isFinished) {
     final @Nls StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
@@ -289,8 +286,7 @@ public final class TestsPresentationUtil {
     };
   }
 
-  @Nullable
-  public static String getTestStatusPresentation(final SMTestProxy proxy) {
+  public static @Nullable String getTestStatusPresentation(final SMTestProxy proxy) {
     return proxy.getMagnitudeInfo().getTitle();
   }
 

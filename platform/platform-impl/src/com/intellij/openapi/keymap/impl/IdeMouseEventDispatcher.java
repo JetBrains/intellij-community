@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -35,9 +35,9 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import static java.awt.event.MouseEvent.*;
 
@@ -48,7 +48,7 @@ import static java.awt.event.MouseEvent.*;
  */
 public final class IdeMouseEventDispatcher {
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
-  private final Map<Container, BlockState> myRootPaneToBlockedId = new HashMap<>();
+  private final Map<Container, BlockState> myRootPaneToBlockedId = new WeakHashMap<>();
   private int myLastHorScrolledComponentHash;
   private boolean myPressedModifiersStored;
   @JdkConstants.InputEventMask
@@ -150,7 +150,7 @@ public final class IdeMouseEventDispatcher {
           resetPopupTrigger(e);
         }
       }
-      else if (SystemInfo.isXWindow) {
+      else if (SystemInfo.isUnix && !SystemInfo.isMac) {
         // we can do better than silly triggering popup on everything but left click
         resetPopupTrigger(e);
       }
@@ -220,7 +220,7 @@ public final class IdeMouseEventDispatcher {
     if (c == null) {
       throw new IllegalStateException("component cannot be null");
     }
-    c = SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY());
+    c = UIUtil.getDeepestComponentAt(c, e.getX(), e.getY());
 
     if (c instanceof IdeGlassPaneImpl) {
       c = ((IdeGlassPaneImpl)c).getTargetComponentFor(e);
@@ -267,7 +267,7 @@ public final class IdeMouseEventDispatcher {
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null && !actions.isEmpty()) {
       DataContext context = DataManager.getInstance().getDataContext(component);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction$intellij_platform_ide_impl(
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
         event, place, context, actions,
         newActionProcessor(modifiers), myPresentationFactory, shortcut);
     }
@@ -275,13 +275,12 @@ public final class IdeMouseEventDispatcher {
 
   private static ActionProcessor newActionProcessor(int modifiers) {
     return new ActionProcessor() {
-      @NotNull
       @Override
-      public AnActionEvent createEvent(@NotNull InputEvent inputEvent,
-                                       @NotNull DataContext context,
-                                       @NotNull String place,
-                                       @NotNull Presentation presentation,
-                                       @NotNull ActionManager manager) {
+      public @NotNull AnActionEvent createEvent(@NotNull InputEvent inputEvent,
+                                                @NotNull DataContext context,
+                                                @NotNull String place,
+                                                @NotNull Presentation presentation,
+                                                @NotNull ActionManager manager) {
         return new AnActionEvent(inputEvent, context, place, presentation, manager, modifiers);
       }
     };
@@ -332,8 +331,7 @@ public final class IdeMouseEventDispatcher {
     return false;
   }
 
-  @Nullable
-  private static JScrollBar findVerticalScrollBar(@Nullable Component component) {
+  private static @Nullable JScrollBar findVerticalScrollBar(@Nullable Component component) {
     if (component == null) {
       return null;
     }
@@ -374,8 +372,7 @@ public final class IdeMouseEventDispatcher {
     return false;
   }
 
-  @Nullable
-  private static JScrollBar findHorizontalScrollBar(Component c) {
+  private static @Nullable JScrollBar findHorizontalScrollBar(Component c) {
     if (c == null) return null;
     if (c instanceof JScrollPane) {
       JScrollBar scrollBar = ((JScrollPane)c).getHorizontalScrollBar();
@@ -407,8 +404,7 @@ public final class IdeMouseEventDispatcher {
     myRootPaneToBlockedId.put(root, new BlockState(e.getID(), blockMode));
   }
 
-  @Nullable
-  private static JRootPane findRoot(MouseEvent e) {
+  private static @Nullable JRootPane findRoot(MouseEvent e) {
     final Component parent = UIUtil.findUltimateParent(e.getComponent());
     JRootPane root = null;
 
@@ -450,14 +446,12 @@ public final class IdeMouseEventDispatcher {
     }
   }
 
-  @Nullable
-  private static Component findDefaultFocusableComponent(@Nullable Component component) {
+  private static @Nullable Component findDefaultFocusableComponent(@Nullable Component component) {
     Container provider = findFocusTraversalPolicyProvider(component);
     return provider == null ? null : provider.getFocusTraversalPolicy().getDefaultComponent(provider);
   }
 
-  @Nullable
-  private static Container findFocusTraversalPolicyProvider(@Nullable Component component) {
+  private static @Nullable Container findFocusTraversalPolicyProvider(@Nullable Component component) {
     Container container = component == null || component instanceof Container ? (Container)component : component.getParent();
     while (container != null) {
       // ensure that container is focus cycle root and provides focus traversal policy

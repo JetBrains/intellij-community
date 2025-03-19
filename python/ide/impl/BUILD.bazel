@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.pycharm.community.ide.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "pycharm-community-ide-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community-ide-impl",
+  module_name = "intellij.pycharm.community.ide.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/diff-api:diff",
+    "@lib//:guava",
+    "@lib//:stream_ex",
+    "//platform/xdebugger-api:debugger",
+    "//platform/usageView",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//python/python-sdk:sdk",
+    "//platform/vcs-api:vcs",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//python/python-features-trainer:featuresTrainer",
+    "//platform/util/progress",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:http-client",
+    "//platform/whatsNew",
+    "//platform/util/coroutines",
+    "//platform/experiment",
+    "@lib//:jna",
+    "//python/services/system-python:python-community-services-systemPython",
+    "//platform/eel",
+    "//python/services/shared:python-community-services-shared",
+    "//python/poetry:community-impl-poetry",
+    "//python/python-venv:community-impl-venv",
+    "@lib//:jetbrains-annotations",
+    "//python/python-pyproject:pyproject",
+    "//python/python-hatch:hatch",
+  ],
+  runtime_deps = [":pycharm-community-ide-impl_resources"]
+)
+### auto-generated section `build intellij.pycharm.community.ide.impl` end

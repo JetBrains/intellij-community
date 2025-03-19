@@ -103,7 +103,7 @@ public final class NamespaceCollector extends XmlRecursiveElementVisitor {
     }
 
     private void addNamespace(final String prefix, final String value) {
-        if (value.length() > 0) {
+        if (!value.isEmpty()) {
             final Namespace namespace = new Namespace(prefix, value);
             namespaces.add(namespace);
         }

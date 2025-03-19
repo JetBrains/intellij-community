@@ -17,8 +17,7 @@ class X {
     return null;
   }
 
-    @Nullable
-    private X newMethod(@Nullable String b) {
+    private @Nullable X newMethod(@Nullable String b) {
         if (b != null) {
           int x = 1;
             return fun1(x);

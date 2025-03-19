@@ -3,6 +3,7 @@ package com.intellij.vcs.commit.message;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +22,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
+@ApiStatus.Internal
 public final class CommitMessageSpellCheckingInspection extends BaseCommitMessageInspection {
   private static final Logger LOG = Logger.getInstance(CommitMessageSpellCheckingInspection.class);
 
@@ -39,10 +42,12 @@ public final class CommitMessageSpellCheckingInspection extends BaseCommitMessag
   });
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     LocalInspectionTool tool = ourSpellCheckingInspection.getValue();
 
-    return tool != null ? tool.buildVisitor(holder, isOnTheFly) : super.buildVisitor(holder, isOnTheFly);
+    return tool != null ? tool.buildVisitor(holder, isOnTheFly, session) : super.buildVisitor(holder, isOnTheFly, session);
   }
 
   @Override

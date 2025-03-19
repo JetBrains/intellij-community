@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.maven.artifactResolver.m31` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "artifactResolver-m31_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "artifactResolver-m31",
+  module_name = "intellij.maven.artifactResolver.m31",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5-provided",
+    "@lib//:maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0-provided",
+    "@lib//:maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5-provided",
+    "@lib//:maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2-provided",
+    "//plugins/maven/artifact-resolver/common:maven-artifactResolver-common",
+  ],
+  exports = ["//plugins/maven/artifact-resolver/common:maven-artifactResolver-common"],
+  runtime_deps = [":artifactResolver-m31_resources"]
+)
+### auto-generated section `build intellij.maven.artifactResolver.m31` end

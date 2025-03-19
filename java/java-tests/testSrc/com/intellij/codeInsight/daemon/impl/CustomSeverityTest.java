@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Objects;
 
 public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
 
@@ -60,7 +61,7 @@ public class CustomSeverityTest extends LightDaemonAnalyzerTestCase {
       """);
     final List<HighlightInfo> highlighting = ContainerUtil.filter(
       doHighlighting(),
-      highlightInfo -> "Convert2Diamond".equals(highlightInfo.getInspectionToolId())
+      highlightInfo -> Objects.requireNonNullElse(highlightInfo.getDescription(),"").startsWith("Explicit type argument ")
     );
     assertSize(1, highlighting);
 

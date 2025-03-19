@@ -1,21 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.applications
 
 import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.DiffManagerEx
 import com.intellij.diff.DiffRequestFactory
-import com.intellij.diff.actions.BlankDiffWindowUtil.createBlankDiffRequestChain
-import com.intellij.diff.actions.BlankDiffWindowUtil.setupBlankContext
 import com.intellij.diff.applications.DiffApplicationBase.findFilesOrThrow
 import com.intellij.diff.applications.DiffApplicationBase.guessProject
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.util.BlankDiffWindowUtil.createBlankDiffRequestChain
+import com.intellij.diff.util.BlankDiffWindowUtil.setupBlankContext
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.ide.CliResult
-import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ApplicationStarterBase
 import com.intellij.openapi.application.EDT
@@ -26,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
 import com.intellij.ui.AppIcon
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -33,11 +33,7 @@ import kotlinx.coroutines.withContext
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 
-internal class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
-  @Suppress("OVERRIDE_DEPRECATION")
-  override val commandName: String
-    get() = "diff"
-
+private class DiffApplication : ApplicationStarterBase(/* ...possibleArgumentsCount = */ 0, 2, 3) {
   override val usageMessage: String
     get() {
       val scriptName = ApplicationNamesInfo.getInstance().scriptName
@@ -92,7 +88,7 @@ private class MyDiffRequestProducer(private val project: Project?, private val f
       DiffRequestFactory.getInstance().getTitle(base)
     }
     else {
-      DiffRequestFactory.getInstance().getTitle(files[0], files[1])
+      DiffRequestFactory.getInstance().getTitleForComparison(files[0], files[1])
     }
   }
 

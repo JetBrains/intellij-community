@@ -1,15 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
   private static void addMoveToPackageFix(@NotNull PsiFile file, String packName, @NotNull List<? super LocalQuickFix> availableFixes) {
     MoveToPackageFix moveToPackageFix = MoveToPackageFix.createIfAvailable(file, packName);
     if (moveToPackageFix != null) {
@@ -34,15 +36,19 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
     }
     if (FileTypeUtils.isInServerPageFile(file)) return null;
 
-    if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(javaFile)) return null;
 
-    PsiDirectory directory = javaFile.getContainingDirectory();
+    PsiDirectory directory = javaFile.getOriginalFile().getContainingDirectory();
     if (directory == null) return null;
     PsiPackage dirPackage = JavaDirectoryService.getInstance().getPackage(directory);
     if (dirPackage == null) return null;
     PsiPackageStatement packageStatement = javaFile.getPackageStatement();
 
     String packageName = dirPackage.getQualifiedName();
+
+    SingleFileSourcesTracker singleFileSourcesTracker = SingleFileSourcesTracker.getInstance(file.getProject());
+    String singleFileSourcePackageName = singleFileSourcesTracker.getPackageNameForSingleFileSource(file.getVirtualFile());
+    if (singleFileSourcePackageName != null) packageName = singleFileSourcePackageName;
     if (packageStatement == null) {
       if (!Comparing.strEqual(packageName, "", true)) {
         // highlight the first class in the file only
@@ -67,6 +73,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
       }
     }
     else {
+      if (ContainerUtil.or(javaFile.getClasses(), c -> c instanceof PsiImplicitClass)) return null;
       final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
       PsiPackage classPackage = (PsiPackage)packageReference.resolve();
       List<LocalQuickFix> availableFixes = new ArrayList<>();
@@ -77,7 +84,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
         String packName = classPackage != null ? classPackage.getQualifiedName() : packageReference.getQualifiedName();
         addMoveToPackageFix(file, packName, availableFixes);
       }
-      if (!availableFixes.isEmpty()){
+      if (!availableFixes.isEmpty()) {
         String description = JavaErrorBundle.message("package.name.file.path.mismatch",
                                                      packageReference.getQualifiedName(),
                                                      packageName);
@@ -86,28 +93,23 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
           manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
                                           fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         return new ProblemDescriptor[]{descriptor};
-
       }
     }
     return null;
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return "";
   }
 
   @Override
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "WrongPackageStatement";
   }
 

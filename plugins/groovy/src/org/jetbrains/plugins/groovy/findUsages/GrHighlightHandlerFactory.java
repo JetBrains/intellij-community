@@ -31,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 /**
  * @author Max Medvedev
  */
-public class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase {
+public final class GrHighlightHandlerFactory extends HighlightUsagesHandlerFactoryBase {
   @Override
   public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
     ASTNode node = target.getNode();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.binary;
 
 import com.intellij.diff.DiffContext;
@@ -23,7 +23,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 
 public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorHolder> {
-  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  private final @NotNull TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public ThreesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -63,8 +63,7 @@ public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorH
   }
 
   @Override
-  @NotNull
-  protected Runnable performRediff(@NotNull final ProgressIndicator indicator) {
+  protected @NotNull Runnable performRediff(final @NotNull ProgressIndicator indicator) {
     return EmptyRunnable.INSTANCE;
   }
 

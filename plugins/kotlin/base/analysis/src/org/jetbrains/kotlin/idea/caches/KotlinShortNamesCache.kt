@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.caches
 
+import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -12,7 +15,6 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
 import com.intellij.util.Processors
@@ -24,14 +26,18 @@ import org.jetbrains.kotlin.asJava.defaultImplsChild
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
-import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache() {
@@ -98,27 +104,24 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             return@Processor processor.process(psiClass)
         }
 
-        val allKtClassOrObjectsProcessed = StubIndex.getInstance().processElements(
-            KotlinClassShortNameIndex.indexKey,
-            name,
-            project,
-            effectiveScope,
-            filter,
-            KtClassOrObject::class.java
-        ) { ktClassOrObject ->
-            fqNameProcessor.process(ktClassOrObject.fqName)
-        }
+        val allKtClassOrObjectsProcessed =
+          KotlinClassShortNameIndex.processElements(
+              name,
+              project,
+              effectiveScope,
+              filter
+            ) { ktClassOrObject ->
+                fqNameProcessor.process(ktClassOrObject.fqName)
+            }
         if (!allKtClassOrObjectsProcessed) {
             return false
         }
 
-        return StubIndex.getInstance().processElements(
-            KotlinFileFacadeShortNameIndex.indexKey,
-            name,
-            project,
-            effectiveScope,
-            filter,
-            KtFile::class.java
+        return KotlinFileFacadeShortNameIndex.processElements(
+          name,
+          project,
+          effectiveScope,
+          filter
         ) { ktFile ->
             fqNameProcessor.process(ktFile.javaFileFacadeFqName)
         }
@@ -180,41 +183,36 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         scope: GlobalSearchScope,
         filter: IdFilter?
     ): Boolean {
-        if (disableSearch.get()) return true
-        val allFunctionsProcessed = StubIndex.getInstance().processElements(
-            KotlinFunctionShortNameIndex.indexKey,
+        if (disableSearch.get() || DumbService.isDumb(project)) return true
+        val allFunctionsProcessed =
+          KotlinFunctionShortNameIndex.processElements(
             name,
             project,
             scope,
-            filter,
-            KtNamedFunction::class.java
-        ) { ktNamedFunction ->
-            val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
-            methods.all(processor::process)
-        }
+            filter
+          ) { ktNamedFunction ->
+              ProgressManager.checkCanceled()
+              val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
+              methods.all(processor::process)
+          }
         if (!allFunctionsProcessed) {
             return false
         }
 
         for (propertyName in getPropertyNamesCandidatesByAccessorName(Name.identifier(name))) {
-            val allProcessed = StubIndex.getInstance().processElements(
-                KotlinPropertyShortNameIndex.indexKey,
-                propertyName.asString(),
-                project,
-                scope,
-                filter,
-                KtNamedDeclaration::class.java
-            ) { ktNamedDeclaration ->
-                if (ktNamedDeclaration is KtValVarKeywordOwner) {
-                    if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
-                        return@processElements true
-                    }
-                }
-                ktNamedDeclaration.getAccessorLightMethods()
+            val allProcessed =
+              KotlinPropertyShortNameIndex.processElements(propertyName.asString(), project, scope, filter) { ktNamedDeclaration ->
+                  ProgressManager.checkCanceled()
+                  if (ktNamedDeclaration is KtValVarKeywordOwner) {
+                      if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
+                          return@processElements true
+                      }
+                  }
+                  ktNamedDeclaration.getAccessorLightMethods()
                     .asSequence()
                     .filter { it.name == name }
                     .all(processor::process)
-            }
+              }
             if (!allProcessed) {
                 return false
             }
@@ -281,17 +279,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         scope: GlobalSearchScope,
         filter: IdFilter?
     ): Boolean {
-        if (disableSearch.get()) return true
-        return StubIndex.getInstance().processElements(
-            KotlinPropertyShortNameIndex.indexKey,
-            name,
-            project,
-            scope,
-            filter,
-            KtNamedDeclaration::class.java
+        if (disableSearch.get() || DumbService.isDumb(project)) return true
+        return KotlinPropertyShortNameIndex.processElements(
+          name,
+          project,
+          scope,
+          filter
         ) { ktNamedDeclaration ->
             val field = LightClassUtil.getLightClassBackingField(ktNamedDeclaration)
-                ?: return@processElements true
+                        ?: return@processElements true
 
             return@processElements processor.process(field)
         }
@@ -332,7 +328,7 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
         private val set = HashSet<T>()
-        private val processor = Processors.cancelableCollectProcessor<T>(set)
+        private val processor = Processors.cancelableCollectProcessor(set)
 
         override fun process(value: T): Boolean {
             return processor.process(value)
@@ -341,5 +337,9 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         val size: Int get() = set.size
 
         fun toArray(a: Array<T>): Array<T> = set.toArray(a)
+    }
+
+    override fun getLanguage(): Language {
+        return KotlinLanguage.INSTANCE
     }
 }

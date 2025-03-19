@@ -12,7 +12,7 @@ class MS {
 
   void test(boolean cond) {
     m(cond ? () -> 26 : () -> 24);
-    <error descr="Ambiguous method call: both 'MS.m(GetInt)' and 'MS.m(GetInteger)' match">m</error>(cond ? () -> 26 : () -> new Integer(42));
+    m<error descr="Ambiguous method call: both 'MS.m(GetInt)' and 'MS.m(GetInteger)' match">(cond ? () -> 26 : () -> new Integer(42))</error>;
     m(cond ? () -> new Integer(26) : () -> new Integer(42));
   }
 }

@@ -58,7 +58,7 @@ class BuildViewTest : LightPlatformTestCase() {
       .createBuildProgress(project)
       .start(progressDescriptor)
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+        .progress("Running…")
         .startChildProgress("Inner progress")
           .fileMessage("File message1", "message1 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
           .fileMessage("File message2", "message2 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
@@ -181,7 +181,7 @@ class BuildViewTest : LightPlatformTestCase() {
       .createBuildProgress(project)
       .start(progressDescriptor)
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+        .progress("Running…")
         .startChildProgress("Inner progress")
           .fileMessage("File message1", "message1 descriptive text", ERROR, FilePosition(File("aFile.java"), 0, 0))
           .fileMessage("File message2", "message2 descriptive text", ERROR, FilePosition(File("aFile.java"), 0, 0))
@@ -224,7 +224,7 @@ class BuildViewTest : LightPlatformTestCase() {
       .createBuildProgress(project)
       .start(progressDescriptor)
         .message("Root message", "Tex of the root message console", INFO, null)
-        .progress("Running ...")
+        .progress("Running…")
         .startChildProgress("Inner progress")
         .cancel()
       .cancel()
@@ -266,7 +266,7 @@ class BuildViewTest : LightPlatformTestCase() {
       .start(progressDescriptor)
         .output("Build greeting\n", true)
         .message("Root message", "Text of the root message console", INFO, null)
-        .progress("Running ...")
+        .progress("Running…")
         .startChildProgress("Inner progress")
           .output("inner progress output", true)
           .fileMessage("File message1", "message1 descriptive text", INFO, FilePosition(File("aFile.java"), 0, 0))
@@ -298,10 +298,10 @@ class BuildViewTest : LightPlatformTestCase() {
                                                      false
     )
 
-    assertEquals("running..." +
+    assertEquals("running…" +
                  "Build greeting\n" +
                  "Root message" +
-                 "Running ..." +
+                 "Running…" +
                  "Inner progress" +
                  "inner progress output" +
                  "File message1" +

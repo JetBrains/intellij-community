@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from queue import Queue
 from threading import Lock, Thread
-from typing import ClassVar
-from typing_extensions import Literal, TypeAlias
+from typing import ClassVar, Literal
+from typing_extensions import TypeAlias
 
 from ._keyboard_event import KeyboardEvent
 from ._mouse_event import _MouseEvent

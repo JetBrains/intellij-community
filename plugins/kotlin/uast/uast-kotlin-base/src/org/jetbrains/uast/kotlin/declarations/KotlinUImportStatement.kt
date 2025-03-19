@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -19,17 +20,23 @@ class KotlinUImportStatement(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UImportStatement, DelegatedMultiResolve {
 
+    private var importRefPart: Any? = UNINITIALIZED_UAST_PART
+
     override val javaPsi: PsiElement? = null
 
     override val sourcePsi: KtImportDirective = psi
 
     override val isOnDemand: Boolean = sourcePsi.isAllUnder
 
-    private val importRef: ImportReference? by lz {
-        sourcePsi.importedReference?.let {
-            ImportReference(it, sourcePsi.name ?: sourcePsi.text, this, sourcePsi)
+    private val importRef: ImportReference?
+        get() {
+            if (importRefPart == UNINITIALIZED_UAST_PART) {
+                importRefPart = sourcePsi.importedReference?.let {
+                    ImportReference(it, this)
+                }
+            }
+            return importRefPart as ImportReference?
         }
-    }
 
     override val importReference: UElement? = importRef
 
@@ -37,15 +44,13 @@ class KotlinUImportStatement(
 
     private class ImportReference(
         override val psi: KtExpression,
-        override val identifier: String,
-        givenParent: UElement?,
-        private val importDirective: KtImportDirective
+        givenParent: UElement?
     ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression {
         override val sourcePsi: KtExpression = psi
 
-        override val resolvedName: String = identifier
+        override val identifier: String = psi.text
 
-        override fun asRenderString(): String = importDirective.importedFqName?.asString() ?: sourcePsi.text
+        override val resolvedName: String = psi.text
 
         override fun resolve(): PsiElement? {
             val reference = sourcePsi.getQualifiedElementSelector() as? KtReferenceExpression ?: return null

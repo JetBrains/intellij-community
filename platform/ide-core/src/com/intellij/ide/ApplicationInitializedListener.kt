@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.diagnostic.PluginException
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -11,18 +13,46 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Not part of [com.intellij.ide.ApplicationLoadListener] to avoid class loading before application initialization.
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
 @ApiStatus.Internal
 interface ApplicationInitializedListener {
   /**
-   * Invoked when all application level components are initialized.
-   * Write actions and time-consuming activities are not recommended because directly affects application start time.
+   * Invoked when application level is nearly initialized.
+   * Write actions and time-consuming activities are forbidden because it directly affects application start time.
    */
-  suspend fun execute(asyncScope: CoroutineScope) {
+  suspend fun execute() {
+    val aClass = this::class.java
+    val message = "Override `execute` (class=$aClass)"
+    val classLoader = aClass.classLoader
+    val log = logger<ApplicationInitializedListener>()
+    if (classLoader is PluginAwareClassLoader) {
+      if (classLoader.pluginId.idString == "com.jetbrains.rust") {
+        log.warn(PluginException(message, classLoader.pluginId))
+      }
+      else {
+        log.error(PluginException(message, classLoader.pluginId))
+      }
+    }
+    else {
+      log.error(message)
+    }
+
     @Suppress("DEPRECATION")
     componentsInitialized()
   }
 
-  @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
-  fun componentsInitialized() {
+   @Deprecated("Use [execute]", ReplaceWith("execute()"))
+   fun componentsInitialized() {
+   }
+}
+
+@ApiStatus.Internal
+@Deprecated("Consider avoiding using of ApplicationInitializedListener", level = DeprecationLevel.ERROR)
+abstract class ApplicationInitializedListenerJavaShim : ApplicationInitializedListener {
+  final override suspend fun execute() {
+    componentsInitialized()
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  abstract override fun componentsInitialized()
 }

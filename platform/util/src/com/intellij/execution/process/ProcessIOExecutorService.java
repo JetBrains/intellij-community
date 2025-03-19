@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.CountingThreadFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +26,18 @@ public final class ProcessIOExecutorService extends ThreadPoolExecutor {
     return ((CountingThreadFactory)getThreadFactory()).getCount();
   }
 
+  @Override
+  public void execute(@NotNull Runnable command) {
+    super.execute(AppScheduledExecutorService.capturePropagationAndCancellationContext(command));
+  }
+
   private static final class MyCountingThreadFactory extends CountingThreadFactory {
     // Ensure that we don't keep the classloader of the plugin which caused this thread to be created
     // in Thread.inheritedAccessControlContext
     private final ThreadFactory myThreadFactory = Executors.privilegedThreadFactory();
 
-    @NotNull
     @Override
-    public Thread newThread(@NotNull final Runnable r) {
+    public @NotNull Thread newThread(final @NotNull Runnable r) {
       Thread thread = myThreadFactory.newThread(r);
       thread.setName(POOLED_THREAD_PREFIX + counter.incrementAndGet());
       thread.setPriority(Thread.NORM_PRIORITY - 1);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -7,14 +7,15 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class PrattBuilderImpl extends PrattBuilder {
   private final PsiBuilder myBuilder;
   private final PrattBuilder myParentBuilder;
@@ -53,7 +54,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void setTokenTypeRemapper(@Nullable final ITokenTypeRemapper remapper) {
+  public void setTokenTypeRemapper(final @Nullable ITokenTypeRemapper remapper) {
     myBuilder.setTokenTypeRemapper(remapper);
   }
 
@@ -63,8 +64,7 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  @Nullable
-  public IElementType parse() {
+  public @Nullable IElementType parse() {
     checkParsed();
     return myLeftSiblings.size() != 1 ? null : myLeftSiblings.getLast();
   }
@@ -107,12 +107,11 @@ public class PrattBuilderImpl extends PrattBuilder {
     myStartMarker.drop();
   }
 
-  @Nullable
-  private TokenParser findParser() {
+  private @Nullable TokenParser findParser() {
     final IElementType tokenType = getTokenType();
-    for (final Trinity<Integer, PathPattern, TokenParser> trinity : myRegistry.getParsers(tokenType)) {
-      if (trinity.first > myPriority && trinity.second.accepts(this)) {
-        return trinity.third;
+    for (final PrattRegistry.ParserData parserData : myRegistry.getParsers(tokenType)) {
+      if (parserData.priority() > myPriority && parserData.pattern().accepts(this)) {
+        return parserData.parser();
       }
     }
     return null;
@@ -125,33 +124,30 @@ public class PrattBuilderImpl extends PrattBuilder {
   }
 
   @Override
-  public void error(@NotNull @NlsContexts.ParsingError final String errorText) {
+  public void error(final @NotNull @NlsContexts.ParsingError String errorText) {
     final PsiBuilder.Marker marker = myBuilder.mark();
     myBuilder.error(errorText);
     marker.drop();
   }
 
   @Override
-  @Nullable
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     return myBuilder.getTokenType();
   }
 
   @Override
-  @Nullable
-  public String getTokenText() {
+  public @Nullable String getTokenText() {
     return myBuilder.getTokenText();
   }
 
   @Override
-  public void reduce(@NotNull final IElementType type) {
+  public void reduce(final @NotNull IElementType type) {
     myStartMarker.finish(type);
     myStartMarker = myStartMarker.precede();
   }
 
   @Override
-  @NotNull
-  public List<IElementType> getResultTypes() {
+  public @NotNull List<IElementType> getResultTypes() {
     checkParsed();
     return myLeftSiblings;
   }

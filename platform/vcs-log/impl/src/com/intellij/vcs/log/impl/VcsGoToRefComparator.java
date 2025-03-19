@@ -4,11 +4,13 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsRef;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class VcsGoToRefComparator implements Comparator<VcsRef> {
   private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
 

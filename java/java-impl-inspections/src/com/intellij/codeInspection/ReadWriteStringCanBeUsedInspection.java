@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher FILES_WRITE = CallMatcher.staticCall("java.nio.file.Files", "write")
     .parameterTypes("java.nio.file.Path", "byte[]", "java.nio.file.OpenOption...");
   private static final CallMatcher FILES_READ_ALL_BYTES = CallMatcher.staticCall("java.nio.file.Files", "readAllBytes")
@@ -27,9 +29,8 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher CHARSET_FOR_NAME = CallMatcher.staticCall("java.nio.charset.Charset", "forName")
     .parameterTypes(CommonClassNames.JAVA_LANG_STRING);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
     if (level.isLessThan(LanguageLevel.JDK_11)) {
       return PsiElementVisitor.EMPTY_VISITOR;
@@ -78,18 +79,16 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ReplaceWithReadStringFix implements LocalQuickFix {
+  private static class ReplaceWithReadStringFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Files.readString()");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression newExpression = tryCast(descriptor.getStartElement().getParent(), PsiNewExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiNewExpression newExpression = tryCast(element.getParent(), PsiNewExpression.class);
       if (newExpression == null) return;
       PsiExpressionList newArgList = newExpression.getArgumentList();
       if (newArgList == null) return;
@@ -108,30 +107,26 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
   }
 
-  private static final class ReplaceWithWriteStringFix implements LocalQuickFix {
+  private static final class ReplaceWithWriteStringFix extends PsiUpdateModCommandQuickFix {
     private final boolean myMayNotWork;
 
     private ReplaceWithWriteStringFix(boolean mayNotWork) {
       myMayNotWork = mayNotWork;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return myMayNotWork ? JavaBundle.message("quickfix.text.0.may.not.work.before.jdk.11.0.2", getFamilyName()) : getFamilyName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", "Files.writeString()");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression writeCall = tryCast(descriptor.getStartElement().getParent().getParent(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression writeCall = tryCast(element.getParent().getParent(), PsiMethodCallExpression.class);
       if (!FILES_WRITE.test(writeCall)) return;
       PsiExpressionList argumentList = writeCall.getArgumentList();
       PsiExpression[] args = argumentList.getExpressions();

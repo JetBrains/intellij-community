@@ -3,13 +3,14 @@
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.*
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
-import org.jetbrains.kotlin.load.kotlin.loadModuleMapping
+import org.jetbrains.kotlin.idea.KotlinModuleFileType
+import org.jetbrains.kotlin.metadata.deserialization.MetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping
 import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
-import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfiguration
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -55,9 +56,7 @@ class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<
 
     override fun getValueExternalizer() = VALUE_EXTERNALIZER
 
-    override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { file ->
-        file.nameSequence.endsWith(MAPPING_FILE_DOT_FILE_EXTENSION)
-    }
+    override fun getInputFilter(): FileBasedIndex.InputFilter = FileTypeInputFilterPredicate(KotlinModuleFileType.INSTANCE)
 
     override fun getVersion(): Int = 5
 
@@ -65,9 +64,16 @@ class KotlinModuleMappingIndex internal constructor() : FileBasedIndexExtension<
         val content = inputData.content
         val file = inputData.file
         try {
-            val moduleMapping = ModuleMapping.loadModuleMapping(content, file.toString(), DeserializationConfiguration.Default) {
+            val moduleMapping = ModuleMapping.loadModuleMapping(
+                bytes = content,
+                debugName = file.toString(),
+                skipMetadataVersionCheck = false,
+                isJvmPackageNameSupported = true,
+                metadataVersionFromLanguageVersion = MetadataVersion.INSTANCE,
+            ) {
                 // Do nothing; it's OK for an IDE index to just ignore incompatible module files
             }
+
             if (moduleMapping === ModuleMapping.CORRUPTED) {
                 file.refresh(true, false)
             }

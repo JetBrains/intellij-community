@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.JavaLanguage;
@@ -25,8 +25,7 @@ public final class ClassUtil {
     return null;
   }
 
-  @NotNull
-  public static @NlsSafe String extractClassName(@NotNull String fqName) {
+  public static @NotNull @NlsSafe String extractClassName(@NotNull String fqName) {
     int i = fqName.lastIndexOf('.');
     return i == -1 ? fqName : fqName.substring(i + 1);
   }
@@ -51,7 +50,7 @@ public final class ClassUtil {
     return null;
   }
 
-  public static void formatClassName(@NotNull final PsiClass aClass, @NotNull StringBuilder buf) {
+  public static void formatClassName(final @NotNull PsiClass aClass, @NotNull StringBuilder buf) {
     final String qName = aClass.getQualifiedName();
     if (qName != null) {
       buf.append(qName);
@@ -70,7 +69,7 @@ public final class ClassUtil {
     }
   }
 
-  private static int getNonQualifiedClassIdx(@NotNull final PsiClass psiClass, @NotNull final PsiClass containingClass) {
+  private static int getNonQualifiedClassIdx(final @NotNull PsiClass psiClass, final @NotNull PsiClass containingClass) {
     ObjectIntMap<PsiClass> indices =
       CachedValuesManager.getCachedValue(containingClass, () -> {
         ObjectIntMap<PsiClass> map = new ObjectIntHashMap<>();
@@ -87,7 +86,7 @@ public final class ClassUtil {
   }
 
   public static PsiClass findNonQualifiedClassByIndex(@NotNull String indexName,
-                                                      @NotNull final PsiClass containingClass,
+                                                      final @NotNull PsiClass containingClass,
                                                       final boolean jvmCompatible) {
     String prefix = getDigitPrefix(indexName);
     final int idx = !prefix.isEmpty() ? Integer.parseInt(prefix) : -1;
@@ -140,8 +139,7 @@ public final class ClassUtil {
     return result[0];
   }
 
-  @NotNull
-  private static String getDigitPrefix(@NotNull String indexName) {
+  private static @NotNull String getDigitPrefix(@NotNull String indexName) {
     int i;
     for (i = 0; i < indexName.length(); i++) {
       final char c = indexName.charAt(i);
@@ -155,26 +153,23 @@ public final class ClassUtil {
   /**
    * Looks for inner and anonymous classes by FQN in a javac notation ('pkg.Top$Inner').
    */
-  @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager manager, @NotNull String name) {
+  public static @Nullable PsiClass findPsiClass(@NotNull PsiManager manager, @NotNull String name) {
     return findPsiClass(manager, name, null, false);
   }
 
-  @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager manager,
-                                      @NotNull String name,
-                                      @Nullable PsiClass parent,
-                                      boolean jvmCompatible) {
+  public static @Nullable PsiClass findPsiClass(@NotNull PsiManager manager,
+                                                @NotNull String name,
+                                                @Nullable PsiClass parent,
+                                                boolean jvmCompatible) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(manager.getProject());
     return findPsiClass(manager, name, parent, jvmCompatible, scope);
   }
 
-  @Nullable
-  public static PsiClass findPsiClass(@NotNull PsiManager manager,
-                                      @NotNull String name,
-                                      @Nullable PsiClass parent,
-                                      boolean jvmCompatible,
-                                      @NotNull GlobalSearchScope scope) {
+  public static @Nullable PsiClass findPsiClass(@NotNull PsiManager manager,
+                                                @NotNull String name,
+                                                @Nullable PsiClass parent,
+                                                boolean jvmCompatible,
+                                                @NotNull GlobalSearchScope scope) {
     if (parent != null) {
       return findSubClass(name, parent, jvmCompatible);
     }
@@ -196,8 +191,7 @@ public final class ClassUtil {
     return null;
   }
 
-  @Nullable
-  private static PsiClass findSubClass(@NotNull String name, @NotNull PsiClass parent, boolean jvmCompatible) {
+  private static @Nullable PsiClass findSubClass(@NotNull String name, @NotNull PsiClass parent, boolean jvmCompatible) {
     PsiClass result = isIndexed(name) ? findNonQualifiedClassByIndex(name, parent, jvmCompatible) : parent.findInnerClassByName(name, false);
     if (result != null) return result;
 
@@ -219,9 +213,7 @@ public final class ClassUtil {
     return Character.isDigit(name.charAt(0));
   }
 
-  @Nullable
-  @NlsSafe
-  public static String getJVMClassName(@NotNull PsiClass aClass) {
+  public static @Nullable @NlsSafe String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
       String parentName = getJVMClassName(containingClass);
@@ -236,8 +228,7 @@ public final class ClassUtil {
   /**
    * Looks for inner and anonymous classes by internal name ('pkg/Top$Inner').
    */
-  @Nullable
-  public static PsiClass findPsiClassByJVMName(@NotNull PsiManager manager, @NotNull String jvmClassName) {
+  public static @Nullable PsiClass findPsiClassByJVMName(@NotNull PsiManager manager, @NotNull String jvmClassName) {
     return findPsiClass(manager, jvmClassName.replace('/', '.'), null, true);
   }
 
@@ -310,18 +301,15 @@ public final class ClassUtil {
     };
   }
 
-  @NotNull
-  public static String getClassObjectPresentation(@NotNull PsiType psiType) {
+  public static @NotNull String getClassObjectPresentation(@NotNull PsiType psiType) {
      return toBinary(psiType, false);
   }
 
-  @NotNull
-  public static String getBinaryPresentation(@NotNull PsiType psiType) {
+  public static @NotNull String getBinaryPresentation(@NotNull PsiType psiType) {
     return toBinary(psiType, true);
   }
 
-  @NotNull
-  private static String toBinary(@NotNull PsiType psiType, final boolean slashes) {
+  private static @NotNull String toBinary(@NotNull PsiType psiType, final boolean slashes) {
     return Optional.of(psiType)
                    .map(type -> TypeConversionUtil.erasure(type))
                    .map(type -> type.accept(createBinarySignatureVisitor(slashes)))

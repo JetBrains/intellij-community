@@ -15,8 +15,12 @@
  */
 package org.intellij.images.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -28,33 +32,38 @@ import org.jetbrains.annotations.NotNull;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class ShowThumbnailsAction extends AnAction {
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-        Project project = e.getData(CommonDataKeys.PROJECT);
-        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        if (project != null && file != null && file.isDirectory()) {
-            ThumbnailManager thumbnailManager = ThumbnailManager.getManager(project);
-            ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
-            thumbnailView.setRoot(file);
-            thumbnailView.setVisible(true);
-            thumbnailView.activate();
-        }
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project != null && file != null && file.isDirectory()) {
+      ThumbnailManager thumbnailManager = ThumbnailManager.getManager(project);
+      ThumbnailView thumbnailView = thumbnailManager.getThumbnailView();
+      thumbnailView.setRoot(file);
+      thumbnailView.setVisible(true);
+      thumbnailView.activate();
+    }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (!Registry.is("thumbnails.toolwindow.enabled", false)) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
     }
 
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-        VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-        boolean enabled = file != null && file.isDirectory();
-        if (ActionPlaces.isPopupPlace(e.getPlace())) {
-            e.getPresentation().setEnabledAndVisible(enabled);
-        }
-        else {
-            e.getPresentation().setEnabled(enabled);
-        }
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    boolean enabled = file != null && file.isDirectory();
+    if (e.isFromContextMenu()) {
+      e.getPresentation().setEnabledAndVisible(enabled);
     }
+    else {
+      e.getPresentation().setEnabled(enabled);
+    }
+  }
 
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 }

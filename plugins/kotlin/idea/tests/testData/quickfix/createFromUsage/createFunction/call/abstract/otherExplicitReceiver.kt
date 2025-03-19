@@ -1,9 +1,6 @@
 // "Create abstract function 'foo'" "false"
-// ACTION: Add 'b =' to argument
-// ACTION: Create extension function 'B.foo'
-// ACTION: Create member function 'B.foo'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: Unresolved reference 'foo'.
 abstract class A {
     fun bar(b: Boolean) {}
 

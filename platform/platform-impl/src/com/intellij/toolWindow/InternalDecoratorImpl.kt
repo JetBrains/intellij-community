@@ -1,32 +1,33 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeGlassPane
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WindowInfo
-import com.intellij.openapi.wm.impl.FloatingDecorator
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
+import com.intellij.openapi.wm.impl.ToolWindowExternalDecorator
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ContentImpl
@@ -34,36 +35,43 @@ import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.hover.HoverStateListener
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.MathUtil
+import com.intellij.util.SmartList
 import com.intellij.util.animation.AlphaAnimated
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.plaf.UIResource
+import javax.swing.text.JTextComponent
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
   @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
-) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {
+) : InternalDecorator(), Queryable, UiDataProvider, ComponentWithMnemonics {
   companion object {
-    val SHARED_ACCESS_KEY = Key.create<Boolean>("sharedAccess")
+    val SHARED_ACCESS_KEY: Key<Boolean> = Key.create("sharedAccess")
 
-    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create<Boolean>("HideCommonToolWindowButtons")
-    internal val INACTIVE_LOOK = Key.create<Boolean>("InactiveLook")
+    internal val HIDE_COMMON_TOOLWINDOW_BUTTONS: Key<Boolean> = Key.create("HideCommonToolWindowButtons")
+    internal val INACTIVE_LOOK: Key<Boolean> = Key.create("InactiveLook")
+
+    private val PREVENT_RECURSIVE_BACKGROUND_CHANGE = Key.create<Boolean>("prevent.recursive.background.change")
 
     /**
      * Catches all event from tool window and modifies decorator's appearance.
      */
-    internal const val HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow"
+    internal const val HIDE_ACTIVE_WINDOW_ACTION_ID: String = "HideActiveWindow"
 
     private fun moveContent(content: Content, source: InternalDecoratorImpl, target: InternalDecoratorImpl) {
       val targetContentManager = target.contentManager
@@ -118,6 +126,76 @@ class InternalDecoratorImpl internal constructor(
       return ComponentUtil.findParentByCondition(component?.parent) { it is InternalDecoratorImpl } as InternalDecoratorImpl?
     }
 
+    @JvmStatic
+    @Internal
+    fun componentWithEditorBackgroundAdded(component: Component) {
+      val decorator = findNearestDecorator(component)
+      if (decorator != null) {
+        decorator.componentsWithEditorLikeBackground += component
+      }
+    }
+
+    @JvmStatic
+    @Internal
+    fun componentWithEditorBackgroundRemoved(component: Component) {
+      val decorator = findNearestDecorator(component)
+      if (decorator != null) {
+        decorator.componentsWithEditorLikeBackground -= component
+      }
+    }
+
+    @JvmStatic
+    internal fun setActiveDecorator(toolWindow: ToolWindow, focusOwner: Component) {
+      val decorator = findNearestDecorator(focusOwner)
+      if (decorator?.toolWindowId == toolWindow.id) {
+        findTopLevelDecorator(decorator.header)?.forAllNestedDecorators {
+          val newValue = if (it == decorator) null else java.lang.Boolean.TRUE
+          val oldValue = it.getClientProperty(INACTIVE_LOOK)
+          if (newValue != oldValue) {
+            it.putClientProperty(INACTIVE_LOOK, newValue)
+            it.header.repaint()
+          }
+        }
+      }
+    }
+
+    /** Checks if the tool window header should have a top border. */
+    @JvmStatic
+    internal fun headerNeedsTopBorder(header: ToolWindowHeader): Boolean {
+      val decorator = findNearestDecorator(header) ?: return false
+      return decorator.toolWindow.type == ToolWindowType.WINDOWED &&
+          SideProperty.TOP_TOOL_WINDOW_EDGE in decorator.getSideProperties(decorator)
+    }
+
+    @JvmStatic
+    fun preventRecursiveBackgroundUpdateOnToolwindow(component: JComponent) {
+      component.putClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE, true)
+    }
+
+    private fun isRecursiveBackgroundUpdateDisabled(component: Component): Boolean {
+      val preventRecoloring = (component as? JComponent)?.getClientProperty(PREVENT_RECURSIVE_BACKGROUND_CHANGE) ?: return false
+
+      return preventRecoloring == true
+    }
+
+    internal fun setBackgroundFor(component: Component, bg: Color) {
+      if (component is ActionButton ||
+          component is Divider ||
+          component is JTextComponent ||
+          component is JComboBox<*> ||
+          component is EditorTextField) return
+      if (component.isBackgroundSet && component.background !is UIResource) {
+        return
+      }
+      component.background = bg
+    }
+
+    internal fun setBackgroundRecursively(component: Component, bg: Color) {
+      UIUtil.uiTraverser(component)
+        .expandAndFilter { !isRecursiveBackgroundUpdateDisabled(component) }
+        .forEach { setBackgroundFor(it, bg) }
+    }
+
     private fun installDefaultFocusTraversalKeys(container: Container, id: Int) {
       container.setFocusTraversalKeys(id, KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(id))
     }
@@ -125,9 +203,8 @@ class InternalDecoratorImpl internal constructor(
     private val HOVER_STATE_LISTENER: HoverStateListener = object : HoverStateListener() {
       override fun hoverChanged(component: Component, hovered: Boolean) {
         if (component is InternalDecoratorImpl) {
-          val decorator = component
-          decorator.isWindowHovered = hovered
-          decorator.updateActiveAndHoverState()
+          component.isWindowHovered = hovered
+          component.updateActiveAndHoverState()
         }
       }
     }
@@ -151,6 +228,9 @@ class InternalDecoratorImpl internal constructor(
   private var firstDecorator: InternalDecoratorImpl? = null
   private var secondDecorator: InternalDecoratorImpl? = null
   private var splitter: Splitter? = null
+  private val componentsWithEditorLikeBackground = SmartList<Component>()
+  private var tabActions: List<AnAction> = emptyList()
+  private val titleActions = mutableListOf<AnAction>()
 
   init {
     isFocusable = false
@@ -198,9 +278,15 @@ class InternalDecoratorImpl internal constructor(
     when (mode) {
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
-        add(dividerAndHeader, BorderLayout.NORTH)
-        add(myDecoratorChild, BorderLayout.CENTER)
-        border = InnerPanelBorder(toolWindow)
+
+        InternalUICustomization.getInstance()?.toolWindowUIDecorator?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+          add(it, BorderLayout.CENTER)
+        } ?: run {
+          add(dividerAndHeader, BorderLayout.NORTH)
+          add(myDecoratorChild, BorderLayout.CENTER)
+          border = InnerPanelBorder(toolWindow)
+        }
+
         firstDecorator?.let {
           Disposer.dispose(it.contentManager)
         }
@@ -228,9 +314,15 @@ class InternalDecoratorImpl internal constructor(
       contentManager.addContent(content, dropIndex)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator()
+    firstDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator()
+    secondDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(secondDecorator)
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
@@ -356,14 +448,14 @@ class InternalDecoratorImpl internal constructor(
 
   override fun isSplitUnsplitInProgress(): Boolean = isSplitUnsplitInProgress
 
-  override fun getContentManager() = contentUi.contentManager
+  override fun getContentManager(): ContentManager = contentUi.contentManager
 
-  override fun getHeaderToolbar() = header.getToolbar()
+  override fun getHeaderToolbar(): ActionToolbar = header.getToolbar()
 
   val headerToolbarActions: ActionGroup
     get() = header.getToolbarActions()
-  val headerToolbarWestActions: ActionGroup
-    get() = header.getToolbarWestActions()
+  val tabToolbarActions: ActionGroup
+    get() = contentUi.tabToolbarActions
 
   override fun toString(): String {
     return toolWindow.id + ": " + StringUtil.trimMiddle(contentManager.contents.joinToString { it.displayName ?: "null" }, 40) +
@@ -399,6 +491,9 @@ class InternalDecoratorImpl internal constructor(
   fun applyWindowInfo(info: WindowInfo) {
     if (info.type == ToolWindowType.SLIDING) {
       val anchor = info.anchor
+      if (log().isDebugEnabled) {
+        log().debug("The sliding window ${info.id} anchor is now $anchor")
+      }
       val divider = initDivider()
       divider.invalidate()
       when (anchor) {
@@ -410,48 +505,89 @@ class InternalDecoratorImpl internal constructor(
       divider.preferredSize = Dimension(0, 0)
     }
     else if (divider != null) {
+      if (log().isDebugEnabled) {
+        log().debug("Removing divider of the non-sliding (${info.type}) window ${info.id}")
+      }
       // docked and floating windows don't have divider
       divider!!.parent?.remove(divider)
       divider = null
     }
 
     // push "apply" request forward
-    if (info.type == ToolWindowType.FLOATING) {
-      (SwingUtilities.getAncestorOfClass(FloatingDecorator::class.java, this) as FloatingDecorator?)?.apply(info)
+    if (!info.type.isInternal) {
+      getExternalDecorator(info.type)?.apply(info)
     }
   }
 
-  override fun getData(dataId: @NonNls String): Any? {
-    return if (PlatformDataKeys.TOOL_WINDOW.`is`(dataId)) toolWindow else null
+  internal fun getExternalDecorator(type: ToolWindowType): ToolWindowExternalDecorator? {
+    var result: ToolWindowExternalDecorator? = null
+    var component: Component? = this
+    while (component != null) {
+      result = ClientProperty.get(component, ToolWindowExternalDecorator.DECORATOR_PROPERTY)
+      if (result != null && result.getToolWindowType() == type) {
+        break
+      }
+      component = component.parent
+    }
+    return result
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
   }
 
   fun setTitleActions(actions: List<AnAction>) {
-    header.setAdditionalTitleActions(actions)
+    titleActions.clear()
+    titleActions.addAll(actions)
+    header.setAdditionalTitleActions(titleActions)
+    firstDecorator?.setTitleActions(actions)
+    secondDecorator?.setTitleActions(actions)
   }
 
   fun setTabActions(actions: List<AnAction>) {
-    header.setTabActions(actions)
+    tabActions = actions
+    contentUi.setTabActions(actions)
+    firstDecorator?.setTabActions(actions)
+    secondDecorator?.setTabActions(actions)
   }
 
-  private class InnerPanelBorder(private val window: ToolWindowImpl) : Border {
+  private inner class InnerPanelBorder(private val window: ToolWindowImpl) : Border {
+
+    private var paintLeftExternalBorder = false
+    private var paintLeftInternalBorder = false
+    private var paintRightExternalBorder = false
+    private var paintRightInternalBorder = false
+
     override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-      g.color = JBColor.border()
       doPaintBorder(c, g, x, y, width, height)
     }
 
     private fun doPaintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
       val insets = getBorderInsets(c)
       g as Graphics2D
+      doPaintExternalBorder(g, insets, x, y, width, height)
+      doPaintInternalBorder(g, insets, x, y, height, width)
+    }
+
+    private fun doPaintExternalBorder(
+      g: Graphics2D,
+      insets: Insets,
+      x: Int,
+      y: Int,
+      width: Int,
+      height: Int,
+      ) {
+      g.color = JBColor.border()
       if (insets.top > 0) {
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
-      if (insets.left > 0) {
+      if (paintLeftExternalBorder) {
         LinePainter2D.paint(g, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(g, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
       }
-      if (insets.right > 0) {
+      if (paintRightExternalBorder) {
         LinePainter2D.paint(g, (x + width - 1).toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(),
                             (y + height).toDouble())
         LinePainter2D.paint(g, (x + width).toDouble(), (y + insets.top).toDouble(), (x + width).toDouble(),
@@ -460,6 +596,26 @@ class InternalDecoratorImpl internal constructor(
       if (insets.bottom > 0) {
         LinePainter2D.paint(g, x.toDouble(), (y + height - 1).toDouble(), (x + width).toDouble(), (y + height - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + height).toDouble(), (x + width).toDouble(), (y + height).toDouble())
+      }
+    }
+
+    private fun doPaintInternalBorder(
+      g: Graphics2D,
+      insets: Insets,
+      x: Int,
+      y: Int,
+      height: Int,
+      width: Int,
+    ) {
+      g.color = JBUI.CurrentTheme.ToolWindow.background()
+      if (paintLeftInternalBorder) {
+        val offset = if (paintLeftExternalBorder) 1 else 0
+        LinePainter2D.paint(g, (x + offset).toDouble(), y.toDouble(), (x + offset).toDouble(), (y + height).toDouble())
+      }
+      if (paintRightInternalBorder) {
+        val offset = if (paintRightExternalBorder) 2 else 1
+        LinePainter2D.paint(g, (x + width - offset).toDouble(), (y + insets.top).toDouble(), (x + width - offset).toDouble(),
+                            (y + height).toDouble())
       }
     }
 
@@ -472,26 +628,74 @@ class InternalDecoratorImpl internal constructor(
         return JBInsets.emptyInsets()
       }
       val anchor = windowInfo.anchor
+      val sideProperties = getSideProperties(c)
+      val top = if (SideProperty.TOP_DIVIDER !in sideProperties && toolWindow.type != ToolWindowType.FLOATING &&
+                    SideProperty.TOP_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+      val bottom = 0
+      var left = if (SideProperty.LEFT_DIVIDER !in sideProperties && anchor == ToolWindowAnchor.RIGHT &&
+                     SideProperty.LEFT_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+      var right = if (SideProperty.RIGHT_DIVIDER !in sideProperties && anchor == ToolWindowAnchor.LEFT &&
+                      SideProperty.RIGHT_TOOL_WINDOW_EDGE in sideProperties) 1 else 0
+      paintLeftExternalBorder = left > 0
+      paintRightExternalBorder = right > 0
+      paintLeftInternalBorder = false
+      paintRightInternalBorder = false
+
       var component: Component = window.component
       var parent = component.parent
       var isSplitter = false
       var isFirstInSplitter = false
       var isVerticalSplitter = false
+      var otherDecoratorInSplitter: InternalDecoratorImpl? = null
       while (parent != null) {
         if (parent is Splitter) {
           val splitter = parent
           isSplitter = true
           isFirstInSplitter = splitter.firstComponent === component
+          otherDecoratorInSplitter = (if (isFirstInSplitter) splitter.secondComponent else splitter.firstComponent) as? InternalDecoratorImpl?
           isVerticalSplitter = splitter.isVertical
           break
         }
         component = parent
-        parent = component.getParent()
+        parent = component.parent
       }
-      val top = if (isSplitter && (anchor == ToolWindowAnchor.RIGHT || anchor == ToolWindowAnchor.LEFT) && windowInfo.isSplit && isVerticalSplitter) -1 else 0
-      val left = if (anchor == ToolWindowAnchor.RIGHT && (!isSplitter || isVerticalSplitter || isFirstInSplitter)) 1 else 0
-      val bottom = 0
-      val right = if (anchor == ToolWindowAnchor.LEFT && (!isSplitter || isVerticalSplitter || !isFirstInSplitter)) 1 else 0
+      val isTouchingTheEditor = when (anchor) {
+        ToolWindowAnchor.RIGHT -> !isSplitter || isVerticalSplitter || isFirstInSplitter
+        ToolWindowAnchor.LEFT -> !isSplitter || isVerticalSplitter || !isFirstInSplitter
+        else -> false
+      }
+      if (JBColor.border() == EditorColorsManager.getInstance().globalScheme.defaultBackground) {
+        // Might need another border if the tool window has an editor-like component touching the corresponding edge.
+        // Five cases overall:
+        // 1. The tool window on the right touches the editor and has the same background on the left edge.
+        // 2. The tool window on the right touches another tool window (side-by-side) and they both have editor backgrounds along that edge.
+        // 3. The tool window on the left touches the editor and has the same background on the right edge.
+        // 4. The tool window on the left touches another tool window (side-by-side) and they both have editor backgrounds along that edge.
+        // 5. Two tool windows on the bottom (in a splitter) have editor background along the common edge.
+        // In the 5th case we draw borders on the right side of the divider. The choice between left and right is random, but drawing both looks ugly.
+        if ((
+            anchor == ToolWindowAnchor.RIGHT &&
+            hasEditorLikeComponentOnTheLeft() &&
+            (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true) // cases 1 & 2
+          ) || (
+            anchor == ToolWindowAnchor.BOTTOM &&
+            hasEditorLikeComponentOnTheLeft() &&
+            isSplitter &&
+            !isFirstInSplitter &&
+            otherDecoratorInSplitter?.hasEditorLikeComponentOnTheRight() == true // case 5
+        )) {
+          ++left
+          paintLeftInternalBorder = true
+        }
+        if (
+            anchor == ToolWindowAnchor.LEFT &&
+            hasEditorLikeComponentOnTheRight() &&
+            (isTouchingTheEditor || otherDecoratorInSplitter?.hasEditorLikeComponentOnTheLeft() == true) // cases 3 & 4
+        ) {
+          ++right
+          paintRightInternalBorder = true
+        }
+      }
       return Insets(top, left, bottom, right)
     }
 
@@ -499,6 +703,78 @@ class InternalDecoratorImpl internal constructor(
       return false
     }
   }
+
+  /**
+   * Determines what sides of the component [c] are adjacent to dividers and what sides touch the edges of the tool window.
+   */
+  private fun getSideProperties(c: Component): Set<SideProperty> {
+    val result = EnumSet.of(SideProperty.LEFT_TOOL_WINDOW_EDGE, SideProperty.RIGHT_TOOL_WINDOW_EDGE,
+                            SideProperty.TOP_TOOL_WINDOW_EDGE, SideProperty.BOTTOM_TOOL_WINDOW_EDGE)
+    var component = c
+    var reachedToolWindow = component == toolWindow.decorator
+    var parent = component.parent
+    while (parent != null) {
+      if (parent == toolWindow.decorator) {
+        reachedToolWindow = true
+      }
+
+      when (parent) {
+        is Splitter -> {
+          val splitter = parent
+          if (splitter.isVertical) {
+            if (component == splitter.firstComponent) {
+              result.add(SideProperty.BOTTOM_DIVIDER)
+              if (!reachedToolWindow) {
+                result.remove(SideProperty.BOTTOM_TOOL_WINDOW_EDGE)
+              }
+            } else {
+              result.add(SideProperty.TOP_DIVIDER)
+              if (!reachedToolWindow) {
+                result.remove(SideProperty.TOP_TOOL_WINDOW_EDGE)
+              }
+            }
+          } else if (component == splitter.firstComponent) {
+            result.add(SideProperty.RIGHT_DIVIDER)
+            if (!reachedToolWindow) {
+              result.remove(SideProperty.RIGHT_TOOL_WINDOW_EDGE)
+            }
+          }
+          else {
+            result.add(SideProperty.LEFT_DIVIDER)
+            if (!reachedToolWindow) {
+              result.remove(SideProperty.LEFT_TOOL_WINDOW_EDGE)
+            }
+          }
+        }
+
+        is InternalDecoratorImpl -> {}
+
+        else -> break
+      }
+      component = parent
+      parent = component.parent
+    }
+
+    return result
+  }
+
+  private fun hasEditorLikeComponentOnTheLeft(): Boolean = componentsWithEditorLikeBackground.any {
+    // 2px used as the maximum border width, to avoid the chicken-and-egg dependency:
+    // 1. We need to check if there's an editor touching the left edge to calculate the border width.
+    // 2. We need to know the border width to figure out what exactly is the left edge.
+    // So we just assume everything that's small enough is nothing but a border.
+    // In the worst case we'll just paint an extra border when it's not really needed.
+    it.locationRelativeToDecorator.x <= 2
+  }
+
+  private fun hasEditorLikeComponentOnTheRight(): Boolean = componentsWithEditorLikeBackground.any {
+    it.locationRelativeToDecorator.x + width >= this@InternalDecoratorImpl.width - 2
+  }
+
+  private val Component.locationRelativeToDecorator: Point
+    get() = location.also { point ->
+      SwingUtilities.convertPoint(parent, point, this@InternalDecoratorImpl)
+    }
 
   override fun getHeaderHeight(): Int {
     return header.preferredSize.height
@@ -518,7 +794,8 @@ class InternalDecoratorImpl internal constructor(
   fun updateActiveAndHoverState() {
     val isHoverAlphaAnimationEnabled =
       toolWindow.toolWindowManager.isNewUi &&
-      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons")
+      !AdvancedSettings.getBoolean("ide.always.show.tool.window.header.icons") &&
+      toolWindow.component.getClientProperty(ToolWindowContentUi.DONT_HIDE_TOOLBAR_IN_HEADER) != true
     val narrow = this.toolWindow.decorator?.width?.let { it < JBUI.scale(120) } ?: false
     val isVisible = narrow || !isHoverAlphaAnimationEnabled || isWindowHovered || header.isPopupShowing || toolWindow.isActive
 
@@ -527,9 +804,9 @@ class InternalDecoratorImpl internal constructor(
       toolbar.alphaContext.isVisible = isVisible
     }
 
-    val toolbarWest = header.getToolbarWest()
-    if (toolbarWest != null && toolbarWest is AlphaAnimated) {
-      toolbarWest.alphaContext.isVisible = isVisible
+    val tabToolbar = contentUi.tabToolbar
+    if (tabToolbar != null && tabToolbar is AlphaAnimated) {
+      tabToolbar.alphaContext.isVisible = isVisible
     }
   }
 
@@ -560,6 +837,9 @@ class InternalDecoratorImpl internal constructor(
     }
 
   override fun addNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId shown"))
+    }
     super.addNotify()
     if (isSplitUnsplitInProgress()) {
       return
@@ -570,19 +850,28 @@ class InternalDecoratorImpl internal constructor(
     }
 
     val divider = divider
-    disposable = Disposer.newCheckedDisposable()
-    HOVER_STATE_LISTENER.addTo(this, disposable!!)
+    val disposable = Disposer.newCheckedDisposable()
+    this.disposable = disposable
+    HOVER_STATE_LISTENER.addTo(this, disposable)
     updateActiveAndHoverState()
     if (divider != null) {
       val glassPane = rootPane.glassPane as IdeGlassPane
       val listener = ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this)
-      glassPane.addMouseMotionPreprocessor(listener, disposable!!)
-      glassPane.addMousePreprocessor(listener, disposable!!)
+      glassPane.addMouseMotionPreprocessor(listener, disposable)
+      glassPane.addMousePreprocessor(listener, disposable)
     }
     contentUi.update()
+
+    if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
+        Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
+      ToolWindowInnerDragHelper(disposable, this).start()
+    }
   }
 
   override fun removeNotify() {
+    if (log().isTraceEnabled) {
+      log().trace(Throwable("Tool window $toolWindowId hidden"))
+    }
     super.removeNotify()
     if (isSplitUnsplitInProgress()) {
       return
@@ -602,7 +891,6 @@ class InternalDecoratorImpl internal constructor(
     if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null)
-      putClientProperty(INACTIVE_LOOK, null)
     }
     else {
       val hideLabel: Any? = if (SwingUtilities.convertPoint(this, x, y, topLevelDecorator) == Point()) null else "true"
@@ -612,9 +900,7 @@ class InternalDecoratorImpl internal constructor(
       val screenLocation = locationOnScreen
       screenLocation.x += w
       val hideButtons = if (topScreenLocation == screenLocation) null else java.lang.Boolean.TRUE
-      val hideActivity = if (topScreenLocation.y == screenLocation.y) null else java.lang.Boolean.TRUE
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons)
-      putClientProperty(INACTIVE_LOOK, hideActivity)
     }
     if (!rectangle.equals(bounds)) {
       contentUi.update()
@@ -633,17 +919,11 @@ class InternalDecoratorImpl internal constructor(
     lastPoint.x = MathUtil.clamp(lastPoint.x, 0, windowPane.width)
     lastPoint.y = MathUtil.clamp(lastPoint.y, 0, windowPane.height)
     val bounds = bounds
-    if (anchor == ToolWindowAnchor.TOP) {
-      setBounds(0, 0, bounds.width, lastPoint.y)
-    }
-    else if (anchor == ToolWindowAnchor.LEFT) {
-      setBounds(0, 0, lastPoint.x, bounds.height)
-    }
-    else if (anchor == ToolWindowAnchor.BOTTOM) {
-      setBounds(0, lastPoint.y, bounds.width, windowPane.height - lastPoint.y)
-    }
-    else if (anchor == ToolWindowAnchor.RIGHT) {
-      setBounds(lastPoint.x, 0, windowPane.width - lastPoint.x, bounds.height)
+    when (anchor) {
+      ToolWindowAnchor.TOP -> setBounds(0, 0, bounds.width, lastPoint.y)
+      ToolWindowAnchor.LEFT -> setBounds(0, 0, lastPoint.x, bounds.height)
+      ToolWindowAnchor.BOTTOM -> setBounds(0, lastPoint.y, bounds.width, windowPane.height - lastPoint.y)
+      ToolWindowAnchor.RIGHT -> setBounds(lastPoint.x, 0, windowPane.width - lastPoint.x, bounds.height)
     }
     validate()
   }
@@ -728,6 +1008,21 @@ class InternalDecoratorImpl internal constructor(
     return accessibleContext
   }
 
+  /** Executes the given action for this and nested decorators. */
+  private fun forAllNestedDecorators(action: (InternalDecoratorImpl) -> Unit) {
+    action(this)
+    firstDecorator?.forAllNestedDecorators(action)
+    secondDecorator?.forAllNestedDecorators(action)
+  }
+
+  /** Requests focus transfer to the preferred focusable component of the selected content. */
+  internal fun requestContentFocus() {
+    val component = contentUi.contentManager.selectedContent?.preferredFocusableComponent
+    if (component != null && component.isShowing) {
+      component.requestFocusInWindow()
+    }
+  }
+
   private inner class AccessibleInternalDecorator : AccessibleJPanel() {
     override fun getAccessibleName(): String {
       return super.getAccessibleName()
@@ -738,7 +1033,22 @@ class InternalDecoratorImpl internal constructor(
     }
 
     override fun getAccessibleRole(): AccessibleRole {
-      return AccessibleRole.GROUP_BOX
+      return AccessibilityUtils.GROUPED_ELEMENTS
     }
   }
+
+  private enum class SideProperty {
+    // Sides adjacent to dividers.
+    LEFT_DIVIDER,
+    RIGHT_DIVIDER,
+    TOP_DIVIDER,
+    BOTTOM_DIVIDER,
+    // Sides adjacent to the edges of the containing tool window.
+    LEFT_TOOL_WINDOW_EDGE,
+    RIGHT_TOOL_WINDOW_EDGE,
+    TOP_TOOL_WINDOW_EDGE,
+    BOTTOM_TOOL_WINDOW_EDGE,
+  }
+
+  private fun log(): Logger = toolWindow.toolWindowManager.log()
 }

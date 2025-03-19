@@ -29,7 +29,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
+public final class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(param)) {
@@ -51,9 +51,8 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(callable)) {
       return null;
     }
@@ -78,9 +77,8 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
+  public @Nullable PyType getCallableType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (PyiUtil.isInsideStub(callable)) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -23,16 +23,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
-  @NotNull
+public final class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAction {
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.introduce.variable.text");
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -71,7 +69,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return IntentionPreviewInfo.EMPTY;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
     if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
       return previewableRefactoringActionHandler.generatePreview(project, expression);
@@ -89,7 +87,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
 
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
     assert handler != null;
     handler.invoke(project, editor, expression);
@@ -100,9 +98,8 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
@@ -131,8 +128,7 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
     return null;
   }
 
-  @Nullable
-  private static PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
+  private static @Nullable PsiType getTypeOfUnfilledParameter(@NotNull Editor editor, @NotNull PsiElement element) {
     if (element.getParent() instanceof PsiExpressionList && element.getParent().getParent() instanceof PsiMethodCallExpression) {
       PsiJavaToken leftBoundary = PsiTreeUtil.getPrevSiblingOfType(element, PsiJavaToken.class);
       PsiJavaToken rightBoundary = element instanceof PsiJavaToken ? (PsiJavaToken)element

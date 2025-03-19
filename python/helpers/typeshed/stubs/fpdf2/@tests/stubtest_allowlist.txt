@@ -1,3 +1,14 @@
-# The "dest" argument is unused and will be removed.
-fpdf.FPDF.output
-fpdf.fpdf.FPDF.output
+# Argument has default at runtime, but using it raises a TypeError.
+fpdf.FPDF.set_creation_date
+fpdf.fpdf.FPDF.set_creation_date
+
+# fonttools shims since we can't import it
+fpdf._fonttools_shims
+
+# Only present if harfbuzz is installed
+fpdf.fonts.HarfBuzzFont
+
+# Checking the following function crashes stubtest 0.991, but seems to be
+# fixed in later versions.
+fpdf.FPDF.set_encryption
+fpdf.fpdf.FPDF.set_encryption

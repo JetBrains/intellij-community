@@ -1,39 +1,34 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.NonNls;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return InspectionsBundle.message("group.names.class.structure");
-  }
-
-  @Override
-  @NotNull
-  public String getShortName() {
-    return SHORT_NAME;
-  }
+public final class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -57,10 +52,9 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static ProblemDescriptor createProblem(@NotNull InspectionManager manager,
-                                                 @NotNull PsiIdentifier identifier,
-                                                 boolean isOnTheFly) {
+  private static @NotNull ProblemDescriptor createProblem(@NotNull InspectionManager manager,
+                                                          @NotNull PsiIdentifier identifier,
+                                                          boolean isOnTheFly) {
     return manager.createProblemDescriptor(
       identifier,
       JavaBundle.message("inspection.parameter.can.be.local.problem.descriptor"),
@@ -71,15 +65,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     );
   }
 
-  @NotNull
-  private static List<PsiParameter> filterFinal(PsiParameter[] parameters) {
-    final List<PsiParameter> result = new ArrayList<>(parameters.length);
-    for (PsiParameter parameter : parameters) {
-      if (!parameter.hasModifierProperty(PsiModifier.FINAL)) {
-        result.add(parameter);
-      }
-    }
-    return result;
+  private static @NotNull List<PsiParameter> filterFinal(PsiParameter[] parameters) {
+    return ContainerUtil.filter(parameters, parameter -> !parameter.hasModifierProperty(PsiModifier.FINAL));
   }
 
   private static Collection<PsiParameter> getWriteBeforeRead(@NotNull Collection<? extends PsiParameter> parameters,
@@ -91,34 +78,26 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     if (result.isEmpty()) return Collections.emptyList();
     result.retainAll(ControlFlowUtil.getWrittenVariables(controlFlow, 0, controlFlow.getSize(), false));
     if (result.isEmpty()) return Collections.emptyList();
-    for (final PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
-      final PsiElement resolved = readBeforeWrite.resolve();
-      if (resolved instanceof PsiParameter) {
-        result.remove(resolved);
+    for (PsiReferenceExpression readBeforeWrite : ControlFlowUtil.getReadBeforeWrite(controlFlow)) {
+      if (readBeforeWrite.resolve() instanceof PsiParameter param) {
+        result.remove(param);
       }
     }
 
     return result;
   }
 
-  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow, @NotNull Collection<? extends PsiParameter> parameters) {
+  private static Set<PsiParameter> filterParameters(@NotNull ControlFlow controlFlow,
+                                                    @NotNull Collection<? extends PsiParameter> parameters) {
     final Set<PsiVariable> usedVars = new HashSet<>(ControlFlowUtil.getUsedVariables(controlFlow, 0, controlFlow.getSize()));
-
-    final Set<PsiParameter> result = new HashSet<>();
-    for (PsiParameter parameter : parameters) {
-      if (usedVars.contains(parameter)) {
-        result.add(parameter);
-      }
-    }
-    return result;
+    return parameters.stream().filter(usedVars::contains).collect(Collectors.toSet());
   }
 
   private static boolean isOverrides(PsiMethod method) {
     return SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
   }
 
-  @Nullable
-  private static ControlFlow getControlFlow(final PsiElement context) {
+  private static @Nullable ControlFlow getControlFlow(final PsiElement context) {
     try {
       return ControlFlowFactory.getInstance(context.getProject())
         .getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -128,17 +107,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  private static final class ConvertParameterToLocalQuickFix extends BaseConvertToLocalQuickFix<PsiParameter> {
-    @Override
-    protected PsiParameter getVariable(@NotNull ProblemDescriptor descriptor) {
-      return (PsiParameter)descriptor.getPsiElement().getParent();
-    }
-
-    @NotNull
-    @Override
-    protected String suggestLocalName(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull PsiCodeBlock scope) {
-      return parameter.getName();
-    }
+  private static final class ConvertParameterToLocalQuickFix implements LocalQuickFix {
+    private static final Logger LOG = Logger.getInstance(ConvertParameterToLocalQuickFix.class);
 
     @Override
     public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
@@ -146,10 +116,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       return IntentionPreviewInfo.DIFF;
     }
 
-    @Override
-    @NotNull
-    protected List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
-      final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+    private static @NotNull List<PsiElement> moveDeclaration(@NotNull Project project, @NotNull PsiParameter variable) {
+      final List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
       if (references.isEmpty()) return Collections.emptyList();
       final PsiElement scope = variable.getDeclarationScope();
       if (!(scope instanceof PsiMethod method)) return Collections.emptyList();
@@ -163,7 +131,8 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
       }
       final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
       final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-      PsiElement moved = IntentionPreviewUtils.writeAndCompute(() -> copyVariableToMethodBody(variable, references));
+      PsiElement moved = IntentionPreviewUtils.writeAndCompute(
+        () -> ConvertToLocalUtils.copyVariableToMethodBody(variable, references, block -> variable.getName()));
       if (moved == null) return Collections.emptyList();
       SmartPsiElementPointer<PsiElement> newDeclaration = SmartPointerManager.createPointer(moved);
       if (IntentionPreviewUtils.isPreviewElement(variable)) {
@@ -176,6 +145,45 @@ public class ParameterCanBeLocalInspection extends AbstractBaseJavaLocalInspecti
         processor.run();
       }
       return Collections.singletonList(Objects.requireNonNull(newDeclaration.getElement()));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("inspection.convert.to.local.quickfix");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiParameter variable = (PsiParameter)descriptor.getPsiElement().getParent();
+      if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
+      if (!IntentionPreviewUtils.prepareElementForWrite(descriptor.getPsiElement())) return;
+      final PsiFile myFile = variable.getContainingFile();
+      try {
+        final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
+        if (newDeclarations.isEmpty()) return;
+        positionCaretToDeclaration(project, myFile, newDeclarations.get(newDeclarations.size() - 1));
+        newDeclarations.forEach(declaration -> IntentionPreviewUtils.write(() -> ConvertToLocalUtils.inlineRedundant(declaration)));
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    }
+
+    private static void positionCaretToDeclaration(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement declaration) {
+      if (!psiFile.isPhysical()) return;
+      final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor != null && (IJSwingUtilities.hasFocus(editor.getComponent()) || ApplicationManager.getApplication().isUnitTestMode())) {
+        final PsiFile openedFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        if (openedFile == psiFile) {
+          editor.getCaretModel().moveToOffset(declaration.getTextOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        }
+      }
     }
   }
 }

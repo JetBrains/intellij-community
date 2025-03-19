@@ -16,7 +16,7 @@ internal fun reportIdeaKotlinUnresolvedDependency(
         dependencyName = dependency.coordinates?.toString() ?: "<unknown coordinates>",
         failureMessage = dependency.cause,
         projectPath = context.resolverCtx.projectPath,
-        isOfflineMode = context.resolverCtx.settings?.isOfflineWork == true,
+        isOfflineMode = context.resolverCtx.settings.isOfflineWork == true,
         dependencyOwner = sourceSetModuleId.toString(),
     )
 

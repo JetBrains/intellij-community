@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.suspiciousNameCombination;
 
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -29,11 +28,11 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.codeInspection.options.OptPane.stringList;
 
 
-public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NonNls private static final String ELEMENT_GROUPS = "group";
-  @NonNls private static final String ATTRIBUTE_NAMES = "names";
-  @NonNls private static final String ELEMENT_IGNORED_METHODS = "ignored";
-  protected final List<String> myNameGroups = new ArrayList<>();
+public final class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final @NonNls String ELEMENT_GROUPS = "group";
+  private static final @NonNls String ATTRIBUTE_NAMES = "names";
+  private static final @NonNls String ELEMENT_IGNORED_METHODS = "ignored";
+  private final List<String> myNameGroups = new ArrayList<>();
   final MethodMatcher myIgnoredMethods = new MethodMatcher()
     // parameter name is 'x' which is completely unrelated to coordinates
     .add("java.io.PrintStream", "println")
@@ -43,10 +42,10 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     .add("java.sql.ResultSet", "update.*")
     .add("java.sql.SQLOutput", "write.*")
     // parameters for compare methods are x and y which is also unrelated to coordinates
-    .add("java.lang.Integer", "compare.*")
+    .add("java.lang.Integer", "compare.*|toUnsignedLong")
     .add("java.lang.Long", "compare.*")
-    .add("java.lang.Short", "compare")
-    .add("java.lang.Byte", "compare")
+    .add("java.lang.Short", "compare|toUnsigned.*")
+    .add("java.lang.Byte", "compare|toUnsigned.*")
     .add("java.lang.Character", "compare")
     .add("java.lang.Boolean", "compare")
     // parameter names for addExact, multiplyFull, floorDiv, hypot etc. are x and y,
@@ -74,13 +73,13 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     return true;
   }
 
-  protected void clearNameGroups() {
+  private void clearNameGroups() {
     myNameGroups.clear();
     myWordToGroupMap.clear();
     myLongestWord = 0;
   }
 
-  public void addNameGroup(@NonNls final String group) {
+  public void addNameGroup(final @NonNls String group) {
     myNameGroups.add(group);
     List<String> words = StringUtil.split(group, ",");
     for(String word: words) {
@@ -91,21 +90,17 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "SuspiciousNameCombination";
   }
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
   }
 
@@ -131,8 +126,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     myIgnoredMethods.writeSettings(ignoredMethods);
   }
 
-  @NotNull
-  private static String canonicalize(String word) {
+  private static @NotNull String canonicalize(String word) {
     return StringUtil.toLowerCase(word.trim());
   }
 
@@ -192,8 +186,8 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     }
 
     private void checkCombination(final PsiElement location,
-                                  @Nullable final String name,
-                                  @Nullable final String referenceName,
+                                  final @Nullable String name,
+                                  final @Nullable String referenceName,
                                   @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key) {
       String nameGroup1 = findNameGroup(name);
       String nameGroup2 = findNameGroup(referenceName);
@@ -202,7 +196,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
       }
     }
 
-    @Nullable private String findNameGroup(@Nullable final String name) {
+    private @Nullable String findNameGroup(final @Nullable String name) {
       if (name == null) {
         return null;
       }

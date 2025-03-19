@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "buz": {
+      "$ref": "#/$defs/foo-or-bar"
+    }
+  },
+  "$defs": {
+    "foo-or-bar": {
+      "if": {
+        "type": "object",
+        "required": ["foo"]
+      },
+      "then": {
+        "$ref": "#/$defs/nested_foo"
+      },
+      "else": {
+        "$ref": "#/$defs/nested_bar"
+      }
+    },
+
+    "nested_foo": {
+      "if": {
+        "type": "object",
+        "required": ["a"]
+      },
+      "then": {
+        "$ref": "#/$defs/foo_a"
+      },
+      "else": {
+        "$ref": "#/$defs/foo_b"
+      }
+    },
+    "nested_bar": {
+      "if": {
+        "type": "object",
+        "required": [
+          "a"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/bar_a"
+      },
+      "else": {
+        "$ref": "#/$defs/bar_b"
+      }
+    },
+
+    "foo_a": {
+      "additionalProperties": false,
+      "required": ["foo", "a"],
+      "properties": {
+        "foo": {
+          "type": "integer"
+        },
+        "a": {
+          "type": "integer"
+        }
+      }
+    },
+    "foo_b": {
+      "additionalProperties": false,
+      "required": ["foo", "b"],
+      "properties": {
+        "foo": {
+          "type": "boolean"
+        },
+        "b": {
+          "type": "boolean"
+        }
+      }
+    },
+    "bar_a": {
+      "additionalProperties": false,
+      "required": ["bar", "a"],
+      "properties": {
+        "bar": {
+          "type": "string"
+        },
+        "a": {
+          "type": "string"
+        }
+      }
+    },
+    "bar_b": {
+      "additionalProperties": false,
+      "required": ["bar", "b"],
+      "properties": {
+        "bar": {
+          "type": "array"
+        },
+        "b": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}

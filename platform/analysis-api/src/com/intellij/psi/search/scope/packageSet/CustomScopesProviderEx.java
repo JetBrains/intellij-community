@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -12,14 +12,12 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class CustomScopesProviderEx implements CustomScopesProvider {
-  @Nullable
-  public NamedScope getCustomScope(@NotNull String name) {
+  public @Nullable NamedScope getCustomScope(@NotNull String name) {
     final List<NamedScope> predefinedScopes = getFilteredScopes();
     return findPredefinedScope(name, predefinedScopes);
   }
 
-  @Nullable
-  public static NamedScope findPredefinedScope(@NotNull String scopeId, @NotNull List<? extends NamedScope> predefinedScopes) {
+  public static @Nullable NamedScope findPredefinedScope(@NotNull String scopeId, @NotNull List<? extends NamedScope> predefinedScopes) {
     for (NamedScope scope : predefinedScopes) {
       if (scopeId.equals(scope.getScopeId())) return scope;
     }
@@ -46,11 +44,9 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     SETTING, ACTION
   }
 
-  private static class AllScopeHolder {
-    @NotNull
-    private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
-    @NotNull
-    private static final NamedScope ALL = new NamedScope("All", () -> AnalysisBundle.message("all.scope.name"), AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
+  private static final class AllScopeHolder {
+    private static final @NotNull String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
+    private static final @NotNull NamedScope ALL = new NamedScope("All", () -> AnalysisBundle.message("all.scope.name"), AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
         return true;
@@ -58,8 +54,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     });
   }
 
-  @NotNull
-  public static NamedScope getAllScope() {
+  public static @NotNull NamedScope getAllScope() {
     return AllScopeHolder.ALL;
   }
 }

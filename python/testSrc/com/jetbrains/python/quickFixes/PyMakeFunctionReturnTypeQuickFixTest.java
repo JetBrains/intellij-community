@@ -55,13 +55,27 @@ public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
 
   // PY-27128
   public void testAncestorAndInheritorReturn() {
-    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X]"));
+    doMultiFileTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "foo", "Type[X | Y]"));
   }
 
   // PY-27128 PY-48466
   public void testLambda() {
     doQuickFixTest(PyTypeCheckerInspection.class,
                    PyPsiBundle.message("QFIX.make.function.return.type", "func", "Callable[[Any], int]"),
+                   LanguageLevel.getLatest());
+  }
+
+  // PY-20710
+  public void testChangeGenerator() {
+      doQuickFixTest(PyTypeCheckerInspection.class, 
+                     PyPsiBundle.message("QFIX.make.function.return.type", "gen", "Generator[str, bool, int]"),
+                     LanguageLevel.getLatest());
+  }
+
+  // PY-20710
+  public void testMakeGenerator() {
+    doQuickFixTest(PyTypeCheckerInspection.class,
+                   PyPsiBundle.message("QFIX.make.function.return.type", "gen", "AsyncGenerator[str | float, Any]"),
                    LanguageLevel.getLatest());
   }
 }

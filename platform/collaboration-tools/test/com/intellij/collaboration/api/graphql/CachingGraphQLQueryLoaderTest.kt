@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.api.graphql
 
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.inputStreamIfExists
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -9,6 +9,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import kotlin.io.path.createFile
 import kotlin.io.path.writeText
 
 class CachingGraphQLQueryLoaderTest {
@@ -17,13 +18,15 @@ class CachingGraphQLQueryLoaderTest {
   @JvmField
   val testDataRule = TemporaryFolder()
 
-  private lateinit var loader: Loader
+  private lateinit var loader: CachingGraphQLQueryLoader
   private lateinit var queryFile: File
   private lateinit var fragmentFolder: File
 
   @Before
   fun setUp() {
-    loader = Loader(testDataRule.root)
+    loader = CachingGraphQLQueryLoader(getFileStream = {
+      testDataRule.root.toPath().resolve(it).inputStreamIfExists()
+    })
     testDataRule.newFolder("graphql", "query")
     fragmentFolder = testDataRule.newFolder("graphql", "fragment")
     queryFile = testDataRule.newFile("graphql/query/q.graphql")
@@ -179,7 +182,7 @@ class CachingGraphQLQueryLoaderTest {
   }
 
   private fun writeFragment(name: String, source: String) {
-    val file = fragmentFolder.toPath().resolve("$name.graphql").createFile()
+    val file = fragmentFolder.toPath().resolve("$name.graphql").createParentDirectories().createFile()
     file.writeText(source)
   }
 
@@ -191,10 +194,5 @@ class CachingGraphQLQueryLoaderTest {
   private fun check(loaded: String, vararg sources: String) {
     val trimmedSource = sources.joinToString("\n").lines().map(String::trim).joinToString("\n") { it }
     assertEquals(trimmedSource, loaded)
-  }
-
-  private class Loader(private val directory: File) : CachingGraphQLQueryLoader() {
-    override fun getFileStream(relativePath: String) =
-      directory.toPath().resolve(relativePath).inputStreamIfExists()
   }
 }

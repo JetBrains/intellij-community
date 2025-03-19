@@ -84,6 +84,10 @@ public interface FileIndex {
 
   /**
    * Returns {@code true} if {@code fileOrDir} is a file or directory located under a source root of some module and not excluded or ignored.
+   * <br>
+   * Note that this method doesn't take the exact type of the containing source root into account. 
+   * If you're interested if the file is located under a root of a specific type (e.g., if you want to distinguish Java source and Java 
+   * resource files), use {@link #isUnderSourceRootOfType(VirtualFile, Set)} instead.
    */
   @RequiresReadLock
   boolean isInSourceContent(@NotNull VirtualFile fileOrDir);

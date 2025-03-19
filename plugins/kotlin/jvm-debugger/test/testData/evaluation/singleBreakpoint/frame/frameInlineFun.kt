@@ -7,11 +7,19 @@ fun main(args: Array<String>) {
     }
 }
 
+inline fun foo(block: () -> Unit) {
+    block()
+}
+
 class A {
     inline fun inlineFun(s: (Int) -> Unit) {
         val element = 1.0
-        //Breakpoint!
-        s(1)
+        foo {
+            foo {
+                //Breakpoint!
+                s(1)
+            }
+        }
     }
 
     val prop = 1

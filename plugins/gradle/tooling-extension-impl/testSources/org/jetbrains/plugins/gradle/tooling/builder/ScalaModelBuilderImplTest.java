@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.scala.ScalaCompileOptions;
 import org.jetbrains.plugins.gradle.model.scala.ScalaModel;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Vladislav.Soroka
@@ -43,26 +30,58 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 
   @Test
   public void testScalaModel() {
-    DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .applyPlugin("scala")
+      .withMavenCentral()
+      .addImplementationDependency("org.scala-lang:scala-library:2.11.0")
+      .addPostfix(
+        "Closure compilerPlugins = {\n" +
+        "  String parjar = \"opt\"\n" +
+        "  scalaCompileOptions.additionalParameters = [\n" +
+        "    \"-opt:$parjar\"\n" +
+        "  ]\n" +
+        "}\n" +
+        "compileScala compilerPlugins\n" +
+        "compileTestScala compilerPlugins"
+      )
+      .generate()
+    );
 
-    List<ScalaModel> scalaModels = ContainerUtil.mapNotNull(
-      ideaModules, new Function<IdeaModule, ScalaModel>() {
-        @Override
-        public ScalaModel fun(IdeaModule module) {
-          return allModels.getModel(module, ScalaModel.class);
-        }
-      });
+    GradleIdeaModelHolder models = runBuildAction(ScalaModel.class);
 
-    assertEquals(1, scalaModels.size());
-    ScalaModel scalaModel = scalaModels.get(0);
+    DomainObjectSet<? extends IdeaModule> ideaModules = models.getRootModel(IdeaProject.class).getModules();
+    assertEquals(1, ideaModules.size());
+    IdeaModule ideaModule = ideaModules.iterator().next();
+
+    ScalaModel scalaModel = models.getProjectModel(ideaModule, ScalaModel.class);
     ScalaCompileOptions scalaCompileOptions = scalaModel.getScalaCompileOptions();
     assertNotNull(scalaCompileOptions);
     assertEquals(1, scalaCompileOptions.getAdditionalParameters().size());
     assertEquals("-opt:opt", scalaCompileOptions.getAdditionalParameters().iterator().next());
   }
 
-  @Override
-  protected Set<Class<?>> getModels() {
-    return Collections.<Class<?>>singleton(ScalaModel.class);
+  @Test
+  @TargetVersions("6.4+")
+  public void testScalaModelWithScalaCompilerPlugins() {
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .applyPlugin("scala")
+      .withMavenCentral()
+      .addImplementationDependency("org.scala-lang:scala-library:2.13.14")
+      .addDependency("scalaCompilerPlugins", "com.olegpy:better-monadic-for_2.13:0.3.1")
+      .generate()
+    );
+
+    GradleIdeaModelHolder models = runBuildAction(ScalaModel.class);
+
+    DomainObjectSet<? extends IdeaModule> ideaModules = models.getRootModel(IdeaProject.class).getModules();
+    assertEquals(1, ideaModules.size());
+    IdeaModule ideaModule = ideaModules.iterator().next();
+
+    ScalaModel scalaModel = models.getProjectModel(ideaModule, ScalaModel.class);
+    Set<File> scalaCompilerPlugins = scalaModel.getScalaCompilerPlugins();
+    assertNotNull(scalaCompilerPlugins);
+    assertEquals(1, scalaCompilerPlugins.size());
+    String compilerPluginPath = scalaCompilerPlugins.iterator().next().getPath();
+    assertTrue(compilerPluginPath.endsWith("better-monadic-for_2.13-0.3.1.jar"));
   }
 }

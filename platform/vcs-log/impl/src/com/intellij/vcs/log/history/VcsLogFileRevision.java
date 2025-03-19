@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
 
-public class VcsLogFileRevision extends VcsFileRevisionEx {
+class VcsLogFileRevision extends VcsFileRevisionEx {
   private final @NotNull ContentRevision myRevision;
   private final @NotNull FilePath myPath;
   private final @NotNull VcsUser myAuthor;
@@ -29,9 +29,9 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   private byte @Nullable [] myContent = null;
 
-  public VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata,
-                            @NotNull ContentRevision revision,
-                            @NotNull FilePath path, boolean isDeleted) {
+  VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata,
+                     @NotNull ContentRevision revision,
+                     @NotNull FilePath path, boolean isDeleted) {
     myRevision = revision;
     myPath = path;
 

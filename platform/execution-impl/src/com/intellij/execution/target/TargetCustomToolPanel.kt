@@ -9,10 +9,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class TargetCustomToolPanel(private val project: Project,
                             private val targetEnvironmentType: TargetEnvironmentType<*>,
                             private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,
@@ -41,13 +43,8 @@ class TargetCustomToolPanel(private val project: Project,
     languagePanel?.configurable?.apply()
   }
 
-  /**
-   * While [targetSupplier] might return temp [TargetEnvironmentConfiguration], [preparedConfiguration] is the actual configuration that can be
-   * used for creating Python SDK.
-   * Call [validateCustomTool] before this method to make sure there are no errors
-   */
-  fun createCustomTool(preparedConfiguration: TargetEnvironmentConfiguration): Any? {
-    return customToolLanguageConfigurable?.createCustomTool(preparedConfiguration)
+  fun createCustomTool(): Any? {
+    return customToolLanguageConfigurable?.createCustomTool()
   }
 
   fun validateCustomTool(): Collection<ValidationInfo> = customToolLanguageConfigurable?.validate() ?: emptyList()

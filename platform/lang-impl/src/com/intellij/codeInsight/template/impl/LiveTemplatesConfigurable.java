@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LiveTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class LiveTemplatesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   static final String ID = "editing.templates";
   private TemplateListPanel myPanel;
 
@@ -55,20 +55,17 @@ public class LiveTemplatesConfigurable implements SearchableConfigurable, Config
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return ID;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
   @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
+  public @Nullable Runnable enableSearch(final String option) {
     return () -> myPanel.selectNode(option);
   }
 

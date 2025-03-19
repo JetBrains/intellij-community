@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.parameterInfo;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/annotations")
     public static class Annotations extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -45,6 +52,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/arrayAccess")
     public static class ArrayAccess extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -93,6 +106,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/functionCall")
     public static class FunctionCall extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -100,6 +119,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("Conflicting.kt")
         public void testConflicting() throws Exception {
             runTest("testData/parameterInfo/functionCall/Conflicting.kt");
+        }
+
+        @TestMetadata("ConstDefaultParameter.kt")
+        public void testConstDefaultParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ConstDefaultParameter.kt");
         }
 
         @TestMetadata("DataClassComponentFunction.kt")
@@ -197,6 +221,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
         }
 
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("testData/parameterInfo/functionCall/InvalidCandidates.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/parameterInfo/functionCall/Invoke.kt");
@@ -292,6 +321,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
         }
 
+        @TestMetadata("NoDefaultValueForValParameter.kt")
+        public void testNoDefaultValueForValParameter() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoDefaultValueForValParameter.kt");
+        }
+
         @TestMetadata("NoShadowedDeclarations.kt")
         public void testNoShadowedDeclarations() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoShadowedDeclarations.kt");
@@ -330,6 +364,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("OtherConstructorFromSecondary.kt")
         public void testOtherConstructorFromSecondary() throws Exception {
             runTest("testData/parameterInfo/functionCall/OtherConstructorFromSecondary.kt");
+        }
+
+        @TestMetadata("ParameterHighlighting.kt")
+        public void testParameterHighlighting() throws Exception {
+            runTest("testData/parameterInfo/functionCall/ParameterHighlighting.kt");
         }
 
         @TestMetadata("ParameterNameAnnotationConflict.kt")
@@ -541,6 +580,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/typeArguments")
     public static class TypeArguments extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -664,6 +709,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/withLib1")
     public static class WithLib1 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -677,6 +728,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/withLib2")
     public static class WithLib2 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -690,6 +747,12 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/parameterInfo/withLib3")
     public static class WithLib3 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -697,6 +760,25 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("useJavaSAMFromLib.kt")
         public void testUseJavaSAMFromLib() throws Exception {
             runTest("testData/parameterInfo/withLib3/useJavaSAMFromLib.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/parameterInfo/withLib4")
+    public static class WithLib4 extends AbstractParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationWithTypeUse.kt")
+        public void testAnnotationWithTypeUse() throws Exception {
+            runTest("testData/parameterInfo/withLib4/annotationWithTypeUse.kt");
         }
     }
 }

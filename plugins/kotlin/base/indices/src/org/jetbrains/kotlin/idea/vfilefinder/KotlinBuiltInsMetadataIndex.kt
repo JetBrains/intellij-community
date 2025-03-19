@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.vfilefinder
 
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
-import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 
 class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
     companion object {
@@ -27,7 +27,7 @@ class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
     private val INDEXER = indexer { fileContent ->
         val packageFqName =
             if (fileContent.fileType == KotlinBuiltInFileType &&
-                fileContent.fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)
+                fileContent.fileName.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION)
             ) {
                 val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
                 builtins?.packageFqName

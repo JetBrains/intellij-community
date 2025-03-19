@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import java.util.function.Predicate
 import javax.swing.JComponent
 
-const val INLAY_ID = "inlay.hints"
+const val INLAY_ID: String = "inlay.hints"
 
-class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll {
+class InlaySettingsConfigurable(val project: Project) : Configurable, SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private val panel: InlaySettingsPanel by lazy  { InlaySettingsPanel(project) }
 
@@ -50,6 +50,8 @@ class InlaySettingsConfigurable(val project: Project) : Configurable, Searchable
   override fun getId(): String = INLAY_ID
 
   override fun getHelpTopic(): String = "settings.inlays"
+
+  override fun isProjectLevel(): Boolean = false
 }
 
 class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {

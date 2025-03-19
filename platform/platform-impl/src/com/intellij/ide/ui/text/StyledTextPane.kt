@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.text
 
 import com.intellij.ide.ui.text.paragraph.TextParagraph
@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Point
@@ -71,7 +72,7 @@ open class StyledTextPane : JTextPane(), Disposable {
         redraw()
       }
 
-      override fun shortcutChanged(keymap: Keymap, actionId: String) {
+      override fun shortcutsChanged(keymap: Keymap, actionIds: @NonNls MutableCollection<String>, fromSettings: Boolean) {
         redraw()
       }
     })
@@ -124,7 +125,7 @@ open class StyledTextPane : JTextPane(), Disposable {
     return preferredSize
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   final override fun addMouseListener(l: MouseListener?) {
     super.addMouseListener(l)

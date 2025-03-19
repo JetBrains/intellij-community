@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.ide.DataManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,16 +60,26 @@ public final class ExternalSystemUiUtil {
     balloon.show(new RelativePoint(component, new Point(x, y)), position);
   }
 
-  @NotNull
-  public static GridBag getLabelConstraints(int indentLevel) {
+  public static @NotNull GridBag getLabelConstraints(int indentLevel) {
     Insets insets = JBUI.insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().anchor(GridBagConstraints.WEST).weightx(0).insets(insets);
   }
 
-  @NotNull
-  public static GridBag getFillLineConstraints(int indentLevel) {
+  public static @NotNull GridBag getFillLineConstraints(int indentLevel) {
     Insets insets = JBUI.insets(INSETS, INSETS + INSETS * indentLevel, 0, INSETS);
     return new GridBag().weightx(1).coverLine().fillCellHorizontally().anchor(GridBagConstraints.WEST).insets(insets);
+  }
+
+  public static @NotNull GridBag getCommentConstraints(int indentLevel) {
+    GridBag constraints = getFillLineConstraints(indentLevel);
+    constraints.insets.top = 0;
+    return constraints;
+  }
+
+  public static @NotNull GridBag getCheckBoxCommentConstraints(int indentLevel, @NotNull JCheckBox checkBox) {
+    GridBag constraints = getCommentConstraints(indentLevel);
+    constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(checkBox);
+    return constraints;
   }
 
   public static void fillBottom(@NotNull JComponent component) {
@@ -109,13 +120,12 @@ public final class ExternalSystemUiUtil {
     }
   }
 
-  @NotNull
-  public static ExternalSystemUiAware getUiAware(@NotNull ProjectSystemId externalSystemId) {
+  public static @NotNull ExternalSystemUiAware getUiAware(@NotNull ProjectSystemId externalSystemId) {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     return manager instanceof ExternalSystemUiAware ? (ExternalSystemUiAware)manager : DefaultExternalSystemUiAware.INSTANCE;
   }
 
-  public static void executeAction(@NotNull final String actionId, @NotNull final InputEvent e) {
+  public static void executeAction(final @NotNull String actionId, final @NotNull InputEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     final AnAction action = actionManager.getAction(actionId);
     if (action == null) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -18,29 +19,23 @@ class PythonInterpreterDetailsConfigurable(project: Project,
                                            module: Module?,
                                            val sdk: Sdk,
                                            parentConfigurable: Configurable) : NamedConfigurable<Sdk>() {
-  private val underlyingConfigurable: Configurable
 
+  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
   private var initialSdkName: String = sdk.name
-
   private var currentSdkName: @NlsSafe String = sdk.name
-
-  init {
-    underlyingConfigurable = createPythonInterpreterConfigurable(project, module, sdk, parentConfigurable)
-  }
 
   override fun isModified(): Boolean = initialSdkName != currentSdkName || underlyingConfigurable.isModified
 
-  /**
-   * TODO Shouldn't be here the association updated (see [com.jetbrains.python.configuration.PythonSdkDetailsDialog.editSdk]).
-   */
   override fun apply() {
     underlyingConfigurable.apply()
 
     if (currentSdkName != initialSdkName) {
-      val sdkModificator = sdk.sdkModificator
-      sdkModificator.name = currentSdkName
-      sdkModificator.commitChanges()
-      initialSdkName = currentSdkName
+      WriteAction.run<Throwable> {
+        val sdkModificator = sdk.sdkModificator
+        sdkModificator.name = currentSdkName
+        sdkModificator.commitChanges()
+        initialSdkName = currentSdkName
+      }
     }
   }
 

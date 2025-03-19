@@ -16,9 +16,11 @@
 package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
+import com.intellij.diagnostic.hprof.util.IDMapper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import java.util.function.LongUnaryOperator
 
+@ApiStatus.Internal
 class ClassDefinition(val name: String,
                       val id: Long,
                       val superClassId: Long,
@@ -53,8 +55,8 @@ class ClassDefinition(val name: String,
     get() = name.substringBefore('!')
 
   companion object {
-    const val OBJECT_PREAMBLE_SIZE = 8
-    const val ARRAY_PREAMBLE_SIZE = 12
+    const val OBJECT_PREAMBLE_SIZE: Int = 8
+    const val ARRAY_PREAMBLE_SIZE: Int = 12
 
     @NonNls
     fun computePrettyName(name: String): String {
@@ -83,7 +85,7 @@ class ClassDefinition(val name: String,
       }
     }
 
-    val CLASS_FIELD = InstanceField("<class>", -1, Type.OBJECT)
+    val CLASS_FIELD: InstanceField = InstanceField("<class>", -1, Type.OBJECT)
   }
 
   fun getSuperClass(classStore: ClassStore): ClassDefinition? {
@@ -99,8 +101,8 @@ class ClassDefinition(val name: String,
 
   fun isPrimitiveArray(): Boolean = isArray() && name.length == 2
 
-  fun copyWithRemappedIDs(remappingFunction: LongUnaryOperator): ClassDefinition {
-    fun map(id: Long): Long = remappingFunction.applyAsLong(id)
+  fun copyWithRemappedIDs(idMapper: IDMapper): ClassDefinition {
+    fun map(id: Long): Long = idMapper.getID(id)
     val newConstantFields = LongArray(constantFields.size) {
       map(constantFields[it])
     }

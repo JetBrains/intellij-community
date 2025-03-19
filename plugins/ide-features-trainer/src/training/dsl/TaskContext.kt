@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.ui.tree.TreeVisitor
-import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
 import training.statistic.LearningInternalProblems
@@ -26,6 +23,12 @@ abstract class TaskContext : LearningDslBase {
   abstract val project: Project
 
   open val taskId: TaskId = TaskId(0)
+
+  /**
+   * By default, the engine requires all steps become completed before move to the next task.
+   * The behavior can be changed to pass the task if at least one step becomes completed.
+   */
+  var passMode: PassMode = PassMode.AllSteps
 
   /**
    * This property can be set to the true if you want that the next task restore will jump over the current task.
@@ -96,24 +99,24 @@ abstract class TaskContext : LearningDslBase {
   open fun runtimeText(@Nls callback: RuntimeTextContext.() -> String?) = Unit
 
   /** Simply wait until an user perform particular action */
-  open fun trigger(actionId: String) = Unit
+  open fun trigger(@Language("devkit-action-id") actionId: String) = Unit
 
   /** Simply wait until an user perform actions */
   open fun trigger(checkId: (String) -> Boolean) = Unit
 
   /** Trigger on actions start. Needs if you want to split long actions into several tasks. */
-  open fun triggerStart(actionId: String, checkState: TaskRuntimeContext.() -> Boolean = { true }) = Unit
+  open fun triggerStart(@Language("devkit-action-id") actionId: String, checkState: TaskRuntimeContext.() -> Boolean = { true }) = Unit
 
   /** [actionIds] these actions required for the current task */
-  open fun triggers(vararg actionIds: String) = Unit
+  open fun triggers(@Language("devkit-action-id") vararg actionIds: String) = Unit
 
   /** An user need to rice an action which leads to necessary state change */
-  open fun <T : Any?> trigger(actionId: String,
+  open fun <T : Any?> trigger(@Language("devkit-action-id") actionId: String,
                               calculateState: TaskRuntimeContext.() -> T,
                               checkState: TaskRuntimeContext.(T, T) -> Boolean) = Unit
 
   /** An user need to rice an action which leads to appropriate end state */
-  fun trigger(actionId: String, checkState: TaskRuntimeContext.() -> Boolean) {
+  fun trigger(@Language("devkit-action-id") actionId: String, checkState: TaskRuntimeContext.() -> Boolean) {
     trigger(actionId, { }, { _, _ -> checkState() })
   }
 
@@ -162,19 +165,6 @@ abstract class TaskContext : LearningDslBase {
     return object : HighlightingTriggerMethods() {}
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use triggerAndBorderHighlight().treeItem")
-  fun triggerByFoundPathAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
-                                     usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
-                                     checkPath: TaskRuntimeContext.(tree: JTree, path: TreePath) -> Boolean) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
-    triggerByFoundPathAndHighlight(options) { tree ->
-      TreeUtil.visitVisibleRows(tree, TreeVisitor { path ->
-        if (checkPath(tree, path)) TreeVisitor.Action.INTERRUPT else TreeVisitor.Action.CONTINUE
-      })
-    }
-  }
-
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form)
   protected open fun triggerByFoundPathAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
                                                     checkTree: TaskRuntimeContext.(tree: JTree) -> TreePath?) = Unit
@@ -194,17 +184,6 @@ abstract class TaskContext : LearningDslBase {
                                                         options: LearningUiHighlightingManager.HighlightingOptions,
                                                         selector: ((candidates: Collection<T>) -> T?)?,
                                                         rectangle: TaskRuntimeContext.(T) -> Rectangle?) = Unit
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use triggerAndBorderHighlight().listItem")
-  fun triggerByListItemAndHighlight(highlightBorder: Boolean = true, highlightInside: Boolean = false,
-                                    usePulsation: Boolean = false, clearPreviousHighlights: Boolean = true,
-                                    checkList: TaskRuntimeContext.(item: Any) -> Boolean) {
-    val options = LearningUiHighlightingManager.HighlightingOptions(highlightBorder, highlightInside, usePulsation, clearPreviousHighlights)
-    triggerByFoundListItemAndHighlight(options) { ui: JList<*> ->
-      LessonUtil.findItem(ui) { checkList(it) }
-    }
-  }
 
   // This method later can be converted to the public (But I'm not sure it will be ever needed in a such form
   protected open fun triggerByFoundListItemAndHighlight(options: LearningUiHighlightingManager.HighlightingOptions,
@@ -240,7 +219,7 @@ abstract class TaskContext : LearningDslBase {
 
   class DoneStepContext(private val future: CompletableFuture<Boolean>, rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     fun completeStep() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       if (!future.isDone && !future.isCancelled) {
         future.complete(true)
       }
@@ -248,6 +227,11 @@ abstract class TaskContext : LearningDslBase {
   }
 
   data class TaskId(val idx: Int)
+
+  enum class PassMode {
+    AllSteps,
+    AnyStep
+  }
 
   companion object {
     val CaretRestoreProposal: String

@@ -15,9 +15,11 @@
  */
 package com.intellij.ui.colorpicker
 
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.JButton
 
+@ApiStatus.Internal
 class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private val pipette: ColorPipette) : JButton() {
 
   init {
@@ -30,7 +32,7 @@ class ColorPipetteButton(private val colorPickerModel: ColorPickerModel, private
     addActionListener { pipette.pick(MyCallback(colorPickerModel)) }
   }
 
-  var currentState = PipetteState.NONE
+  var currentState: PipetteState = PipetteState.NONE
 
   enum class PipetteState {PICKED, UPDATING, NONE}
 

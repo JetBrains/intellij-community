@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.extractSuperclass;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -39,6 +25,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.PyMembersUtil;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.BadDataException;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterNoPreviewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,17 +36,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Ilya.Kazakevich
- */
-class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView,
+@ApiStatus.Internal
+public final class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImpl<PyExtractSuperclassView,
   MemberInfoModel<PyElement, PyMemberInfo<PyElement>>>
   implements PyExtractSuperclassPresenter {
   private final NamesValidator myNamesValidator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
 
-  PyExtractSuperclassPresenterImpl(@NotNull final PyExtractSuperclassView view,
-                                   @NotNull final PyClass classUnderRefactoring,
-                                   @NotNull final PyMemberInfoStorage infoStorage) {
+  PyExtractSuperclassPresenterImpl(final @NotNull PyExtractSuperclassView view,
+                                   final @NotNull PyClass classUnderRefactoring,
+                                   final @NotNull PyMemberInfoStorage infoStorage) {
     super(view, classUnderRefactoring, infoStorage, new PyExtractSuperclassInfoModel(classUnderRefactoring));
   }
 
@@ -101,8 +86,7 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     }
   }
   
-  @Nullable
-  private static PyFile getPyFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  private static @Nullable PyFile getPyFile(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     VirtualFile targetFile = Arrays.stream(FileEditorManager.getInstance(project).getAllEditors(virtualFile))
       .map(editor -> editor.getFile())
       .filter(file -> file instanceof BackedVirtualFile)
@@ -128,9 +112,8 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
     myView.initAndShow();
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return RefactoringBundle.message("extract.superclass.command.name", myView.getSuperClassName(), myClassUnderRefactoring.getName());
   }
 
@@ -142,9 +125,8 @@ class PyExtractSuperclassPresenterImpl extends MembersBasedPresenterNoPreviewImp
       .extractSuperclass(myClassUnderRefactoring, infos, myView.getSuperClassName(), myView.getModuleFile());
   }
 
-  @NotNull
   @Override
-  protected Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
+  protected @NotNull Iterable<? extends PyClass> getDestClassesToCheckConflicts() {
     return Collections.emptyList(); // No conflict can take place in newly created classes
   }
 

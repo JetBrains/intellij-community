@@ -1,0 +1,11 @@
+// FIR_IDENTICAL
+interface A {
+    fun a()
+}
+object AllAtOnce: A {
+    @JvmStatic
+    suspend fun anyFun() {}
+    override fun a() {
+        TODO("Not yet implemented")
+    }
+}

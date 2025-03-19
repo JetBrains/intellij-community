@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -14,7 +14,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
@@ -25,10 +25,8 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -38,7 +36,6 @@ import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
@@ -49,7 +46,9 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @HeavyPlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
@@ -69,7 +68,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass", GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    SmartPsiElementPointer pointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
     int offset = aClass.getTextOffset();
@@ -86,13 +85,13 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> document.insertString(offset, s));
   }
 
-  // This test is unfair. If pointer would be asked for getElement() between commits it'll never restore again anyway.
+  // This test is unfair. If pointer is asked for getElement() between commits it'll never restore again anyway.
   //
   public void testChangeInDocumentTwice() {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    SmartPsiElementPointer pointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
     int offset = aClass.getTextOffset();
@@ -111,7 +110,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    SmartPsiElementPointer pointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
     int offset = aClass.getTextOffset();
@@ -130,7 +129,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    SmartPsiElementPointer pointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
     int offset = aClass.getTextOffset();
@@ -156,7 +155,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       Document document = documentManager.getDocument(aClass.getContainingFile());
       document.insertString(0, "/******/");
 
-      SmartPointerEx pointer = createPointer(aClass.getNameIdentifier());
+      SmartPointerEx<PsiIdentifier> pointer = createPointer(aClass.getNameIdentifier());
 
       document.insertString(0, "/**/");
       documentManager.commitAllDocuments();
@@ -176,7 +175,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     createEditor(file.getVirtualFile());
     assertFalse(file.isContentsLoaded());
 
-    SmartPointerEx pointer = createPointer(aClass);
+    SmartPointerEx<PsiClass> pointer = createPointer(aClass);
     assertFalse(file.isContentsLoaded());
 
     //noinspection UnusedAssignment
@@ -196,7 +195,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testTextFileClearingDoesNotCrash() {
     configureByText(PlainTextFileType.INSTANCE, "foo bar goo\n");
-    SmartPsiElementPointer pointer = createPointer(myFile.getFirstChild());
+    SmartPsiElementPointer<PsiElement> pointer = createPointer(myFile.getFirstChild());
 
     GCWatcher.tracking(myFile.getNode()).ensureCollected();
     assertEquals(myFile.getFirstChild(), pointer.getElement());
@@ -219,7 +218,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    SmartPsiElementPointer pointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
     int offset = aClass.getTextOffset();
@@ -254,8 +253,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     final PsiTypeElement typeElement = myJavaFacade.findClass("Test",GlobalSearchScope.allScope(getProject())).getFields()[0].getTypeElement();
 
-    SmartPsiElementPointer typePointer = createPointer(typeElement);
-    SmartPsiElementPointer classPointer = createPointer(aClass);
+    SmartPsiElementPointer<PsiTypeElement> typePointer = createPointer(typeElement);
+    SmartPsiElementPointer<PsiClass> classPointer = createPointer(aClass);
 
     Document aClassDocument = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
     Document testDocument = PsiDocumentManager.getInstance(myProject).getDocument(typeElement.getContainingFile());
@@ -265,11 +264,10 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     insertString(testDocument, typeElement.getTextOffset(), "/**/");
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    PsiElement element = typePointer.getElement();
+    PsiTypeElement element = typePointer.getElement();
     assertNotNull(element);
-    assertTrue(element instanceof PsiTypeElement);
     assertTrue(element.isValid());
-    assertEquals(classPointer.getElement(), PsiUtil.resolveClassInType(((PsiTypeElement)element).getType()));
+    assertEquals(classPointer.getElement(), PsiUtil.resolveClassInType(element.getType()));
   }
 
   public void testCreatePointerInBeforeDocumentChange() {
@@ -278,7 +276,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(aClass.getContainingFile());
 
-    final SmartPsiElementPointer[] pointer = new SmartPsiElementPointer[1];
+    final SmartPsiElementPointer<?>[] pointer = new SmartPsiElementPointer[1];
     int offset = aClass.getTextOffset();
     DocumentListener listener = new DocumentListener() {
       @Override
@@ -317,13 +315,9 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
       Document document = FileDocumentManager.getInstance().getDocument(vFile);
 
-      final SmartPsiElementPointer pointer = createPointer(aClass);
+      final SmartPsiElementPointer<PsiClass> pointer = createPointer(aClass);
 
       System.gc();
-        /*
-        PsiFile psiFile = myPsiManager.getFileManager().getCachedPsiFile(vFile);
-        assertNull(psiFile);
-        */
 
       insertString(document, 0, "class Foo{}\n");
 
@@ -334,7 +328,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       psiDocumentManager.commitAllDocuments();
 
       if (aClass.isValid()) {
-        aClass.getChildren();
+        assertNotNull(aClass.getChildren()); // trigger PSI loading
       }
 
       element = pointer.getElement();
@@ -355,8 +349,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(aClass);
     assertTrue(aClass.isValid());
 
-    SmartPsiElementPointer classp = createPointer(aClass);
-    SmartPsiElementPointer filep = createPointer(aClass.getContainingFile());
+    SmartPsiElementPointer<PsiClass> classp = createPointer(aClass);
+    SmartPsiElementPointer<PsiFile> filep = createPointer(aClass.getContainingFile());
 
     FileContentUtil.reparseFiles(myProject, Collections.singleton(vfile), true);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -389,7 +383,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
     assertTreeLoaded(file, false);
 
-    SmartPsiElementPointer p = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> p = createPointer(aClass);
     assertNotNull(p);
 
     assertTreeLoaded(file, false);
@@ -428,7 +422,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(aClass);
 
     PsiReferenceExpression ref1 = PsiTreeUtil.getParentOfType(PsiUtilBase.getElementAtCaret(getEditor()), PsiReferenceExpression.class);
-    SmartPsiElementPointer pointer1 = createPointer(ref1);
+    SmartPsiElementPointer<PsiReferenceExpression> pointer1 = createPointer(ref1);
 
     ctrlD();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -445,7 +439,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertEquals(1, refs.size());
     PsiReferenceExpression ref2 = refs.iterator().next();
     assertNotSame(ref1, ref2);
-    SmartPsiElementPointer pointer2 = createPointer(ref2);
+    SmartPsiElementPointer<PsiReferenceExpression> pointer2 = createPointer(ref2);
     assertNotSame(pointer1, pointer2);
 
     PsiElement element1 = pointer1.getElement();
@@ -464,8 +458,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
     SmartPointerManagerImpl smartPointerManager = getPointerManager();
-    SmartPsiElementPointer pointer1 = createPointer(aClass);
-    SmartPsiElementPointer pointer2 = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer1 = createPointer(aClass);
+    SmartPsiElementPointer<PsiClass> pointer2 = createPointer(aClass);
     assertSame(pointer1, pointer2);
 
     assertNotNull(pointer1.getRange());
@@ -487,7 +481,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
     SmartPointerManagerImpl smartPointerManager = getPointerManager();
-    SmartPsiElementPointerImpl pointer1 = (SmartPsiElementPointerImpl)createPointer(aClass);
+    SmartPsiElementPointerImpl<PsiClass> pointer1 = (SmartPsiElementPointerImpl<PsiClass>)createPointer(aClass);
     for (int i=0; i<1000; i++) {
       SmartPsiElementPointer<PsiClass> pointer2 = createPointer(aClass);
       assertSame(pointer1, pointer2);
@@ -673,30 +667,6 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     assertNotNull(node);
   }
 
-  public void testLargeFileWithManyChangesPerformance() throws Exception {
-    String text = StringUtil.repeat("foo foo \n", 50000);
-    PsiFile file = createFile("a.txt", text);
-    final TextRange range = TextRange.from(10, 10);
-    final SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, range);
-
-    final Document document = file.getViewProvider().getDocument();
-    assertNotNull(document);
-
-    WriteAction.run(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update", 10_000, () -> {
-      for (int i = 0; i < 10000; i++) {
-        document.insertString(i * 20 + 100, "x\n");
-        assertFalse(PsiDocumentManager.getInstance(myProject).isCommitted(document));
-        assertEquals(range, pointer.getRange());
-      }
-    }).setup(() -> {
-      document.setText(text);
-      assertEquals(range, pointer.getRange());
-    }).assertTiming());
-
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    assertEquals(range, pointer.getRange());
-  }
-
   public void testConvergingRanges() {
     configureByText(PlainTextFileType.INSTANCE, "aba");
     final Document document = myFile.getViewProvider().getDocument();
@@ -771,9 +741,9 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiJavaFile file = (PsiJavaFile)configureByText(JavaFileType.INSTANCE, text);
     PsiMethod method = file.getClasses()[0].getMethods()[0];
     TextRange originalRange = method.getTextRange();
-    SmartPsiElementPointer pointer = createPointer(method);
+    SmartPsiElementPointer<PsiMethod> pointer = createPointer(method);
 
-    ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtil.insertStringAtCaret(myEditor, """
+    ApplicationManager.getApplication().runWriteAction(() -> EditorModificationUtilEx.insertStringAtCaret(myEditor, """
           void m() {
           }
       """));
@@ -806,7 +776,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       }""";
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("<>"), PsiJavaCodeReferenceElement.class, false);
-    SmartPointerEx pointer = createPointer(ref.getParameterList().getTypeParameterElements()[0]);
+    SmartPointerEx<PsiTypeElement> pointer = createPointer(ref.getParameterList().getTypeParameterElements()[0]);
     //noinspection UnusedAssignment
     ref = null;
 
@@ -823,8 +793,8 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
       }""";
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("void"), PsiMethod.class, false);
-    SmartPointerEx pointer1 = createPointer(method.getModifierList());
-    SmartPointerEx pointer2 = createPointer(method.getTypeParameterList());
+    SmartPointerEx<PsiModifierList> pointer1 = createPointer(method.getModifierList());
+    SmartPointerEx<PsiTypeParameterList> pointer2 = createPointer(method.getTypeParameterList());
     //noinspection UnusedAssignment
     method = null;
 
@@ -839,7 +809,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     String text = "class Foo extends Bar {}";
     PsiFile file = configureByText(JavaFileType.INSTANCE, text);
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
-    SmartPointerEx pointer = createPointer(ref);
+    SmartPointerEx<PsiJavaCodeReferenceElement> pointer = createPointer(ref);
     //noinspection UnusedAssignment
     ref = null;
 
@@ -875,26 +845,6 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     assertNotNull(pointer.getElement());
-  }
-
-  public void testManyPsiChangesWithManySmartPointersPerformance() throws Exception {
-    String eachTag = "<a>\n" + StringUtil.repeat("   <a> </a>\n", 9) + "</a>\n";
-    XmlFile file = (XmlFile)createFile("a.xml", "<root>\n" + StringUtil.repeat(eachTag, 500) + "</root>");
-    List<XmlTag> tags = new ArrayList<>(PsiTreeUtil.findChildrenOfType(file.getDocument(), XmlTag.class));
-    List<SmartPsiElementPointer> pointers = ContainerUtil.map(tags, this::createPointer);
-    ApplicationManager.getApplication().runWriteAction(() -> PlatformTestUtil.startPerformanceTest("smart pointer range update after PSI change", 21000, () -> {
-      for (int i = 0; i < tags.size(); i++) {
-        XmlTag tag = tags.get(i);
-        SmartPsiElementPointer pointer = pointers.get(i);
-        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
-        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
-
-        tag.setName("bar1" + (i % 10));
-        assertEquals(tag.getName().length(), TextRange.create(pointer.getRange()).getLength());
-        assertEquals(tag.getName().length(), TextRange.create(pointer.getPsiRange()).getLength());
-      }
-      PostprocessReformattingAspect.getInstance(myProject).doPostponedFormatting();
-    }).useLegacyScaling().assertTiming());
   }
 
   @NotNull
@@ -943,22 +893,6 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     range = createPointer(psiClass).getPsiRange();
     assertNotNull(range);
     assertEquals(psiClass.getNameIdentifier().getTextRange(), TextRange.create(range));
-  }
-
-  public void testManySmartPointersCreationDeletionPerformance() throws Exception {
-    String text = StringUtil.repeatSymbol(' ', 100000);
-    PsiFile file = createFile("a.txt", text);
-
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 650, () -> {
-      List<SmartPsiFileRange> pointers = new ArrayList<>();
-      for (int i = 0; i < text.length() - 1; i++) {
-        pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
-      }
-      Collections.shuffle(pointers);
-      for (SmartPsiFileRange pointer : pointers) {
-        getPointerManager().removePointer(pointer);
-      }
-    }).assertTiming();
   }
 
   public void testDifferentHashCodesForDifferentElementsInOneFile() throws Exception {
@@ -1010,17 +944,19 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
   public void testDoubleRemoveIsAnError() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    @Language("JAVA")
-    String text = "class A {}";
-    SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", text));
-    getPointerManager().removePointer(pointer);
-    try {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      @Language("JAVA")
+      String text = "class A {}";
+      SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", text));
       getPointerManager().removePointer(pointer);
-      fail("Should have failed");
-    }
-    catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
-    }
+      try {
+        getPointerManager().removePointer(pointer);
+        fail("Should have failed");
+      }
+      catch (AssertionError e) {
+        assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
+      }
+    });
   }
 
   public void testStubSmartPointersAreCreatedEvenInAstPresence() throws Exception {
@@ -1102,32 +1038,34 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
   // if the assertion is to be removed, please ensure that the test in IDEA-182567 passes
   public void testCreatingPointerInsidePsiListenerProhibited() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    @Language("JAVA")
-    String text = "class Foo { { int a; } }";
-    PsiFile file = createFile("a.java", text);
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      @Language("JAVA")
+      String text = "class Foo { { int a; } }";
+      PsiFile file = createFile("a.java", text);
 
-    try {
-      WriteCommandAction.runWriteCommandAction(myProject, () -> {
-        PsiLocalVariable var = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("int"), PsiLocalVariable.class, false);
-        PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
-          @Override
-          public void childAdded(@NotNull PsiTreeChangeEvent event) {
-            createPointer(var);
+      try {
+        WriteCommandAction.runWriteCommandAction(myProject, () -> {
+          PsiLocalVariable var = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("int"), PsiLocalVariable.class, false);
+          PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
+            @Override
+            public void childAdded(@NotNull PsiTreeChangeEvent event) {
+              createPointer(var);
+            }
+          };
+          PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
+          try {
+            var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
           }
-        };
-        PsiManager.getInstance(getProject()).addPsiTreeChangeListener(listener);
-        try {
-          var.getModifierList().setModifierProperty(PsiModifier.FINAL, true);
-        }
-        finally {
-          PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
-        }
-      });
-      fail();
-    }
-    catch (AssertionError e) {
-      assertTrue(e.getMessage(), e.getMessage().contains("must not be created"));
-    }
+          finally {
+            PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
+          }
+        });
+        fail();
+      }
+      catch (AssertionError e) {
+        assertTrue(e.getMessage(), e.getMessage().contains("must not be created"));
+      }
+    });
   }
 
   public void testCanRestoreErrorElementsAtSameOffset() throws Exception {

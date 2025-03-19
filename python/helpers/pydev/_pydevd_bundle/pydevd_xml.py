@@ -11,14 +11,18 @@ from _pydev_bundle import pydev_log
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
-from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, \
-    GET_FRAME_RETURN_GROUP
-from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
-from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
-from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, should_evaluate_shape
-from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, DO_NOT_PROCESS_VARS, XML_COMMUNICATION_VARS_HANDLER
+from _pydevd_bundle.pydevd_constants import dict_keys, IS_PY3K, \
+    LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT
+from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, \
+    StrPresentationProvider
+from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, \
+    DO_NOT_PROCESS_VARS, XML_COMMUNICATION_VARS_HANDLER
 from _pydevd_bundle.pydevd_repr_utils import get_value_repr
+from _pydevd_bundle.pydevd_user_type_renderers_utils import \
+    try_get_type_renderer_for_var
+from _pydevd_bundle.pydevd_utils import is_string, should_evaluate_full_value, \
+    should_evaluate_shape
+
 try:
     import types
 
@@ -199,14 +203,17 @@ class TypeResolveHandler(object):
 
             return self._base_get_type(o, type_name, type_name)
 
-    def str_from_providers(self, o, type_object, type_name):
+    def str_from_providers(self, o, type_object, type_name, do_trim=True):
         provider = self._type_to_str_provider_cache.get(type_object)
 
         if provider is self.NO_PROVIDER:
             return None
 
         if provider is not None:
-            return provider.get_str(o)
+            try:
+                return provider.get_str(o, do_trim)
+            except TypeError:
+                return provider.get_str(o)
 
         if not self._initialized:
             self._initialize()
@@ -214,7 +221,10 @@ class TypeResolveHandler(object):
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
-                return provider.get_str(o)
+                try:
+                    return provider.get_str(o, do_trim)
+                except TypeError:
+                    return provider.get_str(o)
 
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
@@ -270,7 +280,7 @@ def frame_vars_to_xml(frame_f_locals, group_type, hidden_ns=None, user_type_rend
 
 
 def _get_default_var_string_representation(v, _type, typeName, format, do_trim=True):
-    str_from_provider = _str_from_providers(v, _type, typeName)
+    str_from_provider = _str_from_providers(v, _type, typeName, do_trim)
     if str_from_provider is not None:
         return str_from_provider
 
@@ -334,6 +344,7 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
     # shape to xml
     xml_shape = ''
     try:
+        # if should_evaluate_shape() and is_safe_to_access(v, 'shape'):
         if should_evaluate_shape():
             if hasattr(v, 'shape') and not callable(v.shape):
                 xml_shape = ' shape="%s"' % make_valid_xml_value(str(tuple(v.shape)))

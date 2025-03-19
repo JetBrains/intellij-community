@@ -14,9 +14,9 @@ final class ShowAutoImportPassFactory implements TextEditorHighlightingPassFacto
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(file);
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
     boolean canChangeFileSilently = session.canChangeFileSilently();
-    return canChangeFileSilently ? new ShowAutoImportPass(file, editor, session.getVisibleRange()) : null;
+    return canChangeFileSilently ? new ShowAutoImportPass(psiFile, editor, session.getVisibleRange()) : null;
   }
 }

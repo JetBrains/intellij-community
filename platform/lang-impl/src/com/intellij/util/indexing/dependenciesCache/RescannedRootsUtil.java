@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,10 +35,9 @@ final class RescannedRootsUtil {
     return createBuildersForReincludedFiles(project, excludedRoots, librariesDescriptorsAfter);
   }
 
-  @NotNull
-  private static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
-                                                                                 @NotNull Collection<VirtualFile> reincludedRoots,
-                                                                                 @NotNull List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter) {
+  private static @NotNull List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
+                                                                                          @NotNull Collection<VirtualFile> reincludedRoots,
+                                                                                          @NotNull List<? extends SyntheticLibraryDescriptor> librariesDescriptorsAfter) {
     ReincludedRootsUtil.Classifier classifier = ReincludedRootsUtil.classifyFiles(project, reincludedRoots);
     List<IndexableIteratorBuilder> builders = new ArrayList<>(classifier.createBuildersFromWorkspaceFiles());
     builders.addAll(classifier.createBuildersFromFilesFromIndexableSetContributors(project));
@@ -72,9 +71,8 @@ final class RescannedRootsUtil {
     return builders;
   }
 
-  @NotNull
-  static Collection<? extends IndexableIteratorBuilder> getLibraryIteratorBuilders(@Nullable Collection<? extends SyntheticLibraryDescriptor> before,
-                                                                                   @NotNull Collection<? extends SyntheticLibraryDescriptor> after) {
+  static @NotNull Collection<? extends IndexableIteratorBuilder> getLibraryIteratorBuilders(@Nullable Collection<? extends SyntheticLibraryDescriptor> before,
+                                                                                            @NotNull Collection<? extends SyntheticLibraryDescriptor> after) {
     if (after.size() == 1 && before != null && before.size() == 1) {
       SyntheticLibraryDescriptor afterLib = after.iterator().next();
       SyntheticLibraryDescriptor beforeLib = before.iterator().next();
@@ -97,9 +95,8 @@ final class RescannedRootsUtil {
     return result;
   }
 
-  @NotNull
-  private static List<? extends IndexableIteratorBuilder> createLibraryIteratorBuilders(@NotNull SyntheticLibraryDescriptor beforeLib,
-                                                                                        @NotNull SyntheticLibraryDescriptor afterLib) {
+  private static @NotNull List<? extends IndexableIteratorBuilder> createLibraryIteratorBuilders(@NotNull SyntheticLibraryDescriptor beforeLib,
+                                                                                                 @NotNull SyntheticLibraryDescriptor afterLib) {
     Collection<VirtualFile> newRoots = ContainerUtil.subtract(afterLib.getAllRoots(), beforeLib.getAllRoots());
     if (!newRoots.isEmpty()) {
       return Collections.singletonList(
@@ -110,9 +107,8 @@ final class RescannedRootsUtil {
     }
   }
 
-  @NotNull
-  public static Collection<? extends IndexableIteratorBuilder> getIndexableSetIteratorBuilders(@Nullable IndexableSetContributorDescriptor before,
-                                                                                               @NotNull IndexableSetContributorDescriptor after) {
+  public static @NotNull Collection<? extends IndexableIteratorBuilder> getIndexableSetIteratorBuilders(@Nullable IndexableSetContributorDescriptor before,
+                                                                                                        @NotNull IndexableSetContributorDescriptor after) {
     if (before == null) {
       return after.toIteratorBuilders();
     }

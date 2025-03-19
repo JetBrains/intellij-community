@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 interface StepFactory {
@@ -5,13 +6,12 @@ interface StepFactory {
   fun interpretActionsStep(): EvaluationStep
   fun interpretActionsOnNewWorkspaceStep(): EvaluationStep
   fun reorderElements(): EvaluationStep
-  fun highlightTokensInIdeStep(): EvaluationStep
   fun generateReportStep(): EvaluationStep
-  fun finishEvaluationStep(): EvaluationStep
-
-  fun setupCompletionStep(): EvaluationStep
   fun setupStatsCollectorStep(): EvaluationStep?
-  fun setupFullLineStep(): EvaluationStep
+  fun setupRegistryStep(): EvaluationStep
   fun setupSdkStep(): EvaluationStep?
-  fun checkSdkConfiguredStep(): EvaluationStep
+  fun checkSdkConfiguredStep(): EvaluationStep?
+  fun finishEvaluationStep(): FinishEvaluationStep
+  fun featureSpecificSteps(): List<EvaluationStep>
+  fun featureSpecificPreliminarySteps(): List<EvaluationStep>
 }

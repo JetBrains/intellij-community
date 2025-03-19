@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -20,7 +21,8 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 import static com.intellij.patterns.StandardPatterns.instanceOf;
 
 
-public class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
+@ApiStatus.Internal
+public final class CustomFileTypeCompletionContributor extends CompletionContributor implements DumbAware {
   public CustomFileTypeCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inFile(psiFile().withFileType(instanceOf(CustomSyntaxTableFileType.class))),
            new CompletionProvider<>() {

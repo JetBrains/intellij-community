@@ -1,0 +1,20 @@
+public class ExpData {
+
+  private Object provideObject() {
+    return new Object();
+  }
+
+  public static void useStatic(Object p) {
+    System.out.println(p);
+  }
+
+  public void context() {
+    inlineE();
+  }
+
+  public static void inlineE() {
+    useStatic(new DD[10]);
+  }
+
+  class DD {}
+}

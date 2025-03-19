@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xdebugger;
 
@@ -18,6 +18,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import javax.swing.event.HyperlinkListener;
  * An instance of this class can be obtained from the {@link XDebugProcess#getSession()} method
  * and can then be used to control the debugging process.
  */
+@ApiStatus.NonExtendable
 public interface XDebugSession extends AbstractDebuggerSession {
   DataKey<XDebugSession> DATA_KEY = DataKey.create("XDebugSessionTab.XDebugSession");
 
@@ -46,6 +48,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @Nullable
   XStackFrame getCurrentStackFrame();
 
+  @Nullable
   XSuspendContext getSuspendContext();
 
   /**
@@ -105,12 +108,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage);
 
   /**
-   * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getCondition()}) evaluates to {@code true}.
+   * Call this method when a breakpoint is reached if its condition ({@link XBreakpoint#getConditionExpression()}) evaluates to {@code true}.
    * <p>
    * <strong>The underlying debugging process should be suspended only if the method returns {@code true}.</strong>
    *
    * @param breakpoint             reached breakpoint
-   * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpression()} evaluated in the current context
+   * @param evaluatedLogExpression value of {@link XBreakpoint#getLogExpressionObject()} evaluated in the current context
    * @param suspendContext         context
    * @return {@code true} if the debug process should be suspended
    */
@@ -170,4 +173,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   ConsoleView getConsoleView();
 
   RunnerLayoutUi getUI();
+
+  @ApiStatus.Internal
+  boolean isMixedMode();
 }

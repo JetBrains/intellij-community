@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.TestCaseLoader;
@@ -21,10 +21,12 @@ import java.lang.reflect.InvocationTargetException;
 
 /**
  * Allows to customize the test execution environment for the entire test execution without modifying the source code
- * of tests. To specify a test execution policy, set the system property "idea.test.execution.policy" to the FQ name
+ * of tests. To specify a test execution policy, set the system property {@link #SYSTEM_PROPERTY_NAME} to the FQ name
  * of a class implementing this interface.
  */
 public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
+  public static final String SYSTEM_PROPERTY_NAME = "idea.test.execution.policy";
+
   protected IdeaTestExecutionPolicy() {
     TestModeFlags.addListener(this);
   }
@@ -78,10 +80,9 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
 
   private static IdeaTestExecutionPolicy ourCurrent;
 
-  @Nullable
-  public static IdeaTestExecutionPolicy current() {
+  public static @Nullable IdeaTestExecutionPolicy current() {
     if (ourCurrent != null) return ourCurrent;
-    String policyClassName = System.getProperty("idea.test.execution.policy");
+    String policyClassName = System.getProperty(SYSTEM_PROPERTY_NAME);
     if (policyClassName == null) return null;
     try {
       Class<?> policyClass = Class.forName(policyClassName);

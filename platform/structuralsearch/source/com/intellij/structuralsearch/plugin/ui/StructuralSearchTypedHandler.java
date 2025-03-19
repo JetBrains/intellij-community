@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -19,12 +19,8 @@ import java.util.List;
  */
 public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
 
-  @NotNull
   @Override
-  public Result beforeSelectionRemoved(char c,
-                                       @NotNull Project project,
-                                       @NotNull Editor editor,
-                                       @NotNull PsiFile file) {
+  public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (editor.getUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY) == null) {
       return Result.CONTINUE;
     }
@@ -80,13 +76,12 @@ public class StructuralSearchTypedHandler extends TypedHandlerDelegate {
       }
       else if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
         final Document document = editor.getDocument();
-        final CaretModel caretModel = editor.getCaretModel();
-        final Caret caret = caretModel.getCurrentCaret();
+        final Caret caret = editor.getCaretModel().getCurrentCaret();
         final LogicalPosition position = caret.getLogicalPosition();
         final int lineStart = document.getLineStartOffset(position.line);
         final int lineEnd = document.getLineEndOffset(position.line);
         final CharSequence text = document.getCharsSequence();
-        final int offset = lineStart + position.column;
+        final int offset = caret.getOffset();
         final boolean nextIsDollar = offset < text.length() && text.charAt(offset) == '$';
         if (hasOddDollar(text, lineStart, offset) && nextIsDollar) {
           caret.setSelection(offset, offset + 1);

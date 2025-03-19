@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -7,51 +7,56 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public final class Message {
-  @NotNull private final String myTitle;
-  @NotNull private final String myText;
-  @Nullable private final String myGroup;
-  @NotNull private final Kind myKind;
-  @Nullable FilePosition myFilePosition;
+  private final @NotNull String myTitle;
+  private final @NotNull String myText;
+  private final @Nullable String myGroup;
+  private final @NotNull Kind myKind;
+  private final @Nullable FilePosition myFilePosition;
 
-  public Message(@NotNull String title,
-                 @NotNull String text,
-                 @Nullable String group,
-                 @NotNull Kind kind,
-                 @Nullable FilePosition filePosition) {
+  private final boolean myInternal;
+
+  public Message(
+    @NotNull String title,
+    @NotNull String text,
+    @Nullable String group,
+    @NotNull Kind kind,
+    @Nullable FilePosition filePosition,
+    boolean isInternal
+  ) {
     myTitle = title;
     myText = text;
     myGroup = group;
+    myInternal = isInternal;
     myKind = kind;
     myFilePosition = filePosition;
   }
 
-  @NotNull
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return myTitle;
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
-  @Nullable
-  public String getGroup() {
+  public @Nullable String getGroup() {
     return myGroup;
   }
 
-  @NotNull
-  public Kind getKind() {
+  public @NotNull Kind getKind() {
     return myKind;
   }
 
-  @Nullable
-  public FilePosition getFilePosition() {
+  public @Nullable FilePosition getFilePosition() {
     return myFilePosition;
   }
 
+  public boolean isInternal() {
+    return myInternal;
+  }
+
   public static class FilePosition {
-    @NotNull private final String myFilePath;
+    private final @NotNull String myFilePath;
     private final int myLine;
     private final int myColumn;
 
@@ -61,8 +66,7 @@ public final class Message {
       myColumn = column;
     }
 
-    @NotNull
-    public String getFilePath() {
+    public @NotNull String getFilePath() {
       return myFilePath;
     }
 
@@ -75,5 +79,9 @@ public final class Message {
     }
   }
 
-  public enum Kind {ERROR, WARNING, INFO}
+  public enum Kind {
+    ERROR,
+    WARNING,
+    INFO
+  }
 }

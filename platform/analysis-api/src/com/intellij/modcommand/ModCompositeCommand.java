@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * A composite command that contains leaf commands inside
+ * A composite command that contains leaf commands inside.
  * 
  * @param commands list of commands; must not contain composite commands
  */
@@ -26,23 +25,12 @@ public record ModCompositeCommand(@NotNull List<@NotNull ModCommand> commands) i
   }
 
   @Override
-  public @NotNull ModStatus execute(@NotNull Project project) {
-    for (ModCommand command : commands) {
-      ModStatus status = command.execute(project);
-      if (status != ModStatus.SUCCESS) {
-        return status;
-      }
-    }
-    return ModStatus.SUCCESS;
-  }
-
-  @Override
   public boolean isEmpty() {
     return ContainerUtil.all(commands, ModCommand::isEmpty);
   }
 
   @Override
-  public @NotNull Set<@NotNull PsiFile> modifiedFiles() {
+  public @NotNull Set<@NotNull VirtualFile> modifiedFiles() {
     return commands.stream().flatMap(c -> c.modifiedFiles().stream()).collect(Collectors.toSet());
   }
 

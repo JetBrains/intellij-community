@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
@@ -6,8 +6,8 @@ import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.MnemonicHelper.DISABLE_MNEMONIC_PROCESSING
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -33,10 +33,11 @@ import javax.swing.*
 /**
  * @author Eugene Belyaev
  */
-class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl) : AnchoredButton(), DataProvider {
+class StripeButton internal constructor(@JvmField internal val toolWindow: ToolWindowImpl)
+  : AnchoredButton(), UiDataProvider {
   /**
-   * This is analog of Swing mnemonic. We cannot use the standard ones
-   * because it causes typing of "funny" characters into the editor.
+   * This is an analog of Swing mnemonic.
+   * We cannot use the standard ones because it causes typing of "funny" characters into the editor.
    */
   private var mnemonic = 0
   private var pressedWhenSelected = false
@@ -73,7 +74,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     enableEvents(AWTEvent.MOUSE_EVENT_MASK)
     addMouseMotionListener(object : MouseMotionAdapter() {
       override fun mouseDragged(e: MouseEvent) {
-        if (!Registry.`is`("ide.new.tool.window.dnd")) processDrag(e)
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) processDrag(e)
       }
     })
     updateHelpTooltip()
@@ -82,9 +83,8 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private fun updateHelpTooltip() {
     HelpTooltip.dispose(this)
     val tooltip = HelpTooltip()
-    @Suppress("DialogTitleCapitalization")
-    tooltip.setTitle(toolWindow.stripeTitle)
-    val activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindow.id)
+    tooltip.setTitle(toolWindow.stripeTitleProvider)
+    val activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindow.id)
     tooltip.setShortcut(ActionManager.getInstance().getKeyboardShortcut(activateActionId))
     tooltip.installOn(this)
   }
@@ -94,22 +94,19 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   val id: String
     get() = toolWindow.id
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.TOOL_WINDOW.`is`(dataId) -> toolWindow
-      CommonDataKeys.PROJECT.`is`(dataId) -> toolWindow.toolWindowManager.project
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
+    sink[CommonDataKeys.PROJECT] = toolWindow.toolWindowManager.project
   }
 
-  override fun getMnemonic() = mnemonic
+  override fun getMnemonic(): Int = mnemonic
 
   /**
    * We are using the trick here: the method does all things that super method does
-   * except firing of the MNEMONIC_CHANGED_PROPERTY event. After that mnemonic
-   * doesn't work via standard Swing rules (processing of Alt keystrokes).
+   * except firing of the MNEMONIC_CHANGED_PROPERTY event.
+   * After that, mnemonic doesn't work via standard Swing rules (processing of Alt keystrokes).
    */
-  override fun setMnemonic(mnemonic: Int) = throw UnsupportedOperationException("use setMnemonic2(int)")
+  override fun setMnemonic(mnemonic: Int): Nothing = throw UnsupportedOperationException("use setMnemonic2(int)")
 
   private fun setMnemonic2(mnemonic: Int) {
     this.mnemonic = mnemonic
@@ -118,9 +115,9 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
     repaint()
   }
 
-  override fun getMnemonic2() = mnemonic
+  override fun getMnemonic2(): Int = mnemonic
 
-  override fun getAnchor() = toolWindow.anchor
+  override fun getAnchor(): ToolWindowAnchor = toolWindow.anchor
 
   val isFirst: Boolean
     get() = `is`(true)
@@ -275,7 +272,7 @@ class StripeButton internal constructor(internal val toolWindow: ToolWindowImpl)
   private fun updateText(toolWindow: ToolWindowImpl) {
     var text = toolWindow.stripeTitle
     if (UISettings.getInstance().showToolWindowsNumbers) {
-      val mnemonic = ActivateToolWindowAction.getMnemonicForToolWindow(toolWindow.id)
+      val mnemonic = ActivateToolWindowAction.Manager.getMnemonicForToolWindow(toolWindow.id)
       if (mnemonic != -1) {
         text = mnemonic.toChar().toString() + ": " + text
         setMnemonic2(mnemonic)

@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.ide.ui.DocumentationPopupUI
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
@@ -69,9 +70,9 @@ internal class DataContextPopupBoundsHandler(
     popup.showInBestPositionFor(dataContext(popup))
   }
 
-  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
+  override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
     if (!resized) {
-      resizePopup(popup)
+      resizePopup(popup, popupUpdateEvent)
       yield()
     }
     popup.setLocation(popup.getBestPositionFor(dataContext(popup)))

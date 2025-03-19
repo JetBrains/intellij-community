@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -17,17 +17,18 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
+internal class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
   override fun getIcon(): Icon = AllIcons.Vcs.FromVCSDialog
 
-  override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
+  override fun getName(): @Nls String = VcsBundle.message("clone.dialog.repository.url.item")
 
   override fun getTooltip(): String {
     return CheckoutProvider.EXTENSION_POINT_NAME.extensions
@@ -39,8 +40,10 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
     return RepositoryUrlMainExtensionComponent(project, modalityState)
   }
 
-  class RepositoryUrlMainExtensionComponent(private val project: Project,
-                                            private val modalityState: ModalityState) : VcsCloneDialogExtensionComponent() {
+  internal class RepositoryUrlMainExtensionComponent(
+    private val project: Project,
+    private val modalityState: ModalityState,
+  ) : VcsCloneDialogExtensionComponent() {
     override fun onComponentSelected() {
       dialogStateListener.onOkActionNameChanged(getCurrentVcsComponent()?.getOkButtonText() ?: VcsBundle.message("clone.dialog.clone.button"))
       dialogStateListener.onOkActionEnabled(true)
@@ -89,7 +92,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
       comboBox.selectedItem = selectedByDefaultProvider
     }
 
-    override fun getView() = mainPanel
+    override fun getView(): JPanel = mainPanel
 
     fun openForVcs(clazz: Class<out CheckoutProvider>): RepositoryUrlMainExtensionComponent {
       comboBox.selectedItem = CheckoutProvider.EXTENSION_POINT_NAME.findExtension(clazz)

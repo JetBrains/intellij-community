@@ -26,9 +26,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class UnusedImportInspection extends GlobalSimpleInspectionTool {
-  @NonNls
-  public static final String SHORT_NAME = "UNUSED_IMPORT";
+public final class UnusedImportInspection extends GlobalSimpleInspectionTool {
+  public static final @NonNls String SHORT_NAME = "UNUSED_IMPORT";
 
   @Override
   public void checkFile(@NotNull PsiFile file,
@@ -39,8 +38,16 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     if (!(file instanceof PsiJavaFile javaFile) || FileTypeUtils.isInServerPageFile(file)) return;
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
     javaFile.accept(visitor);
+    PsiPolyVariantReference reference;
     for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {
-      PsiJavaCodeReferenceElement reference = unusedImportStatement.getImportReference();
+      if (unusedImportStatement instanceof PsiImportModuleStatement moduleStatement) {
+        PsiJavaModuleReferenceElement moduleReference = moduleStatement.getModuleReference();
+        if (moduleReference == null) continue;
+        reference = moduleReference.getReference();
+      }
+      else {
+        reference = unusedImportStatement.getImportReference();
+      }
       if (reference != null &&
           reference.multiResolve(false).length > 0 &&
           !(PsiTreeUtil.skipWhitespacesForward(unusedImportStatement) instanceof PsiErrorElement)) {
@@ -51,9 +58,8 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     }
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
@@ -62,7 +68,7 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     return false;
   }
 
-  public static @Nls String getDisplayNameText() {
+  public static @NotNull @Nls String getDisplayNameText() {
     return JavaAnalysisBundle.message("unused.import.display.name");
   }
 }

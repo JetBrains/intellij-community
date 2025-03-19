@@ -1,1 +1,1 @@
-print(f'{"foo" :^10}')
+print(f'{'foo' :^10}')

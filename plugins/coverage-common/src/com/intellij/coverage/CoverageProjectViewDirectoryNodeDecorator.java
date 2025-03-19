@@ -8,20 +8,31 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.NotNull;
 
 
 final class CoverageProjectViewDirectoryNodeDecorator extends AbstractCoverageProjectViewNodeDecorator {
   @Override
-  public void decorate(ProjectViewNode node, PresentationData data) {
+  public void decorate(@NotNull ProjectViewNode node, @NotNull PresentationData data) {
     Project project = node.getProject();
     if (project == null) {
       return;
     }
+    if (!CoverageOptionsProvider.getInstance(project).showInProjectView()) return;
 
-    final CoverageDataManager manager = getCoverageDataManager(project);
+    final CoverageDataManager manager = CoverageDataManager.getInstance(project);
     if (manager == null) return;
-    final CoverageSuitesBundle currentSuite = manager.getCurrentSuitesBundle();
+    for (CoverageSuitesBundle suite : manager.activeSuites()) {
+      decorateBundle(node, data, suite, project, manager);
+    }
 
+  }
+
+  private static void decorateBundle(ProjectViewNode node,
+                                     PresentationData data,
+                                     CoverageSuitesBundle currentSuite,
+                                     Project project,
+                                     CoverageDataManager manager) {
     final CoverageAnnotator coverageAnnotator = currentSuite == null ? null : currentSuite.getAnnotator(project);
     if (coverageAnnotator == null) {
       // N/A

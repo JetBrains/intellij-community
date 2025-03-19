@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -15,10 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
@@ -101,9 +97,8 @@ public class JavaInheritorsGetter {
     return expectedClassTypes;
   }
 
-  @Nullable
-  private LookupElement addExpectedType(final PsiType type,
-                                        final CompletionParameters parameters) {
+  private @Nullable LookupElement addExpectedType(final PsiType type,
+                                                  final CompletionParameters parameters) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type, parameters.getPosition())) return null;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
@@ -111,14 +106,14 @@ public class JavaInheritorsGetter {
 
     PsiElement position = parameters.getPosition();
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
-        HighlightClassUtil.checkCreateInnerClassFromStaticContext(position, null, psiClass) != null &&
+        isInnerClassFromStaticContext(position, psiClass) &&
         !psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(".")).accepts(position)) {
       return null;
     }
 
     PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
-        PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
+        PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, parameters.getOriginalFile())) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       PsiClassType classType = (PsiClassType)type;
       if (psiClass.hasTypeParameters() && !classType.isRaw()) {
@@ -168,6 +163,9 @@ public class JavaInheritorsGetter {
     final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position).setShowPackage();
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+        return null;
+      }
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setIndicateAnonymous(true);
     }
@@ -248,5 +246,15 @@ public class JavaInheritorsGetter {
       }
     }
     return true;
+  }
+
+  private static boolean isInnerClassFromStaticContext(@NotNull PsiElement element, @NotNull PsiClass aClass) {
+    if (aClass.hasModifierProperty(PsiModifier.STATIC)) return false;
+    PsiClass outerClass = aClass.getContainingClass();
+    if (outerClass == null) return false;
+
+    return !InheritanceUtil.hasEnclosingInstanceInScope(outerClass, element, true, false) &&
+           (!PsiTreeUtil.isContextAncestor(outerClass, element, false) ||
+            PsiUtil.getEnclosingStaticElement(element, outerClass) != null);
   }
 }

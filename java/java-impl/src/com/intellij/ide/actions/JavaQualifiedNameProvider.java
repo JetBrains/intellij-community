@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -26,12 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class JavaQualifiedNameProvider implements QualifiedNameProvider {
+public final class JavaQualifiedNameProvider implements QualifiedNameProvider {
   private static final Logger LOG = Logger.getInstance(JavaQualifiedNameProvider.class);
 
   @Override
-  @Nullable
-  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
+  public @Nullable PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) return element;
     if (element instanceof PsiDirectory) {
       final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
@@ -44,8 +43,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   @Override
-  @Nullable
-  public String getQualifiedName(@NotNull PsiElement element) {
+  public @Nullable String getQualifiedName(@NotNull PsiElement element) {
     if (element instanceof PsiPackage pkg) {
       return pkg.getQualifiedName();
     }
@@ -172,7 +170,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       PsiClass aClass = member.getContainingClass();
       String className = aClass == null ? "" : aClass.getQualifiedName();
       toInsert = className == null ? "" : className;
-      if (toInsert.length() != 0) toInsert += "#";
+      if (!toInsert.isEmpty()) toInsert += "#";
       toInsert += member.getName();
       if (member instanceof PsiMethod) {
         toInsert += getParameterString((PsiMethod)member, true);
@@ -205,7 +203,8 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
           // pasting reference to default constructor of the class after new
           suffix = "()";
         }
-        else if (toInsert != null && toInsert.length() != 0 && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
+        else if (toInsert != null &&
+                 !toInsert.isEmpty() && Character.isJavaIdentifierPart(toInsert.charAt(toInsert.length()-1)) && Character.isJavaIdentifierPart(elementAtCaret.getText().charAt(0))) {
           //separate identifiers with space
           suffix = " ";
         }
@@ -300,8 +299,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     return resolved == targetElement;
   }
 
-  @Nullable
-  private static PsiElement getMember(PsiElement element) {
+  private static @Nullable PsiElement getMember(PsiElement element) {
     if (element instanceof PsiMember) return element;
 
     if (element instanceof PsiReference) {

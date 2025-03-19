@@ -8,9 +8,11 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.AbstractEmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.IntentionSource;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
 public class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>, SpeedSearchFilter<IntentionActionWithTextCaching> {
   private static final Logger LOG = Logger.getInstance(IntentionListStep.class);
 
-  private final @NotNull CachedIntentions myCachedIntentions;
+  private final @NotNull IntentionContainer myCachedIntentions;
   private final @Nullable IntentionHintComponent.IntentionPopup myPopup;
   private final Dimension myMaxIconSize;
 
@@ -44,23 +46,45 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final Project myProject;
   private final PsiFile myFile;
   private final @Nullable Editor myEditor;
+  private IntentionSource myIntentionSource = IntentionSource.CONTEXT_ACTIONS;
 
+  /**
+   * This constructor exists for binary compatibility
+   */
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
                            @NotNull Project project,
                            @NotNull CachedIntentions intentions) {
+    this(popup, editor, file, project, (IntentionContainer)intentions);
+  }
+
+  public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
+                           @Nullable Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull Project project,
+                           @NotNull IntentionContainer intentions) {
+    this(popup, editor, file, project, intentions, IntentionSource.CONTEXT_ACTIONS);
+  }
+
+  protected IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
+                              @Nullable Editor editor,
+                              @NotNull PsiFile file,
+                              @NotNull Project project,
+                              @NotNull IntentionContainer intentions,
+                              @NotNull IntentionSource source) {
     myPopup = popup;
     myProject = project;
     myFile = file;
     myEditor = editor;
     myCachedIntentions = intentions;
     myMaxIconSize = getMaxIconSize();
+    myIntentionSource = source;
   }
 
   @Override
   public String getTitle() {
-    return null;
+    return myCachedIntentions.getTitle();
   }
 
   @Override
@@ -106,9 +130,10 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
         return;
       }
 
-      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-        DumbService.getInstance(myProject).showDumbModeNotification(
-          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()));
+      if (!DumbService.getInstance(myProject).isUsableInCurrentContext(cachedAction)) {
+        DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(
+          CodeInsightBundle.message("notification.0.is.not.available.during.indexing", cachedAction.getText()),
+          DumbModeBlockedFunctionality.Intentions);
         return;
       }
 
@@ -118,7 +143,6 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
       if (file == null) {
         return;
       }
-
       chooseActionAndInvoke(cachedAction, file, myProject, myEditor);
     };
   }
@@ -127,32 +151,32 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
                                        @NotNull PsiFile file,
                                        @NotNull Project project,
                                        @Nullable Editor editor) {
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText());
+    ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, cachedAction.getAction(), cachedAction.getText(),
+                                                      cachedAction.getFixOffset(), myIntentionSource);
   }
 
   @NotNull
   IntentionListStep getSubStep(@NotNull IntentionActionWithTextCaching action, @NlsContexts.PopupTitle String title) {
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
+    if (myCachedIntentions instanceof CachedIntentions cachedIntentions) {
+      intentions.setOffset(cachedIntentions.getOffset());
+    }
     for (IntentionAction optionIntention : action.getOptionIntentions()) {
       intentions.intentionsToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionIntention, null, null, getIcon(optionIntention), null, null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionErrorFixes()) {
       intentions.errorFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
     }
     for (IntentionAction optionFix : action.getOptionInspectionFixes()) {
       intentions.inspectionFixesToShow.add(
-        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null));
+        new HighlightInfo.IntentionActionDescriptor(optionFix, null, null, getIcon(optionFix), null, null, null, null));
     }
+    intentions.setTitle(title);
 
     return new IntentionListStep(myPopup, myEditor, myFile, myProject,
-                                 CachedIntentions.create(myProject, myFile, myEditor, intentions)) {
-      @Override
-      public String getTitle() {
-        return title;
-      }
-
+                                 CachedIntentions.create(myProject, myFile, myEditor, intentions), myIntentionSource) {
       @Override
       protected void chooseActionAndInvoke(@NotNull IntentionActionWithTextCaching cachedAction,
                                            @NotNull PsiFile file,
@@ -240,6 +264,9 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
 
   @Override
   public ListSeparator getSeparatorAbove(IntentionActionWithTextCaching value) {
+    if (value.hasSeparatorAbove()) {
+      return new ListSeparator();
+    }
     List<IntentionActionWithTextCaching> values = getValues();
     int index = values.indexOf(value);
     if (index <= 0) return null;

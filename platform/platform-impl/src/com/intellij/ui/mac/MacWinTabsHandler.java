@@ -1,32 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.jdkEx.JdkEx;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.platform.jbr.JdkEx;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +33,12 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 
+import static com.intellij.openapi.wm.impl.IdeGlassPaneImplKt.executeOnCancelInEdt;
+
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public class MacWinTabsHandler {
   private static final String WIN_TAB_FILLER = "WIN_TAB_FILLER_KEY";
   private static final String CLOSE_MARKER = "TABS_CLOSE_MARKER";
@@ -48,22 +50,18 @@ public class MacWinTabsHandler {
   private static Callback myObserverCallback; // don't convert to local var
   private static ID myObserverDelegate;
 
-  public static @NotNull JComponent wrapRootPaneNorthSide(@NotNull JRootPane rootPane, @NotNull JComponent northComponent) {
+  public static @NotNull JComponent createAndInstallHandlerComponent(@NotNull JRootPane rootPane) {
     if (isVersion2()) {
-      return MacWinTabsHandlerV2._wrapRootPaneNorthSide(rootPane, northComponent);
+      return MacWinTabsHandlerV2._createAndInstallHandlerComponent(rootPane);
     }
-
-    JPanel panel = new NonOpaquePanel(new BorderLayout());
 
     JPanel filler = new OpaquePanel();
     filler.setBorder(JBUI.Borders.customLineBottom(UIUtil.getTooltipSeparatorColor()));
     filler.setVisible(false);
 
-    panel.add(filler, BorderLayout.NORTH);
-    panel.add(northComponent);
     rootPane.putClientProperty(WIN_TAB_FILLER, filler);
     rootPane.putClientProperty("Window.transparentTitleBarHeight", 28);
-    return panel;
+    return filler;
   }
 
   public static void fastInit(@NotNull IdeFrameImpl frame) {
@@ -80,22 +78,20 @@ public class MacWinTabsHandler {
     return ExperimentalUI.isNewUI() && Registry.is("ide.mac.os.wintabs.version2", true);
   }
 
-  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  public MacWinTabsHandler(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     myFrame = frame;
-    myFrameAllowed = initFrame(frame, parentDisposable);
+    myFrameAllowed = initFrame(frame, coroutineScope);
   }
 
-  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull Disposable parentDisposable) {
+  protected boolean initFrame(@NotNull IdeFrameImpl frame, @NotNull CoroutineScope coroutineScope) {
     boolean allowed = isAllowedFrame(frame) && JdkEx.setTabbingMode(frame, getWindowId(), () -> updateTabBars(null));
 
     if (allowed) {
       Foundation.invoke("NSWindow", "setAllowsAutomaticWindowTabbing:", true);
 
-      Disposer.register(parentDisposable, new Disposable() { // don't convert to lambda
-        @Override
-        public void dispose() {
-          updateTabBars(null);
-        }
+      executeOnCancelInEdt(coroutineScope, () -> {
+        updateTabBars(null);
+        return Unit.INSTANCE;
       });
     }
 
@@ -177,7 +173,7 @@ public class MacWinTabsHandler {
 
       for (int i = 0; i < frames.length; i++) {
         ProjectFrameHelper helper = (ProjectFrameHelper)frames[i];
-        if (Disposer.isDisposed(helper)) {
+        if (helper.isDisposed()) {
           visibleAndHeights[i] = 0;
           continue;
         }
@@ -230,36 +226,40 @@ public class MacWinTabsHandler {
   }
 
   private static void updateTabBar(@NotNull Object frameObject, int height) {
-    JFrame frame = null;
+    JRootPane rootPane;
     if (frameObject instanceof JFrame) {
-      frame = (JFrame)frameObject;
+      rootPane = ((JFrame)frameObject).getRootPane();
     }
-    else if (frameObject instanceof ProjectFrameHelper) {
-      if (Disposer.isDisposed((Disposable)frameObject)) {
-        return;
-      }
-      frame = ((ProjectFrameHelper)frameObject).getFrame();
+    else if (frameObject instanceof ProjectFrameHelper frameHelper) {
+      rootPane = frameHelper.getFrame().getRootPane();
     }
-    if (frame == null) {
+    else {
       return;
     }
 
-    JComponent filler = (JComponent)frame.getRootPane().getClientProperty(WIN_TAB_FILLER);
+    if (rootPane == null) {
+      return;
+    }
+
+    JComponent filler = (JComponent)rootPane.getClientProperty(WIN_TAB_FILLER);
     if (filler == null) {
       return;
     }
+
     if (height > 0) {
       height++;
     }
+
     boolean visible = height > 0;
     boolean oldVisible = filler.isVisible();
     filler.setVisible(visible);
-    filler.setPreferredSize(new JBDimension(-1, height));
+    filler.setPreferredSize(new Dimension(-1, height)); // native header doesn't scale
 
     Container parent = filler.getParent();
     if (parent == null || oldVisible == visible) {
       return;
     }
+
     parent.doLayout();
     parent.revalidate();
     parent.repaint();

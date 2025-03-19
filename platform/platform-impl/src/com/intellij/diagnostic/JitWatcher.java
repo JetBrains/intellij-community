@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.IdeBundle;
@@ -25,8 +25,7 @@ final class JitWatcher {
   private final AtomicBoolean myJitProblemReported = new AtomicBoolean();
   private Method myIsCompilationEnabledMethod;
   private Method myIsCompilationStoppedForeverMethod;
-  @NotNull
-  private CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
+  private @NotNull CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
 
   JitWatcher() {
     // jit compilation check preparations
@@ -52,19 +51,17 @@ final class JitWatcher {
     if (compilationStateCurrentValue != myCompilationStateLastValue) {
       myCompilationStateLastValue = compilationStateCurrentValue;
       switch (myCompilationStateLastValue) {
-        case STATE_UNKNOWN:
-          break;
-        case DISABLED:
+        case STATE_UNKNOWN -> {
+        }
+        case DISABLED -> {
           notifyJitDisabled();
           LOG.warn("The JIT compiler was temporary disabled.");
-          break;
-        case ENABLED:
-          LOG.warn("The JIT compiler was enabled.");
-          break;
-        case STOPPED_FOREVER:
+        }
+        case ENABLED -> LOG.warn("The JIT compiler was enabled.");
+        case STOPPED_FOREVER -> {
           notifyJitDisabled();
           LOG.warn("The JIT compiler was stopped forever. This will affect IDE performance.");
-          break;
+        }
       }
     }
   }

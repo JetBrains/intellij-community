@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.codeInsight.hints.HintUtilsKt.getLanguageForSettingKey;
 
-public class MethodInfoExcludeListFilter implements HintInfoFilter {
+public final class MethodInfoExcludeListFilter implements HintInfoFilter {
   private final List<Matcher> myMatchers;
 
   public MethodInfoExcludeListFilter(Set<String> list) {
@@ -28,8 +28,7 @@ public class MethodInfoExcludeListFilter implements HintInfoFilter {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  public static MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
+  public static @NotNull MethodInfoExcludeListFilter forLanguage(@NotNull Language language) {
     Set<String> list = fullExcludelist(language);
     return new MethodInfoExcludeListFilter(list);
   }
@@ -42,9 +41,7 @@ public class MethodInfoExcludeListFilter implements HintInfoFilter {
     return false;
   }
 
-  @NotNull
-  @Unmodifiable
-  private static Set<String> fullExcludelist(Language language) {
+  private static @NotNull @Unmodifiable Set<String> fullExcludelist(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) {
       return Collections.emptySet();
@@ -58,8 +55,7 @@ public class MethodInfoExcludeListFilter implements HintInfoFilter {
     return excludeList;
   }
 
-  @NotNull
-  private static Set<String> excludeList(@NotNull Language language) {
+  private static @NotNull Set<String> excludeList(@NotNull Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider != null) {
       ParameterNameHintsSettings settings = ParameterNameHintsSettings.getInstance();

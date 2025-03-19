@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.contentAnnotation;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -6,10 +6,12 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
+@ApiStatus.Internal
 @State(name = "VcsContentAnnotationSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
   public static final int ourMaxDays = 31; // approx
@@ -21,13 +23,13 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
     return project.getService(VcsContentAnnotationSettings.class);
   }
 
-  final static class State {
+ public static final class State {
     public boolean myShow1;
     public long myLimit = ourAbsoluteLimit;
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 

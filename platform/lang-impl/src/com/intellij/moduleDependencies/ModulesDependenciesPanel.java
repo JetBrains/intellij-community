@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.CommonBundle;
-import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -51,7 +50,7 @@ import java.util.*;
 /**
  * @author anna
  */
-public class ModulesDependenciesPanel extends JPanel implements Disposable {
+public final class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";
 
   private static final Comparator<DefaultMutableTreeNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -112,7 +111,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     myPathField.setEditable(false);
     add(createNorthPanel(), BorderLayout.NORTH);
 
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    project.getMessageBus().connect(this).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateModuleGraph();
@@ -175,7 +174,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
         }
       }
 
-      private boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
+      private static boolean isLooped(TreePath path, DefaultMutableTreeNode child) {
         for (Object o : path.getPath()) {
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)o;
           if (node != child && Comparing.equal(node.getUserObject(), child.getUserObject())) {
@@ -364,7 +363,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public void dispose() { }
 
 
-  private static class MyUserObject implements NavigatableWithText {
+  private static final class MyUserObject implements NavigatableWithText {
     private final Module myModule;
     private final boolean myInCycle;
 
@@ -381,11 +380,6 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     @Override
     public boolean canNavigate() {
       return !myModule.isDisposed();
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override
@@ -409,7 +403,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
   }
 
-  private static class MyTreePanel extends JPanel implements DataProvider {
+  private static final class MyTreePanel extends JPanel implements UiDataProvider {
     private final Tree myTree;
     private final Project myProject;
 
@@ -421,34 +415,19 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      TreePath path = myTree.getLeadSelectionPath();
+      Object obj = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      if (obj instanceof MyUserObject o) {
+        sink.set(LangDataKeys.MODULE_CONTEXT, o.myModule);
+        sink.set(CommonDataKeys.NAVIGATABLE, o);
       }
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
-          if (node.getUserObject() instanceof MyUserObject) {
-            return ((MyUserObject)node.getUserObject()).myModule;
-          }
-        }
-      }
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return HELP_ID;
-      }
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        TreePath selectionPath = myTree.getLeadSelectionPath();
-        if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode node) {
-          if (node.getUserObject() instanceof MyUserObject) {
-            return node.getUserObject();
-          }
-        }
-      }
-      return null;
+      sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
     }
   }
 
-  private static class MyTreeExpander extends DefaultTreeExpander {
+  private static final class MyTreeExpander extends DefaultTreeExpander {
     private final boolean myEnableExpandAll;
 
     MyTreeExpander(Tree tree, boolean enableExpandAll) {

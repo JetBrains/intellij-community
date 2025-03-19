@@ -7,6 +7,9 @@ import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.VcsLogRangeFilter.RefRange
 import com.intellij.vcs.log.util.VcsLogUtil
 
+/**
+ * @see VcsLogFilterObject.fromRange
+ */
 internal class VcsLogRangeFilterImpl(override val ranges: List<RefRange>) : VcsLogRangeFilter {
 
   override fun getTextPresentation(): Collection<String> {

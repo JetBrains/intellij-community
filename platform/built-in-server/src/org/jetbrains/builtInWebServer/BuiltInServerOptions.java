@@ -1,14 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.util.xmlb.XmlSerializerUtil;
@@ -27,7 +24,9 @@ import java.util.Collections;
 
 @State(
   name = "BuiltInServerOptions",
-  storages = @Storage(StoragePathMacros.NON_ROAMABLE_FILE)
+  category =  SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)
 )
 public final class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions> {
   public static final int DEFAULT_PORT = 63342;
@@ -45,9 +44,8 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
   }
 
   static final class BuiltInServerDebuggerConfigurableProvider extends DebuggerConfigurableProvider {
-    @NotNull
     @Override
-    public Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
+    public @NotNull Collection<? extends Configurable> getConfigurables(@NotNull DebuggerSettingsCategory category) {
       if (category == DebuggerSettingsCategory.GENERAL) {
         return Collections.singletonList(SimpleConfigurable.create("builtInServer", BuiltInServerBundle
           .message("setting.builtin.server.category.label"), BuiltInServerConfigurableUi.class, () -> getInstance()));
@@ -95,8 +93,7 @@ public final class BuiltInServerOptions implements PersistentStateComponent<Buil
 
   public static void onBuiltInServerPortChanged() {
     CustomPortServerManager.EP_NAME.forEachExtensionSafe(extension -> {
-      CustomPortServerManagerBase baseManager = (CustomPortServerManagerBase) extension;
-      if (baseManager != null) {
+      if (extension instanceof CustomPortServerManagerBase baseManager) {
         baseManager.portChanged();
       }
     });

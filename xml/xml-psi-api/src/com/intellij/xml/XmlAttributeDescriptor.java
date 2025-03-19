@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.xml;
 
@@ -33,8 +33,7 @@ public interface XmlAttributeDescriptor extends PsiMetaData {
   @DetailedDescription
   String validateValue(XmlElement context, String value);
 
-  @NotNull
-  default Collection<PsiElement> getDeclarations() {
+  default @NotNull Collection<PsiElement> getDeclarations() {
     PsiElement declaration = getDeclaration();
     return declaration != null ? Collections.singleton(declaration)
                                : Collections.emptyList();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.JavaTestUtil;
@@ -10,7 +10,9 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -24,7 +26,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -48,10 +49,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -71,10 +69,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author MYakovlev
- */
 @ExcludeFromTestDiscovery
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;
@@ -94,16 +90,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindInDirectoryCorrectlyFindVirtualFileForJars() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    VirtualFile[] files = getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES);
-    VirtualFile rtJar = null;
-    for(VirtualFile file:files) {
-      if (file.getPath().contains("rt.jar")) {
-        rtJar = JarFileSystem.getInstance().getLocalVirtualFileFor(file);
-        break;
-      }
-    }
-
+    VirtualFile rtJar = Stream.of(getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES))
+      .filter(file -> file.getPath().contains("rt.jar"))
+      .map(file -> JarFileSystem.getInstance().getLocalByEntry(file))
+      .findFirst().orElse(null);
     assertNotNull(rtJar);
+
     findModel.setProjectScope(false);
     findModel.setDirectoryName(rtJar.getPath());
     assertNotNull(FindInProjectUtil.getDirectory(findModel));
@@ -117,7 +109,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindString() throws InterruptedException, ExecutionException {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    @Language("JAVA")
+    @Language("JAVA") @SuppressWarnings("ALL")
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = myFindManager.findString(text, 0, findModel);
     assertTrue(findResult.isStringFound());
@@ -165,7 +157,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setProjectScope(true);
 
     final FindResult[] findResultArr = new FindResult[1];
-    Future<?> thread = findInNewThread(findModel, myFindManager, text, 0, findResultArr);
+    Future<?> thread = findInNewThread(findModel, myFindManager, text, findResultArr);
     new WaitFor(30 *1000){
       @Override
       protected boolean condition() {
@@ -177,14 +169,10 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     thread.get();
   }
 
-  private static Future<?> findInNewThread(final FindModel model,
-                                           final FindManager findManager,
-                                           final CharSequence text,
-                                           final int offset,
-                                           final FindResult[] op_result){
+  private static Future<?> findInNewThread(FindModel model, FindManager findManager, CharSequence text, FindResult[] op_result){
     op_result[0] = null;
     return ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        op_result[0] = findManager.findString(text, offset, model);
+        op_result[0] = findManager.findString(text, 0, model);
       }
     );
   }
@@ -523,7 +511,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     final FindModel findModel = new FindModel();
     String toFind = "xxx";
     findModel.setStringToFind(toFind);
-    @SuppressWarnings("SpellCheckingInspection") String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+    String toReplace = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
     findModel.setStringToReplace(toReplace);
     findModel.setWholeWordsOnly(true);
     findModel.setFromCursor(false);
@@ -903,13 +891,9 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     createFile("a.java", "foo bar foo true");
     FindModel findModel = FindManagerTestUtils.configureFindModel("true");
     findModel.setWholeWordsOnly(true);
-    DumbServiceImpl.getInstance(getProject()).setDumb(true);
-    try {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
       assertSize(1, findInProject(findModel));
-    }
-    finally {
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-    }
+    });
   }
 
   public void testNoFilesFromAdditionalIndexedRootsWithCustomExclusionScope() throws ParsingException {
@@ -1116,7 +1100,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     model.setProjectScope(false);
     model.setCustomScopeName("initialScopeName");
 
-    checkContext(model, myProject, directory, module, false, dirName, moduleName, false);
+    checkContext(model, myProject, directory, module, false, dirName, moduleName, true);
     checkContext(model, myProject, directory, null, false, dirName, moduleName, false);//prev directory state
     checkContext(model, myProject, null, null, false, dirName, moduleName, false);//prev module and dir state
     model.setCustomScope(scope);
@@ -1124,12 +1108,19 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     checkContext(model, myProject, null, null, false, dirName, moduleName, true);//prev module and dir state
   }
 
-  private static void checkContext(FindModel model, Project project, VirtualFile directory, Module module,
-                                   boolean shouldBeProjectScope, String expectedDirectoryName, String expectedModuleName, boolean shouldBeCustomScope) {
-    MapDataContext dataContext = new MapDataContext();
-    dataContext.put(CommonDataKeys.PROJECT, project);
-    dataContext.put(CommonDataKeys.VIRTUAL_FILE, directory);
-    dataContext.put(LangDataKeys.MODULE_CONTEXT, module);
+  private static void checkContext(FindModel model,
+                                   Project project,
+                                   VirtualFile directory,
+                                   Module module,
+                                   boolean shouldBeProjectScope,
+                                   String expectedDirectoryName,
+                                   String expectedModuleName,
+                                   boolean shouldBeCustomScope) {
+    DataContext dataContext = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(CommonDataKeys.VIRTUAL_FILE, directory)
+      .add(LangDataKeys.MODULE_CONTEXT, module)
+      .build();
     FindInProjectUtil.setDirectoryName(model, dataContext);
     assertEquals(shouldBeProjectScope, model.isProjectScope());
     assertEquals(expectedDirectoryName, model.getDirectoryName());

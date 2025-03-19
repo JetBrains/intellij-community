@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Nikolay.Tropin
  */
-public class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
+public final class JavaSimpleGetterProvider implements SimplePropertyGetterProvider {
   @Override
   public boolean isInsideSimpleGetter(@NotNull PsiElement element) {
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);

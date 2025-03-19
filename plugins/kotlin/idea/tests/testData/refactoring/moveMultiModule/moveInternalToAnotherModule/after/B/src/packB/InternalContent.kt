@@ -8,6 +8,6 @@ class InternalContent {
     }
 
     fun useInternal() {
-        InternalContentUser().internalFun()
+        InternalContentUser().internalFunUser()
     }
 }

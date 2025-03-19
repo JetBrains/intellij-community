@@ -1,19 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStubBase
-import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 import javax.swing.Icon
 
-internal val NONE = ActionIconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
-internal val SEPARATOR = ActionIconInfo(null, "", "", null)
+internal val NONE: ActionIconInfo = ActionIconInfo(null, IdeBundle.message("default.icons.none.text"), "", null)
+internal val SEPARATOR: ActionIconInfo = ActionIconInfo(null, "", "", null)
 
 /**
  * @param actionId id of the action that uses this icon.
@@ -58,8 +58,7 @@ internal fun getAvailableIcons(): List<ActionIconInfo> {
   return actionManager.getActionIdList("").mapNotNull { actionId ->
     val action = actionManager.getActionOrStub(actionId) ?: return@mapNotNull null
     val icon = if (action is ActionStubBase) {
-      val path = action.iconPath ?: return@mapNotNull null
-      IconLoader.findIcon(path, action.plugin.classLoader)
+      findIconUsingNewImplementation(path = action.iconPath ?: return@mapNotNull null, classLoader = action.plugin.classLoader)
     }
     else {
       val presentation = action.templatePresentation
@@ -77,16 +76,13 @@ internal fun getCustomIcons(schema: CustomActionsSchema): List<ActionIconInfo> {
     }
     val action = actionManager.getAction(iconReference)
     if (action == null) {
-      val icon = try {
-        CustomActionsSchema.loadCustomIcon(iconReference)
+      try {
+        val icon = loadCustomIcon(iconReference)
+        ActionIconInfo(icon = icon, text = iconReference.substringAfterLast('/'), actionId = actionId, iconPath = iconReference)
       }
       catch (ex: IOException) {
         null
       }
-      if (icon != null) {
-        ActionIconInfo(icon, iconReference.substringAfterLast("/"), actionId, iconReference)
-      }
-      else null
     }
     else null
   }

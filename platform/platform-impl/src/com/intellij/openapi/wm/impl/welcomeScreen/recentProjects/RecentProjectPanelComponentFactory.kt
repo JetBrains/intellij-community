@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.ide.RecentProjectsManager
@@ -61,8 +61,15 @@ internal object RecentProjectPanelComponentFactory {
       }
     })
 
-    val updateQueue = MergingUpdateQueue("Welcome screen UI updater", UPDATE_INTERVAL, true, null,
-                                         parentDisposable, tree, Alarm.ThreadToUse.SWING_THREAD)
+    val updateQueue = MergingUpdateQueue(
+      name = "Welcome screen UI updater",
+      mergingTimeSpan = UPDATE_INTERVAL,
+      isActive = true,
+      modalityStateComponent = null,
+      parent = parentDisposable,
+      activationComponent = tree,
+      thread = Alarm.ThreadToUse.SWING_THREAD,
+    )
     updateQueue.queue(Update.create(filteringTree, Runnable { repaintProgressBars(updateQueue, filteringTree) }))
 
     return filteringTree

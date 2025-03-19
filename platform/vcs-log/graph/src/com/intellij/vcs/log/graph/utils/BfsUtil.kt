@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.utils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 open class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags, private val down: Boolean = true) {
@@ -55,6 +56,7 @@ open class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private v
   }
 }
 
+@ApiStatus.Internal
 open class BfsSearch<T>(start: Int, graph: LiteLinearGraph, visited: Flags, down: Boolean = true,
                         private val limit: Int = graph.nodesCount()) : BfsWalk(start, graph, visited, down) {
   var result: T? = null

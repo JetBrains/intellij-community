@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -9,7 +9,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.UserRenderersConfigurable;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.CompoundReferenceRenderer;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,7 +38,7 @@ public class CreateRendererAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
+  public void actionPerformed(final @NotNull AnActionEvent event) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = ViewAsGroup.getSelectedValues(event);
     if (values.size() != 1) {
@@ -54,7 +54,7 @@ public class CreateRendererAction extends AnAction {
 
     final Project project = event.getProject();
 
-    process.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+    javaValue.getEvaluationContext().getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         Type type = javaValue.getDescriptor().getType();
@@ -66,9 +66,8 @@ public class CreateRendererAction extends AnAction {
               "reference.idesettings.debugger.typerenderers",
               JavaDebuggerBundle.message("user.renderers.configurable.display.name"),
               "reference.idesettings.debugger.typerenderers") {
-              @NotNull
               @Override
-              protected NodeRendererSettings getSettings() {
+              protected @NotNull NodeRendererSettings getSettings() {
                 return NodeRendererSettings.getInstance();
               }
 
@@ -79,12 +78,13 @@ public class CreateRendererAction extends AnAction {
             };
           SingleConfigurableEditor editor = new SingleConfigurableEditor(project, configurable);
           if (name != null) {
-            NodeRenderer renderer = NodeRendererSettings.getInstance().createCompoundReferenceRenderer(
+            CompoundReferenceRenderer renderer = NodeRendererSettings.getInstance().createCompoundReferenceRenderer(
               StringUtil.getShortName(name),
               name,
               null,
               null);
             renderer.setEnabled(true);
+            renderer.setHasOverhead(true);
             ui.addRenderer(renderer);
           }
           editor.show();

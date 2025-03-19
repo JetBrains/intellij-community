@@ -47,6 +47,7 @@ public class SameSourceRootInTwoModulesTest extends JavaPsiTestCase {
       assertEquals("p.A", psiClass.getQualifiedName());
 
       PsiFile psiFile = myPsiManager.findFile(myPackDir.findChild("A.java"));
+      //noinspection ResultOfMethodCallIgnored -- load PSI
       psiFile.getChildren();
       assertEquals(psiFile, psiClass.getContainingFile());
 

@@ -25,11 +25,11 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
@@ -748,7 +748,7 @@ public class XmlTagTest extends LightJavaCodeInsightTestCase {
     FileUtil.writeToFile(tempFile, text);
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      VirtualFileManager.getInstance().syncRefresh();
+      VfsTestUtil.syncRefresh();
       XmlFile file ;//createTemporaryFile("wpd.xml", text));
       try {
         file = (XmlFile)getPsiManager().findFile(VfsUtil.findFileByURL(tempFile.toURL()));

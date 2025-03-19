@@ -6,10 +6,12 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = varWithType)
-                        ULiteralExpression (value = "Not Null")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "Not Null")
                 UDeclarationsExpression
                     ULocalVariable (name = varWithoutType)
-                        ULiteralExpression (value = "lorem ipsum")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "lorem ipsum")
                 UDeclarationsExpression
                     ULocalVariable (name = result)
                         UBinaryExpression (operator = +)
@@ -40,7 +42,6 @@ UFile (package = )
                     ULocalVariable (name = tl)
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                             UIdentifier (Identifier (listOf))
-                            USimpleNameReferenceExpression (identifier = listOf, resolvesTo = null)
                             USimpleNameReferenceExpression (identifier = at)
                 UDeclarationsExpression
                     ULocalVariable (name = tsl)
@@ -48,7 +49,6 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = tl)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                                 UIdentifier (Identifier (map))
-                                USimpleNameReferenceExpression (identifier = map, resolvesTo = null)
                                 ULambdaExpression
                                     UParameter (name = it)
                                     UBlockExpression
@@ -57,7 +57,6 @@ UFile (package = )
                                                 USimpleNameReferenceExpression (identifier = it)
                                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                                     UIdentifier (Identifier (toString))
-                                                    USimpleNameReferenceExpression (identifier = toString, resolvesTo = null)
                 UDeclarationsExpression
                     ULocalVariable (name = lls)
                 UDeclarationsExpression
@@ -66,7 +65,5 @@ UFile (package = )
                     ULocalVariable (name = llt)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                     UIdentifier (Identifier (parameterizedFoo))
-                    USimpleNameReferenceExpression (identifier = parameterizedFoo, resolvesTo = null)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (emptyList))
-                        USimpleNameReferenceExpression (identifier = emptyList, resolvesTo = null)

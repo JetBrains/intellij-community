@@ -1,0 +1,22 @@
+// NAME_COUNT_TO_USE_STAR_IMPORT: 2
+package test
+
+import dependencyBar.*
+import dependencyFoo.*
+import dependencyFoo.CommonClass
+
+fun barUsage() {
+    barOne()
+    barTwo()
+    barThree()
+}
+
+fun fooUsage() {
+    fooOne()
+    fooTwo()
+    fooThree()
+}
+
+fun test() {
+    CommonClass()
+}

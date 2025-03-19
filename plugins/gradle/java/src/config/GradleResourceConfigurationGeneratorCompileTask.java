@@ -7,7 +7,7 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class GradleResourceConfigurationGeneratorCompileTask implements CompileTask {
+public final class GradleResourceConfigurationGeneratorCompileTask implements CompileTask {
 
   @Override
   public boolean execute(@NotNull CompileContext context) {

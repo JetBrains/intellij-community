@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.testFramework.TestDataPath
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import java.awt.Color
 import java.awt.Graphics
@@ -18,6 +19,9 @@ import java.awt.Rectangle
 @TestDataPath("\$CONTENT_ROOT/testData/diff/painting")
 class DiffEditorPaintingTest : EditorPaintingTestCase() {
   override fun getTestDataPath(): String {
+    if (ExperimentalUI.isNewUI()) {
+      return "platform/diff-impl/tests/testData/diff/painting/new.ui"
+    }
     return "platform/diff-impl/tests/testData/diff/painting"
   }
 

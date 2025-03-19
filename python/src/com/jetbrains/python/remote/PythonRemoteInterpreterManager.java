@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.intellij.execution.ExecutionException;
@@ -15,18 +15,18 @@ import com.intellij.remote.PathMappingProvider;
 import com.intellij.remote.RemoteMappingsManager;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.extensions.python.ProgressManagerExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyConsoleProcessHandler;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PythonConsoleView;
+import com.jetbrains.python.extensions.ProgressManagerExtKt;
 import com.jetbrains.python.remote.PyRemotePathMapper.PyPathMappingType;
 import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,19 +34,16 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 
 public abstract class PythonRemoteInterpreterManager {
-  public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
+  public static final ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
 
-  public final static Key<PathMapper> PATH_MAPPING_SETTINGS_KEY = Key.create("PATH_MAPPING_SETTINGS_KEY");
-
-  public final static Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
+  public static final Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 
   public static final String PYTHON_PREFIX = "python";
 
   public abstract boolean editSdk(@NotNull Project project, @NotNull SdkModificator sdkModificator, @NotNull Collection<Sdk> existingSdks);
 
-  @Nullable
-  public static PythonRemoteInterpreterManager getInstance() {
+  public static @Nullable PythonRemoteInterpreterManager getInstance() {
     return ContainerUtil.getFirstItem(EP_NAME.getExtensionList());
   }
 
@@ -65,13 +62,12 @@ public abstract class PythonRemoteInterpreterManager {
   }
 
   public static void addHelpersMapping(@NotNull RemoteSdkProperties data, @NotNull PyRemotePathMapper pathMapper) {
-    pathMapper.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath(), PyPathMappingType.HELPERS);
+    pathMapper.addMapping(PythonHelpersLocator.getCommunityHelpersRoot().toString(), data.getHelpersPath(), PyPathMappingType.HELPERS);
   }
 
-  @NotNull
-  public static PyRemotePathMapper appendBasicMappings(@Nullable Project project,
-                                                       @Nullable PyRemotePathMapper pathMapper,
-                                                       @NotNull RemoteSdkAdditionalData<?> data) {
+  public static @NotNull PyRemotePathMapper appendBasicMappings(@Nullable Project project,
+                                                                @Nullable PyRemotePathMapper pathMapper,
+                                                                @NotNull RemoteSdkAdditionalData data) {
     @NotNull PyRemotePathMapper newPathMapper = PyRemotePathMapper.cloneMapper(pathMapper);
 
     addHelpersMapping(data, newPathMapper);
@@ -102,11 +98,13 @@ public abstract class PythonRemoteInterpreterManager {
     return newPathMapper;
   }
 
-  @NotNull
-  public abstract SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
+  public abstract @NotNull SdkAdditionalData loadRemoteSdkData(@NotNull Sdk sdk, @Nullable Element additional);
 
-  @NotNull
-  public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
+  /**
+   * The method is going to be removed when the flag {@code python.use.targets.api} is eliminated.
+   */
+  @ApiStatus.Obsolete
+  public abstract @NotNull PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
                                                                       @NotNull PythonConsoleView view,
                                                                       @NotNull PydevConsoleCommunication consoleCommunication,
                                                                       @NotNull String commandLine,

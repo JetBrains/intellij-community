@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.contents.DiffContent;
@@ -16,8 +16,8 @@ import java.util.List;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnPropertiesDiffRequest extends ContentDiffRequest {
-  @NotNull private final List<DiffContent> myContents;
-  @NotNull private final List<String> myContentTitles;
+  private final @NotNull List<DiffContent> myContents;
+  private final @NotNull List<String> myContentTitles;
 
   public SvnPropertiesDiffRequest(@Nullable List<PropertyData> before, @Nullable List<PropertyData> after,
                                   @Nullable String title1, @Nullable String title2) {
@@ -27,46 +27,40 @@ public class SvnPropertiesDiffRequest extends ContentDiffRequest {
     myContentTitles = Arrays.asList(title1, title2);
   }
 
-  @NotNull
-  public DiffContent createContent(@Nullable List<PropertyData> content) {
+  public @NotNull DiffContent createContent(@Nullable List<PropertyData> content) {
     if (content == null) return new EmptyContent();
 
     return new PropertyContent(content);
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return message("dialog.title.svn.properties.diff");
   }
 
-  @NotNull
   @Override
-  public List<String> getContentTitles() {
+  public @NotNull List<String> getContentTitles() {
     return myContentTitles;
   }
 
-  @NotNull
   @Override
-  public List<DiffContent> getContents() {
+  public @NotNull List<DiffContent> getContents() {
     return myContents;
   }
 
   public static class PropertyContent extends DiffContentBase {
-    @NotNull private final List<PropertyData> myProperties;
+    private final @NotNull List<PropertyData> myProperties;
 
     public PropertyContent(@NotNull List<PropertyData> properties) {
       myProperties = properties;
     }
 
-    @NotNull
-    public List<PropertyData> getProperties() {
+    public @NotNull List<PropertyData> getProperties() {
       return myProperties;
     }
 
-    @Nullable
     @Override
-    public FileType getContentType() {
+    public @Nullable FileType getContentType() {
       return null;
     }
   }

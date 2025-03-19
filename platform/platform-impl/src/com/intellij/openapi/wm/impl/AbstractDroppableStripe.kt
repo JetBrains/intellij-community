@@ -40,7 +40,7 @@ internal class LayoutData(
 internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager)
   : JBPanel<AbstractDroppableStripe>(layoutManager) {
   companion object {
-    const val DROP_DISTANCE_SENSITIVITY = 200
+    const val DROP_DISTANCE_SENSITIVITY: Int = 200
 
     @VisibleForTesting
     fun createButtonLayoutComparator(isNewUi: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
@@ -78,6 +78,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
   private var lastLayoutData: LayoutData? = null
 
   private val buttons: MutableList<StripeButtonManager> = mutableListOf()
+  private val buttonAddedRemovedListeners = mutableListOf<() -> Unit>()
 
   abstract val isNewStripes: Boolean
   abstract val anchor: ToolWindowAnchor
@@ -112,10 +113,15 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
 
   fun getButtons(): List<StripeButtonManager> = buttons
 
+  internal fun addButtonAddedRemovedListener(listener: () -> Unit) {
+    buttonAddedRemovedListeners.add(listener)
+  }
+
   fun addButton(button: StripeButtonManager) {
     computedPreferredSize = null
     buttons.add(button)
     add(button.getComponent())
+    buttonAddedRemovedListeners.forEach { it() }
     revalidate()
   }
 
@@ -123,6 +129,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     computedPreferredSize = null
     buttons.remove(button)
     remove(button.getComponent())
+    buttonAddedRemovedListeners.forEach { it() }
     revalidate()
     repaint()
   }
@@ -187,7 +194,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     super.invalidate()
   }
 
-  fun isDroppingButton() = dragButton != null
+  fun isDroppingButton(): Boolean = dragButton != null
 
   abstract fun getButtonFor(toolWindowId: String): StripeButtonManager?
 
@@ -228,7 +235,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     return isShowing && Rectangle(locationOnScreen, size).contains(screenPoint)
   }
 
-  open fun getToolWindowDropAreaScreenBounds() = Rectangle(locationOnScreen, size)
+  open fun getToolWindowDropAreaScreenBounds(): Rectangle = Rectangle(locationOnScreen, size)
 
   protected fun recomputeBounds(setBounds: Boolean, toFitWith: Dimension?, noDrop: Boolean): LayoutData {
     val horizontalOffset = height

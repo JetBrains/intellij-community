@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -16,16 +16,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
-  @NotNull
+public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.encapsulate.field.text");
   }
 
-  @NotNull
   @Override
-  public final String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -59,8 +57,7 @@ public class EncapsulateFieldAction extends BaseRefactoringIntentionAction {
     JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler().invoke(project, new PsiElement[]{field}, dataContext);
   }
 
-  @Nullable
-  protected static PsiField getField(@Nullable PsiElement element) {
+  private static @Nullable PsiField getField(@Nullable PsiElement element) {
     if (!(element instanceof PsiIdentifier)) {
       return null;
     }

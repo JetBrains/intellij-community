@@ -5,7 +5,7 @@ import de.plushnikov.intellij.plugin.LombokClassNames;
 /**
  * @author Plushnikov Michail
  */
-public class JBossLogProcessor extends AbstractTopicSupportingSimpleLogProcessor {
+public final class JBossLogProcessor extends AbstractTopicSupportingSimpleLogProcessor {
 
   private static final String LOGGER_TYPE = "org.jboss.logging.Logger";
   private static final String LOGGER_INITIALIZER = "org.jboss.logging.Logger.getLogger(%s)";

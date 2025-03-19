@@ -6,10 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.Collections;
 import java.util.EventListener;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,13 +39,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   @Override
   public void loadState(@NotNull State state) {
     synchronized (myLock) {
-      if (state.diffRenameLimitOne) {
-        myState = new State(state);
-      }
-      else {
-        myState = new State();
-        myState.diffRenameLimitOne = true;
-      }
+      myState = new State(state);
     }
   }
 
@@ -52,7 +48,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     synchronized (myLock) {
       added = myState.repositories.add(root.getPath());
     }
-    if (added) myDispatcher.getMulticaster().onRepositoriesListChanged();
+    if (added) myDispatcher.getMulticaster().onRepositoryAdded(root);
   }
 
   public boolean removeRepository(@NotNull VirtualFile root) {
@@ -60,19 +56,30 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     synchronized (myLock) {
       removed = myState.repositories.remove(root.getPath());
     }
-    if (removed) myDispatcher.getMulticaster().onRepositoriesListChanged();
+    if (removed) myDispatcher.getMulticaster().onRepositoryRemoved(root);
     return removed;
   }
 
   public boolean isBig(@NotNull VirtualFile root) {
+    return isBig(root.getPath());
+  }
+
+  public boolean isBig(@NotNull String path) {
     synchronized (myLock) {
-      return myState.repositories.contains(root.getPath());
+      return myState.repositories.contains(path);
     }
   }
 
   public int getRepositoryCount() {
     synchronized (myLock) {
       return myState.repositories.size();
+    }
+  }
+
+  @Contract(pure = true)
+  public @NotNull @UnmodifiableView SortedSet<String> getRepositoryPaths() {
+    synchronized (myLock) {
+      return Collections.unmodifiableSortedSet(myState.repositories);
     }
   }
 
@@ -87,19 +94,31 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   public static final class State {
     @XCollection(elementName = "repository", valueAttributeName = "path", style = XCollection.Style.v2)
     public SortedSet<String> repositories = new TreeSet<>();
-    @Attribute("diff-rename-limit-one")
-    public boolean diffRenameLimitOne = false;
 
     public State() {
     }
 
     public State(@NotNull State state) {
       repositories = new TreeSet<>(state.repositories);
-      diffRenameLimitOne = state.diffRenameLimitOne;
     }
   }
 
   public interface Listener extends EventListener {
+    default void onRepositoryAdded(@NotNull VirtualFile root) { }
+    default void onRepositoryRemoved(@NotNull VirtualFile root) { }
+  }
+
+  public interface Adapter extends Listener {
+    @Override
+    default void onRepositoryAdded(@NotNull VirtualFile root) {
+      onRepositoriesListChanged();
+    }
+
+    @Override
+    default void onRepositoryRemoved(@NotNull VirtualFile root) {
+      onRepositoriesListChanged();
+    }
+
     void onRepositoriesListChanged();
   }
 }

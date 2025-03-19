@@ -1,23 +1,59 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.text.CharArrayUtil;
-import it.unimi.dsi.fastutil.ints.*;
-import it.unimi.dsi.fastutil.objects.AbstractObjectIterator;
-import it.unimi.dsi.fastutil.objects.AbstractObjectSet;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.ints.AbstractIntIterator;
+import it.unimi.dsi.fastutil.ints.AbstractIntSet;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
+/**
+ * Helper class to generates a <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
+ * Notes on our implementation:
+ * <ol>
+ *   <li>
+ *   <b>Packed trigram:</b> we represent trigram in a packed form: {@code int trigram = (ch[0]<<16) + (ch[1]<<8) + ch[2]}.
+ *   <br/>
+ *   For 1-byte characters this is a lossless representation, but for multibyte characters the representation is
+ *   actually lossy: >1 different trigram could be packed into the same int32 value. So the representation is
+ *   really not an actual trigram 'packed', but a kind of _hash_ of a trigram (ch[0], ch[1], ch[2]).
+ *   <br/>
+ *   This non-unique representation doesn't hurt search because we use trigram index only to produce a list of
+ *   file _candidates_, and re-scan the candidates files to find ones that really contain a query string.
+ *   </li>
+ *   <li>
+ *   <b>Words separators:</b> we use {@link Character#isJavaIdentifierPart(char)} as a way to differentiate between
+ *   'word' and 'separator' symbols -- i.e. java-identifier symbols are 'word' symbols, all other symbols are
+ *   separators.
+ *   </li>
+ *   <li>
+ *   <b>Case-sensitivity:</b> we're trying to generate case-insensitive trigrams. For that we lower-case
+ *   {@link Character#toLowerCase(char)} every symbol before utilising it in a trigram.
+ *   <b>BEWARE</b>: This is <b>imperfect case-insensitivity</b> implementation: case conversion rules could be quite
+ *   tricky outside basic ASCII.
+ *   E.g. for some symbols ch.toUpper().toLower() != ch.toLower(), and for some symbols ch.toLower() could be a one
+ *   char, and String(ch).toLower() could be a 2-chars string. Both cases are not covered very well with the currently
+ *   used approach: a search via trigram-based index _could_ sometimes miss potential matches, if such matches are of
+ *   a different case than a query string, and case-conversion is non-trivial.
+ *   Since non-trivial case-conversions are all beyond ASCII, and infrequent in general -- we decided to not deal with
+ *   it now.
+ *   </li>
+ * </ol>
+ */
+@ApiStatus.Internal
 public final class TrigramBuilder {
   private TrigramBuilder() {
   }
 
-  public static abstract class TrigramProcessor implements IntPredicate {
+  public abstract static class TrigramProcessor implements IntPredicate {
     public boolean consumeTrigramsCount(@SuppressWarnings("unused") int count) {
       return true;
     }
@@ -29,7 +65,7 @@ public final class TrigramBuilder {
     if (!consumer.consumeTrigramsCount(trigrams.size())) {
       return false;
     }
-    IntIterator iterator = trigrams.intIterator();
+    IntIterator iterator = trigrams.iterator();
     while (iterator.hasNext()) {
       int trigram = iterator.nextInt();
       if (!consumer.test(trigram)) {
@@ -40,7 +76,7 @@ public final class TrigramBuilder {
   }
 
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text) {
-    return new AbstractInt2ObjectMap<Void>() {
+    return new AbstractMap<Integer, Void>() {
       final IntSet trigrams = getTrigrams(text);
 
       @Override
@@ -49,7 +85,8 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public boolean containsKey(int k) {
+      public boolean containsKey(Object k) {
+        //noinspection deprecation
         return trigrams.contains(k);
       }
 
@@ -59,37 +96,38 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public ObjectSet<Entry<Void>> int2ObjectEntrySet() {
-        return new AbstractObjectSet<Entry<Void>>() {
+      public void forEach(BiConsumer<? super Integer, ? super Void> consumer) {
+        trigrams.forEach(integer -> {
+          consumer.accept(integer, null);
+        });
+      }
+
+      @Override
+      public IntSet keySet() {
+        return trigrams;
+      }
+
+      @Override
+      public Collection<Void> values() {
+        return Collections.nCopies(trigrams.size(), null);
+      }
+
+      @Override
+      public @NotNull Set<Entry<Integer, Void>> entrySet() {
+        return new AbstractSet<Entry<Integer, Void>>() {
           @Override
-          public ObjectIterator<Entry<Void>> iterator() {
-            IntIterator iterator = trigrams.intIterator();
-            return new AbstractObjectIterator<Entry<Void>>() {
+          public Iterator<Entry<Integer, Void>> iterator() {
+            IntIterator iterator = trigrams.iterator();
+            return new Iterator<Entry<Integer, Void>>() {
               @Override
               public boolean hasNext() {
                 return iterator.hasNext();
               }
 
               @Override
-              public Entry<Void> next() {
+              public Entry<Integer, Void> next() {
                 int key = iterator.nextInt();
-
-                return new Entry<Void>() {
-                  @Override
-                  public int getIntKey() {
-                    return key;
-                  }
-
-                  @Override
-                  public Void getValue() {
-                    return null;
-                  }
-
-                  @Override
-                  public Void setValue(Void value) {
-                    throw new UnsupportedOperationException();
-                  }
-                };
+                return new AbstractMap.SimpleImmutableEntry<>(key, null);
               }
             };
           }
@@ -102,7 +140,7 @@ public final class TrigramBuilder {
       }
 
       @Override
-      public Void get(int key) {
+      public Void get(Object key) {
         return null;
       }
     };
@@ -111,63 +149,121 @@ public final class TrigramBuilder {
   /**
    * Produces <a href="https://en.wikipedia.org/wiki/Trigram">trigrams</a> from a given text.
    * <p>
-   * Every single trigram is represented by single integer where char bytes are stored with 8 bit offset.
+   * Every single trigram is represented by a single integer where char bytes are stored with 8-bit offsets.
    */
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text) {
-    final AddonlyIntSet set = new AddonlyIntSet();
-    int index = 0;
-    final char[] fileTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
+    State state = new State(new AddonlyIntSet(1 + text.length() / 8));
+    char[] array = CharArrayUtil.fromSequenceWithoutCopying(text);
+    return array != null ? state.processArray(array) : state.processSequence(text);
+  }
 
-    ScanWordsLoop:
-    while (true) {
-      while (true) {
-        if (index == text.length()) break ScanWordsLoop;
-        final char c = fileTextArray != null ? fileTextArray[index]:text.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
-            Character.isJavaIdentifierPart(c)) {
-          break;
+  private static class State {
+    private int tc1, tc2, idChars;
+    private final AddonlyIntSet set;
+
+    private State(AddonlyIntSet set) {
+      this.set = set;
+    }
+
+    void process(char c) {
+      if (c < ASCII_END ? idPartAscii[c] : Character.isJavaIdentifierPart(c)) {
+        c = StringUtilRt.toLowerCase(c);
+        if (idChars == 0) {
+          tc1 = tc2 = c;
+          idChars = 1;
         }
-        index++;
-      }
-      int identifierStart = index;
-      while (true) {
-        index++;
-        if (index == text.length()) break;
-        final char c = fileTextArray != null ? fileTextArray[index]:text.charAt(index);
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) continue;
-        if (!Character.isJavaIdentifierPart(c)) break;
-      }
-
-      int tc1 = 0;
-      int tc2 = 0;
-      int tc3;
-      for (int i = identifierStart, iters = 0; i < index; ++i, ++iters) {
-        char c = StringUtil.toLowerCase(fileTextArray != null ? fileTextArray[i]:text.charAt(i));
-        tc3 = (tc2 << 8) + c;
-        tc2 = (tc1 << 8) + c;
-        tc1 = c;
-
-        if (iters >= 2) {
-          set.add(tc3);
+        else {
+          if (++idChars >= 3) {
+            set.add((tc2 << 8) + c);
+          }
+          tc2 = (tc1 << 8) + c;
+          tc1 = c;
         }
+      }
+      else {
+        idChars = 0;
       }
     }
 
-    return set;
+    AddonlyIntSet processSequence(CharSequence text) {
+      int length = text.length();
+      for (int i = 0; i < length; i++) {
+        process(text.charAt(i));
+      }
+      return set;
+    }
+
+    AddonlyIntSet processArray(char[] text) {
+      for (char c : text) {
+        process(c);
+      }
+      return set;
+    }
   }
 
-  private static class AddonlyIntSet extends AbstractIntSet {
+  private static final int ASCII_END = 128;
+  private static final boolean[] idPartAscii = new boolean[ASCII_END];
+
+  static {
+    for (char c = 0; c < idPartAscii.length; c++) {
+      idPartAscii[c] = Character.isJavaIdentifierPart(c);
+    }
+  }
+
+  @VisibleForTesting
+  public static final class AddonlyIntSet extends AbstractIntSet {
+
     private int size;
     private int[] data;
     private int mask;
     private boolean hasZeroKey;
 
-    AddonlyIntSet() {
+    public AddonlyIntSet() {
       this(21);
     }
 
+    AddonlyIntSet(int expectedSize) {
+      int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
+      mask = powerOfTwo - 1;
+      data = new int[powerOfTwo];
+    }
+
     @Override
-    public IntIterator iterator() {
+    public int[] toArray(int[] arr) {
+      int size = this.size;
+      if (arr == null) {
+        arr = new int[size];
+      }
+      else if (arr.length < size) {
+        arr = Arrays.copyOf(arr, size);
+      }
+      int idx = 0;
+      if (hasZeroKey) {
+        arr[idx++] = 0;
+      }
+      for (int val : data) {
+        if (val != 0) {
+          arr[idx++] = val;
+        }
+      }
+      assert idx == size;
+      return arr;
+    }
+
+    @Override
+    public void forEach(IntConsumer action) {
+      if (hasZeroKey) {
+        action.accept(0);
+      }
+      for (int val : data) {
+        if (val != 0) {
+          action.accept(val);
+        }
+      }
+    }
+
+    @Override
+    public @NotNull IntIterator iterator() {
       return new AbstractIntIterator() {
         private int pos = -1;
 
@@ -204,12 +300,6 @@ public final class TrigramBuilder {
           return false;
         }
       };
-    }
-
-    AddonlyIntSet(int expectedSize) {
-      int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
-      mask = powerOfTwo - 1;
-      data = new int[powerOfTwo];
     }
 
     @Override
@@ -255,7 +345,7 @@ public final class TrigramBuilder {
     private void rehash() {
       int[] b = new int[data.length << 1];
       mask = b.length - 1;
-      for (int i = data.length; --i >= 0;) {
+      for (int i = data.length; --i >= 0; ) {
         int ns = data[i];
         if (ns != 0) doPut(b, ns);
       }
@@ -290,7 +380,18 @@ public final class TrigramBuilder {
       }
       return true;
     }
-  }
 
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("AddonlyIntSet[");
+      int[] items = toIntArray();
+      Arrays.sort(items);
+      for (int item : items) {
+        sb.append(item).append(", ");
+      }
+      sb.append(']');
+      return sb.toString();
+    }
+  }
 }
 

@@ -2,13 +2,14 @@
 package com.intellij.codeInspection.actions
 
 import com.intellij.find.FindBundle
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 
 internal class FileFilterPanelUi {
-  fun panel(useFileMask: JCheckBox, fileMask: JComboBox<in String>) = panel {
+  fun panel(useFileMask: JCheckBox, fileMask: JComboBox<in String>): DialogPanel = panel {
     group(FindBundle.message("find.filter.file.name.group")) {
       row {
         useFileMask.text = FindBundle.message("find.filter.file.mask.checkbox")

@@ -1,26 +1,36 @@
 0(1) element: null
 1(2) element: PyIfStatement
-2(3) READ ACCESS: True
-3(4) element: PyStatementList. Condition: True:true
-4(5) ASSERTTYPE ACCESS: True
-5(6) element: PyIfStatement
-6(7) READ ACCESS: True
-7(8) element: PyStatementList. Condition: True:true
-8(12) ASSERTTYPE ACCESS: True
-9(10) element: PyStatementList. Condition: True:false
-10(11) element: PyAssignmentStatement
-11(12) WRITE ACCESS: b
-12(13) element: PyIfStatement
-13(14) READ ACCESS: True
-14(15) element: PyStatementList. Condition: True:true
-15(25) ASSERTTYPE ACCESS: True
-16(17) element: PyIfPartElif. Condition: True:false
-17(18) READ ACCESS: c
-18(19) element: PyStatementList. Condition: c:true
-19(20) ASSERTTYPE ACCESS: c
-20(21) element: PyAssignmentStatement
-21(25) WRITE ACCESS: d
-22(23) element: PyStatementList. Condition: c:false
-23(24) element: PyAssignmentStatement
-24(25) WRITE ACCESS: e
-25() element: null
+2(3,4) READ ACCESS: True
+3(8) element: null. Condition: True:false
+4(5) element: null. Condition: True:true
+5(6) ASSERTTYPE ACCESS: True
+6(7) element: PyStatementList
+7(8) element: PyPassStatement
+8(9) element: PyIfStatement
+9(10,11) READ ACCESS: True
+10() element: null. Condition: True:false
+11(12) element: null. Condition: True:true
+12(13) ASSERTTYPE ACCESS: True
+13(14) element: PyStatementList
+14(18) element: PyPassStatement
+15(16) element: PyStatementList
+16(17) element: PyAssignmentStatement
+17(18) WRITE ACCESS: b
+18(19) element: PyIfStatement
+19(20,21) READ ACCESS: True
+20(25) element: null. Condition: True:false
+21(22) element: null. Condition: True:true
+22(23) ASSERTTYPE ACCESS: True
+23(24) element: PyStatementList
+24(35) element: PyPassStatement
+25(26,27) READ ACCESS: c
+26() element: null. Condition: c:false
+27(28) element: null. Condition: c:true
+28() ASSERTTYPE ACCESS: c
+29(30) element: PyStatementList
+30(31) element: PyAssignmentStatement
+31(35) WRITE ACCESS: d
+32(33) element: PyStatementList
+33(34) element: PyAssignmentStatement
+34(35) WRITE ACCESS: e
+35() element: null

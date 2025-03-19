@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.configurationStore.Scheme_implKt;
@@ -52,13 +52,12 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 
-public class RunConfigurationStorageUi {
+public final class RunConfigurationStorageUi {
   private static final Logger LOG = Logger.getInstance(RunConfigurationStorageUi.class);
 
-  private static final LayeredIcon GEAR_WITH_DROPDOWN_ICON = new LayeredIcon(AllIcons.General.GearPlain, AllIcons.General.Dropdown);
-  private static final LayeredIcon GEAR_WITH_DROPDOWN_DISABLED_ICON =
-    new LayeredIcon(IconLoader.getDisabledIcon(AllIcons.General.GearPlain), IconLoader.getDisabledIcon(AllIcons.General.Dropdown));
-  private static final LayeredIcon GEAR_WITH_DROPDOWN_ERROR_ICON = new LayeredIcon(AllIcons.General.Error, AllIcons.General.Dropdown);
+  private static final Icon GEAR_WITH_DROPDOWN_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.General.GearPlain, AllIcons.General.Dropdown});
+  private static final Icon GEAR_WITH_DROPDOWN_DISABLED_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{IconLoader.getDisabledIcon(AllIcons.General.GearPlain), IconLoader.getDisabledIcon(AllIcons.General.Dropdown)});
+  private static final Icon GEAR_WITH_DROPDOWN_ERROR_ICON = LayeredIcon.layeredIcon(() -> new Icon[]{AllIcons.General.Error, AllIcons.General.Dropdown});
 
   private final JBCheckBox myStoreAsFileCheckBox;
   private final ActionButton myStoreAsFileGearButton;
@@ -200,16 +199,13 @@ public class RunConfigurationStorageUi {
     return GEAR_WITH_DROPDOWN_ICON;
   }
 
-  @NonNls
-  @NotNull
-  private static String getFileNameByRCName(@NotNull String rcName) {
+  private static @NonNls @NotNull String getFileNameByRCName(@NotNull String rcName) {
     return Scheme_implKt.getMODERN_NAME_CONVERTER().invoke(rcName) + ".run.xml";
   }
 
-  @Nullable
   @Contract("_,null -> !null")
-  private static String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
-                                                                         @Nullable @NonNls @SystemIndependent String path) {
+  private static @Nullable String getErrorIfBadFolderPathForStoringInArbitraryFile(@NotNull Project project,
+                                                                                   @Nullable @NonNls @SystemIndependent String path) {
     if (getDotIdeaStoragePath(project).equals(path)) return null; // that's ok
 
     if (StringUtil.isEmpty(path)) return ExecutionBundle.message("run.configuration.storage.folder.path.not.specified");
@@ -250,9 +246,7 @@ public class RunConfigurationStorageUi {
   /**
    * @return full path to .idea/runConfigurations folder (for directory-based projects) or full path to the project.ipr file (for file-based projects)
    */
-  @NonNls
-  @NotNull
-  private static String getDotIdeaStoragePath(@NotNull Project project) {
+  private static @NonNls @NotNull String getDotIdeaStoragePath(@NotNull Project project) {
     // notNullize is to make inspections happy. Paths can't be null for non-default project
     return ProjectKt.isDirectoryBased(project)
            ? RunManagerImpl.getInstanceImpl(project).getDotIdeaRunConfigurationsPath$intellij_platform_execution_impl()
@@ -412,7 +406,7 @@ public class RunConfigurationStorageUi {
     }
   }
 
-  private static class RunConfigurationStoragePopup {
+  private static final class RunConfigurationStoragePopup {
     private final JPanel myMainPanel;
     private final ComboBox<String> myPathComboBox;
 
@@ -467,18 +461,11 @@ public class RunConfigurationStorageUi {
     }
 
     private @NotNull ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
-      ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(500));
+      var comboBox = new ComboBox<String>(JBUI.scale(500));
       comboBox.setEditable(true);
 
-      // chooseFiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          // dotIdeaStoragePath may be a path to the project.ipr file in IPR-based projects
-          if (file.getPath().equals(myDotIdeaStoragePath)) return true;
-          return file.isDirectory() && super.isFileVisible(file, showHiddenFiles);
-        }
-
+      // `chooseFiles` is set to `true` to be able to select 'project.ipr' file in IPR-based projects; other files are not selectable
+      var descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
         @Override
         public boolean isFileSelectable(@Nullable VirtualFile file) {
           if (file == null) return false;
@@ -491,10 +478,7 @@ public class RunConfigurationStorageUi {
         }
       };
 
-      Runnable selectFolderAction = new BrowseFolderRunnable<>(null, null, project, descriptor, comboBox,
-                                                               TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT) {
-      };
-
+      var selectFolderAction = new BrowseFolderRunnable<>(project, descriptor, comboBox, TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT);
       comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
       return comboBox;
     }

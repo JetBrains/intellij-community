@@ -1,5 +1,5 @@
 async def f11(x):
-    y = {await<error descr="Expression expected"> </error>for await<error descr="Expression expected"> </error>in []}  # fail
+    y = {await<error descr="Expression expected"> </error>for <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>in []}  # fail
     await x
 
 
@@ -9,7 +9,7 @@ def f12(x):
 
 
 async def f21(x):
-    y = {mapper(await<error descr="Expression expected">)</error> for await<error descr="Expression expected"> </error>in []}  # fail
+    y = {mapper(await<error descr="Expression expected">)</error> for <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>in []}  # fail
     await x
 
 
@@ -19,7 +19,7 @@ def f22(x):
 
 
 async def f31(x):
-    await<error descr="Expression expected"> </error>= []  # fail
+    <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>= []  # fail
     y = {i for i in await<error descr="Expression expected">}</error>  # fail
     await x
 
@@ -51,7 +51,7 @@ async def f44(x):
 
 
 async def f51():
-    await<error descr="Expression expected"> </error>= 5  # fail
+    <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>= 5  # fail
     return {await<error descr="Expression expected">}</error>  # fail
 
 
@@ -61,7 +61,7 @@ def f52():
 
 
 async def f61():
-    await<error descr="Expression expected"> </error>= 5  # fail
+    <error descr="Cannot assign to await expression">await</error><error descr="Expression expected"> </error>= 5  # fail
     return {"a", await<error descr="Expression expected">,</error> "b"}  # fail
 
 

@@ -15,6 +15,10 @@ public abstract class NotificationsConfiguration implements Notifications {
 
   public abstract @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId);
 
+  public abstract @NotNull NotificationAnnouncingMode getNotificationAnnouncingMode();
+
+  public abstract void setNotificationAnnouncingMode(@NotNull NotificationAnnouncingMode mode);
+
   public abstract void setDisplayType(@NotNull String groupId, @NotNull NotificationDisplayType displayType);
 
   public abstract void changeSettings(@NotNull String groupId, @NotNull NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);

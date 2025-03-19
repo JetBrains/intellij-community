@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
@@ -78,6 +78,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
         }
       }
     });
+    myButton.getAccessibleContext().setAccessibleDescription(OptionsBundle.message("tag.button.accessible.description"));
     add(myButton, JLayeredPane.DEFAULT_LAYER);
     myCloseButton = new InplaceButton(new IconButton(null, AllIcons.Actions.Close, AllIcons.Actions.CloseDarkGrey),
                                       a -> remove(action, null));
@@ -86,6 +87,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
       .setTitle(OptionsBundle.message("tag.button.tooltip"))
       .setShortcut(new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), null))
       .installOn(myCloseButton);
+    myCloseButton.getAccessibleContext().setAccessibleName(OptionsBundle.message("tag.button.tooltip"));
     add(myCloseButton, JLayeredPane.POPUP_LAYER);
 
     layoutButtons();
@@ -120,8 +122,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myButton.setToolTipText(toolTip);
   }
 
-  @Nls
-  public String getText() {
+  public @Nls String getText() {
     return myText;
   }
 

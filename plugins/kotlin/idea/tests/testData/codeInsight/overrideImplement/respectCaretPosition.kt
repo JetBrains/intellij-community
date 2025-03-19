@@ -14,3 +14,6 @@ class SomeTest : Test {
 
     }
 }
+
+// MEMBER: "test(): Unit"
+// MEMBER: "testProp: Int"

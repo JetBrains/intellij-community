@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
+public abstract class PanelWithActionsAndCloseButton extends JPanel implements UiCompatibleDataProvider, Disposable {
   protected final ContentManager myContentManager;
   private final @NonNls String myHelpId;
   private final boolean myVerticalToolbar;
@@ -55,14 +55,15 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     myCloseEnabled = false;
   }
 
-  protected void init(){
+  protected void init() {
     addActionsTo(myToolbarGroup);
     myToolbarGroup.add(new MyCloseAction());
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, ! myVerticalToolbar);
+    ActionManager actionManager = ActionManager.getInstance();
+    ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, myToolbarGroup, !myVerticalToolbar);
     JComponent centerPanel = createCenterPanel();
     toolbar.setTargetComponent(centerPanel);
-    for (AnAction action : myToolbarGroup.getChildren(null)) {
+    for (AnAction action : myToolbarGroup.getChildren(actionManager)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
     }
 
@@ -76,9 +77,8 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
-  public Object getData(@NotNull String dataId) {
-    return PlatformCoreDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, myHelpId);
   }
 
   protected abstract JComponent createCenterPanel();

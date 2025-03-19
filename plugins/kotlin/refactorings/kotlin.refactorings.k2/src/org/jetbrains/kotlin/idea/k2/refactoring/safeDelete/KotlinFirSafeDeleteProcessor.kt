@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.safeDelete
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate
@@ -18,26 +21,34 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinFirRefactoringsSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.KotlinK2RefactoringsBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.canDeleteElement
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.refactoring.deleteBracesAroundEmptyList
+import org.jetbrains.kotlin.idea.refactoring.deleteSeparatingComma
+import org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteSettings
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
-import java.util.*
 
 class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
     override fun handlesElement(element: PsiElement?) = element.canDeleteElement()
@@ -60,6 +71,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
 
         if (element is KtDeclaration) {
             val additionalElementsToDeleteArray = additionalElementsToDelete.toTypedArray()
+            //group declarations into expected to receive conflicts once per expected/actuals group
+            val expected = ExpectActualUtils.liftToExpect(element) ?: element
             ReferencesSearch.search(element).forEach(Processor {
                 val e = it.element
                 if (!isInside(e) && !isInside(e, additionalElementsToDeleteArray)) {
@@ -68,7 +81,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                         return@Processor true
                     }
                     val importDirective = e.getNonStrictParentOfType<KtImportDirective>()
-                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, element, importDirective != null))
+                    result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(importDirective ?: e, expected, importDirective != null))
                 }
                 return@Processor true
             })
@@ -79,7 +92,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (owner != null) {
                 val parameterList = owner.typeParameters
                 val parameterIndex = parameterList.indexOf(element)
-                for (reference in ReferencesSearch.search(owner)) {
+                for (reference in ReferencesSearch.search(owner).asIterable()) {
                     JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language)?.createJavaTypeParameterUsageInfo(
                         reference,
                         result,
@@ -96,9 +109,6 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (function != null) {
                 val parameterIndexAsJavaCall = element.parameterIndex() + if (function.receiverTypeReference != null) 1 else 0
                 findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function)
-                if (function is KtPrimaryConstructor) {
-                    findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, function.getContainingClassOrObject())
-                }
             }
         }
         
@@ -115,33 +125,31 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         val overridden = arrayListOf<PsiElement>()
         val containingClass = element.containingClass()
         if (containingClass != null) {
-            analyze(containingClass) {
-                val elementClassSymbol = containingClass.getSymbol() as KtClassOrObjectSymbol
+            overridden.add(element)
+            element.findAllOverridings().forEach { m ->
+                val original = m.unwrapped
+                if (original != null && !allElementsToDelete.contains(original)) {
+                    analyze(original.getKaModule(original.project, useSiteModule = null)) {
+                        val elementClassSymbol = containingClass.symbol as KaClassSymbol
 
-                fun isMultipleInheritance(function: KtSymbol): Boolean {
-                    val superMethods = (function as? KtCallableSymbol)?.getDirectlyOverriddenSymbols() ?: return false
-                    return superMethods.any {
-                        val superClassSymbol = it.getContainingSymbol() as? KtClassOrObjectSymbol ?: return@any false
-                        val superMethod = it.psi ?: return@any false
-                        return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
-                    }
-                }
+                        fun isMultipleInheritance(function: KaSymbol): Boolean {
+                            val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
+                            return superMethods.any {
+                                val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
+                                val superMethod = it.psi ?: return@any false
+                                return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
+                            }
+                        }
 
-                overridden.add(element)
-                element.findAllOverridings().forEach { m ->
-                    val original = m.unwrapped
-                    if (original != null && !allElementsToDelete.contains(original)) {
                         val oSymbol = when (original) {
-                            is KtDeclaration -> original.getSymbol()
-                            is PsiMember -> original.getCallableSymbol()
+                            is KtDeclaration -> original.symbol
+                            is PsiMember -> original.callableSymbol
                             else -> null
                         }
 
-                        if (oSymbol != null && isMultipleInheritance(oSymbol)) {
-                            return@forEach
+                        if (oSymbol == null || !isMultipleInheritance(oSymbol)) {
+                            overridden.add(original)
                         }
-
-                        overridden.add(original)
                     }
                 }
             }
@@ -150,10 +158,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         for (overriddenFunction in overridden) {
             if (ReferencesSearch.search(overriddenFunction).forEach(Processor {
                     val place = it.element
-                    if (!isInside(place)) {
-                        return@Processor false
-                    }
-                    return@Processor true
+                    return@Processor isInside(place)
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
                 result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))
@@ -170,6 +175,46 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         parameterIndexAsJavaCall: Int,
         ktElement: KtElement
     ) {
+        if (ktElement is KtConstructor<*>) {
+            val containingClass = ktElement.containingClass() ?: return
+
+            val directInheritors = mutableListOf<KtElement>()
+            DirectKotlinClassInheritorsSearch.search(containingClass).asIterable().forEach { el ->
+                if (el !is KtElement) {
+                    val lightMethod = ktElement.toLightMethods().filterIsInstance<KtLightMethod>().firstOrNull() ?: return
+                    MethodReferencesSearch.search(lightMethod, lightMethod.useScope, true).forEach(Processor {
+                        JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
+                            ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                        return@Processor true
+                    })
+                    return
+                }
+                directInheritors.add(el)
+            }
+
+            fun processDelegatingReferences(ktClass: KtClass) {
+                ktClass.secondaryConstructors.forEach { c ->
+                    if (c != ktElement) {
+                        val delegationCall = c.getDelegationCallOrNull()
+                        val reference = delegationCall?.calleeExpression?.mainReference
+                        if (reference != null && reference.resolve() == ktElement) {
+                            JavaSafeDeleteDelegate.EP.forLanguage(reference.element.language)
+                                ?.createUsageInfoForParameter(reference, result, element, parameterIndexAsJavaCall, element.isVarArg)
+                        }
+                    }
+                }
+            }
+
+            processDelegatingReferences(containingClass)
+            for (inheritor in directInheritors) {
+                (inheritor as? KtClass)?.let { processDelegatingReferences(it) }
+            }
+
+            //to find constructor calls in java, one needs to perform class search
+            findCallArgumentsToDelete(result, element, parameterIndexAsJavaCall, containingClass)
+        }
+
+
         ReferencesSearch.search(ktElement).forEach(Processor {
             JavaSafeDeleteDelegate.EP.forLanguage(it.element.language)
                 ?.createUsageInfoForParameter(it, result, element, parameterIndexAsJavaCall, element.isVarArg)
@@ -177,22 +222,64 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         })
     }
 
+    private fun shouldAllowPropagationToExpected(parameter: KtParameter): Boolean {
+        if (isUnitTestMode()) {
+            return with (KotlinSafeDeleteSettings) {
+                parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
+            }
+        }
+
+        return Messages.showYesNoDialog(
+            KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones"),
+            RefactoringBundle.message("safe.delete.title"),
+            Messages.getQuestionIcon()
+        ) == Messages.YES
+    }
+
+    private fun shouldAllowPropagationToExpected(): Boolean {
+        if (isUnitTestMode()) return true
+
+        return Messages.showYesNoDialog(
+            KotlinBundle.message("do.you.want.to.delete.expected.declaration.together.with.all.related.actual.ones"),
+            RefactoringBundle.message("safe.delete.title"),
+            Messages.getQuestionIcon()
+        ) == Messages.YES
+    }
+
     override fun getElementsToSearch(
-      element: PsiElement,
-      module: Module?,
-      allElementsToDelete: Collection<PsiElement>
-    ): Collection<PsiElement> {
-        when (element) {
+        element: PsiElement, module: Module?, allElementsToDelete: Collection<PsiElement>
+    ): Collection<PsiElement>? {
+        val mapToExpected: (PsiElement) -> List<PsiElement> = { e ->
+            if (e is KtDeclaration) {
+                if (e.hasActualModifier() && !shouldAllowPropagationToExpected()) {
+                    listOf(e)
+                } else if (e is KtParameter && e.ownerFunction?.hasActualModifier() == true && !shouldAllowPropagationToExpected(e)) {
+                    with(KotlinSafeDeleteSettings) {
+                        e.ownerFunction?.dropActualModifier = true
+                    }
+                    listOf(e)
+                } else {
+                    ActionUtil.underModalProgress(element.project, KotlinBundle.message("progress.title.searching.for.expected.actual")) {
+                        ExpectActualUtils.withExpectedActuals(e)
+                    }
+                }
+            } else {
+                listOf(e)
+            }
+        }
+        return when (element) {
             is KtParameter -> {
-                return getParametersToSearch(element)
+                val parametersToSearch = getParametersToSearch(element)
+                parametersToSearch.flatMap(mapToExpected)
             }
 
             is KtNamedFunction, is KtProperty -> {
-                if (isUnitTestMode()) return Collections.singletonList(element)
-                return checkSuperMethods(element as KtDeclaration, allElementsToDelete, RefactoringBundle.message("to.refactor"))
+                if (isUnitTestMode()) mapToExpected(element)
+                else checkSuperMethods(element as KtDeclaration, allElementsToDelete, RefactoringBundle.message("to.refactor")).flatMap(
+                    mapToExpected
+                )
             }
-
-            else -> return arrayListOf(element)
+            else -> mapToExpected(element)
         }
     }
 
@@ -213,9 +300,8 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
 
             return analyzeInModalWindow(element as KtDeclaration, RefactoringBundle.message("detecting.possible.conflicts")) {
-                (element.getSymbol() as? KtCallableSymbol)?.getAllOverriddenSymbols()
-                    ?.asSequence()
-                    ?.filter { (it as? KtSymbolWithModality)?.modality == Modality.ABSTRACT }
+                (element.symbol as? KaCallableSymbol)?.allOverriddenSymbols
+                    ?.filter { it.modality == KaSymbolModality.ABSTRACT }
                     ?.mapNotNull { it.psi }
                     ?.mapTo(ArrayList()) {
                         KotlinK2RefactoringsBundle.message(
@@ -241,6 +327,14 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
             }
 
             is KtParameter -> {
+                element.ownerFunction?.let {
+                    with(KotlinSafeDeleteSettings) {
+                        if (it.dropActualModifier == true) {
+                            it.removeModifier(KtTokens.ACTUAL_KEYWORD)
+                            it.dropActualModifier = null
+                        }
+                    }
+                }
                 deleteSeparatingComma(element)
             }
         }

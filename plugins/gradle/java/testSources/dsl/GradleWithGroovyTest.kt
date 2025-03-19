@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.testFramework.assertInstanceOf
-import groovy.transform.CompileStatic
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_DOMAIN_OBJECT_COLLECTION
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -17,13 +16,12 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 
-@CompileStatic
 class GradleWithGroovyTest : GradleCodeInsightTestCase() {
-
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test Project#allprojects call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
+      @Suppress("SpellCheckingInspection")
       testBuildscript(decorator, "<caret>allprojects {}") {
         val call = elementUnderCaret(GrMethodCall::class.java)
         val element = assertOneElement(call.multiResolve(false)).element
@@ -35,7 +33,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test DomainObjectCollection#all call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>configurations.all {}") {
@@ -49,7 +47,7 @@ class GradleWithGroovyTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @AllGradleVersionsSource("$DECORATORS, buildscript")
+  @AllGradleVersionsSource("$PROJECT_CONTEXTS, buildscript")
   fun `test DomainObjectCollection#withType call`(gradleVersion: GradleVersion, decorator: String) {
     testGroovyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>plugins.withType(JavaPlugin) {}") {

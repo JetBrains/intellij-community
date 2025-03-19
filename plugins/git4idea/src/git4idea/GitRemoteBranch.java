@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -20,20 +20,16 @@ public abstract class GitRemoteBranch extends GitBranch {
    * For example, "master".
    * @see #getNameForLocalOperations()
    */
-  @NlsSafe
-  @NotNull
-  public abstract String getNameForRemoteOperations();
+  public abstract @NlsSafe @NotNull String getNameForRemoteOperations();
 
   /**
    * Returns the name of this remote branch to be used in local operations: checkout, merge, rebase.
    * It is the name of this branch how it is references in this local repository.
    * For example, "origin/master".
    */
-  @NotNull
-  public abstract String getNameForLocalOperations();
+  public abstract @NotNull String getNameForLocalOperations();
 
-  @NotNull
-  public abstract GitRemote getRemote();
+  public abstract @NotNull GitRemote getRemote();
 
   @Override
   public boolean isRemote() {

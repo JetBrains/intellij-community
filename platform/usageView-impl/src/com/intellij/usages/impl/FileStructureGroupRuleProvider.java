@@ -7,10 +7,12 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.UsageGroupingRule;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface FileStructureGroupRuleProvider {
+  @ApiStatus.Internal
   ExtensionPointName<FileStructureGroupRuleProvider> EP_NAME = new ExtensionPointName<>("com.intellij.fileStructureGroupRuleProvider");
 
   @Nullable

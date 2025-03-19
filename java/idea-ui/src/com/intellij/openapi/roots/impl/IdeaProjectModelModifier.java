@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
@@ -57,9 +57,9 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull final Collection<? extends Module> modules,
-                                                    @NotNull final ExternalLibraryDescriptor descriptor,
-                                                    @NotNull final DependencyScope scope) {
+  public Promise<Void> addExternalLibraryDependency(final @NotNull Collection<? extends Module> modules,
+                                                    final @NotNull ExternalLibraryDescriptor descriptor,
+                                                    final @NotNull DependencyScope scope) {
     List<String> defaultRoots = descriptor.getLibraryClassesRoots();
     List<String> classesRoots;
     Module firstModule = ContainerUtil.getFirstItem(modules);

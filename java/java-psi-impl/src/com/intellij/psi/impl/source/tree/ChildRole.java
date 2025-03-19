@@ -152,9 +152,6 @@ public final class ChildRole {
 
   public static boolean isUnique(int role) {
     switch(role){
-      default:
-        return true;
-
       case ChildRoleBase.NONE:
       case CLASS:
       case FIELD:
@@ -168,6 +165,8 @@ public final class ChildRole {
       case TYPE_PARAMETER_IN_LIST:
       case ANNOTATION_VALUE:
         return false;
+      default:
+        return true;
     }
   }
 }

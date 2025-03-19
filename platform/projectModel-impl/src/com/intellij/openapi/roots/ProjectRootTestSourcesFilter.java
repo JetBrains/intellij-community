@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class ProjectRootTestSourcesFilter extends TestSourcesFilter {
+class ProjectRootTestSourcesFilter extends TestSourcesFilter {
   @Override
   public boolean isTestSource(@NotNull VirtualFile file, @NotNull Project project) {
     return ReadAction.compute(() -> ProjectFileIndex.getInstance(project).isInTestSourceContent(file));

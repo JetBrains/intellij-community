@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -110,14 +110,13 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     createPatch(project, commitMessage, allChanges, mySilentClipboard, patchBuilder);
   }
 
-  @Nullable
-  private static String extractCommitMessage(@NotNull AnActionEvent e) {
+  private static @Nullable String extractCommitMessage(@NotNull AnActionEvent e) {
     String message = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
     if (message != null) return message;
 
     List<ShelvedChangeList> shelvedChangeLists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
     if (!shelvedChangeLists.isEmpty()) {
-      return shelvedChangeLists.get(0).DESCRIPTION;
+      return shelvedChangeLists.get(0).getDescription();
     }
 
     ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
@@ -143,7 +142,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     createPatch(project, commitMessage, changes, silentClipboard, patchBuilder);
   }
 
-  private static void createPatch(@NotNull Project project,
+  public static void createPatch(@NotNull Project project,
                                   @Nullable String commitMessage,
                                   @NotNull List<? extends Change> changes,
                                   boolean silentClipboard,

@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.inspection.modifiers;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.fixes.RemoveModifierFix;
 import de.plushnikov.intellij.plugin.inspection.LombokJavaInspectionBase;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +22,8 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
     this.redundantModifiersInfo = redundantModifiersInfo;
   }
 
-  @NotNull
   @Override
-  protected PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  protected @NotNull PsiElementVisitor createVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new LombokRedundantModifiersVisitor(holder);
   }
 
@@ -82,8 +81,8 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
           || (infoType != RedundantModifiersInfoType.VARIABLE && !(parentModifierListOwner instanceof PsiClass))) {
           continue;
         }
-        if ((supportedAnnotation == null || parentModifierListOwner.hasAnnotation(supportedAnnotation)) &&
-          redundantModifiersInfo.getType().getSupportedClass().isAssignableFrom(psiModifierListOwner.getClass())) {
+        if ((supportedAnnotation == null || PsiAnnotationSearchUtil.isAnnotatedWith(parentModifierListOwner, supportedAnnotation)) &&
+            redundantModifiersInfo.getType().getSupportedClass().isAssignableFrom(psiModifierListOwner.getClass())) {
           PsiModifierList psiModifierList = psiModifierListOwner.getModifierList();
           if (psiModifierList == null ||
             (redundantModifiersInfo.getDontRunOnModifier() != null && psiModifierList.hasExplicitModifier(redundantModifiersInfo.getDontRunOnModifier()))) {
@@ -100,7 +99,6 @@ public abstract class LombokRedundantModifierInspection extends LombokJavaInspec
 
               psiModifier.ifPresent(psiElement -> holder.registerProblem(psiElement,
                 redundantModifiersInfo.getDescription(),
-                ProblemHighlightType.WARNING,
                 new RemoveModifierFix(modifier))
               );
             }

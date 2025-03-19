@@ -6,3 +6,5 @@ fun test() {
 
 fun foo() {}
 fun bar(f: (Int) -> Unit) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveSingleLambdaParameterFix

@@ -13,24 +13,17 @@ import git4idea.ui.branch.popup.GitBranchesTreePopup;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>
- * Invokes a {@link GitBranchPopup} to checkout and control Git branches.
- * </p>
+ * Shows a popup to checkout and control Git branches.
  */
 public class GitBranchesAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     GitRepository repository = GitBranchUtil.guessRepositoryForOperation(project, e.getDataContext());
     if (repository == null) return;
-
-    if (GitBranchesTreePopup.isEnabled()) {
-      GitBranchesTreePopup.show(project, repository);
-    }
-    else {
-      GitBranchPopup.getInstance(project, repository, e.getDataContext()).asListPopup().showCenteredInCurrentWindow(project);
-    }
+    GitBranchesTreePopup.show(project, repository);
   }
 
   @Override

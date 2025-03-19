@@ -2,19 +2,12 @@
 
 package org.jetbrains.kotlin.idea.base.compilerPreferences.facet
 
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import org.jetbrains.kotlin.utils.DescriptionAware
-import java.awt.Component
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
+import javax.swing.ListCellRenderer
 
-class DescriptionListCellRenderer : DefaultListCellRenderer() {
-    override fun getListCellRendererComponent(
-        list: JList<*>?,
-        value: Any?,
-        index: Int,
-        isSelected: Boolean,
-        cellHasFocus: Boolean
-    ): Component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).apply {
-        text = (value as? DescriptionAware)?.description ?: ""
+internal fun <T> createDescriptionAwareRenderer(): ListCellRenderer<T?> {
+    return textListCellRenderer("") {
+        (it as? DescriptionAware)?.description
     }
 }

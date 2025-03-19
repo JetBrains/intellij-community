@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +17,7 @@ public abstract class LookupElementAction {
     myText = text;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
@@ -32,7 +31,7 @@ public abstract class LookupElementAction {
     public static final Result HIDE_LOOKUP = new Result();
     public static final Result REFRESH_ITEM = new Result();
 
-    public static class ChooseItem extends Result {
+    public static final class ChooseItem extends Result {
       public final LookupElement item;
 
       public ChooseItem(LookupElement item) {

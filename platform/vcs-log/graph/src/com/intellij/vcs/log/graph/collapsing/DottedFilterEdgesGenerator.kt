@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.collapsing
 
+import com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph.NodeFilter
@@ -25,17 +26,17 @@ import kotlin.math.max
 import kotlin.math.min
 
 abstract class DottedFilterEdgesGenerator internal constructor(private val graph: LiteLinearGraph,
-                                                               private val upIndex: Int,
-                                                               private val downIndex: Int) {
+                                                               private val upIndex: VcsLogVisibleGraphIndex,
+                                                               private val downIndex: VcsLogVisibleGraphIndex) {
   private val numbers: ShiftNumber = ShiftNumber(upIndex, downIndex)
 
-  protected abstract fun nodeIsVisible(nodeIndex: Int): Boolean
+  protected abstract fun nodeIsVisible(nodeIndex: VcsLogVisibleGraphIndex): Boolean
 
-  protected abstract fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int)
+  protected abstract fun addDottedEdge(nodeIndex1: VcsLogVisibleGraphIndex, nodeIndex2: VcsLogVisibleGraphIndex)
 
-  protected abstract fun addDottedArrow(nodeIndex: Int, isUp: Boolean)
+  protected abstract fun addDottedArrow(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean)
 
-  protected abstract fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean
+  protected abstract fun hasDottedEdges(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean): Boolean
 
   // update specified range
   internal fun update() {
@@ -50,7 +51,7 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
     }
   }
 
-  private fun addEdgeOrArrow(currentNodeIndex: Int, anotherNodeIndex: Int, isUp: Boolean) {
+  private fun addEdgeOrArrow(currentNodeIndex: VcsLogVisibleGraphIndex, anotherNodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean) {
     if (hasDottedEdges(currentNodeIndex, isUp)) {
       if (nodeIsVisible(anotherNodeIndex)) {
         addDottedEdge(currentNodeIndex, anotherNodeIndex)
@@ -151,13 +152,13 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
 
   companion object {
     @JvmStatic
-    fun update(collapsedGraph: CollapsedGraph, upDelegateNodeIndex: Int, downDelegateNodeIndex: Int) {
+    fun update(collapsedGraph: CollapsedGraph, upDelegateNodeIndex: VcsLogVisibleGraphIndex, downDelegateNodeIndex: VcsLogVisibleGraphIndex) {
       val modification = collapsedGraph.startModification()
       DottedFilterEdgesGeneratorImpl(collapsedGraph, modification, upDelegateNodeIndex, downDelegateNodeIndex).update()
       modification.apply()
     }
 
-    fun hideInplace(collapsedGraph: CollapsedGraph, toHide: Set<Int>) {
+    fun hideInplace(collapsedGraph: CollapsedGraph, toHide: Set<VcsLogVisibleGraphIndex>) {
       val modification = collapsedGraph.startModification()
       InplaceFilterEdgesGenerator(collapsedGraph, modification, toHide).update()
       toHide.forEach { modification.hideNode(collapsedGraph.convertToDelegateNodeIndex(it)) }
@@ -168,26 +169,26 @@ abstract class DottedFilterEdgesGenerator internal constructor(private val graph
 
 class DottedFilterEdgesGeneratorImpl(private val collapsedGraph: CollapsedGraph,
                                      private val modification: CollapsedGraph.Modification,
-                                     upIndex: Int,
-                                     downIndex: Int) :
+                                     upIndex: VcsLogVisibleGraphIndex,
+                                     downIndex: VcsLogVisibleGraphIndex) :
   DottedFilterEdgesGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.delegatedGraph), upIndex, downIndex) {
 
-  override fun nodeIsVisible(nodeIndex: Int): Boolean {
+  override fun nodeIsVisible(nodeIndex: VcsLogVisibleGraphIndex): Boolean {
     return collapsedGraph.isNodeVisible(nodeIndex)
   }
 
-  override fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
+  override fun addDottedEdge(nodeIndex1: VcsLogVisibleGraphIndex, nodeIndex2: VcsLogVisibleGraphIndex) {
     modification.createEdge(GraphEdge.createNormalEdge(nodeIndex1, nodeIndex2, DOTTED))
   }
 
-  override fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
+  override fun addDottedArrow(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean) {
     modification.createEdge(GraphEdge.createEdgeWithTargetId(nodeIndex, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
   }
 
-  override fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean = modification.hasDottedEdges(nodeIndex, isUp)
+  override fun hasDottedEdges(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean): Boolean = modification.hasDottedEdges(nodeIndex, isUp)
 }
 
-private fun CollapsedGraph.Modification.hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
+private fun CollapsedGraph.Modification.hasDottedEdges(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean): Boolean {
   for (edge in edgesToAdd.getAdjacentEdges(nodeIndex, EdgeFilter.NORMAL_ALL)) {
     if (edge.type == DOTTED) {
       if (isUp && LinearGraphUtils.isEdgeUp(edge, nodeIndex)) return true
@@ -199,23 +200,23 @@ private fun CollapsedGraph.Modification.hasDottedEdges(nodeIndex: Int, isUp: Boo
 
 class InplaceFilterEdgesGenerator(private val collapsedGraph: CollapsedGraph,
                                   private val modification: CollapsedGraph.Modification,
-                                  private val toHide: Set<Int>) : DottedFilterEdgesGenerator(
+                                  private val toHide: Set<VcsLogVisibleGraphIndex>) : DottedFilterEdgesGenerator(
   LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph), 0, collapsedGraph.compiledGraph.nodesCount() - 1) {
 
-  override fun nodeIsVisible(nodeIndex: Int): Boolean = !toHide.contains(nodeIndex)
+  override fun nodeIsVisible(nodeIndex: VcsLogVisibleGraphIndex): Boolean = !toHide.contains(nodeIndex)
 
-  override fun addDottedEdge(nodeIndex1: Int, nodeIndex2: Int) {
+  override fun addDottedEdge(nodeIndex1: VcsLogVisibleGraphIndex, nodeIndex2: VcsLogVisibleGraphIndex) {
     val delegateIndex1 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex1)
     val delegateIndex2 = collapsedGraph.convertToDelegateNodeIndex(nodeIndex2)
     modification.createEdge(GraphEdge.createNormalEdge(delegateIndex1, delegateIndex2, DOTTED))
   }
 
-  override fun addDottedArrow(nodeIndex: Int, isUp: Boolean) {
+  override fun addDottedArrow(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean) {
     val delegateIndex = collapsedGraph.convertToDelegateNodeIndex(nodeIndex)
     modification.createEdge(GraphEdge.createEdgeWithTargetId(delegateIndex, null, if (isUp) DOTTED_ARROW_UP else DOTTED_ARROW_DOWN))
   }
 
-  override fun hasDottedEdges(nodeIndex: Int, isUp: Boolean): Boolean {
+  override fun hasDottedEdges(nodeIndex: VcsLogVisibleGraphIndex, isUp: Boolean): Boolean {
     val delegateIndex = collapsedGraph.convertToDelegateNodeIndex(nodeIndex)
     return modification.hasDottedEdges(delegateIndex, isUp)
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
   private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MINUTES.toMillis(3);
 
@@ -78,7 +80,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
 
   @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   @Override
-  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, @NotNull final C impl)
+  protected <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass, final @NotNull C impl)
     throws RemoteException
   {
     if (!myStdOutputConfigured) {
@@ -133,10 +135,10 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
   }
 
   private static final class LineAwarePrintStream extends PrintStream {
-    private LineAwarePrintStream(@NotNull final PrintStream delegate) {
+    private LineAwarePrintStream(final @NotNull PrintStream delegate) {
       super(new OutputStream() {
 
-        @NotNull private final StringBuilder myBuffer = new StringBuilder();
+        private final @NotNull StringBuilder myBuffer = new StringBuilder();
 
         @Override
         public void write(int b) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.diagnostic.Dumpable;
@@ -6,9 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -24,8 +22,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +41,8 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class SoftWrapApplianceManager implements Dumpable {
+//@ApiStatus.Internal
+public final class SoftWrapApplianceManager implements Dumpable {
   private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   private static final int QUICK_DUMMY_WRAPPING = Integer.MAX_VALUE; // special value to request a tentative wrapping
                                                                      // before editor is shown and actual available width is known
@@ -77,6 +78,7 @@ public class SoftWrapApplianceManager implements Dumpable {
   private int myLastTopLeftCornerOffset;
 
   private VisibleAreaWidthProvider       myWidthProvider;
+  private boolean mySoftWrapsUnderScrollBar;
   private IncrementalCacheUpdateEvent    myEventBeingProcessed;
   private boolean                        myCustomIndentUsedLastTime;
   private int                            myCustomIndentValueUsedLastTime;
@@ -85,8 +87,10 @@ public class SoftWrapApplianceManager implements Dumpable {
   private boolean                        myIsDirty = true;
   private IncrementalCacheUpdateEvent    myDocumentChangedEvent;
   private int                            myAvailableWidth = QUICK_DUMMY_WRAPPING;
+  private @Nullable LineWrapPositionStrategy myLineWrapPositionStrategy;
 
 
+  @ApiStatus.Internal
   public SoftWrapApplianceManager(@NotNull SoftWrapsStorage storage,
                                   @NotNull EditorImpl editor,
                                   @NotNull SoftWrapPainter painter,
@@ -103,10 +107,17 @@ public class SoftWrapApplianceManager implements Dumpable {
     }));
   }
 
+  @ApiStatus.Internal
+  public void setSoftWrapsUnderScrollBar(boolean softWrapsUnderScrollBar) {
+    mySoftWrapsUnderScrollBar = softWrapsUnderScrollBar;
+  }
+
+  @ApiStatus.Internal
   public void registerSoftWrapIfNecessary() {
     recalculateIfNecessary();
   }
 
+  @ApiStatus.Internal
   public void reset() {
     myIsDirty = true;
     for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
@@ -128,7 +139,8 @@ public class SoftWrapApplianceManager implements Dumpable {
     onRecalculationEnd();
   }
 
-  public void recalculate(@NotNull List<? extends Segment> ranges) {
+  @ApiStatus.Internal
+  public void recalculate(@NotNull @Unmodifiable List<? extends Segment> ranges) {
     if (myIsDirty) {
       return;
     }
@@ -137,7 +149,7 @@ public class SoftWrapApplianceManager implements Dumpable {
       return;
     }
 
-    ranges.sort((o1, o2) -> {
+    ranges = ContainerUtil.sorted(ranges, (o1, o2) -> {
       int startDiff = o1.getStartOffset() - o2.getStartOffset();
       return startDiff == 0 ? o2.getEndOffset() - o1.getEndOffset() : startDiff;
     });
@@ -165,6 +177,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     onRecalculationEnd();
   }
 
+  @ApiStatus.Internal
   public void recalculateAll() {
     reset();
     myStorage.removeAll();
@@ -216,7 +229,7 @@ public class SoftWrapApplianceManager implements Dumpable {
         doRecalculateSoftWrapsRoughly(event);
       }
       else {
-        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myVisibleAreaWidth,
+        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myLineWrapPositionStrategy, myVisibleAreaWidth,
                            myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1).generate();
       }
       if (LOG.isDebugEnabled()) {
@@ -296,6 +309,7 @@ public class SoftWrapApplianceManager implements Dumpable {
    *         {@code false} otherwise (e.g. we need to perform re-calculation but current editor is now shown, i.e. we don't
    *         have information about viewport width
    */
+  @ApiStatus.Internal
   public boolean recalculateIfNecessary() {
     if (myInProgress) {
       return false;
@@ -393,10 +407,12 @@ public class SoftWrapApplianceManager implements Dumpable {
    * @param listener    listener to register
    * @return            {@code true} if this collection changed as a result of the call; {@code false} otherwise
    */
+  @ApiStatus.Internal
   public boolean addListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
     return myListeners.add(listener);
   }
 
+  @ApiStatus.Internal
   public boolean removeListener(@NotNull SoftWrapAwareDocumentParsingListener listener) {
     return myListeners.remove(listener);
   }
@@ -420,10 +436,12 @@ public class SoftWrapApplianceManager implements Dumpable {
     }
   }
 
+  @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
     myDocumentChangedEvent = new IncrementalCacheUpdateEvent(event, myEditor);
   }
 
+  @ApiStatus.Internal
   public void documentChanged(DocumentEvent event, boolean processAlsoLineEnd) {
     LOG.assertTrue(myDocumentChangedEvent != null);
     recalculate(myDocumentChangedEvent);
@@ -436,18 +454,30 @@ public class SoftWrapApplianceManager implements Dumpable {
     myDocumentChangedEvent = null;
   }
 
+  //@ApiStatus.Internal
   public void setWidthProvider(@NotNull VisibleAreaWidthProvider widthProvider) {
     myWidthProvider = widthProvider;
     reset();
   }
 
+  //@ApiStatus.Internal
   public @NotNull VisibleAreaWidthProvider getWidthProvider() {
     return myWidthProvider;
   }
 
-  @NotNull
+  /**
+   * By default, line wrap strategy depends on the editor's file language
+   * and can be provided using {@link LanguageLineWrapPositionStrategy}.
+   * This method can be used to specify the strategy for the Editor that is not bound to any particular file.
+   * Note that the strategy set using this method takes precedence over one provided using {@link LanguageLineWrapPositionStrategy}.
+   */
+  public void setLineWrapPositionStrategy(@NotNull LineWrapPositionStrategy strategy) {
+    myLineWrapPositionStrategy = strategy;
+    reset();
+  }
+
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return String.format(
       "recalculation in progress: %b; event being processed: %s, available width: %d, visible width: %d, dirty: %b",
       myInProgress, myEventBeingProcessed, myAvailableWidth, myVisibleAreaWidth, myIsDirty
@@ -459,11 +489,14 @@ public class SoftWrapApplianceManager implements Dumpable {
     return dumpState();
   }
 
-  @TestOnly
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
+    recalculateAll();
   }
 
+  @ApiStatus.Internal
   public void updateAvailableArea() {
     Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
     if (visibleArea.isEmpty()) return;
@@ -490,23 +523,31 @@ public class SoftWrapApplianceManager implements Dumpable {
     int getVisibleAreaWidth();
   }
 
-  private class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
+  private final class DefaultVisibleAreaWidthProvider implements VisibleAreaWidthProvider {
 
     @Override
     public int getVisibleAreaWidth() {
       Insets insets = myEditor.getContentComponent().getInsets();
       int horizontalInsets = insets.left + insets.right;
-      // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
-      // because in this case the scrollbar sometimes prevents the user from placing the caret by
-      // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
-      // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
-      // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+      // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
+      // as the underlying logic is very complicated. But we can reasonably assume that if they
+      // do NOT include it, they will be very small (most likely zero).
       final var vsbWidth = getVerticalScrollBarWidth();
-      if (horizontalInsets < vsbWidth) {
-        // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
-        // as the underlying logic is very complicated. But we can reasonably assume that if they
-        // do NOT include it, they will be very small (most likely zero).
-        horizontalInsets += vsbWidth;
+      boolean insetsIncludeScrollbar = horizontalInsets >= vsbWidth;
+      if (mySoftWrapsUnderScrollBar) {
+        if (insetsIncludeScrollbar) {
+          horizontalInsets -= vsbWidth;
+        }
+      }
+      else {
+        // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
+        // because in this case the scrollbar sometimes prevents the user from placing the caret by
+        // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
+        // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
+        // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+        if (!insetsIncludeScrollbar) {
+          horizontalInsets += vsbWidth;
+        }
       }
       int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - horizontalInsets);
       if (myEditor.isInDistractionFreeMode()) {

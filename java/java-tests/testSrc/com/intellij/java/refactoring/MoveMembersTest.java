@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -12,6 +11,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.VisibilityUtil;
 
 import java.util.ArrayList;
@@ -89,6 +89,10 @@ public class MoveMembersTest extends LightMultiFileTestCase {
 
   public void testProtectedConstructor() {
     doTest("pack1.A", "pack1.C", 0);
+  }
+
+  public void testPackagePrivateStaticMember() {
+    doTest("pack1.A", "pack2.C", true, PsiModifier.PACKAGE_LOCAL, 0);
   }
 
   public void testUntouchedVisibility() {
@@ -198,19 +202,21 @@ public class MoveMembersTest extends LightMultiFileTestCase {
   }
 
   public void testStaticToInterface() {
-    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel level = levelProjectExtension.getLanguageLevel();
+    final LanguageLevel level = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_8);
     try {
-      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
       doTest("A", "B", 0);
     }
     finally {
-      levelProjectExtension.setLanguageLevel(level);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
     }
   }
   
   public void testEscalateVisibility1() {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
+  public void testEscalateVisibilityWhenMoveStaticMemberToStaticClass() {
+    doTest("pack.A", "pack.A.B", true, VisibilityUtil.ESCALATE_VISIBILITY, 1, 2);
   }
 
   public void testStringConstantInSwitchLabelExpression() {
@@ -242,14 +248,12 @@ public class MoveMembersTest extends LightMultiFileTestCase {
   }
 
   public void testFromNestedToOuterMethodRef() {
-    final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    final LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.HIGHEST);
     try {
-      projectExtension.setLanguageLevel(LanguageLevel.HIGHEST);
       doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 

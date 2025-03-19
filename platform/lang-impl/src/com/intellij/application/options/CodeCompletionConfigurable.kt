@@ -25,16 +25,14 @@ import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.selected
 
 class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("title.code.completion"), "reference.settingsdialog.IDE.editor.code.completion"),
                               EditorOptionsProvider, WithEpDependencies {
 
   companion object {
-    const val ID = "editor.preferences.completion"
+    const val ID: String = "editor.preferences.completion"
     private val LOG = Logger.getInstance(CodeCompletionConfigurable::class.java)
   }
 
@@ -45,7 +43,7 @@ class CodeCompletionConfigurable : BoundCompositeConfigurable<UnnamedConfigurabl
   override fun createConfigurables(): List<UnnamedConfigurable> =
     ConfigurableWrapper.createConfigurables(CodeCompletionConfigurableEP.EP_NAME)
 
-  override fun getId() = ID
+  override fun getId(): String = ID
 
   override fun getDependencies(): Collection<BaseExtensionPointName<*>> =
     listOf(CodeCompletionConfigurableEP.EP_NAME)

@@ -63,7 +63,7 @@ interface ValuesTestBase {
         }
         builder.append(" = ").append(value ?: "NON-EVALUATED")
       }
-      builder.appendln()
+      builder.appendLine()
       level++
       return false
     }

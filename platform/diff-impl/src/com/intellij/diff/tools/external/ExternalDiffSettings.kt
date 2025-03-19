@@ -3,11 +3,14 @@ package com.intellij.diff.tools.external
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 @State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)], category = SettingsCategory.TOOLS)
@@ -40,28 +43,25 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
   }
 
   data class ExternalToolConfiguration(
-    @NonNls var fileTypeName: String = DEFAULT_TOOL_NAME,
-    @NonNls var diffToolName: String = BUILTIN_TOOL,
-    @NonNls var mergeToolName: String = BUILTIN_TOOL
+    var fileTypeName: @NlsSafe String = DEFAULT_TOOL_NAME,
+    var diffToolName: @NlsSafe String = BUILTIN_TOOL,
+    var mergeToolName: @NlsSafe String = BUILTIN_TOOL
   ) {
     companion object {
-      @NonNls
-      const val DEFAULT_TOOL_NAME = "Default"
-
-      @NonNls
-      const val BUILTIN_TOOL = "Built-in"
+      const val DEFAULT_TOOL_NAME: @NonNls String = "Default"
+      const val BUILTIN_TOOL: @NonNls String = "Built-in"
 
       val builtinInstance = ExternalToolConfiguration()
     }
   }
 
-  enum class ExternalToolGroup(val groupName: String) {
-    DIFF_TOOL("Diff tool"),
-    MERGE_TOOL("Merge tool")
+  enum class ExternalToolGroup(val groupName: @Nls String) {
+    DIFF_TOOL(DiffBundle.message("diff.tool")),
+    MERGE_TOOL(DiffBundle.message("merge.tool"))
   }
 
   data class ExternalTool(
-    @NonNls var name: String = "",
+    var name: @NlsSafe String = "",
     var programPath: String = "",
     var argumentPattern: String = "",
     var isMergeTrustExitCode: Boolean = false,

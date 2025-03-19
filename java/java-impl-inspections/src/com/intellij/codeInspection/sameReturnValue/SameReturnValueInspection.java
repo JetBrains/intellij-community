@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sameReturnValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -19,7 +19,7 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.List;
 
-public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
+public final class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull RefEntity refEntity,
                                                            @NotNull AnalysisScope scope,
@@ -33,7 +33,7 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
 
       String returnValue = refMethod.getReturnValueIfSame();
       if (returnValue != null) {
-        final UMethod method = (UMethod)refMethod.getUastElement();
+        final UMethod method = refMethod.getUastElement();
         final PsiType returnType = method.getReturnType();
         if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) {
           return null;
@@ -69,18 +69,14 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
                                                 @NotNull GlobalJavaInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                processor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(final @NotNull RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+          processor.ignoreElement(refMethod);
+          return false;
+        });
       }
     });
 
@@ -88,23 +84,21 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.declaration.redundancy");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "SameReturnValue";
   }
 
-  @Nullable
   @Override
-  public LocalInspectionTool getSharedLocalInspectionTool() {
+  public @Nullable LocalInspectionTool getSharedLocalInspectionTool() {
     return new LocalSameReturnValueInspection(this);
   }
 
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static final class LocalSameReturnValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameReturnValueInspection myGlobal;
 
@@ -118,20 +112,17 @@ public class SameReturnValueInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    @NotNull
-    public String getGroupDisplayName() {
+    public @NotNull String getGroupDisplayName() {
       return myGlobal.getGroupDisplayName();
     }
 
     @Override
-    @NotNull
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return myGlobal.getShortName();
     }
 
-    @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
       @SuppressWarnings("unchecked") Class<? extends UMethod>[] hint = new Class[]{UMethod.class};
 
       return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {

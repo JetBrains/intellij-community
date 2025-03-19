@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
@@ -38,9 +24,8 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
     myDescriptors = descriptors;
   }
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(@NotNull XmlTag tag) {
     return getFirst(descriptor -> descriptor.getElementDescriptor(tag));
   }
 
@@ -50,9 +35,8 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
       .flatMap(descriptor -> Arrays.stream(descriptor.getRootElementsDescriptors(document))).toArray();
   }
 
-  @Nullable
   @Override
-  public XmlFile getDescriptorFile() {
+  public @Nullable XmlFile getDescriptorFile() {
     return myDescriptors.get(0).getDescriptorFile();
   }
 
@@ -81,15 +65,13 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
     return myDescriptors.stream().flatMap(descriptor -> Arrays.stream(descriptor.getDependencies())).toArray();
   }
 
-  @Nullable
   @Override
-  public TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
+  public @Nullable TypeDescriptor getTypeDescriptor(@NotNull String name, XmlTag context) {
     return getFirst(descriptor -> descriptor.getTypeDescriptor(name, context));
   }
 
-  @Nullable
   @Override
-  public TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
+  public @Nullable TypeDescriptor getTypeDescriptor(XmlTag descriptorTag) {
     return getFirst(descriptor -> descriptor.getTypeDescriptor(descriptorTag));
   }
 
@@ -109,36 +91,31 @@ public class MultiFileNsDescriptor implements XsdNsDescriptor {
     return true;
   }
 
-  @Nullable
   @Override
-  public XmlElementDescriptor getElementDescriptor(String localName,
-                                                   String namespace,
-                                                   Set<? super XmlNSDescriptorImpl> visited,
-                                                   boolean reference) {
+  public @Nullable XmlElementDescriptor getElementDescriptor(String localName,
+                                                             String namespace,
+                                                             Set<? super XmlNSDescriptorImpl> visited,
+                                                             boolean reference) {
     return getFirst(descriptor -> descriptor.getElementDescriptor(localName, namespace, visited, reference));
   }
 
-  @Nullable
   @Override
-  public XmlAttributeDescriptor getAttribute(String localName, String namespace, XmlTag context) {
+  public @Nullable XmlAttributeDescriptor getAttribute(String localName, String namespace, XmlTag context) {
     return getFirst(descriptor -> descriptor.getAttribute(localName, namespace, context));
   }
 
-  @Nullable
   @Override
-  public TypeDescriptor findTypeDescriptor(String localName, String namespace) {
+  public @Nullable TypeDescriptor findTypeDescriptor(String localName, String namespace) {
     return getFirst(descriptor -> descriptor.findTypeDescriptor(localName, namespace));
   }
 
-  @Nullable
   @Override
-  public XmlTag findGroup(String name) {
+  public @Nullable XmlTag findGroup(String name) {
     return getFirst(descriptor -> descriptor.findGroup(name));
   }
 
-  @Nullable
   @Override
-  public XmlTag findAttributeGroup(String name) {
+  public @Nullable XmlTag findAttributeGroup(String name) {
     return getFirst(descriptor -> descriptor.findAttributeGroup(name));
   }
 }

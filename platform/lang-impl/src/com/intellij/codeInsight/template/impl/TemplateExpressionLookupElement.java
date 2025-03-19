@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class TemplateExpressionLookupElement extends LookupElementDecorator<LookupElement> {
+final class TemplateExpressionLookupElement extends LookupElementDecorator<LookupElement> {
   private final TemplateState myState;
 
   TemplateExpressionLookupElement(final TemplateState state, LookupElement element, int index) {
@@ -55,7 +55,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
   }
 
   @Override
-  public void handleInsert(@NotNull final InsertionContext context) {
+  public void handleInsert(final @NotNull InsertionContext context) {
     doHandleInsert(context);
     handleCompletionChar(context);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.ide.IdeEventQueue;
@@ -9,22 +9,26 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.fileTypes.FileTypesBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandlerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.platform.backend.presentation.TargetPresentationBuilder;
+import com.intellij.project.ProjectKt;
+import com.intellij.project.ProjectStoreOwner;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 @State(name = "ReadonlyStatusHandler", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
 
@@ -60,8 +64,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -70,24 +73,37 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     myState = state;
   }
 
-  @NotNull
   @Override
-  protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
-    List<FileInfo> fileInfos = files.stream()
+  protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles, Collection<? extends VirtualFile> files) {
+    IProjectStore stateStore = (myProject instanceof ProjectStoreOwner) ? ProjectKt.getStateStore(myProject) : null;
+    Map<Boolean, List<FileInfo>> projectFilesAndOthersInfos = files.stream()
       .filter(vf-> vf != null && !vf.isWritable() && vf.isInLocalFileSystem())
       .map(vf -> new FileInfo(vf, myProject))
-      .toList();
+      .collect(Collectors.partitioningBy(info -> stateStore != null && stateStore.isProjectFile(info.getFile())));
+
+    List<FileInfo> projectFiles = projectFilesAndOthersInfos.get(true);
+    List<FileInfo> fileInfos = projectFilesAndOthersInfos.get(false);
 
     // if all files are already writable
-    if (fileInfos.isEmpty()) {
+    if (fileInfos.isEmpty() && projectFiles.isEmpty()) {
       return createResultStatus(originalFiles, files);
     }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (myClearReadOnlyInTests) {
-        processFiles(new ArrayList<>(fileInfos), null);
+        ArrayList<FileInfo> allInfos = new ArrayList<>(fileInfos.size() + projectFiles.size());
+        allInfos.addAll(fileInfos);
+        allInfos.addAll(projectFiles);
+        processFiles(allInfos, null, false);
       }
       return createResultStatus(originalFiles, files);
+    }
+
+    if (!projectFiles.isEmpty()) {
+      processFiles(new ArrayList<>(projectFiles), null, false);
+      if (fileInfos.isEmpty()) {
+        return createResultStatus(originalFiles, files);
+      }
     }
 
     // This event count hack is necessary to allow actions that called this stuff could still get data from their data contexts.
@@ -103,13 +119,13 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
       new ReadOnlyStatusDialog(myProject, presentableFileInfos).show();
     }
     else {
-      processFiles(new ArrayList<>(fileInfos), null); // the collection passed is modified
+      processFiles(new ArrayList<>(fileInfos), null, false); // the collection passed is modified
     }
     IdeEventQueue.getInstance().setEventCount(savedEventCount);
     return createResultStatus(originalFiles, files);
   }
 
-  private List<PresentableFileInfo> createPresentableFileInfos(List<? extends FileInfo> fileInfos) {
+  private @Unmodifiable List<PresentableFileInfo> createPresentableFileInfos(List<? extends FileInfo> fileInfos) {
     return ContainerUtil.map(fileInfos, fileInfo -> {
       TargetPresentationBuilder builder = TargetPresentation.builder(fileInfo.getFile().getPresentableName())
         .icon(VirtualFilePresentation.getIcon(fileInfo.getFile()))
@@ -120,7 +136,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     });
   }
 
-  public static void processFiles(@NotNull List<? extends FileInfo> fileInfos, @Nullable String changelist) {
+  static void processFiles(@NotNull List<? extends FileInfo> fileInfos, @Nullable String changelist, boolean setChangeListActive) {
     FileInfo[] copy = fileInfos.toArray(new FileInfo[0]);
     MultiMap<HandleType, VirtualFile> handleTypeToFile = new MultiMap<>();
     for (FileInfo fileInfo : copy) {
@@ -128,7 +144,7 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandlerBase i
     }
 
     for (HandleType handleType : handleTypeToFile.keySet()) {
-      handleType.processFiles(handleTypeToFile.get(handleType), changelist);
+      handleType.processFiles(handleTypeToFile.get(handleType), changelist, setChangeListActive);
     }
 
     for (FileInfo fileInfo : copy) {

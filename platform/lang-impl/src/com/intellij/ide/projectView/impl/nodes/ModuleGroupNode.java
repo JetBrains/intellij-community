@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -30,15 +32,12 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     super(project, value, viewSettings);
   }
 
-  @NotNull
-  protected abstract AbstractTreeNode createModuleNode(@NotNull Module module) throws
+  protected abstract @NotNull AbstractTreeNode createModuleNode(@NotNull Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
-  @NotNull
-  protected abstract ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
+  protected abstract @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
@@ -57,9 +56,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return result;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     Collection<AbstractTreeNode<?>> children = getChildren();
     Set<VirtualFile> result = new HashSet<>();
     for (AbstractTreeNode each : children) {
@@ -73,11 +71,15 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    List<Module> modules = getModulesByFile(file);
+    var modules = new HashSet<>(getModulesByFile(file));
     if (modules.isEmpty() && file.getFileSystem() instanceof ArchiveFileSystem) {
       VirtualFile archiveFile = ((ArchiveFileSystem)file.getFileSystem()).getLocalByEntry(file);
-      if (archiveFile != null) modules = getModulesByFile(archiveFile);
+      if (archiveFile != null) modules = new HashSet<>(getModulesByFile(archiveFile));
     }
+    // It's possible that the file is located under some module which doesn't belong to this group,
+    // but its content root is located under one of the modules that do belong to this group.
+    // So we also need to check the modules that the file's modules' content roots belong to.
+    addParentContentRootModules(modules);
     List<String> thisGroupPath = getValue().getGroupPathList();
     ModuleGrouper grouper = ModuleGrouper.instanceFor(getProject());
     for (Module module : modules) {
@@ -88,13 +90,34 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return false;
   }
 
+  private void addParentContentRootModules(HashSet<Module> modules) {
+    var parentContentRootModules = new HashSet<Module>();
+    for (Module module : modules) {
+      for (VirtualFile contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+        var parentContentRoot = contentRoot.getParent();
+        if (parentContentRoot == null) {
+          continue;
+        }
+        parentContentRootModules.addAll(getModulesByFile(parentContentRoot));
+      }
+    }
+    // Account for a crazy case where a module's content root is under another content root of the same module,
+    // or another module that's already collected. Otherwise, we may end up recursing infinitely here.
+    parentContentRootModules.removeAll(modules);
+    if (parentContentRootModules.isEmpty()) {
+      return;
+    }
+    modules.addAll(parentContentRootModules);
+    // Now add parents' parents.
+    addParentContentRootModules(parentContentRootModules);
+  }
+
   @Override
   public boolean validate() {
     return getValue() != null;
   }
 
-  @NotNull
-  protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
+  protected abstract @Unmodifiable @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
   public void update(@NotNull PresentationData presentation) {
@@ -102,8 +125,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  @NotNull
-  private String getPresentableName() {
+  private @NotNull String getPresentableName() {
     return StringUtil.join(getRelativeGroupPath(), ".");
   }
 

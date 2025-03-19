@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "buz": {
+      "$ref": "#/$defs/foo-or-bar"
+    }
+  },
+  "$defs": {
+    "foo-or-bar": {
+      "if": {
+        "type": "object",
+        "required": [
+          "foo_required"
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/foo"
+      },
+      "else": {
+        "$ref": "#/$defs/bar"
+      }
+    },
+    "foo": {
+      "additionalProperties": false,
+      "required": [
+        "foo_dependency"
+      ],
+      "properties": {
+        "foo_dependency": {
+          "type": "boolean"
+        },
+        "foo_required": {
+          "type": "integer"
+        },
+        "foo_additional": {
+          "type": "string"
+        }
+      }
+    },
+    "bar": {
+      "additionalProperties": false,
+      "required": [
+        "bar_dependency"
+      ],
+      "properties": {
+        "bar_dependency": {
+          "type": "boolean"
+        },
+        "bar_required": {
+          "type": "integer"
+        },
+        "bar_additional": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -10,37 +10,38 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('grep')
+                PsiWhiteSpace(' ')
                 LITERAL
-                  PsiElement(word)('grep')
+                  PsiElement(word)('-v')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)(''^#'')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$usrcff')
+                  PsiElement(CLOSE_QUOTE)('"')
               PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('-v')
+              PsiElement(|)('|')
               PsiWhiteSpace(' ')
-              STRING
-                PsiElement(RAW_STRING)(''^#'')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$usrcff')
-                PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            PsiElement(|)('|')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
-                LITERAL
-                  PsiElement(word)('grep')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                PsiElement(STRING_CONTENT)(' ')
-                VARIABLE
-                  PsiElement(var)('$name')
-                PsiElement(STRING_CONTENT)('(')
-                PsiElement(CLOSE_QUOTE)('"')
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('grep')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  PsiElement(STRING_CONTENT)(' ')
+                  VARIABLE
+                    PsiElement(var)('$name')
+                  PsiElement(STRING_CONTENT)('(')
+                  PsiElement(CLOSE_QUOTE)('"')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')
@@ -55,39 +56,40 @@ SHELL_SCRIPT
         SUBSHELL_COMMAND
           PsiElement(()('(')
           COMPOUND_LIST
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+            PIPELINE_COMMAND_LIST
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('printf')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$members')
+                  PsiElement(STRING_CONTENT)('\n')
+                  PsiElement(CLOSE_QUOTE)('"')
+              PsiWhiteSpace(' ')
+              PsiElement(|)('|')
+              PsiWhiteSpace(' ')
+              SIMPLE_COMMAND
+                GENERIC_COMMAND_DIRECTIVE
+                  LITERAL
+                    PsiElement(word)('cut')
+                PsiWhiteSpace(' ')
                 LITERAL
-                  PsiElement(word)('printf')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$members')
-                PsiElement(STRING_CONTENT)('\n')
-                PsiElement(CLOSE_QUOTE)('"')
-            PsiWhiteSpace(' ')
-            PsiElement(|)('|')
-            PsiWhiteSpace(' ')
-            SIMPLE_COMMAND
-              GENERIC_COMMAND_DIRECTIVE
+                  PsiElement(word)('-d')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(RAW_STRING)('','')
+                PsiWhiteSpace(' ')
                 LITERAL
-                  PsiElement(word)('cut')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('-d')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(RAW_STRING)('','')
-              PsiWhiteSpace(' ')
-              LITERAL
-                PsiElement(word)('-f')
-              PsiWhiteSpace(' ')
-              STRING
-                PsiElement(OPEN_QUOTE)('"')
-                VARIABLE
-                  PsiElement(var)('$position')
-                PsiElement(CLOSE_QUOTE)('"')
+                  PsiElement(word)('-f')
+                PsiWhiteSpace(' ')
+                STRING
+                  PsiElement(OPEN_QUOTE)('"')
+                  VARIABLE
+                    PsiElement(var)('$position')
+                  PsiElement(CLOSE_QUOTE)('"')
           PsiElement())(')')
         PsiElement(CLOSE_QUOTE)('"')
   PsiElement(\n)('\n')

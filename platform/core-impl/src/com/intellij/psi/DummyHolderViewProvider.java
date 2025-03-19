@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -27,26 +27,22 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   }
 
   @Override
-  @NotNull
-  public CharSequence getContents() {
+  public @NotNull CharSequence getContents() {
     return myHolder != null ? myHolder.getNode().getText() : "";
   }
 
   @Override
-  @NotNull
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return myHolder.getLanguage();
   }
 
   @Override
-  @NotNull
-  public Set<Language> getLanguages() {
+  public @NotNull Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
-  @Nullable
   @Override
-  protected PsiFile getPsiInner(Language target) {
+  protected @Nullable PsiFile getPsiInner(Language target) {
     return getCachedPsi(target);
   }
 
@@ -56,9 +52,8 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
     return target == getBaseLanguage() ? myHolder : null;
   }
 
-  @NotNull
   @Override
-  public List<PsiFile> getCachedPsiFiles() {
+  public @NotNull List<PsiFile> getCachedPsiFiles() {
     return Collections.singletonList(myHolder);
   }
 
@@ -68,8 +63,7 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
   }
 
   @Override
-  @NotNull
-  public List<PsiFile> getAllFiles() {
+  public @NotNull List<PsiFile> getAllFiles() {
     return getCachedPsiFiles();
   }
 
@@ -94,9 +88,8 @@ public class DummyHolderViewProvider extends AbstractFileViewProvider {
     return findElementAt(offset);
   }
 
-  @NotNull
   @Override
-  public FileViewProvider createCopy(@NotNull VirtualFile copy) {
+  public @NotNull FileViewProvider createCopy(@NotNull VirtualFile copy) {
     throw new RuntimeException("Clone is not supported for DummyHolderProviders. Use DummyHolder clone directly.");
   }
 

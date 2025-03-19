@@ -18,6 +18,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
 
   private final Map<String, PsiAnnotation> myAnnotations;
   private final Set<String> myImplicitModifiers;
+  private PsiElement myParent;
 
   public LombokLightModifierList(@NotNull PsiManager manager) {
     this(manager, JavaLanguage.INSTANCE);
@@ -74,19 +75,26 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return result;
   }
 
-  @Override
-  public void checkSetModifierProperty(@PsiModifier.ModifierConstant @NotNull @NonNls String name, boolean value) throws IncorrectOperationException {
-    throw new IncorrectOperationException();
+  public LombokLightModifierList withParent(@NotNull PsiElement parent) {
+    myParent = parent;
+    return this;
+  }
+
+  public LombokLightModifierList withAnnotation(@NotNull String qualifiedName, @NotNull PsiAnnotation psiAnnotation) {
+    myAnnotations.put(qualifiedName, psiAnnotation);
+    return this;
   }
 
   public LombokLightModifierList withAnnotation(@NotNull PsiAnnotation psiAnnotation) {
-    myAnnotations.put(psiAnnotation.getQualifiedName(), psiAnnotation);
+    final String qualifiedName = psiAnnotation.getQualifiedName();
+    if (null != qualifiedName) {
+      return withAnnotation(qualifiedName, psiAnnotation);
+    }
     return this;
   }
 
   @Override
-  @NotNull
-  public PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
+  public @NotNull PsiAnnotation addAnnotation(@NotNull @NonNls String qualifiedName) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     final PsiAnnotation psiAnnotation = elementFactory.createAnnotationFromText('@' + qualifiedName, null);
     myAnnotations.put(qualifiedName, psiAnnotation);
@@ -114,6 +122,12 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
+  @Override
+  public PsiElement getParent() {
+    return myParent;
+  }
+
+  @Override
   public String toString() {
     return "LombokLightModifierList";
   }
@@ -127,7 +141,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
       return false;
     }
 
-    LombokLightModifierList that = (LombokLightModifierList) o;
+    LombokLightModifierList that = (LombokLightModifierList)o;
 
     return myAnnotations.equals(that.myAnnotations);
   }

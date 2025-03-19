@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
@@ -19,7 +20,7 @@ import com.jetbrains.jsonSchema.impl.MatchResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBase {
+public final class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBase {
   @Override
   protected PsiElementVisitor doBuildVisitor(@NotNull JsonValue root,
                                              @Nullable JsonSchemaObject schema,
@@ -40,7 +41,8 @@ public class JsonSchemaDeprecationInspection extends JsonSchemaBasedInspectionBa
         JsonPointerPosition position = walker.findPosition(o, true);
         if (position == null) return;
 
-        final MatchResult result = new JsonSchemaResolver(project, schema, position).detailedResolve();
+        JsonPropertyAdapter parentPropertyAdapter = walker.getParentPropertyAdapter(o);
+        final MatchResult result = new JsonSchemaResolver(project, schema, position, parentPropertyAdapter == null ? null : parentPropertyAdapter.getNameValueAdapter()).detailedResolve();
         Iterable<JsonSchemaObject> iterable;
         if (result.myExcludingSchemas.size() == 1) {
           iterable = ContainerUtil.concat(result.mySchemas, result.myExcludingSchemas.get(0));

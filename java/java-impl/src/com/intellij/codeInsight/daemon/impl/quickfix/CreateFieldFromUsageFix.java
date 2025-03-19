@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -31,15 +31,16 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     return CommonQuickFixBundle.message("fix.create.title.x", JavaElementKind.FIELD.object(), varName);
   }
 
-  @NotNull
   @Override
-  protected List<PsiClass> getTargetClasses(PsiElement element) {
+  protected @NotNull List<PsiClass> getTargetClasses(PsiElement element) {
+    PsiReferenceExpression referenceExpression = myReferenceExpression.getElement();
+    if (referenceExpression == null) return List.of();
     final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
       if (canModify(psiClass) &&
           (!psiClass.isInterface() && !psiClass.isAnnotationType() && !psiClass.isRecord()
-           || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
-        PsiElement target = myReferenceExpression.resolve();
+           || shouldCreateStaticMember(referenceExpression, psiClass))) {
+        PsiElement target = referenceExpression.resolve();
         if (!(target instanceof PsiField field) || field.getContainingClass() != psiClass) {
           targetClasses.add(psiClass);
         }
@@ -59,38 +60,40 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   private void invokeImpl(@NotNull PsiClass targetClass) {
-    final Project project = myReferenceExpression.getProject();
+    PsiReferenceExpression referenceExpression = myReferenceExpression.getElement();
+    if (referenceExpression == null) return;
+    final Project project = referenceExpression.getProject();
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
     if (factory == null) factory = JavaPsiFacade.getElementFactory(project);
 
     PsiMember enclosingContext = null;
     PsiClass parentClass;
     do {
-      enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? myReferenceExpression : enclosingContext, PsiMethod.class,
+      enclosingContext = PsiTreeUtil.getParentOfType(enclosingContext == null ? referenceExpression : enclosingContext, PsiMethod.class,
                                                      PsiField.class, PsiClassInitializer.class);
       parentClass = enclosingContext == null ? null : enclosingContext.getContainingClass();
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
+    ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(referenceExpression, false);
 
-    String fieldName = myReferenceExpression.getReferenceName();
+    String fieldName = referenceExpression.getReferenceName();
     assert fieldName != null;
 
     PsiField field = factory.createField(fieldName, PsiTypes.intType());
 
-    if (!targetClass.isInterface() && shouldCreateStaticMember(myReferenceExpression, targetClass)) {
+    if (!targetClass.isInterface() && shouldCreateStaticMember(referenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
     }
-    if (shouldCreateFinalMember(myReferenceExpression, targetClass)) {
+    if (shouldCreateFinalMember(referenceExpression, targetClass)) {
       PsiUtil.setModifierProperty(field, PsiModifier.FINAL, true);
     }
 
-    field = CreateFieldFromUsageHelper.insertField(targetClass, field, myReferenceExpression);
+    field = CreateFieldFromUsageHelper.insertField(targetClass, field, referenceExpression);
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
-    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, false, myReferenceExpression);
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, false, referenceExpression);
   }
 
   public static void createFieldFromUsageTemplate(final PsiClass targetClass,
@@ -138,8 +141,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.field.from.usage.family");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -41,7 +42,9 @@ private val LOG = logger<FeatureUsageData>()
  * </p>
  */
 @ApiStatus.Internal
-class FeatureUsageData(private val recorderId: String) {
+class FeatureUsageData(val recorderId: String) {
+  @TestOnly
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("FeatureUsageData(recorderId)"), DeprecationLevel.WARNING)
   constructor() : this("FUS")
 
   private var data: MutableMap<String, Any> = HashMap()
@@ -51,12 +54,21 @@ class FeatureUsageData(private val recorderId: String) {
     if (clientId != null && clientId != ClientId.defaultLocalId) {
       addClientId(clientId.value)
     }
+    if (QODANA_EVENTS_DATA.projectId != null) {
+      data["system_qdcld_project_id"] = QODANA_EVENTS_DATA.projectId
+    }
+    if (QODANA_EVENTS_DATA.organizationId != null) {
+      data["system_qdcld_org_id"] = QODANA_EVENTS_DATA.organizationId
+    }
   }
 
   companion object {
     // don't list "version" as "platformDataKeys" because it's format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id", "client_id")
+                                                "file_path", "anonymous_id", "client_id", "system_qdcld_project_id", "system_qdcld_org_id",
+                                                "auto_license_type")
+
+    private val QODANA_EVENTS_DATA: QodanaEventsData = calcQodanaEventsData()
   }
 
   fun addClientId(clientId: String?): FeatureUsageData {
@@ -119,6 +131,10 @@ class FeatureUsageData(private val recorderId: String) {
 
   fun addLanguage(language: Language?): FeatureUsageData {
     return addLanguageInternal("lang", language)
+  }
+
+  fun addLanguage(name: String, language: Language?): FeatureUsageData {
+    return addLanguageInternal(name, language)
   }
 
   fun addCurrentFile(language: Language?): FeatureUsageData {
@@ -198,8 +214,26 @@ class FeatureUsageData(private val recorderId: String) {
     return this
   }
 
+  // Added for java compatibility
   fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?): FeatureUsageData {
-    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value) } ?: "undefined"
+    addAnonymizedValue(key, value, false)
+    return this
+  }
+
+  fun addAnonymizedValue(@NonNls key: String, @NonNls value: List<String>): FeatureUsageData {
+    data[key] = value.map { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(it, false) }
+    return this
+  }
+
+  fun addAnonymizedValue(@NonNls key: String, @NonNls value: String?, short: Boolean = false): FeatureUsageData {
+    data[key] = value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value, short) } ?: "undefined"
+    return this
+  }
+
+  fun addDatedShortAnonymizedValue(@NonNls key: String, timestamp: Long, @NonNls value: String?): FeatureUsageData {
+    data[key] =
+      "${StatisticsUtil.getTimestampDateInUTC(timestamp)}-" +
+      (value?.let { EventLogConfiguration.getInstance().getOrCreate(recorderId).anonymize(value, true) } ?: "undefined")
     return this
   }
 
@@ -326,7 +360,7 @@ class FeatureUsageData(private val recorderId: String) {
   }
 
   fun copy(): FeatureUsageData {
-    val result = FeatureUsageData()
+    val result = FeatureUsageData(recorderId)
     for ((key, value) in data) {
       result.data[key] = value
     }
@@ -339,9 +373,7 @@ class FeatureUsageData(private val recorderId: String) {
 
     other as FeatureUsageData
 
-    if (data != other.data) return false
-
-    return true
+    return data == other.data
   }
 
   override fun hashCode(): Int {

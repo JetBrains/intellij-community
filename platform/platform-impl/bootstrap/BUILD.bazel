@@ -1,0 +1,43 @@
+### auto-generated section `build intellij.platform.ide.bootstrap` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-bootstrap",
+  module_name = "intellij.platform.ide.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/statistics",
+    "//platform/service-container:serviceContainer",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/util/zip",
+    "//platform/analysis-api:analysis",
+    "//platform/util:util-ui",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/settings",
+    "//platform/util-ex",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/projectModel-impl",
+    "//platform/util/concurrency",
+    "//platform/diagnostic/telemetry",
+    "//platform/bootstrap/coroutine",
+    "//platform/lvcs-api:lvcs",
+    "//platform/util/coroutines",
+    "//platform/indexing-api:indexing",
+    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/bootstrap/eel:ide-bootstrap-eel",
+    "//fleet/kernel",
+    "@lib//:jna",
+    "@lib//:hash4j",
+    "@lib//:jbr-api",
+    "@lib//:googlecode-plist-dd",
+    "@lib//:netty-codec-http",
+    "//platform/platform-impl/bootstrap/kernel:ide-bootstrap-kernel",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.bootstrap` end

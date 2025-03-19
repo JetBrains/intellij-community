@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.bootstrap` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "bootstrap",
+  module_name = "intellij.platform.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/util-class-loader:util-classLoader",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/service-container:serviceContainer",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/boot",
+    "//platform/ide-core-impl",
+    "@lib//:jbr-api",
+    "//platform/runtime/product",
+    "//platform/diagnostic",
+    "//platform/runtime/repository",
+    "//platform/diagnostic/telemetry-impl",
+    "//platform/plugins/parser/impl:plugins-parser-impl",
+  ],
+  runtime_deps = ["//platform/bootstrap/coroutine"]
+)
+### auto-generated section `build intellij.platform.bootstrap` end

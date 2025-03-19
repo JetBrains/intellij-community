@@ -45,14 +45,13 @@ public class AnnotationParamListElement extends CompositeElement {
   @Override
   public ASTNode findChildByRole(int role) {
     switch (role) {
+      case ChildRole.LPARENTH:
+        return findChildByType(JavaTokenType.LPARENTH);
+      case ChildRole.RPARENTH:
+        return findChildByType(JavaTokenType.RPARENTH);
       default:
         LOG.assertTrue(false);
         return null;
-      case ChildRole.LPARENTH:
-        return findChildByType(JavaTokenType.LPARENTH);
-
-      case ChildRole.RPARENTH:
-        return findChildByType(JavaTokenType.RPARENTH);
     }
   }
 

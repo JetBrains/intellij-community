@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -19,18 +19,18 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaTreeGenerator implements TreeGenerator {
+public final class JavaTreeGenerator implements TreeGenerator {
   private static final Logger LOG = Logger.getInstance(JavaTreeGenerator.class);
 
   private static final JavaParserUtil.ParserWrapper MOD_LIST =
     builder -> JavaParser.INSTANCE.getDeclarationParser().parseModifierList(builder);
 
   @Override
-  @Nullable
-  public TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull final CharTable table, @NotNull final PsiManager manager) {
+  public @Nullable TreeElement generateTreeFor(@NotNull PsiElement original, final @NotNull CharTable table, final @NotNull PsiManager manager) {
     if (original instanceof PsiJavaToken) {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
@@ -223,6 +223,8 @@ public class JavaTreeGenerator implements TreeGenerator {
     }
   }
 
-  static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
-  static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiClass> REFERENCED_CLASS_KEY = Key.create("REFERENCED_CLASS_KEY");
+  @ApiStatus.Internal
+  public static final Key<PsiMember> REFERENCED_MEMBER_KEY = Key.create("REFERENCED_MEMBER_KEY");
 }

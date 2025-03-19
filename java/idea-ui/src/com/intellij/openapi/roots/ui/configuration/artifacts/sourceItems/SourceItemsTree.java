@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.CommonActionsManager;
@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
@@ -125,7 +126,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  public @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     final DefaultMutableTreeNode[] nodes = getSelectedTreeNodes();
     if (nodes.length == 1) {
       return DnDAwareTree.getDragImage(this, TreeUtil.getPathFromRoot(nodes[0]), dragOrigin);
@@ -143,9 +144,8 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
       myArtifactsEditor = artifactsEditor;
     }
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       if (myRoot == null) {
         myRoot = new SourceItemsTreeRoot(myEditorContext, myArtifactsEditor);
       }

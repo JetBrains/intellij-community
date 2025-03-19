@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.k2.debugger.test.cases;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/smartStepInto")
 public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K2;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -41,6 +48,11 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
     @TestMetadata("callChain.kt")
     public void testCallChain() throws Exception {
         runTest("../testData/smartStepInto/callChain.kt");
+    }
+
+    @TestMetadata("classOneLineMethods.kt")
+    public void testClassOneLineMethods() throws Exception {
+        runTest("../testData/smartStepInto/classOneLineMethods.kt");
     }
 
     @TestMetadata("constructor.kt")
@@ -93,6 +105,16 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
         runTest("../testData/smartStepInto/funWithExpressionBody.kt");
     }
 
+    @TestMetadata("idea335207.kt")
+    public void testIdea335207() throws Exception {
+        runTest("../testData/smartStepInto/idea335207.kt");
+    }
+
+    @TestMetadata("idea335263.kt")
+    public void testIdea335263() throws Exception {
+        runTest("../testData/smartStepInto/idea335263.kt");
+    }
+
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("../testData/smartStepInto/if.kt");
@@ -118,9 +140,39 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
         runTest("../testData/smartStepInto/inlinedFunctionalExpression.kt");
     }
 
+    @TestMetadata("insideAddChain.kt")
+    public void testInsideAddChain() throws Exception {
+        runTest("../testData/smartStepInto/insideAddChain.kt");
+    }
+
+    @TestMetadata("insideCallChain.kt")
+    public void testInsideCallChain() throws Exception {
+        runTest("../testData/smartStepInto/insideCallChain.kt");
+    }
+
+    @TestMetadata("insideCallChain2.kt")
+    public void testInsideCallChain2() throws Exception {
+        runTest("../testData/smartStepInto/insideCallChain2.kt");
+    }
+
+    @TestMetadata("insideCallChain3.kt")
+    public void testInsideCallChain3() throws Exception {
+        runTest("../testData/smartStepInto/insideCallChain3.kt");
+    }
+
+    @TestMetadata("insideCallChain4.kt")
+    public void testInsideCallChain4() throws Exception {
+        runTest("../testData/smartStepInto/insideCallChain4.kt");
+    }
+
     @TestMetadata("invoke.kt")
     public void testInvoke() throws Exception {
         runTest("../testData/smartStepInto/invoke.kt");
+    }
+
+    @TestMetadata("javaLambda.kt")
+    public void testJavaLambda() throws Exception {
+        runTest("../testData/smartStepInto/javaLambda.kt");
     }
 
     @TestMetadata("javaSyntheticPropertyReference.kt")
@@ -128,9 +180,24 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
         runTest("../testData/smartStepInto/javaSyntheticPropertyReference.kt");
     }
 
+    @TestMetadata("lambdas.kt")
+    public void testLambdas() throws Exception {
+        runTest("../testData/smartStepInto/lambdas.kt");
+    }
+
     @TestMetadata("libraryFun.kt")
     public void testLibraryFun() throws Exception {
         runTest("../testData/smartStepInto/libraryFun.kt");
+    }
+
+    @TestMetadata("libraryFunReference.kt")
+    public void testLibraryFunReference() throws Exception {
+        runTest("../testData/smartStepInto/libraryFunReference.kt");
+    }
+
+    @TestMetadata("methodReference.kt")
+    public void testMethodReference() throws Exception {
+        runTest("../testData/smartStepInto/methodReference.kt");
     }
 
     @TestMetadata("multiline.kt")
@@ -146,6 +213,11 @@ public class K2SmartStepIntoTestGenerated extends AbstractK2SmartStepIntoTest {
     @TestMetadata("object.kt")
     public void testObject() throws Exception {
         runTest("../testData/smartStepInto/object.kt");
+    }
+
+    @TestMetadata("ordinals.kt")
+    public void testOrdinals() throws Exception {
+        runTest("../testData/smartStepInto/ordinals.kt");
     }
 
     @TestMetadata("param.kt")

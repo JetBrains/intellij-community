@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -69,8 +69,7 @@ public class FormBuilder {
     return addLabeledComponent(label, component, topInset, labelOnTop);
   }
 
-  @NotNull
-  private static JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
+  private static @NotNull JLabel createLabelForComponent(@NotNull @NlsContexts.Label String labelText, @NotNull JComponent component) {
     JLabel label = new JLabel(UIUtil.replaceMnemonicAmpersand(labelText));
     label.setLabelFor(component);
     return label;
@@ -84,8 +83,7 @@ public class FormBuilder {
     return addLabeledComponent((JLabel)null, component, topInset, false);
   }
 
-  @NotNull
-  public FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
+  public @NotNull FormBuilder addComponentFillVertically(@NotNull JComponent component, int topInset) {
     return addLabeledComponent(null, component, topInset, false, true);
   }
 
@@ -113,11 +111,11 @@ public class FormBuilder {
     return addComponentToRightColumn(label, 1);
   }
 
-  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component) {
+  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component) {
     return addComponentToRightColumn(component, myVerticalGap);
   }
 
-  public FormBuilder addComponentToRightColumn(@NotNull final JComponent component, final int topInset) {
+  public FormBuilder addComponentToRightColumn(final @NotNull JComponent component, final int topInset) {
     return addLabeledComponent(new JLabel(), component, topInset);
   }
 

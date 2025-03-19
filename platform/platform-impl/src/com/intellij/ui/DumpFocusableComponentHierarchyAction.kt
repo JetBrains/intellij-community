@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.WindowManager
@@ -12,17 +13,17 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.KeyboardFocusManager
-import java.awt.Toolkit
 import java.awt.Window
-import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JWindow
 
+@ApiStatus.Internal
 class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
   init {
     isEnabledInModalContext = true
@@ -43,7 +44,7 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
 
     val closeButton = JButton(object : AbstractAction(IdeBundle.message("dump.focusable.component.hierarchy.close.button")) {
       override fun actionPerformed(e: ActionEvent) {
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(dump), null)
+        CopyPasteManager.copyTextToClipboard(dump)
         popup.dispose()
       }
     })

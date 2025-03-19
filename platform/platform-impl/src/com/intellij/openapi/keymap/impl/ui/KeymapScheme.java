@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.keymap.Keymap;
@@ -23,9 +23,8 @@ final class KeymapScheme implements Scheme {
   /**
    * @return a current presentable name of a keymap
    */
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return getCurrent().getPresentableName();
   }
 
@@ -64,9 +63,10 @@ final class KeymapScheme implements Scheme {
   /**
    * @return a mutable copy, which is created on demand
    */
-  @NotNull
-  KeymapImpl getMutable() {
-    if (mutable != null) return mutable;
+  @NotNull KeymapImpl getMutable() {
+    if (mutable != null) {
+      return mutable;
+    }
     assert isMutable() : "create a mutable copy for immutable keymap";
     mutable = original.copyTo(new KeymapImpl());
     return mutable;
@@ -144,7 +144,9 @@ final class KeymapScheme implements Scheme {
    */
   @NotNull
   Keymap apply() {
-    if (mutable != null) mutable.copyTo(original);
+    if (mutable != null) {
+      mutable.copyTo(original);
+    }
     return original;
   }
 
@@ -155,7 +157,9 @@ final class KeymapScheme implements Scheme {
   @NotNull
   KeymapScheme copy(@NotNull String name) {
     KeymapImpl keymap = original.deriveKeymap(name);
-    if (mutable != null) mutable.copyTo(keymap);
+    if (mutable != null) {
+      mutable.copyTo(keymap);
+    }
     return new KeymapScheme(keymap);
   }
 }

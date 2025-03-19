@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 
-public class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
+public final class PythonFormattedStringReferenceContributor extends PsiReferenceContributor {
   static final class Holder {
     private static final PsiElementPattern.Capture<PyStringLiteralExpression> PERCENT_STRING_PATTERN =
       psiElement(PyStringLiteralExpression.class).beforeLeaf(psiElement().withText("%")).withParent(PyBinaryExpression.class);

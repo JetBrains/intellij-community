@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.FieldVisibilityProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
@@ -57,8 +58,7 @@ public class ClassRenderer extends NodeRendererImpl {
     super(DEFAULT_NAME, true);
   }
 
-  @Nullable
-  public final String renderTypeName(@Nullable final String typeName) {
+  public final @Nullable String renderTypeName(final @Nullable String typeName) {
     if (SHOW_FQ_TYPE_NAMES || typeName == null) {
       return typeName;
     }
@@ -255,12 +255,11 @@ public class ClassRenderer extends NodeRendererImpl {
       });
   }
 
-  @NotNull
-  protected FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
-                                                  NodeDescriptorFactory nodeDescriptorFactory,
-                                                  ObjectReference objRef,
-                                                  Field field,
-                                                  EvaluationContext evaluationContext) {
+  protected @NotNull FieldDescriptor createFieldDescriptor(ValueDescriptorImpl parentDescriptor,
+                                                           NodeDescriptorFactory nodeDescriptorFactory,
+                                                           ObjectReference objRef,
+                                                           Field field,
+                                                           EvaluationContext evaluationContext) {
     return nodeDescriptorFactory.getFieldDescriptor(parentDescriptor, objRef, field);
   }
 
@@ -293,7 +292,7 @@ public class ClassRenderer extends NodeRendererImpl {
       return false;
     }
 
-    return true;
+    return FieldVisibilityProvider.shouldDisplayField(field);
   }
 
   @Override
@@ -352,8 +351,7 @@ public class ClassRenderer extends NodeRendererImpl {
     LOG.assertTrue(false);
   }
 
-  @Nullable
-  public static String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
+  public static @Nullable String getEnumConstantName(@NotNull ObjectReference objRef, ClassType classType) {
     do {
       if (!classType.isPrepared()) {
         return null;
@@ -364,7 +362,7 @@ public class ClassRenderer extends NodeRendererImpl {
       }
     }
     while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
-    final Field field = classType.fieldByName("name");
+    final Field field = DebuggerUtils.findField(classType, "name");
     if (field == null) {
       return null;
     }

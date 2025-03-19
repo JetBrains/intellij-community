@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -11,17 +11,20 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 
 class JavaMethodReferenceElement extends LookupElement implements TypedLookupItem {
   private final PsiMethod myMethod;
   private final PsiElement myRefPlace;
   private final PsiType myType;
+  private final Icon myIcon;
 
   JavaMethodReferenceElement(PsiMethod method, PsiElement refPlace, @Nullable PsiType type) {
     myMethod = method;
     myRefPlace = refPlace;
     myType = type;
+    myIcon = myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY);
   }
 
   @Override
@@ -41,21 +44,19 @@ class JavaMethodReferenceElement extends LookupElement implements TypedLookupIte
     return Objects.hash(getLookupString(), myRefPlace);
   }
 
-  @NotNull
   @Override
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return myMethod;
   }
 
-  @NotNull
   @Override
-  public String getLookupString() {
+  public @NotNull String getLookupString() {
     return myMethod.isConstructor() ? "new" : myMethod.getName();
   }
 
   @Override
   public void renderElement(@NotNull LookupElementPresentation presentation) {
-    presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
+    presentation.setIcon(myIcon);
     super.renderElement(presentation);
   }
 

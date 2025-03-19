@@ -7,6 +7,7 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -15,14 +16,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
-  var isHovered = false; private set
-  var lastHoverMs = 0L; private set
+  var isHovered: Boolean = false; private set
+  var lastHoverMs: Long = 0L; private set
 
   private val fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
 
@@ -36,15 +39,10 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
 
   private val settingsBtn = object : ActionButton(settingsAction, settingsAction.templatePresentation.clone(), ActionPlaces.POPUP, JBUI.size(22, 22)) {
     override fun performAction(e: MouseEvent?) {
-      val event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, dataContext, false, true)
+      val event = AnActionEvent.createEvent(dataContext, myPresentation, myPlace, ActionUiKind.TOOLBAR, e)
       ActionUtil.performDumbAwareWithCallbacks(myAction, event) { actionPerformed(event) }
     }
     override fun isShowing() = true
-  }
-
-  private val dataContext = DataContext {
-    if (CommonDataKeys.EDITOR.`is`(it)) editor
-    else null
   }
 
   private inner class PatchedActionLink(action: AnAction, event: AnActionEvent) : AnActionLink(action, ActionPlaces.POPUP) {
@@ -58,14 +56,18 @@ class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadd
         }
       }
     }
-    override fun getData(dataId: String) = dataContext.getData(dataId) ?: super.getData(dataId)
+
+    override fun uiDataSnapshot(sink: DataSink) {
+      super.uiDataSnapshot(sink)
+      sink[CommonDataKeys.EDITOR] = editor
+    }
+
     override fun isShowing() = true
   }
 
   private val resetLink = ActionManager.getInstance().getAction("EditorResetFontSize").run {
-    val event = AnActionEvent.createFromInputEvent(null, ActionPlaces.POPUP,
-                                                   null, dataContext,
-                                                   false, true)
+    val dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR, editor)
+    val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.POPUP, ActionUiKind.TOOLBAR, null)
     update(event)
     fontSizeLabel.addPropertyChangeListener {
       if (it.propertyName == "text") {

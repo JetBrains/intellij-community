@@ -83,7 +83,7 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPySetLiteralExpression(@NotNull PySetLiteralExpression node) {
-    visitPyExpression(node);
+    visitPySequenceExpression(node);
   }
 
   public void visitPyListCompExpression(@NotNull PyListCompExpression node) {
@@ -274,6 +274,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
+  public void visitPyPassStatement(@NotNull PyPassStatement node) {
+    visitPyStatement(node);
+  }
+
   public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     visitPyElement(node);
   }
@@ -384,5 +388,21 @@ public class PyElementVisitor extends PsiElementVisitor {
 
   public void visitPyCaseClause(@NotNull PyCaseClause node) {
     visitPyElement(node);
+  }
+
+  public void visitPyTypeAliasStatement(@NotNull PyTypeAliasStatement node) {
+    visitPyStatement(node);
+  }
+
+  public void visitPyTypeParameter(@NotNull PyTypeParameter node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyTypeParameterList(@NotNull PyTypeParameterList node) {
+    visitPyElement(node);
+  }
+
+  public void visitPyKeyValueExpression(@NotNull PyKeyValueExpression node) {
+    visitPyExpression(node);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,8 +21,7 @@ public final class RunResult<T> extends Result<T> {
     myActionRunnable = action;
   }
 
-  @NotNull
-  public RunResult<T> run() {
+  public @NotNull RunResult<T> run() {
     try {
       myActionRunnable.run(this);
     }
@@ -44,8 +43,7 @@ public final class RunResult<T> extends Result<T> {
     return myResult;
   }
 
-  @NotNull
-  public RunResult logException(Logger logger) {
+  public @NotNull RunResult logException(Logger logger) {
     if (myThrowable != null) {
       logger.error(myThrowable);
     }
@@ -53,8 +51,7 @@ public final class RunResult<T> extends Result<T> {
     return this;
   }
 
-  @NotNull
-  public RunResult<T> throwException() throws RuntimeException, Error {
+  public @NotNull RunResult<T> throwException() throws RuntimeException, Error {
     if (myThrowable != null) {
       ExceptionUtil.rethrowAllAsUnchecked(myThrowable);
     }

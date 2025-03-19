@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -7,6 +7,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -53,7 +54,8 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     final String propertyName = variable != null
                                 ? JavaCodeStyleManager.getInstance(myProject).variableNameToPropertyName(variable.getName(), VariableKind.LOCAL_VARIABLE)
                                 : null;
-    mySuggestedNameInfo = suggestNames(defaultType, propertyName);
+    mySuggestedNameInfo =
+      DumbService.getInstance(myProject).computeWithAlternativeResolveEnabled(() -> suggestNames(defaultType, propertyName));
     final String[] names = mySuggestedNameInfo.names;
     if (propertyName != null && names.length > 1) {
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(myProject);
@@ -92,7 +94,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   @Override
   protected void restoreState(@NotNull PsiVariable psiField) {
     final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(getType());
-    super.restoreState(psiField);
+    DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> super.restoreState(psiField));
     for (PsiExpression occurrence : myOccurrences) {
       if (!occurrence.isValid()) return;
     }
@@ -117,11 +119,10 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
     return myTypeSelectorManager.getDefaultType();
   }
 
-  @Nullable
-  public static PsiExpression restoreExpression(PsiFile containingFile,
-                                                PsiVariable psiVariable,
-                                                PsiElementFactory elementFactory,
-                                                RangeMarker marker, String exprText) {
+  public static @Nullable PsiExpression restoreExpression(PsiFile containingFile,
+                                                          PsiVariable psiVariable,
+                                                          PsiElementFactory elementFactory,
+                                                          RangeMarker marker, String exprText) {
     if (exprText == null) return null;
     if (psiVariable == null || !psiVariable.isValid()) return null;
     final PsiElement refVariableElement = containingFile.findElementAt(marker.getStartOffset());

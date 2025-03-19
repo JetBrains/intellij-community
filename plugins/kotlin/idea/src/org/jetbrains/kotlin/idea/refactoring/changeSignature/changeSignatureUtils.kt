@@ -5,18 +5,17 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.CallerUsageInfo
-import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.DeferredJavaMethodKotlinCallerUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.JavaMethodKotlinUsageWithDelegate
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
@@ -29,18 +28,9 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
-
-fun KtNamedDeclaration.getDeclarationBody(): KtElement? = when (this) {
-    is KtClassOrObject -> getSuperTypeList()
-    is KtPrimaryConstructor -> getContainingClassOrObject().getSuperTypeList()
-    is KtSecondaryConstructor -> getDelegationCall()
-    is KtNamedFunction -> bodyExpression
-    else -> null
-}
 
 fun PsiElement.isCaller(allUsages: Array<out UsageInfo>): Boolean {
     val primaryConstructor = (this as? KtClass)?.primaryConstructor
@@ -51,14 +41,6 @@ fun PsiElement.isCaller(allUsages: Array<out UsageInfo>): Boolean {
             usage is KotlinCallerUsage || usage is DeferredJavaMethodKotlinCallerUsage || usage is CallerUsageInfo || (usage is OverriderUsageInfo && !usage.isOriginalOverrider)
         }
         .any { it.element in elementsToSearch }
-}
-
-fun KtElement.isInsideOfCallerBody(allUsages: Array<out UsageInfo>): Boolean {
-    val container = parentsWithSelf.firstOrNull {
-        it is KtNamedFunction || it is KtConstructor<*> || it is KtClassOrObject
-    } as? KtNamedDeclaration ?: return false
-    val body = container.getDeclarationBody() ?: return false
-    return body.textRange.contains(textRange) && container.isCaller(allUsages)
 }
 
 fun getCallableSubstitutor(
@@ -133,13 +115,6 @@ fun suggestReceiverNames(project: Project, descriptor: CallableDescriptor): List
     val receiverType = descriptor.extensionReceiverParameter?.type ?: return emptyList()
     return Fe10KotlinNameSuggester.suggestNamesByType(receiverType, validator, "receiver")
 }
-
-internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
-    get() = when (this) {
-        is KotlinChangeInfo -> this
-        is KotlinChangeInfoWrapper -> delegate
-        else -> null
-    }
 
 fun KotlinTypeInfo.getReceiverTypeText(): String {
     val text = render()

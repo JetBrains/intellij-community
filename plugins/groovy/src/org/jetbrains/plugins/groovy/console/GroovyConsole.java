@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.ExecutionException;
@@ -109,9 +109,9 @@ public final class GroovyConsole {
     }
   }
 
-  public static void getOrCreateConsole(@NotNull final Project project,
-                                        @NotNull final VirtualFile contentFile,
-                                        @NotNull final Consumer<? super GroovyConsole> callback) {
+  public static void getOrCreateConsole(final @NotNull Project project,
+                                        final @NotNull VirtualFile contentFile,
+                                        final @NotNull Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) {
       callback.consume(existingConsole);
@@ -140,10 +140,9 @@ public final class GroovyConsole {
     });
   }
 
-  @Nullable
-  public static GroovyConsole createConsole(@NotNull final Project project,
-                                            @NotNull final VirtualFile contentFile,
-                                            @NotNull Module module) {
+  public static @Nullable GroovyConsole createConsole(final @NotNull Project project,
+                                                      final @NotNull VirtualFile contentFile,
+                                                      @NotNull Module module) {
     final ProcessHandler processHandler = createProcessHandler(module);
     if (processHandler == null) return null;
 

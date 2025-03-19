@@ -1,0 +1,72 @@
+### auto-generated section `build intellij.platform.ide` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.swing=ALL-UNNAMED",
+    "java.desktop/sun.awt=ALL-UNNAMED",
+  ]
+)
+
+jvm_resources(
+  name = "ide_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide",
+  module_name = "intellij.platform.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  javac_opts = ":custom-javac-options",
+  deps = [
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/icons",
+    "//platform/observable:ide-observable",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util/progress",
+    "@lib//:jna",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/jdom",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:jcef",
+    "//platform/code-style-api:codeStyle",
+    "//platform/credential-store:credentialStore",
+    "//platform/remote-core",
+    "//platform/ide-core",
+    "//platform/util/text-matching",
+    "//platform/diagnostic",
+    "@lib//:jackson",
+    "@lib//:caffeine",
+    "//platform/progress/shared:ide-progress",
+    "//platform/util/diff",
+  ],
+  exports = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/forms_rt:java-guiForms-rt",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/credential-store:credentialStore",
+    "//platform/remote-core",
+    "//platform/ide-core",
+    "//platform/progress/shared:ide-progress",
+  ],
+  runtime_deps = [":ide_resources"]
+)
+### auto-generated section `build intellij.platform.ide` end

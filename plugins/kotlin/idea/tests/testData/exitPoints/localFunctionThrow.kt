@@ -1,9 +1,9 @@
 fun f(a: Int): Int {
-    fun localFun() {
+    <info descr="null">fun</info> localFun() {
         if (a > 5) {
-            return
+            <info descr="null">return</info>
         }
-        <caret>throw Error()
+        <info descr="null">~throw Error()</info>
     }
 
     if (a < 5) {
@@ -13,7 +13,3 @@ fun f(a: Int): Int {
         throw Exception()
     }
 }
-
-//HIGHLIGHTED: return
-//HIGHLIGHTED: localFun
-//HIGHLIGHTED: throw Error()

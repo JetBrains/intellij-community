@@ -20,9 +20,9 @@ class NewIdentifierWatcherTest : LightJavaCodeInsightFixtureTestCase() {
                     }
                 }
             """.trimIndent(),
-      { myFixture.type("int abc = 1;") },
-      expectedNewIdentifiers = listOf("int", "abc")
-    )
+      listOf("int", "abc")) {
+      myFixture.type("int abc = 1;")
+    }
   }
 
   fun testPasteCode() {
@@ -34,16 +34,20 @@ class NewIdentifierWatcherTest : LightJavaCodeInsightFixtureTestCase() {
                     }
                 }
             """.trimIndent(),
-      { myFixture.type("int abc = ") },
-      { myFixture.editor.document.insertString(myFixture.editor.caretModel.offset, "X * Y * Z") },
-      expectedNewIdentifiers = emptyList()
-    )
+      emptyList()) {
+      myFixture.type("int abc = ")
+      executeCommand {
+        runWriteAction {
+          myFixture.editor.document.insertString(myFixture.editor.caretModel.offset, "X * Y * Z")
+        }
+      }
+    }
   }
 
   private fun doTest(
     initialFileText: String,
-    vararg editingActions: () -> Unit,
-    expectedNewIdentifiers: List<String>
+    expectedNewIdentifiers: List<String>,
+    editingActions: () -> Unit
   ) {
     myFixture.configureByText(JavaFileType.INSTANCE, initialFileText)
 
@@ -55,13 +59,7 @@ class NewIdentifierWatcherTest : LightJavaCodeInsightFixtureTestCase() {
     }
     myFixture.editor.document.addDocumentListener(listener)
 
-    for (action in editingActions) {
-      executeCommand {
-        runWriteAction {
-          action()
-        }
-      }
-    }
+    editingActions()
 
     myFixture.editor.document.removeDocumentListener(listener)
 

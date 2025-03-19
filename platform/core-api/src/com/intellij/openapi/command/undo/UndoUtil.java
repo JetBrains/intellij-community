@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -18,7 +18,7 @@ public final class UndoUtil {
    *
    * @param file to make editors of to respond to undo action.
    */
-  public static void markPsiFileForUndo(@NotNull final PsiFile file) {
+  public static void markPsiFileForUndo(final @NotNull PsiFile file) {
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;

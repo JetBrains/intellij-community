@@ -97,9 +97,7 @@ internal class IncomingChangesViewProvider(private val project: Project) : Chang
   internal class DisplayNameSupplier : Supplier<String> {
     override fun get(): String = message("incoming.changes.tab")
   }
-
-  companion object {
-    fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
-      vcs.cachingCommittedChangesProvider?.supportsIncomingChanges() == true
-  }
 }
+
+internal fun isIncomingChangesAvailable(vcs: AbstractVcs): Boolean =
+  vcs.cachingCommittedChangesProvider?.supportsIncomingChanges() == true

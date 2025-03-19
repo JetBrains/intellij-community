@@ -212,7 +212,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
       convertVirtualGroupToRealNode(group, nodeFromVirtualGroup, node)
     }
     nodeForGroup[group] = node
-    nodeData[node] = ModuleTreeNodeData<M>(null, group)
+    nodeData[node] = ModuleTreeNodeData(null, group)
     return node
   }
 
@@ -235,7 +235,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   }
 
   fun moveAllModuleNodesToProperGroups(rootNode: N, model: DefaultTreeModel) {
-    val modules = nodeData.values.map { it.module }.filterNotNull()
+    val modules = nodeData.values.mapNotNull { it.module }
     nodeData.keys.forEach { it.removeFromParent() }
     nodeData.clear()
     nodeForGroup.clear()

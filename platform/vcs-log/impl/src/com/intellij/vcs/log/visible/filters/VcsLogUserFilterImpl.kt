@@ -13,6 +13,10 @@ import com.intellij.vcs.log.data.VcsLogUserResolver
 import com.intellij.vcs.log.data.VcsLogUserResolverBase
 import com.intellij.vcs.log.util.VcsUserUtil
 
+/**
+ * @see VcsLogFilterObject.fromUser
+ * @see VcsLogFilterObject.fromUserNames
+ */
 internal class VcsLogUserFilterImpl(private val userNames: Collection<String>,
                                     private val resolver: VcsLogUserResolver) : VcsLogUserFilter {
 
@@ -54,7 +58,11 @@ internal class VcsLogUserFilterImpl(private val userNames: Collection<String>,
 
   private fun resolveUserName(root: VirtualFile, name: String): Set<VcsUser> {
     if (VcsLogFilterObject.ME != name) return resolver.resolveUserName(name)
-    return resolver.resolveCurrentUser(root)
+    val currentUsers = resolver.resolveCurrentUser(root)
+    if (currentUsers.isEmpty()) {
+      LOG.warn("Can not resolve user name for root $root")
+    }
+    return currentUsers
   }
 
   override fun toString(): String {

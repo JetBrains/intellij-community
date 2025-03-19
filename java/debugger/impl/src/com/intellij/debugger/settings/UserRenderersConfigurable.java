@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ConfigurableUi;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -77,8 +78,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
@@ -161,7 +161,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     rendererConfiguration.iterateRenderers(renderer -> {
       final NodeRenderer clonedRenderer = (NodeRenderer)renderer.clone();
       myRendererChooser.addElement(clonedRenderer, clonedRenderer.isEnabled());
-      if (elementsToSelect.size() == 0) {
+      if (elementsToSelect.isEmpty()) {
         elementsToSelect.add(clonedRenderer);
       }
       return true;
@@ -192,7 +192,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
   }
 
-  private class CopyAction extends AnActionButton {
+  private class CopyAction extends DumbAwareAction {
     CopyAction() {
       super(JavaDebuggerBundle.messagePointer("button.copy"), JavaDebuggerBundle
         .messagePointer("user.renderers.configurable.button.description.copy"), PlatformIcons.COPY_ICON);
@@ -207,8 +207,7 @@ public final class UserRenderersConfigurable extends JPanel implements Configura
     }
 
     @Override
-    public void updateButton(@NotNull AnActionEvent e) {
-      super.updateButton(e);
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myRendererChooser.getSelectedElement() != null);
     }
 

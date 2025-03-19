@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -110,8 +110,7 @@ public final class LastUnchangedContentTracker {
     saveContentReference(file, getFS().storeUnlinkedContent(content.getBytes(file.getCharset())));
   }
 
-    @Nullable
-  private static Integer getSavedContentId(VirtualFile file) {
+    private static @Nullable Integer getSavedContentId(VirtualFile file) {
     if (!file.isValid()) {
       return null;
     }
@@ -135,8 +134,7 @@ public final class LastUnchangedContentTracker {
     return oldContentId;
   }
 
-  @Nullable
-  private static Long getLastSavedStamp(VirtualFile file) {
+  private static @Nullable Long getLastSavedStamp(VirtualFile file) {
     Long l = file.getUserData(LAST_TS_KEY);
     if (l == null) {
       try (final DataInputStream stream = LAST_TS_ATTR.readFileAttribute(file)) {

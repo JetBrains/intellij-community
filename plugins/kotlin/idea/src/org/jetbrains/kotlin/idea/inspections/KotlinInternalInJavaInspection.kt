@@ -5,12 +5,13 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.*
+import com.intellij.psi.javadoc.PsiInlineDocTag
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.lexer.KtTokens.INTERNAL_KEYWORD
 import org.jetbrains.kotlin.psi.KtModifierListOwner
-
 
 class KotlinInternalInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -33,6 +34,9 @@ class KotlinInternalInJavaInspection : LocalInspectionTool() {
         }
 
         if (modifierListOwner.hasModifier(INTERNAL_KEYWORD)) {
+            // ignore JavaDoc @link references
+            if (PsiTreeUtil.getParentOfType(this, PsiInlineDocTag::class.java) != null) return
+
             holder.registerProblem(this, KotlinBundle.message("usage.of.kotlin.internal.declaration.from.different.module"))
         }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -29,6 +29,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.*;
@@ -44,13 +45,12 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
-    this(project, Arrays.asList(contributors));
+    this(project, List.of(contributors));
   }
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull List<ChooseByNameContributor> contributors) {
     myProject = project;
     myContributors = contributors;
-    assert !contributors.contains(null);
   }
 
   @Override
@@ -90,7 +90,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.error(ex);
         }
         return true;
@@ -152,16 +152,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtilRt.toStringArray(allNames);
   }
 
-  private List<ChooseByNameContributor> filterDumb(List<ChooseByNameContributor> contributors) {
-    if (!DumbService.getInstance(myProject).isDumb()) return contributors;
-    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.size());
-    for (ChooseByNameContributor contributor : contributors) {
-      if (DumbService.isDumbAware(contributor)) {
-        answer.add(contributor);
-      }
-    }
-
-    return answer;
+  private @Unmodifiable List<ChooseByNameContributor> filterDumb(List<? extends ChooseByNameContributor> contributors) {
+    return ContainerUtil.filter(contributors, contributor -> DumbService.getInstance(myProject).isUsableInCurrentContext(contributor));
   }
 
   public Object @NotNull [] getElementsByName(@NotNull String name,
@@ -237,10 +229,12 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         LOG.debug(TimeoutUtil.getDurationMillis(start) + "," + contributor + "," + count[0]);
       }
     }
-    catch (ProcessCanceledException ex) {
+    catch (IndexNotReadyException ignore) {
+    }
+    catch (ProcessCanceledException ignore) {
       // index corruption detected, ignore
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       LOG.error(ex);
     }
     return true;
@@ -256,7 +250,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
    *  which {@link #acceptItem(NavigationItem)} returns {@code true}.
    */
   @Override
-  public Object @NotNull [] getElementsByName(@NotNull final String name, final boolean checkBoxState, @NotNull final String pattern) {
+  public Object @NotNull [] getElementsByName(final @NotNull String name, final boolean checkBoxState, final @NotNull String pattern) {
     return getElementsByName(name, FindSymbolParameters.wrap(pattern, myProject, checkBoxState), new ProgressIndicatorBase());
   }
 
@@ -301,8 +295,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return pattern;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 }

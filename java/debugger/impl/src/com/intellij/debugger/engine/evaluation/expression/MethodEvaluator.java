@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodEvaluator
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jdi.MethodImpl;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 
@@ -110,6 +111,7 @@ public class MethodEvaluator implements Evaluator {
         // we know nothing about expected method's signature, so trying to match my method name and parameter count
         // dummy matching, may be improved with types matching later
         // IMPORTANT! using argumentTypeNames() instead of argumentTypes() to avoid type resolution inside JDI, which may be time-consuming
+        //noinspection SSBasedInspection
         List<Method> matchingMethods =
           StreamEx.of(referenceType.methodsByName(myMethodName)).filter(m -> m.argumentTypeNames().size() == args.size()).toList();
         if (matchingMethods.size() == 1) {
@@ -125,10 +127,10 @@ public class MethodEvaluator implements Evaluator {
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.instance.method", myMethodName));
       }
-      if (myMustBeVararg && !jdiMethod.isVarArgs()) {
+      if (myMustBeVararg && !jdiMethod.isVarArgs() && ContainerUtil.getLastItem(jdiMethod.argumentTypes()) instanceof ArrayType) {
         // this is a workaround for jdk bugs when bridge or proxy methods do not have ACC_VARARGS flags
         // see IDEA-129869 and IDEA-202380
-        wrapVarargParams(jdiMethod, args);
+        MethodImpl.handleVarArgs(jdiMethod, args);
       }
       if (signature == null) { // runtime conversions
         argsConversions(jdiMethod, args, context);
@@ -220,21 +222,5 @@ public class MethodEvaluator implements Evaluator {
   @Override
   public String toString() {
     return "call " + myMethodName;
-  }
-
-  private static void wrapVarargParams(Method method, List<Value> args) throws ClassNotLoadedException, InvalidTypeException {
-    int argCount = args.size();
-    List<Type> paramTypes = method.argumentTypes();
-    Type varargType = ContainerUtil.getLastItem(paramTypes);
-    if (varargType instanceof ArrayType) {
-      int paramCount = paramTypes.size();
-      int arraySize = argCount - paramCount + 1;
-      ArrayReference argArray = ((ArrayType)varargType).newInstance(arraySize);
-      argArray.setValues(0, args, paramCount - 1, arraySize);
-      if (paramCount <= argCount) {
-        args.subList(paramCount - 1, argCount).clear();
-      }
-      args.add(argArray);
-    }
   }
 }

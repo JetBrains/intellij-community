@@ -21,12 +21,12 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReturnStatement;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiReturnStatementImpl extends CompositePsiElement implements PsiReturnStatement, Constants {
@@ -45,9 +45,6 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.RETURN_KEYWORD:
         return findChildByType(RETURN_KEYWORD);
 
@@ -56,6 +53,9 @@ public class PsiReturnStatementImpl extends CompositePsiElement implements PsiRe
 
       case ChildRole.CLOSING_SEMICOLON:
         return TreeUtil.findChildBackward(this, SEMICOLON);
+
+      default:
+        return null;
     }
   }
 

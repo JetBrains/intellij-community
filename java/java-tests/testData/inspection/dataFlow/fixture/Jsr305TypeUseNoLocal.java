@@ -29,8 +29,7 @@ class Mixed {
   }
 }
 
-// Error due to mock limitation
-<error descr="'@NotNull' not applicable to annotation type">@NotNull</error>
+@NotNull
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @TypeQualifierDefault({ ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.TYPE_USE })

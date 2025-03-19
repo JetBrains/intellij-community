@@ -5,7 +5,7 @@ import traceback
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_constants import get_global_debugger, IS_WINDOWS, IS_MACOS, \
     IS_JYTHON, IS_PY36_OR_LESSER, IS_PY36_OR_GREATER, IS_PY38_OR_GREATER, \
-    get_current_thread_id, IS_PY311_OR_GREATER
+    get_current_thread_id, IS_PY311_OR_GREATER, clear_cached_thread_id
 from _pydev_bundle import pydev_log
 
 try:
@@ -14,7 +14,7 @@ except:
     xrange = range
 
 
-PYTHON_NAMES = ['python', 'jython', 'pypy']
+PYTHON_NAMES = ['python', 'jython', 'pypy', "python3"]
 
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
@@ -81,7 +81,9 @@ def _is_py3_and_has_bytes_args(args):
 
 def _on_forked_process():
     import pydevd
-    pydevd.threadingCurrentThread().__pydevd_main_thread = True
+    main_thread = pydevd.threadingCurrentThread()
+    main_thread.__pydevd_main_thread = True
+    clear_cached_thread_id(main_thread)
     pydevd.settrace_forked()
 
 
@@ -242,6 +244,16 @@ def patch_args(args):
             return args
 
         i = 1
+        # Implementation-specific options that start with `-X` can be passed right
+        # after the Python executable. We have to preserve them.
+        while i < len(args) and args[i].startswith('-X'):
+            new_args.append(args[i])
+            if args[i] == '-X':
+                if i < len(args) - 1:
+                    new_args.append(args[i + 1])
+                    i += 1
+            i += 1
+
         # Original args should be something as:
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']
@@ -572,6 +584,37 @@ def create_warn_fork_exec(original_name):
     return new_warn_fork_exec
 
 
+def create_subprocess_fork_exec(original_name):
+    """
+    subprocess._fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+
+    def new_fork_exec(args, *other_args):
+        import subprocess
+        args = patch_args(args)
+        send_process_created_message()
+
+        return getattr(subprocess, original_name)(args, *other_args)
+
+    return new_fork_exec
+
+
+def create_subprocess_warn_fork_exec(original_name):
+    """
+    subprocess._fork_exec(args, executable_list, close_fds, ... (13 more))
+    """
+
+    def new_warn_fork_exec(*args):
+        try:
+            import subprocess
+            warn_multiproc()
+            return getattr(subprocess, original_name)(*args)
+        except:
+            pass
+
+    return new_warn_fork_exec
+
+
 def create_CreateProcess(original_name):
     """
     CreateProcess(*args, **kwargs)
@@ -718,6 +761,13 @@ def patch_new_process_functions():
                 monkey_patch_module(_posixsubprocess, 'fork_exec', create_fork_exec)
             except ImportError:
                 pass
+
+            try:
+                import subprocess
+                monkey_patch_module(subprocess, '_fork_exec',
+                                    create_subprocess_fork_exec)
+            except AttributeError:
+                pass
         else:
             # Windows
             try:
@@ -756,6 +806,13 @@ def patch_new_process_functions_with_warning():
                 import _posixsubprocess
                 monkey_patch_module(_posixsubprocess, 'fork_exec', create_warn_fork_exec)
             except ImportError:
+                pass
+
+            try:
+                import subprocess
+                monkey_patch_module(subprocess, '_fork_exec',
+                                    create_subprocess_warn_fork_exec)
+            except AttributeError:
                 pass
         else:
             # Windows

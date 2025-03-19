@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -168,7 +169,7 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   @Override
-  public String getTabName() {
+  public @Nls String getTabName() {
     return myPostProcessing ? POST_PROCESSING_TAB_POINTER.get() : PRE_PROCESSING_TAB_POINTER.get();
   }
 

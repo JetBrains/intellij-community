@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.detect;
 
 import com.intellij.ide.ProjectGroup;
@@ -17,6 +17,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppJavaExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
@@ -29,8 +30,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
-final class EclipseProjectDetector extends ProjectDetector {
-  private final static Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
+@ApiStatus.Internal
+public final class EclipseProjectDetector extends ProjectDetector {
+  private static final Logger LOG = Logger.getInstance(EclipseProjectDetector.class);
 
   void collectProjectPaths(List<String> projects) {
     String home = System.getProperty("user.home");

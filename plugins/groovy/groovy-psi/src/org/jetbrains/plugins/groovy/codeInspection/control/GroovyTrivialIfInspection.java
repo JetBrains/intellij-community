@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -28,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -38,11 +39,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-public class GroovyTrivialIfInspection extends BaseInspection {
+import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
-  @NotNull
+public final class GroovyTrivialIfInspection extends BaseInspection {
+
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new TrivialIfVisitor();
   }
 
@@ -52,33 +54,30 @@ public class GroovyTrivialIfInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new TrivialIfFix();
   }
 
-  private static class TrivialIfFix extends GroovyFix {
+  private static class TrivialIfFix extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return GroovyBundle.message("intention.family.name.simplify");
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement ifKeywordElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement ifKeywordElement, @NotNull ModPsiUpdater updater) {
       final GrIfStatement statement =
           (GrIfStatement) ifKeywordElement.getParent();
       if (isSimplifiableAssignment(statement)) {
         replaceSimplifiableAssignment(statement);
       } else if (isSimplifiableReturn(statement)) {
-        repaceSimplifiableReturn(statement);
+        replaceSimplifiableReturn(statement);
       } else if (isSimplifiableImplicitReturn(statement)) {
         replaceSimplifiableImplicitReturn(statement);
       } else if (isSimplifiableAssignmentNegated(statement)) {
         replaceSimplifiableAssignmentNegated(statement);
       } else if (isSimplifiableReturnNegated(statement)) {
-        repaceSimplifiableReturnNegated(statement);
+        replaceSimplifiableReturnNegated(statement);
       } else if (isSimplifiableImplicitReturnNegated(statement)) {
         replaceSimplifiableImplicitReturnNegated(statement);
       } else if (isSimplifiableImplicitAssignment(statement)) {
@@ -94,17 +93,17 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       final String conditionText = condition.getText();
       final PsiElement nextStatement =
         PsiTreeUtil.skipWhitespacesForward(statement);
-      @NonNls final String newStatement = "return " + conditionText + ';';
+      final @NonNls String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
       assert nextStatement != null;
       nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturn(GrIfStatement statement)
+    private static void replaceSimplifiableReturn(GrIfStatement statement)
         throws IncorrectOperationException {
       final GrCondition condition = statement.getCondition();
       final String conditionText = condition.getText();
-      @NonNls final String newStatement = "return " + conditionText + ';';
+      final @NonNls String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
     }
 
@@ -182,12 +181,12 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       if (nextStatement == null) {
         return;
       }
-      @NonNls final String newStatement = "return " + conditionText + ';';
+      final @NonNls String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
       nextStatement.delete();
     }
 
-    private static void repaceSimplifiableReturnNegated(GrIfStatement statement)
+    private static void replaceSimplifiableReturnNegated(GrIfStatement statement)
         throws IncorrectOperationException {
       final GrExpression condition = statement.getCondition();
       if (condition == null) {
@@ -195,7 +194,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
       }
       final String conditionText =
           BoolUtils.getNegatedExpressionText(condition);
-      @NonNls final String newStatement = "return " + conditionText + ';';
+      final @NonNls String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
     }
 
@@ -439,8 +438,7 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     }
   }
 
-  @NonNls
-  private static String getTextForOperator(IElementType operator) {
+  private static @NonNls String getTextForOperator(IElementType operator) {
     if (operator.equals(GroovyTokenTypes.mASSIGN)) {
       return "=";
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.process.OSProcessUtil;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.MemTester;
 import com.intellij.util.SystemProperties;
 import com.sun.management.OperatingSystemMXBean;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,7 +18,8 @@ import java.lang.management.ManagementFactory;
 /**
  * @author Konstantin Bulenkov
  */
-public class MemTestAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class MemTestAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     try {

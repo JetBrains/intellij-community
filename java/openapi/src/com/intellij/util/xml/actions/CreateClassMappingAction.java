@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.actions;
 
 import com.intellij.ide.util.ClassFilter;
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public abstract class CreateClassMappingAction<T extends DomElement> extends CreateDomElementAction<T> {
 
-  @Nullable private final String myBaseClass;
+  private final @Nullable String myBaseClass;
   private final String myTemplate;
 
   public CreateClassMappingAction(Class<T> contextClass, @Nullable String baseClass, String template) {
@@ -78,8 +78,7 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
 
   protected abstract DomElement createElement(T context);
 
-  @Nullable
-  protected PsiClass getBaseClass(T context, Project project, String baseClass) {
+  protected @Nullable PsiClass getBaseClass(T context, Project project, String baseClass) {
     return baseClass == null ? null : JavaPsiFacade.getInstance(project).findClass(baseClass, GlobalSearchScope.allScope(project));
   }
 

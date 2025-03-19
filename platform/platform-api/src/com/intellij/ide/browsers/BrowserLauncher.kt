@@ -1,11 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.ArrayUtil
-
-import java.io.File
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.Path
 
@@ -18,7 +16,9 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  abstract fun browse(file: File)
+  /** Prefer `browse(Path)`. */
+  @ApiStatus.Obsolete
+  abstract fun browse(file: java.io.File)
 
   abstract fun browse(file: Path)
 
@@ -27,11 +27,4 @@ abstract class BrowserLauncher {
   fun browse(url: String, browser: WebBrowser?): Unit = browse(url, browser, null)
 
   abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
-
-  abstract fun browseUsingPath(url: String?,
-                               browserPath: String? = null,
-                               browser: WebBrowser? = null,
-                               project: Project? = null,
-                               openInNewWindow: Boolean = false,
-                               additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY): Boolean
 }

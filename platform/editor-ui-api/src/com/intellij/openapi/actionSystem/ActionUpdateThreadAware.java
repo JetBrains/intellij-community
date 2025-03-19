@@ -1,28 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This interface is supported for {@link AnAction} and can be supported in some other places.
+ * This interface is mainly supported for {@link AnAction} and {@link ActionGroup}.
+ * <p>
+ * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
+ * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like methods
+ * are called inside an {@link UpdateSession}.
+ * <p>
+ * The PREFERRED value is {@link ActionUpdateThread#BGT} as it keeps the UI thread free.
+ * <p>
+ * The DEFAULT value is {@link ActionUpdateThread#EDT} to make simple UI actions easier to implement.
  *
  * @see ActionUpdateThread
  */
 public interface ActionUpdateThreadAware {
   /**
-   * Specifies the thread and the way {@link AnAction#update(AnActionEvent)},
-   * {@link ActionGroup#getChildren(AnActionEvent)} or other update-like method shall be called.
+   * See {@link ActionUpdateThreadAware}
    */
   default @NotNull ActionUpdateThread getActionUpdateThread() {
-    if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
-      return ActionUpdateThread.BGT;
-    }
-    //PluginException.reportDeprecatedDefault(getClass(), "getActionUpdateThread", "OLD_EDT is deprecated");
-    return ActionUpdateThread.OLD_EDT;
+    return ActionUpdateThread.EDT;
   }
 
   /**
-   * Allows to specify forced action-update-thread for all actions in an action group recursively.
+   * Allows specifying forced action-update-thread for all actions in an action group recursively.
    */
   interface Recursive extends ActionUpdateThreadAware {
     @Override

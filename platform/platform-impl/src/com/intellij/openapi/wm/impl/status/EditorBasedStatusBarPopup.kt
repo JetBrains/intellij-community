@@ -1,15 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LeakingThis")
 
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.DataManager
-import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -17,7 +18,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.*
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.Multiframe
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.ClickListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.cancelOnDispose
@@ -66,7 +67,7 @@ abstract class EditorBasedStatusBarPopup(
   protected val scope: CoroutineScope,
 ) : EditorBasedWidget(project), Multiframe, CustomStatusBarWidget {
   @Suppress("DEPRECATION")
-  constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, project.coroutineScope)
+  constructor(project: Project, isWriteableFileRequired: Boolean) : this(project, isWriteableFileRequired, (project as ComponentManagerEx).getCoroutineScope())
 
   private val component: Lazy<JPanel> = lazy {
     if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -87,7 +88,7 @@ abstract class EditorBasedStatusBarPopup(
     component
   }
 
-  var isActionEnabled = false
+  var isActionEnabled: Boolean = false
     protected set
 
   private val update = MutableSharedFlow<Runnable?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -124,7 +125,6 @@ abstract class EditorBasedStatusBarPopup(
       }
     })
 
-    registerCustomListeners(myConnection)
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(e: DocumentEvent) {
         val document = e.document
@@ -145,7 +145,7 @@ abstract class EditorBasedStatusBarPopup(
   private suspend fun doUpdate(finishUpdate: Runnable?) {
     val file = getSelectedFile()
     val state = readAction {
-      getWidgetState(file)
+      getWidgetState(file?.takeIf { it.isValid })
     }
     if (state != WidgetState.NO_CHANGE) {
       withContext(Dispatchers.EDT) {
@@ -334,20 +334,20 @@ abstract class EditorBasedStatusBarPopup(
        * Return this state if you want to hide the widget
        */
       @JvmField
-      val HIDDEN = WidgetState()
+      val HIDDEN: WidgetState = WidgetState()
 
       /**
        * Return this state if you don't want to change widget presentation
        */
       @JvmField
-      val NO_CHANGE = WidgetState()
+      val NO_CHANGE: WidgetState = WidgetState()
 
       /**
        * Return this state if you want to show widget in its previous state
        * but without updating its content
        */
       @JvmField
-      val NO_CHANGE_MAKE_VISIBLE = WidgetState()
+      val NO_CHANGE_MAKE_VISIBLE: WidgetState = WidgetState()
 
       /**
        * Returns a special state for dumb mode (when indexes are not ready).
@@ -360,7 +360,7 @@ abstract class EditorBasedStatusBarPopup(
       @JvmStatic
       fun getDumbModeState(name: @Nls String?, widgetPrefix: @NlsContexts.StatusBarText String?): WidgetState {
         // todo: update accordingly to UX-252
-        return WidgetState(toolTip = ActionUtil.getUnavailableMessage(name!!, false),
+        return WidgetState(toolTip = ActionUtil.getActionUnavailableMessage(name!!),
                            text = widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
                            isActionEnabled = false)
       }

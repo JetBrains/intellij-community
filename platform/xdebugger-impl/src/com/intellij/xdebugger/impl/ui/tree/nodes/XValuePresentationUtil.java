@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -10,36 +10,49 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+
 public final class XValuePresentationUtil {
-  public static void renderValue(@NotNull @NlsSafe String value, @NotNull ColoredTextContainer text, @NotNull SimpleTextAttributes attributes, int maxLength,
-                                 @Nullable String additionalCharsToEscape) {
-    SimpleTextAttributes escapeAttributes = null;
+  public static void renderValue(@NotNull @NlsSafe String value,
+                                 @NotNull ColoredTextContainer text,
+                                 @NotNull SimpleTextAttributes attributes,
+                                 int maxLength,
+                                 @Nullable String additionalSpecialCharsToHighlight) {
+    renderValue(value, text, attributes, maxLength, additionalSpecialCharsToHighlight,
+                DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE));
+  }
+
+  @ApiStatus.Internal
+  public static void renderValue(@NotNull @NlsSafe String value,
+                                 @NotNull ColoredTextContainer text,
+                                 @NotNull SimpleTextAttributes attributes,
+                                 int maxLength,
+                                 @Nullable String additionalSpecialCharsToHighlight,
+                                 @Nullable TextAttributes escapeCharsAttribute) {
+    SimpleTextAttributes escapeAttributes;
+    if (escapeCharsAttribute != null) {
+      escapeAttributes = SimpleTextAttributes.fromTextAttributes(escapeCharsAttribute);
+    }
+    else {
+      escapeAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY);
+    }
+
     int lastOffset = 0;
     int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);
     for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
-      int additionalCharIndex = -1;
-      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f'
-          || (additionalCharsToEscape != null && (additionalCharIndex = additionalCharsToEscape.indexOf(ch)) != -1)) {
+      if (isEscapingSymbol(ch)
+          || (additionalSpecialCharsToHighlight != null && additionalSpecialCharsToHighlight.indexOf(ch) != -1)) {
         if (i > lastOffset) {
           text.append(value.substring(lastOffset, i), attributes);
         }
         lastOffset = i + 1;
 
-        if (escapeAttributes == null) {
-          TextAttributes fromHighlighter = DebuggerUIUtil.getColorScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
-          if (fromHighlighter != null) {
-            escapeAttributes = SimpleTextAttributes.fromTextAttributes(fromHighlighter);
-          }
-          else {
-            escapeAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.GRAY);
-          }
-        }
-
-        if (additionalCharIndex == -1) {
+        if (isEscapingSymbol(ch)) {
           text.append("\\", escapeAttributes);
         }
 
@@ -52,6 +65,64 @@ public final class XValuePresentationUtil {
     }
   }
 
+  private static boolean isEscapingSymbol(char ch) {
+    return getEscapingSymbol(ch) != ch;
+  }
+
+  @ApiStatus.Experimental
+  public static void renderName(@NotNull @NlsSafe String name,
+                                int maxOutputLength,
+                                Consumer<@NlsSafe String> appender) {
+    int lastPartStart = 0;
+    int lastPartEnd = 0;
+    boolean lastCharWasWhitespace = false;
+    int appendedCount = 0;
+    for (int i = 0; i < name.length(); i++) {
+      char ch = name.charAt(i);
+      if (isEscapingSymbol(ch) || ch == ' ') {
+        lastCharWasWhitespace = true;
+      }
+      else {
+        if (lastCharWasWhitespace) {
+          appendedCount += appendPart(name, appender, maxOutputLength, appendedCount, lastPartStart, lastPartEnd);
+          if (appendedCount > 0 && appendedCount < maxOutputLength) {
+            appendedCount++;
+            appender.accept(" ");
+          }
+          if (appendedCount == maxOutputLength) {
+            return;
+          }
+          lastPartStart = i;
+          lastPartEnd = i + 1;
+        }
+        else {
+          lastPartEnd++;
+        }
+        lastCharWasWhitespace = false;
+      }
+    }
+
+    if (lastPartStart < lastPartEnd) {
+      appendPart(name, appender, maxOutputLength, appendedCount, lastPartStart, lastPartEnd);
+    }
+  }
+
+  private static int appendPart(@NotNull String name,
+                                @NotNull Consumer<String> appender,
+                                int maxOutputLength,
+                                int appendedCount,
+                                int lastPartStart,
+                                int lastPartEnd) {
+    int remainingLength = maxOutputLength - appendedCount - (lastPartEnd - lastPartStart);
+    if (remainingLength <= 0) {
+      lastPartEnd = Math.max(lastPartStart, lastPartEnd + remainingLength);
+    }
+    String substring = name.substring(lastPartStart, lastPartEnd);
+    appender.accept(substring);
+    return substring.length();
+  }
+
+
   private static char getEscapingSymbol(char ch) {
     return switch (ch) {
       case '\n' -> 'n';
@@ -59,6 +130,10 @@ public final class XValuePresentationUtil {
       case '\t' -> 't';
       case '\b' -> 'b';
       case '\f' -> 'f';
+      // Java doesn't support two more standard escape symbols \a & \v, but many other languages support them.
+      // So we print them nicely for all languages and hope that it should not negatively affect any language.
+      case 0x07 -> 'a';
+      case 0x0b -> 'v';
       default -> ch;
     };
   }
@@ -69,8 +144,7 @@ public final class XValuePresentationUtil {
     }
   }
 
-  @NotNull
-  public static String computeValueText(@NotNull XValuePresentation presentation) {
+  public static @NotNull String computeValueText(@NotNull XValuePresentation presentation) {
     XValuePresentationTextExtractor extractor = new XValuePresentationTextExtractor();
     presentation.renderValue(extractor);
     return extractor.getText();
@@ -84,10 +158,11 @@ public final class XValuePresentationUtil {
     return renderer instanceof XValuePresentationTextExtractor;
   }
 
-  private static class XValuePresentationTextExtractor extends XValueTextRendererBase {
+  @ApiStatus.Internal
+  public static class XValuePresentationTextExtractor extends XValueTextRendererBase {
     private final StringBuilder myBuilder;
 
-    XValuePresentationTextExtractor() {
+    public XValuePresentationTextExtractor() {
       myBuilder = new StringBuilder();
     }
 

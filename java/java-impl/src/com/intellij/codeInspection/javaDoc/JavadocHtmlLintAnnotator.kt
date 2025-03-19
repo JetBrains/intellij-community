@@ -87,7 +87,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
           val description = StringUtil.capitalize(message)
           val severity = if (error) HighlightSeverity.ERROR else HighlightSeverity.WARNING
           holder.newAnnotation(severity, description).range(range)
-            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value).registerFix()
+            .newFix(EmptyIntentionAction(JavaBundle.message("inspection.javadoc.lint.display.name"))).key(key.value!!).registerFix()
             .create()
         }
       }
@@ -95,7 +95,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   }
 
   //<editor-fold desc="Helpers">
-  private val key = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
+  private val key: Lazy<HighlightDisplayKey?> = lazy { HighlightDisplayKey.find(JavadocHtmlLintInspection.SHORT_NAME) }
 
   private val lintOptions = "-Xmsgs:html/private,accessibility/private"
   private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()

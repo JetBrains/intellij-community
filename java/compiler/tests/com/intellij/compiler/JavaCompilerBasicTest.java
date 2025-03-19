@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
@@ -10,6 +11,8 @@ import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
+import org.jetbrains.jps.builders.java.CannotCreateJavaCompilerException;
 import org.jetbrains.jps.javac.JpsJavacFileManager;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.javac.ZipFileObject;
@@ -57,13 +60,13 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     }
     final VirtualFile srcFile = createFile("src/A.java", "import ppp.B; public class A { B b; }");
 
-    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
+    final StandardJavaFileManager stdFileManager = getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
       @Override
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), null)) {
       fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
 
@@ -91,13 +94,13 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     final VirtualFile clsFile = createFile("out/ppp/B.class", "package ppp; public class B {}");
     final File outputRoot = new File(javaFile.getParent().getParent().getPath());
 
-    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
+    final StandardJavaFileManager stdFileManager = getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
       @Override
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), null)) {
       fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputRoot));
 
       final Iterable<JavaFileObject> files = fileManager.list(StandardLocation.CLASS_OUTPUT, "ppp", Set.of(JavaFileObject.Kind.CLASS, JavaFileObject.Kind.OTHER), false);
@@ -126,13 +129,13 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       jar.addFile("arch/B.java", new File(srcBFile.getPath()));
     }
 
-    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
+    final StandardJavaFileManager stdFileManager = getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
       @Override
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       }
     }, Locale.US, null);
     
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), null)) {
       fileManager.setLocation(StandardLocation.CLASS_PATH, Collections.singleton(jarFile));
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
 
@@ -179,13 +182,13 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
     final VirtualFile srcBFile = createFile("src/B.java", "public class B {}");
     final File srcRoot = new File(srcAFile.getParent().getPath());
 
-    final StandardJavaFileManager stdFileManager = ToolProvider.getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
+    final StandardJavaFileManager stdFileManager = getSystemJavaCompiler().getStandardFileManager(new DiagnosticListener<>() {
       @Override
       public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
       }
     }, Locale.US, null);
 
-    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList())) {
+    try (final JpsJavacFileManager fileManager = new JpsJavacFileManager(new DummyContext(stdFileManager), true, Collections.emptyList(), null)) {
       fileManager.setLocation(StandardLocation.SOURCE_PATH, Collections.emptyList());
       fileManager.handleOption("--patch-module", Arrays.asList("java.desktop=" + srcRoot.getPath()).iterator());
 
@@ -208,6 +211,15 @@ public class JavaCompilerBasicTest extends BaseCompilerTestCase {
       assertFalse(fileManager.isSameFile(srcAFileObject, srcBFileObject));
       checkFileObjectsBelongToLocation(fileManager, StandardLocation.SOURCE_PATH, sources);
       checkFileObjectsBelongToLocation(fileManager, StandardLocation.PATCH_MODULE_PATH, sources);
+    }
+  }
+
+  private static JavaCompiler getSystemJavaCompiler() throws IOException{
+    try {
+      return new JavacCompilerTool().createCompiler();
+    }
+    catch (CannotCreateJavaCompilerException e) {
+      throw new IOException(e);
     }
   }
 

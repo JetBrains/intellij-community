@@ -1,21 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
+import com.intellij.platform.workspace.storage.EntityPointer
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   /**
@@ -26,7 +28,38 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
                   includeExternalSets: Boolean,
-                  includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo
+                  includeExternalSourceSets: Boolean,
+                  includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
+
+  /**
+   * Searches for the first parent of [file] (or [file] itself), which has an associated [WorkspaceFileSet]s (taking into account
+   * passed flags), and returns entities of type [E] from which these filesets were contributed.
+   * 
+   * Note that the result of this function depends on how exactly [com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor]
+   * for entities of type [E] are implemented.
+   * If the contributor is actually registered for a child entity of [E], the function will return nothing.
+   */
+  fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile,
+                                                  entityClass: Class<E>,
+                                                  honorExclusion: Boolean, 
+                                                  includeContentSets: Boolean, 
+                                                  includeExternalSets: Boolean,
+                                                  includeExternalSourceSets: Boolean,
+                                                  includeCustomKindSets: Boolean): Collection<E>
+
+  /**
+   * Searches for the first parent of [file] (or [file] itself), which has an associated [WorkspaceFileSet]s (taking into account
+   * passed flags), and returns all entities from which these filesets were contributed.
+   */
+  @ApiStatus.Experimental
+  fun findContainingEntities(
+    file: VirtualFile,
+    honorExclusion: Boolean,
+    includeContentSets: Boolean,
+    includeExternalSets: Boolean,
+    includeExternalSourceSets: Boolean,
+    includeCustomKindSets: Boolean,
+  ): Collection<WorkspaceEntity>
 
   /**
    * Holds references to the currently stored data.
@@ -76,10 +109,20 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    * There may be thousands of file sets in index, so visiting them all is generally discouraged.
    */
   @ApiStatus.Internal
+  @RequiresReadLock
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
   
-  @TestOnly
+  @ApiStatus.Internal
   fun reset()
+}
+
+internal class WorkspaceFileIndexCleaner: PersistentFsConnectionListener {
+  override fun beforeConnectionClosed() {
+    for (p in ProjectManager.getInstanceIfCreated()?.openProjects.orEmpty()) {
+      val fileIndex = p.serviceIfCreated<WorkspaceFileIndex>() as WorkspaceFileIndexEx? ?: continue
+      fileIndex.reset()
+    }
+  }
 }
 
 /**
@@ -100,27 +143,44 @@ sealed interface WorkspaceFileInternalInfo {
     /** File is invalid */
     INVALID;
 
+    override val fileSets: List<WorkspaceFileSetWithCustomData<*>> get() = emptyList()
+
     override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? = null
+    override fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>> = emptyList()
   }
+
+  /**
+   * A list of file sets with custom data stored in this instance.
+   */
+  val fileSets: List<WorkspaceFileSetWithCustomData<*>>
 
   /**
    * Returns a file set stored in this instance which satisfies the given [condition], or `null` if no such file set found.
    */
   fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>?
+
+  /**
+   * Returns file sets stored in this instance which satisfies the given [condition]
+   * todo ijpl-339 mark experimental
+   */
+  @ApiStatus.Internal
+  fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>>
+  
+  abstract override fun toString(): String
 }
 
 internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo {
-  val fileSets: List<WorkspaceFileSetWithCustomData<*>>
+  override val fileSets: List<WorkspaceFileSetWithCustomData<*>>
   fun find(acceptedCustomDataClass: Class<out WorkspaceFileSetData>?): WorkspaceFileSetWithCustomData<*>?
 }
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface WorkspaceFileSetVisitor {
-  fun visitIncludedRoot(fileSet: WorkspaceFileSet)
+fun interface WorkspaceFileSetVisitor {
+  fun visitIncludedRoot(fileSet: WorkspaceFileSet, entityPointer: EntityPointer<WorkspaceEntity>, recursive: Boolean)
 }
 
 @ApiStatus.Internal
 interface VfsChangeApplier: AsyncFileListener.ChangeApplier {
-  val entitiesToReindex: List<EntityReference<WorkspaceEntity>>
+  val entitiesToReindex: Set<EntityPointer<WorkspaceEntity>>
 }

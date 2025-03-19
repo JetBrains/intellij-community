@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -16,13 +16,15 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @State(name = "FrameworkDetectionExcludesConfiguration")
-public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
+public final class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {
   private final Map<String, VirtualFilePointerContainer> myExcludedFiles;
   private final Set<String> myExcludedFrameworks;
@@ -157,8 +159,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     }
   }
 
-  @NotNull
-  public ExcludesConfigurationState getActualState() {
+  public @NotNull ExcludesConfigurationState getActualState() {
     ensureOldSettingsLoaded();
 
     final ExcludesConfigurationState state = new ExcludesConfigurationState();
@@ -177,8 +178,8 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     return state;
   }
 
-  @Override @Nullable
-  public ExcludesConfigurationState getState() {
+  @Override
+  public @Nullable ExcludesConfigurationState getState() {
     if (!myConverted) return null;
     return getActualState();
   }

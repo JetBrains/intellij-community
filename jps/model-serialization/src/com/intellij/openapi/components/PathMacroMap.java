@@ -8,6 +8,7 @@ import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public abstract class PathMacroMap {
     }
   }
 
+  @ApiStatus.Internal
   public @NotNull String getAttributeValue(@NotNull Attribute attribute, @Nullable PathMacroFilter filter, boolean caseSensitive, boolean recursively) {
     String oldValue = attribute.getValue();
     if (recursively || (filter != null && filter.recursePathMacros(attribute))) {
@@ -85,5 +87,7 @@ public abstract class PathMacroMap {
     return substitute(text, caseSensitive);
   }
 
+  @Override
+  @ApiStatus.Internal
   public abstract int hashCode();
 }

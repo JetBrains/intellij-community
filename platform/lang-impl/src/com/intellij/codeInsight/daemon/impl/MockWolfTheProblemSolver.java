@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   private WolfTheProblemSolver myDelegate;
 
@@ -45,11 +46,6 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   @Override
   public boolean hasProblemFilesBeneath(@NotNull Module scope) {
     return myDelegate != null && myDelegate.hasProblemFilesBeneath(scope);
-  }
-
-  @Override
-  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
-    if (myDelegate != null) myDelegate.addProblemListener(listener, parentDisposable);
   }
 
   @Override

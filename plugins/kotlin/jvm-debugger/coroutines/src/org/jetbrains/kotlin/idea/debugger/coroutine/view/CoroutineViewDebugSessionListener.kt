@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
@@ -10,7 +10,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
-class CoroutineViewDebugSessionListener(
+internal class CoroutineViewDebugSessionListener(
     private val session: XDebugSession,
     private val coroutineView: CoroutineView
 ) : XDebugSessionListener {
@@ -18,13 +18,22 @@ class CoroutineViewDebugSessionListener(
 
     override fun sessionPaused() {
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         coroutineView.alarm.cancel()
         renew(suspendContext)
     }
 
     override fun sessionResumed() {
-        coroutineView.saveState()
         val suspendContext = session.suspendContext ?: return requestClear()
+        if (coroutineView.isLiveUpdateEnabled) {
+            coroutineView.saveState()
+        } else {
+            coroutineView.collapseCoroutineHierarchyNode()
+        }
         renew(suspendContext)
     }
 
@@ -48,7 +57,9 @@ class CoroutineViewDebugSessionListener(
     private fun renew(suspendContext: XSuspendContext) {
         if (suspendContext is SuspendContextImpl) {
             DebuggerUIUtil.invokeLater {
-                coroutineView.renewRoot(suspendContext)
+                if (coroutineView.isShowing()) {
+                    coroutineView.renewRoot(suspendContext)
+                }
             }
         }
     }

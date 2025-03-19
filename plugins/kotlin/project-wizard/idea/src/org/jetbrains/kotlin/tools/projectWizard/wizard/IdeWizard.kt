@@ -5,6 +5,7 @@ import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
@@ -50,6 +51,8 @@ class IdeWizard(
         JpsData(libraryDescription, librariesContainer, libraryOptionsPanel)
     }
 
+    var stdlibForJps: LibraryOrderEntry? = null
+
     var jdk: Sdk? = null
 
     var projectPath by setting(StructurePlugin.projectPath.reference)
@@ -60,6 +63,8 @@ class IdeWizard(
     var buildSystemType by setting(BuildSystemPlugin.type.reference)
 
     var projectTemplate by setting(ProjectTemplatesPlugin.template.reference)
+
+    var isCreatingNewProject = true
 
     private fun <V : Any, T : SettingType<V>> setting(reference: SettingReference<V, T>) =
         object : ReadWriteProperty<Any?, V?> {

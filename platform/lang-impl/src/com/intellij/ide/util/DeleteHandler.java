@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -13,7 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -57,8 +57,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +72,7 @@ public final class DeleteHandler {
 
   private DeleteHandler() { }
 
-  public static class DefaultDeleteProvider implements DeleteProvider {
+  public static final class DefaultDeleteProvider implements DeleteProvider {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -86,7 +88,7 @@ public final class DeleteHandler {
     }
 
     private static PsiElement @Nullable [] getPsiElements(DataContext dataContext) {
-      PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
         final PsiElement data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (data != null) {
@@ -132,26 +134,26 @@ public final class DeleteHandler {
 
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
-      final Ref<Boolean> exit = Ref.create(false);
-      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
-        @Override
-        public void run(final SafeDeleteDialog dialog) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
-
-          SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
-            exit.set(true);
-            dialog.close(DialogWrapper.OK_EXIT_CODE);
-          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
-
-          processor.run();
-        }
-      }) {
-        @Override
-        protected boolean isDelete() {
-          return true;
-        }
-      };
       if (needConfirmation) {
+        final Ref<Boolean> exit = Ref.create(false);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+          @Override
+          public void run(final SafeDeleteDialog dialog) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
+
+            SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+              exit.set(true);
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
+            }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+
+            processor.run();
+          }
+        }) {
+          @Override
+          protected boolean isDelete() {
+            return true;
+          }
+        };
         dialog.setTitle(RefactoringBundle.message("delete.title"));
         if (!dialog.showAndGet() || exit.get()) {
           return;
@@ -378,7 +380,7 @@ public final class DeleteHandler {
     Disposer.register(disposable, () -> ourOverrideNeedsConfirmation = null);
   }
 
-  private static class LocalFilesDeleteTask extends Task.Modal {
+  private static final class LocalFilesDeleteTask extends Task.Modal {
     private final PsiElement[] myFileElements;
 
     List<PsiElement> processed = new ArrayList<>();
@@ -392,11 +394,35 @@ public final class DeleteHandler {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      indicator.setIndeterminate(true);
-
       try {
+        indicator.setText(IdeBundle.message("progress.counting.files"));
+        Ref<Integer> curFileCount = new Ref<>(0);
         for (PsiElement element : myFileElements) {
+          VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+          Files.walkFileTree(file.toNioPath(), new NioFiles.StatsCollectingVisitor() {
+            @Override
+            protected void countDirectory(Path dir, BasicFileAttributes attrs) {
+              count();
+            }
+
+            @Override
+            protected void countFile(Path file, BasicFileAttributes attrs) {
+              count();
+            }
+
+            private void count() {
+              indicator.checkCanceled();
+              curFileCount.set(curFileCount.get() + 1);
+            }
+          });
+        }
+        final int totalFileCount = curFileCount.get();
+        curFileCount.set(0);
+        indicator.setIndeterminate(totalFileCount <= 1); // don't show progression when deleting single file
+        for (int i = 0; i < myFileElements.length; i++) {
+          PsiElement element = myFileElements[i];
           if (indicator.isCanceled()) break;
+          indicator.setFraction((double) i / myFileElements.length);
 
           VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
           aborted = file;
@@ -405,7 +431,9 @@ public final class DeleteHandler {
 
           try {
             NioFiles.deleteRecursively(path, p -> {
+              curFileCount.set(curFileCount.get() + 1);
               indicator.checkCanceled();
+              indicator.setFraction((double)curFileCount.get() / totalFileCount);
               indicator.setText2(path.relativize(p).toString());
             });
             processed.add(element);

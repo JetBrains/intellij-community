@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
+import com.intellij.compiler.server.CompilerConfigurationUtils;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import org.jdom.JDOMException;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
-import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,9 +58,8 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
 
   public void testUpdateAnnotationsProfilesOnModuleRename() {
     Module module = createModule("foo");
-    ProcessorConfigProfileImpl profile = new ProcessorConfigProfileImpl("foo");
+    ProcessorConfigProfile profile = getConfiguration().addNewProcessorProfile("foo");
     profile.addModuleName("foo");
-    getConfiguration().addModuleProcessorProfile(profile);
     assertSame(profile, getConfiguration().getAnnotationProcessingConfiguration(module));
 
     ModuleGroupTestsKt.renameModule(module, "bar");
@@ -68,6 +67,89 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
     ProcessorConfigProfile newProfile = getConfiguration().getAnnotationProcessingConfiguration(module);
     assertNotNull(newProfile);
     assertEquals("bar", assertOneElement(newProfile.getModuleNames()));
+  }
+
+  public void testDefaultParallelCompilationOptionIsAutomatic() {
+    assertEquals(ParallelCompilationOption.AUTOMATIC, getConfiguration().getParallelCompilationOption());
+  }
+
+  public void testDefaultParallelCompilationOptionDoesNotChangeXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    assertNotNull(configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo("<state />");
+  }
+
+  public void testChangedInOldWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationEnabled(true);
+
+    assertEquals(ParallelCompilationOption.ENABLED, configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>"""
+    );
+
+    configuration.setParallelCompilationEnabled(false);
+
+    assertEquals(ParallelCompilationOption.DISABLED, configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>"""
+    );
+
+  }
+
+  public void testChangedInNewWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertEquals(ParallelCompilationOption.ENABLED, configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertEquals(ParallelCompilationOption.AUTOMATIC, configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Automatic" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertEquals(ParallelCompilationOption.DISABLED, configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>""");
+  }
+
+  public void testParallelCompilationOptionMapToBoolean() {
+    CompilerConfiguration configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertTrue(configuration.isParallelCompilationEnabled());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertEquals(configuration.isParallelCompilationEnabled(), CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertFalse(configuration.isParallelCompilationEnabled());
   }
 
   private CompilerConfigurationImpl getConfiguration() {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public class RenameJavaModuleProcessor extends RenamePsiElementProcessor {
+public final class RenameJavaModuleProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return element instanceof PsiJavaModule;

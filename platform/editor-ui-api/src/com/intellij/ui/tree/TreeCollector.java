@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,8 +25,7 @@ public final class TreeCollector<T> {
     this.predicate = predicate;
   }
 
-  @NotNull
-  public List<T> get() {
+  public @NotNull List<T> get() {
     synchronized (reference) {
       List<T> list = reference.getAndSet(null);
       return list != null ? list : emptyList();
@@ -42,13 +41,11 @@ public final class TreeCollector<T> {
     }
   }
 
-  @NotNull
-  private static <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, T... objects) {
+  private static @NotNull <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, T... objects) {
     return isEmpty(objects) ? new ArrayList<>() : collect(predicate, asList(objects));
   }
 
-  @NotNull
-  private static <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, @NotNull Collection<? extends T> objects) {
+  private static @NotNull <T> List<T> collect(@NotNull BiPredicate<? super T, ? super T> predicate, @NotNull Collection<? extends T> objects) {
     List<T> list = new ArrayList<>(objects.size());
     for (T object : objects) if (object != null) add(predicate, list, object);
     return list;
@@ -65,18 +62,15 @@ public final class TreeCollector<T> {
   public static final class VirtualFileLeafs {
     private static final BiPredicate<VirtualFile, VirtualFile> PREDICATE = (child, parent) -> isAncestor(parent, child, false);
 
-    @NotNull
-    public static TreeCollector<VirtualFile> create() {
+    public static @NotNull TreeCollector<VirtualFile> create() {
       return new TreeCollector<>(PREDICATE);
     }
 
-    @NotNull
-    public static List<VirtualFile> collect(VirtualFile... files) {
+    public static @NotNull List<VirtualFile> collect(VirtualFile... files) {
       return TreeCollector.collect(PREDICATE, files);
     }
 
-    @NotNull
-    public static List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
+    public static @NotNull List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
       return TreeCollector.collect(PREDICATE, files);
     }
   }
@@ -85,18 +79,15 @@ public final class TreeCollector<T> {
   public static final class VirtualFileRoots {
     private static final BiPredicate<VirtualFile, VirtualFile> PREDICATE = (parent, child) -> isAncestor(parent, child, false);
 
-    @NotNull
-    public static TreeCollector<VirtualFile> create() {
+    public static @NotNull TreeCollector<VirtualFile> create() {
       return new TreeCollector<>(PREDICATE);
     }
 
-    @NotNull
-    public static List<VirtualFile> collect(VirtualFile... files) {
+    public static @NotNull List<VirtualFile> collect(VirtualFile... files) {
       return TreeCollector.collect(PREDICATE, files);
     }
 
-    @NotNull
-    public static List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
+    public static @NotNull List<VirtualFile> collect(@NotNull Collection<? extends VirtualFile> files) {
       return TreeCollector.collect(PREDICATE, files);
     }
   }
@@ -105,18 +96,15 @@ public final class TreeCollector<T> {
   public static final class TreePathLeafs {
     private static final BiPredicate<TreePath, TreePath> PREDICATE = (child, parent) -> parent.isDescendant(child);
 
-    @NotNull
-    public static TreeCollector<TreePath> create() {
+    public static @NotNull TreeCollector<TreePath> create() {
       return new TreeCollector<>(PREDICATE);
     }
 
-    @NotNull
-    public static List<TreePath> collect(TreePath... paths) {
+    public static @NotNull List<TreePath> collect(TreePath... paths) {
       return TreeCollector.collect(PREDICATE, paths);
     }
 
-    @NotNull
-    public static List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
+    public static @NotNull List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
       return TreeCollector.collect(PREDICATE, paths);
     }
   }
@@ -125,18 +113,15 @@ public final class TreeCollector<T> {
   public static final class TreePathRoots {
     private static final BiPredicate<TreePath, TreePath> PREDICATE = (parent, child) -> parent.isDescendant(child);
 
-    @NotNull
-    public static TreeCollector<TreePath> create() {
+    public static @NotNull TreeCollector<TreePath> create() {
       return new TreeCollector<>(PREDICATE);
     }
 
-    @NotNull
-    public static List<TreePath> collect(TreePath... paths) {
+    public static @NotNull List<TreePath> collect(TreePath... paths) {
       return TreeCollector.collect(PREDICATE, paths);
     }
 
-    @NotNull
-    public static List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
+    public static @NotNull List<TreePath> collect(@NotNull Collection<? extends TreePath> paths) {
       return TreeCollector.collect(PREDICATE, paths);
     }
   }

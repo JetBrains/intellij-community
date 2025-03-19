@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
@@ -32,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
+import com.intellij.psi.controlFlow.ControlFlowFactory;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -77,6 +77,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
       PsiSubstitutor.EMPTY, showClassName ? PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS : PsiFormatUtilBase.SHOW_NAME,
       0
     );
+    returnType = PsiTypesUtil.removeExternalAnnotations(returnType);
     myReturnTypePointer = SmartTypePointerManager.getInstance(method.getProject()).createSmartTypePointer(returnType);
     myFixWholeHierarchy = fixWholeHierarchy;
     mySuggestSuperTypes = suggestSuperTypes;
@@ -99,9 +100,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myDisplayName, myCanonicalText);
     PsiType type = Objects.requireNonNull(myReturnTypePointer.getType());
     boolean hasPredecessor = type.getSuperTypes().length != 0;
@@ -110,8 +110,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("fix.return.type.family");
   }
 
@@ -188,8 +187,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     myMethod.addBefore(typeElement, myMethod.getNameIdentifier());
   }
 
-  @NotNull
-  private static List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
+  private static @NotNull List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
     Map<String, PsiType> map = new LinkedHashMap<>();
     String defaultTypeKey = serialize(defaultType);
     map.put(defaultTypeKey, defaultType);
@@ -210,8 +208,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return ordered;
   }
 
-  @NotNull
-  private static String serialize(PsiType type) {
+  private static @NotNull String serialize(PsiType type) {
     if (PsiUtil.resolveClassInType(type) instanceof PsiTypeParameter) return type.getCanonicalText();
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }
@@ -281,8 +278,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   // to clearly separate data
   private static final class ReturnStatementAdder {
-    @NotNull private final PsiElementFactory factory;
-    @NotNull private final PsiType myTargetType;
+    private final @NotNull PsiElementFactory factory;
+    private final @NotNull PsiType myTargetType;
 
     private ReturnStatementAdder(@NotNull PsiElementFactory factory, @NotNull PsiType targetType) {
       this.factory = factory;
@@ -300,7 +297,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
         ControlFlow controlFlow;
         try {
-          controlFlow = HighlightControlFlowUtil.getControlFlowNoConstantEvaluate(method.getBody());
+          controlFlow = ControlFlowFactory.getControlFlowNoConstantEvaluate(method.getBody());
         }
         catch (AnalysisCanceledException e) {
           return null; //must be an error
@@ -350,8 +347,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return null;
   }
 
-  @NotNull
-  private List<PsiMethod> changeReturnType(PsiMethod method, @NotNull PsiType returnType) {
+  private @NotNull List<PsiMethod> changeReturnType(PsiMethod method, @NotNull PsiType returnType) {
     PsiMethod[] methods = new PsiMethod[] {method};
     if (myFixWholeHierarchy) {
       PsiType type = getHierarchyAdjustedReturnType(method, returnType);
@@ -382,7 +378,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiMethod[] hierarchyMethods = methods;
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       for (PsiMethod psiMethod : hierarchyMethods) {
-        OverridingMethodsSearch.search(psiMethod).forEach(m -> {
+        OverridingMethodsSearch.search(psiMethod).asIterable().forEach(m -> {
           affectedMethods.add(m);
         });
       }
@@ -445,8 +441,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return false;
   }
 
-  @Nullable
-  private static PsiReferenceParameterList findTypeArgumentsList(PsiClass superClass, PsiClass derivedClass) {
+  private static @Nullable PsiReferenceParameterList findTypeArgumentsList(PsiClass superClass, PsiClass derivedClass) {
     PsiReferenceParameterList referenceParameterList = null;
     if (derivedClass instanceof PsiAnonymousClass) {
       referenceParameterList = ((PsiAnonymousClass)derivedClass).getBaseClassReference().getParameterList();
@@ -465,8 +460,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return referenceParameterList;
   }
 
-  @Nullable
-  private static PsiReferenceParameterList extractReferenceParameterList(PsiClass superClass, PsiReferenceList extendsList) {
+  private static @Nullable PsiReferenceParameterList extractReferenceParameterList(PsiClass superClass, PsiReferenceList extendsList) {
     for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
       final PsiElement element = referenceElement.resolve();
       if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, superClass, true)) {

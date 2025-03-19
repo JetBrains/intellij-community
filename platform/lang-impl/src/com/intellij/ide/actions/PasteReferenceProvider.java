@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -19,12 +19,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Producer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.Transferable;
 
-public class PasteReferenceProvider implements PasteProvider {
+@ApiStatus.Internal
+public final class PasteReferenceProvider implements PasteProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -92,8 +94,7 @@ public class PasteReferenceProvider implements PasteProvider {
     }), IdeBundle.message("command.pasting.reference"), null);
   }
 
-  @Nullable
-  private static String getCopiedFqn(final DataContext context) {
+  private static @Nullable String getCopiedFqn(final DataContext context) {
     Producer<Transferable> producer = PasteAction.TRANSFERABLE_PROVIDER.getData(context);
 
     if (producer != null) {

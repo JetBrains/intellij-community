@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import copy
 import errno
@@ -221,7 +220,7 @@ def nullsubrepo(ctx, path, pctx):
 # subrepo classes need to implement the following abstract class:
 
 
-class abstractsubrepo(object):
+class abstractsubrepo:
     def __init__(self, ctx, path):
         """Initialize abstractsubrepo part
 
@@ -570,9 +569,20 @@ class hgsubrepo(abstractsubrepo):
 
     @annotatesubrepoerror
     def add(self, ui, match, prefix, uipathfn, explicitonly, **opts):
-        return cmdutil.add(
-            ui, self._repo, match, prefix, uipathfn, explicitonly, **opts
-        )
+        # XXX Ideally, we could let the caller take the `changing_files`
+        # context.  However this is not an abstraction that make sense for
+        # other repository types, and leaking that details purely related to
+        # dirstate seems unfortunate. So for now the context will be used here.
+        with self._repo.wlock(), self._repo.dirstate.changing_files(self._repo):
+            return cmdutil.add(
+                ui,
+                self._repo,
+                match,
+                prefix,
+                uipathfn,
+                explicitonly,
+                **opts,
+            )
 
     @annotatesubrepoerror
     def addremove(self, m, prefix, uipathfn, opts):
@@ -581,7 +591,18 @@ class hgsubrepo(abstractsubrepo):
         # be used to process sibling subrepos however.
         opts = copy.copy(opts)
         opts[b'subrepos'] = True
-        return scmutil.addremove(self._repo, m, prefix, uipathfn, opts)
+        # XXX Ideally, we could let the caller take the `changing_files`
+        # context.  However this is not an abstraction that make sense for
+        # other repository types, and leaking that details purely related to
+        # dirstate seems unfortunate. So for now the context will be used here.
+        with self._repo.wlock(), self._repo.dirstate.changing_files(self._repo):
+            return scmutil.addremove(
+                self._repo,
+                m,
+                prefix,
+                uipathfn,
+                opts,
+            )
 
     @annotatesubrepoerror
     def cat(self, match, fm, fntemplate, prefix, **opts):
@@ -622,7 +643,7 @@ class hgsubrepo(abstractsubrepo):
                 match,
                 prefix=prefix,
                 listsubrepos=True,
-                **opts
+                **opts,
             )
         except error.RepoLookupError as inst:
             self.ui.warn(
@@ -947,16 +968,21 @@ class hgsubrepo(abstractsubrepo):
 
     @annotatesubrepoerror
     def forget(self, match, prefix, uipathfn, dryrun, interactive):
-        return cmdutil.forget(
-            self.ui,
-            self._repo,
-            match,
-            prefix,
-            uipathfn,
-            True,
-            dryrun=dryrun,
-            interactive=interactive,
-        )
+        # XXX Ideally, we could let the caller take the `changing_files`
+        # context.  However this is not an abstraction that make sense for
+        # other repository types, and leaking that details purely related to
+        # dirstate seems unfortunate. So for now the context will be used here.
+        with self._repo.wlock(), self._repo.dirstate.changing_files(self._repo):
+            return cmdutil.forget(
+                self.ui,
+                self._repo,
+                match,
+                prefix,
+                uipathfn,
+                True,
+                dryrun=dryrun,
+                interactive=interactive,
+            )
 
     @annotatesubrepoerror
     def removefiles(
@@ -970,17 +996,22 @@ class hgsubrepo(abstractsubrepo):
         dryrun,
         warnings,
     ):
-        return cmdutil.remove(
-            self.ui,
-            self._repo,
-            matcher,
-            prefix,
-            uipathfn,
-            after,
-            force,
-            subrepos,
-            dryrun,
-        )
+        # XXX Ideally, we could let the caller take the `changing_files`
+        # context.  However this is not an abstraction that make sense for
+        # other repository types, and leaking that details purely related to
+        # dirstate seems unfortunate. So for now the context will be used here.
+        with self._repo.wlock(), self._repo.dirstate.changing_files(self._repo):
+            return cmdutil.remove(
+                self.ui,
+                self._repo,
+                matcher,
+                prefix,
+                uipathfn,
+                after,
+                force,
+                subrepos,
+                dryrun,
+            )
 
     @annotatesubrepoerror
     def revert(self, substate, *pats, **opts):
@@ -1010,7 +1041,12 @@ class hgsubrepo(abstractsubrepo):
             pats = [b'set:modified()']
         else:
             pats = []
-        cmdutil.revert(self.ui, self._repo, ctx, *pats, **opts)
+        # XXX Ideally, we could let the caller take the `changing_files`
+        # context.  However this is not an abstraction that make sense for
+        # other repository types, and leaking that details purely related to
+        # dirstate seems unfortunate. So for now the context will be used here.
+        with self._repo.wlock(), self._repo.dirstate.changing_files(self._repo):
+            cmdutil.revert(self.ui, self._repo, ctx, *pats, **opts)
 
     def shortid(self, revid):
         return revid[:12]
@@ -1100,6 +1136,10 @@ class svnsubrepo(abstractsubrepo):
             # --non-interactive.
             if commands[0] in (b'update', b'checkout', b'commit'):
                 cmd.append(b'--non-interactive')
+        if hasattr(subprocess, 'CREATE_NO_WINDOW'):
+            # On Windows, prevent command prompts windows from popping up when
+            # running in pythonw.
+            extrakw['creationflags'] = getattr(subprocess, 'CREATE_NO_WINDOW')
         cmd.extend(commands)
         if filename is not None:
             path = self.wvfs.reljoin(
@@ -1120,7 +1160,7 @@ class svnsubrepo(abstractsubrepo):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=procutil.tonativeenv(env),
-            **extrakw
+            **extrakw,
         )
         stdout, stderr = map(util.fromnativeeol, p.communicate())
         stderr = stderr.strip()
@@ -1151,7 +1191,7 @@ class svnsubrepo(abstractsubrepo):
         # commit revision so we can compare the subrepo state with
         # both. We used to store the working directory one.
         output, err = self._svncommand([b'info', b'--xml'])
-        doc = xml.dom.minidom.parseString(output)
+        doc = xml.dom.minidom.parseString(output)  # pytype: disable=pyi-error
         entries = doc.getElementsByTagName('entry')
         lastrev, rev = b'0', b'0'
         if entries:
@@ -1175,7 +1215,7 @@ class svnsubrepo(abstractsubrepo):
         """
         output, err = self._svncommand([b'status', b'--xml'])
         externals, changes, missing = [], [], []
-        doc = xml.dom.minidom.parseString(output)
+        doc = xml.dom.minidom.parseString(output)  # pytype: disable=pyi-error
         for e in doc.getElementsByTagName('entry'):
             s = e.getElementsByTagName('wc-status')
             if not s:
@@ -1320,7 +1360,7 @@ class svnsubrepo(abstractsubrepo):
     @annotatesubrepoerror
     def files(self):
         output = self._svncommand([b'list', b'--recursive', b'--xml'])[0]
-        doc = xml.dom.minidom.parseString(output)
+        doc = xml.dom.minidom.parseString(output)  # pytype: disable=pyi-error
         paths = []
         for e in doc.getElementsByTagName('entry'):
             kind = pycompat.bytestr(e.getAttribute('kind'))
@@ -1470,6 +1510,11 @@ class gitsubrepo(abstractsubrepo):
             # insert the argument in the front,
             # the end of git diff arguments is used for paths
             commands.insert(1, b'--color')
+        extrakw = {}
+        if hasattr(subprocess, 'CREATE_NO_WINDOW'):
+            # On Windows, prevent command prompts windows from popping up when
+            # running in pythonw.
+            extrakw['creationflags'] = getattr(subprocess, 'CREATE_NO_WINDOW')
         p = subprocess.Popen(
             pycompat.rapply(
                 procutil.tonativestr, [self._gitexecutable] + commands
@@ -1480,6 +1525,7 @@ class gitsubrepo(abstractsubrepo):
             close_fds=procutil.closefds,
             stdout=subprocess.PIPE,
             stderr=errpipe,
+            **extrakw,
         )
         if stream:
             return p.stdout, None
@@ -1771,7 +1817,7 @@ class gitsubrepo(abstractsubrepo):
             for b in rev2branch[self._state[1]]:
                 if b.startswith(b'refs/remotes/origin/'):
                     return True
-        for b, revision in pycompat.iteritems(branch2rev):
+        for b, revision in branch2rev.items():
             if b.startswith(b'refs/remotes/origin/'):
                 if self._gitisancestor(self._state[1], revision):
                     return True

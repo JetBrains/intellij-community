@@ -4,7 +4,6 @@ package com.intellij.usages.impl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.ArrayUtil;
@@ -17,7 +16,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Internal
-@Service
 @State(name = "UsageFilteringRuleState", storages = @Storage("usageView.xml"))
 public final class UsageFilteringRuleStateService implements PersistentStateComponent<String[]> {
 

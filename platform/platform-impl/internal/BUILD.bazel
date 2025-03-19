@@ -1,0 +1,46 @@
+### auto-generated section `build intellij.platform.ide.internal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-internal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-internal",
+  module_name = "intellij.platform.ide.internal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/ui.jcef:ui-jcef",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/ui:ide-ui",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/analysis-impl",
+    "//platform/util/progress",
+    "//platform/lang-api:lang",
+    "//platform/backend/workspace",
+    "//platform/workspace/jps",
+    "//platform/jbr",
+    "//platform/ide-core-impl",
+    "//platform/util/coroutines",
+    "//platform/statistics/uploader",
+    "//platform/util/jdom",
+    "//platform/service-container:serviceContainer",
+    "@lib//:guava",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:fastutil-min",
+    "@lib//:hash4j",
+    "@lib//:gson",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlin-reflect",
+    "@lib//:jna",
+  ],
+  runtime_deps = [":ide-internal_resources"]
+)
+### auto-generated section `build intellij.platform.ide.internal` end

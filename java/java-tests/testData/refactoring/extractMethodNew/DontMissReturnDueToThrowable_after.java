@@ -9,8 +9,7 @@ class Test {
         System.out.println(s);
     }
 
-    @NotNull
-    private String newMethod() throws IOException {
+    private @NotNull String newMethod() throws IOException {
         String s = "result";
         new Test().withError();
         return s;

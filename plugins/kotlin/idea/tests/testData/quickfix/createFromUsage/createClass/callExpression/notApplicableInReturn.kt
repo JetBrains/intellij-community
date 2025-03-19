@@ -1,7 +1,6 @@
 // "Create class 'BookKeeper'" "false"
-// ACTION: Create function 'BookKeeper'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: BookKeeper
+// IGNORE_K2
 package pack
 
 import pack.Currrency.EUR

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -21,14 +21,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class JsonCopyPointerAction extends CopyReferenceAction {
+public final class JsonCopyPointerAction extends CopyReferenceAction {
   public JsonCopyPointerAction() {
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(JsonBundle.message("copy.json.pointer"));
+    e.getPresentation().setText(JsonBundle.message("action.JsonCopyPointer.text"));
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     VirtualFile file = editor == null ? null : FileDocumentManager.getInstance().getFile(editor.getDocument());
@@ -36,15 +36,13 @@ public class JsonCopyPointerAction extends CopyReferenceAction {
   }
 
   @Override
-  @NlsSafe
-  protected String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
+  protected @NlsSafe String getQualifiedName(Editor editor, List<? extends PsiElement> elements) {
     if (elements.size() != 1) return null;
     return JsonQualifiedNameProvider.generateQualifiedName(elements.get(0), JsonQualifiedNameKind.JsonPointer);
   }
 
-  @NotNull
   @Override
-  protected List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
+  protected @NotNull List<PsiElement> getPsiElements(DataContext dataContext, Editor editor) {
     List<PsiElement> elements = super.getPsiElements(dataContext, editor);
     if (!elements.isEmpty()) return elements;
     PsiElement location = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN).getPsiLocation();

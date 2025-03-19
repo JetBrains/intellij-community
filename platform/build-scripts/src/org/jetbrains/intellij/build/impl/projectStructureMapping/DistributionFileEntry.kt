@@ -1,8 +1,40 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
+import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import java.nio.file.Path
+
+internal data class ContentReport(
+  @JvmField val platform: List<DistributionFileEntry>,
+  @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
+  @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
+) {
+  init {
+    val intersection = bundledPlugins
+      .map { it.first.layout.mainModule }
+      .intersect(
+        nonBundledPlugins
+          .filterNot { it.first.layout.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
+          .map { it.first.layout.mainModule }
+      )
+    require(intersection.none()) {
+      "Plugins cannot be both bundled and non-bundled for the same IDE: $intersection"
+    }
+  }
+
+  fun all(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
+    yieldAll(nonBundledPlugins.flatMap { it.second })
+  }
+
+  fun bundled(): Sequence<DistributionFileEntry> = sequence {
+    yieldAll(platform)
+    yieldAll(bundledPlugins.flatMap { it.second })
+  }
+}
 
 sealed interface DistributionFileEntry {
   /**
@@ -10,12 +42,14 @@ sealed interface DistributionFileEntry {
    */
   val path: Path
 
+  val relativeOutputFile: String?
+
   /**
    * Type of the element in the project configuration which was copied to [.path]
    */
   val type: String
 
-  fun changePath(newFile: Path): DistributionFileEntry
+  val hash: Long
 }
 
 sealed interface LibraryFileEntry : DistributionFileEntry {
@@ -23,58 +57,72 @@ sealed interface LibraryFileEntry : DistributionFileEntry {
   val size: Int
 }
 
+internal data class CustomAssetEntry(
+  override val path: Path,
+  override val hash: Long,
+) : DistributionFileEntry {
+  override val type: String
+    get() = "custom-asset"
+
+  override val relativeOutputFile: String?
+    get() = null
+}
+
 /**
- * Represents a file in module-level library
+ * Represents a file in a module-level library
  */
-internal class ModuleLibraryFileEntry(override val path: Path,
-                                      @JvmField val moduleName: String,
-                                      @JvmField val libraryName: String,
-                                      override val libraryFile: Path?,
-                                      override val size: Int) : DistributionFileEntry, LibraryFileEntry {
+internal data class ModuleLibraryFileEntry(
+  override val path: Path,
+  @JvmField val moduleName: String,
+  @JvmField val libraryName: String,
+  override val libraryFile: Path?,
+  override val size: Int,
+  override val hash: Long,
+  override val relativeOutputFile: String?,
+) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
     get() = "module-library-file"
-
-  override fun changePath(newFile: Path) = ModuleLibraryFileEntry(newFile, moduleName, libraryName, libraryFile, size)
 }
 
 /**
  * Represents test classes of a module
  */
-internal class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
+internal data class ModuleTestOutputEntry(override val path: Path, @JvmField val moduleName: String) : DistributionFileEntry {
+  override val relativeOutputFile: String?
+    get() = null
+
   override val type: String
     get() = "module-test-output"
 
-  override fun changePath(newFile: Path) = ModuleTestOutputEntry(newFile, moduleName)
+  override val hash: Long
+    get() = 0
 }
 
 /**
  * Represents a project-level library
  */
-internal class ProjectLibraryEntry(
+internal data class ProjectLibraryEntry(
   override val path: Path,
   @JvmField val data: ProjectLibraryData,
   override val libraryFile: Path?,
-  override val size: Int
+  override val hash: Long,
+  override val size: Int,
+  override val relativeOutputFile: String?,
 ) : DistributionFileEntry, LibraryFileEntry {
   override val type: String
-    get() = "project-library"
-
-  override fun changePath(newFile: Path) = ProjectLibraryEntry(newFile, data, libraryFile, size)
-
-  override fun toString() = "ProjectLibraryEntry(data='$data\', libraryFile=$libraryFile, size=$size)"
-}
+    get() = "project-library" }
 
 /**
  * Represents production classes of a module
  */
-class ModuleOutputEntry(
+data class ModuleOutputEntry(
   override val path: Path,
   @JvmField val moduleName: String,
   @JvmField val size: Int,
-  @JvmField val reason: String? = null
+  override val hash: Long,
+  override val relativeOutputFile: String,
+  @JvmField val reason: String? = null,
 ) : DistributionFileEntry {
   override val type: String
     get() = "module-output"
-
-  override fun changePath(newFile: Path) = ModuleOutputEntry(path = newFile, moduleName = moduleName, size = size, reason = reason)
 }

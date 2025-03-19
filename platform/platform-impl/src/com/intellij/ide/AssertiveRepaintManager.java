@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +16,9 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class AssertiveRepaintManager extends RepaintManager {
-  private final static Logger LOG = Logger.getInstance(AssertiveRepaintManager.class);
+  private static final Logger LOG = Logger.getInstance(AssertiveRepaintManager.class);
 
   private WeakReference<Component> myLastComponent;
 

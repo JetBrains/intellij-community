@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,8 +16,7 @@ public abstract class CredentialsType<T> {
 
   public static final Key<UnknownCredentialsHolder> UNKNOWN_CREDENTIALS = Key.create("UNKNOWN_CREDENTIALS");
 
-  public static final CredentialsType<UnknownCredentialsHolder> UNKNOWN = new CredentialsType<>(
-    RemoteBundle.message("credentials.type.filetype.description.unknown"), "") {
+  public static final CredentialsType<UnknownCredentialsHolder> UNKNOWN = new CredentialsType<>(RemoteBundle.message("credentials.type.filetype.description.unknown"), "") {
     @Override
     public Key<UnknownCredentialsHolder> getCredentialsKey() {
       return UNKNOWN_CREDENTIALS;
@@ -72,8 +71,8 @@ public abstract class CredentialsType<T> {
     return Integer.MAX_VALUE;
   }
 
-  public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase... cases) {
-    for (CredentialsCase credentialsCase : cases) {
+  public void saveCredentials(RemoteSdkAdditionalData data, CredentialsCase<T>... cases) {
+    for (var credentialsCase : cases) {
       if (credentialsCase.getType() == this) {
         T credentials = createCredentials();
         credentialsCase.process(credentials);

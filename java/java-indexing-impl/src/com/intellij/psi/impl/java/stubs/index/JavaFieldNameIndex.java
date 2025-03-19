@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -12,21 +12,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
+public final class JavaFieldNameIndex extends StringStubIndexExtension<PsiField> {
   private static final JavaFieldNameIndex ourInstance = new JavaFieldNameIndex();
 
   public static JavaFieldNameIndex getInstance() {
     return ourInstance;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiField> getKey() {
+  public @NotNull StubIndexKey<String, PsiField> getKey() {
     return JavaStubIndexKeys.FIELDS;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getFields(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
-  public Collection<PsiField> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiField> get(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+    return getFields(s, project, scope);
+  }
+
+  public Collection<PsiField> getFields(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiField.class);
   }
 }

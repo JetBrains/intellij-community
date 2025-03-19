@@ -1,0 +1,2 @@
+toString()
+oldFun(toString())

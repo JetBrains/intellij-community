@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyNames.PREPARE
+import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.extensions.afterDefInFunction
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -58,7 +59,7 @@ class PySpecialMethodNamesCompletionContributor : CompletionContributor(), DumbA
         it.withInsertHandler { context, _ ->
           val function = PsiTreeUtil.getParentOfType(context.file.findElementAt(context.startOffset), PyFunction::class.java)
 
-          if (function != null && function.modifier != PyFunction.Modifier.CLASSMETHOD) {
+          if (function != null && function.modifier != PyAstFunction.Modifier.CLASSMETHOD) {
             PyUtil.addDecorator(function, "@${PyNames.CLASSMETHOD}")
           }
         }

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
-import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -12,7 +12,8 @@ import java.util.Collection;
  * @author Vladislav.Soroka
  */
 public final class ModelFactory {
-  public static ExternalDependency createCopy(ExternalDependency dependency) {
+
+  public static @NotNull ExternalDependency createCopy(@NotNull ExternalDependency dependency) {
     ExternalDependency newDep;
     if (dependency instanceof ExternalProjectDependency) {
       newDep = new DefaultExternalProjectDependency((ExternalProjectDependency)dependency);
@@ -32,10 +33,11 @@ public final class ModelFactory {
     return newDep;
   }
 
-  @Contract("null -> null")
-  public static Collection<ExternalDependency> createCopy(@Nullable Collection<? extends ExternalDependency> dependencies) {
-    if (dependencies == null) return null;
-
+  public static @NotNull Collection<ExternalDependency> createCopy(@Nullable Collection<? extends ExternalDependency> dependencies) {
+    if (dependencies == null) {
+      // Collection can be modified outside by mutation methods
+      return new ArrayList<>(0);
+    }
     Collection<ExternalDependency> result = new ArrayList<>(dependencies.size());
     for (ExternalDependency dependency : dependencies) {
       result.add(createCopy(dependency));

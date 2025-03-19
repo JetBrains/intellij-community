@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.util.zip` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "zip",
+  module_name = "intellij.platform.util.zip",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/rt-java8",
+  ]
+)
+### auto-generated section `build intellij.platform.util.zip` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.colors.ScopeAttributesUtil;
@@ -13,62 +13,85 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.DependencyValidationManagerImpl;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class HighlightNamesUtil {
   private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
 
-  @Nullable
-  static HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
-                                           @NotNull PsiElement elementToHighlight,
-                                           boolean isDeclaration,
-                                           @NotNull TextAttributesScheme colorsScheme) {
+  public static void highlightElement(@NotNull PsiElement psiElement, @NotNull HighlightInfoHolder holder) {
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return;
+    highlight(containingFile, holder, visitor -> psiElement.accept(visitor));
+  }
+
+  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
+    JavaNamesHighlightVisitor visitor = new JavaNamesHighlightVisitor();
+    if (!visitor.suitableForFile(file)) return;
+    visitor.analyze(file, false, holder, () -> consumer.accept(visitor));
+  }
+
+  static @Nullable HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
+                                                     @NotNull PsiElement elementToHighlight,
+                                                     boolean isDeclaration,
+                                                     @NotNull TextAttributesScheme colorsScheme) {
     boolean isInherited = false;
     boolean isStaticallyImported = false;
 
     if (!isDeclaration) {
-      isStaticallyImported = isStaticallyImported(elementToHighlight);
-      if (isCalledOnThis(elementToHighlight)) {
-        PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
-        PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
-        while (enclosingClass != null) {
-          isInherited = enclosingClass.isInheritor(containingClass, true);
-          if (isInherited) break;
-          enclosingClass = PsiTreeUtil.getParentOfType(enclosingClass, PsiClass.class, true);
+      try {
+        isStaticallyImported = isStaticallyImported(elementToHighlight);
+        if (isCalledOnThis(elementToHighlight)) {
+          PsiClass containingClass = methodOrClass instanceof PsiMethod ? methodOrClass.getContainingClass() : null;
+          PsiClass enclosingClass = containingClass == null ? null : PsiTreeUtil.getParentOfType(elementToHighlight, PsiClass.class);
+          while (enclosingClass != null) {
+            isInherited = enclosingClass.isInheritor(containingClass, true);
+            if (isInherited) break;
+            enclosingClass = PsiTreeUtil.getParentOfType(enclosingClass, PsiClass.class, true);
+          }
         }
-      }
+      } catch (IndexNotReadyException ignored) { }
     }
 
     LOG.assertTrue(methodOrClass instanceof PsiMethod || !isDeclaration);
-    HighlightInfoType type = methodOrClass instanceof PsiMethod ? getMethodNameHighlightType((PsiMethod)methodOrClass, isDeclaration, isInherited, isStaticallyImported)
-                                                                : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
+    HighlightInfoType type = methodOrClass instanceof PsiMethod psiMethod ? getMethodNameHighlightType(psiMethod, isDeclaration, isInherited, isStaticallyImported)
+                                                                       : JavaHighlightInfoTypes.CONSTRUCTOR_CALL;
     if (type != null) {
       TextAttributes attributes = mergeWithScopeAttributes(methodOrClass, type, colorsScheme);
       if (!isDeclaration) {
         attributes = mergeWithVisibilityAttributes(methodOrClass, attributes, colorsScheme);
       }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
+      HighlightInfo.Builder builder = nameBuilder(type).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
       return builder.createUnconditionally();
     }
     return null;
+  }
+
+  private static @NotNull HighlightInfo.Builder nameBuilder(@NotNull HighlightInfoType type) {
+    return HighlightInfo.newHighlightInfo(type)/*.toolId(JavaNamesHighlightVisitor.class)*/;
   }
 
   private static boolean isCalledOnThis(@NotNull PsiElement elementToHighlight) {
@@ -119,8 +142,7 @@ public final class HighlightNamesUtil {
     return basedAttributes;
   }
 
-  @NotNull
-  static HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
+  static @NotNull HighlightInfo highlightClassName(@Nullable PsiClass aClass, @NotNull PsiElement elementToHighlight, @NotNull TextAttributesScheme colorsScheme) {
     TextRange range = elementToHighlight.getTextRange();
     if (elementToHighlight instanceof PsiJavaCodeReferenceElement referenceElement) {
       PsiElement identifier = referenceElement.getReferenceNameElement();
@@ -140,17 +162,16 @@ public final class HighlightNamesUtil {
     if (aClass != null && elementToHighlight instanceof PsiJavaCodeReferenceElement) {
       attributes = mergeWithVisibilityAttributes(aClass, attributes, colorsScheme);
     }
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    HighlightInfo.Builder builder = nameBuilder(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
     return builder.createUnconditionally();
   }
 
-  @Nullable
-  static HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
-                                             @NotNull PsiElement elementToHighlight,
-                                             @NotNull TextAttributesScheme colorsScheme) {
+  static @Nullable HighlightInfo highlightVariableName(@NotNull PsiVariable variable,
+                                                       @NotNull PsiElement elementToHighlight,
+                                                       @NotNull TextAttributesScheme colorsScheme) {
     HighlightInfoType varType = getVariableNameHighlightType(variable, elementToHighlight);
     if (varType == null) {
       return null;
@@ -160,14 +181,14 @@ public final class HighlightNamesUtil {
       if (elementToHighlight.getParent() instanceof PsiReferenceExpression) {
         attributes = mergeWithVisibilityAttributes(variable, attributes, colorsScheme);
       }
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
+      HighlightInfo.Builder builder = nameBuilder(varType).range(elementToHighlight);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
       return builder.createUnconditionally();
     }
 
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(varType).range(elementToHighlight);
+    HighlightInfo.Builder builder = nameBuilder(varType).range(elementToHighlight);
     return RainbowHighlighter.isRainbowEnabledWithInheritance(colorsScheme, JavaLanguage.INSTANCE)
            ? builder.createUnconditionally()
            : builder.create();
@@ -185,17 +206,19 @@ public final class HighlightNamesUtil {
       return isStaticallyImported ? JavaHighlightInfoTypes.STATIC_METHOD_CALL_IMPORTED : JavaHighlightInfoTypes.STATIC_METHOD;
     }
     if (isInheritedMethod) return JavaHighlightInfoTypes.INHERITED_METHOD;
-    if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return JavaHighlightInfoTypes.ABSTRACT_METHOD;
     }
     return JavaHighlightInfoTypes.METHOD_CALL;
   }
 
-  @Nullable
-  private static HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
+  private static @Nullable HighlightInfoType getVariableNameHighlightType(@NotNull PsiVariable var, @NotNull PsiElement elementToHighlight) {
     if (var instanceof PsiLocalVariable
-        || var instanceof PsiParameter && ((PsiParameter)var).getDeclarationScope() instanceof PsiForeachStatement) {
+        || var instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiForeachStatement) {
       return JavaHighlightInfoTypes.LOCAL_VARIABLE;
+    }
+    if (var instanceof PsiRecordComponent || var instanceof LightRecordField) {
+      return JavaHighlightInfoTypes.RECORD_COMPONENT;
     }
     if (var instanceof PsiField) {
       if (var.hasModifierProperty(PsiModifier.STATIC)) {
@@ -211,15 +234,15 @@ public final class HighlightNamesUtil {
         return var.hasModifierProperty(PsiModifier.FINAL) ? JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD : JavaHighlightInfoTypes.INSTANCE_FIELD;
       }
     }
-    if (var instanceof PsiParameter) {
-      return ((PsiParameter)var).getDeclarationScope() instanceof PsiLambdaExpression ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
-                                                                                      : JavaHighlightInfoTypes.PARAMETER;
+    if (var instanceof PsiParameter parameter) {
+      return parameter.getDeclarationScope() instanceof PsiLambdaExpression
+             ? JavaHighlightInfoTypes.LAMBDA_PARAMETER
+             : JavaHighlightInfoTypes.PARAMETER;
     }
     return null;
   }
 
-  @NotNull
-  private static HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
+  private static @NotNull HighlightInfoType getClassNameHighlightType(@Nullable PsiClass aClass, @NotNull PsiElement element) {
     if (element instanceof PsiJavaCodeReferenceElement && element.getParent() instanceof PsiAnonymousClass) {
       return JavaHighlightInfoTypes.ANONYMOUS_CLASS_NAME;
     }
@@ -227,9 +250,13 @@ public final class HighlightNamesUtil {
       if (aClass.isAnnotationType()) return JavaHighlightInfoTypes.ANNOTATION_NAME;
       if (aClass.isInterface()) return JavaHighlightInfoTypes.INTERFACE_NAME;
       if (aClass.isEnum()) return JavaHighlightInfoTypes.ENUM_NAME;
+      if (aClass.isRecord()) return JavaHighlightInfoTypes.RECORD_NAME;
       if (aClass instanceof PsiTypeParameter) return JavaHighlightInfoTypes.TYPE_PARAMETER_NAME;
       PsiModifierList modList = aClass.getModifierList();
       if (modList != null && modList.hasModifierProperty(PsiModifier.ABSTRACT)) return JavaHighlightInfoTypes.ABSTRACT_CLASS_NAME;
+    }
+    if (aClass == null && element.getParent() instanceof PsiAnnotation) {
+      return JavaHighlightInfoTypes.ANNOTATION_NAME;
     }
     // use class by default
     return JavaHighlightInfoTypes.CLASS_NAME;
@@ -256,8 +283,7 @@ public final class HighlightNamesUtil {
     return result;
   }
 
-  @NotNull
-  public static TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
+  public static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
     if (method instanceof SyntheticElement) return TextRange.EMPTY_RANGE;
     int start = stripAnnotationsFromModifierList(method.getModifierList());
     TextRange throwsRange = method.getThrowsList().getTextRange();
@@ -266,25 +292,23 @@ public final class HighlightNamesUtil {
     return new TextRange(start, end);
   }
 
-  @NotNull
-  public static TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
+  public static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     int start = stripAnnotationsFromModifierList(field.getModifierList());
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end);
   }
 
-  @NotNull
-  public static TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
-    if (aClass instanceof PsiEnumConstantInitializer) {
-      return ((PsiEnumConstantInitializer)aClass).getEnumConstant().getNameIdentifier().getTextRange();
+  public static @NotNull TextRange getClassDeclarationTextRange(@NotNull PsiClass aClass) {
+    if (aClass instanceof PsiEnumConstantInitializer initializer) {
+      return initializer.getEnumConstant().getNameIdentifier().getTextRange();
     }
-    PsiElement psiElement = aClass instanceof PsiAnonymousClass
-                                  ? ((PsiAnonymousClass)aClass).getBaseClassReference()
+    PsiElement psiElement = aClass instanceof PsiAnonymousClass anonymousClass
+                                  ? anonymousClass.getBaseClassReference()
                                   : aClass.getModifierList() == null ? aClass.getNameIdentifier() : aClass.getModifierList();
     if(psiElement == null) return new TextRange(aClass.getTextRange().getStartOffset(), aClass.getTextRange().getStartOffset());
     int start = stripAnnotationsFromModifierList(psiElement);
-    PsiElement endElement = aClass instanceof PsiAnonymousClass ?
-                            ((PsiAnonymousClass)aClass).getBaseClassReference() :
+    PsiElement endElement = aClass instanceof PsiAnonymousClass anonymousClass ?
+                            anonymousClass.getBaseClassReference() :
                             aClass.getImplementsList();
     if (endElement == null) endElement = aClass.getNameIdentifier();
     TextRange endTextRange = endElement == null ? null : endElement.getTextRange();
@@ -316,7 +340,7 @@ public final class HighlightNamesUtil {
     return textRange.getStartOffset();
   }
 
-  static @NotNull HighlightInfo highlightPackage(@NotNull PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
+  static @NotNull HighlightInfo highlightPackage(@Nullable PsiElement resolved, @NotNull PsiJavaCodeReferenceElement elementToHighlight, @NotNull TextAttributesScheme scheme) {
     PsiElement referenceNameElement = elementToHighlight.getReferenceNameElement();
     TextRange range;
     if (referenceNameElement == null) {
@@ -337,10 +361,35 @@ public final class HighlightNamesUtil {
     }
     HighlightInfoType type = JavaHighlightInfoTypes.CLASS_NAME;
     TextAttributes attributes = mergeWithScopeAttributes(resolved, type, scheme);
-    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
+    HighlightInfo.Builder builder = nameBuilder(type).range(range);
     if (attributes != null) {
       builder.textAttributes(attributes);
     }
     return builder.createUnconditionally();
+  }
+
+  static HighlightInfo highlightImplicitAnonymousClassParameter(@NotNull PsiJavaCodeReferenceElement ref) {
+    return nameBuilder(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create();
+  }
+
+  static HighlightInfo highlightAnnotationAttributeName(@NotNull PsiIdentifier nameId) {
+    return nameBuilder(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create();
+  }
+
+  static HighlightInfo highlightKeyword(@NotNull PsiKeyword keyword) {
+    return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create();
+  }
+
+  static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
+    return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
+  }
+
+  public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
+    return formatClass(aClass, true);
+  }
+
+  public static @NotNull String formatClass(@NotNull PsiClass aClass, boolean fqn) {
+    return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
   }
 }

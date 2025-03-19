@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -66,14 +67,14 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   protected Dimension updatePreferredSize(JComponent c, Dimension size) {
     JBInsets.addTo(size, ((JTextComponent)c).getMargin());
     size.height = Math.max(size.height, getMinimumHeight(size.height));
-    size.width = Math.max(size.width, MINIMUM_WIDTH.get());
+    size.width = Math.max(size.width, JBUI.CurrentTheme.TextField.minimumSize().width);
     return size;
   }
 
   protected int getMinimumHeight(int originHeight) {
     JComponent component = getComponent();
     Insets insets = component.getInsets();
-    return (isCompact(component) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + insets.top + insets.bottom;
+    return (isCompact(component) ? COMPACT_HEIGHT.get() : JBUI.CurrentTheme.TextField.minimumSize().height) + insets.top + insets.bottom;
   }
 
   @Override
@@ -129,7 +130,14 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    getComponent().setMargin(JBInsets.create(2, 5));
+    getComponent().setMargin(getDefaultMargins(c));
+  }
+
+  private static @NotNull Insets getDefaultMargins(JComponent c) {
+    boolean newBorder = c.getBorder() instanceof DarculaTextBorderNew;
+
+    // See constants in DarculaTextFieldUI.getDefaultMargins
+    return newBorder ? new JBInsets(2, 9, 2, 6) : JBInsets.create(2, 5);
   }
 
   @Override

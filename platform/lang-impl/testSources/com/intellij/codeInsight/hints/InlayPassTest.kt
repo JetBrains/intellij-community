@@ -5,18 +5,21 @@ import com.intellij.codeInsight.hints.presentation.RecursivelyUpdatingRootPresen
 import com.intellij.codeInsight.hints.presentation.RootInlayPresentation
 import com.intellij.codeInsight.hints.presentation.SpacePresentation
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import java.util.concurrent.atomic.AtomicBoolean
 
 class InlayPassTest : BasePlatformTestCase() {
   private val noSettings = SettingsKey<NoSettings>("no")
-
+  private lateinit var sharedSink: InlayHintsSinkImpl
   override fun setUp() {
     super.setUp()
     myFixture.configureByText("file.java", "class A{ }")
+    sharedSink = InlayHintsSinkImpl(myFixture.editor)
   }
 
   fun testTurnedOffHintsDisappear() {
@@ -157,11 +160,10 @@ class InlayPassTest : BasePlatformTestCase() {
   }
 
   private fun createOneOffCollector(collector: (InlayHintsSink) -> Unit): CollectorWithSettings<NoSettings> {
-    var firstTime = true
+    val firstTime = AtomicBoolean(true)
     val collectorLambda: (PsiElement, Editor, InlayHintsSink) -> Boolean = { _, _, sink ->
-      if (firstTime) {
+      if (firstTime.compareAndSet(true, false)) {
         collector(sink)
-        firstTime = false
       }
       false
     }
@@ -173,17 +175,19 @@ class InlayPassTest : BasePlatformTestCase() {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
         return collector(element, editor, sink)
       }
-    }, noSettings, Language.ANY, InlayHintsSinkImpl(myFixture.editor))
+    }, noSettings, Language.ANY, sharedSink)
   }
 
   private fun createPass(collectors: List<CollectorWithSettings<*>>): InlayHintsPass {
-    return InlayHintsPass(myFixture.file, collectors, myFixture.editor)
+    val visibleRange = myFixture.editor.calculateVisibleRange()
+    return ActionUtil.underModalProgress(project, "") { InlayHintsPass(myFixture.file, collectors, myFixture.editor, visibleRange, sharedSink) }
   }
 
   private fun InlayHintsPass.collectAndApply() {
     val dumbProgressIndicator = DumbProgressIndicator()
     doCollectInformation(dumbProgressIndicator)
     applyInformationToEditor()
+    sharedSink.reset()
   }
 
   private val inlayModel

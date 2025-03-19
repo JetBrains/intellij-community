@@ -262,7 +262,7 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
   id: String,
   private val extenders: List<FragmentsDslBuilderExtender<Settings>>
 ) {
-  val fullId = (if (parentId == null) "" else "$parentId.") + id
+  val fullId: String = (if (parentId == null) "" else "$parentId.") + id
 
   private val fragments = arrayListOf<SettingsEditorFragment<Settings, *>>()
 
@@ -286,7 +286,7 @@ class FragmentsBuilder<Settings : FragmentedSettings>(
     return Fragment<Settings, Component>(id, component).also(setup).let { it.build().apply { fragments += this } }
   }
 
-  fun customFragment(fragment: SettingsEditorFragment<Settings, *>) = fragment.apply { fragments += this }
+  fun customFragment(fragment: SettingsEditorFragment<Settings, *>): SettingsEditorFragment<Settings, *> = fragment.apply { fragments += this }
 
   fun tag(id: String, @Nls name: String, setup: Tag<Settings>.() -> Unit): SettingsEditorFragment<Settings, TagButton> {
     return Tag<Settings>(id, name).also(setup).let { it.build().apply { fragments += this } }
@@ -313,11 +313,11 @@ interface FragmentsDslBuilderExtender<Settings : FragmentedSettings> {
 
   fun extend(builder: FragmentsBuilder<Settings>)
 
-  fun isApplicableTo(builder: FragmentsBuilder<Settings>) = builder.fullId == id
+  fun isApplicableTo(builder: FragmentsBuilder<Settings>): Boolean = builder.fullId == id
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<FragmentsDslBuilderExtender<*>>("com.intellij.fragments.dsl.builder.extender")
+    val EP_NAME: ExtensionPointName<FragmentsDslBuilderExtender<*>> = ExtensionPointName.create("com.intellij.fragments.dsl.builder.extender")
 
     inline fun <reified T : FragmentedSettings> getExtenders(startId: String): List<FragmentsDslBuilderExtender<T>> {
       return EP_NAME.extensionList.map {

@@ -9,7 +9,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil
 
-class CompareRevisionsFromLogAction : DumbAwareAction() {
+internal class CompareRevisionsFromLogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -29,11 +29,9 @@ class CompareRevisionsFromLogAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
-    val handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER)
-
     VcsLogUsageTriggerCollector.triggerUsage(e, this)
-
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
+    val handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) ?: return
     val commits = selection.commits
     if (commits.size == 2) {
       val root = commits.first().root

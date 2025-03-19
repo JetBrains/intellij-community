@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXECUTE_TASK
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.tooling.ProjectConnection
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.junit.Test
@@ -14,7 +15,7 @@ class GradleConnectorServiceIntegrationTest : GradleImportingTestCase() {
 
   @Test
   fun `test connection reuse`() {
-    createSettingsFile("include 'child'")
+    createSettingsFile(including("child"))
     importProject("")
 
     val projectConnection = requestConnection(projectPath, getExecutionSettings(projectPath))
@@ -37,8 +38,10 @@ class GradleConnectorServiceIntegrationTest : GradleImportingTestCase() {
   private fun getExecutionSettings(projectPath: String): GradleExecutionSettings =
     ExternalSystemApiUtil.getExecutionSettings(myProject, projectPath, externalSystemId)
 
-  private fun requestConnection(projectPath: String, executionSettings: GradleExecutionSettings) = GradleExecutionHelper()
-    .execute(projectPath, executionSettings, ExternalSystemTaskId.create(externalSystemId, EXECUTE_TASK, myProject), null, null) { it }
+  private fun requestConnection(projectPath: String, executionSettings: GradleExecutionSettings): ProjectConnection {
+    val taskId = ExternalSystemTaskId.create(externalSystemId, EXECUTE_TASK, myProject)
+    return GradleExecutionHelper.execute(projectPath, executionSettings, taskId, null, null) { it }
+  }
 
   companion object {
     /** It's sufficient to run the test against single gradle version. */

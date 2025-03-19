@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template;
 
@@ -12,13 +12,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -44,6 +40,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private final Document myDocument;
   private final PsiFile myFile;
   private Comparator<? super Variable> myVariableComparator;
+
+  private boolean scrollToTemplate = true;
 
   private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
@@ -157,13 +155,20 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   /**
-   * Adds end variable after the specified element
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element after which the cursor will be placed
    */
   public void setEndVariableAfter(PsiElement element) {
     element = PsiTreeUtil.nextLeaf(element);
     setEndVariableBefore(element);
   }
 
+  /**
+   * Sets the place where the caret will be moved after the template is finished.
+   *
+   * @param element the element before which the cursor will be placed
+   */
   public void setEndVariableBefore(PsiElement element) {
     if (myEndElement != null) {
       myElements.remove(myEndElement);
@@ -273,6 +278,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
 
     template.setToIndent(false);
     template.setToReformat(false);
+    template.setScrollToTemplate(scrollToTemplate);
 
     orderTemplateVariables(template);
 
@@ -311,18 +317,6 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void run() {
-    final Project project = myFile.getProject();
-    VirtualFile file = myFile.getVirtualFile();
-    assert file != null: "Virtual file is null for " + myFile;
-    OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
-
-    assert editor != null : "Editor is null";
-    run(editor, false);
-  }
-
-  @Override
   public void runNonInteractively(final boolean inline) {
     Template template = new TemplateImpl("", "");
     if (inline) {
@@ -336,7 +330,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void run(@NotNull final Editor editor, final boolean inline) {
+  public void run(final @NotNull Editor editor, final boolean inline) {
     final Template template;
     if (inline) {
       template = buildInlineTemplate();
@@ -370,5 +364,11 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     myVariableNamesMap.put(key, varName);
     myVariableExpressions.put(key, dependantVariableName);
     myElements.add(key);
+  }
+
+  @Override
+  public TemplateBuilder setScrollToTemplate(boolean scrollToTemplate) {
+    this.scrollToTemplate = scrollToTemplate;
+    return this;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,9 +29,9 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
 
   private static final @NonNls String CMD_SSL_SERVER = "cmd.ssl.server";
 
-  @NotNull private final AuthenticationService myAuthenticationService;
-  @NotNull private final Url myRepositoryUrl;
-  @NotNull private final String myRealm;
+  private final @NotNull AuthenticationService myAuthenticationService;
+  private final @NotNull Url myRepositoryUrl;
+  private final @NotNull String myRealm;
 
   public CertificateTrustManager(@NotNull AuthenticationService authenticationService, @NotNull Url repositoryUrl) {
     myAuthenticationService = authenticationService;
@@ -86,14 +86,14 @@ public class CertificateTrustManager extends ClientOnlyTrustManager {
       .acceptServerAuthentication(myRepositoryUrl, myRealm, certificate, isStorageEnabled);
 
     switch (result) {
-      case ACCEPTED_PERMANENTLY:
+      case ACCEPTED_PERMANENTLY -> {
         // TODO: --trust-server-cert command line key does not allow caching credentials permanently - so permanent caching should be
         // TODO: separately implemented. Try utilizing "Server Certificates" settings for this.
-      case ACCEPTED_TEMPORARILY:
+      }
+      case ACCEPTED_TEMPORARILY -> {
         // acknowledge() is called in checkServerTrusted()
-        break;
-      case REJECTED:
-        throw new CertificateException("Server SSL certificate rejected");
+      }
+      case REJECTED -> throw new CertificateException("Server SSL certificate rejected");
     }
   }
 

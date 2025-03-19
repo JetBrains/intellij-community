@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.ComponentStoreImpl
@@ -6,12 +6,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.stateStore
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
-import kotlin.coroutines.coroutineContext
 
 internal class AutoSyncManager(private val icsManager: IcsManager) {
   @Volatile
@@ -19,14 +21,14 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
   @Volatile var enabled = true
 
-  suspend fun waitAutoSync() {
+  suspend fun waitAutoSync() = reportRawProgress { reporter ->
     val autoFuture = autoSyncFuture ?: return
     if (autoFuture.isCompleted) {
       autoSyncFuture = null
     }
     else {
       LOG.info("Wait for auto sync future")
-      coroutineContext.progressSink?.text(IcsBundle.message("autosync.progress.text"))
+      reporter.text(IcsBundle.message("autosync.progress.text"))
       autoFuture.join()
     }
   }
@@ -45,26 +47,14 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     if (onAppExit) {
       // called on final confirmed exit - no need to restore enabled state
       enabled = false
-      catchAndLog {
-        runBlockingMaybeCancellable {
-          icsManager.runInAutoCommitDisabledMode {
-            val repositoryManager = icsManager.repositoryManager
-            val hasUpstream = repositoryManager.hasUpstream()
-            if (hasUpstream && !repositoryManager.canCommit()) {
-              LOG.warn("Auto sync skipped: repository is not committable")
-              return@runInAutoCommitDisabledMode
-            }
-
-            // on app exit fetch and push only if there are commits to push
-            // if no upstream - just update cloud schemes
-            if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
-              return@runInAutoCommitDisabledMode
-            }
-
-            // use explicit progress task to sync on app exit to make it clear why app is not exited immediately
-            icsManager.syncManager.sync(SyncType.MERGE, onAppExit = true)
-          }
+      if (EDT.isCurrentThreadEdt()) {
+        @Suppress("DialogTitleCapitalization")
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), IcsBundle.message("task.sync.title")) {
+          doSyncOnAppExit()
         }
+      }
+      runBlockingMaybeCancellable {
+        doSyncOnAppExit()
       }
       return
     }
@@ -73,12 +63,32 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    autoSyncFuture = ApplicationManager.getApplication().coroutineScope.launch {
+    autoSyncFuture = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
       catchAndLog {
         icsManager.runInAutoCommitDisabledMode {
           doSync()
         }
       }
+    }
+  }
+
+  private suspend fun doSyncOnAppExit() {
+    icsManager.runInAutoCommitDisabledMode {
+      val repositoryManager = icsManager.repositoryManager
+      val hasUpstream = repositoryManager.hasUpstream()
+      if (hasUpstream && !repositoryManager.canCommit()) {
+        LOG.warn("Auto sync skipped: repository is not committable")
+        return@runInAutoCommitDisabledMode
+      }
+
+      // on app exit fetch and push only if there are commits to push
+      // if no upstream - just update cloud schemes
+      if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
+        return@runInAutoCommitDisabledMode
+      }
+
+      // use an explicit progress task to sync on app exit to make it clear why the app is not exited immediately
+      icsManager.syncManager.sync(SyncType.MERGE, onAppExit = true)
     }
   }
 
@@ -100,7 +110,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
 
     val updater = repositoryManager.fetch()
     // we merge in EDT non-modal to ensure that new settings will be properly applied
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       catchAndLog {
         val updateResult = updater.merge()
         if (!app.isDisposed &&
@@ -122,9 +132,8 @@ internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit
   try {
     runnable()
   }
-  catch (ignored: ProcessCanceledException) {
-  }
-  catch (ignored: CancellationException) {
+  catch (e: CancellationException) {
+    throw e
   }
   catch (e: Throwable) {
     if (asWarning || e is AuthenticationException || e is NoRemoteRepositoryException) {

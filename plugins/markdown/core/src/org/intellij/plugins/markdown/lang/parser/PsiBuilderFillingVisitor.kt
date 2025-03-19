@@ -7,38 +7,29 @@ import com.intellij.openapi.progress.ProgressManager
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.LeafASTNode
-import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.ast.visitors.RecursiveVisitor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.plugins.markdown.lang.MarkdownElementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.util.textRange
 
 internal class PsiBuilderFillingVisitor(
   private val builder: PsiBuilder,
   startingFromFileLevel: Boolean
 ): RecursiveVisitor() {
   private var seenFirstMarker = startingFromFileLevel
-  private var lastWasTableSeparator = false
 
   private val HEADERS = MarkdownTokenTypeSets.HEADERS.types.map { MarkdownElementType.markdownType(it) }.toSet()
 
-  private val ASTNode.text: String
-    get() = getTextInNode(builder.originalText).toString()
-
-  private fun ASTNode.isTableSeparator(): Boolean {
-    return type == GFMTokenTypes.TABLE_SEPARATOR && text == "|"
-  }
-
-  private fun ensureNoWhitespaceAfter(): Boolean {
-    val token = builder.rawLookup(1) ?: return true
-    return token !in MarkdownTokenTypeSets.WHITE_SPACES
+  private fun ASTNode.isEmptyCell(): Boolean {
+    return type == GFMTokenTypes.CELL && textRange.isEmpty
   }
 
   override fun visitNode(node: ASTNode) {
     ProgressManager.checkCanceled()
     val type = node.type
-    if (lastWasTableSeparator && node.isTableSeparator()) {
+    if (node.isEmptyCell()) {
       // We encountered two separators without cell node between them
       // In that case underlying parser should've emitted a cell node,
       // but it is not capable of producing nodes with empty range.
@@ -47,7 +38,6 @@ internal class PsiBuilderFillingVisitor(
       builder.mark().done(org.intellij.plugins.markdown.lang.MarkdownElementTypes.TABLE_CELL)
       //builder.mark().done(MarkdownTokenTypes.TABLE_SEPARATOR)
     }
-    lastWasTableSeparator = node.isTableSeparator() && ensureNoWhitespaceAfter()
     if (node is LeafASTNode) {
       /* a hack for the link reference definitions:
        * they are being parsed independent of link references and

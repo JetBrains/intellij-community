@@ -29,8 +29,7 @@ public class XPathParser implements PsiParser {
   private static final boolean DBG_MODE = Boolean.getBoolean(XPathParser.class.getName() + ".debug") || ApplicationManager.getApplication().isUnitTestMode();
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     builder.setDebugMode(DBG_MODE);
 
     final PsiBuilder.Marker rootMarker = builder.mark();

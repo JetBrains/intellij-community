@@ -3,93 +3,119 @@ package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.gradle.properties.GradleProperties.EMPTY
-import org.jetbrains.plugins.gradle.properties.base.BasePropertiesFile
-import org.jetbrains.plugins.gradle.properties.models.Property
+import org.jetbrains.plugins.gradle.properties.models.getBooleanProperty
+import org.jetbrains.plugins.gradle.properties.models.getStringProperty
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 const val USER_HOME = "user.home"
+
 const val GRADLE_CACHE_DIR_NAME = ".gradle"
+
 const val GRADLE_PROPERTIES_FILE_NAME = "gradle.properties"
+
 const val GRADLE_JAVA_HOME_PROPERTY = "org.gradle.java.home"
 const val GRADLE_LOGGING_LEVEL_PROPERTY = "org.gradle.logging.level"
+const val GRADLE_PARALLEL_PROPERTY = "org.gradle.parallel"
+const val GRADLE_JVM_OPTIONS_PROPERTY = "org.gradle.jvmargs"
+const val GRADLE_ISOLATED_PROJECTS_PROPERTY = "org.gradle.unsafe.isolated-projects"
 
-object GradlePropertiesFile : BasePropertiesFile<GradleProperties>() {
+object GradlePropertiesFile {
 
-  override val propertiesFileName = GRADLE_PROPERTIES_FILE_NAME
+  @JvmStatic
+  fun getProperties(project: Project, projectPath: Path): GradleProperties {
+    val serviceDirectory = GradleLocalSettings.getInstance(project).gradleUserHome
+    return getProperties(serviceDirectory, projectPath)
+  }
 
-  override fun getProperties(project: Project, externalProjectPath: Path) =
-    findAndMergeProperties(getPossiblePropertiesFiles(project, externalProjectPath))
+  @JvmStatic
+  fun getProperties(serviceDirectory: String?, projectPath: Path): GradleProperties {
+    return loadAndMergeProperties(
+      getGradlePropertiesPathInServiceDirectory(serviceDirectory),
+      getGradlePropertiesPathInUserHome(),
+      getGradlePropertiesPathInProject(projectPath)
+    )
+  }
 
-  fun getProperties(serviceDirectoryStr: String?, externalProjectPath: Path) =
-    findAndMergeProperties(getPossiblePropertiesFiles(serviceDirectoryStr, externalProjectPath))
-
-  private fun findAndMergeProperties(possiblePropertiesFiles: List<Path>): GradleProperties {
-    return possiblePropertiesFiles
-      .asSequence()
-      .map { it.toAbsolutePath().normalize() }
+  private fun loadAndMergeProperties(vararg possiblePropertiesFiles: Path?): GradleProperties {
+    return possiblePropertiesFiles.asSequence()
+      .filterNotNull()
+      .map(Path::toAbsolutePath)
+      .map(Path::normalize)
       .map(::loadGradleProperties)
-      .reduce(::mergeGradleProperties)
+      .filterNotNull()
+      .fold(EMPTY_GRADLE_PROPERTIES, ::mergeGradleProperties)
   }
 
-  private fun getPossiblePropertiesFiles(project: Project, externalProjectPath: Path): List<Path> {
-    return listOfNotNull(
-      getGradleServiceDirectoryPath(project),
-      getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
-    )
-  }
-
-  private fun getPossiblePropertiesFiles(serviceDirectoryStr: String?, externalProjectPath: Path): List<Path> {
-    return listOfNotNull(
-      getGradleServiceDirectoryPath(serviceDirectoryStr),
-      getGradleHomePropertiesPath(),
-      getGradleProjectPropertiesPath(externalProjectPath)
-    )
-  }
-
-  private fun getGradleServiceDirectoryPath(project: Project): Path? {
-    val gradleUserHome = GradleLocalSettings.getInstance(project).gradleUserHome ?: return null
-    return Paths.get(gradleUserHome, propertiesFileName)
-  }
-
-  private fun getGradleServiceDirectoryPath(serviceDirectoryStr: String?) =
-    serviceDirectoryStr?.let { Paths.get(serviceDirectoryStr, propertiesFileName) }
-
-  fun getGradleHomePropertiesPath(): Path? {
-    val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
-    if (gradleUserHome != null) {
-      return Paths.get(gradleUserHome, propertiesFileName)
-    }
-
-    val userHome = Environment.getProperty(USER_HOME)
-    if (userHome != null) {
-      return Paths.get(userHome, GRADLE_CACHE_DIR_NAME, propertiesFileName)
+  private fun getGradlePropertiesPathInServiceDirectory(serviceDirectory: String?): Path? {
+    if (serviceDirectory != null) {
+      return Paths.get(serviceDirectory, GRADLE_PROPERTIES_FILE_NAME)
     }
     return null
   }
 
-  private fun getGradleProjectPropertiesPath(externalProjectPath: Path) =
-    externalProjectPath.resolve(propertiesFileName)
+  fun getGradlePropertiesPathInUserHome(): Path? {
+    val gradleUserHome = Environment.getVariable(GradleConstants.SYSTEM_DIRECTORY_PATH_KEY)
+    if (gradleUserHome != null) {
+      return Paths.get(gradleUserHome, GRADLE_PROPERTIES_FILE_NAME)
+    }
 
-  private fun loadGradleProperties(propertiesPath: Path): GradleProperties {
-    val properties = loadProperties(propertiesPath) ?: return EMPTY
-    val javaHome = properties.getProperty(GRADLE_JAVA_HOME_PROPERTY)
-    val javaHomeProperty = javaHome?.let { Property(it, propertiesPath.toString()) }
-    val logLevel = properties.getProperty(GRADLE_LOGGING_LEVEL_PROPERTY)
-    val logLevelProperty = logLevel?.let { Property(it, propertiesPath.toString()) }
-    return GradlePropertiesImpl(javaHomeProperty, logLevelProperty)
+    val userHome = Environment.getProperty(USER_HOME)
+    if (userHome != null) {
+      return Paths.get(userHome, GRADLE_CACHE_DIR_NAME, GRADLE_PROPERTIES_FILE_NAME)
+    }
+    return null
+  }
+
+  private fun getGradlePropertiesPathInProject(projectPath: Path): Path {
+    return resolveGradleProjectRoot(projectPath)
+      .resolve(GRADLE_PROPERTIES_FILE_NAME)
+  }
+
+  private fun resolveGradleProjectRoot(projectPath: Path): Path {
+    var buildRoot: Path? = projectPath
+    while (buildRoot != null) {
+      for (settingsFileName in GradleConstants.KNOWN_GRADLE_SETTINGS_FILES) {
+        val settingsFile = buildRoot.resolve(settingsFileName)
+        if (settingsFile.exists()) {
+          return buildRoot
+        }
+      }
+      buildRoot = buildRoot.parent
+    }
+    return projectPath
+  }
+
+  private fun loadGradleProperties(propertiesPath: Path): GradleProperties? {
+    val properties = GradleUtil.readGradleProperties(propertiesPath) ?: return null
+    return GradlePropertiesImpl(
+      javaHomeProperty = properties.getStringProperty(GRADLE_JAVA_HOME_PROPERTY, propertiesPath),
+      logLevel = properties.getStringProperty(GRADLE_LOGGING_LEVEL_PROPERTY, propertiesPath),
+      parallel = properties.getBooleanProperty(GRADLE_PARALLEL_PROPERTY, propertiesPath),
+      isolatedProjects = properties.getBooleanProperty(GRADLE_ISOLATED_PROJECTS_PROPERTY, propertiesPath),
+      jvmOptions = properties.getStringProperty(GRADLE_JVM_OPTIONS_PROPERTY, propertiesPath)
+    )
   }
 
   private fun mergeGradleProperties(most: GradleProperties, other: GradleProperties): GradleProperties {
-    return when {
-      most is EMPTY -> other
-      other is EMPTY -> most
-      else -> GradlePropertiesImpl(most.javaHomeProperty ?: other.javaHomeProperty,
-                                   most.gradleLoggingLevel ?: other.gradleLoggingLevel)
-    }
+    return GradlePropertiesImpl(
+      javaHomeProperty = most.javaHomeProperty ?: other.javaHomeProperty,
+      logLevel = most.logLevel ?: other.logLevel,
+      parallel = most.parallel ?: other.parallel,
+      isolatedProjects = most.isolatedProjects ?: other.isolatedProjects,
+      jvmOptions = most.jvmOptions ?: other.jvmOptions
+    )
   }
+
+  private val EMPTY_GRADLE_PROPERTIES = GradlePropertiesImpl(
+    javaHomeProperty = null,
+    logLevel = null,
+    parallel = null,
+    isolatedProjects = null,
+    jvmOptions = null,
+  )
 }

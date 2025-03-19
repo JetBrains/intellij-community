@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -95,11 +95,11 @@ public final class SelectBranchPopup {
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<Object> {
-    @NotNull private final Project myProject;
-    @NotNull private final VirtualFile myVcsRoot;
-    @NotNull private final SvnBranchConfigurationNew myConfiguration;
-    @NotNull private final BranchSelectedCallback myCallback;
-    @Nullable private final Component myComponent;
+    private final @NotNull Project myProject;
+    private final @NotNull VirtualFile myVcsRoot;
+    private final @NotNull SvnBranchConfigurationNew myConfiguration;
+    private final @NotNull BranchSelectedCallback myCallback;
+    private final @Nullable Component myComponent;
 
     BranchBasesPopupStep(@NotNull Project project,
                          @NotNull VirtualFile vcsRoot,
@@ -121,9 +121,8 @@ public final class SelectBranchPopup {
       return getConfigureMessage().equals(value) ? new ListSeparator("") : null;
     }
 
-    @NotNull
     @Override
-    public String getTextFor(@NotNull Object value) {
+    public @NotNull String getTextFor(@NotNull Object value) {
       if (value instanceof Url url) {
         String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : ELLIPSIS;
 
@@ -133,7 +132,7 @@ public final class SelectBranchPopup {
     }
 
     @Override
-    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(Object selectedValue, boolean finalChoice) {
       if (getConfigureMessage().equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }

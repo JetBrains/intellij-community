@@ -7,7 +7,9 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 @SuppressWarnings("ComponentNotRegistered")
 public final class MinimizeViewAction extends BaseViewAction {
   @Override

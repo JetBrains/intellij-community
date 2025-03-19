@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.execution` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "execution_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "execution",
+  module_name = "intellij.platform.execution",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util:util-ui",
+    "//platform/util/jdom",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/util/concurrency",
+    "//platform/projectModel-api:projectModel",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//platform/analysis-api:analysis",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  runtime_deps = [":execution_resources"]
+)
+### auto-generated section `build intellij.platform.execution` end

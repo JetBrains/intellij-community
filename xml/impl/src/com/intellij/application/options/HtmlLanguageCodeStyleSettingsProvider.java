@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.lang.Language;
@@ -8,7 +8,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +16,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return HTMLLanguage.INSTANCE;
   }
 
@@ -28,12 +27,11 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   public static @ConfigurableName String getDisplayName() {
-    return XmlBundle.message("options.html.display.name");
+    return XmlCoreBundle.message("options.html.display.name");
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new HtmlCodeStyleSettings(settings);
   }
 

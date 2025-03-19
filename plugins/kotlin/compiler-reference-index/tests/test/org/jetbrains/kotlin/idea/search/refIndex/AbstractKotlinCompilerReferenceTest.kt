@@ -3,8 +3,9 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.compiler.impl.CompileDriver
 import com.intellij.testFramework.assertEqualsToFile
-import com.intellij.util.io.readText
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import kotlin.io.path.*
 
@@ -18,7 +19,9 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json").takeIf { isFir && it.exists() }
+        val isFir = pluginMode == KotlinPluginMode.K2
+        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json")
+            .takeIf { isFir && it.exists() }
         val pathToCheck = firConfigurationPath ?: configurationPath
         val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 
@@ -30,7 +33,12 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         runCatching {
             val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
             myFixture.configureByFiles(*allFiles.toTypedArray())
-            rebuildProject()
+            project.putUserData(CompileDriver.TIMEOUT, 100_000)
+            try {
+                rebuildProject()
+            } finally {
+                project.putUserData(CompileDriver.TIMEOUT, null)
+            }
 
             val actualUsages = getReferentFilesForElementUnderCaret()
             assertEqualsToFile(

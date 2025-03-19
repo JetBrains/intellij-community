@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Pair;
@@ -6,14 +6,17 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FlatteningIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 public abstract class ComparingClassifier<T> extends Classifier<T> {
   private final boolean myNegated;
 
@@ -22,12 +25,10 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     myNegated = negated;
   }
 
-  @Nullable
-  public abstract Comparable getWeight(T t, ProcessingContext context);
+  public abstract @Nullable Comparable getWeight(T t, ProcessingContext context);
 
-  @NotNull
   @Override
-  public Iterable<T> classify(@NotNull final Iterable<? extends T> source, @NotNull final ProcessingContext context) {
+  public @NotNull Iterable<T> classify(final @NotNull Iterable<? extends T> source, final @NotNull ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<>();
     for (T t : source) {
@@ -60,9 +61,8 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
     };
   }
 
-  @NotNull
   @Override
-  public List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, @NotNull final ProcessingContext context) {
+  public @Unmodifiable @NotNull List<Pair<T, Object>> getSortingWeights(@NotNull Iterable<? extends T> items, final @NotNull ProcessingContext context) {
     return ContainerUtil.map(items, t -> new Pair<>(t, getWeight(t, context)));
   }
 }

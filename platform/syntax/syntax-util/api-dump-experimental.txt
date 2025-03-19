@@ -1,0 +1,97 @@
+*c:com.intellij.platform.syntax.util.lexer.DelegateLexer
+- com.intellij.platform.syntax.lexer.Lexer
+- <init>(com.intellij.platform.syntax.lexer.Lexer):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- f:getDelegate():com.intellij.platform.syntax.lexer.Lexer
+- getState():I
+- getTokenEnd():I
+- getTokenSequence():java.lang.CharSequence
+- getTokenStart():I
+- getTokenText():java.lang.String
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
+- start(java.lang.CharSequence):V
+- start(java.lang.CharSequence,I,I):V
+- start(java.lang.CharSequence,I,I,I):V
+*c:com.intellij.platform.syntax.util.lexer.FlexAdapter
+- com.intellij.platform.syntax.util.lexer.LexerBase
+- <init>(com.intellij.platform.syntax.util.lexer.FlexLexer):V
+- advance():V
+- getBufferEnd():I
+- getBufferSequence():java.lang.CharSequence
+- f:getFlex():com.intellij.platform.syntax.util.lexer.FlexLexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- pf:locateToken():V
+- start(java.lang.CharSequence,I,I,I):V
+*:com.intellij.platform.syntax.util.lexer.FlexLexer
+- a:advance():com.intellij.platform.syntax.SyntaxElementType
+- a:getTokenEnd():I
+- a:getTokenStart():I
+- a:reset(java.lang.CharSequence,I,I,I):V
+- a:yybegin(I):V
+- a:yystate():I
+*a:com.intellij.platform.syntax.util.lexer.LexerBase
+- com.intellij.platform.syntax.lexer.Lexer
+- <init>():V
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
+- start(java.lang.CharSequence):V
+- start(java.lang.CharSequence,I,I):V
+*c:com.intellij.platform.syntax.util.lexer.MergingLexerAdapter
+- com.intellij.platform.syntax.util.lexer.MergingLexerAdapterBase
+- <init>(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementTypeSet):V
+- merge(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.SyntaxElementType
+*a:com.intellij.platform.syntax.util.lexer.MergingLexerAdapterBase
+- com.intellij.platform.syntax.util.lexer.DelegateLexer
+- <init>(com.intellij.platform.syntax.lexer.Lexer):V
+- advance():V
+- getCurrentPosition():com.intellij.platform.syntax.lexer.LexerPosition
+- f:getOriginal():com.intellij.platform.syntax.lexer.Lexer
+- getState():I
+- getTokenEnd():I
+- getTokenStart():I
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- a:merge(com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.lexer.Lexer):com.intellij.platform.syntax.SyntaxElementType
+- restore(com.intellij.platform.syntax.lexer.LexerPosition):V
+- start(java.lang.CharSequence,I,I,I):V
+*f:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
+- sf:INSTANCE:com.intellij.platform.syntax.util.parser.SyntaxBuilderUtil
+- f:advance(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):V
+- f:drop(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker[]):V
+- f:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType):Z
+- f:expect(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementTypeSet):Z
+- sf:hasProperBraceBalance(java.lang.CharSequence,com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.CancellationProvider):Z
+- f:parseBlockLazy(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType,com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- f:rawTokenText(com.intellij.platform.syntax.parser.SyntaxTreeBuilder,I):java.lang.CharSequence
+*c:com.intellij.platform.syntax.util.parser.SyntaxTreeBuilderAdapter
+- com.intellij.platform.syntax.parser.SyntaxTreeBuilder
+- <init>(com.intellij.platform.syntax.parser.SyntaxTreeBuilder):V
+- advanceLexer():V
+- enforceCommentTokens(com.intellij.platform.syntax.SyntaxElementTypeSet):V
+- eof():Z
+- error(java.lang.String):V
+- getCurrentOffset():I
+- getLastDoneMarker():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- getProductions():java.util.List
+- getText():java.lang.CharSequence
+- getTokenText():java.lang.String
+- getTokenType():com.intellij.platform.syntax.SyntaxElementType
+- getTokens():com.intellij.platform.syntax.lexer.TokenList
+- hasErrorsAfter(com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker):Z
+- isWhitespaceOrComment(com.intellij.platform.syntax.SyntaxElementType):Z
+- lookAhead(I):com.intellij.platform.syntax.SyntaxElementType
+- mark():com.intellij.platform.syntax.parser.SyntaxTreeBuilder$Marker
+- rawAdvanceLexer(I):V
+- rawLookup(I):com.intellij.platform.syntax.SyntaxElementType
+- rawTokenIndex():I
+- rawTokenTypeStart(I):I
+- remapCurrentToken(com.intellij.platform.syntax.SyntaxElementType):V
+- setDebugMode(Z):V
+- setTokenTypeRemapper(com.intellij.platform.syntax.parser.SyntaxElementTypeRemapper):V
+- setWhitespaceSkippedCallback(com.intellij.platform.syntax.parser.WhitespaceSkippedCallback):V

@@ -4,7 +4,6 @@ package com.intellij.xml.tools;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +73,7 @@ final class GenerateDTDAction extends BaseCodeInsightAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       Presentation presentation = event.getPresentation();
       presentation.setVisible(presentation.isEnabled());
     }

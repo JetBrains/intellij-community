@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,13 +17,14 @@ import java.util.*;
 /**
  * @author Kirill Likhodedov
  */
+@ApiStatus.Internal
 public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
   private final @NotNull Map<String, Map<String, Color>> myPath2Palette;
   private final @NotNull List<FilePath> myPaths;
 
-  public VcsLogColorManagerImpl(
+  VcsLogColorManagerImpl(
     @NotNull Collection<? extends FilePath> paths,
     @NotNull List<Color> defaultPalette,
     AdditionalColorSpace... additionalColorSpaces
@@ -31,11 +33,11 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     myPath2Palette = new HashMap<>();
 
     defaultPalette = defaultPalette.isEmpty() ? List.of(getDefaultRootColor()) : new ArrayList<>(defaultPalette);
-    myPath2Palette.put(VcsLogColorManager.DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
+    myPath2Palette.put(DEFAULT_COLOR_MODE, generateFromPalette(defaultPalette));
 
     for (AdditionalColorSpace colorSpace : additionalColorSpaces) {
       // do not allow to override default palette
-      if (colorSpace.colorMode.equals(VcsLogColorManager.DEFAULT_COLOR_MODE)) continue;
+      if (colorSpace.colorMode.equals(DEFAULT_COLOR_MODE)) continue;
 
       // allow additional palettes only the same size as the default
       if (colorSpace.palette.size() != defaultPalette.size()) continue;
@@ -103,7 +105,7 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
     return myPaths;
   }
 
-  static class AdditionalColorSpace {
+  public static class AdditionalColorSpace {
     private final String colorMode;
     private final List<Color> palette;
 

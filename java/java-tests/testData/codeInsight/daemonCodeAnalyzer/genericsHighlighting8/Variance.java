@@ -33,12 +33,12 @@ class VarianceTesting {
         <error descr="Incompatible types. Found: 'VarianceTesting', required: 'capture<? extends VarianceTesting>'">x.method()[0] = new VarianceTesting()</error>;
         <error descr="Incompatible types. Found: 'VarianceTesting[]', required: 'capture<? extends VarianceTesting>[]'">x.arrayField = new VarianceTesting[10]</error>;
         l1.addAll<error descr="'addAll(java.util.Collection<? extends capture<? extends VarianceTesting>>)' in 'java.util.List' cannot be applied to '(java.util.ArrayList<VarianceTesting>)'">(new ArrayList<VarianceTesting>())</error>;
-        <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">List<? extends VarianceTesting> l2 = new ArrayList<String>();</error>
+        List<? extends VarianceTesting> l2 = new <error descr="Incompatible types. Found: 'java.util.ArrayList<java.lang.String>', required: 'java.util.List<? extends VarianceTesting>'">ArrayList<String></error>();
         List<? extends VarianceTesting> l3 = l2;
         VarianceTesting t = l1.get(0);
         l.add(new VarianceTesting());
         l.add(null);
-        <error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">VarianceTesting t1 = l.get(0);</error>
+        VarianceTesting t1 = l.<error descr="Incompatible types. Found: 'capture<? super VarianceTesting>', required: 'VarianceTesting'">get</error>(0);
         X<? extends VarianceTesting> x1 = null;
         x1.putAll(new ArrayList<VarianceTesting>());
         List<?> unknownlist = l;
@@ -64,7 +64,7 @@ class SuperTester <U> {
 
 class SCR40202 {
     void foo(Map<?, String> map) {
-        for (<error descr="Incompatible types. Found: 'java.util.Iterator<java.util.Map.Entry<capture<?>,java.lang.String>>', required: 'java.util.Iterator<java.util.Map.Entry<?,java.lang.String>>'">Iterator<Map.Entry<?, String>> it = map.entrySet().iterator();</error> it.hasNext();) {
+        for (Iterator<Map.Entry<?, String>> it = map.entrySet().<error descr="Incompatible types. Found: 'java.util.Iterator<java.util.Map.Entry<capture<?>,java.lang.String>>', required: 'java.util.Iterator<java.util.Map.Entry<?,java.lang.String>>'">iterator</error>(); it.hasNext();) {
 
         }
     }

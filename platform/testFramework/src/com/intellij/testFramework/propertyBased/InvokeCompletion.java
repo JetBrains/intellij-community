@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -47,6 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class InvokeCompletion extends ActionOnFile {
   private static final Logger LOG = Logger.getInstance(InvokeCompletion.class);
@@ -159,6 +163,7 @@ public class InvokeCompletion extends ActionOnFile {
       EditorActionManager.getInstance();
       TypedAction.getInstance().actionPerformed(editor, completionChar, EditorUtil.getEditorDataContext(lookup.getTopLevelEditor()));
     }
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
 
   private boolean checkHighlightingErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
@@ -197,7 +202,10 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.isStrikeout());
       var prev = presentations.put(info, item);
       if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
-        TestCase.fail("Duplicate suggestions: " + p);
+        Function<LookupElement, String> itemInfoFn = it ->
+          it + ";" + Stream.iterate(it, Objects::nonNull, i -> i instanceof LookupElementDecorator<?> dec ? dec.getDelegate() : null)
+            .map(i -> i.getClass().getName()).collect(Collectors.joining("->"));
+        TestCase.fail("Duplicate suggestions: " + p + "(item1: " + itemInfoFn.apply(prev) + "; item2:" + itemInfoFn.apply(item) + ")");
       }
     }
   }

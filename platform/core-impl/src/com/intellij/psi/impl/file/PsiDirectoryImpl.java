@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ASTNode;
@@ -23,18 +25,17 @@ import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.navigation.NavigationRequest;
-import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.PsiElementBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.search.CodeInsightContextAwareSearchScopes;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.PlatformIcons;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -42,9 +43,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
@@ -113,7 +114,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     }
     VirtualFile child = parentFile.findChild(name);
     if (child != null && !child.equals(myFile)) {
-      throw new IncorrectOperationException(CoreBundle.message("file.already.exists.error", child.getPresentableUrl()));
+      throw new IncorrectOperationException(CoreBundle.message("dir.already.exists.error", child.getPresentableUrl()));
     }
   }
 
@@ -143,13 +144,39 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public PsiFile @NotNull [] getFiles() {
+    return getFilesImpl(null);
+  }
+
+  @Override
+  public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
+    return getFilesImpl(scope);
+  }
+
+  private PsiFile @NotNull [] getFilesImpl(@Nullable GlobalSearchScope scope) {
     if (!myFile.isValid()) throw new InvalidVirtualFileAccessException(myFile);
     VirtualFile[] files = myFile.getChildren();
+    if (files.length == 0) return PsiFile.EMPTY_ARRAY;
+
+    boolean sharedSourceSupportEnabled = CodeInsightContexts.isSharedSourceSupportEnabled(getProject());
+
     ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (VirtualFile file : files) {
-      PsiFile psiFile = myManager.findFile(file);
-      if (psiFile != null) {
-        psiFiles.add(psiFile);
+      // The scope allows us to pre-filter the virtual files and avoid creating unnecessary PSI files.
+
+      if (sharedSourceSupportEnabled && scope != null) {
+        Collection<CodeInsightContext> contexts = CodeInsightContextAwareSearchScopes.getCorrespondingContexts(scope, file);
+        for (CodeInsightContext context : contexts) {
+          PsiFile psiFile = myManager.findFile(file, context);
+          if (psiFile != null) {
+            psiFiles.add(psiFile);
+          }
+        }
+      }
+      else if (scope == null || scope.contains(file)) {
+        PsiFile psiFile = myManager.findFile(file);
+        if (psiFile != null) {
+          psiFiles.add(psiFile);
+        }
       }
     }
     return PsiUtilCore.toPsiFileArray(psiFiles);
@@ -169,7 +196,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     VirtualFile childVFile = myFile.findChild(name);
     if (childVFile == null) return null;
     if (!childVFile.isValid()) {
-      LOG.error("Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid());
+      LOG.error(
+        "Invalid file: " + childVFile + " in dir " + myFile + ", dir.valid=" + myFile.isValid(),
+        new InvalidVirtualFileAccessException(childVFile)
+      );
       return null;
     }
     return myManager.findFile(childVFile);
@@ -354,7 +384,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       if (UPDATE_ADDED_FILE_KEY.get(this, true)) {
         DumbService.getInstance(getProject()).completeJustSubmittedTasks();
         PsiFile copyPsi = findCopy(copyVFile, vFile);
-        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi));
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(copyPsi), Collections.singletonList(originalFile));
         return copyPsi;
       }
       return findCopy(copyVFile, vFile);
@@ -433,7 +463,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
         PsiFile newFile = myManager.findFile(newVFile);
         if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
-        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile));
+        UpdateAddedFileProcessor.updateAddedFiles(Collections.singletonList(newFile), Collections.singletonList(originalFile));
         return newFile;
       }
       catch (IOException e) {
@@ -521,17 +551,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public @Nullable NavigationRequest navigationRequest() {
-    return NavigationRequests.getInstance().directoryNavigationRequest(this);
+    return NavigationRequest.directoryNavigationRequest(this);
   }
 
   @Override
   public void navigate(boolean requestFocus) {
     PsiNavigationSupport.getInstance().navigateToDirectory(this, requestFocus);
-  }
-
-  @Override
-  protected Icon getElementIcon(int flags) {
-    return IconManager.getInstance().tooltipOnlyIfComposite(IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder));
   }
 
   @Override

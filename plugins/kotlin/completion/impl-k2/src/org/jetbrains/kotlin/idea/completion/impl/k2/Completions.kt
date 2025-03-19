@@ -1,153 +1,216 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
-package org.jetbrains.kotlin.idea.completion
-
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.calls.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.context.*
-import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
-import org.jetbrains.kotlin.idea.completion.contributors.complete
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.findValueArgument
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal object Completions {
-    fun KtAnalysisSession.complete(
-        factory: FirCompletionContributorFactory,
-        positionContext: FirRawPositionCompletionContext,
-        weighingContext: WeighingContext
-    ) {
+
+    fun complete(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext,
+        sink: LookupElementSink,
+    ): Unit = analyze(parameters.completionFile) {
+        val weighingContext = when (positionContext) {
+            is KotlinNameReferencePositionContext -> WeighingContext.create(parameters, positionContext)
+            else -> WeighingContext.create(parameters, elementInCompletionFile = positionContext.position)
+        }
+
         when (positionContext) {
-            is FirExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext)
-            } else {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.namedArgumentContributor(0), positionContext, weighingContext)
-                complete(factory.callableContributor(0), positionContext, weighingContext)
-                complete(factory.classifierContributor(0), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(1), positionContext, weighingContext)
+            is KotlinExpressionNameReferencePositionContext -> {
+                FirTrailingFunctionParameterNameCompletionContributorBase.All(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                if (positionContext.allowsOnlyNamedArguments()) {
+                    FirNamedArgumentCompletionContributor(parameters, sink)
+                        .complete(positionContext, weighingContext)
+                } else {
+                    FirKeywordCompletionContributor(parameters, sink)
+                        .complete(positionContext, weighingContext)
+                    FirNamedArgumentCompletionContributor(parameters, sink)
+                        .complete(positionContext, weighingContext)
+                    FirCallableCompletionContributor(parameters, sink, withTrailingLambda = true)
+                        .complete(positionContext, weighingContext)
+                    FirClassifierCompletionContributor(parameters, sink)
+                        .complete(positionContext, weighingContext)
+                    FirPackageCompletionContributor(parameters, sink, priority = 1)
+                        .complete(positionContext, weighingContext)
+                }
             }
 
-            is FirSuperReceiverNameReferencePositionContext -> {
-                complete(factory.superMemberContributor(0), positionContext, weighingContext)
+            is KotlinSuperReceiverNameReferencePositionContext -> {
+                FirSuperMemberCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirTypeNameReferencePositionContext -> {
-                complete(factory.classifierContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(1), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext)
+            is KotlinTypeNameReferencePositionContext -> {
+                val allowClassifiersAndPackagesForPossibleExtensionCallables =
+                    !positionContext.hasNoExplicitReceiver()
+                            || parameters.invocationCount > 0
+                            || sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() != true
+
+                if (allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    FirClassifierCompletionContributor(parameters, sink)
+                        .complete(positionContext, weighingContext)
+                }
+                FirKeywordCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                if (allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    FirPackageCompletionContributor(parameters, sink, priority = 2)
+                        .complete(positionContext, weighingContext)
+                }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext)
-                complete(factory.declarationFromOverridableMembersContributor(1), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+                FirDeclarationFromUnresolvedNameContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirDeclarationFromOverridableMembersContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                K2ActualDeclarationContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirAnnotationTypeNameReferencePositionContext -> {
-                complete(factory.annotationsContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(1), positionContext, weighingContext)
-                complete(factory.packageCompletionContributor(2), positionContext, weighingContext)
+            is KotlinAnnotationTypeNameReferencePositionContext -> {
+                FirAnnotationCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirKeywordCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirPackageCompletionContributor(parameters, sink, priority = 2)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirSuperTypeCallNameReferencePositionContext -> {
-                complete(factory.superEntryContributor(0), positionContext, weighingContext)
+            is KotlinSuperTypeCallNameReferencePositionContext -> {
+                FirSuperEntryContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirImportDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext)
-                complete(factory.importDirectivePackageMembersContributor(0), positionContext, weighingContext)
+            is KotlinImportDirectivePositionContext -> {
+                FirPackageCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirImportDirectivePackageMembersCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirPackageDirectivePositionContext -> {
-                complete(factory.packageCompletionContributor(0), positionContext, weighingContext)
+            is KotlinPackageDirectivePositionContext -> {
+                FirPackageCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirTypeConstraintNameInWhereClausePositionContext -> {
-                complete(factory.typeParameterConstraintNameInWhereClauseContributor(0), positionContext, weighingContext)
+            is KotlinTypeConstraintNameInWhereClausePositionContext -> {
+                FirTypeParameterConstraintNameInWhereClauseCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirMemberDeclarationExpectedPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
+            is KotlinMemberDeclarationExpectedPositionContext -> {
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirUnknownPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
+            is KotlinLabelReferencePositionContext -> {
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirClassifierNamePositionContext -> {
-                complete(factory.classifierNameContributor(0), positionContext, weighingContext)
-                complete(factory.declarationFromUnresolvedNameContributor(1), positionContext, weighingContext)
+            is KotlinUnknownPositionContext -> {
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirWithSubjectEntryPositionContext -> {
-                complete(factory.whenWithSubjectConditionContributor(0), positionContext, weighingContext)
+            is KotlinClassifierNamePositionContext -> {
+                FirSameAsFileClassifierNameCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirDeclarationFromUnresolvedNameContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirCallableReferencePositionContext -> {
-                complete(factory.classReferenceContributor(0), positionContext, weighingContext)
-                complete(factory.callableReferenceContributor(1), positionContext, weighingContext)
-                complete(factory.classifierReferenceContributor(1), positionContext, weighingContext)
+            is KotlinWithSubjectEntryPositionContext -> {
+                FirWhenWithSubjectConditionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirClassifierCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirCallableCompletionContributor(parameters, sink, priority = 2)
+                    .complete(positionContext, weighingContext)
+                FirPackageCompletionContributor(parameters, sink, priority = 3)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirInfixCallPositionContext -> {
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.infixCallableContributor(0), positionContext, weighingContext)
+            is KotlinCallableReferencePositionContext -> {
+                FirClassReferenceCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirCallableReferenceCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
+                FirClassifierReferenceCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirIncorrectPositionContext -> {
+            is KotlinInfixCallPositionContext -> {
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirInfixCallableCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+            }
+
+            is KotlinOperatorCallPositionContext,
+            is KotlinIncorrectPositionContext -> {
                 // do nothing, completion is not supposed to be called here
             }
 
-            is FirSimpleParameterPositionContext -> {
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext) // for parameter declaration
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+            is KotlinSimpleParameterPositionContext -> {
+                FirTrailingFunctionParameterNameCompletionContributorBase.Missing(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                // for parameter declaration
+                FirDeclarationFromUnresolvedNameContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
             }
 
-            is FirPrimaryConstructorParameterPositionContext -> {
-                complete(factory.declarationFromUnresolvedNameContributor(0), positionContext, weighingContext) // for parameter declaration
-                complete(factory.declarationFromOverridableMembersContributor(0), positionContext, weighingContext)
-                complete(factory.keywordContributor(0), positionContext, weighingContext)
-                complete(factory.variableOrParameterNameWithTypeContributor(0), positionContext, weighingContext)
+            is KotlinPrimaryConstructorParameterPositionContext -> {
+                // for parameter declaration
+                FirDeclarationFromUnresolvedNameContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirDeclarationFromOverridableMembersContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirKeywordCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+            }
+
+            is KDocParameterNamePositionContext -> {
+                FirKDocParameterNameContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+            }
+
+            is KDocLinkNamePositionContext -> {
+                FirKDocCallableCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirClassifierCompletionContributor(parameters, sink)
+                    .complete(positionContext, weighingContext)
+                FirPackageCompletionContributor(parameters, sink, priority = 1)
+                    .complete(positionContext, weighingContext)
             }
         }
-    }
-
-    fun KtAnalysisSession.createWeighingContext(
-        basicContext: FirBasicCompletionContext,
-        positionContext: FirRawPositionCompletionContext
-    ): WeighingContext = when (positionContext) {
-        is FirSuperReceiverNameReferencePositionContext -> {
-            val expectedType = positionContext.nameExpression.getExpectedType()
-            val receiver = positionContext.superExpression
-
-            // Implicit receivers do not match for this position completion context.
-            WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers = emptyList(), basicContext.fakeKtFile)
-        }
-
-        is FirExpressionNameReferencePositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-        is FirInfixCallPositionContext -> createWeighingContextForNameReference(basicContext, positionContext)
-
-        else -> WeighingContext.createEmptyWeighingContext(basicContext.fakeKtFile)
-    }
-
-    private fun KtAnalysisSession.createWeighingContextForNameReference(
-        basicContext: FirBasicCompletionContext,
-        positionContext: FirNameReferencePositionContext
-    ): WeighingContext {
-        val expectedType = positionContext.nameExpression.getExpectedType()
-        val receiver = positionContext.explicitReceiver
-        val implicitReceivers = basicContext.originalKtFile.getScopeContextForPosition(positionContext.nameExpression).implicitReceivers
-
-        return WeighingContext.createWeighingContext(receiver, expectedType, implicitReceivers, basicContext.fakeKtFile)
     }
 }
 
-context(KtAnalysisSession)
-private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
+context(KaSession)
+private fun KotlinExpressionNameReferencePositionContext.allowsOnlyNamedArguments(): Boolean {
     if (explicitReceiver != null) return false
 
     val valueArgument = findValueArgument(nameExpression) ?: return false
@@ -156,7 +219,15 @@ private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments()
 
     if (valueArgument.getArgumentName() != null) return false
 
-    val call = callElement.resolveCall().singleCallOrNull<KtFunctionCall<*>>() ?: return false
+    val call = callElement.resolveToCall()?.singleCallOrNull<KaFunctionCall<*>>() ?: return false
+
+    if (CallParameterInfoProvider.isJavaArgumentWithNonDefaultName(
+            call.partiallyAppliedSymbol.signature,
+            call.argumentMapping,
+            valueArgument
+        )
+    ) return true
+
     val firstArgumentInNamedMode = CallParameterInfoProvider.firstArgumentInNamedMode(
         callElement,
         call.partiallyAppliedSymbol.signature,
@@ -165,4 +236,12 @@ private fun FirExpressionNameReferencePositionContext.allowsOnlyNamedArguments()
     ) ?: return false
 
     return with(valueArgumentList.arguments) { indexOf(valueArgument) >= indexOf(firstArgumentInNamedMode) }
+}
+
+private fun KotlinTypeNameReferencePositionContext.hasNoExplicitReceiver(): Boolean {
+    val declaration = typeReference?.parent
+        ?: return false
+
+    return (declaration is KtNamedFunction || declaration is KtProperty)
+            && explicitReceiver == null
 }

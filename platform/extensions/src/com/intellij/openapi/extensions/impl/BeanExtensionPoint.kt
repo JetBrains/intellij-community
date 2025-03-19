@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
 
 internal class BeanExtensionPoint<T : Any>(
   name: String,
@@ -12,18 +11,33 @@ internal class BeanExtensionPoint<T : Any>(
   pluginDescriptor: PluginDescriptor,
   componentManager: ComponentManager,
   dynamic: Boolean,
-) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null, dynamic), ImplementationClassResolver {
-
-  override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter) = extensionClass
+) : ExtensionPointImpl<T>(name = name,
+                          className = className,
+                          extensionPointPluginDescriptor = pluginDescriptor,
+                          componentManager = componentManager,
+                          extensionClass = null,
+                          isDynamic = dynamic), ImplementationClassResolver {
+  override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter): Class<T> {
+    return getExtensionClass()
+  }
 
   override fun createAdapter(descriptor: ExtensionDescriptor,
                              pluginDescriptor: PluginDescriptor,
                              componentManager: ComponentManager): ExtensionComponentAdapter {
-    return if (componentManager.isInjectionForExtensionSupported) {
-      SimpleConstructorInjectionAdapter(className, pluginDescriptor, descriptor, this)
+    if (componentManager.isInjectionForExtensionSupported) {
+      return SimpleConstructorInjectionAdapter(implementationClassName = className,
+                                               pluginDescriptor = pluginDescriptor,
+                                               descriptor = descriptor,
+                                               extensionElement = descriptor.element,
+                                               implementationClassResolver = this)
     }
     else {
-      XmlExtensionAdapter(className, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this)
+      return XmlExtensionAdapter(implementationClassName = className,
+                                 pluginDescriptor = pluginDescriptor,
+                                 orderId = descriptor.orderId,
+                                 order = descriptor.order,
+                                 extensionElement = descriptor.element,
+                                 implementationClassResolver = this)
     }
   }
 
@@ -31,6 +45,9 @@ internal class BeanExtensionPoint<T : Any>(
                                     pluginDescriptor: PluginDescriptor,
                                     priorityListenerCallbacks: MutableList<in Runnable>,
                                     listenerCallbacks: MutableList<in Runnable>) {
-    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
+    unregisterExtensions(stopAfterFirstMatch = false,
+                         priorityListenerCallbacks = priorityListenerCallbacks,
+                         listenerCallbacks = listenerCallbacks,
+                         extensionToKeepFilter = { it.pluginDescriptor !== pluginDescriptor })
   }
 }

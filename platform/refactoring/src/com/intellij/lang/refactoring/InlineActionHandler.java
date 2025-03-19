@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.refactoring;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * Natural loading order can be changed by providing attribute "order" during registration in plugin.xml.
  */
 public abstract class InlineActionHandler {
+  @ApiStatus.Internal
   public static final ExtensionPointName<InlineActionHandler> EP_NAME = ExtensionPointName.create("com.intellij.inlineActionHandler");
 
   /**
@@ -70,9 +72,7 @@ public abstract class InlineActionHandler {
     */
   public abstract void inlineElement(Project project, Editor editor, PsiElement element);
 
-  @Nullable
-  @ActionText
-  public String getActionName(PsiElement element) {
+  public @Nullable @ActionText String getActionName(PsiElement element) {
     return null;
   }
 }

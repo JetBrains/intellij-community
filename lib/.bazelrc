@@ -1,0 +1,50 @@
+common --experimental_convenience_symlinks=ignore
+# https://bazel.build/docs/bazel-and-java#hermetic-testing
+# The code is compiled for, executed, and tested on this JVM.
+common --java_language_version=17
+common --java_runtime_version=remotejdk_21
+
+# see https://bazel.build/external/lockfile
+# use `bazel mod deps --lockfile_mode=refresh` to update lock file
+common --lockfile_mode=error
+
+# https://bazel.build/docs/bazel-and-java#config-build-tools-java
+# A second pair of JDK and JVM used to build and execute tools, which are used in the build process, but are not in the build results.
+# That JDK and JVM are controlled using --tool_java_language_version and --tool_java_runtime_version
+common --tool_java_language_version=21
+# Java runtime the tools should use
+common --tool_java_runtime_version=remotejdk_21
+
+# make sure you don't need to open file to read commpilation errors
+common --experimental_ui_max_stdouterr_bytes=-1
+
+# IDEA do not handle symlinks efficiently (freeze due to modal non-cancellable dialog) and no way to exclude directories by pattern bazel-
+common --symlink_prefix=out/bazel-
+
+# Disk Cache
+
+build --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
+
+common --enable_platform_specific_config
+build:macos --disk_cache=~/Library/Caches/JetBrains/bazel-ij
+build:linux --disk_cache=~/.bazel-ij
+build:windows --disk_cache=~/.bazel-ij
+
+# Remote Caching (https://bazel.build/remote/caching)
+
+# https://github.com/bazelbuild/bazel/issues/13378#issuecomment-869301764
+# https://github.com/buildfarm/buildfarm/issues/756#issuecomment-847890721
+# IJ Infrastruture team will setup Google OAuth instead of mTLS
+# basic auth cannot be specified in URL for gRPC, so, please create ~/.netrc file (https://jb.gg/yp4kxq)
+
+build --bes_results_url=https://ij-build.labs.jb.gg/invocation/
+build --bes_backend=grpcs://ij-build-grpc.labs.jb.gg
+build --remote_cache=grpcs://ij-build-grpc.labs.jb.gg
+
+# https://www.buildbuddy.io/blog/debugging-slow-bazel-builds/
+# check if `--remote_download_outputs=minimal` makes sense for CI or some local builds
+build --nolegacy_important_outputs --remote_build_event_upload=minimal
+# on CI, set remote_cache_async to false! set to false for local runs also, to investigate https://github.com/bazelbuild/bazel/issues/19273
+build --experimental_remote_cache_async=false --remote_cache_compression
+
+# build --remote_timeout=3600

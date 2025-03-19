@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.openapi.project.Project
@@ -5,20 +6,26 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachHostProvider
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 
+@ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
 data class AttachHostAndProvider(
-  val host: XAttachHost,
+  override val host: XAttachHost,
   val provider: XAttachHostProvider<out XAttachHost>,
   val project: Project,
-  val dataHolder: UserDataHolder) {
+  val dataHolder: UserDataHolder): AttachHostItem {
+
+  override fun getId(): String {
+    return getPresentation()
+  }
 
   @Nls
-  fun getPresentation(): String {
-    val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
+  override fun getPresentation(): String {
+    val presentationGroup = provider.getPresentationGroup() as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }
 
@@ -27,8 +34,8 @@ data class AttachHostAndProvider(
     return getPresentation()
   }
 
-  fun getIcon(): Icon {
-    val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
+  override fun getIcon(): Icon {
+    val presentationGroup = provider.getPresentationGroup() as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemIcon(project, host, dataHolder)
   }
 

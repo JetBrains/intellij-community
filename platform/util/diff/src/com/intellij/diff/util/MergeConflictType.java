@@ -4,7 +4,7 @@ package com.intellij.diff.util;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeConflictType {
-  @NotNull private final Type myType;
+  private final @NotNull Type myType;
   private final boolean myLeftChange;
   private final boolean myRightChange;
   private final boolean myCanBeResolved;
@@ -20,8 +20,7 @@ public class MergeConflictType {
     myCanBeResolved = canBeResolved;
   }
 
-  @NotNull
-  public Type getType() {
+  public @NotNull Type getType() {
     return myType;
   }
 

@@ -15,13 +15,44 @@
  */
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
 
-public class ConcurrentPackedBitArrayTest extends TestCase {
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.concurrent.ThreadLocalRandom;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class ConcurrentPackedBitArrayTest {
+  private int bits;
+
+  @ParameterizedTest(name="bitsPerChunk={arguments}")
+  @ValueSource(ints = {1, 3, 5, 15, 32})
+  public void bitsWrittenInArrayCouldBeReadBackAsIs(int bitsPerChunk) {
+    ConcurrentPackedBitsArray bitSet = ConcurrentPackedBitsArray.create(bitsPerChunk);
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+
+    for (int id = 0; id < 1 << 20; id++) {
+      long bitsToWrite = bitsPerChunk == 64 ?
+                         rnd.nextLong() :
+                         rnd.nextLong(1L << bitsPerChunk);
+
+      long bits = bitSet.get(id);
+      assertEquals(0, bits, "Initially all bits are 0");
+      long previousBits = bitSet.set(id, bitsToWrite);
+      assertEquals(0, previousBits, "Initially all bits are 0");
+      long bitsReadBack = bitSet.get(id);
+      assertEquals(bitsToWrite, bitsReadBack, "Bits read back == bits written");
+    }
+  }
+
+  @Test
   public void test() {
     ConcurrentPackedBitsArray bitSet = ConcurrentPackedBitsArray.create(4);
     int N = 3000;
-    for (int i=0; i<N;i++) {
+    for (int i = 0; i < N; i++) {
       assertEquals(0, bitSet.get(i) & 0xf);
       bitSet.set(i, 0xa);
       assertEquals(0xa, bitSet.get(i) & 0xf);
@@ -55,11 +86,12 @@ public class ConcurrentPackedBitArrayTest extends TestCase {
     }
   }
 
+  @Test
   public void testChunkSize32() {
     ConcurrentPackedBitsArray bitSet = ConcurrentPackedBitsArray.create(32);
     bitSet.set(0, 0xDEAFBEEFL);
     assertEquals(0xDEAFBEEFL, bitSet.get(0) & 0xFFFFFFFFL);
-    
+
     bitSet = ConcurrentPackedBitsArray.create(31);
     long eadBeef = 0b0101_1110_1010_1111_1011_1110_1110_1111L;
     bitSet.set(0, eadBeef);

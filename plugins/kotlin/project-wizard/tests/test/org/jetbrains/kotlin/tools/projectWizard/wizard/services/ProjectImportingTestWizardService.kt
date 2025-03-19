@@ -11,12 +11,13 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
-import org.jetbrains.kotlin.idea.framework.MAVEN_SYSTEM_ID
 import org.jetbrains.kotlin.tools.projectWizard.cli.TestWizardService
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
@@ -31,7 +32,8 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> {
         AndroidStudioTestUtils.specifyAndroidSdk(path.toFile())
 
@@ -56,7 +58,7 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
                             importingErrorDetails = errorDetails
                         }
                     }
-                }).forceWhenUptodate()
+                })
         )
 
         return importingErrorMessage?.let { message ->
@@ -74,6 +76,6 @@ class GradleProjectImportingTestWizardService(private val project: Project) : Pr
         BuildSystemType.GradleKotlinDsl -> GradleConstants.SYSTEM_ID
         BuildSystemType.GradleGroovyDsl -> GradleConstants.SYSTEM_ID
         BuildSystemType.Jps -> null
-        BuildSystemType.Maven -> MAVEN_SYSTEM_ID
+        BuildSystemType.Maven -> MavenUtil.SYSTEM_ID
     }
 }

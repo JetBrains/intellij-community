@@ -32,54 +32,91 @@ public class TestIffSimplification {
 
 class 'pkg/TestIffSimplification' {
    method 'simpleIff (Z[I)I' {
+      0      4
       1      4
+      4      4
       5      4
       6      4
+      a      4
       b      4
       c      4
       d      4
    }
 
    method 'simpleIf (Z[I)I' {
+      0      8
       1      8
+      4      8
       5      8
       6      8
+      8      8
       9      8
       a      8
    }
 
    method 'nestedIf (ZZ[I)I' {
+      0      12
       1      12
+      4      13
       5      13
+      8      13
       9      13
       a      13
+      c      13
       d      13
       e      13
+      10      15
       11      15
       12      15
       13      15
    }
 
    method 'compareTo (IIBBDDII)I' {
+      0      20
+      1      20
       2      20
+      5      21
+      6      21
       7      21
       a      21
       e      21
       f      21
+      10      22
+      11      22
+      12      22
       13      22
+      16      23
+      17      23
+      18      23
       19      23
       1c      23
       20      23
       21      23
+      22      24
+      23      24
+      24      24
+      25      24
       26      24
       27      24
+      28      24
+      29      24
       2a      24
+      2b      24
+      2c      24
       2d      24
       2e      24
+      31      25
+      32      25
+      33      25
+      34      25
       35      25
       38      25
       3c      25
       3d      25
+      3e      27
+      3f      27
+      40      27
+      41      27
       42      27
       43      27
       46      27

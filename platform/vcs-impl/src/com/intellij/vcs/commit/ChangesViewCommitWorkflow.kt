@@ -8,9 +8,11 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
+@ApiStatus.Internal
 class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(project) {
   private val vcsManager get() = ProjectLevelVcsManager.getInstance(project)
   private val changeListManager get() = ChangeListManagerEx.getInstanceEx(project)

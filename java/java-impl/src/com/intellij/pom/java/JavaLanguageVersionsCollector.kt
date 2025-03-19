@@ -13,18 +13,21 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.util.*
 
 class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
-  private val group = EventLogGroup("java.language", 3)
+  private val group = EventLogGroup("java.language", 6)
 
   private val feature = EventFields.Int("feature")
   private val minor = EventFields.Int("minor")
   private val update = EventFields.Int("update")
   private val ea = EventFields.Boolean("ea")
   private val wsl = EventFields.Boolean("wsl")
+  private val vendor = EventFields.String("vendor", JdkVersionDetector.VENDORS)
+
   private val moduleJdkVersion = group.registerVarargEvent("MODULE_JDK_VERSION",
-                                                           feature, minor, update, ea, wsl)
+                                                           feature, minor, update, ea, wsl, vendor)
   private val moduleLanguageLevel = group.registerEvent("MODULE_LANGUAGE_LEVEL",
                                                         EventFields.Int("version"),
                                                         EventFields.Boolean("preview"))
@@ -38,18 +41,25 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
       ModuleRootManager.getInstance(it).sdk
     }.filter { it.sdkType is JavaSdk }
 
+    data class JdkVersionData(val version: JavaVersion?, val wsl: Boolean, val vendor: String)
+
     val jdkVersions = sdks.mapTo(HashSet()) { sdk ->
-      JavaVersion.tryParse(sdk.versionString) to (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false)
+      JdkVersionData(
+        JavaVersion.tryParse(sdk.versionString),
+        (sdk.homePath?.let { WslPath.isWslUncPath(it) } ?: false),
+        JdkVersionDetector.VENDORS.firstOrNull { sdk.versionString?.contains(it) == true } ?: JdkVersionDetector.Variant.Unknown.displayName
+      )
     }
 
     val metrics = HashSet<MetricEvent>()
-    jdkVersions.mapTo(metrics) { (version, isWsl) ->
+    jdkVersions.mapTo(metrics) { (version, isWsl, detectedVendor) ->
       moduleJdkVersion.metric(
         feature with (version?.feature ?: -1),
         minor with (version?.minor ?: -1),
         update with (version?.update ?: -1),
         ea with (version?.ea ?: false),
-        wsl with isWsl
+        wsl with isWsl,
+        vendor with detectedVendor
       )
     }
 
@@ -60,12 +70,12 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
         LanguageLevelUtil.getCustomLanguageLevel(it) ?: projectLanguageLevel
       }
       languageLevels.mapTo(metrics) {
-        moduleLanguageLevel.metric(it.toJavaVersion().feature, it.isPreview)
+        moduleLanguageLevel.metric(it.feature(), it.isPreview)
       }
     }
 
     return metrics
   }
 
-  override fun requiresReadAccess() = true
+  override fun requiresReadAccess(): Boolean = true
 }

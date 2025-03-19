@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.ArtifactsSettings;
@@ -37,8 +37,7 @@ final class MultiFilesSettings implements ArtifactsSettings, ProjectLibrariesSet
     this.projectFile = projectFile;
   }
 
-  @NotNull
-  private List<Path> getSettingsFiles() {
+  private @NotNull List<Path> getSettingsFiles() {
     if (settingsFiles == null) {
       if (dir == null) {
         settingsFiles = Collections.emptyList();
@@ -75,7 +74,7 @@ final class MultiFilesSettings implements ArtifactsSettings, ProjectLibrariesSet
     }
 
     for (Path file : getSettingsFiles()) {
-      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile(file).getRootElement(), tagName));
+      result.addAll(JDOMUtil.getChildren(context.getOrCreateFile$intellij_platform_lang_impl(file).getRootElement(), tagName));
     }
     return result;
   }

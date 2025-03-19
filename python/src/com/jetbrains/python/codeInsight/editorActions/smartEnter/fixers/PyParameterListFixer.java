@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
@@ -63,7 +64,7 @@ public class PyParameterListFixer extends PyFixer<PyParameterList> {
       final PyFunction.Modifier modifier = pyFunction.getModifier();
       String parameterName = null;
       if (modifier == null) parameterName = PyNames.CANONICAL_SELF;
-      else if (modifier == PyFunction.Modifier.CLASSMETHOD) parameterName = PyNames.CANONICAL_CLS;
+      else if (modifier == PyAstFunction.Modifier.CLASSMETHOD) parameterName = PyNames.CANONICAL_CLS;
 
       if (parameterName != null) {
         document.insertString(offset, parameterName);

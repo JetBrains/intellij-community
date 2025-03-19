@@ -1,6 +1,8 @@
 package org.assertj.core.api;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+import org.jspecify.annotations.NullMarked;
+import java.util.Optional;
 import java.util.stream.*;
 
 class Sample {
@@ -35,19 +37,53 @@ class Sample {
     Stream<String> stream = Stream.empty();
     Assertions.assertThat(stream).isEmpty();
   }
+
+  // All methods inside the org.assertj.core.api package are hardcoded to be pure by default
+  // See com.intellij.codeInsight.DefaultInferredAnnotationProvider.getHardcodedContractAnnotation
+  // We override this, otherwise it spoils the tests, as it's assumed that the same value is always returned
+  @Contract(pure = false)
+  private native Optional<String> getOptional();
+
+  public void testAs() {
+    Optional<String> id = getOptional();
+    if (id.isPresent()) {}
+    Assertions.assertThat(id).as("Asserting id not empty.").isNotEmpty();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = getOptional();
+    Assertions.assertThat(id).describedAs("Asserting id present.").isPresent();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+    id = getOptional();
+    Assertions.assertThat(id.isPresent()).as("Alternative asserting id present.").isTrue();
+    if (<warning descr="Condition 'id.isPresent()' is always 'true'">id.isPresent()</warning>) {}
+  }
 }
 class Assertions {
-  public static ObjectAssert assertThat(Object actual) {
-    return new ObjectAssert(actual);
+  public static <T> ObjectAssert<T> assertThat(T actual) {
+    return new ObjectAssert<>(actual);
   }
 }
-class ObjectAssert extends AbstractAssert {
-  ObjectAssert(Object obj) {}
-  
-  public ObjectAssert isNotNull() {
+class ObjectAssert<T> extends AbstractAssert {
+  ObjectAssert(T obj) {}
+
+  public ObjectAssert<T> isNotNull() {
     return this;
   }
-  public ObjectAssert isTrue() { return this; }
+  public ObjectAssert<T> isNull() {
+    return this;
+  }
+  public ObjectAssert<T> isTrue() { return this; }
+  public ObjectAssert<T> isPresent() { return this; }
+  public ObjectAssert<T> isNotEmpty() { return this; }
   public void isEmpty() {}
 }
-class AbstractAssert {}
+class AbstractAssert extends Descriptable {}
+class Descriptable {
+  public native ObjectAssert<?> as(String message, Object... params);
+  public native ObjectAssert<?> describedAs(String message, Object... params);
+}
+@NullMarked
+class MarkedAsNull {
+  void test() {
+    Assertions.assertThat((Object)null).isNull();
+  }
+}

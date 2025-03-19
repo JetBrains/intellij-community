@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui.actions;
 
 import com.intellij.history.integration.IdeaGateway;
-import com.intellij.history.integration.ui.views.DirectoryHistoryDialog;
-import com.intellij.history.integration.ui.views.FileHistoryDialog;
-import com.intellij.history.integration.ui.views.HistoryDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Collection;
 
+import static com.intellij.history.integration.ui.actions.ShowLocalHistoryUtilKt.canShowLocalHistoryFor;
+import static com.intellij.history.integration.ui.actions.ShowLocalHistoryUtilKt.showLocalHistoryFor;
+
+@ApiStatus.Internal
 public class ShowHistoryAction extends LocalHistoryAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -39,24 +26,21 @@ public class ShowHistoryAction extends LocalHistoryAction {
     Presentation presentation = e.getPresentation();
     if (presentation.isEnabled()) {
       IdeaGateway gateway = getGateway();
-      VirtualFile file = getFile(e);
-      presentation.setEnabled(gateway != null && file != null && isEnabled(gateway, file));
+      Collection<VirtualFile> files = getFiles(e);
+      presentation.setEnabled(isActionEnabled(gateway, files));
     }
   }
 
   @Override
   protected void actionPerformed(@NotNull Project p, @NotNull IdeaGateway gw, @NotNull AnActionEvent e) {
-    VirtualFile f = Objects.requireNonNull(getFile(e));
-    HistoryDialog frame = f.isDirectory() ? new DirectoryHistoryDialog(p, gw, f) : new FileHistoryDialog(p, gw, f);
-    frame.show();
+    showLocalHistoryFor(p, gw, getFiles(e));
   }
 
-  protected boolean isEnabled(@NotNull IdeaGateway gw, @NotNull VirtualFile f) {
-    return gw.isVersioned(f) && (f.isDirectory() || gw.areContentChangesVersioned(f));
+  protected boolean isActionEnabled(@NotNull IdeaGateway gw, @NotNull Collection<VirtualFile> files) {
+    return canShowLocalHistoryFor(gw, files);
   }
 
-  @Nullable
-  protected static VirtualFile getFile(@NotNull AnActionEvent e) {
-    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
+  protected @NotNull Collection<VirtualFile> getFiles(@NotNull AnActionEvent e) {
+    return JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).toSet();
   }
 }

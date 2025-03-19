@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 object G {
     fun cat(x: Int, y: Int): Int {
         return x + y
@@ -11,5 +12,3 @@ fun test(x: Int, y: Int): String {
         else -> return "big"
     }
 }
-
-// IGNORE_FIR

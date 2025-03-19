@@ -15,4 +15,3 @@ class Delegate() {
 var p: String by Delegate()
 
 
-// IGNORE_FIR_LOG

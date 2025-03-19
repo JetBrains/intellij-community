@@ -9,16 +9,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +42,7 @@ public class PyTypeModelBuilder {
   abstract static class TypeModel {
     abstract void accept(@NotNull TypeVisitor visitor);
 
-    @NotNull
-    public String asString() {
+    public @NotNull String asString() {
       final TypeToStringVisitor visitor = new TypeToStringVisitor();
       accept(visitor);
       return visitor.getString();
@@ -52,16 +53,20 @@ public class PyTypeModelBuilder {
       accept(visitor);
     }
 
-    @NotNull
-    public String asDescription() {
+    public @NotNull String asDescription() {
       final TypeToDescriptionVisitor visitor = new TypeToDescriptionVisitor();
       accept(visitor);
       return visitor.getDescription();
     }
 
-    @NotNull
-    public String asPep484TypeHint() {
+    public @NotNull String asPep484TypeHint() {
       final TypeToStringVisitor visitor = new TypeToPep484TypeHintVisitor();
+      accept(visitor);
+      return visitor.getString();
+    }
+
+    public @NotNull String asStringWithAdditionalInfo() {
+      TypeToStringVisitor visitor = new VerboseTypeInfoVisitor();
       accept(visitor);
       return visitor.getString();
     }
@@ -82,12 +87,30 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static final class NarrowedType extends TypeModel {
+    private final TypeModel narrowedType;
+    private final boolean isTypeIs;
+
+    private NarrowedType(@NotNull TypeModel narrowedType, boolean isTypeIs) {
+      this.narrowedType = narrowedType;
+      this.isTypeIs = isTypeIs;
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.narrowedType(this);
+    }
+  }
+  
+
   private static final class CollectionOf extends TypeModel {
     private final TypeModel collectionType;
     private final List<TypeModel> elementTypes;
     private final boolean useTypingAlias;
 
-    private CollectionOf(TypeModel collectionType, List<TypeModel> elementTypes, boolean useTypingAlias) {
+    private CollectionOf(TypeModel collectionType,
+                         List<TypeModel> elementTypes,
+                         boolean useTypingAlias) {
       this.collectionType = collectionType;
       this.elementTypes = elementTypes;
       this.useTypingAlias = useTypingAlias;
@@ -101,11 +124,9 @@ public class PyTypeModelBuilder {
 
   static final class NamedType extends TypeModel {
 
-    @NotNull
-    private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
+    private static final @NotNull NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
 
-    @Nullable
-    private final @NlsSafe String name;
+    private final @Nullable @NlsSafe String name;
 
     private NamedType(@Nullable String name) {
       this.name = name;
@@ -116,8 +137,7 @@ public class PyTypeModelBuilder {
       visitor.name(name);
     }
 
-    @NotNull
-    private static NamedType nameOrAny(@Nullable PyType type) {
+    private static @NotNull NamedType nameOrAny(@Nullable PyType type) {
       return type == null ? ANY : new NamedType(type.getName());
     }
   }
@@ -170,8 +190,8 @@ public class PyTypeModelBuilder {
   }
 
   static final class FunctionType extends TypeModel {
-    @NotNull private final TypeModel returnType;
-    @Nullable private final Collection<TypeModel> parameters;
+    private final @NotNull TypeModel returnType;
+    private final @Nullable Collection<TypeModel> parameters;
 
     private FunctionType(@Nullable TypeModel returnType, @Nullable Collection<TypeModel> parameters) {
       this.returnType = returnType != null ? returnType : NamedType.ANY;
@@ -185,8 +205,8 @@ public class PyTypeModelBuilder {
   }
 
   static final class ParamType extends TypeModel {
-    @Nullable private final @NlsSafe String name;
-    @Nullable private final TypeModel type;
+    private final @Nullable @NlsSafe String name;
+    private final @Nullable TypeModel type;
 
     private ParamType(@Nullable String name, @Nullable TypeModel type) {
       this.name = name;
@@ -212,23 +232,24 @@ public class PyTypeModelBuilder {
     }
   }
 
-  static class GenericType extends TypeModel {
+  static class TypeVarType extends TypeModel {
     private final @NlsSafe String name;
+    private final TypeModel bound;
 
-    GenericType(@Nullable String name) {
+    TypeVarType(@Nullable String name, @Nullable TypeModel bound) {
       this.name = name;
+      this.bound = bound;
     }
 
     @Override
     void accept(@NotNull TypeVisitor visitor) {
-      visitor.genericType(this);
+      visitor.typeVarType(this);
     }
   }
 
   private static final class OneOfLiterals extends TypeModel {
 
-    @NotNull
-    private final List<PyLiteralType> literals;
+    private final @NotNull List<PyLiteralType> literals;
 
     private OneOfLiterals(@NotNull List<PyLiteralType> literals) {
       this.literals = literals;
@@ -237,6 +258,19 @@ public class PyTypeModelBuilder {
     @Override
     void accept(@NotNull TypeVisitor visitor) {
       visitor.oneOfLiterals(this);
+    }
+  }
+  
+  private static class CallableParameterList extends TypeModel {
+    private final List<TypeModel> parameters;
+
+    private CallableParameterList(@NotNull List<TypeModel> parameters) {
+      this.parameters = parameters; 
+    }
+
+    @Override
+    void accept(@NotNull TypeVisitor visitor) {
+      visitor.callableParameterList(this);
     }
   }
 
@@ -256,14 +290,8 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTypedDictType typedDictType) {
-      if (typedDictType.isInferred()) {
-        return build(new PyCollectionTypeImpl(typedDictType.getPyClass(), false,
-                                              typedDictType.getElementTypes()), allowUnions);
-      }
-      else {
-        result = NamedType.nameOrAny(type);
-      }
+    if (type instanceof PyTypedDictType) {
+      result = NamedType.nameOrAny(type);
     }
     else if (type instanceof PyInstantiableType && ((PyInstantiableType<?>)type).isDefinition()) {
       final PyInstantiableType instanceType = ((PyInstantiableType<?>)type).toInstance();
@@ -284,7 +312,8 @@ public class PyTypeModelBuilder {
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
                                         : tupleType.getElementTypes();
 
-      boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(tupleType.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
+      boolean useTypingAlias =
+        PythonLanguageLevelPusher.getLanguageLevelForFile(tupleType.getPyClass().getContainingFile()).isOlderThan(LanguageLevel.PYTHON39);
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous(), useTypingAlias);
     }
@@ -294,10 +323,15 @@ public class PyTypeModelBuilder {
         elementModels.add(build(elementType, true));
       }
       if (!elementModels.isEmpty()) {
-        final TypeModel collectionType = build(new PyClassTypeImpl(asCollection.getPyClass(), asCollection.isDefinition()), false);
-        boolean useTypingAlias = PyiUtil.getOriginalLanguageLevel(asCollection.getPyClass()).isOlderThan(LanguageLevel.PYTHON39);
+        PyClass pyClass = asCollection.getPyClass();
+        final TypeModel collectionType = build(new PyClassTypeImpl(pyClass, asCollection.isDefinition()), false);
+        boolean useTypingAlias =
+          PythonLanguageLevelPusher.getLanguageLevelForFile(pyClass.getContainingFile()).isOlderThan(LanguageLevel.PYTHON39);
         result = new CollectionOf(collectionType, elementModels, useTypingAlias);
       }
+    }
+    else if (type instanceof PyNarrowedType narrowedType) {
+      result = new NarrowedType(build(narrowedType.getNarrowedType(), true), narrowedType.getTypeIs());
     }
     else if (type instanceof PyUnionType unionType && allowUnions) {
       final Collection<PyType> unionMembers = unionType.getMembers();
@@ -333,8 +367,12 @@ public class PyTypeModelBuilder {
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = buildCallable((PyCallableType)type);
     }
-    else if (type instanceof PyGenericType) {
-      result = new GenericType(type.getName());
+    else if (type instanceof PyTypeVarType typeVarType) {
+      PyType effectiveBound = PyTypeUtil.getEffectiveBound(typeVarType);
+      result = new TypeVarType(type.getName(), effectiveBound != null ? build(effectiveBound, true) : null);
+    }
+    else if (type instanceof PyCallableParameterListType callableParameterListType) {
+      result = new CallableParameterList(buildParameterModels(callableParameterListType.getParameters()));
     }
     if (result == null) {
       result = NamedType.nameOrAny(type);
@@ -343,8 +381,7 @@ public class PyTypeModelBuilder {
     return result;
   }
 
-  @Nullable
-  private static Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
+  private static @Nullable Ref<PyType> getOptionalType(@NotNull PyUnionType type) {
     final Collection<PyType> members = type.getMembers();
     if (members.size() == 2) {
       boolean foundNone = false;
@@ -376,23 +413,28 @@ public class PyTypeModelBuilder {
   }
 
   private TypeModel buildCallable(@NotNull PyCallableType type) {
-    List<TypeModel> parameterModels = null;
     final List<PyCallableParameter> parameters = type.getParameters(myContext);
+    List<TypeModel> parameterModels = null;
     if (parameters != null) {
-      parameterModels = new ArrayList<>();
-      for (PyCallableParameter parameter : parameters) {
-        final var paramType = parameter.getType(myContext);
-        if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
-          parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
-        }
-        else {
-          parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
-        }
-      }
+      parameterModels = buildParameterModels(parameters);
     }
     final PyType ret = type.getReturnType(myContext);
     final TypeModel returnType = build(ret, true);
     return new FunctionType(returnType, parameterModels);
+  }
+
+  private @NotNull List<TypeModel> buildParameterModels(@NotNull List<PyCallableParameter> parameters) {
+    List<TypeModel> parameterModels = new ArrayList<>();
+    for (PyCallableParameter parameter : parameters) {
+      final var paramType = parameter.getType(myContext);
+      if (paramType instanceof PyParamSpecType || paramType instanceof PyConcatenateType) {
+        parameterModels.add(new ParamType(null, build(parameter.getType(myContext), true)));
+      }
+      else {
+        parameterModels.add(new ParamType(parameter.getName(), build(parameter.getType(myContext), true)));
+      }
+    }
+    return parameterModels;
   }
 
   private interface TypeVisitor {
@@ -414,20 +456,24 @@ public class PyTypeModelBuilder {
 
     void classObject(ClassObjectType type);
 
-    void genericType(GenericType type);
+    void typeVarType(TypeVarType type);
 
     void oneOfLiterals(OneOfLiterals literals);
+
+    void narrowedType(NarrowedType type);
+
+    void callableParameterList(CallableParameterList list);
   }
 
   private static class TypeToStringVisitor extends TypeNameVisitor {
     @Override
     protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
     protected @NotNull HtmlChunk escaped(@Nls String text) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
@@ -437,7 +483,7 @@ public class PyTypeModelBuilder {
 
     @Override
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
-      return HtmlChunk.raw(expressionText);
+      return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
     public String getString() {
@@ -533,12 +579,12 @@ public class PyTypeModelBuilder {
   private static class TypeToDescriptionVisitor extends TypeNameVisitor {
     @Override
     protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
     protected @NotNull HtmlChunk escaped(@Nls String text) {
-      return HtmlChunk.raw(text);
+      return HtmlChunk.raw(StringUtil.notNullize(text));
     }
 
     @Override
@@ -548,18 +594,17 @@ public class PyTypeModelBuilder {
 
     @Override
     protected @NotNull HtmlChunk styledExpression(@Nls String expressionText, @NotNull PyExpression expression) {
-      return HtmlChunk.raw(expressionText);
+      return HtmlChunk.raw(StringUtil.notNullize(expressionText));
     }
 
-    @NotNull
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return myBody.toString();
     }
   }
 
   private abstract static class TypeNameVisitor implements TypeVisitor {
     private int myDepth = 0;
-    private final static int MAX_DEPTH = 6;
+    private static final int MAX_DEPTH = 6;
     private boolean switchBuiltinToTyping = false;
     protected HtmlBuilder myBody = new HtmlBuilder();
 
@@ -648,6 +693,19 @@ public class PyTypeModelBuilder {
         processList(collectionOf.elementTypes);
         add(styled("]", PyHighlighter.PY_BRACKETS));
       }
+    }
+
+    @Override
+    public void narrowedType(@NotNull NarrowedType narrowedType) {
+      if (narrowedType.isTypeIs) {
+        add(styled("TypeIs", PyHighlighter.PY_CLASS_DEFINITION));
+      }
+      else {
+        add(styled("TypeGuard", PyHighlighter.PY_CLASS_DEFINITION));
+      }
+      add(styled("[", PyHighlighter.PY_BRACKETS));
+      narrowedType.narrowedType.accept(this);
+      add(styled("]", PyHighlighter.PY_BRACKETS));
     }
 
     @Override
@@ -747,7 +805,7 @@ public class PyTypeModelBuilder {
     }
 
     @Override
-    public void genericType(GenericType type) {
+    public void typeVarType(TypeVarType type) {
       if (type.name != null) {
         add(escaped(type.name));
       }
@@ -766,6 +824,27 @@ public class PyTypeModelBuilder {
                     .collect(HtmlChunk.toFragment(styled(", ", PyHighlighter.PY_COMMA))))
           .append(styled("]", PyHighlighter.PY_BRACKETS))
           .toFragment());
+    }
+
+    @Override
+    public void callableParameterList(CallableParameterList list) {
+      add(HtmlChunk.raw("["));
+      processList(list.parameters);
+      add(HtmlChunk.raw("]"));
+    }
+  }
+
+  private static class VerboseTypeInfoVisitor extends TypeToStringVisitor {
+
+    @Override
+    public void typeVarType(TypeVarType type) {
+      if (type.name != null) {
+        add(escaped(type.name));
+        if (type.bound != null) {
+          add(escaped(" ≤: "));
+          type.bound.accept(this);
+        }
+      }
     }
   }
 }

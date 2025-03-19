@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -10,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.common.runAllCatching
 import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
-import com.intellij.util.io.delete
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -29,7 +29,7 @@ import kotlin.properties.Delegates
 
 /**
  * Provides the possibility to create a temporary directory during a test.
- * The directory is not actually created by default; call [createDir] to do that.
+ * The directory is not created by default; call [createDir] to do that.
  *
  * * The `fileName` argument is not used as is for generated file or dir name - sortable UID is added as suffix.
  * * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
@@ -113,7 +113,7 @@ open class TemporaryDirectory : ExternalResource() {
     }
 
     val error = runAllCatching(paths.asReversed()) {
-      it.delete()
+      NioFiles.deleteRecursively(it)
     }
 
     paths.clear()
@@ -177,13 +177,13 @@ open class TemporaryDirectory : ExternalResource() {
   }
 }
 
-fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
-fun VirtualFile.writeChild(relativePath: String, data: ByteArray) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: ByteArray): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
 fun Path.refreshVfs() {
   // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-  val virtualFile = (LocalFileSystem.getInstance() ?: return).refreshAndFindFileByNioFile(this) ?: return
+  val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(this) ?: return
   VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
 }
 

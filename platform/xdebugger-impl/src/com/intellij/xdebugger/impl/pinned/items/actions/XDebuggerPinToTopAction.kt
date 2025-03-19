@@ -71,11 +71,13 @@ class XDebuggerPinToTopAction : XDebuggerTreeActionBase() {
         val pinInfo = node.getPinInfo()
             ?: return
 
-        if (node.isPinned(pinToTopManager)) {
-            pinToTopManager.removeItemInfo(pinInfo)
+        val pinNode = !node.isPinned(pinToTopManager)
+        if (pinNode) {
+           pinToTopManager.addItemInfo(pinInfo)
         } else {
-            pinToTopManager.addItemInfo(pinInfo)
+           pinToTopManager.removeItemInfo(pinInfo)
         }
+        node.parentPinToTopValue?.onChildPinned(pinNode, pinInfo)
 
         XDebuggerUtilImpl.rebuildTreeAndViews(node.tree)
     }

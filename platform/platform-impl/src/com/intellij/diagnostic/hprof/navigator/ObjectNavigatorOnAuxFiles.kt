@@ -21,9 +21,11 @@ import com.intellij.diagnostic.hprof.parser.Type
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongList
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
+@ApiStatus.Internal
 class ObjectNavigatorOnAuxFiles(
   private val roots: Long2ObjectMap<RootReason>,
   private val auxOffsets: ByteBuffer,
@@ -32,7 +34,7 @@ class ObjectNavigatorOnAuxFiles(
   instanceCount: Long,
   private val idSize: Int
 ) : ObjectNavigator(classStore, instanceCount) {
-  override fun getClass() = currentClass!!
+  override fun getClass(): ClassDefinition = currentClass!!
 
   override fun getClassForObjectId(id: Long): ClassDefinition {
     auxOffsets.position((id * 4).toInt())
@@ -71,7 +73,7 @@ class ObjectNavigatorOnAuxFiles(
     }
   }
 
-  override fun getReferencesCopy() = LongArrayList(references)
+  override fun getReferencesCopy(): LongArrayList = LongArrayList(references)
 
   override fun isNull(): Boolean {
     return id == 0L

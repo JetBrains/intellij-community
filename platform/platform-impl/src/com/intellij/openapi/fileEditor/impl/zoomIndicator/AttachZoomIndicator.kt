@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.zoomIndicator
 
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
@@ -35,7 +36,7 @@ private class AttachZoomIndicator : EditorFactoryListener {
     if (project.isDisposed || shouldSuppressZoomIndicator(editorEx)) return
     editorEx.addPropertyChangeListener {
       if (it.propertyName != EditorEx.PROP_FONT_SIZE) return@addPropertyChangeListener
-      if (!ZoomIndicatorManager.isEnabled || shouldSuppressZoomIndicator(editorEx)) return@addPropertyChangeListener
+      if (!ZoomIndicatorManager.isEditorZoomIndicatorEnabled || shouldSuppressZoomIndicator(editorEx)) return@addPropertyChangeListener
 
       invokeLater {
         if (!editorEx.isDisposed) {
@@ -50,8 +51,9 @@ private class AttachZoomIndicator : EditorFactoryListener {
     val editor = event.editor
     val project = event.editor.project ?: return
     if (editor.isDisposed || project.isDisposed) return
-    if (service(project).editor == editor) {
-      service(project).cancelCurrentPopup()
+    val manager = project.serviceIfCreated<ZoomIndicatorManager>()
+    if (manager?.editor == editor) {
+      manager.cancelCurrentPopup()
     }
   }
 

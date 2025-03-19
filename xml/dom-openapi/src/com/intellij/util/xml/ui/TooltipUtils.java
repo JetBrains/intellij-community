@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.ui;
 
@@ -13,11 +13,11 @@ import org.jetbrains.annotations.NonNls;
 import java.util.List;
 
 public final class TooltipUtils {
-  @NonNls private static final HtmlChunk MESSAGE_DELIMITER = HtmlChunk.hr().attr("size", "1")
+  private static final @NonNls HtmlChunk MESSAGE_DELIMITER = HtmlChunk.hr().attr("size", "1")
     .attr("noshade", "noshade");
 
   public static @NlsContexts.Tooltip String getTooltipText(List<? extends DomElementProblemDescriptor> annotations) {
-    if (annotations.size() == 0) return null;
+    if (annotations.isEmpty()) return null;
 
     return getTooltipText(getMessages(annotations));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.export;
 
 import com.intellij.execution.ExecutionBundle;
@@ -57,18 +57,16 @@ public class ExportTestResultsForm {
 
     myFileNameField.setText(defaultFileName);
 
-    myCustomTemplateField.addBrowseFolderListener(ExecutionBundle.message("export.test.results.custom.template.chooser.title"), null, null,
-                                                  new FileChooserDescriptor(true, false, false, false, false, false) {
-                                 @Override
-                                 public boolean isFileSelectable(@Nullable VirtualFile file) {
-                                   return file != null &&
-                                          ("xsl".equalsIgnoreCase(file.getExtension()) || "xslt".equalsIgnoreCase(file.getExtension()));
-                                 }
-                               }, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var templateDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileSelectable(@Nullable VirtualFile file) {
+        return file != null && ("xsl".equalsIgnoreCase(file.getExtension()) || "xslt".equalsIgnoreCase(file.getExtension()));
+      }
+    }.withTitle(ExecutionBundle.message("export.test.results.custom.template.chooser.title"));
+    myCustomTemplateField.addBrowseFolderListener(null, templateDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
-    myFolderField.addBrowseFolderListener(ExecutionBundle.message("export.test.results.output.folder.chooser.title"), null, null,
-                                          FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var outputDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("export.test.results.output.folder.chooser.title"));
+    myFolderField.addBrowseFolderListener(null, outputDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     myFileNameField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -150,8 +148,7 @@ public class ExportTestResultsForm {
     myEventDispatcher.addListener(changeListener);
   }
 
-  @Nullable
-  public @NlsContexts.Label String validate() {
+  public @Nullable @NlsContexts.Label String validate() {
     if (getExportFormat() == ExportTestResultsConfiguration.ExportFormat.UserTemplate) {
       if (StringUtil.isEmpty(myCustomTemplateField.getText())) {
         return ExecutionBundle.message("export.test.results.custom.template.path.empty");

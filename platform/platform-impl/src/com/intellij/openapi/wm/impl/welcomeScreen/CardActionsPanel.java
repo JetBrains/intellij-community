@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -15,6 +15,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class CardActionsPanel extends JPanel {
   private static final boolean USE_ICONS = true;
   private final JBCardLayout myLayout = new JBCardLayout();
@@ -138,7 +140,7 @@ public class CardActionsPanel extends JPanel {
     }
   }
 
-  private static class Button extends ActionButtonWithText {
+  private static final class Button extends ActionButtonWithText {
     private static final Icon DEFAULT_ICON = new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -219,7 +221,7 @@ public class CardActionsPanel extends JPanel {
     }
   }
 
-  private class ActivateCard extends AnAction {
+  private final class ActivateCard extends AnAction {
     private final String myId;
 
     ActivateCard(String id) {

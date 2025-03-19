@@ -1,12 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
@@ -129,14 +133,7 @@ fun checkSuperMethodsWithPopup(
 ) {
     if (deepestSuperMethods.isEmpty()) return action(listOf(declaration))
 
-    val superMethod = deepestSuperMethods.first()
-
-    val (superClass, isAbstract) = when (superMethod) {
-        is PsiMember -> superMethod.containingClass to superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
-        is KtNamedDeclaration -> superMethod.containingClassOrObject to superMethod.isAbstract()
-        else -> null
-    } ?: return action(listOf(declaration))
-    if (superClass == null) return action(listOf(declaration))
+    val title = getRenameBaseTitle(declaration, deepestSuperMethods) ?: return action(listOf(declaration))
 
     if (isUnitTestMode()) return action(deepestSuperMethods)
 
@@ -157,13 +154,6 @@ fun checkSuperMethodsWithPopup(
 
     val renameBase = KotlinBundle.message("rename.base.0", superKindIndex + (if (deepestSuperMethods.size > 1) 10 else 0))
     val renameCurrent = KotlinBundle.message("rename.only.current.0", kindIndex)
-    val title = KotlinBundle.message(
-        "rename.declaration.title.0.implements.1.2.of.3",
-        declaration.name ?: "",
-        if (isAbstract) 1 else 2,
-        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
-        SymbolPresentationUtil.getSymbolPresentableText(superClass)
-    )
 
     JBPopupFactory.getInstance()
         .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
@@ -178,4 +168,46 @@ fun checkSuperMethodsWithPopup(
         }
         .createPopup()
         .showInBestPositionFor(editor)
+}
+
+fun checkSuperMethods(
+    declaration: KtNamedDeclaration,
+    deepestSuperMethods: List<PsiElement>
+): List<PsiElement> {
+    if (deepestSuperMethods.isEmpty()) return listOf(declaration)
+
+    val title = getRenameBaseTitle(declaration, deepestSuperMethods) ?: return listOf(declaration)
+    if (isUnitTestMode()) return deepestSuperMethods
+
+    val exitCode = showYesNoCancelDialog(
+        declaration.project, title, IdeBundle.message("title.warning"),
+        KotlinBundle.message("button.rename.base"),
+        KotlinBundle.message("button.rename.current"), CommonBundle.getCancelButtonText(), Messages.getQuestionIcon()
+    )
+
+    return when (exitCode) {
+        Messages.YES -> deepestSuperMethods
+        Messages.NO -> listOf(declaration)
+        else -> emptyList()
+    }
+}
+
+private fun getRenameBaseTitle(declaration: KtNamedDeclaration,
+                               deepestSuperMethods: List<PsiElement>): @DialogMessage String? {
+    val superMethod = deepestSuperMethods.first()
+    val (superClass, isAbstract) = when (superMethod) {
+        is PsiMember -> superMethod.containingClass to superMethod.hasModifierProperty(PsiModifier.ABSTRACT)
+        is KtNamedDeclaration -> superMethod.containingClassOrObject to superMethod.isAbstract()
+        else -> null
+    } ?: return null
+
+    if (superClass == null) return null
+
+    return KotlinBundle.message(
+        "rename.declaration.title.0.implements.1.2.of.3",
+        declaration.name ?: "",
+        if (isAbstract) 1 else 2,
+        ElementDescriptionUtil.getElementDescription(superMethod, UsageViewTypeLocation.INSTANCE),
+        SymbolPresentationUtil.getSymbolPresentableText(superClass)
+    )
 }

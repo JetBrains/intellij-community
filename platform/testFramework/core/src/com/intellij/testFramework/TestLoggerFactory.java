@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -9,15 +9,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
 import org.junit.ComparisonFailure;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.*;
 import java.lang.invoke.MethodHandle;
@@ -28,6 +29,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
@@ -35,6 +38,7 @@ import java.util.logging.StreamHandler;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.PathManager.PROPERTY_LOG_PATH;
+import static com.intellij.testFramework.TestLoggerKt.recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures;
 import static java.util.Objects.requireNonNullElse;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
@@ -59,6 +63,10 @@ public final class TestLoggerFactory implements Logger.Factory {
   /** When enabled, log records with at least "FINE" level are echoed to the stdout with a timestamp relative to the test start time. */
   private static final boolean myEchoDebugToStdout = Boolean.getBoolean("idea.test.logs.echo.debug.to.stdout");
 
+  private static final AtomicInteger myRethrowErrorsNumber = new AtomicInteger(0);
+
+  private final AtomicReference<DebugArtifactPublisher> myDebugArtifactPublisher = new AtomicReference<>();
+
   private TestLoggerFactory() { }
 
   private static @Nullable TestLoggerFactory getTestLoggerFactory() {
@@ -72,22 +80,11 @@ public final class TestLoggerFactory implements Logger.Factory {
       myInitialized = true;
     }
 
-    java.util.logging.Logger julLogger = java.util.logging.Logger.getLogger(category);
-    if (myEchoDebugToStdout) {
-      configureLogToStdoutIfDebug(julLogger);
-    }
-    return new TestLogger(julLogger, this);
+    return new TestLogger(java.util.logging.Logger.getLogger(category), this);
   }
 
-  /**
-   * If the logger has the "FINE" level, add a LogToStdoutJulHandler that streams its log records
-   * to STDOUT with a timestamp relative to the test start time.
-   */
-  private static void configureLogToStdoutIfDebug(@NotNull java.util.logging.Logger julLogger) {
-    if (julLogger.isLoggable(Level.FINE) &&
-        ContainerUtil.findInstance(julLogger.getHandlers(), LogToStdoutJulHandler.class) == null) {
-      julLogger.addHandler(new LogToStdoutJulHandler());
-    }
+  public static int getRethrowErrorNumber() {
+    return myRethrowErrorsNumber.get();
   }
 
   public static boolean reconfigure() {
@@ -110,7 +107,13 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, false, true, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null, null, null);
+
+      if (myEchoDebugToStdout) {
+        addConsoleAppenderForDebugRecords();
+      }
+
+      System.out.printf("Test log file: %s%n", logFile);
 
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
@@ -124,9 +127,16 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  private static void addConsoleAppenderForDebugRecords() {
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+
+    // just add a single console appender instead of multiple handlers, but for the root logger
+    rootLogger.addHandler(new FilteringLogToStdoutJulHandler(Level.FINE));
+  }
+
   public static @NotNull Path getTestLogDir() {
     String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property != null ? Path.of(property) : Path.of(PathManager.getSystemPath(), LOG_DIR);
+    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property).normalize();
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
@@ -152,7 +162,7 @@ public final class TestLoggerFactory implements Logger.Factory {
           logText = Files.readString(logFile);
         }
 
-        out.println("\n\nIdea Log:");
+        out.println("\n\nIdea Log at " + logFile + ":");
         int startPos = logText.lastIndexOf(testStartMarker);
         out.println(startPos > 0 ? logText.substring(startPos) : logText);
       }
@@ -215,11 +225,11 @@ public final class TestLoggerFactory implements Logger.Factory {
     if (t == null) return null;
 
     StringBuilder sb = new StringBuilder();
-    ExceptionUtil.findCauseAndSuppressed(t, ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
-    ExceptionUtil.findCauseAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
+    ExceptionUtil.causeAndSuppressed(t, junit.framework.ComparisonFailure.class).forEach(e ->
       logComparisonFailure(sb, e.getExpected(), e.getActual())
     );
 
@@ -249,17 +259,16 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static void onTestStarted() {
+    myRethrowErrorsNumber.set(0);
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.clearLogBuffer();  // clear buffer from tests which failed to report their termination properly
+      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      if (publisher != null) {
+        publisher.cleanup();
+      }
       factory.myTestStartedMillis = System.currentTimeMillis();
     }
-  }
-
-  /** @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead */
-  @Deprecated
-  public static void onTestFinished(boolean success) {
-    onTestFinished(success, "unnamed_test");
   }
 
   /** @see #onTestFinished(boolean, String) */
@@ -274,17 +283,48 @@ public final class TestLoggerFactory implements Logger.Factory {
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       factory.myTestStartedMillis = 0;
+      DebugArtifactPublisher publisher = factory.myDebugArtifactPublisher.getAndSet(null);
+      if (publisher != null) {
+        if (!success) {
+          publisher.publishArtifacts(testName);
+        }
+        else {
+          publisher.cleanup();
+        }
+      }
       factory.dumpLogBuffer(success, testName);
     }
   }
 
-  public static void logTestFailure(@NotNull Throwable t) {
+  public static void logTestFailure(@Nullable Throwable t) {
     TestLoggerFactory factory = getTestLoggerFactory();
     if (factory != null) {
       String comparisonFailures = dumpComparisonFailures(t);
       String message = comparisonFailures != null ? "test failed: " + comparisonFailures : "Test failed";
       factory.buffer(LogLevel.ERROR, "#TestFramework", message, t);
     }
+  }
+
+  /**
+   * Publishes {@code artifactPath} as a build artifact if the current test fails on TeamCity under 'debug-artifacts' directory.
+   * @param artifactPath path to a file or directory to be published
+   * @param artifactName meaningful name under which the artifact will be published; the name of the current test will be added as a prefix
+   *                     automatically; and if multiple artifacts with the same {@code artifactName} are added during execution of the test,
+   *                     unique suffix will also be added automatically.
+   */
+  public static void publishArtifactIfTestFails(@NotNull Path artifactPath, @NotNull String artifactName) {
+    TestLoggerFactory factory = getTestLoggerFactory();
+    if (factory != null) {
+      factory.getOrCreateDebugArtifactPublisher().storeArtifact(artifactPath, artifactName);
+    }
+  }
+
+  private DebugArtifactPublisher getOrCreateDebugArtifactPublisher() {
+    DebugArtifactPublisher publisher = myDebugArtifactPublisher.get();
+    if (publisher != null) return publisher;
+    Path storagePath = PathManager.getLogDir().resolve("debug-artifacts");
+    myDebugArtifactPublisher.compareAndSet(null, new DebugArtifactPublisher(storagePath));
+    return myDebugArtifactPublisher.get();
   }
 
   private void clearLogBuffer() {
@@ -336,33 +376,40 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   public static @NotNull TestRule createTestWatcher() {
-    return new TestWatcher() {
-      @Override
-      protected void succeeded(Description description) {
-        onTestFinished(true, description);
-      }
+    return RuleChain.emptyRuleChain()
+      .around(new TestWatcher() {
+        @Override
+        protected void succeeded(Description description) {
+          onTestFinished(true, description);
+        }
 
-      @Override
-      protected void failed(Throwable e, Description description) {
-        logTestFailure(e);
-        onTestFinished(false, description);
-      }
+        @Override
+        protected void failed(Throwable e, Description description) {
+          logTestFailure(e);
+          onTestFinished(false, description);
+        }
 
-      @Override
-      protected void skipped(AssumptionViolatedException e, Description description) {
-        onTestFinished(true, description);
-      }
+        @Override
+        protected void skipped(AssumptionViolatedException e, Description description) {
+          onTestFinished(true, description);
+        }
 
-      @Override
-      protected void starting(@NotNull Description d) {
-        onTestStarted();
-      }
-    };
+        @Override
+        protected void starting(@NotNull Description d) {
+          onTestStarted();
+        }
+      })
+      .around((base, description) -> new Statement() {
+        @Override
+        public void evaluate() {
+          recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(() -> base.evaluate());
+        }
+      });
   }
 
   @Internal
   public static final class TestLoggerAssertionError extends AssertionError {
-    private TestLoggerAssertionError(String message, Throwable cause) {
+    TestLoggerAssertionError(String message, Throwable cause) {
       super(message, cause);
     }
   }
@@ -378,8 +425,13 @@ public final class TestLoggerFactory implements Logger.Factory {
     @Override
     public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
       Set<LoggedErrorProcessor.Action>
-        actions = LoggedErrorProcessor.getInstance().processError(myLogger.getName(), requireNonNullElse(message, ""), details, t);
+        actions = LoggedErrorProcessor.getInstance().processError(getLoggerName(), requireNonNullElse(message, ""), details, t);
 
+      ErrorLog errorLog = TestLoggerKt.getErrorLog();
+      if (actions.contains(LoggedErrorProcessor.Action.RETHROW) && errorLog != null) {
+        errorLog.recordLoggedError(message, t);
+        return;
+      }
       if (actions.contains(LoggedErrorProcessor.Action.LOG)) {
         if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && details.length == 0) {
           throw (TestLoggerAssertionError)t;
@@ -389,29 +441,31 @@ public final class TestLoggerFactory implements Logger.Factory {
         t = ensureNotControlFlow(t);
 
         if (myFactory.mySplitTestLogs) {
-          myFactory.buffer(LogLevel.ERROR, myLogger.getName(), message, t);
+          myFactory.buffer(LogLevel.ERROR, getLoggerName(), message, t);
         }
 
         super.info(message, t);
       }
 
-      if (actions.contains(LoggedErrorProcessor.Action.STDERR)) {
-        DefaultLogger.dumpExceptionsToStderr(message, t);
+      if (actions.contains(LoggedErrorProcessor.Action.STDERR) && DefaultLogger.shouldDumpExceptionToStderr()) {
+        System.err.println("ERROR: " + message);
+        if (t != null) t.printStackTrace(System.err);
       }
 
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
+        myRethrowErrorsNumber.incrementAndGet();
         throw new TestLoggerAssertionError(message, t);
       }
     }
 
     @Override
     public void warn(String message, @Nullable Throwable t) {
-      if (LoggedErrorProcessor.getInstance().processWarn(myLogger.getName(), requireNonNullElse(message, ""), t)) {
+      if (LoggedErrorProcessor.getInstance().processWarn(getLoggerName(), requireNonNullElse(message, ""), t)) {
         message += DefaultLogger.attachmentsToString(t);
         t = ensureNotControlFlow(t);
 
         if (myFactory.mySplitTestLogs) {
-          myFactory.buffer(LogLevel.WARNING, myLogger.getName(), message, t);
+          myFactory.buffer(LogLevel.WARNING, getLoggerName(), message, t);
         }
 
         super.warn(message, t);
@@ -419,31 +473,16 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     @Override
-    public void info(String message) {
-      info(message, null);
-    }
-
-    @Override
     public void info(String message, @Nullable Throwable t) {
       super.info(message, t);
-      myFactory.buffer(LogLevel.INFO, myLogger.getName(), message, t);
-    }
-
-    @Override
-    public void debug(String message) {
-      debug(message, (Throwable)null);
-    }
-
-    @Override
-    public void debug(@Nullable Throwable t) {
-      debug(null, t);
+      myFactory.buffer(LogLevel.INFO, getLoggerName(), message, t);
     }
 
     @Override
     public void debug(String message, @Nullable Throwable t) {
       if (isDebugEnabled()) {
         super.debug(message, t);
-        myFactory.buffer(LogLevel.DEBUG, myLogger.getName(), message, t);
+        myFactory.buffer(LogLevel.DEBUG, getLoggerName(), message, t);
       }
     }
 
@@ -451,7 +490,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     public void trace(String message) {
       if (isTraceEnabled()) {
         super.trace(message);
-        myFactory.buffer(LogLevel.TRACE, myLogger.getName(), message, null);
+        myFactory.buffer(LogLevel.TRACE, getLoggerName(), message, null);
       }
     }
 
@@ -459,7 +498,7 @@ public final class TestLoggerFactory implements Logger.Factory {
     public void trace(@Nullable Throwable t) {
       if (isTraceEnabled()) {
         super.trace(t);
-        myFactory.buffer(LogLevel.TRACE, myLogger.getName(), null, t);
+        myFactory.buffer(LogLevel.TRACE, getLoggerName(), null, t);
       }
     }
 
@@ -472,8 +511,7 @@ public final class TestLoggerFactory implements Logger.Factory {
      * Calling {@link com.intellij.openapi.application.ex.ApplicationManagerEx#isInStressTest} reflectively to avoid dependency on a platform module
      */
     private static class Accessor {
-      @NotNull
-      private static final MethodHandle isInStressTest = getMethodHandle();
+      private static final @NotNull MethodHandle isInStressTest = getMethodHandle();
 
       private static @NotNull MethodHandle getMethodHandle() {
         try {
@@ -501,10 +539,10 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   // Cannot extend from ConsoleHandler since it is hard-coded to System.err,
   // and calling setOutputStream(System.out) after the constructor would close System.err.
-  private static class LogToStdoutJulHandler extends StreamHandler {
+  public static class LogToStdoutJulHandler extends StreamHandler {
     private boolean initialized;
 
-    LogToStdoutJulHandler() {
+    public LogToStdoutJulHandler() {
       super(System.out, new WithTimeSinceTestStartedJulFormatter());
       setLevel(Level.ALL);
     }
@@ -535,9 +573,19 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  private static class FilteringLogToStdoutJulHandler extends LogToStdoutJulHandler {
+    FilteringLogToStdoutJulHandler(Level level) {
+      super();
+
+      // we'd like to capture all records with level or finer than the level
+      // so we set level to all and do actual level filtering with the filter
+      setFilter(record -> record.getLevel().intValue() <= level.intValue());
+    }
+  }
+
   private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
     WithTimeSinceTestStartedJulFormatter() {
-      super(false);
+      super(true);
     }
 
     @Override

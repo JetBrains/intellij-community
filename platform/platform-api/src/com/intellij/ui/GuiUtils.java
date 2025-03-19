@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.application.Application;
@@ -7,12 +7,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
@@ -30,6 +28,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.Consumer;
 
 public final class GuiUtils {
   private static final Insets paddingInsideDialog = JBUI.insets(5);
@@ -139,24 +138,27 @@ public final class GuiUtils {
   }
 
   public static void iterateChildren(Component container, Consumer<? super Component> consumer, JComponent... excludeComponents) {
-    if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) return;
-    consumer.consume(container);
+    if (excludeComponents != null && ArrayUtilRt.find(excludeComponents, container) != -1) {
+      return;
+    }
+
+    consumer.accept(container);
     if (container instanceof Container) {
-      final Component[] components = ((Container)container).getComponents();
+      Component[] components = ((Container)container).getComponents();
       for (Component child : components) {
         iterateChildren(child, consumer, excludeComponents);
       }
     }
   }
 
-  public static void enableChildren(final boolean enabled, Component... components) {
-    for (final Component component : components) {
+  public static void enableChildren(boolean enabled, Component... components) {
+    for (Component component : components) {
       enableChildren(component, enabled);
     }
   }
 
   public static void showComponents(final boolean visible, Component... components) {
-    for (final Component component : components) {
+    for (Component component : components) {
       component.setVisible(visible);
     }
   }
@@ -228,20 +230,6 @@ public final class GuiUtils {
     }
   }
 
-  /**
-   * @deprecated Use ModalityUiUtil instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void invokeLaterIfNeeded(@NotNull Runnable runnable, @NotNull ModalityState modalityState, @NotNull Condition expired) {
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(runnable, modalityState, expired);
-    }
-  }
-
   public static JTextField createUndoableTextField() {
     return new JBTextField();
   }
@@ -253,8 +241,7 @@ public final class GuiUtils {
    * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
    */
-  @NotNull
-  public static Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
+  public static @NotNull Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
     Dimension size = comp.getPreferredSize();
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
     size.width = fontMetrics.charWidth('a') * charCount;

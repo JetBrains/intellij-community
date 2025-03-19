@@ -46,6 +46,7 @@ interface SEResultsEqualityProvider {
       override fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType =
         if (another is Replace) Replace(toBeReplaced + another.toBeReplaced) else this
     }
+
     abstract fun combine(another: SEEqualElementsActionType): SEEqualElementsActionType
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy;
 
 import com.intellij.ide.FileIconProvider;
@@ -21,9 +21,8 @@ import org.jetbrains.plugins.groovy.util.GrFileIndexUtil;
 import javax.swing.*;
 
 final class GroovyFileIconProvider implements FileIconProvider {
-  @Nullable
   @Override
-  public Icon getIcon(@NotNull VirtualFile virtualFile, @Iconable.IconFlags int flags, @Nullable Project project) {
+  public @Nullable Icon getIcon(@NotNull VirtualFile virtualFile, @Iconable.IconFlags int flags, @Nullable Project project) {
     if (project == null || !FileTypeRegistry.getInstance().isFileOfType(virtualFile, GroovyFileType.GROOVY_FILE_TYPE)) return null;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
     if (!(psiFile instanceof GroovyFile file)) return null;

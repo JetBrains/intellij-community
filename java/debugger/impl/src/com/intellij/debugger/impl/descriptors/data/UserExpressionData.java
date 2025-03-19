@@ -28,12 +28,14 @@ public class UserExpressionData extends DescriptorData<UserExpressionDescriptor>
     return new UserExpressionDescriptorImpl(project, myParentDescriptor, myTypeName, myName, myText, myEnumerationIndex);
   }
 
+  @Override
   public boolean equals(Object object) {
     if (!(object instanceof UserExpressionData)) return false;
 
     return myName.equals(((UserExpressionData)object).myName);
   }
 
+  @Override
   public int hashCode() {
     return myName.hashCode();
   }

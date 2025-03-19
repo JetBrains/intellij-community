@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap
 
 private fun GroovyFile.getBindings(): ConcurrentMap<String, GrVariable> {
   return CachedValuesManager.getCachedValue(this) {
-    Result.create(ConcurrentHashMap<String, GrVariable>(), PsiModificationTracker.MODIFICATION_COUNT)
+    Result.create(ConcurrentHashMap(), PsiModificationTracker.MODIFICATION_COUNT)
   }
 }
 

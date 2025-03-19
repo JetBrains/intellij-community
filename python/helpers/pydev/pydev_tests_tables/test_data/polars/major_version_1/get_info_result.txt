@@ -1,0 +1,14 @@
+<class 'polars.dataframe.frame.DataFrame'>
+__pydev_val__
+(3, 13)
+__pydev_val__
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (1, 13)</small><table border="1" class="dataframe"><thead><tr><th>int_col</th><th>float_col</th><th>bool_col</th><th>bool_col_with_none</th><th>str_col</th><th>date_col</th><th>datetime_col</th><th>time_col</th><th>categorical_col</th><th>binary_col</th><th>struct_col</th><th>list_col</th><th>large_number</th></tr><tr><td>i64</td><td>f64</td><td>bool</td><td>bool</td><td>str</td><td>date</td><td>datetime[μs]</td><td>time</td><td>cat</td><td>binary</td><td>struct[2]</td><td>list[i64]</td><td>u64</td></tr></thead><tbody><tr><td>1</td><td>1.0</td><td>true</td><td>true</td><td>&quot;one&quot;</td><td>2022-01-01</td><td>2022-01-01 12:00:00</td><td>12:00:00</td><td>&quot;A&quot;</td><td>b&quot;abc&quot;</td><td>{30,5.5}</td><td>[1, 2]</td><td>1844674407370955</td></tr></tbody></table></div>
+__pydev_val__
+Int64__pydev_table_column_type_val__Float64__pydev_table_column_type_val__Boolean__pydev_table_column_type_val__Boolean__pydev_table_column_type_val__String__pydev_table_column_type_val__Date__pydev_table_column_type_val__Datetime(time_unit='us', time_zone=None)__pydev_table_column_type_val__Time__pydev_table_column_type_val__Categorical(ordering='physical')__pydev_table_column_type_val__Binary__pydev_table_column_type_val__Struct({'age': Int64, 'height': Float64})__pydev_table_column_type_val__List(Int64)__pydev_table_column_type_val__UInt64

@@ -11,7 +11,6 @@ import com.intellij.webSymbols.framework.WebSymbolsFramework
 import org.jetbrains.annotations.TestOnly
 
 class WebSymbolsFrameworkRegistrationExtensionPoint<T : WebSymbolsFramework> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {
-
   @Attribute("id")
   @RequiredElement
   var id: String? = null
@@ -30,7 +29,7 @@ class WebSymbolsFrameworkRegistrationExtensionPoint<T : WebSymbolsFramework> : B
 
   override fun getImplementationClassName(): String? = implementation
 
-  override fun getKey(): String? = id
+  override fun getKey(): String = id!!
 
   override fun createInstance(componentManager: ComponentManager, pluginDescriptor: PluginDescriptor): T {
     val result = super.createInstance(componentManager, pluginDescriptor)

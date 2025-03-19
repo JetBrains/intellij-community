@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.memory.ui.InstancesWindowBase;
 import com.intellij.xdebugger.memory.utils.InstancesProvider;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +18,11 @@ public class InstancesWindow extends InstancesWindowBase {
 
   private final InstancesView myInstancesView;
 
-  public InstancesWindow(@NotNull XDebugSession session, @NotNull InstancesProvider provider, @NotNull String className) {
-    super(session, className);
-    myInstancesView = new InstancesView(session, provider, className, this::addWarningMessage);
+  public InstancesWindow(@NotNull XDebugSession session,
+                         @NotNull InstancesProvider provider,
+                         @NotNull ReferenceType classType) {
+    super(session, classType.name());
+    myInstancesView = new InstancesView(session, provider, classType,  this::addWarningMessage);
     Disposer.register(this.myDisposable, myInstancesView);
     myInstancesView.setPreferredSize(
       new JBDimension(DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT));
@@ -29,15 +32,13 @@ public class InstancesWindow extends InstancesWindowBase {
     root.setDefaultButton(myInstancesView.getFilterButton());
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myInstancesView;
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
     JComponent comp = super.createSouthPanel();
     if (comp != null) {
       comp.add(myInstancesView.getProgress(), BorderLayout.WEST);

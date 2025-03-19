@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.GeneralPath
 import javax.swing.JComponent
@@ -13,6 +14,7 @@ import javax.swing.LookAndFeel
 import javax.swing.SwingConstants
 import javax.swing.plaf.basic.BasicSliderUI
 
+@ApiStatus.Internal
 public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   companion object {
     @JvmStatic
@@ -270,10 +272,11 @@ public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JS
 
 }
 
+@ApiStatus.Internal
 public class DarculaSliderUIThemes {
-  val thumbHalfWidth = JBUI.scale(7)
-  val thumbHeight = JBUI.scale(24)
-  val focusedThumbHalfWidth = thumbHalfWidth + focusBorderThickness
+  val thumbHalfWidth: Int = JBUI.scale(7)
+  val thumbHeight: Int = JBUI.scale(24)
+  val focusedThumbHalfWidth: Int = thumbHalfWidth + focusBorderThickness
   val arc: Int
     get() = JBUI.scale(1)
   val trackThickness: Int
@@ -281,7 +284,7 @@ public class DarculaSliderUIThemes {
   val focusBorderThickness: Int
     get() = JBUI.scale(3)
   val focusedBorderColor: Color
-    get() = JBUI.CurrentTheme.Focus.focusColor()
+    get() = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
   val borderThickness: Int
     get() = JBUI.scale(1)
   val thumbOverhang: Int
@@ -295,7 +298,7 @@ public class DarculaSliderUIThemes {
   val tickColor: Color
     get() = JBColor.namedColor("Slider.tickColor", JBColor(0x999999, 0x808080))
   val focusedOuterColor: Color
-    get() = JBUI.CurrentTheme.Component.FOCUSED_BORDER_COLOR
+    get() = JBUI.CurrentTheme.Focus.focusColor()
   val disabledButtonColor: Color
     get() = JBColor.PanelBackground
   val disabledButtonBorderColor: Color

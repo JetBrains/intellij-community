@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
@@ -12,9 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 
-class OpenInRightSplitAction : AnAction(), DumbAware {
+@Internal
+class OpenInRightSplitAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
     val file = getVirtualFile(e) ?: return
@@ -27,13 +30,16 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
 
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return
     if (files.size > 1) {
-      files.forEach {
+      for (it in files) {
         if (file == it) {
-          return@forEach
+          continue
         }
-        FileEditorManagerEx.getInstanceEx(project).openFile(file = it,
-                                                            window = editorWindow,
-                                                            options = FileEditorOpenOptions(requestFocus = true))
+
+        FileEditorManagerEx.getInstanceEx(project).openFile(
+          file = it,
+          window = editorWindow,
+          options = FileEditorOpenOptions(requestFocus = true),
+        )
       }
     }
   }
@@ -58,9 +64,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
                                          !FileEditorManagerImpl.forbidSplitFor(contextFile)
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   companion object {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
@@ -75,7 +79,11 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
 
       val editorWindow = fileEditorManager.splitters.openInRightSplit(file, requestFocus)
       if (editorWindow == null) {
-        element?.navigate(requestFocus) ?: fileEditorManager.openFile(file, requestFocus)
+        element?.navigate(requestFocus) ?: fileEditorManager.openFile(
+          file = file,
+          window = null,
+          options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false),
+        )
         return null
       }
 

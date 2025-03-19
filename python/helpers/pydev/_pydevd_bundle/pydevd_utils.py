@@ -1,5 +1,6 @@
 from __future__ import nested_scopes
 
+import ctypes
 import os
 import traceback
 
@@ -16,12 +17,14 @@ except:
     OrderedDict = dict
 
 import inspect
-from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
-    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_ASYNCIO_DEBUGGER_ENV, IS_PY311
+from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, \
+    dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
+    ValuesPolicy, GET_FRAME_RETURN_GROUP, GET_FRAME_NORMAL_GROUP, IS_PY311, \
+    IS_PY37_OR_GREATER
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression_in_context
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression_in_context
 from array import array
 from collections import deque
 
@@ -54,7 +57,9 @@ def save_main_module(file, module_name):
         if hasattr(orig_module, attr):
             orig_attr = getattr(orig_module, attr)
             setattr(m, attr, orig_attr)
-    m.__file__ = file
+
+    if file is not None:
+        m.__file__ = file
 
     return m
 
@@ -559,7 +564,7 @@ def dump_threads(stream=None):
 
 
 def take_first_n_coll_elements(coll, n):
-    if coll.__class__ in (list, tuple, array):
+    if coll.__class__ in (list, tuple, array, str):
         return coll[:n]
     elif coll.__class__ in (set, frozenset, deque):
         buf = []
@@ -622,6 +627,25 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
+def is_safe_to_access(obj, attr_name):
+    """Evaluates the safety of attribute accessibility via `obj.attr_name`.
+
+    Direct attribute access can occasionally lead to unsafe conditions. A typical
+    scenario is when an extension class contains a property that might attempt to
+    access a field before its initialization. This function aims to verify the safety
+    of attribute access in the most risk-free manner. As an example, it leverages the
+    `inspect` module, facilitating attribute retrieval without triggering any
+    descriptor functionality.
+    """
+    attr = inspect.getattr_static(obj, attr_name, None)
+
+    # Should we check for other descriptor types here?
+    if inspect.isgetsetdescriptor(attr):
+        return False
+
+    return True
+
+
 def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
@@ -631,12 +655,36 @@ def is_in_unittests_debugging_mode():
 def is_current_thread_main_thread():
     if hasattr(threading, 'main_thread'):
         return threading.current_thread() is threading.main_thread()
-    else:
-        return isinstance(threading.current_thread(), threading._MainThread)
+
+    return isinstance(threading.current_thread(), threading._MainThread)
 
 
 def eval_expression(expression, globals, locals):
-    if IS_ASYNCIO_DEBUGGER_ENV:
-        return eval_async_expression_in_context(expression, globals, locals, False)
+    eval_func = get_eval_async_expression_in_context()
+    if eval_func is not None:
+        return eval_func(expression, globals, locals, False)
+
+    return eval(expression, globals, locals)
+
+
+def kill_thread(thread):
+    if not thread.is_alive():
+        return
+
+    thread_id = thread.ident
+
+    if IS_PY37_OR_GREATER:
+        tid = ctypes.c_long(thread_id)
     else:
-        return eval(expression, globals, locals)
+        tid = ctypes.c_ulong(thread_id)
+
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(SystemExit))
+
+    if res == 0:
+        pydev_log.debug("Thread with ID '%s' not found" % thread_id)
+    elif res > 1:
+        pydev_log.debug("More then one thread with ID '%s' found" % thread_id)
+    else:
+        pydev_log.debug("Successfully raised an exception in thread with ID '%s'"
+                        % thread_id)
+    pydev_log.debug("Thread with ID '%s' is stopped" % thread_id)

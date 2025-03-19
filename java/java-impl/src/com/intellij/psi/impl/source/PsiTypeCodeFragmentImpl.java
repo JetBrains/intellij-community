@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.util.BitUtil.isSet;
 
 public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiTypeCodeFragment {
-  private final static Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
+  private static final Logger LOG = Logger.getInstance(PsiTypeCodeFragmentImpl.class);
 
   private final boolean myAllowEllipsis;
   private final boolean myAllowDisjunction;
@@ -43,8 +43,7 @@ public class PsiTypeCodeFragmentImpl extends PsiCodeFragmentImpl implements PsiT
   }
 
   @Override
-  @NotNull
-  public PsiType getType() throws TypeSyntaxException, NoTypeException {
+  public @NotNull PsiType getType() throws TypeSyntaxException, NoTypeException {
     class MyTypeSyntaxException extends RuntimeException {
       final PsiErrorElement error;
 

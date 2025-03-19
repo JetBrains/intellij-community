@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.PanelWithAnchor;
@@ -26,10 +26,10 @@ import static com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfigurat
  */
 public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestRunConfigurationParams, PanelWithAnchor {
   private JPanel myRootPanel;
-  private LabeledComponent myTestClassComponent;
-  private LabeledComponent myTestMethodComponent;
-  private LabeledComponent myTestFolderComponent;
-  private LabeledComponent myTestScriptComponent;
+  private LabeledComponentNoThrow myTestClassComponent;
+  private LabeledComponentNoThrow myTestMethodComponent;
+  private LabeledComponentNoThrow myTestFolderComponent;
+  private LabeledComponentNoThrow myTestScriptComponent;
   private JRadioButton myAllInFolderRB;
   private JRadioButton myTestScriptRB;
   private JRadioButton myTestClassRB;
@@ -63,10 +63,10 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
 
     setAnchor(myTestMethodComponent.getLabel());
 
-    myTestFolderTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.folder.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myTestScriptTextField.addBrowseFolderListener(PyBundle.message("runcfg.unittest.dlg.select.script.path"), null, myProject,
-                                                  FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myTestFolderTextField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("runcfg.unittest.dlg.select.folder.path")));
+    myTestScriptTextField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(PyBundle.message("runcfg.unittest.dlg.select.script.path")));
 
     myPatternCheckBox.setSelected(configuration.usePattern());
 
@@ -284,6 +284,10 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     return myParamCheckBox;
   }
 
+  public JTextField getParamTextField() {
+    return myParamTextField;
+  }
+
   public void setParams(String params) {
     myParamTextField.setText(params);
   }
@@ -293,5 +297,3 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     myParamCheckBox.setVisible(true);
   }
 }
-
-

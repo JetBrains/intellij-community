@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -77,7 +77,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private final LightVirtualFile myNewVirtualFile;
 
   private final long myOrigCreationStamp;
-  private EditorWindow mySplittedWindow;
+  private EditorWindow splittedWindow;
   private boolean myCommittingToOriginal;
 
   private final @NotNull InjectedFileChangesHandler myEditChangesHandler;
@@ -165,7 +165,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       Disposer.register(this, () -> finalEditHandlers.remove(this));
     });
 
-    initGuardedBlocks(shreds);
+    initGuardedBlocks(myNewDocument, myOrigDocument, shreds);
 
     myOrigDocument.addDocumentListener(this, this);
     myNewDocument.addDocumentListener(this, this);
@@ -181,7 +181,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     if (changesHandlerFactory != null) {
       return changesHandlerFactory.createFileChangesHandler(shreds, editor, document, injectedFile);
     }
-    if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+    if (ContainerUtil.or(shreds, it -> InjectionMeta.getInjectionIndent().get(it.getHost()) != null)) {
       return new IndentAwareInjectedFileChangesHandler(shreds, editor, document, injectedFile);
     }
     return new CommonInjectedFileChangesHandler(shreds, editor, document, injectedFile);
@@ -209,7 +209,9 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
-        mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
+        if (currentWindow != null) {
+          splittedWindow = currentWindow.split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
+        }
       }
       Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(myProject, myNewVirtualFile, injectedOffset), true);
       // fold missing values
@@ -295,14 +297,14 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   private void closeEditor() {
     boolean unsplit = false;
-    if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+    if (splittedWindow != null && !splittedWindow.isDisposed()) {
+      List<EditorComposite> editors = splittedWindow.getAllComposites();
       if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }
     if (unsplit) {
-      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, mySplittedWindow);
+      ((FileEditorManagerImpl)FileEditorManager.getInstance(myProject)).closeFile(myNewVirtualFile, splittedWindow);
     }
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
@@ -312,7 +314,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     closeEditor();
   }
 
-  private void initGuardedBlocks(Place shreds) {
+  static void initGuardedBlocks(@NotNull Document newDocument, @NotNull Document origDocument, Place shreds) {
     int origOffset = -1;
     int curOffset = 0;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
@@ -320,16 +322,16 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       int start = shred.getRange().getStartOffset() + shred.getPrefix().length();
       int end = shred.getRange().getEndOffset() - shred.getSuffix().length();
       if (curOffset < start) {
-        RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, start);
+        RangeMarker guard = newDocument.createGuardedBlock(curOffset, start);
         if (curOffset == 0 && shred == shreds.get(0)) guard.setGreedyToLeft(true);
-        String padding = origOffset < 0 ? "" : myOrigDocument.getText().substring(origOffset, hostRangeMarker.getStartOffset());
+        String padding = origOffset < 0 ? "" : origDocument.getText().substring(origOffset, hostRangeMarker.getStartOffset());
         guard.putUserData(REPLACEMENT_KEY, fixQuotes(padding));
       }
       curOffset = end;
       origOffset = hostRangeMarker.getEndOffset();
     }
-    if (curOffset < myNewDocument.getTextLength()) {
-      RangeMarker guard = myNewDocument.createGuardedBlock(curOffset, myNewDocument.getTextLength());
+    if (curOffset < newDocument.getTextLength()) {
+      RangeMarker guard = newDocument.createGuardedBlock(curOffset, newDocument.getTextLength());
       guard.setGreedyToRight(true);
       guard.putUserData(REPLACEMENT_KEY, "");
     }
@@ -374,7 +376,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     return "QuickEditHandler@" + this.hashCode() + super.toString();
   }
 
-  private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
+  private static final class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       //nothing

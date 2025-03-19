@@ -22,7 +22,7 @@ object DeclarationCantBeInlinedFactory : KotlinIntentionActionsFactory() {
         if (containingClass.isInterface()) {
             fixes.add(ConvertMemberToExtensionFix(function))
         } else if (function.hasModifier(KtTokens.OPEN_KEYWORD)) {
-            fixes.add(RemoveModifierFix(function, KtTokens.OPEN_KEYWORD, false))
+            fixes.add(RemoveModifierFix(function, KtTokens.OPEN_KEYWORD, false).asIntention())
         }
         return fixes
     }
@@ -36,6 +36,6 @@ private class ConvertMemberToExtensionFix(element: KtNamedFunction) : KotlinQuic
     override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        element?.also { ConvertMemberToExtensionIntention.convert(it) }
+        element?.also { ConvertMemberToExtensionIntention.Holder.convert(it) }
     }
 }

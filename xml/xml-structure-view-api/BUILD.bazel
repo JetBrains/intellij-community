@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.xml.structureView` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "structureView",
+  module_name = "intellij.xml.structureView",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//xml/xml-psi-api:psi",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  exports = ["//xml/xml-psi-api:psi"]
+)
+### auto-generated section `build intellij.xml.structureView` end

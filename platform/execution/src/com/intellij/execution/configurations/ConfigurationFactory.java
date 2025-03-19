@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -14,7 +15,9 @@ import javax.swing.*;
 
 /**
  * Factory for run configuration instances.
+ *
  * @see ConfigurationType#getConfigurationFactories()
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html">Execution / Run Configurations (IntelliJ Platform Docs)</a>
  */
 public abstract class ConfigurationFactory {
   public static final ConfigurationFactory[] EMPTY_ARRAY = new ConfigurationFactory[0];
@@ -101,6 +104,9 @@ public abstract class ConfigurationFactory {
     // null only if SimpleConfigurationType (but method overridden)
     //noinspection ConstantConditions
     return myType;
+  }
+
+  public void configureDefaultSettings(@NotNull RunnerAndConfigurationSettings settings) {
   }
 
   /**

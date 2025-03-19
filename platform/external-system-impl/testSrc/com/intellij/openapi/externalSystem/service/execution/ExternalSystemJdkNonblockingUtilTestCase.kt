@@ -2,11 +2,10 @@
 package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
-import com.intellij.testFramework.PlatformTestUtil
-import java.util.concurrent.TimeUnit
 
 abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilTestCase() {
 
@@ -18,8 +17,10 @@ abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilT
     sdkLookupProvider = SdkLookupProviderImpl()
   }
 
-  open fun nonblockingResolveJdkInfo(jdkReference: String?) =
-    sdkLookupProvider.nonblockingResolveJdkInfo(projectSdk, jdkReference)
+  open fun nonblockingResolveJdkInfo(jdkReference: String?): SdkInfo {
+    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+    return sdkLookupProvider.nonblockingResolveJdkInfo(projectSdk, jdkReference)
+  }
 
   fun assertSdkInfo(versionString: String, homePath: String, actualJdkReference: String?) {
     val actualSdkInfo = nonblockingResolveJdkInfo(actualJdkReference)
@@ -40,16 +41,4 @@ abstract class ExternalSystemJdkNonblockingUtilTestCase : ExternalSystemJdkUtilT
   }
 
   fun createResolvingSdkInfo(sdk: Sdk) = SdkInfo.Resolving(sdk.name, sdk.versionString, sdk.homePath)
-
-  fun waitForLookup() = sdkLookupProvider.waitForLookup()
-
-  companion object {
-    fun SdkLookupProvider.waitForLookup() {
-      this as SdkLookupProviderImpl
-      val promise = getSdkPromiseForTests()
-      if (promise != null) {
-        PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
-      }
-    }
-  }
 }

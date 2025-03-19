@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
     public static class WithLightTestFramework extends AbstractKotlinPsiBasedTestFrameworkTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPsiBasedTest, this, testDataFilePath);
         }
@@ -45,6 +52,11 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
         }
 
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
+        }
+
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
@@ -59,6 +71,12 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
     public static class WithoutLightTestFramework extends AbstractKotlinPsiBasedTestFrameworkTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPureTest, this, testDataFilePath);
         }
@@ -81,6 +99,60 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
         @TestMetadata("jUnit5TestFile.kt")
         public void testJUnit5TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
+        }
+
+        @TestMetadata("jUnitTestClassWithSubclasses.kt")
+        public void testJUnitTestClassWithSubclasses() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
+        }
+
+        @TestMetadata("testNGTestClassWithSubclasses.kt")
+        public void testTestNGTestClassWithSubclasses() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/testNGTestClassWithSubclasses.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
+    public static class WithGradleConfiguration extends AbstractKotlinPsiBasedTestFrameworkTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithGradleConfiguration, this, testDataFilePath);
+        }
+
+        @TestMetadata("jUnit3TestFile.kt")
+        public void testJUnit3TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
+        }
+
+        @TestMetadata("jUnit3TestFileWithJUnit4.kt")
+        public void testJUnit3TestFileWithJUnit4() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFileWithJUnit4.kt");
+        }
+
+        @TestMetadata("jUnit4TestFile.kt")
+        public void testJUnit4TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5WithExtensionsTestFile.kt")
+        public void testJUnit5WithExtensionsTestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5WithExtensionsTestFile.kt");
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")

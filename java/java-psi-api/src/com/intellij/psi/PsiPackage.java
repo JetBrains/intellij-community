@@ -108,4 +108,11 @@ public interface PsiPackage extends PsiCheckedRenameElement, NavigationItem, Psi
   boolean containsClassNamed(@NotNull String name);
 
   PsiClass @NotNull [] findClassByShortName(@NotNull String name, @NotNull GlobalSearchScope scope);
+
+  /**
+   * Returns {@code true} if the package contains a class with short name {@code name} belonging to the provided scope.
+   */
+  default boolean hasClassWithShortName(@NotNull String name, @NotNull GlobalSearchScope scope) {
+    return findClassByShortName(name, scope).length > 0;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,6 +10,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
-public class PluginTable extends JBTable {
+@ApiStatus.Internal
+public final class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);
     getColumnModel().setColumnMargin(0);
@@ -36,9 +38,8 @@ public class PluginTable extends JBTable {
     setShowGrid(false);
     this.setTableHeader(null);
     setTransferHandler(new TransferHandler() {
-      @Nullable
       @Override
-      protected Transferable createTransferable(JComponent c) {
+      protected @Nullable Transferable createTransferable(JComponent c) {
         final IdeaPluginDescriptor[] selectedValues = getSelectedObjects();
         if (selectedValues == null) return null;
         final String text = StringUtil.join(selectedValues, descriptor -> descriptor.getName(), ", ");

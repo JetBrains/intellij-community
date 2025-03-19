@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth
 
 import com.intellij.concurrency.JobScheduler
@@ -64,7 +64,7 @@ private val LOG = logger<SvnAuthenticationNotifier>()
 private val AUTH_KINDS =
   listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server")
 
-@Service
+@Service(Service.Level.PROJECT)
 class SvnAuthenticationNotifier(project: Project) :
   GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
     project,
@@ -149,7 +149,7 @@ class SvnAuthenticationNotifier(project: Project) :
     getApplication().invokeLater(
       {
         outdatedRequests.forEach { removeLazyNotificationByKey(it) }
-      }, ModalityState.NON_MODAL
+      }, ModalityState.nonModal()
     )
   }
 
@@ -326,7 +326,7 @@ class SvnAuthenticationNotifier(project: Project) :
               configuration.configurationDirectory, { configuration.setConfigurationDirParameters(false, it) }, project, null)
           }
         )
-      }, ModalityState.NON_MODAL, project.disposed)
+      }, ModalityState.nonModal(), project.disposed)
 
     @JvmStatic
     fun clearAuthenticationCache(project: Project, component: Component?, configDirPath: String?) {

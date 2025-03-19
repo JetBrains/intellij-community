@@ -1,0 +1,64 @@
+### auto-generated section `build intellij.devkit.workspaceModel` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+jvm_resources(
+  name = "workspaceModel_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "workspaceModel",
+  module_name = "intellij.devkit.workspaceModel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common-provided",
+    "@lib//:kotlinc-kotlin-jps-common-provided",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:workspace-model-codegen",
+    "//platform/ide-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-api:ide",
+    "//platform/lang-core",
+    "//platform/indexing-api:indexing",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//plugins/devkit/devkit-core:core",
+    "//java/idea-ui:ui",
+    "//aether-dependency-resolver:java-aetherDependencyResolver",
+    "//java/openapi:java",
+    "//platform/util-class-loader:util-classLoader",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/formatter/minimal:kotlin-formatter-minimal",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-reflect",
+    "//platform/backend/workspace",
+    "//platform/util/progress",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":workspaceModel_resources"]
+)
+### auto-generated section `build intellij.devkit.workspaceModel` end

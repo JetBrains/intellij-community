@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,8 +41,7 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @NonNls @SuppressWarnings("StringOperationCanBeSimplified")
-  private static final Object lock = new String("registry lock");
+  private static final @NonNls Object lock = new String("registry lock");
 
   static {
     IElementType[] init = new IElementType[137];
@@ -58,6 +59,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull ClassLoader loader, @NotNull PluginDescriptor pluginDescriptor) {
     for (int i = 0; i < ourRegistry.length; i++) {
       IElementType type = ourRegistry[i];
@@ -67,6 +69,7 @@ public class IElementType {
     }
   }
 
+  @ApiStatus.Internal
   public static void unregisterElementTypes(@NotNull Language language, @NotNull PluginDescriptor pluginDescriptor) {
     if (language == Language.ANY) {
       throw new IllegalArgumentException("Trying to unregister Language.ANY");
@@ -80,11 +83,8 @@ public class IElementType {
   }
 
   private final short myIndex;
-  @NonNls
-  @NotNull
-  private final String myDebugName;
-  @NotNull
-  private final Language myLanguage;
+  private final @NonNls @NotNull String myDebugName;
+  private final @NotNull Language myLanguage;
 
   /**
    * Creates and registers a new element type for the specified language.
@@ -96,7 +96,7 @@ public class IElementType {
     this(debugName, language, true);
 
     if (!(this instanceof IFileElementType)) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
+      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
     }
   }
 
@@ -110,21 +110,18 @@ public class IElementType {
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       synchronized (lock) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myIndex = size++;
-        if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
-          List<IElementType> types = max.getValue();
-          Logger.getInstance(IElementType.class)
-            .error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
-                   " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
-        }
-        IElementType[] newRegistry =
-          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
+
+        IElementType[] newRegistry = myIndex >= ourRegistry.length
+                                     ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY)
+                                     : ourRegistry;
         newRegistry[myIndex] = this;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
+
+      checkSizeDoesNotExceedLimit();
     }
     else {
       myIndex = -1;
@@ -136,8 +133,7 @@ public class IElementType {
    *
    * @return the associated language.
    */
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -165,10 +161,8 @@ public class IElementType {
    * Don't use it directly. Override or call {@link IElementType#toString()}.
    * Note, it should be used only for testing and logging purposes.
    */
-  @NonNls
-  @NotNull
   @ApiStatus.Internal
-  public String getDebugName() {
+  public @NonNls @NotNull String getDebugName() {
     return myDebugName;
   }
 
@@ -204,11 +198,14 @@ public class IElementType {
    * @return the element type at the specified index.
    * @throws IndexOutOfBoundsException if the index is out of registered elements' range.
    */
-  public static IElementType find(short idx) {
+  public static @NotNull IElementType find(short idx) {
     // volatile read; array always grows, never shrinks, never overwritten
     IElementType type = ourRegistry[idx];
     if (type instanceof TombstoneElementType) {
       throw new IllegalArgumentException("Trying to access element type from unloaded plugin: " + type);
+    }
+    if (type == null) {
+      throw new IndexOutOfBoundsException("Element type index " + idx + " is out of range (0.." + (size - 1) + ")");
     }
     return type;
   }
@@ -244,6 +241,56 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[0]);
+  }
+
+  /**
+   * todo IJPL-562 mark experimental?
+   *
+   * Map all registered token types that match the specified predicate.
+   *
+   * @param p the predicate which should be matched by the element types.
+   * @return the list of matching element types.
+   */
+  @ApiStatus.Internal
+  public static <R> @NotNull List<@NotNull R> mapNotNull(@NotNull Function<IElementType, ? extends R> p) {
+    List<R> matches = new ArrayList<>();
+    for (IElementType value : ourRegistry) {
+      if (value != null) {
+        R result = p.apply(value);
+        if (result != null) {
+          matches.add(result);
+        }
+      }
+    }
+    return matches;
+  }
+
+  private void checkSizeDoesNotExceedLimit() {
+    if (myIndex != MAX_INDEXED_TYPES) {
+      return;
+    }
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      int length = MAX_INDEXED_TYPES;
+      IElementType[] registrySnapshot = new IElementType[length];
+      synchronized (lock) {
+        System.arraycopy(ourRegistry, 0, registrySnapshot, 0, length);
+      }
+
+      Map<Language, List<IElementType>> byLang = Stream.of(registrySnapshot)
+        .filter(Objects::nonNull)
+        .collect(Collectors.groupingBy(ie -> ie.myLanguage));
+
+      Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
+
+      List<IElementType> maxTypes = max.getValue();
+      Language maxLanguage = max.getKey();
+      String first300ElementTypes = StringUtil.first(StringUtil.join(maxTypes, ", "), 300, true);
+
+      Logger.getInstance(IElementType.class)
+        .error("Too many element types registered. Out of (short) range. Most of element types (" + maxTypes.size() + ")" +
+               " were registered for '" + maxLanguage + "': " + first300ElementTypes);
+    });
   }
 
   private static final class TombstoneElementType extends IElementType {

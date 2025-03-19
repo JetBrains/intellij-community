@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
-import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension
@@ -14,13 +13,13 @@ class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
     if (getMavenCoordinates(libraryData) != null) {
       return ImportedLibraryType.IMPORTED_LIBRARY_KIND
     }
-    return null;
+    return null
   }
 
   override fun prepareNewLibrary(libraryData: LibraryData,
                                  libraryModel: Library.ModifiableModel) {
     val properties = (libraryModel as? LibraryEx)?.properties
-    val coords = getMavenCoordinates(libraryData);
+    val coords = getMavenCoordinates(libraryData)
     if (properties is ImportedLibraryProperties && coords != null) {
       (libraryModel as? LibraryEx.ModifiableModelEx)?.properties = ImportedLibraryProperties(coords)
     }

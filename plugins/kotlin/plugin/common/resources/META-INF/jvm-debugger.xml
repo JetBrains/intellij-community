@@ -16,24 +16,32 @@
     </action>
   </actions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
                     interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <debugger.creationStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+    <debugger.dumpItemsProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutinesDumpAsyncProvider"/>
 
     <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
-
-    <applicationService
-            serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
 
-    <projectService
+    <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
 
@@ -42,11 +50,13 @@
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
 
-    <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
+    <debugger.compoundRendererProvider id="KotlinClassRendererProvider"
+                                       implementation="org.jetbrains.kotlin.idea.debugger.core.render.KotlinClassRendererProvider"/>
     <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
 
 
     <debugger.sourcePositionHighlighter implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter"/>
+    <debugger.sourcePositionProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionProvider"/>
 
     <debugger.extraSteppingFilter implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinExtraSteppingFilter"/>
     <debugger.syntheticProvider implementation="org.jetbrains.kotlin.idea.debugger.core.filter.KotlinSyntheticTypeComponentProvider"/>
@@ -55,6 +65,7 @@
     <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
     <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider"/>
     <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSimpleGetterProvider"/>
+    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
 
     <debuggerEditorTextProvider
             language="kotlin"
@@ -70,11 +81,6 @@
             implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory"
             order="first"/>
 
-    <registryKey
-            key="kotlin.debugger.coroutines.standalone"
-            description="Enable debugging for coroutines in Kotlin/JVM with no library support"
-            defaultValue="false"
-            restartRequired="false"/>
     <registryKey
             key="kotlin.debugger.coroutines.trace"
             description="Trace coroutines debugger output"

@@ -1,10 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-slf4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.6.4" />
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-slf4j:1.10.1-intellij-3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-3/kotlinx-coroutines-slf4j-1.10.1-intellij-3.jar">
+          <sha256sum>1808c8e493794077bfef20e9a0adbd7a4fd44be9f610e01f1a7c8d32bd7b27c6</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-slf4j/1.6.4/kotlinx-coroutines-slf4j-1.6.4.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-3/kotlinx-coroutines-slf4j-1.10.1-intellij-3.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-slf4j/1.10.1-intellij-3/kotlinx-coroutines-slf4j-1.10.1-intellij-3-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

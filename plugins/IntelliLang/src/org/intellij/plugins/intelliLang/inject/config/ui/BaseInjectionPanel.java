@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject.config.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -42,7 +28,7 @@ import java.util.ArrayList;
 /**
  * @author Gregory.Shrago
  */
-public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
+public final class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   // read by reflection
   LanguagePanel myLanguagePanel;
@@ -107,7 +93,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         sb.append(s.trim());
         continue;
       }
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         final String text = sb.toString();
         places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
         sb.setLength(0);
@@ -115,7 +101,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       sb.append(s);
       enabled = nextEnabled;
     }
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       final String text = sb.toString();
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }

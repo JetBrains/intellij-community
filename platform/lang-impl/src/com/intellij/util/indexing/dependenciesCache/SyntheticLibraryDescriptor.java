@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.navigation.ItemPresentation;
@@ -17,26 +17,16 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Set;
 
-class SyntheticLibraryDescriptor {
-  @NotNull
-  public final Class<? extends AdditionalLibraryRootsProvider> providerClass;
-  @NotNull
-  public final AdditionalLibraryRootsProvider provider;
-  @Nullable
-  public final String comparisonId;
-  @NotNull
-  public final SyntheticLibrary library;
-  @Nullable @NlsSafe
-  public final String presentableLibraryName;
-  @NotNull
-  @NlsSafe
-  public final String debugLibraryName;
-  @NotNull
-  public final Set<VirtualFile> sourceRoots;
-  @NotNull
-  public final Set<VirtualFile> binaryRoots;
-  @NotNull
-  public final Set<VirtualFile> excludedRoots;
+final class SyntheticLibraryDescriptor {
+  public final @NotNull Class<? extends AdditionalLibraryRootsProvider> providerClass;
+  public final @NotNull AdditionalLibraryRootsProvider provider;
+  public final @Nullable String comparisonId;
+  public final @NotNull SyntheticLibrary library;
+  public final @Nullable @NlsSafe String presentableLibraryName;
+  public final @NotNull @NlsSafe String debugLibraryName;
+  public final @NotNull Set<VirtualFile> sourceRoots;
+  public final @NotNull Set<VirtualFile> binaryRoots;
+  public final @NotNull Set<VirtualFile> excludedRoots;
   public final boolean hasExcludeFileCondition;
 
   SyntheticLibraryDescriptor(@NotNull SyntheticLibrary library,
@@ -58,7 +48,7 @@ class SyntheticLibraryDescriptor {
                                      @NotNull Set<VirtualFile> sourceRoots,
                                      @NotNull Set<VirtualFile> binaryRoots,
                                      @NotNull Set<VirtualFile> excludedRoots,
-                                     @Nullable Condition<VirtualFile> excludeFileCondition) {
+                                     @Nullable Condition<? super VirtualFile> excludeFileCondition) {
     this.provider = provider;
     this.providerClass = provider.getClass();
     this.comparisonId = library.getComparisonId();
@@ -71,24 +61,20 @@ class SyntheticLibraryDescriptor {
     this.hasExcludeFileCondition = excludeFileCondition != null;
   }
 
-  @NotNull
-  public SyntheticLibraryIndexableFilesIteratorImpl toIndexableIterator() {
+  public @NotNull SyntheticLibraryIndexableFilesIteratorImpl toIndexableIterator() {
     return new SyntheticLibraryIndexableFilesIteratorImpl(presentableLibraryName, library, getAllRoots());
   }
 
-  @Nullable
-  public SyntheticLibraryDescriptor getLibForIncrementalRescanning(@Nullable Collection<? extends SyntheticLibraryDescriptor> before) {
+  public @Nullable SyntheticLibraryDescriptor getLibForIncrementalRescanning(@Nullable Collection<? extends SyntheticLibraryDescriptor> before) {
     if (before == null || comparisonId == null || hasExcludeFileCondition) return null;
     return ContainerUtil.find(before, lib -> comparisonId.equals(lib.comparisonId));
   }
 
-  @NotNull
-  @Unmodifiable
-  public Set<VirtualFile> getAllRoots() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getAllRoots() {
     return ContainerUtil.union(sourceRoots, binaryRoots);
   }
 
-  public final boolean contains(@NotNull VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return contains(file, true, true);
   }
 

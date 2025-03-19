@@ -1,3 +1,3 @@
-from braintree.resource import Resource as Resource
+from braintree.resource import Resource
 
 class OAuthCredentials(Resource): ...

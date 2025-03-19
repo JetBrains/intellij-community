@@ -11,7 +11,7 @@ data class CompoundRunConfigurationProperties(val name: String, val toRun: List<
     fun loadRunConfiguration(file: Path): CompoundRunConfigurationProperties {
       val configuration = RunConfigurationProperties.getConfiguration(file)
       if (!configuration.getAttributeValue("type").equals(TYPE)) {
-        throw RuntimeException("Cannot load compound configuration from \'${file.name}\': ${TYPE} run configuration type is expected")
+        throw RuntimeException("Cannot load compound configuration from '${file.name}': ${TYPE} run configuration type is expected")
       }
 
       val configurationName = configuration.getAttributeValue("name")

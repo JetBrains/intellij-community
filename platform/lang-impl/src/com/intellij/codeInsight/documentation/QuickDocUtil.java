@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -45,7 +45,7 @@ public final class QuickDocUtil {
    * Use {@link DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
   @Deprecated(forRemoval = true)
-  public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable @Nls final String documentation) {
+  public static void updateQuickDoc(final @NotNull Project project, final @NotNull PsiElement element, final @Nullable @Nls String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -61,8 +61,7 @@ public final class QuickDocUtil {
    * Use {@link  DocumentationResult#asyncDocumentation} or {@link DocumentationResult.Documentation#updates} for async updates.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public static DocumentationComponent getActiveDocComponent(@NotNull Project project) {
+  public static @Nullable DocumentationComponent getActiveDocComponent(@NotNull Project project) {
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     DocumentationComponent component;
     JBPopup hint = documentationManager.getDocInfoHint();
@@ -81,12 +80,11 @@ public final class QuickDocUtil {
   }
 
 
-  @Nls
   @Contract("_, _, _, null -> null")
-  public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
-                                                      PsiElement element,
-                                                      PsiElement originalElement,
-                                                      @Nullable @Nls String navigationInfo) {
+  public static @Nls String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
+                                                           PsiElement element,
+                                                           PsiElement originalElement,
+                                                           @Nullable @Nls String navigationInfo) {
     if (navigationInfo != null) {
       String fqn = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
       String fullText = provider.generateDoc(element, originalElement);

@@ -17,28 +17,36 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.ProjectTopics.PROJECT_ROOTS;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
 public abstract class ProjectFileNodeUpdater {
   private static final Logger LOG = Logger.getInstance(ProjectFileNodeUpdater.class);
   private final Ref<Set<VirtualFile>> reference = new Ref<>();
-  private final Invoker invoker;
+  private final ProjectFileNodeUpdaterInvoker invoker;
   private volatile boolean root;
   private volatile long time;
   private volatile int size;
 
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
+    this(project, new ProjectFileNodeUpdaterLegacyInvoker(invoker));
+  }
+
+  public ProjectFileNodeUpdater(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+    this(project, new ProjectFileNodeUpdaterCoroutineInvoker(coroutineScope));
+  }
+
+  private ProjectFileNodeUpdater(@NotNull Project project, @NotNull ProjectFileNodeUpdaterInvoker invoker) {
     this.invoker = invoker;
     MessageBusConnection connection = project.getMessageBus().connect(invoker);
-    connection.subscribe(PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateFromRoot();

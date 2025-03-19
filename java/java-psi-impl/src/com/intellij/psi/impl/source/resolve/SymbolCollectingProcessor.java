@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -54,16 +54,20 @@ public class SymbolCollectingProcessor implements PsiScopeProcessor, ElementClas
   }
 
   public static class ResultWithContext {
-    private final PsiNamedElement myElement;
+    private final @Nullable PsiNamedElement myElement;
     private final PsiElement myFileContext;
 
-    public ResultWithContext(@NotNull PsiNamedElement element, @Nullable PsiElement fileContext) {
+    /**
+     * @param element resolved element; or null if the element is unresolved but should be resolved within given context in 
+     *                the correct Java-program
+     * @param fileContext resolve context (e.g., import statement), if applicable
+     */
+    public ResultWithContext(@Nullable PsiNamedElement element, @Nullable PsiElement fileContext) {
       myElement = element;
       myFileContext = fileContext;
     }
 
-    @NotNull
-    public PsiNamedElement getElement() {
+    public @Nullable PsiNamedElement getElement() {
       return myElement;
     }
 
@@ -73,7 +77,7 @@ public class SymbolCollectingProcessor implements PsiScopeProcessor, ElementClas
 
     @Override
     public String toString() {
-      return myElement.toString();
+      return String.valueOf(myElement);
     }
   }
 }

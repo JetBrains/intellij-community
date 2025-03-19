@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -103,8 +103,7 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     showTooltip(editor, component, false);
   }
 
-  @Nullable
-  private static String createActionText(@NotNull String actionId, @NotNull String href) {
+  private static @Nullable String createActionText(@NotNull String actionId, @NotNull String href) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) return null;
     String text = action.getTemplateText();
@@ -126,7 +125,7 @@ public final class EditPropertyValueTooltipManager implements EditorMouseListene
     Point relativePoint = new Point((start.x + end.x) / 2, start.y);
     Point point = SwingUtilities.convertPoint(editorComponent, relativePoint, rootPane.getLayeredPane());
     LightweightHint hint = new LightweightHint(component);
-    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true);
+    HintHint hintHint = HintManagerImpl.createHintHint(editor, point, hint, ABOVE).setShowImmediately(true).setStatus(HintHint.Status.Info);
     int flags = HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING;
     if (tenacious) {
       hintHint.setExplicitClose(true);

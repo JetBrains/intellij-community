@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.embedder;
 
 import org.eclipse.aether.RepositorySystemSession;
@@ -7,7 +7,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.server.MavenServerParallelRunner;
+import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class CustomMaven36ArtifactResolver implements ArtifactResolver {
+public class CustomMaven36ArtifactResolver implements ArtifactResolver, Resetable {
   private final ArtifactResolver myWrapee;
   private final Map<ArtifactRequestData, ArtifactResultData> artifactCache = new ConcurrentHashMap<>();
 
@@ -23,7 +23,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     myWrapee = wrapee;
   }
 
-  private ArtifactResultData doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
+  protected ArtifactResultData doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
     try {
       return new ArtifactResultData(myWrapee.resolveArtifact(session, request), null);
     }
@@ -32,8 +32,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     }
   }
 
-  @NotNull
-  private static ArtifactResult getResult(ArtifactRequest request, ArtifactResultData resultData) {
+  private static @NotNull ArtifactResult getResult(ArtifactRequest request, ArtifactResultData resultData) {
     ArtifactResult result = new ArtifactResult(request);
     result.setArtifact(resultData.getArtifact());
     result.setRepository(resultData.getRepository());
@@ -68,7 +67,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
 
     List<ArtifactRequest> requestList = new ArrayList<>(requests);
 
-    List<ArtifactResultData> resultDataList = MavenServerParallelRunner.execute(
+    List<ArtifactResultData> resultDataList = ParallelRunnerForServer.execute(
       true,
       requests,
       request -> doResolveArtifactAndWrapException(session, request)
@@ -90,6 +89,7 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     return results;
   }
 
+  @Override
   public void reset() {
     artifactCache.clear();
   }

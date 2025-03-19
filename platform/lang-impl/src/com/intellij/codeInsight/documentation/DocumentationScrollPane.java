@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -17,9 +18,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.codeInsight.documentation.DocumentationComponent.MAX_DEFAULT;
-import static com.intellij.codeInsight.documentation.DocumentationComponent.MIN_DEFAULT;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.*;
 import static com.intellij.lang.documentation.ide.ui.UiKt.FORCED_WIDTH;
+import static com.intellij.ui.scale.JBUIScale.scale;
 
 @Internal
 public final class DocumentationScrollPane extends JBScrollPane {
@@ -33,18 +34,60 @@ public final class DocumentationScrollPane extends JBScrollPane {
   @Override
   public Dimension getPreferredSize() {
     Integer forcedWidth = UIUtil.getClientProperty(this, FORCED_WIDTH);
-    int minWidth = forcedWidth == null ? MIN_DEFAULT.width() : forcedWidth;
-    return getPreferredSize(minWidth, MAX_DEFAULT.width(), MAX_DEFAULT.height());
+    int minWidth = forcedWidth == null ? scale(getDocPopupMinWidth()) : forcedWidth;
+    int maxWidth = forcedWidth == null ? scale(getDocPopupMaxWidth()) : forcedWidth;
+    return getPreferredSize(minWidth, maxWidth, scale(getDocPopupMaxHeight()));
+  }
+
+  public void setViewportView(@NotNull DocumentationEditorPane editorPane,
+                              @NotNull JLabel locationLabel) {
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        JBViewport parent = (JBViewport)getParent();
+        Dimension minimumSize = editorPane.getMinimumSize();
+        Insets insets = getInsets();
+        int insetWidth = insets.left + insets.right;
+        int width = Math.max(Math.max(minimumSize.width, parent.getWidth() - insetWidth), scale(200));
+        Dimension editorPaneSize = editorPane.getPackedSize(width, width);
+        Dimension locationLabelSize = locationLabel.isVisible() ? locationLabel.getPreferredSize() : new Dimension();
+        return new Dimension(width + insetWidth, editorPaneSize.height + locationLabelSize.height + insets.top + insets.bottom);
+      }
+    };
+    panel.add(editorPane, BorderLayout.CENTER);
+    panel.add(locationLabel, BorderLayout.SOUTH);
+    panel.setOpaque(true);
+    locationLabel.setOpaque(true);
+    setViewportView(panel);
   }
 
   private @NotNull Dimension getPreferredSize(int minWidth, int maxWidth, int maxHeight) {
-    Dimension paneSize = ((DocumentationEditorPane)getViewport().getView()).getPackedSize(minWidth, maxWidth);
+    Component view = getViewport().getView();
+    Dimension paneSize;
 
     JScrollBar hBar = getHorizontalScrollBar();
-    boolean hasHBar = paneSize.width > maxWidth && hBar.isOpaque();
+    JScrollBar vBar = getVerticalScrollBar();
+    int insetWidth = 0;
+    if (view instanceof DocumentationEditorPane editorPane) {
+      paneSize = editorPane.getPackedSize(minWidth, maxWidth);
+    }
+    else if (view instanceof JPanel panel) {
+      Component[] components = panel.getComponents();
+      Insets viewInsets = panel.getInsets();
+      insetWidth = viewInsets.left + viewInsets.right;
+      Dimension editorPaneSize = ((DocumentationEditorPane)components[0]).getPackedSize(minWidth, maxWidth);
+      int locationLabelSizeHeight = components.length > 1 && panel.getComponents()[1].isVisible()
+                                    ? panel.getComponents()[1].getPreferredSize().height
+                                    : Math.max(JBUI.scale(getContentOuterPadding() - getSpaceAfterParagraph()), 0);
+      paneSize = new Dimension(editorPaneSize.width + vBar.getPreferredSize().width + insetWidth,
+                               editorPaneSize.height + locationLabelSizeHeight + viewInsets.top + viewInsets.bottom);
+    }
+    else {
+      throw new IllegalStateException(view.getClass().getName());
+    }
+    boolean hasHBar = paneSize.width - vBar.getPreferredSize().width - insetWidth > maxWidth && hBar.isOpaque();
     int hBarHeight = hasHBar ? hBar.getPreferredSize().height : 0;
 
-    JScrollBar vBar = getVerticalScrollBar();
     boolean hasVBar = paneSize.height + hBarHeight > maxHeight && vBar.isOpaque();
     int vBarWidth = hasVBar ? vBar.getPreferredSize().width : 0;
 

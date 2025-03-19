@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ElementManipulators extends ClassExtension<ElementManipulator> {
 
-  @NonNls public static final String EP_NAME = "com.intellij.lang.elementManipulator";
+  public static final @NonNls String EP_NAME = "com.intellij.lang.elementManipulator";
   public static final ElementManipulators INSTANCE = new ElementManipulators();
 
 
@@ -32,21 +32,18 @@ public final class ElementManipulators extends ClassExtension<ElementManipulator
     return getManipulatorRange(manipulator, element).getStartOffset();
   }
 
-  @NotNull
-  public static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(@NotNull T element) {
+  public static @NotNull <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(@NotNull T element) {
     final ElementManipulator<T> manipulator = getManipulator(element);
     LOG.assertTrue(manipulator != null, element.getClass().getName());
     return manipulator;
   }
 
-  @NotNull
-  public static TextRange getValueTextRange(@NotNull PsiElement element) {
+  public static @NotNull TextRange getValueTextRange(@NotNull PsiElement element) {
     final ElementManipulator<PsiElement> manipulator = getManipulator(element);
     return manipulator == null ? TextRange.from(0, element.getTextLength()) : getManipulatorRange(manipulator, element);
   }
 
-  @NotNull
-  public static String getValueText(@NotNull PsiElement element) {
+  public static @NotNull String getValueText(@NotNull PsiElement element) {
     final TextRange valueTextRange = getValueTextRange(element);
     if (valueTextRange.isEmpty()) return "";
 
@@ -68,8 +65,7 @@ public final class ElementManipulators extends ClassExtension<ElementManipulator
     return manipulator.handleContentChange(element, range, text);
   }
 
-  @NotNull
-  private static TextRange getManipulatorRange(@NotNull ElementManipulator<? super PsiElement> manipulator, @NotNull PsiElement element) {
+  private static @NotNull TextRange getManipulatorRange(@NotNull ElementManipulator<? super PsiElement> manipulator, @NotNull PsiElement element) {
     TextRange rangeInElement = manipulator.getRangeInElement(element);
     TextRange elementRange = TextRange.from(0, element.getTextLength());
     if (!elementRange.contains(rangeInElement)) {

@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.python.syntax` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "syntax_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "syntax",
+  module_name = "intellij.python.syntax",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//python/python-parser:parser",
+    "//platform/editor-ui-api:editor-ui",
+    "//python/python-syntax-core:syntax-core",
+    "//platform/platform-impl:ide-impl",
+    "//python/python-ast:ast",
+    "//platform/lang-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:fastutil-min",
+  ],
+  runtime_deps = [":syntax_resources"]
+)
+### auto-generated section `build intellij.python.syntax` end

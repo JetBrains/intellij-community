@@ -19,7 +19,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers
@@ -28,7 +27,7 @@ import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitUserRegistry
 import git4idea.GitUtil.getRepositoryManager
-import git4idea.checkin.GitCheckinEnvironment.collectActiveMovementProviders
+import git4idea.checkin.GitCheckinEnvironment.Companion.collectActiveMovementProviders
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import java.awt.Point

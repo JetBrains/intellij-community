@@ -35,14 +35,13 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyEmptyCatchBlockInspection extends BaseInspection {
+public final class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
-  @NlsSafe private static final String NEW_NAME = "ignored";
+  private static final @NlsSafe String NEW_NAME = "ignored";
 
   @Override
-  @NotNull
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

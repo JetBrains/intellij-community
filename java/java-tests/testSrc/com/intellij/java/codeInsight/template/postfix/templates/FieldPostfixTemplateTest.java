@@ -28,6 +28,10 @@ public class FieldPostfixTemplateTest extends PostfixTemplateTestCase {
   public void testFoo() {
     doTest();
   }
+  
+  public void testAnnotated() {
+    doTest();
+  }
 
   @NotNull
   @Override

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame.presentation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +26,7 @@ public abstract class XValuePresentation {
   /**
    * @return separator between name and value in a debugger tree
    */
-  @NotNull
-  @NlsSafe
-  public String getSeparator() {
+  public @NotNull @NlsSafe String getSeparator() {
     return DEFAULT_SEPARATOR;
   }
 
@@ -41,11 +40,15 @@ public abstract class XValuePresentation {
   /**
    * @return optional type of the value, it is shown in gray color and surrounded by braces
    */
-  @Nullable
-  @NlsSafe
-  public String getType() {
+  public @Nullable @NlsSafe String getType() {
     return null;
   }
+
+  /**
+   * @return true if content retrieval is async
+   */
+  @ApiStatus.Internal
+  public boolean isAsync() { return false; }
 
   public interface XValueTextRenderer {
     /**

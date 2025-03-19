@@ -17,6 +17,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.logging.LoggingHandler
+import org.apache.thrift.TConfiguration
 import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import org.apache.thrift.transport.TTransportException
@@ -53,7 +54,7 @@ class TNettyServerTransport(host: String, port: Int) : TServerTransport() {
     return nettyServer.awaitTermination(timeout, unit)
   }
 
-  override fun acceptImpl(): TTransport = nettyServer.accept()
+  override fun accept(): TTransport = nettyServer.accept()
 
   override fun interrupt() {
     close()
@@ -259,10 +260,21 @@ class TNettyServerTransport(host: String, port: Int) : TServerTransport() {
       }
       return got
     }
+
+    override fun getConfiguration(): TConfiguration? = null
+
+    override fun updateKnownMessageSize(size: Long) {}
+
+    override fun checkReadBytesAvailable(numBytes: Long) {}
   }
 
   private class TNettyClientTransport(private val channel: SocketChannel) : TCumulativeTransport() {
     override fun isOpen(): Boolean = channel.isOpen
+    override fun getConfiguration(): TConfiguration? = null
+
+    override fun updateKnownMessageSize(size: Long) {}
+
+    override fun checkReadBytesAvailable(numBytes: Long) {}
 
     override fun writeMessage(content: ByteArray) {
       channel.writeAndFlush(DirectedMessage(DirectedMessage.MessageDirection.REQUEST, content))

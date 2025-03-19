@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KDocUnresolvedReferenceInspection;
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingTest;
+import org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.KDocUnresolvedReferenceInspection;
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 
@@ -12,11 +12,6 @@ public abstract class AbstractSharedK2KDocHighlightingTest extends AbstractHighl
     protected void setUp() {
         super.setUp();
         myFixture.enableInspections(KDocUnresolvedReferenceInspection.class);
-    }
-
-    @Override
-    protected boolean isFirPlugin() {
-        return true;
     }
 
     @NotNull

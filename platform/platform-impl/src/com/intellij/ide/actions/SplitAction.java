@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
@@ -15,37 +17,41 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class SplitAction extends AnAction implements DumbAware {
-  public static final Key<Boolean> FORBID_TAB_SPLIT = new Key<>("FORBID_TAB_SPLIT");
-  private final int myOrientation;
-  private final boolean myCloseSource;
+public abstract class SplitAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
+  public static final Key<Boolean> FORBID_TAB_SPLIT = FileEditorManagerKeys.FORBID_TAB_SPLIT;
 
-  protected SplitAction(final int orientation) {
+  private final int orientation;
+  private final boolean closeSource;
+
+  protected SplitAction(int orientation) {
     this(orientation, false);
   }
 
-  protected SplitAction(final int orientation, boolean closeSource) {
-    myOrientation = orientation;
-    myCloseSource = closeSource;
+  protected SplitAction(int orientation, boolean closeSource) {
+    this.orientation = orientation;
+    this.closeSource = closeSource;
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent event) {
-    final EditorWindow window = event.getRequiredData(EditorWindow.DATA_KEY);
-    final VirtualFile file = window.getSelectedFile();
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    EditorWindow window = event.getData(EditorWindow.DATA_KEY);
+    if (window == null) {
+      return;
+    }
 
-    if (myCloseSource && file != null) {
-      file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), window.isFilePinned(file));
+    VirtualFile file = window.getContextFile();
+    if (closeSource && file != null) {
+      file.putUserData(EditorWindow.DRAG_START_PINNED_KEY, window.isFilePinned(file));
       window.closeFile(file, false, false);
     }
 
-    window.split(myOrientation, true, file, true);
+    window.split(orientation, true, file, true);
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    VirtualFile selectedFile = window != null ? window.getSelectedFile() : null;
+    VirtualFile selectedFile = window == null ? null : window.getContextFile();
 
     boolean enabled = isEnabled(selectedFile, window);
     event.getPresentation().setEnabledAndVisible(enabled);
@@ -56,14 +62,14 @@ public abstract class SplitAction extends AnAction implements DumbAware {
     return ActionUpdateThread.EDT;
   }
 
-  private boolean isEnabled(@Nullable VirtualFile vFile, @Nullable EditorWindow window) {
-    if (vFile == null || window == null) {
+  private boolean isEnabled(@Nullable VirtualFile file, @Nullable EditorWindow window) {
+    if (file == null || window == null) {
       return false;
     }
-    if (!myCloseSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
+    if (!closeSource && FileEditorManagerImpl.forbidSplitFor(file)) {
       return false;
     }
-    int minimum = myCloseSource ? 2 : 1;
+    int minimum = closeSource ? 2 : 1;
     return window.getTabCount() >= minimum;
   }
 }

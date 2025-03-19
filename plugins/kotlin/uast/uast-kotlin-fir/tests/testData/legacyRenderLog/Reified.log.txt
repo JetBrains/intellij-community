@@ -7,9 +7,9 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = String)
                             USimpleNameReferenceExpression (identifier = java)
         UMethod (name = systemService1)
             UParameter (name = $this$systemService1)
@@ -18,9 +18,9 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = T)
                             USimpleNameReferenceExpression (identifier = java)
     UClass (name = Context)
         UMethod (name = ownSystemService2)
@@ -28,9 +28,9 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = String)
                             USimpleNameReferenceExpression (identifier = java)
         UMethod (name = Context)
         UMethod (name = ownSystemService1)
@@ -38,7 +38,7 @@ UFile (package = test.pkg)
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (getSystemService))
-                        USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                         UQualifiedReferenceExpression
                             UClassLiteralExpression
+                                USimpleNameReferenceExpression (identifier = T)
                             USimpleNameReferenceExpression (identifier = java)

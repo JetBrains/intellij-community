@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.execution.ui.TagButton;
@@ -18,7 +18,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ public class ComponentValidator {
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
-  private final Alarm popupAlarm = new Alarm();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private boolean isOverPopup;
 
   private ComponentPopupBuilder popupBuilder;
@@ -78,18 +78,6 @@ public class ComponentValidator {
 
   public ComponentValidator(@NotNull Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
-  }
-
-  /**
-   * @deprecated Use {@link ComponentValidator#withValidator(Supplier)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public ComponentValidator withValidator(@NotNull Consumer<? super ComponentValidator> validator) {
-    this.validator = () -> {
-      validator.accept(this);
-      return validationInfo;
-    };
-    return this;
   }
 
   public ComponentValidator withValidator(@NotNull Supplier<? extends ValidationInfo> validator) {
@@ -166,7 +154,7 @@ public class ComponentValidator {
   }
 
   /**
-   * Convenient wrapper for mostly used scenario.
+   * Convenient wrapper for a mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
     DocumentAdapter listener = new DocumentAdapter() {
@@ -219,8 +207,7 @@ public class ComponentValidator {
     validationInfo = null;
   }
 
-  @Nullable
-  public ValidationInfo getValidationInfo() {
+  public @Nullable ValidationInfo getValidationInfo() {
     return validationInfo;
   }
 
@@ -266,7 +253,7 @@ public class ComponentValidator {
         }
 
         if (!StringUtil.isEmptyOrSpaces(info.message)) {
-          // create popup if there is something to show to user
+          // create a popup if there is something to show to user
           popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
             tipComponent = editorPane;
             editorPane.addHyperlinkListener(hyperlinkListener);
@@ -284,8 +271,7 @@ public class ComponentValidator {
     }
   }
 
-  @NotNull
-  private static ComponentPopupBuilder createPopupBuilder(boolean isWarning, @Nullable Consumer<? super JEditorPane> configurator) {
+  private static @NotNull ComponentPopupBuilder createPopupBuilder(boolean isWarning, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
@@ -323,10 +309,9 @@ public class ComponentValidator {
   }
 
   /**
-   * @return true if message is multiline.
+   * @return true if a message is multiline.
    */
-  @NlsSafe
-  private static boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
+  private static @NlsSafe boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
     View v = BasicHTML.createHTMLView(component, String.format("<html>%s</html>", message));
     boolean widerText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get();
     HtmlChunk.Element div =  widerText ?
@@ -336,8 +321,7 @@ public class ComponentValidator {
     return widerText;
   }
 
-  @NotNull
-  public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
+  public static @NotNull ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
     return createPopupBuilder(info.warning, tipComponent -> {
       convertMessage(info.message, tipComponent);
       if (configurator != null) {
@@ -389,12 +373,13 @@ public class ComponentValidator {
       if (now || hyperlinkListener == null) {
         popup.cancel();
         popup = null;
-      } else {
-        popupAlarm.addRequest(() -> {
+      }
+      else {
+        popupAlarm.request(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
           if (!isOverPopup || hyperlinkListener == null) {
             hidePopup(true);
           }
-        }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+        });
       }
     }
   }

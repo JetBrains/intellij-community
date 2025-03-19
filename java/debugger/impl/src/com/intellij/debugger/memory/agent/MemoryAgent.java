@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.DebugProcess;
@@ -26,19 +26,16 @@ public interface MemoryAgent {
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 50;
 
-  @NotNull
-  static MemoryAgent get(@NotNull EvaluationContextImpl evaluationContext) {
-    if (!DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT ||
-        DebuggerUtilsImpl.isRemote(evaluationContext.getDebugProcess())) {
+  static @NotNull MemoryAgent get(@NotNull EvaluationContextImpl evaluationContext) {
+    if (!isAgentEnabled(evaluationContext.getDebugProcess())) {
       return MemoryAgentImpl.DISABLED;
     }
     return MemoryAgentInitializer.getAgent(evaluationContext);
   }
 
-  static boolean isAgentLoaded(@NotNull DebugProcess debugProcess) {
-    return MemoryAgentInitializer.isAgentLoaded(debugProcess);
+  static boolean isAgentEnabled(@NotNull DebugProcess debugProcess) {
+    return DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT && !DebuggerUtilsImpl.isRemote(debugProcess);
   }
-
   void cancelAction();
 
   boolean isDisabled();
@@ -57,10 +54,15 @@ public interface MemoryAgent {
                                                                               long timeoutInMillis) throws EvaluateException;
 
   @NotNull
-  MemoryAgentActionResult<long[]> estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext,
-                                                       @NotNull List<ObjectReference> references,
-                                                       long timeoutInMillis) throws EvaluateException;
+  MemoryAgentActionResult<Pair<long[], long[]>> getShallowAndRetainedSizesByObjects(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                    @NotNull List<ObjectReference> references,
+                                                                                    long timeoutInMillis) throws EvaluateException;
 
+  @NotNull
+  MemoryAgentActionResult<ObjectsAndSizes> getSortedShallowAndRetainedSizesByClass(@NotNull EvaluationContextImpl evaluationContext,
+                                                                                   @NotNull ReferenceType classType,
+                                                                                   long objectsLimit,
+                                                                                   long timeoutInMillis) throws EvaluateException;
   @NotNull
   MemoryAgentActionResult<long[]> getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext,
                                                           @NotNull List<ReferenceType> classes,
@@ -81,4 +83,27 @@ public interface MemoryAgent {
                                                                           @NotNull ObjectReference reference,
                                                                           int pathsNumber, int objectsNumber,
                                                                           long timeoutInMillis) throws EvaluateException;
+  class ObjectsAndSizes {
+    private final ObjectReference[] myObjects;
+    private final long[] myShallowSizes;
+    private final long[] myRetainedSizes;
+
+    public ObjectsAndSizes(ObjectReference[] objects, long[] shallowSizes, long[] retainedSizes) {
+      myObjects = objects;
+      myShallowSizes = shallowSizes;
+      myRetainedSizes = retainedSizes;
+    }
+
+    public long[] getShallowSizes() {
+      return myShallowSizes;
+    }
+
+    public long[] getRetainedSizes() {
+      return myRetainedSizes;
+    }
+
+    public ObjectReference[] getObjects() {
+      return myObjects;
+    }
+  }
 }

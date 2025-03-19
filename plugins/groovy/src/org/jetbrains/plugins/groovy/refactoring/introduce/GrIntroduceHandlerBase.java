@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -89,8 +89,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @Nullable
-  private static PsiType findLValueType(GrExpression initializer) {
+  private static @Nullable PsiType findLValueType(GrExpression initializer) {
     if (initializer.getParent() instanceof GrAssignmentExpression && ((GrAssignmentExpression)initializer.getParent()).getRValue() == initializer) {
       return ((GrAssignmentExpression)initializer.getParent()).getLValue().getNominalType();
     }
@@ -102,8 +101,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @NotNull
-  public static GrStatement getAnchor(PsiElement @NotNull [] occurrences, @NotNull PsiElement scope) {
+  public static @NotNull GrStatement getAnchor(PsiElement @NotNull [] occurrences, @NotNull PsiElement scope) {
     PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
     PsiElement container = getEnclosingContainer(parent);
     assert container != null;
@@ -113,8 +111,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return (GrStatement)anchor;
   }
 
-  @Nullable
-  public static PsiElement getEnclosingContainer(PsiElement place) {
+  public static @Nullable PsiElement getEnclosingContainer(PsiElement place) {
     PsiElement parent = place;
     while (true) {
       if (parent == null) {
@@ -133,8 +130,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   protected abstract @Nls(capitalization = Title) @NotNull String getRefactoringName();
 
-  @NotNull
-  protected abstract String getHelpID();
+  protected abstract @NotNull String getHelpID();
 
   protected abstract Scope @NotNull [] findPossibleScopes(GrExpression expression, GrVariable variable, StringPartInfo stringPart, Editor editor);
 
@@ -146,11 +142,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   protected abstract void checkOccurrences(PsiElement @NotNull [] occurrences);
 
-  @NotNull
-  protected abstract GrIntroduceDialog<Settings> getDialog(@NotNull GrIntroduceContext context);
+  protected abstract @NotNull GrIntroduceDialog<Settings> getDialog(@NotNull GrIntroduceContext context);
 
-  @Nullable
-  public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
+  public abstract @Nullable GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
   protected abstract GrAbstractInplaceIntroducer<Settings> getIntroducer(@NotNull GrIntroduceContext context,
                                                                          @NotNull OccurrencesChooser.ReplaceChoice choice);
@@ -177,15 +171,13 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return map;
   }
 
-  @NotNull
-  public static List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
+  public static @NotNull List<GrExpression> collectExpressions(final PsiFile file, final Editor editor, final int offset, boolean acceptVoidCalls) {
     int correctedOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctedOffset);
     return collectExpressions(elementAtCaret, acceptVoidCalls);
   }
 
-  @NotNull
-  public static List<GrExpression> collectExpressions(PsiElement elementAtCaret, boolean acceptVoidCalls) {
+  public static @NotNull List<GrExpression> collectExpressions(PsiElement elementAtCaret, boolean acceptVoidCalls) {
     final List<GrExpression> expressions = new ArrayList<>();
 
     for (GrExpression expression = PsiTreeUtil.getParentOfType(elementAtCaret, GrExpression.class);
@@ -246,8 +238,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return correctedOffset;
   }
 
-  @Nullable
-  public static GrVariable findVariableAtCaret(final PsiFile file, final Editor editor, final int offset) {
+  public static @Nullable GrVariable findVariableAtCaret(final PsiFile file, final Editor editor, final int offset) {
     final int correctOffset = correctOffset(editor, offset);
     final PsiElement elementAtCaret = file.findElementAt(correctOffset);
     final GrVariable variable = PsiTreeUtil.getParentOfType(elementAtCaret, GrVariable.class);
@@ -256,7 +247,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();
@@ -298,11 +289,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     // Does nothing
   }
 
-  public void getContextAndInvoke(@NotNull final Project project,
-                                  @NotNull final Editor editor,
-                                  @Nullable final GrExpression expression,
-                                  @Nullable final GrVariable variable,
-                                  @Nullable final StringPartInfo stringPart) {
+  public void getContextAndInvoke(final @NotNull Project project,
+                                  final @NotNull Editor editor,
+                                  final @Nullable GrExpression expression,
+                                  final @Nullable GrVariable variable,
+                                  final @Nullable StringPartInfo stringPart) {
     final Scope[] scopes = findPossibleScopes(expression, variable, stringPart, editor);
 
     Consumer<? super Scope> callback = scope-> {
@@ -339,7 +330,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }), getRefactoringName(), getRefactoringName());
   }
 
-  protected void addBraces(@NotNull final GrStatement anchor, @NotNull final Ref<GrIntroduceContext> contextRef) {
+  protected void addBraces(final @NotNull GrStatement anchor, final @NotNull Ref<GrIntroduceContext> contextRef) {
     CommandProcessor.getInstance().executeCommand(contextRef.get().getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
       GrIntroduceContext context = contextRef.get();
       SmartPointerManager pointManager = SmartPointerManager.getInstance(context.getProject());
@@ -390,8 +381,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }), getRefactoringName(), getRefactoringName());
   }
 
-  @NotNull
-  protected static GrStatement findAnchor(@NotNull final GrIntroduceContext context, final boolean replaceAll) {
+  protected static @NotNull GrStatement findAnchor(final @NotNull GrIntroduceContext context, final boolean replaceAll) {
     return ReadAction.compute(() -> {
       PsiElement[] occurrences = replaceAll ? context.getOccurrences() : new GrExpression[]{context.getExpression()};
       return getAnchor(occurrences, context.getScope());
@@ -463,8 +453,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @NotNull
-  protected Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
+  protected @NotNull Map<OccurrencesChooser.ReplaceChoice, List<Object>> getOccurrenceOptions(@NotNull GrIntroduceContext context) {
     return fillChoice(context);
   }
 
@@ -476,8 +465,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return occurrences;
   }
 
-  private void invoke(@NotNull final Project project,
-                      @NotNull final Editor editor,
+  private void invoke(final @NotNull Project project,
+                      final @NotNull Editor editor,
                       @NotNull PsiFile file,
                       int startOffset,
                       int endOffset) throws GrRefactoringError {
@@ -514,7 +503,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   public static boolean isInplace(@NotNull Editor editor, @NotNull PsiElement place) {
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(place);
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(place);
     return supportProvider != null &&
            (editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART) == null || !editor.getUserData(InplaceRefactoring.INTRODUCE_RESTART)) &&
            editor.getUserData(AbstractInplaceIntroducer.ACTIVE_INTRODUCE) == null &&
@@ -523,8 +512,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
            !ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  @Nullable
-  public static GrVariable findVariable(@NotNull PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable GrVariable findVariable(@NotNull PsiFile file, int startOffset, int endOffset) {
     GrVariable var = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrVariable.class);
     if (var == null) {
       final GrVariableDeclaration variableDeclaration =
@@ -541,8 +529,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return var;
   }
 
-  @Nullable
-  public static GrVariable findVariable(@NotNull GrStatement statement) {
+  public static @Nullable GrVariable findVariable(@NotNull GrStatement statement) {
     if (!(statement instanceof GrVariableDeclaration variableDeclaration)) return null;
     final GrVariable[] variables = variableDeclaration.getVariables();
 
@@ -557,14 +544,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
 
-  @Nullable
-  public static GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable GrExpression findExpression(PsiFile file, int startOffset, int endOffset) {
     GrExpression selectedExpr = PsiImplUtil.findElementInRange(file, startOffset, endOffset, GrExpression.class);
     return findExpression(selectedExpr);
   }
 
-  @Nullable
-  public static GrExpression findExpression(GrStatement selectedExpr) {
+  public static @Nullable GrExpression findExpression(GrStatement selectedExpr) {
     if (!(selectedExpr instanceof GrExpression selected)) return null;
 
     while (selected instanceof GrParenthesizedExpression) selected = ((GrParenthesizedExpression)selected).getOperand();
@@ -572,8 +557,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return selected;
   }
 
-  @Nullable
-  private Settings showDialog(@NotNull GrIntroduceContext context) {
+  private @Nullable Settings showDialog(@NotNull GrIntroduceContext context) {
 
     // Add occurrences highlighting
     ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
@@ -606,9 +590,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return null;
   }
 
-  @Nullable
-  public static PsiElement findAnchor(PsiElement @NotNull [] occurrences,
-                                      @NotNull PsiElement container) {
+  public static @Nullable PsiElement findAnchor(PsiElement @NotNull [] occurrences,
+                                                @NotNull PsiElement container) {
     if (occurrences.length == 0) return null;
 
     PsiElement candidate;
@@ -656,8 +639,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @Nullable
-  private static PsiElement findContainingStatement(@Nullable PsiElement candidate) {
+  private static @Nullable PsiElement findContainingStatement(@Nullable PsiElement candidate) {
     while (candidate != null && (candidate.getParent() instanceof GrLabeledStatement || !(PsiUtil.isExpressionStatement(candidate)))) {
       candidate = candidate.getParent();
     }
@@ -676,8 +658,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @Nullable
-  public static GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
+  public static @Nullable GrVariable resolveLocalVar(@NotNull GrIntroduceContext context) {
     final GrVariable var = context.getVar();
     if (var != null) {
       return var;
@@ -686,8 +667,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return resolveLocalVar(context.getExpression());
   }
 
-  @Nullable
-  public static GrVariable resolveLocalVar(@Nullable GrExpression expression) {
+  public static @Nullable GrVariable resolveLocalVar(@Nullable GrExpression expression) {
     if (expression instanceof GrReferenceExpression ref) {
 
       final PsiElement resolved = ref.resolve();
@@ -710,10 +690,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return false;
   }
 
-  @NotNull
-  public static PsiElement getCurrentPlace(@Nullable GrExpression expr,
-                                           @Nullable GrVariable var,
-                                           @Nullable StringPartInfo stringPartInfo) {
+  public static @NotNull PsiElement getCurrentPlace(@Nullable GrExpression expr,
+                                                    @Nullable GrVariable var,
+                                                    @Nullable StringPartInfo stringPartInfo) {
     if (var != null) return var;
     if (expr != null) return expr;
     if (stringPartInfo != null) return stringPartInfo.getLiteral();

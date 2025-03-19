@@ -1,21 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
-import com.intellij.openapi.externalSystem.service.remote.wrapper.ExternalSystemFacadeWrapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 public final class InProcessExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
   @SuppressWarnings("unchecked")
-  @Nullable
   @Override
-  public RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
+  public @Nullable RemoteExternalSystemFacade acquire(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
     InProcessExternalSystemFacadeImpl result = new InProcessExternalSystemFacadeImpl(manager.getProjectResolverClass(),
@@ -30,11 +30,7 @@ public final class InProcessExternalSystemCommunicationManager implements Extern
 
   @Override
   public boolean isAlive(@NotNull RemoteExternalSystemFacade facade) {
-    RemoteExternalSystemFacade toCheck = facade;
-    if (facade instanceof ExternalSystemFacadeWrapper) {
-      toCheck = ((ExternalSystemFacadeWrapper)facade).getDelegate();
-    }
-    return toCheck instanceof InProcessExternalSystemFacadeImpl;
+    return facade instanceof InProcessExternalSystemFacadeImpl;
   }
 
   @Override

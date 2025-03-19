@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.attach;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -27,8 +27,7 @@ public final class JavaDebuggerAttachUtil {
     return false;
   }
 
-  @NotNull
-  public static Set<String> getAttachedPids(@NotNull Project project) {
+  public static @NotNull Set<String> getAttachedPids(@NotNull Project project) {
     return StreamEx.of(DebuggerManagerEx.getInstanceEx(project).getSessions())
       .map(s -> s.getDebugEnvironment().getRemoteConnection())
       .select(PidRemoteConnection.class)
@@ -36,8 +35,7 @@ public final class JavaDebuggerAttachUtil {
       .toSet();
   }
 
-  @NotNull
-  public static VirtualMachine attachVirtualMachine(String id) throws IOException, AttachNotSupportedException {
+  public static @NotNull VirtualMachine attachVirtualMachine(String id) throws IOException, AttachNotSupportedException {
     // avoid attaching to the 3rd party vms
     if (VirtualMachine.list().stream().map(VirtualMachineDescriptor::id).noneMatch(id::equals)) {
       throw new AttachNotSupportedException("AttachProvider for the vm is not found");

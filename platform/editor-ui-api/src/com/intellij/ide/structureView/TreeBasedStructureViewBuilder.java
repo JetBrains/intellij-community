@@ -1,11 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,16 +28,21 @@ public abstract class TreeBasedStructureViewBuilder implements StructureViewBuil
    * @return the structure view model instance.
    * @see TextEditorBasedStructureViewModel
    */
-  @NotNull
-  public abstract StructureViewModel createStructureViewModel(@Nullable Editor editor);
+  public abstract @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor);
 
   @Override
-  @NotNull
-  public StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project) {
-    StructureViewModel model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
-    StructureView view = StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
+  public @NotNull StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project) {
+    StructureViewModel model;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162970")) {
+      model = createStructureViewModel(fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null);
+    }
+    var view = createStructureView(fileEditor, project, model);
     Disposer.register(view, model);
     return view;
+  }
+
+  public @NotNull StructureView createStructureView(@Nullable FileEditor fileEditor, @NotNull Project project, StructureViewModel model) {
+    return StructureViewFactory.getInstance(project).createStructureView(fileEditor, model, project, isRootNodeShown());
   }
 
   /**

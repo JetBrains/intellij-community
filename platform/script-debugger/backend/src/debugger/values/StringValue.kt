@@ -15,8 +15,10 @@
  */
 package org.jetbrains.debugger.values
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 
+@ApiStatus.Internal
 interface StringValue : Value {
   val isTruncated: Boolean
 

@@ -24,12 +24,18 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   public DefaultExternalProjectDependency(ExternalProjectDependency dependency) {
     super(dependency);
+
     projectPath = dependency.getProjectPath();
     configurationName = dependency.getConfigurationName();
+
     projectDependencyArtifacts =
       dependency.getProjectDependencyArtifacts() == null
-      ? new ArrayList<File>(0)
+      ? new ArrayList<>(0)
       : new ArrayList<>(dependency.getProjectDependencyArtifacts());
+    projectDependencyArtifactsSources =
+      dependency.getProjectDependencyArtifactsSources() == null
+      ? new ArrayList<>(0)
+      : new ArrayList<>(dependency.getProjectDependencyArtifactsSources());
   }
 
   @Override

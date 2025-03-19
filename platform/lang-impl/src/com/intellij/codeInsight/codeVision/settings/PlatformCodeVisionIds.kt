@@ -4,5 +4,7 @@ package com.intellij.codeInsight.codeVision.settings
 enum class PlatformCodeVisionIds(val key: String) {
   USAGES("references"),
   INHERITORS("inheritors"),
-  PROBLEMS("problems")
+  PROBLEMS("problems"),
+  RENAME("rename"),
+  CHANGE_SIGNATURE("change.signature"),
 }

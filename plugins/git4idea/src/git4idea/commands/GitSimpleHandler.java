@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -73,7 +73,7 @@ public class GitSimpleHandler extends GitTextHandler {
    * @param command   a command to execute
    */
   @SuppressWarnings({"WeakerAccess"})
-  public GitSimpleHandler(@NotNull final Project project, @NotNull final VirtualFile directory, @NotNull final GitCommand command) {
+  public GitSimpleHandler(final @NotNull Project project, final @NotNull VirtualFile directory, final @NotNull GitCommand command) {
     super(project, directory, command);
   }
 
@@ -121,7 +121,7 @@ public class GitSimpleHandler extends GitTextHandler {
     if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
-    int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
+    int last = !lineRest.isEmpty() ? lineRest.charAt(lineRest.length() - 1) : -1;
     int start = 0;
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
@@ -135,7 +135,7 @@ public class GitSimpleHandler extends GitTextHandler {
         }
         if (last != '\r' || savedPos != i) {
           String line;
-          if (lineRest.length() == 0) {
+          if (lineRest.isEmpty()) {
             line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
@@ -163,16 +163,14 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * @return stderr contents
    */
-  @NlsSafe
-  public String getStderr() {
+  public @NlsSafe String getStderr() {
     return myStderr.toString();
   }
 
   /**
    * @return stdout contents
    */
-  @NlsSafe
-  public String getStdout() {
+  public @NlsSafe String getStdout() {
     return myStdout.toString();
   }
 
@@ -182,8 +180,7 @@ public class GitSimpleHandler extends GitTextHandler {
    * @return a value if process was successful
    * @throws VcsException exception if process failed to start.
    */
-  @NlsSafe
-  public String run() throws VcsException {
+  public @NlsSafe String run() throws VcsException {
     Ref<VcsException> exRef = Ref.create();
     Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {
@@ -195,10 +192,10 @@ public class GitSimpleHandler extends GitTextHandler {
           }
           else {
             String msg = getStderr();
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = getStdout();
             }
-            if (msg.length() == 0) {
+            if (msg.isEmpty()) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
             exRef.set(new VcsException(msg));
@@ -210,7 +207,7 @@ public class GitSimpleHandler extends GitTextHandler {
       }
 
       @Override
-      public void startFailed(@NotNull final Throwable exception) {
+      public void startFailed(final @NotNull Throwable exception) {
         exRef.set(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       }
     });

@@ -4,5 +4,6 @@ class KotlinClass : JavaClass()
 
 fun test() = KotlinClass().<caret>
 
-// EXIST: { lookupString: "execute", itemText: "execute", tailText: "(Runnable!, Int)", typeText: "Unit", attributes: "", icon: "fileTypes/javaClass.svg"}
-// EXIST: { lookupString: "execute", itemText: "execute", tailText: "((() -> Unit)!, Int)", typeText: "Unit", attributes: "", icon: "fileTypes/javaClass.svg"}
+// IGNORE_K2
+// EXIST: { lookupString: "execute", itemText: "execute", tailText: "(Runnable!, Int)", typeText: "Unit", attributes: "", icon: "Method"}
+// EXIST: { lookupString: "execute", itemText: "execute", tailText: "((() -> Unit)!, Int)", typeText: "Unit", attributes: "", icon: "Method"}

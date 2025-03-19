@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
@@ -49,8 +49,8 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                             """.trimIndent())
     importProject("apply plugin: 'java'\n")
 
-    assertModuleOutput("project.buildSrc.main", projectPath + "/buildSrc/build/foo", "");
-    assertModuleOutput("project.buildSrc.test", "", projectPath + "/buildSrc/build/bar");
+    assertModuleOutput("project.buildSrc.main", "$projectPath/buildSrc/build/foo", "")
+    assertModuleOutput("project.buildSrc.test", "", "$projectPath/buildSrc/build/bar")
   }
 
 
@@ -121,7 +121,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "project.buildSrc", "project.buildSrc.main", "project.buildSrc.test",
                   "build-plugins", "build-plugins.main", "build-plugins.test")
 
-    assertModuleLibDep("project.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("project.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
   /**
@@ -153,7 +153,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "build-plugins", "build-plugins.main", "build-plugins.test",
                   "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
 
-    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("another-build.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
 
@@ -188,7 +188,7 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "included-build",
                   "another-build", "another-build.buildSrc", "another-build.buildSrc.main", "another-build.buildSrc.test")
 
-    assertModuleLibDep("another-build.buildSrc.main", depJar.presentableUrl, depJar.url)
+    assertModuleLibDep("another-build.buildSrc.main", convertToLibraryName(depJar), depJar.url)
   }
 
   @TargetVersions("6.7+")
@@ -240,18 +240,17 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions("3.3+")
   fun `test buildSrc with included projects name duplication`() {
     createSettingsFile("""
       includeBuild('build1')
       includeBuild('build2')
       """.trimIndent())
     createProjectSubFile("buildSrc/settings.gradle")
+    val build1SettingsFile = createProjectSubFile("build1/settings.gradle") // fist create file so that next call myProjectRoot.findChild("build1") finds the dir
+    setFileContent(build1SettingsFile, including(myProjectRoot.findChild("build1"), "app"), false)
 
-    createProjectSubFile("build1/settings.gradle", "include('app')")
-
-    createProjectSubFile("build2/settings.gradle", "include('app')")
     createProjectSubFile("build2/buildSrc/build.gradle")
+    createProjectSubFile("build2/settings.gradle", including(myProjectRoot.findChild("build2"), "app"))
 
     importProject("")
     assertModules("project",

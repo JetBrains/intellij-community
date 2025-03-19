@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
 
 public class LightParameter extends LightVariableBuilder<LightVariableBuilder<?>> implements PsiParameter {
   private final PsiElement myDeclarationScope;
@@ -25,6 +27,18 @@ public class LightParameter extends LightVariableBuilder<LightVariableBuilder<?>
   public LightParameter(@NonNls @NotNull String name, @NotNull PsiType type, @NotNull PsiElement declarationScope, @NotNull Language language,
                         @NotNull LightModifierList modifierList, boolean isVarArgs) {
     super(declarationScope.getManager(), name, type, language, modifierList);
+    myDeclarationScope = declarationScope;
+    myVarArgs = isVarArgs;
+  }
+
+  public LightParameter(
+    @NonNls @NotNull String name,
+    @NotNull PsiElement declarationScope,
+    @NotNull Supplier<? extends @NotNull PsiType> typeSupplier,
+    @NotNull Language language,
+    boolean isVarArgs
+  ) {
+    super(declarationScope.getManager(), name, typeSupplier, language, new LightModifierList(declarationScope.getManager()));
     myDeclarationScope = declarationScope;
     myVarArgs = isVarArgs;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -12,9 +12,10 @@ import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.IncorrectOperationException
@@ -22,13 +23,42 @@ import com.intellij.util.PsiNavigateUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
+
+@NonNls
+internal const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
+
+@NonNls
+internal const val DESCRIPTION_SUFFIX = ".description"
+
+@NonNls
+internal const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
+
+internal fun isImplicitUsageKey(keyName: String): Boolean =
+  keyName.endsWith(DESCRIPTION_SUFFIX) ||
+  keyName.endsWith(RESTART_REQUIRED_SUFFIX)
+
+internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
+  IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
  */
-class RegistryPropertiesAnnotator : Annotator {
+internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
+
+  @NonNls
+  private val PLUGIN_GROUP_NAMES = setOf(
+    "appcode", "cidr", "clion",
+    "cvs", "git", "github", "svn", "hg4idea", "tfs",
+    "dart", "markdown",
+    "java", "javac", "uast", "junit4", "dsm",
+    "js", "javascript", "typescript", "nodejs", "eslint", "jest",
+    "ruby", "rubymine",
+    "groovy", "grails", "python", "php",
+    "kotlin", "spring", "jupyter", "dataspell", "javafx",
+    "maven", "gradle", "android", "eclipse"
+  )
+
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element !is PropertyKeyImpl) return
 
@@ -43,8 +73,13 @@ class RegistryPropertiesAnnotator : Annotator {
     }
 
     val groupName = propertyName.substringBefore('.').lowercase(Locale.getDefault())
+
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
-        propertyName.startsWith("editor.config.")) {
+        propertyName.startsWith("editor.config.") ||
+        propertyName.startsWith("debugger.kotlin.") ||
+        propertyName.startsWith("debugger.enable.kotlin.") ||
+        propertyName.startsWith("ide.java.")) {
+
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
         .withFix(ShowEPDeclarationIntention(propertyName)).create()
     }
@@ -58,7 +93,7 @@ class RegistryPropertiesAnnotator : Annotator {
     }
   }
 
-  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
+  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction, DumbAware {
     override fun startInWriteAction(): Boolean = false
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
@@ -91,7 +126,7 @@ class RegistryPropertiesAnnotator : Annotator {
     }
   }
 
-  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction {
+  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction, DumbAware {
 
     @Nls
     override fun getText(): String = DevKitBundle.message("registry.properties.annotator.add.description.text", myPropertyName)
@@ -109,7 +144,7 @@ class RegistryPropertiesAnnotator : Annotator {
       val descriptionProperty = propertiesFile.addPropertyAfter(myPropertyName + DESCRIPTION_SUFFIX, "Description", originalProperty)
 
       val valueNode = (descriptionProperty.psiElement as PropertyImpl).valueNode!!
-      if (!IntentionPreviewUtils.isPreviewElement(valueNode.psi) ) {
+      if (!IntentionPreviewUtils.isPreviewElement(valueNode.psi)) {
         PsiNavigateUtil.navigate(valueNode.psi)
       }
     }
@@ -117,34 +152,4 @@ class RegistryPropertiesAnnotator : Annotator {
     override fun startInWriteAction(): Boolean = true
   }
 
-  companion object {
-
-    @NonNls
-    private val PLUGIN_GROUP_NAMES = setOf(
-      "appcode", "cidr", "clion",
-      "cvs", "git", "github", "svn", "hg4idea", "tfs",
-      "dart", "markdown",
-      "java", "javac", "uast", "junit4", "dsm",
-      "js", "javascript", "typescript", "nodejs", "eslint", "jest",
-      "ruby", "rubymine",
-      "groovy", "grails", "python", "php", "kotlin"
-    )
-
-    @NonNls
-    private const val REGISTRY_PROPERTIES_FILENAME = "registry.properties"
-
-    @NonNls
-    const val DESCRIPTION_SUFFIX = ".description"
-
-    @NonNls
-    const val RESTART_REQUIRED_SUFFIX = ".restartRequired"
-
-    @JvmStatic
-    fun isImplicitUsageKey(keyName: String): Boolean =
-      StringUtil.endsWith(keyName, DESCRIPTION_SUFFIX) || StringUtil.endsWith(keyName, RESTART_REQUIRED_SUFFIX)
-
-    @JvmStatic
-    fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
-      PsiUtil.isIdeaProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
-  }
 }

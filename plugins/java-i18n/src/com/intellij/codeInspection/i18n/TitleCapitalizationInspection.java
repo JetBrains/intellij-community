@@ -1,22 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.ibm.icu.text.MessagePattern;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.restriction.AnnotationContext;
 import com.intellij.codeInspection.restriction.StringFlowUtil;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.i18n.JavaI18nBundle;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.Property;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import one.util.streamex.IntStreamEx;
@@ -30,10 +27,9 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @SuppressWarnings("unchecked") 
       private static final Class<? extends UExpression>[] uExpressionClasses = new Class[] 
@@ -68,7 +64,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                                titleValue, getCapitalizationName(capitalization));
             }
             else {
-              fix = titleValue.canFix() && element instanceof PsiExpression ? new TitleCapitalizationFix(titleValue, capitalization) : null;
+              fix = titleValue.canFix() &&
+                    (element instanceof PsiExpression || uElement instanceof UCallExpression call && getPropertyArgument(call) != null) ? 
+                    new TitleCapitalizationFix(titleValue, capitalization) : null;
               message = JavaI18nBundle.message("inspection.title.capitalization.description",
                                                titleValue, getCapitalizationName(capitalization));
             }
@@ -90,12 +88,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           }
           UCallExpression call = ObjectUtils.tryCast(parent, UCallExpression.class);
           if (call != null) {
-            PsiMethod method = call.resolve();
-            if (method != null) {
-              PsiParameter parameter = AnnotationContext.getParameter(method, call, usage);
-              if (parameter != null) {
-                capitalization = getSupplierCapitalization(parameter);
-              }
+            PsiParameter parameter = AnnotationContext.getParameter(call, usage);
+            if (parameter != null) {
+              capitalization = getSupplierCapitalization(parameter);
             }
           }
         }
@@ -112,8 +107,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
-  @Nullable
-  private static Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
+  private static @Nullable Value getTitleValue(@Nullable UExpression arg, @Nullable Set<? super UExpression> processed) {
     if (arg instanceof UInjectionHost) {
       return Value.of((UInjectionHost)arg);
     }
@@ -151,8 +145,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  @Nullable
-  private static Property getPropertyArgument(UCallExpression arg) {
+  private static @Nullable Property getPropertyArgument(UCallExpression arg) {
     List<UExpression> args = arg.getValueArguments();
     if (!args.isEmpty()) {
       return JavaI18nUtil.resolveProperty(args.get(0));
@@ -160,7 +153,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static class TitleCapitalizationFix implements LocalQuickFix {
+  private static class TitleCapitalizationFix extends PsiUpdateModCommandQuickFix {
     private final Value myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
@@ -169,17 +162,29 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       myCapitalization = capitalization;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return JavaI18nBundle.message("quickfix.text.title.capitalization", myTitleValue);
     }
 
     @Override
-    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement problemElement = descriptor.getPsiElement();
-      if (problemElement == null) return;
-      doFix(project, problemElement);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement problemElement, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literal = updater.getWritable(getTargetLiteral(problemElement));
+      if (literal != null) {
+        Value value = Value.of(literal);
+        if (value == null) return;
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiExpression newExpression =
+          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"',
+                                           problemElement);
+        literal.replace(newExpression);
+      }
+      if (UastContextKt.toUElement(problemElement) instanceof UCallExpression call) {
+        final Property property = updater.getWritable(getPropertyArgument(call));
+        Value value = Value.of(property, call.getValueArgumentCount() > 1);
+        if (value == null) return;
+        property.setValue(value.fixCapitalization(myCapitalization));
+      }
     }
 
     private static @Nullable PsiLiteralExpression getTargetLiteral(@NotNull PsiElement element) {
@@ -203,87 +208,25 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return null;
     }
 
-    protected void doFix(@NotNull Project project, @NotNull PsiElement element) throws IncorrectOperationException {
-      PsiLiteralExpression literal = getTargetLiteral(element);
-      if (literal != null) {
-        Value value = Value.of(literal);
-        if (value == null) return;
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression newExpression =
-          factory.createExpressionFromText('"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"',
-                                           element);
-        literal.replace(newExpression);
-      }
-      if (element instanceof PsiMethodCallExpression call) {
-        final Property property = getPropertyArgument(call);
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
-        if (value == null) return;
-        property.setValue(value.fixCapitalization(myCapitalization));
-      }
-    }
-
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiElement element = previewDescriptor.getStartElement();
-      PsiLiteralExpression literal = getTargetLiteral(element);
-      if (literal != null) {
-        PsiFile file = literal.getContainingFile();
-        if (file == element.getContainingFile()) {
-          doFix(project, element);
-          return IntentionPreviewInfo.DIFF;
-        }
-        PsiElement parent = literal.getParent();
-        Value value = Value.of(literal);
-        if (value == null) return IntentionPreviewInfo.EMPTY;
-        Object mark = PsiTreeUtil.mark(literal);
-        PsiElement copyParent = parent.copy();
-        PsiLiteralExpression copyLiteral = (PsiLiteralExpression)Objects.requireNonNull(PsiTreeUtil.releaseMark(copyParent, mark));
-        String newLiteral = '"' + StringUtil.escapeStringCharacters(value.fixCapitalization(myCapitalization)) + '"';
-        copyLiteral.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newLiteral, null));
-        return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, file.getName(), parent.getText(), copyParent.getText());
-      }
-      if (element instanceof PsiMethodCallExpression call) {
-        final Property property = getPropertyArgument(call);
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
-        if (value == null) return IntentionPreviewInfo.EMPTY;
-        Property copy = (Property)property.copy();
-        copy.setValue(value.fixCapitalization(myCapitalization));
-        return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, property.getContainingFile().getName(), property.getText(),
-                                                   copy.getText());
-      }
-      return IntentionPreviewInfo.EMPTY;
-    }
-
-    @Nullable
-    private static Property getPropertyArgument(PsiMethodCallExpression arg) {
-      PsiExpression[] args = arg.getArgumentList().getExpressions();
-      if (args.length > 0) {
-        return JavaI18nUtil.resolveProperty(args[0]);
-      }
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaI18nBundle.message("quickfix.family.title.capitalization.fix");
     }
   }
 
   interface Value {
+    @Override
     @NotNull String toString();
     boolean isSatisfied(@NotNull Nls.Capitalization capitalization);
 
-    @NotNull
-    default String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
+    default @NotNull String fixCapitalization(@NotNull Nls.Capitalization capitalization) {
       return NlsCapitalizationUtil.fixValue(toString(), capitalization);
     }
 
     default boolean canFix() { return true; }
 
     @Contract("null, _ -> null")
-    @Nullable
-    static Value of(@Nullable Property property, boolean useFormat) {
+    static @Nullable Value of(@Nullable Property property, boolean useFormat) {
       if (property == null) return null;
       String value = property.getUnescapedValue();
       if (value == null) return null;
@@ -304,14 +247,12 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return value == null ? null : new TextValue(value);
     }
 
-    @Nullable
-    static Value of(@NotNull PsiLiteralExpression literal) {
+    static @Nullable Value of(@NotNull PsiLiteralExpression literal) {
       Object value = literal.getValue();
       return value instanceof String ? new TextValue((String)value) : null;
     }
 
-    @Nullable
-    static Value of(NlsInfo info) {
+    static @Nullable Value of(NlsInfo info) {
       if (info instanceof NlsInfo.Localized) {
         Nls.Capitalization capitalization = ((NlsInfo.Localized)info).getCapitalization();
         if (capitalization != Nls.Capitalization.NotSpecified) {
@@ -327,9 +268,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     TextValue(String text) { myText = text; }
 
-    @NotNull
     @Override
-    public String toString() { return myText;}
+    public @NotNull String toString() { return myText;}
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
@@ -354,9 +294,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return false;
     }
 
-    @NotNull
     @Override
-    public String toString() { return getCapitalizationName(myDeclared);}
+    public @NotNull String toString() { return getCapitalizationName(myDeclared);}
   }
 
   static class PropertyValue implements Value {
@@ -368,8 +307,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       myPattern = pattern;
     }
 
-    @NotNull @Override
-    public String toString() {
+    @Override
+    public @NotNull String toString() {
       return myPresentation;
     }
     

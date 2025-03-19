@@ -1,5 +1,5 @@
 // "Change type to MutableSet" "false"
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Replace overloaded operator with function call
 // WITH_STDLIB

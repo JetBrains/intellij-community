@@ -5,12 +5,9 @@ import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.GotItTooltip
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
@@ -51,11 +48,4 @@ internal class ActionToolbarGotItTooltip(@NonNls private val id: String,
 
     if (dispose) Disposer.dispose(tooltipDisposable)
   }
-}
-
-internal fun findToolbarActionButton(toolbar: ActionToolbar, condition: (AnAction) -> Boolean): JComponent? {
-  return UIUtil.uiTraverser(toolbar.component)
-    .filter(ActionButton::class.java)
-    .filter { condition(it.action) }
-    .first()
 }

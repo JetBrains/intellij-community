@@ -2,11 +2,13 @@
 package com.intellij.testFramework;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 import java.util.function.ToIntFunction;
 
 public interface TestSorter {
   @NotNull
+  @Unmodifiable
   List<Class<?>> sorted(@NotNull List<Class<?>> testClasses, @NotNull ToIntFunction<? super Class<?>> ranker);
 }

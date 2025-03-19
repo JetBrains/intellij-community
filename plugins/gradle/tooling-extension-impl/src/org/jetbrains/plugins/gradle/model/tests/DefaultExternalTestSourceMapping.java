@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model.tests;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,16 +13,12 @@ import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmo
 import static org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil.unmodifiablePathSet;
 
 public class DefaultExternalTestSourceMapping implements ExternalTestSourceMapping {
-  @Nullable
-  private String testName;
-  @Nullable
-  private String testTaskPath;
-  @NotNull
-  private Set<File> sourceFolders = Collections.emptySet();
+  private @Nullable String testName;
+  private @Nullable String testTaskPath;
+  private @NotNull Set<File> sourceFolders = Collections.emptySet();
 
   @Override
-  @NotNull
-  public Set<String> getSourceFolders() {
+  public @NotNull Set<String> getSourceFolders() {
     return unmodifiablePathSet(sourceFolders);
   }
 
@@ -30,9 +26,8 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
     this.sourceFolders = unmodifiableFileSet(sourceFolders);
   }
 
-  @NotNull
   @Override
-  public String getTestName() {
+  public @NotNull String getTestName() {
     assert testName != null;
     return testName;
   }
@@ -42,8 +37,7 @@ public class DefaultExternalTestSourceMapping implements ExternalTestSourceMappi
   }
 
   @Override
-  @NotNull
-  public String getTestTaskPath() {
+  public @NotNull String getTestTaskPath() {
     assert testTaskPath != null;
     return testTaskPath;
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
@@ -21,9 +22,9 @@ class RemoveNullableFix(element: KtNullableType, private val typeOfError: Nullab
         PROPERTY(KotlinBundle.message("make.not.nullable"))
     }
 
-    override fun getFamilyName() = KotlinBundle.message("text.remove.question")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("text.remove.question")
 
-    override fun getText() = typeOfError.message
+    override fun getText(): String = typeOfError.message
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
@@ -32,10 +33,10 @@ class RemoveNullableFix(element: KtNullableType, private val typeOfError: Nullab
     }
 
     companion object {
-        val removeForRedundant = createFactory(NullableKind.REDUNDANT)
-        val removeForSuperType = createFactory(NullableKind.SUPERTYPE)
-        val removeForUseless = createFactory(NullableKind.USELESS)
-        val removeForLateInitProperty = createFactory(NullableKind.PROPERTY)
+        val removeForRedundant: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.REDUNDANT)
+        val removeForSuperType: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.SUPERTYPE)
+        val removeForUseless: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.USELESS)
+        val removeForLateInitProperty: QuickFixesPsiBasedFactory<KtElement> = createFactory(NullableKind.PROPERTY)
 
         private fun createFactory(typeOfError: NullableKind): QuickFixesPsiBasedFactory<KtElement> {
             return quickFixesPsiBasedFactory { e ->

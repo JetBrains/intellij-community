@@ -23,14 +23,11 @@ object StarterUtils {
   fun parseDependencyConfig(projectTag: Element, resourcePath: String, interpolateProperties: Boolean = true): DependencyConfig {
     val properties: MutableMap<String, String> = mutableMapOf()
     val dependencies: MutableList<Dependency> = mutableListOf()
-    val bomVersion: String
 
     if (projectTag.name != "project") throw IncorrectBomFileException("Incorrect root tag name ${projectTag.name}")
 
     val bomVersionText = projectTag.getChild("version")?.text
     if (bomVersionText.isNullOrEmpty()) throw IncorrectBomFileException("Empty BOM version for ${resourcePath}")
-
-    bomVersion = bomVersionText
 
     val propertiesTag = projectTag.getChild("properties")
     if (propertiesTag != null) {
@@ -63,7 +60,7 @@ object StarterUtils {
       }
     }
 
-    return DependencyConfig(bomVersion, properties, dependencies)
+    return DependencyConfig(bomVersionText, properties, dependencies)
   }
 
   internal fun parseDependencyConfigVersion(projectTag: Element, resourcePath: String): Version {

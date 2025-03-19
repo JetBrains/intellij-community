@@ -24,20 +24,18 @@ import java.util.Set;
 /**
  * Looks for the 'self' or its equivalents.
  */
-public class PyMethodParametersInspection extends PyInspection {
+public final class PyMethodParametersInspection extends PyInspection {
 
-  @Nullable
-  public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
+  public static @Nullable PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
     final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     final String toolName = PyMethodParametersInspection.class.getSimpleName();
     return (PyMethodParametersInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

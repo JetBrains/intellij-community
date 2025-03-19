@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -7,7 +8,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.starters.local.generator.*
+import com.intellij.ide.starters.local.generator.convertOutputLocationForTests
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -60,16 +61,15 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
+import kotlin.Throws
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
-
   companion object {
     @JvmField
     val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
-    private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
-      ExtensionPointName.create("com.intellij.starter.moduleImporter")
+    private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> = ExtensionPointName("com.intellij.starter.moduleImporter")
 
     @JvmStatic
     fun suggestPackageName(group: String, artifact: String): String {
@@ -191,6 +191,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   protected open fun getCollapsedDependencyCategories(): List<String> = emptyList()
   protected open fun getFilePathsToOpen(): List<String> = emptyList()
 
+  protected open fun isShowProjectTypes(): Boolean = true
+
   internal open fun getCollapsedDependencyCategoriesInternal(): List<String> = getCollapsedDependencyCategories()
 
   internal fun isDependencyAvailableInternal(starter: Starter, dependency: Library): Boolean {
@@ -201,7 +203,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return true
   }
 
-  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+  override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
     return sdkType is JavaSdkType && !sdkType.isDependent
   }
 
@@ -210,7 +212,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
-  override fun createProject(name: String?, path: String?): Project? {
+  override fun createProject(name: String, path: String): Project? {
     val project = super.createProject(name, path)
     project?.let { setupProject(it) }
     return project
@@ -220,7 +222,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
-    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) ?: false
+    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) == true
     ExternalSystemUtil.configureNewModule(module, starterContext.isCreatingNewProject, isMaven)
 
     startGenerator(module)
@@ -237,7 +239,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       emptyList(),
       emptyList(),
       getTestFrameworks(),
-      getCustomizedMessages()
+      getCustomizedMessages(),
+      isShowProjectTypes()
     )
   }
 
@@ -374,14 +377,14 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       preprocessModuleCreated(module, this, starterContext.starter?.id)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), module.disposed, Runnable {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()
-          // import of module may dispose it and create another, open files first
+          // import of module may dispose it and create another. open samples first.
           openSampleFiles(module, getFilePathsToOpen())
 
-          if (starterContext.gitIntegration) {
+          if (starterContext.gitIntegration && starterContext.isCreatingNewProject) {
             runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), module.project) {
               GitRepositoryInitializer.getInstance()?.initRepository(module.project, moduleContentRoot, true)
             }

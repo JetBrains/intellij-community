@@ -41,6 +41,12 @@ internal object DebuggerPreferenceKeys {
 
     val REFLECTION_PATCHING by debuggerPreferenceKey(true)
 
+    val SHOW_LIBRARY_STACK_FRAMES by debuggerPreferenceKey(true /* for backward compatibility with existing tests */)
+
+    val REGISTRY by debuggerPreferenceKey(emptyList<String>())
+
+    val JVM_DEFAULT_MODE by debuggerPreferenceKey("")
+
     val values: List<DebuggerPreferenceKey<*>> by lazy {
         DebuggerPreferenceKeys::class.declaredMemberProperties
             .filter { (it.returnType.javaType as? ParameterizedType)?.rawType == DebuggerPreferenceKey::class.java }

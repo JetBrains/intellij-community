@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -14,7 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Collection;
 
-public class CollapsiblePanel extends JPanel {
+public final class CollapsiblePanel extends JPanel {
   private final JButton myToggleCollapseButton;
   private final JComponent myContent;
   private boolean myIsCollapsed;
@@ -25,8 +25,8 @@ public class CollapsiblePanel extends JPanel {
   private Label myTitleLabel;
   public static final KeyStroke LEFT_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0);
   public static final KeyStroke RIGHT_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0);
-  @NonNls public static final String EXPAND = "expand";
-  @NonNls public static final String COLLAPSE = "collapse";
+  public static final @NonNls String EXPAND = "expand";
+  public static final @NonNls String COLLAPSE = "collapse";
 
   public CollapsiblePanel(JComponent content, boolean collapseButtonAtLeft,
                           boolean isCollapsed, Icon collapseIcon, Icon expandIcon,
@@ -109,7 +109,7 @@ public class CollapsiblePanel extends JPanel {
     this(content, collapseButtonAtLeft, false, null, null, null);
   }
 
-  protected void setCollapsed(boolean collapse) {
+  private void setCollapsed(boolean collapse) {
     try {
       if (collapse) {
         if (myIsInitialized) remove(myContent);

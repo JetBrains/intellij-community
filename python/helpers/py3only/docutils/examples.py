@@ -1,4 +1,4 @@
-# $Id: examples.py 7320 2012-01-19 22:33:02Z milde $
+# $Id: examples.py 9026 2022-03-04 15:57:13Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -49,6 +49,7 @@ def html_parts(input_string, source_path=None, destination_path=None,
         writer_name='html', settings_overrides=overrides)
     return parts
 
+
 def html_body(input_string, source_path=None, destination_path=None,
               input_encoding='unicode', output_encoding='unicode',
               doctitle=True, initial_header_level=1):
@@ -71,6 +72,7 @@ def html_body(input_string, source_path=None, destination_path=None,
     if output_encoding != 'unicode':
         fragment = fragment.encode(output_encoding)
     return fragment
+
 
 def internals(input_string, source_path=None, destination_path=None,
               input_encoding='unicode', settings_overrides=None):

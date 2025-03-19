@@ -3,7 +3,8 @@ package git4idea.conflicts
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -153,12 +154,10 @@ internal class GitConflictsPanel(
   private fun getConflictOperationLock(conflict: GitConflict) = getConflictOperationLock(project, conflict)
 
 
-  private inner class MainPanel : JPanel(BorderLayout()), DataProvider {
-    override fun getData(dataId: String): Any? {
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
-        return ChangesUtil.getNavigatableArray(project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile })
-      }
-      return null
+  private inner class MainPanel : JPanel(BorderLayout()), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ChangesUtil.getNavigatableArray(
+        project, getSelectedConflicts().mapNotNull { it.filePath.virtualFile })
     }
   }
 

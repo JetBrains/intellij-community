@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
@@ -26,15 +25,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.inline.InlineTransformer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -43,17 +45,15 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
   private InlineUtil() {}
 
-  @NotNull
-  public static PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
+  public static @NotNull PsiExpression inlineVariable(PsiVariable variable, PsiExpression initializer, PsiJavaCodeReferenceElement ref) throws IncorrectOperationException {
     return CommonJavaInlineUtil.getInstance().inlineVariable(variable, initializer, ref, null);
   }
 
   @Override
-  @NotNull
-  public PsiExpression inlineVariable(@NotNull PsiVariable variable,
-                                      @NotNull PsiExpression initializer,
-                                      @NotNull PsiJavaCodeReferenceElement ref,
-                                      @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
+  public @NotNull PsiExpression inlineVariable(@NotNull PsiVariable variable,
+                                               @NotNull PsiExpression initializer,
+                                               @NotNull PsiJavaCodeReferenceElement ref,
+                                               @Nullable PsiExpression thisAccessExpr) throws IncorrectOperationException {
     final PsiElement parent = ref.getParent();
     if (parent instanceof PsiResourceExpression) {
       LOG.error("Unable to inline resource reference");
@@ -78,7 +78,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         }
       }
     }
-    solveVariableNameConflicts(initializer, ref, initializer);
+    solveLocalNameConflicts(initializer, ref, initializer);
 
     ChangeContextUtil.encodeContextInfo(initializer, false);
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
@@ -201,7 +201,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return result && nonTailCallUsages.isEmpty();
   }
 
-  public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
+  public static TailCallType getTailCallType(final @NotNull PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
     if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -212,7 +212,14 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }
     if (callParent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)callParent)) {
       PsiElement negationParent = PsiUtil.skipParenthesizedExprUp(callParent.getParent());
-      if (negationParent instanceof PsiReturnStatement || negationParent instanceof PsiLambdaExpression) {
+      if (negationParent instanceof PsiPolyadicExpression polyOp &&
+          (polyOp.getOperationTokenType().equals(JavaTokenType.ANDAND) || polyOp.getOperationTokenType().equals(JavaTokenType.OROR)) &&
+          PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyOp.getOperands()), callParent, false)) {
+        negationParent = PsiUtil.skipParenthesizedExprUp(negationParent.getParent());
+      }
+      if (negationParent instanceof PsiReturnStatement ||
+          negationParent instanceof PsiYieldStatement || 
+          negationParent instanceof PsiLambdaExpression) {
         return TailCallType.Invert;
       }
     }
@@ -299,31 +306,60 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     return ref != initializer ? ref.replace(initializer) : initializer;
   }
 
-  public static void solveVariableNameConflicts(final PsiElement scope,
-                                                final PsiElement placeToInsert,
-                                                final PsiElement renameScope) throws IncorrectOperationException {
-    if (scope instanceof PsiVariable var) {
-      String name = var.getName();
-      String oldName = name;
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(scope.getProject());
-      while (true) {
-        String newName = codeStyleManager.suggestUniqueVariableName(name, placeToInsert, true);
-        if (newName.equals(name)) break;
-        name = newName;
-        newName = codeStyleManager.suggestUniqueVariableName(name, var, true);
-        if (newName.equals(name)) break;
-        name = newName;
-      }
-      if (!name.equals(oldName)) {
-        RefactoringUtil.renameVariableReferences(var, name, new LocalSearchScope(renameScope), true);
-        var.getNameIdentifier().replace(JavaPsiFacade.getElementFactory(scope.getProject()).createIdentifier(name));
+  public static void solveLocalNameConflicts(final PsiElement scope, 
+                                             final PsiElement placeToInsert,
+                                             final PsiElement renameScope) {
+    if (scope instanceof PsiVariable || scope instanceof PsiClass) {
+      PsiNameIdentifierOwner named = (PsiNameIdentifierOwner)scope;
+      String name = named.getName();
+      PsiElement identifier = named.getNameIdentifier();
+      if (name != null && identifier != null) {
+        String oldName = name;
+        Project project = scope.getProject();
+        final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+        BiFunction<PsiElement, String, String> suggester =
+          scope instanceof PsiVariable ?
+          (place, curName) -> codeStyleManager.suggestUniqueVariableName(curName, place, true) :
+          (place, curName) -> suggestClassName(place, curName);
+        while (true) {
+          String newName = suggester.apply(placeToInsert, name);
+          if (newName.equals(name)) break;
+          name = newName;
+          newName = suggester.apply(named, name);
+          if (newName.equals(name)) break;
+          name = newName;
+        }
+        if (!name.equals(oldName)) {
+          for (PsiReference reference : ReferencesSearch.search(named, new LocalSearchScope(renameScope), true).asIterable()) {
+            reference.handleElementRename(name);
+          }
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(scope.getProject());
+          if (named instanceof PsiClass cls) {
+            for (PsiMethod constructor : cls.getConstructors()) {
+              if (!(constructor instanceof SyntheticElement) && constructor.getName().equals(oldName)) {
+                Objects.requireNonNull(constructor.getNameIdentifier()).replace(factory.createIdentifier(name));
+              }
+            }
+          }
+          Objects.requireNonNull(named.getNameIdentifier()).replace(factory.createIdentifier(name));
+        }
       }
     }
 
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
-      solveVariableNameConflicts(child, placeToInsert, renameScope);
+      solveLocalNameConflicts(child, placeToInsert, renameScope);
     }
+  }
+
+  private static @NotNull String suggestClassName(@NotNull PsiElement place, @NotNull String name) {
+    PsiResolveHelper helper = PsiResolveHelper.getInstance(place.getProject());
+    return UniqueNameGenerator.generateUniqueNameOneBased(
+      name,
+      n -> helper.resolveReferencedClass(n, place) == null &&
+           !(place instanceof PsiClass && place.getParent() instanceof PsiDeclarationStatement decl &&
+             decl.getParent() instanceof PsiCodeBlock block &&
+             SyntaxTraverser.psiTraverser(block).filter(PsiClass.class).find(cls -> n.equals(cls.getName())) != null));
   }
 
   public static boolean isChainingConstructor(PsiMethod constructor) {
@@ -342,19 +378,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
                                                            @NotNull PsiExpression initializer,
                                                            @NotNull PsiVariable variable) {
 
-    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
-    if (referencedVars.isEmpty()) return;
-
-    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
-    if (scope == null) return;
-
-    ControlFlow flow = createControlFlow(scope);
-    if (flow == null) return;
-
-    int start = flow.getEndOffset(initializer);
-    if (start < 0) return;
-
-    Map<PsiElement, PsiVariable> writePlaces = ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
+    Map<PsiElement, PsiVariable> writePlaces = getChangedBeforeLastAccessMap(initializer, variable);
 
     String readVarName = variable.getName();
     for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
@@ -363,8 +387,29 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }
   }
 
-  @Nullable
-  private static ControlFlow createControlFlow(@NotNull PsiElement scope) {
+  /**
+   * @param initializer variable initializer
+   * @param variable variable initialized
+   * @return map of places where locals referenced in the initializer are changed before the last use of variable
+   */
+  public static @NotNull Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
+                                                                           @NotNull PsiVariable variable) {
+    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
+    if (referencedVars.isEmpty()) return Map.of();
+
+    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
+    if (scope == null) return Map.of();
+
+    ControlFlow flow = createControlFlow(scope);
+    if (flow == null) return Map.of();
+
+    int start = flow.getEndOffset(initializer);
+    if (start < 0) return Map.of();
+
+    return ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
+  }
+
+  private static @Nullable ControlFlow createControlFlow(@NotNull PsiElement scope) {
     ControlFlowFactory factory = ControlFlowFactory.getInstance(scope.getProject());
     ControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
 
@@ -452,19 +497,14 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (expr instanceof PsiLiteralExpression && PsiTypes.booleanType().equals(expr.getType())) {
       Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
       if (value != null) {
-        SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
-        if (fix.isAvailable()) {
-          fix.invoke(project, expr.getContainingFile(), expr, expr);
-        }
+        SimplifyBooleanExpressionFix.trySimplify(expr, value);
       }
     }
     return initializer;
   }
 
   public static boolean canInlineParameterOrThisVariable(PsiLocalVariable variable) {
-    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-    if (block == null) return false;
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, block);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferencesNoCache(variable);
     boolean isAccessedForWriting = false;
     for (PsiReferenceExpression refElement : refs) {
       if (PsiUtil.isAccessedForWriting(refElement)) {
@@ -506,10 +546,21 @@ public final class InlineUtil implements CommonJavaInlineUtil {
         if (!(list.getParent() instanceof PsiCallExpression call)) return false;
         PsiExpression qualifier = call instanceof PsiMethodCallExpression methodCall ? methodCall.getMethodExpression().getQualifierExpression() :
                                   call instanceof PsiNewExpression newExpression ? newExpression.getQualifier() : null;
-        if (qualifier != null && !ExpressionUtils.isSafelyRecomputableExpression(qualifier)) return false;
+        if (qualifier != null &&
+            !(ExpressionUtils.isSafelyRecomputableExpression(qualifier) ||
+              qualifier instanceof PsiReferenceExpression qualifierRef && qualifierRef.resolve() instanceof PsiClass)) {
+          return false;
+        }
         cur = call;
-      }
-      else if (parent instanceof PsiReferenceExpression ref) {
+      } else if (parent instanceof PsiAssignmentExpression assign && assign.getRExpression() == cur) {
+        PsiExpression lExpression = assign.getLExpression();
+        if (lExpression instanceof PsiReferenceExpression lRef &&
+            (lRef.getQualifierExpression() == null || lRef.getQualifierExpression() instanceof PsiQualifiedExpression)) {
+          cur = assign;
+        } else {
+          return false;
+        }
+      } else if (parent instanceof PsiReferenceExpression ref) {
         if (parent.getParent() instanceof PsiMethodCallExpression call) {
           cur = call;
         } else {
@@ -689,9 +740,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
    * @param strictlyFinal whether the variable is referenced in the places where final variable is required
    */
   public static void tryInlineGeneratedLocal(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
-    PsiElement scope = PsiUtil.getVariableCodeBlock(variable, null);
-    if (scope == null) return;
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, scope);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferencesNoCache(variable);
     PsiReferenceExpression firstRef = ContainerUtil.getFirstItem(refs);
 
     PsiExpression initializer = variable.getInitializer();
@@ -709,9 +758,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
 
     boolean isAccessedForWriting = false;
+    boolean usedAsResource = false;
     for (PsiReferenceExpression refElement : refs) {
       if (PsiUtil.isAccessedForWriting(refElement)) {
         isAccessedForWriting = true;
+      }
+      if (refElement.getParent() instanceof PsiResourceExpression) {
+        usedAsResource = true;
       }
     }
 
@@ -719,6 +772,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     Project project = variable.getProject();
     boolean canInline = refs.size() == 1 && !isAccessedForWriting && isFirstUse(variable, refs.get(0)) ||
                         canInlineParameterOrThisVariable(project, initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting);
+    canInline &= !usedAsResource;
     if (canInline) {
       if (shouldBeFinal) {
         declareUsedLocalsFinal(initializer, true);
@@ -755,7 +809,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     throws IncorrectOperationException {
     PsiElement context = PsiUtil.getVariableCodeBlock(resultVar, null);
     if (context == null) return;
-    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(resultVar, context);
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferencesNoCache(resultVar);
     if (resultVar.getInitializer() == null) {
       PsiAssignmentExpression assignment = null;
       for (PsiReferenceExpression ref : references) {
@@ -793,7 +847,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (declaration == null || declaration.getDeclaredElements().length != 1) return;
     PsiModifierList modifiers = target.getModifierList();
     if (modifiers != null && modifiers.getAnnotations().length != 0) return;
-    boolean effectivelyFinal = HighlightControlFlowUtil.isEffectivelyFinal(variable, context, null);
+    boolean effectivelyFinal = ControlFlowUtil.isEffectivelyFinal(variable, context);
     if (!effectivelyFinal && !VariableAccessUtils.canUseAsNonFinal(target)) return;
 
     for (PsiReferenceExpression reference : references) {
@@ -863,15 +917,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     }),
     Return((methodCopy, callSite, returnType) -> null);
 
-    @Nullable
-    private final InlineTransformer myTransformer;
+    private final @Nullable InlineTransformer myTransformer;
 
     TailCallType(@Nullable InlineTransformer transformer) {
       myTransformer = transformer;
     }
 
-    @Nullable
-    public InlineTransformer getTransformer() {
+    public @Nullable InlineTransformer getTransformer() {
       return myTransformer;
     }
   }

@@ -6,7 +6,7 @@ import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.config.migration.VersionedState
-import com.intellij.grazie.grammar.LanguageToolChecker
+import com.intellij.grazie.grammar.grammarRules
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
@@ -100,7 +100,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationT
     @VisibleForTesting
     fun migrateLTRuleIds(state: State): State {
       val ltRules: List<Rule> by lazy {
-        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { LanguageToolChecker.grammarRules(LangTool.createTool(it, state), it) }
+        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { grammarRules(LangTool.createTool(it, state), it) }
       }
 
       fun convert(ids: Set<String>): Set<String> =

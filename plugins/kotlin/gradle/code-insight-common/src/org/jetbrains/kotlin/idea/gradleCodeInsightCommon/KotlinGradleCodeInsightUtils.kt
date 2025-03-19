@@ -11,8 +11,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
@@ -51,20 +53,25 @@ fun Module.getBuildScriptSettingsPsiFile(): PsiFile? {
 }
 
 fun Project.getTopLevelBuildScriptPsiFile(): PsiFile? {
-    val basePath = this.basePath ?: return null
-    return findBuildGradleFile(basePath, DEFAULT_SCRIPT_NAME, KOTLIN_BUILD_SCRIPT_NAME)?.getPsiFile(this)
+    val projectDir = this.guessProjectDir() ?: return null
+    return findBuildGradleFile(projectDir.path, DEFAULT_SCRIPT_NAME, KOTLIN_BUILD_SCRIPT_NAME)?.getPsiFile(this)
 }
 
 fun Module.getTopLevelBuildScriptSettingsPsiFile(): PsiFile? {
     val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(this) ?: return null
+    return getTopLevelBuildScriptSettingsPsiFile(project, externalProjectPath)
+}
+
+fun getTopLevelBuildScriptSettingsPsiFile(project: Project, externalProjectPath: String): PsiFile? {
     return findBuildGradleFile(externalProjectPath, SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)
         ?.getPsiFile(project)
 }
 
 private fun Module.getBuildScriptFile(vararg fileNames: String): Path? {
-    val moduleDir = Path(moduleFilePath).parent.pathString
-    findBuildGradleFile(moduleDir, *fileNames)?.let {
-        return it
+    moduleNioFile.parent?.let { moduleDir ->
+        findBuildGradleFile(moduleDir.pathString, *fileNames)?.let {
+            return it
+        }
     }
 
     for (contentRoot in ModuleRootManager.getInstance(this).contentRoots) {
@@ -101,3 +108,5 @@ private fun findBuildGradleFile(path: String, vararg fileNames: String): Path? =
 private fun Path.getPsiFile(project: Project) = VfsUtil.findFile(this, true)?.let {
     PsiManager.getInstance(project).findFile(it)
 }
+
+fun PsiFile.canBeConfigured(): Boolean = WritingAccessProvider.isPotentiallyWritable(this.virtualFile, null)

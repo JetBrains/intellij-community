@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull
 @Service(Service.Level.APP)
 class PluginRepositoryAuthService {
 
-  val connectionTuner = HttpRequests.ConnectionTuner { connection ->
+  val connectionTuner: HttpRequests.ConnectionTuner = HttpRequests.ConnectionTuner { connection ->
     try {
       getAllCustomHeaders(connection.url.toString())
         .forEach { (k, v) -> connection.addRequestProperty(k, v) }

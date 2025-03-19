@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInspection.longLine;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public interface LongLineInspectionPolicy {
-  ExtensionPointName<LongLineInspectionPolicy> EP_NAME = ExtensionPointName.create("com.intellij.longLineInspectionPolicy");
 
   boolean ignoreLongLineFor(@NotNull PsiElement element);
 }

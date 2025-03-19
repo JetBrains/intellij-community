@@ -26,7 +26,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InternalUserInvokedFullAnalysisAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     HeapDumpSnapshotRunnable(MemoryReportReason.InternalUserInvoked, IMMEDIATE).run()
@@ -47,6 +49,7 @@ class InternalNonuserInvokedHeapDumpSnapshotAction : AnAction(), DumbAware {
   }
 }
 
+@ApiStatus.Internal
 class AnalyzeReportAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val fileChooser = FileChooserFactory.getInstance().createFileChooser(

@@ -20,7 +20,7 @@ public final class ExpandedItemListCellRendererWrapper<T> implements ListCellRen
 
   @Override
   public Component getListCellRendererComponent(JList<? extends T> list, T value, int index, boolean isSelected, boolean cellHasFocus) {
-    GraphicsUtil.setAntialiasingType(list, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(list, AntialiasingType.getAATextInfoForSwingComponent());
     Component result = myWrappee.getListCellRendererComponent(list, UIUtil.htmlInjectionGuard(value), index, isSelected, cellHasFocus);
     if (!myHandler.getExpandedItems().contains(index)) return result;
     Rectangle bounds = result.getBounds();

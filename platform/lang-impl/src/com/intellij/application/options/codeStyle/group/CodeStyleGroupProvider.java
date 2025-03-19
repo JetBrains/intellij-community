@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.group;
 
 import com.intellij.ConfigurableFactory;
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
+public final class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
   private final CodeStyleGroup myGroup;
   private final CodeStyleSchemesModel myModel;
   private final CodeStyleSchemesConfigurable mySchemesConfigurable;
@@ -35,7 +35,7 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     mySchemesConfigurable = configurable;
   }
 
-  public Configurable createConfigurable() {
+  public @NotNull Configurable createConfigurable() {
     return new CodeStyleGroupConfigurable();
   }
 
@@ -49,9 +49,8 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     return myGroup.getLanguage();
   }
 
-  @NotNull
   @Override
-  public Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleGroupConfigurable();
   }
 
@@ -59,7 +58,7 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     myChildProviders.add(provider);
   }
 
-  public class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract
+  public final class CodeStyleGroupConfigurable extends SearchableConfigurable.Parent.Abstract
     implements ConfigurableGroup, Configurable.NoScroll {
 
     @Override
@@ -103,7 +102,7 @@ public class CodeStyleGroupProvider extends CodeStyleSettingsProvider {
     }
 
     @Override
-    public Configurable @NotNull [] buildConfigurables() {
+    public @NotNull Configurable @NotNull [] buildConfigurables() {
       List<Configurable> childConfigurables = new ArrayList<>();
       for (CodeStyleSettingsProvider childProvider : myChildProviders) {
         CodeStyleConfigurableWrapper wrapper =

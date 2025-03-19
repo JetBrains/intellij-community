@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -12,7 +12,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 
 final class AutoCompletionProvider {
 
-  public static List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,
-                                                                             JTextComponent textComponent) {
+  public static @Unmodifiable List<SearchEverywhereFoundElementInfo> getCompletionElements(Collection<SearchEverywhereContributor<?>> contributors,
+                                                                                           JTextComponent textComponent) {
     StubContributor stubContributor = new StubContributor(textComponent);
     return ContainerUtil.map(
       getCompletions(contributors, textComponent),
@@ -41,7 +41,7 @@ final class AutoCompletionProvider {
       .collect(Collectors.toList());
   }
 
-  private static class StubContributor implements SearchEverywhereContributor<AutoCompletionCommand> {
+  private static final class StubContributor implements SearchEverywhereContributor<AutoCompletionCommand> {
 
     private final JTextComponent myTextComponent;
 
@@ -52,9 +52,8 @@ final class AutoCompletionProvider {
       return "AutocompletionContributor";
     }
 
-    @Nls
     @Override
-    public @NotNull String getGroupName() {
+    public @Nls @NotNull String getGroupName() {
       return IdeBundle.message("searcheverywhere.autocompletion.tab.name");
     }
 
@@ -85,19 +84,13 @@ final class AutoCompletionProvider {
     public @NotNull ListCellRenderer<? super AutoCompletionCommand> getElementsRenderer() {
       return new CommandRenderer();
     }
-
-    @Override
-    public @Nullable Object getDataForItem(@NotNull AutoCompletionCommand element,
-                                           @NotNull String dataId) {
-      return null;
-    }
   }
 
-  private static class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
+  private static final class CommandRenderer extends SimpleColoredComponent implements ListCellRenderer<AutoCompletionCommand> {
 
-    protected boolean mySelected;
-    protected Color myForeground;
-    protected Color mySelectionForeground;
+    private boolean mySelected;
+    private Color myForeground;
+    private Color mySelectionForeground;
 
     @Override
     public Component getListCellRendererComponent(JList<? extends AutoCompletionCommand> list,
@@ -129,7 +122,7 @@ final class AutoCompletionProvider {
     }
 
     @Override
-    public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
       if (mySelected) {
         super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
       }

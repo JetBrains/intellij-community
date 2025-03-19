@@ -1,45 +1,36 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
 public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public static final SpeedSearchSupply DUMMY_SEARCH = new SpeedSearchSupply() {
-    @Nullable
     @Override
-    public Iterable<TextRange> matchingFragments(@NotNull String text) { return null; }
+    public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) { return null; }
 
     @Override
     public void refreshSelection() { }
@@ -62,11 +53,11 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   public FilteringTree(@NotNull Tree tree, @NotNull T root) {
     myRoot = root;
     myTree = tree;
-    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren, useIdentityHashing()));
+    myTree.setModel(new SearchTreeModel<>(myRoot, DUMMY_SEARCH, o -> getText(o), this::createNode, this::getChildren,
+                                          useIdentityHashing()));
   }
 
-  @NotNull
-  public SearchTextField installSearchField() {
+  public @NotNull SearchTextField installSearchField() {
     SearchTextField field = new SearchTextField(false) {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent e) {
@@ -87,71 +78,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return field;
   }
 
-  @NotNull
-  protected SpeedSearchSupply createSpeedSearch(@NotNull SearchTextField searchTextField) {
-    return new FilteringSpeedSearch(searchTextField);
-  }
-
-  protected class FilteringSpeedSearch extends MySpeedSearch<T> {
-
-    protected FilteringSpeedSearch(@NotNull SearchTextField field) {
-      super(myTree, field.getTextEditor());
-    }
-
-    @Override
-    protected void onSearchFieldUpdated(String pattern) {
-      TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
-      getSearchModel().refilter();
-      expandTreeOnSearchUpdateComplete(pattern);
-      myTree.getSelectionModel().setSelectionPaths(paths);
-      onSpeedSearchUpdateComplete(pattern);
-    }
-
-    @Override
-    public void select(@NotNull T node) {
-      TreeUtil.selectInTree(node, false, myTree);
-    }
-
-    @Override
-    public boolean isMatching(@NotNull T node) {
-      String text = getText(getUserObject(node));
-      return text != null && matchingFragments(text) != null;
-    }
-
-    @Nullable
-    @Override
-    public T getSelection() {
-      return ArrayUtil.getFirstElement(myTree.getSelectedNodes(getNodeClass(), null));
-    }
-
-    @NotNull
-    @Override
-    public Iterator<T> iterate(@Nullable T start, boolean fwd) {
-      JBTreeTraverser<T> traverser = JBTreeTraverser.from(n -> {
-        int count = n.getChildCount();
-        List<T> children = new ArrayList<>(count);
-        for (int i = 0; i < count; ++i) {
-          T c = ObjectUtils.tryCast(n.getChildAt(fwd ? i : count - i - 1), getNodeClass());
-          if (c != null) children.add(c);
-        }
-        return children;
-      });
-      if (start == null) {
-        traverser = traverser.withRoot(getRoot());
-      }
-      else {
-        List<T> roots = new ArrayList<>();
-        for (TreeNode node = null, parent = start; parent != null; node = parent, parent = node.getParent()) {
-          int idx = node == null ? -1 : parent.getIndex(node);
-          for (int i = fwd ? idx + 1 : 0, c = fwd ? parent.getChildCount() : idx; i < c; ++i) {
-            T child = ObjectUtils.tryCast(parent.getChildAt(fwd ? i : idx - i - 1), getNodeClass());
-            if (child != null) roots.add(child);
-          }
-        }
-        traverser = traverser.withRoots(roots);
-      }
-      return traverser.preOrderDfsTraversal().iterator();
-    }
+  protected @NotNull SpeedSearchSupply createSpeedSearch(@NotNull SearchTextField searchTextField) {
+    return new FilteringSpeedSearch<T, U>(this, searchTextField);
   }
 
   public void installSimple() {
@@ -185,19 +113,15 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
    */
   protected abstract Class<? extends T> getNodeClass();
 
-  @NotNull
-  protected abstract T createNode(@NotNull U obj);
+  protected abstract @NotNull T createNode(@NotNull U obj);
 
-  @NotNull
-  protected abstract Iterable<U> getChildren(@NotNull U obj);
+  protected abstract @NotNull Iterable<U> getChildren(@NotNull U obj);
 
-  @NotNull
-  public Tree getTree() {
+  public @NotNull Tree getTree() {
     return myTree;
   }
 
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myTree;
   }
 
@@ -217,21 +141,18 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     return true;
   }
 
-  @Nullable
-  protected abstract String getText(@Nullable U object);
+  protected abstract @Nullable String getText(@Nullable U object);
 
-  @NotNull
   @SuppressWarnings("unchecked")
-  public SearchTreeModel<T, U> getSearchModel() {
+  public @NotNull SearchTreeModel<T, U> getSearchModel() {
     return (SearchTreeModel)myTree.getModel();
   }
 
-  @NotNull
-  public T getRoot() {
+  public @NotNull T getRoot() {
     return myRoot;
   }
 
-  public static class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
+  public static final class SearchTreeModel<N extends DefaultMutableTreeNode, U> extends DefaultTreeModel {
     private final @NotNull Function<? super U, String> myNamer;
     private final @NotNull Function<? super U, ? extends N> myFactory;
     private final U myRootObject;
@@ -272,15 +193,32 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         N treeNode = myNodeCache.get(node);
         newNodes.put(node, treeNode == null ? createNode(node) : treeNode);
       }
-      List<N> oldNodes = new ArrayList<>();
-      for (Map.Entry<U, N> entry : myNodeCache.entrySet()) {
-        if (!newNodes.containsKey(entry.getKey())) oldNodes.add(entry.getValue());
-      }
+      Set<N> nodesToRemove = getNodesToRemove(newNodes);
       myNodeCache = newNodes;
-      for (N node : oldNodes) {
+      for (N node : nodesToRemove) {
         if (node.getParent() != null) removeNodeFromParent(node);
       }
       refilter();
+    }
+
+    private @NotNull Set<N> getNodesToRemove(Map<U, N> newNodes) {
+      Set<N> nodesToRemove = new ReferenceOpenHashSet<>();
+      for (Map.Entry<U, N> entry : myNodeCache.entrySet()) {
+        if (!newNodes.containsKey(entry.getKey())) {
+          N node = entry.getValue();
+          boolean shouldRemove = true;
+          for (TreeNode treeNode : node.getPath()) {
+            if (nodesToRemove.contains(treeNode)) {
+              shouldRemove = false;
+              break;
+            }
+          }
+          if (shouldRemove) {
+            nodesToRemove.add(node);
+          }
+        }
+      }
+      return nodesToRemove;
     }
 
     @Override
@@ -289,27 +227,23 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return (N)root;
     }
 
-    @NotNull
-    public U getRootObject() {
+    public @NotNull U getRootObject() {
       return myRootObject;
     }
 
-    @NotNull
-    public N getNode(@NotNull U object) {
+    public @NotNull N getNode(@NotNull U object) {
       N node = getCachedNode(object);
       if (node == null) myNodeCache.put(object, node = createNode(object));
       return node;
     }
 
-    @Nullable
-    public N getCachedNode(@Nullable U object) {
+    public @Nullable N getCachedNode(@Nullable U object) {
       if (object == null) return null;
       if (object == myRootObject) return getRoot();
       return myNodeCache.get(object);
     }
 
-    @NotNull
-    protected N createNode(@NotNull U object) {
+    private @NotNull N createNode(@NotNull U object) {
       assert !(object instanceof DefaultMutableTreeNode);
       return myFactory.fun(object);
     }
@@ -329,14 +263,12 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
     }
 
-    @NotNull
-    private Set<U> createUserObjectSet() {
+    private @NotNull Set<U> createUserObjectSet() {
       return myUseIdentityHashing ? new ReferenceOpenHashSet<>() : new HashSet<>();
     }
 
-    @NotNull
-    private Map<U, N> createUserObjectMap() {
-      return myUseIdentityHashing ? new IdentityHashMap<>() : new HashMap<>();
+    private @NotNull Map<U, N> createUserObjectMap() {
+      return myUseIdentityHashing ? new Reference2ObjectLinkedOpenHashMap<>() : new LinkedHashMap<>();
     }
 
     private boolean equalUserObjects(@Nullable U u1, @Nullable U u2) {
@@ -349,8 +281,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       for (U child : children) {
         isAccepted |= computeAcceptCache(child, cache);
       }
-      String name = myNamer.fun(object);
-      isAccepted |= object == myRootObject || name != null && accept(name);
+      isAccepted = isAccepted || object == myRootObject || accept(object);
       if (isAccepted) {
         for (U child : children) {
           if (myNamer.fun(child) == null) cache.add(child);
@@ -360,18 +291,28 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return isAccepted;
     }
 
-    @NotNull
-    public Iterable<? extends U> getChildren(@Nullable U object) {
+    private boolean accept(@NotNull U object) {
+      String name = myNamer.fun(object);
+      if (name == null) return false;
+
+      Iterable<TextRange> matchingFragments = mySpeedSearch.matchingFragments(name);
+      if (mySpeedSearch instanceof FilteringTreeUserObjectMatcher filteringTreeSpeedSearch) {
+        //noinspection unchecked
+        return filteringTreeSpeedSearch.checkMatching(object, matchingFragments) != Matching.NONE;
+      } else {
+        return matchingFragments != null;
+      }
+    }
+
+    public @NotNull Iterable<? extends U> getChildren(@Nullable U object) {
       return object == null ? JBIterable.empty() : myStructure.fun(object);
     }
 
-    @NotNull
-    public Function<? super U, ? extends Iterable<? extends U>> getStructure() {
+    public @NotNull Function<? super U, ? extends Iterable<? extends U>> getStructure() {
       return myStructure;
     }
 
-    @Nullable
-    private static <N extends DefaultMutableTreeNode> N getChildSafe(@NotNull N node, int i) {
+    private static @Nullable <N extends DefaultMutableTreeNode> N getChildSafe(@NotNull N node, int i) {
       return node.getChildCount() <= i ? null : getChild(node, i);
     }
 
@@ -401,6 +342,9 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         }
       }
 
+      if (acceptedList.size() != acceptedSet.size()) {
+        throw new AssertionError("Duplicate nodes will cause failure");
+      }
       removeNotAccepted(node, acceptedSet);
       mergeAcceptedNodes(node, acceptedList);
     }
@@ -421,7 +365,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
         }
         ++k;
       }
-      if (newIds.size() > 0) {
+      if (!newIds.isEmpty()) {
         nodesWereInserted(node, newIds.toIntArray());
       }
       if (node.getChildCount() > k) {
@@ -432,7 +376,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           node.remove(i);
           leftIds.add(i);
         }
-        if (leftIds.size() > 0) {
+        if (!leftIds.isEmpty()) {
           int[] ints = leftIds.toIntArray();
           for (int i = 0; i < ints.length; i++) {
             int temp = ints[i];
@@ -468,150 +412,25 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
     }
 
-    protected boolean accept(@Nullable String name) {
-      if (name == null) return true;
-      return mySpeedSearch.matchingFragments(name) != null;
-    }
-
     @Override
     public boolean isLeaf(Object node) {
       return getRoot() != node && super.isLeaf(node);
     }
 
-    @Nullable
     @SuppressWarnings("unchecked")
-    public final U getUserObject(@Nullable N node) {
+    public @Nullable U getUserObject(@Nullable N node) {
       return node == null ? null : (U)node.getUserObject();
     }
   }
 
-  private static abstract class MySpeedSearch<Item> extends SpeedSearch {
-    private boolean myUpdating = false;
-    private final JTextComponent myField;
-
-    MySpeedSearch(@NotNull JComponent comp, @NotNull JTextComponent field) {
-      myField = field;
-      myField.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          if (!myUpdating) {
-            myUpdating = true;
-            try {
-              String text = myField.getText();
-              updatePattern(text);
-              onUpdatePattern(text);
-              update();
-            }
-            finally {
-              myUpdating = false;
-            }
-          }
-        }
-      });
-      setEnabled(true);
-      comp.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (selectTargetElement(e.getKeyCode())) {
-            e.consume();
-          }
-        }
-      });
-      comp.addKeyListener(this);
-      installSupplyTo(comp);
-    }
-
-    @Override
-    public void update() {
-      String filter = getFilter();
-      if (!myUpdating) {
-        myUpdating = true;
-        try {
-          myField.setText(filter);
-        }
-        finally {
-          myUpdating = false;
-        }
-      }
-      onSearchFieldUpdated(filter);
-      updateSelection();
-    }
-
-    @Override
-    public void noHits() {
-      myField.setBackground(LightColors.RED);
-    }
-
-    public void updateSelection() {
-      Item selection = getSelection();
-      if (selection != null && isMatching(selection)) return;
-      JBIterator<Item> it = JBIterator.from(iterate(selection, true, true))
-        .filter(item -> item != selection && isMatching(item));
-      if (!it.advance()) return;
-      select(it.current());
-    }
-
-    protected void onUpdatePattern(@Nullable String text) { }
-
-    protected void onSearchFieldUpdated(String pattern) { }
-
-    public abstract void select(@NotNull Item item);
-
-    @Nullable
-    public abstract Item getSelection();
-
-    public abstract boolean isMatching(@NotNull Item item);
-
-    @NotNull
-    public abstract Iterator<Item> iterate(@Nullable Item start, boolean fwd);
-
-    @NotNull
-    public Iterator<Item> iterate(@Nullable Item start, boolean fwd, boolean wrap) {
-      if (!wrap || start == null) return iterate(start, fwd);
-      return new JBIterator<>() {
-        boolean wrapped = false;
-        Iterator<Item> it = iterate(start, fwd);
-
-        @Override
-        protected Item nextImpl() {
-          if (it.hasNext()) return it.next();
-          if (wrapped) return stop();
-          wrapped = true;
-          it = JBIterator.from(iterate(null, fwd)).takeWhile(item -> item != start);
-          return it.hasNext() ? it.next() : stop();
-        }
-      };
-    }
-
-    private boolean selectTargetElement(int keyCode) {
-      if (!isPopupActive()) return false;
-      Iterator<Item> it;
-      if (keyCode == KeyEvent.VK_UP) {
-        it = iterate(getSelection(), false, UISettings.getInstance().getCycleScrolling());
-      }
-      else if (keyCode == KeyEvent.VK_DOWN) {
-        it = iterate(getSelection(), true, UISettings.getInstance().getCycleScrolling());
-      }
-      else if (keyCode == KeyEvent.VK_HOME) {
-        it = iterate(null, true);
-      }
-      else if (keyCode == KeyEvent.VK_END) {
-        it = iterate(null, false);
-      }
-      else {
-        return false;
-      }
-      it = JBIterator.from(it).filter(item -> isMatching(item));
-      if (it.hasNext()) {
-        select(it.next());
-      }
-      return true;
-    }
+  @SuppressWarnings("unchecked")
+  public final @Nullable U getUserObject(@Nullable TreeNode node) {
+    return node == null || !getNodeClass().isAssignableFrom(node.getClass()) ? null : (U)((T)node).getUserObject();
   }
 
-  @Nullable
-  @SuppressWarnings("unchecked")
-  public final U getUserObject(@Nullable TreeNode node) {
-    return node == null || !getNodeClass().isAssignableFrom(node.getClass()) ? null : (U)((T)node).getUserObject();
+  public enum Matching {NONE, PARTIAL, FULL}
+
+  protected interface FilteringTreeUserObjectMatcher<U> {
+    @NotNull Matching checkMatching(@NotNull U userObject, @Nullable Iterable<TextRange> matchingFragments);
   }
 }

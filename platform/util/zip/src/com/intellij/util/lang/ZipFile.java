@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
@@ -41,5 +42,14 @@ public interface ZipFile extends AutoCloseable {
     byte @NotNull [] getData() throws IOException;
 
     @NotNull InputStream getInputStream() throws IOException;
+  }
+
+  static @NotNull ZipFile load(@NotNull Path file) throws IOException {
+    try {
+      return ImmutableZipFile.load(file);
+    }
+    catch (MissingIkvException e) {
+      return HashMapZipFile.load(file);
+    }
   }
 }

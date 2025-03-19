@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.Alignment;
@@ -21,19 +21,16 @@ public class AlignmentProvider {
     aligner.append(e2);
   }
 
-  @Nullable
-  public Alignment getAlignment(@NotNull PsiElement e) {
+  public @Nullable Alignment getAlignment(@NotNull PsiElement e) {
     Aligner aligner = myElement2Aligner.get(e);
     return aligner == null ? null : aligner.getAlignment();
   }
 
-  @NotNull
-  public Aligner createAligner(boolean allowBackwardShift) {
+  public @NotNull Aligner createAligner(boolean allowBackwardShift) {
     return new Aligner(allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
-  @NotNull
-  public Aligner createAligner(PsiElement element, boolean allowBackwardShift, Alignment.Anchor anchor) {
+  public @NotNull Aligner createAligner(PsiElement element, boolean allowBackwardShift, Alignment.Anchor anchor) {
     final Aligner aligner = new Aligner(allowBackwardShift, anchor);
     aligner.append(element);
     return aligner;

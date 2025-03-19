@@ -39,8 +39,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
-                               private val remapInMemory: Boolean) {
+open class HProfScenarioRunner(
+  private val tmpFolder: TemporaryFolder,
+  private val remapInMemory: Boolean,
+) {
 
   val regex = Regex("^com\\.intellij\\.diagnostic\\.hprof\\..*\\\$.*\\\$")
 
@@ -51,17 +53,34 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
     return clazz.name.replace(regex, "")
   }
 
-  fun run(scenario: HProfBuilder.() -> Unit,
-          baselineFileName: String,
-          nominatedClassNames: List<String>?) {
+  fun createReport(
+    scenario: HProfBuilder.() -> Unit,
+    nominatedClassNames: List<String>?,
+    shouldMapClassNames: Boolean = true,
+    config: AnalysisConfig? = null,
+  ): String {
     val hprofFile = tmpFolder.newFile()
     HProfTestUtils.createHProfOnFile(hprofFile,
-                                     scenario,
-                                     { c -> mapClassName(c) })
-    compareReportToBaseline(hprofFile, baselineFileName, nominatedClassNames)
+                                     scenario) { c -> if (shouldMapClassNames) mapClassName(c) else c.name }
+    return createReport(hprofFile, nominatedClassNames, config)
   }
 
-  private fun compareReportToBaseline(hprofFile: File, baselineFileName: String, nominatedClassNames: List<String>? = null) {
+  fun run(
+    scenario: HProfBuilder.() -> Unit,
+    baselineFileName: String,
+    nominatedClassNames: List<String>?,
+    shouldMapClassNames: Boolean = true,
+    config: AnalysisConfig? = null,
+  ) {
+    val report = createReport(scenario, nominatedClassNames, shouldMapClassNames, config)
+    compareReportToBaseline(report, baselineFileName)
+  }
+
+  fun createReport(
+    hprofFile: File,
+    nominatedClassNames: List<String>? = null,
+    config: AnalysisConfig? = null,
+  ): String {
     FileChannel.open(hprofFile.toPath(), StandardOpenOption.READ).use { hprofChannel ->
 
       val progress = object : AbstractProgressIndicatorBase() {
@@ -79,8 +98,9 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
         RemapIDsVisitor.createFileBased(openTempEmptyFileChannel(), histogram.instanceCount)
 
       parser.accept(remapIDsVisitor, "id mapping")
-      parser.setIdRemappingFunction(remapIDsVisitor.getRemappingFunction())
-      hprofMetadata.remapIds(remapIDsVisitor.getRemappingFunction())
+      val idMapper = remapIDsVisitor.getIDMapper()
+      parser.setIDMapper(idMapper)
+      hprofMetadata.remapIds(idMapper)
 
       val navigator = ObjectNavigator.createOnAuxiliaryFiles(
         parser,
@@ -129,14 +149,17 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
         histogram
       )
 
-      val analysisReport = AnalyzeGraph(analysisContext, memoryBackedListProvider).analyze(progress).mainReport.toString()
-
-      val baselinePath = getBaselinePath(baselineFileName)
-      val baseline = getBaselineContents(baselinePath)
-      Assert.assertEquals("Report doesn't match the baseline from file:\n$baselinePath",
-                          baseline,
-                          analysisReport)
+      return AnalyzeGraph(analysisContext, memoryBackedListProvider).analyze(progress).mainReport.toString()
     }
+  }
+
+  fun compareReportToBaseline(analysisReport: String, baselineFileName: String) {
+    val baselinePath = getBaselinePath(baselineFileName)
+    val baseline = getBaselineContents(baselinePath)
+    Assert.assertEquals("Report doesn't match the baseline from file:\n$baselinePath",
+                        baseline,
+                        analysisReport)
+
   }
 
   /**
@@ -157,15 +180,31 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
 
     val name = file.nameWithoutExtension
     val extension = if (file.extension != "") "." + file.extension else ""
+    val testDataDir = file.parentFile
 
-    val javaSpecSpecificFileName = File(file.parent, "$name.$javaSpecString$extension").toString()
+    val javaVersion = javaSpecString.toIntOrNull()
+    val minimalVersionToScan = 17 // to be compatible with tests on old jre-s
+    if (javaVersion == null || javaVersion <= minimalVersionToScan) {
+      val javaSpecSpecificFile = testDataDir.findTestDataFileByJavaSpec(name, javaSpecString, extension)
+      if (javaSpecSpecificFile != null) {
+        return javaSpecSpecificFile
+      }
+    }
+    else {
+      for (v in javaVersion downTo minimalVersionToScan) {
+        return testDataDir.findTestDataFileByJavaSpec(name, v.toString(), extension) ?: continue
+      }
+    }
+    return Path.of(PlatformTestUtil.getPlatformTestDataPath(), filenameWithPath)
+  }
+
+  private fun File.findTestDataFileByJavaSpec(baseName: String, javaSpec: String, extension: String): Path? {
+    val javaSpecSpecificFileName = File(this, "$baseName.$javaSpec$extension").toString()
     val javaSpecSpecificFile = Path.of(PlatformTestUtil.getPlatformTestDataPath(), javaSpecSpecificFileName);
-
     if (Files.exists(javaSpecSpecificFile)) {
       return javaSpecSpecificFile
     }
-
-    return Path.of(PlatformTestUtil.getPlatformTestDataPath(), filenameWithPath)
+    return null
   }
 
   class MemoryBackedIntList(size: Int) : IntList {
@@ -195,7 +234,7 @@ open class HProfScenarioRunner(private val tmpFolder: TemporaryFolder,
     }
   }
 
-  object memoryBackedListProvider: ListProvider {
+  object memoryBackedListProvider : ListProvider {
     override fun createUByteList(name: String, size: Long) = MemoryBackedUByteList(size.toInt())
     override fun createUShortList(name: String, size: Long) = MemoryBackedUShortList(size.toInt())
     override fun createIntList(name: String, size: Long) = MemoryBackedIntList(size.toInt())

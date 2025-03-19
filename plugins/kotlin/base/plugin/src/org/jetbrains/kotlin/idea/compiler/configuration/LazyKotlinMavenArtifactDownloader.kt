@@ -14,6 +14,7 @@ internal class LazyKotlinMavenArtifactDownloader(
     private val version: String,
     private val artifactIsPom: Boolean = false,
 ) : AbstractLazyFileOutputProducer<Unit, DownloadContext>("${this::class.java.name}-$artifactId-$version") {
+
     override fun produceOutput(input: Unit, computationContext: DownloadContext): List<File> {
         computationContext.indicator.text = computationContext.indicatorDownloadText
         return KotlinArtifactsDownloader.downloadMavenArtifacts(
@@ -21,7 +22,8 @@ internal class LazyKotlinMavenArtifactDownloader(
             version,
             computationContext.project,
             computationContext.indicator,
-            artifactIsPom
+            artifactIsPom,
+            listOf()
         )
     }
 

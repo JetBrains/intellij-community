@@ -3,17 +3,18 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.refactoring.rename.KotlinVariableInplaceRenameHandler
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
@@ -25,18 +26,6 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention<KtSimpleNameExpression>(
     KtSimpleNameExpression::class.java, KotlinBundle.lazyMessage("replace.with.a.for.loop")
 ) {
-    companion object {
-        private const val FOR_EACH_NAME = "forEach"
-        private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
-        }
-
-        private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
-        private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
-            sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
-        }
-    }
-
     override fun isApplicableTo(element: KtSimpleNameExpression): Boolean {
         val referencedName = element.getReferencedName()
         val isForEach = referencedName == FOR_EACH_NAME
@@ -44,6 +33,8 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         if (!isForEach && !isForEachIndexed) return false
 
         val data = extractData(element) ?: return false
+        if (data.expressionToReplace is KtSafeQualifiedExpression && data.receiver !is KtNameReferenceExpression) return false
+
         val valueParameterSize = data.functionLiteral.valueParameters.size
         if (isForEach && valueParameterSize > 1 || isForEachIndexed && valueParameterSize != 2) return false
         if (data.functionLiteral.bodyExpression == null) return false
@@ -55,11 +46,22 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         val (expressionToReplace, receiver, functionLiteral, context) = extractData(element)!!
 
         val commentSaver = CommentSaver(expressionToReplace)
+        val project = element.project
 
         val isForEachIndexed = element.getReferencedName() == FOR_EACH_INDEXED_NAME
         val loop = generateLoop(functionLiteral, receiver, isForEachIndexed, context)
-        val result = expressionToReplace.replace(loop) as KtForExpression
-        result.loopParameter?.also { editor?.caretModel?.moveToOffset(it.startOffset) }
+        val result = expressionToReplace.replace(loop)
+
+        if (editor != null) {
+            if (result is KtLabeledExpression) {
+                editor.caretModel.moveToOffset(result.startOffset)
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+                KotlinVariableInplaceRenameHandler().doRename(result, editor, null)
+            } else {
+                val forExpression = result as? KtForExpression ?: result.collectDescendantsOfType<KtForExpression>().first()
+                forExpression.loopParameter?.also { editor.caretModel.moveToOffset(it.startOffset) }
+            }
+        }
 
         commentSaver.restore(result)
     }
@@ -110,22 +112,34 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
         val body = functionLiteral.bodyExpression!!
         val function = functionLiteral.functionLiteral
 
+        val loopLabelName = KotlinNameSuggester.suggestNameByName("loop") { candidate ->
+            !functionLiteral.anyDescendantOfType<KtLabeledExpression> { it.getLabelName() == candidate }
+        }
+        var needLoopLabel = false
+
         body.forEachDescendantOfType<KtReturnExpression> {
             if (it.getTargetFunction(context) == function) {
-                it.replace(psiFactory.createExpression("continue"))
+                val parentLoop = it.getStrictParentOfType<KtLoopExpression>()
+                if (parentLoop?.getStrictParentOfType<KtLambdaExpression>() == functionLiteral) {
+                    it.replace(psiFactory.createExpression("continue@$loopLabelName"))
+                    needLoopLabel = true
+                } else {
+                    it.replace(psiFactory.createExpression("continue"))
+                }
             }
         }
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameters = functionLiteral.valueParameters
-        return if (isForEachIndexed) {
+        val loopLabel = if (needLoopLabel) "$loopLabelName@ " else ""
+        val loop = if (isForEachIndexed) {
             val loopRangeWithIndex = if (loopRange is KtThisExpression && loopRange.labelQualifier == null) {
                 psiFactory.createExpression("withIndex()")
             } else {
                 psiFactory.createExpressionByPattern("$0.withIndex()", loopRange)
             }
             psiFactory.createExpressionByPattern(
-                "for(($0, $1) in $2){ $3 }",
+                "${loopLabel}for(($0, $1) in $2){ $3 }",
                 parameters[0].text,
                 parameters[1].text,
                 loopRangeWithIndex,
@@ -133,11 +147,27 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
             )
         } else {
             psiFactory.createExpressionByPattern(
-                "for($0 in $1){ $2 }",
-                parameters.singleOrNull() ?: "it",
+                "${loopLabel}for($0 in $1){ $2 }",
+                parameters.singleOrNull() ?: StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
                 loopRange,
                 body.allChildren
             )
         }
+
+        return if (loopRange.getQualifiedExpressionForReceiver() is KtSafeQualifiedExpression) {
+            psiFactory.createExpressionByPattern("if ($0 != null) { $1 }", loopRange, loop)
+        } else {
+            loop
+        }
     }
+}
+
+private const val FOR_EACH_NAME = "forEach"
+private val FOR_EACH_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_NAME" }.toSet()
+}
+
+private const val FOR_EACH_INDEXED_NAME = "forEachIndexed"
+private val FOR_EACH_INDEXED_FQ_NAMES: Set<String> by lazy {
+    sequenceOf("collections", "sequences", "text", "ranges").map { "kotlin.$it.$FOR_EACH_INDEXED_NAME" }.toSet()
 }

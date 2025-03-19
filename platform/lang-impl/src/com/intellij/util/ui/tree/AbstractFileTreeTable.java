@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui.tree;
 
@@ -37,6 +37,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+/**
+ * @deprecated The component works directly on files causing {@link com.intellij.util.SlowOperations} assertion.
+ */
+@Deprecated(forRemoval = true)
 public class AbstractFileTreeTable<T> extends TreeTable {
   private final MyModel<T> myModel;
   private final Project myProject;
@@ -157,8 +161,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  @NotNull
-  public Map<VirtualFile, T> getValues() {
+  public @NotNull Map<VirtualFile, T> getValues() {
     return myModel.getValues();
   }
 
@@ -178,7 +181,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     TreeUtil.expandRootChildIfOnlyOne(getTree());
   }
 
-  public void select(@Nullable final VirtualFile toSelect) {
+  public void select(final @Nullable VirtualFile toSelect) {
     if (toSelect != null) {
       select(toSelect, (TreeNode)myModel.getRoot());
     }
@@ -206,7 +209,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   private static final class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
-    @NlsContexts.ColumnName private final String myValueTitle;
+    private final @NlsContexts.ColumnName String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
 
     private MyModel(@NotNull Project project,
@@ -301,7 +304,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public static class ProjectRootNode extends ConvenientNode<Project> {
+  public static final class ProjectRootNode extends ConvenientNode<Project> {
     private final VirtualFileFilter myFilter;
 
     ProjectRootNode(@NotNull Project project, @NotNull VirtualFileFilter filter) {
@@ -310,7 +313,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     @Override
-    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
+    protected void appendChildrenTo(final @NotNull Collection<? super ConvenientNode> children) {
       Project project = getObject();
       VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentRoots();
 
@@ -394,22 +397,22 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public static class FileNode extends ConvenientNode<VirtualFile> {
+  public static final class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
     private final VirtualFileFilter myFilter;
 
-    public FileNode(@NotNull VirtualFile file, @NotNull final Project project) {
+    public FileNode(@NotNull VirtualFile file, final @NotNull Project project) {
       this(file, project, VirtualFileFilter.ALL);
     }
 
-    public FileNode(@NotNull VirtualFile file, @NotNull final Project project, @NotNull VirtualFileFilter filter) {
+    public FileNode(@NotNull VirtualFile file, final @NotNull Project project, @NotNull VirtualFileFilter filter) {
       super(file);
       myProject = project;
       myFilter = filter;
     }
 
     @Override
-    protected void appendChildrenTo(@NotNull final Collection<? super ConvenientNode> children) {
+    protected void appendChildrenTo(final @NotNull Collection<? super ConvenientNode> children) {
       for (VirtualFile child : getObject().getChildren()) {
         if (myFilter.accept(child)) {
           children.add(new FileNode(child, myProject, myFilter));

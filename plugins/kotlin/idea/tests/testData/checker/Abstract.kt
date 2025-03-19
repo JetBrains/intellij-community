@@ -1,3 +1,5 @@
+// RUNTIME
+
 package abstract
 
 class MyClass() {

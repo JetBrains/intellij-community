@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -206,8 +206,12 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
   private static void check(boolean testCharByCharProcessing, @NotNull List<ColoredText> texts) {
     AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
     List<Pair<String, String>> actualColoredChunks = new ArrayList<>();
-    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) ->
-      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(attributes.toString(), "\u001b[0;")));
+    AnsiEscapeDecoder.ColoredTextAcceptor acceptor = (text, attributes) -> {
+      ProcessOutputType processOutputType = (ProcessOutputType)attributes;
+      String escapeSequence = processOutputType.getEscapeSequence();
+      String outputType = escapeSequence != null ? escapeSequence : processOutputType.getBaseOutputType().toString();
+      actualColoredChunks.add(Pair.create(text, StringUtil.trimStart(outputType, "\u001b[0;")));
+    };
     for (ColoredText text : texts) {
       decoder.escapeText(text.myRawText, text.myOutputType, acceptor);
     }
@@ -283,14 +287,14 @@ public class AnsiEscapeDecoderTest extends LightPlatformTestCase {
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PlatformTestUtil.startPerformanceTest("ansi color", 8_500, () -> {
+      Benchmark.newBenchmark("ansi color", () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);
           handler.notifyTextAvailable(i + "Plain\u001B[32mGreen\u001B[39mNormal\u001B[1A\u001B[2K\u001B[31mRed\u001B[39m\n",
                                       ProcessOutputTypes.SYSTEM);
         }
-      }).assertTiming();
+      }).start();
     });
   }
 

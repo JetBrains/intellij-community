@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,8 +26,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFilesOptions {
-  private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
+  private static final @NonNls String HELP_ID = "Reformat Code on Directory Dialog";
 
   private final Project myProject;
   private final @NlsContexts.Label String  myText;
@@ -188,8 +190,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   }
 
   @Override
-  @Nullable
-  public String getFileTypeMask() {
+  public @Nullable String getFileTypeMask() {
     if (myEnableFileNameFilterCb.isSelected()) {
       return (String)myFileFilter.getSelectedItem();
     }
@@ -202,9 +203,8 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
     Disposer.register(myDisposable, myScopeCombo);
   }
 
-  @Nullable
   @Override
-  public SearchScope getSearchScope() {
+  public @Nullable SearchScope getSearchScope() {
     if (myUseScopeFilteringCb.isSelected()) {
       return myScopeCombo.getSelectedScope();
     }

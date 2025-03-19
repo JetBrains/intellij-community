@@ -22,7 +22,6 @@ You can discover Zeroconf-enabled repositories by running
   $ hg paths
   zc-test = http://example.com:8000/test
 '''
-from __future__ import absolute_import
 
 import os
 import socket
@@ -159,7 +158,7 @@ def zc_create_server(create_server, ui, app):
 # listen
 
 
-class listener(object):
+class listener:
     def __init__(self):
         self.found = {}
 
@@ -234,10 +233,10 @@ def cleanupafterdispatch(orig, ui, options, cmd, cmdfunc):
             server.close()
 
 
-extensions.wrapfunction(dispatch, b'_runcommand', cleanupafterdispatch)
+extensions.wrapfunction(dispatch, '_runcommand', cleanupafterdispatch)
 
-extensions.wrapfunction(uimod.ui, b'config', config)
-extensions.wrapfunction(uimod.ui, b'configitems', configitems)
-extensions.wrapfunction(uimod.ui, b'configsuboptions', configsuboptions)
-extensions.wrapfunction(hg, b'defaultdest', defaultdest)
-extensions.wrapfunction(servermod, b'create_server', zc_create_server)
+extensions.wrapfunction(uimod.ui, 'config', config)
+extensions.wrapfunction(uimod.ui, 'configitems', configitems)
+extensions.wrapfunction(uimod.ui, 'configsuboptions', configsuboptions)
+extensions.wrapfunction(hg, 'defaultdest', defaultdest)
+extensions.wrapfunction(servermod, 'create_server', zc_create_server)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -37,7 +37,6 @@ public final class PlatformUtils {
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
-  public static final String MOBILE_IDE_PREFIX = "MobileIDE";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
   public static final String DATASPELL_PREFIX = "DataSpell";
@@ -49,19 +48,22 @@ public final class PlatformUtils {
   public static final String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
+  public static final String RUSTROVER_PREFIX = "RustRover";
+  public static final String WRITERSIDE_PREFIX = "Writerside";
+  public static final String GITCLIENT_PREFIX = "GitClient";
 
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
   public static final String JETBRAINS_CLIENT_PREFIX = "JetBrainsClient";
   public static final String GATEWAY_PREFIX = "Gateway";
-  public static final String QODANA_PREFIX = "Qodana";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
-    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
-    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, DATASPELL_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
+    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -115,9 +117,8 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
   }
@@ -127,19 +128,17 @@ public final class PlatformUtils {
   }
 
   /**
-   * @deprecated use other ways to customize behavior in different IDEs, see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
    */
-  @Deprecated
   public static boolean isCLion() {
     return is(CLION_PREFIX);
   }
 
-  public static boolean isMobileIde() {
-    return is(MOBILE_IDE_PREFIX);
-  }
-
+  /**
+   * see {@link com.jetbrains.cidr.PluginUtils CIDR-specific information}
+   */
   public static boolean isCidr() {
-    return isAppCode() || isCLion() || isMobileIde();
+    return isAppCode() || isCLion();
   }
 
   public static boolean isPyCharm() {
@@ -174,6 +173,10 @@ public final class PlatformUtils {
     return is(WEB_PREFIX);
   }
 
+  public static boolean isWriterSide() {
+    return is(WRITERSIDE_PREFIX);
+  }
+
   public static boolean isDataGrip() {
     return is(DBE_PREFIX);
   }
@@ -185,13 +188,6 @@ public final class PlatformUtils {
   public static boolean isGoIde() {
     return is(GOIDE_PREFIX);
   }
-
-  /**
-   * @deprecated Code With Me Guest is an old name for JetBrains Client
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static boolean isCodeWithMeGuest() { return is(CWM_GUEST_PREFIX); }
 
   public static boolean isJetBrainsClient() { return is(JETBRAINS_CLIENT_PREFIX); }
 
@@ -207,6 +203,14 @@ public final class PlatformUtils {
 
   public static boolean isFleetBackend() {
     return is(FLEET_PREFIX);
+  }
+
+  public static boolean isRustRover() {
+    return is(RUSTROVER_PREFIX);
+  }
+
+  public static boolean isQodana() {
+    return SystemProperties.getBooleanProperty("qodana.application", false);
   }
 
   private static boolean is(String idePrefix) {

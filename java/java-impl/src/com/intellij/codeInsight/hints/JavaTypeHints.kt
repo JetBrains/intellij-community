@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
 import com.intellij.psi.*
-import com.intellij.util.SlowOperations
 
 /**
  * Creates InlayPresentation for given PsiType.
@@ -72,10 +71,8 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
   }
 
   private fun parametersHint(classType: PsiClassType, level: Int, context: Context): InlayPresentation {
-    return SlowOperations.allowSlowOperations<InlayPresentation, Throwable> {
-      context.lengthAvailable -= 2
-      join(classType.parameters.map { hint(it, level + 1, context) }, ", ", context)
-    }
+    context.lengthAvailable -= 2
+    return join(classType.parameters.map { hint(it, level + 1, context) }, ", ", context)
   }
 
   private fun classHint(aClass: PsiClass, level: Int, context: Context): InlayPresentation? {

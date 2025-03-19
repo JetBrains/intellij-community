@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui
 
@@ -29,8 +29,8 @@ import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.JBLabelDecorator
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.onTextChange
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.refactoring.isInKotlinAwareSourceRoot
 import org.jetbrains.kotlin.idea.refactoring.move.logFusForMoveRefactoring
@@ -103,13 +103,9 @@ class KotlinAwareMoveFilesOrDirectoriesDialog(
         RecentsManager.getInstance(project).getRecentEntries(RECENT_KEYS)?.let { targetDirectoryField.childComponent.history = it }
 
         val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-        targetDirectoryField.addBrowseFolderListener(
-            RefactoringBundle.message("select.target.directory"),
-            RefactoringBundle.message("the.file.will.be.moved.to.this.directory"),
-            project,
-            descriptor,
-            TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
-        )
+            .withTitle(RefactoringBundle.message("select.target.directory"))
+            .withDescription(RefactoringBundle.message("the.file.will.be.moved.to.this.directory"))
+        targetDirectoryField.addBrowseFolderListener(project, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT)
         val textField = targetDirectoryField.childComponent.textEditor
         FileChooserFactory.getInstance().installFileCompletion(textField, descriptor, true, disposable)
         textField.onTextChange { validateOKButton() }

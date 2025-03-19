@@ -5,7 +5,7 @@ class R<T> {
   }
 
   public static void main(String[] args) {
-    test(new R<>.O<error descr="'O(java.lang.Object)' in 'R.O' cannot be applied to '()'">()</error>);
+    test(new R<>.O<error descr="Expected 1 argument but found 0">()</error>);
   }
 
   private static void test(R.O o) { }

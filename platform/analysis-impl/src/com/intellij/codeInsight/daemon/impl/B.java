@@ -1,15 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationBuilder;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -20,23 +27,23 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
+import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-class B implements AnnotationBuilder {
-  @NotNull
-  private final AnnotationHolderImpl myHolder;
+@ApiStatus.Internal
+public final class B implements AnnotationBuilder {
+  private final @NotNull AnnotationHolderImpl myHolder;
   private final @Nls String message;
-  @NotNull
-  private final PsiElement myCurrentElement;
+  private final @NotNull PsiElement myCurrentElement;
   private final @NotNull Object myCurrentAnnotator;
-  @NotNull
-  private final HighlightSeverity severity;
+  private final @NotNull HighlightSeverity severity;
   private TextRange range;
   private Boolean afterEndOfLine;
   private Boolean fileLevel;
@@ -50,11 +57,11 @@ class B implements AnnotationBuilder {
   private List<FixB> fixes;
   private boolean created;
   private final Throwable myDebugCreationPlace;
-  private PsiReference unresolvedReference;
+  private List<@NotNull Consumer<? super QuickFixActionRegistrar>> myLazyQuickFixes;
 
   B(@NotNull AnnotationHolderImpl holder,
     @NotNull HighlightSeverity severity,
-    @Nls String message,
+    @Nls @Nullable String message,
     @NotNull PsiElement currentElement,
     @NotNull Object currentAnnotator) {
     myHolder = holder;
@@ -82,13 +89,13 @@ class B implements AnnotationBuilder {
 
   private class FixB implements FixBuilder {
     @NotNull
-    IntentionAction fix;
+    final CommonIntentionAction fix;
     TextRange range;
     HighlightDisplayKey key;
     Boolean batch;
     Boolean universal;
 
-    FixB(@NotNull IntentionAction fix) {
+    FixB(@NotNull CommonIntentionAction fix) {
       this.fix = fix;
     }
 
@@ -116,9 +123,13 @@ class B implements AnnotationBuilder {
     }
 
     private void assertLQF() {
-      if (!(fix instanceof LocalQuickFix || fix instanceof LocalQuickFixAsIntentionAdapter)) {
+      if (!(fix instanceof LocalQuickFix ||
+            fix instanceof ModCommandAction ||
+            fix instanceof QuickFixWrapper ||
+            fix instanceof LocalQuickFixAsIntentionAdapter)) {
         markNotAbandoned();
-        throw new IllegalArgumentException("Fix " + fix + " must be instance of LocalQuickFix to be registered as batch");
+        throw new IllegalArgumentException(
+          "Fix " + fix + " must be instance of LocalQuickFix or ModCommandAction to be registered as batch");
       }
     }
 
@@ -134,7 +145,7 @@ class B implements AnnotationBuilder {
     @Override
     public @NotNull AnnotationBuilder registerFix() {
       if (fixes == null) {
-        fixes = new ArrayList<>();
+        fixes = new SmartList<>();
       }
       fixes.add(this);
       return B.this;
@@ -152,18 +163,32 @@ class B implements AnnotationBuilder {
   }
 
   @Override
+  public @NotNull AnnotationBuilder withFix(@NotNull CommonIntentionAction fix) {
+    return newFix(fix).registerFix();
+  }
+
+  @Override
   public @NotNull FixBuilder newFix(@NotNull IntentionAction fix) {
     return new FixB(fix);
   }
 
   @Override
-  public @NotNull FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor) {
-    return new FixB(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor));
+  public @NotNull FixBuilder newFix(@NotNull CommonIntentionAction fix) {
+    return new FixB(fix);
   }
 
-  void unresolvedReference(@NotNull PsiReference reference) {
-    assertNotSet(this.unresolvedReference, "unresolvedReference");
-    this.unresolvedReference = reference;
+  @Override
+  public @NotNull FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor) {
+    return new FixB(QuickFixWrapper.wrap(problemDescriptor, fix));
+  }
+
+  @Override
+  public @NotNull AnnotationBuilder withLazyQuickFix(@NotNull Consumer<? super QuickFixActionRegistrar> quickFixComputer) {
+    if (myLazyQuickFixes == null) {
+      myLazyQuickFixes = new SmartList<>();
+    }
+    myLazyQuickFixes.add(quickFixComputer);
+    return this;
   }
 
   @Override
@@ -260,6 +285,10 @@ class B implements AnnotationBuilder {
 
   @Override
   public void create() {
+    doCreate();
+  }
+
+  private Annotation doCreate() {
     if (created) {
       throw new IllegalStateException("Must not call .create() twice");
     }
@@ -297,32 +326,38 @@ class B implements AnnotationBuilder {
     }
     if (fixes != null) {
       for (FixB fb : fixes) {
-        IntentionAction fix = fb.fix;
+        CommonIntentionAction fix = fb.fix;
+        IntentionAction intention = fix.asIntention();
         TextRange finalRange = fb.range == null ? this.range : fb.range;
         if (fb.batch != null && fb.batch) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
         }
         else if (fb.universal != null && fb.universal) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerBatchFix(intention, getLocalQuickFix(fix), finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
         else {
-          annotation.registerFix(fix, finalRange, fb.key);
+          annotation.registerFix(intention, finalRange, fb.key);
         }
       }
     }
-    if (unresolvedReference != null) {
-      annotation.setUnresolvedReference(unresolvedReference);
+    if (myLazyQuickFixes != null) {
+      annotation.registerLazyQuickFixes(myLazyQuickFixes);
     }
     myHolder.add(annotation);
-    myHolder.queueToUpdateIncrementally();
     myHolder.annotationCreatedFrom(this);
+    return annotation;
   }
 
-  private static <T extends IntentionAction & LocalQuickFix>
-  void registerBatchFix(@NotNull Annotation annotation, @NotNull Object fix, @NotNull TextRange range, HighlightDisplayKey key) {
-    //noinspection unchecked
-    annotation.registerBatchFix((T)fix, range, key);
+  private static @NotNull LocalQuickFix getLocalQuickFix(@NotNull CommonIntentionAction fix) {
+    if (fix instanceof ModCommandAction modCommandAction) {
+      return LocalQuickFix.from(modCommandAction);
+    }
+    LocalQuickFix unwrapped = QuickFixWrapper.unwrap(fix);
+    if (unwrapped != null) {
+      return unwrapped;
+    }
+    return (LocalQuickFix)fix;
   }
 
   void assertAnnotationCreated() {
@@ -345,7 +380,7 @@ class B implements AnnotationBuilder {
            ", myCurrentElement=" + myCurrentElement + " (" + myCurrentElement.getClass() + ")" +
            ", myCurrentAnnotator=" + myCurrentAnnotator +
            ", severity=" + severity +
-           ", range=" + (range == null ? "(implicit)"+myCurrentElement.getTextRange() : range) +
+           ", range=" + (range == null ? "(implicit)" + myCurrentElement.getTextRange() : range) +
            omitIfEmpty(afterEndOfLine, "afterEndOfLine") +
            omitIfEmpty(fileLevel, "fileLevel") +
            omitIfEmpty(gutterIconRenderer, "gutterIconRenderer") +
@@ -362,56 +397,6 @@ class B implements AnnotationBuilder {
   @Override
   public Annotation createAnnotation() {
     PluginException.reportDeprecatedUsage("AnnotationBuilder#createAnnotation", "Use `#create()` instead");
-    if (range == null) {
-      range = myCurrentElement.getTextRange();
-    }
-    if (tooltip == null && message != null) {
-      tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message));
-    }
-    //noinspection deprecation
-    Annotation annotation = new Annotation(range.getStartOffset(), range.getEndOffset(), severity, message, tooltip);
-    if (needsUpdateOnTyping != null) {
-      annotation.setNeedsUpdateOnTyping(needsUpdateOnTyping);
-    }
-    if (highlightType != null) {
-      annotation.setHighlightType(highlightType);
-    }
-    if (textAttributesKey != null) {
-      annotation.setTextAttributes(textAttributesKey);
-    }
-    if (enforcedAttributes != null) {
-      annotation.setEnforcedTextAttributes(enforcedAttributes);
-    }
-    if (problemGroup != null) {
-      annotation.setProblemGroup(problemGroup);
-    }
-    if (gutterIconRenderer != null) {
-      annotation.setGutterIconRenderer(gutterIconRenderer);
-    }
-    if (fileLevel != null) {
-      annotation.setFileLevelAnnotation(fileLevel);
-    }
-    if (afterEndOfLine != null) {
-      annotation.setAfterEndOfLine(afterEndOfLine);
-    }
-    if (fixes != null) {
-      for (FixB fb : fixes) {
-        IntentionAction fix = fb.fix;
-        TextRange finalRange = fb.range == null ? this.range : fb.range;
-        if (fb.batch != null && fb.batch) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
-        }
-        else if (fb.universal != null && fb.universal) {
-          registerBatchFix(annotation, fix, finalRange, fb.key);
-          annotation.registerFix(fix, finalRange, fb.key);
-        }
-        else {
-          annotation.registerFix(fix, finalRange, fb.key);
-        }
-      }
-    }
-    myHolder.add(annotation);
-    myHolder.annotationCreatedFrom(this);
-    return annotation;
+    return doCreate();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl;
 
@@ -18,6 +18,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,9 +26,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class IndexCacheManagerImpl implements CacheManager {
-  @NotNull
-  private final Project myProject;
+@ApiStatus.Internal
+public final class IndexCacheManagerImpl implements CacheManager {
+  private final @NotNull Project myProject;
 
   public IndexCacheManagerImpl(@NotNull Project project) {
     myProject = project;

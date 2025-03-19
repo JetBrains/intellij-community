@@ -2,6 +2,7 @@ package org.intellij.plugins.markdown.model
 
 import com.intellij.model.psi.PsiSymbolReferenceService
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -53,6 +54,20 @@ class HeaderAnchorSymbolResolveTest: BasePlatformTestCase() {
 
   @Test
   fun `weird date case`() = doTest("100-april-8-2018")
+
+  @Test
+  fun `test header with non characters`() = doTest("this-is-a-header-with--and--or---and-also-_-inside")
+
+  @Test
+  fun `test header with non characters gitlab`() = run {
+    val oldValue = AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors")
+    try {
+      AdvancedSettings.setBoolean("markdown.squash.multiple.dashes.in.header.anchors", true)
+      doTest("this-is-a-header-with-and-or-and-also-_-inside")
+    } finally {
+      AdvancedSettings.setBoolean("markdown.squash.multiple.dashes.in.header.anchors", oldValue)
+    }
+  }
 
   private fun doTest(expectedAnchor: String) {
     val testName = getTestName(true)

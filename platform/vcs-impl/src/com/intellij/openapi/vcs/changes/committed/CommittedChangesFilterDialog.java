@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.application.ModalityState;
@@ -9,52 +8,52 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtScheduler;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class CommittedChangesFilterDialog extends DialogWrapper {
-  private final ChangesBrowserSettingsEditor myPanel;
-  private ChangeBrowserSettings mySettings;
+public final class CommittedChangesFilterDialog extends DialogWrapper {
+  private final ChangesBrowserSettingsEditor panel;
+  private ChangeBrowserSettings settings;
   private final JLabel myErrorLabel = new JLabel();
-  private final Alarm myValidateAlarm = new Alarm();
-  private final Runnable myValidateRunnable = new Runnable() {
-    @Override
-    public void run() {
-      validateInput();
-      myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));
-    }
+  private Job validateAlarm = null;
+  private final Runnable validateRunnable = () -> {
+    validateInput();
+    scheduleValidation();
   };
+
+  private void scheduleValidation() {
+    validateAlarm = EdtScheduler.getInstance().schedule(500, ModalityState.stateForComponent(panel.getComponent()), validateRunnable);
+  }
 
   public CommittedChangesFilterDialog(Project project,
                                       @NotNull ChangesBrowserSettingsEditor panel,
                                       @NotNull ChangeBrowserSettings settings) {
     super(project, false);
-    myPanel = panel;
+    this.panel = panel;
     //noinspection unchecked
-    myPanel.setSettings(settings);
+    this.panel.setSettings(settings);
     setTitle(VcsBundle.message("browse.changes.filter.title"));
     init();
     myErrorLabel.setForeground(JBColor.RED);
     validateInput();
-    myValidateAlarm.addRequest(myValidateRunnable, 500, ModalityState.stateForComponent(myPanel.getComponent()));
+    scheduleValidation();
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.add(myPanel.getComponent(), BorderLayout.CENTER);
+    panel.add(this.panel.getComponent(), BorderLayout.CENTER);
     panel.add(myErrorLabel, BorderLayout.SOUTH);
     return panel;
   }
 
   private void validateInput() {
-    String error = myPanel.validateInput();
+    String error = panel.validateInput();
     setOKActionEnabled(error == null);
     myErrorLabel.setText(error == null ? " " : error);
   }
@@ -63,18 +62,18 @@ public class CommittedChangesFilterDialog extends DialogWrapper {
   protected void doOKAction() {
     validateInput();
     if (isOKActionEnabled()) {
-      myValidateAlarm.cancelAllRequests();
-      mySettings = myPanel.getSettings();
+      validateAlarm.cancel(null);
+      settings = panel.getSettings();
       super.doOKAction();
     }
   }
 
   public ChangeBrowserSettings getSettings() {
-    return mySettings;
+    return settings;
   }
 
-  @Override @NonNls
-  protected String getDimensionServiceKey() {
-    return "AbstractVcsHelper.FilterDialog." + myPanel.getDimensionServiceKey();
+  @Override
+  protected @NonNls String getDimensionServiceKey() {
+    return "AbstractVcsHelper.FilterDialog." + panel.getDimensionServiceKey();
   }
 }

@@ -1,3 +1,0 @@
-from typing import Any
-
-def custom_method(name, http_verb, http_path: Any | None = ..., is_streaming: bool = ...): ...

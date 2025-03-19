@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -26,6 +25,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +35,16 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
 
+@ApiStatus.Internal
 public final class FileHistorySessionPartner implements VcsHistorySessionConsumer, Disposable {
-  @NotNull private final AbstractVcs myVcs;
-  @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
-  @NotNull private final FilePath myPath;
-  @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
-  @NotNull private final FileHistoryRefresherI myRefresher;
-  @NotNull private final LimitHistoryCheck myLimitHistoryCheck;
-  @NotNull private final BufferedListConsumer<VcsFileRevision> myBuffer;
-  @NotNull private final FileHistoryContentPanel myContentPanel;
+  private final @NotNull AbstractVcs myVcs;
+  private final @NotNull VcsHistoryProvider myVcsHistoryProvider;
+  private final @NotNull FilePath myPath;
+  private final @Nullable VcsRevisionNumber myStartingRevisionNumber;
+  private final @NotNull FileHistoryRefresherI myRefresher;
+  private final @NotNull LimitHistoryCheck myLimitHistoryCheck;
+  private final @NotNull BufferedListConsumer<VcsFileRevision> myBuffer;
+  private final @NotNull FileHistoryContentPanel myContentPanel;
   private volatile VcsAbstractHistorySession mySession = null;
 
   public FileHistorySessionPartner(@NotNull VcsHistoryProvider vcsHistoryProvider,
@@ -76,18 +77,16 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     };
   }
 
-  @Nullable
-  static FileHistoryRefresherI findExistingHistoryRefresher(@NotNull Project project,
-                                                            @NotNull FilePath path,
-                                                            @Nullable VcsRevisionNumber startingRevisionNumber) {
+  static @Nullable FileHistoryRefresherI findExistingHistoryRefresher(@NotNull Project project,
+                                                                      @NotNull FilePath path,
+                                                                      @Nullable VcsRevisionNumber startingRevisionNumber) {
     JComponent component = ContentUtilEx.findContentComponent(getToolWindow(project).getContentManager(), comp ->
       comp instanceof FileHistoryContentPanel &&
       sameHistories(((FileHistoryContentPanel)comp).getPath(), ((FileHistoryContentPanel)comp).getRevision(), path,
                     startingRevisionNumber));
     if (component == null) return null;
-    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(component);
-    if (dataProvider == null) return null;
-    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
+    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataContext);
   }
 
   @RequiresBackgroundThread
@@ -119,8 +118,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     });
   }
 
-  @NotNull
-  private static ToolWindow getToolWindow(@NotNull Project project) {
+  private static @NotNull ToolWindow getToolWindow(@NotNull Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
     return toolWindow;
@@ -150,9 +148,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     toolWindow.activate(null);
   }
 
-  @NlsContexts.TabTitle
-  @NotNull
-  private static String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
+  private static @NlsContexts.TabTitle @NotNull String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
     String tabName = path.getName();
     if (revisionNumber != null) {
       tabName += " (" + VcsUtil.getShortRevisionString(revisionNumber) + ")";
@@ -177,7 +173,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
   }
 
   private final class FileHistoryContentPanel extends JBPanelWithEmptyText {
-    @Nullable private FileHistoryPanelImpl myFileHistoryPanel;
+    private @Nullable FileHistoryPanelImpl myFileHistoryPanel;
 
     private FileHistoryContentPanel() {
       super(new BorderLayout());
@@ -197,7 +193,6 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
         myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider,
                                                       myRefresher, false);
         add(myFileHistoryPanel, BorderLayout.CENTER);
-        DataManager.registerDataProvider(this, myFileHistoryPanel);
         Disposer.register(FileHistorySessionPartner.this, myFileHistoryPanel);
       }
       else if (!session.getRevisionList().isEmpty()) {
@@ -209,13 +204,11 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
       if (myFileHistoryPanel != null) myFileHistoryPanel.finishRefresh();
     }
 
-    @NotNull
-    public FilePath getPath() {
+    public @NotNull FilePath getPath() {
       return myPath;
     }
 
-    @Nullable
-    public VcsRevisionNumber getRevision() {
+    public @Nullable VcsRevisionNumber getRevision() {
       return myStartingRevisionNumber;
     }
   }

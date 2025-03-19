@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,12 +24,11 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-
-public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
     boolean visible = isVisible(e);
     e.getPresentation().setVisible(visible);
     e.getPresentation().setEnabled(visible && isEnabled(e));
@@ -36,7 +36,8 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    Project project = event.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     AbstractVcs vcs = Objects.requireNonNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
 
     Pair<FilePath, VcsRevisionNumber> fileAndRevision = Objects.requireNonNull(getFileAndRevision(event));
@@ -85,8 +86,7 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     return fileAndRevision != null && !fileAndRevision.second.asString().isEmpty();
   }
 
-  @Nullable
-  private static Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull AnActionEvent event) {
+  private static @Nullable Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull AnActionEvent event) {
     Change[] changes = event.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1) return null;
     Change change = changes[0];
@@ -103,20 +103,17 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     return Pair.create(fileAndRevision.getFirst(), revisionNumber);
   }
 
-  @Nullable
-  private static Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull Change change) {
+  private static @Nullable Pair<FilePath, VcsRevisionNumber> getFileAndRevision(@NotNull Change change) {
     ContentRevision revision = change.getType() == Change.Type.DELETED ? change.getBeforeRevision() : change.getAfterRevision();
     if (revision == null) return null;
     return Pair.create(revision.getFile(), revision.getRevisionNumber());
   }
 
-  @Nullable
-  private static AbstractVcs getVcs(@NotNull Project project, @Nullable VcsKey vcsKey) {
+  private static @Nullable AbstractVcs getVcs(@NotNull Project project, @Nullable VcsKey vcsKey) {
     return vcsKey == null ? null : ProjectLevelVcsManager.getInstance(project).findVcsByName(vcsKey.getName());
   }
 
-  @Nullable
-  private static AbstractVcsHelperImpl getVcsHelper(@NotNull Project project) {
+  private static @Nullable AbstractVcsHelperImpl getVcsHelper(@NotNull Project project) {
     AbstractVcsHelper helper = AbstractVcsHelper.getInstance(project);
     return tryCast(helper, AbstractVcsHelperImpl.class);
   }

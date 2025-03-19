@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.config;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -15,6 +15,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,8 +120,7 @@ public class ConfigFilesTreeBuilder {
     return psiFiles;
   }
 
-  @Nls
-  private static String getFileTypeNodeName(FileType fileType) {
+  private static @Nls String getFileTypeNodeName(FileType fileType) {
     return XmlBundle.message("xml.tree.config.files.type", fileType.getName());
   }
 
@@ -130,6 +130,7 @@ public class ConfigFilesTreeBuilder {
     return nonEmptyGroups > 1;
   }
 
+  @Contract(mutates = "param1,param3")
   private void addChildrenFiles(@NotNull Set<? super PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<? extends PsiFile> moduleFiles) {
     moduleFiles.sort(FILE_COMPARATOR);
     for (PsiFile file : moduleFiles) {

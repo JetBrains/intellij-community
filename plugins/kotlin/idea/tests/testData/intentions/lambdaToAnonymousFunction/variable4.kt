@@ -1,3 +1,3 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 val test = <caret>{ i, s -> "$i:$s" }

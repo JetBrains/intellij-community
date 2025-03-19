@@ -7,8 +7,10 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "RunToolbarSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class RunToolbarSettings(private val project: Project) : SimplePersistentStateComponent<RunToolbarState>(RunToolbarState()) {
@@ -79,6 +81,7 @@ class RunToolbarSettings(private val project: Project) : SimplePersistentStateCo
   }
 }
 
+@ApiStatus.Internal
 class RunToolbarState : BaseState() {
   @Deprecated("Use slots map instead of installedItems")
   @get:XCollection

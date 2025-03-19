@@ -4,8 +4,6 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsFilter
-import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -55,11 +53,23 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+    open fun testSuspendOverride() {
+        doImplementFileTest()
+    }
+
    open fun testJavaInterfaceMethod() {
         doImplementDirectoryTest()
     }
 
+    open fun testJavaClassWithField() {
+        doOverrideDirectoryTest()
+    }
+
    open fun testJavaInterfaceMethodInCorrectOrder() {
+        doMultiImplementDirectoryTest()
+    }
+
+    open fun testJavaInterfaceMethodWithTypeParameters() {
         doMultiImplementDirectoryTest()
     }
 
@@ -83,6 +93,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doImplementFileTest()
     }
 
+    open fun testPropertyWithGetter() {
+        doOverrideFileTest()
+    }
+
    open fun testInterfaceGenericImplement() {
         doImplementFileTest()
     }
@@ -100,6 +114,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
     }
 
    open fun testInterfaceNullableFunction() {
+        doImplementFileTest()
+    }
+
+   open fun testKtij16175() {
         doImplementFileTest()
     }
 
@@ -163,7 +181,11 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideDirectoryTest("getFooBar")
     }
 
-   open fun testJavaMethodWithPackageProtectedVisibility() {
+    open fun testJavaMethodWithPackageVisibilityFromOtherPackage() {
+        doMultiOverrideDirectoryTest()
+    }
+
+    open fun testJavaMethodWithPackageProtectedVisibility() {
         doOverrideDirectoryTest("getFooBar")
     }
 
@@ -225,6 +247,14 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
 
    open fun testEscapeIdentifiers() {
         doOverrideFileTest()
+    }
+
+    open fun testValueClass() {
+        doImplementFileTest()
+    }
+
+    open fun testLongPackageName() {
+        doImplementFileTest()
     }
 
    open fun testVarArgs() {
@@ -375,6 +405,10 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doOverrideFileTest("toString")
     }
 
+    open fun testEnumEntry() {
+        doOverrideFileTest("foo")
+    }
+
    open fun testOverrideExternalFunction() {
         doOverrideFileTest()
     }
@@ -395,7 +429,11 @@ abstract class OverrideImplementTest<T : ClassMember> : AbstractOverrideImplemen
         doMultiImplementFileTest()
     }
 
-    fun testGenericClass() {
+    open fun testGenericClass() {
         doMultiImplementFileTest()
+    }
+
+    open fun testDoNotRenderRedundantModifiers() {
+        doMultiOverrideFileTest()
     }
 }

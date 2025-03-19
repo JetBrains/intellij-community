@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,8 +19,7 @@ public class IdeLanguageCustomization {
    * Returns the primary languages for which the IDE is supposed to be used. If there are several primary languages add them to the resulting list
    * in order of importance. This method is used to customize IDE's UI, e.g. to move settings pages related to a primary language to the top.
    */
-  @NotNull
-  public List<Language> getPrimaryIdeLanguages() {
+  public @NotNull List<Language> getPrimaryIdeLanguages() {
     return Collections.emptyList();
   }
 }

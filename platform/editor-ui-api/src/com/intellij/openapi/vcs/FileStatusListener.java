@@ -5,9 +5,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface FileStatusListener {
+
+  @ApiStatus.Internal
   @Topic.ProjectLevel
   Topic<FileStatusListener> TOPIC = new Topic<>(FileStatusListener.class, Topic.BroadcastDirection.NONE, true);
 

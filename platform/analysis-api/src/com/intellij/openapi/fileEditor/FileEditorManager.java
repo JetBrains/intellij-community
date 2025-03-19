@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -8,13 +8,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -30,11 +34,15 @@ public abstract class FileEditorManager {
   public abstract @Nullable FileEditorComposite getComposite(@NotNull VirtualFile file);
 
   /**
-   * @param file file to open. File should be valid.
-   *             Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
+   * @param file file to open. The file should be valid.
    * @return array of opened editors
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
+
+  @ApiStatus.Experimental
+  public void requestOpenFile(@NotNull VirtualFile file) {
+    openFile(file, true);
+  }
 
   public abstract @NotNull List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
 
@@ -82,12 +90,18 @@ public abstract class FileEditorManager {
   @RequiresEdt
   public abstract @Nullable Editor getSelectedTextEditor();
 
+  @ApiStatus.Experimental
+  public @Nullable Editor getSelectedTextEditor(boolean lockFree) {
+    return getSelectedTextEditor();
+  }
+
   /**
    * @return currently selected TEXT editors including ones which were opened by guests during a collaborative development session
    * The method returns an empty array in case there are no selected editors or none of them is a text one.
    * Must be called from <a href="https://docs.oracle.com/javase/tutorial/uiswing/concurrency/dispatch.html">EDT</a>.
    */
   @ApiStatus.Experimental
+  @RequiresEdt
   public Editor @NotNull [] getSelectedTextEditorWithRemotes() {
     Editor editor = getSelectedTextEditor();
     return editor != null ? new Editor[]{editor} : Editor.EMPTY_ARRAY;
@@ -141,8 +155,8 @@ public abstract class FileEditorManager {
    * The method returns an empty array if no editors are open.
    */
   @ApiStatus.Experimental
-  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
-    return getSelectedEditors();
+  public @NotNull Collection<FileEditor> getSelectedEditorWithRemotes() {
+    return List.of(getSelectedEditors());
   }
 
   /**
@@ -164,10 +178,16 @@ public abstract class FileEditorManager {
    */
   public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
 
+  public @NotNull List<FileEditor> getEditorList(@NotNull VirtualFile file) {
+    return Arrays.asList(getEditors(file));
+  }
+
   /**
    * @return all editors for the specified {@code file}
    */
   public abstract FileEditor @NotNull [] getAllEditors(@NotNull VirtualFile file);
+
+  public abstract @NotNull @Unmodifiable List<@NotNull FileEditor> getAllEditorList(@NotNull VirtualFile file);
 
   /**
    * @return all open editors
@@ -185,8 +205,10 @@ public abstract class FileEditorManager {
    * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
+  @RequiresEdt
   public abstract void addTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
+  @RequiresEdt
   public abstract void removeTopComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   /**
@@ -200,8 +222,10 @@ public abstract class FileEditorManager {
    * To change the order of components, the specified component may implement the
    * {@link com.intellij.openapi.util.Weighted Weighted} interface.
    */
+  @RequiresEdt
   public abstract void addBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
+  @RequiresEdt
   public abstract void removeBottomComponent(final @NotNull FileEditor editor, final @NotNull JComponent component);
 
   public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
@@ -243,12 +267,19 @@ public abstract class FileEditorManager {
    */
   public abstract @NotNull Project getProject();
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
+   */
+  @Deprecated(forRemoval = true)
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, @Nullable Disposable parentDisposable);
 
   /**
    * Returns data associated with given editor/caret context. Data providers are registered via
    * {@link #registerExtraEditorDataProvider(EditorDataProvider, Disposable)} method.
+   *
+   * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
    */
+  @Deprecated(forRemoval = true)
   public abstract @Nullable Object getData(@NotNull String dataId, @NotNull Editor editor, @NotNull Caret caret);
 
   /**
@@ -279,4 +310,12 @@ public abstract class FileEditorManager {
    * @param file refreshed file
    */
   public void updateFileColor(@NotNull VirtualFile file) { }
+
+  /**
+   * Returns currently focused editor (if any). It is either {@code null} or the value returned by {@link #getSelectedEditor()}.
+   */
+  public @Nullable FileEditor getFocusedEditor() {
+    FileEditor editor = getSelectedEditor();
+    return editor != null && UIUtil.isFocusAncestor(editor.getComponent()) ? editor : null;
+  }
 }

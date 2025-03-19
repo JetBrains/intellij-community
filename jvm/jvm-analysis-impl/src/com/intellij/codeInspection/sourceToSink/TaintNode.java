@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -25,27 +25,25 @@ import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
 
-  @Nullable
-  private final SmartPsiElementPointer<PsiElement> myPsiElement;
+  private final @Nullable SmartPsiElementPointer<PsiElement> myPsiElement;
 
-  @Nullable
-  private final SmartPsiElementPointer<PsiElement> myRef;
+  private final @Nullable SmartPsiElementPointer<PsiElement> myRef;
   List<TaintNode> myCachedChildren;
   TaintValue myTaintValue = TaintValue.UNKNOWN;
   boolean isTaintFlowRoot;
   private boolean isExcluded;
 
-  @Nullable
-  private final Icon myIcon;
-  @Nullable
-  private final TaintValueFactory myTaintValueFactory;
+  private final @Nullable Icon myIcon;
+  private final @Nullable TaintValueFactory myTaintValueFactory;
 
   private final boolean myNext;
+
+  private final @NotNull PresentationData data  = new PresentationData();
 
   TaintNode(@Nullable TaintNode parent,
             @Nullable PsiElement psiElement,
@@ -59,6 +57,7 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
     myIcon = psiElement == null ? null : psiElement.getIcon(flags);
     myNext = next;
+    appendPsiElement(psiElement);
   }
 
   @Override
@@ -130,7 +129,8 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
       append(data, UsageViewBundle.message("node.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       return data;
     }
-    appendPsiElement(data, psiElement);
+    data.setIcon(myIcon);
+    data.applyFrom(this.data);
     if (!this.isTaintFlowRoot) return data;
     String unsafeFlow = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.unsafe.flow");
     SimpleTextAttributes attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, UIUtil.getLabelInfoForeground());
@@ -143,9 +143,11 @@ public class TaintNode extends PresentableNodeDescriptor<TaintNode> {
     data.addText(message, attributes);
   }
 
-  private void appendPsiElement(@NotNull PresentationData data, @NotNull PsiElement psiElement) {
+  private void appendPsiElement(@Nullable PsiElement psiElement) {
+    if (psiElement == null) {
+      return;
+    }
     TaintNode taintNode = this;
-    data.setIcon(myIcon);
     int style = taintNode.isExcluded() ? SimpleTextAttributes.STYLE_STRIKEOUT : SimpleTextAttributes.STYLE_PLAIN;
     Color color = taintNode.myTaintValue == TaintValue.TAINTED ? NamedColorUtil.getErrorForeground() : null;
     SimpleTextAttributes attributes = new SimpleTextAttributes(style, color);

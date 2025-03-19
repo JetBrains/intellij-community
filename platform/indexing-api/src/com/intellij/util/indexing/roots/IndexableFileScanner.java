@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * For example, during the project startup, all content files/directories are scanned.
  * Scanned files/directories are under content roots and not excluded or ignored.
  */
+@Internal
+@OverrideOnly
 public interface IndexableFileScanner {
   ExtensionPointName<IndexableFileScanner> EP_NAME = ExtensionPointName.create("com.intellij.projectFileScanner");
 
@@ -59,7 +63,12 @@ public interface IndexableFileScanner {
     void visitFile(@NotNull VirtualFile fileOrDir);
 
     /**
-     * Called on a background thread when all files of {@link IndexableSetOrigin} has been successfully processed.
+     * Called on a background thread when files of {@link IndexableSetOrigin} have been successfully processed.
+     * <p>
+     * If several {@link IndexableSetOrigin}s have common files (e.g., common jars between libraries),
+     * then {@link #visitFile} will be skipped for all visitors except for the first one to scan a specific file.
+     * Therefore, this method should NOT expect that {@link #visitFile} has been called for <b>all</b> the files in a provider.
+     * @see IndexableFilesDeduplicateFilter
      */
     @ApiStatus.Experimental
     default void visitingFinished() {

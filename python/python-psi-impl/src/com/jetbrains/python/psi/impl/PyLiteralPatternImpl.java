@@ -2,9 +2,12 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyLiteralPattern;
+import com.jetbrains.python.psi.types.PyLiteralType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PyLiteralPatternImpl extends PyElementImpl implements PyLiteralPattern {
   public PyLiteralPatternImpl(ASTNode astNode) {
@@ -17,12 +20,11 @@ public class PyLiteralPatternImpl extends PyElementImpl implements PyLiteralPatt
   }
 
   @Override
-  public @NotNull PyExpression getExpression() {
-    return findNotNullChildByClass(PyExpression.class);
-  }
-
-  @Override
-  public boolean isIrrefutable() {
-    return false;
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+    PyType literalType = PyLiteralType.Companion.fromLiteralParameter(getExpression(), context);
+    if (literalType != null) {
+      return literalType;
+    }
+    return context.getType(getExpression());
   }
 }

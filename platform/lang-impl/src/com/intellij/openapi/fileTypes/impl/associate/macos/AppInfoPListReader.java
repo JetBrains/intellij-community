@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.openapi.application.PathManager;
@@ -13,22 +13,20 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 
+import static com.intellij.util.JavaXmlDocumentKt.createDocumentBuilder;
+
 class AppInfoPListReader {
-  private final static String BUNDLE_IDENTIFIER = "CFBundleIdentifier";
+  private static final String BUNDLE_IDENTIFIER = "CFBundleIdentifier";
 
-  private final static String DEBUG_HOME_PATH = System.getProperty("file.association.debug.home.path");
+  private static final String DEBUG_HOME_PATH = System.getProperty("file.association.debug.home.path");
 
-  private final static Logger LOG = Logger.getInstance(AppInfoPListReader.class);
+  private static final Logger LOG = Logger.getInstance(AppInfoPListReader.class);
   private Document myDocument;
 
-  @Nullable
-  public String getBundleIdentifier() {
+  public @Nullable String getBundleIdentifier() {
     NodeList dictList = getDocument().getElementsByTagName("dict");
     for (int i = 0; i < dictList.getLength(); i ++) {
       Node dictNode = dictList.item(i);
@@ -51,16 +49,14 @@ class AppInfoPListReader {
     return null;
   }
 
-  @NotNull
-  private Document getDocument() {
+  private @NotNull Document getDocument() {
     if (myDocument == null) {
       LOG.error("Info.plist not loaded");
     }
     return myDocument;
   }
 
-  @NotNull
-  private static File getInfoPListFile() throws OSFileAssociationException {
+  private static @NotNull File getInfoPListFile() throws OSFileAssociationException {
     String homePath = ObjectUtils.notNull(DEBUG_HOME_PATH, PathManager.getHomePath());
     File infoFile = new File(homePath + File.separator + "Info.plist");
     if (!infoFile.exists()) {
@@ -70,13 +66,8 @@ class AppInfoPListReader {
   }
 
   void loadPList() throws OSFileAssociationException {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
     try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
-      myDocument = builder.parse(getInfoPListFile());
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
+      myDocument = createDocumentBuilder().parse(getInfoPListFile());
     }
     catch (SAXException | IOException e) {
       throw new OSFileAssociationException("Error reading Info.plist: " + e.getMessage());

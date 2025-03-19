@@ -10,6 +10,6 @@ class Reservoir:
     def TTL(self): ...
 
 class ReservoirDecision(Enum):
-    TAKE: str
-    BORROW: str
-    NO: str
+    TAKE = "take"
+    BORROW = "borrow"
+    NO = "no"

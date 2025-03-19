@@ -3,22 +3,31 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
+import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
-        extend(CompletionType.BASIC, PlatformPatterns.psiElement(), KotlinFirCompletionProvider)
+        extend(CompletionType.BASIC, psiElement(), KotlinFirCompletionProvider)
+
+        // add tag completion in KDoc
+        extend(
+            CompletionType.BASIC,
+            psiElement().afterLeaf(StandardPatterns.or(psiElement(KDocTokens.LEADING_ASTERISK), psiElement(KDocTokens.START))),
+            KDocTagCompletionProvider
+        )
+        extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
@@ -34,6 +43,11 @@ class KotlinFirCompletionContributor : CompletionContributor() {
         identifierProviderService: CompletionDummyIdentifierProviderService,
         context: CompletionInitializationContext
     ) {
+        // If replacement context is not "modified" externally then `com.intellij.codeInsight.completion.CompletionProgressIndicator`
+        // searches for the reference at caret and on Tab replaces the whole reference, which in case of completion in Kotlin leads to bugs
+        // such as KTIJ-26872.
+        context.markReplacementOffsetAsModified()
+
         val dummyIdentifierCorrected = identifierProviderService.correctPositionForStringTemplateEntry(context)
         if (dummyIdentifierCorrected) {
             return
@@ -46,74 +60,55 @@ class KotlinFirCompletionContributor : CompletionContributor() {
 }
 
 private object KotlinFirCompletionProvider : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
-        if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
-        val resultSet = createResultSet(parameters, result)
-
-        val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
-
-        val positionContext = FirPositionCompletionContextDetector.detect(basicContext)
-
-        FirPositionCompletionContextDetector.analyzeInContext(basicContext, positionContext) {
-            recordOriginalFile(basicContext)
-            complete(basicContext, positionContext)
-        }
-    }
-
-
-    private fun KtAnalysisSession.complete(
-        basicContext: FirBasicCompletionContext,
-        positionContext: FirRawPositionCompletionContext,
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet,
     ) {
-        val factory = FirCompletionContributorFactory(basicContext)
-        with(Completions) {
-            val weighingContext = createWeighingContext(basicContext, positionContext)
-            complete(factory, positionContext, weighingContext)
-        }
-    }
+        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return
+        val position = parameters.position
 
+        // no completion inside number literals
+        if (AFTER_NUMBER_LITERAL.accepts(position)) return
+        val positionContext = KotlinPositionContextDetector.detect(position)
 
-    private fun KtAnalysisSession.recordOriginalFile(basicCompletionContext: FirBasicCompletionContext) {
-        val originalFile = basicCompletionContext.originalKtFile
-        val fakeFile = basicCompletionContext.fakeKtFile
-        fakeFile.recordOriginalKtFile(originalFile)
-    }
+        val resultSet = result.withRelevanceSorter(parameters, positionContext)
+            .withPrefixMatcher(parameters)
 
-    private fun createResultSet(parameters: KotlinFirCompletionParameters, result: CompletionResultSet): CompletionResultSet {
-        val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.ijParameters.position.containingFile,
-            parameters.ijParameters.offset,
-            kotlinIdentifierPartPattern(),
-            kotlinIdentifierStartPattern()
+        Completions.complete(
+            parameters = parameters,
+            positionContext = positionContext,
+            sink = LookupElementSink(resultSet, parameters),
         )
-        return result.withRelevanceSorter(createSorter(parameters.ijParameters, result)).withPrefixMatcher(prefix)
     }
 
-    private fun createSorter(parameters: CompletionParameters, result: CompletionResultSet): CompletionSorter =
-        CompletionSorter.defaultSorter(parameters, result.prefixMatcher)
-            .let(Weighers::addWeighersToCompletionSorter)
+    private fun CompletionResultSet.withPrefixMatcher(
+        parameters: KotlinFirCompletionParameters,
+    ): CompletionResultSet {
+        val prefix = CompletionUtil.findIdentifierPrefix(
+            parameters.completionFile,
+            parameters.offset,
+            kotlinIdentifierPartPattern(),
+            kotlinIdentifierStartPattern(),
+        )
+
+        return withPrefixMatcher(prefix)
+    }
+
+    private fun CompletionResultSet.withRelevanceSorter(
+        parameters: KotlinFirCompletionParameters,
+        positionContext: KotlinRawPositionContext,
+    ): CompletionResultSet {
+        val sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher)
+            .applyWeighers(positionContext)
+
+        return withRelevanceSorter(sorter)
+    }
 
     private val AFTER_NUMBER_LITERAL = PsiJavaPatterns.psiElement().afterLeafSkipping(
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
-    private val AFTER_INTEGER_LITERAL_AND_DOT = PsiJavaPatterns.psiElement().afterLeafSkipping(
-        PsiJavaPatterns.psiElement().withText("."),
-        PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.INTEGER_LITERAL))
-    )
-
-    private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
-        val position = parameters.position
-        val invocationCount = parameters.invocationCount
-
-        // no completion inside number literals
-        if (AFTER_NUMBER_LITERAL.accepts(position)) return true
-
-        // no completion auto-popup after integer and dot
-        if (invocationCount == 0 && prefixMatcher.prefix.isEmpty() && AFTER_INTEGER_LITERAL_AND_DOT.accepts(position)) return true
-
-        return false
-    }
 }

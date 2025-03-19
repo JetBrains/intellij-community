@@ -1,3 +1,7 @@
-from typing import Any
+from typing import TypeVar
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+from docutils import readers
+
+_S = TypeVar("_S")
+
+class Reader(readers.ReReader[_S]): ...

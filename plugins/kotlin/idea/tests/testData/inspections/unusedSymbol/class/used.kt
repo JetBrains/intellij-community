@@ -1,5 +1,5 @@
-class A
+class AZ807
 
 fun main(args: Array<String>) {
-    val x: A? = null
+    val x: AZ807? = null
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -21,21 +21,18 @@ public class ComponentDependenciesImpl implements ComponentDependencies, Seriali
     this.runtimeDependencies = runtimeDependencies;
   }
 
-  @NotNull
   @Override
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return componentName;
   }
 
-  @NotNull
   @Override
-  public DependencyScopeNode getCompileDependenciesGraph() {
+  public @NotNull DependencyScopeNode getCompileDependenciesGraph() {
     return compileDependencies;
   }
 
-  @NotNull
   @Override
-  public DependencyScopeNode getRuntimeDependenciesGraph() {
+  public @NotNull DependencyScopeNode getRuntimeDependenciesGraph() {
     return runtimeDependencies;
   }
 

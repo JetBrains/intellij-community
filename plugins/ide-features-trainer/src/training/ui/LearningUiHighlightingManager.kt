@@ -8,9 +8,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.paint.RectanglePainter
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimerUtil
 import java.awt.*
+import java.awt.geom.Path2D
+import java.awt.geom.RoundRectangle2D
 import java.util.*
 import javax.swing.*
 import javax.swing.tree.TreePath
@@ -24,6 +27,9 @@ object LearningUiHighlightingManager {
     val highlightInside: Boolean = true,
     val usePulsation: Boolean = false,
     val clearPreviousHighlights: Boolean = true,
+    val limitByVisibleRect: Boolean = true,
+    val isRoundedCorners: Boolean = false,
+    val thickness: Int = 1,
   )
 
   private val highlights: MutableList<RepaintHighlighting<*>> = ArrayList()
@@ -62,7 +68,12 @@ object LearningUiHighlightingManager {
       RepaintHighlighting(component, options, partInfo) l@{
         val rect = rectangle(component) ?: return@l null
         if (component !is JComponent) return@l rect
-        component.visibleRect.intersection(rect).takeIf { !it.isEmpty }
+        val intersection = component.visibleRect.intersection(rect)
+        when {
+          intersection.isEmpty -> null
+          !options.limitByVisibleRect -> rect
+          else -> intersection
+        }
       }
     }
   }
@@ -171,10 +182,8 @@ internal class LearningHighlightPainter(
 ) : AbstractPainter() {
   private val pulsationOffset = if (options.usePulsation) pulsationSize else 0
   private var previous: Long = 0
-  override fun executePaint(component: Component?, g: Graphics2D?) {
-    val g2d = g as Graphics2D
+  override fun executePaint(component: Component?, g: Graphics2D) {
     val r: Rectangle = bounds
-    val oldColor = g2d.color
     val time = Date().time
     val delta = time - startDate.time
     previous = time
@@ -193,14 +202,37 @@ internal class LearningHighlightPainter(
     val gp = GradientPaint(gradientShift + 0F, gradientShift + 0F, magenta,
       gradientShift + r.height.toFloat(), gradientShift + r.height.toFloat(), orange, true)
 
-    val x = r.x + pulsationOffset - shift
-    val y = r.y + pulsationOffset - shift
-    val width = r.width - (pulsationOffset - shift) * 2
-    val height = r.height - (pulsationOffset - shift) * 2
-    RectanglePainter.paint(g2d, x, y, width, height, 2,
-      if (options.highlightInside) background else null,
-      if (options.highlightBorder) gp else null)
-    g2d.color = oldColor
+    val x = (r.x + pulsationOffset - shift).toDouble()
+    val y = (r.y + pulsationOffset - shift).toDouble()
+    val width = (r.width - (pulsationOffset - shift) * 2).toDouble()
+    val height = (r.height - (pulsationOffset - shift) * 2).toDouble()
+    val arc = JBUI.scale(if (options.isRoundedCorners) 16 else 2).toDouble()
+    val thickness = JBUI.scale(options.thickness).toDouble()
+
+    val outerRect = RoundRectangle2D.Double(x, y, width, height, arc, arc)
+    val innerRect = RoundRectangle2D.Double(x + thickness, y + thickness, width - thickness * 2, height - thickness * 2, arc - thickness * 2, arc - thickness * 2)
+    val border = Path2D.Double(Path2D.WIND_EVEN_ODD).apply {
+      append(outerRect, false)
+      append(innerRect, false)
+      closePath()
+    }
+
+    val g2d = g.create() as Graphics2D
+    try {
+      GraphicsUtil.setupAAPainting(g2d)
+      if (options.highlightInside) {
+        val rect = if (options.highlightBorder) innerRect else outerRect
+        g2d.color = background
+        g2d.fill(rect)
+      }
+      if (options.highlightBorder) {
+        g2d.paint = gp
+        g2d.fill(border)
+      }
+    }
+    finally {
+      g2d.dispose()
+    }
   }
 
   override fun needsRepaint(): Boolean = true

@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
+@ApiStatus.Internal
+public final class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
   private final IntentionAction myAction;
 
   public EnableDisableIntentionAction(@NotNull IntentionAction action) {

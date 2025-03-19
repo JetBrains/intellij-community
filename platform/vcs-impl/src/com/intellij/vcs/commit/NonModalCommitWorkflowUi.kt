@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Nls
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAuthorTracker {
   val commitProgressUi: CommitProgressUi
 
-  var editedCommit: EditedCommitDetails?
+  var editedCommit: EditedCommitPresentation?
 
   fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext)
 }
 
+@ApiStatus.Internal
 interface CommitActionsUi {
   var defaultCommitActionName: @NlsContexts.Button String
   var isDefaultCommitActionEnabled: Boolean

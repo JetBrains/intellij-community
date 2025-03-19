@@ -3,10 +3,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
@@ -27,16 +27,16 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
             analyze(call) {
                 val receiverType = receiver.getTypeIfComparable() ?: return
                 val argumentType = argument.getTypeIfComparable() ?: return
-                if (!receiverType.isEqualTo(argumentType)) {
+                if (!receiverType.semanticallyEquals(argumentType)) {
                     holder.registerProblem(callee, KotlinBundle.message("equals.between.objects.of.inconvertible.types"))
                 }
             }
         }
     )
 
-    context(KtAnalysisSession)
-    private fun KtExpression.getTypeIfComparable(): KtType? {
-        val type = getKtType()?.withNullability(KtTypeNullability.NON_NULLABLE)
-        return type?.takeIf { it.isPrimitive || it.isString || it.isEnum() }
+    context(KaSession)
+    private fun KtExpression.getTypeIfComparable(): KaType? {
+        val type = expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
+        return type?.takeIf { it.isPrimitive || it.isStringType || it.isEnum() }
     }
 }

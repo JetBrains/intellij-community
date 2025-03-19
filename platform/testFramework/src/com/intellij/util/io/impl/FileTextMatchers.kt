@@ -5,22 +5,22 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.FileTextMatcher
 
 object FileTextMatchers {
-  val exact = object : FileTextMatcher {
+  val exact: FileTextMatcher = object : FileTextMatcher {
     override fun matches(actualText: String, expectedText: String): Boolean =
       actualText == expectedText
   }
 
-  val lines = object : FileTextMatcher {
+  val lines: FileTextMatcher = object : FileTextMatcher {
     override fun matches(actualText: String, expectedText: String): Boolean =
       actualText.lines() == expectedText.lines()
   }
 
-  val ignoreBlankLines = object : FileTextMatcher {
+  val ignoreBlankLines: FileTextMatcher = object : FileTextMatcher {
     override fun matches(actualText: String, expectedText: String): Boolean =
       actualText.lines().filter { it.isNotBlank() } == expectedText.lines().filter { it.isNotBlank() }
   }
 
-  val ignoreXmlFormatting = object : FileTextMatcher {
+  val ignoreXmlFormatting: FileTextMatcher = object : FileTextMatcher {
     override fun matches(actualText: String, expectedText: String): Boolean {
       val trimmed = expectedText.trim()
       if (trimmed.startsWith('<') && trimmed.endsWith('>')) {

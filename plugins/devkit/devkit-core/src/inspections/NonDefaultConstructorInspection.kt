@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
@@ -19,7 +19,6 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UClass
@@ -30,11 +29,11 @@ import java.util.*
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
-class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
-    if (javaPsi.language.id == "Groovy" || !PsiUtil.isExtensionPointImplementationCandidate(javaPsi) ||
+    if (javaPsi.language.id == "Groovy" || !ExtensionUtil.isExtensionPointImplementationCandidate(javaPsi) ||
         javaPsi.hasModifierProperty(PsiModifier.PRIVATE) /* ignore private classes */) {
       return null
     }
@@ -51,7 +50,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+    if (isLightService(javaPsi)) {
       area = null
       isService = true
       isServiceAnnotation = true
@@ -80,6 +79,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
             "guest" -> ClientKind.GUEST
             "owner" -> ClientKind.OWNER
             "remote" -> ClientKind.REMOTE
+            "frontend" -> ClientKind.FRONTEND
             "all" -> ClientKind.ALL
             else -> null
           }
@@ -202,7 +202,7 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
 @NonNls
 private val ignoredTagNames = java.util.Set.of("semContributor", "modelFacade", "scriptGenerator",
                                                "editorActionHandler", "editorTypedHandler",
-                                               "dataImporter", "java.error.fix", "explainPlanProvider", "typeIcon")
+                                               "dataImporter", "explainPlanProvider", "typeIcon")
 
 // problem - tag
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
@@ -223,8 +223,6 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 @NonNls
 private val allowedClientSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientSession",
-  "com.jetbrains.rdserver.core.GuestSession",
-  "com.jetbrains.rdserver.core.RemoteSession",
 )
 
 @NonNls

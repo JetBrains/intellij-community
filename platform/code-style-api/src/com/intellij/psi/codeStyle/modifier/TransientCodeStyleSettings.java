@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.modifier;
 
 import com.intellij.application.options.CodeStyle;
@@ -7,8 +7,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.util.Processor;
@@ -27,25 +27,28 @@ import java.util.List;
  * @see CodeStyleSettingsModifier
  */
 public final class TransientCodeStyleSettings extends CodeStyleSettings {
-  private final WeakReference<FileViewProvider> myViewProviderRef;
-  private CodeStyleSettingsModifier             myModifier;
+  private final WeakReference<VirtualFile> myFileRef;
+  private final Project myProject;
+  private CodeStyleSettingsModifier myModifier;
   private final List<Object> myDependencies = new ArrayList<>();
 
   /**
-   * @deprecated Use {@link #TransientCodeStyleSettings(FileViewProvider,CodeStyleSettings)}
+   * @deprecated Use {@link #TransientCodeStyleSettings(VirtualFile,Project,CodeStyleSettings)}
    */
   @Deprecated
   public TransientCodeStyleSettings(@NotNull PsiFile psiFile, @NotNull CodeStyleSettings settings) {
     super(true, false);
-    myViewProviderRef = new WeakReference<>(psiFile.getViewProvider());
+    myFileRef = new WeakReference<>(psiFile.getVirtualFile());
+    myProject = psiFile.getProject();
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
 
 
-  public TransientCodeStyleSettings(@NotNull FileViewProvider viewProvider, @NotNull CodeStyleSettings settings) {
+  public TransientCodeStyleSettings(@NotNull VirtualFile file, @NotNull Project project, @NotNull CodeStyleSettings settings) {
     super(true, false);
-    myViewProviderRef = new WeakReference<>(viewProvider);
+    myFileRef = new WeakReference<>(file);
+    myProject = project;
     copyFrom(settings);
     myDependencies.add(settings.getModificationTracker());
   }
@@ -54,8 +57,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
     myModifier = modifier;
   }
 
-  @Nullable
-  public CodeStyleSettingsModifier getModifier() {
+  public @Nullable CodeStyleSettingsModifier getModifier() {
     return myModifier;
   }
 
@@ -63,19 +65,17 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    * @return A file for which the settings were initially computed or {@code null} if the file is no longer valid
    * (doesn't exist) and has been garbage collected.
    */
-  @Nullable
-  public PsiFile getPsiFile() {
-    FileViewProvider viewProvider = myViewProviderRef.get();
-    return viewProvider != null ? viewProvider.getPsi(viewProvider.getBaseLanguage()) : null;
+  public @Nullable PsiFile getPsiFile() {
+    VirtualFile file = myFileRef.get();
+    return file != null && file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null;
   }
 
-  @NotNull
   @Override
-  public IndentOptions getIndentOptionsByFile(@NotNull Project project,
-                                              @Nullable VirtualFile file,
-                                              @Nullable TextRange formatRange,
-                                              boolean ignoreDocOptions,
-                                              @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
+  public @NotNull IndentOptions getIndentOptionsByFile(@NotNull Project project,
+                                                       @Nullable VirtualFile file,
+                                                       @Nullable TextRange formatRange,
+                                                       boolean ignoreDocOptions,
+                                                       @Nullable Processor<? super FileIndentOptionsProvider> providerProcessor) {
     if (file != null && file.isValid()) {
       FileType fileType = file.getFileType();
       return getIndentOptions(fileType);
@@ -87,7 +87,7 @@ public final class TransientCodeStyleSettings extends CodeStyleSettings {
    * @deprecated Use {@link #applyIndentOptionsFromProviders(Project, VirtualFile)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public void applyIndentOptionsFromProviders(@NotNull PsiFile file) {
     applyIndentOptionsFromProviders(file.getProject(), file.getVirtualFile());

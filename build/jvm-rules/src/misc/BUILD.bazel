@@ -1,0 +1,44 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+# load("@rules_graalvm//graalvm:defs.bzl", "native_image")
+
+kt_jvm_library(
+    name = "worker-lib",
+    srcs = glob(["*.kt"]),
+    deps = [
+        "//src/worker-framework",
+        "//zip:build-zip",
+        "//:protobuf-java",
+        "@lib//:opentelemetry",
+        "@bazel_tools//src/main/protobuf:deps_java_proto",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+java_binary(
+    name = "worker-jvm",
+    runtime_deps = [":worker-lib"],
+    main_class = "org.jetbrains.bazel.jvm.JvmWorker",
+    jvm_flags = [
+        "-Djava.awt.headless=true",
+        "-Dapple.awt.UIElement=true",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# native_image(
+#     name = "worker-native",
+#     deps = [":worker-lib"],
+#     extra_args = [
+#         "-H:+UnlockExperimentalVMOptions",
+#         "-H:+CompactingOldGen",
+#         "-Djava.awt.headless=true",
+#         "-Dapple.awt.UIElement=true",
+#         "-march=native",
+#         "-O3",
+#     ],
+#     reflection_configuration = ":reflection-config.json",
+#     main_class = "org.jetbrains.bazel.jvm.JvmWorker",
+#     native_image_tool = "@graalvm//:native-image",
+#     visibility = ["//visibility:public"],
+# )

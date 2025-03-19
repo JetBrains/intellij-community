@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.properties.psi.Property;
@@ -65,9 +65,8 @@ public class GrLightField extends GrLightVariable implements GrField {
     return false;
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
@@ -91,9 +90,8 @@ public class GrLightField extends GrLightVariable implements GrField {
     return PsiUtil.isProperty(this);
   }
 
-  @Nullable
   @Override
-  public GrAccessorMethod getSetter() {
+  public @Nullable GrAccessorMethod getSetter() {
     return GrClassImplUtil.findSetter(this);
   }
   @Override
@@ -101,9 +99,8 @@ public class GrLightField extends GrLightVariable implements GrField {
     return GrClassImplUtil.findGetters(this);
   }
 
-  @NotNull
   @Override
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return Collections.emptyMap();
   }
 
@@ -146,9 +143,8 @@ public class GrLightField extends GrLightVariable implements GrField {
     return getType();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     return myNameIdentifier;
   }
 

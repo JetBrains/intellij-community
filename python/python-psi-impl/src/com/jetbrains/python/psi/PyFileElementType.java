@@ -18,6 +18,7 @@ package com.jetbrains.python.psi;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
@@ -29,7 +30,6 @@ import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.parsing.PythonParser;
 import com.jetbrains.python.parsing.console.PyConsoleParser;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import com.jetbrains.python.parsing.console.PythonConsoleLexer;
@@ -60,12 +60,11 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 85;
+    return 99;
   }
 
-  @Nullable
   @Override
-  public ASTNode parseContents(@NotNull ASTNode node) {
+  public @Nullable ASTNode parseContents(@NotNull ASTNode node) {
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
     PythonRuntimeService instance = PythonRuntimeService.getInstance();
     if (instance != null) {
@@ -86,17 +85,18 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
       final Lexer lexer = parserDefinition.createLexer(project);
       final PsiParser parser = parserDefinition.createParser(project);
       final PsiBuilder builder = factory.createBuilder(project, node, lexer, language, node.getChars());
-      if (parser instanceof PyParser) {
-        final PythonParser pythonParser = (PythonParser)parser;
+      if (parser instanceof PyParser pythonParser) {
         pythonParser.setLanguageLevel(languageLevel);
       }
-      return parser.parse(this, builder).getFirstChildNode();
+      var startTime = System.nanoTime();
+      var result = parser.parse(this, builder).getFirstChildNode();
+      ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
+      return result;
     }
     return null;
   }
 
-  @Nullable
-  private ASTNode parseConsoleCode(@NotNull ASTNode node, PythonConsoleData consoleData) {
+  private @Nullable ASTNode parseConsoleCode(@NotNull ASTNode node, PythonConsoleData consoleData) {
     final Lexer lexer = createConsoleLexer(node, consoleData);
     final PsiElement psi = node.getPsi();
     if (psi != null) {
@@ -110,8 +110,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return null;
   }
 
-  @Nullable
-  private Lexer createConsoleLexer(ASTNode node, PythonConsoleData consoleData) {
+  private @Nullable Lexer createConsoleLexer(ASTNode node, PythonConsoleData consoleData) {
     if (consoleData.isIPythonEnabled()) {
       return new PythonConsoleLexer();
     }
@@ -139,9 +138,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     return ((PyFile)file).getLanguageLevel();
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "python.FILE";
   }
 
@@ -152,9 +150,8 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     dataStream.writeName(stub.getDeprecationMessage());
   }
 
-  @NotNull
   @Override
-  public PyFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public @NotNull PyFileStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     List<String> all = readNullableList(dataStream);
     BitSet future_features = readBitSet(dataStream);
     StringRef deprecationMessage = dataStream.readName();
@@ -195,8 +192,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
     }
   }
 
-  @Nullable
-  public static List<String> readNullableList(StubInputStream dataStream) throws IOException {
+  public static @Nullable List<String> readNullableList(StubInputStream dataStream) throws IOException {
     boolean hasNames = dataStream.readBoolean();
     List<String> names = null;
     if (hasNames) {

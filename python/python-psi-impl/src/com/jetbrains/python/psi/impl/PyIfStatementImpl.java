@@ -2,15 +2,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyElsePart;
-import com.jetbrains.python.psi.PyIfPart;
 import com.jetbrains.python.psi.PyIfStatement;
-import org.jetbrains.annotations.NotNull;
 
 
-public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfStatement {
+public class PyIfStatementImpl extends PyElementImpl implements PyIfStatement {
   public PyIfStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -18,21 +14,5 @@ public class PyIfStatementImpl extends PyPartitionedElementImpl implements PyIfS
   @Override
   protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
     pyVisitor.visitPyIfStatement(this);
-  }
-
-  @Override
-  @NotNull
-  public PyIfPart getIfPart() {
-    return (PyIfPart)getPartNotNull(PyElementTypes.IF_PART_IF);
-  }
-
-  @Override
-  public PyIfPart @NotNull [] getElifParts() {
-    return childrenToPsi(PyElementTypes.ELIFS, PyIfPart.EMPTY_ARRAY);
-  }
-
-  @Override
-  public PyElsePart getElsePart() {
-    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
   }
 }

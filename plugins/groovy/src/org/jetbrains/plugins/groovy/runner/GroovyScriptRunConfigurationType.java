@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -6,13 +6,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.FileTypeIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
@@ -23,9 +20,8 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     myConfigurationFactory = new GroovyFactory(this);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return GroovyBundle.message("script.runner.display.name");
   }
 
@@ -40,14 +36,11 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getId() {
+  public @NonNls @NotNull String getId() {
     return "GroovyScriptRunConfiguration";
   }
 
-  @NotNull
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return myConfigurationFactory;
   }
 
@@ -76,13 +69,7 @@ public final class GroovyScriptRunConfigurationType implements ConfigurationType
     }
 
     @Override
-    public boolean isApplicable(@NotNull Project project) {
-      return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
-    }
-
-    @NotNull
-    @Override
-    public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
       return new GroovyScriptRunConfiguration("Groovy Script", project, this);
     }
   }

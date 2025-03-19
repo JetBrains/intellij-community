@@ -4,6 +4,7 @@ package com.intellij.usages.similarity.bag;
 import com.intellij.util.containers.Interner;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class Bag {
@@ -28,6 +29,7 @@ public class Bag {
     }
   }
 
+  @ApiStatus.Internal
   public @NotNull Object2IntMap<String> getBag() {
     return myBag;
   }

@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.tasks` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tasks",
+  module_name = "intellij.tasks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/vcs-api:vcs",
+    "//platform/platform-impl:ide-impl",
+    "//platform/tasks-platform-api:tasks",
+    "//platform/core-ui",
+    "//platform/util-ex",
+  ],
+  exports = ["//platform/tasks-platform-api:tasks"]
+)
+### auto-generated section `build intellij.tasks` end

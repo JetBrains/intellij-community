@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
@@ -38,12 +39,11 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
-  @NotNull
+public final class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   @Override
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                             @NotNull Collection<AbstractTreeNode<?>> children,
-                                             ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
+                                                         @NotNull Collection<AbstractTreeNode<?>> children,
+                                                         ViewSettings settings) {
     final Project project = parent.getProject();
     final Sdk sdk = getPythonSdk(parent);
     if (sdk != null && project != null) {
@@ -64,6 +64,10 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
       if (typeShedNode != null) {
         newChildren.add(typeShedNode);
       }
+      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(project, sdk, settings);
+      if (bundledStubsNode != null) {
+        newChildren.add(bundledStubsNode);
+      }
       return newChildren;
     }
     if (settings != null && settings.isShowMembers()) {
@@ -82,8 +86,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return children;
   }
 
-  @Nullable
-  private static Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
+  private static @Nullable Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
     if (node instanceof NamedLibraryElementNode) {
       final NamedLibraryElement value = ((NamedLibraryElementNode)node).getValue();
       if (value != null) {
@@ -100,8 +103,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
     return null;
   }
 
-  @NotNull
-  private static Collection<AbstractTreeNode<?>> hideSkeletons(@NotNull Collection<AbstractTreeNode<?>> children) {
+  private static @NotNull Collection<AbstractTreeNode<?>> hideSkeletons(@NotNull Collection<AbstractTreeNode<?>> children) {
     List<AbstractTreeNode<?>> newChildren = new ArrayList<>();
     for (AbstractTreeNode child : children) {
       if (child instanceof PsiDirectoryNode) {
@@ -120,6 +122,9 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
           continue;
         }
         if (PyTypeShed.INSTANCE.isInside(dir)) {
+          continue;
+        }
+        if (PyBundledStubs.INSTANCE.isInside(dir)) {
           continue;
         }
         VirtualFile dirParent = dir.getParent();
@@ -167,7 +172,7 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         return parent;     // we don't display any nodes under functions
       }
     }
-    if (parents.size() > 0) {
+    if (!parents.isEmpty()) {
       return parents.get(parents.size() - 1);
     }
     return element.getContainingFile();

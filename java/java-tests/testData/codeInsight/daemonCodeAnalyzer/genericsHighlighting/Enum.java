@@ -3,9 +3,9 @@ enum Operation {
   static int s = 0;
   public static final String constS = "";
   Operation() {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum constructor is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum constructor is not allowed">s</error>;
+    <error descr="Accessing static field from enum constructor is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -18,12 +18,12 @@ enum Operation {
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
-    //Operation o = X;
+    Operation o = X;
   }
   {
-    int i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">Operation.s</error>;
-    i = <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error>;
-    <error descr="It is illegal to access static member 's' from enum constructor or instance initializer">s</error> = 0;
+    int i = <error descr="Accessing static field from enum instance initializer is not allowed">Operation.s</error>;
+    i = <error descr="Accessing static field from enum instance initializer is not allowed">s</error>;
+    <error descr="Accessing static field from enum instance initializer is not allowed">s</error> = 0;
     final int x = Integer.MAX_VALUE;
     String co = constS;
     // TODO: unclear
@@ -41,10 +41,10 @@ enum Operation {
 enum enumWithTypeParameterInValueOf {
   ;
 
-  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure"><error descr="'valueOf(String)' is already defined in 'enumWithTypeParameterInValueOf'">static <T> void valueOf(String s)</error></error> {}
+  <error descr="'valueOf(String)' clashes with 'valueOf(String)'; both methods have same erasure">static <T> void valueOf(String s)</error> {}
 }
 
-<error descr="There is no default constructor available in 'Operation'">class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error></error> {
+class exte extends <error descr="Cannot inherit from enum 'Operation'">Operation</error> {
 }
 
 enum withConstant {
@@ -103,9 +103,9 @@ enum OurEnum {
 
 enum TestEnum
 {
-    A(<error descr="Illegal forward reference">B</error>), B(A);
+    A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>), B(A);
     TestEnum(TestEnum other) {
-      <error descr="Call to super is not allowed in enum constructor">super(null, 0)</error>;
+      <error descr="Call to 'super' is not allowed in enum constructor">super(null, 0)</error>;
     }
 }
 
@@ -207,7 +207,7 @@ class NestedEnums {
   enum E1 { }
 
   class C2 {
-    <error descr="Static declarations in inner classes are not supported at language level '5'">enum E2</error> { }
+    <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
   }
 
   static class C3 {
@@ -216,14 +216,14 @@ class NestedEnums {
 
   {
     new C3() {
-      <error descr="Static declarations in inner classes are not supported at language level '5'">enum E2</error> { }
+      <error descr="Static declarations in inner classes are not supported at language level '5'">enum</error> E2 { }
     };
   }
 }
 
 enum EnumWithoutExpectedArguments {
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">ONE</error>, //comment
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">TWO</error>
+  <error descr="Expected 1 argument but found 0">ONE</error>, //comment
+  <error descr="Expected 1 argument but found 0">TWO</error>
   ;
   EnumWithoutExpectedArguments(int a) {}
 }

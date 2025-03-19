@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.BitUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,27 +34,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  JavaMethodElementType(@NonNls final String name) {
-    super(name);
+@ApiStatus.Internal
+public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+  JavaMethodElementType(final @NonNls String name, @NotNull IElementType parentElementType) {
+    super(name, parentElementType);
   }
 
   @Override
-  public PsiMethod createPsi(@NotNull final PsiMethodStub stub) {
+  public PsiMethod createPsi(final @NotNull PsiMethodStub stub) {
     return getPsiFactory(stub).createMethod(stub);
   }
 
   @Override
-  public PsiMethod createPsi(@NotNull final ASTNode node) {
+  public PsiMethod createPsi(final @NotNull ASTNode node) {
     if (node instanceof AnnotationMethodElement) {
       return new PsiAnnotationMethodImpl(node);
     }
     return new PsiMethodImpl(node);
   }
 
-  @NotNull
   @Override
-  public PsiMethodStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
+  public @NotNull PsiMethodStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;
@@ -105,7 +106,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
   }
 
   @Override
-  public void serialize(@NotNull final PsiMethodStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
+  public void serialize(final @NotNull PsiMethodStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getReturnTypeText());
     dataStream.writeByte(((PsiMethodStubImpl)stub).getFlags());
@@ -114,9 +115,8 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
     }
   }
 
-  @NotNull
   @Override
-  public PsiMethodStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PsiMethodStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = dataStream.readNameString();
     final TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
@@ -125,7 +125,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
   }
 
   @Override
-  public void indexStub(@NotNull final PsiMethodStub stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull PsiMethodStub stub, final @NotNull IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.METHODS, name);
@@ -141,7 +141,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
         for (StubElement<?> paramStub : stubElement.getChildrenStubs()) {
           if (paramStub instanceof PsiParameterStub) {
             TypeInfo type = ((PsiParameterStub)paramStub).getType();
-            String typeName = PsiNameHelper.getShortClassName(type.text);
+            String typeName = PsiNameHelper.getShortClassName(type.text());
             if (TypeConversionUtil.isPrimitive(typeName) || TypeConversionUtil.isPrimitiveWrapper(typeName)) continue;
             if (!methodTypeParams.contains(typeName)) {
               sink.occurrence(JavaStubIndexKeys.METHOD_TYPES, typeName);
@@ -153,8 +153,7 @@ abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, 
     }
   }
 
-  @NotNull
-  private static Set<String> getVisibleTypeParameters(@NotNull StubElement<?> stub) {
+  private static @NotNull Set<String> getVisibleTypeParameters(@NotNull StubElement<?> stub) {
     Set<String> result = null;
     while (stub != null) {
       Set<String> names = getOwnTypeParameterNames(stub);

@@ -2,7 +2,6 @@
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.LanguageLevel;
 
 public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCase {
   public void testCaretOnDefinition() {
@@ -20,6 +19,16 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
 
   public void testCaretOnParamUsage() {
     doTestParam();
+  }
+
+  // PY-55548
+  public void testUnwrapsTypesInAsyncFunctions() {
+    doTestReturnType();
+  }
+
+  // PY-55548
+  public void testAddsImportsWhenNeeded() {
+    doTestReturnType();
   }
 
   // PY-31369

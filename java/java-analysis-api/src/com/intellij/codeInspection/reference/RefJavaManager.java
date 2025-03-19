@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastMetaLanguage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UParameter;
@@ -20,14 +20,18 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class RefJavaManager implements RefManagerExtension<RefJavaManager> {
-  @NonNls public static final String CLASS = "class";
-  @NonNls public static final String METHOD = "method";
-  @NonNls static final String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
-  @NonNls public static final String FIELD = "field";
-  @NonNls static final String PARAMETER = "parameter";
-  @NonNls static final String JAVA_MODULE = "java.module";
-  @NonNls public static final String PACKAGE = "package";
-  static final String FUNCTIONAL_EXPRESSION = "functional.expression";
+  public static final @NonNls String CLASS = "class";
+  public static final @NonNls String METHOD = "method";
+  @ApiStatus.Internal
+  public static final @NonNls String IMPLICIT_CONSTRUCTOR = "implicit.constructor";
+  public static final @NonNls String FIELD = "field";
+  @ApiStatus.Internal
+  public static final @NonNls String PARAMETER = "parameter";
+  @ApiStatus.Internal
+  public static final @NonNls String JAVA_MODULE = "java.module";
+  public static final @NonNls String PACKAGE = "package";
+  @ApiStatus.Internal
+  public static final String FUNCTIONAL_EXPRESSION = "functional.expression";
   public static final Key<RefJavaManager> MANAGER = Key.create("RefJavaManager");
   private final List<Language> myLanguages;
 
@@ -77,21 +81,13 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
 
   public abstract EntryPointsManager getEntryPointsManager();
 
-  @NotNull
   @Override
-  public Collection<Language> getLanguages() {
+  public @NotNull Collection<Language> getLanguages() {
     return myLanguages;
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
-    return JavaLanguage.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public Key<RefJavaManager> getID() {
+  public @NotNull Key<RefJavaManager> getID() {
     return MANAGER;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.CommonBundle;
@@ -14,6 +14,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
@@ -22,6 +23,7 @@ import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletion
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.TreeModelListener;
@@ -84,6 +86,7 @@ public class MavenArtifactSearchPanel extends JPanel {
                                                   : new MyArtifactCellRenderer(myResultList);
     myResultList.setCellRenderer(renderer);
     myResultList.setRowHeight(renderer.getPreferredSize().height);
+    myResultList.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.results.list.accessible.name"));
 
     mySearchField = new JTextField(initialText);
     mySearchField.addKeyListener(new KeyAdapter() {
@@ -108,11 +111,12 @@ public class MavenArtifactSearchPanel extends JPanel {
         }
       }
     });
+    mySearchField.getAccessibleContext().setAccessibleName(MavenDomBundle.message("maven.search.text.field.accessible.name"));
 
     setLayout(new BorderLayout());
     add(mySearchField, BorderLayout.NORTH);
     JScrollPane pane = ScrollPaneFactory.createScrollPane(myResultList);
-    pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS); // Don't remove this line.
                                                                                     // Without VERTICAL_SCROLLBAR_ALWAYS policy our custom layout
                                                                                     // works incorrectly, see https://youtrack.jetbrains.com/issue/IDEA-72986
@@ -204,8 +208,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     });
   }
 
-  @NotNull
-  public List<MavenId> getResult() {
+  public @NotNull List<MavenId> getResult() {
     TreePath[] selectionPaths = myResultList.getSelectionPaths();
     if (selectionPaths == null) {
       return Collections.emptyList();
@@ -334,6 +337,21 @@ public class MavenArtifactSearchPanel extends JPanel {
           return w;
         }
       });
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleJPanel() {
+          @Override
+          public String getAccessibleName() {
+            return AccessibleContextUtil.combineAccessibleStrings(
+              myLeftComponent.getAccessibleContext().getAccessibleName(),
+              myRightComponent.getAccessibleContext().getAccessibleName());
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     @Override

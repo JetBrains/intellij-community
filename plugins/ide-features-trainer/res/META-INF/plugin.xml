@@ -14,11 +14,14 @@
     ]]></description>
 
   <dependencies>
+    <module name="intellij.platform.tips"/>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
 
   <content>
     <module name="intellij.vcs.git.featuresTrainer"/>
+    <module name="intellij.featuresTrainer.onboarding"/>
   </content>
 
   <resource-bundle>messages.LearnBundle</resource-bundle>
@@ -46,19 +49,17 @@
     <extensionPoint name="ift.learning.commonCourse" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
     </extensionPoint>
+
+    <extensionPoint name="ift.newUsersOnboardingExperimentAccessor" interface="training.learn.NewUsersOnboardingExperimentAccessor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
-      implementation="training.statistic.IdeFeaturesTrainerModuleRuleValidator"/>
-    <statistics.validation.customValidationRule
       implementation="training.statistic.SupportedLanguageRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.ActionIdRuleValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="training.statistic.TaskIdRuleValidator"/>
     <statistics.validation.customValidationRule
       implementation="training.statistic.KeymapSchemeRuleValidator"/>
     <statistics.counterUsagesCollector implementationClass="training.statistic.StatisticBase"/>
@@ -70,7 +71,6 @@
     <tipAndTrickPromotionFactory implementation="training.ui.IftTipAndTrickPromoter"/>
 
     <applicationService serviceImplementation="training.lang.LangManager"/>
-    <applicationService serviceImplementation="training.ui.UISettings"/>
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
@@ -92,24 +92,30 @@
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
       <action internal="true" id="ResetOnboardingFeedbackState" class="training.actions.ResetOnboardingFeedbackStateAction"/>
+      <action internal="true" id="ShowDemoAltClickPromoter" class="training.featuresSuggester.suggesters.promo.ShowDemoAltClickPromoterAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"/>
-    <action id="NextLessonAction" class="training.actions.NextLessonAction"/>
-    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"/>
-    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"/>
 
-    <!-- Help -->
-    <group id="LearnGroup">
-      <separator/>
-      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"/>
-      <separator/>
-      <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
-    </group>
+    <action id="PreviousLessonAction" class="training.actions.PreviousLessonAction"
+            icon="AllIcons.Actions.Back"/>
+    <action id="NextLessonAction" class="training.actions.NextLessonAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action id="ResetLearningProgressAction" class="training.actions.ResetLearningProgressAction"
+            icon="AllIcons.Actions.Restart"/>
+    <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
+            icon="training.FeaturesTrainerIcons.ResetLesson"/>
+
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow">
+      <add-to-group group-id="LearnGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ift.short.onboarding.lesson"
+                 description="Use short onborading lesson followed after UI overview"
+                 defaultValue="TRUE"
+                 restartRequired="true"/>
     <registryKey key="ift.help.links"
                  description="Turn on IFT Help and Resources section"
                  defaultValue="TRUE"
@@ -165,6 +171,8 @@
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.CopyPasteSuggester"/>
     <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.QuickEvaluateSuggester"/>
+    <ifs.suggester
       implementation="training.featuresSuggester.suggesters.SurroundWithSuggester"/>
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.UnwrapSuggester"/>
@@ -183,12 +191,11 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
+    <applicationService serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
     <applicationConfigurable parentId="tools"
                              instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
-                             id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"/>
-    <projectService serviceImplementation="training.featuresSuggester.FeatureSuggestersManager"/>
+                             id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"
+                             key="configurable.name" bundle="messages.FeatureSuggesterBundle"/>
     <psi.treeChangeListener
       implementation="training.featuresSuggester.listeners.PsiActionsListener"/>
     <editorFactoryDocumentListener
@@ -205,11 +212,10 @@
                  key="feature.suggester.enable.suggesters" restartRequired="true"/>
     <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
         bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
-    <iconMapper mappingFile="FeaturesTrainerIconMappings.json"/>
 
     <newProject.onboarding.tips implementation="training.onboarding.NewProjectOnboardingTipsImpl"/>
-    <backgroundPostStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
-    <editorNotificationProvider implementation="training.onboarding.DoNotGenerateTipsNotification"/>
+    <postStartupActivity implementation="training.onboarding.InstallOnboardingTooltip"/>
+    <editorFactoryListener implementation="training.onboarding.InstallOnboardingTipsEditorListener"/>
     <statistics.counterUsagesCollector
       implementationClass="training.onboarding.OnboardingTipsStatistics"/>
   </extensions>
@@ -224,5 +230,7 @@
   <applicationListeners>
     <listener class="training.featuresSuggester.listeners.EditorActionsListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="training.featuresSuggester.listeners.EvaluationListener"
+              topic="com.intellij.xdebugger.XEvaluationListener"/>
   </applicationListeners>
 </idea-plugin>

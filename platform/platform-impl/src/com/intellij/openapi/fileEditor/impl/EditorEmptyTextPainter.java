@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActivateToolWindowAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
@@ -31,7 +31,7 @@ import java.awt.*;
 
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
-    if (!Registry.is("editor.paint.empty.text", true)) {
+    if (!isEnabled()) {
       return;
     }
 
@@ -74,7 +74,7 @@ public class EditorEmptyTextPainter {
                                   @NotNull String toolWindowId,
                                   @NotNull JComponent splitters) {
     if (!isToolwindowVisible(splitters, toolWindowId)) {
-      String activateActionId = ActivateToolWindowAction.getActionIdForToolWindow(toolWindowId);
+      String activateActionId = ActivateToolWindowAction.Manager.getActionIdForToolWindow(toolWindowId);
       appendAction(painter, action, getActionShortcutText(activateActionId));
     }
   }
@@ -90,29 +90,28 @@ public class EditorEmptyTextPainter {
     painter.appendLine(line);
   }
 
-  @NotNull
-  protected String getActionShortcutText(@NonNls @NotNull String actionId) {
+  protected @NotNull String getActionShortcutText(@NonNls @NotNull String actionId) {
     return KeymapUtil.getFirstKeyboardShortcutText(actionId);
   }
 
   protected static boolean isToolwindowVisible(@NotNull JComponent splitters, @NotNull String toolwindowId) {
-    ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(SwingUtilities.getWindowAncestor(splitters));
-    if (frame != null) {
-      Project project = frame.getProject();
-      if (project != null) {
-        if (!project.isInitialized()) return true;
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolwindowId);
-        return toolWindow != null && toolWindow.isVisible();
-      }
+    Project project = ProjectUtil.getProjectForComponent(splitters);
+    if (project != null) {
+      if (!project.isInitialized()) return true;
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolwindowId);
+      return toolWindow != null && toolWindow.isVisible();
     }
     return false;
   }
 
-  @NotNull
-  public static UIUtil.TextPainter createTextPainter() {
+  public static @NotNull UIUtil.TextPainter createTextPainter() {
     return new UIUtil.TextPainter()
       .withLineSpacing(1.8f)
       .withColor(JBColor.namedColor("Editor.foreground", new JBColor(Gray._80, Gray._160)))
       .withFont(JBUI.Fonts.label(16f));
+  }
+
+  static boolean isEnabled() {
+    return Registry.is("editor.paint.empty.text", true);
   }
 }

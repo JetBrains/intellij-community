@@ -1,0 +1,2 @@
+//method
+String string() { return ""; }

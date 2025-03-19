@@ -10,11 +10,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Mikhail Golubev
  */
-public class PythonASTFactory extends ASTFactory {
+public final class PythonASTFactory extends ASTFactory {
 
-  @Nullable
   @Override
-  public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
+  public @Nullable LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     if (PyTokenTypes.STRING_NODES.contains(type)) {
       return new PyPlainStringElementImpl(type, text);
     }

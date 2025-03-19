@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -10,12 +10,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
+public class SpeedSearch extends SpeedSearchSupply implements KeyListener, SpeedSearchActivator {
   public static final String PUNCTUATION_MARKS = "*_-+\"'/.#$>: ,;?!@%^&";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
@@ -24,6 +25,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+  private boolean myJustActivated = false;
 
   public SpeedSearch() {
     this(false);
@@ -38,14 +40,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public void backspace() {
-    if (myString.length() > 0) {
+    if (!myString.isEmpty()) {
       updatePattern(myString.substring(0, myString.length() - 1));
     }
   }
 
   public boolean shouldBeShowing(String string) {
     return string == null ||
-           myString.length() == 0 || (myMatcher != null && myMatcher.matches(string));
+           myString.isEmpty() || (myMatcher != null && myMatcher.matches(string));
   }
 
   public void processKeyEvent(KeyEvent e) {
@@ -68,6 +70,12 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
       else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
         if (isHoldingFilter()) {
           updatePattern("");
+          e.consume();
+        }
+        else if (myJustActivated) {
+          // Special case: speed search was activated through the API without typing anything, should be cancelled on Esc.
+          myJustActivated = false;
+          update();
           e.consume();
         }
       }
@@ -101,7 +109,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public boolean isHoldingFilter() {
-    return myEnabled && myString.length() > 0;
+    return myEnabled && !myString.isEmpty();
   }
 
   public void setEnabled(boolean enabled) {
@@ -125,6 +133,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   public void updatePattern(final String string) {
     if (myString.equals(string)) return;
 
+    myJustActivated = false;
+
     String prevString = myString;
     myString = string;
     try {
@@ -144,16 +154,14 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     fireStateChanged(prevString);
   }
 
-  @Nullable
-  public Matcher getMatcher() {
+  public @Nullable Matcher getMatcher() {
     return myMatcher;
   }
 
-  @Nullable
   @Override
-  public Iterable<TextRange> matchingFragments(@NotNull String text) {
-    if (myMatcher instanceof MinusculeMatcher) {
-      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
+  public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
+    if (getMatcher() instanceof MinusculeMatcher matcher) {
+      return matcher.matchingFragments(text);
     }
     return null;
   }
@@ -167,10 +175,42 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
     return isHoldingFilter();
   }
 
-  @Nullable
   @Override
-  public String getEnteredPrefix() {
+  public @Nullable String getEnteredPrefix() {
     return myString;
+  }
+
+  @Override
+  public boolean isSupported() {
+    return false; // Disabled by default because has to be implemented differently for every subclass.
+  }
+
+  @Override
+  public boolean isAvailable() {
+    return true; // Convenient default for implementations, is ignored anyway when isSupported() == false.
+  }
+
+  @Override
+  public boolean isActive() {
+    return isPopupActive();
+  }
+
+  protected boolean shouldBeActive() {
+    return myJustActivated || isHoldingFilter();
+  }
+
+  @Override
+  public @Nullable JComponent getTextField() {
+    return null;
+  }
+
+  @Override
+  public void activate() {
+    myJustActivated = true;
+    doActivate();
+  }
+
+  protected void doActivate() {
   }
 
   @Override

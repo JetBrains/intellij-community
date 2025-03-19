@@ -7,7 +7,7 @@ import javax.swing.Icon
 /**
  * @param T - icon key type
  */
-interface IconsProvider<T> {
+fun interface IconsProvider<T> {
 
   /**
    * @param key - icon key

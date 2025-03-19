@@ -1,21 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.suggested
 
-import com.intellij.ide.ui.AntialiasingType
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.font.FontRenderContext
-import java.awt.geom.AffineTransform
 import java.awt.geom.Arc2D
 import java.awt.geom.GeneralPath
 import java.awt.geom.Point2D
 import kotlin.math.*
 
+@ApiStatus.Internal
 class SignatureChangePresentation(
   private val model: SignatureChangePresentationModel,
   private val font: Font,
@@ -30,16 +30,10 @@ class SignatureChangePresentation(
   private val connectionStroke = BasicStroke(connectionLineThickness.toFloat())
   private val connectionColor = modifiedAttributes.backgroundColor ?: defaultForegroundColor
 
-  private val dummyFontRenderContext = FontRenderContext(
-    AffineTransform(),
-    AntialiasingType.getKeyForCurrentScope(false),
-    UISettings.getPreferredFractionalMetricsValue()
-  )
-
-  val requiredSize by lazy {
-    val oldSignatureSize = signatureDimensions(model.oldSignature, dummyFontRenderContext)
-    val newSignatureSize = signatureDimensions(model.newSignature, dummyFontRenderContext)
-    if (verticalMode) {
+  fun requiredSize(frc: FontRenderContext): Dimension {
+    val oldSignatureSize = signatureDimensions(model.oldSignature, frc)
+    val newSignatureSize = signatureDimensions(model.newSignature, frc)
+    return if (verticalMode) {
       Dimension(
         oldSignatureSize.width + newSignatureSize.width + betweenSignaturesHSpace + leftSpace + rightSpace,
         max(oldSignatureSize.height, newSignatureSize.height) + topSpace + bottomSpace
@@ -51,7 +45,7 @@ class SignatureChangePresentation(
         oldSignatureSize.height + newSignatureSize.height + betweenSignaturesVSpace + topSpace + bottomSpace
       )
       if (model.oldSignature.any { it.connectionId != null }) {
-        val router = renderAll(null, dummyFontRenderContext, Rectangle(Point(), size)) as HorizontalModeConnectionRouter
+        val router = renderAll(null, frc, Rectangle(Point(), size)) as HorizontalModeConnectionRouter
         if (router.hSegmentLevelsRequired > 0) {
           size.height += betweenSignaturesVSpaceWithOneHSegment - betweenSignaturesVSpace +
                          betweenHSegmentsVSpace * (router.hSegmentLevelsRequired - 1)
@@ -101,14 +95,11 @@ class SignatureChangePresentation(
   }
 
   fun paint(g: Graphics2D, bounds: Rectangle) {
+    UISettings.setupAntialiasing(g)
     renderAll(g, g.fontRenderContext, bounds)
   }
 
   private fun renderAll(g: Graphics2D?, fontRenderContext: FontRenderContext, bounds: Rectangle): ConnectionRouter {
-    if (g != null) {
-      UISettings.setupAntialiasing(g)
-    }
-
     val lineHeight = lineHeight(fontRenderContext)
     val oldSignatureSize = signatureDimensions(model.oldSignature, fontRenderContext)
     val newSignatureSize = signatureDimensions(model.newSignature, fontRenderContext)

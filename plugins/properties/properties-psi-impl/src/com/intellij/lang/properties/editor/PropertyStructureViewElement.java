@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang.properties.editor;
 
@@ -23,10 +23,8 @@ import java.util.function.BooleanSupplier;
 public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private static final TextAttributesKey GROUP_KEY;
 
-  @NotNull
-  private final IProperty myProperty;
-  @NotNull
-  private final BooleanSupplier myGrouped;
+  private final @NotNull IProperty myProperty;
+  private final @NotNull BooleanSupplier myGrouped;
   private String myPresentableName;
 
   static {
@@ -40,13 +38,11 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
     myGrouped = grouped;
   }
 
-  @Nullable
-  public IProperty getProperty() {
+  public @Nullable IProperty getProperty() {
     return getPsiElement() != null ? myProperty : null;
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     PsiElement element = myProperty.getPsiElement();
     return element.isValid() ? element : null;
   }
@@ -84,13 +80,11 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
   }
 
   @Override
-  @NotNull
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     return new TextAttributesPresentation() {
 
-      @Nullable
       @Override
-      public TextAttributesKey getTextAttributesKey() {
+      public @Nullable TextAttributesKey getTextAttributesKey() {
         return (getPresentableName() != null && getPresentableName().isEmpty()) ? GROUP_KEY : null;
       }
 

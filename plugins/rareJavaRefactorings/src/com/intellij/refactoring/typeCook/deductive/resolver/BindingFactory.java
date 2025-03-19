@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeCook.deductive.resolver;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public class BindingFactory {
           descendants.add(aClass);
         }
         else {
-          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false)) {
+          for (PsiClass bInheritor : ClassInheritorsSearch.search(bClass, false).asIterable()) {
             getGreatestLowerClasses(bInheritor, aClass, descendants);
           }
         }
@@ -126,6 +126,7 @@ public class BindingFactory {
       }
     }
 
+    @Override
     public boolean equals(final Object o) {
       if (this == o) return true;
       return o instanceof BindingImpl binding && myBindings.equals(binding.myBindings);
@@ -149,40 +150,34 @@ public class BindingFactory {
         final int flag = (b1i == null ? 0 : 1) + (b2i == null ? 0 : 2);
 
         switch (flag) {
-          case 0:
-            break;
+          case 0 -> {}
+          case 1 -> /* b1(i)\b2(i) */
+          {
+            final PsiType type = b2.apply(b1i);
 
-          case 1: /* b1(i)\b2(i) */
-            {
-              final PsiType type = b2.apply(b1i);
-
-              if (type == null) {
-                return null;
-              }
-
-              if (type != PsiTypes.nullType()) {
-                b3.myBindings.put(i, type);
-                b3.myCyclic = type instanceof PsiTypeVariable;
-              }
+            if (type == null) {
+              return null;
             }
-            break;
 
-          case 2: /* b2(i)\b1(i) */
-            {
-              final PsiType type = b1.apply(b2i);
-
-              if (type == null) {
-                return null;
-              }
-
-              if (type != PsiTypes.nullType()) {
-                b3.myBindings.put(i, type);
-                b3.myCyclic = type instanceof PsiTypeVariable;
-              }
+            if (type != PsiTypes.nullType()) {
+              b3.myBindings.put(i, type);
+              b3.myCyclic = type instanceof PsiTypeVariable;
             }
-            break;
+          }
+          case 2 -> /* b2(i)\b1(i) */
+          {
+            final PsiType type = b1.apply(b2i);
 
-          case 3:  /* b2(i) \cap b1(i) */
+            if (type == null) {
+              return null;
+            }
+
+            if (type != PsiTypes.nullType()) {
+              b3.myBindings.put(i, type);
+              b3.myCyclic = type instanceof PsiTypeVariable;
+            }
+          }
+          case 3 ->  /* b2(i) \cap b1(i) */
           {
             final Binding common = rise(b1i, b2i, null);
 
@@ -199,7 +194,6 @@ public class BindingFactory {
               b3.myBindings.put(i, type);
               b3.myCyclic = type instanceof PsiTypeVariable;
             }
-
           }
         }
       }
@@ -207,6 +201,7 @@ public class BindingFactory {
       return b3;
     }
 
+    @Override
     public String toString() {
       final StringBuilder buffer = new StringBuilder();
 
@@ -222,7 +217,7 @@ public class BindingFactory {
       return buffer.toString();
     }
 
-    private PsiType normalize(final PsiType t) {
+    private static PsiType normalize(final PsiType t) {
       if (t == null || t instanceof PsiTypeVariable) {
         return Bottom.BOTTOM;
       }
@@ -251,7 +246,7 @@ public class BindingFactory {
         final int comp = new Object() {
           int compare(final PsiType x, final PsiType y) {
             final int[] kinds = new Object() {
-              private int classify(final PsiType type) {
+              private static int classify(final PsiType type) {
                 if (type == null) {
                   return 0;
                 }
@@ -425,7 +420,7 @@ public class BindingFactory {
 
     @Override
     public boolean nonEmpty() {
-      return myBindings.size() > 0;
+      return !myBindings.isEmpty();
     }
 
     @Override
@@ -445,7 +440,7 @@ public class BindingFactory {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
             boolean myFlag;
 
-            @Override public Void visitTypeVariable(@NotNull final PsiTypeVariable var) {
+            @Override public Void visitTypeVariable(final @NotNull PsiTypeVariable var) {
               if (var.getIndex() == index) {
                 myFlag = true;
               }

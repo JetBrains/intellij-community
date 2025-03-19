@@ -1,25 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
- * This class should be extended by plugin vendor and provided by means of {@link com.intellij.ExtensionPoints#ERROR_HANDLER_EP}
- * if reporting errors that happened in plugin code to vendor is desirable.
+ * Override this class and register the implementation in the plugin.xml file to provide custom reporting for errors related to the plugin:  
+ * <pre>{@code
+ *   <extensions xmlns="com.intellij">
+ *     <errorHandler implementation="my.plugin.package.MyErrorHandler"/>
+ *   </extensions>
+ * }</pre>
  */
 public abstract class ErrorReportSubmitter implements PluginAware {
+  @ApiStatus.Internal
+  public static final ExtensionPointName<ErrorReportSubmitter> EP_NAME = ExtensionPointName.create("com.intellij.errorHandler");
+
   private PluginDescriptor myPlugin;
 
   /**
-   * Called by the framework. Allows to identify the plugin that provided this extension.
+   * Called by the framework. Allows identifying the plugin that provided this extension.
    */
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor plugin) {
@@ -41,6 +51,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
+  @RequiresBackgroundThread
   public @DetailedDescription @Nullable String getPrivacyNoticeText() {
     return null;
   }
@@ -49,20 +60,21 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * If this reporter allows a user to identify themselves, the method should return either the name of an account that will be used
    * for submitting reports or an empty string. Otherwise, it should return {@code null}.
    */
+  @RequiresBackgroundThread
   public @Nullable String getReporterAccount() {
     return null;
   }
 
   /**
    * If {@link #getReporterAccount()} returns a non-null value, this method may be called when a user wants to change a reporter account.
-   * It is expected to be synchronous - i.e. do not return until a user finished entering their data.
+   * It is expected to be synchronous - i.e., do not return until a user finished entering their data.
    */
   public void changeReporterAccount(@NotNull Component parentComponent) {
     throw new UnsupportedOperationException();
   }
 
   /**
-   * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
+   * This method is called whenever an exception in a plugin code had happened, and a user decided to report a problem to the plugin vendor.
    * <p>
    * <b>Note</b>: the method is not abstract because compatibility, but all implementations must override it.
    *
@@ -70,12 +82,14 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param additionalInfo  additional information provided by a user.
    * @param parentComponent UI component to use as a parent in any UI activity from a submitter.
    * @param consumer        a callback to be called after sending is finished (or failed).
-   * @return {@code true} if reporting was started (must invoke {@code consumer} callback with result), {@code false} if a report can't be sent at the moment.
+   * @return {@code true} if reporting was started (must invoke {@code consumer} callback with a result), {@code false} if a report can't be sent at the moment.
    */
-  public boolean submit(IdeaLoggingEvent @NotNull [] events,
-                        @Nullable String additionalInfo,
-                        @NotNull Component parentComponent,
-                        @NotNull Consumer<? super SubmittedReportInfo> consumer) {
+  public boolean submit(
+    @NotNull IdeaLoggingEvent @NotNull [] events,
+    @Nullable String additionalInfo,
+    @NotNull Component parentComponent,
+    @NotNull Consumer<? super SubmittedReportInfo> consumer
+  ) {
     try {
       consumer.consume(submit(events, parentComponent));
       return true;

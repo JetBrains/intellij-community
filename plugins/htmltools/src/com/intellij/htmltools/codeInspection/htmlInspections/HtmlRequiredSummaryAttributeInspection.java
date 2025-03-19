@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HtmlRequiredSummaryAttributeInspection extends HtmlLocalInspectionTool {
+public final class HtmlRequiredSummaryAttributeInspection extends HtmlLocalInspectionTool {
 
   private static final String TABLE = "table";
   private static final String SUMMARY = "summary";
@@ -36,9 +36,8 @@ public class HtmlRequiredSummaryAttributeInspection extends HtmlLocalInspectionT
                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return super.getShortName();
   }
 }

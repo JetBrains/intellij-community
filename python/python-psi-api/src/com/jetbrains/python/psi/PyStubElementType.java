@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
@@ -20,16 +20,14 @@ public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT exten
     return "Py:" + super.toString();
   }
 
-  @NotNull
-  public abstract PsiElement createElement(@NotNull final ASTNode node);
+  public abstract @NotNull PsiElement createElement(final @NotNull ASTNode node);
 
   @Override
-  public void indexStub(@NotNull final StubT stub, @NotNull final IndexSink sink) {
+  public void indexStub(final @NotNull StubT stub, final @NotNull IndexSink sink) {
   }
 
   @Override
-  @NotNull
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     return "py." + super.toString();
   }
 }

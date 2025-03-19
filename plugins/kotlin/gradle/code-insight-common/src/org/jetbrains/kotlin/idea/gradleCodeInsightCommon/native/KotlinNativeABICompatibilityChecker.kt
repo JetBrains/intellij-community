@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.ProjectActivity
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoListener
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.KlibCompatibilityInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NativeKlibLibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.isGradleLibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
@@ -23,13 +25,15 @@ import org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanel
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 
 /** TODO: merge [KotlinNativeABICompatibilityChecker] in the future with [UnsupportedAbiVersionNotificationPanelProvider], KT-34525 */
+@K1ModeProjectStructureApi
 internal class KotlinNativeABICompatibilityChecker : ProjectActivity {
-    override suspend fun execute(project: Project) {
+    override suspend fun execute(project: Project) : Unit = blockingContext {
         KotlinNativeABICompatibilityCheckerService.getInstance(project).runActivity()
     }
 }
 
 @Service(Service.Level.PROJECT)
+@K1ModeProjectStructureApi
 internal class KotlinNativeABICompatibilityCheckerService(private val project: Project): Disposable {
     fun runActivity() {
         val connection = project.messageBus.connect(this)

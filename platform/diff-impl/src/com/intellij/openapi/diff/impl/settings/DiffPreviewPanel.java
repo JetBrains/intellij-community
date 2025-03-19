@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.diff.impl.settings;
 
@@ -32,6 +32,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -46,13 +47,14 @@ import static com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffS
 /**
  * The panel from the Settings, that allows to see changes to diff/merge coloring scheme right away.
  */
-class DiffPreviewPanel implements PreviewPanel {
+@ApiStatus.Internal
+public final class DiffPreviewPanel implements PreviewPanel {
   private final JPanel myPanel;
   private final MyViewer myViewer;
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);
 
-  DiffPreviewPanel() {
+  public DiffPreviewPanel() {
     myViewer = new MyViewer();
     myViewer.init();
 
@@ -90,33 +92,30 @@ class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  private static class SampleRequest extends ContentDiffRequest {
+  private static final class SampleRequest extends ContentDiffRequest {
     private final List<DiffContent> myContents;
 
     SampleRequest() {
       myContents = Arrays.asList(DiffPreviewProvider.getContents());
     }
 
-    @NotNull
     @Override
-    public List<DiffContent> getContents() {
+    public @NotNull List<DiffContent> getContents() {
       return myContents;
     }
 
-    @NotNull
     @Override
-    public List<String> getContentTitles() {
+    public @NotNull List<String> getContentTitles() {
       return Arrays.asList(null, null, null);
     }
 
-    @Nullable
     @Override
-    public String getTitle() {
+    public @NotNull String getTitle() {
       return DiffBundle.message("merge.color.options.dialog.title");
     }
   }
 
-  private static class SampleContext extends DiffContext {
+  private static final class SampleContext extends DiffContext {
     SampleContext() {
       TextDiffSettings settings = new TextDiffSettings();
       settings.setHighlightPolicy(HighlightPolicy.BY_WORD);
@@ -126,9 +125,8 @@ class DiffPreviewPanel implements PreviewPanel {
       putUserData(TextDiffSettings.KEY, settings);
     }
 
-    @Nullable
     @Override
-    public Project getProject() {
+    public @Nullable Project getProject() {
       return null;
     }
 
@@ -148,12 +146,12 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   @Override
-  public void addListener(@NotNull final ColorAndFontSettingsListener listener) {
+  public void addListener(final @NotNull ColorAndFontSettingsListener listener) {
     myDispatcher.addListener(listener);
   }
 
   private final class EditorMouseListener implements EditorMouseMotionListener {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     private EditorMouseListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -170,7 +168,7 @@ class DiffPreviewPanel implements PreviewPanel {
   }
 
   private final class EditorClickListener implements CaretListener, com.intellij.openapi.editor.event.EditorMouseListener {
-    @NotNull private final ThreeSide mySide;
+    private final @NotNull ThreeSide mySide;
 
     private EditorClickListener(@NotNull ThreeSide side) {
       mySide = side;
@@ -203,8 +201,7 @@ class DiffPreviewPanel implements PreviewPanel {
     }
   }
 
-  @Nullable
-  private SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
+  private @Nullable SimpleThreesideDiffChange getChange(@NotNull ThreeSide side, int line) {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
@@ -215,8 +212,7 @@ class DiffPreviewPanel implements PreviewPanel {
     return null;
   }
 
-  @Nullable
-  private FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
+  private @Nullable FoldRegion getFoldRegion(@NotNull ThreeSide side, int line) {
     EditorEx editor = myViewer.getEditor(side);
     DocumentEx document = editor.getDocument();
     for (FoldRegion region : editor.getFoldingModel().getAllFoldRegions()) {
@@ -237,13 +233,12 @@ class DiffPreviewPanel implements PreviewPanel {
     Disposer.dispose(myViewer);
   }
 
-  @NotNull
   @TestOnly
-  public SimpleThreesideDiffViewer testGetViewer() {
+  public @NotNull SimpleThreesideDiffViewer testGetViewer() {
     return myViewer;
   }
 
-  private static class MyViewer extends SimpleThreesideDiffViewer {
+  private static final class MyViewer extends SimpleThreesideDiffViewer {
     MyViewer() {super(new SampleContext(), new SampleRequest());}
 
     @Override

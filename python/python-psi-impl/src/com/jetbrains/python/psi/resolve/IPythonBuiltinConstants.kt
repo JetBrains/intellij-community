@@ -6,10 +6,6 @@ object IPythonBuiltinConstants {
   const val IN = "In"
   const val OUT = "Out"
 
-  const val IPYTHON_PACKAGE = "IPython"
-  const val CORE_PACKAGE = "core"
-
-  const val HISTORY_MANAGER = "HistoryManager"
   const val OUT_HIST_DICT = "output_hist"
   const val IN_HIST_DICT = "input_hist_parsed"
 

@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from decimal import Decimal
 from re import Pattern
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 from .adjacency_graphs import _Graph
 from .matching import _Match
@@ -22,7 +22,9 @@ class _GuessesResult(TypedDict):
     sequence: list[_Match]
 
 def nCk(n: int, k: int) -> float: ...
-def most_guessable_match_sequence(password: str, matches: Iterable[_Match], _exclude_additive: bool = ...) -> _GuessesResult: ...
+def most_guessable_match_sequence(
+    password: str, matches: Iterable[_Match], _exclude_additive: bool = False
+) -> _GuessesResult: ...
 def estimate_guesses(match: _Match, password: str) -> Decimal: ...
 def bruteforce_guesses(match: _Match) -> int: ...
 def dictionary_guesses(match: _Match) -> int: ...

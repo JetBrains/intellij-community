@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
-public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
+public final class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAttribute> {
   private final String myPropertyName;
   private final PsiMethod myStaticMethod;
 
@@ -20,39 +20,33 @@ public class JavaFxStaticPropertyReference extends JavaFxPropertyReference<XmlAt
     myStaticMethod = JavaFxPsiUtil.findStaticPropertySetter(propertyName, psiClass);
   }
 
-  @Nullable
   @Override
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myStaticMethod;
   }
 
-  @Nullable
   @Override
-  public PsiMethod getGetter() {
+  public @Nullable PsiMethod getGetter() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiMethod getSetter() {
+  public @Nullable PsiMethod getSetter() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiField getField() {
+  public @Nullable PsiField getField() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiMethod getObservableGetter() {
+  public @Nullable PsiMethod getObservableGetter() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiMethod getStaticSetter() {
+  public @Nullable PsiMethod getStaticSetter() {
     return myStaticMethod;
   }
 

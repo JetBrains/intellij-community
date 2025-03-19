@@ -37,29 +37,29 @@ internal class SwingTextTrimmerTest : TestCase() {
   }
 
 
-  fun testEllipsisAtLeft() = SwingTextTrimmer.ELLIPSIS_AT_LEFT.test()
-  fun testEllipsisAtRight() = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.test()
-  fun testEllipsisInCenter() = SwingTextTrimmer.ELLIPSIS_IN_CENTER.test()
+  fun testEllipsisAtLeft(): Unit = SwingTextTrimmer.ELLIPSIS_AT_LEFT.test()
+  fun testEllipsisAtRight(): Unit = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.test()
+  fun testEllipsisInCenter(): Unit = SwingTextTrimmer.ELLIPSIS_IN_CENTER.test()
 
-  fun testThreeDotsAtLeft() = SwingTextTrimmer.THREE_DOTS_AT_LEFT.test()
-  fun testThreeDotsAtRight() = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.test()
-  fun testThreeDotsInCenter() = SwingTextTrimmer.THREE_DOTS_IN_CENTER.test()
-
-
-  fun testEllipsisAtLeftEmpty() = SwingTextTrimmer.ELLIPSIS_AT_LEFT.test("")
-  fun testEllipsisAtRightEmpty() = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.test("")
-  fun testEllipsisInCenterEmpty() = SwingTextTrimmer.ELLIPSIS_IN_CENTER.test("")
-
-  fun testThreeDotsAtLeftEmpty() = SwingTextTrimmer.THREE_DOTS_AT_LEFT.test("")
-  fun testThreeDotsAtRightEmpty() = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.test("")
-  fun testThreeDotsInCenterEmpty() = SwingTextTrimmer.THREE_DOTS_IN_CENTER.test("")
+  fun testThreeDotsAtLeft(): Unit = SwingTextTrimmer.THREE_DOTS_AT_LEFT.test()
+  fun testThreeDotsAtRight(): Unit = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.test()
+  fun testThreeDotsInCenter(): Unit = SwingTextTrimmer.THREE_DOTS_IN_CENTER.test()
 
 
-  fun testEllipsisAtLeftNull() = SwingTextTrimmer.ELLIPSIS_AT_LEFT.testNull()
-  fun testEllipsisAtRightNull() = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.testNull()
-  fun testEllipsisInCenterNull() = SwingTextTrimmer.ELLIPSIS_IN_CENTER.testNull()
+  fun testEllipsisAtLeftEmpty(): Unit = SwingTextTrimmer.ELLIPSIS_AT_LEFT.test("")
+  fun testEllipsisAtRightEmpty(): Unit = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.test("")
+  fun testEllipsisInCenterEmpty(): Unit = SwingTextTrimmer.ELLIPSIS_IN_CENTER.test("")
 
-  fun testThreeDotsAtLeftNull() = SwingTextTrimmer.THREE_DOTS_AT_LEFT.testNull()
-  fun testThreeDotsAtRightNull() = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.testNull()
-  fun testThreeDotsInCenterNull() = SwingTextTrimmer.THREE_DOTS_IN_CENTER.testNull()
+  fun testThreeDotsAtLeftEmpty(): Unit = SwingTextTrimmer.THREE_DOTS_AT_LEFT.test("")
+  fun testThreeDotsAtRightEmpty(): Unit = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.test("")
+  fun testThreeDotsInCenterEmpty(): Unit = SwingTextTrimmer.THREE_DOTS_IN_CENTER.test("")
+
+
+  fun testEllipsisAtLeftNull(): Unit = SwingTextTrimmer.ELLIPSIS_AT_LEFT.testNull()
+  fun testEllipsisAtRightNull(): Unit = SwingTextTrimmer.ELLIPSIS_AT_RIGHT.testNull()
+  fun testEllipsisInCenterNull(): Unit = SwingTextTrimmer.ELLIPSIS_IN_CENTER.testNull()
+
+  fun testThreeDotsAtLeftNull(): Unit = SwingTextTrimmer.THREE_DOTS_AT_LEFT.testNull()
+  fun testThreeDotsAtRightNull(): Unit = SwingTextTrimmer.THREE_DOTS_AT_RIGHT.testNull()
+  fun testThreeDotsInCenterNull(): Unit = SwingTextTrimmer.THREE_DOTS_IN_CENTER.testNull()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.engine.evaluation.TextWithImports;
@@ -21,10 +21,11 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor> {
   }
 
   @Override
-  protected WatchItemDescriptor createDescriptorImpl(@NotNull final Project project) {
+  protected WatchItemDescriptor createDescriptorImpl(final @NotNull Project project) {
     return myValue == null ? new WatchItemDescriptor(project, myText) : new WatchItemDescriptor(project, myText, myValue);
   }
 
+  @Override
   public boolean equals(final Object object) {
     if (object instanceof WatchItemData) {
       return myText.equals(((WatchItemData)object).myText);
@@ -32,6 +33,7 @@ public final class WatchItemData extends DescriptorData<WatchItemDescriptor> {
     return false;
   }
 
+  @Override
   public int hashCode() {
     return myText.hashCode();
   }

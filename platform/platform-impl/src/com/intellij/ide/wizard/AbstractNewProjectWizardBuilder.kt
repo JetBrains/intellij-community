@@ -3,27 +3,34 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.ProjectBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.Companion.NPW_PREFIX
-import com.intellij.ide.wizard.NewProjectWizardStep.Companion.MODIFIABLE_MODULE_MODEL_KEY
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModifiableModuleModel
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.observation.trackActivityBlocking
+import org.jetbrains.annotations.ApiStatus
+import java.util.function.BiConsumer
 import javax.swing.Icon
 
 abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   private var panel: NewProjectWizardStepPanel? = null
 
   abstract override fun getPresentableName(): String
-  abstract override fun getDescription(): String
   abstract override fun getNodeIcon(): Icon
 
   protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
 
-  final override fun getModuleType() =
+  override fun getDescription(): String = ""
+
+  final override fun getModuleType(): ModuleType<AbstractNewProjectWizardBuilder> =
     object : ModuleType<AbstractNewProjectWizardBuilder>(NPW_PREFIX + javaClass.simpleName) {
       override fun createModuleBuilder() = this@AbstractNewProjectWizardBuilder
       override fun getName() = this@AbstractNewProjectWizardBuilder.presentableName
@@ -41,8 +48,17 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     val step = panel!!.step
     step.context.putUserData(MODIFIABLE_MODULE_MODEL_KEY, model)
     return detectCreatedModule(project, model) {
-      step.setupProject(project)
+      project.trackActivityBlocking(NewProjectWizardActivityKey) {
+        step.setupProject(project)
+      }
     }
+  }
+
+  @ApiStatus.Internal
+  override fun postCommit(project: Project, projectDir: VirtualFile) {
+    panel!!.step.context
+      .getOrCreateUserData(POST_COMMIT_ACTIONS) { ArrayList() }
+      .forEach { it.accept(project, projectDir) }
   }
 
   override fun cleanup() {
@@ -63,6 +79,29 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
   }
 
   companion object {
+
+    @get:ApiStatus.Internal
+    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create("MODIFIABLE_MODULE_MODEL_KEY")
+    private val POST_COMMIT_ACTIONS: Key<MutableList<BiConsumer<Project, VirtualFile>>> = Key.create("POST_COMMIT_ACTIONS")
+
+    @ApiStatus.Internal
+    fun NewProjectWizardStep.commitByBuilder(builder: ProjectBuilder, project: Project): List<Module> {
+      val model = context.getUserData(MODIFIABLE_MODULE_MODEL_KEY)
+      return builder.commit(project, model)
+    }
+
+    @ApiStatus.Internal
+    fun NewProjectWizardStep.postCommitByBuilder(builder: ProjectBuilder) {
+      context.getOrCreateUserData(POST_COMMIT_ACTIONS) { ArrayList() }
+        .add(builder::postCommit)
+    }
+
+    @ApiStatus.Internal
+    fun NewProjectWizardStep.addPostCommitAction(action: (Project) -> Unit) {
+      context.getOrCreateUserData(POST_COMMIT_ACTIONS) { ArrayList() }
+        .add { project, _ -> action(project) }
+    }
+
     private fun detectCreatedModule(project: Project, model: ModifiableModuleModel?, action: () -> Unit): Module? {
       if (model == null) {
         return detectCreatedModule(project, action)

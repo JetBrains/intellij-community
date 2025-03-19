@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
@@ -53,8 +53,7 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     return descriptors.toArray(HierarchyNodeDescriptor.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
+  private static @NotNull Collection<PsiClass> searchInheritors(@NotNull PsiClass psiClass, @NotNull SearchScope searchScope) {
     if (psiClass.isAnnotationType()) {
       Set<PsiClass> result = new HashSet<>();
 

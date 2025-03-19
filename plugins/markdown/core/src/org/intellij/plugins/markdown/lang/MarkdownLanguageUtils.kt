@@ -5,16 +5,18 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 
-object MarkdownLanguageUtils {
-  fun Language.isMarkdownLanguage(): Boolean {
-    return this == MarkdownLanguage.INSTANCE
-  }
+fun Language.isMarkdownLanguage(): Boolean {
+  return this == MarkdownLanguage.INSTANCE
+}
 
-  fun FileType.isMarkdownType(): Boolean {
-    return this == MarkdownFileType.INSTANCE
-  }
+fun Language.supportsMarkdown(): Boolean {
+  return MarkdownCompatibilityChecker.EP_NAME.extensionList.any { it.isSupportedLanguage(this) }
+}
 
-  fun VirtualFile.hasMarkdownType(): Boolean {
-    return FileTypeRegistry.getInstance().isFileOfType(this, MarkdownFileType.INSTANCE)
-  }
+fun FileType.isMarkdownType(): Boolean {
+  return this == MarkdownFileType.INSTANCE
+}
+
+fun VirtualFile.hasMarkdownType(): Boolean {
+  return FileTypeRegistry.getInstance().isFileOfType(this, MarkdownFileType.INSTANCE)
 }

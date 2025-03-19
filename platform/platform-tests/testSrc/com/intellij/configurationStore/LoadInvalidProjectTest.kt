@@ -1,23 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
-import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -27,6 +30,7 @@ import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
 
+
 class LoadInvalidProjectTest {
   companion object {
     @JvmField
@@ -35,6 +39,24 @@ class LoadInvalidProjectTest {
 
     private val testDataRoot: Path
       get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("platform/platform-tests/testData/configurationStore/invalid")
+
+    private fun getProjectLoadingErrorNotification(project: Project): List<Notification> {
+      return NotificationsManager.getNotificationsManager()
+        .getNotificationsOfType(Notification::class.java, project)
+        .filter { it.groupId == "Project Loading Error" }
+    }
+
+    private fun checkProjectHasProjectLoadingErrorNotification(project: Project) {
+      val notifications = getProjectLoadingErrorNotification(project)
+      assertThat(notifications).hasSize(1)
+      assertThat(notifications.single().content)
+        .startsWith("Configuration files aren't loaded for projects opened in the safe mode.")
+    }
+
+    fun checkProjectHasNotProjectLoadingErrorNotifications(project: Project) {
+      val notifications = getProjectLoadingErrorNotification(project)
+      assertThat(notifications).isEmpty()
+    }
   }
 
   @JvmField
@@ -120,22 +142,62 @@ class LoadInvalidProjectTest {
     }
   }
 
-  @Test
-  fun `remote iml paths must not be loaded in untrusted projects`() {
-    IoTestUtil.assumeWindows()
+  private fun loadUntrustedProjectCheckResults(
+    projectTemplate: Path,
+    task: suspend (Project) -> Unit,
+  ) {
     fun createUntrustedProject(targetDir: VirtualFile): Path {
       val projectDir = VfsUtil.virtualToIoFile(targetDir)
-      FileUtil.copyDir(testDataRoot.resolve("remote-iml-path").toFile(), projectDir)
+      FileUtil.copyDir(projectTemplate.toFile(), projectDir)
       VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
       val projectDirPath = projectDir.toPath()
-      TrustedPaths.getInstance().setProjectPathTrusted(projectDirPath, false)
+      TrustedProjects.setProjectTrusted(projectDirPath, false)
       return projectDirPath
     }
     runBlocking {
-      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false) {
-        assertThat(errors).hasSize(1)
-        assertThat(errors.single().description).contains("remote locations")
-      }
+      createOrLoadProject(tempDirectory, ::createUntrustedProject, loadComponentState = true, useDefaultProjectSettings = false, task = task)
+    }
+  }
+
+  private suspend fun checkUntrustedModuleIsNotLoaded(project: Project, moduleName: String) {
+    val moduleEntities = blockingContext {
+      WorkspaceModel.getInstance(project).currentSnapshot.entities(ModuleEntity::class.java)
+    }
+
+    assertThat(moduleEntities.find { module -> module.name == moduleName }).isNull()
+  }
+
+  @Test
+  fun `remote iml paths must not be loaded in untrusted projects`() {
+    IoTestUtil.assumeWindows()
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-iml-path")) { project ->
+      checkProjectHasProjectLoadingErrorNotification(project)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote iml paths must not be loaded in untrusted projects (with protocol)`() {
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-iml-path-with-protocol")) { project ->
+      checkProjectHasProjectLoadingErrorNotification(project)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote roots must not be loaded in untrusted projects`() {
+    IoTestUtil.assumeWindows()
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-roots")) { project ->
+      checkProjectHasProjectLoadingErrorNotification(project)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
+    }
+  }
+
+  @Test
+  fun `remote roots must not be loaded in untrusted projects (with protocol)`() {
+    loadUntrustedProjectCheckResults(testDataRoot.resolve("remote-roots-with-protocol")) { project ->
+      checkProjectHasProjectLoadingErrorNotification(project)
+      checkUntrustedModuleIsNotLoaded(project, "foo") // 'foo' is not a random name, but a concrete module name from test data
     }
   }
 

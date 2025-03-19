@@ -1,17 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
@@ -26,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Map<String, String> ATTR_REPLACEMENTS = Map.of(
     "lastModified", "lastModifiedTime().toMillis",
     "isFile", "isRegularFile",
@@ -64,8 +69,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     return !ExceptionUtil.isHandled(ioExceptionType, anchor);
   }
 
-  @Nullable
-  private static PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
+  private static @Nullable PsiVariable getFileVariable(@NotNull PsiMethodCallExpression call) {
     PsiElement qualifier = call.getMethodExpression().getQualifier();
     if (qualifier instanceof PsiParenthesizedExpression) {
       qualifier = PsiUtil.skipParenthesizedExprDown((PsiExpression)qualifier);
@@ -97,13 +101,13 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
         boolean needsTryCatchBlock = needsTryCatchBlock(anchor);
         if (!needsTryCatchBlock) {
           varCalls.forEach(call -> myHolder.registerProblem(call, JavaBundle.message("inspection.bulk.file.attributes.read.message"),
-                                                            new ReplaceWithBulkCallFix(myIsOnTheFly)));
+                                                            new ReplaceWithBulkCallFix()));
           return;
         }
         if (myIsOnTheFly) {
           varCalls.forEach(call -> myHolder.registerProblem(call, JavaBundle.message("inspection.bulk.file.attributes.read.message"),
                                                             ProblemHighlightType.INFORMATION,
-                                                            new ReplaceWithBulkCallFix(true)));
+                                                            new ReplaceWithBulkCallFix()));
         }
       });
     }
@@ -154,19 +158,14 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
       super.visitMethodCallExpression(call);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
       PsiVariable variable = getFileVariable(call);
-      if (variable == null) return;
-      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, myScope, null)) return;
+      if (variable == null || !ControlFlowUtil.isEffectivelyFinal(variable, myScope)) return;
       List<PsiMethodCallExpression> varCalls = myCalls.computeIfAbsent(variable, __ -> new SmartList<>());
       varCalls.add(call);
     }
   }
 
-  private static class ReplaceWithBulkCallFix implements LocalQuickFix {
-
-    private final boolean myIsOnTheFly;
-
-    private ReplaceWithBulkCallFix(boolean isOnTheFly) {
-      myIsOnTheFly = isOnTheFly;
+  private static class ReplaceWithBulkCallFix extends PsiUpdateModCommandQuickFix {
+    private ReplaceWithBulkCallFix() {
     }
 
     @Override
@@ -175,8 +174,8 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
       if (!FILE_ATTR_CALL_MATCHER.test(call)) return;
       FileVariableModel fileVariable = FileVariableModel.create(call);
       if (fileVariable == null) return;
@@ -188,36 +187,35 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
       if (fileVarName == null) return;
       AttributesVariableModel attributesVariable = AttributesVariableModel.create(fileVarName, fileVariable.myScope, anchor);
       if (attributesVariable == null) return;
+      List<String> names =
+        new VariableNameGenerator(anchor, VariableKind.LOCAL_VARIABLE).byType(attributesVariable.myType).byName(attributesVariable.myName)
+          .generateAll(true);
+      String name = names.get(0);
 
       final PsiDeclarationStatement declaration;
-      PsiReference[] usages = new PsiReference[fileVariable.myAttributeCalls.size() + (attributesVariable.myNeedsTryCatch ? 1 : 0)];
       if (!attributesVariable.myNeedsTryCatch) {
-        declaration =
-          addDeclaration(parent, anchor, attributesVariable.myName, attributesVariable.myType, attributesVariable.myInitializer);
+        declaration = addDeclaration(parent, anchor, name, attributesVariable.myType, attributesVariable.myInitializer);
       }
       else {
-        declaration = addDeclaration(parent, anchor, attributesVariable.myName, attributesVariable.myType, null);
-        PsiExpressionStatement assignment = addAssignment(parent, anchor, attributesVariable.myName, attributesVariable.myInitializer);
+        declaration = addDeclaration(parent, anchor, name, attributesVariable.myType, null);
+        PsiExpressionStatement assignment = addAssignment(parent, anchor, name, attributesVariable.myInitializer);
         assignment = surroundWithTryCatch(assignment);
         if (assignment == null) return;
         PsiExpression lhs = getLhs(assignment);
         if (lhs == null) return;
         PsiReference lhsRef = lhs.getReference();
         if (lhsRef == null) return;
-        usages[usages.length - 1] = lhsRef;
       }
 
       List<PsiMethodCallExpression> attrCalls = fileVariable.myAttributeCalls;
       for (int i = 0; i < attrCalls.size(); i++) {
         PsiMethodCallExpression attrCall = attrCalls.get(i);
-        String replacement = getBulkCallReplacement(attributesVariable.myName, attrCall);
-        attrCall = (PsiMethodCallExpression)PsiReplacementUtil.replaceExpressionAndShorten(attrCall, replacement, new CommentTracker());
-        usages[i] = getTopLevelQualifier(attrCall).getReference();
+        String replacement = getBulkCallReplacement(name, attrCall);
+        PsiReplacementUtil.replaceExpressionAndShorten(attrCall, replacement, new CommentTracker());
       }
 
-      if (!myIsOnTheFly) return;
       PsiVariable attrsVariable = (PsiVariable)declaration.getDeclaredElements()[0];
-      HighlightUtils.showRenameTemplate(fileVariable.myScope, attrsVariable, usages);
+      updater.rename(attrsVariable, names);
     }
 
     private static @NotNull PsiExpressionStatement addAssignment(@NotNull PsiElement parent,
@@ -252,7 +250,19 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
                                                                    @NotNull PsiType type,
                                                                    @Nullable PsiExpression initializer) {
       PsiElementFactory elementFactory = PsiElementFactory.getInstance(parent.getProject());
-      PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(varName, type, initializer);
+      PsiType displayType;
+      if (
+        initializer != null
+        && parent.getContext() != null
+        && PsiUtil.isAvailable(JavaFeature.LVTI, parent)
+        && JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE
+      ) {
+        displayType = TypeUtils.getType(PsiKeyword.VAR, parent.getContext());
+      } else {
+        displayType = type;
+      }
+      PsiDeclarationStatement declaration = elementFactory
+        .createVariableDeclarationStatement(varName, displayType, initializer);
       declaration = (PsiDeclarationStatement)parent.addBefore(declaration, anchor);
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(parent.getProject());
       return (PsiDeclarationStatement)codeStyleManager.shortenClassReferences(declaration);
@@ -261,14 +271,6 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
     private static @NotNull String getBulkCallReplacement(@NotNull String attrsVarName, @NotNull PsiMethodCallExpression attrCall) {
       String attrMethodName = Objects.requireNonNull(attrCall.getMethodExpression().getReferenceName());
       return attrsVarName + "." + ATTR_REPLACEMENTS.get(attrMethodName) + "()";
-    }
-
-    private static @NotNull PsiElement getTopLevelQualifier(@NotNull PsiMethodCallExpression methodCall) {
-      PsiElement qualifier = PsiUtil.skipParenthesizedExprUp(methodCall.getMethodExpression().getQualifier());
-      while (qualifier instanceof PsiMethodCallExpression call) {
-        qualifier = PsiUtil.skipParenthesizedExprUp(call.getMethodExpression().getQualifier());
-      }
-      return Objects.requireNonNull(qualifier);
     }
 
     private static class FileVariableModel {
@@ -299,8 +301,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
         return ControlFlowUtils.getOnlyStatementInBlock(codeBlock);
       }
 
-      @NotNull
-      private static List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
+      private static @NotNull List<PsiMethodCallExpression> findAttributeCalls(@NotNull PsiVariable fileVar, @NotNull PsiElement scope) {
         Collection<PsiMethodCallExpression> calls = ReferencesSearch.search(fileVar, new LocalSearchScope(scope))
           .filtering(ref -> scope == findScope(ref.getElement()))
           .mapping(ref -> ObjectUtils.tryCast(ref, PsiReferenceExpression.class))
@@ -320,8 +321,7 @@ public class BulkFileAttributesReadInspection extends AbstractBaseJavaLocalInspe
         return new FileVariableModel(attributeCalls, psiVariable, scope);
       }
 
-      @Nullable
-      private static PsiElement findScope(@NotNull PsiElement element) {
+      private static @Nullable PsiElement findScope(@NotNull PsiElement element) {
         PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLoopStatement.class);
         if (scope instanceof PsiLoopStatement) scope = ((PsiLoopStatement)scope).getBody();
         return scope;

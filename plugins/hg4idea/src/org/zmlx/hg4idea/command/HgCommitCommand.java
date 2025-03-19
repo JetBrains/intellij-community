@@ -33,7 +33,7 @@ public class HgCommitCommand extends HgCommitTypeCommand {
   private final boolean myCloseBranch;
   private final boolean myShouldCommitWithSubrepos;
 
-  @NotNull private List<String> mySubrepos = Collections.emptyList();
+  private @NotNull List<String> mySubrepos = Collections.emptyList();
 
   public HgCommitCommand(@NotNull Project project,
                          @NotNull HgRepository repository,

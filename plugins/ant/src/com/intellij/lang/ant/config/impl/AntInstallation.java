@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
@@ -28,13 +28,13 @@ public class AntInstallation {
   public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = antInstallation -> antInstallation.getReference();
   public static final AbstractProperty<@Nls String> VERSION =
     new StringProperty("version", AntBundle.message("ant.unknown.version.string.presentation"));
-  @NonNls private static final String PROPERTY_VERSION = "VERSION";
+  private static final @NonNls String PROPERTY_VERSION = "VERSION";
 
   private final ClassLoaderHolder myClassLoaderHolder;
-  @NonNls public static final String PATH_TO_ANT_JAR = "lib/ant.jar";
-  @NonNls public static final String LIB_DIR = "lib";
-  @NonNls public static final String ANT_JAR_FILE = "ant.jar";
-  @NonNls public static final String VERSION_RESOURCE = "org/apache/tools/ant/version.txt";
+  public static final @NonNls String PATH_TO_ANT_JAR = "lib/ant.jar";
+  public static final @NonNls String LIB_DIR = "lib";
+  public static final @NonNls String ANT_JAR_FILE = "ant.jar";
+  public static final @NonNls String VERSION_RESOURCE = "org/apache/tools/ant/version.txt";
 
   public AntReference getReference() {
     return new AntReference.BindedReference(this);
@@ -104,8 +104,7 @@ public class AntInstallation {
     return myProperties;
   }
 
-  @NotNull
-  public ClassLoader getClassLoader() {
+  public @NotNull ClassLoader getClassLoader() {
     return myClassLoaderHolder.getClassloader();
   }
 

@@ -25,10 +25,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class GradlePluginDescriptions implements GradlePluginDescriptionsExtension {
-  @NotNull
+public final class GradlePluginDescriptions implements GradlePluginDescriptionsExtension {
   @Override
-  public Map<@NlsSafe String, @NlsContexts.DetailedDescription String> getPluginDescriptions() {
+  public @NotNull Map<@NlsSafe String, @NlsContexts.DetailedDescription String> getPluginDescriptions() {
     final Collection<@NlsSafe String> plugins = StringUtil.split(
       "java,groovy,idea,eclipse,scala,antlr,application,ear,jetty,maven,osgi,war,announce," +
       "build-announcements,checkstyle,codenarc,eclipse-wtp,findbugs,jdepend,pmd,project-report,signing,sonar", ",");
@@ -40,8 +39,7 @@ public class GradlePluginDescriptions implements GradlePluginDescriptionsExtensi
     return descriptions;
   }
 
-  @NotNull
-  private static @NlsContexts.DetailedDescription String getDescription(@NotNull String pluginName) {
+  private static @NotNull @NlsContexts.DetailedDescription String getDescription(@NotNull String pluginName) {
     return GradleDocumentationBundle.INSTANCE
       .messageOrDefault(String.format("gradle.documentation.org.gradle.api.Project.apply.plugin.%s.non-html", pluginName), "");
   }

@@ -4,11 +4,11 @@ import com.intellij.lang.ASTNode;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyOrPattern;
-import com.jetbrains.python.psi.PyPattern;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern {
   public PyOrPatternImpl(ASTNode astNode) {
@@ -21,12 +21,7 @@ public class PyOrPatternImpl extends PyElementImpl implements PyOrPattern {
   }
 
   @Override
-  public @NotNull List<PyPattern> getAlternatives() {
-    return Arrays.asList(findChildrenByClass(PyPattern.class));
-  }
-
-  @Override
-  public boolean isIrrefutable() {
-    return ContainerUtil.exists(getAlternatives(), PyPattern::isIrrefutable);
+  public @Nullable PyType getType(@NotNull TypeEvalContext context, TypeEvalContext.@NotNull Key key) {
+    return PyUnionType.union(ContainerUtil.map(getAlternatives(), it -> context.getType(it)));
   }
 }

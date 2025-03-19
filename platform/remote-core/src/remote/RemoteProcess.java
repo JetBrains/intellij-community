@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.google.common.net.HostAndPort;
@@ -30,8 +30,7 @@ public abstract class RemoteProcess extends Process implements SelfKiller, Proce
    * @param remotePort remote process port
    * @return host:port
    */
-  @Nullable
-  public abstract HostAndPort getLocalTunnel(int remotePort);
+  public abstract @Nullable HostAndPort getLocalTunnel(int remotePort);
 
-
+  public abstract void setWindowSize(int columns, int rows);
 }

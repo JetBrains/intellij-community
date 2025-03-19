@@ -8,18 +8,14 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 
 abstract class MdnDocumentedSymbol : WebSymbol {
 
-  private val mdnDoc by lazy(LazyThreadSafetyMode.NONE) {
+  private val mdnDoc by lazy(LazyThreadSafetyMode.PUBLICATION) {
     getMdnDocumentation()
   }
 
   protected abstract fun getMdnDocumentation(): MdnSymbolDocumentation?
 
   override val apiStatus: WebSymbolApiStatus
-    get() = when {
-      mdnDoc?.isDeprecated == true -> WebSymbolApiStatus.Deprecated
-      mdnDoc?.isExperimental == true -> WebSymbolApiStatus.Experimental
-      else -> WebSymbolApiStatus.Stable
-    }
+    get() = mdnDoc?.apiStatus ?: WebSymbolApiStatus.Stable
 
   override val description: String?
     get() = mdnDoc?.description

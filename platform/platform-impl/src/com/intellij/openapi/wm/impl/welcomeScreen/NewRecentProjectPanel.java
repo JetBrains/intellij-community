@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.filename.UniqueNameBuilder;
 import com.intellij.ide.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComponentUtil;
@@ -20,6 +22,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +35,8 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class NewRecentProjectPanel extends RecentProjectPanel {
+@ApiStatus.Internal
+public final class NewRecentProjectPanel extends RecentProjectPanel {
 
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {
     this(parentDisposable, true);
@@ -255,7 +259,16 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
                   icon.paintIcon(this, g, 0, 0);
                 }
               };
-              projectIcon.setDisabledIcon(IconUtil.desaturate(icon));
+              ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                // IconUtil.desaturate eagerly evaluates `icon` which
+                // may take unbound amount of time on a network share
+                Icon disabledIcon = IconUtil.desaturate(icon);
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  if (projectIcon.isValid()) {
+                    projectIcon.setDisabledIcon(disabledIcon);
+                  }
+                }, ModalityState.any());
+              });
               if (isValid) {
                 projectIcon.setEnabled(false);
               }
@@ -270,7 +283,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
-          private Icon getGray(Icon icon) {
+          private static Icon getGray(Icon icon) {
             final int w = icon.getIconWidth();
             final int h = icon.getIconHeight();
             GraphicsEnvironment ge =
@@ -293,9 +306,8 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
     };
   }
 
-  @Nullable
   @Override
-  protected JPanel createTitle() {
+  protected @Nullable JPanel createTitle() {
     return null;
   }
 }

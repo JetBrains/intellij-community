@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a stream (stdout/stderr/system) output type. It can be a base output type or a colored output type.
  * Base stdout/stderr output types are constants: {@link ProcessOutputTypes#STDOUT}, {@link ProcessOutputTypes#STDERR} and
  * {@link ProcessOutputTypes#SYSTEM}.<br/>
- * A colored stdout/stderr output type corresponds to an unique ANSI color attributes info passed as
+ * A colored stdout/stderr output type corresponds to a unique ANSI color attributes info passed as
  * {@code name} constructor parameter, and base stream output type (stdout/stderr) - {@code streamType} parameter.
  * <p/>
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
@@ -47,20 +47,22 @@ public class ProcessOutputType extends Key<Object> {
    */
   public static final ProcessOutputType STDERR = new ProcessOutputType("stderr");
 
-  private final ProcessOutputType myStreamType;
+  private final @Nullable String myEscapeSequence;
+  private final @NotNull ProcessOutputType myStreamType;
 
   public ProcessOutputType(@NotNull String name, @NotNull ProcessOutputType streamType) {
     super(name);
+    myEscapeSequence = name;
     myStreamType = streamType.getBaseOutputType();
   }
 
   private ProcessOutputType(@NotNull String name) {
     super(name);
+    myEscapeSequence = null;
     myStreamType = this;
   }
 
-  @NotNull
-  public ProcessOutputType getBaseOutputType() {
+  public @NotNull ProcessOutputType getBaseOutputType() {
     return myStreamType;
   }
 
@@ -80,13 +82,27 @@ public class ProcessOutputType extends Key<Object> {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
-  @NotNull
-  public static String getKeyNameForLogging(@NotNull Key<?> key) {
-    return key.toString().replace("\u001B", "ESC");
+  public @Nullable String getEscapeSequence() {
+    return myEscapeSequence;
   }
 
-  @Nullable
-  public static ProcessOutputType tryCast(@NotNull Key<?> key) {
+  @Override
+  public String toString() {
+    if (myEscapeSequence != null) {
+      return "[" + getBaseOutputType() + "] " + toHumanReadableEscapeSequence(myEscapeSequence);
+    }
+    return super.toString();
+  }
+
+  private static @NotNull String toHumanReadableEscapeSequence(@NotNull String escapeSequence) {
+    return escapeSequence.replace("\u001b", "ESC")
+      .replace("\u0007", "BEL")
+      .replace("\n", "\\n")
+      .replace("\r", "\\r")
+      .replace("\b", "\\b");
+  }
+
+  public static @Nullable ProcessOutputType tryCast(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType ? (ProcessOutputType)key : null;
   }
 }

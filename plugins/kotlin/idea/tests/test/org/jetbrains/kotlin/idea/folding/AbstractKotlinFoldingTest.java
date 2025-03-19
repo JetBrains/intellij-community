@@ -7,7 +7,7 @@ import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
@@ -25,8 +25,13 @@ public abstract class AbstractKotlinFoldingTest extends KotlinLightCodeInsightFi
     protected void doTest(@NotNull String path) {
         try {
             myFixture.testFolding(path);
-        } catch (FileComparisonFailure e) {
-            throw new FileComparisonFailure(e.getMessage(), e.getExpected(), e.getActual(), new File(e.getFilePath()).getAbsolutePath());
+        } catch (FileComparisonFailedError fcf) {
+            throw new FileComparisonFailedError(
+                    fcf.getMessage(),
+                    fcf.getExpectedStringPresentation(),
+                    fcf.getActualStringPresentation(),
+                    new File(fcf.getFilePath()).getAbsolutePath()
+            );
         }
     }
 

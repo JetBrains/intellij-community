@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -6,15 +6,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * This action works only in the variables view
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
+ * @see com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction
  */
+@ApiStatus.Internal
 public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   @Override
-  protected boolean isEnabled(@NotNull final XValueNodeImpl node, @NotNull AnActionEvent e) {
+  protected boolean isEnabled(final @NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && DebuggerUIUtil.getWatchesView(e) != null;
   }
 
@@ -36,7 +39,7 @@ public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
+  protected void perform(final XValueNodeImpl node, final @NotNull String nodeName, final AnActionEvent e) {
     final XWatchesView watchesView = DebuggerUIUtil.getWatchesView(e);
     if (watchesView != null) {
       DebuggerUIUtil.addToWatches(watchesView, node);

@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
-import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValidationResult
+import org.jetbrains.kotlin.tools.projectWizard.core.entity.properties.Property
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetting
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.SettingDefaultValue
 import org.jetbrains.kotlin.tools.projectWizard.core.service.BuildSystemAvailabilityWizardService
@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.StructurePlugin
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.BuildFilePrinter
@@ -71,7 +72,7 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
 
         val buildFiles by listProperty<BuildFileIR>()
 
-        val pluginRepositoreis by listProperty<Repository>()
+        val pluginRepositories by listProperty<Repository>()
 
         val takeRepositoriesFromDependencies by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runBefore(createModules)
@@ -114,8 +115,11 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
             runAfter(createModules)
             withAction {
                 val data = buildSystemData.propertyValue.first { it.type == buildSystemType }
+                val settings = if (buildSystemType.isGradle) {
+                    GradleBuildSystemSettings(GradlePlugin.gradleHome.settingValue.takeIf { it != "" })
+                } else null
                 service<ProjectImportingWizardService> { service -> service.isSuitableFor(data.type) }
-                    .importProject(this, StructurePlugin.projectPath.settingValue, allIRModules, buildSystemType)
+                    .importProject(this, StructurePlugin.projectPath.settingValue, allIRModules, buildSystemType, settings)
             }
         }
     }
@@ -131,12 +135,12 @@ abstract class BuildSystemPlugin(context: Context) : Plugin(context) {
     override val properties: List<Property<*>> = listOf(
         buildSystemData,
         buildFiles,
-        pluginRepositoreis
+        pluginRepositories
     )
 }
 
 fun Reader.getPluginRepositoriesWithDefaultOnes(): List<Repository> {
-    val allRepositories = BuildSystemPlugin.pluginRepositoreis.propertyValue + buildSystemType.getDefaultPluginRepositories()
+    val allRepositories = BuildSystemPlugin.pluginRepositories.propertyValue + buildSystemType.getDefaultPluginRepositories()
     return allRepositories.filterOutOnlyDefaultPluginRepositories(buildSystemType)
 }
 
@@ -164,6 +168,12 @@ data class BuildFileData(
     val createPrinter: () -> BuildFilePrinter,
     @NonNls val buildFileName: String
 )
+
+sealed interface BuildSystemSettings
+
+data class GradleBuildSystemSettings(
+    val gradleHome: String?
+) : BuildSystemSettings
 
 enum class BuildSystemType(
     @Nls override val text: String,

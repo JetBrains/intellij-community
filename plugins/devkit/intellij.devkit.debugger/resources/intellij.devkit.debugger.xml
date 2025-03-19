@@ -1,0 +1,30 @@
+<idea-plugin package="org.jetbrains.idea.devkit.debugger">
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
+  <resource-bundle>messages.DevKitDebuggerBundle</resource-bundle>
+  <extensions defaultExtensionNs="com.intellij">
+    <debugger.extraDebugNodesProvider implementation="org.jetbrains.idea.devkit.debugger.DebugeeIdeStateRenderer"/>
+    <registryKey defaultValue="true" description="Show details of a debugee IDE in the variables view" key="devkit.debugger.show.ide.state"/>
+    <registryKey defaultValue="true" description="Do not throw PCE during stepping and pause" key="devkit.debugger.prevent.pce.while.stepping"/>
+
+    <applicationConfigurable parentId="project.propDebugger"
+                             id="devkit.debugger"
+                             bundle="messages.DevKitDebuggerBundle"
+                             key="configurable.name.ide.debugger"
+                             provider="org.jetbrains.idea.devkit.debugger.settings.DevKitDebuggerConfigurableProvider"/>
+    <debugger.steppingListener implementation="org.jetbrains.idea.devkit.debugger.ResumeListener"/>
+  </extensions>
+  <actions>
+    <action id="DevKit.Debugger.Disable.IDE.State"
+            class="org.jetbrains.idea.devkit.debugger.settings.DisableIDEStateAction"
+            icon="AllIcons.General.Remove"
+            use-shortcut-of="$Delete">
+      <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+    </action>
+  </actions>
+  <projectListeners>
+    <listener class="org.jetbrains.idea.devkit.debugger.PauseListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+  </projectListeners>
+</idea-plugin>

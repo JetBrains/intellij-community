@@ -1,3 +1,4 @@
+// INPLACE_VARIABLE_NAME: i
 fun foo(param: Int): String {
     val i = 123
     val x = "a${i}4_"

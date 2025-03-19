@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -6,12 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ImaginaryCaretModel implements CaretModel {
   private final ImaginaryEditor myEditor;
   private final ImaginaryCaret myCaret;
@@ -27,10 +29,9 @@ public class ImaginaryCaretModel implements CaretModel {
     return myEditor;
   }
 
-  @NotNull
   @Override
-  public Caret getCurrentCaret() {
-    return myCaret;
+  public @NotNull Caret getCurrentCaret() {
+    return getPrimaryCaret();
   }
 
   protected RuntimeException notImplemented() {
@@ -54,17 +55,16 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public boolean supportsMultipleCarets() {
-    throw notImplemented();
+    return false;
   }
 
   @Override
   public int getMaxCaretCount() {
-    throw notImplemented();
+    return 1;
   }
 
-  @NotNull
   @Override
-  public Caret getPrimaryCaret() {
+  public @NotNull Caret getPrimaryCaret() {
     return myCaret;
   }
 
@@ -73,21 +73,18 @@ public class ImaginaryCaretModel implements CaretModel {
     return 1;
   }
 
-  @NotNull
   @Override
-  public List<Caret> getAllCarets() {
-    return Collections.singletonList(myCaret);
+  public @NotNull List<Caret> getAllCarets() {
+    return Collections.singletonList(getCurrentCaret());
   }
 
-  @Nullable
   @Override
-  public Caret getCaretAt(@NotNull VisualPosition pos) {
+  public @Nullable Caret getCaretAt(@NotNull VisualPosition pos) {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
+  public @Nullable Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     throw notImplemented();
   }
 
@@ -103,7 +100,6 @@ public class ImaginaryCaretModel implements CaretModel {
 
   @Override
   public void removeSecondaryCarets() {
-    throw notImplemented();
   }
 
   @Override
@@ -118,33 +114,32 @@ public class ImaginaryCaretModel implements CaretModel {
     }
     CaretState state = caretStates.get(0);
     if (state.getCaretPosition() != null) {
-      myCaret.moveToOffset(myEditor.logicalPositionToOffset(state.getCaretPosition()));
+      getCurrentCaret().moveToOffset(myEditor.logicalPositionToOffset(state.getCaretPosition()));
     }
     if (state.getSelectionStart() != null && state.getSelectionEnd() != null && !state.getSelectionStart().equals(state.getSelectionEnd())) {
-      myCaret.setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()),
+      getCurrentCaret().setSelection(myEditor.logicalPositionToOffset(state.getSelectionStart()),
                            myEditor.logicalPositionToOffset(state.getSelectionEnd()));
     }
   }
 
-  @NotNull
   @Override
-  public List<CaretState> getCaretsAndSelections() {
+  public @NotNull List<CaretState> getCaretsAndSelections() {
     return Collections.singletonList(
-      new CaretState(myCaret.getLogicalPosition(),
+      new CaretState(getCurrentCaret().getLogicalPosition(),
                      0,
-                     myEditor.offsetToLogicalPosition(myCaret.getSelectionStart()),
-                     myEditor.offsetToLogicalPosition(myCaret.getSelectionEnd()))
+                     myEditor.offsetToLogicalPosition(getCurrentCaret().getSelectionStart()),
+                     myEditor.offsetToLogicalPosition(getCurrentCaret().getSelectionEnd()))
     );
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action) {
-    action.perform(myCaret);
+    action.perform(getCurrentCaret());
   }
 
   @Override
   public void runForEachCaret(@NotNull CaretAction action, boolean reverseOrder) {
-    action.perform(myCaret);
+    action.perform(getCurrentCaret());
   }
 
   @Override

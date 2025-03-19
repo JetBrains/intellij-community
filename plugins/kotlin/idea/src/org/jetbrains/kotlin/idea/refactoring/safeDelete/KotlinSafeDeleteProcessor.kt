@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
@@ -19,7 +18,6 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -35,8 +33,11 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
-import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.idea.util.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -48,13 +49,6 @@ import org.jetbrains.kotlin.utils.ifEmpty
 import java.util.*
 
 class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
-    companion object {
-        @set:TestOnly
-        var Project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
-                by NotNullableUserDataProperty(Key.create("ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED"), true)
-
-        private var KtDeclaration.dropActualModifier: Boolean? by UserDataProperty(Key.create("DROP_ACTUAL_MODIFIER"))
-    }
 
     override fun handlesElement(element: PsiElement): Boolean = element.canDeleteElement()
 
@@ -82,7 +76,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                     if (it.hasActualModifier()) it.project.projectScope() else it.useScope(),
                     kotlinOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = true)
                 )
-                ReferencesSearch.search(searchParameters).asSequence()
+                ReferencesSearch.search(searchParameters).asIterable().asSequence()
                     .filterNot { reference -> getIgnoranceCondition().value(reference.element) }
             }
         }
@@ -204,7 +198,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             val parameterList = owner.typeParameters
             val parameterIndex = parameterList.indexOf(parameter)
 
-            for (reference in ReferencesSearch.search(owner)) {
+            for (reference in ReferencesSearch.search(owner).asIterable()) {
                 if (reference !is KtReference) continue
 
                 val referencedElement = reference.element
@@ -376,7 +370,6 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             }
 
             else -> {
-                removeModifier(KtTokens.IMPL_KEYWORD)
                 removeModifier(KtTokens.ACTUAL_KEYWORD)
             }
         }
@@ -405,10 +398,11 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
             is KtParameter -> {
                 element.ownerFunction?.let {
-                    if (it.dropActualModifier == true) {
-                        it.removeModifier(KtTokens.IMPL_KEYWORD)
-                        it.removeModifier(KtTokens.ACTUAL_KEYWORD)
-                        it.dropActualModifier = null
+                    with(KotlinSafeDeleteSettings) {
+                        if (it.dropActualModifier == true) {
+                            it.removeModifier(KtTokens.ACTUAL_KEYWORD)
+                            it.dropActualModifier = null
+                        }
                     }
                 }
                 (element.parent as KtParameterList).removeParameter(element)
@@ -417,7 +411,11 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     }
 
     private fun shouldAllowPropagationToExpected(parameter: KtParameter): Boolean {
-        if (isUnitTestMode()) return parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
+        if (isUnitTestMode()){
+            return with (KotlinSafeDeleteSettings) {
+                parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
+            }
+        }
 
         return Messages.showYesNoDialog(
             KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones"),
@@ -446,7 +444,9 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                     return if (shouldAllowPropagationToExpected(element)) {
                         listOf(expectParameter)
                     } else {
-                        element.ownerFunction?.dropActualModifier = true
+                        with(KotlinSafeDeleteSettings) {
+                            element.ownerFunction?.dropActualModifier = true
+                        }
                         listOf(element)
                     }
                 }

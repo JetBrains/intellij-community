@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.idCache;
 
 import com.intellij.lexer.Lexer;
@@ -15,18 +15,16 @@ import org.jetbrains.annotations.Nullable;
 public class XmlIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS);
 
-  @Nullable
   @Override
-  public Lexer getIndexingLexer(@NotNull PsiFile file) {
+  public @Nullable Lexer getIndexingLexer(@NotNull PsiFile file) {
     if (file instanceof XmlFile) {
       return new XmlLexer();
     }
     return null;
   }
 
-  @Nullable
   @Override
-  public TokenSet getCommentTokenSet(@NotNull PsiFile file) {
+  public @Nullable TokenSet getCommentTokenSet(@NotNull PsiFile file) {
     if (file instanceof XmlFile) {
       return XML_COMMENT_BIT_SET;
     }

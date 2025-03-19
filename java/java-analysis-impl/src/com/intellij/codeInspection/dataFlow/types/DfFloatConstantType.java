@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.value.RelationType;
@@ -7,14 +7,29 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
+public final class DfFloatConstantType extends DfConstantType<Float> implements DfFloatType {
+  private final boolean shouldWiden;
+  
   DfFloatConstantType(float value) {
-    super(value);
+    this(value, false);
   }
 
-  @NotNull
+  private DfFloatConstantType(float value, boolean widen) {
+    super(value);
+    shouldWiden = widen;
+  }
+  
+  public DfFloatConstantType makeWide() {
+    return shouldWiden ? this : new DfFloatConstantType(getValue(), true);
+  }
+
   @Override
-  public DfType join(@NotNull DfType other) {
+  public DfType widen() {
+    return shouldWiden ? DfTypes.FLOAT : super.widen();
+  }
+
+  @Override
+  public @NotNull DfType join(@NotNull DfType other) {
     return Objects.requireNonNull(join(other, false));
   }
 
@@ -54,13 +69,23 @@ public class DfFloatConstantType extends DfConstantType<Float> implements DfFloa
     return DfFloatRangeType.fromRelation(relationType, value, value);
   }
 
-  @NotNull
   @Override
-  public DfType tryNegate() {
+  public @NotNull DfType tryNegate() {
     float value = getValue();
     if (Float.isNaN(value)) {
       return DfFloatRangeType.create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, false);
     }
     return DfFloatRangeType.create(value, value, true, true);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof DfFloatConstantType that && super.equals(o) && shouldWiden == that.shouldWiden;
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + (shouldWiden ? 1 : 0);
   }
 }

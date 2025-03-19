@@ -2,13 +2,13 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.ui.speedSearch.SpeedSearchSupply.getSupply;
-
+@ApiStatus.Internal
 public abstract class TreeActions extends SwingActionDelegate {
   private TreeActions(String actionId) {
     super(actionId);
@@ -17,7 +17,7 @@ public abstract class TreeActions extends SwingActionDelegate {
   @Override
   protected @Nullable JTree getComponent(AnActionEvent event) {
     var component = super.getComponent(event);
-    return component instanceof JTree tree && getSupply(component) == null ? tree : null;
+    return component instanceof JTree tree && !speedSearchHandlesNavigation(component) ? tree : null;
   }
 
   public static final class Home extends TreeActions {
@@ -168,6 +168,14 @@ public abstract class TreeActions extends SwingActionDelegate {
     public static final @NonNls String ID = "selectPreviousSibling";
 
     public PreviousSibling() {
+      super(ID);
+    }
+  }
+
+  public static final class SelectAll extends TreeActions {
+    public static final @NonNls String ID = "selectAll";
+
+    public SelectAll() {
       super(ID);
     }
   }

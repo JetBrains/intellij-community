@@ -3,6 +3,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.color.ColorSpace;
@@ -11,6 +12,7 @@ import java.awt.color.ICC_Profile;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
+@ApiStatus.Internal
 public final class MacColorSpaceLoader {
   private static final String GENERIC_RGB_PROFILE_PATH = "/System/Library/ColorSync/Profiles/Generic RGB Profile.icc";
 

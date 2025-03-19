@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.project.Project;
@@ -6,13 +6,15 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
 
+@ApiStatus.Internal
 public class LimitHistoryCheck {
-  @NotNull private final Project myProject;
-  @NotNull private final String myFilePath;
+  private final @NotNull Project myProject;
+  private final @NotNull String myFilePath;
   private int myLimit;
   private int myCount;
   private boolean myWarningShown;

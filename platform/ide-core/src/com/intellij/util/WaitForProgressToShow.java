@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public final class WaitForProgressToShow {
    *
    * @deprecated Violates threading assertions in ProgressWindow.
    */
+  @ApiStatus.Internal
   @Deprecated
   public static void execute(ProgressIndicator pi) {
     if (pi.isShowing()) {

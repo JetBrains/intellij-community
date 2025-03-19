@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +37,7 @@ public final class CertificateUtil {
 
   private CertificateUtil() { }
 
-  @Nullable
-  public static X509Certificate loadX509Certificate(@NotNull String path) {
+  public static @Nullable X509Certificate loadX509Certificate(@NotNull String path) {
     try (InputStream stream = new FileInputStream(path)) {
       return (X509Certificate)ourFactory.generateCertificate(stream);
     }

@@ -1,33 +1,20 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.InjectedDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -49,10 +36,36 @@ import java.util.LinkedHashSet;
 import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
+/** @deprecated replace with {@link TextEditorPsiDataProvider.DataRule} when EditorDataProvider is dropped */
+@Deprecated(forRemoval = true)
 public class TextEditorPsiDataProvider implements EditorDataProvider {
+
+  static class DataRule implements UiDataRule {
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+      Editor editor = snapshot.get(EDITOR);
+      if (!(editor instanceof EditorEx) || editor.isDisposed()) return;
+
+      EditorKind editorKind = editor.getEditorKind();
+      if (editorKind == EditorKind.PREVIEW || editorKind == EditorKind.CONSOLE) return;
+
+      Caret caret = snapshot.get(CARET);
+      if (caret == null) {
+        sink.set(CARET, caret = editor.getCaretModel().getPrimaryCaret());
+      }
+
+      VirtualFile file = editor.getVirtualFile();
+      if (file == null) return;
+
+      Caret finalCaret = caret;
+      sink.set(HOST_EDITOR, editor instanceof EditorWindow o ? o.getDelegate() : editor);
+      sink.set(IDE_VIEW, getIdeView(editor, file));
+      sink.set(BGT_DATA_PROVIDER, slowId -> getSlowData(slowId, editor, finalCaret));
+    }
+  }
+
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
+  public @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
@@ -68,7 +81,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (IDE_VIEW.is(dataId)) {
       return getIdeView(e, file);
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+    if (BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)slowId -> getSlowData(slowId, e, caret);
     }
     return null;
@@ -83,7 +96,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return new IdeView() {
 
       @Override
-      public void selectElement(PsiElement element) {
+      public void selectElement(@NotNull PsiElement element) {
         NavigationUtil.activateFileWithPsiElement(element);
       }
 
@@ -101,8 +114,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     };
   }
 
-  @Nullable
-  private Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
@@ -168,23 +180,23 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       if (psiFile != null) {
         addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
       }
-      return set.toArray(new Language[0]);
+      return set.toArray(Language.EMPTY_ARRAY);
     }
     return null;
   }
 
   // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
-  private EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
+  private static EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
     Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
     return editor instanceof EditorWindow ? (EditorWindow)editor : null;
   }
 
-  private InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
+  private static InjectedCaret querySlowInjectedCaret(@NotNull Editor e, @NotNull Caret caret) {
     EditorWindow editor = querySlowInjectedEditor(e, caret);
     return editor == null ? null : getInjectedCaret(editor, caret);
   }
 
-  private PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
+  private static PsiFile querySlowInjectedPsiFile(@NotNull Editor e, @NotNull Caret caret) {
     return (PsiFile)getSlowData(InjectedDataKeys.PSI_FILE.getName(), e, caret);
   }
 
@@ -225,8 +237,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return PsiUtilCore.findLanguageFromElement(elt);
   }
 
-  @Nullable
-  private static PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull Caret caret, @NotNull VirtualFile file) {
+  private static @Nullable PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull Caret caret, @NotNull VirtualFile file) {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
 
@@ -239,8 +250,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     }
   }
 
-  @Nullable
-  private static PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
+  private static @Nullable PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
     if (!file.isValid()) {
       return null; // fix for SCR 40329
     }
@@ -248,7 +258,8 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (project == null) {
       return null;
     }
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    CodeInsightContext context = EditorContextManager.getEditorContext(e, project);
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(file, context);
     return psiFile != null && psiFile.isValid() ? psiFile : null;
   }
 }

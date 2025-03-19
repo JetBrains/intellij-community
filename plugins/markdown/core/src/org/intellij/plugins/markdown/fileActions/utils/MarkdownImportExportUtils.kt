@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.ModalityUiUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider
@@ -36,7 +36,7 @@ import java.io.File
 /**
  * Utilities used mainly for import/export from markdown.
  */
-object MarkdownImportExportUtils {
+internal object MarkdownImportExportUtils {
   /**
    * Returns the preview of markdown file or null if the preview editor or project is null.
    */
@@ -106,7 +106,7 @@ object MarkdownImportExportUtils {
 
       override fun run(indicator: ProgressIndicator) {
         val filePath = FileUtil.join(dirToImport, "${newFileName}.${MarkdownFileType.INSTANCE.defaultExtension}")
-        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath)
+        val cmd = getConvertDocxToMdCommandLine(vFileToImport, resourcesDir, filePath, project)
 
         output = ExecUtil.execAndGetOutput(cmd)
         createdFilePath = filePath
@@ -145,18 +145,21 @@ object MarkdownImportExportUtils {
   /**
    * returns a platform-independent cmd to perform the converting of docx to markdown using pandoc.
    */
-  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String) = GeneralCommandLine(
-    "pandoc",
-    "--extract-media=$mediaSrc",
-    file.path,
-    "-f",
-    MarkdownDocxExportProvider.format.extension,
-    "-t",
-    TARGET_FORMAT_NAME,
-    "-s",
-    "-o",
-    targetFile
-  )
+  private fun getConvertDocxToMdCommandLine(file: VirtualFile, mediaSrc: String, targetFile: String, project: Project): GeneralCommandLine {
+    val pandoc = PandocSettings.getInstance(project).pathToPandoc ?: "pandoc"
+    return GeneralCommandLine(
+      pandoc,
+      "--extract-media=$mediaSrc",
+      file.path,
+      "-f",
+      MarkdownDocxExportProvider.format.extension,
+      "-t",
+      TARGET_FORMAT_NAME,
+      "-s",
+      "-o",
+      targetFile
+    )
+  }
 
   /**
    * Checks whether the JCEF panel, which is needed for exporting to HTML and PDF, is open in the markdown editor.
@@ -175,14 +178,14 @@ object MarkdownImportExportUtils {
     }
   }
 
-  fun notifyAndRefreshIfExportSuccess(file: File, project: Project) {
+  fun notifyAndRefreshIfExportSuccess(file: VirtualFile, project: Project) {
     MarkdownNotifications.showInfo(
       project,
       id = MarkdownExportProvider.Companion.NotificationIds.exportSuccess,
       message = MarkdownBundle.message("markdown.export.success.msg", file.name)
     )
     val dirToExport = file.parent
-    refreshProjectDirectory(project, dirToExport)
+    refreshProjectDirectory(project, dirToExport.path)
   }
 }
 

@@ -6,10 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.IdeUICustomization
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class CloseOtherProjectsAction : CloseProjectsActionBase() {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
@@ -17,9 +19,9 @@ class CloseOtherProjectsAction : CloseProjectsActionBase() {
     templatePresentation.setDescription(uiCustomization.projectMessagePointer("action.close.other.projects.description"))
   }
 
-  override fun canClose(project: Project, currentProject: Project) = project !== currentProject
+  override fun canClose(project: Project, currentProject: Project): Boolean = project !== currentProject
 
-  override fun shouldShow(e: AnActionEvent) = ProjectManager.getInstance().openProjects.size > 1
+  override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

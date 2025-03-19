@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -18,6 +18,7 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     super(new StructuralSearchFakeInspection(configurations));
   }
 
+  @Override
   public int hashCode() {
     return myTool.getShortName().hashCode();
   }
@@ -28,9 +29,8 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
            ((StructuralSearchInspectionToolWrapper)obj).myTool.getShortName().equals(myTool.getShortName());
   }
 
-  @NotNull
   @Override
-  public LocalInspectionToolWrapper createCopy() {
+  public @NotNull LocalInspectionToolWrapper createCopy() {
     final StructuralSearchFakeInspection inspection = (StructuralSearchFakeInspection)getTool();
     final List<Configuration> copies = new SmartList<>();
     for (Configuration configuration : inspection.getConfigurations()) {
@@ -39,9 +39,8 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     return new StructuralSearchInspectionToolWrapper(copies);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return getTool().getDisplayName();
   }
 
@@ -55,9 +54,8 @@ public class StructuralSearchInspectionToolWrapper extends LocalInspectionToolWr
     return getTool().getID();
   }
 
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return getTool().getGroupDisplayName();
   }
 

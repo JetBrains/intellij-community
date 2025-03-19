@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,25 +14,26 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
-  @NotNull
-  private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
-  RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
+  private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
+  @ApiStatus.Internal
+  public RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private volatile long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
-  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
+  @ApiStatus.Internal
+  public RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean forceDocumentStrongReference) {
     this(forceDocumentStrongReference ? document : ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document),
          document.getTextLength(), start, end, register, false, false);
   }
@@ -105,13 +106,19 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public int getStartOffset() {
-    RangeMarkerTree.RMNode<?> node = myNode;
+    return getStartOffset(myNode);
+  }
+
+  private int getStartOffset(RangeMarkerTree.RMNode<?> node) {
     return node == null ? TextRangeScalarUtil.startOffset(myId) : node.intervalStart() + node.computeDeltaUpToRoot();
   }
 
   @Override
   public int getEndOffset() {
-    RangeMarkerTree.RMNode<?> node = myNode;
+    return getEndOffset(myNode);
+  }
+
+  private int getEndOffset(RangeMarkerTree.RMNode<?> node) {
     return node == null ? TextRangeScalarUtil.endOffset(myId) : node.intervalEnd() + node.computeDeltaUpToRoot();
   }
 
@@ -125,7 +132,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
   }
 
-  void invalidate() {
+  @ApiStatus.Internal
+  public void invalidate() {
     RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
     if (node != null) {
       node.invalidate();
@@ -133,8 +141,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  @NotNull
-  public final DocumentEx getDocument() {
+  public final @NotNull DocumentEx getDocument() {
     Object file = myDocumentOrFile;
     DocumentEx document =
       file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
@@ -156,20 +163,23 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
 
   @Override
   public void setGreedyToLeft(boolean greedy) {
-    if (!isValid() || greedy == isGreedyToLeft()) return;
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    if (!isValid(node) || greedy == node.isGreedyToLeft()) return;
 
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), greedy, isGreedyToRight(), isStickingToRight(), getLayer());
+    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), greedy, node.isGreedyToRight(), node.isStickingToRight(), getLayer());
   }
 
   @Override
   public void setGreedyToRight(boolean greedy) {
-    if (!isValid() || greedy == isGreedyToRight()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    if (!isValid(node) || greedy == node.isGreedyToRight()) return;
+    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), greedy, node.isStickingToRight(), getLayer());
   }
 
   public void setStickingToRight(boolean value) {
-    if (!isValid() || value == isStickingToRight()) return;
-    myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
+    RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+    if (!isValid(node) || value == node.isStickingToRight()) return;
+    node.getTree().changeData(this, getStartOffset(node), getEndOffset(node), node.isGreedyToLeft(), node.isGreedyToRight(), value, getLayer());
   }
 
   @Override
@@ -192,6 +202,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   /**
    * @deprecated do not use because it can mess internal offsets
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public final void documentChanged(@NotNull DocumentEvent e) {
     doChangeUpdate(e);
@@ -287,7 +298,8 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   protected void onReTarget(@NotNull DocumentEvent e) {}
 
   // return -1 if invalid
-  static long applyChange(@NotNull DocumentEvent e, long range,
+  @ApiStatus.Internal
+  public static long applyChange(@NotNull DocumentEvent e, long range,
                           boolean isGreedyToLeft, boolean isGreedyToRight, boolean isStickingToRight) {
     int intervalStart = TextRangeScalarUtil.startOffset(range);
     int intervalEnd = TextRangeScalarUtil.endOffset(range);
@@ -369,21 +381,24 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
            + (isValid() ? "" : "invalid:") + getStartOffset() + "," + getEndOffset()
            + (isGreedyToRight() ? "]" : ")")
            + " " + (isValid() ? getId() : "");
   }
 
-  void setRange(long scalarRange) {
+  @ApiStatus.Internal
+  public void setRange(long scalarRange) {
     myNode.setRange(scalarRange);
   }
 
   @Override
   public boolean isValid() {
-    RangeMarkerTree.RMNode<?> node = myNode;
+    return isValid(myNode);
+  }
+
+  private boolean isValid(@Nullable RangeMarkerTree.RMNode<?> node) {
     if (node == null || !node.isValid()) return false;
     Object file = myDocumentOrFile;
     return file instanceof Document || canHaveDocument((VirtualFile)file);
@@ -394,7 +409,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (document != null) return true;
     if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return false;
 
-    return !file.getFileType().isBinary() || !FileUtilRt.isTooLarge(file.getLength());
+    return !file.getFileType().isBinary() || !VirtualFileUtil.isTooLarge(file);
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
@@ -423,10 +438,26 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node.intervalEnd();
   }
 
-  long toScalarRange() {
+  /**
+   * @return this marker text range in the scalar form
+   */
+  @ApiStatus.Internal
+  public long getScalarRange() {
     RangeMarkerTree.RMNode<?> node = myNode;
     if (node == null) {
-      return -1;
+      return myId;
+    }
+    long range = node.toScalarRange();
+    int delta = node.computeDeltaUpToRoot();
+    return TextRangeScalarUtil.shift(range, delta, delta);
+  }
+
+  // return intrinsic range belonging to that node (without delta-up-to-the-root correction)
+  @ApiStatus.Internal
+  public long toScalarRange() {
+    RangeMarkerTree.RMNode<?> node = myNode;
+    if (node == null) {
+      return myId;
     }
     return node.toScalarRange();
   }
@@ -452,5 +483,16 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
     // piggyback myId to store offsets, to conserve memory
     myId = TextRangeScalarUtil.toScalarRange(startOffset, endOffset); // avoid invalid range
+  }
+
+  @TestOnly
+  public static void runAssertingInternalInvariants(@NotNull ThrowableRunnable<?> runnable) throws Throwable {
+    RedBlackTree.VERIFY = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      RedBlackTree.VERIFY = false;
+    }
   }
 }

@@ -4,35 +4,61 @@ package git4idea.rebase
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.VcsCommitMetadata
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.PropertyKey
+import java.awt.event.KeyEvent
 import java.util.function.Supplier
 
 internal open class GitRebaseEntry(val action: Action, val commit: String, val subject: String) {
-  constructor(action: String, commit: String, subject: String) : this(Action.fromString(action), commit, subject)
-
   override fun toString() = "$action $commit $subject"
 
-  sealed class Action(private val command: String, val visibleName: Supplier<@NlsContexts.Button String>) {
-    object PICK : Action("pick", GitBundle.messagePointer("rebase.entry.action.name.pick"))
-    object EDIT : Action("edit", GitBundle.messagePointer("rebase.entry.action.name.edit"))
-    object DROP : Action("drop", GitBundle.messagePointer("rebase.entry.action.name.drop"))
-    object REWORD : Action("reword", GitBundle.messagePointer("rebase.entry.action.name.reword"))
-    object SQUASH : Action("squash", GitBundle.messagePointer("rebase.entry.action.name.squash"))
-    object FIXUP : Action("fixup", GitBundle.messagePointer("rebase.entry.action.name.fixup"))
-    class Other(command: String) : Action(command, GitBundle.messagePointer("rebase.entry.action.name.unknown"))
+  sealed class Action(val command: String,
+                      val isCommit: Boolean,
+                      private val nameKey: @PropertyKey(resourceBundle = GitBundle.BUNDLE) String) {
+    object PICK : KnownAction("pick", "p", nameKey = "rebase.entry.action.name.pick")
+    object EDIT : KnownAction("edit", "e", nameKey = "rebase.entry.action.name.edit")
+    object DROP : KnownAction("drop", "d", nameKey = "rebase.entry.action.name.drop")
+    object REWORD : KnownAction("reword", "r", nameKey = "rebase.entry.action.name.reword")
+    object SQUASH : KnownAction("squash", "s", nameKey = "rebase.entry.action.name.squash")
+    class FIXUP : KnownAction("fixup", "f", nameKey = "rebase.entry.action.name.fixup") {
+      var overrideMessage: Boolean = false
+        private set
 
-    val mnemonic: Int = command.capitalize().first().code
+      override fun consumeParameter(parameter: String): Boolean {
+        if (!overrideMessage && parameter == "-c" || parameter == "-C") {
+          overrideMessage = true
+          return true
+        }
+        return false
+      }
+    }
+    object UPDATE_REF : KnownAction("update-ref", isCommit = false, nameKey = "rebase.entry.action.name.update.ref")
+
+    class Other(command: String) : Action(command, false, nameKey = "rebase.entry.action.name.unknown")
+
+    val visibleName: Supplier<@NlsContexts.Button String> get() = GitBundle.messagePointer(nameKey)
+
+    protected open fun consumeParameter(parameter: String): Boolean = false
 
     override fun toString(): String = command
+  }
 
-    companion object {
-      private val KNOWN_ACTIONS: List<Action> by lazy {
-        listOf(PICK, EDIT, DROP, SQUASH, REWORD, FIXUP)
-      }
+  sealed class KnownAction(command: String,
+                           vararg val synonyms: String,
+                           isCommit: Boolean = true,
+                           nameKey: @PropertyKey(resourceBundle = "messages.GitBundle") String) : Action(command, isCommit, nameKey) {
+    val mnemonic: Int get() = KeyEvent.getExtendedKeyCodeForChar(command.first().code)
+  }
 
-      fun fromString(action: String): Action = KNOWN_ACTIONS.find { it.command == action } ?: Other(action)
+  companion object {
+    @JvmStatic
+    fun parseAction(action: String): Action {
+      val knownActions = listOf(Action.PICK, Action.EDIT, Action.DROP, Action.REWORD, Action.SQUASH, Action.FIXUP(), Action.UPDATE_REF)
+      return knownActions.find { it.command == action || it.synonyms.contains(action) } ?: Action.Other(action)
     }
   }
 }
 
 internal open class GitRebaseEntryWithDetails(val entry: GitRebaseEntry, val commitDetails: VcsCommitMetadata) :
   GitRebaseEntry(entry.action, entry.commit, entry.subject)
+
+internal fun GitRebaseEntry.getFullCommitMessage(): String? = (this as? GitRebaseEntryWithDetails)?.commitDetails?.fullMessage

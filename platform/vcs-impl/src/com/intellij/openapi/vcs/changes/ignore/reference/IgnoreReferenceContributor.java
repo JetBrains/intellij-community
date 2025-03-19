@@ -24,11 +24,12 @@
 
 package com.intellij.openapi.vcs.changes.ignore.reference;
 
-import com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributor;
+import com.intellij.openapi.vcs.changes.ignore.codeInsight.FileExtensionCompletionContributorKt;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -37,7 +38,8 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 /**
  * PSI elements references contributor.
  */
-public class IgnoreReferenceContributor extends PsiReferenceContributor {
+@ApiStatus.Internal
+public final class IgnoreReferenceContributor extends PsiReferenceContributor {
   /**
    * Registers new references provider for PSI element.
    *
@@ -57,7 +59,7 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
     }
 
     /**
-     * Returns references for given @{link PsiElement}.
+     * Returns references for given {@link PsiElement}.
      *
      * @param psiElement        current element
      * @param processingContext context
@@ -74,7 +76,7 @@ public class IgnoreReferenceContributor extends PsiReferenceContributor {
     }
 
     private static boolean shouldSkipCompletion(@NotNull String text) {
-      return FileExtensionCompletionContributor.Companion.completionSupported(text);
+      return FileExtensionCompletionContributorKt.fileExtensionCompletionSupported(text);
     }
   }
 }

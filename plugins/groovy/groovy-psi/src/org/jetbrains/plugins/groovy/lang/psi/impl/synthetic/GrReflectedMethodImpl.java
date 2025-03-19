@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class GrReflectedMethodImpl extends LightMethodBuilder implements GrReflectedMethod {
   private static final Logger LOG = Logger.getInstance(GrReflectedMethodImpl.class);
-  @NonNls public static final String CATEGORY_PARAMETER_NAME = "self";
+  public static final @NonNls String CATEGORY_PARAMETER_NAME = "self";
 
   private final GrMethod myBaseMethod;
   private GrParameter[] mySkippedParameters = null;
@@ -135,9 +135,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return lightParameter;
   }
 
-  @NotNull
   @Override
-  public GrMethod getBaseMethod() {
+  public @NotNull GrMethod getBaseMethod() {
     return myBaseMethod;
   }
 
@@ -146,9 +145,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return mySkippedParameters;
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return myBaseMethod.getNavigationElement();
   }
 
@@ -177,9 +175,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     throw new UnsupportedOperationException("synthetic method!");
   }
 
-  @NotNull
   @Override
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     return myBaseMethod.getNamedParameters();
   }
 
@@ -193,9 +190,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return myBaseMethod.getMembers();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     return myBaseMethod.getNameIdentifierGroovy();
   }
 
@@ -204,9 +200,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return getParameterList().getParameters();
   }
 
-  @NotNull
   @Override
-  public GrParameterList getParameterList() {
+  public @NotNull GrParameterList getParameterList() {
     return (GrParameterList)super.getParameterList();
   }
 
@@ -230,9 +225,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     return getName() + " (" + StringUtil.join(getParameters(), f -> f.getType().getPresentableText() + " " + f.getName(), ", ") + ")";
   }
 
-  @NotNull
   @Override
-  public GrModifierList getModifierList() {
+  public @NotNull GrModifierList getModifierList() {
     return (GrModifierList)super.getModifierList();
   }
 
@@ -298,9 +292,8 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
     }
   }
 
-  @NotNull
   @Override
-  public PsiElement getPrototype() {
+  public @NotNull PsiElement getPrototype() {
     return getBaseMethod();
   }
 

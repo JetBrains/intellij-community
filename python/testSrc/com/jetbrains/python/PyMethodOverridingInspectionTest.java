@@ -118,6 +118,11 @@ public class PyMethodOverridingInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-33917
+  public void testInitSubclass() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

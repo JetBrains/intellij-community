@@ -5,6 +5,11 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionWithOptions;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -15,8 +20,15 @@ import java.util.List;
  * with the ability to apply to the current file in batch.
  * <p>
  * If the action is used as an inspection quick-fix or 
- * as a usual intention action, using this interface will have no effect. 
+ * as a usual intention action, using this interface will have no effect.
+ * <p>
+ * The interface is obsolete now and may be deprecated in the future. 
+ * To get the similar functionality, use {@link ModCommand} API instead. 
+ * You can implement {@link ModCommandAction} and its {@link ModCommandAction#getPresentation(ActionContext)}
+ * may use {@link Presentation#withFixAllOption(ModCommandAction)}.
+ * </p>
  */
+@ApiStatus.Obsolete
 public interface IntentionActionWithFixAllOption extends IntentionActionWithOptions {
   @Override
   default @NotNull List<IntentionAction> getOptions() {

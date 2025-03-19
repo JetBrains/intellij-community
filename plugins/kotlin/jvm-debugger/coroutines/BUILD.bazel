@@ -1,0 +1,59 @@
+### auto-generated section `build kotlin.jvm-debugger.coroutines` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "kotlin-jvm-debugger-coroutines_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-jvm-debugger-coroutines",
+  module_name = "kotlin.jvm-debugger.coroutines",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//java/debugger/openapi:java-debugger",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:maven-resolver-provider",
+    "@lib//:gson",
+    "@lib//:asm",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/jvm-debugger/base/util:kotlin-jvm-debugger-base-util",
+    "//plugins/kotlin/jvm-debugger/core:kotlin-jvm-debugger-core",
+    "//platform/lang-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/execution-impl",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/smRunner",
+    "//platform/threadDumpParser",
+    "//java/java-psi-api:psi",
+    "//platform/platform-impl:ide-impl",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/impl:java-debugger-impl",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//java/java-runtime:rt",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/java-impl:impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  runtime_deps = [":kotlin-jvm-debugger-coroutines_resources"]
+)
+### auto-generated section `build kotlin.jvm-debugger.coroutines` end

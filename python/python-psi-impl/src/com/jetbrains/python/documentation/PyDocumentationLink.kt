@@ -44,14 +44,6 @@ object PyDocumentationLink {
   }
 
   @JvmStatic
-  fun toParameterPossibleClass(@NlsSafe type: String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk {
-    return when (PyTypeParser.getTypeByName(anchor, type, context)) {
-      is PyClassType -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_PARAM", type)
-      else -> HtmlChunk.text(type)
-    }
-  }
-
-  @JvmStatic
   fun toPossibleClass(typeName: @Nls String, anchor: PsiElement, context: TypeEvalContext): HtmlChunk =
     when (val type = PyTypeParser.getTypeByName(anchor, typeName, context)) {
       is PyClassType -> styledReference(toClass(type.pyClass, typeName), type.pyClass)
@@ -68,6 +60,15 @@ object PyDocumentationLink {
   @JvmStatic
   fun toFunction(@NlsSafe content: String, func: PyFunction): HtmlChunk {
     val qualifiedName = func.qualifiedName
+    return when {
+      qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
+      else -> HtmlChunk.text(content)
+    }
+  }
+
+  @JvmStatic
+  fun toTypeAliasStatement(@NlsSafe content: String, typeAliasStatement: PyTypeAliasStatement) : HtmlChunk {
+    val qualifiedName = typeAliasStatement.qualifiedName
     return when {
       qualifiedName != null -> HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_FUNC$qualifiedName", content)
       else -> HtmlChunk.text(content)

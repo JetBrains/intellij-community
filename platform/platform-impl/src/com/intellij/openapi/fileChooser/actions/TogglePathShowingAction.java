@@ -7,7 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import org.jetbrains.annotations.NotNull;
 
-class TogglePathShowingAction extends FileChooserAction implements Toggleable {
+final class TogglePathShowingAction extends FileChooserAction implements Toggleable {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     Toggleable.setSelected(e.getPresentation(), panel.pathBar());

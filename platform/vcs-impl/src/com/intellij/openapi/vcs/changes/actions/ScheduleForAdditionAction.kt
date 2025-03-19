@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.icons.AllIcons
@@ -25,6 +25,7 @@ import com.intellij.util.Consumer
 import com.intellij.util.PairConsumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.JBIterable
+import com.intellij.vcsUtil.VcsFileUtil
 import org.jetbrains.annotations.Nls
 
 open class ScheduleForAdditionAction : AnAction(), DumbAware {
@@ -46,7 +47,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val unversionedFiles = Manager.getUnversionedFiles(e, project).toList()
 
     Manager.performUnversionedFilesAddition(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), null)
@@ -76,7 +77,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
 
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      if (ModalityState.current() == ModalityState.NON_MODAL) {
+      if (ModalityState.current() == ModalityState.nonModal()) {
         addUnversionedFilesToVcsInBackground(project, targetChangeList, files, changesConsumer, additionalTask)
       }
       else {
@@ -204,7 +205,7 @@ open class ScheduleForAdditionAction : AnAction(), DumbAware {
         performUnversionedFilesAdditionForVcs(project, vcs, vcsFiles, allProcessedFiles, exceptions)
       }
 
-      VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null)
+      VcsFileUtil.markFilesDirty(project, allProcessedFiles)
 
       return allProcessedFiles
     }

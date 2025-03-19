@@ -4,9 +4,9 @@ class Test {
 
     int test() {
         return switch (s) {
-            case <caret>String ss && ss.length() <= 3 -> 1;
+            case <caret>String ss when ss.length() <= 3 -> 1;
             case "fsd" -> 2;
-            case default -> 3;
+            default -> 3;
         };
     }
 }

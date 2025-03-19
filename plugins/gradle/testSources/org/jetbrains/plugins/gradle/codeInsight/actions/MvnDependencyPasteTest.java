@@ -10,35 +10,28 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ExceptionUtil;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor.toGradleDependency;
 
 public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
 
   public void testGradleDependencyScope() {
-    directTransformationTest("compile 'group:artifact:1.0'", "2.14", getDependency("group", "artifact", "1.0", null, null));
-    directTransformationTest("compile 'group:artifact:1.0'", "3.3", getDependency("group", "artifact", "1.0", null, null));
-    directTransformationTest("compile 'group:artifact:1.0'", "3.3-rc-5", getDependency("group", "artifact", "1.0", null, null));
-    directTransformationTest("implementation 'group:artifact:1.0'", "3.4", getDependency("group", "artifact", "1.0", null, null));
-    directTransformationTest("implementation 'group:artifact:1.0'", "3.4-rc-1", getDependency("group", "artifact", "1.0", null, null));
-    directTransformationTest("implementation 'group:artifact:1.0'", "6.7", getDependency("group", "artifact", "1.0", null, null));
+    directTransformationTest("implementation 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", null, null));
+    directTransformationTest("implementation 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "compile", null));
+    directTransformationTest("testImplementation 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "test", null));
+    directTransformationTest("runtime 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "runtime", null));
+    directTransformationTest("compileOnly 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "provided", null));
+  }
 
-    directTransformationTest("compile 'group:artifact:1.0'", "3.3", getDependency("group", "artifact", "1.0", "compile", null));
-    directTransformationTest("implementation 'group:artifact:1.0'", "3.4", getDependency("group", "artifact", "1.0", "compile", null));
+  public void testDependencyWithoutVersion() {
+    directTransformationTest("implementation 'group:artifact'", getDependency("group", "artifact", null, null, null));
+  }
 
-    directTransformationTest("testCompile 'group:artifact:1.0'", "3.3", getDependency("group", "artifact", "1.0", "test", null));
-    directTransformationTest("testImplementation 'group:artifact:1.0'", "3.4", getDependency("group", "artifact", "1.0", "test", null));
-
-    directTransformationTest("runtime 'group:artifact:1.0'", "3.3", getDependency("group", "artifact", "1.0", "runtime", null));
-    directTransformationTest("runtime 'group:artifact:1.0'", "3.4", getDependency("group", "artifact", "1.0", "runtime", null));
-
-    directTransformationTest("compileOnly 'group:artifact:1.0'", "3.3", getDependency("group", "artifact", "1.0", "provided", null));
-    directTransformationTest("compileOnly 'group:artifact:1.0'", "3.4", getDependency("group", "artifact", "1.0", "provided", null));
+  public void testKotlinDslDependency() {
+    directTransformationTestKotlinDsl("implementation(\"group:artifact:1.0\")", getDependency("group", "artifact", "1.0", null, null));
   }
 
   public void testTrimLeadingComment() {
@@ -52,6 +45,10 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     copyPasteTest("runtime 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "runtime", null));
   }
 
+  public void testPastedKotlinDslGradleDependency() {
+    copyPasteTestKotlinDsl("runtime(\"group:artifact:1.0\")", getDependency("group", "artifact", "1.0", "runtime", null));
+  }
+
   public void testDependencyWithClassifier() {
     copyPasteTest("runtime 'group:artifact:1.0:jdk14'", getDependency("group", "artifact", "1.0", "runtime", "jdk14"));
   }
@@ -61,7 +58,7 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     configureFromFileText("pom.xml", noArtifact);
     selectWholeFile();
     performCut();
-    configureGradleFile();
+    configureGradleFile(false);
     int old = CodeInsightSettings.getInstance().REFORMAT_ON_PASTE;
     try {
       CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
@@ -88,8 +85,8 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
     copyPasteTest("compileOnly 'group:artifact:1.0'", getDependency("group", "artifact", "1.0", "provided", null));
   }
 
-  private void configureGradleFile() {
-    configureFromFileText("build.gradle",
+  private void configureGradleFile(boolean isKotlinDsl) {
+    configureFromFileText("build.gradle" + (isKotlinDsl ? ".kts" : ""),
                           """
                             dependencies {
                                 <caret>
@@ -152,21 +149,30 @@ public class MvnDependencyPasteTest extends LightJavaCodeInsightTestCase {
   }
 
   private void copyPasteTest(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    copyPasteTest(gradleDependency, mavenDependency, false);
+  }
+
+  private void copyPasteTestKotlinDsl(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    copyPasteTest(gradleDependency, mavenDependency, true);
+  }
+
+  private void copyPasteTest(@NotNull String gradleDependency, @NotNull String mavenDependency, boolean isKotlinDsl) {
     configureFromFileText("pom.xml", mavenDependency);
     selectWholeFile();
     performCut();
 
-    configureGradleFile();
+    configureGradleFile(isKotlinDsl);
     performPaste();
     checkResultByText("dependencies {\n" +
                       "    " + gradleDependency + "\n" +
                       "}");
   }
 
-  private static void directTransformationTest(@NotNull String gradleDependency,
-                                               @NotNull String gradleVersion,
-                                               @NotNull String mavenDependency) {
-    String actualGradleDependency = toGradleDependency(mavenDependency, GradleVersion.version(gradleVersion));
-    assertEquals(gradleDependency, actualGradleDependency);
+  private static void directTransformationTest(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, false));
+  }
+
+  private static void directTransformationTestKotlinDsl(@NotNull String gradleDependency, @NotNull String mavenDependency) {
+    assertEquals(gradleDependency, new PasteMvnDependencyPreProcessor().toGradleDependency(mavenDependency, true));
   }
 }

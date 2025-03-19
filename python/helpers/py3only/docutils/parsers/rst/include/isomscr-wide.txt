@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |Ascr| unicode:: U+1D49C .. MATHEMATICAL SCRIPT CAPITAL A
 .. |ascr| unicode:: U+1D4B6 .. MATHEMATICAL SCRIPT SMALL A

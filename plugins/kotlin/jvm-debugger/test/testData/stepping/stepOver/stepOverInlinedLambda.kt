@@ -47,4 +47,5 @@ class A {
 
 fun test(i: Int) = 1
 
-// STEP_OVER: 12
+// STEP_OVER: 99
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

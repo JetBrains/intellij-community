@@ -5,7 +5,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.SdkId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -26,6 +27,11 @@ interface ModuleDependencyIndex {
    * tables. 
    */
   fun addListener(listener: ModuleDependencyListener)
+  
+  /**
+   * Unregisters a listener added by [addListener]. 
+   */
+  fun removeListener(listener: ModuleDependencyListener)
 
   fun setupTrackedLibrariesAndJdks()
   
@@ -51,12 +57,18 @@ interface ModuleDependencyIndex {
    * Return `true` if at least one module has dependency on [sdk]
    */
   fun hasDependencyOn(sdk: Sdk): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [sdk]
+   */
+  fun hasDependencyOn(sdk: SdkId): Boolean
 }
 
 /**
  * The methods of this listener are called synchronously under 'write action' lock. Events about module-level libraries aren't fired,
  * because such libraries are implicitly added to containing modules.
  */
+@ApiStatus.Internal
 interface ModuleDependencyListener : EventListener {
   /** 
    * Called when [library] is added to dependency of some module, and there were no dependencies on this library before 

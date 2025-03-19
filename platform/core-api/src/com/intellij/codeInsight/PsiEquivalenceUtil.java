@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight;
 
@@ -12,39 +12,15 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 public final class PsiEquivalenceUtil {
   private static final Logger LOG = Logger.getInstance(PsiEquivalenceUtil.class);
-
-  /**
-   * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, boolean)}
-   */
-  @Deprecated
-  public static boolean areElementsEquivalent(@NotNull PsiElement element1,
-                                              @NotNull PsiElement element2,
-                                              @Nullable Comparator<? super PsiElement> resolvedElementsComparator,
-                                              boolean areCommentsSignificant) {
-    return areEquivalent(element1, element2, adapt(resolvedElementsComparator), areCommentsSignificant);
-  }
-
-  /**
-   * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate)}
-   */
-  @Deprecated
-  public static boolean areElementsEquivalent(@NotNull PsiElement element1,
-                                              @NotNull PsiElement element2,
-                                              @Nullable Comparator<? super PsiElement> resolvedElementsComparator,
-                                              @Nullable Comparator<? super PsiElement> leafElementsComparator) {
-    return areEquivalent(element1, element2, adapt(resolvedElementsComparator), adapt(leafElementsComparator));
-  }
 
   public static boolean areEquivalent(@NotNull PsiElement element1,
                                       @NotNull PsiElement element2,
@@ -61,7 +37,7 @@ public final class PsiEquivalenceUtil {
   }
 
   private static class ReferenceComparator implements BiPredicate<PsiReference, PsiReference> {
-    private @Nullable final BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
+    private final @Nullable BiPredicate<? super PsiElement, ? super PsiElement> myResolvedElementsComparator;
 
     ReferenceComparator(@Nullable BiPredicate<? super PsiElement, ? super PsiElement> resolvedElementsComparator) {
       myResolvedElementsComparator = resolvedElementsComparator;
@@ -74,25 +50,6 @@ public final class PsiEquivalenceUtil {
       return Comparing.equal(resolved1, resolved2) ||
              myResolvedElementsComparator != null && myResolvedElementsComparator.test(resolved1, resolved2);
     }
-  }
-
-  /**
-   * @deprecated use {@link #areEquivalent(PsiElement, PsiElement, BiPredicate, BiPredicate, Predicate, boolean)}
-   */
-  @Deprecated
-  public static boolean areElementsEquivalent(@NotNull PsiElement element1,
-                                              @NotNull PsiElement element2,
-                                              @NotNull Comparator<? super PsiReference> referenceComparator,
-                                              @Nullable Comparator<? super PsiElement> leafElementsComparator,
-                                              @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
-                                              boolean areCommentsSignificant) {
-    return areEquivalent(element1, element2, adapt(referenceComparator),
-                         adapt(leafElementsComparator), isElementSignificantCondition, areCommentsSignificant);
-  }
-
-  @Contract(value = "null -> null; !null -> !null", pure = true)
-  private static <T> BiPredicate<T, T> adapt(@Nullable Comparator<? super T> comparator) {
-    return comparator == null ? null : (l1, l2) -> comparator.compare(l1, l2) == 0;
   }
 
   public static boolean areEquivalent(@NotNull PsiElement element1,
@@ -141,7 +98,7 @@ public final class PsiEquivalenceUtil {
     return areEquivalent(element1, element2, null, false);
   }
 
-  public static PsiElement @NotNull [] getFilteredChildren(@NotNull final PsiElement element,
+  public static PsiElement @NotNull [] getFilteredChildren(final @NotNull PsiElement element,
                                                            @Nullable Predicate<? super PsiElement> isElementSignificantCondition,
                                                            boolean areCommentsSignificant) {
     ASTNode[] children1 = element.getNode().getChildren(null);

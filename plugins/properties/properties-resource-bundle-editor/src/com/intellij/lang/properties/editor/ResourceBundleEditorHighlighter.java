@@ -41,7 +41,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
   }
 
   @Override
-  public HighlightingPass @NotNull [] createPassesForEditor() {
+  public @NotNull HighlightingPass @NotNull [] createPassesForEditor() {
     return new HighlightingPass[]{new ResourceBundleEditorHighlightingPass(myEditor)};
   }
 

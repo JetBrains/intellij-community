@@ -1,18 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
-public class RefFieldImpl extends RefJavaElementImpl implements RefField {
+public final class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK             = 0b1_00000000_00000000; // 17th bit
   private static final int USED_FOR_WRITING_MASK             = 0b10_00000000_00000000; // 18th bit
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0b100_00000000_00000000; // 19th bit
@@ -34,7 +33,14 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     LOG.assertTrue(psi != null);
     UField uElement = getUastElement();
     LOG.assertTrue(uElement != null);
-    this.setOwner((WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager));
+    WritableRefEntity parentRef = (WritableRefEntity)RefMethodImpl.findParentRef(psi, uElement, myManager);
+    if (parentRef == null) return;
+    if (!myManager.isDeclarationsFound()) {
+      parentRef.add(this);
+    }
+    else {
+      this.setOwner(parentRef);
+    }
   }
 
   @Deprecated
@@ -138,10 +144,11 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   }
 
   @Override
-  public void accept(@NotNull final RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitField(this));
-    }  else {
+  public void accept(final @NotNull RefVisitor visitor) {
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitField(this));
+    }
+    else {
       super.accept(visitor);
     }
   }
@@ -182,7 +189,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public RefClass getOwnerClass() {
-    return ObjectUtils.tryCast(getOwner(), RefClass.class);
+    return getOwner() instanceof RefClass c ? c : null;
   }
 
   @Override
@@ -195,14 +202,13 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return owner.getExternalName() + " " + getName();
   }
 
-  @Nullable
-  static RefField fieldFromExternalName(RefManager manager, String externalName) {
+  static @Nullable RefField fieldFromExternalName(RefManager manager, String externalName) {
     return (RefField)manager.getReference(findPsiField(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
-  @SuppressWarnings("WeakerAccess") // used by TeamCity
-  @Nullable
-  public static PsiField findPsiField(PsiManager manager, String externalName) {
+  // used by TeamCity
+  @SuppressWarnings("WeakerAccess")
+  public static @Nullable PsiField findPsiField(PsiManager manager, String externalName) {
     int classNameDelimiter = externalName.lastIndexOf(' ');
     if (classNameDelimiter > 0 && classNameDelimiter < externalName.length() - 1) {
       final String className = externalName.substring(0, classNameDelimiter);

@@ -27,12 +27,14 @@ package com.intellij.openapi.vcs.changes.ignore.psi;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreLanguage;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Token type definition.
  */
+@ApiStatus.Internal
 public class IgnoreTokenType extends IElementType {
   /**
    * Token debug name.
@@ -40,7 +42,7 @@ public class IgnoreTokenType extends IElementType {
   private final String debugName;
 
   /**
-   * Builds a new instance of @{link IgnoreTokenType}.
+   * Builds a new instance of {@link IgnoreTokenType}.
    */
   public IgnoreTokenType(@NotNull @NonNls String debugName) {
     super(debugName, IgnoreLanguage.INSTANCE);

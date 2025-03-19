@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("FunctionName")
 package com.intellij.ui.components
 
@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -33,10 +34,25 @@ import javax.swing.text.BadLocationException
 import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false) =
-  Label(text, style, fontColor, bold, null)
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
+fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
+  return Label(text = text, style = style, fontColor = fontColor, bold = bold, font = null)
+}
 
-fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false, font: Font? = null): JLabel {
+/**
+ * Always calls [BundleBase.replaceMnemonicAmpersand] inside and therefore can log the text in case of several mnemonics.
+ * That's unexpected behavior
+ */
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use correspondent constructors JLabel/JBLabel/MultiLineLabel, depends on situation")
+fun Label(
+  @Label text: String,
+  style: UIUtil.ComponentStyle? = null,
+  fontColor: UIUtil.FontColor? = null,
+  bold: Boolean = false,
+  font: Font? = null,
+): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)!!
   val label: JLabel
   if (fontColor == null) {
@@ -57,17 +73,22 @@ fun Label(@Label text: String, style: UIUtil.ComponentStyle? = null, fontColor: 
 
   // surrounded by space to avoid false match
   if (text.contains(" -> ")) {
+    @Suppress("HardCodedStringLiteral")
     label.text = text.replace(" -> ", " ${FontUtil.rightArrow(label.font)} ")
   }
   return label
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Row.link", level = DeprecationLevel.ERROR)
 fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
   val result = ActionLink(text) { action() }
   style?.let { UIUtil.applyStyle(it, result) }
   return result
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, methods like Row.text, Row.comment or Cell.comment")
 @JvmOverloads
 fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
   val matcher = URLUtil.HREF_PATTERN.matcher(note)
@@ -79,6 +100,7 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
   var prev = 0
   do {
     if (matcher.start() != prev) {
+      @Suppress("HardCodedStringLiteral")
       noteComponent.append(note.substring(prev, matcher.start()))
     }
 
@@ -92,12 +114,15 @@ fun noteComponent(@Label note: String, linkHandler: ((url: String) -> Unit)? = n
   LinkMouseListenerBase.installSingleTagOn(noteComponent)
 
   if (prev < note.length) {
+    @Suppress("HardCodedStringLiteral")
     noteComponent.append(note.substring(prev))
   }
 
   return noteComponent
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Row.text")
 @JvmOverloads
 fun htmlComponent(@DetailedDescription text: String = "",
                   font: Font? = null,
@@ -123,11 +148,20 @@ fun CheckBox(@Checkbox text: String, selected: Boolean = false, toolTip: @Toolti
   return component
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Panel.group")
 @JvmOverloads
 fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLayout()): JPanel {
-  return Panel(title, false, layout)
+  val panel = JPanel(layout)
+  title?.let {
+    @Suppress("HardCodedStringLiteral")
+    setTitledBorder(title = it, panel = panel, hasSeparator = false)
+  }
+  return panel
 }
 
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use Kotlin UI DSL, method Panel.group", level = DeprecationLevel.ERROR)
 fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }
@@ -150,7 +184,7 @@ private fun setTitledBorder(@BorderTitle title: String, panel: JPanel, hasSepara
 }
 
 /**
- * Consider using [UI DSL](http://www.jetbrains.org/intellij/sdk/docs/user_interface_components/kotlin_ui_dsl.html).
+ * Consider using [UI DSL](https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl-version-2.html).
  */
 @JvmOverloads
 fun dialog(@DialogTitle title: String,
@@ -198,9 +232,11 @@ interface DialogManager {
   fun performAction(action: (() -> List<ValidationInfo>?)? = null)
 }
 
-private abstract class MyDialogWrapper(project: Project?,
-                                       parent: Component?,
-                                       modality: IdeModalityType) : DialogWrapper(project, parent, true, modality), DialogManager {
+private abstract class MyDialogWrapper(
+  project: Project?,
+  parent: Component?,
+  modality: IdeModalityType,
+) : DialogWrapper(project, parent, true, modality), DialogManager {
   override fun performAction(action: (() -> List<ValidationInfo>?)?) {
     val validationInfoList = action?.invoke()
     if (validationInfoList.isNullOrEmpty()) {
@@ -243,46 +279,41 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(
   project: Project?,
   component: ComponentWithBrowseButton<T>,
   textField: JTextField,
-  @DialogTitle browseDialogTitle: String?,
-  @Label browseDialogDescription: String? = null,
   fileChooserDescriptor: FileChooserDescriptor,
   textComponentAccessor: TextComponentAccessor<T>,
   fileChosen: ((chosenFile: VirtualFile) -> String)? = null
 ) {
   if (ApplicationManager.getApplication() == null) {
-    // tests
-    return
+    return // tests
   }
-
   val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
   if (fileChosen != null) {
     browseFolderDescriptor.convertFileToText = fileChosen
   }
-
-  component.addActionListener(
-    BrowseFolderActionListener(
-      browseDialogTitle,
-      browseDialogDescription,
-      component,
-      project,
-      browseFolderDescriptor,
-      textComponentAccessor
-    )
-  )
-  FileChooserFactory.getInstance().installFileCompletion(
-    textField,
-    fileChooserDescriptor,
-    true,
-    null /* infer disposable from UI context */
-  )
+  component.addActionListener(BrowseFolderActionListener(component, project, browseFolderDescriptor, textComponentAccessor))
+  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, null /*infer disposable from context*/)
 }
 
+@Deprecated(
+  "Use `textFieldWithHistoryWithBrowseButton(Project, FileChooserDescriptor, () -> List<String>, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
+  level = DeprecationLevel.ERROR
+)
 @JvmOverloads
-fun textFieldWithHistoryWithBrowseButton(project: Project?,
-                                         @DialogTitle browseDialogTitle: String,
-                                         fileChooserDescriptor: FileChooserDescriptor,
-                                         historyProvider: (() -> List<String>)? = null,
-                                         fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+fun textFieldWithHistoryWithBrowseButton(
+  project: Project?,
+  @DialogTitle browseDialogTitle: String,
+  fileChooserDescriptor: FileChooserDescriptor,
+  historyProvider: (() -> List<String>)? = null,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithHistoryWithBrowseButton = textFieldWithHistoryWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), historyProvider, fileChosen)
+
+@JvmOverloads
+fun textFieldWithHistoryWithBrowseButton(
+  project: Project?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  historyProvider: (() -> List<String>)? = null,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithHistoryWithBrowseButton {
   val component = TextFieldWithHistoryWithBrowseButton()
   val textFieldWithHistory = component.childComponent
   textFieldWithHistory.setHistorySize(-1)
@@ -290,66 +321,48 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
   if (historyProvider != null) {
     addHistoryOnExpansion(textFieldWithHistory, historyProvider)
   }
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.childComponent.textEditor,
-    browseDialogTitle = browseDialogTitle,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textField = component.childComponent.textEditor
+  val textComponentAccessor = TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
 
+@Deprecated(
+  "Use `textFieldWithBrowseButton(Project, FileChooserDescriptor, (VirtualFile) -> String)` together with `FileChooserDescriptor#withTitle`",
+  level = DeprecationLevel.ERROR
+)
 @JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+fun textFieldWithBrowseButton(
+  project: Project?,
+  @DialogTitle browseDialogTitle: String?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton = textFieldWithBrowseButton(project, fileChooserDescriptor.withTitle(browseDialogTitle), fileChosen)
+
+@JvmOverloads
+fun textFieldWithBrowseButton(
+  project: Project?,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton()
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.textField,
-    browseDialogTitle = browseDialogTitle,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
 
 @JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              textField: JTextField,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
-  return textFieldWithBrowseButton(project, browseDialogTitle, null, textField, fileChooserDescriptor, fileChosen)
-}
-
-@JvmOverloads
-fun textFieldWithBrowseButton(project: Project?,
-                              @DialogTitle browseDialogTitle: String?,
-                              @Label browseDialogDescription: String?,
-                              textField: JTextField,
-                              fileChooserDescriptor: FileChooserDescriptor,
-                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+fun textFieldWithBrowseButton(
+  project: Project?,
+  textField: JTextField,
+  fileChooserDescriptor: FileChooserDescriptor,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+): TextFieldWithBrowseButton {
   val component = TextFieldWithBrowseButton(textField)
-  installFileCompletionAndBrowseDialog(
-    project = project,
-    component = component,
-    textField = component.textField,
-    browseDialogTitle = browseDialogTitle,
-    browseDialogDescription = browseDialogDescription,
-    fileChooserDescriptor = fileChooserDescriptor,
-    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-    fileChosen = fileChosen
-  )
+  val textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+  installFileCompletionAndBrowseDialog(project, component, component.textField, fileChooserDescriptor, textComponentAccessor, fileChosen)
   return component
 }
-
 
 val JPasswordField.chars: CharSequence?
   get() {
@@ -360,7 +373,7 @@ val JPasswordField.chars: CharSequence?
     else try {
       return Segment().also { doc.getText(0, doc.length, it) }
     }
-    catch (e: BadLocationException) {
+    catch (_: BadLocationException) {
       return null
     }
   }

@@ -44,9 +44,9 @@ class AnalysisConfig(
     val showSize: Boolean = true
   ) {
     companion object {
-      fun default() = TreeDisplayOptions()
+      fun default(): TreeDisplayOptions = TreeDisplayOptions()
       fun all(smartIndent: Boolean = true,
-              showSize: Boolean = true) =
+              showSize: Boolean = true): TreeDisplayOptions =
         TreeDisplayOptions(minimumObjectSize = 0,
                            minimumObjectCount = 0,
                            minimumSubgraphSize = 0,
@@ -96,7 +96,7 @@ class AnalysisConfig(
   )
 
   class DominatorTreeOptions(
-    val includeDominatorTree: Boolean = true,
+    val includeDominatorTree: Boolean = false,
     val maxDominatorIterations: Int = 2_000,
     val minNodeSize: Int = 100_000,
     val maxDepth: Int = 30,
@@ -105,6 +105,6 @@ class AnalysisConfig(
   )
 
   companion object {
-    fun getDefaultConfig(nominatedClasses: List<String>) = AnalysisConfig(PerClassOptions(nominatedClasses))
+    fun getDefaultConfig(nominatedClasses: List<String>): AnalysisConfig = AnalysisConfig(PerClassOptions(nominatedClasses))
   }
 }

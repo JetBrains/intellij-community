@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -11,7 +11,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class FileTypeAssocTableUtil {
-  public static <T> FileTypeAssocTable<T> newScalableFileTypeAssocTable() {
+  public static @NotNull <T> FileTypeAssocTable<T> newScalableFileTypeAssocTable() {
     return new FileTypeAssocTable<>(FileTypeAssocTableUtil::createScalableCharSequenceConcurrentMap);
   }
 

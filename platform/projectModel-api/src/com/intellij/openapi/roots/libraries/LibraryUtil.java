@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.module.Module;
@@ -19,8 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class LibraryUtil {
-  private LibraryUtil() {
-  }
+  private LibraryUtil() { }
 
   public static boolean isClassAvailableInLibrary(@NotNull Library library, @NotNull String fqn) {
     return isClassAvailableInLibrary(library.getFiles(OrderRootType.CLASSES), fqn);
@@ -37,8 +35,7 @@ public final class LibraryUtil {
     return false;
   }
 
-  @Nullable
-  public static Library findLibraryByClass(@NotNull String fqn, @Nullable Project project) {
+  public static @Nullable Library findLibraryByClass(@NotNull String fqn, @Nullable Project project) {
     if (project != null) {
       final LibraryTable projectTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
       Library library = findInTable(projectTable, fqn);
@@ -61,8 +58,7 @@ public final class LibraryUtil {
     return child != null && findInFile(child, tokenizer);
   }
 
-  @Nullable
-  private static Library findInTable(@NotNull LibraryTable table, @NotNull String fqn) {
+  private static @Nullable Library findInTable(@NotNull LibraryTable table, @NotNull String fqn) {
     for (Library library : table.getLibraries()) {
       if (isClassAvailableInLibrary(library, fqn)) {
         return library;
@@ -71,8 +67,7 @@ public final class LibraryUtil {
     return null;
   }
 
-  @NotNull
-  public static Library createLibrary(@NotNull LibraryTable libraryTable, @NonNls @NotNull String baseName) {
+  public static @NotNull Library createLibrary(@NotNull LibraryTable libraryTable, @NonNls @NotNull String baseName) {
     String name = baseName;
     int count = 2;
     while (libraryTable.getLibraryByName(name) != null) {
@@ -116,8 +111,7 @@ public final class LibraryUtil {
     return VfsUtilCore.toVirtualFileArray(roots);
   }
 
-  @Nullable
-  public static Library findLibrary(@NotNull Module module, @NotNull final String name) {
+  public static @Nullable Library findLibrary(@NotNull Module module, final @NotNull String name) {
     final Ref<Library> result = Ref.create(null);
     OrderEnumerator.orderEntries(module).forEachLibrary(library -> {
       if (name.equals(library.getName())) {
@@ -129,8 +123,7 @@ public final class LibraryUtil {
     return result.get();
   }
 
-  @Nullable
-  public static OrderEntry findLibraryEntry(@NotNull VirtualFile file, @NotNull Project project) {
+  public static @Nullable OrderEntry findLibraryEntry(@NotNull VirtualFile file, @NotNull Project project) {
     List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(file);
     for (OrderEntry entry : entries) {
       if (entry instanceof LibraryOrderEntry || entry instanceof JdkOrderEntry) {
@@ -140,12 +133,9 @@ public final class LibraryUtil {
     return null;
   }
 
-  /**
-   * @deprecated use {@link Library#getPresentableName()} instead
-   */
+  /** @deprecated use {@link Library#getPresentableName()} instead */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName(@NotNull Library library) {
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName(@NotNull Library library) {
     return library.getPresentableName();
   }
 }

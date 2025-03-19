@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import org.jetbrains.annotations.Nls;
@@ -12,6 +12,7 @@ public interface VcsShowConfirmationOption {
     DO_NOTHING_SILENTLY,
     DO_ACTION_SILENTLY;
 
+    @Override
     public String toString() {
       // compatibility with the old implementation
       return String.valueOf(ordinal());
@@ -38,9 +39,7 @@ public interface VcsShowConfirmationOption {
     }
   };
 
-  @NotNull
-  @Nls
-  static String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
+  static @NotNull @Nls String getConfirmationOptionText(@NotNull VcsShowConfirmationOption.Value value) {
     return VcsBundle.message(switch (value) {
       case SHOW_CONFIRMATION -> "settings.confirmation.option.text.ask";
       case DO_NOTHING_SILENTLY -> "settings.confirmation.option.text.no";

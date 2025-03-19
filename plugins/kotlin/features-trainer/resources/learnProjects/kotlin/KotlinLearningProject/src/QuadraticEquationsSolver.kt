@@ -13,6 +13,7 @@ class QuadraticEquationsSolver {
                 val x2 = (-b - sqrt(d)) / (2.0 * a)
                 println("x1 = $x1, x2 = $x2")
             }
+
             else -> println("x = ${-b / (2.0 * a)}")
         }
     }

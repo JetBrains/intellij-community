@@ -1,0 +1,10 @@
+Original text:
+---------------
+class Clazz():
+    def method(self, param_one, param_two): ...
+---------------
+Subtree: Language: Python
+---------------
+class Clazz():
+    def method(self, param_one, <reparse>paramINSERTED_two</reparse>): ...
+---------------

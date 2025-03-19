@@ -44,8 +44,7 @@ public class ResolverProcessorImpl extends ResolverProcessor<GroovyResolveResult
         return true;
       }
       PsiNamedElement namedElement = (PsiNamedElement)element;
-      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+      PsiSubstitutor substitutor = MethodResolverProcessor.getSubstitutor(state);
 
       if (myTypeArguments.length > 0 && namedElement instanceof PsiClass) {
         substitutor = substitutor.putAll((PsiClass)namedElement, myTypeArguments);

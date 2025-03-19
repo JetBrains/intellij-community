@@ -1,18 +1,27 @@
 <component name="libraryTable">
   <library name="jackson-databind" type="repository">
-    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.14.2">
+    <properties maven-id="com.fasterxml.jackson.core:jackson-databind:2.17.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar">
+          <sha256sum>c04993f33c0f845342653784f14f38373d005280e6359db5f808701cfae73c0c</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar">
+          <sha256sum>873a606e23507969f9bbbea939d5e19274a88775ea5a169ba7e2d795aa5156e1</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+        <dependency maven-id="net.bytebuddy:byte-buddy" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.14.2/jackson-databind-2.14.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.14.2/jackson-annotations-2.14.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.14.2/jackson-databind-2.14.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.14.2/jackson-annotations-2.14.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.template;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -29,7 +29,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
   }
 
   @Override
-  public boolean isInContext(@NotNull final PsiFile file, final int offset) {
+  public boolean isInContext(final @NotNull PsiFile file, final int offset) {
     if (PsiUtilCore.getLanguageAtOffset(file, offset).isKindOf(GroovyLanguage.INSTANCE)) {
       PsiElement element = file.findElementAt(offset);
       if (element instanceof PsiWhiteSpace) {
@@ -43,7 +43,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
-  public static class Generic extends GroovyTemplateContextType {
+  public static final class Generic extends GroovyTemplateContextType {
     public Generic() {
       super(GroovyBundle.message("language.groovy"));
     }
@@ -54,7 +54,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class Statement extends GroovyTemplateContextType {
+  public static final class Statement extends GroovyTemplateContextType {
     public Statement() {
       super(GroovyBundle.message("live.template.context.statement"));
     }
@@ -68,7 +68,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
 
   }
 
-  public static class Expression extends GroovyTemplateContextType {
+  public static final class Expression extends GroovyTemplateContextType {
 
     public Expression() {
       super(GroovyBundle.message("live.template.context.expression"));
@@ -106,7 +106,7 @@ public abstract class GroovyTemplateContextType extends TemplateContextType {
     return false;
   }
 
-  public static class Declaration extends GroovyTemplateContextType {
+  public static final class Declaration extends GroovyTemplateContextType {
     public Declaration() {
       super(GroovyBundle.message("live.template.context.declaration"));
     }

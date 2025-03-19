@@ -1,24 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.util.Url
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.annotations.ApiStatus
-
 import java.net.URLConnection
 
 abstract class BuiltInServerManager {
   companion object {
     @JvmStatic
-    fun getInstance(): BuiltInServerManager = ApplicationManager.getApplication().getService(BuiltInServerManager::class.java)
+    fun getInstance(): BuiltInServerManager = service()
   }
 
   abstract val port: Int
 
   /**
-   * Set a port value for built-in server to used.
+   * Set a port value for built-in server to use.
    *
    * @param port - [Integer] value define the port toi use for built-in server, or NULL to ignore overrides.
    */

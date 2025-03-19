@@ -8,17 +8,18 @@ import com.intellij.codeInsight.codeVision.ui.renderers.providers.painter
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 import java.awt.Rectangle
 
+@ApiStatus.Internal
 class CodeVisionListPainter(
   private val delimiterPainter: ICodeVisionGraphicPainter = DelimiterPainter(),
-  theme: CodeVisionTheme? = null
+  private val theme: CodeVisionTheme
 ) : ICodeVisionEntryBasePainter<CodeVisionListData?> {
 
-  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   private var loadingPainter: CodeVisionStringPainter = CodeVisionStringPainter("Loading...")
 
@@ -62,7 +63,8 @@ class CodeVisionListPainter(
     value: CodeVisionListData?,
     point: Point,
     state: RangeCodeVisionModel.InlayState,
-    hovered: Boolean
+    hovered: Boolean,
+    hoveredEntry: CodeVisionEntry?
   ) {
 
     var x = point.x + theme.left
@@ -81,7 +83,7 @@ class CodeVisionListPainter(
 
       val size = relativeBounds[it] ?: continue
 
-      painter.paint(editor, textAttributes, g, it, Point(x, y), state, value.isHoveredEntry(it))
+      painter.paint(editor, textAttributes, g, it, Point(x, y), state, it == hoveredEntry, hoveredEntry)
       x += size.width
 
       if (index < value.visibleLens.size - 1 || hovered) {
@@ -99,7 +101,8 @@ class CodeVisionListPainter(
         moreEntry,
         Point(x, y),
         state,
-        value.isHoveredEntry(moreEntry)
+        moreEntry == hoveredEntry,
+        hoveredEntry
       )
     }
 

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
@@ -27,6 +28,8 @@ public final class WSLCommandEscapingTest {
   @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
 
   @Rule public final TempDirectory myTempDirectory = new TempDirectory();
+
+  @Rule public final ProgressJobRule myProgressJobRule = new ProgressJobRule();
 
   @Test
   public void testEmptyParams() throws Exception {
@@ -136,7 +139,7 @@ public final class WSLCommandEscapingTest {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
       return !param.isEmpty() && !param.contains("\\");
     });
-    if (execEchoParams.size() > 0) {
+    if (!execEchoParams.isEmpty()) {
       List<String> execCommand = new ArrayList<>(execEchoParams.size() + 1);
       execCommand.add(echoExecutableLinuxPath);
       execCommand.addAll(execEchoParams);
@@ -209,7 +212,7 @@ public final class WSLCommandEscapingTest {
   }
 
   private void assertPwdOutputInDirectory(String directoryName) throws ExecutionException {
-    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).getPath());
+    String path = wslRule.getWsl().getWslPath(myTempDirectory.newDirectory(directoryName).toPath());
     assertWslCommandOutput(path + "\n", path, Collections.emptyMap(), List.of("pwd"));
   }
 
@@ -249,7 +252,7 @@ public final class WSLCommandEscapingTest {
 
   private String createEchoScriptAndGetLinuxPath(String executableName) {
     File file = myTempDirectory.newFile(executableName + ".sh", "#!/bin/sh\necho \"$@\"".getBytes(StandardCharsets.UTF_8));
-    String wslPath = wslRule.getWsl().getWslPath(file.getPath());
+    String wslPath = wslRule.getWsl().getWslPath(file.toPath());
     assertNotNull("local path: " + file, wslPath);
     return wslPath;
   }
@@ -258,19 +261,17 @@ public final class WSLCommandEscapingTest {
                                              String remoteWorkingDirectory,
                                              Map<String, String> env,
                                              List<String> command) throws ExecutionException {
-    var wsl = wslRule.getWsl();
     assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setLaunchWithWslExe(false)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
     assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setRemoteWorkingDirectory(remoteWorkingDirectory));
+
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setExecuteCommandInLoginShell(true)
       .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
-      .setExecuteCommandInLoginShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
-
-    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setShellPath(wsl.getShellPath())
-      .setExecuteCommandInInteractiveShell(true).setRemoteWorkingDirectory(remoteWorkingDirectory));
+    assertWslCommandOutput(expectedOut, env, command, new WSLCommandLineOptions().setExecuteCommandInInteractiveShell(true)
+      .setRemoteWorkingDirectory(remoteWorkingDirectory));
 
     if (remoteWorkingDirectory == null && ContainerUtil.all(command, (param) -> {
       // wsl.exe --exec doesn't support empty parameters: https://github.com/microsoft/WSL/issues/6072
@@ -285,7 +286,9 @@ public final class WSLCommandEscapingTest {
                                              List<String> command,
                                              WSLCommandLineOptions options) throws ExecutionException {
     var wsl = wslRule.getWsl();
-    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
+    GeneralCommandLine commandLine = (
+      WSLDistribution.mustRunCommandLineWithIjent(options) ? new PtyCommandLine(command) : new GeneralCommandLine(command))
+      .withEnvironment(env);
     ProcessOutput output;
     if (options.isExecuteCommandInShell()) {
       output = WslExecution.executeInShellAndGetCommandOnlyStdout(wsl, commandLine, options, 10_000);
@@ -295,7 +298,7 @@ public final class WSLCommandEscapingTest {
       output = new CapturingProcessHandler(commandLine).runProcess(10_000);
     }
     String expected = stringify(false, "", 0, expectedOut);
-    String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout());
+    String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout().replace("\r", ""));
     assertEquals(expected, actual);
   }
 

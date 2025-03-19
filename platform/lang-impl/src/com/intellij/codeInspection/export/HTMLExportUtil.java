@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.export;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ThrowableConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -19,6 +20,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class HTMLExportUtil {
   public static void writeFile(@NotNull Path dir,
                                @NotNull String fileName,
@@ -60,7 +62,7 @@ public final class HTMLExportUtil {
       InspectionsBundle.message("inspection.export.results.title"),
       Messages.getErrorIcon()
     );
-    ApplicationManager.getApplication().invokeLater(showError, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(showError, ModalityState.nonModal());
     throw new ProcessCanceledException();
   }
 }

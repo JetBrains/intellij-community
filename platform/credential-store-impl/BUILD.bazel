@@ -1,0 +1,79 @@
+### auto-generated section `build intellij.platform.credentialStore.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "credentialStore-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "credentialStore-impl",
+  module_name = "intellij.platform.credentialStore.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/credential-store:credentialStore",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/projectModel-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util",
+    "//platform/remote-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:guava",
+    "@lib//:bouncy-castle-provider",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "@lib//:platform-credential_store-impl-dbus-java",
+    "@lib//:caffeine",
+  ],
+  runtime_deps = [":credentialStore-impl_resources"]
+)
+
+jvm_library(
+  name = "credentialStore-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":credentialStore-impl"],
+  deps = [
+    "//platform/credential-store:credentialStore",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/projectModel-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util",
+    "//platform/remote-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jna",
+    "@lib//:guava",
+    "@lib//:bouncy-castle-provider",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "@lib//:platform-credential_store-impl-dbus-java",
+    "@lib//:caffeine",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "@lib//:assert_j",
+    "@lib//:junit4",
+  ],
+  runtime_deps = [":credentialStore-impl_resources"]
+)
+
+jvm_test(
+  name = "credentialStore-impl_test",
+  runtime_deps = [":credentialStore-impl_test_lib"]
+)
+### auto-generated section `build intellij.platform.credentialStore.impl` end

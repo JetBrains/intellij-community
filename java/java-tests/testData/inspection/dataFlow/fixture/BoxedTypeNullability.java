@@ -7,7 +7,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -16,7 +16,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -28,7 +28,7 @@ class Test {
         break;
       case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -40,7 +40,7 @@ class Test {
         break;
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -52,7 +52,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -62,7 +62,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -72,7 +72,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -83,7 +83,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -92,7 +92,7 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -104,7 +104,7 @@ class Test {
         break;
       case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -116,7 +116,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -126,7 +126,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -136,7 +136,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -147,7 +147,7 @@ class Test {
         break;
       case <warning descr="Switch label 'null' is unreachable">null</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -156,7 +156,7 @@ class Test {
     switch (i) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -168,7 +168,7 @@ class Test {
         break;
       case <warning descr="Switch label 'null' is the only reachable in the whole switch">null</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -180,7 +180,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -190,7 +190,7 @@ class Test {
     switch (<warning descr="Unboxing of 'i' may produce 'NullPointerException'">i</warning>) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -200,7 +200,7 @@ class Test {
     switch (i) {
       case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -211,7 +211,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -220,7 +220,7 @@ class Test {
     switch (<warning descr="Unboxing of 'createNullValue()' may produce 'NullPointerException'">createNullValue()</warning>) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -231,7 +231,7 @@ class Test {
         break;
       case null:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -240,7 +240,7 @@ class Test {
     switch (createValue()) {
       case 1:
         break;
-      case default:
+      default:
         break;
     }
   }
@@ -251,7 +251,7 @@ class Test {
         break;
       case <warning descr="Switch label 'null' is unreachable">null</warning>:
         break;
-      case default:
+      default:
         break;
     }
   }

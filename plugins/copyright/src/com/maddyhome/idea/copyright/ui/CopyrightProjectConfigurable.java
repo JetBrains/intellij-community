@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.ui;
 
@@ -73,13 +73,12 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     return new Configurable[]{myProfilesPanel, new CopyrightFormattingConfigurable(project)};
   }
 

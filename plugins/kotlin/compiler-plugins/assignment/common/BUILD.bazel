@@ -1,0 +1,40 @@
+### auto-generated section `build kotlin.compiler-plugins.assignment.common.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
+
+jvm_resources(
+  name = "kotlin-compiler-plugins-assignment-common-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-assignment-common-k2",
+  module_name = "kotlin.compiler-plugins.assignment.common.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/code-insight/fixes-k2:kotlin-code-insight-fixes-k2",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":kotlin-compiler-plugins-assignment-common-k2_resources"]
+)
+### auto-generated section `build kotlin.compiler-plugins.assignment.common.k2` end

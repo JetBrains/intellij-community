@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
@@ -12,8 +11,11 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.help.HelpManager
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -23,12 +25,16 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
+import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.JBUI
@@ -36,6 +42,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionListener
@@ -48,10 +55,11 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.KeyStroke
 
-class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
+class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWindow {
   private val myScreen: WelcomeScreen
   private val myBalloonLayout: BalloonLayout
   private val listenerDisposable = Disposer.newDisposable()
+  private var isDisposed = false
 
   init {
     hideSplashBeforeShow(this)
@@ -111,6 +119,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
                 return
               }
             }
+            frame.dispose()
             ApplicationManager.getApplication().exit()
           }
           else {
@@ -142,26 +151,23 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
     @JvmStatic
     fun showNow() {
-      prepareToShow()?.run()
+      prepareToShow()?.invoke()
     }
 
-    fun prepareToShow(): Runnable? {
+    @Internal
+    fun prepareToShow(): (() -> Unit)? {
       if (instance != null) {
         return null
       }
 
       // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch {
-        ActionManager.getInstance()
-        if (SystemInfoRt.isMac) {
-          TouchbarSupport.initialize()
-        }
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+        serviceAsync<ActionManager>()
       }
 
-      return Runnable {
+      return task@{
         if (instance != null) {
-          return@Runnable
+          return@task
         }
 
         val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
@@ -170,7 +176,8 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
         registerKeyboardShortcuts(jFrame.rootPane)
         hideSplashBeforeShow(jFrame)
         jFrame.isVisible = true
-        IdeMenuBar.installAppMenuIfNeeded(jFrame)
+        FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
+        installAppMenuIfNeeded(jFrame)
         instance = frame
         if (SystemInfoRt.isMac) {
           touchbar = TouchbarSupport.showWindowActions(frame.component)
@@ -196,13 +203,14 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
       }
 
       val show = prepareToShow() ?: return
-      @Suppress("DEPRECATION")
-      app.coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
-        val windowManager = WindowManager.getInstance() as WindowManagerImpl
-        windowManager.disposeRootFrame()
-        if (windowManager.projectFrameHelpers.isEmpty()) {
-          show.run()
-          lifecyclePublisher?.welcomeScreenDisplayed()
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        val windowManager = serviceAsync<WindowManager>() as? WindowManagerImpl ?: return@launch
+        blockingContext {
+          windowManager.disposeRootFrame()
+          if (windowManager.projectFrameHelpers.isEmpty()) {
+            show()
+            lifecyclePublisher?.welcomeScreenDisplayed()
+          }
         }
       }
     }
@@ -214,7 +222,10 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     Disposer.dispose(myScreen)
     Disposer.dispose(listenerDisposable)
     resetInstance()
+    isDisposed = true
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   override fun getStatusBar(): StatusBar? {
     val pane = contentPane

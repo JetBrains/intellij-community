@@ -31,17 +31,13 @@ public final class AATextInfo {
     this.lcdContrastHint = lcdContrastHint;
   }
 
-  public static Object create(@NotNull Object aaHint, @NotNull Integer lcdContrastHint) {
-    return new AATextInfo(aaHint, lcdContrastHint);
-  }
-
-  public static void putClientProperty(@Nullable Object aaTextInfo, @NotNull JComponent component) {
-    AATextInfo info = (AATextInfo)ObjectUtils.notNull(aaTextInfo, new AATextInfo(null, null));
+  public static void putClientProperty(@Nullable AATextInfo aaTextInfo, @NotNull JComponent component) {
+    AATextInfo info = ObjectUtils.notNull(aaTextInfo, new AATextInfo(null, null));
     component.putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, info.aaHint);
     component.putClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST, info.lcdContrastHint);
   }
 
-  public static Object getClientProperty(@NotNull JComponent component) {
+  public static @NotNull AATextInfo getClientProperty(@NotNull JComponent component) {
     Object aaHint = component.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING);
     Object lcdContrastHint = component.getClientProperty(RenderingHints.KEY_TEXT_LCD_CONTRAST);
     return new AATextInfo(aaHint, lcdContrastHint != null ? (Integer)lcdContrastHint : null);

@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
@@ -15,7 +14,7 @@ import com.intellij.psi.jsp.JspxLanguage;
 import com.intellij.psi.xml.XmlFile;
 
 
-public class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
+public final class XmlSurroundWithRangeAdjuster implements SurroundWithRangeAdjuster {
   private static boolean isLanguageWithWSSignificant(Language lang) {
     return lang == HTMLLanguage.INSTANCE ||
            lang == XHTMLLanguage.INSTANCE ||

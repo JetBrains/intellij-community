@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.descriptors.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,14 +19,14 @@ import java.util.TreeSet;
 
 public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   private static final Logger LOG = Logger.getInstance(ConfigFileInfoSetImpl.class);
-  @NonNls private static final String ELEMENT_NAME = "deploymentDescriptor";
-  @NonNls private static final String ID_ATTRIBUTE = "name";
-  @NonNls private static final String URL_ATTRIBUTE = "url";
+  private static final @NonNls String ELEMENT_NAME = "deploymentDescriptor";
+  private static final @NonNls String ID_ATTRIBUTE = "name";
+  private static final @NonNls String URL_ATTRIBUTE = "url";
   private final MultiMap<ConfigFileMetaData, ConfigFileInfo> configFiles = new MultiMap<>();
   private @Nullable ConfigFileContainerImpl myContainer;
   private final ConfigFileMetaDataProvider myMetaDataProvider;
 
-  public ConfigFileInfoSetImpl(@NotNull final ConfigFileMetaDataProvider metaDataProvider) {
+  public ConfigFileInfoSetImpl(final @NotNull ConfigFileMetaDataProvider metaDataProvider) {
     myMetaDataProvider = metaDataProvider;
   }
 
@@ -51,7 +37,7 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
   @Override
-  public void addConfigFile(@NotNull final ConfigFileMetaData metaData, @NotNull final String url) {
+  public void addConfigFile(final @NotNull ConfigFileMetaData metaData, final @NotNull String url) {
     addConfigFile(new ConfigFileInfo(metaData, url));
   }
 

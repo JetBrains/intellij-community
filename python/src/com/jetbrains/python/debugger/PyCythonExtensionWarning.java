@@ -113,7 +113,7 @@ public final class PyCythonExtensionWarning {
         throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final String interpreterPath = runConfiguration.getInterpreterPath();
-      final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
+      final String cythonPathString = PythonHelpersLocator.findPathStringInHelpers(SETUP_CYTHON_PATH);
 
       final String cythonExtensionsDir = PyDebugRunner.CYTHON_EXTENSIONS_DIR;
       final String[] cythonArgs =
@@ -121,7 +121,7 @@ public final class PyCythonExtensionWarning {
 
       final List<String> cmdline = new ArrayList<>();
       cmdline.add(interpreterPath);
-      cmdline.add(FileUtil.join(helpersPath, FileUtil.toSystemDependentName(SETUP_CYTHON_PATH)));
+      cmdline.add(cythonPathString);
       cmdline.addAll(Arrays.asList(cythonArgs));
       LOG.info("Compile Cython Extensions " + StringUtil.join(cmdline, " "));
 
@@ -161,7 +161,7 @@ public final class PyCythonExtensionWarning {
               }
             }
 
-            private boolean isSignificantOutput(String line) {
+            private static boolean isSignificantOutput(String line) {
               return line.trim().length() > 3;
             }
           });

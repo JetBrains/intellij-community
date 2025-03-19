@@ -46,3 +46,5 @@ fun main() {
 
 // EXPRESSION: block { Foo.x = 21 }
 // RESULT: Method threw 'java.lang.IllegalAccessException' exception.
+
+// IGNORE_K2

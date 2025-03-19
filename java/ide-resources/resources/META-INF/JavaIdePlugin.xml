@@ -26,9 +26,6 @@
   </xi:include>
 
   <xi:include href="/META-INF/XmlPlugin.xml"/>
-  <xi:include href="intellij.json.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/RegExpPlugin.xml">
     <xi:fallback/>
   </xi:include>
@@ -44,5 +41,6 @@
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
                         serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
                         overrides="true"/>
+    <ide.newUiOnboarding ideHelpName="idea"/>
   </extensions>
 </idea-plugin>

@@ -1,0 +1,62 @@
+<idea-plugin package="com.intellij.platform.execution.serviceView">
+  <dependencies>
+    <module name="intellij.platform.navbar.frontend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <actionPromoter implementation="com.intellij.platform.execution.serviceView.ServiceViewActionPromoter"/>
+    <navbar implementation="com.intellij.platform.execution.serviceView.ServiceViewNavBarExtension"/>
+    <postStartupActivity implementation="com.intellij.platform.execution.serviceView.ServiceViewStartupActivity"/>
+    <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
+                    serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewManagerImpl"/>
+    <projectService serviceInterface="com.intellij.execution.services.ServiceViewToolWindowFactory$CompatibilityDelegate"
+                    serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewToolWindowManager"/>
+    <applicationService serviceInterface="com.intellij.execution.services.ServiceViewDefaultDeleteProvider"
+                        serviceImplementation="com.intellij.platform.execution.serviceView.ServiceViewDeleteProvider"/>
+  </extensions>
+  <actions>
+    <group id="ServiceViewTreeToolbar">
+      <!-- Suppres unresolved reference to NewElement -->
+      <!--suppress PluginXmlValidity -->
+      <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
+             class="com.intellij.platform.execution.serviceView.AddServiceActionGroup"/>
+      <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
+             class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <action id="ServiceView.GroupByContributor" class="com.intellij.platform.execution.serviceView.GroupByContributorAction"/>
+        <separator/>
+      </group>
+      <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
+             class="com.intellij.platform.execution.serviceView.OpenInNewTabActionGroup">
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.platform.execution.serviceView.OpenInNewTabAction"/>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.platform.execution.serviceView.OpenEachInNewTabAction"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.platform.execution.serviceView.SplitByTypeAction"/>
+      </group>
+    </group>
+    <group id="ServiceViewItemToolbar">
+      <group id="ServiceViewItemToolbarGroup"
+             class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$ItemToolbarActionGroup"/>
+      <separator/>
+    </group>
+    <group id="ServiceViewItemPopup">
+      <group id="ServiceViewItemPopupGroup"
+             class="com.intellij.platform.execution.serviceView.ServiceViewActionProvider$ItemPopupActionGroup"/>
+      <separator/>
+      <reference ref="ServiceView.OpenInNewTab"/>
+      <reference ref="ServiceView.OpenEachInNewTab"/>
+      <reference ref="ServiceView.SplitByType"/>
+      <action id="ServiceView.OpenInToolWindow" class="com.intellij.platform.execution.serviceView.OpenInToolWindowAction"/>
+      <separator/>
+      <reference ref="$Delete"/>
+      <separator/>
+      <reference ref="EditSource"/>
+      <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
+              class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
+    </group>
+    <group id="ServiceView.Gear">
+      <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
+      <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
+              class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>
+      <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
+              class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
+    </group>
+  </actions>
+</idea-plugin>

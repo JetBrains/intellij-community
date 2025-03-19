@@ -13,6 +13,7 @@ class FilesScanExecutorTest : LightPlatformTestCase() {
       t.start()
       t.join(5000)
       assertFalse("Tasks are still running, but they should not. Looks like a deadlock.", t.isAlive)
+      assertTrue("Thread finished with exception", testTask.finishedNormally)
     }
     finally {
       if (t.isAlive) t.interrupt()
@@ -20,6 +21,8 @@ class FilesScanExecutorTest : LightPlatformTestCase() {
   }
 
   class RecursionTestTask : Runnable {
+    var finishedNormally: Boolean = false
+
     override fun run() {
       runOnAllThreads {
         runOnAllThreads {
@@ -28,6 +31,7 @@ class FilesScanExecutorTest : LightPlatformTestCase() {
           }
         }
       }
+      finishedNormally = true
     }
   }
 }

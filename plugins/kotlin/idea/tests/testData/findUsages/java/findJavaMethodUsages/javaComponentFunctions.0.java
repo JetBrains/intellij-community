@@ -11,4 +11,3 @@ public class JavaClass {
     }
 }
 
-// IGNORE_FIR_LOG

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.IdeEventQueue;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.stream.Stream;
@@ -97,6 +98,13 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
     }
   }
 
+  private static boolean dispatchInputMethodEvent(InputMethodEvent event) {
+    if (ourShowingStep == null) {
+      return false;
+    }
+    return ourShowingStep.dispatchInputMethodEvent(event);
+  }
+
   private static boolean disposeActiveWizard() {
     if (ourActiveWizardRoot != null) {
       ourActiveWizardRoot.disposeChildren();
@@ -145,9 +153,8 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
     return ourShowingStep != null && !ourShowingStep.isDisposed() ? ourShowingStep.getContent() : null;
   }
 
-  @NotNull
   @Override
-  public Stream<JBPopup> getPopupStream() {
+  public @NotNull Stream<JBPopup> getPopupStream() {
     return Stream.of(ourActiveWizardRoot);
   }
 
@@ -158,6 +165,9 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
     }
     if (event instanceof MouseEvent) {
       return dispatchMouseEvent(event);
+    }
+    if (event instanceof InputMethodEvent) {
+      return dispatchInputMethodEvent((InputMethodEvent)event);
     }
     return false;
   }
@@ -174,9 +184,5 @@ public final class PopupDispatcher implements AWTEventListener, KeyEventDispatch
   @Override
   public boolean close() {
     return disposeActiveWizard();
-  }
-
-  @Override
-  public void setRestoreFocusSilently() {
   }
 }

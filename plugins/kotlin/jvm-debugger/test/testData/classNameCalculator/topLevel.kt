@@ -2,18 +2,18 @@
 @file:JvmName("Boo")
 
 fun foo() {
-    /* Boo$foo$1 */fun bar() {
+    fun bar() {
         print("bar")
     }
 
-    /* Boo$foo$2 */fun baz() {
+    fun baz() {
         print("baz")
 
-        /* Boo$foo$2$1 */fun zoo() {
+        fun zoo() {
             print("zoo")
         }
 
-        block /* Boo$foo$2$2 */{
+        block /* Boo$foo$baz$1 */{
             zoo()
         }
     }

@@ -16,11 +16,6 @@
 package com.jetbrains.python.codeInsight.dataflow.scope;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -35,14 +30,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
-import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
 
 public final class ScopeUtil {
   private ScopeUtil() {
   }
 
-  @Nullable
-  public static PsiElement getParameterScope(final PsiElement element){
+  public static @Nullable PsiElement getParameterScope(final PsiElement element){
     if (element instanceof PyNamedParameter){
       final PyFunction function = getParentOfType(element, PyFunction.class, false);
       if (function != null){
@@ -74,71 +67,11 @@ public final class ScopeUtil {
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  @Nullable
-  public static ScopeOwner getScopeOwner(@Nullable final PsiElement element) {
-    if (element == null) {
-      return null;
-    }
-    if (element instanceof PyExpressionCodeFragment) {
-      final PsiElement context = element.getContext();
-      return context instanceof ScopeOwner ? (ScopeOwner)context : getScopeOwner(context);
-    }
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement<?>)element).getStub();
-      if (stub != null) {
-        StubElement parentStub = stub.getParentStub();
-        while (parentStub != null) {
-          final PsiElement parent = parentStub.getPsi();
-          if (parent instanceof ScopeOwner) {
-            return (ScopeOwner)parent;
-          }
-          parentStub = parentStub.getParentStub();
-        }
-        return null;
-      }
-    }
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
-      .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
+  public static @Nullable ScopeOwner getScopeOwner(final @Nullable PsiElement element) {
+    return (ScopeOwner)ScopeUtilCore.getScopeOwner(element);
   }
 
-  @Nullable
-  private static ScopeOwner calculateScopeOwnerByAST(@Nullable PsiElement element) {
-    final ScopeOwner firstOwner = getParentOfType(element, ScopeOwner.class);
-    if (firstOwner == null) {
-      return null;
-    }
-    final ScopeOwner nextOwner = getParentOfType(firstOwner, ScopeOwner.class);
-    // References in decorator expressions are resolved outside of the function (if the lambda is not inside the decorator)
-    final PyElement decoratorAncestor = getParentOfType(element, PyDecorator.class);
-    if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
-      return nextOwner;
-    }
-    // References in default values or in annotations of parameters are resolved outside of the function (if the lambda is not inside the
-    // default value)
-    final PyNamedParameter parameterAncestor = getParentOfType(element, PyNamedParameter.class);
-    if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
-      final PyExpression defaultValue = parameterAncestor.getDefaultValue();
-      final PyAnnotation annotation = parameterAncestor.getAnnotation();
-      if (isAncestor(defaultValue, element, false) || isAncestor(annotation, element, false)) {
-        return nextOwner;
-      }
-    }
-    // Superclasses are resolved outside of the class
-    final PyClass containingClass = getParentOfType(element, PyClass.class);
-    if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false)) {
-      return nextOwner;
-    }
-    // Function return annotations and type comments are resolved outside of the function
-    if (firstOwner instanceof PyFunction function) {
-      if (isAncestor(function.getAnnotation(), element, false) || isAncestor(function.getTypeComment(), element, false)) {
-        return nextOwner;
-      }
-    }
-    return firstOwner;
-  }
-
-  @Nullable
-  public static ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
+  public static @Nullable ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
     if (name != null) {
       final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
       ScopeOwner scopeOwner = originalScopeOwner;
@@ -155,10 +88,9 @@ public final class ScopeUtil {
     return null;
   }
 
-  @NotNull
-  public static List<PsiElement> getElementsOfAccessType(@NotNull String name,
-                                                         @NotNull ScopeOwner scopeOwner,
-                                                         @NotNull ReadWriteInstruction.ACCESS type) {
+  public static @NotNull List<PsiElement> getElementsOfAccessType(@NotNull String name,
+                                                                  @NotNull ScopeOwner scopeOwner,
+                                                                  @NotNull ReadWriteInstruction.ACCESS type) {
     return StreamEx
       .of(ControlFlowCache.getControlFlow(scopeOwner).getInstructions())
       .select(ReadWriteInstruction.class)

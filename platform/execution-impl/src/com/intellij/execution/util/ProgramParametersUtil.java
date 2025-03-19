@@ -2,11 +2,14 @@
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.workspace.SubprojectInfoProvider;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.Nullable;
 
 public final class ProgramParametersUtil {
@@ -37,8 +40,16 @@ public final class ProgramParametersUtil {
     return new ProgramParametersConfigurator().expandPathAndMacros(path, module, project);
   }
 
-  @Nullable
-  public static Module getModule(CommonProgramRunConfigurationParameters configuration) {
+  public static @Nullable Module getModule(CommonProgramRunConfigurationParameters configuration) {
     return new ProgramParametersConfigurator().getModule(configuration);
+  }
+
+  public static String getWorkingDirectoryByModule(ModuleBasedConfiguration<?, ?> configuration) {
+    Module module = configuration.getConfigurationModule().getModule();
+    if (module != null) {
+      String path = SubprojectInfoProvider.Companion.getSubprojectPath(module);
+      if (path != null) return path;
+    }
+    return PathUtil.toSystemDependentName(configuration.getProject().getBasePath());
   }
 }

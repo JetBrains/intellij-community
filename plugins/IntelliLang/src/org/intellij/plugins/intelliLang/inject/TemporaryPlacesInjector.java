@@ -1,22 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.inject;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.general.Injection;
 import com.intellij.lang.injection.general.LanguageInjectionContributor;
 import com.intellij.lang.injection.general.SimpleInjection;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Gregory.Shrago
  */
-public final class TemporaryPlacesInjector implements LanguageInjectionContributor {
+final class TemporaryPlacesInjector implements LanguageInjectionContributor {
 
   @Override
   public @Nullable Injection getInjection(@NotNull PsiElement context) {
-    if (!(context instanceof PsiLanguageInjectionHost host) || !((PsiLanguageInjectionHost)context).isValidHost()) {
+    if (!(context instanceof PsiLanguageInjectionHost host) || !host.isValidHost()) {
       return null;
     }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notebook.editor.BackedVirtualFile;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,8 +33,9 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
   }
 
   private static void checkThreading() {
+    ThreadingAssertions.assertEventDispatchThread(); // we might show a dialog
+
     Application app = ApplicationManager.getApplication();
-    app.assertWriteIntentLockAcquired();
     if (!app.isWriteAccessAllowed()) return;
 
     if (app.isUnitTestMode() && Registry.is("tests.assert.clear.read.only.status.outside.write.action")) {
@@ -57,9 +61,8 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(readOnlyFiles));
   }
 
-  @NotNull
   @Override
-  public OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
+  public @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles) {
     if (originalFiles.isEmpty()) {
       return new OperationStatusImpl(VirtualFile.EMPTY_ARRAY);
     }
@@ -67,13 +70,8 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     checkThreading();
 
     Set<VirtualFile> realFiles = new HashSet<>(originalFiles.size());
-    for (VirtualFile file : originalFiles) {
-      if (file instanceof LightVirtualFile) {
-        VirtualFile originalFile = ((LightVirtualFile)file).getOriginalFile();
-        if (originalFile != null) {
-          file = originalFile;
-        }
-      }
+    for (@Nullable VirtualFile file : originalFiles) {
+      file = ObjectUtils.doIfNotNull(file, VirtualFileUtil::originalFileOrSelf);
       if (file instanceof VirtualFileWindow) {
         file = ((VirtualFileWindow)file).getDelegate();
       }
@@ -84,41 +82,36 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
         realFiles.add(file);
       }
     }
-    Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
 
-    if (!myProject.isDefault()) {
-      OperationStatusImpl status = WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
-        Collection<VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
-
+    try (AccessToken ignore = SlowOperations.knownIssue("EA-1051315, IJPL-149483")) {
+      Collection<? extends VirtualFile> files = new ArrayList<>(realFiles);
+      OperationStatusImpl status = myProject.isDefault() ? null : WritingAccessProvider.EP.computeSafeIfAny(myProject, provider -> {
+        Collection<? extends VirtualFile> denied = ContainerUtil.filter(files, virtualFile -> !provider.isPotentiallyWritable(virtualFile));
         if (denied.isEmpty()) {
           denied = provider.requestWriting(files);
         }
-        if (!denied.isEmpty()) {
-          return new OperationStatusImpl(VfsUtilCore.toVirtualFileArray(denied),
-                                         provider.getReadOnlyMessage(),
-                                         provider.getHyperlinkListener());
-        }
-        return null;
+        return denied.isEmpty() ? null : new OperationStatusImpl(
+          VfsUtilCore.toVirtualFileArray(denied),
+          provider.getReadOnlyMessage(),
+          provider.getHyperlinkListener());
       });
       if (status != null) {
         return status;
       }
+      return ensureFilesWritable(originalFiles, files);
     }
-
-    return ensureFilesWritable(originalFiles, files);
   }
 
-  @NotNull
-  protected OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles,
-                                                Collection<? extends VirtualFile> files) {
+  protected @NotNull OperationStatus ensureFilesWritable(@NotNull Collection<? extends VirtualFile> originalFiles,
+                                                         Collection<? extends VirtualFile> files) {
     return createResultStatus(originalFiles, files);
   }
 
 
   public static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
-    @NotNull private final @NlsContexts.DialogMessage String myReadOnlyReason;
-    @Nullable private final HyperlinkListener myHyperlinkListener;
+    private final @NotNull @NlsContexts.DialogMessage String myReadOnlyReason;
+    private final @Nullable HyperlinkListener myHyperlinkListener;
 
     public OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles, "");
@@ -147,8 +140,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     }
 
     @Override
-    @NotNull
-    public String getReadonlyFilesMessage() {
+    public @NotNull String getReadonlyFilesMessage() {
       if (hasReadonlyFiles()) {
         if (!Strings.isEmpty(myReadOnlyReason)) {
           return myReadOnlyReason;
@@ -170,8 +162,7 @@ public class ReadonlyStatusHandlerBase extends ReadonlyStatusHandler {
     }
 
     @Override
-    @Nullable
-    public HyperlinkListener getHyperlinkListener() {
+    public @Nullable HyperlinkListener getHyperlinkListener() {
       return myHyperlinkListener;
     }
   }

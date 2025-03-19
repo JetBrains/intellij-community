@@ -28,17 +28,24 @@ class KotlinUBinaryExpression(
         )
     }
 
-    override val leftOperand by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.left, this)
-    }
+    private val leftOperandPart = UastLazyPart<UExpression>()
+    private val rightOperandPart = UastLazyPart<UExpression>()
+    private val operatorIdentifierPart = UastLazyPart<UIdentifier>()
 
-    override val rightOperand by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.right, this)
-    }
+    override val leftOperand: UExpression
+        get() = leftOperandPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.left, this)
+        }
 
-    override val operatorIdentifier: UIdentifier by lz {
-        KotlinUIdentifier(sourcePsi.operationReference.getReferencedNameElement(), this)
-    }
+    override val rightOperand: UExpression
+        get() = rightOperandPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.right, this)
+        }
+
+    override val operatorIdentifier: UIdentifier
+        get() = operatorIdentifierPart.getOrBuild {
+            KotlinUIdentifier(sourcePsi.operationReference.getReferencedNameElement(), this)
+        }
 
     override fun resolveOperator(): PsiMethod? {
         // array[index1, index2, ...] = v or ... += v

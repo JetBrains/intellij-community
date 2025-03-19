@@ -1,0 +1,19 @@
+// FILE: test.before.kt
+// "Make override accessor function 'name'" "false"
+package p;
+
+abstract class AbstractBaseClass: BaseClass()
+
+class Bar : AbstractBaseClass() {
+    <caret>override val name: String
+           get() = "x"
+}
+// IGNORE_K1
+// FILE: p/BaseClass.java
+package p;
+
+public class BaseClass {
+    public String getName(int v) {
+        return "";
+    }
+}

@@ -6,4 +6,3 @@ package testing
 fun testing() {
   <caret>Some.test()
 }
-/* IGNORE_FIR */

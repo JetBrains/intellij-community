@@ -70,8 +70,7 @@ public class HgUpdateCommand {
   }
 
 
-  @Nullable
-  public HgCommandResult execute() {
+  public @Nullable HgCommandResult execute() {
     List<String> arguments = new LinkedList<>();
     if (clean) {
       arguments.add("--clean");
@@ -101,7 +100,7 @@ public class HgUpdateCommand {
     return result;
   }
 
-  public static int showDiscardChangesConfirmation(@NotNull final Project project,
+  public static int showDiscardChangesConfirmation(final @NotNull Project project,
                                                    @NotNull @NlsContexts.DialogTitle String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
     UIUtil.invokeAndWaitIfNeeded(() -> {
@@ -112,9 +111,9 @@ public class HgUpdateCommand {
     return exitCode.get();
   }
 
-  public static void updateTo(@NotNull final @NonNls String targetRevision,
+  public static void updateTo(final @NotNull @NonNls String targetRevision,
                               @NotNull List<? extends HgRepository> repos,
-                              @Nullable final Runnable callInAwtLater) {
+                              final @Nullable Runnable callInAwtLater) {
     FileDocumentManager.getInstance().saveAllDocuments();
     for (HgRepository repo : repos) {
       final VirtualFile repository = repo.getRoot();
@@ -123,18 +122,18 @@ public class HgUpdateCommand {
     }
   }
 
-  public static void updateRepoTo(@NotNull final Project project,
-                                  @NotNull final VirtualFile repository,
-                                  @NotNull final @NonNls String targetRevision,
-                                  @Nullable final Runnable callInAwtLater) {
+  public static void updateRepoTo(final @NotNull Project project,
+                                  final @NotNull VirtualFile repository,
+                                  final @NotNull @NonNls String targetRevision,
+                                  final @Nullable Runnable callInAwtLater) {
     updateRepoTo(project, repository, targetRevision, false, callInAwtLater);
   }
 
-  public static void updateRepoTo(@NotNull final Project project,
-                                  @NotNull final VirtualFile repository,
-                                  @NotNull final @NonNls String targetRevision,
+  public static void updateRepoTo(final @NotNull Project project,
+                                  final @NotNull VirtualFile repository,
+                                  final @NotNull @NonNls String targetRevision,
                                   final boolean clean,
-                                  @Nullable final Runnable callInAwtLater) {
+                                  final @Nullable Runnable callInAwtLater) {
     new Task.Backgroundable(project, HgBundle.message("action.hg4idea.updateTo.description")) {
       @Override
       public void onSuccess() {
@@ -150,9 +149,9 @@ public class HgUpdateCommand {
     }.queue();
   }
 
-  public static boolean updateRepoToInCurrentThread(@NotNull final Project project,
-                                                    @NotNull final VirtualFile repository,
-                                                    @NotNull final @NonNls String targetRevision,
+  public static boolean updateRepoToInCurrentThread(final @NotNull Project project,
+                                                    final @NotNull VirtualFile repository,
+                                                    final @NotNull @NonNls String targetRevision,
                                                     final boolean clean) {
     final HgUpdateCommand hgUpdateCommand = new HgUpdateCommand(project, repository);
     hgUpdateCommand.setRevision(targetRevision);

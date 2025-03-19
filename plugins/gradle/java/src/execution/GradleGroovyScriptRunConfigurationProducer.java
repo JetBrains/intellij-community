@@ -1,21 +1,19 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.actions.LazyRunConfigurationProducer;
-import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 
 import java.util.List;
 
@@ -26,20 +24,14 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
 /**
  * @author Vladislav.Soroka
  */
-final class GradleGroovyScriptRunConfigurationProducer extends LazyRunConfigurationProducer<ExternalSystemRunConfiguration> {
-  @NotNull
-  @Override
-  public ConfigurationFactory getConfigurationFactory() {
-    return GradleExternalTaskConfigurationType.getInstance().getFactory();
-  }
+@ApiStatus.Internal
+public final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigurationProducer {
 
   @Override
-  protected boolean setupConfigurationFromContext(@NotNull ExternalSystemRunConfiguration configuration,
+  @VisibleForTesting
+  public boolean setupConfigurationFromContext(@NotNull GradleRunConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
-    ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
-    if (!GradleConstants.SYSTEM_ID.equals(taskExecutionSettings.getExternalSystemId())) return false;
-
     final Location contextLocation = context.getLocation();
     if (!isFromGroovyGradleScript(contextLocation)) return false;
 
@@ -56,6 +48,7 @@ final class GradleGroovyScriptRunConfigurationProducer extends LazyRunConfigurat
     }
 
     List<String> tasksToRun = getTasksTarget(contextLocation);
+    ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
     taskExecutionSettings.setExternalProjectPath(projectPath);
     taskExecutionSettings.setTaskNames(tasksToRun);
     configuration.setName(AbstractExternalSystemTaskConfigurationType.generateName(module.getProject(), taskExecutionSettings));
@@ -63,9 +56,7 @@ final class GradleGroovyScriptRunConfigurationProducer extends LazyRunConfigurat
   }
 
   @Override
-  public boolean isConfigurationFromContext(@NotNull ExternalSystemRunConfiguration configuration, @NotNull ConfigurationContext context) {
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
+  public boolean isConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
     final Location contextLocation = context.getLocation();
     if (!isFromGroovyGradleScript(contextLocation)) return false;
 

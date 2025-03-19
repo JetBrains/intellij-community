@@ -1,0 +1,10 @@
+// BIND_TO C
+class A {
+    class B { }
+}
+
+class C { }
+
+fun foo() {
+    val x = A::<caret>B
+}

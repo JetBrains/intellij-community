@@ -4,30 +4,22 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Companion.TypedDictFieldQualifier
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
 import com.jetbrains.python.psi.types.*
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_FIELDS_PARAMETER
-import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_NAME_PARAMETER
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL_PARAMETER
-
-@NlsSafe
-private const val REQUIRED = "Required"
-
-@NlsSafe
-private const val NOT_REQUIRED = "NotRequired"
 
 class PyTypedDictInspection : PyInspection() {
 
@@ -41,11 +33,11 @@ class PyTypedDictInspection : PyInspection() {
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
       val operandType = myTypeEvalContext.getType(node.operand)
-      if (operandType !is PyTypedDictType || operandType.isInferred()) return
+      if (operandType !is PyTypedDictType) return
 
       val indexExpression = node.indexExpression
-      val indexExpressionValueOptions = getIndexExpressionValueOptions(indexExpression)
-      if (indexExpressionValueOptions.isNullOrEmpty()) {
+      val indexExpressionValueOptions = PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(indexExpression, myTypeEvalContext, String::class.java)
+      if (indexExpressionValueOptions.isEmpty()) {
         if (!operandType.isDefinition) {
           val keyList = operandType.fields.keys.joinToString(transform = { "'$it'" })
           registerProblem(indexExpression, PyPsiBundle.message("INSP.typeddict.typeddict.key.must.be.string.literal.expected.one", keyList))
@@ -67,7 +59,7 @@ class PyTypedDictInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression) {
       val value = node.findAssignedValue()
       if (value is PyCallExpression && value.callee != null && PyTypedDictTypeProvider.isTypedDict(value.callee!!, myTypeEvalContext)) {
-        val typedDictName = value.getArgument(0, TYPED_DICT_NAME_PARAMETER, PyExpression::class.java)
+        val typedDictName = PyPsiUtils.flattenParens(value.arguments.firstOrNull())
         if (typedDictName is PyStringLiteralExpression && node.name != typedDictName.stringValue) {
           registerProblem(typedDictName, PyPsiBundle.message("INSP.typeddict.first.argument.has.to.match.variable.name"))
         }
@@ -76,35 +68,48 @@ class PyTypedDictInspection : PyInspection() {
 
     override fun visitPyArgumentList(node: PyArgumentList) {
       if (node.parent is PyClass && PyTypedDictTypeProvider.isTypingTypedDictInheritor(node.parent as PyClass, myTypeEvalContext)) {
-        val arguments = node.arguments
-        for (argument in arguments) {
+        for (argument in node.arguments) {
           val type = myTypeEvalContext.getType(argument)
           if (!isValidSuperclass(argument, type)) {
             registerProblem(argument, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.inherit.from.non.typeddict.base.class"))
           }
-          if (argument is PyKeywordArgument && argument.keyword == TYPED_DICT_TOTAL_PARAMETER && argument.valueExpression != null) {
-            checkValidTotality(argument.valueExpression!!)
+          if (argument is PyKeywordArgument) {
+            val keyword = argument.keyword
+            if (keyword == TYPED_DICT_TOTAL_PARAMETER) {
+              val valueExpression = argument.valueExpression
+              if (valueExpression != null) {
+                checkValidTotality(valueExpression)
+              }
+            }
+            else if (keyword != PyNames.METACLASS) {
+              registerProblem(argument,
+                              PyPsiBundle.message("INSP.typeddict.unexpected.argument.for.__init_subclass__.of.TypedDict", keyword))
+            }
           }
         }
       }
-      else if (node.callExpression != null) {
+      else {
         val callExpression = node.callExpression
-        val callee = callExpression!!.callee
-        if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
-          val fields = callExpression.getArgument(1, TYPED_DICT_FIELDS_PARAMETER, PyExpression::class.java)
-          if (fields !is PyDictLiteralExpression) {
-            return
-          }
+        if (callExpression != null) {
+          val callee = callExpression.callee
+          if (callee != null && PyTypedDictTypeProvider.isTypedDict(callee, myTypeEvalContext)) {
+            val argument1 = callExpression.arguments.getOrNull(1)
+            val fields = PyPsiUtils.flattenParens(argument1)
+            if (fields !is PyDictLiteralExpression) {
+              registerProblem(argument1, PyPsiBundle.message("INSP.typeddict.expected.a.dictionary.literal"))
+              return
+            }
 
-          fields.elements.forEach {
-            if (it !is PyKeyValueExpression) return
+            fields.elements.forEach {
+              if (it !is PyKeyValueExpression) return
 
-            checkValueIsAType(it.value, it.value?.text)
-          }
+              checkValueIsAType(it.value, it.value?.text)
+            }
 
-          val totalityArgument = callExpression.getArgument(2, TYPED_DICT_TOTAL_PARAMETER, PyExpression::class.java)
-          if (totalityArgument != null) {
-            checkValidTotality(totalityArgument)
+            val totalityArgument = callExpression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER)
+            if (totalityArgument != null) {
+              checkValidTotality(totalityArgument)
+            }
           }
         }
       }
@@ -125,38 +130,32 @@ class PyTypedDictInspection : PyInspection() {
                         PyPsiBundle.message("INSP.typeddict.specifying.metaclass.not.allowed.in.typeddict"))
       }
 
-      val ancestorsFields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
+      val allAncestorsFields = mutableMapOf<String, MutableList<PyTypedDictType.FieldTypeAndTotality>>()
       val typedDictAncestors = node.getAncestorTypes(myTypeEvalContext).filterIsInstance<PyTypedDictType>()
       typedDictAncestors.forEach { typedDict ->
         typedDict.fields.forEach { field ->
           val key = field.key
           val value = field.value
-          if (key in ancestorsFields && !matchTypedDictFieldTypeAndTotality(ancestorsFields[key]!!, value)) {
+          if (key !in allAncestorsFields) {
+            allAncestorsFields[key] = mutableListOf()
+          }
+          val listOfFieldsForKey = allAncestorsFields[key]!!
+          if (listOfFieldsForKey.isNotEmpty() && !matchTypedDictFieldTypeAndTotality(listOfFieldsForKey.first(), value)) {
             registerProblem(node.superClassExpressionList,
                             PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field.while.merging", key))
           }
-          else {
-            ancestorsFields[key] = value
-          }
+          listOfFieldsForKey.add(value)
         }
       }
 
-      val singleStatement = node.statementList.statements.singleOrNull()
-      if (singleStatement != null &&
-          singleStatement is PyExpressionStatement &&
-          singleStatement.expression is PyNoneLiteralExpression &&
-          (singleStatement.expression as PyNoneLiteralExpression).isEllipsis) {
-        registerProblem(tryGetNameIdentifier(singleStatement),
-                        PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"),
-                        ProblemHighlightType.WEAK_WARNING)
-        return
-      }
-
+      val classTypedDictType = PyTypedDictTypeProvider.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {
-          registerProblem(tryGetNameIdentifier(element),
-                          PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"),
-                          ProblemHighlightType.WEAK_WARNING)
+          if (element is PyTypeParameter) {
+            return@processClassLevelDeclarations true
+          }
+          registerProblem(element,
+                          PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"))
           return@processClassLevelDeclarations true
         }
         if (element.hasAssignedValue()) {
@@ -164,9 +163,18 @@ class PyTypedDictInspection : PyInspection() {
                           PyPsiBundle.message("INSP.typeddict.right.hand.side.values.are.not.supported.in.typeddict"))
           return@processClassLevelDeclarations true
         }
-        if (element.name in ancestorsFields) {
-          registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
-          return@processClassLevelDeclarations true
+
+        if (element.name in allAncestorsFields) {
+          val fieldsForKey = allAncestorsFields[element.name]
+          val classField = classTypedDictType?.fields[element.name]
+          if (fieldsForKey != null && classField != null) {
+            for (ancestorField in fieldsForKey) {
+              if (!matchTypedDictFieldTypeAndTotality(ancestorField, classField)) {
+                registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
+                return@processClassLevelDeclarations true
+              }
+            }
+          }
         }
         checkValueIsAType(element.annotation?.value, element.annotationValue)
         true
@@ -178,11 +186,11 @@ class PyTypedDictInspection : PyInspection() {
         for (expr in PyUtil.flattenedParensAndTuples(target)) {
           if (expr !is PySubscriptionExpression) continue
           val type = myTypeEvalContext.getType(expr.operand)
-          if (type is PyTypedDictType && !type.isInferred()) {
-            val index = PyEvaluator.evaluate(expr.indexExpression, String::class.java)
-            if (index == null || index !in type.fields) continue
-            if (type.fields[index]!!.isRequired) {
-              registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
+          if (type is PyTypedDictType) {
+            for (index in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(expr.indexExpression, myTypeEvalContext, String::class.java)) {
+              if (type.fields[index]?.qualifiers?.isRequired == true) {
+                registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
+              }
             }
           }
         }
@@ -194,32 +202,39 @@ class PyTypedDictInspection : PyInspection() {
       if (callee !is PyReferenceExpression || callee.qualifier == null) return
 
       val nodeType = myTypeEvalContext.getType(callee.qualifier!!)
-      if (nodeType !is PyTypedDictType || nodeType.isInferred()) return
-      val arguments = node.arguments
+      if (nodeType !is PyTypedDictType) return
+      var arguments = node.arguments
 
       if (PyNames.UPDATE == callee.name) {
-        inspectUpdateSequenceArgument(
-          if (arguments.size == 1 && arguments[0] is PySequenceExpression) (arguments[0] as PySequenceExpression).elements else arguments,
-          nodeType)
+        if (arguments.size == 1 && arguments[0] is PyReferenceExpression) {
+          (PyUtil.resolveToTheTop(arguments[0]) as? PyTargetExpression)?.let { resolvedArg ->
+            resolvedArg.findAssignedValue()?.let {
+              arguments = arrayOf(it)
+            }
+          }
+        }
+        if (arguments.size == 1 && arguments[0] is PySequenceExpression) {
+          arguments = (arguments[0] as PySequenceExpression).elements
+        }
+        inspectUpdateSequenceArgument(node, arguments, nodeType)
       }
 
       if (PyNames.CLEAR == callee.name || PyNames.POPITEM == callee.name) {
-        if (nodeType.fields.any { it.value.isRequired }) {
-          registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.this.operation.might.break.typeddict.consistency"),
-                          if (PyNames.CLEAR == callee.name) ProblemHighlightType.WARNING else ProblemHighlightType.WEAK_WARNING)
-        }
+        registerProblem(callee.nameElement?.psi,
+                        PyPsiBundle.message("INSP.typeddict.this.operation.might.break.typeddict.consistency"),
+                        ProblemHighlightType.WARNING)
       }
 
       if (PyNames.POP == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.isRequired) {
+        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.qualifiers.isRequired == true) {
           registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", key, nodeType.name))
         }
       }
 
       if (PyNames.SETDEFAULT == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
-        if (key != null && key in nodeType.fields && !nodeType.fields[key]!!.isRequired) {
+        if (key != null && key in nodeType.fields && nodeType.fields[key]!!.qualifiers.isRequired == false) {
           if (node.arguments.size > 1) {
             val valueType = myTypeEvalContext.getType(arguments[1])
             if (!PyTypeChecker.match(nodeType.fields[key]!!.type, valueType, myTypeEvalContext)) {
@@ -252,81 +267,64 @@ class PyTypedDictInspection : PyInspection() {
         if (target !is PySubscriptionExpression) return@forEach
         val targetType = myTypeEvalContext.getType(target.operand)
         if (targetType !is PyTypedDictType) return@forEach
-        val indexString = PyEvaluator.evaluate(target.indexExpression, String::class.java)
-        if (indexString == null) return@forEach
+        for (indexString in PySubscriptionExpressionImpl.getIndexExpressionPossibleValues(target.indexExpression, myTypeEvalContext, String::class.java)) {
+          if (targetType.fields[indexString]?.qualifiers?.isReadOnly == true) {
+            registerProblem(target, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", indexString))
+          }
 
-        val expected = targetType.getElementType(indexString)
-        val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }
-        actualExpressions.forEach { actual ->
-          val actualType = myTypeEvalContext.getType(actual)
-          if (!PyTypeChecker.match(expected, actualType, myTypeEvalContext)) {
-            val expectedTypeName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext)
-            val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
-            registerProblem(actual,
-                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+          val expected = targetType.getElementType(indexString)
+          val actualExpressions = targetsToValuesMapping.filter { it.first == target }.map { it.second }
+          actualExpressions.forEach { actual ->
+            val actualType = myTypeEvalContext.getType(actual)
+            if (!PyTypeChecker.match(expected, actualType, myTypeEvalContext)) {
+              val expectedTypeName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext)
+              val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
+              registerProblem(actual,
+                              PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+            }
           }
         }
       }
     }
 
+    fun isTypeDictQualifier(node: PyReferenceExpression): Boolean =
+      PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { PyTypingTypeProvider.TYPE_DICT_QUALIFIERS.contains(it) }
+
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       if (PsiTreeUtil.getParentOfType(node, PyImportStatementBase::class.java) == null) {
-        val isRequired = PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { qualifiedName ->
-          PyTypingTypeProvider.REQUIRED == qualifiedName ||
-          PyTypingTypeProvider.REQUIRED_EXT == qualifiedName
-        }
-        val isNotRequired = PyTypingTypeProvider.resolveToQualifiedNames(node, myTypeEvalContext).any { qualifiedName ->
-          PyTypingTypeProvider.NOT_REQUIRED == qualifiedName ||
-          PyTypingTypeProvider.NOT_REQUIRED_EXT == qualifiedName
-        }
-        if (isRequired || isNotRequired) {
+        val isTypeDictQualifier = isTypeDictQualifier(node)
+        if (isTypeDictQualifier) {
+          val qualifierName = node.name
           val classParent = PsiTreeUtil.getParentOfType(node, PyClass::class.java)
           val callParent = PsiTreeUtil.getParentOfType(node, PyCallExpression::class.java)
           if (classParent == null) {
             if (callParent == null) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                        if (isRequired) REQUIRED else NOT_REQUIRED))
+              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                        qualifierName))
             }
             else {
               if (callParent.callee != null &&
                   PyTypingTypeProvider.resolveToQualifiedNames(callParent.callee!!, myTypeEvalContext).none { qualifiedName ->
                     PyTypingTypeProvider.TYPED_DICT == qualifiedName || PyTypingTypeProvider.TYPED_DICT_EXT == qualifiedName
                   }) {
-                registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                          if (isRequired) REQUIRED else NOT_REQUIRED))
+                registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                          qualifierName))
               }
             }
           }
           else {
             if (!PyTypedDictTypeProvider.isTypingTypedDictInheritor(classParent, myTypeEvalContext)) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.required.notrequired.cannot.be.used.outside.typeddict.definition",
-                                                        if (isRequired) REQUIRED else NOT_REQUIRED))
+              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                                                        qualifierName))
             }
           }
 
           if (node.parent is PySubscriptionExpression && (node.parent as PySubscriptionExpression).indexExpression is PyTupleExpression) {
             registerProblem((node.parent as PySubscriptionExpression).indexExpression,
                             PyPsiBundle.message("INSP.typeddict.required.notrequired.must.have.exactly.one.type.argument",
-                                                if (isRequired) REQUIRED else NOT_REQUIRED))
+                                                qualifierName))
           }
         }
-      }
-    }
-
-    private fun getIndexExpressionValueOptions(indexExpression: PyExpression?): List<String>? {
-      if (indexExpression == null) return null
-      val indexExprValue = PyEvaluator.evaluate(indexExpression, String::class.java)
-      if (indexExprValue == null) {
-        val type = myTypeEvalContext.getType(indexExpression) ?: return null
-        val members = PyTypeUtil.toStream(type)
-          .map { if (it is PyLiteralType) PyEvaluator.evaluate(it.expression, String::class.java) else null }
-          .toList()
-        return if (members.contains(null)) null
-        else members
-          .filterNotNull()
-      }
-      else {
-        return listOf(indexExprValue)
       }
     }
 
@@ -334,37 +332,31 @@ class PyTypedDictInspection : PyInspection() {
      * Checks that [expression] with [strType] name is a type
      */
     private fun checkValueIsAType(expression: PyExpression?, strType: String?) {
-      if (expression !is PyReferenceExpression &&
-          expression !is PySubscriptionExpression &&
-          expression !is PyNoneLiteralExpression &&
-          expression !is PyBinaryExpression &&
-          expression !is PyStringLiteralExpression || strType == null) {
+      if (expression !is PyExpression || strType == null) {
         registerProblem(expression, PyPsiBundle.message("INSP.typeddict.value.must.be.type"), ProblemHighlightType.WEAK_WARNING)
         return
       }
       if (expression is PySubscriptionExpression && expression.operand is PyReferenceExpression) {
-        if (expression.indexExpression is PySubscriptionExpression) {
-          val indexExpression = expression.indexExpression as PySubscriptionExpression
-          if (indexExpression.operand is PyReferenceExpression) {
-            val operandIsRequired = PyTypedDictTypeProvider.isRequired(expression.operand as PyReferenceExpression, myTypeEvalContext)
-            val indexIsRequired = PyTypedDictTypeProvider.isRequired(indexExpression.operand as PyReferenceExpression, myTypeEvalContext)
-            if (operandIsRequired != null && indexIsRequired != null && operandIsRequired.xor(indexIsRequired)) {
-              registerProblem(expression, PyPsiBundle.message("INSP.typeddict.cannot.be.required.and.not.required.at.the.same.time"))
-            }
-          }
+        val qualifiers = PyTypedDictTypeProvider.getTypedDictFieldQualifiers(expression, myTypeEvalContext)
+        if (qualifiers.count { it == TypedDictFieldQualifier.REQUIRED || it == TypedDictFieldQualifier.NOT_REQUIRED } > 1) {
+          registerProblem(expression, PyPsiBundle.message("INSP.typeddict.required.and.not.required.cannot.be.nested"))
+        }
+        if (qualifiers.count { it == TypedDictFieldQualifier.READ_ONLY } > 1) {
+          registerProblem(expression, PyPsiBundle.message("INSP.typeddict.read.only.cannot.be.nested"))
         }
         return
       }
-      val type = Ref.deref(PyTypingTypeProvider.getStringBasedType(strType, expression, myTypeEvalContext))
+      val type = if (expression is PyReferenceExpression) {
+        Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
+      }
+      else {
+        Ref.deref(PyTypingTypeProvider.getStringBasedType(strType, expression, myTypeEvalContext))
+      }
       if (type == null && !PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext).any { qualifiedName ->
           PyTypingTypeProvider.ANY == qualifiedName
         }) {
         registerProblem(expression, PyPsiBundle.message("INSP.typeddict.value.must.be.type"), ProblemHighlightType.WEAK_WARNING)
       }
-    }
-
-    private fun tryGetNameIdentifier(element: PsiElement): PsiElement {
-      return if (element is PsiNameIdentifierOwner) element.nameIdentifier ?: element else element
     }
 
     private fun checkValidTotality(totalityValue: PyExpression) {
@@ -376,11 +368,11 @@ class PyTypedDictInspection : PyInspection() {
 
     private fun matchTypedDictFieldTypeAndTotality(expected: PyTypedDictType.FieldTypeAndTotality,
                                                    actual: PyTypedDictType.FieldTypeAndTotality): Boolean {
-      return expected.isRequired == actual.isRequired &&
+      return expected.qualifiers.isRequired == actual.qualifiers.isRequired &&
              PyTypeChecker.match(expected.type, actual.type, myTypeEvalContext)
     }
 
-    private fun inspectUpdateSequenceArgument(sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
+    private fun inspectUpdateSequenceArgument(updateCall: PyCallExpression, sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
       sequenceElements.forEach {
         var key: PsiElement? = null
         var keyAsString: String? = null
@@ -419,6 +411,10 @@ class PyTypedDictInspection : PyInspection() {
         if (!fields.containsKey(keyAsString)) {
           registerProblem(key, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.have.key", typedDictType.name, keyAsString))
           return@forEach
+        }
+        if (fields.get(keyAsString)!!.qualifiers.isReadOnly) {
+          val warningHolder = (updateCall.callee as? PyReferenceExpression)?.nameElement?.psi ?: updateCall
+          registerProblem(warningHolder, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", keyAsString))
         }
         val valueType = myTypeEvalContext.getType(value)
         if (!PyTypeChecker.match(fields[keyAsString]?.type, valueType, myTypeEvalContext)) {

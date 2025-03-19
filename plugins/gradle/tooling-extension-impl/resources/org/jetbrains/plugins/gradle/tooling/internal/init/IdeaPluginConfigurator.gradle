@@ -1,0 +1,25 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+
+GradleLifecycleUtil.beforeProject(gradle) { Project project ->
+  IdeaPluginConfigurator.disableSources(project.plugins)
+}
+
+class IdeaPluginConfigurator {
+
+  static void disableSources(PluginContainer plugins) {
+    plugins.withType(IdeaPlugin).all { IdeaPlugin plugin ->
+      overridePluginSourcesPolicy(plugin)
+    }
+  }
+
+  private static void overridePluginSourcesPolicy(IdeaPlugin plugin) {
+    def module = plugin?.model?.module
+    if (module != null) {
+      module.downloadJavadoc = false
+      module.downloadSources = false
+    }
+  }
+}

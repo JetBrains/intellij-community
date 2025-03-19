@@ -2,12 +2,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Document listeners are sorted according {@link PrioritizedDocumentListener#getPriority()}.
  * (the smaller the priority value the sooner the listener will be called)
  * Some standard priorities are listed here.
  */
+@ApiStatus.Internal
 public final class EditorDocumentPriorities {
 
   /**

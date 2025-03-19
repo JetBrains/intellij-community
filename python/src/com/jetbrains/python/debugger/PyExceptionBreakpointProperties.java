@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -23,7 +23,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   public PyExceptionBreakpointProperties() {
   }
 
-  public PyExceptionBreakpointProperties(@NotNull final String exception) {
+  public PyExceptionBreakpointProperties(final @NotNull String exception) {
     myException = exception;
     myNotifyOnTerminate = true;
     myIgnoreLibraries = false;
@@ -37,7 +37,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
   }
 
   @Override
-  public void loadState(@NotNull final PyExceptionBreakpointProperties state) {
+  public void loadState(final @NotNull PyExceptionBreakpointProperties state) {
     myException = state.myException;
     myNotifyOnlyOnFirst = state.myNotifyOnlyOnFirst;
     myNotifyOnTerminate = state.myNotifyOnTerminate;
@@ -68,8 +68,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     return myIgnoreLibraries;
   }
 
-  @Nullable
-  public String getCondition() {
+  public @Nullable String getCondition() {
     return myCondition;
   }
 
@@ -78,8 +77,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     myCondition = condition;
   }
 
-  @Nullable
-  public String getLogExpression() {
+  public @Nullable String getLogExpression() {
     return myLogExpression;
   }
 

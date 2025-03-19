@@ -57,5 +57,3 @@ fun main() {
 fun foo(l1: (Int) -> Unit) {
     l1(0)
 }
-
-// IGNORE_K2

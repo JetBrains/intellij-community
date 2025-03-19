@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -9,15 +9,18 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
-const val APPEARANCE_ID = "appearance"
+@Internal
+const val APPEARANCE_ID: String = "appearance"
 
-internal val uiOptionGroupName
+internal val uiOptionGroupName: @Nls String
   get() = message("appearance.ui.option.group")
-internal val windowOptionGroupName
+internal val windowOptionGroupName: @Nls String
   get() = message("appearance.window.option.group")
-internal val viewOptionGroupName
+internal val viewOptionGroupName: @Nls String
   get() = message("appearance.view.option.group")
 
 private val settings
@@ -42,7 +45,7 @@ private val cdShowBalloons
   get() = CheckboxDescriptor(message("display.balloon.notifications"), notificationSettings::SHOW_BALLOONS, groupName = uiOptionGroupName)
 
 internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
-  override fun getId() = APPEARANCE_ID
+  override fun getId(): String = APPEARANCE_ID
 
   override fun getOptions(): List<OptionDescription> {
     var list = sequenceOf(
@@ -59,17 +62,18 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
     return allOptions.toList()
   }
 
-  companion object {
-    @JvmStatic
+  internal object Options {
     fun option(@Label option: String, propertyName: String, configurableId: String): BooleanOptionDescription {
       return object : PublicMethodBasedOptionDescription(option, configurableId,
                                                          "get" + Strings.capitalize(propertyName),
-                                                         "set" + Strings.capitalize(propertyName), Supplier { UISettings.getInstance().state }) {
+                                                         "set" + Strings.capitalize(propertyName),
+                                                         Supplier { UISettings.getInstance().state }) {
         override fun fireUpdated() = UISettings.getInstance().fireUISettingsChanged()
       }
     }
 
-    @JvmStatic
-    fun appearance(@Label option: String, propertyName: String) = option(option, propertyName, "preferences.lookFeel")
+    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription {
+      return option(option, propertyName, "preferences.lookFeel")
+    }
   }
 }

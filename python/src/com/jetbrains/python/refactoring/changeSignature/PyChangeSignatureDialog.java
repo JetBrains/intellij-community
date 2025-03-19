@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.changeSignature;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -6,6 +6,7 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -36,7 +37,11 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.PyAstSingleStarParameter;
+import com.jetbrains.python.ast.PyAstSlashParameter;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NotNull;
@@ -69,9 +74,8 @@ public class PyChangeSignatureDialog extends
     return PythonFileType.INSTANCE;
   }
 
-  @NotNull
   @Override
-  protected PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
+  protected @NotNull PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
     final PyParameterList parameterList = PsiTreeUtil.getChildOfType(method.getMethod(), PyParameterList.class);
     return new PyParameterTableModel(parameterList, myDefaultValueContext, myProject);
   }
@@ -83,15 +87,13 @@ public class PyChangeSignatureDialog extends
                                           parameters.toArray(new PyParameterInfo[0]));
   }
 
-  @Nullable
   @Override
-  protected PsiCodeFragment createReturnTypeCodeFragment() {
+  protected @Nullable PsiCodeFragment createReturnTypeCodeFragment() {
     return null;
   }
 
-  @Nullable
   @Override
-  protected CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PyFunction>> callback) {
+  protected @Nullable CallerChooserBase<PyFunction> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PyFunction>> callback) {
     return null;
   }
 
@@ -100,9 +102,8 @@ public class PyChangeSignatureDialog extends
     return name != null && validator.isIdentifier(name, project) && !validator.isKeyword(name, project);
   }
 
-  @Nullable
   @Override
-  protected String validateAndCommitData() {
+  protected @Nullable String validateAndCommitData() {
     final String functionName = myNameField.getText().trim();
     if (!functionName.equals(myMethod.getName())) {
       final boolean defined = IntroduceValidator.isDefinedInScope(functionName, myMethod.getMethod());
@@ -129,7 +130,7 @@ public class PyChangeSignatureDialog extends
       final PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
-      final boolean isMarkerParameter = name.equals(PySlashParameter.TEXT) || name.equals(PySingleStarParameter.TEXT);
+      final boolean isMarkerParameter = name.equals(PyAstSlashParameter.TEXT) || name.equals(PyAstSingleStarParameter.TEXT);
       if (!isMarkerParameter) {
         final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
         if (parameterNames.contains(nameWithoutStars)) {
@@ -138,7 +139,7 @@ public class PyChangeSignatureDialog extends
         parameterNames.add(nameWithoutStars);
       }
 
-      if (name.equals(PySingleStarParameter.TEXT)) {
+      if (name.equals(PyAstSingleStarParameter.TEXT)) {
         if (hadSingleStar) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
         }
@@ -147,7 +148,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.after.star");
         }
       }
-      else if (name.equals(PySlashParameter.TEXT)) {
+      else if (name.equals(PyAstSlashParameter.TEXT)) {
         if (hadSlash) {
           return PyPsiBundle.message("ANN.multiple.slash");
         }
@@ -162,7 +163,7 @@ public class PyChangeSignatureDialog extends
           return PyPsiBundle.message("ANN.named.parameters.before.slash");
         }
       }
-      else if (name.startsWith(PySingleStarParameter.TEXT) && !name.startsWith("**")) {
+      else if (name.startsWith(PyAstSingleStarParameter.TEXT) && !name.startsWith("**")) {
         if (hadKeywordContainer) {
           return PyPsiBundle.message("ANN.starred.param.after.kwparam");
         }
@@ -288,9 +289,8 @@ public class PyChangeSignatureDialog extends
         };
       }
 
-      @NotNull
       @Override
-      protected JBTableRowEditor getRowEditor(ParameterTableModelItemBase<PyParameterInfo> item) {
+      protected @NotNull JBTableRowEditor getRowEditor(ParameterTableModelItemBase<PyParameterInfo> item) {
         return new JBTableRowEditor() {
           private EditorTextField myNameEditor;
           private EditorTextField myDefaultValueEditor;
@@ -341,6 +341,7 @@ public class PyChangeSignatureDialog extends
             defaultValuePanel.add(defaultValueLabel);
             defaultValuePanel.add(myDefaultValueEditor);
             myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myDefaultValueEditor.setFont(EditorUtil.getEditorFont());
             // The corresponding PyParameterInfo field can't be updated by just RowEditorChangeListener(1) 
             // because the corresponding column value is not String but Pair<PsiCodeFragment, Boolean>.
             myDefaultValueEditor.addDocumentListener(new DocumentListener() {
@@ -361,6 +362,7 @@ public class PyChangeSignatureDialog extends
             namePanel.add(nameLabel);
             namePanel.add(myNameEditor);
             myNameEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myNameEditor.setFont(EditorUtil.getEditorFont());
             myNameEditor.addDocumentListener(new RowEditorChangeListener(0));
             myNameEditor.addDocumentListener(new DocumentListener() {
               @Override

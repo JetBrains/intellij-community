@@ -12,4 +12,3 @@ fun main(args: Array<String>) {
 
 // EXPRESSION: (SomeClass::class.java.annotations[0] as Anno).value
 // RESULT: "abc": Ljava/lang/String;
-

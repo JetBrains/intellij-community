@@ -7,25 +7,44 @@ import org.gradle.tooling.model.Launchable
 import org.gradle.tooling.model.Task
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 
-internal class TargetBuildLauncher(connection: TargetProjectConnection) :
-  TargetBuildExecuter<TargetBuildLauncher, Void>(connection), BuildLauncher {
+internal class TargetBuildLauncher(
+  connection: TargetProjectConnection
+) : AbstractTargetBuildOperation<TargetBuildLauncher, Void>(connection, "TargetBuildLauncher API"),
+    BuildLauncher {
 
   override val targetBuildParametersBuilder = TargetBuildParameters.BuildLauncherParametersBuilder()
+
+  override val prepareTaskState: Boolean = true
+
   override fun run() {
     runAndGetResult()
   }
 
-  @Suppress("UNCHECKED_CAST")
-  override fun run(handler: ResultHandler<in Void>) = runWithHandler(handler as ResultHandler<Any?>)
-  override fun getThis(): TargetBuildLauncher = this
-  override fun forTasks(vararg tasks: String) = apply { operationParamsBuilder.setTasks(tasks.asList()) }
-  override fun forTasks(vararg tasks: Task) = apply { forTasks(tasks.asList()) }
-  override fun forTasks(tasks: Iterable<Task>) = apply { forLaunchables(tasks) }
-  override fun forLaunchables(vararg launchables: Launchable) = apply { forLaunchables(launchables.asList()) }
-  override fun forLaunchables(launchables: Iterable<Launchable>) = apply { operationParamsBuilder.setLaunchables(launchables) }
-  override fun getServerRunner() = GradleServerRunner(connection, consumerOperationParameters, true)
+  override fun run(handler: ResultHandler<in Void>) {
+    runWithHandler(handler)
+  }
 
-  init {
-    operationParamsBuilder.setEntryPoint("TargetBuildLauncher API")
+  override fun getThis(): TargetBuildLauncher = this
+
+  override fun forTasks(vararg tasks: String): TargetBuildLauncher {
+    operationParamsBuilder.setTasks(tasks.asList())
+    return this
+  }
+
+  override fun forTasks(vararg tasks: Task): TargetBuildLauncher {
+    return forTasks(tasks.asList())
+  }
+
+  override fun forTasks(tasks: Iterable<Task>): TargetBuildLauncher {
+    return forLaunchables(tasks)
+  }
+
+  override fun forLaunchables(vararg launchables: Launchable): TargetBuildLauncher {
+    return forLaunchables(launchables.asList())
+  }
+
+  override fun forLaunchables(launchables: Iterable<Launchable>): TargetBuildLauncher {
+    operationParamsBuilder.setLaunchables(launchables)
+    return this
   }
 }

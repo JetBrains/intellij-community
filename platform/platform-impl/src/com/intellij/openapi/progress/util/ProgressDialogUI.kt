@@ -1,16 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.progress.TaskCancellation
-import com.intellij.openapi.progress.impl.CancellableTaskCancellation
-import com.intellij.openapi.progress.impl.NonCancellableTaskCancellation
-import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.openapi.ui.DialogWrapperDialog
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.CancellableTaskCancellation
+import com.intellij.platform.ide.progress.NonCancellableTaskCancellation
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.util.progress.ProgressState
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.TitlePanel
 import com.intellij.ui.WindowMoveListener
@@ -56,33 +57,33 @@ internal class ProgressDialogUI : Disposable {
     progressPanel.preferredSize = Dimension(if (SystemInfoRt.isMac) 350 else JBUIScale.scale(450), -1)
     progressPanel.add(textLabel, gridConstraints(row = 0, minimumSize = Dimension(0, -1)))
     progressPanel.add(JLabel(" "), gridConstraints(
-      row = 0, column = 1, anchor = ANCHOR_WEST, fill = FILL_NONE, HSizePolicy = SIZEPOLICY_FIXED,
+      row = 0, column = 1, anchor = ANCHOR_WEST, fill = FILL_NONE, hSizePolicy = SIZEPOLICY_FIXED,
     ))
     progressPanel.add(progressBar, gridConstraints(row = 1, colSpan = 2))
     progressPanel.add(detailsLabel, gridConstraints(
       row = 2, anchor = ANCHOR_NORTHWEST, minimumSize = Dimension(0, -1),
     ))
     progressPanel.add(JLabel(" "), gridConstraints(
-      row = 2, column = 1, anchor = ANCHOR_WEST, fill = FILL_NONE, HSizePolicy = SIZEPOLICY_FIXED,
+      row = 2, column = 1, anchor = ANCHOR_WEST, fill = FILL_NONE, hSizePolicy = SIZEPOLICY_FIXED,
     ))
 
     val buttonPanel = JPanel()
     buttonPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
-    buttonPanel.add(cancelButton, gridConstraints(row = 0, HSizePolicy = SIZE_POLICY_DEFAULT))
-    buttonPanel.add(backgroundButton, gridConstraints(row = 1, HSizePolicy = SIZE_POLICY_DEFAULT))
+    buttonPanel.add(cancelButton, gridConstraints(row = 0, hSizePolicy = SIZE_POLICY_DEFAULT))
+    buttonPanel.add(backgroundButton, gridConstraints(row = 1, hSizePolicy = SIZE_POLICY_DEFAULT))
 
     val progressAndButtonPanel = JPanel()
     progressAndButtonPanel.layout = GridLayoutManager(1, 2, JBInsets(6, 10, 10, 10), -1, -1, false, false)
     progressAndButtonPanel.isOpaque = false
-    progressAndButtonPanel.add(progressPanel, gridConstraints(row = 0, VSizePolicy = SIZEPOLICY_CAN_GROW))
+    progressAndButtonPanel.add(progressPanel, gridConstraints(row = 0, vSizePolicy = SIZEPOLICY_CAN_GROW))
     progressAndButtonPanel.add(buttonPanel, gridConstraints(
-      row = 0, column = 1, HSizePolicy = SIZEPOLICY_CAN_SHRINK, VSizePolicy = SIZEPOLICY_CAN_GROW
+      row = 0, column = 1, hSizePolicy = SIZEPOLICY_CAN_SHRINK, vSizePolicy = SIZEPOLICY_CAN_GROW
     ))
 
     panel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
     panel.add(titlePanel, gridConstraints(row = 0))
     panel.add(progressAndButtonPanel, gridConstraints(
-      row = 1, fill = FILL_BOTH, HSizePolicy = SIZE_POLICY_DEFAULT, VSizePolicy = SIZE_POLICY_DEFAULT
+      row = 1, fill = FILL_BOTH, hSizePolicy = SIZE_POLICY_DEFAULT, vSizePolicy = SIZE_POLICY_DEFAULT
     ))
     if (ExperimentalUI.isNewUI()) {
       panel.background = JBUI.CurrentTheme.Popup.BACKGROUND
@@ -122,6 +123,7 @@ internal class ProgressDialogUI : Disposable {
         }
         val buttonListener = ActionListener {
           cancelAction()
+          cancelButton.isEnabled = false
         }
         cancelButton.addActionListener(buttonListener)
         cancelButton.registerKeyboardAction(
@@ -139,12 +141,19 @@ internal class ProgressDialogUI : Disposable {
   }
 
   fun updateProgress(state: ProgressState) {
+    updateProgress(state.fraction, state.text, state.details)
+  }
+
+  fun updateProgress(
+    fraction: Double?,
+    text: @ProgressText String?,
+    details: @ProgressText String?,
+  ) {
     EDT.assertIsEdt()
-    textLabel.text = fitTextToLabel(state.text, textLabel)
-    detailsLabel.text = fitTextToLabel(state.details, detailsLabel)
+    textLabel.text = fitTextToLabel(text, textLabel)
+    detailsLabel.text = fitTextToLabel(details, detailsLabel)
     if (progressBar.isShowing) {
-      val fraction = state.fraction
-      if (fraction < 0.0) {
+      if (fraction == null) {
         progressBar.isIndeterminate = true
       }
       else {
@@ -178,9 +187,9 @@ private fun gridConstraints(
   colSpan: Int = 1,
   anchor: Int = ANCHOR_CENTER,
   fill: Int = FILL_HORIZONTAL,
-  HSizePolicy: Int = SIZE_POLICY_DEFAULT or SIZEPOLICY_WANT_GROW,
-  VSizePolicy: Int = SIZEPOLICY_FIXED,
+  hSizePolicy: Int = SIZE_POLICY_DEFAULT or SIZEPOLICY_WANT_GROW,
+  vSizePolicy: Int = SIZEPOLICY_FIXED,
   minimumSize: Dimension? = null,
 ): GridConstraints {
-  return GridConstraints(row, column, 1, colSpan, anchor, fill, HSizePolicy, VSizePolicy, minimumSize, null, null)
+  return GridConstraints(row, column, 1, colSpan, anchor, fill, hSizePolicy, vSizePolicy, minimumSize, null, null)
 }

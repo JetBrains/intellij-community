@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
@@ -10,7 +10,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +27,10 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (selection == null) return;
 
     CommitId commit = ContainerUtil.getFirstItem(selection.getCommits());
     assert commit != null;
@@ -69,13 +74,11 @@ public abstract class VcsLogSingleCommitAction<Repo extends Repository> extends 
     return true;
   }
 
-  protected boolean isVisible(@NotNull final Project project, @NotNull Repo repository, @NotNull Hash hash) {
+  protected boolean isVisible(final @NotNull Project project, @NotNull Repo repository, @NotNull Hash hash) {
     return !getRepositoryManager(project).isExternal(repository);
   }
 
-  @NotNull
-  protected abstract AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
+  protected abstract @NotNull AbstractRepositoryManager<Repo> getRepositoryManager(@NotNull Project project);
 
-  @Nullable
-  protected abstract Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
+  protected abstract @Nullable Repo getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root);
 }

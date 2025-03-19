@@ -1,15 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.concurrency.ContextAwareRunnable;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -24,6 +22,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,8 +43,6 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   private final List<FocusRequestInfo> myRequests = new LinkedList<>();
 
-  private final IdeEventQueue myQueue;
-
   private final Map<Window, Component> myLastFocused = ContainerUtil.createWeakValueMap();
   private final Map<Window, Component> myLastFocusedAtDeactivation = ContainerUtil.createWeakValueMap();
 
@@ -54,11 +51,9 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   private IdeFrame myLastFocusedFrame;
 
   public FocusManagerImpl() {
-    myQueue = IdeEventQueue.getInstance();
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new AppListener());
-
-    StartupUiUtil.addAwtListener(e -> {
+    StartupUiUtil.addAwtListener(AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK, this, e -> {
       if (e instanceof FocusEvent fe) {
         final Component c = fe.getComponent();
         if (c instanceof Window || c == null) return;
@@ -78,7 +73,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           }
         }
       }
-    }, AWTEvent.FOCUS_EVENT_MASK | AWTEvent.WINDOW_EVENT_MASK, this);
+    });
 
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusedWindow", event -> {
       Object value = event.getNewValue();
@@ -92,6 +87,11 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
           // it is needed to forget about the closed window
           myLastFocusedFrame = null;
         }
+      }
+    });
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(event -> {
+      if (FOCUS_REQUESTS_LOG.isDebugEnabled()) {
+        FOCUS_REQUESTS_LOG.debug(event.getPropertyName() + "=" + event.getNewValue());
       }
     });
   }
@@ -165,12 +165,18 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
+    // Immediate check is buggy.
+    // JVM can run "postponed" code on other thread before this thread set `immediate` to `false`
     AtomicBoolean immediate = new AtomicBoolean(true);
-    myQueue.executeWhenAllFocusEventsLeftTheQueue((ContextAwareRunnable) () -> {
+    EdtInvocationManager.invokeLaterIfNeeded((ContextAwareRunnable) () -> {
       if (immediate.get()) {
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
-          runnable.run();
+          // Even immediate code need explicit write-safe context, not implicit one
+          AppImplKt.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+            runnable.run();
+            return null;
+          });
         }
       }
       else {

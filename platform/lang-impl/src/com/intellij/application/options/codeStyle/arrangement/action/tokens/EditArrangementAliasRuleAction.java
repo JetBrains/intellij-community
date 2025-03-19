@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.action.EditArrangementRuleAction;
@@ -11,10 +11,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class EditArrangementAliasRuleAction extends EditArrangementRuleAction {
+public final class EditArrangementAliasRuleAction extends EditArrangementRuleAction {
   @Override
-  @Nullable
-  protected ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
+  protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return e.getData(ArrangementRuleAliasControl.KEY);
   }
 }

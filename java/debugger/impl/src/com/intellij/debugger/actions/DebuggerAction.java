@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerAction
@@ -43,18 +43,15 @@ public abstract class DebuggerAction extends AnAction {
     private static final DebuggerTreeNodeImpl[] EMPTY_TREE_NODE_ARRAY = new DebuggerTreeNodeImpl[0];
   }
 
-  @Nullable
-  public static DebuggerTree getTree(DataContext dataContext) {
+  public static @Nullable DebuggerTree getTree(DataContext dataContext) {
     return DebuggerTree.DATA_KEY.getData(dataContext);
   }
 
-  @Nullable
-  public static DebuggerTreePanel getPanel(DataContext dataContext) {
+  public static @Nullable DebuggerTreePanel getPanel(DataContext dataContext) {
     return DebuggerTreePanel.DATA_KEY.getData(dataContext);
   }
 
-  @Nullable
-  public static DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
+  public static @Nullable DebuggerTreeNodeImpl getSelectedNode(DataContext dataContext) {
     DebuggerTree tree = getTree(dataContext);
     if (tree == null) return null;
 
@@ -89,8 +86,7 @@ public abstract class DebuggerAction extends AnAction {
     return nodes.toArray(new DebuggerTreeNodeImpl[0]);
   }
 
-  @NotNull
-  public static DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
+  public static @NotNull DebuggerContextImpl getDebuggerContext(DataContext dataContext) {
     DebuggerTreePanel panel = getPanel(dataContext);
     if (panel != null) {
       return panel.getContext();
@@ -163,8 +159,7 @@ public abstract class DebuggerAction extends AnAction {
     return null;
   }
 
-  @Nullable
-  private static StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
+  private static @Nullable StackFrameDescriptorImpl getSelectedStackFrameDescriptor(AnActionEvent e) {
     DebuggerTreeNodeImpl selectedNode = getSelectedNode(e.getDataContext());
     if (selectedNode != null) {
       NodeDescriptorImpl descriptor = selectedNode.getDescriptor();
@@ -175,8 +170,7 @@ public abstract class DebuggerAction extends AnAction {
     return null;
   }
 
-  @Nullable
-  private static JavaStackFrame getSelectedStackFrame(AnActionEvent e) {
+  private static @Nullable JavaStackFrame getSelectedStackFrame(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
       XDebugSession session = DebuggerUIUtil.getSession(e);

@@ -11,17 +11,6 @@ abstract class SelfTargetingOffsetIndependentIntention<TElement : KtElement>(
   textGetter: () -> @IntentionName String,
   familyNameGetter: () -> @IntentionFamilyName String = textGetter,
 ) : SelfTargetingRangeIntention<TElement>(elementType, textGetter, familyNameGetter) {
-
-    @Deprecated(
-        "Replace with primary constructor",
-        ReplaceWith("SelfTargetingOffsetIndependentIntention<TElement>(elementType, { text }, { familyName })")
-    )
-    constructor(
-      elementType: Class<TElement>,
-      text: @IntentionName String,
-      familyName: @IntentionFamilyName String = text,
-    ) : this(elementType, { text }, { familyName })
-
     abstract fun isApplicableTo(element: TElement): Boolean
 
     final override fun applicabilityRange(element: TElement): TextRange? {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle.message
@@ -8,8 +8,10 @@ import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
                             targetType: TargetEnvironmentType<*>,
                             targetProvider: Supplier<out TargetEnvironmentConfiguration>,
@@ -29,8 +31,8 @@ class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration
       }
 
       collapsibleGroup(message("java.language.runtime.separator.advanced.volume.settings")) {
-        addVolumeUI(JavaLanguageRuntimeType.CLASS_PATH_VOLUME)
-        addVolumeUI(JavaLanguageRuntimeType.AGENTS_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME)
+        addVolumeUI(JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME)
       }.topGap(TopGap.NONE)
     }
   }

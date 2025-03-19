@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.IFileElementType;
 import com.intellij.tasks.jira.jql.psi.impl.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,8 +95,7 @@ public interface JqlElementTypes {
   IElementType HISTORY_PREDICATE = new JqlElementType("HISTORY_PREDICATE");
 
   final class Factory {
-    @NotNull
-    public static PsiElement createElement(@NotNull ASTNode node) {
+    public static @NotNull PsiElement createElement(@NotNull ASTNode node) {
       final IElementType type = node.getElementType();
       if (type == QUERY) {
         return new JqlQueryImpl(node);

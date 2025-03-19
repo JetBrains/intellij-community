@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -12,27 +12,26 @@ import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class IntentionActionWithTextCaching
-  implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
+public final class IntentionActionWithTextCaching implements Comparable<IntentionActionWithTextCaching>, ShortcutProvider, IntentionActionDelegate {
   private static final Logger LOG = Logger.getInstance(IntentionActionWithTextCaching.class);
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
@@ -41,17 +40,28 @@ public class IntentionActionWithTextCaching
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
+  private final @Nullable String myToolId;
+  private final @Nullable TextRange myFixRange;
+
+  public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
+    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, null, (actWithText, act) -> {
+    });
+  }
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
+                                 @Nullable String toolId,
+                                 @Nullable TextRange fixRange,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+    myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
+    myFixRange = fixRange;
   }
 
   public @NotNull @IntentionName String getText() {
@@ -89,7 +99,7 @@ public class IntentionActionWithTextCaching
     return myOptionInspectionFixes;
   }
 
-  public @NotNull List<IntentionAction> getOptionActions() {
+  public @Unmodifiable @NotNull List<IntentionAction> getOptionActions() {
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
@@ -115,19 +125,18 @@ public class IntentionActionWithTextCaching
     return Comparing.compare(getText(), other.getText());
   }
 
-  Icon getIcon() {
+  public Icon getIcon() {
     return myIcon;
   }
 
   @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(myAction);
+  public @Nullable ShortcutSet getShortcut() {
+    return getShortcutSet(myAction);
   }
 
-  @Override
-  public @Nullable ShortcutSet getShortcut() {
-    ShortcutSet shortcut = myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
-    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(myAction);
+  public static @Nullable ShortcutSet getShortcutSet(@NotNull IntentionAction action) {
+    ShortcutSet shortcut = action instanceof ShortcutProvider ? ((ShortcutProvider)action).getShortcut() : null;
+    return shortcut != null ? shortcut : IntentionShortcutManager.getInstance().getShortcutSet(action);
   }
 
   @Override
@@ -159,11 +168,34 @@ public class IntentionActionWithTextCaching
     return true;
   }
 
+  public boolean hasSeparatorAbove() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)action).hasSeparatorAbove();
+    }
+    return false;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof IntentionActionWithTextCaching other)) return false;
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
+  }
+
+  public @Nullable String getToolId() {
+    return myToolId;
+  }
+
+  public int getFixOffset() {
+    return myFixRange == null ? -1 : myFixRange.getStartOffset();
+  }
+
+  /**
+   * @return <code>null</code> if the action belong to the problem at the caret offset
+   */
+  public @Nullable TextRange getFixRange() {
+    return myFixRange;
   }
 
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
@@ -176,8 +208,8 @@ public class IntentionActionWithTextCaching
   }
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
-                                             ShortcutProvider, PossiblyDumbAware {
+  private final class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
+                                                   ShortcutProvider {
     private final IntentionAction myAction;
     private final @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
@@ -185,11 +217,6 @@ public class IntentionActionWithTextCaching
                       @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
       myMarkInvoked = markInvoked;
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      return DumbService.isDumbAware(myAction);
     }
 
     @Override
@@ -214,7 +241,7 @@ public class IntentionActionWithTextCaching
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      SlowOperations.allowSlowOperations(() -> myAction.invoke(project, editor, file));
+      myAction.invoke(project, editor, file);
       myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
     }
 

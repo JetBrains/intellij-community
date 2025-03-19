@@ -1,0 +1,23 @@
+### auto-generated section `build intellij.laf.macos` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "macos_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "macos",
+  module_name = "intellij.laf.macos",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:java_compatibility",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":macos_resources"]
+)
+### auto-generated section `build intellij.laf.macos` end

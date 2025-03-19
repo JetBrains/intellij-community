@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.RoamingType;
@@ -44,8 +30,7 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     super(new ServiceState());
   }
 
-  @NotNull
-  public final String getRequirementsPath() {
+  public final @NotNull String getRequirementsPath() {
     return getState().myRequirementsPath;
   }
 
@@ -93,24 +78,18 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     return getRequirementsPath().equals(DEFAULT_REQUIREMENTS_PATH);
   }
 
-  @NotNull
-  public static PyPackageRequirementsSettings getInstance(@Nullable Module module) {
+  public static @NotNull PyPackageRequirementsSettings getInstance(@Nullable Module module) {
     return SERVICE_CLASSES.getService(module);
   }
 
-  @NotNull
-  public static PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
+  public static @NotNull PyDefaultProjectAwareServiceModuleConfigurator getConfigurator() {
     return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES);
   }
 
   public static final class ServiceState {
-    @NotNull
-    @OptionTag("requirementsPath")
-    public String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
+    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
 
-    @NotNull
-    @OptionTag("versionSpecifier")
-    public PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
+    @OptionTag("versionSpecifier") public @NotNull PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
 
     @OptionTag("removeUnused")
     public boolean myRemoveUnused = false;

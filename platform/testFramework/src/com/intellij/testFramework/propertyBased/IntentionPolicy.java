@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -6,14 +6,19 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModDisplayMessage;
+import com.intellij.modcommand.ModUpdateSystemOptions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IntentionPolicy {
 
@@ -28,7 +33,7 @@ public class IntentionPolicy {
    * </li> 
    */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    if (!action.startInWriteAction() || shouldSkipIntention(action.getText())) {
+    if ((!action.startInWriteAction() && action.asModCommandAction() == null) || shouldSkipIntention(action.getText())) {
       return false;
     }
     IntentionAction original = IntentionActionDelegate.unwrap(action);
@@ -86,16 +91,14 @@ public class IntentionPolicy {
    * @return list of elements which could be wrapped. One of them will be selected and wrapped and it will be checked that no intentions
    * changed. Returns an empty list by default which means that no wrapping should be performed
    */
-  @NotNull
-  public List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
+  public @NotNull List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
     return Collections.emptyList();
   }
 
   /**
    * @return a wrap prefix for {@link #getElementsToWrap(PsiElement)}.
    */
-  @NotNull
-  public String getWrapPrefix() { return "";}
+  public @NotNull String getWrapPrefix() { return "";}
 
   /**
    * @return a wrap suffix for {@link #getElementsToWrap(PsiElement)}.
@@ -108,5 +111,20 @@ public class IntentionPolicy {
    */
   public boolean shouldTolerateIntroducedError(@NotNull HighlightInfo info) {
     return false;
+  }
+
+  /**
+   * @param modCommand command to validate (already unpacked, not composite)
+   * @return non-null message if the command should be skipped, null if it's ok to execute such a command
+   */
+  public @Nullable String validateCommand(@NotNull ModCommand modCommand) {
+    // TODO: debug commands that do nothing. This should not be generally the case
+    if (modCommand instanceof ModDisplayMessage message && message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+      return "Error: " + message.messageText();
+    }
+    if (modCommand instanceof ModUpdateSystemOptions option) {
+      return "Updates "+option.options().stream().map(opt -> opt.bindId()).collect(Collectors.joining("; "));
+    }
+    return null;
   }
 }

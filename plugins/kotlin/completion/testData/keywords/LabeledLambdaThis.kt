@@ -3,7 +3,7 @@
 fun foo(): String.() -> Unit {
     return (label@ {
         f {
-            <caret>
+            thi<caret> // TODO too many lookup elements for an empty prefix
         }
     })
 }

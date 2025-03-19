@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.xml.analysis` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis",
+  module_name = "intellij.xml.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/xml-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/extensions",
+    "//platform/util",
+  ],
+  exports = [
+    "//xml/xml-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/extensions",
+  ],
+  runtime_deps = [":analysis_resources"]
+)
+### auto-generated section `build intellij.xml.analysis` end

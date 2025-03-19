@@ -1,0 +1,3 @@
+- name: lib/keymap-visualStudio.jar
+  modules:
+  - name: intellij.keymap.visualStudio

@@ -3,20 +3,17 @@
 2(3) WRITE ACCESS: x
 3(4) element: PyBinaryExpression
 4(5,6) READ ACCESS: x
-5(19) element: null. Condition: x % 4 == 0:false
+5(16) element: null. Condition: x % 4 == 0:false
 6(7) element: null. Condition: x % 4 == 0:true
 7(8) element: PyBinaryExpression
 8(9,10) READ ACCESS: x
-9(16) element: null. Condition: x % 400 == 0:true
-10(11) element: null. Condition: x % 400 == 0:false
+9(11) element: null. Condition: x % 400 == 0:false
+10(14) element: null. Condition: x % 400 == 0:true
 11(12,13) READ ACCESS: x
-12(19) element: null. Condition: x % 100 != 0:false
-13(14,15) element: null. Condition: x % 100 != 0:true
-14(19) element: null. Condition: (x % 400 == 0 or x % 100 != 0):false
-15(16) element: null. Condition: (x % 400 == 0 or x % 100 != 0):true
-16(17) element: PyStatementList. Condition: x % 4 == 0 and (x % 400 == 0 or x % 100 != 0):true
-17(18) element: PyExpressionStatement
-18(19) READ ACCESS: y
-19(20) element: PyExpressionStatement
-20(21) READ ACCESS: z
-21() element: null
+12(16) element: null. Condition: x % 100 != 0:false
+13(14) element: null. Condition: x % 100 != 0:true
+14(15) element: PyExpressionStatement
+15(16) READ ACCESS: y
+16(17) element: PyExpressionStatement
+17(18) READ ACCESS: z
+18() element: null

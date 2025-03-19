@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.ui;
 
@@ -13,6 +13,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,8 @@ import java.util.Properties;
 /*
  * @author MYakovlev
  */
-public class CreateFromTemplatePanel {
+@ApiStatus.Internal
+public final class CreateFromTemplatePanel {
 
   private JPanel myMainPanel;
   private JPanel myAttrPanel;
@@ -40,7 +42,7 @@ public class CreateFromTemplatePanel {
   private final AttributesDefaults myAttributesDefaults;
 
   public CreateFromTemplatePanel(final String[] unsetAttributes, final boolean mustEnterName,
-                                 @Nullable final AttributesDefaults attributesDefaults){
+                                 final @Nullable AttributesDefaults attributesDefaults){
     myMustEnterName = mustEnterName;
     myUnsetAttributes = unsetAttributes;
     myAttributesDefaults = attributesDefaults;
@@ -182,8 +184,7 @@ public class CreateFromTemplatePanel {
     myMainPanel.revalidate();
   }
 
-  @Nullable
-  public String getFileName(){
+  public @Nullable String getFileName(){
     if (myFilenameField!=null) {
       String fileName = myFilenameField.getText();
       return fileName == null ? "" : fileName;

@@ -1,0 +1,9 @@
+// "Wrap element with 'listOf()' call" "true"
+// WITH_STDLIB
+
+fun foo(a: String) {
+    val strings: List<String> = listOf(a)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

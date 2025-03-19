@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveFilesOrDirectories
 
@@ -119,6 +119,11 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
 
     override fun afterMove(newElement: PsiElement) {
 
+    }
+
+    override fun retargetUsages(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>): List<UsageInfo> {
+        // usages are processed through `FileUsagesWrapper`
+        return usages
     }
 
     override fun postProcessUsages(usages: Array<out UsageInfo>, newDirMapper: Function<in PsiDirectory, out PsiDirectory>) {

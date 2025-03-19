@@ -44,9 +44,9 @@ import static org.zmlx.hg4idea.util.HgErrorUtil.ensureSuccess;
 
 public class HgRegularUpdater implements HgUpdater {
 
-  @NotNull private final Project project;
-  @NotNull private final VirtualFile repoRoot;
-  @NotNull private final HgUpdateConfigurationSettings updateConfiguration;
+  private final @NotNull Project project;
+  private final @NotNull VirtualFile repoRoot;
+  private final @NotNull HgUpdateConfigurationSettings updateConfiguration;
   private static final Logger LOG = Logger.getInstance(HgRegularUpdater.class);
 
   public HgRegularUpdater(@NotNull Project project, @NotNull VirtualFile repository, @NotNull HgUpdateConfigurationSettings configuration) {
@@ -256,7 +256,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void abortOnLocalChanges() throws VcsException {
-    if (getLocalChanges().size() != 0) {
+    if (!getLocalChanges().isEmpty()) {
       throw new VcsException(HgBundle.message("hg4idea.update.error.localchanges", repoRoot.getPath()));
     }
   }

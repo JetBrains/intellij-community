@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
-public class SPIAnnotator implements Annotator{
+public final class SPIAnnotator implements Annotator{
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);

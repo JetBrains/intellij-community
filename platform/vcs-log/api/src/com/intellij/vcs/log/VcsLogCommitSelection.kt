@@ -4,22 +4,25 @@ package com.intellij.vcs.log
 import java.util.function.Consumer
 
 /**
- * Commit selection in the Vcs Log table.
+ * Selection of commits in the Vcs Log Graph.
  *
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
 interface VcsLogCommitSelection {
-  /**
-   * Selection size.
-   */
-  val size: Int
 
   /**
-   * Identifiers of the commits selected in the table.
+   * Rows in [com.intellij.vcs.log.graph.VisibleGraph]
    *
-   * @see com.intellij.vcs.log.data.VcsLogStorage.getCommitIndex
+   * @see com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
    */
-  val ids: List<Int>
+  val rows: IntArray
+
+  /**
+   * Identifiers of the selected commits in [com.intellij.vcs.log.graph.VisibleGraph]
+   *
+   * @see VcsLogDataProvider.getCommitIndex
+   */
+  val ids: List<VcsLogCommitStorageIndex>
 
   /**
    * [CommitId] of the commits selected in the table.
@@ -48,24 +51,10 @@ interface VcsLogCommitSelection {
   val cachedFullDetails: List<VcsFullCommitDetails>
 
   /**
-   * Returns a lazy list of commit details for this selection.
-   *
-   * @param detailsGetter function which gets commit details by commit id.
-   */
-  fun <T> getDetails(detailsGetter: (Int) -> T): List<T>
-
-  /**
    * Sends a request to load full details of the selected commits in a background thread.
    * After all details are loaded they are provided to the consumer in the EDT.
    *
    * @param consumer called in EDT after all details are loaded.
    */
   fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>)
-
-  companion object {
-    @JvmStatic
-    fun VcsLogCommitSelection.isEmpty() = size == 0
-    @JvmStatic
-    fun VcsLogCommitSelection.isNotEmpty() = size != 0
-  }
 }

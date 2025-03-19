@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -29,18 +29,16 @@ import java.util.*;
 /**
  * Plugin ID and {@code <module>} entries.
  */
-public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
+public final class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdModuleIndex");
 
-  @NotNull
   @Override
-  public ID<String, Void> getName() {
+  public @NotNull ID<String, Void> getName() {
     return NAME;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Void> getValueExternalizer() {
+  public @NotNull DataExternalizer<Void> getValueExternalizer() {
     return VoidDataExternalizer.INSTANCE;
   }
 
@@ -54,15 +52,14 @@ public class PluginIdModuleIndex extends PluginXmlIndexBase<String, Void> {
     return ContainerUtil.newHashMap(ids, Collections.nCopies(ids.size(), null));
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @Override
   public int getVersion() {
-    return 2;
+    return BASE_INDEX_VERSION + 2;
   }
 
   public static Collection<VirtualFile> getFiles(@NotNull Project project, @NotNull String idOrModule) {

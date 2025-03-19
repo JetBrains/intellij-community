@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.util.ui.JBInsets;
@@ -10,7 +10,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaTableHeaderBorder implements Border, UIResource {
+public final class DarculaTableHeaderBorder implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {

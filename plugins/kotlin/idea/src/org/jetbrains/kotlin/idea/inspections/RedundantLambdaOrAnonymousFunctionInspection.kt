@@ -24,7 +24,7 @@ class RedundantLambdaOrAnonymousFunctionInspection : AbstractKotlinInspection() 
         }
 
         private fun processExpression(function: KtFunction) {
-            if (findCallIfApplicableTo(function) == null) return
+            if (Util.findCallIfApplicableTo(function) == null) return
             val message = if (function is KtNamedFunction)
                 KotlinBundle.message("inspection.redundant.anonymous.function.description")
             else
@@ -46,7 +46,7 @@ class RedundantLambdaOrAnonymousFunctionInspection : AbstractKotlinInspection() 
         }
     }
 
-    companion object {
+    object Util {
         fun findCallIfApplicableTo(function: KtFunction): KtExpression? = if (function.hasBody())
             KotlinInlineAnonymousFunctionProcessor.findCallExpression(function)
         else

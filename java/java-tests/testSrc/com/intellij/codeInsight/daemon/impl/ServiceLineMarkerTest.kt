@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.impl.JavaServiceUtil.ServiceNavigationHandler
+import com.intellij.codeInsight.daemon.impl.JavaServiceLineMarkerUtil.ServiceNavigationHandler
 import com.intellij.icons.AllIcons
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
@@ -14,14 +14,14 @@ import org.assertj.core.api.Assertions.assertThat
 class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
-  override fun isIconRequired() = true
+  override fun isIconRequired(): Boolean = true
 
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("foo/bar/MyService.java", "package foo.bar;\npublic class MyService { void doWork(); }")
   }
 
-  fun testProvidesAsSubclass() =
+  fun testProvidesAsSubclass(): Unit =
     doTestImplementer("""
         public class <caret>MyServiceImpl implements MyService {
             @Override public void doWork() {}
@@ -33,6 +33,25 @@ class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
               public static MyService <caret>provider() {
                   return new MyService() { @Override public void doWork() {} };
               }
+          }""".trimIndent())
+  }
+
+  fun testSingleConstructorGutter() {
+    doTestImplementer("""
+          public class MyServiceImpl implements MyService {
+              public <caret>MyServiceImpl() {}
+              @Override public void doWork() {}
+          }""".trimIndent())
+  }
+
+  fun testSingleProviderGutter() {
+    doTestImplementer("""
+          public class MyServiceImpl implements MyService {
+              public MyServiceImpl() {}
+              public static MyService <caret>provider() {
+                  return new MyServiceImpl();
+              }
+              @Override public void doWork() {}
           }""".trimIndent())
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.DiffContentFactory;
@@ -23,15 +9,13 @@ import com.intellij.diff.actions.impl.MutableDiffRequestChain;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.editor.DiffVirtualFile;
+import com.intellij.diff.util.BlankDiffWindowUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +29,7 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
     presentation.setEnabled(canShow);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       presentation.setVisible(canShow);
     }
   }
@@ -65,21 +49,18 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     return !DiffUtil.isFileWithoutContent(file);
   }
 
-  @Nullable
-  protected abstract DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
+  protected abstract @Nullable DiffRequestChain getDiffRequestChain(@NotNull AnActionEvent e);
 
-  @NotNull
-  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                       @NotNull VirtualFile file1,
-                                                                       @NotNull VirtualFile file2) {
+  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                             @NotNull VirtualFile file1,
+                                                                             @NotNull VirtualFile file2) {
     return createMutableChainFromFiles(project, file1, file2, null);
   }
 
-  @NotNull
-  protected static MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
-                                                                       @NotNull VirtualFile file1,
-                                                                       @NotNull VirtualFile file2,
-                                                                       @Nullable VirtualFile baseFile) {
+  public static @NotNull MutableDiffRequestChain createMutableChainFromFiles(@Nullable Project project,
+                                                                             @NotNull VirtualFile file1,
+                                                                             @NotNull VirtualFile file2,
+                                                                             @Nullable VirtualFile baseFile) {
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DiffRequestFactory requestFactory = DiffRequestFactory.getInstance();
 
@@ -92,17 +73,18 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
         (baseContent == null || baseContent instanceof DocumentContent)) {
       chain = BlankDiffWindowUtil.createBlankDiffRequestChain((DocumentContent)content1,
                                                               (DocumentContent)content2,
-                                                              (DocumentContent)baseContent);
+                                                              (DocumentContent)baseContent,
+                                                              project);
     }
     else {
-      chain = new MutableDiffRequestChain(content1, baseContent, content2);
+      chain = new MutableDiffRequestChain(content1, baseContent, content2, project);
     }
 
     if (baseFile != null) {
       chain.setWindowTitle(requestFactory.getTitle(baseFile));
     }
     else {
-      chain.setWindowTitle(requestFactory.getTitle(file1, file2));
+      chain.setWindowTitle(requestFactory.getTitleForComparison(file1, file2));
     }
     return chain;
   }

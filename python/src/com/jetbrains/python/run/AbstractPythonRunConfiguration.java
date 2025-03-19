@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -27,6 +27,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -35,10 +36,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 
 /**
  * @author Leonid Shalupov
@@ -117,9 +117,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     };
   }
 
-  @NotNull
   @Override
-  public final SettingsEditor<T> getConfigurationEditor() {
+  public final @NotNull SettingsEditor<T> getConfigurationEditor() {
     if (Registry.is("python.new.run.config", false) && isNewUiSupported()) {
       // TODO: actually, we should return result of `PythonExtendedConfigurationEditor.create()` call, but it produces side effects
       // investigation needed PY-17716
@@ -184,7 +183,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
             throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
           }
         }
-        else if (getSdkHome() == null || !PythonSdkType.getInstance().isValidSdkHome(getSdkHome())) {
+        else if (!PySdkExtKt.getSdkSeemsValid(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }
@@ -212,8 +211,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return sdkHome;
   }
 
-  @Nullable
-  public String getInterpreterPath() {
+  public @Nullable String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
       Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
@@ -230,8 +228,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  @Nullable
-  public Sdk getSdk() {
+  @Transient
+  public @Nullable Sdk getSdk() {
     if (myUseModuleSdk) {
       return PythonSdkUtil.findPythonSdk(getModule());
     }
@@ -241,6 +239,18 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     else {
       return PythonSdkUtil.findSdkByPath(getSdkHome());
     }
+  }
+
+  private @NotNull List<String> myEnvFiles = Collections.emptyList();
+
+  @Override
+  public @NotNull List<String> getEnvFilePaths() {
+    return myEnvFiles;
+  }
+
+  @Override
+  public void setEnvFilePaths(@NotNull List<String> envFiles) {
+    myEnvFiles = envFiles;
   }
 
   @Override
@@ -254,6 +264,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     if (sdkName != null) {
       mySdk = PythonSdkUtil.findSdkByKey(sdkName);
     }
+
+    var output = JDOMExternalizerUtil.readField(element, "ENV_FILES");
+    myEnvFiles = output != null ? StringUtil.split(output, File.pathSeparator) : Collections.emptyList();
 
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
@@ -281,6 +294,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
+    JDOMExternalizerUtil.writeField(element, "ENV_FILES", String.join(File.pathSeparator, myEnvFiles));
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
     JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
@@ -332,14 +346,14 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
+  @Transient
   public void setSdk(@Nullable Sdk sdk) {
     mySdk = sdk;
   }
 
   @Override
-  @Nullable
   @Transient
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return getConfigurationModule().getModule();
   }
 
@@ -374,6 +388,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
+    target.setEnvFilePaths(source.getEnvFilePaths());
     target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
@@ -407,7 +422,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineFirst(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -416,7 +430,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   /**
    * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
-   *
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
@@ -424,7 +437,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   /**
    * Alters PATH so that a virtualenv is activated, if present.
-   *
    */
   protected void patchCommandLineForVirtualenv(@NotNull GeneralCommandLine commandLine, @NotNull Sdk sdk) {
     PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk);
@@ -454,9 +466,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * @return working directory to run, never null, does its best to guess which dir to use.
    * Unlike {@link #getWorkingDirectory()} it does not simply take directory from config.
    */
-  @NotNull
-  public String getWorkingDirectorySafe() {
-    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : myWorkingDirectory;
+  public @NotNull String getWorkingDirectorySafe() {
+    final String result = StringUtil.isEmpty(myWorkingDirectory) ? getProject().getBasePath() : getExpandedWorkingDir(this);
     if (result != null) {
       return result;
     }
@@ -468,8 +479,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     return new File(".").getAbsolutePath();
   }
 
-  @Nullable
-  private String getFirstModuleRoot() {
+  private @Nullable String getFirstModuleRoot() {
     final Module module = getModule();
     if (module == null) {
       return null;
@@ -496,7 +506,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    * <p>
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
-  public void addTestSpecsAsParameters(@NotNull final ParamsGroup paramsGroup, @NotNull final List<String> testSpecs) {
+  public void addTestSpecsAsParameters(final @NotNull ParamsGroup paramsGroup, final @NotNull List<String> testSpecs) {
     // By default we simply add them as arguments
     paramsGroup.addParameters(testSpecs);
   }

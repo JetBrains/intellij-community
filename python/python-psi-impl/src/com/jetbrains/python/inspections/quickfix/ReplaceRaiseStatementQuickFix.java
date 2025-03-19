@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -26,24 +26,22 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceRaiseStatementQuickFix implements LocalQuickFix {
-  @NotNull
+public class ReplaceRaiseStatementQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.raise.statement");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement raiseStatement = descriptor.getPsiElement();
-    if (raiseStatement instanceof PyRaiseStatement) {
-      PyExpression[] expressions = ((PyRaiseStatement)raiseStatement).getExpressions();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyRaiseStatement) {
+      PyExpression[] expressions = ((PyRaiseStatement)element).getExpressions();
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       String newExpressionText = expressions[0].getText() + "(" + expressions[1].getText() + ")";
       if (expressions.length == 2) {
-        raiseStatement.replace(elementGenerator.createFromText(LanguageLevel.forElement(raiseStatement), PyRaiseStatement.class, "raise " + newExpressionText));
+        element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyRaiseStatement.class, "raise " + newExpressionText));
       } else if (expressions.length == 3) {
-        raiseStatement.replace(elementGenerator.createFromText(LanguageLevel.forElement(raiseStatement), PyRaiseStatement.class,
+        element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyRaiseStatement.class,
                                                                "raise " + newExpressionText + ".with_traceback(" + expressions[2].getText() + ")"));
       }
     }

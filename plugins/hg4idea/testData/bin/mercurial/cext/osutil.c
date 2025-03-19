@@ -73,19 +73,11 @@ struct listdir_stat {
 };
 #endif
 
-#ifdef IS_PY3K
 #define listdir_slot(name) \
 	static PyObject *listdir_stat_##name(PyObject *self, void *x) \
 	{ \
 		return PyLong_FromLong(((struct listdir_stat *)self)->st.name); \
 	}
-#else
-#define listdir_slot(name) \
-	static PyObject *listdir_stat_##name(PyObject *self, void *x) \
-	{ \
-		return PyInt_FromLong(((struct listdir_stat *)self)->st.name); \
-	}
-#endif
 
 listdir_slot(st_dev)
 listdir_slot(st_mode)
@@ -206,7 +198,7 @@ static PyObject *make_item(const WIN32_FIND_DATAA *fd, int wantstat)
 		? _S_IFDIR : _S_IFREG;
 
 	if (!wantstat)
-		return Py_BuildValue(PY23("si", "yi"), fd->cFileName, kind);
+		return Py_BuildValue("yi", fd->cFileName, kind);
 
 	py_st = PyObject_CallObject((PyObject *)&listdir_stat_type, NULL);
 	if (!py_st)
@@ -224,7 +216,7 @@ static PyObject *make_item(const WIN32_FIND_DATAA *fd, int wantstat)
 	if (kind == _S_IFREG)
 		stp->st_size = ((__int64)fd->nFileSizeHigh << 32)
 				+ fd->nFileSizeLow;
-	return Py_BuildValue(PY23("siN", "yiN"), fd->cFileName,
+	return Py_BuildValue("yiN", fd->cFileName,
 		kind, py_st);
 }
 
@@ -412,10 +404,10 @@ static PyObject *_listdir_stat(char *path, int pathlen, int keepstat,
 			PyObject *stat = makestat(&st);
 			if (!stat)
 				goto error;
-			elem = Py_BuildValue(PY23("siN", "yiN"), ent->d_name,
+			elem = Py_BuildValue("yiN", ent->d_name,
 					     kind, stat);
 		} else
-			elem = Py_BuildValue(PY23("si", "yi"), ent->d_name,
+			elem = Py_BuildValue("yi", ent->d_name,
 					     kind);
 		if (!elem)
 			goto error;
@@ -593,10 +585,10 @@ static PyObject *_listdir_batch(char *path, int pathlen, int keepstat,
 				stat = makestat(&st);
 				if (!stat)
 					goto error;
-				elem = Py_BuildValue(PY23("siN", "yiN"),
+				elem = Py_BuildValue("yiN",
 						     filename, kind, stat);
 			} else
-				elem = Py_BuildValue(PY23("si", "yi"),
+				elem = Py_BuildValue("yi",
 						     filename, kind);
 			if (!elem)
 				goto error;
@@ -693,84 +685,11 @@ bail:
 	return NULL;
 }
 
-/*
- * recvfds() simply does not release GIL during blocking io operation because
- * command server is known to be single-threaded.
- *
- * Old systems such as Solaris don't provide CMSG_LEN, msg_control, etc.
- * Currently, recvfds() is not supported on these platforms.
- */
-#ifdef CMSG_LEN
-
-static ssize_t recvfdstobuf(int sockfd, int **rfds, void *cbuf, size_t cbufsize)
-{
-	char dummy[1];
-	struct iovec iov = {dummy, sizeof(dummy)};
-	struct msghdr msgh = {0};
-	struct cmsghdr *cmsg;
-
-	msgh.msg_iov = &iov;
-	msgh.msg_iovlen = 1;
-	msgh.msg_control = cbuf;
-	msgh.msg_controllen = (socklen_t)cbufsize;
-	if (recvmsg(sockfd, &msgh, 0) < 0)
-		return -1;
-
-	for (cmsg = CMSG_FIRSTHDR(&msgh); cmsg;
-	     cmsg = CMSG_NXTHDR(&msgh, cmsg)) {
-		if (cmsg->cmsg_level != SOL_SOCKET ||
-		    cmsg->cmsg_type != SCM_RIGHTS)
-			continue;
-		*rfds = (int *)CMSG_DATA(cmsg);
-		return (cmsg->cmsg_len - CMSG_LEN(0)) / sizeof(int);
-	}
-
-	*rfds = cbuf;
-	return 0;
-}
-
-static PyObject *recvfds(PyObject *self, PyObject *args)
-{
-	int sockfd;
-	int *rfds = NULL;
-	ssize_t rfdscount, i;
-	char cbuf[256];
-	PyObject *rfdslist = NULL;
-
-	if (!PyArg_ParseTuple(args, "i", &sockfd))
-		return NULL;
-
-	rfdscount = recvfdstobuf(sockfd, &rfds, cbuf, sizeof(cbuf));
-	if (rfdscount < 0)
-		return PyErr_SetFromErrno(PyExc_OSError);
-
-	rfdslist = PyList_New(rfdscount);
-	if (!rfdslist)
-		goto bail;
-	for (i = 0; i < rfdscount; i++) {
-		PyObject *obj = PyLong_FromLong(rfds[i]);
-		if (!obj)
-			goto bail;
-		PyList_SET_ITEM(rfdslist, i, obj);
-	}
-	return rfdslist;
-
-bail:
-	Py_XDECREF(rfdslist);
-	return NULL;
-}
-
-#endif /* CMSG_LEN */
-
 /* allow disabling setprocname via compiler flags */
 #ifndef SETPROCNAME_USE_NONE
 #if defined(HAVE_SETPROCTITLE)
 /* setproctitle is the first choice - available in FreeBSD */
 #define SETPROCNAME_USE_SETPROCTITLE
-#elif (defined(__linux__) || defined(__APPLE__)) && PY_MAJOR_VERSION == 2
-/* rewrite the argv buffer in place - works in Linux and OS X. Py_GetArgcArgv
- * in Python 3 returns the copied wchar_t **argv, thus unsupported. */
-#define SETPROCNAME_USE_ARGVREWRITE
 #else
 #define SETPROCNAME_USE_NONE
 #endif
@@ -780,49 +699,11 @@ bail:
 static PyObject *setprocname(PyObject *self, PyObject *args)
 {
 	const char *name = NULL;
-	if (!PyArg_ParseTuple(args, PY23("s", "y"), &name))
+	if (!PyArg_ParseTuple(args, "y", &name))
 		return NULL;
 
 #if defined(SETPROCNAME_USE_SETPROCTITLE)
 	setproctitle("%s", name);
-#elif defined(SETPROCNAME_USE_ARGVREWRITE)
-	{
-		static char *argvstart = NULL;
-		static size_t argvsize = 0;
-		if (argvstart == NULL) {
-			int argc = 0, i;
-			char **argv = NULL;
-			char *argvend;
-			extern void Py_GetArgcArgv(int *argc, char ***argv);
-			Py_GetArgcArgv(&argc, &argv);
-			/* Py_GetArgcArgv may not do much if a custom python
-			 * launcher is used that doesn't record the information
-			 * it needs. Let's handle this gracefully instead of
-			 * segfaulting. */
-			if (argv != NULL)
-				argvend = argvstart = argv[0];
-			else
-				argvend = argvstart = NULL;
-
-			/* Check the memory we can use. Typically, argv[i] and
-			 * argv[i + 1] are continuous. */
-			for (i = 0; i < argc; ++i) {
-				size_t len;
-				if (argv[i] > argvend || argv[i] < argvstart)
-					break; /* not continuous */
-				len = strlen(argv[i]);
-				argvend = argv[i] + len + 1 /* '\0' */;
-			}
-			if (argvend > argvstart) /* sanity check */
-				argvsize = argvend - argvstart;
-		}
-
-		if (argvstart && argvsize > 1) {
-			int n = snprintf(argvstart, argvsize, "%s", name);
-			if (n >= 0 && (size_t)n < argvsize)
-				memset(argvstart + n, 0, argvsize - n);
-		}
-	}
 #endif
 
 	Py_RETURN_NONE;
@@ -1135,14 +1016,14 @@ static PyObject *getfstype(PyObject *self, PyObject *args)
 	const char *path = NULL;
 	struct statfs buf;
 	int r;
-	if (!PyArg_ParseTuple(args, PY23("s", "y"), &path))
+	if (!PyArg_ParseTuple(args, "y", &path))
 		return NULL;
 
 	memset(&buf, 0, sizeof(buf));
 	r = statfs(path, &buf);
 	if (r != 0)
 		return PyErr_SetFromErrno(PyExc_OSError);
-	return Py_BuildValue(PY23("s", "y"), describefstype(&buf));
+	return Py_BuildValue("y", describefstype(&buf));
 }
 #endif /* defined(HAVE_LINUX_STATFS) || defined(HAVE_BSD_STATFS) */
 
@@ -1153,14 +1034,14 @@ static PyObject *getfsmountpoint(PyObject *self, PyObject *args)
 	const char *path = NULL;
 	struct statfs buf;
 	int r;
-	if (!PyArg_ParseTuple(args, PY23("s", "y"), &path))
+	if (!PyArg_ParseTuple(args, "y", &path))
 		return NULL;
 
 	memset(&buf, 0, sizeof(buf));
 	r = statfs(path, &buf);
 	if (r != 0)
 		return PyErr_SetFromErrno(PyExc_OSError);
-	return Py_BuildValue(PY23("s", "y"), buf.f_mntonname);
+	return Py_BuildValue("y", buf.f_mntonname);
 }
 #endif /* defined(HAVE_BSD_STATFS) */
 
@@ -1195,8 +1076,7 @@ static PyObject *listdir(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	static char *kwlist[] = {"path", "stat", "skip", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, PY23("s#|OO:listdir",
-							    "y#|OO:listdir"),
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#|OO:listdir",
 			kwlist, &path, &plen, &statobj, &skipobj))
 		return NULL;
 
@@ -1227,12 +1107,8 @@ static PyObject *posixfile(PyObject *self, PyObject *args, PyObject *kwds)
 	char fpmode[4];
 	int fppos = 0;
 	int plus;
-#ifndef IS_PY3K
-	FILE *fp;
-#endif
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, PY23("et|si:posixfile",
-							  "et|yi:posixfile"),
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "et|yi:posixfile",
 					 kwlist,
 					 Py_FileSystemDefaultEncoding,
 					 &name, &mode, &bufsize))
@@ -1302,26 +1178,9 @@ static PyObject *posixfile(PyObject *self, PyObject *args, PyObject *kwds)
 		PyErr_SetFromErrnoWithFilename(PyExc_IOError, name);
 		goto bail;
 	}
-#ifndef IS_PY3K
-	fp = _fdopen(fd, fpmode);
-	if (fp == NULL) {
-		_close(fd);
-		PyErr_SetFromErrnoWithFilename(PyExc_IOError, name);
-		goto bail;
-	}
-
-	file_obj = PyFile_FromFile(fp, name, mode, fclose);
-	if (file_obj == NULL) {
-		fclose(fp);
-		goto bail;
-	}
-
-	PyFile_SetBufSize(file_obj, bufsize);
-#else
 	file_obj = PyFile_FromFd(fd, name, mode, bufsize, NULL, NULL, NULL, 1);
 	if (file_obj == NULL)
 		goto bail;
-#endif
 bail:
 	PyMem_Free(name);
 	return file_obj;
@@ -1357,10 +1216,6 @@ static PyMethodDef methods[] = {
 	{"statfiles", (PyCFunction)statfiles, METH_VARARGS | METH_KEYWORDS,
 	 "stat a series of files or symlinks\n"
 "Returns None for non-existent entries and entries of other types.\n"},
-#ifdef CMSG_LEN
-	{"recvfds", (PyCFunction)recvfds, METH_VARARGS,
-	 "receive list of file descriptors via socket\n"},
-#endif
 #ifndef SETPROCNAME_USE_NONE
 	{"setprocname", (PyCFunction)setprocname, METH_VARARGS,
 	 "set process title (best-effort)\n"},
@@ -1387,7 +1242,6 @@ static PyMethodDef methods[] = {
 
 static const int version = 4;
 
-#ifdef IS_PY3K
 static struct PyModuleDef osutil_module = {
 	PyModuleDef_HEAD_INIT,
 	"osutil",
@@ -1406,14 +1260,3 @@ PyMODINIT_FUNC PyInit_osutil(void)
 	PyModule_AddIntConstant(m, "version", version);
 	return m;
 }
-#else
-PyMODINIT_FUNC initosutil(void)
-{
-	PyObject *m;
-	if (PyType_Ready(&listdir_stat_type) == -1)
-		return;
-
-	m = Py_InitModule3("osutil", methods, osutil_doc);
-	PyModule_AddIntConstant(m, "version", version);
-}
-#endif

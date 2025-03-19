@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.platform.ijent.community.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "community-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "community-impl",
+  module_name = "intellij.platform.ijent.community.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "@lib//:opentelemetry",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/diagnostic/telemetry",
+    "//platform/eel-impl",
+    "//platform/ijent",
+    "//platform/eel-provider",
+  ],
+  runtime_deps = [":community-impl_resources"]
+)
+### auto-generated section `build intellij.platform.ijent.community.impl` end

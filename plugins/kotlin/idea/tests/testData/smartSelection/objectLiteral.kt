@@ -11,6 +11,6 @@ fun foo() {
 }
 
 /*
-object : T {...}
-object : T {...}.foo(...)
+object : T {…}
+object : T {…}.foo(…)
 */

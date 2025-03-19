@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.ast.PyAstFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NonNls;
@@ -25,8 +12,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
-  List<PyStatement> getStatements();
+public interface PyFile extends PyAstFile, PyElement, PsiFile, PyDocStringOwner, ScopeOwner {
+  @Override
+  default List<PyStatement> getStatements() {
+    //noinspection unchecked
+    return (List<PyStatement>)PyAstFile.super.getStatements();
+  }
 
   @NotNull
   List<PyClass> getTopLevelClasses();
@@ -45,7 +36,11 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   @Nullable
   PyTargetExpression findTopLevelAttribute(@NotNull String name);
 
-  LanguageLevel getLanguageLevel();
+  @NotNull
+  List<PyTypeAliasStatement> getTypeAliasStatements();
+
+  @Nullable
+  PyTypeAliasStatement findTypeAliasStatement(@NotNull String name);
 
   /**
    * Return the list of all 'from ... import' statements in the top-level scope of the file.
@@ -105,11 +100,6 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   List<String> getDunderAll();
 
   /**
-   * Return true if the file contains a 'from __future__ import ...' statement with given feature.
-   */
-  boolean hasImportFromFuture(FutureFeature feature);
-
-  /**
    * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning.
    *
    * @return the deprecation message or null if the function is not deprecated.
@@ -120,4 +110,9 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
    * Returns the sequential list of import statements in the beginning of the file.
    */
   List<PyImportStatementBase> getImportBlock();
+
+  @Override
+  default @Nullable PyStringLiteralExpression getDocStringExpression() {
+    return (PyStringLiteralExpression)PyAstFile.super.getDocStringExpression();
+  }
 }

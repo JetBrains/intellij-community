@@ -5,7 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.io.readChars
 import com.intellij.util.io.write
@@ -18,14 +18,13 @@ import org.yaml.snakeyaml.representer.Represent
 import org.yaml.snakeyaml.representer.Representer
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.*
 import java.util.regex.Pattern
 
 internal interface SnapshotFileUsageListener {
   fun beforeMatch(file: Path)
 }
 
-internal val snapshotFileUsageListeners = ConcurrentCollectionFactory.createConcurrentSet<SnapshotFileUsageListener>()
+internal val snapshotFileUsageListeners: MutableSet<SnapshotFileUsageListener> = ConcurrentCollectionFactory.createConcurrentSet<SnapshotFileUsageListener>()
 
 class ListAssertEx<ELEMENT>(actual: List<ELEMENT>?) : ListAssert<ELEMENT>(actual) {
   fun toMatchSnapshot(snapshotFile: Path) {
@@ -62,7 +61,7 @@ internal fun loadSnapshotContent(snapshotFile: Path, convertLineSeparators: Bool
   return content
 }
 
-@Throws(FileComparisonFailure::class)
+@Throws(FileComparisonFailedError::class)
 fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolean = isUpdateSnapshotIfMismatch(), writeIfNotFound: Boolean = true) {
   val actualContent = if (actual is CharSequence) getNormalizedActualContent(actual) else dumpData(actual).trimEnd()
 
@@ -95,7 +94,7 @@ fun compareFileContent(actual: Any, snapshotFile: Path, updateIfMismatch: Boolea
                   "Expected: '${expected.contextAround(firstMismatch, 10)}'\n" +
                   "Actual  : '${actualContent.contextAround(firstMismatch, 10)}'\n" +
                   "Inspect your code changes or run with `-Dtest.update.snapshots` to update"
-    throw FileComparisonFailure(message, expected.toString(), actualContent.toString(), snapshotFile.toString())
+    throw FileComparisonFailedError(message, expected.toString(), actualContent.toString(), snapshotFile.toString())
   }
 }
 

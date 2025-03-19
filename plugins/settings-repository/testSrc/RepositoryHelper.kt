@@ -3,11 +3,11 @@ package org.jetbrains.settingsRepository.test
 
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.isFile
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
   assertThat(path1).isDirectory()
@@ -22,7 +22,7 @@ fun compareFiles(path1: Path, path2: Path, vararg localExcludes: String) {
     for (child2 in it) {
       val childName = child2.fileName.toString()
       val child1 = path1.resolve(childName)
-      if (child1.isFile()) {
+      if (child1.isRegularFile()) {
         assertThat(child2).hasSameTextualContentAs(child1)
       }
       else if (!child1.exists()) {

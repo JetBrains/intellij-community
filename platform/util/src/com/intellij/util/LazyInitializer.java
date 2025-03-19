@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.Contract;
@@ -19,7 +19,7 @@ public final class LazyInitializer {
     return new LazyValue<>(initializer);
   }
 
-  public static class LazyValue<T> {
+  public static final class LazyValue<T> {
     private final @NotNull Supplier<? extends T> initializer;
 
     public LazyValue(@NotNull Supplier<? extends T> initializer) {
@@ -51,7 +51,7 @@ public final class LazyInitializer {
       return value;
     }
 
-    protected void set(T value) {
+    void set(T value) {
       //noinspection SynchronizeOnThis
       synchronized(this) {
         this.value = value;

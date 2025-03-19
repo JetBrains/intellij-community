@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -28,9 +28,9 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
     return ActionUpdateThread.BGT;
   }
 
-  @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
+  protected abstract @NotNull AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
 
-  @NotNull protected abstract ConfigurationType getConfigurationType();
+  protected abstract @NotNull ConfigurationType getConfigurationType();
 
   protected abstract boolean isPatternBasedConfiguration(T configuration);
 
@@ -59,7 +59,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
       JBPopupFactory.getInstance().createListPopup(
         new BaseListPopupStep<>(JavaCompilerBundle.message("popup.title.choose.suite.to.add"), patternConfigurations) {
           @Override
-          public PopupStep onChosen(T configuration, boolean finalChoice) {
+          public PopupStep<?> onChosen(T configuration, boolean finalChoice) {
             for (PsiElement aClass : classes) {
               String qName = getPatternBasedProducer().getQName(aClass);
               if (qName != null) {
@@ -74,9 +74,8 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
             return configuration.getIcon();
           }
 
-          @NotNull
           @Override
-          public String getTextFor(T value) {
+          public @NotNull String getTextFor(T value) {
             return value.getName();
           }
         }).showInBestPositionFor(dataContext);

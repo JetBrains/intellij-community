@@ -5,7 +5,9 @@ import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.sun.jna.platform.win32.User32;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class RemoteDesktopDetector extends RemoteDesktopService {
   private static final Logger LOG = Logger.getInstance(RemoteDesktopDetector.class);
   private volatile boolean myFailureDetected;

@@ -1,38 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
-import org.jetbrains.kotlin.idea.debugger.core.VariableWithLocation
+import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.getInlineDepth
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
-import org.jetbrains.kotlin.idea.debugger.core.isKotlinFakeLineNumber
-import org.jetbrains.kotlin.idea.debugger.core.filterRepeatedVariables
-import org.jetbrains.kotlin.idea.debugger.core.sortedVariablesWithLocation
+import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 
 object InlineStackTraceCalculator {
-    fun calculateInlineStackTrace(frameProxy: StackFrameProxyImpl): List<XStackFrame> =
-        frameProxy.stackFrame.computeKotlinStackFrameInfos().map {
-            it.toXStackFrame(frameProxy)
+    fun calculateInlineStackTrace(descriptor: StackFrameDescriptorImpl): List<XStackFrame> =
+        descriptor.frameProxy.stackFrame.computeKotlinStackFrameInfos().map {
+            it.toXStackFrame(descriptor)
         }.reversed()
 
     // Calculate the variables that are visible in the top stack frame.
-    fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> =
-        frameProxy.stackFrame.computeKotlinStackFrameInfos().last().visibleVariableProxies(frameProxy)
+    fun calculateVisibleVariables(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> {
+        // This is called from CoroutineStackFrame even for Java frames. We only need to compute for Kotlin frames.
+        return if (frameProxy.location().isInKotlinSources()) {
+            frameProxy.stackFrame.computeKotlinStackFrameInfos()
+                .lastOrNull()?.visibleVariableProxies(frameProxy) ?: emptyList()
+        } else {
+            frameProxy.safeVisibleVariables()
+        }
+    }
 }
 
 private val INLINE_LAMBDA_REGEX =
-    "${JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.replace("$", "\\$")}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
+    "${Regex.escape(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)}-(.+)-[^\$]+\\$([^\$]+)\\$.*"
         .toRegex()
+
+data class LambdaName(val inlineFunctionName: String, val declarationFunctionName: String)
 
 class KotlinStackFrameInfo(
     // The scope introduction variable for an inline stack frame, i.e., $i$f$function
@@ -41,7 +50,7 @@ class KotlinStackFrameInfo(
     val scopeVariable: VariableWithLocation?,
     // For inline lambda stack frames we need to include the visible variables from the
     // enclosing stack frame.
-    private val enclosingStackFrame: KotlinStackFrameInfo?,
+    var enclosingStackFrame: KotlinStackFrameInfo?,
     // All variables that were added in this stack frame.
     val visibleVariablesWithLocations: MutableList<VariableWithLocation>,
     // For an inline stack frame, the number of calls from the nearest non-inline function.
@@ -54,22 +63,29 @@ class KotlinStackFrameInfo(
     // This depends on the next stack frame info and is initialized after the KotlinStackFrameInfo.
     var callLocation: Location? = null
 
+    var inlineScopeNumber = -1
+    var surroundingScopeNumber = -1
+
     val displayName: String?
         get() {
-            val scopeVariableName = scopeVariable?.name
-                ?: return null
+            val scopeVariableName = scopeVariable?.name?.dropInlineScopeInfo() ?: return null
             if (scopeVariableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) {
                 return scopeVariableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
             }
 
-            val groupValues = INLINE_LAMBDA_REGEX.matchEntire(scopeVariableName)?.groupValues
-            if (groupValues != null) {
-                val lambdaName = groupValues.getOrNull(1)
-                val declarationFunctionName = groupValues.getOrNull(2)
-                return "lambda '$lambdaName' in '$declarationFunctionName'"
-            } else {
-                return scopeVariableName
+            lambdaDetails?.let {
+                return "lambda '${it.inlineFunctionName}' in '${it.declarationFunctionName}'"
             }
+
+            return scopeVariableName
+        }
+
+    val lambdaDetails: LambdaName?
+        get() {
+            val scopeVariableName = scopeVariable?.name ?: return null
+            val match = INLINE_LAMBDA_REGEX.matchEntire(scopeVariableName) ?: return null
+            val (inlineFunctionName, declarationFunctionName) = match.destructured
+            return LambdaName(inlineFunctionName, declarationFunctionName)
         }
 
     val visibleVariables: List<LocalVariable>
@@ -83,12 +99,20 @@ class KotlinStackFrameInfo(
     fun visibleVariableProxies(frameProxy: StackFrameProxyImpl): List<LocalVariableProxyImpl> =
         visibleVariables.map { LocalVariableProxyImpl(frameProxy, it) }
 
-    fun toXStackFrame(frameProxy: StackFrameProxyImpl): XStackFrame {
+    fun toXStackFrame(descriptor: StackFrameDescriptorImpl): XStackFrame {
+        val frameProxy = descriptor.frameProxy
         val variables = visibleVariableProxies(frameProxy)
         displayName?.let { name ->
-            return InlineStackFrame(callLocation, name, frameProxy, depth, variables)
+            return InlineStackFrame(callLocation, name, frameProxy, depth, variables, inlineScopeNumber, surroundingScopeNumber)
         }
-        return KotlinStackFrame(safeInlineStackFrameProxy(callLocation, 0, frameProxy), variables)
+
+        // no need to create a new descriptor if the location is the same, also it breaks drop frame for now
+        if (descriptor.location == callLocation) {
+            return KotlinStackFrame(descriptor, variables)
+        }
+
+        val proxy = safeInlineStackFrameProxy(callLocation, 0, frameProxy, inlineScopeNumber, surroundingScopeNumber)
+        return KotlinStackFrame(proxy, variables)
     }
 }
 
@@ -100,10 +124,24 @@ fun StackFrame.computeKotlinStackFrameInfos(): List<KotlinStackFrameInfo> {
         it.variable.isVisible(this)
     }
 
-    return computeStackFrameInfos(allVisibleVariables).also {
+    val stackFrameInfos = if (shouldComputeStackFrameInfosUsingTheOldScheme(allVisibleVariables)) {
+        computeStackFrameInfosWithCallLocations(location, method, allVisibleVariables)
+    } else {
+        computeStackFrameInfosUsingScopeNumbers(location, method, allVisibleVariables) ?:
+            computeStackFrameInfosWithCallLocations(location, method, allVisibleVariables)
+    }
+    return stackFrameInfos
+}
+
+private fun computeStackFrameInfosWithCallLocations(
+    location: Location,
+    method: Method,
+    allVisibleVariables: List<VariableWithLocation>
+): List<KotlinStackFrameInfo> =
+    computeStackFrameInfos(allVisibleVariables).also {
         fetchCallLocations(method, it, location)
     }
-}
+
 
 // Constructs a list of inline stack frames from a list of currently visible variables
 // in introduction order.
@@ -236,6 +274,88 @@ private fun computeStackFrameInfos(sortedVariables: List<VariableWithLocation>):
     return stackFrameInfos
 }
 
+// This function computes inline stack trace using scope numbers encoded in
+// local variables. The format affects 3 kinds of variables:
+//   1. Inline function marker variables
+//      $i$f$name\[scope number]\[call site line number]
+//   2. Inline lambda marker variables
+//      $i$a$name\[scope number]\[call site line number]\[surrounding scope number]
+//   3. Local variables from inline functions or lambdas
+//      name\[scope number]
+// If a variable has a scope number, then it should be visible in an inline frame that is
+// represented by a marker variable with the same scope number. Inline lambda frames should
+// also include variables from their surrounding scopes accordingly.
+private fun computeStackFrameInfosUsingScopeNumbers(
+    location: Location,
+    method: Method,
+    sortedVariables: List<VariableWithLocation>
+): List<KotlinStackFrameInfo>? {
+    val firstFrameVariables = mutableListOf<VariableWithLocation>()
+    val firstFrameInfo = KotlinStackFrameInfo(null, null, firstFrameVariables, 0)
+    val stackFrameInfos = mutableListOf(firstFrameInfo)
+
+    val scopeNumberToVariables = mutableMapOf<Int, MutableList<VariableWithLocation>>()
+    for (variable in sortedVariables) {
+        val scopeNumber = variable.name.getInlineScopeInfo()?.scopeNumber
+        if (scopeNumber != null) {
+            scopeNumberToVariables.getOrPut(scopeNumber) { mutableListOf() }.add(variable)
+        } else {
+            firstFrameVariables.add(variable)
+        }
+    }
+
+    val lineNumberToLocation = DebuggerUtilsEx.allLineLocations(method).orEmpty()
+        .associateBy { it.lineNumber("Java") }
+
+    val callSiteLocations = mutableListOf<Location?>()
+    val infosAndSurroundingScopeIds = mutableListOf<Pair<KotlinStackFrameInfo, Int>>()
+    val scopeNumberToFrameInfo = mutableMapOf<Int, KotlinStackFrameInfo>()
+    scopeNumberToFrameInfo[0] = firstFrameInfo
+
+    for (variable in sortedVariables) {
+        val name = variable.name
+        if (!JvmAbi.isFakeLocalVariableForInline(name)) {
+            continue
+        }
+
+        val (scopeNumber, callSiteLineNumber, surroundingScopeNumber) = name.getInlineScopeInfo() ?: return null
+        val frameInfo = KotlinStackFrameInfo(
+            variable,
+            null,
+            scopeNumberToVariables[scopeNumber] ?: mutableListOf(),
+            -1
+        ).apply { inlineScopeNumber = scopeNumber }
+
+        if (name.isInlineLambdaMarkerVariableName) {
+            frameInfo.surroundingScopeNumber = surroundingScopeNumber ?: -1
+
+            if (surroundingScopeNumber != null) {
+                infosAndSurroundingScopeIds.add(Pair(frameInfo, surroundingScopeNumber))
+            } else {
+                frameInfo.enclosingStackFrame = firstFrameInfo
+            }
+        }
+
+        scopeNumberToFrameInfo[scopeNumber] = frameInfo
+        callSiteLocations += lineNumberToLocation[callSiteLineNumber]
+        stackFrameInfos += frameInfo
+    }
+
+    // We may encounter a lambda before its surrounding lambda or function,
+    // that's why we have to process enclosing stack frames after the variable
+    // processing.
+    for ((info, id) in infosAndSurroundingScopeIds) {
+        info.enclosingStackFrame = scopeNumberToFrameInfo[id]
+    }
+
+    callSiteLocations += location
+    for ((callSiteLocation, frameInfo) in callSiteLocations.zip(stackFrameInfos)) {
+        frameInfo.callLocation = callSiteLocation
+    }
+
+    return stackFrameInfos
+}
+
 // Heuristic to guess inline call locations based on the variables in a `KotlinStackFrameInfo`
 // and the `KotlinDebug` SMAP stratum.
 //
@@ -325,8 +445,8 @@ private fun fetchCallLocations(
         // The scope introduction variable on the other hand should start inside an
         // inline function.
         val startOffset = firstInlineScopeVariable.location
-        val callLineNumber = startOffset.safeLineNumber("KotlinDebug")
-        val callSourceName = startOffset.safeSourceName("KotlinDebug")
+        val callLineNumber = startOffset.safeLineNumber(KOTLIN_DEBUG_STRATA_NAME)
+        val callSourceName = startOffset.safeSourceName(KOTLIN_DEBUG_STRATA_NAME)
         if (callLineNumber != -1 && callSourceName != null) {
             // Find the closest location to startOffset with the correct line number and source name.
             val callLocation = allLocations.lastOrNull { location ->
@@ -378,3 +498,9 @@ private fun fetchCallLocations(
         prev.callLocation = allLocations[locationIndex]
     }
 }
+
+private fun shouldComputeStackFrameInfosUsingTheOldScheme(variables: List<VariableWithLocation>): Boolean =
+    variables.any {
+        val name = it.name
+        JvmAbi.isFakeLocalVariableForInline(name) && name.getInlineScopeInfo() == null
+    }

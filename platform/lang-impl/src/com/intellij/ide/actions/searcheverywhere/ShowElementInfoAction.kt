@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.searcheverywhere.SearchListModel.ResultsNotificationElement
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,9 +15,11 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupPositionManager
 import com.intellij.ui.popup.PopupUpdateProcessorBase
 import com.intellij.util.ui.JBDimension
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JEditorPane
 
+@ApiStatus.Internal
 class ShowElementInfoAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val ui = getSEUI(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) ?: return
@@ -28,9 +31,9 @@ class ShowElementInfoAction : AnAction() {
     e.presentation.isEnabled = getSEUI(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isDumbAware() = true
+  override fun isDumbAware(): Boolean = true
 
   private fun getSEUI(component: Component?): SearchEverywhereUI? {
     var current = component
@@ -81,7 +84,8 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
       override fun updatePopup(element: Any?) {
         val popup = myPopup
         if (popup?.isVisible == true) {
-          seUI.getData(SearchEverywhereUI.SELECTED_ITEM_INFO.name)?.let { fillContent(popup.component as JEditorPane, it as SearchEverywhereFoundElementInfo) }
+          val single = seUI.selectedInfos.singleOrNull() ?: return
+          fillContent(popup.component as JEditorPane, single)
         }
       }
     }
@@ -110,6 +114,10 @@ private class ElementInfoManager(private val seUI: SearchEverywhereUI) {
   private fun fillContent(content: JEditorPane, info: SearchEverywhereFoundElementInfo) {
     if (info.element == SearchListModel.MORE_ELEMENT) {
       content.text = "'More...' element"
+      return
+    }
+    if (info.element is ResultsNotificationElement) {
+      content.text = "Results notification element"
       return
     }
 

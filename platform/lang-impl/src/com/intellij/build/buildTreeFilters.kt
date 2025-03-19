@@ -37,12 +37,13 @@ fun install(filterable: Filterable<ExecutionNode>) {
   WarningsToggleAction.install(filterable)
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
-open class FilterToggleAction constructor(@NlsContexts.Command text: String,
-                                          private val stateKey: String?,
-                                          private val filterable: Filterable<ExecutionNode>,
-                                          private val filter: Predicate<ExecutionNode>,
-                                          private val defaultState: Boolean) : ToggleAction(text), DumbAware {
+open class FilterToggleAction(@NlsContexts.Command text: String,
+                              private val stateKey: String?,
+                              private val filterable: Filterable<ExecutionNode>,
+                              private val filter: Predicate<ExecutionNode>,
+                              private val defaultState: Boolean) : ToggleAction(text), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val presentation = e.presentation
     val filteringEnabled = filterable.isFilteringEnabled
@@ -56,7 +57,7 @@ open class FilterToggleAction constructor(@NlsContexts.Command text: String,
     return filterable.contains(filter)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
@@ -83,6 +84,7 @@ open class FilterToggleAction constructor(@NlsContexts.Command text: String,
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
   FilterToggleAction(LangBundle.message("build.tree.filters.show.succesful"), STATE_KEY, filterable, SUCCESSFUL_STEPS_FILTER, false), DumbAware {
@@ -94,6 +96,7 @@ class SuccessfulStepsToggleAction(filterable: Filterable<ExecutionNode>) :
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class WarningsToggleAction(filterable: Filterable<ExecutionNode>) :
   FilterToggleAction(LangBundle.message("build.tree.filters.show.warnings"), STATE_KEY, filterable, WARNINGS_FILTER, true), DumbAware {

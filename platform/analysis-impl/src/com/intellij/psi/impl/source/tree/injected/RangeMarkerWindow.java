@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -10,16 +10,18 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-class RangeMarkerWindow implements RangeMarkerEx {
+@ApiStatus.Internal
+public class RangeMarkerWindow implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerWindow.class);
   private final DocumentWindow myDocumentWindow;
   private final RangeMarkerEx myHostMarker;
   private final int myStartShift;
   private final int myEndShift;
 
-  RangeMarkerWindow(@NotNull DocumentWindow documentWindow, int startOffset, int endOffset, boolean surviveOnExternalChange) {
+  public RangeMarkerWindow(@NotNull DocumentWindow documentWindow, int startOffset, int endOffset, boolean surviveOnExternalChange) {
     myDocumentWindow = documentWindow;
     TextRange hostRange = documentWindow.injectedToHost(new ProperTextRange(startOffset, endOffset));
     // shifts to be added to hostToInjected(hostMarker) offsets to get the target marker offsets, when the startOffset/endOffset lie inside prefix/suffix
@@ -32,14 +34,13 @@ class RangeMarkerWindow implements RangeMarkerEx {
     }
   }
 
-  @NotNull
-  RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
+  @ApiStatus.Internal
+  public @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange) {
     return myDocumentWindow.getDelegate().createRangeMarker(hostRange.getStartOffset(), hostRange.getEndOffset(), surviveOnExternalChange);
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocumentWindow;
   }
 
@@ -89,8 +90,7 @@ class RangeMarkerWindow implements RangeMarkerEx {
     return myHostMarker.getId();
   }
 
-  @NotNull
-  public RangeMarkerEx getDelegate() {
+  public @NotNull RangeMarkerEx getDelegate() {
     return myHostMarker;
   }
 

@@ -2,24 +2,22 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.handler
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
-import com.intellij.debugger.streams.wrapper.CallArgument
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
-import com.intellij.debugger.streams.wrapper.StreamCallType
-import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType
+import com.intellij.debugger.streams.core.wrapper.CallArgument
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall
+import com.intellij.debugger.streams.core.wrapper.StreamCallType
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinSequenceTypes
 
 class OnEachCall(private val elementsType: GenericType, lambda: String) : IntermediateStreamCall {
-    private val args: List<CallArgument>
-
-    init {
-        args = listOf(CallArgumentImpl(KotlinSequenceTypes.ANY.genericTypeName, lambda))
-    }
+    private val args: List<CallArgument> = listOf(CallArgumentImpl(KotlinSequenceTypes.ANY.genericTypeName, lambda))
 
     override fun getArguments(): List<CallArgument> = args
 
     override fun getName(): String = "onEach"
+
+    override fun getGenericArguments(): String = ""
 
     override fun getType(): StreamCallType = StreamCallType.INTERMEDIATE
 

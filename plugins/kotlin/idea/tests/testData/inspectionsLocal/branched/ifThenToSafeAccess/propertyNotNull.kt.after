@@ -1,4 +1,4 @@
-
+// HIGHLIGHT: WARNING
 // FIX: Remove redundant 'if' expression
 
 interface Bar

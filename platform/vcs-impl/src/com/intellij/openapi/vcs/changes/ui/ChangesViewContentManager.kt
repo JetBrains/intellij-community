@@ -21,6 +21,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
+import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitModeManager
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
@@ -41,6 +42,7 @@ private val LOG = logger<ChangesViewContentManager>()
 
 class ChangesViewContentManager(private val project: Project) : ChangesViewContentI, Disposable {
   private val addedContents = mutableListOf<Content>()
+  private var selectedAddedContent: Content? = null
 
   private val toolWindows = mutableSetOf<ToolWindow>()
   private val contentManagers: Collection<ContentManager> get() = toolWindows.map { it.contentManager }
@@ -114,8 +116,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
     addedContents.removeAll(contents)
 
-    // Ensure that first tab is selected after tabs reordering
-    contentManager.selectFirstContent()
+    val toSelect = selectedAddedContent
+    if (toSelect != null && contents.contains(toSelect)) {
+      contentManager.setSelectedContent(toSelect)
+    }
+    else {
+      // Ensure that first tab is selected after tabs reordering
+      contentManager.selectFirstContent()
+    }
+    selectedAddedContent = null
   }
 
   override fun dispose() {
@@ -123,6 +132,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
       Disposer.dispose(content)
     }
     addedContents.clear()
+    selectedAddedContent = null
   }
 
   override fun addContent(content: Content) {
@@ -141,6 +151,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     val contentManager = content.manager
     if (contentManager == null || contentManager.isDisposed) {
       addedContents.remove(content)
+      if (selectedAddedContent == content) selectedAddedContent = null
       if (dispose) Disposer.dispose(content)
     }
     else {
@@ -153,7 +164,15 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
   }
 
   override fun setSelectedContent(content: Content, requestFocus: Boolean) {
-    content.manager?.setSelectedContent(content, requestFocus)
+    LOG.debug("select content: ${content.tabName}")
+    val contentManager = content.manager
+    if (contentManager != null) {
+      contentManager.setSelectedContent(content, requestFocus)
+      selectedAddedContent = null
+    }
+    else if (addedContents.contains(content)) {
+      selectedAddedContent = content
+    }
   }
 
   override fun <T : Any> getActiveComponent(aClass: Class<T>): T? =
@@ -168,8 +187,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   fun selectContent(tabName: String, requestFocus: Boolean) {
     LOG.debug("select content: $tabName")
-    val content = contentManagers.flatMap { it.contents.asList() }.find { it.tabName == tabName } ?: return
-    content.manager?.setSelectedContent(content, requestFocus)
+    val content = findContent(tabName) ?: return
+    setSelectedContent(content, requestFocus)
   }
 
   override fun findContents(predicate: Predicate<Content>): List<Content> {
@@ -214,6 +233,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     INCOMING(ChangesViewContentManager.INCOMING, 30),
     SHELF(ChangesViewContentManager.SHELF, 40),
     BRANCHES(ChangesViewContentManager.BRANCHES, 50),
+    VCS_LOG(ChangesViewContentManager.VCS_LOG, 50), // main tab
     CONSOLE(ChangesViewContentManager.CONSOLE, 60),
     OTHER(null, 100),
     LAST(null, Integer.MAX_VALUE)
@@ -242,7 +262,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     internal const val COMMIT_TOOLWINDOW_ID = ToolWindowId.COMMIT
 
     @JvmField
-    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
+    internal val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider?>("CONTENT_PROVIDER_SUPPLIER")
 
     /**
      * Whether [Content] should be shown in [ToolWindowId.COMMIT] toolwindow.
@@ -287,6 +307,20 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     }
 
     /**
+     * @see subscribeOnVcsToolWindowLayoutChanges
+     */
+    @JvmStatic
+    fun isToolWindowTabVertical(project: Project, tabName: String): Boolean {
+      val toolWindow = getToolWindowFor(project, tabName)
+      return toolWindow != null && !toolWindow.anchor.isHorizontal
+    }
+
+    @JvmStatic
+    fun shouldHaveSplitterDiffPreview(project: Project, isContentVertical: Boolean): Boolean {
+      return !isContentVertical || !isCommitToolWindowShown(project)
+    }
+
+    /**
      * Specified tab order in toolwindow.
      *
      * @see ChangesViewContentManager.TabOrderWeight
@@ -300,6 +334,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     const val INCOMING: @NonNls String = "Incoming"
     const val SHELF: @NonNls String = "Shelf"
     const val BRANCHES: @NonNls String = "Branches"
+    const val VCS_LOG: @NonNls String = "Log"
   }
 }
 
@@ -315,4 +350,13 @@ private fun getContentWeight(content: Content): Int {
   }
 
   return ChangesViewContentManager.TabOrderWeight.OTHER.weight
+}
+
+fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Runnable) {
+  subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+    override fun toolWindowMappingChanged() = updateLayout.run()
+  })
+  subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+    override fun stateChanged(toolWindowManager: ToolWindowManager) = updateLayout.run()
+  })
 }

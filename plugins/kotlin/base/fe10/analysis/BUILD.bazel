@@ -1,0 +1,51 @@
+### auto-generated section `build kotlin.base.fe10.analysis` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-fe10-analysis",
+  module_name = "kotlin.base.fe10.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-fe10",
+    "@lib//:guava",
+    "@lib//:vavr",
+    "@lib//:javax-inject",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//java/java-impl:impl",
+    "//java/openapi:java",
+    "//java/java-analysis-api:analysis",
+    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+  ]
+)
+### auto-generated section `build kotlin.base.fe10.analysis` end

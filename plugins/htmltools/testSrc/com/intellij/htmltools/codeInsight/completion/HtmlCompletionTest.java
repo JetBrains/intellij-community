@@ -35,7 +35,9 @@ import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -247,11 +249,11 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
   }
 
   public void testDotTypeWhileActiveLookupInFileReference() throws Throwable {
-    configureByFile(getTestName(false) + ".html");
+    final String path = getTestName(false) + ".html";
+    configureByFile(path);
     Assert.assertNotNull(getActiveLookup());
     myFixture.type('.');
-    checkResultByFile(getTestName(false) + "_after.html");
-    Assert.assertNotNull(getActiveLookup());
+    myFixture.testCompletionVariants(path, path);
   }
 
   private LookupImpl getActiveLookup() {
@@ -338,12 +340,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
 
   public void testAdditionalHtmlTagsInsertedByCompletion() throws Exception {
     final HtmlUnknownTagInspection inspection = new HtmlUnknownTagInspection();
-    String additionalEntries = inspection.getAdditionalEntries();
-    if (additionalEntries.length() > 0) {
-      additionalEntries += ",";
-    }
 
-    inspection.updateAdditionalEntries(additionalEntries + "zzz");
+    inspection.updateAdditionalEntries("zZz", getTestRootDisposable());
 
     doTestWithHtmlInspectionEnabled("", inspection);
     doTestWithHtmlInspectionEnabled("2", inspection);
@@ -351,12 +349,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
 
   public void testAdditionalHtmlAttributesInsertedByCompletion() throws Exception {
     final HtmlUnknownAttributeInspection inspection = new HtmlUnknownAttributeInspection();
-    String additionalEntries = inspection.getAdditionalEntries();
-    if (additionalEntries.length() > 0) {
-      additionalEntries += ",";
-    }
 
-    inspection.updateAdditionalEntries(additionalEntries + "zzz");
+    inspection.updateAdditionalEntries("zZz", getTestRootDisposable());
 
     doTestWithHtmlInspectionEnabled("2", inspection);
     doTestWithHtmlInspectionEnabled("", inspection);
@@ -528,7 +522,8 @@ public class HtmlCompletionTest extends BasePlatformTestCase {
     checkDuplicates(myFixture.getCompletionVariants("/scriptTypeDuplicates.html"), "module");
   }
 
-  protected void checkDuplicates(List<String> variants, String... tags) {
+  protected void checkDuplicates(@Unmodifiable List<String> variants, String... tags) {
+    variants = new ArrayList<>(variants);
     for (String tag : tags) {
       assertTrue("Not in list " + tag, variants.remove(tag));
       assertFalse("Duplicate " + tag, variants.contains(tag));

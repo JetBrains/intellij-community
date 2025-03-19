@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
+public final class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
   private final JTextComponent myTextField;
 
   public VariantsCompletionAction(JTextComponent textField) {
@@ -38,7 +38,7 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
     if (editor == null) return;
     final String prefix = myTextField.getText().substring(0, myTextField.getCaretPosition());

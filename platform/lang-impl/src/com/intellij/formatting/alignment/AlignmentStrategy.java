@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.alignment;
 
 import com.intellij.formatting.Alignment;
@@ -110,8 +110,7 @@ public abstract class AlignmentStrategy {
    * @param childType     target child type
    * @return              alignment to use
    */
-  @Nullable
-  public Alignment getAlignment(@Nullable IElementType childType) {
+  public @Nullable Alignment getAlignment(@Nullable IElementType childType) {
     return getAlignment(null, childType);
   }
 
@@ -122,8 +121,7 @@ public abstract class AlignmentStrategy {
    * @param childType     child type to use for filtering (if not {@code null})
    * @return              alignment to use for the given arguments
    */
-  @Nullable
-  public abstract Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
+  public abstract @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType);
 
   /**
    * Stands for {@link AlignmentStrategy} implementation that is configured to return single pre-configured {@link Alignment} object
@@ -143,8 +141,7 @@ public abstract class AlignmentStrategy {
     }
 
     @Override
-    @Nullable
-    public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
+    public @Nullable Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
       return myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes ? myAlignment : null;
     }
   }
@@ -153,7 +150,7 @@ public abstract class AlignmentStrategy {
    * Alignment strategy that creates and caches alignments for target element types and returns them for elements with the
    * same types.
    */
-  public static class AlignmentPerTypeStrategy extends AlignmentStrategy {
+  public static final class AlignmentPerTypeStrategy extends AlignmentStrategy {
     private final Map<IElementType, Alignment> myAlignments = new HashMap<>();
 
     private final IElementType     myParentType;

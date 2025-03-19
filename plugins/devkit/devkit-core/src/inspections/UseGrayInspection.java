@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -14,8 +14,10 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -25,10 +27,9 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import java.awt.*;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+@VisibleForTesting
+@ApiStatus.Internal
+public final class UseGrayInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String GRAY_CLASS_NAME = Gray.class.getName();
@@ -37,8 +38,7 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
   public static final Class<? extends UElement>[] HINTS = new Class[]{UCallExpression.class};
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildInternalVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
       @Override
       public boolean visitCallExpression(@NotNull UCallExpression expression) {
@@ -68,8 +68,7 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return AWT_COLOR_CLASS_NAME.equals(constructorClass.getQualifiedName());
   }
 
-  @Nullable
-  private static Integer getGrayValue(@NotNull UCallExpression constructorCall) {
+  private static @Nullable Integer getGrayValue(@NotNull UCallExpression constructorCall) {
     List<UExpression> constructorParams = constructorCall.getValueArguments();
     UExpression redParam = constructorParams.get(0);
     Integer red = evaluateColorValue(redParam);
@@ -79,8 +78,7 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
     return 0 <= red && red < 256 && red.equals(evaluateColorValue(greenParam)) && red.equals(evaluateColorValue(blueParam)) ? red : null;
   }
 
-  @Nullable
-  private static Integer evaluateColorValue(@NotNull UExpression expression) {
+  private static @Nullable Integer evaluateColorValue(@NotNull UExpression expression) {
     Object evaluatedExpression = expression.evaluate();
     if (evaluatedExpression instanceof Integer value) {
       return value;
@@ -89,9 +87,8 @@ public class UseGrayInspection extends DevKitUastInspectionBase implements Clean
   }
 
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "InspectionUsingGrayColors";
   }
 

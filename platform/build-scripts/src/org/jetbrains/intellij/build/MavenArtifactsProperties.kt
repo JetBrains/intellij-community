@@ -11,12 +11,12 @@ import java.nio.file.Path
  * Specifies how Maven artifacts for IDE modules should be generated.
  * Public artifacts are generated under [BuildPaths.artifactDir]/maven-artifacts directory.
  * Proprietary artifacts are generated under [BuildPaths.artifactDir]/proprietary-maven-artifacts directory.
- * @see ProductProperties#mavenArtifacts
- * @see org.jetbrains.intellij.build.impl.MavenArtifactsBuilder#generateMavenArtifacts
+ * @see ProductProperties.mavenArtifacts
+ * @see org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder.generateMavenArtifacts
  */
 class MavenArtifactsProperties {
   /**
-   * If `true` Maven artifacts are generated for all modules included into the IDE distribution.
+   * If `true` Maven artifacts are generated for all modules included in the IDE distribution.
    */
   var forIdeModules = false
 

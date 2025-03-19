@@ -8,12 +8,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementService
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
+import com.jetbrains.python.sdk.pipenv.quickFixes.PipEnvAssociationQuickFix
+import com.jetbrains.python.sdk.pipenv.quickFixes.PipEnvInstallQuickFix
+import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 import org.jdom.Element
 import javax.swing.Icon
 
@@ -27,14 +28,12 @@ class PyPipEnvSdkProvider : PySdkProvider {
     return PyPipEnvSdkAdditionalData.load(element)
   }
 
-  override fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService? {
-    return if (sdk.isPipEnv) PyPipEnvPackageManagementService(project, sdk) else null
-  }
-
-  override fun createEnvironmentAssociationFix(module: Module,
-                                               sdk: Sdk,
-                                               isPyCharm: Boolean,
-                                               associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
+  override fun createEnvironmentAssociationFix(
+    module: Module,
+    sdk: Sdk,
+    isPyCharm: Boolean,
+    associatedModulePath: String?,
+  ): PyInterpreterInspectionQuickFixData? {
     if (sdk.isPipEnv) {
       val message = when {
         associatedModulePath != null -> when {
@@ -46,7 +45,7 @@ class PyPipEnvSdkProvider : PySdkProvider {
           else -> PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module")
         }
       }
-      return PyInterpreterInspectionQuickFixData(UsePipEnvQuickFix(sdk, module), message)
+      return PyInterpreterInspectionQuickFixData(PipEnvAssociationQuickFix(), message)
     }
     return null
   }
@@ -56,11 +55,13 @@ class PyPipEnvSdkProvider : PySdkProvider {
     return if (sdk.isPipEnv) PipEnvInstallQuickFix() else null
   }
 
-  override fun createNewEnvironmentPanel(project: Project?,
-                                         module: Module?,
-                                         existingSdks: List<Sdk>,
-                                         newProjectPath: String?,
-                                         context: UserDataHolder): PyAddNewEnvPanel {
+  override fun createNewEnvironmentPanel(
+    project: Project?,
+    module: Module?,
+    existingSdks: List<Sdk>,
+    newProjectPath: String?,
+    context: UserDataHolder,
+  ): PyAddNewEnvPanel {
     return PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context)
   }
 }

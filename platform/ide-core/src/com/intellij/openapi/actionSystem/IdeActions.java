@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 /**
@@ -9,6 +9,7 @@ public interface IdeActions {
   String ACTION_EDITOR_COPY = "EditorCopy";
   String ACTION_EDITOR_PASTE = "EditorPaste";
   String ACTION_EDITOR_PASTE_SIMPLE = "EditorPasteSimple";
+  String ACTION_EDITOR_PASTE_FROM_HISTORY = "PasteMultiple";
   String ACTION_EDITOR_DELETE = "EditorDelete";
   String ACTION_EDITOR_DELETE_TO_WORD_START = "EditorDeleteToWordStart";
   String ACTION_EDITOR_DELETE_TO_WORD_END = "EditorDeleteToWordEnd";
@@ -55,13 +56,14 @@ public interface IdeActions {
   String ACTION_EDITOR_ESCAPE = "EditorEscape";
   String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
   String ACTION_EDITOR_COMPLETE_STATEMENT = "EditorCompleteStatement";
+  String ACTION_EDITOR_MATCH_BRACE = "EditorMatchBrace";
   String ACTION_EDITOR_USE_SOFT_WRAPS = "EditorToggleUseSoftWraps";
-  String ACTION_EDITOR_ADD_OR_REMOVE_CARET= "EditorAddOrRemoveCaret";
-  String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION= "EditorCreateRectangularSelection";
-  String ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG= "EditorAddRectangularSelectionOnMouseDrag";
+  String ACTION_EDITOR_ADD_OR_REMOVE_CARET = "EditorAddOrRemoveCaret";
+  String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION = "EditorCreateRectangularSelection";
+  String ACTION_EDITOR_ADD_RECTANGULAR_SELECTION_ON_MOUSE_DRAG = "EditorAddRectangularSelectionOnMouseDrag";
   String ACTION_EDITOR_CREATE_RECTANGULAR_SELECTION_ON_MOUSE_DRAG = "EditorCreateRectangularSelectionOnMouseDrag";
-  String ACTION_EDITOR_CLONE_CARET_BELOW= "EditorCloneCaretBelow";
-  String ACTION_EDITOR_CLONE_CARET_ABOVE= "EditorCloneCaretAbove";
+  String ACTION_EDITOR_CLONE_CARET_BELOW = "EditorCloneCaretBelow";
+  String ACTION_EDITOR_CLONE_CARET_ABOVE = "EditorCloneCaretAbove";
   String ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE = "EditorAddCaretPerSelectedLine";
   String ACTION_EDITOR_TOGGLE_STICKY_SELECTION = "EditorToggleStickySelection";
   String ACTION_EDITOR_TOGGLE_OVERWRITE_MODE = "EditorToggleInsertState";
@@ -104,6 +106,13 @@ public interface IdeActions {
   String ACTION_LOOKUP_UP = "EditorLookupUp";
   String ACTION_LOOKUP_DOWN = "EditorLookupDown";
 
+  String ACTION_INSERT_INLINE_COMPLETION = "InsertInlineCompletionAction";
+  String ACTION_INSERT_INLINE_COMPLETION_WORD = "InsertInlineCompletionWordAction";
+  String ACTION_INSERT_INLINE_COMPLETION_LINE = "InsertInlineCompletionLineAction";
+  String ACTION_NEXT_INLINE_COMPLETION_SUGGESTION = "NextInlineCompletionSuggestionAction";
+  String ACTION_PREV_INLINE_COMPLETION_SUGGESTION = "PrevInlineCompletionSuggestionAction";
+  String ACTION_CALL_INLINE_COMPLETION = "CallInlineCompletionAction";
+
   String GROUP_EXTERNAL_TOOLS = "ExternalToolsGroup";
 
   String GROUP_MAIN_MENU = "MainMenu";
@@ -121,18 +130,18 @@ public interface IdeActions {
   String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
   String GROUP_HELP_MENU = "HelpMenu";
-  String GROUP_INTENTIONS = "Intentions";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String GROUP_INTENTIONS = "Intentions"; // todo IJPL-174981
 
-  String ACTION_CVS_ADD = "Cvs.Add";
-  String ACTION_CVS_COMMIT = "Cvs.Commit";
-  String ACTION_CVS_EDITORS = "Cvs.Editors";
-  String ACTION_CVS_LOG = "Cvs.Log";
-  String ACTION_CVS_UPDATE = "Cvs.Update";
-  String ACTION_CVS_STATUS = "Cvs.Status";
-  String ACTION_CVS_DIFF = "Cvs.Diff";
-  String ACTION_CVS_EDIT = "Cvs.Edit";
-  String ACTION_CVS_UNEDIT = "Cvs.Unedit";
-  String ACTION_CVS_CHECKOUT = "Cvs.Checkout";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_ADD = "Cvs.Add";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_COMMIT = "Cvs.Commit";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_EDITORS = "Cvs.Editors";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_LOG = "Cvs.Log";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_UPDATE = "Cvs.Update";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_STATUS = "Cvs.Status";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_DIFF = "Cvs.Diff";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_EDIT = "Cvs.Edit";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_UNEDIT = "Cvs.Unedit";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_CHECKOUT = "Cvs.Checkout";
 
   String ACTION_CLOSE_ACTIVE_TAB = "CloseActiveTab";
   String ACTION_PIN_ACTIVE_TAB = "PinActiveTab";
@@ -151,8 +160,10 @@ public interface IdeActions {
   String ACTION_SELECT_NEXT_OCCURENCE = "SelectNextOccurrence";
   String ACTION_SELECT_ALL_OCCURRENCES = "SelectAllOccurrences";
   String ACTION_UNSELECT_PREVIOUS_OCCURENCE = "UnselectPreviousOccurrence";
+  String ACTION_TOGGLE_SCROLL_TO_RESULTS_DURING_TYPING = "ToggleScrollToResultsDuringTypingAction";
   String ACTION_REPLACE = "Replace";
   String ACTION_TOGGLE_FIND_IN_SELECTION_ONLY = "ToggleFindInSelection";
+  String GROUP_EDITOR_SEARCH_FILTER_RESULTS = "Editor.Search.Filter.Results";
   String ACTION_COMPILE = "Compile";
   String ACTION_COMPILE_PROJECT = "CompileProject";
   String ACTION_MAKE_MODULE = "MakeModule";
@@ -181,6 +192,7 @@ public interface IdeActions {
   String DIFF_VIEWER_POPUP = "Diff.ViewerPopupMenu";
   String DIFF_VIEWER_TOOLBAR = "Diff.ViewerToolbar";
   String GROUP_DIFF_EDITOR_GUTTER_POPUP = "Diff.EditorGutterPopupMenu";
+  String GROUP_DIFF_EDITOR_MODES = "Diff.EditorGutterPopupMenu.DiffModes";
   String GROUP_DIFF_EDITOR_SETTINGS = "Diff.EditorGutterPopupMenu.EditorSettings";
 
   String ACTION_EXPAND_ALL = "ExpandAll";
@@ -195,12 +207,13 @@ public interface IdeActions {
   String ACTION_COLLAPSE_REGION_RECURSIVELY = "CollapseRegionRecursively";
   String ACTION_EXPAND_TO_LEVEL_1 = "ExpandToLevel1";
   String ACTION_EXPAND_ALL_TO_LEVEL_1 = "ExpandAllToLevel1";
+  String ACTION_EXPAND_COLLAPSE_TOGGLE_REGION = "ExpandCollapseToggleAction";
 
-  String ACTION_NEW_HORIZONTAL_TAB_GROUP = "NewHorizontalTabGroup";
-  String ACTION_NEW_VERTICAL_TAB_GROUP = "NewVerticalTabGroup";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_NEW_HORIZONTAL_TAB_GROUP = "NewHorizontalTabGroup"; // todo IJPL-174981
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_NEW_VERTICAL_TAB_GROUP = "NewVerticalTabGroup"; // todo IJPL-174981
   String ACTION_MOVE_EDITOR_TO_OPPOSITE_TAB_GROUP = "MoveEditorToOppositeTabGroup";
   String ACTION_CHANGE_SPLIT_ORIENTATION = "ChangeSplitOrientation";
-  String ACTION_PIN_ACTIVE_EDITOR = "PinActiveEditor";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_PIN_ACTIVE_EDITOR = "PinActiveEditor"; // todo IJPL-174981
 
   String GROUP_VERSION_CONTROLS = "VersionControlsGroup";
 
@@ -209,21 +222,10 @@ public interface IdeActions {
   String GROUP_NAVBAR_TOOLBAR = "NavBarToolBar";
   String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
-  String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu";
+  @SuppressWarnings("UnresolvedPluginConfigReference") String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu"; // todo IJPL-174981
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
-  String GROUP_J2EE_VIEW_POPUP = "J2EEViewPopupMenu";
-  String GROUP_EJB_TRANSACTION_ATTRIBUTES_VIEW_POPUP = "EjbTransactionAttributesViewPopupMenu";
-  String GROUP_EJB_ENVIRONMENT_ENTRIES_VIEW_POPUP = "EjbEnvironmentEntriesViewPopupMenu";
-  String GROUP_EJB_REFERENCES_VIEW_POPUP = "EjbReferencesViewPopupMenu";
-  String GROUP_SECURITY_ROLES_VIEW_POPUP = "SecurityRolesViewPopupMenu";
-  String GROUP_PARAMETERS_VIEW_POPUP = "ParametersViewPopupMenu";
-  String GROUP_SERVLET_MAPPING_VIEW_POPUP = "ServletMappingViewPopupMenu";
-  String GROUP_EJB_RESOURCE_REFERENCES_VIEW_POPUP = "EjbResourceReferencesViewPopupMenu";
-  String GROUP_EJB_RESOURCE_ENVIRONMENT_REFERENCES_VIEW_POPUP = "EjbResourceEnvironmentReferencesViewPopupMenu";
-  String GROUP_ADD_SUPPORT = "AddSupportGroup";
-  
   String GROUP_STRUCTURE_VIEW_POPUP = "StructureViewPopupMenu";
   String GROUP_TYPE_HIERARCHY_POPUP = "TypeHierarchyPopupMenu";
   String GROUP_METHOD_HIERARCHY_POPUP = "MethodHierarchyPopupMenu";
@@ -231,7 +233,6 @@ public interface IdeActions {
 
   String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
 
-  String GROUP_OTHER_MENU = "OtherMenu";
   String GROUP_EDITOR = "EditorActions";
   String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
@@ -277,10 +278,10 @@ public interface IdeActions {
   String GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP = "GuiDesigner.ComponentTreePopupMenu";
   String GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP = "GuiDesigner.PropertyInspectorPopupMenu";
 
-  String ACTION_GOTO_LAST_CHANGE    = "JumpToLastChange";
-  String ACTION_GOTO_NEXT_CHANGE    = "JumpToNextChange";
+  String ACTION_GOTO_LAST_CHANGE = "JumpToLastChange";
+  String ACTION_GOTO_NEXT_CHANGE = "JumpToNextChange";
 
-  String ACTION_GOTO_BACK    = "Back";
+  String ACTION_GOTO_BACK = "Back";
   String ACTION_GOTO_FORWARD = "Forward";
   String ACTION_GOTO_DECLARATION = "GotoDeclaration";
   String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
@@ -297,7 +298,7 @@ public interface IdeActions {
   String GROUP_WELCOME_SCREEN_OPTIONS = "WelcomeScreen.Options";
   String GROUP_WELCOME_SCREEN_LEARN_IDE = "WelcomeScreen.LearnIdeHelp";
 
-  String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
+  String ACTION_KEYMAP_REFERENCE = "Help.KeymapReference";
   String ACTION_MOVE = "Move";
   String ACTION_RENAME = "RenameElement";
 
@@ -326,7 +327,7 @@ public interface IdeActions {
   String ACTION_MOVE_STATEMENT_DOWN_ACTION = "MoveStatementDown";
   String MOVE_ELEMENT_LEFT = "MoveElementLeft";
   String MOVE_ELEMENT_RIGHT = "MoveElementRight";
-  
+
   String ACTION_MOVE_LINE_UP_ACTION = "MoveLineUp";
   String ACTION_MOVE_LINE_DOWN_ACTION = "MoveLineDown";
 

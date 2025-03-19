@@ -1,0 +1,188 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+import com.intellij.gradle.toolingExtension.impl.initScript.util.GradleLifecycleUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.impl.util.GradleProjectUtil
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
+
+import java.util.jar.JarOutputStream
+import java.util.zip.ZipEntry
+
+interface Properties {
+  //noinspection GrUnresolvedAccess
+  public static final String gradlePath = GRADLE_PATH
+  //noinspection GrUnresolvedAccess
+  public static final String runAppTaskName = RUN_APP_TASK_NAME
+  //noinspection GrUnresolvedAccess
+  public static final String mainClassToRun = MAIN_CLASS_TO_RUN
+  //noinspection GrUnresolvedAccess
+  public static final String sourceSetName = SOURCE_SET_NAME
+  //noinspection GrUnresolvedAccess
+  public static final boolean useManifestJar = USE_MANIFEST_JAR
+  //noinspection GrUnresolvedAccess
+  public static final boolean useArgsFile = USE_ARGS_FILE
+  //noinspection GrUnresolvedAccess
+  public static final boolean useClasspathFile = USE_CLASSPATH_FILE
+}
+
+def javaExePath = JAVA_EXE_PATH
+def workingDirectory = WORKING_DIRECTORY
+def intelliJRtPath  = INTELLIJ_RT_PATH
+DEFS
+
+def isOlderThan64 = GradleVersionUtil.isCurrentGradleOlderThan("6.4")
+
+if (Properties.useManifestJar) {
+  gradle.addListener(new ManifestTaskActionListener(Properties.runAppTaskName))
+}
+if (Properties.useArgsFile) {
+  gradle.addListener(new ArgFileTaskActionListener(Properties.runAppTaskName))
+}
+if (Properties.useClasspathFile && intelliJRtPath != null) {
+  gradle.addListener(
+    new ClasspathFileTaskActionListener(
+      Properties.runAppTaskName,
+      Properties.mainClassToRun,
+      intelliJRtPath
+    )
+  )
+}
+
+GradleLifecycleUtil.afterProject(gradle) { Project project ->
+  def projectPath = GradleProjectUtil.getProjectIdentityPath(project)
+  if (projectPath == Properties.gradlePath && JavaPluginUtil.isJavaPluginApplied(project)) {
+    def overwrite = project.tasks.findByName(Properties.runAppTaskName) != null
+    project.tasks.create(name: Properties.runAppTaskName, overwrite: overwrite, type: JavaExec) {
+      if (javaExePath) executable = javaExePath
+      if (isOlderThan64) {
+        main = Properties.mainClassToRun
+      }
+      else {
+        mainClass = Properties.mainClassToRun
+      }
+      PARAMS
+      if (workingDirectory) {
+        workingDir = workingDirectory
+      }
+      standardInput = System.in
+      classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
+    }
+  }
+}
+
+abstract class RunAppTaskActionListener implements TaskActionListener {
+  String myTaskName
+  File myClasspathFile
+
+  RunAppTaskActionListener(String taskName) {
+    myTaskName = taskName
+  }
+
+  void beforeActions(Task task) {
+    if (!(task instanceof JavaExec) || task.name != myTaskName) return
+    myClasspathFile = patchTaskClasspath(task)
+  }
+
+  void afterActions(Task task) {
+    if (myClasspathFile != null) {
+      myClasspathFile.delete()
+    }
+  }
+
+  abstract File patchTaskClasspath(JavaExec task)
+}
+
+class ManifestTaskActionListener extends RunAppTaskActionListener {
+  ManifestTaskActionListener(String taskName) {
+    super(taskName)
+  }
+
+  File patchTaskClasspath(JavaExec task) {
+    java.util.jar.Manifest manifest = new java.util.jar.Manifest()
+    java.util.jar.Attributes attributes = manifest.getMainAttributes()
+    attributes.put(java.util.jar.Attributes.Name.MANIFEST_VERSION, '1.0')
+    attributes.putValue('Class-Path', task.classpath.files.collect { it.toURI().toURL().toString() }.join(' '))
+    File file = File.createTempFile('generated-', '-manifest')
+    def oStream = new JarOutputStream(new FileOutputStream(file), manifest)
+    oStream.putNextEntry(new ZipEntry('META-INF/'))
+    oStream.close()
+    task.classpath = task.project.files(file.getAbsolutePath())
+    return file
+  }
+}
+
+class ArgFileTaskActionListener extends RunAppTaskActionListener {
+  ArgFileTaskActionListener(String taskName) {
+    super(taskName)
+  }
+
+  File patchTaskClasspath(JavaExec task) {
+    File file = File.createTempFile('generated-', '-argFile')
+    def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))
+    def lineSep = System.getProperty('line.separator')
+    writer.print('-classpath' + lineSep)
+    writer.print(quoteArg(task.classpath.asPath))
+    writer.print(lineSep)
+    writer.close()
+    task.jvmArgs('@' + file.absolutePath)
+    task.classpath = task.project.files([])
+    return file
+  }
+
+  private static String quoteArg(String arg) {
+    String specials = ' #\'\"\n\r\t\f'
+    if (specials.find { arg.indexOf(it) != -1 } == null) return arg
+    StringBuilder sb = new StringBuilder(arg.length() * 2)
+    for (int i = 0; i < arg.length(); i++) {
+      char c = arg.charAt(i)
+      if (c == ' ' as char || c == '#' as char || c == '\'' as char) {
+        sb.append('"').append(c).append('"')
+      }
+      else if (c == '"' as char) {
+        sb.append("\"\\\"\"")
+      }
+      else if (c == '\n' as char) {
+        sb.append("\"\\n\"")
+      }
+      else if (c == '\r' as char) {
+        sb.append("\"\\r\"")
+      }
+      else if (c == '\t' as char) {
+        sb.append("\"\\t\"")
+      }
+      else if (c == '\f' as char) {
+        sb.append("\"\\f\"")
+      }
+      else {
+        sb.append(c)
+      }
+    }
+    return sb.toString()
+  }
+}
+
+class ClasspathFileTaskActionListener extends RunAppTaskActionListener {
+  String myMainClass
+  String myIntelliJRtPath
+
+  ClasspathFileTaskActionListener(String taskName, String mainClass, String intelliJRtPath) {
+    super(taskName)
+    myMainClass = mainClass
+    myIntelliJRtPath = intelliJRtPath
+  }
+
+  File patchTaskClasspath(JavaExec task) {
+    File file = File.createTempFile('generated-', '-classpathFile')
+    def writer = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), 'UTF-8'))
+    task.classpath.files.each { writer.println(it.path) }
+    writer.close()
+    List args = [file.absolutePath, myMainClass] as List
+    args.addAll(task.args)
+    task.args = []
+    task.argumentProviders.add({ return args } as CommandLineArgumentProvider)
+    task.main = 'com.intellij.rt.execution.CommandLineWrapper'
+    task.classpath = task.project.files([myIntelliJRtPath])
+    return file
+  }
+}

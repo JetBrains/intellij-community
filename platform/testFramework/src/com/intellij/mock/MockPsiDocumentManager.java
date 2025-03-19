@@ -1,8 +1,8 @@
-/*
- * Copyright (c) 2000-2007 JetBrains s.r.o. All Rights Reserved.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -17,26 +17,27 @@ import java.util.Collection;
 
 public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
-  @Nullable
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getPsiFile is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public PsiFile getCachedPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
+    return getCachedPsiFile(document, CodeInsightContexts.anyContext());
+  }
+
+  @Override
+  public @Nullable PsiFile getCachedPsiFile(@NotNull Document document, @NotNull CodeInsightContext context) {
     throw new UnsupportedOperationException("Method getCachedPsiFile is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public Document getDocument(@NotNull PsiFile file) {
+  public @Nullable Document getDocument(@NotNull PsiFile file) {
     return null;
   }
 
   @Override
-  @Nullable
-  public Document getCachedDocument(@NotNull PsiFile file) {
+  public @Nullable Document getCachedDocument(@NotNull PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
@@ -51,7 +52,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performForCommittedDocument(@NotNull final Document document, @NotNull final Runnable action) {
+  public void performForCommittedDocument(final @NotNull Document document, final @NotNull Runnable action) {
     action.run();
   }
 
@@ -59,9 +60,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   public void commitDocument(@NotNull Document document) {
   }
 
-  @NotNull
   @Override
-  public CharSequence getLastCommittedText(@NotNull Document document) {
+  public @NotNull CharSequence getLastCommittedText(@NotNull Document document) {
     return document.getImmutableCharSequence();
   }
 
@@ -70,9 +70,8 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
     return document.getModificationStamp();
   }
 
-  @Nullable
   @Override
-  public Document getLastCommittedDocument(@NotNull PsiFile file) {
+  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile file) {
     return null;
   }
 
@@ -92,6 +91,11 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
+    return getPsiFile(document, CodeInsightContexts.anyContext());
+  }
+
+  @Override
   public boolean hasUncommitedDocuments() {
     throw new UnsupportedOperationException("Method hasUncommitedDocuments is not yet implemented in " + getClass().getName());
   }
@@ -104,11 +108,6 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   @Override
   public <T> T commitAndRunReadAction(@NotNull Computable<T> computation) {
     throw new UnsupportedOperationException("Method commitAndRunReadAction is not yet implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void addListener(@NotNull Listener listener) {
-    throw new UnsupportedOperationException("Method addListener is not yet implemented in " + getClass().getName());
   }
 
   @Override
@@ -133,7 +132,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
   }
 
   @Override
-  public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
+  public void performLaterWhenAllCommitted(final @NotNull Runnable runnable) {
     throw new UnsupportedOperationException();
   }
 

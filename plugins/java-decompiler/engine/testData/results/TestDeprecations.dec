@@ -26,6 +26,15 @@ public abstract class TestDeprecations {
    public abstract void byAnnoAbstract();
 
    /** @deprecated */
+   public static class ByComment {
+      int a = 5;
+
+      void foo() {
+         boolean var1 = true;// 46
+      }// 47
+   }
+
+   /** @deprecated */
    @Deprecated
    public static class ByAnno {
       int a = 5;
@@ -33,15 +42,6 @@ public abstract class TestDeprecations {
       void foo() {
          boolean var1 = true;// 55
       }// 56
-   }
-
-   /** @deprecated */
-   public static class ByComment {
-      int a = 5;
-
-      void foo() {
-         boolean var1 = true;// 46
-      }// 47
    }
 }
 
@@ -59,15 +59,15 @@ class 'pkg/TestDeprecations' {
    }
 }
 
-class 'pkg/TestDeprecations$ByAnno' {
+class 'pkg/TestDeprecations$ByComment' {
    method 'foo ()V' {
-      0      33
-      1      33
-      2      34
+      0      32
+      1      32
+      2      33
    }
 }
 
-class 'pkg/TestDeprecations$ByComment' {
+class 'pkg/TestDeprecations$ByAnno' {
    method 'foo ()V' {
       0      42
       1      42
@@ -80,7 +80,7 @@ Lines mapping:
 28 <-> 13
 35 <-> 21
 36 <-> 22
-46 <-> 43
-47 <-> 44
-55 <-> 34
-56 <-> 35
+46 <-> 33
+47 <-> 34
+55 <-> 43
+56 <-> 44

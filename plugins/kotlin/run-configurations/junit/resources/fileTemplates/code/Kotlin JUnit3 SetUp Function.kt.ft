@@ -1,0 +1,4 @@
+fun setUp() {
+  super.setUp()
+  ${BODY}
+}

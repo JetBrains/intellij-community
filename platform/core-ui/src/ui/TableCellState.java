@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ui.render.RenderingUtil;
@@ -25,13 +25,11 @@ public class TableCellState {
     myCellBorder = getBorder(isSelected, hasFocus);
   }
 
-  @NotNull
-  protected Color getSelectionForeground(JTable table, boolean isSelected) {
+  protected @NotNull Color getSelectionForeground(JTable table, boolean isSelected) {
     return RenderingUtil.getForeground(table, isSelected);
   }
 
-  @Nullable
-  protected Border getBorder(boolean isSelected, boolean hasFocus) {
+  protected @Nullable Border getBorder(boolean isSelected, boolean hasFocus) {
     if (hasFocus) {
       if (isSelected) {
         Border border = UIManager.getBorder("Table.focusSelectedCellHighlightBorder");

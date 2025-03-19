@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -14,12 +15,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.function.Supplier;
 
-public class LookupOffsets implements DocumentListener {
-  @NotNull private String myAdditionalPrefix = "";
+public final class LookupOffsets implements DocumentListener {
+  private static final Logger LOG = Logger.getInstance(LookupOffsets.class);
+
+  private @NotNull String myAdditionalPrefix = "";
 
   private boolean myStableStart;
-  @Nullable private Supplier<String> myStartMarkerDisposeInfo = null;
-  @NotNull private RangeMarker myLookupStartMarker;
+  private @Nullable Supplier<String> myStartMarkerDisposeInfo = null;
+  private @NotNull RangeMarker myLookupStartMarker;
   private int myRemovedPrefix;
   private RangeMarker myLookupOriginalStartMarker;
   private final Editor myEditor;
@@ -71,12 +74,12 @@ public class LookupOffsets implements DocumentListener {
                  : myEditor.getCaretModel().getOffset();
   }
 
-  @NotNull
-  public String getAdditionalPrefix() {
+  public @NotNull String getAdditionalPrefix() {
     return myAdditionalPrefix;
   }
 
   public void appendPrefix(char c) {
+    LOG.debug("Append prefix :: char=" + c + ", myAdditionalPrefix: " + myAdditionalPrefix);
     myAdditionalPrefix += c;
   }
 

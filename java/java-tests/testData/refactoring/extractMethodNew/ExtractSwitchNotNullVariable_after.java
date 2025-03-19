@@ -6,8 +6,7 @@ class Test {
         System.out.println(x);
     }
 
-    @NotNull
-    private String newMethod(int y) {
+    private @NotNull String newMethod(int y) {
         String x;
         switch (y){
             case 3:

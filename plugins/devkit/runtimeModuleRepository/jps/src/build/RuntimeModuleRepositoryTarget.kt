@@ -1,16 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.intellij.devkit.runtimeModuleRepository.jps.build
 
+import com.dynatrace.hash4j.hashing.HashSink
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
 import com.intellij.devkit.runtimeModuleRepository.jps.impl.DevkitRuntimeModuleRepositoryJpsBundle
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer
-import com.intellij.util.io.DigestUtil
 import org.jetbrains.jps.builders.*
+import org.jetbrains.jps.builders.impl.BuildRootDescriptorImpl
 import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.cmdline.ProjectDescriptor
 import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService
 import org.jetbrains.jps.indices.IgnoredFileIndex
 import org.jetbrains.jps.indices.ModuleExcludeIndex
 import org.jetbrains.jps.model.JpsModel
@@ -19,15 +22,24 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.io.PrintWriter
-import java.security.MessageDigest
 import kotlin.system.measureTimeMillis
 
-internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTarget<BuildRootDescriptor?>(RuntimeModuleRepositoryTarget) {
+internal class RuntimeModuleRepositoryTarget(
+  val project: JpsProject,
+) : BuildTarget<BuildRootDescriptor>(RuntimeModuleRepositoryTarget), BuildTargetHashSupplier {
   override fun getId(): String {
     return "project"
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return other is RuntimeModuleRepositoryTarget
+  }
+
+  override fun hashCode(): Int {
+    return 42
   }
 
   override fun computeDependencies(targetRegistry: BuildTargetRegistry, outputIndex: TargetOutputIndex): Collection<BuildTarget<*>> {
@@ -38,7 +50,12 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
                                       index: ModuleExcludeIndex,
                                       ignoredFileIndex: IgnoredFileIndex,
                                       dataPaths: BuildDataPaths): List<BuildRootDescriptor> {
-    return emptyList()
+    /* runtime module repository uses data not only from modules.xml, but also from *.iml module and from .idea/libraries, 
+       but there is no need to register them as sources because changes in them are handled via 'writeConfiguration' anyway;
+       however, we need to have at least one source file to ensure that up-to-date checks can be properly performed. 
+     */
+    val modulesXmlFile = getModulesXmlFile(model.project)
+    return modulesXmlFile?.let { listOf(BuildRootDescriptorImpl(this, it)) } ?: emptyList()
   }
 
   override fun findRootDescriptor(rootId: String, rootIndex: BuildRootIndex): BuildRootDescriptor? {
@@ -52,57 +69,58 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
   override fun getOutputRoots(context: CompileContext): Collection<File> {
     val project = context.projectDescriptor.project
     val outputUrl = JpsJavaExtensionService.getInstance().getProjectExtension(project)?.outputUrl ?: return emptyList()
-    return listOf(File(JpsPathUtil.urlToFile(outputUrl), JAR_REPOSITORY_FILE_NAME))
+    return java.util.List.of(File(JpsPathUtil.urlToFile(outputUrl), JAR_REPOSITORY_FILE_NAME))
   }
 
-  override fun writeConfiguration(pd: ProjectDescriptor, out: PrintWriter) {
-    val digest: ByteArray
+  override fun computeConfigurationDigest(projectDescriptor: ProjectDescriptor, hash: HashSink) {
+    hash.putString(JarFileSerializer.SPECIFICATION_VERSION)
+    hash.putInt(RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION)
+
     val time = measureTimeMillis {
-      digest = computeDependenciesDigest(pd)
+      computeDependenciesDigest(projectDescriptor, hash)
     }
     LOG.info("Dependencies digest computed in ${time}ms")
-    out.println("${JarFileSerializer.SPECIFICATION_VERSION}.${RuntimeModuleRepositoryBuildConstants.GENERATOR_VERSION}")
-    out.println(StringUtil.toHexString(digest))
   }
 
-  private fun computeDependenciesDigest(pd: ProjectDescriptor): ByteArray {
-    val digest = DigestUtil.sha256()
+  private fun computeDependenciesDigest(pd: ProjectDescriptor, hash: HashSink) {
     val relativizer = pd.dataManager.relativizer
-    fun MessageDigest.update(string: String) {
-      update(string.encodeToByteArray())
-      update('\n'.code.toByte())
-    }
 
-    fun MessageDigest.updateFromRoots(library: JpsLibrary) {
-      library.getRoots(JpsOrderRootType.COMPILED).forEach {
-        update(relativizer.toRelative(JpsPathUtil.urlToPath(it.url)))
+    val modules = pd.project.modules
+    for (module in modules) {
+      hash.putString(module.name)
+      val sourceRoots = module.sourceRoots
+      for (sourceRoot in sourceRoots) {
+        hash.putString(relativizer.toRelative(sourceRoot.path.toString()))
       }
-    }
-    pd.project.modules.forEach { module ->
-      digest.update(module.name)
-      module.sourceRoots.forEach { sourceRoot ->
-        digest.update(relativizer.toRelative(sourceRoot.file.absolutePath))
-      }
+      hash.putInt(sourceRoots.size)
+
+      var counter = 0
       RuntimeModuleRepositoryBuilder.enumerateRuntimeDependencies(module).processModuleAndLibraries(
         {
-          digest.update(it.name)
+          hash.putString(it.name)
+          counter++
         },
         { library ->
-          digest.update(library.name)
+          hash.putString(library.name)
           if (library.createReference().parentReference is JpsModuleReference) {
-            digest.updateFromRoots(library)
+            updateFromRoots(library, hash, relativizer)
           }
+          counter++
         },
       )
+      hash.putInt(counter)
     }
-    pd.project.libraryCollection.libraries.forEach { library ->
-      digest.update(library.name)
-      digest.updateFromRoots(library)
+    hash.putInt(modules.size)
+
+    val libraries = pd.project.libraryCollection.libraries
+    for (library in libraries) {
+      hash.putString(library.name)
+      updateFromRoots(library, hash, relativizer)
     }
-    return digest.digest()
+    hash.putInt(libraries.size)
   }
 
-  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(TARGET_TYPE_ID), ModuleInducedTargetType {
+  companion object : BuildTargetType<RuntimeModuleRepositoryTarget?>(RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID), ModuleInducedTargetType {
     private val LOG = logger<RuntimeModuleRepositoryTarget>()
     
     override fun computeAllTargets(model: JpsModel): List<RuntimeModuleRepositoryTarget> {
@@ -123,13 +141,21 @@ internal class RuntimeModuleRepositoryTarget(val project: JpsProject) : BuildTar
       }
     }
     
+    fun getModulesXmlFile(project: JpsProject): File? {
+      val projectExtension = JpsModelSerializationDataService.getProjectExtension(project) ?: return null
+      return File(projectExtension.baseDirectory, ".idea/modules.xml")
+    }
+
     private fun isIntellijPlatformProject(project: JpsProject): Boolean {
       return project.modules.any { it.name == "intellij.idea.community.main" || it.name == "intellij.platform.commercial" }
     }
+
+    private fun updateFromRoots(library: JpsLibrary, digest: HashSink, relativizer: PathRelativizerService) {
+      val roots = library.getRoots(JpsOrderRootType.COMPILED)
+      for (root in roots) {
+        digest.putString(relativizer.toRelative(JpsPathUtil.urlToPath(root.url)))
+      }
+      digest.putInt(roots.size)
+    }
   }
 }
-
-/**
- * Must be equal to [org.jetbrains.idea.devkit.build.IntelliJModuleRepositoryBuildScopeProvider.TARGET_TYPE_ID]
- */
-private const val TARGET_TYPE_ID = "intellij-runtime-module-repository"

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
@@ -15,11 +15,11 @@ import java.util.Collections;
 import java.util.List;
 
 public class StdArrangementSettings implements ArrangementSettings {
-  @NotNull private final   List<ArrangementSectionRule> mySectionRules     = new ArrayList<>();
-  @NotNull private final   List<ArrangementGroupingRule> myGroupings       = new ArrayList<>();
+  private final @NotNull List<ArrangementSectionRule> mySectionRules     = new ArrayList<>();
+  private final @NotNull List<ArrangementGroupingRule> myGroupings       = new ArrayList<>();
 
   // cached values
-  @NotNull protected final List<StdArrangementMatchRule> myRulesByPriority = Collections.synchronizedList(new ArrayList<>());
+  protected final @NotNull List<StdArrangementMatchRule> myRulesByPriority = Collections.synchronizedList(new ArrayList<>());
 
   public StdArrangementSettings() {
   }
@@ -43,8 +43,7 @@ public class StdArrangementSettings implements ArrangementSettings {
     return new StdArrangementSettings(groupingRules, sectionRules);
   }
 
-  @NotNull
-  protected List<ArrangementGroupingRule> cloneGroupings() {
+  protected @NotNull List<ArrangementGroupingRule> cloneGroupings() {
     final ArrayList<ArrangementGroupingRule> groupings = new ArrayList<>();
     for (ArrangementGroupingRule grouping : myGroupings) {
       groupings.add(grouping.clone());
@@ -52,8 +51,7 @@ public class StdArrangementSettings implements ArrangementSettings {
     return groupings;
   }
 
-  @NotNull
-  protected List<ArrangementSectionRule> cloneSectionRules() {
+  protected @NotNull List<ArrangementSectionRule> cloneSectionRules() {
     final ArrayList<ArrangementSectionRule> rules = new ArrayList<>();
     for (ArrangementSectionRule rule : mySectionRules) {
       rules.add(rule.clone());
@@ -61,33 +59,28 @@ public class StdArrangementSettings implements ArrangementSettings {
     return rules;
   }
 
-  @NotNull
   @Override
-  public ArrangementSettings clone() {
+  public @NotNull ArrangementSettings clone() {
     return new StdArrangementSettings(cloneGroupings(), cloneSectionRules());
   }
 
   @Override
-  @NotNull
-  public List<ArrangementGroupingRule> getGroupings() {
+  public @NotNull List<ArrangementGroupingRule> getGroupings() {
     return myGroupings;
   }
 
-  @NotNull
   @Override
-  public List<ArrangementSectionRule> getSections() {
+  public @NotNull List<ArrangementSectionRule> getSections() {
     return mySectionRules;
   }
 
-  @NotNull
   @Override
-  public List<StdArrangementMatchRule> getRules() {
+  public @NotNull List<StdArrangementMatchRule> getRules() {
     return ArrangementUtil.collectMatchRules(mySectionRules);
   }
 
-  @NotNull
   @Override
-  public List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
+  public @NotNull List<? extends ArrangementMatchRule> getRulesSortedByPriority() {
     synchronized (myRulesByPriority) {
       if (myRulesByPriority.isEmpty()) {
         for (ArrangementSectionRule rule : mySectionRules) {

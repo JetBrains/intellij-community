@@ -1,1 +1,2 @@
-Unclassified 3 AKt.getX("");
+[extensionPropertyUsages.0.kt] Value read 10 println(s.x)
+[extensionPropertyUsages.1.java] Unclassified 3 AKt.getX("");

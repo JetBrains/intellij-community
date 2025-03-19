@@ -1,0 +1,176 @@
+package pkg;
+
+public class TestSwitchClassReferencesFastExitEcj {
+   public static void testObject(Object o) {
+      label16:
+      while(true) {
+         int i = 0;// 7
+
+         while(i < o.hashCode()) {
+            switch (o) {// 8
+               case String s:// 9
+                  System.out.println("s");// 10
+                  System.exit(0);// 11
+                  ++i;// 12
+                  break;
+               case Integer in:// 13
+                  System.out.println("ii");// 14
+                  continue label16;// 15
+               default:
+                  System.out.println("s");// 17
+                  return;// 18
+            }
+         }
+      }
+   }
+
+   public static void testObject2(Object o) {
+      label16:
+      while(true) {
+         int i = 0;// 27
+
+         while(i < o.hashCode()) {
+            switch (o) {// 28
+               case String s:// 29
+                  System.out.println("s");// 30
+                  System.exit(0);// 31
+                  ++i;// 32
+                  break;
+               case Integer in:// 34
+                  System.out.println("ii");// 35
+                  continue label16;// 36
+               default:
+                  System.out.println("s");// 39
+                  return;// 40
+            }
+         }
+      }
+   }
+}
+
+class 'pkg/TestSwitchClassReferencesFastExitEcj' {
+   method 'testObject (Ljava/lang/Object;)V' {
+      0      6
+      1      6
+      5      9
+      15      9
+      34      10
+      35      10
+      36      11
+      37      11
+      38      11
+      39      11
+      3a      11
+      3b      11
+      3c      11
+      3d      11
+      3e      12
+      3f      12
+      40      12
+      41      12
+      42      13
+      49      15
+      4a      15
+      4b      16
+      4c      16
+      4d      16
+      4e      16
+      4f      16
+      50      16
+      53      17
+      59      19
+      5a      19
+      5b      19
+      5c      19
+      5d      19
+      5e      19
+      5f      19
+      60      19
+      61      20
+      64      14
+      67      8
+      68      8
+      69      8
+      6a      8
+      6b      8
+      6c      8
+   }
+
+   method 'testObject2 (Ljava/lang/Object;)V' {
+      0      29
+      1      29
+      5      32
+      15      32
+      34      33
+      35      33
+      36      34
+      37      34
+      38      34
+      39      34
+      3a      34
+      3b      34
+      3c      34
+      3d      34
+      3e      35
+      3f      35
+      40      35
+      41      35
+      42      36
+      49      38
+      4a      38
+      4b      39
+      4c      39
+      4d      39
+      4e      39
+      4f      39
+      50      39
+      53      40
+      59      42
+      5a      42
+      5b      42
+      5c      42
+      5d      42
+      5e      42
+      5f      42
+      60      42
+      61      43
+      64      37
+      67      31
+      68      31
+      69      31
+      6a      31
+      6b      31
+      6c      31
+   }
+}
+
+Lines mapping:
+7 <-> 7
+8 <-> 10
+9 <-> 11
+10 <-> 12
+11 <-> 13
+12 <-> 14
+13 <-> 16
+14 <-> 17
+15 <-> 18
+17 <-> 20
+18 <-> 21
+27 <-> 30
+28 <-> 33
+29 <-> 34
+30 <-> 35
+31 <-> 36
+32 <-> 37
+34 <-> 39
+35 <-> 40
+36 <-> 41
+39 <-> 43
+40 <-> 44
+Not mapped:
+6
+16
+22
+26
+38
+45

@@ -6,8 +6,8 @@ use anyhow::Result;
 use {
     anyhow::bail,
     log::info,
-    windows::core::{HSTRING, PCWSTR},
-    windows::Win32::Foundation::{ERROR_SERVICE_DOES_NOT_EXIST, GetLastError},
+    windows::core::{Error, HSTRING, PCWSTR},
+    windows::Win32::Foundation::ERROR_SERVICE_DOES_NOT_EXIST,
     windows::Win32::System::Services::{CloseServiceHandle, OpenSCManagerW, OpenServiceW, SC_MANAGER_CONNECT}
 };
 
@@ -122,13 +122,11 @@ pub fn is_service_present(service_name: &str) -> Result<bool> {
         let svc_handle = match OpenServiceW(svc_manager, &HSTRING::from(service_name), SC_MANAGER_CONNECT) {
             Ok(handle) => { handle }
             Err(e) => {
-                let os_error = GetLastError();
-                if os_error == ERROR_SERVICE_DOES_NOT_EXIST {
+                if e == Error::from(ERROR_SERVICE_DOES_NOT_EXIST) {
                     let _ = CloseServiceHandle(svc_manager);
                     return Ok(false);
                 }
-
-                bail!("Failed to get Windows service. Error: {e:?}, Last OS error: {os_error:?}");
+                bail!("Failed to get Windows service. Error: {e:?}");
             }
         };
 

@@ -25,9 +25,8 @@ public class ShQuickFixIntention implements IntentionAction {
     this.fix = fix;
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return ShBundle.message("sh.shell.script");
   }
 
@@ -41,9 +40,8 @@ public class ShQuickFixIntention implements IntentionAction {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return message;
   }
 

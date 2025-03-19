@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -6,16 +6,16 @@ package org.jetbrains.intellij.build
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
 import kotlinx.collections.immutable.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import java.util.function.BiConsumer
 
 /**
  * Default bundled plugins for all products.
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
-  "intellij.dev",
+  "intellij.dev"
 )
 
 class ProductModulesLayout {
@@ -30,22 +30,28 @@ class ProductModulesLayout {
   var productImplementationModules: List<String> = emptyList()
 
   /**
-   * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. Layouts of the
-   * bundled plugins are specified in [pluginLayouts] list.
+   * These are the names of the main modules (which contain META-INF/plugin.xml).
+   * They belong to the plugins that need to be included with the product.
+   * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
+   * 
+   * This property can be used for writing only. 
+   * If you need to read the list of plugins which should be bundled, use [BuildContext.getBundledPluginModules] instead.
    */
-  var bundledPluginModules: MutableList<String> = DEFAULT_BUNDLED_PLUGINS.toMutableList()
+  var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
 
   /**
-   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
-   * into it. Zip archives of these plugins will be built and placed under "&lt;product-code&gt;-plugins" directory in the build artifacts.
+   * This property is used only if [ProductModulesLayout.buildAllCompatiblePlugins] is `false`, otherwise it should be empty.
+   *
+   * Main module names (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed into it.
+   * Zip archives of these plugins will be built and placed under [BuildContext.nonBundledPlugins] directory in the build artifacts.
    * Layouts of the plugins are specified in [pluginLayouts] list.
    */
   var pluginModulesToPublish: PersistentSet<String> = persistentSetOf()
 
   /**
-   * Describes layout of non-trivial plugins which may be included into the product. The actual list of the plugins need to be bundled
-   * with the product is specified by [bundledPluginModules], the actual list of plugins which need to be prepared for publishing
-   * is specified by [pluginModulesToPublish].
+   * Describes the layout of non-trivial plugins which may be included in the product.
+   * The actual list of the plugins needs to be bundled with the product is specified by [bundledPluginModules],
+   * the actual list of plugins which need to be prepared for publishing is specified by [pluginModulesToPublish].
    */
   var pluginLayouts: PersistentList<PluginLayout> = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
     set(value) {
@@ -66,25 +72,20 @@ class ProductModulesLayout {
 
   /**
    * Module name to list of Ant-like patterns describing entries which should be excluded from its output.
-   * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
-   * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
+   * <strong>This is a temporary property added to keep the layout of some products.
+   * If some directory from a module shouldn't be included in the product JAR,
+   * it's strongly recommended to move that directory outside the module source roots.</strong>
    */
   internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
   /**
    * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutSpec = persistentListOf<(PlatformLayout, BuildContext) -> Unit>()
+  internal var platformLayoutSpec = persistentListOf<suspend (PlatformLayout, BuildContext) -> Unit>()
+    private set
 
-  @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
-  fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutSpec = platformLayoutSpec.add { layout, context ->
-      customizer.accept(layout, context)
-    }
-  }
-
-  fun addPlatformSpec(customizer: (PlatformLayout, BuildContext) -> Unit) {
-    platformLayoutSpec = platformLayoutSpec.add(customizer)
+  fun addPlatformSpec(customizer: suspend (PlatformLayout, BuildContext) -> Unit) {
+    platformLayoutSpec += customizer
   }
 
   fun excludeModuleOutput(module: String, path: String) {
@@ -96,15 +97,9 @@ class ProductModulesLayout {
   }
 
   /**
-   * Names of the modules which classpath will be used to build searchable options index <br>
-   * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
-   */
-  var mainModules: List<String> = emptyList()
-
-  /**
    * If `true` a special xml descriptor in custom plugin repository format will be generated for [pluginModulesToPublish] plugins.
    * This descriptor and the plugin *.zip files can be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file
-   * to allow installing custom plugins directly from IDE. If [ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
+   * to allow installing custom plugins directly from the IDE. If [ProprietaryBuildTools.artifactsServer] is specified, `__BUILTIN_PLUGINS_URL__` in
    * *ApplicationInfo.xml file will be automatically replaced by the plugin repository URL provided by the artifact server.
    *
    * @see [pluginModulesToPublish]
@@ -112,10 +107,9 @@ class ProductModulesLayout {
   var prepareCustomPluginRepositoryForPublishedPlugins: Boolean = true
 
   /**
-   * If `true` then all plugins that compatible with an IDE will be built. By default, these plugins will be placed to "auto-uploading"
-   * subdirectory and may be automatically uploaded to plugins.jetbrains.com.
-   * <br>
-   * If `false` only plugins from [pluginModulesToPublish] will be considered.
+   * If `true` then all plugins that compatible with an IDE will be built, otherwise only [pluginModulesToPublish] are considered.
+   * Then the plugins matching [BuildContext.pluginAutoPublishList] will be placed to [BuildContext.nonBundledPluginsToBePublished]
+   * subdirectory to be uploaded to plugins.jetbrains.com upon a release.
    */
   var buildAllCompatiblePlugins: Boolean = true
 
@@ -125,13 +119,23 @@ class ProductModulesLayout {
   var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 
   /**
+   * If this property is set to `true`, modules registered as optional in `content` tag in `plugin.xml` files which doesn't exist in the JPS project configuration, will be excluded 
+   * from the distribution (by default, in such cases build scripts fail with an error).
+   * This can be used to build a product from a subset of a source repository. E.g., a plugin from intellij-community may refer to some additional modules located in the ultimate
+   * part of the project, and they should be skipped while building from intellij-community sources. 
+   */
+  @ApiStatus.Internal
+  var skipUnresolvedContentModules: Boolean = false
+  
+  /**
    * Module names which should be excluded from this product.
-   * Allows to filter out default platform modules (both api and implementation) as well as product modules.
-   * This API is experimental, use with care
+   * Allows filtering out default platform modules (both api and implementation) as well as product modules.
+   * This API is experimental, use it with care
    */
   var excludedModuleNames: PersistentSet<String> = persistentSetOf()
 }
 
+// the set is ordered (Linked)
 internal fun createPluginLayoutSet(expectedSize: Int): MutableSet<PluginLayout> {
   return ObjectLinkedOpenCustomHashSet(expectedSize, object : Hash.Strategy<PluginLayout?> {
     override fun hashCode(layout: PluginLayout?): Int {

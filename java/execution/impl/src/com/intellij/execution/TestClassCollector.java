@@ -107,7 +107,7 @@ public final class TestClassCollector {
     for (VirtualFile file : pathsList.getVirtualFiles()) {
       files.add(file.toNioPath());
     }
-    return UrlClassLoader.build().useCache(false).files(files).get();
+    return UrlClassLoader.build().files(files).get();
   }
 
   public static VirtualFile @Nullable [] getRootPath(Module module, final boolean chooseSingleModule) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
@@ -67,7 +53,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
   private final DownloadableLibraryType myLibraryType;
   private FrameworkLibraryVersion myLastSelectedVersion;
 
-  public DownloadingOptionsDialog(@NotNull Component parent, @NotNull final LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
+  public DownloadingOptionsDialog(@NotNull Component parent, final @NotNull LibraryDownloadSettings settings, @NotNull List<? extends FrameworkLibraryVersion> versions,
                                   final boolean showNameAndLevel) {
     super(parent, true);
     setTitle(JavaUiBundle.message("dialog.title.downloading.options"));
@@ -104,9 +90,9 @@ public class DownloadingOptionsDialog extends DialogWrapper {
 
     myFilesList.setBorder(null);
     myFilesToDownloadLabel.setLabelFor(myFilesList);
-    myDirectoryField.addBrowseFolderListener(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"),
-                                             JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
-                                             FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myDirectoryField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.title"))
+      .withDescription(JavaUiBundle.message("file.chooser.directory.for.downloaded.libraries.description")));
 
     myCopyDownloadedFilesToLabel.setLabelFor(myDirectoryField);
     myDirectoryField.setText(FileUtil.toSystemDependentName(settings.getDirectoryForDownloadedLibrariesPath()));
@@ -174,7 +160,7 @@ public class DownloadingOptionsDialog extends DialogWrapper {
       myFilesList.setModel(new CollectionListModel<>(
         ContainerUtil.map2Array(downloads, JCheckBox.class, (Function<DownloadableLibraryFileDescription, JCheckBox>)description -> {
           final boolean selected = selectedFiles != null ? selectedFiles.contains(description) : !description.isOptional();
-          @NlsSafe final String name = description.getPresentableFileName();
+          final @NlsSafe String name = description.getPresentableFileName();
           return new JCheckBox(name, selected);
         })));
       if (myNameAndLevelPanel != null) {
@@ -195,16 +181,14 @@ public class DownloadingOptionsDialog extends DialogWrapper {
     return myFilesList;
   }
 
-  @Nullable
-  public FrameworkLibraryVersion getSelectedVersion() {
+  public @Nullable FrameworkLibraryVersion getSelectedVersion() {
     return (FrameworkLibraryVersion)myVersionComboBox.getSelectedItem();
   }
 
-  @Nullable
-  public static LibraryDownloadSettings showDialog(@NotNull JComponent parent,
-                                                   @NotNull LibraryDownloadSettings settings,
-                                                   List<? extends FrameworkLibraryVersion> versions,
-                                                   boolean showNameAndLevel) {
+  public static @Nullable LibraryDownloadSettings showDialog(@NotNull JComponent parent,
+                                                             @NotNull LibraryDownloadSettings settings,
+                                                             List<? extends FrameworkLibraryVersion> versions,
+                                                             boolean showNameAndLevel) {
     final DownloadingOptionsDialog dialog = new DownloadingOptionsDialog(parent, settings, versions, showNameAndLevel);
     if (!dialog.showAndGet()) {
       return null;

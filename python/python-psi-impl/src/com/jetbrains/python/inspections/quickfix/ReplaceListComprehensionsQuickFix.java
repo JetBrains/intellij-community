@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -26,21 +26,19 @@ import com.jetbrains.python.psi.PyExpressionStatement;
 import com.jetbrains.python.psi.PyTupleExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceListComprehensionsQuickFix implements LocalQuickFix {
-  @NotNull
+public class ReplaceListComprehensionsQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.replace.list.comprehensions");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement expression = descriptor.getPsiElement();
-    if (expression instanceof PyTupleExpression) {
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (element instanceof PyTupleExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpressionStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpressionStatement.class,
-                                                                        "(" + expression.getText() + ")");
-      expression.replace(statement.getExpression());
+      PyExpressionStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class,
+                                                                        "(" + element.getText() + ")");
+      element.replace(statement.getExpression());
     }
   }
 }

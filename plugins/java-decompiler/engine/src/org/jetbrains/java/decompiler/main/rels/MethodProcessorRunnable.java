@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -11,13 +12,20 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.*;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MethodProcessorRunnable implements Runnable {
   public final Object lock = new Object();
@@ -67,11 +75,14 @@ public class MethodProcessorRunnable implements Runnable {
   }
 
   public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+    cancellationManager.checkCanceled();
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
     mt.expandData(cl);
     InstructionSequence seq = mt.getInstructionSequence();
     ControlFlowGraph graph = new ControlFlowGraph(seq);
+    DecompilerContext.getLimitContainer().incrementAndCheckDirectNodeCount(graph);
 
     DeadCodeHelper.removeDeadBlocks(graph);
 
@@ -83,6 +94,7 @@ public class MethodProcessorRunnable implements Runnable {
     // Since jsr instruction is forbidden for class files version 51.0 (Java 7) or above
     // call to inlineJsr() is only meaningful for class files prior to the Java 7.
     //
+    cancellationManager.checkCanceled();
     if (!cl.isVersion7()) {
       graph.inlineJsr(cl, mt);
     }
@@ -91,6 +103,8 @@ public class MethodProcessorRunnable implements Runnable {
     DeadCodeHelper.connectDummyExitBlock(graph);
 
     DeadCodeHelper.removeGoTos(graph);
+
+    ExceptionDeobfuscator.duplicateMergedMatchedExceptionCatchBlocks(graph, cl);
 
     ExceptionDeobfuscator.removeCircularRanges(graph);
 
@@ -124,57 +138,89 @@ public class MethodProcessorRunnable implements Runnable {
       }
       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
+    cancellationManager.checkCanceled();
+    RootStatement root = DomHelper.parseGraph(graph, mt);
 
-    RootStatement root = DomHelper.parseGraph(graph);
+    cancellationManager.checkCanceled();
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(cl, mt, root, graph)) {
-      root = DomHelper.parseGraph(graph);
+      cancellationManager.checkCanceled();
+      root = DomHelper.parseGraph(graph, mt);
     }
 
     // remove synchronized exception handler
     // not until now because of comparison between synchronized statements in the finally cycle
     DomHelper.removeSynchronizedHandler(root);
+    cancellationManager.checkCanceled();
 
     //		LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
 
     SequenceHelper.condenseSequences(root);
 
     ClearStructHelper.clearStatements(root);
+    cancellationManager.checkCanceled();
 
     ExprProcessor proc = new ExprProcessor(md, varProc);
     proc.processStatement(root, cl);
+    cancellationManager.checkCanceled();
 
     SequenceHelper.condenseSequences(root);
 
-    StackVarsProcessor stackProc = new StackVarsProcessor();
-
     do {
-      stackProc.simplifyStackVars(root, mt, cl);
+      StackVarsProcessor.simplifyStackVars(root, mt, cl);
       varProc.setVarVersions(root);
     }
-    while (new PPandMMHelper().findPPandMM(root));
+    while (new PPandMMHelper(varProc).findPPandMM(root));
+
+    cancellationManager.checkCanceled();
+
+    if (cl.isVersion9()) {
+      ConcatenationHelper.simplifyStringConcat(root);
+    }
+
+    if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
+      if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
+        SequenceHelper.condenseSequences(root);
+        StackVarsProcessor.simplifyStackVars(root, mt, cl);
+        varProc.setVarVersions(root);
+      }
+    }
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
 
-      do {
-        MergeHelper.enhanceLoops(root);
-      }
-      while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
+      while (true) {
+        if (EliminateLoopsHelper.eliminateLoops(root, mt, cl)) {
+          continue;
+        }
 
-      if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
-        if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-          SequenceHelper.condenseSequences(root);
-          stackProc.simplifyStackVars(root, mt, cl);
-          varProc.setVarVersions(root);
+        MergeHelper.enhanceLoops(root);
+
+        if (LoopExtractHelper.extractLoops(root)) {
+          continue;
+        }
+
+        if (!IfHelper.mergeAllIfs(root)) {
+          break;
         }
       }
 
+
       LabelHelper.identifyLabels(root);
+
+      if (TryHelper.enhanceTryStats(root, graph, mt)) {
+        continue;
+      }
 
       if (InlineSingleBlockHelper.inlineSingleBlocks(root)) {
         continue;
+      }
+
+      // this has to be done last so it does not screw up the formation of for loops
+      if (MergeHelper.makeDoWhileLoops(root)) {
+        LabelHelper.cleanUpEdges(root);
+        LabelHelper.identifyLabels(root);
       }
 
       // initializer may have at most one return point, so no transformation of method exits permitted
@@ -187,19 +233,27 @@ public class MethodProcessorRunnable implements Runnable {
       //  break;
       //}
     }
+    cancellationManager.checkCanceled();
 
     ExitHelper.removeRedundantReturns(root);
 
     SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
 
+    cleanSynchronizedVar(root);
+
     varProc.setVarDefinitions(root);
+
+    cancellationManager.checkCanceled();
+    SecondaryFunctionsHelper.updateAssignments(root);
 
     // must be the last invocation, because it makes the statement structure inconsistent
     // FIXME: new edge type needed
     LabelHelper.replaceContinueWithBreak(root);
 
+    SwitchHelper.simplifySwitchesOnReferences(root, cl);
+    SwitchHelper.prepareForRules(root, cl);
     PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
-    SwitchHelper.simplifySwitchesOnString(root);
+    cancellationManager.checkCanceled();
 
     mt.releaseResources();
 
@@ -214,5 +268,52 @@ public class MethodProcessorRunnable implements Runnable {
 
   public boolean isFinished() {
     return finished;
+  }
+
+  /**
+   * Clean monitor of synchronizer: <p>
+   * Simple synthetic example:<p>
+   * before: <pre>
+   * {@code
+   * var a = b; // a is not used anywhere
+   * synchronized (b){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   * after:
+   * <pre>
+   * {@code
+   * synchronized (b){
+   *  doSomething();
+   * }
+   * }
+   * </pre>
+   */
+  public static void cleanSynchronizedVar(Statement stat) {
+    for (Statement st : stat.getStats()) {
+      cleanSynchronizedVar(st);
+    }
+
+    if (stat.type == Statement.StatementType.SYNCHRONIZED) {
+      SynchronizedStatement sync = (SynchronizedStatement)stat;
+      if (sync.getHeadexprentList().get(0).type == Exprent.EXPRENT_MONITOR) {
+        MonitorExprent mon = (MonitorExprent)sync.getHeadexprentList().get(0);
+        List<Exprent> exprents = sync.getFirst().getExprents();
+        if (exprents == null) return;
+        for (Exprent e : exprents) {
+          if (e.type == Exprent.EXPRENT_ASSIGNMENT) {
+            AssignmentExprent ass = (AssignmentExprent)e;
+            if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
+              VarExprent var = (VarExprent)ass.getLeft();
+              if (ass.getRight().equals(mon.getValue()) && !var.isVarReferenced(stat.getParent())) {
+                exprents.remove(e);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

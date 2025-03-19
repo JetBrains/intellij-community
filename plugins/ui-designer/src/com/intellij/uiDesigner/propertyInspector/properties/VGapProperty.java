@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
 
+@Service(Service.Level.PROJECT)
 public final class VGapProperty extends AbstractIntProperty<RadContainer> {
   public static VGapProperty getInstance(Project project) {
     return project.getService(VGapProperty.class);
@@ -18,16 +20,13 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   public Integer getValue(final RadContainer component) {
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    if (component.getLayout() instanceof FlowLayout layout) {
       return layout.getVgap();
     }
-    if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    if (component.getLayout() instanceof CardLayout layout) {
       return layout.getVgap();
     }
     if (component.getLayout() instanceof AbstractLayout layoutManager) {
@@ -38,16 +37,13 @@ public final class VGapProperty extends AbstractIntProperty<RadContainer> {
 
   @Override
   protected void setValueImpl(final RadContainer component, final Integer value) throws Exception {
-    if (component.getLayout() instanceof BorderLayout) {
-      BorderLayout layout = (BorderLayout) component.getLayout();
+    if (component.getLayout() instanceof BorderLayout layout) {
       layout.setVgap(value.intValue());
     }
-    else if (component.getLayout() instanceof FlowLayout) {
-      FlowLayout layout = (FlowLayout) component.getLayout();
+    else if (component.getLayout() instanceof FlowLayout layout) {
       layout.setVgap(value.intValue());
     }
-    else if (component.getLayout() instanceof CardLayout) {
-      CardLayout layout = (CardLayout) component.getLayout();
+    else if (component.getLayout() instanceof CardLayout layout) {
       layout.setVgap(value.intValue());
     }
     else {

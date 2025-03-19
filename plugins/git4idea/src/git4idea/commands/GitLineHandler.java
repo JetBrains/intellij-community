@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -10,7 +10,6 @@ import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -41,9 +40,9 @@ public class GitLineHandler extends GitTextHandler {
   /**
    * Remote url which require authentication
    */
-  @NotNull private Collection<String> myUrls = Collections.emptyList();
-  @NotNull private AuthenticationMode myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
-  @Nullable private AuthenticationGate myAuthenticationGate;
+  private @NotNull Collection<String> myUrls = Collections.emptyList();
+  private @NotNull AuthenticationMode myIgnoreAuthenticationRequest = AuthenticationMode.FULL;
+  private @Nullable AuthenticationGate myAuthenticationGate;
 
   public GitLineHandler(@Nullable Project project,
                         @NotNull File directory,
@@ -80,8 +79,7 @@ public class GitLineHandler extends GitTextHandler {
     myUrls = urls;
   }
 
-  @NotNull
-  public Collection<String> getUrls() {
+  public @NotNull Collection<String> getUrls() {
     return myUrls;
   }
 
@@ -89,8 +87,7 @@ public class GitLineHandler extends GitTextHandler {
     return !myUrls.isEmpty();
   }
 
-  @NotNull
-  public AuthenticationMode getIgnoreAuthenticationMode() {
+  public @NotNull AuthenticationMode getIgnoreAuthenticationMode() {
     return myIgnoreAuthenticationRequest;
   }
 
@@ -98,18 +95,7 @@ public class GitLineHandler extends GitTextHandler {
     myIgnoreAuthenticationRequest = authenticationMode;
   }
 
-  /** @deprecated Please use overload {@link #setIgnoreAuthenticationMode(AuthenticationMode)}*/
-  @Deprecated(forRemoval = true)
-  public void setIgnoreAuthenticationMode(@NotNull GitAuthenticationMode authenticationMode) {
-    myIgnoreAuthenticationRequest = switch (authenticationMode) {
-      case NONE -> AuthenticationMode.NONE;
-      case SILENT -> AuthenticationMode.SILENT;
-      case FULL -> AuthenticationMode.FULL;
-    };
-  }
-
-  @Nullable
-  public AuthenticationGate getAuthenticationGate() {
+  public @Nullable AuthenticationGate getAuthenticationGate() {
     return myAuthenticationGate;
   }
 
@@ -118,7 +104,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @Override
-  protected void processTerminated(final int exitCode) {}
+  protected void processTerminated(final int exitCode) { }
 
   public void addLineListener(GitLineHandlerListener listener) {
     super.addListener(listener);
@@ -153,19 +139,17 @@ public class GitLineHandler extends GitTextHandler {
 
   @Override
   protected OSProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine, myWithMediator && myExecutable.isLocal() && Registry.is("git.execute.with.mediator")) {
-      @NotNull
+    return new MyOSProcessHandler(commandLine) {
       @Override
-      protected BaseDataReader createOutputDataReader() {
+      protected @NotNull BaseDataReader createOutputDataReader() {
         return new LineReader(createProcessOutReader(),
                               readerOptions().policy(),
                               new BufferingTextSplitter((line, isCr) -> onLineAvailable(line, isCr, ProcessOutputTypes.STDOUT)),
                               myPresentableName);
       }
 
-      @NotNull
       @Override
-      protected BaseDataReader createErrorDataReader() {
+      protected @NotNull BaseDataReader createErrorDataReader() {
         return new LineReader(createProcessErrReader(),
                               readerOptions().policy(),
                               new BufferingTextSplitter((line, isCr) -> onLineAvailable(line, isCr, ProcessOutputTypes.STDERR)),
@@ -189,10 +173,10 @@ public class GitLineHandler extends GitTextHandler {
    * other than {@link com.intellij.util.io.BaseOutputReader.Options#policy()} because we do not negotiate with terrorists
    */
   private static class LineReader extends BaseDataReader {
-    @NotNull private final Reader myReader;
+    private final @NotNull Reader myReader;
     private final char @NotNull [] myInputBuffer = new char[8192];
 
-    @NotNull private final BufferingTextSplitter myOutputProcessor;
+    private final @NotNull BufferingTextSplitter myOutputProcessor;
 
     LineReader(@NotNull Reader reader,
                       @NotNull SleepingPolicy sleepingPolicy,
@@ -229,9 +213,8 @@ public class GitLineHandler extends GitTextHandler {
     }
 
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return ProcessIOExecutorService.INSTANCE.submit(runnable);
     }
 

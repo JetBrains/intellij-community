@@ -1,1 +1,11 @@
-version = "65.3.*"
+version = "71.1.*"
+upstream_repository = "https://github.com/pypa/setuptools"
+extra_description = """\
+If using `setuptools >= 71.1` *only* for `pkg_resources`,
+you don't need `types-setuptools` since `pkg_resources` is now typed.\
+"""
+
+[tool.stubtest]
+# darwin is equivalent to linux for OS-specific methods
+platforms = ["linux", "win32"]
+stubtest_requirements = ["tomli"]

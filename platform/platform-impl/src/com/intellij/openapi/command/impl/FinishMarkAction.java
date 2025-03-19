@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class FinishMarkAction extends BasicUndoableAction {
-  private @NotNull final StartMarkAction myStartAction;
+  private final @NotNull StartMarkAction myStartAction;
   private boolean myGlobal = false;
   private @NlsContexts.Command String myCommandName;
   private final DocumentReference myReference;
@@ -56,7 +56,7 @@ public final class FinishMarkAction extends BasicUndoableAction {
     return myReference;
   }
 
-  public static void finish(final Project project, final Editor editor, @Nullable final StartMarkAction startAction) {
+  public static void finish(final Project project, final Editor editor, final @Nullable StartMarkAction startAction) {
     if (startAction == null) return;
     CommandProcessor.getInstance().executeCommand(project, () -> {
       DocumentReference reference = DocumentReferenceManager.getInstance().create(editor.getDocument());

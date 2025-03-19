@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.performanceTesting;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,9 +54,8 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     super(text, line);
   }
 
-  @NotNull
   @Override
-  protected Promise<Object> _execute(@NotNull PlaybackContext context) {
+  protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     runWhenGradleImportAndIndexingFinished(context, actionCallback);
     return Promises.toPromise(actionCallback);
@@ -94,8 +93,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     AsyncPromise<?> promise = new AsyncPromise<>();
     context.message("Waiting for current import resolve tasks", getLine());
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      ExternalSystemProcessingManager processingManager =
-        ApplicationManager.getApplication().getService(ExternalSystemProcessingManager.class);
+      var processingManager = ExternalSystemProcessingManager.getInstance();
       while (processingManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT, project)) {
         final Object lock = new Object();
         synchronized (lock) {
@@ -135,7 +133,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
           connection.subscribe(ProjectDataImportListener.TOPIC, new ProjectDataImportListener() {
             @Override
-            public void onImportFinished(String projectPath) {
+            public void onFinalTasksFinished(String projectPath) {
               _onImportFinished(projectPath);
             }
 
@@ -148,7 +146,10 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
               if (!projectsPaths.contains(projectPath)) return;
               connection.disconnect();
               if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-                ApplicationManager.getApplication().invokeLater(() -> promise.setResult(null));
+
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  promise.setResult(null);
+                });
               }
             }
           });
@@ -162,7 +163,7 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
           context.error("Gradle resolve failed for: " + settings.getExternalProjectPath() + ":" + errorMessage + ":" + errorDetails,
                         getLine());
           synchronized (projectsWithResolveErrors) {
-            if (projectsWithResolveErrors.length() != 0) {
+            if (!projectsWithResolveErrors.isEmpty()) {
               projectsWithResolveErrors.append(", ");
             }
             projectsWithResolveErrors.append(String.format("'%s'", new File(settings.getExternalProjectPath()).getName()));
@@ -178,17 +179,17 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     }
   }
 
-  private Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,
-                                                  @NotNull PlaybackContext context,
-                                                  @NotNull GradleSettings gradleSettings) {
+  public static Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,
+                                                        @NotNull PlaybackContext context,
+                                                        @NotNull GradleSettings gradleSettings) {
     if (gradleSettings.getLinkedProjectsSettings().isEmpty()) {
       VirtualFile projectDir = ProjectUtil.guessProjectDir(project);
       assert projectDir != null;
       VirtualFile[] children = projectDir.getChildren();
       boolean isGradleProject = ContainerUtil.exists(children, file -> GradleConstants.KNOWN_GRADLE_FILES.contains(file.getName()));
       if (!isGradleProject) {
-        context.error("Unable to find Gradle project at " + projectDir.getPath(), getLine());
-        context.message("Files found at the path: " + Arrays.toString(ContainerUtil.map2Array(children, VirtualFile::getName)), getLine());
+        context.error("Unable to find Gradle project at " + projectDir.getPath(), 0);
+        context.message("Files found at the path: " + Arrays.toString(ContainerUtil.map2Array(children, VirtualFile::getName)), 0);
         return Promises.rejectedPromise();
       }
       else {

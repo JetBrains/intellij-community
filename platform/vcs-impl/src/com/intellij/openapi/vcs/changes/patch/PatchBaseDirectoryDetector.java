@@ -3,10 +3,12 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collection;
 
 
+@ApiStatus.Internal
 public abstract class PatchBaseDirectoryDetector {
   public static PatchBaseDirectoryDetector getInstance(Project project) {
     return project.getService(PatchBaseDirectoryDetector.class);

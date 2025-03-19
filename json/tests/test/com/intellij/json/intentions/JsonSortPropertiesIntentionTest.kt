@@ -25,4 +25,8 @@ class JsonSortPropertiesIntentionTest : JsonTestCase() {
   fun testSortRecursively() {
     doTest()
   }
+
+  fun testSortWhenCaretAfterLastSymbol() {
+    doTest()
+  }
 }

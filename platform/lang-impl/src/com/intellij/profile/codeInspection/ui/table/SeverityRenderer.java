@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.HighlightDisplayLevelColoredIcon;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -19,16 +20,17 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.EventObject;
+import java.util.List;
 
-public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
+public final class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   private static final Icon DEFAULT_DISABLED_ICON = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
 
   static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity("-", -1);
@@ -37,6 +39,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   private final ScopesAndSeveritiesTable myTable;
   private final @NotNull Project myProject;
 
+  @ApiStatus.Internal
   public SeverityRenderer(@NotNull InspectionProfileImpl inspectionProfile,
                           @NotNull Project project,
                           @NotNull Runnable onClose,
@@ -55,8 +58,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
     Icon icon = level.getIcon();
-    return icon instanceof HighlightDisplayLevel.ColoredIcon
-                 ? new ColorIcon(icon.getIconWidth(), ((HighlightDisplayLevel.ColoredIcon)icon).getColor())
+    return icon instanceof HighlightDisplayLevelColoredIcon
+                 ? new ColorIcon(icon.getIconWidth(), ((HighlightDisplayLevelColoredIcon)icon).getColor())
                  : icon;
   }
 

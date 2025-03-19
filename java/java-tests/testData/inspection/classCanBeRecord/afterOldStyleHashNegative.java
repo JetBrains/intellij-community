@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 record Test(double[] arrayValue) {
     @Override
     public int hashCode() {

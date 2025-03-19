@@ -7,10 +7,10 @@ import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollec
 
 import java.util.List;
 
-public class RunConfigurationTypeLanguageExtension implements FeatureUsageCollectorExtension {
+final class RunConfigurationTypeLanguageExtension implements FeatureUsageCollectorExtension {
   @Override
   public String getGroupId() {
-    return RunConfigurationTypeUsagesCollector.GROUP.getId();
+    return RunConfigurationTypeDefs.TYPE_USAGES_GROUP_ID;
   }
 
   @Override

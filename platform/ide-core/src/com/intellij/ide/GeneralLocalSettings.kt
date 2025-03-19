@@ -71,7 +71,7 @@ class GeneralLocalSettings : SimplePersistentStateComponent<GeneralLocalState>(G
 }
 
 class GeneralLocalState : BaseState() {
-  var defaultProjectDirectory by string("")
-  var useDefaultBrowser by property(true)
-  var browserPath by string(null)
+  var defaultProjectDirectory: String? by string("")
+  var useDefaultBrowser: Boolean by property(true)
+  var browserPath: String? by string(null)
 }

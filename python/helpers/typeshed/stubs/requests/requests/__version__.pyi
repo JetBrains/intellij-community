@@ -1,10 +1,12 @@
-__title__: str
-__description__: str
-__url__: str
-__version__: str
-__build__: int
-__author__: str
-__author_email__: str
-__license__: str
-__copyright__: str
-__cake__: str
+from typing import Final
+
+__title__: Final = "requests"
+__description__: Final[str]
+__url__: Final[str]
+__version__: Final[str]
+__build__: Final[int]
+__author__: Final[str]
+__author_email__: Final[str]
+__license__: Final[str]
+__copyright__: Final[str]
+__cake__: Final[str]

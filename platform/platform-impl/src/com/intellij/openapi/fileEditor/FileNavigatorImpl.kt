@@ -1,19 +1,23 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.ide.*
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class FileNavigatorImpl : FileNavigator {
   private val ignoreContextEditor = ThreadLocal<Boolean?>()
 
@@ -32,11 +36,9 @@ class FileNavigatorImpl : FileNavigator {
     if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
       return
     }
-    else if (navigateInProjectView(descriptor.project, descriptor.file, requestFocus)) {
-      return
+    else {
+      ProjectFileNavigatorImpl.getInstance(descriptor.project).scheduleNavigateInProjectView(descriptor.file, requestFocus)
     }
-    val message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().productName)
-    Messages.showErrorDialog(descriptor.project, message, IdeBundle.message("title.cannot.open.file"))
   }
 
   private fun navigateInEditorOrNativeApp(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
@@ -57,7 +59,7 @@ class FileNavigatorImpl : FileNavigator {
     return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
-  private fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
+  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
     if (ignoreContextEditor.get() == true) {
       return false
     }
@@ -73,6 +75,25 @@ class FileNavigatorImpl : FileNavigator {
       return false
     }
     OpenFileDescriptor.navigateInEditor(descriptor, e)
+    return true
+  }
+
+  suspend fun navigateInRequestedEditorAsync(descriptor: OpenFileDescriptor, dataContext: DataContext): Boolean {
+    val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
+    if (e.isDisposed) {
+      logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+      return false
+    }
+
+    if (serviceAsync<FileDocumentManager>().getFile(e.document) != descriptor.file) {
+      return false
+    }
+
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        OpenFileDescriptor.navigateInEditor(descriptor, e)
+      }
+    }
     return true
   }
 
@@ -93,24 +114,13 @@ class FileNavigatorImpl : FileNavigator {
   }
 }
 
-private fun navigateInProjectView(project: Project, file: VirtualFile, requestFocus: Boolean): Boolean {
-  val context: SelectInContext = FileSelectInContext(project, file, null)
-  for (target in SelectInManager.getInstance(project).targetList) {
-    if (context.selectIn(target, requestFocus)) {
-      return true
-    }
-  }
-  return false
-}
-
 @RequiresEdt
 private fun navigateInAnyFileEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Boolean {
   val fileEditorManager = FileEditorManager.getInstance(descriptor.project)
   val editors = fileEditorManager.openFileEditor(descriptor, focusEditor)
   for (editor in editors) {
     if (editor is TextEditor) {
-      val e = editor.editor
-      fileEditorManager.runWhenLoaded(e) { OpenFileDescriptor.unfoldCurrentLine(e) }
+      fileEditorManager.runWhenLoaded(editor.editor) { OpenFileDescriptor.unfoldCurrentLine(editor.editor) }
     }
   }
   return !editors.isEmpty()

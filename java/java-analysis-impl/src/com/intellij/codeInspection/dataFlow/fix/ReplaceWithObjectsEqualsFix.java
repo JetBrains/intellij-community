@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
+public final class ReplaceWithObjectsEqualsFix extends PsiUpdateModCommandQuickFix {
   private final String myQualifierText;
   private final String myReplacementText;
 
@@ -25,23 +25,19 @@ public final class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     myReplacementText = replacementText;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getName() {
+  public @Nls @NotNull String getName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", myQualifierText + ".equals(...)", "Objects.equals(" + myReplacementText + ", ...)");
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", ".equals()", "Objects.equals()");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (call == null) return;
 
     PsiExpression[] args = call.getArgumentList().getExpressions();
@@ -52,12 +48,11 @@ public final class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(((PsiMethodCallExpression)replaced).getMethodExpression());
   }
 
-  @Nullable
-  public static ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
-                                                      @NotNull PsiReferenceExpression methodExpression) {
+  public static @Nullable ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
+                                                                @NotNull PsiReferenceExpression methodExpression) {
     if (!"equals".equals(methodExpression.getReferenceName()) ||
         call.getArgumentList().getExpressionCount() != 1 ||
-        !PsiUtil.getLanguageLevel(call).isAtLeast(LanguageLevel.JDK_1_7)) {
+        !PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, call)) {
       return null;
     }
 

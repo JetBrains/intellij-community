@@ -20,6 +20,7 @@ import com.intellij.util.indexing.FindSymbolParameters
 import icons.GradleIcons
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.action.GradleExecuteTaskAction
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineInfo.Companion.GRADLE_COMPLETION_COMPARATOR
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -85,10 +86,10 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
     return true
   }
 
-  private fun completeTasks(context: Context): Sequence<String> {
+  private fun completeTasks(context: Context): List<String> {
     val indices = GradleTasksIndices.getInstance(context.project)
-    return indices.getTasksCompletionVariances(context.workingDirectory)
-      .asSequence().map { it.key }
+    return indices.getTasksCompletionVariances(context.workingDirectory).keys
+      .sortedWith(GRADLE_COMPLETION_COMPARATOR)
   }
 
   private fun completeOptions(isLongOpt: Boolean): Sequence<String> {

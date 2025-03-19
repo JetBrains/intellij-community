@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +27,8 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -107,7 +108,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
     @Override
     public void beforeConnectionClosed() {
-      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      Application app = ApplicationManager.getApplication();
+      VirtualFilePointerManager service = app == null ? null : app.getServiceIfCreated(VirtualFilePointerManager.class);
       if (service != null) {
         ((VirtualFilePointerManagerImpl)service).switchToUrlBasedPointers();
       }
@@ -150,7 +152,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
     assert !StringUtil.isEmptyOrSpaces(childName);
     @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
-    addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent, false));
+    addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
     return nodes.values();
   }
 
@@ -389,13 +391,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       toUpdate = root.findOrCreateByFile(file);
     }
     FilePartNode node = toUpdate.node;
-    if (fs != node.myFS) {
+    if (fs != node.fs) {
       if (url != null && (IS_UNDER_UNIT_TEST || IS_INTERNAL)) {
         throw new IllegalArgumentException("Invalid url: '" + url + "'. " +
                                            "Its protocol '" + VirtualFileManager.extractProtocol(url) + "' is from " + fsFromFile +
-                                           " but the path part points to " + node.myFS);
+                                           " but the path part points to " + node.fs);
       }
-      LOG.error("fs=" + fs + "; node.myFS=" + node.myFS+"; url="+url+"; file="+file+"; node="+node);
+      LOG.error("fs=" + fs + "; node.myFS=" + node.fs + "; url=" + url + "; file=" + file + "; node=" + node);
     }
 
     VirtualFilePointerImpl pointer = node.getPointer(listener);
@@ -540,13 +542,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private record CollectedEvents(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
-                                 @NotNull List<? extends NodeToUpdate> toUpdateNodes,
-                                 @NotNull List<? extends EventDescriptor> eventList,
+                                 @NotNull List<NodeToUpdate> toUpdateNodes,
+                                 @NotNull List<EventDescriptor> eventList,
                                  long startModCount,
                                  long prepareElapsedMs) {
   }
 
-  static class NodeToUpdate {
+  static final class NodeToUpdate {
     private final FilePartNode parent;
     final FilePartNode node;
     VFileEvent myEvent;
@@ -694,7 +696,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private static int toNameId(@NotNull String name) {
-    return FileNameCache.storeName(name);
+    return FSRecords.getInstance().getNameId(name);
   }
 
   synchronized void assertConsistency() {
@@ -734,7 +736,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         FilePartNode parent = toUpdate.parent;
         FilePartNode node = toUpdate.node;
 
-        node.update(parent, getRoot(node.myFS), "VFPMI invalidated VFP during update", toUpdate.myEvent);
+        node.update(parent, getRoot(node.fs), "VFPMI invalidated VFP during update", toUpdate.myEvent);
       }
     }
 
@@ -758,7 +760,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     if (!shouldKill) {
       return false;
     }
-    getRoot(pointer.myNode.myFS).removePointer(pointer);
+    getRoot(pointer.getNode().fs).removePointer(pointer);
     pointer.myNode = null;
     assertConsistency();
     myPointerSetModCount++;
@@ -811,7 +813,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
           VirtualFilePointerImpl pointer = entry.getKey();
           int disposeCount = entry.getIntValue();
-          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
+          boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.getNode() == null;
           if (isDisposed) {
             pointer.throwDisposalError("Already disposed:\n" + pointer.getStackTrace());
           }

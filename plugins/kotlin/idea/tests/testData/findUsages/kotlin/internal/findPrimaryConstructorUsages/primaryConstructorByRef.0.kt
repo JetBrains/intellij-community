@@ -17,4 +17,4 @@ fun test() {
     <caret>A(1)
 }
 
-
+// ISSUE: KTIJ-29704

@@ -10,10 +10,10 @@ class Main {
 
   Main(Collection<String> list, Map<? extends String, ? extends String> map,
        Set<String> set) {
-    myList = List.<String>copyOf(list);
-    myList2 = List.<String>copyOf(set);
-    myMap = Map.<String, String>copyOf(map);
-    mySet = Set.<String>copyOf(set);
-    mySet2 = Set.<String>copyOf(list);
+    myList = List.copyOf(list);
+    myList2 = List.copyOf(set);
+    myMap = Map.copyOf(map);
+    mySet = Set.copyOf(set);
+    mySet2 = Set.copyOf(list);
   }
 }

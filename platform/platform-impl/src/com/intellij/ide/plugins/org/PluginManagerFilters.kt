@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.org
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -16,6 +16,8 @@ import com.intellij.util.xmlb.annotations.XCollection
  * restrictions in the UI for the plugin management.
  */
 @Service(Service.Level.APP)
+@Deprecated("please use PluginManagementPolicy directly instead",
+            ReplaceWith("getPluginManagementPolicy()", "com.intellij.ide.plugins.getPluginManagementPolicy"))
 class PluginManagerFilters {
   companion object {
     @JvmStatic
@@ -32,6 +34,8 @@ class PluginManagerFilters {
   fun isPluginAllowed(isLocalPlugin: Boolean, descriptor: IdeaPluginDescriptor): Boolean = allowInstallingPlugin(descriptor)
 
   fun allowInstallFromDisk(): Boolean = state.allowInstallFromDisk
+
+
 }
 
 @Service(Service.Level.APP)

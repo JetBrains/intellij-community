@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.icons.AllIcons;
@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -15,6 +16,9 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.panels.ListLayout;
+import com.intellij.ui.components.panels.ListLayout.Alignment;
+import com.intellij.ui.components.panels.ListLayout.GrowPolicy;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -26,6 +30,7 @@ import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseBu
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
@@ -34,6 +39,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -54,18 +60,29 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private boolean dropVmOptions;
   private boolean dropStoreExternallyCheckBox;
   private boolean dropDefaultProjectSettings;
+  private boolean dropParallelModelFetchCheckBox;
 
   @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryLabel;
-  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myServiceDirectoryHint;
   private @Nullable TargetPathFieldWithBrowseButton myServiceDirectoryPathField;
+
   private @Nullable JBTextField myGradleVmOptionsField;
   @SuppressWarnings({"FieldCanBeLocal", "FieldMayBeFinal"}) // Used by reflection at showUi() and disposeUiResources()
   private @NotNull List<Component> myGradleVmOptionsComponents = new ArrayList<>();
+
   private @Nullable JBCheckBox myGenerateImlFilesCheckBox;
-  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
   private @Nullable JBLabel myGenerateImlFilesHint;
+
+  private @Nullable JBCheckBox myParallelModelFetchCheckBox;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JPanel myParallelModelFetchPanel;
+  @SuppressWarnings("FieldCanBeLocal") // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myParallelModelFetchWarning;
+  @SuppressWarnings({"FieldCanBeLocal", "unused"}) // Used by reflection at showUi() and disposeUiResources()
+  private @Nullable JBLabel myParallelModelFetchHint;
 
   private final @NotNull GradleSettingsControl myDefaultProjectSettingsControl = new IdeaGradleDefaultProjectSettingsControl();
 
@@ -88,6 +105,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     return this;
   }
 
+  public IdeaGradleSystemSettingsControlBuilder dropParallelModelFetchCheckBox() {
+    dropParallelModelFetchCheckBox = true;
+    return this;
+  }
+
   @Override
   public void fillUi(@NotNull PaintAwarePanel canvas, int indentLevel) {
     addServiceDirectoryControl(canvas, indentLevel);
@@ -96,6 +118,9 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (!dropStoreExternallyCheckBox) {
       addStoreExternallyCheckBox(canvas, indentLevel);
+    }
+    if (!dropParallelModelFetchCheckBox) {
+      addParallelModelFetchCheckBox(canvas, indentLevel);
     }
     if (!dropDefaultProjectSettings) {
       myDefaultProjectSettingsControl.fillUi(canvas, indentLevel);
@@ -112,8 +137,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   public void reset() {
     if (myServiceDirectoryPathField != null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(myInitialSettings.getProject());
-      String gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHome()); //NON-NLS
-      ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir);
+      Path gradleUserHomeDir = maybeGetTargetValue(buildLayoutParameters.getGradleUserHomePath()); //NON-NLS
+      if (gradleUserHomeDir != null) {
+        ((JBTextField)myServiceDirectoryPathField.getTextField()).getEmptyText().setText(gradleUserHomeDir.toString());
+      }
       myServiceDirectoryPathField.setLocalPath(myInitialSettings.getServiceDirectoryPath());
     }
 
@@ -128,6 +155,10 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
 
     if (myGenerateImlFilesCheckBox != null) {
       myGenerateImlFilesCheckBox.setSelected(!myInitialSettings.getStoreProjectFilesExternally());
+    }
+
+    if (myParallelModelFetchCheckBox != null) {
+      myParallelModelFetchCheckBox.setSelected(myInitialSettings.isParallelModelFetch());
     }
 
     myDefaultProjectSettingsControl.reset();
@@ -151,6 +182,11 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
       return true;
     }
 
+    if (myParallelModelFetchCheckBox != null &&
+        myParallelModelFetchCheckBox.isSelected() != myInitialSettings.isParallelModelFetch()) {
+      return true;
+    }
+
     if (myDefaultProjectSettingsControl.isModified()) {
       return true;
     }
@@ -170,6 +206,12 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     if (myGenerateImlFilesCheckBox != null) {
       settings.setStoreProjectFilesExternally(!myGenerateImlFilesCheckBox.isSelected());
     }
+    if (myParallelModelFetchCheckBox != null) {
+      if (settings.isParallelModelFetch() != myParallelModelFetchCheckBox.isSelected()) {
+        GradleActionsUsagesCollector.TOGGLE_PARALLEL_FETCH.log(settings.getProject(), myParallelModelFetchCheckBox.isSelected());
+      }
+      settings.setParallelModelFetch(myParallelModelFetchCheckBox.isSelected());
+    }
     myDefaultProjectSettingsControl.apply();
   }
 
@@ -184,28 +226,24 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myDefaultProjectSettingsControl.disposeUiResources();
   }
 
-  @NotNull
   @Override
-  public GradleSettings getInitialSettings() {
+  public @NotNull GradleSettings getInitialSettings() {
     return myInitialSettings;
   }
 
   private void addServiceDirectoryControl(PaintAwarePanel canvas, int indentLevel) {
     myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.user.home"));
-    myServiceDirectoryHint = new JBLabel(XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
-                                         UIUtil.ComponentStyle.SMALL);
-    myServiceDirectoryHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
     myServiceDirectoryPathField = GradleRuntimeTargetUI
       .targetPathFieldWithBrowseButton(myInitialSettings.getProject(), GradleBundle.message("gradle.settings.text.user.home.dialog.title"));
+    myServiceDirectoryLabel.setLabelFor(myServiceDirectoryPathField);
     canvas.add(myServiceDirectoryLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
     canvas.add(myServiceDirectoryPathField, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
-    canvas.add(Box.createGlue(), ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-    constraints.insets.top = 0;
-    canvas.add(myServiceDirectoryHint, constraints);
-
-    myServiceDirectoryLabel.setLabelFor(myServiceDirectoryPathField);
+    myServiceDirectoryHint = addComment(
+      canvas,
+      XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.user.home.hint")),
+      ExternalSystemUiUtil.getCommentConstraints(indentLevel)
+    );
   }
 
   private void addVMOptionsControl(@NotNull PaintAwarePanel canvas, int indentLevel) {
@@ -262,19 +300,44 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     myGenerateImlFilesCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.generate.iml.files"));
     canvas.add(myGenerateImlFilesCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
 
-    myGenerateImlFilesHint = new JBLabel(
+    myGenerateImlFilesHint = addComment(
+      canvas,
       XmlStringUtil.wrapInHtml(GradleBundle.message("gradle.settings.text.generate.iml.files.hint", getIDEName())),
-      UIUtil.ComponentStyle.SMALL);
-    myGenerateImlFilesHint.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
-
-    GridBag constraints = ExternalSystemUiUtil.getFillLineConstraints(indentLevel);
-    constraints.insets.left += UIUtil.getCheckBoxTextHorizontalOffset(myGenerateImlFilesCheckBox);
-    constraints.insets.top = 0;
-    canvas.add(myGenerateImlFilesHint, constraints);
+      ExternalSystemUiUtil.getCheckBoxCommentConstraints(indentLevel, myGenerateImlFilesCheckBox)
+    );
   }
 
-  @Nullable
-  private static String trimIfPossible(@Nullable String s) {
+  private void addParallelModelFetchCheckBox(@NotNull PaintAwarePanel canvas, int indentLevel) {
+    myParallelModelFetchCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.parallelModelFetch"));
+
+    myParallelModelFetchWarning = new JBLabel(AllIcons.General.Warning);
+    myParallelModelFetchWarning.setToolTipText(GradleBundle.message("gradle.settings.text.parallelModelFetch.warning"));
+
+    myParallelModelFetchPanel = new JPanel(ListLayout.horizontal(ExternalSystemUiUtil.INSETS, Alignment.CENTER, GrowPolicy.NO_GROW));
+    myParallelModelFetchPanel.add(myParallelModelFetchCheckBox);
+    myParallelModelFetchPanel.add(myParallelModelFetchWarning);
+    canvas.add(myParallelModelFetchPanel, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+
+    myParallelModelFetchHint = addComment(
+      canvas,
+      GradleBundle.message("gradle.settings.text.parallelModelFetch.hint"),
+      ExternalSystemUiUtil.getCheckBoxCommentConstraints(indentLevel, myParallelModelFetchCheckBox)
+    );
+  }
+
+  private static @NotNull JBLabel addComment(
+    @NotNull PaintAwarePanel canvas,
+    @NotNull @NlsContexts.Label String text,
+    @NotNull GridBag constraints
+  ) {
+    var label = new JBLabel(text);
+    label.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    label.setForeground(UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER));
+    canvas.add(label, constraints);
+    return label;
+  }
+
+  private static @Nullable String trimIfPossible(@Nullable String s) {
     return StringUtil.nullize(StringUtil.trim(s));
   }
 
@@ -286,7 +349,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
     }
     if (gradleUserHomeDir == null) {
       BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.defaultBuildLayoutParameters(settings.getProject());
-      String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+      Path gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHomePath());
       if (gradleUserHome == null) {
         Messages.showErrorDialog(settings.getProject(),
                                  GradleBundle.message("gradle.settings.text.vm.options.migration.error.text",
@@ -295,7 +358,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
         return false;
       }
       else {
-        gradleUserHomeDir = new File(gradleUserHome);
+        gradleUserHomeDir = gradleUserHome.toFile();
       }
     }
 
@@ -337,8 +400,7 @@ public class IdeaGradleSystemSettingsControlBuilder implements GradleSystemSetti
   private static final Pattern VM_OPTIONS_REGEX = Pattern.compile("^(\\s*\"?org\\.gradle\\.jvmargs\"?\\s*[=:]).*?(?<!\\\\)($)",
                                                                   Pattern.MULTILINE | Pattern.DOTALL);
 
-  @NotNull
-  public static String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
+  public static @NotNull String updateVMOptions(@NotNull String originalText, @NotNull String vmOptions) {
     Matcher matcher = VM_OPTIONS_REGEX.matcher(originalText);
 
     StringBuilder result = new StringBuilder(originalText.length() + vmOptions.length());

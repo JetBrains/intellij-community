@@ -4,6 +4,7 @@ package com.jetbrains.python.run.configuration
 import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
+import com.intellij.ide.macro.MacrosDialog
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -12,10 +13,11 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.TextAccessor
-import com.jetbrains.PySymbolFieldWithBrowseButton
-import com.jetbrains.extensions.ModuleBasedContextAnchor
-import com.jetbrains.extensions.ProjectSdkContextAnchor
-import com.jetbrains.isPythonModule
+import com.intellij.ui.components.fields.ExtendableTextField
+import com.jetbrains.python.PySymbolFieldWithBrowseButton
+import com.jetbrains.python.extensions.ModuleBasedContextAnchor
+import com.jetbrains.python.extensions.ProjectSdkContextAnchor
+import com.jetbrains.python.isPythonModule
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.awt.GridBagConstraints
@@ -83,6 +85,7 @@ class PyScriptOrModuleFragment : SettingsEditorFragment<PythonRunConfiguration, 
   private fun initComponents(config: PythonRunConfiguration) {
     val scriptField = TextFieldWithBrowseButton()
     scriptField.addBrowseFolderListener(TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), config.project))
+    MacrosDialog.addMacroSupport(scriptField.textField as ExtendableTextField, MacrosDialog.Filters.ALL) { false }
     initComponent(scriptField, SCRIPT_MODE)
     fields[SCRIPT_MODE] = scriptField
     hints[scriptField] = PyBundle.message("python.run.configuration.fragments.script.path.hint")

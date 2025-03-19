@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -9,12 +11,18 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.originalFileOrSelf
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
+import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
+import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import kotlin.script.experimental.api.ScriptAcceptedLocation
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.acceptedLocations
@@ -34,7 +42,20 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             return false
         }
 
-        if (virtualFile !is VirtualFileWindow && fileIndex.isInSourceContent(virtualFile)) {
+        val rootType = if (filter.includeResources) {
+            KOTLIN_AWARE_SOURCE_AND_RESOURCES_ROOT_TYPES
+        } else {
+            KOTLIN_AWARE_SOURCE_ROOT_TYPES
+        }
+
+        val nameSequence = virtualFile.nameSequence
+        val hasBinaryFileExtension =
+            nameSequence.endsWith(JavaClassFileType.DOT_DEFAULT_EXTENSION) ||
+                nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION) ||
+                nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
+
+        if (virtualFile !is VirtualFileWindow && !hasBinaryFileExtension &&
+            fileIndex.isUnderSourceRootOfType(virtualFile.originalFileOrSelf(), rootType)) {
             return filter.includeProjectSourceFiles
         }
 
@@ -76,10 +97,28 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             return false
         }
 
-        val fileType = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
-        // NOTE: the following is a workaround for cases when class files are under library source roots and source files are under class roots
-        val canContainClassFiles = fileType == ArchiveFileType.INSTANCE || virtualFile.isDirectory
-        val isBinary = fileType.isKotlinBinary
+        val canContainClassFiles: Boolean
+        val isBinary: Boolean
+
+        if (virtualFile.isDirectory) {
+            canContainClassFiles = true
+            isBinary = false
+        } else {
+            if (nameSequence.endsWith(JavaFileType.DOT_DEFAULT_EXTENSION) ||
+                nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
+            ) {
+                canContainClassFiles = false
+                isBinary = false
+            } else if (hasBinaryFileExtension) {
+                canContainClassFiles = false
+                isBinary = true
+            } else {
+                val fileType = FileTypeManager.getInstance().getFileTypeByFileName(virtualFile.nameSequence)
+                // NOTE: the following is a workaround for cases when class files are under library source roots and source files are under class roots
+                canContainClassFiles = fileType == ArchiveFileType.INSTANCE || virtualFile.isDirectory
+                isBinary = fileType.isKotlinBinary
+            }
+        }
 
         if (correctedFilter.includeLibraryClassFiles && (isBinary || canContainClassFiles)) {
             if (fileIndex.isInLibraryClasses(virtualFile)) {
@@ -87,7 +126,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
           val classFileScope = when {
-            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(
+            correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(
               project).getAllScriptsDependenciesClassFilesScope()
             else -> null
           }
@@ -103,7 +142,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
             }
 
             val sourceFileScope = when {
-                correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
+                correctedFilter.includeScriptDependencies -> ScriptDependencyAware.getInstance(project)
                     .getAllScriptDependenciesSourcesScope()
 
                 else -> null
@@ -111,7 +150,7 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
 
             if (sourceFileScope != null &&
                 sourceFileScope.contains(virtualFile) &&
-                !(virtualFile !is VirtualFileWindow && fileIndex.isInSourceContent(virtualFile))
+                !(virtualFile !is VirtualFileWindow && fileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_AWARE_SOURCE_ROOT_TYPES))
             ) {
                 return true
             }

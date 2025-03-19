@@ -35,7 +35,7 @@ abstract class LessonContext : LearningDslBase {
   }
 
   /** Describe a simple task: just one action required */
-  fun actionTask(action: String, getText: TaskContext.(action: String) -> @Nls String) {
+  fun actionTask(@Language("devkit-action-id") action: String, getText: TaskContext.(action: String) -> @Nls String) {
     task {
       text(getText(action))
       trigger(action)
@@ -49,7 +49,7 @@ abstract class LessonContext : LearningDslBase {
    * Just shortcut to write action name once
    * @see task
    */
-  fun task(action: String, taskContent: TaskContext.(action: String) -> Unit) = task {
+  fun task(@Language("devkit-action-id") action: String, taskContent: TaskContext.(action: String) -> Unit) = task {
     taskContent(action)
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -54,8 +54,7 @@ public abstract class CachedEvaluator {
         throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.cannot.find.source", className));
       }
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(myReferenceExpression, context);
-      JavaCodeFragment codeFragment = factory.createCodeFragment(myReferenceExpression, overrideContext(context), project);
-      codeFragment.setThisType(psiClassAndType.second);
+      PsiCodeFragment codeFragment = factory.createPsiCodeFragment(myReferenceExpression, overrideContext(context), project);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
 
@@ -97,8 +96,7 @@ public abstract class CachedEvaluator {
     return cache.myEvaluator;
   }
 
-  @Nullable
-  protected PsiExpression getPsiExpression(final Project project) {
+  protected @Nullable PsiExpression getPsiExpression(final Project project) {
     Cache cache = myCache.get();
     if (cache == null) {
       cache = initEvaluatorAndChildrenExpression(project);

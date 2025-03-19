@@ -1,180 +1,242 @@
-from typing import Any
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete
+from datetime import datetime
+from typing import ClassVar, Literal, overload
 
+from openpyxl.descriptors.base import Bool, DateTime, Float, Integer, String, Typed, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 class Index(Serialisable):
-    tagname: str
-    v: Any
-    def __init__(self, v: int = ...) -> None: ...
+    tagname: ClassVar[str]
+    v: Integer[Literal[True]]
+    def __init__(self, v: ConvertibleToInt | None = 0) -> None: ...
 
-class Tuple(Serialisable):  # type: ignore[misc]
-    fld: Any
-    hier: Any
-    item: Any
-    def __init__(self, fld: Any | None = ..., hier: Any | None = ..., item: Any | None = ...) -> None: ...
+class Tuple(Serialisable):
+    fld: Integer[Literal[True]]
+    hier: Integer[Literal[True]]
+    item: Integer[Literal[False]]
+    def __init__(self, fld: ConvertibleToInt, hier: ConvertibleToInt, item: ConvertibleToInt) -> None: ...
 
-class TupleList(Serialisable):  # type: ignore[misc]
-    c: Any
-    tpl: Any
-    __elements__: Any
-    def __init__(self, c: Any | None = ..., tpl: Any | None = ...) -> None: ...
+class TupleList(Serialisable):
+    c: Integer[Literal[True]]
+    tpl: Typed[Tuple, Literal[False]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
+    def __init__(self, c: ConvertibleToInt | None = None, *, tpl: Tuple) -> None: ...
+    @overload
+    def __init__(self, c: ConvertibleToInt | None, tpl: Tuple) -> None: ...
 
 class Missing(Serialisable):
-    tagname: str
-    tpls: Any
-    x: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    bc: Any
-    fc: Any
-    i: Any
-    un: Any
-    st: Any
-    b: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tpls: Incomplete
+    x: Incomplete
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    _in: Integer[Literal[True]]  # Not private. Avoids name clash
+    bc: Incomplete
+    fc: Incomplete
+    i: Bool[Literal[True]]
+    un: Bool[Literal[True]]
+    st: Bool[Literal[True]]
+    b: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        tpls=...,
-        x=...,
-        u: Any | None = ...,
-        f: Any | None = ...,
-        c: Any | None = ...,
-        cp: Any | None = ...,
-        _in: Any | None = ...,
-        bc: Any | None = ...,
-        fc: Any | None = ...,
-        i: Any | None = ...,
-        un: Any | None = ...,
-        st: Any | None = ...,
-        b: Any | None = ...,
+        tpls=(),
+        x=(),
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class Number(Serialisable):
-    tagname: str
-    tpls: Any
-    x: Any
-    v: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    bc: Any
-    fc: Any
-    i: Any
-    un: Any
-    st: Any
-    b: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tpls: Incomplete
+    x: Incomplete
+    v: Float[Literal[False]]
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    _in: Integer[Literal[True]]  # Not private. Avoids name clash
+    bc: Incomplete
+    fc: Incomplete
+    i: Bool[Literal[True]]
+    un: Bool[Literal[True]]
+    st: Bool[Literal[True]]
+    b: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        tpls=...,
-        x=...,
-        v: Any | None = ...,
-        u: Any | None = ...,
-        f: Any | None = ...,
-        c: Any | None = ...,
-        cp: Any | None = ...,
-        _in: Any | None = ...,
-        bc: Any | None = ...,
-        fc: Any | None = ...,
-        i: Any | None = ...,
-        un: Any | None = ...,
-        st: Any | None = ...,
-        b: Any | None = ...,
+        tpls=(),
+        x=(),
+        *,
+        v: ConvertibleToFloat,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        tpls,
+        x,
+        v: ConvertibleToFloat,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class Error(Serialisable):
-    tagname: str
-    tpls: Any
-    x: Any
-    v: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    bc: Any
-    fc: Any
-    i: Any
-    un: Any
-    st: Any
-    b: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tpls: Typed[TupleList, Literal[True]]
+    x: Incomplete
+    v: String[Literal[False]]
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    _in: Integer[Literal[True]]  # Not private. Avoids name clash
+    bc: Incomplete
+    fc: Incomplete
+    i: Bool[Literal[True]]
+    un: Bool[Literal[True]]
+    st: Bool[Literal[True]]
+    b: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    @overload
     def __init__(
         self,
-        tpls: Any | None = ...,
-        x=...,
-        v: Any | None = ...,
-        u: Any | None = ...,
-        f: Any | None = ...,
-        c: Any | None = ...,
-        cp: Any | None = ...,
-        _in: Any | None = ...,
-        bc: Any | None = ...,
-        fc: Any | None = ...,
-        i: Any | None = ...,
-        un: Any | None = ...,
-        st: Any | None = ...,
-        b: Any | None = ...,
+        tpls: TupleList | None = None,
+        x=(),
+        *,
+        v: str,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        tpls: TupleList | None,
+        x,
+        v: str,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class Boolean(Serialisable):
-    tagname: str
-    x: Any
-    v: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    x: Incomplete
+    v: Bool[Literal[False]]
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, x=..., v: Any | None = ..., u: Any | None = ..., f: Any | None = ..., c: Any | None = ..., cp: Any | None = ...
+        self,
+        x=(),
+        v: _ConvertibleToBool = None,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
     ) -> None: ...
 
 class Text(Serialisable):
-    tagname: str
-    tpls: Any
-    x: Any
-    v: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    bc: Any
-    fc: Any
-    i: Any
-    un: Any
-    st: Any
-    b: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    tpls: Incomplete
+    x: Incomplete
+    v: String[Literal[False]]
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    _in: Integer[Literal[True]]  # Not private. Avoids name clash
+    bc: Incomplete
+    fc: Incomplete
+    i: Bool[Literal[True]]
+    un: Bool[Literal[True]]
+    st: Bool[Literal[True]]
+    b: Bool[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        tpls=...,
-        x=...,
-        v: Any | None = ...,
-        u: Any | None = ...,
-        f: Any | None = ...,
-        c: Any | None = ...,
-        cp: Any | None = ...,
-        _in: Any | None = ...,
-        bc: Any | None = ...,
-        fc: Any | None = ...,
-        i: Any | None = ...,
-        un: Any | None = ...,
-        st: Any | None = ...,
-        b: Any | None = ...,
+        tpls=(),
+        x=(),
+        v: Incomplete | None = None,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: Incomplete | None = None,
+        cp: ConvertibleToInt | None = None,
+        _in: ConvertibleToInt | None = None,
+        bc: Incomplete | None = None,
+        fc: Incomplete | None = None,
+        i: _ConvertibleToBool | None = None,
+        un: _ConvertibleToBool | None = None,
+        st: _ConvertibleToBool | None = None,
+        b: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class DateTimeField(Serialisable):
-    tagname: str
-    x: Any
-    v: Any
-    u: Any
-    f: Any
-    c: Any
-    cp: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    x: Incomplete
+    v: DateTime[Literal[False]]
+    u: Bool[Literal[True]]
+    f: Bool[Literal[True]]
+    c: String[Literal[True]]
+    cp: Integer[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
     def __init__(
-        self, x=..., v: Any | None = ..., u: Any | None = ..., f: Any | None = ..., c: Any | None = ..., cp: Any | None = ...
+        self,
+        x=(),
+        v: datetime | str | None = None,
+        u: _ConvertibleToBool | None = None,
+        f: _ConvertibleToBool | None = None,
+        c: str | None = None,
+        cp: ConvertibleToInt | None = None,
     ) -> None: ...

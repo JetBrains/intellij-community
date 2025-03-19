@@ -14,7 +14,7 @@ import java.io.File;
 import java.util.Set;
 
 import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
-import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
+import static com.intellij.jvm.analysis.internal.testFramework.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public class JavaNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {

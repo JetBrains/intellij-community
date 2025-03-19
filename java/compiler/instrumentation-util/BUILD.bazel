@@ -1,0 +1,12 @@
+### auto-generated section `build intellij.java.compiler.instrumentationUtil` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-compiler-instrumentationUtil",
+  module_name = "intellij.java.compiler.instrumentationUtil",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = ["@lib//:asm"]
+)
+### auto-generated section `build intellij.java.compiler.instrumentationUtil` end

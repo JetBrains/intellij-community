@@ -3,12 +3,11 @@ package com.jetbrains.python.configuration
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.ui.InputValidatorEx
@@ -16,11 +15,12 @@ import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.ToggleActionButton
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
+import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -31,10 +31,16 @@ import javax.swing.tree.TreePath
  * The list of Python interpreters with actions ("Add", "Remove", "Show Paths") and the details of the selected interpreter to the right of
  * the list.
  */
-internal class PythonInterpreterMasterDetails(private val project: Project,
-                                              private val module: Module?,
-                                              private val parentConfigurable: Configurable) : MasterDetailsComponent() {
-  private val pythonConfigurableInterpreterList: PyConfigurableInterpreterList = PyConfigurableInterpreterList.getInstance(project)
+internal class PythonInterpreterMasterDetails(private val moduleOrProject: ModuleOrProject, private val parentConfigurable: Configurable) : MasterDetailsComponent() {
+  private val pythonConfigurableInterpreterList: PyConfigurableInterpreterList = PyConfigurableInterpreterList.getInstance(moduleOrProject.project)
+
+  private val project = moduleOrProject.project
+
+  // Temporary hack as lots of legacy code accept nullable module. Remove after legacy code migrated to ModuleOrProject.
+  private val module = when (moduleOrProject) {
+    is ModuleAndProject -> moduleOrProject.module
+    is ProjectOnly -> null
+  }
 
   internal val projectSdksModel = pythonConfigurableInterpreterList.model
 
@@ -72,13 +78,15 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
   }
 
   private class PySdkListTreeRenderer : ColoredTreeCellRenderer() {
-    override fun customizeCellRenderer(tree: JTree,
-                                       value: Any?,
-                                       selected: Boolean,
-                                       expanded: Boolean,
-                                       leaf: Boolean,
-                                       row: Int,
-                                       hasFocus: Boolean) {
+    override fun customizeCellRenderer(
+      tree: JTree,
+      value: Any?,
+      selected: Boolean,
+      expanded: Boolean,
+      leaf: Boolean,
+      row: Int,
+      hasFocus: Boolean,
+    ) {
       val configurable = (value as? DefaultMutableTreeNode)?.userObject as? PythonInterpreterDetailsConfigurable
       val sdk = configurable?.sdk
       // The name might have been changed with "Rename" action and stored in `displayName`, while the change not being reflected in `sdk`
@@ -137,11 +145,11 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
     }
     else {
       // it would be nicer to insert the sdk at the proper place instead of adding it to the bottom
-      val addInterpreterActionGroup = PopupActionGroup(collectAddInterpreterActions(project, module, ::addSdkNodeAndSelect))
+      val addInterpreterActionGroup = PopupActionGroup(collectAddInterpreterActions(moduleOrProject, ::addSdkNodeAndSelect))
       addInterpreterActionGroup.templatePresentation.icon = AllIcons.General.Add
       addInterpreterActionGroup.templatePresentation.text = PyBundle.message("python.interpreters.add.interpreter.action.text")
       addInterpreterActionGroup.isPopup = true
-      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, myTree)
+      addInterpreterActionGroup.registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
       listOf(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
     }
 
@@ -229,8 +237,10 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
     }
   }
 
-  private inner class ToggleVirtualEnvFilterButton : ToggleActionButton(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
-                                                                        AllIcons.General.Filter), DumbAware {
+  private inner class ToggleVirtualEnvFilterButton
+    : DumbAwareToggleAction(PyBundle.messagePointer("sdk.details.dialog.hide.all.virtual.envs"),
+                            Presentation.NULL_STRING, AllIcons.General.Filter) {
+
     override fun isSelected(e: AnActionEvent): Boolean = hideOtherProjectVirtualenvs
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -246,9 +256,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
       hideOtherProjectVirtualenvs = state
     }
 
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.BGT
-    }
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
   /**
@@ -269,7 +277,9 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
       pathEditor.reset(sdkModificator)
       if (dialog.showAndGet() && pathEditor.isModified) {
         pathEditor.apply(sdkModificator)
-        sdkModificator.commitChanges()
+        ApplicationManager.getApplication().runWriteAction {
+          sdkModificator.commitChanges()
+        }
         // now added and excluded paths are updated in `sdk` instance
         pythonPathsModified = true
         reloadSdk(sdk)

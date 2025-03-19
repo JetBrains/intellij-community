@@ -1,17 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.stubs.StubUpdatingIndex;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Describes on-disk indexes layout, relative to {@link PathManager#getIndexRoot()}
+ */
+@Internal
 public final class IndexInfrastructure {
   private static final String STUB_VERSIONS = ".versions";
   private static final String PERSISTENT_INDEX_DIRECTORY_NAME = ".persistent";
@@ -27,8 +31,18 @@ public final class IndexInfrastructure {
     return getIndexRootDir(indexName).resolve(indexName.getName());
   }
 
+  public static @NotNull Path getStorageFile(@NotNull ID<?, ?> indexName,
+                                             int shardNo) throws IOException {
+    return getIndexRootDir(indexName).resolve(indexName.getName() + "." + shardNo);
+  }
+
   public static @NotNull Path getInputIndexStorageFile(@NotNull ID<?, ?> indexName) throws IOException {
     return getIndexRootDir(indexName).resolve(indexName + "_inputs");
+  }
+
+  public static @NotNull Path getInputIndexStorageFile(@NotNull ID<?, ?> indexName,
+                                                       int shardNo) throws IOException {
+    return getIndexRootDir(indexName).resolve(indexName + "_inputs." + shardNo);
   }
 
   public static @NotNull Path getIndexRootDir(@NotNull ID<?, ?> indexName) throws IOException {
@@ -53,7 +67,8 @@ public final class IndexInfrastructure {
     return getIndexDirectory(indexId.getName(), relativePath, indexId instanceof StubIndexKey, forVersion);
   }
 
-  private static @NotNull Path getIndexDirectory(String indexName, String relativePath, boolean stubKey, boolean forVersion) throws IOException {
+  private static @NotNull Path getIndexDirectory(String indexName, String relativePath, boolean stubKey, boolean forVersion)
+    throws IOException {
     indexName = Strings.toLowerCase(indexName);
     Path indexDir;
     if (stubKey) {
@@ -75,12 +90,12 @@ public final class IndexInfrastructure {
     return indexDir;
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull Path getFileBasedIndexRootDir(@NotNull String indexName) throws IOException {
     return getIndexDirectory(indexName, "", false, false);
   }
 
-  @ApiStatus.Internal
+  @Internal
   public static @NotNull Path getStubIndexRootDir(@NotNull String indexName) throws IOException {
     return getIndexDirectory(indexName, "", true, false);
   }

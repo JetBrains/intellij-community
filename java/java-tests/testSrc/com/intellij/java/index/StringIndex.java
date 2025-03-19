@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.index;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -32,6 +18,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.io.DataInput;
@@ -46,6 +33,7 @@ import java.util.*;
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;
   private volatile Throwable myRebuildThrowable;
+
   public StringIndex(String testName,
                      IndexStorage<String, String> storage,
                      File forwardIndexFile,
@@ -126,14 +114,20 @@ public class StringIndex {
     };
   }
 
+  @Unmodifiable
   public List<String> getFilesByWord(@NotNull String word) throws StorageException {
-    return ContainerUtil.collect(myIndex.getData(word).getValueIterator());
+    var paths = new ArrayList<String>();
+    myIndex.withData(word, container -> {
+      ContainerUtil.addAll(paths, container.getValueIterator());
+      return true;
+    });
+    return paths;
   }
-  
+
   public boolean update(@NotNull String path, @Nullable String content) {
     int inputId = MathUtil.nonNegativeAbs(path.hashCode());
     PathContentPair contentPair = toInput(path, content);
-    return myIndex.mapInputAndPrepareUpdate(inputId, contentPair).compute();
+    return myIndex.mapInputAndPrepareUpdate(inputId, contentPair).update();
   }
 
   public long getModificationStamp() {
@@ -160,14 +154,14 @@ public class StringIndex {
   private static class Indexer implements DataIndexer<String, String, PathContentPair> {
     @Override
     @NotNull
-    public Map<String,String> map(@NotNull final PathContentPair inputData) {
-      final Map<String,String> _map = new HashMap<>();
+    public Map<String, String> map(@NotNull final PathContentPair inputData) {
+      final Map<String, String> _map = new HashMap<>();
       final StringBuilder builder = new StringBuilder();
       final String content = inputData.content;
       for (int idx = 0; idx < content.length(); idx++) {
         final char ch = content.charAt(idx);
         if (Character.isWhitespace(ch)) {
-          if (builder.length() > 0) {
+          if (!builder.isEmpty()) {
             _map.put(builder.toString(), inputData.path);
             builder.setLength(0);
           }
@@ -177,14 +171,14 @@ public class StringIndex {
         }
       }
       // emit the last word
-      if (builder.length() > 0) {
+      if (!builder.isEmpty()) {
         _map.put(builder.toString(), inputData.path);
         builder.setLength(0);
       }
       return _map;
     }
   }
-  
+
   private static final class PathContentPair {
     final String path;
     final String content;

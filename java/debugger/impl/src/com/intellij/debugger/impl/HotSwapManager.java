@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -15,13 +15,14 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class HotSwapManager {
   private final Map<DebuggerSession, Long> myTimeStamps = new HashMap<>();
   private static final String CLASS_EXTENSION = ".class";
@@ -132,17 +133,15 @@ public final class HotSwapManager {
     return withoutExtension.replace('/', '.');
   }
 
-  @NotNull
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<DebuggerSession> sessions,
-                                                                                      @NotNull HotSwapProgress swapProgress) {
+  public static @NotNull Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<DebuggerSession> sessions,
+                                                                                               @NotNull HotSwapProgress swapProgress) {
     return scanForModifiedClasses(sessions, null, swapProgress);
   }
 
 
-  @NotNull
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<DebuggerSession> sessions,
-                                                                                      @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
-                                                                                      @NotNull HotSwapProgress swapProgress) {
+  public static @NotNull Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(@NotNull List<DebuggerSession> sessions,
+                                                                                               @Nullable NotNullLazyValue<? extends List<String>> outputPaths,
+                                                                                               @NotNull HotSwapProgress swapProgress) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<>();
     final MultiProcessCommand scanClassesCommand = new MultiProcessCommand();
     swapProgress.setCancelWorker(() -> scanClassesCommand.cancel());
@@ -182,6 +181,8 @@ public final class HotSwapManager {
                                            @NotNull HotSwapProgress reloadClassesProgress) {
     MultiProcessCommand reloadClassesCommand = new MultiProcessCommand();
     reloadClassesProgress.setCancelWorker(() -> reloadClassesCommand.cancel());
+    int totalClasses = modifiedClasses.values().stream().mapToInt(e -> e.size()).sum();
+    HotSwapStatistics.logClassesReloaded(reloadClassesProgress.getProject(), totalClasses);
     for (DebuggerSession debuggerSession : modifiedClasses.keySet()) {
       reloadClassesCommand.addCommand(debuggerSession.getProcess(), new DebuggerCommandImpl() {
         @Override

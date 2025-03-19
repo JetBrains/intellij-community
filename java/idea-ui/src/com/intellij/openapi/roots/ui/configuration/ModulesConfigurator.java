@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.Facet;
@@ -11,7 +11,6 @@ import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,19 +37,19 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -148,8 +147,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Override
-  @Nullable
-  public Module getModule(@NotNull String name) {
+  public @Nullable Module getModule(@NotNull String name) {
     if (myModuleModel == null) return null;
 
     final Module moduleByName = myModuleModel.findModuleByName(name);
@@ -159,8 +157,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModuleModel.getModuleToBeRenamed(name); //if module was renamed
   }
 
-  @Nullable
-  public ModuleEditor getModuleEditor(Module module) {
+  public @Nullable ModuleEditor getModuleEditor(Module module) {
     return myModuleEditors.get(module);
   }
 
@@ -169,8 +166,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return getOrCreateModuleEditor(module).getRootModel();
   }
 
-  @NotNull
-  public ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
+  public @NotNull ModuleEditor getOrCreateModuleEditor(@NotNull Module module) {
     String moduleName = module.getName();
     LOG.assertTrue(getModule(moduleName) != null, "Module " + moduleName + " has been deleted");
     ModuleEditor editor = getModuleEditor(module);
@@ -180,8 +176,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return editor;
   }
 
-  @NotNull
-  private ModuleEditor doCreateModuleEditor(@NotNull Module module) {
+  private @NotNull ModuleEditor doCreateModuleEditor(@NotNull Module module) {
     final ModuleEditor moduleEditor = new HeaderHidingTabbedModuleEditor(myProject, this, module) {
       @Override
       public ProjectFacetsConfigurator getFacetsConfigurator() {
@@ -192,18 +187,11 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     myModuleEditors.put(moduleEditor.getModule(), moduleEditor);
 
     moduleEditor.addChangeListener(this);
-    Disposer.register(moduleEditor, new Disposable() {
-      @Override
-      public void dispose() {
-        moduleEditor.removeChangeListener(ModulesConfigurator.this);
-      }
-    });
     return moduleEditor;
   }
 
-  @NotNull
   @Override
-  public FacetModel getFacetModel(@NotNull Module module) {
+  public @NotNull FacetModel getFacetModel(@NotNull Module module) {
     return myFacetsConfigurator.getOrCreateModifiableModel(module);
   }
 
@@ -379,8 +367,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
 
-  @Nullable
-  private List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
+  private @Nullable List<Module> addModule(Producer<@Nullable AbstractProjectWizard> createWizardAction) {
     var wizard = createWizardAction.produce();
     if (null == wizard) return null;
 
@@ -392,8 +379,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  @Nullable
-  private List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
+  private @Nullable List<Module> doAddModule(@NotNull AbstractProjectWizard wizard) {
     var builder = runWizard(wizard);
     if (null == builder) return null;
 
@@ -417,16 +403,14 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return modules;
   }
 
-  @Nullable
-  public List<Module> addImportModule(Component parent) {
+  public @Nullable List<Module> addImportModule(Component parent) {
     if (myProject.isDefault()) return null;
     return addModule(() -> createImportModuleWizard(parent));
   }
 
-  @Nullable
-  public List<Module> addNewModule() {
+  public @Nullable List<Module> addNewModule(@Nullable String defaultPath) {
     if (myProject.isDefault()) return null;
-    return addModule(this::createNewModuleWizard);
+    return addModule(() -> createNewModuleWizard(defaultPath));
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -442,8 +426,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     }
   }
 
-  @Nullable
-  public Module addModule(final ModuleBuilder moduleBuilder) {
+  public @Nullable Module addModule(final ModuleBuilder moduleBuilder) {
     final Module module = createModule(moduleBuilder);
     if (module != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {
@@ -454,8 +437,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return module;
   }
 
-  @Nullable
-  private ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
+  private @Nullable ProjectBuilder runWizard(@Nullable AbstractProjectWizard wizard) {
     if (wizard == null) return null;
 
     if (wizard.getStepCount() == 0) {
@@ -472,15 +454,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return wizard.getBuilder(myProject);
   }
 
-  @Nullable
-  private AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
+  private @Nullable AbstractProjectWizard createImportModuleWizard(Component dialogParent) {
     return ImportModuleAction.selectFileAndCreateWizard(myProject, dialogParent);
   }
 
-  @NotNull
-  private AbstractProjectWizard createNewModuleWizard() {
+  private @NotNull AbstractProjectWizard createNewModuleWizard(@Nullable String defaultPath) {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
-    return wizardFactory.create(myProject, this);
+    return wizardFactory.create(myProject, this, defaultPath);
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
@@ -544,13 +524,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     return myModified || myFacetsConfigurator.isModified();
   }
 
-  public static boolean showArtifactSettings(@NotNull Project project, @Nullable final Artifact artifact) {
+  public static boolean showArtifactSettings(@NotNull Project project, final @Nullable Artifact artifact) {
     final ProjectStructureConfigurable configurable = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(artifact, true));
   }
 
-  public static boolean showFacetSettingsDialog(@NotNull final Facet facet,
-                                                @Nullable final String tabNameToSelect) {
+  public static boolean showFacetSettingsDialog(final @NotNull Facet facet,
+                                                final @Nullable String tabNameToSelect) {
     final Project project = facet.getModule().getProject();
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> {
@@ -564,7 +544,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     });
   }
 
-  public static boolean showDialog(@NotNull Project project, @Nullable final String moduleToSelect, @Nullable final String editorNameToSelect) {
+  public static boolean showDialog(@NotNull Project project, final @Nullable String moduleToSelect, final @Nullable String editorNameToSelect) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(project);
     return ShowSettingsUtil.getInstance().editConfigurable(project, config, () -> config.select(moduleToSelect, editorNameToSelect, true));
   }
@@ -585,15 +565,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @ApiStatus.Internal
   public interface NewProjectWizardFactory {
-    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider);
+    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath);
   }
 
   @ApiStatus.Internal
-  public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
+  public static final class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
 
     @Override
-    public @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider) {
-      return new NewProjectWizard(project, modulesProvider, null);
+    public @NotNull NewProjectWizard create(@Nullable Project project,
+                                            @NotNull ModulesProvider modulesProvider,
+                                            @Nullable String defaultPath) {
+      return new NewProjectWizard(project, modulesProvider, defaultPath);
     }
   }
 }

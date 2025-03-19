@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl.javaCompiler;
 
 import com.intellij.compiler.options.ModuleOptionsTableModel;
@@ -12,7 +12,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,8 +60,13 @@ public class CompilerModuleOptionsComponent extends JPanel {
     table.setPreferredSize(new Dimension(myTable.getWidth(), 150));
     JLabel header = new JLabel(JavaCompilerBundle.message("settings.override.compiler.parameters.per.module"));
 
-    add(header, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(5, 5, 0, 0), 0, 0));
-    add(table, new GridBagConstraints(0, 1, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.BOTH, JBUI.insets(5, 5, 0, 0), 0, 0));
+    GridBag gridBag = new GridBag()
+      .setDefaultAnchor(GridBagConstraints.WEST)
+      .setDefaultWeightX(1.0).setDefaultWeightY(1.0)
+      .setDefaultInsets(6, 0, 0, 0);
+
+    add(header, gridBag.nextLine().weighty(0.0));
+    add(table, gridBag.nextLine().fillCell());
   }
 
   private void addModules() {
@@ -78,8 +83,7 @@ public class CompilerModuleOptionsComponent extends JPanel {
     }
   }
 
-  @NotNull
-  public Map<String, String> getModuleOptionsMap() {
+  public @NotNull Map<String, String> getModuleOptionsMap() {
     return ((ModuleOptionsTableModel)myTable.getModel()).getModuleOptions();
   }
 

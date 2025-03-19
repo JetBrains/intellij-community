@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.diagnostic.PluginException;
@@ -18,6 +18,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedList;
 
-abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
-
+@ApiStatus.Internal
+@ApiStatus.NonExtendable
+public abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(OccurenceNavigatorActionBase.class);
 
   @Override
@@ -68,7 +70,7 @@ abstract class OccurenceNavigatorActionBase extends DumbAwareAction {
     Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
-      // make it invisible only in main menu to avoid initial invisibility in toolbars
+      // make it invisible only in the main menu to avoid initial invisibility in toolbars
       presentation.setVisible(!ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
       return;
     }

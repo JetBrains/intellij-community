@@ -2,6 +2,9 @@
 // ERROR: No value passed for parameter 'foo'
 // ERROR: No value passed for parameter 'foo'
 // ERROR: No value passed for parameter 'foo'
+// K2_AFTER_ERROR: No value passed for parameter 'foo'.
+// K2_AFTER_ERROR: No value passed for parameter 'foo'.
+// K2_AFTER_ERROR: No value passed for parameter 'foo'.
 
 enum class E {
     A,
@@ -10,3 +13,5 @@ enum class E {
     },
     C
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateParameterFromUsageBuilder$CreateParameterFromUsageAction

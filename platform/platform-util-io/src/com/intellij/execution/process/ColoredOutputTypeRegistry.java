@@ -1,12 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class ColoredOutputTypeRegistry {
   /*
     Description
@@ -37,11 +38,9 @@ public abstract class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
-  public @NotNull
-  abstract ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType);
+  public abstract @NotNull ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType);
 
-  public @NotNull
-  abstract ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
+  public abstract @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType);
 
   public static ColoredOutputTypeRegistry getInstance() {
     return ApplicationManager.getApplication().getService(ColoredOutputTypeRegistry.class);

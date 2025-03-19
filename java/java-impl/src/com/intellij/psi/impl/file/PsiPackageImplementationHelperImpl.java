@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
-import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -16,9 +16,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,10 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
-  @NotNull
+public final class PsiPackageImplementationHelperImpl extends PsiPackageImplementationHelper {
   @Override
-  public GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
+  public @NotNull GlobalSearchScope adjustAllScope(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope globalSearchScope) {
     return NonClasspathClassFinder.addNonClasspathScope(psiPackage.getProject(), globalSearchScope);
   }
 
@@ -65,7 +61,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   }
 
   @Override
-  public void handleQualifiedNameChange(@NotNull final PsiPackage psiPackage, @NotNull final String newQualifiedName) {
+  public void handleQualifiedNameChange(final @NotNull PsiPackage psiPackage, final @NotNull String newQualifiedName) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     final String oldQualifedName = psiPackage.getQualifiedName();
     final boolean anyChanged = changePackagePrefixes(psiPackage, oldQualifedName, newQualifiedName);
@@ -118,16 +114,10 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
   }
 
   @Override
-  public void navigate(@NotNull final PsiPackage psiPackage, final boolean requestFocus) {
-    final Project project = psiPackage.getProject();
-    ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
-    if (window != null) {
-      window.activate(null);
-    }
-    final ProjectView projectView = ProjectView.getInstance(project);
+  public void navigate(final @NotNull PsiPackage psiPackage, final boolean requestFocus) {
     PsiDirectory[] directories = suggestMostAppropriateDirectories(psiPackage);
     if (directories.length == 0) return;
-    projectView.select(directories[0], directories[0].getVirtualFile(), requestFocus);
+    PsiNavigationSupport.getInstance().navigateToDirectory(directories[0], requestFocus);
   }
 
   @VisibleForTesting

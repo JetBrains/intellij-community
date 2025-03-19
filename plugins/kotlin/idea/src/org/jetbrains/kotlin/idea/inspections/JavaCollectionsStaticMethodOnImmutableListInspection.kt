@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 class JavaCollectionsStaticMethodOnImmutableListInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return dotQualifiedExpressionVisitor(fun(expression) {
-            val (methodName, firstArg) = JavaCollectionsStaticMethodInspection.getTargetMethodOnImmutableList(expression) ?: return
+            val (methodName, firstArg) = JavaCollectionsStaticMethodInspection.Util.getTargetMethodOnImmutableList(expression) ?: return
             holder.registerProblem(
                 expression.callExpression?.calleeExpression ?: expression,
                 KotlinBundle.message("call.of.java.mutator.0.on.immutable.kotlin.collection.1", methodName, firstArg.text)

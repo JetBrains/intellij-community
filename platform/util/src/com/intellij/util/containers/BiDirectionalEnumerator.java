@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -8,8 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Predicate;
 
 public final class BiDirectionalEnumerator<T> extends Enumerator<T> {
-  @NotNull
-  private final Int2ObjectMap<T> myIntToObjectMap;
+  private final @NotNull Int2ObjectMap<T> myIntToObjectMap;
 
   public BiDirectionalEnumerator(int expectNumber) {
     super(expectNumber);
@@ -30,8 +29,7 @@ public final class BiDirectionalEnumerator<T> extends Enumerator<T> {
     myIntToObjectMap.clear();
   }
 
-  @NotNull
-  public T getValue(int index) {
+  public @NotNull T getValue(int index) {
     T value = myIntToObjectMap.get(index);
     if (value == null) {
       throw new RuntimeException("Can not find value by index " + index);

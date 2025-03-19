@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.ide.bootstrap.eel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-bootstrap-eel",
+  module_name = "intellij.platform.ide.bootstrap.eel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/core-nio-fs",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ijent/buildConstants:community-buildConstants",
+    "//platform/ijent/impl:community-impl",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.bootstrap.eel` end

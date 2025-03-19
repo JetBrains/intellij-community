@@ -5,6 +5,7 @@
 // ACTION: Create member function 'Base.foo'
 // ACTION: Rename reference
 // ERROR: Unresolved reference: foo
+// K2_AFTER_ERROR: Unresolved reference 'foo'.
 
 package p
 

@@ -1,15 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
@@ -24,9 +24,8 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
   protected JavaCodeInsightTestFixture myFixture;
   private @NotNull IndexingMode myIndexingMode = IndexingMode.SMART;
 
-  @NotNull
   @Override
-  public Disposable getTestRootDisposable() {
+  public @NotNull Disposable getTestRootDisposable() {
     return myFixture == null ? super.getTestRootDisposable() : myFixture.getTestRootDisposable();
   }
 
@@ -48,7 +47,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
 
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_6);
   }
 
   protected boolean toAddSourceRoot() {
@@ -75,8 +74,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return relative path to the test data.
    */
-  @NonNls
-  protected String getBasePath() {
+  protected @NonNls String getBasePath() {
     return "";
   }
 
@@ -85,8 +83,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase impl
    *
    * @return absolute path to the test data.
    */
-  @NonNls
-  protected String getTestDataPath() {
+  protected @NonNls String getTestDataPath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
   }
 

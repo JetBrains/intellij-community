@@ -18,7 +18,9 @@ package org.jetbrains.jps.model.serialization.artifact;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 @Tag("properties")
 public class ArtifactPropertiesState {
   private String myId;

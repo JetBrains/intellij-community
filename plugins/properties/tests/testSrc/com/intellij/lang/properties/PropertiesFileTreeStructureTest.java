@@ -89,7 +89,7 @@ public class PropertiesFileTreeStructureTest extends BasePlatformTestCase {
   private void doTest(String classText, String expected) {
     myFixture.configureByText("Test.properties", classText);
     myFixture.testStructureView(svc -> {
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
       svc.setActionActive(GroupByWordPrefixes.ID, true);
       svc.setActionActive(PropertiesFileStructureViewModel.KIND_SORTER_ID, true);
       JTree tree = svc.getTree();

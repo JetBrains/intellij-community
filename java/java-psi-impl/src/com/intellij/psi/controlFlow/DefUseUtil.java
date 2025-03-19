@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,37 +25,42 @@ public final class DefUseUtil {
   private DefUseUtil() { }
 
   public static class Info {
-    @NotNull
-    private final PsiVariable myVariable;
-    @NotNull
-    private final PsiElement myContext;
+    private final @NotNull PsiVariable myVariable;
+    private final @NotNull PsiElement myContext;
     private final boolean myIsRead;
 
-    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read) {
+    private final boolean myWriteOutsideDeclaration;
+
+    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read, boolean writeOutsideDeclaration) {
       myVariable = variable;
       myContext = context;
       myIsRead = read;
+      myWriteOutsideDeclaration = writeOutsideDeclaration;
     }
 
-    @NotNull
-    public PsiVariable getVariable() {
+    public @NotNull PsiVariable getVariable() {
       return myVariable;
     }
 
-    @NotNull
-    public PsiElement getContext() {
+    public @NotNull PsiElement getContext() {
       return myContext;
     }
 
     public boolean isRead() {
       return myIsRead;
     }
+
+    /**
+     * @return true if this variable was written at least once (except declaration).
+     */
+    public boolean isWriteOutsideDeclaration() {
+      return myWriteOutsideDeclaration;
+    }
   }
 
   private static class InstructionState implements Comparable<InstructionState> {
     private Set<PsiVariable> myUsed;
-    @NotNull
-    private final InstructionKey myInstructionKey;
+    private final @NotNull InstructionKey myInstructionKey;
     private final List<InstructionKey> myBackwardTraces;
     private boolean myIsVisited;
 
@@ -124,8 +129,7 @@ public final class DefUseUtil {
     }
   }
 
-  @Nullable
-  public static List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
+  public static @Nullable List<Info> getUnusedDefs(PsiElement body, Set<? super PsiVariable> outUsedVariables) {
     if (body == null) {
       return null;
     }
@@ -143,6 +147,7 @@ public final class DefUseUtil {
     }
 
     Set<PsiVariable> assignedVariables = new HashSet<>();
+    Set<PsiVariable> assignedSeveralTimes = new HashSet<>();
     Set<PsiVariable> readVariables = new HashSet<>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
@@ -153,7 +158,9 @@ public final class DefUseUtil {
         context = PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
         PsiVariable psiVariable = writeInstruction.variable;
         if (context != null && !(context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null)) {
-          assignedVariables.add(psiVariable);
+          if (!assignedVariables.add(psiVariable)) {
+            assignedSeveralTimes.add(psiVariable);
+          }
         }
       }
       else if (instruction instanceof ReadVariableInstruction) {
@@ -241,11 +248,11 @@ public final class DefUseUtil {
           if (context != null) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
-                unusedDefs.add(new Info(psiVariable, context, false));
+                unusedDefs.add(new Info(psiVariable, context, false, assignedSeveralTimes.contains(psiVariable)));
               }
             }
             else {
-              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable)));
+              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable), assignedSeveralTimes.contains(psiVariable)));
             }
           }
         }
@@ -255,27 +262,40 @@ public final class DefUseUtil {
     return unusedDefs;
   }
 
-  /**
-   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
-   * @param def        variable which value is to be defined
-   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
-   *                   
-   * @return variable {@code def} initializers which should be used when inlining {@code ref}
-   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
-   */
+  /// @see #getDefs(PsiCodeBlock, PsiVariable, PsiElement, boolean)
   public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getDefs(body, def, ref, false);
   }
 
-  /**
-   * Retrieves value of a variable {@code def} at the place {@code ref} in the scope {@code body} 
-   * @param def        variable which value is to be defined
-   * @param ref        element which contains a reference to the variable {@code def} and where the variable's value is to be defined
-   *                   
-   * @return variable {@code def} initializers which should be used when inlining {@code ref}
-   *         when array length is more than 1, it's unclear what initializer to use and such results are normally rejected
-   */
-  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
+  /// Retrieves reaching definitions of variable `def` at the place `ref` in the scope of `block`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following code:
+  ///
+  /// ```java
+  /// void func() {
+  ///   String[] arr = {"bar", "baz", "foo"};
+  ///   arr = new String[]{"well", "actually"};
+  ///   System.out.println(arr);
+  /// }
+  /// ```
+  ///
+  /// Here's an example of arguments that you could call this method with (in the context of the sample code above):
+  ///  * `block` is the method's body
+  ///  * `def` is a [PsiLocalVariable] `arr`, which is a child of [PsiDeclarationStatement] `String[] arr = {"bar", "baz", "foo"};`
+  ///  * `ref` is a [PsiReferenceExpression] `arr`, inside the call to println.
+  ///
+  /// In this example, this method returns an array containing a single [PsiReferenceExpression] `arr`, which would be a child
+  /// of the [PsiAssignmentExpression] `arr = new String[]{"well", "actually"}`. This menas that `{"well", "actually"}` is the
+  /// actual value of variable `def` {at place of/when referenced by} `ref`.
+  ///
+  /// @param def variable which value is to be defined. Usually you can get to it by resolving `ref`.
+  /// @param ref element which contains a reference to the variable `def` and where the variable's value is to be defined
+  ///
+  /// @return Initializers/assignments of variable `def` which should be used when inlining `ref`.
+  /// When this array's length is more than 1, it's unclear what initializer to use, and such results are normally rejected by the callers.
+  public static PsiElement @NotNull [] getDefs(@NotNull PsiCodeBlock block, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
      if (def instanceof PsiLocalVariable && ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).resolve() == def) {
       final PsiElement defContainer = LambdaUtil.getContainingClassOrLambda(def);
       PsiElement refContainer = LambdaUtil.getContainingClassOrLambda(ref);
@@ -286,7 +306,7 @@ public final class DefUseUtil {
     }
 
     try {
-      RefsDefs refsDefs = new RefsDefs(body) {
+      RefsDefs refsDefs = new RefsDefs(block) {
         final PsiManager psiManager = def.getManager();
         private final IntList[] myBackwardTraces = getBackwardTraces(instructions);
 
@@ -306,7 +326,7 @@ public final class DefUseUtil {
         }
 
         @Override
-        protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
+        protected void processInstruction(final @NotNull Set<? super PsiElement> res, final @NotNull Instruction instruction, int index) {
           if (instruction instanceof WriteVariableInstruction) {
             WriteVariableInstruction instructionW = (WriteVariableInstruction)instruction;
             if (psiManager.areElementsEquivalent(instructionW.variable, def)) {
@@ -340,13 +360,40 @@ public final class DefUseUtil {
     }
   }
 
+  /// @see #getRefs(PsiCodeBlock, PsiVariable, PsiElement, boolean)
   public static PsiElement @NotNull [] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref) {
     return getRefs(body, def, ref, false);
   }
 
-  /**
-   * Returns variable {@code def} references which read assigned value {@code ref}
-   */
+  /// Returns references to variable `def` which have the value of `ref` in the scope of `block`.
+  /// `ref` is the value assigned to the variable `def`.
+  ///
+  /// ### Example
+  ///
+  /// Consider the following code:
+  ///
+  /// ```java
+  /// void testHighlightBecauseIncorrect() {
+  ///   String name = "foo ".trim();
+  ///   println(name);
+  ///   println(name);
+  ///   name = "bar";
+  ///   println(name);
+  /// }
+  /// ```
+  ///
+  /// Here's an example of arguments that you could call this method with (in the context of the sample code above):
+  ///  * `block` is the method's body
+  ///  * `def` is [PsiLocalVariable]: `String name = "foo ".trim()`
+  ///  * `ref` is [PsiMethodCallExpression]: `"foo ".trim()`
+  ///
+  /// In the code above there are 3 [PsiReferenceExpression]s of `name`, but this method would only return the first two.
+  /// The third [PsiReferenceExpression] of `name` would not be included, because `name` was redefined by that point and no longer
+  /// has the value of `def` (which at this point is not `"foo ".trim()`, but `"bar"`).
+  ///
+  /// ### See also:
+  ///  * `DeclarationSearchUtils.findDefinition` to find the definition of the [PsiReferenceExpression]
+  ///  * {@link PsiTreeUtil#getParentOfType(PsiElement, Class)} to find the block containing the code you want to analyze
   public static PsiElement[] getRefs(@NotNull PsiCodeBlock body, @NotNull PsiVariable def, @NotNull PsiElement ref, boolean rethrow) {
     try {
       RefsDefs refsDefs = new RefsDefs(body) {
@@ -367,7 +414,7 @@ public final class DefUseUtil {
         }
 
         @Override
-        protected void processInstruction(@NotNull final Set<? super PsiElement> res, @NotNull final Instruction instruction, int index) {
+        protected void processInstruction(final @NotNull Set<? super PsiElement> res, final @NotNull Instruction instruction, int index) {
           if (instruction instanceof ReadVariableInstruction) {
             ReadVariableInstruction instructionR = (ReadVariableInstruction)instruction;
             if (psiManager.areElementsEquivalent(instructionR.variable, def)) {
@@ -399,8 +446,7 @@ public final class DefUseUtil {
     protected abstract int   nNext(int index);
     protected abstract int getNext(int index, int no);
 
-    @NotNull
-    final List<Instruction> instructions;
+    final @NotNull List<Instruction> instructions;
     final ControlFlow flow;
     final PsiCodeBlock body;
 
@@ -567,8 +613,7 @@ public final class DefUseUtil {
       myInstructions = instructions;
     }
 
-    @NotNull
-    private Map<InstructionKey, InstructionState> walk() {
+    private @NotNull Map<InstructionKey, InstructionState> walk() {
       InstructionKey startKey = InstructionKey.create(0);
       myStates.put(startKey, new InstructionState(startKey));
       myWalkThroughStack.push(InstructionKey.create(-1), startKey);
@@ -619,8 +664,7 @@ public final class DefUseUtil {
       }
     }
 
-    @NotNull
-    static Map<InstructionKey, InstructionState> getStates(@NotNull List<? extends Instruction> instructions) {
+    static @NotNull Map<InstructionKey, InstructionState> getStates(@NotNull List<? extends Instruction> instructions) {
       return new InstructionStateWalker(instructions).walk();
     }
   }

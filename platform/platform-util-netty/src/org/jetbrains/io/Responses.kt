@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Responses")
 package org.jetbrains.io
 
@@ -13,6 +13,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.util.*
@@ -30,13 +31,24 @@ fun response(contentType: String?, content: ByteBuf?): FullHttpResponse {
   return response
 }
 
-fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): FullHttpResponse {
-  return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
+fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): FullHttpResponse =
+  DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(content, charset))
+
+fun responseStatus(status: HttpResponseStatus, keepAlive: Boolean, channel: Channel) {
+  val response = DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status)
+  HttpUtil.setContentLength(response, 0)
+  response.addCommonHeaders()
+  response.addNoCache()
+  if (keepAlive) {
+    HttpUtil.setKeepAlive(response, true)
+  }
+  response.headers().set("X-Frame-Options", "Deny")
+  response.send(channel, !keepAlive)
 }
 
 fun HttpResponse.addNoCache(): HttpResponse {
-  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
-  headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
+  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
+  headers().add(HttpHeaderNames.PRAGMA, "no-cache")
   return this
 }
 
@@ -67,7 +79,7 @@ fun HttpResponse.send(channel: Channel, request: HttpRequest?, extraHeaders: Htt
   extraHeaders?.let {
     headers().add(it)
   }
-  send(channel, request != null && !addKeepAliveIfNeeded(request))
+  send(channel = channel, close = request != null && !addKeepAliveIfNeeded(request))
 }
 
 fun HttpResponse.addKeepAliveIfNeeded(request: HttpRequest): Boolean {
@@ -88,11 +100,11 @@ fun HttpResponse.addCommonHeaders() {
     headers().set(HttpHeaderNames.X_FRAME_OPTIONS, "SameOrigin")
   }
   @Suppress("SpellCheckingInspection")
-  headers().set("X-Content-Type-Options", "nosniff")//NON-NLS
-  headers().set("x-xss-protection", "1; mode=block")//NON-NLS
+  headers().set("X-Content-Type-Options", "nosniff")
+  headers().set("x-xss-protection", "1; mode=block")
 
   if (status() < HttpResponseStatus.MULTIPLE_CHOICES) {
-    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")//NON-NLS
+    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")
   }
 }
 
@@ -111,7 +123,8 @@ fun HttpResponse.send(channel: Channel, close: Boolean) {
   }
 }
 
-fun HttpResponseStatus.response(request: HttpRequest? = null, description: String? = null): HttpResponse = createStatusResponse(this, request, description)
+fun HttpResponseStatus.response(request: HttpRequest? = null, description: String? = null): HttpResponse =
+  createStatusResponse(this, request, description)
 
 @JvmOverloads
 fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
@@ -123,10 +136,13 @@ fun HttpResponseStatus.sendPlainText(channel: Channel, request: HttpRequest? = n
   createStatusResponse(this, request, description, usePlainText = true).send(channel, request, extraHeaders)
 }
 
-internal fun createStatusResponse(responseStatus: HttpResponseStatus,
-                                  request: HttpRequest?,
-                                  description: String? = null,
-                                  usePlainText: Boolean = false): HttpResponse {
+@Internal
+fun createStatusResponse(
+  responseStatus: HttpResponseStatus,
+  request: HttpRequest?,
+  description: String? = null,
+  usePlainText: Boolean = false,
+): HttpResponse {
   if (request != null && request.method() == HttpMethod.HEAD) {
     return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }

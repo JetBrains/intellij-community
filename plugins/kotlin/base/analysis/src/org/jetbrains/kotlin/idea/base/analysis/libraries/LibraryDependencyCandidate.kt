@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.base.analysis.libraries
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.AbstractKlibLibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 sealed class LibraryDependencyCandidate {
     abstract val platform: TargetPlatform
     abstract val libraries: List<LibraryInfo>
@@ -32,12 +34,14 @@ sealed class LibraryDependencyCandidate {
 }
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 data class DefaultLibraryDependencyCandidate(
     override val platform: TargetPlatform,
     override val libraries: List<LibraryInfo>
 ): LibraryDependencyCandidate()
 
 @ApiStatus.Internal
+@K1ModeProjectStructureApi
 data class KlibLibraryDependencyCandidate(
   override val platform: TargetPlatform,
   override val libraries: List<LibraryInfo>,

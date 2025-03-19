@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -25,23 +26,22 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor.pathToAnonymousClass;
+import static com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributorKt.pathToAnonymousClass;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
@@ -56,11 +56,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private @NlsContexts.PopupAdvertisement String myAdText;
   private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList, this);
 
-  protected ChooseByNamePopup(@Nullable final Project project,
+  protected ChooseByNamePopup(final @Nullable Project project,
                               @NotNull ChooseByNameModel model,
                               @NotNull ChooseByNameItemProvider provider,
                               @Nullable ChooseByNamePopup oldPopup,
-                              @Nullable final String predefinedText,
+                              final @Nullable String predefinedText,
                               boolean mayRequestOpenInCurrentWindow,
                               int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
@@ -176,7 +176,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     String adText = getAdText();
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
-      builder.setFocusable(false)
+      builder.setFocusable(ScreenReader.isActive())
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
         .setCancelKeyEnabled(false)
@@ -189,6 +189,25 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myDropdownPopup = builder.createPopup();
       myDropdownPopup.setSize(preferredScrollPaneSize);
       myDropdownPopup.showInScreenCoordinates(layeredPane, location);
+      if (ScreenReader.isActive()) {
+        Window window = SwingUtilities.getWindowAncestor(myDropdownPopup.getContent());
+        window.setFocusableWindowState(true);
+        window.setFocusable(true);
+        window.setFocusTraversalKeysEnabled(false);
+        window.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {});
+        window.addKeyListener(new KeyAdapter() {
+          @Override
+          public void keyReleased(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_TAB) {
+              if (e.isShiftDown()) {
+                IdeFocusManager.getInstance(myProject).requestFocus(myTextField, true);
+              } else {
+                IdeFocusManager.getInstance(myProject).requestFocus(myCheckBox.isVisible() ? myCheckBox : myTextField, true);
+              }
+            }
+          }
+        });
+      }
     }
     else {
       myDropdownPopup.setLocation(location);
@@ -283,12 +302,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              @Nullable final String predefinedText) {
+                                              final @Nullable String predefinedText) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
-                                              @Nullable final String predefinedText,
+                                              final @Nullable String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
     return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, mayRequestOpenInCurrentWindow,
                        initialIndex);
@@ -303,14 +322,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project,
                                               @NotNull ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              @Nullable final String predefinedText) {
+                                              final @Nullable String predefinedText) {
     return createPopup(project, model, provider, predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project,
-                                              @NotNull final ChooseByNameModel model,
+                                              final @NotNull ChooseByNameModel model,
                                               @NotNull ChooseByNameItemProvider provider,
-                                              @Nullable final String predefinedText,
+                                              final @Nullable String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow,
                                               final int initialIndex) {
     final ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
@@ -326,7 +345,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
-                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
                                                                                 "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
@@ -337,15 +356,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
-  @NotNull
   @Override
-  public String transformPattern(@NotNull String pattern) {
+  public @NotNull String transformPattern(@NotNull String pattern) {
     final ChooseByNameModel model = getModel();
     return getTransformedPattern(pattern, model);
   }
 
-  @NotNull
-  public static String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
+  public static @NotNull String getTransformedPattern(@NotNull String pattern, @NotNull ChooseByNameModel model) {
     String rawPattern = pattern;
 
     Pattern regex = null;
@@ -399,8 +416,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return -1;
   }
 
-  @Nullable
-  public String getPathToAnonymous() {
+  public @Nullable String getPathToAnonymous() {
     Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
     return pathToAnonymousClass(matcher);
   }
@@ -409,8 +425,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return getLineOrColumn(false);
   }
 
-  @Nullable
-  public String getMemberPattern() {
+  public @Nullable String getMemberPattern() {
     final String enteredText = getTrimmedText();
     final int index = enteredText.lastIndexOf('#');
     if (index == -1) {
@@ -428,8 +443,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
-  @NlsContexts.PopupAdvertisement
-  public String getAdText() {
+  public @NlsContexts.PopupAdvertisement String getAdText() {
     return myAdText;
   }
 
@@ -468,12 +482,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
-  @NotNull
   @TestOnly
-  public List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
+  public @NotNull List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
     List<Object> elements = new SmartList<>("empty");
     Semaphore semaphore = new Semaphore(1);
-    scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, set -> {
+    scheduleCalcElements(text, checkboxState, ModalityState.nonModal(), SelectMostRelevant.INSTANCE, set -> {
       elements.clear();
       elements.addAll(set);
       semaphore.up();

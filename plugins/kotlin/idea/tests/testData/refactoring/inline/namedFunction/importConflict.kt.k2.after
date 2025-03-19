@@ -1,0 +1,4 @@
+fun use() {
+    first.foo()
+    second.foo()
+}

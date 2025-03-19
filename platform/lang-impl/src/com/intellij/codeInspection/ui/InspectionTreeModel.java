@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -23,16 +23,18 @@ import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.TreeTraversal;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
-public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
+public final class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> implements InvokerSupplier {
   private static final Logger LOG = Logger.getInstance(InspectionTreeModel.class);
   private final InspectionRootNode myRoot = new InspectionRootNode(this);
   private final Invoker myInvoker;
@@ -72,8 +74,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return myRoot;
   }
 
-  @Nullable
-  public InspectionTreeNode getParent(InspectionTreeNode node) {
+  public @Nullable InspectionTreeNode getParent(InspectionTreeNode node) {
     return node.myParent;
   }
 
@@ -130,21 +131,23 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     }
   }
 
-  @NotNull
-  public InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
+  @ApiStatus.Internal
+  public @NotNull InspectionModuleNode createModuleNode(@NotNull Module module, @NotNull InspectionTreeNode parent) {
     return getOrAdd(module, parent, () -> new InspectionModuleNode(module, parent));
   }
 
-  @NotNull
-  public InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
+  @ApiStatus.Internal
+  public @NotNull InspectionPackageNode createPackageNode(String packageName, @NotNull InspectionTreeNode parent) {
     return getOrAdd(packageName, parent, () -> new InspectionPackageNode(packageName, parent));
   }
 
+  @ApiStatus.Internal
   @NotNull
   InspectionGroupNode createGroupNode(@Nls String group, @NotNull InspectionTreeNode parent) {
     return getOrAdd(group, parent, () -> new InspectionGroupNode(group, parent));
   }
 
+  @ApiStatus.Internal
   @NotNull
   InspectionSeverityGroupNode createSeverityGroupNode(SeverityRegistrar severityRegistrar,
                                                       HighlightDisplayLevel level,
@@ -152,10 +155,9 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return getOrAdd(level, parent, () -> new InspectionSeverityGroupNode(severityRegistrar, level, parent));
   }
 
-  @NotNull
-  public RefElementNode createRefElementNode(@Nullable RefEntity entity,
-                                             @NotNull Supplier<? extends RefElementNode> supplier,
-                                             @NotNull InspectionTreeNode parent) {
+  public @NotNull RefElementNode createRefElementNode(@Nullable RefEntity entity,
+                                                      @NotNull Supplier<? extends RefElementNode> supplier,
+                                                      @NotNull InspectionTreeNode parent) {
     return getOrAdd(entity, parent, () -> ReadAction.compute(supplier::get));
   }
 
@@ -177,6 +179,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     getOrAdd(descriptor, parent, () -> ReadAction.compute(() -> new ProblemDescriptionNode(element, descriptor, presentation, parent)));
   }
 
+  @ApiStatus.Internal
   public void createOfflineProblemDescriptorNode(@NotNull OfflineProblemDescriptor offlineDescriptor,
                                                  @NotNull OfflineDescriptorResolveResult resolveResult,
                                                  @NotNull InspectionToolPresentation presentation,
@@ -229,9 +232,8 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return (T)node;
   }
 
-  @NotNull
   @Override
-  public Invoker getInvoker() {
+  public @NotNull Invoker getInvoker() {
     return myInvoker;
   }
 }

@@ -12,7 +12,7 @@ import git4idea.ui.branch.GitBranchPopupActions.*
 
 internal class GitCompareWithBranchAction : GitSingleBranchAction(GitBundle.messagePointer("branches.compare.with.current")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     with(e.presentation) {

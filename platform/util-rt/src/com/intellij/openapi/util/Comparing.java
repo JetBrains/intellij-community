@@ -32,12 +32,6 @@ public final class Comparing {
     return arg1.equals(arg2);
   }
 
-  /** @deprecated same as {@link Arrays#equals(Object[], Object[])} */
-  @Deprecated @ApiStatus.ScheduledForRemoval
-  public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
-    return Arrays.equals(arr1, arr2);
-  }
-
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
     return StringUtilRt.equal(s1, s2, true);
@@ -78,13 +72,9 @@ public final class Comparing {
     }
 
     Set<T> aSet = new HashSet<>(a);
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
+    Set<T> bSet = new HashSet<>(b);
 
-    return true;
+    return aSet.equals(bSet);
   }
 
   public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
@@ -97,14 +87,7 @@ public final class Comparing {
       return false;
     }
 
-    Set<T> aSet = new HashSet<>(Arrays.asList(a));
-    for (T t : b) {
-      if (!aSet.contains(t)) {
-        return false;
-      }
-    }
-
-    return true;
+    return haveEqualElements(Arrays.asList(a), Arrays.asList(b));
   }
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
@@ -130,16 +113,9 @@ public final class Comparing {
   }
 
   /**
-   * @deprecated use {@link Byte#compare(byte, byte)} instead
-   */
-  @Deprecated
-  public static int compare(byte o1, byte o2) {
-    return Byte.compare(o1, o2);
-  }
-
-  /**
    * @deprecated use {@link Boolean#compare(boolean, boolean)} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static int compare(boolean o1, boolean o2) {
     return Boolean.compare(o1, o2);
@@ -151,22 +127,6 @@ public final class Comparing {
   @Deprecated
   public static int compare(int o1, int o2) {
     return Integer.compare(o1, o2);
-  }
-
-  /**
-   * @deprecated use {@link Long#compare(long, long)} instead
-   */
-  @Deprecated
-  public static int compare(long o1, long o2) {
-    return Long.compare(o1, o2);
-  }
-
-  /**
-   * @deprecated use {@link Double#compare(double, double)} instead
-   */
-  @Deprecated
-  public static int compare(double o1, double o2) {
-    return Double.compare(o1, o2);
   }
 
   public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {

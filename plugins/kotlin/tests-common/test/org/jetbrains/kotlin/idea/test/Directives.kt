@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.test
 
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+
 class Directives {
 
-    private val directives = mutableMapOf<String, MutableList<String>?>()
+    private val directives: MutableMap<String, MutableList<String>?> = mutableMapOf<String, MutableList<String>?>()
 
     operator fun contains(key: String): Boolean {
         return key in directives

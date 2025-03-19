@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -18,7 +19,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public HighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -62,8 +63,7 @@ public final class HighlightExitPointsHandler extends HighlightUsagesHandlerBase
     }
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiStatement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiStatement exitStatement) {
     if (exitStatement instanceof PsiReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PsiMethod.class);
     }

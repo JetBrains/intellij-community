@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.yaml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "yaml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "yaml",
+  module_name = "intellij.yaml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util:util-ui",
+    "//platform/refactoring",
+    "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/util/jdom",
+    "@lib//:fastutil-min",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:stream_ex",
+  ],
+  runtime_deps = [":yaml_resources"]
+)
+### auto-generated section `build intellij.yaml` end

@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import static com.intellij.codeInspection.options.OptPane.number;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyOverlyNestedMethodInspection extends GroovyOverlyNestedMethodInspectionBase {
+public final class GroovyOverlyNestedMethodInspection extends GroovyOverlyNestedMethodInspectionBase {
 
   @Override
   public @NotNull OptPane getGroovyOptionsPane() {

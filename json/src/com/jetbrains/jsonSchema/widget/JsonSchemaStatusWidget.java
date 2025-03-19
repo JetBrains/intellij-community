@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -60,6 +60,8 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.widget.FailedSchemaLoadingDiagnosticsKt.logSchemaDownloadFailureDiagnostics;
 
 final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   public static final String ID = "JSONSchemaSelector";
@@ -213,7 +215,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return getNoSchemaState();
     }
     Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
-    if (schemaFiles.size() == 0) {
+    if (schemaFiles.isEmpty()) {
       return getNoSchemaState();
     }
 
@@ -230,7 +232,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         return state;
       }
       schemaFiles = userSchemas;
-      if (schemaFiles.size() == 0) {
+      if (schemaFiles.isEmpty()) {
         return getNoSchemaState();
       }
     }
@@ -243,9 +245,12 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     String bar =
       isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files") : JsonBundle.message("schema.widget.prefix.other.files");
 
-    if (schemaFile instanceof HttpVirtualFile) {
-      RemoteFileInfo info = ((HttpVirtualFile)schemaFile).getFileInfo();
-      if (info == null) return getDownloadErrorState(null);
+    if (schemaFile instanceof HttpVirtualFile httpSchemaFile) {
+      RemoteFileInfo info = httpSchemaFile.getFileInfo();
+      if (info == null) {
+        logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
+        return getDownloadErrorState(null);
+      }
 
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (info.getState()) {
@@ -260,6 +265,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
                                    JsonBundle.message("schema.widget.download.in.progress.label"), false);
         }
         case ERROR_OCCURRED -> {
+          logSchemaDownloadFailureDiagnostics(httpSchemaFile, getProject());
           return getDownloadErrorState(info.getErrorMessage());
         }
       }
@@ -349,6 +355,8 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   private boolean isValidSchemaFile(@Nullable VirtualFile schemaFile) {
+    // to avoid widget blinking we consider currently loaded schema as valid one
+    if (schemaFile instanceof HttpVirtualFile) return true;
     if (schemaFile == null) return false;
     JsonSchemaService service = getService();
     return service != null && service.isSchemaFile(schemaFile) && service.isApplicableToFile(schemaFile);
@@ -432,7 +440,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Override
   protected void registerCustomListeners(@NotNull MessageBusConnection connection) {
-    class Listener implements DumbService.DumbModeListener {
+    final class Listener implements DumbService.DumbModeListener {
       volatile boolean isDumbMode;
 
       @Override
@@ -543,7 +551,7 @@ final class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         .setHideOnClickOutside(true)
         .createBalloon();
       balloon.showInCenterOf(statusBarComponent);
-    }, 500, ModalityState.NON_MODAL);
+    }, 500, ModalityState.nonModal());
   }
 
   private enum WidgetStatus {

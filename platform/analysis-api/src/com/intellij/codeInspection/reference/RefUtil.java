@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ex.EntryPointsManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +24,7 @@ public final class RefUtil {
       return false;
     }
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
-      boolean isImplicitUsage = ReadAction.nonBlocking(() -> {
-        return provider.isImplicitUsage(element);
-      }).executeSynchronously();
-      if (isImplicitUsage) {
-        return true;
-      }
+      if (provider.isImplicitUsage(element)) return true;
     }
     return false;
   }

@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.ant.jps` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "jps_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "jps",
+  module_name = "intellij.ant.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "//jps/model-api:model",
+    "//jps/model-serialization",
+    "//platform/util",
+    "//jps/jps-builders:build",
+    "//java/java-runtime:rt",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":jps_resources"]
+)
+### auto-generated section `build intellij.ant.jps` end
+
+### auto-generated section `build intellij.ant.jps.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "jps-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "jps-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/ant/jps-plugin:jps",
+    "//jps/model-serialization:model-serialization-tests_test_lib",
+    "//jps/model-serialization",
+    "//jps/jps-builders:build-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+
+jvm_test(
+  name = "jps-tests_test",
+  runtime_deps = [":jps-tests_test_lib"]
+)
+### auto-generated section `build intellij.ant.jps.tests` end

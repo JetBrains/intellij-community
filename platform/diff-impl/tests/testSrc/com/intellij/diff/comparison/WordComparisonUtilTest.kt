@@ -15,6 +15,9 @@
  */
 package com.intellij.diff.comparison
 
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
+import com.intellij.diff.util.Range
+
 class WordComparisonUtilTest : ComparisonUtilTestBase() {
   fun testSimpleCases() {
     lines_inner {
@@ -575,5 +578,36 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       ("--     " - " --     ").ignore()
       testAll()
     }
+  }
+
+  fun testWordFirstTrimmableCase() {
+    // TODO: the [----] lines are marked as modified but the 'XX' prefix can be trimmed
+
+    val sequence1 = "a\n$chGun\n$chGun$chGun"
+    //              "a_X_XX"
+    // inner:        ***123
+    //              "a_X_     XX"
+    // lines:       [    ] | [--]
+    val sequence2 = "b\n\n$chGun$chGun\n\n<"
+    //              "b__XX__<"
+    //  inner:       *1*23***
+    //              "b_  _  XX__<"
+    //  lines:      [  ][ ][-----]
+    val result = MANAGER.compareLinesWordFirst(sequence1, sequence2, LineOffsetsUtil.create(sequence1), LineOffsetsUtil.create(sequence2),
+                                               ComparisonPolicy.DEFAULT, INDICATOR)
+
+    val actualInner = result.flatMap { line ->
+      line.innerFragments?.map { inner ->
+        Range(line.startOffset1 + inner.startOffset1, line.startOffset1 + inner.endOffset1,
+              line.startOffset2 + inner.startOffset2, line.startOffset2 + inner.endOffset2)
+      }
+      ?: listOf(Range(line.startOffset1, line.endOffset1, line.startOffset2, line.endOffset2))
+    }
+    val expectedInner = listOf(Range(0, 4, 0, 1), Range(5, 5, 2, 3), Range(9, 9, 7, 10))
+    assertEquals(expectedInner, actualInner)
+
+    val actualLines = result.map { Range(it.startLine1, it.endLine1, it.startLine2, it.endLine2) }
+    val expectedLines = listOf(Range(0, 2, 0, 1), Range(2, 2, 1, 2), Range(2, 3, 2, 5))
+    assertEquals(expectedLines, actualLines)
   }
 }

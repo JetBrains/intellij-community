@@ -1,27 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,29 +22,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
+@Service(Service.Level.PROJECT)
 @State(name = "ResourceBundleManager", storages = @Storage("resourceBundles.xml"))
 public final class ResourceBundleManager implements PersistentStateComponent<ResourceBundleManagerState>, Disposable {
-  private final static Logger LOG = Logger.getInstance(ResourceBundleManager.class);
-  private static final String BUNDLE_EDITOR_PLUGIN_ID = "com.intellij.properties.bundle.editor";
-  private static final String SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN = "suggest.resource.bundle.editor.plugin";
+  private static final Logger LOG = Logger.getInstance(ResourceBundleManager.class);
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
 
-  private final SingletonNotificationManager myNotificationManager = new SingletonNotificationManager(PluginsAdvertiser.getNotificationGroup().getDisplayId(), 
-                                                                                                      NotificationType.INFORMATION);
-  
   public ResourceBundleManager(@NotNull Project project) {
     PsiManager manager = PsiManager.getInstance(project);
     manager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
-      public void childMoved(@NotNull final PsiTreeChangeEvent event) {
+      public void childMoved(final @NotNull PsiTreeChangeEvent event) {
         final PsiElement child = event.getChild();
         if (!(child instanceof PsiFile)) {
           if (child instanceof PsiDirectory) {
@@ -114,8 +96,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
 
       }
 
-      @Nullable
-      private String getUrl(PsiElement element) {
+      private static @Nullable String getUrl(PsiElement element) {
         return !(element instanceof PsiDirectory) ? null : ((PsiDirectory)element).getVirtualFile().getUrl();
       }
 
@@ -161,39 +142,6 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         }
       }
     }, this);
-  
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (file.getFileType() == PropertiesFileType.INSTANCE &&
-            PropertiesComponent.getInstance().getBoolean(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, true)) {
-          PsiFile psiFile = manager.findFile(file);
-          if (psiFile != null && !file.getNameWithoutExtension().equals(PropertiesUtil.getDefaultBaseName(psiFile))) {
-            PluginId pluginId = PluginId.getId(BUNDLE_EDITOR_PLUGIN_ID);
-            IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
-            if (pluginDescriptor == null || !pluginDescriptor.isEnabled()) {
-              myNotificationManager.notify(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
-                                           PropertiesBundle.message("notification.content.resource.bundle.plugin.advertisement"), project, notification -> {
-                notification.setSuggestionType(true);
-                notification.setDisplayId("resource.bundle.editor");
-                if (pluginDescriptor == null) {
-                  notification.addAction(NotificationAction.createSimpleExpiring(PropertiesBundle.message("notification.content.install.plugin"), () -> {
-                    PluginsAdvertiser.installAndEnable(project, Collections.singleton(pluginId), true, () -> {});
-                  }));
-                }
-                else {
-                  notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.enable.plugin"), 
-                                                                                 () -> PluginManagerConfigurable.showPluginConfigurableAndEnable(project, Set.of(pluginDescriptor))));
-                }
-                notification.addAction(NotificationAction.createSimpleExpiring(
-                  PropertiesBundle.message("notification.content.ignore.plugin"),
-                  () -> PropertiesComponent.getInstance().setValue(SUGGEST_RESOURCE_BUNDLE_EDITOR_PLUGIN, false)));
-              });
-            }
-          }
-        }
-      }
-    });
   }
 
   @Override
@@ -204,8 +152,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return project.getService(ResourceBundleManager.class);
   }
 
-  @Nullable
-  public String getFullName(final @NotNull PropertiesFile propertiesFile) {
+  public @Nullable String getFullName(final @NotNull PropertiesFile propertiesFile) {
     return ReadAction.compute(() -> {
       final PsiDirectory directory = propertiesFile.getParent();
       final String packageQualifiedName = PropertiesUtil.getPackageQualifiedName(directory);
@@ -213,7 +160,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         return null;
       }
       final StringBuilder qName = new StringBuilder(packageQualifiedName);
-      if (qName.length() > 0) {
+      if (!qName.isEmpty()) {
         qName.append(".");
       }
       qName.append(getBaseName(propertiesFile.getContainingFile()));
@@ -221,8 +168,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     });
   }
 
-  @NotNull
-  public String getBaseName(@NotNull final PsiFile file) {
+  public @NotNull String getBaseName(final @NotNull PsiFile file) {
     final VirtualFile vFile = file.getVirtualFile();
     final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(vFile);
     if (customResourceBundle != null) {
@@ -266,8 +212,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return propertiesFiles.get(0).getResourceBundle();
   }
 
-  @Nullable
-  public CustomResourceBundle getCustomResourceBundle(final @NotNull PropertiesFile file) {
+  public @Nullable CustomResourceBundle getCustomResourceBundle(final @NotNull PropertiesFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return null;
@@ -284,8 +229,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return myState.getDissociatedFiles().contains(url) || getCustomResourceBundleState(virtualFile) != null;
   }
 
-  @Nullable
-  private CustomResourceBundleState getCustomResourceBundleState(final @NotNull VirtualFile virtualFile) {
+  private @Nullable CustomResourceBundleState getCustomResourceBundleState(final @NotNull VirtualFile virtualFile) {
     if (myState.getCustomResourceBundles().isEmpty()) {
       return null;
     }
@@ -298,9 +242,8 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return null;
   }
 
-  @Nullable
   @Override
-  public ResourceBundleManagerState getState() {
+  public @Nullable ResourceBundleManagerState getState() {
     return myState.isEmpty() ? null : myState;
   }
 

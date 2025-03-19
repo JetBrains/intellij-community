@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
@@ -17,15 +18,15 @@ import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.appendElement
-import org.jetbrains.kotlin.idea.core.getOrCreateBody
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
+import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.getDefaultInitializer
 import org.jetbrains.kotlin.psi.*
@@ -79,7 +80,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = noUsagesExist(affectedFunctions)
             }
         }
 
@@ -137,7 +138,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val initializerText = propertyDescriptor.type.getDefaultInitializer() ?: "null"
                         val newParam = KotlinParameterInfo(
                             callableDescriptor = originalDescriptor.baseDescriptor,
-                            name = Fe10KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
+                            name = KotlinNameSuggester.suggestNameByName(propertyDescriptor.name.asString(), validator),
                             originalTypeInfo = KotlinTypeInfo(false, propertyDescriptor.type),
                             defaultValueForCall = KtPsiFactory(element!!.project).createExpression(initializerText)
                         )
@@ -145,7 +146,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                     }
                 }
 
-                override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
+                override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean = noUsagesExist(affectedFunctions)
             }
         }
 
@@ -177,7 +178,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
                         val psiFactory = KtPsiFactory(project)
                         val name = newParam.name ?: return
                         constructor.safeAs<KtSecondaryConstructor>()?.getOrCreateBody()
-                            ?.appendElement(psiFactory.createExpression("this.${element.name} = $name"))
+                            ?.addElement(psiFactory.createExpression("this.${element.name} = $name"))
                             ?: element.setInitializer(psiFactory.createExpression(name))
                     }
                 }
@@ -216,7 +217,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         val property = diagnostic.psiElement as? KtProperty ?: return emptyList()
         if (property.receiverTypeReference != null) return emptyList()
 
-        val actions = ArrayList<IntentionAction>(2)
+        val actions = ArrayList<IntentionAction>(3)
 
         actions.add(AddInitializerFix(property))
 
@@ -225,12 +226,11 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             if (klass.primaryConstructor?.hasActualModifier() == true) return@let
 
             val secondaryConstructors by lazy { klass.secondaryConstructors.filter { it.getDelegationCallOrNull()?.isCallToThis != true } }
-            if (property.accessors.isNotEmpty() || secondaryConstructors.isNotEmpty()) {
-                if (secondaryConstructors.none { it.hasActualModifier() }) {
-                    actions.add(InitializeWithConstructorParameter(property))
-                }
-            } else {
+            if (property.accessors.isEmpty() && secondaryConstructors.isEmpty()) {
                 actions.add(MoveToConstructorParameters(property))
+            }
+            if (secondaryConstructors.none { it.hasActualModifier() }) {
+                actions.add(InitializeWithConstructorParameter(property))
             }
         }
 

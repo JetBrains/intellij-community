@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inconsistentLanguageLevel;
 
 import com.intellij.analysis.AnalysisScope;
@@ -34,7 +19,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
+public final class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   @Override
   public boolean isGraphNeeded() {
     return false;
@@ -62,12 +47,12 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
         LanguageLevel dependantLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
-            JavaAnalysisBundle
-              .message("module.0.with.language.level.1.depends.on.module.2.with.language.level.3", module.getName(), languageLevel,
-                       dependantModule.getName(), dependantLanguageLevel),
+            JavaAnalysisBundle.message("module.0.with.language.level.1.depends.on.module.2.with.language.level.3", 
+                                       module.getName(), languageLevel.getShortText(),
+                                       dependantModule.getName(), dependantLanguageLevel.getShortText()),
             module,
             new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(dependantModule.getName()),
-            (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
+            (QuickFix<?>)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           return new CommonProblemDescriptor[] {problemDescriptor};
         }
       }
@@ -81,17 +66,12 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
   }
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.modularization.issues");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "InconsistentLanguageLevel";
   }
-
 }

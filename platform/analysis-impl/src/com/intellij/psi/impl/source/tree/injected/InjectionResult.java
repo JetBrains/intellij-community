@@ -1,19 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.injection.ReferenceInjector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-final class InjectionResult implements Supplier<InjectionResult> {
+@ApiStatus.Internal
+public final class InjectionResult implements Supplier<InjectionResult> {
   private final PsiFile myHostFile;
-  @Nullable final List<? extends PsiFile> files;
-  @Nullable final List<? extends Pair<ReferenceInjector, Place>> references;
+  final @Nullable List<? extends PsiFile> files;
+  final @Nullable List<? extends Pair<ReferenceInjector, Place>> references;
   private final long myModificationCount;
 
   InjectionResult(@NotNull PsiFile hostFile,
@@ -34,7 +36,8 @@ final class InjectionResult implements Supplier<InjectionResult> {
     return files == null && references == null;
   }
 
-  boolean isValid() {
+  @ApiStatus.Internal
+  public boolean isValid() {
     if (files != null) {
       for (PsiFile file : files) {
         if (!file.isValid()) return false;

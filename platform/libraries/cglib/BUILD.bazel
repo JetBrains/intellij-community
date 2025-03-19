@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.cglib` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "cglib",
+  module_name = "intellij.libraries.cglib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:libraries-cglib-cglib",
+    "//platform/util/base",
+    "//platform/util-rt",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "@lib//:fastutil-min",
+    "//platform/util-class-loader:util-classLoader",
+  ],
+  exports = ["@lib//:libraries-cglib-cglib"]
+)
+### auto-generated section `build intellij.libraries.cglib` end

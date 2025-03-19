@@ -49,7 +49,7 @@ abstract class WslHashMatcher(val code: String, val pattern: String) {
    * @param regex must be a [POSIX ERE](https://en.wikipedia.org/wiki/Regular_expression#POSIX_extended).
    * @see wslhash.c
    */
-  private class RegexMatcher constructor(private val regex: Regex) : WslHashMatcher("rgx", regex.pattern) {
+  private class RegexMatcher(private val regex: Regex) : WslHashMatcher("rgx", regex.pattern) {
     override fun matches(fileName: String): Boolean {
       return regex.containsMatchIn(fileName)
     }

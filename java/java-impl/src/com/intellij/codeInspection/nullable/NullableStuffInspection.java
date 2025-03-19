@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -59,16 +59,13 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       super(element);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return getFamilyName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.name");
     }
 
@@ -89,7 +86,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         new UsageTarget[]{new PsiElement2UsageTargetAdapter(method.getParameterList().getParameters()[parameterIdx])},
         () -> new UsageSearcher() {
           @Override
-          public void generate(@NotNull final Processor<? super Usage> processor) {
+          public void generate(final @NotNull Processor<? super Usage> processor) {
             ReadAction.run(() -> JavaNullMethodArgumentUtil.searchNullArgument(method, parameterIdx, (arg) -> processor.process(new UsageInfo2UsageAdapter(new UsageInfo(arg)))));
           }
         }, false, false, presentation, null);

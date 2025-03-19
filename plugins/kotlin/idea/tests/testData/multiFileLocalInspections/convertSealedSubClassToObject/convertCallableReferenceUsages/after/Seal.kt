@@ -2,7 +2,7 @@ package seal
 
 sealed class Sealed
 
-object SubSealed : Sealed() {
+data object SubSealed : Sealed() {
     class Nested
 
     fun internalFunction() {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
@@ -16,7 +16,11 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -27,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.jetbrains.kotlin.psi.KtFunction
@@ -77,8 +80,9 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         )
     }
 
-    fun testAvailableInsideObject() {
-        doTestMethodConfiguration(
+    fun testNoAvailableInsideObject() {
+        myFixture.configureByText(
+            "tests.kt",
             """
                       import org.junit.Test
                       object tests {
@@ -87,13 +91,13 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
                               <caret>
                           }
                       }
-                    """
+                    """.trimIndent()
         )
         assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
         assertEquals(0, myFixture.findGuttersAtCaret().size)
         val gutters = myFixture.findAllGutters()
-        assertEquals(2, gutters.size)
-        assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
+        assertEquals(0, gutters.size)
+        assertEquals(ThreeState.NO, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
     }
 
     fun testBackticksInNames() {
@@ -123,10 +127,10 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         val location = PsiLocation(element)
         val context = ConfigurationContext.createEmptyContextForLocation(location)
         val contexts = context.configurationsFromContext
-        Assert.assertEquals(1, contexts!!.size)
-        val fromContext = contexts[0]
-        assert(fromContext.configuration is JUnitConfiguration)
-        val configuration = fromContext.configuration as JUnitConfiguration
+        assertEquals(1, contexts?.size ?: 0)
+        val fromContext = contexts?.get(0)
+        assert(fromContext?.configuration is JUnitConfiguration)
+        val configuration = fromContext?.configuration as JUnitConfiguration
         val testObject = configuration.persistentData.TEST_OBJECT
         assert(testObject == JUnitConfiguration.TEST_METHOD) {
             "method should be suggested to run, but $testObject was used instead"
@@ -218,18 +222,19 @@ fun main(args: Array<String>) {}
         val marks = myFixture.findGuttersAtCaret()
         assertEquals(1, marks.size)
         val mark = marks[0] as GutterIconRenderer
-        val group = mark.popupMenuActions
+        val group = mark.popupMenuActions as ActionGroup
         assertNotNull(group)
-        val event = TestActionEvent.createTestEvent()
-        val list = ContainerUtil.findAll(group!!.getChildren(event)) { action: AnAction ->
-            val actionEvent = TestActionEvent.createTestEvent()
-            action.update(actionEvent)
-            val text = actionEvent.presentation.text
-            text != null && text.startsWith("Run '") && text.endsWith("'")
+        val presentations = PresentationFactory()
+        val dataContext = TestActionEvent.createTestEvent().dataContext
+        val children = Utils.expandActionGroup(
+            group, presentations, dataContext, ActionPlaces.EDITOR_GUTTER_POPUP, ActionUiKind.POPUP)
+        val list = children.filter {
+            presentations.getPresentation(it).text.run {
+                startsWith("Run '") && endsWith("'")
+            }
         }
         assertEquals(list.toString(), 1, list.size)
-        list[0].update(event)
-        assertEquals("Run 'ATest'", event.presentation.text)
+        assertEquals("Run 'ATest'", presentations.getPresentation(list[0]).text)
         myFixture.testAction(list[0])
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         val selectedConfiguration = getInstance(project).selectedConfiguration

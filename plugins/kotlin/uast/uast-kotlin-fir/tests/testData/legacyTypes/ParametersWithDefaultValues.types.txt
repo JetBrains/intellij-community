@@ -7,8 +7,8 @@ UFile (package = ) [public final class ParametersWithDefaultValuesKt {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = c) [@org.jetbrains.annotations.NotNull var c: int = 0]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULiteralExpression (value = 0) [0] : PsiType:int
+                ULiteralExpression (value = 0) [0] : int
             UParameter (name = flag) [@org.jetbrains.annotations.NotNull var flag: boolean = false]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                ULiteralExpression (value = false) [false] : PsiType:boolean
-            UBlockExpression [{...}] : PsiType:void
+                ULiteralExpression (value = false) [false] : boolean
+            UBlockExpression [{...}] : void

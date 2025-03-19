@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,7 +30,9 @@ public interface JpsCompositePackagingElement extends JpsPackagingElement {
   @NotNull
   List<JpsPackagingElement> getChildren();
 
+  @ApiStatus.Internal
   <E extends JpsPackagingElement> E addChild(@NotNull E child);
 
+  @ApiStatus.Internal
   void removeChild(@NotNull JpsPackagingElement child);
 }

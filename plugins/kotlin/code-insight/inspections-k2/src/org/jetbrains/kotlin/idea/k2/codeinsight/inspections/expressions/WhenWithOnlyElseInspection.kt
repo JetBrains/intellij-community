@@ -1,22 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 /**
  * This inspection finds and replaces `when` expressions containing only a single `else` branch by the body of that branch, accounting for
@@ -40,7 +40,17 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
  * contingent on a few complications. See Steps 3.1 and 3.2 below.
  */
 internal class WhenWithOnlyElseInspection
-    : AbstractKotlinApplicableInspectionWithContext<KtWhenExpression, WhenWithOnlyElseInspection.Context>(KtWhenExpression::class) {
+    : KotlinApplicableInspectionBase.Simple<KtWhenExpression, WhenWithOnlyElseInspection.Context>() {
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ) = object : KtVisitorVoid() {
+
+        override fun visitWhenExpression(expression: KtWhenExpression) {
+            visitTargetElement(expression, holder, isOnTheFly)
+        }
+    }
 
     data class WhenSubjectVariableInfo(
         val subjectVariable: SmartPsiElementPointer<KtProperty>,
@@ -48,7 +58,7 @@ internal class WhenWithOnlyElseInspection
         val isInitializerPure: Boolean
     )
 
-    class Context(
+    data class Context(
         val isWhenUsedAsExpression: Boolean,
         val elseExpression: SmartPsiElementPointer<KtExpression>,
         val subjectVariableInfo: WhenSubjectVariableInfo?
@@ -57,9 +67,8 @@ internal class WhenWithOnlyElseInspection
     override fun getProblemDescription(element: KtWhenExpression, context: Context): String =
         KotlinBundle.message("inspection.when.with.only.else.display.name")
 
-    override fun getActionFamilyName(): String = KotlinBundle.message("inspection.when.with.only.else.action.name")
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
+    override fun getApplicableRanges(element: KtWhenExpression): List<TextRange> =
+        ApplicabilityRanges.whenKeyword(element)
 
     /**
      * STEP 1:
@@ -76,11 +85,10 @@ internal class WhenWithOnlyElseInspection
      *   - whether the `when` expression itself is used as an expression
      *   - for the subject variable, if present, whether the initializer is pure.
      */
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtWhenExpression): Context? {
+    override fun KaSession.prepareContext(element: KtWhenExpression): Context? {
         val singleEntry = element.entries.singleOrNull() ?: return null
         val elseExpression = singleEntry.takeIf { it.isElse }?.expression ?: return null
-        val isWhenUsedAsExpression = element.isUsedAsExpression()
+        val isWhenUsedAsExpression = element.isUsedAsExpression
         val subjectVariableInfo = element.subjectVariable?.let {
             val initializer = it.initializer
             WhenSubjectVariableInfo(
@@ -93,16 +101,28 @@ internal class WhenWithOnlyElseInspection
         return Context(isWhenUsedAsExpression, elseExpression.createSmartPointer(), subjectVariableInfo)
     }
 
-    override fun apply(element: KtWhenExpression, context: Context, project: Project, editor: Editor?) {
-        if (editor == null) return
+    override fun createQuickFix(
+        element: KtWhenExpression,
+        context: Context,
+    ): KotlinModCommandQuickFix<KtWhenExpression> = object : KotlinModCommandQuickFix<KtWhenExpression>() {
 
-        val factory = KtPsiFactory(project)
-        val newCaretPosition = element.startOffset
+        override fun getFamilyName(): String =
+            KotlinBundle.message("inspection.when.with.only.else.action.name")
 
-        val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, factory) ?: return
-        element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+        override fun applyFix(
+            project: Project,
+            element: KtWhenExpression,
+            updater: ModPsiUpdater,
+        ) {
+            val factory = KtPsiFactory(project)
+            val newCaretPosition = element.startOffset
+            val elseExpression: KtExpression = context.elseExpression.dereference()?.let(updater::getWritable) ?: return
 
-        editor.caretModel.moveToOffset(newCaretPosition)
+            val (rewrittenBranch, insertedCallToKotlinDotRun) = rewriteElseBranch(context, elseExpression, factory, updater) ?: return
+            element.replaceWithRewrittenBranch(rewrittenBranch, insertedCallToKotlinDotRun, context, factory)
+
+            updater.moveCaretTo(newCaretPosition)
+        }
     }
 
     /**
@@ -116,18 +136,24 @@ internal class WhenWithOnlyElseInspection
      *  Additionally, track if _we_ inserted a call to `kotlin.run`. In that case, we will attempt to shorten the reference to `run`,
      *  once we have done the actual transformation in Step 3.2 below. This preserves explicit, user-supplied calls to `kotlin.run`.
      */
-    private fun rewriteElseBranch(context: Context, factory: KtPsiFactory): Pair<KtExpression, Boolean>? {
-        val elseExpression = context.elseExpression.dereference() ?: return null
+    private fun rewriteElseBranch(
+        context: Context,
+        elseExpression: KtExpression,
+        factory: KtPsiFactory,
+        updater: ModPsiUpdater
+    ): Pair<KtExpression, Boolean>? {
         val info = context.subjectVariableInfo
 
         if (info?.initializer == null) {
             return elseExpression to false
         }
 
-        val subjectVariable = info.subjectVariable.dereference() ?: return null
-        val initializer = info.initializer.dereference() ?: return null
+        val subjectVariable = info.subjectVariable.dereference().let(updater::getWritable) ?: return null
+        val initializer = info.initializer.dereference().let(updater::getWritable) ?: return null
         val isInitializerPure = info.isInitializerPure
+
         val references = ReferencesSearch.search(subjectVariable).findAll()
+
         val occurrences = references.size
         return when {
             occurrences == 0 && isInitializerPure ->
@@ -196,7 +222,7 @@ internal class WhenWithOnlyElseInspection
      *
      * @return `true` if `this` is _definitely_ pure.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun KtExpression.isPure(): Boolean = when (this) {
         is KtStringTemplateExpression -> !hasInterpolation()
         is KtConstantExpression -> true
@@ -204,7 +230,7 @@ internal class WhenWithOnlyElseInspection
         is KtThisExpression -> true
         is KtObjectLiteralExpression -> true
         else ->
-            evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION) != null
+            evaluate() != null
     }
 
     /**

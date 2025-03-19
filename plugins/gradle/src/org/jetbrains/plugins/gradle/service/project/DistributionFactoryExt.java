@@ -20,7 +20,7 @@ import org.gradle.tooling.internal.protocol.InternalBuildProgressListener;
 import org.gradle.util.GradleVersion;
 import org.gradle.util.internal.DistributionLocator;
 import org.gradle.wrapper.GradleUserHomeLookup;
-import org.gradle.wrapper.SystemPropertiesHandler;
+import org.gradle.wrapper.PropertiesFileHandler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.ApiStatus;
@@ -174,9 +174,9 @@ public final class DistributionFactoryExt extends DistributionFactory {
       }
 
       systemProperties.putAll(
-        SystemPropertiesHandler.getSystemProperties(new File(determineRootDir(connectionParameters), "gradle.properties")));
+        PropertiesFileHandler.getSystemProperties(new File(determineRootDir(connectionParameters), "gradle.properties")));
       systemProperties.putAll(
-        SystemPropertiesHandler.getSystemProperties(new File(determineRealUserHomeDir(connectionParameters), "gradle.properties")));
+        PropertiesFileHandler.getSystemProperties(new File(determineRealUserHomeDir(connectionParameters), "gradle.properties")));
       return systemProperties;
     }
 

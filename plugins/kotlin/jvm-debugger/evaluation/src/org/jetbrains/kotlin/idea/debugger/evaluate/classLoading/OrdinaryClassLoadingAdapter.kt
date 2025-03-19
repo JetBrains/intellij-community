@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.ClassLoadingUtils
+import com.intellij.debugger.impl.DebuggerUtilsEx.enableCollection
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfByteArray
+import com.intellij.debugger.impl.DebuggerUtilsEx.mirrorOfString
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
@@ -84,7 +87,8 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
     }
 
     override fun isApplicable(context: ExecutionContext, info: ClassLoadingAdapter.Companion.ClassInfoForEvaluator): Boolean {
-        return info.isCompilingEvaluatorPreferred && context.classLoader != null && !DexDebugFacility.isDex(context.debugProcess)
+        return info.isCompilingEvaluatorPreferred && context.classLoader != null
+                && !DexDebugFacility.isDex(context.evaluationContext.virtualMachineProxy.virtualMachine)
     }
 
     override fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference {
@@ -136,10 +140,16 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
             val vm = context.vm
             val classLoaderType = classLoader.referenceType() as ClassType
             val defineMethod = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
-            val nameObj = vm.mirrorOf(name)
-
-            val args = listOf(nameObj, mirrorOfByteArray(bytes, context), vm.mirrorOf(0), vm.mirrorOf(bytes.size))
-            context.invokeMethod(classLoader, defineMethod, args)
+            val nameObj = mirrorOfString(name, context.evaluationContext)
+            val byteArray = mirrorOfByteArray(bytes, context.evaluationContext)
+            val args = listOf(nameObj, byteArray, vm.mirrorOf(0), vm.mirrorOf(bytes.size))
+            try {
+                context.invokeMethod(classLoader, defineMethod, args)
+            }
+            finally {
+                enableCollection(nameObj)
+                enableCollection(byteArray)
+            }
         } catch (e: Exception) {
             throw EvaluateException("Error during class $name definition: $e", e)
         }

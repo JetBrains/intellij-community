@@ -28,10 +28,10 @@ class Some {
 
         1..2
 
-        null ?: 3+1
+        null?:3+1
 
         val a=1
-        null ?: a+a
+        null?:a+a
     }
 }
 
@@ -42,3 +42,4 @@ class Some {
 // SET_TRUE: SPACE_AROUND_ADDITIVE_OPERATORS
 // SET_TRUE: SPACE_AROUND_MULTIPLICATIVE_OPERATORS
 // SET_TRUE: SPACE_AROUND_RANGE
+// SET_TRUE: SPACE_AROUND_ELVIS

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:ApiStatus.Internal
+
 package com.intellij.diagnostic
 
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.createDirectories
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -29,6 +32,7 @@ import java.util.*
 /**
  * Stores list of hprof files and keeps the temporary directory where they are stored clean.
  */
+@ApiStatus.Internal
 class HProfDatabase(tmpDirectory: Path) {
 
   // All hprof files should be in $tmpDirectory/hprof-temp/
@@ -63,11 +67,10 @@ class HProfDatabase(tmpDirectory: Path) {
   }
 
   fun createHprofTemporaryFilePath(): Path {
-    val name = ApplicationNamesInfo.getInstance().productName.replace(' ', '-').toLowerCase(
-      Locale.US)
+    val name = ApplicationNamesInfo.getInstance().productName.replace(' ', '-').lowercase(Locale.US)
     hprofTempDirectory.createDirectories()
     return hprofTempDirectory.resolve("heapDump-$name-${System.currentTimeMillis()}.hprof")
   }
 }
 
-val hprofDatabase = HProfDatabase(Paths.get(PathManager.getTempPath()))
+val hprofDatabase: HProfDatabase = HProfDatabase(Paths.get(PathManager.getTempPath()))

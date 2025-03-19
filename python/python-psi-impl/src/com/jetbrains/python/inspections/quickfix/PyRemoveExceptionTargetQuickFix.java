@@ -15,8 +15,8 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
@@ -24,16 +24,14 @@ import com.jetbrains.python.psi.PyExceptPart;
 import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
 import org.jetbrains.annotations.NotNull;
 
-public class PyRemoveExceptionTargetQuickFix implements LocalQuickFix {
-  @NotNull
+public class PyRemoveExceptionTargetQuickFix extends PsiUpdateModCommandQuickFix {
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("QFIX.NAME.remove.exception.target");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
     if (exceptPart != null) {
       final PsiElement exceptClass = exceptPart.getExceptClass();

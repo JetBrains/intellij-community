@@ -2,19 +2,24 @@
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.*
+import com.intellij.psi.formatter.java.JavaFormatterUtil
 import com.intellij.psi.impl.source.tree.ChildRole
 import com.intellij.psi.impl.source.tree.java.MethodElement
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.suggested.SuggestedChangeSignatureData
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
 import com.siyeh.ig.psiutils.TypeUtils
 
 class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
   override fun isAnchor(psiElement: PsiElement): Boolean {
+    //todo make SuggestedRefactoringSupport dumbAware
+    if (DumbService.isDumb(psiElement.project)) return false
+
     if (psiElement is PsiCallExpression && Registry.`is`("ide.java.refactoring.suggested.call.site")) {
       return psiElement.argumentList != null
     }
@@ -53,36 +58,14 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     })?.textRange
   }
 
-  override fun isIdentifierStart(c: Char) = c.isJavaIdentifierStart()
-  override fun isIdentifierPart(c: Char) = c.isJavaIdentifierPart()
+  override fun isIdentifierStart(c: Char): Boolean = c.isJavaIdentifierStart()
+  override fun isIdentifierPart(c: Char): Boolean = c.isJavaIdentifierPart()
 
-  override val stateChanges = JavaSuggestedRefactoringStateChanges(this)
-  override val availability = JavaSuggestedRefactoringAvailability(this)
-  override val ui get() = JavaSuggestedRefactoringUI
-  override val execution = JavaSuggestedRefactoringExecution(this)
+  override val stateChanges: JavaSuggestedRefactoringStateChanges = JavaSuggestedRefactoringStateChanges(this)
+  override val availability: JavaSuggestedRefactoringAvailability = JavaSuggestedRefactoringAvailability(this)
+  override val ui: JavaSuggestedRefactoringUI get() = JavaSuggestedRefactoringUI
+  override val execution: JavaSuggestedRefactoringExecution = JavaSuggestedRefactoringExecution(this)
 
-  companion object {
-    fun extractAnnotationsToCopy(type: PsiType, owner: PsiModifierListOwner, file: PsiFile): List<PsiAnnotation> {
-      val applicableAnnotations = (owner.modifierList ?: return emptyList()).applicableAnnotations
-      if (applicableAnnotations.isEmpty()) return type.annotations.asList()
-
-      val annotationNamesToCopy = OverrideImplementsAnnotationsHandler.EP_NAME.extensionList
-        .flatMap { it.getAnnotations(file).asList() }
-        .toSet()
-
-      return mutableListOf<PsiAnnotation>().apply {
-        for (annotation in applicableAnnotations) {
-          val qualifiedName = annotation.qualifiedName ?: continue
-          if (qualifiedName in annotationNamesToCopy && !type.hasAnnotation(qualifiedName)) {
-            add(annotation)
-          }
-        }
-
-        addAll(type.annotations)
-      }
-    }
-
-  }
 }
 
 data class JavaParameterAdditionalData(
@@ -99,7 +82,7 @@ interface JavaSignatureAdditionalData : SuggestedRefactoringSupport.SignatureAdd
 data class JavaDeclarationAdditionalData(
   override val visibility: String?,
   override val annotations: String,
-  override val exceptionTypes: List<String>
+  override val exceptionTypes: List<String>,
 ) : JavaSignatureAdditionalData
 
 internal data class JavaCallAdditionalData(
@@ -127,6 +110,19 @@ internal fun PsiMethod.visibility(): String? {
   return visibilityModifiers.firstOrNull { hasModifierProperty(it) }
 }
 
+internal fun PsiMethod.explicitVisibility(): String {
+  val explicitModifier = visibilityModifiers.firstOrNull { modifier -> this.modifierList.hasExplicitModifier(modifier) }
+  if (explicitModifier != null) return explicitModifier
+  if ((this.parent as? PsiClass)?.isInterface == true) {
+    return PsiModifier.PUBLIC
+  }
+  return PsiModifier.PACKAGE_LOCAL
+}
+
+internal fun PsiMethod.explicitAbstract(): Boolean {
+  return JavaFormatterUtil.isExplicitlyAbstract(this)
+}
+
 internal fun PsiJvmModifiersOwner.extractAnnotations(): String {
   return annotations.joinToString(separator = " ") { it.text } //TODO: skip comments and spaces
 }
@@ -151,4 +147,24 @@ internal fun SuggestedChangeSignatureData.correctParameterTypes(origTypes: List<
     }
   }
   else origTypes
+}
+
+internal fun extractAnnotationsToCopy(type: PsiType, owner: PsiModifierListOwner, file: PsiFile): List<PsiAnnotation> {
+  val applicableAnnotations = (owner.modifierList ?: return emptyList()).applicableAnnotations
+  if (applicableAnnotations.isEmpty()) return type.annotations.asList()
+
+  val annotationNamesToCopy = OverrideImplementsAnnotationsHandler.EP_NAME.extensionList
+    .flatMap { it.getAnnotations(file).asList() }
+    .toSet()
+
+  return mutableListOf<PsiAnnotation>().apply {
+    for (annotation in applicableAnnotations) {
+      val qualifiedName = annotation.qualifiedName ?: continue
+      if (qualifiedName in annotationNamesToCopy && !type.hasAnnotation(qualifiedName)) {
+        add(annotation)
+      }
+    }
+
+    addAll(type.annotations)
+  }
 }

@@ -6,7 +6,9 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 @State(name = "ShowUsagesSettings", storages = [(Storage("usageView.xml"))], category = SettingsCategory.UI)
 class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
   companion object {
@@ -28,6 +30,7 @@ class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
   }
 }
 
+@Internal
 class ShowUsageViewSettings : UsageViewSettings(false, false, false, false, false) {
 
   override var isGroupByUsageType: Boolean

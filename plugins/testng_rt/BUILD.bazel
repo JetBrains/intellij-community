@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.testng.rt` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testng-rt",
+  module_name = "intellij.testng.rt",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:test_n_g",
+    "//java/java-runtime:rt",
+  ]
+)
+### auto-generated section `build intellij.testng.rt` end

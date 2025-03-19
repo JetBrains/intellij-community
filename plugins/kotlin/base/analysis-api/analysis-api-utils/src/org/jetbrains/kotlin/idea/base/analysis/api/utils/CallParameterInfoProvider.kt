@@ -4,30 +4,37 @@
  */
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
-import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object CallParameterInfoProvider {
     /**
-     * Returns true when there is an argument before current that is mapped to a parameter with different type.
+     * Returns `true` when there is an argument before the current one that is mapped to a parameter with a different type.
+     *
+     * If error types should be ignored when checking for type mismatches, please specify [KaSubtypingErrorTypePolicy.LENIENT] as the
+     * [subtypingErrorTypePolicy].
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun hasTypeMismatchBeforeCurrent(
         sourceElement: KtElement,
-        argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         currentArgumentIndex: Int,
+        subtypingErrorTypePolicy: KaSubtypingErrorTypePolicy = KaSubtypingErrorTypePolicy.STRICT,
     ): Boolean {
         val argumentExpressionsBeforeCurrent = getArgumentOrIndexExpressions(sourceElement).take(currentArgumentIndex).filterNotNull()
         for (argumentExpression in argumentExpressionsBeforeCurrent) {
             val parameterForArgument = argumentMapping[argumentExpression] ?: continue
-            val argumentType = argumentExpression.getKtType() ?: error("Argument should have a KtType")
-            if (argumentType.isNotSubTypeOf(parameterForArgument.returnType)) {
+            val argumentType = argumentExpression.expressionType ?: error("Argument should have a KaType")
+            if (!argumentType.isSubtypeOf(parameterForArgument.returnType, subtypingErrorTypePolicy)) {
                 return true
             }
         }
@@ -37,11 +44,11 @@ object CallParameterInfoProvider {
     /**
      * Returns argument expressions mapped to parameter indices. In case of array set call the value to set is ignored.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun mapArgumentsToParameterIndices(
         sourceElement: KtElement,
-        signature: KtFunctionLikeSignature<*>,
-        argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>
+        signature: KaFunctionSignature<*>,
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>
     ): Map<KtExpression, Int> {
         val isArraySetCall = isArraySetCall(sourceElement, signature)
         val parameterToIndex = mapParametersToIndices(signature, isArraySetCall)
@@ -60,9 +67,9 @@ object CallParameterInfoProvider {
      * a[""] = 1 // array set call
      * ```
      */
-    context(KtAnalysisSession)
-    fun isArraySetCall(sourceElement: KtElement, signature: KtFunctionLikeSignature<*>): Boolean {
-        val callableId = signature.symbol.callableIdIfNonLocal ?: return false
+    context(KaSession)
+    fun isArraySetCall(sourceElement: KtElement, signature: KaFunctionSignature<*>): Boolean {
+        val callableId = signature.symbol.callableId ?: return false
         val isSet = callableId.callableName == OperatorNameConventions.SET
         return isSet && sourceElement is KtArrayAccessExpression
     }
@@ -80,11 +87,11 @@ object CallParameterInfoProvider {
      * 3. Mixed named arguments in their own positions are not supported.
      * 4. An argument is after non-named vararg.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     fun firstArgumentInNamedMode(
         sourceCallElement: KtCallElement,
-        signature: KtFunctionLikeSignature<*>,
-        argumentMapping: Map<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+        signature: KaFunctionSignature<*>,
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         languageVersionSettings: LanguageVersionSettings
     ): KtValueArgument? {
         val valueArguments = sourceCallElement.valueArgumentList?.arguments ?: return null
@@ -111,12 +118,30 @@ object CallParameterInfoProvider {
     /**
      * Returns parameters mapped to their indices. In case of array set call last parameter is ignored.
      */
-    context(KtAnalysisSession)
+    context(KaSession)
     private fun mapParametersToIndices(
-        signature: KtFunctionLikeSignature<*>,
+        signature: KaFunctionSignature<*>,
         isArraySetCall: Boolean
-    ): Map<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
+    ): Map<KaVariableSignature<KaValueParameterSymbol>, Int> {
         val valueParameters = signature.valueParameters.let { if (isArraySetCall) it.dropLast(1) else it }
         return valueParameters.mapIndexed { index, parameter -> parameter to index }.toMap()
+    }
+
+    /**
+     * Returns true for an argument in Java annotation entry if the argument is not mapped to default ("value") method of annotation.
+     * For passing such arguments named argument syntax needs to be used.
+     */
+    context(KaSession)
+    fun isJavaArgumentWithNonDefaultName(
+        signature: KaFunctionSignature<*>,
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
+        currentArgument: KtValueArgument,
+    ): Boolean {
+        if (!currentArgument.isInsideAnnotationEntryArgumentList()) return false
+
+        if (!signature.symbol.origin.isJavaSourceOrLibrary()) return false
+
+        val parameter = argumentMapping[currentArgument.getArgumentExpression()] ?: return false
+        return parameter.name != JvmAnnotationNames.DEFAULT_ANNOTATION_MEMBER_NAME
     }
 }

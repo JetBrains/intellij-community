@@ -1,18 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
 public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> implements Comparable<ChangesBrowserFileNode> {
-  @Nullable private final Project myProject;
+  private final @Nullable Project myProject;
   private final String myName;
 
   public ChangesBrowserFileNode(@Nullable Project project, @NotNull VirtualFile userObject) {
@@ -35,11 +37,12 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   }
 
   @Override
-  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(final @NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final VirtualFile file = getUserObject();
-    FileStatus fileStatus = getFileStatus();
-
-    renderer.appendFileName(file, file.getName(), fileStatus.getColor());
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322065, EA-857522")) {
+      FileStatus fileStatus = getFileStatus();
+      renderer.appendFileName(file, file.getName(), fileStatus.getColor());
+    }
 
     if (renderer.isShowFlatten()) {
       if (file.isValid()) {
@@ -74,8 +77,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     return compareFileNames(myName, o.myName);
   }
 
-  @NotNull
-  private FileStatus getFileStatus() {
+  private @NotNull FileStatus getFileStatus() {
     if (myProject == null || myProject.isDisposed()) return FileStatus.NOT_CHANGED;
     return ChangeListManager.getInstance(myProject).getStatus(getUserObject());
   }

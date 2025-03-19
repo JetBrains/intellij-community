@@ -1,0 +1,43 @@
+### auto-generated section `build kotlin.base.injection` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction"]
+)
+
+jvm_resources(
+  name = "kotlin-base-injection_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-injection",
+  module_name = "kotlin.base.injection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:guava",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/util-ex",
+    "//java/java-psi-api:psi",
+    "//platform/code-style-api:codeStyle",
+    "@lib//:jetbrains-annotations",
+    "//plugins/IntelliLang:langInjection",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/IntelliLang/java-support:java-langInjection",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "@lib//:kotlinc-analysis-api",
+  ],
+  runtime_deps = [":kotlin-base-injection_resources"]
+)
+### auto-generated section `build kotlin.base.injection` end

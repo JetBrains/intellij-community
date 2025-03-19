@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.gradle.native` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "native_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "native",
+  module_name = "intellij.gradle.native",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//plugins/gradle",
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  exports = [
+    "//plugins/gradle:gradle-common",
+    "//plugins/gradle/native/tooling:gradle-native-tooling",
+  ],
+  runtime_deps = [":native_resources"]
+)
+### auto-generated section `build intellij.gradle.native` end

@@ -10,18 +10,21 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.*;
+import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CodeStyleCachingServiceImpl implements CodeStyleCachingService, Disposable {
   public static final int MAX_CACHE_SIZE = 100;
 
-  private static final Key<CodeStyleCachedValueProvider> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
+  private static final Key<SoftReference<CodeStyleCachedValueProvider>> PROVIDER_KEY = Key.create("code.style.cached.value.provider");
 
   private final Map<String, FileData> myFileDataCache = new HashMap<>();
 
@@ -66,20 +69,87 @@ public final class CodeStyleCachingServiceImpl implements CodeStyleCachingServic
   private @NotNull CodeStyleCachedValueProvider getOrCreateCachedValueProvider(@NotNull VirtualFile virtualFile) {
     synchronized (CACHE_LOCK) {
       FileData fileData = getOrCreateFileData(getFileKey(virtualFile));
-      CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+      SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+      CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
       if (provider == null || provider.isExpired()) {
-        FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(virtualFile);
-        provider = new CodeStyleCachedValueProvider(Objects.requireNonNull(viewProvider), myProject);
-        fileData.putUserData(PROVIDER_KEY, provider);
+        Supplier<VirtualFile> fileSupplier; // all values must correctly implement equals and hashCode IJPL-150378
+        if (virtualFile instanceof LightVirtualFile) {
+          LightVirtualFile copy = getCopy((LightVirtualFile)virtualFile);
+          // create a new copy each time
+          // it requested to make sure the attached PSI is collected
+          fileSupplier = new LightVirtualFileCopyGetter(copy);
+        }
+        else {
+          fileSupplier = new VirtualFileGetter(virtualFile);
+        }
+        provider = new CodeStyleCachedValueProvider(fileSupplier, myProject, fileData);
+        fileData.putUserData(PROVIDER_KEY, new SoftReference<>(provider));
       }
       return provider;
     }
   }
 
+  private static class VirtualFileGetter implements Supplier<VirtualFile> {
+    private final VirtualFile virtualFile;
+
+    private VirtualFileGetter(VirtualFile file) { virtualFile = file; }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      VirtualFileGetter getter = (VirtualFileGetter)o;
+      return Objects.equals(virtualFile, getter.virtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(virtualFile);
+    }
+
+    @Override
+    public VirtualFile get() {
+      return virtualFile;
+    }
+  }
+
+  private static class LightVirtualFileCopyGetter implements Supplier<VirtualFile> {
+    private final LightVirtualFile virtualFile;
+
+    private LightVirtualFileCopyGetter(LightVirtualFile file) { virtualFile = file; }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      LightVirtualFileCopyGetter getter = (LightVirtualFileCopyGetter)o;
+      return Objects.equals(virtualFile, getter.virtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(virtualFile);
+    }
+
+    @Override
+    public VirtualFile get() {
+      return getCopy(virtualFile);
+    }
+  }
+
+  private static @NotNull LightVirtualFile getCopy(@NotNull LightVirtualFile original) {
+    VirtualFile parent = original.getParent();
+    return new LightVirtualFile(original, original.getContent(), original.getModificationStamp()) {
+      @Override
+      public VirtualFile getParent() {
+        return parent;
+      }
+    };
+  }
+
   private void clearCache() {
     synchronized (CACHE_LOCK) {
       myFileDataCache.values().forEach(fileData -> {
-        CodeStyleCachedValueProvider provider = fileData.getUserData(PROVIDER_KEY);
+        SoftReference<CodeStyleCachedValueProvider> providerRef = fileData.getUserData(PROVIDER_KEY);
+        CodeStyleCachedValueProvider provider = providerRef != null ? providerRef.get() : null;
         if (provider != null) {
           provider.cancelComputation();
         }

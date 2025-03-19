@@ -41,4 +41,3 @@ fun test4() {
 }
 
 
-// IGNORE_FIR_LOG

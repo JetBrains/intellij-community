@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -57,13 +57,11 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
       this.descriptor = descriptor;
     }
 
-    @NotNull
-    public LocalQuickFix getFix() {
+    public @NotNull LocalQuickFix getFix() {
       return fix;
     }
 
-    @NotNull
-    public ProblemDescriptor getDescriptor() {
+    public @NotNull ProblemDescriptor getDescriptor() {
       return descriptor;
     }
 

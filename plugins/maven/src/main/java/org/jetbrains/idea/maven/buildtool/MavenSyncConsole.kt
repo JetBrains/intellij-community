@@ -12,10 +12,7 @@ import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -29,23 +26,25 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.maven.buildtool.quickfix.MavenFullSyncQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OffMavenOfflineModeQuickFix
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
-import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
+import org.jetbrains.idea.maven.server.MavenServerConsoleEvent
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
+import java.text.MessageFormat
 
-class MavenSyncConsole(private val myProject: Project) {
-  @Volatile
-  private var mySyncView: BuildProgressListener = BuildProgressListener { _, _ -> }
+class MavenSyncConsole(private val myProject: Project) : MavenEventHandler {
+  private val mySyncView: BuildProgressListener = myProject.getService(SyncViewManager::class.java)
   private var mySyncId = createTaskId()
   private var finished = false
   private var started = false
@@ -60,38 +59,21 @@ class MavenSyncConsole(private val myProject: Project) {
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
   @Synchronized
-  fun startImport(syncView: BuildProgressListener, spec: MavenImportSpec) {
+  fun startImport(explicit: Boolean) {
     if (started) {
       return
-    }
-    val restartAction: AnAction = object : AnAction() {
-      override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = !started || finished
-        e.presentation.icon = AllIcons.Actions.Refresh
-      }
-
-      override fun actionPerformed(e: AnActionEvent) {
-        e.project?.let {
-          MavenProjectsManager.getInstance(it).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
-        }
-      }
-
-      override fun getActionUpdateThread() = ActionUpdateThread.BGT
     }
     started = true
     finished = false
     hasErrors = false
     hasUnresolved = false
-    mySyncView = syncView
     shownIssues.clear()
     mySyncId = createTaskId()
 
-    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!,
-                                            System.currentTimeMillis())
-      .withRestartAction(restartAction)
-    descriptor.isActivateToolWindowWhenFailed = spec.isExplicitImport
+    val descriptor = DefaultBuildDescriptor(mySyncId, SyncBundle.message("maven.sync.title"), myProject.basePath!!, System.currentTimeMillis())
+    descriptor.isActivateToolWindowWhenFailed = explicit
     descriptor.isActivateToolWindowWhenAdded = false
-    descriptor.isNavigateToError = if (spec.isExplicitImport) ThreeState.YES else ThreeState.UNSURE
+    descriptor.isNavigateToError = if (explicit) ThreeState.YES else ThreeState.NO
 
     mySyncView.onEvent(mySyncId, StartBuildEventImpl(descriptor, SyncBundle.message("maven.sync.project.title", myProject.name)))
     debugLog("maven sync: started importing $myProject")
@@ -161,9 +143,9 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
-  fun finishImport() {
+  fun finishImport(showFullSyncQuickFix: Boolean = false) {
     debugLog("Maven sync: finishImport")
-    doFinish()
+    doFinish(showFullSyncQuickFix)
   }
 
   fun terminated(exitCode: Int) = doIfImportInProcess {
@@ -188,7 +170,7 @@ class MavenSyncConsole(private val myProject: Project) {
   @Synchronized
   fun startWrapperResolving() {
     if (!started || finished) {
-      startImport(myProject.getService(SyncViewManager::class.java), MavenImportSpec.EXPLICIT_IMPORT)
+      startImport(true)
     }
     startTask(mySyncId, SyncBundle.message("maven.sync.wrapper"))
   }
@@ -219,12 +201,13 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
-    hasErrors = true
-    val group = SyncBundle.message("maven.sync.group.error")
+    hasErrors = hasErrors || problem.isError
+    val group = if (problem.isError) SyncBundle.message("maven.sync.group.error") else SyncBundle.message("maven.sync.group.warning")
+    val kind = if (problem.isError) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     val position = problem.getFilePosition()
     val message = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.message")
     val detailedMessage = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.detailed.message", problem.path)
-    val eventImpl = FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, group, message, detailedMessage, position)
+    val eventImpl = FileMessageEventImpl(mySyncId, kind, group, message, detailedMessage, position)
     mySyncView.onEvent(mySyncId, eventImpl)
   }
 
@@ -254,8 +237,16 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   @Synchronized
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
-  fun addException(e: Throwable, progressListener: BuildProgressListener) {
+  @Deprecated("use {@link #addException(Throwable)}", ReplaceWith("addException(e)"))
+  fun addException(e: Throwable, ignoredProgressListener: BuildProgressListener) {
+    addException(e)
+  }
+
+  @Synchronized
+  @ApiStatus.Internal
+  fun addException(e: Throwable) {
     if (started && !finished) {
       MavenLog.LOG.warn(e)
       hasErrors = true
@@ -269,21 +260,21 @@ class MavenSyncConsole(private val myProject: Project) {
 
     }
     else {
-      this.startImport(progressListener, MavenImportSpec.EXPLICIT_IMPORT)
-      this.addException(e, progressListener)
+      this.startImport(true)
+      this.addException(e)
       this.finishImport()
     }
   }
 
-  fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
+  private fun getKeyPrefix(type: MavenServerConsoleIndicator.ResolveType): String {
     return when (type) {
-      MavenServerProgressIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerProgressIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerConsoleIndicator.ResolveType.PLUGIN -> "maven.sync.plugins"
+      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> "maven.sync.dependencies"
     }
   }
 
   @Synchronized
-  private fun doFinish() {
+  private fun doFinish(showFullSyncQuickFix: Boolean = false) {
     if (syncTransactionStarted) {
       debugLog("Maven sync: sync transaction is still not finished, postpone build finish event")
       return
@@ -295,8 +286,24 @@ class MavenSyncConsole(private val myProject: Project) {
                                                       if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
 
     attachOfflineQuickFix()
+    if (showFullSyncQuickFix) {
+      attachFullSyncQuickFix()
+    }
     finished = true
     started = false
+  }
+
+  private fun attachFullSyncQuickFix() {
+    try {
+      mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
+        override val title: String = "Sync Finished"
+        override val description: String = "Sync finished. If there is something wrong with the project model, <a href=\"${MavenFullSyncQuickFix.ID}\">reload all projects</a>\n"
+        override val quickFixes: List<BuildIssueQuickFix> = listOf(MavenFullSyncQuickFix())
+        override fun getNavigatable(project: Project): Navigatable? = null
+      }, MessageEvent.Kind.INFO))
+    }
+    catch (ignore: Exception) {
+    }
   }
 
   private fun attachOfflineQuickFix() {
@@ -307,30 +314,16 @@ class MavenSyncConsole(private val myProject: Project) {
           override val title: String = "Dependency Resolution Failed"
           override val description: String = "<a href=\"${OffMavenOfflineModeQuickFix.ID}\">Switch Off Offline Mode</a>\n"
           override val quickFixes: List<BuildIssueQuickFix> = listOf(OffMavenOfflineModeQuickFix())
-
           override fun getNavigatable(project: Project): Navigatable? = null
         }, MessageEvent.Kind.ERROR))
       }
     }
     catch (ignore: Exception) {
     }
-
   }
 
   @Synchronized
-  private fun showError(keyPrefix: String, dependency: String) = doIfImportInProcess {
-    hasErrors = true
-    hasUnresolved = true
-    val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
-    val errorString = SyncBundle.message("${keyPrefix}.resolve.error", dependency)
-    startTask(mySyncId, umbrellaString)
-    mySyncView.onEvent(mySyncId, MessageEventImpl(umbrellaString, MessageEvent.Kind.ERROR,
-                                                  SyncBundle.message("maven.sync.group.error"), errorString, errorString))
-    addText(mySyncId, errorString, false)
-  }
-
-  @Synchronized
-  private fun showBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
+  private fun showArtifactBuildIssue(keyPrefix: String, dependency: String, errorMessage: String?) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
     val umbrellaString = SyncBundle.message("${keyPrefix}.resolve")
@@ -341,12 +334,25 @@ class MavenSyncConsole(private val myProject: Project) {
     addText(mySyncId, errorString, false)
   }
 
+  fun showArtifactBuildIssue(type: MavenServerConsoleIndicator.ResolveType, dependency: String, errorMessage: String?) {
+    showArtifactBuildIssue(getKeyPrefix(type), dependency, errorMessage)
+  }
+
   @Synchronized
-  private fun showBuildIssueNode(key: String, buildIssue: BuildIssue) = doIfImportInProcess {
+  fun showBuildIssue(buildIssue: BuildIssue) = doIfImportInProcess {
     hasErrors = true
     hasUnresolved = true
+    val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
     startTask(mySyncId, key)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, MessageEvent.Kind.ERROR))
+  }
+
+  @Synchronized
+  fun showBuildIssue(buildIssue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcess {
+    hasErrors =  hasErrors || kind == MessageEvent.Kind.ERROR
+    val key = getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY)
+    startTask(mySyncId, key)
+    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(key, buildIssue, kind))
   }
 
   @Synchronized
@@ -368,6 +374,13 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
+  fun finishPluginResolution() {
+    completeUmbrellaEvents(getKeyPrefix(MavenServerConsoleIndicator.ResolveType.PLUGIN))
+  }
+
+  fun finishArtifactsDownload() {
+    completeUmbrellaEvents(getKeyPrefix(MavenServerConsoleIndicator.ResolveType.DEPENDENCY))
+  }
 
   @Synchronized
   private fun completeUmbrellaEvents(keyPrefix: String) = doIfImportInProcess {
@@ -424,53 +437,6 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  @Synchronized
-  fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenUtil.getMavenVersionByMavenHome(
-      MavenServerManager.BUNDLED_MAVEN_3)
-    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = SyncBundle.message("maven.sync.version.issue.title")
-      override val description: String = "${message}\n" +
-                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.version.open.settings") + "</a>\n" +
-                                         "- <a href=\"${UseBundledMavenQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.version.use.bundled", bundledVersion) + "</a>\n"
-
-      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix(), UseBundledMavenQuickFix())
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }, kind))
-  }
-
-  fun <Result> runTask(@NlsSafe taskName: String, task: () -> Result): Result {
-    startTask(mySyncId, taskName)
-    val startTime = System.currentTimeMillis()
-    try {
-      return task().also {
-        completeTask(mySyncId, taskName, SuccessResultImpl())
-      }
-    }
-    catch (e: Exception) {
-      MavenProjectsManager.getInstance(myProject).showServerException(e)
-      throw e
-    }
-    finally {
-      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
-    }
-  }
-
-  @Synchronized
-  fun showQuickFixJDK(version: String) {
-    mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-      override val title = SyncBundle.message("maven.sync.quickfixes.maven.jdk.version.title")
-      override val description: String = SyncBundle.message("maven.sync.quickfixes.upgrade.to.jdk7", version) + "\n" +
-                                         "- <a href=\"${OpenMavenSettingsQuickFix.ID}\">" +
-                                         SyncBundle.message("maven.sync.quickfixes.open.settings") +
-                                         "</a>\n"
-      override val quickFixes: List<BuildIssueQuickFix> = listOf(OpenMavenSettingsQuickFix())
-      override fun getNavigatable(project: Project): Navigatable? = null
-    }, MessageEvent.Kind.ERROR))
-  }
-
   private fun isJavadocOrSource(dependency: String): Boolean {
     val split = dependency.split(':')
     if (split.size < 4) {
@@ -494,77 +460,93 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  private inner class ArtifactSyncListenerImpl(val keyPrefix: String) : ArtifactSyncListener {
-    override fun downloadStarted(dependency: String) {
-      downloadEventStarted(keyPrefix, dependency)
-    }
+  @ApiStatus.Experimental
+  @Synchronized
+  fun startTransaction() {
+    syncTransactionStarted = true
+  }
 
-    override fun downloadCompleted(dependency: String) {
-      downloadEventCompleted(keyPrefix, dependency)
-    }
-
-    override fun downloadFailed(dependency: String, error: String, stackTrace: String?) {
-      downloadEventFailed(keyPrefix, dependency, error, stackTrace)
-    }
-
-    override fun finish() {
-      completeUmbrellaEvents(keyPrefix)
-    }
-
-    override fun showError(dependency: String) {
-      showError(keyPrefix, dependency)
-    }
-
-    override fun showArtifactBuildIssue(dependency: String, errorMessage: String?) {
-      showBuildIssue(keyPrefix, dependency, errorMessage)
-    }
-
-    override fun showBuildIssue(dependency: String, buildIssue: BuildIssue) {
-      showBuildIssueNode(keyPrefix, buildIssue)
-    }
+  @ApiStatus.Experimental
+  @Synchronized
+  fun finishTransaction(showFullSyncQuickFix: Boolean) {
+    syncTransactionStarted = false
+    finishImport(showFullSyncQuickFix)
   }
 
   companion object {
     val EXIT_CODE_OK = 0
     val EXIT_CODE_SIGTERM = 143
+    private val LINE_SEPARATOR: String = System.lineSeparator()
+    private val LEVEL_TO_PREFIX = mapOf(
+      MavenServerConsoleIndicator.LEVEL_DEBUG to "DEBUG",
+      MavenServerConsoleIndicator.LEVEL_INFO to "INFO",
+      MavenServerConsoleIndicator.LEVEL_WARN to "WARNING",
+      MavenServerConsoleIndicator.LEVEL_ERROR to "ERROR",
+      MavenServerConsoleIndicator.LEVEL_FATAL to "FATAL_ERROR"
+    )
 
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun startTransaction(project: Project) {
-      debugLog("Maven sync: start sync transaction")
-      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
-      synchronized(syncConsole) {
-        syncConsole.syncTransactionStarted = true
-      }
-    }
-
-    @ApiStatus.Experimental
-    @JvmStatic
-    fun finishTransaction(project: Project) {
-      debugLog("Maven sync: finish sync transaction")
-      val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
-      synchronized(syncConsole) {
-        syncConsole.syncTransactionStarted = false
-        syncConsole.finishImport()
-      }
+    private enum class OutputType {
+      NORMAL, ERROR
     }
 
     private fun debugLog(s: String, exception: Throwable? = null) {
       MavenLog.LOG.debug(s, exception)
     }
   }
+
+  @Synchronized
+  override fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+    for (e in downloadEvents) {
+      val key = getKeyPrefix(e.resolveType)
+      val id = e.dependencyId
+      when (e.artifactEventType) {
+        ArtifactEventType.DOWNLOAD_STARTED -> downloadEventStarted(key, id)
+        ArtifactEventType.DOWNLOAD_COMPLETED -> downloadEventCompleted(key, id)
+        ArtifactEventType.DOWNLOAD_FAILED -> downloadEventFailed(key, id, e.errorMessage, e.stackTrace)
+      }
+    }
+  }
+
+  override fun handleConsoleEvents(consoleEvents: List<MavenServerConsoleEvent>) {
+    for (e in consoleEvents) {
+      printMessage(e.level, e.message, e.throwable)
+    }
+  }
+
+  private fun printMessage(level: Int, string: String, throwable: Throwable?) {
+    if (isSuppressed(level)) return
+
+    var type = OutputType.NORMAL
+    if (throwable != null || level == MavenServerConsoleIndicator.LEVEL_WARN || level == MavenServerConsoleIndicator.LEVEL_ERROR || level == MavenServerConsoleIndicator.LEVEL_FATAL) {
+      type = OutputType.ERROR
+    }
+
+    doPrint(composeLine(level, string), type)
+
+    if (throwable != null) {
+      val throwableText = ExceptionUtil.getThrowableText(throwable)
+      if (Registry.`is`("maven.print.import.stacktraces") || ApplicationManager.getApplication().isUnitTestMode) { //NO-UT-FIX
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwableText), type)
+      }
+      else {
+        doPrint(LINE_SEPARATOR + composeLine(MavenServerConsoleIndicator.LEVEL_ERROR, throwable.message), type)
+      }
+    }
+  }
+
+  private fun doPrint(@NlsSafe text: String, type: OutputType) {
+    addText(text, type == OutputType.NORMAL)
+  }
+
+  private fun isSuppressed(level: Int): Boolean {
+    return level < MavenProjectsManager.getInstance(myProject).generalSettings.outputLevel.level
+  }
+
+  private fun composeLine(level: Int, message: String?): String {
+    return MessageFormat.format("[{0}] {1}", getPrefixByLevel(level), message)
+  }
+
+  private fun getPrefixByLevel(level: Int): String? {
+    return LEVEL_TO_PREFIX[level]
+  }
 }
-
-interface ArtifactSyncListener {
-  fun showError(dependency: String)
-  fun showArtifactBuildIssue(dependency: String, errorMessage: String?)
-  fun showBuildIssue(dependency: String, buildIssue: BuildIssue)
-  fun downloadStarted(dependency: String)
-  fun downloadCompleted(dependency: String)
-  fun downloadFailed(dependency: String, error: String, stackTrace: String?)
-  fun finish()
-}
-
-
-
-

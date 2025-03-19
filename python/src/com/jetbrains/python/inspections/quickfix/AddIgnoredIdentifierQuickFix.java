@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -14,9 +14,9 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import org.jetbrains.annotations.NotNull;
 
 
-public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityAction {
+public class AddIgnoredIdentifierQuickFix extends ModCommandQuickFix implements LowPriorityAction {
 
-  @NotNull private final QualifiedName myIdentifier;
+  private final @NotNull QualifiedName myIdentifier;
   private final boolean myIgnoreAllAttributes;
 
   public AddIgnoredIdentifierQuickFix(@NotNull QualifiedName identifier, boolean ignoreAllAttributes) {
@@ -24,9 +24,8 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
     myIgnoreAllAttributes = ignoreAllAttributes;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     if (myIgnoreAllAttributes) {
       return PyBundle.message("QFIX.mark.all.unresolved.attributes.of.0.as.ignored", myIdentifier);
     }
@@ -35,28 +34,19 @@ public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityA
     }
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyBundle.message("QFIX.ignore.unresolved.reference");
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-      PyUnresolvedReferencesInspection inspection =
-        (PyUnresolvedReferencesInspection)model.getUnwrappedTool(PyUnresolvedReferencesInspection.class.getSimpleName(), context);
+    return ModCommand.updateInspectionOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
       String name = myIdentifier.toString();
       if (myIgnoreAllAttributes) {
         name += PyNames.END_WILDCARD;
       }
-      assert inspection != null;
       if (!inspection.ignoredIdentifiers.contains(name)) {
         inspection.ignoredIdentifiers.add(name);
       }

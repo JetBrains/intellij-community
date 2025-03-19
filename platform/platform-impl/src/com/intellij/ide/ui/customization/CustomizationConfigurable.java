@@ -1,15 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class CustomizationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+@ApiStatus.Internal
+public final class CustomizationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private CustomizableActionsPanel myPanel;
 
   @Override
@@ -46,8 +48,7 @@ public class CustomizationConfigurable implements SearchableConfigurable, Config
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }

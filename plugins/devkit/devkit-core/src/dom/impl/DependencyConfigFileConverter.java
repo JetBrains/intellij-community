@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -37,7 +37,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
   private static final PathReferenceProvider ourProvider = new StaticPathReferenceProvider(null) {
 
     @Override
-    public boolean createReferences(@NotNull final PsiElement psiElement,
+    public boolean createReferences(final @NotNull PsiElement psiElement,
                                     int offset,
                                     String text,
                                     @NotNull List<? super PsiReference> references,
@@ -47,9 +47,10 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
                                                   new FileType[]{XmlFileType.INSTANCE}) {
 
         private final Condition<PsiFileSystemItem> PLUGIN_XML_CONDITION = item -> !item.isDirectory() &&
-                                                                              !item.equals(getContainingFile()) &&
-                                                                              (item instanceof XmlFile && DescriptorUtil.isPluginXml((PsiFile)item)) &&
-                                                                              !isAlreadyUsed((XmlFile)item);
+                                                                                  !item.equals(getContainingFile()) &&
+                                                                                  (item instanceof XmlFile &&
+                                                                                   DescriptorUtil.isPluginXml((PsiFile)item)) &&
+                                                                                  !isAlreadyUsed((XmlFile)item);
 
         private boolean isAlreadyUsed(final XmlFile xmlFile) {
           final PsiFile file = getContainingFile();
@@ -65,16 +66,15 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
           });
         }
 
-        @NotNull
         @Override
-        public Collection<PsiFileSystemItem> computeDefaultContexts() {
+        public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
           final PsiFile containingFile = getContainingFile();
           if (containingFile == null) {
             return Collections.emptyList();
           }
 
-          final Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
-          if (module == null) {
+          final Module currentModule = ModuleUtilCore.findModuleForPsiElement(getElement());
+          if (currentModule == null) {
             return Collections.emptyList();
           }
 
@@ -82,8 +82,13 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
           final VirtualFile parent = containingFile.getVirtualFile().getParent();
           roots.add(parent);
 
-          for (VirtualFile sourceRoot : ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION)) {
-            roots.add(sourceRoot.findChild("META-INF"));
+          final Set<Module> dependencies = new LinkedHashSet<>();
+          ModuleUtilCore.getDependencies(currentModule, dependencies);
+
+          for (Module dependency : dependencies) {
+            for (VirtualFile sourceRoot : ModuleRootManager.getInstance(dependency).getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION)) {
+              roots.add(sourceRoot.findChild("META-INF"));
+            }
           }
           return toFileSystemItems(roots);
         }
@@ -104,7 +109,7 @@ public class DependencyConfigFileConverter extends PathReferenceConverter {
   };
 
   @Override
-  public PathReference fromString(@Nullable String s, ConvertContext context) {
+  public PathReference fromString(@Nullable String s, @NotNull ConvertContext context) {
     final XmlElement element = context.getReferenceXmlElement();
     final Module module = context.getModule();
     if (s == null || element == null || module == null) {

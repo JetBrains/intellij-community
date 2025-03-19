@@ -1,10 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.core.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
-abstract class SetupSdkStep : EvaluationStep {
+abstract class SetupSdkStep : ForegroundEvaluationStep {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SetupSdkStep>("com.intellij.cce.setupSdkStep")
 

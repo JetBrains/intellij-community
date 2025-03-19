@@ -1,0 +1,7 @@
+// FILE: not-build-src/src/main/kotlin/utils.kt
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts kotlinStdLib"
+
+const val kotlin<caret>StdLib = "..."
+
+// FILE: build.gradle.kts
+kotlinStdLib

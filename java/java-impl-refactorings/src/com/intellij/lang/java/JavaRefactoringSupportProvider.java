@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
-import com.intellij.lang.refactoring.RefactoringSupportProvider;
+import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
@@ -38,7 +38,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
   public boolean isSafeDeleteAvailable(@NotNull PsiElement element) {
     return element instanceof PsiClass || element instanceof PsiMethod || element instanceof PsiField ||
            (element instanceof PsiParameter && ((PsiParameter)element).getDeclarationScope() instanceof PsiMethod) ||
-           element instanceof PsiPackage || element instanceof PsiLocalVariable;
+           element instanceof PsiPackage || element instanceof PsiLocalVariable || element instanceof PsiRecordComponent;
   }
 
   @Override
@@ -52,12 +52,20 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
   }
 
   @Override
-  public boolean isInplaceRenameAvailable(@NotNull final PsiElement element, final PsiElement context) {
+  public boolean isInplaceRenameAvailable(final @NotNull PsiElement element, final PsiElement context) {
     return mayRenameInplace(element, context);
   }
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
+    if (context != null && context.getLanguage() != elementToRename.getLanguage() &&
+        elementToRename instanceof PsiNamedElement namedElement) {
+      String name = namedElement.getName();
+      if (name != null && !LanguageNamesValidation.isIdentifier(context.getLanguage(), name, elementToRename.getProject())) {
+        return false;
+      }
+    }
+
     return elementToRename instanceof PsiMember || elementToRename instanceof PsiJavaModule || isCanonicalConstructorParameter(elementToRename);
   }
 
@@ -72,8 +80,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
   }
 
   @Override
-  @Nullable
-  public RefactoringActionHandler getExtractMethodHandler() {
+  public @Nullable RefactoringActionHandler getExtractMethodHandler() {
     return new ExtractMethodHandler();
   }
 
@@ -82,9 +89,8 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
     return new IntroduceParameterHandler();
   }
 
-  @Nullable
   @Override
-  public RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
+  public @Nullable RefactoringActionHandler getIntroduceFunctionalParameterHandler() {
     return new IntroduceFunctionalParameterHandler();
   }
 
@@ -138,6 +144,7 @@ public class JavaRefactoringSupportProvider extends JavaBaseRefactoringSupportPr
 
   public static boolean mayRenameInplace(PsiElement elementToRename, final PsiElement nameSuggestionContext) {
     if (nameSuggestionContext != null && nameSuggestionContext.getContainingFile() != elementToRename.getContainingFile()) return false;
+    if (elementToRename instanceof PsiImplicitClass) return false;
     if (!PsiUtil.isJvmLocalVariable(elementToRename) && !(elementToRename instanceof PsiLabeledStatement)) {
       return false;
     }

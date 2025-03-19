@@ -3,11 +3,14 @@ package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
+import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -18,12 +21,17 @@ import org.jetbrains.annotations.NonNls;
 import java.util.*;
 
 public class SliceTreeTest extends SliceTestCase {
-  private SliceTreeStructure configureTree(@NonNls String name) throws Exception {
-    configureByFile("/codeInsight/slice/backward/"+ name +".java");
+  @Override
+  protected String getBasePath() {
+    return "/java/java-tests/testData/codeInsight/slice/backward/";
+  }
+
+  private SliceTreeStructure configureTree(@NonNls String name) {
+    myFixture.configureByFile(name + ".java");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = SliceHandler.create(true).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
-    Collection<HighlightInfo> errors = highlightErrors();
+    Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(errors);
 
     SliceAnalysisParams params = new SliceAnalysisParams();
@@ -33,7 +41,7 @@ public class SliceTreeTest extends SliceTestCase {
     SliceUsage usage = LanguageSlicing.getProvider(element).createRootUsage(element, params);
 
 
-    ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(myProject);
+    ToolWindowHeadlessManagerImpl.MockToolWindow toolWindow = new ToolWindowHeadlessManagerImpl.MockToolWindow(getProject());
     SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, toolWindow) {
       @Override
       public boolean isAutoScroll() {
@@ -67,7 +75,7 @@ public class SliceTreeTest extends SliceTestCase {
     }
   }
 
-  public void testTypingDoesNotInterfereWithDuplicates() throws Exception {
+  public void testTypingDoesNotInterfereWithDuplicates() {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = treeStructure.getRootElement();
     List<SliceNode> nodes = new ArrayList<>();
@@ -82,7 +90,7 @@ public class SliceTreeTest extends SliceTestCase {
       }
     }
 
-    type("   xx");
+    myFixture.type("   xx");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     backspace();
     backspace();
@@ -108,7 +116,11 @@ public class SliceTreeTest extends SliceTestCase {
     assertTrue(hasDups.isEmpty());
   }
 
-  public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() throws Exception {
+  private void backspace() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+  }
+
+  public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() {
     SliceTreeStructure treeStructure = configureTree("Tuple");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -117,7 +129,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEmpty(leaves);
   }
 
-  public void testLeafExpressionsSimple() throws Exception {
+  public void testLeafExpressionsSimple() {
     SliceTreeStructure treeStructure = configureTree("DupSlice");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -128,7 +140,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(1111111111, ((PsiLiteral)element).getValue());
   }
 
-  public void testLeafExpressionsMoreComplex() throws Exception {
+  public void testLeafExpressionsMoreComplex() {
     SliceTreeStructure treeStructure = configureTree("Duplicate");
     SliceNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -146,7 +158,7 @@ public class SliceTreeTest extends SliceTestCase {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public void testGroupByValuesCorrectLeaves() throws Exception {
+  public void testGroupByValuesCorrectLeaves() {
     SliceTreeStructure treeStructure = configureTree("DuplicateLeaves");
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -191,7 +203,7 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(child.getValue().getElement(), leaf);
   }
 
-  public void testNullness() throws Exception {
+  public void testNullness() {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     SliceRootNode root = treeStructure.getRootElement();
     Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
@@ -203,78 +215,78 @@ public class SliceTreeTest extends SliceTestCase {
     checkStructure(newRoot, """
       Null Values
         Value: o
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                15|set(|o|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                15| |set(|o|);| in X.X(String) (filter: null)
         Value: other
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                24|set(|other|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                24| |set(|other|);| in X.X(String)
         Value: nu()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                29|set(|nu()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                29| |set(|nu()|);| in X.X(String)
         Value: t
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                46|x.set(|t|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                46| |x.set(|t|);| in X.fs(String, X)
       NotNull Values
         Value: "xxx"
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                10|set(|"xxx"|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                10| |set(|"xxx"|);| in X.X(String)
         Value: new String()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                17|set(|new| String()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                17| |set(|new| String()|);| in X.X(String) (filter: not-null)
         Value: nn()
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                18|set(|nn()|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                18| |set(|nn()|);| in X.X(String) (filter: not-null)
         Value: CON
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                19|set(|CON|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                19| |set(|CON|);| in X.X(String) (filter: "")
         Value: nn
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                21|set(|nn|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                21| |set(|nn|);| in X.X(String) (filter: not-null)
         Value: g
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                27|set(|g|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                27| |set(|g|);| in X.X(String) (filter: not-null)
         Value: t == null ? "null" : t
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                48|x.set(|t == |null| ? |"null"| : t|);
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                48| |x.set(|t == |null| ? |"null"| : t|);| in X.fs(String, X) (filter: not-null)
         Value: d
-          6|String |l;
-            55|l = |d|;
+          6| |String |l;| in X
+            55| |l = |d|;| in X.setFromNN(String) (filter: not-null)
       Other Values
         Value: private String d;
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                30|set(|hz()|);
-                  42|return| |d|;
-                    7|private| String |d;
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                30| |set(|hz()|);| in X.X(String)
+                  42| |return| |d|;| in X.hz()
+                    7| |private| String |d;| in X
         Value: String g
-          6|String |l;
-            52|l = |d|;
-              51|void| set(String |d|) {
-                11|set(|g|);
-                  9|public| X(String |g|) {
+          6| |String |l;| in X
+            52| |l = |d|;| in X.set(String)
+              51| |void| set(String |d|) {| in X.set(String)
+                11| |set(|g|);| in X.X(String)
+                  9| |public| X(String |g|) {| in X.X(String)
       """);
   }
 
@@ -282,12 +294,16 @@ public class SliceTreeTest extends SliceTestCase {
     String dataActual =
       EntryStream.ofTree(root, (depth, node) -> StreamEx.of(node.getChildren()).sorted(SliceTreeBuilder.SLICE_NODE_COMPARATOR))
         .skip(1)
-        .mapKeyValue((depth, node) -> StringUtil.repeat("  ", depth - 1) + node + "\n")
+        .mapKeyValue((depth, node) -> {
+          node.getValue().updateCachedPresentation();
+          String s = StringUtil.repeat("  ", depth - 1) + node + "\n";
+          return s.replace(FontUtil.thinSpace(), "");
+        })
         .joining();
     assertEquals(dataExpected, dataActual);
   }
 
-  public void testDoubleNullness() throws Exception {
+  public void testDoubleNullness() {
     SliceTreeStructure treeStructure = configureTree("DoubleNulls");
     SliceRootNode root = treeStructure.getRootElement();
     Map<SliceNode, JavaSliceNullnessAnalyzer.NullAnalysisResult> map = SliceNullnessAnalyzerBase.createMap();
@@ -299,13 +315,13 @@ public class SliceTreeTest extends SliceTestCase {
     checkStructure(newRoot, """
       Null Values
         Value: null
-          2|String |l;
-            4|l = |null|;
-            7|l = |null|;
+          2| |String |l;| in X
+            4| |l = |null|;| in X
+            7| |l = |null|;| in X
       """);
   }
 
-  public void testGroupByLeavesWithLists() throws Exception {
+  public void testGroupByLeavesWithLists() {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -316,13 +332,13 @@ public class SliceTreeTest extends SliceTestCase {
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"xxx\""), names);
   }
 
-  public void testCollectionTrack() throws Exception {
+  public void testCollectionTrack() {
     Set<String> names = groupByLeaves();
     assertEquals(3, names.size());
     assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"x\"", "\"y\""), names);
   }
 
-  private Set<String> groupByLeaves() throws Exception {
+  private Set<String> groupByLeaves() {
     SliceTreeStructure treeStructure = configureTree(getTestName(false));
     SliceRootNode root = treeStructure.getRootElement();
     SliceLeafAnalyzer analyzer = JavaSlicerAnalysisUtil.createLeafAnalyzer();
@@ -331,17 +347,17 @@ public class SliceTreeTest extends SliceTestCase {
     return ContainerUtil.map2Set(leaves, PsiElement::getText);
   }
 
-  public void testArrayCopyTrack() throws Exception {
+  public void testArrayCopyTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }
 
-  public void testMapValuesTrack() throws Exception {
+  public void testMapValuesTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"y\""), assertOneElement(names));
   }
 
-  public void testMapKeysTrack() throws Exception {
+  public void testMapKeysTrack() {
     Set<String> names = groupByLeaves();
     assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }

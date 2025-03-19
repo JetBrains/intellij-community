@@ -7,7 +7,6 @@ package org.toml.lang.psi.impl
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTFactory
-import org.toml.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
@@ -91,7 +90,8 @@ class TomlLiteralImpl(type: IElementType) : CompositePsiElement(type), TomlLiter
 
     override fun createLiteralTextEscaper(): LiteralTextEscaper<out PsiLanguageInjectionHost> {
         val tokenType = node.findChildByType(TOML_STRING_LITERALS)?.elementType ?: error("$text is not string literal")
-        return if (tokenType in TOML_BASIC_STRINGS) TomlLiteralTextEscaper(this) else SimpleMultiLineTextEscaper(this)
+        return if (tokenType in TOML_BASIC_STRINGS) TomlLiteralTextEscaper(this)
+        else LiteralTextEscaper.createSimple(this, false)
     }
 
     override fun accept(visitor: PsiElementVisitor) {

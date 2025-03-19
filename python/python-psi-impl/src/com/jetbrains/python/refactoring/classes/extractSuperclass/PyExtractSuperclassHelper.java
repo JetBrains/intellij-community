@@ -5,16 +5,15 @@ import com.google.common.base.Predicate;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.Function;
@@ -37,7 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
+import static com.jetbrains.python.psi.resolve.PyNamespacePackageUtil.isInNamespacePackage;
+import static com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil.placeFile;
 
 /**
  * @author Dennis.Ushakov
@@ -87,8 +91,6 @@ public final class PyExtractSuperclassHelper {
       }
     }
 
-
-
     final String text = "class " + superBaseName + ":\n  pass" + "\n";
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
@@ -108,7 +110,7 @@ public final class PyExtractSuperclassHelper {
   /**
    * If class explicitly extends object we shall move it even in Py3K
    */
-  private static boolean isObjectParentDeclaredExplicitly(@NotNull final PyClass clazz) {
+  private static boolean isObjectParentDeclaredExplicitly(final @NotNull PyClass clazz) {
     return ContainerUtil.exists(clazz.getSuperClassExpressions(), o -> PyNames.OBJECT.equals(o.getName()));
   }
 
@@ -118,14 +120,14 @@ public final class PyExtractSuperclassHelper {
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
   
-  private static PyClass placeNewClass(final Project project, PyClass newClass, @NotNull final PyClass clazz, final String targetFile) {
+  private static PyClass placeNewClass(final @NotNull Project project, @NotNull PyClass newClass, final @NotNull PyClass clazz, final @NotNull String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
     if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile()) || isRefactoredClassInBackedFile(file, clazz)) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
     }
-
+    boolean isNamespace = isInNamespacePackage(clazz);
     PsiFile psiFile = null;
     try {
       if (file == null) {
@@ -140,10 +142,10 @@ public final class PyExtractSuperclassHelper {
           path = targetFile;
           filename = PyNames.INIT_DOT_PY; // user requested putting the class into this package directly
         }
-        psiFile = placeFile(project, path, filename);
+        psiFile = placeFile(project, path, filename, isNamespace);
       }
       else if (file.isDirectory()) { // existing directory
-        psiFile = placeFile(project, file.getPath(), PyNames.INIT_DOT_PY);
+        psiFile = placeFile(project, file.getPath(), PyNames.INIT_DOT_PY, isNamespace);
       }
       else { // existing file
         psiFile = PsiManager.getInstance(project).findFile(file);
@@ -163,102 +165,12 @@ public final class PyExtractSuperclassHelper {
     return newClass;
   }
 
-  /**
-   * Places a file at the end of given path, creating intermediate dirs and inits.
-   *
-   * @return the placed file
-   */
-  public static PsiFile placeFile(Project project, String path, String filename) throws IOException {
-    return placeFile(project, path, filename, null);
-  }
 
-  //TODO: Mover to the other class? That is not good to dependent PyUtils on this class
-  public static PsiFile placeFile(Project project, String path, String filename, @Nullable String content) throws IOException {
-    PsiDirectory psiDir = createDirectories(project, path);
-    LOG.assertTrue(psiDir != null);
-    PsiFile psiFile = psiDir.findFile(filename);
-    if (psiFile == null) {
-      psiFile = psiDir.createFile(filename);
-      if (content != null) {
-        final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-        final Document document = manager.getDocument(psiFile);
-        if (document != null) {
-          document.setText(content);
-          manager.commitDocument(document);
-        }
-      }
-    }
-    return psiFile;
-  }
 
-  /**
-   * Create all intermediate dirs with inits from one of roots up to target dir.
-   *
-   * @param target  a full path to target dir
-   * @return deepest child directory, or null if target is not in roots or process fails at some point.
-   */
-  @Nullable
-  private static PsiDirectory createDirectories(Project project, String target) throws IOException {
-    String relativePath = null;
-    VirtualFile closestRoot = null;
 
-    // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
-    target = FileUtil.toSystemIndependentName(target);
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-    final List<VirtualFile> allRoots = new ArrayList<>();
-    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
-    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
-    // Check deepest roots first
-    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
-    for (VirtualFile file : allRoots) {
-      final String rootPath = file.getPath();
-      if (target.startsWith(rootPath)) {
-        relativePath = target.substring(rootPath.length());
-        closestRoot = file;
-        break;
-      }
-    }
-    if (closestRoot == null) {
-      throw new IOException("Can't find '" + target + "' among roots");
-    }
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    final PsiManager psiManager = PsiManager.getInstance(project);
-    final String[] dirs = relativePath.split("/");
-    int i = 0;
-    if (dirs[0].isEmpty()) i = 1;
-    VirtualFile resultDir = closestRoot; 
-    while (i < dirs.length) {
-      VirtualFile subdir = resultDir.findChild(dirs[i]);
-      if (subdir != null) {
-        if (!subdir.isDirectory()) {
-          throw new IOException("Expected resultDir, but got non-resultDir: " + subdir.getPath());
-        }
-      }
-      else {
-        subdir = resultDir.createChildDirectory(lfs, dirs[i]);
-      }
-      if (subdir.findChild(PyNames.INIT_DOT_PY) == null) {
-        subdir.createChildData(lfs, PyNames.INIT_DOT_PY);
-      }
-      /*
-      // here we could add an __all__ clause to the __init__.py.
-      // * there's no point to do so; we import the class directly;
-      // * we can't do this consistently since __init__.py may already exist and be nontrivial.
-      if (i == dirs.length - 1) {
-        PsiFile init_file = psiManager.findFile(initVFile);
-        LOG.assertTrue(init_file != null);
-        final PyElementGenerator gen = PyElementGenerator.getInstance(project);
-        final PyStatement statement = gen.createFromText(LanguageLevel.getDefault(), PyStatement.class, PyNames.ALL + " = [\"" + lastName + "\"]");
-        init_file.add(statement);
-      }
-      */
-      resultDir = subdir;
-      i += 1;
-    }
-    return psiManager.findDirectory(resultDir);
-  }
 
   public static String getRefactoringId() {
     return "refactoring.python.extract.superclass";
   }
+
 }

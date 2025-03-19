@@ -42,6 +42,7 @@ public class DomCollectionProblemDescriptorImpl extends DomElementProblemDescrip
     myChildDescription = childDescription;
   }
 
+  @Override
   public String toString() {
     return super.toString() + "; " + myChildDescription;
   }

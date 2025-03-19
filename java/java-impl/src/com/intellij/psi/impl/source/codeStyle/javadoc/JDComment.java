@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.formatting.IndentInfo;
@@ -38,11 +24,20 @@ public class JDComment {
   private List<String> mySinceList;
   private String myDeprecated;
   private boolean myMultiLineComment;
-  private String myFirstLine = "/**";
-  private String myEndLine = "*/";
 
-  public JDComment(@NotNull CommentFormatter formatter) {
+  private final boolean myMarkdown;
+  private String myFirstLine;
+  private String myEndLine;
+  private final String myLeadingLine;
+
+
+  public JDComment(@NotNull CommentFormatter formatter, boolean isMarkdown) {
     myFormatter = formatter;
+    myMarkdown = isMarkdown;
+
+    myFirstLine = myMarkdown ? "///" : "/**";
+    myEndLine =  myMarkdown ? "" : "*/";
+    myLeadingLine = myMarkdown ? "/// " : " * ";
   }
 
   protected static boolean isNull(@Nullable String s) {
@@ -57,25 +52,22 @@ public class JDComment {
     myMultiLineComment = value;
   }
 
-  @NotNull
-  protected String javadocContinuationIndent() {
+  protected @NotNull String javadocContinuationIndent() {
     if (!myFormatter.getSettings().JD_INDENT_ON_CONTINUATION) return "";
     return continuationIndent();
   }
 
-  @NotNull
-  protected String continuationIndent() {
+  protected @NotNull String continuationIndent() {
     CodeStyleSettings settings = myFormatter.getSettings().getContainer();
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
     return new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
   }
 
-  @Nullable
-  public String generate(@NotNull String indent) {
+  public @Nullable String generate(@NotNull String indent) {
     final String prefix;
 
-    if (myFormatter.getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
-      prefix = indent + " * ";
+    if (myMarkdown || myFormatter.getSettings().JD_LEADING_ASTERISKS_ARE_ENABLED) {
+      prefix = indent + myLeadingLine;
     } else {
       prefix = indent;
     }
@@ -83,7 +75,7 @@ public class JDComment {
     StringBuilder sb = new StringBuilder();
 
     if (!isNull(myDescription)) {
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, getIsMarkdown()));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);
@@ -97,7 +89,7 @@ public class JDComment {
 
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
-        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix));
+        sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix, continuationPrefix, getIsMarkdown()));
       }
     }
 
@@ -105,7 +97,7 @@ public class JDComment {
       JDTag tag = JDTag.SEE;
       for (String aSeeAlsoList : mySeeAlsoList) {
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
         sb.append(tagDescription);
       }
     }
@@ -114,7 +106,7 @@ public class JDComment {
       JDTag tag = JDTag.SINCE;
       for (String since : mySinceList) {
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+          .formatJDTagDescription(since, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
         sb.append(tagDescription);
       }
     }
@@ -122,7 +114,7 @@ public class JDComment {
     if (myDeprecated != null) {
       JDTag tag = JDTag.DEPRECATED;
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix);
+        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), continuationPrefix, getIsMarkdown());
       sb.append(tagDescription);
     }
 
@@ -133,13 +125,14 @@ public class JDComment {
         sb.delete(nlen, sb.length());
       }
     }
-    else if (sb.length() == 0 && !StringUtil.isEmpty(myEndLine)) {
+    else if (sb.isEmpty() && !StringUtil.isEmpty(myEndLine)) {
       sb.append(prefix).append('\n');
     }
 
-    if (myMultiLineComment && myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
+    if (!myMarkdown && (myMultiLineComment &&
+        myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
         || !myFormatter.getSettings().JD_DO_NOT_WRAP_ONE_LINE_COMMENTS
-        || sb.indexOf("\n") != sb.length() - 1) // If comment has become multiline after formatting - it must be shown as multiline.
+        || sb.indexOf("\n") != sb.length() - 1)) // If comment has become multiline after formatting - it must be shown as multiline.
                                                 // Last symbol is always '\n', so we need to check if there is one more LF symbol before it.
     {
       sb.insert(0, myFirstLine + '\n');
@@ -179,12 +172,15 @@ public class JDComment {
     mySinceList.add(since);
   }
 
+  public boolean getIsMarkdown() {
+    return myMarkdown;
+  }
+
   public void setDeprecated(@Nullable String deprecated) {
     this.myDeprecated = deprecated;
   }
 
-  @Nullable
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myDescription;
   }
 

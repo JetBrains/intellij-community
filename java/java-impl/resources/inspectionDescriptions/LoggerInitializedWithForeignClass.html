@@ -1,0 +1,35 @@
+<html>
+<body>
+Reports <code>Logger</code> instances that are initialized with a <code>class</code> literal from a different class than the <code>Logger</code>
+is contained in. This can easily happen when copy-pasting some code from another class and
+may result in logging events under an unexpected category and cause filters to be applied incorrectly.
+<p>A quick-fix is provided to replace the foreign class literal with one from the surrounding class.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  <b>public class</b> Paramount {
+    <b>protected static final</b> Logger LOG = Logger.getLogger(Critical.class);
+
+    // ... other fields and methods
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  <b>public class</b> Paramount {
+    <b>protected static final</b> Logger LOG = Logger.getLogger(Paramount.class);
+
+    // ... other fields and methods
+  }
+</code></pre>
+<!-- tooltip end -->
+<p>
+  Configure the inspection:
+</p>
+<ul>
+  <li>Use the table to specify the logger factory classes and logger factory methods recognized by this inspection.</li>
+  <li>Use the <b>Ignore loggers initialized with a superclass</b> option to ignore loggers that are initialized with a superclass of
+  the class containing the logger.</li>
+  <li>Use the <b>Ignore loggers in non-public classes</b> to only warn on loggers in <code>public</code> classes.</li>
+  <li>Use the <b>Ignore loggers not initialized in a final field</b> to only report loggers initialized in a final field, other cases will be ignored.</li>
+</ul>
+</body>
+</html>

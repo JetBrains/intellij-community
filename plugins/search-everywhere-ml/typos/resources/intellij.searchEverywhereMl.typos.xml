@@ -23,10 +23,13 @@
     <registryKey key="search.everywhere.ml.typos.show.confidence"
                  description="Show confidence in Search Everywhere"
                  defaultValue="false"/>
-
-    <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.searchEverywhereMl.typos.RuntimeActionsDictionaryProvider"/>
-
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.ActionsLanguageModel$ModelComputationStarter"/>
   </extensions>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

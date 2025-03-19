@@ -1,5 +1,7 @@
-@Anno(a=b) class Stub<A,B> {
+@Anno(a=b) class Stub<@Anno1 A, @Anno(a=b) @Anno1 B, C> {
   def <T> T foo() {}
+
+  def <@Anno1 T> T bar() {}
 }
 -----
 [Groovy script]
@@ -10,8 +12,17 @@
           [Annotation member value pair]
     [Type parameter list]
       [Type parameter : A]
+        [Annotation]
+          [Annotation arguments]
         [Type extends bounds list]
       [Type parameter : B]
+        [Annotation]
+          [Annotation arguments]
+            [Annotation member value pair]
+        [Annotation]
+          [Annotation arguments]
+        [Type extends bounds list]
+      [Type parameter : C]
         [Type extends bounds list]
     [Extends clause]
     [Implements clause]
@@ -21,6 +32,15 @@
         [Modifiers]
         [Type parameter list]
           [Type parameter : T]
+            [Type extends bounds list]
+        [Parameter list]
+        [Throw clause]
+      [Method : bar]
+        [Modifiers]
+        [Type parameter list]
+          [Type parameter : T]
+            [Annotation]
+              [Annotation arguments]
             [Type extends bounds list]
         [Parameter list]
         [Throw clause]

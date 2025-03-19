@@ -1,0 +1,201 @@
+com.intellij.openapi.diff.impl.patch.AirContentRevision
+- getCharset():java.nio.charset.Charset
+- a:getContentAsBytes():B[]
+- a:getContentAsString():java.lang.String
+- a:getLastModifiedTimestamp():java.lang.Long
+- getLineSeparator():java.lang.String
+- a:getPath():com.intellij.openapi.vcs.FilePath
+- a:getRevisionNumber():java.lang.String
+- a:isBinary():Z
+f:com.intellij.openapi.diff.impl.patch.BinaryFilePatch
+- com.intellij.openapi.diff.impl.patch.FilePatch
+- <init>(B[],B[]):V
+- copy():com.intellij.openapi.diff.impl.patch.BinaryFilePatch
+- getAfterContent():B[]
+- getBeforeContent():B[]
+- isDeletedFile():Z
+- isNewFile():Z
+a:com.intellij.openapi.diff.impl.patch.FilePatch
+- <init>():V
+- getAfterFileName():java.lang.String
+- getAfterName():java.lang.String
+- getAfterVersionId():java.lang.String
+- getBeforeFileName():java.lang.String
+- getBeforeName():java.lang.String
+- getBeforeVersionId():java.lang.String
+- getNewFileMode():I
+- a:isDeletedFile():Z
+- a:isNewFile():Z
+- setAfterName(java.lang.String):V
+- setAfterVersionId(java.lang.String):V
+- setBeforeName(java.lang.String):V
+- setBeforeVersionId(java.lang.String):V
+- setNewFileMode(I):V
+com.intellij.openapi.diff.impl.patch.PatchEP
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:consumeContentBeforePatchApplied(com.intellij.openapi.project.Project,java.lang.String,java.lang.CharSequence,com.intellij.openapi.vcs.changes.CommitContext):V
+- a:getName():java.lang.String
+- a:provideContent(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vcs.changes.CommitContext):java.lang.CharSequence
+c:com.intellij.openapi.diff.impl.patch.PatchHunk
+- <init>(I,I,I,I):V
+- addLine(com.intellij.openapi.diff.impl.patch.PatchLine):V
+- getEndLineAfter():I
+- getEndLineBefore():I
+- getLines():java.util.List
+- getStartLineAfter():I
+- getStartLineBefore():I
+- getText():java.lang.String
+- isDeletedContent():Z
+- isNewContent():Z
+- isNoNewLineAtEnd():Z
+f:com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+- sf:INSTANCE:com.intellij.openapi.diff.impl.patch.PatchHunkUtil
+- f:createPatchFromHunk(java.lang.String,java.lang.String):java.lang.String
+- f:findDiffFileLineIndex(com.intellij.openapi.diff.impl.patch.TextFilePatch,kotlin.Pair):java.lang.Integer
+- f:findHunkLineIndex(com.intellij.openapi.diff.impl.patch.PatchHunk,kotlin.Pair,Z):java.lang.Integer
+- bs:findHunkLineIndex$default(com.intellij.openapi.diff.impl.patch.PatchHunkUtil,com.intellij.openapi.diff.impl.patch.PatchHunk,kotlin.Pair,Z,I,java.lang.Object):java.lang.Integer
+- f:getChangeOnlyRanges(com.intellij.openapi.diff.impl.patch.PatchHunk):java.util.List
+- f:getLinesInRange(com.intellij.openapi.diff.impl.patch.PatchHunk,com.intellij.diff.util.Side,com.intellij.diff.util.LineRange):java.util.List
+- f:getLinesLeft(com.intellij.openapi.diff.impl.patch.TextFilePatch,com.intellij.diff.util.LineRange):java.lang.String
+- f:getRange(com.intellij.openapi.diff.impl.patch.PatchHunk):com.intellij.diff.util.Range
+- f:truncateHunkAfter(com.intellij.openapi.diff.impl.patch.PatchHunk,I):com.intellij.openapi.diff.impl.patch.PatchHunk
+- f:truncateHunkBefore(com.intellij.openapi.diff.impl.patch.PatchHunk,I):com.intellij.openapi.diff.impl.patch.PatchHunk
+f:com.intellij.openapi.diff.impl.patch.PatchHunkUtilKt
+- sf:withoutContext(java.util.Collection):kotlin.sequences.Sequence
+c:com.intellij.openapi.diff.impl.patch.PatchLine
+- <init>(com.intellij.openapi.diff.impl.patch.PatchLine$Type,java.lang.String):V
+- getText():java.lang.String
+- getType():com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- isSuppressNewLine():Z
+- setSuppressNewLine(Z):V
+e:com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- java.lang.Enum
+- sf:ADD:com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- sf:CONTEXT:com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- sf:REMOVE:com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- s:valueOf(java.lang.String):com.intellij.openapi.diff.impl.patch.PatchLine$Type
+- s:values():com.intellij.openapi.diff.impl.patch.PatchLine$Type[]
+com.intellij.openapi.diff.impl.patch.PathDescription
+- a:getPath():java.nio.file.Path
+- a:isDirectory():Z
+c:com.intellij.openapi.diff.impl.patch.TextFilePatch
+- com.intellij.openapi.diff.impl.patch.FilePatch
+- <init>(java.nio.charset.Charset):V
+- <init>(java.nio.charset.Charset,java.lang.String):V
+- addHunk(com.intellij.openapi.diff.impl.patch.PatchHunk):V
+- getCharset():java.nio.charset.Charset
+- getHunks():java.util.List
+- getLineSeparator():java.lang.String
+- getSingleHunkPatchText():java.lang.String
+- hasNoModifiedContent():Z
+- isDeletedFile():Z
+- isNewFile():Z
+- pathsOnlyCopy():com.intellij.openapi.diff.impl.patch.TextFilePatch
+- setFileStatus(com.intellij.openapi.vcs.FileStatus):V
+f:com.intellij.openapi.vcs.VcsBundle
+- sf:BUNDLE:java.lang.String
+- sf:INSTANCE:com.intellij.DynamicBundle
+- s:message(java.lang.String,java.lang.Object[]):java.lang.String
+- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+c:com.intellij.openapi.vcs.VcsException
+- java.lang.Exception
+- sf:EMPTY_ARRAY:com.intellij.openapi.vcs.VcsException[]
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+- <init>(java.lang.String,Z):V
+- <init>(java.lang.Throwable):V
+- <init>(java.lang.Throwable,Z):V
+- <init>(java.util.Collection):V
+- getMessage():java.lang.String
+- s:getMessage(java.lang.Throwable):java.lang.String
+- getMessages():java.lang.String[]
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- isWarning():Z
+- setIsWarning(Z):com.intellij.openapi.vcs.VcsException
+- setVirtualFile(com.intellij.openapi.vfs.VirtualFile):V
+f:com.intellij.openapi.vcs.VcsKey
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+com.intellij.openapi.vcs.changes.ByteBackedContentRevision
+- com.intellij.openapi.vcs.changes.ContentRevision
+- a:getContentAsBytes():B[]
+c:com.intellij.openapi.vcs.changes.Change
+- sf:EMPTY_CHANGE_ARRAY:com.intellij.openapi.vcs.changes.Change[]
+- p:myMoveRelativePath:java.lang.String
+- p:myMoved:Z
+- p:myRenameOrMoveCached:Z
+- p:myRenamed:Z
+- <init>(com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):V
+- <init>(com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.FileStatus):V
+- addAdditionalLayerElement(java.lang.String,com.intellij.openapi.vcs.changes.Change):V
+- affectsFile(java.io.File):Z
+- p:copyFieldsFrom(com.intellij.openapi.vcs.changes.Change):V
+- equals(java.lang.Object):Z
+- getAdditionalIcon():javax.swing.Icon
+- getAfterRevision():com.intellij.openapi.vcs.changes.ContentRevision
+- getBeforeRevision():com.intellij.openapi.vcs.changes.ContentRevision
+- getDescription():java.lang.String
+- getFileStatus():com.intellij.openapi.vcs.FileStatus
+- getMoveRelativePath(com.intellij.openapi.project.Project):java.lang.String
+- p:getMovedText(com.intellij.openapi.project.Project):java.lang.String
+- getOriginText(com.intellij.openapi.project.Project):java.lang.String
+- getOtherLayers():java.util.Map
+- p:getRenamedText():java.lang.String
+- getType():com.intellij.openapi.vcs.changes.Change$Type
+- getVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
+- isIsReplaced():Z
+- isMoved():Z
+- isRenamed():Z
+- setIsReplaced(Z):V
+e:com.intellij.openapi.vcs.changes.Change$Type
+- java.lang.Enum
+- sf:DELETED:com.intellij.openapi.vcs.changes.Change$Type
+- sf:MODIFICATION:com.intellij.openapi.vcs.changes.Change$Type
+- sf:MOVED:com.intellij.openapi.vcs.changes.Change$Type
+- sf:NEW:com.intellij.openapi.vcs.changes.Change$Type
+- s:valueOf(java.lang.String):com.intellij.openapi.vcs.changes.Change$Type
+- s:values():com.intellij.openapi.vcs.changes.Change$Type[]
+f:com.intellij.openapi.vcs.changes.CommitContext
+- com.intellij.openapi.util.UserDataHolderBase
+- <init>():V
+- f:getAdditionalData():com.intellij.util.NullableFunction
+- f:getAdditionalDataConsumer():com.intellij.util.PairConsumer
+com.intellij.openapi.vcs.changes.ContentRevision
+- a:getContent():java.lang.String
+- a:getFile():com.intellij.openapi.vcs.FilePath
+- a:getRevisionNumber():com.intellij.openapi.vcs.history.VcsRevisionNumber
+com.intellij.openapi.vcs.history.LongRevisionNumber
+- a:getLongRevisionNumber():J
+com.intellij.openapi.vcs.history.VcsRevisionNumber
+- java.lang.Comparable
+- sf:NULL:com.intellij.openapi.vcs.history.VcsRevisionNumber
+- a:asString():java.lang.String
+c:com.intellij.openapi.vcs.history.VcsRevisionNumber$Int
+- com.intellij.openapi.vcs.history.LongRevisionNumber
+- com.intellij.openapi.vcs.history.VcsRevisionNumber
+- <init>(I):V
+- asString():java.lang.String
+- compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I
+- equals(java.lang.Object):Z
+- getLongRevisionNumber():J
+- getValue():I
+- hashCode():I
+c:com.intellij.openapi.vcs.history.VcsRevisionNumber$Long
+- com.intellij.openapi.vcs.history.LongRevisionNumber
+- com.intellij.openapi.vcs.history.VcsRevisionNumber
+- <init>(J):V
+- asString():java.lang.String
+- compareTo(com.intellij.openapi.vcs.history.VcsRevisionNumber):I
+- equals(java.lang.Object):Z
+- getLongRevisionNumber():J
+- getLongValue():J
+- hashCode():I
+a:com.intellij.openapi.vcs.impl.VcsPathPresenter
+- <init>():V
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.impl.VcsPathPresenter
+- a:getPresentableRelativePath(com.intellij.openapi.vcs.changes.ContentRevision,com.intellij.openapi.vcs.changes.ContentRevision):java.lang.String
+- a:getPresentableRelativePathFor(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+f:com.intellij.vcsUtil.Rethrow
+- s:reThrowRuntime(java.lang.Throwable):V

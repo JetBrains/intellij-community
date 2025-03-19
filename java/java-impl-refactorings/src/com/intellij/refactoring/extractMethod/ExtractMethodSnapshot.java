@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -23,13 +23,13 @@ public class ExtractMethodSnapshot {
   public final boolean myIsChainedConstructor;
   public final String myMethodVisibility;
   public final Nullability myNullability;
-  @Nullable public final SmartTypePointer myReturnType;
-  @NotNull public final List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
-  @Nullable public final SmartPsiElementPointer<PsiVariable> myOutputVariable;
-  @Nullable public final SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
-  @NotNull public final List<VariableDataSnapshot> myVariableDatum;
+  public final @Nullable SmartTypePointer myReturnType;
+  public final @NotNull List<SmartPsiElementPointer<PsiVariable>> myOutputVariables;
+  public final @Nullable SmartPsiElementPointer<PsiVariable> myOutputVariable;
+  public final @Nullable SmartPsiElementPointer<PsiVariable> myArtificialOutputVariable;
+  public final @NotNull List<VariableDataSnapshot> myVariableDatum;
   public final boolean myFoldable;
-  @Nullable public final SmartPsiElementPointer<PsiClass> myTargetClass;
+  public final @Nullable SmartPsiElementPointer<PsiClass> myTargetClass;
 
   public ExtractMethodSnapshot(@NotNull ExtractMethodProcessor from) {
     myProject = from.getProject();
@@ -108,13 +108,11 @@ public class ExtractMethodSnapshot {
                             .orElse(null);
   }
 
-  @Nullable
-  private static PsiClass findTargetClassInRange(@Nullable PsiFile file, @NotNull TextRange range) {
+  private static @Nullable PsiClass findTargetClassInRange(@Nullable PsiFile file, @NotNull TextRange range) {
     return file != null ? CodeInsightUtil.findElementInRange(file, range.getStartOffset(), range.getEndOffset(), PsiClass.class) : null;
   }
 
-  @Nullable
-  public PsiClass getTargetClass() {
+  public @Nullable PsiClass getTargetClass() {
     return myTargetClass != null ? myTargetClass.getElement() : null;
   }
 }

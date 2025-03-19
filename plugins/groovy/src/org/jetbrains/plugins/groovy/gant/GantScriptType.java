@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
@@ -32,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class GantScriptType extends GroovyRunnableScriptType {
-  @NonNls public static final String DEFAULT_EXTENSION = "gant";
+  public static final @NonNls String DEFAULT_EXTENSION = "gant";
 
   public static final GroovyScriptType INSTANCE = new GantScriptType();
 
@@ -41,8 +41,7 @@ public final class GantScriptType extends GroovyRunnableScriptType {
   }
 
   @Override
-  @NotNull
-  public Icon getScriptIcon() {
+  public @NotNull Icon getScriptIcon() {
     return JetgroovyIcons.Groovy.Gant_16x16;
   }
 
@@ -61,8 +60,7 @@ public final class GantScriptType extends GroovyRunnableScriptType {
     return params != null && (params.startsWith(targetName + " ") || params.equals(targetName));
   }
 
-  @Nullable
-  private static String getTargetName(Location location) {
+  private static @Nullable String getTargetName(Location location) {
     PsiElement parent = location.getPsiElement();
     while (!(parent.getParent() instanceof PsiFile) && parent.getParent() != null) {
       parent = parent.getParent();

@@ -399,4 +399,26 @@ public class LongRangeKnownMethods {
     if (<warning descr="Condition 'val >= 20' is always 'false'">val >= 20</warning>) {}
     if (val >= 19) {}
   }
+  
+  void testParse(String s) {
+    if (!s.equals("1234")) return;
+    int val = Integer.parseInt(s);
+    if (<warning descr="Condition 'val != 1234' is always 'false'">val != 1234</warning>) return;
+  }
+
+  void testParseIncorrect(String s) {
+    if (!s.equals("1234L")) return;
+    int val = Integer.<warning descr="The call to 'parseInt' always fails with an exception">parseInt</warning>(s);
+    if (val != 1234) return;
+  }
+  
+  void testByteTooBig() {
+    byte b;
+    if (Math.random() > 0.5) {
+      b = Byte.<warning descr="The call to 'parseByte' always fails with an exception">parseByte</warning>("128");
+    } else {
+      b = Byte.parseByte("127");
+    }
+    if (<warning descr="Condition 'b == 127' is always 'true'">b == 127</warning>) {}
+  }
 }

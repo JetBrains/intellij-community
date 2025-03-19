@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR
 LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:41
 LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:50
 LineBreakpoint created at filterFunctionCallsFromInlineClass.kt:59

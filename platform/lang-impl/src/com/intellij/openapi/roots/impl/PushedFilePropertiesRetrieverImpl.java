@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -10,9 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 final class PushedFilePropertiesRetrieverImpl implements PushedFilePropertiesRetriever {
-  @NotNull
   @Override
-  public List<String> dumpSortedPushedProperties(@NotNull VirtualFile file) {
+  public @NotNull List<String> dumpSortedPushedProperties(@NotNull VirtualFile file) {
     if (file.isDirectory()) {
       throw new IllegalArgumentException("file " + file + " is expected to be a regular file");
     }

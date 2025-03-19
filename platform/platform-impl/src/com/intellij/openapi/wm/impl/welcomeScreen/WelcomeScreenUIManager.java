@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.plugins.newui.ListPluginComponent;
@@ -18,8 +18,7 @@ import java.net.URL;
 
 public final class WelcomeScreenUIManager {
 
-  @NotNull
-  static Font getProductFont(int size) {
+  static @NotNull Font getProductFont(int size) {
     try {
       return loadFont().deriveFont((float)JBUIScale.scale(size));
     }
@@ -29,8 +28,7 @@ public final class WelcomeScreenUIManager {
     return StartupUiUtil.getLabelFont().deriveFont(JBUIScale.scale((float)size));
   }
 
-  @NotNull
-  private static Font loadFont() {
+  private static @NotNull Font loadFont() {
     @NonNls String fontPath = "/fonts/Roboto-Light.ttf";
     URL url = AppUIUtil.class.getResource(fontPath);
     if (url == null) {
@@ -63,8 +61,7 @@ public final class WelcomeScreenUIManager {
     return ListPluginComponent.SELECTION_COLOR; //use the same as plugins tab use
   }
 
-  @NotNull
-  public static Color getProjectsSelectionForeground(boolean isSelected, boolean hasFocus) {
+  public static @NotNull Color getProjectsSelectionForeground(boolean isSelected, boolean hasFocus) {
     return UIUtil.getListForeground(); // do not change foreground for selection
   }
 

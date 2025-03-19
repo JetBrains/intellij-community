@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -23,15 +23,15 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
                                                  serializeCodeInsightPasses ? null : uf, false, Pass.UPDATE_ALL);
   }
 
-  @NotNull
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.UPDATE_ALL);
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL);
     if (textRange == null) {
-      return new EmptyPass(file.getProject(), editor.getDocument());
+      return new EmptyPass(psiFile.getProject(), editor.getDocument());
     }
-    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
-    return new GeneralHighlightingPass(file, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, new DefaultHighlightInfoProcessor());
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
+    return new GeneralHighlightingPass(psiFile, editor.getDocument(), textRange.getStartOffset(), textRange.getEndOffset(), true, visibleRange, editor, true,
+                                       true, true, HighlightInfoUpdater.getInstance(psiFile.getProject()));
   }
 
   @Override
@@ -40,6 +40,7 @@ final class GeneralHighlightingPassFactory implements MainHighlightingPassFactor
                                                                @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     // no applying to the editor - for read-only analysis only
     return new GeneralHighlightingPass(file, document, 0, file.getTextLength(),
-                                       true, new ProperTextRange(0, document.getTextLength()), null, highlightInfoProcessor);
+                                       true, new ProperTextRange(0, document.getTextLength()), null, true, true,
+                                       true, HighlightInfoUpdater.EMPTY);
   }
 }

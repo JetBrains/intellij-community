@@ -5,10 +5,14 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorStorage
-import com.intellij.completion.ml.personalization.UserFactorsManager
 import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.personalization.session.SessionPrefixTracker
 import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.util.language
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.extensions.PluginId
 
 class CompletionFactorsInitializer : LookupTracker() {
   companion object {
@@ -22,12 +26,15 @@ class CompletionFactorsInitializer : LookupTracker() {
     processSessionFactors(lookup, storage)
   }
 
-  private fun shouldUseUserFactors() = UserFactorsManager.ENABLE_USER_FACTORS
+  private fun shouldUseUserFactors(language: Language?) = ApplicationManager.getApplication().isEAP ||
+                                       ApplicationInfo.getInstance().versionName == "PyCharm" &&
+                                       (language == null || language.isKindOf("Python")) &&
+                                       PluginManager.isPluginInstalled(PluginId.getId("org.jetbrains.completion.full.line"))
 
   private fun shouldUseSessionFactors(): Boolean = SessionFactorsUtils.shouldUseSessionFactors()
 
   private fun processUserFactors(lookup: LookupImpl) {
-    if (!shouldUseUserFactors()) return
+    if (!shouldUseUserFactors(lookup.language())) return
 
     UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_USAGE) {
       it.fireCompletionUsed()

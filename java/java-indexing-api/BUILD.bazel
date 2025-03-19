@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.java.indexing` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "indexing_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "indexing",
+  module_name = "intellij.java.indexing",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//java/java-psi-api:psi",
+    "//platform/indexing-api:indexing",
+    "//platform/util",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":indexing_resources"]
+)
+### auto-generated section `build intellij.java.indexing` end

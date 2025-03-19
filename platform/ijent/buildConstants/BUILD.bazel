@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.platform.ijent.community.buildConstants` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "community-buildConstants",
+  module_name = "intellij.platform.ijent.community.buildConstants",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+  ]
+)
+### auto-generated section `build intellij.platform.ijent.community.buildConstants` end

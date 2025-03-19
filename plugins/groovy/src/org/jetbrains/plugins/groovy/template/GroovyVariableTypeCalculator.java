@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 /**
  * @author Max Medvedev
  */
-public class GroovyVariableTypeCalculator extends VariableTypeCalculator {
+public final class GroovyVariableTypeCalculator extends VariableTypeCalculator {
   @Override
   public PsiType inferVarTypeAt(@NotNull PsiVariable var, @NotNull PsiElement place) {
     if (!(var instanceof GrVariable) || !(place.getLanguage() == GroovyLanguage.INSTANCE)) return null;

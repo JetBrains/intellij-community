@@ -1,0 +1,46 @@
+### auto-generated section `build kotlin.performanceExtendedPlugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "performanceExtendedPlugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "performanceExtendedPlugin",
+  module_name = "kotlin.performanceExtendedPlugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "@lib//:kotlinc-analysis-api-platform-interface-provided",
+    "@lib//:kotlinc-analysis-api-provided",
+    "@lib//:opentelemetry",
+    "@lib//:opentelemetry-semconv",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/kotlin.searching/base",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry-impl",
+    "//plugins/kotlin/base/code-insight/minimal:kotlin-base-code-insight-minimal",
+    "//plugins/kotlin/kotlin.ide:ide",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/performanceTesting/vcs",
+    "//plugins/kotlin/idea",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":performanceExtendedPlugin_resources"]
+)
+### auto-generated section `build kotlin.performanceExtendedPlugin` end

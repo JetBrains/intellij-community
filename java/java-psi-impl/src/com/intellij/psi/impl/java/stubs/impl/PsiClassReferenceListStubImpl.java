@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.*;
@@ -15,13 +15,18 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
   private final TypeInfo @NotNull [] myInfos;
   private volatile PsiClassType [] myTypes;
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, String @NotNull [] names) {
-    this(type, parent, ContainerUtil.map2Array(names, TypeInfo.class, TypeInfo::new));
+    this(type, parent, ContainerUtil.map2Array(
+      ContainerUtil.filter(names, PsiClassReferenceListStubImpl::isCorrectGenericSequence),
+      TypeInfo.class,
+      TypeInfo::fromString)
+    );
   }
 
   public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, StubElement parent, 
@@ -29,9 +34,9 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     super(parent, type);
     for (TypeInfo info : infos) {
       if (info == null) throw new IllegalArgumentException();
-      if (info.text == null) throw new IllegalArgumentException();
+      if (info.text() == null) throw new IllegalArgumentException();
     }
-    myInfos = infos;
+    myInfos = infos.length == 0 ? TypeInfo.EMPTY_ARRAY : infos;
   }
 
   @Override
@@ -40,13 +45,13 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     if (types == null) {
       myTypes = types = createTypes();
     }
-    return types.clone();
+    return types.length == 0 ? PsiClassType.EMPTY_ARRAY : types.clone();
   }
   
   private boolean shouldSkipSoleObject() {
     final boolean compiled = ((JavaClassReferenceListElementType)getStubType()).isCompiled(this);
-    return compiled && myInfos.length == 1 && myInfos[0].text.equals(CommonClassNames.JAVA_LANG_OBJECT) &&
-           myInfos[0].getTypeAnnotations().isEmpty();
+    return compiled && myInfos.length == 1 && myInfos[0].getKind() == TypeInfo.TypeKind.JAVA_LANG_OBJECT &&
+           myInfos[0].getTypeAnnotations() == TypeAnnotationContainer.EMPTY;
   }
 
   private PsiClassType @NotNull [] createTypes() {
@@ -58,7 +63,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         TypeInfo info = myInfos[i];
         TypeAnnotationContainer annotations = info.getTypeAnnotations();
-        ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text, annotations);
+        ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text(), annotations);
         types[i] = new PsiClassReferenceType(reference, null).annotate(annotations.getProvider(reference));
       }
     }
@@ -69,7 +74,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       final PsiReferenceList psi = getPsi();
       for (int i = 0; i < types.length; i++) {
         try {
-          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myInfos[i].text, psi);
+          final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myInfos[i].text(), psi);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }
@@ -91,10 +96,22 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return types;
   }
 
+  private static boolean isCorrectGenericSequence(@Nullable String text) {
+    if (text == null) return true;
+    int depth = 0;
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '<') depth++;
+      else if (ch == '>') depth--;
+      if (depth < 0) return false;
+    }
+    return depth == 0;
+  }
+
   @Override
   public String @NotNull [] getReferencedNames() {
     if (myInfos.length == 0 || shouldSkipSoleObject()) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return ContainerUtil.map2Array(myInfos, String.class, info -> info.text);
+    return ContainerUtil.map2Array(myInfos, String.class, info -> info.text());
   }
 
   @Override
@@ -103,9 +120,8 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return myInfos.clone();
   }
 
-  @NotNull
   @Override
-  public PsiReferenceList.Role getRole() {
+  public @NotNull PsiReferenceList.Role getRole() {
     return JavaClassReferenceListElementType.elementTypeToRole(getStubType());
   }
 

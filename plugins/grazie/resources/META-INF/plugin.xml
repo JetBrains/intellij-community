@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie">
+<idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
   <id>tanvd.grazi</id>
   <name>Grazie Lite</name>
   <vendor>JetBrains</vendor>
@@ -26,6 +26,9 @@
     <p>Data privacy: all verification is performed locally, inside your IDE.</p>
     ]]></description>
 
+  <dependencies>
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
   <content>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
@@ -43,16 +46,18 @@
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
-                     level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text"/>
+                     level="GRAMMAR_ERROR" key="grazie.grammar.inspection.grammar.text" language=""/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
-                     level="WARNING" key="grazie.detection.inspection.text"/>
+                     level="WEAK WARNING" key="grazie.detection.inspection.text" language=""/>
 
-    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"/>
+    <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"
+                             key="configurable.group.proofread.settings.display.name" bundle="messages.OptionsBundle"/>
 
     <applicationConfigurable parentId="proofread" instance="com.intellij.grazie.ide.ui.grammar.GrazieConfigurable"
-                             id="reference.settingsdialog.project.grazie"/>
+                             id="reference.settingsdialog.project.grazie"
+                             key="grazie.settings.page.name" bundle="messages.GrazieBundle"/>
 
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
@@ -75,6 +80,8 @@
 
     <severitiesProvider implementation="com.intellij.grazie.ide.TextProblemSeverities"/>
     <daemon.statusItemMerger implementation="com.intellij.grazie.ide.TextSeverityMerger"/>
+
+    <spellchecker.lifecycle implementation="com.intellij.grazie.spellcheck.GrazieSpellcheckerLifecycle"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
@@ -106,5 +113,11 @@
     <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
                     beanClass="com.intellij.grazie.config.CheckingContext$DisableChecking"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.textContentModificationTrackerProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true"
+    >
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.TextContentModificationTrackerProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

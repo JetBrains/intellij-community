@@ -4,8 +4,10 @@ package com.intellij.largeFilesEditor.search.searchTask;
 import com.intellij.find.FindManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public abstract class SearchTaskBase implements Runnable {
 
   protected final FileDataProviderForSearch fileDataProviderForSearch;

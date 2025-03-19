@@ -21,7 +21,7 @@ class KotlinMavenArchetypesProviderTest {
         assertTrue("Test data is missing", file.exists())
 
         val json = file.bufferedReader().use {
-            JsonParser().parse(it)
+            JsonParser.parseReader(it)
         }
 
         val versions = KotlinMavenArchetypesProvider("1.0.0-Release-Something-1886", false).extractVersions(json)
@@ -41,7 +41,7 @@ class KotlinMavenArchetypesProviderTest {
         assertTrue("Test data is missing", file.exists())
 
         val json = file.bufferedReader().use {
-            JsonParser().parse(it)
+            JsonParser.parseReader(it)
         }
 
         val versions = KotlinMavenArchetypesProvider("1.1.0-Next-Release-Something-9999", false).extractVersions(json)
@@ -60,7 +60,7 @@ class KotlinMavenArchetypesProviderTest {
         assertTrue("Test data is missing", file.exists())
 
         val json = file.bufferedReader().use {
-            JsonParser().parse(it)
+            JsonParser.parseReader(it)
         }
 
         val versions = KotlinMavenArchetypesProvider("1.0.0-Release-Something-1886", true).extractVersions(json)
@@ -81,7 +81,7 @@ class KotlinMavenArchetypesProviderTest {
         assertTrue("Test data is missing", file.exists())
 
         val json = file.bufferedReader().use {
-            JsonParser().parse(it)
+            JsonParser.parseReader(it)
         }
 
         val versions = KotlinMavenArchetypesProvider("1.9.0-Missing-Release-Something-1886", false).extractVersions(json)
@@ -102,7 +102,7 @@ class KotlinMavenArchetypesProviderTest {
         assertTrue("Test data is missing", file.exists())
 
         val json = file.bufferedReader().use {
-            JsonParser().parse(it)
+            JsonParser.parseReader(it)
         }
 
         val versions = KotlinMavenArchetypesProvider("@snapshot@", false).extractVersions(json)

@@ -15,7 +15,7 @@ import java.util.concurrent.Callable
 
 internal class DocumentationEditSourceAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun targetPointer(dc: DataContext): Pointer<out DocumentationTarget>? = documentationBrowser(dc)?.targetPointer
 

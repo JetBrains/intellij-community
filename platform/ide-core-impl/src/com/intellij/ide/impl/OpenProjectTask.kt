@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.openapi.module.Module
@@ -8,25 +8,27 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
-data class OpenProjectTask internal constructor(
+data class OpenProjectTask @Internal constructor(
   val forceOpenInNewFrame: Boolean,
+  val forceReuseFrame: Boolean = false,
   val projectToClose: Project?,
   val isNewProject: Boolean = false,
   /** Ignored if [isNewProject] is set to false. */
   val useDefaultProjectAsTemplate: Boolean = isNewProject,
-  /** When you just need to open an already created and prepared project; used e.g. by the "new project" action. */
+  /** When you just need to open an already created and prepared project; used e.g., by the "new project" action. */
   val project: Project?,
   val projectName: String?,
-  /** Whether to show welcome screen if failed to open project. */
+  /** Whether to show welcome screen if failed to open a project. */
   val showWelcomeScreen: Boolean,
   val callback: ProjectOpenedCallback?,
   val line: Int,
   val column: Int,
+  @Deprecated("Not used")
   val isRefreshVfsNeeded: Boolean,
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
    *
-   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  **NB**: if a project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
@@ -37,7 +39,7 @@ data class OpenProjectTask internal constructor(
   @TestOnly
   val preloadServices: Boolean,
   val beforeInit: ((Project) -> Unit)?,
-  /** Ignored if project is explicitly set. */
+  /** Ignored if a project is explicitly set. */
   val beforeOpen: (suspend (Project) -> Boolean)?,
   val preparedToOpen: (suspend (Module) -> Unit)?,
   val preventIprLookup: Boolean,
@@ -45,11 +47,13 @@ data class OpenProjectTask internal constructor(
   val implOptions: Any?,
 ) {
   @Internal
-  constructor(forceOpenInNewFrame: Boolean = false,
-              projectToClose: Project? = null,
-              isNewProject: Boolean = false,
-              /** Ignored if [isNewProject] is set to false. */
-              useDefaultProjectAsTemplate: Boolean = isNewProject) : this(
+  constructor(
+    forceOpenInNewFrame: Boolean = false,
+    projectToClose: Project? = null,
+    isNewProject: Boolean = false,
+    /** Ignored if [isNewProject] is set to false. */
+    useDefaultProjectAsTemplate: Boolean = isNewProject,
+  ) : this(
     forceOpenInNewFrame = forceOpenInNewFrame,
     projectToClose = projectToClose,
     isNewProject = isNewProject,
@@ -85,17 +89,18 @@ data class OpenProjectTask internal constructor(
     fun build(): OpenProjectTask = OpenProjectTask()
   }
 
-  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean) = copy(forceOpenInNewFrame = forceOpenInNewFrame)
-  fun withProjectToClose(projectToClose: Project?) = copy(projectToClose = projectToClose)
-  fun asNewProject() = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
-  fun withProject(project: Project?) = copy(project = project)
-  fun withProjectName(projectName: String?) = copy(projectName = projectName)
+  fun withForceOpenInNewFrame(forceOpenInNewFrame: Boolean): OpenProjectTask = copy(forceOpenInNewFrame = forceOpenInNewFrame)
+  fun withProjectToClose(projectToClose: Project?): OpenProjectTask = copy(projectToClose = projectToClose)
+  fun asNewProject(): OpenProjectTask = copy(isNewProject = true, useDefaultProjectAsTemplate = true)
+  fun withProject(project: Project?): OpenProjectTask = copy(project = project)
+  fun withProjectName(projectName: String?): OpenProjectTask = copy(projectName = projectName)
 }
 
-class OpenProjectTaskBuilder internal constructor() {
+class OpenProjectTaskBuilder @PublishedApi internal constructor() {
   var projectName: String? = null
 
   var forceOpenInNewFrame: Boolean = false
+  var forceReuseFrame: Boolean = false
 
   var isNewProject: Boolean = false
   var useDefaultProjectAsTemplate: Boolean? = null
@@ -103,7 +108,7 @@ class OpenProjectTaskBuilder internal constructor() {
   /**
    *  Whether to run [configurators][com.intellij.platform.DirectoryProjectConfigurator] if [isNewProject] or has no modules.
    *
-   *  **NB**: if project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
+   *  **NB**: if a project was [loaded from cache][com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl.loadedFromCache],
    *  but no serialized modules were found, configurators will be run regardless of [runConfigurators] value.
    *  See com.intellij.platform.PlatformProjectOpenProcessor.Companion.isLoadedFromCacheButHasNoModules
    */
@@ -143,10 +148,11 @@ class OpenProjectTaskBuilder internal constructor() {
 
   var project: Project? = null
 
-  internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+  @PublishedApi internal inline fun build(builder: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
     builder()
     return OpenProjectTask(
       forceOpenInNewFrame = forceOpenInNewFrame,
+      forceReuseFrame = forceReuseFrame,
       preloadServices = preloadServices,
 
       projectToClose = projectToClose,
@@ -180,6 +186,6 @@ class OpenProjectTaskBuilder internal constructor() {
 }
 
 @Internal
-fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
+inline fun OpenProjectTask(buildAction: OpenProjectTaskBuilder.() -> Unit): OpenProjectTask {
   return OpenProjectTaskBuilder().build(buildAction)
 }

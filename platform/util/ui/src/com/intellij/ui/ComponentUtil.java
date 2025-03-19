@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,11 +15,16 @@ import java.util.function.Predicate;
 
 public final class ComponentUtil {
   private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
+  private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
+  @ApiStatus.Internal
+  public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
+
+  private ComponentUtil() {}
 
   /**
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }
@@ -82,12 +87,12 @@ public final class ComponentUtil {
 
   /**
    * Searches above in the component hierarchy starting from the specified component.
-   * Note that the initial component is also checked.
+   * Note that the initial component is <b>also checked</b>.
    *
    * @param type      expected class
    * @param component initial component
    * @return a component of the specified type, or {@code null} if the search is failed
-   * @see SwingUtilities#getAncestorOfClass
+   * @see #getStrictParentOfType(Class, Component)
    */
   @Contract(pure = true)
   public static @Nullable <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
@@ -97,6 +102,27 @@ public final class ComponentUtil {
         return (T)component;
       }
       component = component.getParent();
+    }
+    return null;
+  }
+
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is <b>not checked</b>.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see #getParentOfType(Class, Component)
+   */
+  @Contract(pure = true)
+  public static @Nullable <T> T getStrictParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      component = component.getParent();
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
+      }
     }
     return null;
   }
@@ -140,13 +166,13 @@ public final class ComponentUtil {
     return parent instanceof JViewport ? (JViewport)parent : null;
   }
 
-  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
+  public static @NotNull <T extends JComponent> java.util.List<T> findComponentsOfType(@Nullable JComponent parent, @NotNull Class<? extends T> cls) {
     java.util.List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
 
-  private static <T extends JComponent> void findComponentsOfType(JComponent parent,
+  private static <T extends JComponent> void findComponentsOfType(@Nullable JComponent parent,
                                                                   @NotNull Class<T> cls,
                                                                   @NotNull List<? super T> result) {
     if (parent == null) return;
@@ -170,5 +196,60 @@ public final class ComponentUtil {
       return true;
     }
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   *
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
+      return true;
+    }
+    if (component.isShowing()) {
+      return true;
+    }
+
+    while (component != null) {
+      JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+      if (jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(IS_SHOWING))) {
+        return true;
+      }
+      component = component.getParent();
+    }
+
+    return false;
+  }
+
+  /**
+   * Marks a component as showing
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void markAsShowing(@NotNull JComponent component, boolean value) {
+    if (Boolean.getBoolean("java.awt.headless")) {
+      return;
+    }
+    forceMarkAsShowing(component, value);
+  }
+
+  /**
+   * Marks a component as showing regardless of headless mode.
+   *
+   * @see #isShowing(Component, boolean)
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void forceMarkAsShowing(@NotNull JComponent component, boolean value) {
+    component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
+  }
+
+  public static void decorateWindowHeader(@Nullable JRootPane pane) {
+    if (pane != null && SystemInfoRt.isMac) {
+      pane.putClientProperty("apple.awt.windowAppearance",
+                             StartupUiUtil.INSTANCE.isDarkTheme() ? "NSAppearanceNameVibrantDark" : "NSAppearanceNameVibrantLight");
+    }
   }
 }

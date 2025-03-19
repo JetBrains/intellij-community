@@ -1,0 +1,7 @@
+// IGNORE_K1
+fun foo(): String {
+    val string = $$"""$def"""
+    return $$"""
+        abc$${string}gh
+    """.trimIndent()
+}

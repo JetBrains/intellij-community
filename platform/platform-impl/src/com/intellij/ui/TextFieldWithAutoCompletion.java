@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -32,10 +17,12 @@ import java.util.Collection;
 
 /**
  * Text field with completion from a list of values.
- *
- * Differs from {@link TextFieldWithCompletion} in 2 aspects:
- * 1. only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});
- * 2. allows to change completion variants {@link #setVariants(Collection)}.
+ * <p>
+ * Differs from {@link TextFieldWithCompletion} in two aspects:
+ * <ol>
+ * <li>only accepts instances of {@link TextFieldWithAutoCompletionListProvider} (and not other implementations of {@link com.intellij.util.textCompletion.TextCompletionProvider});</li>
+ * <li>allows to change completion variants {@link #setVariants(Collection)}.</li>
+ * </ol>
  *
  * Completion is implemented via {@link com.intellij.util.textCompletion.TextCompletionContributor}.
  *
@@ -43,7 +30,7 @@ import java.util.Collection;
  */
 public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
   public static final TextFieldWithAutoCompletionListProvider EMPTY_COMPLETION = new StringsCompletionProvider(null, null);
-  @NotNull private final TextFieldWithAutoCompletionListProvider<T> myProvider;
+  private final @NotNull TextFieldWithAutoCompletionListProvider<T> myProvider;
 
   public TextFieldWithAutoCompletion(@Nullable Project project,
                                      @NotNull TextFieldWithAutoCompletionListProvider<T> provider,
@@ -61,20 +48,18 @@ public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
     myProvider = provider;
   }
 
-  @NotNull
-  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
-                                                           @NotNull Collection<String> items,
-                                                           boolean showCompletionHint,
-                                                           @Nullable String text) {
+  public static @NotNull TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                                    @NotNull Collection<String> items,
+                                                                    boolean showCompletionHint,
+                                                                    @Nullable String text) {
     return create(project, items, null, showCompletionHint, text);
   }
 
-  @NotNull
-  public static TextFieldWithAutoCompletion<String> create(@Nullable Project project,
-                                                           @NotNull Collection<String> items,
-                                                           @Nullable Icon icon,
-                                                           boolean showCompletionHint,
-                                                           @Nullable String text) {
+  public static @NotNull TextFieldWithAutoCompletion<String> create(@Nullable Project project,
+                                                                    @NotNull Collection<String> items,
+                                                                    @Nullable Icon icon,
+                                                                    boolean showCompletionHint,
+                                                                    @Nullable String text) {
     return new TextFieldWithAutoCompletion<>(project, new StringsCompletionProvider(items, icon), showCompletionHint, text);
   }
 
@@ -97,7 +82,7 @@ public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
   }
 
   public static class StringsCompletionProvider extends TextFieldWithAutoCompletionListProvider<String> implements DumbAware {
-    @Nullable private final Icon myIcon;
+    private final @Nullable Icon myIcon;
 
     public StringsCompletionProvider(@Nullable Collection<String> variants, @Nullable Icon icon) {
       super(variants);
@@ -114,9 +99,8 @@ public class TextFieldWithAutoCompletion<T> extends TextFieldWithCompletion {
       return myIcon;
     }
 
-    @NotNull
     @Override
-    protected String getLookupString(@NotNull String item) {
+    protected @NotNull String getLookupString(@NotNull String item) {
       return item;
     }
   }

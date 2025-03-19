@@ -1,25 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.Language;
 
 import java.util.function.BiConsumer;
 
@@ -39,10 +29,6 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
 
-  public void assertIntentionAvailable(String intentionName) {
-    assertTrue(ContainerUtil.exists(myFixture.getAvailableIntentions(), action -> action.getText().equals(intentionName)));
-  }
-
   static void addCheckerAnnotations(JavaCodeInsightTestFixture fixture) {
     fixture.addClass("package org.checkerframework.checker.nullness.qual;import java.lang.annotation.*;" +
                      "@Target(ElementType.TYPE_USE)public @interface NonNull {}");
@@ -55,5 +41,49 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
                      "  Class<? extends Annotation> value();" +
                      "  TypeUseLocation[] locations() default {TypeUseLocation.ALL};" +
                      "}");
+  }
+
+  static void addJetBrainsNotNullByDefault(JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("""
+                         package org.jetbrains.annotations;
+                         
+                         import java.lang.annotation.*;
+                         
+                         @Target({ElementType.TYPE, ElementType.PACKAGE})\s
+                         public @interface NotNullByDefault {}""");
+  }
+
+  static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    fixture.addClass(nullMarked);
+  }
+
+  public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+   setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
+ }
+
+  private static void setupCustomAnnotations(String pkg, String target, JavaCodeInsightTestFixture fixture) {
+   fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface Nullable { }");
+   fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target(" + target + ") public @interface NotNull { }");
+   setCustomAnnotations(fixture.getProject(), fixture.getTestRootDisposable(), pkg + ".NotNull", pkg + ".Nullable");
+ }
+
+  static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {
+   NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(project);
+   nnnManager.setNotNulls(notNull);
+   nnnManager.setNullables(nullable);
+   Disposer.register(parentDisposable, () -> {
+     nnnManager.setNotNulls();
+     nnnManager.setNullables();
+   });
+ }
+
+  static void setupAmbiguousAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+    setupCustomAnnotations(pkg, "{ElementType.METHOD, ElementType.TYPE_USE}", fixture);
   }
 }

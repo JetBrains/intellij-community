@@ -1,12 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
-import com.intellij.CommonBundle
-import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
@@ -15,6 +11,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.actions.RefreshAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -22,10 +19,11 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.cleanActionText
+import com.intellij.vcsUtil.VcsImplUtil
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
 
-object CheckinActionUtil {
+internal object CheckinActionUtil {
   private val LOG = logger<CheckinActionUtil>()
 
   fun updateCommonCommitAction(e: AnActionEvent) {
@@ -39,7 +37,10 @@ object CheckinActionUtil {
       return
     }
 
-    presentation.isEnabled = !ProjectLevelVcsManager.getInstance(project).isBackgroundVcsOperationRunning
+    val projectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+    val singleVcs = projectLevelVcsManager.singleVCS
+    presentation.isEnabled = !projectLevelVcsManager.isBackgroundVcsOperationRunning &&
+                             (singleVcs == null || !singleVcs.isCommitActionDisabled)
     presentation.isVisible = true
   }
 
@@ -83,10 +84,7 @@ object CheckinActionUtil {
                                 pathsToCommit: List<FilePath>,
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
-    FileDocumentManager.getInstance().saveAllDocuments()
-    runBlockingModal(project, CommonBundle.message("title.save.project")) {
-      saveSettings(project)
-    }
+    RefreshAction.saveAllAndInvokeCustomRefreshersOnEdt(project)
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
@@ -113,13 +111,15 @@ object CheckinActionUtil {
                                  selectedUnversioned: List<FilePath>,
                                  initialChangeList: LocalChangeList,
                                  pathsToCommit: List<FilePath>): Collection<Any> {
+    val resolvedConflictPaths = ChangeListManager.getInstance(project).resolvedConflictPaths
     if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
-      val manager = ChangeListManager.getInstance(project)
-      val changesToCommit = pathsToCommit.flatMap { manager.getChangesIn(it) }.toSet()
-      return initialChangeList.changes.intersect(changesToCommit)
+      val allChanges = ChangeListManager.getInstance(project).allChanges
+      val changesToCommit = VcsImplUtil.filterChangesUnder(allChanges, pathsToCommit).toSet()
+      return ContainerUtil.concat(resolvedConflictPaths, initialChangeList.changes.intersect(changesToCommit).toList())
     }
     else {
-      return ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      val changesAndUnversioned = ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      return ContainerUtil.concat(resolvedConflictPaths, changesAndUnversioned)
     }
   }
 
@@ -132,21 +132,16 @@ object CheckinActionUtil {
   }
 
   fun getInitiallySelectedChangeListFor(project: Project, pathsToCommit: List<FilePath>): LocalChangeList {
-    val manager = ChangeListManager.getInstance(project)
+    val manager = ChangeListManagerEx.getInstanceEx(project)
 
     val defaultChangeList = manager.defaultChangeList
-    val defaultListChanges = defaultChangeList.changes
-
-    var result: LocalChangeList? = null
-    for (filePath in pathsToCommit) {
-      val changes = manager.getChangesIn(filePath)
-      if (changes.any { defaultListChanges.contains(it) }) return defaultChangeList
-
-      if (result == null) {
-        result = changes.firstNotNullOfOrNull { manager.getChangeList(it) }
-      }
+    val selectedInDefault = VcsImplUtil.filterChangesUnder(defaultChangeList.changes, pathsToCommit)
+    if (selectedInDefault.isNotEmpty) {
+      return defaultChangeList
     }
 
-    return result ?: defaultChangeList
+    val selectedChanges = VcsImplUtil.filterChangesUnder(manager.allChanges, pathsToCommit)
+    val changeLists = manager.getAffectedLists(selectedChanges.toList())
+    return changeLists.singleOrNull() ?: defaultChangeList
   }
 }

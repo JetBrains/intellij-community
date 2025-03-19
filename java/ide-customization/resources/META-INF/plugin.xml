@@ -13,8 +13,8 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
-    <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>
+    <applicationActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsScheduler$MyStartupActivity"/>
 
     <projectViewPane implementation="com.intellij.ide.projectView.impl.ProjectViewPane"/>
@@ -40,11 +40,7 @@
 
     <projectTemplatesFactory implementation="com.intellij.platform.templates.ArchivedTemplatesFactory"/>
     <applicationService serviceImplementation="com.intellij.platform.templates.ProjectTemplateExportable"/>
-    <exportable serviceInterface="com.intellij.platform.templates.ProjectTemplateExportable"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
-
-    <!-- this depends on TemplateLanguageConfigurable which isn't registered in LangExtensions, so it should go here as well -->
-    <errorQuickFixProvider implementation="com.intellij.psi.templateLanguages.TemplateLanguageErrorQuickFixProvider"/>
 
     <moduleRendererFactory implementation="com.intellij.ide.util.DefaultModuleRendererFactory" order="last,before platform"/>
 
@@ -58,10 +54,14 @@
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"
                         overrides="true"/>
+
+    <codeInsight.codeVision.settings.defaults implementation="com.intellij.ide.java.JavaCodeVisionSettingsDefaults"/>
   </extensions>
 
   <actions>
-    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
+    <action id="NewElement" class="com.intellij.ide.actions.NewElementAction">
+      <add-to-group group-id="ProjectViewToolbar" anchor="first"/>
+    </action>
 
     <group id="OpenProjectGroup">
       <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>

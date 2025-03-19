@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.facet.Facet;
@@ -42,8 +42,7 @@ public class FacetBasedDetectedFrameworkDescriptionInWizard<F extends Facet, C e
   }
 
   @Override
-  @NotNull
-  protected Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
+  protected @NotNull Collection<? extends Facet> getExistentFacets(FacetTypeId<?> underlyingFacetType) {
     return Collections.emptyList();
   }
 }

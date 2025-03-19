@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.python.tools` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "tools_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "tools",
+  module_name = "intellij.python.tools",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//python/python-psi-api:psi",
+    "//python:python-community-impl",
+    "@lib//:guava",
+    "//python/python-sdk:sdk",
+    "@lib//:kotlin-script-runtime",
+    "@lib//ant/lib:ant-antlr-provided",
+    "//python/testFramework:community-testFramework",
+  ],
+  runtime_deps = [
+    ":tools_resources",
+    "//python:pycharm-community",
+    "//python/pluginCore:community-plugin",
+    "//platform/build-scripts/downloader:buildScripts-downloader",
+  ]
+)
+### auto-generated section `build intellij.python.tools` end

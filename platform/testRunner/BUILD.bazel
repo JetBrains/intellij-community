@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.platform.testRunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "testRunner_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testRunner",
+  module_name = "intellij.platform.testRunner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/diff-impl",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":testRunner_resources"]
+)
+
+jvm_library(
+  name = "testRunner_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":testRunner"],
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//platform/diff-impl",
+    "@lib//:fastutil-min",
+    "@lib//:junit4",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [":testRunner_resources"]
+)
+
+jvm_test(
+  name = "testRunner_test",
+  runtime_deps = [":testRunner_test_lib"]
+)
+### auto-generated section `build intellij.platform.testRunner` end

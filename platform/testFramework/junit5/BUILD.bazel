@@ -1,0 +1,86 @@
+### auto-generated section `build intellij.platform.testFramework.junit5` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "junit5_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "junit5_test_resources",
+  files = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
+jvm_library(
+  name = "junit5",
+  module_name = "intellij.platform.testFramework.junit5",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-impl",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5",
+    "//platform/analysis-api:analysis",
+    "@lib//:junit5Jupiter",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/testFramework/common",
+    "//java/java-runtime:rt",
+    "//platform/util/coroutines",
+    "@lib//:opentest4j",
+    "//platform/testFramework/core",
+    "//platform/util/jdom",
+  ],
+  exports = ["//platform/testFramework/common"],
+  runtime_deps = [":junit5_resources"]
+)
+
+jvm_library(
+  name = "junit5_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":junit5"],
+  deps = [
+    "//platform/core-impl",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5",
+    "//platform/analysis-api:analysis",
+    "@lib//:junit5Jupiter",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework/common",
+    "//java/java-runtime:rt",
+    "//platform/util/coroutines",
+    "@lib//:junit5Params",
+    "@lib//:opentest4j",
+    "//platform/testFramework/core",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [
+    ":junit5_resources",
+    ":junit5_test_resources",
+  ]
+)
+
+jvm_test(
+  name = "junit5_test",
+  runtime_deps = [":junit5_test_lib"]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5` end

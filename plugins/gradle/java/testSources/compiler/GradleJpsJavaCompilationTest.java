@@ -40,9 +40,9 @@ public class GradleJpsJavaCompilationTest extends GradleJpsCompilingTestCase {
     importProject(
       createBuildScriptBuilder()
         .withJavaPlugin()
+        .sourceCompatibility("7")
+        .targetCompatibility("7")
         .withPrefix(it -> {
-          it.assign("sourceCompatibility", "7");
-          it.assign("targetCompatibility", "7");
           it.call("compileJava", it1 -> {
             it1.assign("sourceCompatibility", "8");
             it1.assign("targetCompatibility", "8");

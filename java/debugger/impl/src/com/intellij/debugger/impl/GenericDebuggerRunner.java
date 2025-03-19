@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -11,13 +11,16 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.impl.statistics.ProgramRunnerUsageCollector;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.execution.runners.JvmPatchableProgramRunner;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfileState;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
@@ -40,14 +43,13 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
   private static final Logger LOG = Logger.getInstance(GenericDebuggerRunner.class);
 
   @Override
-  public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
+  public boolean canRun(final @NotNull String executorId, final @NotNull RunProfile profile) {
     return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
            && !(profile instanceof RunConfigurationWithSuppressedDefaultDebugAction);
   }
 
   @Override
-  @NotNull
-  public String getRunnerId() {
+  public @NotNull String getRunnerId() {
     return DebuggingRunnerData.DEBUGGER_RUNNER_ID;
   }
 
@@ -58,18 +60,23 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       return;
     }
 
-    ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
+    Project project = environment.getProject();
+    ExecutionManager executionManager = ExecutionManager.getInstance(project);
     RunProfile runProfile = environment.getRunProfile();
+    StructuredIdeActivity activity = ProgramRunnerUsageCollector.INSTANCE.startExecute(project, this, runProfile);
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
         state instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, state, (ignored) -> {
-        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment);
+        return doExecuteAsync((TargetEnvironmentAwareRunProfileState)state, environment).onSuccess((RunContentDescriptor descr) -> {
+          ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, true);
+        });
       });
     }
     else {
       executionManager.startRunProfile(environment, state, state1 -> {
         return doExecute(state, environment);
       });
+      ProgramRunnerUsageCollector.INSTANCE.finishExecute(activity, this, runProfile, false);
     }
   }
 
@@ -85,9 +92,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return createContentDescriptor(state, env);
   }
 
-  @NotNull
-  protected Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
-                                                                   @NotNull ExecutionEnvironment env)
+  protected @NotNull Promise<@Nullable RunContentDescriptor> doExecuteAsync(@NotNull TargetEnvironmentAwareRunProfileState state,
+                                                                            @NotNull ExecutionEnvironment env)
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
@@ -98,9 +104,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     });
   }
 
-  @Nullable
-  protected RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
-                                                         @NotNull ExecutionEnvironment environment) throws ExecutionException {
+  protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
+                                                                   @NotNull ExecutionEnvironment environment) throws ExecutionException {
     if (state instanceof JavaCommandLine) {
       JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
       boolean isPollConnection = true;
@@ -133,35 +138,32 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     return null;
   }
 
-  @Nullable
-  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
-                                                      @NotNull ExecutionEnvironment env,
-                                                      RemoteConnection connection,
-                                                      boolean pollConnection) throws ExecutionException {
+  protected @Nullable RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                                @NotNull ExecutionEnvironment env,
+                                                                RemoteConnection connection,
+                                                                boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(state, env, connection, pollConnection ? DebugEnvironment.LOCAL_START_TIMEOUT : 0);
   }
 
 
-  @Nullable
-  protected RunContentDescriptor attachVirtualMachine(RunProfileState state,
-                                                      @NotNull ExecutionEnvironment env,
-                                                      RemoteConnection connection,
-                                                      long pollTimeout) throws ExecutionException {
+  protected @Nullable RunContentDescriptor attachVirtualMachine(RunProfileState state,
+                                                                @NotNull ExecutionEnvironment env,
+                                                                RemoteConnection connection,
+                                                                long pollTimeout) throws ExecutionException {
+    DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
+    DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
+    if (debuggerSession == null) {
+      return null;
+    }
+
     AtomicReference<ExecutionException> ex = new AtomicReference<>();
     AtomicReference<RunContentDescriptor> result = new AtomicReference<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      DebugEnvironment environment = new DefaultDebugEnvironment(env, state, connection, pollTimeout);
       try {
-        final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(env.getProject()).attachVirtualMachine(environment);
-        if (debuggerSession == null) {
-          return;
-        }
-
-        final DebugProcessImpl debugProcess = debuggerSession.getProcess();
+        DebugProcessImpl debugProcess = debuggerSession.getProcess();
         result.set(XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
           @Override
-          @NotNull
-          public XDebugProcess start(@NotNull XDebugSession session) {
+          public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
             ExecutionResult executionResult = debugProcess.getExecutionResult();
             sessionImpl.addExtraActions(executionResult.getActions());
@@ -177,7 +179,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
       catch (ExecutionException e) {
         ex.set(e);
       }
-    });
+    }, ModalityState.any());
     if (ex.get() != null) throw ex.get();
     return result.get();
   }

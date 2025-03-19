@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,8 +18,10 @@ import java.util.Objects;
 public final class RefactoringChangeUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringChangeUtil.class);
 
-  public static PsiType getTypeByExpression(PsiExpression expr) {
-    PsiType type = expr != null ? expr.getType() : null;
+  @Contract("null -> null")
+  public static PsiType getTypeByExpression(@Nullable PsiExpression expr) {
+    if (expr == null) return null;
+    PsiType type = expr.getType();
     if (type == null) {
       if (expr instanceof PsiArrayInitializerExpression) {
         PsiExpression[] initializers = ((PsiArrayInitializerExpression)expr).getInitializers();
@@ -42,7 +45,7 @@ public final class RefactoringChangeUtil {
 
   public static PsiReferenceExpression qualifyReference(@NotNull PsiReferenceExpression referenceExpression,
                                                         @NotNull PsiMember member,
-                                                        @Nullable final PsiClass qualifyingClass) throws IncorrectOperationException {
+                                                        final @Nullable PsiClass qualifyingClass) throws IncorrectOperationException {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
     while (methodCallExpression != null) {
@@ -109,8 +112,7 @@ public final class RefactoringChangeUtil {
    * @return class based on the type of the qualifier expression,
    *         or containing class, if {@code expression} is not qualified
    */
-  @Nullable
-  public static PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
+  public static @Nullable PsiClass getQualifierClass(@NotNull PsiReferenceExpression expression) {
     PsiExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression != null) {
       PsiType expressionType = qualifierExpression.getType();

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -19,16 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
+public final class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.convert.method.to.property");
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return PyPsiBundle.message("INTN.convert.method.to.property");
   }
 
@@ -97,11 +96,30 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
       final PsiElement usageElement = usage.getElement();
       if (usageElement instanceof PyReferenceExpression) {
         final PsiElement parent = usageElement.getParent();
-        if (parent instanceof PyCallExpression) {
-          final PyArgumentList argumentList = ((PyCallExpression)parent).getArgumentList();
-          if (argumentList != null) argumentList.delete();
+        if (parent instanceof PyCallExpression callExpression) {
+          convertCallExpToRefExpr(callExpression);
         }
       }
+    }
+  }
+
+  private static void convertCallExpToRefExpr(PyCallExpression callExpression) {
+    PyExpression callee = callExpression.getCallee();
+    if (callee == null) {
+      throw new PsiInvalidElementAccessException(callExpression);
+    }
+
+    String newReferenceExpressionText = callee.getText();
+
+    PyExpression newExpression = PyElementGenerator.getInstance(callExpression.getProject())
+      .createExpressionFromText(LanguageLevel.forElement(callExpression), newReferenceExpressionText);
+
+    if (newExpression instanceof PyReferenceExpression referenceExpression) {
+      callExpression.replace(referenceExpression);
+    }
+    else {
+      throw new IllegalStateException(
+        "Failed to create reference expression from call expression with text: \"" + callExpression.getText() + "\"");
     }
   }
 }

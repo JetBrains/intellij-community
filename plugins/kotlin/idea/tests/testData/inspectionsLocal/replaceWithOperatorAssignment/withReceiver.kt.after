@@ -1,0 +1,5 @@
+data class Data(var quantity:Int)
+
+fun increment(item:Data) {
+    item.quantity += 1
+}

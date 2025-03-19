@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.lang.cacheBuilder.VersionedWordsScanner;
@@ -8,21 +8,27 @@ import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@OverrideOnly
 public abstract class ScanningIdIndexer implements IdIndexer {
 
   protected abstract WordsScanner createScanner();
 
   @Override
-  @NotNull
-  public Map<IdIndexEntry, Integer> map(@NotNull final FileContent inputData) {
+  public @NotNull Map<IdIndexEntry, Integer> map(final @NotNull FileContent inputData) {
     final CharSequence chars = inputData.getContentAsText();
-    final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
     final IdDataConsumer consumer = new IdDataConsumer();
-    createScanner().processWords(chars, new Processor<>() {
+    createScanner().processWords(chars, createProcessor(chars, consumer));
+    return consumer.getResult();
+  }
+
+  protected static @NotNull Processor<WordOccurrence> createProcessor(@NotNull CharSequence chars, @NotNull IdDataConsumer consumer) {
+    final char[] charsArray = CharArrayUtil.fromSequenceWithoutCopying(chars);
+    return new Processor<>() {
       @Override
       public boolean process(final WordOccurrence t) {
         if (charsArray != null && t.getBaseText() == chars) {
@@ -34,7 +40,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
         return true;
       }
 
-      private int convertToMask(final WordOccurrence.Kind kind) {
+      private static int convertToMask(final WordOccurrence.Kind kind) {
         if (kind == null) {
           return UsageSearchContext.ANY;
         }
@@ -44,8 +50,7 @@ public abstract class ScanningIdIndexer implements IdIndexer {
         if (kind == WordOccurrence.Kind.FOREIGN_LANGUAGE) return UsageSearchContext.IN_FOREIGN_LANGUAGES;
         return 0;
       }
-    });
-    return consumer.getResult();
+    };
   }
 
   @Override

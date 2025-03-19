@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text;
 
 import com.intellij.diff.util.DiffUtil;
@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
 
 final class LineOffsetsDocumentWrapper implements LineOffsets {
-  @NotNull private final Document myDocument;
+  private final @NotNull Document myDocument;
 
   LineOffsetsDocumentWrapper(@NotNull Document document) {
     myDocument = document;

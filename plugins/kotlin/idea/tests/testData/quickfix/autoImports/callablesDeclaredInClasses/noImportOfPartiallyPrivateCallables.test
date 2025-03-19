@@ -1,0 +1,24 @@
+// FILE: main.before.kt
+// "Import" "false"
+// ERROR: Unresolved reference: fromObject
+// IGNORE_K1
+package foo
+
+fun usage() {
+    <caret>fromObject()
+}
+
+// FILE: dependency.before.kt
+package bar
+
+interface Interface {
+    fun fromObject() {}
+}
+
+private object PrivateObjectWithPublicCallable : Interface
+
+open class OpenClass {
+    private fun fromObject() {}
+}
+
+object PublicObjectWithPrivateCallable : OpenClass() 

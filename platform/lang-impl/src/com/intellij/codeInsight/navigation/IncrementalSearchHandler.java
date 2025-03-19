@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
@@ -51,7 +52,7 @@ public final class IncrementalSearchHandler {
 
   private static boolean ourActionsRegistered = false;
 
-  private static class PerHintSearchData {
+  private static final class PerHintSearchData {
     final Project project;
     final JLabel label;
 
@@ -65,7 +66,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  private static class PerEditorSearchData {
+  private static final class PerEditorSearchData {
     LightweightHint hint;
     @NlsContexts.Label String lastSearch;
   }
@@ -176,7 +177,7 @@ public final class IncrementalSearchHandler {
     int y = - hint.getComponent().getPreferredSize().height;
     Point p = SwingUtilities.convertPoint(component,x,y,component.getRootPane().getLayeredPane());
 
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManagerImpl.HIDE_BY_ESCAPE | HintManagerImpl.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p).setAwtTooltip(false));
+    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, p, HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_TEXT_CHANGE, 0, false, new HintHint(editor, p).setAwtTooltip(false));
 
     PerHintSearchData hintData = new PerHintSearchData(project, label2);
     hintData.searchStart = editor.getCaretModel().getOffset();
@@ -217,7 +218,7 @@ public final class IncrementalSearchHandler {
       final boolean caseSensitive = detectSmartCaseSensitive(prefix);
 
       if (acceptableRegExp(prefix)) {
-        @NonNls final StringBuilder buf = new StringBuilder(prefix.length());
+        final @NonNls StringBuilder buf = new StringBuilder(prefix.length());
         final int len = prefix.length();
 
         for (int i = 0; i < len; ++i) {
@@ -313,7 +314,7 @@ public final class IncrementalSearchHandler {
     return hasUpperCase;
   }
 
-  private static class MyLabel extends JLabel {
+  private static final class MyLabel extends JLabel {
     MyLabel(@NlsContexts.Label String text) {
       super(text);
       this.setBackground(HintUtil.getInformationColor());
@@ -322,7 +323,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  private static class MyPanel extends JPanel{
+  private static final class MyPanel extends JPanel{
     private final Component myLeft;
 
     MyPanel(Component left) {
@@ -342,7 +343,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class MyTypedHandler extends TypedActionHandlerBase {
+  public static final class MyTypedHandler extends TypedActionHandlerBase {
     public MyTypedHandler(@Nullable TypedActionHandler originalHandler) {
       super(originalHandler);
     }
@@ -370,7 +371,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class BackSpaceHandler extends EditorActionHandler{
+  public static final class BackSpaceHandler extends EditorActionHandler{
     private final EditorActionHandler myOriginalHandler;
 
     public BackSpaceHandler(EditorActionHandler originalAction) {
@@ -396,7 +397,7 @@ public final class IncrementalSearchHandler {
     }
   }
 
-  public static class UpHandler extends EditorActionHandler {
+  public static final class UpHandler extends EditorActionHandler {
     private final EditorActionHandler myOriginalHandler;
 
     public UpHandler(EditorActionHandler originalHandler) {

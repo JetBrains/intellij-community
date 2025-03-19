@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,8 +32,7 @@ public class JavaArrangementParseInfo {
   private final HashMap<PsiField, JavaElementArrangementEntry> myFields = new LinkedHashMap<>();
   private final Map<PsiField, Set<PsiField>> myFieldDependencies = new HashMap<>();
 
-  @NotNull
-  public List<JavaElementArrangementEntry> getEntries() {
+  public @NotNull List<JavaElementArrangementEntry> getEntries() {
     return myEntries;
   }
 
@@ -40,8 +40,7 @@ public class JavaArrangementParseInfo {
     myEntries.add(entry);
   }
 
-  @NotNull
-  public Collection<JavaArrangementPropertyInfo> getProperties() {
+  public @NotNull Collection<JavaArrangementPropertyInfo> getProperties() {
     return myProperties.values();
   }
 
@@ -50,8 +49,7 @@ public class JavaArrangementParseInfo {
    *            {@link ArrangementEntryDependencyInfo#getDependentEntriesInfos() calls another method}, it calls other methods
    *            and so forth
    */
-  @NotNull
-  public List<ArrangementEntryDependencyInfo> getMethodDependencyRoots() {
+  public @NotNull List<ArrangementEntryDependencyInfo> getMethodDependencyRoots() {
     if (myRebuildMethodDependencies) {
       myMethodDependencyRoots.clear();
       Map<PsiMethod, ArrangementEntryDependencyInfo> cache = new HashMap<>();
@@ -66,9 +64,8 @@ public class JavaArrangementParseInfo {
     return myMethodDependencyRoots;
   }
 
-  @Nullable
-  private ArrangementEntryDependencyInfo buildMethodDependencyInfo(@NotNull final PsiMethod method,
-                                                                   @NotNull Map<PsiMethod, ArrangementEntryDependencyInfo> cache) {
+  private @Nullable ArrangementEntryDependencyInfo buildMethodDependencyInfo(final @NotNull PsiMethod method,
+                                                                             @NotNull Map<PsiMethod, ArrangementEntryDependencyInfo> cache) {
     JavaElementArrangementEntry entry = myMethodEntriesMap.get(method);
     if (entry == null) {
       return null;
@@ -116,8 +113,7 @@ public class JavaArrangementParseInfo {
     getPropertyInfo(propertyName, className).addSetter(entry);
   }
 
-  @NotNull
-  private JavaArrangementPropertyInfo getPropertyInfo(@NotNull String propertyName, @NotNull String className) {
+  private @NotNull JavaArrangementPropertyInfo getPropertyInfo(@NotNull String propertyName, @NotNull String className) {
     Pair<String, String> key = Pair.create(propertyName, className);
     JavaArrangementPropertyInfo propertyInfo = myProperties.get(key);
     if (propertyInfo == null) {
@@ -146,8 +142,7 @@ public class JavaArrangementParseInfo {
     methods.add(new OverriddenMethodPair(baseMethod, overridingMethod));
   }
 
-  @NotNull
-  public List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
+  public @NotNull List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
     List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<>();
     for (Map.Entry<PsiClass, List<OverriddenMethodPair>> entry: myOverriddenMethods.entrySet()) {
       String name = entry.getKey().getName();
@@ -158,8 +153,8 @@ public class JavaArrangementParseInfo {
         JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(name);
         result.add(info);
 
-        List<OverriddenMethodPair> value = listEntry.getValue();
-        value.sort(Comparator.comparingInt(pair -> pair.overridden.getTextOffset()));
+        List<OverriddenMethodPair> value = ContainerUtil.sorted(listEntry.getValue(),
+                Comparator.comparingInt(pair -> pair.overridden.getTextOffset()));
         for (OverriddenMethodPair methodPair: value) {
           JavaElementArrangementEntry methodEntry = myMethodEntriesMap.get(methodPair.overriding);
           info.addMethodEntry(methodEntry);
@@ -197,13 +192,11 @@ public class JavaArrangementParseInfo {
     fields.add(usedInInitialization);
   }
 
-  @NotNull
-  public List<ArrangementEntryDependencyInfo> getFieldDependencyRoots() {
+  public @NotNull List<ArrangementEntryDependencyInfo> getFieldDependencyRoots() {
      return new FieldDependenciesManager(myFieldDependencies, myFields).getRoots();
   }
 
-  @NotNull
-  public Collection<JavaElementArrangementEntry> getFields() {
+  public @NotNull Collection<JavaElementArrangementEntry> getFields() {
     return myFields.values();
   }
 

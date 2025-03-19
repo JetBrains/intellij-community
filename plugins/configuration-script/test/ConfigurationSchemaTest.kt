@@ -1,12 +1,13 @@
 package com.intellij.configurationScript
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.configurationScript.providers.PluginsConfiguration
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.updateSettings.impl.PluginsConfiguration
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil.getCommunityPath
@@ -150,7 +151,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
     val schemaObject = JsonSchemaReader.readFromFile(project, schemaFile)
     assertThat(schemaObject).isNotNull
 
-    return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element)
+    return JsonSchemaCompletionContributor.getCompletionVariants(schemaObject, element!!, element, CompletionType.BASIC)
   }
 }
 

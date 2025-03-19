@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public PyHighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {
@@ -55,8 +56,7 @@ public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<Psi
     highlightExitPoints((PyReturnStatement)parent, function);
   }
 
-  @Nullable
-  private static PsiElement getExitTarget(PsiElement exitStatement) {
+  private static @Nullable PsiElement getExitTarget(PsiElement exitStatement) {
     if (exitStatement instanceof PyReturnStatement) {
       return PsiTreeUtil.getParentOfType(exitStatement, PyFunction.class);
     }

@@ -1,34 +1,104 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
-import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.util.DefaultIndenter
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import org.jetbrains.intellij.build.BuildPaths
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator
+import org.apache.commons.io.output.ByteArrayOutputStream
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
+import org.jetbrains.intellij.build.io.ZipFileWriter
 import java.io.File
-import java.io.OutputStream
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 
-internal val Collection<DistributionFileEntry>.includedModules: Sequence<String>
-  get() = asSequence().mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
+internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
+  return entries.mapNotNull { (it as? ModuleOutputEntry)?.moduleName }.distinct()
+}
 
-/**
- * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
- * contains an array of [DistributionFileEntry].
- */
-internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
-  val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
+internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
+  zipFileWriter.uncompressedData("platform.yaml", buildPlatformContentReport(contentReport, buildPaths, context.getDistFiles(os = null, arch = null)))
+  zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
+  zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
+}
+
+private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
+  val out = ByteArrayOutputStream()
+  val writer = createYamlGenerator(out)
+
+  writer.writeStartArray()
+  for ((plugin, entries) in pluginToEntries) {
+    val fileToPresentablePath = HashMap<Path, String>()
+
+    val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
+    for (entry in entries) {
+      val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
+        if (entry.path.startsWith(plugin.dir)) {
+          plugin.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
+        }
+        else {
+          shortenAndNormalizePath(it, buildPaths)
+        }
+      }
+      fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
+    }
+
+    writer.writeStartObject()
+    writer.writeStringField("mainModule", plugin.layout.mainModule)
+    if (plugin.os != null) {
+      writer.writeStringField("os", plugin.os.osId)
+    }
+
+    val contentModuleReason = "<- ${plugin.layout.mainModule} (plugin content)"
+
+    writer.writeArrayFieldStart("content")
+    for ((filePath, fileEntries) in fileToEntry) {
+      writer.writeStartObject()
+      writer.writeStringField("name", filePath)
+      writeProjectLibs(fileEntries, writer, buildPaths)
+
+      writeModules(
+        writer = writer,
+        fileEntries = fileEntries.asSequence().filter { it !is ModuleOutputEntry || it.reason != contentModuleReason },
+        buildPaths = buildPaths
+      )
+      writeModules(
+        writer = writer,
+        fileEntries = fileEntries.asSequence().filter { it !is ModuleOutputEntry || it.reason == contentModuleReason },
+        buildPaths = buildPaths,
+        fieldName = "contentModules",
+        writeReason = false,
+      )
+
+      writer.writeEndObject()
+    }
+    writer.writeEndArray()
+
+    writer.writeEndObject()
+  }
+  writer.writeEndArray()
+
+  writer.close()
+  return out.toByteArray()
+}
+
+private fun createYamlGenerator(out: ByteArrayOutputStream): YAMLGenerator {
+  return YAMLFactory().createGenerator(out)
+    .useDefaultPrettyPrinter()
+    .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+}
+
+private fun buildPlatformContentReport(contentReport: ContentReport, buildPaths: BuildPaths, distFiles: Collection<DistFile>): ByteArray {
+  val out = ByteArrayOutputStream()
+  val writer = createYamlGenerator(out)
   val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
   val fileToPresentablePath = HashMap<Path, String>()
-  for (entry in entries) {
-    val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) { shortenAndNormalizePath(it, buildPaths) }
+  for (entry in contentReport.platform) {
+    val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
+      shortenAndNormalizePath(it, buildPaths)
+    }
     fileToEntry.computeIfAbsent(presentablePath) { mutableListOf() }.add(entry)
   }
   writer.writeStartArray()
@@ -36,47 +106,39 @@ internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, o
     writer.writeStartObject()
     writer.writeStringField("name", filePath)
     writeProjectLibs(fileEntries, writer, buildPaths)
-    writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths)
+    writeModules(writer = writer, fileEntries = fileEntries.asSequence(), buildPaths = buildPaths)
     writer.writeEndObject()
   }
+
+  for (item in distFiles) {
+    writer.writeStartObject()
+
+    writer.writeStringField("name", item.relativePath)
+    item.os?.let { writer.writeStringField("os", it.osId) }
+    item.arch?.let { writer.writeStringField("arch", it.dirName) }
+
+    writer.writeEndObject()
+  }
+
+  writer.writeStartObject()
+
+  writer.writeObjectField("name", "plugins")
+  writer.writeArrayFieldStart("bundled")
+  for (p in contentReport.bundledPlugins) {
+    writer.writeString(p.first.layout.mainModule)
+  }
+  writer.writeEndArray()
+  writer.writeArrayFieldStart("nonBundled")
+  for (p in contentReport.nonBundledPlugins) {
+    writer.writeString(p.first.layout.mainModule)
+  }
+  writer.writeEndArray()
+
+  writer.writeEndObject()
+
   writer.writeEndArray()
   writer.close()
-}
-
-fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file: Path, buildPaths: BuildPaths, extraRoot: Path? = null) {
-  Files.createDirectories(file.parent)
-  Files.newOutputStream(file).use { out ->
-    val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
-    writer.use {
-      writer.writeStartArray()
-      for (entry in entries) {
-        writer.writeStartObject()
-        writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
-        writer.writeStringField("type", entry.type)
-        when (entry) {
-          is ModuleLibraryFileEntry -> {
-            writer.writeStringField("module", entry.moduleName)
-            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-            writer.writeNumberField("size", entry.size)
-          }
-          is ModuleOutputEntry -> {
-            writeModuleItem(writer, entry)
-          }
-          is ModuleTestOutputEntry -> {
-            writer.writeStringField("module", entry.moduleName)
-          }
-          is ProjectLibraryEntry -> {
-            writer.writeStringField("library", entry.data.libraryName)
-            writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
-            writer.writeNumberField("size", entry.size)
-          }
-          else -> throw UnsupportedOperationException("${entry.type} is not supported")
-        }
-        writer.writeEndObject()
-      }
-      writer.writeEndArray()
-    }
-  }
+  return out.toByteArray()
 }
 
 private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): String {
@@ -97,24 +159,18 @@ private fun shortenPath(file: Path, buildPaths: BuildPaths, extraRoot: Path?): S
   }
 }
 
-private val INDENTER = DefaultIndenter("  ", "\n")
-
-private class IntelliJDefaultPrettyPrinter : DefaultPrettyPrinter() {
-  override fun createInstance(): DefaultPrettyPrinter = IntelliJDefaultPrettyPrinter()
-
-  init {
-    _objectFieldValueSeparatorWithSpaces = ": "
-    _objectIndenter = INDENTER
-    _arrayIndenter = INDENTER
-  }
-}
-
 private fun shortenAndNormalizePath(file: Path, buildPaths: BuildPaths, extraRoot: Path? = null): String {
   val result = shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, '/')
   return if (result.startsWith("temp/")) result.substring("temp/".length) else result
 }
 
-private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFileEntry>, buildPaths: BuildPaths) {
+private fun writeModules(
+  writer: JsonGenerator,
+  fileEntries: Sequence<DistributionFileEntry>,
+  buildPaths: BuildPaths,
+  fieldName: String = "modules",
+  writeReason: Boolean = true,
+) {
   var opened = false
   for (entry in fileEntries) {
     if (entry !is ModuleOutputEntry) {
@@ -122,13 +178,13 @@ private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFi
     }
 
     if (!opened) {
-      writer.writeArrayFieldStart("modules")
+      writer.writeArrayFieldStart(fieldName)
       opened = true
     }
 
     writer.writeStartObject()
     val moduleName = entry.moduleName
-    writeModuleItem(writer, entry)
+    writeModuleItem(writer, entry, writeReason = writeReason)
     writeModuleLibraries(fileEntries = fileEntries, moduleName = moduleName, writer = writer, buildPaths = buildPaths)
     writer.writeEndObject()
   }
@@ -137,36 +193,38 @@ private fun writeModules(writer: JsonGenerator, fileEntries: List<DistributionFi
   }
 }
 
-private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry) {
+private fun writeModuleItem(writer: JsonGenerator, entry: ModuleOutputEntry, writeReason: Boolean) {
   writer.writeStringField("name", entry.moduleName)
   writer.writeNumberField("size", entry.size)
-  entry.reason?.let {
-    writer.writeStringField("reason", it)
+  if (writeReason) {
+    entry.reason?.let {
+      writer.writeStringField("reason", it)
+    }
   }
 }
 
-private fun writeModuleLibraries(fileEntries: List<DistributionFileEntry>,
-                                 moduleName: String,
-                                 writer: JsonGenerator,
-                                 buildPaths: BuildPaths) {
-  var opened = false
-  for (entry in fileEntries) {
-    if (entry !is ModuleLibraryFileEntry || entry.moduleName != moduleName) {
-      continue
-    }
+private fun writeModuleLibraries(fileEntries: Sequence<DistributionFileEntry>, moduleName: String, writer: JsonGenerator, buildPaths: BuildPaths) {
+  val entriesGroupedByLibraryName = fileEntries
+    .filterIsInstance<ModuleLibraryFileEntry>()
+    .filter { it.moduleName == moduleName }
+    .groupBy { it.libraryName }
 
-    if (!opened) {
-      writer.writeArrayFieldStart("libraries")
-      opened = true
-    }
-    writer.writeStartObject()
-    writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
-    writer.writeNumberField("size", entry.size)
-    writer.writeEndObject()
+  if (entriesGroupedByLibraryName.isEmpty()) {
+    return
   }
-  if (opened) {
+
+  writer.writeObjectFieldStart("libraries")
+  for ((libName, entries) in entriesGroupedByLibraryName) {
+    writer.writeArrayFieldStart(libName)
+    for (entry in entries) {
+      writer.writeStartObject()
+      writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
+      writer.writeNumberField("size", entry.size)
+      writer.writeEndObject()
+    }
     writer.writeEndArray()
   }
+  writer.writeEndObject()
 }
 
 private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonGenerator, buildPaths: BuildPaths) {

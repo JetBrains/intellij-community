@@ -14,14 +14,13 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import it.unimi.dsi.fastutil.ints.IntSets
 import java.beans.PropertyChangeEvent
 
-open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
+internal open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, private val storage: VcsLogStorage, component: VcsLogGraphTable) :
   VcsLogSpeedSearch(component) {
 
-  private val userRegistry: VcsUserRegistry
+  private val userRegistry: VcsUserRegistry = project.getService(VcsUserRegistry::class.java)
   private var matchResult: MatchResult? = null
 
   init {
-    userRegistry = project.getService(VcsUserRegistry::class.java)
     addChangeListener { evt: PropertyChangeEvent ->
       if (evt.propertyName == ENTERED_PREFIX_PROPERTY_NAME) {
         matchResult = matchUsers(matchResult, evt.newValue as? String)
@@ -54,10 +53,11 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, pr
   }
 
   override fun isMatchingElement(row: Any, pattern: String): Boolean {
+    val commitId = getCommitId(row as VcsLogTableIndex) ?: return false
     if (super.isMatchingElement(row, pattern)) return true
     return matchResult?.run {
       commitsForUsers.isNotEmpty() &&  // getting id from row takes time, so optimizing a little here
-      commitsForUsers.contains(getCommitId(row as Int))
+      commitsForUsers.contains(commitId)
     } ?: false
   }
 
@@ -69,12 +69,13 @@ open class IndexSpeedSearch(project: Project, private val index: VcsLogIndex, pr
     return super.isMatchingMetadata(pattern, metadata)
   }
 
-  override fun getCommitMetadata(row: Int): VcsCommitMetadata? {
+  override fun getCommitMetadata(row: VcsLogTableIndex): VcsCommitMetadata? {
     val dataGetter = index.dataGetter ?: return super.getCommitMetadata(row)
-    return IndexedDetails(dataGetter, storage, getCommitId(row))
+    val commitId = getCommitId(row) ?: return null
+    return IndexedDetails(dataGetter, storage, commitId)
   }
 
-  protected fun getCommitId(row: Int): Int = myComponent.model.getIdAtRow(row)
+  protected fun getCommitId(row: VcsLogTableIndex): VcsLogCommitStorageIndex? = myComponent.model.getId(row)
 }
 
 private data class MatchResult(@JvmField val pattern: String,

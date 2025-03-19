@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.IdeBundle;
@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class FormNode extends ProjectViewNode<Form>{
+public final class FormNode extends ProjectViewNode<Form>{
   private final Collection<BasePsiNode<? extends PsiElement>> myChildren;
 
   public FormNode(Project project, @NotNull Object value, ViewSettings viewSettings) {
@@ -37,8 +37,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   @Override
-  @NotNull
-  public Collection<BasePsiNode<? extends PsiElement>> getChildren() {
+  public @NotNull Collection<BasePsiNode<? extends PsiElement>> getChildren() {
     return myChildren;
   }
 

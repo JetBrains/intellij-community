@@ -1,23 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.actions.DumpThreadsAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.StandardProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   implements StandardProgressIndicator, ProgressIndicatorWithDelayedPresentation, PingProgress, Disposable {
 
@@ -37,12 +41,19 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   private final Component myComponent;
   private final PotemkinProgress.EventStealer myEventStealer;
-  private final long myCreatedAt = System.currentTimeMillis();
+  private final long myCreatedAt = System.nanoTime();
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS * 10;
   private long myLastUiUpdate = myCreatedAt;
   private long myLastInteraction;
   private boolean myShowing;
 
+  static {
+    // preload classes
+    //noinspection ResultOfMethodCallIgnored
+    NlsMessages.formatDurationApproximateNarrow(0);
+  }
+
+  @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
     EDT.assertIsEdt();
     myComponent = component;
@@ -58,10 +69,14 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   public void stop() {
     try {
       super.stop();
-      Disposer.dispose(this);
     }
     finally {
-      myEventStealer.dispatchEvents(0);
+      try {
+        Disposer.dispose(this);
+      }
+      finally {
+        myEventStealer.dispatchEvents(0);
+      }
     }
   }
 
@@ -76,17 +91,18 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   @Override
   public void interact() {
     if (!EDT.isCurrentThreadEdt()) return;
-    long now = System.currentTimeMillis();
+    long now = System.nanoTime();
     if (now == myLastInteraction) return;
     myLastInteraction = now;
-    if (!myShowing && now - myLastUiUpdate > myDelayInMillis) {
+    long millisSinceLastUpdate = TimeoutUtil.getDurationMillis(myLastUiUpdate);
+    if (!myShowing && millisSinceLastUpdate > myDelayInMillis) {
       myShowing = true;
     }
     if (myShowing) {
       myEventStealer.dispatchEvents(0);
     }
-    if (myShowing && now - myLastUiUpdate > ProgressDialog.UPDATE_INTERVAL) {
-      myLastUiUpdate = now;
+    if (myShowing && millisSinceLastUpdate > ProgressDialog.UPDATE_INTERVAL) {
+      myLastUiUpdate = System.nanoTime();
       paintProgress();
     }
   }
@@ -100,8 +116,8 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     }
     else if (DUMP_SHORTCUT.equals(shortcut)) {
       event.consume();
-      IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, myComponent);
-      DumpThreadsAction.dumpThreads(frame == null ? null : frame.getProject());
+      Project project = ProjectUtil.getProjectForComponent(myComponent);
+      DumpThreadsAction.dumpThreads(project);
     }
   }
 
@@ -117,10 +133,13 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   }
 
   private void paintProgress() {
-    JRootPane rootPane = SwingUtilities.getRootPane(myComponent);
+    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt);
+  }
+
+  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt) {
     IdeGlassPane glassPane = rootPane == null ? null : ObjectUtils.tryCast(rootPane.getGlassPane(), IdeGlassPane.class);
     if (glassPane == null) return;
-    long roundedDuration = (System.currentTimeMillis() - myCreatedAt) / 1000 * 1000;
+    long roundedDuration = TimeoutUtil.getDurationMillis(createdAt) / 1000 * 1000;
     //noinspection HardCodedStringLiteral
     String text = KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +

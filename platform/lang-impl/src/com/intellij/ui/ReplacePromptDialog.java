@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui;
 
@@ -17,7 +17,7 @@ import java.awt.event.ActionEvent;
 
 public class ReplacePromptDialog extends DialogWrapper {
   private final boolean myIsMultiple;
-  @Nullable private final FindManager.MalformedReplacementStringException myException;
+  private final @Nullable FindManager.MalformedReplacementStringException myException;
 
   public ReplacePromptDialog(boolean isMultipleFiles, @NlsContexts.DialogTitle String title, Project project) {
     this(isMultipleFiles, title, project, null);
@@ -95,7 +95,7 @@ public class ReplacePromptDialog extends DialogWrapper {
     return "ReplaceDuplicatesPrompt";
   }
 
-  private class DoAction extends AbstractAction {
+  private final class DoAction extends AbstractAction {
     private final int myExitCode;
 
     DoAction(@NlsActions.ActionText String name, int exitCode) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.ide.highlighter.DTDFileType;
@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 
 public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
-  @NonNls private static final String GT_ENTITY = "&gt;";
-  @NonNls private static final String QUOT_ENTITY = "&quot;";
+  private static final @NonNls String GT_ENTITY = "&gt;";
+  private static final @NonNls String QUOT_ENTITY = "&quot;";
 
   public XmlEntityRefImpl() {
     super(XmlElementType.XML_ENTITY_REF);

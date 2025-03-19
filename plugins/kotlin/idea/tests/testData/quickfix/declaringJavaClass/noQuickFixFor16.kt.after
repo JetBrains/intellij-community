@@ -6,3 +6,4 @@
 fun <E : Enum<E>> foo(enum: E) {
     enum.<caret>declaringJavaClass // shouldn't be available (KT-53805)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.DeclaringJavaClassMigrationFix

@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.builders.BuildTargetLoader;
 import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
@@ -19,16 +20,15 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
   public static final JavaModuleBuildTargetType TEST = new JavaModuleBuildTargetType("java-test", true);
   public static final List<JavaModuleBuildTargetType> ALL_TYPES = List.of(PRODUCTION, TEST);
 
-  private final boolean myTests;
+  private final boolean isTest;
 
   private JavaModuleBuildTargetType(String typeId, boolean tests) {
     super(typeId, true);
-    myTests = tests;
+    isTest = tests;
   }
 
-  @NotNull
   @Override
-  public List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
+  public @NotNull List<ModuleBuildTarget> computeAllTargets(@NotNull JpsModel model) {
     List<JpsModule> modules = model.getProject().getModules();
     List<ModuleBuildTarget> targets = new ArrayList<>(modules.size());
     for (JpsModule module : modules) {
@@ -37,35 +37,36 @@ public final class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<
     return targets;
   }
 
-  @NotNull
   @Override
-  public Loader createLoader(@NotNull JpsModel model) {
+  public @NotNull BuildTargetLoader<ModuleBuildTarget> createLoader(@NotNull JpsModel model) {
     return new Loader(model);
   }
 
   public boolean isTests() {
-    return myTests;
+    return isTest;
   }
 
   public static JavaModuleBuildTargetType getInstance(boolean tests) {
     return tests ? TEST : PRODUCTION;
   }
 
-  private class Loader extends BuildTargetLoader<ModuleBuildTarget> {
-    private final Map<String, JpsModule> myModules;
+  private final class Loader extends BuildTargetLoader<ModuleBuildTarget> {
+    private final @Unmodifiable Map<String, JpsModule> modules;
 
     Loader(JpsModel model) {
-      myModules = new HashMap<>();
-      for (JpsModule module : model.getProject().getModules()) {
-        myModules.put(module.getName(), module);
+      List<JpsModule> moduleList = model.getProject().getModules();
+      Map<String, JpsModule> modules = new HashMap<>(moduleList.size());
+      for (JpsModule module : moduleList) {
+        modules.put(module.getName(), module);
       }
+
+      this.modules = modules;
     }
 
-    @Nullable
     @Override
-    public ModuleBuildTarget createTarget(@NotNull String targetId) {
-      JpsModule module = myModules.get(targetId);
-      return module != null ? new ModuleBuildTarget(module, JavaModuleBuildTargetType.this) : null;
+    public @Nullable ModuleBuildTarget createTarget(@NotNull String targetId) {
+      JpsModule module = modules.get(targetId);
+      return module == null ? null : new ModuleBuildTarget(module, JavaModuleBuildTargetType.this);
     }
   }
 }

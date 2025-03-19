@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -22,8 +22,7 @@ public class SearchRequestCollector {
     mySession = session;
   }
 
-  @NotNull
-  public SearchSession getSearchSession() {
+  public @NotNull SearchSession getSearchSession() {
     return mySession;
   }
 
@@ -55,8 +54,10 @@ public class SearchRequestCollector {
         searchScope instanceof GlobalSearchScope &&
         ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
 
-      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> ScopeOptimizer.calculateOverallRestrictedUseScope(
-        PsiSearchHelper.CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions(), searchTarget));
+      SearchScope restrictedCodeUsageSearchScope = ReadAction.compute(() -> {
+        return ScopeOptimizer.calculateOverallRestrictedUseScope(PsiSearchHelper.CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensionList(),
+                                                                 searchTarget);
+      });
       if (restrictedCodeUsageSearchScope != null) {
         short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
                                         ? UsageSearchContext.IN_COMMENTS |
@@ -92,7 +93,7 @@ public class SearchRequestCollector {
     searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), searchTarget, processor);
   }
 
-  private static String getContainerName(@NotNull final PsiElement target) {
+  private static String getContainerName(final @NotNull PsiElement target) {
     return ReadAction.compute(() -> {
       PsiElement container = getContainer(target);
       return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
@@ -100,13 +101,15 @@ public class SearchRequestCollector {
   }
 
   private static PsiElement getContainer(@NotNull PsiElement refElement) {
-    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
-      final PsiElement container = provider.getContainer(refElement);
-      if (container != null) return container;
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensionList()) {
+      PsiElement container = provider.getContainer(refElement);
+      if (container != null) {
+        return container;
+      }
     }
     // it's assumed that in the general case of unknown language the .getParent() will lead to reparse,
     // (all these Javascript stubbed methods under non-stubbed block statements under stubbed classes - meh)
-    // so just return null instead of refElement.getParent() here to avoid making things worse.
+    // so return null instead of refElement.getParent() here to avoid making things worse.
     return null;
   }
 
@@ -143,13 +146,11 @@ public class SearchRequestCollector {
     }
   }
 
-  @NotNull
-  public List<QuerySearchRequest> takeQueryRequests() {
+  public @NotNull List<QuerySearchRequest> takeQueryRequests() {
     return takeRequests(myQueryRequests);
   }
 
-  @NotNull
-  private <T> List<T> takeRequests(@NotNull List<? extends T> list) {
+  private @NotNull <T> List<T> takeRequests(@NotNull List<? extends T> list) {
     synchronized (lock) {
       final List<T> requests = new ArrayList<>(list);
       list.clear();
@@ -157,13 +158,11 @@ public class SearchRequestCollector {
     }
   }
 
-  @NotNull
-  public List<PsiSearchRequest> takeSearchRequests() {
+  public @NotNull List<PsiSearchRequest> takeSearchRequests() {
     return takeRequests(myWordRequests);
   }
 
-  @NotNull
-  public List<Processor<? super Processor<? super PsiReference>>> takeCustomSearchActions() {
+  public @NotNull List<Processor<? super Processor<? super PsiReference>>> takeCustomSearchActions() {
     return takeRequests(myCustomSearchActions);
   }
 

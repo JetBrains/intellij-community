@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.java.indexing.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "indexing-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "indexing-impl",
+  module_name = "intellij.java.indexing.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/util",
+    "//java/java-indexing-api:indexing",
+    "@lib//:kotlin-stdlib",
+    "@lib//:fastutil-min",
+    "//java/codeserver/core:java-codeserver-core",
+  ],
+  exports = [
+    "//java/java-psi-api:psi",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/indexing-impl",
+    "//platform/projectModel-api:projectModel",
+    "//java/java-indexing-api:indexing",
+  ],
+  runtime_deps = [":indexing-impl_resources"]
+)
+### auto-generated section `build intellij.java.indexing.impl` end

@@ -1,31 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.util.ui.UI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
-public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private final StaticPseudoFunctionalStyleMethodOptions myOptions = new StaticPseudoFunctionalStyleMethodOptions();
 
   @Override
@@ -36,12 +32,13 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!JavaFeature.STREAMS.isFeatureSupported(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression methodCallExpression) {
@@ -86,23 +83,20 @@ public class StaticPseudoFunctionalStyleMethodInspection extends AbstractBaseJav
     };
   }
 
-  public static final class ReplacePseudoLambdaWithLambda implements LocalQuickFix {
-    @SafeFieldForPreview
+  public static final class ReplacePseudoLambdaWithLambda extends PsiUpdateModCommandQuickFix {
     private final StaticPseudoFunctionalStyleMethodOptions.PipelineElement myHandler;
 
     private ReplacePseudoLambdaWithLambda(StaticPseudoFunctionalStyleMethodOptions.PipelineElement handler) {
       myHandler = handler;
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.java.stream.api.pipeline");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement psiElement, @NotNull ModPsiUpdater updater) {
       if (psiElement instanceof PsiReferenceExpression && psiElement.getParent() instanceof PsiMethodCallExpression call) {
         myHandler.template().convertToStream(call, null, false);
       }

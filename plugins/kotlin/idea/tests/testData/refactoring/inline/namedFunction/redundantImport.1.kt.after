@@ -1,0 +1,9 @@
+package one
+
+interface Interface
+
+class OuterClass {
+    class InnerClass {
+        fun getInstance(): Interface = null!!
+    }
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,7 +7,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
-import com.intellij.navigation.PsiElementNavigationItem;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -21,9 +21,9 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -50,12 +50,14 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
 
     final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
+    String accessibleName = "";
 
     final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     ((JComponent) leftCellRendererComponent).setOpaque(false);
     add(leftCellRendererComponent, BorderLayout.WEST);
+    accessibleName += leftCellRendererComponent.getAccessibleContext().getAccessibleName();
 
     setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
 
@@ -67,6 +69,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       ((JComponent)rightCellRendererComponent).setOpaque(false);
       rightCellRendererComponent.setBackground(listBg);
       add(rightCellRendererComponent, BorderLayout.EAST);
+      accessibleName += " " + rightCellRendererComponent.getAccessibleContext().getAccessibleName();
       final JPanel spacer = new NonOpaquePanel();
 
       final Dimension size = rightCellRendererComponent.getSize();
@@ -74,15 +77,11 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
       spacer.setBackground(isSelected ? UIUtil.getListSelectionBackground(true) : listBg);
       add(spacer, BorderLayout.CENTER);
     }
+    getAccessibleContext().setAccessibleName(accessibleName);
     return this;
   }
 
-  static PsiElement getPsiElement(Object o) {
-    return o instanceof PsiElement ? (PsiElement)o :
-           o instanceof PsiElementNavigationItem ? ((PsiElementNavigationItem)o).getTargetElement() : null;
-  }
-
-  private static class LeftRenderer extends ColoredListCellRenderer {
+  private static final class LeftRenderer extends ColoredListCellRenderer {
     public final boolean myRenderLocation;
     private final Matcher myMatcher;
 
@@ -104,43 +103,47 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else if (value instanceof NavigationItem item) {
-        ItemPresentation presentation = item.getPresentation();
-        assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
-          item + ", class " + item.getClass().getName();
-        String name = presentation.getPresentableText();
-        assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
-                             item + ", class " + item.getClass().getName();
         Color color = list.getForeground();
-        boolean isProblemFile;
-        if (item instanceof PsiElement) {
-          Project project = ((PsiElement)item).getProject();
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)item);
-          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
-        }
-        else {
-          isProblemFile = false;
-        }
 
-        PsiElement psiElement = getPsiElement(item);
+        String name;
+        Icon icon;
+        ItemPresentation presentation;
+        TextAttributes textAttributes;
+        boolean isProblemFile = false;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162822")) {
+          presentation = item.getPresentation();
+          assert presentation != null :
+            "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
+            item +
+            ", class " +
+            item.getClass().getName();
+          name = presentation.getPresentableText();
+          assert name != null :
+            "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
+            item +
+            ", class " +
+            item.getClass().getName();
 
-        if (psiElement != null && psiElement.isValid()) {
-          Project project = psiElement.getProject();
+          PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
+          if (psiElement != null && psiElement.isValid()) {
+            Project project = psiElement.getProject();
+            VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+            isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
-
-          Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
-          if (fileColor != null) {
-            bgColor = fileColor;
+            Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
+            if (fileColor != null) {
+              bgColor = fileColor;
+            }
           }
+          FileStatus status = NavigationItemFileStatus.get(item);
+          if (status != FileStatus.NOT_CHANGED) {
+            color = status.getColor();
+          }
+
+          textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
+          icon = presentation.getIcon(false);
         }
 
-        FileStatus status = NavigationItemFileStatus.get(item);
-        if (status != FileStatus.NOT_CHANGED) {
-          color = status.getColor();
-        }
-
-        final TextAttributes textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
         if (isProblemFile) {
           textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
           textAttributes.setEffectColor(JBColor.red);
@@ -148,12 +151,12 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         textAttributes.setForegroundColor(color);
         SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
-        setIcon(presentation.getIcon(false));
+        setIcon(icon);
 
         if (myRenderLocation) {
           String containerText = presentation.getLocationString();
 
-          if (containerText != null && containerText.length() > 0) {
+          if (containerText != null && !containerText.isEmpty()) {
             append(" " + containerText, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
           }
         }

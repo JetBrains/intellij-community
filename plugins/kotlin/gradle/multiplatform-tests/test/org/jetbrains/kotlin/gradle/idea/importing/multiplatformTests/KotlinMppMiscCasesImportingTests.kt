@@ -2,25 +2,28 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AggregatedExternalLibrariesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/misc")
-class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest()  {
+class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideStdlib = true
         hideKotlinTest = true
         hideKotlinNativeDistribution = true
 
-        onlyFacetFields(KotlinFacetSettings::targetPlatform)
+        onlyFacetFields(IKotlinFacetSettings::targetPlatform)
 
         hideResourceRoots = true
     }
@@ -58,7 +61,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testMppLibAndHmppConsumer() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib")
             excludeDependencies(""".*consumer.*""")
@@ -69,7 +72,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testHmppLibAndMppConsumer() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib")
             excludeDependencies(""".*consumer.*""")
@@ -87,7 +90,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testBinaryDependenciesOrderIsStable() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib1")
             publish("lib2")
@@ -112,7 +115,12 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testMismatchedAttributesDependencyBinary() {
         // NB: Variant-mismatch error is printed verbatim in stderr
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
+
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
 
             publish("producer")
             excludeDependencies(".*consumer.*")
@@ -148,6 +156,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         }
     }
 
+    @PluginTargetVersions(pluginVersion = "1.9.20-Beta+") // -Xexpect-actual-classes cannot be easily passed before
     @Test
     fun testTransitiveKmmLibraryThroughJava() {
         doTest {
@@ -177,8 +186,28 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testAssociateCompilationIntegrationTest() {
         doTest {
             onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
-            onlyFacetFields(KotlinFacetSettings::additionalVisibleModuleNames)
+            onlyFacetFields(IKotlinFacetSettings::additionalVisibleModuleNames)
             hideLineMarkers = true
+        }
+    }
+
+    @Test
+    @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
+    fun testProjectDependenciesToMppProjectWithAdditionalCompilations() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+            onlyDependencies(from = ".*client.*", to = ".*libMpp.*")
+        }
+    }
+
+    // This test ensures that a single library,
+    // on which both the MPP module and the Java-only module depend,
+    // imports with the same name,
+    // and it is not duplicated with different names in "External libraries tree"
+    @Test
+    fun testNoLibraryDuplicationTest() {
+        doTest {
+            onlyCheckers(AggregatedExternalLibrariesChecker)
         }
     }
 }

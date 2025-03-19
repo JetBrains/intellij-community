@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -56,7 +57,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   }
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
+  public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
     if (element instanceof PsiPlainTextFile plainTextFile) {
       if (plainTextFile.getFileType().equals(GuiFormFileType.INSTANCE)) {
         return getCachedData(plainTextFile).myReferences;
@@ -65,8 +66,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  @Nullable
-  public static PsiFile getFormFile(PsiField field) {
+  public static @Nullable PsiFile getFormFile(PsiField field) {
     PsiReference ref = getFormReference(field);
     if (ref != null) {
       return ref.getElement().getContainingFile();
@@ -74,8 +74,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return null;
   }
 
-  @Nullable
-  public static PsiReference getFormReference(PsiField field) {
+  public static @Nullable PsiReference getFormReference(PsiField field) {
     final PsiClass containingClass = field.getContainingClass();
     if (containingClass != null && containingClass.getQualifiedName() != null) {
       final List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(containingClass.getProject(), containingClass);
@@ -98,15 +97,17 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return Pair.getFirst(typeRangePair);
   }
 
-  public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
+  public static ModCommand setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
     if (typeRangePair != null) {
       final TextRange range = typeRangePair.getSecond();
       if (range != null) {
-        PsiDocumentManager.getInstance(file.getProject()).getDocument(file).replaceString(range.getStartOffset(), range.getEndOffset(), typeText);
+        return ModCommand.psiUpdate(file, f -> f.getViewProvider().getDocument()
+          .replaceString(range.getStartOffset(), range.getEndOffset(), typeText));
       }
     }
+    return ModCommand.nop();
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {
@@ -121,7 +122,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
       return;
     }
 
-    @NonNls final String name = rootTag.getName();
+    final @NonNls String name = rootTag.getName();
     if (!"form".equals(name)){
       return;
     }
@@ -298,8 +299,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     }
   }
 
-  @Nullable
-  public static String getBundleName(final PropertiesFile propertiesFile) {
+  public static @Nullable String getBundleName(final PropertiesFile propertiesFile) {
     final PsiDirectory directory = propertiesFile.getParent();
     if (directory == null) {
       return null;
@@ -315,7 +315,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
 
     String bundleName = propertiesFile.getResourceBundle().getBaseName();
 
-    if (packageName.length() > 0) {
+    if (!packageName.isEmpty()) {
       bundleName = packageName + '.' + bundleName;
     }
     bundleName = bundleName.replace('.', '/');
@@ -361,8 +361,8 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   public void projectClosed() {
   }
 
-  @NotNull @NonNls
-  public String getComponentName() {
+  public @NotNull
+  @NonNls String getComponentName() {
     return "FormReferenceProvider";
   }
 

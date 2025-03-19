@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -10,30 +10,33 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParenthesesIfPossible
 import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.CallableRefactoring
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.explicateReceiverOf
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.getAffectedCallables
-import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.K1IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.KtSimpleReference
-import org.jetbrains.kotlin.idea.search.usagesSearch.searchReferencesOrMethodReferences
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -123,7 +126,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
             if (expression is KtLambdaExpression) {
                 expression.valueParameters.getOrNull(data.typeParameterIndex)?.let { parameterToConvert ->
                     val thisRefExpr = psiFactory.createThisExpression()
-                    val search = ReferencesSearch.search(parameterToConvert, LocalSearchScope(expression)).toList()
+                    val search = ReferencesSearch.search(parameterToConvert, LocalSearchScope(expression)).asIterable().toList()
                     runWriteAction {
                         for (ref in search) {
                             (ref.element as? KtSimpleNameExpression)?.replace(thisRefExpr)
@@ -173,7 +176,13 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
         private fun generateVariable(expression: KtExpression): String {
             var baseCallee = ""
-            KotlinIntroduceVariableHandler.doRefactoring(project, null, expression, false, emptyList()) {
+            K1IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+                project,
+                editor = null,
+                expression,
+                isVar = false,
+                emptyList()
+            ) {
                 baseCallee = it.name!!
             }
 
@@ -329,7 +338,7 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
             if (body != null) {
                 val functionParameter = callable.valueParameters.getOrNull(data.functionParameterIndex) ?: return
-                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body))) {
+                for (ref in ReferencesSearch.search(functionParameter, LocalSearchScope(body)).asIterable()) {
                     val element = ref.element as? KtSimpleNameExpression ?: continue
                     val callExpression = element.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }
                     if (callExpression != null) {
@@ -381,5 +390,13 @@ class ConvertFunctionTypeParameterToReceiverIntention : SelfTargetingRangeIntent
 
     override fun applyTo(element: KtTypeReference, editor: Editor?) {
         element.getConversionData()?.let { Converter(it, editor).run() }
+    }
+}
+fun PsiElement.searchReferencesOrMethodReferences(): Collection<PsiReference> {
+    val lightMethods = toLightMethods()
+    return if (lightMethods.isNotEmpty()) {
+        lightMethods.flatMapTo(LinkedHashSet()) { MethodReferencesSearch.search(it).asIterable() }
+    } else {
+        ReferencesSearch.search(this).findAll()
     }
 }

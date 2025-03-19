@@ -1,0 +1,35 @@
+// WITH_STDLIB
+
+class MyClass
+
+data class A(
+    val a: IntArray,
+    val b: Array<String>,
+    val c: String,
+    val d: Int,
+    val e: MyClass,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as A
+
+        if (d != other.d) return false
+        if (!a.contentEquals(other.a)) return false
+        if (!b.contentEquals(other.b)) return false
+        if (c != other.c) return false
+        if (e != other.e) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = d
+        result = 31 * result + a.contentHashCode()
+        result = 31 * result + b.contentHashCode()
+        result = 31 * result + c.hashCode()
+        result = 31 * result + e.hashCode()
+        return result
+    }
+}

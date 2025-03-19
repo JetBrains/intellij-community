@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +18,7 @@ public final class PlatformDocumentationUtil {
   private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<(?=[^/!\\p{Alpha}])");
   private static final @NonNls String LT_ENTITY = "&lt;";
 
-  @Nullable
-  public static List<String> getHttpRoots(String @NotNull [] roots, String relPath) {
+  public static @Nullable List<String> getHttpRoots(String @NotNull [] roots, String relPath) {
     List<String> result = new SmartList<>();
     for (String root : roots) {
       VirtualFile virtualFile = VirtualFileManager.getInstance().findFileByUrl(root);
@@ -32,8 +31,7 @@ public final class PlatformDocumentationUtil {
     return result.isEmpty() ? null : result;
   }
 
-  @Nullable
-  public static String getDocUrl(@NotNull VirtualFile root, String relPath) {
+  public static @Nullable String getDocUrl(@NotNull VirtualFile root, String relPath) {
     if (root.getFileSystem() instanceof HttpFileSystem) {
       @NonNls String url = StringUtil.trimEnd(root.getUrl(), "/index.html", true);
       if (!url.endsWith("/")) {

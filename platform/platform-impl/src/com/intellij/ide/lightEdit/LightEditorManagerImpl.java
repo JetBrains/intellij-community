@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,8 +27,10 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -35,6 +38,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private static final Logger LOG = Logger.getInstance(LightEditorManagerImpl.class);
 
@@ -44,9 +48,9 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
 
   private final LightEditServiceImpl myLightEditService;
 
-  final static Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
+  static final Key<Boolean> NO_IMPLICIT_SAVE = Key.create("light.edit.no.implicit.save");
 
-  private final static String DEFAULT_FILE_NAME = "untitled_";
+  private static final String DEFAULT_FILE_NAME = "untitled_";
 
   public LightEditorManagerImpl(LightEditServiceImpl service) {
     myLightEditService = service;
@@ -81,7 +85,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
         ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(@NotNull Editor editor) {
-            checkUpdate(editor);
+            WriteIntentReadAction.run((Runnable)() -> checkUpdate(editor));
           }
         }, this);
       }
@@ -109,8 +113,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     return Objects.requireNonNull(doCreateEditor(file));
   }
 
-  @NotNull
-  private static FileType getFileType(@Nullable String preferredName) {
+  private static @NotNull FileType getFileType(@Nullable String preferredName) {
     if (preferredName != null) {
       int extOffset = preferredName.lastIndexOf(".");
       if (extOffset >= 0 && preferredName.length() > extOffset + 1) {
@@ -186,8 +189,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     myEventDispatcher.getMulticaster().fileStatusChanged(editorInfos);
   }
 
-  @NotNull
-  private static EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
+  private static @NotNull EditorHighlighter getHighlighter(@NotNull VirtualFile file, @NotNull Editor editor) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(file, editor.getColorsScheme(), null);
   }
 
@@ -195,8 +197,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     return myEditors.size();
   }
 
-  @Nullable
-  public LightEditorInfo findOpen(@NotNull VirtualFile file) {
+  public @Nullable LightEditorInfo findOpen(@NotNull VirtualFile file) {
     return ContainerUtil.find(myEditors, editorInfo -> file.getPath().equals(editorInfo.getFile().getPath()));
   }
 
@@ -207,13 +208,12 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
-  @NotNull
-  public Collection<VirtualFile> getOpenFiles() {
+  public @NotNull Collection<VirtualFile> getOpenFiles() {
     return myEditors.stream().map(info -> info.getFile()).collect(Collectors.toSet());
   }
 
   @Override
-  public @NotNull Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile) {
+  public @Unmodifiable @NotNull Collection<LightEditorInfo> getEditors(@NotNull VirtualFile virtualFile) {
     return ContainerUtil.filter(myEditors, editorInfo -> virtualFile.equals(editorInfo.getFile()));
   }
 
@@ -228,6 +228,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @NotNull
+  @Unmodifiable
   List<LightEditorInfo> getUnsavedEditors() {
     return ContainerUtil.filter(myEditors, editorInfo -> editorInfo.isSaveRequired());
   }
@@ -242,8 +243,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   @Override
-  @NotNull
-  public LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile) {
+  public @NotNull LightEditorInfo saveAs(@NotNull LightEditorInfo info, @NotNull VirtualFile targetFile) {
     LightEditorInfo newInfo = createEditor(targetFile);
     if (newInfo != null) {
       ApplicationManager.getApplication().runWriteAction(() -> {

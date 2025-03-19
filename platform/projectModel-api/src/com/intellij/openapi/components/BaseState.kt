@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.components
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.serialization.PropertyAccessor
@@ -13,7 +16,7 @@ import java.lang.invoke.MethodType
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
-internal val LOG = logger<BaseState>()
+internal val LOG: Logger = logger<BaseState>()
 
 private val factory: StatePropertyFactory = run {
   val implClass = BaseState::class.java.classLoader.loadClass("com.intellij.serialization.stateProperties.StatePropertyFactoryImpl")
@@ -52,7 +55,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
    */
-  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean) = addProperty(factory.obj(initialValue, isDefault))
+  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> = addProperty(factory.obj(initialValue, isDefault))
 
   /**
    * Collection considered as default if empty.
@@ -73,9 +76,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   protected fun <E> treeSet(): StoredPropertyBase<MutableSet<E>> where E : Comparable<E>, E : BaseState = addProperty(factory.treeSet())
 
   /**
-   * Charset is an immutable, so, it is safe to use it as default value.
+   * Charset is immutable, so, it is safe to use it as the default value.
    */
-  protected fun <T : Charset> property(initialValue: T) = addProperty(factory.obj(initialValue))
+  protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> = addProperty(factory.obj(initialValue))
 
   protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
     @Suppress("UNCHECKED_CAST")
@@ -126,13 +129,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   /**
    * If you use [set], [treeSet] or [linkedMap] you must ensure that [incrementModificationCount] is called for each
-   * mutation operation on corresponding property value (e.g. add, remove, put).
+   * mutation operation on corresponding property value (e.g., add, remove, put).
    *
    * [list] and [map] track content mutation, but if key or value is mutable, you have to call [incrementModificationCount].
    *
    * You can set property value to a new collection.
    * In this case, the underlying collection will be cleared and filled with an assigned collection's contents.
-   * It will update modification count.
+   * It will update the modification count.
    */
   protected fun incrementModificationCount() {
     intIncrementModificationCount()
@@ -162,6 +165,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return true
   }
 
+  @ApiStatus.Internal
   fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   /**
@@ -180,9 +184,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   override fun hashCode(): Int = properties.hashCode()
 
-  override fun toString(): String {
-    return properties.joinToString(" ")
-  }
+  override fun toString(): String = properties.joinToString(" ")
 
   @JvmOverloads
   fun copyFrom(state: BaseState, isMustBeTheSameType: Boolean = true) {
@@ -208,9 +210,10 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   // internal usage only
   @Suppress("FunctionName")
   @ApiStatus.Internal
-  fun __getProperties() = properties
+  fun __getProperties(): MutableList<StoredProperty<Any>> = properties
 }
 
+@ApiStatus.Internal
 interface StatePropertyFactory {
   fun bool(defaultValue: Boolean): StoredPropertyBase<Boolean>
 

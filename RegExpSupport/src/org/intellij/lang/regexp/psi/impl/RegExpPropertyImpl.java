@@ -59,14 +59,12 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     }
 
     @Override
-    @Nullable
-    public ASTNode getCategoryNode() {
+    public @Nullable ASTNode getCategoryNode() {
         return getNode().findChildByType(RegExpTT.NAME);
     }
 
-  @Nullable
   @Override
-  public ASTNode getValueNode() {
+  public @Nullable ASTNode getValueNode() {
     ASTNode node = getNode();
     ASTNode eq = node.findChildByType(RegExpTT.EQ);
     return eq != null ? node.findChildByType(RegExpTT.NAME, eq) : null;
@@ -79,14 +77,12 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
 
   private class MyPsiReference implements PsiReference {
     @Override
-    @NotNull
-    public PsiElement getElement() {
+    public @NotNull PsiElement getElement() {
       return RegExpPropertyImpl.this;
     }
 
     @Override
-    @NotNull
-    public TextRange getRangeInElement() {
+    public @NotNull TextRange getRangeInElement() {
       ASTNode node = getNode();
       ASTNode firstNode = node.findChildByType(RegExpTT.CARET);
       if (firstNode == null) {
@@ -111,14 +107,12 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return RegExpPropertyImpl.this;
     }
 
     @Override
-    @NotNull
-    public String getCanonicalText() {
+    public @NotNull String getCanonicalText() {
       return getRangeInElement().substring(getElement().getText());
     }
 

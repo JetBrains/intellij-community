@@ -10,7 +10,7 @@ internal class KotlinNotPostfixTemplate : NotPostfixTemplate {
     @Suppress("ConvertSecondaryConstructorToPrimary")
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* info = */ KotlinPostfixTemplatePsiInfo,
-        /* selector = */ allExpressions(ValuedFilter, NotExpressionFilter, ExpressionTypeFilter { it.isBoolean && !it.isMarkedNullable }),
+        /* selector = */ allExpressions(ValuedFilter, NotExpressionFilter, ExpressionTypeFilter { it.isBooleanType && !it.isMarkedNullable }),
         /* provider = */ provider
     )
 }
@@ -18,11 +18,7 @@ internal class KotlinNotPostfixTemplate : NotPostfixTemplate {
 private object NotExpressionFilter : (KtExpression) -> Boolean {
     override fun invoke(expression: KtExpression): Boolean {
         val parent = expression.parent
-        if (parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL) {
-            // Avoid double negation ('!foo' -> '!!foo')
-            return false
-        }
-
-        return true
+        // Avoid double negation ('!foo' -> '!!foo')
+        return !(parent is KtPrefixExpression && parent.operationToken == KtTokens.EXCL)
     }
 }

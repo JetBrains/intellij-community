@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
@@ -17,9 +17,6 @@ import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.File;
-import java.util.List;
-
 
 public interface VcsDataKeys {
   DataKey<VcsKey> VCS = DataKey.create("VCS");
@@ -33,8 +30,6 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<String[]> VCS_COMMIT_SUBJECTS = DataKey.create("VCS_COMMIT_SUBJECTS");
 
-  DataKey<File> IO_FILE = DataKey.create("IO_FILE");
-  DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
 
@@ -78,12 +73,6 @@ public interface VcsDataKeys {
    * This difference might be important when {@link AbstractVcs#areDirectoriesVersionedItems()} is {@code true}.
    */
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
-  /**
-   * Can be used to ensure that directory flags for SVN are initialized.
-   * Is potentially slow and should not be used in {@link com.intellij.openapi.actionSystem.AnAction#update}, use {@link #CHANGES} instead.
-   */
-  DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
-  DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
 
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");
   DataKey<VirtualFile> CURRENT_UNVERSIONED = DataKey.create("ChangeListView.CurrentUnversionedFile");

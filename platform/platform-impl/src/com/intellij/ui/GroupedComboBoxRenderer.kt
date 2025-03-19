@@ -11,7 +11,6 @@ import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
@@ -25,8 +24,13 @@ import javax.swing.border.CompoundBorder
  * Instead of using a [ComboBox]<[Any]> (model with [T] and the separator) with a custom renderer,
  * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
  * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
+ *
+ * Use this render in very specific cases like multiline renderers, otherwise use [com.intellij.ui.dsl.listCellRenderer.listCellRenderer].
+ * It allows building complex renderers with shorter and simpler code
+ *
+ * @param component the [JComponent] opening the list
  */
-abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : GroupedElementsRenderer(), ListCellRenderer<T> {
+abstract class GroupedComboBoxRenderer<T>(val component: JComponent? = null) : GroupedElementsRenderer(), ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   /**
    * @return The item title displayed in the combo
@@ -44,18 +48,19 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   open fun getIcon(item: T): Icon? = null
 
   private lateinit var coloredComponent: SimpleColoredComponent
+  private var selectionForeground: Color? = null
 
   open val maxWidth: Int = -1
 
   /**
-   * Appends text fragments to the item [SimpleColoredComponent].
+   * Appends text fragments to the [SimpleColoredComponent] item.
    */
   open fun customize(item: SimpleColoredComponent,
                      value: T,
                      index: Int,
                      isSelected: Boolean,
                      cellHasFocus: Boolean) {
-    val text = getText(value)
+    val text = if (value == null) "" else getText(value)
     item.append(text)
 
     val secondaryText = getSecondaryText(value)
@@ -97,7 +102,15 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   }
 
   override fun createItemComponent(): JComponent {
-    coloredComponent = SimpleColoredComponent()
+    coloredComponent = object: SimpleColoredComponent() {
+      override fun append(fragment: String, attributes: SimpleTextAttributes, isMainText: Boolean) {
+        super.append(
+          fragment,
+          if (selectionForeground == null) { attributes } else { SimpleTextAttributes(attributes.style, selectionForeground) },
+          isMainText
+        )
+      }
+    }
     return layoutComponent(coloredComponent)
   }
 
@@ -109,7 +122,7 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
   }
 
   private val enabled: Boolean
-    get() = combo?.isEnabled ?: true
+    get() = component?.isEnabled ?: true
 
   override fun getBackground(): Color = if (enabled) UIUtil.getListBackground(false, false) else UIUtil.getComboBoxDisabledBackground()
   override fun getForeground(): Color = if (enabled) UIUtil.getListForeground(false, false) else UIUtil.getComboBoxDisabledForeground()
@@ -121,17 +134,16 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val model = (list?.model as? ListPopupModel)
-
     coloredComponent.apply {
       clear()
+      selectionForeground = if (isSelected) { list?.selectionForeground } else { null }
       customize(this, value, index, isSelected, cellHasFocus)
     }
 
     mySeparatorComponent.apply {
-      isVisible = model?.isSeparatorAboveOf(value) == true
+      isVisible = isSeparatorVisible(list, value)
       if (isVisible) {
-        caption = model!!.getCaptionAboveOf(value)
+        caption = getCaption(list, value)
         (this as GroupHeaderSeparator).setHideLine(index == 0)
       }
     }
@@ -148,9 +160,6 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
       }
     }
 
-    AccessibleContextUtil.setName(myRendererComponent, coloredComponent)
-    AccessibleContextUtil.setDescription(myRendererComponent, coloredComponent)
-
     list?.let { myRendererComponent.background = it.background }
     updateSelection(isSelected, itemComponent, coloredComponent)
 
@@ -162,5 +171,18 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>? = null) : Grou
     }
 
     return myRendererComponent
+  }
+
+  protected open fun getCaption(list: JList<out T>?,
+                                value: T): @NlsContexts.Separator String? = (list?.model as ListPopupModel).getCaptionAboveOf(value)
+
+  protected open fun isSeparatorVisible(list: JList<out T>?, value: T): Boolean = (list?.model as? ListPopupModel)?.isSeparatorAboveOf(value) == true
+
+  override fun getDelegateAccessibleName(): String? {
+    return coloredComponent.accessibleContext.accessibleName
+  }
+
+  override fun getDelegateAccessibleDescription(): String? {
+    return coloredComponent.accessibleContext.accessibleDescription
   }
 }

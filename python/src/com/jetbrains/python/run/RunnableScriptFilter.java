@@ -31,8 +31,7 @@ public interface RunnableScriptFilter {
       }
       element = ifStatement;
     }
-    if (element instanceof PyIfStatement) {
-      PyIfStatement ifStatement = (PyIfStatement)element;
+    if (element instanceof PyIfStatement ifStatement) {
       return PyUtil.isIfNameEqualsMain(ifStatement);
     }
     return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public class FormEditorErrorCollector extends FormErrorCollector {
   private final GuiEditor myEditor;
-  @NotNull private final RadComponent myComponent;
+  private final @NotNull RadComponent myComponent;
   private List<ErrorInfo> myResults;
   private final InspectionProfile myProfile;
   private final PsiFile myFormPsiFile;
@@ -40,7 +40,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   }
 
   @Override
-  public void addError(@NotNull final String inspectionId, @NotNull final IComponent component, @Nullable IProperty prop,
+  public void addError(final @NotNull String inspectionId, final @NotNull IComponent component, @Nullable IProperty prop,
                        @NotNull String errorMessage,
                        EditorQuickFixProvider @NotNull ... editorQuickFixProviders) {
     if (myResults == null) {

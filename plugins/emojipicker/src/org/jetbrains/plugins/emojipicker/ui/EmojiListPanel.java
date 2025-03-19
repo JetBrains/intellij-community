@@ -28,7 +28,7 @@ import java.awt.font.TextLayout;
 import java.util.List;
 import java.util.Objects;
 
-class EmojiListPanel extends JBScrollPane {
+final class EmojiListPanel extends JBScrollPane {
   private static final Image NO_EMOJI_FOUND_IMAGE =
     ImageLoader.loadFromStream(EmojiListPanel.class.getResourceAsStream("/icons/NoEmojiFound.png"));
   private static final int HORIZONTAL_PADDING = 8;
@@ -45,7 +45,6 @@ class EmojiListPanel extends JBScrollPane {
   private Category myCurrentItemCategory;
   private int myCurrentItemIndex = -1;
   private EmojiSkinTone myCurrentSkinTone = EmojiSkinTone.NO_TONE;
-
 
   EmojiListPanel(EmojiPicker emojiPicker, EmojiPickerStyle style, List<EmojiCategory> categories) {
     super(null, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -214,7 +213,7 @@ class EmojiListPanel extends JBScrollPane {
     private static final int NO_LABEL_PADDING = 12;
     private static final int LABEL_HEIGHT = 32;
     private EmojiCategory myCategory;
-    @Nls private final String myName;
+    private final @Nls String myName;
     private final Insets myPadding;
 
     private Category(EmojiCategory category) {

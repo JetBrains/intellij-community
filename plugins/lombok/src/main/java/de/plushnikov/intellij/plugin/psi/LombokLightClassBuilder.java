@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -26,6 +27,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   private final LombokLightModifierList myModifierList;
 
   private boolean myIsEnum;
+  private boolean myIsAnnotationType;
   private PsiField[] myFields;
   private PsiMethod[] myMethods;
 
@@ -35,14 +37,14 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   public LombokLightClassBuilder(@NotNull PsiElement context, @NotNull String simpleName, @NotNull String qualifiedName) {
     super(context, simpleName);
     myIsEnum = false;
+    myIsAnnotationType = false;
     myQualifiedName = qualifiedName;
     myBaseIcon = LombokIcons.Nodes.LombokClass;
-    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage());
+    myModifierList = new LombokLightModifierList(context.getManager(), context.getLanguage()).withParent(this);
   }
 
-  @NotNull
   @Override
-  public LombokLightModifierList getModifierList() {
+  public @NotNull LombokLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -59,9 +61,8 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
     return getContainingClass();
   }
 
-  @Nullable
   @Override
-  public String getQualifiedName() {
+  public @Nullable String getQualifiedName() {
     return myQualifiedName;
   }
 
@@ -92,9 +93,23 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   }
 
   @Override
+  public boolean isAnnotationType() {
+    return myIsAnnotationType;
+  }
+
+  @Override
   public PsiField @NotNull [] getFields() {
     if (null == myFields) {
-      Collection<PsiField> generatedFields = fieldSupplier.apply(this);
+      Collection<PsiField> generatedFields;
+      DumbService dumbService = DumbService.getInstance(getProject());
+      if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+        generatedFields = dumbService.computeWithAlternativeResolveEnabled(
+          () -> fieldSupplier.apply(this)
+        );
+      }
+      else {
+        generatedFields = fieldSupplier.apply(this);
+      }
       myFields = generatedFields.toArray(PsiField.EMPTY_ARRAY);
       fieldSupplier = c -> Collections.emptyList();
     }
@@ -104,7 +119,16 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
   @Override
   public PsiMethod @NotNull [] getMethods() {
     if (null == myMethods) {
-      Collection<PsiMethod> generatedMethods = methodSupplier.apply(this);
+      Collection<PsiMethod> generatedMethods;
+      DumbService dumbService = DumbService.getInstance(getProject());
+      if (dumbService.isDumb() && !dumbService.isAlternativeResolveEnabled()) {
+        generatedMethods = dumbService.computeWithAlternativeResolveEnabled(
+          () -> methodSupplier.apply(this)
+        );
+      }
+      else {
+        generatedMethods = methodSupplier.apply(this);
+      }
       myMethods = generatedMethods.toArray(PsiMethod.EMPTY_ARRAY);
       methodSupplier = c -> Collections.emptyList();
     }
@@ -138,6 +162,11 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
   public LombokLightClassBuilder withEnum(boolean isEnum) {
     myIsEnum = isEnum;
+    return this;
+  }
+
+  public LombokLightClassBuilder withAnnotationType(boolean isAnnotationType) {
+    myIsAnnotationType = isAnnotationType;
     return this;
   }
 

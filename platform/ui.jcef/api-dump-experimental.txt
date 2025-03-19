@@ -1,0 +1,24 @@
+*c:com.intellij.ui.jcef.HwFacadeHelper
+- sf:TRANSPARENT_COLOR:java.awt.Color
+- addNotify():V
+- s:create(javax.swing.JComponent):com.intellij.ui.jcef.HwFacadeHelper
+- hide():V
+- paint(java.awt.Graphics,java.util.function.Consumer):V
+- removeNotify():V
+- show():V
+*f:com.intellij.ui.jcef.JBCefHealthMonitor
+- <init>():V
+- s:getInstance():com.intellij.ui.jcef.JBCefHealthMonitor
+- getStatus():com.intellij.ui.jcef.JBCefHealthMonitor$Status
+*:com.intellij.ui.jcef.JBCefHealthMonitor$JBCefHealthCheckTopic
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:onHealthHealthStatusChanged(com.intellij.ui.jcef.JBCefHealthMonitor$Status):V
+*e:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- java.lang.Enum
+- sf:GPU_PROCESS_FAILED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- sf:OK:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- sf:RUN_UNDER_SUPER_USER:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- sf:UNKNOWN:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- sf:UNPRIVILEGED_USER_NS_DISABLED:com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- s:valueOf(java.lang.String):com.intellij.ui.jcef.JBCefHealthMonitor$Status
+- s:values():com.intellij.ui.jcef.JBCefHealthMonitor$Status[]

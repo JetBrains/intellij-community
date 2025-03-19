@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -12,9 +12,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
-  @NotNull private final Query<? extends T> myOriginal;
+  private final @NotNull Query<? extends T> myOriginal;
   private final HashingStrategy<? super M> myHashingStrategy;
-  @NotNull private final Function<? super T, ? extends M> myMapper;
+  private final @NotNull Function<? super T, ? extends M> myMapper;
 
   public UniqueResultsQuery(@NotNull Query<? extends T> original) {
     this(original, Functions.identity());
@@ -44,9 +44,8 @@ public final class UniqueResultsQuery<T, M> extends AbstractQuery<T> {
     return Collections.synchronizedSet(CollectionFactory.createCustomHashingStrategySet(myHashingStrategy));
   }
 
-  @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
+  public @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
     return myOriginal.forEachAsync(new MyProcessor(createSet(), consumer));
   }
 

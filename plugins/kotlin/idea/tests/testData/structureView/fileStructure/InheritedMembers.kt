@@ -1,4 +1,4 @@
-class Test: Runable {
+class Test: Runnable {
     fun test() {
 
     }

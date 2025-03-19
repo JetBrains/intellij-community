@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipFile;
 
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   private static final RemoteRepository mavenLocal;
@@ -114,56 +99,6 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
                (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
       }).collect(Collectors.toList()));
     }
-  }
-
-  private Path resolveSomeSingleJar() throws Exception {
-    myRepositoryManager.resolveDependency(
-      "org.jetbrains", "annotations", "20.1.0",
-      false, Collections.emptyList()
-    );
-    try (var stream = Files.walk(localRepository.toPath())) {
-      var resolvedJars = stream.filter(file -> file.getFileName().toString().endsWith(".jar")).collect(Collectors.toList());
-      assertSize(1, resolvedJars);
-      var resolvedJar = resolvedJars.get(0);
-      try (var zip = new ZipFile(resolvedJar.toFile())) {
-        assert zip.size() > 0;
-      }
-      return resolvedJar;
-    }
-  }
-
-  public void testResolutionForEmptyJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    Files.createFile(resolvedJar);
-    assert Files.size(resolvedJar) == 0;
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForSymbolicLinkToEmptyJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    var brokenTarget = Files.createTempFile("empty", ".jar");
-    assert Files.size(brokenTarget) == 0;
-    Files.createSymbolicLink(resolvedJar, brokenTarget);
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForMalformedJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    Files.createFile(resolvedJar);
-    Files.writeString(resolvedJar, "malformed jar content");
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForSymbolicLinkToMalformedJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    var brokenTarget = Files.createTempFile("malformed", ".jar");
-    Files.writeString(brokenTarget, "malformed jar content");
-    Files.createSymbolicLink(resolvedJar, brokenTarget);
-    resolveSomeSingleJar();
   }
 
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {

@@ -4,11 +4,11 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.ModuleEntityChangeListener
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
 
@@ -52,6 +52,7 @@ abstract class FrameworkAvailabilityChecker(
     private inner class ModelChangeListener(project: Project) : ModuleEntityChangeListener(project) {
         override fun entitiesChanged(outdated: List<Module>) {
             val checkerClass = this@FrameworkAvailabilityChecker.javaClass
+            @Suppress("IncorrectServiceRetrieving")
             val service = project.getService(checkerClass) ?: error("Cannot find service $checkerClass")
             service.invalidateEntries(condition = { key, _ -> key.module in outdated })
         }

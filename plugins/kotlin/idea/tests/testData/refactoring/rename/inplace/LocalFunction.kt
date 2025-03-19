@@ -1,3 +1,5 @@
+// NEW_NAME: bar
+// RENAME: member
 fun f() {
     fun <caret>foo(a: Int) {
     }

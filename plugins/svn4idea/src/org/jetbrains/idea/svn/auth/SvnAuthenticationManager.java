@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.project.Project;
@@ -67,8 +67,7 @@ public final class SvnAuthenticationManager {
     return myProvider;
   }
 
-  @NotNull
-  public HostOptions getHostOptions(@NotNull Url url) {
+  public @NotNull HostOptions getHostOptions(@NotNull Url url) {
     return new HostOptions(url);
   }
 
@@ -78,8 +77,8 @@ public final class SvnAuthenticationManager {
     SvnConfiguration.getInstance(myProject).acknowledge(kind, realm, proxy);
   }
 
-  private final static int DEFAULT_READ_TIMEOUT = 30 * 1000;
-  private final static int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
+  private static final int DEFAULT_READ_TIMEOUT = 30 * 1000;
+  private static final int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
   public int getReadTimeout(@NotNull Url url) {
     String protocol = url.getProtocol();
@@ -116,7 +115,7 @@ public final class SvnAuthenticationManager {
   }
 
   public final class HostOptions {
-    @NotNull private final Url myUrl;
+    private final @NotNull Url myUrl;
 
     private HostOptions(@NotNull Url url) {
       myUrl = url;
@@ -136,8 +135,7 @@ public final class SvnAuthenticationManager {
       return storageEnabled;
     }
 
-    @Nullable
-    public String getSSLClientCertFile() {
+    public @Nullable String getSSLClientCertFile() {
       return getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "ssl-client-cert-file");
     }
   }

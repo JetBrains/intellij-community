@@ -51,8 +51,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   }
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     parseLight(root, builder);
     return builder.getTreeBuilt();
   }
@@ -344,8 +343,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
    * GROUP  ::= "(" PATTERN ")" | TERM
    * TERM   ::= "." | "$" | "^" | CHAR | CLASS | BACKREF
    */
-  @Nullable
-  private PsiBuilder.Marker parseGroup(PsiBuilder builder) {
+  private @Nullable PsiBuilder.Marker parseGroup(PsiBuilder builder) {
     final IElementType type = builder.getTokenType();
 
     final PsiBuilder.Marker marker = builder.mark();

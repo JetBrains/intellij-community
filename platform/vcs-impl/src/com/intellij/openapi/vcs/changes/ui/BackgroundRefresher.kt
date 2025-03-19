@@ -87,7 +87,7 @@ class BackgroundRefresher<T>(name: String, parentDisposable: Disposable) {
         }
       }
       catch (t: Throwable) {
-        // Pass any exception even ProcessCancelledException
+        // Pass any exception even ProcessCanceledException
         // If PCE was initiated by next refresh, collectPromises will return an empty list
         // and promises will be intact until next refresh
         for (asyncPromise in collectPromises(force = false)) {

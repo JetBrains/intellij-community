@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang;
 
 import com.intellij.psi.tree.IElementType;
@@ -20,23 +6,18 @@ import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.MarkdownTokenTypes;
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MarkdownElementType extends IElementType {
 
-  @NotNull
-  private static final Map<org.intellij.markdown.IElementType, IElementType> markdownToPlatformTypeMap =
-    new HashMap<>();
-  @NotNull
-  private static final Map<IElementType, org.intellij.markdown.IElementType> platformToMarkdownTypeMap =
-    new HashMap<>();
+  private static final @NotNull Map<org.intellij.markdown.IElementType, IElementType> markdownToPlatformTypeMap =
+    new ConcurrentHashMap<>();
+  private static final @NotNull Map<IElementType, org.intellij.markdown.IElementType> platformToMarkdownTypeMap =
+    new ConcurrentHashMap<>();
 
   public MarkdownElementType(@NotNull @NonNls String debugName) {
     super(debugName, MarkdownLanguage.INSTANCE);
@@ -48,7 +29,7 @@ public class MarkdownElementType extends IElementType {
   }
 
   @Contract("null -> null; !null -> !null")
-  public synchronized static IElementType platformType(@Nullable org.intellij.markdown.IElementType markdownType) {
+  public static IElementType platformType(@Nullable org.intellij.markdown.IElementType markdownType) {
     if (markdownType == null) {
       return null;
     }
@@ -57,25 +38,29 @@ public class MarkdownElementType extends IElementType {
       return markdownToPlatformTypeMap.get(markdownType);
     }
 
-    final IElementType result;
-    if (markdownType == MarkdownElementTypes.PARAGRAPH
-        || markdownType == MarkdownTokenTypes.ATX_CONTENT
-        || markdownType == MarkdownTokenTypes.SETEXT_CONTENT
-        || markdownType == GFMTokenTypes.CELL) {
-      result = new MarkdownLazyElementType(markdownType.toString());
+    synchronized (platformToMarkdownTypeMap) {
+      return markdownToPlatformTypeMap.computeIfAbsent(markdownType, type -> {
+        final IElementType result;
+        if (type == MarkdownElementTypes.PARAGRAPH
+            || type == MarkdownTokenTypes.ATX_CONTENT
+            || type == MarkdownTokenTypes.SETEXT_CONTENT
+            || type == GFMTokenTypes.CELL) {
+          result = new MarkdownLazyElementType(type.toString());
+        }
+        else if (isHeaderElementType(type)) {
+          result = new MarkdownHeaderStubElementType(type.toString());
+        }
+        else {
+          result = new MarkdownElementType(type.toString());
+        }
+        platformToMarkdownTypeMap.put(result, type);
+        return result;
+      });
     }
-    else if (isHeaderElementType(markdownType)) {
-      result = new MarkdownHeaderStubElementType(markdownType.toString());
-    }
-    else {
-      result = new MarkdownElementType(markdownType.toString());
-    }
-    markdownToPlatformTypeMap.put(markdownType, result);
-    platformToMarkdownTypeMap.put(result, markdownType);
-    return result;
   }
 
-  private static boolean isHeaderElementType(@NotNull org.intellij.markdown.IElementType markdownType) {
+  @ApiStatus.Internal
+  public static boolean isHeaderElementType(@NotNull org.intellij.markdown.IElementType markdownType) {
     return markdownType == MarkdownElementTypes.ATX_1 ||
            markdownType == MarkdownElementTypes.ATX_2 ||
            markdownType == MarkdownElementTypes.ATX_3 ||
@@ -87,10 +72,16 @@ public class MarkdownElementType extends IElementType {
   }
 
   @Contract("!null -> !null")
-  public synchronized static org.intellij.markdown.IElementType markdownType(@Nullable IElementType platformType) {
+  public static org.intellij.markdown.IElementType markdownType(@Nullable IElementType platformType) {
     if (platformType == null) {
       return null;
     }
-    return platformToMarkdownTypeMap.get(platformType);
+    var result = platformToMarkdownTypeMap.get(platformType);
+    if (result != null) {
+      return result;
+    }
+    synchronized (platformToMarkdownTypeMap) {
+      return platformToMarkdownTypeMap.get(platformType);
+    }
   }
 }

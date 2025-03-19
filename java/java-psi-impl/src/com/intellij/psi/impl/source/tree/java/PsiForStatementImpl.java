@@ -70,9 +70,6 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.FOR_KEYWORD:
         return findChildByType(FOR_KEYWORD);
 
@@ -115,6 +112,9 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
             return child;
           }
         }
+        return null;
+
+      default:
         return null;
     }
   }

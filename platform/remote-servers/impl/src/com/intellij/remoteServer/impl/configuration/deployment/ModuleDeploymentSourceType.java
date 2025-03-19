@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.openapi.module.ModulePointerManager;
@@ -15,9 +15,8 @@ public final class ModuleDeploymentSourceType extends DeploymentSourceType<Modul
     super("module");
   }
 
-  @NotNull
   @Override
-  public ModuleDeploymentSource load(@NotNull Element tag, @NotNull Project project) {
+  public @NotNull ModuleDeploymentSource load(@NotNull Element tag, @NotNull Project project) {
     String moduleName = tag.getAttributeValue(NAME_ATTRIBUTE);
     assert moduleName != null;
     return new ModuleDeploymentSourceImpl(ModulePointerManager.getInstance(project).create(moduleName));

@@ -4,10 +4,13 @@ package com.intellij.execution.ui.layout.impl;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-public class TabImpl extends AbstractTab implements Tab {
+@ApiStatus.Internal
+public final class TabImpl extends AbstractTab implements Tab {
   TabImpl() {
   }
 
@@ -21,8 +24,8 @@ public class TabImpl extends AbstractTab implements Tab {
     return myDefaultIndex >= 0 ? myDefaultIndex : myIndex;
   }
 
-  @NlsSafe
-  public String getDisplayName() {
+  @Transient
+  public @NlsSafe String getDisplayName() {
     return myDisplayName;
   }
 

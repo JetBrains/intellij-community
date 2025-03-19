@@ -2,5 +2,7 @@
 package com.jetbrains.python.psi;
 
 
-public interface PyPassStatement extends PyStatement {
+import com.jetbrains.python.ast.PyAstPassStatement;
+
+public interface PyPassStatement extends PyAstPassStatement, PyStatement {
 }

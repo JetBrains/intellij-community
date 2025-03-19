@@ -1,19 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots.builders
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIterator
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean =
@@ -70,7 +68,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun getRoot(builder: LibraryIdIteratorBuilder): Root {
-    if (builder.roots == null && builder.sourceRoots == null) return AllRoots
+    if (builder.roots == null && builder.sourceRoots == null && builder.rootUrls == null) return AllRoots
     return RootList(builder)
   }
 
@@ -79,16 +77,18 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                                     entityStorage: EntityStorage,
                                     project: Project): LibraryIndexableFilesIterator? {
     return libraryId.findLibraryBridge(entityStorage, project)?.let {
-      when (root) {
-        AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
-        is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root.roots, root.sourceRoots)
-      }
+      ReadAction.nonBlocking<LibraryIndexableFilesIterator?> {
+        when (root) {
+          AllRoots -> LibraryIndexableFilesIteratorImpl.createIterator(it)
+          is RootList -> LibraryIndexableFilesIteratorImpl.createIterator(it, root.roots, root.sourceRoots)
+        }
+      }.executeSynchronously()
     }
   }
 
   private sealed interface Root
 
-  private object AllRoots : Root
+  private data object AllRoots : Root
 
   private class RootList() : Root {
     val roots = mutableListOf<VirtualFile>()
@@ -97,6 +97,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     constructor(builder: LibraryIdIteratorBuilder) : this() {
       builder.roots?.also { roots.addAll(it) }
       builder.sourceRoots?.also { sourceRoots.addAll(it) }
+      builder.rootUrls?.toSourceRootHolder()?.also { roots.addAll(it.roots); sourceRoots.addAll(it.sourceRoots) }
     }
   }
 
@@ -153,7 +154,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     private fun checkDependencies(iterator: Iterator<ModuleDependencyItem>, libraryId: LibraryId): Boolean {
       while (iterator.hasNext()) {
         val next = iterator.next()
-        if (next is ModuleDependencyItem.Exportable.LibraryDependency) {
+        if (next is LibraryDependency) {
           idsFromDependencies.add(next.library)
           if (libraryId == next.library) {
             idsToIndex.add(libraryId)

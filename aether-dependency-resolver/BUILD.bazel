@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.java.aetherDependencyResolver` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "java-aetherDependencyResolver",
+  module_name = "intellij.java.aetherDependencyResolver",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:maven-resolver-provider",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
+    "@lib//:commons-lang3",
+    "@lib//:plexus-utils",
+    "@lib//:commons-codec",
+    "//platform/util",
+  ],
+  exports = [
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "@lib//:maven-resolver-provider",
+  ]
+)
+
+jvm_library(
+  name = "java-aetherDependencyResolver_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  associates = [":java-aetherDependencyResolver"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:http-client",
+    "@lib//:commons-logging",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:maven-resolver-provider",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-file",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-transport-http",
+    "@lib//:java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
+    "@lib//:commons-lang3",
+    "@lib//:plexus-utils",
+    "@lib//:commons-codec",
+    "//platform/util",
+  ]
+)
+
+jvm_test(
+  name = "java-aetherDependencyResolver_test",
+  runtime_deps = [":java-aetherDependencyResolver_test_lib"]
+)
+### auto-generated section `build intellij.java.aetherDependencyResolver` end

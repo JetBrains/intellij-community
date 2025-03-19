@@ -1,13 +1,22 @@
 from _typeshed import Incomplete, SupportsWrite
+from abc import ABC, abstractmethod
 from collections.abc import Iterable, Mapping
-from typing import Any, Generic, NoReturn, TypeVar, overload
-from typing_extensions import TypeAlias
+from typing import NoReturn, TypeVar, overload
 
 from .std import tqdm as std_tqdm
 
 __all__ = ["tqdm_rich", "trrange", "tqdm", "trange"]
 
-_ProgressColumn: TypeAlias = Any  # Actually rich.progress.ProgressColumn
+_T = TypeVar("_T")
+
+# Actually rich.progress.ProgressColumn
+class _ProgressColumn(ABC):
+    max_refresh: float | None
+    def __init__(self, table_column: Incomplete | None = ...) -> None: ...
+    def get_table_column(self): ...
+    def __call__(self, task): ...
+    @abstractmethod
+    def render(self, task): ...
 
 class FractionColumn(_ProgressColumn):
     unit_scale: bool
@@ -24,9 +33,7 @@ class RateColumn(_ProgressColumn):
     def __init__(self, unit: str = ..., unit_scale: bool = ..., unit_divisor: int = ...) -> None: ...
     def render(self, task): ...
 
-_T = TypeVar("_T")
-
-class tqdm_rich(Generic[_T], std_tqdm[_T]):
+class tqdm_rich(std_tqdm[_T]):
     def close(self) -> None: ...
     def clear(self, *_, **__) -> None: ...
     def display(self, *_, **__) -> None: ...
@@ -44,7 +51,7 @@ class tqdm_rich(Generic[_T], std_tqdm[_T]):
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,
@@ -65,7 +72,7 @@ class tqdm_rich(Generic[_T], std_tqdm[_T]):
     @overload
     def __init__(
         self: tqdm_rich[NoReturn],
-        iterable: None = ...,
+        iterable: None = None,
         desc: str | None = ...,
         total: float | None = ...,
         leave: bool | None = ...,
@@ -75,7 +82,7 @@ class tqdm_rich(Generic[_T], std_tqdm[_T]):
         maxinterval: float = ...,
         miniters: float | None = ...,
         ascii: bool | str | None = ...,
-        disable: bool = ...,
+        disable: bool | None = ...,
         unit: str = ...,
         unit_scale: bool | float = ...,
         dynamic_ncols: bool = ...,

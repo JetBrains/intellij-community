@@ -19,5 +19,5 @@ public abstract class CustomComponentExtensionWithSwingRenderer<T> extends Custo
     return render(deserializeData(control.data()), project);
   }
   
-  abstract public @NotNull JComponent render(T data, @NotNull Project project);
+  public abstract @NotNull JComponent render(T data, @NotNull Project project);
 }

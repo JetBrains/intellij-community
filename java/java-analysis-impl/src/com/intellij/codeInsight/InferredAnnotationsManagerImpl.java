@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
+public final class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   private final Project myProject;
 
@@ -19,9 +19,8 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     myProject = project;
   }
 
-  @Nullable
   @Override
-  public PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+  public @Nullable PsiAnnotation findInferredAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
     for (InferredAnnotationProvider provider : InferredAnnotationProvider.EP_NAME.getExtensionList(myProject)) {
       PsiAnnotation annotation = provider.findInferredAnnotation(listOwner, annotationFQN);
       if (annotation != null) {

@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -19,13 +20,13 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   private val stepsProperty = AtomicProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
-  val stepProperty = propertyGraph.property("")
+  val stepProperty: GraphProperty<String> = propertyGraph.property("")
     .bindStorage("${javaClass.name}.selectedStep")
-  var step by stepProperty
+  var step: String by stepProperty
 
   private val stepsPanels = HashMap<String, DialogPanel>()
 
-  protected open fun initSteps() = emptyMap<String, NewProjectWizardStep>()
+  protected open fun initSteps(): Map<String, NewProjectWizardStep> = emptyMap()
 
   protected open fun setupSwitcherUi(builder: Panel) {
     builder.row(label) {
@@ -34,10 +35,10 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   }
 
   protected open fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
-    return builder.segmentedButton(steps.keys) { it }
+    return builder.segmentedButton(steps.keys) { text = it }
       .bind(stepProperty)
       .gap(RightGap.SMALL)
-      .apply { stepsProperty.afterChange { items(steps.keys) } }
+      .apply { stepsProperty.afterChange { items = steps.keys } }
   }
 
   override fun setupUI(builder: Panel) {

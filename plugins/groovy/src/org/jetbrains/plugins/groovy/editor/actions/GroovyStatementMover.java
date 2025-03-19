@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.editor.actions;
 
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroovyStatementMover extends StatementUpDownMover {
+public final class GroovyStatementMover extends StatementUpDownMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
@@ -83,8 +83,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
     return true;
   }
 
-  @Nullable
-  private static GroovyPsiElement getElementToMove(GroovyFileBase file, int offset) {
+  private static @Nullable GroovyPsiElement getElementToMove(GroovyFileBase file, int offset) {
     offset = CharArrayUtil.shiftForward(file.getText(), offset, " \t");
     PsiElement element = file.findElementAt(offset);
     final GrDocComment docComment = PsiTreeUtil.getParentOfType(element, GrDocComment.class);

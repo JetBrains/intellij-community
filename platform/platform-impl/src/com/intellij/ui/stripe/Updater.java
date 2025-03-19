@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ import java.awt.event.MouseEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
+@ApiStatus.Internal
 public abstract class Updater<Painter extends ErrorStripePainter> implements Disposable {
   private final Painter myPainter;
   private final JScrollBar myScrollBar;

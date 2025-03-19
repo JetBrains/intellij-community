@@ -27,9 +27,8 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class PyFileStubBuilder extends DefaultStubBuilder {
-  @NotNull
   @Override
-  protected StubElement createStubForFile(@NotNull PsiFile file) {
+  protected @NotNull StubElement createStubForFile(@NotNull PsiFile file) {
     if (file instanceof PyFile) {
       return new PyFileStubImpl((PyFile)file);
     }

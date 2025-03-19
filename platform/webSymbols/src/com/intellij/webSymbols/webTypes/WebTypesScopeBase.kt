@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.webTypes
 
+import com.intellij.markdown.utils.doc.DocMarkdownToHtmlConverter
 import com.intellij.model.Pointer
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.UserDataHolderEx
@@ -22,7 +24,6 @@ import com.intellij.webSymbols.context.WebSymbolsContextRulesProvider
 import com.intellij.webSymbols.impl.StaticWebSymbolsScopeBase
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolNameConversionRulesProvider
-import com.intellij.webSymbols.utils.HtmlMarkdownUtils
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.webSymbols.webTypes.impl.WebTypesJsonContributionAdapter.Companion.wrap
 import com.intellij.webSymbols.webTypes.json.*
@@ -37,17 +38,17 @@ abstract class WebTypesScopeBase :
   private val frameworkConfigs = mutableMapOf<WebTypes, FrameworkConfig>()
   private val contextsConfigs = mutableMapOf<WebTypes, ContextsConfig>()
 
-  private val contextRulesCache = createContextRulesCache()
+  private val contextRulesCache: ClearableLazyValue<MultiMap<ContextKind, WebSymbolsContextKindRules>> = createContextRulesCache()
 
   private val nameConversionRulesCache = createNameConversionRulesCache()
 
   abstract override fun createPointer(): Pointer<out WebTypesScopeBase>
 
-  override fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider =
-    WebTypesSymbolNameConversionRulesProvider(framework, this)
+  override fun getNameConversionRulesProvider(framework: FrameworkId): WebSymbolNameConversionRulesProvider {
+    return WebTypesSymbolNameConversionRulesProvider(framework, this, nameConversionRulesCache)
+  }
 
-  override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> =
-    contextRulesCache.value
+  override fun getContextRules(): MultiMap<ContextKind, WebSymbolsContextKindRules> = contextRulesCache.value
 
   protected open fun addWebTypes(webTypes: WebTypes, context: WebTypesJsonOrigin) {
     addRoot(webTypes.contributions, context)
@@ -107,24 +108,33 @@ abstract class WebTypesScopeBase :
         list.map { it.wrap(origin, this@WebTypesScopeBase, namespace, kind) }
       }
 
-  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<ContextKind, WebSymbolsContextKindRules>> =
-    ClearableLazyValue.create {
-      data class RulesEntry(val kind: ContextKind,
-                            val name: ContextName,
-                            val enablementRules: EnablementRules?,
-                            val disablementRules: DisablementRules?)
-
-      val rulesPerKind = contextsConfigs.values.asSequence()
+  private fun createContextRulesCache(): ClearableLazyValue<MultiMap<ContextKind, WebSymbolsContextKindRules>> {
+    return ClearableLazyValue.create {
+      val deprecatedContextConfigRules = contextsConfigs.values.asSequence()
         .flatMap { it.additionalProperties.entries }
         .filter { (name, config) -> name != null && config.kind != null }
         .map { (name, config) -> RulesEntry(config.kind, name, config.enableWhen?.wrap(), config.disableWhen?.wrap()) }
-        .plus(
-          frameworkConfigs
-            .filter { (webTypes, _) -> webTypes.framework != null }
-            .map { (webTypes, config) ->
-              RulesEntry(KIND_FRAMEWORK, webTypes.framework, config.enableWhen?.wrap(), config.disableWhen?.wrap())
+
+      val contextConfigRules = contextsConfigs.values.asSequence()
+        .flatMap { it.additionalProperties.entries }
+        .filter { (kind, kindConfig) -> kind != null && kindConfig.kind == null }
+        .flatMap { (kind, kindConfig) ->
+          kindConfig.additionalProperties.asSequence()
+            .filter { it.key != null }
+            .map { (name, config) ->
+              RulesEntry(kind, name, config.enableWhen?.wrap(), config.disableWhen?.wrap())
             }
-        )
+        }
+      val frameworkConfigRules = frameworkConfigs
+        .filter { (webTypes, _) -> webTypes.framework != null }
+        .map { (webTypes, config) ->
+          RulesEntry(KIND_FRAMEWORK, webTypes.framework, config.enableWhen?.wrap(), config.disableWhen?.wrap())
+        }
+
+
+      val rulesPerKind = deprecatedContextConfigRules
+        .plus(contextConfigRules)
+        .plus(frameworkConfigRules)
         .groupBy { it.kind }
 
       val result = MultiMap.create<ContextKind, WebSymbolsContextKindRules>()
@@ -136,32 +146,7 @@ abstract class WebTypesScopeBase :
       }
       result
     }
-
-  private fun <T> createEnablementCache(accessor: (config: FrameworkConfig) -> T?,
-                                        accessor2: (config: ContextConfig) -> T?): ClearableLazyValue<Map<String, Map<String, List<T>>>> =
-    ClearableLazyValue.create {
-      val result = mutableMapOf<String, MutableMap<String, MutableList<T>>>()
-      for (entry in contextsConfigs) {
-        for ((name, config) in entry.value.additionalProperties) {
-          val kind = config.kind ?: continue
-          val rules = accessor2(config) ?: continue
-          result
-            .getOrPut(kind) { mutableMapOf() }
-            .getOrPut(name) { mutableListOf() }
-            .add(rules)
-        }
-      }
-      for ((webTypes, config) in frameworkConfigs) {
-        val framework = webTypes.framework ?: continue
-        val rules = accessor(config) ?: continue
-        result
-          .getOrPut(KIND_FRAMEWORK) { mutableMapOf() }
-          .getOrPut(framework) { mutableListOf() }
-          .add(rules)
-      }
-      // Make the map not mutable
-      result.mapValues { (_, map) -> map.mapValues { (_, innerMap) -> innerMap.toList() } }
-    }
+  }
 
   private fun createNameConversionRulesCache(): ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>> =
     ClearableLazyValue.create {
@@ -173,7 +158,7 @@ abstract class WebTypesScopeBase :
 
           buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
           buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
-          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addNameVariantsRule)
+          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addCompletionVariantsRule)
 
           Pair(framework, builder.build())
         }
@@ -183,20 +168,22 @@ abstract class WebTypesScopeBase :
   protected class WebTypesJsonOriginImpl(
     webTypes: WebTypes,
     override val typeSupport: WebSymbolTypeSupport,
+    private val project: Project,
     private val symbolLocationResolver: (source: SourceBase) -> WebTypesSymbol.Location? = { null },
     private val sourceSymbolResolver: (location: WebTypesSymbol.Location, cacheHolder: UserDataHolderEx) -> PsiElement? = { _, _ -> null },
     private val iconLoader: (path: String) -> Icon? = { null },
     override val version: String? = webTypes.version
   ) : WebTypesJsonOrigin {
-
     override val framework: FrameworkId? = webTypes.framework
+
     override val library: String? = webTypes.name
-    private val contextExpr = webTypes.context
+
+    private val contextExpr = webTypes.requiredContext ?: webTypes.context
 
     private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) ?: ("<p>$doc") }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> DocMarkdownToHtmlConverter.convert(project, doc) }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 
@@ -204,48 +191,55 @@ abstract class WebTypesScopeBase :
 
     override fun renderDescription(description: String): String = descriptionRenderer(description)
 
-    override fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement? =
-      resolveSourceLocation(source)?.let { sourceSymbolResolver(it, cacheHolder) }
-
-    override fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location? =
-      symbolLocationResolver(source)
-
-    override fun loadIcon(path: String): Icon? =
-      if (path.startsWith("<svg"))
-        WebTypesSvgStringIconLoader.loadIcon(path)
-      else
-        iconLoader(path)
-
-    override fun matchContext(context: WebSymbolsContext): Boolean =
-      (framework == null || context.framework == framework)
-      && contextExpr?.evaluate(context) != false
-
-    override fun toString(): String {
-      return "$library@$version ($framework)"
+    override fun resolveSourceSymbol(source: SourceBase, cacheHolder: UserDataHolderEx): PsiElement? {
+      return resolveSourceLocation(source)?.let { sourceSymbolResolver(it, cacheHolder) }
     }
 
+    override fun resolveSourceLocation(source: SourceBase): WebTypesSymbol.Location? = symbolLocationResolver(source)
+
+    override fun loadIcon(path: String): Icon? {
+      return if (path.startsWith("<svg")) WebTypesSvgStringIconLoader.loadIcon(path) else iconLoader(path)
+    }
+
+    override fun matchContext(context: WebSymbolsContext): Boolean {
+      return ((framework == null || context.framework == framework) && contextExpr?.evaluate(context) != false)
+    }
+
+    override fun toString(): String = "$library@$version ($framework)"
+  }
+}
+
+private class WebTypesSymbolNameConversionRulesProvider(
+  private val framework: FrameworkId,
+  private val scope: WebTypesScopeBase,
+  private val nameConversionRulesCache: ClearableLazyValue<Map<FrameworkId, WebSymbolNameConversionRules>>,
+) : WebSymbolNameConversionRulesProvider {
+  override fun getNameConversionRules(): WebSymbolNameConversionRules {
+    return nameConversionRulesCache.value[framework] ?: WebSymbolNameConversionRules.empty()
   }
 
-  private class WebTypesSymbolNameConversionRulesProvider(private val framework: FrameworkId,
-                                                          private val scope: WebTypesScopeBase) : WebSymbolNameConversionRulesProvider {
-    override fun getNameConversionRules(): WebSymbolNameConversionRules =
-      scope.nameConversionRulesCache.value[framework] ?: WebSymbolNameConversionRules.empty()
-
-    override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> {
-      val framework = framework
-      val scopePtr = scope.createPointer()
-      return Pointer {
-        scopePtr.dereference()?.let { WebTypesSymbolNameConversionRulesProvider(framework, scope) }
+  override fun createPointer(): Pointer<out WebSymbolNameConversionRulesProvider> {
+    val framework = framework
+    val scopePtr = scope.createPointer()
+    return Pointer {
+      scopePtr.dereference()?.let {
+        WebTypesSymbolNameConversionRulesProvider(
+          framework = framework,
+          scope = scope,
+          nameConversionRulesCache = nameConversionRulesCache,
+        )
       }
     }
-
-    override fun getModificationCount(): Long =
-      scope.modificationCount
   }
 
-  companion object {
-    private val EOL_PATTERN: Regex = Regex("\n|\r\n")
-
-  }
-
+  override fun getModificationCount(): Long = scope.modificationCount
 }
+
+private val EOL_PATTERN: Regex = Regex("\n|\r\n")
+
+private data class RulesEntry(
+  val kind: ContextKind,
+  val name: ContextName,
+  val enablementRules: EnablementRules?,
+  val disablementRules: DisablementRules?,
+)

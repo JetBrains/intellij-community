@@ -3,7 +3,7 @@
   <problem>
   <file>Test.java</file>
   <line>10</line>
-  <description>Actual value of parameter 'obj' is always 'A.OBJ'</description>
+  <description>Value of parameter 'obj' is always 'A.OBJ'</description>
 </problem>
 
 </problems>

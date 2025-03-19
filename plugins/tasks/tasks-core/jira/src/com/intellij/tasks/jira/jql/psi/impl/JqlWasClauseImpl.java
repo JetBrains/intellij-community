@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.jira.jql.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -24,15 +25,13 @@ public class JqlWasClauseImpl extends JqlClauseWithHistoryPredicatesImpl impleme
   /**
    * Operand can be missing in malformed query.
    */
-  @Nullable
   @Override
-  public JqlOperand getOperand() {
+  public @Nullable JqlOperand getOperand() {
     return findChildByClass(JqlOperand.class);
   }
 
-  @NotNull
   @Override
-  public Type getType() {
+  public @NotNull Type getType() {
     boolean hasNot = getNode().findChildByType(JqlTokenTypes.NOT_KEYWORD) != null;
     boolean hasIn = getNode().findChildByType(JqlTokenTypes.IN_KEYWORD) != null;
     if (hasIn && hasNot) {

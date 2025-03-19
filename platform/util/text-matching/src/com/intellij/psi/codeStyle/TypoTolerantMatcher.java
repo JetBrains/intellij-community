@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
@@ -7,19 +7,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.NameUtilCore;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
 
-final class TypoTolerantMatcher extends MinusculeMatcher {
-
-  //heuristics: 15 can take 10-20 ms in some cases, while 10 works in 1-5 ms
-  private static final int TYPO_AWARE_PATTERN_LIMIT = 13;
-
+@ApiStatus.Internal
+public final class TypoTolerantMatcher extends MinusculeMatcher {
   private final char[] myPattern;
   private final String myHardSeparators;
   private final NameUtil.MatchingCaseSensitivity myOptions;
@@ -41,7 +35,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
-  TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  @VisibleForTesting
+  public TypoTolerantMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
     myOptions = options;
     myPattern = Strings.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;
@@ -213,11 +208,6 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     return fragments != null && isStartMatch(fragments);
   }
 
-  public static boolean isStartMatch(@NotNull Iterable<? extends TextRange> fragments) {
-    Iterator<? extends TextRange> iterator = fragments.iterator();
-    return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
-  }
-
   @Override
   public boolean matches(@NotNull String name) {
     return matchingFragments(name) != null;
@@ -236,9 +226,6 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     boolean ascii = AsciiUtils.isAscii(name);
     FList<TextRange> ranges = new Session(name, false, ascii).matchingFragments();
     if (ranges != null) return ranges;
-
-    //do not apply typo aware matching for long patterns, it can take too much time
-    if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
 
     return new Session(name, true, ascii).matchingFragments();
   }
@@ -297,12 +284,14 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       if (!myTypoAware) {
         int patternIndex = 0;
-        for (int i = 0; i < length; ++i) {
-          char c = myName.charAt(i);
-          if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
-            patternIndex += 2;
-            if (patternIndex >= myMeaningfulCharacters.length) {
-              break;
+        if (myMeaningfulCharacters.length > 0) {
+          for (int i = 0; i < length; ++i) {
+            char c = myName.charAt(i);
+            if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
+              patternIndex += 2;
+              if (patternIndex >= myMeaningfulCharacters.length) {
+                break;
+              }
             }
           }
         }
@@ -341,7 +330,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           patternIndex - 2, errorState)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<TextRange>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0));
+            return FList.singleton(new Range(spaceIndex, spaceIndex + 1, 0));
           }
           return null;
         }
@@ -544,7 +533,7 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
         if (errors == fragmentLength) return null;
-        return FList.<TextRange>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
+        return FList.singleton(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
       // try to match the remainder of pattern with the remainder of name
@@ -682,13 +671,13 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
   public @NonNls String toString() {
     return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
-  
+
   private record ErrorWithIndex(int index, Error error) {}
 
   private static class ErrorState {
     private final @Nullable ErrorState myBase;
     private final int myDeriveIndex;
-    
+
     private BitSet myAffected;
     private int myAllAffectedAfter = Integer.MAX_VALUE;
     private List<ErrorWithIndex> myErrors;
@@ -814,24 +803,24 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
 
       return null;
     }
-    
-    private int numMisses() {
+
+    private int numMisses(int end) {
       int numMisses = 0;
-      if (myErrors != null) {
+      if (myErrors != null && end > 0) {
         for (ErrorWithIndex error : myErrors) {
-          if (error.error instanceof MissError) {
+          if (error.index < end && error.error instanceof MissError) {
             numMisses++;
           }
         }
       }
-      return numMisses + (myBase == null ? 0 : myBase.numMisses());
+      return numMisses + (myBase == null ? 0 : myBase.numMisses(myDeriveIndex));
     }
 
     public int length(char[] pattern) {
       if (myPattern != null) {
         return myPattern.length;
       }
-      return pattern.length + numMisses();
+      return pattern.length + numMisses(Integer.MAX_VALUE);
     }
   }
 

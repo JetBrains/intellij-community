@@ -1,32 +1,21 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
+import com.jetbrains.python.ast.PyAstExceptPart;
 import com.jetbrains.python.psi.stubs.PyExceptPartStub;
 import org.jetbrains.annotations.Nullable;
 
-public interface PyExceptPart extends PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
+public interface PyExceptPart extends PyAstExceptPart, PyElement, StubBasedPsiElement<PyExceptPartStub>, PyNamedElementContainer, PyStatementPart {
   PyExceptPart[] EMPTY_ARRAY = new PyExceptPart[0];
 
-  @Nullable
-  PyExpression getExceptClass();
+  @Override
+  default @Nullable PyExpression getExceptClass() {
+    return (PyExpression)PyAstExceptPart.super.getExceptClass();
+  }
 
-  @Nullable
-  PyExpression getTarget();
-
-  boolean isStar();
+  @Override
+  default @Nullable PyExpression getTarget() {
+    return (PyExpression)PyAstExceptPart.super.getTarget();
+  }
 }

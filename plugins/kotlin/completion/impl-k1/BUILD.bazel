@@ -1,0 +1,61 @@
+### auto-generated section `build kotlin.completion.impl.k1` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-completion-impl-k1",
+  module_name = "kotlin.completion.impl.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-compiler-ir",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:guava",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//platform/ide-core-impl",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/base/fe10/kdoc:kotlin-base-fe10-kdoc",
+    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k1:kotlin-code-insight-override-implement-k1",
+    "//plugins/kotlin/code-insight/intentions-k1:kotlin-code-insight-intentions-k1",
+    "//plugins/kotlin/completion/api:kotlin-completion-api",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//platform/core-impl",
+    "//platform/core-ui",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//platform/util/text-matching",
+    "//platform/ml-impl",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/highlighting/highlighting-k1:kotlin-highlighting-k1",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+  ]
+)
+### auto-generated section `build kotlin.completion.impl.k1` end

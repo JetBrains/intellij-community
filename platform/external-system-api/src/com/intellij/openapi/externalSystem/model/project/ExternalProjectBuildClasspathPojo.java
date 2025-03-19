@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model.project;
 
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +16,9 @@ public class ExternalProjectBuildClasspathPojo {
   /**
    * Common for all project modules build classpath. E.g. it can be build system SDK libraries, configured at project level.
    */
-  @NotNull private List<String> myProjectBuildClasspath;
-  @NotNull private Map<String, ExternalModuleBuildClasspathPojo> myModulesBuildClasspath;
-  @NotNull private String myName;
+  private @NotNull List<String> myProjectBuildClasspath;
+  private @NotNull Map<String, ExternalModuleBuildClasspathPojo> myModulesBuildClasspath;
+  private @NotNull String myName;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalProjectBuildClasspathPojo() {
@@ -34,8 +34,7 @@ public class ExternalProjectBuildClasspathPojo {
     myModulesBuildClasspath = modulesBuildClasspath;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -43,8 +42,7 @@ public class ExternalProjectBuildClasspathPojo {
     myName = name;
   }
 
-  @NotNull
-  public Map<String, ExternalModuleBuildClasspathPojo> getModulesBuildClasspath() {
+  public @NotNull Map<String, ExternalModuleBuildClasspathPojo> getModulesBuildClasspath() {
     return myModulesBuildClasspath;
   }
 
@@ -52,8 +50,7 @@ public class ExternalProjectBuildClasspathPojo {
     myModulesBuildClasspath = modulesBuildClasspath;
   }
 
-  @NotNull
-  public List<String> getProjectBuildClasspath() {
+  public @NotNull List<String> getProjectBuildClasspath() {
     return myProjectBuildClasspath;
   }
 

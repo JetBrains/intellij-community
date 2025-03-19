@@ -14,12 +14,14 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.DocumentationHoverInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
@@ -33,25 +35,25 @@ import javax.swing.JComponent
 internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, hostOffset: Int): DocumentationHoverInfo? {
   ApplicationManager.getApplication().assertIsNonDispatchThread()
   return runBlockingCancellable {
-    val request = readAction {
+    val requests = readAction {
       val targets = injectedThenHost(
         project, hostEditor, hostOffset,
         IdeDocumentationTargetProvider.getInstance(project)::documentationTargets
       )
-      targets?.singleOrNull()?.documentationRequest()
+      targets?.map { it.documentationRequest() }
     }
-    if (request == null) {
+    if (requests.isNullOrEmpty()) {
       return@runBlockingCancellable null
     }
     if (!LightEdit.owns(project)) {
       val preview = withContext(Dispatchers.EDT) {
-        DocumentationToolWindowManager.instance(project).updateVisibleAutoUpdatingTab(request)
+        DocumentationToolWindowManager.getInstance(project).updateVisibleAutoUpdatingTab(requests.first())
       }
       if (preview) {
         return@runBlockingCancellable null
       }
     }
-    val browser = DocumentationBrowser.createBrowser(project, request)
+    val browser = DocumentationBrowser.createBrowser(project, requests)
     val hasContent: Boolean? = withTimeoutOrNull(DEFAULT_UI_RESPONSE_TIMEOUT) {
       // to avoid flickering: wait a bit before showing the hover popup,
       // otherwise, the popup will be shown with "Fetching..." message,
@@ -108,9 +110,18 @@ private class DocumentationTargetHoverInfo(
     bridge.performWhenAvailable { popup: AbstractPopup ->
       popupUI.setPopup(popup)
       popupUI.updatePopup {
-        resizePopup(popup)
-        bridge.updateLocation()
+        resizePopup(popup, it)
+        writeIntentReadAction {
+          bridge.updateLocation()
+        }
       }
+      val fileType = editor.virtualFile?.fileType
+      DocumentationUsageCollector.QUICK_DOC_SHOWN.log(fileType)
+      val startTime = System.currentTimeMillis()
+      Disposer.register(popup) {
+        DocumentationUsageCollector.QUICK_DOC_CLOSED.log(fileType, jointPopup, System.currentTimeMillis() - startTime)
+      }
+
     }
     EditorUtil.disposeWithEditor(editor, popupUI)
     return popupUI.component

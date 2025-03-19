@@ -3,13 +3,17 @@
 
 package com.intellij.openapi.util.io
 
-import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import com.intellij.openapi.util.io.CanonicalPathPrefixTree.CanonicalPathElement
+import com.intellij.util.containers.prefixTree.PrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.nio.file.Paths
 import kotlin.io.path.*
 
 /**
- * Normalizes and returns path with forward slashes ('/').
+ * Normalizes and returns a path with forward slashes ('/').
  */
 fun Path.toCanonicalPath(): String {
   return normalize().invariantSeparatorsPathString
@@ -17,22 +21,40 @@ fun Path.toCanonicalPath(): String {
 
 /**
  * Resolves and normalizes path under [this] path.
- * I.e. resolve joins [this] and [relativePath] using file system separator
+ * I.e., resolve joins [this] and [relativePath] using file system separator
  */
 fun Path.getResolvedPath(relativePath: String): Path {
-  return resolve(FileUtil.toSystemDependentName(relativePath)).normalize()
+  return resolve(relativePath).normalize()
 }
 
 /**
- * Checks that [this] is an ancestor of [path].
+ * Returns normalised base and relative paths. Result of this function should satisfy for condition:
+ * `resultBasePath.resolve(resultRelativePath) == basePath.resolve(relativePath).normalize()` where
+ * resultBasePath is path with maximum length of all possible.
  *
- * @param strict if `false` then this method returns `true` if [this] equals to [file].
- * @return `true` if [this] is parent of [path]; `false` otherwise.
+ * For example:
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `../../a/b`,
+ *    returns pair with base path = `/1/2/3` and relative path = `a/b`;
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `../..`,
+ *    returns pair with base path = `/1/2/3` and empty relative path;
+ *  * for [this] = `/1/2/3/4/5` and [relativePath] = `a/b`,
+ *    returns pair with base path = `/1/2/3/4/5` and relative path = `a/b`.
  */
-fun Path.isAncestor(path: Path, strict: Boolean): Boolean {
-  return FileUtil.isAncestor(this, path, strict)
+@ApiStatus.Internal
+fun Path.relativizeToClosestAncestor(relativePath: String): Pair<Path, Path> {
+  val normalizedPath = getResolvedPath(relativePath)
+  val normalizedBasePath = checkNotNull(FileUtil.findAncestor(this, normalizedPath)) {
+    """
+      |Cannot resolve normalized base path for: $normalizedPath
+      |  basePath = $this
+      |  relativePath = $relativePath
+    """.trimMargin()
+  }
+  val normalizedRelativePath = normalizedBasePath.relativize(normalizedPath)
+  return normalizedBasePath to normalizedRelativePath
 }
 
+@ApiStatus.Internal
 fun Path.findOrCreateFile(): Path {
   parent?.createDirectories()
   if (!exists()) {
@@ -44,6 +66,7 @@ fun Path.findOrCreateFile(): Path {
   return this
 }
 
+@ApiStatus.Internal
 fun Path.findOrCreateDirectory(): Path {
   createDirectories()
   if (!isDirectory()) {
@@ -52,37 +75,53 @@ fun Path.findOrCreateDirectory(): Path {
   return this
 }
 
+@ApiStatus.Internal
 fun Path.findOrCreateFile(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateFile()
 }
 
+@ApiStatus.Internal
 fun Path.findOrCreateDirectory(relativePath: String): Path {
   return getResolvedPath(relativePath).findOrCreateDirectory()
 }
 
+@Deprecated("Do not use", level = DeprecationLevel.ERROR)
+@ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
 fun String.toNioPath(): Path {
-  return Paths.get(FileUtil.toSystemDependentName(this))
+  return Paths.get(FileUtilRt.toSystemDependentName(this))
 }
 
 fun String.toNioPathOrNull(): Path? {
   return try {
-    toNioPath()
+    Paths.get(FileUtilRt.toSystemDependentName(this))
   }
   catch (ex: InvalidPathException) {
     null
   }
 }
 
-object NioPathPrefixTreeFactory : AbstractPrefixTreeFactory<Path, String>() {
-
-  override fun convertToList(element: Path): List<String> {
-    return element.map { it.pathString }
+@ApiStatus.Internal
+object PathPrefixTree : PrefixTreeFactory<Path, Path> {
+  override fun convertToList(element: Path): List<Path> {
+    return element.toList()
   }
 }
 
-object CanonicalPathPrefixTreeFactory : AbstractPrefixTreeFactory<String, String>() {
+@ApiStatus.Internal
+object CanonicalPathPrefixTree : PrefixTreeFactory<String, CanonicalPathElement> {
 
-  override fun convertToList(element: String): List<String> {
-    return element.removeSuffix("/").split("/")
+  override fun convertToList(element: String): List<CanonicalPathElement> {
+    return element.removeSuffix("/").split("/").map(::CanonicalPathElement)
+  }
+
+  @ApiStatus.Internal
+  class CanonicalPathElement(private val keyElement: String) {
+
+    override fun equals(other: Any?): Boolean =
+      FileUtil.pathsEqual(keyElement, (other as? CanonicalPathElement)?.keyElement)
+
+    override fun hashCode(): Int =
+      FileUtil.pathHashCode(keyElement)
   }
 }

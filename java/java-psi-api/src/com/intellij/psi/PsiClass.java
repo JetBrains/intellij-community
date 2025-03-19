@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClass;
@@ -13,6 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -65,16 +66,25 @@ public interface PsiClass
   /**
    * Checks if the class is a record.
    *
-   * @return true if the class is an record, false otherwise.
+   * @return true if the class is a record, false otherwise.
    */
   default boolean isRecord() {
     return false;
   }
 
   /**
+   * Checks if the class is a Valhalla value class.
+   *
+   * @return true if the class is a value class, false otherwise.
+   */
+  default boolean isValueClass() {
+    return false;
+  }
+
+  /**
    * Returns the list of classes that this class or interface extends.
    *
-   * @return the extends list, or null for anonymous classes.
+   * @return the extends list, or null for anonymous classes and unnamed classes.
    */
   @Nullable
   PsiReferenceList getExtendsList();
@@ -82,7 +92,7 @@ public interface PsiClass
   /**
    * Returns the list of interfaces that this class implements.
    *
-   * @return the implements list, or null for anonymous classes
+   * @return the implements list, or null for anonymous classes and unnamed classes
    */
   @Nullable
   PsiReferenceList getImplementsList();
@@ -90,7 +100,7 @@ public interface PsiClass
   /**
    * Returns the array of class types for the classes that this class or interface extends.
    *
-   * @return the array of extended class types, or an empty list for anonymous classes.
+   * @return the array of extended class types, or an empty list for anonymous classes and implicitly declared classes.
    */
   PsiClassType @NotNull [] getExtendsListTypes();
 
@@ -98,7 +108,7 @@ public interface PsiClass
    * Returns the array of class types for the interfaces that this class implements.
    *
    * @return the array of extended class types, or an empty list for anonymous classes,
-   * enums and annotation types
+   * enums, annotation types and implicitly declared classes
    */
   PsiClassType @NotNull [] getImplementsListTypes();
 
@@ -107,8 +117,7 @@ public interface PsiClass
    *
    * @return the permits list, or null if there's none.
    */
-  @Nullable
-  default PsiReferenceList getPermitsList() {
+  default @Nullable PsiReferenceList getPermitsList() {
     return null;
   }
 
@@ -273,6 +282,7 @@ public interface PsiClass
    * @return the found methods and their substitutors, or an empty list if no methods are found.
    */
   @NotNull
+  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> findMethodsAndTheirSubstitutorsByName(@NonNls @NotNull String name, boolean checkBases);
 
   /**
@@ -282,6 +292,7 @@ public interface PsiClass
    * @return the list of methods and their substitutors
    */
   @NotNull
+  @Unmodifiable
   List<Pair<PsiMethod, PsiSubstitutor>> getAllMethodsAndTheirSubstitutors();
 
   /**
@@ -297,7 +308,7 @@ public interface PsiClass
   /**
    * Returns the token representing the opening curly brace of the class.
    *
-   * @return the token instance, or null if the token is missing in the source code file.
+   * @return the token instance, or null if the token is absent in the source code file.
    */
   @Nullable
   PsiElement getLBrace();
@@ -305,7 +316,7 @@ public interface PsiClass
   /**
    * Returns the token representing the closing curly brace of the class.
    *
-   * @return the token instance, or null if the token is missing in the source code file.
+   * @return the token instance, or null if the token is absent in the source code file.
    */
   @Nullable
   PsiElement getRBrace();
@@ -313,7 +324,7 @@ public interface PsiClass
   /**
    * Returns the name identifier of the class.
    *
-   * @return the name identifier, or null if the class is anonymous or synthetic jsp class
+   * @return the name identifier, or null if the class is anonymous, synthetic jsp class or unnamed class
    */
   @Override
   @Nullable
@@ -376,15 +387,13 @@ public interface PsiClass
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
-  @NotNull
   @Override
-  default JvmClassKind getClassKind() {
+  default @NotNull JvmClassKind getClassKind() {
     return PsiJvmConversionHelper.getJvmClassKind(this);
   }
 
-  @Nullable
   @Override
-  default JvmReferenceType getSuperClassType() {
+  default @Nullable JvmReferenceType getSuperClassType() {
     return PsiJvmConversionHelper.getClassSuperType(this);
   }
 
@@ -397,8 +406,7 @@ public interface PsiClass
     return PsiRecordComponent.EMPTY_ARRAY;
   }
 
-  @Nullable
-  default PsiRecordHeader getRecordHeader() {
+  default @Nullable PsiRecordHeader getRecordHeader() {
     return null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.toml.navigation
 
 import com.intellij.patterns.ElementPattern
@@ -10,8 +10,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.gradle.service.resolve.getVersionCatalogFiles
 import org.toml.lang.psi.TomlKeySegment
 
-class VersionCatalogRenameInputValidator : RenameInputValidator {
-
+private class VersionCatalogRenameInputValidator : RenameInputValidator {
   override fun getPattern(): ElementPattern<out PsiElement> {
     return psiElement(TomlKeySegment::class.java)
       .with(object : PatternCondition<TomlKeySegment>("version ref descriptor") {

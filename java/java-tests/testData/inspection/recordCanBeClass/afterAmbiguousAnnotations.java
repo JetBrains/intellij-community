@@ -1,4 +1,4 @@
-// "Convert record to class" "true"
+// "Convert record to class" "true-preview"
 import java.lang.annotation.*;
 import java.util.Objects;
 

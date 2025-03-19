@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.openapi.Disposable;
@@ -48,7 +48,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
     myExpressionEditor.setExpression(expression);
     expressionPanel.addToCenter(myExpressionEditor.getComponent());
     final JBLabel help = new JBLabel(XDebuggerBundle.message("xdebugger.evaluate.addtowatches.hint",
-                                                             KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE)),
+                                                             KeymapUtil.getKeystrokeText(XDebuggerEvaluationDialog.getAddWatchKeystroke())),
                                      SwingConstants.RIGHT);
     help.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
     help.setComponentStyle(UIUtil.ComponentStyle.SMALL);
@@ -72,8 +72,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
   }
 
   @Override
-  @NotNull
-  public XDebuggerEditorBase getInputEditor() {
+  public @NotNull XDebuggerEditorBase getInputEditor() {
     return myExpressionEditor;
   }
 }

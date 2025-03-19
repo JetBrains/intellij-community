@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -12,6 +12,7 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -56,7 +57,7 @@ public class ScopePanel extends JPanel {
                                     !(descriptor.getScope() instanceof ModuleWithDependenciesScope); // don't show module scope
 
   private final Project myProject;
-  @NotNull private SearchScope myScope;
+  private @NotNull SearchScope myScope;
   private Consumer<? super SearchScope> myConsumer;
   private Scopes.Type myScopeType;
   private boolean myUpdating = false;
@@ -108,7 +109,7 @@ public class ScopePanel extends JPanel {
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setTargetComponent(myToolbar);
     myToolbar.setForceMinimumSize(true);
-    myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
 
     final GridBagLayout layout = new GridBagLayout();
     final GridBag constraint = new GridBag();
@@ -271,8 +272,7 @@ public class ScopePanel extends JPanel {
     myConsumer = consumer;
   }
 
-  @NotNull
-  public SearchScope getScope() {
+  public @NotNull SearchScope getScope() {
     return myScope;
   }
 

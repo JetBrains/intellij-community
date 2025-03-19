@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -26,8 +26,7 @@ public final class PySkeletonsNode extends PsiDirectoryNode {
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  @Nullable
-  public static PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
+  public static @Nullable PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
     final VirtualFile skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);

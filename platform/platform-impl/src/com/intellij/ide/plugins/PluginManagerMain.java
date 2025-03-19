@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,7 +81,7 @@ public final class PluginManagerMain {
                                         boolean allowInstallWithoutRestart,
                                         @Nullable Runnable onSuccess,
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
-                                        @NotNull final ModalityState modalityState,
+                                        final @NotNull ModalityState modalityState,
                                         @Nullable Consumer<Boolean> function) throws IOException {
     return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
   }
@@ -168,7 +169,7 @@ public final class PluginManagerMain {
     }
   }
 
-  public static class MyHyperlinkListener extends HyperlinkAdapter {
+  public static final class MyHyperlinkListener extends HyperlinkAdapter {
     @Override
     protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
       JEditorPane pane = (JEditorPane)e.getSource();
@@ -200,9 +201,9 @@ public final class PluginManagerMain {
         }
 
         PluginId dependantId = dependency.getPluginId();
-        // If there is no installed plugin implementing the module, then it can only be a platform module which cannot be disabled
+        // If there is no installed plugin implementing the module, then it can only be a platform module that cannot be disabled
         if (PluginManagerCore.isModuleDependency(dependantId) &&
-            PluginManagerCore.findPluginByModuleDependency(dependantId) == null) {
+            PluginManagerCore.INSTANCE.findPluginByModuleDependency(dependantId) == null) {
           continue;
         }
 
@@ -238,7 +239,8 @@ public final class PluginManagerMain {
 
       boolean result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
-        int code =
+        Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
+        int code = codeHeadless != null ? codeHeadless :
           MessageDialogBuilder.yesNoCancel(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message))
             .yesText(IdeBundle.message("button.enable.all"))
             .noText(IdeBundle.message("button.enable.updated.plugins", disabled.size()))
@@ -257,7 +259,10 @@ public final class PluginManagerMain {
           message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part9", disabledDependants.size());
         }
         message += "?";
-        result = MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
+        Integer codeHeadless = PluginUtilsKt.getEnableDisabledPluginsDependentConfirmationData();
+        result = codeHeadless != null
+                 ? codeHeadless.equals(Messages.YES)
+                 : MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
         if (!result) {
           return false;
         }
@@ -343,9 +348,7 @@ public final class PluginManagerMain {
   }
 
   public static boolean checkThirdPartyPluginsAllowed(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
-    @SuppressWarnings("SSBasedInspection") var aliens = descriptors.stream()
-      .filter(descriptor -> !(descriptor.isBundled() || PluginManagerCore.isDevelopedByJetBrains(descriptor)))
-      .collect(Collectors.toList());
+    var aliens = ContainerUtil.filter(descriptors, descriptor -> !(descriptor.isBundled() || PluginManagerCore.isVendorTrusted(descriptor)));
     if (aliens.isEmpty()) return true;
 
     var updateSettings = UpdateSettings.getInstance();
@@ -356,7 +359,7 @@ public final class PluginManagerMain {
 
     if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
-      PluginManagerCore.write3rdPartyPlugins(aliens);
+      PluginManagerCore.writeThirdPartyPluginsIds(ContainerUtil.map(aliens, IdeaPluginDescriptor::getPluginId));
       return true;
     }
 
@@ -364,7 +367,7 @@ public final class PluginManagerMain {
     var pluginList = aliens.stream()
       .map(descriptor -> "&nbsp;&nbsp;&nbsp;" + PluginManagerCore.getPluginNameAndVendor(descriptor))
       .collect(Collectors.joining("<br>"));
-    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList);
+    var message = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfoImpl.getShadowInstance().getShortCompanyName());
     var yesText = CoreBundle.message("third.party.plugins.privacy.note.accept");
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
@@ -375,18 +378,6 @@ public final class PluginManagerMain {
     else {
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
       return false;
-    }
-  }
-
-  @ApiStatus.Internal
-  public static void checkThirdPartyPluginsAllowed() {
-    Boolean noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted();
-    if (noteAccepted == Boolean.TRUE) {
-      UpdateSettings.getInstance().setThirdPartyPluginsAllowed(true);
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
-    }
-    else if (noteAccepted == Boolean.FALSE) {
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
     }
   }
 }

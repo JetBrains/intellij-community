@@ -1,16 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(
   name = "PyDebuggerOptionsProvider",
   storages = {
@@ -41,7 +39,10 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
     public @NonNls String myPyQtBackend = "auto";
+    public boolean myRunDebuggerInServerMode = true;
+    public int myDebuggerPort = 29781;
     public @NonNls String myAttachProcessFilter = "python";
+    public int myEvaluationResponseTimeout = 60_000;
   }
 
 
@@ -86,13 +87,30 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
   }
 
   public String getPyQtBackend() {
-    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend))
+    if (StringUtil.toLowerCase(PyBundle.messagePointer("python.debugger.qt.backend.auto").get()).equals(myState.myPyQtBackend)) {
       return "auto";
+    }
     return myState.myPyQtBackend;
   }
 
   public void setPyQtBackend(String backend) {
     myState.myPyQtBackend = backend;
+  }
+
+  public boolean isRunDebuggerInServerMode() {
+    return myState.myRunDebuggerInServerMode;
+  }
+
+  public void setRunDebuggerInServerMode(boolean runDebuggerInServerMode) {
+    myState.myRunDebuggerInServerMode = runDebuggerInServerMode;
+  }
+
+  public int getDebuggerPort() {
+    return myState.myDebuggerPort;
+  }
+
+  public void setDebuggerPort(int port) {
+    myState.myDebuggerPort = port;
   }
 
   public String getAttachProcessFilter() {
@@ -101,6 +119,14 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
 
   public void setAttachProcessFilter(String filter) {
     myState.myAttachProcessFilter = filter;
+  }
+
+  public int getEvaluationResponseTimeout() {
+    return myState.myEvaluationResponseTimeout;
+  }
+
+  public void setEvaluationResponseTimeout(int timeout) {
+    myState.myEvaluationResponseTimeout = timeout;
   }
 }
 

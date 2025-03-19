@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.macro` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "macro",
+  module_name = "intellij.platform.macro",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution",
+    "//platform/lang-core",
+    "//platform/util:util-ui",
+    "//jps/model-serialization",
+    "//platform/projectModel-impl",
+    "//platform/util",
+    "//platform/ide-core",
+    "//platform/analysis-api:analysis",
+    "//platform/util/jdom",
+  ]
+)
+### auto-generated section `build intellij.platform.macro` end

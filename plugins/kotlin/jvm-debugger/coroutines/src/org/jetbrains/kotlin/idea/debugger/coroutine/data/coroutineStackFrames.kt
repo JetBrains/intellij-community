@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -14,6 +14,7 @@ import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.sun.jdi.Location
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
@@ -27,11 +28,11 @@ import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
  * resumeWith()
  *
  */
+@ApiStatus.Internal
 class CoroutinePreflightFrame(
-    val coroutineInfoData: CoroutineInfoData,
-    val frame: StackFrameProxyImpl,
+    val coroutineStacksInfoData: CoroutineStacksInfoData,
+    frame: StackFrameProxyImpl,
     val threadPreCoroutineFrames: List<StackFrameProxyImpl>,
-    val mode: SuspendExitMode,
     firstFrameVariables: List<JavaValue>
 ) : CoroutineStackFrame(frame, null, firstFrameVariables) {
 
@@ -44,15 +45,17 @@ class CoroutinePreflightFrame(
 class CreationCoroutineStackFrame(
     frame: StackFrameProxyImpl,
     sourcePosition: XSourcePosition?,
-    val first: Boolean,
+    private var withSeparator: Boolean,
     location: Location? = frame.safeLocation()
 ) : CoroutineStackFrame(frame, sourcePosition, emptyList(), false, location), XDebuggerFramesList.ItemWithSeparatorAbove {
 
     override fun getCaptionAboveOf() =
         KotlinDebuggerCoroutinesBundle.message("coroutine.dump.creation.trace")
 
-    override fun hasSeparatorAbove() =
-        first
+    override fun hasSeparatorAbove() = withSeparator
+    override fun setWithSeparator(withSeparator: Boolean) {
+        this.withSeparator = withSeparator
+    }
 }
 
 open class CoroutineStackFrame(

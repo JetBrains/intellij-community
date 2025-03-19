@@ -30,7 +30,7 @@ public final class TopLevelClass {
         return TODO()
     }
     public fun TopLevelClass(@org.jetbrains.annotations.NotNull t: int) {
-        <init>()
+        Object()
     }
     public static final class NestedClass {
         public fun NestedClass() = UastEmptyExpression
@@ -42,5 +42,6 @@ public final enum MyBooleanEnum {
     @null FALSE
     public static fun values() : MyBooleanEnum[] = UastEmptyExpression
     public static fun valueOf(value: java.lang.String) : MyBooleanEnum = UastEmptyExpression
+    public static fun getEntries() : kotlin.enums.EnumEntries<MyBooleanEnum> = UastEmptyExpression
     private fun MyBooleanEnum() = UastEmptyExpression
 }

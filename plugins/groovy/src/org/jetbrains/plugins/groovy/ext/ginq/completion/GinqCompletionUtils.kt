@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.ginq.completion
 
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -11,9 +11,9 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.asSafely
 import icons.JetgroovyIcons
 import org.jetbrains.plugins.groovy.ext.ginq.*
@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParent
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
-object GinqCompletionUtils {
+internal object GinqCompletionUtils {
 
   fun CompletionResultSet.addFromSelectShutdown(root: GinqRootPsiElement, position: PsiElement) {
     if (position.parentOfType<GrMethodCall>()?.callRefName == KW_SHUTDOWN) {

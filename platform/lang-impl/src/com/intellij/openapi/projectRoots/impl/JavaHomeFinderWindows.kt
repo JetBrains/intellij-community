@@ -1,25 +1,30 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConvertSecondaryConstructorToPrimary")
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.io.WindowsRegistryUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
 
+@Internal
 class JavaHomeFinderWindows : JavaHomeFinderBasic {
   companion object {
-    const val defaultJavaLocation = "C:\\Program Files"
+    const val defaultJavaLocation: String = "C:\\Program Files"
 
     @Suppress("SpellCheckingInspection")
-    private const val regCommand = """reg query HKLM\SOFTWARE\JavaSoft\JDK /s /v JavaHome"""
+    private val regCommand = listOf("reg", "query", """HKLM\SOFTWARE\JavaSoft\JDK""", "/s", "/v", "JavaHome")
 
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
@@ -36,9 +41,17 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
   }
 
-  constructor(registeredJdks: Boolean,
-              wslJdks: Boolean,
-              systemInfoProvider: JavaHomeFinder.SystemInfoProvider) : super(systemInfoProvider) {
+  private val processRunner: (cmd: List<String>) -> CharSequence
+
+  @JvmOverloads
+  constructor(
+    registeredJdks: Boolean,
+    wslJdks: Boolean,
+    systemInfoProvider: JavaHomeFinder.SystemInfoProvider,
+    processRunner: (cmd: List<String>) -> CharSequence = { cmd -> WindowsRegistryUtil.readRegistry(cmd.joinToString(" ")) },
+  ) : super(systemInfoProvider) {
+    this.processRunner = processRunner
+
     if (registeredJdks) {
       /** Whether the OS is 64-bit (**important**: it's not the same as [com.intellij.util.system.CpuArch]). */
       val os64bit = !systemInfoProvider.getEnvironmentVariable("ProgramFiles(x86)").isNullOrBlank()
@@ -52,9 +65,28 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     }
     registerFinder(this::guessPossibleLocations)
     if (wslJdks) {
-      for (distro in WslDistributionManager.getInstance().installedDistributions) {
-        val wslFinder = JavaHomeFinderWsl(distro)
-        registerFinder { wslFinder.findExistingJdks() }
+      val installedDistributions = try {
+        WslDistributionManager.getInstance().installedDistributions
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (t: Throwable) {
+        thisLogger().warn(IllegalStateException("Unable to get WSL distributions list: ${t.message}", t))
+        emptyList()
+      }
+
+      for (distro in installedDistributions) {
+        try {
+          val wslFinder = JavaHomeFinderWsl(distro)
+          registerFinder { wslFinder.findExistingJdks() }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (t: Throwable) {
+          thisLogger().warn(IllegalStateException("Unable to connect to WSL distribution '${distro.id}': ${t.message}", t))
+        }
       }
     }
   }
@@ -67,11 +99,11 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     val cmd =
       when (b) {
         null -> regCommand
-        Bitness.x32 -> "$regCommand /reg:32"
-        Bitness.x64 -> "$regCommand /reg:64"
+        Bitness.x32 -> regCommand + "/reg:32"
+        Bitness.x64 -> regCommand + "/reg:64"
       }
     try {
-      val registryLines: CharSequence = WindowsRegistryUtil.readRegistry(cmd)
+      val registryLines: CharSequence = processRunner(cmd)
       val registeredPaths = gatherHomePaths(registryLines)
       val folders: MutableSet<Path> = TreeSet()
       for (rp in registeredPaths) {
@@ -87,6 +119,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       return scanAll(folders, true)
     }
     catch (ie: InterruptedException) {
+      return emptySet()
+    }
+    catch (e: CancellationException) {
       return emptySet()
     }
     catch (e: Exception) {

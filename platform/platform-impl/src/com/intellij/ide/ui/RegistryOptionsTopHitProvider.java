@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerImpl;
 import com.intellij.openapi.util.registry.RegistryValue;
 import org.jetbrains.annotations.NotNull;
@@ -26,9 +26,8 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
     }
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public @NotNull Collection<OptionDescription> getOptions() {
     List<OptionDescription> result = new ArrayList<>();
     for (RegistryValue value : ((RegistryManagerImpl)RegistryManager.getInstance()).getAll()) {
       if (value.isBoolean()) {
@@ -62,9 +61,8 @@ final class RegistryOptionsTopHitProvider implements OptionsTopHitProvider.Appli
     return result;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "registry";
   }
 }

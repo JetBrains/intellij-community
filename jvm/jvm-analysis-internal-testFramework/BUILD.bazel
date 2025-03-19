@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.jvm.analysis.internal.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-internal-testFramework",
+  module_name = "intellij.jvm.analysis.internal.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//jvm/jvm-analysis-impl:analysis-impl",
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//platform/testFramework",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/smRunner",
+    "//java/openapi:java",
+    "//java/execution/impl:java-execution-impl",
+    "//java/testFramework",
+    "//java/codeserver/core:java-codeserver-core",
+  ]
+)
+### auto-generated section `build intellij.jvm.analysis.internal.testFramework` end

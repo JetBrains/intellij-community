@@ -5,6 +5,7 @@ import com.intellij.platform.externalSystem.testFramework.*
 import com.intellij.externalSystem.JavaProjectData
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.util.execution.ParametersListUtil
 
 class JavaProject : AbstractNode<JavaProjectData>("javaProject") {
   var compileOutputPath: String
@@ -24,19 +25,29 @@ class JavaProject : AbstractNode<JavaProjectData>("javaProject") {
       if (value == null) props.remove("targetBytecodeVersion")
       else props["targetBytecodeVersion"] = value
     }
+  var compilerArguments: List<String>
+    get() = ParametersListUtil.parse(props["compilerArguments"]!!)
+    set(value) {
+      props["compilerArguments"] =  ParametersListUtil.join(value)
+    }
 
   override fun createDataNode(parentData: Any?): DataNode<JavaProjectData> {
-    val javaProjectData = JavaProjectData(systemId, compileOutputPath, languageLevel, targetBytecodeVersion)
+    val javaProjectData = JavaProjectData(systemId, compileOutputPath, languageLevel, targetBytecodeVersion, compilerArguments)
     return DataNode(JavaProjectData.KEY, javaProjectData, null)
   }
 }
 
-fun Project.javaProject(compileOutputPath: String,
-                        languageLevel: LanguageLevel? = null,
-                        targetBytecodeVersion: String? = null) =
-  initChild(JavaProject()) {
+fun Project.javaProject(
+  compileOutputPath: String,
+  languageLevel: LanguageLevel? = null,
+  targetBytecodeVersion: String? = null,
+  compilerArguments: List<String> = emptyList(),
+): JavaProject {
+  return initChild(JavaProject()) {
     this.compileOutputPath = compileOutputPath
     this.languageLevel = languageLevel
     this.targetBytecodeVersion = targetBytecodeVersion
+    this.compilerArguments = compilerArguments
   }
+}
 

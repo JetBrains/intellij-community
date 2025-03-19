@@ -1,26 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.actions;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.awt.datatransfer.StringSelection;
-
-public final class CopyPropertyKeyToClipboardIntention implements IntentionAction, LowPriorityAction {
-
-  @Override
-  public @NotNull String getText() {
-    return getFamilyName();
-  }
+public final class CopyPropertyKeyToClipboardIntention implements ModCommandAction {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -28,24 +20,20 @@ public final class CopyPropertyKeyToClipboardIntention implements IntentionActio
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             Editor editor,
-                             PsiFile file) {
-    return file.getLanguage().isKindOf(PropertiesLanguage.INSTANCE) &&
-           CopyPropertyValueToClipboardIntention.getProperty(editor, file) != null;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!context.file().getLanguage().isKindOf(PropertiesLanguage.INSTANCE) ||
+        CopyPropertyValueToClipboardIntention.getProperty(context) == null) {
+      return null;
+    }
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final Property property = CopyPropertyValueToClipboardIntention.getProperty(editor, file);
-    if (property == null) return;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    final Property property = CopyPropertyValueToClipboardIntention.getProperty(context);
+    if (property == null) return ModCommand.nop();
     final String key = property.getUnescapedKey();
-    if (key == null) return;
-    CopyPasteManager.getInstance().setContents(new StringSelection(key));
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
+    if (key == null) return ModCommand.nop();
+    return ModCommand.copyToClipboard(key);
   }
 }

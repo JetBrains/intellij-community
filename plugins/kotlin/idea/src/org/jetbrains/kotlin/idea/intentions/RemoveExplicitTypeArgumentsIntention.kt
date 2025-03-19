@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -17,11 +17,14 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
+import org.jetbrains.kotlin.idea.codeinsight.utils.RemoveExplicitTypeArgumentsUtils
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegatingBindingTrace
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
@@ -36,10 +39,11 @@ import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
 @Suppress("DEPRECATION")
 class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArgumentList>(RemoveExplicitTypeArgumentsIntention::class) {
+    override val problemText: String = KotlinBundle.message("explicit.type.arguments.can.be.inferred")
 
     override fun additionalFixes(element: KtTypeArgumentList): List<LocalQuickFix>? {
         val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return null
-        if (!RemoveExplicitTypeIntention.isApplicableTo(declaration)) return null
+        if (!RemoveExplicitTypeIntention.Holder.isApplicableTo(declaration)) return null
         return listOf(RemoveExplicitTypeFix(declaration.nameAsSafeName.asString()))
     }
 
@@ -51,7 +55,7 @@ class RemoveExplicitTypeArgumentsInspection : IntentionBasedInspection<KtTypeArg
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtTypeArgumentList ?: return
             val declaration = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
-            RemoveExplicitTypeIntention.removeExplicitType(declaration)
+            RemoveExplicitTypeIntention.Holder.removeExplicitType(declaration)
         }
     }
 }
@@ -77,9 +81,7 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
         fun isApplicableTo(element: KtTypeArgumentList, approximateFlexible: Boolean): Boolean {
             val callExpression = element.parent as? KtCallExpression ?: return false
-            val typeArguments = callExpression.typeArguments
-            if (typeArguments.isEmpty()) return false
-            if (typeArguments.any { it.typeReference?.isAnnotatedDeep() == true }) return false
+            if (!RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression)) return false
 
             val resolutionFacade = callExpression.getResolutionFacade()
             val bindingContext = resolutionFacade.analyze(callExpression, BodyResolveMode.PARTIAL_WITH_CFA)
@@ -193,15 +195,5 @@ class RemoveExplicitTypeArgumentsIntention : SelfTargetingOffsetIndependentInten
 
     override fun isApplicableTo(element: KtTypeArgumentList): Boolean = isApplicableTo(element, approximateFlexible = false)
 
-    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) {
-        val prevCallExpression = element.getPrevSiblingIgnoringWhitespaceAndComments() as? KtCallExpression
-        val isBetweenLambdaArguments = prevCallExpression?.lambdaArguments?.isNotEmpty() == true &&
-                element.getNextSiblingIgnoringWhitespaceAndComments() is KtLambdaArgument
-
-        element.delete()
-
-        if (isBetweenLambdaArguments) {
-            prevCallExpression?.replace(KtPsiFactory(element.project).createExpressionByPattern("($0)", prevCallExpression))
-        }
-    }
+    override fun applyTo(element: KtTypeArgumentList, editor: Editor?) = RemoveExplicitTypeArgumentsUtils.applyTo(element)
 }

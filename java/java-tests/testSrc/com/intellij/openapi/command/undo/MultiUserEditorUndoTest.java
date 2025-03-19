@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.codeWithMe.ClientId;
@@ -12,9 +12,11 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -29,7 +31,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.function.Predicate;
 
-public class MultiUserEditorUndoTest extends EditorUndoTestCase {
+public class MultiUserEditorUndoTest extends MultiUserEditorUndoTestCase {
   private Disposable myDisposable;
 
   @Override
@@ -209,6 +211,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
       checkEditorText("te1st", getFirstEditor());
     });
 
+    checkEditorText("te1st", getFirstEditor());
     try {
       redoFirstEditor();
       fail("Exception expected");
@@ -285,7 +288,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     }
   }
 
-  private void typeWithFlush(char c) {
+  protected void typeWithFlush(char c) {
     executeCommand(() -> typeInChar(c));
   }
 
@@ -303,7 +306,13 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
   private static void registerAppSession(@NotNull ClientId clientId, @NotNull Disposable disposable) {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application);
+    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application) {
+      @NotNull
+      @Override
+      public @NlsSafe String getName() {
+        return clientId.getValue();
+      }
+    };
     registerSession(clientAppSession, application, disposable);
     PluginDescriptor descriptor = ComponentManagerImpl.fakeCorePluginDescriptor;
     clientAppSession.registerServiceInstance(ClientCopyPasteManager.class, new MockCopyPasteManager(), descriptor);
@@ -314,7 +323,7 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
                                       @NotNull Disposable disposable) {
     ClientSessionsManager<ClientSession> sessionsManager = getClientSessionsManager(componentManager);
     sessionsManager.registerSession(disposable, session);
-    session.registerServices();
+    session.registerComponents();
     BuildersKt.launch(GlobalScope.INSTANCE, EmptyCoroutineContext.INSTANCE, CoroutineStart.DEFAULT, (scope, continuation) -> {
       session.preloadServices(scope);
       return Unit.INSTANCE;
@@ -340,6 +349,21 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     @Override
     public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
       return false;
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable) {
+
+    }
+
+    @Override
+    public void removeContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
     }
 
     @Nullable
@@ -382,6 +406,21 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
     @Override
     public void lostOwnership(Clipboard clipboard, Transferable contents) {
+
+    }
+
+    @Override
+    public boolean isSystemSelectionSupported() {
+      return false;
+    }
+
+    @Override
+    public @Nullable Transferable getSystemSelectionContents() {
+      return null;
+    }
+
+    @Override
+    public void setSystemSelectionContents(@NotNull Transferable content) {
 
     }
   }

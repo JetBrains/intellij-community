@@ -1,69 +1,65 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.diagnostic.BrokenIndexingDiagnostics;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
-import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Supplier;
-
 @ApiStatus.Internal
-class SingleIndexValueRemover {
-  private final FileBasedIndexImpl myIndexImpl;
-  final @NotNull ID<?, ?> indexId;
-  private final VirtualFile file;
+public final class SingleIndexValueRemover {
+  public final @NotNull ID<?, ?> indexId;
+  public final int shardNo;
+
+  private final @NotNull FileBasedIndexImpl indexImpl;
+
   private final int inputId;
   private final @Nullable String fileInfo;
-  private final boolean isWritingValuesSeparately;
-  long evaluatingValueRemoverTime;
+  private final @NotNull FileIndexingResult.ApplicationMode applicationMode;
 
-  SingleIndexValueRemover(FileBasedIndexImpl indexImpl, @NotNull ID<?, ?> indexId,
+  /** Time of {@code index.mapInputAndPrepareUpdate(inputId, null)}, in nanoseconds */
+  public long evaluatingValueRemoverTime;
+
+  SingleIndexValueRemover(@NotNull FileBasedIndexImpl indexImpl,
+                          @NotNull ID<?, ?> indexId,
+                          int shardNo,
                           @Nullable VirtualFile file,
                           @Nullable FileContent fileContent,
                           int inputId,
-                          boolean isWritingValuesSeparately) {
-    myIndexImpl = indexImpl;
+                          @NotNull FileIndexingResult.ApplicationMode applicationMode) {
+    this.indexImpl = indexImpl;
     this.indexId = indexId;
-    this.file = file;
     this.inputId = inputId;
+    this.shardNo = shardNo;
     this.fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, fileContent);
-    this.isWritingValuesSeparately = isWritingValuesSeparately;
+    this.applicationMode = applicationMode;
   }
 
   /**
+   * Contrary to the {@link SingleIndexValueApplier}, the remover does both 'prepare update' and 'apply update to the index'
+   * steps here. This is because for removes {@link InvertedIndex#mapInputAndPrepareUpdate(int, Object)} is almost trivial,
+   * with ~0 cost.
    * @return false in case index update is not necessary or the update has failed
    */
-  boolean remove() {
-    if (!RebuildStatus.isOk(indexId) && !myIndexImpl.myIsUnitTestMode) {
+  public boolean remove() {
+    if (!RebuildStatus.isOk(indexId) && !indexImpl.myIsUnitTestMode) {
       return false; // the index is scheduled for rebuild, no need to update
     }
-    myIndexImpl.increaseLocalModCount();
+    indexImpl.increaseLocalModCount();
 
-    UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, ?> index = indexImpl.getIndex(indexId);
 
-    if (isWritingValuesSeparately) {
-      FileBasedIndexImpl.markFileWritingIndexes(inputId);
-    }
-    else {
-      FileBasedIndexImpl.markFileIndexed(file, null);
-    }
+    FileBasedIndexImpl.markFileWritingIndexes(inputId);
     try {
-      Supplier<Boolean> storageUpdate;
+      StorageUpdate storageUpdate;
       long startTime = System.nanoTime();
       try {
         storageUpdate = index.mapInputAndPrepareUpdate(inputId, null);
       }
       catch (MapReduceIndexMappingException e) {
-        Throwable cause = e.getCause();
-        if (cause instanceof SnapshotInputMappingException) {
-          myIndexImpl.requestRebuild(indexId, e);
-          return false;
-        }
         BrokenIndexingDiagnostics.INSTANCE.getExceptionListener().onFileIndexMappingFailed(inputId, null, null, indexId, e);
         return false;
       }
@@ -71,27 +67,30 @@ class SingleIndexValueRemover {
         this.evaluatingValueRemoverTime = System.nanoTime() - startTime;
       }
 
-      if (myIndexImpl.runUpdateForPersistentData(storageUpdate)) {
-        if (myIndexImpl.doTraceStubUpdates(indexId) || myIndexImpl.doTraceIndexUpdates()) {
+      if (indexImpl.runUpdateForPersistentData(storageUpdate)) {
+        if (FileBasedIndexEx.doTraceStubUpdates(indexId) || FileBasedIndexEx.doTraceIndexUpdates()) {
           FileBasedIndexImpl.LOG.info("index " + indexId + " deletion finished for " + fileInfo);
         }
-        ConcurrencyUtil.withLock(myIndexImpl.myReadLock, () -> {
-          index.setUnindexedStateForFile(inputId);
-        });
+        ConcurrencyUtil.withLock(indexImpl.myReadLock, () -> index.setUnindexedStateForFile(inputId));
       }
       return true;
     }
     catch (RuntimeException exception) {
-      myIndexImpl.requestIndexRebuildOnException(exception, indexId);
+      indexImpl.requestIndexRebuildOnException(exception, indexId);
       return false;
     }
     finally {
-      if (isWritingValuesSeparately) {
-        FileBasedIndexImpl.unmarkWritingIndexes();
-      }
-      else {
-        FileBasedIndexImpl.unmarkBeingIndexed();
-      }
+      FileBasedIndexImpl.unmarkWritingIndexes();
     }
+  }
+
+  @Override
+  public String toString() {
+    return "SingleIndexValueRemover{" +
+           "indexId=" + indexId +
+           ", inputId=" + inputId +
+           ", fileInfo='" + fileInfo + '\'' +
+           ", applicationMode =" + applicationMode +
+           '}';
   }
 }

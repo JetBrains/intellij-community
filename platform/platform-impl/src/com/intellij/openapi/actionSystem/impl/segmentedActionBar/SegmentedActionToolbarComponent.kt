@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
@@ -8,30 +8,33 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.border.Border
 
+@ApiStatus.Internal
 open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
                                            private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
-    internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
-    internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
-    internal const val CONTROL_BAR_LAST = "CONTROL_BAR_PROPERTY_LAST"
-    internal const val CONTROL_BAR_MIDDLE = "CONTROL_BAR_PROPERTY_MIDDLE"
-    internal const val CONTROL_BAR_SINGLE = "CONTROL_BAR_PROPERTY_SINGLE"
+    internal const val CONTROL_BAR_PROPERTY: String = "CONTROL_BAR_PROPERTY"
+    internal const val CONTROL_BAR_FIRST: String = "CONTROL_BAR_PROPERTY_FIRST"
+    internal const val CONTROL_BAR_LAST: String = "CONTROL_BAR_PROPERTY_LAST"
+    internal const val CONTROL_BAR_MIDDLE: String = "CONTROL_BAR_PROPERTY_MIDDLE"
+    internal const val CONTROL_BAR_SINGLE: String = "CONTROL_BAR_PROPERTY_SINGLE"
 
-    const val RUN_TOOLBAR_COMPONENT_ACTION = "RUN_TOOLBAR_COMPONENT_ACTION"
+    const val RUN_TOOLBAR_COMPONENT_ACTION: String = "RUN_TOOLBAR_COMPONENT_ACTION"
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook: ActionButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 
@@ -53,7 +56,7 @@ open class SegmentedActionToolbarComponent(place: String,
   }
 
   init {
-    layoutPolicy = NOWRAP_LAYOUT_POLICY
+    layoutStrategy = MyLayoutStrategy()
     setActionButtonBorder(JBUI.Borders.empty(0, 3))
     setCustomButtonLook(segmentedButtonLook)
   }
@@ -103,20 +106,13 @@ open class SegmentedActionToolbarComponent(place: String,
         continue
       }
 
-      if (action is CustomComponentAction) {
-        val component = getCustomComponent(action)
-        addMetadata(component, i, actions.size)
-        add(CUSTOM_COMPONENT_CONSTRAINT, component)
-
-        component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
-      }
-      else {
-        val component = createToolbarButton(action)
-        addMetadata(component, i, actions.size)
-        add(ACTION_BUTTON_CONSTRAINT, component)
-
-        component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
-      }
+      val component = getOrCreateActionComponent(action)
+      val constraints =
+        if (component is ActionButton) ACTION_BUTTON_CONSTRAINT
+        else CUSTOM_COMPONENT_CONSTRAINT
+      addMetadata(component, i, actions.size)
+      add(constraints, component)
+      component.putClientProperty(RUN_TOOLBAR_COMPONENT_ACTION, action)
     }
   }
 
@@ -159,7 +155,7 @@ open class SegmentedActionToolbarComponent(place: String,
     component.putClientProperty(CONTROL_BAR_PROPERTY, property)
   }
 
-  protected open fun logNeeded() = false
+  protected open fun logNeeded(): Boolean = false
 
   protected fun forceUpdate() {
     if (logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
@@ -182,8 +178,9 @@ open class SegmentedActionToolbarComponent(place: String,
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
 
-    val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
-    val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
+    val actionManager = ActionManager.getInstance()
+    val ides = newVisibleActions.map { actionManager.getId(it)!! }
+    val filteredIds = filtered.map { actionManager.getId(it)!! }
 
     traceState(lastIds, filteredIds, ides)
 
@@ -199,19 +196,27 @@ open class SegmentedActionToolbarComponent(place: String,
   protected open fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
     // if(logNeeded() && filteredIds != lastIds) LOG.info("MAIN SLOT new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
+}
 
-  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
-    bounds.clear()
-    for (i in 0 until componentCount) {
-      bounds.add(Rectangle())
-    }
+private class MyLayoutStrategy: ToolbarLayoutStrategy {
+  override fun calculateBounds(toolbar: ActionToolbar): List<Rectangle> {
+    val res = mutableListOf<Rectangle>()
 
+    val insets = toolbar.component.insets
     var offset = 0
-    for (i in 0 until componentCount) {
-      val d = getChildPreferredSize(i)
-      val r = bounds[i]
-      r.setBounds(insets.left + offset, insets.top, d.width, DEFAULT_MINIMUM_BUTTON_SIZE.height)
+    for (child in toolbar.component.components) {
+      val d = if (child.isVisible) child.preferredSize else Dimension()
+      res.add(Rectangle(insets.left + offset, insets.top, d.width, ActionToolbarImpl.DEFAULT_MINIMUM_BUTTON_SIZE.height))
       offset += d.width
     }
+
+    return res;
   }
+
+  override fun calcPreferredSize(toolbar: ActionToolbar): Dimension {
+    val width = toolbar.component.components.filter { it.isVisible }.map { it.preferredSize.width }.sum()
+    return JBUI.size(width, ActionToolbarImpl.DEFAULT_MINIMUM_BUTTON_SIZE.height)
+  }
+
+  override fun calcMinimumSize(toolbar: ActionToolbar): Dimension = JBUI.emptySize()
 }

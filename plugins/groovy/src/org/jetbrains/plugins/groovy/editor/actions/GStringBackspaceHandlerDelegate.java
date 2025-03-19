@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 /**
  * @author Maxim.Medvedev
  */
-public class GStringBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
+public final class GStringBackspaceHandlerDelegate extends BackspaceHandlerDelegate {
 
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {

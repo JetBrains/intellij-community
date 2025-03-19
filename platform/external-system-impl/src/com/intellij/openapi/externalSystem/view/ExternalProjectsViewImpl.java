@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -45,14 +44,15 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
+public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   private final @NotNull Project myProject;
@@ -120,33 +120,30 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (ExternalSystemDataKeys.VIEW.is(dataId)) return this;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(ExternalSystemDataKeys.VIEW, this);
+    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.toolwindows.gradle");
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID, myExternalSystemId);
+    sink.set(ExternalSystemDataKeys.UI_AWARE, myUiAware);
+    sink.set(ExternalSystemDataKeys.PROJECTS_TREE, myTree);
+    sink.set(ExternalSystemDataKeys.NOTIFICATION_GROUP, myNotificationGroup);
 
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return "reference.toolwindows.gradle";
-    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
+    //noinspection rawtypes
+    List<ExternalSystemNode> selection = getSelectedNodes(ExternalSystemNode.class);
+    ProjectNode projectNode = ObjectUtils.tryCast(ContainerUtil.getOnlyItem(selection), ProjectNode.class);
 
-    if (ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.is(dataId)) return myExternalSystemId;
-    if (ExternalSystemDataKeys.UI_AWARE.is(dataId)) return myUiAware;
-    if (ExternalSystemDataKeys.SELECTED_PROJECT_NODE.is(dataId)) return getSelectedProjectNode();
-    if (ExternalSystemDataKeys.SELECTED_NODES.is(dataId)) return getSelectedNodes(ExternalSystemNode.class);
-    if (ExternalSystemDataKeys.PROJECTS_TREE.is(dataId)) return myTree;
-    if (ExternalSystemDataKeys.NOTIFICATION_GROUP.is(dataId)) return myNotificationGroup;
+    sink.set(ExternalSystemDataKeys.SELECTED_NODES, selection);
+    sink.set(ExternalSystemDataKeys.SELECTED_PROJECT_NODE, projectNode);
 
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      final List<ExternalSystemNode> selectedNodes = getSelectedNodes(ExternalSystemNode.class);
-      return (DataProvider)(@NotNull String dataIdParam) -> {
-        if (Location.DATA_KEY.is(dataIdParam)) {
-          return extractLocation(selectedNodes);
-        }
-        return null;
-      };
-    }
+    sink.set(CommonDataKeys.VIRTUAL_FILE, selection.isEmpty() ? null : selection.get(0).getVirtualFile());
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, VfsUtilCore.toVirtualFileArray(
+      JBIterable.from(selection).filterMap(o -> o.getVirtualFile()).toList()));
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, JBIterable.from(selection)
+      .filterMap(o -> o.getNavigatable()).toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
 
-    return super.getData(dataId);
+    sink.lazy(Location.DATA_KEY, () -> extractLocation(selection));
   }
 
   @Override
@@ -159,6 +156,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return myUiAware;
   }
 
+  @ApiStatus.Internal
   @Override
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myProjectsManager.getShortcutsManager();
@@ -214,7 +212,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
       private void changed() {
         scheduleStructureRequest(() -> {
           assert myStructure != null;
-          myStructure.visitNodes(ModuleNode.class, node -> node.updateRunConfigurations());
+          myStructure.visitExistingNodes(ModuleNode.class, node -> node.updateRunConfigurations());
         });
       }
 
@@ -546,15 +544,6 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return myStructure != null ? myStructure.getSelectedNodes(myTree, aClass) : ContainerUtil.emptyList();
   }
 
-  private List<ProjectNode> getSelectedProjectNodes() {
-    return getSelectedNodes(ProjectNode.class);
-  }
-
-  private @Nullable ProjectNode getSelectedProjectNode() {
-    final List<ProjectNode> projectNodes = getSelectedProjectNodes();
-    return projectNodes.size() == 1 ? projectNodes.get(0) : null;
-  }
-
   private @Nullable ExternalSystemTaskLocation extractLocation(List<ExternalSystemNode> selectedNodes) {
     if (selectedNodes.isEmpty()) return null;
 
@@ -586,37 +575,6 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     taskExecutionInfo.getSettings().setExternalProjectPath(projectPath);
 
     return ExternalSystemTaskLocation.create(myProject, myExternalSystemId, projectPath, taskExecutionInfo);
-  }
-
-  private VirtualFile extractVirtualFile() {
-    for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
-      VirtualFile file = each.getVirtualFile();
-      if (file != null && file.isValid()) return file;
-    }
-
-    final ProjectNode projectNode = getSelectedProjectNode();
-    if (projectNode == null) return null;
-    VirtualFile file = projectNode.getVirtualFile();
-    if (file == null || !file.isValid()) return null;
-    return file;
-  }
-
-  private Object extractVirtualFiles() {
-    final List<VirtualFile> files = new ArrayList<>();
-    for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
-      VirtualFile file = each.getVirtualFile();
-      if (file != null && file.isValid()) files.add(file);
-    }
-    return files.isEmpty() ? null : VfsUtilCore.toVirtualFileArray(files);
-  }
-
-  private Object extractNavigatables() {
-    final List<Navigatable> navigatables = new ArrayList<>();
-    for (ExternalSystemNode each : getSelectedNodes(ExternalSystemNode.class)) {
-      Navigatable navigatable = each.getNavigatable();
-      if (navigatable != null) navigatables.add(navigatable);
-    }
-    return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
   }
 
   @Override

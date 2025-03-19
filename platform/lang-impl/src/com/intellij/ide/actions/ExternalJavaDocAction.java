@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -33,7 +33,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalJavaDocAction extends AnAction {
+public final class ExternalJavaDocAction extends AnAction {
 
   public ExternalJavaDocAction() {
     setInjectedContext(true);
@@ -111,28 +111,26 @@ public class ExternalJavaDocAction extends AnAction {
             LangBundle.message("popup.title.choose.external.documentation.root"),
             ArrayUtilRt.toStringArray(finalUrls)) {
             @Override
-            public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+            public PopupStep<?> onChosen(final String selectedValue, final boolean finalChoice) {
               BrowserUtil.browse(selectedValue);
               return FINAL_CHOICE;
             }
           }).showInBestPositionFor(DataManager.getInstance().getDataContext(contextComponent));
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
 
   }
 
-  @Nullable
-  private static PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
+  private static @Nullable PsiElement getOriginalElement(@NotNull DataContext dataContext, @Nullable Editor editor) {
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     return (file != null && editor != null) ? file.findElementAt(editor.getCaretModel().getOffset())
                                             : null;
   }
 
-  @Nullable
-  private static PsiElement getElement(@NotNull DataContext dataContext,
-                                       @Nullable Editor editor,
-                                       @Nullable PsiElement originalElement) {
+  private static @Nullable PsiElement getElement(@NotNull DataContext dataContext,
+                                                 @Nullable Editor editor,
+                                                 @Nullable PsiElement originalElement) {
     return editor == null || originalElement == null
                      ? CommonDataKeys.PSI_ELEMENT.getData(dataContext)
                      : DocumentationManager.getInstance(originalElement.getProject())

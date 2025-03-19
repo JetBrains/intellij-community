@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 
-public class NoScrollPaneInspection extends BaseFormInspection {
+public final class NoScrollPaneInspection extends BaseFormInspection {
   public NoScrollPaneInspection() {
     super("NoScrollPane");
   }

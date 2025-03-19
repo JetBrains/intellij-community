@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestEventTest : GradleExecutionTestCase() {
+class GradleTestEventTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
@@ -20,47 +21,8 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("<ijLogEol/>")
-    }
-  }
-
-  @ParameterizedTest
-  @TargetVersions("3.5+")
-  @AllGradleVersionsSource
-  fun `test configuration resolves after execution graph`(gradleVersion: GradleVersion) {
-    testJavaProject(gradleVersion) {
-      appendText("build.gradle", """
-        |import java.util.concurrent.atomic.AtomicBoolean;
-        |
-        |def resolutionAllowed = new AtomicBoolean(false)
-        |
-        |configurations.testRuntimeClasspath.incoming.beforeResolve {
-        |  logger.warn("Attempt to resolve configuration")
-        |  if (!resolutionAllowed.get()) {
-        |    logger.warn("Attempt to resolve configuration too early")
-        |  }
-        |}
-        |
-        |gradle.taskGraph.beforeTask { Task task ->
-        |  if (task.path == ":test" ) {
-        |    logger.warn("Green light to resolve configuration")
-        |    resolutionAllowed.set(true)
-        |  }
-        |}
-      """.trimMargin())
-      writeText("src/test/java/org/example/TestCase.java", """
-        |package org.example;
-        |import $jUnitTestAnnotationClass;
-        |public class TestCase {
-        |  @Test public void test() {}
-        |}
-      """.trimMargin())
-
-      executeTasks(":test")
-      assertTestConsoleContains("Green light to resolve configuration")
-      assertTestConsoleContains("Attempt to resolve configuration")
-      assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
     }
   }
 
@@ -85,7 +47,7 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsContain("com.intellij.TestCase", "testSuccess")
@@ -105,10 +67,13 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":build --rerun-tasks")
+      executeTasks(":build", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "test")
 
-      executeTasks(":build")
+      executeTasks(":build --rerun-tasks", isRunAsTest = false)
+      assertTestEventsWasNotReceived()
+
+      executeTasks(":build", isRunAsTest = false)
       assertTestEventsWasNotReceived()
     }
   }
@@ -141,25 +106,23 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
+      executeTasks(":test", isRunAsTest = true)
       assertTestEventsContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
 
-      executeTasks(":test --tests org.example.TestCase.testFail")
+      executeTasks(":test --tests org.example.TestCase.testFail", isRunAsTest = true)
       assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
       assertTestEventsContain("org.example.TestCase", "testFail")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
       assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
 
-      if (isGradleAtLeast("4.1")) {
-        executeTasks(":test --tests com.intellij.*")
-        assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
-        assertTestEventsDoesNotContain("org.example.TestCase", "testFail")
-        assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
-        assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
-      }
+      executeTasks(":test --tests com.intellij.*", isRunAsTest = true)
+      assertTestEventsDoesNotContain("org.example.TestCase", "testSuccess")
+      assertTestEventsDoesNotContain("org.example.TestCase", "testFail")
+      assertTestEventsDoesNotContain("com.intellij.TestCase", "testSuccess")
+      assertTestEventsDoesNotContain("com.intellij.TestCase", "testFail")
     }
   }
 
@@ -186,8 +149,8 @@ class GradleTestEventTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test")
-      assertTestTreeView {
+      executeTasks(":test", isRunAsTest = true)
+      assertTestViewTree {
         assertNode("TestCase") {
           assertNode("successTest")
           assertNode("failedTest")
@@ -198,6 +161,36 @@ class GradleTestEventTest : GradleExecutionTestCase() {
       assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
       assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
       assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test parametrized test count`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion,"7.0")
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+      | import org.junit.jupiter.params.ParameterizedTest;
+      | import org.junit.jupiter.params.provider.ValueSource;
+      |
+      |import static org.junit.jupiter.api.Assertions.assertFalse;
+      |
+      |public class TestCase {
+      |  @ParameterizedTest
+      |  @ValueSource(strings = { "a", "b", "c" })
+      |  public void test(String str) {
+      |    assertFalse(str.isEmpty());
+      |  }
+      |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      val pattern = "[%d] %s"
+
+      assertTestEventCount("test(String)",1, 1, 0, 0, 0, 0)
+      assertTestEventCount(String.format(pattern, 1, 'a'),0, 0, 1, 1, 0, 0)
+      assertTestEventCount(String.format(pattern, 2, 'b'),0, 0, 1, 1, 0, 0)
+      assertTestEventCount(String.format(pattern, 3, 'c'),0, 0, 1, 1, 0, 0)
     }
   }
 }

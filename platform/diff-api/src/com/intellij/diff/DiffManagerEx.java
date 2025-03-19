@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff;
 
 import com.intellij.diff.chains.DiffRequestChain;
@@ -6,7 +6,6 @@ import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeRequestProducer;
 import com.intellij.diff.merge.MergeTool;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
@@ -16,9 +15,8 @@ import java.util.List;
 
 public abstract class DiffManagerEx extends DiffManager {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static DiffManagerEx getInstance() {
-    return (DiffManagerEx)ApplicationManager.getApplication().getService(DiffManager.class);
+  public static @NotNull DiffManagerEx getInstance() {
+    return (DiffManagerEx)DiffManager.getInstance();
   }
 
   //
@@ -40,9 +38,7 @@ public abstract class DiffManagerEx extends DiffManager {
   @RequiresEdt
   public abstract void showMergeBuiltin(@Nullable Project project, @NotNull MergeRequestProducer request, @NotNull DiffDialogHints hints);
 
-  @NotNull
-  public abstract List<DiffTool> getDiffTools();
+  public abstract @NotNull List<DiffTool> getDiffTools();
 
-  @NotNull
-  public abstract List<MergeTool> getMergeTools();
+  public abstract @NotNull List<MergeTool> getMergeTools();
 }

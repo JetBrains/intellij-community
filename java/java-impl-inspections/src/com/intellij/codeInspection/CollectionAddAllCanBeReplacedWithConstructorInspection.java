@@ -1,41 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.performance.CollectionsListSettings;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Dmitry Batkovich
- */
-public class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
-
+public final class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
     protected Collection<String> getDefaultSettings() {
@@ -63,11 +59,10 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     mySettings.readSettings(node);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -116,14 +111,14 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
         return switch (name) {
           case "java.util.TreeSet", "java.util.concurrent.ConcurrentSkipListSet" ->
             // If declared arg type inherits SortedSet, the (SortedSet) copy constructor will be invoked, which inherits the comparator
-            InheritanceUtil.isInheritor(argType, "java.util.SortedSet");
+            InheritanceUtil.isInheritor(argType, CommonClassNames.JAVA_UTIL_SORTED_SET);
           case "java.util.TreeMap", "java.util.concurrent.ConcurrentSkipListMap" ->
             // If declared arg type inherits SortedMap, the (SortedMap) copy constructor will be invoked, which inherits the comparator
-            InheritanceUtil.isInheritor(argType, "java.util.SortedMap");
+            InheritanceUtil.isInheritor(argType, CommonClassNames.JAVA_UTIL_SORTED_MAP);
           case "java.util.PriorityQueue", "java.util.concurrent.PriorityBlockingQueue" -> {
             // Here even (Collection) copy constructor inherits the comparator using runtime type checks, so we should be more conservative
             TypeConstraint constraint = TypeConstraint.fromDfType(CommonDataflow.getDfType(args[0]));
-            PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName("java.util.SortedSet");
+            PsiClassType sortedSet = JavaPsiFacade.getElementFactory(holder.getProject()).createTypeByFQClassName(CommonClassNames.JAVA_UTIL_SORTED_SET);
             yield constraint.meet(TypeConstraints.instanceOf(sortedSet)) != TypeConstraints.BOTTOM ||
                   constraint.meet(TypeConstraints.instanceOf(type)) != TypeConstraints.BOTTOM;
           }
@@ -223,7 +218,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     return isReplaceable[0];
   }
 
-  private static class ReplaceAddAllWithConstructorFix implements LocalQuickFix {
+  private static class ReplaceAddAllWithConstructorFix extends PsiUpdateModCommandQuickFix {
     private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCallExpression;
     private final SmartPsiElementPointer<PsiNewExpression> myNewExpression;
     private final String methodName;
@@ -236,35 +231,22 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiMethodCallExpression call = myMethodCallExpression.getElement();
-      PsiNewExpression newExpression = myNewExpression.getElement();
-      if (call == null || newExpression == null) return null;
-      return new ReplaceAddAllWithConstructorFix(PsiTreeUtil.findSameElementInCopy(newExpression, target),
-                                                 PsiTreeUtil.findSameElementInCopy(call, target),
-                                                 methodName);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.name", methodName);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCallExpression = myMethodCallExpression.getElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiMethodCallExpression methodCallExpression = updater.getWritable(myMethodCallExpression.getElement());
       if (methodCallExpression == null) return;
       PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(methodCallExpression.getParent(), PsiExpressionStatement.class);
       if (expressionStatement == null) return;
-      final PsiNewExpression newExpression = myNewExpression.getElement();
+      final PsiNewExpression newExpression = updater.getWritable(myNewExpression.getElement());
       if (newExpression == null) return;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(newExpression.getParent());
       PsiVariable variable = null;
@@ -289,7 +271,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
             ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length == 1) {
           PsiElement scope = PsiTreeUtil.getParentOfType(expressionStatement, PsiMember.class, PsiStatement.class, PsiLambdaExpression.class);
           if (scope != null &&
-              ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
+              ContainerUtil.and(VariableAccessUtils.getVariableReferences(variable), ref -> PsiTreeUtil.isAncestor(scope, ref, true))) {
             PsiDeclarationStatement newDeclaration =
               JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiTypes.intType(), null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);

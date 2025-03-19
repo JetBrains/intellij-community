@@ -1,0 +1,10 @@
+<idea-plugin>
+
+  <id>pycharm.systemPython.tests</id>
+  <dependencies>
+    <plugin id="PythonCore"/>
+  </dependencies>
+  <extensions defaultExtensionNs="Pythonid">
+    <systemPythonProvider implementation="com.intellij.python.junit5Tests.env.systemPython.impl.EnvTestPythonProvider"/>
+  </extensions>
+</idea-plugin>

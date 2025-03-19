@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.platform.credentialStore` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "credentialStore",
+  module_name = "intellij.platform.credentialStore",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util-ex",
+    "//platform/util/base",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.platform.credentialStore` end

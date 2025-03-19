@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -19,38 +19,39 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 
 public final class ShadowAction {
   private final AnAction myAction;
   private AnAction myCopyFromAction;
   private final Reference<JComponent> myComponent;
 
-  private @NonNls String myActionId;
+  private String myActionId;
 
-  private Presentation myPresentation;
-
-  private final Disposable parentDisposable;
+  private final Presentation myPresentation;
+  private final Disposable myParentDisposable;
 
   private Disposable listenerDisposable;
   private Disposable shortcutSetDisposable;
 
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, Presentation presentation, @NotNull Disposable parentDisposable) {
-    this(action, copyFromAction, component, parentDisposable);
-    myPresentation = presentation;
+    this(action, copyFromAction, ActionManager.getInstance().getId(copyFromAction), presentation, component, parentDisposable);
   }
 
   // force passing parentDisposable to avoid code like new ShadowAction(this, original, c) (without Disposer.register)
   public ShadowAction(AnAction action, AnAction copyFromAction, JComponent component, @NotNull Disposable parentDisposable) {
-    this(action, copyFromAction, ActionManager.getInstance().getId(copyFromAction), component, parentDisposable);
+    this(action, copyFromAction, ActionManager.getInstance().getId(copyFromAction), null, component, parentDisposable);
   }
 
   public ShadowAction(AnAction action, @NlsSafe String actionId, JComponent component, @NotNull Disposable parentDisposable) {
-    this(action, ActionManager.getInstance().getAction(actionId), actionId, component, parentDisposable);
+    this(action, ActionManager.getInstance().getAction(actionId), actionId, null, component, parentDisposable);
   }
 
-  private ShadowAction(AnAction action, AnAction copyFromAction, @NlsSafe String actionId, JComponent component, @NotNull Disposable parentDisposable) {
+  private ShadowAction(AnAction action, AnAction copyFromAction, @NlsSafe String actionId, @Nullable Presentation presentation,
+                       JComponent component, @NotNull Disposable parentDisposable) {
     myAction = action;
-    this.parentDisposable = parentDisposable;
+    myParentDisposable = parentDisposable;
+    myPresentation = presentation;
 
     myCopyFromAction = copyFromAction;
     myComponent = new WeakReference<>(component);
@@ -79,7 +80,7 @@ public final class ShadowAction {
 
     if (listenerDisposable == null) {
       listenerDisposable = Disposer.newDisposable();
-      Disposer.register(parentDisposable, listenerDisposable);
+      Disposer.register(myParentDisposable, listenerDisposable);
       application.getMessageBus().connect(listenerDisposable).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
         @Override
         public void activeKeymapChanged(@Nullable Keymap keymap) {
@@ -87,8 +88,8 @@ public final class ShadowAction {
         }
 
         @Override
-        public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
-          if (myActionId == null || actionId.equals(myActionId)) {
+        public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
+          if (myActionId == null || actionIds.contains(myActionId)) {
             rebound();
           }
         }
@@ -133,7 +134,7 @@ public final class ShadowAction {
 
     ShortcutSet shortcutSet = new CustomShortcutSet(keymap.getShortcuts(myActionId));
     shortcutSetDisposable = Disposer.newDisposable();
-    Disposer.register(parentDisposable, shortcutSetDisposable);
+    Disposer.register(myParentDisposable, shortcutSetDisposable);
     myAction.registerCustomShortcutSet(shortcutSet, myComponent.get(), shortcutSetDisposable);
   }
 
@@ -145,8 +146,7 @@ public final class ShadowAction {
     }
   }
 
-  @Nullable
-  private static KeymapManager getKeymapManager() {
+  private static @Nullable KeymapManager getKeymapManager() {
     return ApplicationManager.getApplication().isDisposed() ? null : KeymapManager.getInstance();
   }
 

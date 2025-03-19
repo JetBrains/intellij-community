@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.testExtensions` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "testExtensions_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "testExtensions",
+  module_name = "intellij.platform.testExtensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/execution",
+    "//platform/projectModel-impl",
+    "//platform/testFramework",
+    "//platform/util/jdom",
+    "@lib//:memoryfilesystem",
+    "@lib//:junit4",
+    "@lib//:assert_j",
+    "@lib//:snakeyaml",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "@lib//:junit5",
+  ],
+  runtime_deps = [":testExtensions_resources"]
+)
+### auto-generated section `build intellij.platform.testExtensions` end

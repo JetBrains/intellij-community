@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,16 +19,22 @@ import java.util.List;
 import static com.intellij.ide.util.TipOrderUtil.SHUFFLE_ALGORITHM;
 import static com.intellij.ide.util.TipOrderUtil.SORTING_ALGORITHM;
 
+@ApiStatus.Internal
 public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 12);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 13);
 
   public enum DialogType {automatically, manually}
+
+  public enum SkipReason {dialog, suggestions}
 
   public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
   public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
 
   private static final EventId1<DialogType> DIALOG_SHOWN =
     GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
+
+  private static final EventId1<SkipReason> DIALOG_SKIPPED =
+    GROUP.registerEvent("dialog.skipped", EventFields.Enum("reason", SkipReason.class));
 
   private static final EventId2<Boolean, Boolean> DIALOG_CLOSED =
     GROUP.registerEvent("dialog.closed", EventFields.Boolean("keep_showing_before"), EventFields.Boolean("keep_showing_after"));
@@ -58,6 +65,10 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
     DIALOG_SHOWN.log(type);
   }
 
+  public static void triggerDialogSkipped(@NotNull TipsOfTheDayUsagesCollector.SkipReason reason) {
+    DIALOG_SKIPPED.log(reason);
+  }
+
   public static void triggerDialogClosed(boolean showOnStartupBefore) {
     DIALOG_CLOSED.log(showOnStartupBefore, GeneralSettings.getInstance().isShowTipsOnStartup());
   }
@@ -69,15 +80,13 @@ public final class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   public static class TipInfoValidationRule extends CustomValidationRule {
     public static final String RULE_ID = "tip_info";
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return RULE_ID;
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       PluginInfo info = context.getPayload(PLUGIN_INFO);
       if (info != null) {
         return info.isSafeToReport() ? ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;

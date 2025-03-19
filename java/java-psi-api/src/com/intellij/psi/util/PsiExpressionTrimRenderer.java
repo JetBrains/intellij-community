@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -82,15 +82,13 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
 
   @Override
   public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
-    PsiExpression[] operands = expression.getOperands();
-    for (int i = 0; i < operands.length; i++) {
-      PsiExpression operand = operands[i];
-      if (i != 0) {
-        PsiJavaToken token = expression.getTokenBeforeOperand(operand);
-        assert token != null;
-        myBuf.append(" ").append(token.getText()).append(" ");
+    for (PsiElement child : expression.getChildren()) {
+      if (child instanceof PsiExpression) {
+        child.accept(this);
       }
-      operand.accept(this);
+      else if (child instanceof PsiJavaToken) {
+        myBuf.append(" ").append(child.getText()).append(" ");
+      }
     }
   }
 
@@ -253,9 +251,8 @@ public class PsiExpressionTrimRenderer extends JavaRecursiveElementWalkingVisito
   }
 
   public static class RenderFunction implements NotNullFunction<PsiExpression, String> {
-    @NotNull
     @Override
-    public String fun(@NotNull PsiExpression psiExpression) {
+    public @NotNull String fun(@NotNull PsiExpression psiExpression) {
       return render(psiExpression);
     }
   }

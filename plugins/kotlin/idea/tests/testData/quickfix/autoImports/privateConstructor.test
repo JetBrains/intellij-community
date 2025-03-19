@@ -1,0 +1,19 @@
+// FILE: first.before.kt
+// "Import" "false"
+// ERROR: Cannot access '<init>': it is private in 'Foo'
+// IGNORE_K1
+import foo.bar.Foo
+
+private val dataCache1 = <caret>Foo()
+
+//-----------------------
+
+
+// FILE: second.kt
+package foo.bar
+
+class Foo private constructor() {
+
+}
+
+//-----------------------

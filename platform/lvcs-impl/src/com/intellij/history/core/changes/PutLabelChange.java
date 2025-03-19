@@ -4,6 +4,7 @@ package com.intellij.history.core.changes;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.DataStreamUtil;
+import com.intellij.history.core.HistoryPathFilter;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +16,8 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PutLabelChange extends Change {
-  @NotNull private final @NlsContexts.Label String myName;
-  @NotNull private final String myProjectId;
+  private final @NotNull @NlsContexts.Label String myName;
+  private final @NotNull String myProjectId;
 
   public PutLabelChange(long id, @NotNull @NlsContexts.Label String name, @NotNull String projectId) {
     super(id);
@@ -37,14 +38,11 @@ public class PutLabelChange extends Change {
     DataStreamUtil.writeString(out, myProjectId);
   }
 
-  @NlsContexts.Label
-  @NotNull
-  public String getName() {
+  public @NlsContexts.Label @NotNull String getName() {
     return myName;
   }
 
-  @NotNull
-  public String getProjectId() {
+  public @NotNull String getProjectId() {
     return myProjectId;
   }
 
@@ -59,7 +57,12 @@ public class PutLabelChange extends Change {
   }
 
   @Override
-  public boolean affectsMatching(Pattern pattern) {
+  public boolean affectsMatching(@NotNull Pattern pattern) {
+    return false;
+  }
+
+  @Override
+  public boolean affectsMatching(@NotNull HistoryPathFilter historyPathFilter) {
     return false;
   }
 

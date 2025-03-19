@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl.httpclient;
 
 import com.google.gson.Gson;
@@ -40,7 +40,7 @@ import java.util.function.IntPredicate;
 public final class TaskResponseUtil {
   public static final Logger LOG = Logger.getInstance(TaskResponseUtil.class);
 
-  public final static Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+  public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
   /**
    * Utility class
@@ -97,8 +97,7 @@ public final class TaskResponseUtil {
     return charsetName != null ? new InputStreamReader(stream, charsetName) : new InputStreamReader(stream, DEFAULT_CHARSET);
   }
 
-  @NotNull
-  public static String messageForStatusCode(int statusCode) {
+  public static @NotNull String messageForStatusCode(int statusCode) {
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       return TaskBundle.message("failure.login");
     }
@@ -119,47 +118,40 @@ public final class TaskResponseUtil {
       myGson = gson;
     }
 
-    @NotNull
-    public static JsonResponseHandlerBuilder fromGson(@NotNull Gson gson) {
+    public static @NotNull JsonResponseHandlerBuilder fromGson(@NotNull Gson gson) {
       return new JsonResponseHandlerBuilder(gson);
     }
 
-    @NotNull
-    public JsonResponseHandlerBuilder successCode(@NotNull IntPredicate predicate) {
+    public @NotNull JsonResponseHandlerBuilder successCode(@NotNull IntPredicate predicate) {
       mySuccessChecker = predicate;
       return this;
     }
 
-    @NotNull
-    public JsonResponseHandlerBuilder ignoredCode(@NotNull IntPredicate predicate) {
+    public @NotNull JsonResponseHandlerBuilder ignoredCode(@NotNull IntPredicate predicate) {
       myIgnoreChecker = predicate;
       return this;
     }
 
-    @NotNull
-    public JsonResponseHandlerBuilder errorHandler(@NotNull Function<HttpResponse, ? extends RequestFailedException> handler) {
+    public @NotNull JsonResponseHandlerBuilder errorHandler(@NotNull Function<HttpResponse, ? extends RequestFailedException> handler) {
       myErrorExtractor = handler;
       return this;
     }
 
-    @NotNull
-    public <T> ResponseHandler<T> toSingleObject(@NotNull Class<T> cls) {
+    public @NotNull <T> ResponseHandler<T> toSingleObject(@NotNull Class<T> cls) {
       return new GsonResponseHandler<>(this,
                                        s -> myGson.fromJson(s, cls),
                                        r -> myGson.fromJson(r, cls),
                                        () -> null);
     }
 
-    @NotNull
-    public <T> ResponseHandler<List<T>> toMultipleObjects(@NotNull TypeToken<List<T>> typeToken) {
+    public @NotNull <T> ResponseHandler<List<T>> toMultipleObjects(@NotNull TypeToken<List<T>> typeToken) {
       return new GsonResponseHandler<>(this,
                                        s -> myGson.fromJson(s, typeToken.getType()),
                                        r -> myGson.fromJson(r, typeToken.getType()),
                                        () -> Collections.emptyList());
     }
 
-    @NotNull
-    public ResponseHandler<Void> toNothing() {
+    public @NotNull ResponseHandler<Void> toNothing() {
       return new GsonResponseHandler<>(this,
                                        s -> null,
                                        r -> null,

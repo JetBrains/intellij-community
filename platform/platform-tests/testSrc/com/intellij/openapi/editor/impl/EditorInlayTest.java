@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.DocumentUtil;
@@ -460,12 +459,6 @@ public class EditorInlayTest extends AbstractEditorTest {
     getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Inlay inlay) { return 123;}
-
-      @Override
-      public void paint(@NotNull Inlay inlay,
-                        @NotNull Graphics g,
-                        @NotNull Rectangle targetRegion,
-                        @NotNull TextAttributes textAttributes) {}
     });
     assertEquals(123, getEditor().getContentComponent().getPreferredSize().width);
   }

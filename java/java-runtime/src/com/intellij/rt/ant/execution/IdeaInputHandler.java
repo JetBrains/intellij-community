@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.ant.execution;
 
 import org.apache.tools.ant.BuildException;
@@ -20,13 +20,13 @@ public class IdeaInputHandler implements InputHandler {
     if (err == null) {
       throw new BuildException("Selected InputHandler should be used by Intellij IDEA");
     }
-    final PacketWriter packet = PacketFactory.ourInstance.createPacket(IdeaAntLogger2.INPUT_REQUEST);
+    final PacketWriter packet = PacketFactory.ourInstance.createPacket(AntLoggerConstants.INPUT_REQUEST);
     packet.appendLimitedString(prompt);
     packet.appendLimitedString(request.getDefaultValue());
     if (request instanceof MultipleChoiceInputRequest) {
       @SuppressWarnings("unchecked") 
       List<String> choices = ((MultipleChoiceInputRequest)request).getChoices();
-      if (choices != null && choices.size() > 0) {
+      if (choices != null && !choices.isEmpty()) {
         int count = choices.size();
         packet.appendLong(count);
         for (String choice : choices) {

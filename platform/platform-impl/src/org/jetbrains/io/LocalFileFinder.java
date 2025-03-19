@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -28,8 +28,7 @@ public final class LocalFileFinder {
    2) even if drive exists, it could be not used due to 10 ms threshold.
    Method is not generic and is not suitable for all.
    */
-  @Nullable
-  public static VirtualFile findFile(@NotNull String path) {
+  public static @Nullable VirtualFile findFile(@NotNull String path) {
     if (windowsDriveExists(path)) {
       return LocalFileSystem.getInstance().findFileByPath(path);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,9 @@ import java.awt.*;
 import java.util.List;
 import java.util.function.IntSupplier;
 
+/**
+ * @see com.intellij.openapi.editor.InlayModel#addBlockElement(int, boolean, boolean, int, com.intellij.openapi.editor.EditorCustomElementRenderer)
+ */
 final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, BlockInlayImpl<?>> implements IntSupplier {
   final boolean myShowAbove;
   final boolean myShowWhenFolded;
@@ -35,7 +39,8 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
   }
 
   @Override
-  MarkerTreeWithPartialSums<BlockInlayImpl<?>> getTree() {
+  @ApiStatus.Internal
+  public MarkerTreeWithPartialSums<BlockInlayImpl<?>> getTree() {
     return myEditor.getInlayModel().myBlockElementsTree;
   }
 
@@ -85,21 +90,18 @@ final class BlockInlayImpl<R extends EditorCustomElementRenderer> extends InlayI
     return myHeightInPixels;
   }
 
-  @NotNull
   @Override
-  public Placement getPlacement() {
+  public @NotNull Placement getPlacement() {
     return myShowAbove ? Placement.ABOVE_LINE : Placement.BELOW_LINE;
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     return myEditor.offsetToVisualPosition(getOffset());
   }
 
-  @Nullable
   @Override
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import kotlin.jvm.PurelyImplements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -14,6 +15,7 @@ import java.util.function.Consumer;
  * The tradeoff is the following: This list is slower than {@link ArrayList} but occupies less memory in case of exactly 1 element.
  * Please use it only if your code contains many 1-element lists outside very hot loops.
  */
+@PurelyImplements("kotlin.collections.MutableList")
 public class SmartList<E> extends AbstractList<E> implements RandomAccess {
   private int mySize;
   private Object myElem; // null if mySize==0, (E)elem if mySize==1, Object[] if mySize>=2
@@ -84,8 +86,7 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     }
   }
 
-  @NotNull
-  private static String outOfBoundsMessage(int index, int size) {
+  private static @NotNull String outOfBoundsMessage(int index, int size) {
     return "Index: " + index + ", Size: " + size;
   }
 
@@ -237,9 +238,8 @@ public class SmartList<E> extends AbstractList<E> implements RandomAccess {
     return oldValue;
   }
 
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return mySize == 0 ? Collections.emptyIterator() : super.iterator();
   }
 

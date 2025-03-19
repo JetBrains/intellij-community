@@ -5,12 +5,14 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.TraceableDisposable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils.findLibraryId;
 
 /**
  * Tracks leaks of libraries from global {@link LibraryTable}
@@ -30,7 +32,7 @@ import java.util.Collection;
  */
 @TestOnly
 public final class LibraryTableTracker {
-  private Library[] stored;
+  private Map<LibraryId, Library> stored;
   private Throwable trace;
   private boolean isTracking; // true when storePointers() was called but before assertPointersDisposed(). false otherwise
   private LibraryTable myLibraryTable;
@@ -58,14 +60,12 @@ public final class LibraryTableTracker {
       throw new IllegalStateException("Double call of assertDisposed() - see 'Caused by:' for the previous call", trace);
     }
 
-    Library[] actual = dumpAll();
+    Map<LibraryId, Library> leaked = dumpAll();
     try {
-      Collection<Library> leaked = ContainerUtil.subtract(Arrays.asList(actual), Arrays.asList(stored));
-      if (!leaked.isEmpty()) {
-        for (Library library : leaked) {
-          System.err.println("Leaked library: "+library+" creation trace:\n"+((TraceableDisposable)library).getStackTrace());
-          ((TraceableDisposable)library).throwDisposalError("Leaked library: "+library);
-        }
+      stored.keySet().forEach(leaked::remove);
+      for (Library library : leaked.values()) {
+        System.err.println("Leaked library: "+library+" creation trace:\n"+((TraceableDisposable)library).getStackTrace());
+        ((TraceableDisposable)library).throwDisposalError("Leaked library: "+library);
       }
     }
     finally {
@@ -76,7 +76,11 @@ public final class LibraryTableTracker {
     }
   }
 
-  private Library @NotNull [] dumpAll() {
-    return myLibraryTable.getLibraries();
+  private @NotNull Map<LibraryId, Library> dumpAll() {
+    Map<LibraryId, Library> libraries = new HashMap<>();
+    for (Library library : myLibraryTable.getLibraries()) {
+      libraries.put(findLibraryId(library), library);
+    }
+    return libraries;
   }
 }

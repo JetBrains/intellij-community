@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.deprecation.DeprecationInspectionBase;
@@ -14,12 +14,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
-  @NotNull
+public final class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
-                                        final boolean isOnTheFly,
-                                        @NotNull final LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
+                                                 final boolean isOnTheFly,
+                                                 final @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
       public void visitIdentifier(@NotNull PsiIdentifier identifier) {
@@ -79,7 +78,7 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
                                       @NotNull SearchScope searchScope) {
     PsiSearchHelper.SearchCostResult cheapEnough 
       = searchScope instanceof GlobalSearchScope ?
-        psiSearchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)searchScope, null, null) : null;
+        psiSearchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)searchScope, null) : null;
     if (cheapEnough == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {
       return ThreeState.NO;
     }

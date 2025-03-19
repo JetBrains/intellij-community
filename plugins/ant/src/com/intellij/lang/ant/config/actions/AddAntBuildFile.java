@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.actions;
 
 import com.intellij.lang.ant.AntBundle;
@@ -18,6 +18,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class AddAntBuildFile extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -47,7 +49,7 @@ public final class AddAntBuildFile extends AnAction {
     }
 
     int filesAdded = 0;
-    @Nls final StringBuilder errors = new StringBuilder();
+    final @Nls StringBuilder errors = new StringBuilder();
 
     for (VirtualFile file : files) {
       try {
@@ -57,23 +59,23 @@ public final class AddAntBuildFile extends AnAction {
       }
       catch (AntNoFileException ex) {
         String message = ex.getMessage();
-        if (message == null || message.length() == 0) {
+        if (message == null || message.isEmpty()) {
           message = AntBundle.message("cannot.add.build.files.from.excluded.directories.error.message", ex.getFile().getPresentableUrl());
         }
-        if (errors.length() > 0) {
+        if (!errors.isEmpty()) {
           errors.append("\n");
         }
         errors.append(message);
       }
     }
 
-    if (errors.length() > 0) {
+    if (!errors.isEmpty()) {
       Messages.showWarningDialog(project, errors.toString(), AntBundle.message("cannot.add.build.file.dialog.title"));
     }
     if (filesAdded > 0) {
       ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.ANT_BUILD);
       if (window == null) {
-        window = ActivateAntToolWindowAction.Manager.createToolWindow(project);
+        window = ActivateAntToolWindowAction.Manager.INSTANCE.createToolWindow(project);
       }
       window.activate(null);
     }
@@ -103,6 +105,9 @@ public final class AddAntBuildFile extends AnAction {
             continue;
           }
           if (AntConfigurationBase.getInstance(project).getAntBuildFile(psiFile) != null) {
+            continue;
+          }
+          if ("http://maven.apache.org/POM/4.0.0".equals(rootTag.getNamespace())) {
             continue;
           }
           // found at least one candidate file

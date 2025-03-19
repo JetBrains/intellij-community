@@ -1,21 +1,28 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ShowUsageException
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader
+import com.intellij.util.PlatformUtils
+import com.intellij.util.application
+import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
-import kotlin.system.exitProcess
+import java.nio.file.Files
+import java.util.*
 
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
 
@@ -25,45 +32,54 @@ private val LOG = Logger.getInstance(FormatterStarter::class.java)
 internal class FormatterStarter : ApplicationStarter {
   private val messageOutput = StdIoMessageOutput
 
-  override val commandName: String
-    get() = "format"
-
   override fun main(args: List<String>) {
     messageOutput.info("$appInfo Formatter\n")
     LOG.info(args.joinToString(",", prefix = "Attributes: "))
 
-    val processor = try {
-      createFormatter(args, messageOutput)
+    val builder = try {
+      createBuilder(args, messageOutput)
     }
     catch (e: ShowUsageException) {
       messageOutput.info(usageInfo)
-      exitProcess(0)
+      exit(0)
+      return
     }
     catch (e: ArgumentsException) {
       messageOutput.error("ERROR: ${e.message}\n")
-      exitProcess(1)
+      exit(1)
+      return
     }
 
+    val projectUID = UUID.randomUUID().toString()
+    val project = createProject(projectUID)
+    val processor = builder.build(project)
+
     try {
-      processor.use {
+      processor.let {
         it.processFiles()
         it.printReport()
         if (!it.isResultSuccessful()) {
-          exitProcess(1)
+          exit(1)
+          return
         }
       }
     }
     catch (e: IOException) {
       messageOutput.error("ERROR: ${e.localizedMessage}\n")
-      exitProcess(1)
+      exit(1)
+      //return
+    }
+    finally {
+      ProjectManager.getInstance().closeAndDispose(project)
     }
 
-    (ApplicationManager.getApplication() as ApplicationEx).exit(true, true)
+    exit(0)
   }
-
 }
 
-fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput) =
+
+
+fun createBuilder(args: List<String>, messageOutput: MessageOutput = StdIoMessageOutput): CodeStyleProcessorBuilder =
   CodeStyleProcessorBuilder(messageOutput)
     .apply {
       if (args.size < 2) throw ShowUsageException()
@@ -107,7 +123,6 @@ fun createFormatter(args: List<String>, messageOutput: MessageOutput = StdIoMess
           }
         }
     }
-    .build()
 
 
 private const val usageInfo = """
@@ -135,8 +150,8 @@ fun readSettings(settingsFile: File): CodeStyleSettings? {
 
 private fun readSettings(settingsPath: String): CodeStyleSettings? = readSettings(File(settingsPath))
 
-private val appInfo: String =
-  (ApplicationInfoEx.getInstanceEx() as ApplicationInfoImpl)
+private val appInfo: String
+  get() = ApplicationInfo.getInstance()
     .let { "${it.fullApplicationName}, build ${it.build.asString()}" }
 
 sealed class CodeStyleProcessorBuildException : RuntimeException {
@@ -159,3 +174,24 @@ private class Skipper(private var skip: Boolean = false) {
     }
   }
 }
+
+private fun exit(code: Int) {
+  application.exit(true, true, false, code)
+}
+
+private val PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format."
+private const val PROJECT_DIR_SUFFIX = ".tmp"
+
+private fun createProjectDir(projectUID: String) = FileUtil
+  .createTempDirectory(PROJECT_DIR_PREFIX, projectUID + PROJECT_DIR_SUFFIX)
+  .toPath()
+  .resolve(PathMacroUtil.DIRECTORY_STORE_NAME)
+  .also { Files.createDirectories(it) }
+
+private fun createProject(projectUID: String) =
+  ProjectManagerEx.getInstanceEx()
+    .openProject(createProjectDir(projectUID), OpenProjectTask(isNewProject = true))
+    ?.also {
+      CodeStyle.setMainProjectSettings(it, CodeStyleSettingsManager.getInstance().createSettings())
+    }
+  ?: throw RuntimeException("Failed to create temporary project $projectUID")

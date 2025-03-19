@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
@@ -22,11 +22,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class JsonSchemaInfo {
-  @Nullable private final JsonSchemaFileProvider myProvider;
-  @Nullable @NlsSafe private final String myUrl;
-  @Nullable private @Nls String myName = null;
-  @Nullable private @Nls String myDocumentation = null;
-  @NotNull  private final static Set<String> myDumbNames = Set.of(
+  private final @Nullable JsonSchemaFileProvider myProvider;
+  private final @Nullable @NlsSafe String myUrl;
+  private @Nullable @Nls String myName = null;
+  private @Nullable @Nls String myDocumentation = null;
+  private static final @NotNull Set<String> myDumbNames = Set.of(
     "schema",
     "lib",
     "cli",
@@ -36,8 +36,8 @@ public class JsonSchemaInfo {
     "angular", // the only angular-related schema is the 'angular-cli', so we skip the repo name
     "config");
 
-  // weird cases such as meaningless 'config' as a name, etc.
-  @NotNull private final static Map<String, @Nls String> myWeirdNames = ContainerUtil.stringMap(
+  // Strange cases such as meaningless 'config' as a name, etc.
+  private static final @NotNull Map<String, @NlsSafe String> myWeirdNames = Map.of(
     "http://json.schemastore.org/config", "asp.net config",
     "https://schemastore.azurewebsites.net/schemas/json/config.json", "asp.net config",
     "http://json.schemastore.org/2.0.0-csd.2.beta.2018-10-10.json", "sarif-2.0.0-csd.2.beta.2018-10-10",
@@ -54,13 +54,11 @@ public class JsonSchemaInfo {
     myProvider = null;
   }
 
-  @Nullable
-  public JsonSchemaFileProvider getProvider() {
+  public @Nullable JsonSchemaFileProvider getProvider() {
     return myProvider;
   }
 
-  @NotNull
-  public String getUrl(Project project) {
+  public @NotNull String getUrl(Project project) {
     if (myProvider != null) {
       String remoteSource = myProvider.getRemoteSource();
       if (remoteSource != null) {
@@ -86,8 +84,7 @@ public class JsonSchemaInfo {
     }
   }
 
-  @NotNull
-  public @Nls String getDescription() {
+  public @NotNull @Nls String getDescription() {
     if (myProvider != null) {
       String providerName = myProvider.getPresentableName();
       return sanitizeName(providerName);
@@ -111,8 +108,7 @@ public class JsonSchemaInfo {
       .findFirst().orElse(myUrl);
   }
 
-  @Nullable
-  public @Nls String getDocumentation() {
+  public @Nullable @Nls String getDocumentation() {
     return myDocumentation;
   }
 
@@ -120,8 +116,7 @@ public class JsonSchemaInfo {
     myDocumentation = documentation;
   }
 
-  @Nullable
-  public @Nls String getName() {
+  public @Nullable @Nls String getName() {
     return myName;
   }
 
@@ -134,18 +129,15 @@ public class JsonSchemaInfo {
     return StringUtil.split(possibleName, ".").stream().allMatch(s -> JsonSchemaType.isInteger(s));
   }
 
-  @NotNull
-  private static @NlsSafe String sanitizeName(@NotNull String providerName) {
+  private static @NotNull @NlsSafe String sanitizeName(@NotNull String providerName) {
     return StringUtil.trimEnd(StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema"), ".schema");
   }
 
-  @NotNull
-  public JsonSchemaVersion getSchemaVersion() {
+  public @NotNull JsonSchemaVersion getSchemaVersion() {
     return myProvider != null ? myProvider.getSchemaVersion() : JsonSchemaVersion.SCHEMA_4;
   }
 
-  @NotNull
-  public static String getRelativePath(@NotNull Project project, @NotNull String text) {
+  public static @NotNull String getRelativePath(@NotNull Project project, @NotNull String text) {
     text = text.trim();
     if (project.isDefault() || project.getBasePath() == null || Strings.isEmptyOrSpaces(text)) {
       return text;

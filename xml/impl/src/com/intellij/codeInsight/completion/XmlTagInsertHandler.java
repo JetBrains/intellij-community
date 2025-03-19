@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,13 +20,16 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -160,7 +163,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
 
       @Override
-      public void templateFinished(@NotNull final Template template, boolean brokenOff) {
+      public void templateFinished(final @NotNull Template template, boolean brokenOff) {
         final int offset = editor.getCaretModel().getOffset();
 
         if (chooseAttributeName && offset > 0) {
@@ -190,11 +193,10 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     });
   }
 
-  @Nullable
-  private static StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
-                                                     @Nullable XmlTag tag,
-                                                     Template template,
-                                                     PsiFile containingFile) {
+  private static @Nullable StringBuilder addRequiredAttributes(XmlElementDescriptor descriptor,
+                                                               @Nullable XmlTag tag,
+                                                               Template template,
+                                                               PsiFile containingFile) {
 
     Set<String> notRequiredAttributes = Collections.emptySet();
 
@@ -211,7 +213,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
       }
     }
 
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(tag);
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, tag);
+
+    if (attributes == null || attributes.length == 0) {
+      return null;
+    }
+
     StringBuilder indirectRequiredAttrs = null;
 
     if (WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes()) {
@@ -276,14 +283,14 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     }
     else if (completionChar == ' ' && template.getSegmentsCount() == 0) {
       if (WebEditorOptions.getInstance().isAutomaticallyStartAttribute() &&
-          (descriptor.getAttributesDescriptors(tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
+          (getAttributesDescriptors(descriptor, tag).length > 0 || isTagFromHtml(tag) && !HtmlUtil.isTagWithoutAttributes(tag.getName()))) {
         completeAttribute(tag.getContainingFile(), template);
         return true;
       }
     }
     else if (completionChar == Lookup.AUTO_INSERT_SELECT_CHAR || completionChar == Lookup.NORMAL_SELECT_CHAR || completionChar == Lookup.REPLACE_SELECT_CHAR) {
       if (WebEditorOptions.getInstance().isAutomaticallyInsertClosingTag() && isHtmlCode && HtmlUtil.isSingleHtmlTag(tag, true)) {
-        if (hasOwnAttributes(descriptor, tag)) {
+        if (runWithTimeoutOrNull(() -> hasOwnAttributes(descriptor, tag)) == Boolean.TRUE) {
           template.addEndVariable();
         }
         template.addTextSegment(HtmlUtil.isHtmlTag(tag) ? ">" : closeTag(tag));
@@ -303,8 +310,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     return false;
   }
 
-  @NotNull
-  private static String closeTag(XmlTag tag) {
+  private static @NotNull String closeTag(XmlTag tag) {
     CodeStyleSettings settings = CodeStyle.getSettings(tag.getContainingFile());
     boolean html = HtmlUtil.isHtmlTag(tag);
     boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
@@ -398,12 +404,12 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
   }
 
   private static boolean hasOwnAttributes(XmlElementDescriptor descriptor, XmlTag tag) {
-    return ContainerUtil.find(descriptor.getAttributesDescriptors(tag),
+    return ContainerUtil.find(getAttributesDescriptors(descriptor, tag),
                               attr -> attr instanceof HtmlAttributeDescriptorImpl && HtmlUtil.isOwnHtmlAttribute(attr)) != null;
   }
 
   private static boolean canHaveAttributes(XmlElementDescriptor descriptor, XmlTag context) {
-    XmlAttributeDescriptor[] attributes = descriptor.getAttributesDescriptors(context);
+    XmlAttributeDescriptor[] attributes = getAttributesDescriptors(descriptor, context);
     int required = WebEditorOptions.getInstance().isAutomaticallyInsertRequiredAttributes() ?
                    ArraysKt.count(attributes, (attribute) -> attribute.isRequired() && context.getAttribute(attribute.getName()) == null) :
                    0;
@@ -418,4 +424,17 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     final String ns = tag.getNamespace();
     return XmlUtil.XHTML_URI.equals(ns) || XmlUtil.HTML_URI.equals(ns);
   }
+
+  private static XmlAttributeDescriptor[] getAttributesDescriptors(XmlElementDescriptor descriptor, XmlTag tag) {
+    var result = runWithTimeoutOrNull(() -> descriptor.getAttributesDescriptors( tag));
+    return result != null ? result : XmlAttributeDescriptor.EMPTY;
+  }
+
+  public static <T> @Nullable T runWithTimeoutOrNull(Computable<@NotNull T> block) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || ApplicationManager.getApplication().isUnitTestMode())
+      return block.get();
+    else
+      return ProgressIndicatorUtils.withTimeout(250, block);
+  }
+
 }

@@ -2,21 +2,23 @@
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.util.ui.JBValue
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Contains a lot of UI related constants for clone dialog that can be helpful for external implementations.
  */
+@ApiStatus.Internal
 object VcsCloneDialogUiSpec {
   object ExtensionsList {
-    val iconSize = JBValue.UIInteger("VcsCloneDialog.iconSize", 22)
-    const val iconTitleGap = 6
-    const val topBottomInsets = 8
-    const val leftRightInsets = 10
+    val iconSize: JBValue.UIInteger = JBValue.UIInteger("VcsCloneDialog.iconSize", 22)
+    const val iconTitleGap: Int = 6
+    const val topBottomInsets: Int = 8
+    const val leftRightInsets: Int = 10
   }
 
   object Components {
-    const val innerHorizontalGap = 10
-    const val avatarSize = 24
-    const val popupMenuAvatarSize = 40
+    const val innerHorizontalGap: Int = 10
+    const val avatarSize: Int = 24
+    const val popupMenuAvatarSize: Int = 40
   }
 }

@@ -1,15 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.rename
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -18,8 +20,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
-import org.jetbrains.kotlin.idea.util.actualsForExpected
-import org.jetbrains.kotlin.idea.util.liftToExpected
+import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -27,43 +28,15 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
-    override fun processForeignUsages(
-        element: PsiElement,
-        newName: String,
-        usages: Array<UsageInfo>,
-        fallbackHandler: (UsageInfo) -> Unit
-    ) {
-        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler)
-    }
-
-    override fun prepareForeignUsagesRenaming(
-        element: PsiElement,
-        newName: String,
-        allRenames: MutableMap<PsiElement, String>,
-        scope: SearchScope
-    ) {
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
-    }
-
-    override fun checkRedeclarations(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkRedeclarations(declaration, newName, result)
-    }
-
-    override fun checkOriginalUsagesRetargeting(
+    override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,
         originalUsages: MutableList<UsageInfo>,
         newUsages: MutableList<UsageInfo>
     ) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
-    }
 
-    override fun checkNewNameUsagesRetargeting(declaration: KtNamedDeclaration, newName: String, newUsages: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkNewNameUsagesRetargeting(declaration, newName, newUsages)
-    }
-
-    override fun checkAccidentalPropertyOverrides(declaration: KtNamedDeclaration, newName: String, result: MutableList<UsageInfo>) {
-        org.jetbrains.kotlin.idea.refactoring.rename.checkAccidentalPropertyOverrides(declaration, newName, result)
+        checkOriginalUsagesRetargeting(declaration, newName, originalUsages, newUsages)
+        checkNewNameUsagesRetargeting(declaration, newName, newUsages)
     }
 
     override fun getAllOverridenFunctions(function: KtNamedFunction): List<PsiElement> {
@@ -71,24 +44,13 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         return descriptor.overriddenDescriptors.mapNotNull { it.source.getPsi() }
     }
 
-    override fun getModuleNameSuffixForMangledName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.getModuleNameSuffix(mangledName)
-    }
-
     override fun mangleInternalName(name: String, moduleName: String): String {
-        return KotlinTypeMapper.InternalNameMapper.mangleInternalName(name, moduleName)
+        return name + "$" + NameUtils.sanitizeAsJavaIdentifier(moduleName)
     }
 
     override fun demangleInternalName(mangledName: String): String? {
-        return KotlinTypeMapper.InternalNameMapper.demangleInternalName(mangledName)
-    }
-
-    override fun actualsForExpected(declaration: KtDeclaration): Set<KtDeclaration> {
-        return declaration.actualsForExpected()
-    }
-
-    override fun liftToExpected(declaration: KtDeclaration): KtDeclaration? {
-        return declaration.liftToExpected()
+        val indexOfDollar = mangledName.indexOf('$')
+        return if (indexOfDollar >= 0) mangledName.substring(0, indexOfDollar) else null
     }
 
     override fun getJvmName(element: PsiElement): String? {
@@ -115,11 +77,28 @@ internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         element.addToShorteningWaitSet(ShortenReferences.Options.ALL_ENABLED)
     }
 
-    override fun findAllOverridingMethods(psiMethod: PsiMethod, scope: SearchScope): List<PsiMethod> = buildList {
-        psiMethod.forEachOverridingMethod(scope) {
-            add(it)
-            true
-        }
+    override fun findAllOverridingMethods(element: PsiElement, scope: SearchScope): List<PsiMethod> {
+      val psiMethods = ((element as? PsiMethod)?.let { listOf(it) } ?: runReadAction { getMethods(element) }) ?: return emptyList()
+      return buildList {
+          for (m in psiMethods) {
+              m.forEachOverridingMethod(scope) {
+                  add(it)
+                  true
+              }
+          }
+      }
+    }
+
+    private fun getMethods(element: PsiElement): List<PsiMethod>? {
+        return if (element is KtFunction) {
+            LightClassUtil.getLightClassMethod(element)?.let { listOf(it) }
+        } else if (element is KtProperty) {
+            val propertyMethods = LightClassUtil.getLightClassPropertyMethods(element)
+            buildList {
+                addIfNotNull(propertyMethods.getter)
+                addIfNotNull(propertyMethods.setter)
+            }.takeIf { it.isNotEmpty() }
+        } else null
     }
 
     override fun dropOverrideKeywordIfNecessary(element: KtNamedDeclaration) {

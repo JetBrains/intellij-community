@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -14,7 +16,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("add.braces")) {
+@Internal
+@IntellijInternalApi
+class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("add.braces")) {
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val expression = element.getTargetExpression(caretOffset) ?: return false
         if (expression is KtBlockExpression) return false
@@ -38,7 +42,7 @@ internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement:
     override fun applyTo(element: KtElement, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val expression = element.getTargetExpression(editor.caretModel.offset) ?: return
-        addBraces(element, expression)
+        Util.addBraces(element, expression)
     }
 
     private fun KtElement.getTargetExpression(caretLocation: Int): KtExpression? {
@@ -59,7 +63,7 @@ internal class AddBracesIntention : SelfTargetingIntention<KtElement>(KtElement:
         }
     }
 
-    companion object {
+    object Util {
         fun addBraces(element: KtElement, expression: KtExpression) {
             val psiFactory = KtPsiFactory(element.project)
 

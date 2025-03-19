@@ -1,11 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.handler;
 
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.CallArgument;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCallType;
-import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl;
+import com.intellij.debugger.streams.core.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.core.wrapper.CallArgument;
+import com.intellij.debugger.streams.core.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.core.wrapper.StreamCallType;
+import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
@@ -25,39 +25,38 @@ public class PeekCall implements IntermediateStreamCall {
     myElementType = elementType;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "peek";
   }
 
-  @NotNull
   @Override
-  public List<CallArgument> getArguments() {
+  public @NotNull String getGenericArguments() {
+    return "";
+  }
+
+  @Override
+  public @NotNull List<CallArgument> getArguments() {
     return myLambda;
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return TextRange.EMPTY_RANGE;
   }
 
-  @NotNull
   @Override
-  public StreamCallType getType() {
+  public @NotNull StreamCallType getType() {
     return StreamCallType.INTERMEDIATE;
   }
 
-  @NotNull
   @Override
-  public GenericType getTypeAfter() {
+  public @NotNull GenericType getTypeAfter() {
     return myElementType;
   }
 
-  @NotNull
   @Override
-  public GenericType getTypeBefore() {
+  public @NotNull GenericType getTypeBefore() {
     return myElementType;
   }
 }

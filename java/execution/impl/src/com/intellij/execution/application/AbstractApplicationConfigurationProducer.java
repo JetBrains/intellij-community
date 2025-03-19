@@ -2,18 +2,15 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
+import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +43,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       return false;
     }
     PsiFile containingFile = aClass.getContainingFile();
-    if (JavaHighlightUtil.isJavaHashBangScript(containingFile)) {
+    if (JavaPsiSingleFileSourceUtil.isJavaHashBangScript(containingFile)) {
       return false;
     }
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);
@@ -62,6 +59,9 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
+    if (aClass instanceof PsiImplicitClass) {
+      configuration.setImplicitClassConfiguration(true);
+    }
     configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
@@ -69,14 +69,17 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
 
   @Override
   public boolean isConfigurationFromContext(@NotNull T appConfiguration, @NotNull ConfigurationContext context) {
-    Location location = context.getLocation();
+    Location<?> location = context.getLocation();
     if (location == null) {
       return false;
     }
 
-    Location singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
+    Location<?> singleClassLocation = JavaExecutionUtil.stepIntoSingleClass(location);
     final PsiClass aClass = PsiTreeUtil.getParentOfType(singleClassLocation.getPsiElement(), PsiClass.class, false);
-    if (aClass != null && Objects.equals(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
+    if (aClass != null) {
+      final String className = JavaExecutionUtil.getRuntimeQualifiedName(aClass);
+      if (!Objects.equals(className, appConfiguration.getMainClassName())) return false;
+
       final PsiMethod method = PsiTreeUtil.getParentOfType(context.getPsiLocation(), PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;
@@ -85,12 +88,12 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       final Module configurationModule = appConfiguration.getConfigurationModule().getModule();
       if (Comparing.equal(context.getModule(), configurationModule)) return true;
 
-      ApplicationConfiguration template =
-        (ApplicationConfiguration)context.getRunManager().getConfigurationTemplate(getConfigurationFactory()).getConfiguration();
+      ApplicationConfiguration template = (ApplicationConfiguration)context
+        .getRunManager()
+        .getConfigurationTemplate(getConfigurationFactory())
+        .getConfiguration();
       final Module predefinedModule = template.getConfigurationModule().getModule();
-      if (Comparing.equal(predefinedModule, configurationModule)) {
-        return true;
-      }
+      return Comparing.equal(predefinedModule, configurationModule);
     }
     return false;
   }

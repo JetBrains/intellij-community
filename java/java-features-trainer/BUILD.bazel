@@ -1,0 +1,68 @@
+### auto-generated section `build intellij.java.featuresTrainer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "featuresTrainer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "featuresTrainer",
+  module_name = "intellij.java.featuresTrainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/ide-core-impl",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-impl:ide-impl",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//java/debugger/impl:java-debugger-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+jvm_library(
+  name = "featuresTrainer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":featuresTrainer"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/ide-core-impl",
+    "//java/java-impl:impl",
+    "//java/idea-ui:ui",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//platform/core-ui",
+    "//java/debugger/impl:java-debugger-impl",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/execution/impl:java-execution-impl",
+    "//java/debugger/shared:java-debugger-impl-shared",
+  ],
+  runtime_deps = [":featuresTrainer_resources"]
+)
+
+jvm_test(
+  name = "featuresTrainer_test",
+  runtime_deps = [":featuresTrainer_test_lib"]
+)
+### auto-generated section `build intellij.java.featuresTrainer` end

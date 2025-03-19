@@ -1,4 +1,4 @@
-// SHORTEN_AND_STAR_IMPORT
+// STRATEGY: SHORTEN_AND_STAR_IMPORT
 package a.b.c
 
 fun test(n: Int) {

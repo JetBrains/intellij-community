@@ -1,16 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.repo.Repository
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.ChangeListData
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import git4idea.DialogManager
+import git4idea.GitApplyChangesNotification
+import git4idea.GitActivity
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_FAILED
 import git4idea.GitNotificationIdsHolder.Companion.CHERRY_PICK_ABORT_SUCCESS
 import git4idea.GitNotificationIdsHolder.Companion.MERGE_ABORT_FAILED
@@ -26,10 +31,13 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFreezingProcess
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
-internal abstract class GitAbortOperationAction(repositoryState: Repository.State,
-                                                final override val operationName: @Nls String,
-                                                private val gitCommand: GitCommand)
+internal abstract class GitAbortOperationAction(
+  private val repositoryState: Repository.State,
+  final override val operationName: @Nls String,
+  private val gitCommand: GitCommand,
+)
   : GitOperationActionBase(repositoryState) {
 
   private val operationNameCapitalised = StringUtil.capitalizeWords(operationName, true)
@@ -52,13 +60,17 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
     override val notificationErrorDisplayId = REVERT_ABORT_FAILED
   }
 
-  override fun performInBackground(repository: GitRepository): Boolean {
-    if (!confirmAbort(repository)) return false
+  final override fun getMainToolbarIcon(): Icon = AllIcons.Vcs.Abort
+
+  override fun performInBackground(repository: GitRepository) {
+    if (!confirmAbort(repository)) return
 
     runBackgroundableTask(GitBundle.message("abort.operation.progress.title", operationNameCapitalised), repository.project) { indicator ->
       doAbort(repository, indicator)
     }
-    return true
+
+    GitApplyChangesNotification.expireAll<GitApplyChangesNotification.ExpireAfterAbort>(repository.project)
+
   }
 
   private fun confirmAbort(repository: GitRepository): Boolean {
@@ -71,7 +83,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
   private fun doAbort(repository: GitRepository, indicator: ProgressIndicator) {
     val project = repository.project
     GitFreezingProcess(project, GitBundle.message("abort")) {
-      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("abort")).use {
+      DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.abort.command", operationName), GitActivity.Abort).use {
         indicator.text2 = GitBundle.message("abort.operation.indicator.text", gitCommand.name(), GitUtil.mention(repository))
 
         val startHash = GitUtil.getHead(repository)
@@ -89,6 +101,17 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
 
           GitUtil.updateAndRefreshChangedVfs(repository, startHash)
           RefreshVFsSynchronously.refresh(stagedChanges, true)
+
+          if (repositoryState == Repository.State.GRAFTING) {
+            // cleanup after GitApplyChangesProcess
+            val changeListManager = ChangeListManagerEx.getInstanceEx(project)
+            for (list in changeListManager.changeLists) {
+              val isAutomatic = (list.data as? ChangeListData)?.automatic == true
+              if (isAutomatic) {
+                changeListManager.editChangeListData(list.name, null)
+              }
+            }
+          }
         }
       }
     }.execute()

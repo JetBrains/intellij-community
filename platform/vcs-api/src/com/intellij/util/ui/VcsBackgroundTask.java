@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;

@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Formats;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
@@ -23,7 +24,7 @@ import java.util.function.Function;
  * @author Eugene Zhuravlev
  */
 public final class Utils {
-  public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
+  public static final Key<Map<BuildTarget<?>, Collection<Path>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
@@ -89,22 +90,25 @@ public final class Utils {
 
     final Path rootFile = Paths.get(projectPath);
     if (!Files.isDirectory(rootFile) && projectPath.endsWith(".ipr")) {
-      name = StringUtil.trimEnd(rootFile.getFileName().toString(), ".ipr");
+      name = Strings.trimEnd(rootFile.getFileName().toString(), ".ipr");
       locationHash = hashFunction.apply(projectPath);
     }
     else {
       Path directoryBased;
+      String rawName;
       if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
+        rawName = JpsProjectConfigurationLoading.getDirectoryBaseProjectName(rootFile.getParent(), directoryBased);
       }
       else {
         directoryBased = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+        rawName = JpsProjectConfigurationLoading.getDirectoryBaseProjectName(rootFile, directoryBased);
       }
-      name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
+      name = PathUtilRt.suggestFileName(rawName);
       locationHash = hashFunction.apply(directoryBased.toString());
     }
 
-    return new File(systemRoot, StringUtil.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
+    return new File(systemRoot, Strings.toLowerCase(name) + "_" + Integer.toHexString(locationHash));
   }
 
   public static boolean errorsDetected(CompileContext context) {
@@ -112,7 +116,7 @@ public final class Utils {
   }
 
   public static String formatDuration(long duration) {
-    return StringUtil.formatDuration(duration);
+    return Formats.formatDuration(duration);
   }
 
   public static int suggestForkedCompilerHeapSize() {

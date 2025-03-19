@@ -7,10 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiReference
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -20,6 +20,20 @@ interface KotlinFindUsagesSupport {
 
     companion object {
         fun getInstance(project: Project): KotlinFindUsagesSupport = project.service()
+
+        fun searchOverriders(element: PsiElement,
+                             searchScope: SearchScope): Sequence<PsiElement> {
+            return getInstance(element.project).searchOverriders(element, searchScope)
+        }
+
+        /**
+         * NOTE: Java functional expressions would not be found, corresponding search should be started separately
+         */
+        fun searchInheritors(element: PsiElement,
+                             searchScope: SearchScope,
+                             searchDeeply: Boolean = true): Sequence<PsiElement> {
+            return getInstance(PsiUtilCore.getProjectInReadAction(element)).searchInheritors(element, searchScope, searchDeeply)
+        }
 
         fun processCompanionObjectInternalReferences(
             companionObject: KtObjectDeclaration,
@@ -31,8 +45,8 @@ interface KotlinFindUsagesSupport {
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
         @NlsSafe
-        fun formatJavaOrLightMethod(method: PsiMethod): String =
-            getInstance(method.project).formatJavaOrLightMethod(method)
+        fun renderDeclaration(method: KtDeclaration): String =
+            getInstance(method.project).renderDeclaration(method)
 
         fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
             fun isJavaConstructorUsage(): Boolean {
@@ -51,11 +65,20 @@ interface KotlinFindUsagesSupport {
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 
-    fun formatJavaOrLightMethod(method: PsiMethod): String
+    fun renderDeclaration(method: KtDeclaration): String
 
     fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 
     fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
 
-    fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, @Nls actionString: String): List<PsiElement>
+    fun searchOverriders(
+        element: PsiElement,
+        searchScope: SearchScope,
+    ): Sequence<PsiElement>
+
+    fun searchInheritors(
+        element: PsiElement,
+        searchScope: SearchScope,
+        searchDeeply: Boolean = true,
+    ): Sequence<PsiElement>
 }

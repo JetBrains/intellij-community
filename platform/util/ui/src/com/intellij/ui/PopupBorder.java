@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -31,10 +31,15 @@ public interface PopupBorder extends Border {
     }
 
     public static @NotNull PopupBorder create(boolean active, boolean windowWithShadow) {
-      boolean visible = !(SystemInfoRt.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder") == Boolean.TRUE;
-      PopupBorder border = new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
+      boolean visible = !(SystemInfoRt.isMac && windowWithShadow) || UIManager.getBoolean("Popup.paintBorder");
+      PopupBorder border = createPopupBorder(visible);
       border.setActive(active);
       return border;
+    }
+
+    @ApiStatus.Internal
+    public static @NotNull PopupBorder createPopupBorder(boolean visible) {
+      return new BaseBorder(visible, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
     }
 
     public static PopupBorder createColored(Color color) {
@@ -44,18 +49,19 @@ public interface PopupBorder extends Border {
     }
   }
 
-  class BaseBorder implements PopupBorder {
+  @ApiStatus.Internal
+  final class BaseBorder implements PopupBorder {
     private final boolean myVisible;
     private final Color myActiveColor;
     private final Color myPassiveColor;
     private boolean myActive;
     private boolean popupUsed = false;
 
-    protected BaseBorder() {
+    private BaseBorder() {
       this(false, null, null);
     }
 
-    protected BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
+    private BaseBorder(final boolean visible, final Color activeColor, final Color passiveColor) {
       myVisible = visible;
       myActiveColor = activeColor;
       myPassiveColor = passiveColor;

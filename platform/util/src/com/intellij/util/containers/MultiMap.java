@@ -1,17 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.*;
 import java.util.WeakHashMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Pass custom map using {@link #MultiMap(Map)} if needed.
@@ -54,7 +54,7 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   protected @NotNull Collection<V> createCollection() {
-    return new ArrayList<>();
+    return new SmartList<>();
   }
 
   protected @NotNull Collection<V> createEmptyCollection() {
@@ -84,11 +84,11 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   public final void putValues(K key, @NotNull Collection<? extends V> values) {
-    myMap.computeIfAbsent(key, __ -> createCollection()).addAll(values);
+    getModifiable(key).addAll(values);
   }
 
   public final void putValue(@Nullable K key, V value) {
-    myMap.computeIfAbsent(key, __ -> createCollection()).add(value);
+    getModifiable(key).add(value);
   }
 
   public final @NotNull Set<Map.Entry<K, Collection<V>>> entrySet() {
@@ -136,6 +136,14 @@ public class MultiMap<K, V> implements Serializable {
   public final @NotNull Collection<V> get(K key) {
     Collection<V> collection = myMap.get(key);
     return collection == null ? createEmptyCollection() : collection;
+  }
+
+  public final @NotNull Collection<V> getOrPut(K key, Supplier<? extends V> defaultValue) {
+    Collection<V> collection = getModifiable(key);
+    if (collection.isEmpty()) {
+      collection.add(defaultValue.get());
+    }
+    return collection;
   }
 
   public final @NotNull Collection<V> getModifiable(K key) {
@@ -283,15 +291,6 @@ public class MultiMap<K, V> implements Serializable {
     };
   }
 
-  /**
-   * @deprecated Use {@link #MultiMap()}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @NotNull <K, V> MultiMap<K, V> createSmart() {
-    return new MultiMap<>();
-  }
-
   public static @NotNull <K, V> MultiMap<K, V> createConcurrent() {
     return new MultiMap<K, V>(new ConcurrentHashMap<>()) {
       @Override
@@ -319,7 +318,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>() {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return new HashSet<>();
+        return new SmartHashSet<>();
       }
 
       @Override
@@ -333,7 +332,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>(map) {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return new HashSet<>();
+        return new SmartHashSet<>();
       }
 
       @Override

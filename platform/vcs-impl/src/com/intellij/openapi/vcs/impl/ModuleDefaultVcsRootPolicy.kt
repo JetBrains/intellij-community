@@ -5,18 +5,20 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.project.stateStore
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
   }
 
-  override fun getDefaultVcsRoots(): Collection<VirtualFile> {
+  override fun getDefaultVcsRootsCandidates(): Collection<VirtualFile> {
     val result = mutableSetOf<VirtualFile>()
 
     val baseDir = myProject.baseDir
@@ -45,6 +47,7 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
   private inner class MyModulesListener : ContentRootChangeListener(skipFileChanges = true) {
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
       scheduleMappedRootsUpdate()
+      scheduleRootsChangeProcessing(removed, added)
     }
   }
 }

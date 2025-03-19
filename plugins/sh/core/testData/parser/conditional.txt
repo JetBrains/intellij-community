@@ -575,17 +575,18 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
+        PIPELINE_COMMAND_LIST
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
           PsiWhiteSpace(' ')
-          PsiElement(])(']')
-        PsiWhiteSpace(' ')
-        PsiElement(||)('||')
-        PsiWhiteSpace(' ')
-        CONDITIONAL_COMMAND
-          PsiElement([)('[')
+          PsiElement(||)('||')
           PsiWhiteSpace(' ')
-          PsiElement(])(']')
+          CONDITIONAL_COMMAND
+            PsiElement([)('[')
+            PsiWhiteSpace(' ')
+            PsiElement(])(']')
         PsiElement(;)(';')
       PsiWhiteSpace(' ')
       THEN_CLAUSE
@@ -609,35 +610,36 @@ SHELL_SCRIPT
       PsiElement(if)('if')
       PsiWhiteSpace(' ')
       COMPOUND_LIST
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('cat')
+        PIPELINE_COMMAND_LIST
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('cat')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$0')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              REDIRECTION
+                PsiElement(>)('>')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('/dev/null')
           PsiWhiteSpace(' ')
-          VARIABLE
-            PsiElement(var)('$0')
+          PsiElement(||)('||')
           PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            REDIRECTION
-              PsiElement(>)('>')
-              PsiWhiteSpace(' ')
-              PsiElement(word)('/dev/null')
-        PsiWhiteSpace(' ')
-        PsiElement(||)('||')
-        PsiWhiteSpace(' ')
-        SIMPLE_COMMAND
-          GENERIC_COMMAND_DIRECTIVE
-            LITERAL
-              PsiElement(word)('cat')
-          PsiWhiteSpace(' ')
-          VARIABLE
-            PsiElement(var)('$0')
-          PsiWhiteSpace(' ')
-          SIMPLE_COMMAND_ELEMENT
-            REDIRECTION
-              PsiElement(>)('>')
-              PsiWhiteSpace(' ')
-              PsiElement(word)('/dev/null')
+          SIMPLE_COMMAND
+            GENERIC_COMMAND_DIRECTIVE
+              LITERAL
+                PsiElement(word)('cat')
+            PsiWhiteSpace(' ')
+            VARIABLE
+              PsiElement(var)('$0')
+            PsiWhiteSpace(' ')
+            SIMPLE_COMMAND_ELEMENT
+              REDIRECTION
+                PsiElement(>)('>')
+                PsiWhiteSpace(' ')
+                PsiElement(word)('/dev/null')
         PsiElement(\n)('\n')
         PsiWhiteSpace('   ')
         SIMPLE_COMMAND

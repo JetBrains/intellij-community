@@ -28,5 +28,3 @@ suspend fun suspendUse(value: Any) {
 }
 
 inline fun inlineBlock(block: () -> Unit) = block()
-
-// IGNORE_K2

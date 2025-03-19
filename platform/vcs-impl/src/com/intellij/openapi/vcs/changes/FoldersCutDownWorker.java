@@ -17,10 +17,12 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class FoldersCutDownWorker {
   private final Set<String> myPaths;
 

@@ -1,0 +1,2 @@
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlin/reflect/KProperty

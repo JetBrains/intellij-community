@@ -1,22 +1,23 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
+public class AddAnnotationAttributeNameFix extends PsiUpdateModCommandAction<PsiNameValuePair> {
   private final String myName;
 
   public AddAnnotationAttributeNameFix(PsiNameValuePair pair, String name) {
@@ -24,46 +25,30 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
     myName = name;
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message("add.annotation.attribute.name", myName);
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("add.annotation.attribute.name.family.name");
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    doFix((PsiNameValuePair)startElement, myName);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNameValuePair element, @NotNull ModPsiUpdater updater) {
+    doFix(element, myName);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return super.isAvailable(project, file, startElement, endElement) && startElement instanceof PsiNameValuePair;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNameValuePair element) {
+    return Presentation.of(QuickFixBundle.message("add.annotation.attribute.name", myName))
+      .withFixAllOption(this);
   }
 
-  @NotNull
-  public static List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
+  public static @Unmodifiable @NotNull List<IntentionAction> createFixes(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value == null || pair.getName() != null) {
       return Collections.emptyList();
     }
 
     final Collection<String> methodNames = getAvailableAnnotationMethodNames(pair);
-    return ContainerUtil.map(methodNames, name -> new AddAnnotationAttributeNameFix(pair, name));
+    return ContainerUtil.map(methodNames, name -> new AddAnnotationAttributeNameFix(pair, name).asIntention());
   }
 
   public static void doFix(@NotNull PsiNameValuePair annotationParameter, @NotNull String name) {
@@ -90,8 +75,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
     return false;
   }
 
-  @NotNull
-  private static Collection<String> getAvailableAnnotationMethodNames(@NotNull PsiNameValuePair pair) {
+  private static @NotNull Collection<String> getAvailableAnnotationMethodNames(@NotNull PsiNameValuePair pair) {
     final PsiAnnotationMemberValue value = pair.getValue();
     if (value != null && pair.getName() == null) {
       final PsiElement parent = pair.getParent();
@@ -118,16 +102,14 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
     return Collections.emptyList();
   }
 
-  @NotNull
-  public static Set<String> getUsedAttributeNames(@NotNull PsiAnnotationParameterList parameterList) {
+  public static @NotNull Set<String> getUsedAttributeNames(@NotNull PsiAnnotationParameterList parameterList) {
     return Arrays.stream(parameterList.getAttributes())
               .map(PsiNameValuePair::getName)
               .filter(Objects::nonNull)
               .collect(Collectors.toSet());
   }
 
-  @Nullable
-  private static PsiClass getAnnotationClass(@NotNull PsiAnnotationParameterList parameterList) {
+  private static @Nullable PsiClass getAnnotationClass(@NotNull PsiAnnotationParameterList parameterList) {
     PsiElement parent = parameterList.getParent();
     return parent instanceof PsiAnnotation ? ((PsiAnnotation)parent).resolveAnnotationType() : null;
   }

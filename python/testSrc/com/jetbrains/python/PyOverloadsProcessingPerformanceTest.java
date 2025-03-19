@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -14,8 +15,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -44,7 +45,9 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     final SdkModificator modificator = sdk.getSdkModificator();
     assertNotNull(modificator);
     modificator.addRoot(myRoot, OrderRootType.CLASSES);
-    modificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      modificator.commitChanges();
+    });
   }
 
   @Override
@@ -54,7 +57,9 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
       modificator.removeRoot(myRoot, OrderRootType.CLASSES);
-      modificator.commitChanges();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        modificator.commitChanges();
+      });
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -66,7 +71,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   public void testComputingResultTypeWithCodeAnalysisContext() {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
-    doPerformanceTestResettingCaches("Computing result type with code analysis context", 1200, () -> {
+    doPerformanceTestResettingCaches("Computing result type with code analysis context", () -> {
       TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
       assertType("int", call, context);
     });
@@ -74,7 +79,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
 
   public void testComputingResultTypeWithUserInitiatedContext() {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainQualified.py");
-    doPerformanceTestResettingCaches("Computing result type with user initiated context", 4000, () -> {
+    doPerformanceTestResettingCaches("Computing result type with user initiated context", () -> {
       TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
       assertType("int", call, context);
     });
@@ -83,7 +88,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testNavigatingToDefinition() {
     configureAndGetCallExprUnderCaret("mainQualified.py");
     Project project = myFixture.getProject();
-    doPerformanceTestResettingCaches("Navigating to definition", 600, () -> {
+    doPerformanceTestResettingCaches("Navigating to definition", () -> {
       TypeEvalContext context = TypeEvalContext.userInitiated(project, myFixture.getFile());
       PsiElement target = GotoDeclarationAction.findTargetElement(project, myFixture.getEditor(), myFixture.getCaretOffset());
       assertNotNull(target);
@@ -98,7 +103,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     PsiElement leaf = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     DocumentationManager docManager = DocumentationManager.getInstance(myFixture.getProject());
     PsiElement docTarget = docManager.findTargetElement(myFixture.getEditor(), leaf.getTextOffset(), myFixture.getFile(), leaf);
-    doPerformanceTestResettingCaches("Rendering Quick Documentation", 100, () -> {
+    doPerformanceTestResettingCaches("Rendering Quick Documentation", () -> {
       String doc = docProvider.generateDoc(docTarget, leaf);
       // Smoke test that it's the right documentation.
       assertTrue(doc.contains("def <b>func</b>(x"));
@@ -108,7 +113,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testUnresolvedReferencesInspectionPass() {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", 1200, () -> {
+    doPerformanceTestResettingCaches("Pass of Unresolved References inspection", () -> {
       myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
     });
@@ -117,7 +122,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   public void testArgumentListInspectionPass() {
     myFixture.copyDirectoryToProject("", "");
     myFixture.enableInspections(PyArgumentListInspection.class);
-    doPerformanceTestResettingCaches("Pass of Incorrect Call Arguments inspection", 1200, () -> {
+    doPerformanceTestResettingCaches("Pass of Incorrect Call Arguments inspection", () -> {
       myFixture.configureByFile("mainQualified.py");
       myFixture.checkHighlighting();
     });
@@ -139,14 +144,14 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     assertEquals(NUMBER_OF_OVERLOADS, resolveResults.length);
   }
 
-  private void doPerformanceTestResettingCaches(@NotNull String text, int expectedMs, ThrowableRunnable<Throwable> runnable) {
+  private void doPerformanceTestResettingCaches(@NotNull String text, ThrowableRunnable<Throwable> runnable) {
     PsiManager psiManager = myFixture.getPsiManager();
-    PlatformTestUtil.startPerformanceTest(text, expectedMs, runnable)
+    Benchmark.newBenchmark(text, runnable)
       .setup(() -> {
         psiManager.dropPsiCaches();
         psiManager.dropResolveCaches();
       })
-      .assertTiming();
+      .start();
   }
 
   @NotNull

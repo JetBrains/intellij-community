@@ -10,9 +10,9 @@ abstract class IntroduceActionBase : BasePlatformRefactoringAction() {
     setInjectedContext(true)
   }
 
-  override fun isAvailableInEditorOnly() = true
+  override fun isAvailableInEditorOnly(): Boolean = true
 
-  override fun isEnabledOnElements(elements: Array<out PsiElement>) = false
+  override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -21,9 +21,8 @@ public final class WritesCounterSemilattice implements Semilattice<Object2IntMap
   }
 
 
-  @NotNull
   @Override
-  public Object2IntMap<GrVariable> join(@NotNull List<? extends Object2IntMap<GrVariable>> ins) {
+  public @NotNull Object2IntMap<GrVariable> join(@NotNull List<? extends Object2IntMap<GrVariable>> ins) {
     if (ins.isEmpty()) {
       return NEUTRAL;
     }

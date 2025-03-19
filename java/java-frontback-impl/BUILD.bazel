@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.java.frontback.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontback-impl_resources",
+  files = glob(["resource/**/*"]),
+  strip_prefix = "resource"
+)
+
+jvm_library(
+  name = "frontback-impl",
+  module_name = "intellij.java.frontback.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "//platform/ide-core-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/core-api:core",
+    "//platform/util/jdom",
+  ],
+  exports = [
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-impl",
+    "//xml/xml-parser:parser",
+  ],
+  runtime_deps = [":frontback-impl_resources"]
+)
+### auto-generated section `build intellij.java.frontback.impl` end

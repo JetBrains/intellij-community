@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -49,8 +49,10 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
-    if(myReferenceExpression.isQualified()) return false;
-    PsiStatement anchor = getAnchor(myReferenceExpression);
+    PsiReferenceExpression element = myReferenceExpression.getElement();
+    if (element == null) return false;
+    if (element.isQualified()) return false;
+    PsiStatement anchor = getAnchor(element);
     if (anchor == null) return false;
     if (anchor instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
@@ -71,8 +73,10 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    String varName = myReferenceExpression.getReferenceName();
-    if (CreateFromUsageUtils.isValidReference(myReferenceExpression, false) || varName == null) return;
+    PsiReferenceExpression element = myReferenceExpression.getElement();
+    if (element == null) return;
+    String varName = element.getReferenceName();
+    if (CreateFromUsageUtils.isValidReference(element, false) || varName == null) return;
 
     if (file.isPhysical()) {
       IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
@@ -80,26 +84,26 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
-    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
+    PsiType[] expectedTypes = CreateFromUsageUtils.guessType(element, false);
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
     if (LambdaUtil.notInferredType(type)) {
-      type = PsiType.getJavaLangObject(myReferenceExpression.getManager(), file.getResolveScope());
+      type = PsiType.getJavaLangObject(element.getManager(), file.getResolveScope());
     }
 
     PsiExpression initializer = null;
     boolean isInline = false;
-    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+    PsiExpression[] expressions = CreateFromUsageUtils.collectExpressions(element, PsiMember.class, PsiFile.class);
     PsiStatement anchor = getAnchor(expressions);
     if (anchor == null) {
-      expressions = new PsiExpression[]{myReferenceExpression};
+      expressions = new PsiExpression[]{element};
       anchor = getAnchor(expressions);
       if (anchor == null) return;
     }
     if (anchor instanceof PsiExpressionStatement expressionStatement &&
         expressionStatement.getExpression() instanceof PsiAssignmentExpression assignment &&
-        assignment.getLExpression().textMatches(myReferenceExpression)) {
+        assignment.getLExpression().textMatches(element)) {
       initializer = assignment.getRExpression();
       isInline = true;
     }
@@ -160,8 +164,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  @Nullable
-  private static PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
+  private static @Nullable PsiStatement getAnchor(PsiExpression... expressionOccurrences) {
     PsiElement parent = expressionOccurrences[0];
     int minOffset = expressionOccurrences[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressionOccurrences.length; i++) {
@@ -175,28 +178,31 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
       if (parent instanceof PsiCodeBlock) {
         block = (PsiCodeBlock)parent;
         break;
-      } else if (parent instanceof PsiSwitchLabeledRuleStatement) {
+      }
+      else if (parent instanceof PsiSwitchLabeledRuleStatement) {
         parent = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
-      } else {
+      }
+      else {
         parent = parent.getParent();
       }
     }
     if (block == null) return null;
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
-      if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];
+      if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i - 1];
     }
     return statements[statements.length - 1];
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.local.from.usage.family");
   }
 
   @Override
   public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(myReferenceExpression, target));
+    PsiReferenceExpression referenceExpression = myReferenceExpression.getElement();
+    if(referenceExpression==null) return null;
+    return new CreateLocalFromUsageFix(PsiTreeUtil.findSameElementInCopy(referenceExpression, target));
   }
 }

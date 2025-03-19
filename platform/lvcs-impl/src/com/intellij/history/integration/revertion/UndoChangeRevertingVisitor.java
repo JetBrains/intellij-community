@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class UndoChangeRevertingVisitor extends ChangeVisitor {
+@ApiStatus.Internal
+public final class UndoChangeRevertingVisitor extends ChangeVisitor {
   private static final Logger LOG = Logger.getInstance(UndoChangeRevertingVisitor.class);
 
   private final IdeaGateway myGateway;
@@ -42,7 +44,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     myToChangeId = toChangeId == null ? -1 : toChangeId;
   }
 
-  protected boolean shouldRevert(Change c) {
+  private boolean shouldRevert(@NotNull Change c) {
     if (c.getId() == myFromChangeId) {
       isReverting = true;
     }
@@ -53,12 +55,12 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     return shouldRevert;
   }
 
-  protected void checkShouldStop(Change c) throws StopVisitingException {
+  private void checkShouldStop(@NotNull Change c) throws StopVisitingException {
     if (c.getId() == myToChangeId) stop();
   }
 
   @Override
-  public void visit(CreateEntryChange c) throws StopVisitingException {
+  public void visit(@NotNull CreateEntryChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -75,7 +77,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ContentChange c) throws StopVisitingException {
+  public void visit(@NotNull ContentChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile f = myGateway.findOrCreateFileSafely(c.getPath(), false);
@@ -89,7 +91,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(RenameChange c) throws StopVisitingException {
+  public void visit(@NotNull RenameChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -109,7 +111,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(ROStatusChange c) throws StopVisitingException {
+  public void visit(@NotNull ROStatusChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -120,7 +122,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(MoveChange c) throws StopVisitingException {
+  public void visit(@NotNull MoveChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       VirtualFile f = myGateway.findVirtualFile(c.getPath());
       if (f != null) {
@@ -139,7 +141,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(DeleteChange c) throws StopVisitingException {
+  public void visit(@NotNull DeleteChange c) throws StopVisitingException {
     if (shouldRevert(c)) {
       try {
         VirtualFile parent = myGateway.findOrCreateFileSafely(Paths.getParentOf(c.getPath()), true);
@@ -152,7 +154,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     checkShouldStop(c);
   }
 
-  private void revertDeletion(VirtualFile parent, Entry e) throws IOException {
+  private void revertDeletion(VirtualFile parent, @NotNull Entry e) throws IOException {
     VirtualFile f = myGateway.findOrCreateFileSafely(parent, e.getName(), e.isDirectory());
     if (e.isDirectory()) {
       for (Entry child : e.getChildren()) revertDeletion(f, child);
@@ -200,7 +202,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static abstract class DelayedApply {
+  private abstract static class DelayedApply {
     protected VirtualFile myFile;
 
     protected DelayedApply(VirtualFile f) {
@@ -225,7 +227,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  private static class DelayedContentApply extends DelayedApply {
+  private static final class DelayedContentApply extends DelayedApply {
     private final Content myContent;
 
     DelayedContentApply(VirtualFile f, Content content) {
@@ -267,7 +269,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
     }
   }
 
-  public static class RuntimeIOException extends RuntimeException {
+  public static final class RuntimeIOException extends RuntimeException {
     public RuntimeIOException(Throwable cause) {
       super(cause);
     }

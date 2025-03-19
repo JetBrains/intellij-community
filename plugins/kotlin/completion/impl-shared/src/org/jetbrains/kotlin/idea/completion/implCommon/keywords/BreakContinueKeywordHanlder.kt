@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.completion.implCommon.keywords
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
@@ -30,19 +30,20 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
  * [org.jetbrains.kotlin.idea.fir.completion.test.handlers.FirKeywordCompletionHandlerTestGenerated]
  * [org.jetbrains.kotlin.idea.fir.completion.wheigher.HighLevelWeigherTestGenerated.Uncategorized]
  */
-class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHandler<KtAnalysisSession>(keyword) {
+class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHandler<KaSession>(keyword) {
     init {
         check(keyword == KtTokens.BREAK_KEYWORD || keyword == KtTokens.CONTINUE_KEYWORD) {
             "Keyword should be either `break` or `continue`. But was: $keyword"
         }
     }
 
-    fun createLookups(analysisSession: KtAnalysisSession, expression: KtExpression?): Collection<LookupElement> {
+    context(KaSession)
+    fun createLookups(expression: KtExpression?): Collection<LookupElement> {
         if (expression == null) return emptyList()
         val supportsNonLocalBreakContinue =
             expression.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
         return expression.parentsWithSelf
-            .takeWhile { it !is KtDeclarationWithBody || canDoNonLocalJump(it, supportsNonLocalBreakContinue, analysisSession) }
+            .takeWhile { it !is KtDeclarationWithBody || canDoNonLocalJump(it, supportsNonLocalBreakContinue) }
             .filterIsInstance<KtLoopExpression>()
             .flatMapIndexed { index: Int, loop: KtLoopExpression ->
                 listOfNotNull(
@@ -54,25 +55,26 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             }
             .toList()
     }
-
+    context(KaSession)
     private fun canDoNonLocalJump(
         body: KtDeclarationWithBody,
         supportsNonLocalBreakContinue: Boolean,
-        analysisSession: KtAnalysisSession
     ) = supportsNonLocalBreakContinue &&
             body is KtFunctionLiteral &&
-            analysisSession.isInlineFunctionCall(body.findLabelAndCall().second)
+            isInlineFunctionCall(body.findLabelAndCall().second)
 
-    override fun KtAnalysisSession.createLookups(
+    context(KaSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = createLookups(this, expression)
+    ): Collection<LookupElement> = createLookups(expression)
 }
 
-fun KtAnalysisSession.isInlineFunctionCall(call: KtCallExpression?): Boolean =
+context(KaSession)
+fun isInlineFunctionCall(call: KtCallExpression?): Boolean =
     (call?.calleeExpression as? KtReferenceExpression)?.mainReference
         ?.resolveToSymbol()
-        ?.let { it as? KtFunctionSymbol }
+        ?.let { it as? KaNamedFunctionSymbol }
         ?.isInline == true

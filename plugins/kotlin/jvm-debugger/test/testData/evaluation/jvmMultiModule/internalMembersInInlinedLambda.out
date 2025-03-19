@@ -1,0 +1,11 @@
+LineBreakpoint created at call.kt:8
+LineBreakpoint created at call.kt:13
+Run Java
+Connected to the target VM
+call.kt:8
+Compile bytecode for applyLambda(A(1)) { it.internalProp }
+Compile bytecode for applyLambda(A(1)) { it.internalFun() }
+call.kt:13
+Disconnected from the target VM
+
+Process finished with exit code 0

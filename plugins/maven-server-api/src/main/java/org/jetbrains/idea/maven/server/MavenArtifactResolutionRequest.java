@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,46 +7,55 @@ import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 
 public final class MavenArtifactResolutionRequest implements Serializable {
-  @NotNull
-  private final MavenArtifactInfo myArtifactInfo;
-  @NotNull
-  private final List<MavenRemoteRepository> myRemoteRepositories;
+  private final @NotNull MavenArtifactInfo myArtifactInfo;
+  private final @NotNull List<MavenRemoteRepository> myRemoteRepositories;
+  private boolean myUpdateSnapshots;
 
-  public MavenArtifactResolutionRequest(@NotNull MavenArtifactInfo mavenArtifactInfo, @NotNull List<MavenRemoteRepository> repositories) {
+  public MavenArtifactResolutionRequest(@NotNull MavenArtifactInfo mavenArtifactInfo,
+                                        @NotNull List<MavenRemoteRepository> repositories,
+                                        boolean updateSnapshots) {
     myArtifactInfo = mavenArtifactInfo;
     myRemoteRepositories = repositories;
+    myUpdateSnapshots = updateSnapshots;
   }
 
-  @NotNull
-  public MavenArtifactInfo getArtifactInfo() {
+  public MavenArtifactResolutionRequest(@NotNull MavenArtifactInfo mavenArtifactInfo,
+                                        @NotNull List<MavenRemoteRepository> repositories) {
+    this(mavenArtifactInfo, repositories, false);
+  }
+
+  public @NotNull MavenArtifactInfo getArtifactInfo() {
     return myArtifactInfo;
   }
 
-  @NotNull
-  public List<MavenRemoteRepository> getRemoteRepositories() {
+  public @NotNull List<MavenRemoteRepository> getRemoteRepositories() {
     return myRemoteRepositories;
+  }
+
+  public boolean updateSnapshots() {
+    return myUpdateSnapshots;
+  }
+
+  public void setUpdateSnapshots(boolean updateSnapshots) {
+    this.myUpdateSnapshots = updateSnapshots;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
     MavenArtifactResolutionRequest request = (MavenArtifactResolutionRequest)o;
-
-    if (!myArtifactInfo.equals(request.myArtifactInfo)) return false;
-    if (!myRemoteRepositories.equals(request.myRemoteRepositories)) return false;
-
-    return true;
+    return myUpdateSnapshots == request.myUpdateSnapshots &&
+           Objects.equals(myArtifactInfo, request.myArtifactInfo) &&
+           Objects.equals(myRemoteRepositories, request.myRemoteRepositories);
   }
 
   @Override
   public int hashCode() {
-    int result = myArtifactInfo.hashCode();
-    result = 31 * result + myRemoteRepositories.hashCode();
-    return result;
+    return Objects.hash(myArtifactInfo, myRemoteRepositories, myUpdateSnapshots);
   }
 
   @Override
@@ -54,6 +63,7 @@ public final class MavenArtifactResolutionRequest implements Serializable {
     return "MavenArtifactResolutionRequest{" +
            "myArtifactInfo=" + myArtifactInfo +
            ", myRemoteRepositories=" + myRemoteRepositories +
+           ", myUpdateSnapshots=" + myUpdateSnapshots +
            '}';
   }
 }

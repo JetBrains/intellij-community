@@ -1,0 +1,15 @@
+interface Foo {
+    fun baz(a: String)
+}
+interface Bar
+
+fun foo(a: Foo.() -> Unit) {}
+fun bar(a: Bar.() -> Unit) {}
+
+fun foobs() {
+    foo {
+        bar {
+            baz("Ah")
+        }
+    }
+}

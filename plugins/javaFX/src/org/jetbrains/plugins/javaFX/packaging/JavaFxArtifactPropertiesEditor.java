@@ -1,14 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.ide.highlighter.HtmlFileType;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -23,14 +23,12 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private final JavaFxArtifactProperties myProperties;
 
   private JPanel myWholePanel;
@@ -61,24 +59,20 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     super();
     myProperties = properties;
     JavaFxApplicationClassBrowser.appClassBrowser(project, artifact).setField(myAppClass);
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("properties");
-    myHtmlParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description"), project, descriptor);
-    myParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
-    myHtmlTemplate.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,
-                                           FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE));
-    myEditSignCertificateButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
-        myDialog.show();
-      }
+    myHtmlParams.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.title" ))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.standalone.description")));
+    myParams.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor("properties")
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description")));
+    myHtmlTemplate.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE)
+      .withTitle(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"))
+      .withDescription(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description")));
+    myEditSignCertificateButton.addActionListener(e -> {
+      myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
+      myDialog.show();
     });
-    myEnableSigningCB.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected());
-      }
-    });
+    myEnableSigningCB.addActionListener(e -> myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected()));
 
     myEditAttributesButton.addActionListener(e -> {
       final CustomManifestAttributesDialog customManifestAttributesDialog =
@@ -109,9 +103,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     return JavaFXBundle.message("java.fx.artifacts.tab.name");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     return myWholePanel;
   }
 
@@ -194,9 +187,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setMsgOutputLevel((String)myMsgOutputLevel.getSelectedItem());
   }
 
-  @Nullable
   @Override
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return "Project_Structure_Artifacts_Java_FX_tab";
   }
 
@@ -252,11 +244,11 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     withBrowseButton.setText(path != null ? FileUtil.toSystemDependentName(path.trim()) : "");
   }
 
-  private static class CustomManifestAttributesDialog extends DialogWrapper {
+  private static final class CustomManifestAttributesDialog extends DialogWrapper {
     private final JPanel myWholePanel = new JPanel(new BorderLayout());
     private final AttributesTable myTable;
 
-    protected CustomManifestAttributesDialog(JPanel panel, List<JavaFxManifestAttribute> attrs) {
+    private CustomManifestAttributesDialog(JPanel panel, List<JavaFxManifestAttribute> attrs) {
       super(panel, true);
       myTable = new AttributesTable();
       myTable.setValues(attrs);
@@ -266,8 +258,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     }
 
     @Override
-    @Nullable
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myWholePanel;
     }
 
@@ -281,14 +272,13 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       return myTable.getAttrs();
     }
 
-    private static class AttributesTable extends ListTableWithButtons<JavaFxManifestAttribute> {
+    private static final class AttributesTable extends ListTableWithButtons<JavaFxManifestAttribute> {
       @Override
-      protected ListTableModel createListModel() {
-        final ColumnInfo name = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message(
+      protected ListTableModel<JavaFxManifestAttribute> createListModel() {
+        final ColumnInfo<JavaFxManifestAttribute, @NlsContexts.ListItem String> name = new ElementsColumnInfoBase<>(JavaFXBundle.message(
           "column.name.artifact.manifest.property.name")) {
-          @Nullable
           @Override
-          public String valueOf(JavaFxManifestAttribute attribute) {
+          public @Nullable String valueOf(JavaFxManifestAttribute attribute) {
             return attribute.getName();
           }
 
@@ -302,14 +292,14 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
             attr.setName(value);
           }
 
-          @Nullable
           @Override
-          protected String getDescription(JavaFxManifestAttribute element) {
+          protected @Nullable String getDescription(JavaFxManifestAttribute element) {
             return element.getName();
           }
         };
 
-        final ColumnInfo value = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message("column.name.artifact.manifest.property.value")) {
+        final ColumnInfo<JavaFxManifestAttribute, @NlsContexts.ListItem String>
+          value = new ElementsColumnInfoBase<>(JavaFXBundle.message("column.name.artifact.manifest.property.value")) {
           @Override
           public String valueOf(JavaFxManifestAttribute attr) {
             return attr.getValue();
@@ -325,14 +315,13 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
             attr.setValue(s);
           }
 
-          @Nullable
           @Override
-          protected String getDescription(JavaFxManifestAttribute attr) {
+          protected @Nullable String getDescription(JavaFxManifestAttribute attr) {
             return attr.getValue();
           }
         };
 
-        return new ListTableModel(name, value);
+        return new ListTableModel<>(name, value);
       }
 
       @Override

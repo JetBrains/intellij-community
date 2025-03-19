@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
@@ -21,7 +22,7 @@ import javax.swing.JPanel
 class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settings.name")) {
 
   companion object {
-    const val ID = "com.intellij.minimap"
+    const val ID: String = "com.intellij.minimap"
   }
 
   private val state = MinimapSettingsState() // todo remove
@@ -29,7 +30,7 @@ class MinimapConfigurable : BoundConfigurable(MiniMessagesBundle.message("settin
 
   private lateinit var fileTypeComboBox: ComboBox<FileType>
 
-  override fun createPanel() = panel {
+  override fun createPanel(): DialogPanel = panel {
     MinimapSettings.getInstance().state.let {
       // todo remove except fileTypes
       state.enabled = it.enabled

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 
 sealed interface KotlinLibraryKind {
     // TODO: Drop this property. See https://youtrack.jetbrains.com/issue/KT-38233
@@ -21,6 +22,24 @@ sealed interface KotlinLibraryKind {
 object KotlinJavaScriptLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.js"), KotlinLibraryKind {
     override val compilerPlatform: TargetPlatform
         get() = JsPlatforms.defaultJsPlatform
+
+    override fun createDefaultProperties(): DummyLibraryProperties {
+        return DummyLibraryProperties.INSTANCE
+    }
+}
+
+object KotlinWasmJsLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.wasm.js"), KotlinLibraryKind {
+    override val compilerPlatform: TargetPlatform
+        get() = WasmPlatforms.wasmJs
+
+    override fun createDefaultProperties(): DummyLibraryProperties {
+        return DummyLibraryProperties.INSTANCE
+    }
+}
+
+object KotlinWasmWasiLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.wasm.wasi"), KotlinLibraryKind {
+    override val compilerPlatform: TargetPlatform
+        get() = WasmPlatforms.wasmWasi
 
     override fun createDefaultProperties(): DummyLibraryProperties {
         return DummyLibraryProperties.INSTANCE

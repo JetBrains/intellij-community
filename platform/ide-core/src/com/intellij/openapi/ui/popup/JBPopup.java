@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
+import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
@@ -43,6 +44,22 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * @param point the relative point where the popup should be displayed.
    */
   void show(@NotNull RelativePoint point);
+
+  /**
+   * Shows the popup according to the specified options.
+   * <p>
+   *   The options should be created using one of the static builders in {@link PopupShowOptions},
+   *   for example {@link PopupShowOptions#aboveComponent(Component) aboveComponent}.
+   * </p>
+   * @param showOptions the options determining where and how to show the popup
+   */
+  default void show(@NotNull PopupShowOptions showOptions) {
+    PopupShowOptionsImpl options = ((PopupShowOptionsBuilder)showOptions).build();
+    var owner = options.getOwner();
+    var aScreenX = options.getScreenX();
+    var aScreenY = options.getScreenY();
+    showInScreenCoordinates(owner, new Point(aScreenX, aScreenY));
+  }
 
   void showInScreenCoordinates(@NotNull Component owner, @NotNull Point point);
 
@@ -158,11 +175,20 @@ public interface JBPopup extends Disposable, LightweightWindow {
    */
   void setLocation(@NotNull Point screenPoint);
 
+  default void setSize(@Nullable Point location, @NotNull Dimension size) { }
+
   void setSize(@NotNull Dimension size);
 
   Dimension getSize();
 
   void setCaption(@NotNull @NlsContexts.PopupTitle String title);
+
+  void setCaptionIcon(@Nullable Icon icon);
+
+  /**
+   * Icon horizontal position relative to the title (left or right)
+   */
+  void setCaptionIconPosition(boolean left);
 
   boolean isPersistent();
 
@@ -214,6 +240,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * {@code false} otherwise
    */
   boolean dispatchKeyEvent(@NotNull KeyEvent e);
+
+  default boolean dispatchInputMethodEvent(@NotNull InputMethodEvent e) { return false; }
 
   /**
    * Whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.

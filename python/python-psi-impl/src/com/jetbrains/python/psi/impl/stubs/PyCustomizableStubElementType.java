@@ -4,19 +4,19 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.psi.PyElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
 
-interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCustomStub, StubType extends PyCustomStubType<Psi, ? extends Stub>> {
-
+@ApiStatus.Internal
+public interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCustomStub, StubType extends PyCustomStubType<Psi, ? extends Stub>> {
   @NotNull
   List<StubType> getExtensions();
 
-  @Nullable
-  default Stub createCustomStub(@NotNull Psi psi) {
+  default @Nullable Stub createCustomStub(@NotNull Psi psi) {
     for (StubType type : getExtensions()) {
       final Stub stub = type.createStub(psi);
       if (stub != null) return stub;
@@ -35,8 +35,7 @@ interface PyCustomizableStubElementType<Psi extends PyElement, Stub extends PyCu
     }
   }
 
-  @Nullable
-  default Stub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
+  default @Nullable Stub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
     if (stream.readBoolean()) {
       final String typeName = stream.readNameString();
       for (StubType type : getExtensions()) {

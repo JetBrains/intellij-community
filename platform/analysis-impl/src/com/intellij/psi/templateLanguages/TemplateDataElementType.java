@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.*;
@@ -41,8 +41,8 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   public static final LanguageExtension<TreePatcher> TREE_PATCHER =
     new LanguageExtension<>("com.intellij.lang.treePatcher", new SimpleTreePatcher());
 
-  @NotNull private final IElementType myTemplateElementType;
-  @NotNull final IElementType myOuterElementType;
+  private final @NotNull IElementType myTemplateElementType;
+  final @NotNull IElementType myOuterElementType;
 
   public TemplateDataElementType(@NonNls String debugName,
                                  Language language,
@@ -212,8 +212,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
 
-  @NotNull
-  private static String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
+  private static @NotNull String getRangeDump(@NotNull TextRange range, @NotNull CharSequence sequence) {
     return "'" + StringUtil.escapeLineBreak(range.subSequence(sequence).toString()) + "' " + range;
   }
 
@@ -285,13 +284,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   protected PsiFile createPsiFileFromSource(final Language language, CharSequence sourceCode, PsiManager manager) {
-    @NonNls final LightVirtualFile virtualFile =
+    final @NonNls LightVirtualFile virtualFile =
       new LightVirtualFile("foo", createTemplateFakeFileType(language), sourceCode, LocalTimeCounter.currentTime());
 
     FileViewProvider viewProvider = new SingleRootFileViewProvider(manager, virtualFile, false) {
       @Override
-      @NotNull
-      public Language getBaseLanguage() {
+      public @NotNull Language getBaseLanguage() {
         return language;
       }
     };
@@ -320,15 +318,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     }
 
     @Override
-    @NotNull
-    public String getDefaultExtension() {
+    public @NotNull String getDefaultExtension() {
       return "";
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getDescription() {
+    public @NotNull @NonNls String getDescription() {
       return "fake for language" + myLanguage.getID();
     }
 
@@ -338,9 +333,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     }
 
     @Override
-    @NotNull
-    @NonNls
-    public String getName() {
+    public @NotNull @NonNls String getName() {
       return myLanguage.getID();
     }
   }
@@ -360,7 +353,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
    *
    * @implNote Should be interface, but abstract class with empty method bodies for keeping binary compatibility with plugins.
    */
-  public static abstract class RangeCollector {
+  public abstract static class RangeCollector {
 
     /**
      * Adds range corresponding to the outer element inside original source code.

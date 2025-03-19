@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,6 +85,11 @@ public class SeparatorComponent extends JComponent {
     }
   }
 
+  @ApiStatus.Internal
+  public SeparatorOrientation getOrientation() {
+    return myOrientation;
+  }
+
   private static void paintHorizontalLine(Graphics g, int x, int y, int length) {
     LinePainter2D.paint((Graphics2D)g, x, y, x + length, y, LinePainter2D.StrokeType.CENTERED, 1.);
   }
@@ -118,4 +124,5 @@ public class SeparatorComponent extends JComponent {
     }
     return size;
   }
+
 }

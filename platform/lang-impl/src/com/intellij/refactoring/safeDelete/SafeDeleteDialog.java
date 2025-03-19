@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.DeleteUtil;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbModeBlockedFunctionalityCollector;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -139,8 +141,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
-  private SafeDeleteProcessorDelegate getDelegate() {
+  private @Nullable SafeDeleteProcessorDelegate getDelegate() {
     if (myElements.length == 1) {
       for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(myElements[0])) {
@@ -170,6 +171,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     if (DumbService.isDumb(myProject)) {
+      DumbModeBlockedFunctionalityCollector.INSTANCE.logFunctionalityBlocked(myProject, DumbModeBlockedFunctionality.SafeDeleteDialog);
       Messages.showMessageDialog(myProject, RefactoringBundle.message("safe.delete.not.available.indexing"),
                                  RefactoringBundle.message("refactoring.indexing.warning.title"), null);
       return;

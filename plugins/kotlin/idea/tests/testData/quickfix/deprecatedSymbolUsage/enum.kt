@@ -9,3 +9,5 @@ enum class Enm {
 fun test() {
     Enm.FOO<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// IGNORE_K2

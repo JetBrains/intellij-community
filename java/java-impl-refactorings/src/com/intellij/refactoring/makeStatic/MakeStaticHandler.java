@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -25,6 +25,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +55,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if(elements.length != 1 || !(elements[0] instanceof PsiTypeParameterListOwner member)) return;
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, member)) return;
@@ -72,7 +73,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiElement element = BaseRefactoringAction.getElementAtCaret(editor, file);
-    return RefactoringActionContextUtil.getJavaMethodHeader(element) != null || RefactoringActionContextUtil.isJavaClassHeader(element);
+    return MethodUtils.getJavaMethodFromHeader(element) != null || RefactoringActionContextUtil.isJavaClassHeader(element);
   }
 
   public static void invoke(final PsiTypeParameterListOwner member) {
@@ -116,8 +117,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
     }
   }
 
-  @Nullable
-  public static @NlsContexts.DialogMessage String validateTarget(final PsiTypeParameterListOwner member) {
+  public static @Nullable @NlsContexts.DialogMessage String validateTarget(final PsiTypeParameterListOwner member) {
     final PsiClass containingClass = member.getContainingClass();
 
     // Checking various preconditions
@@ -137,7 +137,7 @@ public class MakeStaticHandler implements RefactoringActionHandler, ContextAware
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.make.abstract.method.static"));
     }
 
-    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !HighlightingFeature.INNER_STATICS.isAvailable(member) ||
+    if(PsiUtil.isLocalOrAnonymousClass(containingClass) && !PsiUtil.isAvailable(JavaFeature.INNER_STATICS, member) ||
        containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
       return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("inner.classes.cannot.have.static.members"));
     }

@@ -8,4 +8,10 @@ import kotlin.coroutines.CoroutineContext
 interface CoroutineSupport {
 
   fun edtDispatcher(): CoroutineContext
+
+  fun uiDispatcher(): CoroutineContext
+
+  fun immediateEdtDispatcher(): CoroutineContext
+
+  fun immediateUiDispatcher(): CoroutineContext
 }

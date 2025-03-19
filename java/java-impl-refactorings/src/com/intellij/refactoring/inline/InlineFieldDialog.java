@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -10,7 +10,6 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
   private final PsiElement myReferenceExpression;
@@ -22,25 +21,22 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     super(project, true, field);
     myField = field;
     myReferenceExpression = ref;
+    myOccurrencesNumber = getNumberOfOccurrences(myField);
     myInvokedOnReference = myReferenceExpression != null;
 
     setTitle(getRefactoringName());
-    myOccurrencesNumber = getNumberOfOccurrences(myField);
     init();
   }
 
   @Override
   protected String getNameLabelText() {
-    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
-    String occurrencesString = myOccurrencesNumber > -1 ?
-                              JavaRefactoringBundle.message("inline.field.field.occurrences", fieldText, myOccurrencesNumber) :
-                              JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
-    return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
-  }
-
-  @Override
-  protected String getBorderTitle() {
-    return RefactoringBundle.message("inline.field.border.title");
+    int options = myReferenceExpression != null
+                  ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME
+                  : PsiFormatUtilBase.SHOW_NAME;
+    String fieldText = PsiFormatUtil.formatVariable(myField, options, PsiSubstitutor.EMPTY);
+    return myOccurrencesNumber > -1 ?
+           JavaRefactoringBundle.message("inline.field.field.occurrences", fieldText, myOccurrencesNumber) :
+           JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
   }
 
   @Override
@@ -50,15 +46,17 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getInlineAllText() {
-    return myField.isWritable()
-           ? JavaRefactoringBundle.message("all.references.and.remove.the.field")
-           : RefactoringBundle.message("all.invocations.in.project");
+    return JavaRefactoringBundle.message(isLibraryInline() ? "all.invocations.in.project" : "all.references.and.remove.the.field");
   }
 
   @Override
   protected String getKeepTheDeclarationText() {
-    if (myField.isWritable()) return JavaRefactoringBundle.message("all.references.keep.field");
+    if (!isLibraryInline()) return JavaRefactoringBundle.message("all.references.keep.field");
     return super.getKeepTheDeclarationText();
+  }
+
+  private boolean isLibraryInline() {
+    return myField.getOriginalElement() instanceof PsiCompiledElement;
   }
 
   @Override
@@ -106,7 +104,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     super.doAction();
     invokeRefactoring(
       new InlineConstantFieldProcessor(myField, getProject(), myReferenceExpression, isInlineThisOnly(), isSearchInCommentsAndStrings(),
-                                       isSearchForTextOccurrences(), !isKeepTheDeclaration()));
+                                       isSearchForTextOccurrences(), !isLibraryInline() && !isKeepTheDeclaration()));
     JavaRefactoringSettings settings = JavaRefactoringSettings.getInstance();
     if(myRbInlineThisOnly.isEnabled() && myRbInlineAll.isEnabled()) {
       settings.INLINE_FIELD_THIS = isInlineThisOnly();

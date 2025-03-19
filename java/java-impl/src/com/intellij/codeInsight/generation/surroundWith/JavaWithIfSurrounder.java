@@ -1,32 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public class JavaWithIfSurrounder extends JavaStatementsSurrounder{
+public class JavaWithIfSurrounder extends JavaStatementsModCommandSurrounder {
   @Override
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.if.template");
   }
 
   @Override
-  public TextRange surroundStatements(Project project, Editor editor, PsiElement container, PsiElement[] statements) {
-    PsiIfStatement ifStatement = surroundStatements(project, container, statements, "");
-    if (ifStatement == null) return null;
+  protected void surroundStatements(@NotNull ActionContext context,
+                                    @NotNull PsiElement container,
+                                    @NotNull PsiElement @NotNull [] statements,
+                                    @NotNull ModPsiUpdater updater) {
+    PsiIfStatement ifStatement = surroundStatements(context.project(), container, statements, "");
+    if (ifStatement == null) return;
     ifStatement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(ifStatement);
-    if (ifStatement == null) return null;
+    if (ifStatement == null) return;
 
     final PsiJavaToken lParenth = ifStatement.getLParenth();
     assert lParenth != null;
     final TextRange range = lParenth.getTextRange();
-    return new TextRange(range.getEndOffset(), range.getEndOffset());
+    updater.select(TextRange.from(range.getEndOffset(), 0));
   }
 
   public PsiIfStatement surroundStatements(Project project, PsiElement container, PsiElement[] statements, String condition) {

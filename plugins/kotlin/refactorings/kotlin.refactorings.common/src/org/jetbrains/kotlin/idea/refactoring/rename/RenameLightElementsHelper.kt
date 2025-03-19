@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.asJava.propertyNameByAccessor
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
-import org.jetbrains.kotlin.name.JvmNames
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.siblings
@@ -30,7 +30,7 @@ internal object RenameLightElementsHelper {
      * @param name A new JVM name for that declaration.
      */
     fun renameLightMethod(lightMethod: KtLightMethod, name: String) {
-        val jvmNameAnnotation = lightMethod.modifierList.findAnnotation(JvmNames.JVM_NAME.asString())
+        val jvmNameAnnotation = lightMethod.modifierList.findAnnotation(JvmStandardClassIds.JVM_NAME.asString())
         val demangledName =
             (if (lightMethod.isMangled) KotlinRenameRefactoringSupport.getInstance().demangleInternalName(name) else null) ?: name
         val newNameForOrigin = propertyNameByAccessor(demangledName, lightMethod) ?: demangledName
@@ -54,7 +54,7 @@ internal object RenameLightElementsHelper {
      */
     fun renameFacadeLightClass(classForFacade: KtLightClassForFacade, name: String): PsiElement {
         for (file in classForFacade.files) {
-            val jvmNameEntry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmNames.JVM_NAME_SHORT)
+            val jvmNameEntry = JvmFileClassUtil.findAnnotationEntryOnFileNoResolve(file, JvmStandardClassIds.JVM_NAME_SHORT)
 
             if (PackagePartClassUtils.getFilePartShortName(file.name) == name) {
                 jvmNameEntry?.delete()
@@ -70,7 +70,7 @@ internal object RenameLightElementsHelper {
                 }
 
                 val psiFactory = KtPsiFactory(classForFacade.project)
-                val annotationText = "${JvmNames.JVM_NAME_SHORT}(\"$name\")"
+                val annotationText = "${JvmStandardClassIds.JVM_NAME_SHORT}(\"$name\")"
                 val newFileAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
                 val annotationList = file.fileAnnotationList
                 if (annotationList != null) {

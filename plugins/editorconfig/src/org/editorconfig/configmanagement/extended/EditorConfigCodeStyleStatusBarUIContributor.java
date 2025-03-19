@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,27 +29,23 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
     return EditorConfigActionUtil.createNavigationActions(file);
   }
 
-  @Nullable
   @Override
-  public String getActionGroupTitle() {
+  public @Nullable String getActionGroupTitle() {
     return EditorConfigBundle.message("action.group.title");
   }
 
-  @Nullable
   @Override
-  public String getTooltip() {
+  public @Nullable String getTooltip() {
     return EditorConfigBundle.message("config.code.style.overridden");
   }
 
-  @Nullable
   @Override
-  public AnAction createDisableAction(@NotNull Project project) {
+  public @Nullable AnAction createDisableAction(@NotNull Project project) {
     return EditorConfigActionUtil.createDisableAction(project, EditorConfigBundle.message("action.disable"));
   }
 
-  @NotNull
   @Override
-  public String getStatusText(@NotNull PsiFile psiFile) {
+  public @NotNull String getStatusText(@NotNull PsiFile psiFile) {
     IndentOptions fileOptions = CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile);
     String indentInfo = IndentStatusBarUIContributor.getIndentInfo(fileOptions);
     IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
@@ -58,9 +55,8 @@ class EditorConfigCodeStyleStatusBarUIContributor implements CodeStyleStatusBarU
     return indentInfo;
   }
 
-  @Nullable
   @Override
-  public AnAction createShowAllAction(@NotNull Project project) {
+  public @Nullable AnAction createShowAllAction(@NotNull Project project) {
     return EditorConfigActionUtil.createShowEditorConfigFilesAction();
   }
 

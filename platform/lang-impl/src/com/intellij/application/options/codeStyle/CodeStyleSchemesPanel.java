@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private final CodeStyleSchemesModel myModel;
@@ -75,9 +77,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     }
   }
 
-  @NotNull
   @Override
-  protected AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
+  protected @NotNull AbstractSchemeActions<CodeStyleScheme> createSchemeActions() {
     return
       new CodeStyleSchemesActions(this) {
 
@@ -98,9 +99,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
       };
   }
 
-  @NotNull
   @Override
-  public SchemesModel<CodeStyleScheme> getModel() {
+  public @NotNull SchemesModel<CodeStyleScheme> getModel() {
     return myModel;
   }
 
@@ -119,9 +119,8 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     return true;
   }
 
-  @Nullable
   @Override
-  protected JComponent createBottomComponent() {
+  protected @Nullable JComponent createBottomComponent() {
     myBottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     JLabel iconLabel = new JLabel();
     iconLabel.setIcon(AllIcons.General.Warning);

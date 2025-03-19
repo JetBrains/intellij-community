@@ -1,196 +1,254 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.impl.GenericZipFile;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.Map;
+import java.nio.file.Path;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
-/**
- * ZIP handler that keeps limited LRU number of ZipFile references open for a while after they were used.
- * Once the inactivity time is passed, the ZipFile is closed.
-*/
-public class TimedZipHandler extends ZipHandlerBase {
-  private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
-  private static final boolean doTracing = LOG.isTraceEnabled();
-  private static final AtomicLong ourOpenTime = new AtomicLong();
-  private static final AtomicInteger ourOpenCount = new AtomicInteger();
-  private static final AtomicInteger ourCloseCount = new AtomicInteger();
-  private static final AtomicLong ourCloseTime = new AtomicLong();
+import static com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-  private static final Map<TimedZipHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
-  static {
-    final int maxSize = 30;
-    ourOpenFileLimitGuard = new LinkedHashMap<>(maxSize, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<TimedZipHandler, ScheduledFuture<?>> eldest, TimedZipHandler key, ScheduledFuture<?> value) {
-        if (size() > maxSize) {
-          key.myHandle.invalidateZipReference(value);
-          return true;
-        }
-        return false;
-      }
-    };
-  }
+/**
+ * ZIP handler that keeps a limited number ({@linkplain #LRU_CACHE_SIZE}) of {@link ZipFile} references open for a while
+ * ({@linkplain #RETENTION_MS}) after they were used.
+ * Once the inactivity time is passed, the file is closed.
+ */
+public final class TimedZipHandler extends ZipHandlerBase {
+  private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
+
+  /** How much time to wait after {@linkplain ZipResourceHandle#close()} and actual zip file close */
+  private static final long RETENTION_MS = 2000L;
+  /** Max handlers to keep open (for a while, {@linkplain #RETENTION_MS}) */
+  private static final int LRU_CACHE_SIZE = 30;
+
+  /**
+   * Cache of recently used handlers, limited-size ({@linkplain #LRU_CACHE_SIZE}).
+   * The oldest (least-recently-used) entry is the first one to drop (=close).
+   * The handlersLRUCache itself is used to protect from multithreaded access.
+   */
+  private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> handlersLRUCache =
+    new Object2ObjectLinkedOpenHashMap<>(LRU_CACHE_SIZE + 1);
+  /** Executor for delayed ({@linkplain #RETENTION_MS}) zipFile closing */
+  private static final ScheduledExecutorService postponedInvalidationsExecutor =
+    createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
-    synchronized (ourOpenFileLimitGuard) {
-      ourOpenFileLimitGuard.keySet().forEach(TimedZipHandler::clearCaches);
+    synchronized (handlersLRUCache) {
+      for (var handler : handlersLRUCache.keySet()) {
+        handler.clearCaches();
+      }
+      handlersLRUCache.clear();
     }
   }
 
-  private static final ScheduledExecutorService ourScheduledExecutorService =
-    AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
-
-  private final ZipResourceHandle myHandle;
+  private final ZipResourceHandle handle = new ZipResourceHandle();
 
   public TimedZipHandler(@NotNull String path) {
     super(path);
-    myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? 2000L : 5L * 60 * 1000);
   }
 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    myHandle.invalidateZipReference();
+    handle.invalidateZipReference(null);
   }
 
   @Override
-  protected @NotNull ResourceHandle<ZipFile> acquireZipHandle() throws IOException {
-    myHandle.attach();
-    return myHandle;
+  protected @NotNull ResourceHandle<GenericZipFile> acquireZipHandle() throws IOException {
+    handle.attach();
+    return handle;
   }
 
   @Override
   protected long getEntryFileStamp() {
-    return myHandle.getFileStamp();
+    return handle.getFileStamp();
   }
 
-  private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
-    private final long myInvalidationTime;
-    private ZipFile myFile;
-    private long myFileStamp;
-    private final ReentrantLock myLock = new ReentrantLock();
-    private ScheduledFuture<?> myInvalidationRequest;
 
-    private ZipResourceHandle(long invalidationTime) {
-      myInvalidationTime = invalidationTime;
-    }
+  private final class ZipResourceHandle extends ResourceHandle<GenericZipFile> {
+
+    /** all fields protected by this lock */
+    private final ReentrantLock lock = new ReentrantLock();
+
+    //Assumption: we assume the GenericZipFile implementations are _thread-safe_ by themselves, so this handle doesn't need
+    //            to guard ZipFile. I.e. this class keeps its state changes thread-safe, but doesn't care about ZipFile
+    //            thread-safety.
+
+    private GenericZipFile zipFile;
+    /** zip file last-modified-timestamp, ms */
+    private long lastModifiedMs;
+
+    /**
+     * Postponed request to close zipFile after some period of not-use ({@linkplain #RETENTION_MS}).
+     * Cleaning of zipFiles is doing 2-folds: by timeout, and by cache-size.
+     * Timeout is not 100% bullet-prove, because it could be the handler is still in use at the moment {@linkplain #RETENTION_MS}
+     * is elapsed -- those handlers will be closed by cache-size, in next .close() call.
+     */
+    private ScheduledFuture<?> scheduledInvalidationRequest = null;
+
+    private int referenceCount = 0;
 
     private void attach() throws IOException {
-      synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.remove(TimedZipHandler.this);
+      synchronized (handlersLRUCache) {
+        handlersLRUCache.remove(TimedZipHandler.this);
       }
 
-      myLock.lock();
-
+      lock.lock();
       try {
-        ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
-        if (invalidationRequest != null) {
-          invalidationRequest.cancel(false);
-          myInvalidationRequest = null;
+        if (zipFile != null) {
+          cancelPostponedInvalidation();
         }
-
-        if (myFile == null) {
-          File fileToUse = getFile();
-          if (doTracing) LOG.trace("Opening: " + fileToUse);
-          long t = doTracing ? System.nanoTime() : 0;
-          myFileStamp = Files.getLastModifiedTime(fileToUse.toPath()).toMillis();
-          ZipFile file = new ZipFile(fileToUse);
-          if (doTracing) {
-            t = System.nanoTime() - t;
-            LOG.trace("Opened in " + TimeUnit.NANOSECONDS.toMillis(t) + "ms" +
-                      ", times opened: " + ourOpenCount.incrementAndGet() +
-                      ", open time: " + TimeUnit.NANOSECONDS.toMillis(ourOpenTime.addAndGet(t)) + "ms" +
-                      ", reference will be cached for " + myInvalidationTime + "ms");
-          }
-          myFile = file;
+        else {
+          Path path = getPath();
+          zipFile = getZipFileWrapper(path);
+          lastModifiedMs = Files.getLastModifiedTime(path).toMillis();
         }
+        referenceCount++;
       }
-      catch (Throwable e) {
-        myLock.unlock();
-        throw e;
+      finally {
+        lock.unlock();
       }
     }
+
 
     @Override
     public void close() {
-      assert myLock.isLocked();
-      ScheduledFuture<?> invalidationRequest;
+      lock.lock();
       try {
-        myInvalidationRequest = invalidationRequest =
-          ourScheduledExecutorService.schedule(() -> invalidateZipReference(), myInvalidationTime, TimeUnit.MILLISECONDS);
+        if (zipFile == null || referenceCount == 0) {
+          return; //nothing to close
+        }
+
+        referenceCount--;
+
+        ScheduledFuture<?> invalidationRequest = schedulePostponedInvalidation();
+
+        synchronized (handlersLRUCache) {
+          handlersLRUCache.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest);
+        }
       }
       finally {
-        myLock.unlock();
+        lock.unlock();
       }
-      synchronized (ourOpenFileLimitGuard) {
-        ourOpenFileLimitGuard.put(TimedZipHandler.this, invalidationRequest);
+
+      //if already too many cached entries -> invalidate (close) the oldest (least-recently-used):
+      for (int i = 0; i < LRU_CACHE_SIZE; i++) {
+        //^^^ loop iterations must be limited because it could be too many handlers are in use thus can't be closed right now
+        TimedZipHandler leastUsedHandler;
+        ScheduledFuture<?> invalidationRequest;
+        synchronized (handlersLRUCache) {
+          if (handlersLRUCache.size() <= LRU_CACHE_SIZE) {
+            break;
+          }
+
+          leastUsedHandler = handlersLRUCache.lastKey();
+          invalidationRequest = handlersLRUCache.removeLast();
+        }
+
+        if (leastUsedHandler != null) {
+          leastUsedHandler.handle.invalidateZipReference(invalidationRequest);
+        }
+      }
+    }
+
+    //@GuardedBy(lock)
+    private @NotNull ScheduledFuture<?> schedulePostponedInvalidation() {
+      cancelPostponedInvalidation();
+
+      ScheduledFuture<?> invalidationRequest = postponedInvalidationsExecutor.schedule(
+        () -> invalidateZipReference( /*expectedRequest: */ null),
+        RETENTION_MS,
+        MILLISECONDS
+      );
+      this.scheduledInvalidationRequest = invalidationRequest;
+      return invalidationRequest;
+    }
+
+    //@GuardedBy(lock)
+    private void cancelPostponedInvalidation() {
+      assert lock.isHeldByCurrentThread() : "Lock must be acquired before this method invocation";
+      if (scheduledInvalidationRequest != null) {
+        scheduledInvalidationRequest.cancel(false);
+        scheduledInvalidationRequest = null;
+      }
+    }
+
+    /**
+     * @param expectedInvalidationRequest if not-null, then only invalidate (close) zip file if state.invalidationRequest==expected,
+     *                                    if null -- invalidate (close) regardless of current state.invalidationRequest value
+     */
+    private void invalidateZipReference(@Nullable ScheduledFuture<?> expectedInvalidationRequest) {
+      //We must NOT close zip file if it is in use right now, which is that referenceCount is for.
+      // Solution: reference-counting, + re-schedule the timer if referenceCount>0 at current timer expiration
+      GenericZipFile zipFileLocalCopy;
+      lock.lock();
+      try {
+        if (referenceCount > 0) {
+          //MAYBE RC: if there is a scheduledInvalidationRequest -> cancel it and re-schedule?
+          return;
+        }
+
+        if (zipFile == null
+            || expectedInvalidationRequest != null && scheduledInvalidationRequest != expectedInvalidationRequest) {
+          return; // (already closed) OR (the handler is re-acquired)
+        }
+
+        cancelPostponedInvalidation();
+        zipFileLocalCopy = zipFile;
+        zipFile = null;
+      }
+      finally {
+        lock.unlock();
+      }
+
+      //close file outside the lock to reduce time-under-lock:
+      try {
+        zipFileLocalCopy.close();
+      }
+      catch (IOException e) {
+        LOG.warn(e);
       }
     }
 
     @Override
-    public @NotNull ZipFile get() {
-      assert myLock.isLocked();
-      return myFile;
-    }
-
-    private void invalidateZipReference() {
-      invalidateZipReference(null);
-    }
-    
-    private void invalidateZipReference(@Nullable ScheduledFuture<?> expectedInvalidationRequest) {
-      myLock.lock();
+    public @NotNull GenericZipFile get() {
+      lock.lock();
       try {
-        if (myFile == null) return;
-        if (expectedInvalidationRequest != null) {
-          if (doTracing) LOG.trace("Invalidation cache size exceeded");
-          if (myInvalidationRequest != expectedInvalidationRequest) {
-            return;
-          }
+        if (zipFile == null) {
+          throw new IllegalStateException("Handler is closed");
         }
-        myInvalidationRequest = null;
-        long t = doTracing ? System.nanoTime() : 0;
-        try {
-          myFile.close();
-        }
-        catch (IOException ex) {
-          LOG.info(ex);
-        }
-        if (doTracing) {
-          t = System.nanoTime() - t;
-          LOG.trace("Closed: " + getFile() + " in " + TimeUnit.NANOSECONDS.toMillis(t) + "ms" +
-                    ", times closed: " + ourCloseCount.incrementAndGet() +
-                    ", close time: " + TimeUnit.NANOSECONDS.toMillis(ourCloseTime.addAndGet(t)) + "ms");
-        }
-        myFile = null;
+        return zipFile;
       }
       finally {
-        myLock.unlock();
+        lock.unlock();
       }
     }
 
     private long getFileStamp() {
-      assert myLock.isLocked();
-      return myFileStamp;
+      lock.lock();
+      try {
+        if (zipFile == null) {
+          throw new IllegalStateException("Handler is closed");
+        }
+        return lastModifiedMs;
+      }
+      finally {
+        lock.unlock();
+      }
     }
-  } 
+  }
 }

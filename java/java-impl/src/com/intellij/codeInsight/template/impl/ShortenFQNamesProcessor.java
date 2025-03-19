@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtilBase;
 
-public class ShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbAware {
+public final class ShortenFQNamesProcessor implements TemplateOptionalProcessor, DumbAware {
 
   @Override
   public void processText(final Project project, final Template template, final Document document, final RangeMarker templateRange,

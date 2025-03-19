@@ -1,12 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.remoteServer.ServerType;
@@ -28,7 +25,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@State(name = "RemoteServers", storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
+@State(name = "RemoteServers",
+  category = SettingsCategory.TOOLS,
+  exportable = true,
+  storages = @Storage(value = "remote-servers.xml", roamingType = RoamingType.DISABLED))
 public final class RemoteServersManagerImpl extends RemoteServersManager implements PersistentStateComponent<RemoteServersManagerState> {
   private SkipDefaultValuesSerializationFilters myDefaultValuesFilter = new SkipDefaultValuesSerializationFilters();
   private final List<RemoteServer<?>> myServers = new CopyOnWriteArrayList<>();
@@ -77,9 +77,8 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
     return servers;
   }
 
-  @Nullable
   @Override
-  public <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type) {
+  public @Nullable <C extends ServerConfiguration> RemoteServer<C> findByName(@NotNull String name, @NotNull ServerType<C> type) {
     for (RemoteServer<?> server : myServers) {
       if (server.getType().equals(type) && server.getName().equals(name)) {
         //noinspection unchecked
@@ -90,14 +89,12 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
   }
 
   @Override
-  @NotNull
-  public <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name) {
+  public @NotNull <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type, @NotNull String name) {
     return new RemoteServerImpl<>(name, type, type.createDefaultConfiguration());
   }
 
   @Override
-  @NotNull
-  public <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type) {
+  public @NotNull <C extends ServerConfiguration> RemoteServer<C> createServer(@NotNull ServerType<C> type) {
     String name = UniqueNameGenerator.generateUniqueName(
       type.getPresentableName(), s -> getServers(type).stream().map(RemoteServer::getName).noneMatch(s::equals));
     return createServer(type, name);
@@ -155,8 +152,7 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
     }
   }
 
-  @NotNull
-  private RemoteServerState createServerState(@NotNull RemoteServer<?> server) {
+  private @NotNull RemoteServerState createServerState(@NotNull RemoteServer<?> server) {
     RemoteServerState serverState = new RemoteServerState();
     serverState.myName = server.getName();
     serverState.myTypeId = server.getType().getId();
@@ -164,16 +160,14 @@ public final class RemoteServersManagerImpl extends RemoteServersManager impleme
     return serverState;
   }
 
-  @NotNull
-  private static <C extends ServerConfiguration> RemoteServerImpl<C> createConfiguration(ServerType<C> type, RemoteServerState server) {
+  private static @NotNull <C extends ServerConfiguration> RemoteServerImpl<C> createConfiguration(ServerType<C> type, RemoteServerState server) {
     C configuration = type.createDefaultConfiguration();
     PersistentStateComponent<?> serializer = configuration.getSerializer();
     ComponentSerializationUtil.loadComponentState(serializer, server.myConfiguration);
     return new RemoteServerImpl<>(server.myName, type, configuration);
   }
 
-  @Nullable
-  private static ServerType<?> findServerType(@NotNull String typeId) {
+  private static @Nullable ServerType<?> findServerType(@NotNull String typeId) {
     return ServerType.EP_NAME.findFirstSafe(next -> typeId.equals(next.getId()));
   }
 }

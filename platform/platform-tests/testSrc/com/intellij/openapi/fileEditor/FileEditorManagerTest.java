@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
@@ -11,21 +11,16 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.options.advanced.AdvancedSettingsImpl;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.FileEditorManagerTestCase;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -34,6 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.testFramework.CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() {
@@ -42,7 +38,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.closeAllFiles();
     openFiles(STRING);
-    assertOpenFiles("foo.xml", "1.txt", "2.txt", "3.txt");
+    // regardless of pin, we open files in the same order as it was closed
+    assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
 
   @Override
@@ -101,7 +98,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
-    manager.openFile(getFile("/src/3.txt"), true);
+    manager.openFile(getFile("/src/3.txt"), null, new FileEditorOpenOptions().withRequestFocus());
     // the limit is still 1, but a pinned flag prevents closing the tab, and the actual tab number may exceed the limit
     assertOpenFiles("foo.xml", "3.txt");
 
@@ -202,10 +199,13 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile file2 = getFile("/src/2.txt");
     assertNotNull(file2);
     manager.openFile(file2, true);
-    EditorWindow primaryWindow = manager.getCurrentWindow();//1.txt and selected 2.txt
+    // 1.txt and selected 2.txt
+    EditorWindow primaryWindow = manager.getCurrentWindow();
     assertNotNull(primaryWindow);
-    manager.createSplitter(SwingConstants.VERTICAL, primaryWindow);
-    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);//2.txt only, selected and focused
+    primaryWindow.split(SwingConstants.VERTICAL, true, null, true);
+
+    // 2.txt only, selected and focused
+    EditorWindow secondaryWindow = manager.getNextWindow(primaryWindow);
     assertNotNull(secondaryWindow);
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     // here we have to ignore 'searchForSplitter'
@@ -220,7 +220,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     UISettings.getInstance().setEditorTabPlacement(UISettings.TABS_NONE);
     VirtualFile file = getFile("/src/Test.java");
     assertNotNull(file);
-    Assume.assumeTrue("JAVA".equals(file.getFileType().getName())); // otherwise, the folding would be incorrect
+    assertEquals("JAVA", file.getFileType().getName()); // otherwise, the folding would be incorrect
     FileEditor[] editors = manager.openFile(file, false);
     assertEquals(1, editors.length);
     assertTrue(editors[0] instanceof TextEditor);
@@ -253,19 +253,16 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenInDumbMode() {
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyFileEditorProvider(), myFixture.getTestRootDisposable());
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDumbAwareProvider(), myFixture.getTestRootDisposable());
-    try {
-      DumbServiceImpl.getInstance(getProject()).setDumb(true);
-      VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile createdFile = DumbModeTestUtils.computeInDumbModeSynchronously(getProject(), () -> {
+      VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
       FileEditor[] editors = manager.openFile(file, false);
       assertEquals(ContainerUtil.map(editors, ed-> ed + " of " + ed.getClass()).toString(), 1, editors.length);
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-      manager.waitForAsyncUpdateOnDumbModeFinished();
-      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
-      assertEquals(2, manager.getAllEditors(file).length);
-    }
-    finally {
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-    }
+      return file;
+    });
+
+    manager.waitForAsyncUpdateOnDumbModeFinished();
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(getProject());
+    assertThat(manager.getAllEditorList(createdFile)).hasSize(2);
   }
 
   public void testOpenSpecificTextEditor() {
@@ -282,7 +279,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testHideDefaultEditor() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -310,11 +307,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
 
     manager.openFile(file, false);
     assertOpenedFileEditorsNames(file, "hide_def_1", "hide_def_2", "passive");
-    assertEquals(3, manager.getAllEditors(file).length);
+    assertEquals(3, manager.getAllEditorList(file).size());
   }
 
   public void testHideOtherEditors() {
-    VirtualFile file = createFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
+    VirtualFile file = createTempFile("/src/foo.bar", new byte[]{1, 0, 2, 3});
 
     FileEditorProvider.EP_FILE_EDITOR_PROVIDER.getPoint().registerExtension(new MyDefaultEditorProvider(
       "t_default", "default"), myFixture.getTestRootDisposable());
@@ -388,6 +385,17 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // with the changed setting, we want to open the file in the current splitter (
     new OpenFileDescriptor(getProject(), file).setUseCurrentWindow(true).navigate(true);
     assertEquals(2, secondaryWindow.getTabCount());
+  }
+
+  public void testGetPreviousWindow() {
+    manager.openFile(getFile("/src/1.txt"), false);
+    EditorWindow currentWindow = manager.getCurrentWindow();
+    VirtualFile expectedFile = getFile("/src/2.txt");
+    manager.openFile(expectedFile, false);
+    manager.createSplitter(SwingConstants.VERTICAL, currentWindow);
+
+    VirtualFile actualFile = manager.getPrevWindow(currentWindow).getSelectedFile();
+    assertEquals(expectedFile, actualFile);
   }
 
   @Language("XML")
@@ -472,9 +480,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       myPolicy = policy;
     }
 
-    @NotNull
     @Override
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       return myEditorTypeId;
     }
 
@@ -483,19 +490,21 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       return true;
     }
 
-    @NotNull
     @Override
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean acceptRequiresReadAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new Mock.MyFileEditor() {
-        @NotNull
         @Override
-        public JComponent getComponent() {
+        public @NotNull JComponent getComponent() {
           return new JLabel();
         }
 
-        @NotNull
         @Override
-        public String getName() {
+        public @NotNull String getName() {
           return myFileEditorName;
         }
 
@@ -510,9 +519,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     public void disposeEditor(@NotNull FileEditor editor) {
     }
 
-    @NotNull
     @Override
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       return myPolicy;
     }
   }
@@ -547,21 +555,23 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       return true;
     }
 
-    @NotNull
     @Override
-    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean acceptRequiresReadAction() {
+      return false;
+    }
+
+    @Override
+    public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new MyTextEditor(file, FileDocumentManager.getInstance().getDocument(file), myId, myTargetOffset);
     }
 
-    @NotNull
     @Override
-    public String getEditorTypeId() {
+    public @NotNull String getEditorTypeId() {
       return myId;
     }
 
-    @NotNull
     @Override
-    public FileEditorPolicy getPolicy() {
+    public @NotNull FileEditorPolicy getPolicy() {
       return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
   }
@@ -592,21 +602,18 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
       }
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return new JLabel();
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
     @Override
-    public Editor getEditor() {
+    public @NotNull Editor getEditor() {
       return myEditor;
     }
 

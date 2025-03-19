@@ -1,25 +1,26 @@
-from typing import Any
+from _typeshed import Unused
+from collections.abc import Callable
+from typing import ClassVar
+from typing_extensions import deprecated
 
 from ..cmd import Command
 
 def show_formats() -> None: ...
 
+class ListCompat(dict[str, tuple[str, str]]):
+    @deprecated("format_commands is now a dict. append is deprecated")
+    def append(self, item: Unused) -> None: ...
+
 class bdist(Command):
-    description: str
-    user_options: Any
-    boolean_options: Any
-    help_options: Any
-    no_format_option: Any
-    default_format: Any
-    format_commands: Any
-    format_command: Any
-    bdist_base: Any
-    plat_name: Any
-    formats: Any
-    dist_dir: Any
-    skip_build: int
-    group: Any
-    owner: Any
+    description: ClassVar[str]
+    user_options: ClassVar[list[tuple[str, str | None, str | None]]]
+    boolean_options: ClassVar[list[str]]
+    help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
+    no_format_option: ClassVar[tuple[str, ...]]
+    default_format: ClassVar[dict[str, str]]
+    format_commands: ClassVar[ListCompat]
+    format_command = format_commands
+
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...
     def run(self) -> None: ...

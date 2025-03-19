@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.maven.RepositoryUtils;
@@ -23,14 +23,14 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public final class Maven3AetherModelConverter extends Maven3ModelConverter {
-  @NotNull
-  public static MavenModel convertModelWithAetherDependencyTree(Model model,
-                                                                List<String> sources,
-                                                                List<String> testSources,
-                                                                Collection<? extends Artifact> dependencies,
-                                                                Collection<? extends DependencyNode> dependencyTree,
-                                                                Collection<? extends Artifact> extensions,
-                                                                File localRepository) throws RemoteException {
+  public static @NotNull MavenModel convertModelWithAetherDependencyTree(Model model,
+                                                                         List<String> sources,
+                                                                         List<String> testSources,
+                                                                         Collection<? extends Artifact> dependencies,
+                                                                         Collection<? extends DependencyNode> dependencyTree,
+                                                                         Collection<? extends Artifact> pluginArtifacts,
+                                                                         Collection<? extends Artifact> extensions,
+                                                                         File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -42,7 +42,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, pluginArtifacts));
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<Artifact, MavenArtifact>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
@@ -50,6 +50,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
@@ -99,8 +100,7 @@ public final class Maven3AetherModelConverter extends Maven3ModelConverter {
     return result;
   }
 
-  @Nullable
-  public static Artifact toArtifact(@Nullable Dependency dependency) {
+  public static @Nullable Artifact toArtifact(@Nullable Dependency dependency) {
     if (dependency == null) {
       return null;
     }

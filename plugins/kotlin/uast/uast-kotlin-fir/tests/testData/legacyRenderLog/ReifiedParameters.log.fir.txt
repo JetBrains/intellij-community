@@ -8,7 +8,6 @@ UFile (package = )
                 UReturnExpression
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
                         UIdentifier (Identifier (process))
-                        USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null)
                         USimpleNameReferenceExpression (identifier = t)
         UMethod (name = functionWithVararg)
             UParameter (name = i)
@@ -37,7 +36,8 @@ UFile (package = )
             UParameter (name = t)
                 UAnnotation (fqName = kotlin.Suppress)
                     UNamedExpression (name = names)
-                        ULiteralExpression (value = "s")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "s")
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
@@ -46,7 +46,8 @@ UFile (package = )
                 UAnnotation (fqName = null)
                 UAnnotation (fqName = kotlin.Suppress)
                     UNamedExpression (name = names)
-                        ULiteralExpression (value = "s")
+                        UPolyadicExpression (operator = +)
+                            ULiteralExpression (value = "s")
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)

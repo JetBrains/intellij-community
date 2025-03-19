@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -71,8 +71,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myAnchor = UIUtil.mergeComponentsWithAnchor(myProgramParametersComponent, myWorkingDirectoryComponent, myEnvVariablesComponent);
   }
 
-  @Nullable
-  protected Project getProject() {
+  protected @Nullable Project getProject() {
     return myModuleContext != null ? myModuleContext.getProject() : null;
   }
 
@@ -83,16 +82,13 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     // for backward compatibility: com.microsoft.tooling.msservices.intellij.azure:3.0.11
     myWorkingDirectoryField = new TextFieldWithBrowseButton();
 
-    myWorkingDirectoryField.addBrowseFolderListener(ExecutionBundle.message("select.working.directory.message"), null,
-                                                    getProject(),
-                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField,
-                                                          ExecutionBundle.message("run.configuration.working.directory.label"));
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    myWorkingDirectoryField.addBrowseFolderListener(getProject(), descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myWorkingDirectoryComponent = LabeledComponent.create(myWorkingDirectoryField, ExecutionBundle.message("run.configuration.working.directory.label"));
 
     myEnvVariablesComponent = createEnvironmentVariablesComponent();
-
     myEnvVariablesComponent.setLabelLocation(BorderLayout.WEST);
+
     myProgramParametersComponent.setLabelLocation(BorderLayout.WEST);
     myWorkingDirectoryComponent.setLabelLocation(BorderLayout.WEST);
 
@@ -104,8 +100,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     copyDialogCaption(myProgramParametersComponent);
   }
 
-  @NotNull
-  protected EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
+  protected @NotNull EnvironmentVariablesComponent createEnvironmentVariablesComponent() {
     return new EnvironmentVariablesComponent();
   }
 
@@ -113,7 +108,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
    * @deprecated use {@link MacroComboBoxWithBrowseButton}
    */
   @Deprecated(forRemoval = true)
-  protected JComponent createComponentWithMacroBrowse(@NotNull final TextFieldWithBrowseButton textAccessor) {
+  protected JComponent createComponentWithMacroBrowse(final @NotNull TextFieldWithBrowseButton textAccessor) {
     final FixedSizeButton button = new FixedSizeButton(textAccessor);
     button.setIcon(AllIcons.Actions.ListFiles);
     button.addActionListener(new ActionListener() {
@@ -243,8 +238,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     myEnvVariablesComponent.apply(configuration);
   }
 
-  @Nullable
-  protected String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
+  protected @Nullable String fromTextField(@NotNull TextAccessor textAccessor, @NotNull CommonProgramRunConfigurationParameters configuration) {
     return textAccessor.getText();
   }
 

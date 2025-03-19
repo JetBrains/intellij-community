@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels
 
-import com.intellij.ui.components.panels.ListLayout.Axis
 import com.intellij.ui.components.panels.ListLayout.Companion.getDeltaFactor
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBValue
@@ -90,14 +89,10 @@ class ListLayout private constructor(
 
   override fun addLayoutComponent(component: Component, constraints: Any?) {
     if (constraints == null || constraints == defaultGrowPolicy) return
-    if (constraints is GrowPolicy) {
-      nonDefaultGrowComponents.add(component)
-    }
-    else if (constraints is Alignment) {
-      nonDefaultAlignmentComponents[component] = constraints
-    }
-    else {
-      throw IllegalArgumentException("Unsupported constraints: $constraints")
+    when (constraints) {
+      is GrowPolicy -> nonDefaultGrowComponents.add(component)
+      is Alignment -> nonDefaultAlignmentComponents[component] = constraints
+      else -> throw IllegalArgumentException("Unsupported constraints: $constraints")
     }
   }
 
@@ -255,7 +250,7 @@ class ListLayout private constructor(
   override fun getLayoutAlignmentX(target: Container): Float = .5f
   override fun getLayoutAlignmentY(target: Container): Float = .5f
 
-  override fun invalidateLayout(target: Container) = Unit
+  override fun invalidateLayout(target: Container) {}
 
   override fun toString(): String =
     when (majorAxis) {
@@ -272,8 +267,9 @@ class ListLayout private constructor(
      * @param vertGrow should the component be stretched vertically
      */
     @JvmStatic
-    fun horizontal(horGap: Int = 0, vertAlignment: Alignment = Alignment.CENTER, vertGrow: GrowPolicy = GrowPolicy.NO_GROW): ListLayout =
-      ListLayout(Axis.X, vertAlignment, vertGrow, horGap)
+    fun horizontal(horGap: Int = 0, vertAlignment: Alignment = Alignment.CENTER, vertGrow: GrowPolicy = GrowPolicy.NO_GROW): ListLayout {
+      return ListLayout(Axis.X, vertAlignment, vertGrow, horGap)
+    }
 
     /**
      * Create a simple vertical variant - major axis [Axis.Y]
@@ -283,9 +279,9 @@ class ListLayout private constructor(
      * @param horGrow should the component be stretched horizontally
      */
     @JvmStatic
-    fun vertical(vertGap: Int = 0, horAlignment: Alignment = Alignment.START, horGrow: GrowPolicy = GrowPolicy.GROW): ListLayout =
-      ListLayout(Axis.Y, horAlignment, horGrow, vertGap)
-
+    fun vertical(vertGap: Int = 0, horAlignment: Alignment = Alignment.START, horGrow: GrowPolicy = GrowPolicy.GROW): ListLayout {
+      return ListLayout(Axis.Y, horAlignment, horGrow, vertGap)
+    }
 
     /**
      * How much the difference between min and pref sizes is shrunk
@@ -304,6 +300,4 @@ class ListLayout private constructor(
 
     private fun getVisibleComponents(container: Container): List<Component> = container.components.filter { it.isVisible }
   }
-
-
 }

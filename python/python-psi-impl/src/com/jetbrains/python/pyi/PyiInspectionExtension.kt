@@ -20,6 +20,7 @@ import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyImportStatement
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyiInspectionExtension : PyInspectionExtension() {
@@ -34,5 +35,10 @@ class PyiInspectionExtension : PyInspectionExtension() {
       else -> emptyList()
     }
     return elements.isEmpty() || elements.any { it.asName != null }
+  }
+
+  override fun ignoreProtectedSymbol(expression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+    val referencedElement = expression.reference.resolve()
+    return referencedElement?.containingFile is PyiFile
   }
 }

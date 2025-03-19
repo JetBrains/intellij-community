@@ -15,40 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
-import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.ast.PyAstNumericLiteralExpression;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
-public interface PyNumericLiteralExpression extends PyLiteralExpression {
-  /**
-   * Returns the value of this literal as a long (with any fraction truncated).
-   * This method will return {@code null} if the value is too large or too
-   * small to be represented as a long.
-   */
-  @Nullable
-  Long getLongValue();
-
-  /**
-   * Returns the value of this literal as a {@code BigInteger} (with any
-   * fraction truncated).
-   */
-  @Nullable
-  BigInteger getBigIntegerValue();
-
-  /**
-   * Returns the exact value of this literal.
-   */
-  @Nullable
-  BigDecimal getBigDecimalValue();
-
-  boolean isIntegerLiteral();
-
-  /**
-   * Returns possible suffix of integer literal like {@code uL}.
-   *
-   * @return null if this is not integer literal or the suffix is missed; string suffix otherwise
-   */
-  @Nullable
-  String getIntegerLiteralSuffix();
+public interface PyNumericLiteralExpression extends PyAstNumericLiteralExpression, PyLiteralExpression {
 }

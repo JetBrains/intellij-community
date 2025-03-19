@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspection.EnumValuesSoftDeprecateInspectionBase
@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.resolve.checkers.OptInUsageChecker.Companion.isOptIn
 
 class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspectionBase() {
 
-    override fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
+    context(KaSession)
+    override fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean {
         return element.isOptInAllowed(annotationClassId.asSingleFqName(), element.languageVersionSettings, element.analyze())
     }
 }

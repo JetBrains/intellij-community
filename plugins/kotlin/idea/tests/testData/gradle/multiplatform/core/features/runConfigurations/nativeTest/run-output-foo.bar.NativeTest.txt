@@ -1,0 +1,8 @@
+<time>: Executing ':cleanMacosArm64Test :macosArm64Test --tests "foo.bar.NativeTest"'…
+<time>: Execution finished ':cleanMacosArm64Test :macosArm64Test --tests "foo.bar.NativeTest"'.
+
+
+com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:
+org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:
+
+<exitCode: 1>

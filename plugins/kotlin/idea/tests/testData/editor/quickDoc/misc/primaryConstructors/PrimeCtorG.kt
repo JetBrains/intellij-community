@@ -1,0 +1,4 @@
+open class PrimeCtorG protected constructor<caret>(var fa: AuxFaceA)
+//INFO: <div class='definition'><pre><span style="color:#000080;font-weight:bold;">protected</span> <span style="color:#000080;font-weight:bold;">constructor</span> <span style="color:#000000;">PrimeCtorG</span>(
+//INFO:     <span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">final</span> <span style="color:#000080;font-weight:bold;">var</span> <span style="color:#660e7a;font-weight:bold;">fa</span><span style="">: </span><span style="color:#000000;"><a href="psi_element://AuxFaceA">AuxFaceA</a></span>
+//INFO: )</pre></div><div class='bottom'><icon src="KotlinBaseResourcesIcons.ClassKotlin"/>&nbsp;<a href="psi_element://PrimeCtorG"><code><span style="color:#000000;">PrimeCtorG</span></code></a><br/></div>

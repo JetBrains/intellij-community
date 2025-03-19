@@ -10,7 +10,7 @@ import java.util.*
  */
 @ApiStatus.Internal
 interface DistributedTestPlayer {
-  fun initAgent(agent: AgentInfo): LinkedList<AgentAction>
+  fun initAgent(agent: AgentInfo): Pair<Map<String, Queue<AgentAction>>, Map<String, Queue<AgentActionGetComponentData>>>
 
   fun performInit(method: Method)
 }

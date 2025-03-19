@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -55,7 +56,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }
@@ -77,9 +78,9 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!EditorModificationUtil.requestWriting(editor)) return;
 
-    DataContext context = dataId -> {
-      return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
-    };
+    DataContext context = CustomizedDataContext.withSnapshot(dataContext, sink -> {
+      sink.set(PasteAction.TRANSFERABLE_PROVIDER, () -> transferable);
+    });
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();
@@ -111,11 +112,11 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     });
   }
 
-  private static void doPaste(@NotNull final Editor editor,
-                              @NotNull final Project project,
+  private static void doPaste(final @NotNull Editor editor,
+                              final @NotNull Project project,
                               final PsiFile file,
                               final Document document,
-                              @NotNull final Transferable content) {
+                              final @NotNull Transferable content) {
     final TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
       typingActionsExtension.startPaste(project, editor);
@@ -126,7 +127,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+  private static final class ProcessorAndData<Data extends TextBlockTransferableData> {
     final CopyPastePostProcessor<Data> processor;
     final @NotNull List<? extends Data> data;
 
@@ -153,8 +154,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                                     final Project project,
                                     final PsiFile file,
                                     final Document document,
-                                    @NotNull final Transferable content,
-                                    @NotNull final TypingActionsExtension typingActionsExtension) {
+                                    final @NotNull Transferable content,
+                                    final @NotNull TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;
@@ -267,7 +268,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
         : indentOptions;
       ApplicationManager.getApplication().runWriteAction(
         () -> typingActionsExtension
-          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn, true)
+          .format(project, editor, howtoReformat, bounds.getStartOffset(), bounds.getEndOffset(), blockIndentAnchorColumn, true, true)
       );
     }
 

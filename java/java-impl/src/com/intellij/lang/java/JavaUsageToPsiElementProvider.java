@@ -9,7 +9,7 @@ import com.intellij.usages.UsageToPsiElementProvider;
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaUsageToPsiElementProvider extends UsageToPsiElementProvider {
+public final class JavaUsageToPsiElementProvider extends UsageToPsiElementProvider {
   private static final Language JAVA = Language.findLanguageByID("JAVA");
   private static final int MAX_HOPES = 17;
 

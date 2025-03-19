@@ -1,5 +1,5 @@
 // PROBLEM: none
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 enum class E(val value: String) {
     E1(<caret>Companion.foo);

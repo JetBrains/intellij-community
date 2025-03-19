@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class StoreNewLayoutAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,6 +33,6 @@ class StoreNewLayoutAction : DumbAwareAction() {
     e.presentation.isEnabled = e.project != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
 }

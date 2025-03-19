@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -29,15 +15,17 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImportIntoShelfAction extends DumbAwareAction {
+@ApiStatus.Internal
+public final class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
     super(VcsBundle.messagePointer("action.ImportIntoShelfAction.text"),
-          VcsBundle.messagePointer("action.ImportIntoShelfAction.description"), null);
+          VcsBundle.messagePointer("action.ImportIntoShelfAction.description"));
   }
 
   @Override
@@ -55,7 +43,12 @@ public class ImportIntoShelfAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
+    importPatchesToShelf(project);
+  }
+
+  public static List<ShelvedChangeList> importPatchesToShelf(@NotNull Project project) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
+    List<ShelvedChangeList> addedLists = new ArrayList<>();
     FileChooser.chooseFiles(descriptor, project, null, files -> {
       //gatherPatchFiles
       final ProgressManager pm = ProgressManager.getInstance();
@@ -76,6 +69,7 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         final List<VcsException> exceptions = new ArrayList<>();
         final List<ShelvedChangeList> lists =
           shelveChangesManager.importChangeLists(patchTypeFiles, e1 -> exceptions.add(e1));
+        addedLists.addAll(lists);
         if (!lists.isEmpty()) {
           ShelvedChangesViewManager.getInstance(project).activateView(lists.get(lists.size() - 1));
         }
@@ -87,5 +81,6 @@ public class ImportIntoShelfAction extends DumbAwareAction {
         }
       }, VcsBundle.message("import.patches.into.shelf"), true, project);
     });
+    return addedLists;
   }
 }

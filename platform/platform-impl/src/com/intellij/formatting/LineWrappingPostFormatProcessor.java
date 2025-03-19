@@ -10,11 +10,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class LineWrappingPostFormatProcessor implements PostFormatProcessor {
+@ApiStatus.Internal
+public final class LineWrappingPostFormatProcessor implements PostFormatProcessor {
   @Override
   public @NotNull PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     processText(source.getContainingFile(), source.getTextRange(), settings);

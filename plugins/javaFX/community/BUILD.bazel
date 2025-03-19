@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.javaFX.community` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "community_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "community",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "community_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/javaFX",
+    "//plugins/javaFX:javaFX_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/impl",
+    "//plugins/groovy",
+    "//plugins/groovy:groovy_test_lib",
+    "//plugins/javaFX/common",
+    "//java/java-tests:tests_test_lib",
+    "//plugins/groovy/structuralsearch-groovy:structuralSearch",
+    "//plugins/groovy/structuralsearch-groovy:structuralSearch_test_lib",
+    "//java/compiler/openapi:java-compiler",
+    "//platform/core-ui",
+    "//plugins/javaFX:javaFX-properties",
+    "//java/java-impl-refactorings:impl-refactorings",
+  ],
+  runtime_deps = [":community_resources"]
+)
+
+jvm_test(
+  name = "community_test",
+  runtime_deps = [":community_test_lib"]
+)
+### auto-generated section `build intellij.javaFX.community` end

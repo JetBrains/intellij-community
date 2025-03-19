@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.InputValidator;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class InputDialogWithCheckbox extends Messages.InputDialog {
+final class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
   InputDialogWithCheckbox(@NlsContexts.DialogMessage String message,
@@ -28,9 +28,8 @@ class InputDialogWithCheckbox extends Messages.InputDialog {
     myCheckBox.setEnabled(checkboxEnabled);
   }
 
-  @NotNull
   @Override
-  protected JPanel createMessagePanel() {
+  protected @NotNull JPanel createMessagePanel() {
     JPanel messagePanel = new JPanel(new BorderLayout());
     if (myMessage != null) {
       JComponent textComponent = createTextComponent();

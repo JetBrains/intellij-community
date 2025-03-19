@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -9,11 +9,14 @@ import com.intellij.debugger.memory.ui.SizedReferenceInfo;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.CpuArch;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -31,10 +34,7 @@ public final class MemoryAgentUtil {
   private static final Logger LOG = Logger.getInstance(MemoryAgentUtil.class);
   private static final String MEMORY_AGENT_EXTRACT_DIRECTORY = "memory.agent.extract.dir";
 
-  private static final int ESTIMATE_OBJECTS_SIZE_LIMIT = 2000;
-
-  @Nullable
-  static String getAgentFilePathAsString(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
+  static @Nullable String getAgentFilePathAsString(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
     throws ExecutionException, InterruptedException, TimeoutException {
     Path agentFile = getAgentFile(isInDebugMode, libraryType);
     return JavaExecutionUtil.handleSpacesInAgentPath(
@@ -55,32 +55,58 @@ public final class MemoryAgentUtil {
     throw new IllegalStateException("Unsupported OS and arch: " + SystemInfo.getOsNameAndVersion() + " " + arch);
   }
 
-  @NotNull
-  public static List<JavaReferenceInfo> tryCalculateSizes(@NotNull EvaluationContextImpl context,
-                                                          @NotNull List<JavaReferenceInfo> objects) {
+  public static @NotNull List<JavaReferenceInfo> calculateSizes(@NotNull EvaluationContextImpl context,
+                                                                @NotNull ReferenceType classType,
+                                                                long objectsLimit,
+                                                                @NotNull ProgressIndicator progressIndicator) {
     MemoryAgent agent = MemoryAgent.get(context);
-    if (!agent.getCapabilities().canEstimateObjectsSizes()) return objects;
-    if (objects.size() > ESTIMATE_OBJECTS_SIZE_LIMIT) {
-      LOG.info("Too many objects to estimate their sizes");
-      return objects;
-    }
+    agent.setProgressIndicator(progressIndicator);
     try {
-      long[] sizes = agent.estimateObjectsSizes(
+      MemoryAgent.ObjectsAndSizes objectsAndSizes = agent.getSortedShallowAndRetainedSizesByClass(
         context,
-        ContainerUtil.map(objects, x -> x.getObjectReference()),
+        classType,
+        objectsLimit,
         Registry.get("debugger.memory.agent.action.timeout").asInteger()
       ).getResult();
-      return IntStreamEx.range(0, objects.size())
-        .mapToObj(i -> new SizedReferenceInfo(objects.get(i).getObjectReference(), sizes[i]))
-        .reverseSorted(Comparator.comparing(x -> x.size()))
-        .map(x -> (JavaReferenceInfo)x)
+      return IntStreamEx.range(0, objectsAndSizes.getObjects().length)
+        .mapToObj(i ->
+          (JavaReferenceInfo) new SizedReferenceInfo(
+            objectsAndSizes.getObjects()[i],
+            objectsAndSizes.getShallowSizes()[i],
+            objectsAndSizes.getRetainedSizes()[i]
+          )
+        )
         .toList();
     }
     catch (EvaluateException e) {
       LOG.error("Could not estimate objects sizes", e);
     }
 
-    return objects;
+    return Collections.emptyList();
+  }
+
+  public static List<JavaReferenceInfo> calculateSizesByObjects(@NotNull EvaluationContextImpl context,
+                                                                @NotNull List<ObjectReference> references,
+                                                                @NotNull ProgressIndicator progressIndicator) {
+    MemoryAgent agent = MemoryAgent.get(context);
+    agent.setProgressIndicator(progressIndicator);
+    try {
+      Pair<long[], long[]> sizes = agent.getShallowAndRetainedSizesByObjects(
+        context,
+        references,
+        Registry.get("debugger.memory.agent.action.timeout").asInteger()
+      ).getResult();
+      return IntStreamEx.range(0, references.size())
+        .mapToObj(i -> new SizedReferenceInfo(references.get(i), sizes.first[i], sizes.second[i]))
+        .sortedBy(ref -> -ref.getRetainedSize())
+        .map(ref -> (JavaReferenceInfo)ref)
+        .toList();
+    }
+    catch (EvaluateException e) {
+      LOG.error("Could not estimate objects sizes", e);
+    }
+
+    return Collections.emptyList();
   }
 
   public static boolean isPlatformSupported() {
@@ -89,8 +115,7 @@ public final class MemoryAgentUtil {
            SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64());
   }
 
-  @NotNull
-  private static Path getAgentFile(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
+  private static @NotNull Path getAgentFile(boolean isInDebugMode, @NotNull AgentExtractor.AgentLibraryType libraryType)
     throws InterruptedException, ExecutionException, TimeoutException {
     if (isInDebugMode) {
       String debugAgentPath = Registry.get("debugger.memory.agent.debug.path").asString();

@@ -1,12 +1,7 @@
-from typing import Any
-
-from braintree import exceptions as exceptions
-from braintree.configuration import Configuration as Configuration
-from braintree.signature_service import SignatureService as SignatureService
-from braintree.util.crypto import Crypto as Crypto
+from _typeshed import Incomplete
 
 class ClientToken:
     @staticmethod
-    def generate(params: Any | None = ..., gateway: Any | None = ...): ...
+    def generate(params: Incomplete | None = None, gateway: Incomplete | None = None): ...
     @staticmethod
     def generate_signature(): ...

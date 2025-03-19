@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Spacing;
@@ -205,16 +205,14 @@ public abstract class GroovySpacingProcessorBasic {
     }
   }
 
-  @NotNull
-  private static Spacing getStatementSpacing(FormattingContext context) {
+  private static @NotNull Spacing getStatementSpacing(FormattingContext context) {
     return Spacing.createSpacing(0, 0, 1, context.getSettings().KEEP_LINE_BREAKS, context.getSettings().KEEP_BLANK_LINES_IN_CODE);
   }
 
-  @NotNull
-  static Spacing createDependentSpacingForClosure(@NotNull CommonCodeStyleSettings settings,
-                                                  @NotNull GroovyCodeStyleSettings groovySettings,
-                                                  @NotNull GrClosableBlock closure,
-                                                  final boolean forArrow) {
+  static @NotNull Spacing createDependentSpacingForClosure(@NotNull CommonCodeStyleSettings settings,
+                                                           @NotNull GroovyCodeStyleSettings groovySettings,
+                                                           @NotNull GrClosableBlock closure,
+                                                           final boolean forArrow) {
     boolean spaceWithinBraces = closure.getParent() instanceof GrStringInjection
                                 ? groovySettings.SPACE_WITHIN_GSTRING_INJECTION_BRACES
                                 : settings.SPACE_WITHIN_BRACES;

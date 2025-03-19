@@ -107,8 +107,7 @@ private fun KtExpression.hasCandidateNameReferenceExpression(checkConstants: Boo
         return true
     }
     val resolved = nameReferenceExpression.mainReference.resolve()
-    if (resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true) return false
-    return true
+    return !(resolved is KtObjectDeclaration || (resolved as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true)
 }
 
 fun KtWhenExpression.introduceSubject(checkConstants: Boolean = true): KtWhenExpression? {

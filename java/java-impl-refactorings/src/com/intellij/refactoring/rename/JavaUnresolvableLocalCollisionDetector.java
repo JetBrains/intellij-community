@@ -22,41 +22,34 @@ public final class JavaUnresolvableLocalCollisionDetector {
       return;
     }
 
-
+    PsiVariable variable = (PsiVariable)element;
     PsiElement scope;
-    PsiElement anchor = null;
-    if (element instanceof PsiLocalVariable) {
-      scope = CommonJavaRefactoringUtil.getVariableScope((PsiLocalVariable)element);
-      if (!(element instanceof ImplicitVariable)) {
-        anchor = element.getParent();
-      }
+    if (variable instanceof PsiLocalVariable local) {
+      scope = CommonJavaRefactoringUtil.getVariableScope(local);
     }
     else {
       // element is a PsiParameter
       scope = ((PsiParameter)element).getDeclarationScope();
     }
+    String oldName = variable.getName();
     LOG.assertTrue(scope != null, element.getClass().getName());
-
+    boolean methodParameter = element instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod;
+    
+    PsiResolveHelper helper = PsiResolveHelper.getInstance(element.getProject());
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
       @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
-        LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);
+        if (collidingVariable.isUnnamed()) return;
+        if (!methodParameter &&
+            helper.resolveAccessibleReferencedVariable(newName, element) != collidingVariable &&
+            helper.resolveAccessibleReferencedVariable(oldName, collidingVariable) != element) return;
+        LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(collidingVariable, element);
         result.add(collision);
       }
     };
 
-    visitLocalsCollisions(element, newName, scope, anchor, collidingNameVisitor);
-
-
-    /*PsiElement place = scope.getLastChild();
-    PsiResolveHelper helper = place.getManager().getResolveHelper();
-    PsiVariable refVar = helper.resolveReferencedVariable(newName, place, null);
-
-    if (refVar != null) {
-      LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, refVar);
-      result.add(collision);
-    }*/
+    visitLocalsCollisions(element, newName, scope, null, collidingNameVisitor);
   }
 
   public static void visitLocalsCollisions(PsiElement element, final String newName,
@@ -70,7 +63,7 @@ public final class JavaUnresolvableLocalCollisionDetector {
 
   private static void visitDownstreamCollisions(PsiElement scope, PsiElement place, final String newName,
                                                 final CollidingVariableVisitor collidingNameVisitor
-                                               ) {
+  ) {
     ConflictingLocalVariablesVisitor collector =
       new ConflictingLocalVariablesVisitor(newName, collidingNameVisitor);
     if (place == null) {
@@ -81,7 +74,6 @@ public final class JavaUnresolvableLocalCollisionDetector {
       for (PsiElement sibling = place; sibling != null; sibling = sibling.getNextSibling()) {
         sibling.accept(collector);
       }
-
     }
   }
 

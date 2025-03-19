@@ -1,5 +1,5 @@
 <idea-plugin>
-  <depends>com.intellij.completion.ml.ranking</depends>
+  <depends optional="true" config-file="gradle-groovy-ml-integration.xml">com.intellij.completion.ml.ranking</depends>
   <depends optional="true" config-file="gradle-groovy-toml-integration.xml">org.toml.lang</depends>
 
   <extensionPoints>
@@ -35,14 +35,8 @@
     <resolveScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleBuildClasspathResolveScopeEnlarger"/>
     <useScopeEnlarger implementation="org.jetbrains.plugins.gradle.config.GradleUseScopeEnlarger"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.gradle.config.GradleImplicitUsageProvider"/>
-    <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
     <gotoDeclarationHandler implementation="org.jetbrains.plugins.gradle.service.navigation.GradleVersionCatalogGotoDeclarationHandler"/>
-
-    <completion.ml.contextFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyContextFeatureProvider"/>
-    <completion.ml.elementFeatures language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyElementFeatureProvider"/>
-    <completion.ml.ranking.features.policy language="Groovy" implementationClass="org.jetbrains.plugins.gradle.service.completion.ml.GradleGroovyCompletionFeaturesPolicy"/>
-
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleSuppressHighlightingListener"/>
     <trafficLightRendererContributor implementation="org.jetbrains.plugins.gradle.codeInspection.suppression.GradleGroovyTrafficLightRendererContributor"/>
 
@@ -76,6 +70,10 @@
                                  hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
                                  targetClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectSymbol"
                                  implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectReferenceProvider"/>
+    <psi.symbolReferenceProvider hostLanguage="Groovy"
+                                 hostElementClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral"
+                                 targetClass="org.jetbrains.plugins.gradle.service.resolve.GradlePluginSymbol"
+                                 implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradlePluginReferenceProvider"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.gradle.service.resolve.GradleManagedPropertySetterReferenceSearcher"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleProjectUsageSearcher"/>
@@ -90,9 +88,13 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.gradle.config.GradleScriptTypeDetector"/>
     <importContributor implementation="org.jetbrains.plugins.gradle.config.GradleDefaultImportContributor"/>
     <variableEnhancer order="first" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleClosureSamParameterEnhancer"/>
+    <variableEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleClosureParameterEnhancer"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSettingsScriptContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectExtensionContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleSyntheticSetterMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleConfigurableCallContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleActionToClosureMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptContributor"/>
@@ -106,7 +108,6 @@
     <callTypeCalculator implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactCallTypeCalculator"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationClosureDelegateProvider"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDelegatesToProvider"/>
-    <delegatesToProvider implementation="org.jetbrains.plugins.gradle.service.resolve.GradleActionDelegatesToProvider"/>
     <elementFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationElementFilter"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>

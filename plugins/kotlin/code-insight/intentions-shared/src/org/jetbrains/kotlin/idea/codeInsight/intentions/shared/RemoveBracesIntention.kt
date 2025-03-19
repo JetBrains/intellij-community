@@ -6,25 +6,22 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.getControlFlowElementDescription
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class.java, KotlinBundle.lazyMessage("remove.braces")) {
-    private fun KtElement.findChildBlock() = when (this) {
-        is KtBlockExpression -> this
-        is KtLoopExpression -> body as? KtBlockExpression
-        is KtWhenEntry -> expression as? KtBlockExpression
-        else -> null
-    }
-
     override fun isApplicableTo(element: KtElement, caretOffset: Int): Boolean {
         val block = element.findChildBlock() ?: return false
-        if (!isApplicableTo(block)) return false
+        if (!Holder.isApplicableTo(block)) return false
         when (val container = block.parent) {
             is KtContainerNode -> {
                 val description = container.getControlFlowElementDescription() ?: return false
@@ -39,10 +36,20 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
 
     override fun applyTo(element: KtElement, editor: Editor?) {
         val block = element.findChildBlock() ?: return
-        removeBraces(element, block, editor)
+        Holder.removeBraces(element, block, editor)
     }
 
-    companion object {
+    override fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean =
+        element is KtBlockExpression && element.parent !is KtWhenEntry
+
+    private fun KtElement.findChildBlock(): KtBlockExpression? = when (this) {
+        is KtBlockExpression -> this
+        is KtLoopExpression -> body as? KtBlockExpression
+        is KtWhenEntry -> expression as? KtBlockExpression
+        else -> null
+    }
+
+    object Holder {
         fun isApplicableTo(block: KtBlockExpression): Boolean {
             val singleStatement = block.statements.singleOrNull() ?: return false
             if (singleStatement is KtLambdaExpression && singleStatement.functionLiteral.arrow == null) return false
@@ -69,7 +76,7 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
 
             val container = block.parent
             val construct = container.parent as KtExpression
-            handleComments(construct, block)
+            statement.handleComments(block, factory)
 
             val newElement = block.replace(statement.copy())
             editor?.caretModel?.moveToOffset(if (caretOnAfterStatement) newElement.endOffset else newElement.startOffset)
@@ -97,23 +104,26 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
             }
         }
 
-        private fun handleComments(construct: KtExpression, block: KtBlockExpression) {
-            var sibling = block.firstChild?.nextSibling
-
-            while (sibling != null) {
-                if (sibling is PsiComment) {
-                    //cleans up extra whitespace
-                    val psiFactory = KtPsiFactory(construct.project)
-                    if (construct.prevSibling is PsiWhiteSpace) {
-                        construct.prevSibling!!.replace(psiFactory.createNewLine())
-                    }
-                    val commentElement = construct.parent.addBefore(sibling, construct.prevSibling)
-                    construct.parent.addBefore(psiFactory.createNewLine(), commentElement)
-                }
-                sibling = sibling.nextSibling
+        private fun KtExpression.handleComments(block: KtBlockExpression, factory: KtPsiFactory) {
+            val nextComments = comments(forward = true)
+            val prevComments = comments(forward = false).reversed()
+            val blockParent = block.parent
+            if (prevComments.isNotEmpty()) {
+                blockParent.addRangeBefore(prevComments.first(), prevComments.last(), block)
+            }
+            if (nextComments.isNotEmpty()) {
+                blockParent.addRangeAfter(nextComments.first(), nextComments.last(), block)
             }
         }
-    }
 
-    override fun skipProcessingFurtherElementsAfter(element: PsiElement) = element is KtBlockExpression && element.parent !is KtWhenEntry
+        private fun KtExpression.comments(forward: Boolean): List<PsiElement> {
+            val elements = siblings(forward = forward, withItself = false)
+                .takeWhile { it is PsiComment || it is PsiWhiteSpace }
+                .toList()
+            return if (elements.any { it is PsiComment }) elements else emptyList()
+        }
+
+        private fun List<PsiElement>.hasLineBreak(): Boolean =
+            any { it is PsiWhiteSpace && it.textContains('\n') }
+    }
 }

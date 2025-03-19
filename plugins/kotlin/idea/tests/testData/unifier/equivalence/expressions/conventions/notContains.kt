@@ -1,4 +1,5 @@
-// DISABLE-ERRORS
+// IGNORE_K2
+// DISABLE_ERRORS
 val array = Array(2) { it }
 fun <T> Array<T>.contains(t: T): Boolean = false
 

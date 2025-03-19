@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.impl;
 
 import com.intellij.pom.PomManager;
@@ -16,9 +16,8 @@ public abstract class PomTransactionBase implements PomTransaction{
     myAccumulatedEvent = new PomModelEvent(PomManager.getModel(scope.getProject()), null);
   }
 
-  @NotNull
   @Override
-  public PomModelEvent getAccumulatedEvent() {
+  public @NotNull PomModelEvent getAccumulatedEvent() {
     return myAccumulatedEvent;
   }
 
@@ -27,12 +26,10 @@ public abstract class PomTransactionBase implements PomTransaction{
     myAccumulatedEvent.merge(runInner());
   }
 
-  @NotNull
-  public abstract PomModelEvent runInner() throws IncorrectOperationException;
+  public abstract @NotNull PomModelEvent runInner() throws IncorrectOperationException;
 
-  @NotNull
   @Override
-  public PsiElement getChangeScope() {
+  public @NotNull PsiElement getChangeScope() {
     return myScope;
   }
 

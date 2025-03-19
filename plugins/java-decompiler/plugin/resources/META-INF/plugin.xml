@@ -1,0 +1,49 @@
+<idea-plugin>
+  <id>org.jetbrains.java.decompiler</id>
+  <name>Java Bytecode Decompiler</name>
+  <category>Other Tools</category>
+  <description>
+    Extends standard .class file viewer with the FernFlower Java decompiler
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.java</depends>
+
+  <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.java.decompiler.IdeaDecompiler" order="last, before clsStubBuilder"/>
+    <editorFactoryListener implementation="org.jetbrains.java.decompiler.DecompilerInEditorListener"/>
+    <applicationService serviceImplementation="org.jetbrains.java.decompiler.IdeaDecompilerSettings"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.java.decompiler.DecompilerPresetChangedCollector"/>
+
+    <!--approximately - 50_000 lines of code -->
+    <advancedSetting
+      id="decompiler.max.direct.nodes.count"
+      default="20000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
+    <!--probably, obfuscated -->
+    <advancedSetting
+      id="decompiler.max.variable.nodes.count"
+      default="30000"
+      groupKey="advanced.setting.group.decompiler"
+    />
+
+  </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.java.decompiler.IdeaDecompiler$LegalBurden"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"/>
+  </applicationListeners>
+
+  <actions>
+    <group id="idea.java.decompiler.action.group">
+      <action id="ByteCodeDecompiler" class="org.jetbrains.java.decompiler.ShowDecompiledClassAction"/>
+      <add-to-group group-id="QuickActions" anchor="after" relative-to-action="QuickJavaDoc"/>
+    </group>
+  </actions>
+</idea-plugin>

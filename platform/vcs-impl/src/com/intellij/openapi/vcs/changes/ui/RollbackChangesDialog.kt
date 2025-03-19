@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ui.LocalChangesBrowser.*
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.RollbackUtil
 import org.jetbrains.annotations.Nls
@@ -30,6 +31,8 @@ class RollbackChangesDialog private constructor(private val project: Project,
 
   private lateinit var deleteLocallyAddedFilesCheckBox: JCheckBox
   private val operationName: @Nls String
+
+  private val isInvokedFromModalContext = LaterInvocator.isInModalContext()
 
   init {
     Disposer.register(disposable, browser)
@@ -64,6 +67,9 @@ class RollbackChangesDialog private constructor(private val project: Project,
                         { newValue -> PropertiesComponent.getInstance().setValue(DELETE_LOCALLY_ADDED_FILES_KEY, newValue) })
           .component
       }
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(200, 150)
     }
   }
 
@@ -82,7 +88,7 @@ class RollbackChangesDialog private constructor(private val project: Project,
   override fun doOKAction() {
     super.doOKAction()
 
-    RollbackWorker(project, operationName, LaterInvocator.isInModalContext())
+    RollbackWorker(project, operationName, isInvokedFromModalContext)
       .doRollback(browser.includedChanges, deleteLocallyAddedFilesCheckBox.isSelected)
   }
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -11,8 +12,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutputStream;
 import java.io.*;
+import java.io.DataOutputStream;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +26,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntFunction;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 public final class IOUtil {
   public static final int KiB = 1024;
@@ -81,6 +86,14 @@ public final class IOUtil {
       throw new IOException(e);
     }
   }
+
+  /** reads all bytes from the buffer, and creates UTF8 string from them */
+  public static @NotNull String readString(@NotNull ByteBuffer buffer) {
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.get(bytes);
+    return new String(bytes, StandardCharsets.UTF_8);
+  }
+
 
   public static void writeString(@Nullable String s, @NotNull DataOutput stream) throws IOException {
     writeCharSequence(s, stream);
@@ -190,8 +203,7 @@ public final class IOUtil {
     return new String(buffer, 0, len, StandardCharsets.ISO_8859_1);
   }
 
-  @Nullable
-  private static String readLongString(@NotNull DataInput storage) throws IOException {
+  private static @Nullable String readLongString(@NotNull DataInput storage) throws IOException {
     String result = storage.readUTF();
     if (LONGER_THAN_64K_MARKER.equals(result)) {
       return readString(storage);
@@ -226,6 +238,10 @@ public final class IOUtil {
     return c < 128;
   }
 
+  /**
+   * @return true if _there are no files with such prefix exist_ -- e.g. if we delete nothing,
+   * because there were no such files beforehand.
+   */
   public static boolean deleteAllFilesStartingWith(@NotNull Path file) {
     String baseName = file.getFileName().toString();
     Path parentFile = file.getParent();
@@ -251,7 +267,7 @@ public final class IOUtil {
     boolean ok = true;
     for (Path f : files) {
       try {
-        Files.deleteIfExists(f);
+        FileUtil.delete(f);
       }
       catch (IOException ignore) {
         ok = false;
@@ -310,9 +326,8 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
-                                                                      @NotNull IntFunction<? extends C> collectionGenerator)
+  public static @NotNull <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
+                                                                               @NotNull IntFunction<? extends C> collectionGenerator)
     throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     C strings = collectionGenerator.apply(size);
@@ -325,12 +340,12 @@ public final class IOUtil {
   /**
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
-  @NotNull
-  public static List<String> readStringList(@NotNull DataInput in) throws IOException {
+  public static @NotNull List<String> readStringList(@NotNull DataInput in) throws IOException {
     return readStringCollection(in, ArrayList::new);
   }
 
-  public static void closeSafe(@NotNull Logger log, Closeable... closeables) {
+  public static void closeSafe(@NotNull Logger log,
+                               Closeable... closeables) {
     for (Closeable closeable : closeables) {
       if (closeable != null) {
         try {
@@ -343,27 +358,82 @@ public final class IOUtil {
     }
   }
 
-
-
-  private static final ByteBuffer ZEROES = ByteBuffer.allocateDirect(1);
+  public static void closeSafe(@NotNull Logger log,
+                               AutoCloseable... closeables) {
+    for (AutoCloseable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Exception e) {
+          log.error(e);
+        }
+      }
+    }
+  }
 
   /**
-   * Imitates 'fallocate' linux call: ensures file region [offsetInFile..offsetInFile+size) is allocated on disk.
-   * We can't call 'fallocate' directly, hence just write zeros into the channel.
+   * Close all the non-null closeables, catch the exceptions along the way, and re-throw them at the end.
+   * I.e. method closes as many closeables as possible -- single failed .close() doesn't prevent closing of
+   * the remaining closeables.
    */
-  public static void allocateFileRegion(final FileChannel channel,
-                                        final long offsetInFile,
-                                        final int size) throws IOException {
-    final long channelSize = channel.size();
-    if (channelSize < offsetInFile + size) {
-      //Assumes OS file cache page >= 1024, so writes land on each page at least once, and the write forces each
-      // page to be allocated (consume disk space):
-      final int stride = 1024;
-      for (long pos = Math.max(offsetInFile, channelSize);
-           pos < offsetInFile + size;
-           pos += stride) {
-        channel.write(ZEROES, pos);
+  @ApiStatus.Internal
+  public static void closeAllSafely(@Nullable Closeable ... closeables) throws IOException {
+    Throwable closeEx = null;
+    for (Closeable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Throwable t) {
+          if (closeEx == null) {
+            closeEx = t;
+          }
+          else {
+            closeEx.addSuppressed(t);
+          }
+        }
       }
+    }
+
+    if (closeEx != null) {
+      if (closeEx instanceof IOException) {
+        throw (IOException)closeEx;
+      }
+      else {
+        throw new IOException(closeEx);
+      }
+    }
+  }
+
+
+  private static final byte[] ZEROES = new byte[64 * 1024];
+
+  /**
+   * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
+   * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
+   */
+  public static void allocateFileRegion(@NotNull FileChannel channel,
+                                        long upUntilSize) throws IOException {
+    long channelSize = channel.size();
+    if (channelSize < upUntilSize) {
+      fillFileRegionWithZeros(channel, channelSize, upUntilSize);
+    }
+  }
+
+  /**
+   * Zero region [startingOffset..upUntilSize) -- i.e. upper limit exclusive.
+   * File is expanded, if needed
+   */
+  public static void fillFileRegionWithZeros(@NotNull FileChannel channel,
+                                             long startingOffset,
+                                             long upUntilOffset) throws IOException {
+    int stride = ZEROES.length;
+    ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
+    for (long pos = startingOffset; pos < upUntilOffset; pos += stride) {
+      int remainsToZero = Math.toIntExact(Math.min(stride, upUntilOffset - pos));
+      zeros.clear().limit(remainsToZero);
+      channel.write(zeros, pos);
     }
   }
 
@@ -385,7 +455,10 @@ public final class IOUtil {
     }
   }
 
-  /** @return string with buffer content, as-if it is byte[], formatted by Arrays.toString(byte[]) */
+  /**
+   * @return string with buffer content (full: [0..capacity)), as-if it is byte[], formatted by Arrays.toString(byte[])
+   * Method is for debug view, for reading string from bytebuffer use {@link #readString(ByteBuffer)}
+   */
   public static String toString(final @NotNull ByteBuffer buffer) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
@@ -395,47 +468,152 @@ public final class IOUtil {
     return Arrays.toString(bytes);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer) {
+  /**
+   * Formats buffer content into a string, as HEX.
+   * BEWARE: Method formats the _whole_ buffer, ignoring position/limit, it is intended for debug/error messages formatting
+   */
+  public static @NotNull String toHexString(@NotNull ByteBuffer buffer) {
     return toHexString(buffer, /*pageSize: */ -1);
   }
 
-  @NotNull
-  public static String toHexString(final @NotNull ByteBuffer buffer,
-                                   final int pageSize) {
-    final byte[] bytes = new byte[buffer.capacity()];
-    final ByteBuffer slice = buffer.duplicate();
+  /**
+   * Formats buffer content into a string, formatting bytes as space-separated hexadecimal.
+   * BEWARE: Method formats the _whole_ buffer, ignoring position/limit, it is intended for debug/error messages formatting
+   *
+   * @param pageSize if >0 adds '\n' every pageSize bytes, does nothing if pageSize <=0
+   */
+  public static @NotNull String toHexString(@NotNull ByteBuffer buffer,
+                                            int pageSize) {
+    byte[] bytes = new byte[buffer.capacity()];
+    ByteBuffer slice = buffer.duplicate();
+    //don't care about byte-order since we access content byte-by-byte only
     slice.position(0)
       .limit(buffer.capacity());
     slice.get(bytes);
     return toHexString(bytes, pageSize);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes) {
+  public static @NotNull String toHexString(byte[] bytes) {
     return toHexString(bytes, /*pageSize: */-1);
   }
 
-  @NotNull
-  public static String toHexString(final byte[] bytes,
-                                   final int pageSize) {
-    final StringBuilder sb = new StringBuilder(bytes.length * 3);
+  /**
+   * Formats bytes into a string, as space-separated hexadecimals.
+   *
+   * @param pageSize if >0 adds '\n' every pageSize bytes, does nothing if pageSize <=0
+   */
+  public static @NotNull String toHexString(byte[] bytes,
+                                            int pageSize) {
+    StringBuilder sb = new StringBuilder(bytes.length * 3);
     for (int i = 0; i < bytes.length; i++) {
-      final byte b = bytes[i];
-      final int unsignedByte = Byte.toUnsignedInt(b);
-      if (unsignedByte < 16) {//Integer.toHexString format it single-digit, which ruins blocks alignment
+      byte b = bytes[i];
+      int unsignedByte = Byte.toUnsignedInt(b);
+      if (unsignedByte < 16) {//Integer.toHexString formats it as single-digit, which ruins blocks alignment
         sb.append("0");
       }
       sb.append(Integer.toHexString(unsignedByte));
-      if (pageSize > 0 && i % pageSize == pageSize - 1) {
-        sb.append('\n');
-      }
-      else {
-        sb.append(' ');
+      if (i < bytes.length - 1) {
+        if (pageSize > 0 && i % pageSize == pageSize - 1) {
+          sb.append('\n');
+        }
+        else {
+          sb.append(' ');
+        }
       }
     }
     return sb.toString();
   }
 
+  /** Convert 4-chars ascii string into an int32 'magicWord' -- i.e. reserved header value used to identify a file format. */
+  public static int asciiToMagicWord(@NotNull String ascii) {
+    if (ascii.length() != 4) {
+      throw new IllegalArgumentException("ascii[" + ascii + "] must be 4 ASCII chars long");
+    }
+    byte[] bytes = ascii.getBytes(US_ASCII);
+    if (bytes.length != 4) {
+      throw new IllegalArgumentException("ascii bytes [" + toHexString(bytes) + "].length must be 4");
+    }
 
+    return (Byte.toUnsignedInt(bytes[0]) << 24)
+           | (Byte.toUnsignedInt(bytes[1]) << 16)
+           | (Byte.toUnsignedInt(bytes[2]) << 8)
+           | Byte.toUnsignedInt(bytes[3]);
+  }
+
+  public static String magicWordToASCII(int magicWord) {
+    byte[] ascii = new byte[4];
+    ascii[0] = (byte)((magicWord >> 24) & 0xFF);
+    ascii[1] = (byte)((magicWord >> 16) & 0xFF);
+    ascii[2] = (byte)((magicWord >> 8) & 0xFF);
+    ascii[3] = (byte)((magicWord) & 0xFF);
+    return new String(ascii, US_ASCII);
+  }
+
+  /**
+   * Tries to wrap storageToWrap into another storage Out with the wrapperer.
+   * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
+   * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
+   */
+  public static <Out, In extends AutoCloseable, E extends Throwable>
+  Out wrapSafely(@NotNull In storageToWrap,
+                 @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
+    try {
+      return wrapperer.fun(storageToWrap);
+    }
+    catch (Throwable mainEx) {
+      try {
+        if (storageToWrap instanceof Unmappable) {
+          Unmappable unmappable = (Unmappable)storageToWrap;
+          unmappable.closeAndUnsafelyUnmap();
+        }
+        else {
+          storageToWrap.close();
+        }
+      }
+      catch (Throwable closeEx) {
+        mainEx.addSuppressed(closeEx);
+      }
+      throw mainEx;
+    }
+  }
+
+
+  private static final AtomicLong BITS_RESERVED_MEMORY_FIELD;
+
+  static {
+    //RC: counter-intuitively, but Direct ByteBuffers (seems to be) invisible to any public monitoring API.
+    //    E.g. memoryMXBean.getNonHeapMemoryUsage() doesn't count memory occupied by direct ByteBuffers
+    //    -- and neither do others memory-related MX-beans.
+    //    java.nio.Bits.RESERVED_MEMORY is the best way I'm able to find:
+    AtomicLong reservedMemoryCounter = null;
+    try {
+      Class<?> bitsClass = Class.forName("java.nio.Bits");
+      Field reservedMemoryField = bitsClass.getDeclaredField("RESERVED_MEMORY");
+      reservedMemoryField.setAccessible(true);
+      reservedMemoryCounter = (AtomicLong)reservedMemoryField.get(null);
+    }
+    catch (Throwable t) {
+      Logger log = Logger.getInstance(IOUtil.class);
+      if (log.isDebugEnabled()) {
+        log.warn("Can't get java.nio.Bits.RESERVED_MEMORY", t);
+      }
+    }
+
+    BITS_RESERVED_MEMORY_FIELD = reservedMemoryCounter;
+  }
+
+
+  //MAYBE RC: this method + PageCacheUtils.maxDirectMemory() is better to move to some common utility class
+
+  /** @return total size (bytes) of all direct {@link ByteBuffer}s allocated, or -1 if metric is not available */
+  public static long directBuffersTotalAllocatedSize() {
+    if (BITS_RESERVED_MEMORY_FIELD != null) {
+      return BITS_RESERVED_MEMORY_FIELD.get();
+    }
+    else {
+      return -1;
+    }
+  }
 }
+
+

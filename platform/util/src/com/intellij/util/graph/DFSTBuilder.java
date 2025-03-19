@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -19,7 +19,6 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.ToIntFunction;
 
 public final class DFSTBuilder<Node> {
-
   private final @NotNull OutboundSemiGraph<Node> myGraph;
 
   private final ToIntFunction<Node> myNodeToNNumber;
@@ -204,7 +203,7 @@ public final class DFSTBuilder<Node> {
 
         // we have returned to the node
         if (index[i] == -1) {
-          // actually we visit node first time, prepare
+          // actually, we visit node first time, prepare
           index[i] = dfsIndex;
           lowLink[i] = dfsIndex;
           dfsIndex++;
@@ -278,8 +277,7 @@ public final class DFSTBuilder<Node> {
     }
   }
 
-  @NotNull
-  public Comparator<Node> comparator() {
+  public @NotNull Comparator<Node> comparator() {
     return comparator(isAcyclic());
   }
 
@@ -287,8 +285,7 @@ public final class DFSTBuilder<Node> {
    * @param useNNumber if true then a node number in topological ordering will be used for comparison
    *           otherwise a node number in scc topological order will be used
    */
-  @NotNull
-  public Comparator<Node> comparator(boolean useNNumber) {
+  public @NotNull Comparator<Node> comparator(boolean useNNumber) {
     if (useNNumber) {
       if (myNComparator == null) {
         myNComparator = Comparator.comparingInt(myNodeToNNumber);
@@ -303,8 +300,7 @@ public final class DFSTBuilder<Node> {
     }
   }
 
-  @Nullable
-  public Map.Entry<Node, Node> getCircularDependency() {
+  public @Nullable Map.Entry<Node, Node> getCircularDependency() {
     return myBackEdge;
   }
 
@@ -312,13 +308,11 @@ public final class DFSTBuilder<Node> {
     return getCircularDependency() == null;
   }
 
-  @NotNull
-  public Node getNodeByNNumber(final int n) {
+  public @NotNull Node getNodeByNNumber(final int n) {
     return myInvN[n];
   }
 
-  @NotNull
-  public Node getNodeByTNumber(final int n) {
+  public @NotNull Node getNodeByTNumber(final int n) {
     return myInvT[n];
   }
 
@@ -326,22 +320,19 @@ public final class DFSTBuilder<Node> {
    * @return the list containing the number of nodes in strongly connected components.
    * Respective nodes could be obtained via {@link #getNodeByTNumber(int)}.
    */
-  @NotNull
-  public IntList getSCCs() {
+  public @NotNull IntList getSCCs() {
     return mySCCs;
   }
 
-  @NotNull
-  public Collection<Collection<Node>> getComponents() {
+  public @NotNull Collection<Collection<Node>> getComponents() {
     IntList componentSizes = getSCCs();
     if (componentSizes.isEmpty()) {
       return Collections.emptyList();
     }
 
     return new MyCollection<Collection<Node>>(componentSizes.size()) {
-      @NotNull
       @Override
-      public Iterator<Collection<Node>> iterator() {
+      public @NotNull Iterator<Collection<Node>> iterator() {
         return new MyIterator<Collection<Node>>(componentSizes.size()) {
           private int offset;
 
@@ -355,9 +346,8 @@ public final class DFSTBuilder<Node> {
 
             offset += cSize;
             return new MyCollection<Node>(cSize) {
-              @NotNull
               @Override
-              public Iterator<Node> iterator() {
+              public @NotNull Iterator<Node> iterator() {
                 return new MyIterator<Node>(cSize) {
                   @Override
                   public Node get(int i) {

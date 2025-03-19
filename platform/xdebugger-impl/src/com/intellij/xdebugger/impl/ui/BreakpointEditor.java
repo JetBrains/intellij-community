@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public class BreakpointEditor {
   public JPanel getMainPanel() {
     return myMainPanel;
@@ -96,7 +98,7 @@ public class BreakpointEditor {
     };
     doneAction.registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ESCAPE,
                                                                   CommonShortcuts.ENTER,
-                                                                  CommonShortcuts.CTRL_ENTER), myMainPanel);
+                                                                  CommonShortcuts.getCtrlEnter()), myMainPanel);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
   }

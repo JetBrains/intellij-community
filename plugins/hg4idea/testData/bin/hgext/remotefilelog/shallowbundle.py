@@ -4,7 +4,6 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial.node import bin, hex
@@ -14,7 +13,6 @@ from mercurial import (
     error,
     match,
     mdiff,
-    pycompat,
 )
 from . import (
     constants,
@@ -44,7 +42,7 @@ def shallowgroup(cls, self, nodelist, rlog, lookup, units=None, reorder=None):
     nodelist.insert(0, p)
 
     # build deltas
-    for i in pycompat.xrange(len(nodelist) - 1):
+    for i in range(len(nodelist) - 1):
         prev, curr = nodelist[i], nodelist[i + 1]
         linknode = lookup(curr)
         for c in self.nodechunk(rlog, curr, prev, linknode):

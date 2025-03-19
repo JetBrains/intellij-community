@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// FIX: Specify return type explicitly
+
+open class My {
+    protected fun foo(): String = java.lang.String.valueOf(3)
+}

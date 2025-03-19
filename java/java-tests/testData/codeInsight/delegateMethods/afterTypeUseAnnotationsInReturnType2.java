@@ -13,8 +13,7 @@ static class Y implements X {
   X x;
 
     @Override
-    @Foo
-    public Map.@Foo Entry getString() {
+    public @Foo Map.@Foo Entry getString() {
         return x.getString();
     }
 }

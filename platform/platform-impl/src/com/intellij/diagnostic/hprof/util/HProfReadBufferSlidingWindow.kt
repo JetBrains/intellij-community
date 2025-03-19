@@ -19,6 +19,7 @@ import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.util.lang.ByteBufferCleaner
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
+import kotlin.math.min
 
 internal class HProfReadBufferSlidingWindow(private val channel: FileChannel, parser: HProfEventBasedParser) :
   AbstractHProfNavigatorReadBuffer(parser) {
@@ -29,7 +30,7 @@ internal class HProfReadBufferSlidingWindow(private val channel: FileChannel, pa
   private var bufferOffset = 0L
 
   init {
-    buffer = channel.map(FileChannel.MapMode.READ_ONLY, bufferOffset, Math.min(bufferSize, size))
+    buffer = channel.map(FileChannel.MapMode.READ_ONLY, bufferOffset, min(bufferSize, size))
   }
 
   override fun close() {
@@ -48,7 +49,7 @@ internal class HProfReadBufferSlidingWindow(private val channel: FileChannel, pa
   private fun remapBuffer(newPosition: Long) {
     val oldBuffer = buffer
 
-    buffer = channel.map(FileChannel.MapMode.READ_ONLY, newPosition, Math.min(bufferSize, size - newPosition))
+    buffer = channel.map(FileChannel.MapMode.READ_ONLY, newPosition, min(bufferSize, size - newPosition))
     bufferOffset = newPosition
 
     // Force clean up previous buffer
@@ -72,7 +73,7 @@ internal class HProfReadBufferSlidingWindow(private val channel: FileChannel, pa
       var offset = 0
       while (remaining > 0) {
         remapBuffer(position())
-        val bytesToFetch = Math.min(remaining, bufferSize.toInt())
+        val bytesToFetch = min(remaining, bufferSize.toInt())
         buffer.get(bytes, offset, bytesToFetch)
         remaining -= bytesToFetch
         offset += bytesToFetch

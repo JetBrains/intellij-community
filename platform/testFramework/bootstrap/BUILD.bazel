@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.tools.testsBootstrap` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "tools-testsBootstrap",
+  module_name = "intellij.tools.testsBootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "@lib//:junit5Launcher-provided",
+    "@lib//:junit5-provided",
+    "@lib//:junit5Vintage-provided",
+    "@lib//:tc_service_messages",
+    "@lib//:junit5Jupiter-provided",
+    "@lib//:opentest4j",
+  ],
+  runtime_deps = ["//platform/boot"]
+)
+### auto-generated section `build intellij.tools.testsBootstrap` end

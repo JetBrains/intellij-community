@@ -7,7 +7,9 @@ import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CodeVisionInlaySettingProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     if (!Registry.`is`("editor.codeVision.new")) return emptyList()

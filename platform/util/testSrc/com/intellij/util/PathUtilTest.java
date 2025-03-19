@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class PathUtilTest {
   @Test
@@ -153,6 +154,7 @@ public class PathUtilTest {
 
   @Test
   public void comparator() {
+    //noinspection EqualsWithItself
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("", "")).isEqualTo(0);
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("/", "")).isPositive();
     assertThat(OSAgnosticPathUtil.COMPARATOR.compare("", "\\")).isNegative();

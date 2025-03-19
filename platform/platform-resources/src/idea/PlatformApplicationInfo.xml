@@ -2,11 +2,7 @@
   <version codename="Diana" major="8" minor="0M1" eap="true"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_logo.png"/>
-  <about url="/idea_about.png"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
-
-  <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
-
-  <update-urls check="http://www.jetbrains.com/updates/update.xml"
-               download="http://www.jetbrains.com/idea/download/"/>
+  <update-urls check="https://www.jetbrains.com/updates/update.xml"
+               download="https://www.jetbrains.com/idea/download/"/>
 </component>

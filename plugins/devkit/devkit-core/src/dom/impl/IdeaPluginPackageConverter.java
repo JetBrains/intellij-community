@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.daemon.quickFix.CreateClassOrPackageFix;
@@ -21,14 +21,14 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 /**
  * Resolve {@code idea-plugin@package} attribute using:
  * <ol>
- *   <li>with plugin ID/name: project production scope, as main module may not contain any sources itself</li>
- *   <li>no plugin ID: module production scope</li>
+ *   <li>with plugin ID/name: project production scope, as main module may not contain any sources itself and have no dependencies defined</li>
+ *   <li>no plugin ID: module + dependencies production scope</li>
  * </ol>
  */
 public class IdeaPluginPackageConverter extends PsiPackageConverter {
 
   @Override
-  public PsiPackage fromString(@Nullable String s, ConvertContext context) {
+  public PsiPackage fromString(@Nullable String s, @NotNull ConvertContext context) {
     final GlobalSearchScope scope = getResolveScope(context.getInvocationElement());
     if (scope == null) return null;
 
@@ -53,8 +53,7 @@ public class IdeaPluginPackageConverter extends PsiPackageConverter {
     }.getPsiReferences();
   }
 
-  @Nullable
-  private static GlobalSearchScope getResolveScope(DomElement genericDomValue) {
+  private static @Nullable GlobalSearchScope getResolveScope(DomElement genericDomValue) {
     final IdeaPlugin ideaPlugin = genericDomValue.getParentOfType(IdeaPlugin.class, true);
     assert ideaPlugin != null;
 
@@ -65,7 +64,7 @@ public class IdeaPluginPackageConverter extends PsiPackageConverter {
       return GlobalSearchScopesCore.projectProductionScope(module.getProject());
     }
 
-    return module.getModuleScope(false);
+    return module.getModuleWithDependenciesAndLibrariesScope(false);
   }
 
 

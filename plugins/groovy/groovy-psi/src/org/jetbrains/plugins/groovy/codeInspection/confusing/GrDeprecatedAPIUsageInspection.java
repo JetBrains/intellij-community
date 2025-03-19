@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -23,11 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 /**
  * @author Max Medvedev
  */
-public class GrDeprecatedAPIUsageInspection extends BaseInspection {
+public final class GrDeprecatedAPIUsageInspection extends BaseInspection {
 
-  @NotNull
   @Override
-  protected BaseInspectionVisitor buildVisitor() {
+  protected @NotNull BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull GrReferenceExpression ref) {
@@ -76,7 +75,7 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
         }
       }
 
-      private @Nullable PsiElement getResolveElement(GroovyReference reference) {
+      private static @Nullable PsiElement getResolveElement(GroovyReference reference) {
         GroovyResolveResult[] results = reference.multiResolve(false);
         for (GroovyResolveResult result : results) {
           PsiElement element = result.getElement();
@@ -87,7 +86,7 @@ public class GrDeprecatedAPIUsageInspection extends BaseInspection {
         return null;
       }
 
-      private boolean isDeprecated(PsiElement resolved) {
+      private static boolean isDeprecated(PsiElement resolved) {
         if (resolved instanceof PsiDocCommentOwner) {
           return ((PsiDocCommentOwner)resolved).isDeprecated();
         }

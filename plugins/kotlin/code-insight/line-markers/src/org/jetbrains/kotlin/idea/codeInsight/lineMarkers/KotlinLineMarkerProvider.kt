@@ -1,55 +1,51 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
-import com.intellij.codeInsight.daemon.*
+import com.intellij.codeInsight.daemon.DaemonBundle
+import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.NavigateAction
 import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.project.DumbService
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
-import com.intellij.util.containers.toArray
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
+import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.k2.codeinsight.KotlinGoToSuperDeclarationsHandler
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
-import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinClassInheritorsSearch
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
-class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName() = KotlinBundle.message("highlighter.name.kotlin.line.markers")
+class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
 
-    override fun getOptions(): Array<Option> = KotlinLineMarkerOptions.options
-
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
-    override fun collectSlowLineMarkers(elements: MutableList<out PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (elements.isEmpty()) return
-        if (KotlinLineMarkerOptions.options.none { option -> option.isEnabled }) return
-
-        val first = elements.first()
-        if (DumbService.getInstance(first.project).isDumb) return
-
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         for (element in elements) {
             if (!(element is LeafPsiElement && element.elementType == KtTokens.IDENTIFIER)) continue
             val declaration = element.parent as? KtNamedDeclaration ?: continue
@@ -68,8 +64,6 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectCallableOverridings(element: KtCallableDeclaration, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
         if (!element.isOverridable()) {
             return
         }
@@ -77,12 +71,14 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         val klass = element.containingClassOrObject ?: return
         if (klass !is KtClass) return
 
-        if (element.findAllOverridings().firstOrNull() == null) return
+        val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
+        val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
+        if (element.findAllOverridings().firstOrNull() == null &&
+            (element.hasBody() || !isUsedSamInterface(klass))) return
 
         val anchor = element.nameIdentifier ?: element
 
-        val isAbstract = CallableOverridingsTooltip.isAbstract(element, klass)
-        val gutter = if (isAbstract) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
@@ -103,24 +99,21 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectSuperDeclarations(declaration: KtCallableDeclaration, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementingOption.isEnabled || KotlinLineMarkerOptions.overridingOption.isEnabled)) {
-            return
-        }
-
         if (!(declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD) || (declaration.containingFile as KtFile).isCompiled)) {
             return
         }
 
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return
-            if (callableSymbol is KtValueParameterSymbol) {
+            var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return
             }
-            val allOverriddenSymbols = callableSymbol.getAllOverriddenSymbols()
+            val allOverriddenSymbols = callableSymbol.allOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return
-            val implements = callableSymbol is KtSymbolWithModality && callableSymbol.modality != Modality.ABSTRACT &&
-                    allOverriddenSymbols.all { it is KtSymbolWithModality && it.modality == Modality.ABSTRACT }
+            val implements = callableSymbol.modality != KaSymbolModality.ABSTRACT &&
+                    allOverriddenSymbols.all { it.modality == KaSymbolModality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
+            if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
             val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
                 anchor,
@@ -144,17 +137,18 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
     }
 
     private fun collectInheritedClassMarker(element: KtClass, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!(KotlinLineMarkerOptions.implementedOption.isEnabled || KotlinLineMarkerOptions.overriddenOption.isEnabled)) return
-
         if (!element.isInheritable()) {
             return
         }
 
-        if (DirectKotlinClassInheritorsSearch.search(element).findFirst() == null) return
-
         val anchor = element.nameIdentifier ?: element
         val isInterface = element.isInterface()
         val gutter = if (isInterface) KotlinLineMarkerOptions.implementedOption else KotlinLineMarkerOptions.overriddenOption
+        if (!gutter.isEnabled) return
+
+        if (!KotlinFindUsagesSupport.searchInheritors(element, element.useScope, searchDeeply = false).iterator().hasNext() &&
+            !isUsedSamInterface(element)) return
+
         val icon = gutter.icon ?: return
 
         val lineMarkerInfo = InheritanceMergeableLineMarkerInfo(
@@ -177,17 +171,20 @@ class KotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
         result.add(lineMarkerInfo)
     }
 
+    private fun isUsedSamInterface(element: KtClass): Boolean = element.toLightClass()
+        ?.let { aClass -> LambdaUtil.isFunctionalClass(aClass) && ReferencesSearch.search(aClass).findFirst() != null } == true
+
 }
 
 object SuperDeclarationPopupHandler : GutterIconNavigationHandler<PsiElement> {
-    override fun navigate(e: MouseEvent, element: PsiElement) {
-        val declaration = element.getParentOfType<KtDeclaration>(false) ?: return
+    override fun navigate(e: MouseEvent, element: PsiElement?) {
+        val declaration = element?.getParentOfType<KtDeclaration>(false) ?: return
         KotlinGoToSuperDeclarationsHandler.gotoSuperDeclarations(declaration)?.show(RelativePoint(e))
     }
 }
 
 object ImplementationsPopupHandler : InheritorsLineMarkerNavigator() {
-    override fun getMessageForDumbMode() = KotlinBundle.message("notification.navigation.to.overriding.classes")
+    override fun getMessageForDumbMode(): String = KotlinBundle.message("notification.navigation.to.overriding.classes")
 }
 
 private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->
@@ -199,8 +196,13 @@ private fun comparator(): Comparator<PsiElement> = Comparator.comparing { el ->
 object ClassInheritorsTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val ktClass = element.parent as? KtClass ?: return null
-        val inheritors = ktClass.findAllInheritors().take(5).toList().toArray(PsiElement.EMPTY_ARRAY)
-        if (inheritors.isEmpty()) return null
+        var inheritors = KotlinFindUsagesSupport.searchInheritors(ktClass, ktClass.useScope).take(5).toList()
+        if (inheritors.isEmpty()) {
+            inheritors = findFunctionalExpressions(ktClass)
+            if (inheritors.isEmpty()) {
+                return null
+            }
+        }
         val isInterface = ktClass.isInterface()
         if (inheritors.size == 5) {
             return if (isInterface) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("class.is.subclassed.too.many")
@@ -215,12 +217,25 @@ object ClassInheritorsTooltip : Function<PsiElement, String> {
     }
 }
 
+private fun findFunctionalExpressions(ktClass: KtClass): List<PsiElement> {
+    val lightClass = ktClass.toLightClass()
+    if (lightClass != null && LambdaUtil.isFunctionalClass(lightClass)) {
+        return FunctionalExpressionSearch.search(lightClass, ktClass.useScope).asIterable().asSequence().take(5).toList()
+    }
+    return emptyList()
+}
+
 object CallableOverridingsTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         val klass = declaration.containingClassOrObject as? KtClass ?: return null
-        val overridings = declaration.findAllOverridings().take(5).toList()
-        if (overridings.isEmpty()) return null
+        var overridings = KotlinFindUsagesSupport.searchOverriders(declaration, declaration.useScope).take(5).toList()
+        if (overridings.isEmpty()) {
+            overridings = findFunctionalExpressions(klass)
+            if (overridings.isEmpty()) {
+                return null
+            }
+        }
         val isAbstract = isAbstract(declaration, klass)
         if (overridings.size == 5) {
             return if (isAbstract) DaemonBundle.message("method.is.implemented.too.many") else DaemonBundle.message("method.is.overridden.too.many")
@@ -247,17 +262,17 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
         val declaration = element.getParentOfType<KtCallableDeclaration>(false) ?: return null
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
         analyze(declaration) {
-            var callableSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return null
-            if (callableSymbol is KtValueParameterSymbol) {
+            var callableSymbol = declaration.symbol as? KaCallableSymbol ?: return null
+            if (callableSymbol is KaValueParameterSymbol) {
                 callableSymbol = callableSymbol.generatedPrimaryConstructorProperty ?: return null
             }
-            val allOverriddenSymbols = callableSymbol.getDirectlyOverriddenSymbols()
+            val allOverriddenSymbols = callableSymbol.directlyOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return ""
-            val isAbstract = callableSymbol is KtSymbolWithModality && callableSymbol.modality == Modality.ABSTRACT
+            val isAbstract = callableSymbol.modality == KaSymbolModality.ABSTRACT
             val abstracts = hashSetOf<PsiElement>()
             val supers = allOverriddenSymbols.mapNotNull {
                 val superFunction = it.psi
-                if (superFunction != null && it is KtSymbolWithModality && it.modality == Modality.ABSTRACT) {
+                if (superFunction != null && it.modality == KaSymbolModality.ABSTRACT) {
                     abstracts.add(superFunction)
                 }
                 superFunction

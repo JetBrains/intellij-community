@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
@@ -15,14 +17,15 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
+@Deprecated("Use AbstractKotlinInlayHintsProvider instead")
 abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     override val previewText: String? = ""
@@ -177,5 +180,6 @@ internal fun createKtFile(
 }
 
 internal fun refreshHints(project: Project) {
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    DeclarativeInlayHintsPassFactory.resetModificationStamp()
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "KotlinAbstractHintsProviderKt.refreshHints")
 }

@@ -8,3 +8,8 @@ interface Bar {
 class Bar2 : Bar {
     <caret>
 }
+
+// MEMBER: "test(foo: Foo /* = Int */): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.editor.Editor;
@@ -21,11 +22,9 @@ public abstract class GutterContentProvider {
 
   public abstract boolean hasText();
 
-  @Nullable
-  public abstract String getText(int line, @NotNull Editor editor);
+  public abstract @Nullable String getText(int line, @NotNull Editor editor);
 
-  @Nullable
-  public abstract @NlsContexts.Tooltip String getToolTip(int line, @NotNull Editor editor);
+  public abstract @Nullable @NlsContexts.Tooltip String getToolTip(int line, @NotNull Editor editor);
 
   public abstract void doAction(int line, @NotNull Editor editor);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +62,11 @@ public final class UnixProcessManager {
   @ReviseWhenPortedToJDK("9")
   public static int getProcessId(@NotNull Process process) {
     try {
-      if (JavaVersion.current().feature >= 9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+      if (CurrentJavaVersion.currentJavaVersion().feature >= 9 &&
+          ("java.lang.ProcessImpl".equals(process.getClass().getName()) ||
+           "com.pty4j.unix.UnixPtyProcess".equals(process.getClass().getName())
+          )
+      ) {
         return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
       }
       else {
@@ -120,6 +124,9 @@ public final class UnixProcessManager {
   }
 
   public static int sendSignal(int pid, int signal) {
+    if (pid <= 0) {
+      throw new IllegalArgumentException("Invalid PID: " + pid + " (killing all user processes in one shot is prohibited here)");
+    }
     checkCLib();
     return Java8Helper.C_LIB.kill(pid, signal);
   }
@@ -281,7 +288,7 @@ public final class UnixProcessManager {
     }
   }
 
-  private static class ProcessInfo {
+  private static final class ProcessInfo {
     private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {

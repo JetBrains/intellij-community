@@ -25,45 +25,159 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
-  // PY-7420, PY-16419, PY-26417
-  public void testWithSuppressedExceptions() {
-    doTest();
+  // PY-51564
+  public void testWithNotContext() {
+    doTestByText("""
+class NotContext:
+    pass
+
+def no_context():
+    with NotContext():
+        raise ValueError("Something went wrong")
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    """);
   }
 
-  // PY-7420, PY-16419, PY-26417
-  public void testWithNotSuppressedExceptions() {
+  // PY-51564
+  public void testWithContextlibUnittest() {
+    doTestByText("""
+import contextlib
+from contextlib import suppress
+from unittest import TestCase
+
+def cl():
+    with suppress(Exception):
+        raise ValueError("Something went wrong")
+    print("reachable")
+    
+class A(TestCase):
+    def f(self):
+        with self.assertRaises(Exception):
+            raise ValueError("Something went wrong")
+        print("reachable")
+    """);
+  }
+
+  // PY-51564
+  public void testWith() {
     doTestByText(
       """
-        class C(object):
-            def __enter__(self):
-                return self
+class Suppress:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> bool: ...
 
-            def __exit__(self, exc, value, traceback):
-                return False
+class NoSuppress:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> bool | None: ...
 
-        def f1():
-            with C():
-                raise Exception()
-            print(1) #pass
+def sup(b):
+    with Suppress():
+        a = 42
+        raise ValueError("Something went wrong")
+    print("reachable")
+    
+    with Suppress():
+        assert b
+        a = 42
+        assert False
+    print("reachable")
 
-        def g2():
-            raise Exception()
-
-        def f2():
-            with C():
-                return g2()
-            <warning descr="This code is unreachable">print(1) #pass</warning>
-
-        def f3():
-            with C():
-                g2()
-            print(1) #pass"""
+def nosup(b):
+    with NoSuppress():
+        a = 42
+        raise ValueError("Something went wrong")
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    
+    with NoSuppress():
+        assert b
+        a = 42
+        assert False
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+        """
     );
+  }
+
+  // PY-51564
+  public void testMiltipleWith() {
+    doTestByText("""
+import contextlib
+
+@contextlib.contextmanager
+def raising_exception_in_enter(p):
+    if p:
+        raise Exception
+    yield
+
+
+def f():
+    with contextlib.suppress(Exception):
+        return
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+
+def f2(p):
+    with contextlib.suppress(Exception):
+        with raising_exception_in_enter(p):
+            return
+    print("Reachable")
+
+
+def f3(p):
+    with contextlib.suppress(Exception), raising_exception_in_enter(p):
+        return
+    print("Reachable")
+                   """);
+  }
+
+  // PY-51564
+  public void testAsyncWith() {
+    doTestByText("""
+class AsyncSuppress:
+    async def __aenter__(self): ...
+    async def __aexit__(self, exc_type, exc_value, traceback) -> bool: ...
+
+class AsyncNoSuppress:
+    async def __aenter__(self): ...
+    async def __aexit__(self, exc_type, exc_value, traceback) -> bool | None: ...
+
+async def sup(b):
+    async with AsyncSuppress():
+        a = 42
+        raise ValueError("Something went wrong")
+    print("reachable")
+    
+    async with AsyncSuppress():
+        assert b
+        a = 42
+        assert False
+    print("reachable")
+
+async def nosup(b):
+    async with AsyncNoSuppress():
+        a = 42
+        raise ValueError("Something went wrong")
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    
+    async with AsyncNoSuppress():
+        assert b
+        a = 42
+        assert False
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    """);
   }
 
   // PY-25974
   public void testExprOrSysExitAssignedToVar() {
     doTest();
+  }
+
+  public void testWhileTrue() {
+    doTestByText(
+      """
+        while True:
+            pass
+        <warning descr="This code is unreachable">print()</warning>
+        """
+    );
   }
 
   // PY-22184
@@ -76,15 +190,18 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     doTestByText(
       """
         if False:
-            <warning descr="This code is unreachable">a = 1</warning>
+            <warning descr="This code is unreachable">a = 1
+            a1 = 1</warning>
 
         if False:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
         else:
             pass
 
         if False:
-            <warning descr="This code is unreachable">c = 1</warning>
+            <warning descr="This code is unreachable">c = 1
+            c1 = 1</warning>
         elif d:
             pass
         else:
@@ -103,14 +220,17 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         if True:
             pass
         else:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
 
         if True:
             pass
         elif c:
-            <warning descr="This code is unreachable">d = 1</warning>
+            <warning descr="This code is unreachable">d = 1
+            d1 = 1</warning>
         else:
-            <warning descr="This code is unreachable">e = 1</warning>
+            <warning descr="This code is unreachable">e = 1
+            e1 = 1</warning>
         """
     );
   }
@@ -129,7 +249,8 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         elif True:
             pass
         else:
-            <warning descr="This code is unreachable">e = 1</warning>
+            <warning descr="This code is unreachable">e = 1
+            f = 2</warning>
         """
     );
   }
@@ -141,12 +262,14 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
         if c:
             pass
         elif False:
-            <warning descr="This code is unreachable">a = 1</warning>
+            <warning descr="This code is unreachable">a = 1
+            a1 = 1</warning>
 
         if d:
             pass
         elif False:
-            <warning descr="This code is unreachable">b = 1</warning>
+            <warning descr="This code is unreachable">b = 1
+            b1 = 1</warning>
         else:
             pass"""
     );
@@ -219,17 +342,33 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-23859
-  public void testUnreachableCodeReportedAfterSelfFailInClassContainingTestInName() {
+  public void testUnreachableCodeReportedAfterSelfFail() {
     doTest();
   }
 
-  // PY-23859
-  public void testCodeNotReportedAsUnreachableAfterSelfFailInClassNotContainingTestInName() {
+  // PY-24273
+  public void testUnreachableCodeReportedAfterNoReturnFunction() {
     doTest();
   }
 
-  public void testUnreachableCodeReportedAfterPytestFail() {
+  public void testUnreachableCodeReportedAfterNoReturnWithQuotesFunction() {
     doTest();
+  }
+
+  // PY-24273
+  public void testUnreachableCodeReportedAfterImportedNoReturnFunction() {
+    doMultiFileTest();
+  }
+
+  public void testUnreachableCodeReportedNoReturnInClassMember() {
+    doMultiFileTest();
+  }
+
+  // PY-53703
+  public void testUnreachableCodeReportedAfterNever() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTest();
+    });
   }
 
   @NotNull

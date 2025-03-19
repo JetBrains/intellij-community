@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import getpass
 
@@ -44,7 +43,7 @@ class WatchmanNoRoot(Unavailable):
         super(WatchmanNoRoot, self).__init__(msg)
 
 
-class client(object):
+class client:
     def __init__(self, ui, root, timeout=1.0):
         err = None
         if not self._user:
@@ -70,7 +69,7 @@ class client(object):
 
     def getcurrentclock(self):
         result = self.command(b'clock')
-        if not util.safehasattr(result, 'clock'):
+        if not hasattr(result, 'clock'):
             raise Unavailable(
                 b'clock result is missing clock value', invalidate=True
             )

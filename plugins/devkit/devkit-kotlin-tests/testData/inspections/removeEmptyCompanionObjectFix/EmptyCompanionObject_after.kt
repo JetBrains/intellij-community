@@ -1,0 +1,2 @@
+class MyExtensionImpl : MyExtension {
+}

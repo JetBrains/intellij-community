@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.FilePosition;
@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -38,12 +39,11 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
 
   private static final Logger LOG = Logger.getInstance(BaseProjectImportErrorHandler.class);
 
-  @NotNull
   @Override
-  public ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
-                                                      @NotNull Throwable error,
-                                                      @NotNull String projectPath,
-                                                      @Nullable String buildFilePath) {
+  public @NotNull ExternalSystemException getUserFriendlyError(@Nullable BuildEnvironment buildEnvironment,
+                                                               @NotNull Throwable error,
+                                                               @NotNull String projectPath,
+                                                               @Nullable String buildFilePath) {
     GradleExecutionErrorHandler executionErrorHandler = new GradleExecutionErrorHandler(error, projectPath, buildFilePath);
     ExternalSystemException exception = doGetUserFriendlyError(buildEnvironment, error, projectPath, buildFilePath, executionErrorHandler);
     if (!exception.isCauseInitialized()) {
@@ -123,11 +123,22 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     }
 
     if (rootCause instanceof ConnectException) {
-      String msg = rootCauseMessage;
-      if (msg != null && msg.contains("timed out")) {
-        msg += msg.endsWith(".") ? " " : ". ";
-        msg += SET_UP_HTTP_PROXY;
-        return createUserFriendlyError(msg, null);
+      if (rootCauseMessage != null) {
+        if (rootCauseMessage.contains("timed out")) {
+          String msg = rootCauseMessage;
+          msg += msg.endsWith(".") ? " " : ". ";
+          msg += SET_UP_HTTP_PROXY;
+          return createUserFriendlyError(msg, null);
+        }
+        if (rootCauseMessage.toLowerCase(Locale.ROOT).contains("connection refused")) {
+          String errorMessage = error.getMessage();
+          if (errorMessage != null && errorMessage.startsWith("Could not install Gradle distribution")) {
+            String msg = errorMessage;
+            msg += msg.endsWith(".") ? " " : ". ";
+            msg += rootCauseMessage + EMPTY_LINE + "Please ensure the host name is correct. " + SET_UP_HTTP_PROXY;
+            return createUserFriendlyError(msg, null);
+          }
+        }
       }
     }
 
@@ -167,8 +178,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     return createUserFriendlyError(errMessage, location);
   }
 
-  @Nullable
-  private static FilePosition getErrorFilePosition(@Nullable String location) {
+  private static @Nullable FilePosition getErrorFilePosition(@Nullable String location) {
     if (location == null) return null;
     Pair<String, Integer> errorLocation = GradleExecutionErrorHandler.getErrorLocation(location);
     if (errorLocation == null) return null;

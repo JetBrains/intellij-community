@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
@@ -34,8 +34,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     Module module = getValue().getModule();
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
     List<AbstractTreeNode<?>> children = new ArrayList<>();
@@ -47,7 +46,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
           continue;
         }
         final String libraryName = library.getName();
-        if (libraryName == null || libraryName.length() == 0) {
+        if (libraryName == null || libraryName.isEmpty()) {
           addLibraryChildren(libraryOrderEntry, children, getProject(), this);
         }
         else {

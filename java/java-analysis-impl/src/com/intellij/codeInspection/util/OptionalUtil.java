@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.psi.*;
@@ -7,6 +7,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 
@@ -31,9 +32,8 @@ public final class OptionalUtil {
   public static final CallMatcher JDK_OPTIONAL_WRAP_METHOD =
     CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
 
-  @NotNull
   @Contract(pure = true)
-  public static String getOptionalClass(String type) {
+  public static @NotNull String getOptionalClass(String type) {
     return switch (type) {
       case "int" -> OPTIONAL_INT;
       case "long" -> OPTIONAL_LONG;
@@ -42,7 +42,8 @@ public final class OptionalUtil {
     };
   }
 
-  public static boolean isJdkOptionalClassName(String className) {
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isJdkOptionalClassName(@Nullable String className) {
     return JAVA_UTIL_OPTIONAL.equals(className) ||
          OPTIONAL_INT.equals(className) || OPTIONAL_LONG.equals(className) || OPTIONAL_DOUBLE.equals(className);
   }

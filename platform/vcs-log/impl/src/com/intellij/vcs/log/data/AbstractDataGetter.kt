@@ -27,11 +27,11 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     Disposer.register(this, disposableFlag)
   }
 
-  override fun loadCommitsData(commits: List<Int>,
+  override fun loadCommitsData(commits: List<VcsLogCommitStorageIndex>,
                                consumer: Consumer<in List<T>>,
                                errorConsumer: Consumer<in Throwable>,
                                indicator: ProgressIndicator?) {
-    val detailsFromCache = getCommitDataIfAvailable(commits)
+    val detailsFromCache = getCachedData(commits)
     if (detailsFromCache.size == commits.size) {
       // client of this code expect start/stop methods to get called for the provided indicator
       runInCurrentThread(indicator) {
@@ -74,12 +74,12 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
 
   @RequiresBackgroundThread
   @Throws(VcsException::class)
-  fun loadCommitsDataSynchronously(commits: Iterable<Int>,
+  fun loadCommitsDataSynchronously(commits: Iterable<VcsLogCommitStorageIndex>,
                                    indicator: ProgressIndicator,
-                                   consumer: (Int, T) -> Unit) {
+                                   consumer: (VcsLogCommitStorageIndex, T) -> Unit) {
     val toLoad = IntOpenHashSet()
     for (id in commits) {
-      val details = getCommitDataIfAvailable(id)
+      val details = getCachedData(id)
       if (details == null || details is LoadingDetails) {
         toLoad.add(id)
       }
@@ -101,7 +101,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
   @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected open fun doLoadCommitsData(commits: IntSet, consumer: Consumer<in T>) {
-    val hashesGroupedByRoot = commits.mapNotNull { storage.getCommitId(it) }
+    val hashesGroupedByRoot = storage.getCommitIds(commits).values
       .groupBy<CommitId, VirtualFile, @NlsSafe String>({ it.root }) { it.hash.asString() }
 
     for ((root, hashes) in hashesGroupedByRoot) {
@@ -114,9 +114,9 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     }
   }
 
-  protected abstract fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<T>
+  protected abstract fun getCachedData(commits: List<VcsLogCommitStorageIndex>): Int2ObjectMap<T>
 
-  protected abstract fun saveInCache(commit: Int, details: T)
+  protected abstract fun saveInCache(commit: VcsLogCommitStorageIndex, details: T)
 
   protected open fun cacheCommits(commits: IntOpenHashSet) = Unit
 
@@ -153,7 +153,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
     @RequiresBackgroundThread
     @Throws(VcsException::class)
     @JvmStatic
-    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<Int>): List<T> {
+    fun <T : VcsShortCommitDetails> AbstractDataGetter<T>.getCommitDetails(commits: List<VcsLogCommitStorageIndex>): List<T> {
       val commitToDetailsMap = Int2ObjectOpenHashMap<T>()
       loadCommitsDataSynchronously(commits,
                                    ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()) { commitIndex, details ->

@@ -8,10 +8,10 @@ import com.intellij.facet.ui.ValidationResult
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.table.JBTable
-import org.jetbrains.kotlin.compiler.plugin.CliOptionValue
 import org.jetbrains.kotlin.compiler.plugin.parseLegacyPluginOption
 import org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinBaseCompilerConfigurationUiBundle
 import org.jetbrains.kotlin.idea.facet.KotlinFacetConfiguration
+import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
@@ -42,7 +42,7 @@ class KotlinFacetCompilerPluginsTab(
         val pluginInfos: List<PluginInfo> = ArrayList<PluginInfo>().apply {
             parsePluginOptions(configuration)
                 .sortedWith(
-                    Comparator<CliOptionValue> { o1, o2 ->
+                    Comparator { o1, o2 ->
                         var result = o1.pluginId.compareTo(o2.pluginId)
                         if (result == 0) {
                             result = o1.optionName.compareTo(o2.optionName)
@@ -172,7 +172,9 @@ class KotlinFacetCompilerPluginsTab(
     }
 
     override fun apply() {
-        configuration.settings.compilerArguments!!.pluginOptions = optionsByTable.toTypedArray()
+        configuration.settings.updateCompilerArguments {
+            pluginOptions = optionsByTable.toTypedArray()
+        }
     }
 
     override fun disposeUIResources() {

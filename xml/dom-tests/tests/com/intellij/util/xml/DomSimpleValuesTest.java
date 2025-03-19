@@ -505,18 +505,18 @@ public class DomSimpleValuesTest extends DomTestCase {
   public static class CmpFieldConverter extends ResolvingConverter<CmpField> {
 
     @Override
-    public CmpField fromString(String s, ConvertContext context) {
+    public CmpField fromString(String s, @NotNull ConvertContext context) {
       return ElementPresentationManager.findByName(getVariants(context), s);
     }
 
     @Override
-    public String toString(CmpField t, ConvertContext context) {
+    public String toString(CmpField t, @NotNull ConvertContext context) {
       return t == null ? null : t.getName().getValue();
     }
 
     @Override
     @NotNull
-    public Collection<CmpField> getVariants(ConvertContext context) {
+    public Collection<CmpField> getVariants(@NotNull ConvertContext context) {
       final DomElement element = context.getInvocationElement();
       return Arrays.asList(createCmpField(null, element), createCmpField("myField1", element), createCmpField("def", element));
     }
@@ -537,36 +537,36 @@ public class DomSimpleValuesTest extends DomTestCase {
     public int fromStringCalls = 0;
 
     @Override
-    public String fromString(@Nullable @NonNls String s, final ConvertContext context) {
+    public String fromString(@Nullable @NonNls String s, final @NotNull ConvertContext context) {
       fromStringCalls++;
       return s;
     }
 
     @Override
-    public String toString(@Nullable String s, final ConvertContext context) {
+    public String toString(@Nullable String s, final @NotNull ConvertContext context) {
       return s;
     }
   }
 
   public static class FooConverter extends Converter<String> {
     @Override
-    public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
+    public String fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
       return s == null ? null : "foo";
     }
 
     @Override
-    public String toString(@Nullable final String s, final ConvertContext context) {
+    public String toString(@Nullable final String s, final @NotNull ConvertContext context) {
       return s;
     }
   }
   public static class BarConverter extends Converter<String> {
     @Override
-    public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
+    public String fromString(@Nullable @NonNls final String s, final @NotNull ConvertContext context) {
       return s == null ? null : "bar";
     }
 
     @Override
-    public String toString(@Nullable final String s, final ConvertContext context) {
+    public String toString(@Nullable final String s, final @NotNull ConvertContext context) {
       return s;
     }
   }

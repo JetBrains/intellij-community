@@ -63,5 +63,5 @@ abstract class HProfReadBuffer : AutoCloseable {
     return String(bytes)
   }
 
-  fun skip(n: Int) = position(position() + n)
+  fun skip(n: Int): Unit = position(position() + n)
 }

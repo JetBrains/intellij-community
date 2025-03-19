@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.FileTreesPsiReconciliation;
 import static com.intellij.reference.SoftReference.deref;
 import static com.intellij.reference.SoftReference.dereference;
 
@@ -148,7 +149,7 @@ final class FileTrees {
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, () -> ast, null);
+    return new FileTrees(file, null, ast == null ? null : () -> ast, null);
   }
 
   /**
@@ -174,12 +175,17 @@ final class FileTrees {
     try {
       return DebugUtil.performPsiModification("reconcilePsi", () -> {
         if (myRefToPsi != null) {
-          assert myRefToPsi.length == (stubList != null ? stubList.size() : nodeList.size()) : "Cached PSI count doesn't match actual one";
+          assert myRefToPsi.length == (stubList != null ? stubList.size() : nodeList.size())
+            : "Cached PSI count doesn't match actual one. " +
+              "myRefToPsi.length=" + myRefToPsi.length + ", " +
+              "stubList.size=" + (stubList == null ? "null" : stubList.size()) + ", " +
+              "nodeList.size=" + (nodeList == null ? "null" : nodeList.size());
           bindSubstratesToCachedPsi(stubList, nodeList);
         }
 
         if (stubList != null && nodeList != null) {
-          assert stubList.size() == nodeList.size() : "Stub count doesn't match stubbed node length";
+          assert stubList.size() == nodeList.size() : "Stub count (" + stubList.size() + ") doesn't match " +
+                                                      "stubbed node length (" + nodeList.size() + ")";
 
           FileTrees result = switchToSpineRefs(srcSpine);
           bindStubsWithAst(srcSpine, stubList, nodeList, takePsiFromStubs);
@@ -191,7 +197,7 @@ final class FileTrees {
     catch (Throwable e) {
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
       myFile.rebuildStub();
-      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e);
+      throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e, FileTreesPsiReconciliation);
     }
   }
 
@@ -211,7 +217,7 @@ final class FileTrees {
       if (cachedPsi != null) {
         if (stubList != null) {
           // noinspection unchecked
-          ((StubBase)stubList.get(i)).setPsi(cachedPsi);
+          ((StubBase<StubBasedPsiElementBase<?>>)stubList.get(i)).setPsi(cachedPsi);
         }
         if (nodeList != null) {
           nodeList.get(i).setPsi(cachedPsi);
@@ -224,7 +230,7 @@ final class FileTrees {
     for (int i = firstNonFilePsiIndex; i < stubList.size(); i++) {
       StubElement<?> stub = stubList.get(i);
       CompositeElement node = nodeList.get(i);
-      assert stub.getStubType() == node.getElementType() : "Stub type mismatch: " + stub.getStubType() + "!=" + node.getElementType() + " in #" + node.getElementType().getLanguage();
+      assert stub.getElementType() == node.getElementType() : "Stub type mismatch: " + stub.getElementType() + "!=" + node.getElementType() + " in #" + node.getElementType().getLanguage();
 
       PsiElement psi = Objects.requireNonNull(srcSpine.get(i));
       if (takePsiFromStubs) {
@@ -232,7 +238,7 @@ final class FileTrees {
       }
       else {
         //noinspection unchecked
-        ((StubBase)stub).setPsi(psi);
+        ((StubBase<PsiElement>)stub).setPsi(psi);
       }
     }
   }

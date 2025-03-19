@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -25,7 +26,7 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk(JavaVersion.compose(17));
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(23));
   }
 
   @Override
@@ -57,13 +58,69 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
     doTest(LanguageLevel.JDK_17);
   }
 
+  public void testInstanceofWithPrimitives() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorBoolean() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorByte() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestNotExpected(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorChar() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestNotExpected(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorDouble() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorFloat() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorInt() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestNotExpected(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorLong() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorShort() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTestNotExpected(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testDeconstructionWithPrimitives() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitivePattern() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
+  public void testSwitchWithPrimitiveSelectorAndPattern() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+  }
+
   private void doTest(LanguageLevel level) {
+    doTest(level, true);
+  }
+
+  private void doTestNotExpected(LanguageLevel level) {
+    doTest(level, false);
+  }
+
+  private void doTest(LanguageLevel level, boolean expected) {
     configureByFile(getTestName(false) + ".java");
     doHighlighting();
     List<IntentionAction> actions = CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile());
     String message = JavaBundle.message("set.language.level.to.0", level.getPresentableText());
     IntentionAction foundAction = ContainerUtil.find(actions, act -> act.getText().equals(message));
-    if (foundAction == null) {
+    if (foundAction == null && expected) {
       LanguageLevel foundLevel = Stream.of(LanguageLevel.values())
         .filter(l -> ContainerUtil.exists(actions, act -> act.getText()
           .equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))))
@@ -74,7 +131,7 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
         fail("Action " + message + " not found");
       }
     }
-    else {
+    else if(foundAction != null && !expected) {
       String actualPreview = IntentionPreviewPopupUpdateProcessor.getPreviewContent(getProject(), foundAction, getFile(), getEditor());
       JavaVersion javaVersion = level.toJavaVersion();
       String expectedPreview = JavaBundle.message("increase.language.level.preview.description", getModule().getName(), javaVersion);

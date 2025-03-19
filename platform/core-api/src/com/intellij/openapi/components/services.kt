@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
-import kotlinx.coroutines.Deferred
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientKind
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -27,8 +29,17 @@ import org.jetbrains.annotations.ApiStatus
  */
 inline fun <reified T : Any> ComponentManager.service(): T {
   val serviceClass = T::class.java
-  return getService(serviceClass)
-         ?: error("Cannot find service ${serviceClass.name} in $this (classloader=${serviceClass.classLoader}")
+  return getService(serviceClass) ?: throw serviceNotFoundError(serviceClass)
+}
+
+// do not inline it in client code
+@PublishedApi
+internal fun <T : Any> ComponentManager.serviceNotFoundError(serviceClass: Class<T>): IllegalStateException {
+  return IllegalStateException("Cannot find service ${serviceClass.name} (" +
+                               "classloader=${serviceClass.classLoader}, " +
+                               "serviceContainer=$this, " +
+                               "serviceContainerClass=${this::class.java.name}" +
+                               ")")
 }
 
 /**
@@ -52,20 +63,37 @@ inline fun <reified T : Any> ComponentManager.serviceIfCreated(): T? {
  * @see ComponentManager.getServices
  */
 inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): List<T> {
-  return getServices(T::class.java, includeLocal)
+  return getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
-suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): Deferred<T> {
-  return (this as ComponentManagerEx).getServiceAsync(T::class.java)
+suspend inline fun <reified T : Any> serviceAsync(): T {
+  return ApplicationManager.getApplication().serviceAsync()
+}
+
+@ApiStatus.Experimental
+suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
+  return serviceAsync(T::class.java)
+}
+
+@ApiStatus.Experimental
+suspend fun <T : Any> ComponentManager.serviceAsync(keyClass: Class<T>): T {
+  return (this as ComponentManagerEx).getServiceAsync(keyClass)
 }
 
 @ApiStatus.Internal
 interface ComponentManagerEx {
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
+  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     throw AbstractMethodError()
   }
+
+  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
+    throw AbstractMethodError()
+  }
+
+  @ApiStatus.Obsolete
+  @ApiStatus.Internal
+  fun getCoroutineScope(): CoroutineScope
 }

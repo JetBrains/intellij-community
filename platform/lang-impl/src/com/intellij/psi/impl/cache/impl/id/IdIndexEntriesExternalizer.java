@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
@@ -13,29 +13,37 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
-class IdIndexEntriesExternalizer implements DataExternalizer<Collection<IdIndexEntry>> {
+final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<IdIndexEntry>> {
   private static final ThreadLocalCachedIntArray spareBufferLocal = new ThreadLocalCachedIntArray();
 
   @Override
   public void save(@NotNull DataOutput out, @NotNull Collection<IdIndexEntry> value) throws IOException {
     int size = value.size();
-    final int[] values = spareBufferLocal.getBuffer(size);
+    int[] values = spareBufferLocal.getBuffer(size);
     int ptr = 0;
-    for(IdIndexEntry ie:value) {
+    for (IdIndexEntry ie : value) {
       values[ptr++] = ie.getWordHashCode();
     }
-    Arrays.sort(values, 0, size);
+    save(out, values, size);
+  }
+
+  /** BEWARE: idHashes is _modified_ (sorted) during the method call */
+  static void save(@NotNull DataOutput out,
+                   int[] idHashes,
+                   int size) throws IOException {
+    Arrays.sort(idHashes, 0, size);
     DataInputOutputUtil.writeINT(out, size);
     int prev = 0;
-    for(int i = 0; i < size; ++i) {
-      DataInputOutputUtil.writeLONG(out, (long)values[i] - prev);
-      prev = values[i];
+    for (int i = 0; i < size; ++i) {
+      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
+      prev = idHashes[i];
     }
   }
 
   @Override
   public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
     int length = DataInputOutputUtil.readINT(in);
+    //TODO RC: create implementation of List<IdIndexEntry> that stores int[] inside
     ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
     int prev = 0;
     while(length-- > 0) {

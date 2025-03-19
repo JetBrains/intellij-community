@@ -24,7 +24,7 @@ import kotlin.coroutines.resumeWithException
  *   public Object someSuspendingFunction(Params p, Continuation<String> $completion) {
  *     return JavaCoroutines.suspendJava(jc -> {
  *       executeOnPooledThread(() -> {
- *         jc.complete("Hello");
+ *         jc.resume("Hello");
  *       });
  *     }, $completion);
  *   }

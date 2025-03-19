@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.feedback` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "feedback_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "feedback",
+  module_name = "intellij.platform.feedback",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/observable:ide-observable",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinx-datetime-jvm",
+    "//platform/util/xmlDom",
+    "//platform/statistics",
+    "//platform/core-ui",
+    "//platform/platform-impl/internal:ide-internal",
+    "@lib//:jna",
+  ],
+  runtime_deps = [":feedback_resources"]
+)
+### auto-generated section `build intellij.platform.feedback` end

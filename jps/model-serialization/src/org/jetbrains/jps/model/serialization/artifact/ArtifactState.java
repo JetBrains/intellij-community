@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.artifact;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -7,15 +7,17 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 @Tag("artifact")
 public class ArtifactState {
-  @NonNls public static final String NAME_ATTRIBUTE = "name";
+  public static final @NonNls String NAME_ATTRIBUTE = "name";
   private @NlsSafe String myName;
   private String myOutputPath;
   private String myArtifactType = "plain";

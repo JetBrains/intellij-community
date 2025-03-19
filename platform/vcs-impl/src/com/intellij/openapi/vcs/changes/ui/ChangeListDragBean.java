@@ -4,11 +4,13 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public class ChangeListDragBean {
   private final JComponent mySourceComponent;
   private final List<Change> myChanges;

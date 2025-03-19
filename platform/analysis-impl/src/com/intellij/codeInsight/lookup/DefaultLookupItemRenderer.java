@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
@@ -8,12 +9,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.SizedIcon;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
+public final class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
 
   @Override
@@ -26,18 +29,21 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
     presentation.setTypeText(getText3(item), null);
   }
 
-  @Nullable
-  public static Icon getRawIcon(final LookupElement item) {
-    Icon icon = _getRawIcon(item);
-    if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
-    if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight()) {
-      return new SizedIcon(icon, icon.getIconWidth(), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight());
+  public static @Nullable Icon getRawIcon(final LookupElement item) {
+    Icon icon;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-344670, 32126317")) {
+      icon = _getRawIcon(item);
+    }
+    if (icon instanceof ScalableIcon) {
+      icon = ((ScalableIcon)icon).scale(1f);
+    }
+    if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight()) {
+      return new SizedIcon(icon, icon.getIconWidth(), IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight());
     }
     return icon;
   }
 
-  @Nullable
-  private static Icon _getRawIcon(LookupElement item) {
+  private static @Nullable Icon _getRawIcon(LookupElement item) {
     if (item instanceof LookupItem) {
       Icon icon = (Icon)((LookupItem<?>)item).getAttribute(LookupItem.ICON_ATTR);
       if (icon != null) return icon;
@@ -58,8 +64,7 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
 
 
   @SuppressWarnings("deprecation")
-  @Nullable
-  private static String getText3(LookupItem<?> item) {
+  private static @Nullable String getText3(LookupItem<?> item) {
     Object o = item.getObject();
     String text;
     if (o instanceof LookupValueWithUIHint) {
@@ -101,5 +106,4 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
 
     return name;
   }
-
 }

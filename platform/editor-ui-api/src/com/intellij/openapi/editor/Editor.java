@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -12,8 +13,10 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,7 @@ import java.awt.geom.Point2D;
  * <li>{@link #getSelectionModel()}
  * </ul>
  * The appearance of an editor is determined by:
+ * <ul>
  * <li>{@link #getColorsScheme()}
  * <li>{@link #getScrollingModel()}
  * <li>{@link #getSoftWrapModel()}
@@ -349,7 +353,11 @@ public interface Editor extends UserDataHolder {
   /** Returns the project to which the editor is related, if any. */
   @Nullable Project getProject();
 
-  /** Returns the file being edited, if any. */
+  /**
+   * Returns the file being edited, if any. Not necessary matching the {@link #getDocument()}, often <code>null</code>.
+   * <p>
+   * See also {@link com.intellij.openapi.fileEditor.FileDocumentManager#getFile(Document)} as a more reliable alternative.
+   */
   default VirtualFile getVirtualFile() {
     return null;
   }
@@ -408,7 +416,25 @@ public interface Editor extends UserDataHolder {
    */
   default int getAscent() {
     // The actual implementation in EditorImpl is a bit more complex, but this gives an idea of how it's constructed.
-    return (int)(getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
-                 getColorsScheme().getLineSpacing());
+    return ReadAction.compute(() -> (getContentComponent().getFontMetrics(getColorsScheme().getFont(EditorFontType.PLAIN)).getAscent() *
+                                     getColorsScheme().getLineSpacing())).intValue();
+  }
+
+  /**
+   * Computes a range which is visible on screen, i.e., a pair of character offsets first visible/last visible onscreen.
+   * When the entire editor window is visible, returns {@code (0-getDocument().getTextLength())} range.
+   * By default, it retrieves the visible area from the scrolling pane attached to the editor component.
+   * Can only be called from the EDT.
+   */
+  default @NotNull ProperTextRange calculateVisibleRange() {
+    ThreadingAssertions.assertEventDispatchThread();
+    return ReadAction.compute(() -> {
+      Rectangle rect = getScrollingModel().getVisibleArea();
+      LogicalPosition startPosition = xyToLogicalPosition(new Point(rect.x, rect.y));
+      int visibleStart = logicalPositionToOffset(startPosition);
+      LogicalPosition endPosition = xyToLogicalPosition(new Point(rect.x + rect.width, rect.y + rect.height));
+      int visibleEnd = logicalPositionToOffset(new LogicalPosition(endPosition.line + 1, 0));
+      return new ProperTextRange(visibleStart, Math.max(visibleEnd, visibleStart));
+    });
   }
 }

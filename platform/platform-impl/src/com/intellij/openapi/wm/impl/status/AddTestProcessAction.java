@@ -11,9 +11,11 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public class AddTestProcessAction extends AnAction implements DumbAware {
   public AddTestProcessAction() {

@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.application.PathMacroFilter
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.PathMacroManager
-import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
+import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -28,13 +27,11 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
                                                     private val isForbidSensitiveData: Boolean = true,
                                                     private val storageFilePathForDebugPurposes: String? = null) : BaseXmlOutputter(lineSeparator) {
   companion object {
-    @JvmStatic
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager, writer: Writer) {
       createOutputter(project).output(element, writer)
     }
 
-    @JvmStatic
     fun createOutputter(project: ComponentManager): JbXmlOutputter {
       val macroManager = PathMacroManager.getInstance(project)
       return JbXmlOutputter(macroMap = macroManager.replacePathMap, macroFilter = macroManager.macroFilter)
@@ -44,7 +41,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     @Throws(IOException::class)
     fun collapseMacrosAndWrite(element: Element, project: ComponentManager): String {
       val writer = StringWriter()
-      collapseMacrosAndWrite(element, project, writer)
+      collapseMacrosAndWrite(element = element, project = project, writer = writer)
       return writer.toString()
     }
 
@@ -108,7 +105,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   }
 
   /**
-   * This will handle printing of the declaration.
+   * This will handle the printing of the declaration.
    * Assumes XML version 1.0 since we don't directly know.
    *
    * @param out      `Writer` to use.
@@ -182,9 +179,15 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    */
   @Throws(IOException::class)
   fun printElement(out: Writer, element: Element, level: Int) {
+    printElementImpl(out, element, level, macroFilter != null)
+  }
+
+  @Throws(IOException::class)
+  private fun printElementImpl(out: Writer, element: Element, level: Int, substituteMacro: Boolean) {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return
     }
+    val currentSubstituteMacro = substituteMacro && (macroFilter != null && !macroFilter.skipPathMacros(element))
 
     // Print the beginning of the tag plus attributes and any
     // necessary namespace declarations
@@ -192,12 +195,12 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     printQualifiedName(out, element)
 
     if (element.hasAttributes()) {
-      printAttributes(out, element.attributes)
+      printAttributes(out, element.attributes, currentSubstituteMacro)
     }
 
     // depending on the settings (newlines, textNormalize, etc.), we may or may not want to print all the content,
     // so determine the index of the start of the content we're interested in based on the current settings.
-    if (!writeContent(out, element, level)) {
+    if (!writeContent(out, element, level, currentSubstituteMacro)) {
       return
     }
 
@@ -207,7 +210,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
   }
 
   @Throws(IOException::class)
-  protected open fun writeContent(out: Writer, element: Element, level: Int): Boolean {
+  protected open fun writeContent(out: Writer, element: Element, level: Int, substituteMacro: Boolean): Boolean {
     if (isForbidSensitiveData) {
       checkIsElementContainsSensitiveInformation(element)
     }
@@ -227,7 +230,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     if (nextNonText(content, start) < size) {
       // case Mixed Content - normal indentation
       newline(out)
-      printContentRange(out, content, start, size, level + 1)
+      printContentRange(out, content, start, size, level + 1, substituteMacro)
       newline(out)
       indent(out, level)
     }
@@ -251,7 +254,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * @param level   `int` level of indentation.
    */
   @Throws(IOException::class)
-  private fun printContentRange(out: Writer, content: List<Content>, start: Int, end: Int, level: Int) {
+  private fun printContentRange(out: Writer, content: List<Content>, start: Int, end: Int, level: Int, substituteMacro: Boolean) {
     var firstNode: Boolean // Flag for 1st node in content
     var next: Content       // Node we're about to print
     var first: Int
@@ -287,7 +290,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       indent(out, level)
 
       if (next is Element) {
-        printElement(out, next, level)
+        printElementImpl(out, next, level, substituteMacro)
       }
 
       index++
@@ -357,14 +360,14 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
    * @param out        `Writer` to use
    */
   @Throws(IOException::class)
-  private fun printAttributes(out: Writer, attributes: List<Attribute>) {
+  private fun printAttributes(out: Writer, attributes: List<Attribute>, substituteMacro: Boolean) {
     for (attribute in attributes) {
       out.write(' '.code)
       printQualifiedName(out, attribute)
       out.write('='.code)
       out.write('"'.code)
 
-      val value = if (macroMap != null && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
+      val value = if (macroMap != null && substituteMacro && (macroFilter == null || !macroFilter.skipPathMacros(attribute))) {
         macroMap.getAttributeValue(attribute, macroFilter, SystemInfoRt.isFileSystemCaseSensitive, false)
       }
       else {
@@ -460,7 +463,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
 
     if (!shouldCheckElement(element)) return
 
-    if (doesNameSuggestSensitiveInformation(name!!)) {
+    if (doesNameSuggestSensitiveInformation(name!!) && !element.isEmpty) {
       logSensitiveInformationError(name, "Element", element.parentElement)
     }
 
@@ -486,8 +489,8 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
       var parent = parentElement
       while (parent != null) {
         var parentId = parent.name
-        if (parentId == FileStorageCoreUtil.COMPONENT) {
-          val componentName = parent.getAttributeValue(FileStorageCoreUtil.NAME)
+        if (parentId == ComponentStorageUtil.COMPONENT) {
+          val componentName = parent.getAttributeValue(ComponentStorageUtil.NAME)
           if (componentName != null) {
             parentId += "@$componentName"
           }

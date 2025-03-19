@@ -10,12 +10,12 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
 import org.jetbrains.kotlin.psi.*
@@ -44,7 +44,7 @@ class KotlinFirStructureViewElement(
     constructor(
         element: NavigatablePsiElement,
         inheritElement: KtElement,
-        descriptor: KtSymbolPointer<*>,
+        descriptor: KaSymbolPointer<*>,
         isInherited: Boolean,
     ) : this(element = element, ktElement = inheritElement, isInherited = isInherited) {
         if (element !is KtElement) {
@@ -92,7 +92,9 @@ class KotlinFirStructureViewElement(
             else -> emptyList()
         }
 
-        return children.map { KotlinFirStructureViewElement(it, it, isInherited = false) }
+        return children.map {
+            KotlinFirStructureViewElement(it, it, isInherited = false)
+        }
     }
 
     private fun PsiElement.collectLocalDeclarations(): List<KtDeclaration> {
@@ -111,7 +113,7 @@ class KotlinFirStructureViewElement(
         return result
     }
 
-    private fun <T> createSymbolAndThen(modifier: KtAnalysisSession.(KtSymbol) -> T): T? {
+    private fun <T> createSymbolAndThen(modifier: KaSession.(KaSymbol) -> T): T? {
         val element = element
         return when {
             !element.isValid -> null
@@ -120,7 +122,7 @@ class KotlinFirStructureViewElement(
             else -> runReadAction {
                 if (!DumbService.isDumb(element.getProject())) {
                     analyze(element) {
-                        modifier.invoke(this, element.getSymbol())
+                        modifier.invoke(this, element.symbol)
                     }
                 } else {
                     null
@@ -129,19 +131,19 @@ class KotlinFirStructureViewElement(
         }
     }
 
-    class Visibility(symbol: KtSymbol?) {
-        private val visibility: org.jetbrains.kotlin.descriptors.Visibility? = (symbol as? KtSymbolWithVisibility)?.visibility
+    class Visibility(symbol: KaSymbol?) {
+        private val visibility: KaSymbolVisibility? = (symbol as? KaDeclarationSymbol)?.visibility
 
         val isPublic: Boolean
-            get() = visibility == Visibilities.Public
+            get() = visibility == KaSymbolVisibility.PUBLIC
 
         val accessLevel: Int?
-            get() = when {
-                visibility == Visibilities.Public -> 1
-                visibility == Visibilities.Internal -> 2
-                visibility == Visibilities.Protected -> 3
-                visibility?.let { Visibilities.isPrivate(it) } == true -> 4
-                else -> null
+            get() = when (visibility) {
+              KaSymbolVisibility.PUBLIC -> 1
+              KaSymbolVisibility.INTERNAL -> 2
+              KaSymbolVisibility.PROTECTED -> 3
+              KaSymbolVisibility.PRIVATE -> 4
+              else -> null
             }
     }
 }

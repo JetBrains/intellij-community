@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.ide.util.treeView.AlphaComparator;
@@ -6,11 +6,12 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public class SliceTreeBuilder {
+public final class SliceTreeBuilder {
   private final SliceTreeStructure sliceTreeStructure;
   public final boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
@@ -18,7 +19,7 @@ public class SliceTreeBuilder {
 
   public static final Comparator<NodeDescriptor<?>> SLICE_NODE_COMPARATOR = (o1, o2) -> {
     if (!(o1 instanceof SliceNode node1) || !(o2 instanceof SliceNode node2)) {
-      return AlphaComparator.INSTANCE.compare(o1, o2);
+      return AlphaComparator.getInstance().compare(o1, o2);
     }
     SliceUsage usage1 = node1.getValue();
     SliceUsage usage2 = node2.getValue();
@@ -51,7 +52,8 @@ public class SliceTreeBuilder {
     return sliceTreeStructure;
   }
 
-  public SliceRootNode getRootSliceNode() {
+  @Contract(pure = true)
+  public @NotNull SliceRootNode getRootSliceNode() {
     return sliceTreeStructure.getRootElement();
   }
 

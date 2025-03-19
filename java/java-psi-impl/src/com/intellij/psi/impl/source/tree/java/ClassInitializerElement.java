@@ -35,14 +35,14 @@ public class ClassInitializerElement extends CompositeElement implements Constan
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.MODIFIER_LIST:
         return findChildByType(MODIFIER_LIST);
 
       case ChildRole.METHOD_BODY:
         return findChildByType(CODE_BLOCK);
+
+      default:
+        return null;
     }
   }
 

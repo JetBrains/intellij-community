@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.UNIT_SUCCESS
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import java.nio.file.Path
 
@@ -13,7 +14,8 @@ interface ProjectImportingWizardService : BuildSystemWizardService {
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit>
 }
 
@@ -23,6 +25,7 @@ class ProjectImportingWizardServiceImpl : ProjectImportingWizardService, IdeaInd
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ) = UNIT_SUCCESS
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.Strings;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ public final class PathMacrosCollector extends PathMacroMap {
                          PathMacrosImpl.getInstanceEx());
   }
 
+  @ApiStatus.Internal
   public static @NotNull Set<String> getMacroNames(@NotNull Element root, @Nullable PathMacroFilter filter, @NotNull PathMacrosImpl pathMacros) {
     PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter);
@@ -74,7 +76,7 @@ public final class PathMacrosCollector extends PathMacroMap {
       startPos = 0;
     }
     else {
-      for (String protocol : ReplacePathToMacroMap.PROTOCOLS) {
+      for (String protocol : PathMacroProtocolHolder.getProtocols()) {
         if (text.length() > protocol.length() + 4 && text.startsWith(protocol) && text.charAt(protocol.length()) == ':') {
           startPos = protocol.length() + 1;
           if (text.charAt(startPos) == '/') startPos++;

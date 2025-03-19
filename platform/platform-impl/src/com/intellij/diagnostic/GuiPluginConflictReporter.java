@@ -3,13 +3,11 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.errordialog.PluginConflictDialog;
 import com.intellij.ide.plugins.PluginConflictReporter;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 

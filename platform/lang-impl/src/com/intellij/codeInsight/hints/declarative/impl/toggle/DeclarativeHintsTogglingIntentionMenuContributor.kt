@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.toggle
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
@@ -8,12 +8,13 @@ import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parents
 import org.jetbrains.annotations.Nls
 
-class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributor {
+internal class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributor, DumbAware {
   override fun collectActions(hostEditor: Editor,
                               hostFile: PsiFile,
                               intentions: ShowIntentionsPass.IntentionsInfo,
@@ -22,7 +23,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
     val context = Context.gather(hostFile.project, hostEditor, hostFile) ?: return
     for (providerInfo in context.providersToToggle) {
       val action = DeclarativeHintsTogglingIntention(providerInfo.providerId, providerInfo.providerName, providerInfo.providerEnabled)
-      val descriptor = HighlightInfo.IntentionActionDescriptor(action, mutableListOf(), null, null, null, null, HighlightSeverity.INFORMATION)
+      val descriptor = HighlightInfo.IntentionActionDescriptor(action, listOf(), null, null, null, null, HighlightSeverity.INFORMATION, null)
       intentions.intentionsToShow.add(descriptor)
     }
     val settings = DeclarativeInlayHintsSettings.getInstance()
@@ -45,7 +46,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
         DeclarativeHintsTogglingOptionIntention.Mode.EnableProviderAndOption
       }
       val action = DeclarativeHintsTogglingOptionIntention(optionId, providerId, providersWithOption.providerName, optionInfo.name, mode)
-      val descriptor = HighlightInfo.IntentionActionDescriptor(action, mutableListOf(), null, null, null, null, HighlightSeverity.INFORMATION)
+      val descriptor = HighlightInfo.IntentionActionDescriptor(action, listOf(), null, null, null, null, HighlightSeverity.INFORMATION, null)
       intentions.intentionsToShow.add(descriptor)
     }
   }
@@ -59,7 +60,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
     override fun addPresentation(position: InlayPosition,
                                  payloads: List<InlayPayload>?,
                                  tooltip: String?,
-                                 hasBackground: Boolean,
+                                 hintFormat: HintFormat,
                                  builder: PresentationTreeBuilder.() -> Unit) {
       if (currentOptions.isEmpty()) {
         attemptedToAddWithoutOptions = true
@@ -119,7 +120,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
           if (element != null) {
             for (parent in element.parents(true)) {
               for ((collector, sink, providerId, providerName, providerEnabled) in sharedBypassCollectors) {
-                collector.collectFromElement(parent, sink)
+                collector.collectFromElementForActions(parent, sink)
                 if (sink.attemptedToAddWithoutOptions) {
                   providersToToggle.add(ProviderInfo(providerId, providerName, providerEnabled))
                 }

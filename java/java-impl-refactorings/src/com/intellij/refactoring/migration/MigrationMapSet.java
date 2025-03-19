@@ -1,5 +1,5 @@
 
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.migration;
 
 import com.intellij.application.options.CodeStyle;
@@ -32,18 +32,18 @@ public class MigrationMapSet {
   private static final Logger LOG = Logger.getInstance(MigrationMapSet.class);
 
   private ArrayList<MigrationMap> myMaps;
-  @NonNls private static final String MIGRATION_MAP = "migrationMap";
-  @NonNls private static final String ENTRY = "entry";
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String OLD_NAME = "oldName";
-  @NonNls private static final String NEW_NAME = "newName";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String ORDER = "order";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String TYPE = "type";
-  @NonNls private static final String PACKAGE_TYPE = "package";
-  @NonNls private static final String CLASS_TYPE = "class";
-  @NonNls private static final String RECURSIVE = "recursive";
+  private static final @NonNls String MIGRATION_MAP = "migrationMap";
+  private static final @NonNls String ENTRY = "entry";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String OLD_NAME = "oldName";
+  private static final @NonNls String NEW_NAME = "newName";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String ORDER = "order";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String TYPE = "type";
+  private static final @NonNls String PACKAGE_TYPE = "package";
+  private static final @NonNls String CLASS_TYPE = "class";
+  private static final @NonNls String RECURSIVE = "recursive";
 
   public MigrationMapSet() {
   }
@@ -56,8 +56,7 @@ public class MigrationMapSet {
 //    saveMaps();
   }
 
-  @Nullable
-  public synchronized MigrationMap findMigrationMap(@NotNull String name) {
+  public synchronized @Nullable MigrationMap findMigrationMap(@NotNull String name) {
     if (myMaps == null) {
       loadMaps();
     }
@@ -97,8 +96,7 @@ public class MigrationMapSet {
     return ret;
   }
 
-  @Nullable
-  private static File getMapDirectory() {
+  private static @Nullable File getMapDirectory() {
     Path dir = PathManager.getConfigDir().resolve("migration");
     try {
       Files.createDirectories(dir);

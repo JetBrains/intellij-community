@@ -8,15 +8,15 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import kotlin.io.FilesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression.*;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.statement.*;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
@@ -61,6 +61,10 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
 
     public void doTestWithTryCatchExpressionSurrounder(String path) throws Exception {
         doTest(path, new KotlinTryExpressionSurrounder.TryCatch());
+    }
+
+    public void doTestWithTryFinallyExpressionSurrounder(String path) throws Exception {
+        doTest(path, new KotlinTryExpressionSurrounder.TryFinally());
     }
 
     public void doTestWithTryCatchFinallySurrounder(String path) throws Exception {
@@ -113,10 +117,9 @@ public abstract class AbstractSurroundWithTest extends KotlinLightCodeInsightFix
 
         String filePath = path + ".after";
         try {
-            String localPath = FilesKt.toRelativeString(new File(filePath), new File(getTestDataPath()));
+            String localPath = FilesKt.toRelativeString(new File(filePath), getTestDataDirectory());
             myFixture.checkResultByFile(localPath);
-        }
-        catch (FileComparisonFailure fileComparisonFailure) {
+        } catch (FileComparisonFailedError exception) {
             KotlinTestUtils.assertEqualsToFile(new File(filePath), getEditor());
         }
     }

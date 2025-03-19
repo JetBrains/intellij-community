@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -24,10 +24,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 public class ThreadsDebuggerTree extends DebuggerTree {
   private static final Logger LOG = Logger.getInstance(ThreadsDebuggerTree.class);
@@ -64,7 +61,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
     final DebuggerSession.State state = session != null ? session.getState() : DebuggerSession.State.DISPOSED;
     if (ApplicationManager.getApplication().isUnitTestMode() || state == DebuggerSession.State.PAUSED || state == DebuggerSession.State.RUNNING) {
       showMessage(MessageDescriptor.EVALUATING);
-      context.getDebugProcess().getManagerThread().schedule(command);
+      Objects.requireNonNull(context.getManagerThread()).schedule(command);
     }
     else {
       showMessage(session != null ? session.getStateDescription() : JavaDebuggerBundle.message("status.debug.stopped"));
@@ -88,12 +85,13 @@ public class ThreadsDebuggerTree extends DebuggerTree {
       }
       final DebuggerContextImpl context = mySession.getContextManager().getContext();
       final SuspendContextImpl suspendContext = context.getSuspendContext();
-      final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null ? suspendContext.getThread() : null;
+      final ThreadReferenceProxyImpl suspendContextThread = suspendContext != null ? suspendContext.getEventThread() : null;
 
       final boolean showGroups = ThreadsViewSettings.getInstance().SHOW_THREAD_GROUPS;
       try {
         final ThreadReferenceProxyImpl currentThread = ThreadsViewSettings.getInstance().SHOW_CURRENT_THREAD ? suspendContextThread : null;
-        final VirtualMachineProxyImpl vm = debugProcess.getVirtualMachineProxy();
+        @SuppressWarnings("UsagesOfObsoleteApi")
+        final VirtualMachineProxyImpl vm = suspendContext != null ? suspendContext.getVirtualMachineProxy() : debugProcess.getVirtualMachineProxy();
 
         final EvaluationContextImpl evaluationContext = suspendContext != null ? getDebuggerContext().createEvaluationContext() : null;
         final NodeManagerImpl nodeManager = getNodeFactory();
@@ -178,7 +176,7 @@ public class ThreadsDebuggerTree extends DebuggerTree {
         }
 
         private void nodeChanged(DebuggerTreeNodeImpl debuggerTreeNode) {
-          if (pathToThread.size() == 0) {
+          if (pathToThread.isEmpty()) {
             if (debuggerTreeNode.getDescriptor() instanceof ThreadDescriptorImpl && ((ThreadDescriptorImpl)debuggerTreeNode.getDescriptor()).getThreadReference() == thread) {
               removeListener();
               final TreePath treePath = new TreePath(debuggerTreeNode.getPath());

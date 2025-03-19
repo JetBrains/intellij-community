@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.find.findUsages.FindUsagesOptions;
@@ -26,8 +26,8 @@ public final class ThrowSearchUtil {
   }
 
   public static class Root {
-    @NotNull private final PsiElement myElement;
-    @NotNull private final PsiType myType;
+    private final @NotNull PsiElement myElement;
+    private final @NotNull PsiType myType;
     private final boolean isExact;
 
     public Root(@NotNull PsiElement root, @NotNull PsiType type, final boolean exact) {

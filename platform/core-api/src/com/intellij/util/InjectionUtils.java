@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,5 +30,14 @@ public final class InjectionUtils {
   }
   public static boolean shouldCollectLineMarkersForInjectedFiles(@NotNull PsiFile file) {
     return !Boolean.FALSE.equals(file.getUserData(COLLECT_LINE_MARKERS_FOR_INJECTED_FILES));
+  }
+
+  private static final Key<Boolean>
+    DO_POSTPROCESS_FORMATTING_ONLY_FOR_INJECTED_FRAGMENTS = Key.create("create reformatting actions only for PSI elements injected into this host");
+  public static void setFormatOnlyInjectedCode(@NotNull FileViewProvider topLevelViewProvider, boolean enabled) {
+    topLevelViewProvider.putUserData(DO_POSTPROCESS_FORMATTING_ONLY_FOR_INJECTED_FRAGMENTS, enabled);
+  }
+  public static boolean shouldFormatOnlyInjectedCode(@NotNull FileViewProvider topLevelViewProvider) {
+    return Boolean.TRUE.equals(topLevelViewProvider.getUserData(DO_POSTPROCESS_FORMATTING_ONLY_FOR_INJECTED_FRAGMENTS));
   }
 }

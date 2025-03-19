@@ -5,27 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.util.indexing.diagnostic.ScanningType
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-data class JsonProjectIndexingHistoryTimes(
-  val indexingReason: String? = null,
-  val scanningType: ScanningType = ScanningType.FULL,
-  val totalUpdatingTime: JsonDuration = JsonDuration(),
-  val indexingTime: JsonDuration = JsonDuration(),
-  val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
-  val creatingIteratorsTime: JsonDuration = JsonDuration(),
-  val scanFilesTime: JsonDuration = JsonDuration(),
-  val pushPropertiesTime: JsonDuration = JsonDuration(),
-  val indexExtensionsTime: JsonDuration = JsonDuration(),
-  val isAppliedAllValuesSeparately: Boolean = true,
-  val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),
-
-  val updatingStart: JsonDateTime = JsonDateTime(),
-  val updatingEnd: JsonDateTime = JsonDateTime(),
-  val totalSuspendedTime: JsonDuration = JsonDuration(),
-  val wasInterrupted: Boolean = false
-)
-
 sealed interface JsonProjectIndexingActivityHistoryTimes {
   val updatingStart: JsonDateTime
   val updatingEnd: JsonDateTime
@@ -33,7 +12,8 @@ sealed interface JsonProjectIndexingActivityHistoryTimes {
   val wallTimeOnPause: JsonDuration
   val totalWallTimeWithoutPauses: JsonDuration
     get() = JsonDuration(totalWallTimeWithPauses.nano - wallTimeOnPause.nano)
-  val wasInterrupted: Boolean
+  val isCancelled: Boolean
+  val cancellationReason: String?
 
   val dumbModeStart: JsonDateTime?
   val dumbWallTimeWithPauses: JsonDuration
@@ -47,7 +27,11 @@ data class JsonProjectScanningHistoryTimes(
   val scanningType: ScanningType = ScanningType.FULL,
   val scanningId: Long = 0,
   val creatingIteratorsTime: JsonDuration = JsonDuration(),
-  val collectingIndexableFilesTime: JsonDuration = JsonDuration(),
+  val concurrentHandlingWallTimeWithoutPauses: JsonDuration = JsonDuration(),
+  val concurrentHandlingWallTimeWithPauses: JsonDuration = JsonDuration(),
+  val concurrentHandlingSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
+  val concurrentIterationAndScannersApplicationSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
+  val concurrentFileCheckSumOfThreadTimesWithPauses: JsonDuration = JsonDuration(),
   val delayedPushPropertiesStageTime: JsonDuration = JsonDuration(),
   val indexExtensionsTime: JsonDuration = JsonDuration(),
 
@@ -59,7 +43,8 @@ data class JsonProjectScanningHistoryTimes(
   override val updatingEnd: JsonDateTime = JsonDateTime(),
   override val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   override val wallTimeOnPause: JsonDuration = JsonDuration(),
-  override val wasInterrupted: Boolean = false
+  override val isCancelled: Boolean = false,
+  override val cancellationReason: String? = null,
 ) : JsonProjectIndexingActivityHistoryTimes
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -67,15 +52,15 @@ data class JsonProjectScanningHistoryTimes(
 data class JsonProjectDumbIndexingHistoryTimes(
   val scanningIds: Set<Long> = setOf(),
   val contentLoadingVisibleTime: JsonDuration = JsonDuration(),
-  val refreshedFilesScanTime: JsonDuration = JsonDuration(),
-  val isAppliedAllValuesSeparately: Boolean = true,
+  val retrievingChangedDuringIndexingFilesTime: JsonDuration = JsonDuration(),
   val separateApplyingIndexesVisibleTime: JsonDuration = JsonDuration(),
 
   override val updatingStart: JsonDateTime = JsonDateTime(),
   override val updatingEnd: JsonDateTime = JsonDateTime(),
   override val totalWallTimeWithPauses: JsonDuration = JsonDuration(),
   override val wallTimeOnPause: JsonDuration = JsonDuration(),
-  override val wasInterrupted: Boolean = false
+  override val isCancelled: Boolean = false,
+  override val cancellationReason: String? = null,
 ) : JsonProjectIndexingActivityHistoryTimes {
 
   override val dumbModeStart: JsonDateTime

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.starter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "starter",
+  module_name = "intellij.platform.starter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-impl",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/bootstrap",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.platform.starter` end

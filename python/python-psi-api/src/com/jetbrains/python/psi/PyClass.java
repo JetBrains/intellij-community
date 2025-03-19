@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
@@ -23,11 +8,13 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.jetbrains.python.ast.PyAstClass;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,14 +25,16 @@ import java.util.Map;
 /**
  * Represents a class declaration in source.
  */
-public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
-                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors {
+public interface PyClass extends PyAstClass, PsiNameIdentifierOwner, PyCompoundStatement, PyDocStringOwner, StubBasedPsiElement<PyClassStub>,
+                                 ScopeOwner, PyDecoratable, PyTypedElement, PyQualifiedNameOwner, PyStatementListContainer, PyWithAncestors,
+                                 PyTypeParameterListOwner, PyDeprecatable {
   PyClass[] EMPTY_ARRAY = new PyClass[0];
   ArrayFactory<PyClass> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyClass[count];
 
-  @Nullable
-  ASTNode getNameNode();
-
+  @Override
+  default @NotNull PyStatementList getStatementList() {
+    return (PyStatementList)PyAstClass.super.getStatementList();
+  }
 
   /**
    * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.
@@ -74,22 +63,35 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
    * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
    */
-  PyClass @NotNull [] getSuperClasses(@Nullable  TypeEvalContext context);
+  PyClass @NotNull [] getSuperClasses(@Nullable TypeEvalContext context);
 
   /**
    * Returns a PSI element for the super classes list.
    * <p/>
    * Operates at the AST level.
    */
-  @Nullable
-  PyArgumentList getSuperClassExpressionList();
+  @Override
+  default @Nullable PyArgumentList getSuperClassExpressionList() {
+    return (PyArgumentList)PyAstClass.super.getSuperClassExpressionList();
+  }
 
   /**
    * Returns PSI elements for the expressions in the super classes list.
    * <p/>
    * Operates at the AST level.
    */
+  @Override
   PyExpression @NotNull [] getSuperClassExpressions();
+
+
+  /**
+   * Collects methods defined in the class, and its parents.
+   * <p/>
+   * This method does not access AST if the underlying PSI is stub-based.
+   *
+   * @return class methods
+   */
+  PyFunction @NotNull [] getMethodsInherited(@Nullable TypeEvalContext context);
 
   /**
    * Collects methods defined in the class.
@@ -101,7 +103,16 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   PyFunction @NotNull [] getMethods();
 
   /**
-   * Get class properties.
+   * Collects properties defined in the class, and its parents.
+   *
+   * @param context context to be used to resolve ancestors
+   * @return Map [property_name] = [{@link Property}]
+   */
+  @NotNull
+  Map<String, Property> getPropertiesInherited(@Nullable TypeEvalContext context);
+
+  /**
+   * Collects properties defined in the class.
    *
    * @return Map [property_name] = [{@link Property}]
    */
@@ -117,7 +128,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    * @return method with given name or null, prefers implementation over same name overloads.
    */
   @Nullable
-  PyFunction findMethodByName(@Nullable @NonNls final String name, boolean inherited, TypeEvalContext context);
+  PyFunction findMethodByName(final @Nullable @NonNls String name, boolean inherited, TypeEvalContext context);
 
   /**
    * Finds a method with the given name and all its overloads.
@@ -160,8 +171,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   /**
    * Finds a property with the specified name in the class or one of its ancestors.
    *
-   * @param name      of the property
-   * @param context   type eval (null to use loose context, but you better provide one)
+   * @param name    of the property
+   * @param context type eval (null to use loose context, but you better provide one)
    * @return descriptor of property accessors, or null if such property does not exist.
    */
   @Nullable
@@ -196,14 +207,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    */
   List<PyTargetExpression> getClassAttributes();
 
-
   /**
    * Returns all class attributes this class class contains, including inherited one.
    * Process may be heavy, depending or your context.
    *
    * @param context context to use for this process
    * @return list of attrs.
-   *
+   * <p>
    * TODO: Replace it and {@link #getClassAttributes()} with a single getClassAttributes(@NotNull TypeEvalContext context, boolean inherited)
    */
   @NotNull
@@ -256,7 +266,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   /**
    * @return True iff this and parent are the same or parent is one of our superclasses.
    */
-  boolean isSubclass(PyClass parent, @Nullable  TypeEvalContext context);
+  boolean isSubclass(PyClass parent, @Nullable TypeEvalContext context);
 
   boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
@@ -283,11 +293,21 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
   @Nullable
   List<String> getOwnSlots();
 
-  @Override
-  @Nullable
-  String getDocStringValue();
-
+  /**
+   * Process all declarations appearing at the syntactic level of this class' body, in particular class attributes, both
+   * assignments and type declarations, methods, and nested classes.
+   */
   boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
+
+  /**
+   * Process all definitions that can be accessed as attributes of this class.
+   * These include immediate class-level declarations scanned by {@link #processClassLevelDeclarations(PsiScopeProcessor)} and class
+   * object's attributes initialized in methods decorated with {@code @classmethod}.
+   */
+  @ApiStatus.Internal
+  default boolean processClassObjectAttributes(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location) {
+    return processClassLevelDeclarations(processor);
+  }
 
   boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PsiElement location);
 
@@ -325,8 +345,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    * If several candidates are found, the most-derived one (the lowest one in the hierarchy) is returned,
    * and if it cannot be deduced, {@code type} is used as the fallback value.
    */
-  @Nullable
-  default PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
+  default @Nullable PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
     return ObjectUtils.tryCast(getMetaClassType(context), PyClassLikeType.class);
   }
 
@@ -344,4 +363,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyCompoundStatement, Py
    */
   @Nullable
   PyClassLikeType getType(@NotNull TypeEvalContext context);
+
+  @Override
+  default @Nullable PyStringLiteralExpression getDocStringExpression() {
+    return (PyStringLiteralExpression)PyAstClass.super.getDocStringExpression();
+  }
 }

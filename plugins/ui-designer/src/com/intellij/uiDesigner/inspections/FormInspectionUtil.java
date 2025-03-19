@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.inspections;
 
 import com.intellij.openapi.module.Module;
@@ -38,7 +38,7 @@ public final class FormInspectionUtil {
     return false;
   }
 
-  @Nullable public static String getText(@NotNull final Module module, final IComponent component) {
+  public static @Nullable String getText(final @NotNull Module module, final IComponent component) {
     IProperty textProperty = findProperty(component, SwingProperties.TEXT);
     if (textProperty != null) {
       Object propValue = textProperty.getPropertyValue(component);
@@ -61,8 +61,7 @@ public final class FormInspectionUtil {
     return null;
   }
 
-  @Nullable
-  public static IProperty findProperty(@NotNull IComponent component, final String name) {
+  public static @Nullable IProperty findProperty(@NotNull IComponent component, final String name) {
     IProperty[] props = component.getModifiedProperties();
     for(IProperty prop: props) {
       if (prop.getName().equals(name)) return prop;

@@ -51,7 +51,7 @@
       langType: "string",
      },
      complete: true,
-     description: "<p>The cool directive</p>",
+     description: "<p>The cool directive",
      priority: NORMAL,
      segments: [
       {
@@ -66,13 +66,14 @@
    },
    {
     name-part: "foo",
+    display-name: "argument",
     matchScore: 0,
     symbol: {
      matchedName: "html/argument/<pattern>",
      name: "Vue directive argument",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>Cool argument</p>",
+     description: "<p>Cool argument",
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -93,7 +94,7 @@
      matchedName: "html/modifiers/foo",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>Foo is cool</p>",
+     description: "<p>Foo is cool",
      docUrl: "http://cool.foo",
      priority: NORMAL,
      segments: [
@@ -109,13 +110,14 @@
    },
    {
     name-part: "ba456",
+    display-name: "modifier",
     matchScore: 2,
     symbol: {
      matchedName: "html/modifiers/<pattern>",
      name: "ba###",
      origin: "test-lib@2.0.0-rc.24 (vue)",
      complete: true,
-     description: "<p>Bar is pattern with static prefix</p>",
+     description: "<p>Bar is pattern with static prefix",
      docUrl: "http://cool.bar",
      priority: NORMAL,
      has-pattern: true,

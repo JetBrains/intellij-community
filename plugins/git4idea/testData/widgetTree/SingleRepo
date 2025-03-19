@@ -1,0 +1,27 @@
+-Update Project...
+-Commit…
+-Push…
+------
+-New Branch…
+-Checkout Tag or Revision…
+------
+-Recent
+ another-branch
+-Local
+ another-branch
+ master
+ -another
+  -group
+   test
+ -group
+  test
+ test
+-Remote
+ -origin
+  master
+  -another
+   -group
+    test
+  -group
+   test
+  test

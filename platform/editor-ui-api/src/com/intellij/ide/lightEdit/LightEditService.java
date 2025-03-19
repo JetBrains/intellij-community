@@ -15,11 +15,10 @@ import java.util.Collection;
 
 @ApiStatus.Experimental
 public interface LightEditService {
-  String WINDOW_NAME = "LightEdit";
 
-  boolean isLightEditEnabled();
-
-  boolean isForceOpenInLightEditMode();
+  static @NotNull String getWindowName() {
+    return "LightEdit";
+  }
 
   static LightEditService getInstance() {
     return ApplicationManager.getApplication().getService(LightEditService.class);
@@ -77,4 +76,8 @@ public interface LightEditService {
    * @return True if Project mode is preferred without a confirmation.
    */
   boolean isPreferProjectMode();
+
+  boolean isLightEditEnabled();
+
+  boolean isForceOpenInLightEditMode();
 }

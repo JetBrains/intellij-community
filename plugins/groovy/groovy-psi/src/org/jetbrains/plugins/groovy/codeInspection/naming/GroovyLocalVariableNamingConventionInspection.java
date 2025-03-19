@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
-public class GroovyLocalVariableNamingConventionInspection extends ConventionInspection {
+public final class GroovyLocalVariableNamingConventionInspection extends ConventionInspection {
 
   private static final int DEFAULT_MIN_LENGTH = 4;
   private static final int DEFAULT_MAX_LENGTH = 32;
@@ -43,8 +43,7 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
   }
 
   @Override
-  @NotNull
-  public String buildErrorString(Object... args) {
+  public @NotNull String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
       return GroovyBundle.message("inspection.message.local.variable.name.ref.too.short");
@@ -69,9 +68,8 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
     return DEFAULT_MAX_LENGTH;
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new NamingConventionsVisitor();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,6 +35,7 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                     File:idea-plugin
                       Element:idea-plugin
                         Attribute:package:idea.plugin.package
+                        Attribute:implementation-detail:true
                         Element:id:com.intellij.myPlugin
                         Element:name:pluginName
                         Element:depends:anotherPlugin

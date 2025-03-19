@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.markdown.utils` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "markdown-utils",
+  module_name = "intellij.platform.markdown.utils",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-markdown",
+    "//platform/lang-impl",
+  ]
+)
+
+jvm_library(
+  name = "markdown-utils_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":markdown-utils"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util:util-ui",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-markdown",
+    "@lib//:junit4",
+    "@lib//:kotlin-test",
+    "//platform/lang-impl",
+  ]
+)
+
+jvm_test(
+  name = "markdown-utils_test",
+  runtime_deps = [":markdown-utils_test_lib"]
+)
+### auto-generated section `build intellij.platform.markdown.utils` end

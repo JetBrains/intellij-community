@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.slicer
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -28,11 +27,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-sealed class KotlinUsageContextDataFlowPanelBase(
-    project: Project,
-    presentation: UsageViewPresentation,
-    private val isInflow: Boolean
-) : UsageContextPanelBase(project, presentation) {
+sealed class KotlinUsageContextDataFlowPanelBase(presentation: UsageViewPresentation, private val isInflow: Boolean)
+    : UsageContextPanelBase(presentation) {
     private var panel: JPanel? = null
 
     abstract class ProviderBase : UsageContextPanel.Provider {
@@ -52,12 +48,13 @@ sealed class KotlinUsageContextDataFlowPanelBase(
     }
 
     protected fun createPanel(element: PsiElement, dataFlowToThis: Boolean): JPanel {
-        val toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.FIND) ?: error("Can't find ToolWindowId.FIND")
+        val project = element.project
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.FIND) ?: error("Can't find ToolWindowId.FIND")
         val params = createParams(element)
 
-        val rootNode = SliceRootNode(myProject, DuplicateMap(), KotlinSliceUsage(element, params))
+        val rootNode = SliceRootNode(project, DuplicateMap(), KotlinSliceUsage(element, params))
 
-        return object : SlicePanel(myProject, dataFlowToThis, rootNode, false, toolWindow) {
+        return object : SlicePanel(project, dataFlowToThis, rootNode, false, toolWindow) {
             override fun isToShowAutoScrollButton() = false
 
             override fun isToShowPreviewButton() = false
@@ -98,26 +95,22 @@ sealed class KotlinUsageContextDataFlowPanelBase(
     }
 }
 
-class KotlinUsageContextDataInflowPanel(
-    project: Project,
-    presentation: UsageViewPresentation
-) : KotlinUsageContextDataFlowPanelBase(project, presentation, true) {
+class KotlinUsageContextDataInflowPanel(presentation: UsageViewPresentation)
+    : KotlinUsageContextDataFlowPanelBase(presentation, true) {
     class Provider : ProviderBase() {
         override fun create(usageView: UsageView): UsageContextPanel {
-            return KotlinUsageContextDataInflowPanel((usageView as UsageViewImpl).project, usageView.getPresentation())
+            return KotlinUsageContextDataInflowPanel(usageView.getPresentation())
         }
 
         override fun getTabTitle() = KotlinBundle.message("slicer.title.dataflow.to.here")
     }
 }
 
-class KotlinUsageContextDataOutflowPanel(
-    project: Project,
-    presentation: UsageViewPresentation
-) : KotlinUsageContextDataFlowPanelBase(project, presentation, false) {
+class KotlinUsageContextDataOutflowPanel(presentation: UsageViewPresentation)
+    : KotlinUsageContextDataFlowPanelBase(presentation, false) {
     class Provider : ProviderBase() {
         override fun create(usageView: UsageView): UsageContextPanel {
-            return KotlinUsageContextDataOutflowPanel((usageView as UsageViewImpl).project, usageView.getPresentation())
+            return KotlinUsageContextDataOutflowPanel(usageView.getPresentation())
         }
 
         override fun getTabTitle() = KotlinBundle.message("slicer.title.dataflow.from.here")

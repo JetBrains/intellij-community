@@ -6,8 +6,8 @@ import java.net.http.HttpRequest
 open class CommonHeadersConfigurer : HttpRequestConfigurer {
 
   protected open val commonHeaders: Map<String, String> =
-    mapOf("Accept-Encoding" to "gzip",
-          "User-Agent" to "JetBrains IDE")
+    mapOf(HttpClientUtil.ACCEPT_ENCODING_HEADER to HttpClientUtil.CONTENT_ENCODING_GZIP,
+          HttpClientUtil.USER_AGENT_HEADER to "JetBrains IDE")
 
   final override fun configure(builder: HttpRequest.Builder): HttpRequest.Builder = builder
     .apply { commonHeaders.forEach(::header) }

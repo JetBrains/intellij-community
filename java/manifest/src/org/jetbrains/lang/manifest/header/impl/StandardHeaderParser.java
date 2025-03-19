@@ -58,9 +58,8 @@ public class StandardHeaderParser implements HeaderParser {
     return false;
   }
 
-  @Nullable
   @Override
-  public Object getConvertedValue(@NotNull Header header) {
+  public @Nullable Object getConvertedValue(@NotNull Header header) {
     HeaderValue value = header.getHeaderValue();
     return value != null ? value.getUnwrappedText() : null;
   }

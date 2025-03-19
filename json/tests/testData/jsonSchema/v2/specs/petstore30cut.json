@@ -1,0 +1,14 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "pleaseremoveme": {
+      "get": {
+        "parameters": [
+          {
+            "name": "limit"
+          }
+        ]
+      }
+    }
+  }
+}

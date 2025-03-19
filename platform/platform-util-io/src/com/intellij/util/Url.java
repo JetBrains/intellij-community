@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,7 @@ public interface Url {
 
   @NotNull Url trimParameters();
 
+  @ApiStatus.OverrideOnly
   int hashCodeCaseInsensitive();
 
   @NotNull Url resolve(@NotNull String subPath);
@@ -50,6 +52,5 @@ public interface Url {
   @Contract(pure = true)
   @NotNull Url addParameters(@NotNull Map<String, String> parameters);
 
-  @NotNull
-  default Url removeParameter(String name) { return this; } 
+  default @NotNull Url removeParameter(String name) { return this; }
 }

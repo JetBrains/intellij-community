@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
@@ -51,8 +51,7 @@ public interface ModifiableModuleModel {
    * in a project XML file. When IDE closes, all non-persistent modules vanishes out.
    */
   @ApiStatus.Experimental
-  @NotNull
-  default Module newNonPersistentModule(@NotNull String moduleName, @NotNull String moduleTypeId) {
+  default @NotNull Module newNonPersistentModule(@NotNull String moduleName, @NotNull String moduleTypeId) {
     throw new UnsupportedOperationException();
   }
 

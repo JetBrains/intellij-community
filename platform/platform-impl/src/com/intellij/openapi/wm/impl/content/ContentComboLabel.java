@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -66,14 +66,19 @@ final class ContentComboLabel extends ContentLabel {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       if (findHoveredIcon() != null) return;
 
-      if (UIUtil.isActionClick(e)) {
+      if (UIUtil.isActionClick(e) && isToDrawCombo()) {
         ToolWindowContentUi.toggleContentPopup(myUi, myUi.getContentManager());
       }
     }
   }
 
   void update() {
-    setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
+    if (isToDrawCombo()) {
+      myBorder.setBorderInsets(0, JBUI.scale(8), 0, JBUI.scale(8));
+    }
+    else {
+      myBorder.setBorderInsets(0, 0, 0, 0);
+    }
     updateTextAndIcon(getContent(), true, ExperimentalUI.isNewUI());
     updateAdditionalActions();
   }
@@ -99,16 +104,20 @@ final class ContentComboLabel extends ContentLabel {
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
+    int iconsGap = JBUI.scale(ICONS_GAP);
     if (!isPreferredSizeSet() && isToDrawCombo()) {
-      if (hasActiveIcons()) size.width -= ICONS_GAP;
+      if (hasActiveIcons()) size.width -= iconsGap;
       myComboIconPoint.x = size.width;
       size.width += myComboIcon.getIconWidth();
     }
 
     if (ExperimentalUI.isNewUI()) {
-      setBorder(myLayout.shouldShowId()
-                ? JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, ICONS_GAP)
-                : JBUI.Borders.empty(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, ICONS_GAP));
+      if (myLayout.shouldShowId()) {
+        myBorder.setBorderInsets(0, JBUI.CurrentTheme.ToolWindow.headerTabLeftRightInsets().left, 0, iconsGap);
+      }
+      else {
+        myBorder.setBorderInsets(0, JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets().left, 0, iconsGap);
+      }
     }
 
     return size;
@@ -141,9 +150,8 @@ final class ContentComboLabel extends ContentLabel {
     }
   }
 
-  @Nullable
   @Override
-  public Content getContent() {
+  public @Nullable Content getContent() {
     return myUi.getContentManager().getSelectedContent();
   }
 

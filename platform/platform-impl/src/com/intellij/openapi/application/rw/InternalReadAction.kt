@@ -4,8 +4,11 @@ package com.intellij.openapi.application.rw
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.isLockStoredInContext
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -28,17 +31,29 @@ internal class InternalReadAction<T>(
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
-        return blockingContext(action)
+        return blockingContext {
+          // To copy permit from context to thread local
+          ReadAction.compute<T, Throwable>(action)
+        }
       }
       coroutineScope {
         readLoop()
       }
     }
     else {
-      withContext(Dispatchers.Default) {
-        check(!application.isReadAccessAllowed) {
-          "This thread unexpectedly holds the read lock"
+      // Third condition is check for lock consistency
+      if (isLockStoredInContext && application.isParallelizedReadAction(currentCoroutineContext()) && application.isReadAccessAllowed) {
+        val unsatisfiedConstraint = findUnsatisfiedConstraint()
+        check(unsatisfiedConstraint == null) {
+          "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
         }
+        return withContext(Dispatchers.Default) {
+          // To copy permit from context to thread local
+          ReadAction.compute<T, Throwable>(action)
+        }
+      }
+      withContext(Dispatchers.Default) {
+        application.assertReadAccessNotAllowed()
         readLoop()
       }
     }
@@ -62,7 +77,7 @@ internal class InternalReadAction<T>(
       }
       when (val readResult = tryReadAction()) {
         is ReadResult.Successful -> return readResult.value
-        is ReadResult.UnsatisfiedConstraint -> readResult.waitForConstraint.join()
+        is ReadResult.UnsatisfiedConstraint -> readResult.constraint.awaitConstraint()
         is ReadResult.WritePending -> Unit // retry
       }
     }
@@ -78,11 +93,10 @@ internal class InternalReadAction<T>(
   }
 
   private suspend fun tryReadBlocking(): ReadResult<T> {
-    val loopJob = currentCoroutineContext().job
     return blockingContext {
       var result: ReadResult<T>? = null
       application.tryRunReadAction {
-        result = insideReadAction(loopJob)
+        result = insideReadAction()
       }
       result ?: ReadResult.WritePending
     }
@@ -90,29 +104,28 @@ internal class InternalReadAction<T>(
 
   private suspend fun tryReadCancellable(): ReadResult<T> = try {
     val ctx = currentCoroutineContext()
-    val loopJob = ctx.job
     cancellableReadActionInternal(ctx) {
-      insideReadAction(loopJob)
+      insideReadAction()
     }
   }
-  catch (readCe: ReadCancellationException) {
+  catch (readCe: CannotReadException) {
     ReadResult.WritePending
   }
 
-  private fun insideReadAction(loopJob: Job): ReadResult<T> {
+  private fun insideReadAction(): ReadResult<T> {
     val unsatisfiedConstraint = findUnsatisfiedConstraint()
     return if (unsatisfiedConstraint == null) {
       ReadResult.Successful(action())
     }
     else {
-      ReadResult.UnsatisfiedConstraint(waitForConstraint(loopJob, unsatisfiedConstraint))
+      ReadResult.UnsatisfiedConstraint(unsatisfiedConstraint)
     }
   }
 }
 
 private sealed class ReadResult<out T> {
   class Successful<T>(val value: T) : ReadResult<T>()
-  class UnsatisfiedConstraint(val waitForConstraint: Job) : ReadResult<Nothing>()
+  class UnsatisfiedConstraint(val constraint: ReadConstraint) : ReadResult<Nothing>()
   object WritePending : ReadResult<Nothing>()
 }
 
@@ -130,16 +143,7 @@ private suspend fun yieldToPendingWriteActions() {
   }
 }
 
-private fun waitForConstraint(loopJob: Job, constraint: ReadConstraint): Job {
-  return CoroutineScope(loopJob).launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
-    check(ApplicationManager.getApplication().isReadAccessAllowed) // schedule while holding read lock
-    yieldUntilRun(constraint::schedule)
-    check(constraint.isSatisfied())
-    // Job is finished, readLoop may continue the next attempt
-  }
-}
-
-private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
+internal suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
   suspendCancellableCoroutine { continuation ->
     schedule(ResumeContinuationRunnable(continuation))
   }

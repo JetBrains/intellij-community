@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
@@ -13,8 +13,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.Interner;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,10 +22,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class InspectionViewSuppressActionHolder {
   private final Map<String, Map<ContextDescriptor, SuppressIntentionAction[]>> mySuppressActions =
     FactoryMap.create(__ -> new HashMap<>());
-  private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = new HashSetInterner<>();
+  private final Interner<Set<SuppressIntentionAction>> myActionSetInterner = Interner.createInterner();
 
   public synchronized SuppressIntentionAction @NotNull [] getSuppressActions(@NotNull InspectionToolWrapper wrapper, @NotNull PsiElement context) {
     ContextDescriptor descriptor = ContextDescriptor.from(context);
@@ -44,8 +45,7 @@ public final class InspectionViewSuppressActionHolder {
     });
   }
 
-  @NotNull
-  public synchronized Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
+  public synchronized @NotNull Set<SuppressIntentionAction> getSuppressActions(@NotNull InspectionToolWrapper wrapper) {
     return mySuppressActions.get(wrapper.getShortName()).values().stream().flatMap(Arrays::stream).collect(Collectors.toSet());
   }
 
@@ -56,14 +56,10 @@ public final class InspectionViewSuppressActionHolder {
   }
 
   private static final class ContextDescriptor {
-    @NotNull
-    private final Language myElementLanguage;
-    @NotNull
-    private final Language myFileBaseLanguage;
-    @NotNull
-    private final Set<Language> myFileLanguages;
-    @Nullable
-    private final ContextDescriptor myInjectionDescriptor;
+    private final @NotNull Language myElementLanguage;
+    private final @NotNull Language myFileBaseLanguage;
+    private final @NotNull Set<Language> myFileLanguages;
+    private final @Nullable ContextDescriptor myInjectionDescriptor;
 
     private static ContextDescriptor from(@NotNull PsiElement element) {
       return from(element, true);

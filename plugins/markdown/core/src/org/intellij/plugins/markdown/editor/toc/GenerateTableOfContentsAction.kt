@@ -10,13 +10,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.psi.util.siblings
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.*
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction.Manager.replaceString
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -32,12 +28,12 @@ internal class GenerateTableOfContentsAction: AnAction() {
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val file = event.getRequiredData(CommonDataKeys.PSI_FILE) as MarkdownFile
-    val editor = event.getRequiredData(CommonDataKeys.EDITOR)
-    val content = obtainToc(file)
+    val file = event.getData(CommonDataKeys.PSI_FILE) as? MarkdownFile ?: return
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+    val content = Manager.obtainToc(file)
     val caretOffset = editor.caretModel.primaryCaret.offset
     val project = event.getData(CommonDataKeys.PROJECT)
-    val existingRanges = findExistingTocs(file).toList()
+    val existingRanges = Manager.findExistingTocs(file).toList()
     runWriteAction {
       executeCommand(project) {
         val document = editor.document
@@ -56,7 +52,7 @@ internal class GenerateTableOfContentsAction: AnAction() {
       event.presentation.isEnabled = false
       return
     }
-    if (findExistingTocs(file).any()) {
+    if (Manager.findExistingTocs(file).any()) {
       event.presentation.text = MarkdownBundle.message("action.Markdown.GenerateTableOfContents.update.text")
     }
   }
@@ -65,11 +61,11 @@ internal class GenerateTableOfContentsAction: AnAction() {
     return ActionUpdateThread.BGT
   }
 
-  companion object {
+  object Manager {
     @NlsSafe
     private const val sectionDelimiter = "<!-- TOC -->"
 
-    private fun Document.replaceString(range: TextRange, replacement: String) {
+    internal fun Document.replaceString(range: TextRange, replacement: String) {
       replaceString(range.startOffset, range.endOffset, replacement)
     }
 

@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class TerminalConsoleContentHelper implements Disposable {
+final class TerminalConsoleContentHelper implements Disposable {
 
   private static final int FLUSH_TIMEOUT = 200;
 
@@ -44,7 +44,7 @@ class TerminalConsoleContentHelper implements Disposable {
     }
   }
 
-  private void flush() {
+  void flush() {
     if (myDisposed) return;
     myRequested.set(false);
     List<Pair<String, ConsoleViewContentType>> textChunks = new ArrayList<>(myTextChunks.size());

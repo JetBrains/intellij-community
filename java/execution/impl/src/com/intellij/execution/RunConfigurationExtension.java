@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configuration.RunConfigurationExtensionBase;
@@ -81,9 +81,11 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
 
   /**
    * Enhances the run process console by adding any extension-specific information to it.
+   *
+   * @deprecated use {@code com.intellij.execution.application.JavaConsoleDecorator.decorate}
    */
-  @NotNull
-  protected ConsoleView decorate(@NotNull ConsoleView console, @NotNull RunConfigurationBase<?> configuration, @NotNull Executor executor) {
+  @Deprecated(forRemoval = true)
+  protected @NotNull ConsoleView decorate(@NotNull ConsoleView console, @NotNull RunConfigurationBase<?> configuration, @NotNull Executor executor) {
     return console;
   }
 }

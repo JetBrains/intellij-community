@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.lookup.*;
@@ -27,6 +27,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint;
+import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.DumbService;
@@ -69,12 +72,12 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private boolean myDocumentChangesTerminateTemplate = true;
   private boolean myDocumentChanged;
 
-  @Nullable private LookupListener myLookupListener;
+  private @Nullable LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private DocumentListener myEditorDocumentListener;
   private boolean myTemplateIndented;
-  @Nullable private PairProcessor<? super String, ? super String> myProcessor;
+  private @Nullable PairProcessor<? super String, ? super String> myProcessor;
   private boolean mySelectionCalculated;
   private boolean myStarted;
 
@@ -84,7 +87,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
 
   public static final Key<Boolean> FORCE_TEMPLATE_RUNNING = Key.create("TemplateState.forTemplateRunning");
 
-  TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
+  @ApiStatus.Internal
+  public TemplateState(@NotNull Project project, final @Nullable Editor editor, @NotNull Document document,
                 @NotNull TemplateStateProcessor processor) {
     super(editor, document);
     myProject = project;
@@ -243,15 +247,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     myCurrentSegmentNumber = isFinished ? -1 : getCurrentSegmentNumber();
   }
 
-  @Nullable
-  public TextRange getCurrentVariableRange() {
+  public @Nullable TextRange getCurrentVariableRange() {
     int number = getCurrentSegmentNumber();
     if (number == -1) return null;
     return new TextRange(getSegments().getSegmentStart(number), getSegments().getSegmentEnd(number));
   }
 
-  @Nullable
-  public TextRange getVariableRange(String variableName) {
+  public @Nullable TextRange getVariableRange(String variableName) {
     int segment = getTemplate().getVariableSegmentNumber(variableName);
     if (segment < 0) return null;
 
@@ -295,7 +297,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  void start(@NotNull TemplateImpl template,
+  @ApiStatus.Internal
+  public void start(@NotNull TemplateImpl template,
              @Nullable PairProcessor<? super String, ? super String> processor,
              @Nullable Map<String, String> predefinedVarValues) {
     start(template, processor, predefinedVarValues, getEditor().getCaretModel().getOffset());
@@ -350,7 +353,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  private void processAllExpressions(@NotNull final TemplateImpl template) {
+  private void processAllExpressions(final @NotNull TemplateImpl template) {
     Runnable action = () -> {
       if (!template.isInline()) getDocument().insertString(myTemplateRange.getStartOffset(), template.getTemplateText());
       for (int i = 0; i < template.getSegmentsCount(); i++) {
@@ -419,7 +422,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     performWrite(action);
   }
 
-  void performWrite(Runnable action) {
+  @ApiStatus.Internal
+  public void performWrite(Runnable action) {
     if (requiresWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(action);
     } else {
@@ -521,8 +525,10 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     final int start = getSegments().getSegmentStart(currentSegmentNumber);
     final int end = getSegments().getSegmentEnd(currentSegmentNumber);
     if (end >= 0 && getEditor() != null) {
-      getEditor().getCaretModel().moveToOffset(end);
-      getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      if (getTemplate().isScrollToTemplate()) {
+        getEditor().getCaretModel().moveToOffset(end);
+        getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      }
       getEditor().getSelectionModel().removeSelection();
       getEditor().getSelectionModel().setSelection(start, end);
     }
@@ -550,11 +556,13 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @Nullable
-  PsiFile getPsiFile() {
+  @ApiStatus.Internal
+  public PsiFile getPsiFile() {
     return !isDisposed() ? PsiDocumentManager.getInstance(myProject).getPsiFile(getDocument()) : null;
   }
 
-  boolean requiresWriteAction() {
+  @ApiStatus.Internal
+  public boolean requiresWriteAction() {
     PsiFile file = getPsiFile();
     return file == null || file.isPhysical() || FORCE_TEMPLATE_RUNNING.isIn(file);
   }
@@ -578,8 +586,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     return createExpressionContext(getSegments().getSegmentStart(segmentNumber));
   }
 
-  @NotNull
-  private Expression getCurrentExpression() {
+  private @NotNull Expression getCurrentExpression() {
     return getTemplate().getExpressionAt(myCurrentVariableNumber);
   }
 
@@ -594,7 +601,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   // Hours spent fixing code : 3.5
-  void calcResults(final boolean isQuick) {
+  @ApiStatus.Internal
+  public void calcResults(final boolean isQuick) {
     if (getSegments().isInvalid()) {
       gotoEnd(true);
     }
@@ -715,8 +723,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     }
   }
 
-  @NotNull
-  private String getVariableValueText(String variableName) {
+  private @NotNull String getVariableValueText(String variableName) {
     TextResult value = getVariableValue(variableName);
     return value != null ? value.getText() : "";
   }
@@ -911,9 +918,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         return (T)getProperties().get(key);
       }
 
-      @Nullable
       @Override
-      public PsiElement getPsiElementAtStartOffset() {
+      public @Nullable PsiElement getPsiElementAtStartOffset() {
         Project project = getProject();
         int templateStartOffset = getTemplateStartOffset();
         int offset = templateStartOffset > 0 ? getTemplateStartOffset() - 1 : getTemplateStartOffset();
@@ -1000,7 +1006,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       offset = -1; //do not move caret in multicaret mode if at least one tab had been made already
     }
 
-    if (offset >= 0) {
+    if (offset >= 0 && getTemplate().isScrollToTemplate()) {
       getEditor().getCaretModel().moveToOffset(offset);
       getEditor().getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     }
@@ -1017,7 +1023,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   }
 
   @ApiStatus.Internal
-  void cancelTemplate() {
+  public void cancelTemplate() {
     if (isDisposed()) return;
     try {
       fireTemplateCancelled();
@@ -1137,21 +1143,29 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     int start = getSegments().getSegmentStart(segmentNumber);
     int end = getSegments().getSegmentEnd(segmentNumber);
     MarkupModelEx markupModel = (MarkupModelEx)getEditor().getMarkupModel();
-    return markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
-                                                              HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
-        segmentHighlighter.setGreedyToLeft(true);
-        segmentHighlighter.setGreedyToRight(true);
+    RangeHighlighterEx highlighter =
+      markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, HighlighterLayer.ELEMENT_UNDER_CARET - 1,
+                                                         HighlighterTargetArea.EXACT_RANGE, false, segmentHighlighter -> {
+          segmentHighlighter.setGreedyToLeft(true);
+          segmentHighlighter.setGreedyToRight(true);
 
-        EditorColorsScheme scheme = getEditor().getColorsScheme();
-        TextAttributes attributes = segmentHighlighter.getTextAttributes(scheme);
-        if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
-          TextAttributes clone = attributes.clone();
-          clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
-          clone.setBackgroundColor(scheme.getDefaultBackground());
-          segmentHighlighter.setTextAttributes(clone);
-        }
-        segmentHighlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
-      });
+          EditorColorsScheme scheme = getEditor().getColorsScheme();
+
+          TextAttributes attributes = scheme.getAttributes(attributesKey);
+          if (attributes != null && attributes.getEffectType() == EffectType.BOXED && newStyle) {
+            TextAttributes clone = attributes.clone();
+            clone.setEffectType(EffectType.SLIGHTLY_WIDER_BOX);
+            clone.setBackgroundColor(scheme.getDefaultBackground());
+            segmentHighlighter.setTextAttributes(clone);
+          }
+        });
+    EditorActionAvailabilityHintKt.addActionAvailabilityHint(highlighter,
+                                                             new EditorActionAvailabilityHint("NextTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint("PreviousTemplateVariable", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside),
+                                                             new EditorActionAvailabilityHint("EditorEscape", EditorActionAvailabilityHint.AvailabilityCondition.CaretInside));
+    highlighter.putUserData(TEMPLATE_RANGE_HIGHLIGHTER_KEY, mightStop);
+
+    return highlighter;
   }
 
   private boolean mightStopAtVariable(@Nullable Variable var, int segmentNumber) {
@@ -1307,7 +1321,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
       buffer.append(ch);
     }
-    if (buffer.length() == 0 && selectionIndent <= 0 || startLineNum >= endLineNum) {
+    if (buffer.isEmpty() && selectionIndent <= 0 || startLineNum >= endLineNum) {
       return;
     }
     String stringToInsert = buffer.toString();

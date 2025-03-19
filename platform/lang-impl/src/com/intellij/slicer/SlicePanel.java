@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
@@ -10,7 +10,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +29,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,7 +47,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 
-public abstract class SlicePanel extends JPanel implements DataProvider, Disposable {
+public abstract class SlicePanel extends JPanel implements UiDataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;
 
@@ -69,15 +69,15 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
   private final ToolWindow myToolWindow;
   private final SliceLanguageSupportProvider myProvider;
 
-  protected SlicePanel(@NotNull final Project project,
+  protected SlicePanel(final @NotNull Project project,
                        boolean dataFlowToThis,
                        @NotNull SliceNode rootNode,
                        boolean splitByLeafExpressions,
-                       @NotNull final ToolWindow toolWindow) {
+                       final @NotNull ToolWindow toolWindow) {
     super(new BorderLayout());
     myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myProject = project;
 
     myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
@@ -152,20 +152,17 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
   }
 
-  static class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
-    @NotNull
-    private final SliceUsageCellRendererBase rootRenderer;
+  static final class MultiLanguageTreeCellRenderer implements TreeCellRenderer {
+    private final @NotNull SliceUsageCellRendererBase rootRenderer;
 
-    @NotNull
-    private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
+    private final @NotNull Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
 
     MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
       this.rootRenderer = rootRenderer;
       rootRenderer.setOpaque(false);
     }
 
-    @NotNull
-    private SliceUsageCellRendererBase getRenderer(Object value) {
+    private @NotNull SliceUsageCellRendererBase getRenderer(Object value) {
       if (!(value instanceof DefaultMutableTreeNode)) return rootRenderer;
 
       Object userObject = ((DefaultMutableTreeNode)value).getUserObject();
@@ -195,8 +192,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     }
   }
 
-  @NotNull
-  private JTree createTree() {
+  private @NotNull JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     final Tree tree = new Tree(new DefaultTreeModel(root))/* {
       @Override
@@ -269,7 +265,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       if (isDisposed) return;
       List<UsageInfo> infos = getSelectedUsageInfos();
       if (infos != null && myUsagePreviewPanel != null) {
-        myUsagePreviewPanel.updateLayout(infos);
+        myUsagePreviewPanel.updateLayout(myProject, infos);
       }
     });
   }
@@ -285,8 +281,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
    return null;
   }
 
-  @Nullable
-  private List<UsageInfo> getSelectedUsageInfos() {
+  private @Nullable List<UsageInfo> getSelectedUsageInfos() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return null;
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -303,21 +298,15 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     return result;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<Navigatable> navigatables = getNavigatables();
-      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return new DefaultTreeExpander(myTree);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    List<Navigatable> navigatables = getNavigatables();
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
+             navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    sink.set(PlatformDataKeys.TREE_EXPANDER, new DefaultTreeExpander(myTree));
   }
 
-  @NotNull
-  private List<Navigatable> getNavigatables() {
+  private @NotNull List<Navigatable> getNavigatables() {
     TreePath[] paths = myTree.getSelectionPaths();
     if (paths == null) return Collections.emptyList();
     final ArrayList<Navigatable> navigatables = new ArrayList<>();
@@ -336,8 +325,7 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     return navigatables;
   }
 
-  @NotNull
-  private ActionToolbar createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(new MyRefreshAction(myTree));
     if (isToShowAutoScrollButton()) {
@@ -397,14 +385,14 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       SliceNode rootNode = myBuilder.getRootSliceNode();
       rootNode.setChanged();
       myStructureTreeModel.invalidateAsync();
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent event) {
+    public void update(final @NotNull AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);
     }

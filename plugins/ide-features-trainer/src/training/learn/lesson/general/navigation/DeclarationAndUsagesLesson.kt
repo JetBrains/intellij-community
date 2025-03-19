@@ -3,7 +3,7 @@ package training.learn.lesson.general.navigation
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.FindBundle
-import com.intellij.find.FindSettings
+import com.intellij.find.FindUsagesSettings
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.wm.IdeFocusManager
@@ -29,6 +29,8 @@ abstract class DeclarationAndUsagesLesson
     get() = {
       sdkConfigurationTasks()
 
+      configurationTasks()
+
       setInitialPosition()
 
       prepareRuntimeTask {
@@ -47,21 +49,19 @@ abstract class DeclarationAndUsagesLesson
         test { actions(it) }
       }
 
-      task("GotoDeclaration") {
-        text(LessonsBundle.message("declaration.and.usages.show.usages", action(it)))
-        trigger(it, { state() }) l@{ before, now ->
-          if (before == null || now == null) {
-            return@l false
-          }
-
-          val navigationElement = before.target.navigationElement
-          return@l navigationElement == now.target.navigationElement &&
-                   isInsidePsi(navigationElement, before.position) &&
-                   !isInsidePsi(navigationElement, now.position)
+      task("GotoDeclaration") { actionId ->
+        text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
+        stateCheck l@{
+          val curEditor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@l false
+          val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(curEditor.document) ?: return@l false
+          val offset = curEditor.caretModel.offset
+          val element = psiFile.findElementAt(offset) ?: return@l false
+          val parentExpr = getParentExpression(element) ?: return@l false
+          parentExpr.text.endsWith(entityName)
         }
-        restoreIfModifiedOrMoved()
+        //restoreIfModifiedOrMoved()
         test {
-          actions(it)
+          actions(actionId)
           ideFrame {
             waitComponent(JBTable::class.java, "ShowUsagesTable")
             invokeActionViaShortcut("ENTER")
@@ -98,7 +98,7 @@ abstract class DeclarationAndUsagesLesson
         text(LessonsBundle.message("declaration.and.usages.pin.motivation", strong(UIBundle.message("tool.window.name.find"))))
         text(LessonsBundle.message("declaration.and.usages.right.click.tab",
                                    strong(FindBundle.message("find.usages.of.element.in.scope.panel.title",
-                                                             entityName, FindSettings.getInstance().defaultScopeName))))
+                                                             entityName, FindUsagesSettings.getInstance().defaultScopeName))))
       }
 
       task("PinToolwindowTab") {
@@ -123,6 +123,10 @@ abstract class DeclarationAndUsagesLesson
                               action(it), strong(UIBundle.message("tool.window.name.find")))
       }
     }
+
+  protected open fun LessonContext.configurationTasks() {}
+
+  protected abstract fun getParentExpression(element: PsiElement): PsiElement?
 
   private fun TaskRuntimeContext.state(): MyInfo? {
     val flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED

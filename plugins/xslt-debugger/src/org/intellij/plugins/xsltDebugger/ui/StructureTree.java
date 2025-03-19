@@ -17,19 +17,20 @@
 package org.intellij.plugins.xsltDebugger.ui;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import org.intellij.plugins.xsltDebugger.ui.actions.CopyValueAction;
 import org.intellij.plugins.xsltDebugger.ui.actions.NavigateAction;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-public class StructureTree extends Tree implements DataProvider {
+public class StructureTree extends Tree implements UiDataProvider {
   public StructureTree(GeneratedStructureModel model) {
     super(model);
 
@@ -43,18 +44,11 @@ public class StructureTree extends Tree implements DataProvider {
     PopupHandler.installFollowingSelectionTreePopup(this, structureContextActions, "XSLT.Debugger.GeneratedStructure");
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      TreePath selection = getSelectionPath();
-      Object o = selection == null ? null : selection.getLastPathComponent();
-      return o instanceof Navigatable ? o : null;
-    }
-    else if (CopyValueAction.SELECTED_NODE.is(dataId)) {
-      TreePath selection = getSelectionPath();
-      return selection == null ? null : selection.getLastPathComponent();
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath selection = getSelectionPath();
+    Object obj = selection == null ? null : selection.getLastPathComponent();
+    sink.set(CommonDataKeys.NAVIGATABLE, obj instanceof Navigatable o ? o : null);
+    sink.set(CopyValueAction.SELECTED_NODE, obj instanceof DefaultMutableTreeNode o? o : null);
   }
 }

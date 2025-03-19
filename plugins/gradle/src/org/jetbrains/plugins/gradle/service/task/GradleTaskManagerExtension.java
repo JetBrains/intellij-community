@@ -19,61 +19,109 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * This extension point allows overriding default Gradle task execution.
- * <br>
- * When IDEA needs to execute some Gradle tasks, implementing extension can intercept execution logic
+ * <p>
+ * When an IDEA needs to execute some Gradle tasks, implementing extension can intercept execution logic
  * and perform these tasks in its own manner
  */
+@ApiStatus.OverrideOnly
 public interface GradleTaskManagerExtension {
 
   ExtensionPointName<GradleTaskManagerExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.taskManager");
 
   /**
-   * @deprecated use {@link #executeTasks(ExternalSystemTaskId, List, String, GradleExecutionSettings, String, ExternalSystemTaskNotificationListener)}
+   * Configures Gradle task execution settings.
+   *
+   * @param projectPath path to project, where tasks are executed
+   * @param id          id of operation in IDEA terms
+   * @param settings    gradle execution settings
    */
-  @Deprecated(forRemoval = true)
-  default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
-                               @NotNull final List<String> taskNames,
-                               @NotNull String projectPath,
-                               @Nullable final GradleExecutionSettings settings,
-                               @NotNull final List<String> vmOptions,
-                               @NotNull final List<String> scriptParameters,
-                               @Nullable final String jvmParametersSetup,
-                               @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+  default void configureTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @Nullable GradleVersion gradleVersion
+  ) { }
+
+  /**
+   * @deprecated use {@link #executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
+   */
+  @Deprecated
+  default boolean executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> taskNames,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @NotNull List<String> vmOptions,
+    @NotNull List<String> scriptParameters,
+    @Nullable String jvmParametersSetup,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
     return false;
   }
 
   /**
-   * Try executing tasks.
-   *
-   * @param id id of operation in IDEA terms
-   * @param taskNames names of tasks
-   * @param projectPath path to project, where tasks are executed
-   * @param settings gradle execution settings
-   * @param jvmParametersSetup jvm parameters string
-   * @param listener should be called to notify IDEA on tasks' progress and status
-   * @return false if tasks were not executed and IDEA should proceed with default logic, true - if tasks are executed and no
-   * more actions are required
+   * @deprecated use {@link #executeTasks(String, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
-  default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
-                               @NotNull final List<String> taskNames,
-                               @NotNull String projectPath,
-                               @Nullable final GradleExecutionSettings settings,
-                               @Nullable final String jvmParametersSetup,
-                               @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
-    List<String> vmOptions = settings != null ? settings.getJvmArguments() : Collections.emptyList();
-    List<String> arguments = settings != null ? settings.getArguments() : Collections.emptyList();
+  @Deprecated
+  default boolean executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> taskNames,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @Nullable String jvmParametersSetup,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    assert settings != null;
+    settings.setTasks(taskNames);
+    settings.setJvmParameters(jvmParametersSetup);
+    return executeTasks(projectPath, id, settings, listener);
+  }
+
+  /**
+   * Overrides Gradle task execution process.
+   *
+   * @param projectPath path to project, where tasks are executed
+   * @param id          id of operation in IDEA terms
+   * @param settings    gradle execution settings
+   * @param listener    should be called to notify IDEA on tasks' progress and status
+   * @return false - if tasks were not executed and IDEA should proceed with default logic,
+   * true - if tasks are executed and no more actions are required
+   */
+  default boolean executeTasks(
+    @NotNull String projectPath,
+    @NotNull ExternalSystemTaskId id,
+    @NotNull GradleExecutionSettings settings,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    var taskNames = settings.getTasks();
+    var arguments = settings.getArguments();
+    var vmOptions = settings.getJvmArguments();
+    var jvmParametersSetup = settings.getJvmParameters();
     return executeTasks(id, taskNames, projectPath, settings, vmOptions, arguments, jvmParametersSetup, listener);
   }
 
-  boolean cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
-    throws ExternalSystemException;
+  /**
+   * Overrides Gradle task cancellation process.
+   *
+   * @param id       id of operation in IDEA terms
+   * @param listener should be called to notify IDEA on tasks' progress and status
+   * @return false - if tasks were not canceled and IDEA should proceed with default logic,
+   * true - if tasks are canceled and no more actions are required
+   */
+  default boolean cancelTask(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
+    return false;
+  }
 }

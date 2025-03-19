@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.lang;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -12,6 +13,10 @@ import java.util.List;
  * Defines the support for "Comment with Line Comment" and "Comment with Block Comment"
  * actions in a custom language.
  *
+ * @see CodeDocumentationAwareCommenter
+ * @see com.intellij.codeInsight.generation.CommenterWithLineSuffix
+ * @see com.intellij.codeInsight.generation.EscapingCommenter
+ * @see com.intellij.codeInsight.generation.IndentedCommenter
  * @see com.intellij.codeInsight.generation.SelfManagingCommenter
  */
 public interface Commenter {
@@ -32,8 +37,7 @@ public interface Commenter {
    *
    * @return the list of line comment prefixes
    */
-  @NotNull
-  default List<String> getLineCommentPrefixes() {
+  default @Unmodifiable @NotNull List<String> getLineCommentPrefixes() {
     return ContainerUtil.createMaybeSingletonList(getLineCommentPrefix());
   }
 

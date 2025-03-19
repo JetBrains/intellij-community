@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see com.intellij.find.usages.symbol.SymbolSearchTargetFactory
  */
-public interface UsageTargetProvider {
+public interface UsageTargetProvider extends PossiblyDumbAware {
 
   /**
    * @param editor currently opened editor

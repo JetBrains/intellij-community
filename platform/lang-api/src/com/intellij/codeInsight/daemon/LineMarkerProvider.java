@@ -2,8 +2,10 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -11,12 +13,13 @@ import java.util.List;
 /**
  * This extension point specifies line markers (icons in the vertical gutter at the left of the screen) for the particular {@link PsiElement}.
  * For example, {@link com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider} draws "arrow down" icon left to the Java method to navigate to all its overriding methods.
+ * To allow user to change line markers visibility (via Gutter Icons settings) please inherit from {@link LineMarkerProviderDescriptor}
  *
  * @see LineMarkerProviders#EP_NAME
  * @see LineMarkerProviderDescriptor
  * @see RelatedItemLineMarkerProvider
  */
-public interface LineMarkerProvider {
+public interface LineMarkerProvider extends PossiblyDumbAware {
   /**
    * Get line markers for this PsiElement.
    * <p/>
@@ -69,7 +72,7 @@ public interface LineMarkerProvider {
    * }
    * </pre>
    */
-  LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
+  @Nullable LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element);
 
   /**
    * Collects line markers for several PsiElements in batch, after all (relatively faster) {@link #getLineMarkerInfo(PsiElement)} calls are finished.

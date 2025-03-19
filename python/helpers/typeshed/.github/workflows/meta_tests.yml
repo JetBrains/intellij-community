@@ -1,0 +1,80 @@
+# This workflow is for testing typeshed's scripts and tests themselves
+name: Meta-tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/meta_tests.yml"
+      - "requirements-tests.txt"
+      - "pyproject.toml"
+
+permissions:
+  contents: read
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+  FORCE_COLOR: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  mypy:
+    name: Run mypy against the scripts and tests directories
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ["linux", "win32"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python ./tests/typecheck_typeshed.py --platform=${{ matrix.platform }}
+  pyright:
+    name: Run pyright against the scripts and tests directories
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-platform: ["Linux", "Windows"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Max supported Python version as of pytype 2024.2.27.
+          python-version: "3.11"
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install -r requirements-tests.txt --system
+      - name: Run pyright on typeshed
+        uses: jakebailey/pyright-action@v2
+        with:
+          version: PATH
+          python-platform: ${{ matrix.python-platform }}
+          python-version: "3.9" # The Python version to test against.
+          project: ./pyrightconfig.scripts_and_tests.json
+  stubsabot-dry-run:
+    name: Stubsabot dry run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Git config
+        run: |
+          git config --global user.name stubsabot
+          git config --global user.email '<>'
+      - run: uv pip install -r requirements-tests.txt --system
+      - run: python scripts/stubsabot.py --action-level local

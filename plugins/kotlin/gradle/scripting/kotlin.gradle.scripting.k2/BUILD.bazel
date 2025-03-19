@@ -1,0 +1,69 @@
+### auto-generated section `build kotlin.gradle.scripting.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-gradle-scripting-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "kotlin-gradle-scripting-k2_resources_1",
+  files = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "kotlin-gradle-scripting-k2",
+  module_name = "kotlin.gradle.scripting.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//platform/analysis-api:analysis",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/execution",
+    "//platform/workspace/jps",
+    "//plugins/gradle",
+    "//platform/backend/observation",
+    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//java/idea-ui:ui",
+    "//platform/util:util-ui",
+    "//plugins/kotlin/gradle/gradle-java:kotlin-gradle-gradle-java",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+  ],
+  runtime_deps = [
+    ":kotlin-gradle-scripting-k2_resources",
+    ":kotlin-gradle-scripting-k2_resources_1",
+  ]
+)
+### auto-generated section `build kotlin.gradle.scripting.k2` end

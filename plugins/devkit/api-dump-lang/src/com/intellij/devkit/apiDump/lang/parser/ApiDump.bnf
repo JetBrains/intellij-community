@@ -1,0 +1,117 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+{
+  parserClass='com.intellij.devkit.apiDump.lang.parser.ADParser'
+  parserUtilClass="com.intellij.devkit.apiDump.lang.parser.ADParserUtil"
+  psiPackage='com.intellij.devkit.apiDump.lang.psi'
+  psiImplPackage='com.intellij.devkit.apiDump.lang.psi.impl'
+
+  elementTypeHolderClass='com.intellij.devkit.apiDump.lang.psi.ADElementTypes'
+  elementTypeClass='com.intellij.devkit.apiDump.lang.elementTypes.ADElementType'
+  psiClassPrefix="AD"
+  psiImplClassSuffix="ImplGen"
+
+  psiImplUtilClass="com.intellij.devkit.apiDump.lang.psi.ADPsiImplUtil"
+
+  tokenTypeClass='com.intellij.devkit.apiDump.lang.elementTypes.ADTokenType'
+
+  implements = 'com.intellij.devkit.apiDump.lang.psi.ADPsiElement'
+  extends = 'com.intellij.devkit.apiDump.lang.psi.impl.ADPsiElementImpl'
+
+  parserImports = 'static com.intellij.lang.parser.GeneratedParserUtilBase.*'
+
+  generateFirstCheck = 1
+
+  tokens = [
+      IDENTIFIER
+      MINUS
+      DOT
+      ASTERISK
+      LPAREN
+      RPAREN
+      LBRACKET
+      RBRACKET
+      COMMA
+      COLON
+      AT
+      LESS
+      MORE
+  ]
+
+  extends("Method|Field|Constructor|Companion|SuperType") = Member
+}
+
+//////////////////////////////////////////root///////////////////////////////////////////////////////////////////////////
+
+File ::= ClassDeclaration*
+
+ClassDeclaration ::= ClassHeader Member* {
+  methods = [ resolvePsiClass getNavigationElement ]
+}
+
+Member ::= Method | Constructor | Field | Companion | SuperType
+
+ClassHeader ::= Modifiers? TypeReference
+
+Modifiers ::= &(ASTERISK | IDENTIFIER | AT) Experimental? Modifier? COLON
+
+Experimental ::= ASTERISK
+
+Modifier ::= IDENTIFIER | AT
+
+TypeReference ::= IDENTIFIER (DOT IDENTIFIER)* Array*
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADTypeReferenceImpl'
+  methods = [getIdentifierList]
+}
+
+Array ::= LBRACKET RBRACKET
+
+private MemberStart ::= MINUS (Modifiers &(IDENTIFIER (LPAREN | COLON) | LESS))?
+
+Method ::= MemberStart MethodReference Parameters TypeAnnotation
+{
+  pin = 'Parameters'
+  methods = [ getNavigationElement ]
+}
+
+MethodReference ::= IDENTIFIER
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADMethodReferenceImpl'
+}
+
+Parameters ::= LPAREN Parameter? (COMMA Parameter)* RPAREN
+{
+  pin = 'LPAREN'
+}
+
+Parameter ::= TypeReference
+
+private TypeAnnotation ::= COLON TypeReference
+{
+  pin = 'COLON'
+}
+
+Field ::= MemberStart FieldReference TypeAnnotation
+{
+  methods = [ getNavigationElement ]
+}
+
+FieldReference ::= IDENTIFIER
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADFieldReferenceImpl'
+}
+
+Constructor ::= MemberStart ConstructorReference Parameters TypeAnnotation
+{
+  pin = 'Parameters'
+  methods = [ getNavigationElement ]
+}
+
+ConstructorReference ::= LESS 'init' MORE
+{
+  mixin = 'com.intellij.devkit.apiDump.lang.psi.impl.ADConstructorReferenceImpl'
+}
+
+SuperType ::= MINUS TypeReference
+
+Companion ::= MemberStart 'Companion' COLON TypeReference

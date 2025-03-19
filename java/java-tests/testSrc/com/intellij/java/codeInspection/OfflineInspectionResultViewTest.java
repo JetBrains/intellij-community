@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -43,7 +43,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     final InspectionProfileImpl profile = new InspectionProfileImpl("test") {
       @Override
       public boolean isToolEnabled(final @Nullable HighlightDisplayKey key, PsiElement element) {
-        return key != null && Comparing.strEqual(key.toString(), UnusedDeclarationInspectionBase.SHORT_NAME);
+        return key != null && Comparing.strEqual(key.getShortName(), UnusedDeclarationInspectionBase.SHORT_NAME);
       }
 
       @Override
@@ -61,7 +61,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
           @Override
           public boolean isToolEnabled(@Nullable HighlightDisplayKey key, PsiElement element) {
-            return key != null && Comparing.strEqual(key.toString(), UnusedDeclarationInspectionBase.SHORT_NAME);
+            return key != null && Comparing.strEqual(key.getShortName(), UnusedDeclarationInspectionBase.SHORT_NAME);
           }
         };
       }
@@ -134,17 +134,17 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                               -f()
                                                -D
                                                 -b()
-                                                 Variable 'r' is never used.
+                                                 Variable 'r' is never used
                                                  -anonymous (Runnable)
                                                   -run()
-                                                   Variable 'i' is never used.
+                                                   Variable 'i' is never used
                                               -ff()
-                                               Variable 'a' is never used.
-                                               Variable 'd' is never used.
+                                               Variable 'd' is never used
+                                               Variable 'a' is never used
                                               -foo()
-                                               Variable 'j' is never used.
+                                               Variable 'j' is never used
                                               -main(String[])
-                                               Variable 'test' is never used.
+                                               Variable 'test' is never used
                                          -Probable bugs
                                           -'equals()' called on itself
                                            -testOfflineWithInvalid
@@ -179,17 +179,17 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                               -f()
                                                -D
                                                 -b()
-                                                 Variable 'r' is never used.
+                                                 Variable 'r' is never used
                                                  -anonymous (Runnable)
                                                   -run()
-                                                   Variable 'i' is never used.
+                                                   Variable 'i' is never used
                                               -ff()
-                                               Variable 'a' is never used.
-                                               Variable 'd' is never used.
+                                               Variable 'd' is never used
+                                               Variable 'a' is never used
                                               -foo()
-                                               Variable 'j' is never used.
+                                               Variable 'j' is never used
                                               -main(String[])
-                                               Variable 'test' is never used.
+                                               Variable 'test' is never used
                                          -Probable bugs
                                           -'equals()' called on itself
                                            -testOfflineView
@@ -217,17 +217,17 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                             -f()
                                              -D
                                               -b()
-                                               Variable 'r' is never used.
+                                               Variable 'r' is never used
                                                -anonymous (Runnable)
                                                 -run()
-                                                 Variable 'i' is never used.
+                                                 Variable 'i' is never used
                                             -ff()
-                                             Variable 'a' is never used.
-                                             Variable 'd' is never used.
+                                             Variable 'd' is never used
+                                             Variable 'a' is never used
                                             -foo()
-                                             Variable 'j' is never used.
+                                             Variable 'j' is never used
                                             -main(String[])
-                                             Variable 'test' is never used.
+                                             Variable 'test' is never used
                                          -Probable bugs
                                           -'equals()' called on itself
                                            -Test
@@ -251,17 +251,17 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                             -f()
                                              -D
                                               -b()
-                                               Variable 'r' is never used.
+                                               Variable 'r' is never used
                                                -anonymous (Runnable)
                                                 -run()
-                                                 Variable 'i' is never used.
+                                                 Variable 'i' is never used
                                             -ff()
-                                             Variable 'a' is never used.
-                                             Variable 'd' is never used.
+                                             Variable 'd' is never used
+                                             Variable 'a' is never used
                                             -foo()
-                                             Variable 'j' is never used.
+                                             Variable 'j' is never used
                                             -main(String[])
-                                             Variable 'test' is never used.
+                                             Variable 'test' is never used
                                          -Probable bugs
                                           -'equals()' called on itself
                                            -Test

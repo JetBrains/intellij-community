@@ -1,6 +1,0 @@
-query($login: String!) {
-  user(login: $login) {
-    __typename
-    ...userInfo
-  }
-}

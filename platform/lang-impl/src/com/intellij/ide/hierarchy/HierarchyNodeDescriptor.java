@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
@@ -22,8 +22,7 @@ import java.awt.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   public static final HierarchyNodeDescriptor[] EMPTY_ARRAY = new HierarchyNodeDescriptor[0];
-  @NotNull
-  protected CompositeAppearance myHighlightedText;
+  protected @NotNull CompositeAppearance myHighlightedText;
   private Object[] myCachedChildren;
   protected final boolean myIsBase;
   private Color myBackgroundColor;
@@ -43,8 +42,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return this;
   }
 
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     PsiElement element = getPsiElement();
     return element != null ? element.getContainingFile() : null;
   }
@@ -61,8 +59,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     myCachedChildren = cachedChildren;
   }
 
-  @Nullable
-  public final Color getBackgroundColorCached() {
+  public final @Nullable Color getBackgroundColorCached() {
     return myBackgroundColor;
   }
 
@@ -83,8 +80,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return true;
   }
 
-  @NotNull
-  public final CompositeAppearance getHighlightedText() {
+  public final @NotNull CompositeAppearance getHighlightedText() {
     return myHighlightedText;
   }
 
@@ -123,8 +119,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     }
   }
 
-  @NotNull
-  protected Icon getBaseMarkerIcon(@Nullable Icon sourceIcon) {
+  protected @NotNull Icon getBaseMarkerIcon(@Nullable Icon sourceIcon) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(sourceIcon, 0);
     icon.setIcon(AllIcons.General.Modified, 1, -AllIcons.General.Modified.getIconWidth(), 0);

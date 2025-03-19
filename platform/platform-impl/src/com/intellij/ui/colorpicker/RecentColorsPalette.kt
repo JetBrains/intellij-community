@@ -7,6 +7,7 @@ package com.intellij.ui.colorpicker
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.KeyEvent
@@ -17,11 +18,12 @@ import javax.swing.*
 private const val COLOR_BUTTON_ROW = 2
 private const val COLOR_BUTTON_COLUMN = 10
 
+@ApiStatus.Internal
 class RecentColorsPalette(private val pickerModel: ColorPickerModel,
                           private val recentColors: List<Color>) : JPanel() {
 
   @get:TestOnly
-  val colorButtons = Array(COLOR_BUTTON_ROW * COLOR_BUTTON_COLUMN) {
+  val colorButtons: Array<ColorButton> = Array(COLOR_BUTTON_ROW * COLOR_BUTTON_COLUMN) {
     ColorButton(recentColors.getOrElse(it) { _ -> Color.WHITE }).apply {
       background = PICKER_BACKGROUND_COLOR
       addActionListener { pickerModel.setColor(color, this@RecentColorsPalette) }
@@ -51,7 +53,7 @@ class ColorButton(var color: Color = Color.WHITE): JButton() {
 
   enum class Status { NORMAL, HOVER, PRESSED }
 
-  var status = Status.NORMAL
+  var status: Status = Status.NORMAL
 
   init {
     preferredSize = JBUI.size(28)

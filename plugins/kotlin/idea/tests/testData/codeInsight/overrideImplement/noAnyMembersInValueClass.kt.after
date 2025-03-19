@@ -1,7 +1,9 @@
-// IGNORE_FIR
+// IGNORE_K2
 @JvmInline
 value class V(val v: Int) {
     override fun toString(): String {
         return super.toString()
     }
 }
+
+// MEMBER: "toString(): String"

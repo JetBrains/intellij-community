@@ -1,12 +1,28 @@
 <component name="libraryTable">
   <library name="asm-tools" type="repository">
-    <properties maven-id="org.ow2.asm:asm-analysis:9.3" />
+    <properties maven-id="org.ow2.asm:asm-analysis:9.7">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.7/asm-analysis-9.7.jar">
+          <sha256sum>7bc6bcbc21379948a0c8c467fb0f864206e5b818f6bc0b546872f5c9f941556f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.7/asm-tree-9.7.jar">
+          <sha256sum>62f4b3bc436045c1acb5c3ba2d8ec556ec3369093d7f5d06c747eb04b56d52b1</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.7/asm-9.7.jar">
+          <sha256sum>adf46d5e34940bdf148ecdd26a9ee8eea94496a72034ff7141066b3eea5c4e9d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.3/asm-analysis-9.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.3/asm-tree-9.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.3/asm-9.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.7/asm-analysis-9.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.7/asm-tree-9.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.7/asm-9.7.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.7/asm-analysis-9.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.7/asm-tree-9.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.7/asm-9.7-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

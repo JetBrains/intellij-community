@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.application.options.CodeStyle;
@@ -55,9 +55,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
 
-  @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
+  public @Nullable String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
       IndentCalculator indentCalculator = getIndent(project, editor, language, offset - 1);
       if (indentCalculator != null) {
@@ -70,8 +69,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
-  @Nullable
-  protected IndentCalculator getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
+  protected @Nullable IndentCalculator getIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     IndentCalculatorFactory myFactory = new IndentCalculatorFactory(project, editor);
     if (getPosition(editor, offset).matchesRule(
       position -> position.isAt(Whitespace) &&
@@ -435,19 +433,16 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                                        tokenType -> mapType(tokenType));
   }
 
-  @NotNull
-  protected HighlighterIterator getIteratorAtPosition(@NotNull Editor editor, int offset) {
+  protected @NotNull HighlighterIterator getIteratorAtPosition(@NotNull Editor editor, int offset) {
     return editor.getHighlighter().createIterator(offset);
   }
 
-  @Nullable
-  protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
+  protected abstract @Nullable SyntaxElement mapType(@NotNull IElementType tokenType);
 
 
-  @Nullable
-  protected Indent getIndentInBlock(@NotNull Project project,
-                                    @Nullable Language language,
-                                    @NotNull SemanticEditorPosition blockStartPosition) {
+  protected @Nullable Indent getIndentInBlock(@NotNull Project project,
+                                              @Nullable Language language,
+                                              @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
       CommonCodeStyleSettings settings = CodeStyle.getSettings(blockStartPosition.getEditor()).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
@@ -475,7 +470,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
            : Indent.getIndent(type, 0, false, false);
   }
 
-  public static class IndentCalculatorFactory {
+  public static final class IndentCalculatorFactory {
     private final Project myProject;
     private final Editor myEditor;
 
@@ -484,13 +479,11 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       myEditor = editor;
     }
 
-    @Nullable
-    public IndentCalculator createIndentCalculator(@Nullable Type indentType, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
+    public @Nullable IndentCalculator createIndentCalculator(@Nullable Type indentType, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
       return createIndentCalculator(getDefaultIndentFromType(indentType), baseLineOffsetCalculator);
     }
 
-    @Nullable
-    public IndentCalculator createIndentCalculator(@Nullable Indent indent, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
+    public @Nullable IndentCalculator createIndentCalculator(@Nullable Indent indent, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
       return indent != null ?
              new IndentCalculator(myProject,
                                   myEditor,

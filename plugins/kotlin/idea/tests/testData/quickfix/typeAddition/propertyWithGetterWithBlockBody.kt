@@ -1,10 +1,10 @@
-// "Specify type explicitly" "true"
+// "Specify type explicitly" "false"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 // ERROR: This property must either have a type annotation, be initialized or be delegated
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
 // ACTION: Move to companion object
-// ACTION: Specify type explicitly
+// K2_AFTER_ERROR: This property must have an explicit type, be initialized, or be delegated.
 
 class My {
     val <caret>x
@@ -12,4 +12,5 @@ class My {
             return 3.14
         }
 }
-/* IGNORE_FIR */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention

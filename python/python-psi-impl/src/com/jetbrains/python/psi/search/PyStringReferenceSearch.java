@@ -15,15 +15,15 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
+public final class PyStringReferenceSearch extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public PyStringReferenceSearch() {
     super(true);
   }
 
   @Override
-  public void processQuery(@NotNull final ReferencesSearch.SearchParameters params,
-                           @NotNull final Processor<? super PsiReference> consumer) {
+  public void processQuery(final @NotNull ReferencesSearch.SearchParameters params,
+                           final @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement element = params.getElementToSearch();
     if (!(element instanceof PyElement) && !(element instanceof PsiDirectory)) {
       return;

@@ -23,3 +23,5 @@ fun bar() {
     f() + a*f()
     f() + f().times(f())
 }
+
+// IGNORE_K2

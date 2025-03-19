@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -21,8 +21,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,6 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,6 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
+
+  @Topic.ProjectLevel
   public static final Topic<InspectListener> INSPECT_TOPIC = new Topic<>(InspectListener.class, Topic.BroadcastDirection.NONE);
 
   private static final Logger LOG = Logger.getInstance(GlobalInspectionContextEx.class);
@@ -58,6 +61,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
 
   public GlobalInspectionContextEx(@NotNull Project project) { super(project); }
 
+  @RequiresBackgroundThread
   public void launchInspectionsOffline(@NotNull AnalysisScope scope,
                                        @NotNull Path outputPath,
                                        boolean runGlobalToolsOnly,
@@ -65,6 +69,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     performInspectionsWithProgressAndExportResults(scope, runGlobalToolsOnly, true, outputPath, inspectionsResults);
   }
 
+  @RequiresBackgroundThread
   public void performInspectionsWithProgressAndExportResults(@NotNull AnalysisScope scope,
                                                              boolean runGlobalToolsOnly,
                                                              boolean isOfflineInspections,
@@ -135,7 +140,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
                      myGlobalReportedProblemFilter.shouldReportProblem(refEntity, toolWrapper.getShortName()))) {
                   getPresentation(toolWrapper).exportResults(e -> {
                     try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                      JbXmlOutputter.Companion.collapseMacrosAndWrite(e, getProject(), writer);
                       writer.flush();
                     }
                     catch (IOException e1) {
@@ -318,7 +323,8 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     return myProfile;
   }
 
-  void updateProfile(VirtualFile virtualFile, long millis) {
+  @ApiStatus.Internal
+  public void updateProfile(VirtualFile virtualFile, long millis) {
     if (myProfile != null) {
       Path path = Paths.get(virtualFile.getPath());
       myProfile.merge(path, millis, Long::sum);

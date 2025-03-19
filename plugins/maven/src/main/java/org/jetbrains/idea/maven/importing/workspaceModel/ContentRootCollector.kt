@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 object ContentRootCollector {
   fun collect(folders: List<ImportedFolder>): Collection<ContentRootResult> {
+    MavenLog.LOG.debug("collecting content roots, folders = ", folders)
+
     class ContentRootWithFolders(val path: String, val folders: MutableList<ImportedFolder> = mutableListOf())
 
     val result = mutableListOf<ContentRootWithFolders>()
@@ -115,7 +118,7 @@ object ContentRootCollector {
       }
     }
 
-    return result.map { root ->
+    val collectedRoots = result.map { root ->
       val sourceFolders = root.folders.asSequence().filterIsInstance<UserOrGeneratedSourceFolder>().map { folder ->
         SourceFolderResult(folder.path, folder.type, folder is GeneratedSourceFolder)
       }
@@ -124,6 +127,10 @@ object ContentRootCollector {
       }
       ContentRootResult(root.path, sourceFolders.toList(), excludeFolders.toList())
     }
+
+    MavenLog.LOG.debug("collected content roots = ", collectedRoots)
+
+    return collectedRoots
   }
 
   sealed class ImportedFolder(path: String, internal val rank: Int) : Comparable<ImportedFolder> {
@@ -132,7 +139,7 @@ object ContentRootCollector {
     override fun compareTo(other: ImportedFolder): Int {
       val result = FileUtil.comparePaths(path, other.path)
       if (result != 0) return result
-      return Integer.compare(rank, other.rank)
+      return rank.compareTo(other.rank)
     }
 
     override fun toString(): String {
@@ -144,7 +151,7 @@ object ContentRootCollector {
     override fun compareTo(other: ImportedFolder): Int {
       val result = super.compareTo(other)
       if (result != 0 || other !is UserOrGeneratedSourceFolder) return result
-      return Integer.compare(rootTypeRank, other.rootTypeRank)
+      return rootTypeRank.compareTo(other.rootTypeRank)
     }
 
     val rootTypeRank
@@ -162,19 +169,33 @@ object ContentRootCollector {
   }
 
   abstract class BaseExcludedFolder(path: String, rank: Int) : ImportedFolder(path, rank)
-  class ProjectRootFolder(path: String) : ImportedFolder(path, 0)
+  class ProjectRootFolder(path: String) : ImportedFolder(path, 0) {
+    override fun toString(): String {
+      return "$path root"
+    }
+  }
   class SourceFolder(path: String, type: JpsModuleSourceRootType<*>) : UserOrGeneratedSourceFolder(path, type, 1)
-  class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2)
+  class ExcludedFolderAndPreventSubfolders(path: String) : BaseExcludedFolder(path, 2) {
+    override fun toString(): String {
+      return "$path exclude with subfolders"
+    }
+  }
   class GeneratedSourceFolder(path: String,
                               type: JpsModuleSourceRootType<*>,
                               val isAnnotationFolder: Boolean = false) : UserOrGeneratedSourceFolder(path, type, 3)
 
-  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4)
+  class ExcludedFolder(path: String) : BaseExcludedFolder(path, 4) {
+    override fun toString(): String {
+      return "$path exclude"
+    }
+  }
 
   class ContentRootResult(val path: String,
                           val sourceFolders: List<SourceFolderResult>,
                           val excludeFolders: List<ExcludedFolderResult>) {
-    override fun toString() = path
+    override fun toString(): String {
+      return "path='$path', sourceFolders=$sourceFolders, excludeFolders=$excludeFolders"
+    }
   }
 
   class SourceFolderResult(val path: String, val type: JpsModuleSourceRootType<*>, val isGenerated: Boolean) {

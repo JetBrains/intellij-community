@@ -1,5 +1,5 @@
 <idea-plugin>
-  <name>UI Designer</name>
+  <name>Swing UI Designer</name>
   <id>com.intellij.uiDesigner</id>
   <category>Swing</category>
   <vendor>JetBrains</vendor>
@@ -75,32 +75,17 @@
                      groupKey="form.inspections.group" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.uiDesigner.inspections.BoundFieldAssignmentInspection"/>
 
-    <fileEditorProvider implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider"/>
-
-    <applicationService serviceImplementation="com.intellij.uiDesigner.Properties"/>
+    <fileEditorProvider id="ui-designer" implementation="com.intellij.uiDesigner.editor.UIFormEditorProvider" fileType="GUI_DESIGNER_FORM"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VSizePolicyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HSizePolicyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MarginProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.HGapProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.VGapProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeHorizontallyProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.SameSizeVerticallyProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.IndentProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.UseParentLayoutProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MinimumSizeProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.PreferredSizeProperty"/>
-    <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.MaximumSizeProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.CustomCreateProperty"/>
     <projectService serviceImplementation="com.intellij.uiDesigner.propertyInspector.properties.ClientPropertiesProperty"/>
 
     <moduleService serviceImplementation="com.intellij.uiDesigner.StringDescriptorManager"/>
 
-    <projectService serviceImplementation="com.intellij.uiDesigner.LoaderFactory"/>
-
-    <projectService serviceImplementation="com.intellij.uiDesigner.GuiDesignerConfiguration"/>
     <annotator language="JAVA" implementationClass="com.intellij.uiDesigner.binding.FormClassAnnotator"/>
 
     <cacheBuilder fileType="GUI_DESIGNER_FORM" wordsScannerClass="com.intellij.uiDesigner.binding.FormWordsScanner"/>
@@ -128,8 +113,6 @@
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.uiDesigner.binding.GeneratedCodeFoldingBuilder"/>
     <gotoRelatedProvider implementation="com.intellij.uiDesigner.binding.FormRelatedFilesProvider"/>
-
-    <projectService serviceImplementation="com.intellij.uiDesigner.palette.Palette"/>
 
     <projectService serviceImplementation="com.intellij.uiDesigner.clientProperties.ClientPropertiesManager"/>
 
@@ -243,10 +226,10 @@
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>
 
-    <group id="GuiDesigner.NewActions" popup="true" icon="AllIcons.FileTypes.UiForm">
+    <group id="GuiDesigner.NewActions" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator/>
-      <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
-      <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
+      <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction" icon="AllIcons.FileTypes.UiForm"/>
+      <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction" icon="AllIcons.General.Balloon"/>
 
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>

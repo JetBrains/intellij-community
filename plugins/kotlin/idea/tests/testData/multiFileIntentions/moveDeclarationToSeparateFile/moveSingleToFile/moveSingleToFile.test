@@ -1,5 +1,6 @@
 {
   "mainFile": "source/test.kt",
   "intentionClass": "org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ExtractDeclarationFromCurrentFileIntention",
+  "intentionK2Class": "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ExtractDeclarationFromCurrentFileIntention",
   "isApplicable": "false"
 }

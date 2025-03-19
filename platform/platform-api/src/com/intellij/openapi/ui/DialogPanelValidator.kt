@@ -17,7 +17,7 @@ typealias ValidationStatus = Map<JComponent, ValidationInfo>
 typealias MutableValidationStatus = MutableMap<JComponent, ValidationInfo>
 
 @ApiStatus.Internal
-internal class DialogPanelValidator(panel: DialogPanel, parentDisposable: Disposable) {
+internal class DialogPanelValidator(private val panel: DialogPanel, parentDisposable: Disposable) {
 
   private val panels = DisposableWrapperList<DialogPanel>()
   private val validationStatus = DisposableWrapperList<ValidationStatus>()
@@ -152,6 +152,7 @@ internal class DialogPanelValidator(panel: DialogPanel, parentDisposable: Dispos
         UiSwitcher.show(component)
       }
     }
+    panel.preferredFocusedComponent = components.firstOrNull()
   }
 
   fun validateAll(): List<ValidationInfo> {

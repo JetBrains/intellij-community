@@ -1,27 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 
-public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaCodeBlockInspection.class);
   private static final @NonNls String SHORT_NAME = "CodeBlock2Expr";
 
-  @Nls
-  @NotNull
   @Override
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.language.level.specific.issues.and.migration.aids");
   }
 
@@ -30,18 +31,18 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     return true;
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.LAMBDA_EXPRESSIONS);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
@@ -96,25 +97,21 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     return false;
   }
 
-  private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
-    @NotNull
+  private static class ReplaceWithExprFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("replace.with.expression.lambda");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element != null) {
-        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
-        if (lambdaExpression != null) {
-          final PsiElement body = lambdaExpression.getBody();
-          if (body != null) {
-            PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
-            if (expression != null) {
-              body.replace(expression);
-            }
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        final PsiElement body = lambdaExpression.getBody();
+        if (body != null) {
+          PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+          if (expression != null) {
+            body.replace(expression);
           }
         }
       }

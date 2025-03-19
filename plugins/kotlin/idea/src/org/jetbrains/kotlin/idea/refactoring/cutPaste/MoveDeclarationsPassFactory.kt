@@ -7,11 +7,11 @@ import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
-import com.intellij.refactoring.suggested.range
 
 class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
@@ -27,11 +27,11 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         }
     }
 
-    override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass {
-        return MyPass(file.project, file, editor)
+    override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass {
+        return MoveDeclarationsPass(psiFile.project, psiFile, editor)
     }
 
-    private class MyPass(
+    private class MoveDeclarationsPass(
         private val project: Project,
         private val file: PsiFile,
         private val editor: Editor
@@ -40,7 +40,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         override fun doCollectInformation(progress: ProgressIndicator) {
             val info = buildHighlightingInfo()
             if (info != null) {
-                BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, myDocument, 0, file.textLength, listOf(info), colorsScheme, id)
+                BackgroundUpdateHighlightersUtil.setHighlightersToEditor(project, file, myDocument, 0, file.textLength, listOf(info), id)
             }
         }
 
@@ -60,7 +60,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
             }
 
             return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
-                .range(cookie.bounds.range!!)
+                .range(cookie.bounds.asTextRange!!)
                 .registerFix(MoveDeclarationsIntentionAction(processor, cookie.bounds, cookie.modificationCount), null, null, null, null)
                 .createUnconditionally()
         }

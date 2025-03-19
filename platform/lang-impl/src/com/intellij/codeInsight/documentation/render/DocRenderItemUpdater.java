@@ -11,8 +11,8 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -26,16 +26,29 @@ public final class DocRenderItemUpdater implements Runnable {
     return ApplicationManager.getApplication().getService(DocRenderItemUpdater.class);
   }
 
+  public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent, Runnable onAfterDone) {
+    getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent, onAfterDone);
+  }
+
   public static void updateRenderers(@NotNull Collection<? extends DocRenderItem> items, boolean recreateContent) {
     getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> i.getFoldRegion()), recreateContent);
   }
 
-  static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
+  public static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
     if (recreateContent) {
       DocRenderer.clearCachedLoadingPane(editor);
     }
     Collection<? extends DocRenderItem> items = DocRenderItemManager.getInstance().getItems(editor);
     if (items != null) updateRenderers(items, recreateContent);
+  }
+
+  void updateFoldRegions(@NotNull Collection<? extends  CustomFoldRegion> foldRegions, boolean recreateContent, Runnable onAfterDone) {
+    if (foldRegions.isEmpty()) return;
+    boolean wasEmpty = myQueue.isEmpty();
+    for (CustomFoldRegion foldRegion : foldRegions) {
+      myQueue.merge(foldRegion, recreateContent, Boolean::logicalOr);
+    }
+    if (wasEmpty) processChunk(onAfterDone);
   }
 
   void updateFoldRegions(@NotNull Collection<? extends CustomFoldRegion> foldRegions, boolean recreateContent) {
@@ -44,15 +57,15 @@ public final class DocRenderItemUpdater implements Runnable {
     for (CustomFoldRegion foldRegion : foldRegions) {
       myQueue.merge(foldRegion, recreateContent, Boolean::logicalOr);
     }
-    if (wasEmpty) processChunk();
+    if (wasEmpty) processChunk(null);
   }
 
   @Override
   public void run() {
-    processChunk();
+    processChunk(null);
   }
 
-  private void processChunk() {
+  private void processChunk(@Nullable Runnable onAfterDone) {
     long deadline = System.currentTimeMillis() + MAX_UPDATE_DURATION_MS;
     Map<Editor, EditorScrollingPositionKeeper> keepers = new HashMap<>();
     // This is a heuristic to lessen visual 'jumping' on editor opening. We'd like regions visible at target opening location to be updated
@@ -62,6 +75,7 @@ public final class DocRenderItemUpdater implements Runnable {
     List<CustomFoldRegion> toProcess = new ArrayList<>(myQueue.keySet());
     Object2IntMap<Editor> memoMap = new Object2IntOpenHashMap<>();
     toProcess.sort(Comparator.comparingInt(i -> -Math.abs(i.getStartOffset() - getVisibleOffset(i.getEditor(), memoMap))));
+    Map<Editor, List<Runnable>> editorTasks = new HashMap<>();
     do {
       CustomFoldRegion region = toProcess.remove(toProcess.size() - 1);
       boolean updateContent = myQueue.remove(region);
@@ -72,12 +86,23 @@ public final class DocRenderItemUpdater implements Runnable {
           keeper.savePosition();
           return keeper;
         });
-        ((DocRenderer)region.getRenderer()).update(true, updateContent, null);
+        var tasks = editorTasks.computeIfAbsent(editor, e -> new ArrayList<>());
+        ((DocRenderer)region.getRenderer()).update(true, updateContent, tasks);
+        if (tasks.size() > 20) {
+          runFoldingTasks(editor, tasks);
+        }
       }
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
+    editorTasks.entrySet().forEach((entry -> runFoldingTasks(entry.getKey(), entry.getValue())));
     keepers.values().forEach(k -> k.restorePosition(false));
-    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(this);
+    if (!myQueue.isEmpty()) ApplicationManager.getApplication().invokeLater(() -> processChunk(onAfterDone));
+    if (myQueue.isEmpty() && onAfterDone != null) onAfterDone.run();
+  }
+
+  private static void runFoldingTasks(@NotNull Editor editor, @NotNull List<Runnable> tasks) {
+    editor.getFoldingModel().runBatchFoldingOperation(() -> tasks.forEach(Runnable::run), true, false);
+    tasks.clear();
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

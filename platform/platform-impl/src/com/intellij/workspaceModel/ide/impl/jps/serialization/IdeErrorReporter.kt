@@ -9,14 +9,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.projectModel.ProjectModelBundle
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.Nls
 
 internal class IdeErrorReporter(private val project: Project) : ErrorReporter {
-  val errors = ArrayList<ConfigurationErrorDescription>()
+  val errors: ArrayList<ConfigurationErrorDescription> = ArrayList()
 
   override fun reportError(message: @Nls String, file: VirtualFileUrl) {
     if (FileUtil.extensionEquals(file.fileName, "iml")) {

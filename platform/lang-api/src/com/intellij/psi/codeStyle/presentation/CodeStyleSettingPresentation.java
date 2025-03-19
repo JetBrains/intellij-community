@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -14,9 +14,7 @@ import java.util.Map;
 public class CodeStyleSettingPresentation {
 
   public static class SettingsGroup {
-    @Nullable
-    @NlsContexts.Label
-    public final String name;
+    public final @Nullable @NlsContexts.Label String name;
 
     public SettingsGroup(@Nullable @NlsContexts.Label String name) {
       this.name = name;
@@ -41,26 +39,20 @@ public class CodeStyleSettingPresentation {
     }
   }
 
-  @NotNull
-  protected String myFieldName;
+  protected @NotNull String myFieldName;
 
-  @NotNull
-  @NlsContexts.Label
-  protected String myUiName;
+  protected @NotNull @NlsContexts.Label String myUiName;
 
   public CodeStyleSettingPresentation(@NotNull String fieldName, @NotNull @NlsContexts.Label String uiName) {
     myFieldName = fieldName;
     myUiName = uiName;
   }
 
-  @NotNull
-  public String getFieldName() {
+  public @NotNull String getFieldName() {
     return myFieldName;
   }
 
-  @NotNull
-  @NlsContexts.Label
-  public String getUiName() {
+  public @NotNull @NlsContexts.Label String getUiName() {
     return myUiName;
   }
 
@@ -89,19 +81,13 @@ public class CodeStyleSettingPresentation {
    * @param settingsType type to get standard settings for
    * @return mapping setting groups to contained setting presentations
    */
-  @NotNull
-  public static Map<SettingsGroup, List<CodeStyleSettingPresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
-    switch (settingsType) {
-      case BLANK_LINES_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getBlankLinesStandardSettings();
-      case SPACING_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getSpacingStandardSettings();
-      case WRAPPING_AND_BRACES_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getWrappingAndBracesStandardSettings();
-      case INDENT_SETTINGS:
-        return CodeStyleSettingsPresentations.getInstance().getIndentStandardSettings();
-      case LANGUAGE_SPECIFIC:
-    }
-    return new LinkedHashMap<>();
+  public static @NotNull Map<SettingsGroup, List<CodeStyleSettingPresentation>> getStandardSettings(LanguageCodeStyleSettingsProvider.SettingsType settingsType) {
+    return switch (settingsType) {
+      case BLANK_LINES_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getBlankLinesStandardSettings();
+      case SPACING_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getSpacingStandardSettings();
+      case WRAPPING_AND_BRACES_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getWrappingAndBracesStandardSettings();
+      case INDENT_SETTINGS -> CodeStyleSettingsPresentations.getInstance().getIndentStandardSettings();
+      default -> new LinkedHashMap<>();
+    };
   }
 }

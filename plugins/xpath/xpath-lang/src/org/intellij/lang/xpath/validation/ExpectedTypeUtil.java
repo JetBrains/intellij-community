@@ -34,8 +34,7 @@ public final class ExpectedTypeUtil {
   private ExpectedTypeUtil() {
   }
 
-  @NotNull
-  public static XPathType getExpectedType(XPathExpression expression) {
+  public static @NotNull XPathType getExpectedType(XPathExpression expression) {
 
     final XPathExpression parentExpr = PsiTreeUtil.getParentOfType(expression, XPathExpression.class);
     if (parentExpr != null) {
@@ -100,8 +99,7 @@ public final class ExpectedTypeUtil {
     return expression.getType() == XPathType.NUMBER ? XPathType.NUMBER : XPathType.BOOLEAN;
   }
 
-  @Nullable
-  private static Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
+  private static @Nullable Parameter findParameterDecl(XPathExpression[] argumentList, XPathExpression expr, Parameter[] parameters) {
     for (int i = 0; i < argumentList.length; i++) {
       XPathExpression arg = argumentList[i];
       if (arg == expr) {
@@ -145,8 +143,7 @@ public final class ExpectedTypeUtil {
   }
 
   // TODO: put this somewhere else
-  @Nullable
-  public static XPathExpression unparenthesize(XPathExpression expression) {
+  public static @Nullable XPathExpression unparenthesize(XPathExpression expression) {
     while (expression instanceof XPathParenthesizedExpression) {
       expression = ((XPathParenthesizedExpression)expression).getExpression();
     }

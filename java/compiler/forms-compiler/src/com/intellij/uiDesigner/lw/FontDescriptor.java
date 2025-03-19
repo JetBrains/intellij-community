@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import javax.swing.*;
@@ -49,7 +49,7 @@ public final class FontDescriptor {
       return null;
     }
     String name = myFontName;
-    if (name == null || name.length() == 0) {
+    if (name == null || name.isEmpty()) {
       if (defaultFont == null) {
         return null;
       }
@@ -100,6 +100,7 @@ public final class FontDescriptor {
     return UIManager.getFont(mySwingFont) != null;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof FontDescriptor)) {
       return false;

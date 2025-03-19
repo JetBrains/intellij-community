@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
 import com.intellij.facet.*
@@ -15,9 +15,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.*
 
+@ApiStatus.Internal
 class FacetTypeRegistryImpl : FacetTypeRegistry() {
   private val myTypeIds: MutableMap<String, FacetTypeId<*>> = HashMap()
   private val myFacetTypes: MutableMap<FacetTypeId<*>, FacetType<*, *>> = HashMap()
@@ -149,7 +151,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
 
       //we cannot use forEachExtensionSafe here because it may throw ProcessCanceledException during iteration
       // and we'll get partially initialized state here
-      for (type in FacetType.EP_NAME.extensions) {
+      for (type in FacetType.EP_NAME.extensionList) {
         registerFacetType(type)
       }
       FacetType.EP_NAME.addExtensionPointListener(

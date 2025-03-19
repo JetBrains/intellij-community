@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideOrImplementOptions;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -69,26 +58,27 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
+  public void invoke(final @NotNull Project project,
                      @NotNull PsiFile file,
-                     @Nullable final Editor editor,
-                     @NotNull final PsiElement startElement,
+                     final @Nullable Editor editor,
+                     final @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (editor == null) return;
     PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
     if (classReference == null) return;
     final PsiClass psiClass = (PsiClass)classReference.resolve();
     if (psiClass == null) return;
-    final JavaOverrideImplementMemberChooser chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
-    if (chooser == null) return;
+    chooseMethodsToImplement(editor, startElement, psiClass, false, chooser -> {
+      if (chooser == null) return;
 
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    OverrideOrImplementOptions options = chooser.getOptions();
+      final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+      OverrideOrImplementOptions options = chooser.getOptions();
 
-    if (selectedElements == null || selectedElements.isEmpty()) return;
+      if (selectedElements == null || selectedElements.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      implementNewMethods(project, editor, startElement, selectedElements, options);
+      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+        implementNewMethods(project, editor, startElement, selectedElements, options);
+      });
     });
   }
 

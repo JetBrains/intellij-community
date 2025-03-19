@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -23,9 +23,8 @@ final class PyLocalAttachGroup implements XAttachProcessPresentationGroup {
     return -10;
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return PyBundle.message("python.local.attach.group.name");
   }
 
@@ -34,9 +33,8 @@ final class PyLocalAttachGroup implements XAttachProcessPresentationGroup {
     return AllIcons.RunConfigurations.Application;
   }
 
-  @Nls
   @Override
-  public @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+  public @Nls @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getArgs();
   }
 }

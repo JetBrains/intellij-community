@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package foo
 
 fun <R> bar(block: () -> R): R = TODO()

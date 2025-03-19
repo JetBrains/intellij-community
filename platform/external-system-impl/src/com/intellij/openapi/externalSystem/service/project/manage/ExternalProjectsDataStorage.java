@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -8,10 +8,7 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManagerEx;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.*;
@@ -24,8 +21,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.module.ModuleTypeId;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
@@ -42,6 +37,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,13 +58,15 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 /**
  * @author Vladislav.Soroka
  */
+@Service(Service.Level.PROJECT)
 @State(name = "ExternalProjectsData", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@ApiStatus.Internal
 public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   implements SettingsSavingComponentJavaAdapter, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
   // exposed for tests
-  public static final int STORAGE_VERSION = 7;
+  public static final int STORAGE_VERSION = 11;
 
   private final @NotNull Project myProject;
   private final @NotNull ConcurrentMap<Pair<ProjectSystemId, File>, InternalExternalProjectInfo> myExternalRootProjects =
@@ -118,6 +116,9 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
       List<InternalExternalProjectInfo> projectInfos = load(myProject);
       readEnd = System.currentTimeMillis();
 
+      boolean isOpenedProjectWithIdeCaches = projectInfos != null && !projectInfos.isEmpty();
+      myProject.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, isOpenedProjectWithIdeCaches);
+
       boolean isOpenedProject = hasLinkedExternalProjects() && !ExternalSystemUtil.isNewProject(myProject);
       if (projectInfos == null || (projectInfos.isEmpty() && isOpenedProject)) {
         markDirtyAllExternalProjects();
@@ -149,7 +150,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
         }
       }
     }
-    catch (ProcessCanceledException | CancellationException e) {
+    catch (CancellationException e) {
       throw e;
     }
     catch (Throwable e) {
@@ -316,7 +317,8 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @NotNull
-  Collection<ExternalProjectInfo> list(@NotNull final ProjectSystemId projectSystemId) {
+  @ApiStatus.Internal
+  public Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }
@@ -364,7 +366,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     for (ExternalProjectPojo childProject : childProjects) {
       String moduleConfigPath = childProject.getPath();
       ModuleData moduleData = new ModuleData(childProject.getName(), systemId,
-                                             ModuleTypeId.JAVA_MODULE, childProject.getName(),
+                                             "JAVA_MODULE", childProject.getName(),
                                              moduleConfigPath, moduleConfigPath);
       projectDataNode.createChild(MODULE, moduleData);
     }
@@ -384,8 +386,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static DataNode<ExternalConfigPathAware> resolveProjectNode(@NotNull DataNode node) {
+  private static @Nullable DataNode<ExternalConfigPathAware> resolveProjectNode(@NotNull DataNode node) {
     if ((MODULE.equals(node.getKey()) || PROJECT.equals(node.getKey())) && node.getData() instanceof ExternalConfigPathAware) {
       return (DataNode<ExternalConfigPathAware>)node;
     }
@@ -396,8 +397,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     return parent;
   }
 
-  @Nullable("null indicates that cache was invalid")
-  private static List<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
+  private static @Nullable("null indicates that cache was invalid") List<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     VersionedFile cacheFile = getCacheFile(project);
     BasicFileAttributes fileAttributes = PathKt.basicAttributesIfExists(cacheFile.getFile());
     if (fileAttributes == null || !fileAttributes.isRegularFile()) {
@@ -427,19 +427,16 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     return false;
   }
 
-  @NotNull
-  private static VersionedFile getCacheFile(@NotNull Project project) {
+  private static @NotNull VersionedFile getCacheFile(@NotNull Project project) {
     return new VersionedFile(getProjectConfigurationDir(project).resolve("project.dat"), STORAGE_VERSION);
   }
 
-  @NotNull
-  public static Path getProjectConfigurationDir(@NotNull Project project) {
+  public static @NotNull Path getProjectConfigurationDir(@NotNull Project project) {
     return ProjectUtil.getExternalConfigurationDir(project);
   }
 
-  @Nullable
   @Override
-  public synchronized State getState() {
+  public synchronized @Nullable State getState() {
     return myState;
   }
 
@@ -487,8 +484,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
   }
 
-  @NotNull
-  private static File getBrokenMarkerFile() {
+  private static @NotNull File getBrokenMarkerFile() {
     return PathManagerEx.getAppSystemDir().resolve("external_build_system").resolve(".broken").toFile();
   }
 

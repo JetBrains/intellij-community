@@ -1,14 +1,17 @@
-<idea-plugin package="com.intellij.tracing.ide"
-             implementation-detail="true">
+<idea-plugin package="com.intellij.tracing.ide">
   <id>com.intellij.tracing.ide</id>
+  <name>JPS Build Tracing</name>
   <vendor>JetBrains</vendor>
   <description>
-    Infrastructure to conveniently gather tracing information from builds.
+    Infrastructure to conveniently gather tracing information from JPS builds: duration and spans.
   </description>
-  <depends optional="false">com.intellij.modules.java</depends>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+  </dependencies>
 
   <actions>
-    <action class="com.intellij.tracing.ide.ToggleBuildTracingAction" internal="true" id="toggle.tracing.action"/>
+    <action class="com.intellij.tracing.ide.ToggleBuildTracingAction" id="toggle.tracing.action"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

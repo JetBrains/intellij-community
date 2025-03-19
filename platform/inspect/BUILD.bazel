@@ -1,0 +1,91 @@
+### auto-generated section `build intellij.platform.inspect` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "inspect_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "inspect",
+  module_name = "intellij.platform.inspect",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "//platform/extensions",
+    "//platform/analysis-api:analysis",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/diff-api:diff",
+    "//platform/vcs-api:vcs",
+    "@lib//:stream_ex",
+    "//platform/diff-impl",
+    "//platform/boot",
+    "@lib//:cli-parser",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:snakeyaml",
+    "//platform/ide-core-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson-databind",
+    "@lib//:jsoup",
+    "@lib//:jackson",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/backend/observation",
+  ],
+  exports = [
+    "//platform/core-api:core",
+    "//platform/extensions",
+  ],
+  runtime_deps = [":inspect_resources"]
+)
+
+jvm_library(
+  name = "inspect_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":inspect"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/lang-impl",
+    "@lib//:junit4",
+    "//platform/extensions",
+    "//platform/analysis-api:analysis",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/diff-api:diff",
+    "//platform/vcs-api:vcs",
+    "@lib//:stream_ex",
+    "//platform/diff-impl",
+    "//platform/boot",
+    "@lib//:cli-parser",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:snakeyaml",
+    "//platform/ide-core-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:jackson-databind",
+    "@lib//:jsoup",
+    "@lib//:jackson",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
+  ],
+  runtime_deps = [":inspect_resources"]
+)
+
+jvm_test(
+  name = "inspect_test",
+  runtime_deps = [":inspect_test_lib"]
+)
+### auto-generated section `build intellij.platform.inspect` end

@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.codeHighlighting.ColorGenerator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.codeHighlighting.ColorGenerator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +21,7 @@ public class AnnotationsSettings {
 
   static final List<ColorKey> ANCHOR_COLOR_KEYS = createColorKeys(ANCHORS_COUNT);
 
-  @NotNull
-  private static List<ColorKey> createColorKeys(int count) {
+  private static @NotNull List<ColorKey> createColorKeys(int count) {
     List<ColorKey> keys = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       keys.add(ColorKey.createColorKey("VCS_ANNOTATIONS_COLOR_" + (i + 1)));
@@ -34,8 +33,7 @@ public class AnnotationsSettings {
     return ApplicationManager.getApplication().getService(AnnotationsSettings.class);
   }
 
-  @NotNull
-  public List<Color> getAuthorsColors(@Nullable EditorColorsScheme scheme) {
+  public @NotNull List<Color> getAuthorsColors(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
     List<Color> colors = getOrderedColors(scheme);
 
@@ -50,8 +48,7 @@ public class AnnotationsSettings {
     return authorColors;
   }
 
-  @NotNull
-  public List<Color> getOrderedColors(@Nullable EditorColorsScheme scheme) {
+  public @NotNull List<Color> getOrderedColors(@Nullable EditorColorsScheme scheme) {
     if (scheme == null) scheme = EditorColorsManager.getInstance().getGlobalScheme();
 
     List<Color> anchorColors = new ArrayList<>();

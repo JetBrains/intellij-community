@@ -17,12 +17,12 @@ public interface NavigatableFileEditor extends FileEditor {
    *
    * @return true if editor can navigate, false otherwise
    */
-  boolean canNavigateTo(@NotNull final Navigatable navigatable);
+  boolean canNavigateTo(final @NotNull Navigatable navigatable);
 
   /**
    * Navigate the editor to the given navigatable if {@link #canNavigateTo(Navigatable)} is true
    *
    * @param navigatable navigation target
    */
-  void navigateTo(@NotNull final Navigatable navigatable);
+  void navigateTo(final @NotNull Navigatable navigatable);
 }

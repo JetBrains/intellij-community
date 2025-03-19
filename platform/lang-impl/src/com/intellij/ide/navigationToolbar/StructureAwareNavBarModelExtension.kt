@@ -53,7 +53,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return null
   }
 
-  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?) = psiElement?.language == language
+  protected open fun isAcceptableLanguage(psiElement: @Nullable PsiElement?): Boolean = psiElement?.language == language
 
   override fun processChildren(`object`: Any,
                                rootElement: Any?,
@@ -73,6 +73,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   override fun getParent(psiElement: PsiElement?): PsiElement? {
     if (isAcceptableLanguage(psiElement)) {
       val file = psiElement?.containingFile ?: return null
+      if (psiElement == file) return null
       val model = buildStructureViewModel(file)
       if (model != null) {
         val parentInModel = findParentInModel(model.root, psiElement)
@@ -120,7 +121,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
   }
 
   protected open fun createModel(file: PsiFile, editor: Editor?): @NotNull StructureViewModel? {
-    val builder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(file)
+    val builder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file)
     return (builder as? TreeBasedStructureViewBuilder)?.createStructureViewModel(editor)
   }
 
@@ -143,7 +144,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     return children + applicableNodeProviders.flatMap { it.provideNodes(parent) }
   }
 
-  override fun normalizeChildren() = false
+  override fun normalizeChildren(): Boolean = false
 
   protected open val applicableNodeProviders: List<NodeProvider<*>> = emptyList()
 

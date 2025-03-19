@@ -1,0 +1,28 @@
+### auto-generated section `build kotlin.uast.uast-kotlin-idea-base` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-uast-uast-kotlin-idea-base",
+  module_name = "kotlin.uast.uast-kotlin-idea-base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//platform/util-ex",
+    "//platform/util",
+    "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
+    "//uast/uast-common:uast",
+    "//plugins/kotlin/uast/uast-kotlin:kotlin-uast-uast-kotlin",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//uast/uast-common-ide:ide",
+  ],
+  runtime_deps = ["//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle"]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin-idea-base` end

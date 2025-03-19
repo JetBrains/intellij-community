@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import array
 
@@ -68,10 +67,7 @@ def jsonescapeu8fast(u8chars, paranoid):
         raise ValueError
 
 
-if pycompat.ispy3:
-    _utf8strict = r'surrogatepass'
-else:
-    _utf8strict = r'strict'
+_utf8strict = r'surrogatepass'
 
 
 def jsonescapeu8fallback(u8chars, paranoid):

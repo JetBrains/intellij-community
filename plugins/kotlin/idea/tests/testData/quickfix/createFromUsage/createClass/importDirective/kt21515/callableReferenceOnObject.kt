@@ -12,3 +12,4 @@ open class Bar {
 class Foo : Bar() {
     val a = <caret>FromBarCompanion::foo
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddExplicitImportForDeprecatedVisibilityFix

@@ -9,7 +9,9 @@ import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
+import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 
+@K1ModeProjectStructureApi
 sealed class ModuleSourceInfoWithExpectedBy(private val forProduction: Boolean) : ModuleSourceInfo {
     override val expectedBy: List<ModuleSourceInfo>
         get() {

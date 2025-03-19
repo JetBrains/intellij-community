@@ -1,7 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -54,15 +56,19 @@ class ProfileNode extends MavenSimpleNode {
   }
 
   @Override
-  @Nullable
-  @NonNls
-  protected String getActionId() {
+  protected @Nullable @NonNls String getActionId() {
     return "Maven.ToggleProfile";
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  @Nullable
+  @NonNls
+  String getMenuId() {
+    return "Maven.ProfileMenu";
+  }
+
+  @Override
+  public @Nullable Navigatable getNavigatable() {
     if (myProject == null) return null;
     final List<MavenDomProfile> profiles = new ArrayList<>();
 
@@ -97,13 +103,23 @@ class ProfileNode extends MavenSimpleNode {
     return getNavigatable(profiles);
   }
 
-  private Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
+  private record ProfileWithName(MavenDomProfile profile, String name) {
+  }
+
+  private static Navigatable getNavigatable(final @NotNull List<MavenDomProfile> profiles) {
     if (profiles.size() > 1) {
+      var profileUrls = new ArrayList<ProfileWithName>();
+      for (var profile : profiles) {
+        var element = profile.getXmlElement();
+        if (null != element) {
+          profileUrls.add(new ProfileWithName(profile, getPresentableUrl(element)));
+        }
+      }
       return new NavigatableAdapter() {
         @Override
         public void navigate(final boolean requestFocus) {
           JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(profiles)
+            .createPopupChooserBuilder(profileUrls)
             .setRenderer(new DefaultListCellRenderer() {
               @Override
               public Component getListCellRendererComponent(JList list,
@@ -112,17 +128,13 @@ class ProfileNode extends MavenSimpleNode {
                                                             boolean isSelected,
                                                             boolean cellHasFocus) {
                 Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
-                XmlElement xmlElement = mavenDomProfile.getXmlElement();
-                if (xmlElement != null) {
-                  setText(xmlElement.getContainingFile().getVirtualFile().getPresentableUrl());
-                }
+                setText(((ProfileWithName)value).name);
                 return result;
               }
             })
             .setTitle(message("maven.notification.choose.file.to.open"))
             .setItemChosenCallback((value) -> {
-              final Navigatable navigatable = getNavigatable(value);
+              final Navigatable navigatable = getNavigatable(value.profile);
               if (navigatable != null) navigatable.navigate(requestFocus);
             }).createPopup().showInFocusCenter();
         }
@@ -133,8 +145,11 @@ class ProfileNode extends MavenSimpleNode {
     }
   }
 
-  @Nullable
-  private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
+  private static @NlsSafe @NotNull String getPresentableUrl(@NotNull XmlElement xmlElement) {
+    return ReadAction.nonBlocking(() -> xmlElement.getContainingFile().getVirtualFile().getPresentableUrl()).executeSynchronously();
+  }
+
+  private static @Nullable Navigatable getNavigatable(final @Nullable MavenDomProfile profile) {
     if (profile == null) return null;
     XmlElement xmlElement = profile.getId().getXmlElement();
     return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;

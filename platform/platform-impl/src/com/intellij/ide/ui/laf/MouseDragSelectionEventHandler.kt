@@ -7,7 +7,7 @@ import java.awt.event.MouseEvent
 
 internal class MouseDragSelectionEventHandler(private val mouseDraggedOriginal: (MouseEvent) -> Unit) {
 
-  var isNativeSelectionEnabled = false
+  var isNativeSelectionEnabled: Boolean = false
 
   fun mouseDragged(e: MouseEvent) {
     when (dragSelectionMode()) {

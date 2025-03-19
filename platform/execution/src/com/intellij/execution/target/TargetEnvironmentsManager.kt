@@ -2,10 +2,7 @@
 package com.intellij.execution.target
 
 import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.xmlb.annotations.Attribute
@@ -14,6 +11,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 @State(name = "RemoteTargetsManager", storages = [Storage("remote-targets.xml")])
 class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsManager.TargetsListState> {
   companion object {
@@ -76,27 +74,27 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
   ) {
     override fun toBaseState(config: TargetEnvironmentConfiguration): OneTargetState = config.toOneTargetState()
 
-    override fun fromOneState(state: ContributedStateBase) = when (state) {
+    override fun fromOneState(state: ContributedStateBase): TargetEnvironmentConfiguration? = when (state) {
       is OneTargetState -> state.toTargetConfiguration()
       else -> super.fromOneState(state) // unexpected, but I do not want to fail just in case
     }
   }
 
   class TargetsListState : BaseState() {
-    var projectDefaultTargetUuid by string()
+    var projectDefaultTargetUuid: String? by string()
 
     @get: XCollection(style = XCollection.Style.v2)
-    var targets by list<OneTargetState>()
+    var targets: MutableList<OneTargetState> by list()
   }
 
   @Tag("target")
   class OneTargetState : ContributedConfigurationsList.ContributedStateBase() {
     @get:Attribute("uuid")
-    var uuid by string()
+    var uuid: String? by string()
 
     @get: XCollection(style = XCollection.Style.v2)
     @get: Property(surroundWithTag = false)
-    var runtimes by list<ContributedConfigurationsList.ContributedStateBase>()
+    var runtimes: MutableList<ContributedConfigurationsList.ContributedStateBase> by list()
 
     fun toTargetConfiguration(): TargetEnvironmentConfiguration? {
       return TargetEnvironmentType.EXTENSION_NAME.deserializeState(this)?.also { result ->
@@ -106,7 +104,7 @@ class TargetEnvironmentsManager : PersistentStateComponent<TargetEnvironmentsMan
     }
 
     companion object {
-      fun TargetEnvironmentConfiguration.toOneTargetState() = OneTargetState().also { state ->
+      fun TargetEnvironmentConfiguration.toOneTargetState(): OneTargetState = OneTargetState().also { state ->
         state.loadFromConfiguration(this)
         state.uuid = uuid
         state.runtimes = runtimes.state.configs

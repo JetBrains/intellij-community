@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.BrowserUtil;
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 public final class AllVcses implements AllVcsesI, Disposable {
   private static final Logger LOG = Logger.getInstance(AllVcses.class);
@@ -140,9 +138,8 @@ public final class AllVcses implements AllVcsesI, Disposable {
     return vcs;
   }
 
-  @Nullable
   @Override
-  public VcsDescriptor getDescriptor(String name) {
+  public @Nullable VcsDescriptor getDescriptor(String name) {
     final VcsEP ep;
     synchronized (myLock) {
       ep = myExtensions.get(name);
@@ -259,9 +256,9 @@ public final class AllVcses implements AllVcsesI, Disposable {
     CVS("CVS", "CVS", "https://plugins.jetbrains.com/plugin/10746-cvs-integration"),
     TFS("TFS", "TFS", "https://plugins.jetbrains.com/plugin/4578-tfs");
 
-    @NotNull private final String vcsName;
-    @NotNull private final PluginId pluginId;
-    @NotNull private final String pluginUrl;
+    private final @NotNull String vcsName;
+    private final @NotNull PluginId pluginId;
+    private final @NotNull String pluginUrl;
 
     ObsoleteVcs(@NotNull String vcsName, @NotNull String pluginId, @NotNull String pluginUrl) {
       this.vcsName = vcsName;
@@ -269,15 +266,14 @@ public final class AllVcses implements AllVcsesI, Disposable {
       this.pluginUrl = pluginUrl;
     }
 
-    @Nullable
-    public static ObsoleteVcs findByName(@NotNull String name) {
+    public static @Nullable ObsoleteVcs findByName(@NotNull String name) {
       return ContainerUtil.find(values(), vcs -> vcs.vcsName.equals(name));
     }
   }
 
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(message, NotificationType.WARNING)
+    Notification notification = VcsNotifier.importantNotification().createNotification(message, NotificationType.WARNING)
       .setDisplayId(VcsNotificationIdsHolder.OBSOLETE_PLUGIN_UNBUNDLED)
       .addAction(NotificationAction.createSimpleExpiring(VcsBundle.message("action.NotificationAction.AllVcses.text.install"),
                                                          () -> installPlugin(vcs)))
@@ -315,7 +311,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
       private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull @NlsContexts.NotificationContent String message) {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
-        Notification notification = IMPORTANT_ERROR_NOTIFICATION
+        Notification notification = VcsNotifier.importantNotification()
           .createNotification(title, message, NotificationType.ERROR)
           .setDisplayId(VcsNotificationIdsHolder.SUGGESTED_PLUGIN_INSTALL_FAILED)
           .addAction(

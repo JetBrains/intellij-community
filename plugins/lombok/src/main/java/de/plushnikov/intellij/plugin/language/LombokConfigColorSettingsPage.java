@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class LombokConfigColorSettingsPage implements ColorSettingsPage {
+public final class LombokConfigColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.comment"), LombokConfigSyntaxHighlighter.COMMENT),
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.clear"), LombokConfigSyntaxHighlighter.CLEAR),
@@ -23,21 +23,18 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
     new AttributesDescriptor(LombokBundle.messagePointer("color.settings.value"), LombokConfigSyntaxHighlighter.VALUE),
   };
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return LombokIcons.Config;
   }
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new LombokConfigSyntaxHighlighter();
   }
 
-  @NotNull
   @Override
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return """
       ##
       ## Key : lombok.log.fieldName
@@ -52,9 +49,8 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
       """;
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return null;
   }
 
@@ -68,10 +64,8 @@ public class LombokConfigColorSettingsPage implements ColorSettingsPage {
     return ColorDescriptor.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  @NlsContexts.ConfigurableName
-  public String getDisplayName() {
+  public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return LombokBundle.message("configurable.name.lombok.config");
   }
 }

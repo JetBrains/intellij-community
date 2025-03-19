@@ -37,7 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
+public final class GroovyDoubleCheckedLockingInspection extends BaseInspection {
 
   /**
    * @noinspection PublicField,WeakerAccess
@@ -45,8 +45,7 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
   public boolean ignoreOnVolatileVariables = false;
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.double.checked.locking");
   }
 
@@ -56,9 +55,8 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
       checkbox("ignoreOnVolatileVariables", GroovyBundle.message("checkbox.ignore.double.checked.locking.on.volatile.fields")));
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new DoubleCheckedLockingVisitor();
   }
 
@@ -108,8 +106,8 @@ public class GroovyDoubleCheckedLockingInspection extends BaseInspection {
       registerStatementError(statement);
     }
 
-    private boolean ifStatementAssignsVolatileVariable(
-        GrIfStatement statement) {
+    private static boolean ifStatementAssignsVolatileVariable(
+      GrIfStatement statement) {
       GrStatement innerThen = statement.getThenBranch();
       innerThen = ControlFlowUtils.stripBraces(innerThen);
       if (!(innerThen instanceof GrAssignmentExpression assignmentExpression)) {

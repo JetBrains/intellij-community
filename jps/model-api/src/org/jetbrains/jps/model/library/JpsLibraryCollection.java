@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.library;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -23,10 +24,12 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import java.util.List;
 
 public interface JpsLibraryCollection {
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType type);
 
+  @ApiStatus.Internal
   @NotNull
   <P extends JpsElement>
   JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
@@ -38,8 +41,10 @@ public interface JpsLibraryCollection {
   <P extends JpsElement>
   Iterable<JpsTypedLibrary<P>> getLibraries(@NotNull JpsLibraryType<P> type);
 
+  @ApiStatus.Internal
   void addLibrary(@NotNull JpsLibrary library);
 
+  @ApiStatus.Internal
   void removeLibrary(@NotNull JpsLibrary library);
 
   @Nullable

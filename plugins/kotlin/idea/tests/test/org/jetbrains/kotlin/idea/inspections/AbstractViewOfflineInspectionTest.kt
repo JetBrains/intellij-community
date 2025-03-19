@@ -16,7 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -31,7 +31,7 @@ abstract class AbstractViewOfflineInspectionTest: KotlinLightCodeInsightFixtureT
         val testPath = testDataFile.toString()
         val shortName = run {
             val parent = testDataFile.parentFile.name
-            parent[0].toUpperCase() + parent.substring(1)
+            parent[0].uppercaseChar() + parent.substring(1)
         }
 
         InspectionProfileImpl.INIT_INSPECTIONS = true

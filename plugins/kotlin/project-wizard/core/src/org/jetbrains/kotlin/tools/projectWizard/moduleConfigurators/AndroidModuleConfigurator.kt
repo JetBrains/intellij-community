@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardKotlinVersion
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.AndroidConfigIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.AndroidPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
@@ -131,8 +131,7 @@ object AndroidTargetConfigurator : AndroidTargetConfiguratorBase(),
             +super<ModuleConfiguratorWithTests>.createModuleIRs(reader, configurationData, module)
             +super<AndroidTargetConfiguratorBase>.createModuleIRs(reader, configurationData, module)
             +ArtifactBasedLibraryDependencyIR(
-                MavenArtifact(DefaultRepository.MAVEN_CENTRAL, "junit", "junit"),
-                version = Versions.JUNIT,
+                Dependencies.JUNIT,
                 dependencyType = DependencyType.TEST
             )
         }

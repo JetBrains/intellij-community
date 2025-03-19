@@ -6,14 +6,12 @@ SHELL_SCRIPT
         PsiElement(word)('a')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
         NUMBER
           PsiElement(int)('1')
-      SIMPLE_COMMAND_ELEMENT
-        REDIRECTION
-          PsiElement(>)('>')
-          PsiElement(word)('a')
+        PsiElement(>)('>')
+        PsiElement(word)('a')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     GENERIC_COMMAND_DIRECTIVE
@@ -70,11 +68,9 @@ SHELL_SCRIPT
           PsiElement(int)('1')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
         NUMBER
           PsiElement(int)('2')
-      SIMPLE_COMMAND_ELEMENT
-        REDIRECTION
-          PsiElement(>)('>')
-          PsiElement(word)('OUT')
+        PsiElement(>)('>')
+        PsiElement(word)('OUT')

@@ -26,8 +26,10 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -55,13 +57,20 @@ public class ShowDiffWithLocalFromTableHistoryAction implements AnActionExtensio
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
-    VcsRevisionNumber currentRevisionNumber = e.getRequiredData(VcsDataKeys.HISTORY_SESSION).getCurrentRevisionNumber();
-    VcsFileRevision selectedRevision = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS)[0];
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VirtualFile virtualFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
+    VcsHistorySession historySession = e.getData(VcsDataKeys.HISTORY_SESSION);
+    if (historySession == null) return;
+    VcsRevisionNumber currentRevisionNumber = historySession.getCurrentRevisionNumber();
+    VcsFileRevision[] fileRevisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (fileRevisions == null) return;
+    VcsFileRevision selectedRevision = fileRevisions[0];
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (virtualFile == null) return;
 
     if (currentRevisionNumber != null && selectedRevision != null) {
       DiffFromHistoryHandler diffHandler = ObjectUtils.notNull(e.getRequiredData(VcsDataKeys.HISTORY_PROVIDER).getHistoryDiffHandler(),

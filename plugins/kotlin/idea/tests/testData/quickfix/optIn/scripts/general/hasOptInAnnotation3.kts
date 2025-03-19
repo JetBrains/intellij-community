@@ -1,0 +1,19 @@
+// "Opt in for 'A' on 'root'" "true"
+// PRIORITY: HIGH
+// ACTION: Opt in for 'A' in containing file 'hasOptInAnnotation3.kts'
+// ACTION: Opt in for 'A' in module 'light_idea_test_case'
+// ACTION: Opt in for 'A' on 'root'
+// ACTION: Opt in for 'A' on statement
+// ACTION: Propagate 'A' opt-in requirement to 'root'
+// RUNTIME_WITH_SCRIPT_RUNTIME
+@RequiresOptIn
+annotation class A
+
+@A
+fun f1() {}
+
+@OptIn
+fun root() {
+    <caret>f1()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$ModifyOptInAnnotationFix

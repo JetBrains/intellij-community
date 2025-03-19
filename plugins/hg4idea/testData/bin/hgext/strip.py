@@ -6,7 +6,6 @@ since version 5.7. Please use :hg:`debugstrip ...` instead.
 This extension allows you to strip changesets and all their descendants from the
 repository. See the command help for details.
 """
-from __future__ import absolute_import
 
 from mercurial import commands
 

@@ -28,4 +28,4 @@ fun when2(o: Any) {
     }
 }
 
-// IGNORE_FIR_LOG
+

@@ -15,6 +15,9 @@
  */
 package com.intellij.dvcs.push.ui;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface TooltipNode {
 
   String getTooltip();

@@ -76,7 +76,7 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStyleScheme testScheme = createTestScheme();
     final CodeStyleSettings settings = testScheme.getCodeStyleSettings();
     final CommonCodeStyleSettings commonJavaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11,22));
+    settings.setSoftMargins(JavaLanguage.INSTANCE, Arrays.asList(11, 22));
     commonJavaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     commonJavaSettings.CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     commonJavaSettings.WRAP_ON_TYPING = CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
@@ -112,17 +112,18 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals(2, commonJavaSettings.getIndentOptions().INDENT_SIZE);
     assertTrue(javaSettings.JD_ALIGN_PARAM_COMMENTS);
     PackageEntryTable importsTable = javaSettings.getImportLayoutTable();
-    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(0));
-    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(1));
-    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(2));
-    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(3));
-    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(4));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, importsTable.getEntryAt(0));
+    assertEquals(new PackageEntry(false, "com.jetbrains", false), importsTable.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, importsTable.getEntryAt(2));
+    assertEquals(new PackageEntry(false, "org.eclipse.bar", false), importsTable.getEntryAt(3));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, importsTable.getEntryAt(4));
+    assertEquals(new PackageEntry(true, "org.eclipse.foo", true), importsTable.getEntryAt(5));
     List<String> repeatAnno = javaSettings.getRepeatAnnotations();
     assertEquals(2, repeatAnno.size());
     assertEquals("com.jetbrains.First", repeatAnno.get(0));
     assertEquals("com.jetbrains.Second", repeatAnno.get(1));
   }
-  
+
   private static void setSimple(@NotNull AbstractCodeStylePropertyMapper mapper, @NotNull String name, @NotNull String value) {
     CodeStylePropertyAccessor accessor = mapper.getAccessor(name);
     assertNotNull(name + " not found", accessor);
@@ -134,6 +135,157 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertNotNull(name + " not found", accessor);
     //noinspection unchecked
     accessor.set(value);
+  }
+
+  public void testFirstMigration() throws SchemeImportException {
+    CodeStyleSettings initialSettings = createTestScheme().getCodeStyleSettings();
+
+    CommonCodeStyleSettings initialCommonCodeStyleSettings = initialSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings initialCustomCodeStyleSettings = initialSettings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    assertEquals(0, initialCommonCodeStyleSettings.BLANK_LINES_AROUND_FIELD);
+    assertEquals(0, initialCustomCodeStyleSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+
+    CodeStyleSettings settings = importSettings();
+
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    assertEquals(7, commonSettings.BLANK_LINES_AROUND_FIELD);
+    assertEquals(7, customSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+  }
+
+  public void testWithoutModulesAndOtherImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModulesAndOtherImportAndStaticImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(4));
+    assertEquals("javax", table.getEntryAt(5).getPackageName());
+    assertEquals("java", table.getEntryAt(6).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutModules() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testOnlyModules() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(3, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(2));
+  }
+
+  public void testWithoutOtherImportWithModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutStaticImportWithoutModule() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(8, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(3));
+    assertEquals("javax", table.getEntryAt(4).getPackageName());
+    assertEquals("java", table.getEntryAt(5).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(6));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(7));
+  }
+
+  public void testWithoutStaticImportWithoutModuleAndStaticNotSeparate() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(6));
+  }
+
+  public void testEmptyConfigImport() throws SchemeImportException {
+    CodeStyleSettings settings = importSettings();
+
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    PackageEntryTable table = customSettings.IMPORT_LAYOUT_TABLE;
+    assertSize(7, table.getEntries());
+    assertEquals(PackageEntry.ALL_MODULE_IMPORTS, table.getEntryAt(0));
+    assertEquals(PackageEntry.ALL_OTHER_IMPORTS_ENTRY, table.getEntryAt(1));
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(2));
+    assertEquals("javax", table.getEntryAt(3).getPackageName());
+    assertEquals("java", table.getEntryAt(4).getPackageName());
+    assertEquals(PackageEntry.BLANK_LINE_ENTRY, table.getEntryAt(5));
+    assertEquals(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY, table.getEntryAt(6));
   }
 
   private static boolean isPrimitiveOrString(Class type) {

@@ -354,6 +354,19 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
     );
   }
 
+  public void testImplicitClass() {
+    doTest(
+      """
+        void foo() {
+        }
+        """,
+
+      """
+        -Test.java
+         foo(): void"""
+    );
+  }
+
   public void testRecursive() {
     myFixture.configureByText("I.java", "interface I {" +
                                         "  class Impl implements I {" +
@@ -475,7 +488,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
 
     myFixture.testStructureView(svc -> {
       svc.setActionActive(FieldsFilter.ID, true);
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
 
       svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
@@ -504,7 +517,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, true);
       svc.setActionActive(SuperTypesGrouper.ID, true);
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
 
       JTree tree = svc.getTree();
       PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, 2));
@@ -530,7 +543,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
 
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);
@@ -588,7 +601,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
       svc.setActionActive(PublicElementsFilter.ID, true);
 
       JTree tree = svc.getTree();
@@ -639,7 +652,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       svc.setActionActive(InheritedMembersNodeProvider.ID, true);
       svc.setActionActive(PropertiesGrouper.ID, false);
       svc.setActionActive(SuperTypesGrouper.ID, true);
-      svc.setActionActive(Sorter.ALPHA_SORTER_ID, true);
+      svc.setActionActive(Sorter.getAlphaSorterId(), true);
 
       JTree tree = svc.getTree();
       PlatformTestUtil.expandAll(tree);

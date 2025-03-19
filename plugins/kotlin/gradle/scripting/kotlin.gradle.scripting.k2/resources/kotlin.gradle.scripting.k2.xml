@@ -1,0 +1,41 @@
+<idea-plugin package="org.jetbrains.kotlin.gradle.scripting.k2">
+  <dependencies>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.gradle-java"/>
+    <plugin id="org.jetbrains.plugins.gradle"/>
+  </dependencies>
+
+  <projectListeners>
+    <listener
+            class="org.jetbrains.kotlin.gradle.scripting.k2.ProjectGradleSettingsListener"
+            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider
+            implementation="org.jetbrains.kotlin.gradle.scripting.k2.IndexScriptDependenciesSourcesNotificationProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptNotificationProvider"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.gradle.scripting.k2.inspections.KotlinOptionsToCompilerOptionsInspection"
+                     shortName="KotlinOptionsToCompilerOptions"
+                     groupPathKey="group.path.kotlin.migration"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin" editorAttributes="DEPRECATED_ATTRIBUTES"
+                     key="inspection.kotlin.options.to.compiler.options.display.name" bundle="messages.KotlinBundle"/>
+  </extensions>
+
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptConfigurationsSource"/>
+
+    <kotlinScriptLazyResolveProhibitionCondition
+            implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptLazyResolveProhibitionCondition"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsSource"/>
+  </extensions>
+</idea-plugin>

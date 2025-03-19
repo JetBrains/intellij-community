@@ -1,1 +1,2 @@
+// PRIORITY: LOW
 val s = "foo <caret>bar baz"

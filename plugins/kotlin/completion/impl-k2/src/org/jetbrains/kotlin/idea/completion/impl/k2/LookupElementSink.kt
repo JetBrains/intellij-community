@@ -1,69 +1,91 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.completion
+package org.jetbrains.kotlin.idea.completion.impl.k2
 
-import com.intellij.codeInsight.completion.CompletionInitializationContext
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
+import org.jetbrains.kotlin.idea.base.codeInsight.duration
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
-import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
+import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
+import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
+import kotlin.time.Duration
 
 internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
+    private val contributorClass: Class<FirCompletionContributor<*>>? = null,
 ) {
 
-    fun withPriority(priority: Int): LookupElementSink =
-        LookupElementSink(resultSet, parameters, priority)
+    var duration: Duration = Duration.ZERO
+        private set
+
+    val prefixMatcher: PrefixMatcher
+        get() = resultSet.prefixMatcher
+
+    fun withPriority(groupPriority: Int): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
+
+    fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
 
     fun addElement(element: LookupElement) {
-        element.groupPriority = groupPriority
-        resultSet.addElement(applyWrappersToLookupElement(element))
+        resultSet.addElement(decorateLookupElement(element))
     }
 
     fun addAllElements(elements: Iterable<LookupElement>) {
-        elements.forEach {
-            it.groupPriority = groupPriority
-        }
-        resultSet.addAllElements(elements.map(::applyWrappersToLookupElement))
+        resultSet.addAllElements(elements.map(::decorateLookupElement))
     }
 
     fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
         resultSet.restartCompletionOnPrefixChange(prefixCondition)
     }
 
-    private fun applyWrappersToLookupElement(lookupElement: LookupElement): LookupElement {
-        val wrappers = WrappersProvider.getWrapperForLookupElement(parameters)
-        return wrappers.wrap(lookupElement)
-    }
-}
+    private fun decorateLookupElement(
+        element: LookupElement,
+    ): LookupElementDecorator<LookupElement> {
+        duration += element.duration
 
+        element.groupPriority = groupPriority
+        element.contributorClass = contributorClass
 
-private object WrappersProvider {
-    fun getWrapperForLookupElement(parameters: KotlinFirCompletionParameters): List<LookupElementWrapper> {
-        return when (parameters.type) {
-            KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> {
-                listOf(LookupElementWrapper(::wrapLookupElementForStringTemplateAfterDotCompletion))
-            }
-            else -> listOf(LookupElementWrapper(::WrapSingleStringTemplateEntryWithBraces))
+        if (isAtFunctionLiteralStart(parameters.position)) {
+            element.suppressItemSelectionByCharsOnTyping = true
         }
+
+        val bracesInsertHandler = when (parameters.type) {
+            KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> InsertStringTemplateBracesInsertHandler
+            else -> WrapSingleStringTemplateEntryWithBracesInsertHandler
+        }
+
+        return LookupElementDecorator.withDelegateInsertHandler(
+            LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
+            CompletionCharInsertHandler(parameters.delegate),
+        )
     }
 }
 
-private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupElement) : LookupElementDecorator<LookupElement>(lookupElement) {
-    override fun handleInsert(context: InsertionContext) {
+private object WrapSingleStringTemplateEntryWithBracesInsertHandler : InsertHandler<LookupElement> {
+
+    override fun handleInsert(
+        context: InsertionContext,
+        item: LookupElement,
+    ) {
         val document = context.document
         context.commitDocument()
 
@@ -71,12 +93,12 @@ private class WrapSingleStringTemplateEntryWithBraces(lookupElement: LookupEleme
             insertBraces(context, document)
             context.commitDocument()
 
-            super.handleInsert(context)
+            item.handleInsert(context)
 
             removeUnneededBraces(context)
             context.commitDocument()
         } else {
-            super.handleInsert(context)
+            item.handleInsert(context)
         }
     }
 

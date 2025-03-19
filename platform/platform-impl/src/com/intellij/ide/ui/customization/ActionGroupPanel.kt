@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.QuickListsManager.Companion.getInstance
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.keymap.impl.ui.Group
@@ -19,6 +20,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.util.function.Supplier
+import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
@@ -96,7 +98,8 @@ class ActionGroupPanel(
     val treeNodes = getActions(groupIDs, currentSchema).map { ActionsTreeUtil.createNode(it) }
     if (groupIDs.size == 1) {
       return DefaultTreeModel(treeNodes.first())
-    } else {
+    }
+    else {
       val root = createRootNode()
       treeNodes.forEach(root::add)
       return DefaultTreeModel(root)
@@ -105,7 +108,7 @@ class ActionGroupPanel(
 
   @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
   private fun createRootNode() : DefaultMutableTreeNode {
-    val rootGroup = Group("root", null, null)
+    val rootGroup = Group("root", null, null as Supplier<Icon>?)
     return DefaultMutableTreeNode(rootGroup)
   }
 
@@ -125,7 +128,7 @@ class ActionGroupPanel(
       val actionGroup = DefaultActionGroup(*createActions())
       val toolbar = ActionManager.getInstance().createActionToolbar("ActionGroupPanel", actionGroup, true).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         targetComponent = tree
       }
       addToRight(toolbar.component)
@@ -184,7 +187,7 @@ class ActionGroupPanel(
         .mapNotNull { (id, group) ->
           group ?: return@mapNotNull null
           @NlsSafe val name = currentSchema.getDisplayName(id)
-          ActionsTreeUtil.createGroup(group, name, null, null, false) { true }
+          ActionsTreeUtil.createGroup(group, name, null, false) { true }
         }
     }
   }

@@ -112,6 +112,8 @@ abstract class ChangeCallableReturnTypeFix(
     override fun getFamilyName(): String = ChangeTypeFixUtils.familyName()
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
+        if (changeFunctionLiteralReturnTypeFix?.isAvailable(project, editor, file) == false) return false
+
         return !typeContainsError &&
                 element !is KtConstructor<*>
     }

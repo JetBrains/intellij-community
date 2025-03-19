@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.progress.*
-import com.intellij.util.concurrency.CancellationPropagationTest
-import com.intellij.util.concurrency.ThreadContextPropagationTest
+import com.intellij.util.concurrency.*
 import org.junit.platform.suite.api.SelectClasses
 import org.junit.platform.suite.api.Suite
 
@@ -14,26 +13,44 @@ import org.junit.platform.suite.api.Suite
   WithThreadLocalTest::class,
   ThreadContextTest::class,
 
+  // general threading
+  NonBlockingReadActionTest::class,
+  ProgressRunnerTest::class,
+  EdtCoroutineDispatcherTest::class,
+  ImplicitReadTest::class,
+  LaterInvocatorTest::class,
+  ModalCoroutineTest::class,
+  ReadWritePropagationTest::class,
+  SwingThreadingTest::class,
+
   // contexts
   ContextSwitchTest::class,
-  CurrentJobTest::class,
+  BlockingContextTest::class,
   ExistingThreadContextTest::class,
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
-  RunBlockingModalTest::class,
+  RunWithModalProgressBlockingTest::class,
   WithModalProgressTest::class,
   CoroutineToIndicatorTest::class,
+  CurrentThreadCoroutineScopeTest::class,
+  ImplicitBlockingContextTest::class,
+  CancellableContextTest::class,
 
   // rw
   CancellableReadActionWithJobTest::class,
   CancellableReadActionWithIndicatorTest::class,
-  Blocking::class,
-  NonBlocking::class,
-  NonBlockingUndispatched::class,
+  BlockingSuspendingReadActionTest::class,
+  NonBlockingSuspendingReadActionTest::class,
+  NonBlockingUndispatchedSuspendingReadActionTest::class,
   SuspendingWriteActionTest::class,
+  SuspendingReadAndWriteActionTest::class,
+  BackgroundWriteActionTest::class,
 
   // propagation
   ThreadContextPropagationTest::class,
   CancellationPropagationTest::class,
+  MergingUpdateQueuePropagationTest::class,
+  DocumentManagerPropagationTest::class,
+  DumbServicePropagationTest::class,
 )
 class ContextAndCoroutinesSuite

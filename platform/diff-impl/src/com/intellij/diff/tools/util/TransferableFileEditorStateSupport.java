@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util;
 
 import com.intellij.diff.DiffContext;
@@ -29,12 +15,12 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TransferableFileEditorState;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,15 +31,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class TransferableFileEditorStateSupport {
-  @NotNull private static final Key<MyState> TRANSFERABLE_FILE_EDITOR_STATE =
+  private static final @NotNull Key<MyState> TRANSFERABLE_FILE_EDITOR_STATE =
     Key.create("Diff.TransferableFileEditorState");
 
   private static final Condition<BinaryEditorHolder> IS_SUPPORTED = holder -> getEditorState(holder.getEditor()) != null;
 
-  @NotNull private final DiffSettings mySettings;
-  @NotNull private final List<? extends BinaryEditorHolder> myHolders;
-  @NotNull private final List<? extends FileEditor> myEditors;
+  private final @NotNull DiffSettings mySettings;
+  private final @NotNull List<? extends BinaryEditorHolder> myHolders;
+  private final @NotNull List<? extends FileEditor> myEditors;
 
   private final boolean mySupported;
 
@@ -66,7 +53,7 @@ public class TransferableFileEditorStateSupport {
     mySettings = settings;
     myHolders = holders;
     myEditors = ContainerUtil.map(ContainerUtil.filter(holders, IS_SUPPORTED), holder -> holder.getEditor());
-    mySupported = myEditors.size() > 0;
+    mySupported = !myEditors.isEmpty();
 
     new MySynchronizer().install(disposable);
   }
@@ -90,8 +77,7 @@ public class TransferableFileEditorStateSupport {
     syncStateFrom(masterEditor);
   }
 
-  @NotNull
-  public AnAction createToggleAction() {
+  public @NotNull AnAction createToggleAction() {
     return new ToggleSynchronousEditorStatesAction(this);
   }
 
@@ -197,18 +183,17 @@ public class TransferableFileEditorStateSupport {
     }
   }
 
-  @Nullable
-  private static TransferableFileEditorState getEditorState(@NotNull FileEditor editor) {
+  private static @Nullable TransferableFileEditorState getEditorState(@NotNull FileEditor editor) {
     FileEditorState state = editor.getState(FileEditorStateLevel.FULL);
     return state instanceof TransferableFileEditorState ? (TransferableFileEditorState)state : null;
   }
 
 
-  private static class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
-    @NotNull private final TransferableFileEditorStateSupport mySupport;
+  private static class ToggleSynchronousEditorStatesAction extends DumbAwareToggleAction {
+    private final @NotNull TransferableFileEditorStateSupport mySupport;
 
     ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
-      super(DiffBundle.message("synchronize.editors.settings"), AllIcons.Actions.SyncPanels);
+      super(DiffBundle.message("synchronize.editors.settings"), null, AllIcons.Actions.SyncPanels);
       mySupport = support;
     }
 
@@ -218,8 +203,9 @@ public class TransferableFileEditorStateSupport {
     }
 
     @Override
-    public boolean isVisible() {
-      return mySupport.isSupported();
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(mySupport.isSupported());
     }
 
     @Override

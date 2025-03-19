@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -18,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AutocreatingMoveDestination implements MoveDestination {
-  @NotNull
-  protected final PackageWrapper myPackage;
+  protected final @NotNull PackageWrapper myPackage;
   protected final PsiManager myManager;
   protected final ProjectFileIndex myFileIndex;
 
@@ -29,9 +28,8 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
     myFileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
   }
 
-  @NotNull
   @Override
-  public abstract PackageWrapper getTargetPackage();
+  public abstract @NotNull PackageWrapper getTargetPackage();
 
   @Override
   public abstract PsiDirectory getTargetDirectory(PsiDirectory source) throws IncorrectOperationException;
@@ -39,8 +37,7 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
   @Override
   public abstract PsiDirectory getTargetDirectory(PsiFile source) throws IncorrectOperationException;
 
-  @Nullable
-  protected @NlsContexts.DialogMessage String checkCanCreateInSourceRoot(final VirtualFile targetSourceRoot) {
+  protected @Nullable @NlsContexts.DialogMessage String checkCanCreateInSourceRoot(final VirtualFile targetSourceRoot) {
     final String targetQName = myPackage.getQualifiedName();
     final String sourceRootPackage = PackageIndex.getInstance(myManager.getProject()).getPackageNameByDirectory(targetSourceRoot);
     if (!CommonJavaRefactoringUtil.canCreateInSourceRoot(sourceRootPackage, targetQName)) {

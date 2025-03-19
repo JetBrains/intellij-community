@@ -9,3 +9,6 @@ class Foo {
 }
 
 fun Foo.s() = ""
+
+// KTIJ-32433
+// IGNORE_K2

@@ -1,53 +1,62 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
 import com.intellij.java.library.getMavenCoordinates
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.RuleChain
-import com.intellij.testFramework.rules.ProjectModelRule
-import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
-import org.junit.Assert.*
-import org.junit.Before
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
+@TestApplication
 class RepositoryLibraryTest {
-  companion object {
-    @JvmStatic
-    @get:ClassRule
-    val applicationRule = ApplicationRule()
-  }
+  @TestDisposable
+  lateinit var disposable: Disposable
 
-  private val disposableRule = DisposableRule()
-  private val projectRule = ProjectModelRule()
-  private val mavenRepo = TempDirectory()
-  private val localMavenCache = TempDirectory()
-  @get:Rule
-  val rulesChain = RuleChain(localMavenCache, mavenRepo, projectRule, disposableRule)
+  @JvmField
+  @RegisterExtension
+  val projectRule: ProjectModelExtension = ProjectModelExtension()
+
+  @JvmField
+  @RegisterExtension
+  val mavenRepo = TempDirectoryExtension()
+
+  @JvmField
+  @RegisterExtension
+  val localMavenCache = TempDirectoryExtension()
 
   private val ARTIFACT_NAME = "myArtifact"
   private val GROUP_NAME = "myGroup"
   private val LIBRARY_NAME = "NewLibrary"
 
-  @Before
+  @BeforeEach
   fun setUp() {
     JarRepositoryManager.setLocalRepositoryPath(localMavenCache.root)
 
     MavenRepoFixture(mavenRepo.root).apply {
       addLibraryArtifact(group = GROUP_NAME, artifact = ARTIFACT_NAME, version = "1.0")
+      addLibraryArtifact(group = GROUP_NAME, artifact = ARTIFACT_NAME, version = "1.0-SNAPSHOT")
       generateMavenMetadata(GROUP_NAME, ARTIFACT_NAME)
     }
 
@@ -56,17 +65,21 @@ class RepositoryLibraryTest {
     )
   }
 
-  private fun createLibrary(block: (LibraryEx.ModifiableModelEx) -> Unit = {}): Library {
+  private fun createLibrary(version: String = "1.0", libraryName: String = LIBRARY_NAME, block: (LibraryEx.ModifiableModelEx) -> Unit = {}): Library {
     val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(projectRule.project)
     val library = runWriteActionAndWait {
-      projectRule.addProjectLevelLibrary(LIBRARY_NAME) {
+      projectRule.addProjectLevelLibrary(libraryName) {
         it.kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
-        it.properties = RepositoryLibraryProperties(GROUP_NAME, ARTIFACT_NAME, "1.0", false, emptyList())
+        it.properties = RepositoryLibraryProperties(GROUP_NAME, ARTIFACT_NAME, version, false, emptyList())
         block(it)
       }
     }
-    disposableRule.register {
-      runWriteActionAndWait { libraryTable.removeLibrary(library) }
+    Disposer.register(disposable) {
+      runWriteActionAndWait {
+        if (!library.isDisposed) {
+          libraryTable.removeLibrary(library)
+        }
+      }
     }
     return library
   }
@@ -123,5 +136,5 @@ class RepositoryLibraryTest {
     assertTrue(workspaceVersion() == modelVersionBefore)
   }
 
-  private fun workspaceVersion() = WorkspaceModel.getInstance(projectRule.project).entityStorage.version
+  private fun workspaceVersion() = (WorkspaceModel.getInstance(projectRule.project) as WorkspaceModelInternal).entityStorage.version
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -19,11 +19,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-public class FileStatusColorsTableModel extends AbstractTableModel {
+public final class FileStatusColorsTableModel extends AbstractTableModel {
   private final EditorColorsScheme myScheme;
   private final List<FileStatusColorDescriptor> myDescriptors;
 
-  private final static ColumnInfo[] COLUMNS_INFO = {
+  private static final ColumnInfo[] COLUMNS_INFO = {
     new ColumnInfo(Boolean.class, descriptor -> descriptor.isDefault()),
     new ColumnInfo(String.class, descriptor -> descriptor.getStatus().getText())
   };
@@ -118,12 +118,12 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     if (myScheme instanceof AbstractColorsScheme) {
       ((AbstractColorsScheme)myScheme).setSaveNeeded(true);
     }
-    if (EditorColorsManagerImpl.isTempScheme(myScheme)) {
+    if (EditorColorsManagerImpl.Companion.isTempScheme(myScheme)) {
       ColorAndFontOptions.writeTempScheme(myScheme);
     }
   }
 
-  public @Nullable FileStatusColorDescriptor getDescriptorAt(int index) {
+  @Nullable FileStatusColorDescriptor getDescriptorAt(int index) {
     if (index >= 0 && index < myDescriptors.size()) {
       return myDescriptors.get(index);
     }

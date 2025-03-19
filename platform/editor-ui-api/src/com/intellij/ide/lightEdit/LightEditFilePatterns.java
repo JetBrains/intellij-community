@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileNameMatcher;
@@ -6,13 +6,15 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class LightEditFilePatterns {
+@ApiStatus.Internal
+public final class LightEditFilePatterns {
   public static final String[] DEFAULT_PATTERNS = {
     "*.txt", "*.log", "*.md", "*.json", "*.xml", "*.sh", "*.ini", "*.yml", "*.conf"};
 
@@ -41,13 +43,11 @@ public class LightEditFilePatterns {
     return new LightEditFilePatterns(filePatterns);
   }
 
-  @NlsSafe
-  public String toSeparatedString() {
+  public @NlsSafe String toSeparatedString() {
     return String.join(PATTERN_SEPARATOR, getPatterns());
   }
 
-  @NotNull
-  public List<String> getPatterns() {
+  public @NotNull List<String> getPatterns() {
     synchronized (myPatternLock) {
       return myPatterns.stream().sorted().collect(Collectors.toList());
     }

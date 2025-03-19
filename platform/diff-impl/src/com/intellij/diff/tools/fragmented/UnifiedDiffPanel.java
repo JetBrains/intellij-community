@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.tools.util.base.DiffPanelBase;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -38,13 +23,10 @@ public class UnifiedDiffPanel extends DiffPanelBase {
   private static final @NonNls String OPERATION_CANCELED_CONTENT = "OperationCanceledContent";
   private static final @NonNls String ERROR_CONTENT = "ErrorContent";
 
-  @NotNull private final AsyncProcessIcon.Big myBusyIcon;
+  private final @NotNull AsyncProcessIcon.Big myBusyIcon;
 
-  public UnifiedDiffPanel(@Nullable Project project,
-                          @NotNull JComponent content,
-                          @NotNull DataProvider provider,
-                          @NotNull DiffContext context) {
-    super(project, provider, context);
+  public UnifiedDiffPanel(@Nullable Project project, @NotNull JComponent content, @NotNull DiffContext context) {
+    super(project, context);
     myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
     JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
     myContentPanel.add(centerPanel, GOOD_CONTENT);

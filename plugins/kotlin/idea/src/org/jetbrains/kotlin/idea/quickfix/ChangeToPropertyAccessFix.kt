@@ -1,43 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
 
-class ChangeToPropertyAccessFix(
-    element: KtCallExpression,
-    private val isObjectCall: Boolean
-) : KotlinQuickFixAction<KtCallExpression>(element) {
+internal object ChangeToPropertyAccessFix : KotlinSingleIntentionActionFactory() {
 
-    override fun getFamilyName() = when {
-        isObjectCall -> KotlinBundle.message("fix.change.to.property.access.family.remove")
-        else -> KotlinBundle.message("fix.change.to.property.access.family.change")
-    }
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val expression = UnresolvedInvocationQuickFix.findAcceptableParentCallExpression(diagnostic.psiElement)
+            ?: return null
 
-    override fun getText() = familyName
+        val isObjectCall = expression.calleeExpression?.getCallableDescriptor() is FakeCallableDescriptorForObject
 
-    public override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        element.replace(element.calleeExpression as KtExpression)
-    }
+        val quickFix = if (isObjectCall)
+            UnresolvedInvocationQuickFix.RemoveInvocationQuickFix(expression)
+        else
+            UnresolvedInvocationQuickFix.ChangeToPropertyAccessQuickFix(expression)
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtCallExpression>? {
-            val expression = diagnostic.psiElement.parent as? KtCallExpression ?: return null
-            if (expression.valueArguments.isEmpty()) {
-                val isObjectCall = expression.calleeExpression?.getCallableDescriptor() is FakeCallableDescriptorForObject
-                return ChangeToPropertyAccessFix(expression, isObjectCall)
-            }
-            return null
-        }
+        return quickFix.asIntention()
     }
 }

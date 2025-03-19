@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="zstd-jni" type="repository">
-    <properties maven-id="com.github.luben:zstd-jni:1.5.2-5" />
+    <properties maven-id="com.github.luben:zstd-jni:1.5.6-9">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9.jar">
+          <sha256sum>e122143e2abb041b6384e43c9a79980fe3d2ff3d9610ea20b29231ea518772b2</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.2-5/zstd-jni-1.5.2-5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.2-5/zstd-jni-1.5.2-5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/luben/zstd-jni/1.5.6-9/zstd-jni-1.5.6-9-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

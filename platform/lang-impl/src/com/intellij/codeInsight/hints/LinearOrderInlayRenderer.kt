@@ -4,11 +4,11 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.hints.InlayHintsUtils.produceUpdatedRootList
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationListener
-import com.intellij.codeInsight.hints.presentation.withTranslated
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.SmartList
+import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
@@ -23,18 +23,6 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   private val createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
   private val comparator: Comparator<ConstrainedPresentation<*, Constraint>> = compareBy { it.priority }
 ) : PresentationContainerRenderer<Constraint> {
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use constructor with [Comparator] parameter")
-  constructor(
-    constrainedPresentations: Collection<ConstrainedPresentation<*, Constraint>>,
-    createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
-    comparator: (ConstrainedPresentation<*, Constraint>) -> Int
-  ) : this(
-    constrainedPresentations,
-    createPresentation,
-    compareBy(comparator)
-  )
 
   // Supposed to be changed rarely and rarely contains more than 1 element
   private var presentations: List<ConstrainedPresentation<*, Constraint>> = SmartList(constrainedPresentations.sortedWith(comparator))
@@ -107,6 +95,10 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
     cachedPresentation.mouseClicked(event, translated)
+  }
+
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    cachedPresentation.mousePressed(event, translated)
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -51,8 +51,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @Nullable
-  public static Icon getDescriptorIcon(NodeDescriptor descriptor) {
+  public static @Nullable Icon getDescriptorIcon(NodeDescriptor descriptor) {
     if (descriptor instanceof ThreadGroupDescriptorImpl threadGroupDescriptor) {
       return threadGroupDescriptor.isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup;
     }
@@ -90,10 +89,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
       if (fieldDescriptor.getField().isFinal()) {
-        nodeIcon = new LayeredIcon(nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark));
+        nodeIcon = LayeredIcon.layeredIcon(new Icon[]{nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.FinalMark)});
       }
       if (fieldDescriptor.isStatic()) {
-        nodeIcon = new LayeredIcon(nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.StaticMark));
+        nodeIcon = LayeredIcon.layeredIcon(new Icon[]{nodeIcon, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.StaticMark)});
       }
     }
     else if (valueDescriptor instanceof ThrownExceptionValueDescriptorImpl) {
@@ -142,7 +141,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
     final Icon valueIcon = valueDescriptor.getValueIcon();
     if (valueIcon != null) {
-      nodeIcon = IconManager.getInstance().createRowIcon(nodeIcon, valueIcon);
+      // Keep watch icon to make clear the source of a node, prefer the provided icon otherwise
+      nodeIcon = nodeIcon == AllIcons.Debugger.Db_watch
+                 ? IconManager.getInstance().createRowIcon(nodeIcon, valueIcon)
+                 : valueIcon;
     }
     return nodeIcon;
   }
@@ -292,7 +294,7 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       if (slashFound) {
         slashFound = false;
         if (ch == '\\' || ch == '\"' || ch == 'b' || ch == 't' || ch == 'n' || ch == 'f' || ch == 'r') {
-          if (buf.length() > 0) {
+          if (!buf.isEmpty()) {
             descriptorText.append(buf.toString(), attribs);
             buf.setLength(0);
           }
@@ -325,13 +327,13 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         }
       }
     }
-    if (buf.length() > 0) {
+    if (!buf.isEmpty()) {
       descriptorText.append(buf.toString(), attribs);
     }
   }
 
   private static String[] breakString(String source, String substr) {
-    if (substr != null && substr.length() > 0) {
+    if (substr != null && !substr.isEmpty()) {
       int index = Math.max(source.indexOf(substr), 0);
       String prefix = (index > 0) ? source.substring(0, index) : null;
       index += substr.length();

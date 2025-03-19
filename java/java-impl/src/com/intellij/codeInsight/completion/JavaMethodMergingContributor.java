@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Key;
@@ -15,7 +14,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
+import static com.intellij.codeInsight.completion.JavaMethodCallElement.areParameterTemplatesEnabledOnCompletion;
+
+public final class JavaMethodMergingContributor extends CompletionContributor implements DumbAware {
   static final Key<Boolean> MERGED_ELEMENT = Key.create("merged.element");
 
   @Override
@@ -25,7 +26,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
       return null;
     }
 
-    if (ParameterInfoControllerBase.areParameterTemplatesEnabledOnCompletion()) {
+    if (areParameterTemplatesEnabledOnCompletion()) {
       return null;
     }
 
@@ -38,7 +39,10 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
       final ArrayList<PsiMethod> allMethods = new ArrayList<>();
       for (LookupElement item : items) {
         Object o = item.getPsiElement();
-        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null || !(o instanceof PsiMethod)) {
+        if (!(o instanceof PsiMethod psiMethod)) {
+          return super.handleAutoCompletionPossibility(context);
+        }
+        if (item.getUserData(JavaCompletionUtil.FORCE_SHOW_SIGNATURE_ATTR) != null) {
           return AutoCompletionDecision.SHOW_LOOKUP;
         }
 
@@ -48,7 +52,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
         }
 
         commonName = name;
-        allMethods.add((PsiMethod)o);
+        allMethods.add(psiMethod);
       }
 
       for (LookupElement item : items) {
@@ -89,8 +93,7 @@ public class JavaMethodMergingContributor extends CompletionContributor implemen
            (method.getParameterList().isEmpty() ? 0 : 2);
   }
 
-  @Nullable
-  private static PsiMethod getItemMethod(LookupElement item) {
+  private static @Nullable PsiMethod getItemMethod(LookupElement item) {
     Object o = item.getPsiElement();
     return o instanceof PsiMethod ? (PsiMethod)o : null;
   }

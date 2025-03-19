@@ -1,10 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -30,7 +35,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
                       GET_METHOD, GET_DECLARED_METHOD,
@@ -75,9 +80,8 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     ignoredClassNamesString = String.join(",", ignoredClassNames);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
@@ -209,21 +213,18 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   }
 
   @Contract("null->null")
-  @Nullable
-  private static String getMemberName(@Nullable PsiExpression memberNameArgument) {
+  private static @Nullable String getMemberName(@Nullable PsiExpression memberNameArgument) {
     return computeConstantExpression(memberNameArgument, String.class);
   }
 
-  @Nullable
-  private static ReflectiveClass getOwnerClass(@NotNull PsiMethodCallExpression callExpression) {
+  private static @Nullable ReflectiveClass getOwnerClass(@NotNull PsiMethodCallExpression callExpression) {
     return getReflectiveClass(callExpression.getMethodExpression().getQualifierExpression());
   }
 
-  @Nullable
-  private static PsiMethod matchMethod(@NotNull PsiMethodCallExpression callExpression,
-                                       PsiMethod[] methods,
-                                       PsiExpression[] arguments,
-                                       int argumentOffset) {
+  private static @Nullable PsiMethod matchMethod(@NotNull PsiMethodCallExpression callExpression,
+                                                 PsiMethod[] methods,
+                                                 PsiExpression[] arguments,
+                                                 int argumentOffset) {
     final JavaReflectionInvocationInspection.Arguments methodArguments =
       JavaReflectionInvocationInspection.getActualMethodArguments(arguments, argumentOffset, MethodCallUtils.isVarArgCall(callExpression));
     if (methodArguments == null) {
@@ -235,30 +236,25 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
     return JavaLangClassMemberReference.matchMethod(methods, argumentTypes);
   }
 
-  static final class UseAppropriateMethodFix implements LocalQuickFix {
+  static final class UseAppropriateMethodFix extends PsiUpdateModCommandQuickFix {
     private final String myProperMethod;
 
     UseAppropriateMethodFix(String method) {
       myProperMethod = method;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.use", myProperMethod + "()");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.reflection.member.access.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpressionList expressionList = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpressionList.class);
       if (expressionList == null) return;
       PsiMethodCallExpression call = ObjectUtils.tryCast(expressionList.getParent(), PsiMethodCallExpression.class);

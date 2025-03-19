@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.jdi.JNITypeParser;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ public interface ClassesByNameProvider {
 
     @Override
     public List<ReferenceType> get(@NotNull String s) {
-      return (List<ReferenceType>)myCache.get(JNITypeParser.typeNameToSignature(s));
+      return (List<ReferenceType>)myCache.get(DebuggerUtilsEx.typeNameToSignature(s));
     }
   }
 }

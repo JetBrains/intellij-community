@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.diff.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "diff-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "diff-impl",
+  module_name = "intellij.platform.diff.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/execution-impl",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-api:lang",
+    "@lib//:guava",
+    "//platform/ide-core-impl",
+    "//platform/statistics",
+    "//platform/boot",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
+    "//platform/util/jdom",
+  ],
+  exports = ["//platform/diff-api:diff"],
+  runtime_deps = [":diff-impl_resources"]
+)
+### auto-generated section `build intellij.platform.diff.impl` end

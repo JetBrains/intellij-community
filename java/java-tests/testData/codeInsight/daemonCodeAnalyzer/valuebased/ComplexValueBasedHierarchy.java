@@ -10,16 +10,16 @@ class Main {
     final ComplexVBHierarchy localVb = new ComplexVBHierarchy();
     final Object objectVb = new ComplexVBHierarchy();
 
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">vb</warning>) {}
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">localVb</warning>) {}
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">objectVb</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">vb</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">localVb</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">objectVb</warning>) {}
     synchronized (ComplexVBHierarchy.class) {}
     f(vb);
     g(vb);
   }
 
   void f(ComplexVBHierarchy vb) {
-    synchronized (<warning descr="Attempt to synchronize on an instance of a value-based class">vb</warning>) {}
+    synchronized (<warning descr="Synchronization on instance of value-based class">vb</warning>) {}
   }
 
   void g(Object vb) {

@@ -1,34 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,66 +18,71 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityAction {
-  private final boolean myCreateGetter;
-  private final boolean myCreateSetter;
-  private final PsiField myField;
+public sealed class CreateGetterOrSetterFix extends PsiUpdateModCommandAction<PsiField> {
+  private final Create myCreate;
   private final String myPropertyName;
 
-  public CreateGetterOrSetterFix(boolean createGetter, boolean createSetter, @NotNull PsiField field) {
-    myCreateGetter = createGetter;
-    myCreateSetter = createSetter;
-    myField = field;
+  private enum Create { GETTER , SETTER , GETTER_SETTER }
+  
+  public static final class CreateGetterFix extends CreateGetterOrSetterFix {
+    public CreateGetterFix(@NotNull PsiField field) {
+      super(Create.GETTER, field);
+    }
+  }
+
+  public static final class CreateSetterFix extends CreateGetterOrSetterFix {
+    public CreateSetterFix(@NotNull PsiField field) {
+      super(Create.SETTER, field);
+    }
+  }
+
+  public static final class CreateGetterAndSetterFix extends CreateGetterOrSetterFix {
+    public CreateGetterAndSetterFix(@NotNull PsiField field) {
+      super(Create.GETTER_SETTER, field);
+    }
+  }
+  
+  private CreateGetterOrSetterFix(Create create, @NotNull PsiField field) {
+    super(field);
+    myCreate = create;
     myPropertyName = PropertyUtilBase.suggestPropertyName(field);
   }
 
-  @Override
-  @NotNull
-  public String getText() {
-    @NonNls final String what;
-    if (myCreateGetter && myCreateSetter) {
-      what = "create.getter.and.setter.for.field";
-    }
-    else if (myCreateGetter) {
-      what = "create.getter.for.field";
-    }
-    else if (myCreateSetter) {
-      what = "create.setter.for.field";
-    }
-    else {
-      throw new IllegalStateException("Either createGetter or createSetter must be true");
-    }
-    return QuickFixBundle.message(what, myField.getName());
+  private boolean createGetter() {
+    return myCreate != Create.SETTER;
+  }
+
+  private boolean createSetter() {
+    return myCreate != Create.GETTER;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.accessor.for.unused.field.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myField.isValid()) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiField field) {
+    final PsiClass aClass = field.getContainingClass();
+    if (aClass == null) return null;
 
-    final PsiClass aClass = myField.getContainingClass();
-    if (aClass == null) {
-      return false;
+    if (createGetter()) {
+      if (isStaticFinal(field) || PropertyUtilBase.findPropertyGetter(aClass, myPropertyName, isStatic(field), false) != null) {
+        return null;
+      }
     }
-
-    if (myCreateGetter){
-      if (isStaticFinal(myField) || PropertyUtilBase.findPropertyGetter(aClass, myPropertyName, isStatic(myField), false) != null){
-        return false;
+    if (createSetter()) {
+      if (isFinal(field) || PropertyUtilBase.findPropertySetter(aClass, myPropertyName, isStatic(field), false) != null) {
+        return null;
       }
     }
 
-    if (myCreateSetter){
-      if(isFinal(myField) || PropertyUtilBase.findPropertySetter(aClass, myPropertyName, isStatic(myField), false) != null){
-        return false;
-      }
-    }
-
-    return true;
+    final String what = switch (myCreate) {
+      case GETTER_SETTER -> "create.getter.and.setter.for.field";
+      case GETTER -> "create.getter.for.field";
+      case SETTER -> "create.setter.for.field";
+    };
+    return Presentation.of(QuickFixBundle.message(what, field.getName()));
   }
 
   private static boolean isFinal(@NotNull PsiField field){
@@ -110,21 +97,15 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     return isStatic(field) && isFinal(field);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return myField;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiClass aClass = myField.getContainingClass();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiField field, @NotNull ModPsiUpdater updater) {
+    PsiClass aClass = field.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<>();
-    if (myCreateGetter) {
-      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, true));
+    if (createGetter()) {
+      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
     }
-    if (myCreateSetter) {
-      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(myField, false));
+    if (createSetter()) {
+      Collections.addAll(methods, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
     }
     assert aClass != null;
     final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(aClass.getProject());
@@ -132,15 +113,5 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
       final PsiElement newMember = GenerateMembersUtil.insert(aClass, method, null, true);
       manager.shortenClassReferences(newMember);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new CreateGetterOrSetterFix(myCreateGetter, myCreateSetter, PsiTreeUtil.findSameElementInCopy(myField, target));
   }
 }

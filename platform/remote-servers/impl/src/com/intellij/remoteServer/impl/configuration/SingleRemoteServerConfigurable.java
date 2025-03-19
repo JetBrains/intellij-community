@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -121,15 +122,13 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     return myMainPanel;
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return myServerName;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @Nullable String getHelpTopic() {
     return myServer.getType().getHelpTopic();
   }
 
@@ -165,9 +164,8 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     Disposer.dispose(myRunner);
   }
 
-  @Nullable
   @Override
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return myServer.getType().getIcon();
   }
 

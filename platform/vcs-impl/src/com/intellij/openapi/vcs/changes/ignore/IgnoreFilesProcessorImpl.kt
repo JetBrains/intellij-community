@@ -1,8 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -16,21 +20,24 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.project.getProjectStoreDirectory
 import com.intellij.project.stateStore
 import com.intellij.vcsUtil.VcsImplUtil.findIgnoredFileContentProvider
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.job
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
+import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<IgnoreFilesProcessorImpl>()
 
 /**
  * Automatically generate or update .ignore files basing on [IgnoredFileProvider] extension point.
  */
-class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, private val parentDisposable: Disposable)
+internal class IgnoreFilesProcessorImpl(project: Project, parentDisposable: Disposable, private val vcs: AbstractVcs)
   : FilesProcessorWithNotificationImpl(project, parentDisposable), AsyncVfsEventsListener, ChangeListListener {
 
   private val UNPROCESSED_FILES_LOCK = ReentrantReadWriteLock()
@@ -39,13 +46,9 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
 
   private val vcsIgnoreManager = VcsIgnoreManager.getInstance(project)
 
-  fun install() {
-    runReadAction {
-      if (!project.isDisposed) {
-        project.messageBus.connect(parentDisposable).subscribe(ChangeListListener.TOPIC, this)
-        AsyncVfsEventsPostProcessor.getInstance().addListener(this, parentDisposable)
-      }
-    }
+  fun install(coroutineScope: CoroutineScope) {
+    project.messageBus.connect(coroutineScope).subscribe(ChangeListListener.TOPIC, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, coroutineScope)
   }
 
   override fun unchangedFileStatusChanged(upToDate: Boolean) {
@@ -78,11 +81,12 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     return files - filesInConfigDir
   }
 
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (ApplicationManager.getApplication().isUnitTestMode) return
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
 
-    val potentiallyIgnoredFiles =
-      events.asSequence()
+    val potentiallyIgnoredFiles = events.asSequence()
         .filter {
           val filePath = getAffectedFilePath(it)
           filePath != null && vcsIgnoreManager.isPotentiallyIgnoredFile(filePath)
@@ -90,8 +94,13 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
         .mapNotNull { it.file }
         .toList()
 
-    if (potentiallyIgnoredFiles.isEmpty()) return
-    LOG.debug("Got potentially ignored files from VFS events", potentiallyIgnoredFiles)
+    if (potentiallyIgnoredFiles.isEmpty()) {
+      return
+    }
+
+    LOG.debug { "Got potentially ignored files from VFS events $potentiallyIgnoredFiles" }
+
+    coroutineContext.job.ensureActive()
 
     UNPROCESSED_FILES_LOCK.write {
       unprocessedFiles.addAll(potentiallyIgnoredFiles)
@@ -112,6 +121,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   }
 
   private fun writeIgnores(project: Project, potentiallyIgnoredFiles: Collection<VirtualFile>) {
+    if (project.isDisposed) return
     if (potentiallyIgnoredFiles.isEmpty()) return
 
     LOG.debug("Try to write potential ignored files", potentiallyIgnoredFiles)
@@ -158,9 +168,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
       if (storeDir != null
           && ignoredContentProvider.supportIgnoreFileNotInVcsRoot()
           && file.underProjectStoreDir(storeDir)) {
-        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()){
+        if (ignoredContentProvider.canCreateIgnoreFileInStateStoreDir()) {
           storeDir
-        } else return null
+        }
+        else return null
       }
       else VcsUtil.getVcsRootFor(project, file) ?: return null
 
@@ -169,12 +180,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     }
   }
 
-  private fun findStoreDir(project: Project): VirtualFile? {
-    val projectBasePath = project.basePath ?: return null
-    val projectBaseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath) ?: return null
-
-    return getProjectStoreDirectory(projectBaseDir)
-  }
+  private fun findStoreDir(project: Project): VirtualFile? =
+    project.stateStore.directoryStorePath?.let {
+      LocalFileSystem.getInstance().findFileByNioFile(it)
+    }
 
   private fun VirtualFile.underProjectStoreDir(storeDir: VirtualFile): Boolean {
     return VfsUtilCore.isAncestor(storeDir, this, true)

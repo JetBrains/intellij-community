@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.compose` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "compose_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compose",
+  module_name = "intellij.platform.compose",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//libraries/skiko",
+    "@lib//:kotlin-stdlib",
+    "//platform/jewel/ui",
+    "//platform/jewel/foundation",
+    "@lib//:jetbrains-annotations",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/jewel/ide-laf-bridge:ideLafBridge",
+    "//libraries/compose-foundation-desktop",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  exports = ["//platform/jewel/ide-laf-bridge:ideLafBridge"],
+  runtime_deps = [":compose_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.platform.compose` end

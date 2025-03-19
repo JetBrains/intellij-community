@@ -2,8 +2,26 @@ import java.util.*;
 
 public class ExtractMethodRecommender {
   List<List<String>> simpleWithPrecedingComment() {
-    <weak_warning descr="It's possible to extract method returning 'list' from a long surrounding method">// Create list</weak_warning>
+    // Create list
     // Comment
+    <weak_warning descr="It's possible to extract method returning 'list' from a long surrounding method">List<String> list = new ArrayList<>();</weak_warning>
+    list.add("one");
+    list.add("two");
+    list.add("three");
+    list.add("four");
+
+    List<String> list2 = new ArrayList<>();
+    list2.add("v1");
+    list2.add("v2");
+    list2.add("v3");
+    list2.add("v4");
+    return List.of(list, list2);
+  }
+
+  List<List<String>> simpleWithPrecedingCommentSuppress() {
+    // Create list
+    // Comment
+    //noinspection ExtractMethodRecommender
     List<String> list = new ArrayList<>();
     list.add("one");
     list.add("two");
@@ -94,5 +112,71 @@ public class ExtractMethodRecommender {
     d.setMinutes(34);
     d.setSeconds(56);
     System.out.println(d);
+  }
+
+  String varAnonymousClass() {
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    var anon = new Runnable() {
+
+      String result;
+
+      public void run() {
+        result = "Hello";
+      }
+    };
+    anon.run();
+    anon.run();
+    return anon.result;
+  }
+
+  String varLocalClass() {
+    class Local implements Runnable {
+      String result;
+
+      public void run() {
+        result = "Hello";
+      }
+    }
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    var anon = new Local();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    return anon.result;
+  }
+
+  static class Nested implements Runnable {
+    String result;
+
+    public void run() {
+      result = "Hello";
+    }
+  }
+
+  String varNestedClass() {
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    System.out.println("hello");
+    <weak_warning descr="It's possible to extract method returning 'anon' from a long surrounding method">var anon = new Nested();</weak_warning>
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    anon.run();
+    return anon.result;
   }
 }

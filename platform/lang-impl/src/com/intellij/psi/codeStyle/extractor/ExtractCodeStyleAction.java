@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.application.options.CodeStyle;
@@ -36,6 +36,7 @@ import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
-public class ExtractCodeStyleAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public final class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -97,12 +99,12 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(task);
   }
 
-  public void reportResult(@NotNull final String htmlReport,
-                           @NotNull final ValuesExtractionResult calculatedValues,
-                           @NotNull final Project project,
-                           @NotNull final CodeStyleSettings cloneSettings,
-                           @NotNull final PsiFile file,
-                           @NotNull final Map<Value, Object> backup) {
+  public void reportResult(final @NotNull String htmlReport,
+                           final @NotNull ValuesExtractionResult calculatedValues,
+                           final @NotNull Project project,
+                           final @NotNull CodeStyleSettings cloneSettings,
+                           final @NotNull PsiFile file,
+                           final @NotNull Map<Value, Object> backup) {
     UIUtil.invokeLaterIfNeeded(() -> {
       final Balloon balloon = JBPopupFactory
         .getInstance()
@@ -114,7 +116,6 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
             public void hyperlinkUpdate(HyperlinkEvent e) {
               if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 boolean apply = "apply".equals(e.getDescription());
-                ExtractedSettingsDialog myDialog = null;
                 if (!apply) {
                   final List<Value> values = calculatedValues.getValues();
                   Language language = file.getLanguage();
@@ -124,7 +125,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                     if (target.equals(language)) {
                       //this is our language
                       nameProvider.addSettings(provider);
-                      myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
+                      ExtractedSettingsDialog myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
                       apply = myDialog.showAndGet();
                       break;
                     }

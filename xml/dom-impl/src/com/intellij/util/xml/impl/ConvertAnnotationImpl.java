@@ -20,11 +20,12 @@ import com.intellij.util.xml.Converter;
 
 import java.lang.annotation.Annotation;
 
+@SuppressWarnings("ClassExplicitlyAnnotation")
 public class ConvertAnnotationImpl implements Convert {
-  private final Converter myConverter;
+  private final Converter<?> myConverter;
   private final boolean mySoft;
 
-  public ConvertAnnotationImpl(final Converter converter, final boolean soft) {
+  public ConvertAnnotationImpl(final Converter<?> converter, final boolean soft) {
     myConverter = converter;
     mySoft = soft;
   }
@@ -34,7 +35,7 @@ public class ConvertAnnotationImpl implements Convert {
     return Convert.class;
   }
 
-  public Converter getConverter() {
+  public Converter<?> getConverter() {
     return myConverter;
   }
 

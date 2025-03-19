@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -18,19 +18,19 @@ public final class JavaCodeInsightTestUtil {
 
   private JavaCodeInsightTestUtil() { }
 
-  public static void doInlineLocalTest(@NotNull final CodeInsightTestFixture fixture,
-                                       @NotNull final String before, @NotNull final String after) {
+  public static void doInlineLocalTest(final @NotNull CodeInsightTestFixture fixture,
+                                       final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
     assert element instanceof PsiLocalVariable : element;
-    InlineLocalHandler.inlineVariable(fixture.getProject(), editor, (PsiLocalVariable)element, null);
+    new InlineLocalHandler().inlineElement(fixture.getProject(), editor, element);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doInlineParameterTest(@NotNull final CodeInsightTestFixture fixture,
-                                           @NotNull final String before, @NotNull final String after) {
+  public static void doInlineParameterTest(final @NotNull CodeInsightTestFixture fixture,
+                                           final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
@@ -39,8 +39,8 @@ public final class JavaCodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doInlineMethodTest(@NotNull final CodeInsightTestFixture fixture,
-                                        @NotNull final String before, @NotNull final String after) {
+  public static void doInlineMethodTest(final @NotNull CodeInsightTestFixture fixture,
+                                        final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);
@@ -55,8 +55,8 @@ public final class JavaCodeInsightTestUtil {
     fixture.checkResultByFile(after, false);
   }
 
-  public static void doInlineConstantTest(@NotNull final CodeInsightTestFixture fixture,
-                                          @NotNull final String before, @NotNull final String after) {
+  public static void doInlineConstantTest(final @NotNull CodeInsightTestFixture fixture,
+                                          final @NotNull String before, final @NotNull String after) {
     fixture.configureByFile(before);
     final Editor editor = fixture.getEditor();
     final PsiElement element = TargetElementUtil.findTargetElement(editor, TARGET_FOR_INLINE_FLAGS);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -310,11 +311,9 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
-  @Nullable
-  protected abstract @NlsSafe String getStringRepresentationFor(Data content);
+  protected abstract @Nullable @NlsSafe String getStringRepresentationFor(Data content);
 
-  @NotNull
-  protected abstract List<Data> getContents();
+  protected abstract @NotNull List<Data> getContents();
 
   public int getSelectedIndex() {
     Item o = myList.getSelectedValue();
@@ -327,18 +326,15 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     updateViewerForSelection();
   }
 
-  @NotNull
-  public List<Data> getSelectedContents() {
+  public @Unmodifiable @NotNull List<Data> getSelectedContents() {
     return JBIterable.from(myList.getSelectedValuesList()).map(o -> myAllContents.get(o.index)).toList();
   }
 
-  @NotNull
-  public List<Data> getAllContents() {
+  public @NotNull List<Data> getAllContents() {
     return myAllContents;
   }
 
-  @NotNull
-  public String getSelectedText() {
+  public @NotNull String getSelectedText() {
     StringBuilder sb = new StringBuilder();
     boolean first = true;
     for (Item o : myList.getSelectedValuesList()) {
@@ -350,7 +346,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return sb.toString();
   }
 
-  private class MyListCellRenderer extends ColoredListCellRenderer<Item> {
+  private final class MyListCellRenderer extends ColoredListCellRenderer<Item> {
     int previewChars = 80;
 
     @Override

@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaPolyadicPartAnchor;
@@ -35,11 +36,13 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.psi.impl.source.tree.java.PsiEmptyExpressionImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -96,11 +99,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (!isStatic &&
         ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isClassWithCustomizedInitialization(psiClass))) {
-      addInstruction(new EscapeInstruction(Collections.singleton(ThisDescriptor.createThisValue(getFactory(), psiClass))));
+      addInstruction(new EscapeInstruction(List.of(new ThisDescriptor(psiClass))));
       addInstruction(new FlushFieldsInstruction());
     }
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if ((element instanceof PsiField field && field.hasInitializer() || element instanceof PsiClassInitializer) &&
+      if ((element instanceof PsiField field &&
+           field.hasInitializer() && PsiAugmentProvider.canTrustFieldInitializer(field) || element instanceof PsiClassInitializer) &&
           ((PsiMember)element).hasModifierProperty(PsiModifier.STATIC) == isStatic) {
         element.accept(this);
       }
@@ -165,17 +169,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myCurrentFlow.getStartOffset(element);
   }
 
-  private void startElement(PsiElement element) {
+  private void startElement(@NotNull PsiElement element) {
     myCurrentFlow.startElement(element);
   }
 
-  private void finishElement(PsiElement element) {
+  private void finishElement(@NotNull PsiElement element) {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {
-      List<DfaVariableValue> synthetics = myCurrentFlow.getSynthetics(element);
+      List<VariableDescriptor> synthetics = myCurrentFlow.getSynthetics(element);
       FinishElementInstruction instruction = new FinishElementInstruction(element);
-      instruction.getVarsToFlush().addAll(synthetics);
+      instruction.flushVars(synthetics);
       addInstruction(instruction);
     }
   }
@@ -227,8 +231,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (arrayStore != null) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-      var staticVariable = ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, arrayStore), DfaVariableValue.class);
-      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticVariable));
+      VariableDescriptor staticDescriptor = ArrayElementDescriptor.fromArrayAccess(arrayStore);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, rExpr, transfer, staticDescriptor));
     } else {
       addInstruction(new AssignInstruction(rExpr, JavaDfaValueFactory.getExpressionDfaValue(myFactory, lExpr)));
     }
@@ -306,7 +310,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void initializeVariable(PsiVariable variable, PsiExpression initializer) {
     if (JavaDfaValueFactory.ignoreInitializer(variable)) return;
     DfaVariableValue dfaVariable = PlainDescriptor.createVariableValue(myFactory, variable);
-    addInstruction(new JvmPushInstruction(dfaVariable, null, true));
+    addInstruction(new JvmPushForWriteInstruction(dfaVariable));
     initializer.accept(this);
     generateBoxingUnboxingInstructionFor(initializer, variable.getType());
     addInstruction(new AssignInstruction(initializer, dfaVariable));
@@ -406,7 +410,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void addNullCheck(@NotNull PsiExpression expression) {
+  void addNullCheck(@NotNull PsiExpression expression) {
     addNullCheck(NullabilityProblemKind.fromContext(expression, myCustomNullabilityProblems));
   }
 
@@ -536,7 +540,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         length = SpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
-        addInstruction(new UnwrapDerivedVariableInstruction(length));
+        addInstruction(new GetQualifiedValueInstruction(length));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfTypes.intValue(0)));
         hasSizeCheck = true;
       } else {
@@ -698,6 +702,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if(diff >= 0 && diff <= MAX_UNROLL_SIZE) {
       // Unroll small loops
       Objects.requireNonNull(statement.getUpdate()).accept(this);
+      // It's possible that a nested loop may cause widening, dismissing our efforts to track the loop variable
+      // In this case, we should at least ensure that it's not lower than the start. 
+      addInstruction(new PushInstruction(loopVar, null));
+      DfType startBound = PsiTypes.intType().equals(counterType) ? DfTypes.intValue(Math.toIntExact(start)) : DfTypes.longValue(start);
+      addInstruction(new EnsureInstruction(null, RelationType.GE, startBound, null));
+      addInstruction(new PopInstruction());
       addInstruction(new GotoInstruction(startOffset, false));
       return true;
     }
@@ -786,24 +796,18 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void handleClosure(PsiElement closure) {
-    Set<PsiVariable> variables = new HashSet<>();
-    Set<DfaVariableValue> escapedVars = new HashSet<>();
+    Set<VariableDescriptor> descriptors = new HashSet<>();
     closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
-        if (PsiUtil.isJvmLocalVariable(target)) {
-          variables.add((PsiVariable)target);
+        VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(target);
+        if (descriptor != null) {
+          descriptors.add(descriptor);
         }
-        if (target instanceof PsiMember) {
-          DfaValue escapedVar = JavaDfaValueFactory.getQualifierOrThisValue(getFactory(), expression);
-          if (escapedVar == null) {
-            escapedVar = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
-          }
-          if (escapedVar instanceof DfaVariableValue dfaVar) {
-            escapedVars.add(dfaVar);
-          }
+        if (JavaDfaValueFactory.getQualifierOrThisValue(myFactory, expression) instanceof DfaVariableValue dfaVar) {
+          descriptors.add(dfaVar.getDescriptor());
         }
       }
 
@@ -812,17 +816,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         super.visitThisExpression(expression);
         DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
         if (value instanceof DfaVariableValue dfaVar) {
-          escapedVars.add(dfaVar);
+          descriptors.add(dfaVar.getDescriptor());
         }
       }
     });
-    for (DfaValue value : getFactory().getValues()) {
-      if (value instanceof DfaVariableValue dfaVar && dfaVar.getPsiVariable() instanceof PsiVariable var && variables.contains(var)) {
-        escapedVars.add(dfaVar);
-      }
-    }
-    if (!escapedVars.isEmpty()) {
-      addInstruction(new EscapeInstruction(escapedVars));
+    if (!descriptors.isEmpty()) {
+      addInstruction(new EscapeInstruction(List.copyOf(descriptors)));
     }
     List<PsiElement> closures;
     if (closure instanceof PsiClass psiClass) {
@@ -879,7 +878,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     DfaControlTransferValue transferValue = exception != null ? createTransfer(exception) : null;
     addInstruction(new DupInstruction());
-    addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.CONSUMED_STREAM));
+    addInstruction(new GetQualifiedValueInstruction(SpecialField.CONSUMED_STREAM));
     addInstruction(new EnsureInstruction(new ConsumedStreamProblem(reference), RelationType.NE, DfStreamStateType.CONSUMED, transferValue));
     addInstruction(new PopInstruction());
   }
@@ -959,7 +958,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void push(@NotNull DfaValue value, @NotNull PsiExpression expression) {
-    addInstruction(new JvmPushInstruction(value, new JavaExpressionAnchor(expression)));
+    addInstruction(new PushInstruction(value, new JavaExpressionAnchor(expression)));
   }
 
   private void push(@NotNull DfType dfType, @NotNull PsiExpression expression) {
@@ -1000,7 +999,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           continue;
         }
         try {
+          PsiExpression guard = psiLabelStatement.getGuardExpression();
           ControlFlowOffset offset = getStartOffset(statement);
+          ControlFlowOffset targetOffset = guard == null ? offset : new DeferredOffset();
           PsiCaseLabelElementList labelElementList = psiLabelStatement.getCaseLabelElementList();
           if (labelElementList != null) {
             for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
@@ -1013,17 +1014,17 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                        ref.resolve() instanceof PsiEnumConstant;
                 if (expressionValue != null && (enumConstant || PsiUtil.isConstantExpression(expr))) {
                   if (PsiPrimitiveType.getUnboxedType(targetType) == null) {
-                    addInstruction(new JvmPushInstruction(expressionValue, null));
+                    addInstruction(new PushInstruction(expressionValue, null));
                     expr.accept(this);
                     addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
-                    addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                    addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                   }
                   else {
-                    addInstruction(new JvmPushInstruction(expressionValue, null));
+                    addInstruction(new PushInstruction(expressionValue, null));
                     DeferredOffset condGotoOffset = new DeferredOffset();
                     addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.NULL));
 
-                    addInstruction(new JvmPushInstruction(expressionValue, null));
+                    addInstruction(new PushInstruction(expressionValue, null));
                     generateBoxingUnboxingInstructionFor(selector, PsiPrimitiveType.getUnboxedType(targetType));
                     expr.accept(this);
                     addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
@@ -1034,44 +1035,40 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                     addInstruction(pushValInstr);
                     condGotoOffset.setOffset(pushValInstr.getIndex());
 
-                    ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(offset, DfTypes.TRUE);
+                    ConditionalGotoInstruction exitFromSwitchBranchInstr = new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE);
                     addInstruction(exitFromSwitchBranchInstr);
                     gotoOffset.setOffset(exitFromSwitchBranchInstr.getIndex());
                   }
                 }
                 else if (expressionValue != null && ExpressionUtils.isNullLiteral(expr)) {
-                  addInstruction(new JvmPushInstruction(expressionValue, null));
+                  addInstruction(new PushInstruction(expressionValue, null));
                   expr.accept(this);
                   addInstruction(new BooleanBinaryInstruction(RelationType.EQ, true, new JavaSwitchLabelTakenAnchor(expr)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
                 else {
                   pushUnknown();
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
               }
               else if (expressionValue != null && targetType != null) {
                 if (labelElement instanceof PsiPattern pattern) {
                   processPatternInSwitch(pattern, expressionValue, targetType);
                   addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(pattern)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
-                }
-                else if (labelElement instanceof PsiPatternGuard patternGuard) {
-                  processPatternInSwitch(patternGuard.getPattern(), expressionValue, targetType);
-                  PsiExpression guard = patternGuard.getGuardingExpression();
-                  DeferredOffset endGuardOffset = new DeferredOffset();
-                  if (guard != null) {
-                    addInstruction(new DupInstruction());
-                    addInstruction(new ConditionalGotoInstruction(endGuardOffset, DfTypes.FALSE));
-                    addInstruction(new PopInstruction());
-                    guard.accept(this);
-                  }
-                  endGuardOffset.setOffset(getInstructionCount());
-                  addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(patternGuard)));
-                  addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+                  addInstruction(new ConditionalGotoInstruction(targetOffset, DfTypes.TRUE));
                 }
               }
             }
+          }
+          if (guard != null) {
+            DeferredOffset endGuardOffset = new DeferredOffset();
+            addInstruction(new GotoInstruction(endGuardOffset));
+            ((DeferredOffset)targetOffset).setOffset(getInstructionCount());
+            guard.accept(this);
+            generateBoxingUnboxingInstructionFor(guard, PsiTypes.booleanType());
+            addInstruction(new ResultOfInstruction(new JavaSwitchLabelTakenAnchor(guard)));
+            addInstruction(new ConditionalGotoInstruction(offset, DfTypes.TRUE));
+            endGuardOffset.setOffset(getInstructionCount());
           }
         }
         catch (IncorrectOperationException e) {
@@ -1099,7 +1096,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void processPatternInSwitch(@NotNull PsiPattern pattern, @NotNull DfaVariableValue expressionValue, @NotNull PsiType checkType) {
     DeferredOffset endPatternOffset = new DeferredOffset();
-    addInstruction(new JvmPushInstruction(expressionValue, null));
+    addInstruction(new PushInstruction(expressionValue, null));
     processPattern(pattern, pattern, checkType, null, endPatternOffset);
     endPatternOffset.setOffset(getInstructionCount());
   }
@@ -1107,8 +1104,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPatternInInstanceof(@NotNull PsiPattern pattern, @NotNull PsiInstanceOfExpression expression,
                                           @NotNull PsiType checkType) {
     boolean potentiallyRedundantInstanceOf = pattern instanceof PsiTypeTestPattern ||
-                                             JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern) instanceof PsiTypeTestPattern ||
-                                             pattern instanceof PsiDeconstructionPattern dec && JavaPsiPatternUtil.hasUnconditionalComponents(dec);
+                                             pattern instanceof PsiDeconstructionPattern dec &&
+                                             JavaPsiPatternUtil.hasUnconditionalComponents(dec);
     DfaAnchor instanceofAnchor = potentiallyRedundantInstanceOf ? new JavaExpressionAnchor(expression) : null;
     DeferredOffset endPatternOffset = new DeferredOffset();
     processPattern(pattern, pattern, checkType, instanceofAnchor, endPatternOffset);
@@ -1121,28 +1118,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void processPattern(@NotNull PsiPattern sourcePattern, @Nullable PsiPattern innerPattern,
                               @NotNull PsiType checkType, @Nullable DfaAnchor instanceofAnchor, @NotNull DeferredOffset endPatternOffset) {
     if (innerPattern == null) return;
-    if (innerPattern instanceof PsiGuardedPattern guardedPattern) {
-      PsiPrimaryPattern primaryPattern = guardedPattern.getPrimaryPattern();
-      processPattern(sourcePattern, primaryPattern, checkType, instanceofAnchor, endPatternOffset);
-      PsiExpression expression = guardedPattern.getGuardingExpression();
-      if (expression != null) {
-        expression.accept(this);
-      }
-      else {
-        addInstruction(new PushValueInstruction(DfTypes.BOOLEAN));
-      }
-      DeferredOffset condGotoOffset = new DeferredOffset();
-      addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
-
-      addInstruction(new PushValueInstruction(DfTypes.FALSE));
-      addInstruction(new GotoInstruction(endPatternOffset));
-
-      condGotoOffset.setOffset(getInstructionCount());
-    }
-    else if (innerPattern instanceof PsiParenthesizedPattern) {
-      PsiPattern unwrappedPattern = JavaPsiPatternUtil.skipParenthesizedPatternDown(innerPattern);
-      processPattern(sourcePattern, unwrappedPattern, checkType, instanceofAnchor, endPatternOffset);
-    }
     else if (innerPattern instanceof PsiDeconstructionPattern deconstructionPattern) {
       PsiPatternVariable variable = deconstructionPattern.getPatternVariable();
       PsiType patternType = deconstructionPattern.getTypeElement().getType();
@@ -1154,19 +1129,25 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PopInstruction());
 
       PsiPattern[] components = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
-      PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
-      if (recordClass != null && recordClass.isRecord()) {
-        PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
-        if (components.length == recordComponents.length) {
-          for (int i = 0; i < components.length; i++) {
-            PsiRecordComponent recordComponent = recordComponents[i];
-            PsiPattern patternComponent = components[i];
-            PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
-            if (accessor == null) continue;
-            DfaVariableValue accessorDfaVar =
-              getFactory().getVarFactory().createVariableValue(new GetterDescriptor(accessor), patternDfaVar);
-            addInstruction(new JvmPushInstruction(accessorDfaVar, null));
-            processPattern(sourcePattern, patternComponent, recordComponent.getType(), null, endPatternOffset);
+      if (patternType instanceof PsiClassType patternClassType) {
+        PsiClassType.ClassResolveResult resolveResult = patternClassType.resolveGenerics();
+        PsiClass recordClass = resolveResult.getElement();
+        boolean unchecked = JavaGenericsUtil.isUncheckedCast(patternClassType, checkType);
+        PsiSubstitutor substitutor = unchecked ? PsiSubstitutor.EMPTY : resolveResult.getSubstitutor();
+        if (recordClass != null && recordClass.isRecord()) {
+          PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
+          if (components.length == recordComponents.length) {
+            for (int i = 0; i < components.length; i++) {
+              PsiRecordComponent recordComponent = recordComponents[i];
+              PsiPattern patternComponent = components[i];
+              PsiMethod accessor = JavaPsiRecordUtil.getAccessorForRecordComponent(recordComponent);
+              if (accessor == null) continue;
+              PsiField field = PropertyUtil.getFieldOfGetter(accessor);
+              VariableDescriptor descriptor = field == null ? new GetterDescriptor(accessor) : new PlainDescriptor(field);
+              DfaVariableValue accessorDfaVar = getFactory().getVarFactory().createVariableValue(descriptor, patternDfaVar);
+              addInstruction(new PushInstruction(accessorDfaVar, null));
+              processPattern(sourcePattern, patternComponent, substitutor.substitute(recordComponent.getType()), null, endPatternOffset);
+            }
           }
         }
       }
@@ -1192,11 +1173,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                    @NotNull DeferredOffset endPatternOffset,
                                    @NotNull DfaVariableValue patternDfaVar,
                                    @Nullable DfaAnchor instanceofAnchor) {
-    boolean java19plus = PsiUtil.getLanguageLevel(myCodeFragment).isAtLeast(LanguageLevel.JDK_19_PREVIEW);
-    if (java19plus
-        ? (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType))
-        : !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
-      addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar);
+    if (sourcePattern == innerPattern || !JavaPsiPatternUtil.isUnconditionalForType(innerPattern, checkType)) {
+      addPatternTypeTest(innerPattern, instanceofAnchor, endPatternOffset, patternDfaVar, checkType);
     }
     else {
       addInstruction(new SimpleAssignmentInstruction(null, patternDfaVar));
@@ -1206,13 +1184,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void addPatternTypeTest(@NotNull PsiPattern pattern,
                                   @Nullable DfaAnchor instanceofAnchor,
                                   @NotNull DeferredOffset endPatternOffset,
-                                  @NotNull DfaVariableValue patternDfaVar) {
+                                  @NotNull DfaVariableValue patternDfaVar,
+                                  @NotNull PsiType checkType) {
     DeferredOffset condGotoOffset;
     addInstruction(new DupInstruction());
-    addInstruction(
-      new PushValueInstruction(DfTypes.typedObject(JavaPsiPatternUtil.getPatternType(pattern), Nullability.NOT_NULL)));
-
-    addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+    PsiType patternType = JavaPsiPatternUtil.getPatternType(pattern);
+    generateInstanceOfInstructions(pattern, instanceofAnchor, checkType, patternType);
 
     condGotoOffset = new DeferredOffset();
     addInstruction(new ConditionalGotoInstruction(condGotoOffset, DfTypes.TRUE));
@@ -1223,6 +1200,163 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     SimpleAssignmentInstruction assignmentInstr = new SimpleAssignmentInstruction(null, patternDfaVar);
     addInstruction(assignmentInstr);
     condGotoOffset.setOffset(assignmentInstr.getIndex());
+  }
+
+  private void generateInstanceOfInstructions(@NotNull PsiElement context,
+                         @Nullable DfaAnchor instanceofAnchor,
+                         @NotNull PsiType checkType,
+                         @Nullable PsiType patternType) {
+    checkType = TypeConversionUtil.erasure(checkType);
+    if (patternType == null ||
+        ((checkType instanceof PsiPrimitiveType || patternType instanceof PsiPrimitiveType) &&
+         (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, context) || !TypeConversionUtil.areTypesConvertible(checkType, patternType))) ||
+        isUnresolvedType(checkType) || isUnresolvedType(patternType)) {
+      addInstruction(new PopInstruction());
+      pushUnknown();
+      return;
+    }
+    if (checkType instanceof PsiPrimitiveType && patternType instanceof PsiPrimitiveType) {
+      if (checkType.equals(patternType) || JavaPsiPatternUtil.isExactPrimitiveWideningConversion(checkType, patternType)) {
+        addInstruction(new PopInstruction());
+        addInstruction(new PushValueInstruction(DfTypes.booleanValue(true)));
+        if (instanceofAnchor != null) {
+          addInstruction(new ResultOfInstruction(instanceofAnchor));
+        }
+      }
+      else {
+        generateExactTestingConversion(context, checkType, patternType, instanceofAnchor);
+      }
+    }
+    else if (patternType instanceof PsiPrimitiveType patternPrimitiveType) {
+      PsiPrimitiveType unboxedCheckedType = PsiPrimitiveType.getUnboxedType(checkType);
+      if (unboxedCheckedType != null) {
+        boolean isWideningConversion = JavaPsiPatternUtil.isExactPrimitiveWideningConversion(unboxedCheckedType, patternPrimitiveType) ||
+                                       unboxedCheckedType.equals(patternPrimitiveType);
+        if (!isWideningConversion) {
+          addInstruction(new DupInstruction());
+        }
+        addInstruction(new PushValueInstruction(DfTypes.NULL));
+        addInstruction(new BooleanBinaryInstruction(RelationType.NE, false,
+                                                    isWideningConversion ? instanceofAnchor : null));
+        if (!isWideningConversion) {
+          CFGBuilder builder = new CFGBuilder(this) //checkValue resultNotNull
+            .push(DfTypes.booleanValue(false)) //checkValue resultNotNull false
+            .ifCondition(RelationType.EQ) //checkValue
+            .pop() //
+            .push(DfTypes.booleanValue(false)) //false
+            .elseBranch(); //checkValue
+          generateBoxingUnboxingInstructionFor(context, checkType, unboxedCheckedType, false);
+          generateInstanceOfInstructions(context, null, unboxedCheckedType, patternPrimitiveType);
+          builder
+            .end();
+          if (instanceofAnchor != null) {
+            addInstruction(new ResultOfInstruction(instanceofAnchor));
+          }
+        }
+      }
+      else {
+        PsiClassType boxedType = patternPrimitiveType.getBoxedType(context);
+        addInstruction(new PushValueInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL)));
+        addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+      }
+    }
+    else {
+      if (checkType instanceof PsiPrimitiveType checkPrimitiveType) {
+        PsiClassType boxedType = checkPrimitiveType.getBoxedType(context);
+        generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false);
+      }
+      addInstruction(new PushValueInstruction(DfTypes.typedObject(patternType, Nullability.NOT_NULL)));
+      addInstruction(new InstanceofInstruction(instanceofAnchor, false));
+    }
+  }
+
+  private static boolean isUnresolvedType(@NotNull PsiType type) {
+    return type.getDeepComponentType() instanceof PsiClassType ct && ct.resolve() == null;
+  }
+
+  private void generateExactTestingConversion(@NotNull PsiElement context,
+                                              @NotNull PsiType checkType,
+                                              @NotNull PsiType patternType,
+                                              @Nullable DfaAnchor instanceofAnchor) {
+    PsiType exactlyPromotedType = JavaPsiPatternUtil.getExactlyPromotedType(context, checkType, patternType);
+    boolean checkTypeIsDouble = checkType.equals(PsiTypes.doubleType());
+    boolean checkTypeIsFloat = checkType.equals(PsiTypes.floatType());
+    boolean checkTypeIsLong = checkType.equals(PsiTypes.longType());
+    if (exactlyPromotedType.equalsToText("java.math.BigDecimal")) {
+      //there is no need to use BigDecimal explicitly, because
+      //there is some further simplification (see java.lang.runtime.ExactConversionsSupport)
+      if (checkTypeIsLong) {
+        exactlyPromotedType = PsiTypes.longType();
+      }
+      else if (checkTypeIsFloat) {
+        exactlyPromotedType = PsiTypes.floatType();
+      }
+      else {
+        exactlyPromotedType = PsiTypes.doubleType();
+      }
+    }
+    CFGBuilder builder = new CFGBuilder(this);
+    boolean generateOr = false;
+    boolean generateAnd = false;
+    if (checkTypeIsFloat || checkTypeIsDouble) {
+      if (patternType.equals(PsiTypes.floatType()) ||
+          patternType.equals(PsiTypes.doubleType())) {
+        generateOr = true;
+        builder //stack: checkValue
+          .dup() //checkValue checkValue
+          .dup() //checkValue checkValue checkValue
+          .compare(RelationType.EQ); //checkValue isNotNan
+        addInstruction(new NotInstruction(null)); //checkValue isNan
+        builder.swap(); //isNan checkValue
+      }
+      else {
+        generateAnd = true;
+        PsiClassType boxedType = checkTypeIsFloat
+                                 ? PsiTypes.floatType().getBoxedType(context)
+                                 : PsiTypes.doubleType().getBoxedType(context);
+        builder //stack: checkValue
+          .dup(); // checkValue checkValue
+        generateBoxingUnboxingInstructionFor(context, checkType, boxedType, false); //checkValue ReferenceOfCheckValue
+        builder.push(checkTypeIsFloat
+                     ? DfTypes.floatValue(-0.0f)
+                     : DfTypes.doubleValue(-0.0f)) ;// checkValue ReferenceOfCheckValue -0.0
+        generateBoxingUnboxingInstructionFor(context, PsiTypes.doubleType(), boxedType, false); //checkValue ReferenceOfCheckValue ReferenceNegativeZero
+        addInstruction(new BooleanBinaryInstruction(RelationType.NE, true, null)); //checkValue IsNotMinusZero
+        builder.swap(); //IsNotMinusZero checkValue
+        if (patternType.equals(PsiTypes.longType())) {
+          builder.dup()//IsNotMinusZero checkValue checkValue
+            //see com.google.common.math.DoubleMath.MAX_LONG_AS_DOUBLE_PLUS_ONE for explanation
+            .push(checkTypeIsFloat
+                  ? DfTypes.floatValue(0x1p63F)
+                  : DfTypes.doubleValue(0x1p63)) //IsNotMinusZero checkValue checkValue maxLong
+            .compare(RelationType.NE) //IsNotMinusZero checkValue notMax
+            .splice(3, 1, 0, 2);  //checkValue IsNotMinusZero  notMax
+          addInstruction(new BooleanAndOrInstruction(false, null));//checkValue result
+          builder.swap(); //result checkValue
+        }
+      }
+    } else if(checkTypeIsLong &&
+              (patternType.equals(PsiTypes.floatType()) ||
+               patternType.equals(PsiTypes.doubleType()))){
+      generateAnd = true;
+        builder //checkValue
+          .dup() //checkValue checkValue
+          .push(DfTypes.longValue(Long.MAX_VALUE)) //checkValue checkValue Max_long
+          .compare(RelationType.NE) //checkValue NotMaxLong
+          .swap(); //NotMaxLong checkValue
+    }
+    builder.dup(); //something checkValue checkValue
+    generateBoxingUnboxingInstructionFor(context, checkType, exactlyPromotedType, false); //something checkValue casted
+    builder.swap(); //something casted checkValue
+    generateBoxingUnboxingInstructionFor(context, checkType, patternType, false);
+    generateBoxingUnboxingInstructionFor(context, patternType, exactlyPromotedType, false);
+    addInstruction(new BooleanBinaryInstruction(RelationType.EQ, false, generateOr || generateAnd ? null : instanceofAnchor));
+    if (generateOr) {
+      addInstruction(new BooleanAndOrInstruction(true, instanceofAnchor));
+    }
+    if (generateAnd) {
+      addInstruction(new BooleanAndOrInstruction(false, instanceofAnchor));
+    }
   }
 
   @Override
@@ -1259,6 +1393,83 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     finishElement(statement);
+  }
+
+  @Override
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    PsiExpression processor = PsiUtil.skipParenthesizedExprDown(expression.getProcessor());
+    if (processConcatTemplate(expression)) {
+      return;
+    }
+    if (processor != null) {
+      processor.accept(this);
+    } else {
+      pushUnknown(); // incomplete code
+    }
+    PsiTemplate template = expression.getTemplate();
+    if (template != null) {
+      for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
+        embeddedExpression.accept(this);
+        addInstruction(new PopInstruction());
+      }
+    }
+    addInstruction(new MethodCallInstruction(expression, List.of()));
+    if (myTrapTracker.shouldHandleException()) {
+      addThrows(ExceptionUtil.getOwnUnhandledExceptions(expression));
+    }
+    addNullCheck(expression);
+  }
+
+  private boolean processConcatTemplate(@NotNull PsiTemplateExpression expression) {
+    PsiExpression processor = PsiUtil.skipParenthesizedExprDown(expression.getProcessor());
+    if (!JavaPsiStringTemplateUtil.isStrTemplate(processor)) return false;
+    PsiLiteralExpression literalExpression = expression.getLiteralExpression();
+    if (literalExpression != null) {
+      literalExpression.accept(this);
+      return true;
+    }
+    PsiTemplate template = expression.getTemplate();
+    if (template == null) {
+      pushUnknown();
+      return true;
+    }
+    PsiType stringType = expression.getType();
+    if (stringType == null) return false;
+    TypeConstraint constraint = TypeConstraints.exact(stringType); 
+    List<@NotNull PsiExpression> expressions = template.getEmbeddedExpressions();
+    List<@NotNull PsiFragment> fragments = template.getFragments();
+    int count = expressions.size();
+    if (count + 1 != fragments.size()) return false;
+    for (int i = 0; i < count; i++) {
+      PsiFragment fragment = fragments.get(i);
+      Object value = fragment.getValue();
+      if (value != null) {
+        addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
+      } else {
+        pushUnknown();
+      }
+      if (i > 0) {
+        addInstruction(new StringConcatInstruction(null, constraint));
+      }
+      PsiExpression embeddedExpression = expressions.get(i);
+      if (embeddedExpression instanceof PsiEmptyExpressionImpl) {
+        addInstruction(new PushValueInstruction(DfTypes.NULL));
+      } else {
+        embeddedExpression.accept(this);
+      }
+      addInstruction(new StringConcatInstruction(null, constraint));
+    }
+    PsiFragment lastFragment = fragments.get(count);
+    Object value = lastFragment.getValue();
+    if (value != null) {
+      addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
+    } else {
+      pushUnknown();
+    }
+    if (count > 0) {
+      addInstruction(new StringConcatInstruction(new JavaExpressionAnchor(expression), constraint));
+    }
+    return true;
   }
 
   @Override public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
@@ -1340,8 +1551,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  @NotNull
-  private InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
+  private @NotNull InstructionTransfer createTransfer(PsiElement exitedStatement, PsiElement blockToFlush) {
     List<VariableDescriptor> varsToFlush = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(blockToFlush, PsiVariable.class),
                                                              PlainDescriptor::new);
     return new InstructionTransfer(getEndOffset(exitedStatement), varsToFlush);
@@ -1465,10 +1675,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void readArrayElement(@NotNull PsiArrayAccessExpression expression) {
     DfaControlTransferValue transfer = createTransfer("java.lang.ArrayIndexOutOfBoundsException");
-    DfaVariableValue staticValue =
-      ObjectUtils.tryCast(JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), DfaVariableValue.class);
     addInstruction(new ArrayAccessInstruction(new JavaExpressionAnchor(expression), new ArrayIndexProblem(expression), transfer,
-                                              staticValue));
+                                              ArrayElementDescriptor.fromArrayAccess(expression)));
   }
 
   private @Nullable DfaVariableValue getTargetVariable(PsiExpression expression) {
@@ -1519,7 +1727,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .meet(type == null ? DfTypes.OBJECT_OR_NULL : TypeConstraints.exact(type).asDfType())
       .meet(DfTypes.LOCAL_OBJECT);
     if (arrayWriteTarget != null) {
-      addInstruction(new JvmPushInstruction(arrayWriteTarget, null, true));
+      addInstruction(new JvmPushForWriteInstruction(arrayWriteTarget));
       push(arrayType, expression);
       addInstruction(new AssignInstruction(originalExpression, arrayWriteTarget));
       int index = 0;
@@ -1529,7 +1737,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
           target = Objects.requireNonNull(ArrayElementDescriptor.getArrayElementValue(getFactory(), arrayWriteTarget, index));
         }
         index++;
-        addInstruction(new JvmPushInstruction(target == null ? myFactory.getUnknown() : target, null, true));
+        addInstruction(new JvmPushForWriteInstruction(target == null ? myFactory.getUnknown() : target));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
@@ -1540,17 +1748,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     else {
       for (PsiExpression initializer : initializers) {
-        addInstruction(new JvmPushInstruction(myFactory.getUnknown(), null, true));
+        addInstruction(new JvmPushForWriteInstruction(myFactory.getUnknown()));
         initializer.accept(this);
         if (componentType != null) {
           generateBoxingUnboxingInstructionFor(initializer, componentType);
         }
+        // Assign to handle escaping if necessary
         addInstruction(new AssignInstruction(initializer, null));
         addInstruction(new PopInstruction());
       }
-      addInstruction(new JvmPushInstruction(var, null, true));
-      push(arrayType, expression);
-      addInstruction(new AssignInstruction(originalExpression, var));
+      if (ControlFlow.isTempVariable(var)) {
+        addInstruction(new JvmPushForWriteInstruction(var));
+        push(arrayType, expression);
+        addInstruction(new AssignInstruction(null, var));
+      } else {
+        push(arrayType, expression);
+      }
     }
   }
 
@@ -1565,12 +1778,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return;
     }
 
-    PsiExpression[] operands = expression.getOperands();
-    if (operands.length <= 1) {
+    if (PsiUtilCore.hasErrorElementChild(expression)) {
       pushUnknown();
       finishElement(expression);
       return;
     }
+
+    PsiExpression[] operands = expression.getOperands();
     IElementType op = expression.getOperationTokenType();
     if (op == JavaTokenType.ANDAND) {
       generateShortCircuitAndOr(expression, operands, expression.getType(), true);
@@ -1594,12 +1808,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
     PsiType lType = lExpr.getType();
+    addImplicitToStringThrows(op, lType);
 
     for (int i = 1; i < operands.length; i++) {
       PsiExpression rExpr = operands[i];
       PsiType rType = rExpr.getType();
 
       acceptBinaryRightOperand(op, lExpr, lType, rExpr, rType);
+      addImplicitToStringThrows(op, rType);
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
       DfaAnchor anchor = i == operands.length - 1 ? new JavaExpressionAnchor(expression) :
                          new JavaPolyadicPartAnchor(expression, i);
@@ -1607,6 +1823,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
       lExpr = rExpr;
       lType = resType;
+    }
+  }
+
+  private void addImplicitToStringThrows(@NotNull IElementType op, PsiType type) {
+    if (myTrapTracker.shouldHandleException() && op.equals(JavaTokenType.PLUS) && 
+        !TypeConversionUtil.isPrimitiveAndNotNullOrWrapper(type) && !TypeUtils.isJavaLangString(type)) {
+      addThrows(List.of());
     }
   }
 
@@ -1672,12 +1895,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (leftCast != null) {
-      generateBoxingUnboxingInstructionFor(lExpr, leftCast);
+      generateBoxingUnboxingInstructionFor(lExpr, lType, leftCast, false);
     }
 
     rExpr.accept(this);
     if (rightCast != null) {
-      generateBoxingUnboxingInstructionFor(rExpr, rightCast);
+      generateBoxingUnboxingInstructionFor(rExpr, rType, rightCast, false);
     }
   }
 
@@ -1685,12 +1908,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     generateBoxingUnboxingInstructionFor(expression, expression.getType(), expectedType, false);
   }
 
-  void generateBoxingUnboxingInstructionFor(@NotNull PsiExpression context, PsiType actualType, PsiType expectedType, boolean explicit) {
+  void generateBoxingUnboxingInstructionFor(@NotNull PsiElement context, PsiType actualType, PsiType expectedType, boolean explicit) {
     if (PsiTypes.voidType().equals(expectedType)) return;
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
-      addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.UNBOX));
+      addInstruction(new GetQualifiedValueInstruction(SpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
     expectedType = toBound(expectedType);
@@ -1705,12 +1928,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       addInstruction(new WrapDerivedVariableInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
-    else if (actualType != expectedType &&
+    else if (!Objects.equals(actualType, expectedType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&
              TypeConversionUtil.isNumericType(expectedType)) {
-      DfaAnchor anchor = explicit ? new JavaExpressionAnchor(context) : null;
+      DfaAnchor anchor = (explicit && context instanceof PsiExpression psiExpression) ? new JavaExpressionAnchor(psiExpression) : null;
       addInstruction(new PrimitiveConversionInstruction((PsiPrimitiveType)expectedType, anchor));
     }
   }
@@ -1801,28 +2024,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiType operandType = operand.getType();
     PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
     CFGBuilder builder = new CFGBuilder(this);
-    DfaVariableValue expressionValue;
     if (pattern == null) {
-      if (checkType == null) {
+      if (checkType == null || operandType == null) {
         pushUnknown();
       }
       else {
-        buildSimpleInstanceof(builder, expression, operand, checkType);
+        buildSimpleInstanceof(builder, expression, operand, operandType, checkType);
       }
     }
     else if (operandType != null) {
-      DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-      if (expr instanceof DfaVariableValue) {
-        expressionValue = (DfaVariableValue)expr;
-        builder.push(expressionValue);
-      }
-      else {
-        expressionValue = createTempVariable(operand.getType());
-        builder
-          .pushForWrite(expressionValue)
-          .pushExpression(operand)
-          .assign();
-      }
+      builder
+        .pushForWrite(createTempVariable(operand.getType()))
+        .pushExpression(operand)
+        .assign();
       processPatternInInstanceof(pattern, expression, operandType);
     }
     else {
@@ -1832,20 +2046,25 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  private static void buildSimpleInstanceof(CFGBuilder builder,
-                                            PsiInstanceOfExpression expression,
-                                            PsiExpression operand,
-                                            PsiTypeElement checkType) {
+  private void buildSimpleInstanceof(@NotNull CFGBuilder builder,
+                                     @NotNull PsiInstanceOfExpression expression,
+                                     @NotNull PsiExpression operand,
+                                     @NotNull PsiType operandType,
+                                     @NotNull PsiTypeElement checkType) {
     PsiType type = checkType.getType();
     builder
-      .pushExpression(operand)
-      .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-      .isInstance(expression);
+      .pushExpression(operand);
+    generateInstanceOfInstructions(expression, new JavaExpressionAnchor(expression), operandType, type);
   }
 
-  void addMethodThrows(PsiMethod method) {
+  void addMethodThrows(@Nullable PsiMember methodOrClass) {
     if (myTrapTracker.shouldHandleException()) {
-      addThrows(method == null ? Collections.emptyList() : Arrays.asList(method.getThrowsList().getReferencedTypes()));
+      if (methodOrClass == null) {
+        DfaControlTransferValue transfer = myTrapTracker.transferValue(JAVA_LANG_THROWABLE);
+        addInstruction(new EnsureInstruction(null, RelationType.EQ, DfType.TOP, transfer));
+      } else {
+        addThrows(methodOrClass instanceof PsiMethod method ? Arrays.asList(method.getThrowsList().getReferencedTypes()) : List.of());
+      }
     }
   }
 
@@ -1890,7 +2109,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (qualifierExpression == null) {
         DfaValue thisVariable = JavaDfaValueFactory.getQualifierOrThisValue(myFactory, call.getMethodExpression());
         if (thisVariable != null) {
-          addInstruction(new JvmPushInstruction(thisVariable, null));
+          addInstruction(new PushInstruction(thisVariable, null));
         }
         else {
           pushUnknown();
@@ -1965,10 +2184,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         // Do not track contracts if return value is not used
         contracts = Collections.emptyList();
       }
-      addInstruction(new MethodCallInstruction(expression, JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), contracts));
+      addInstruction(new MethodCallInstruction(expression, contracts));
       anchor = expression;
     }
-    processFailResult(contracts, anchor);
+    processFailResult(method, contracts, anchor);
 
     addMethodThrows(method);
     if (expression != null) {
@@ -1976,8 +2195,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
-    if (ContainerUtil.exists(contracts, c -> c.getReturnValue().isFail())) {
+  private void processFailResult(@Nullable PsiMethod method, @NotNull List<? extends MethodContract> contracts, @NotNull PsiExpression anchor) {
+    if ((CustomMethodHandlers.isConstantCall(method) && !PsiTypes.booleanType().equals(method.getReturnType())) 
+        || ContainerUtil.exists(contracts, c -> c.getReturnValue().isFail())) {
       DfaControlTransferValue transfer = createTransfer(JAVA_LANG_THROWABLE);
       // if a contract resulted in 'fail', handle it
       addInstruction(new EnsureInstruction(new ContractFailureProblem(anchor), RelationType.NE, DfType.FAIL, transfer));
@@ -1994,7 +2214,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     pushUnknown();
     pushConstructorArguments(enumConstant);
-    addInstruction(new MethodCallInstruction(enumConstant, null, Collections.emptyList()));
+    addInstruction(new MethodCallInstruction(enumConstant, Collections.emptyList()));
     addInstruction(new PopInstruction());
   }
 
@@ -2028,7 +2248,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
       }
       DfType arrayValue = TypeConstraints.exact(type).asDfType().meet(DfTypes.LOCAL_OBJECT);
-      addInstruction(new WrapDerivedVariableInstruction(arrayValue, SpecialField.ARRAY_LENGTH));
+      addInstruction(new WrapDerivedVariableInstruction(arrayValue, SpecialField.ARRAY_LENGTH, new JavaExpressionAnchor(expression)));
 
       initializeSmallArray((PsiArrayType)type, dimensions);
     }
@@ -2045,38 +2265,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             qualifierValue = ThisDescriptor.createThisValue(myFactory, outerClass);
           }
         }
-        addInstruction(new JvmPushInstruction(qualifierValue, null));
+        addInstruction(new PushInstruction(qualifierValue, null));
       }
 
-      PsiMethod constructor = pushConstructorArguments(expression);
+      PsiMember constructorOrClass = pushConstructorArguments(expression);
+      PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
       PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
       if (anonymousClass != null) {
         handleClosure(anonymousClass);
       }
 
       addConditionalErrorThrow();
-      DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
       List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() :
                                                  JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
-      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
-      processFailResult(contracts, expression);
+      addInstruction(new MethodCallInstruction(expression, contracts));
+      processFailResult(constructor, contracts, expression);
 
-      addMethodThrows(constructor);
+      addMethodThrows(constructorOrClass);
     }
 
     finishElement(expression);
-  }
-
-  private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
-    PsiType type = expression.getType();
-    if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfType dfType = SpecialField.COLLECTION_SIZE.asDfType(DfTypes.intValue(0))
-        .meet(TypeConstraints.exact(type).asDfType())
-        .meet(DfTypes.LOCAL_OBJECT);
-      return myFactory.fromDfType(dfType);
-    }
-    return null;
   }
 
   private void initializeSmallArray(PsiArrayType type, PsiExpression[] dimensions) {
@@ -2102,16 +2311,23 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private @Nullable PsiMethod pushConstructorArguments(PsiConstructorCall call) {
+  /**
+   * @return resolved constructor, class (in case of default constructor), or null if resolve failes
+   */
+  private @Nullable PsiMember pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
-    PsiMethod ctr = call.resolveConstructor();
+    PsiMember ctr = call.resolveConstructor();
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
-    if (call instanceof PsiNewExpression) {
+    if (call instanceof PsiNewExpression newExpression) {
+      if (ctr == null) {
+        PsiJavaCodeReferenceElement classRef = newExpression.getClassReference();
+        ctr = classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
+      }
       substitutor = call.resolveMethodGenerics().getSubstitutor();
     }
     if (args != null) {
       PsiExpression[] arguments = args.getExpressions();
-      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      PsiParameter[] parameters = ctr instanceof PsiMethod method ? method.getParameterList().getParameters() : null;
       for (int i = 0; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
         argument.accept(this);
@@ -2215,8 +2431,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     DfaValue dest = JavaDfaValueFactory.getExpressionDfaValue(myFactory, operand);
     if (arrayStore != null) {
-      addInstruction(new JavaArrayStoreInstruction(arrayStore, null, null,
-                                                   ObjectUtils.tryCast(dest, DfaVariableValue.class)));
+      VariableDescriptor staticDescriptor = ArrayElementDescriptor.fromArrayAccess(arrayStore);
+      addInstruction(new JavaArrayStoreInstruction(arrayStore, null, null, staticDescriptor));
     } else {
       addInstruction(new AssignInstruction(operand, null, dest));
     }
@@ -2272,24 +2488,52 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     startElement(expression);
+    pushReferenceExpression(expression);
+    addNullCheck(expression);
+    finishElement(expression);
+  }
 
-    final PsiExpression qualifierExpression = expression.getQualifierExpression();
-    if (qualifierExpression != null) {
-      if (!(expression.resolve() instanceof PsiMember member) || !member.hasModifierProperty(PsiModifier.STATIC)) {
-        qualifierExpression.accept(this);
-        addInstruction(new PopInstruction());
-      }
-    }
-
+  private void pushReferenceExpression(@NotNull PsiReferenceExpression expression) {
+    JavaExpressionAnchor anchor = new JavaExpressionAnchor(expression);
+    PsiVariable var = ObjectUtils.tryCast(expression.resolve(), PsiVariable.class);
     // complex assignments (e.g. "|=") are both reading and writing
     boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
-    DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
-    addInstruction(new JvmPushInstruction(value == null ? myFactory.getUnknown() : value,
-                                          writing ? null : new JavaExpressionAnchor(expression),
-                                          writing));
-    addNullCheck(expression);
+    if (!writing && var != null && !PlainDescriptor.hasInitializationHacks(var)) {
+      DfaValue constValue = JavaDfaValueFactory.getConstantFromVariable(myFactory, var);
+      if (constValue != null && !JavaDfaValueFactory.maybeUninitializedConstant(constValue, expression, var)) {
+        addInstruction(new PushInstruction(constValue, anchor));
+        return;
+      }
+    }
+    final PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (var instanceof PsiField field && !field.hasModifierProperty(PsiModifier.STATIC) && !writing) {
+      DfaValue effectiveQualifier = JavaDfaValueFactory.getQualifierOrThisValue(myFactory, expression);
+      if (qualifierExpression == null) {
+        addInstruction(new PushInstruction(effectiveQualifier == null ? myFactory.getUnknown() : effectiveQualifier, null));
+      } else {
+        qualifierExpression.accept(this);
+      }
+      VariableDescriptor descriptor = Objects.requireNonNull(JavaDfaValueFactory.getAccessedVariableOrGetter(field));
+      if (effectiveQualifier instanceof DfaVariableValue qualifierVar && 
+          JavaDfaHelpers.mayLeakFromType(descriptor.getDfType(qualifierVar)) &&
+          JavaDfaHelpers.mayLeakFromExpression(expression)) {
+        addInstruction(new EscapeInstruction(List.of(qualifierVar.getDescriptor())));
+      }
+      addInstruction(new GetQualifiedValueInstruction(descriptor, anchor));
+      return;
+    }
+    if (qualifierExpression != null && !(qualifierExpression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiClass)) {
+      qualifierExpression.accept(this);
+      addInstruction(new PopInstruction());
+    }
 
-    finishElement(expression);
+    DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
+    if (writing) {
+      addInstruction(new JvmPushForWriteInstruction(value == null ? myFactory.getUnknown() : value));
+    }
+    else {
+      addInstruction(new PushInstruction(value == null ? myFactory.getUnknown() : value, anchor));
+    }
   }
 
   @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
@@ -2308,18 +2552,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(castExpression);
     PsiExpression operand = castExpression.getOperand();
 
+    PsiType operandType = operand == null ? null : operand.getType();
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(castExpression, operand.getType(), castExpression.getType(), true);
+      generateBoxingUnboxingInstructionFor(castExpression, operandType, castExpression.getType(), true);
     }
     else {
       addInstruction(new PushValueInstruction(DfTypes.typedObject(castExpression.getType(), Nullability.UNKNOWN)));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
+    if (typeElement != null && operandType != null && !(typeElement.getType() instanceof PsiPrimitiveType) &&
+        !(operandType instanceof PsiLambdaExpressionType) && !(operandType instanceof PsiMethodReferenceType)) {
       DfaControlTransferValue transfer = createTransfer("java.lang.ClassCastException");
       addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType(), transfer));
+    } else {
+      addInstruction(new ResultOfInstruction(new JavaExpressionAnchor(castExpression)));
     }
     finishElement(castExpression);
   }
@@ -2368,7 +2616,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                     @Nullable PsiType type) {
     // Transfer value is pushed to avoid emptying stack beyond this point
     pushTrap(new InsideInlinedBlockTrap(block));
-    addInstruction(new JvmPushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
+    addInstruction(new PushInstruction(myFactory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, FList.emptyList()), null));
     myExpressionBlockContext =
       new ExpressionBlockContext(myExpressionBlockContext, block, resultNullability == Nullability.NOT_NULL, target, type);
     startElement(block);
@@ -2446,8 +2694,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
    * @param useInliners whether to use inliners
    * @return resulting control flow; null if it cannot be built (e.g. if the code block contains unrecoverable errors)
    */
-  @Nullable
-  public static ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
+  public static @Nullable ControlFlow buildFlow(@NotNull PsiElement psiBlock, @NotNull DfaValueFactory targetFactory, boolean useInliners) {
     if (!useInliners) {
       return new ControlFlowAnalyzer(targetFactory, psiBlock, false).buildControlFlow();
     }
@@ -2485,7 +2732,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     void generateReturn(PsiExpression returnValue, ControlFlowAnalyzer analyzer) {
       if (returnValue != null) {
-        analyzer.addInstruction(new JvmPushInstruction(myTarget, null, true));
+        analyzer.addInstruction(new JvmPushForWriteInstruction(myTarget));
         if (!isSwitch()) {
           analyzer.addCustomNullabilityProblem(returnValue, myForceNonNullBlockResult ?
                                                             NullabilityProblemKind.nullableFunctionReturn : NullabilityProblemKind.noProblem);
@@ -2504,7 +2751,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final CallInliner[] INLINERS = {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(),
-    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner()
+    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(), new AccessorInliner(),
+    new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new AssertInstanceOfInliner()
   };
 }

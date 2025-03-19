@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.intentions.aliasImport;
 
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
@@ -45,7 +45,7 @@ import java.util.*;
 /**
  * @author Max Medvedev
  */
-public class GrAliasImportIntention extends Intention {
+public final class GrAliasImportIntention extends Intention {
 
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
@@ -259,9 +259,8 @@ public class GrAliasImportIntention extends Intention {
   }
 
 
-  @NotNull
   @Override
-  protected PsiElementPredicate getElementPredicate() {
+  protected @NotNull PsiElementPredicate getElementPredicate() {
     return AliasImportIntentionPredicate.INSTANCE;
   }
 }

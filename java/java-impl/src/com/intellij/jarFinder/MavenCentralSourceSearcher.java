@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarFinder;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -16,12 +15,11 @@ import java.util.List;
 public class MavenCentralSourceSearcher extends SourceSearcher {
   private static final Logger LOG = Logger.getInstance(MavenCentralSourceSearcher.class);
 
-  @Nullable
   @Override
-  protected String findSourceJar(@NotNull ProgressIndicator indicator,
-                                 @NotNull String artifactId,
-                                 @NotNull String version,
-                                 @NotNull VirtualFile classesJar) throws SourceSearchException {
+  protected @Nullable String findSourceJar(@NotNull ProgressIndicator indicator,
+                                           @NotNull String artifactId,
+                                           @NotNull String version,
+                                           @NotNull VirtualFile classesJar) throws SourceSearchException {
     try {
       indicator.setText(IdeCoreBundle.message("progress.message.connecting.to", "https://search.maven.org"));
 

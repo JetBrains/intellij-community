@@ -5,7 +5,7 @@ Value: KtLightClassForDecompiledDeclaration of PsiFile:ArraysKt___ArraysKt.class
 Value file: kotlin-stdlib.jar!/kotlin/collections/ArraysKt___ArraysKt.class
 
 Navigation item #0: KtFile: _Arrays.kt
-Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
+Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays.kt
 
 
 -Project
@@ -114,8 +114,10 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
+     +PsiDirectory: uuid
      _Assertions
      BuilderInference
+     ConsistentCopyVisibility
      ContextFunctionTypeParams
      DeepRecursiveFunction
      DeepRecursiveScope
@@ -128,8 +130,10 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExposedCopyVisibility
      ExtensionFunctionType
      Function
+     IgnorableReturnValue
      InitializedLazyImpl
      kotlin.kotlin_builtins
      KotlinNothingValueException
@@ -139,6 +143,7 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      Lazy
      LazyThreadSafetyMode
      Metadata
+     MustUseReturnValue
      NotImplementedError
      NoWhenBranchMatchedException
      OptIn
@@ -212,4 +217,4 @@ Navigation item file #0: kotlin-stdlib-common-sources.jar!/generated/_Arrays.kt
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.jar
+   +PsiDirectory: kotlin-stdlib-common.klib

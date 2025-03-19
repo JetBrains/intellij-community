@@ -1,4 +1,4 @@
-# $Id: tableparser.py 7320 2012-01-19 22:33:02Z milde $
+# $Id: tableparser.py 9038 2022-03-05 23:31:46Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -19,9 +19,9 @@ and produce a well-formed data structure suitable for building a CALS table.
 
 __docformat__ = 'reStructuredText'
 
+
 import re
 import sys
-
 from docutils import DataError
 from docutils.utils import strip_combining_chars
 
@@ -36,8 +36,8 @@ class TableMarkupError(DataError):
     """
 
     def __init__(self, *args, **kwargs):
-            self.offset = kwargs.pop('offset', 0)
-            DataError.__init__(self, *args)
+        self.offset = kwargs.pop('offset', 0)
+        DataError.__init__(self, *args)
 
 
 class TableParser:
@@ -65,8 +65,7 @@ class TableParser:
         self.setup(block)
         self.find_head_body_sep()
         self.parse_table()
-        structure = self.structure_from_cells()
-        return structure
+        return self.structure_from_cells()
 
     def find_head_body_sep(self):
         """Look for a head/body row separator line; store the line index."""
@@ -170,8 +169,9 @@ class GridTableParser(TableParser):
         corners = [(0, 0)]
         while corners:
             top, left = corners.pop(0)
-            if top == self.bottom or left == self.right \
-                  or top <= self.done[left]:
+            if (top == self.bottom
+                or left == self.right
+                or top <= self.done[left]):
                 continue
             result = self.scan_cell(top, left)
             if not result:
@@ -209,8 +209,7 @@ class GridTableParser(TableParser):
     def scan_cell(self, top, left):
         """Starting at the top-left corner, start tracing out a cell."""
         assert self.block[top][left] == '+'
-        result = self.scan_right(top, left)
-        return result
+        return self.scan_right(top, left)
 
     def scan_right(self, top, left):
         """
@@ -286,18 +285,16 @@ class GridTableParser(TableParser):
         From the data collected by `scan_cell()`, convert to the final data
         structure.
         """
-        rowseps = list(self.rowseps.keys())   # list of row boundaries
-        rowseps.sort()
+        rowseps = sorted(self.rowseps.keys())   # list of row boundaries
         rowindex = {}
         for i in range(len(rowseps)):
             rowindex[rowseps[i]] = i    # row boundary -> row number mapping
-        colseps = list(self.colseps.keys())   # list of column boundaries
-        colseps.sort()
+        colseps = sorted(self.colseps.keys())   # list of column boundaries
         colindex = {}
         for i in range(len(colseps)):
             colindex[colseps[i]] = i    # column boundary -> col number map
         colspecs = [(colseps[i] - colseps[i - 1] - 1)
-                    for i in range(1, len(colseps))] # list of column widths
+                    for i in range(1, len(colseps))]  # list of column widths
         # prepare an empty table with the correct number of rows & columns
         onerow = [None for i in range(len(colseps) - 1)]
         rows = [onerow[:] for i in range(len(rowseps) - 1)]
@@ -322,7 +319,7 @@ class GridTableParser(TableParser):
         else:
             headrows = []
             bodyrows = rows
-        return (colspecs, headrows, bodyrows)
+        return colspecs, headrows, bodyrows
 
 
 class SimpleTableParser(TableParser):
@@ -476,10 +473,8 @@ class SimpleTableParser(TableParser):
             return
         if spanline:
             columns = self.parse_columns(*spanline)
-            span_offset = spanline[1]
         else:
             columns = self.columns[:]
-            span_offset = start
         self.check_columns(lines, start, columns)
         row = self.init_row(columns, start)
         for i in range(len(columns)):
@@ -511,14 +506,14 @@ class SimpleTableParser(TableParser):
                 if i == lastcol and line[end:].strip():
                     text = line[start:].rstrip()
                     new_end = start + len(text)
-                    columns[i] = (start, new_end)
                     main_start, main_end = self.columns[-1]
+                    columns[i] = (start, max(main_end, new_end))
                     if new_end > main_end:
                         self.columns[-1] = (main_start, new_end)
                 elif line[end:nextstart].strip():
-                    raise TableMarkupError('Text in column margin '
-                        'in table line %s.' % (first_line+offset+1),
-                        offset=first_line+offset)
+                    raise TableMarkupError('Text in column margin in table '
+                                           'line %s.' % (first_line+offset+1),
+                                           offset=first_line+offset)
                 offset += 1
         columns.pop()
 
@@ -540,5 +535,5 @@ def update_dict_of_lists(master, newdata):
 
     Both parameters must be dictionaries containing list values.
     """
-    for key, values in list(newdata.items()):
+    for key, values in newdata.items():
         master.setdefault(key, []).extend(values)

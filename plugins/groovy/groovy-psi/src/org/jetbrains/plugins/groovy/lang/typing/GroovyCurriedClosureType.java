@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing;
 
 import com.intellij.psi.PsiElement;
@@ -43,14 +43,12 @@ final class GroovyCurriedClosureType extends GroovyClosureType {
     return super.isValid() && myOriginal.isValid();
   }
 
-  @NotNull
   @Override
-  public List<CallSignature<?>> getSignatures() {
+  public @NotNull List<CallSignature<?>> getSignatures() {
     return mySignatures.getValue();
   }
 
-  @Nullable
-  private CallSignature<?> curry(CallSignature<?> original) {
+  private @Nullable CallSignature<?> curry(CallSignature<?> original) {
     if (original.isVararg()) {
       return new CurriedSignature(original, myPosition, myArguments);
     }
@@ -64,9 +62,8 @@ final class GroovyCurriedClosureType extends GroovyClosureType {
     }
   }
 
-  @NotNull
   @Override
-  public PsiType curry(int position, @NotNull List<? extends Argument> arguments, @NotNull PsiElement context) {
+  public @NotNull PsiType curry(int position, @NotNull List<? extends Argument> arguments, @NotNull PsiElement context) {
     return new GroovyCurriedClosureType(this, position, arguments, myCurriedArgumentCount + myArguments.size(), context);
   }
 }

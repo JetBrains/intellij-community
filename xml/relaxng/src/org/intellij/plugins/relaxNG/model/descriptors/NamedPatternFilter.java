@@ -24,6 +24,6 @@ final class NamedPatternFilter implements Condition<DXmlTokenPattern> {
 
   @Override
   public boolean value(DXmlTokenPattern pattern) {
-    return pattern.getName().listNames().size() > 0;
+    return !pattern.getName().listNames().isEmpty();
   }
 }

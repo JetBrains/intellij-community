@@ -4,18 +4,17 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveInsideParentheses
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -28,12 +27,10 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
-import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeConstructor
+import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 import org.jetbrains.kotlin.types.typeUtil.isUnit
@@ -50,12 +47,12 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
         if (call?.getStrictParentOfType<KtFunction>()?.hasModifier(KtTokens.INLINE_KEYWORD) == true) return false
 
         val context = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
-        if (call?.getResolvedCall(context)?.getParameterForArgument(argument)?.type?.isSuspendFunctionType == true) return false
         val descriptor = context[
                 BindingContext.DECLARATION_TO_DESCRIPTOR,
                 element.functionLiteral,
         ] as? AnonymousFunctionDescriptor ?: return false
 
+        if (descriptor.isSuspend) return false
         if (descriptor.valueParameters.any { it.isDestructuring() || it.type is ErrorType }) return false
 
         val lastElement = element.functionLiteral.arrow ?: element.functionLiteral.lBrace
@@ -64,7 +61,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
 
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val functionDescriptor = element.functionLiteral.descriptor as? AnonymousFunctionDescriptor ?: return
-        val resultingFunction = convertLambdaToFunction(element, functionDescriptor) ?: return
+        val resultingFunction = Holder.convertLambdaToFunction(element, functionDescriptor) ?: return
         val argument = when (val parent = resultingFunction.parent) {
             is KtLambdaArgument -> parent
             is KtLabeledExpression -> parent.replace(resultingFunction).parent as? KtLambdaArgument
@@ -76,7 +73,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
 
     private fun ValueParameterDescriptor.isDestructuring() = this is ValueParameterDescriptorImpl.WithDestructuringDeclaration
 
-    companion object {
+    object Holder {
         fun convertLambdaToFunction(
             lambda: KtLambdaExpression,
             functionDescriptor: FunctionDescriptor,

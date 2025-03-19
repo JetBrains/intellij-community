@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 
-public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
+public final class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @Override
   public @NotNull FormattingModel createModel(com.intellij.formatting.@NotNull FormattingContext formattingContext) {
     PsiFile containingFile = formattingContext.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);

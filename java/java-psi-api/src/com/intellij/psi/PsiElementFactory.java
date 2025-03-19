@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
@@ -20,8 +20,7 @@ import java.util.Map;
  * @see JavaPsiFacade#getElementFactory()
  * @see PsiFileFactory
  */
-@NonNls
-public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
+public @NonNls interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactory {
 
   /**
    * @deprecated please use {@link #getInstance(Project)}
@@ -364,6 +363,11 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
                                              @Nullable PsiElement context);
 
   /**
+   * Creates a string template fragment with the specified text of the specified token type.
+   */
+  @NotNull PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context);
+
+  /**
    * Creates a PSI element for the "&#64;param" JavaDoc tag.
    *
    * @throws IncorrectOperationException if the name or description are invalid.
@@ -387,7 +391,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    * @param languageLevel language level used to construct array class.
    */
   @NotNull
-  PsiClassType getArrayClassType(@NotNull PsiType componentType, @NotNull final LanguageLevel languageLevel);
+  PsiClassType getArrayClassType(@NotNull PsiType componentType, final @NotNull LanguageLevel languageLevel);
 
   /**
    * @param psiClass class to test
@@ -414,6 +418,18 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull
   PsiImportStaticStatement createImportStaticStatement(@NotNull PsiClass aClass, @NotNull String memberName)
     throws IncorrectOperationException;
+
+  /**
+   * Creates an {@code import static} statement for importing the specified member
+   * from the specified class.
+   */
+  @NotNull PsiImportStaticStatement createImportStaticStatementFromText(@NotNull String classFullyQualifiedName, @NotNull String memberName) throws IncorrectOperationException;
+
+  /**
+   * Creates an {@code import static} statement for importing the specified member
+   * from the specified class.
+   */
+  @NotNull PsiImportModuleStatement createImportModuleStatementFromText(@NotNull String moduleName) throws IncorrectOperationException;
 
   /**
    * Creates a parameter list from the specified parameter names and types.

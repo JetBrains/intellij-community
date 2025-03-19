@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -12,21 +12,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExtension<PsiAnonymousClass> {
+public final class JavaAnonymousClassBaseRefOccurenceIndex extends StringStubIndexExtension<PsiAnonymousClass> {
   private static final JavaAnonymousClassBaseRefOccurenceIndex ourInstance = new JavaAnonymousClassBaseRefOccurenceIndex();
 
   public static JavaAnonymousClassBaseRefOccurenceIndex getInstance() {
     return ourInstance;
   }
 
-  @NotNull
   @Override
-  public StubIndexKey<String, PsiAnonymousClass> getKey() {
+  public @NotNull StubIndexKey<String, PsiAnonymousClass> getKey() {
     return JavaStubIndexKeys.ANONYMOUS_BASEREF;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getOccurences(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
-  public Collection<PsiAnonymousClass> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiAnonymousClass> get(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+    return getOccurences(s, project, scope);
+  }
+
+  public Collection<PsiAnonymousClass> getOccurences(final @NotNull String s, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiAnonymousClass.class);
   }
 }

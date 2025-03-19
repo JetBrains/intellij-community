@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -16,18 +16,17 @@ import java.util.Set;
 public final class ServiceViewActionUtils {
   public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
   public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
+  public static final DataKey<Boolean> IS_FROM_TREE_KEY = DataKey.create("IsFromTreeSource");
 
   private ServiceViewActionUtils() {
   }
 
-  @Nullable
-  public static <T> T getTarget(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
+  public static @Nullable <T> T getTarget(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
     Object[] items = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     return items != null && items.length == 1 ? ObjectUtils.tryCast(items[0], clazz) : null;
   }
 
-  @NotNull
-  public static <T> List<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
+  public static @NotNull <T> List<T> getTargets(@NotNull AnActionEvent e, @NotNull Class<T> clazz) {
     Object[] items = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     if (items == null) return Collections.emptyList();
 

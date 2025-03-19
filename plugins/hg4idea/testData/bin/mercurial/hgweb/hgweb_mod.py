@@ -6,7 +6,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import contextlib
 import os
@@ -18,7 +17,6 @@ from .common import (
     permhooks,
     statusmessage,
 )
-from ..pycompat import getattr
 
 from .. import (
     encoding,
@@ -35,11 +33,11 @@ from .. import (
     templater,
     templateutil,
     ui as uimod,
-    util,
     wireprotoserver,
 )
 
 from . import (
+    common,
     request as requestmod,
     webcommands,
     webutil,
@@ -111,7 +109,7 @@ def makebreadcrumb(url, prefix=b''):
     return templateutil.mappinglist(reversed(breadcrumb))
 
 
-class requestcontext(object):
+class requestcontext:
     """Holds state/context for an individual request.
 
     Servers can be multi-threaded. Holding state on the WSGI application
@@ -124,6 +122,16 @@ class requestcontext(object):
         self.reponame = app.reponame
         self.req = req
         self.res = res
+
+        # Only works if the filter actually support being upgraded to show
+        # visible changesets
+        current_filter = repo.filtername
+        if (
+            common.hashiddenaccess(repo, req)
+            and current_filter is not None
+            and current_filter + b'.hidden' in repoview.filtertable
+        ):
+            self.repo = self.repo.filtered(repo.filtername + b'.hidden')
 
         self.maxchanges = self.configint(b'web', b'maxchanges')
         self.stripecount = self.configint(b'web', b'stripes')
@@ -231,12 +239,13 @@ class requestcontext(object):
 
     def sendtemplate(self, name, **kwargs):
         """Helper function to send a response generated from a template."""
-        kwargs = pycompat.byteskwargs(kwargs)
-        self.res.setbodygen(self.tmpl.generate(name, kwargs))
+        if self.req.method != b'HEAD':
+            kwargs = pycompat.byteskwargs(kwargs)
+            self.res.setbodygen(self.tmpl.generate(name, kwargs))
         return self.res.sendresponse()
 
 
-class hgweb(object):
+class hgweb:
     """HTTP server for individual repositories.
 
     Instances of this class serve HTTP responses for a particular
@@ -366,17 +375,6 @@ class hgweb(object):
             # replace it.
             res.headers[b'Content-Security-Policy'] = rctx.csp
 
-        # /api/* is reserved for various API implementations. Dispatch
-        # accordingly. But URL paths can conflict with subrepos and virtual
-        # repos in hgwebdir. So until we have a workaround for this, only
-        # expose the URLs if the feature is enabled.
-        apienabled = rctx.repo.ui.configbool(b'experimental', b'web.apiserver')
-        if apienabled and req.dispatchparts and req.dispatchparts[0] == b'api':
-            wireprotoserver.handlewsgiapirequest(
-                rctx, req, res, self.check_perm
-            )
-            return res.sendresponse()
-
         handled = wireprotoserver.handlewsgirequest(
             rctx, req, res, self.check_perm
         )
@@ -403,7 +401,7 @@ class hgweb(object):
                 cmd = cmd[style + 1 :]
 
             # avoid accepting e.g. style parameter as command
-            if util.safehasattr(webcommands, cmd):
+            if hasattr(webcommands, pycompat.sysstr(cmd)):
                 req.qsparams[b'cmd'] = cmd
 
             if cmd == b'static':
@@ -424,7 +422,7 @@ class hgweb(object):
 
             if cmd == b'archive':
                 fn = req.qsparams[b'node']
-                for type_, spec in pycompat.iteritems(webutil.archivespecs):
+                for type_, spec in webutil.archivespecs.items():
                     ext = spec[2]
                     if fn.endswith(ext):
                         req.qsparams[b'node'] = fn[: -len(ext)]
@@ -474,11 +472,11 @@ class hgweb(object):
                 # override easily enough.
                 res.status = b'200 Script output follows'
                 res.headers[b'Content-Type'] = ctype
-                return getattr(webcommands, cmd)(rctx)
+                return getattr(webcommands, pycompat.sysstr(cmd))(rctx)
 
         except (error.LookupError, error.RepoLookupError) as err:
             msg = pycompat.bytestr(err)
-            if util.safehasattr(err, b'name') and not isinstance(
+            if hasattr(err, 'name') and not isinstance(
                 err, error.ManifestLookupError
             ):
                 msg = b'revision not found: %s' % err.name

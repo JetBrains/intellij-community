@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.util.TextRange
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import junit.framework.ComparisonFailure
@@ -35,11 +35,11 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
     hintSettings.loadState(default.state)
   }
 
-  val manager = ParameterHintsPresentationManager.getInstance()
+  val manager: ParameterHintsPresentationManager = ParameterHintsPresentationManager.getInstance()
   private val inlayPresenter: (Inlay<*>) -> String = { (it.renderer as HintRenderer).text ?: throw IllegalArgumentException("No text set to hint") }
   private val inlayFilter: (Inlay<*>) -> Boolean = { manager.isParameterHint(it) }
 
-  fun checkParameterHints() = checkInlays(inlayPresenter, inlayFilter)
+  fun checkParameterHints(): Unit = checkInlays(inlayPresenter, inlayFilter)
 
   fun checkInlays(inlayPresenter: (Inlay<*>) -> String, inlayFilter: (Inlay<*>) -> Boolean) {
     val file = myFixture.file!!
@@ -51,7 +51,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
-                               originalText: String) =
+                               originalText: String): Unit =
     verifyInlaysAndCaretInfo(expectedInlaysAndCaret, originalText, inlayPresenter, inlayFilter)
 
   private fun verifyInlaysAndCaretInfo(expectedInlaysAndCaret: CaretAndInlaysInfo,
@@ -87,7 +87,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
       entries.asReversed().forEach { proposedText.insert(it.first, it.second) }
 
       VfsTestUtil.TEST_DATA_FILE_PATH.get(file.virtualFile)?.let { originalPath ->
-        throw FileComparisonFailure("Hints differ", originalText, proposedText.toString(), originalPath)
+        throw FileComparisonFailedError("Hints differ", originalText, proposedText.toString(), originalPath)
       } ?: throw ComparisonFailure("Hints differ", originalText, proposedText.toString())
     }
 
@@ -109,6 +109,7 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
                               inlayFilter: (Inlay<*>) -> Boolean): List<InlayInfo> {
     val editor = myFixture.editor
     val allInlays = editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength) +
+                    editor.inlayModel.getAfterLineEndElementsInRange(0, editor.document.textLength) +
                     editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
 
     val hintManager = ParameterHintsPresentationManager.getInstance()
@@ -168,9 +169,9 @@ class InlayHintsChecker(private val myFixture: CodeInsightTestFixture) {
   }
 
   private fun removeText(document: Document, realStartOffset: Int, matchedLength: Int) {
-    WriteCommandAction.runWriteCommandAction(myFixture.project, {
+    WriteCommandAction.runWriteCommandAction(myFixture.project) {
       document.replaceString(realStartOffset, realStartOffset + matchedLength, "")
-    })
+    }
   }
 
 

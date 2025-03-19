@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -10,6 +10,7 @@ import com.intellij.debugger.ui.breakpoints.MethodBreakpoint;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -26,17 +27,15 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleMethodBreakpointAction extends AnAction {
+public class ToggleMethodBreakpointAction extends AnAction implements ActionRemoteBehaviorSpecification.Disabled {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
     boolean toEnable = getPlace(event) != null;
 
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    event.getPresentation().setEnabled(toEnable);
+    if (event.isFromContextMenu()) {
       event.getPresentation().setVisible(toEnable);
-    }
-    else {
-      event.getPresentation().setEnabled(toEnable);
     }
   }
 
@@ -52,9 +51,6 @@ public class ToggleMethodBreakpointAction extends AnAction {
       return;
     }
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
-    if (debugManager == null) {
-      return;
-    }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
     if (place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {
@@ -68,8 +64,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
     }
   }
 
-  @Nullable
-  private static PlaceInDocument getPlace(AnActionEvent event) {
+  private static @Nullable PlaceInDocument getPlace(AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return null;
@@ -87,7 +82,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
           method = psiElement;
-          document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
+          document = containingFile.getViewProvider().getDocument();
         }
       }
     }
@@ -109,14 +104,12 @@ public class ToggleMethodBreakpointAction extends AnAction {
     return method != null ? new PlaceInDocument(document, method.getTextOffset()) : null;
   }
 
-  @Nullable
-  static Editor getEditor(AnActionEvent event) {
+  static @Nullable Editor getEditor(AnActionEvent event) {
     @Nullable FileEditor editor = event.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
     return editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null;
   }
 
-  @Nullable
-  private static PsiMethod findMethod(Project project, Editor editor) {
+  private static @Nullable PsiMethod findMethod(Project project, Editor editor) {
     if (editor == null) {
       return null;
     }

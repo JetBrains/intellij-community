@@ -95,6 +95,6 @@ public class PyIndexingTest extends PyTestCase {
 
   // PY-19047
   public void testPy19047() {
-    FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, new Throwable());
+    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -7,6 +7,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +19,7 @@ import java.util.stream.Stream;
  * @see HtmlBuilder
  */
 public abstract class HtmlChunk {
-  private static class Empty extends HtmlChunk {
+  private static final class Empty extends HtmlChunk {
     private static final Empty INSTANCE = new Empty();
     
     @Override
@@ -30,7 +32,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  private static class Text extends HtmlChunk {
+  private static final class Text extends HtmlChunk {
     private final String myContent;
 
     private Text(String content) {
@@ -41,26 +43,83 @@ public abstract class HtmlChunk {
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
     }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Text && Objects.equals(myContent, ((Text)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
+    }
   }
   
-  private static class Raw extends HtmlChunk {
+  private static final class Raw extends HtmlChunk {
+    private static final Pattern CLASS = Pattern.compile("class=([\"'])([A-Za-z\\-_0-9]+)\\1");
     private final String myContent;
 
     private Raw(String content) {
       myContent = content;
     }
 
+    // Caution: works poorly
+    @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      Matcher matcher = CLASS.matcher(myContent);
+      StringBuffer result = new StringBuffer();
+      while (matcher.find()) {
+        String style = styles.get(matcher.group(2));
+        if (style != null) {
+          matcher.appendReplacement(result, "style=\"" + style + "\"");
+        } else {
+          matcher.appendReplacement(result, matcher.group());
+        }
+      }
+      if (result.length() == 0) return this;
+      matcher.appendTail(result);
+      return new Raw(result.toString());
+    }
+
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(myContent);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Raw && Objects.equals(myContent, ((Raw)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
+    }
   }
   
-  static class Fragment extends HtmlChunk {
+  static final class Fragment extends HtmlChunk {
     private final List<? extends HtmlChunk> myContent;
 
     Fragment(List<? extends HtmlChunk> content) {
       myContent = content;
+    }
+
+    @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      List<HtmlChunk> newChildren = null;
+      for (HtmlChunk child : myContent) {
+        HtmlChunk updated = child.applyStyles(styles);
+        if (updated != child) {
+          if (newChildren == null) {
+            newChildren = new ArrayList<>(myContent);
+          }
+          newChildren.set(newChildren.indexOf(child), updated);
+        }
+      }
+      if (newChildren != null) {
+        return new Fragment(newChildren);
+      }
+      return this;
     }
 
     @Override
@@ -81,9 +140,18 @@ public abstract class HtmlChunk {
       return null;
     }
 
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Fragment && Objects.equals(myContent, ((Fragment)o).myContent);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hashCode(myContent);
+    }
   }
   
-  private static class Nbsp extends HtmlChunk {
+  private static final class Nbsp extends HtmlChunk {
     private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
 
@@ -94,6 +162,16 @@ public abstract class HtmlChunk {
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append(StringUtil.repeat("&nbsp;", myCount));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof Nbsp && myCount == ((Nbsp)o).myCount;
+    }
+
+    @Override
+    public int hashCode() {
+      return myCount;
     }
   }
 
@@ -122,10 +200,45 @@ public abstract class HtmlChunk {
     }
 
     @Override
+    public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+      String myClass = myAttributes.get("class");
+      UnmodifiableHashMap<String, String> newAttributes = myAttributes;
+      if (myClass != null) {
+        String style = styles.get(myClass);
+        if (style != null) {
+          newAttributes = newAttributes.without("class");
+          String existingStyle = newAttributes.get("style");
+          if (existingStyle != null) {
+            style = existingStyle.endsWith(";") ? existingStyle + " " + style 
+                                                : existingStyle + "; " + style;
+          }
+          newAttributes = newAttributes.with("style", style);
+        }
+      }
+      List<HtmlChunk> newChildren = null;
+      for (HtmlChunk child : myChildren) {
+        HtmlChunk updated = child.applyStyles(styles);
+        if (updated != child) {
+          if (newChildren == null) {
+            newChildren = new ArrayList<>(myChildren);
+          }
+          newChildren.set(newChildren.indexOf(child), updated);
+        }
+      }
+      if (newChildren != null) {
+        return new Element(myTagName, newAttributes, newChildren);
+      }
+      return newAttributes == myAttributes ? this : new Element(myTagName, newAttributes, myChildren);
+    }
+
+    @Override
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append('<').append(myTagName);
       myAttributes.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
-        builder.append(' ').append(entry.getKey()).append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        builder.append(' ').append(entry.getKey());
+        if (entry.getValue() != null) {
+          builder.append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        }
       });
       if (myChildren.isEmpty()) {
         builder.append("/>");
@@ -156,6 +269,17 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
+    }
+
+    /**
+     * Adds an attribute without '=' sign and a value
+     *
+     * @param name attribute name
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name) {
+      return new Element(myTagName, myAttributes.with(name, null), myChildren);
     }
 
     /**
@@ -249,9 +373,28 @@ public abstract class HtmlChunk {
       }
       return null;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      Element element = (Element)o;
+      return Objects.equals(myTagName, element.myTagName) &&
+             Objects.equals(myAttributes, element.myAttributes) &&
+             Objects.equals(myChildren, element.myChildren);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hashCode(myTagName);
+      result = 31 * result + Objects.hashCode(myAttributes);
+      result = 31 * result + Objects.hashCode(myChildren);
+      return result;
+    }
   }
 
-  private static class IconElement extends Element {
+  private static final class IconElement extends Element {
     private final @NotNull String myId;
     private final @NotNull Icon myIcon;
 
@@ -268,6 +411,23 @@ public abstract class HtmlChunk {
       }
       return null;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      if (!super.equals(o)) return false;
+      IconElement element = (IconElement)o;
+      return myId.equals(element.myId) && myIcon.equals(element.myIcon);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + myId.hashCode();
+      result = 31 * result + myIcon.hashCode();
+      return result;
+    }
   }
 
   /**
@@ -278,6 +438,22 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public @Nullable Icon findIcon(@NotNull @NonNls String id) {
     return null;
+  }
+
+  /**
+   * Rewrites the HTML classes with the corresponding CSS styles.
+   * Warning: this is a poor man replacement.
+   * May not work as expected, especially if you are using raw elements. 
+   * Use only if you control the HTML generation.
+   * 
+   * @param styles map where keys are class names and values are CSS definitions
+   * @return a new {@link HtmlChunk} where known classes from the supplied Map 
+   * are replaced with supplied styles; unknown classes are left intact.
+   */
+  @ApiStatus.Experimental
+  @Contract(pure = true)
+  public @NotNull HtmlChunk applyStyles(@NotNull Map<@NotNull @NonNls String, @NotNull String> styles) {
+    return this;
   }
 
   /**

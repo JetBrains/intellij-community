@@ -34,13 +34,12 @@ import java.nio.charset.UnsupportedCharsetException;
 
 import static com.jetbrains.python.psi.FutureFeature.UNICODE_LITERALS;
 
-public class PyByteLiteralInspection extends PyInspection {
+public final class PyByteLiteralInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -71,7 +70,7 @@ public class PyByteLiteralInspection extends PyInspection {
       boolean hasNonAscii = false;
 
       int length = value.length();
-      char c = 0;
+      char c;
       for (int i = 0; i < length; ++i) {
         c = value.charAt(i);
         if (((int) c) > 255) {

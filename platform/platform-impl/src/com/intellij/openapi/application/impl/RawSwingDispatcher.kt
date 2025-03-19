@@ -16,5 +16,5 @@ object RawSwingDispatcher : CoroutineDispatcher() {
     EventQueue.invokeLater(block)
   }
 
-  override fun toString() = "Swing"
+  override fun toString(): String = "Swing"
 }

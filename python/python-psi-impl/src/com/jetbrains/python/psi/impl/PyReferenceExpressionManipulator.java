@@ -22,16 +22,15 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
-public class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
+public final class PyReferenceExpressionManipulator extends AbstractElementManipulator<PyReferenceExpression> {
   @Override
-  public PyReferenceExpression handleContentChange(@NotNull final PyReferenceExpression element, @NotNull final TextRange range, final String newContent)
+  public PyReferenceExpression handleContentChange(final @NotNull PyReferenceExpression element, final @NotNull TextRange range, final String newContent)
     throws IncorrectOperationException {
     return null;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement(@NotNull final PyReferenceExpression element) {
+  public @NotNull TextRange getRangeInElement(final @NotNull PyReferenceExpression element) {
     final ASTNode nameElement = element.getNameElement();
     final int startOffset = nameElement != null ? nameElement.getStartOffset() : element.getTextRange().getEndOffset();
     return new TextRange(startOffset - element.getTextOffset(), element.getTextLength());

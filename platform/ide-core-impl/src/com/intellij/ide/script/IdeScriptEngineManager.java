@@ -15,19 +15,15 @@ public abstract class IdeScriptEngineManager {
     return ApplicationManager.getApplication().getService(IdeScriptEngineManager.class);
   }
 
-  @NotNull
-  public abstract List<EngineInfo> getEngineInfos();
+  public abstract @NotNull List<EngineInfo> getEngineInfos();
 
-  @Nullable
-  public abstract IdeScriptEngine getEngine(@NotNull EngineInfo engineInfo, @Nullable ClassLoader loader);
+  public abstract @Nullable IdeScriptEngine getEngine(@NotNull EngineInfo engineInfo, @Nullable ClassLoader loader);
 
-  @Nullable
-  public abstract IdeScriptEngine getEngineByName(@NotNull @NonNls String engineName, @Nullable ClassLoader loader);
+  public abstract @Nullable IdeScriptEngine getEngineByName(@NotNull @NonNls String engineName, @Nullable ClassLoader loader);
 
-  @Nullable
-  public abstract IdeScriptEngine getEngineByFileExtension(@NotNull String extension, @Nullable ClassLoader loader);
+  public abstract @Nullable IdeScriptEngine getEngineByFileExtension(@NotNull String extension, @Nullable ClassLoader loader);
 
-  public static class EngineInfo {
+  public static final class EngineInfo {
     public final @NonNls String engineName;
     public final String engineVersion;
     public final String languageName;

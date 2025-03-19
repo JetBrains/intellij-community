@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -17,6 +18,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ComponentAdapter
@@ -29,11 +31,16 @@ import kotlin.math.max
 import kotlin.math.min
 
 object CommentTextFieldFactory {
+
+  /**
+   * Use [com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory] or create a standalone editor
+   */
+  @Obsolete
   fun create(
     project: Project?,
     document: Document,
     scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
-    placeHolder: @Nls String? = null
+    placeHolder: @Nls String? = null,
   ): EditorTextField = CommentTextField(project, document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     setPlaceholder(placeHolder)
@@ -92,7 +99,19 @@ object CommentTextFieldFactory {
   fun wrapWithLeftIcon(config: IconConfig, item: JComponent): JComponent {
     val (icon, iconGap) = config
     val iconLabel = JLabel(icon)
-    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
+    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset()) {
+      item.takeIf { it.isVisible }?.minimumSize?.height ?: 0
+    }).apply {
+      isOpaque = false
+      add(CommentFieldWithIconLayout.ICON, iconLabel)
+      add(CommentFieldWithIconLayout.ITEM, item)
+    }
+  }
+
+  internal fun wrapWithLeftIcon(config: IconConfig, item: JComponent, minimalItemHeightCalculator: () -> Int): JComponent {
+    val (icon, iconGap) = config
+    val iconLabel = JLabel(icon)
+    return JPanel(CommentFieldWithIconLayout(iconGap - CollaborationToolsUIUtil.getFocusBorderInset(), minimalItemHeightCalculator)).apply {
       isOpaque = false
       add(CommentFieldWithIconLayout.ICON, iconLabel)
       add(CommentFieldWithIconLayout.ITEM, item)
@@ -109,7 +128,7 @@ object CommentTextFieldFactory {
 
 private class CommentTextField(
   project: Project?,
-  document: Document
+  document: Document,
 ) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
   init {
     isOneLineMode = false
@@ -130,11 +149,10 @@ private class CommentTextField(
     }
   }
 
-  override fun getData(dataId: String): Any? {
-    if (PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId)) {
-      return editor?.let { TextEditorProvider.getInstance().getTextEditor(it) } ?: super.getData(dataId)
-    }
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    val editor = editor ?: return
+    sink[PlatformCoreDataKeys.FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
   }
 }
 
@@ -145,7 +163,8 @@ private class CommentTextField(
  * Same thing the other way around.
  */
 private class CommentFieldWithIconLayout(
-  private val gap: Int
+  private val gap: Int,
+  private val minimalItemHeightCalculator: () -> Int
 ) : LayoutManager {
 
   companion object {
@@ -192,7 +211,7 @@ private class CommentFieldWithIconLayout(
     val contentHeight = bounds.height
 
     val iconHeight = iconComponent?.takeIf { it.isVisible }?.preferredSize?.height ?: 0
-    val itemMinHeight = itemComponent?.takeIf { it.isVisible }?.minimumSize?.height ?: 0
+    val itemMinHeight = minimalItemHeightCalculator()
 
     iconComponent?.takeIf { it.isVisible }?.apply {
       val prefSize = preferredSize

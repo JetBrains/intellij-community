@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.projectView;
 
 import com.intellij.ide.DeleteProvider;
@@ -8,10 +8,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -33,8 +30,7 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
+  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     if (parent.getValue() instanceof Form) {
       return children;
     }
@@ -86,26 +82,16 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   @Override
-  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (Form.DATA_KEY.is(dataId)) {
-      List<Form> result = new ArrayList<>();
-      for (AbstractTreeNode<?> node : selected) {
-        if (node instanceof FormNode) {
-          result.add(((FormNode)node).getValue());
-        }
-      }
-      if (!result.isEmpty()) {
-        return result.toArray(new Form[0]);
-      }
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for (AbstractTreeNode<?> node : selected) {
-        if (node instanceof FormNode) {
-          return new MyDeleteProvider(selected);
-        }
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink,
+                             @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+    List<FormNode> nodes = ContainerUtil.filterIsInstance(selection, FormNode.class);
+    if (nodes.isEmpty()) return;
+    sink.lazy(Form.DATA_KEY, () -> {
+      return ContainerUtil.map2Array(nodes, Form.class, o -> o.getValue());
+    });
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
+      return new MyDeleteProvider(selection);
+    });
   }
 
   private static Collection<PsiFile> convertToFiles(Collection<? extends BasePsiNode<? extends PsiElement>> formNodes) {
@@ -131,10 +117,10 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   private static final class MyDeleteProvider implements DeleteProvider {
-    private final PsiElement[] myElements;
+    private final AbstractTreeNode<?>[] myNodes;
 
-    MyDeleteProvider(final Collection<? extends AbstractTreeNode<?>> selected) {
-      myElements = collectFormPsiElements(selected);
+    MyDeleteProvider(Collection<? extends AbstractTreeNode<?>> nodes) {
+      myNodes = nodes.toArray(AbstractTreeNode[]::new);
     }
 
     @Override
@@ -145,15 +131,17 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      DeleteHandler.deletePsiElement(myElements, project);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      DeleteHandler.deletePsiElement(elements, project);
     }
 
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return DeleteHandler.shouldEnableDeleteAction(myElements);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    private static PsiElement[] collectFormPsiElements(Collection<? extends AbstractTreeNode<?>> selected) {
+    private static PsiElement[] collectFormPsiElements(AbstractTreeNode<?>[] selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form form) {

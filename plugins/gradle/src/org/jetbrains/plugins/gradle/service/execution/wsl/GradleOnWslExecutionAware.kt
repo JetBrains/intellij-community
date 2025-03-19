@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.IncorrectGradleJdkIssue
 import org.jetbrains.plugins.gradle.service.execution.*
 import org.jetbrains.plugins.gradle.util.GradleBundle.message
+import java.nio.file.Path
 
 @ApiStatus.Internal
 class GradleOnWslExecutionAware : GradleExecutionAware {
@@ -73,15 +74,16 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     return WslBuildLayoutParameters(wslDistribution, project, null)
   }
 
-  override fun getBuildLayoutParameters(project: Project, projectPath: String): BuildLayoutParameters? {
-    val wslDistribution = resolveWslDistribution(projectPath) ?: return null
-    return WslBuildLayoutParameters(wslDistribution, project, projectPath)
+  override fun getBuildLayoutParameters(project: Project, projectPath: Path): BuildLayoutParameters? {
+    val projectPathString = projectPath.toString()
+    val wslDistribution = resolveWslDistribution(projectPathString) ?: return null
+    return WslBuildLayoutParameters(wslDistribution, project, projectPathString)
   }
 
-  override fun isGradleInstallationHomeDir(project: Project, homePath: String): Boolean {
+  override fun isGradleInstallationHomeDir(project: Project, homePath: Path): Boolean {
     val wslDistribution = resolveWslDistribution(project.basePath ?: return false) ?: return false
-    val windowsPath = wslDistribution.getWindowsPath(homePath) ?: return false
-    return LocalGradleExecutionAware().isGradleInstallationHomeDir(project, windowsPath)
+    val windowsPath = wslDistribution.getWindowsPath(homePath.toString())
+    return LocalGradleExecutionAware().isGradleInstallationHomeDir(project, Path.of(windowsPath))
   }
 
   private fun getTargetPathMapper(wslDistribution: WSLDistribution): PathMapper {

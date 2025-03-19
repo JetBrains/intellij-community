@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,7 +19,7 @@ import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_
 import static com.intellij.openapi.vcs.changes.committed.VcsConfigurationChangeListener.BRANCHES_CHANGED;
 
 public class MergeInfoUpdatesListener {
-  private final static int DELAY = 300;
+  private static final int DELAY = 300;
 
   private final Project myProject;
   private final MessageBusConnection myConnection;

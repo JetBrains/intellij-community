@@ -13,7 +13,6 @@ import com.intellij.ui.dsl.builder.impl.DslComponentPropertyInternal
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
-import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JTextField
@@ -24,19 +23,19 @@ import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextCha
 /**
  * Columns for text components with tiny width. Used for [Row.intTextField] by default
  */
-const val COLUMNS_TINY = 6
+const val COLUMNS_TINY: Int = 6
 
 /**
  * Columns for text components with short width
  */
-const val COLUMNS_SHORT = 18
+const val COLUMNS_SHORT: Int = 18
 
 /**
  * Columns for text components with medium width
  */
-const val COLUMNS_MEDIUM = 25
+const val COLUMNS_MEDIUM: Int = 25
 
-const val COLUMNS_LARGE = 36
+const val COLUMNS_LARGE: Int = 36
 
 fun <T : JTextComponent> Cell<T>.bindText(property: ObservableMutableProperty<String>): Cell<T> {
   installValidationRequestor(property)
@@ -91,11 +90,11 @@ fun <T : JTextComponent> Cell<T>.text(text: String): Cell<T> {
  * @see COLUMNS_MEDIUM
  * @see COLUMNS_LARGE
  */
-fun <T : JTextField> Cell<T>.columns(columns: Int) = apply {
+fun <T : JTextField> Cell<T>.columns(columns: Int): Cell<T> = apply {
   component.columns(columns)
 }
 
-fun <T : JTextField> T.columns(columns: Int) = apply {
+fun <T : JTextField> T.columns(columns: Int): T = apply {
   this.columns = columns
 }
 
@@ -112,10 +111,10 @@ private fun JTextComponent.isIntInRange(value: Int): Boolean {
   return range == null || value in range
 }
 
-fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+fun <T : JTextComponent> Cell<T>.trimmedTextValidation(vararg validations: DialogValidation.WithParameter<() -> String>): Cell<T> =
   textValidation(*validations.map2Array { it.trimParameter() })
 
-fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>) =
+fun <T : JTextComponent> Cell<T>.textValidation(vararg validations: DialogValidation.WithParameter<() -> String>): Cell<T> =
   validation(*validations.map2Array { it.forTextComponent() })
 
 @ApiStatus.Experimental

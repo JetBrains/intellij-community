@@ -101,7 +101,7 @@ object IdeaDocCommentConverter : DocCommentConverter {
     else
         ""
 
-    private class HtmlToMarkdownConverter() : XmlRecursiveElementVisitor() {
+    private class HtmlToMarkdownConverter : XmlRecursiveElementVisitor() {
         private enum class ListType { Ordered, Unordered; }
         data class MarkdownSpan(val prefix: String, val suffix: String) {
             companion object {

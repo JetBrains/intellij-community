@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.platform.smRunner` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "smRunner_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "smRunner",
+  module_name = "intellij.platform.smRunner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:tc_service_messages",
+    "//platform/lang-api:lang",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+  ],
+  exports = [
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "@lib//:tc_service_messages",
+  ],
+  runtime_deps = [":smRunner_resources"]
+)
+
+jvm_library(
+  name = "smRunner_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":smRunner"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
+    "//platform/execution-impl",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/xdebugger-api:debugger",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:tc_service_messages",
+    "@lib//:objenesis",
+    "@lib//:easymock",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-api:lang",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util/jdom",
+    "//platform/diff-api:diff",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  runtime_deps = [":smRunner_resources"]
+)
+
+jvm_test(
+  name = "smRunner_test",
+  runtime_deps = [":smRunner_test_lib"]
+)
+### auto-generated section `build intellij.platform.smRunner` end

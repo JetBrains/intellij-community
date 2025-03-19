@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -26,7 +26,7 @@ import static com.intellij.codeInsight.completion.JavaCompletionContributor.isIn
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
-public class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
+public final class JavaMethodHandleCompletionContributor extends CompletionContributor implements DumbAware {
 
   // MethodHandle for constructors and methods
   private static final Set<String> METHOD_HANDLE_FACTORY_NAMES = Set.of(
@@ -47,8 +47,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
       psiExpression().methodCallParameter(2, methodPattern(ArrayUtilRt.toStringArray(FIELD_HANDLE_FACTORY_NAMES))));
 
 
-  @NotNull
-  private static PsiMethodPattern methodPattern(String... methodNames) {
+  private static @NotNull PsiMethodPattern methodPattern(String... methodNames) {
     return psiMethod().withName(methodNames).definedInClass(JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP);
   }
 
@@ -126,8 +125,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
       .forEach(result::consume);
   }
 
-  @NotNull
-  private static LookupElement lookupSignature(@NotNull ReflectiveSignature signature, @NotNull PsiElement context) {
+  private static @NotNull LookupElement lookupSignature(@NotNull ReflectiveSignature signature, @NotNull PsiElement context) {
     final String expressionText = getMethodTypeExpressionText(signature);
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     final PsiExpression expression = factory.createExpressionFromText(expressionText, context);
@@ -173,11 +171,10 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     }
   }
 
-  @NotNull
-  private static LookupElement lookupExpression(@NotNull PsiExpression expression,
-                                                @Nullable Icon icon,
-                                                @NotNull String presentableText,
-                                                @NotNull String lookupText) {
+  private static @NotNull LookupElement lookupExpression(@NotNull PsiExpression expression,
+                                                         @Nullable Icon icon,
+                                                         @NotNull String presentableText,
+                                                         @NotNull String lookupText) {
     final LookupElement element = new ExpressionLookupItem(expression, icon, presentableText, lookupText) {
       @Override
       public void handleInsert(@NotNull InsertionContext context) {

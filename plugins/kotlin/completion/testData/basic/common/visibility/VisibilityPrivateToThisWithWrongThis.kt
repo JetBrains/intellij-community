@@ -1,5 +1,5 @@
-// FIR_IDENTICAL
 // FIR_COMPARISON
+//  Diff reason: KT-55446
 
 class A<in I> {
     private val bar: I

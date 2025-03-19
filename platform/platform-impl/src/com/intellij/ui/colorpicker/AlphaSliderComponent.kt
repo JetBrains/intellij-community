@@ -17,12 +17,14 @@ package com.intellij.ui.colorpicker
 
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import kotlin.math.max
 import kotlin.math.min
 
 private val DEFAULT_SLIDER_BACKGROUND = Color.WHITE
 
+@ApiStatus.Internal
 class AlphaSliderComponent : SliderComponent<Int>(0) {
 
   /**
@@ -36,7 +38,7 @@ class AlphaSliderComponent : SliderComponent<Int>(0) {
 
   override fun valueToKnobPosition(value: Int): Int = Math.round(value * sliderWidth / 255f)
 
-  override fun slide(shift: Int) = max(0, min(value + shift, 255))
+  override fun slide(shift: Int): Int = max(0, min(value + shift, 255))
 
   override fun paintSlider(g2d: Graphics2D) {
     val transparent = ColorUtil.toAlpha(Color.WHITE, 0)

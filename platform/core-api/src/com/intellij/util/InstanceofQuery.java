@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -22,9 +22,8 @@ public class InstanceofQuery<S, T> extends AbstractQuery<T> {
     return delegateProcessResults(myDelegate, new MyProcessor(consumer));
   }
 
-  @NotNull
   @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
+  public @NotNull AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super T> consumer) {
     return myDelegate.forEachAsync(new MyProcessor(consumer));
   }
 

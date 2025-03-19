@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.model.ModelPatch;
@@ -33,8 +33,7 @@ public class VcsFacade {
   protected VcsFacade() {
   }
 
-  @NotNull
-  public static VcsFacade getInstance() {
+  public static @NotNull VcsFacade getInstance() {
     return ApplicationManager.getApplication().getService(VcsFacade.class);
   }
 
@@ -84,34 +83,30 @@ public class VcsFacade {
     return false;
   }
 
-  public boolean hasChanges(@NotNull final Project project) {
+  public boolean hasChanges(final @NotNull Project project) {
     final Set<VirtualFile> directories = BaseProjectDirectories.getBaseDirectories(project);
     return ContainerUtil.exists(directories, it -> hasChanges(it, project));
   }
 
-  @NotNull
-  public Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
+  public @NotNull Boolean isFileUnderVcs(@NotNull PsiFile psiFile) {
     return false;
   }
 
   /**
    * @return '.ignore' file names for known vcses.
    */
-  @NotNull
-  public Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
+  public @NotNull Set<String> getVcsIgnoreFileNames(@NotNull Project project) {
     return Collections.emptySet();
   }
 
   /**
    * @return PsiFiles with uncommitted changes under specified directories.
    */
-  @NotNull
-  public List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs) {
+  public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project, @NotNull List<? extends PsiDirectory> dirs) {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
+  public @NotNull List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
     return helper != null ? helper.allChangedRanges : new ArrayList<>();
   }
@@ -137,8 +132,7 @@ public class VcsFacade {
    * {@link ChangedRangesInfo#insertedRanges} contains 'completely new' lines.
    * {@link ChangedRangesInfo#insertedRanges} is {@code null} if the whole file is new.
    */
-  @Nullable
-  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
+  public @Nullable ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
     return null;
   }
 
@@ -167,8 +161,7 @@ public class VcsFacade {
   }
 
   @ApiStatus.Experimental
-  @Nullable
-  public JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull ModelPatch patch) {
+  public @Nullable JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull ModelPatch patch) {
     return null;
   }
 }

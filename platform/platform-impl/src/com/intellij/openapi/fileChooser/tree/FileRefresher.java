@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.tree;
 
 import com.intellij.openapi.Disposable;
@@ -22,7 +22,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * This class is intended to refresh virtual files periodically.
  */
-public class FileRefresher implements Disposable {
+public final class FileRefresher implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileRefresher.class);
   private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();
   private final boolean recursive;
@@ -63,7 +63,7 @@ public class FileRefresher implements Disposable {
    * @param recursive {@code true} if a file should be considered as root
    * @return an object that allows to stop watching the specified file
    */
-  protected Object watch(VirtualFile file, boolean recursive) {
+  private static Object watch(VirtualFile file, boolean recursive) {
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystem) {
       return LocalFileSystem.getInstance().addRootToWatch(file.getPath(), recursive);
@@ -76,7 +76,7 @@ public class FileRefresher implements Disposable {
    *
    * @param watcher an object that allows to stop watching a file
    */
-  protected void unwatch(Object watcher) {
+  private static void unwatch(Object watcher) {
     if (watcher instanceof LocalFileSystem.WatchRequest) {
       LocalFileSystem.getInstance().removeWatchedRoot((LocalFileSystem.WatchRequest)watcher);
     }
@@ -87,7 +87,7 @@ public class FileRefresher implements Disposable {
    *
    * @param file a file to watch and to refresh
    */
-  public final void register(VirtualFile file) {
+  public void register(VirtualFile file) {
     if (file != null && !disposed.get()) {
       LOG.debug("add file to watch recursive=", recursive, ": ", file);
       Object watcher = watch(file, recursive);
@@ -106,7 +106,7 @@ public class FileRefresher implements Disposable {
   /**
    * Pauses files refreshing.
    */
-  public final void pause() {
+  public void pause() {
     LOG.debug("pause");
     paused.set(true);
   }
@@ -115,7 +115,7 @@ public class FileRefresher implements Disposable {
    * Starts files refreshing immediately.
    * If files are refreshing now, it will be restarted when finished.
    */
-  public final void start() {
+  public void start() {
     LOG.debug("start");
     paused.set(false);
     launch();
@@ -167,7 +167,7 @@ public class FileRefresher implements Disposable {
     LOG.debug("dispose");
     if (!disposed.getAndSet(true)) {
       synchronized (watchers) {
-        watchers.forEach(this::unwatch);
+        watchers.forEach(FileRefresher::unwatch);
         watchers.clear();
       }
       RefreshSession session;
@@ -176,7 +176,7 @@ public class FileRefresher implements Disposable {
         session = this.session;
         this.session = null;
       }
-      if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+      if (session != null) session.cancel();
     }
   }
 }

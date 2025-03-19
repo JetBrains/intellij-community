@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.SuperBuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -20,14 +21,23 @@ import java.util.List;
  *
  * @author Michail Plushnikov
  */
-public class SuperBuilderProcessor extends AbstractClassProcessor {
+public final class SuperBuilderProcessor extends AbstractClassProcessor {
 
   public SuperBuilderProcessor() {
     super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);
   }
 
-  protected SuperBuilderHandler getBuilderHandler() {
+  private static SuperBuilderHandler getBuilderHandler() {
     return new SuperBuilderHandler();
+  }
+
+  @Override
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint.equals(BuilderHandler.TO_BUILDER_METHOD_NAME) ||
+           nameHint.equals(psiClass.getName()) ||
+           nameHint.equals(getBuilderHandler().getBuilderMethodName(psiAnnotation));
   }
 
   @Override
@@ -39,9 +49,8 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
     return List.of(builderMethodName, BuilderHandler.TO_BUILDER_METHOD_NAME, constructorName);
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
     addJacksonizedAnnotation(psiClass, result);
     addFieldsAnnotation(result, psiClass, BuilderProcessor.SINGULAR_CLASS, BuilderProcessor.BUILDER_DEFAULT_CLASS);
@@ -62,7 +71,8 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     SuperBuilderHandler builderHandler = getBuilderHandler();
     final String builderClassName = builderHandler.getBuilderClassName(psiClass);
     final PsiClass builderBaseClass = psiClass.findInnerClassByName(builderClassName, false);
@@ -71,6 +81,9 @@ public class SuperBuilderProcessor extends AbstractClassProcessor {
 
       builderHandler.createBuilderBasedConstructor(psiClass, builderBaseClass, psiAnnotation, psiTypeBaseWithGenerics)
         .ifPresent(target::add);
+
+      target.addAll(
+        builderHandler.createBuilderDefaultProviderMethodsIfNecessary(psiClass, null, builderBaseClass, psiAnnotation));
 
       // skip generation of builder methods, if class is abstract
       if (!psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

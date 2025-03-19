@@ -46,6 +46,7 @@ public class InternalOperationDescriptor
     return parent;
   }
 
+  @Override
   public String toString() {
     return getDisplayName();
   }

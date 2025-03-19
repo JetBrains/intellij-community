@@ -2,10 +2,12 @@
 package com.intellij.openapi.externalSystem.service.ui.command.line
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfoRenderer
+import com.intellij.openapi.externalSystem.service.ui.completion.collector.TextCompletionCollector
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.bind
@@ -13,6 +15,7 @@ import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.setEmptyState
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -20,15 +23,25 @@ import javax.swing.KeyStroke
 
 class CommandLineField(
   project: Project,
-  private val commandLineInfo: CommandLineInfo
+  commandLineInfo: CommandLineInfo,
+  parentDisposable: Disposable
 ) : TextCompletionField<TextCompletionInfo>(project) {
 
   private val commandLineProperty = AtomicProperty("")
 
   var commandLine by commandLineProperty
 
-  override fun getCompletionVariants(): List<TextCompletionInfo> {
-    return commandLineInfo.tablesInfo.flatMap { it.completionInfo }
+  private val completionModificationTrackers: List<ModificationTracker> =
+    commandLineInfo.tablesInfo.map { it.completionModificationTracker }
+
+  private val completionModificationTracker: ModificationTracker = ModificationTracker {
+    completionModificationTrackers.sumOf { it.modificationCount }
+  }
+
+  override val completionCollector = TextCompletionCollector.async(completionModificationTracker, parentDisposable) {
+    commandLineInfo.tablesInfo.flatMap {
+      it.collectCompletionInfo()
+    }
   }
 
   init {
@@ -44,7 +57,7 @@ class CommandLineField(
   init {
     val action = Runnable {
       updatePopup(UpdatePopupType.HIDE)
-      val dialog = CommandLineDialog(project, commandLineInfo)
+      val dialog = CommandLineDialog(project, this, commandLineInfo)
       dialog.whenVariantChosen {
         val separator = if (text.endsWith(" ") || text.isEmpty()) "" else " "
         document.insertString(document.length, separator + it.text, null)

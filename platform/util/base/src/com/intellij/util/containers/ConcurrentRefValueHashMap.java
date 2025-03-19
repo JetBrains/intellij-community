@@ -1,24 +1,34 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.lang.ref.ReferenceQueue;
-import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent strong key:K -> (soft/weak) value:V map
  * Null keys are NOT allowed
  * Null values are NOT allowed
  */
-abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+@ApiStatus.Internal
+public abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
+
   private final ConcurrentMap<K, ValueReference<K, V>> myMap = new ConcurrentHashMap<>();
+  private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super K> myEvictionListener;
   protected final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
+
+  ConcurrentRefValueHashMap(@Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
+    myEvictionListener = evictionListener;
+  }
 
   interface ValueReference<K, V> {
     @NotNull
@@ -28,14 +38,19 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   // returns true if some refs were tossed
-  boolean processQueue() {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public boolean processQueue() {
     boolean processed = false;
 
     while (true) {
       //noinspection unchecked
       ValueReference<K, V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
-      myMap.remove(ref.getKey(), ref);
+      K key = ref.getKey();
+      if (myMap.remove(key, ref) && myEvictionListener != null) {
+        myEvictionListener.accept(this, key);
+      }
       processed = true;
     }
     return processed;
@@ -61,9 +76,9 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   public V putIfAbsent(@NotNull K key, @NotNull V value) {
     ValueReference<K, V> newRef = createValueReference(key, value);
     while (true) {
+      processQueue();
       ValueReference<K, V> oldRef = myMap.putIfAbsent(key, newRef);
       if (oldRef == null) return null;
-      processQueue();
       V oldVal = oldRef.get();
       if (oldVal == null) {
         if (myMap.replace(key, oldRef, newRef)) return null;

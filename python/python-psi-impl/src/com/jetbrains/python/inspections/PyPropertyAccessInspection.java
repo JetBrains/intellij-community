@@ -31,11 +31,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Checks that properties are accessed correctly.
  */
-public class PyPropertyAccessInspection extends PyInspection {
+public final class PyPropertyAccessInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

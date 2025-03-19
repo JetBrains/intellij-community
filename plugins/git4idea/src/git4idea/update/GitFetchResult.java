@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import git4idea.i18n.GitBundle;
@@ -37,7 +23,6 @@ public final class GitFetchResult {
 
   public enum Type {
     SUCCESS,
-    CANCELLED,
     NOT_AUTHORIZED,
     ERROR
   }
@@ -46,39 +31,26 @@ public final class GitFetchResult {
     myType = type;
   }
 
-  @NotNull
-  public static GitFetchResult success() {
+  public static @NotNull GitFetchResult success() {
     return new GitFetchResult(Type.SUCCESS);
   }
 
-  @NotNull
-  public static GitFetchResult cancel() {
-    return new GitFetchResult(Type.CANCELLED);
-  }
-
-  @NotNull
-  public static GitFetchResult error(Collection<Exception> errors) {
+  public static @NotNull GitFetchResult error(Collection<Exception> errors) {
     GitFetchResult result = new GitFetchResult(Type.ERROR);
     result.myErrors = errors;
     return result;
   }
 
-  @NotNull
-  public static GitFetchResult error(Exception error) {
+  public static @NotNull GitFetchResult error(Exception error) {
     return error(Collections.singletonList(error));
   }
 
-  @NotNull
-  public static GitFetchResult error(@NotNull String errorMessage) {
+  public static @NotNull GitFetchResult error(@NotNull String errorMessage) {
     return error(new Exception(errorMessage));
   }
   
   public boolean isSuccess() {
     return myType == Type.SUCCESS;
-  }
-
-  public boolean isCancelled() {
-    return myType == Type.CANCELLED;
   }
 
   public boolean isNotAuthorized() {
@@ -89,8 +61,7 @@ public final class GitFetchResult {
     return myType == Type.ERROR;
   }
 
-  @NotNull
-  public Collection<? extends Exception> getErrors() {
+  public @NotNull Collection<? extends Exception> getErrors() {
     return myErrors;
   }
 
@@ -98,14 +69,11 @@ public final class GitFetchResult {
     myPrunedRefs.addAll(prunedRefs);
   }
 
-  @NotNull
-  public Collection<String> getPrunedRefs() {
+  public @NotNull Collection<String> getPrunedRefs() {
     return myPrunedRefs;
   }
 
-  @NotNull
-  @Nls
-  public String getAdditionalInfo() {
+  public @NotNull @Nls String getAdditionalInfo() {
     if (!myPrunedRefs.isEmpty()) {
       return GitBundle.message("fetch.pruned.obsolete.remote.references", myPrunedRefs.size(), join(myPrunedRefs, ", "));
     }

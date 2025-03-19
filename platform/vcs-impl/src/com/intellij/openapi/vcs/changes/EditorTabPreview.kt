@@ -5,16 +5,15 @@ import com.intellij.diff.DiffDialogHints
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.chains.SimpleDiffRequestChain
-import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFileBase
+import com.intellij.diff.editor.SimpleDiffEditorEscapeAction
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -26,29 +25,45 @@ import com.intellij.openapi.util.Disposer.isDisposed
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.Processor
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
+@ApiStatus.Internal
+@Deprecated("Use EditorTabDiffPreview")
+@ScheduledForRemoval
 abstract class EditorTabPreview(private val diffProcessor: DiffRequestProcessor) :
   EditorTabPreviewBase(diffProcessor.project!!, diffProcessor) {
 
-  override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, ::getCurrentName)
   override val updatePreviewProcessor: DiffPreviewUpdateProcessor get() = diffProcessor as DiffPreviewUpdateProcessor
+  override val previewFile: VirtualFile = EditorTabDiffPreviewVirtualFile(diffProcessor, updatePreviewProcessor, ::getCurrentName)
 }
 
+@ApiStatus.Internal
+@Deprecated("Use EditorTabDiffPreview")
+@ScheduledForRemoval
 abstract class EditorTabPreviewBase(protected val project: Project,
                                     protected val parentDisposable: Disposable) : DiffPreview {
   private val updatePreviewQueue =
     MergingUpdateQueue("updatePreviewQueue", 100, true, null, parentDisposable).apply {
       setRestartTimerOnAdd(true)
     }
+
+  init {
+    Disposer.register(parentDisposable) {
+      previewFile.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, null)
+    }
+  }
 
   protected abstract val updatePreviewProcessor: DiffPreviewUpdateProcessor
 
@@ -130,7 +145,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
 
   protected open fun skipPreviewUpdate(): Boolean = ToolWindowManager.getInstance(project).isEditorComponentActive
 
-  override fun updatePreview(fromModelRefresh: Boolean) {
+  open fun updatePreview(fromModelRefresh: Boolean) {
     if (isPreviewOpen()) {
       updatePreviewProcessor.refresh(false)
     }
@@ -182,11 +197,15 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     return openPreviewEditor(true)
   }
 
-  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor, tabNameProvider: () -> @Nls String?)
+  internal class EditorTabDiffPreviewVirtualFile(diffProcessor: DiffRequestProcessor,
+                                                 updatePreviewProcessor: DiffPreviewUpdateProcessor,
+                                                 tabNameProvider: () -> @Nls String?)
     : PreviewDiffVirtualFile(EditorTabDiffPreviewProvider(diffProcessor, tabNameProvider)) {
     init {
       // EditorTabDiffPreviewProvider does not create new processor, so general assumptions of DiffVirtualFile are violated
-      diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, true)
+      diffProcessor.putContextUserData(DiffUserDataKeysEx.DIFF_IN_EDITOR_WITH_EXPLICIT_DISPOSABLE, Runnable {
+        updatePreviewProcessor.clear()
+      })
     }
   }
 
@@ -196,7 +215,7 @@ abstract class EditorTabPreviewBase(protected val project: Project,
     }
 
     fun registerEscapeHandler(file: VirtualFile, handler: Runnable) {
-      file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, EditorTabPreviewEscapeAction(handler))
+      file.putUserData(DiffVirtualFileBase.ESCAPE_HANDLER, SimpleDiffEditorEscapeAction(handler))
     }
 
     fun showExternalToolIfNeeded(project: Project?, diffProducers: ListSelection<out DiffRequestProducer>?): Boolean {
@@ -208,16 +227,15 @@ abstract class EditorTabPreviewBase(protected val project: Project,
   }
 }
 
-internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction(), DiffEditorEscapeAction {
-  override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
-}
-
 private class EditorTabDiffPreviewProvider(
   private val diffProcessor: DiffRequestProcessor,
   private val tabNameProvider: () -> @Nls String?
 ) : ChainBackedDiffPreviewProvider {
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     IJSwingUtilities.updateComponentTreeUI(diffProcessor.component)
+    if (diffProcessor is DiffPreviewUpdateProcessor) {
+      diffProcessor.refresh(false) // ensureHasContent
+    }
     return diffProcessor
   }
 

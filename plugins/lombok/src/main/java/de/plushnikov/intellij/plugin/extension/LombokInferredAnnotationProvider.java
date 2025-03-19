@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LombokInferredAnnotationProvider implements InferredAnnotationProvider {
+public final class LombokInferredAnnotationProvider implements InferredAnnotationProvider {
   public static final Key<PsiAnnotation> CONTRACT_ANNOTATION = Key.create("lombok.contract");
 
   @Override

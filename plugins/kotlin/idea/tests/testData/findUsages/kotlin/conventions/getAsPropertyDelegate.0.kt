@@ -11,4 +11,3 @@ class Delegate() {
 val p: String by Delegate()
 
 
-// IGNORE_FIR_LOG

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
@@ -21,7 +22,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -29,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
+import kotlin.io.path.createFile
 
 const val OUT = "out"
 const val EXCLUDED = "excluded"
@@ -81,7 +83,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val workspaceFile = project.stateStore.workspacePath
     val workspaceFileExist = try {
-      workspaceFile.createFile()
+      workspaceFile.createParentDirectories().createFile()
       true
     }
     catch (e: FileAlreadyExistsException) {
@@ -105,7 +107,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
 
     runBlocking {
-      GitIgnoreInStoreDirGenerator(project, project.coroutineScope).run()
+      GitIgnoreInStoreDirGenerator(project, (project as ComponentManagerEx).getCoroutineScope()).run()
     }
 
     assertGitignoreValid(gitIgnore,

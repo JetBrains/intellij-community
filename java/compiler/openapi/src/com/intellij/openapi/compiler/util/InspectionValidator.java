@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.compiler.util;
 
@@ -46,8 +32,7 @@ public abstract class InspectionValidator {
 
   private final Class<? extends LocalInspectionTool> @Nullable [] myInspectionToolClasses;
 
-  @Nullable
-  private final InspectionToolProvider myInspectionToolProvider;
+  private final @Nullable InspectionToolProvider myInspectionToolProvider;
 
   protected InspectionValidator(@NotNull @NonNls String id, @NotNull @Nls String description,
                                 @NotNull @Nls String progressIndicatorText) {
@@ -62,8 +47,7 @@ public abstract class InspectionValidator {
 
   public abstract Collection<VirtualFile> getFilesToProcess(final Project project, final CompileContext context);
 
-  @NotNull
-  public Collection<? extends PsiElement> getDependencies(final PsiFile psiFile) {
+  public @NotNull Collection<? extends PsiElement> getDependencies(final PsiFile psiFile) {
     return Collections.emptyList();
   }
 
@@ -76,8 +60,7 @@ public abstract class InspectionValidator {
     return myInspectionToolProvider.getInspectionClasses();
   }
 
-  @NotNull
-  public final String getId() {
+  public final @NotNull String getId() {
     return myId;
   }
 
@@ -89,16 +72,15 @@ public abstract class InspectionValidator {
     return myProgressIndicatorText;
   }
 
-  public CompilerMessageCategory getCategoryByHighlightDisplayLevel(@NotNull final HighlightDisplayLevel severity,
-                                                                    @NotNull final VirtualFile virtualFile,
-                                                                    @NotNull final CompileContext context) {
+  public CompilerMessageCategory getCategoryByHighlightDisplayLevel(final @NotNull HighlightDisplayLevel severity,
+                                                                    final @NotNull VirtualFile virtualFile,
+                                                                    final @NotNull CompileContext context) {
     if (severity == HighlightDisplayLevel.ERROR) return CompilerMessageCategory.ERROR;
     if (severity == HighlightDisplayLevel.WARNING) return CompilerMessageCategory.WARNING;
     return CompilerMessageCategory.INFORMATION;
   }
 
-  @NotNull
-  public Map<ProblemDescriptor, HighlightDisplayLevel> checkAdditionally(PsiFile file) {
+  public @NotNull Map<ProblemDescriptor, HighlightDisplayLevel> checkAdditionally(PsiFile file) {
     return Collections.emptyMap();
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,8 +37,8 @@ import static com.intellij.util.ReflectionUtil.getMethod;
  */
 @Deprecated
 public class WideSelectionTreeUI extends BasicTreeUI {
-  @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
-  @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
+  public static final @NonNls String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
+  public static final @NonNls String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
@@ -48,7 +47,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Logger LOG = Logger.getInstance(WideSelectionTreeUI.class);
   private static final Set<String> LOGGED_RENDERERS = ContainerUtil.newConcurrentSet();
 
-  @NotNull private final Condition<? super Integer> myWideSelectionCondition;
+  private final @NotNull Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private static final boolean mySkinny = false;
@@ -145,9 +144,8 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
 
-      @NotNull
       @Override
-      protected MouseEvent convert(@NotNull MouseEvent event) {
+      protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
         if (!event.isConsumed() && SwingUtilities.isLeftMouseButton(event)) {
           int x = event.getX();
           int y = event.getY();

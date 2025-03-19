@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsActions;
@@ -14,57 +13,85 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>,
                                         MnemonicNavigationFilter<PopupFactoryImpl.ActionItem>,
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
-  private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
-
   private final @NotNull List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle @Nullable String myTitle;
   private final @NotNull Supplier<? extends DataContext> myContext;
   private final @NotNull String myActionPlace;
+  private final @NotNull ActionUiKind myUiKind;
   private final boolean myEnableMnemonics;
-  private final @Nullable PresentationFactory myPresentationFactory;
+  private final @NotNull PresentationFactory myPresentationFactory;
+  private final ActionPopupOptions myOptions;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
   private final Condition<? super AnAction> myPreselectActionCondition;
+  private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
 
+  /** @deprecated {@link #ActionPopupStep(List, String, Supplier, String, PresentationFactory, ActionPopupOptions)} instead */
+  @Deprecated(forRemoval = true)
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          @PopupTitle @Nullable String title,
                          @NotNull Supplier<? extends DataContext> context,
                          @Nullable String actionPlace,
                          boolean enableMnemonics,
-                         @Nullable Condition<? super AnAction> preselectActionCondition,
+                         @Nullable Condition<? super AnAction> preselectCondition,
                          boolean autoSelection,
                          boolean showDisabledActions,
                          @Nullable PresentationFactory presentationFactory) {
+    this(items, title, context, actionPlace == null ? ActionPlaces.POPUP : actionPlace,
+         presentationFactory == null ? new PresentationFactory() : presentationFactory,
+         ActionPopupOptions.forStep(showDisabledActions, enableMnemonics, autoSelection, preselectCondition));
+  }
+
+  public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
+                         @PopupTitle @Nullable String title,
+                         @NotNull Supplier<? extends DataContext> context,
+                         @NotNull String actionPlace,
+                         @NotNull PresentationFactory presentationFactory,
+                         @NotNull ActionPopupOptions options) {
     myItems = items;
     myTitle = title;
     myContext = context;
     myActionPlace = getPopupOrMainMenuPlace(actionPlace);
-    myEnableMnemonics = enableMnemonics;
+    myUiKind = ActionPlaces.MAIN_MENU.equals(myActionPlace) ?
+               ActionUiKind.MAIN_MENU : ActionUiKind.POPUP;
+    myEnableMnemonics = options.honorActionMnemonics();
     myPresentationFactory = presentationFactory;
-    myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
-    myPreselectActionCondition = preselectActionCondition;
-    myAutoSelectionEnabled = autoSelection;
-    myShowDisabledActions = showDisabledActions;
-    if (actionPlace != null && !isPopupOrMainMenuPlace(actionPlace)) {
-      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
-    }
+    myOptions = options;
+    myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(options.getPreselectCondition(), items);
+    myPreselectActionCondition = options.getPreselectCondition();
+    myAutoSelectionEnabled = options.autoSelectionEnabled();
+    myShowDisabledActions = options.showDisabledActions();
+  }
+
+  public @NotNull PresentationFactory getPresentationFactory() {
+    return myPresentationFactory;
+  }
+
+  public @NotNull String getActionPlace() {
+    return myActionPlace;
+  }
+
+  public ActionPopupOptions getOptions() {
+    return myOptions;
   }
 
   private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
-                                                              @NotNull List<? extends PopupFactoryImpl.ActionItem> items) {
+                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {
@@ -78,63 +105,66 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return defaultOptionIndex;
   }
 
-  @NotNull
-  public static ListPopupStep<PopupFactoryImpl.ActionItem> createActionsStep(@NotNull ActionGroup actionGroup,
+  public static @NotNull ListPopupStep<PopupFactoryImpl.ActionItem> createActionsStep(@PopupTitle @Nullable String title,
+                                                                                      @NotNull ActionGroup actionGroup,
+                                                                                      @NotNull DataContext dataContext,
+                                                                                      @NotNull String actionPlace,
+                                                                                      @NotNull PresentationFactory presentationFactory,
+                                                                                      @NotNull Supplier<? extends DataContext> contextSupplier,
+                                                                                      @NotNull ActionPopupOptions options) {
+    List<PopupFactoryImpl.ActionItem> items = createActionItems(
+      actionGroup, dataContext, actionPlace, presentationFactory, options);
+
+    ActionPopupOptions stepOptions = ActionPopupOptions.forStep(
+      options.showDisabledActions(), options.showNumbers() || options.honorActionMnemonics() && PopupFactoryImpl.anyMnemonicsIn(items),
+      options.autoSelectionEnabled(), options.getPreselectCondition() != null ? options.getPreselectCondition() :
+                            action -> options.getDefaultIndex() >= 0 &&
+                                      options.getDefaultIndex() < items.size() &&
+                                      items.get(options.getDefaultIndex()).getAction().equals(action));
+    return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
+  }
+
+  /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions)} instead */
+  @Deprecated(forRemoval = true)
+  public static @NotNull List<PopupFactoryImpl.ActionItem> createActionItems(@NotNull ActionGroup actionGroup,
                                                                              @NotNull DataContext dataContext,
                                                                              boolean showNumbers,
                                                                              boolean useAlphaAsNumbers,
                                                                              boolean showDisabledActions,
-                                                                             @PopupTitle @Nullable String title,
                                                                              boolean honorActionMnemonics,
-                                                                             boolean autoSelectionEnabled,
-                                                                             Supplier<? extends DataContext> contextSupplier,
                                                                              @Nullable String actionPlace,
-                                                                             Condition<? super AnAction> preselectCondition,
-                                                                             int defaultOptionIndex,
                                                                              @Nullable PresentationFactory presentationFactory) {
-    List<PopupFactoryImpl.ActionItem> items = createActionItems(
-      actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
-    boolean enableMnemonics = showNumbers ||
-                              honorActionMnemonics &&
-                              PopupFactoryImpl.anyMnemonicsIn(items);
-
-    return new ActionPopupStep(
-      items, title, contextSupplier, actionPlace, enableMnemonics,
-      preselectCondition != null ? preselectCondition :
-      action -> defaultOptionIndex >= 0 &&
-                defaultOptionIndex < items.size() && items.get(defaultOptionIndex).getAction().equals(action),
-      autoSelectionEnabled,
-      showDisabledActions, presentationFactory);
+    return createActionItems(actionGroup, dataContext,
+                             actionPlace == null ? ActionPlaces.POPUP : actionPlace,
+                             presentationFactory == null ? new PresentationFactory() : presentationFactory,
+                             ActionPopupOptions.create(
+                               showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
+                               -1, false, null));
   }
 
-  @NotNull
-  public static List<PopupFactoryImpl.ActionItem> createActionItems(@NotNull ActionGroup actionGroup,
-                                                                    @NotNull DataContext dataContext,
-                                                                    boolean showNumbers,
-                                                                    boolean useAlphaAsNumbers,
-                                                                    boolean showDisabledActions,
-                                                                    boolean honorActionMnemonics,
-                                                                    @Nullable String actionPlace,
-                                                                    @Nullable PresentationFactory presentationFactory) {
-    if (actionPlace != null && !isPopupOrMainMenuPlace(actionPlace)) {
-      LOG.error("isPopupOrMainMenuPlace(" + actionPlace + ")==false. Use ActionPlaces.getPopupPlace.");
-      actionPlace = getPopupOrMainMenuPlace(actionPlace);
-    }
-    DataContext wrappedContext = Utils.wrapDataContext(dataContext);
+  public static @NotNull List<PopupFactoryImpl.ActionItem> createActionItems(@NotNull ActionGroup actionGroup,
+                                                                             @NotNull DataContext dataContext,
+                                                                             @NotNull String actionPlace,
+                                                                             @NotNull PresentationFactory presentationFactory,
+                                                                             @NotNull ActionPopupOptions options) {
+    ActionUiKind uiKind = ActionPlaces.MAIN_MENU.equals(actionPlace) ?
+                          ActionUiKind.MAIN_MENU : ActionUiKind.POPUP;
+    actionPlace = getPopupOrMainMenuPlace(actionPlace);
     ActionStepBuilder builder = new ActionStepBuilder(
-      wrappedContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
+      dataContext, options.showNumbers(), options.useAlphaAsNumbers(), options.showDisabledActions(),
+      options.honorActionMnemonics(),
+      actionPlace, uiKind, presentationFactory);
     builder.buildGroup(actionGroup);
     return builder.getItems();
   }
 
   @Override
-  @NotNull
-  public List<PopupFactoryImpl.ActionItem> getValues() {
+  public @NotNull List<PopupFactoryImpl.ActionItem> getValues() {
     return myItems;
   }
 
-  public List<PopupFactoryImpl.InlineActionItem> getInlineActions(PopupFactoryImpl.ActionItem value) {
-    return value.getInlineActions();
+  public @NotNull List<PopupFactoryImpl.ActionItem> getInlineItems(@NotNull PopupFactoryImpl.ActionItem value) {
+    return value.getInlineItems();
   }
 
   @Override
@@ -145,10 +175,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public int getMnemonicPos(final PopupFactoryImpl.ActionItem value) {
     String text = getTextFor(value);
-    int i = text.indexOf(UIUtil.MNEMONIC);
-    if (i < 0) i = text.indexOf('&');
-    if (i < 0) i = text.indexOf('_');
-    return i;
+    return text.indexOf(UIUtil.MNEMONIC);
   }
 
   @Override
@@ -172,15 +199,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  @NotNull
-  @NlsActions.ActionText
-  public String getTextFor(final PopupFactoryImpl.ActionItem value) {
+  public @NotNull @NlsActions.ActionText String getTextFor(final PopupFactoryImpl.ActionItem value) {
     return value.getText();
   }
 
-  @Nullable
   @Override
-  public String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
+  public @Nullable String getTooltipTextFor(PopupFactoryImpl.ActionItem value) {
     return value.getTooltip();
   }
 
@@ -188,8 +212,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   public void setEmptyText(@NotNull StatusText emptyText) { }
 
   @Override
-  public @Nullable String getValueFor(PopupFactoryImpl.ActionItem item) {
-    return item.getValue();
+  public @Nullable String getSecondaryTextFor(PopupFactoryImpl.ActionItem item) {
+    return item.getClientProperty(ActionUtil.SECONDARY_TEXT);
+  }
+
+  @Override
+  public @Nullable Icon getSecondaryIconFor(PopupFactoryImpl.@NotNull ActionItem item) {
+    return item.getClientProperty(ActionUtil.SECONDARY_ICON);
   }
 
   @Override
@@ -203,9 +232,18 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  @Nullable
-  public String getTitle() {
+  public @Nullable String getTitle() {
     return myTitle;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull BiFunction<DataContext, AnAction, DataContext> getSubStepContextAdjuster() {
+    return mySubStepContextAdjuster;
+  }
+
+  @ApiStatus.Internal
+  public void setSubStepContextAdjuster(@NotNull BiFunction<DataContext, AnAction, DataContext>  subStepContextAdjuster) {
+    mySubStepContextAdjuster = subStepContextAdjuster;
   }
 
   @Override
@@ -218,28 +256,34 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
-      return getSubStep((ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
-                        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+      DataContext dataContext = mySubStepContextAdjuster.apply(myContext.get(), action);
+      return getSubStep((ActionGroup)action, dataContext, myActionPlace, myPresentationFactory, myEnableMnemonics, true, myShowDisabledActions, null,
+                        false, false, () -> dataContext, myPreselectActionCondition, -1);
     }
-    else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
-      performAction(action, inputEvent);
+    else if (Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), inputEvent)) {
+      performActionItem(item, inputEvent);
       return FINAL_CHOICE;
     }
     else {
-      myFinalRunnable = () -> performAction(action, inputEvent);
+      myFinalRunnable = () -> performActionItem(item, inputEvent);
       return FINAL_CHOICE;
     }
   }
 
-  /** @noinspection SameParameterValue*/
+  /** @noinspection SameParameterValue */
   protected @NotNull ListPopupStep<PopupFactoryImpl.ActionItem> getSubStep(
-    @NotNull ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean useAlphaAsNumbers,
-    boolean showDisabledActions, @PopupTitle @Nullable String title, boolean honorActionMnemonics, boolean autoSelectionEnabled,
-    Supplier<? extends DataContext> contextSupplier, @Nullable String actionPlace, Condition<? super AnAction> preselectCondition,
-    int defaultOptionIndex, @Nullable PresentationFactory presentationFactory) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, title,
-                             honorActionMnemonics, autoSelectionEnabled, contextSupplier, actionPlace, preselectCondition,
-                             defaultOptionIndex, presentationFactory);
+    @NotNull ActionGroup actionGroup, @NotNull DataContext dataContext,
+    @NotNull String actionPlace, @NotNull PresentationFactory presentationFactory,
+    boolean showNumbers, boolean useAlphaAsNumbers,
+    boolean showDisabledActions, @PopupTitle @Nullable String title,
+    boolean honorActionMnemonics, boolean autoSelectionEnabled,
+    Supplier<? extends DataContext> contextSupplier,
+    Condition<? super AnAction> preselectCondition, int defaultOptionIndex) {
+    return createActionsStep(
+      title, actionGroup, dataContext, actionPlace, presentationFactory, contextSupplier,
+      ActionPopupOptions.forStepAndItems(showNumbers, useAlphaAsNumbers, showDisabledActions,
+                                         honorActionMnemonics, autoSelectionEnabled, preselectCondition,
+                                         defaultOptionIndex));
   }
 
   @Override
@@ -248,25 +292,30 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
   }
 
-  public void performAction(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
-    ActionUtil.invokeAction(action, myContext.get(), myActionPlace, inputEvent, null);
+  public void performActionItem(@NotNull PopupFactoryImpl.ActionItem item, @Nullable InputEvent inputEvent) {
+    AnAction action = item.getAction();
+    AnActionEvent event = createAnActionEvent(item, inputEvent);
+    event.setInjectedContext(action.isInInjectedContext());
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    }
+  }
+
+  public @NotNull AnActionEvent createAnActionEvent(@NotNull PopupFactoryImpl.ActionItem item, @Nullable InputEvent inputEvent) {
+    DataContext dataContext = myContext.get();
+    Presentation presentation = item.clonePresentation();
+    return AnActionEvent.createEvent(dataContext, presentation, myActionPlace, myUiKind, inputEvent);
   }
 
   public void updateStepItems(@NotNull JComponent component) {
-    DataContext dataContext = Utils.wrapDataContext(myContext.get());
-    PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
+    DataContext dataContext = myContext.get();
     List<PopupFactoryImpl.ActionItem> values = getValues();
     Utils.updateComponentActions(
       component, ContainerUtil.map(values, PopupFactoryImpl.ActionItem::getAction),
-      dataContext, myActionPlace, presentationFactory,
+      dataContext, myActionPlace, myPresentationFactory,
       () -> {
         for (PopupFactoryImpl.ActionItem actionItem : values) {
-          Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
-          actionItem.updateFromPresentation(presentation, myActionPlace);
-          for (PopupFactoryImpl.InlineActionItem inlineActionItem : actionItem.getInlineActions()) {
-            presentation = presentationFactory.getPresentation(inlineActionItem.getAction());
-            inlineActionItem.updateFromPresentation(presentation, myActionPlace);
-          }
+          actionItem.updateFromPresentation(myPresentationFactory, myActionPlace);
         }
       }
     );
@@ -317,11 +366,30 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return this;
   }
 
-  private static boolean isPopupOrMainMenuPlace(@NotNull String place) {
-    return ActionPlaces.isPopupPlace(place) || ActionPlaces.MAIN_MENU.equals(place);
+  @ApiStatus.Internal
+  public void reorderItems(int from, int where, int preserveSeparatorAt) {
+    if (myItems.get(from).isPrependWithSeparator() || myItems.get(where).isPrependWithSeparator()) {
+      String fromText = myItems.get(from).getSeparatorText();
+      String whereText = myItems.get(where).getSeparatorText();
+      myItems.get(from).setSeparatorText(null);
+      if (preserveSeparatorAt == from) {
+        myItems.get(from + 1).setSeparatorText(fromText);
+      }
+      if (preserveSeparatorAt == where) {
+        myItems.get(where).setSeparatorText(null);
+        myItems.get(from).setSeparatorText(whereText);
+      }
+    }
+    PopupFactoryImpl.ActionItem toMove = myItems.get(from);
+    myItems.add(where, toMove);
+    if (where < from) {
+      from ++;
+    }
+    myItems.remove(from);
   }
 
-  private static @NotNull String getPopupOrMainMenuPlace(@Nullable String place) {
-    return place != null && isPopupOrMainMenuPlace(place) ? place : ActionPlaces.getPopupPlace(place);
+  private static @NotNull String getPopupOrMainMenuPlace(@NotNull String place) {
+    boolean isOk = ActionPlaces.isPopupPlace(place) || ActionPlaces.MAIN_MENU.equals(place);
+    return isOk ? place : ActionPlaces.getPopupPlace(place);
   }
 }

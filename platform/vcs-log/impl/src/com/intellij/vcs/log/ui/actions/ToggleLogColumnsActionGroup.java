@@ -1,33 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
-import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
-public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
-
-  public ToggleLogColumnsActionGroup() {
-    super(VcsLogBundle.message("action.title.select.columns.to.see"),
-          VcsLogBundle.message("action.description.select.columns.to.see"), null);
-  }
-
+@ApiStatus.Internal
+public final class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
@@ -40,18 +33,15 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     List<AnAction> actions = new ArrayList<>();
     if (e != null && !isPopup(e)) {
-      actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
+      actions.add(Separator.create(VcsLogBundle.message("group.Vcs.Log.ToggleColumns.text")));
     }
 
-    List<VcsLogColumn<?>> columns = new ArrayList<>();
-    columns.addAll(getDefaultDynamicColumns());
-    columns.addAll(VcsLogCustomColumn.KEY.getExtensionList());
-    columns.addAll(map(VcsCommitExternalStatusProvider.getExtensionsWithColumns(), ext -> ext.getLogColumn()));
-    for (VcsLogColumn<?> column : filter(columns, (it) -> it.isDynamic())) {
+    List<VcsLogColumn<?>> dynamicColumns = getDynamicColumns();
+    for (VcsLogColumn<?> column : dynamicColumns) {
       actions.add(new ToggleColumnAction(column));
     }
 
-    return actions.toArray(AnAction.EMPTY_ARRAY);
+    return actions.toArray(EMPTY_ARRAY);
   }
 
   @Override
@@ -78,6 +68,8 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
+      if (!isColumnAvailable(e)) return false;
+
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
       if (properties != null) {
         return isVisible(myColumn, properties);
@@ -89,7 +81,10 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-      VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+      if (!isColumnAvailable(e)) return;
+
+      VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
+      if (properties == null) return;
       assert supportsColumnsToggling(properties);
 
       if (state) {
@@ -104,12 +99,20 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
 
-      e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
+      e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e) && isColumnAvailable(e));
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+
+    private boolean isColumnAvailable(@NotNull AnActionEvent e) {
+      if (myColumn instanceof VcsLogCustomColumn<?> customColumn) {
+        VcsLogData logData = e.getData(VcsLogInternalDataKeys.LOG_DATA);
+        return logData != null && VcsLogCustomColumn.isAvailable(customColumn, logData);
+      }
+      return true;
     }
   }
 }

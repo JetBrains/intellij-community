@@ -8,7 +8,7 @@ import com.sun.jdi.Field
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
 import java.util.*
 
@@ -26,17 +26,18 @@ private sealed class PendingValue {
     class This(val label: String, val value: Value?) : PendingValue() {
         override fun addTo(existingVariables: ExistingVariables): DescriptorData<out ValueDescriptorImpl>? {
             val thisName = if (existingVariables.hasThisVariables) {
-                if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
-                    // Avoid item duplication
-                    return null
-                }
+              if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
+                // Avoid item duplication
+                return null
+              }
 
-                getThisName(label)
-            } else {
-                if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
-                    return null
-                }
-                AsmUtil.THIS
+              getThisName(label)
+            }
+            else {
+              if (!existingVariables.add(ExistingVariable.LabeledThis(label))) {
+                return null
+              }
+              AsmUtil.THIS
             }
 
             return LabeledThisData(label, thisName, value)

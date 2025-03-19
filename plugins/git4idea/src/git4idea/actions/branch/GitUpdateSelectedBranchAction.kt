@@ -3,7 +3,6 @@ package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import git4idea.GitBranch
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
@@ -15,7 +14,6 @@ import git4idea.ui.branch.isTrackingInfosExist
 import git4idea.ui.branch.updateBranches
 import java.util.*
 
-//TODO: incoming/outgoing
 class GitUpdateSelectedBranchAction
   : GitSingleBranchAction(GitBundle.messagePointer("branches.update")) {
 

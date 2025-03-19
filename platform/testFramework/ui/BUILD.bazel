@@ -1,0 +1,36 @@
+### auto-generated section `build intellij.platform.testFramework.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ui_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ui",
+  module_name = "intellij.platform.testFramework.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-remote-fixtures",
+    "//platform/built-in-server-api:builtInServer",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/platform-util-netty:ide-util-netty",
+    "//platform/platform-util-io-impl:ide-util-io-impl",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-robot-server-core",
+    "@lib//:gson",
+  ],
+  exports = [
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-remote-fixtures",
+    "@lib//:platform-test_framework-ui-intellij-remoterobot-robot-server-core",
+  ],
+  runtime_deps = [
+    ":ui_resources",
+    "@lib//:okhttp",
+  ]
+)
+### auto-generated section `build intellij.platform.testFramework.ui` end

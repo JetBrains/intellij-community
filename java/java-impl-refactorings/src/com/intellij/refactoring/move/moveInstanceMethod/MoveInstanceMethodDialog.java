@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -99,11 +99,10 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
   }
 
-  @Nullable
-  private JPanel createParametersPanel () {
+  private @Nullable JPanel createParametersPanel () {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
     myOldClassParameterNameFields = new HashMap<>();
-    if (myThisClassesMap.size() == 0) return null;
+    if (myThisClassesMap.isEmpty()) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
       final String text = JavaRefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
@@ -147,7 +146,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   @Override
-  protected void updateOnChanged(JList list) {
+  protected void updateOnChanged(JList<?> list) {
     super.updateOnChanged(list);
     final PsiVariable selectedValue = (PsiVariable)list.getSelectedValue();
     if (selectedValue != null) {

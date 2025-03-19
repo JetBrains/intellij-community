@@ -1,0 +1,25 @@
+### auto-generated section `build intellij.platform.vcs.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-core",
+  module_name = "intellij.platform.vcs.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/diff-api:diff",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = [":vcs-core_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.core` end

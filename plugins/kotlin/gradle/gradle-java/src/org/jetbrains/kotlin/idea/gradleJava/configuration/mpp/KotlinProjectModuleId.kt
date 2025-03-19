@@ -19,12 +19,13 @@ value class KotlinProjectModuleId @UnsafeApi constructor(private val id: String)
         KotlinSourceSetModuleId(this.id + ":" + sourceSetName)
 }
 
+@OptIn(UnsafeApi::class)
 fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaModule: GradleIdeaModule) =
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
 fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
     /* Own build */
-    return if (coordinates.buildId == ":") {
+    return if (coordinates.buildPath == ":") {
         /* Root project */
         if (coordinates.projectPath == ":") {
             KotlinProjectModuleId(coordinates.projectName)
@@ -38,11 +39,11 @@ fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProj
     else {
         /* Root project in included build */
         if (coordinates.projectPath == ":") {
-            KotlinProjectModuleId(":${coordinates.buildId}")
+            KotlinProjectModuleId(coordinates.buildPath)
         }
         /* Subproject in included build */
         else {
-            KotlinProjectModuleId(":${coordinates.buildId}${coordinates.projectPath}")
+            KotlinProjectModuleId("${coordinates.buildPath}${coordinates.projectPath}")
         }
     }
 }

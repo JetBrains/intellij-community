@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -20,6 +6,8 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
@@ -36,11 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.Supplier;
 
-/**
- * @author Dmitry Avdeev
- */
 public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAction<PsiFile> {
 
   protected CreateFileFromTemplateAction() {
@@ -62,22 +48,30 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
   }
 
-  @Nullable
-  public static PsiFile createFileFromTemplate(@Nullable String name,
-                                               @NotNull FileTemplate template,
-                                               @NotNull PsiDirectory dir,
-                                               @Nullable String defaultTemplateProperty,
-                                               boolean openFile) {
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile) {
     return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, Collections.emptyMap());
   }
 
-  @Nullable
-  public static PsiFile createFileFromTemplate(@Nullable String name,
-                                               @NotNull FileTemplate template,
-                                               @NotNull PsiDirectory dir,
-                                               @Nullable String defaultTemplateProperty,
-                                               boolean openFile,
-                                               @NotNull Map<String, String> liveTemplateDefaultValues) {
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile,
+                                                         @NotNull Map<String, String> liveTemplateDefaultValues) {
+    return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, liveTemplateDefaultValues, Collections.emptyMap());
+  }
+
+  public static @Nullable PsiFile createFileFromTemplate(@Nullable String name,
+                                                         @NotNull FileTemplate template,
+                                                         @NotNull PsiDirectory dir,
+                                                         @Nullable String defaultTemplateProperty,
+                                                         boolean openFile,
+                                                         @NotNull Map<String, String> liveTemplateDefaultValues,
+                                                         @NotNull Map<String, String> extraTemplateProperties) {
     if (name != null) {
       CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
       name = mkdirs.newName;
@@ -86,12 +80,17 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
 
     Project project = dir.getProject();
     try {
-      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir)
+      Properties templateProperties = FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties();
+      templateProperties.putAll(extraTemplateProperties);
+
+      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, templateProperties, dir)
         .getContainingFile();
       SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiFile);
 
       VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null) {
+        FileTypeUsageCounterCollector.logCreated(project, virtualFile, template);
+
         if (openFile) {
           if (template.isLiveTemplateEnabled()) {
             CreateFromTemplateActionBase.startLiveTemplate(psiFile, liveTemplateDefaultValues);
@@ -113,7 +112,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       throw e;
     }
     catch (Exception e) {
-      LOG.error(e);
+      Logger.getInstance(CreateFileFromTemplateAction.class).error(e);
     }
 
     return null;

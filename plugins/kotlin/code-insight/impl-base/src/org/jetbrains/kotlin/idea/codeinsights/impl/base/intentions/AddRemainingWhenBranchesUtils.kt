@@ -3,17 +3,16 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.psi.PsiWhiteSpace
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
-import org.jetbrains.kotlin.renderer.render
 
 object AddRemainingWhenBranchesUtils {
-    class Context(
+    class ElementContext(
         val whenMissingCases: List<WhenMissingCase>,
         val enumToStarImport: ClassId?,
     )
@@ -24,16 +23,16 @@ object AddRemainingWhenBranchesUtils {
 
     fun addRemainingWhenBranches(
         whenExpression: KtWhenExpression,
-        context: Context,
+        elementContext: ElementContext,
     ) {
-        generateWhenBranches(whenExpression, context.whenMissingCases)
+        generateWhenBranches(whenExpression, elementContext.whenMissingCases)
         shortenReferences(
             whenExpression,
-            callableShortenOption = {
-                if (it.callableIdIfNonLocal?.classId == context.enumToStarImport) {
-                    ShortenOption.SHORTEN_AND_STAR_IMPORT
+            callableShortenStrategy = {
+                if (it.callableId?.classId == elementContext.enumToStarImport) {
+                    ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 }
             }
         )
@@ -58,19 +57,7 @@ object AddRemainingWhenBranchesUtils {
         val elseBranch = element.entries.find { it.isElse }
         (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
         for (case in missingCases) {
-            val branchConditionText = when (case) {
-                WhenMissingCase.Unknown,
-                WhenMissingCase.NullIsMissing,
-                is WhenMissingCase.BooleanIsMissing,
-                is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
-                is WhenMissingCase.IsTypeCheckIsMissing ->
-                    if (case.isSingleton) {
-                        ""
-                    } else {
-                        "is "
-                    } + case.classId.asSingleFqName().render()
-                is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asSingleFqName().render()
-            }
+            val branchConditionText = case.branchConditionText
             val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
             if (elseBranch != null) {
                 element.addBefore(entry, elseBranch)

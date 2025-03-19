@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.OutgoingResult;
@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,12 +22,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode, Comparable<RepositoryNode> {
 
-  @NotNull protected final AtomicBoolean myLoading = new AtomicBoolean();
-  @NotNull private final CheckBoxModel myCheckBoxModel;
+  protected final @NotNull AtomicBoolean myLoading = new AtomicBoolean();
+  private final @NotNull CheckBoxModel myCheckBoxModel;
 
-  @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
-  @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
+  private final @NotNull RepositoryWithBranchPanel myRepositoryPanel;
+  private @Nullable Future<AtomicReference<OutgoingResult>> myFuture;
 
+  @ApiStatus.Internal
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
     super(repositoryPanel);
     myCheckBoxModel = model;
@@ -71,9 +73,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked(), syncEditingText);
   }
 
-  @Nls
-  @NotNull
-  private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
+  private @Nls @NotNull String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
     String name = getRepositoryName();
     return GraphicsUtil.stringWidth(name, renderer.getFont()) > maxWidth - UIUtil.DEFAULT_HGAP ? name + "  " : name;
   }
@@ -106,7 +106,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   }
 
   @Override
-  public void startLoading(@NotNull final JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future, boolean initial) {
+  public void startLoading(final @NotNull JTree tree, @NotNull Future<AtomicReference<OutgoingResult>> future, boolean initial) {
     myFuture = future;
     myLoading.set(true);
   }
@@ -142,8 +142,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     return getRepositoryName() + " " + getRepositoryPresentationDetails();
   }
 
-  @NotNull
-  protected String getRepositoryPresentationDetails() {
+  protected @NotNull String getRepositoryPresentationDetails() {
     PushTarget targetValue = myRepositoryPanel.getTargetPanel().getValue();
     return myRepositoryPanel.getSourceName() + (targetValue != null ? myRepositoryPanel.getArrow() + targetValue : "");
   }

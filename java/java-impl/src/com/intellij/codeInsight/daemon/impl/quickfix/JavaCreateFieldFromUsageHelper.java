@@ -18,21 +18,23 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Max Medvedev
  */
-public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
+public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
 
   @Override
   public Template setupTemplateImpl(PsiField field,
                                     Object expectedTypes,
                                     PsiClass targetClass,
                                     Editor editor,
-                                    PsiElement context,
+                                    @Nullable PsiElement context,
                                     boolean createConstantField,
+                                    boolean isScrollToTemplate,
                                     @NotNull PsiSubstitutor substitutor) {
     Project project = field.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
+    builder.setScrollToTemplate(isScrollToTemplate);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }

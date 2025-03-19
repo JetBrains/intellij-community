@@ -1,11 +1,11 @@
 // "Wrap with '?.let { ... }' call" "false"
 // ACTION: Add 's =' to argument
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (s!!) call
 // ACTION: Convert to run
 // ACTION: Convert to with
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 // WITH_STDLIB
 fun foo(s: String?) {}
 

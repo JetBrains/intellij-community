@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -12,17 +12,14 @@ import java.util.*;
 public final class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
   private static final long serialVersionUID = 1L;
 
-  @NotNull
   private String name;
-  @NotNull
-  private Set<File> srcDirs;
+  private @NotNull Set<File> srcDirs;
   private File outputDir;
-  private final List<File> gradleOutputDirs;
+  private @NotNull Collection<File> gradleOutputDirs;
   private final FilePatternSetImpl patterns;
-  @NotNull
-  private List<DefaultExternalFilter> filters;
+  private @NotNull List<DefaultExternalFilter> filters;
 
-  private boolean inheritedCompilerOutput;
+  private boolean isCompilerOutputInherited;
 
   public DefaultExternalSourceDirectorySet() {
     srcDirs = new HashSet<>(0);
@@ -31,25 +28,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns = new FilePatternSetImpl();
   }
 
-  public DefaultExternalSourceDirectorySet(ExternalSourceDirectorySet sourceDirectorySet) {
-    name = sourceDirectorySet.getName();
-    srcDirs = new HashSet<>(sourceDirectorySet.getSrcDirs());
-    outputDir = sourceDirectorySet.getOutputDir();
-    gradleOutputDirs = new ArrayList<>(sourceDirectorySet.getGradleOutputDirs());
-
-    patterns = new FilePatternSetImpl(sourceDirectorySet.getIncludes(),
-                                      sourceDirectorySet.getExcludes());
-
-    filters = new ArrayList<>(sourceDirectorySet.getFilters().size());
-    for (ExternalFilter filter : sourceDirectorySet.getFilters()) {
-      filters.add(new DefaultExternalFilter(filter));
-    }
-    inheritedCompilerOutput = sourceDirectorySet.isCompilerOutputPathInherited();
-  }
-
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -57,9 +37,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.name = name;
   }
 
-  @NotNull
   @Override
-  public Set<File> getSrcDirs() {
+  public @NotNull Set<File> getSrcDirs() {
     return srcDirs;
   }
 
@@ -67,9 +46,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.srcDirs = srcDirs;
   }
 
-  @NotNull
   @Override
-  public File getOutputDir() {
+  public @NotNull File getOutputDir() {
     return outputDir;
   }
 
@@ -77,24 +55,26 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     this.outputDir = outputDir;
   }
 
-  @NotNull
   @Override
-  public Collection<File> getGradleOutputDirs() {
+  public @NotNull Collection<File> getGradleOutputDirs() {
     return gradleOutputDirs;
   }
 
-  public void addGradleOutputDir(@NotNull File outputDir) {
-    gradleOutputDirs.add(outputDir);
+  public void setGradleOutputDirs(@NotNull Collection<File> gradleOutputDirs) {
+    this.gradleOutputDirs = gradleOutputDirs;
   }
 
   @Override
   public boolean isCompilerOutputPathInherited() {
-    return inheritedCompilerOutput;
+    return isCompilerOutputInherited;
   }
 
-  @NotNull
+  public void setCompilerOutputPathInherited(boolean isCompilerOutputInherited) {
+    this.isCompilerOutputInherited = isCompilerOutputInherited;
+  }
+
   @Override
-  public Set<String> getExcludes() {
+  public @NotNull Set<String> getExcludes() {
     return patterns.getExcludes();
   }
 
@@ -102,9 +82,8 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns.setExcludes(excludes);
   }
 
-  @NotNull
   @Override
-  public Set<String> getIncludes() {
+  public @NotNull Set<String> getIncludes() {
     return patterns.getIncludes();
   }
 
@@ -112,19 +91,18 @@ public final class DefaultExternalSourceDirectorySet implements ExternalSourceDi
     patterns.setIncludes(includes);
   }
 
-  @NotNull
   @Override
-  public FilePatternSet getPatterns() {
+  public @NotNull FilePatternSet getPatterns() {
     return patterns;
   }
 
-  public void setInheritedCompilerOutput(boolean inheritedCompilerOutput) {
-    this.inheritedCompilerOutput = inheritedCompilerOutput;
+  public void setPatterns(@NotNull FilePatternSet patterns) {
+    this.patterns.setIncludes(patterns.getIncludes());
+    this.patterns.setExcludes(patterns.getExcludes());
   }
 
-  @NotNull
   @Override
-  public List<? extends ExternalFilter> getFilters() {
+  public @NotNull List<DefaultExternalFilter> getFilters() {
     return filters;
   }
 

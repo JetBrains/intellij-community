@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 fun test(n: Int): String {
     return <caret>when (n) {
         in 0..5, in 5..10 -> "small"

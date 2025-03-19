@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -67,13 +67,13 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   private final ExecutorService myExecutorPool = AppExecutorUtil.createBoundedApplicationPoolExecutor(
     "JavaI18nizeQuickFixDialog Executor Pool", AppExecutorUtil.getAppExecutorService(), 1);
 
-  @NonNls public static final String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
-  @NonNls public static final String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
-  @NonNls public static final String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
+  public static final @NonNls String PROPERTY_KEY_OPTION_KEY = "PROPERTY_KEY";
+  public static final @NonNls String RESOURCE_BUNDLE_OPTION_KEY = "RESOURCE_BUNDLE";
+  public static final @NonNls String PROPERTY_VALUE_ATTR = "PROPERTY_VALUE";
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
-                                   @NotNull final PsiFile context,
-                                   @Nullable final T literalExpression,
+                                   final @NotNull PsiFile context,
+                                   final @Nullable T literalExpression,
                                    @NotNull String defaultPropertyValue,
                                    DialogCustomization customization,
                                    final boolean showJavaCodeInfo,
@@ -241,8 +241,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     super.somethingChanged();
   }
 
-  @Nullable
-  protected String getTemplateName() {
+  protected @Nullable String getTemplateName() {
     return myResourceBundleManager.getTemplateName();
   }
 

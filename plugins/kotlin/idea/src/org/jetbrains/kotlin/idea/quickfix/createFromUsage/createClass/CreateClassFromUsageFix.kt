@@ -4,59 +4,34 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.LowPriorityAction
-import com.intellij.ide.util.DirectoryChooserUtil
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.*
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.base.util.module
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.ClassKind.*
-import org.jetbrains.kotlin.idea.refactoring.SeparateFileWrapper
-import org.jetbrains.kotlin.idea.refactoring.canRefactor
-import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
-import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.application.*
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.types.typeUtil.isUnit
-import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import org.jetbrains.kotlin.utils.SmartList
 import java.util.*
-import com.intellij.codeInsight.daemon.impl.quickfix.ClassKind as IdeaClassKind
-
-enum class ClassKind(@NonNls val keyword: String, @Nls val description: String) {
-    PLAIN_CLASS("class", KotlinBundle.message("text.class")),
-    ENUM_CLASS("enum class", KotlinBundle.message("text.enum")),
-    ENUM_ENTRY("", KotlinBundle.message("text.enum.constant")),
-    ANNOTATION_CLASS("annotation class", KotlinBundle.message("text.annotation")),
-    INTERFACE("interface", KotlinBundle.message("text.interface")),
-    OBJECT("object", KotlinBundle.message("text.object")),
-    DEFAULT("", "") // Used as a placeholder and must be replaced with one of the kinds above
-}
-
-fun ClassKind.toIdeaClassKind() = IdeaClassKind { this@toIdeaClassKind.description.capitalize() }
 
 val ClassKind.actionPriority: IntentionActionPriority
-    get() = if (this == ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
+    get() = if (this == ClassKind.ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
 
 data class ClassInfo(
-    val kind: ClassKind = DEFAULT,
+    val kind: ClassKind = ClassKind.DEFAULT,
     val name: String,
     private val targetParents: List<PsiElement>,
     val expectedTypeInfo: TypeInfo,
@@ -66,9 +41,9 @@ data class ClassInfo(
     val parameterInfos: List<ParameterInfo> = Collections.emptyList(),
     val primaryConstructorVisibility: DescriptorVisibility? = null
 ) {
-    val applicableParents by lazy {
+    val applicableParents: List<PsiElement> by lazy {
         targetParents.filter {
-            if (kind == OBJECT && it is KtClass && (it.isInner() || it.isLocal)) return@filter false
+            if (kind == ClassKind.OBJECT && it is KtClass && (it.isInner() || it.isLocal)) return@filter false
             true
         }
     }
@@ -78,179 +53,67 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
     element: E,
     private val classInfo: ClassInfo
 ) : CreateFromUsageFixBase<E>(element) {
-    override fun getText() = KotlinBundle.message("create.0.1", classInfo.kind.description, classInfo.name)
+    override fun getText(): String = KotlinBundle.message("create.0.1", classInfo.kind.description, classInfo.name)
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        with(classInfo) {
-            if (kind == DEFAULT) return false
-            if (applicableParents.isEmpty()) return false
-            applicableParents.forEach {
-                if (it is PsiClass) {
-                    if (kind == OBJECT || kind == ENUM_ENTRY) return false
-                    if (it.isInterface && inner) return false
-                }
+        if (classInfo.kind == ClassKind.DEFAULT ||
+            classInfo.applicableParents.isEmpty()) return false
+        classInfo.applicableParents.forEach {
+            if (it is PsiClass) {
+                if (classInfo.kind == ClassKind.OBJECT ||
+                    classInfo.kind == ClassKind.ENUM_ENTRY ||
+                    it.isInterface && classInfo.inner) return false
             }
-
         }
         return true
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         if (editor == null) return
 
-        val applicableParents = SmartList<PsiElement>().also { parents ->
-            classInfo.applicableParents.filterNotTo(parents) { element ->
-                element is KtClassOrObject && element.superTypeListEntries.any {
-                    when (it) {
-                        is KtDelegatedSuperTypeEntry, is KtSuperTypeEntry -> it.typeAsUserType == this.element
-                        is KtSuperTypeCallEntry -> it == this.element
-                        else -> false
-                    }
-                }
-            }
-
-            if (classInfo.kind != ENUM_ENTRY && parents.find { it is PsiPackage } == null) {
-                parents += SeparateFileWrapper(PsiManager.getInstance(project))
-            }
-        }
-
-        if (isUnitTestMode()) {
-            val targetParent = applicableParents.firstOrNull { element ->
-                if (element is PsiPackage) false else element.allChildren.any { it is PsiComment && it.text == "// TARGET_PARENT:" }
-            } ?: classInfo.applicableParents.last()
-            return doInvoke(targetParent, editor, file)
-        }
-
-        chooseContainerElementIfNecessary(
-            applicableParents.reversed(),
-            editor,
-            KotlinBundle.message("choose.class.container"),
-            true,
-        ) {
-            doInvoke(it, editor, file)
+        CreateClassUtil.chooseAndCreateClass(project, editor, file, element, classInfo.kind, classInfo.applicableParents, classInfo.name, text) { targetParent ->
+            runCreateClassBuilder(file, editor, targetParent, classInfo.name)
         }
     }
 
-    private fun createFileByPackage(
-        psiPackage: PsiPackage,
+    private fun runCreateClassBuilder(
+        file: KtFile,
         editor: Editor,
-        originalFile: KtFile
-    ): KtFile? {
-        val directories = psiPackage.directories.filter { it.canRefactor() }
-        assert(directories.isNotEmpty()) { "Package '${psiPackage.qualifiedName}' must be refactorable" }
-
-        val currentModule = ModuleUtilCore.findModuleForPsiElement(originalFile)
-        val preferredDirectory =
-            directories.firstOrNull { ModuleUtilCore.findModuleForPsiElement(it) == currentModule }
-                ?: directories.firstOrNull()
-
-        val targetDirectory = if (directories.size > 1 && !isUnitTestMode()) {
-            DirectoryChooserUtil.chooseDirectory(directories.toTypedArray(), preferredDirectory, originalFile.project, HashMap())
-        } else {
-            preferredDirectory
-        } ?: return null
-
-        val fileName = "${classInfo.name}.${KotlinFileType.INSTANCE.defaultExtension}"
-        val targetFile = getOrCreateKotlinFile(fileName, targetDirectory)
-        if (targetFile == null) {
-            val filePath = "${targetDirectory.virtualFile.path}/$fileName"
-            KotlinSurrounderUtils.showErrorHint(
-                targetDirectory.project,
-                editor,
-                KotlinBundle.message("file.0.already.exists.but.does.not.correspond.to.kotlin.file", filePath),
-                KotlinBundle.message("create.file"),
-                null
-            )
-        }
-        return targetFile
-    }
-
-    private fun doInvoke(selectedParent: PsiElement, editor: Editor, file: KtFile, startCommand: Boolean = true) {
-        val className = classInfo.name
-
-        if (selectedParent is SeparateFileWrapper) {
-            if (isUnitTestMode()) {
-                return doInvoke(file, editor, file)
-            }
-
-            val ideaClassKind = classInfo.kind.toIdeaClassKind()
-            val defaultPackageFqName = file.packageFqName
-            val dialog = object : CreateKotlinClassDialog(
-                file.project,
-                KotlinBundle.message("create.0", ideaClassKind.description.capitalize()),
-                className,
-                defaultPackageFqName.asString(),
-                ideaClassKind,
-                false,
-                file.module
-            ) {
-                override fun reportBaseInSourceSelectionInTest() = true
-            }
-            dialog.show()
-            if (dialog.exitCode != DialogWrapper.OK_EXIT_CODE) return
-
-            val targetDirectory = dialog.targetDirectory ?: return
-            val fileName = "$className.${KotlinFileType.EXTENSION}"
-            val packageFqName = targetDirectory.getFqNameWithImplicitPrefix()
-
-            file.project.executeWriteCommand(text) {
-                val targetFile = getOrCreateKotlinFile(fileName, targetDirectory, (packageFqName ?: defaultPackageFqName).asString())
-                if (targetFile != null) {
-                    doInvoke(targetFile, editor, file, false)
-                }
-            }
-            return
-        }
-
+        targetParent: PsiElement,
+        className: String
+    ) {
         val element = element ?: return
 
-        runWriteAction<Unit> {
-            with(classInfo) {
-                val targetParent =
-                    when (selectedParent) {
-                        is KtElement, is PsiClass -> selectedParent
-                        is PsiPackage -> createFileByPackage(selectedParent, editor, file)
-                        else -> throw KotlinExceptionWithAttachments("Unexpected element: ${selectedParent::class.java}")
-                            .withPsiAttachment("selectedParent", selectedParent)
-                    } ?: return@runWriteAction
-                val constructorInfo = ClassWithPrimaryConstructorInfo(
-                    classInfo,
-                    // Need for #KT-22137
-                    if (expectedTypeInfo.isUnit) TypeInfo.Empty else expectedTypeInfo,
-                    primaryConstructorVisibility = classInfo.primaryConstructorVisibility
+        val constructorInfo = ClassWithPrimaryConstructorInfo(
+            classInfo,
+            // Need for #KT-22137
+            if (classInfo.expectedTypeInfo.isUnit) TypeInfo.Empty else classInfo.expectedTypeInfo,
+            primaryConstructorVisibility = classInfo.primaryConstructorVisibility
+        )
+        val builder = CallableBuilderConfiguration(
+            Collections.singletonList(constructorInfo),
+            element,
+            file,
+            editor,
+            false,
+            classInfo.kind == ClassKind.PLAIN_CLASS || classInfo.kind == ClassKind.INTERFACE
+        ).createBuilder()
+        builder.placement = CallablePlacement.NoReceiver(targetParent)
+
+        file.project.executeCommand(text, command = {
+            builder.build {
+                if (targetParent !is KtFile || targetParent == file) return@build
+                val targetPackageFqName = targetParent.packageFqName
+                if (targetPackageFqName == file.packageFqName) return@build
+                val reference = (element.getQualifiedElementSelector() as? KtSimpleNameExpression)?.mainReference ?: return@build
+                reference.bindToFqName(
+                    targetPackageFqName.child(Name.identifier(className)),
+                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
                 )
-                val builder = CallableBuilderConfiguration(
-                    Collections.singletonList(constructorInfo),
-                    element,
-                    file,
-                    editor,
-                    false,
-                    kind == PLAIN_CLASS || kind == INTERFACE
-                ).createBuilder()
-                builder.placement = CallablePlacement.NoReceiver(targetParent)
-
-                fun buildClass() {
-                    builder.build {
-                        if (targetParent !is KtFile || targetParent == file) return@build
-                        val targetPackageFqName = targetParent.packageFqName
-                        if (targetPackageFqName == file.packageFqName) return@build
-                        val reference = (element.getQualifiedElementSelector() as? KtSimpleNameExpression)?.mainReference ?: return@build
-                        reference.bindToFqName(
-                            targetPackageFqName.child(Name.identifier(className)),
-                            KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                        )
-                    }
-                }
-
-                if (startCommand) {
-                    file.project.executeCommand(text, command = ::buildClass)
-                } else {
-                    buildClass()
-                }
             }
-        }
+        })
     }
 
     private class LowPriorityCreateClassFromUsageFix<E : KtElement>(

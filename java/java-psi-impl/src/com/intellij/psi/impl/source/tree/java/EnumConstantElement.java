@@ -20,7 +20,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.JavaDocElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +43,6 @@ public class EnumConstantElement extends CompositeElement implements Constants {
   public ASTNode findChildByRole(int role){
     LOG.assertTrue(ChildRole.isUnique(role));
     switch(role){
-      default:
-        return null;
-
       case ChildRole.DOC_COMMENT:
         return PsiImplUtil.findDocComment(this);
 
@@ -57,6 +57,9 @@ public class EnumConstantElement extends CompositeElement implements Constants {
 
       case ChildRole.MODIFIER_LIST:
         return findChildByType(JavaElementType.MODIFIER_LIST);
+
+      default:
+        return null;
     }
   }
 

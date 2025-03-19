@@ -5,7 +5,7 @@ import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
-import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
+import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionInlayRenderer
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestModeFlags
@@ -14,7 +14,7 @@ import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   companion object {
-    const val AUTHOR_HINT = "John Smith +2"
+    const val AUTHOR_HINT: String = "John Smith +2"
   }
 
   protected open val onlyCodeVisionHintsAllowed: Boolean
@@ -29,7 +29,7 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   override fun tearDown() {
     try {
-      val settings = CodeVisionSettings.instance()
+      val settings = CodeVisionSettings.getInstance()
       val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
       codeVisionHost.providers.forEach {
         settings.setProviderEnabled(it.groupId, true)
@@ -45,14 +45,14 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
   protected fun testProviders(expectedText: String, fileName: String, vararg enabledProviderGroupIds: String) {
     // set enabled providers
-    val settings = CodeVisionSettings.instance()
+    val settings = CodeVisionSettings.getInstance()
     val codeVisionHost = CodeVisionInitializer.getInstance(project).getCodeVisionHost()
     codeVisionHost.providers.map { it.groupId }.toSet().forEach {
       settings.setProviderEnabled(it, enabledProviderGroupIds.contains(it))
     }
 
-    val sourceText = InlayDumpUtil.removeHints(expectedText)
-    myFixture.configureByText(fileName, sourceText)
+    val sourceText = InlayDumpUtil.removeInlays(expectedText)
+    configureFile(fileName, sourceText)
 
     val editor = myFixture.editor
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
@@ -69,13 +69,20 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     assertEquals(expectedText, actualText)
   }
 
+  protected open fun configureFile(fileName: String, sourceText: String) {
+    myFixture.configureByText(fileName, sourceText)
+  }
+
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayDumpUtil.dumpHintsInternal(sourceText, {
-      val rendererSupported = it.renderer is CodeVisionRenderer
-      if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
-      rendererSupported
-    }, { _, inlay ->
-                                             inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
-                                           }, myFixture.file!!, myFixture.editor, myFixture.getDocument(myFixture.file!!))
+    return InlayDumpUtil.dumpInlays(
+      sourceText, myFixture.editor,
+      filter = {
+        val rendererSupported = it.renderer is CodeVisionInlayRenderer
+        if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
+        rendererSupported
+      },
+      renderer = { _, inlay ->
+        inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
+      })
   }
 }

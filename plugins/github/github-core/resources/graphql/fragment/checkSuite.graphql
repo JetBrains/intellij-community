@@ -1,0 +1,10 @@
+fragment checkSuite on CheckSuite {
+  checkRuns(first: 100) {
+    pageInfo {
+      ...pageInfo
+    }
+    nodes {
+      ...checkRun
+    }
+  }
+}

@@ -7,6 +7,7 @@ fun <T, R, C : MutableCollection<in R>> Iterable<T>.mapTo(destination: C, transf
 
 fun main() {
     val strings = listOf("abc", "def")
-    strings.mapTo(mutableSetOf(), {it.length}).map { <caret> }
+    strings.mapTo(mutableSetOf(), { it.length }).map { <caret> }
 }
 // ELEMENT: map
+// TAIL_TEXT: " { transform: (Int) -> R } for Iterable<T> in kotlin.collections"

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,109 +17,109 @@ import java.util.Locale;
 
 import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   private final StorageLockContext lock = new StorageLockContext();
-  private Path f;
-  private PagedFileStorage s;
+  private Path file;
+  private PagedFileStorage pagedFileStorage;
 
   @Before
   public void setUp() throws IOException {
+    file = tempDir.newFile("storage").toPath();
     withLock(lock, () -> {
-      f = tempDir.newFile("storage").toPath();
-      s = new PagedFileStorage(f, lock, DEFAULT_PAGE_SIZE, false, false);
+      pagedFileStorage = new PagedFileStorage(file, lock, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 
   @After
   public void tearDown() throws IOException {
     withLock(lock, () -> {
-      s.close();
-      Path l = f.resolveSibling(f.getFileName() + ".len");
+      pagedFileStorage.close();
+      Path l = file.resolveSibling(file.getFileName() + ".len");
       assertTrue(l.toString(), !Files.exists(l) || Files.deleteIfExists(l));
-      assertTrue(f.toString(), Files.deleteIfExists(f));
+      assertTrue(file.toString(), Files.deleteIfExists(file));
     });
   }
 
   @Test
   public void testResizing() throws IOException {
     withLock(lock, () -> {
-      assertEquals(0, Files.size(f));
+      assertEquals(0, Files.size(file));
 
-      s.resize(12345);
-      assertEquals(12345, Files.size(f));
+      pagedFileStorage.resize(12345);
+      assertEquals(12345, Files.size(file));
 
-      s.resize(123);
-      assertEquals(123, Files.size(f));
+      pagedFileStorage.resize(123);
+      assertEquals(123, Files.size(file));
     });
   }
 
   @Test
   public void testFillingWithZerosAfterResize() throws IOException {
     withLock(lock, () -> {
-      s.resize(1000);
+      pagedFileStorage.resize(1000);
 
       for (int i = 0; i < 1000; i++) {
-        assertEquals(0, s.get(i, true));
+        assertEquals(0, pagedFileStorage.get(i, true));
       }
     });
   }
 
   @Test
   public void testResizeableMappedFile() throws IOException {
-    long freeSpace = Files.getFileStore(f).getUsableSpace();
-    Assume.assumeTrue("test requires at least 2Gb of empty disk space", 2L * IOUtil.GiB < freeSpace);
+    Path newPath = tempDir.newFile("storage-1").toPath();
+    long freeSpace = Files.getFileStore(newPath).getUsableSpace();
+    assumeTrue("test requires at least 2Gb of empty disk space", 2L * IOUtil.GiB < freeSpace);
     withLock(lock, () -> {
-      ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock, -1, false);
+      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, 2000000, lock, -1, false)) {
+        LOG.debug("writing...");
+        long t = System.currentTimeMillis();
+        for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
+          file.putInt(index, index);
+          assertTrue(file.length() > index);
+          assertEquals(index, file.getInt(index));
+          printPct(pct);
+        }
+        file.putInt(Integer.MAX_VALUE - 20, 1234);
+        assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
+        t = System.currentTimeMillis() - t;
+        LOG.debug("done in " + t + " ms");
 
-      LOG.debug("writing...");
-      long t = System.currentTimeMillis();
-      for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
-        file.putInt(index, index);
-        assertTrue(file.length() > index);
-        assertEquals(index, file.getInt(index));
-        printPct(pct);
+        file.putInt(Integer.MAX_VALUE + 20L, 5678);
+        assertEquals(5678, file.getInt(Integer.MAX_VALUE + 20L));
+
+        t = System.currentTimeMillis();
+        LOG.debug("checking...");
+        for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
+          assertEquals(index, file.getInt(index));
+          printPct(pct);
+        }
+        assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
+        t = System.currentTimeMillis() - t;
+        LOG.debug("done in " + t + " ms");
       }
-      file.putInt(Integer.MAX_VALUE - 20, 1234);
-      assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
-      t = System.currentTimeMillis() - t;
-      LOG.debug("done in " + t + " ms");
-
-      file.putInt(Integer.MAX_VALUE + 20L, 5678);
-      assertEquals(5678, file.getInt(Integer.MAX_VALUE + 20L));
-
-      t = System.currentTimeMillis();
-      LOG.debug("checking...");
-      for (int index = 0, pct = 0; index <= 2000000000; index += 2000000, pct++) {
-        assertEquals(index, file.getInt(index));
-        printPct(pct);
-      }
-      assertEquals(1234, file.getInt(Integer.MAX_VALUE - 20));
-      t = System.currentTimeMillis() - t;
-      LOG.debug("done in " + t + " ms");
-
-      file.close();
     });
   }
 
   @Test
   public void testResizeableMappedFile2() throws IOException {
+    Path newPath = tempDir.newFile("storage-2").toPath();
     withLock(lock, () -> {
       int initialSize = 4096;
-      ResizeableMappedFile file = new ResizeableMappedFile(f, initialSize, lock, IOUtil.MiB, false);
-      byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
-      assertTrue(bytes.length > initialSize);
+      try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, initialSize, lock, IOUtil.MiB, false)) {
+        byte[] bytes = StringUtil.repeat("1", initialSize + 2).getBytes(StandardCharsets.UTF_8);
+        assertTrue(bytes.length > initialSize);
 
-      file.put(0, bytes, 0, bytes.length);
-      int written_bytes = (int)file.length();
-      byte[] newBytes = new byte[written_bytes];
-      file.get(0, newBytes, 0, written_bytes, true);
-      assertArrayEquals(bytes, newBytes);
-
-      file.close();
+        file.put(0, bytes, 0, bytes.length);
+        int written_bytes = (int)file.length();
+        byte[] newBytes = new byte[written_bytes];
+        file.get(0, newBytes, 0, written_bytes, true);
+        assertArrayEquals(bytes, newBytes);
+      }
     });
   }
 

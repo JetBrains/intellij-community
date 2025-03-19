@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution;
 
 import com.intellij.openapi.module.Module;
@@ -11,19 +11,20 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.testFramework.VfsTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-final class TestSources {
+public final class TestSources {
   private final Project myProject;
   private final TemporaryDirectory tempDir;
   private VirtualFile mySrc;
   private Module myModule;
 
-  TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
+  public TestSources(@NotNull Project project, @NotNull TemporaryDirectory temporaryDirectory) {
     myProject = project;
     tempDir = temporaryDirectory;
   }
@@ -61,6 +62,7 @@ final class TestSources {
     Module tempModule = BaseConfigurationTestCase.createTempModule(tempDir, myProject);
     ModuleRootModificationUtil.addDependency(myModule, tempModule);
     disposeModule(tempModule);
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   private void disposeModule(@NotNull Module tempModule) {
@@ -69,10 +71,12 @@ final class TestSources {
 
   public void copyJdkFrom(@NotNull Module module) {
     ModuleRootModificationUtil.setModuleSdk(myModule, ModuleRootManager.getInstance(module).getSdk());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   public void addLibrary(@NotNull VirtualFile lib) {
     ModuleRootModificationUtil.addModuleLibrary(myModule, lib.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   public @NotNull VirtualFile createPackageDir(@NotNull String packageName) {

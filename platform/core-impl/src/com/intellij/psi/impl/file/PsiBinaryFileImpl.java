@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file;
 
@@ -35,8 +35,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myViewProvider.getVirtualFile();
   }
 
@@ -50,8 +49,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return !isCopy() ? getVirtualFile().getName() : myName;
   }
 
@@ -85,8 +83,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
     return getManager().findDirectory(parentFile);
   }
 
-  @Nullable
-  public PsiDirectory getParentDirectory() {
+  public @Nullable PsiDirectory getParentDirectory() {
     return getContainingDirectory();
   }
 
@@ -96,8 +93,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -254,20 +250,17 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public PsiFile getOriginalFile() {
+  public @NotNull PsiFile getOriginalFile() {
     return this;
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "PsiBinaryFile:" + getName();
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myViewProvider.getFileType();
   }
 
@@ -277,8 +270,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   }
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     return myViewProvider;
   }
 

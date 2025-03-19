@@ -37,19 +37,19 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
   }
 
   //-----------------------params and return values---------------------------------
-  public void testParameterPassed2NotNull() throws Exception {
+  public void testParameterPassed2NotNull() {
     doTest(false);
   }
 
-  public void testParameterCheckedForNull() throws Exception {
+  public void testParameterCheckedForNull() {
     doTest(false);
   }
 
-  public void testParameterDereferenced() throws Exception {
+  public void testParameterDereferenced() {
     doTest(false);
   }
 
-  public void testParameterCheckedForInstanceof() throws Exception {
+  public void testParameterCheckedForInstanceof() {
     try {
       doTest(false);
       fail("Should infer nothing");
@@ -61,46 +61,49 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testParameterUsedInForeachIteratedValue() throws Exception {
+  public void testParameterUsedInForeachIteratedValue() {
     doTest(false);
   }
 
-  public void testForEachParameter() throws Exception {
+  public void testForEachParameter() {
     doTest(true);
   }
 
-  public void testConditionalReturnNotNull() throws Exception {
+  public void testConditionalReturnNotNull() {
     doTest(false);
   }
 
-  public void testAssertParamNotNull() throws Exception {
+  public void testAssertParamNotNull() {
     doTest(true);
   }
 
-  public void testTryEnumSwitch() throws Exception {
+  public void testTryEnumSwitch() {
     doTest(true);
   }
   
-  public void testCatchParams() throws Exception {
+  public void testCatchParams() {
     doTest(true);
   }
 
   //-----------------------fields---------------------------------------------------
-  public void testFieldsAssignment() throws Exception {
+  public void testFieldsAssignment() {
     doTest(false);
   }
 
   //-----------------------methods---------------------------------------------------
-  public void testMethodReturnValue() throws Exception {
+  public void testMethodReturnValue() {
     doTest(false);
   }
 
-  public void testNullFail() throws Exception {
+  public void testNullFail() {
+    doTest(false);
+  }
+  
+  public void testArrayInitializer() {
     doTest(false);
   }
 
-
-  private void doTest(boolean annotateLocalVariables) throws Exception  {
+  private void doTest(boolean annotateLocalVariables) {
     final String nullityPath = "/codeInsight/nullityinferrer";
     configureByFile(nullityPath + "/before" + getTestName(false) + ".java");
     final NullityInferrer nullityInferrer = new NullityInferrer(annotateLocalVariables, getProject());

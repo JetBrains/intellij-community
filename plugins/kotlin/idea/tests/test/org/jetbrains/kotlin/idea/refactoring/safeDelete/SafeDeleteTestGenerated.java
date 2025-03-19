@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -21,6 +22,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteClass/kotlinClass")
     public static class KotlinClass extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
         }
@@ -99,6 +106,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteClass/kotlinClassWithJava")
     public static class KotlinClassWithJava extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doClassTestWithJava, this, testDataFilePath);
         }
@@ -112,6 +125,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin")
     public static class JavaClassWithKotlin extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaClassTest, this, testDataFilePath);
         }
@@ -135,6 +154,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteObject/kotlinObject")
     public static class KotlinObject extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doObjectTest, this, testDataFilePath);
         }
@@ -193,6 +218,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteFunction/kotlinFunction")
     public static class KotlinFunction extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doFunctionTest, this, testDataFilePath);
         }
@@ -291,6 +322,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava")
     public static class KotlinFunctionWithJava extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doFunctionTestWithJava, this, testDataFilePath);
         }
@@ -359,6 +396,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin")
     public static class JavaFunctionWithKotlin extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
         }
@@ -377,6 +420,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteProperty/kotlinProperty")
     public static class KotlinProperty extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPropertyTest, this, testDataFilePath);
         }
@@ -510,6 +559,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava")
     public static class KotlinPropertyWithJava extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doPropertyTestWithJava, this, testDataFilePath);
         }
@@ -578,6 +633,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin")
     public static class JavaPropertyWithKotlin extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaPropertyTest, this, testDataFilePath);
         }
@@ -616,6 +677,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias")
     public static class KotlinTypeAlias extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeAliasTest, this, testDataFilePath);
         }
@@ -634,6 +701,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter")
     public static class KotlinTypeParameter extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeParameterTest, this, testDataFilePath);
         }
@@ -722,6 +795,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava")
     public static class KotlinTypeParameterWithJava extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTypeParameterTestWithJava, this, testDataFilePath);
         }
@@ -815,6 +894,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter")
     public static class KotlinValueParameter extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doValueParameterTest, this, testDataFilePath);
         }
@@ -832,6 +917,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("defaultParam2.kt")
         public void testDefaultParam2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/defaultParam2.kt");
+        }
+
+        @TestMetadata("enumConstructor.kt")
+        public void testEnumConstructor() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/enumConstructor.kt");
         }
 
         @TestMetadata("extNamedParam1.kt")
@@ -929,6 +1019,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/lambdaArgExt.kt");
         }
 
+        @TestMetadata("namedDefaultParam.kt")
+        public void testNamedDefaultParam() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedDefaultParam.kt");
+        }
+
         @TestMetadata("namedParam1.kt")
         public void testNamedParam1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam1.kt");
@@ -937,6 +1032,31 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("namedParam2.kt")
         public void testNamedParam2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam2.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
+        public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInDelegationCall.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInInstanceCreation.kt")
+        public void testPrimaryConstructorParameterInInstanceCreation() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInInstanceCreation.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInSuperTypeList.kt")
+        public void testPrimaryConstructorParameterInSuperTypeList() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInSuperTypeList.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInTheMiddle.kt")
+        public void testPrimaryConstructorParameterInTheMiddle() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInTheMiddle.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterWithNamedArgument.kt")
+        public void testPrimaryConstructorParameterWithNamedArgument() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterWithNamedArgument.kt");
         }
 
         @TestMetadata("propertyParam1.kt")
@@ -974,6 +1094,31 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt2.kt");
         }
 
+        @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
+        public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInDelegationCall.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInInstanceCreation.kt")
+        public void testSecondaryConstructorParameterInInstanceCreation() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInInstanceCreation.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInSuperTypeList.kt")
+        public void testSecondaryConstructorParameterInSuperTypeList() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInSuperTypeList.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInTheMiddle.kt")
+        public void testSecondaryConstructorParameterInTheMiddle() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInTheMiddle.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterWithNamedArgument.kt")
+        public void testSecondaryConstructorParameterWithNamedArgument() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterWithNamedArgument.kt");
+        }
+
         @TestMetadata("setter.kt")
         public void testSetter() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/setter.kt");
@@ -983,6 +1128,12 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava")
     public static class KotlinValueParameterWithJava extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doValueParameterTestWithJava, this, testDataFilePath);
         }
@@ -1092,6 +1243,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages3.kt");
         }
 
+        @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
+        public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/primaryConstructorParameterInDelegationCall.kt");
+        }
+
         @TestMetadata("propertyParam1.kt")
         public void testPropertyParam1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam1.kt");
@@ -1100,6 +1256,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("propertyParam2.kt")
         public void testPropertyParam2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam2.kt");
+        }
+
+        @TestMetadata("propertyParam3.kt")
+        public void testPropertyParam3() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam3.kt");
         }
 
         @TestMetadata("safeUsages1.kt")
@@ -1126,11 +1287,22 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         public void testSafeUsagesExt2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
         }
+
+        @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
+        public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/secondaryConstructorParameterInDelegationCall.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin")
     public static class JavaParameterWithKotlin extends AbstractSafeDeleteTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doJavaParameterTest, this, testDataFilePath);
         }

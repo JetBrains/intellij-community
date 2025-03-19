@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.pycharm.community.ide.implTraining` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "pycharm-community-ide-implTraining_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "pycharm-community-ide-implTraining",
+  module_name = "intellij.pycharm.community.ide.implTraining",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//python/python-features-trainer:featuresTrainer",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":pycharm-community-ide-implTraining_resources"]
+)
+### auto-generated section `build intellij.pycharm.community.ide.implTraining` end

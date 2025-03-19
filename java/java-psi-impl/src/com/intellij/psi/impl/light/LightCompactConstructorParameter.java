@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -29,8 +30,7 @@ public class LightCompactConstructorParameter extends LightParameter implements 
   }
 
   @Override
-  @NotNull
-  public PsiRecordComponent getRecordComponent() {
+  public @NotNull PsiRecordComponent getRecordComponent() {
     return myRecordComponent;
   }
 
@@ -39,10 +39,20 @@ public class LightCompactConstructorParameter extends LightParameter implements 
     return myRecordComponent.getTextOffset();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return myRecordComponent.getNavigationElement();
+  }
+
+  @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    PsiMethod constructor = (PsiMethod)getDeclarationScope();
+    PsiMethod copyConstructor = PsiTreeUtil.findSameElementInCopy(constructor, copy);
+    PsiParameterList parameterList = constructor.getParameterList();
+    int index = parameterList.getParameterIndex(this);
+    PsiParameter parameter = copyConstructor.getParameterList().getParameter(index);
+    assert parameter != null;
+    return parameter;
   }
 
   @Override

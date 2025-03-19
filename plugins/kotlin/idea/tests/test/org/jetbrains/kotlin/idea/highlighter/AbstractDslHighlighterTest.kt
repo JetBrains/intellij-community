@@ -29,7 +29,7 @@ abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCas
             val styleIdByComment = commentText?.replace("//", "")?.trim()?.toInt()
                 ?.let { DslKotlinHighlightingVisitorExtension.externalKeyName(it) }
 
-            val styleIdByCall = extension.highlightCall(element, call)?.externalName
+            val styleIdByCall = extension.highlightCall(element, call)?.attributesKey?.externalName
             if (styleIdByCall != null && styleIdByCall == styleIdByComment) {
                 val holder = HighlightInfoHolder(psiFile)
                 val checkers = AbstractKotlinHighlightVisitor.getAfterAnalysisVisitor(holder, bindingContext)
@@ -38,7 +38,7 @@ abstract class AbstractDslHighlighterTest : KotlinLightCodeInsightFixtureTestCas
                 assertTrue(
                     "KotlinHighlightingPass did not contribute an Annotation containing the correct text attribute key at line ${lineNumber + 1}",
                     (0 until holder.size()).map { holder[it] }.any {
-                        it.forcedTextAttributesKey.externalName == styleIdByComment
+                        it.type.attributesKey.externalName == styleIdByComment
                     }
                 )
             } else if (styleIdByCall != styleIdByComment) {

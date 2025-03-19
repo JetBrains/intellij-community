@@ -5,11 +5,18 @@ import com.intellij.ide.ui.NavBarLocation
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.ui.ExperimentalUI
 
-abstract class NavBarLocationAction(private val location: NavBarLocation) : ToggleAction(), DumbAware {
+internal abstract class NavBarLocationAction(private val location: NavBarLocation) : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun isSelected(e: AnActionEvent): Boolean {
     val settings = UISettings.getInstance()
     return settings.showNavigationBar && settings.navBarLocation == location
@@ -30,15 +37,19 @@ abstract class NavBarLocationAction(private val location: NavBarLocation) : Togg
     }
     super.update(e)
   }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
 }
 
-class NavBarTopLocationAction : NavBarLocationAction(NavBarLocation.TOP)
-class NavBarBottomLocationAction : NavBarLocationAction(NavBarLocation.BOTTOM)
-class HideNavBarAction : ToggleAction(), DumbAware {
+internal class NavBarTopLocationAction : NavBarLocationAction(NavBarLocation.TOP)
+
+internal class NavBarBottomLocationAction : NavBarLocationAction(NavBarLocation.BOTTOM)
+
+internal class HideNavBarAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun isSelected(e: AnActionEvent): Boolean = !UISettings.getInstance().showNavigationBar
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
@@ -46,9 +57,5 @@ class HideNavBarAction : ToggleAction(), DumbAware {
       it.showNavigationBar = false
       it.fireUISettingsChanged()
     }
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
   }
 }

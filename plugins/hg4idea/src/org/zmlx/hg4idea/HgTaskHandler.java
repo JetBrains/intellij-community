@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsTaskHandler;
@@ -56,9 +56,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     return bookmark == null ? repository.getCurrentBranch() : bookmark;
   }
 
-  @NotNull
   @Override
-  protected Iterable<TaskInfo> getAllBranches(@NotNull HgRepository repository) {
+  protected @NotNull Iterable<TaskInfo> getAllBranches(@NotNull HgRepository repository) {
     //be careful with equality names of branches/bookmarks =(
     Iterable<String> names =
       ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
@@ -66,7 +65,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected void mergeAndClose(@NotNull final String branch, @NotNull final List<? extends HgRepository> repositories) {
+  protected void mergeAndClose(final @NotNull String branch, final @NotNull List<? extends HgRepository> repositories) {
     String bookmarkRevisionArg = "bookmark(\"" + branch + "\")";
     FileDocumentManager.getInstance().saveAllDocuments();
     final UpdatedFiles updatedFiles = UpdatedFiles.create();
@@ -99,9 +98,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
     return myNameValidator.checkInput(branchName);
   }
 
-  @NotNull
   @Override
-  public String cleanUpBranchName(@NotNull String suggestedName) {
+  public @NotNull String cleanUpBranchName(@NotNull String suggestedName) {
     return myNameValidator.cleanUpBranchName(suggestedName);
   }
 }

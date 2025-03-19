@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class LocalVariableEvaluator
@@ -39,18 +25,24 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-class LocalVariableEvaluator implements Evaluator {
+class LocalVariableEvaluator implements ModifiableEvaluator {
   private static final Logger LOG = Logger.getInstance(LocalVariableEvaluator.class);
 
   private final String myLocalVariableName;
-  private EvaluationContextImpl myContext;
-  private LocalVariableProxyImpl myEvaluatedVariable;
-  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
   private final boolean myCanScanFrames;
+
+  // TODO remove non-final fields, see IDEA-366793
+  @Deprecated
+  private EvaluationContextImpl myContext;
+  @Deprecated
+  private LocalVariableProxyImpl myEvaluatedVariable;
+  @Deprecated
+  private DecompiledLocalVariable myEvaluatedDecompiledVariable;
 
   LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
@@ -58,7 +50,7 @@ class LocalVariableEvaluator implements Evaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
+  public @NotNull ModifiableValue evaluateModifiable(EvaluationContextImpl context) throws EvaluateException {
     StackFrameProxyImpl frameProxy = context.getFrameProxy();
     if (frameProxy == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.no.stackframe"));
@@ -80,7 +72,7 @@ class LocalVariableEvaluator implements Evaluator {
                 variable.equals(resolveVariable(frameProxy, myLocalVariableName, context.getProject(), process))) {
               myEvaluatedVariable = local;
               myContext = context;
-              return frameProxy.getValue(local);
+              return new ModifiableValue(frameProxy.getValue(local), new MyModifier(context, local, null));
             }
           }
         }
@@ -97,7 +89,7 @@ class LocalVariableEvaluator implements Evaluator {
               if (var.getMatchedNames().contains(myLocalVariableName) || var.getDefaultName().equals(myLocalVariableName)) {
                 myEvaluatedDecompiledVariable = var;
                 myContext = context;
-                return entry.getValue();
+                return new ModifiableValue(entry.getValue(), new MyModifier(context, null, var));
               }
             }
           }
@@ -139,61 +131,16 @@ class LocalVariableEvaluator implements Evaluator {
 
   @Override
   public Modifier getModifier() {
-    Modifier modifier = null;
     if ((myEvaluatedVariable != null || myEvaluatedDecompiledVariable != null) && myContext != null) {
-      modifier = new Modifier() {
-        @Override
-        public boolean canInspect() {
-          return true;
-        }
-
-        @Override
-        public boolean canSetValue() {
-          return true;
-        }
-
-        @Override
-        public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
-          StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
-          try {
-            assert frameProxy != null;
-            if (myEvaluatedVariable != null) {
-              frameProxy.setValue(myEvaluatedVariable, value);
-            }
-            else { // no debug info
-              LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable, value);
-            }
-          }
-          catch (EvaluateException e) {
-            LOG.error(e);
-          }
-        }
-
-        @Override
-        public Type getExpectedType() throws ClassNotLoadedException {
-          try {
-            return myEvaluatedVariable.getType();
-          }
-          catch (EvaluateException e) {
-            LOG.error(e);
-            return null;
-          }
-        }
-
-        @Override
-        public NodeDescriptorImpl getInspectItem(Project project) {
-          return new LocalVariableDescriptorImpl(project, myEvaluatedVariable);
-        }
-      };
+      return new MyModifier(myContext, myEvaluatedVariable, myEvaluatedDecompiledVariable);
     }
-    return modifier;
+    return null;
   }
 
-  @Nullable
-  private static PsiVariable resolveVariable(final StackFrameProxy frame,
-                                             final String name,
-                                             final Project project,
-                                             final DebugProcess process) {
+  private static @Nullable PsiVariable resolveVariable(final StackFrameProxy frame,
+                                                       final String name,
+                                                       final Project project,
+                                                       final DebugProcess process) {
     PsiElement place = ContextUtil.getContextElement(new SimpleStackFrameContext(frame, process));
     if (place == null) {
       return null;
@@ -205,5 +152,62 @@ class LocalVariableEvaluator implements Evaluator {
   @Override
   public String toString() {
     return myLocalVariableName;
+  }
+
+  private static class MyModifier implements Modifier {
+    private final EvaluationContextImpl myContext;
+    private final LocalVariableProxyImpl myEvaluatedVariable;
+    private final DecompiledLocalVariable myEvaluatedDecompiledVariable;
+
+    private MyModifier(EvaluationContextImpl context,
+                       LocalVariableProxyImpl evaluatedVariable,
+                       DecompiledLocalVariable evaluatedDecompiledVariable) {
+      this.myContext = context;
+      this.myEvaluatedVariable = evaluatedVariable;
+      this.myEvaluatedDecompiledVariable = evaluatedDecompiledVariable;
+    }
+
+    @Override
+    public boolean canInspect() {
+      return true;
+    }
+
+    @Override
+    public boolean canSetValue() {
+      return true;
+    }
+
+    @Override
+    public void setValue(Value value) throws ClassNotLoadedException, InvalidTypeException {
+      StackFrameProxyImpl frameProxy = myContext.getFrameProxy();
+      try {
+        assert frameProxy != null;
+        if (myEvaluatedVariable != null) {
+          frameProxy.setValue(myEvaluatedVariable, value);
+        }
+        else { // no debug info
+          LocalVariablesUtil.setValue(frameProxy.getStackFrame(), myEvaluatedDecompiledVariable, value);
+        }
+      }
+      catch (EvaluateException e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public Type getExpectedType() throws ClassNotLoadedException {
+      try {
+        return myEvaluatedVariable.getType();
+      }
+      catch (EvaluateException e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    @Override
+    public NodeDescriptorImpl getInspectItem(Project project) {
+      return new LocalVariableDescriptorImpl(project, myEvaluatedVariable);
+    }
   }
 }

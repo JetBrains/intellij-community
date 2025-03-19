@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
@@ -7,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.jetbrains.rd.util.reactive.IProperty
 import org.jetbrains.annotations.Nls
 
 class RangeCodeVisionModel(
@@ -24,20 +24,15 @@ class RangeCodeVisionModel(
   }
 
   private val projectModel = ProjectCodeVisionModel.getInstance(project)
-  private val lensForRange: List<CodeVisionEntry>
-  val inlays: ArrayList<Inlay<*>> = ArrayList<Inlay<*>>()
+  private val lensForRange: List<CodeVisionEntry> = lensMap.flatMap { it.value }
+  val inlays: ArrayList<Inlay<*>> = ArrayList()
 
-  init {
-    lensForRange = lensMap.flatMap { it.value }
+  fun handleLensClick(entry: CodeVisionEntry, anchorInlay: Inlay<*>) {
+    projectModel.handleLensClick(editor, anchoringRange, anchorInlay, entry)
   }
 
-  fun lensPopupActive(): IProperty<Boolean> = projectModel.lensPopupActive
-  fun handleLensClick(entry: CodeVisionEntry) {
-    projectModel.handleLensClick(editor, anchoringRange, entry)
-  }
-
-  fun handleLensRightClick() {
-    projectModel.handleLensRightClick()
+  fun handleLensRightClick(clickedEntry: CodeVisionEntry, anchorInlay: Inlay<*>) {
+    projectModel.handleLensRightClick(clickedEntry, anchorInlay)
   }
 
   fun handleLensExtraAction(selectedValue: CodeVisionEntry, actionId: String) {

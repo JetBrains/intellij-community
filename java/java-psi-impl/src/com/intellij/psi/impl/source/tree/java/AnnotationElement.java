@@ -52,14 +52,14 @@ public class AnnotationElement extends CompositeElement implements Constants {
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.PARAMETER_LIST:
         return findChildByType(ANNOTATION_PARAMETER_LIST);
 
       case ChildRole.CLASS_REFERENCE:
         return findChildByType(JAVA_CODE_REFERENCE);
+
+      default:
+        return null;
     }
   }
 }

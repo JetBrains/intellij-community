@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.util.messages.Topic;
@@ -17,7 +17,9 @@ import java.util.EventListener;
  */
 @FunctionalInterface
 public interface UISettingsListener extends EventListener {
-  Topic<UISettingsListener> TOPIC = new Topic<>(UISettingsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
   void uiSettingsChanged(@NotNull UISettings uiSettings);
+
+  @Topic.AppLevel
+  Topic<UISettingsListener> TOPIC = new Topic<>(UISettingsListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 }

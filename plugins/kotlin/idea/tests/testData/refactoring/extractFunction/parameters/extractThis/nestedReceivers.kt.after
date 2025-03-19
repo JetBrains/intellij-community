@@ -1,0 +1,13 @@
+fun bar() {
+    with("") { A22().apply { __dummyTestFun__(this@apply, this@with) } }
+}
+
+private fun __dummyTestFun__(a22: A22, string: String) {
+    a22.b(string.plus(""))
+}
+
+class A22 {
+    fun b(a: String) {}
+}
+
+// IGNORE_K1

@@ -1,12 +1,14 @@
 import datetime
-from _typeshed import Self
+from _typeshed import Incomplete, MaybeNone, Unused
 from collections.abc import Callable, Iterator
 from json import JSONDecoder
 from typing import Any
+from typing_extensions import Self
 
 from urllib3 import exceptions as urllib3_exceptions, fields, filepost, util
 
 from . import auth, cookies, exceptions, hooks, status_codes, utils
+from .adapters import HTTPAdapter
 from .cookies import RequestsCookieJar
 from .structures import CaseInsensitiveDict as CaseInsensitiveDict
 
@@ -40,32 +42,42 @@ super_len = utils.super_len
 to_native_string = utils.to_native_string
 codes = status_codes.codes
 
-REDIRECT_STATI: Any
-DEFAULT_REDIRECT_LIMIT: Any
-CONTENT_CHUNK_SIZE: Any
-ITER_CHUNK_SIZE: Any
+REDIRECT_STATI: Incomplete
+DEFAULT_REDIRECT_LIMIT: Incomplete
+CONTENT_CHUNK_SIZE: Incomplete
+ITER_CHUNK_SIZE: Incomplete
 
 class RequestEncodingMixin:
     @property
-    def path_url(self): ...
+    def path_url(self) -> str: ...
 
 class RequestHooksMixin:
     def register_hook(self, event, hook): ...
     def deregister_hook(self, event, hook): ...
 
 class Request(RequestHooksMixin):
-    hooks: Any
-    method: Any
-    url: Any
-    headers: Any
-    files: Any
-    data: Any
-    json: Any
-    params: Any
-    auth: Any
-    cookies: Any
+    hooks: Incomplete
+    method: Incomplete
+    url: Incomplete
+    headers: Incomplete
+    files: Incomplete
+    data: Incomplete
+    json: Incomplete
+    params: Incomplete
+    auth: Incomplete
+    cookies: Incomplete
     def __init__(
-        self, method=..., url=..., headers=..., files=..., data=..., params=..., auth=..., cookies=..., hooks=..., json=...
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        json=None,
     ) -> None: ...
     def prepare(self) -> PreparedRequest: ...
 
@@ -74,27 +86,37 @@ class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
     url: str | None
     headers: CaseInsensitiveDict[str]
     body: bytes | str | None
-    hooks: Any
+    hooks: Incomplete
     def __init__(self) -> None: ...
     def prepare(
-        self, method=..., url=..., headers=..., files=..., data=..., params=..., auth=..., cookies=..., hooks=..., json=...
+        self,
+        method=None,
+        url=None,
+        headers=None,
+        files=None,
+        data=None,
+        params=None,
+        auth=None,
+        cookies=None,
+        hooks=None,
+        json=None,
     ) -> None: ...
     def copy(self) -> PreparedRequest: ...
     def prepare_method(self, method) -> None: ...
     def prepare_url(self, url, params) -> None: ...
     def prepare_headers(self, headers) -> None: ...
-    def prepare_body(self, data, files, json=...) -> None: ...
-    def prepare_content_length(self, body) -> None: ...
-    def prepare_auth(self, auth, url=...) -> None: ...
+    def prepare_body(self, data, files, json=None) -> None: ...
+    def prepare_content_length(self, body: bytes | str | None) -> None: ...
+    def prepare_auth(self, auth, url="") -> None: ...
     def prepare_cookies(self, cookies) -> None: ...
     def prepare_hooks(self, hooks) -> None: ...
 
 class Response:
-    __attrs__: Any
+    __attrs__: Incomplete
     _content: bytes | None  # undocumented
     status_code: int
     headers: CaseInsensitiveDict[str]
-    raw: Any
+    raw: Incomplete
     url: str
     encoding: str | None
     history: list[Response]
@@ -102,12 +124,13 @@ class Response:
     cookies: RequestsCookieJar
     elapsed: datetime.timedelta
     request: PreparedRequest
+    connection: HTTPAdapter
     def __init__(self) -> None: ...
     def __bool__(self) -> bool: ...
     def __nonzero__(self) -> bool: ...
     def __iter__(self) -> Iterator[bytes]: ...
-    def __enter__(self: Self) -> Self: ...
-    def __exit__(self, *args: object) -> None: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(self, *args: Unused) -> None: ...
     @property
     def next(self) -> PreparedRequest | None: ...
     @property
@@ -118,12 +141,12 @@ class Response:
     def is_permanent_redirect(self) -> bool: ...
     @property
     def apparent_encoding(self) -> str: ...
-    def iter_content(self, chunk_size: int | None = ..., decode_unicode: bool = ...) -> Iterator[Any]: ...
+    def iter_content(self, chunk_size: int | None = 1, decode_unicode: bool = False) -> Iterator[Incomplete]: ...
     def iter_lines(
-        self, chunk_size: int | None = ..., decode_unicode: bool = ..., delimiter: str | bytes | None = ...
-    ) -> Iterator[Any]: ...
+        self, chunk_size: int | None = 512, decode_unicode: bool = False, delimiter: str | bytes | None = None
+    ) -> Iterator[Incomplete]: ...
     @property
-    def content(self) -> bytes: ...
+    def content(self) -> bytes | MaybeNone: ...
     @property
     def text(self) -> str: ...
     def json(
@@ -138,6 +161,6 @@ class Response:
         **kwds: Any,
     ) -> Any: ...
     @property
-    def links(self) -> dict[Any, Any]: ...
+    def links(self) -> dict[Incomplete, Incomplete]: ...
     def raise_for_status(self) -> None: ...
     def close(self) -> None: ...

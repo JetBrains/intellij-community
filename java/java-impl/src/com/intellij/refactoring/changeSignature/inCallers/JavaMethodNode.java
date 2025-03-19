@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inCallers;
 
 import com.intellij.openapi.project.Project;
@@ -7,6 +7,7 @@ import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.MemberNodeBase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class JavaMethodNode extends JavaMemberNode<PsiMethod> {
   }
 
   @Override
-  protected List<PsiMethod> computeCallers() {
+  protected @Unmodifiable List<PsiMethod> computeCallers() {
     final PsiReference[] refs = MethodReferencesSearch.search(myMethod).toArray(PsiReference.EMPTY_ARRAY);
 
     List<PsiMethod> result = new ArrayList<>();

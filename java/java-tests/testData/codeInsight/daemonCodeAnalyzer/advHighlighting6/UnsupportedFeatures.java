@@ -21,7 +21,7 @@ class UnsupportedFeatures {
     I i1 = <error descr="Method references are not supported at language level '6'">UnsupportedFeatures::m</error>;
     I i2 = <error descr="Lambda expressions are not supported at language level '6'">() -> { }</error>;
 
-    switch (<error descr="Incompatible types. Found: 'java.lang.String', required: 'byte, char, short or int'">list.get(0)</error>) {
+    switch (<error descr="Selector type of 'java.lang.String' is not supported at language level '6'">list.get(0)</error>) {
       case "foo": break;
     }
 
@@ -32,9 +32,9 @@ class UnsupportedFeatures {
     switch (list.size()) {
       case <error descr="Enhanced 'switch' blocks are not supported at language level '6'">1, 2</error>:
     }
-    System.out.println(<error descr="'switch' expressions are not supported at language level '6'">switch (list.size()) {
-      default -> "whoa!";
-    }</error>);
+    System.out.println(switch (list.size()) {
+      <error descr="Enhanced 'switch' blocks are not supported at language level '6'">default -> "whoa!";</error>
+    });
   }
 
   void f(<error descr="Receiver parameters are not supported at language level '6'">Object this</error>) { }

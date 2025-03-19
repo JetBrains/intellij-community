@@ -16,6 +16,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="AntMessageCustomizer" interface="com.intellij.lang.ant.config.execution.AntMessageCustomizer" dynamic="true"/>
   </extensionPoints>
 
@@ -26,7 +27,6 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
     <statistics.counterUsagesCollector implementationClass="com.intellij.lang.ant.AntActionsUsagesCollector"/>
 
     <projectService serviceInterface="com.intellij.lang.ant.config.AntConfiguration" serviceImplementation="com.intellij.lang.ant.config.impl.AntConfigurationImpl"/>
-    <projectService serviceImplementation="com.intellij.lang.ant.config.impl.AntWorkspaceConfiguration"/>
 
     <renameHandler implementation="com.intellij.lang.ant.refactoring.AntRenameHandler"/>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
@@ -90,7 +90,8 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
 
     <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
     <externalTextProvider implementation="com.intellij.lang.ant.config.impl.AntTextProvider"/>
-    <iconMapper mappingFile="antIconMappings.json"/>
+
+    <buildProcess.parametersProvider implementation="com.intellij.lang.ant.AntBuildParametersProvider"/>
   </extensions>
 
   <actions>

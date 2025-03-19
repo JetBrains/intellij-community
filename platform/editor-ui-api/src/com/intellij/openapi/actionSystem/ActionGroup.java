@@ -1,12 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -16,8 +20,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * Represents a group of actions.
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
- * @see com.intellij.openapi.actionSystem.CheckedActionGroup
- * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
@@ -27,6 +29,9 @@ public abstract class ActionGroup extends AnAction {
     }
   };
 
+  @ApiStatus.Internal
+  public static final DataKey<ActionGroup> CONTEXT_ACTION_GROUP_KEY = DataKey.create("context.action.group");
+
   private boolean mySearchable = true;
   private Set<AnAction> mySecondaryActions;
 
@@ -35,7 +40,7 @@ public abstract class ActionGroup extends AnAction {
    * popup set to {@code false}.
    */
   public ActionGroup() {
-    // avoid eagerly creating template presentation
+    // avoid template presentation creation
   }
 
   /**
@@ -52,12 +57,21 @@ public abstract class ActionGroup extends AnAction {
 
   public ActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName);
-    setPopup(popup);
+    // avoid template presentation creation
+    if (popup) {
+      getTemplatePresentation().setPopupGroup(popup);
+    }
   }
 
   public ActionGroup(@Nullable @ActionText String text,
                      @Nullable @ActionDescription String description,
                      @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public ActionGroup(@NotNull Supplier<@ActionText String> text,
+                     @NotNull Supplier<@ActionDescription String> description,
+                     @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(text, description, icon);
   }
 
@@ -75,39 +89,20 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * @return {@code true} if {@link #actionPerformed(AnActionEvent)} should be called.
-   * @deprecated Use {@link Presentation#isPerformGroup()} instead.
+   * A shortcut for {@code getTemplatePresentation().isPopupGroup()}
    */
-  @Deprecated(forRemoval = true)
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return false;
-  }
-
-  /**
-   * @see Presentation#isPopupGroup()}
-   */
-  @ApiStatus.NonExtendable
-  public boolean isPopup() {
+  public final boolean isPopup() {
     return getTemplatePresentation().isPopupGroup();
   }
 
-  /** @deprecated Use {@link Presentation#setPopupGroup(boolean)} instead. */
-  @Deprecated(forRemoval = true)
-  public boolean isPopup(@NotNull String place) {
-    return isPopup();
-  }
-
   /**
-   * Sets the default value of the popup flag for the group.
+   * A shortcut for {@code getTemplatePresentation().setPopupGroup(popup)}
+   *
    * A popup group is shown as a popup in menus.
    * <p>
    * In the {@link AnAction#update(AnActionEvent)} method {@code event.getPresentation().setPopupGroup(value)}
    * shall be used instead of this method to control the popup flag for the particular event and place.
    * <p>
-   * If the {@link #isPopup()} method is overridden, this method could be useless.
-   *
-   * @param popup If {@code true} the group will be shown as a popup in menus.
-   * @see Presentation#setPopupGroup(boolean)
    */
   public final void setPopup(boolean popup) {
     getTemplatePresentation().setPopupGroup(popup);
@@ -126,13 +121,17 @@ public abstract class ActionGroup extends AnAction {
    *
    * @see #getActionUpdateThread()
    */
+  @ApiStatus.OverrideOnly
   public abstract AnAction @NotNull [] getChildren(@Nullable AnActionEvent e);
 
+  /** @deprecated Use {@link DefaultActionGroup#getChildren(ActionManager)} instead or avoid altogether */
+  @Deprecated(forRemoval = true)
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
     return getChildren(null);
   }
 
-  final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {
+  @ApiStatus.Internal
+  public final void setAsPrimary(@NotNull AnAction action, boolean isPrimary) {
     if (isPrimary) {
       if (mySecondaryActions != null) {
         mySecondaryActions.remove(action);
@@ -148,12 +147,11 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * Allows the group to intercept and transform its expanded content.
+   * Allows the group to intercept and transform its expanded visible children.
    */
-  @NotNull
-  @ApiStatus.Experimental
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                   @NotNull UpdateSession updateSession) {
+  public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(
+    @NotNull AnActionEvent e,
+    @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     return Collections.unmodifiableList(visibleChildren);
   }
 
@@ -161,6 +159,7 @@ public abstract class ActionGroup extends AnAction {
     return mySecondaryActions == null || !mySecondaryActions.contains(action);
   }
 
+  @ApiStatus.Internal
   protected final void replace(@NotNull AnAction originalAction, @NotNull AnAction newAction) {
     if (mySecondaryActions != null) {
       if (mySecondaryActions.contains(originalAction)) {
@@ -168,19 +167,5 @@ public abstract class ActionGroup extends AnAction {
         mySecondaryActions.add(newAction);
       }
     }
-  }
-
-  /** @deprecated Use {@link Presentation#setHideGroupIfEmpty(boolean)} instead. */
-  @Deprecated
-  @ApiStatus.NonExtendable
-  public boolean hideIfNoVisibleChildren() {
-    return getTemplatePresentation().isHideGroupIfEmpty();
-  }
-
-  /** @deprecated Use {@link Presentation#setDisableGroupIfEmpty(boolean)} instead. */
-  @Deprecated
-  @ApiStatus.NonExtendable
-  public boolean disableIfNoVisibleChildren() {
-    return getTemplatePresentation().isDisableGroupIfEmpty();
   }
 }

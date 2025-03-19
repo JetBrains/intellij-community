@@ -1,0 +1,4 @@
+// DISABLE_ERRORS
+annotation class Ann
+
+expect class Foo constructor()

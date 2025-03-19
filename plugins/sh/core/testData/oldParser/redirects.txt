@@ -19,14 +19,12 @@ SHELL_SCRIPT
           PsiElement(word)('OUT')
   PsiElement(\n)('\n')
   COMMANDS_LIST
-    SIMPLE_COMMAND
-      GENERIC_COMMAND_DIRECTIVE
+    GENERIC_COMMAND_DIRECTIVE
+      REDIRECTION
         NUMBER
           PsiElement(int)('2')
-      SIMPLE_COMMAND_ELEMENT
-        REDIRECTION
-          PsiElement(>)('>')
-          PsiElement(word)('OUT')
+        PsiElement(>)('>')
+        PsiElement(word)('OUT')
   PsiElement(\n)('\n')
   COMMANDS_LIST
     SIMPLE_COMMAND
@@ -34,10 +32,10 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('2')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('2')
           PsiElement(>)('>')
           PsiElement(word)('OUT')
   PsiElement(\n)('\n')
@@ -82,11 +80,11 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('exec')
       PsiWhiteSpace(' ')
-      NUMBER
-        PsiElement(int)('9')
-      PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT
         REDIRECTION
+          NUMBER
+            PsiElement(int)('9')
+          PsiWhiteSpace(' ')
           PsiElement(<&)('<&')
           PsiWhiteSpace(' ')
           NUMBER

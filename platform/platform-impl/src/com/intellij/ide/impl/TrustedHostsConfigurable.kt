@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
@@ -19,55 +18,31 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.CellBuilder
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Component
-import javax.swing.JComponent
 import kotlin.math.max
 
+@ApiStatus.Internal
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
-
-  @Deprecated("Replaced by EP_NAME")
-  @ScheduledForRemoval
-  private val EP_NAME_OLD = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
 
   private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurableProvider>("com.intellij.trustedHostsConfigurableProvider")
 
   override fun createPanel(): DialogPanel {
-    val deprecatedPanels = mutableListOf<DialogPanel>()
     val result = panel {
       row {
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
       row {
-        val trustedPathsSettings = service<TrustedPathsSettings>()
+        val trustedPathsSettings = TrustedPathsSettings.getInstance()
         trustedLocationConfigurable(getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
                                     setValuesToSettings = { trustedPathsSettings.setTrustedPaths(it) },
                                     getNewValueFromUser = { getPathFromUser(it) })
       }.resizableRow()
 
-      // Remove this loop with EP_NAME_OLD
-      for (additionalPanel in EP_NAME_OLD.extensionList) {
-        // RIDER-92645 Port TrustedSolutionConfigurablePanelProvider to Kotlin UI DSL 2
-        val panel = com.intellij.ui.layout.panel() {
-          row {
-            additionalPanel.getCellBuilder(this)
-          }
-        }
-        deprecatedPanels.add(panel)
-        row {
-          cell(panel)
-        }
-      }
-
       for (additionalPanel in EP_NAME.extensionList) {
         additionalPanel.buildContent(this)
       }
-    }
-    for (panel in deprecatedPanels) {
-      result.registerIntegratedPanel(panel)
     }
     return result
   }
@@ -106,8 +81,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   private fun getPathFromUser(parent: Component): String? {
     val pathField = TextFieldWithBrowseButton(null, disposable)
     pathField.textField.columns = Messages.InputDialog.INPUT_DIALOG_COLUMNS
-    pathField.addBrowseFolderListener(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title"), null, null,
-                                      FileChooserDescriptorFactory.createSingleFolderDescriptor())
+    pathField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title")))
     val ok = DialogBuilder(parent)
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
       .setNorthPanel(pathField)
@@ -118,13 +92,6 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   override fun getId(): String {
     return "trusted.hosts"
   }
-}
-
-@ApiStatus.Internal
-@Deprecated("Replace by TrustedHostsConfigurableProvider")
-@ScheduledForRemoval
-interface TrustedHostsConfigurablePanelProvider {
-  fun getCellBuilder(row: com.intellij.ui.layout.Row) : CellBuilder<JComponent>
 }
 
 /**

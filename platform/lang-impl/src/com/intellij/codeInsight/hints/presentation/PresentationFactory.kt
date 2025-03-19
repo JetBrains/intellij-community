@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.InlayPresentationFactory.*
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
@@ -15,12 +16,11 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -34,10 +34,6 @@ import java.util.*
 import javax.swing.Icon
 import kotlin.math.max
 
-/**
- * Contains non-stable and not well-designed API. Will be changed in 2020.2
- */
-@ApiStatus.Experimental
 class PresentationFactory(private val editor: Editor) : InlayPresentationFactory {
   private val textMetricsStorage = InlayHintsUtils.getTextMetricStorage(editor)
   private val offsetFromTopProvider = object : InsetValueProvider {
@@ -71,7 +67,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return MouseHandlingPresentation(base, clickListener, hoverListener)
   }
 
-  @ApiStatus.Experimental
   @Contract(pure = true)
   fun textSpacePlaceholder(length: Int, isSmall: Boolean) : InlayPresentation {
     return TextPlaceholderPresentation(length, textMetricsStorage, isSmall)
@@ -118,8 +113,43 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
 
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun opaqueBorderedRoundWithBackgroundAndSmallInset(base: InlayPresentation, borderColor: Color): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundBorderedPresentation(
+      RoundWithBackgroundPresentation(
+        InsetPresentation(
+          base,
+          left = base.height / 2,
+          right = base.height / 2,
+          top = 0,
+          down = 0
+        ), base.height, base.height, editor.colorsScheme.defaultBackground, 1f
+      ), borderColor
+    ))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun offsetFromTopForSmallText(base: InlayPresentation) = DynamicInsetPresentation(base, offsetFromTopProvider)
+
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun scaledIcon(icon: Icon, scaleFactor: Float): InlayPresentation
+  {
+    return ScaledIconWithCustomFactorPresentation(textMetricsStorage, false, icon, editor.component, scaleFactor)
+  }
 
   @Contract(pure = true)
   override fun smallScaledIcon(icon: Icon): InlayPresentation
@@ -142,7 +172,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
 
   /**
    * Creates node, that can be collapsed/expanded by clicking on prefix/suffix.
-   * If presentation is collapsed, clicking to content will expand it.
+   * If presentation is collapsed, clicking on content will expand it.
    */
   @Contract(pure = true)
   fun collapsible(
@@ -183,7 +213,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   }
 
   /**
-   * On hover of any of [presentations] changes all the presentations with a given decorator.
+   * On hover of [presentations] changes all the presentations with a given decorator.
    * This presentation is stateless.
    */
   @Contract(pure = true)
@@ -253,6 +283,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return referenceInternal(base, onClickAction)
   }
 
+
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
     val hovered = onClick(
@@ -306,6 +337,11 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   @Contract(pure = true)
   fun withCursorOnHover(base: InlayPresentation, cursor: Cursor): InlayPresentation {
     return WithCursorOnHoverPresentation(base, cursor, editor)
+  }
+
+  @Contract(pure = true)
+  fun withCursorOnHoverWhenControlDown (base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor) { isControlDown(it) }
   }
 
   @Contract(pure = true)
@@ -393,7 +429,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
                                       WithAttributesPresentation.AttributesFlags().withIsDefault(true))
   }
 
-  private fun isControlDown(e: MouseEvent): Boolean = (SystemInfo.isMac && e.isMetaDown) || e.isControlDown
+  private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown
 
   @Contract(pure = true)
   fun withTooltip(@NlsContexts.HintText tooltip: String, base: InlayPresentation): InlayPresentation = when {
@@ -403,7 +439,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
           if (hint?.isVisible != true && editor.contentComponent.isShowing) {
-            hint = showTooltip(editor, event, tooltip)
+            hint = showTooltip(event, tooltip)
           }
         }
 
@@ -414,7 +450,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       })
     }
   }
-  private fun showTooltip(editor: Editor, e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
+  fun showTooltip(e: MouseEvent, @NlsContexts.HintText text: String): LightweightHint {
     val hint = run {
       val label = HintUtil.createInformationLabel(text)
       label.border = JBUI.Borders.empty(6, 6, 5, 6)
@@ -453,7 +489,6 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
       CommandProcessor.getInstance().executeCommand(target.project, { target.navigate(true) }, null, null)
     }
   }
-
 
   companion object {
     var customToStringProvider: ((PsiElement) -> String)? = null

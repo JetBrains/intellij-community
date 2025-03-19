@@ -1,4 +1,4 @@
-// "Make 'call()' return 'Callable<java.lang.Integer>'" "true"
+// "Make 'call()' return 'Callable<java.lang.Integer>' or ancestor" "true"
 public class a extends CallableEx<String> {
   public Callable<String> call() {
     return new Callable<Inte<caret>ger>();

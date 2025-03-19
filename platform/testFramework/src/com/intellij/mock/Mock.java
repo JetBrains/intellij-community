@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -171,10 +172,6 @@ public final class Mock {
     }
 
     @Override
-    public void unsplitWindow() {
-    }
-
-    @Override
     public void unsplitAllWindow() {
     }
 
@@ -304,6 +301,11 @@ public final class Mock {
     }
 
     @Override
+    public @NotNull @Unmodifiable List<@NotNull FileEditor> getAllEditorList(@NotNull VirtualFile file) {
+      return List.of();
+    }
+
+    @Override
     public FileEditor @NotNull [] getAllEditors() {
       return FileEditor.EMPTY_ARRAY;
     }
@@ -336,11 +338,10 @@ public final class Mock {
       return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
 
-    @Nullable
     @Override
-    public Object openFile(@NotNull VirtualFile file,
-                           @NotNull FileEditorOpenOptions options,
-                           @NotNull Continuation<? super FileEditorComposite> $completion) {
+    public @Nullable Object openFile(@NotNull VirtualFile file,
+                                     @NotNull FileEditorOpenOptions options,
+                                     @NotNull Continuation<? super FileEditorComposite> $completion) {
       return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
@@ -449,6 +450,11 @@ public final class Mock {
   public static class MyFileEditorProvider implements FileEditorProvider {
     @Override
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+      return false;
+    }
+
+    @Override
+    public boolean acceptRequiresReadAction() {
       return false;
     }
 

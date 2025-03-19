@@ -3,7 +3,6 @@
 package com.intellij.vcs.log.graph;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -15,6 +14,7 @@ import com.intellij.vcs.log.graph.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar;
 
@@ -33,7 +33,7 @@ public final class GraphStrUtils {
       long timestamp = commitsInfo.getTimestamp(i);
 
       s.append(commitIndex).append(CommitParser.SEPARATOR);
-      s.append(toStr.fun(commitId)).append(CommitParser.SEPARATOR);
+      s.append(toStr.apply(commitId)).append(CommitParser.SEPARATOR);
       s.append(timestamp);
     }
     return s.toString();

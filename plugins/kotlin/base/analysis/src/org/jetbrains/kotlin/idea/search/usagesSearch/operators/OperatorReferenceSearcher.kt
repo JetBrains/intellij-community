@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.forceResolveReferences
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.getReceiverTypeSearcherInfo
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
@@ -60,7 +61,15 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     protected fun processReferenceElement(element: TReferenceElement): Boolean {
         val reference = extractReference(element) ?: return true
         testLog { "Resolved ${logPresentation(element)}" }
-        return if (reference.isReferenceTo(targetDeclaration)) {
+        if (reference.isReferenceTo(targetDeclaration)) {
+            return consumer.process(reference)
+        }
+
+        val currentTargets = (reference as? PsiPolyVariantReference)?.multiResolve(false)?.mapNotNull { it.element as? KtDeclaration } ?: return true
+        if (targetDeclaration !is KtDeclaration) return true
+        val expectedTarget = targetDeclaration.expectDeclarationIfAny() ?: targetDeclaration
+        return if (expectedTarget in currentTargets.map { it.expectDeclarationIfAny() ?: it }
+        ) {
             consumer.process(reference)
         } else {
             true
@@ -190,15 +199,15 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
 
     fun run() {
 
-        val (psiClass, containsTypeOrDerivedInside) = runReadAction {
+        val (klass, containsTypeOrDerivedInside) = runReadAction {
             targetDeclaration.getReceiverTypeSearcherInfo(this is DestructuringDeclarationReferenceSearcher)
         } ?: return
 
         val inProgress = SearchesInProgress.get()
-        if (psiClass != null) {
-            if (!inProgress.add(psiClass)) {
+        if (klass != null) {
+            if (!inProgress.add(klass)) {
                 testLog {
-                    "ExpressionOfTypeProcessor is already started for ${runReadAction { psiClass.qualifiedName }}. Exit for operator ${logPresentation(
+                    "ExpressionOfTypeProcessor is already started for ${runReadAction { (klass as? PsiClass)?.qualifiedName ?: (klass as? PsiNamedElement)?.name ?: klass.text }}. Exit for operator ${logPresentation(
                         targetDeclaration
                     )}."
                 }
@@ -214,14 +223,14 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
         try {
             ExpressionsOfTypeProcessor(
                 containsTypeOrDerivedInside,
-                psiClass,
+                klass,
                 searchScope,
                 project,
                 possibleMatchHandler = { expression -> processPossibleReceiverExpression(expression) },
                 possibleMatchesInScopeHandler = { searchScope -> doPlainSearch(searchScope) }
             ).run()
         } finally {
-            inProgress.remove(psiClass ?: targetDeclaration)
+            inProgress.remove(klass ?: targetDeclaration)
         }
     }
 

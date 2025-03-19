@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -33,12 +33,14 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
+@ApiStatus.Internal
+@SuppressWarnings("SSBasedInspection")
 public final class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
   private static final Key<Long> LAST_TIME_INDENTS_BUILT = Key.create("LAST_TIME_INDENTS_BUILT");
@@ -78,7 +80,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
 
   private long nowStamp() {
     if (!myEditor.getSettings().isIndentGuidesShown()) return -1;
-    // include tab size into stamp to make sure indent guides are recalculated on tab size change
+    // include tab size in stamp to make sure indent guides are recalculated on tab size change
     return myDocument.getModificationStamp() ^ (((long)getTabSize()) << 24);
   }
 
@@ -105,7 +107,9 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
       while (curRange < myRanges.size() && curHighlight < oldHighlighters.size()) {
         TextRange range = myRanges.get(curRange);
         RangeHighlighter highlighter = oldHighlighters.get(curHighlight);
-        if (!highlighter.isValid()) break;
+        if (!highlighter.isValid()) {
+          break;
+        }
 
         int cmp = compare(range, highlighter);
         if (cmp < 0) {
@@ -150,8 +154,8 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     calculator.calculate();
     int[] lineIndents = calculator.lineIndents;
 
-    IntStack lines = new IntArrayList();
-    IntStack indents = new IntArrayList();
+    IntArrayList lines = new IntArrayList();
+    IntArrayList indents = new IntArrayList();
 
     lines.push(0);
     indents.push(0);
@@ -220,8 +224,7 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     }
   }
 
-  @NotNull
-  private static RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
+  private static @NotNull RangeHighlighter createHighlighter(MarkupModel mm, TextRange range) {
     RangeHighlighter highlighter = mm.addRangeHighlighter(null, range.getStartOffset(), range.getEndOffset(), 0,
                                                                 HighlighterTargetArea.EXACT_RANGE);
     highlighter.setCustomRenderer(RENDERER);
@@ -238,11 +241,11 @@ public final class IndentsPass extends TextEditorHighlightingPass implements Dum
     return new ArrayList<>(myDescriptors);
   }
 
-  private class IndentsCalculator {
-    @NotNull final Map<Language, TokenSet> myComments = new HashMap<>();
+  private final class IndentsCalculator {
+    final @NotNull Map<Language, TokenSet> myComments = new HashMap<>();
     final int @NotNull [] lineIndents; // negative value means the line is empty (or contains a comment) and indent
     // (denoted by absolute value) was deduced from enclosing non-empty lines
-    @NotNull final CharSequence myChars;
+    final @NotNull CharSequence myChars;
 
     IndentsCalculator() {
       lineIndents = new int[myDocument.getLineCount()];

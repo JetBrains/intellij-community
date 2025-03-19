@@ -1,88 +1,98 @@
+from _typeshed import ConvertibleToInt, Incomplete, Unused
 from array import array
-from typing import Any
+from collections.abc import Iterable, MutableSequence
+from typing import ClassVar, Generic, Literal, TypeVar
+from typing_extensions import Self
 
+from openpyxl.descriptors.base import Bool, Integer, Typed, _ConvertibleToBool
+from openpyxl.descriptors.excel import ExtensionList
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.styles.alignment import Alignment
+from openpyxl.styles.protection import Protection
 
-class ArrayDescriptor:
-    key: Any
-    def __init__(self, key) -> None: ...
-    def __get__(self, instance, cls): ...
-    def __set__(self, instance, value) -> None: ...
+_T = TypeVar("_T")
 
-class StyleArray(array[Any]):
-    tagname: str
-    fontId: Any
-    fillId: Any
-    borderId: Any
-    numFmtId: Any
-    protectionId: Any
-    alignmentId: Any
-    pivotButton: Any
-    quotePrefix: Any
-    xfId: Any
-    def __new__(cls, args=...): ...
-    def __hash__(self): ...
-    def __copy__(self): ...
-    def __deepcopy__(self, memo): ...
+class ArrayDescriptor(Generic[_T]):
+    key: int
+    def __init__(self, key: int) -> None: ...
+    def __get__(self, instance: MutableSequence[_T], cls: Unused) -> _T: ...
+    def __set__(self, instance: MutableSequence[_T], value: _T) -> None: ...
+
+class StyleArray(array[int]):
+    tagname: ClassVar[str]
+    fontId: ArrayDescriptor[int]
+    fillId: ArrayDescriptor[int]
+    borderId: ArrayDescriptor[int]
+    numFmtId: ArrayDescriptor[int]
+    protectionId: ArrayDescriptor[int]
+    alignmentId: ArrayDescriptor[int]
+    pivotButton: ArrayDescriptor[int]
+    quotePrefix: ArrayDescriptor[int]
+    xfId: ArrayDescriptor[int]
+    def __new__(cls, args: bytes | bytearray | Iterable[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0]) -> Self: ...
+    def __init__(self, args: bytes | bytearray | Iterable[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0]) -> None: ...
+    def __hash__(self) -> int: ...
+    def __copy__(self) -> StyleArray: ...
+    def __deepcopy__(self, memo: Unused) -> StyleArray: ...
 
 class CellStyle(Serialisable):
-    tagname: str
-    numFmtId: Any
-    fontId: Any
-    fillId: Any
-    borderId: Any
-    xfId: Any
-    quotePrefix: Any
-    pivotButton: Any
-    applyNumberFormat: Any
-    applyFont: Any
-    applyFill: Any
-    applyBorder: Any
+    tagname: ClassVar[str]
+    numFmtId: Integer[Literal[False]]
+    fontId: Integer[Literal[False]]
+    fillId: Integer[Literal[False]]
+    borderId: Integer[Literal[False]]
+    xfId: Integer[Literal[True]]
+    quotePrefix: Bool[Literal[True]]
+    pivotButton: Bool[Literal[True]]
+    applyNumberFormat: Bool[Literal[True]]
+    applyFont: Bool[Literal[True]]
+    applyFill: Bool[Literal[True]]
+    applyBorder: Bool[Literal[True]]
     # Overwritten by properties below
-    # applyAlignment: Bool
-    # applyProtection: Bool
-    alignment: Any
-    protection: Any
-    extLst: Any
-    __elements__: Any
-    __attrs__: Any
+    # applyAlignment: Bool[Literal[True]]
+    # applyProtection: Bool[Literal[True]]
+    alignment: Typed[Alignment, Literal[True]]
+    protection: Typed[Protection, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        numFmtId: int = ...,
-        fontId: int = ...,
-        fillId: int = ...,
-        borderId: int = ...,
-        xfId: Any | None = ...,
-        quotePrefix: Any | None = ...,
-        pivotButton: Any | None = ...,
-        applyNumberFormat: Any | None = ...,
-        applyFont: Any | None = ...,
-        applyFill: Any | None = ...,
-        applyBorder: Any | None = ...,
-        applyAlignment: Any | None = ...,
-        applyProtection: Any | None = ...,
-        alignment: Any | None = ...,
-        protection: Any | None = ...,
-        extLst: Any | None = ...,
+        numFmtId: ConvertibleToInt = 0,
+        fontId: ConvertibleToInt = 0,
+        fillId: ConvertibleToInt = 0,
+        borderId: ConvertibleToInt = 0,
+        xfId: ConvertibleToInt | None = None,
+        quotePrefix: _ConvertibleToBool | None = None,
+        pivotButton: _ConvertibleToBool | None = None,
+        applyNumberFormat: _ConvertibleToBool | None = None,
+        applyFont: _ConvertibleToBool | None = None,
+        applyFill: _ConvertibleToBool | None = None,
+        applyBorder: _ConvertibleToBool | None = None,
+        applyAlignment: Unused = None,
+        applyProtection: Unused = None,
+        alignment: Alignment | None = None,
+        protection: Protection | None = None,
+        extLst: Unused = None,
     ) -> None: ...
     def to_array(self): ...
     @classmethod
     def from_array(cls, style): ...
     @property
-    def applyProtection(self): ...
+    def applyProtection(self) -> Literal[True] | None: ...
     @property
-    def applyAlignment(self): ...
+    def applyAlignment(self) -> Literal[True] | None: ...
 
 class CellStyleList(Serialisable):
-    tagname: str
-    __attrs__: Any
+    tagname: ClassVar[str]
+    __attrs__: ClassVar[tuple[str, ...]]
     # Overwritten by property below
     # count: Integer
-    xf: Any
-    alignment: Any
-    protection: Any
-    __elements__: Any
-    def __init__(self, count: Any | None = ..., xf=...) -> None: ...
+    xf: Incomplete
+    alignment: Incomplete
+    protection: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Unused = None, xf=()) -> None: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
     def __getitem__(self, idx): ...

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -23,21 +9,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
+@ApiStatus.Internal
+public final class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
-  private final static String FILE_STATUS_COLORS_ID = "file.status.colors";
+  private static final String FILE_STATUS_COLORS_ID = "file.status.colors";
 
-  @Nullable private FileStatusColorsPanel myPanel;
+  private @Nullable FileStatusColorsPanel myPanel;
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return FILE_STATUS_COLORS_ID;
   }
 
@@ -46,15 +33,13 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
     return "reference.versionControl.highlight";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ApplicationBundle.message("title.file.status.colors");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
     }

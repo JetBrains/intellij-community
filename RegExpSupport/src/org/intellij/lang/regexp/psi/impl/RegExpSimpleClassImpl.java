@@ -16,10 +16,9 @@
 package org.intellij.lang.regexp.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import org.jetbrains.annotations.NotNull;
-
 import org.intellij.lang.regexp.psi.RegExpElementVisitor;
 import org.intellij.lang.regexp.psi.RegExpSimpleClass;
+import org.jetbrains.annotations.NotNull;
 
 public class RegExpSimpleClassImpl extends RegExpElementImpl implements RegExpSimpleClass {
     public RegExpSimpleClassImpl(ASTNode node) {
@@ -27,8 +26,7 @@ public class RegExpSimpleClassImpl extends RegExpElementImpl implements RegExpSi
     }
 
     @Override
-    @NotNull
-    public Kind getKind() {
+    public @NotNull Kind getKind() {
       return switch (getUnescapedText()) {
         case "." -> Kind.ANY;
         case "\\d" -> Kind.DIGIT;

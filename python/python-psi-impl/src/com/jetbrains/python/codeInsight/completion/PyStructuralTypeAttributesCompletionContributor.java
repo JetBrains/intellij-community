@@ -36,7 +36,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  *
  * @author Mikhail Golubev
  */
-public class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyStructuralTypeAttributesCompletionContributor extends CompletionContributor implements DumbAware {
 
   private static final Logger LOG = Logger.getInstance(PyStructuralTypeAttributesCompletionContributor.class);
 
@@ -98,9 +98,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
     }
 
-    private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
-                                                          @NotNull Set<String> seenAttrs,
-                                                          @NotNull TypeEvalContext context) {
+    private static Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
+                                                                 @NotNull Set<String> seenAttrs,
+                                                                 @NotNull TypeEvalContext context) {
       final Set<PyClass> candidates = new HashSet<>();
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
@@ -134,10 +134,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       return Collections.unmodifiableSet(suitableClasses);
     }
 
-    @NotNull
-    private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
-                                                      @NotNull TypeEvalContext context,
-                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static @NotNull Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                                      @NotNull TypeEvalContext context,
+                                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
         availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
@@ -150,10 +149,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
      * The approach used here does not require proper MRO order of ancestors and its performance is greatly improved by reusing
      * intermediate results in case of a large class hierarchy.
      */
-    @NotNull
-    private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
-                                                @NotNull TypeEvalContext context,
-                                                @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static @NotNull Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+                                                       @NotNull TypeEvalContext context,
+                                                       @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
       if (ancestors != null) {
         return ancestors;
@@ -179,8 +177,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       return result;
     }
 
-    @NotNull
-    private static String debugClassCoordinates(PyClass cls) {
+    private static @NotNull String debugClassCoordinates(PyClass cls) {
       return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";
     }
   }

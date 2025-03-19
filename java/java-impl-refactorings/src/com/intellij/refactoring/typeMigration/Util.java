@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.psi.*;
@@ -25,10 +25,8 @@ public final class Util {
     return parent;
   }
 
-  @Nullable
-  public static PsiElement normalizeElement(final PsiElement element) {
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+  public static @Nullable PsiElement normalizeElement(final PsiElement element) {
+    if (element instanceof PsiMethod method) {
       final PsiType initialMethodReturnType = method.getReturnType();
       if (initialMethodReturnType == null) {
         return null;
@@ -80,7 +78,7 @@ public final class Util {
     return Arrays.stream(es).allMatch(Util::canBeMigrated);
   }
 
-  private static boolean canBeMigrated(@Nullable final PsiElement e) {
+  private static boolean canBeMigrated(final @Nullable PsiElement e) {
     if (e == null) {
       return false;
     }

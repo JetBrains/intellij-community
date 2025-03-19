@@ -1,14 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -20,15 +21,12 @@ class ReplaceInfixOrOperatorCallFix(
     element: KtExpression,
     private val notNullNeeded: Boolean,
     private val binaryOperatorName: String = ""
-) : KotlinPsiOnlyQuickFixAction<KtExpression>(element) {
+) : PsiUpdateModCommandAction<KtExpression>(element) {
 
-    override fun getText() = KotlinBundle.message("replace.with.safe.call")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("replace.with.safe.call")
 
-    override fun getFamilyName() = text
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        val psiFactory = KtPsiFactory(project)
+    override fun invoke(context: ActionContext, element: KtExpression, updater: ModPsiUpdater) {
+        val psiFactory = KtPsiFactory(context.project)
         val elvis = element.elvisOrEmpty(notNullNeeded)
         var replacement: PsiElement? = null
         when (element) {
@@ -98,7 +96,7 @@ class ReplaceInfixOrOperatorCallFix(
             }
         }
         if (elvis.isNotEmpty()) {
-            replacement?.moveCaretToEnd(editor, project)
+            replacement?.moveCaretToEnd(context.project, updater)
         }
     }
 }

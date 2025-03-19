@@ -1,0 +1,758 @@
+c:com.intellij.dvcs.DvcsRememberedInputs
+- <init>():V
+- addUrl(java.lang.String):V
+- addUrl(java.lang.String,java.lang.String):V
+- clear():V
+- getCloneParentDir():java.lang.String
+- getState():com.intellij.dvcs.DvcsRememberedInputs$State
+- getUserNameForUrl(java.lang.String):java.lang.String
+- getVisitedUrls():java.util.List
+- loadState(com.intellij.dvcs.DvcsRememberedInputs$State):V
+- setCloneParentDir(java.lang.String):V
+c:com.intellij.dvcs.DvcsRememberedInputs$State
+- cloneParentDir:java.lang.String
+- visitedUrls:java.util.List
+- <init>():V
+c:com.intellij.dvcs.DvcsRememberedInputs$UrlAndUserName
+- url:java.lang.String
+- userName:java.lang.String
+- <init>():V
+f:com.intellij.dvcs.DvcsUtil
+- sf:REPOSITORY_COMPARATOR:java.util.Comparator
+- sf:VIRTUAL_FILE_PRESENTATION_COMPARATOR:java.util.Comparator
+- <init>():V
+- s:addMappingIfSubRoot(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
+- s:assertFileExists(java.io.File,java.lang.String):V
+- s:disableActionIfAnyRepositoryIsFresh(com.intellij.openapi.actionSystem.AnActionEvent,java.util.Collection,java.lang.String):V
+- s:ensureAllChildrenInVfs(com.intellij.openapi.vfs.VirtualFile):V
+- s:findVcsRootFor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- s:findVirtualFilesWithRefresh(java.util.List):java.util.List
+- s:getDateString(com.intellij.vcs.log.TimedVcsCommit):java.lang.String
+- s:getPushSupport(com.intellij.openapi.vcs.AbstractVcs):com.intellij.dvcs.push.PushSupport
+- s:getSelectedFile(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.VirtualFile
+- s:getShortHash(java.lang.String):java.lang.String
+- s:getShortNames(java.util.Collection):java.lang.String
+- s:getShortRepositoryName(com.intellij.dvcs.repo.Repository):java.lang.String
+- s:groupCommitsByRoots(com.intellij.dvcs.repo.RepositoryManager,java.util.List):java.util.Map
+- s:guessCurrentRepositoryQuick(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.AbstractRepositoryManager,java.lang.String):com.intellij.dvcs.repo.Repository
+- s:guessRepositoryForFile(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.RepositoryManager,com.intellij.openapi.vfs.VirtualFile,java.lang.String):com.intellij.dvcs.repo.Repository
+- s:guessRepositoryForOperation(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.AbstractRepositoryManager):com.intellij.dvcs.repo.Repository
+- s:guessRepositoryForOperation(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.AbstractRepositoryManager,com.intellij.openapi.actionSystem.DataContext):com.intellij.dvcs.repo.Repository
+- s:guessRepositoryForOperation(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext):com.intellij.dvcs.repo.Repository
+- s:guessVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- s:guessWidgetRepository(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.AbstractRepositoryManager,java.lang.String,com.intellij.openapi.actionSystem.DataContext):com.intellij.dvcs.repo.Repository
+- s:guessWidgetRepository(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.AbstractRepositoryManager,java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- s:joinMessagesOrNull(java.util.Collection):java.lang.String
+- s:joinShortNames(java.util.Collection):java.lang.String
+- s:joinShortNames(java.util.Collection,I):java.lang.String
+- s:joinWithAnd(java.util.List,I):java.lang.String
+- s:sortRepositories(java.util.Collection):java.util.List
+- s:sortVirtualFilesByPresentation(java.util.Collection):java.util.List
+- s:tryLoadFile(java.io.File):java.lang.String
+- s:tryLoadFile(java.io.File,java.lang.String):java.lang.String
+- s:tryLoadFileOrReturn(java.io.File,java.lang.String):java.lang.String
+- s:tryLoadFileOrReturn(java.io.File,java.lang.String,java.lang.String):java.lang.String
+- s:tryOrThrow(java.util.concurrent.Callable,java.lang.Object):java.lang.Object
+- s:visitVcsDirVfs(com.intellij.openapi.vfs.VirtualFile,java.util.Collection):V
+- s:workingTreeChangeStarted(com.intellij.openapi.project.Project):com.intellij.openapi.application.AccessToken
+- s:workingTreeChangeStarted(com.intellij.openapi.project.Project,java.lang.String):com.intellij.openapi.application.AccessToken
+- s:workingTreeChangeStarted(com.intellij.openapi.project.Project,java.lang.String,com.intellij.history.ActivityId):com.intellij.openapi.application.AccessToken
+c:com.intellij.dvcs.MultiMessage
+- <init>(java.util.Collection,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,Z,Z):V
+- b:<init>(java.util.Collection,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:append(java.lang.Object,java.lang.String):com.intellij.dvcs.MultiMessage
+- f:asString():java.lang.String
+f:com.intellij.dvcs.MultiRootBranches
+- sf:diverged(java.util.Collection):Z
+- sf:getCommonCurrentBranch(java.util.Collection):java.lang.String
+- sf:getCommonName(java.util.Collection,kotlin.jvm.functions.Function1):java.lang.String
+- sf:isSyncOptionEnabled(com.intellij.dvcs.branch.DvcsSyncSettings):Z
+f:com.intellij.dvcs.MultiRootMessage
+- com.intellij.dvcs.MultiMessage
+- <init>(com.intellij.openapi.project.Project,java.util.Collection,Z,Z):V
+- b:<init>(com.intellij.openapi.project.Project,java.util.Collection,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+a:com.intellij.dvcs.actions.DvcsCompareWithAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pa:createPopup(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.Repository,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.ui.popup.JBPopup
+- ps:createPopup(java.lang.String,java.util.List,java.util.function.Consumer):com.intellij.openapi.ui.popup.JBPopup
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- ps:getPresentableCurrentBranchName(com.intellij.dvcs.repo.Repository):java.lang.String
+- pa:getRepositoryManager(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.AbstractRepositoryManager
+- pa:nothingToCompare(com.intellij.dvcs.repo.Repository):Z
+- ps:showDiffBetweenRevision(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,com.intellij.openapi.util.ThrowableComputable):V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.dvcs.actions.DvcsCompareWithBranchAction
+- com.intellij.dvcs.actions.DvcsCompareWithAction
+- <init>():V
+- p:createPopup(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.Repository,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.ui.popup.JBPopup
+- ps:fileDoesntExistInBranchError(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.String
+- pa:getBranchNamesExceptCurrent(com.intellij.dvcs.repo.Repository):java.util.List
+- pa:getDiffChanges(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.util.Collection
+a:com.intellij.dvcs.actions.DvcsQuickListContentProvider
+- com.intellij.openapi.vcs.actions.VcsQuickListContentProvider
+- <init>():V
+- ps:add(java.lang.String,com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
+- pa:collectVcsSpecificActions(com.intellij.openapi.actionSystem.ActionManager):java.util.List
+- p:customizeActions(com.intellij.openapi.actionSystem.ActionManager,java.util.List):V
+- getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.AnActionEvent):java.util.List
+- pa:getVcsName():java.lang.String
+- replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
+com.intellij.dvcs.branch.BranchType
+- a:getName():java.lang.String
+c:com.intellij.dvcs.branch.DvcsBranchInfo
+- f:repoPath:java.lang.String
+- f:sourceName:java.lang.String
+- <init>():V
+- <init>(java.lang.String,java.lang.String):V
+- equals(java.lang.Object):Z
+- hashCode():I
+a:com.intellij.dvcs.branch.DvcsBranchManager
+- sf:DVCS_BRANCH_SETTINGS_CHANGED:com.intellij.util.messages.Topic
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.dvcs.branch.DvcsBranchSettings,com.intellij.dvcs.branch.BranchType[],com.intellij.dvcs.repo.AbstractRepositoryManager):V
+- p:getDefaultBranchNames(com.intellij.dvcs.branch.BranchType):java.util.Collection
+- getFavoriteBranches(com.intellij.dvcs.branch.BranchType):java.util.Map
+- isFavorite(com.intellij.dvcs.branch.BranchType,com.intellij.dvcs.repo.Repository,java.lang.String):Z
+- isGroupingEnabled(com.intellij.dvcs.branch.GroupingKey):Z
+- setFavorite(com.intellij.dvcs.branch.BranchType,com.intellij.dvcs.repo.Repository,java.lang.String,Z):V
+- setGrouping(com.intellij.dvcs.branch.GroupingKey,Z):V
+com.intellij.dvcs.branch.DvcsBranchManager$DvcsBranchManagerListener
+- branchFavoriteSettingsChanged():V
+- branchGroupingSettingsChanged(com.intellij.dvcs.branch.GroupingKey,Z):V
+- showTagsSettingsChanged(Z):V
+a:com.intellij.dvcs.branch.DvcsBranchPopup
+- pf:myCurrentRepository:com.intellij.dvcs.repo.Repository
+- pf:myInSpecificRepository:Z
+- pf:myMultiRootBranchConfig:com.intellij.dvcs.branch.DvcsMultiRootBranchConfig
+- pf:myPopup:com.intellij.dvcs.ui.BranchActionGroupPopup
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myRepositoryManager:com.intellij.dvcs.repo.AbstractRepositoryManager
+- pf:myVcs:com.intellij.openapi.vcs.AbstractVcs
+- pf:myVcsSettings:com.intellij.dvcs.branch.DvcsSyncSettings
+- p:<init>(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.repo.AbstractRepositoryManager,com.intellij.dvcs.branch.DvcsMultiRootBranchConfig,com.intellij.dvcs.branch.DvcsSyncSettings,com.intellij.openapi.util.Condition,java.lang.String,com.intellij.openapi.actionSystem.DataContext):V
+- asListPopup():com.intellij.openapi.ui.popup.ListPopup
+- pa:createRepositoriesActions():com.intellij.dvcs.ui.LightActionGroup
+- pa:fillPopupWithCurrentRepositoryActions(com.intellij.dvcs.ui.LightActionGroup,com.intellij.dvcs.ui.LightActionGroup):V
+- pa:fillWithCommonRepositoryActions(com.intellij.dvcs.ui.LightActionGroup,com.intellij.dvcs.repo.AbstractRepositoryManager):V
+- p:filterRepositoriesNotOnThisBranch(java.lang.String,java.util.List):java.util.List
+- p:userWantsSyncControl():Z
+f:com.intellij.dvcs.branch.DvcsBranchPopup$MyMoreIndex
+- sf:DEFAULT_NUM:I
+- sf:MAX_NUM:I
+- <init>():V
+f:com.intellij.dvcs.branch.DvcsBranchSettings
+- com.intellij.openapi.components.BaseState
+- <init>():V
+- f:getGroupingKeyIds():java.util.Set
+f:com.intellij.dvcs.branch.DvcsBranchSyncPolicyUpdateNotifier
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.dvcs.branch.DvcsSyncSettings,com.intellij.dvcs.repo.AbstractRepositoryManager):V
+- f:initBranchSyncPolicyIfNotInitialized():V
+f:com.intellij.dvcs.branch.DvcsBranchUtil
+- <init>():V
+- s:find(java.util.Collection,com.intellij.dvcs.repo.Repository,java.lang.String):com.intellij.dvcs.branch.DvcsBranchInfo
+- s:getPathFor(com.intellij.dvcs.repo.Repository):java.lang.String
+- s:shortenBranchName(java.lang.String):java.lang.String
+- s:swapRevisions(java.util.List):java.util.List
+f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner
+- sf:Companion:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion
+f:com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion
+- f:create(java.lang.String,java.lang.String):com.intellij.openapi.ui.DialogPanel
+- bs:create$default(com.intellij.dvcs.branch.DvcsBranchesDivergedBanner$Companion,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.openapi.ui.DialogPanel
+com.intellij.dvcs.branch.DvcsCompareSettings
+- a:setSwapSidesInCompareBranches(Z):V
+- a:shouldSwapSidesInCompareBranches():Z
+a:com.intellij.dvcs.branch.DvcsMultiRootBranchConfig
+- pf:myRepositories:java.util.Collection
+- <init>(java.util.Collection):V
+- diverged():Z
+- getCurrentBranch():java.lang.String
+- a:getLocalBranchNames():java.util.Collection
+com.intellij.dvcs.branch.DvcsSyncSettings
+- a:getSyncSetting():com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- a:setSyncSetting(com.intellij.dvcs.branch.DvcsSyncSettings$Value):V
+e:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- java.lang.Enum
+- sf:DONT_SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- sf:NOT_DECIDED:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- sf:SYNC:com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- s:valueOf(java.lang.String):com.intellij.dvcs.branch.DvcsSyncSettings$Value
+- s:values():com.intellij.dvcs.branch.DvcsSyncSettings$Value[]
+a:com.intellij.dvcs.branch.DvcsTaskHandler
+- com.intellij.openapi.vcs.VcsTaskHandler
+- p:<init>(com.intellij.dvcs.repo.AbstractRepositoryManager,com.intellij.openapi.project.Project,java.lang.String):V
+- pa:checkout(java.lang.String,java.util.List,java.lang.Runnable):V
+- pa:checkoutAsNewBranch(java.lang.String,java.util.List):V
+- closeTask(com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo,com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo):V
+- pa:getActiveBranch(com.intellij.dvcs.repo.Repository):java.lang.String
+- pa:getAllBranches(com.intellij.dvcs.repo.Repository):java.lang.Iterable
+- getAllExistingTasks():com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo[]
+- getCurrentTasks():com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo[]
+- pa:hasBranch(com.intellij.dvcs.repo.Repository,com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo):Z
+- isEnabled():Z
+- isSyncEnabled():Z
+- pa:mergeAndClose(java.lang.String,java.util.List):V
+- startNewTask(java.lang.String):com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo
+- switchToTask(com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo,java.lang.Runnable):Z
+e:com.intellij.dvcs.branch.GroupingKey
+- java.lang.Enum
+- sf:GROUPING_BY_DIRECTORY:com.intellij.dvcs.branch.GroupingKey
+- sf:GROUPING_BY_REPOSITORY:com.intellij.dvcs.branch.GroupingKey
+- f:getDescription():java.lang.String
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getId():java.lang.String
+- f:getText():java.lang.String
+- s:valueOf(java.lang.String):com.intellij.dvcs.branch.GroupingKey
+- s:values():com.intellij.dvcs.branch.GroupingKey[]
+a:com.intellij.dvcs.branch.TrackReposSynchronouslyAction
+- com.intellij.openapi.actionSystem.ToggleAction
+- com.intellij.openapi.project.DumbAware
+- p:<init>():V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getSettings(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.dvcs.branch.DvcsSyncSettings
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+f:com.intellij.dvcs.cherrypick.VcsCherryPickManager
+- <init>(com.intellij.openapi.project.Project):V
+- cherryPick(com.intellij.vcs.log.VcsLogCommitSelection):V
+- getCherryPickerFor(com.intellij.openapi.vcs.VcsKey):com.intellij.dvcs.cherrypick.VcsCherryPicker
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.cherrypick.VcsCherryPickManager
+- isCherryPickAlreadyStartedFor(java.util.List):Z
+a:com.intellij.dvcs.commit.AmendCommitService
+- com.intellij.vcs.commit.AmendCommitAware
+- <init>(com.intellij.openapi.project.Project):V
+- getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
+- pf:getProject():com.intellij.openapi.project.Project
+f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
+- sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
+f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
+- com.intellij.openapi.vcs.FilesProcessor
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
+- f:clearFiles(java.util.Collection):Z
+- doActionOnChosenFiles(java.util.Collection):V
+- doFilterFiles(java.util.Collection):java.util.List
+- f:getValidFiles():java.util.List
+- f:isNotEmpty():Z
+- f:muteForCurrentProject():V
+- f:mutedForCurrentProject():Z
+- f:onIgnoredFilesUpdate(java.util.Set,java.util.Set):V
+a:com.intellij.dvcs.ignore.VcsIgnoredFilesHolderBase
+- com.intellij.dvcs.repo.VcsManagedFilesHolderBase
+- <init>(com.intellij.dvcs.repo.AbstractRepositoryManager):V
+- containsFile(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vfs.VirtualFile):Z
+- pa:getHolder(com.intellij.dvcs.repo.Repository):com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder
+- isInUpdatingMode():Z
+- values():java.util.List
+a:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase
+- com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder
+- com.intellij.openapi.vcs.changes.ChangeListListener
+- com.intellij.vfs.AsyncVfsEventsListener
+- sf:Companion:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Companion
+- pf:repository:com.intellij.dvcs.repo.Repository
+- <init>(com.intellij.dvcs.repo.Repository,com.intellij.dvcs.repo.AbstractRepositoryManager):V
+- addUpdateStateListener(com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener):V
+- changeListUpdateDone():V
+- containsFile(com.intellij.openapi.vcs.FilePath):Z
+- dispose():V
+- filesChanged(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
+- getIgnoredFilePaths():java.util.Set
+- isInUpdateMode():Z
+- removeIgnoredFiles(java.util.Collection):java.util.Collection
+- pa:requestIgnored(java.util.Collection):java.util.Set
+- bs:requestIgnored$default(com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase,java.util.Collection,I,java.lang.Object):java.util.Set
+- pa:scanTurnedOff():Z
+- f:setupListeners(kotlinx.coroutines.CoroutineScope):V
+- startRescan():V
+- startRescan(java.lang.Runnable):V
+f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Companion
+f:com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase$Waiter
+- com.intellij.dvcs.ignore.VcsIgnoredHolderUpdateListener
+- <init>(com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase):V
+- updateFinished(java.util.Collection,Z):V
+- f:waitFor():V
+com.intellij.dvcs.push.PrePushHandler
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:getPresentableName():java.lang.String
+- handle(com.intellij.openapi.project.Project,java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
+- handle(java.util.List,com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
+e:com.intellij.dvcs.push.PrePushHandler$Result
+- java.lang.Enum
+- sf:ABORT:com.intellij.dvcs.push.PrePushHandler$Result
+- sf:ABORT_AND_CLOSE:com.intellij.dvcs.push.PrePushHandler$Result
+- sf:OK:com.intellij.dvcs.push.PrePushHandler$Result
+- s:valueOf(java.lang.String):com.intellij.dvcs.push.PrePushHandler$Result
+- s:values():com.intellij.dvcs.push.PrePushHandler$Result[]
+f:com.intellij.dvcs.push.PushController
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.push.ui.VcsPushDialog,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- createAdditionalPanels():java.util.Map
+- createTopPanel():javax.swing.JComponent
+- dispose():V
+- executeHandlers(com.intellij.openapi.progress.ProgressIndicator):com.intellij.dvcs.push.PrePushHandler$Result
+- getProject():com.intellij.openapi.project.Project
+- getPushPanelLog():com.intellij.dvcs.push.ui.PushLog
+- getSelectedPushSpecs():java.util.Map
+- hasCommitWarnings():Z
+- isPushAllowed():Z
+- push(Z):V
+c:com.intellij.dvcs.push.PushController$HandlerException
+- java.lang.RuntimeException
+- <init>(java.lang.String,java.util.List,java.lang.Throwable):V
+- getFailedHandlerName():java.lang.String
+- getSkippedHandlers():java.util.List
+com.intellij.dvcs.push.PushInfo
+- a:getCommits():java.util.List
+- a:getPushSpec():com.intellij.dvcs.push.PushSpec
+- a:getRepository():com.intellij.dvcs.repo.Repository
+com.intellij.dvcs.push.RepositoryNodeListener
+- a:onSelectionChanged(Z):V
+- a:onTargetChanged(com.intellij.dvcs.push.PushTarget):V
+- a:onTargetInEditMode(java.lang.String):V
+c:com.intellij.dvcs.push.ui.CommitNode
+- javax.swing.tree.DefaultMutableTreeNode
+- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.VcsFullCommitDetails):V
+- getTooltip():java.lang.String
+- getUserObject():com.intellij.vcs.log.VcsFullCommitDetails
+- render(com.intellij.ui.ColoredTreeCellRenderer):V
+f:com.intellij.dvcs.push.ui.PushLog
+- javax.swing.JPanel
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.actionSystem.UiDataProvider
+- <init>(com.intellij.openapi.project.Project,com.intellij.ui.CheckedTreeNode,com.intellij.openapi.application.ModalityState,Z):V
+- dispose():V
+- fireEditorUpdated(java.lang.String):V
+- getPreferredFocusedComponent():javax.swing.JComponent
+- getTree():com.intellij.ui.CheckboxTree
+- highlightNodeOrFirst(com.intellij.dvcs.push.ui.RepositoryNode,Z):V
+- selectIfNothingSelected(javax.swing.tree.TreeNode):V
+- setBusyLoading(Z):V
+- setChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.Collection):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+f:com.intellij.dvcs.push.ui.PushLogTreeUtil
+- sf:EDIT_MODE_PROP:java.lang.String
+- <init>():V
+- s:addTransparencyIfNeeded(com.intellij.ui.SimpleColoredComponent,com.intellij.ui.SimpleTextAttributes,Z):com.intellij.ui.SimpleTextAttributes
+- s:getTagAtForRenderer(com.intellij.ui.CheckboxTree$CheckboxTreeCellRenderer,java.awt.event.MouseEvent):java.lang.Object
+c:com.intellij.dvcs.push.ui.PushTargetTextField
+- com.intellij.util.textCompletion.TextFieldWithCompletion
+- <init>(com.intellij.openapi.project.Project,java.util.List,java.lang.String):V
+- p:updateBorder(com.intellij.openapi.editor.ex.EditorEx):V
+f:com.intellij.dvcs.push.ui.PushUtils
+- sf:getProhibitedTarget(com.intellij.dvcs.push.ui.VcsPushUi):com.intellij.dvcs.push.PushTarget
+- sf:getProhibitedTargetConfigurablePath(com.intellij.dvcs.push.ui.VcsPushUi):java.lang.String
+c:com.intellij.dvcs.push.ui.RepositoryNode
+- com.intellij.ui.CheckedTreeNode
+- java.lang.Comparable
+- pf:myLoading:java.util.concurrent.atomic.AtomicBoolean
+- cancelLoading():V
+- compareTo(com.intellij.dvcs.push.ui.RepositoryNode):I
+- fireOnCancel():V
+- fireOnChange():V
+- fireOnSelectionChange(Z):V
+- forceUpdateUiModelWithTypedText(java.lang.String):V
+- p:getRepositoryPresentationDetails():java.lang.String
+- getUserObject():java.lang.Object
+- isCheckboxVisible():Z
+- isChecked():Z
+- isEditableNow():Z
+- isLoading():Z
+- render(com.intellij.ui.ColoredTreeCellRenderer):V
+- render(com.intellij.ui.ColoredTreeCellRenderer,java.lang.String):V
+- setChecked(Z):V
+- startLoading(javax.swing.JTree,java.util.concurrent.Future,Z):V
+- stopLoading():V
+c:com.intellij.dvcs.push.ui.RepositoryWithBranchPanel
+- com.intellij.ui.components.panels.NonOpaquePanel
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,com.intellij.dvcs.push.PushTargetPanel):V
+- addRepoNodeListener(com.intellij.dvcs.push.RepositoryNodeListener):V
+- fireOnCancel():V
+- fireOnChange():V
+- fireOnSelectionChange(Z):V
+- getArrow():java.lang.String
+- getRepositoryName():java.lang.String
+- getSourceName():java.lang.String
+- getTargetPanel():com.intellij.dvcs.push.PushTargetPanel
+- getTreeCellEditorComponent(javax.swing.JTree,java.lang.Object,Z,Z,Z,I,Z):java.awt.Component
+- isEditable():Z
+com.intellij.dvcs.push.ui.VcsLinkListener
+- a:hyperlinkActivated(javax.swing.tree.DefaultMutableTreeNode,java.awt.event.MouseEvent):V
+c:com.intellij.dvcs.push.ui.VcsLinkedTextComponent
+- javax.swing.JLabel
+- <init>(java.lang.String,com.intellij.dvcs.push.ui.VcsLinkListener):V
+- fireOnClick(javax.swing.tree.DefaultMutableTreeNode,java.awt.event.MouseEvent):V
+- getText():java.lang.String
+- render(com.intellij.ui.ColoredTreeCellRenderer):V
+- setSelected(Z):V
+- setTransparent(Z):V
+- setUnderlined(Z):V
+- updateLinkText(java.lang.String):V
+c:com.intellij.dvcs.push.ui.VcsPushDialog
+- com.intellij.openapi.ui.DialogWrapper
+- com.intellij.dvcs.push.ui.VcsPushUi
+- com.intellij.openapi.actionSystem.DataProvider
+- pf:myController:com.intellij.dvcs.push.PushController
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.openapi.project.Project,java.util.Collection,java.util.List,com.intellij.dvcs.repo.Repository,com.intellij.dvcs.push.PushSource):V
+- <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.dvcs.repo.Repository):V
+- canPush():Z
+- p:createActions():javax.swing.Action[]
+- p:createCenterPanel():javax.swing.JComponent
+- p:createContentPaneBorder():javax.swing.border.Border
+- p:createOptionsPanel():javax.swing.JPanel
+- p:createSouthAdditionalPanel():javax.swing.JPanel
+- p:createSouthPanel():javax.swing.JComponent
+- p:doOKAction():V
+- p:doValidate():com.intellij.openapi.ui.ValidationInfo
+- enableOkActions(Z):V
+- executeAfterRunningPrePushHandlers(com.intellij.openapi.progress.Task$Backgroundable):V
+- getAdditionalOptionValue(com.intellij.dvcs.push.PushSupport):com.intellij.dvcs.push.VcsPushOptionValue
+- getData(java.lang.String):java.lang.Object
+- p:getDimensionServiceKey():java.lang.String
+- p:getHelpId():java.lang.String
+- p:getOKAction():javax.swing.Action
+- getPreferredFocusedComponent():javax.swing.JComponent
+- getSelectedPushSpecs():java.util.Map
+- hasWarnings():Z
+- p:postponeValidation():Z
+- push(Z):V
+- runPrePushHandlersInModalTask():com.intellij.dvcs.push.PrePushHandler$Result
+- updateOkActions():V
+com.intellij.dvcs.push.ui.VcsPushUi
+- sf:VCS_PUSH_DIALOG:com.intellij.openapi.actionSystem.DataKey
+- a:canPush():Z
+- a:executeAfterRunningPrePushHandlers(com.intellij.openapi.progress.Task$Backgroundable):V
+- a:getAdditionalOptionValue(com.intellij.dvcs.push.PushSupport):com.intellij.dvcs.push.VcsPushOptionValue
+- a:getSelectedPushSpecs():java.util.Map
+- a:push(Z):V
+a:com.intellij.dvcs.repo.AbstractRepositoryManager
+- com.intellij.dvcs.repo.RepositoryManager
+- com.intellij.openapi.Disposable
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.VcsKey,java.lang.String):V
+- addExternalRepository(com.intellij.openapi.vfs.VirtualFile,com.intellij.dvcs.repo.Repository):V
+- dispose():V
+- a:getRepositories():java.util.List
+- p:getRepositories(java.lang.Class):java.util.List
+- getRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- getRepositoryForFileQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- getRepositoryForFileQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- getRepositoryForRootQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- getRepositoryForRootQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- getVcs():com.intellij.openapi.vcs.AbstractVcs
+- isExternal(com.intellij.dvcs.repo.Repository):Z
+- moreThanOneRoot():Z
+- removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
+- shouldProposeSyncControl():Z
+- updateAllRepositories():V
+- updateRepository(com.intellij.openapi.vfs.VirtualFile):V
+a:com.intellij.dvcs.repo.ClonePathProvider
+- <init>():V
+- s:defaultParentDirectoryPath(com.intellij.openapi.project.Project,com.intellij.dvcs.DvcsRememberedInputs):java.lang.String
+- a:getParentDirectoryPath(com.intellij.openapi.project.Project,com.intellij.dvcs.DvcsRememberedInputs):java.lang.String
+- a:getRelativeDirectoryPathForVcsUrl(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+- s:relativeDirectoryPathForVcsUrl(com.intellij.openapi.project.Project,java.lang.String):java.lang.String
+c:com.intellij.dvcs.repo.RepoStateException
+- java.lang.Exception
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
+a:com.intellij.dvcs.repo.RepositoryImpl
+- com.intellij.dvcs.repo.Repository
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):V
+- p:<init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.Disposable):V
+- dispose():V
+- equals(java.lang.Object):Z
+- getPresentableUrl():java.lang.String
+- getProject():com.intellij.openapi.project.Project
+- getRoot():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
+- isDisposed():Z
+- isFresh():Z
+a:com.intellij.dvcs.repo.VcsManagedFilesHolderBase
+- com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
+- sf:Companion:com.intellij.dvcs.repo.VcsManagedFilesHolderBase$Companion
+- <init>():V
+- addFile(com.intellij.openapi.vcs.FilePath):V
+- cleanAll():V
+- cleanUnderScope(com.intellij.openapi.vcs.changes.VcsDirtyScope):V
+- copy():com.intellij.openapi.vcs.changes.FileHolder
+f:com.intellij.dvcs.repo.VcsManagedFilesHolderBase$Companion
+com.intellij.dvcs.repo.VcsRepositoryCreator
+- a:createRepositoryIfValid(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.Disposable):com.intellij.dvcs.repo.Repository
+- a:getVcsKey():com.intellij.openapi.vcs.VcsKey
+f:com.intellij.dvcs.repo.VcsRepositoryManager
+- com.intellij.openapi.Disposable
+- sf:Companion:com.intellij.dvcs.repo.VcsRepositoryManager$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:VCS_REPOSITORY_MAPPING_UPDATED:com.intellij.util.messages.Topic
+- f:addExternalRepository(com.intellij.openapi.vfs.VirtualFile,com.intellij.dvcs.repo.Repository):V
+- dispose():V
+- f:getExternalRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- f:getExternalRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
+- f:getRepositories():java.util.Collection
+- f:getRepositoryForFile(com.intellij.openapi.vcs.FilePath,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFileQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRootQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForRootQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- f:isExternal(com.intellij.dvcs.repo.Repository):Z
+- f:removeExternalRepository(com.intellij.openapi.vfs.VirtualFile):V
+- f:waitForAsyncTaskCompletion():V
+f:com.intellij.dvcs.repo.VcsRepositoryManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
+com.intellij.dvcs.repo.VcsRepositoryMappingListener
+- a:mappingChanged():V
+a:com.intellij.dvcs.ui.BranchActionGroup
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.openapi.project.DumbAware
+- <init>():V
+- s:getIncomingOutgoingIcon():javax.swing.Icon
+- getRightIcon():javax.swing.Icon
+- hasIncomingCommits():Z
+- hasOutgoingCommits():Z
+- isFavorite():Z
+- setFavorite(Z):V
+- p:setIcons(javax.swing.Icon,javax.swing.Icon,javax.swing.Icon,javax.swing.Icon):V
+- toggle():V
+f:com.intellij.dvcs.ui.BranchActionGroupPopup
+- com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup
+- <init>(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.util.Condition,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String,com.intellij.openapi.actionSystem.DataContext):V
+- addToolbarAction(com.intellij.openapi.actionSystem.AnAction,Z):V
+- handleSelect(Z):V
+- handleSelect(Z,java.awt.event.InputEvent):V
+- storeDimensionSize():V
+- update():V
+- s:wrapWithMoreActionIfNeeded(com.intellij.openapi.project.Project,com.intellij.dvcs.ui.LightActionGroup,java.util.List,I,java.lang.String):V
+- s:wrapWithMoreActionIfNeeded(com.intellij.openapi.project.Project,com.intellij.dvcs.ui.LightActionGroup,java.util.List,I,java.lang.String,Z):V
+f:com.intellij.dvcs.ui.BranchActionUtil
+- sf:FAVORITE_BRANCH_COMPARATOR:java.util.Comparator
+- <init>():V
+- s:getNumOfFavorites(java.util.List):I
+- s:getNumOfTopShownBranches(java.util.List):I
+a:com.intellij.dvcs.ui.CloneDvcsDialog
+- com.intellij.openapi.ui.DialogWrapper
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myVcsDirectoryName:java.lang.String
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):V
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String):V
+- p:createCenterPanel():javax.swing.JComponent
+- p:doOKAction():V
+- p:doValidateAll():java.util.List
+- getDirectoryName():java.lang.String
+- getParentDirectory():java.lang.String
+- getPreferredFocusedComponent():javax.swing.JComponent
+- pa:getRememberedInputs():com.intellij.dvcs.DvcsRememberedInputs
+- getSourceRepositoryURL():java.lang.String
+- prependToHistory(java.lang.String):V
+- rememberSettings():V
+- pa:test(java.lang.String):com.intellij.dvcs.ui.CloneDvcsDialog$TestResult
+pc:com.intellij.dvcs.ui.CloneDvcsDialog$TestResult
+- sf:SUCCESS:com.intellij.dvcs.ui.CloneDvcsDialog$TestResult
+- <init>(java.lang.String):V
+- getError():java.lang.String
+- isSuccess():Z
+f:com.intellij.dvcs.ui.CloneDvcsValidationUtils
+- <init>():V
+- s:checkDirectory(java.lang.String,javax.swing.JComponent):com.intellij.openapi.ui.ValidationInfo
+- s:checkDirectory(java.lang.String,javax.swing.JTextField):com.intellij.openapi.ui.ValidationInfo
+- s:checkRepositoryURL(javax.swing.JComponent,java.lang.String):com.intellij.openapi.ui.ValidationInfo
+- s:createDestination(java.lang.String):com.intellij.openapi.ui.ValidationInfo
+- s:isRepositoryUrlValid(java.lang.String):Z
+c:com.intellij.dvcs.ui.CommitListPanel
+- javax.swing.JPanel
+- com.intellij.openapi.actionSystem.UiDataProvider
+- <init>(java.util.List,java.lang.String):V
+- addListMultipleSelectionListener(com.intellij.util.Consumer):V
+- addListSelectionListener(com.intellij.util.Consumer):V
+- clearSelection():V
+- getPreferredFocusComponent():javax.swing.JComponent
+- registerDiffAction(com.intellij.openapi.actionSystem.AnAction):V
+- setCommits(java.util.List):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+c:com.intellij.dvcs.ui.CompareBranchesDialog
+- <init>(com.intellij.dvcs.ui.CompareBranchesHelper,java.lang.String,java.lang.String,com.intellij.dvcs.util.CommitCompareInfo,com.intellij.dvcs.repo.Repository,Z):V
+- show():V
+c:com.intellij.dvcs.ui.CompareBranchesDiffPanel
+- javax.swing.JPanel
+- com.intellij.openapi.actionSystem.UiDataProvider
+- sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
+- <init>(com.intellij.openapi.project.Project,com.intellij.dvcs.branch.DvcsCompareSettings,java.lang.String,java.lang.String):V
+- disableControls():V
+- enableControls():V
+- getChangesBrowser():com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+- getPreferredFocusComponent():javax.swing.JComponent
+- setCompareInfo(com.intellij.dvcs.util.CommitCompareInfo):V
+- setEmptyText(java.lang.String):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+c:com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider
+- com.intellij.openapi.actionSystem.AnActionExtensionProvider
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isActive(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.dvcs.ui.CompareBranchesHelper
+- a:formatLogCommand(java.lang.String,java.lang.String):java.lang.String
+- a:getDvcsCompareSettings():com.intellij.dvcs.branch.DvcsCompareSettings
+- a:getProject():com.intellij.openapi.project.Project
+- a:getRepositoryManager():com.intellij.dvcs.repo.RepositoryManager
+a:com.intellij.dvcs.ui.DvcsCloneDialogComponent
+- com.intellij.openapi.vcs.ui.VcsCloneComponent
+- com.intellij.openapi.vcs.ui.VcsCloneComponent$WithSettableUrl
+- p:errorComponent:com.intellij.util.ui.components.BorderLayoutPanel
+- <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.dvcs.DvcsRememberedInputs,com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener):V
+- dispose():V
+- a:doClone(com.intellij.openapi.vcs.CheckoutProvider$Listener):V
+- doValidateAll():java.util.List
+- f:getDirectory():java.lang.String
+- pf:getErrorComponent():com.intellij.util.ui.components.BorderLayoutPanel
+- pf:getMainPanel():com.intellij.openapi.ui.DialogPanel
+- getPreferredFocusedComponent():javax.swing.JComponent
+- f:getProject():com.intellij.openapi.project.Project
+- pf:getRememberedInputs():com.intellij.dvcs.DvcsRememberedInputs
+- f:getUrl():java.lang.String
+- getView():javax.swing.JPanel
+- p:isOkActionEnabled():Z
+- isOkEnabled():Z
+- pf:setErrorComponent(com.intellij.util.ui.components.BorderLayoutPanel):V
+- f:setProject(com.intellij.openapi.project.Project):V
+- setUrl(java.lang.String):V
+- pf:updateOkActionState(com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener):V
+a:com.intellij.dvcs.ui.DvcsStatusWidget
+- com.intellij.openapi.wm.impl.status.EditorBasedWidget
+- com.intellij.openapi.wm.StatusBarWidget$Multiframe
+- com.intellij.openapi.wm.StatusBarWidget$MultipleTextValuesPresentation
+- psf:LOG:com.intellij.openapi.diagnostic.Logger
+- p:<init>(com.intellij.openapi.project.Project,java.lang.String):V
+- pa:getFullBranchName(com.intellij.dvcs.repo.Repository):java.lang.String
+- getIcon():javax.swing.Icon
+- p:getIcon(com.intellij.dvcs.repo.Repository):javax.swing.Icon
+- getPopup():com.intellij.openapi.ui.popup.JBPopup
+- getPresentation():com.intellij.openapi.wm.StatusBarWidget$WidgetPresentation
+- getSelectedValue():java.lang.String
+- p:getToolTip(com.intellij.dvcs.repo.Repository):java.lang.String
+- getTooltipText():java.lang.String
+- p:getWidgetPopup(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.Repository):com.intellij.openapi.ui.popup.JBPopup
+- pa:guessCurrentRepository(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- install(com.intellij.openapi.wm.StatusBar):V
+- pa:isMultiRoot(com.intellij.openapi.project.Project):Z
+- pa:rememberRecentRoot(java.lang.String):V
+- p:updateLater():V
+f:com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
+- com.intellij.ui.DocumentAdapter
+- sf:Companion:com.intellij.dvcs.ui.FilePathDocumentChildPathHandle$Companion
+- f:trySetChildPath(java.lang.String):V
+f:com.intellij.dvcs.ui.FilePathDocumentChildPathHandle$Companion
+- f:install(javax.swing.text.Document,java.lang.String):com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
+c:com.intellij.dvcs.ui.LightActionGroup
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.openapi.actionSystem.ActionUpdateThreadAware$Recursive
+- <init>():V
+- <init>(Z):V
+- f:add(com.intellij.openapi.actionSystem.AnAction):V
+- f:addAction(com.intellij.openapi.actionSystem.AnAction):V
+- f:addAll(com.intellij.openapi.actionSystem.ActionGroup):V
+- f:addAll(java.util.List):V
+- f:addAll(com.intellij.openapi.actionSystem.AnAction[]):V
+- f:addSeparator():V
+- addSeparator(java.lang.String):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+a:com.intellij.dvcs.ui.NewBranchAction
+- com.intellij.openapi.project.DumbAwareAction
+- sf:icon:javax.swing.Icon
+- pf:myProject:com.intellij.openapi.project.Project
+- pf:myRepositories:java.util.List
+- <init>(com.intellij.openapi.project.Project,java.util.List):V
+- a:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+com.intellij.dvcs.ui.PopupElementWithAdditionalInfo
+- getInfoText():java.lang.String
+c:com.intellij.dvcs.ui.RepositoryChangesBrowserNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
+- com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$NodeWithFilePath
+- sf:Companion:com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion
+- <init>(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager):V
+- b:<init>(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- compareUserObjects(com.intellij.dvcs.repo.Repository):I
+- getNodeFilePath():com.intellij.openapi.vcs.FilePath
+- getSortWeight():I
+- getTextPresentation():java.lang.String
+- render(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,Z,Z,Z):V
+f:com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion
+- f:getColorManager(com.intellij.openapi.project.Project):com.intellij.vcs.log.ui.VcsLogColorManager
+- f:getRepositoryIcon(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager):com.intellij.util.ui.ColorIcon
+- bs:getRepositoryIcon$default(com.intellij.dvcs.ui.RepositoryChangesBrowserNode$Companion,com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.ui.VcsLogColorManager,I,java.lang.Object):com.intellij.util.ui.ColorIcon
+f:com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer
+- com.intellij.ui.SimpleListCellRenderer
+- <init>():V
+- customize(javax.swing.JList,com.intellij.dvcs.repo.Repository,I,Z,Z):V
+c:com.intellij.dvcs.ui.RootAction
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.dvcs.ui.PopupElementWithAdditionalInfo
+- com.intellij.openapi.actionSystem.ActionUpdateThreadAware$Recursive
+- com.intellij.openapi.project.DumbAware
+- pf:myRepository:com.intellij.dvcs.repo.Repository
+- <init>(com.intellij.dvcs.repo.Repository,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- getInfoText():java.lang.String
+f:com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
+- com.intellij.openapi.ui.TextFieldWithBrowseButton
+- <init>(java.lang.String):V
+- f:trySetChildPath(java.lang.String):V
+a:com.intellij.dvcs.ui.VcsLogAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- pa:actionPerformed(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getRepositoryForRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- pa:getRepositoryManager(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.AbstractRepositoryManager
+- pa:isEnabled(com.intellij.util.containers.MultiMap):Z
+- p:isVisible(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+a:com.intellij.dvcs.ui.VcsLogOneCommitPerRepoAction
+- com.intellij.dvcs.ui.VcsLogAction
+- <init>():V
+- p:actionPerformed(com.intellij.openapi.project.Project,com.intellij.util.containers.MultiMap):V
+- pa:actionPerformed(com.intellij.openapi.project.Project,java.util.Map):V
+- p:isEnabled(com.intellij.util.containers.MultiMap):Z
+a:com.intellij.dvcs.ui.VcsLogSingleCommitAction
+- com.intellij.openapi.project.DumbAwareAction
+- <init>():V
+- pa:actionPerformed(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.Hash):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getRepositoryForRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
+- pa:getRepositoryManager(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.AbstractRepositoryManager
+- p:isEnabled(com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.Hash):Z
+- p:isVisible(com.intellij.openapi.project.Project,com.intellij.dvcs.repo.Repository,com.intellij.vcs.log.Hash):Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.dvcs.util.CommitCompareInfo
+- <init>():V
+- <init>(com.intellij.dvcs.util.CommitCompareInfo$InfoType):V
+- getBranchToHeadCommits(com.intellij.dvcs.repo.Repository):java.util.List
+- getHeadToBranchCommits(com.intellij.dvcs.repo.Repository):java.util.List
+- getInfoType():com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- getRepositories():java.util.Collection
+- getTotalDiff():java.util.List
+- isEmpty():Z
+- put(com.intellij.dvcs.repo.Repository,java.util.List,java.util.List):V
+- putTotalDiff(com.intellij.dvcs.repo.Repository,java.util.Collection):V
+- p:updateTotalDiff(java.util.Map):V
+e:com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- java.lang.Enum
+- sf:BOTH:com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- sf:BRANCH_TO_HEAD:com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- sf:HEAD_TO_BRANCH:com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- s:valueOf(java.lang.String):com.intellij.dvcs.util.CommitCompareInfo$InfoType
+- s:values():com.intellij.dvcs.util.CommitCompareInfo$InfoType[]
+a:com.intellij.dvcs.util.LocalCommitCompareInfo
+- com.intellij.dvcs.util.CommitCompareInfo
+- <init>():V
+- a:copyChangesFromBranch(java.util.List,Z):V

@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -28,7 +28,7 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
-    ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
+    ApplicationInfo appInfo = ApplicationInfo.getInstance();
     Calendar cal = appInfo.getBuildDate();
 
     String output = "Build version: ";
@@ -43,9 +43,11 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += ' ' + buildInfo + ' ' + buildDate;
     output += '\n';
 
-    output += "Theme: ";
-    output += LafManager.getInstance().getCurrentLookAndFeel().getName();
-    output += '\n';
+    if (LafManager.getInstance().getCurrentUIThemeLookAndFeel() != null) {
+      output += "Theme: ";
+      output += LafManager.getInstance().getCurrentUIThemeLookAndFeel().getName();
+      output += '\n';
+    }
 
     output += "JRE: ";
     output += System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
@@ -61,6 +63,10 @@ final class AboutTroubleInfoCollector implements GeneralTroubleInfoCollector {
     output += "Operating System: ";
     output += SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION;
     output += " (" + SystemInfo.OS_ARCH + (CpuArch.isEmulated() ? ", emulated" : "") + ')';
+    output += '\n';
+
+    output += "Toolkit: ";
+    output += Toolkit.getDefaultToolkit().getClass().getName();
     output += '\n';
 
     output += PathManager.PROPERTY_CONFIG_PATH + "=" + logPath(PathManager.getConfigPath()) + '\n';

@@ -1,5 +1,0 @@
-# The following methods have custom classmethod decorators
-stripe\..*\.delete
-stripe\..*PaymentIntent\.confirm
-stripe\.api_resources\..*\.SearchableAPIResource\.search  # Not defined on the actual class in v3, but expected to exist. 
-stripe\.api_resources\..*\.SearchableAPIResource\.search_auto_paging_iter  # Not defined on the actual class in v3, but expected to exist. 

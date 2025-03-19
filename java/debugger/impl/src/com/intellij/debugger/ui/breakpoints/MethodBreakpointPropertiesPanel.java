@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -41,9 +28,8 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
   //}
 
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     JPanel _panel, _panel0;
 
     myEmulatedCheckBox = new JCheckBox(JavaDebuggerBundle.message("label.method.breakpoint.properties.panel.emulated"));
@@ -53,7 +39,7 @@ public class MethodBreakpointPropertiesPanel extends XBreakpointCustomProperties
     DialogUtil.registerMnemonic(myWatchExitCheckBox);
 
 
-    Box watchBox = Box.createVerticalBox();
+    JBBox watchBox = JBBox.createVerticalBox();
     _panel = JBUI.Panels.simplePanel();
     _panel.add(myEmulatedCheckBox, BorderLayout.NORTH);
     watchBox.add(_panel);

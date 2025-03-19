@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.ide.DataManager;
@@ -15,10 +15,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class AppFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {
 
   private final NotNullLazyValue<AppFontPanel> myFontPanelInstance =
@@ -29,9 +31,8 @@ public abstract class AppFontConfigurable implements SearchableConfigurable, Con
       }
     }));
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return getFontPanel().getComponent();
   }
 
@@ -53,8 +54,7 @@ public abstract class AppFontConfigurable implements SearchableConfigurable, Con
     getFontOptions().update(getUIFontPreferences());
   }
 
-  @NotNull
-  private FontPreferences getUIFontPreferences() {
+  private @NotNull FontPreferences getUIFontPreferences() {
     return getFontPanel().getOptionsPanel().getFontPreferences();
   }
 
@@ -64,16 +64,13 @@ public abstract class AppFontConfigurable implements SearchableConfigurable, Con
     getFontPanel().getOptionsPanel().updateOnChangedFont();
   }
 
-  @NotNull
-  private FontPreferences getStoredPreferences() {
+  private @NotNull FontPreferences getStoredPreferences() {
     return getFontOptions().getFontPreferences();
   }
 
-  @NotNull
-  protected abstract AppFontOptions<?> getFontOptions();
+  protected abstract @NotNull AppFontOptions<?> getFontOptions();
 
-  @NotNull
-  private AppFontPanel getFontPanel() {
+  private @NotNull AppFontPanel getFontPanel() {
     return myFontPanelInstance.getValue();
   }
 
@@ -84,14 +81,12 @@ public abstract class AppFontConfigurable implements SearchableConfigurable, Con
     }
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "reference.settingsdialog.IDE.editor.colors";
   }
 
-  @NotNull
-  protected abstract AppFontOptionsPanel createFontOptionsPanel(@NotNull EditorColorsScheme previewScheme);
+  protected abstract @NotNull AppFontOptionsPanel createFontOptionsPanel(@NotNull EditorColorsScheme previewScheme);
 
   protected static AppFontConfigurable findConfigurable(JComponent component, Class<? extends AppFontConfigurable> confClass) {
     Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(component));

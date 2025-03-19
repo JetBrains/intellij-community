@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.gradle.dependencyUpdater` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "dependencyUpdater_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "dependencyUpdater",
+  module_name = "intellij.gradle.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/gradle",
+    "//plugins/gradle:gradle-common",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/external-system-api/dependency-updater:externalSystem-dependencyUpdater",
+    "//android/gradle-dsl",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [
+    ":dependencyUpdater_resources",
+    "//android/gradle-dsl-kotlin",
+    "//android/gradle-dsl-toml",
+    "//android/gradle-dsl-declarative",
+    "//android/gradle-dsl-groovy",
+  ]
+)
+### auto-generated section `build intellij.gradle.dependencyUpdater` end

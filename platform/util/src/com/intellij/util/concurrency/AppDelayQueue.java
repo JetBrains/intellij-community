@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class implements the global delayed queue which is used by
@@ -16,10 +17,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * It starts the background thread which polls the queue for tasks ready to run and sends them to the appropriate executor.
  * The {@link #shutdown(SchedulingWrapper.MyScheduledFutureTask)} must be called before disposal.
  */
-final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
+@ApiStatus.Internal
+public final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask<?>> {
   private static final Logger LOG = Logger.getInstance(AppDelayQueue.class);
   private final TransferThread transferThread = new TransferThread();
-  private final AtomicBoolean shutdown = new AtomicBoolean();
+  private final AtomicReference<Throwable> shutdownTrace = new AtomicReference<>();
   private volatile SchedulingWrapper.MyScheduledFutureTask<Void> myPoisonPill;
 
   /** this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
@@ -29,15 +31,16 @@ final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFuture
   }
 
   void shutdown(@NotNull SchedulingWrapper.MyScheduledFutureTask<Void> poisonPill) {
-    if (shutdown.getAndSet(true)) {
-      throw new IllegalStateException("Already shutdown");
+    Throwable throwable = shutdownTrace.getAndSet(new Throwable());
+    if (throwable != null) {
+      throw new IllegalStateException("Already shutdown", throwable);
     }
     myPoisonPill = poisonPill;
     super.offer(poisonPill);
   }
 
   boolean awaitTermination(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
-    if (!shutdown.get()) {
+    if (shutdownTrace.get() == null) {
       throw new IllegalStateException("must call shutdown before");
     }
     long deadline = System.nanoTime() + unit.toNanos(timeout);
@@ -56,8 +59,9 @@ final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFuture
 
   @Override
   public boolean offer(@NotNull SchedulingWrapper.MyScheduledFutureTask<?> task) {
-    if (shutdown.get()) {
-      throw new IllegalStateException("Already shutdown");
+    Throwable throwable = shutdownTrace.get();
+    if (throwable != null) {
+      throw new IllegalStateException("Already shutdown", throwable);
     }
     return super.offer(task);
   }
@@ -67,7 +71,7 @@ final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFuture
     return transferThread;
   }
 
-  private class TransferThread extends Thread {
+  private final class TransferThread extends Thread {
     private TransferThread() {
       super("Periodic tasks thread");
     }
@@ -95,7 +99,7 @@ final class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFuture
           }
         }
         catch (InterruptedException e) {
-          if (!shutdown.get()) {
+          if (shutdownTrace.get() == null) {
             LOG.error(e);
           }
         }

@@ -1,8 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
@@ -32,8 +36,7 @@ import java.util.List;
 import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFixes;
 
 public final class QuickfixUtil {
-  @Nullable
-  public static PsiClass findTargetClass(GrReferenceExpression refExpr) {
+  public static @Nullable PsiClass findTargetClass(GrReferenceExpression refExpr) {
     if (refExpr.getQualifier() == null) {
       return PsiUtil.getContextClass(refExpr);
     }
@@ -157,14 +160,13 @@ public final class QuickfixUtil {
     return settings;
   }
 
-  @NotNull
-  public static List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, LocalQuickFix @NotNull [] fixes) {
+  public static @NotNull List<IntentionAction> fixesToIntentions(@NotNull PsiElement highlightElement, @NotNull LocalQuickFix @NotNull [] fixes) {
     InspectionManager inspectionManager = InspectionManager.getInstance(highlightElement.getProject());
     // dummy problem descriptor, highlight element is only used
     ProblemDescriptor descriptor = inspectionManager.createProblemDescriptor(
       highlightElement, highlightElement, "", ProblemHighlightType.INFORMATION, true, LocalQuickFix.EMPTY_ARRAY
     );
-    return ContainerUtil.map(fixes, it -> new LocalQuickFixAsIntentionAdapter(it, descriptor));
+    return ContainerUtil.map(fixes, it -> QuickFixWrapper.wrap(descriptor, it));
   }
 
   public static @NotNull LocalQuickFix @NotNull [] intentionsToFixes(@NotNull PsiElement highlightElement, @NotNull List<? extends IntentionAction> actions) {

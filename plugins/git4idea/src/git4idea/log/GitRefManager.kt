@@ -17,6 +17,7 @@ import com.intellij.vcs.log.impl.SimpleRefType
 import com.intellij.vcs.log.impl.SingletonRefGroup
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitBranch
+import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle
@@ -234,7 +235,7 @@ class GitRefManager(project: Project, private val repositoryManager: RepositoryM
       if (power1 != power2) {
         return power1 - power2
       }
-      val namesComparison = ref1.name.compareTo(ref2.name)
+      val namesComparison = GitReference.REFS_NAMES_COMPARATOR.compare(ref1.name, ref2.name)
       return if (namesComparison != 0) {
         namesComparison
       }

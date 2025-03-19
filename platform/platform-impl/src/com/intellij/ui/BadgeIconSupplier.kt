@@ -3,24 +3,27 @@ package com.intellij.ui
 
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.util.ui.JBUI.CurrentTheme.IconBadge
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
+/**
+ * Provides icon variants with additional badges such as error, warning, information, and success on top of the original icon.
+ * It also decorates icons with a live indicator.
+ *
+ * @property originalIcon The original icon to which badges are to be applied.
+ */
 class BadgeIconSupplier(val originalIcon: Icon) {
   private val oldLiveIndicatorIcon by lazy { ExecutionUtil.getLiveIndicator(originalIcon) }
 
-  val errorIcon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.ERROR) }
-  val warningIcon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.WARNING) }
-  val infoIcon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.INFORMATION) }
-  val successIcon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.SUCCESS) }
-  val liveIndicatorIcon
+  val errorIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.ERROR) }
+  val warningIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.WARNING) }
+  val infoIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.INFORMATION) }
+  val successIcon: Icon by lazy { IconManager.getInstance().withIconBadge(originalIcon, IconBadge.SUCCESS) }
+  val liveIndicatorIcon: Icon
     get() = if (ExperimentalUI.isNewUI()) successIcon else oldLiveIndicatorIcon
 
-  fun getErrorIcon(error: Boolean) = if (error) errorIcon else originalIcon
-  fun getWarningIcon(warning: Boolean) = if (warning) warningIcon else originalIcon
-  fun getInfoIcon(info: Boolean) = if (info) infoIcon else originalIcon
-  fun getSuccessIcon(success: Boolean) = if (success) successIcon else originalIcon
-  fun getLiveIndicatorIcon(alive: Boolean) = if (alive) liveIndicatorIcon else originalIcon
+  fun getErrorIcon(error: Boolean): Icon = if (error) errorIcon else originalIcon
+  fun getWarningIcon(warning: Boolean): Icon = if (warning) warningIcon else originalIcon
+  fun getInfoIcon(info: Boolean): Icon = if (info) infoIcon else originalIcon
+  fun getSuccessIcon(success: Boolean): Icon = if (success) successIcon else originalIcon
+  fun getLiveIndicatorIcon(alive: Boolean): Icon = if (alive) liveIndicatorIcon else originalIcon
 }

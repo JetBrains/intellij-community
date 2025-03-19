@@ -40,8 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class GeneratedStructureModel extends DefaultTreeModel {
-  @NonNls
-  private static final String PENDING = "...";
+  private static final @NonNls String PENDING = "...";
 
   private static WeakReference<Interner<String>> ourSharedInterner;
 
@@ -101,7 +100,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     if (!myFilterWhitespace) {
       return super.isLeaf(node);
     }
-    return super.isLeaf(node) || getFilteredChildren((DefaultMutableTreeNode)node, true).size() == 0;
+    return super.isLeaf(node) || getFilteredChildren((DefaultMutableTreeNode)node, true).isEmpty();
   }
 
   private static List getFilteredChildren(DefaultMutableTreeNode node, boolean checkOnly) {
@@ -117,7 +116,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       if (child instanceof StructureNode) {
         final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)child.getUserObject();
         if (event != null && event.getType() == OutputEventQueue.CHARACTERS) {
-          if (event.getValue().trim().length() == 0) {
+          if (event.getValue().trim().isEmpty()) {
             child = child.getNextSibling();
             continue;
           }
@@ -133,7 +132,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   private void updateImpl(List<OutputEventQueue.NodeEvent> nodeEvents) {
-    if (nodeEvents.size() > 0) {
+    if (!nodeEvents.isEmpty()) {
       for (DefaultMutableTreeNode node : myLastNodes) {
         if (node instanceof StructureNode) {
           ((StructureNode)node).refresh();
@@ -201,8 +200,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     return event;
   }
 
-  @Nullable
-  private OutputEventQueue.NodeEvent.QName intern(OutputEventQueue.NodeEvent.QName name) {
+  private @Nullable OutputEventQueue.NodeEvent.QName intern(OutputEventQueue.NodeEvent.QName name) {
     if (name == null) return null;
     name.myPrefix = intern(name.myPrefix);
     name.myLocalName = intern(name.myLocalName);
@@ -210,10 +208,9 @@ public class GeneratedStructureModel extends DefaultTreeModel {
     return name;
   }
 
-  @Nullable
-  private String intern(String s) {
+  private @Nullable String intern(String s) {
     if (s != null) {
-      if (s.length() == 0) return s.intern();
+      if (s.isEmpty()) return s.intern();
       return myInterner.intern(s);
     } else {
       return null;

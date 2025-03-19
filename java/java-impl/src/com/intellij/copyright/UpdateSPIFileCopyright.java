@@ -15,7 +15,7 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyright;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightsProvider;
 import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright;
 
-public class UpdateSPIFileCopyright extends UpdateCopyrightsProvider {
+public final class UpdateSPIFileCopyright extends UpdateCopyrightsProvider {
   @Override
   public UpdateCopyright createInstance(Project project, Module module, VirtualFile file, FileType base, CopyrightProfile options) {
     return new UpdatePsiFileCopyright(project, module, file, options) {

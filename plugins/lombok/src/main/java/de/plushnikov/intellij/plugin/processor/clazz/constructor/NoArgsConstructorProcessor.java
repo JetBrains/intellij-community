@@ -6,9 +6,10 @@ import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,9 +29,9 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
 
     result = super.validate(psiAnnotation, psiClass, problemSink);
 
-    if (!isForceConstructor(psiAnnotation)) {
+    if (result && !isForceConstructor(psiAnnotation)) {
       final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-      result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
+      result = validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), problemSink);
 
       if (problemSink.deepValidation()) {
         final Collection<PsiField> requiredFields = getRequiredFields(psiClass, true);
@@ -44,19 +45,17 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
     return result;
   }
 
-  @NotNull
-  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                       @NotNull String methodVisibility,
-                                                       @NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                                @NotNull String methodVisibility,
+                                                                @NotNull PsiAnnotation psiAnnotation) {
     final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
     return createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults);
   }
 
-  @NotNull
-  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
-                                                       @NotNull String methodVisibility,
-                                                       @NotNull PsiAnnotation psiAnnotation,
-                                                       boolean withJavaDefaults) {
+  public @NotNull Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass,
+                                                                @NotNull String methodVisibility,
+                                                                @NotNull PsiAnnotation psiAnnotation,
+                                                                boolean withJavaDefaults) {
     final Collection<PsiField> params = getConstructorFields(psiClass, withJavaDefaults);
     return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, withJavaDefaults, params);
   }
@@ -68,7 +67,7 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibility(psiAnnotation);
     if (null != methodVisibility) {
       target.addAll(createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation));
@@ -77,21 +76,20 @@ public final class NoArgsConstructorProcessor extends AbstractConstructorClassPr
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiClass containingClass = psiField.getContainingClass();
-    if (null != containingClass) {
-
-      final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
-      final Collection<PsiField> params = getConstructorFields(containingClass, forceConstructorWithJavaDefaults);
-
-      if (PsiClassUtil.getNames(params).contains(psiField.getName())) {
-        return LombokPsiElementUsage.WRITE;
+    final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
+    if(forceConstructorWithJavaDefaults) {
+      final PsiClass containingClass = psiField.getContainingClass();
+      if (null != containingClass) {
+        final boolean classAnnotatedWithValue = PsiAnnotationSearchUtil.isAnnotatedWith(containingClass, LombokClassNames.VALUE);
+        if (isRequiredField(psiField, false, classAnnotatedWithValue)) {
+          return LombokPsiElementUsage.WRITE;
+        }
       }
     }
     return LombokPsiElementUsage.NONE;
   }
 
-  @NotNull
-  private Collection<PsiField> getConstructorFields(PsiClass containingClass, boolean forceConstructorWithJavaDefaults) {
+  private @NotNull Collection<PsiField> getConstructorFields(PsiClass containingClass, boolean forceConstructorWithJavaDefaults) {
     Collection<PsiField> params;
     if (forceConstructorWithJavaDefaults) {
       params = getRequiredFields(containingClass);

@@ -3,17 +3,20 @@ package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 
 
 class GotItTooltipAllowlistEP {
@@ -21,6 +24,8 @@ class GotItTooltipAllowlistEP {
   var prefix: String = ""
 }
 
+@ApiStatus.Internal
+@Service
 class GotItUsageCollector private constructor() {
   companion object {
     @JvmStatic
@@ -77,9 +82,11 @@ class GotItUsageCollector private constructor() {
   }
 }
 
-class GotItUsageCollectorGroup : CounterUsagesCollector() {
+@ApiStatus.Internal
+object GotItUsageCollectorGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
+  @ApiStatus.Internal
   enum class CloseType(private val text: String) {
     ButtonClick("click.button"),
     LinkClick("click.link"),
@@ -91,20 +98,20 @@ class GotItUsageCollectorGroup : CounterUsagesCollector() {
     override fun toString(): String = text
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("got.it.tooltip", 2)
+  private val GROUP = EventLogGroup("got.it.tooltip", 2)
 
-    internal val showEvent = GROUP.registerEvent("show",
-                                                 EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
-                                                 EventFields.Int("count"))
+  internal val showEvent: EventId2<String?, Int> = GROUP.registerEvent("show",
+                                                                       EventFields.StringValidatedByCustomRule("id_prefix",
+                                                                                                               GotItIDValidator::class.java),
+                                                                       EventFields.Int("count"))
 
-    internal val closeEvent = GROUP.registerEvent("close",
-                                                  EventFields.StringValidatedByCustomRule("id_prefix", GotItIDValidator::class.java),
-                                                  EventFields.Enum<CloseType>("type"))
-  }
+  internal val closeEvent: EventId2<String?, CloseType> = GROUP.registerEvent("close",
+                                                                              EventFields.StringValidatedByCustomRule("id_prefix",
+                                                                                                                      GotItIDValidator::class.java),
+                                                                              EventFields.Enum<CloseType>("type"))
 }
 
-class GotItIDValidator : CustomValidationRule() {
+internal class GotItIDValidator : CustomValidationRule() {
   override fun getRuleId(): String = GotItTooltip.PROPERTY_PREFIX
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType =

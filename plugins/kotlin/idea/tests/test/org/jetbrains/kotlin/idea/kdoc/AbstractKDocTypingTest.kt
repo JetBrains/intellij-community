@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.kdoc
 
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import java.io.File
 
 abstract class AbstractKDocTypingTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor() = KotlinLightProjectDescriptor.INSTANCE
 
     protected fun doTest(fileName: String) {
-        val file = File(fileName).relativeTo(File(testDataPath))
+        val file = File(fileName).relativeTo(testDataDirectory)
         myFixture.configureByFile(file.path)
         val textToType = InTextDirectivesUtils.findStringWithPrefixes(myFixture.file.text, "// TYPE:")
         if (textToType == null) {

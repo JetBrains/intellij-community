@@ -9,7 +9,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils
 
 class JavaMethodChainsDeclarativeInlayProvider : AbstractDeclarativeCallChainProvider<PsiMethodCallExpression, PsiType, Unit>() {
   companion object {
-    const val PROVIDER_ID = "java.method.chains"
+    const val PROVIDER_ID: String = "java.method.chains"
   }
 
   override fun PsiType.buildTree(expression: PsiElement, project: Project, context: Unit, treeBuilder: PresentationTreeBuilder) {

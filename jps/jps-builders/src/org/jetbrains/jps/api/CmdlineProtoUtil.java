@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
@@ -250,9 +250,9 @@ public final class CmdlineProtoUtil {
 
   private static BuilderMessage createBuildEvent(final BuilderMessage.BuildEvent.Type type,
                                                  @Nullable String description,
-                                                 @Nullable final BuilderMessage.BuildEvent.Status status,
+                                                 final @Nullable BuilderMessage.BuildEvent.Status status,
                                                  @Nullable Collection<? extends Pair<String, String>> generatedPaths,
-                                                 @Nullable final BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
+                                                 final @Nullable BuilderMessage.BuildEvent.CustomBuilderMessage builderMessage) {
     final BuilderMessage.BuildEvent.Builder builder = BuilderMessage.BuildEvent.newBuilder().setEventType(type);
     if (description != null) {
       builder.setDescription(description);

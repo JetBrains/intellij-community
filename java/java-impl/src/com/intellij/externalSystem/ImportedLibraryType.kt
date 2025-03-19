@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.externalSystem
 
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
@@ -31,7 +32,7 @@ class ImportedLibraryType : LibraryType<ImportedLibraryProperties>(IMPORTED_LIBR
   override fun getDescription(properties: ImportedLibraryProperties): String {
     val gav = properties.mavenCoordinates
     if (gav == null) {
-      return "Unknown Library"
+      return JavaBundle.message("unknown.library")
     } else {
       return "${gav.groupId}:${gav.artifactId}:${gav.version}"
     }

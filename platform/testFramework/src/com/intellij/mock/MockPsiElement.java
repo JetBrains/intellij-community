@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.lang.ASTNode;
@@ -73,27 +59,27 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
     throw new UnsupportedOperationException("Method accept is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void acceptChildren(@NotNull final PsiElementVisitor visitor) {
+  public void acceptChildren(final @NotNull PsiElementVisitor visitor) {
     throw new UnsupportedOperationException("Method acceptChildren is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public PsiElement add(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement add(final @NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Method add is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public PsiElement addAfter(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(final @NotNull PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Method addAfter is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public PsiElement addBefore(@NotNull final PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addBefore(final @NotNull PsiElement element, final PsiElement anchor) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Method addBefore is not yet implemented in " + getClass().getName());
   }
 
@@ -108,13 +94,13 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  public PsiElement addRangeBefore(@NotNull final PsiElement first, @NotNull final PsiElement last, final PsiElement anchor) throws
+  public PsiElement addRangeBefore(final @NotNull PsiElement first, final @NotNull PsiElement last, final PsiElement anchor) throws
                                                                                                                              IncorrectOperationException {
     throw new UnsupportedOperationException("Method addRangeBefore is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public void checkAdd(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public void checkAdd(final @NotNull PsiElement element) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Method checkAdd is not yet implemented in " + getClass().getName());
   }
 
@@ -139,14 +125,12 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @Nullable
-  public PsiElement findElementAt(final int offset) {
+  public @Nullable PsiElement findElementAt(final int offset) {
     throw new UnsupportedOperationException("Method findElementAt is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public PsiReference findReferenceAt(final int offset) {
+  public @Nullable PsiReference findReferenceAt(final int offset) {
     throw new UnsupportedOperationException("Method findReferenceAt is not yet implemented in " + getClass().getName());
   }
 
@@ -161,32 +145,27 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @Nullable
-  public PsiElement getContext() {
+  public @Nullable PsiElement getContext() {
     return getParent();
   }
 
   @Override
-  @Nullable
-  public <T> T getCopyableUserData(@NotNull final Key<T> key) {
+  public @Nullable <T> T getCopyableUserData(final @NotNull Key<T> key) {
     throw new UnsupportedOperationException("Method getCopyableUserData is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public PsiElement getFirstChild() {
+  public @Nullable PsiElement getFirstChild() {
     throw new UnsupportedOperationException("Method getFirstChild is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     throw new UnsupportedOperationException("Method getLanguage is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public PsiElement getLastChild() {
+  public @Nullable PsiElement getLastChild() {
     throw new UnsupportedOperationException("Method getLastChild is not yet implemented in " + getClass().getName());
   }
 
@@ -205,14 +184,12 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @Nullable
-  public PsiElement getNextSibling() {
+  public @Nullable PsiElement getNextSibling() {
     throw new UnsupportedOperationException("Method getNextSibling is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @Nullable
-  public ASTNode getNode() {
+  public @Nullable ASTNode getNode() {
     throw new UnsupportedOperationException("Method getNode is not yet implemented in " + getClass().getName());
   }
 
@@ -234,20 +211,17 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @Nullable
-  public PsiElement getPrevSibling() {
+  public @Nullable PsiElement getPrevSibling() {
     throw new UnsupportedOperationException("Method getPrevSibling is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @Nullable
-  public PsiReference getReference() {
+  public @Nullable PsiReference getReference() {
     throw new UnsupportedOperationException("Method getReference is not yet implemented in " + getClass().getName());
   }
 
@@ -257,8 +231,7 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     throw new UnsupportedOperationException("Method getResolveScope is not yet implemented in " + getClass().getName());
   }
 
@@ -268,8 +241,7 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @NonNls
-  public String getText() {
+  public @NonNls String getText() {
     return myText;
   }
 
@@ -289,8 +261,7 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     throw new UnsupportedOperationException("Method getUseScope is not yet implemented in " + getClass().getName());
   }
 
@@ -309,8 +280,7 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
     throw new UnsupportedOperationException("Method isWritable is not yet implemented in " + getClass().getName());
   }
 
-  @Nullable
-  protected <T extends PsiNamedElement> T findDeclaration(String name, Class<T> aClass) {
+  protected @Nullable <T extends PsiNamedElement> T findDeclaration(String name, Class<T> aClass) {
     for (final PsiElement declaration : myDeclarations) {
       if (declaration instanceof PsiNamedElement psiNamedElement) {
         if (name.equals(psiNamedElement.getName()) && aClass.isInstance(psiNamedElement)) {
@@ -332,8 +302,8 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  public boolean processDeclarations(@NotNull final PsiScopeProcessor processor,
-                                     @NotNull final ResolveState state, final PsiElement lastParent, @NotNull final PsiElement place) {
+  public boolean processDeclarations(final @NotNull PsiScopeProcessor processor,
+                                     final @NotNull ResolveState state, final PsiElement lastParent, final @NotNull PsiElement place) {
     for (final PsiElement declaration : myDeclarations) {
       if (!processor.execute(declaration, state)) return false;
     }
@@ -342,12 +312,12 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  public <T> void putCopyableUserData(@NotNull final Key<T> key, final T value) {
+  public <T> void putCopyableUserData(final @NotNull Key<T> key, final T value) {
     throw new UnsupportedOperationException("Method putCopyableUserData is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public PsiElement replace(@NotNull final PsiElement newElement) throws IncorrectOperationException {
+  public PsiElement replace(final @NotNull PsiElement newElement) throws IncorrectOperationException {
     throw new UnsupportedOperationException("Method replace is not yet implemented in " + getClass().getName());
   }
 
@@ -357,12 +327,12 @@ public class MockPsiElement extends UserDataHolderBase implements PsiElement, Na
   }
 
   @Override
-  public boolean textMatches(@NotNull final PsiElement element) {
+  public boolean textMatches(final @NotNull PsiElement element) {
     throw new UnsupportedOperationException("Method textMatches is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public boolean textMatches(@NotNull final CharSequence text) {
+  public boolean textMatches(final @NotNull CharSequence text) {
     throw new UnsupportedOperationException("Method textMatches is not yet implemented in " + getClass().getName());
   }
 

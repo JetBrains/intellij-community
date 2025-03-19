@@ -2,11 +2,9 @@
 package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.AbstractEditorTest
-import com.intellij.testFramework.MapDataContext
 import org.junit.Test
 import java.awt.Dimension
 import java.awt.Point
@@ -28,10 +26,7 @@ class PopupUtilTest : AbstractEditorTest() {
       extentSize = Dimension(500, 1000)
     }
     val logicalPosition = editor.caretModel.logicalPosition
-    val context = MapDataContext().apply {
-      put(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor.contentComponent)
-      put(CommonDataKeys.EDITOR, editor)
-    }
+    val context = IdeUiService.getInstance().createUiDataContext(editor.contentComponent)
     val xyBalloonPosition = editor.logicalPositionToXY(logicalPosition)
     val xyPopupPosition = Point(xyBalloonPosition.x, xyBalloonPosition.y + editor.lineHeight)
     val balloonPosition = getBestBalloonPosition(context)

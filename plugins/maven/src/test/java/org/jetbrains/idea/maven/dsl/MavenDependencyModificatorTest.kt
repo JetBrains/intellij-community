@@ -2,15 +2,16 @@
 package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
-import junit.framework.TestCase
 import com.intellij.maven.testFramework.MavenTestCase
+import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenDependencyModificatorTest : MavenTestCase() {
 
   @Test
-  fun testShouldReturnDependencyDirectlyDeclared() {
-    val dep = MavenDependencyModificator(myProject)
+  fun testShouldReturnDependencyDirectlyDeclared() = runBlocking {
+    val dep = MavenDependencyModificator(project)
     val file = createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
@@ -29,8 +30,8 @@ class MavenDependencyModificatorTest : MavenTestCase() {
   }
 
   @Test
-  fun testShouldReturnDependencyManagedInParent() {
-    val dep = MavenDependencyModificator(myProject)
+  fun testShouldReturnDependencyManagedInParent() = runBlocking {
+    val dep = MavenDependencyModificator(project)
     createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>

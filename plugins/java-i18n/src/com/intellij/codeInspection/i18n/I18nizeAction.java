@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -6,7 +6,10 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,16 +42,13 @@ public class I18nizeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean active = getHandler(e) != null;
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    e.getPresentation().setEnabled(active);
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(active);
-    }
-    else {
-      e.getPresentation().setEnabled(active);
     }
   }
 
-  @Nullable
-  public static I18nQuickFixHandler<?> getHandler(final AnActionEvent e) {
+  public static @Nullable I18nQuickFixHandler<?> getHandler(final AnActionEvent e) {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
 
@@ -58,8 +58,7 @@ public class I18nizeAction extends AnAction {
     return getHandler(editor, psiFile);
   }
 
-  @Nullable
-  public static I18nQuickFixHandler<?> getHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  public static @Nullable I18nQuickFixHandler<?> getHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     TextRange range = JavaI18nUtil.getSelectedRange(editor, psiFile);
     if (range == null) return null;
 
@@ -89,8 +88,7 @@ public class I18nizeAction extends AnAction {
     return null;
   }
 
-  @Nullable
-  public static UInjectionHost getEnclosingStringLiteral(final PsiFile psiFile, final Editor editor) {
+  public static @Nullable UInjectionHost getEnclosingStringLiteral(final PsiFile psiFile, final Editor editor) {
     PsiElement psiElement = psiFile.findElementAt(editor.getCaretModel().getOffset());
     return getEnclosingStringLiteral(psiElement);
   }
@@ -99,8 +97,7 @@ public class I18nizeAction extends AnAction {
    * @param psiElement element to search from
    * @return UAST element representing an enclosing string literal
    */
-  @Nullable
-  public static UInjectionHost getEnclosingStringLiteral(PsiElement psiElement) {
+  public static @Nullable UInjectionHost getEnclosingStringLiteral(PsiElement psiElement) {
     while (psiElement != null) {
       UInjectionHost uastStringLiteral = UastContextKt.toUElement(psiElement, UInjectionHost.class);
       if (uastStringLiteral != null && uastStringLiteral.isString()) {

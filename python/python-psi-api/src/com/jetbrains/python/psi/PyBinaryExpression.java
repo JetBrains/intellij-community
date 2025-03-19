@@ -1,25 +1,35 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.psi.PsiElement;
+import com.jetbrains.python.ast.PyAstBinaryExpression;
+import com.jetbrains.python.ast.PyAstExpression;
 import org.jetbrains.annotations.Nullable;
 
 
-public interface PyBinaryExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+public interface PyBinaryExpression extends PyAstBinaryExpression, PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
 
-  PyExpression getLeftExpression();
-  @Nullable PyExpression getRightExpression();
+  @Override
+  default PyExpression getLeftExpression() {
+    return (PyExpression)PyAstBinaryExpression.super.getLeftExpression();
+  }
 
-  @Nullable
-  PyElementType getOperator();
+  @Override
+  default @Nullable PyExpression getRightExpression() {
+    return (PyExpression)PyAstBinaryExpression.super.getRightExpression();
+  }
 
-  @Nullable
-  PsiElement getPsiOperator();
+  /**
+   * @deprecated Use {@link PyAstBinaryExpression#getOppositeExpression(PyAstExpression)}
+   */
+  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
+  @Deprecated
+  default PyExpression getOppositeExpression(PyExpression expression)
+    throws IllegalArgumentException {
+    return (PyExpression)PyAstBinaryExpression.super.getOppositeExpression(expression);
+  }
 
-  boolean isOperator(String chars);
-
-  PyExpression getOppositeExpression(PyExpression expression)
-      throws IllegalArgumentException;
-
-  boolean isRightOperator(@Nullable PyCallable resolvedCallee);
+  @Override
+  default @Nullable PyExpression getQualifier() {
+    return (PyExpression)PyAstBinaryExpression.super.getQualifier();
+  }
 }

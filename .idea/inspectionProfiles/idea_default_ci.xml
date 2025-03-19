@@ -868,7 +868,7 @@
       <scope name="android" level="WARNING" enabled="false" />
     </inspection_tool>
     <inspection_tool class="DataClassPrivateConstructor" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="DataProviderReturnType" enabled="false" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="DataProviderReturnType" enabled="false" level="ERROR" enabled_by_default="true">
       <scope name="android" level="ERROR" enabled="false" />
     </inspection_tool>
     <inspection_tool class="DateToString" enabled="false" level="WARNING" enabled_by_default="false">
@@ -980,7 +980,7 @@
     </inspection_tool>
     <inspection_tool class="DuplicatedBeanNamesInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="DuplicatedBlockNamesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="DuplicatedDataProviderNames" enabled="false" level="WARNING" enabled_by_default="true">
+    <inspection_tool class="DuplicatedDataProviderNames" enabled="false" level="ERROR" enabled_by_default="true">
       <scope name="android" level="ERROR" enabled="false" />
     </inspection_tool>
     <inspection_tool class="Duplicates" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -3269,18 +3269,14 @@
     <inspection_tool class="PlatformExtensionReceiverOfInline" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PlayCustomTagNameInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PlayPropertyInspection" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="PluginXmlValidity" enabled="true" level="ERROR" enabled_by_default="true">
-      <scope name="android" level="ERROR" enabled="false" />
-      <option name="myRegistrationCheckIgnoreClassList">
+    <inspection_tool class="PluginXmlRegistrationCheck" enabled="true" level="ERROR" enabled_by_default="true">        
+      <option name="ignoreClasses">
         <set>
-          <option value="com.intellij.ide.AgreementUpdater" />
           <option value="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider" />
-          <option value="com.intellij.internal.statistic.updater.StatisticsJobsScheduler" />
           <option value="com.intellij.openapi.application.IdeUrlTrackingParametersProvider" />
-          <option value="com.intellij.ultimate.UltimateVerifier" />
         </set>
       </option>
-      <option name="PLUGINS_MODULES">
+      <option name="pluginsModules">
         <modules-set>
           <module name="intellij.platform.analysis" />
           <module name="intellij.platform.builtInServer" />
@@ -3367,7 +3363,7 @@
           <module name="intellij.platform.externalSystem.impl" />
         </modules-set>
         <modules-set>
-          <module name="intellij.idea.community.resources" />
+          <module name="intellij.idea.community.customization" />
           <module name="intellij.java" />
           <module name="intellij.java.aetherDependencyResolver" />
           <module name="intellij.java.analysis" />
@@ -3428,87 +3424,18 @@
           <module name="intellij.android.common" />
           <module name="intellij.android.apkanalyzer" />
           <module name="intellij.android.designer" />
-          <module name="intellij.android.ultimate" />
         </modules-set>
         <modules-set>
-          <module name="intellij.appcode" />
-          <module name="intellij.clion" />
-          <module name="intellij.cidr.common" />
-          <module name="intellij.cidr.debugger" />
-          <module name="intellij.c" />
-          <module name="intellij.swift" />
-          <module name="intellij.cidr.cocoaCommon" />
-          <module name="intellij.cidr.xctest" />
-          <module name="intellij.clion.swift" />
-          <module name="intellij.clion.webDeployment" />
-          <module name="intellij.cidr.ide" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.css" />
-          <module name="intellij.css.impl" />
-          <module name="intellij.css.psi" />
-          <module name="intellij.css.analysis" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.database" />
-          <module name="intellij.database.impl" />
-          <module name="intellij.database.sql.dialects" />
-          <module name="intellij.database.dialects" />
-          <module name="intellij.database.jdbcConsole" />
-          <module name="intellij.database.plugin" />
-          <module name="intellij.database.sql" />
-          <module name="intellij.database.sql.impl" />
-          <module name="intellij.datagrip.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.python" />
-          <module name="intellij.python.plugin" />
           <module name="intellij.python.community" />
           <module name="intellij.python.community.impl" />
-          <module name="intellij.ds" />
           <module name="intellij.pycharm.community" />
           <module name="intellij.python.community.plugin" />
-          <module name="intellij.python.concurrencyVisualizer" />
-          <module name="intellij.edu.pycharm" />
-          <module name="intellij.pycharm.pro" />
           <module name="intellij.python.psi" />
           <module name="intellij.python.pydev" />
         </modules-set>
-        <modules-set>
-          <module name="intellij.ideTalk" />
-          <module name="intellij.ideTalk.p2p" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.php" />
-          <module name="intellij.php.resources" />
-          <module name="intellij.php.impl" />
-          <module name="intellij.php.jsDebugger" />
-          <module name="intellij.phpstorm" />
-          <module name="intellij.platform.webide.impl" />
-          <module name="intellij.php.structuralSearch" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.ruby" />
-          <module name="intellij.ruby.core" />
-          <module name="intellij.ruby.ext" />
-          <module name="intellij.ruby.plugin" />
-          <module name="intellij.rubymine" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.rubyMotion" />
-          <module name="intellij.rubyMotion.plugin" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.struts2" />
-          <module name="intellij.struts2.ognl" />
-          <module name="intellij.struts2.dom" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.xml.duplicates" />
-          <module name="intellij.xml.duplicates.analysis" />
-        </modules-set>
       </option>
     </inspection_tool>
+    <inspection_tool class="PluginXmlValidity" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessArithmeticExpression" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="android" level="WARNING" enabled="false">

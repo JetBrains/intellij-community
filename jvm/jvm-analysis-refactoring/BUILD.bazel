@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.jvm.analysis.refactoring` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "analysis-refactoring",
+  module_name = "intellij.jvm.analysis.refactoring",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util",
+    "//uast/uast-common:uast",
+    "//jvm/jvm-analysis-api:analysis",
+    "//platform/core-api:core",
+  ]
+)
+### auto-generated section `build intellij.jvm.analysis.refactoring` end

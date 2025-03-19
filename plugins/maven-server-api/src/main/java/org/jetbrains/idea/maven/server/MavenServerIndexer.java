@@ -22,12 +22,11 @@ import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
@@ -36,24 +35,24 @@ public interface MavenServerIndexer extends Remote {
 
   int getIndexCount(MavenToken token) throws RemoteException;
 
-  void updateIndex(MavenIndexId mavenIndexId, MavenServerProgressIndicator indicator, MavenToken token)
+  void updateIndex(MavenIndexId mavenIndexId, MavenServerProgressIndicator indicator, boolean multithreaded, MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException;
 
   @Nullable
     //null means no artifacts lasts
-  List<IndexedMavenId> processArtifacts(MavenIndexId mavenIndexId, int startFrom, MavenToken token)
+  ArrayList<IndexedMavenId> processArtifacts(MavenIndexId mavenIndexId, int startFrom, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
   @NotNull
-  List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull Collection<File> artifactFiles, MavenToken token)
+  ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull ArrayList<Path> artifactFiles, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  Set<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
+  HashSet<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException;
+  HashSet<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException;
 
   void release(MavenToken token) throws RemoteException;
 
-  boolean indexExists(File dir, MavenToken token) throws RemoteException;
+  boolean indexExists(Path dir, MavenToken token) throws RemoteException;
 }

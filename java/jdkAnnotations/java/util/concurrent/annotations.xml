@@ -59,12 +59,12 @@
     </annotation>
   </item>
   <item name='java.util.concurrent.ArrayBlockingQueue ArrayBlockingQueue(int, boolean) 0'>
-        <annotation name='org.jetbrains.annotations.Range'>
-            <val name="from" val="1"/>
-            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.BlockingDeque E element()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E element()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.concurrent.BlockingDeque E poll(long, java.util.concurrent.TimeUnit)'>
@@ -131,7 +131,7 @@
     <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.util.concurrent.BlockingQueue E poll(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.concurrent.BlockingQueue E take()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -143,34 +143,933 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.concurrent.BlockingQueue boolean offer(E, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.BlockingQueue int drainTo(java.util.Collection&lt;? super E&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.BlockingQueue int drainTo(java.util.Collection&lt;? super E&gt;, int) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.concurrent.BlockingQueue void put(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeAsync(java.util.function.Supplier&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeAsync(java.util.function.Supplier&lt;? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeAsync(java.util.function.Supplier&lt;? extends T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeAsync(java.util.function.Supplier&lt;? extends T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeOnTimeout(T, long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; completeOnTimeout(T, long, java.util.concurrent.TimeUnit) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionally(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionally(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyCompose(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyCompose(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; orTimeout(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; orTimeout(long, java.util.concurrent.TimeUnit) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; failedFuture(java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; failedFuture(java.lang.Throwable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handle(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handle(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApply(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApply(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenCompose(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenCompose(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAccept(java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAccept(java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRun(java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRun(java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletionStage&lt;T&gt; minimalCompletionStage()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletionStage&lt;U&gt; completedStage(U)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletionStage&lt;U&gt; failedStage(java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletionStage&lt;U&gt; failedStage(java.lang.Throwable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.Executor delayedExecutor(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletableFuture java.util.concurrent.Executor delayedExecutor(long, java.util.concurrent.TimeUnit) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.Executor delayedExecutor(long, java.util.concurrent.TimeUnit, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.Executor delayedExecutor(long, java.util.concurrent.TimeUnit, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletableFuture java.util.concurrent.Executor delayedExecutor(long, java.util.concurrent.TimeUnit, java.util.concurrent.Executor) 2'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; poll(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; submit(java.lang.Runnable, V)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; submit(java.lang.Runnable, V) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; submit(java.util.concurrent.Callable&lt;V&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.CompletionService java.util.concurrent.Future&lt;V&gt; submit(java.util.concurrent.Callable&lt;V&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
+  </item>
+  <item name='java.util.concurrent.CompletionStage java.util.concurrent.CompletableFuture&lt;T&gt; toCompletableFuture()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionally(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionally(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyAsync(java.util.function.Function&lt;java.lang.Throwable,? extends T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyCompose(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyCompose(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; exceptionallyComposeAsync(java.util.function.Function&lt;java.lang.Throwable,? extends java.util.concurrent.CompletionStage&lt;T&gt;&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenComplete(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;T&gt; whenCompleteAsync(java.util.function.BiConsumer&lt;? super T,? super java.lang.Throwable&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/1/*"/>
+    <annotation name='org.jetbrains.annotations.UnknownNullability' typePath="/2/*"/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; applyToEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Function&lt;? super T,U&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handle(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handle(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; handleAsync(java.util.function.BiFunction&lt;? super T,java.lang.Throwable,? extends U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApply(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApply(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenApplyAsync(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenCompose(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenCompose(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;U&gt; thenComposeAsync(java.util.function.Function&lt;? super T,? extends java.util.concurrent.CompletionStage&lt;U&gt;&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombine(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;V&gt; thenCombineAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiFunction&lt;? super T,? super U,? extends V&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEither(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; acceptEitherAsync(java.util.concurrent.CompletionStage&lt;? extends T&gt;, java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBoth(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterBothAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEither(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; runAfterEitherAsync(java.util.concurrent.CompletionStage&lt;?&gt;, java.lang.Runnable, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAccept(java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAccept(java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptAsync(java.util.function.Consumer&lt;? super T&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBoth(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenAcceptBothAsync(java.util.concurrent.CompletionStage&lt;? extends U&gt;, java.util.function.BiConsumer&lt;? super T,? super U&gt;, java.util.concurrent.Executor) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRun(java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRun(java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.concurrent.CompletionStage java.util.concurrent.CompletionStage&lt;java.lang.Void&gt; thenRunAsync(java.lang.Runnable, java.util.concurrent.Executor) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.concurrent.ConcurrentHashMap V put(K, V) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -192,25 +1091,25 @@
     </annotation>
   </item>
   <item name="java.util.concurrent.ConcurrentMap V putIfAbsent(K, V) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap V replace(K, V) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap V replace(K, V) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap boolean remove(java.lang.Object, java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.concurrent.ConcurrentSkipListSet ConcurrentSkipListSet(java.util.Collection&lt;? extends E&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -241,203 +1140,240 @@
     </annotation>
   </item>
   <item name="java.util.concurrent.CountDownLatch boolean await(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Delayed long getDelay(java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executor void execute(java.lang.Runnable) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService T invokeAny(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService boolean awaitTermination(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.concurrent.ExecutorService java.util.List&lt;java.lang.Runnable&gt; shutdownNow()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ExecutorService java.util.List&lt;java.util.concurrent.Future&lt;T&gt;&gt; invokeAll(java.util.Collection&lt;? extends java.util.concurrent.Callable&lt;T&gt;&gt;, long, java.util.concurrent.TimeUnit) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;?&gt; submit(java.lang.Runnable)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;?&gt; submit(java.lang.Runnable) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;T&gt; submit(java.lang.Runnable, T)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;T&gt; submit(java.lang.Runnable, T) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;T&gt; submit(java.util.concurrent.Callable&lt;T&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.ExecutorService java.util.concurrent.Future&lt;T&gt; submit(java.util.concurrent.Callable&lt;T&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; callable(java.lang.Runnable, T)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; callable(java.lang.Runnable, T) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallable(java.util.concurrent.Callable&lt;T&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallable(java.util.concurrent.Callable&lt;T&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallable(java.util.concurrent.Callable&lt;T&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallable(java.util.concurrent.Callable&lt;T&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallableUsingCurrentClassLoader(java.util.concurrent.Callable&lt;T&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallableUsingCurrentClassLoader(java.util.concurrent.Callable&lt;T&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallableUsingCurrentClassLoader(java.util.concurrent.Callable&lt;T&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;T&gt; privilegedCallableUsingCurrentClassLoader(java.util.concurrent.Callable&lt;T&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.lang.Runnable)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.lang.Runnable) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedAction&lt;?&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedAction&lt;?&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedAction&lt;?&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedAction&lt;?&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedExceptionAction&lt;?&gt;)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedExceptionAction&lt;?&gt;)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedExceptionAction&lt;?&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.Callable&lt;java.lang.Object&gt; callable(java.security.PrivilegedExceptionAction&lt;?&gt;) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newCachedThreadPool()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newCachedThreadPool(java.util.concurrent.ThreadFactory)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newFixedThreadPool(int, java.util.concurrent.ThreadFactory)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newFixedThreadPool(int, java.util.concurrent.ThreadFactory)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newSingleThreadExecutor()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newSingleThreadExecutor(java.util.concurrent.ThreadFactory)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ExecutorService newSingleThreadExecutor(java.util.concurrent.ThreadFactory)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService unconfigurableExecutorService(java.util.concurrent.ExecutorService)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ExecutorService unconfigurableExecutorService(java.util.concurrent.ExecutorService)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ExecutorService unconfigurableExecutorService(java.util.concurrent.ExecutorService) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ExecutorService unconfigurableExecutorService(java.util.concurrent.ExecutorService) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newScheduledThreadPool(int)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newScheduledThreadPool(int, java.util.concurrent.ThreadFactory)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newScheduledThreadPool(int, java.util.concurrent.ThreadFactory)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newSingleThreadScheduledExecutor()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newSingleThreadScheduledExecutor(java.util.concurrent.ThreadFactory)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService newSingleThreadScheduledExecutor(java.util.concurrent.ThreadFactory)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService unconfigurableScheduledExecutorService(java.util.concurrent.ScheduledExecutorService)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService unconfigurableScheduledExecutorService(java.util.concurrent.ScheduledExecutorService)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService unconfigurableScheduledExecutorService(java.util.concurrent.ScheduledExecutorService) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.Executors java.util.concurrent.ScheduledExecutorService unconfigurableScheduledExecutorService(java.util.concurrent.ScheduledExecutorService) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ThreadFactory defaultThreadFactory()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Executors java.util.concurrent.ThreadFactory privilegedThreadFactory()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.Future V get(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.FutureTask FutureTask(java.lang.Runnable, V) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.FutureTask FutureTask(java.util.concurrent.Callable&lt;V&gt;) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.FutureTask V get(long, java.util.concurrent.TimeUnit) 1">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.concurrent.LinkedBlockingQueue boolean offer(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; schedule(java.lang.Runnable, long, java.util.concurrent.TimeUnit) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 3">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleAtFixedRate(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 3">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;?&gt; scheduleWithFixedDelay(java.lang.Runnable, long, long, java.util.concurrent.TimeUnit) 3">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit)">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit) 0">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-  <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+  <item
+    name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit) 2">
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
-    <item name='java.util.concurrent.ScheduledThreadPoolExecutor ScheduledThreadPoolExecutor(int) 0'>
-        <annotation name='org.jetbrains.annotations.Range'>
-            <val name="from" val="0"/>
-            <val name="to" val="java.lang.Integer.MAX_VALUE"/>
-        </annotation>
-    </item>
+  <item name='java.util.concurrent.ScheduledThreadPoolExecutor ScheduledThreadPoolExecutor(int) 0'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item
     name='java.util.concurrent.ScheduledThreadPoolExecutor ScheduledThreadPoolExecutor(int, java.util.concurrent.RejectedExecutionHandler) 0'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -539,7 +1475,7 @@
     </annotation>
   </item>
   <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item
     name='java.util.concurrent.ThreadPoolExecutor ThreadPoolExecutor(int, int, long, java.util.concurrent.TimeUnit, java.util.concurrent.BlockingQueue&lt;java.lang.Runnable&gt;) 0'>
@@ -699,16 +1635,16 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.concurrent.TransferQueue boolean tryTransfer(E) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.TransferQueue boolean tryTransfer(E, long, java.util.concurrent.TimeUnit) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.TransferQueue boolean tryTransfer(E, long, java.util.concurrent.TimeUnit) 2">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name="java.util.concurrent.TransferQueue void transfer(E) 0">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
 </root>
 

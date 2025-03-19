@@ -9,7 +9,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
-import java.util.*
 
 private val URL_PROVIDER_EP = ExtensionPointName<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
 
@@ -18,7 +17,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     fun getProviders(request: OpenInBrowserRequest): Sequence<WebBrowserUrlProvider> {
       val dumbService = DumbService.getInstance(request.project)
       return URL_PROVIDER_EP.extensionList.asSequence().filter {
-        (!dumbService.isDumb || DumbService.isDumbAware(it)) && it.canHandleElement(request)
+        dumbService.isUsableInCurrentContext(it) && it.canHandleElement(request)
       }
     }
 
@@ -52,7 +51,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in URL_PROVIDER_EP.extensionList) {
-        if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
+        if (dumbService.isUsableInCurrentContext(urlProvider) && urlProvider.canHandleElement(request)) {
           val urls = getUrls(urlProvider, request)
           if (!urls.isEmpty()) {
             return urls

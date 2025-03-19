@@ -1,8 +1,9 @@
 import contextlib
 import enum
-from _typeshed import Self
+import sys
 from collections.abc import Callable, Iterable, Iterator
 from typing import Any, ClassVar
+from typing_extensions import Self
 
 from pynput._util import AbstractListener
 
@@ -12,82 +13,91 @@ class KeyCode:
     char: str | None
     is_dead: bool | None
     combining: str | None
-    def __init__(self, vk: str | None = ..., char: str | None = ..., is_dead: bool = ..., **kwargs: str) -> None: ...
+    def __init__(self, vk: str | None = None, char: str | None = None, is_dead: bool = False, **kwargs: str) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __hash__(self) -> int: ...
-    def join(self: Self, key: Self) -> Self: ...
+    def join(self, key: Self) -> Self: ...
     @classmethod
-    def from_vk(cls: type[Self], vk: int, **kwargs: Any) -> Self: ...
+    def from_vk(cls, vk: int, **kwargs: Any) -> Self: ...
     @classmethod
-    def from_char(cls: type[Self], char: str, **kwargs: Any) -> Self: ...
+    def from_char(cls, char: str, **kwargs: Any) -> Self: ...
     @classmethod
-    def from_dead(cls: type[Self], char: str, **kwargs: Any) -> Self: ...
+    def from_dead(cls, char: str, **kwargs: Any) -> Self: ...
 
 class Key(enum.Enum):
-    alt: int
-    alt_l: int
-    alt_r: int
-    alt_gr: int
-    backspace: int
-    caps_lock: int
-    cmd: int
-    cmd_l: int
-    cmd_r: int
-    ctrl: int
-    ctrl_l: int
-    ctrl_r: int
-    delete: int
-    down: int
-    end: int
-    enter: int
-    esc: int
-    f1: int
-    f2: int
-    f3: int
-    f4: int
-    f5: int
-    f6: int
-    f7: int
-    f8: int
-    f9: int
-    f10: int
-    f11: int
-    f12: int
-    f13: int
-    f14: int
-    f15: int
-    f16: int
-    f17: int
-    f18: int
-    f19: int
-    f20: int
-    home: int
-    left: int
-    page_down: int
-    page_up: int
-    right: int
-    shift: int
-    shift_l: int
-    shift_r: int
-    space: int
-    tab: int
-    up: int
-    media_play_pause: int
-    media_volume_mute: int
-    media_volume_down: int
-    media_volume_up: int
-    media_previous: int
-    media_next: int
-    insert: int
-    menu: int
-    num_lock: int
-    pause: int
-    print_screen: int
-    scroll_lock: int
+    alt: KeyCode
+    alt_l: KeyCode
+    alt_r: KeyCode
+    alt_gr: KeyCode
+    backspace: KeyCode
+    caps_lock: KeyCode
+    cmd: KeyCode
+    cmd_l: KeyCode
+    cmd_r: KeyCode
+    ctrl: KeyCode
+    ctrl_l: KeyCode
+    ctrl_r: KeyCode
+    delete: KeyCode
+    down: KeyCode
+    end: KeyCode
+    enter: KeyCode
+    esc: KeyCode
+    f1: KeyCode
+    f2: KeyCode
+    f3: KeyCode
+    f4: KeyCode
+    f5: KeyCode
+    f6: KeyCode
+    f7: KeyCode
+    f8: KeyCode
+    f9: KeyCode
+    f10: KeyCode
+    f11: KeyCode
+    f12: KeyCode
+    f13: KeyCode
+    f14: KeyCode
+    f15: KeyCode
+    f16: KeyCode
+    f17: KeyCode
+    f18: KeyCode
+    f19: KeyCode
+    f20: KeyCode
+    if sys.platform == "win32":
+        f21: KeyCode
+        f22: KeyCode
+        f23: KeyCode
+        f24: KeyCode
+    home: KeyCode
+    left: KeyCode
+    page_down: KeyCode
+    page_up: KeyCode
+    right: KeyCode
+    shift: KeyCode
+    shift_l: KeyCode
+    shift_r: KeyCode
+    space: KeyCode
+    tab: KeyCode
+    up: KeyCode
+    media_play_pause: KeyCode
+    media_volume_mute: KeyCode
+    media_volume_down: KeyCode
+    media_volume_up: KeyCode
+    media_previous: KeyCode
+    media_next: KeyCode
+    insert: KeyCode
+    menu: KeyCode
+    num_lock: KeyCode
+    pause: KeyCode
+    print_screen: KeyCode
+    scroll_lock: KeyCode
 
 class Controller:
     _KeyCode: ClassVar[type[KeyCode]]  # undocumented
     _Key: ClassVar[type[Key]]  # undocumented
+
+    if sys.platform == "linux":
+        CTRL_MASK: ClassVar[int]
+        SHIFT_MASK: ClassVar[int]
 
     class InvalidKeyException(Exception): ...
     class InvalidCharacterException(Exception): ...
@@ -114,9 +124,9 @@ class Controller:
 class Listener(AbstractListener):
     def __init__(
         self,
-        on_press: Callable[[Key | KeyCode | None], None] | None = ...,
-        on_release: Callable[[Key | KeyCode | None], None] | None = ...,
-        suppress: bool = ...,
+        on_press: Callable[[Key | KeyCode | None], None] | None = None,
+        on_release: Callable[[Key | KeyCode | None], None] | None = None,
+        suppress: bool = False,
         **kwargs: Any,
     ) -> None: ...
     def canonical(self, key: Key | KeyCode) -> Key | KeyCode: ...

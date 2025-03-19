@@ -12,6 +12,7 @@ import com.intellij.ui.WinFocusStealer;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -20,12 +21,15 @@ import java.util.Arrays;
  * This class mutes focus stealing prevention mechanism on Windows, while at least one debug session is active, to make 'Focus application
  * on breakpoint' setting work as expected.
  */
+@ApiStatus.Internal
 public class DebuggerFocusManager implements XDebuggerManagerListener, RegistryValueListener, ProjectManagerListener {
-  private final RegistryValue mySetting = Registry.get("debugger.mayBringFrameToFrontOnBreakpoint");
+  private final RegistryValue myFrameToFrontOnBreakpointSetting = Registry.get("debugger.mayBringFrameToFrontOnBreakpoint");
+  private final RegistryValue myBringDebuggeeToFrontAfterResumeSetting = Registry.get("debugger.mayBringDebuggeeWindowToFrontAfterResume");
   private boolean myFocusStealingEnabled;
 
   private DebuggerFocusManager() {
-    mySetting.addListener(this, ApplicationManager.getApplication());
+    myFrameToFrontOnBreakpointSetting.addListener(this, ApplicationManager.getApplication());
+    myBringDebuggeeToFrontAfterResumeSetting.addListener(this, ApplicationManager.getApplication());
   }
 
   @Override
@@ -61,7 +65,8 @@ public class DebuggerFocusManager implements XDebuggerManagerListener, RegistryV
   }
 
   private synchronized void update(boolean enable) {
-    boolean shouldBeEnabled = enable && mySetting.asBoolean();
+    boolean shouldBeEnabled = enable && (myFrameToFrontOnBreakpointSetting.asBoolean() ||
+                                         myBringDebuggeeToFrontAfterResumeSetting.asBoolean());
     if (shouldBeEnabled != myFocusStealingEnabled) {
       WinFocusStealer.setFocusStealingEnabled(myFocusStealingEnabled = shouldBeEnabled);
     }

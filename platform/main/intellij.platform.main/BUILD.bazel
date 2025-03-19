@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//platform/bootstrap",
+    "//platform/remote-servers/clouds",
+    "//platform/execution.dashboard:execution-dashboard",
+    "//platform/execution.serviceView:execution-serviceView",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+    "//platform/inline-completion/shared:inline-completion",
+    "//platform/bookmarks",
+    "//platform/todo",
+  ]
+)
+### auto-generated section `build intellij.platform.main` end

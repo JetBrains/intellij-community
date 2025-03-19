@@ -2,16 +2,16 @@ MODULES
 my-app
 
 my-app.commonMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 my-app.commonTest
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 my-app.jvmAndLinuxMain
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 my-app.jvmAndLinuxTest
-    targetPlatform = JVM (1.8)/Native (general)
+    targetPlatform = JVM (17)/Native (general)
 
 my-app.jvmMain
     targetPlatform = JVM (17)

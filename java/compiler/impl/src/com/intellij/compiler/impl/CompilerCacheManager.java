@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-@Service
+@Service(Service.Level.PROJECT)
 public final class CompilerCacheManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(CompilerCacheManager.class);
   private final Map<Compiler, Object> myCompilerToCacheMap = new HashMap<>();

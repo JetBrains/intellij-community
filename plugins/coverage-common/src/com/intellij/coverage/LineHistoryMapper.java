@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.history.LocalHistory;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -31,18 +33,18 @@ import java.util.List;
 /**
  * This service finds correspondence of lines of a file in a specified timestamp in VCS/local history and current state of the file.
  */
-public class LineHistoryMapper {
+final class LineHistoryMapper {
   private static final Logger LOG = Logger.getInstance(LineHistoryMapper.class);
   private final Object myLock = new Object();
   private final Project myProject;
   private final VirtualFile myFile;
   private final Document myDocument;
   private final long myDate;
-  protected SoftReference<Int2IntMap> myNewToOldLines;
-  protected SoftReference<Int2IntMap> myOldToNewLines;
+  private SoftReference<Int2IntMap> myNewToOldLines;
+  private SoftReference<Int2IntMap> myOldToNewLines;
   private volatile SoftReference<byte[]> myOldContent;
 
-  public LineHistoryMapper(Project project, VirtualFile file, Document document, long date) {
+  LineHistoryMapper(Project project, VirtualFile file, Document document, long date) {
     myProject = project;
     myFile = file;
     myDocument = document;
@@ -65,8 +67,7 @@ public class LineHistoryMapper {
     return myOldContent != null;
   }
 
-  @Nullable
-  public Int2IntMap getOldToNewLineMapping() {
+  public @Nullable Int2IntMap getOldToNewLineMapping() {
     if (myOldToNewLines == null) {
       myOldToNewLines = doGetLineMapping(true);
       if (myOldToNewLines == null) return null;
@@ -74,8 +75,7 @@ public class LineHistoryMapper {
     return myOldToNewLines.get();
   }
 
-  @Nullable
-  public Int2IntMap getNewToOldLineMapping() {
+  public @Nullable Int2IntMap getNewToOldLineMapping() {
     if (myNewToOldLines == null) {
       myNewToOldLines = doGetLineMapping(false);
       if (myNewToOldLines == null) return null;
@@ -159,8 +159,10 @@ public class LineHistoryMapper {
 
 
   private String @NotNull [] getLinesFromBytes(byte @NotNull [] oldContent) {
-    final String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, myFile, false, false).toString();
-    return LineTokenizer.tokenize(text, false);
+    try (AccessToken ignore = ProjectLocator.withPreferredProject(myFile, myProject)) {
+      String text = LoadTextUtil.getTextByBinaryPresentation(oldContent, myFile, false, false).toString();
+      return LineTokenizer.tokenize(text, false);
+    }
   }
 
   private String @NotNull [] getUpToDateLines() {
@@ -175,7 +177,7 @@ public class LineHistoryMapper {
     });
   }
 
-  protected Int2IntMap buildMapping(Diff.Change change, int firstNLines) {
+  private static Int2IntMap buildMapping(Diff.Change change, int firstNLines) {
     Int2IntMap result = new Int2IntOpenHashMap();
     int prevLineInFirst = 0;
     int prevLineInSecond = 0;

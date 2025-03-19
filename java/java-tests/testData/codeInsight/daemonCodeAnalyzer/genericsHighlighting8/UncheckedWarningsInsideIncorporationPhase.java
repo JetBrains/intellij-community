@@ -4,7 +4,7 @@ abstract class Group {
   }
 
   public <T extends Category> T get(Key<T> key) {
-    return <error descr="Incompatible types. Found: 'Category', required: 'T'">getCategory(key);</error>
+    return <error descr="Incompatible types. Found: 'Category', required: 'T'">getCategory</error>(key);
   }
 
   public abstract <R extends Category<R>> R getCategory(Key<R> key);

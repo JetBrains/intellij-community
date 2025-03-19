@@ -2,6 +2,8 @@
 package com.intellij.psi.search;
 
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.AcceptAllFilesAndDirectoriesIndexingHint;
+import com.intellij.util.indexing.hints.RejectAllIndexingHint;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +28,12 @@ final class FilenameIndexImpl extends ScalarIndexExtension<String> {
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return file -> true;
+    if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      return RejectAllIndexingHint.INSTANCE;
+    }
+    else {
+      return AcceptAllFilesAndDirectoriesIndexingHint.INSTANCE;
+    }
   }
 
   @Override

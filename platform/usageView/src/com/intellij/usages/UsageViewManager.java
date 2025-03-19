@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 
@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usages.rules.PsiElementUsage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
@@ -29,13 +31,12 @@ public abstract class UsageViewManager {
                                                 Usage @NotNull [] foundUsages,
                                                 @NotNull UsageViewPresentation presentation);
 
-  @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
-  public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                @NotNull Factory<? extends UsageSearcher> searcherFactory,
-                                                boolean showPanelIfOnlyOneUsage,
-                                                boolean showNotFoundMessage,
-                                                @NotNull UsageViewPresentation presentation,
-                                                @Nullable UsageViewStateListener listener);
+  public abstract @Nullable("returns null in case of no usages found or usage view not shown for one usage") UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
+                                                                                                                                           @NotNull Supplier<? extends UsageSearcher> searcherFactory,
+                                                                                                                                           boolean showPanelIfOnlyOneUsage,
+                                                                                                                                           boolean showNotFoundMessage,
+                                                                                                                                           @NotNull UsageViewPresentation presentation,
+                                                                                                                                           @Nullable UsageViewStateListener listener);
 
   public interface UsageViewStateListener {
     void usageViewCreated(@NotNull UsageView usageView);
@@ -48,10 +49,9 @@ public abstract class UsageViewManager {
                                            @NotNull UsageViewPresentation presentation,
                                            @Nullable UsageViewStateListener listener);
 
-  @Nullable
-  public abstract UsageView getSelectedUsageView();
+  public abstract @Nullable UsageView getSelectedUsageView();
 
-  public static boolean isSelfUsage(@NotNull final Usage usage, final UsageTarget @NotNull [] searchForTarget) {
+  public static boolean isSelfUsage(final @NotNull Usage usage, final UsageTarget @NotNull [] searchForTarget) {
     if (!(usage instanceof PsiElementUsage)) return false;
     return ReadAction.compute(() -> {
       final PsiElement element = ((PsiElementUsage)usage).getElement();

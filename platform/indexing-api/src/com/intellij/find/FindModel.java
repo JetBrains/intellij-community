@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,6 +47,10 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   public void removeObserver(@NotNull FindModelObserver observer) {
     myObservers.remove(observer);
+  }
+
+  public void refresh() {
+    notifyObservers();
   }
 
   private void notifyObservers() {
@@ -150,6 +155,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       isMultiline = model.isMultiline;
       mySearchInProjectFiles = model.mySearchInProjectFiles;
       myPattern = model.myPattern;
+      model.copyCopyableDataTo(this);
       notifyObservers();
     }
   }
@@ -191,6 +197,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
       return false;
     }
     if (mySearchInProjectFiles != findModel.mySearchInProjectFiles) return false;
+    if (!isCopyableDataEqual(findModel)) return false;
 
     return true;
   }
@@ -234,8 +241,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to find.
    */
-  @NotNull
-  public String getStringToFind() {
+  public @NotNull String getStringToFind() {
     return (myStringToFind == null) ? "" : myStringToFind;
   }
 
@@ -262,8 +268,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the string to replace with.
    */
-  @NotNull
-  public String getStringToReplace() {
+  public @NotNull String getStringToReplace() {
     return myStringToReplace;
   }
 
@@ -541,8 +546,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the directory used as a scope, or null if the selected scope is not "Directory".
    */
-  @Nullable
-  public @NlsSafe String getDirectoryName() {
+  public @Nullable @NlsSafe String getDirectoryName() {
     return directoryName;
   }
 
@@ -556,14 +560,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.directoryName = directoryName;
       notifyObservers();
-      if (directoryName != null) {
-        String path = FileUtil.toSystemIndependentName(directoryName);
-        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
-          setSearchInProjectFiles(true);
-        }
-      }
     }
-
   }
 
   /**
@@ -640,7 +637,8 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
            "fileFilter = " + fileFilter + "\n" +
            "moduleName = '" + moduleName + "'\n" +
            "customScopeName = '" + customScopeName + "'\n" +
-           "searchInProjectFiles = " + mySearchInProjectFiles + "\n";
+           "searchInProjectFiles = " + mySearchInProjectFiles + "\n" +
+           "userDataMap = " + getUserMap() + "\n";
   }
 
   /**
@@ -686,12 +684,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.fileFilter = fileFilter;
       notifyObservers();
-      if (fileFilter != null) {
-        List<String> split = StringUtil.split(fileFilter, ",");
-        if (ContainerUtil.exists(split, s -> s.endsWith("*.iml") || s.endsWith("*.ipr") || s.endsWith("*.iws"))) {
-          setSearchInProjectFiles(true);
-        }
-      }
     }
   }
 
@@ -701,8 +693,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @return the module name, or null if the selected scope is not "Module".
    */
-  @Nullable
-  public @NlsSafe String getModuleName() {
+  public @Nullable @NlsSafe String getModuleName() {
     return moduleName;
   }
 
@@ -857,8 +848,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  @NotNull
-  public SearchContext getSearchContext() {
+  public @NotNull SearchContext getSearchContext() {
     return searchContext;
   }
 
@@ -875,6 +865,20 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isSearchInProjectFiles() {
+    if (!mySearchInProjectFiles) {
+      if (fileFilter != null) {
+        List<String> split = StringUtil.split(fileFilter, ",");
+        if (ContainerUtil.exists(split, s -> s.endsWith(".iml") || s.endsWith(".ipr") || s.endsWith(".iws"))) {
+          return true;
+        }
+      }
+      if (directoryName != null) {
+        String path = FileUtil.toSystemIndependentName(directoryName);
+        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
+          return true;
+        }
+      }
+    }
     return mySearchInProjectFiles;
   }
 
@@ -882,6 +886,24 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     boolean changed = mySearchInProjectFiles != searchInProjectFiles;
     if (changed) {
       mySearchInProjectFiles = searchInProjectFiles;
+      notifyObservers();
+    }
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    boolean changed = !Objects.equals(value, getUserData(key));
+    super.putUserData(key, value);
+    if (changed) {
+      notifyObservers();
+    }
+  }
+
+  @Override
+  public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
+    boolean changed = !Objects.equals(value, getCopyableUserData(key));
+    super.putCopyableUserData(key, value);
+    if (changed) {
       notifyObservers();
     }
   }

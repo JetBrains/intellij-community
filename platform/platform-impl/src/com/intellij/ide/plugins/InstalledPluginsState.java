@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.LoadingState;
@@ -21,8 +21,7 @@ public final class InstalledPluginsState {
 
   public static final @NonNls String RESTART_REQUIRED_MESSAGE = "Not allowing load/unload without restart because of pending restart operation";
 
-  @Nullable
-  public static InstalledPluginsState getInstanceIfLoaded() {
+  public static @Nullable InstalledPluginsState getInstanceIfLoaded() {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? getInstance() : null;
   }
 
@@ -63,15 +62,13 @@ public final class InstalledPluginsState {
     }
   }
 
-  @NotNull
-  public Collection<IdeaPluginDescriptor> getInstalledPlugins() {
+  public @NotNull Collection<IdeaPluginDescriptor> getInstalledPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myInstalledPlugins.values());
     }
   }
 
-  @NotNull
-  public Collection<PluginId> getUpdatedPlugins() {
+  public @NotNull Collection<PluginId> getUpdatedPlugins() {
     synchronized (myLock) {
       return Collections.unmodifiableCollection(myUpdatedPlugins);
     }

@@ -4,6 +4,7 @@ package com.intellij.ui.jcef;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
+import org.cef.CefApp;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
@@ -67,6 +68,10 @@ public class JBCefCookieManagerTest {
       false);
 
     JBCefBrowser browser = new JBCefBrowser(TEST_URL);
+
+    CountDownLatch cefInitLatch = new CountDownLatch(1);
+    CefApp.getInstance().onInitialization(s -> cefInitLatch.countDown());
+    JBCefTestHelper.await(cefInitLatch, "waiting CefApp initialization");
 
     CountDownLatch loadStartedLatch = new CountDownLatch(1);
     browser.getJBCefClient().addLoadHandler(new CefLoadHandlerAdapter() {

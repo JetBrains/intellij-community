@@ -89,9 +89,9 @@ class MavenRunAnythingProvider : RunAnythingCommandLineProvider() {
     val projectsManager = MavenProjectsManager.getInstance(project)
     if (!projectsManager.isMavenizedProject) return emptySequence()
     val mavenProject = context.getMavenProject(projectsManager) ?: return emptySequence()
-    val localRepository = projectsManager.localRepository
-    return mavenProject.declaredPlugins.asSequence()
-      .mapNotNull { MavenArtifactUtil.readPluginInfo(localRepository, it.mavenId) }
+    val localRepository = projectsManager.repositoryPath
+    return mavenProject.declaredPluginInfos.asSequence()
+      .mapNotNull { MavenArtifactUtil.readPluginInfo(it.artifact) }
       .flatMap { it.mojos.asSequence() }
       .map { it.displayName }
       .filter { it !in commandLine }

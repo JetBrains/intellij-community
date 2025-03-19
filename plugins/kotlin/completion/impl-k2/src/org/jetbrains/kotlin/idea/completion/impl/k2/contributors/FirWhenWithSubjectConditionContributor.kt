@@ -1,35 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.completion.InsertionContext
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.parentOfType
+import com.intellij.util.applyIf
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
-import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirWithSubjectEntryPositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -38,192 +40,263 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
-    basicContext: FirBasicCompletionContext,
-    priority: Int,
-) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirWithSubjectEntryPositionContext, weighingContext: WeighingContext) {
+    parameters: KotlinFirCompletionParameters,
+    sink: LookupElementSink,
+    priority: Int = 0,
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(parameters, sink, priority) {
+
+    private val onTypingIsKeyword: Boolean =
+        super.prefixMatcher.prefix.let { prefix ->
+            prefix.isNotEmpty()
+                    && KtTokens.IS_KEYWORD.value.startsWith(prefix)
+        }
+
+    override val prefixMatcher: PrefixMatcher =
+        super.prefixMatcher
+            .applyIf(onTypingIsKeyword) { cloneWithPrefix("") }
+
+    context(KaSession)
+    override fun complete(
+        positionContext: KotlinWithSubjectEntryPositionContext,
+        weighingContext: WeighingContext,
+    ) {
         val whenCondition = positionContext.whenCondition
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
         val subject = whenExpression.subjectExpression ?: return
         val allConditionsExceptCurrent = whenExpression.entries.flatMap { entry -> entry.conditions.filter { it != whenCondition } }
-        val subjectType = subject.getKtType() ?: return
+        val subjectType = subject.expressionType ?: return
         val classSymbol = getClassSymbol(subjectType)
-        val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
         when {
-            classSymbol?.classKind == KtClassKind.ENUM_CLASS -> {
-                completeEnumEntries(classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
-            }
-            classSymbol?.modality == Modality.SEALED -> {
-                completeSubClassesOfSealedClass(
-                    classSymbol,
-                    allConditionsExceptCurrent,
-                    whenCondition,
-                    visibilityChecker,
-                    isSingleCondition
+            classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
+                completeEnumEntries(
+                    positionContext = positionContext,
+                    context = weighingContext,
+                    classSymbol = classSymbol,
+                    conditions = allConditionsExceptCurrent,
+                    isSingleCondition = isSingleCondition,
                 )
             }
-            else -> {
-                completeAllTypes(whenCondition, visibilityChecker, isSingleCondition)
+
+            classSymbol?.modality == KaSymbolModality.SEALED -> {
+                completeSubClassesOfSealedClass(
+                    positionContext = positionContext,
+                    context = weighingContext,
+                    classSymbol = classSymbol,
+                    conditions = allConditionsExceptCurrent,
+                    whenCondition = whenCondition,
+                    isSingleCondition = isSingleCondition,
+                )
             }
+
+            else -> completeAllTypes(
+                positionContext = positionContext,
+                context = weighingContext,
+                whenCondition = whenCondition,
+                isSingleCondition = isSingleCondition,
+            )
         }
-        addNullIfWhenExpressionCanReturnNull(subjectType)
-        addElseBranchIfSingleConditionInEntry(whenCondition)
+        createNullBranchLookupElement(weighingContext, subjectType)
+            ?.let(sink::addElement)
+        createElseBranchLookupElement(weighingContext, whenCondition)
+            ?.let(sink::addElement)
     }
 
-    private fun KtAnalysisSession.getClassSymbol(subjectType: KtType): KtNamedClassOrObjectSymbol? {
-        val classType = subjectType as? KtNonErrorClassType
-        return classType?.classSymbol as? KtNamedClassOrObjectSymbol
+    context(KaSession)
+    private fun getClassSymbol(subjectType: KaType): KaNamedClassSymbol? {
+        val classType = subjectType as? KaClassType
+        return classType?.symbol as? KaNamedClassSymbol
     }
 
+    context(KaSession)
+    private fun createNullBranchLookupElement(
+        context: WeighingContext,
+        type: KaType?,
+    ): LookupElement? {
+        if (type?.canBeNull != true) return null
 
-    private fun KtAnalysisSession.addNullIfWhenExpressionCanReturnNull(type: KtType?) {
-        if (type?.canBeNull == true) {
-            val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
-            sink.addElement(lookupElement)
-        }
+        return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
+            .applyWeighs(context)
     }
 
-    private fun KtAnalysisSession.completeAllTypes(
+    context(KaSession)
+    private fun completeAllTypes(
+        positionContext: KotlinWithSubjectEntryPositionContext,
+        context: WeighingContext,
         whenCondition: KtWhenCondition,
-        visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        val availableFromScope = mutableSetOf<KtClassifierSymbol>()
-        getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
-            .forEach { classifierWithScopeKind ->
+        val availableFromScope = mutableSetOf<KaClassifierSymbol>()
+        originalKtFile.scopeContext(whenCondition)
+            .scopes
+            .flatMap { it.getAvailableClassifiers(positionContext, scopeNameFilter, visibilityChecker) }
+            .mapNotNull { classifierWithScopeKind ->
                 val classifier = classifierWithScopeKind.symbol
-                if (classifier !is KtNamedSymbol) return@forEach
+                if (classifier !is KaNamedSymbol) return@mapNotNull null
                 availableFromScope += classifier
 
-                addLookupElement(
-                    classifier.name.asString(),
-                    classifier,
-                    (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded(classifier),
-                    isSingleCondition,
+                createLookupElement(
+                    context = context,
+                    lookupString = classifier.name.asString(),
+                    symbol = classifier,
+                    origin = CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                    fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
                 )
-            }
+            }.forEach(sink::addElement)
 
         if (prefixMatcher.prefix.isNotEmpty()) {
-            getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
-                .forEach { classifier ->
-                    if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
-
-                    addLookupElement(
-                        classifier.name.asString(),
-                        classifier,
-                        (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                        isPrefixNeeded(classifier),
-                        isSingleCondition,
-                        availableWithoutImport = false,
+            getAvailableClassifiersFromIndex(
+                positionContext = positionContext,
+                parameters = parameters,
+                symbolProvider = symbolFromIndexProvider,
+                scopeNameFilter = scopeNameFilter,
+                visibilityChecker = visibilityChecker,
+            ).filterNot { it in availableFromScope }
+                .filterIsInstance<KaNamedSymbol>()
+                .map { classifier ->
+                    createLookupElement(
+                        context = context,
+                        lookupString = classifier.name.asString(),
+                        symbol = classifier,
+                        origin = CompletionSymbolOrigin.Index,
+                        fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                        isSingleCondition = isSingleCondition,
                     )
-                }
+                }.forEach(sink::addElement)
         }
     }
 
-    private fun KtAnalysisSession.isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {
-        return when (classifier) {
-            is KtAnonymousObjectSymbol -> return false
-            is KtNamedClassOrObjectSymbol -> !classifier.classKind.isObject
-            is KtTypeAliasSymbol -> (classifier.expandedType as? KtNonErrorClassType)?.classSymbol?.let { isPrefixNeeded(it) } == true
-            is KtTypeParameterSymbol -> true
-        }
-    }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun KtAnalysisSession.completeSubClassesOfSealedClass(
-        classSymbol: KtNamedClassOrObjectSymbol,
-        conditions: List<KtWhenCondition>,
-        whenCondition: KtWhenCondition,
-        visibilityChecker: CompletionVisibilityChecker,
-        isSingleCondition: Boolean,
-    ) {
-        require(classSymbol.modality == Modality.SEALED)
-        val handledCasesClassIds = getHandledClassIds(conditions)
-        val allInheritors = getAllSealedInheritors(classSymbol)
-
-        allInheritors
-            .asSequence()
-            .filter { it.classIdIfNonLocal !in handledCasesClassIds }
-            .filter {  visibilityChecker.isVisible(it as KtClassifierSymbol) }
-            .forEach { inheritor ->
-                val classId = inheritor.classIdIfNonLocal ?: return@forEach
-                addLookupElement(
-                    classId.relativeClassName.asString(),
-                    inheritor,
-                    classId.asSingleFqName(),
-                    isPrefixNeeded(inheritor),
-                    isSingleCondition
-                )
+    context(KaSession)
+    private fun isPrefixNeeded(symbol: KaNamedSymbol): Boolean {
+        return when (symbol) {
+            is KaAnonymousObjectSymbol -> return false
+            is KaNamedClassSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
+            is KaTypeAliasSymbol -> {
+                (symbol.expandedType as? KaClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
 
-        if (allInheritors.any { it.modality == Modality.ABSTRACT }) {
-            completeAllTypes(whenCondition, visibilityChecker, isSingleCondition)
+            is KaTypeParameterSymbol -> true
+            else -> false
         }
     }
 
-    private fun KtAnalysisSession.getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
+    context(KaSession)
+    private fun completeSubClassesOfSealedClass(
+        positionContext: KotlinWithSubjectEntryPositionContext,
+        context: WeighingContext,
+        classSymbol: KaNamedClassSymbol,
+        conditions: List<KtWhenCondition>,
+        whenCondition: KtWhenCondition,
+        isSingleCondition: Boolean,
+    ) {
+        require(classSymbol.modality == KaSymbolModality.SEALED)
+        val handledCasesClassIds = getHandledClassIds(conditions)
+
+        getAllSealedInheritors(classSymbol)
+            .asSequence()
+            .filter { it.classId !in handledCasesClassIds }
+            .filter { visibilityChecker.isVisible(it as KaClassifierSymbol, positionContext) }
+            .mapNotNull { inheritor ->
+                val classId = inheritor.classId
+                    ?: return@mapNotNull null
+
+                createLookupElement(
+                    context = context,
+                    lookupString = classId.relativeClassName.asString(),
+                    symbol = inheritor,
+                    origin = CompletionSymbolOrigin.Index,
+                    fqName = classId.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
+                )
+            }.forEach(sink::addElement)
+
+        if (getAllSealedInheritors(classSymbol).any { it.modality == KaSymbolModality.ABSTRACT }) {
+            completeAllTypes(
+                positionContext = positionContext,
+                context = context,
+                whenCondition = whenCondition,
+                isSingleCondition = isSingleCondition,
+            )
+        }
+    }
+
+    context(KaSession)
+    private fun getHandledClassIds(conditions: List<KtWhenCondition>): Set<ClassId> =
         conditions.mapNotNullTo(hashSetOf()) { condition ->
             val reference = when (condition) {
                 is KtWhenConditionWithExpression -> condition.expression?.reference()
                 is KtWhenConditionIsPattern -> (condition.typeReference?.typeElement as? KtUserType)?.referenceExpression?.reference()
                 else -> null
             }
-            val resolvesTo = reference?.resolveToSymbol() as? KtNamedClassOrObjectSymbol
-            resolvesTo?.classIdIfNonLocal
+            val resolvesTo = reference?.resolveToExpandedSymbol() as? KaNamedClassSymbol
+            resolvesTo?.classId
         }
 
-    private fun KtAnalysisSession.getAllSealedInheritors(classSymbol: KtNamedClassOrObjectSymbol): Collection<KtNamedClassOrObjectSymbol> {
-        fun KtAnalysisSession.getAllSealedInheritorsTo(
-            classSymbol: KtNamedClassOrObjectSymbol,
-            destination: MutableSet<KtNamedClassOrObjectSymbol>
+    context(KaSession)
+    private fun getAllSealedInheritors(classSymbol: KaNamedClassSymbol): Collection<KaNamedClassSymbol> {
+
+        fun getAllSealedInheritorsTo(
+            classSymbol: KaNamedClassSymbol,
+            destination: MutableSet<KaNamedClassSymbol>
         ) {
-            classSymbol.getSealedClassInheritors().forEach { inheritor ->
+            classSymbol.sealedClassInheritors.forEach { inheritor ->
                 destination += inheritor
-                if (inheritor.modality == Modality.SEALED) {
+                if (inheritor.modality == KaSymbolModality.SEALED) {
                     getAllSealedInheritorsTo(inheritor, destination)
                 }
             }
         }
 
-        return ObjectOpenCustomHashSet(KtNamedClassOrObjectSymbolTObjectHashingStrategy)
+        return ObjectOpenCustomHashSet(KaNamedClassOrObjectSymbolTObjectHashingStrategy)
             .apply { getAllSealedInheritorsTo(classSymbol, this) }
     }
 
-    private fun addElseBranchIfSingleConditionInEntry(whenCondition: KtWhenCondition) {
-        val whenEntry = whenCondition.parent as? KtWhenEntry ?: return
-        if (whenEntry.conditions.size > 1) return
-        val lookupElement = createKeywordElement(keyword = KtTokens.ELSE_KEYWORD.value, tail = " -> ")
-        sink.addElement(lookupElement)
+    context(KaSession)
+    private fun createElseBranchLookupElement(
+        context: WeighingContext,
+        whenCondition: KtWhenCondition,
+    ): LookupElement? {
+        val whenEntry = whenCondition.parent as? KtWhenEntry
+            ?: return null
+        if (whenEntry.conditions.size > 1) return null
+
+        return createKeywordElement(
+            keyword = KtTokens.ELSE_KEYWORD.value,
+            tail = " -> ",
+        ).applyWeighs(context)
     }
 
 
-    private fun KtAnalysisSession.completeEnumEntries(
-        classSymbol: KtNamedClassOrObjectSymbol,
+    context(KaSession)
+    private fun completeEnumEntries(
+        positionContext: KotlinWithSubjectEntryPositionContext,
+        context: WeighingContext,
+        classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
-        visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
-        require(classSymbol.classKind == KtClassKind.ENUM_CLASS)
+        require(classSymbol.classKind == KaClassKind.ENUM_CLASS)
         val handledCasesNames = conditions.mapNotNullTo(hashSetOf()) { condition ->
             val conditionWithExpression = condition as? KtWhenConditionWithExpression
-            val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KtEnumEntrySymbol
+            val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol
             resolvesTo?.name
         }
-        val allEnumEntrySymbols = classSymbol.getEnumEntries()
-        allEnumEntrySymbols
+        classSymbol.staticDeclaredMemberScope
+            .callables
+            .filterIsInstance<KaEnumEntrySymbol>()
             .filter { it.name !in handledCasesNames }
-            .filter { visibilityChecker.isVisible(it) }
-            .forEach { entry ->
-                addLookupElement(
-                    "${classSymbol.name.asString()}.${entry.name.asString()}",
-                    entry,
-                    entry.callableIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded = false,
-                    isSingleCondition,
+            .filter { visibilityChecker.isVisible(it, positionContext) }
+            .map { entry ->
+                createLookupElement(
+                    context = context,
+                    lookupString = "${classSymbol.name.asString()}.${entry.name.asString()}",
+                    symbol = entry,
+                    origin = CompletionSymbolOrigin.Index,
+                    fqName = entry.callableId?.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
                 )
-            }
+            }.forEach(sink::addElement)
     }
 
     private fun KtWhenCondition.isSingleConditionInEntry(): Boolean {
@@ -231,24 +304,28 @@ internal class FirWhenWithSubjectConditionContributor(
         return entry.conditions.size == 1
     }
 
-    private fun KtAnalysisSession.addLookupElement(
+    context(KaSession)
+    private fun createLookupElement(
+        context: WeighingContext,
         lookupString: String,
-        symbol: KtNamedSymbol,
+        symbol: KaNamedSymbol,
+        origin: CompletionSymbolOrigin,
         fqName: FqName?,
-        isPrefixNeeded: Boolean,
         isSingleCondition: Boolean,
-        availableWithoutImport: Boolean = true,
-    ) {
-        val typeArgumentsCount = (symbol as? KtSymbolWithTypeParameters)?.typeParameters?.size ?: 0
+    ): LookupElement {
+        val isPrefixNeeded = isPrefixNeeded(symbol)
+
+        @OptIn(KaExperimentalApi::class)
+        val typeArgumentsCount = (symbol as? KaDeclarationSymbol)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
 
-        LookupElementBuilder.create(lookupObject, getIsPrefix(isPrefixNeeded) + lookupString)
+        return LookupElementBuilder.create(lookupObject, getIsPrefix(isPrefixNeeded) + lookupString)
             .withIcon(getIconFor(symbol))
             .withPsiElement(symbol.psi)
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .let(sink::addElement)
+            .applyWeighs(context, KtSymbolWithOrigin(symbol, origin))
     }
 }
 
@@ -272,7 +349,7 @@ private object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditio
         lookupObject: WhenConditionLookupObject
     ) {
         if (lookupObject.isSingleCondition && completionChar != ',') {
-            insertSymbol(" -> ")
+            insertString(" -> ")
             commitDocument()
         }
     }
@@ -300,10 +377,10 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 }
 
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KtNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KtNamedClassOrObjectSymbol> {
-    override fun equals(p0: KtNamedClassOrObjectSymbol?, p1: KtNamedClassOrObjectSymbol?): Boolean {
-        return p0?.classIdIfNonLocal == p1?.classIdIfNonLocal
+private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassSymbol> {
+    override fun equals(p0: KaNamedClassSymbol?, p1: KaNamedClassSymbol?): Boolean {
+        return p0?.classId == p1?.classId
     }
 
-    override fun hashCode(p0: KtNamedClassOrObjectSymbol?): Int = p0?.classIdIfNonLocal?.hashCode() ?: 0
+    override fun hashCode(p0: KaNamedClassSymbol?): Int = p0?.classId?.hashCode() ?: 0
 }

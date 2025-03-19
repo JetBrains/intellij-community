@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import com.intellij.openapi.util.Pair;
@@ -44,21 +44,18 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     myVariableIndex = index;
   }
 
-  @NotNull
   @Override
-  public PsiElement getElement() {
+  public @NotNull PsiElement getElement() {
     return Objects.requireNonNull(super.getElement());
   }
 
-  @NotNull
   @Override
-  protected String getElementPresentation() {
+  protected @NotNull String getElementPresentation() {
     return "instanceof: " + getElement().getText();
   }
 
-  @Nullable
   // todo: lazy
-  private Pair<GrExpression, PsiType> getInstanceof() {
+  private @Nullable Pair<GrExpression, PsiType> getInstanceof() {
     final PsiElement element = getElement();
     if (element instanceof GrInstanceOfExpression) {
       GrExpression operand = ((GrInstanceOfExpression)element).getOperand();
@@ -118,17 +115,15 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
   }
 
   @Override
-  @Nullable
-  public PsiType inferMixinType() {
+  public @Nullable PsiType inferMixinType() {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();
     if (instanceOf == null) return null;
 
     return instanceOf.getSecond();
   }
 
-  @Nullable
   @Override
-  public ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
+  public @Nullable ReadWriteVariableInstruction getInstructionToMixin(Instruction[] flow) {
     Pair<GrExpression, PsiType> instanceOf = getInstanceof();
     if (instanceOf == null) return null;
 
@@ -151,9 +146,8 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
     return descr == null ? 0 : descr;
   }
 
-  @Nullable
   @Override
-  public ConditionInstruction getConditionInstruction() {
+  public @Nullable ConditionInstruction getConditionInstruction() {
     return myCondition;
   }
 }

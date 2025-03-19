@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
@@ -18,17 +19,18 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
-import com.intellij.util.io.isDirectory
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
@@ -38,9 +40,10 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
+import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
-class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
+internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
   MarkdownBundle.message("markdown.settings.name"),
   _id = ID
@@ -78,15 +81,18 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         row(MarkdownBundle.message("markdown.settings.default.layout")) {
           comboBox(
             model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
-            renderer = SimpleListCellRenderer.create("") { it?.getName() ?: "" }
-          ).bindItem(settings::splitLayout.toNullableProperty())
+            renderer = textListCellRenderer("") { it.getName() }
+          ).bindItem(settings::splitLayout.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }
         row(MarkdownBundle.message("markdown.settings.preview.layout.label")) {
           comboBox(
             model = DefaultComboBoxModel(arrayOf(false, true)),
-            renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
-          ).bindItem(settings::isVerticalSplit.toNullableProperty())
+            renderer = textListCellRenderer("", ::presentSplitLayout)
+          ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
+        row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
+          previewFontSizeField()
+        }
         row {
           checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
             .bindSelected(settings::isAutoScrollEnabled)
@@ -149,6 +155,22 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
       comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
+        .widthGroup(comboBoxWidthGroup)
+    }
+  }
+
+  private fun Row.previewFontSizeField(): Cell<ComboBox<Int>> {
+    return comboBox(fontSizeOptions).bindItem(
+      getter = { service<MarkdownPreviewSettings>().state.fontSize },
+      setter = { value ->
+        service<MarkdownPreviewSettings>().update { settings ->
+          if (value != null) {
+            settings.state.fontSize = value
+          }
+        }
+      }
+    ).applyToComponent {
+      isEditable = true
     }
   }
 
@@ -215,6 +237,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
       project = project,
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
     )
+    field.applyToComponent {
+      disposable?.let { Disposer.register(it, this@applyToComponent) }
+    }
     return field.validationOnInput(::validateCustomStylesheetPath).validationOnApply(::validateCustomStylesheetPath)
   }
 
@@ -234,6 +259,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
             onApply { component.apply() }
             onIsModified { component.isModified() }
             onReset { component.reset() }
+          }
+          .applyToComponent {
+            disposable?.let { Disposer.register(it, this@applyToComponent) }
           }
       }
     }
@@ -341,13 +369,15 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
 
   companion object {
     const val ID = "Settings.Markdown"
+    private const val comboBoxWidthGroup = "Markdown.ComboBoxWidthGroup"
 
-    private fun presentSplitLayout(splitLayout: Boolean?): @Nls String {
+    private fun presentSplitLayout(splitLayout: Boolean): @Nls String {
       return when (splitLayout) {
         false -> MarkdownBundle.message("markdown.settings.preview.layout.horizontal")
         true -> MarkdownBundle.message("markdown.settings.preview.layout.vertical")
-        else -> ""
       }
     }
+
+    val fontSizeOptions = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
   }
 }

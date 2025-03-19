@@ -21,12 +21,14 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+@ApiStatus.Internal
 @State(name = "StructureViewFactory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class StructureViewFactoryImpl extends StructureViewFactoryEx implements PersistentStateComponent<StructureViewFactoryImpl.State> {
   private static final ExtensionPointName<StructureViewExtension> EXTENSION_POINT_NAME = new ExtensionPointName<>("com.intellij.lang.structureViewExtension");

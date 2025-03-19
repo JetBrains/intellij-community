@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.lang.documentation.ide.ui.PopupUpdateEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,8 +31,8 @@ internal class InlinePopupContext(
       original.showPopup(popup)
     }
 
-    override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean) {
-      original.updatePopup(popup, resized)
+    override suspend fun updatePopup(popup: AbstractPopup, resized: Boolean, popupUpdateEvent: PopupUpdateEvent) {
+      original.updatePopup(popup, resized, popupUpdateEvent)
     }
   }
 }

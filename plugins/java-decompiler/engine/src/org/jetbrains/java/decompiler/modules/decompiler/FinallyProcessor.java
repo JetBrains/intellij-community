@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -139,7 +139,7 @@ public class FinallyProcessor {
 
     List<Exprent> expressions = firstBlockStatement.getExprents();
 
-    VarVersionPair pair = new VarVersionPair((VarExprent)((AssignmentExprent)expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
+    VarVersion pair = new VarVersion((VarExprent)((AssignmentExprent)expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flattenHelper.buildDirectGraph(root);
@@ -179,7 +179,7 @@ public class FinallyProcessor {
 
             boolean found = false;
             for (Exprent expr : lst) {
-              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPair((VarExprent)expr).equals(pair)) {
+              if (expr.type == Exprent.EXPRENT_VAR && new VarVersion((VarExprent)expr).equals(pair)) {
                 found = true;
                 break;
               }
@@ -207,7 +207,7 @@ public class FinallyProcessor {
             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
               AssignmentExprent assignment = (AssignmentExprent)exprent;
               if (assignment.getRight().type == Exprent.EXPRENT_VAR &&
-                  new VarVersionPair((VarExprent)assignment.getRight()).equals(pair)) {
+                  new VarVersion((VarExprent)assignment.getRight()).equals(pair)) {
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
                   if (node.successors.size() == 1) {
@@ -304,6 +304,7 @@ public class FinallyProcessor {
       }
     }
 
+    final int storeLength = var <= 3 ? 1 : var <= 128 ? 2 : 4;
     // disable semaphore at statement exit points
     for (BasicBlock block : setTry) {
       for (BasicBlock dest : block.getSuccessors()) {
@@ -311,8 +312,8 @@ public class FinallyProcessor {
         if (dest != graph.getLast() && !setCopy.contains(dest)) {
           // disable semaphore
           SimpleInstructionSequence seq = new SimpleInstructionSequence();
-          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{0}), -1);
-          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}), -1);
+          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{0}, 1), -1);
+          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}, storeLength), -1);
 
           // build a separate block
           BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
@@ -331,11 +332,11 @@ public class FinallyProcessor {
     }
 
     // enable semaphore at the statement entrance
-    BasicBlock newHead = createHeadBlock(graph, 1, var, bytecodeVersion);
+    BasicBlock newHead = createHeadBlock(graph, 1, var, bytecodeVersion, storeLength);
     insertBlockBefore(graph, head, newHead);
 
     // initialize semaphore with false
-    BasicBlock newHeadInit = createHeadBlock(graph, 0, var, bytecodeVersion);
+    BasicBlock newHeadInit = createHeadBlock(graph, 0, var, bytecodeVersion, storeLength);
     insertBlockBefore(graph, newHead, newHeadInit);
 
     setCopy.add(newHead);
@@ -351,11 +352,10 @@ public class FinallyProcessor {
     }
   }
 
-  @NotNull
-  private static BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion) {
+  private static @NotNull BasicBlock createHeadBlock(ControlFlowGraph graph, int value, int var, int bytecodeVersion, int storeLength) {
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
-    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{value}), -1);
-    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}), -1);
+    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{value}, 1), -1);
+    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecodeVersion, new int[]{var}, storeLength), -1);
     return new BasicBlock(++graph.last_id, seq);
   }
 
@@ -453,9 +453,11 @@ public class FinallyProcessor {
     // `throw` in the `try` body will point directly to the dummy exit, so remove it
     startBlocks.remove(graph.getLast());
     startBlocks.removeAll(tryBlocks);
+    List<BasicBlock> starts = new ArrayList<>(startBlocks);
+    Collections.sort(starts, Comparator.comparingInt(o -> -o.id));
 
     List<Area> areas = new ArrayList<>();
-    for (BasicBlock start : startBlocks) {
+    for (BasicBlock start : starts) {
       Area arr = compareSubGraphsEx(graph, start, catchBlocks, first, finallyType, mapLast, skippedFirst);
       if (arr == null) {
         return false;
@@ -468,8 +470,12 @@ public class FinallyProcessor {
       deleteArea(graph, area);
     }
 
+    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<>(mapLast.entrySet());
+    // We must sort here to prevent decompile differences deriving from hash maps.
+    lasts.sort(Comparator.comparingInt(o -> o.getKey().id));
+
     // INFO: Empty basic blocks may remain in the graph!
-    for (Entry<BasicBlock, Boolean> entry : mapLast.entrySet()) {
+    for (Entry<BasicBlock, Boolean> entry : lasts) {
       BasicBlock last = entry.getKey();
 
       if (entry.getValue()) {
@@ -572,7 +578,7 @@ public class FinallyProcessor {
               if (catchBlocks.contains(sucCatch) && !setSample.contains(sucSample)) {
                 List<int[]> lst = entry.lstStoreVars;
 
-                if (sucCatch.getSeq().length() > 0 && sucSample.getSeq().length() > 0) {
+                if (!sucCatch.getSeq().isEmpty() && !sucSample.getSeq().isEmpty()) {
                   Instruction instrCatch = sucCatch.getSeq().getInstr(0);
                   Instruction instrSample = sucSample.getSeq().getInstr(0);
 
@@ -694,23 +700,29 @@ public class FinallyProcessor {
                                        int finallyType,
                                        List<int[]> lstStoreVars) {
     InstructionSequence seqPattern = pattern.getSeq();
+    List<Integer> instrOldOffsetsPattern = pattern.getOriginalOffsets();
     InstructionSequence seqSample = sample.getSeq();
+    List<Integer> instrOldOffsetsSample = sample.getOriginalOffsets();
 
     if (type != 0) {
       seqPattern = seqPattern.clone();
+      instrOldOffsetsPattern = new ArrayList<>(instrOldOffsetsPattern);
 
       if ((type & 1) > 0) { // first
         if (finallyType > 0) {
+          instrOldOffsetsPattern.remove(0);
           seqPattern.removeInstruction(0);
         }
       }
 
       if ((type & 2) > 0) { // last
         if (finallyType == 0 || finallyType == 2) {
+          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
           seqPattern.removeLast();
         }
 
         if (finallyType == 2) {
+          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
           seqPattern.removeLast();
         }
       }
@@ -737,6 +749,7 @@ public class FinallyProcessor {
         seq.addInstruction(0, seqSample.getInstr(i), -1);
         oldOffsets.addFirst(sample.getOriginalOffset(i));
         seqSample.removeInstruction(i);
+        instrOldOffsetsSample.remove(i);
       }
 
       BasicBlock newBlock = new BasicBlock(++graph.last_id, seq);
@@ -787,12 +800,16 @@ public class FinallyProcessor {
         int secondOp = second.operand(i);
         if (firstOp != secondOp) {
           // a-load/store instructions
-          if (first.opcode == CodeConstants.opc_aload || first.opcode == CodeConstants.opc_astore) {
+          if (first.opcode == CodeConstants.opc_aload) {
             for (int[] arr : lstStoreVars) {
               if (arr[0] == firstOp && arr[1] == secondOp) {
                 return true;
               }
             }
+          }
+          else if (first.opcode == CodeConstants.opc_astore) {
+            lstStoreVars.add(new int[]{firstOp, secondOp});
+            return true;
           }
 
           return false;
@@ -894,26 +911,31 @@ public class FinallyProcessor {
 
   private static void removeExceptionInstructionsEx(BasicBlock block, int blockType, int finallyType) {
     InstructionSequence seq = block.getSeq();
+    List<Integer> instrOldOffsets = block.getOriginalOffsets();
 
     if (finallyType == 3) { // empty finally handler
       for (int i = seq.length() - 1; i >= 0; i--) {
         seq.removeInstruction(i);
+        instrOldOffsets.remove(i);
       }
     }
     else {
       if ((blockType & 1) > 0) { // first
         if (finallyType == 2 || finallyType == 1) { // `AStore` or `Pop`
           seq.removeInstruction(0);
+          // don't delete offset, because it is crucial for line-mapping
         }
       }
 
       if ((blockType & 2) > 0) { // last
         if (finallyType == 2 || finallyType == 0) {
           seq.removeLast();
+          instrOldOffsets.remove(instrOldOffsets.size() - 1);
         }
 
         if (finallyType == 2) { // `AStore`
           seq.removeLast();
+          instrOldOffsets.remove(instrOldOffsets.size() - 1);
         }
       }
     }

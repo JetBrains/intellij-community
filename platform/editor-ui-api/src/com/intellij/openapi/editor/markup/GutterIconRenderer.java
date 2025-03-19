@@ -46,8 +46,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    * @return the actions for the context menu, or null if no context menu is needed
    * @see #getRightButtonClickAction()
    */
-  @Nullable
-  public ActionGroup getPopupMenuActions() {
+  public @Nullable ActionGroup getPopupMenuActions() {
     return null;
   }
 
@@ -57,8 +56,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    * @return the tooltip text, or null if no tooltip is needed
    */
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return null;
   }
 
@@ -67,8 +65,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    *
    * @return the action instance, or null if there is no left-click action
    */
-  @Nullable
-  public AnAction getClickAction() {
+  public @Nullable AnAction getClickAction() {
     return null;
   }
 
@@ -77,8 +74,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    *
    * @return the action instance, or null if there is no middle-click action
    */
-  @Nullable
-  public AnAction getMiddleButtonClickAction() {
+  public @Nullable AnAction getMiddleButtonClickAction() {
     return null;
   }
 
@@ -88,8 +84,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    * @return the action instance, or null to show the popup menu
    * @see #getPopupMenuActions()
    */
-  @Nullable
-  public AnAction getRightButtonClickAction() {
+  public @Nullable AnAction getRightButtonClickAction() {
     return null;
   }
 
@@ -107,8 +102,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    * The order in which icons with the same alignment values are displayed is not specified
    * (it can be influenced using {@link com.intellij.openapi.editor.GutterMarkPreprocessor}).
    */
-  @NotNull
-  public Alignment getAlignment() {
+  public @NotNull Alignment getAlignment() {
     return Alignment.CENTER;
   }
 
@@ -117,20 +111,18 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    *
    * @return the drag handler callback, or null if the icon does not support drag and drop.
    */
-  @Nullable
-  public GutterDraggableObject getDraggableObject() {
+  public @Nullable GutterDraggableObject getDraggableObject() {
     return null;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral") // subclasses should override this method to provide localized name
+  // subclasses should override this method to provide localized name
+  @SuppressWarnings("HardCodedStringLiteral")
   @Override
-  @NotNull
-  public String getAccessibleName() {
+  public @NotNull String getAccessibleName() {
     return getAccessibleName(getIcon(), "icon: ");
   }
 
-  @NonNls
-  public final @NotNull String getFeatureId() {
+  public final @NonNls @NotNull String getFeatureId() {
     return getAccessibleName(getIcon(), "");
   }
 
@@ -158,9 +150,8 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     return prefix + "unknown";
   }
 
-  @Nullable
   @Override
-  public String getAccessibleTooltipText() {
+  public @Nullable String getAccessibleTooltipText() {
     return getTooltipText();
   }
 

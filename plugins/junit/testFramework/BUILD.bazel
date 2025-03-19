@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.junit.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.junit.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//jvm/jvm-analysis-testFramework:analysis-testFramework",
+    "//plugins/junit",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "//java/testFramework",
+    "//platform/testFramework",
+    "//platform/projectModel-api:projectModel",
+  ],
+  exports = [
+    "//plugins/junit",
+    "//java/java-frontback-psi-api:frontback-psi",
+  ]
+)
+### auto-generated section `build intellij.junit.testFramework` end

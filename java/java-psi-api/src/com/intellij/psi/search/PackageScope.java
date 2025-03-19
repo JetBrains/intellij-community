@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -103,20 +103,17 @@ public class PackageScope extends GlobalSearchScope {
            ", includeSubpackages = " + myIncludeSubpackages;
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, true);
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScope(@NotNull PsiPackage aPackage,
-                                               boolean includeSubpackages,
-                                               @NotNull GlobalSearchScope packageScope) {
+  public static @NotNull GlobalSearchScope packageScope(@NotNull PsiPackage aPackage,
+                                                        boolean includeSubpackages,
+                                                        @NotNull GlobalSearchScope packageScope) {
     return new PackageScope(aPackage, includeSubpackages, true, packageScope);
   }
 
-  @NotNull
-  public static GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
+  public static @NotNull GlobalSearchScope packageScopeWithoutLibraries(@NotNull PsiPackage aPackage, boolean includeSubpackages) {
     return new PackageScope(aPackage, includeSubpackages, false);
   }
 }

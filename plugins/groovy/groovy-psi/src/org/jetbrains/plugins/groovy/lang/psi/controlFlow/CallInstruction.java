@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
 import org.jetbrains.annotations.NonNls;
@@ -15,27 +15,24 @@ public class CallInstruction extends InstructionImpl {
     myCallee = callee;
   }
 
-  @NonNls
-  public String toString() {
+  @Override
+  public @NonNls String toString() {
     return super.toString() + " CALL " + myCallee.num();
   }
 
-  @NotNull
   @Override
-  public Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
+  public @NotNull Iterable<Instruction> successors(@NotNull CallEnvironment environment) {
     environment.callStack(myCallee).push(this);
     return Collections.singletonList(myCallee);
   }
 
-  @NotNull
   @Override
-  public Iterable<Instruction> allSuccessors() {
+  public @NotNull Iterable<Instruction> allSuccessors() {
     return Collections.singletonList(myCallee);
   }
 
-  @NotNull
   @Override
-  protected String getElementPresentation() {
+  protected @NotNull String getElementPresentation() {
     return "";
   }
 }

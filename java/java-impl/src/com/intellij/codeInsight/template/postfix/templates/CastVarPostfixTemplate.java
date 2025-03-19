@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.guess.GuessManager;
@@ -11,11 +11,14 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +30,7 @@ import java.util.Set;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorTopmost;
 
-public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
+public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implements DumbAware {
   private static final String TYPE_VAR = "typeVar";
   private static final @NonNls String VAR_NAME = "varName";
 
@@ -35,20 +38,24 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
     super("castvar", "T name = (T)expr", selectorTopmost(IS_NON_VOID));
   }
 
-  @Nullable
   @Override
-  public String getTemplateString(@NotNull PsiElement element) {
+  public @Nullable String getTemplateString(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     boolean isFinal = JavaCodeStyleSettings.getInstance(file).GENERATE_FINAL_LOCALS;
+    boolean useVar = Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+                     PsiUtil.isAvailable(JavaFeature.LVTI, file);
 
-    return (isFinal ? "final " : "") + "$" + TYPE_VAR + "$ $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
+    return (isFinal ? "final " : "") + (useVar ? PsiKeyword.VAR : "$" + TYPE_VAR + "$")+
+           " $" + VAR_NAME + "$ = ($" + TYPE_VAR + "$)$expr$;$END$";
   }
 
   @Override
   public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
     super.setVariables(template, element);
-    if (element instanceof PsiExpression) {
-      PsiType[] types = GuessManager.getInstance(element.getProject()).guessTypeToCast((PsiExpression)element);
+    if (element instanceof PsiExpression expression) {
+      Project project = element.getProject();
+      PsiType[] types = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+        () -> GuessManager.getInstance(project).guessTypeToCast(expression));
       fill(template, types, element);
     }
     else {
@@ -60,14 +67,20 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate {
   }
 
   private static void fill(@NotNull Template template, PsiType @NotNull [] suggestedTypes, @NotNull PsiElement context) {
-    Set<LookupElement> itemSet = new LinkedHashSet<>();
-    for (PsiType type : suggestedTypes) {
-      itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
-    }
+    Set<LookupElement> itemSet =
+      DumbService.getInstance(context.getProject()).computeWithAlternativeResolveEnabled(() -> createLookupItems(suggestedTypes));
     final Result result = suggestedTypes.length > 0 ? new PsiTypeResult(suggestedTypes[0], context.getProject()) : null;
 
     Expression expr = new ConstantNode(result).withLookupItems(itemSet.size() > 1 ? itemSet : Collections.emptyList());
 
     template.addVariable(TYPE_VAR, expr, expr, true);
+  }
+
+  private static @NotNull Set<LookupElement> createLookupItems(PsiType @NotNull [] suggestedTypes) {
+    Set<LookupElement> itemSet = new LinkedHashSet<>();
+    for (PsiType type : suggestedTypes) {
+      itemSet.add(PsiTypeLookupItem.createLookupItem(type, null));
+    }
+    return itemSet;
   }
 }

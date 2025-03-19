@@ -1,10 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -32,7 +34,7 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ExplicitArrayFillingInspection.class);
 
   public boolean mySuggestSetAll = false;
@@ -43,9 +45,8 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       checkbox("mySuggestSetAll", JavaBundle.message("inspection.explicit.array.filling.suggest.set.all")));
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -74,7 +75,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           registerProblem(statement, false);
           return;
         }
-        if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) return;
+        if (!PsiUtil.isAvailable(JavaFeature.ADVANCED_COLLECTIONS_API, holder.getFile())) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(rValue, Predicate.isEqual(loop.getCounter()))) return;
         registerProblem(statement, true);
@@ -128,8 +129,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
           ControlFlowUtils.isVariableReferencedBeforeStatementEntry(flow, flow.getEndOffset(def) + 1, statement, arrayVar, exclude));
       }
 
-      @Nullable
-      private static ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
+      private static @Nullable ControlFlow createControlFlow(@NotNull PsiCodeBlock block) {
         try {
           return ControlFlowFactory.getInstance(block.getProject())
             .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -180,8 +180,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         return ContainerUtil.and(initializer.getInitializers(), init -> isDefaultValue(init, defaultValue, init.getType()));
       }
 
-      @Nullable
-      private static Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
+      private static @Nullable Set<Integer> getDefsOffsets(@NotNull ControlFlow flow, PsiElement @NotNull [] defs) {
         Set<Integer> set = new HashSet<>();
         for (PsiElement def : defs) {
           int start = flow.getStartOffset(def);
@@ -206,20 +205,19 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
         TextRange range = getRange(statement, type);
 
         if (isSetAll && mySuggestSetAll && isOnTheFly) {
-          SetInspectionOptionFix disableForSetAllFix =
-            new SetInspectionOptionFix(ExplicitArrayFillingInspection.this,
+          var disableForSetAllFix =
+            new UpdateInspectionOptionFix(ExplicitArrayFillingInspection.this,
                                        "mySuggestSetAll",
                                        JavaBundle.message("inspection.explicit.array.filling.no.suggestion.for.set.all"),
                                        false);
-          holder.registerProblem(statement, message, type, range, fix, disableForSetAllFix);
+          holder.problem(statement, message).highlight(type).range(range).fix(fix).fix(disableForSetAllFix).register();
           return;
         }
 
         holder.registerProblem(statement, message, type, range, fix);
       }
 
-      @NotNull
-      private TextRange getRange(@NotNull PsiForStatement statement, @NotNull ProblemHighlightType type) {
+      private @NotNull TextRange getRange(@NotNull PsiForStatement statement, @NotNull ProblemHighlightType type) {
         PsiStatement initialization = statement.getInitialization();
         LOG.assertTrue(initialization != null);
         TextRange range = TextRange.from(initialization.getStartOffsetInParent(), initialization.getTextLength());
@@ -235,24 +233,21 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static final class ReplaceWithArraysCallFix implements LocalQuickFix {
-
+  private static final class ReplaceWithArraysCallFix extends PsiUpdateModCommandQuickFix {
     private final boolean myIsRhsConstant;
 
     private ReplaceWithArraysCallFix(boolean isRhsConstant) {
       myIsRhsConstant = isRhsConstant;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.explicit.array.filling.fix.family.name", myIsRhsConstant ? "fill" : "setAll");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiForStatement statement = tryCast(descriptor.getStartElement(), PsiForStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiForStatement statement = tryCast(element, PsiForStatement.class);
       if (statement == null) return;
       CountingLoop loop = CountingLoop.from(statement);
       if (loop == null) return;
@@ -280,8 +275,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @NotNull
-    private static String getCast(@NotNull PsiElement context, @Nullable PsiType elementType, @Nullable PsiType rType) {
+    private static @NotNull String getCast(@NotNull PsiElement context, @Nullable PsiType elementType, @Nullable PsiType rType) {
       if (elementType == null || rType == null) return "";
       PsiType assignTo = tryCast(elementType, PsiPrimitiveType.class);
       if (assignTo == null) assignTo = TypeUtils.getObjectType(context);
@@ -289,8 +283,7 @@ public class ExplicitArrayFillingInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
-  @Nullable
-  private static IndexedContainer getContainer(CountingLoop loop, PsiAssignmentExpression assignment) {
+  private static @Nullable IndexedContainer getContainer(CountingLoop loop, PsiAssignmentExpression assignment) {
     IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
     if (container == null) {
       if (!(assignment.getLExpression() instanceof PsiArrayAccessExpression arrayAccessExpression)) {

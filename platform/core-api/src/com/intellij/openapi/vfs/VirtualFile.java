@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +42,7 @@ import java.util.function.Supplier;
  *
  * <p>If an in-memory implementation of VirtualFile is required, {@link LightVirtualFile} can be used.</p>
  *
- * <p>Please see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/virtual_file_system.html">Virtual File System</a>
+ * <p>Please see <a href="https://plugins.jetbrains.com/docs/intellij/virtual-file-system.html">Virtual File System</a>
  * for a high-level overview.</p>
  *
  * @see VirtualFileSystem
@@ -191,7 +192,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final @NotNull @NlsSafe String getPresentableUrl() {
+  @ApiStatus.NonExtendable
+  public @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -565,6 +567,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Sets contents of the virtual file to {@code content}.
    * The BOM, if present, should be included in the {@code content} buffer.
    */
+  @RequiresWriteLock(generateAssertion = false)
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
@@ -574,15 +577,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /**
    * Creates the {@code OutputStream} for this file.
    * Writes BOM first, if there is any. See <a href=http://unicode.org/faq/utf_bom.html>Unicode Byte Order Mark FAQ</a> for an explanation.
-   *
+   * This method requires WA around it (and all the operations with OutputStream returned, until its closing): currently the indexes pipeline relies on file content being changed under WA
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if {@code requestor} is {@code null}.
    *                  See {@link VirtualFileEvent#getRequestor} and {@link SafeWriteRequestor}.
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
-  @NotNull
-  public final OutputStream getOutputStream(Object requestor) throws IOException {
+  @RequiresWriteLock(generateAssertion = false)
+  public final @NotNull OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
 
@@ -603,6 +606,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #getModificationStamp()
    */
+  @RequiresWriteLock(generateAssertion = false)
   public abstract @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException;
 
   /**
@@ -681,8 +685,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return getName();
   }
 
@@ -707,8 +710,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
-  @NotNull
-  public abstract InputStream getInputStream() throws IOException;
+  public abstract @NotNull InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);

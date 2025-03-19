@@ -1,19 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Service(Service.Level.PROJECT)
 @State(name = "Push.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class PushSettings implements PersistentStateComponent<PushSettings.State> {
   private State state = new State();
@@ -36,8 +34,12 @@ public final class PushSettings implements PersistentStateComponent<PushSettings
   }
 
   public boolean containsForcePushTarget(final @NotNull String remote, final @NotNull String branch) {
-    return ContainerUtil.exists(state.FORCE_PUSH_TARGETS,
-                                info -> info.targetRemoteName.equals(remote) && info.targetBranchName.equals(branch));
+    for (ForcePushTargetInfo t : state.FORCE_PUSH_TARGETS) {
+      if (t.targetRemoteName.equals(remote) && t.targetBranchName.equals(branch)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void addForcePushTarget(@NotNull String targetRemote, @NotNull String targetBranch) {
@@ -56,7 +58,8 @@ public final class PushSettings implements PersistentStateComponent<PushSettings
   }
 
   @Tag("force-push-target")
-  private static final class ForcePushTargetInfo {
+  @ApiStatus.Internal
+  public static final class ForcePushTargetInfo {
     @Attribute("remote-path") public String targetRemoteName;
     @Attribute("branch") public String targetBranchName;
 

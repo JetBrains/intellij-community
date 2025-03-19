@@ -8,13 +8,11 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.util.PlatformUtils
@@ -27,10 +25,7 @@ import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.TitledBorder
 
-private val pathActionName: String
-  get() = CommonBundle.message("action.settings.path.template.text", CommonBundle.settingsTitle())
-
-internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.message("action.CopySettingsPath.description"), null), DumbAware {
+internal class CopySettingsPathAction : DumbAwareAction() {
   init {
     isEnabledInModalContext = true
   }
@@ -39,7 +34,7 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
     @JvmStatic
     fun createSwingActions(supplier: Supplier<Collection<String>>): List<Action> {
       return listOf(
-        createSwingAction("CopySettingsPath", pathActionName) { copy(supplier.get()) },
+        createSwingAction("CopySettingsPath", getActionText()) { copy(supplier.get()) },
         // disable until REST API is not able to delegate to proper IDE
         //createSwingAction(null, "Copy ${CommonBundle.settingsTitle()} Link") {
         //  copyLink(supplier, isHttp = true)
@@ -56,18 +51,21 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
         return null
       }
 
-      val prefix = if (isMac) CommonBundle.message("action.settings.path.mac") else CommonBundle.message("action.settings.path")
-      val sb = StringBuilder(prefix)
+      val sb = StringBuilder(CommonBundle.settingsActionPath())
       for (name in names) {
         sb.append(SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR).append(name)
       }
       return TextTransferable(sb)
     }
+
+    private fun getActionText() =
+      ActionsBundle.message("action.CopySettingsPath.text.template", CommonBundle.settingsTitle())
   }
 
   override fun update(event: AnActionEvent) {
     val component = event.getData(CONTEXT_COMPONENT)
     val editor = ComponentUtil.getParentOfType(SettingsEditor::class.java, component)
+    event.presentation.text = getActionText()
     event.presentation.isEnabledAndVisible = editor != null
   }
 

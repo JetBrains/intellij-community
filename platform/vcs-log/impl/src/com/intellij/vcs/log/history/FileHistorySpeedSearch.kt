@@ -11,7 +11,7 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.visible.VisiblePack
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 
-class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, storage: VcsLogStorage, component: VcsLogGraphTable)
+internal class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, storage: VcsLogStorage, component: VcsLogGraphTable)
   : IndexSpeedSearch(project, index, storage, component) {
   var visiblePack: VisiblePack = VisiblePack.EMPTY
     set(value) {
@@ -23,7 +23,8 @@ class FileHistorySpeedSearch(project: Project, index: VcsLogIndex, storage: VcsL
 
   override fun getCommitMetadata(row: Int): VcsCommitMetadata? {
     val commits = visiblePack.getUserData(COMMIT_METADATA) ?: return super.getCommitMetadata(row)
-    return commits.get(getCommitId(row)) ?: return super.getCommitMetadata(row)
+    val commitId = getCommitId(row) ?: return null
+    return commits.get(commitId) ?: return super.getCommitMetadata(row)
   }
 
   companion object {

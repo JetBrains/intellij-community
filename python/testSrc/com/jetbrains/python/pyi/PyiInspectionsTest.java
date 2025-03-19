@@ -16,6 +16,7 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -79,6 +80,7 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
 
+  // PY-78185
   public void testHiddenPyiImports() {
     doPyTest(PyUnresolvedReferencesInspection.class);
   }
@@ -149,4 +151,7 @@ public class PyiInspectionsTest extends PyTestCase {
   public void testMissedSuperInitCall() {
     doPyiTest(PyMissingConstructorInspection.class);
   }
+
+  @TestFor(issues = "PY-16477")
+  public void testAccessProtectedProperty() { doPyTest(PyProtectedMemberInspection.class); }
 }

@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import argparse
 import json
 import os
+import re
 import sys
 import zipfile
 from collections import defaultdict
@@ -17,6 +18,29 @@ _bytes_that_never_appears_in_text = (set(range(7))
                                      | set(range(14, 27))
                                      | set(range(28, 32))
                                      | {127})
+
+BINARY_FILE_PATTERNS = [
+    # plotlywidget/static/index.js.map is 8.7 MiB.
+    # Many map files from notebook are near 2 MiB.
+    r'.*\.js\.map$',
+
+    # uvloop/loop.c contains 6.4 MiB of code.
+    # Some header files from tensorflow has size more than 1 MiB.
+    r'.*\.h$',
+    r'.*\.c$',
+
+    # Test data of pycrypto, many files are near 1 MiB.
+    r'.*\.rsp$',
+
+    # No need to read these files even if they are small.
+    r'.*\.py[cdo]$',
+    
+    r'.*\.dll$',
+    # https://unix.stackexchange.com/a/293782/16197
+    r'.*\.so(\.\d+){0,3}$',
+]
+_binary_file_patterns = [re.compile(p) for p in BINARY_FILE_PATTERNS]
+
 
 if six.PY2:
     from io import open
@@ -50,22 +74,8 @@ def is_source_file(path):
     # Want to see that files regardless of their encoding.
     if path.endswith(('-nspkg.pth', '.html', '.pxd', '.py', '.pyi', '.pyx')):
         return True
-    has_bad_extension = path.endswith((
-        # plotlywidget/static/index.js.map is 8.7 MiB.
-        # Many map files from notebook are near 2 MiB.
-        '.js.map',
-
-        # uvloop/loop.c contains 6.4 MiB of code.
-        # Some header files from tensorflow has size more than 1 MiB.
-        '.h', '.c',
-
-        # Test data of pycrypto, many files are near 1 MiB.
-        '.rsp',
-
-        # No need to read these files even if they are small.
-        '.dll', '.pyc', '.pyd', '.pyo', '.so',
-    ))
-    if has_bad_extension:
+    _, filename = os.path.split(path)
+    if any(p.match(filename) for p in _binary_file_patterns):
         return False
     return is_text_file(path)
 

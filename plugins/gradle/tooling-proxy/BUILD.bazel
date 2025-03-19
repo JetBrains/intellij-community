@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.gradle.toolingProxy` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "toolingProxy",
+  module_name = "intellij.gradle.toolingProxy",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:gradle",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:slf4j-api",
+    "@lib//:slf4j-jdk14",
+    "//plugins/gradle/tooling-extension-api:toolingExtension",
+  ]
+)
+### auto-generated section `build intellij.gradle.toolingProxy` end

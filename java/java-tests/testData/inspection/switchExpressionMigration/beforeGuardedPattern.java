@@ -1,4 +1,4 @@
-// "Replace with enhanced 'switch' statement" "true"
+// "Replace with enhanced 'switch' statement" "true-preview"
 import org.jetbrains.annotations.NotNull;
 
 class X {
@@ -8,7 +8,7 @@ class X {
                 // line contains no height
                 System.out.println(i+1);
                 break;
-            case String s && !s.isEmpty():
+            case String s when !s.isEmpty():
                 // line contains no code
                 System.out.println("Goodbye.");
                 break;

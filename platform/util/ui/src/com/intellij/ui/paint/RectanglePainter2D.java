@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.ui.paint.LinePainter2D.Align;
@@ -44,7 +44,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
      */
     @Override
-    public void paint(@NotNull final Graphics2D g,
+    public void paint(final @NotNull Graphics2D g,
                       @NotNull Rectangle2D rect,
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
@@ -79,9 +79,9 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      *                affecting a rounding rectangle only
      */
     @Override
-    public void paint(@NotNull final Graphics2D g,
+    public void paint(final @NotNull Graphics2D g,
                       double x, double y, double width, double height,
-                      @Nullable final Double arc,
+                      final @Nullable Double arc,
                       @NotNull StrokeType strokeType,
                       double strokeWidth,
                       @NotNull Object valueAA) {
@@ -142,7 +142,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
      */
     @Override
-    public void paint(@NotNull final Graphics2D g,
+    public void paint(final @NotNull Graphics2D g,
                       @NotNull Rectangle2D rect,
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
@@ -177,7 +177,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
      *                affecting a rounding rectangle only
      */
     @Override
-    public void paint(@NotNull final Graphics2D g,
+    public void paint(final @NotNull Graphics2D g,
                       double x, double y, double width, double height,
                       @Nullable Double arc,
                       @NotNull StrokeType strokeType,
@@ -233,8 +233,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
    * @param strokeWidth the stroke width
    * @return the rectangle with aligned coordinates and size with adjusted parity
    */
-  @NotNull
-  public static Rectangle2D align(@NotNull Graphics2D g,
+  public static @NotNull Rectangle2D align(@NotNull Graphics2D g,
                                   @NotNull EnumSet<Align> align,
                                   double x, double y, double prefWidth, double prefHeight,
                                   @NotNull StrokeType strokeType, double strokeWidth) {
@@ -279,7 +278,7 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
 
   public abstract void paint(@NotNull Graphics2D g, double x, double y, double width, double height);
 
-  public abstract void paint(@NotNull final Graphics2D g,
+  public abstract void paint(final @NotNull Graphics2D g,
                              @NotNull Rectangle2D rect,
                              @Nullable Double arc,
                              @NotNull StrokeType strokeType,

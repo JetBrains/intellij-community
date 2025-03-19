@@ -1,0 +1,4 @@
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!><!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_LANGUAGE'")!>kotlin<!>
+val x = 1
+println(x + 1)<!HIGHLIGHTING("severity='ERROR'; descr='Unexpected tokens (use ';' to separate expressions on the same line)'")!>))<!>
+<!HIGHLIGHTING("textAttributesKey='MARKDOWN_CODE_FENCE_MARKER'")!>```<!>

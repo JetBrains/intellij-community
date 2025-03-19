@@ -17,8 +17,10 @@ package com.intellij.diagnostic.hprof.util
 
 import com.intellij.diagnostic.hprof.analysis.AnalysisConfig
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 class TreeVisualizer {
 
   private class IndentStore {

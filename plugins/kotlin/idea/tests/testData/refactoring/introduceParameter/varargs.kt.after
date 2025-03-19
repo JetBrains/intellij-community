@@ -8,3 +8,5 @@ fun test() {
     foo(a.size + 1)
     foo(a.size + 1)
 }
+
+// IGNORE_K2

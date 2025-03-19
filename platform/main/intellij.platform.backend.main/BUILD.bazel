@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.platform.backend.main` start
+load("@rules_java//java:defs.bzl", "java_library")
+
+java_library(
+  name = "backend-main",
+  visibility = ["//visibility:public"],
+  runtime_deps = [
+    "//platform/main/intellij.platform.main:main",
+    "//platform/kernel/backend",
+    "//platform/navbar/backend",
+    "//platform/project/backend",
+    "//platform/progress/backend",
+    "//platform/xdebugger-impl/backend:debugger-impl-backend",
+    "//platform/searchEverywhere/backend",
+    "//platform/vcs-impl/backend:vcs-impl-backend",
+    "//platform/bookmarks/backend",
+    "//platform/recentFiles/backend",
+    "//platform/editor/backend",
+  ]
+)
+### auto-generated section `build intellij.platform.backend.main` end

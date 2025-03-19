@@ -1,0 +1,31 @@
+### auto-generated section `build intellij.platform.langInjection` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "langInjection_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "langInjection",
+  module_name = "intellij.platform.langInjection",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//RegExpSupport:regexp",
+    "//platform/platform-api:ide",
+    "@lib//:stream_ex",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-ex:editor-ex",
+    "//xml/xml-parser:parser",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//platform/analysis-impl",
+  ],
+  runtime_deps = [":langInjection_resources"]
+)
+### auto-generated section `build intellij.platform.langInjection` end

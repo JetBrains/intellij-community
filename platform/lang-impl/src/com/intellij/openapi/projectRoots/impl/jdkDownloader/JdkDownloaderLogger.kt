@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,64 +8,45 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
-object JdkDownloaderLogger : CounterUsagesCollector() {
-
-  private const val UNKNOWN_JDK = "Unknown"
-  private val JDKS = listOf(
-    "AdoptOpenJDK (HotSpot)",
-    "AdoptOpenJDK (OpenJ9)",
-    "Eclipse Temurin",
-    "IBM Semeru",
-    "Amazon Corretto",
-    "GraalVM",
-    "IBM JDK",
-    "JetBrains Runtime",
-    "BellSoft Liberica",
-    "Oracle OpenJDK",
-    "SAP SapMachine",
-    "Azul Zulu",
-    UNKNOWN_JDK
-  )
-
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 1)
-
-  private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
-
-  private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
-                                                                         EventFields.String("product", JDKS),
-                                                                         EventFields.Int("version"))
-  private val SELECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("selected",
-                                                                         EventFields.String("product", JDKS),
-                                                                         EventFields.Int("version"))
-
+internal object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  fun logDownload(success: Boolean) {
-    DOWNLOAD.log(success)
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 6)
+
+  private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
+                                                                         EventFields.Int("version"))
+
+  private val DOWNLOADED_SDK: EventId2<String?, Int> = GROUP.registerEvent("jdk.downloaded",
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
+                                                                         EventFields.Int("version"))
+
+  private val FAILURE: EventId1<DownloadFailure> = GROUP.registerEvent("failure",
+                                                                       EventFields.Enum("reason", DownloadFailure::class.java))
+
+  enum class DownloadFailure {
+    WrongProtocol, WSLIssue, FileDoesNotExist, RuntimeException, IncorrectFileSize, ChecksumMismatch, ExtractionFailed, Cancelled,
   }
 
-  fun logSelected(jdkItem: JdkItem) {
-    val name = when (jdkItem.product.vendor) {
-      "Azul" -> "Azul Zulu"
-      "Amazon" -> "Amazon Corretto"
-      "JetBrains" -> "JetBrains Runtime"
-      "BellSoft" -> "BellSoft Liberica"
-      "Oracle" -> "Oracle OpenJDK"
-      "SAP" -> "SAP SapMachine"
-      "IBM" -> "IBM Semeru"
-      "Eclipse" -> "Eclipse Temurin"
-      else -> UNKNOWN_JDK
-    }
-    SELECTED_SDK.log(name, jdkItem.jdkMajorVersion)
+  @Deprecated(message = "Use logDownload(JdkItem) instead")
+  fun logDownload(success: Boolean) {}
+
+  fun logDownload(item: JdkItem) {
+    val variant = item.detectVariant()
+    DOWNLOADED_SDK.log(variant.displayName, item.jdkMajorVersion)
   }
 
+  fun logFailed(failure: DownloadFailure) {
+    FAILURE.log(failure)
+  }
+
+  @JvmStatic
   fun logDetected(jdkInfo: JdkVersionDetector.JdkVersionInfo?) {
     val (name, version) = when {
                             jdkInfo == null -> null
-                            jdkInfo.variant.displayName in JDKS -> (jdkInfo.variant.displayName ?: UNKNOWN_JDK) to jdkInfo.version.feature
-                            else -> UNKNOWN_JDK to jdkInfo.version.feature
+                            jdkInfo.variant.displayName in JdkVersionDetector.VENDORS -> jdkInfo.variant.displayName to jdkInfo.version.feature
+                            else -> JdkVersionDetector.Variant.Unknown.displayName to jdkInfo.version.feature
                           } ?: return
     DETECTED_SDK.log(name, version)
   }
-
 }

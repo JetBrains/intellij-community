@@ -3,68 +3,33 @@ package com.intellij.openapi.externalSystem.action.task
 
 import com.intellij.execution.Executor
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.ui.SimpleToolWindowPanel
 
-class ExternalSystemTaskMenu : DefaultActionGroup(), DumbAware {
-  private val actionManager = ActionManager.getInstance()
-  override fun update(e: AnActionEvent) {
-    val project = AnAction.getEventProject(e) ?: return
+internal class ExternalSystemTaskMenu : DefaultActionGroup(), DumbAware {
 
-    childActionsOrStubs
-      .filter { it is MyDelegatingAction }
-      .forEach { remove(it) }
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+    val project = e?.project ?: return super.getChildren(e)
 
-    Executor.EXECUTOR_EXTENSION_NAME.extensionList
+    return Executor.EXECUTOR_EXTENSION_NAME.extensionList
       .filter { it.isApplicable(project) }
-      .reversed()
-      .forEach {
-        val contextAction = actionManager.getAction(it.contextActionId)
-        if (contextAction != null) {
-          add(wrap(contextAction, it), Constraints.FIRST)
-        }
-      }
-  }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
-
-  private interface MyDelegatingAction
-
-  private class DelegatingActionGroup(action: ActionGroup, private val executor: Executor) :
-    ActionGroupWrapper(action), MyDelegatingAction {
-
-    override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      val children = super.getChildren(e)
-      return children.map { wrap(it, executor) }.toTypedArray()
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      reportUsage(e, executor)
-      super.actionPerformed(e)
-    }
-  }
-
-  private class DelegatingAction(action: AnAction, private val executor: Executor) :
-    AnActionWrapper(action), MyDelegatingAction {
-
-    override fun actionPerformed(e: AnActionEvent) {
-      reportUsage(e, executor)
-      super.actionPerformed(e)
-    }
-  }
-
-  companion object {
-    private fun wrap(action: AnAction, executor: Executor): AnAction = if (action is ActionGroup) DelegatingActionGroup(action, executor)
-    else DelegatingAction(action, executor)
-
-    private fun reportUsage(e: AnActionEvent, executor: Executor) {
-      val project = e.project
-      val systemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.dataContext)
-      ExternalSystemActionsCollector.trigger(project, systemId, ExternalSystemActionsCollector.ActionId.RunExternalSystemTaskAction, e,
-                                             executor)
-    }
+      .map { e.actionManager.getAction(it.contextActionId) }
+      .toTypedArray() + super.getChildren(e)
   }
 
 
+  internal class Listener : AnActionListener {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+      val view = event.getData(ExternalSystemDataKeys.VIEW) ?: return
+      if ((view as SimpleToolWindowPanel).name != event.place) return
+      val actionId = event.actionManager.getId(action) ?: return
+      val executor = Executor.EXECUTOR_EXTENSION_NAME.extensionList.find { it.contextActionId == actionId} ?: return
+
+      val extActionId = ExternalSystemActionsCollector.ActionId.RunExternalSystemTaskAction
+      ExternalSystemActionsCollector.trigger(view.project, view.systemId, extActionId, event, executor)
+    }
+  }
 }

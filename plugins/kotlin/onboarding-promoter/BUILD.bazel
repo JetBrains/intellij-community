@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.kotlin.onboarding-promoter` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "onboarding-promoter_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "onboarding-promoter",
+  module_name = "intellij.kotlin.onboarding-promoter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//java/java-features-trainer:featuresTrainer",
+    "//plugins/kotlin/features-trainer",
+    "//platform/statistics",
+  ],
+  runtime_deps = [":onboarding-promoter_resources"]
+)
+### auto-generated section `build intellij.kotlin.onboarding-promoter` end

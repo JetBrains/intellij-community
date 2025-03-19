@@ -41,7 +41,7 @@ import static com.intellij.codeInspection.options.OptPane.*;
  * This inspection will use filter information from the GenerateToString plugin settings to exclude certain fields (eg. constants etc.).
  * Warns if the class has fields to be dumped and does not have a toString method.
  */
-public class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
+public final class ClassHasNoToStringMethodInspection extends AbstractToStringInspection {
 
     /** User options for classes to exclude. Must be a regexp pattern */
     public String excludeClassNames = "";  // must be public for JDOMSerialization
@@ -63,14 +63,12 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
 
   @Override
-    @NotNull
-    public String getShortName() {
+  public @NotNull String getShortName() {
         return "ClassHasNoToStringMethod";
     }
 
-    @NotNull
     @Override
-    public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, boolean isOnTheFly) {
         return new JavaElementVisitor() {
             @Override
             public void visitClass(@NotNull PsiClass clazz) {

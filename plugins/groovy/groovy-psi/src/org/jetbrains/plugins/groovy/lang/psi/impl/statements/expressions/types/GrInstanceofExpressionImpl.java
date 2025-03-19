@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
@@ -42,8 +42,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElement() {
+  public @Nullable GrTypeElement getTypeElement() {
     return findChildByClass(GrTypeElement.class);
   }
 
@@ -53,8 +52,7 @@ public class GrInstanceofExpressionImpl extends GrExpressionImpl implements GrIn
   }
 
   @Override
-  @NotNull
-  public GrExpression getOperand() {
+  public @NotNull GrExpression getOperand() {
     return findNotNullChildByClass(GrExpression.class);
   }
 }

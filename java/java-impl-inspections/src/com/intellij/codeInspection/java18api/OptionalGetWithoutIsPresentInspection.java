@@ -1,8 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
@@ -14,7 +17,10 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,11 +33,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
+import java.util.Set;
 
-public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -50,7 +61,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
+      private static boolean isOptionalProblem(@NotNull PsiExpression context, @NotNull JavaDfaAnchor anchor) {
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(context);
         if (result == null || !result.anchorWasAnalyzed(anchor)) return false;
         DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(anchor));
@@ -118,17 +129,15 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
     return null;
   }
 
-  private static class UseFlatMapFix implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+  private static class UseFlatMapFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.use.flatmap");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;

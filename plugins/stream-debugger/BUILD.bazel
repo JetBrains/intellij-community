@@ -1,0 +1,72 @@
+### auto-generated section `build intellij.java.debugger.streams` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-debugger-streams_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-debugger-streams",
+  module_name = "intellij.java.debugger.streams",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/ijent/impl:community-impl",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "@lib//:stream_ex",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//java/openapi:java",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ],
+  runtime_deps = [":java-debugger-streams_resources"]
+)
+
+jvm_library(
+  name = "java-debugger-streams_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":java-debugger-streams"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//java/debugger/openapi:java-debugger",
+    "//platform/ijent/impl:community-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/stream-debugger-core:debugger-streams-core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "@lib//:stream_ex",
+    "//java/debugger/impl:java-debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl",
+    "//platform/xdebugger-impl:debugger-impl_test_lib",
+    "//java/execution/openapi:java-execution",
+    "//java/testFramework",
+    "//java/openapi:java",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//plugins/stream-debugger-core/testFramework:debugger-streams-core-testFramework",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":java-debugger-streams_resources"]
+)
+
+jvm_test(
+  name = "java-debugger-streams_test",
+  runtime_deps = [":java-debugger-streams_test_lib"]
+)
+### auto-generated section `build intellij.java.debugger.streams` end

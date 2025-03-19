@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.vcs.git.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-git-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-git-shared",
+  module_name = "intellij.vcs.git.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/platform-api:ide",
+    "//platform/kernel/shared:kernel",
+    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/project/shared:project",
+  ],
+  runtime_deps = [":vcs-git-shared_resources"]
+)
+### auto-generated section `build intellij.vcs.git.shared` end

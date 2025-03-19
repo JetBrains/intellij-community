@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -29,6 +30,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorTextField
 import com.intellij.util.ui.IoErrorText
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.charset.Charset
@@ -38,13 +40,14 @@ import java.nio.file.Path
 import javax.swing.JFrame
 import javax.swing.ScrollPaneConstants
 
+@ApiStatus.Internal
 abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected abstract fun file(): Path?
   protected abstract fun template(): String
   protected open fun charset(): Charset = StandardCharsets.UTF_8
   protected open fun prepareDocument(document: Document?) { }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null
@@ -55,12 +58,16 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
 
     val project = e.project
     if (project != null) {
-      openInEditor(file, project)
+      WriteIntentReadAction.run {
+        openInEditor(file, project)
+      }
     }
     else {
       val frame = WelcomeFrame.getInstance() as JFrame?
       if (frame != null) {
-        openInDialog(file, frame)
+        WriteIntentReadAction.run {
+          openInDialog(file, frame)
+        }
       }
     }
   }
@@ -145,6 +152,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   }
 }
 
+@ApiStatus.Internal
 class EditCustomPropertiesAction : EditCustomSettingsAction() {
   private companion object {
     val file: Lazy<Path?> = lazy { PathManager.getCustomOptionsDirectory()?.let { Path.of(it, PathManager.PROPERTIES_FILE_NAME) } }

@@ -27,10 +27,10 @@ class D<T extends C> {
 }
 
 class Primitives<T> {
-  Object a = new Primitives<<error descr="Type argument cannot be of primitive type">? extends int</error>>();
-  Object o = new Primitives<<error descr="Type argument cannot be of primitive type">int</error>>();
-  void f(Primitives<<error descr="Type argument cannot be of primitive type">boolean</error>> param) {
-    if (this instanceof Primitives<<error descr="Type argument cannot be of primitive type">double</error>>) {
+  Object a = new Primitives<<error descr="Type argument cannot be of a primitive type">? extends int</error>>();
+  Object o = new Primitives<<error descr="Type argument cannot be of a primitive type">int</error>>();
+  void f(Primitives<<error descr="Type argument cannot be of a primitive type">boolean</error>> param) {
+    if (this instanceof Primitives<<error descr="Type argument cannot be of a primitive type">double</error>>) {
       return;
     }
   }
@@ -51,7 +51,7 @@ class Bound extends Generic<String>{
 class Generic2<T1,T2> {
   class A {}
   class B {}
-  private <error descr="Incompatible types. Found: 'Generic2<java.lang.String,Generic2.B>', required: 'Generic2<java.lang.String,Generic2.A>'">Generic2<String, A> map = new Generic2<String,B>();</error>
+  private Generic2<String, A> map = new <error descr="Incompatible types. Found: 'Generic2<java.lang.String,Generic2.B>', required: 'Generic2<java.lang.String,Generic2.A>'">Generic2<String,B></error>();
   {
     <error descr="Incompatible types. Found: 'Generic2<java.lang.String,java.lang.String>', required: 'Generic2<java.lang.String,Generic2.A>'">map = new Generic2<String,String>()</error>;
     map = new Generic2<String,A>();
@@ -64,12 +64,12 @@ abstract class GenericTest3 implements DummyList<<error descr="No wildcard expec
     <T> void foo () {}
     void bar () {
          this.<DummyList<? extends DummyList>>foo();
-         DummyList<DummyList<? super String>>[] l = <error descr="Generic array creation">new DummyList<DummyList<? super String>>[0]</error>;
-         DummyList<String>[] l1 = <error descr="Generic array creation">{}</error>;
+         DummyList<DummyList<? super String>>[] l = new DummyList<error descr="Generic array creation not allowed"><DummyList<? super String>></error>[0];
+         DummyList<String>[] l1 = <error descr="Generic array creation not allowed">{}</error>;
     }
 
     public <T> T[] getComponents (Class<T> baseInterfaceClass) {
-        T[] ts = <error descr="Generic array creation">{}</error>;
+        T[] ts = <error descr="Generic array creation not allowed">{}</error>;
 
         return ts;
     }
@@ -99,7 +99,7 @@ class testDup<T, <error descr="Duplicate type parameter: 'T'">T</error>> { // CA
 
 class aaaa {
     {
-        <error descr="Incompatible types. Found: 'java.lang.Class<java.lang.String>', required: 'java.lang.Class<? super java.lang.Object>'">Class<? super Object> c = String.class;</error>
+        Class<? super Object> c = <error descr="Incompatible types. Found: 'java.lang.Class<java.lang.String>', required: 'java.lang.Class<? super java.lang.Object>'">String.class;</error>
     }
 }
 
@@ -133,15 +133,15 @@ class ClassLiteral<T> {
     Object c1 = <error descr="Cannot access class object of a type parameter">T</error>.class;
     Object c2 = <error descr="Cannot access class object of a type parameter">T[]</error>.class;
     
-    Object c3 = <error descr="Cannot access class object of parameterized type">List<String></error>.class;
-    Object c4 = <error descr="Cannot access class object of parameterized type">List<String>[]</error>.class;
+    Object c3 = <error descr="Cannot access class object of a parameterized type">List<String></error>.class;
+    Object c4 = <error descr="Cannot access class object of a parameterized type">List<String>[]</error>.class;
     Object c5 = List[].class;
     Object c6 = List.class;
   }
 }
 
 class Outer<E> {
-    final Inner[] i = <error descr="Generic array creation">new Inner[10]</error>;
+    final Inner[] i = <error descr="Generic array creation not allowed">new Inner[10]</error>;
     class Inner {
     }
 }

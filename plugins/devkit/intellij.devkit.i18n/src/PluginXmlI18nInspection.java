@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n;
 
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
@@ -19,6 +19,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.SchemeConvertorEPBase;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -35,6 +36,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
@@ -44,15 +46,12 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
-import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
+import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.uast.UExpression;
 
@@ -60,11 +59,16 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
+@ApiStatus.Internal
+public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   private static final Logger LOG = Logger.getInstance(PluginXmlI18nInspection.class);
 
   @Override
-  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element,
+                                 @NotNull DomElementAnnotationHolder holder,
+                                 @NotNull DomHighlightingHelper helper) {
+    if (!isAllowed(holder)) return;
+
     if (element instanceof ActionOrGroup) {
       highlightActionOrGroup(holder, (ActionOrGroup)element);
     }
@@ -95,7 +99,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix());
+      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix("displayName", "inspection"));
       checkNonLocalizableAttribute(holder, extension, "groupName", null);
       //checkNonLocalizableAttribute(holder, element, "groupPath", null);
     }
@@ -138,10 +142,10 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     highlightNonLocalizableElement(holder, DevKitDomUtil.getTag(element, tagName), tagName, quickFix);
   }
 
-  private static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
-                                                     GenericDomValue<?> valueElement,
-                                                     @NonNls String valueElementName,
-                                                     @Nullable LocalQuickFix fix) {
+  static void highlightNonLocalizableElement(DomElementAnnotationHolder holder,
+                                             GenericDomValue<?> valueElement,
+                                             @NonNls String valueElementName,
+                                             @Nullable LocalQuickFix fix) {
     if (valueElement != null && valueElement.getStringValue() != null) {
       holder.createProblem(valueElement,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -153,7 +157,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     if (!DomUtil.hasXml(separator.getText())) return;
 
     final BuildNumber buildNumber = PluginPlatformInfo.forDomElement(separator).getSinceBuildNumber();
-    if (buildNumber != null && buildNumber.getBaselineVersion() >= 202) {
+    if (buildNumber != null && buildNumber.getBaselineVersion() >= 202 ||
+        isIntelliJProject(separator)) {
       holder.createProblem(separator, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                            DevKitI18nBundle.message("inspections.plugin.xml.i18n.key"),
                            null, new SeparatorKeyI18nQuickFix());
@@ -173,9 +178,6 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightActionOrGroup(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup actionOrGroup) {
-    String id = actionOrGroup.getId().getStringValue();
-    if (id == null) return;
-
     String text = actionOrGroup.getText().getStringValue();
     String desc = actionOrGroup.getDescription().getStringValue();
     if (text == null && desc == null) return;
@@ -194,6 +196,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     final GenericAttributeValue<?> internalAttribute = DevKitDomUtil.getAttribute(action, internalAttributeName);
     if (internalAttribute != null && "true".equals(internalAttribute.getStringValue())) return true;
     return false;
+  }
+
+  private static boolean isIntelliJProject(DomElement domElement) {
+    Module module = domElement.getModule();
+    if (module == null) return false;
+    return IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject());
   }
 
   private static void choosePropertiesFileAndExtract(Project project, List<XmlTag> tags, Consumer<String> doFixConsumer) {
@@ -228,9 +236,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     builder.createPopup().showCenteredInCurrentWindow(project);
   }
 
-  @NotNull
-  private static String getBundleQName(@NotNull Project project,
-                                       PropertiesFile propertiesFile) {
+  private static @NotNull String getBundleQName(@NotNull Project project,
+                                                PropertiesFile propertiesFile) {
     String baseName = propertiesFile.getResourceBundle().getBaseName();
     VirtualFile virtualFile = propertiesFile.getVirtualFile();
     VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(virtualFile);
@@ -283,10 +290,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return IntentionPreviewInfo.EMPTY;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "key");
     }
 
@@ -328,13 +333,19 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     }
   }
 
-  private static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
+  static class InspectionI18NQuickFix implements LocalQuickFix, BatchQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+    private final String attributeName;
+    private final String prefix;
+
+    InspectionI18NQuickFix(String attributeName, String prefix) {
+      this.attributeName = attributeName;
+      this.prefix = prefix;
+    }
+
     @Override
-    public String getFamilyName() {
-      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+      return DevKitI18nBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName);
     }
 
     @Override
@@ -365,7 +376,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       return false;
     }
 
-    private static void doFix(@NotNull Project project, List<XmlTag> tags) {
+    private void doFix(@NotNull Project project, List<XmlTag> tags) {
       choosePropertiesFileAndExtract(project, tags, selection -> {
         PropertiesFile propertiesFile = findPropertiesFile(project, selection);
         if (propertiesFile != null) {
@@ -384,35 +395,44 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       });
     }
 
-    private static void registerPropertyKey(@NotNull Project project, XmlTag xml, PropertiesFile propertiesFile) {
-      String displayName = xml.getAttributeValue("displayName");
+    private void registerPropertyKey(@NotNull Project project, XmlTag xml, PropertiesFile propertiesFile) {
+      String displayName = xml.getAttributeValue(attributeName);
       if (displayName == null) return;
-      xml.setAttribute("displayName", null);
-      String shortName = xml.getAttributeValue("shortName");
-      if (shortName == null) {
-        String implementationClass = xml.getAttributeValue("implementationClass");
-        if (implementationClass == null) {
-          return;
-        }
-        shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
-      }
-      @NonNls String key =
-        "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") +
-        ".display.name";
+      xml.setAttribute(attributeName, null);
+      String shortName = getName(xml);
+      if (shortName == null) return;
+      String[] items = ArrayUtil.mergeArrays(NameUtilCore.splitNameIntoWords(shortName), NameUtilCore.splitNameIntoWords(attributeName));
+      @NonNls String key = prefix + "." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
       xml.setAttribute("key", key);
 
-      XmlTag rootTag = ((XmlFile)xml.getContainingFile()).getRootTag();
-      XmlTag resourceBundle = rootTag != null ? rootTag.findFirstSubTag("resource-bundle") : null;
       String bundleQName = getBundleQName(project, propertiesFile);
-      if (resourceBundle == null || !bundleQName.equals(resourceBundle.getValue().getTrimmedText())) {
-        xml.setAttribute("bundle", bundleQName);
-      }
+      setBundle(xml, bundleQName);
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                     Collections.singletonList(propertiesFile),
                                                                     key,
                                                                     StringUtil.unescapeXmlEntities(displayName),
                                                                     new UExpression[0]);
+    }
+
+    protected void setBundle(@NotNull XmlTag xml, @NotNull String bundleQName) {
+      XmlTag rootTag = ((XmlFile)xml.getContainingFile()).getRootTag();
+      XmlTag resourceBundle = rootTag != null ? rootTag.findFirstSubTag("resource-bundle") : null;
+      if (resourceBundle == null || !bundleQName.equals(resourceBundle.getValue().getTrimmedText())) {
+        xml.setAttribute("bundle", bundleQName);
+      }
+    }
+
+    protected @Nullable String getName(@NotNull XmlTag xml) {
+      String shortName = xml.getAttributeValue("shortName");
+      if (shortName == null) {
+        String implementationClass = xml.getAttributeValue("implementationClass");
+        if (implementationClass == null) {
+          return null;
+        }
+        shortName = getShortName(StringUtil.getShortName(implementationClass));
+      }
+      return shortName;
     }
 
     @Override
@@ -430,10 +450,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       myIsAction = isAction;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.name");
     }
 
@@ -517,6 +535,13 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       }
     }
 
+    @Nullable
+    private static String getEffectiveActionOrGroupId(@Nullable XmlTag tag) {
+      ActionOrGroup actionOrGroup = DomUtil.findDomElement(tag, ActionOrGroup.class);
+      assert actionOrGroup != null;
+      return actionOrGroup.getEffectiveId();
+    }
+
     private static void extractTextAndDescription(@NotNull Project project,
                                                   Collection<XmlTag> tags,
                                                   PropertiesFile propertiesFile,
@@ -529,10 +554,10 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
         String id;
         if (tag.getName().equals("override-text")) {
-          id = Objects.requireNonNull(tag.getParentTag()).getAttributeValue("id") + "." + tag.getAttributeValue("place");
+          id = getEffectiveActionOrGroupId(tag.getParentTag()) + "." + tag.getAttributeValue("place");
         }
         else {
-          id = tag.getAttributeValue("id");
+          id = getEffectiveActionOrGroupId(tag);
         }
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);
@@ -577,10 +602,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
   private static class SeparatorKeyI18nQuickFix implements LocalQuickFix, BatchQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return DevKitI18nBundle.message("inspections.plugin.xml.i18n.key");
     }
 

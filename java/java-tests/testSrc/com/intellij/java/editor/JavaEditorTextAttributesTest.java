@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -15,12 +15,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertNotEquals;
@@ -29,10 +30,9 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
 
   private static List<AttributesDescriptor> getDescriptors() {
     JavaColorSettingsPage page = new JavaColorSettingsPage();
-    List<AttributesDescriptor> result = Arrays.asList(page.getAttributeDescriptors());
-    Collections.sort(result,
-                     (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
-    return result;
+    List<AttributesDescriptor> result = new ArrayList<>(Arrays.asList(page.getAttributeDescriptors()));
+    return ContainerUtil.sorted(result,
+                         (o1, o2) -> o1.getKey().getExternalName().compareToIgnoreCase(o2.getKey().getExternalName()));
   }
 
   private static void appendAttributes(@NotNull String name,
@@ -60,25 +60,15 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
   }
 
   private static Pair<String,String> effectTypeToTextStyle(@NotNull EffectType effectType) {
-    switch (effectType) {
-      case LINE_UNDERSCORE:
-        return Pair.create("underline", "");
-      case BOLD_LINE_UNDERSCORE:
-        return Pair.create("underline", "bold");
-      case STRIKEOUT:
-        return Pair.create("line-through", "");
-      case BOXED:
-        return Pair.create("boxed", "");
-      case WAVE_UNDERSCORE:
-        return Pair.create("underline", "wavy");
-      case BOLD_DOTTED_LINE:
-        return Pair.create("underline", "dotted");
-      case SEARCH_MATCH:
-        break;
-      case ROUNDED_BOX:
-        break;
-    }
-    return Pair.create("??", "");
+    return switch (effectType) {
+      case LINE_UNDERSCORE -> Pair.create("underline", "");
+      case BOLD_LINE_UNDERSCORE -> Pair.create("underline", "bold");
+      case STRIKEOUT -> Pair.create("line-through", "");
+      case BOXED -> Pair.create("boxed", "");
+      case WAVE_UNDERSCORE -> Pair.create("underline", "wavy");
+      case BOLD_DOTTED_LINE -> Pair.create("underline", "dotted");
+      default -> Pair.create("??", "");
+    };
   }
 
   private static void appendFontType(@NotNull StringBuilder builder, @NotNull TextAttributes attributes) {
@@ -158,6 +148,8 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #000000;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #000000;  font-style: normal; text-decoration: underline #909090; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #660e7a;  font-style: normal;  font-weight: bold; }
+        RECORD_NAME_ATTRIBUTES { color: #000000;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #660e7a;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #660e7a;  font-style: italic;  font-weight: bold; }
@@ -167,7 +159,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         TYPE_PARAMETER_NAME_ATTRIBUTES { color: #20999d;  font-style: normal; }
         """,
 
-      dumpDefaultColorScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME));
+      dumpDefaultColorScheme(EditorColorsScheme.getDefaultSchemeName()));
   }
 
   public void testDarculaColorScheme() {
@@ -216,6 +208,8 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
         PUBLIC_REFERENCE { color: #a9b7c6;  font-style: normal; }
         REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
         REASSIGNED_PARAMETER_ATTRIBUTES { color: #a9b7c6;  font-style: normal; text-decoration: underline #707d95; }
+        RECORD_COMPONENT_ATTRIBUTES { color: #9876aa;  font-style: normal; }
+        RECORD_NAME_ATTRIBUTES { color: #a9b7c6;  font-style: normal; }
         STATIC_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FIELD_IMPORTED_ATTRIBUTES { color: #9876aa;  font-style: italic; }
         STATIC_FINAL_FIELD_ATTRIBUTES { color: #9876aa;  font-style: italic; }
@@ -230,11 +224,11 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
   }
 
   public void testInheritanceFlagCanBeOverwrittenWithDefaultAttributes() {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorScheme = (EditorColorsScheme)defaultScheme.clone();
     TextAttributes localVarAttrs = defaultScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     editorScheme.setAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES, localVarAttrs);
-    TextAttributes changedAttrs = new TextAttributes(Color.BLUE, Color.WHITE, null, EffectType.BOXED, 0);
+    TextAttributes changedAttrs = new TextAttributes(Color.BLUE, Color.WHITE, null, EffectType.BOXED, Font.PLAIN);
     editorScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, changedAttrs);
     TextAttributes attributes = editorScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     assertNotEquals(attributes, changedAttrs);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -71,15 +71,14 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1) return;
 
     myProject = project;
 
     PsiElement element = elements[0];
 
-    if (element instanceof GrTypeDefinition) {
-      GrTypeDefinition aClass = (GrTypeDefinition)element;
+    if (element instanceof GrTypeDefinition aClass) {
       invokeImpl(project, dataContext, aClass, null);
     }
     else if (element instanceof GrMethod || element instanceof GrField) {

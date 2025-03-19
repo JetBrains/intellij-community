@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.EditorDiffViewer;
 import com.intellij.diff.actions.ProxyUndoRedoAction;
 import com.intellij.diff.actions.impl.FocusOppositePaneAction;
 import com.intellij.diff.actions.impl.OpenInEditorWithMouseAction;
@@ -37,6 +24,8 @@ import com.intellij.diff.util.LineCol;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -46,22 +35,21 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> {
-  @NotNull private final List<? extends EditorEx> myEditableEditors;
-  @Nullable private List<? extends EditorEx> myEditors;
+public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditorHolder> implements EditorDiffViewer {
+  private final @NotNull List<? extends EditorEx> myEditableEditors;
+  private @Nullable List<? extends EditorEx> myEditors;
 
-  @NotNull protected final SetEditorSettingsAction myEditorSettingsAction;
+  protected final @NotNull SetEditorSettingsAction myEditorSettingsAction;
 
-  @NotNull private final MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
+  private final @NotNull MyVisibleAreaListener myVisibleAreaListener = new MyVisibleAreaListener();
 
-  @Nullable private TwosideSyncScrollSupport mySyncScrollSupport;
+  private @Nullable TwosideSyncScrollSupport mySyncScrollSupport;
 
   public TwosideTextDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
     super(context, request, TextEditorHolder.TextEditorHolderFactory.INSTANCE);
@@ -109,9 +97,8 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     super.onDispose();
   }
 
-  @NotNull
   @Override
-  protected List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
+  protected @NotNull List<TextEditorHolder> createEditorHolders(@NotNull EditorHolderFactory<TextEditorHolder> factory) {
     List<TextEditorHolder> holders = super.createEditorHolders(factory);
 
     boolean[] forceReadOnly = TextDiffViewerUtil.checkForceReadOnly(myContext, myRequest);
@@ -128,23 +115,19 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     return holders;
   }
 
-  @NotNull
   @Override
-  protected List<JComponent> createTitles() {
+  protected @NotNull List<JComponent> createTitles() {
     return DiffUtil.createTextTitles(this, myRequest, getEditors());
   }
 
   //
   // Diff
   //
-
-  @NotNull
-  public TextDiffSettings getTextSettings() {
+  public @NotNull TextDiffSettings getTextSettings() {
     return TextDiffViewerUtil.getTextSettings(myContext);
   }
 
-  @NotNull
-  protected List<AnAction> createEditorPopupActions() {
+  protected @NotNull List<AnAction> createEditorPopupActions() {
     return TextDiffViewerUtil.createEditorPopupActions();
   }
 
@@ -198,68 +181,58 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   // Getters
   //
 
-  @NotNull
-  public List<? extends DocumentContent> getContents() {
+  public @NotNull List<? extends DocumentContent> getContents() {
     //noinspection unchecked,rawtypes
     return (List)myRequest.getContents();
   }
 
-  @NotNull
-  public List<? extends EditorEx> getEditors() {
+  @Override
+  public @NotNull List<? extends EditorEx> getEditors() {
     if (myEditors == null) {
       myEditors = ContainerUtil.map(getEditorHolders(), holder -> holder.getEditor());
     }
     return myEditors;
   }
 
-  @NotNull
-  protected List<? extends EditorEx> getEditableEditors() {
+  protected @NotNull List<? extends EditorEx> getEditableEditors() {
     return myEditableEditors;
   }
 
-  @NotNull
-  public EditorEx getCurrentEditor() {
+  @Override
+  public @NotNull EditorEx getCurrentEditor() {
     return getEditor(getCurrentSide());
   }
 
-  @NotNull
-  public DocumentContent getCurrentContent() {
+  public @NotNull DocumentContent getCurrentContent() {
     return getContent(getCurrentSide());
   }
 
-  @NotNull
-  public EditorEx getEditor1() {
+  public @NotNull EditorEx getEditor1() {
     return getEditor(Side.LEFT);
   }
 
-  @NotNull
-  public EditorEx getEditor2() {
+  public @NotNull EditorEx getEditor2() {
     return getEditor(Side.RIGHT);
   }
 
 
-  @NotNull
-  public EditorEx getEditor(@NotNull Side side) {
+  public @NotNull EditorEx getEditor(@NotNull Side side) {
     return side.select(getEditors());
   }
 
-  @NotNull
-  public DocumentContent getContent(@NotNull Side side) {
+  public @NotNull DocumentContent getContent(@NotNull Side side) {
     return side.select(getContents());
   }
 
-  @NotNull
-  public DocumentContent getContent1() {
+  public @NotNull DocumentContent getContent1() {
     return getContent(Side.LEFT);
   }
 
-  @NotNull
-  public DocumentContent getContent2() {
+  public @NotNull DocumentContent getContent2() {
     return getContent(Side.RIGHT);
   }
 
-  @Nullable
-  public TwosideSyncScrollSupport getSyncScrollSupport() {
+  public @Nullable TwosideSyncScrollSupport getSyncScrollSupport() {
     return mySyncScrollSupport;
   }
 
@@ -268,32 +241,33 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   //
 
   @RequiresEdt
-  @NotNull
-  public LineCol transferPosition(@NotNull Side baseSide, @NotNull LineCol position) {
+  public @NotNull LineCol transferPosition(@NotNull Side baseSide, @NotNull LineCol position) {
     if (mySyncScrollSupport == null) return position;
     int line = mySyncScrollSupport.getScrollable().transfer(baseSide, position.line);
     return new LineCol(line, position.column);
   }
 
   @RequiresEdt
-  protected void scrollToLine(@NotNull Side side, int line) {
+  public void scrollToLine(@NotNull Side side, int line) {
+    LineCol otherCol = transferPosition(side, new LineCol(line));
+    DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+
     DiffUtil.scrollEditor(getEditor(side), line, false);
     setCurrentSide(side);
   }
 
-  @Nullable
-  protected abstract SyncScrollSupport.SyncScrollable getSyncScrollable();
+  protected abstract @Nullable SyncScrollSupport.SyncScrollable getSyncScrollable();
 
   //
   // Misc
   //
 
-  @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     Side side = getCurrentSide();
 
-    LineCol position = LineCol.fromCaret(getEditor(side));
+    EditorEx editor = getEditor(side);
+    LineCol position = ReadAction.compute(() -> LineCol.fromCaret(editor));
     Navigatable navigatable = getContent(side).getNavigatable(position);
     if (navigatable != null) return navigatable;
 
@@ -354,13 +328,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
-      return getCurrentEditor();
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_EDITOR, getCurrentEditor());
   }
 
   private class MyVisibleAreaListener implements VisibleAreaListener {
@@ -372,9 +343,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   }
 
   protected abstract class MyInitialScrollPositionHelper extends InitialScrollPositionSupport.TwosideInitialScrollHelper {
-    @NotNull
+    private boolean myShouldUpdateCaretAfterRediff = false;
+
     @Override
-    protected List<? extends Editor> getEditors() {
+    protected @NotNull List<? extends Editor> getEditors() {
       return TwosideTextDiffViewer.this.getEditors();
     }
 
@@ -384,11 +356,29 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     }
 
     @Override
-    protected boolean doScrollToLine() {
+    protected boolean doScrollToLine(boolean onSlowRediff) {
       if (myScrollToLine == null) return false;
 
       scrollToLine(myScrollToLine.first, myScrollToLine.second);
+      myShouldUpdateCaretAfterRediff = onSlowRediff; // move other caret to correct position when we know it
+
       return true;
+    }
+
+    @Override
+    public void onRediff() {
+      super.onRediff();
+
+      if (myShouldUpdateCaretAfterRediff && myScrollToLine != null) {
+        myShouldUpdateCaretAfterRediff = false;
+        Side currentSide = getCurrentSide();
+        Side side = myScrollToLine.first;
+        int line = myScrollToLine.second;
+        if (currentSide == side) {
+          LineCol otherCol = transferPosition(side, new LineCol(line));
+          DiffUtil.moveCaret(getEditor(side.other()), otherCol.line);
+        }
+      }
     }
   }
 }

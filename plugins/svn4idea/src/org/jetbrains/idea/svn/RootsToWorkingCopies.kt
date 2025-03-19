@@ -23,7 +23,7 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
-@Service
+@Service(Service.Level.PROJECT)
 class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, Disposable {
   private val myLock = Any()
   private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
@@ -54,7 +54,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
 
   @RequiresBackgroundThread
   fun getMatchingCopy(url: Url?): WorkingCopy? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
     if (url == null) return null
 
     val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs)
@@ -71,7 +71,7 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
 
   @RequiresBackgroundThread
   fun getWcRoot(root: VirtualFile): WorkingCopy? {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     synchronized(myLock) {
       if (myUnversioned.contains(root)) return null
@@ -127,7 +127,12 @@ class RootsToWorkingCopies(private val project: Project) : VcsMappingListener, D
     // todo +- here... shouldnt be
     SvnAuthenticationNotifier.getInstance(project).clear()
 
-    myZipperUpdater.queue(myRechecker)
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      myRechecker.run()
+    }
+    else {
+      myZipperUpdater.queue(myRechecker)
+    }
   }
 
   companion object {

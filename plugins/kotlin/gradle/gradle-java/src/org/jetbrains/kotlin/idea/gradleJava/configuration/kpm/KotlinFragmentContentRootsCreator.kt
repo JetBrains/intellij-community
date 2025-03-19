@@ -44,21 +44,19 @@ class KotlinFragmentContentRootsCreator : ContentRootsCreator {
             )
         }
     }
+}
 
-    companion object {
-        private fun createContentRootData(
-            sourceDirs: Set<File>,
-            sourceType: ExternalSystemSourceType,
-            packagePrefix: String?,
-            parentNode: DataNode<*>
-        ) {
-            for (sourceDir in sourceDirs) {
-                val contentRootData = ContentRootData(GradleConstants.SYSTEM_ID, sourceDir.absolutePath)
-                packagePrefix?.also {
-                    contentRootData.storePath(sourceType, sourceDir.absolutePath, it)
-                } ?: contentRootData.storePath(sourceType, sourceDir.absolutePath)
-                parentNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData)
-            }
-        }
+private fun createContentRootData(
+    sourceDirs: Set<File>,
+    sourceType: ExternalSystemSourceType,
+    packagePrefix: String?,
+    parentNode: DataNode<*>
+) {
+    for (sourceDir in sourceDirs) {
+        val contentRootData = ContentRootData(GradleConstants.SYSTEM_ID, sourceDir.absolutePath)
+        packagePrefix?.also {
+            contentRootData.storePath(sourceType, sourceDir.absolutePath, it)
+        } ?: contentRootData.storePath(sourceType, sourceDir.absolutePath)
+        parentNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData)
     }
 }

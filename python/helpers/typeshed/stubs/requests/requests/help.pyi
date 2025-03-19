@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 class _VersionDict(TypedDict):
     version: str

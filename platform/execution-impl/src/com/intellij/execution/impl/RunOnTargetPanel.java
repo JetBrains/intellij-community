@@ -16,6 +16,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,7 +24,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 
-public class RunOnTargetPanel {
+@ApiStatus.Internal
+public final class RunOnTargetPanel {
 
   private final RunnerAndConfigurationSettings mySettings;
   private final Project myProject;
@@ -114,8 +116,7 @@ public class RunOnTargetPanel {
    *
    * @see TargetEnvironmentAwareRunProfile#getDefaultTargetName()
    */
-  @Nullable
-  public String getDefaultTargetName() {
+  public @Nullable String getDefaultTargetName() {
     return myDefaultTargetName;
   }
 

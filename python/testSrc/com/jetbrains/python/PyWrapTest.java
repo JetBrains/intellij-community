@@ -6,6 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 
@@ -41,7 +42,23 @@ public class PyWrapTest extends PyTestCase {
   }
 
   public void testBackslashOnWrap() {
-    doTest("and hasattr(old_node, attr):");
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = false;
+      doTest("and hasattr(old_node, attr):");
+    } finally {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
+  }
+
+  public void testParenthesesOnWrap() {
+    boolean initialValue = PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER;
+    try {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = true;
+      doTest("and hasattr(old_node, attr)");
+    } finally {
+      PyCodeInsightSettings.getInstance().PARENTHESISE_ON_ENTER = initialValue;
+    }
   }
 
   public void testWrapInComment() {

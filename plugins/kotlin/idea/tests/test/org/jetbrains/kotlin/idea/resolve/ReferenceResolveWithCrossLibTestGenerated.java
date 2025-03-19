@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.resolve;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/resolve/referenceWithLib")
 public class ReferenceResolveWithCrossLibTestGenerated extends AbstractReferenceResolveWithCrossLibTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -31,6 +38,11 @@ public class ReferenceResolveWithCrossLibTestGenerated extends AbstractReference
     @TestMetadata("delegatedPropertyWithTypeParameters")
     public void testDelegatedPropertyWithTypeParameters() throws Exception {
         runTest("testData/resolve/referenceWithLib/delegatedPropertyWithTypeParameters/");
+    }
+
+    @TestMetadata("enumEntryMethods")
+    public void testEnumEntryMethods() throws Exception {
+        runTest("testData/resolve/referenceWithLib/enumEntryMethods/");
     }
 
     @TestMetadata("enumSyntheticMethods")
@@ -66,6 +78,11 @@ public class ReferenceResolveWithCrossLibTestGenerated extends AbstractReference
     @TestMetadata("multiDeclarationWithTypeParameters")
     public void testMultiDeclarationWithTypeParameters() throws Exception {
         runTest("testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters/");
+    }
+
+    @TestMetadata("namedArguments")
+    public void testNamedArguments() throws Exception {
+        runTest("testData/resolve/referenceWithLib/namedArguments/");
     }
 
     @TestMetadata("nestedClassFromLib")

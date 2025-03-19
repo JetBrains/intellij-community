@@ -8,18 +8,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
-import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromLabelFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.GrDynamicPropertyFromLabelFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromRefFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.elements.GrReplaceWithQualifiedExpressionFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.elements.annotation.MapConstructorAttributesFix;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
-import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAddClassToExtendsFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAddMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAddMissingCaseSectionsFix;
-import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrReplaceWithImportFix;
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrReplaceMultiAssignmentFix;
 import org.jetbrains.plugins.groovy.codeInspection.cs.SpreadArgumentFix;
 import org.jetbrains.plugins.groovy.codeInspection.local.RemoveUnusedGrParameterFix;
-import org.jetbrains.plugins.groovy.codeInspection.naming.RenameFix;
+import org.jetbrains.plugins.groovy.codeInspection.naming.GrRenameFix;
 import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -35,7 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 
 import java.util.List;
 
-public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
+public final class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createDynamicMethodFix(GrReferenceExpression expression, PsiType[] types) {
     return new DynamicMethodFix(expression, types);
@@ -64,32 +64,32 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public IntentionAction createCreateFieldFromUsageFix(GrReferenceExpression expr) {
     final String referenceName = expr.getReferenceName();
-    return referenceName == null ? null : new CreateFieldFromUsageFix(expr, referenceName);
+    return referenceName == null ? null : new GrCreateFieldFromUsageFix(expr, referenceName);
   }
 
   @Override
   public IntentionAction createCreateGetterFromUsageFix(GrReferenceExpression expr, PsiClass aClass) {
-    return new CreateGetterFromUsageFix(expr);
+    return new GrCreateGetterFromUsageFix(expr);
   }
 
   @Override
   public IntentionAction createCreateSetterFromUsageFix(GrReferenceExpression expr) {
-    return new CreateSetterFromUsageFix(expr);
+    return new GrCreateSetterFromUsageFix(expr);
   }
 
   @Override
   public IntentionAction createCreateMethodFromUsageFix(GrReferenceExpression expr) {
-    return new CreateMethodFromUsageFix(expr);
+    return new GrCreateMethodFromUsageFix(expr);
   }
 
   @Override
   public IntentionAction createCreateLocalVariableFromUsageFix(GrReferenceExpression expr, GrVariableDeclarationOwner owner) {
-    return new CreateLocalVariableFromUsageFix(expr, owner);
+    return new GrCreateLocalVariableFromUsageFix(expr, owner);
   }
 
   @Override
   public IntentionAction createCreateParameterFromUsageFix(GrReferenceExpression expr) {
-    return new CreateParameterFromUsageFix(expr);
+    return new GrCreateParameterFromUsageFix(expr);
   }
 
   @Override
@@ -99,12 +99,12 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public GroovyFix createRenameFix() {
-    return new RenameFix();
+    return new GrRenameFix();
   }
 
   @Override
-  public GroovyFix createReplaceWithImportFix() {
-    return new ReplaceWithImportFix();
+  public LocalQuickFix createReplaceWithImportFix() {
+    return new GrReplaceWithImportFix();
   }
 
   @Override
@@ -114,22 +114,22 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public LocalQuickFix createCreateFieldFromConstructorLabelFix(GrTypeDefinition element, GrNamedArgument argument) {
-    return new CreateFieldFromConstructorLabelFix(element, argument);
+    return new GrCreateFieldFromConstructorLabelFix(element, argument);
   }
 
   @Override
   public LocalQuickFix createDynamicPropertyFix(GrArgumentLabel label, PsiClass element) {
-    return new DynamicPropertyFromLabelFix(label, element);
+    return new GrDynamicPropertyFromLabelFix(label, element);
   }
 
   @Override
   public GroovyFix createAddMethodFix(String methodName, GrTypeDefinition aClass) {
-    return new AddMethodFix(methodName, aClass);
+    return new GrAddMethodFix(methodName, aClass);
   }
 
   @Override
   public GroovyFix createAddClassToExtendsFix(GrTypeDefinition aClass, String comparable) {
-    return new AddClassToExtendsFix(aClass, comparable);
+    return new GrAddClassToExtendsFix(aClass, comparable);
   }
 
   @Override
@@ -148,27 +148,27 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   }
 
   @Override
-  public GroovyFix createMultipleAssignmentFix(int size) {
+  public LocalQuickFix createMultipleAssignmentFix(int size) {
     return new GrReplaceMultiAssignmentFix(size);
   }
 
   @Override
-  public GroovyFix createSpreadArgumentFix(int size) {
+  public LocalQuickFix createSpreadArgumentFix(int size) {
     return new SpreadArgumentFix(size);
   }
 
   @Override
-  public GroovyFix createMapConstructorFix() {
+  public LocalQuickFix createMapConstructorFix() {
     return new MapConstructorAttributesFix();
   }
 
   @Override
-  public GroovyFix createQualifyExpressionFix() {
+  public LocalQuickFix createQualifyExpressionFix() {
     return new GrReplaceWithQualifiedExpressionFix();
   }
 
   @Override
-  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+  public LocalQuickFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
     return new GrAddMissingCaseSectionsFix(expressions, switchElement);
   }
 }

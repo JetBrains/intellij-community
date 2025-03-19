@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.BaseSuggestedRefactoringTest
@@ -58,8 +56,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.type(", p2: Any") }
-        )
+        ) {
+            type(", p2: Any")
+        }
     }
 
     fun testRemoveParameter() {
@@ -82,11 +81,10 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                     foo(1)
                 }
             """.trimIndent(),
-            "usages",
-            {
-                deleteTextBeforeCaret(", p2: Int")
-            }
-        )
+            "usages"
+        ) {
+            deleteTextBeforeCaret(", p2: Int")
+        }
     }
 
     fun testReorderParameters1() {
@@ -110,10 +108,10 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT) },
-            { myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT) },
-            wrapIntoCommandAndWriteAction = false
-        )
+        ) {
+            performAction(IdeActions.MOVE_ELEMENT_LEFT)
+            performAction(IdeActions.MOVE_ELEMENT_LEFT)
+        }
     }
 
     fun testReorderParameters2() {
@@ -137,25 +135,17 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_CUT)
-            },
-            {
-                editor.caretModel.moveToOffset(editor.caretModel.offset - 10)
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-            },
-            {
-                myFixture.type(", ")
-            },
-            {
-                editor.caretModel.moveToOffset(editor.caretModel.offset + 10)
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-            },
-            wrapIntoCommandAndWriteAction = false
-        )
+        ) {
+            performAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+            performAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
+            performAction(IdeActions.ACTION_EDITOR_CUT)
+            editor.caretModel.moveToOffset(editor.caretModel.offset - 10)
+            performAction(IdeActions.ACTION_EDITOR_PASTE)
+            type(", ")
+            editor.caretModel.moveToOffset(editor.caretModel.offset + 10)
+            performAction(IdeActions.ACTION_EDITOR_DELETE)
+            performAction(IdeActions.ACTION_EDITOR_DELETE)
+        }
     }
 
     fun testChangeParameterType() {
@@ -181,10 +171,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "Any")
-            }
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testChangeParameterTypeExpectFunction() {
@@ -194,10 +183,10 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             "expect fun foo(p: <caret>String)",
             "expect fun foo(p: <caret>Any)",
             "actual declarations",
-            {
-                replaceTextAtCaret("String", "Any")
-            }
-        )
+
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testUnresolvedParameterType() {
@@ -224,10 +213,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "XXX")
-            }
-        )
+        ) {
+            replaceTextAtCaret("String", "XXX")
+        }
     }
 
     fun testChangeParameterTypeWithImportInsertion() {
@@ -273,13 +261,10 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "X")
-            },
-            {
-                addImport("xxx.X")
-            }
-        )
+        ) {
+            replaceTextAtCaret("String", "X")
+            addImport("xxx.X")
+        }
 
         assertEquals(
             """
@@ -315,10 +300,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "Any")
-            }
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testAddReturnType() {
@@ -343,10 +327,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                myFixture.type(": String")
-            }
-        )
+        ) {
+            type(": String")
+        }
     }
 
     fun testRemoveReturnType() {
@@ -371,10 +354,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                deleteTextAtCaret(": String")
-            }
-        )
+        ) {
+            deleteTextAtCaret(": String")
+        }
     }
 
     fun testRenameAndAddReturnType() {
@@ -399,15 +381,16 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
+        ) {
+            editAction {
                 val offset = editor.caretModel.offset
                 editor.document.insertString(offset, "New")
-            },
-            {
+            }
+            editAction {
                 val offset = editor.caretModel.offset
                 editor.document.insertString(offset + "New()".length, ": String")
             }
-        )
+        }
     }
 
     fun testChangeParameterTypeWithImportReplaced() {
@@ -448,15 +431,14 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
+        ) {
+            editAction {
                 val offset = editor.caretModel.offset
                 editor.document.replaceString(offset, offset + "X".length, "Y")
-            },
-            {
-                addImport("xxx.Y")
-                removeImport("xxx.X")
             }
-        )
+            addImport("xxx.Y")
+            removeImport("xxx.X")
+        }
 
         assertEquals(
             """
@@ -495,19 +477,13 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }     
             """.trimIndent(),
             "usages",
-            {
-                myFixture.type("p1: Int/*comment 1*/")
-            },
-            {
-                myFixture.type(", p2: Long/*comment 2*/")
-            },
-            {
-                myFixture.type(",")
-                myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-                myFixture.type("p3: Any?/*comment 3*/")
-            },
-            wrapIntoCommandAndWriteAction = false
-        )
+        ) {
+            type("p1: Int/*comment 1*/")
+            type(", p2: Long/*comment 2*/")
+            type(",")
+            performAction(IdeActions.ACTION_EDITOR_ENTER)
+            type("p3: Any?/*comment 3*/")
+        }
     }
 
     fun testParameterCompletion() {
@@ -516,30 +492,14 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             "package ppp\nclass Abcdef\nfun foo(<caret>p: Int) { }\nfun bar() { foo(1) }",
             "package ppp\nclass Abcdef\nfun foo(abcdef: Abcdef, <caret>p: Int) { }\nfun bar() { foo(default0, 1) }",
             "usages",
-            {
-                executeCommand {
-                    runWriteAction {
-                        myFixture.type("abcde")
-                        PsiDocumentManager.getInstance(project).commitAllDocuments()
-                    }
-                }
-            },
-            {
-                myFixture.completeBasic()
-            },
-            {
-                myFixture.finishLookup('\n')
-            },
-            {
-                executeCommand {
-                    runWriteAction {
-                        myFixture.type(", ")
-                        PsiDocumentManager.getInstance(project).commitAllDocuments()
-                    }
-                }
-            },
-            wrapIntoCommandAndWriteAction = false
-        )
+        ) {
+            type("abcde")
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+            myFixture.completeBasic()
+            myFixture.finishLookup('\n')
+            type(", ")
+            PsiDocumentManager.getInstance(project).commitAllDocuments()
+        }
     }
 
     fun testRenameTwoParameters() {
@@ -557,12 +517,13 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
+        ) {
+            editAction {
                 val function = (file as KtFile).declarations.single() as KtFunction
                 function.valueParameters[0].setName("p1New")
                 function.valueParameters[1].setName("p2New")
             }
-        )
+        }
     }
 
     fun testChangePropertyType() {
@@ -586,9 +547,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "Any")
-            },
             expectedPresentation = """
                 Old:
                   'var '
@@ -601,7 +559,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   ': '
                   'Any' (modified)
             """.trimIndent()
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testRenameClass() {
@@ -618,10 +578,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "C",
             "CNew",
-            {
-                myFixture.type("New")
-            }
-        )
+        ) {
+            type("New")
+        }
     }
 
     fun testRenameLocalVar() {
@@ -640,10 +599,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "v",
             "vNew",
-            {
-                myFixture.type("New")
-            }
-        )
+        ) {
+            type("New")
+        }
     }
 
     fun testRenameComponentVar() {
@@ -670,10 +628,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "b",
             "b1",
-            {
-                myFixture.type("1")
-            }
-        )
+        ) {
+            type("1")
+        }
     }
 
     fun testRenameLoopVar() {
@@ -694,10 +651,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "s",
             "s1",
-            {
-                myFixture.type("1")
-            }
-        )
+        ) {
+            type("1")
+        }
     }
 
     fun testRenameParameter() {
@@ -714,10 +670,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "p",
             "pNew",
-            {
-                myFixture.type("New")
-            }
-        )
+        ) {
+            type("New")
+        }
     }
 
     fun testRenameParametersInOverrides() {
@@ -746,10 +701,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             "p",
             "pNew",
-            {
-                myFixture.type("New")
-            }
-        )
+        ) {
+            type("New")
+        }
     }
 
     fun testAddPrimaryConstructorParameter() {
@@ -770,7 +724,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }    
             """.trimIndent(),
             "usages",
-            { myFixture.type(", z: Any") },
             expectedPresentation = """
                 Old:
                   'C'
@@ -811,7 +764,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
               """.trimIndent()
-        )
+        ) {
+            type(", z: Any")
+        }
     }
 
     fun testAddSecondaryConstructorParameter() {
@@ -836,7 +791,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }    
             """.trimIndent(),
             "usages",
-            { myFixture.type(", y: Int") },
             expectedPresentation = """
                 Old:
                   'constructor'
@@ -865,7 +819,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
             """.trimIndent()
-        )
+        ) {
+            type(", y: Int")
+        }
     }
 
     fun testAddReceiver() {
@@ -891,7 +847,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.type("Int.") },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -908,6 +863,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   ')'
             """.trimIndent()
         )
+        {
+            type("Int.")
+        }
     }
 
     fun testAddReceiverAndParameter() {
@@ -930,10 +888,13 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.type("Int.") },
-            { repeat("foo(".length) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) } },
-            { myFixture.type("o: Any") }
-        )
+        ) {
+            type("Int.")
+            repeat("foo(".length) {
+                performAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
+            }
+            type("o: Any")
+        }
     }
 
     fun testRemoveReceiver() {
@@ -955,10 +916,11 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                repeat(4) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE) }
+        ) {
+            repeat(4) {
+                performAction(IdeActions.ACTION_EDITOR_DELETE)
             }
-        )
+        }
     }
 
     fun testChangeReceiverType() {
@@ -992,10 +954,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                repeat("Int".length) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE) }
-                myFixture.type("Any")
-            },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1014,7 +972,12 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
             """.trimIndent()
-        )
+        ) {
+            repeat("Int".length) {
+                performAction(IdeActions.ACTION_EDITOR_DELETE)
+            }
+            type("Any")
+        }
     }
 
     fun testChangeReceiverTypeAndRemoveParameter() {
@@ -1034,15 +997,16 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                repeat("Int".length) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE) }
-                myFixture.type("Any")
-            },
-            {
-                editor.caretModel.moveToOffset(editor.caretModel.offset + ".foo(".length)
-                repeat("p: Any".length) { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE) }
+        ) {
+            repeat("Int".length) {
+                performAction(IdeActions.ACTION_EDITOR_DELETE)
             }
-        )
+            type("Any")
+            editor.caretModel.moveToOffset(editor.caretModel.offset + ".foo(".length)
+            repeat("p: Any".length) {
+                performAction(IdeActions.ACTION_EDITOR_DELETE)
+            }
+        }
     }
 
     fun testAddVarargParameter() {
@@ -1068,7 +1032,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.type(", vararg s: String") },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1101,7 +1064,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
             """.trimIndent()
-        )
+        ) {
+            type(", vararg s: String")
+        }
     }
 
     //TODO
@@ -1128,7 +1093,7 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                     }
                 }
             """.trimIndent(),
-            { myFixture.type("vararg ") },
+            { type("vararg ") },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1217,8 +1182,8 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
         doTestChangeSignature(
             """
                 class C(
-                        p1: Int,
-                        p2: String<caret>
+                    p1: Int,
+                    p2: String<caret>
                 )
                 
                 fun foo() {
@@ -1227,8 +1192,8 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
             """.trimIndent(),
             """
                 class C(
-                        p2: String,
-                        p1: Int
+                    p2: String,
+                    p1: Int
                 )
                 
                 fun foo() {
@@ -1236,10 +1201,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                myFixture.performEditorAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
-            }
-        )
+        ) {
+            performAction(IdeActions.ACTION_MOVE_STATEMENT_UP_ACTION)
+        }
     }
 
     fun testChangeParameterTypeOfVirtualExtensionMethod() {
@@ -1273,10 +1237,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("String", "Any")
-            }
-        )
+        ) {
+            replaceTextAtCaret("String", "Any")
+        }
     }
 
     fun testAddParameterToVirtualExtensionMethod() {
@@ -1311,10 +1274,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                myFixture.type(", p1: Int")
-            }
-        )
+        ) {
+            type(", p1: Int")
+        }
     }
     
     fun testAddParameterWithFullyQualifiedType() {
@@ -1342,8 +1304,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            { myFixture.type("p: java.io.InputStream") }
-        )
+        ) {
+            type("p: java.io.InputStream")
+        }
     }
 
     fun testAddOptionalParameter() {
@@ -1377,9 +1340,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                myFixture.type(", p2: Int = 10")
-            },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1412,7 +1372,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
             """.trimIndent()
-        )
+        ) {
+            type(", p2: Int = 10")
+        }
     }
 
     fun testReorderOptionalParameter() {
@@ -1446,9 +1408,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "usages",
-            {
-                myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_RIGHT)
-            },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1489,7 +1448,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   LineBreak('', false)
                   ')'
             """.trimIndent()
-        )
+        ) {
+            performAction(IdeActions.MOVE_ELEMENT_RIGHT)
+        }
     }
 
     fun testReplaceTypeWithItsAlias() {
@@ -1521,9 +1482,6 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                 }
             """.trimIndent(),
             "implementations",
-            {
-                replaceTextAtCaret("(String) -> Unit", "StringToUnit")
-            },
             expectedPresentation = """
                 Old:
                   'fun '
@@ -1542,7 +1500,9 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                   ': '
                   'StringToUnit' (modified)
             """.trimIndent()
-        )
+        ) {
+            replaceTextAtCaret("(String) -> Unit", "StringToUnit")
+        }
     }
 
     fun testNewParameterValueReferencesAnotherParameter() {
@@ -1570,16 +1530,17 @@ class KotlinSuggestedRefactoringTest : BaseSuggestedRefactoringTest() {
                     foo(2, 2 * 2)
                 }
             """.trimIndent(),
-            "usages",
-            { myFixture.type(", p2: Int") }
-        )
+            "usages")
+        {
+            type(", p2: Int")
+        }
     }
 
-    private fun addImport(fqName: String) {
+    private fun addImport(fqName: String) = editAction {
         (file as KtFile).importList!!.add(KtPsiFactory(project).createImportDirective(ImportPath.fromString(fqName)))
     }
 
-    private fun removeImport(fqName: String) {
+    private fun removeImport(fqName: String) = editAction {
         (file as KtFile).importList!!.imports.first { it.importedFqName?.asString() == fqName }.delete()
     }
 }

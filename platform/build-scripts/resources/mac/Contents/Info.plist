@@ -36,8 +36,6 @@
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
     <string>@@bundle_identifier@@@@product_state@@</string>
-    <key>CFBundleSignature</key>
-    <string>????</string>
     <key>CFBundleGetInfoString</key>
     <string>@@bundle_name@@ @@version@@, build @@build@@. Copyright JetBrains s.r.o., (c) 2000-@@year@@</string>
     <key>CFBundleShortVersionString</key>
@@ -48,7 +46,10 @@
 
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.developer-tools</string>
-    @@architectures@@
+    <key>LSArchitecturePriority</key>
+    <array>
+      <string>@@architecture@@</string>
+    </array>
     <key>LSRequiresNativeExecution</key>
     <string>YES</string>
     <key>LSMinimumSystemVersion</key>
@@ -58,30 +59,6 @@
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
-
-    <key>JVMOptions</key>
-    <dict>
-      <key>ClassPath</key>
-      <string>@@class_path@@</string>
-      <key>JVMVersion</key>
-      <string>1.8*,1.8+</string>
-      <key>MainClass</key>
-      <string>@@main_class_name@@</string>
-      <key>ErrorFile</key>
-      <string>@@xx_error_file@@</string>
-      <key>HeapDump</key>
-      <string>@@xx_heap_dump@@</string>
-      <key>Options</key>
-      <array>
-        @@vm_options@@
-      </array>
-      <key>Properties</key>
-      <dict>
-        @@vm_properties@@
-        <key>idea.home.path</key>
-        <string>$APP_PACKAGE/Contents</string>
-      </dict>
-    </dict>
 
     <key>NSCameraUsageDescription</key>
     <string>An application in @@bundle_name@@ requests access to the device's camera.</string>
@@ -103,5 +80,7 @@
     <string>An application in @@bundle_name@@ requests access to Bluetooth.</string>
     <key>NSAppleEventsUsageDescription</key>
     <string>An application in @@bundle_name@@ requests the ability to send Apple events.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>@@bundle_name@@'s features, such as SSH and database connectivity, require permissions for accessing the local network and sending broadcast requests.</string>
   </dict>
 </plist>

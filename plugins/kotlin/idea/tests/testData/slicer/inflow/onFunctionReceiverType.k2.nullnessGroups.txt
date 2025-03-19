@@ -1,0 +1,23 @@
+[NotNull Values]
+12 	<bold>""</bold>.extensionFun() (in String.foo())
+8 		fun <bold>Any</bold>.extensionFun() { (in Any.extensionFun())
+12 			<bold>""</bold>.extensionFun() (in String.foo())
+14 	<bold>1</bold>.extensionFun() (in String.foo())
+8 		fun <bold>Any</bold>.extensionFun() { (in Any.extensionFun())
+14 			<bold>1</bold>.extensionFun() (in String.foo())
+18 	with(<bold>123</bold>) { (in String.foo())
+8 		fun <bold>Any</bold>.extensionFun() { (in Any.extensionFun())
+18 			[LAMBDA CALLS RECEIVER] with(123) <bold>{</bold> (in String.foo())
+LIB 				(INLINE CALL with) [LAMBDA CALLS RECEIVER] public inline fun <T, R> with(receiver: T, <bold>block: T.() -> R</bold>): R { (in with(T, T.() -> R))
+LIB 					(INLINE CALL with) return <bold>receiver</bold>.block() (in with(T, T.() -> R))
+LIB 						(INLINE CALL with) public inline fun <T, R> with(<bold>receiver: T</bold>, block: T.() -> R): R { (in with(T, T.() -> R))
+18 							with(<bold>123</bold>) { (in String.foo())
+24 	<bold>"A"</bold>.foo() (in main())
+8 		fun <bold>Any</bold>.extensionFun() { (in Any.extensionFun())
+11 			fun <bold>String</bold>.foo() { (in String.foo())
+24 				<bold>"A"</bold>.foo() (in main())
+
+[Other Values]
+3 	KotlinUtil.extensionFun(<bold>"x"</bold>);
+8 		fun <bold>Any</bold>.extensionFun() { (in Any.extensionFun())
+3 			JAVA: KotlinUtil.extensionFun(<bold>"x"</bold>); (in JavaClass.f())

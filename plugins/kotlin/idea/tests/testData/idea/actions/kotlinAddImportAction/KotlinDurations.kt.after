@@ -1,6 +1,6 @@
+// IGNORE_K2
 // WITH_STDLIB
-// EXPECT_VARIANT_IN_ORDER "@kotlin.internal.InlineOnly public final val kotlin.Int.seconds: kotlin.time.Duration defined in kotlin.time.Duration.Companion"
-// EXPECT_VARIANT_IN_ORDER "@kotlin.Deprecated @kotlin.DeprecatedSinceKotlin @kotlin.SinceKotlin @kotlin.time.ExperimentalTime public val kotlin.Int.seconds: kotlin.time.Duration defined in kotlin.time"
+// EXPECT_VARIANT_IN_ORDER "public final val kotlin.Int.seconds: kotlin.time.Duration defined in kotlin.time.Duration.Companion"
 package root
 
 import kotlin.time.Duration.Companion.seconds

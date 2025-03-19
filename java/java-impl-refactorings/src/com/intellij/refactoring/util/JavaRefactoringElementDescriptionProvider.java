@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -8,9 +8,9 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
+public final class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
-  public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
+  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
     if (!(location instanceof RefactoringDescriptionLocation rdLocation)) return null;
 
     if (element instanceof PsiField field) {
@@ -48,6 +48,9 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     if (element instanceof PsiParameter parameter) {
       if (parameter.getDeclarationScope() instanceof PsiForeachStatement) {
         return JavaRefactoringBundle.message("local.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
+      }
+      if (parameter instanceof PsiPatternVariable) {
+        return JavaRefactoringBundle.message("pattern.variable.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
       }
       return JavaRefactoringBundle.message("parameter.description", CommonRefactoringUtil.htmlEmphasize(parameter.getName()));
     }

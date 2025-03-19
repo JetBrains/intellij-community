@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -6,8 +6,6 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
-import com.intellij.debugger.engine.JavaExecutionStack;
-import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -17,10 +15,15 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.unscramble.ThreadState;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.impl.hotswap.HotSwapFailureReason;
+import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
+import com.jetbrains.jdi.JDWP;
+import com.jetbrains.jdi.JDWPUnsupportedOperationException;
+import com.jetbrains.jdi.VirtualMachineImpl;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +33,7 @@ import org.jetbrains.annotations.Range;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
@@ -47,30 +47,73 @@ class ReloadClassesWorker {
   }
 
   private void processException(@NotNull Throwable e) {
-    if (e.getMessage() != null) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, e.getMessage());
-    }
-
     if (e instanceof ProcessCanceledException) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, JavaDebuggerBundle.message("error.operation.canceled"));
       return;
     }
 
-    String message =
-      e instanceof UnsupportedOperationException
-      ? JavaDebuggerBundle.message("error.operation.not.supported.by.vm")
-      : e instanceof NoClassDefFoundError
-        ? JavaDebuggerBundle.message("error.class.def.not.found", e.getLocalizedMessage())
-        : e instanceof VerifyError
-          ? JavaDebuggerBundle.message("error.verification.error", e.getLocalizedMessage())
-          : e instanceof UnsupportedClassVersionError
-            ? JavaDebuggerBundle.message("error.unsupported.class.version", e.getLocalizedMessage())
-            : e instanceof ClassFormatError
-              ? JavaDebuggerBundle.message("error.class.format.error", e.getLocalizedMessage())
-              : e instanceof ClassCircularityError
-                ? JavaDebuggerBundle.message("error.class.circularity.error", e.getLocalizedMessage())
-                : JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), e.getLocalizedMessage());
+    String message;
+    String reason = e.getLocalizedMessage();
+    HotSwapFailureReason failureReason = getFailureReason(e);
+    HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason);
+    if (e instanceof UnsupportedOperationException) {
+      message = JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
+    }
+    else if (e instanceof NoClassDefFoundError) {
+      message = JavaDebuggerBundle.message("error.class.def.not.found", reason);
+    }
+    else if (e instanceof VerifyError) {
+      message = JavaDebuggerBundle.message("error.verification.error", reason);
+    }
+    else if (e instanceof UnsupportedClassVersionError) {
+      message = JavaDebuggerBundle.message("error.unsupported.class.version", reason);
+    }
+    else if (e instanceof ClassFormatError) {
+      message = JavaDebuggerBundle.message("error.class.format.error", reason);
+    }
+    else if (e instanceof ClassCircularityError) {
+      message = JavaDebuggerBundle.message("error.class.circularity.error", reason);
+    }
+    else {
+      message = JavaDebuggerBundle.message("error.exception.while.reloading", e.getClass().getName(), reason);
+    }
+
     myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, message);
+  }
+
+  /**
+   * @see VirtualMachineImpl#redefineClasses(Map)
+   */
+  private static @NotNull HotSwapFailureReason getFailureReason(Throwable e) {
+    if (!(e instanceof JDWPUnsupportedOperationException exception)) {
+      return HotSwapFailureReason.OTHER;
+    }
+    switch (exception.getErrorCode()) {
+      case JDWP.Error.ADD_METHOD_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.METHOD_ADDED;
+      }
+      case JDWP.Error.DELETE_METHOD_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.METHOD_REMOVED;
+      }
+      case JDWP.Error.SCHEMA_CHANGE_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.SIGNATURE_MODIFIED;
+      }
+      case JDWP.Error.HIERARCHY_CHANGE_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.STRUCTURE_MODIFIED;
+      }
+      case JDWP.Error.CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.CLASS_MODIFIERS_CHANGED;
+      }
+      case JDWP.Error.METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.METHOD_MODIFIERS_CHANGED;
+      }
+      case JDWP.Error.CLASS_ATTRIBUTE_CHANGE_NOT_IMPLEMENTED -> {
+        return HotSwapFailureReason.CLASS_ATTRIBUTES_CHANGED;
+      }
+      default -> {
+        return HotSwapFailureReason.OTHER;
+      }
+    }
   }
 
   public void reloadClasses(@NotNull Map<@NotNull String, @NotNull HotSwapFile> modifiedClasses) {
@@ -100,7 +143,10 @@ class ReloadClassesWorker {
       virtualMachineProxy.allThreads().stream()
         .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
         .filter(ThreadReferenceProxyImpl::isSuspended)
-        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> {
+          t.setIgnoreModelSuspendCount(true);
+          t.resume();
+        }));
     }
 
     try {
@@ -136,10 +182,12 @@ class ReloadClassesWorker {
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
-        myProgress.addMessage(
-          myDebuggerSession, MessageCategory.INFORMATION,
-          JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
-        );
+        if (!Registry.is("debugger.hotswap.floating.toolbar")) {
+          myProgress.addMessage(
+            myDebuggerSession, MessageCategory.INFORMATION,
+            JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+          );
+        }
       }
       else {
         final String message = JavaDebuggerBundle.message(
@@ -155,17 +203,6 @@ class ReloadClassesWorker {
     }
 
     debugProcess.onHotSwapFinished();
-
-    DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
-    SuspendContextImpl suspendContext = context.getSuspendContext();
-    if (suspendContext != null) {
-      JavaExecutionStack stack = suspendContext.getActiveExecutionStack();
-      if (stack != null) {
-        stack.initTopFrame();
-      }
-    }
-
-    breakpointManager.reloadBreakpoints();
 
     final Semaphore waitSemaphore = new Semaphore();
     waitSemaphore.down();
@@ -274,7 +311,7 @@ class ReloadClassesWorker {
     }
 
     public void processPending() throws LinkageError, UnsupportedOperationException {
-      if (myRedefineMap.size() > 0) {
+      if (!myRedefineMap.isEmpty()) {
         processChunk();
       }
     }

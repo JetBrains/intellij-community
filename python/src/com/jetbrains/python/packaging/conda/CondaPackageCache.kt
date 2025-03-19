@@ -16,24 +16,55 @@ import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.flavors.conda.*
+import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
+import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service
-class CondaPackageCache : PythonPackageCache<String> {
+internal class CondaPackageCache : PythonPackageCache<String> {
   @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
 
   override val packages: List<String>
     get() = cache.keys.toList()
 
-  suspend fun refreshAll(sdk: Sdk, project: Project) {
+  private val lock = Mutex()
+  private var loadInProgress: Boolean = false
+
+  suspend fun forceReloadCache(sdk: Sdk, project: Project) {
+    return reloadCache(sdk, project, true)
+  }
+
+  suspend fun reloadCache(sdk: Sdk, project: Project, force: Boolean = false) {
+    lock.withLock {
+      if ((cache.isNotEmpty() && !force) || loadInProgress) {
+        return
+      }
+
+      loadInProgress = true
+    }
+
+    try {
+      refreshAll(sdk, project)
+    }
+    finally {
+      lock.withLock {
+        loadInProgress = false
+      }
+    }
+  }
+
+  private suspend fun refreshAll(sdk: Sdk, project: Project) {
     withContext(Dispatchers.IO) {
       val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
@@ -43,7 +74,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
-      val helpers = helpersAware.preparePyCharmHelpers()
+      val communityHelpers = helpersAware.preparePyCharmHelpers().helpers.first()
 
 
       val targetReq = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
@@ -51,7 +82,7 @@ class CondaPackageCache : PythonPackageCache<String> {
       val targetEnv = targetReq.prepareEnvironment(TargetProgressIndicator.EMPTY)
 
 
-      val helpersPath = helpers.apply(targetEnv)
+      val helpersPath = communityHelpers.targetPathFun.apply(targetEnv)
 
       // SDK associated with another conda env, not the base one, so we do not pass it not to activate wrong conda
       addCondaPythonToTargetCommandLine(commandLineBuilder, baseConda, null)
@@ -77,7 +108,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it.size < 2 }
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
-        .mapValues { it.value.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
+        .mapValues { it.value.distinct().sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
         .toSortedMap(PythonRankingAwarePackageNameComparator())
 
       cache = packages

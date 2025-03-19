@@ -7,12 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public abstract class TypeCommand extends AbstractCommand {
 
   private static final Logger LOG = Logger.getInstance(TypeCommand.class);

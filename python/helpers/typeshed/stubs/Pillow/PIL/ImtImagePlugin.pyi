@@ -1,9 +1,9 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal
+from _typeshed import Incomplete
+from typing import ClassVar, Literal
 
 from .ImageFile import ImageFile
 
-field: Any
+field: Incomplete
 
 class ImtImageFile(ImageFile):
     format: ClassVar[Literal["IMT"]]

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.intellij.openapi.components.service
@@ -27,8 +27,11 @@ interface TipAndTrickManager {
   fun canShowDialogAutomaticallyNow(project: Project): Boolean
 
   companion object {
+    @JvmField
     val DISABLE_TIPS_FOR_PROJECT: Key<Boolean> = Key.create("DISABLE_TIPS_FOR_PROJECT")
 
-    fun getInstance(): TipAndTrickManager = service()
+    fun getInstance(): TipAndTrickManager {
+      return service()
+    }
   }
 }

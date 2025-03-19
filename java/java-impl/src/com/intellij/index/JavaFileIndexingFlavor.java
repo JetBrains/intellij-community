@@ -9,7 +9,7 @@ import com.intellij.util.indexing.flavor.HashBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFileIndexingFlavor implements FileIndexingFlavorProvider<LanguageLevel> {
+public final class JavaFileIndexingFlavor implements FileIndexingFlavorProvider<LanguageLevel> {
   @Override
   public @Nullable LanguageLevel getFlavor(@NotNull IndexedFile content) {
     return JavaLanguageLevelPusher.getPushedLanguageLevel(content.getFile());

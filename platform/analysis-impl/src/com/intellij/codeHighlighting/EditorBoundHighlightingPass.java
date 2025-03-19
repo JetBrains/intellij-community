@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
+import com.intellij.codeInsight.highlighting.PassRunningAssert;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +16,19 @@ import org.jetbrains.annotations.NotNull;
  * This pass however is for editor-specific markup, e.g. code folding.
  */
 public abstract class EditorBoundHighlightingPass extends TextEditorHighlightingPass {
-  @NotNull protected final Editor myEditor;
-  @NotNull protected final PsiFile myFile;
+  protected final @NotNull Editor myEditor;
+  protected final @NotNull PsiFile myFile;
+
+  private static final PassRunningAssert HIGHLIGHTING_PERFORMANCE_ASSERT =
+    new PassRunningAssert("the expensive method should not be called inside the highlighting pass");
+
+  protected static AccessToken runPass() {
+    return HIGHLIGHTING_PERFORMANCE_ASSERT.runPass();
+  }
+
+  public static void assertHighlightingPassNotRunning() {
+    HIGHLIGHTING_PERFORMANCE_ASSERT.assertPassNotRunning();
+  }
 
   protected EditorBoundHighlightingPass(@NotNull Editor editor,
                                         @NotNull PsiFile psiFile,

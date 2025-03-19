@@ -5,16 +5,16 @@ package com.intellij.ui
 
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.toolWindow.ToolWindowPane
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
@@ -61,8 +61,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
 
   private val listeners = ArrayList<Runnable>()
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+  private val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope()
 
   init {
     layeredPane = parent.layeredPane
@@ -262,17 +261,20 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
   private fun doLayout(balloons: List<Balloon>, startX: Int, bottomY: Int) {
     var y = bottomY
     val pane = UIUtil.findComponentOfType(parent, ToolWindowPane::class.java)
+    val helper = getFrameHelper(parent.parent as? Window)
     if (pane != null) {
       y -= pane.bottomHeight
       if (SystemInfoRt.isMac && !ExperimentalUI.isNewUI()) {
-        val helper = getFrameHelper(parent.parent as Window)
         if (helper == null || !helper.isInFullScreen) {
           y -= UIUtil.getTransparentTitleBarHeight(parent)
         }
       }
     }
-    if (parent is IdeRootPane) {
-      y -= parent.statusBarHeight
+    if (helper != null) {
+      val statusBar = helper.statusBar?.component
+      if (statusBar != null && statusBar.isVisible) {
+        y -= statusBar.height
+      }
     }
     setBounds(balloons = balloons, startX = startX, startY = y)
   }

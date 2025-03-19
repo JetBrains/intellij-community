@@ -1,0 +1,8 @@
+Additional checking of reference Getter: run
+Additional checking of reference KtSimpleNameReference: run
+Additional checking of reference KtInvokeFunctionReference: run { "" }
+Changed resolve type of KtSimpleNameReference: Deprecated
+Trying to build import list again with import rules: +java.lang.Deprecated
+Additional checking of reference Getter: run
+Additional checking of reference KtSimpleNameReference: run
+Additional checking of reference KtInvokeFunctionReference: run { "" }

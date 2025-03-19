@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tools.sdkTools;
 
 import com.intellij.execution.ExecutionException;
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.*;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,20 +47,21 @@ public final class PySdkTools {
    * @param sdkCreationType SDK creation strategy (see {@link SdkCreationType} doc)
    * @return sdk
    */
-  @NotNull
-  public static Sdk createTempSdk(@NotNull final VirtualFile sdkHome,
-                                  @NotNull final SdkCreationType sdkCreationType,
-                                  @Nullable final Module module,
+  public static @NotNull Sdk createTempSdk(final @NotNull VirtualFile sdkHome,
+                                  final @NotNull SdkCreationType sdkCreationType,
+                                  final @Nullable Module module,
                                   @Nullable Disposable parentDisposable
   )
     throws InvalidSdkException {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
-      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
+
       ref.set(sdk);
     });
+
     final Sdk sdk = ref.get();
     if (sdk != null) {
       ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
@@ -89,9 +89,9 @@ public final class PySdkTools {
    * @param module       module to associate with (if provided)
    * @throws InvalidSdkException bas sdk
    */
-  public static void generateTempSkeletonsOrPackages(@NotNull final Sdk sdk,
+  public static void generateTempSkeletonsOrPackages(final @NotNull Sdk sdk,
                                                      final boolean addSkeletons,
-                                                     @Nullable final Module module)
+                                                     final @Nullable Module module)
     throws InvalidSdkException, ExecutionException {
     Project project = null;
 
@@ -108,23 +108,38 @@ public final class PySdkTools {
 
     final SdkModificator modificator = sdk.getSdkModificator();
 
-    modificator.setSdkAdditionalData(new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk)));
-
     for (final String path : new PyTargetsIntrospectionFacade(sdk, project).getInterpreterPaths(new EmptyProgressIndicator())) {
       addTestSdkRoot(modificator, path);
     }
     if (!addSkeletons) {
-      ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+      commitChangesObeyWriteAction(modificator);
       return;
     }
 
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
     addTestSdkRoot(modificator, skeletonsPath);
 
-    ApplicationManager.getApplication().invokeAndWait(modificator::commitChanges);
+    commitChangesObeyWriteAction(modificator);
 
     PySkeletonRefresher
       .refreshSkeletonsOfSdk(project, null, skeletonsPath, sdk);
+  }
+
+  /**
+   * {@link SdkModificator#commitChanges()} is marked with {@link com.intellij.util.concurrency.annotations.RequiresWriteLock} and can't be called without it
+   */
+  private static void commitChangesObeyWriteAction(@NotNull SdkModificator modificator) {
+    var app = ApplicationManager.getApplication();
+    app.invokeAndWait(() -> {
+      if (app.isWriteAccessAllowed()) {
+        modificator.commitChanges();
+      }
+      else {
+        WriteAction.run(() -> {
+          modificator.commitChanges();
+        });
+      }
+    });
   }
 
   public static void addTestSdkRoot(@NotNull SdkModificator sdkModificator, @NotNull String path) {

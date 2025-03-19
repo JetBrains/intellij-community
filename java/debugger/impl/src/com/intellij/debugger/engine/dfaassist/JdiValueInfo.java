@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.sun.jdi.*;
@@ -106,6 +107,12 @@ interface JdiValueInfo {
     if (value instanceof StringReference stringReference) {
       return new StringConstant(stringReference.value());
     }
+    if (value instanceof DfaAssistProvider.BoxedValue boxedValue) {
+      DfConstantType<?> wrappedConstant = primitiveConstant(boxedValue.value());
+      if (wrappedConstant != null) {
+        return new ObjectWithSpecialField(boxedValue.type(), SpecialField.UNBOX, new PrimitiveConstant(wrappedConstant));
+      }
+    }
     if (value instanceof ObjectReference ref) {
       ReferenceType type = ref.referenceType();
       if (!classLoaderFilter.test(type.classLoader())) return null;
@@ -174,14 +181,13 @@ interface JdiValueInfo {
     return null;
   }
 
-  @NotNull
-  private static ObjectWithSpecialField collectionWithSize(ReferenceType type, int size) {
+  private static @NotNull ObjectWithSpecialField collectionWithSize(ReferenceType type, int size) {
     PrimitiveConstant length = new PrimitiveConstant(DfTypes.intValue(size));
     return new ObjectWithSpecialField(type, SpecialField.COLLECTION_SIZE, length);
   }
 
   private static @Nullable Value getField(@NotNull ObjectReference object, @NotNull String name) {
-    Field field = object.referenceType().fieldByName(name);
+    Field field = DebuggerUtils.findField(object.referenceType(), name);
     if (field == null) return null;
     return object.getValue(field);
   }
@@ -195,7 +201,7 @@ interface JdiValueInfo {
       superclass = superclass.superclass();
     }
     if (superclass == null || !superclass.name().equals(CommonClassNames.JAVA_LANG_ENUM)) return null;
-    Field nameField = superclass.fieldByName("name");
+    Field nameField = DebuggerUtils.findField(superclass, "name");
     if (nameField == null) return null;
     Value nameValue = ref.getValue(nameField);
     return nameValue instanceof StringReference ? ((StringReference)nameValue).value() : null;

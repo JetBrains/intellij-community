@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.formatting.fileSet.FileSetDescriptor;
@@ -12,8 +12,8 @@ import com.intellij.psi.search.scope.packageSet.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NamedScopeDescriptor implements FileSetDescriptor {
-  public final static String NAMED_SCOPE_TYPE = "namedScope";
+public final class NamedScopeDescriptor implements FileSetDescriptor {
+  public static final String NAMED_SCOPE_TYPE = "namedScope";
 
   private final String myScopeId;
   private @Nullable PackageSet myFileSet;
@@ -66,26 +66,22 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
     return scope != null ? Pair.create(holder, scope) : null;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myScopeId;
   }
 
-  @NotNull
   @Override
-  public String getType() {
+  public @NotNull String getType() {
     return NAMED_SCOPE_TYPE;
   }
 
-  @Nullable
   @Override
-  public String getPattern() {
+  public @Nullable String getPattern() {
     return myFileSet != null ? myFileSet.getText() : null;
   }
 
-  @Nullable
-  public PackageSet getFileSet() {
+  public @Nullable PackageSet getFileSet() {
     return myFileSet;
   }
 
@@ -94,7 +90,7 @@ public class NamedScopeDescriptor implements FileSetDescriptor {
     return "scope: " + myScopeId;
   }
 
-  public static class Factory implements FileSetDescriptorFactory {
+  public static final class Factory implements FileSetDescriptorFactory {
 
     @Override
     public @Nullable FileSetDescriptor createDescriptor(@NotNull State state) {

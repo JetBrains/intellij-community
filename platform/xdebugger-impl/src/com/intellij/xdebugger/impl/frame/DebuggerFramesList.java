@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.OccurenceNavigator;
@@ -6,6 +6,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import javax.swing.*;
 import javax.swing.text.Position;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class DebuggerFramesList extends JBList implements OccurenceNavigator {
   public DebuggerFramesList() {
     super(new CollectionListModel());
@@ -42,15 +44,13 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return getModel().getSize();
   }
 
-  @NotNull
   @Override
-  public String getNextOccurenceActionName() {
+  public @NotNull String getNextOccurenceActionName() {
     return XDebuggerBundle.message("action.next.frame.text");
   }
 
-  @NotNull
   @Override
-  public String getPreviousOccurenceActionName() {
+  public @NotNull String getPreviousOccurenceActionName() {
     return XDebuggerBundle.message("action.previous.frame.text");
   }
 
@@ -69,8 +69,7 @@ public abstract class DebuggerFramesList extends JBList implements OccurenceNavi
     return getOccurenceInfo();
   }
 
-  @NotNull
-  private OccurenceInfo getOccurenceInfo() {
+  private @NotNull OccurenceInfo getOccurenceInfo() {
     Navigatable navigatable = getSelectedFrameNavigatable();
     return new OccurenceInfo(navigatable, -1, -1);
   }

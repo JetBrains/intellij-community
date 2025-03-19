@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// K2_ERROR: Missing return statement.
 
 object Foo {
     @JvmStatic

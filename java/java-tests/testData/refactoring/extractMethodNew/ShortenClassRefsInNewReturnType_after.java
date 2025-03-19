@@ -9,8 +9,7 @@ class Test {
     return list;
   }
 
-    @NotNull
-    private Collection newMethod() {
+    private @NotNull Collection newMethod() {
         return new ArrayList<String>();
     }
 }

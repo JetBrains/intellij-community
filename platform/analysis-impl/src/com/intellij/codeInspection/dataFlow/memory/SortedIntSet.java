@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.memory;
 
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.function.IntConsumer;
 
 class SortedIntSet implements Comparable<SortedIntSet> {
@@ -74,6 +73,9 @@ class SortedIntSet implements Comparable<SortedIntSet> {
     int thatSize = that.size();
     int thisSize = this.size();
     if (thatSize > thisSize) return false;
+    if (thatSize == thisSize) {
+      return Arrays.equals(myData, 0, thisSize, that.myData, 0, thatSize);
+    }
     int thisIndex=0;
     for (int thatIndex = 0; thatIndex < thatSize; thatIndex++) {
       int thatValue = that.myData[thatIndex];
@@ -90,10 +92,7 @@ class SortedIntSet implements Comparable<SortedIntSet> {
   public int compareTo(SortedIntSet t) {
     if (t == this) return 0;
     if (t.size() != size()) return Integer.compare(size(), t.size());
-    for (int i = 0; i < size(); i++) {
-      if (myData[i] != t.myData[i]) return Integer.compare(myData[i], t.myData[i]);
-    }
-    return 0;
+    return Arrays.compare(myData, 0, mySize, t.myData, 0, mySize);
   }
 
   public int get(int pos) {
@@ -119,8 +118,8 @@ class SortedIntSet implements Comparable<SortedIntSet> {
   @Override
   public int hashCode() {
     int size = mySize;
-    int result = Objects.hash(size);
     int[] arr = myData;
+    int result = size;
     for (int i = 0; i < size; i++) {
       int element = arr[i];
       result = 31 * result + element;

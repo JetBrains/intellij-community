@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.platform.vcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs",
+  module_name = "intellij.platform.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/diff-api:diff",
+    "//platform/util/jdom",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "@lib//:caffeine",
+  ],
+  exports = ["//platform/vcs-api/vcs-api-core:vcs-core"],
+  runtime_deps = ["//platform/backend"]
+)
+### auto-generated section `build intellij.platform.vcs` end

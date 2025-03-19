@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
@@ -16,11 +15,9 @@ public abstract class KeymapManager {
   public static final String KDE_KEYMAP = "Default for KDE";
   public static final String GNOME_KEYMAP = "Default for GNOME";
 
-  @NotNull
-  public abstract Keymap getActiveKeymap();
+  public abstract @NotNull Keymap getActiveKeymap();
 
-  @Nullable
-  public abstract Keymap getKeymap(@NotNull String name);
+  public abstract @Nullable Keymap getKeymap(@NotNull String name);
 
   private static volatile KeymapManager INSTANCE;
 
@@ -42,22 +39,5 @@ public abstract class KeymapManager {
    * @deprecated use {@link KeymapManagerListener#TOPIC} instead
    */
   @Deprecated(forRemoval = true)
-  public abstract void addKeymapManagerListener(@NotNull KeymapManagerListener listener, @NotNull Disposable parentDisposable);
-
-  /**
-   * @deprecated use {@link KeymapManagerListener#TOPIC} instead
-   */
-  @Deprecated(forRemoval = true)
   public abstract void removeKeymapManagerListener(@NotNull KeymapManagerListener listener);
-
-  /**
-   * Instructs the manager that one action should use shortcut of another one ({@code 'use-shortcut-of'} attribute at
-   * action's config located at plugin.xml).
-   *
-   * @param sourceActionId if of the action which shortcut should be used for the 'target action'
-   * @param targetActionId id of the action which should use shortcut of the 'source action'
-   */
-  public abstract void bindShortcuts(@NotNull String sourceActionId, @NotNull String targetActionId);
-
-  public abstract void unbindShortcuts(String targetActionId);
 }

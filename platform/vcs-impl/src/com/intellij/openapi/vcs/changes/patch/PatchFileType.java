@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.patch;
 
@@ -25,28 +25,22 @@ public class PatchFileType implements FileType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return NAME;
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return VcsBundle.message("filetype.patch.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return VcsBundle.message("filetype.patch.display.name");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return "patch";
   }
 

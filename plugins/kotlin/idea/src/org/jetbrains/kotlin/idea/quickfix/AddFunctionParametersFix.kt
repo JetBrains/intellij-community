@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
 import org.jetbrains.kotlin.idea.util.getDataFlowAwareTypes
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
 class AddFunctionParametersFix(
@@ -50,8 +49,6 @@ class AddFunctionParametersFix(
 
     private val callElement: KtCallElement?
         get() = element as? KtCallElement
-
-    private val typesToShorten = ArrayList<KotlinType>()
 
     override fun getText(): String {
         val callElement = callElement ?: return ""
@@ -153,7 +150,6 @@ class AddFunctionParametersFix(
                             val parameterType = parameters[i].type
                             if (argumentType != null && !KotlinTypeChecker.DEFAULT.isSubtypeOf(argumentType, parameterType)) {
                                 descriptor.parameters[i + receiverCount].currentTypeInfo = KotlinTypeInfo(false, argumentType)
-                                typesToShorten.add(argumentType)
                             }
                         } else {
                             val parameterInfo = getNewParameterInfo(
@@ -168,7 +164,7 @@ class AddFunctionParametersFix(
                 })
             }
 
-            override fun performSilently(affectedFunctions: Collection<PsiElement>): Boolean {
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>): Boolean {
                 val onlyFunction = affectedFunctions.singleOrNull() ?: return false
                 return kind != Kind.ChangeSignature && !isConstructor() && !hasOtherUsages(onlyFunction)
             }
@@ -187,7 +183,6 @@ class AddFunctionParametersFix(
         }
         return KotlinParameterInfo(functionDescriptor, -1, name, KotlinTypeInfo(false, null)).apply {
             currentTypeInfo = KotlinTypeInfo(false, type)
-            originalTypeInfo.type?.let { typesToShorten.add(it) }
             if (expression != null) defaultValueForCall = expression
         }
     }
@@ -198,11 +193,11 @@ class AddFunctionParametersFix(
             val project = runReadAction { it.project }
             val psiSearchHelper = PsiSearchHelper.getInstance(project)
             val globalSearchScope = GlobalSearchScope.projectScope(project)
-            val cheapEnoughToSearch = psiSearchHelper.isCheapEnoughToSearch(name, globalSearchScope, null, null)
+            val cheapEnoughToSearch = psiSearchHelper.isCheapEnoughToSearch(name, globalSearchScope, null)
             if (cheapEnoughToSearch == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return false
         }
 
-        return ReferencesSearch.search(function).any {
+        return ReferencesSearch.search(function).asIterable().any {
             val call = it.element.getParentOfType<KtCallElement>(false)
             call != null && callElement != call
         }

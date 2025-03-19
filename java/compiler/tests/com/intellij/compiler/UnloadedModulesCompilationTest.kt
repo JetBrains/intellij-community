@@ -1,13 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler
 
 import com.intellij.compiler.impl.ModuleCompileScope
 import com.intellij.configurationStore.runInAllowSaveMode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.io.TestFileSystemBuilder
 import java.io.IOException
 
@@ -16,7 +16,7 @@ class UnloadedModulesCompilationTest : BaseCompilerTestCase() {
     val a = createFile("unloaded/src/A.java", "class A{ error }")
     val unloaded = addModule("unloaded", a.parent)
     val unloadedList = listOf(unloaded.name)
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList)
     }
     buildAllModules().assertUpToDate()
@@ -28,7 +28,7 @@ class UnloadedModulesCompilationTest : BaseCompilerTestCase() {
     val outputDir = getOutputDir(unloaded, false)
     val unloadedList = listOf(unloaded.name)
     runInAllowSaveMode(true) {
-      runBlockingModal(project, "") {
+      runWithModalProgressBlocking(project, "") {
         ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList)
       }
     }
@@ -43,7 +43,7 @@ class UnloadedModulesCompilationTest : BaseCompilerTestCase() {
     val unloaded = addModule("unloaded", a.parent)
     buildAllModules()
     val unloadedList = listOf(unloaded.name)
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList)
     }
     changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"))
@@ -59,7 +59,7 @@ class UnloadedModulesCompilationTest : BaseCompilerTestCase() {
     ModuleRootModificationUtil.addDependency(unloaded, util)
     buildAllModules()
     val unloadedList = listOf(unloaded.name)
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList)
     }
     changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"))
@@ -74,7 +74,7 @@ class UnloadedModulesCompilationTest : BaseCompilerTestCase() {
     ModuleRootModificationUtil.addDependency(unloaded, util)
     buildAllModules()
     val unloadedList = listOf(unloaded.name)
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList)
     }
     changeFile(utilFile, "class Util { Util(int i) {} }")

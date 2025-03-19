@@ -7,11 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
@@ -86,24 +83,16 @@ private class NewScriptDependenciesNotificationPanel(
 
     init {
         text = KotlinBaseScriptingBundle.message("notification.text.there.is.a.new.script.context.available")
-        createComponentActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.apply.context")) {
+        createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.apply.context")) {
             onClick()
         }
 
-        createComponentActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
+        createActionLabel(KotlinBaseScriptingBundle.message("notification.action.text.enable.auto.reload")) {
             onClick()
 
             @Suppress("DEPRECATION")
-            val scriptDefinition = file.findScriptDefinition(project) ?: return@createComponentActionLabel
+            val scriptDefinition = file.findScriptDefinition(project) ?: return@createActionLabel
             KotlinScriptingSettings.getInstance(project).setAutoReloadConfigurations(scriptDefinition, true)
         }
-    }
-
-    private fun EditorNotificationPanel.createComponentActionLabel(@NlsContexts.LinkLabel labelText: String, callback: (HyperlinkLabel) -> Unit) {
-        val label: Ref<HyperlinkLabel> = Ref.create()
-        val action = Runnable {
-            callback(label.get())
-        }
-        label.set(createActionLabel(labelText, action))
     }
 }

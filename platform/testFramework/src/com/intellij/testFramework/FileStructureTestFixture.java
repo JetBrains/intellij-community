@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.actions.ViewStructureAction;
@@ -31,8 +31,7 @@ public class FileStructureTestFixture implements Disposable {
     myFixture = fixture;
   }
 
-  @Nullable
-  public FilteringTreeStructure.FilteringNode update() {
+  public @Nullable FilteringTreeStructure.FilteringNode update() {
     FileStructurePopup popup = getPopup();
     UIUtil.dispatchAllInvocationEvents(); // Prevent write actions cancelling rebuild and update
     PlatformTestUtil.waitForPromise(popup.rebuildAndUpdate());
@@ -52,8 +51,7 @@ public class FileStructureTestFixture implements Disposable {
     return TreeUtil.getUserObject(FilteringTreeStructure.FilteringNode.class, getTree().getModel().getRoot());
   }
 
-  @NotNull
-  public FileStructurePopup getPopup() {
+  public @NotNull FileStructurePopup getPopup() {
     if (myPopup == null || myFile != myFixture.getFile()) {
       if (myPopup != null) {
         Disposer.dispose(myPopup);

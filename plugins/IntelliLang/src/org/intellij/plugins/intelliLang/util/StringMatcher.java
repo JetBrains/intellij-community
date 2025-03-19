@@ -64,7 +64,7 @@ public abstract class StringMatcher<T> {
     }
   }
 
-  private final static class Equals extends Simple {
+  private static final class Equals extends Simple {
     Equals(String target) {
       super(target);
     }
@@ -75,7 +75,7 @@ public abstract class StringMatcher<T> {
     }
   }
 
-  private final static class StartsWith extends Simple {
+  private static final class StartsWith extends Simple {
     StartsWith(String target) {
       super(target);
     }
@@ -91,7 +91,7 @@ public abstract class StringMatcher<T> {
     }
   }
 
-  private final static class EndsWith extends Simple {
+  private static final class EndsWith extends Simple {
     EndsWith(String target) {
       super(target);
     }
@@ -107,7 +107,7 @@ public abstract class StringMatcher<T> {
     }
   }
 
-  private final static class Contains extends Simple {
+  private static final class Contains extends Simple {
     Contains(String target) {
       super(target);
     }
@@ -211,7 +211,7 @@ public abstract class StringMatcher<T> {
   public abstract String getPattern();
 
   public static StringMatcher create(String target) {
-    if (target.length() == 0) return ANY;
+    if (target.isEmpty()) return ANY;
     if (target.equals(".*")) return ANY_PATTERN;
     if (target.equals(NONE.getPattern())) return NONE;
 
@@ -277,10 +277,12 @@ public abstract class StringMatcher<T> {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myTarget.hashCode();
   }
 
+  @Override
   @SuppressWarnings({"SimplifiableIfStatement"})
   public boolean equals(Object obj) {
     if (obj == null) return false;

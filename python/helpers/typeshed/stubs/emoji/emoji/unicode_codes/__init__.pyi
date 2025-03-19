@@ -1,6 +1,0 @@
-from .data_dict import *
-
-__all__ = ["get_emoji_unicode_dict", "get_aliases_unicode_dict", "EMOJI_DATA", "STATUS", "LANGUAGES"]
-
-def get_emoji_unicode_dict(lang: str) -> dict[str, str]: ...
-def get_aliases_unicode_dict() -> dict[str, str]: ...

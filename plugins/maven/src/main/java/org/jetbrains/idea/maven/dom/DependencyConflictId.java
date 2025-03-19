@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +23,7 @@ public class DependencyConflictId {
     this.classifier = classifier;
   }
 
-  @Nullable
-  public static DependencyConflictId create(@NotNull MavenDomDependency dep) {
+  public static @Nullable DependencyConflictId create(@NotNull MavenDomDependency dep) {
     String groupId = dep.getGroupId().getStringValue();
     if (StringUtil.isEmpty(groupId)) return null;
 
@@ -33,36 +33,30 @@ public class DependencyConflictId {
     return new DependencyConflictId(groupId, artifactId, dep.getType().getStringValue(), dep.getClassifier().getStringValue());
   }
 
-  @Nullable
-  public static DependencyConflictId create(@NotNull MavenArtifact dep) {
+  public static @Nullable DependencyConflictId create(@NotNull MavenArtifact dep) {
     return create(dep.getGroupId(), dep.getArtifactId(), dep.getType(), dep.getClassifier());
   }
 
-  @Nullable
-  public static DependencyConflictId create(String groupId, String artifactId, String type, String classifier) {
+  public static @Nullable DependencyConflictId create(String groupId, String artifactId, String type, String classifier) {
     if (StringUtil.isEmpty(groupId)) return null;
     if (StringUtil.isEmpty(artifactId)) return null;
 
     return new DependencyConflictId(groupId, artifactId, type, classifier);
   }
 
-  @NotNull
-  public String getGroupId() {
+  public @NotNull String getGroupId() {
     return groupId;
   }
 
-  @NotNull
-  public String getArtifactId() {
+  public @NotNull String getArtifactId() {
     return artifactId;
   }
 
-  @NotNull
-  public String getType() {
+  public @NotNull String getType() {
     return type;
   }
 
-  @Nullable
-  public String getClassifier() {
+  public @Nullable String getClassifier() {
     return classifier;
   }
 

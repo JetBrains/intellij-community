@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml;
 
 import net.n3.nanoxml.IXMLBuilder;
@@ -8,8 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.Reader;
 
 @SuppressWarnings("RedundantThrows")
-@NonNls
-public interface NanoXmlBuilder extends IXMLBuilder {
+public @NonNls interface NanoXmlBuilder extends IXMLBuilder {
   @Override
   default void startBuilding(String systemID, int lineNr) throws Exception { }
 

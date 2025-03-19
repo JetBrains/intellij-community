@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.JBIterable;
@@ -41,6 +42,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
@@ -60,7 +62,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   private final boolean myPhysical;
   private volatile Content myContent;
   private volatile Reference<Document> myDocument;
-  private final PsiLock myPsiLock = new PsiLock();
+  @SuppressWarnings("FieldMayBeStatic") private final PsiLock myPsiLock = new PsiLock();
 
   protected AbstractFileViewProvider(@NotNull PsiManager manager,
                                      @NotNull VirtualFile virtualFile,
@@ -101,8 +103,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return provider.getVirtualFile() instanceof LightVirtualFile && !provider.isEventSystemEnabled();
   }
 
-  @NotNull
-  public PsiLock getFilePsiLock() {
+  public @NotNull PsiLock getFilePsiLock() {
     return myPsiLock;
   }
 
@@ -111,13 +112,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return !(file instanceof LightVirtualFile) && FileTypeRegistry.getInstance().isFileIgnored(file);
   }
 
-  @Nullable
-  protected PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
+  protected @Nullable PsiFile createFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull FileType fileType) {
     return createFile(file, fileType, getBaseLanguage());
   }
 
-  @NotNull
-  protected PsiFile createFile(@NotNull VirtualFile file, @NotNull FileType fileType, @NotNull Language language) {
+  protected @NotNull PsiFile createFile(@NotNull VirtualFile file, @NotNull FileType fileType, @NotNull Language language) {
     if (fileType.isBinary() || file.is(VFileProperty.SPECIAL)) {
       return SingleRootFileViewProvider.isTooLargeForContentLoading(file) ?
              new PsiLargeBinaryFileImpl((PsiManagerImpl)getManager(), this) :
@@ -135,8 +134,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return new PsiPlainTextFileImpl(this);
   }
 
-  @Nullable
-  protected PsiFile createFile(@NotNull Language lang) {
+  protected @Nullable PsiFile createFile(@NotNull Language lang) {
     if (lang != getBaseLanguage()) return null;
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
     if (parserDefinition != null) {
@@ -146,25 +144,21 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   @Override
-  @NotNull
-  public final PsiManagerEx getManager() {
+  public final @NotNull PsiManagerEx getManager() {
     return myManager;
   }
 
   @Override
-  @NotNull
-  public CharSequence getContents() {
+  public @NotNull CharSequence getContents() {
     return getContent().getText();
   }
 
   @Override
-  @NotNull
-  public VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
-  @Nullable
-  private Document getCachedDocument() {
+  private @Nullable Document getCachedDocument() {
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());
@@ -182,11 +176,11 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   @Override
-  @Nullable
-  public final PsiFile getPsi(@NotNull Language target) {
+  public final @Nullable PsiFile getPsi(@NotNull Language target) {
     if (!isPhysical()) {
       FileManager fileManager = getManager().getFileManager();
       VirtualFile virtualFile = getVirtualFile();
+      // todo ijpl-339 check no real context is used here???
       if (fileManager.findCachedViewProvider(virtualFile) == null && getCachedPsiFiles().isEmpty()) {
         fileManager.setViewProvider(virtualFile, this);
       }
@@ -194,8 +188,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return getPsiInner(target);
   }
 
-  @Nullable
-  protected abstract PsiFile getPsiInner(Language target);
+  protected abstract @Nullable PsiFile getPsiInner(Language target);
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
@@ -217,14 +210,12 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   @Override
-  @Nullable
-  public PsiReference findReferenceAt(int offset, @NotNull Language language) {
+  public @Nullable PsiReference findReferenceAt(int offset, @NotNull Language language) {
     PsiFile psiFile = getPsi(language);
     return psiFile != null ? findReferenceAt(psiFile, offset) : null;
   }
 
-  @Nullable
-  protected static PsiReference findReferenceAt(@Nullable PsiFile psiFile, int offset) {
+  protected static @Nullable PsiReference findReferenceAt(@Nullable PsiFile psiFile, int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();
@@ -240,8 +231,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return null;
   }
 
-  @Nullable
-  public static PsiElement findElementAt(@Nullable PsiElement psiFile, int offset) {
+  public static @Nullable PsiElement findElementAt(@Nullable PsiElement psiFile, int offset) {
     ASTNode node = psiFile == null ? null : psiFile.getNode();
     return node == null ? null : SourceTreeToPsiMap.treeElementToPsi(node.findLeafElementAt(offset));
   }
@@ -331,8 +321,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return true;
   }
 
-  @NotNull
-  private Content getContent() {
+  private @NotNull Content getContent() {
     return myContent;
   }
 
@@ -379,9 +368,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return getClass().getName() + "{vFile=" + myVirtualFile
            + (myVirtualFile instanceof VirtualFileWithId ? ", vFileId=" + ((VirtualFileWithId)myVirtualFile).getId() : "")
            + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
@@ -389,11 +377,9 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public abstract PsiFile getCachedPsi(@NotNull Language target);
 
-  @NotNull
-  public abstract List<PsiFile> getCachedPsiFiles();
+  public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 
-  @NotNull
-  public abstract List<FileASTNode> getKnownTreeRoots();
+  public abstract @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots();
 
   public final void markInvalidated() {
     invalidateCachedPsi();
@@ -429,10 +415,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     if (copy instanceof FreeThreadedFileViewProvider) {
       LOG.assertTrue(this instanceof FreeThreadedFileViewProvider, "Injected file can't have non-injected original file");
     }
-    Set<AbstractFileViewProvider> copies = getUserData(KNOWN_COPIES);
-    if (copies == null) {
-      copies = putUserDataIfAbsent(KNOWN_COPIES, Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
-    }
+    Set<AbstractFileViewProvider> copies = ConcurrencyUtil.computeIfAbsent(this, KNOWN_COPIES, () -> Collections.newSetFromMap(CollectionFactory.createConcurrentWeakMap()));
     if (copy.getUserData(KNOWN_COPIES) != null) {
       List<AbstractFileViewProvider> derivations = JBTreeTraverser.from(AbstractFileViewProvider::getKnownCopies).withRoot(copy).toList();
       if (derivations.contains(this)) {
@@ -451,9 +434,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
   }
 
   private class VirtualFileContent implements Content {
-    @NotNull
     @Override
-    public CharSequence getText() {
+    public @NotNull CharSequence getText() {
       VirtualFile virtualFile = getVirtualFile();
       if (virtualFile instanceof LightVirtualFile) {
         Document doc = getCachedDocument();
@@ -482,15 +464,13 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return getLastCommittedStamp(document);
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "VirtualFileContent{size=" + getVirtualFile().getLength() + "}";
     }
   }
 
-  @NotNull
-  private CharSequence getLastCommittedText(@NotNull Document document) {
+  private @NotNull CharSequence getLastCommittedText(@NotNull Document document) {
     return PsiDocumentManager.getInstance(myManager.getProject()).getLastCommittedText(document);
   }
   private long getLastCommittedStamp(@NotNull Document document) {
@@ -506,9 +486,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       myFileElement = fileElement;
     }
 
-    @NotNull
     @Override
-    public CharSequence getText() {
+    public @NotNull CharSequence getText() {
       return myFileElement.getText();
     }
 
@@ -523,17 +502,15 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     }
   }
 
-  @NotNull
   @Override
-  public PsiFile getStubBindingRoot() {
+  public @NotNull PsiFile getStubBindingRoot() {
     PsiFile psi = getPsi(getBaseLanguage());
     assert psi != null;
     return psi;
   }
 
-  @NotNull
   @Override
-  public final FileType getFileType() {
+  public final @NotNull FileType getFileType() {
     return myVirtualFile.getFileType();
   }
 }

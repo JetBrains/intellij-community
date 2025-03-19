@@ -17,10 +17,12 @@ package org.intellij.lang.xpath.xslt.run;
 
 import com.intellij.diagnostic.logging.AdditionalTabComponent;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
@@ -29,57 +31,50 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.plugins.xpathView.XPathBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class HighlightingOutputConsole extends AdditionalTabComponent implements DataProvider {
+public class HighlightingOutputConsole extends AdditionalTabComponent implements UiDataProvider {
 
     private final ConsoleView myConsole;
-    private final JComponent myConsoleComponent;
 
     public HighlightingOutputConsole(Project project, @Nullable FileType fileType) {
         super(new BorderLayout());
 
         myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
-        myConsoleComponent = myConsole.getComponent();
-        add(myConsoleComponent, BorderLayout.CENTER);
+        add(myConsole.getComponent(), BorderLayout.CENTER);
 
         final EditorEx editorEx = getEditor();
         assert editorEx != null;
 
         if (fileType != null) {
-          EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType);
+          EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType);
           final EditorHighlighter highlighter = provider.getEditorHighlighter(project, fileType, null, editorEx.getColorsScheme());
           editorEx.setHighlighter(highlighter);
         }
     }
 
     @Override
-    @Nullable
-    public JComponent getSearchComponent() {
+    public @Nullable JComponent getSearchComponent() {
         return null;
     }
 
     @Override
-    @Nullable
-    public ActionGroup getToolbarActions() {
+    public @Nullable ActionGroup getToolbarActions() {
         return null;
     }
 
     @Override
-    @Nullable
-    public JComponent getToolbarContextComponent() {
+    public @Nullable JComponent getToolbarContextComponent() {
         return null;
     }
 
     @Override
-    @Nullable
-    public String getToolbarPlace() {
+    public @Nullable String getToolbarPlace() {
         return null;
     }
 
@@ -88,24 +83,19 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
         return true;
     }
 
-    @Nullable
-    private EditorEx getEditor() {
-        return (EditorEx)((DataProvider)myConsole).getData(LangDataKeys.EDITOR.getName());
+    private @Nullable EditorEx getEditor() {
+      return (EditorEx)((ConsoleViewImpl)myConsole).getEditor();
     }
 
-    @Override
-    public JComponent getPreferredFocusableComponent() {
-        return myConsoleComponent;
-    }
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myConsole.getComponent();
+  }
 
-    @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-        if (LangDataKeys.EDITOR.is(dataId)) {
-            return getEditor();
-        }
-        return null;
-    }
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.EDITOR, getEditor());
+  }
 
     void selectOutputTab() {
         final Container parent = getParent();
@@ -116,8 +106,7 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
     }
 
     @Override
-    @NotNull
-    public String getTabTitle() {
+    public @NotNull String getTabTitle() {
         return XPathBundle.message("tab.title.xslt.output");
     }
 

@@ -6,3 +6,5 @@ fun foo(): Int {
 
     return <caret>localFun()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// IGNORE_K2

@@ -1,29 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class AdjustWhiteSpacesState extends State {
+@ApiStatus.Internal
+public final class AdjustWhiteSpacesState extends State {
 
   private final FormattingProgressCallback myProgressCallback;
   
@@ -82,12 +71,24 @@ public class AdjustWhiteSpacesState extends State {
     }
 
     if (myAlignAgain.isEmpty()) {
+      postProcessDependantWhitespaces();
       setDone(true);
     }
     else {
       myAlignAgain.clear();
       myDependentSpacingEngine.clear();
       myCurrentBlock = myFirstBlock;
+      myDependentSpacingEngine.incrementIteration();
+    }
+  }
+
+  private void postProcessDependantWhitespaces() {
+    for (LeafBlockWrapper block : myDependentSpacingEngine.getLeafBlocksToReformat()) {
+      WhiteSpace whiteSpace = block.getWhiteSpace();
+      SpacingImpl spaceProperty = block.getSpaceProperty();
+      updateSpacing(spaceProperty, whiteSpace);
+
+      myIndentAdjuster.adjustIndent(block);
     }
   }
 
@@ -127,8 +128,8 @@ public class AdjustWhiteSpacesState extends State {
     return myAlignmentsInsideRangesToModify.contains(alignment);
   }
 
-  private static List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
-                                                                                final WhiteSpace whiteSpace) {
+  private static @Unmodifiable List<TextRange> getDependentRegionRangesAfterCurrentWhiteSpace(final SpacingImpl spaceProperty,
+                                                                                              final WhiteSpace whiteSpace) {
     if (!(spaceProperty instanceof DependantSpacingImpl spacing)) return ContainerUtil.emptyList();
 
     if (whiteSpace.isReadOnly() || whiteSpace.isLineFeedsAreReadOnly()) return ContainerUtil.emptyList();
@@ -152,11 +153,7 @@ public class AdjustWhiteSpacesState extends State {
       }
     }
 
-    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockRangesMap);
-
-    if (!whiteSpace.containsLineFeeds()) {
-      whiteSpace.arrangeSpaces(spaceProperty);
-    }
+    updateSpacing(spaceProperty, whiteSpace);
 
     try {
       LeafBlockWrapper newBlock = myWrapProcessor.processWrap(myCurrentBlock);
@@ -187,7 +184,7 @@ public class AdjustWhiteSpacesState extends State {
 
     final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
     if (!ranges.isEmpty()) {
-      myDependentSpacingEngine.registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
+      myDependentSpacingEngine.registerUnresolvedDependentSpacingRanges(myCurrentBlock, ranges);
     }
 
     if (!whiteSpace.isIsReadOnly() && myDependentSpacingEngine.shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
@@ -198,5 +195,13 @@ public class AdjustWhiteSpacesState extends State {
     }
 
     myCurrentBlock = myCurrentBlock.getNextBlock();
+  }
+
+  private void updateSpacing(SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
+    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockRangesMap);
+
+    if (!whiteSpace.containsLineFeeds()) {
+      whiteSpace.arrangeSpaces(spaceProperty);
+    }
   }
 }

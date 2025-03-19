@@ -7,7 +7,7 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -25,14 +25,15 @@ import com.intellij.debugger.ui.impl.tree.TreeBuilderNode;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
 
-public abstract class DebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
+public abstract class DebuggerTree extends DnDAwareTree implements UiDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerTree.class);
   protected static final Key<Rectangle> VISIBLE_RECT = Key.create("VISIBLE_RECT");
 
@@ -114,24 +115,20 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
   }
-
 
   private void buildNode(final DebuggerTreeNodeImpl node) {
     if (node == null || node.getDescriptor() == null) {
       return;
     }
-    final DebugProcessImpl debugProcess = getDebuggerContext().getDebugProcess();
-    if (debugProcess != null) {
+    DebuggerManagerThreadImpl managerThread = getDebuggerContext().getManagerThread();
+    if (managerThread != null) {
       DebuggerCommandImpl command = getBuildNodeCommand(node);
       if (command != null) {
         node.add(myNodeManager.createMessageNode(MessageDescriptor.EVALUATING));
-        debugProcess.getManagerThread().schedule(command);
+        managerThread.schedule(command);
       }
     }
   }
@@ -282,14 +279,14 @@ public abstract class DebuggerTree extends DnDAwareTree implements DataProvider,
   protected abstract void build(DebuggerContextImpl context);
 
   public void rebuild(final DebuggerContextImpl context) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final DebugProcessImpl process = context.getDebugProcess();
-    if (process == null) {
+    ThreadingAssertions.assertEventDispatchThread();
+    DebuggerManagerThreadImpl managerThread = context.getManagerThread();
+    if (managerThread == null) {
       return; // empty context, no process available yet
     }
     myDebuggerContext = context;
     saveState();
-    process.getManagerThread().schedule(PrioritizedTask.Priority.NORMAL, () -> getNodeFactory().setHistoryByContext(context));
+    managerThread.schedule(PrioritizedTask.Priority.NORMAL, () -> getNodeFactory().setHistoryByContext(context));
     build(context);
   }
 

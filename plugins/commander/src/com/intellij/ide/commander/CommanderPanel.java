@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.commander;
 
@@ -8,6 +8,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -20,11 +21,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
@@ -67,10 +68,8 @@ public class CommanderPanel extends JPanel {
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeleteElementProvider myDeleteElementProvider = new MyDeleteElementProvider();
-  @NonNls
-  private static final String ACTION_DRILL_DOWN = "DrillDown";
-  @NonNls
-  private static final String ACTION_GO_UP = "GoUp";
+  private static final @NonNls String ACTION_DRILL_DOWN = "DrillDown";
+  private static final @NonNls String ACTION_GO_UP = "GoUp";
   private ProjectAbstractTreeStructureBase myProjectTreeStructure;
   private boolean myActive = true;
   private final List<CommanderHistoryListener> myHistoryListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -96,12 +95,12 @@ public class CommanderPanel extends JPanel {
         if (myBuilder == null) return;
         myBuilder.buildRoot();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SLASH, ClientSystemInfo.isMac() ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
                                   JComponent.WHEN_FOCUSED);
 
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), ACTION_DRILL_DOWN);
     myList.getInputMap(WHEN_FOCUSED)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, ClientSystemInfo.isMac() ? InputEvent.META_MASK : InputEvent.CTRL_MASK),
            ACTION_DRILL_DOWN);
     myList.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
       @Override
@@ -118,7 +117,7 @@ public class CommanderPanel extends JPanel {
     }.installOn(myList);
 
     myList.getInputMap(WHEN_FOCUSED)
-      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
+      .put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, ClientSystemInfo.isMac() ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
     myList.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myList.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
       @Override
@@ -360,74 +359,56 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.setVisible(flag);
   }
 
-  public Object getDataImpl(final String dataId) {
-    if (myBuilder == null) return null;
-    if (LangDataKeys.IDE_VIEW.is(dataId)) {
-      return myIdeView;
-    }
-    else if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return getSelectedNode();
-    }
-    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      if (selection.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-      return getSelectedNodes().toArray();
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      if (selection.isEmpty()) return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
-      return selection.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      AbstractTreeNode<?> parentNode = myBuilder.getParentNode();
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      DataProvider structureProvider = myProjectTreeStructure == null ? null :
-                                       (DataProvider)myProjectTreeStructure.getDataFromProviders(selection, dataId);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, parentNode, selection), structureProvider);
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteElementProvider;
-    }
-    else if (myProjectTreeStructure != null) {
-      return myProjectTreeStructure.getDataFromProviders(getSelectedNodes(), dataId);
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myBuilder == null) return;
+    List<AbstractTreeNode<?>> selection = getSelectedNodes();
+    AbstractTreeNode<?> node = getSelectedNode();
+    AbstractTreeNode<?> parentNode = myBuilder.getParentNode();
 
-    return null;
-  }
+    sink.set(LangDataKeys.IDE_VIEW, myIdeView);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, node);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+             selection.isEmpty() ? ArrayUtil.EMPTY_OBJECT_ARRAY : getSelectedNodes().toArray());
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
+             selection.isEmpty() ? Navigatable.EMPTY_NAVIGATABLE_ARRAY : selection.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteElementProvider);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId,
-                                              @Nullable AbstractTreeNode<?> parentNode,
-                                              @NotNull List<AbstractTreeNode<?>> selection) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (myProjectTreeStructure != null) {
+      List<TreeStructureProvider> providers = myProjectTreeStructure.getProviders();
+      if (providers != null && !providers.isEmpty()) {
+        for (TreeStructureProvider provider : ContainerUtil.reverse(providers)) {
+          provider.uiDataSnapshot(sink, selection);
+        }
+      }
+    }
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return getNodeElement(ContainerUtil.getOnlyItem(selection));
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       if (selection.isEmpty()) return PsiElement.EMPTY_ARRAY;
       return PsiUtilCore.toPsiElementArray(ContainerUtil.mapNotNull(selection, CommanderPanel::getNodeElement));
-    }
-    else if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
+    });
+    sink.lazy(LangDataKeys.PASTE_TARGET_PSI_ELEMENT, () -> {
       Object element = parentNode != null ? parentNode.getValue() : null;
-      return element instanceof PsiElement ? element : null;
-    }
-    else if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+      return element instanceof PsiElement o ? o : null;
+    });
+    sink.lazy(PlatformCoreDataKeys.MODULE, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof Module ? selectedValue : null;
-    }
-    else if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof Module o ? o : null;
+    });
+    sink.lazy(ModuleGroup.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
-    }
-    else if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof ModuleGroup o ? new ModuleGroup[]{o} : null;
+    });
+    sink.lazy(LibraryGroupElement.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[]{(LibraryGroupElement)selectedValue} : null;
-    }
-    else if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof LibraryGroupElement o ? new LibraryGroupElement[]{o} : null;
+    });
+    sink.lazy(NamedLibraryElement.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
-    }
-    return null;
+      return selectedValue instanceof NamedLibraryElement o ? new NamedLibraryElement[]{o} : null;
+    });
   }
-
 
   public void setProjectTreeStructure(final ProjectAbstractTreeStructureBase projectTreeStructure) {
     myProjectTreeStructure = projectTreeStructure;
@@ -472,7 +453,7 @@ public class CommanderPanel extends JPanel {
     }
 
     @Override
-    public boolean canDeleteElement(@NotNull final DataContext dataContext) {
+    public boolean canDeleteElement(final @NotNull DataContext dataContext) {
       PsiElement[] elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null || elements.length == 0) return false;
       return DeleteHandler.shouldEnableDeleteAction(elements);
@@ -481,7 +462,7 @@ public class CommanderPanel extends JPanel {
 
   private final class MyIdeView implements IdeView {
     @Override
-    public void selectElement(final PsiElement element) {
+    public void selectElement(@NotNull PsiElement element) {
       final boolean isDirectory = element instanceof PsiDirectory;
       if (!isDirectory) {
         EditorHelper.openInEditor(element);
@@ -495,7 +476,7 @@ public class CommanderPanel extends JPanel {
             }
           });
         }
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     }
 
     private PsiDirectory getDirectory() {

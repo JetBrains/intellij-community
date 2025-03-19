@@ -1,3 +1,3 @@
 // IS_APPLICABLE: false
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 expect annotation class A(<caret>a: Int)

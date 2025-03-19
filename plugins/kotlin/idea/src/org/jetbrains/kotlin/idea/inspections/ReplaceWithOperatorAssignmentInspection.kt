@@ -12,10 +12,12 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.inspections.collections.isReadOnlyCollectionOrMap
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.doNotAnalyze
@@ -29,7 +31,7 @@ class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspec
 
     override fun isApplicable(element: KtBinaryExpression): Boolean {
         if (element.operationToken != KtTokens.EQ) return false
-        val left = element.left as? KtNameReferenceExpression ?: return false
+        val left = element.left ?: return false
         val right = element.right as? KtBinaryExpression ?: return false
         if (right.left == null || right.right == null) return false
 
@@ -64,7 +66,7 @@ class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspec
     }
 
     private fun checkExpressionRepeat(
-        variableExpression: KtNameReferenceExpression,
+        variableExpression: KtExpression,
         expression: KtBinaryExpression,
         bindingContext: BindingContext
     ): Boolean {
@@ -111,7 +113,7 @@ class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspec
     }
 
     private fun buildOperatorAssignment(element: KtBinaryExpression): KtBinaryExpression? {
-        val variableExpression = element.left as? KtNameReferenceExpression ?: return null
+        val variableExpression = element.left ?: return null
         val assignedExpression = element.right as? KtBinaryExpression ?: return null
 
         val replacement = buildOperatorAssignmentText(variableExpression, assignedExpression, "")
@@ -119,7 +121,7 @@ class ReplaceWithOperatorAssignmentInspection : AbstractApplicabilityBasedInspec
     }
 
     private tailrec fun buildOperatorAssignmentText(
-        variableExpression: KtNameReferenceExpression,
+        variableExpression: KtExpression,
         expression: KtBinaryExpression,
         tail: String
     ): String {

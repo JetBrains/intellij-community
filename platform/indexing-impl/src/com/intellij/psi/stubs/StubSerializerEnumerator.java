@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -59,7 +59,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     mySerializerToId.clear();
   }
 
-  @NotNull ObjectStubSerializer<?, Stub> getClassById(@NotNull MissingSerializerReporter reporter, int id) throws SerializerNotFoundException {
+  @NotNull ObjectStubSerializer<?, Stub> getSerializerById(@NotNull MissingSerializerReporter reporter, int id) throws SerializerNotFoundException {
     ObjectStubSerializer<?, ? extends Stub> serializer = myIdToSerializer.get(id);
     if (serializer == null) {
       serializer = instantiateSerializer(id, reporter);
@@ -69,7 +69,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     return (ObjectStubSerializer<?, Stub>)serializer;
   }
 
-  int getClassId(final @NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
+  int getSerializerId(final @NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
     Integer idValue = mySerializerToId.get(serializer);
     if (idValue == null) {
       String name = serializer.getExternalId();
@@ -125,14 +125,14 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
   @NotNull
   ObjectStubSerializer<?, ? extends Stub> getSerializer(@NotNull String name) throws SerializerNotFoundException {
     int id = myNameToId.getInt(name);
-    return getClassById((id1, name1, externalId) -> {
+    return getSerializerById((id1, name1, externalId) -> {
       return "Missed stub serializer for " + name;
     }, id);
   }
 
   @Nullable
   String getSerializerName(@NotNull ObjectStubSerializer<?, ? extends Stub> serializer) {
-    return myIdToName.get(getClassId(serializer));
+    return myIdToName.get(getSerializerId(serializer));
   }
 
   private @NotNull ObjectStubSerializer<?, ? extends Stub> instantiateSerializer(int id,

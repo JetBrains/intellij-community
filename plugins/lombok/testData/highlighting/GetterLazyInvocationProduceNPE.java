@@ -1,6 +1,6 @@
 import lombok.Getter;
 
-public class GetterLazyInvocationProduceNPE {
+public class <warning descr="Class 'GetterLazyInvocationProduceNPE' is never used">GetterLazyInvocationProduceNPE</warning> {
     private static class Bar {
       public String sayHello() {
         return "Bar{}";
@@ -13,20 +13,24 @@ public class GetterLazyInvocationProduceNPE {
       }
     }
 
-    // no warning descr="Field 'bar' may be 'final'" any more?
-    private Bar bar;
+    private Bar <warning descr="Field 'bar' may be 'final'">bar</warning>;
+    private Bar <warning descr="Private field 'bar2' is never assigned">bar2</warning>;
     private Car car;
 
-    public GetterLazyInvocationProduceNPE(Bar bar, Car car) {
+    public <warning descr="Constructor 'GetterLazyInvocationProduceNPE(GetterLazyInvocationProduceNPE.Bar, GetterLazyInvocationProduceNPE.Car)' is never used">GetterLazyInvocationProduceNPE</warning>(Bar bar, Car car) {
       this.bar = bar;
       this.car = car;
     }
 
-    // without warning
+    // without warning, because of lazy getter and initialized in constructor
     @Getter(lazy = true)
     private final String barString = bar.sayHello();
 
-    //with warining!
+    // with warning, because of lazy getter and NOT initialized in constructor
+    @Getter(lazy = true)
+    private final String bar2String = bar2.<warning descr="Method invocation 'sayHello' will produce 'NullPointerException'">sayHello</warning>();
+
+    //with warning, because of NOT lazy getter
     @Getter
     private final String carString = car.<warning descr="Method invocation 'sayHello' will produce 'NullPointerException'">sayHello</warning>();
 

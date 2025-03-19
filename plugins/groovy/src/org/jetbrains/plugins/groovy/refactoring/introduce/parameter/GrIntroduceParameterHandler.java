@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -48,7 +48,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
   private JBPopup myEnclosingMethodsPopup;
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, @Nullable final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file, final @Nullable DataContext dataContext) {
     if (editor == null || file == null) return;
     final SelectionModel selectionModel = editor.getSelectionModel();
     if (!selectionModel.hasSelection()) {
@@ -88,7 +88,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     }
   }
 
-  private void chooseScopeAndRun(@NotNull final InitialInfo initialInfo, @NotNull final Editor editor) {
+  private void chooseScopeAndRun(final @NotNull InitialInfo initialInfo, final @NotNull Editor editor) {
     final List<GrParameterListOwner> scopes = findScopes(initialInfo);
 
     if (scopes.isEmpty()) {
@@ -115,8 +115,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     }
   }
 
-  @NotNull
-  private static List<GrParameterListOwner> findScopes(@NotNull InitialInfo initialInfo) {
+  private static @NotNull List<GrParameterListOwner> findScopes(@NotNull InitialInfo initialInfo) {
     PsiElement place = initialInfo.getContext();
     final List<GrParameterListOwner> scopes = new ArrayList<>();
     while (true) {
@@ -135,7 +134,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
 
 
   //method to hack in tests
-  protected void showDialogOrStartInplace(@NotNull final IntroduceParameterInfo info, @NotNull final Editor editor) {
+  protected void showDialogOrStartInplace(final @NotNull IntroduceParameterInfo info, final @NotNull Editor editor) {
     if (isInplace(info, editor)) {
       final GrIntroduceContext context = createContext(info, editor);
       Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = GrIntroduceHandlerBase.fillChoice(context);
@@ -150,8 +149,8 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     new GrIntroduceParameterDialog(info).show();
   }
 
-  private static void startInplace(@NotNull final IntroduceParameterInfo info,
-                                   @NotNull final GrIntroduceContext context,
+  private static void startInplace(final @NotNull IntroduceParameterInfo info,
+                                   final @NotNull GrIntroduceContext context,
                                    OccurrencesChooser.ReplaceChoice replaceChoice) {
     new GrInplaceParameterIntroducer(info, context, replaceChoice).startInplaceIntroduceTemplate();
   }

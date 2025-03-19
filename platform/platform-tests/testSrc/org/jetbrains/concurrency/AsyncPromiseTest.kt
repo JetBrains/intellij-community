@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
@@ -16,7 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.ClassRule
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -80,7 +79,7 @@ class AsyncPromiseTest {
     assertConcurrentPromises(*array)
 
     if (count.get() != (numThreads / 2)) {
-      fail("count: "+count +" "+ log.toString()+"\n---Array:\n"+ Arrays.toString(array))
+      fail("count: " + count + " " + log.toString() + "\n---Array:\n" + array.contentToString())
     }
     assertThat(count.get()).isEqualTo(numThreads / 2)
     assertThat(promise.get()).isEqualTo("test")

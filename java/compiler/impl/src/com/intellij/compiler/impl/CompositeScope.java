@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -84,9 +84,8 @@ public final class CompositeScope extends ExportableUserDataHolderBase implement
     return sets;
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAffectedUnloadedModules() {
+  public @NotNull Collection<String> getAffectedUnloadedModules() {
     Set<String> unloadedModules = new LinkedHashSet<>();
     for (final CompileScope compileScope : myScopes) {
       unloadedModules.addAll(compileScope.getAffectedUnloadedModules());
@@ -105,8 +104,7 @@ public final class CompositeScope extends ExportableUserDataHolderBase implement
     return super.getUserData(key);
   }
 
-  @NotNull
-  public Collection<CompileScope> getScopes() {
+  public @NotNull Collection<CompileScope> getScopes() {
     return Collections.unmodifiableList(myScopes);
   }
 }

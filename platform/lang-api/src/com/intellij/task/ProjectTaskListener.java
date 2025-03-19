@@ -17,14 +17,5 @@ public interface ProjectTaskListener {
    * @param result provides aggregated information about the {@link ProjectTask} execution
    */
   default void finished(@NotNull ProjectTaskManager.Result result) {
-    finished(result.getContext(), new ProjectTaskResult(result.isAborted(), result.hasErrors() ? 1 : 0, 0));
   }
-
-  /**
-   * @param context         tasks execution context
-   * @param executionResult provides aggregated information about the {@link ProjectTask} execution
-   * @deprecated use {@link #finished(ProjectTaskManager.Result)}
-   */
-  @Deprecated(forRemoval = true)
-  default void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {}
 }

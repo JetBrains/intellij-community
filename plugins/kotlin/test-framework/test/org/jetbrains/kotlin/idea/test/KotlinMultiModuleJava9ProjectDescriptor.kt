@@ -88,7 +88,6 @@ object KotlinMultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor()
         model.getModuleExtension(LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_9
         if (module.name == TEST_MODULE_NAME) {
             val testRoot = createSourceRoot(module, "test_src")
-            registerSourceRoot(module.project, testRoot)
             model.addContentEntry(testRoot).addSourceFolder(testRoot, JavaSourceRootType.TEST_SOURCE)
         }
     }

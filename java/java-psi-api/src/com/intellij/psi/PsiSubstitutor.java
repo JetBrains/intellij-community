@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
@@ -48,8 +48,15 @@ public interface PsiSubstitutor {
    * @param type the type to substitute the type parameters for.
    * @return the result of the substitution.
    */
-  @Contract(pure = true)
+  @Contract(pure = true, value = "null -> null")
   PsiType substitute(@Nullable PsiType type);
+
+  /**
+   * @return true if this substitutor has at least one raw substitution
+   */
+  default boolean hasRawSubstitution() {
+    return getSubstitutionMap().containsValue(null);
+  }
 
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
@@ -98,9 +105,8 @@ public interface PsiSubstitutor {
    * @param map a map which contains additional mappings
    * @return the new substitutor instance.
    */
-  @NotNull
   @Contract(pure = true)
-  default PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  default @NotNull PsiSubstitutor putAll(@NotNull Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     return putAll(createSubstitutor(map));
   }
 
@@ -118,8 +124,7 @@ public interface PsiSubstitutor {
    * @param map a map to create a substitutor from
    * @return a substitutor backed by the supplied map
    */
-  @NotNull
-  static PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
+  static @NotNull PsiSubstitutor createSubstitutor(@Nullable Map<? extends PsiTypeParameter, ? extends PsiType> map) {
     if (map == null || map.isEmpty()) return EMPTY;
     return EMPTY.putAll(map);
   }

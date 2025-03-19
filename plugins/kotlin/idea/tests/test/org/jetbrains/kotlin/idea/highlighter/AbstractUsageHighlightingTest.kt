@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.openapi.editor.asTextRange
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -30,13 +32,18 @@ abstract class AbstractUsageHighlightingTest : KotlinLightCodeInsightFixtureTest
         editor.caretModel.moveToOffset(caret)
 
         HighlightUsagesHandler.invoke(project, editor, myFixture.file)
-        val highlighters = myFixture.editor.markupModel.allHighlighters
 
-        val infos = highlighters
-            .filter { isUsageHighlighting(it) }
-            .map { highlighter ->
-                var startOffset = highlighter.startOffset
-                var endOffset = highlighter.endOffset
+        val ranges =
+            myFixture.editor.markupModel.allHighlighters.filter { isUsageHighlighting(it) }.mapNotNull { it.asTextRange } +
+                    (myFixture.file.findElementAt(myFixture.editor.caretModel.offset - 1)?.parent?.let {
+            val usages = IdentifierHighlighterPass.getUsages(it, myFixture.file, false)
+            usages
+        } ?: emptyList())
+
+        val infos = ranges.toHashSet()
+            .map {
+                var startOffset = it.startOffset
+                var endOffset = it.endOffset
 
                 if (startOffset > caret) startOffset += CARET_TAG.length
                 if (endOffset > caret) endOffset += CARET_TAG.length

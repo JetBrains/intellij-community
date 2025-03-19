@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
@@ -225,7 +225,7 @@ public class PersistentBTreeEnumeratorTest {
     StorageLockContext.assertNoBuffersLocked();
 
     FilePageCacheStatistics statsBefore = StorageLockContext.getStatistics();
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 400, () -> {
+    Benchmark.newBenchmark("PersistentStringEnumerator", () -> {
       for (int i = 0; i < 10000; i++) {
         for (String item : data) {
           assertNotEquals(0, myEnumerator.tryEnumerate(item));
@@ -235,7 +235,7 @@ public class PersistentBTreeEnumeratorTest {
           assertEquals(0, myEnumerator.tryEnumerate(item));
         }
       }
-    }).attempts(1).assertTiming();
+    }).warmupIterations(0).attempts(1).start();
     FilePageCacheStatistics statsAfter = StorageLockContext.getStatistics();
 
     // ensure we don't cache anything
@@ -327,7 +327,7 @@ public class PersistentBTreeEnumeratorTest {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator", 1000, () -> {
+    Benchmark.newBenchmark("PersistentStringEnumerator", () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         String string = createRandomString();
@@ -335,7 +335,7 @@ public class PersistentBTreeEnumeratorTest {
       }
       stringCache.removeDeletedPairsListener(listener);
       stringCache.removeAll();
-    }).assertTiming();
+    }).start();
     myEnumerator.close();
     LOG.debug(String.format("File size = %d bytes\n", myFile.length()));
   }

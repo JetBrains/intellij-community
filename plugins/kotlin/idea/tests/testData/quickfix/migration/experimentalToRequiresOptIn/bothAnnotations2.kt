@@ -5,3 +5,5 @@
 @Experimental<caret>(level = Experimental.Level.WARNING)
 @RequiresOptIn(message = "Some experimental API", level = RequiresOptIn.Level.ERROR)
 annotation class Marker
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

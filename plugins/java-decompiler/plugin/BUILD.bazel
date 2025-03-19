@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.java.decompiler` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-decompiler_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-decompiler",
+  module_name = "intellij.java.decompiler",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/java-decompiler/engine:java-decompiler-engine",
+    "//platform/lang-api:lang",
+    "//java/java-psi-api:psi",
+    "//platform/ide-core-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/statistics",
+  ],
+  exports = ["//plugins/java-decompiler/engine:java-decompiler-engine"],
+  runtime_deps = [":java-decompiler_resources"]
+)
+
+jvm_library(
+  name = "java-decompiler_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":java-decompiler"],
+  deps = [
+    "//plugins/java-decompiler/engine:java-decompiler-engine",
+    "//plugins/java-decompiler/engine:java-decompiler-engine_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/java-psi-api:psi",
+    "//platform/ide-core-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-api:core",
+    "//java/testFramework",
+    "//platform/core-ui",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/lang-impl",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+  ],
+  runtime_deps = [":java-decompiler_resources"]
+)
+
+jvm_test(
+  name = "java-decompiler_test",
+  runtime_deps = [":java-decompiler_test_lib"]
+)
+### auto-generated section `build intellij.java.decompiler` end

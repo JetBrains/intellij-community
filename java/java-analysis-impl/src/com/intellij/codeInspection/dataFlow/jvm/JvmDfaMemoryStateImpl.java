@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.jvm;
 
@@ -57,7 +57,8 @@ public class JvmDfaMemoryStateImpl extends DfaMemoryStateImpl {
 
   private void convertReferenceEqualityToValueEquality(DfaValue value) {
     int id = canonicalize(value).getID();
-    int index = myIdToEqClassesIndices.getOrDefault(id, -1);
+    int index = getRawEqClassIndex(id);
+
     if (index == -1) return;
     for (Iterator<DistinctPairSet.DistinctPair> iterator = getDistinctClassPairs().iterator(); iterator.hasNext(); ) {
       DistinctPairSet.DistinctPair pair = iterator.next();

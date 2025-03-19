@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -41,6 +41,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.UIDesignerIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public final class ComponentTree extends Tree implements DataProvider {
+public final class ComponentTree extends Tree implements UiDataProvider {
   private static final Logger LOG = Logger.getInstance(ComponentTree.class);
 
   public static final DataKey<LwInspectionSuppression[]> LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY =
@@ -79,10 +80,10 @@ public final class ComponentTree extends Tree implements DataProvider {
   private final StartInplaceEditingAction myStartInplaceEditingAction;
   private final MyDeleteProvider myDeleteProvider = new MyDeleteProvider();
 
-  @NonNls private static final String ourHelpID = "guiDesigner.uiTour.compsTree";
+  private static final @NonNls String ourHelpID = "guiDesigner.uiTour.compsTree";
   private final Project myProject;
 
-  public ComponentTree(@NotNull final Project project) {
+  public ComponentTree(final @NotNull Project project) {
     super(new DefaultTreeModel(new DefaultMutableTreeNode()));
     myProject = project;
 
@@ -126,8 +127,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     }
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -142,13 +142,16 @@ public final class ComponentTree extends Tree implements DataProvider {
     myStartInplaceEditingAction.setEditor(editor);
   }
 
+  public GuiEditor getEditor() {
+    return myEditor;
+  }
+
   public void refreshIntentionHint() {
     myQuickFixManager.refreshIntentionHint();
   }
 
   @Override
-  @Nullable
-  public String getToolTipText(final MouseEvent e) {
+  public @Nullable String getToolTipText(final MouseEvent e) {
     final TreePath path = getPathForLocation(e.getX(), e.getY());
     final RadComponent component = getComponentFromPath(path);
     if (component != null) {
@@ -160,8 +163,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return null;
   }
 
-  @Nullable
-  private static RadComponent getComponentFromPath(TreePath path) {
+  private static @Nullable RadComponent getComponentFromPath(TreePath path) {
     if (path != null) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       LOG.assertTrue(node != null);
@@ -184,8 +186,7 @@ public final class ComponentTree extends Tree implements DataProvider {
    * @return first selected component. The method returns {@code null}
    *         if there is no selection in the tree.
    */
-  @Nullable
-  public RadComponent getSelectedComponent() {
+  public @Nullable RadComponent getSelectedComponent() {
     return ArrayUtil.getFirstElement(getSelectedComponents());
   }
 
@@ -212,59 +213,34 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
-  /**
-   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
-   * binding of currently selected component (if any)
-   */
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (GuiEditor.DATA_KEY.is(dataId)) {
-      return myEditor;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(GuiEditor.DATA_KEY, myEditor);
+
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
+
+    if (myEditor != null) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.CUT_PROVIDER, myEditor.getCutCopyPasteDelegator());
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, myEditor.getCutCopyPasteDelegator());
     }
 
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteProvider;
-    }
+    Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
+    sink.set(LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY,
+             elements.isEmpty() ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY));
 
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId) ||
-        PlatformDataKeys.CUT_PROVIDER.is(dataId) ||
-        PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myEditor == null ? null : myEditor.getData(dataId);
-    }
+    sink.set(PlatformCoreDataKeys.HELP_ID, ourHelpID);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFormEditor);
 
-    if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
-      Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
-    }
-
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return ourHelpID;
-    }
-
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFormEditor;
-    }
-
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      RadComponent selectedComponent = getSelectedComponent();
-      if (selectedComponent == null) {
-        return null;
-      }
-      return (DataProvider)slowId -> getSlowData(selectedComponent, slowId);
-    }
-    return null;
-  }
-
-  @Nullable
-  private Object getSlowData(@NotNull RadComponent selectedComponent, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    RadComponent selectedComponent = getSelectedComponent();
+    if (selectedComponent == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return getPsiFile(selectedComponent);
-    }
-    return null;
+    });
   }
 
-  @Nullable
-  private Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
+  @ApiStatus.Internal
+  public @Nullable Navigatable getPsiFile(@NotNull RadComponent selectedComponent) {
     final String classToBind = myEditor.getRootContainer().getClassToBind();
     if (classToBind == null) {
       return null;
@@ -312,7 +288,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return result;
   }
 
-  private SimpleTextAttributes getAttribute(@NotNull final SimpleTextAttributes attrs,
+  private SimpleTextAttributes getAttribute(final @NotNull SimpleTextAttributes attrs,
                                             @Nullable HighlightDisplayLevel level) {
     if (level == null) {
       return attrs;
@@ -384,7 +360,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   private final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
-    @NonNls private static final String SWING_PACKAGE = "javax.swing";
+    private static final @NonNls String SWING_PACKAGE = "javax.swing";
 
     @Override
     public void customizeCellRenderer(
@@ -593,7 +569,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      DeleteProvider baseProvider = myEditor == null ? null : PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
+      DeleteProvider baseProvider = myEditor == null ? null : myEditor.getDeleteProvider();
       return baseProvider == null ? ActionUpdateThread.BGT : baseProvider.getActionUpdateThread();
     }
 
@@ -609,10 +585,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         myEditor.refreshAndSave(true);
       }
       else {
-        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
-        if (baseProvider != null) {
-          baseProvider.deleteElement(dataContext);
-        }
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        baseProvider.deleteElement(dataContext);
       }
     }
 
@@ -623,10 +597,8 @@ public final class ComponentTree extends Tree implements DataProvider {
         if (suppressions != null) {
           return true;
         }
-        DeleteProvider baseProvider = PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getData(myEditor);
-        if (baseProvider != null) {
-          return baseProvider.canDeleteElement(dataContext);
-        }
+        DeleteProvider baseProvider = myEditor.getDeleteProvider();
+        return baseProvider.canDeleteElement(dataContext);
       }
       return false;
     }

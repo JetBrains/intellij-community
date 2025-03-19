@@ -3,6 +3,7 @@ package org.jetbrains.fir.uast.test
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.fir.uast.test.env.kotlin.AbstractFirUastTest
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
@@ -13,7 +14,10 @@ import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
 abstract class FirUastApiTest : AbstractFirUastTest() {
-    override val isFirUastPlugin: Boolean = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
+
     override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
     override fun check(filePath: String, file: UFile) {
         // Bogus
@@ -180,9 +184,16 @@ abstract class FirUastApiTest : AbstractFirUastTest() {
             doCheck("uast-kotlin/tests/testData/LambdaParameters.kt", ::checkCallbackForLambdaParameters)
         }
 
+        @TestMetadata("ComplicatedTypes.kt")
+        fun testComplicatedTypes() {
+            doCheck("uast-kotlin/tests/testData/ComplicatedTypes.kt", ::checkCallbackForComplicatedTypes)
+        }
+
         @TestMetadata("SAM.kt")
         fun testSAM() {
-            doCheck("uast-kotlin/tests/testData/SAM.kt", ::checkCallbackForSAM)
+            doCheck("uast-kotlin/tests/testData/SAM.kt") { uFilePath, uFile ->
+                checkCallbackForSAM(uFilePath, uFile, "java.lang.String", "java.lang.String")
+            }
         }
 
         @TestMetadata("Simple.kt")

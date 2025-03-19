@@ -12,3 +12,4 @@ private operator fun String.setValue(nothing: Nothing?, property: KProperty<*>, 
 private operator fun String.getValue(nothing: Nothing?, property: KProperty<*>): Any {
     TODO("Not yet implemented")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

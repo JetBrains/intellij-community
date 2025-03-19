@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +25,22 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean isAlwaysShowPlus() {
+    return true; // to avoid retrieving and validating all children (SLOW!) just to figure out if it's a leaf
+  }
+
+  @Override
+  public boolean isIncludedInExpandAll() {
+    return false; // expanding all libraries makes no sense, as they typically contain too many nodes
+  }
+
+  @Override
+  public boolean isAutoExpandAllowed() {
+    return false;
+  }
+
+  @Override
+  public boolean contains(final @NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     if (!index.isInLibrary(file)) return false;
 
@@ -34,22 +48,21 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      final ArrayList<VirtualFile> roots = new ArrayList<>();
-      Module myModule = getValue().getModule();
-      if (myModule == null) {
-        final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-        for (Module module : modules) {
-          addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
-        }
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
+    ArrayList<VirtualFile> roots = new ArrayList<>();
+    LibrariesElement value = getValue();
+    Module myModule = value == null ? null : value.getModule();
+    if (myModule == null) {
+      Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+      for (Module module : modules) {
+        addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
       }
-      else {
-        addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
-      }
-      return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
-    });
+    }
+    else {
+      addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
+    }
+    var nodeBuilder = new PackageNodeBuilder(null, true);
+    return nodeBuilder.createPackageViewChildrenOnFiles(roots, getProject(), getSettings());
   }
 
   @Override
@@ -71,7 +84,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   }
 
   @Override
-  public void update(@NotNull final PresentationData presentation) {
+  public void update(final @NotNull PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
     presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }

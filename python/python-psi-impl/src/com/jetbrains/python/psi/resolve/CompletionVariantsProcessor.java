@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.completion.PyClassInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PyFunctionInsertHandler;
+import com.jetbrains.python.codeInsight.completion.PyParameterizedTypeInsertHandler;
 import com.jetbrains.python.codeInsight.completion.PythonCompletionWeigher;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -34,8 +35,7 @@ import java.util.*;
 
 public class CompletionVariantsProcessor extends VariantsProcessor {
 
-  @NotNull
-  private final Map<String, LookupElement> myVariants = new HashMap<>();
+  private final @NotNull Map<String, LookupElement> myVariants = new HashMap<>();
 
   private final boolean mySuppressParentheses;
 
@@ -60,17 +60,19 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     mySuppressParentheses = suppressParentheses;
   }
 
-  @NotNull
-  private LookupElement setupItem(@NotNull LookupElementBuilder item) {
+  private @NotNull LookupElement setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
     if (!myPlainNamesOnly && element != null) {
       final Project project = element.getProject();
       final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
 
-      if (!mySuppressParentheses &&
-          element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
-          !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
-          !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
+      if (myContext != null && PyParameterizedTypeInsertHandler.isCompletingParameterizedType(element, myContext, context)) {
+        item = item.withInsertHandler(PyParameterizedTypeInsertHandler.INSTANCE);        
+      }
+      else if (!mySuppressParentheses &&
+               element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
+               !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
+               !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
         final String params = StringUtil.join(parameters, PyCallableParameter::getName, ", ");
@@ -150,8 +152,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
-  @NotNull
-  public List<LookupElement> getResultList() {
+  public @NotNull List<LookupElement> getResultList() {
     return new ArrayList<>(myVariants.values());
   }
 

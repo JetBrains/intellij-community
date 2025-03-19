@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -81,13 +81,13 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract int getRank();
 
   @Override
-  public abstract @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
+  public abstract @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newName) throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException;
+  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException;
+  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
 
   @Override
   public abstract void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
@@ -116,9 +116,19 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
 
   /**
    * Returns {@code true} if {@code path} represents a directory with at least one child.
-   * Override if your file system can answer this question more efficiently (e.g. without enumerating all children).
+   * Override if your file system can answer this question more efficiently (without listing all children).
    */
   public boolean hasChildren(@NotNull VirtualFile file) {
     return list(file).length != 0;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable String normalizePath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
+    return vfs.normalize(path);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull String extractRootPath(@NotNull NewVirtualFileSystem vfs, String normalizedPath) {
+    return vfs.extractRootPath(normalizedPath);
   }
 }

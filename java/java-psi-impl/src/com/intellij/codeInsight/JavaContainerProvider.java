@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Max Medvedev
  */
-public class JavaContainerProvider implements ContainerProvider {
+public final class JavaContainerProvider implements ContainerProvider {
   @Override
   public PsiElement getContainer(@NotNull PsiElement item) {
     if (item instanceof PsiTypeParameter) {

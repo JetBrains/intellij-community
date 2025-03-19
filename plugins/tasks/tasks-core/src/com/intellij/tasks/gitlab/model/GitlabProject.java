@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.gitlab.model;
 
 import com.google.gson.annotations.SerializedName;
@@ -43,13 +44,11 @@ public class GitlabProject {
     this.id = id;
   }
 
-  @Nullable
-  public String getName() {
+  public @Nullable String getName() {
     return name;
   }
 
-  @Nullable
-  public String getWebUrl() {
+  public @Nullable String getWebUrl() {
     return webUrl;
   }
 

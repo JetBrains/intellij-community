@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.Disposable;
@@ -8,13 +8,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -89,13 +88,26 @@ public interface VcsLogProvider {
   Disposable subscribeToRootRefreshEvents(@NotNull Collection<? extends VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
   /**
-   * <p>Return commits, which correspond to the given filters.</p>
-   *
-   * @param maxCount maximum number of commits to request from the VCS, or -1 for unlimited.
+   * @deprecated implement {@link VcsLogProvider#getCommitsMatchingFilter(VirtualFile, VcsLogFilterCollection, PermanentGraph.Options, int)} instead
    */
-  @NotNull
-  List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection, int maxCount)
-    throws VcsException;
+  default @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        int maxCount)
+    throws VcsException {
+    return getCommitsMatchingFilter(root, filterCollection, PermanentGraph.Options.Default, maxCount);
+  }
+
+  /**
+   * Return commits, which correspond to the given filters.
+   *
+   * @param root             repository root
+   * @param filterCollection filters to use
+   * @param graphOptions     additional options, such as "--first-parent", see {@link PermanentGraph.Options}
+   * @param maxCount         maximum number of commits to request from the VCS, or -1 for unlimited.
+   */
+  default @NotNull List<TimedVcsCommit> getCommitsMatchingFilter(@NotNull VirtualFile root, @NotNull VcsLogFilterCollection filterCollection,
+                                                        @NotNull PermanentGraph.Options graphOptions, int maxCount) throws VcsException {
+    throw new UnsupportedOperationException("Method getCommitsMatchingFilter is not implemented the class " + this.getClass().getName());
+  }
 
   /**
    * Returns the name of current user as specified for the given root,
@@ -117,7 +129,8 @@ public interface VcsLogProvider {
    * @param <T>      Type of property value.
    * @return Property value or null if unset.
    */
-  @Nullable <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
+  @Nullable
+  <T> T getPropertyValue(VcsLogProperties.VcsLogProperty<T> property);
 
   /**
    * Returns currently checked out branch in given root, or null if not on any branch or provided root is not under version control.
@@ -133,8 +146,7 @@ public interface VcsLogProvider {
    *
    * @return diff handler or null if unsupported.
    */
-  @Nullable
-  default VcsLogDiffHandler getDiffHandler() {
+  default @Nullable VcsLogDiffHandler getDiffHandler() {
     return null;
   }
 
@@ -143,25 +155,22 @@ public interface VcsLogProvider {
    *
    * @return file history handler or null if unsupported.
    */
-  @Nullable
-  default VcsLogFileHistoryHandler getFileHistoryHandler() {
-    return null;
+  default @Nullable VcsLogFileHistoryHandler getFileHistoryHandler(Project project) {
+    return VcsLogFileHistoryHandler.getByVcs(project, getSupportedVcs());
   }
 
   /**
    * Checks that the given reference points to a valid commit in the given root, and returns the Hash of this commit.
    * Otherwise, if the reference is invalid, returns null.
    */
-  @Nullable
-  default Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
+  default @Nullable Hash resolveReference(@NotNull String ref, @NotNull VirtualFile root) {
     return null;
   }
 
   /**
    * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
    */
-  @Nullable
-  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath filePath) {
+  default @Nullable VirtualFile getVcsRoot(@NotNull Project project, @NotNull VirtualFile detectedRoot, @NotNull FilePath filePath) {
     return detectedRoot;
   }
 
@@ -194,29 +203,5 @@ public interface VcsLogProvider {
 
     @NotNull
     Set<VcsRef> getRefs();
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    CollectConsumer<VcsShortCommitDetails> collectConsumer = new CollectConsumer<>();
-    readMetadata(root, hashes, collectConsumer);
-    return new ArrayList<>(collectConsumer.getResult());
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    List<VcsFullCommitDetails> result = new ArrayList<>();
-    readFullDetails(root, hashes, result::add);
-    return result;
   }
 }

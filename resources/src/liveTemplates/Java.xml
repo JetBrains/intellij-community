@@ -346,4 +346,19 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+
+  <template name="stss" value="try (final var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnSuccess()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stss" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template name="stsf" value="try (final var scope = new java.util.concurrent.StructuredTaskScope.ShutdownOnFailure()) {&#10;    $END$&#10;    scope.join();&#10;} catch (InterruptedException e) {&#10;    // TODO: handle exception&#10;}&#10;"
+            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.stsf" toReformat="true" toShortenFQNames="true">
+    <context>
+      <option name="JAVA_CODE" value="false" />
+      <option name="JAVA_STATEMENT" value="true" />
+    </context>
+  </template>
 </templateSet>

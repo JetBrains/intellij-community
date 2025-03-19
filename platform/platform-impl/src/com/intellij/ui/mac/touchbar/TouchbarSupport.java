@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,11 +33,11 @@ public final class TouchbarSupport {
   private static final long ourEventMask = AWTEvent.FOCUS_EVENT_MASK | AWTEvent.KEY_EVENT_MASK;
 
   private static volatile boolean isInitialized;
-  private static volatile boolean isEnabled = true;
+  private static volatile boolean isEnabled = false;
 
   private static SimpleMessageBusConnection ourConnection;
 
-  public static void initialize() {
+  private static void initialize() {
     if (isInitialized) {
       return;
     }
@@ -46,35 +47,61 @@ public final class TouchbarSupport {
         return;
       }
 
-      NST.loadLibrary();
-
-      if (!Registry.is(IS_ENABLED_KEY)) {
-        LOG.info("touchbar disabled: registry");
-        isEnabled = false;
-      }
-      else {
-        // read isEnabled from OS (i.e. NSDefaults)
-        String appId = Helpers.getAppId();
-        if (appId == null || appId.isEmpty()) {
-          LOG.info("can't obtain application id from NSBundle (touchbar enabled)");
+      try {
+        if (GraphicsEnvironment.isHeadless()) {
+          LOG.info("touchbar disabled: the graphics environment is headless");
         }
-        else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-          // user has enabled setting "FN-keys in touchbar" (global or per-app)
-          if (NSDefaults.isFnShowsAppControls()) {
-            LOG.info("touchbar enabled: show FN-keys but pressing fn-key toggle to show app-controls");
-            isEnabled = true;
-          }
-          else {
-            LOG.info("touchbar disabled: show fn-keys");
-            isEnabled = false;
-          }
+        else if (!Registry.is(IS_ENABLED_KEY, true)) {
+          LOG.info("touchbar disabled: registry");
+        }
+        else if (!JnaLoader.isLoaded()) {
+          LOG.info("touchbar disabled: JNA library is unavailable");
+        }
+        else if (!Helpers.isTouchBarServerRunning()) {
+          LOG.info("touchbar disabled: touchbar-server isn't running");
         }
         else {
-          LOG.info("touchbar support is enabled");
+          isEnabled = true;
+
+          // read isEnabled from OS (i.e., NSDefaults)
+          String appId = Helpers.getAppId();
+          if (appId == null || appId.isEmpty()) {
+            LOG.info("can't obtain application id from NSBundle (touchbar enabled)");
+          }
+          else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+            // user has enabled the setting "FN-keys in touchbar" (global or per-app)
+            if (NSDefaults.isFnShowsAppControls()) {
+              LOG.info("touchbar enabled: show FN-keys but pressing fn-key toggle to show app-controls");
+            }
+            else {
+              LOG.info("touchbar disabled: show fn-keys");
+              isEnabled = false;
+            }
+          }
+          else {
+            LOG.info("touchbar support is enabled");
+          }
         }
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
+
+      if (!isEnabled) {
+        isInitialized = true;
+        return;
+      }
+
+      try {
+        NST.loadLibrary();
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        isEnabled = false;
       }
 
       isInitialized = true;
+      enableSupport();
     }
   }
 
@@ -133,9 +160,6 @@ public final class TouchbarSupport {
 
   public static void onApplicationLoaded() {
     initialize();
-    if (isInitialized && isEnabled()) {
-      enableSupport();
-    }
   }
 
   public static boolean isAvailable() {

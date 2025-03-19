@@ -25,8 +25,7 @@ class EliminateWhenSubjectIntention :
         val lBrace = element.openBrace ?: return false
         if (caretOffset > lBrace.startOffset) return false
         val lastEntry = element.entries.lastOrNull()
-        if (lastEntry?.isElse != true && element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return false
-        return true
+        return lastEntry?.isElse == true || !element.isUsedAsExpression(element.analyze(BodyResolveMode.PARTIAL_WITH_CFA))
     }
 
     override fun applyTo(element: KtWhenExpression, editor: Editor?) {

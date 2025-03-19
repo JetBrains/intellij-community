@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyWordSelectionFilter implements Condition<PsiElement> {
+public final class GroovyWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(PsiElement element) {
 return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyLanguage.INSTANCE);

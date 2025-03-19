@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,22 +21,14 @@ public class CompilationDetailsImpl implements CompilationDetails {
   private ExternalTask compileTask;
 
   private File compileWorkingDir;
-  @NotNull
-  private List<File> frameworkSearchPaths;
-  @NotNull
-  private List<File> systemHeaderSearchPaths;
-  @NotNull
-  private List<File> userHeaderSearchPaths;
-  @NotNull
-  private Set<SourceFile> sources;
-  @NotNull
-  private Set<File> headerDirs;
-  @NotNull
-  private Set<MacroDirective> macroDefines;
-  @NotNull
-  private Set<String> macroUndefines;
-  @NotNull
-  private List<String> additionalArgs;
+  private @NotNull List<File> frameworkSearchPaths;
+  private @NotNull List<File> systemHeaderSearchPaths;
+  private @NotNull List<File> userHeaderSearchPaths;
+  private @NotNull Set<SourceFile> sources;
+  private @NotNull Set<File> headerDirs;
+  private @NotNull Set<MacroDirective> macroDefines;
+  private @NotNull Set<String> macroUndefines;
+  private @NotNull List<String> additionalArgs;
 
   public CompilationDetailsImpl() {
     frameworkSearchPaths = Collections.emptyList();
@@ -79,9 +71,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.compileTask = compileTask;
   }
 
-  @Nullable
   @Override
-  public File getCompilerExecutable() {
+  public @Nullable File getCompilerExecutable() {
     return compilerExecutable;
   }
 
@@ -98,9 +89,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.compileWorkingDir = compileWorkingDir;
   }
 
-  @NotNull
   @Override
-  public List<File> getFrameworkSearchPaths() {
+  public @NotNull List<File> getFrameworkSearchPaths() {
     return frameworkSearchPaths;
   }
 
@@ -108,9 +98,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.frameworkSearchPaths = frameworkSearchPaths;
   }
 
-  @NotNull
   @Override
-  public List<File> getSystemHeaderSearchPaths() {
+  public @NotNull List<File> getSystemHeaderSearchPaths() {
     return systemHeaderSearchPaths;
   }
 
@@ -118,9 +107,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.systemHeaderSearchPaths = systemHeaderSearchPaths;
   }
 
-  @NotNull
   @Override
-  public List<File> getUserHeaderSearchPaths() {
+  public @NotNull List<File> getUserHeaderSearchPaths() {
     return userHeaderSearchPaths;
   }
 
@@ -128,9 +116,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.userHeaderSearchPaths = userHeaderSearchPaths;
   }
 
-  @NotNull
   @Override
-  public Set<? extends SourceFile> getSources() {
+  public @NotNull Set<? extends SourceFile> getSources() {
     return sources;
   }
 
@@ -138,9 +125,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.sources = sources;
   }
 
-  @NotNull
   @Override
-  public Set<File> getHeaderDirs() {
+  public @NotNull Set<File> getHeaderDirs() {
     return headerDirs;
   }
 
@@ -149,9 +135,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
   }
 
 
-  @NotNull
   @Override
-  public Set<? extends MacroDirective> getMacroDefines() {
+  public @NotNull Set<? extends MacroDirective> getMacroDefines() {
     return macroDefines;
   }
 
@@ -159,9 +144,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
     this.macroDefines = macroDefines;
   }
 
-  @NotNull
   @Override
-  public Set<String> getMacroUndefines() {
+  public @NotNull Set<String> getMacroUndefines() {
     return macroUndefines;
   }
 
@@ -170,9 +154,8 @@ public class CompilationDetailsImpl implements CompilationDetails {
   }
 
 
-  @NotNull
   @Override
-  public List<String> getAdditionalArgs() {
+  public @NotNull List<String> getAdditionalArgs() {
     return additionalArgs;
   }
 

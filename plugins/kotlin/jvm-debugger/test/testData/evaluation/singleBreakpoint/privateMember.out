@@ -6,7 +6,6 @@ Compile bytecode for MyClass().privateFun()
 Compile bytecode for MyClass().privateVal
 Compile bytecode for MyClass.PrivateClass().a
 Compile bytecode for base.privateFun()
-Compile bytecode for derived.privateFun()
 Compile bytecode for derivedAsBase.privateFun()
 Disconnected from the target VM
 

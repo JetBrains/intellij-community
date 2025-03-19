@@ -33,6 +33,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.test.GitPlatformTest.ConfigScope.GLOBAL
 import git4idea.test.GitPlatformTest.ConfigScope.SYSTEM
 import java.nio.file.Path
+import java.util.Locale
 
 abstract class GitPlatformTest : VcsPlatformTest() {
   protected lateinit var repositoryManager: GitRepositoryManager
@@ -145,7 +146,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   private fun createParentRepo(parentName: String): Path {
     cd(testNioRoot)
-    git("init --bare $parentName.git")
+    gitInit("--bare $parentName.git")
     return testNioRoot.resolve("$parentName.git")
   }
 
@@ -215,13 +216,13 @@ abstract class GitPlatformTest : VcsPlatformTest() {
 
   protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
 
-  protected fun commit(changes: Collection<Change>) {
-    val exceptions = tryCommit(changes)
+  protected fun commit(changes: Collection<Change>, commitMessage: String = "comment") {
+    val exceptions = tryCommit(changes, commitMessage)
     exceptions?.forEach { fail("Exception during executing the commit: " + it.message) }
   }
 
-  protected fun tryCommit(changes: Collection<Change>): List<VcsException>? {
-    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), "comment", commitContext, mutableSetOf())
+  protected fun tryCommit(changes: Collection<Change>, commitMessage: String = "comment"): List<VcsException>? {
+    val exceptions = vcs.checkinEnvironment!!.commit(changes.toList(), commitMessage, commitContext, mutableSetOf())
     updateChangeListManager()
     return exceptions
   }
@@ -274,7 +275,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     SYSTEM,
     GLOBAL;
 
-    fun param() = "--${name.toLowerCase()}"
+    fun param() = "--${name.lowercase(Locale.getDefault())}"
   }
 
   protected fun withPartialTracker(file: VirtualFile, newContent: String? = null, task: (Document, PartialLocalLineStatusTracker) -> Unit) {

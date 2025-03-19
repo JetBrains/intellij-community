@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.CommonBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -14,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,9 +25,10 @@ import org.jetbrains.uast.UClass;
 
 import java.util.Set;
 
-public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class RegistrationProblemsInspection extends DevKitUastInspectionBase {
 
-  public RegistrationProblemsInspection() {
+  RegistrationProblemsInspection() {
     super(UClass.class);
   }
 
@@ -52,13 +55,13 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
         for (PsiClass componentClass : componentClasses) {
           if (ActionType.ACTION.myClassName.equals(componentClass.getQualifiedName()) &&
               !checkedClass.isInheritor(componentClass, true)) {
-            LocalQuickFix[] fixes = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
-                                    ImplementOrExtendFix.createFixes(nameIdentifier, checkedClass, componentClass, isOnTheFly) :
-                                    LocalQuickFix.EMPTY_ARRAY;
+            ModCommandAction fix = sourcePsi.getLanguage().is(JavaLanguage.INSTANCE) ?
+                                   ImplementOrExtendFix.createFix(checkedClass, componentClass) :
+                                   null;
             ProblemHolderUtilKt.registerUProblem(holder, uClass,
                                                  DevKitBundle.message("inspections.registration.problems.incompatible.message",
                                                                       componentClass.getQualifiedName()),
-                                                 fixes);
+                                                 LocalQuickFix.notNullElements(LocalQuickFix.from(fix)));
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass) && !hasNoArgConstructor(checkedClass)) {
@@ -90,9 +93,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getShortName() {
+  public @NotNull @NonNls String getShortName() {
     return "ComponentRegistrationProblems";
   }
 
@@ -153,8 +154,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return DevKitBundle.message("inspections.registration.problems.quickfix.create.constructor");
     }
   }

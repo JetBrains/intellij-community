@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.maven.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "testFramework",
+  module_name = "intellij.maven.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/testFramework",
+    "//plugins/maven",
+    "@lib//:maven-test_framework-io-takari-maven-wrapper",
+    "//platform/util/jdom",
+    "//plugins/repository-search",
+    "//java/java-runtime:rt",
+    "//java/java-impl:impl",
+    "//platform/usageView",
+    "//java/testFramework",
+    "//platform/projectModel-api:projectModel",
+    "//platform/core-api:core",
+    "//platform/backend/observation",
+  ]
+)
+### auto-generated section `build intellij.maven.testFramework` end

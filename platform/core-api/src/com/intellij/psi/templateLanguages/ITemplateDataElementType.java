@@ -3,5 +3,8 @@
 package com.intellij.psi.templateLanguages;
 
 
+/**
+ * A marker interface for file types of template languages.
+ */
 public interface ITemplateDataElementType {
 }

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.util.Collection;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
 
   public DirectoryTreeNode(String path, Project project, String parentPath) {
@@ -41,8 +43,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
   }
 
   @Override
-  @NotNull
-  public Collection<VirtualFile> getVirtualFiles() {
+  public @NotNull Collection<VirtualFile> getVirtualFiles() {
     Collection<VirtualFile> result = new ArrayList<>();
     for (int i = 0;  i < getChildCount(); i++){
       FileOrDirectoryTreeNode child = (FileOrDirectoryTreeNode)getChildAt(i);
@@ -52,8 +53,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
   }
 
   @Override
-  @NotNull
-  public Collection<File> getFiles() {
+  public @NotNull Collection<File> getFiles() {
     Collection<File> result = new ArrayList<>();
     for (int i = 0;  i < getChildCount(); i++){
       FileOrDirectoryTreeNode child = (FileOrDirectoryTreeNode)getChildAt(i);

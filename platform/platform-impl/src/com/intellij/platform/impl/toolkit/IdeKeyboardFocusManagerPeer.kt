@@ -45,13 +45,13 @@ object IdeKeyboardFocusManagerPeer: KeyboardFocusManagerPeerImpl() {
     focusedWindow = win
   }
 
-  override fun getCurrentFocusedWindow() = focusedWindow
+  override fun getCurrentFocusedWindow(): Window? = focusedWindow
 
   override fun setCurrentFocusOwner(component: Component?) {
     focusOwner = component
   }
 
-  override fun getCurrentFocusOwner() = focusOwner
+  override fun getCurrentFocusOwner(): Component? = focusOwner
 
   fun deliverFocus(
     current: Component?,
@@ -62,10 +62,8 @@ object IdeKeyboardFocusManagerPeer: KeyboardFocusManagerPeerImpl() {
     time: Long,
     cause: FocusEvent.Cause,
   ): Boolean {
-    // JetBrains Runtime passes "false" on X11, we're doing the same here
-    // https://github.com/JetBrains/JetBrainsRuntime/blob/1a9838082e3eb48d43e6bac6a412463923173fc7/src/java.desktop/unix/classes/sun/awt/X11/XKeyboardFocusManagerPeer.java#L108
     return deliverFocusMethod?.invoke(null, lightweightChild, window, temporary, focusedWindowChangeAllowed, time, cause, current) as Boolean? ?:
-           deliverFocusMethodNew?.invoke(null, lightweightChild, window, false, cause, current) as Boolean? ?: false
+           deliverFocusMethodNew?.invoke(null, lightweightChild, window, true, cause, current) as Boolean? ?: false
   }
 
 }

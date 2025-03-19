@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.KtExpression
@@ -20,8 +20,8 @@ internal class KotlinSpreadPostfixTemplate : StringBasedPostfixTemplate {
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "*\$expr$\$END$"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "*\$expr$\$END$"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private object ValueParameterFilter : (KtExpression) -> Boolean {
@@ -40,6 +40,6 @@ private val ARRAY_CLASS_FQ_NAMES: Set<FqNameUnsafe> = buildSet {
     add(StandardNames.FqNames.uLongArrayFqName.toUnsafe())
 }
 
-private fun KtType.canSpread(): Boolean {
-    return this is KtNonErrorClassType && classId.asSingleFqName().toUnsafe() in ARRAY_CLASS_FQ_NAMES
+private fun KaType.canSpread(): Boolean {
+    return this is KaClassType && classId.asSingleFqName().toUnsafe() in ARRAY_CLASS_FQ_NAMES
 }

@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
@@ -322,14 +321,12 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel) throws Exception {
-    LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    LanguageLevel oldLevel = projectExtension.getLanguageLevel();
+    LanguageLevel oldLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), languageLevel);
     try {
-      projectExtension.setLanguageLevel(languageLevel);
       doTest();
     }
     finally {
-      projectExtension.setLanguageLevel(oldLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLevel);
     }
   }
 
@@ -1694,6 +1691,30 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testExtractConditionFromSimpleIf1() throws Exception {
     doTest();
+  }
+
+  public void testSimpleWithNullableDirectlyBeforeType() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
+  }
+
+  public void testSimpleWithNullableDirectlyBeforeKeyword() throws Exception {
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+    boolean oldValue = instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE;
+    instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
+    try {
+      doTest();
+    }
+    finally {
+      instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = oldValue;
+    }
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {

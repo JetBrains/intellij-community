@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,14 +13,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class UnifiedDiffModel {
-  @NotNull private final UnifiedDiffViewer myViewer;
+  private final @NotNull UnifiedDiffViewer myViewer;
 
-  @Nullable private ChangedBlockData myData = null;
-  @NotNull private ThreeState myIsContentsEqual = ThreeState.UNSURE;
+  private @Nullable ChangedBlockData myData = null;
+  private @NotNull ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
-  @NotNull private final List<UnifiedDiffChangeUi> myPresentations = new ArrayList<>();
-  @NotNull private final List<RangeMarker> myGuardedRangeBlocks = new ArrayList<>();
+  private final @NotNull List<UnifiedDiffChangeUi> myPresentations = new ArrayList<>();
+  private final @NotNull List<RangeMarker> myGuardedRangeBlocks = new ArrayList<>();
 
   public UnifiedDiffModel(@NotNull UnifiedDiffViewer viewer) {
     myViewer = viewer;
@@ -29,24 +31,20 @@ public class UnifiedDiffModel {
     return myData != null;
   }
 
-  @NotNull
-  public ThreeState isContentsEqual() {
+  public @NotNull ThreeState isContentsEqual() {
     return myIsContentsEqual;
   }
 
-  @Nullable
-  public ChangedBlockData getData() {
+  public @Nullable ChangedBlockData getData() {
     return myData;
   }
 
-  @Nullable
-  public List<UnifiedDiffChange> getDiffChanges() {
+  public @Nullable List<UnifiedDiffChange> getDiffChanges() {
     ChangedBlockData data = myData;
     return data != null ? data.getDiffChanges() : null;
   }
 
-  @Nullable
-  public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
+  public @Nullable LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
     ChangedBlockData data = myData;
     return data != null ? data.getLineNumberConvertor(side) : null;
   }
@@ -94,10 +92,10 @@ public class UnifiedDiffModel {
   }
 
   public static class ChangedBlockData {
-    @NotNull private final List<UnifiedDiffChange> myDiffChanges;
-    @NotNull private final LineNumberConvertor myLineNumberConvertor1;
-    @NotNull private final LineNumberConvertor myLineNumberConvertor2;
-    @NotNull private final List<HighlightRange> myRanges;
+    private final @NotNull List<UnifiedDiffChange> myDiffChanges;
+    private final @NotNull LineNumberConvertor myLineNumberConvertor1;
+    private final @NotNull LineNumberConvertor myLineNumberConvertor2;
+    private final @NotNull List<HighlightRange> myRanges;
 
     ChangedBlockData(@NotNull List<UnifiedDiffChange> diffChanges,
                      @NotNull LineNumberConvertor lineNumberConvertor1,
@@ -109,18 +107,15 @@ public class UnifiedDiffModel {
       myRanges = Collections.unmodifiableList(ranges);
     }
 
-    @NotNull
-    public List<UnifiedDiffChange> getDiffChanges() {
+    public @NotNull List<UnifiedDiffChange> getDiffChanges() {
       return myDiffChanges;
     }
 
-    @NotNull
-    public LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
+    public @NotNull LineNumberConvertor getLineNumberConvertor(@NotNull Side side) {
       return side.select(myLineNumberConvertor1, myLineNumberConvertor2);
     }
 
-    @NotNull
-    public List<HighlightRange> getRanges() {
+    public @NotNull List<HighlightRange> getRanges() {
       return myRanges;
     }
   }

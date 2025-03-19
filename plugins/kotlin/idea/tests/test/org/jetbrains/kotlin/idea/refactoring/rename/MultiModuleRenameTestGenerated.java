@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/refactoring/renameMultiModule")
 public class MultiModuleRenameTestGenerated extends AbstractMultiModuleRenameTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -141,6 +148,26 @@ public class MultiModuleRenameTestGenerated extends AbstractMultiModuleRenameTes
     @TestMetadata("implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test")
     public void testImplClassAndTypeAliasByHeaderClass_ImplClassAndTypeAliasByHeaderClass() throws Exception {
         runTest("testData/refactoring/renameMultiModule/implClassAndTypeAliasByHeaderClass/implClassAndTypeAliasByHeaderClass.test");
+    }
+
+    @TestMetadata("overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test")
+    public void testOverrideFunctionsByCommonModuleFromOverrider_OverrideFunctionsByCommonModuleFromOverrider() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByCommonModuleFromOverrider/overrideFunctionsByCommonModuleFromOverrider.test");
+    }
+
+    @TestMetadata("overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideFunctionsByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByCommonModule/overrideFunctionsByCommonModule.test");
+    }
+
+    @TestMetadata("overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test")
+    public void testOverrideFunctionsByPlatformModule_OverrideFunctionsByPlatformModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
+    }
+
+    @TestMetadata("overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideInternalPropertyByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
     }
 
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")

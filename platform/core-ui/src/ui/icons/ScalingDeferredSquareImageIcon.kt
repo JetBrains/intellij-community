@@ -6,11 +6,13 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextCache
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
 import javax.swing.Icon
 
+@Internal
 class ScalingDeferredSquareImageIcon<K : Any>(size: Int, defaultIcon: Icon, private val key: K, imageLoader: (K) -> Image?) : Icon {
   private val baseIcon = IconUtil.resizeSquared(defaultIcon, size)
 

@@ -2,25 +2,18 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields.Int
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.internal.statistic.utils.StatisticsUtil
 
-class WelcomeScreenCounterUsageCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("welcome.screen", 1)
-    private val RECENT_PATHS_COUNT: EventField<Int> = Int("recent_paths_count")
-    private val WELCOME_SCREEN_SHOWN = GROUP.registerEvent("projects.tab.created", RECENT_PATHS_COUNT)
+internal object WelcomeScreenCounterUsageCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("welcome.screen", 2)
 
-    private val BOUNDS = intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 50)
+  private val WELCOME_SCREEN_SHOWN = GROUP.registerEvent(
+    "projects.tab.created",
+    EventFields.BoundedInt("recent_paths_count", intArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 50))
+  )
 
-    fun reportWelcomeScreenShowed(recentPathsCount: Int) {
-      WELCOME_SCREEN_SHOWN.log(StatisticsUtil.roundToUpperBound(recentPathsCount, BOUNDS))
-    }
-  }
+  fun reportWelcomeScreenShowed(recentPathsCount: Int) = WELCOME_SCREEN_SHOWN.log(recentPathsCount)
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
+  override fun getGroup(): EventLogGroup = GROUP
 }

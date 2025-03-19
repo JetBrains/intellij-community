@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -6,59 +6,55 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
 
-/**
- * @author Konstantin Bulenkov
- */
+/** @deprecated use methods of {@link DateFormatUtil} */
+@Deprecated(forRemoval = true)
+@SuppressWarnings("unused")
 public abstract class JBDateTimeFormatter {
-  protected abstract boolean isPrettyFormattingSupported();
-
-  @NotNull
-  public String formatTime(@NotNull Date time) {
+  public @NotNull @NlsSafe String formatTime(@NotNull Date time) {
     return formatTime(time.getTime());
   }
 
-  @NotNull
-  public abstract String formatTime(long time);
+  public @NotNull @NlsSafe String formatTime(long time) {
+    return DateFormatUtil.formatTime(time);
+  }
 
-  @NotNull
-  public String formatTimeWithSeconds(@NotNull Date time) {
+  public @NotNull @NlsSafe String formatTimeWithSeconds(@NotNull Date time) {
     return formatTimeWithSeconds(time.getTime());
   }
 
-  @NotNull
-  public abstract String formatTimeWithSeconds(long time);
+  public @NotNull @NlsSafe String formatTimeWithSeconds(long time) {
+    return DateFormatUtil.formatTimeWithSeconds(time);
+  }
 
-  @NotNull
-  public @NlsSafe String formatDate(@NotNull Date time) {
+  public @NotNull @NlsSafe String formatDate(@NotNull Date time) {
     return formatDate(time.getTime());
   }
 
-  @NotNull
-  public abstract String formatDate(long time);
+  public @NotNull @NlsSafe String formatDate(long time) {
+    return DateFormatUtil.formatDate(time);
+  }
 
-  @NotNull
-  public String formatDateTime(Date date) {
+  public @NotNull @NlsSafe String formatDateTime(Date date) {
     return formatDateTime(date.getTime());
   }
 
-  @NotNull
-  public @NlsSafe String formatDateTime(long time) {
+  public @NotNull @NlsSafe String formatDateTime(long time) {
     return DateFormatUtil.formatDateTime(time);
   }
 
-  @NotNull
-  public @NlsSafe String formatPrettyDateTime(@NotNull Date date) {
+  public @NotNull @NlsSafe String formatPrettyDateTime(@NotNull Date date) {
     return formatPrettyDateTime(date.getTime());
   }
 
-  @NotNull
-  public abstract String formatPrettyDateTime(long time);
+  public @NotNull @NlsSafe String formatPrettyDateTime(long time) {
+    return DateFormatUtil.formatPrettyDateTime(time);
+  }
 
-  @NotNull
-  public String formatPrettyDate(@NotNull Date date) {
+  public @NotNull @NlsSafe String formatPrettyDate(@NotNull Date date) {
     return formatPrettyDate(date.getTime());
   }
 
-  @NotNull
-  public abstract String formatPrettyDate(long time);
+  public @NotNull @NlsSafe String formatPrettyDate(long time) {
+    return DateFormatUtil.formatPrettyDate(time);
+  }
 }

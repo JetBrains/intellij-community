@@ -39,9 +39,8 @@ public abstract class InplaceAddEditRemovePanel<T> extends AddEditRemovePanel<T>
     }
   }
 
-  @Nullable
   @Override
-  protected T editItem(T o) {
+  protected @Nullable T editItem(T o) {
     return o;
   }
 }

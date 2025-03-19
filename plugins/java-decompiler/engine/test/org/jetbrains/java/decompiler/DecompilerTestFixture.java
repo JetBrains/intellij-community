@@ -1,6 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -28,8 +31,14 @@ public class DecompilerTestFixture {
   private Path tempDir;
   private Path targetDir;
   private TestConsoleDecompiler decompiler;
+  private boolean cleanup = true;
 
-  public void setUp(Map<String, String> customOptions) throws IOException {
+  public void setUp(Map<String, Object> customOptions) throws IOException {
+    setUp(customOptions, null);
+  }
+
+  public void setUp(@NotNull Map<String, Object> customOptions,
+                    @Nullable CancellationManager cancellationManager) throws IOException {
     testDataDir = Path.of("testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("community/plugins/java-decompiler/engine/testData");
     if (!isTestDataDir(testDataDir)) testDataDir = Path.of("plugins/java-decompiler/engine/testData");
@@ -51,12 +60,17 @@ public class DecompilerTestFixture {
     options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
     options.putAll(customOptions);
 
-    decompiler = new TestConsoleDecompiler(targetDir.toFile(), options);
+    if (cancellationManager == null) {
+      decompiler = new TestConsoleDecompiler(targetDir.toFile(), options);
+    }
+    else {
+      decompiler = new TestConsoleDecompiler(targetDir.toFile(), options, cancellationManager);
+    }
   }
 
   public void tearDown() throws IOException {
     try {
-      if (tempDir != null) {
+      if (tempDir != null && cleanup) {
         deleteRecursively(tempDir);
       }
     }
@@ -79,6 +93,14 @@ public class DecompilerTestFixture {
 
   public ConsoleDecompiler getDecompiler() {
     return decompiler;
+  }
+
+  public void setCleanup(boolean value) {
+    this.cleanup = value;
+  }
+
+  public boolean getCleanup() {
+    return cleanup;
   }
 
   private static boolean isTestDataDir(Path dir) {
@@ -128,6 +150,10 @@ public class DecompilerTestFixture {
 
     TestConsoleDecompiler(File destination, Map<String, Object> options) {
       super(destination, options, new PrintStreamLogger(System.out));
+    }
+
+    TestConsoleDecompiler(File destination, Map<String, Object> options, CancellationManager cancellationManager) {
+      super(destination, options, new PrintStreamLogger(System.out), cancellationManager);
     }
 
     @Override

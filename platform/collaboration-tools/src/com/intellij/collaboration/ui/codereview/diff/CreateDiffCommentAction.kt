@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.CommonProcessors
 
+@Deprecated("Deprecated with the move to ViewModel-based approach")
 abstract class CreateDiffCommentAction : DumbAwareAction(messagePointer("action.CodeReview.CreateDiffComment.text")) {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
@@ -28,7 +29,7 @@ abstract class CreateDiffCommentAction : DumbAwareAction(messagePointer("action.
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getRequiredData(CommonDataKeys.EDITOR)
+    val editor = e.getData(CommonDataKeys.EDITOR) ?: return
     val action = findRendererActionUnderCaret(editor) ?: return
 
     val scrollingModel = editor.scrollingModel

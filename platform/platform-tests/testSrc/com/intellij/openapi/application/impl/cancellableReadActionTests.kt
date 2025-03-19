@@ -10,19 +10,23 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
-import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
+import java.util.concurrent.CancellationException
 import javax.swing.SwingUtilities
 
 @TestApplication
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class CancellableReadActionTests {
 
   @BeforeEach
   fun clearEventQueue() {
     SwingUtilities.invokeAndWait(EmptyRunnable.INSTANCE)
+    ProgressManager.getInstance()
   }
 }
 
@@ -34,7 +38,6 @@ fun testComputeCancellableRethrow() {
   testComputeCancellableRethrow(object : Throwable() {})
   testComputeCancellableRethrow(CancellationException())
   testComputeCancellableRethrow(ProcessCanceledException())
-  testComputeCancellableRethrow(CannotReadException())
 }
 
 private inline fun <reified T : Throwable> testComputeCancellableRethrow(t: T) {
@@ -83,8 +86,8 @@ fun testDoesntThrowWhenAlmostFinished() {
   val result = computeCancellable {
     testNoExceptions()
     waitForPendingWrite().up()
-    assertThrows<JobCanceledException> { // cancelled
-      testExceptions()
+    assertThrows<CannotReadException> { // cancelled
+      testReadExceptions()
     }
     42 // but returning the result doesn't throw CannotReadException
   }
@@ -96,9 +99,20 @@ fun testThrowsOnWrite() {
     computeCancellable {
       testNoExceptions()
       waitForPendingWrite().up()
-      testExceptions()
+      testReadExceptions()
     }
   }
+}
+
+private fun testReadExceptions(): Nothing {
+  val ce = assertThrows<CannotReadException> {
+    Cancellation.checkCancelled()
+  }
+  val jce = assertThrows<CannotReadException> {
+    ProgressManager.checkCanceled()
+  }
+  assertSame(ce, jce)
+  throw jce
 }
 
 fun waitForPendingWrite(): Semaphore {

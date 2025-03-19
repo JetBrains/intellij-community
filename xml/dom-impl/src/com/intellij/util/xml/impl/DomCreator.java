@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.ide.highlighter.DomSupportEnabled;
@@ -47,8 +47,7 @@ import java.util.List;
 
 final class DomCreator {
 
-  @Nullable
-  static DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
+  static @Nullable DomInvocationHandler createTagHandler(@NotNull XmlTag tag) {
     PsiElement candidate = PhysicalDomParentStrategy.getParentTagCandidate(tag);
     if (!(candidate instanceof XmlTag parentTag)) {
       return createRootHandler(tag);
@@ -73,8 +72,7 @@ final class DomCreator {
     return createCustomHandler(tag, parent, localName, info);
   }
 
-  @Nullable
-  private static DomInvocationHandler createRootHandler(XmlTag xmlTag) {
+  private static @Nullable DomInvocationHandler createRootHandler(XmlTag xmlTag) {
     PsiFile file = xmlTag.getContainingFile();
     DomFileElementImpl<?> element = file instanceof XmlFile ? DomManagerImpl.getDomManager(file.getProject()).getFileElement((XmlFile)file) : null;
     if (element != null) {
@@ -86,11 +84,10 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  private static DomInvocationHandler createIndexedHandler(DomInvocationHandler parent,
-                                                           String localName,
-                                                           String namespace,
-                                                           DomFixedChildDescription description, XmlTag tag) {
+  private static @Nullable DomInvocationHandler createIndexedHandler(DomInvocationHandler parent,
+                                                                     String localName,
+                                                                     String namespace,
+                                                                     DomFixedChildDescription description, XmlTag tag) {
     final int totalCount = description.getCount();
 
     int index = 0;
@@ -115,11 +112,10 @@ final class DomCreator {
                                                new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
   }
 
-  @NotNull
-  private static CollectionElementInvocationHandler createCollectionHandler(XmlTag tag,
-                                                                            DomCollectionChildDescription description,
-                                                                            DomInvocationHandler parent,
-                                                                            XmlTag parentTag) {
+  private static @NotNull CollectionElementInvocationHandler createCollectionHandler(XmlTag tag,
+                                                                                     DomCollectionChildDescription description,
+                                                                                     DomInvocationHandler parent,
+                                                                                     XmlTag parentTag) {
     DomStub parentStub = parent.getStub();
     if (parentStub != null) {
       int index = JBIterable
@@ -145,11 +141,10 @@ final class DomCreator {
                                       parentTag instanceof XmlTagImpl ? ((XmlTagImpl)parentTag).getSubTags(false) : parentTag.getSubTags());
   }
 
-  @Nullable
-  private static DomInvocationHandler createCustomHandler(XmlTag tag,
-                                                          DomInvocationHandler parent,
-                                                          String localName,
-                                                          DomGenericInfoEx info) {
+  private static @Nullable DomInvocationHandler createCustomHandler(XmlTag tag,
+                                                                    DomInvocationHandler parent,
+                                                                    String localName,
+                                                                    DomGenericInfoEx info) {
     List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
     if (customs.isEmpty()) return null;
 
@@ -171,8 +166,7 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  static DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
+  static @Nullable DomFileElementImpl<?> createFileElement(XmlFile xmlFile) {
     VirtualFile file = xmlFile.getVirtualFile();
     if (!(xmlFile.getFileType() instanceof DomSupportEnabled) || file != null && ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
       IdempotenceChecker.logTrace("DOM unsupported");
@@ -212,8 +206,7 @@ final class DomCreator {
     return myXmlFile instanceof PsiFileEx && ((PsiFileEx)myXmlFile).isContentsLoaded();
   }
 
-  @Nullable
-  static DomFileDescription<?> findFileDescription(XmlFile file) {
+  static @Nullable DomFileDescription<?> findFileDescription(XmlFile file) {
     DomFileDescription<?> mockDescription = file.getUserData(DomManagerImpl.MOCK_DESCRIPTION);
     if (mockDescription != null) return mockDescription;
 
@@ -231,8 +224,7 @@ final class DomCreator {
     return DomApplicationComponent.getInstance().findDescription(file);
   }
 
-  @Nullable
-  static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
+  static @Nullable DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
     LinkedHashSet<XmlTag> allParents = new LinkedHashSet<>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
@@ -248,8 +240,7 @@ final class DomCreator {
     return manager.getDomHandler(tag);
   }
 
-  @Nullable
-  private static <T extends DomChildrenDescription> T findChildrenDescription(List<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
+  private static @Nullable <T extends DomChildrenDescription> T findChildrenDescription(List<T> descriptions, XmlTag tag, DomInvocationHandler parent) {
     final XmlFile file = parent.getFile();
 
     //noinspection ForLoopReplaceableByForEach
@@ -262,8 +253,7 @@ final class DomCreator {
     return null;
   }
 
-  @Nullable
-  static AttributeChildInvocationHandler createAttributeHandler(@NotNull XmlAttribute attribute) {
+  static @Nullable AttributeChildInvocationHandler createAttributeHandler(@NotNull XmlAttribute attribute) {
     XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
     DomInvocationHandler handler = tag == null ? null : getParentDom(tag);
     if (handler == null) return null;

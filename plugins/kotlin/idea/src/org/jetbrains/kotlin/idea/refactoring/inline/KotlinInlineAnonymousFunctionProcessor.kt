@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInliner.CodeInliner
 import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention
-import org.jetbrains.kotlin.idea.refactoring.intentions.OperatorToFunctionConverter
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.*
@@ -32,7 +32,7 @@ class KotlinInlineAnonymousFunctionProcessor(
     editor: Editor?,
     project: Project,
 ) : AbstractKotlinDeclarationInlineProcessor<KtFunction>(function, editor, project) {
-    override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
+    protected override fun findUsages(): Array<UsageInfo> = arrayOf(UsageInfo(usage))
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         Companion.performRefactoring(usage, editor)
@@ -107,7 +107,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                 is KtFunctionLiteral -> {
                     val lambdaExpression = function.parent as? KtLambdaExpression ?: return null
                     val descriptor = function.descriptor as? FunctionDescriptor ?: return null
-                    LambdaToAnonymousFunctionIntention.convertLambdaToFunction(lambdaExpression, descriptor) as? KtNamedFunction
+                    LambdaToAnonymousFunctionIntention.Holder.convertLambdaToFunction(lambdaExpression, descriptor) as? KtNamedFunction
                 }
 
                 else -> null

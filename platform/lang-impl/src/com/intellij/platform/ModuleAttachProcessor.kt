@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
 import com.intellij.CommonBundle
@@ -9,7 +9,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -26,12 +26,12 @@ import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.systemIndependentPath
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<ModuleAttachProcessor>()
 
@@ -93,7 +93,7 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
       runInAutoSaveDisabledMode {
         saveSettings(newProject)
       }
-      writeAction { Disposer.dispose(newProject) }
+      edtWriteAction { Disposer.dispose(newProject) }
     }
 
     val newModule = try {
@@ -146,8 +146,8 @@ private suspend fun findMainModule(project: Project, projectDir: Path): Module? 
 private suspend fun attachModule(project: Project, imlFile: Path): Module {
   val moduleManager = ModuleManager.getInstance(project)
   val model = moduleManager.getModifiableModel()
-  val module = model.loadModule(imlFile.systemIndependentPath)
-  writeAction {
+  val module = model.loadModule(imlFile.invariantSeparatorsPathString)
+  edtWriteAction {
     model.commit()
   }
 

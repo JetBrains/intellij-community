@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -14,7 +14,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.ListTableModel
+import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.AbstractAction
@@ -28,12 +30,10 @@ internal class AnalyzePluginStartupPerformanceAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null
+    e.presentation.isEnabled = e.project != null && StartUpPerformanceService.getInstance().getPluginCostMap().isNotEmpty()
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
 private data class PluginStartupCostEntry(
@@ -57,7 +57,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
     val pluginCostMap = StartUpPerformanceService.getInstance().getPluginCostMap()
     val tableData = pluginCostMap.mapNotNull { (pluginId, costMap) ->
       if (!ApplicationManager.getApplication().isInternal &&
-          (ApplicationInfoEx.getInstanceEx()).isEssentialPlugin(pluginId)) {
+          (ApplicationInfo.getInstance()).isEssentialPlugin(pluginId)) {
         return@mapNotNull null
       }
 
@@ -85,6 +85,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
       override fun valueOf(item: PluginStartupCostEntry) =
         item.pluginName + (if (item.pluginId in pluginsToDisable) " (will be disabled)" else "")
     }
+    @Suppress("DialogTitleCapitalization")
     val costColumn = object : ColumnInfo<PluginStartupCostEntry, Int>(IdeBundle.message("column.name.startup.time.ms")) {
       override fun valueOf(item: PluginStartupCostEntry) = TimeUnit.NANOSECONDS.toMillis(item.cost).toInt()
     }
@@ -121,12 +122,15 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
 
   override fun doOKAction() {
     super.doOKAction()
-    IdeErrorsDialog.confirmDisablePlugins(
+    DisablePluginsDialog.confirmDisablePlugins(
       project,
-      pluginsToDisable.asSequence()
-        .map(PluginId::getId)
-        .mapNotNull(PluginManagerCore::getPlugin)
-        .toList(),
+      pluginsToDisable.mapNotNull { PluginManagerCore.getPlugin(PluginId.getId(it)) }
     )
   }
+
+  override fun getPreferredFocusedComponent(): JComponent = table
+
+  override fun getInitialSize(): Dimension = JBDimension(800, 600)
+
+  override fun getDimensionServiceKey(): String = "AnalyzePluginStartupPerformanceAction.PluginStartupCostDialog"
 }

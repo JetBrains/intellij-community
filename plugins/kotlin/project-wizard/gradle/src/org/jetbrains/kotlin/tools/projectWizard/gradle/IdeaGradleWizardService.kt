@@ -3,12 +3,15 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.asSafely
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.UNIT_SUCCESS
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
+import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.GradleBuildSystemSettings
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaWizardService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
@@ -23,22 +26,32 @@ internal class IdeaGradleWizardService(private val project: Project) : ProjectIm
         reader: Reader,
         path: Path,
         modulesIrs: List<ModuleIR>,
-        buildSystem: BuildSystemType
+        buildSystem: BuildSystemType,
+        buildSystemSettings: BuildSystemSettings?
     ): TaskResult<Unit> {
-        withGradleWrapperEnabled {
+        withGradleEnabled(buildSystemSettings.asSafely<GradleBuildSystemSettings>()?.gradleHome) {
             linkAndRefreshGradleProject(path.toString(), project)
         }
         return UNIT_SUCCESS
     }
 
-    private fun withGradleWrapperEnabled(action: () -> Unit) {
+    private fun withGradleEnabled(gradleHome: String?, action: () -> Unit) {
         val settings = GradleDefaultProjectSettings.getInstance()
         val oldGradleDistributionType = settings.distributionType
-        settings.distributionType = DistributionType.WRAPPED
+        val oldGradleHome = settings.gradleHome
+
+        if (gradleHome != null) {
+            settings.distributionType = DistributionType.LOCAL
+            settings.gradleHome = gradleHome
+        } else {
+            settings.distributionType = DistributionType.DEFAULT_WRAPPED
+        }
+
         try {
             action()
         } finally {
             settings.distributionType = oldGradleDistributionType
+            settings.gradleHome = oldGradleHome
         }
     }
 }

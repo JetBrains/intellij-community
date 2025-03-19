@@ -4,11 +4,14 @@
 
 package org.jetbrains.jsonProtocol;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * A base interface for JSON subtype interface. This inheritance serves 2 purposes:
  * it declares base type (visible to human and to interface analyzer) and adds {@link #getBase()}
  * getter that may be directly used in programs.
  */
+@ApiStatus.Internal
 public interface JsonSubtype<BASE> {
   BASE getBase();
 }

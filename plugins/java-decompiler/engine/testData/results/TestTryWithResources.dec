@@ -1,0 +1,171 @@
+package pkg;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+
+public class TestTryWithResources {
+   public static void test1() {
+      try (FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {// 13
+         fileSystem.getPath("PATH", "TO", "FILE");// 14
+      } catch (IOException | URISyntaxException var5) {// 16
+      }
+
+   }// 17
+
+   public static void test2() {
+      try (
+         FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI());// 20
+         InputStream stream = Files.newInputStream(fileSystem.getPath("PATH", "TO", "FILE"));// 21
+      ) {
+         stream.read();// 22
+      } catch (IOException | URISyntaxException var8) {// 24
+      }
+
+   }// 25
+
+   public static void test3() {
+      try (FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {// 28
+         try (InputStream stream = Files.newInputStream(fileSystem.getPath("PATH", "TO", "FILE"))) {// 29
+            stream.read();// 30
+         } catch (IOException var7) {// 32
+         } catch (Exception var8) {// 33
+         }
+      } catch (IOException | URISyntaxException var10) {// 35
+      }
+
+   }// 36
+}
+
+class 'pkg/TestTryWithResources' {
+   method 'test1 ()V' {
+      0      11
+      1      11
+      2      11
+      3      11
+      4      11
+      5      11
+      6      11
+      7      11
+      8      11
+      9      11
+      a      11
+      b      11
+      c      11
+      d      11
+      e      12
+      f      12
+      10      12
+      17      12
+      18      12
+      1c      12
+      1d      12
+      1f      12
+      20      12
+      21      12
+      45      13
+      46      16
+   }
+
+   method 'test2 ()V' {
+      0      20
+      1      20
+      2      20
+      3      20
+      4      20
+      5      20
+      6      20
+      7      20
+      8      20
+      9      20
+      a      20
+      b      20
+      c      20
+      d      20
+      e      21
+      f      21
+      10      21
+      17      21
+      18      21
+      1c      21
+      1d      21
+      1f      21
+      20      21
+      21      21
+      26      21
+      27      21
+      28      21
+      29      21
+      2a      23
+      2b      23
+      2c      23
+      2d      23
+      70      24
+      71      27
+   }
+
+   method 'test3 ()V' {
+      0      30
+      1      30
+      2      30
+      3      30
+      4      30
+      5      30
+      6      30
+      7      30
+      8      30
+      9      30
+      a      30
+      b      30
+      c      30
+      d      30
+      e      31
+      f      31
+      10      31
+      17      31
+      18      31
+      1c      31
+      1d      31
+      1f      31
+      20      31
+      21      31
+      26      31
+      27      31
+      28      31
+      29      31
+      2a      32
+      2b      32
+      2c      32
+      2d      32
+      51      33
+      55      34
+      78      36
+      79      39
+   }
+}
+
+Lines mapping:
+13 <-> 12
+14 <-> 13
+16 <-> 14
+17 <-> 17
+20 <-> 21
+21 <-> 22
+22 <-> 24
+24 <-> 25
+25 <-> 28
+28 <-> 31
+29 <-> 32
+30 <-> 33
+32 <-> 34
+33 <-> 35
+35 <-> 37
+36 <-> 40
+Not mapped:
+15
+23
+31
+34

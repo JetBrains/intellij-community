@@ -131,6 +131,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   public void visitElement(@NotNull PsiElement element) {
     final IElementType elementType = element.getNode().getElementType();
     if (elementType != XPathTokenTypes.STAR && XPath2TokenTypes.KEYWORDS.contains(elementType)) {
+      if (element.getPrevSibling() == null) return;
       final PsiElement leaf = PsiTreeUtil.prevLeaf(element);
       PsiElement number;
       if (leaf != null && (number = leaf.getParent()) instanceof XPathNumber && ((XPathNumber)number).getXPathVersion() == XPathVersion.V2) {
@@ -237,7 +238,6 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       }
     }
 
-    checkExpression(myHolder, o);
     super.visitXPathBinaryExpression(o);
   }
 
@@ -293,7 +293,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   private static void markUnresolvedVariable(XPathVariableReference reference, AnnotationHolder holder) {
     final String referencedName = reference.getReferencedName();
     // missing name is already flagged by parser
-    if (referencedName.length() > 0) {
+    if (!referencedName.isEmpty()) {
       final TextRange range = reference.getTextRange().shiftRight(1).grown(-1);
       AnnotationBuilder builder =
         holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.unresolved.variable", referencedName))
@@ -497,8 +497,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     }
   }
 
-  @Nullable
-  private static XPathNodeTypeTest findNodeType(XPathExpression argument) {
+  private static @Nullable XPathNodeTypeTest findNodeType(XPathExpression argument) {
     final XPathNodeTest test = findNodeTest(argument);
     if (test != null && !test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
       return PsiTreeUtil.getChildOfType(test, XPathNodeTypeTest.class);
@@ -506,8 +505,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     return null;
   }
 
-  @Nullable
-  private static PrefixedName findQName(XPathExpression argument) {
+  private static @Nullable PrefixedName findQName(XPathExpression argument) {
     final XPathNodeTest test = findNodeTest(argument);
     if (test != null && test.isNameTest() && test.getPrincipalType() == XPathNodeTest.PrincipalType.ELEMENT) {
       return test.getQName();
@@ -515,8 +513,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     return null;
   }
 
-  @Nullable
-  private static XPathNodeTest findNodeTest(XPathExpression argument) {
+  private static @Nullable XPathNodeTest findNodeTest(XPathExpression argument) {
     if (argument instanceof XPathLocationPath) {
       final XPathStep step = ((XPathLocationPath)argument).getFirstStep();
       if (step != null && step.getPreviousStep() == null && step.getPredicates().length == 0) {

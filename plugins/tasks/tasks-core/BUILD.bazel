@@ -1,0 +1,44 @@
+### auto-generated section `build intellij.tasks.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.tasks.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/tasks/tasks-api:tasks",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/lang-impl",
+    "//platform/vcs-impl",
+    "//plugins/tasks/tasks-core/lib:axis-1-4",
+    "@lib//:xml_r_p_c",
+    "@lib//:gson",
+    "//xml/impl",
+    "//platform/core-api:core",
+    "//RegExpSupport:regexp",
+    "//platform/xdebugger-api:debugger",
+    "//platform/xdebugger-impl:debugger-impl",
+    "@lib//:http-client",
+    "//platform/tasks-platform-impl:tasks-impl",
+    "//platform/tasks-platform-api:tasks",
+    "//plugins/tasks/tasks-compatibility:compatibility",
+    "@lib//:tasks-core-commons-discovery",
+    "@lib//:javax-annotation-api",
+    "//platform/core-ui",
+    "@lib//:jsonpath",
+    "//platform/util/jdom",
+    "//platform/markdown-utils",
+  ],
+  exports = ["//plugins/tasks/tasks-core/lib:axis-1-4"],
+  runtime_deps = [":core_resources"]
+)
+### auto-generated section `build intellij.tasks.core` end

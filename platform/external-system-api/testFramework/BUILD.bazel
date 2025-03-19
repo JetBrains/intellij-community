@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.platform.externalSystem.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "externalSystem-testFramework",
+  module_name = "intellij.platform.externalSystem.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/testFramework",
+    "//platform/platform-util-io:ide-util-io",
+    "@lib//:assert_j",
+    "//java/java-impl:impl",
+    "//platform/workspace/jps",
+  ]
+)
+### auto-generated section `build intellij.platform.externalSystem.testFramework` end

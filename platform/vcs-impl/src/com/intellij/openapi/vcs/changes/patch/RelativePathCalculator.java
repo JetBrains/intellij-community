@@ -4,12 +4,14 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class RelativePathCalculator {
   private static final int MAX_STEPS_UP = 3; // max depth of ../../../../../../ chain
   private static final int MAX_STEPS_DOWN = 4; // max depth of ./very/deep/path/to/shifted/directory/

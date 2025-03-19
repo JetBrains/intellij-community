@@ -16,8 +16,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
@@ -41,7 +42,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Inspection to detect chained comparisons which can be simplified
  * For instance, a < b and b < c  -->  a < b < c
  */
-public class PyChainedComparisonsInspection extends PyInspection {
+public final class PyChainedComparisonsInspection extends PyInspection {
 
   private static final String INSPECTION_SHORT_NAME = "PyChainedComparisonsInspection";
   public boolean ignoreConstantInTheMiddle = false;
@@ -53,11 +54,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, ignoreConstantInTheMiddle, PyInspectionVisitor.getContext(session));
   }
 
@@ -112,10 +112,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
             if (!ignoreConstantInTheMiddle) {
               registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"),
                               new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
-                              new SetInspectionOptionFix(
+                              LocalQuickFix.from(new UpdateInspectionOptionFix(
                                 PyChainedComparisonsInspection.this, "ignoreConstantInTheMiddle",
                                 PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"),
-                                true));
+                                true)));
             }
           }
           else {
@@ -125,8 +125,8 @@ public class PyChainedComparisonsInspection extends PyInspection {
       }
     }
 
-    private boolean isRightSimplified(@NotNull final PyBinaryExpression leftExpression,
-                                      @NotNull final PyBinaryExpression rightExpression) {
+    private boolean isRightSimplified(final @NotNull PyBinaryExpression leftExpression,
+                                      final @NotNull PyBinaryExpression rightExpression) {
       final PyExpression leftRight = leftExpression.getRightExpression();
       if (leftRight instanceof PyBinaryExpression &&
           PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftRight).getOperator())) {
@@ -213,8 +213,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
       return result;
     }
 
-    @Nullable
-    private PyExpression getSmallestRight(PyBinaryExpression expression, boolean isRight) {
+    private @Nullable PyExpression getSmallestRight(PyBinaryExpression expression, boolean isRight) {
       PyExpression result = expression;
       while (result instanceof PyBinaryExpression &&
              (PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)result).getOperator()) ||

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.searching.usages
 
+import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.impl.rules.UsageType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
@@ -26,6 +27,7 @@ object KotlinUsageTypes {
         UsageTypeEnum.IMPLICIT_INVOKE -> IMPLICIT_INVOKE
         UsageTypeEnum.IMPLICIT_ITERATION -> IMPLICIT_ITERATION
         UsageTypeEnum.PROPERTY_DELEGATION -> PROPERTY_DELEGATION
+        UsageTypeEnum.SUPER_DELEGATION -> SUPER_DELEGATION
 
         UsageTypeEnum.RECEIVER -> RECEIVER
         UsageTypeEnum.DELEGATE -> DELEGATE
@@ -70,6 +72,7 @@ object KotlinUsageTypes {
     private val IMPLICIT_INVOKE = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.invoke"))
     private val IMPLICIT_ITERATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.implicit.iteration"))
     private val PROPERTY_DELEGATION = UsageType(KotlinBundle.lazyMessage("find.usages.type.property.delegation"))
+    private val SUPER_DELEGATION = UsageType(UsageViewBundle.messagePointer("usage.type.delegate.to.super.method"))
 
     // values
     val RECEIVER = UsageType(KotlinBundle.lazyMessage("find.usages.type.receiver"))

@@ -30,7 +30,7 @@ public class ClearConsoleAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
     if (consoleView != null) {
       consoleView.clear();

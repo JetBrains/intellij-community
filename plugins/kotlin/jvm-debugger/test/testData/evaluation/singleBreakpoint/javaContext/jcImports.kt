@@ -31,3 +31,5 @@ public class JavaClass {
         return list;
     }
 }
+
+// IGNORE_K2

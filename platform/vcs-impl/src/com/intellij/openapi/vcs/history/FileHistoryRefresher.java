@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.Disposable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,14 +21,15 @@ import java.util.concurrent.Future;
  *
  * @author Kirill Likhodedov
  */
+@ApiStatus.Internal
 public class FileHistoryRefresher implements FileHistoryRefresherI {
-  @NotNull private static final ExecutorService ourExecutor =
+  private static final @NotNull ExecutorService ourExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
-  @NotNull private final FileHistorySessionPartner mySessionPartner;
-  @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
-  @NotNull private final FilePath myPath;
-  @NotNull private final AbstractVcs myVcs;
-  @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
+  private final @NotNull FileHistorySessionPartner mySessionPartner;
+  private final @NotNull VcsHistoryProvider myVcsHistoryProvider;
+  private final @NotNull FilePath myPath;
+  private final @NotNull AbstractVcs myVcs;
+  private final @Nullable VcsRevisionNumber myStartingRevisionNumber;
   private boolean myFirstTime = true;
 
   public FileHistoryRefresher(@NotNull VcsHistoryProvider vcsHistoryProvider,
@@ -57,19 +59,17 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     request.schedule();
   }
 
-  @NotNull
-  public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProvider vcsHistoryProvider,
-                                                   @NotNull FilePath path,
-                                                   @NotNull AbstractVcs vcs) {
+  public static @NotNull FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProvider vcsHistoryProvider,
+                                                            @NotNull FilePath path,
+                                                            @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, null);
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, vcs) : refresher;
   }
 
-  @NotNull
-  public static FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProviderEx vcsHistoryProvider,
-                                                   @NotNull FilePath path,
-                                                   @NotNull AbstractVcs vcs,
-                                                   @Nullable VcsRevisionNumber startingRevisionNumber) {
+  public static @NotNull FileHistoryRefresherI findOrCreate(@NotNull VcsHistoryProviderEx vcsHistoryProvider,
+                                                            @NotNull FilePath path,
+                                                            @NotNull AbstractVcs vcs,
+                                                            @Nullable VcsRevisionNumber startingRevisionNumber) {
     FileHistoryRefresherI refresher =
       FileHistorySessionPartner.findExistingHistoryRefresher(vcs.getProject(), path, startingRevisionNumber);
     return refresher == null ? new FileHistoryRefresher(vcsHistoryProvider, path, startingRevisionNumber, vcs) : refresher;
@@ -110,7 +110,7 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   }
 
   private class RefreshRequest implements Runnable {
-    @NotNull private final Alarm myUpdateAlarm;
+    private final @NotNull Alarm myUpdateAlarm;
     private final int myDelayMillis;
     @Nullable Future<?> myLastTask;
 

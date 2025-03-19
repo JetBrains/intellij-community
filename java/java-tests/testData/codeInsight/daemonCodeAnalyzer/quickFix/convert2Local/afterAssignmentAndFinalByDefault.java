@@ -2,8 +2,8 @@
 class Test {
 
     int getFoo1(boolean f) {
-      int myFoo;
-      if (f) {
+        int myFoo;
+        if (f) {
       myFoo = 1;
     }
     else {

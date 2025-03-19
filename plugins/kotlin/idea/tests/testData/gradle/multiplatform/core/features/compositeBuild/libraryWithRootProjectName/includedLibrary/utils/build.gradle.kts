@@ -11,9 +11,8 @@ kotlin {
     jvm()
     linuxX64()
     linuxArm64()
-    targetHierarchy.default()
 
-    sourceSets.commonMain.get().dependencies {
+    sourceSets.commonMain.dependencies {
         api(project(":"))
     }
 }

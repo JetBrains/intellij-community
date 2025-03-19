@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
@@ -40,10 +40,8 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 
   private static final int MAX_PATH_LENGTH = 40;
-  @NotNull
-  private final Project myProject;
-  @Nullable
-  private final GradleProjectSettings myCompositeRootSettings;
+  private final @NotNull Project myProject;
+  private final @Nullable GradleProjectSettings myCompositeRootSettings;
   private JPanel mainPanel;
   private JPanel contentPanel;
   @SuppressWarnings("unused")
@@ -62,9 +60,8 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTree).
       addExtraAction(new SelectAllButton()).
       addExtraAction(new UnselectAllButton()).
@@ -160,7 +157,7 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     }
   }
 
-  private class SelectAllButton extends AnActionButton {
+  private class SelectAllButton extends DumbAwareAction {
     SelectAllButton() {
       super(GradleBundle.messagePointer("gradle.settings.composite.select.all"), AllIcons.Actions.Selectall);
     }
@@ -170,14 +167,9 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
       walkTree(node -> node.setChecked(true));
       ((DefaultTreeModel)myTree.getModel()).reload();
     }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
   }
 
-  private class UnselectAllButton extends AnActionButton {
+  private class UnselectAllButton extends DumbAwareAction {
     UnselectAllButton() {
       super(GradleBundle.messagePointer("gradle.settings.composite.unselect.all"), AllIcons.Actions.Unselectall);
     }
@@ -186,11 +178,6 @@ public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
     public void actionPerformed(@NotNull AnActionEvent e) {
       walkTree(node -> node.setChecked(false));
       ((DefaultTreeModel)myTree.getModel()).reload();
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
   }
 }

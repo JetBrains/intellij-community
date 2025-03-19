@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
@@ -26,9 +26,8 @@ public class RemoteServerComboWithAutoDetect<S extends ServerConfiguration> exte
     super(serverType);
   }
 
-  @NotNull
   @Override
-  protected ServerItem getNoServersItem() {
+  protected @NotNull ServerItem getNoServersItem() {
     return getServerType().canAutoDetectConfiguration() ? findOrCreateAutoDetectedItem() : super.getNoServersItem();
   }
 
@@ -113,15 +112,13 @@ public class RemoteServerComboWithAutoDetect<S extends ServerConfiguration> exte
       }
     }
 
-    @Nullable
     @Override
-    public String getServerName() {
+    public @Nullable String getServerName() {
       return null;
     }
 
-    @Nullable
     @Override
-    public RemoteServer<S> findRemoteServer() {
+    public @Nullable RemoteServer<S> findRemoteServer() {
       return myServerInstance;
     }
 

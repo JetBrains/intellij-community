@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
@@ -91,19 +91,19 @@ public class LibraryOptionsPanel implements Disposable {
 
   private RadioButtonEnumModel<Choice> myButtonEnumModel;
 
-  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
-                             @NotNull final String path,
-                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
-                             @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
+                             final @NotNull String path,
+                             final @NotNull FrameworkLibraryVersionFilter versionFilter,
+                             final @NotNull LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
 
     this(libraryDescription, () -> path, versionFilter, librariesContainer, showDoNotCreateOption);
   }
 
-  public LibraryOptionsPanel(@NotNull final CustomLibraryDescription libraryDescription,
-                             @NotNull final NotNullComputable<String> pathProvider,
-                             @NotNull final FrameworkLibraryVersionFilter versionFilter,
-                             @NotNull final LibrariesContainer librariesContainer,
+  public LibraryOptionsPanel(final @NotNull CustomLibraryDescription libraryDescription,
+                             final @NotNull NotNullComputable<String> pathProvider,
+                             final @NotNull FrameworkLibraryVersionFilter versionFilter,
+                             final @NotNull LibrariesContainer librariesContainer,
                              final boolean showDoNotCreateOption) {
     myLibraryDescription = libraryDescription;
     myLibrariesContainer = librariesContainer;
@@ -112,7 +112,7 @@ public class LibraryOptionsPanel implements Disposable {
       showCard("loading");
       description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<>() {
         @Override
-        public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
+        public void onSuccess(final @NotNull List<? extends FrameworkLibraryVersion> versions) {
           SwingUtilities.invokeLater(() -> {
             if (!myDisposed) {
               showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
@@ -128,8 +128,7 @@ public class LibraryOptionsPanel implements Disposable {
     }
   }
 
-  @Nullable
-  private String getPresentableVersion() {
+  private @Nullable String getPresentableVersion() {
     switch (myButtonEnumModel.getSelected()) {
       case DOWNLOAD -> {
         LibraryDownloadSettings settings = mySettings.getDownloadSettings();
@@ -157,8 +156,7 @@ public class LibraryOptionsPanel implements Disposable {
     return mySimplePanel;
   }
 
-  @Nullable
-  private static DownloadableLibraryDescription getDownloadableDescription(CustomLibraryDescription libraryDescription) {
+  private static @Nullable DownloadableLibraryDescription getDownloadableDescription(CustomLibraryDescription libraryDescription) {
     final DownloadableLibraryType type = libraryDescription.getDownloadableLibraryType();
     if (type != null) return type.getLibraryDescription();
     if (libraryDescription instanceof OldCustomLibraryDescription) {
@@ -175,7 +173,7 @@ public class LibraryOptionsPanel implements Disposable {
                                  NotNullComputable<String> pathProvider,
                                  FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
-    //todo[nik] create mySettings only in apply() method
+    //todo create mySettings only in apply() method
     mySettings = new LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
@@ -292,7 +290,7 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
         List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
@@ -304,9 +302,8 @@ public class LibraryOptionsPanel implements Disposable {
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }
-        break;
-
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
@@ -315,11 +312,9 @@ public class LibraryOptionsPanel implements Disposable {
             WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
-        break;
-
-      case USE_FROM_PROVIDER:
-      case SETUP_LIBRARY_LATER:
-        break;
+      }
+      case USE_FROM_PROVIDER, SETUP_LIBRARY_LATER -> {
+      }
     }
     updateState();
   }
@@ -378,8 +373,7 @@ public class LibraryOptionsPanel implements Disposable {
     return suitableLibraries;
   }
 
-  @Nullable
-  private VirtualFile getBaseDirectory() {
+  private @Nullable VirtualFile getBaseDirectory() {
     String path = mySettings.getBaseDirectoryPath();
     VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(path);
     if (dir == null) {
@@ -427,8 +421,7 @@ public class LibraryOptionsPanel implements Disposable {
           message = JavaUiBundle.message("library.options.panel.update.state.error.library.is.not.specified");
           myConfigureButton.setVisible(false);
         }
-        else if (item instanceof NewLibraryEditor) {
-          final LibraryEditor libraryEditor = (LibraryEditor)item;
+        else if (item instanceof NewLibraryEditor libraryEditor) {
           message = JavaUiBundle.message("label.library.will.be.created.description.text", mySettings.getNewLibraryLevel(),
                                          libraryEditor.getName(), libraryEditor.getFiles(OrderRootType.CLASSES).length);
         }
@@ -479,8 +472,7 @@ public class LibraryOptionsPanel implements Disposable {
     return mySettings;
   }
 
-  @Nullable
-  public LibraryCompositionSettings apply() {
+  public @Nullable LibraryCompositionSettings apply() {
     if (mySettings == null) return null;
 
     final Choice option = myButtonEnumModel.getSelected();

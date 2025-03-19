@@ -3,19 +3,18 @@ package com.intellij.util.io.pagecache;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.FilePageCacheLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 
-import java.io.Flushable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
  * Page: region of file, 'mapped' into memory. Part of our own file page cache
- * implementation, {@link com.intellij.util.io.PagedFileStorageLockFree}
+ * implementation, {@link PagedFileStorageWithRWLockedPageContent}
  * <p>
  *
  * @see FilePageCacheLockFree
  */
-public interface Page extends AutoCloseable, Flushable {
+public interface Page extends AutoCloseable {
   int pageSize();
 
   int pageIndex();
@@ -40,12 +39,7 @@ public interface Page extends AutoCloseable, Flushable {
   @Override
   void close();
 
-  boolean isDirty();
-
-  @Override
-  void flush() throws IOException;
-
-  //=============================================================================================
+  //===== page content access: ================================================================================
   //RC: There are several different ways to access/modify page content:
   //    Lambda-based .read() and .write() methods: I plan them to be the default option for
   //    accessing page content -- this is the safest way, since all locking, page state checking,
@@ -77,30 +71,6 @@ public interface Page extends AutoCloseable, Flushable {
   <OUT, E extends Exception> OUT write(final int startOffsetOnPage,
                                        final int length,
                                        final ThrowableNotNullFunction<ByteBuffer, OUT, E> writer) throws E;
-
-  //=============================================================================================
-  // BEWARE: low-level & unsafe page data access methods:
-
-  /**
-   * Direct reference to internal buffer returned. This is an unsafe method to access the data. It is
-   * the responsibility of the caller to ensure appropriate read/write lock is acquired, and
-   * page is kept 'in use' (i.e. not .close()-ed) for all the period of using the returned buffer.
-   * <p/>
-   * Returned buffer should be used only in 'absolute positioning' way, i.e. without any access to
-   * buffer.position() and buffer.limit() cursors. Use .slice()/.duplicate() if you want/need to
-   * use cursors.
-   * <p/>
-   * If caller modifies content of the returned buffer, the caller <b>must</b> inform page about
-   * modifications via approriate {@link #regionModified(int, int)} call.
-   */
-  ByteBuffer rawPageBuffer();
-
-  /**
-   * Must be called only under page writeLock. To be used only with writes via {@link #rawPageBuffer()}
-   * as a way to inform page about a buffer region that was really modified.
-   */
-  void regionModified(final int startOffsetModified,
-                      final int length);
 
   //=============================================================================================
 

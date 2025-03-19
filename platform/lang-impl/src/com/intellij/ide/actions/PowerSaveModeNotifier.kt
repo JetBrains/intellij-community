@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
@@ -17,13 +17,15 @@ import com.intellij.openapi.util.Disposer
 internal class PowerSaveModeNotifier : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (PowerSaveMode.isEnabled()) {
-      notifyOnPowerSaveMode(project)
+      Util.notifyOnPowerSaveMode(project)
     }
   }
 
-  companion object {
+  object Util {
+
     private const val IGNORE_POWER_SAVE_MODE = "ignore.power.save.mode"
 
+    @JvmStatic
     fun notifyOnPowerSaveMode(project: Project?) {
       if (PropertiesComponent.getInstance().getBoolean(IGNORE_POWER_SAVE_MODE)) {
         return

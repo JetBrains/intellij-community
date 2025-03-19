@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,8 +20,24 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/usageHighlighter")
 public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("class.kt")
+    public void testClass() throws Exception {
+        runTest("testData/usageHighlighter/class.kt");
+    }
+
+    @TestMetadata("classRef.kt")
+    public void testClassRef() throws Exception {
+        runTest("testData/usageHighlighter/classRef.kt");
     }
 
     @TestMetadata("destructingDeclaration.kt")
@@ -31,6 +48,11 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     @TestMetadata("destructingDeclarationLambdaParams.kt")
     public void testDestructingDeclarationLambdaParams() throws Exception {
         runTest("testData/usageHighlighter/destructingDeclarationLambdaParams.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier.kt")
+    public void testFunctionNameIdentifier() throws Exception {
+        runTest("testData/usageHighlighter/functionNameIdentifier.kt");
     }
 
     @TestMetadata("implicitIt.kt")
@@ -106,5 +128,10 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     @TestMetadata("localVal.kt")
     public void testLocalVal() throws Exception {
         runTest("testData/usageHighlighter/localVal.kt");
+    }
+
+    @TestMetadata("primaryCtor.kt")
+    public void testPrimaryCtor() throws Exception {
+        runTest("testData/usageHighlighter/primaryCtor.kt");
     }
 }

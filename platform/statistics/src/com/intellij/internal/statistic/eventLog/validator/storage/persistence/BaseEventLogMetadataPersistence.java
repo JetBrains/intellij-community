@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 
 import com.intellij.openapi.application.PathManager;
@@ -12,14 +12,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-abstract public class BaseEventLogMetadataPersistence {
+public abstract class BaseEventLogMetadataPersistence {
   private static final Logger LOG = Logger.getInstance(BaseEventLogMetadataPersistence.class);
 
   public static final String DEPRECATED_FUS_METADATA_DIR = "event-log-whitelist";
   public static final String FUS_METADATA_DIR = "event-log-metadata";
 
-  @Nullable
-  public abstract String getCachedEventsScheme();
+  /**
+   * This property should be only used in cases when it's impossible to set up a custom schema in another way,
+   * e.g., via the Statistics Event Log tool window.
+   * In particular, this allows applying a custom schema during the initial IDE startup.
+   */
+  private static final String CUSTOM_FUS_SCHEMA_DIR_PROPERTY = "intellij.fus.custom.schema.dir";
+
+  public abstract @Nullable String getCachedEventsScheme();
 
   public static Path getDefaultMetadataFile(@NotNull String recorderId,
                                             @NotNull String fileName,
@@ -47,8 +53,7 @@ abstract public class BaseEventLogMetadataPersistence {
     return file;
   }
 
-  @NotNull
-  public static Path getDeprecatedMetadataDir() {
+  public static @NotNull Path getDeprecatedMetadataDir() {
     return getMetadataConfigRoot(DEPRECATED_FUS_METADATA_DIR);
   }
 
@@ -60,8 +65,12 @@ abstract public class BaseEventLogMetadataPersistence {
       .normalize().toAbsolutePath();
   }
 
-  @NotNull
-  private static Path getMetadataConfigRoot(@NotNull String dir) {
+  private static @NotNull Path getMetadataConfigRoot(@NotNull String dir) {
+    String customFusPath = System.getProperty(CUSTOM_FUS_SCHEMA_DIR_PROPERTY);
+    if (!StringUtil.isEmpty(customFusPath)) {
+      return Path.of(customFusPath);
+    }
+
     return PathManager.getConfigDir().resolve(dir);
   }
 }

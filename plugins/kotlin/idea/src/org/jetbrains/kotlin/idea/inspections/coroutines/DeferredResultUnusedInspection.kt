@@ -42,24 +42,23 @@ class DeferredResultUnusedInspection(@JvmField var standardOnly: Boolean = false
 
   override fun getOptionsPane() = pane(
     checkbox("standardOnly", KotlinBundle.message("reports.only.function.calls.from.kotlinx.coroutines")))
-
-    companion object {
-        private const val COROUTINE_PACKAGE = "kotlinx.coroutines"
-        private const val COROUTINE_EXPERIMENTAL_PACKAGE = "kotlinx.coroutines.experimental"
-
-        private val shortNames = setOf("async")
-
-        private val fqNames: Set<FqName> = shortNames.mapTo(mutableSetOf()) { FqName("$COROUTINE_PACKAGE.$it") }
-
-        private val fqNamesExperimental: Set<FqName> = shortNames.mapTo(mutableSetOf()) { FqName("$COROUTINE_EXPERIMENTAL_PACKAGE.$it") }
-
-        private val fqNamesAll = fqNames + fqNamesExperimental
-
-        private val deferred = FqName("$COROUTINE_PACKAGE.Deferred")
-
-        private val deferredExperimental = FqName("$COROUTINE_EXPERIMENTAL_PACKAGE.Deferred")
-
-        private val fqNamesThatShouldNotBeReported =
-            listOf("kotlin.test.assertNotNull", "kotlin.requireNotNull", "kotlin.checkNotNull").map { FqName(it) }
-    }
 }
+
+private const val COROUTINE_PACKAGE = "kotlinx.coroutines"
+
+private const val COROUTINE_EXPERIMENTAL_PACKAGE = "kotlinx.coroutines.experimental"
+
+private val shortNames = setOf("async")
+
+private val fqNames: Set<FqName> = shortNames.mapTo(mutableSetOf()) { FqName("$COROUTINE_PACKAGE.$it") }
+
+private val fqNamesExperimental: Set<FqName> = shortNames.mapTo(mutableSetOf()) { FqName("$COROUTINE_EXPERIMENTAL_PACKAGE.$it") }
+
+private val fqNamesAll = fqNames + fqNamesExperimental
+
+private val deferred = FqName("$COROUTINE_PACKAGE.Deferred")
+
+private val deferredExperimental = FqName("$COROUTINE_EXPERIMENTAL_PACKAGE.Deferred")
+
+private val fqNamesThatShouldNotBeReported =
+    listOf("kotlin.test.assertNotNull", "kotlin.requireNotNull", "kotlin.checkNotNull").map { FqName(it) }

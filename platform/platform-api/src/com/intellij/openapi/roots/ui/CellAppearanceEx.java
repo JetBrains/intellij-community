@@ -8,9 +8,5 @@ import org.jetbrains.annotations.NotNull;
 public interface CellAppearanceEx {
   @NotNull @ListItem String getText();
 
-  /** @deprecated don't implement this method - it's never called */
-  @Deprecated(forRemoval = true)
-  default void customize(@SuppressWarnings("ALL") com.intellij.ui.HtmlListCellRenderer renderer) { }
-
   void customize(@NotNull SimpleColoredComponent component);
 }

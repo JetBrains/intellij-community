@@ -1,0 +1,16 @@
+fun foo() {
+    bar { val a: Foo = this + this }
+}
+
+interface Foo {
+
+    operator fun Foo.plus(foo: Foo): Foo = foo
+
+    fun m() {
+        val f = this + this
+    }
+}
+
+fun bar(a: Foo.() -> Unit) {}
+
+// IGNORE_K1

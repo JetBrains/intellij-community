@@ -3,96 +3,51 @@ package org.jetbrains.sqlite
 
 class SqliteIntPreparedStatement internal constructor(private val connection: SqliteConnection, private val sql: String) : SqliteStatement {
   private val pointer: SafeStatementPointer
-
-  private var batchPosition = 0
-  private var batch: IntArray
-
-  var isClosed = false
-    private set
-
-  private val columnCount: Int
-  private val paramCount: Int
-  private var batchQueryCount: Int
+  val binder: IntBinder
 
   init {
-    val db = connection.db
-    synchronized(db) {
-      pointer = db.prepareForStatement(sql.encodeToByteArray())
-      columnCount = db.column_count(pointer.pointer)
+    lateinit var pointer: SafeStatementPointer
+    var paramCount = 0
+    connection.useDb { db ->
+      pointer = db.addStatement(SafeStatementPointer(connection = connection, pointer = db.prepare_utf8(sql.encodeToByteArray())))
       paramCount = db.bind_parameter_count(pointer.pointer)
     }
-
     require(paramCount > 0)
 
-    batchQueryCount = 0
+    this.pointer = pointer
     // pre-allocate twice more than needed to reduce overall allocations
-    batch = IntArray(paramCount * 2)
-    batchPosition = 0
+    binder = IntBinder(paramCount, paramCount * 2)
   }
 
   override fun close() {
-    internalClose()
-    isClosed = true
-  }
-
-  private fun internalClose() {
-    val pointer = pointer.takeIf { !it.isClosed } ?: return
-    check(!connection.isClosed) { "Connection is closed" }
-
-    batchPosition = 0
-    val status = pointer.close()
-    if (status != SqliteCodes.SQLITE_OK && status != SqliteCodes.SQLITE_MISUSE) {
-      throw connection.db.newException(status)
+    connection.useDb { db ->
+      pointer.close(db)
     }
   }
 
   override fun toString(): String = sql
 
+  fun ensureCapacity(count: Int) {
+    binder.ensureCapacity(count)
+  }
+
   fun addBatch() {
-    batchPosition += paramCount
-    batchQueryCount++
-    val batch = batch
-    if ((batchPosition + paramCount) > batch.size) {
-      val newBatch = IntArray(batch.size * 2)
-      batch.copyInto(newBatch)
-      this.batch = newBatch
-    }
+    binder.addBatch()
   }
 
   override fun executeBatch() {
-    if (batchQueryCount == 0) {
+    if (binder.batchQueryCount == 0) {
       return
     }
 
     try {
-      val db = connection.db
-      synchronized(db) {
+      connection.useDb { db ->
         pointer.ensureOpen()
-        for (batchIndex in 0 until batchQueryCount) {
-          db.reset(pointer.pointer)
-          for (position in 0 until paramCount) {
-            val status = db.bind_int(pointer.pointer, position + 1, batch[batchIndex * paramCount + position]) and 0xFF
-            if (status != SqliteCodes.SQLITE_OK) {
-              throw db.newException(status)
-            }
-          }
-
-          stepInBatch(statementPointer = pointer.pointer, db = db, batchIndex = batchIndex)
-        }
-        db.reset(pointer.pointer)
+        binder.executeBatch(pointer.pointer, db)
       }
     }
     finally {
-      clearBatch()
+      binder.clearBatch()
     }
-  }
-
-  private fun clearBatch() {
-    batchPosition = 0
-    batchQueryCount = 0
-  }
-
-  fun setInt(position: Int, value: Int) {
-    batch[(batchPosition + position) - 1] = value
   }
 }

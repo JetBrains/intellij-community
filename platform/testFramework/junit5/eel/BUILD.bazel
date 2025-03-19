@@ -1,0 +1,56 @@
+### auto-generated section `build intellij.platform.testFramework.junit5.eel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "testFramework-junit5-eel",
+  module_name = "intellij.platform.testFramework.junit5.eel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/testFramework/junit5",
+    "//platform/util",
+    "//platform/util-ex",
+  ]
+)
+
+jvm_library(
+  name = "testFramework-junit5-eel_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":testFramework-junit5-eel"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:junit5",
+    "@lib//:junit5Jupiter",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5Params",
+    "//platform/core-api:core",
+    "//platform/core-nio-fs",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
+    "//platform/ide-core",
+    "//platform/ide-core-impl",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util",
+    "//platform/util-ex",
+  ]
+)
+
+jvm_test(
+  name = "testFramework-junit5-eel_test",
+  runtime_deps = [":testFramework-junit5-eel_test_lib"]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.eel` end

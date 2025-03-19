@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.tools.holders.EditorHolder;
@@ -23,6 +9,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,15 +18,15 @@ import java.awt.*;
 import java.util.List;
 
 public class TwosideContentPanel extends JPanel {
-  @NotNull private final DiffSplitter mySplitter;
-  @NotNull private final List<DiffContentPanel> myPanels;
+  private final @NotNull DiffSplitter mySplitter;
+  private final @NotNull List<DiffContentPanel> myPanels;
 
   public TwosideContentPanel(@NotNull List<? extends JComponent> contents) {
     super(new BorderLayout());
     assert contents.size() == 2;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
-    DiffContentPanel.syncTitleHeights(myPanels);
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new DiffSplitter();
     mySplitter.setFirstComponent(Side.LEFT.select(myPanels));
@@ -48,7 +35,7 @@ public class TwosideContentPanel extends JPanel {
     add(mySplitter, BorderLayout.CENTER);
   }
 
-  public void setTitles(@NotNull List<? extends JComponent> titleComponents) {
+  public void setTitles(@NotNull List<? extends @Nullable JComponent> titleComponents) {
     for (Side side : Side.values()) {
       DiffContentPanel panel = side.select(myPanels);
       JComponent title = side.select(titleComponents);
@@ -56,6 +43,7 @@ public class TwosideContentPanel extends JPanel {
     }
   }
 
+  @ApiStatus.Internal
   public void setBreadcrumbs(@NotNull Side side, @Nullable DiffBreadcrumbsPanel breadcrumbs, @NotNull TextDiffSettings settings) {
     if (breadcrumbs != null) {
       DiffContentPanel panel = side.select(myPanels);
@@ -88,13 +76,16 @@ public class TwosideContentPanel extends JPanel {
     mySplitter.repaintDivider();
   }
 
-  @NotNull
-  public DiffSplitter getSplitter() {
+  public @NotNull DiffSplitter getSplitter() {
     return mySplitter;
   }
 
-  @NotNull
-  public static TwosideContentPanel createFromHolders(@NotNull List<? extends EditorHolder> holders) {
-    return new TwosideContentPanel(ContainerUtil.map(holders, holder -> holder.getComponent()));
+  public static @NotNull TwosideContentPanel createFromHolders(@NotNull List<? extends EditorHolder> holders) {
+    TwosideContentPanel panel = new TwosideContentPanel(ContainerUtil.map(holders, holder -> holder.getComponent()));
+
+    EditorHolder holder = Side.RIGHT.select(holders);
+    panel.mySplitter.redispatchWheelEventsTo(holder);
+
+    return panel;
   }
 }

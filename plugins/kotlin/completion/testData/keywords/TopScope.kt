@@ -43,4 +43,6 @@
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
+// EXIST: data object
+// EXIST: {"lookupString":"data object TopScope", "itemText":"data object TopScope"}
 // NOTHING_ELSE

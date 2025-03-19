@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class PlatformActionsReplacer {
 
   private static final Logger logger = Logger.getInstance(PlatformActionsReplacer.class);

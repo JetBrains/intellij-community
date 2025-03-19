@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="com.intellij.tools.apiDump" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module-library">
+      <library name="kotlinx-bcv" type="repository">
+        <properties maven-id="org.jetbrains.kotlinx:binary-compatibility-validator:0.14.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0.jar">
+              <sha256sum>bc4224bdfd69330aa9d3f90914f0bd41fa3bb8eb7741d7f65a925404c0e55807</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2.jar">
+              <sha256sum>8f5759b435fcbcfdf06c80295013ba953db4ec817b04d7809c61a739a483527b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar">
+              <sha256sum>3c6fac2424db3d4a853b669f4e3d1d9c3c552235e19a319673f887083c2303a1</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar">
+              <sha256sum>c43ecf17b539c777e15da7b5b86553b377e2d39a683de6285567d5283888e7ef</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/binary-compatibility-validator/0.14.0/binary-compatibility-validator-0.14.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-metadata-jvm/0.6.2/kotlinx-metadata-jvm-0.6.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+  </component>
+</module>

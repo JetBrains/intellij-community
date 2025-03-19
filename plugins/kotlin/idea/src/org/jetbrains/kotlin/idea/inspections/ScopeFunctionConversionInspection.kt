@@ -5,12 +5,11 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -25,7 +24,6 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -188,7 +186,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         val lambdaExtensionReceiver = lambdaDescriptor.extensionReceiverParameter
         val lambdaDispatchReceiver = lambdaDescriptor.dispatchReceiverParameter
 
-        var parameterName = "it"
+        var parameterName = StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
         val scopes = mutableSetOf<LexicalScope>()
         if (functionLiteral != null && needUniqueNameForParameter(lambda, scopes)) {
             val parameterType = lambdaExtensionReceiver?.type ?: lambdaDispatchReceiver?.type
@@ -255,7 +253,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         val resolutionScope = lambdaArgument.getResolutionScope()
         scopes.add(resolutionScope)
         var needUniqueName = false
-        if (resolutionScope.findVariable(Name.identifier("it"), NoLookupLocation.FROM_IDE) != null) {
+        if (resolutionScope.findVariable(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME, NoLookupLocation.FROM_IDE) != null) {
             needUniqueName = true
             // Don't return here - we still need to gather the list of nested scopes
         }
@@ -274,7 +272,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
             private fun checkNeedUniqueName(dcl: KtElement) {
                 val nestedResolutionScope = dcl.getResolutionScope()
                 scopes.add(nestedResolutionScope)
-                if (nestedResolutionScope.findVariable(Name.identifier("it"), NoLookupLocation.FROM_IDE) != null) {
+                if (nestedResolutionScope.findVariable(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME, NoLookupLocation.FROM_IDE) != null) {
                     needUniqueName = true
                 }
             }
@@ -295,7 +293,7 @@ class ConvertScopeFunctionToParameter(counterpartName: String) : ConvertScopeFun
         return if (parameterType != null)
             Fe10KotlinNameSuggester.suggestNamesByType(parameterType, ::isNameUnique).first()
         else {
-            Fe10KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
+            KotlinNameSuggester.suggestNameByName("p", ::isNameUnique)
         }
     }
 }
@@ -310,7 +308,7 @@ class ConvertScopeFunctionToReceiver(counterpartName: String) : ConvertScopeFunc
         lambda.accept(object : KtTreeVisitorVoid() {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 super.visitSimpleNameExpression(expression)
-                if (expression.getReferencedName() == "it") {
+                if (expression.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                     val result = expression.resolveMainReferenceToDescriptors().singleOrNull()
                     if (result is ValueParameterDescriptor && result.containingDeclaration == lambdaDescriptor) {
                         replacements.add(expression) { createThisExpression() }

@@ -1,10 +1,10 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal
+from _typeshed import Incomplete
+from typing import ClassVar, Literal
 
 from .ImageFile import ImageFile
 
 class BitStream:
-    fp: Any
+    fp: Incomplete
     bits: int
     bitbuffer: int
     def __init__(self, fp) -> None: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -18,7 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-public class TemplateExpandShortcutPanel extends JPanel {
+public final class TemplateExpandShortcutPanel extends JPanel {
   private final JComboBox<String> myExpandByCombo;
   private final HyperlinkLabel myOpenKeymapLabel;
 
@@ -68,7 +68,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
     for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
       myExpandByCombo.addItem(s);
     }
-    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", (@ListItem String value) -> {
+    myExpandByCombo.setRenderer(BuilderKt.textListCellRenderer("", (@ListItem String value) -> {
       if (Strings.areSameInstance(value, getCustom())) {
         Shortcut[] shortcuts = getCurrentCustomShortcuts();
         String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
@@ -87,7 +87,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
         }
       }
 
-      private boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
+      private static boolean isConfigurableOpenEvent(PropertyChangeEvent evt) {
         return evt.getPropertyName().equals("ancestor") && evt.getNewValue() != null && evt.getOldValue() == null;
       }
     });

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
+import com.intellij.find.impl.FindSettingsImpl;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -19,12 +20,14 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Objects;
 
 public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   private final Project myProject;
@@ -67,6 +70,13 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     setOKButtonText(FindBundle.message("find.dialog.find.button"));
     setTitle(FindBundle.message(isSingleFile ? "find.usages.in.file.dialog.title" : "find.usages.dialog.title"));
+  }
+
+  @ApiStatus.Internal
+  void waitWithModalProgressUntilInitialized() {
+    if (myScopeCombo != null) { // some dialogs don't even initialize, consider initialization complete for them
+      myScopeCombo.waitWithModalProgressUntilInitialized();
+    }
   }
 
   @Override
@@ -121,8 +131,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  public final FindUsagesOptions calcFindUsagesOptions() {
+  public final @NotNull FindUsagesOptions calcFindUsagesOptions() {
     calcFindUsagesOptions(myFindUsagesOptions);
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
@@ -138,9 +147,16 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   public void calcFindUsagesOptions(FindUsagesOptions options) {
-    options.searchScope = myScopeCombo == null || myScopeCombo.getSelectedScope() == null
-                          ? GlobalSearchScope.allScope(myProject)
-                          : myScopeCombo.getSelectedScope();
+    var noUserSelectedScope = myScopeCombo == null || myScopeCombo.getSelectedScope() == null;
+    if (noUserSelectedScope) {
+      // This happens when the dialog doesn't even have a scope combo box, e.g., when searching for usages of a private method.
+      // In this case, we use the "All" scope, and we don't save it, as it doesn't make any sense.
+      options.searchScope = GlobalSearchScope.allScope(myProject);
+    }
+    else {
+      options.searchScope = myScopeCombo.getSelectedScope();
+      FindUsagesSettings.getInstance().setDefaultScopeName(options.searchScope.getDisplayName());
+    }
 
     options.isSearchForTextOccurrences = isToChange(myCbToSearchForTextOccurrences) && isSelected(myCbToSearchForTextOccurrences);
   }
@@ -160,7 +176,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   protected void doOKAction() {
     if (!shouldDoOkAction()) return;
 
-    FindSettings settings = FindSettings.getInstance();
+    FindUsagesSettings settings = FindUsagesSettings.getInstance();
 
     if (myScopeCombo != null) {
       settings.setDefaultScopeName(myScopeCombo.getSelectedScopeName());
@@ -188,7 +204,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb != null && cb.getParent() != null && cb.isSelected();
   }
 
-  protected StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, JPanel panel, boolean toUpdate) {
+  protected @NotNull StateRestoringCheckBox addCheckboxToPanel(@NlsContexts.Checkbox String name, boolean toSelect, @NotNull JPanel panel, boolean toUpdate) {
     StateRestoringCheckBox cb = createCheckbox(name, toSelect, toUpdate);
     JComponent decoratedCheckbox = new ComponentPanelBuilder(cb).createPanel();
     decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -198,7 +214,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return cb;
   }
 
-  protected StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
+  protected @NotNull StateRestoringCheckBox createCheckbox(@NlsContexts.Checkbox String name, boolean toSelect, boolean toUpdate) {
     StateRestoringCheckBox cb = new StateRestoringCheckBox(name);
     cb.setSelected(toSelect);
     cb.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -241,8 +257,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return findWhatPanel;
   }
 
-  @Nullable
-  protected JPanel createFindWhatPanel() {
+  protected @Nullable JPanel createFindWhatPanel() {
     if (mySearchForTextOccurrencesAvailable || myIsShowInNewTabVisible) {
       JPanel findWhatPanel = new JPanel();
       findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
@@ -251,7 +266,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return null;
   }
 
-  protected void addUsagesOptions(JPanel panel) {
+  protected void addUsagesOptions(@NotNull JPanel panel) {
     if (mySearchForTextOccurrencesAvailable) {
       myCbToSearchForTextOccurrences = addCheckboxToPanel(FindBundle.message("find.options.search.for.text.occurrences.checkbox"),
                                                          myFindUsagesOptions.isSearchForTextOccurrences, panel, false);
@@ -259,15 +274,19 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
 
     if (myIsShowInNewTabVisible) {
       myCbToSkipResultsWhenOneUsage = addCheckboxToPanel(FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"),
-                                                         FindSettings.getInstance().isSkipResultsWithOneUsage(), panel, false);
+                                                         FindUsagesSettings.getInstance().isSkipResultsWithOneUsage(), panel, false);
     }
   }
 
-  @Nullable
-  private JComponent createSearchScopePanel() {
+  private @Nullable JComponent createSearchScopePanel() {
     if (isInFileOnly()) return null;
     JPanel optionsPanel = new JPanel(new BorderLayout());
-    String scope = myFindUsagesOptions.searchScope.getDisplayName();
+    String scope = FindUsagesSettings.getInstance().getDefaultScopeName();
+    // The default name means we have to fall back to whatever the default scope is set in FindUsagesOptions.
+    // (The default name itself doesn't correspond to any real scope name anyway.)
+    if (Objects.equals(scope, FindSettingsImpl.getDefaultSearchScope())) {
+      scope = FindUsagesOptions.getDefaultScope(myProject).getDisplayName();
+    }
     myScopeCombo = new ScopeChooserCombo(myProject, mySearchInLibrariesAvailable, true, scope);
     Disposer.register(myDisposable, myScopeCombo);
     optionsPanel.add(myScopeCombo, BorderLayout.CENTER);
@@ -277,8 +296,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return optionsPanel;
   }
 
-  @Nullable
-  protected JComponent getPreferredFocusedControl() {
+  protected @Nullable JComponent getPreferredFocusedControl() {
     return null;
   }
 
@@ -290,7 +308,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     return getPreferredFocusedControl();
   }
 
-  private static class Title extends JPanel {
+  private static final class Title extends JPanel {
     private Title(@NlsContexts.Separator String text, @NotNull Border border, @Nullable JComponent labelFor) {
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
       setBorder(border);
@@ -301,7 +319,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     }
   }
 
-  private static class TitleLabel extends JBLabel {
+  private static final class TitleLabel extends JBLabel {
     private @NlsContexts.Separator String originalText;
 
     private TitleLabel(@NlsContexts.Separator String text, @Nullable JComponent labelFor) {

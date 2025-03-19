@@ -11,6 +11,7 @@ import java.util.function.Supplier;
  * An interface to the current session of an {@link ActionGroup} async update and expansion.
  * To be used for recursive action updates and action-group expansions,
  * and for action-group expansion postprocessing.
+ * Session can be obtained by {@link AnActionEvent#getUpdateSession()}
  *
  * @see com.intellij.ide.actions.WeighingActionGroup
  * @see com.intellij.ide.actions.NonTrivialActionGroup
@@ -44,8 +45,8 @@ public interface UpdateSession {
    * This way some data can be computed once and shared between several actions.
    * Both in their <code>update</code> and <code>actionPerformed</code> methods.
    */
-  default @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider) {
-    return provider.get();
+  default @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> supplier) {
+    return supplier.get();
   }
 
   /**

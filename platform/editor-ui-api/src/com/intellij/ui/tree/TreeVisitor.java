@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.util.Function;
@@ -16,9 +16,20 @@ public interface TreeVisitor {
   @NotNull
   Action visit(@NotNull TreePath path);
 
-  @NotNull
+  /**
+   * Returns the thread on which the visitor should be called.
+   * <p>
+   *   The caller isn't required to obey this. The rule of thumb is, if the tree model
+   *   is an async model that has a background part, then it must call visit() on the thread
+   *   specified by the return value of this method. However, if the tree model is
+   *   a pure EDT model (a simple model, or a fast model, or some unit test stub),
+   *   then it'll call visit() on the EDT regardless of the return value of this method.
+   * </p>
+   *
+   * @return the thread on which the visitor should be called
+   */
   @ApiStatus.Experimental
-  default TreeVisitor.VisitThread visitThread() {
+  default @NotNull TreeVisitor.VisitThread visitThread() {
     return VisitThread.EDT;
   }
 
@@ -60,6 +71,23 @@ public interface TreeVisitor {
     Promise<TreePath> accept(@NotNull TreeVisitor visitor);
   }
 
+  /**
+   * Represents a tree model that accepts a tree visitor and promises a result, optionally allowing to skip not loaded nodes.
+   */
+  interface LoadingAwareAcceptor extends Acceptor {
+    @Override
+    default @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+      return accept(visitor, true);
+    }
+
+    /**
+     * @param visitor an object that controls visiting a tree structure
+     * @param allowLoading a flag that determines whether the nodes that weren't loaded yet will be loaded and visited or skipped
+     * @return a promise that will be resolved when visiting is finished
+     */
+    @NotNull
+    Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading);
+  }
 
   abstract class ByComponent<C, T> implements TreeVisitor {
     private final Function<TreePath, T> converter;
@@ -74,9 +102,8 @@ public interface TreeVisitor {
       this(component, object -> type.isInstance(object) ? type.cast(object) : null);
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       return visit(converter.fun(path));
     }
 
@@ -84,8 +111,7 @@ public interface TreeVisitor {
      * @param component a last component of the current path
      * @return an action that controls visiting a tree
      */
-    @NotNull
-    protected Action visit(T component) {
+    protected @NotNull Action visit(T component) {
       if (component == null) return Action.SKIP_CHILDREN;
       if (matches(component, this.component)) return Action.INTERRUPT;
       if (contains(component, this.component)) return Action.CONTINUE;
@@ -129,9 +155,8 @@ public interface TreeVisitor {
                    : path.getPathCount();
     }
 
-    @NotNull
     @Override
-    public Action visit(@NotNull TreePath path) {
+    public @NotNull Action visit(@NotNull TreePath path) {
       return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : visit(path, converter.fun(path));
     }
 
@@ -140,8 +165,7 @@ public interface TreeVisitor {
      * @param component a corresponding component
      * @return an action that controls visiting a tree
      */
-    @NotNull
-    protected Action visit(@NotNull TreePath path, T component) {
+    protected @NotNull Action visit(@NotNull TreePath path, T component) {
       if (component == null) return Action.SKIP_CHILDREN;
       int count = path.getPathCount();
       if (count < this.count) {
@@ -162,9 +186,8 @@ public interface TreeVisitor {
      * @param depth     a depth starting from the found node
      * @return an action that controls visiting a tree
      */
-    @NotNull
     @SuppressWarnings("unused")
-    protected Action visit(@NotNull TreePath path, @NotNull T component, int depth) {
+    protected @NotNull Action visit(@NotNull TreePath path, @NotNull T component, int depth) {
       return depth == 0 ? Action.INTERRUPT : Action.SKIP_CHILDREN;
     }
 

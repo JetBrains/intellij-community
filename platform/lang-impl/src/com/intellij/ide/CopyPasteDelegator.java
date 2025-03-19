@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide;
 
@@ -17,8 +17,10 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.File;
@@ -39,7 +41,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
   }
 
   protected PsiElement @NotNull [] getSelectedElements(@NotNull DataContext dataContext) {
-    return ObjectUtils.notNull(LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
+    return ObjectUtils.notNull(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext), PsiElement.EMPTY_ARRAY);
   }
 
   private static PsiElement @NotNull [] validate(PsiElement @Nullable [] selectedElements) {
@@ -71,7 +73,9 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     return myEditable;
   }
 
-  class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public final class MyEditable implements CutProvider, CopyProvider, PasteProvider, ActionUpdateThreadAware {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -158,7 +162,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       });
     }
 
-    private PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {
+    private static PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {
       PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
       if (module != null && target instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
@@ -169,8 +173,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       return target;
     }
 
-    @Nullable
-    private PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
+    private static @Nullable PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
       PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
       if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()
@@ -248,7 +251,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       return false;
     }
 
-    private boolean isDefaultPasteEnabled(final DataContext dataContext) {
+    private static boolean isDefaultPasteEnabled(final DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return false;

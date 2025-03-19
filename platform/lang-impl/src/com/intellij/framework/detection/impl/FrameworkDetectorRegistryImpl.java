@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.FrameworkType;
@@ -10,10 +10,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry implements Disposable {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectorRegistryImpl.class);
 
@@ -57,8 +59,7 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
   }
 
   @Override
-  @NotNull
-  public MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap() {
+  public @NotNull MultiMap<FileType, Pair<ElementPattern<FileContent>, String>> getDetectorsMap() {
     ensureDetectorsLoaded();
     return myDetectorsMap;
   }
@@ -104,16 +105,14 @@ public final class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegist
     return myDetectorsById.get(id);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getDetectorIds(@NotNull FileType fileType) {
+  public @NotNull Collection<String> getDetectorIds(@NotNull FileType fileType) {
     ensureDetectorsLoaded();
     return myDetectorsByFileType.get(fileType);
   }
 
-  @NotNull
   @Override
-  public Collection<String> getAllDetectorIds() {
+  public @NotNull Collection<String> getAllDetectorIds() {
     ensureDetectorsLoaded();
     return myDetectorsById.keySet();
   }

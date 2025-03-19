@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.application.options.CodeStyle;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class LayoutCodeDialog extends DialogWrapper {
+public final class LayoutCodeDialog extends DialogWrapper {
   private final PsiFile myFile;
   private final boolean myTextSelected;
   private final String myHelpId;
@@ -113,8 +113,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private @NlsContexts.Tooltip String getChangesNotAvailableHint() {
+  private @Nullable @NlsContexts.Tooltip String getChangesNotAvailableHint() {
     if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
       return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
@@ -125,7 +124,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   private void saveCurrentConfiguration() {
-    if (myOptimizeImportsCb.isEnabled()) {
+    if (myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isVisible()) {
       myLastRunOptions.saveOptimizeImportsState(myRunOptions.isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
@@ -178,15 +177,13 @@ public class LayoutCodeDialog extends DialogWrapper {
     };
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myButtonsPanel;
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return myHelpId;
   }
 

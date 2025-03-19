@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
@@ -56,8 +56,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     final PsiType declaredType = getDeclaredType();
     if (declaredType != null) return declaredType;
 
@@ -97,8 +96,7 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     if (isMainMethodFirstUntypedParameter()) {
       return GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(CommonClassNames.JAVA_LANG_STRING + "[]", this).getType();
     }
@@ -155,15 +153,13 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     return getInitializerGroovy() != null;
   }
 
-  @Nullable
   @Override
-  public PsiElement getEllipsisDots() {
+  public @Nullable PsiElement getEllipsisDots() {
     return findChildByType(GroovyTokenTypes.mTRIPLE_DOT);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     if (!isPhysical()) {
       final PsiFile file = getContainingFile();
       final PsiElement context = file.getContext();
@@ -183,14 +179,12 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
   }
 
   @Override
-  @NotNull
-  public GrModifierList getModifierList() {
+  public @NotNull GrModifierList getModifierList() {
     return getRequiredStubOrPsiChild(GroovyStubElementTypes.MODIFIER_LIST);
   }
 
   @Override
-  @NotNull
-  public PsiElement getDeclarationScope() {
+  public @NotNull PsiElement getDeclarationScope() {
     return requireNonNull(getParentOfType(this, GrParametersOwner.class));
   }
 

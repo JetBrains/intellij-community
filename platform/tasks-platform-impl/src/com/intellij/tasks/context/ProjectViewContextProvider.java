@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.context;
 
@@ -17,15 +17,13 @@ import javax.swing.*;
  * @author Dmitry Avdeev
  */
 final class ProjectViewContextProvider extends WorkingContextProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "projectView";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return TaskBundle.message("project.view.state");
   }
 
@@ -33,7 +31,11 @@ final class ProjectViewContextProvider extends WorkingContextProvider {
   public void saveContext(@NotNull Project project, @NotNull Element toElement) throws WriteExternalException {
     for (AbstractProjectViewPane pane : AbstractProjectViewPane.EP.getExtensions(project)) {
       Element paneElement = new Element(pane.getId());
-      pane.writeExternal(paneElement);
+      // When switching between branches, we don't want to persist presentations,
+      // as they likely won't be applicable to another branch.
+      // Besides, it causes glitches, as the tree is already loaded,
+      // and the persist/restore presentation mechanism assumes an initially empty tree.
+      pane.writeExternalWithoutPresentations(paneElement);
       toElement.addContent(paneElement);
     }
   }

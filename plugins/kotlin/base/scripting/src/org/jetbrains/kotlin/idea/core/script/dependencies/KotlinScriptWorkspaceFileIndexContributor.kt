@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.dependencies
 
-import com.intellij.java.workspaceModel.fileIndex.JvmPackageRootData
+import com.intellij.java.workspace.fileIndex.JvmPackageRootData
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleOrLibrarySourceRootData
-import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeI
  * [here](https://youtrack.jetbrains.com/articles/IDEA-A-239/Integration-of-custom-workspace-entities-with-platform-functionality)
  */
 
-fun indexSourceRootsEagerly() = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
+fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
 
 class KotlinScriptWorkspaceFileIndexContributor : WorkspaceFileIndexContributor<KotlinScriptLibraryEntity> {
     override val entityClass: Class<KotlinScriptLibraryEntity>

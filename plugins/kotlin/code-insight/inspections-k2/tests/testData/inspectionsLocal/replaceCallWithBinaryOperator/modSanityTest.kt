@@ -1,4 +1,5 @@
 // PROBLEM: none
+// K2_ERROR: 'operator' modifier is not applicable to function: illegal function name.
 // LANGUAGE_VERSION: 1.2
 
 fun test() {

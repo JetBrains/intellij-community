@@ -5,10 +5,10 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.PinActiveTabAction
-import com.intellij.ide.impl.DataManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
@@ -22,8 +22,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.ExperimentalUI.isNewUI
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -46,6 +47,7 @@ import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 /**
@@ -79,11 +81,9 @@ internal class SingleContentLayout(
     tryUpdateContentView()
   }
 
-  private fun Content.getSupplier(): SingleContentSupplier? {
-    return (component as? DataProvider)?.let(SingleContentSupplier.KEY::getData)
-  }
+  private fun Content.getSupplier(): SingleContentSupplier? = SingleContentSupplier.getSupplierFrom(this)
 
-  fun getSupplier() = getSingleContentOrNull()?.getSupplier()
+  fun getSupplier(): SingleContentSupplier? = getSingleContentOrNull()?.getSupplier()
 
   private fun getSingleContentOrNull(): Content? {
     return if (Registry.`is`("debugger.new.tool.window.layout.dnd", false)) {
@@ -148,7 +148,7 @@ internal class SingleContentLayout(
       )
     }
 
-    if (!isNewUI()) {
+    if (!NewUiValue.isEnabled()) {
       let {
         val contentActions = DefaultActionGroup()
         contentActions.add(closeCurrentContentAction)
@@ -162,7 +162,7 @@ internal class SingleContentLayout(
           content.component
         ).apply {
           setReservePlaceAutoPopupIcon(false)
-          layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+          layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
         }
       }
     }
@@ -237,7 +237,6 @@ internal class SingleContentLayout(
 
     if (isSingleContentView) {
       val component = ui.tabComponent
-      component.bounds = component.bounds.apply { width = component.parent.width }
 
       val labelWidth = idLabel.x + idLabel.width  // label is laid out by parent
       var tabsWidth = tabAdapter?.preferredSize?.width ?: 0
@@ -257,15 +256,28 @@ internal class SingleContentLayout(
 
       var x = labelWidth
 
-      tabAdapter?.apply {
-        bounds = Rectangle(x, 0, tabsWidth, component.height)
-        x += tabsWidth
+      fun computeMainToolbarBounds() {
+        toolbars[ToolbarType.MAIN]?.component?.apply {
+          val height = preferredSize.height
+          bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
+          x += mainToolbarWidth
+        }
       }
 
-      toolbars[ToolbarType.MAIN]?.component?.apply {
-        val height = preferredSize.height
-        bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
-        x += mainToolbarWidth
+      fun computeTabsBounds() {
+        tabAdapter?.apply {
+          bounds = Rectangle(x, 0, tabsWidth, component.height)
+          x += tabsWidth
+        }
+      }
+
+      if (Registry.`is`("debugger.toolbar.before.tabs")) {
+        computeMainToolbarBounds()
+        computeTabsBounds()
+      }
+      else {
+        computeTabsBounds()
+        computeMainToolbarBounds()
       }
 
       wrapper?.apply {
@@ -296,6 +308,11 @@ internal class SingleContentLayout(
       )
       label.toolTipText = displayName
     }
+    val icon = ui.window.component.getClientProperty(ToolWindowContentUi.HEADER_ICON) as? Icon
+    if (icon != null) {
+      label.icon = icon
+      label.horizontalTextPosition = SwingConstants.LEFT
+    }
   }
 
   @NlsSafe
@@ -311,7 +328,7 @@ internal class SingleContentLayout(
   ) : NonOpaquePanel(),
       TabsListener,
       PropertyChangeListener,
-      DataProvider,
+      UiDataProvider,
       MorePopupAware,
       Disposable
   {
@@ -359,7 +376,7 @@ internal class SingleContentLayout(
       val tabListGroup = DefaultActionGroup(tabList, Separator.create(), MyInvisibleAction())
       popupToolbar = createToolbar(ActionPlaces.TOOLWINDOW_POPUP, tabListGroup, this).apply {
         setReservePlaceAutoPopupIcon(false)
-        layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+        layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
       }.component
 
       layout = HorizontalTabLayoutWithHiddenControl {
@@ -491,7 +508,8 @@ internal class SingleContentLayout(
       }
     }
 
-    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout) : ContentTabLabel(content, layout), DataProvider {
+    private inner class MyContentTabLabel(content: SubContent, layout: TabContentLayout)
+      : ContentTabLabel(content, layout), UiDataProvider {
 
       init {
         addMouseListener(popupHandler)
@@ -507,11 +525,9 @@ internal class SingleContentLayout(
         }
       }
 
-      override fun getData(dataId: String): Any? {
-        if (JBTabsEx.NAVIGATION_ACTIONS_KEY.`is`(dataId)) {
-          return jbTabs
-        }
-        return DataManagerImpl.getDataProviderEx(retrieveInfo(this).component)?.getData(dataId)
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[JBTabsEx.NAVIGATION_ACTIONS_KEY] = jbTabs as? JBTabsEx
+        DataSink.uiDataSnapshot(sink, retrieveInfo(this).component)
       }
 
       override fun getContent(): SubContent {
@@ -519,18 +535,15 @@ internal class SingleContentLayout(
       }
     }
 
-    override fun getData(dataId: String): Any? {
-      if (MorePopupAware.KEY.`is`(dataId)) {
-        return this
-      }
-      return null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[MorePopupAware.KEY] = this
     }
 
     override fun canShowMorePopup(): Boolean {
       return true
     }
 
-    override fun showMorePopup(): JBPopup? {
+    override fun showMorePopup(): JBPopup {
       val contentToShow = labels
         .filter { it.bounds.width <= 0 }
         .map(MyContentTabLabel::getContent)

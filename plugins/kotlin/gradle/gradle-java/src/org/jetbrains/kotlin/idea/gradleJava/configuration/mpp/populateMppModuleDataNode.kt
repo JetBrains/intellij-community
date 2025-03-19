@@ -2,26 +2,25 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
+import com.intellij.externalSystem.JavaModuleData
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ModuleSdkData
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtil
-import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.text.VersionComparatorUtil
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.base.externalSystem.find
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.UnsafeTestSourceSetHeuristicApi
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.predictedProductionSourceSetName
@@ -29,14 +28,14 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -45,10 +44,10 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 import java.lang.reflect.Proxy
 import java.util.*
-import java.util.stream.Collectors
 
 /**
  * Creates and adds [GradleSourceSetData] nodes and [KotlinSourceSetInfo] for the given [moduleDataNode]
@@ -96,6 +95,7 @@ internal fun doCreateSourceSetInfo(
             when (it) {
                 is JvmIdePlatformKind -> KotlinPlatform.JVM
                 is JsIdePlatformKind -> KotlinPlatform.JS
+                is WasmIdePlatformKind -> KotlinPlatform.WASM
                 is NativeIdePlatformKind -> KotlinPlatform.NATIVE
                 else -> KotlinPlatform.COMMON
             }
@@ -169,26 +169,46 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
     if (moduleDataNode.isMppDataInitialized) return
 
 
-    /* Populate 'MPP_CONFIGURATION_ARTIFACTS' for every production source set */
+    /*
+    Populate 'artifactMap' mapping between artifacts and source modules that produce said artifacts.
+    This map is later used to resolve dependencies from a given artifact to its source modules.
+     */
     run {
         val externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java)
         if (externalProject == null) return
         moduleDataNode.isMppDataInitialized = true
 
-        // save artifacts locations.
-        val userData = projectDataNode.getUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS)
-            ?: HashMap<String, MutableList<String>>().apply {
-                projectDataNode.putUserData(KotlinMppGradleProjectResolver.MPP_CONFIGURATION_ARTIFACTS, this)
-            }
-
         mppModel.targets.filter { it.jar != null && it.jar!!.archiveFile != null }.forEach { target ->
             val path = ExternalSystemApiUtil.toCanonicalPath(target.jar!!.archiveFile!!.absolutePath)
-            val currentModules = userData[path] ?: ArrayList<String>().apply { userData[path] = this }
-            // Test modules should not be added. Otherwise we could get dependnecy of java.mail on jvmTest
-            val allSourceSets = target.compilations.filter { !it.isTestComponent }.flatMap { it.declaredSourceSets }.toSet()
-            val availableViaDependsOn = allSourceSets.flatMap { it.allDependsOnSourceSets }.mapNotNull { mppModel.sourceSetsByName[it] }
-            allSourceSets.union(availableViaDependsOn).forEach { sourceSet ->
-                currentModules.add(KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx))
+            val allSourceSetOfCompilation = target.jar!!.compilations.flatMap { it.allSourceSets }
+
+            allSourceSetOfCompilation.forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    /*
+                    Using 'kotlin' as moduleId to mark the artifact as being owned by the Kotlin plugin.
+                    As of writing this comment, the exact moduleId is not relevant; there won't be code that will query
+                    artifacts with this ownerId. This acts more as 'tinting' this artifact to be owned by someone else than the
+                    platform. This will disable some special logic from the platform that is mostly relevant for pure java projects.
+
+                    (e.g., retaining some artifacts despite being resolved to _some_ source modules)
+                     */
+                    ownerId = "kotlin"
+                )
+            }
+        }
+
+        // Collect compilation output archives
+        mppModel.targets.flatMap { it.compilations }.forEach { compilation ->
+            val archiveFile = compilation.archiveFile ?: return@forEach
+            val path = ExternalSystemApiUtil.toCanonicalPath(archiveFile.absolutePath)
+            compilation.allSourceSets.forEach { sourceSet ->
+                resolverCtx.artifactsMap.storeModuleId(
+                    artifactPath = path,
+                    moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx),
+                    ownerId = "kotlin"
+                )
             }
         }
     }
@@ -203,6 +223,7 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
             }
         }
         KotlinGradleProjectData().apply {
+            kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion
             kotlinNativeHome = mppModel.kotlinNativeHome
             coroutines = mppModel.extraFeatures.coroutinesState
             isHmpp = mppModel.extraFeatures.isHMPPEnabled
@@ -234,6 +255,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
     val sourceSetMap = projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS)!!
 
     val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
+    val sourceSetToCompilationJavaData = LinkedHashMap<String, MutableSet<JavaModuleData>>()
     for (target in mppModel.targets) {
         if (shouldDelegateToOtherPlugin(target)) continue
         if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
@@ -282,8 +304,12 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
 
                 it.ideModuleGroup = moduleGroup
-                it.sdkName = gradleModule.jdkNameIfAny
             }
+            val compilationSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+                ?: ModuleSdkData(gradleModule.jdkNameIfAny)
+
+            val compilationJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
+                ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList())
 
             val kotlinSourceSet = doCreateSourceSetInfo(mppModel, compilation, gradleModule, resolverCtx) ?: continue
 
@@ -295,19 +321,40 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
                 }
             }
 
-            for (sourceSet in compilation.declaredSourceSets) {
-                sourceSetToCompilationData.getOrPut(sourceSet.name) { LinkedHashSet() } += compilationData
-                for (dependentSourceSetName in sourceSet.allDependsOnSourceSets) {
-                    sourceSetToCompilationData.getOrPut(dependentSourceSetName) { LinkedHashSet() } += compilationData
+            if (compilation.platform == KotlinPlatform.WASM) {
+                compilation.wasmExtensions?.wasmTarget?.let { wasmTarget ->
+                    compilationData.wasmTargets = setOf(wasmTarget)
+                } ?: let {
+                    // In Kotlin 2.0.0 there is already information in klibs about wasm target
+                    // But there is no such information in Kotlin Compilation
+                    // That's why there is necessary to provide the information to import in other way
+                    // Before 2.0.0 this information is not needed because all wasm targets are imported as wasmJs
+                    val kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion
+                    if (kotlinGradlePluginVersion != null && kotlinGradlePluginVersion >= "2.0.0")
+                    compilationData.wasmTargets = when (target.presetName) {
+                        "wasmJs" -> setOf(WasmTarget.JS.alias)
+                        "wasmWasi" -> setOf(WasmTarget.WASI.alias)
+                        else -> emptySet()
+                    }
                 }
             }
 
-            val compilationDataNode =
-                (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
-                    it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
+            for (sourceSet in compilation.declaredSourceSets) {
+                sourceSetToCompilationData.getOrPut(sourceSet.name) { LinkedHashSet() } += compilationData
+                sourceSetToCompilationJavaData.getOrPut(sourceSet.name) { LinkedHashSet() } += compilationJavaData
+                for (dependentSourceSetName in sourceSet.allDependsOnSourceSets) {
+                    sourceSetToCompilationData.getOrPut(dependentSourceSetName) { LinkedHashSet() } += compilationData
+                    sourceSetToCompilationJavaData.getOrPut(dependentSourceSetName) { LinkedHashSet() } += compilationJavaData
                 }
+            }
+
+            val compilationDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, compilationData)).also {
+                it.createChild(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet))
+                it.createChild(ModuleSdkData.KEY, compilationSdkData)
+                it.createChild(JavaModuleData.KEY, compilationJavaData)
+            }
             if (existingSourceSetDataNode == null) {
-                sourceSetMap[moduleId] = Pair(compilationDataNode, createExternalSourceSet(compilation, compilationData, mppModel))
+                sourceSetMap[moduleId] = Pair(compilationDataNode, createExternalSourceSet(compilation, compilationJavaData, mppModel))
             }
 
             /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
@@ -359,25 +406,41 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
             it.ideModuleGroup = moduleGroup
 
             sourceSetToCompilationData[sourceSet.name]?.let { compilationDataRecords ->
-                it.targetCompatibility = compilationDataRecords
-                    .mapNotNull { compilationData -> compilationData.targetCompatibility }
-                    .minWithOrNull(VersionComparatorUtil.COMPARATOR)
-
                 if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.NATIVE) {
                     it.konanTargets = compilationDataRecords
                         .flatMap { compilationData -> compilationData.konanTargets }
                         .toSet()
                 }
+
+                if (sourceSet.actualPlatforms.singleOrNull() == KotlinPlatform.WASM) {
+                    it.wasmTargets = compilationDataRecords
+                        .flatMap { compilationData -> compilationData.wasmTargets }
+                        .toSet()
+                }
             }
         }
+
+        val sourceSetSdkData = existingSourceSetDataNode?.find(ModuleSdkData.KEY)?.data
+            ?: ModuleSdkData(gradleModule.jdkNameIfAny)
+
+        val sourceSetJavaData = existingSourceSetDataNode?.find(JavaModuleData.KEY)?.data
+            ?: JavaModuleData(GradleConstants.SYSTEM_ID, null, null, emptyList()).also {
+                sourceSetToCompilationJavaData[sourceSet.name]?.let { compilationJavaDataRecords ->
+                    it.targetBytecodeVersion = compilationJavaDataRecords
+                        .mapNotNull { compilationJavaData -> compilationJavaData.targetBytecodeVersion }
+                        .minWithOrNull(VersionComparatorUtil.COMPARATOR)
+                }
+            }
 
         val kotlinSourceSet = KotlinMppGradleProjectResolver.createSourceSetInfo(mppModel, sourceSet, gradleModule, resolverCtx) ?: continue
 
         val sourceSetDataNode = (existingSourceSetDataNode ?: moduleDataNode.createChild(GradleSourceSetData.KEY, sourceSetData)).also {
-            it.addChild(DataNode(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet), it))
+            it.createChild(KotlinSourceSetData.KEY, KotlinSourceSetData(kotlinSourceSet))
+            it.createChild(ModuleSdkData.KEY, sourceSetSdkData)
+            it.createChild(JavaModuleData.KEY, sourceSetJavaData)
         }
         if (existingSourceSetDataNode == null) {
-            sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetData, mppModel))
+            sourceSetMap[moduleId] = Pair(sourceSetDataNode, createExternalSourceSet(sourceSet, sourceSetJavaData, mppModel))
         }
 
         /* Execution all extensions after we freshly created a GradleSourceSetData node for the given compilation */
@@ -387,7 +450,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
 
 private fun createExternalSourceSet(
     compilation: KotlinCompilation,
-    compilationData: GradleSourceSetData,
+    compilationJavaData: JavaModuleData,
     mppModel: KotlinMPPGradleModel
 ): ExternalSourceSet {
     return DefaultExternalSourceSet().also { sourceSet ->
@@ -395,8 +458,8 @@ private fun createExternalSourceSet(
         val resourcesDir = compilation.output.resourcesDir
 
         sourceSet.name = compilation.fullName()
-        sourceSet.targetCompatibility = compilationData.targetCompatibility
-        sourceSet.dependencies += compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.targetCompatibility = compilationJavaData.targetBytecodeVersion
+        sourceSet.dependencies = compilation.dependencies.mapNotNull { mppModel.dependencyMap[it] }
         //TODO after applying patch to IDEA core uncomment the following line:
         // sourceSet.isTest = compilation.sourceSets.filter { isTestModule }.isNotEmpty()
         // It will allow to get rid of hacks with guessing module type in DataServices and obtain properly set productionOnTest flags
@@ -405,16 +468,16 @@ private fun createExternalSourceSet(
             sourcesWithTypes += compilation.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = effectiveClassesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.sourceDirs }
-                dirSet.gradleOutputDirs += compilation.output.classesDirs
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.gradleOutputDirs = compilation.output.classesDirs
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
         if (resourcesDir != null) {
             sourcesWithTypes += compilation.resourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
                 dirSet.outputDir = resourcesDir
                 dirSet.srcDirs = compilation.declaredSourceSets.flatMapTo(LinkedHashSet()) { it.resourceDirs }
-                dirSet.gradleOutputDirs += resourcesDir
-                dirSet.setInheritedCompilerOutput(false)
+                dirSet.gradleOutputDirs = listOf(resourcesDir)
+                dirSet.isCompilerOutputPathInherited = false
             }
         }
 
@@ -454,49 +517,25 @@ private fun getInternalModuleName(
     resolverCtx: ProjectResolverContext,
     actualName: String = kotlinComponent.name
 ): String {
-    val delimiter: String
-    val moduleName = StringBuilder()
-
-    val buildSrcGroup = resolverCtx.buildSrcGroup
-    if (resolverCtx.isUseQualifiedModuleNames) {
-        delimiter = "."
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(
-            gradlePathToQualifiedName(
-                gradleModule.project.name,
-                externalProject.qName
-            )
-        )
-    } else {
-        delimiter = "_"
-        if (StringUtil.isNotEmpty(buildSrcGroup)) {
-            moduleName.append(buildSrcGroup).append(delimiter)
-        }
-        moduleName.append(gradleModule.name)
-    }
-    moduleName.append(delimiter)
-    moduleName.append(kotlinComponent.fullName(actualName))
-    return PathUtilRt.suggestFileName(moduleName.toString(), true, false)
+    return KotlinModuleUtils.getInternalModuleName(gradleModule, externalProject, resolverCtx, kotlinComponent.fullName(actualName))
 }
 
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
-        by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
+        by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
 
 private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
     kotlinTarget.platform == KotlinPlatform.ANDROID
 
 private fun createExternalSourceSet(
     ktSourceSet: KotlinSourceSet,
-    ktSourceSetData: GradleSourceSetData,
+    ktSourceSetJavaData: JavaModuleData,
     mppModel: KotlinMPPGradleModel
 ): ExternalSourceSet {
     return DefaultExternalSourceSet().also { sourceSet ->
         sourceSet.name = ktSourceSet.name
-        sourceSet.targetCompatibility = ktSourceSetData.targetCompatibility
-        sourceSet.dependencies += ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
+        sourceSet.targetCompatibility = ktSourceSetJavaData.targetBytecodeVersion
+        sourceSet.dependencies = ktSourceSet.dependencies.mapNotNull { mppModel.dependencyMap[it] }
 
         sourceSet.setSources(linkedMapOf(
             ktSourceSet.sourceType to DefaultExternalSourceDirectorySet().also { dirSet ->
@@ -511,16 +550,6 @@ private fun createExternalSourceSet(
 
 private fun getExternalModuleName(gradleModule: IdeaModule, kotlinComponent: KotlinComponent) =
     gradleModule.name + ":" + kotlinComponent.fullName()
-
-private fun gradlePathToQualifiedName(
-    rootName: String,
-    gradlePath: String
-): String {
-    return ((if (gradlePath.startsWith(":")) "$rootName." else "")
-            + Arrays.stream(gradlePath.split(":".toRegex()).toTypedArray())
-        .filter { s: String -> s.isNotEmpty() }
-        .collect(Collectors.joining(".")))
-}
 
 private val IdeaModule.jdkNameIfAny
     get() = try {
@@ -539,7 +568,7 @@ private fun ExternalProject.notImportedCommonSourceSets() =
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
 fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
-    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.newInstance()
+    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.getDeclaredConstructor().newInstance()
     parseCommandLineArguments(args.toList(), compilerArguments)
     return compilerArguments
 }

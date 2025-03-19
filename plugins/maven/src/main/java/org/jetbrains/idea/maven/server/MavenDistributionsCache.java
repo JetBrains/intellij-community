@@ -1,8 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Service;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -16,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
@@ -29,8 +29,11 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static org.jetbrains.idea.maven.utils.MavenUtil.*;
+
+@Service(Service.Level.PROJECT)
 public final class MavenDistributionsCache {
-  private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
+  private static final ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 
   private final ConcurrentMap<String, String> myWorkingDirToMultiModuleMap = CollectionFactory.createConcurrentWeakMap();
   private final ConcurrentMap<String, String> myVmSettingsMap = CollectionFactory.createConcurrentWeakMap();
@@ -56,25 +59,41 @@ public final class MavenDistributionsCache {
   public @NotNull MavenDistribution getSettingsDistribution() {
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.getGeneralSettings().getMavenHome());
-    if (distribution == null) {
-      if (useWrapper()) {
-        var baseDir = myProject.getBasePath();
-        var projects = projectsManager.getProjects();
-        if (projects.size() > 0) {
-          baseDir = projects.get(0).getDirectory();
-        }
-        distribution = getMavenDistribution(baseDir);
+    MavenHomeType type = settings.getGeneralSettings().getMavenHomeType();
+    if (type instanceof MavenWrapper) {
+      var baseDir = myProject.getBasePath();
+      var projects = projectsManager.getProjects();
+      if (!projects.isEmpty()) {
+        baseDir = projects.get(0).getDirectory();
+      }
+      if (baseDir != null) {
+        String multiModuleDir = myWorkingDirToMultiModuleMap.computeIfAbsent(baseDir, this::resolveMultiModuleDirectory);
+        return myMultimoduleDirToWrapperedMavenDistributionsMap.computeIfAbsent(multiModuleDir, this::getWrapperDistribution);
       }
     }
-    if (distribution == null) {
-      projectsManager.getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
-        .message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHome()));
+    else if (type instanceof MavenInSpecificPath sp) {
+      MavenDistribution mavenDistribution = fromPath(sp.getMavenHome(), sp.getTitle());
+      if (mavenDistribution != null) return mavenDistribution;
+    }
+    else if (type instanceof BundledMaven3 || type instanceof BundledMaven4) {
       return resolveEmbeddedMavenHome();
     }
-    else {
-      return distribution;
+
+
+    projectsManager.getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
+      .message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHomeType().getTitle()));
+      return resolveEmbeddedMavenHome();
+
+  }
+
+  private static @Nullable MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
+    Path file = Path.of(path);
+    if (isValidMavenHome(file)) return new LocalMavenDistribution(file, label);
+    if (isValidMavenDaemon(file)) {
+      var mvnFile = extractMvnFromDaemon(file);
+      if (mvnFile != null) return new DaemonedLocalDistribution(new LocalMavenDistribution(mvnFile, label), file);
     }
+    return null;
   }
 
   public @NotNull String getVmOptions(@Nullable String workingDirectory) {
@@ -103,35 +122,37 @@ public final class MavenDistributionsCache {
 
   private @NotNull MavenDistribution getWrapperDistribution(@NotNull String multiModuleDir) {
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    return (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(distributionUrl);
+    return (distributionUrl == null) ? resolveEmbeddedMavenHome() : getMavenWrapper(myProject, distributionUrl);
   }
 
   public @Nullable MavenDistribution getWrapper(@NotNull String workingDirectory) {
     String multiModuleDir = myWorkingDirToMultiModuleMap.computeIfAbsent(workingDirectory, this::resolveMultiModuleDirectory);
     String distributionUrl = getWrapperDistributionUrl(multiModuleDir);
-    return (distributionUrl != null) ? MavenWrapperSupport.getCurrentDistribution(distributionUrl) : null;
+    return (distributionUrl != null) ? MavenWrapperSupport.getCurrentDistribution(myProject, distributionUrl) : null;
   }
 
-  private static MavenDistribution getMavenWrapper(String distributionUrl) {
-    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(distributionUrl);
+  private static MavenDistribution getMavenWrapper(Project project, String distributionUrl) {
+    MavenDistribution distribution = MavenWrapperSupport.getCurrentDistribution(project, distributionUrl);
     if (distribution == null) {
       distribution = resolveEmbeddedMavenHome();
     }
     return distribution;
   }
 
-  @NotNull
-  public static LocalMavenDistribution resolveEmbeddedMavenHome() {
-    if (PluginManagerCore.isRunningFromSources()) {
-      Path mavenPath = mySourcePath.getValue();
-      return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
-    }
-    else {
-      final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
-      final Path root = pluginFileOrDir.getParent();
+  public static @NotNull LocalMavenDistribution resolveEmbeddedMavenHome() {
+    PluginDescriptor mavenPlugin = PluginManager.getPluginByClass(MavenDistributionsCache.class);
 
-      // maven3 folder inside maven plugin layout
-      return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
+    if (PluginManagerCore.isRunningFromSources()) { // running from sources
+      Path mavenPath = mySourcePath.getValue();
+      return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
+    } else if (mavenPlugin != null) { // running with production classloading. Use maven3 folder inside maven plugin layout
+      Path pathToBundledMaven = mavenPlugin.getPluginPath().resolve("lib").resolve("maven3");
+      return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
+    }
+    else { // running with non-production class loader, e.g. integration tests
+      final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
+      Path pathToBundledMaven = pluginFileOrDir.getParent().resolve("maven3");
+      return new LocalMavenDistribution(pathToBundledMaven, BundledMaven3.INSTANCE.getTitle());
     }
   }
 
@@ -146,16 +167,7 @@ public final class MavenDistributionsCache {
     if (baseDir == null) {
       return null;
     }
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
-    if (distributionUrl == null) {
-      MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-      MavenProjectsManager.getInstance(myProject).getSyncConsole()
-        .addWarning(
-          SyncBundle.message("cannot.resolve.maven.home"),
-          SyncBundle.message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHome())
-        );
-    }
-    return distributionUrl;
+    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
   }
 
   private @NotNull String resolveMultiModuleDirectory(@NotNull String workingDirectory) {

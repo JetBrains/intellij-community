@@ -38,9 +38,8 @@ public final class ProgramRunnerUtil {
   /**
    * @deprecated Use {@link ProgramRunner#getRunner(String, RunProfile)}
    */
-  @Nullable
   @Deprecated
-  public static ProgramRunner<?> getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
+  public static @Nullable ProgramRunner<?> getRunner(@NotNull String executorId, @Nullable RunnerAndConfigurationSettings configuration) {
     return configuration == null ? null : ProgramRunner.getRunner(executorId, configuration.getConfiguration());
   }
 
@@ -48,8 +47,7 @@ public final class ProgramRunnerUtil {
     executeConfigurationAsync(environment, showSettings, assignNewId, null);
   }
 
-  @NotNull
-  public static @NlsContexts.DialogMessage String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
+  public static @NotNull @NlsContexts.DialogMessage String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
     return StringUtil.escapeXmlEntities(ExecutionBundle.message("dialog.message.cannot.run.profile.on.target", profile.getName(), target.getDisplayName()));
   }
 
@@ -163,8 +161,7 @@ public final class ProgramRunnerUtil {
     executeConfiguration(builder.contentToReuse(null).dataContext(null).activeTarget().build(), true, true);
   }
 
-  @NotNull
-  public static Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean invalid) {
+  public static @NotNull Icon getConfigurationIcon(@NotNull RunnerAndConfigurationSettings settings, boolean invalid) {
     Icon icon = getRawIcon(settings);
     Icon configurationIcon = settings.isTemporary() ? getTemporaryIcon(icon) : icon;
     if (invalid) {
@@ -173,15 +170,13 @@ public final class ProgramRunnerUtil {
     return configurationIcon;
   }
 
-  @NotNull
-  public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
+  public static @NotNull Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
     Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
     return icon == null ? AllIcons.Actions.Help : icon;
   }
 
-  @NotNull
-  public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
-    return IconLoader.getTransparentIcon(rawIcon, 0.3f);
+  public static @NotNull Icon getTemporaryIcon(@NotNull Icon rawIcon) {
+    return IconLoader.getTransparentIcon(rawIcon, 0.45f);
   }
 
   public static @NotNull @NlsSafe String shortenName(@Nullable @NlsSafe String name, int toBeAdded) {

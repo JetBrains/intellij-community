@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,13 +28,12 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     String fieldType = PsiReflectionAccessUtil.getAccessibleReturnType(myExpression, resolveFieldType(myField, myExpression));
     if (fieldType == null) {
       LOG.warn("Could not resolve field type. java.lang.Object will be used instead");
-      fieldType = "java.lang.Object";
+      fieldType = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myAccessibleType = fieldType;
   }
 
-  @Nullable
-  public static ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
+  public static @Nullable ItemToReplaceDescriptor createIfInaccessible(@NotNull PsiClass outerClass, @NotNull PsiReferenceExpression expression) {
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField field) {
       PsiClass containingClass = field.getContainingClass();
@@ -98,8 +97,7 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     assignmentExpression.replace(newMethodCallExpression);
   }
 
-  @Nullable
-  private PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
+  private @Nullable PsiMethod createPsiMethod(FieldAccessType accessType, PsiClass outerClass, PsiElementFactory elementFactory) {
     PsiClass containingClass = myField.getContainingClass();
     String className = containingClass == null ? null : ClassUtil.getJVMClassName(containingClass);
     String fieldName = myField.getName();
@@ -119,8 +117,8 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     }
 
     methodBuilder.setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-                 .addParameter("java.lang.Object", "object")
-                 .addParameter("java.lang.Object", "value");
+                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
+                 .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "value");
 
     return methodBuilder.build(elementFactory, outerClass);
   }
@@ -129,8 +127,7 @@ public final class FieldDescriptor implements ItemToReplaceDescriptor {
     return !PsiReflectionAccessUtil.isAccessibleMember(field, outerClass, expression.getQualifierExpression());
   }
 
-  @NotNull
-  private static PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
+  private static @NotNull PsiType resolveFieldType(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {
     PsiType rawType = field.getType();
     return referenceExpression.advancedResolve(false).getSubstitutor().substitute(rawType);
   }

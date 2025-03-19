@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
@@ -27,14 +13,18 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-public class GitSimpleEventDetector implements GitLineHandlerListener {
+public class GitSimpleEventDetector implements GitLineEventDetector {
 
-  @NotNull private final Event myEvent;
+  private final @NotNull Event myEvent;
   private boolean myHappened;
 
   public enum Event {
     CHERRY_PICK_CONFLICT("after resolving the conflicts"), // also applies to revert
-    LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK("would be overwritten by merge"), // also applies to revert
+    /**
+     * @deprecated replaced with {@link git4idea.cherrypick.GitLocalChangesConflictDetector}
+     */
+    @Deprecated
+    LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK("would be overwritten by "), // by (merge|cherry-pick|revert), applies to revert
     UNMERGED_PREVENTING_CHECKOUT("you need to resolve your current index first"),
     UNMERGED_PREVENTING_MERGE("is not possible because you have unmerged files"),
     BRANCH_NOT_FULLY_MERGED("is not fully merged"),
@@ -66,8 +56,16 @@ public class GitSimpleEventDetector implements GitLineHandlerListener {
     }
   }
 
+  /**
+   * @deprecated replaced with {@link #isDetected()}
+   */
+  @Deprecated
   public boolean hasHappened() {
-    return myHappened;
+    return isDetected();
   }
 
+  @Override
+  public boolean isDetected() {
+    return myHappened;
+  }
 }

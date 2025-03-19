@@ -1,0 +1,32 @@
+### auto-generated section `build intellij.platform.warmup` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "warmup_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "warmup",
+  module_name = "intellij.platform.warmup",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/ide-core",
+    "//platform/util",
+    "//platform/indexing-api:indexing",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/indexing-impl",
+    "//platform/platform-api:ide",
+    "//platform/util/progress",
+    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/backend/observation",
+  ],
+  runtime_deps = [":warmup_resources"]
+)
+### auto-generated section `build intellij.platform.warmup` end

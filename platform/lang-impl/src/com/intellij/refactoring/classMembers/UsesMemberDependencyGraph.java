@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.classMembers;
 
@@ -24,13 +10,15 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
+@ApiStatus.Internal
+public final class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   private static final Logger LOG = Logger.getInstance(UsesMemberDependencyGraph.class);
   private final HashSet<T> mySelectedNormal;
   private final HashSet<T> mySelectedAbstract;
@@ -69,7 +57,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
 
   public @NlsContexts.Tooltip String getElementTooltip(T element) {
     final Set<? extends T> dependencies = getDependenciesOf(element);
-    if(dependencies == null || dependencies.size() == 0) return null;
+    if(dependencies == null || dependencies.isEmpty()) return null;
 
     String strings = dependencies.stream().map(NavigationItem::getName).collect(NlsMessages.joiningAnd());
     return RefactoringBundle.message("used.by.0", strings);
@@ -93,7 +81,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
   }
 
   private void buildDepsRecursively(final T sourceElement,
-                                    @Nullable final Set<? extends T> members,
+                                    final @Nullable Set<? extends T> members,
                                     HashSet<T> dependencies,
                                     HashMap<T, HashSet<T>> dependenciesToDependentMap) {
     if (members != null) {

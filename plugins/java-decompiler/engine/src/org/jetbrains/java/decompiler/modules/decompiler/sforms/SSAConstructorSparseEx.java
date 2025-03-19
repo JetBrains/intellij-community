@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.CancellationManager;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
@@ -12,18 +14,16 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+import org.jetbrains.java.decompiler.util.DotExporter;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
 
 public class SSAConstructorSparseEx {
 
@@ -40,7 +40,7 @@ public class SSAConstructorSparseEx {
   private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
 
   // (var, version), version
-  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<>();
+  private final HashMap<VarVersion, FastSparseSet<Integer>> phi = new HashMap<>();
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
@@ -49,15 +49,14 @@ public class SSAConstructorSparseEx {
   private FastSparseSetFactory<Integer> factory;
 
   public void splitVariables(RootStatement root, StructMethod mt) {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
 
-    // try {
-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
-    // } catch(Exception ex) {ex.printStackTrace();}
+    DotExporter.toDotFile(dgraph, mt, "ssaSplitVariables");
 
-    HashSet<Integer> setInit = new HashSet<>();
+    List<Integer> setInit = new ArrayList<>();
     for (int i = 0; i < 64; i++) {
       setInit.add(i);
     }
@@ -68,32 +67,23 @@ public class SSAConstructorSparseEx {
 
     setCatchMaps(root, dgraph, flatthelper);
 
+    int iteration = 1;
     HashSet<String> updated = new HashSet<>();
     do {
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
-      ssaStatements(dgraph, updated);
+      cancellationManager.checkCanceled();
+      ssaStatements(dgraph, updated, mt, iteration++);
       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
     }
     while (!updated.isEmpty());
   }
 
-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated) {
+  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, StructMethod mt, int itteration) {
 
-    // try {
-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr1_my.dot"));
-    // } catch(Exception ex) {ex.printStackTrace();}
+    DotExporter.toDotFile(dgraph, mt, "ssaStatements_" + itteration, outVarVersions);
 
     for (DirectNode node : dgraph.nodes) {
-
-      //			if (node.id.endsWith("_inc")) {
-      //				System.out.println();
-      //
-      //				try {
-      //					DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr1_my.dot"));
-      //				} catch (Exception ex) {
-      //					ex.printStackTrace();
-      //				}
-      //			}
+      DecompilerContext.getLimitContainer().checkSFormsFastMapDirect(this.inVarVersions, this.outVarVersions);
 
       updated.remove(node.id);
       mergeInVarMaps(node, dgraph);
@@ -251,7 +241,7 @@ public class SSAConstructorSparseEx {
       else if (cardinality == 2) { // size > 1
         Integer current_vers = vardest.getVersion();
 
-        VarVersionPair currpaar = new VarVersionPair(varindex, current_vers);
+        VarVersion currpaar = new VarVersion(varindex, current_vers);
         if (current_vers != 0 && phi.containsKey(currpaar)) {
           setCurrentVar(varmap, varindex, current_vers);
           // update phi node
@@ -265,7 +255,7 @@ public class SSAConstructorSparseEx {
 
           setCurrentVar(varmap, varindex, nextver);
           // create new phi node
-          phi.put(new VarVersionPair(varindex, nextver), vers);
+          phi.put(new VarVersion(varindex, nextver), vers);
         }
       } // 0 means uninitialized variable, which is impossible
     }
@@ -290,7 +280,8 @@ public class SSAConstructorSparseEx {
     for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
-        mapNew = mapOut.getCopy();
+        //mapOut should always be new!
+        mapNew = mapOut;
       }
       else {
         mergeMaps(mapNew, mapOut);
@@ -502,7 +493,7 @@ public class SSAConstructorSparseEx {
     return map;
   }
 
-  public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
+  public HashMap<VarVersion, FastSparseSet<Integer>> getPhi() {
     return phi;
   }
 }

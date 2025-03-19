@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -227,7 +228,8 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     if (myIsTargetInterface || info.isToAbstract()) {
       ChangeContextUtil.clearContextInfo(method);
 
-      if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.isLanguageLevel8OrHigher(myTargetSuperClass)) {
+      if (!info.isToAbstract() && !method.hasModifierProperty(PsiModifier.ABSTRACT) && 
+          PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, myTargetSuperClass)) {
         //pull as default
         RefactoringUtil.makeMethodDefault(methodCopy);
         isOriginalMethodAbstract = true;
@@ -250,9 +252,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
           (PsiMethod)(anchor != null ? myTargetSuperClass.addBefore(methodCopy, anchor) : myTargetSuperClass.add(methodCopy));
       }
       OverrideImplementUtil.annotateOnOverrideImplement(method, mySourceClass, movedElement);
-      if (!PsiUtil.isLanguageLevel6OrHigher(mySourceClass) && myIsTargetInterface) {
+      if (!PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass) && myIsTargetInterface) {
         if (isOriginalMethodAbstract) {
-          for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
+          for (PsiMethod oMethod : OverridingMethodsSearch.search(method).asIterable()) {
             deleteOverrideAnnotationIfFound(oMethod);
           }
         }
@@ -471,8 +473,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  @Nullable
-  private PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<? super PsiElement> statementsToRemove) {
+  private @Nullable PsiStatement hasCommonInitializer(PsiStatement commonInitializer, PsiMethod subConstructor, PsiField field, ArrayList<? super PsiElement> statementsToRemove) {
     final PsiCodeBlock body = subConstructor.getBody();
     if (body == null) return null;
     final PsiStatement[] statements = body.getStatements();
@@ -632,7 +633,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       constructorsToSubConstructors.put(constructor, referencingSubConstructors);
       if (constructor != null) {
         // find references
-        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false)) {
+        for (PsiReference reference : ReferencesSearch.search(constructor, new LocalSearchScope(mySourceClass), false).asIterable()) {
           final PsiElement element = reference.getElement();
           if ("super".equals(element.getText())) {
             PsiMethod parentMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -796,7 +797,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   private boolean willBeUsedInSubclass(PsiElement member, PsiClass superclass, PsiClass subclass) {
-    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
+    for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false).asIterable()) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, myMembersToMove, superclass, false)) {
         return true;

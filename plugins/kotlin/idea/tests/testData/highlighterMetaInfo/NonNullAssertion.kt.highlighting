@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>s<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!>?) {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>s<!><!HIGHLIGHTING("textAttributesKey='KOTLIN_EXCLEXCL'")!>!!<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>length<!>
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>s<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!>?) {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>s<!><!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXCLEXCL'")!>!!<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>length<!>
 }

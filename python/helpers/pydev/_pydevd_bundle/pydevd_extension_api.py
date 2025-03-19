@@ -69,7 +69,7 @@ class StrPresentationProvider(_AbstractProvider):
     """
 
     @abc.abstractmethod
-    def get_str(self, val):
+    def get_str(self, val, do_trim=True):
         raise NotImplementedError
 
 

@@ -6,11 +6,10 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -20,12 +19,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.Objects;
+import java.util.Optional;
 
-public class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
+final class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-    FileBasedIndex.getInstance().processAllKeys(HtmlTagIdIndex.INDEX, (name) -> processor.process(name) && processor.process("#" + name),
+    FileBasedIndex.getInstance().processAllKeys(HtmlTagIdIndex.INDEX,
+                                                (name) -> processor.process(name) && processor.process("#" + name),
                                                 scope, filter);
   }
 
@@ -34,21 +36,33 @@ public class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
                                       @NotNull Processor<? super NavigationItem> processor,
                                       @NotNull FindSymbolParameters parameters) {
     String idName = StringUtil.trimStart(name, "#");
-    FileBasedIndex.getInstance().processValues(HtmlTagIdIndex.INDEX, idName, null, (file, value) -> processor.process(
-      new OffsetNavigationItem(parameters, file, value, name)), parameters.getSearchScope(), parameters.getIdFilter());
+    FileBasedIndex.getInstance().processValues(HtmlTagIdIndex.INDEX, idName, null, (file, value) -> {
+      var navigationItem = new OffsetNavigationItem(parameters.getProject(), file, value, name,
+                                                    getLocationString(parameters.getProject(), file));
+      return processor.process(navigationItem);
+    }, parameters.getSearchScope(), parameters.getIdFilter());
+  }
+
+  private static @Nullable String getLocationString(@NotNull Project project, @NotNull VirtualFile file) {
+    return Optional.ofNullable(ProjectUtil.guessProjectDir(project))
+      .map(projectDir -> VfsUtilCore.getRelativePath(file, projectDir, File.separatorChar))
+      .map(path -> "(" + path + ")")
+      .orElse(null);
   }
 
   private static final class OffsetNavigationItem implements NavigationItem {
     private final VirtualFile myFile;
     private final Integer myValue;
     private final String myName;
+    private final String myLocationString;
     private final Project myProject;
 
-    private OffsetNavigationItem(FindSymbolParameters parameters, VirtualFile file, Integer value, String name) {
-      myProject = parameters.getProject();
+    private OffsetNavigationItem(Project project, VirtualFile file, Integer value, String name, String locationString) {
+      myProject = project;
       myFile = file;
       myValue = value;
       myName = name;
+      myLocationString = locationString;
     }
 
     @Override
@@ -79,11 +93,9 @@ public class HtmlGotoSymbolProvider implements ChooseByNameContributorEx {
           return myName;
         }
 
-        @Nullable
         @Override
-        public String getLocationString() {
-          PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
-          return psiFile != null ? "(" + SymbolPresentationUtil.getFilePathPresentation(psiFile) + ")" : null;
+        public @Nullable String getLocationString() {
+          return myLocationString;
         }
 
         @Override

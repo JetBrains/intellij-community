@@ -11,5 +11,8 @@ object FqNames {
         val OLD_USE_EXPERIMENTAL_FQ_NAME = FqName("kotlin.UseExperimental")
 
         val OPT_IN_FQ_NAMES = setOf(OLD_USE_EXPERIMENTAL_FQ_NAME, OptInNames.OPT_IN_FQ_NAME)
+
+        fun isRequiresOptInFqName(fqName: FqName?) : Boolean =
+            fqName == OptInNames.REQUIRES_OPT_IN_FQ_NAME || fqName == OLD_EXPERIMENTAL_FQ_NAME
     }
 }

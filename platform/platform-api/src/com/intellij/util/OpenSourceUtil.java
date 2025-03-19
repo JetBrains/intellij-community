@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.StatePreservingNavigatable;
@@ -17,33 +17,11 @@ public final class OpenSourceUtil {
   }
 
   public static void openSourcesFrom(@NotNull DataContext context, boolean requestFocus) {
+    if (Registry.is("ide.navigation.requests")) {
+      OpenSourceUtilKt.openSourcesFrom(context, requestFocus);
+      return;
+    }
     navigate(requestFocus, false, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
-  }
-
-  /**
-   * @deprecated use {@link #openSourcesFrom(DataContext, boolean)} instead
-   */
-  @Deprecated
-  public static void openSourcesFrom(@NotNull DataProvider context, boolean requestFocus) {
-    openSourcesFrom((DataContext)context::getData, requestFocus);
-  }
-
-  /**
-   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation
-   * @deprecated check instanceof/null on the caller side
-   */
-  @Deprecated
-  public static boolean canNavigate(@Nullable Object object) {
-    return object instanceof Navigatable && ((Navigatable)object).canNavigate();
-  }
-
-  /**
-   * @return {@code true} if the specified {@code object} is {@link Navigatable} and supports navigation to source
-   * @deprecated check instanceof/null on the caller side
-   */
-  @Deprecated
-  public static boolean canNavigateToSource(@Nullable Object object) {
-    return object instanceof Navigatable && ((Navigatable)object).canNavigateToSource();
   }
 
   /**
@@ -80,6 +58,12 @@ public final class OpenSourceUtil {
   public static boolean navigate(boolean requestFocus, boolean tryNotToScroll, @Nullable Iterable<? extends Navigatable> navigatables) {
     if (navigatables == null) {
       return false;
+    }
+    if (Registry.is("ide.navigation.requests")) {
+      Project project = OpenSourceUtilKt.findProject(navigatables);
+      if (project != null) {
+        return OpenSourceUtilKt.navigate(project, requestFocus, tryNotToScroll, navigatables);
+      }
     }
 
     Navigatable nonSourceNavigatable = null;
@@ -139,7 +123,16 @@ public final class OpenSourceUtil {
    * @return {@code true} if navigation is done, {@code false} otherwise
    */
   public static boolean navigateToSource(boolean requestFocus, boolean tryNotToScroll, @Nullable Navigatable navigatable) {
-    if (navigatable == null || !navigatable.canNavigateToSource()) {
+    if (navigatable == null) {
+      return false;
+    }
+    if (Registry.is("ide.navigation.requests")) {
+      Project project = OpenSourceUtilKt.findProject(navigatable);
+      if (project != null) {
+        return OpenSourceUtilKt.navigateToSource(project, requestFocus, tryNotToScroll, navigatable);
+      }
+    }
+    if (!navigatable.canNavigateToSource()) {
       return false;
     }
     if (tryNotToScroll && navigatable instanceof StatePreservingNavigatable) {

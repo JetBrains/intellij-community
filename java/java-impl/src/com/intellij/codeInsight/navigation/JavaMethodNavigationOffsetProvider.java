@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
 
-public class JavaMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
+public final class JavaMethodNavigationOffsetProvider implements MethodNavigationOffsetProvider {
   @Override
   public int @Nullable [] getMethodNavigationOffsets(PsiFile file, int caretOffset) {
     if (file instanceof PsiJavaFile) {

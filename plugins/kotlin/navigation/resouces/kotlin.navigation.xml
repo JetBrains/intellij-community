@@ -4,6 +4,7 @@
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy"
             serviceImplementation="org.jetbrains.kotlin.idea.navigation.KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl"/>
+    <generatedSourcesFilter implementation="org.jetbrains.kotlin.idea.navigation.KotlinResolveExtensionGeneratedSourcesFilter"/>
 
   </extensions>
 </idea-plugin>

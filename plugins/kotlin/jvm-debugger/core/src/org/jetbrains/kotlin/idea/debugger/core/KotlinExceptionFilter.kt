@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.execution.filters.*
 import com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -12,10 +12,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinSourceMapCache
+import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.isInlineFrameLineNumber
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.lang.Math.max
 import java.util.regex.Pattern
+import kotlin.math.max
 
 class KotlinExceptionFilterFactory : ExceptionFilterFactory {
     override fun create(searchScope: GlobalSearchScope): Filter {
@@ -24,18 +25,17 @@ class KotlinExceptionFilterFactory : ExceptionFilterFactory {
 }
 
 class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : ExceptionFilter(searchScope) {
-    override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        return runReadAction {
+    override fun applyFilter(line: String, entireLength: Int): Filter.Result? =
+        ReadAction.nonBlocking<Filter.Result?> {
             val result = super.applyFilter(line, entireLength)
             if (result == null) parseNativeStackTraceLine(line, entireLength) else patchResult(result, line)
-        }
-    }
+        }.executeSynchronously()
 
     private fun patchResult(result: Filter.Result, line: String): Filter.Result {
         val newHyperlinkInfo = createHyperlinkInfo(line, result) ?: return result
 
         return Filter.Result(result.resultItems.map {
-            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.getHighlightAttributes())
+            Filter.ResultItem(it.highlightStartOffset, it.highlightEndOffset, newHyperlinkInfo, it.highlightAttributes)
         })
     }
 
@@ -59,7 +59,7 @@ class KotlinExceptionFilter(private val searchScope: GlobalSearchScope) : Except
         val fullyQualifiedName = stackTraceElement.className
         val lineNumber = stackTraceElement.lineNumber - 1
 
-        val internalName = fullyQualifiedName.replace('.', '/')
+        val internalName = fullyQualifiedName.fqnToInternalName()
         val jvmClassName = JvmClassName.byInternalName(internalName)
 
         val file = DebuggerUtils.findSourceFileForClassIncludeLibrarySources(project, searchScope, jvmClassName, fileName)

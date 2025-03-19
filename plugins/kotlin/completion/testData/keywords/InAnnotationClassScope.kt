@@ -35,4 +35,5 @@ annotation class Test {
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  companion object
+// EXIST: data object
 // NOTHING_ELSE

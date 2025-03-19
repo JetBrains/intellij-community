@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.application.options.CodeStyle;
@@ -27,7 +27,7 @@ public abstract class EditingTestBase extends AbstractEditorTest {
     mySavedScheme = EditorColorsManager.getInstance().getGlobalScheme();
     myTestScheme = (EditorColorsScheme)mySavedScheme.clone();
     myTestScheme.setName("EditingTest.testScheme");
-    EditorColorsManager.getInstance().addColorsScheme(myTestScheme);
+    EditorColorsManager.getInstance().addColorScheme(myTestScheme);
     EditorColorsManager.getInstance().setGlobalScheme(myTestScheme);
   }
 

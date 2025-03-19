@@ -10,11 +10,12 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Used on directory opening with an attempt to configure suitable Python interpreter
- * (mentioned below as sdk configurator, ignored in headless mode).
+ * (mentioned below as sdk configurator).
  *
- * Used with an attempt to suggest suitable Python interpreter if no interpreter is specified.
+ * Used with an attempt to suggest suitable Python interpreter
+ * or try setup and register it in case of headless mode if no interpreter is specified.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PyProjectSdkConfigurationExtension {
 
   companion object {
@@ -60,4 +61,10 @@ interface PyProjectSdkConfigurationExtension {
    */
   @RequiresBackgroundThread
   fun createAndAddSdkForInspection(module: Module): Sdk?
+
+  /**
+   * If headless supported implementation is responsible for interpreter setup and registration
+   * for [createAndAddSdkForConfigurator] method in IDE without an additional user input.
+   */
+  fun supportsHeadlessModel(): Boolean = false
 }

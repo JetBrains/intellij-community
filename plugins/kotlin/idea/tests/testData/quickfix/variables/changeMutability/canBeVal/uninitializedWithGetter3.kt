@@ -4,8 +4,8 @@
 // ACTION: Initialize with constructor parameter
 // ACTION: Introduce backing property
 // ACTION: Move to companion object
-// ACTION: Specify type explicitly
 // ERROR: Property must be initialized
+// K2_AFTER_ERROR: Property must be initialized.
 class Test {
     var foo<caret>
         get() {

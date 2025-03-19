@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
-public class InvokeActionResult implements Result{
+public final class InvokeActionResult implements Result{
   private final Runnable myAction;
 
   public InvokeActionResult(Runnable action) {
@@ -23,6 +23,7 @@ public class InvokeActionResult implements Result{
     return true; //no text result will be provided anyway
   }
 
+  @Override
   public String toString() {
     return "";
   }

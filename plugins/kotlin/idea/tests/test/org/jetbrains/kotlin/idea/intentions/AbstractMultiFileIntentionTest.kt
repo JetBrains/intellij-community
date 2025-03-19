@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -8,16 +8,16 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.VfsTestUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
-import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -27,9 +27,11 @@ import org.junit.Assert
 import java.io.File
 
 abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
+    abstract val classId: String
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testFile = File(testDataPath, fileName())
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val testFile = File(testDataDirectory, fileName())
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)
             KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -39,9 +41,9 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
 
     protected fun doTest(path: String) {
         val testFile = File(path)
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val mainFilePath = config.getString("mainFile")
-        val intentionAction = Class.forName(config.getString("intentionClass")).newInstance() as IntentionAction
+        val intentionAction = Class.forName(config.getString(classId)).getDeclaredConstructor().newInstance() as IntentionAction
         val isApplicableExpected = config["isApplicable"]?.asBoolean ?: true
 
         doTest(path) { rootDir ->
@@ -83,6 +85,16 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val afterDirIOFile = File(testDataDirectory, afterDir)
         val afterVFile = LocalFileSystem.getInstance().findFileByIoFile(afterDirIOFile)!!
         UsefulTestCase.refreshRecursively(afterVFile)
+
+        VfsUtilCore.visitChildrenRecursively(beforeVFile, object : VirtualFileVisitor<Void?>() {
+            override fun visitFile(file: VirtualFile): Boolean {
+                val relative = VfsUtil.getRelativePath(file, beforeVFile)
+                if (relative != null) {
+                    file.putUserData(VfsTestUtil.TEST_DATA_FILE_PATH, File(afterDirIOFile, relative).toString())
+                }
+                return true
+            }
+        })
 
         action(beforeVFile)
 

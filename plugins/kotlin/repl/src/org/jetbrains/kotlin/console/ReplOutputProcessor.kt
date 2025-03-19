@@ -22,9 +22,10 @@ import org.jetbrains.kotlin.console.gutter.IconWithTooltip
 import org.jetbrains.kotlin.console.gutter.ReplIcons
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import kotlin.jvm.java
 import kotlin.math.max
 
-class ReplOutputProcessor(
+internal class ReplOutputProcessor(
     private val runner: KotlinConsoleRunner
 ) {
     private val project = runner.project
@@ -139,7 +140,7 @@ class ReplOutputProcessor(
     private fun getAttributesForSeverity(start: Int, end: Int, severity: Severity): TextAttributes = when (severity) {
         Severity.ERROR ->
             getAttributesForSeverity(HighlightInfoType.ERROR, HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES, start, end)
-        Severity.WARNING ->
+        Severity.WARNING, Severity.FIXED_WARNING ->
             getAttributesForSeverity(
                 HighlightInfoType.WARNING,
                 HighlightSeverity.WARNING,

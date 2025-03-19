@@ -1,61 +1,57 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.*
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.tree.ui.DefaultControl
 import com.intellij.ui.util.getAvailTextLength
-import com.intellij.util.PlatformIcons
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UpdateScaleHelper
-import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
-import git4idea.GitLocalBranch
-import git4idea.GitRemoteBranch
-import git4idea.branch.GitBranchIncomingOutgoingManager
-import git4idea.branch.GitBranchType
-import git4idea.branch.GitBranchUtil
-import git4idea.i18n.GitBundle
+import git4idea.GitReference
+import git4idea.branch.GitRefType
+import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchesClippedNamesCache
-import git4idea.ui.branch.popup.GitBranchesTreePopup
-import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
-import icons.DvcsImplIcons
-import org.jetbrains.annotations.Nls
-import java.awt.*
-import javax.accessibility.AccessibleContext
-import javax.swing.*
+import git4idea.ui.branch.GitBranchesTreeIconProvider
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
+import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
+import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
+import java.awt.Component
+import java.awt.Graphics2D
+import javax.swing.Icon
+import javax.swing.JLabel
+import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 import javax.swing.tree.TreePath
 
-abstract class GitBranchesTreeRenderer(private val project: Project,
-                                       private val treeModel: GitBranchesTreeModel,
-                                       private val selectedRepository: GitRepository?,
-                                       private val repositories: List<GitRepository>) : TreeCellRenderer {
-
+abstract class GitBranchesTreeRenderer(
+  protected val project: Project,
+  private val treeModel: GitBranchesTreeModel,
+  private val selectedRepository: GitRepository?,
+  repositories: List<GitRepository>,
+  private val favoriteToggleOnClickSupported: Boolean = true,
+) : TreeCellRenderer {
+  private val iconProvider = GitBranchesTreeIconProvider(project)
   private val colorManager = RepositoryChangesBrowserNode.getColorManager(project)
 
   private val updateScaleHelper = UpdateScaleHelper()
 
-  private val affectedRepositories get() = selectedRepository?.let(::listOf) ?: repositories
-
-  abstract fun hasRightArrow(nodeUserObject: Any?): Boolean
+  protected val affectedRepositories = selectedRepository?.let(::listOf) ?: repositories
 
   private fun getBranchNameClipper(treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? =
     GitBranchesTreeRendererClipper.create(project, treeNode)
@@ -68,173 +64,58 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     return DefaultControl(defaultIcon, defaultIcon, selectedIcon, selectedIcon)
   }
 
-  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? {
-    val value = treeNode ?: return null
-    return when (value) {
-      is GitBranchesTreeModel.BranchesPrefixGroup -> PlatformIcons.FOLDER_ICON
-      is BranchUnderRepository -> getBranchIcon(value.branch, listOf(value.repository), isSelected)
-      is GitBranch -> getBranchIcon(value, affectedRepositories, isSelected)
-      else -> null
-    }
+  fun getIcon(treeNode: Any?, isSelected: Boolean): Icon? = when (treeNode) {
+    is GitBranchesTreeModel.BranchesPrefixGroup -> iconProvider.forGroup()
+    is RefUnderRepository -> getBranchIcon(treeNode.ref, listOf(treeNode.repository), isSelected)
+    is GitReference -> getBranchIcon(treeNode, affectedRepositories, isSelected)
+    else -> null
   }
 
-  private fun getBranchIcon(branch: GitBranch, repositories: List<GitRepository>, isSelected: Boolean): Icon {
+  private fun getBranchIcon(reference: GitReference, repositories: List<GitRepository>, isSelected: Boolean): Icon {
     val isCurrent =
-      selectedRepository?.let { it.currentBranch == branch } ?: repositories.all { it.currentBranch == branch }
+      selectedRepository?.let { GitRefUtil.getCurrentReference(it) == reference }
+      ?: repositories.all { GitRefUtil.getCurrentReference(it) == reference }
 
     val branchManager = project.service<GitBranchManager>()
     val isFavorite =
-      selectedRepository?.let { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
-      ?: repositories.all { branchManager.isFavorite(GitBranchType.of(branch), it, branch.name) }
+      selectedRepository?.let { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
+      ?: repositories.all { branchManager.isFavorite(GitRefType.of(reference), it, reference.name) }
 
-    return when {
-      isSelected && isFavorite -> AllIcons.Nodes.Favorite
-      isSelected -> AllIcons.Nodes.NotFavoriteOnHover
-      isCurrent && isFavorite -> DvcsImplIcons.CurrentBranchFavoriteLabel
-      isCurrent -> DvcsImplIcons.CurrentBranchLabel
-      isFavorite -> AllIcons.Nodes.Favorite
-      else -> AllIcons.Vcs.BranchNode
-    }
-  }
-
-  private fun getSecondaryText(treeNode: Any?): @NlsSafe String? {
-    return when (treeNode) {
-      is PopupFactoryImpl.ActionItem -> KeymapUtil.getFirstKeyboardShortcutText(treeNode.action)
-      is GitRepository -> GitBranchUtil.getDisplayableBranchText(treeNode)
-      is GitLocalBranch -> {
-        treeNode.getCommonTrackedBranch(affectedRepositories)?.name
-      }
-      else -> null
-    }
-  }
-
-  private fun GitLocalBranch.getCommonTrackedBranch(repositories: List<GitRepository>): GitRemoteBranch? {
-    var commonTrackedBranch: GitRemoteBranch? = null
-
-    for (repository in repositories) {
-      val trackedBranch = findTrackedBranch(repository) ?: return null
-
-      if (commonTrackedBranch == null) {
-        commonTrackedBranch = trackedBranch
-      }
-      else if (commonTrackedBranch.name != trackedBranch.name) {
-        return null
-      }
-    }
-    return commonTrackedBranch
+    return iconProvider.forRef(reference, current = isCurrent, favorite = isFavorite, favoriteToggleOnClick = favoriteToggleOnClickSupported, selected = isSelected)
   }
 
   private fun getNodeIcon(treeNode: Any?, isSelected: Boolean): Icon? {
     val value = treeNode ?: return null
     return when (value) {
       is PopupFactoryImpl.ActionItem -> value.getIcon(isSelected)
-      is GitRepository -> RepositoryChangesBrowserNode.getRepositoryIcon(value, colorManager)
+      is GitRepository -> iconProvider.forRepository(value)
+      is GitBranchesTreeModel.TopLevelRepository -> iconProvider.forRepository(value.repository)
       else -> null
     }
   }
 
-  private fun getIncomingOutgoingIconWithTooltip(treeNode: Any?): Pair<Icon?, @Nls(capitalization = Nls.Capitalization.Sentence) String?> {
-    val empty = null to null
-    val value = treeNode ?: return empty
-    return when (value) {
-      is GitBranch -> getIncomingOutgoingIconWithTooltip(value)
-      else -> empty
-    }
-  }
-
-  private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
-    val branchName = branch.name
-    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
-
-    val hasIncoming = affectedRepositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
-    val hasOutgoing = affectedRepositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
-
-    val tooltip = GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip(hasIncoming, hasOutgoing).orEmpty()
-
-    return when {
-      hasIncoming && hasOutgoing -> RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing)
-      hasIncoming -> DvcsImplIcons.Incoming
-      hasOutgoing -> DvcsImplIcons.Outgoing
-      else -> null
-    } to tooltip
-  }
-
-  private val mainIconComponent = JLabel().apply {
+  protected val mainIconComponent = JLabel().apply {
     ClientProperty.put(this, MAIN_ICON, true)
     border = JBUI.Borders.emptyRight(4)  // 6 px in spec, but label width is differed
   }
-  private val mainTextComponent = SimpleColoredComponent().apply {
+
+  protected val mainTextComponent = SimpleColoredComponent().apply {
     isOpaque = false
     border = JBUI.Borders.empty()
   }
-  private val secondaryLabel = JLabel().apply {
-    border = JBUI.Borders.emptyLeft(10)
-    horizontalAlignment = SwingConstants.RIGHT
-  }
-  private val arrowLabel = JLabel().apply {
-    border = JBUI.Borders.emptyLeft(4) // 6 px in spec, but label width is differed
-  }
-  private val incomingOutgoingLabel = JLabel().apply {
-    border = JBUI.Borders.emptyLeft(10)
-  }
 
-  private val branchInfoPanel = JBUI.Panels.simplePanel(mainTextComponent)
-    .addToLeft(mainIconComponent)
-    .addToRight(incomingOutgoingLabel)
-    .andTransparent()
+  abstract val mainPanel: BorderLayoutPanel
 
-  private val textPanel =
-    JPanel(GridBagLayout()).apply {
-      isOpaque = false
-
-      add(branchInfoPanel,
-          GridBagConstraints().apply {
-            anchor = GridBagConstraints.LINE_START
-            weightx = 0.0
-          })
-
-      add(secondaryLabel,
-          GridBagConstraints().apply {
-            anchor = GridBagConstraints.LINE_END
-            weightx = 0.75
-          })
-    }
-
-  private inner class MyMainPanel : BorderLayoutPanel() {
-    init {
-      addToCenter(textPanel)
-      addToRight(arrowLabel)
-      andTransparent()
-      withBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.cellPadding().right))
-    }
-
-    override fun getAccessibleContext(): AccessibleContext {
-      if (accessibleContext == null) {
-        accessibleContext = object : AccessibleContextDelegateWithContextMenu(mainTextComponent.accessibleContext) {
-          override fun getDelegateParent(): Container = parent
-
-          override fun doShowContextMenu() {
-            ActionManager.getInstance().tryToExecute(ActionManager.getInstance().getAction("ShowPopupMenu"), null, null, null, true)
-          }
-        }
-      }
-      return accessibleContext
-    }
-  }
-
-  private val mainPanel = MyMainPanel()
-
-  override fun getTreeCellRendererComponent(tree: JTree,
-                                            value: Any?,
-                                            selected: Boolean,
-                                            expanded: Boolean,
-                                            leaf: Boolean,
-                                            row: Int,
-                                            hasFocus: Boolean): Component {
+  final override fun getTreeCellRendererComponent(tree: JTree,
+                                                  value: Any?,
+                                                  selected: Boolean,
+                                                  expanded: Boolean,
+                                                  leaf: Boolean,
+                                                  row: Int,
+                                                  hasFocus: Boolean): Component {
     val userObject = TreeUtil.getUserObject(value)
     // render separator text in accessible mode
     if (userObject is SeparatorWithText) return userObject
-    val disabledAction = userObject is PopupFactoryImpl.ActionItem && !userObject.isEnabled
 
     mainIconComponent.apply {
       icon = getIcon(userObject, selected)
@@ -248,7 +129,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       clear()
       val text = getText(userObject, treeModel, affectedRepositories).orEmpty()
 
-      if (disabledAction) {
+      if (isDisabledActionItem(userObject)) {
         append(text, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
       else {
@@ -256,46 +137,20 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
       }
     }
 
-    val (inOutIcon, inOutTooltip) = getIncomingOutgoingIconWithTooltip(userObject)
-    tree.toolTipText = inOutTooltip
+    configureTreeCellComponent(tree, userObject, value, selected, expanded, leaf, row, hasFocus)
 
-    incomingOutgoingLabel.apply {
-      icon = inOutIcon
-      isVisible = icon != null
-    }
-
-    arrowLabel.apply {
-      isVisible = hasRightArrow(userObject)
-      icon = if (selected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
-    }
-
-    secondaryLabel.apply {
-      text = getSecondaryText(userObject)
-      //todo: LAF color
-      foreground = when {
-        disabledAction -> NamedColorUtil.getInactiveTextColor()
-        selected -> JBUI.CurrentTheme.Tree.foreground(true, true)
-        else -> JBColor.GRAY
-      }
-
-      border = if (!arrowLabel.isVisible && ExperimentalUI.isNewUI()) {
-        JBUI.Borders.empty(0, 10, 0, JBUI.CurrentTheme.Popup.Selection.innerInsets().right)
-      }
-      else {
-        JBUI.Borders.emptyLeft(10)
-      }
-    }
-
-    if (value != null && userObject !is PopupFactoryImpl.ActionItem) {
+    if (value != null && canHighlight(project, tree, userObject)) {
       SpeedSearchUtil.applySpeedSearchHighlightingFiltered(tree, value, mainTextComponent, true, selected)
     }
 
     if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
-      tree.rowHeight = GitBranchesTreePopup.treeRowHeight
+      tree.rowHeight = GitBranchesTreePopupBase.treeRowHeight
     }
 
     return mainPanel
   }
+
+  abstract fun configureTreeCellComponent(tree: JTree, userObject: Any?, value: Any?, selected: Boolean, expanded: Boolean, leaf: Boolean, row: Int, hasFocus: Boolean)
 
   companion object {
     @JvmField
@@ -304,36 +159,22 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
-        GitBranchType.LOCAL -> {
-          when {
-            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.local.branches.in.repo",
-                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            repositories.size > 1 -> GitBundle.message("common.local.branches")
-            else -> GitBundle.message("group.Git.Local.Branch.title")
-          }
-        }
-        GitBranchType.REMOTE -> {
-          when {
-            model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.remote.branches.in.repo",
-                                                                           DvcsUtil.getShortRepositoryName(model.selectedRepository))
-            repositories.size > 1 -> GitBundle.message("common.remote.branches")
-            else -> GitBundle.message("group.Git.Remote.Branch.title")
-          }
+        is GitRefType -> when {
+          model is GitBranchesTreeSelectedRepoModel -> value.getInRepoText(DvcsUtil.getShortRepositoryName(model.selectedRepository))
+          repositories.size > 1 -> value.getCommonText()
+          else -> value.getText()
         }
         is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
-        is GitBranchesTreeModel.BranchTypeUnderRepository -> {
-          when (value.type) {
-            GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
-            GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
-          }
-        }
-        is BranchUnderRepository -> getText(value.branch, model, repositories)
-        is GitBranch -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
+        is GitBranchesTreeModel.RefTypeUnderRepository -> value.type.getText()
+        is RefUnderRepository -> getText(value.ref, model, repositories)
+        is GitReference -> if (model.isPrefixGrouping) value.name.split('/').last() else value.name
         is PopupFactoryImpl.ActionItem -> value.text
+        is GitBranchesTreeModel.PresentableNode -> value.presentableText
         else -> null
       }
     }
+    internal fun isDisabledActionItem(userObject: Any?) = userObject is PopupFactoryImpl.ActionItem && !userObject.isEnabled
   }
 }
 
@@ -347,7 +188,7 @@ private class GitBranchesTreeRendererClipper(private val project: Project) : Sim
 
   companion object {
     fun create(project: Project, treeNode: Any?): SimpleColoredComponent.FragmentTextClipper? {
-      if (treeNode is BranchUnderRepository ||
+      if (treeNode is RefUnderRepository ||
           treeNode is GitBranch) {
         return GitBranchesTreeRendererClipper(project)
       }

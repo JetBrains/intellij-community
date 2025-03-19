@@ -1,20 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -23,15 +13,19 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.Collection;
+import java.util.List;
 
-public class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
+public final class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
 
   public JavaProjectModelModificationServiceImpl(Project project) {
@@ -40,35 +34,44 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
-    for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.addModuleDependency(from, to, scope, exported);
-      if (promise != null) {
-        return promise;
-      }
+    Promise<Void> promise = null;
+    List<JavaProjectModelModifier> modifiers = getModelModifiers();
+    for (int i = 0; i < modifiers.size() && promise == null; i++) {
+      promise = modifiers.get(i).addModuleDependency(from, to, scope, exported);
     }
-    return Promises.rejectedPromise();
+
+    promise = promise == null ? Promises.rejectedPromise() : promise;
+    return promise.onSuccess(v -> addJigsawModule(from, to, scope));
   }
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
-    for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.addLibraryDependency(from, library, scope, exported);
-      if (promise != null) {
-        return promise;
-      }
+    Promise<Void> promise = null;
+    List<JavaProjectModelModifier> modifiers = getModelModifiers();
+    for (int i = 0; i < modifiers.size() && promise == null; i++) {
+      promise = modifiers.get(i).addLibraryDependency(from, library, scope, exported);
     }
-    return Promises.rejectedPromise();
+
+    promise = promise == null ? Promises.rejectedPromise() : promise;
+    return promise.onSuccess(v -> addJigsawModule(from, library, scope));
   }
 
   @Override
-  public Promise<Void> addDependency(@NotNull Collection<? extends Module> from, @NotNull ExternalLibraryDescriptor libraryDescriptor, @NotNull DependencyScope scope) {
-    for (JavaProjectModelModifier modifier : getModelModifiers()) {
-      Promise<Void> promise = modifier.addExternalLibraryDependency(from, libraryDescriptor, scope);
-      if (promise != null) {
-        return promise;
-      }
+  public Promise<Void> addDependency(@NotNull Collection<? extends Module> from,
+                                     @NotNull ExternalLibraryDescriptor libraryDescriptor,
+                                     @NotNull DependencyScope scope) {
+    Promise<Void> promise = null;
+    List<JavaProjectModelModifier> modifiers = getModelModifiers();
+    for (int i = 0; i < modifiers.size() && promise == null; i++) {
+      promise = modifiers.get(i).addExternalLibraryDependency(from, libraryDescriptor, scope);
     }
-    return Promises.rejectedPromise();
+
+    promise = promise == null ? Promises.rejectedPromise() : promise;
+    return promise.onSuccess(v -> {
+      Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
+        .getLibraryByName(libraryDescriptor.getPresentableName());
+      from.forEach(m -> addJigsawModule(m, library, scope));
+    });
   }
 
   @Override
@@ -98,7 +101,35 @@ public class JavaProjectModelModificationServiceImpl extends JavaProjectModelMod
     return Promises.rejectedPromise();
   }
 
-  private JavaProjectModelModifier @NotNull [] getModelModifiers() {
-    return JavaProjectModelModifier.EP_NAME.getExtensions(myProject);
+  private List<JavaProjectModelModifier> getModelModifiers() {
+    return JavaProjectModelModifier.EP_NAME.getExtensionList(myProject);
+  }
+
+  private static void addJigsawModule(@NotNull Module from,
+                                      @NotNull Module to,
+                                      @NotNull DependencyScope scope) {
+    PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST));
+    addJigsawModule(from, toModule, scope);
+  }
+
+  private static void addJigsawModule(@NotNull Module from,
+                                      @Nullable Library library,
+                                      @NotNull DependencyScope scope) {
+    if (library == null) return;
+    PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()));
+    addJigsawModule(from, toModule, scope);
+  }
+
+  private static void addJigsawModule(@NotNull Module from,
+                                      @Nullable PsiJavaModule to,
+                                      @NotNull DependencyScope scope) {
+    if (to == null) return;
+    PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
+    if (fromModule == null) return;
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+      WriteAction.run(() -> {
+        JavaModuleGraphUtil.addDependency(fromModule, to, scope);
+      });
+    });
   }
 }

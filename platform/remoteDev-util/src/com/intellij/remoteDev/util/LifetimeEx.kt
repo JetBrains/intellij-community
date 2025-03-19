@@ -15,3 +15,14 @@ fun Lifetime.onTerminationOrNow(action: () -> Unit) {
     throwIfNotAlive()
   }
 }
+
+@ApiStatus.Experimental
+fun Lifetime.onTerminationOrNowSafe(action: () -> Unit) {
+  val isAlive = onTerminationIfAlive {
+    action()
+  }
+
+  if (!isAlive) {
+    action()
+  }
+}

@@ -1,0 +1,66 @@
+### auto-generated section `build kotlin.base.util` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "kotlin-base-util",
+  module_name = "kotlin.base.util",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/lang-core",
+    "//platform/diff-impl",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:gson",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-base-util_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":kotlin-base-util"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinx-coroutines-core",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/lang-core",
+    "//platform/diff-impl",
+    "//platform/indexing-api:indexing",
+    "//java/java-psi-impl:psi-impl",
+    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test",
+    "@lib//:junit4",
+    "//java/java-analysis-impl:analysis-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "@lib//:gson",
+    "//platform/core-ui",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+  ]
+)
+
+jvm_test(
+  name = "kotlin-base-util_test",
+  runtime_deps = [":kotlin-base-util_test_lib"]
+)
+### auto-generated section `build kotlin.base.util` end

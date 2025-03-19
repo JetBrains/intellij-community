@@ -1,16 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform
 
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.OpenProjectTaskBuilder
-import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.ide.impl.TrustedPaths
+import com.intellij.ide.impl.*
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -18,9 +14,10 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.impl.checkTrustedState
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.startup.StartupManager
@@ -31,9 +28,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,15 +63,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
 
-    private val PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY: Key<Boolean> = Key.create("PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY")
-
     fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean = getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
 
-    fun Project.isTempProject(): Boolean = getUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY) == true
+    fun Project.isTempProject(): Boolean = service<OpenProjectSettingsService>().state.isLocatedInTempDirectory
 
     internal fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 
@@ -117,7 +114,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       },
       beforeOpen = {
-        it.putUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY, true)
+        it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
         options.beforeOpen?.invoke(it) ?: true
       })
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
@@ -157,7 +154,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
         },
         beforeOpen = {
-          it.putUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY, true)
+          it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
           options.beforeOpen?.invoke(it) ?: true
         }
       )
@@ -170,8 +167,10 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @ApiStatus.Internal
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       if (Files.isDirectory(file)) {
-        return ProjectManagerEx.getInstanceEx().openProject(file,
-                                                            createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null))
+        val options = runUnderModalProgressIfIsEdt {
+          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null)
+        }
+        return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
 
       var options = originalOptions
@@ -181,8 +180,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       }
 
+      val storePathManager = ProjectStorePathManager.getInstance()
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      while (baseDirCandidate != null && !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -203,7 +203,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
       }
       else {
         baseDir = baseDirCandidate
@@ -238,7 +238,8 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       }
 
       var baseDirCandidate = file.parent
-      while (baseDirCandidate != null && !Files.exists(baseDirCandidate.resolve(Project.DIRECTORY_STORE_FOLDER))) {
+      val storePathManager = serviceAsync<ProjectStorePathManager>()
+      while (baseDirCandidate != null && !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDirCandidate)) {
         baseDirCandidate = baseDirCandidate.parent
       }
 
@@ -259,7 +260,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
 
         baseDir = file.parent
-        options = options.copy(isNewProject = !Files.isDirectory(baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)))
+        options = options.copy(isNewProject = !storePathManager.testStoreDirectoryExistsForProjectRoot(baseDir))
       }
       else {
         baseDir = baseDirCandidate
@@ -285,7 +286,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
       }
       withContext(Dispatchers.EDT) {
-        virtualFile.refresh(false, false)
+        writeIntentReadAction {
+          virtualFile.refresh(false, false)
+        }
       }
 
       for (configurator in EP_NAME.lazySequence()) {
@@ -295,11 +298,17 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
           else if (configurator.isEdtRequired) {
             withContext(Dispatchers.EDT) {
-              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+              blockingContext {
+                SlowOperations.knownIssue("IDEA-319905, EA-808639").use {
+                  configurator.configureProject(project, virtualFile, moduleRef, newProject)
+                }
+              }
             }
           }
           else {
-            configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            blockingContext {
+              configurator.configureProject(project, virtualFile, moduleRef, newProject)
+            }
           }
         }
         catch (e: ProcessCanceledException) {
@@ -323,7 +332,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmStatic
     @RequiresEdt
     fun attachToProject(project: Project, projectDir: Path, callback: ProjectOpenedCallback?): Boolean {
-      return runBlockingModal(project, "") {
+      return runWithModalProgressBlocking(project, "") {
         attachToProjectAsync(projectToClose = project, projectDir = projectDir, callback = callback)
       }
     }
@@ -339,38 +348,36 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
      */
     @ApiStatus.Internal
     @JvmStatic
-    fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
+    suspend fun createOptionsToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?): OpenProjectTask {
       return OpenProjectTask {
         runConfigurators = true
-        isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+        isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
         this.projectToClose = projectToClose
-        // doesn't make sense to refresh
-        isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
         useDefaultProjectAsTemplate = true
       }
     }
 
     @ApiStatus.Internal
-    fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
+    suspend fun OpenProjectTaskBuilder.configureToOpenDotIdeaOrCreateNewIfNotExists(projectDir: Path, projectToClose: Project?) {
       runConfigurators = true
-      isNewProject = !ProjectUtilCore.isValidProjectPath(projectDir)
+      isNewProject = !ProjectUtil.isValidProjectPath(projectDir)
       this.projectToClose = projectToClose
-      // doesn't make sense to refresh
-      isRefreshVfsNeeded = !ApplicationManager.getApplication().isUnitTestMode
       useDefaultProjectAsTemplate = true
     }
   }
 
-  override fun canOpenProject(file: VirtualFile) = file.isDirectory
+  override fun canOpenProject(file: VirtualFile): Boolean = file.isDirectory
 
-  override fun isProjectFile(file: VirtualFile) = false
+  override fun isProjectFile(file: VirtualFile): Boolean = false
 
-  override fun lookForProjectsInDirectory() = false
+  override fun lookForProjectsInDirectory(): Boolean = false
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
     val baseDir = virtualFile.toNioPath()
-    return doOpenProject(baseDir, createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
-      .copy(forceOpenInNewFrame = forceOpenInNewFrame))
+    val options = runUnderModalProgressIfIsEdt {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(baseDir, projectToClose)
+    }.copy(forceOpenInNewFrame = forceOpenInNewFrame)
+    return doOpenProject(baseDir, options)
   }
 
   // force open in a new frame if temp project
@@ -402,18 +409,36 @@ private fun openFileFromCommandLine(project: Project, file: Path, line: Int, col
         PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1)
       }
       navigatable.navigate(true)
-    }, ModalityState.NON_MODAL, project.disposed)
+    }, ModalityState.nonModal(), project.disposed)
   }
 }
 
 @Internal
-suspend fun attachToProjectAsync(projectToClose: Project, projectDir: Path, callback: ProjectOpenedCallback? = null): Boolean {
+suspend fun attachToProjectAsync(
+  projectToClose: Project,
+  projectDir: Path,
+  processor: ProjectAttachProcessor? = null,
+  callback: ProjectOpenedCallback? = null
+): Boolean {
+  if (!checkTrustedState(projectDir)) {
+    return false
+  }
+  if (processor != null) {
+    return attachImpl(processor, projectToClose, projectDir, callback)
+  }
   for (attachProcessor in ProjectAttachProcessor.EP_NAME.lazySequence()) {
-    if (runCatching {
-        attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
-      }.getOrLogException(LOG) == true) {
-      return true
-    }
+    if (attachImpl(attachProcessor, projectToClose, projectDir, callback)) return true
   }
   return false
+}
+
+private suspend fun attachImpl(
+  attachProcessor: ProjectAttachProcessor,
+  projectToClose: Project,
+  projectDir: Path,
+  callback: ProjectOpenedCallback?,
+): Boolean {
+  return runCatching {
+    attachProcessor.attachToProjectAsync(projectToClose, projectDir, callback)
+  }.getOrLogException(LOG) == true
 }

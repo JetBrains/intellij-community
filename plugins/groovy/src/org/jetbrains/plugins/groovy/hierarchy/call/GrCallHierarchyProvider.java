@@ -17,5 +17,5 @@ package org.jetbrains.plugins.groovy.hierarchy.call;
 
 import com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider;
 
-public class GrCallHierarchyProvider extends JavaCallHierarchyProvider {
+public final class GrCallHierarchyProvider extends JavaCallHierarchyProvider {
 }

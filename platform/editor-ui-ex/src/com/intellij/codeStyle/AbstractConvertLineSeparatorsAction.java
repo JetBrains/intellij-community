@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeStyle;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -36,8 +36,7 @@ import java.util.function.Supplier;
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction implements DumbAware, LightEditCompatible {
   private static final Logger LOG = Logger.getInstance(AbstractConvertLineSeparatorsAction.class);
 
-  @NotNull
-  private final String mySeparator;
+  private final @NotNull String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@NotNull Supplier<@NlsActions.ActionText String> text, @NotNull LineSeparator separator) {
     this(separator + " - " + text.get(), separator.getSeparatorString());
@@ -92,9 +91,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
     FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           if (shouldProcess(file)) {
             changeLineSeparators(project, file, mySeparator);
           }

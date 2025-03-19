@@ -37,10 +37,9 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
-  @NotNull
+public final class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
   @Override
-  public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session)) {
 
       @Override
@@ -85,8 +84,7 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
     };
   }
 
-  @NotNull
-  private static List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, PyParameter @NotNull [] realParams) {
+  private static @NotNull List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, PyParameter @NotNull [] realParams) {
     final List<PyNamedParameter> missing = new ArrayList<>();
     final List<String> docStringParameters = docString.getParameters();
     if (docStringParameters.isEmpty()) {
@@ -105,8 +103,7 @@ public class PyIncorrectDocstringInspection extends PyBaseDocstringInspection {
     return missing;
   }
 
-  @NotNull
-  private static List<Substring> getUnexpectedParams(@NotNull StructuredDocString docString, PyParameter @NotNull [] realParams) {
+  private static @NotNull List<Substring> getUnexpectedParams(@NotNull StructuredDocString docString, PyParameter @NotNull [] realParams) {
     final Map<String, Substring> unexpected = Maps.newHashMap();
 
     for (Substring s : docString.getParameterSubstrings()) {

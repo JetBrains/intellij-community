@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,44 +17,43 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class UpdateOutputLineConverter {
-  private final static @NonNls String MERGING = "--- Merging";
-  private final static @NonNls String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
+  private static final @NonNls String MERGING = "--- Merging";
+  private static final @NonNls String RECORDING_MERGE_INFO = "--- Recording mergeinfo";
 
-  private final static @NonNls String UPDATING = "Updating";
-  private final static @NonNls String SKIPPED = "Skipped";
-  private final static @NonNls String RESTORED = "Restored";
+  private static final @NonNls String UPDATING = "Updating";
+  private static final @NonNls String SKIPPED = "Skipped";
+  private static final @NonNls String RESTORED = "Restored";
 
-  private final static @NonNls String FETCHING_EXTERNAL = "Fetching external";
+  private static final @NonNls String FETCHING_EXTERNAL = "Fetching external";
 
-  private final static Pattern ourAtRevision = Pattern.compile("At revision (\\d+)\\.");
-  private final static Pattern ourUpdatedToRevision = Pattern.compile("Updated to revision (\\d+)\\.");
-  private final static Pattern ourCheckedOutRevision = Pattern.compile("Checked out revision (\\d+)\\.");
+  private static final Pattern ourAtRevision = Pattern.compile("At revision (\\d+)\\.");
+  private static final Pattern ourUpdatedToRevision = Pattern.compile("Updated to revision (\\d+)\\.");
+  private static final Pattern ourCheckedOutRevision = Pattern.compile("Checked out revision (\\d+)\\.");
 
   // export from repository
-  private final static Pattern ourExportedRevision = Pattern.compile("Exported revision (\\d+)\\.");
+  private static final Pattern ourExportedRevision = Pattern.compile("Exported revision (\\d+)\\.");
   // export from working copy
-  private final static Pattern ourExportComplete = Pattern.compile("Export complete\\.");
+  private static final Pattern ourExportComplete = Pattern.compile("Export complete\\.");
 
   // update operation with no changes - still we're interested in revision number
-  private final static Pattern ourExternal = Pattern.compile("External at revision (\\d+)\\.");
+  private static final Pattern ourExternal = Pattern.compile("External at revision (\\d+)\\.");
   // update operation with some changes
-  private final static Pattern ourUpdatedExternal = Pattern.compile("Updated external to revision (\\d+)\\.");
-  private final static Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
+  private static final Pattern ourUpdatedExternal = Pattern.compile("Updated external to revision (\\d+)\\.");
+  private static final Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
 
-  private final static Pattern[] ourCompletePatterns =
+  private static final Pattern[] ourCompletePatterns =
     new Pattern[]{ourAtRevision, ourUpdatedToRevision, ourCheckedOutRevision, ourExportedRevision, ourExternal, ourUpdatedExternal,
       ourCheckedOutExternal, ourExportComplete};
 
   private final File myBase;
-  @NotNull private final Stack<File> myRootsUnderProcessing;
+  private final @NotNull Stack<File> myRootsUnderProcessing;
 
   public UpdateOutputLineConverter(File base) {
     myBase = base;
     myRootsUnderProcessing = new Stack<>();
   }
 
-  @Nullable
-  public ProgressEvent convert(final String line) {
+  public @Nullable ProgressEvent convert(final String line) {
     // TODO: Add direct processing of "Summary of conflicts" lines at the end of "svn update" output (if there are conflicts).
     // TODO: Now it works ok because parseNormalLine could not determine necessary statuses from that and further lines
     if (StringUtil.isEmptyOrSpaces(line)) return null;
@@ -78,7 +77,7 @@ public final class UpdateOutputLineConverter {
       final long revision = matchAndGetRevision(pattern, line);
       if (revision != -1) {
         // checkout output does not have special line like "Updating '.'" on start - so stack could be empty and we should use myBase
-        File currentRoot = myRootsUnderProcessing.size() > 0 ? myRootsUnderProcessing.pop() : myBase;
+        File currentRoot = !myRootsUnderProcessing.isEmpty() ? myRootsUnderProcessing.pop() : myBase;
         return createEvent(currentRoot, revision, EventAction.UPDATE_COMPLETED, null);
       }
     }
@@ -86,20 +85,17 @@ public final class UpdateOutputLineConverter {
     return parseNormalString(line);
   }
 
-  @NotNull
-  private static ProgressEvent createEvent(File file, @NotNull EventAction action) {
+  private static @NotNull ProgressEvent createEvent(File file, @NotNull EventAction action) {
     return createEvent(file, -1, action, null);
   }
 
-  @NotNull
-  private static ProgressEvent createEvent(File file, long revision, @NotNull EventAction action, @Nullable String error) {
+  private static @NotNull ProgressEvent createEvent(File file, long revision, @NotNull EventAction action, @Nullable String error) {
     return new ProgressEvent(file, revision, null, null, action, error, null);
   }
 
-  private final static Set<Character> ourActions = Set.of('A', 'D', 'U', 'C', 'G', 'E', 'R');
+  private static final Set<Character> ourActions = Set.of('A', 'D', 'U', 'C', 'G', 'E', 'R');
 
-  @Nullable
-  private ProgressEvent parseNormalString(final String line) {
+  private @Nullable ProgressEvent parseNormalString(final String line) {
     if (line.length() < 5) return null;
     final char first = line.charAt(0);
     if (' ' != first && ! ourActions.contains(first)) return null;
@@ -155,15 +151,13 @@ public final class UpdateOutputLineConverter {
     return -1;
   }
 
-  @Nullable
-  private static String parseComment(final String line) {
+  private static @Nullable String parseComment(final String line) {
     int index = line.lastIndexOf("--");
 
     return index != -1 && index < line.length() - 2 ? line.substring(index + 2).trim() : null;
   }
 
-  @Nullable
-  private File parseForPath(@NotNull String line) {
+  private @Nullable File parseForPath(@NotNull String line) {
     File result = null;
     int start = line.indexOf('\'');
 

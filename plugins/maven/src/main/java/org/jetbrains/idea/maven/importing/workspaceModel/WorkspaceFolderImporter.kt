@@ -1,14 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.ide.util.projectWizard.importSources.JavaSourceRootDetectionUtil
+import com.intellij.java.workspace.entities.JavaResourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaResourceRoots
+import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.FileCollectionFactory
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
-import org.jetbrains.idea.maven.importing.MavenImporter
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -20,8 +30,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import java.io.File
 import java.util.stream.Stream
 
@@ -29,43 +37,57 @@ internal class WorkspaceFolderImporter(
   private val builder: MutableEntityStorage,
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val importingSettings: MavenImportingSettings,
-  private val importingContext: FolderImportingContext) {
+  private val importingContext: FolderImportingContext,
+  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>,
+  private val project: Project
+) {
 
-  fun createContentRoots(mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
-                         stats: WorkspaceImportStats): CachedProjectFolders {
-    val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
-
+  fun createContentRoots(
+    mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
+    stats: WorkspaceImportStats,
+  ): OutputFolders {
     val cachedFolders = importingContext.projectToCachedFolders.getOrPut(mavenProject) {
       collectMavenFolders(mavenProject, stats)
     }
 
-    addContentRoot(cachedFolders, allFolders)
+    val outputFolders = OutputFolders(cachedFolders.outputPath, cachedFolders.testOutputPath)
+
+    // do not create source roots in additional <compileSourceRoots> modules
+    if (moduleType == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) return outputFolders
+
+    val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
+    addContentRoot(cachedFolders, allFolders, isSharedSourceSupportEnabled(project))
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
     for (root in ContentRootCollector.collect(allFolders)) {
       val excludes = root.excludeFolders
-        .map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
-        .map { builder addEntity ExcludeUrlEntity(it, module.entitySource) }
-      val contentRootEntity = builder addEntity ContentRootEntity(virtualFileUrlManager.fromPath(root.path),
-                                                                  emptyList(), module.entitySource) {
+        .map { exclude -> virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(exclude.path)) }
+        .map { ExcludeUrlEntity(it, module.entitySource) }
+      val newContentRootEntity = ContentRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(root.path)),
+                                                   emptyList(), module.entitySource) {
         this.excludedUrls = excludes
-        this.module = module
       }
       root.sourceFolders.forEach { folder ->
-        registerSourceRootFolder(contentRootEntity, folder)
+        registerSourceRootFolder(newContentRootEntity, folder)
+      }
+      builder.modifyModuleEntity(module) {
+        this.contentRoots += newContentRootEntity
       }
     }
 
-    return cachedFolders
+    return outputFolders
   }
 
   private fun addContentRoot(cachedFolders: CachedProjectFolders,
-                             allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
+                             allFolders: MutableList<ContentRootCollector.ImportedFolder>,
+                             duplicatesAreAllowed: Boolean = false) {
     val contentRoot = cachedFolders.projectContentRootPath
 
-    // make sure we don't have overlapping content roots in different modules
-    val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
-    if (alreadyRegisteredRoot) return
+    if (!duplicatesAreAllowed) {
+      // make sure we don't have overlapping content roots in different modules
+      val alreadyRegisteredRoot = importingContext.alreadyRegisteredContentRoots.contains(contentRoot)
+      if (alreadyRegisteredRoot) return
+    }
 
     allFolders.add(ContentRootCollector.ProjectRootFolder(contentRoot))
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
@@ -86,39 +108,35 @@ internal class WorkspaceFolderImporter(
                         StandardMavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
                         StandardMavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
                         StandardMavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
-                        StandardMavenModuleType.AGGREGATOR -> emptyList()
+                        StandardMavenModuleType.AGGREGATOR -> cachedFolders.folders.filter { it is ContentRootCollector.ExcludedFolder }
                         else -> cachedFolders.folders
                       })
   }
 
-  private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity,
+  private fun registerSourceRootFolder(contentRootEntity: ContentRootEntity.Builder,
                                        folder: ContentRootCollector.SourceFolderResult) {
-    val rootType = when (folder.type) {
-      JavaSourceRootType.SOURCE -> JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID
-      JavaSourceRootType.TEST_SOURCE -> JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
-      JavaResourceRootType.RESOURCE -> JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID
-      JavaResourceRootType.TEST_RESOURCE -> JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID
+    val rootTypeId = when (folder.type) {
+      JavaSourceRootType.SOURCE -> JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
+      JavaSourceRootType.TEST_SOURCE -> JAVA_TEST_ROOT_ENTITY_TYPE_ID
+      JavaResourceRootType.RESOURCE -> JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID
+      JavaResourceRootType.TEST_RESOURCE -> JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
       else -> error("${folder.type} doesn't  match to maven root item")
     }
 
-    val sourceRootEntity = builder addEntity SourceRootEntity(virtualFileUrlManager.fromPath(folder.path), rootType,
-                                                              contentRootEntity.entitySource) {
-      this.contentRoot = contentRootEntity
-    }
+    val sourceRootEntity = SourceRootEntity(virtualFileUrlManager.getOrCreateFromUrl(VfsUtilCore.pathToUrl(folder.path)), rootTypeId,
+                                                              contentRootEntity.entitySource)
 
-    val isResource = JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID == rootType
-                     || JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID == rootType
+    val isResource = JAVA_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
+                     || JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID == rootTypeId
 
     if (isResource) {
-      builder addEntity JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
-        this.sourceRoot = sourceRootEntity
-      }
+      sourceRootEntity.javaResourceRoots += JavaResourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource)
     }
     else {
-      builder addEntity JavaSourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource) {
-        this.sourceRoot = sourceRootEntity
-      }
+      sourceRootEntity.javaSourceRoots += JavaSourceRootPropertiesEntity(folder.isGenerated, "", sourceRootEntity.entitySource)
     }
+
+    contentRootEntity.sourceRoots += sourceRootEntity
   }
 
   private fun collectMavenFolders(mavenProject: MavenProject, stats: WorkspaceImportStats): CachedProjectFolders {
@@ -127,9 +145,9 @@ internal class WorkspaceFolderImporter(
     val configuratorContext = object : MavenWorkspaceConfigurator.FoldersContext {
       override val mavenProject = mavenProject
     }
-    val legacyImporters = MavenImporter.getSuitableImporters(mavenProject, true)
 
-    collectSourceFolders(mavenProject, folders, configuratorContext, legacyImporters, stats)
+
+    collectSourceFolders(mavenProject, folders, configuratorContext, stats)
     collectGeneratedFolders(folders, mavenProject)
 
     val outputPath = mavenProject.toAbsolutePath(mavenProject.outputDirectory)
@@ -146,17 +164,16 @@ internal class WorkspaceFolderImporter(
       folders.add(ContentRootCollector.ExcludedFolder(testOutputPath))
     }
 
-    for (each in legacyImporters) {
-      val excludes = mutableListOf<String>()
-      try {
-        each.collectExcludedFolders(mavenProject, excludes)
-      }
-      catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenImporter.collectExcludedFolders, skipping it.", e)
-      }
-      excludes.forEach { folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it))) }
-    }
-    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+    collectExcludedFoldersFromConfigurators(stats, configuratorContext, folders, mavenProject)
+
+    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
+  }
+
+  private fun collectExcludedFoldersFromConfigurators(stats: WorkspaceImportStats,
+                                                      configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
+                                                      folders: MutableList<ContentRootCollector.ImportedFolder>,
+                                                      mavenProject: MavenProject) {
+    for (each in workspaceConfigurators) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
           each.getFoldersToExclude(configuratorContext)
@@ -169,8 +186,6 @@ internal class WorkspaceFolderImporter(
         folders.add(ContentRootCollector.ExcludedFolderAndPreventSubfolders(mavenProject.toAbsolutePath(it)))
       }
     }
-
-    return CachedProjectFolders(mavenProject.directory, outputPath, testOutputPath, folders)
   }
 
   private fun collectGeneratedFolders(folders: MutableList<ContentRootCollector.ImportedFolder>,
@@ -194,7 +209,6 @@ internal class WorkspaceFolderImporter(
   private fun collectSourceFolders(mavenProject: MavenProject,
                                    result: MutableList<ContentRootCollector.ImportedFolder>,
                                    configuratorContext: MavenWorkspaceConfigurator.FoldersContext,
-                                   legacyImporters: List<MavenImporter>,
                                    stats: WorkspaceImportStats) {
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
@@ -204,57 +218,24 @@ internal class WorkspaceFolderImporter(
     mavenProject.testSources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
     mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
-    val buildHelperPlugin = BuildHelperMavenPluginUtil.findPlugin(mavenProject)
-    if (buildHelperPlugin != null) {
-      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-source") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.SOURCE))
-      }
-      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-resource") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.RESOURCE))
-      }
 
-      BuildHelperMavenPluginUtil.addBuilderHelperPaths(buildHelperPlugin, "add-test-source") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaSourceRootType.TEST_SOURCE))
-      }
-      BuildHelperMavenPluginUtil.addBuilderHelperResourcesPaths(buildHelperPlugin, "add-test-resource") { path ->
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), JavaResourceRootType.TEST_RESOURCE))
-      }
-    }
-
-    for (each in WORKSPACE_CONFIGURATOR_EP.extensionList) {
+    for (each in workspaceConfigurators) {
       stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
         try {
-          each.getAdditionalSourceFolders(configuratorContext)
+          each.getAdditionalFolders(configuratorContext)
         }
         catch (e: Exception) {
           MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalSourceFolders, skipping it.", e)
           Stream.empty()
         }
       }.forEach {
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.SOURCE))
-      }
-
-      stats.recordConfigurator(each, MavenImportCollector.COLLECT_FOLDERS_DURATION_MS) {
-        try {
-          each.getAdditionalTestSourceFolders(configuratorContext)
+        val rootType = when (it.type) {
+          MavenWorkspaceConfigurator.FolderType.SOURCE -> JavaSourceRootType.SOURCE
+          MavenWorkspaceConfigurator.FolderType.TEST_SOURCE -> JavaSourceRootType.TEST_SOURCE
+          MavenWorkspaceConfigurator.FolderType.RESOURCE -> JavaResourceRootType.RESOURCE
+          MavenWorkspaceConfigurator.FolderType.TEST_RESOURCE -> JavaResourceRootType.TEST_RESOURCE
         }
-        catch (e: Exception) {
-          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.getAdditionalTestSourceFolders, skipping it.", e)
-          Stream.empty()
-        }
-      }.forEach {
-        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it), JavaSourceRootType.TEST_SOURCE))
-      }
-    }
-
-    for (each in legacyImporters) {
-      try {
-        each.collectSourceRoots(mavenProject) { path: String, type: JpsModuleSourceRootType<*> ->
-          result.add(ContentRootCollector.SourceFolder(toAbsolutePath(path), type))
-        }
-      }
-      catch (e: Exception) {
-        MavenLog.LOG.error("Exception in MavenImporter.collectSourceRoots, skipping it.", e)
+        result.add(ContentRootCollector.SourceFolder(toAbsolutePath(it.path), rootType))
       }
     }
   }
@@ -313,6 +294,8 @@ internal class WorkspaceFolderImporter(
     val projectContentRootPath: String,
     val outputPath: String,
     val testOutputPath: String,
-    val folders: List<ContentRootCollector.ImportedFolder>
+    val folders: List<ContentRootCollector.ImportedFolder>,
   )
+
+  data class OutputFolders(val outputPath: String, val testOutputPath: String)
 }

@@ -1,25 +1,24 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.intellij.build.ProductProperties
+import com.intellij.ReviseWhenPortedToJDK
+import org.jetbrains.intellij.build.BuildContext
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiConsumer
+import kotlin.io.path.name
 
-@Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
+  private const val DEFAULT_MIN_HEAP = "128m"
+  private const val DEFAULT_MAX_HEAP = "2048m"
+
   @Suppress("SpellCheckingInspection")
   private val COMMON_VM_OPTIONS: List<String> = listOf(
-    "-XX:+UseG1GC",
-    "-XX:SoftRefLRUPolicyMSPerMB=50",
-    "-XX:CICompilerCount=2",
+    "-XX:ReservedCodeCacheSize=512m",
     "-XX:+HeapDumpOnOutOfMemoryError",
     "-XX:-OmitStackTraceInFastThrow",
+    "-XX:CICompilerCount=2",
     "-XX:+IgnoreUnrecognizedVMOptions",  // allowing the JVM to start even with outdated options stuck in user configs
-    "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend", // temporary workaround for crashes in С2 (JBR-4509)
     "-ea",
     "-Dsun.io.useCanonCaches=false",
     "-Dsun.java2d.metal=true",
@@ -27,43 +26,77 @@ object VmOptionsGenerator {
     "-Djdk.http.auth.tunneling.disabledSchemes=\"\"",
     "-Djdk.attach.allowAttachSelf=true",
     "-Djdk.module.illegalAccess.silent=true",
-    "-Dkotlinx.coroutines.debug=off"
+    "-Djdk.nio.maxCachedBufferSize=2097152",
+    "-Djava.util.zip.use.nio.for.zip.file.access=true", // IJPL-149160
+    "-Dkotlinx.coroutines.debug=off",
   )
 
-  private val MEMORY_OPTIONS: Map<String, String> = linkedMapOf(
-    "-Xms" to "128m",
-    "-Xmx" to "750m",
-    "-XX:ReservedCodeCacheSize=" to "512m"
+  /** duplicates RepositoryHelper.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+  private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url"
+
+  fun generate(context: BuildContext): List<String> = generate(
+    context.applicationInfo.isEAP,
+    context.bundledRuntime,
+    context.productProperties.customJvmMemoryOptions,
+    context.productProperties.additionalVmOptions.let {
+      val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
+      if (customPluginRepositoryUrl == null) it
+      else it + "-D${CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY}=${customPluginRepositoryUrl}"
+    }
   )
 
-  fun computeVmOptions(isEAP: Boolean, productProperties: ProductProperties): List<String> {
-    return computeVmOptions(isEAP, productProperties.customJvmMemoryOptions)
+  private fun computeCustomPluginRepositoryUrl(context: BuildContext): String? {
+    val artifactsServer = context.proprietaryBuildTools.artifactsServer
+    if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+      val builtinPluginsRepoUrl = artifactsServer.urlToArtifact(context, "${context.nonBundledPlugins.name}/plugins.xml")
+      if (builtinPluginsRepoUrl != null) {
+        if (builtinPluginsRepoUrl.startsWith("http:")) {
+          context.messages.error("Insecure artifact server: ${builtinPluginsRepoUrl}")
+        }
+        return builtinPluginsRepoUrl
+      }
+    }
+    return null
   }
 
-  fun computeVmOptions(isEAP: Boolean, customJvmMemoryOptions: Map<String, String>?): List<String> {
+  internal fun generate(isEAP: Boolean, bundledRuntime: BundledRuntime, customVmMemoryOptions: Map<String, String>, additionalVmOptions: List<String>): List<String> {
     val result = ArrayList<String>()
 
-    if (customJvmMemoryOptions != null) {
-      val memory = LinkedHashMap<String, String>()
-      memory.putAll(MEMORY_OPTIONS)
-      memory.putAll(customJvmMemoryOptions)
-      memory.forEach(BiConsumer { k, v -> result.add(k + v) })
+    val memory = LinkedHashMap<String, String>(customVmMemoryOptions)
+    memory.putIfAbsent("-Xms", DEFAULT_MIN_HEAP)
+    memory.putIfAbsent("-Xmx", DEFAULT_MAX_HEAP)  // must be the same as [com.intellij.diagnostic.MemorySizeConfigurator.DEFAULT_XMX]
+    for ((k, v) in memory) {
+      result += k + v
     }
 
-    result.addAll(COMMON_VM_OPTIONS)
+    result += COMMON_VM_OPTIONS
+
+    result += additionalVmOptions
+
+    var index = result.indexOf("-ea")
+    if (index < 0) index = result.indexOfFirst { it.startsWith("-D") }
+    if (index < 0) index = result.size
+
+    result.addAll(
+      index,
+      @ReviseWhenPortedToJDK("21", description = "Merge into `COMMON_VM_OPTIONS`")
+      if (bundledRuntime.build.startsWith("17.")) {
+        listOf(
+          "-XX:CompileCommand=exclude,com/intellij/openapi/vfs/impl/FilePartNodeRoot,trieDescend",  // temporary workaround for crashes in С2 (JBR-4509)
+          "-XX:SoftRefLRUPolicyMSPerMB=50",
+        )
+      }
+      else listOf("-XX:+UnlockDiagnosticVMOptions", "-XX:TieredOldPercentage=100000")
+    )
 
     if (isEAP) {
-      var place = result.indexOf("-ea")
-      if (place < 0) place = result.indexOfFirst { it.startsWith("-D") }
-      if (place < 0) place = result.size
-      // must be consistent with `ConfigImportHelper#updateVMOptions`
-      result.add(place, "-XX:MaxJavaStackTraceDepth=10000")
+      result.add(index, "-XX:MaxJavaStackTraceDepth=10000")  // must be consistent with `ConfigImportHelper#updateVMOptions`
     }
 
     return result
   }
 
-  fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {
-    Files.writeString(file, vmOptions.joinToString(separator = separator, postfix = separator), StandardCharsets.US_ASCII)
+  internal fun writeVmOptions(file: Path, vmOptions: Sequence<String>, separator: String) {
+    Files.writeString(file, vmOptions.joinToString(separator, postfix = separator), StandardCharsets.US_ASCII)
   }
 }

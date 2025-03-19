@@ -1,14 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.apiUsage;
 
 import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
 
 /**
  * Processes usages of APIs in source code of UAST-supporting languages, which are detected by {@link ApiUsageUastVisitor}.
@@ -24,6 +21,22 @@ public interface ApiUsageProcessor {
    * @param qualifier  is optionally a qualified expression of the reference.
    */
   default void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) { }
+
+  /**
+   * Process implicit reference from lambda to a class which would be found in the bytecode:
+   * <pre>
+   * class I {
+   *   static void f(Runnable r) {}
+   * }
+   *
+   * // target represents Runnable interface
+   * f(() -> println());
+   * </pre>
+   *
+   * @param sourceNode can be used to get actual PSI element to highlight in inspections via {@code sourceNode.sourcePsi}
+   * @param target     resolved API element
+   */
+  default void processLambda(@NotNull ULambdaExpression sourceNode, @NotNull PsiModifierListOwner target) { }
 
   /**
    * Process reference to an imported API element.

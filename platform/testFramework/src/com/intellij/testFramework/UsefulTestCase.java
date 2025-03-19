@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
@@ -23,11 +24,12 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.common.TestApplicationKt;
+import com.intellij.testFramework.common.TestEnvironmentKt;
 import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.IconManager;
@@ -38,6 +40,7 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+import kotlinx.coroutines.Job;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -61,11 +64,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 import java.util.function.Supplier;
 
+import static com.intellij.testFramework.TestLoggerKt.recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures;
 import static com.intellij.testFramework.common.Cleanup.cleanupSwingDataStructures;
 import static com.intellij.testFramework.common.TestEnvironmentKt.initializeTestEnvironment;
 import static org.junit.Assume.assumeTrue;
@@ -119,16 +124,22 @@ public abstract class UsefulTestCase extends TestCase {
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COST_MILLIS = new ObjectIntHashMap<>();
   private static final ObjectIntMap<String> TOTAL_TEARDOWN_COUNT = new ObjectIntHashMap<>();
 
-  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
-
   private @Nullable Disposable myTestRootDisposable;
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+  protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
+  static {
+    assert LOG.getClass().getName().equals("com.intellij.testFramework.TestLoggerFactory$TestLogger") : "Logger must be queried after initializeTestEnvironment() call to get TestLogger, but got: "+LOG.getClass();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
@@ -238,7 +249,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  // some brilliant tests override setup and change setup flow in an alien way - quite unsafe to fix now
+  // some brilliant tests override setup and change the setup-flow in an alien way - quite unsafe to fix now
   protected final void setupTempDir() throws IOException {
     if (myTempDir == null && shouldContainTempFiles()) {
       myTempDir = createGlobalTempDirectory();
@@ -289,10 +300,11 @@ public abstract class UsefulTestCase extends TestCase {
   protected void tearDown() throws Exception {
     // to make stack trace reading easier, don't use method references here
     new RunAll(
+      () -> checkContextJobCanceled(),
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),
@@ -314,6 +326,16 @@ public abstract class UsefulTestCase extends TestCase {
       () -> waitForAppLeakingThreads(10, TimeUnit.SECONDS),
       () -> clearFields(this)
     ).run(mySuppressedExceptions);
+  }
+
+  private static void checkContextJobCanceled() {
+    Job currentJob = Cancellation.currentJob();
+    if (currentJob != null && currentJob.isCancelled()) {
+      throw new IllegalStateException("""
+The context job for test framework was canceled during execution. It can cause incomplete cleanup of the test.
+Most likely there was an uncaught exception in asynchronous execution that resulted in a failure of the whole computation tree for the test.
+""", currentJob.getCancellationException());
+    }
   }
 
   protected final void disposeRootDisposable() {
@@ -483,8 +505,19 @@ public abstract class UsefulTestCase extends TestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
-      UITestUtil.replaceIdeEventQueueSafely();
+      try {
+        UITestUtil.replaceIdeEventQueueSafely();
+      }
+      catch (IllegalAccessError e) {
+        TestEnvironmentKt.checkAddOpens();
+        throw e;
+      }
       EdtTestUtil.runInEdtAndWait(() -> defaultRunBare(wrappedRunnable));
+    }
+    else if (runFromCoroutine()) {
+      CoroutineKt.runTestInCoroutineScope(() -> {
+        defaultRunBare(wrappedRunnable);
+      }, getCoroutineTimeout());
     }
     else {
       defaultRunBare(wrappedRunnable);
@@ -497,7 +530,7 @@ public abstract class UsefulTestCase extends TestCase {
       boolean success = false;
       TestLoggerFactory.onTestStarted();
       try {
-        testRunnable.run();
+        recordErrorsLoggedInTheCurrentThreadAndReportThemAsFailures(testRunnable);
         success = true;
       }
       catch (AssumptionViolatedException e) {
@@ -520,6 +553,14 @@ public abstract class UsefulTestCase extends TestCase {
       return policy.runInDispatchThread();
     }
     return true;
+  }
+
+  protected boolean runFromCoroutine() {
+    return false;
+  }
+
+  protected Duration getCoroutineTimeout() {
+    return Duration.ofMinutes(1);
   }
 
   protected static <T extends Throwable> void edt(@NotNull ThrowableRunnable<T> runnable) throws T {
@@ -680,13 +721,22 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
-    assertContainsElements(collection, Arrays.asList(expected));
+    assertContainsElements("", collection, expected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... expected) {
+    assertContainsElements(message, collection, Arrays.asList(expected));
   }
 
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+    assertContainsElements("", collection, expected);
+  }
+
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     List<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
-    assertSameElements(toString(collection), copy, expected);
+    assertSameElements(messageForCollection(message, collection), copy, expected);
   }
 
   public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
@@ -695,13 +745,26 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
-    assertDoesntContain(collection, Arrays.asList(notExpected));
+    assertDoesntContain("", collection, notExpected);
   }
 
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+    assertDoesntContain("", collection, notExpected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
+    assertDoesntContain(message, collection, Arrays.asList(notExpected));
+  }
+
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
     List<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
-    assertSameElements(collection, expected);
+    assertSameElements(messageForCollection(message, collection), collection, expected);
+  }
+
+  private static @NotNull <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
+    return (message.isBlank() ? "" : message + "\n") + toString(collection);
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
@@ -792,14 +855,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
     if (collection.size() != 1) {
-      Assert.assertEquals(collection.toString(), 1, collection.size());
+      Assert.assertEquals(toString(collection), 1, collection.size());
     }
     return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
     if (ts.length != 1) {
-      Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
+      Assert.assertEquals(toString(Arrays.asList(ts)), 1, ts.length);
     }
     return ts[0];
   }
@@ -825,7 +888,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertEmpty(@NotNull Collection<?> collection) {
     if (!collection.isEmpty()) {
-      assertEmpty(collection.toString(), collection);
+      assertEmpty(toString(collection), collection);
     }
   }
 
@@ -885,6 +948,10 @@ public abstract class UsefulTestCase extends TestCase {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
+  }
+
   protected @NotNull String getTestDirectoryName() {
     return getTestName(true).replaceAll("_.*", "");
   }
@@ -927,8 +994,12 @@ public abstract class UsefulTestCase extends TestCase {
       fileText = FileUtil.loadFile(file, StandardCharsets.UTF_8);
     }
     catch (FileNotFoundException e) {
-      VfsTestUtil.overwriteTestData(filePath, actualText);
-      throw new AssertionFailedError("No output text found. File " + filePath + " created.");
+      String message = "No output text found.";
+      if (!IS_UNDER_TEAMCITY) {
+        VfsTestUtil.overwriteTestData(filePath, actualText);
+        message += " File " + filePath + " created.";
+      }
+      throw new AssertionFailedError(message);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -936,7 +1007,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Objects.equals(expected, actual)) {
-      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
+      throw new FileComparisonFailedError(messageProducer == null ? null : messageProducer.get(), expected, actual, filePath);
     }
   }
 
@@ -946,7 +1017,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static void assertTextEquals(@Nullable String message, @NotNull String expectedText, @NotNull String actualText) {
     if (!expectedText.equals(actualText)) {
-      throw new FileComparisonFailure(Strings.notNullize(message), expectedText, actualText, null);
+      throw new FileComparisonFailedError(Strings.notNullize(message), expectedText, actualText, null);
     }
   }
 
@@ -963,7 +1034,7 @@ public abstract class UsefulTestCase extends TestCase {
       String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.FINAL) == 0 && (modifiers & Modifier.STATIC) == 0 && !field.getType().isPrimitive()) {
+        if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers) && !field.getType().isPrimitive()) {
           field.setAccessible(true);
           field.set(test, null);
         }
@@ -997,7 +1068,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations to test resource consumption, not correctness.
-   * Such test should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
+   * Such tests should avoid performing expensive consistency checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
    * For example: {@code public void testHighlightingPerformance()}
    */
@@ -1007,7 +1078,7 @@ public abstract class UsefulTestCase extends TestCase {
 
   /**
    * @return true for a test which performs a lot of computations <b>and</b> does care about the correctness of operations it performs.
-   * Such test should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
+   * Such tests should typically avoid performing expensive checks, e.g., data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
@@ -1054,7 +1125,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
 
       if (expectedErrorMsgPart != null) {
-        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", cause.getMessage().contains(expectedErrorMsgPart));
+        assertTrue(cause.getClass()+" message was expected to contain '"+expectedErrorMsgPart+"', but got: '"+cause.getMessage()+"'", ObjectUtils.notNull(cause.getMessage(), "").contains(expectedErrorMsgPart));
       }
     }
     finally {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testIntegration.TestFramework;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -36,7 +37,7 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
-
+@ApiStatus.Internal
 public final class TestDataLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
@@ -102,8 +103,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
     return new RunLineMarkerContributor.Info(new GotoTestDataAction(testDataBasePath, psiClass.getProject(), AllIcons.Nodes.Folder));
   }
 
-  @Nullable
-  public static String getTestDataBasePath(@Nullable PsiClass psiClass) {
+  public static @Nullable String getTestDataBasePath(@Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
 
     return CachedValuesManager.getCachedValue(psiClass, () -> {
@@ -136,8 +136,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
     });
   }
 
-  @Nullable
-  public static String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
+  public static @Nullable String annotationValue(@NotNull PsiModifierListOwner owner, String annotationFqName) {
     Set<String> annotationNames = Collections.singleton(annotationFqName);
     boolean nestedClass = owner instanceof PsiClass && ((PsiClass)owner).getContainingClass() != null;
     PsiAnnotation element = nestedClass

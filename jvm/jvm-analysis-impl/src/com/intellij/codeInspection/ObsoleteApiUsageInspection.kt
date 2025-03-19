@@ -6,12 +6,13 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
+private inline val OBSOLETE_ANNOTATION_NAME get() = ApiStatus.Obsolete::class.java.canonicalName
+
+@VisibleForTesting
 class ObsoleteApiUsageInspection : LocalInspectionTool() {
-  private companion object {
-    private val OBSOLETE_ANNOTATION_NAME = ApiStatus.Obsolete::class.java.canonicalName
-  }
 
   private fun shouldInspect(file: PsiFile) = JavaPsiFacade.getInstance(file.project)
     .findClass(OBSOLETE_ANNOTATION_NAME, file.resolveScope) != null
@@ -45,9 +46,20 @@ class ObsoleteApiUsageInspection : LocalInspectionTool() {
         if (declaration !is UClass && declaration !is UMethod && declaration !is UField) return
         if (declaration.findAnnotation(OBSOLETE_ANNOTATION_NAME) != null) {
           val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi ?: return
-          problemsHolder.registerProblem(
-            elementToHighlight, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description")
-          )
+          // Do not highlight method references that map to obsolete functional interface.
+          // this problem will be highlighted elsewhere (e.g., at declaration of the method accepting functional interface) 
+          if (elementToHighlight is PsiMethodReferenceExpression && target is PsiClass) return
+          if (elementToHighlight is PsiReference) {
+            problemsHolder.registerProblem(
+              elementToHighlight as PsiReference, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description"),
+              ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+            )
+          }
+          else {
+            problemsHolder.registerProblem(
+              elementToHighlight, JvmAnalysisBundle.message("jvm.inspections.usages.of.obsolete.api.description")
+            )
+          }
         }
       }
     }

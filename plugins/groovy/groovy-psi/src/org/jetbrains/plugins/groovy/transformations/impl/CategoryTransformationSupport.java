@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-public class CategoryTransformationSupport implements AstTransformationSupport {
+public final class CategoryTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {

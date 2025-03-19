@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.markdown.model` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "model_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "model",
+  module_name = "intellij.markdown.model",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+    "//platform/indexing-api:indexing",
+    "//platform/analysis-api:analysis",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/backend",
+    "@lib//:kotlin-stdlib",
+  ],
+  runtime_deps = [":model_resources"]
+)
+### auto-generated section `build intellij.markdown.model` end

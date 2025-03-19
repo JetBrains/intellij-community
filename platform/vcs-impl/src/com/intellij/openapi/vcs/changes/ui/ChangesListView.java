@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,12 +15,14 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -37,30 +39,32 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
+import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserResolvedConflictsNodeKt.RESOLVED_CONFLICTS_NODE_TAG;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public abstract class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
+public abstract class ChangesListView extends ChangesTree implements DnDAware {
   private static final Logger LOG = Logger.getInstance(ChangesListView.class);
 
-  @NonNls public static final String HELP_ID = "ideaInterface.changes";
-  @NonNls public static final DataKey<ChangesListView> DATA_KEY
+  public static final @NonNls String HELP_ID = "ideaInterface.changes";
+  public static final @NonNls DataKey<ChangesListView> DATA_KEY
     = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
+  public static final @NonNls DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.UnversionedFiles");
-  @NonNls public static final DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY
+  public static final @NonNls DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY
     = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
+  public static final @NonNls DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
     = DataKey.create("ChangeListView.IgnoredFiles");
-  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
+  public static final @NonNls DataKey<Iterable<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY
+    = DataKey.create("ChangeListView.ModifiedWithoutEditing");
+  public static final @NonNls DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
     = DataKey.create("ChangeListView.MissingFiles");
-  @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
+  public static final @NonNls DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
     = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   private boolean myBusy = false;
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
-    super(project, showCheckboxes, true);
+    super(project, showCheckboxes, true, true, true);
     // setDragEnabled throws an exception in headless mode which leads to a memory leak
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);
@@ -85,27 +89,53 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
 
   @Override
   protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
-    Object subtreeRootObject = subtreeRootObject(node);
+    ChangesBrowserNode<?> subtreeRoot = getSubtreeRoot(node);
+    Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
-    if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
-    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
+  }
+
+  @Override
+  protected boolean isInclusionEnabled(@NotNull ChangesBrowserNode<?> node) {
+    if (MergeConflictManager.isForceIncludeResolvedConflicts()) {
+      if (isUnderResolvedConflicts(node)) return false;
+    }
+
+    return super.isInclusionEnabled(node);
+  }
+
+  @Override
+  protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
+    if (isUnderResolvedConflicts(node)) return true;
+
+    return super.isIncludable(node);
+  }
+
+  private static boolean isUnderResolvedConflicts(@NotNull ChangesBrowserNode<?> node) {
+    ChangesBrowserNode<?> curNode = node;
+
+    while (curNode != null && !(node.getUserObject() instanceof LocalChangeList)
+           && curNode.getUserObject() != RESOLVED_CONFLICTS_NODE_TAG) {
+      curNode = curNode.getParent();
+      if (curNode != null && curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG) return true;
+    }
+
+    if (curNode == null) return false;
+
+    return curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG;
+  }
+
+  private static @Nullable ChangesBrowserNode<?> getSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
+    TreeNode[] path = node.getPath();
+    if (path.length < 2) return null;
+    return (ChangesBrowserNode<?>)path[1];
   }
 
   @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
-  }
-
-  public void updateModel(@NotNull DefaultTreeModel newModel) {
-    TreeState state = TreeState.createOn(this, getRoot());
-    state.setScrollToSelection(false);
-    ChangesBrowserNode<?> oldRoot = getRoot();
-    setModel(newModel);
-    ChangesBrowserNode<?> newRoot = getRoot();
-    state.applyTo(this, newRoot);
-
-    initTreeStateIfNeeded(oldRoot, newRoot);
   }
 
   @Override
@@ -114,149 +144,96 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     LOG.warn("rebuildTree() not implemented in " + this, new Throwable());
   }
 
-  private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {
-    ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
-    if (defaultListNode == null) return;
-
-    if (getSelectionCount() == 0) {
-      TreeUtil.selectNode(this, defaultListNode);
-    }
-
-    if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 0) {
-      expandSafe(defaultListNode);
-    }
-  }
-
-  @Nullable
-  private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    return root.iterateNodeChildren()
-      .filter(ChangesBrowserChangeListNode.class)
-      .find(node -> {
-        ChangeList list = node.getUserObject();
-        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
-      });
-  }
-
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    if (VcsDataKeys.CHANGES.is(dataId)) {
-      return getSelectedChanges()
-        .toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return VcsTreeModelData.exactlySelected(this)
-        .iterateUserObjects(Change.class)
-        .toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return VcsTreeModelData.exactlySelected(this)
-        .iterateRawUserObjects(ChangeList.class)
-        .toList().toArray(ChangeList[]::new);
-    }
-    if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-      return VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
-    }
-    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      // don't try to delete files when only a changelist node is selected
-      boolean hasSelection = VcsTreeModelData.exactlySelected(this)
-        .iterateRawUserObjects()
-        .filter(userObject -> !(userObject instanceof ChangeList))
-        .isNotEmpty();
-      return hasSelection
-             ? new VirtualFileDeleteProvider()
-             : null;
-    }
-    if (UNVERSIONED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return getSelectedUnversionedFiles();
-    }
-    if (IGNORED_FILE_PATHS_DATA_KEY.is(dataId)) {
-      return getSelectedIgnoredFiles();
-    }
-    if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
-      return getSelectedModifiedWithoutEditing().toList();
-    }
-    if (LOCALLY_DELETED_CHANGES.is(dataId)) {
-      return getSelectedLocallyDeletedChanges().toList();
-    }
-    if (MISSING_FILES_DATA_KEY.is(dataId)) {
-      return getSelectedLocallyDeletedChanges()
-        .map(LocallyDeletedChange::getPath)
-        .toList();
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
-      VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
-    }
-    return super.getData(dataId);
+  @ApiStatus.Internal
+  public void updateTreeModel(@NotNull DefaultTreeModel model,
+                              @NotNull TreeStateStrategy treeStateStrategy) {
+    super.updateTreeModel(model, treeStateStrategy);
   }
 
-  @Nullable
-  private static Object getSlowData(@NotNull Project project,
-                                    @NotNull VcsTreeModelData treeSelection,
-                                    @NotNull VcsTreeModelData exactSelection,
-                                    @NotNull String slowId) {
-    if (SelectInContext.DATA_KEY.is(slowId)) {
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DATA_KEY, this);
+    sink.set(VcsDataKeys.CHANGES, getSelectedChanges()
+      .toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.CHANGE_LEAD_SELECTION, VcsTreeModelData.exactlySelected(this)
+      .iterateUserObjects(Change.class)
+      .toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.CHANGE_LISTS, VcsTreeModelData.exactlySelected(this)
+      .iterateRawUserObjects(ChangeList.class)
+      .toList().toArray(ChangeList[]::new));
+    sink.set(VcsDataKeys.FILE_PATHS, VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this)));
+    // don't try to delete files when only a changelist node is selected
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER,
+             VcsTreeModelData.exactlySelected(this)
+               .iterateRawUserObjects()
+               .filter(userObject -> !(userObject instanceof ChangeList))
+               .isNotEmpty()
+             ? new VirtualFileDeleteProvider()
+             : null);
+    sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());
+    sink.set(IGNORED_FILE_PATHS_DATA_KEY, getSelectedIgnoredFiles());
+    sink.set(MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing());
+    sink.set(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().toList());
+    sink.set(MISSING_FILES_DATA_KEY, getSelectedLocallyDeletedChanges()
+      .map(LocallyDeletedChange::getPath)
+      .toList());
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
+
+    VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
+    VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
+    sink.lazy(SelectInContext.DATA_KEY, () -> {
       VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
-      return new FileSelectInContext(project, file, null);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+      return new FileSelectInContext(myProject, file, null);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> {
+      return VcsTreeModelData.findSelectedVirtualFile(this);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+    });
+    sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection);
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       VirtualFile file = VcsTreeModelData.mapToNavigatableFile(treeSelection).single();
       return file != null && !file.isDirectory()
-             ? PsiNavigationSupport.getInstance().createNavigatable(project, file, 0)
+             ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
              : null;
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
-      return getNavigatableArray(project, VcsTreeModelData.mapToNavigatableFile(treeSelection));
-    }
-    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      return getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(treeSelection));
+    });
+    sink.lazy(EXACTLY_SELECTED_FILES_DATA_KEY, () -> {
       return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
-    }
-    return null;
+    });
   }
 
-  @NotNull
-  public JBIterable<FilePath> getUnversionedFiles() {
+  public @NotNull JBIterable<FilePath> getUnversionedFiles() {
     return VcsTreeModelData.allUnderTag(this, UNVERSIONED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  public JBIterable<FilePath> getSelectedUnversionedFiles() {
+  public @NotNull JBIterable<FilePath> getSelectedUnversionedFiles() {
     return VcsTreeModelData.selectedUnderTag(this, UNVERSIONED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  private JBIterable<FilePath> getSelectedIgnoredFiles() {
+  private @NotNull JBIterable<FilePath> getSelectedIgnoredFiles() {
     return VcsTreeModelData.selectedUnderTag(this, IGNORED_FILES_TAG)
       .iterateUserObjects(FilePath.class);
   }
 
-  @NotNull
-  private JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
+  private @NotNull JBIterable<VirtualFile> getSelectedModifiedWithoutEditing() {
     return VcsTreeModelData.selectedUnderTag(this, MODIFIED_WITHOUT_EDITING_TAG)
       .iterateUserObjects(VirtualFile.class)
       .filter(VirtualFile::isValid);
   }
 
-  @NotNull
-  public JBIterable<Change> getSelectedChanges() {
+  public @NotNull JBIterable<Change> getSelectedChanges() {
     JBIterable<Change> changes = VcsTreeModelData.selected(this)
       .iterateUserObjects(Change.class);
     JBIterable<Change> hijackedChanges = getSelectedModifiedWithoutEditing()
@@ -266,8 +243,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     return changes.append(hijackedChanges);
   }
 
-  @Nullable
-  public static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @Nullable Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
@@ -276,14 +252,12 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     return null;
   }
 
-  @NotNull
-  private JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
+  private @NotNull JBIterable<LocallyDeletedChange> getSelectedLocallyDeletedChanges() {
     return VcsTreeModelData.selectedUnderTag(this, LOCALLY_DELETED_NODE_TAG)
       .iterateUserObjects(LocallyDeletedChange.class);
   }
 
-  @Nullable
-  public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+  public @Nullable List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     ChangesBrowserNode<?> node = findNodeInTree(change);
     if (node == null) return null;
 
@@ -302,8 +276,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
       .toList();
   }
 
-  @Nullable
-  public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
+  public @Nullable List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
     ChangesBrowserNode<?> node = findNodeInTree(change);
     if (node == null) return null;
 
@@ -315,9 +288,8 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
       .toList();
   }
 
-  @Nullable
-  private static ChangesBrowserNode<?> findParentOfType(@NotNull ChangesBrowserNode<?> node,
-                                                        @NotNull Class<? extends ChangesBrowserNode<?>> clazz) {
+  private static @Nullable ChangesBrowserNode<?> findParentOfType(@NotNull ChangesBrowserNode<?> node,
+                                                                  @NotNull Class<? extends ChangesBrowserNode<?>> clazz) {
     ChangesBrowserNode<?> parent = node.getParent();
     while (parent != null) {
       if (clazz.isInstance(parent)) {
@@ -328,13 +300,11 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     return null;
   }
 
-  @NotNull
-  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
+  public @NotNull JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
     return VcsTreeModelData.all(this).iterateNodes().filter(ChangesBrowserChangeNode.class);
   }
 
-  @NotNull
-  public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
+  public @NotNull JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
     return VcsTreeModelData.selected(this).iterateNodes();
   }
 
@@ -344,21 +314,12 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return this;
   }
 
   @Override
-  public void processMouseEvent(final MouseEvent e) {
-    if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown() &&
-        !e.isMetaDown() && !e.isPopupTrigger()) {
-      if (isOverSelection(e.getPoint())) {
-        TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
-        setSelectionPath(path);
-      }
-    }
-
+  public void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
   }
 
@@ -372,13 +333,11 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
-  @Nullable
-  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject) {
+  public @Nullable ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject) {
     return findNodeInTree(userObject, null);
   }
 
-  @Nullable
-  public ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
+  public @Nullable ChangesBrowserNode<?> findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
     if (userObject instanceof LocalChangeList) {
       return getRoot().iterateNodeChildren()
         .find(node -> userObject.equals(node.getUserObject()));
@@ -397,13 +356,11 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     }
   }
 
-  @Nullable
-  public TreePath findNodePathInTree(@Nullable Object userObject) {
+  public @Nullable TreePath findNodePathInTree(@Nullable Object userObject) {
     return findNodePathInTree(userObject, null);
   }
 
-  @Nullable
-  public TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
+  public @Nullable TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
     DefaultMutableTreeNode node = findNodeInTree(userObject, tag);
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
@@ -7,6 +7,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.java.lexer.JavaDocLexer;
 import com.intellij.lang.java.lexer.JavaLexer;
+import com.intellij.lang.java.lexer.JavaTypeEscapeLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -27,20 +28,22 @@ import org.jetbrains.annotations.Nullable;
 public class JavaParserDefinition implements ParserDefinition {
   public static final IStubFileElementType JAVA_FILE = new JavaFileElementType();
 
-  @NotNull
   @Override
-  public Lexer createLexer(@Nullable Project project) {
+  public @NotNull Lexer createLexer(@Nullable Project project) {
     LanguageLevel level = project != null ? LanguageLevelProjectExtension.getInstance(project).getLanguageLevel() : LanguageLevel.HIGHEST;
     return createLexer(level);
   }
 
-  @NotNull
-  public static Lexer createLexer(@NotNull LanguageLevel level) {
+  public static @NotNull Lexer createLexer(@NotNull LanguageLevel level) {
     return new JavaLexer(level);
   }
 
-  @NotNull
-  public static Lexer createDocLexer(@NotNull LanguageLevel level) {
+  /** @return A lexer which handles JEP-467 bracket escapes when parsing Java types */
+  public static @NotNull Lexer createLexerWithMarkdownEscape(@NotNull LanguageLevel level) {
+    return new JavaTypeEscapeLexer(new JavaLexer(level));
+  }
+
+  public static @NotNull Lexer createDocLexer(@NotNull LanguageLevel level) {
     return new JavaDocLexer(level);
   }
 
@@ -49,27 +52,23 @@ public class JavaParserDefinition implements ParserDefinition {
     return JAVA_FILE;
   }
 
-  @NotNull
   @Override
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return ElementType.JAVA_COMMENT_BIT_SET;
   }
 
-  @NotNull
   @Override
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.create(JavaElementType.LITERAL_EXPRESSION);
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     throw new UnsupportedOperationException("Should not be called directly");
   }
 
-  @NotNull
   @Override
-  public PsiElement createElement(ASTNode node) {
+  public @NotNull PsiElement createElement(ASTNode node) {
     IElementType type = node.getElementType();
     if (type instanceof JavaStubElementType) {
       return ((JavaStubElementType<?, ?>)type).createPsi(node);
@@ -102,14 +101,14 @@ public class JavaParserDefinition implements ParserDefinition {
 
     if (left.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = left.getText();
-      if (text.length() > 0 && Character.isWhitespace(text.charAt(text.length() - 1))) {
+      if (!text.isEmpty() && Character.isWhitespace(text.charAt(text.length() - 1))) {
         return SpaceRequirements.MAY;
       }
     }
 
     if (right.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
       String text = right.getText();
-      if (text.length() > 0 && Character.isWhitespace(text.charAt(0))) {
+      if (!text.isEmpty() && Character.isWhitespace(text.charAt(0))) {
         return SpaceRequirements.MAY;
       }
     }

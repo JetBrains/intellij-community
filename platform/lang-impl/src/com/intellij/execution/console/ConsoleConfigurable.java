@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -9,18 +9,18 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.ui.AddEditDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -28,20 +28,23 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.openapi.options.Configurable.isCheckboxModified;
 import static com.intellij.openapi.options.Configurable.isFieldModified;
 
-public class ConsoleConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class ConsoleConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance(ConsoleConfigurable.class);
 
   private JPanel myMainComponent;
@@ -55,6 +58,16 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   private MyAddDeleteListPanel myPositivePanel;
   private MyAddDeleteListPanel myNegativePanel;
   private final ConsoleFoldingSettings mySettings = ConsoleFoldingSettings.getSettings();
+
+  private static final ExtensionPointName<ConsoleConfigurableEP>
+    EP_NAME = ExtensionPointName.create("com.intellij.consoleConfigurableProvider");
+
+  @ApiStatus.Internal
+  @Override
+  protected @Unmodifiable @NotNull List<UnnamedConfigurable> createConfigurables() {
+    return ContainerUtil.sorted(ConfigurableWrapper.createConfigurables(EP_NAME),
+                                Comparator.comparing(ConfigurableBuilder::getConfigurableTitle));
+  }
 
   @Override
   public JComponent createComponent() {
@@ -113,6 +126,13 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
       myPositivePanel.getEmptyText().setText(ApplicationBundle.message("console.fold.nothing"));
       myNegativePanel.getEmptyText().setText(ApplicationBundle.message("console.no.exceptions"));
+
+      for (var c : getConfigurables()) {
+        var panel = c.createComponent();
+        if (panel != null) {
+          myMainComponent.add(panel, BorderLayout.SOUTH);
+        }
+      }
     }
     return myMainComponent;
   }
@@ -124,7 +144,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.unlimited"));
         return;
       }
-      if (value > FileUtilRt.LARGE_FOR_CONTENT_LOADING / 1024) {
+      if (value > FileSizeLimit.getDefaultContentLoadLimit() / 1024) {
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.too.large"));
         return;
       }
@@ -143,8 +163,10 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
   @Override
   public boolean isModified() {
+    boolean isModified = super.isModified();
+
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
-    boolean isModified = !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(new HashSet<>(mySettings.getNegativePatterns()));
+    isModified |= !ContainerUtil.newHashSet(myNegativePanel.getListItems()).equals(new HashSet<>(mySettings.getNegativePatterns()));
     isModified |= !ContainerUtil.newHashSet(myPositivePanel.getListItems()).equals(new HashSet<>(mySettings.getPositivePatterns()));
     isModified |= isCheckboxModified(myCbUseSoftWrapsAtConsole, editorSettings.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE));
     UISettings uiSettings = UISettings.getInstance();
@@ -172,6 +194,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
   @Override
   public void apply() throws ConfigurationException {
+    super.apply();
+
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState uiSettings = settingsManager.getState();
@@ -208,6 +232,8 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
   @Override
   public void reset() {
+    super.reset();
+
     EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     UISettingsState uiSettings = UISettings.getInstance().getState();
     EncodingManager encodingManager = EncodingManager.getInstance();
@@ -234,14 +260,15 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
 
   @Override
   public void disposeUIResources() {
+    super.disposeUIResources();
+
     myMainComponent = null;
     myNegativePanel = null;
     myPositivePanel = null;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getDisplayName();
   }
 
@@ -255,7 +282,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     return "reference.idesettings.console.folding";
   }
 
-  private static class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
+  private static final class MyAddDeleteListPanel extends AddEditDeleteListPanel<String> {
     private final @NlsContexts.DialogMessage String myQuery;
 
     MyAddDeleteListPanel(@NlsContexts.Label String title, @NlsContexts.DialogMessage String query) {

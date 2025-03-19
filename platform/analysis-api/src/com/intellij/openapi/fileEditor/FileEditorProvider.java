@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -13,9 +14,10 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Should be registered via {@link #EP_FILE_EDITOR_PROVIDER}.
+ *
  * @see DumbAware
  */
-public interface FileEditorProvider {
+public interface FileEditorProvider extends PossiblyDumbAware {
   ExtensionPointName<FileEditorProvider> EP_FILE_EDITOR_PROVIDER = new ExtensionPointName<>("com.intellij.fileEditorProvider");
   Key<FileEditorProvider> KEY = Key.create("com.intellij.fileEditorProvider");
 
@@ -29,10 +31,14 @@ public interface FileEditorProvider {
    */
   boolean accept(@NotNull Project project, @NotNull VirtualFile file);
 
+  default boolean acceptRequiresReadAction() {
+    return true;
+  }
+
   /**
    * Creates editor for the specified file.
    * <p>
-   * This method is called only if the provider has accepted this file (i.e. method {@link #accept(Project, VirtualFile)} returned
+   * This method is called only if the provider has accepted this file (i.e., method {@link #accept(Project, VirtualFile)} returned
    * {@code true}).
    * The provider should return only valid editor.
    *
@@ -54,8 +60,7 @@ public interface FileEditorProvider {
   /**
    * Deserializes state from the specified {@code sourceElement}.
    */
-  @NotNull
-  default FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  default @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     return FileEditorState.INSTANCE;
   }
 
@@ -68,7 +73,7 @@ public interface FileEditorProvider {
   /**
    * @return editor type ID for the editors created with this FileEditorProvider. Each FileEditorProvider should have
    * a unique nonnull ID. The ID is used for saving/loading of EditorStates.
-   *
+   * <p>
    * Please consider setting extension id in registration also for performance reasons.
    */
   @NotNull

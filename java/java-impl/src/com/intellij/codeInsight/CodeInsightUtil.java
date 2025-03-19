@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.*;
@@ -28,14 +28,14 @@ import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 public final class CodeInsightUtil {
   private static final Logger LOG = Logger.getInstance(CodeInsightUtil.class);
 
-  @Nullable
-  public static PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
+  public static @Nullable PsiExpression findExpressionInRange(PsiFile file, int startOffset, int endOffset) {
     if (!file.getViewProvider().getLanguages().contains(JavaLanguage.INSTANCE)) return null;
     PsiExpression expression = findElementInRange(file, startOffset, endOffset, PsiExpression.class);
     if (expression == null && findStatementsInRange(file, startOffset, endOffset).length == 0) {
@@ -174,8 +174,7 @@ public final class CodeInsightUtil {
     return PsiUtilCore.toPsiElementArray(array);
   }
 
-  @Nullable
-  private static Language findJavaOrLikeLanguage(@NotNull final PsiFile file) {
+  private static @Nullable Language findJavaOrLikeLanguage(final @NotNull PsiFile file) {
     final Set<Language> languages = file.getViewProvider().getLanguages();
     if (languages.contains(JavaLanguage.INSTANCE)) return JavaLanguage.INSTANCE;
     for (final Language language : languages) {
@@ -267,8 +266,7 @@ public final class CodeInsightUtil {
     return positionCursor(project, targetFile, lBrace != null ? lBrace : psiClass);
   }
 
-  @Nullable("no virtual file is associated with a targetFile")
-  public static Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
+  public static @Nullable("no virtual file is associated with a targetFile") Editor positionCursor(@NotNull Project project, @NotNull PsiFile targetFile, @NotNull PsiElement element) {
     TextRange range = element.getTextRange();
     LOG.assertTrue(range != null, element.getClass());
     int textOffset = range.getStartOffset();
@@ -296,7 +294,7 @@ public final class CodeInsightUtil {
   public static void processSubTypes(PsiType psiType,
                                      final PsiElement context,
                                      boolean getRawSubtypes,
-                                     @NotNull final PrefixMatcher matcher,
+                                     final @NotNull PrefixMatcher matcher,
                                      Consumer<? super PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
@@ -345,8 +343,7 @@ public final class CodeInsightUtil {
     }
   }
 
-  @NotNull
-  private static Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<? super PsiClass> inheritorsProcessor) {
+  private static @NotNull Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<? super PsiClass> inheritorsProcessor) {
     Set<PsiClass> visited = new HashSet<>();
 
     context.getContainingFile().getOriginalFile().processDeclarations(new PsiScopeProcessor() {
@@ -378,14 +375,13 @@ public final class CodeInsightUtil {
     }
   }
 
-  @Nullable
   @ApiStatus.Internal
-  public static PsiType getSubTypeBySubClass(@NotNull PsiElement context,
-                                             @NotNull PsiClassType baseType,
-                                             int arrayDim,
-                                             boolean raw,
-                                             @NotNull PsiClass baseClass,
-                                             @NotNull PsiClass inheritor) {
+  public static @Nullable PsiType getSubTypeBySubClass(@NotNull PsiElement context,
+                                                       @NotNull PsiClassType baseType,
+                                                       int arrayDim,
+                                                       boolean raw,
+                                                       @NotNull PsiClass baseClass,
+                                                       @NotNull PsiClass inheritor) {
     Project project = baseClass.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (!PsiResolveHelper.getInstance(project).isAccessible(inheritor, context, null)) {
@@ -410,10 +406,9 @@ public final class CodeInsightUtil {
     return baseType.isAssignableFrom(result) ? result : null;
   }
 
-  @NotNull
-  public static List<PsiType> getExpectedTypeArgs(PsiElement context,
-                                                  PsiTypeParameterListOwner paramOwner,
-                                                  Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
+  public static @Unmodifiable @NotNull List<PsiType> getExpectedTypeArgs(PsiElement context,
+                                                                         PsiTypeParameterListOwner paramOwner,
+                                                                         Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
       return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }

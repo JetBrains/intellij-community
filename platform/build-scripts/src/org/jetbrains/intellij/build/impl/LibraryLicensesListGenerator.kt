@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
@@ -15,30 +15,31 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.name
 
-class LibraryLicensesListGenerator(private val libraryLicenses: List<LibraryLicense>) {
-  companion object {
-    fun create(project: JpsProject,
-               licensesList: List<LibraryLicense>,
-               usedModulesNames: Set<String>,
-               allowEmpty: Boolean = false): LibraryLicensesListGenerator {
-      val licences = generateLicenses(project, licensesList, usedModulesNames)
-      check(allowEmpty || !licences.isEmpty()) {
-        "Empty licenses table for ${licensesList.size} licenses and ${usedModulesNames.size} used modules names"
-      }
-      return LibraryLicensesListGenerator(licences)
-    }
-
-    fun getLibraryName(lib: JpsLibrary): String {
-      val name = lib.name
-      if (name.startsWith("#")) {
-        //unnamed module libraries in IntelliJ project may have only one root
-        return lib.getFiles(JpsOrderRootType.COMPILED).first().name
-      }
-      return name
-    }
+fun createLibraryLicensesListGenerator(
+  project: JpsProject,
+  licenseList: List<LibraryLicense>,
+  usedModulesNames: Set<String>,
+  allowEmpty: Boolean = false,
+): LibraryLicensesListGenerator {
+  val licences = generateLicenses(project = project, licensesList = licenseList, usedModulesNames = usedModulesNames)
+  check(allowEmpty || !licences.isEmpty()) {
+    "Empty licenses table for ${licenseList.size} licenses and ${usedModulesNames.size} used modules names"
   }
+  return LibraryLicensesListGenerator(licences)
+}
 
+fun getLibraryFilename(lib: JpsLibrary): String {
+  val name = lib.name
+  if (name.startsWith('#')) {
+    // unnamed module libraries in IntelliJ project may have only one root
+    return lib.getPaths(JpsOrderRootType.COMPILED).first().name
+  }
+  return name
+}
+
+class LibraryLicensesListGenerator internal constructor(private val libraryLicenses: List<LibraryLicense>) {
   fun generateHtml(file: Path) {
     val out = StringBuilder()
     out.append("""
@@ -147,7 +148,7 @@ private fun generateLicenses(project: JpsProject, licensesList: List<LibraryLice
   val usedLibraries = HashMap<String, String>()
   for (module in usedModules) {
     for (item in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
-      usedLibraries.put(LibraryLicensesListGenerator.getLibraryName(item), module.name)
+      usedLibraries.put(getLibraryFilename(item), module.name)
     }
   }
 

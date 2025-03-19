@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -71,7 +71,7 @@ public abstract class LightCompletionTestCase extends LightJavaCodeInsightTestCa
 
   protected void testByCount(int finalCount, String... values) {
     if (myItems == null) {
-      assertEquals(finalCount, 0);
+      assertEquals(0, finalCount);
       return;
     }
     int index = 0;

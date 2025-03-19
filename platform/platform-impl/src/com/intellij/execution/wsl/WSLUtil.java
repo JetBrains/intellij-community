@@ -1,20 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,10 +32,8 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 /**
- * Class for working with WSL after Fall Creators Update
- * https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/
- * - multiple linuxes
- * - file system is unavailable form windows (for now at least)
+ * A tool for working with WSL distributions via the `wsl.exe` utility refined in
+ * <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Windows 10 1709</a>.
  */
 public final class WSLUtil {
   public static final Logger LOG = Logger.getInstance("#com.intellij.execution.wsl");
@@ -44,8 +43,8 @@ public final class WSLUtil {
    * Method will be removed after we check statistics and make sure versions before 1903 aren't used.
    */
   @Deprecated(forRemoval = true)
-  @NotNull
-  public static List<WSLDistribution> getAvailableDistributions() {
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static @NotNull List<WSLDistribution> getAvailableDistributions() {
     if (!isSystemCompatible()) return Collections.emptyList();
 
     final Path executableRoot = getExecutableRootPath();
@@ -68,54 +67,40 @@ public final class WSLUtil {
       }
     }
 
-    // add legacy WSL if it's available and enabled
-    if (Experiments.getInstance().isFeatureEnabled("wsl.legacy.distribution")) {
-      ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
-    }
-
     return result;
   }
 
   /**
    * @return root for WSL executable or null if unavailable
    */
-  @Nullable
-  private static Path getExecutableRootPath() {
+  private static @Nullable Path getExecutableRootPath() {
     String localAppDataPath = System.getenv().get("LOCALAPPDATA");
     return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
-  /**
-   * @return instance of WSL distribution or null if it's unavailable
-   * @deprecated Use {@link WslDistributionManager#getOrCreateDistributionByMsId(String)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static WSLDistribution getDistributionByMsId(@Nullable String name) {
-    if (name == null) {
-      return null;
-    }
-    for (WSLDistribution distribution : getAvailableDistributions()) {
-      if (name.equals(distribution.getMsId())) {
-        return distribution;
-      }
-    }
-    return null;
-  }
+  private static boolean ourIsSystemCompatible = SystemInfo.isWin10OrNewer;
 
   public static boolean isSystemCompatible() {
-    return SystemInfo.isWin10OrNewer;
+    return ourIsSystemCompatible;
+  }
+
+  /**
+   * On the first side, functions like [parseWindowsUncPath] are not supposed to return a Windows path on Unix. Otherwise, API users
+   * can make false assumptions. On the other hand, such limitation hinders creation of OS-agnostic unit tests for this code.
+   */
+  @TestOnly
+  public static void setSystemCompatible(boolean value) {
+    ourIsSystemCompatible = value;
   }
 
   /**
    * @param wslPath a path in WSL file system, e.g. "/mnt/c/Users/file.txt" or "/c/Users/file.txt"
    * @param mntRoot a directory where fixed drives will be mounted. Default is "/mnt/" - {@link WSLDistribution#DEFAULT_WSL_MNT_ROOT}).
-   *                See https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options
+   *                See <a href="https://docs.microsoft.com/ru-ru/windows/wsl/wsl-config#configuration-options">WSL configuration options</a>.
    * @return Windows-dependent path to the file, pointed by {@code wslPath} in WSL or null if the path is unmappable.
    * For example, {@code getWindowsPath("/mnt/c/Users/file.txt", "/mnt/") returns "C:\Users\file.txt"}
    */
-  @Nullable
-  public static String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
+  public static @Nullable String getWindowsPath(@NotNull String wslPath, @NotNull String mntRoot) {
     if (!wslPath.startsWith(mntRoot)) {
       return null;
     }
@@ -178,7 +163,7 @@ public final class WSLUtil {
   }
 
 
-  static class WSLToolFlags {
+  static final class WSLToolFlags {
     public final boolean isQuietFlagAvailable;
     public final boolean isVerboseFlagAvailable;
 
@@ -190,7 +175,7 @@ public final class WSLUtil {
 
   private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS = lazyNullable(() -> getWSLToolFlagsInternal());
 
-  public static @Nullable WSLToolFlags getWSLToolFlags() {
+  static @Nullable WSLToolFlags getWSLToolFlags() {
     return WSL_TOOL_FLAGS.getValue();
   }
 
@@ -218,4 +203,22 @@ public final class WSLUtil {
       return null;
     }
   }
+
+  static @NotNull String getUncPrefix() {
+    return SystemInfo.isWin11OrNewer ? DEFAULT_UNC_PREFIX : WslConstants.UNC_PREFIX;
+  }
+
+  /**
+   * The default path prefix to access Linux files from Windows.
+   * This is a successor to the ` \\wsl$\` path prefix.
+   * 
+   * <li>Windows 11</li>
+   * It's available since the initial release.
+
+   * <li>Windows 10</li>
+   * It's available since Windows 10 Insider Preview Build 21354.
+   * <a href="https://blogs.windows.com/windows-insider/2021/04/07/announcing-windows-10-insider-preview-build-21354/"></a>
+   * This preview was included in Windows 10 Version 21H2 (November 2021 Update).
+   */
+  static final String DEFAULT_UNC_PREFIX = "\\\\wsl.localhost\\";
 }

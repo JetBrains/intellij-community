@@ -1,7 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
-sourceCompatibility = 1.5
 version = '1.0'
 
 dependencies {
@@ -26,7 +25,7 @@ repositories {
 }
 kotlin {
     jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(8)
     }
 }
 

@@ -2,19 +2,18 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Named
-import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.kotlin.idea.gradleTooling.loadClassOrNull
 
 fun KotlinTargetReflection(kotlinTarget: Any): KotlinTargetReflection = KotlinTargetReflectionImpl(kotlinTarget)
 
 interface KotlinTargetReflection {
-    val isMetadataTargetClass: Boolean
     val targetName: String
     val presetName: String?
     val disambiguationClassifier: String?
     val platformType: String?
     val gradleTarget: Named
     val compilations: Collection<KotlinCompilationReflection>?
+    val isMetadataTargetClass: Boolean
 
     val nativeMainRunTasks: Collection<KotlinNativeMainRunTaskReflection>?
     val artifactsTaskName: String?
@@ -24,32 +23,30 @@ interface KotlinTargetReflection {
 private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTargetReflection {
     override val gradleTarget: Named
         get() = instance as Named
+
     override val isMetadataTargetClass: Boolean by lazy {
         val metadataTargetClass =
             instance.javaClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget")
         metadataTargetClass?.isInstance(instance) == true
     }
+
     override val targetName: String by lazy {
         gradleTarget.name
     }
+
     override val presetName: String? by lazy {
         instance.callReflectiveGetter<Any?>("getPreset", logger)
             ?.callReflectiveGetter("getName", logger)
     }
 
     override val disambiguationClassifier: String? by lazy {
-        val getterConditionMethod = "getUseDisambiguationClassifierAsSourceSetNamePrefix"
-        val useDisambiguationClassifier = if (instance.javaClass.getMethodOrNull(getterConditionMethod) != null)
-            instance.callReflectiveGetter(getterConditionMethod, logger)!!
-        else true
-        instance.callReflectiveGetter(
-            (if (useDisambiguationClassifier) "getDisambiguationClassifier"
-            else "getOverrideDisambiguationClassifierOnIdeImport"), logger
-        )
+        instance.callReflectiveGetter("getDisambiguationClassifier",logger)
     }
+
     override val platformType: String? by lazy {
         instance.callReflectiveAnyGetter("getPlatformType", logger)?.callReflectiveGetter("getName", logger)
     }
+
     override val compilations: Collection<KotlinCompilationReflection>? by lazy {
         instance.callReflective("getCompilations", parameters(), returnType<Iterable<Any>>(), logger)?.map { compilation ->
             KotlinCompilationReflection(compilation)

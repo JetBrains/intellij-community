@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.uast.test.common.kotlin.UastApiFixtureTestBase
@@ -10,7 +11,9 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFixtureTestBase {
-    override val isFirUastPlugin: Boolean = false
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -21,6 +24,14 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
 
     fun testArgumentForParameter_smartcast() {
         checkArgumentForParameter_smartcast(myFixture)
+    }
+
+    fun testCallableReferenceWithGeneric() {
+        checkCallableReferenceWithGeneric(myFixture)
+    }
+
+    fun testCallableReferenceWithGeneric_convertedToSAM() {
+        checkCallableReferenceWithGeneric_convertedToSAM(myFixture, isK2 = false)
     }
 
     fun testDivByZero() {
@@ -35,8 +46,52 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkTypesOfDeprecatedHidden(myFixture)
     }
 
+    fun testTypesOfDeprecatedHiddenSuspend() {
+        checkTypesOfDeprecatedHiddenSuspend(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_noAccessor() {
+        checkTypesOfDeprecatedHiddenProperty_noAccessor(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_getter() {
+        checkTypesOfDeprecatedHiddenProperty_getter(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_setter() {
+        checkTypesOfDeprecatedHiddenProperty_setter(myFixture)
+    }
+
+    fun testTypesOfDeprecatedHiddenProperty_accessors() {
+        checkTypesOfDeprecatedHiddenProperty_accessors(myFixture)
+    }
+
+    fun testTypeOfUnresolvedErrorInThrowExpression() {
+        checkTypeOfUnresolvedErrorInThrowExpression(myFixture)
+    }
+
     fun testReifiedTypeNullability() {
         checkReifiedTypeNullability(myFixture)
+    }
+
+    fun testReifiedTypeNullability_generic() {
+        checkReifiedTypeNullability_generic(myFixture)
+    }
+
+    fun testInheritedGenericTypeNullability() {
+        checkInheritedGenericTypeNullability(myFixture)
+    }
+
+    fun testInheritedGenericTypeNullability_propertyAndAccessor() {
+        checkInheritedGenericTypeNullability_propertyAndAccessor(myFixture)
+    }
+
+    fun testGenericTypeNullability_reified() {
+        checkGenericTypeNullability_reified(myFixture)
+    }
+
+    fun testGenericParameterSubtype() {
+        checkGenericParameterSubtype(myFixture)
     }
 
     fun testImplicitReceiverType() {
@@ -47,12 +102,20 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkSubstitutedReceiverType(myFixture)
     }
 
+    fun testJavaStaticMethodReceiverType() {
+        checkJavaStaticMethodReceiverType(myFixture)
+    }
+
     fun testUnderscoreOperatorForTypeArguments() {
         checkUnderscoreOperatorForTypeArguments(myFixture)
     }
 
     fun testCallKindOfSamConstructor() {
         checkCallKindOfSamConstructor(myFixture)
+    }
+
+    fun testExpressionTypeOfForEach() {
+        checkExpressionTypeOfForEach(myFixture)
     }
 
     fun testExpressionTypeFromIncorrectObject() {
@@ -63,6 +126,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkExpressionTypeForCallToInternalOperator(myFixture)
     }
 
+    fun testExpressionTypeForConstructorDelegationCall() {
+        checkExpressionTypeForConstructorDelegationCall(myFixture)
+    }
+
     fun testFlexibleFunctionalInterfaceType() {
         checkFlexibleFunctionalInterfaceType(myFixture)
     }
@@ -71,8 +138,83 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkInvokedLambdaBody(myFixture)
     }
 
+    fun testImplicitReceiver() {
+        checkImplicitReceiver(myFixture)
+    }
+
+    fun testImplicitReceiver_extensionFunction() {
+        checkImplicitReceiver_extensionFunction(myFixture)
+    }
+
+    fun testImplicitReceiver_insideInterface() {
+        checkImplicitReceiver_insideInterface(myFixture)
+    }
+
+    fun testImplicitReceiver_interfaceHierarchy() {
+        checkImplicitReceiver_interfaceHierarchy(myFixture)
+    }
+
+    fun testImplicitReceiver_interfaceHierarchy_smartcast() {
+        checkImplicitReceiver_interfaceHierarchy_smartcast(myFixture)
+    }
+
     fun testLambdaImplicitParameters() {
         checkLambdaImplicitParameters(myFixture)
     }
 
+    fun testLambdaBodyAsParentOfDestructuringDeclaration() {
+        checkLambdaBodyAsParentOfDestructuringDeclaration(myFixture)
+    }
+
+    fun testIdentifierOfNullableExtensionReceiver() {
+        checkIdentifierOfNullableExtensionReceiver(myFixture)
+    }
+
+    fun testReceiverTypeOfExtensionFunction() {
+        checkReceiverTypeOfExtensionFunction(myFixture)
+    }
+
+    fun testReceiverTypeOfExtensionFunction_superType() {
+        checkReceiverTypeOfExtensionFunction_superType(myFixture)
+    }
+
+    fun testSourcePsiOfLazyPropertyAccessor() {
+        checkSourcePsiOfLazyPropertyAccessor(myFixture)
+    }
+
+    fun testTextRangeOfLocalVariable() {
+        checkTextRangeOfLocalVariable(myFixture)
+    }
+
+    fun testNameReferenceVisitInConstructorCall() {
+        checkNameReferenceVisitInConstructorCall(myFixture)
+    }
+
+    fun testNoArgConstructorSourcePsi() {
+        checkNoArgConstructorSourcePsi(myFixture)
+    }
+
+    fun testNullLiteral() {
+        checkNullLiteral(myFixture)
+    }
+
+    fun testStringConcatInAnnotationValue() {
+        checkStringConcatInAnnotationValue(myFixture)
+    }
+
+    fun testLocalPropertyInitializerEvaluate_String() {
+        checkLocalPropertyInitializerEvaluation_String(myFixture)
+    }
+
+    fun testLocalPropertyInitializerEvaluate_Numeric() {
+        checkLocalPropertyInitializerEvaluation_Numeric(myFixture)
+    }
+
+    fun testEnumAsAnnotationAttributeValueEvaluation() {
+        checkEnumAsAnnotationAttributeValueEvaluation(myFixture)
+    }
+
+    fun testJavaConstantEvaluation() {
+        checkJavaConstantEvaluation(myFixture)
+    }
 }

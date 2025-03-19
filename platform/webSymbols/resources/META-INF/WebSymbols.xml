@@ -1,13 +1,11 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.webSymbols.context.impl.WebSymbolsContextProjectRootsListener"
-              topic="com.intellij.openapi.roots.ModuleRootListener"/>
-  </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory"
                     serviceImplementation="com.intellij.webSymbols.query.impl.WebSymbolsQueryExecutorFactoryImpl"/>
 
-    <highlightingPassFactory implementation="com.intellij.webSymbols.inspections.WebSymbolsPassFactory$Registrar"/>
+    <metaLanguage implementation="com.intellij.webSymbols.WebSymbolsEnabledLanguage"/>
+    <annotator language="WebSymbolsEnabledLanguage"
+               implementationClass="com.intellij.webSymbols.highlighting.impl.WebSymbolsHighlightingAnnotator"/>
 
     <webSymbols.webTypes.filter
       name="match-prefix"
@@ -20,9 +18,20 @@
       implementation="com.intellij.webSymbols.documentation.WebSymbolDocumentationTargetProvider"/>
     <psi.declarationProvider implementation="com.intellij.webSymbols.declarations.impl.WebSymbolDeclarationProviderDelegate"/>
 
+    <!--suppress PluginXmlRegistrationCheck -->
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.model.psi.PsiExternalReferenceHost"
+                                 hostLanguage="WebSymbolsEnabledLanguage"
+                                 implementationClass="com.intellij.webSymbols.references.impl.PsiWebSymbolReferenceProviderImpl"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"/>
+
     <referencesSearch implementation="com.intellij.webSymbols.search.PsiSourcedWebSymbolReferenceSearcher"/>
     <refactoring.helper implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRefactoringHelper"/>
     <renameHandler implementation="com.intellij.webSymbols.refactoring.PsiSourcedWebSymbolRenameHandler"/>
+
+    <rename.symbolRenameTargetFactory implementation="com.intellij.webSymbols.refactoring.WebSymbolRenameTargetFactory"/>
+    <lang.symbolSearchTarget forClass="com.intellij.webSymbols.WebSymbol"
+                             implementationClass="com.intellij.webSymbols.search.WebSymbolSearchTargetFactory"/>
 
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.webSymbols.search.WebSymbolsUsageSearcher"/>

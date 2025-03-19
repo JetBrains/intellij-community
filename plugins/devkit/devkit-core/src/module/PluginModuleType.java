@@ -1,9 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.module.Module;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -19,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -28,9 +29,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
+public final class PluginModuleType extends ModuleType<JavaModuleBuilder> {
 
-  @NonNls public static final String ID = "PLUGIN_MODULE";
+  public static final @NonNls String ID = "PLUGIN_MODULE";
 
   public PluginModuleType() {
     super(ID);
@@ -45,31 +46,26 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   @Override
-  @NotNull
-  public PluginModuleBuilder createModuleBuilder() {
-    return new PluginModuleBuilder();
+  public @NotNull JavaModuleBuilder createModuleBuilder() {
+    return new JavaModuleBuilder();
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return DevKitBundle.message("module.title");
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return DevKitBundle.message("module.description");
   }
 
-  @NotNull
   @Override
-  public Icon getNodeIcon(boolean isOpened) {
+  public @NotNull Icon getNodeIcon(boolean isOpened) {
     return AllIcons.Nodes.Plugin;
   }
 
-  @Nullable
-  public static XmlFile getPluginXml(Module module) {
+  public static @Nullable XmlFile getPluginXml(Module module) {
     if (module == null) return null;
     if (!isOfType(module)) {
       for (final ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
@@ -104,11 +100,11 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   public static boolean isPluginModuleOrDependency(@Nullable Module module) {
     if (module == null) return false;
     if (isOfType(module)) return true;
-    return getCandidateModules(module).size() > 0;
+    return !getCandidateModules(module).isEmpty();
   }
 
   public static List<Module> getCandidateModules(Module module) {
-    if (PsiUtil.isIdeaProject(module.getProject())) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
       Set<Module> dependents = new HashSet<>();
       ModuleUtilCore.collectModulesDependsOn(module, dependents);
       return new ArrayList<>(dependents);
@@ -131,7 +127,7 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   @Override
-  public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
+  public boolean isValidSdk(final @NotNull Module module, final Sdk projectSdk) {
     return JavaModuleType.isValidJavaSdk(module);
   }
 }

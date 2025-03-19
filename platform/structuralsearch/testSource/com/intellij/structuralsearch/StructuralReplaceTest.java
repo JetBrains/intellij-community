@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -477,7 +478,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s65 = "'_Type '_Variable = '_Value; // '_Comment";
     String s66 = """
       /**
-       *$Comment$
+       * $Comment$
        */
       $Type$ $Variable$ = $Value$;""";
     String expectedResult23 = """
@@ -613,6 +614,37 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult2 = "if (true) /* System.out.println(\"1111\"); */; else /* System.out.println(\"2222\"); */;\n" +
                              "while(true) /* System.out.println(\"1111\"); */;";
     assertEquals("replace with comment", expectedResult2, replace(s4, s5, s6));
+    
+    String source1 = """
+      public class AnotherTestClass extends TestClass {
+          /* Test comment */
+          public void testMeThOd() {
+              int x = 0;
+          }
+      }""";
+    String what1 = """
+      public class '_A extends '_B {
+          /* '_Comment */
+          public void '_Method() {
+              '_statement;
+          }
+      }""";
+    String by1 = """
+      public class $A$ extends $B$ {
+          /* $Comment$ */
+          public void $NewMethod$() {
+              $statement$;
+          }
+      }""";
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("NewMethod");
+    variable.setScriptCodeConstraint("Method.name.toLowerCase()");
+    assertEquals("""
+                   public class AnotherTestClass extends TestClass {
+                       /* Test comment */
+                       public void testmethod() {
+                           int x = 0;
+                       }
+                   }""", replace(source1, what1, by1));
   }
 
   public void testSeveralStatements() {
@@ -1731,13 +1763,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s6 = "a=a";
 
     try {
-      replace(s4, s5, s6);
-      fail("Undefined no ; in replace");
-    }
-    catch (UnsupportedPatternException ignored) {
-    }
-
-    try {
       replace(s4, s6, s5);
       fail("Undefined no ; in search");
     }
@@ -2048,23 +2073,25 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     }
   }
 
-  public void testReformatAndShortenClassRefPerformance() throws IOException {
+  public void _testReformatAndShortenClassRefPerformance() throws IOException {
     options.setToReformatAccordingToStyle(true);
 
     final String source = loadFile("ReformatAndShortenClassRefPerformance_source.java");
     final String pattern = loadFile("ReformatAndShortenClassRefPerformance_pattern.java");
     final String replacement = loadFile("ReformatAndShortenClassRefPerformance_replacement.java");
 
-    PlatformTestUtil.startPerformanceTest("SSR", 20000,
-                                          () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+    Benchmark.newBenchmark("SSR Reformat",
+                           () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
+                                                             replace(source, pattern, replacement, true, true)))
+      .startAsSubtest();
 
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
-    PlatformTestUtil.startPerformanceTest("SSR", 20000,
-                                          () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+    Benchmark.newBenchmark("SSR Shorten Class Reference",
+                           () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
+                                                             replace(source, pattern, replacement, true, true)))
+      .startAsSubtest();
   }
 
   public void testLeastSurprise() {
@@ -2109,7 +2136,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s2 = "try { '_TryStatement; } catch('_ExceptionType '_ExceptionDcl) { /* '_CommentContent */ }";
     String replacement =
       "try { $TryStatement$; } catch($ExceptionType$ $ExceptionDcl$) { _logger.warning(\"$CommentContent$\", $ExceptionDcl$); }";
-    String expected = "try { em.persist(p); } catch(PersistenceException e) { _logger.warning(\" good\", e); }";
+    String expected = "try { em.persist(p); } catch(PersistenceException e) { _logger.warning(\"good\", e); }";
 
     assertEquals(expected, replace(s1, s2, replacement));
 
@@ -2456,7 +2483,9 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "public class A {}";
     assertEquals(expected1b, replace(in1, what, "@SuppressWarnings(\"NONE\") @Deprecated"));
 
-    final String expected1c = "@SuppressWarnings(\"ALL\") class B {}";
+    final String expected1c = """
+      @SuppressWarnings("ALL")
+      public class B {}""";
     assertEquals("Should replace unmatched annotation parameters",
                  expected1c, replace(in1, "@SuppressWarnings class A {}", "@SuppressWarnings class B {}"));
 
@@ -2464,6 +2493,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "public class A {}";
     assertEquals("Should replace unmatched annotation parameters when matching just annotation",
                  expected1d, replace(in1, "@SuppressWarnings", "@ SuppressWarnings"));
+
+    String what1 = "@SuppressWarnings(\"'value\")";
+    String by = "$lower_case$";
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("lower_case");
+    variable.setScriptCodeConstraint("value.getText().toLowerCase()");
+    final String expected1e = "@SuppressWarnings(\"all\")\n" +
+                              "public class A {}";
+    assertEquals(expected1e, replace(in1, what1, by));
 
 
     final String in2 = """

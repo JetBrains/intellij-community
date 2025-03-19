@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.ex;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementContainer;
@@ -22,9 +23,9 @@ import org.jetbrains.jps.model.JpsElementContainer;
 import java.util.Map;
 
 public abstract class JpsElementContainerEx implements JpsElementContainer {
+  @ApiStatus.Internal
   protected abstract Object getDataLock();
 
+  @ApiStatus.Internal
   protected abstract Map<JpsElementChildRole<?>, JpsElement> getElementsMap();
-
-  protected abstract void applyChanges(JpsElementContainerEx modified);
 }

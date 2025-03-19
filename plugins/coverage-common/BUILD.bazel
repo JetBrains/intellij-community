@@ -1,0 +1,74 @@
+### auto-generated section `build intellij.platform.coverage` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "coverage_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "coverage",
+  module_name = "intellij.platform.coverage",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/extensions",
+    "//platform/testRunner",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/usageView",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/lvcs-api:lvcs",
+    "//platform/vcs-api:vcs",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/util/jdom",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+  ],
+  runtime_deps = [":coverage_resources"]
+)
+
+jvm_library(
+  name = "coverage_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":coverage"],
+  deps = [
+    "@lib//:junit5",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/extensions",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/usageView",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/lvcs-api:lvcs",
+    "//platform/vcs-api:vcs",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/util/jdom",
+    "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
+  ],
+  runtime_deps = [":coverage_resources"]
+)
+
+jvm_test(
+  name = "coverage_test",
+  runtime_deps = [":coverage_test_lib"]
+)
+### auto-generated section `build intellij.platform.coverage` end

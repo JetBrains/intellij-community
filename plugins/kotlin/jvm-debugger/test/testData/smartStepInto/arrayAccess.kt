@@ -4,8 +4,7 @@ fun foo() {
 }
 
 class A {
-    fun get(i: Int) = 1
+    operator fun get(i: Int) = 1
 }
 
 // EXISTS: get(Int)
-// IGNORE_K2

@@ -5,7 +5,6 @@ import com.intellij.navigation.JBProtocolRevisionResolver
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.vfs.VcsFileSystem
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
@@ -18,7 +17,7 @@ class GitNavigateRevisionResolver: JBProtocolRevisionResolver {
       val root = GitUtil.getRootForFile(project, filePath)
       val revisionNumber = GitRevisionNumber.resolve(project, root, revision)
       val fileRevision = GitFileRevision(project, filePath, revisionNumber).also { it.loadContent() }
-      return VcsVirtualFile(absolutePath, fileRevision, VcsFileSystem.getInstance())
+      return VcsVirtualFile(filePath, fileRevision)
     } catch (e: VcsException) {
       thisLogger().info("File $absolutePath can't be found in revision $revision", e)
       return null

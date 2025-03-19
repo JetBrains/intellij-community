@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class ThemeColorAnnotator implements Annotator {
+final class ThemeColorAnnotator implements Annotator, DumbAware {
 
   private static final Pattern COLOR_HEX_PATTERN_RGB = Pattern.compile("^#([A-Fa-f0-9]{6})$");
   private static final Pattern COLOR_HEX_PATTERN_RGBA = Pattern.compile("^#([A-Fa-f0-9]{8})$");
@@ -79,22 +80,21 @@ public class ThemeColorAnnotator implements Annotator {
   }
 
 
-  private static final class MyRenderer extends GutterIconRenderer {
+  private static final class MyRenderer extends GutterIconRenderer implements DumbAware {
     private static final int ICON_SIZE = 12;
 
     private final String myColorText;
     private JsonStringLiteral myLiteral;
-
+    private final Icon myIcon;
 
     private MyRenderer(@NotNull String colorText, @NotNull JsonStringLiteral literal) {
       myColorText = colorText;
       myLiteral = literal;
+      myIcon = computeIcon(colorText);
     }
 
-    @NotNull
-    @Override
-    public Icon getIcon() {
-      Color color = getColor(myColorText);
+    private @NotNull EmptyIcon computeIcon(String colorText) {
+      Color color = getColor(colorText);
       if (color != null) {
         return JBUIScale.scaleIcon(new ColorIcon(ICON_SIZE, color));
       }
@@ -102,19 +102,22 @@ public class ThemeColorAnnotator implements Annotator {
     }
 
     @Override
+    public @NotNull Icon getIcon() {
+      return myIcon;
+    }
+
+    @Override
     public boolean isNavigateAction() {
       return canChooseColor();
     }
 
-    @Nullable
     @Override
-    public String getTooltipText() {
+    public @Nullable String getTooltipText() {
       return canChooseColor() ? DevKitThemesBundle.message("theme.choose.color.tooltip") : null;
     }
 
-    @Nullable
     @Override
-    public AnAction getClickAction() {
+    public @Nullable AnAction getClickAction() {
       if (!canChooseColor()) return null;
 
       return new AnAction(DevKitThemesBundle.messagePointer("action.Anonymous.text.choose.color")) {
@@ -158,8 +161,7 @@ public class ThemeColorAnnotator implements Annotator {
       return isColorCode(myColorText);
     }
 
-    @Nullable
-    private Color getColor(@NotNull String colorText) {
+    private @Nullable Color getColor(@NotNull String colorText) {
       if (!isColorCode(colorText)) {
         return findNamedColor(colorText);
       }
@@ -167,8 +169,7 @@ public class ThemeColorAnnotator implements Annotator {
       return parseColor(colorText);
     }
 
-    @Nullable
-    private static Color parseColor(@NotNull String colorHex) {
+    private static @Nullable Color parseColor(@NotNull String colorHex) {
       boolean isRgba = isRgbaColorHex(colorHex);
       if (!isRgba && !isRgbColorHex(colorHex)) return null;
 
@@ -187,8 +188,7 @@ public class ThemeColorAnnotator implements Annotator {
       }
     }
 
-    @Nullable
-    private Color findNamedColor(String colorText) {
+    private @Nullable Color findNamedColor(String colorText) {
       final PsiFile file = myLiteral.getContainingFile();
       if (!(file instanceof JsonFile)) return null;
       final List<JsonProperty> colors = ThemeJsonUtil.getNamedColors((JsonFile)file);

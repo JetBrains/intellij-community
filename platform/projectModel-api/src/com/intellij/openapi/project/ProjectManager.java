@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +20,8 @@ public abstract class ProjectManager {
   public static final Topic<ProjectManagerListener> TOPIC = new Topic<>(ProjectManagerListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true);
 
   /**
-   * @return {@code ProjectManager} instance
+   * @return {@code ProjectManager} instance.
+   * For coroutines, see <pre>ProjectManagerEx</pre>
    */
   public static ProjectManager getInstance() {
     return ApplicationManager.getApplication().getService(ProjectManager.class);
@@ -28,6 +29,10 @@ public abstract class ProjectManager {
 
   public static @Nullable ProjectManager getInstanceIfCreated() {
     return ApplicationManager.getApplication().getServiceIfCreated(ProjectManager.class);
+  }
+
+  @ApiStatus.Internal
+  protected ProjectManager() {
   }
 
   /**
@@ -114,6 +119,7 @@ public abstract class ProjectManager {
   /**
    * @deprecated Use {@link com.intellij.openapi.project.ex.ProjectManagerEx#newProject(Path, com.intellij.ide.impl.OpenProjectTask)}
    */
+  @Deprecated
   @ApiStatus.Internal
   public abstract @NotNull Project createProject(@Nullable String name, @NotNull String path);
 

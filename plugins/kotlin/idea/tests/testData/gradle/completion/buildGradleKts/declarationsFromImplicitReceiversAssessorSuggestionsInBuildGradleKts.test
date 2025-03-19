@@ -1,0 +1,12 @@
+// FILE: build.gradle.kts
+// "EXPECTED-SUGGESTION": "DEFAULT_BUILD_DIR_NAME"
+plugins {
+    id("java")
+}
+
+org.gradle.api.Project.<caret>
+
+repositories {
+    mavenCentral()
+}
+

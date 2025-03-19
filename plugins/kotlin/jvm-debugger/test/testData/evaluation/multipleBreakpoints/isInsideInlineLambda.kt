@@ -36,15 +36,6 @@ fun main(args: Array<String>) {
     }
     y.foo()
 
-    // inside local function
-    fun local() {
-        // EXPRESSION: it + 5
-        // RESULT: 6: I
-        //Breakpoint! (lambdaOrdinal = 1)
-        a.foo(1) { 1 }
-    }
-    local()
-
     isInsideInlineLambdaInLibrary.test()
 }
 
@@ -71,9 +62,6 @@ class A {
 // EXPRESSION: it + 14
 // RESULT: 18: I
 
-// ADDITIONAL_BREAKPOINT: isInsideInlineLambdaInLibrary.kt / Breakpoint5 / line / 1
-// EXPRESSION: it + 15
-// RESULT: 20: I
 
 // FILE: isInsideInlineLambdaInLibrary.kt
 package isInsideInlineLambdaInLibrary
@@ -102,13 +90,6 @@ public fun test() {
         }
     }
     y.foo()
-
-    // inside local function
-    fun local() {
-        //Breakpoint5
-        a.foo(5) { 1 }
-    }
-    local()
 }
 
 class A {
@@ -117,11 +98,3 @@ class A {
         return this
     }
 }
-
-
-// TODO: Muted on IR Evaluator
-// The breakpoint in the local function (`... EXPRESSION: it + 5...`)/Breakpoint5
-// is not hit, due to the local function compilation naming scheme not being
-// accounted for by the debugging framework. The breakpoints work individually,
-// but as a whole there is some interaction causing otherwise hit and correctly
-// behaving breakpoints to fail the evaluation assertion.

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 
 /**
@@ -10,7 +11,7 @@ import com.intellij.openapi.project.Project
  *
  * Method without project is preferable.
  */
-interface InlayHintsProviderFactory {
+interface InlayHintsProviderFactory : PossiblyDumbAware {
   @Deprecated("Use getProvidersInfo without project", ReplaceWith("getProvidersInfo()"))
   fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> = getProvidersInfo()
 
@@ -30,7 +31,7 @@ interface InlayHintsProviderFactory {
 
   companion object {
     @JvmStatic
-    val EP: ExtensionPointName<InlayHintsProviderFactory> = ExtensionPointName<InlayHintsProviderFactory>("com.intellij.codeInsight.inlayProviderFactory")
+    val EP: ExtensionPointName<InlayHintsProviderFactory> = ExtensionPointName("com.intellij.codeInsight.inlayProviderFactory")
   }
 }
 

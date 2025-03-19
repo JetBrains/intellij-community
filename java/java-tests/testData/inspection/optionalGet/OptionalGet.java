@@ -370,7 +370,7 @@ class CtorTest {
     System.out.println(test.get());
   }
 
-  <error descr="Missing method body, or declare abstract">CtorTest(String noBody);</error>
+  <error descr="Method body expected">CtorTest(String noBody);</error>
 
   void something() {
     test = Optional.empty();

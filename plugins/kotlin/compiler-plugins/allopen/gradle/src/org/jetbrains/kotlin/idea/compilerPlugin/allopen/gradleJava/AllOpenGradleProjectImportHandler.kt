@@ -6,9 +6,9 @@ import org.jetbrains.kotlin.allopen.AllOpenPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.allopen.AllOpenPluginNames.SUPPORTED_PRESETS
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractAnnotationBasedCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.allopen.AllOpenModel
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 
 class AllOpenGradleProjectImportHandler : AbstractAnnotationBasedCompilerPluginGradleImportHandler<AllOpenModel>() {
     override val compilerPluginId = PLUGIN_ID

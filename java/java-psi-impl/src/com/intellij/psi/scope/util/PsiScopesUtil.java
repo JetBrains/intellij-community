@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.scope.util;
 
+import com.intellij.lang.jvm.types.JvmReferenceType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
@@ -21,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +42,10 @@ public final class PsiScopesUtil {
     return treeWalkUp(processor, entrance, maxScope, ResolveState.initial());
   }
 
-  public static boolean treeWalkUp(@NotNull final PsiScopeProcessor processor,
-                                   @NotNull final PsiElement entrance,
-                                   @Nullable final PsiElement maxScope,
-                                   @NotNull final ResolveState state) {
+  public static boolean treeWalkUp(final @NotNull PsiScopeProcessor processor,
+                                   final @NotNull PsiElement entrance,
+                                   final @Nullable PsiElement maxScope,
+                                   final @NotNull ResolveState state) {
     if (!entrance.isValid()) {
       LOG.error(new PsiInvalidElementAccessException(entrance));
     }
@@ -247,7 +249,8 @@ public final class PsiScopesUtil {
               throw new MethodProcessorSetupFailedException("Can't resolve class for super expression");
             }
 
-            final PsiClass superClass = aClass.getSuperClass();
+            JvmReferenceType type = aClass.getSuperClassType();
+            final PsiClass superClass = type == null ? null : ObjectUtils.tryCast(type.resolve(), PsiClass.class);
             if (superClass != null) {
               PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
               PsiClass runSuper = superClass;
@@ -422,7 +425,7 @@ public final class PsiScopesUtil {
     return false;
   }
 
-  private static boolean processQualifierType(@NotNull final PsiType type,
+  private static boolean processQualifierType(final @NotNull PsiType type,
                                               final MethodsProcessor processor,
                                               PsiManager manager,
                                               PsiMethodCallExpression call) throws MethodProcessorSetupFailedException {

@@ -1,0 +1,11 @@
+fun MutableList<Int>.bbb() {
+    fun List<String>.aaa() {
+        buildList {
+            addAll(this@aaa)
+            mapTo(this) { it.toString() }
+            add("a")
+            add(this@aaa.size.toString())
+            add(this@aaa[0])
+        }
+    }
+}

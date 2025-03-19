@@ -4,11 +4,13 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExceptPart;
+import com.jetbrains.python.psi.PyTryExceptStatement;
 import org.jetbrains.annotations.NotNull;
 
 
-public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implements PyTryExceptStatement {
+public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExceptStatement {
   private static final TokenSet EXCEPT_BLOCKS = TokenSet.create(PyElementTypes.EXCEPT_PART);
 
   public PyTryExceptStatementImpl(ASTNode astNode) {
@@ -23,22 +25,5 @@ public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implement
   @Override
   public PyExceptPart @NotNull [] getExceptParts() {
     return childrenToPsi(EXCEPT_BLOCKS, PyExceptPart.EMPTY_ARRAY);
-  }
-
-  @Override
-  public PyElsePart getElsePart() {
-    return (PyElsePart)getPart(PyElementTypes.ELSE_PART);
-  }
-
-  @Override
-  @NotNull
-  public PyTryPart getTryPart() {
-    return (PyTryPart)getPartNotNull(PyElementTypes.TRY_PART);
-  }
-
-
-  @Override
-  public PyFinallyPart getFinallyPart() {
-    return (PyFinallyPart)getPart(PyElementTypes.FINALLY_PART);
   }
 }

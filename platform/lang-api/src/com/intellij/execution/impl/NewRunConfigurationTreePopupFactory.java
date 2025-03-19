@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -23,15 +23,14 @@ public abstract class NewRunConfigurationTreePopupFactory {
   //This method initializes structure according to actual state just before popup showing
   public abstract void initStructure(@NotNull Project project);
 
-  @NotNull
-  public abstract NodeDescriptor getRootElement();
+  public abstract @NotNull NodeDescriptor getRootElement();
 
   protected final NodeDescriptor @NotNull [] convertToDescriptors(@NotNull Project project, NodeDescriptor parent, Object[] elements) {
     ArrayList<NodeDescriptor> descriptors = new ArrayList<>();
     for (Object element : elements) {
       descriptors.add(createDescriptor(project, element, parent));
     }
-    return descriptors.toArray(NodeDescriptor.EMPTY_ARRAY);
+    return descriptors.toArray(NodeDescriptor.getEmptyArray());
   }
 
   //This method is supposed to be called just once for each node, the result goes to cache
@@ -49,18 +48,16 @@ public abstract class NewRunConfigurationTreePopupFactory {
     }
   }
 
-  @NotNull
-  public final NodeDescriptor createDescriptor(@NotNull Project project,
-                                               @NotNull Object element,
-                                               @Nullable NodeDescriptor parentDescriptor) {
-    return createDescriptor(project, element, parentDescriptor, NodeDescriptor.DEFAULT_WEIGHT);
+  public final @NotNull NodeDescriptor createDescriptor(@NotNull Project project,
+                                                        @NotNull Object element,
+                                                        @Nullable NodeDescriptor parentDescriptor) {
+    return createDescriptor(project, element, parentDescriptor, NodeDescriptor.getDefaultWeight());
   }
 
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Project project,
-                                         @NotNull Object element,
-                                         @Nullable NodeDescriptor parentDescriptor,
-                                         int weight) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Project project,
+                                                  @NotNull Object element,
+                                                  @Nullable NodeDescriptor parentDescriptor,
+                                                  int weight) {
     if (element instanceof NodeDescriptor) {
       return (NodeDescriptor)element;
     }

@@ -1,5 +1,3 @@
-import java.util.function.Consumer;
-
 public class Subst {
   void test1() {
     test2();

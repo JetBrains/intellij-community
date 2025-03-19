@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
@@ -15,7 +15,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  * Dummy inspection for configuring the PEP8 checker. The checking itself is performed by
  * Pep8ExternalAnnotator.
  */
-public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
+public final class PyPep8Inspection extends PyInspection implements ExternalAnnotatorBatchInspection {
   public List<String> ignoredErrors = new ArrayList<>();
   public static final String INSPECTION_SHORT_NAME = "PyPep8Inspection";
 
@@ -24,9 +24,8 @@ public class PyPep8Inspection extends PyInspection implements ExternalAnnotatorB
     return pane(OptPane.stringList("ignoredErrors", PyBundle.message("INSP.settings.pep8.ignore.errors.label")));
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return INSPECTION_SHORT_NAME;
   }
 }

@@ -1,131 +1,64 @@
-from collections.abc import Callable, Sequence
+from typing_extensions import TypeAlias
 
 import gdb
 
-class ThreadEvent:
-    inferior_thread: gdb.InferiorThread
-
-class ContinueEvent(ThreadEvent): ...
-
-class ContinueEventRegistry:
-    def connect(self, __object: Callable[[ContinueEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[ContinueEvent], object]) -> None: ...
+ContinueEventRegistry: TypeAlias = gdb.EventRegistry[gdb.ContinueEvent]
 
 cont: ContinueEventRegistry
 
-class ExitedEvent:
-    exit_code: int
-    inferior: gdb.Inferior
-
-class ExitedEventRegistry:
-    def connect(self, __object: Callable[[ExitedEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[ExitedEvent], object]) -> None: ...
+ExitedEventRegistry: TypeAlias = gdb.EventRegistry[gdb.ExitedEvent]
 
 exited: ExitedEventRegistry
 
-class StopEvent(ThreadEvent):
-    stop_signal: str
-
-class BreakpointEvent(StopEvent):
-    breakpoints: Sequence[gdb.Breakpoint]
-    breakpoint: gdb.Breakpoint
-
-class StopEventRegistry:
-    def connect(self, __object: Callable[[StopEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[StopEvent], object]) -> None: ...
+StopEventRegistry: TypeAlias = gdb.EventRegistry[gdb.StopEvent]
 
 stop: StopEventRegistry
 
-class NewObjFileEvent:
-    new_objfile: gdb.Objfile
-
-class NewObjFileEventRegistry:
-    def connect(self, __object: Callable[[NewObjFileEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[NewObjFileEvent], object]) -> None: ...
+NewObjFileEventRegistry: TypeAlias = gdb.EventRegistry[gdb.NewObjFileEvent]
 
 new_objfile: NewObjFileEventRegistry
 
-class ClearObjFilesEvent:
-    progspace: gdb.Progspace
-
-class ClearObjFilesEventRegistry:
-    def connect(self, __object: Callable[[ClearObjFilesEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[ClearObjFilesEvent], object]) -> None: ...
+ClearObjFilesEventRegistry: TypeAlias = gdb.EventRegistry[gdb.ClearObjFilesEvent]
 
 clear_objfiles: ClearObjFilesEventRegistry
 
-class InferiorCallEvent: ...
-
-class InferiorCallPreEvent(InferiorCallEvent):
-    ptid: gdb.InferiorThread
-    address: gdb.Value
-
-class InferiorCallPostEvent(InferiorCallEvent):
-    ptid: gdb.InferiorThread
-    address: gdb.Value
-
-class InferiorCallEventRegistry:
-    def connect(self, __object: Callable[[InferiorCallEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[InferiorCallEvent], object]) -> None: ...
+InferiorCallEventRegistry: TypeAlias = gdb.EventRegistry[gdb._InferiorCallEvent]
 
 inferior_call: InferiorCallEventRegistry
 
-class MemoryChangedEvent:
-    address: gdb.Value
-    length: int
-
-class MemoryChangedEventRegistry:
-    def connect(self, __object: Callable[[MemoryChangedEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[MemoryChangedEvent], object]) -> None: ...
-
+MemoryChangedEventRegistry: TypeAlias = gdb.EventRegistry[gdb.MemoryChangedEvent]
 memory_changed: MemoryChangedEventRegistry
 
-class RegisterChangedEvent:
-    frame: gdb.Frame
-    regnum: str
-
-class RegisterChangedEventRegistry:
-    def connect(self, __object: Callable[[RegisterChangedEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[RegisterChangedEvent], object]) -> None: ...
+RegisterChangedEventRegistry: TypeAlias = gdb.EventRegistry[gdb.RegisterChangedEvent]
 
 register_changed: RegisterChangedEventRegistry
 
-class BreakpointEventRegistry:
-    def connect(self, __object: Callable[[gdb.Breakpoint], object]) -> None: ...
-    def disconnect(self, __object: Callable[[gdb.Breakpoint], object]) -> None: ...
+BreakpointEventRegistry: TypeAlias = gdb.EventRegistry[gdb.Breakpoint]
 
 breakpoint_created: BreakpointEventRegistry
 breakpoint_modified: BreakpointEventRegistry
 breakpoint_deleted: BreakpointEventRegistry
 
-class BeforePromptEventRegistry:
-    def connect(self, __object: Callable[[], object]) -> None: ...
-    def disconnect(self, __object: Callable[[], object]) -> None: ...
+BeforePromptEventRegistry: TypeAlias = gdb.EventRegistry[None]
 
 before_prompt: BeforePromptEventRegistry
 
-class NewInferiorEvent:
-    inferior: gdb.Inferior
-
-class NewInferiorEventRegistry:
-    def connect(self, __object: Callable[[NewInferiorEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[NewInferiorEvent], object]) -> None: ...
+NewInferiorEventRegistry: TypeAlias = gdb.EventRegistry[gdb.NewInferiorEvent]
 
 new_inferior: NewInferiorEventRegistry
 
-class InferiorDeletedEvent:
-    inferior: gdb.Inferior
-
-class InferiorDeletedEventRegistry:
-    def connect(self, __object: Callable[[InferiorDeletedEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[InferiorDeletedEvent], object]) -> None: ...
+InferiorDeletedEventRegistry: TypeAlias = gdb.EventRegistry[gdb.InferiorDeletedEvent]
 
 inferior_deleted: InferiorDeletedEventRegistry
 
-class NewThreadEvent(ThreadEvent): ...
-
-class NewThreadEventRegistry:
-    def connect(self, __object: Callable[[NewThreadEvent], object]) -> None: ...
-    def disconnect(self, __object: Callable[[NewThreadEvent], object]) -> None: ...
+NewThreadEventRegistry: TypeAlias = gdb.EventRegistry[gdb.NewThreadEvent]
 
 new_thread: NewThreadEventRegistry
+
+GdbExitingEventRegistry: TypeAlias = gdb.EventRegistry[gdb.GdbExitingEvent]
+
+gdb_exiting: GdbExitingEventRegistry
+
+ConnectionEventRegistry: TypeAlias = gdb.EventRegistry[gdb.ConnectionEvent]
+
+connection_removed: ConnectionEventRegistry

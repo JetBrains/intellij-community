@@ -1,16 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -19,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,38 +37,22 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          Language language = Language.findLanguageByID(extension.getKey());
-          PsiReferenceContributor instance = extension.getInstance();
-          if (language == Language.ANY) {
-            for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
-              registerContributedReferenceProviders(registrar, instance);
-            }
-          }
-          else if (language != null) {
-            registerContributorForLanguageAndDialects(language, instance);
-            if (language instanceof MetaLanguage) {
-              Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
-              for (Language matchingLanguage : matchingLanguages) {
-                registerContributorForLanguageAndDialects(matchingLanguage, instance);
-              }
-            }
-          }
-        }
-
-        private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
-          Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
-          for (Language languageOrDialect : languageAndDialects) {
-            PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
-            if (registrar != null) {
-              registerContributedReferenceProviders(registrar, instance);
-            }
-          }
+          reset();
         }
 
         @Override
         public void extensionRemoved(@NotNull KeyedLazyInstance<PsiReferenceContributor> extension,
                                      @NotNull PluginDescriptor pluginDescriptor) {
-          Disposer.dispose(extension.getInstance());
+          reset();
+        }
+
+        private void reset() {
+          // it is much easier to just initialize everything next time from scratch than maintain incremental updates
+          for (PsiReferenceRegistrarImpl registrar : myRegistrars.values()) {
+            registrar.cleanup();
+            registrar.clearBindingsCache();
+          }
+          myRegistrars.clear();
         }
       }, null);
     }
@@ -110,10 +92,10 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
 
   private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar,
                                                             @NotNull PsiReferenceContributor contributor) {
-    contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
-    Disposer.register(ApplicationManager.getApplication(), contributor);
+    contributor.registerReferenceProviders(registrar);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull PsiReferenceRegistrarImpl getRegistrar(@NotNull Language language) {
     return myRegistrars.computeIfAbsent(language, ReferenceProvidersRegistryImpl::createRegistrar);
@@ -158,18 +140,18 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
                                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
-    Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
-    for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      PsiReference[] refs = getReferences(context, trinity);
+    Double2ObjectOpenHashMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
+    for (ProviderBinding.ProviderInfo<ProcessingContext> info : providers) {
+      PsiReference[] refs = getReferences(context, info);
       if (refs.length > 0) {
-        List<PsiReference[]> list = map.get(trinity.priority);
+        List<PsiReference[]> list = map.get(info.priority);
         if (list == null) {
           list = new SmartList<>();
-          map.put(trinity.priority, list);
+          map.put(info.priority, list);
         }
         list.add(refs);
         if (IdempotenceChecker.isLoggingEnabled()) {
-          IdempotenceChecker.logTrace(trinity.provider + " returned " + Arrays.toString(refs));
+          IdempotenceChecker.logTrace(info.provider + " returned " + Arrays.toString(refs));
         }
       }
     }
@@ -177,7 +159,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   }
 
   private static PsiReference @NotNull [] getReferences(@NotNull PsiElement context,
-                                                        @NotNull ProviderBinding.ProviderInfo<? extends ProcessingContext> providerInfo) {
+                                                        @NotNull ProviderBinding.ProviderInfo<ProcessingContext> providerInfo) {
     try {
       return providerInfo.provider.getReferencesByElement(context, providerInfo.processingContext);
     }
@@ -230,6 +212,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   /**
    * @deprecated to attract attention and motivate to fix tests which fail these checks
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
     Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);

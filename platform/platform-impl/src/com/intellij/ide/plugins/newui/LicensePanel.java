@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -14,16 +14,18 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Supplier;
@@ -31,7 +33,8 @@ import java.util.function.Supplier;
 /**
  * @author Alexander Lobas
  */
-public class LicensePanel extends NonOpaquePanel {
+@ApiStatus.Internal
+public final class LicensePanel extends NonOpaquePanel {
   private final JLabel mySubMessage = new JLabel();
   private final JPanel myPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(5)));
   private final JLabel myMessage = new JLabel();
@@ -56,9 +59,7 @@ public class LicensePanel extends NonOpaquePanel {
     return myMessage.getIcon() != null || myMessage.isForegroundSet();
   }
 
-  @Nullable
-  @NlsSafe
-  public String getMessage() {
+  public @Nullable @NlsSafe String getMessage() {
     String text = myMessage.getText();
     if (mySubMessage.isVisible()) {
       return mySubMessage.getText() + "\n" + text;
@@ -92,7 +93,7 @@ public class LicensePanel extends NonOpaquePanel {
   }
 
   public void setTextFromStamp(@NotNull String stamp, @Nullable Date expirationDate) {
-    long days = expirationDate == null ? 0 : DateFormatUtil.getDifferenceInDays(new Date(), expirationDate);
+    long days = expirationDate == null ? 0 : Duration.between(Instant.now(), expirationDate.toInstant()).toDays();
 
     if (stamp.startsWith("eval:")) {
       if (days <= 0) {
@@ -151,10 +152,18 @@ public class LicensePanel extends NonOpaquePanel {
     myPanel.setVisible(false);
   }
 
-  public void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
+  public void showBuyPluginWithText(@NotNull @Nls String text, boolean warning, boolean errorColor,
+                                    @NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate,
+                                    boolean makePanelVisible) {
+    setText(text, warning, errorColor);
+    showBuyPlugin(getPlugin, forUpdate);
+    setVisible(makePanelVisible);
+  }
+
+  private void showBuyPlugin(@NotNull Supplier<? extends IdeaPluginDescriptor> getPlugin, boolean forUpdate) {
     IdeaPluginDescriptor plugin = getPlugin.get();
 
-    setLink(IdeBundle.message("plugins.configurable.buy.the.plugin"), () ->
+    setLink(IdeBundle.message("plugins.configurable.buy.the.license"), () ->
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://plugins.jetbrains.com/purchase-link/" + plugin.getProductCode())), true);
 
     if (forUpdate) {
@@ -171,9 +180,9 @@ public class LicensePanel extends NonOpaquePanel {
     if (forUpdate) {
       return;
     }
-    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), false), price -> {
+    PluginPriceService.getPrice(plugin, price -> updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), false), price -> {
       if (plugin == getPlugin.get()) {
-        updateLink(IdeBundle.message("plugins.configurable.buy.the.plugin.from.0", price), true);
+        updateLink(IdeBundle.message("plugins.configurable.buy.the.license.from.0", price), true);
       }
     });
   }
@@ -182,5 +191,11 @@ public class LicensePanel extends NonOpaquePanel {
     return productCodeOrPluginId != null &&
       LicensingFacade.getInstance() != null &&
       ArrayUtil.contains(productCodeOrPluginId, "DPN", "DC", "DPA", "PDB", "PWS", "PGO", "PPS", "PPC", "PRB", "PSW", "Pythonid");
+  }
+
+  public static boolean shouldSkipPluginLicenseDescriptionPublishing(@NotNull IdeaPluginDescriptor plugin) {
+    return "AIP".equals(plugin.getProductCode()) &&
+           (plugin instanceof PluginNode) &&
+           ((PluginNode)plugin).getTags().contains(Tags.Freemium.name());
   }
 }

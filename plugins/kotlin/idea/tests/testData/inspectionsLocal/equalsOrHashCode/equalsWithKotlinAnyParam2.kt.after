@@ -1,7 +1,6 @@
 import kotlin.Any
 
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
+// WITH_STDLIB
 
 class Any
 
@@ -23,4 +22,4 @@ class WithConstructor(x: Int, s: String) {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

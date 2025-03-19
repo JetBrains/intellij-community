@@ -4,6 +4,8 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
+import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.jps.model.module.JpsModule
 
 private val MODULE_GROUP_NAMES = java.util.Set.of("gradle", "uast")
@@ -20,7 +22,7 @@ class KotlinMavenArtifactsBuilder(context: BuildContext) : MavenArtifactsBuilder
     val moduleName = module.name
     val names = moduleName.split("\\.".toRegex()).dropLastWhile(String::isEmpty)
     if (names.size < 2) {
-      context.messages.error("Cannot generate Maven artifacts: incorrect module name \'$moduleName\'")
+      context.messages.error("Cannot generate Maven artifacts: incorrect module name '$moduleName'")
     }
 
     val groupId = "org.jetbrains.kotlin"

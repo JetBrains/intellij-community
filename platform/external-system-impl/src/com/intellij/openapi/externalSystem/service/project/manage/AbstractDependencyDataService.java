@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,11 +18,13 @@ import com.intellij.projectModel.ProjectModelBundle;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
   extends AbstractProjectDataService<E, I> {
@@ -65,12 +67,11 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
                                                             @NotNull Module module,
                                                             @NotNull IdeModifiableModelsProvider modelsProvider);
 
-  @NotNull
   @Override
-  public Computable<Collection<I>> computeOrphanData(final @NotNull Collection<? extends DataNode<E>> toImport,
-                                                     @NotNull final ProjectData projectData,
-                                                     @NotNull final Project project,
-                                                     @NotNull final IdeModifiableModelsProvider modelsProvider) {
+  public @NotNull Computable<Collection<I>> computeOrphanData(final @NotNull Collection<? extends DataNode<E>> toImport,
+                                                              final @NotNull ProjectData projectData,
+                                                              final @NotNull Project project,
+                                                              final @NotNull IdeModifiableModelsProvider modelsProvider) {
     return () -> {
       MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
       for (DataNode<E> node : toImport) {
@@ -119,8 +120,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     };
   }
 
-  @NotNull
-  protected abstract Class<I> getOrderEntryType();
+  protected abstract @NotNull Class<I> getOrderEntryType();
 
   protected String getOrderEntryName(@NotNull IdeModifiableModelsProvider modelsProvider, @NotNull I orderEntry) {
     return orderEntry.getPresentableName();
@@ -138,8 +138,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
     }
   }
 
-  @NotNull
-  private static Map<Module, Collection<ExportableOrderEntry>> groupByModule(@NotNull Collection<? extends ExportableOrderEntry> data) {
+  private static @NotNull Map<Module, Collection<ExportableOrderEntry>> groupByModule(@NotNull Collection<? extends ExportableOrderEntry> data) {
     Map<Module, Collection<ExportableOrderEntry>> result = new HashMap<>();
     for (ExportableOrderEntry entry : data) {
       Collection<ExportableOrderEntry> entries = result.get(entry.getOwnerModule());

@@ -1,67 +1,27 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.IntegrityCheckCapableFileSystem;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.Suppressions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
 
 public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCapableFileSystem {
-  private final Set<String> myNoCopyJarPaths;
-  private final Path myNoCopyJarDir;
-
-  public JarFileSystemImpl() {
-    if (!SystemInfoRt.isWindows) {
-      myNoCopyJarPaths = null;
-    }
-    else if (SystemInfoRt.isFileSystemCaseSensitive) {
-      myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet();
-    }
-    else {
-      myNoCopyJarPaths = ConcurrentCollectionFactory.createConcurrentSet(HashingStrategy.caseInsensitive());
-    }
-
-    // to prevent platform .jar files from copying
-    myNoCopyJarDir = Path.of(PathManager.getHomePath());
-  }
-
-  @Override
-  public void setNoCopyJarForPath(@NotNull String pathInJar) {
-    if (myNoCopyJarPaths == null) return;
-    int index = pathInJar.indexOf(JAR_SEPARATOR);
-    if (index > 0) pathInJar = pathInJar.substring(0, index);
-    myNoCopyJarPaths.add(new File(pathInJar).getPath());
-  }
-
-  public @Nullable File getMirroredFile(@NotNull VirtualFile file) {
-    return new File(file.getPath());
-  }
-
-  public boolean isMakeCopyOfJar(@NotNull File originalJar) {
-    return !(myNoCopyJarPaths == null ||
-             myNoCopyJarPaths.contains(originalJar.getPath()) ||
-             originalJar.toPath().startsWith(myNoCopyJarDir));
-  }
-
   @Override
   public @NotNull String getProtocol() {
     return PROTOCOL;
@@ -95,8 +55,8 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @Override
-  protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    return VfsImplUtil.getHandler(this, entryFile, myNoCopyJarPaths == null ? ZipHandler::new : TimedZipHandler::new);
+  protected @NotNull ZipHandlerBase getHandler(@NotNull VirtualFile entryFile) {
+    return VfsImplUtil.getHandler(this, entryFile, SystemInfo.isWindows ? TimedZipHandler::new : ZipHandler::new);
   }
 
   @TestOnly
@@ -131,13 +91,30 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
   }
 
   @TestOnly
+  @ApiStatus.Internal
   public static void cleanupForNextTest() {
-    TimedZipHandler.closeOpenZipReferences();
+    Suppressions.runSuppressing(
+      () -> TimedZipHandler.closeOpenZipReferences(),
+      () -> ZipHandler.clearFileAccessorCache()
+    );
   }
 
   @Override
   public @NotNull Map<String, Long> getArchiveCrcHashes(@NotNull VirtualFile file) throws IOException {
-    ArchiveHandler handler = getHandler(file);
-    return ((ZipHandlerBase)handler).getArchiveCrcHashes();
+    return getHandler(file).getArchiveCrcHashes();
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated pointless; inline or avoid */
+  @Deprecated(forRemoval = true)
+  public @Nullable File getMirroredFile(@NotNull VirtualFile file) {
+    return new File(file.getPath());
+  }
+
+  /** @deprecated no-op; stop using */
+  @Deprecated(forRemoval = true)
+  public boolean isMakeCopyOfJar(@SuppressWarnings("unused") @NotNull File originalJar) {
+    return false;
+  }
+  //</editor-fold>
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.console.ConsoleHistoryModel.Entry
@@ -7,8 +7,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
 /**
@@ -18,7 +18,7 @@ private val MasterModels = ConcurrentFactoryMap.create<String, MasterModel>(
   {
     MasterModel()
   }, {
-    ContainerUtil.createConcurrentWeakValueMap()
+  CollectionFactory.createConcurrentWeakValueMap()
   })
 
 private fun assertWriteThread() = ApplicationManager.getApplication().assertWriteIntentLockAcquired()
@@ -33,8 +33,8 @@ fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHis
 }
 
 
-private class PrefixHistoryModel constructor(private val masterModel: MasterModel,
-                                             private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
+private class PrefixHistoryModel(private val masterModel: MasterModel,
+                                 private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
                                                                                       ConsoleHistoryModel {
   var userContent: String = ""
   override fun setContent(userContent: String) {

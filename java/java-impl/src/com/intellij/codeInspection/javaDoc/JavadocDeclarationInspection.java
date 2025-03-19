@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
@@ -8,11 +8,16 @@ import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.codeserver.highlighting.JavaSyntaxErrorChecker;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -34,7 +39,7 @@ import java.util.stream.Stream;
 import static com.intellij.codeInspection.javaDoc.MissingJavadocInspection.isDeprecated;
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class JavadocDeclarationInspection extends LocalInspectionTool {
+public final class JavadocDeclarationInspection extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavadocDeclaration";
 
   public String ADDITIONAL_TAGS = "";
@@ -42,6 +47,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   public boolean IGNORE_PERIOD_PROBLEM = true;
   public boolean IGNORE_SELF_REFS = false;
   public boolean IGNORE_DEPRECATED_ELEMENTS = false;
+  public boolean IGNORE_SYNTAX_ERRORS = false;
 
   private boolean myIgnoreEmptyDescriptions = false;
 
@@ -64,23 +70,48 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      expandableString("ADDITIONAL_TAGS", JavaBundle.message("inspection.javadoc.label.text"), ","),
-      checkbox("IGNORE_THROWS_DUPLICATE", JavaBundle.message("inspection.javadoc.option.ignore.throws")),
-      checkbox("IGNORE_PERIOD_PROBLEM", JavaBundle.message("inspection.javadoc.option.ignore.period")),
-      checkbox("IGNORE_SELF_REFS", JavaBundle.message("inspection.javadoc.option.ignore.self.ref")),
+      expandableString("ADDITIONAL_TAGS", JavaBundle.message("inspection.javadoc.additional.tags"), ",")
+        .description(JavaBundle.message("inspection.javadoc.additional.tags.description")),
+      checkbox("IGNORE_THROWS_DUPLICATE", JavaBundle.message("inspection.javadoc.option.ignore.throws"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.javadoc.option.ignore.throws.description"))),
+      checkbox("IGNORE_PERIOD_PROBLEM", JavaBundle.message("inspection.javadoc.option.ignore.period"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.period.description")),
+      checkbox("IGNORE_SELF_REFS", JavaBundle.message("inspection.javadoc.option.ignore.self.ref"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.self.ref.description")),
       checkbox("IGNORE_DEPRECATED_ELEMENTS", JavaBundle.message("inspection.javadoc.option.ignore.deprecated"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.deprecated.description")),
+      checkbox("IGNORE_SYNTAX_ERRORS", JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors"))
+        .description(JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors.description"))
     );
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitJavaFile(@NotNull PsiJavaFile file) {
         if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
           checkFile(file, holder);
         }
+      }
+
+      @Override
+      public void visitErrorElement(@NotNull PsiErrorElement element) {
+        if (IGNORE_SYNTAX_ERRORS || !JavaSyntaxErrorChecker.isJavaDocProblem(element)) return;
+        PsiElement parent = element.getParent();
+        TextRange range = element.getTextRangeInParent();
+        if (range.isEmpty()) {
+          range = new TextRange(range.getStartOffset(), range.getEndOffset() + 1);
+          if (range.getEndOffset() > parent.getTextLength()) {
+            range = range.shiftLeft(1);
+          }
+        }
+        holder.problem(parent, element.getErrorDescription())
+          .range(range)
+          .highlight(ProblemHighlightType.GENERIC_ERROR)
+          .fix(new UpdateInspectionOptionFix(JavadocDeclarationInspection.this, "IGNORE_SYNTAX_ERRORS", 
+                                             JavaBundle.message("inspection.javadoc.option.ignore.syntax.errors"), true))
+          .register();
       }
 
       @Override
@@ -107,7 +138,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
 
   private void checkFile(PsiJavaFile file, ProblemsHolder holder) {
-    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory());
+    PsiDirectory directory = file.getContainingDirectory();
+    if (directory == null) return;
+
+    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
     if (pkg == null) return;
 
     PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
@@ -270,10 +304,9 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
               paramName = "<" + paramName + ">";
             }
             documentedParamNames = set(documentedParamNames);
-            if (documentedParamNames.contains(paramName)) {
+            if (!documentedParamNames.add(paramName)) {
               holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.param", paramName));
             }
-            documentedParamNames.add(paramName);
           }
         }
       }
@@ -286,20 +319,18 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
             if (element instanceof PsiClass psiClass) {
               String fqName = psiClass.getQualifiedName();
               documentedExceptions = set(documentedExceptions);
-              if (documentedExceptions.contains(fqName)) {
+              if (!documentedExceptions.add(fqName)) {
                 holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.throws", fqName));
               }
-              documentedExceptions.add(fqName);
             }
           }
         }
       }
       else if (UNIQUE_TAGS.contains(tag.getName())) {
         uniqueTags = set(uniqueTags);
-        if (uniqueTags.contains(tag.getName())) {
+        if (!uniqueTags.add(tag.getName())) {
           holder.registerProblem(tag.getNameElement(), JavaBundle.message("inspection.javadoc.problem.duplicate.tag", tag.getName()));
         }
-        uniqueTags.add(tag.getName());
       }
     }
   }
@@ -455,10 +486,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   private static void checkSnippetTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
     if (element instanceof PsiSnippetDocTag snippet) {
       PsiElement nameElement = tag.getNameElement();
-      if (!PsiUtil.getLanguageLevel(snippet).isAtLeast(LanguageLevel.JDK_18)) {
+      if (!PsiUtil.isAvailable(JavaFeature.JAVADOC_SNIPPETS, snippet)) {
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
-          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
+          holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(JavaFeature.JAVADOC_SNIPPETS.getMinimumLevel()));
         }
         return;
       }
@@ -481,10 +512,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
             String inlineRegion = region != null && markup.getRegionStart(region) == null ? null : region;
             String inlineRendered = renderText(markup, inlineRegion);
             if (!externalRendered.equals(inlineRendered)) {
-              holder.registerProblem(nameElement, 
-                                     JavaBundle.message("inspection.message.external.snippet.differs.from.inline.snippet"),
-                                     new SynchronizeInlineMarkupFix(externalRendered),
-                                     new DeleteElementFix(body));
+              holder.problem(nameElement, JavaBundle.message("inspection.message.external.snippet.differs.from.inline.snippet"))
+                .fix(new SynchronizeInlineMarkupFix(externalRendered))
+                .fix(new DeleteElementFix(body))
+                .register();
             }
           }
         }
@@ -543,10 +574,10 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     return set != null ? set : new HashSet<>();
   }
 
-  private static class SynchronizeInlineMarkupFix implements LocalQuickFix, HighPriorityAction {
+  private static class SynchronizeInlineMarkupFix extends PsiUpdateModCommandQuickFix implements HighPriorityAction {
     private final String myText;
 
-    public SynchronizeInlineMarkupFix(@NotNull String text) {
+    private SynchronizeInlineMarkupFix(@NotNull String text) {
       myText = text;
     }
 
@@ -556,8 +587,8 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiSnippetDocTag snippetTag = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSnippetDocTag.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiSnippetDocTag snippetTag = PsiTreeUtil.getParentOfType(element, PsiSnippetDocTag.class);
       if (snippetTag == null) return;
       PsiSnippetDocTagValue valueElement = snippetTag.getValueElement();
       if (valueElement == null) return;

@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+@file:OptIn(UnsafeCastFunction::class)
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -8,17 +10,24 @@ import com.intellij.usages.Usage
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
-import org.jetbrains.kotlin.idea.perf.suite.*
-import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
+import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
+import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
+import org.jetbrains.kotlin.idea.perf.suite.suite
+import org.jetbrains.kotlin.idea.perf.util.OutputConfig
+import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.testFramework.Parameter
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.junit.runner.RunWith
 
 @RunWith(JUnit3RunnerWithInners::class)
 open class PerformanceStressTest : UsefulTestCase() {
+
+    override fun runInDispatchThread(): Boolean = false
 
     protected open fun profileConfig(): ProfilerConfig = ProfilerConfig()
 
@@ -104,7 +113,8 @@ open class PerformanceStressTest : UsefulTestCase() {
                             rebuildProject()
                         }
 
-                        fixture("pkg1/DataClass.kt").use { fixture ->
+                        fixture("pkg1/DataClass.kt") {
+                            val fixture = this
                             with(fixture.cursorConfig) { marker = "DataClass" }
 
                             with(config) {
@@ -213,13 +223,105 @@ open class PerformanceStressTest : UsefulTestCase() {
 
                     profile(DefaultProfile)
 
-                    fixture("src/main/java/pkg/BaseClass.kt").use { fixture ->
+                    fixture("src/main/java/pkg/BaseClass.kt") {
+                        val fixture = this
                         with(config) {
                             warmup = 8
                             iterations = 15
                         }
 
                         measureHighlight(fixture)
+                    }
+                }
+            }
+        }
+    }
+
+    fun testLotsOfModules() {
+        suiteWithConfig("Lots of modules project", "KTIJ-26506 project") {
+            app {
+                warmUpProject()
+
+                project {
+                    descriptor {
+                        name("ktij-26506")
+
+                        // originally project has 1,5K modules
+                        //val numberOfModules = 1500
+
+                        val numberOfModules = 150
+                        val numberOfClassesPerModule = 20
+                        val numberOfImportedClasses = 30
+                        val numberOfFunctionsPerClass = 30
+
+                        for (moduleIndex in 0 until numberOfModules) {
+                            module(moduleName = "module$moduleIndex") {
+                                kotlinStandardLibrary()
+
+                                src("src/main/java/")
+
+                                for (classIndex in 0..numberOfClassesPerModule) {
+                                    val className = "Some${moduleIndex}Class${classIndex}"
+
+                                    kotlinFile(className) {
+                                        pkg("com.pkg.module${moduleIndex}")
+
+                                        topClass(className) {
+                                            for (functionIndex in 0 until numberOfFunctionsPerClass) {
+                                                function("foo${functionIndex}") {
+                                                    returnType("String")
+                                                    param("p", "Int")
+                                                    body("TODO()")
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        module(moduleName = "main-module") {
+                            kotlinStandardLibrary()
+
+                            for (moduleIndex in 0 until numberOfModules) {
+                                moduleDependency(moduleName = "module$moduleIndex")
+                            }
+
+                            src("src/main/java/")
+
+                            kotlinFile("Main") {
+                                pkg("com.pkg.module.main")
+
+                                val usedClasses = mutableListOf<String>()
+                                for (moduleIndex in 0 until numberOfImportedClasses) {
+                                    val classIndex = 0
+                                    val className = "Some${moduleIndex}Class${classIndex}"
+                                    usedClasses += className
+                                    import("com.pkg.module$moduleIndex.$className")
+                                }
+
+                                topClass("Main") {
+                                    for (functionIndex in 0 until numberOfFunctionsPerClass) {
+                                        function("foo${functionIndex}") {
+                                            returnType("String")
+                                            param("p", "Int")
+                                            val classToUse = usedClasses[functionIndex % usedClasses.size]
+                                            body("""
+                                                val c = $classToUse()
+                                                return c.toString()
+                                            """.trimIndent())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    fixture("main-module/src/main/java/com/pkg/module/main/Main.kt") {
+                        val fixture = this
+                        fixture.highlight()
                     }
                 }
             }
@@ -277,8 +379,8 @@ open class PerformanceStressTest : UsefulTestCase() {
 
                     profile(DefaultProfile)
 
-                    fixture("src/main/java/pkg/SomeClass.kt").use { fixture ->
-                        with(fixture.typingConfig) {
+                    fixture("src/main/java/pkg/SomeClass.kt"){
+                        with(typingConfig) {
                             marker = "ov"
                             insertString = "override fun foo(): String = TODO()"
                             delayMs = 50
@@ -289,7 +391,7 @@ open class PerformanceStressTest : UsefulTestCase() {
                             iterations = 15
                         }
 
-                        measureTypeAndHighlight(fixture, "type override fun foo()")
+                        measureTypeAndHighlight(this, "type override fun foo()")
                     }
                 }
             }
@@ -377,7 +479,8 @@ open class PerformanceStressTest : UsefulTestCase() {
 
                     profile(DefaultProfile)
 
-                    fixture("SomeKotlinClass.kt").use { fixture ->
+                    fixture("SomeKotlinClass.kt"){
+                        val fixture = this
                         measure<Unit>("findFacadeClass") {
                             test = {
                                 val facadeClass = fixture.psiFile.cast<KtFile>().findFacadeClass()

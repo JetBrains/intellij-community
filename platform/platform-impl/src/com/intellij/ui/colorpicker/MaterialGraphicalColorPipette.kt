@@ -19,10 +19,10 @@ import com.intellij.icons.AllIcons
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class MaterialGraphicalColorPipette(base: GraphicalColorPipette) : ColorPipette by base {
+internal class MaterialGraphicalColorPipette(base: GraphicalColorPipette) : ColorPipette by base {
   override val icon: Icon = AllIcons.Ide.Pipette
 
-  override val rolloverIcon: Icon = AllIcons.Ide.Pipette_rollover
+  override val rolloverIcon: Icon = AllIcons.Ide.PipetteRollover
 
   override val pressedIcon: Icon = AllIcons.Ide.Pipette
 }

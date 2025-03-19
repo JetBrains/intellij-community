@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -9,9 +9,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,8 +42,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return true;
   }
 
-  @NotNull
-  protected List<T> parse(String str, int offset) {
+  protected @NotNull List<T> parse(String str, int offset) {
 
     final List<T> references = new ArrayList<>();
     int current = -1;
@@ -66,12 +65,11 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return next;
   }
 
-  @Nullable
-  protected T createReference(final TextRange range, final int index) {
+  protected @Nullable T createReference(final TextRange range, final int index) {
     return null;
   }
 
-  protected List<T> createReferences(final TextRange range, final int index) {
+  protected @Unmodifiable List<T> createReferences(final TextRange range, final int index) {
     T reference = createReference(range, index);
 
     return ContainerUtil.createMaybeSingletonList(reference);
@@ -93,8 +91,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
     return getReferences().get(index);
   }
 
-  @Nullable
-  public T getLastReference() {
+  public @Nullable T getLastReference() {
     return getReferences().isEmpty() ? null : getReference(getReferences().size() - 1);
   }
 }

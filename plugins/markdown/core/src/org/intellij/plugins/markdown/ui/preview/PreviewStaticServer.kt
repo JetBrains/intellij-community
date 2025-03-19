@@ -95,7 +95,7 @@ class PreviewStaticServer : HttpRequestHandler() {
         default-src 'none';
         script-src ${StringUtil.join(scripts.map(::stripQueryParameters), " ")};
         style-src https: ${StringUtil.join(styles.map(::stripQueryParameters), " ")} 'unsafe-inline';
-        img-src file: *; connect-src 'none'; font-src * data: *;
+        img-src file: * data:; connect-src 'none'; font-src * data: *;
         object-src 'none'; media-src 'none'; child-src 'none';
       """
     }
@@ -112,12 +112,6 @@ class PreviewStaticServer : HttpRequestHandler() {
       val url = parseEncoded(raw)
       requireNotNull(url) { "Could not parse url!" }
       return getInstance().addAuthToken(url).toExternalForm()
-    }
-
-    @Deprecated("Use PreviewStaticServer.getStaticUrl(ResourceProvider, String) instead")
-    @JvmStatic
-    fun getStaticUrl(staticPath: String): String {
-      return getStaticUrl(instance.defaultResourceProvider, staticPath)
     }
 
     /**

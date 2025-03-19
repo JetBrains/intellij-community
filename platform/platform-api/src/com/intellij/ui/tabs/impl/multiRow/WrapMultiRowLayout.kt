@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : MultiRowLayout(tabs, showPinnedTabsSeparately) {
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
     val leftmostX = data.toFitRec.x + tabs.titleWrapper.preferredSize.width
@@ -16,7 +18,7 @@ class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : 
     val firstRowWidth = rightmostX - leftmostX
     val getRowMaxLen: (Int) -> Int = { index -> if (index == 0) firstRowWidth else data.toFitRec.width }
 
-    val infos = data.myVisibleInfos
+    val infos = data.visibleInfos
     val rows = mutableListOf<TabsRow>()
     if (showPinnedTabsSeparately) {
       val (pinned, unpinned) = splitToPinnedUnpinned(infos)
@@ -40,7 +42,7 @@ class WrapMultiRowLayout(tabs: JBTabsImpl, showPinnedTabsSeparately: Boolean) : 
     var curRowInfos = mutableListOf<TabInfo>()
     var curLen = 0
     for (info in infosToSplit) {
-      val len = tabs.infoToLabel.get(info)!!.preferredSize.width
+      val len = tabs.getTabLabel(info)!!.preferredSize.width
       data.lengths[info] = len
       if (curLen + len <= getRowMaxLen(rows.size)) {
         curRowInfos.add(info)

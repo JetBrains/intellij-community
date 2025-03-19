@@ -1,0 +1,14 @@
+LineBreakpoint created at skipSimpleGetters.kt:15
+LineBreakpoint created at skipSimpleGetters.kt:25
+LineBreakpoint created at skipSimpleGetters.kt:39
+Run Java
+Connected to the target VM
+skipSimpleGetters.kt:15
+skipSimpleGetters.kt:2
+skipSimpleGetters.kt:25
+skipSimpleGetters.kt:2
+skipSimpleGetters.kt:39
+skipSimpleGetters.kt:2
+Disconnected from the target VM
+
+Process finished with exit code 0

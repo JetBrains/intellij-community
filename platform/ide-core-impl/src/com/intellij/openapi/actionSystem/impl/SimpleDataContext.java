@@ -2,42 +2,35 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.CustomizedDataContext;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public final class SimpleDataContext extends CustomizedDataContext {
-  private final Map<String, Object> myMap;
-  private final DataContext myParent;
 
-  private SimpleDataContext(@NotNull Map<String, Object> map, @Nullable DataContext parent) {
-    myMap = map;
-    myParent = Objects.requireNonNullElse(parent, DataContext.EMPTY_CONTEXT);
-  }
-
-  @Override
-  public @NotNull DataContext getParent() {
-    return myParent;
-  }
-
-  @Override
-  public @Nullable Object getRawCustomData(@NotNull String dataId) {
-    return myMap.containsKey(dataId) ?
-           Objects.requireNonNullElse(myMap.get(dataId), EXPLICIT_NULL) : null;
+  private SimpleDataContext(@NotNull Map<String, Object> map,
+                            @Nullable DataContext parent) {
+    super(Objects.requireNonNullElseGet(parent, () -> IdeUiService.getInstance()
+            .createUiDataContext((Component)map.get(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()))),
+          (EdtNoGetDataProvider)sink -> {
+            for (String dataId : map.keySet()) {
+              sink.set(DataKey.create(dataId),
+                       Objects.requireNonNullElse(map.get(dataId), EXPLICIT_NULL));
+            }
+          }, false);
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */
   @Deprecated(forRemoval = true)
   public static @NotNull DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data, DataContext parent) {
+    DataKey.create(dataId);
     return new SimpleDataContext(Map.of(dataId, data), parent);
   }
 
@@ -51,13 +44,8 @@ public final class SimpleDataContext extends CustomizedDataContext {
    */
   @Deprecated(forRemoval = true)
   public static @NotNull DataContext getSimpleContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
+    for (String name : dataId2data.keySet()) DataKey.create(name);
     return new SimpleDataContext(dataId2data, parent);
-  }
-
-  /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object)} instead. */
-  @Deprecated(forRemoval = true)
-  public static @NotNull DataContext getSimpleContext(@NotNull String dataId, @NotNull Object data) {
-    return getSimpleContext(dataId, data, null);
   }
 
   public static @NotNull <T> DataContext getSimpleContext(@NotNull DataKey<? super T> dataKey, @NotNull T data) {
@@ -65,7 +53,7 @@ public final class SimpleDataContext extends CustomizedDataContext {
   }
 
   public static @NotNull DataContext getProjectContext(@NotNull Project project) {
-    return getSimpleContext(CommonDataKeys.PROJECT.getName(), project);
+    return getSimpleContext(CommonDataKeys.PROJECT, project);
   }
 
   public static @NotNull Builder builder() {
@@ -93,7 +81,7 @@ public final class SimpleDataContext extends CustomizedDataContext {
       return this;
     }
 
-    public @NotNull <T> Builder addNull(@NotNull DataKey<? super T> dataKey) {
+    public @NotNull Builder addNull(@NotNull DataKey<?> dataKey) {
       if (myMap == null) myMap = new HashMap<>();
       myMap.put(dataKey.getName(), EXPLICIT_NULL);
       return this;

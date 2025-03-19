@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config;
 
 import com.intellij.icons.AllIcons;
@@ -20,28 +20,22 @@ public class EclipseFileType implements FileType {
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getName() {
+  public @NotNull @NonNls String getName() {
     return "Eclipse";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return EclipseBundle.message("filetype.eclipse.description");
   }
 
-  @Nls
   @Override
-  public @NotNull String getDisplayName() {
+  public @Nls @NotNull String getDisplayName() {
     return EclipseBundle.message("filetype.eclipse.display.name");
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getDefaultExtension() {
+  public @NotNull @NonNls String getDefaultExtension() {
     return EclipseXml.CLASSPATH_EXT;
   }
 

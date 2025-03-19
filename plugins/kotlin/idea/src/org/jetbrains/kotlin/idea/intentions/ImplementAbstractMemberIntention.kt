@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -6,9 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.ide.util.PsiClassListCellRenderer
-import com.intellij.ide.util.PsiClassRenderingInfo
-import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -33,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.ClassListCellRenderer
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.GenerateMembersHandler
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject
@@ -95,6 +93,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
 
         return HierarchySearchRequest(baseClass, baseClass.useScope, false)
             .searchInheritors()
+            .asIterable()
             .asSequence()
             .filter(::acceptSubClass)
     }
@@ -155,39 +154,6 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         }
     }
 
-    private class ClassRenderer : PsiElementListCellRenderer<PsiElement>() {
-        private val psiClassRenderer = PsiClassListCellRenderer()
-
-        override fun getComparator(): Comparator<PsiElement> {
-            val baseComparator = psiClassRenderer.comparator
-            return Comparator { o1, o2 ->
-                when {
-                    o1 is KtEnumEntry && o2 is KtEnumEntry -> o1.name!!.compareTo(o2.name!!)
-                    o1 is KtEnumEntry -> -1
-                    o2 is KtEnumEntry -> 1
-                    o1 is PsiClass && o2 is PsiClass -> baseComparator.compare(o1, o2)
-                    else -> 0
-                }
-            }
-        }
-
-        override fun getElementText(element: PsiElement?): String? {
-            return when (element) {
-                is KtEnumEntry -> element.name
-                is PsiClass -> psiClassRenderer.getElementText(element)
-                else -> null
-            }
-        }
-
-        override fun getContainerText(element: PsiElement?, name: String?): String? {
-            return when (element) {
-                is KtEnumEntry -> element.containingClassOrObject?.fqName?.asString()
-                is PsiClass -> PsiClassRenderingInfo.getContainerTextStatic(element)
-                else -> null
-            }
-        }
-    }
-
     override fun startInWriteAction(): Boolean = false
 
     override fun checkFile(file: PsiFile): Boolean {
@@ -210,7 +176,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
 
         classesToProcess.singleOrNull()?.let { return implementInClass(element, listOf(it)) }
 
-        val renderer = ClassRenderer()
+        val renderer = ClassListCellRenderer()
         val sortedClasses = classesToProcess.sortedWith(renderer.comparator)
         if (isUnitTestMode()) return implementInClass(element, sortedClasses)
 

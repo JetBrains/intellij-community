@@ -1,5 +1,5 @@
-// CHOOSE_USE_SITE_TARGET: file
-// IS_APPLICABLE: false
+// NO_OPTION: FILE|Add use-site target 'file'
+// CHOSEN_OPTION: RECEIVER|Add use-site target 'receiver'
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class C

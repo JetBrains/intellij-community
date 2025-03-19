@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
@@ -21,22 +20,19 @@ import com.intellij.refactoring.rename.JavaUnresolvableLocalCollisionDetector;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.refactoring.util.usageInfo.DefaultConstructorImplicitUsageInfo;
-import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
  * @author Maxim.Medvedev
  */
-class JavaChangeSignatureUsageSearcher {
+final class JavaChangeSignatureUsageSearcher {
   private final JavaChangeInfo myChangeInfo;
-  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureUsageSearcher.class);
 
   JavaChangeSignatureUsageSearcher(JavaChangeInfo changeInfo) {
     this.myChangeInfo = changeInfo;
@@ -61,7 +57,7 @@ class JavaChangeSignatureUsageSearcher {
     methods.add(method);
 
     for (PsiMethod psiMethod : methods) {
-      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod)) {
+      for (PsiFunctionalExpression functionalExpression : FunctionalExpressionSearch.search(psiMethod).asIterable()) {
         result.add(new FunctionalInterfaceChangedUsageInfo(functionalExpression, method));
       }
     }
@@ -85,7 +81,7 @@ class JavaChangeSignatureUsageSearcher {
     PsiParameter[] parameters = method.getParameterList().getParameters();
     List<PsiDeconstructionPattern> deconstructions = new ArrayList<>();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(method.getProject());
-    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope)) {
+    for (PsiReference reference : ReferencesSearch.search(aClass, projectScope).asIterable()) {
       PsiElement element = reference.getElement();
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeElement)) {
@@ -106,12 +102,6 @@ class JavaChangeSignatureUsageSearcher {
     PsiPattern[] components = deconstruction.getDeconstructionList().getDeconstructionComponents();
     if (components.length != parameters.length) {
       return false;
-    }
-    for (int i = 0; i < components.length; i++) {
-      PsiType type = JavaPsiPatternUtil.getPatternType(components[i]);
-      if (!parameters[i].getType().equals(type)) {
-        return false;
-      }
     }
     return true;
   }
@@ -247,19 +237,6 @@ class JavaChangeSignatureUsageSearcher {
     }
   }
 
-  private static boolean shouldPropagateToNonPhysicalMethod(PsiMethod method,
-                                                            ArrayList<? super UsageInfo> result,
-                                                            PsiClass containingClass,
-                                                            final Set<? extends PsiMethod> propagateMethods) {
-    for (PsiMethod psiMethod : propagateMethods) {
-      if (!psiMethod.isPhysical() && Comparing.strEqual(psiMethod.getName(), containingClass.getName())) {
-        result.add(new DefaultConstructorImplicitUsageInfo(psiMethod, containingClass, method));
-        return true;
-      }
-    }
-    return false;
-  }
-
   private PsiMethod[] findSimpleUsagesWithoutParameters(final PsiMethod method,
                                                         final ArrayList<? super UsageInfo> result,
                                                         boolean isToModifyArgs,
@@ -270,7 +247,8 @@ class JavaChangeSignatureUsageSearcher {
     PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
 
     for (PsiMethod overridingMethod : overridingMethods) {
-      result.add(new OverriderUsageInfo(overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions));
+      ChangeSignatureUsageProvider provider = getProvider(overridingMethod);
+      result.add(provider.createOverrideUsageInfo(myChangeInfo, overridingMethod, method, isOriginal, isToModifyArgs, isToThrowExceptions, result));
     }
 
     boolean needToChangeCalls =
@@ -279,62 +257,11 @@ class JavaChangeSignatureUsageSearcher {
                                              myChangeInfo.isExceptionSetOrOrderChanged() ||
                                              myChangeInfo.isVisibilityChanged()/*for checking inaccessible*/);
     if (needToChangeCalls) {
-      int parameterCount = method.getParameterList().getParametersCount();
 
       PsiReference[] refs = MethodReferencesSearch.search(method, projectScope, true).toArray(PsiReference.EMPTY_ARRAY);
       for (PsiReference ref : refs) {
-        PsiElement element = ref.getElement();
-
-        boolean isToCatchExceptions = isToThrowExceptions && needToCatchExceptions(RefactoringUtil.getEnclosingMethod(element));
-        if (!isToCatchExceptions) {
-          if (RefactoringUtil.isMethodUsage(element)) {
-            PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
-            if (list == null || !method.isVarArgs() && list.getExpressionCount() != parameterCount) continue;
-            if (method.isVarArgs() &&
-                ref instanceof PsiReferenceExpression &&
-                !((PsiReferenceExpression)ref).advancedResolve(true).isValidResult()) {
-              continue;
-            }
-          }
-        }
-        if (RefactoringUtil.isMethodUsage(element)) {
-          result.add(new MethodCallUsageInfo(element, isToModifyArgs, isToCatchExceptions));
-        }
-        else if (element instanceof PsiDocTagValue) {
-          result.add(new UsageInfo(element));
-        }
-        else if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-          if (JavaLanguage.INSTANCE.equals(element.getLanguage())) {
-            DefaultConstructorImplicitUsageInfo implicitUsageInfo =
-              new DefaultConstructorImplicitUsageInfo((PsiMethod)element, ((PsiMethod)element).getContainingClass(), method);
-            result.add(implicitUsageInfo);
-          }
-        }
-        else if (element instanceof PsiClass psiClass) {
-          LOG.assertTrue(method.isConstructor());
-          if (JavaLanguage.INSTANCE.equals(psiClass.getLanguage())) {
-            if (myChangeInfo instanceof JavaChangeInfoImpl) {
-              if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                     ((JavaChangeInfoImpl)myChangeInfo).propagateParametersMethods)) {
-                continue;
-              }
-              if (shouldPropagateToNonPhysicalMethod(method, result, psiClass,
-                                                     ((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods)) {
-                continue;
-              }
-            }
-            result.add(new NoConstructorClassUsageInfo(psiClass));
-          }
-        }
-        else if (ref instanceof PsiCallReference) {
-          result.add(new CallReferenceUsageInfo((PsiCallReference)ref));
-        }
-        else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
-          result.add(new MethodReferenceUsageInfo(element, isToModifyArgs, isToCatchExceptions));
-        }
-        else {
-          result.add(new MoveRenameUsageInfo(element, ref, method));
-        }
+        ChangeSignatureUsageProvider provider = getProvider(ref.getElement());
+        ContainerUtil.addIfNotNull(result, provider.createUsageInfo(myChangeInfo, ref, method, isToModifyArgs, isToThrowExceptions));
       }
 
       //if (method.isConstructor() && parameterCount == 0) {
@@ -367,24 +294,22 @@ class JavaChangeSignatureUsageSearcher {
     return overridingMethods;
   }
 
+  private static @NotNull ChangeSignatureUsageProvider getProvider(PsiElement element) {
+    ChangeSignatureUsageProvider provider = ChangeSignatureUsageProviders.findProvider(element.getLanguage());
+    if (provider == null) {
+      provider = ChangeSignatureUsageProviders.findProvider(JavaLanguage.INSTANCE);
+    }
+    return Objects.requireNonNull(provider);
+  }
+
 
   private static void addParameterUsages(PsiNamedElement parameter, ArrayList<? super UsageInfo> results, ParameterInfo info) {
     PsiManager manager = parameter.getManager();
     GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false)) {
+    for (PsiReference psiReference : ReferencesSearch.search(parameter, projectScope, false).asIterable()) {
       PsiElement parmRef = psiReference.getElement();
       UsageInfo usageInfo = new ChangeSignatureParameterUsageInfo(parmRef, parameter.getName(), info.getName());
       results.add(usageInfo);
-    }
-  }
-
-  private boolean needToCatchExceptions(PsiMethod caller) {
-    if (myChangeInfo instanceof JavaChangeInfoImpl) {
-      return myChangeInfo.isExceptionSetOrOrderChanged() &&
-             !((JavaChangeInfoImpl)myChangeInfo).propagateExceptionsMethods.contains(caller);
-    }
-    else {
-      return myChangeInfo.isExceptionSetOrOrderChanged();
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.holders;
 
 import com.intellij.diff.DiffContext;
@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,17 +34,17 @@ import javax.swing.*;
 import java.awt.event.FocusListener;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class BinaryEditorHolder extends EditorHolder {
-  @NotNull private final FileEditor myEditor;
-  @Nullable private final FileEditorProvider myEditorProvider;
+  private final @NotNull FileEditor myEditor;
+  private final @Nullable FileEditorProvider myEditorProvider;
 
   public BinaryEditorHolder(@NotNull FileEditor editor, @Nullable FileEditorProvider editorProvider) {
     myEditor = editor;
     myEditorProvider = editorProvider;
   }
 
-  @NotNull
-  public FileEditor getEditor() {
+  public @NotNull FileEditor getEditor() {
     return myEditor;
   }
 
@@ -57,9 +58,8 @@ public final class BinaryEditorHolder extends EditorHolder {
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myEditor.getComponent();
   }
 
@@ -68,9 +68,8 @@ public final class BinaryEditorHolder extends EditorHolder {
     myEditor.getComponent().addFocusListener(listener);
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myEditor.getPreferredFocusedComponent();
   }
 
@@ -82,15 +81,14 @@ public final class BinaryEditorHolder extends EditorHolder {
     public static final BinaryEditorHolderFactory INSTANCE = new BinaryEditorHolderFactory();
 
     @Override
-    @NotNull
-    public BinaryEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
+    public @NotNull BinaryEditorHolder create(@NotNull DiffContent content, @NotNull DiffContext context) {
       Project project = context.getProject();
       if (content instanceof FileContent) {
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         VirtualFile file = ((FileContent)content).getFile();
 
         List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
-        if (providers.size() == 0) {
+        if (providers.isEmpty()) {
           JComponent component = FileTypeRegistry.getInstance().isFileOfType(file, UnknownFileType.INSTANCE)
                                  ? UnknownFileTypeDiffRequest.createComponent(file.getName(), context)
                                  : DiffUtil.createMessagePanel(DiffBundle.message("error.cant.show.file"));
@@ -149,35 +147,31 @@ public final class BinaryEditorHolder extends EditorHolder {
   }
 
   private static final class DumbFileEditor extends FileEditorBase {
-    @NotNull private final VirtualFile myFile;
-    @NotNull private final JComponent myComponent;
+    private final @NotNull VirtualFile myFile;
+    private final @NotNull JComponent myComponent;
 
     private DumbFileEditor(@NotNull VirtualFile file, @NotNull JComponent component) {
       myFile = file;
       myComponent = component;
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
+    public @NotNull JComponent getComponent() {
       return myComponent;
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return null;
     }
 
-    @NotNull
     @Override
-    public VirtualFile getFile() {
+    public @NotNull VirtualFile getFile() {
       return myFile;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return "Dumb"; //NON-NLS
     }
   }

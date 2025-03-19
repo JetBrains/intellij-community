@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.similarity.internal;
 
 import com.intellij.ide.scratch.RootType;
@@ -101,8 +101,7 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
     });
   }
 
-  @NotNull
-  private static String getFeaturesFileName(@NotNull PsiFile file, @NotNull PsiElement element, @NotNull Editor editor) {
+  private static @NotNull String getFeaturesFileName(@NotNull PsiFile file, @NotNull PsiElement element, @NotNull Editor editor) {
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     String fileName = file.getName();
     return "features" +

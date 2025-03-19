@@ -1,5 +1,5 @@
 // My: to be implemented
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 
 @Target(AnnotationTarget.TYPE, AnnotationTarget.VALUE_PARAMETER)
 annotation class SimpleA

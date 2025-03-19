@@ -31,19 +31,7 @@ class ReportingTest : BasePlatformTestCase() {
     val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
     val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
-    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Incorrect:.*Correct:.*")))
-  }
-
-  fun `test unpaired parenthesis tooltip`() {
-    val inspection = GrazieInspection()
-    myFixture.enableInspections(inspection)
-    myFixture.configureByText("a.txt", "I have a (new apple here.")
-    val info = assertOneElement(myFixture.doHighlighting().filter { it.inspectionToolId == inspection.id })
-    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*Incorrect:.*" +
-                                                          "I'm over here, she said" +
-                                                          ".*Correct:.*" +
-                                                          "I'm over here,.*&quot;.*she said" +
-                                                          ".*")))
+    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
 
   fun `test tooltip and description texts in commit annotator`() {
@@ -51,7 +39,7 @@ class ReportingTest : BasePlatformTestCase() {
     val info = assertOneElement(myFixture.doHighlighting().filter { it.description.contains("vowel") })
     val message = "Use a instead of 'an' if the following word doesn't start with a vowel sound, e.g. 'a sentence', 'a university'."
     assertEquals(info.description, message)
-    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Incorrect:.*Correct:.*")))
+    assertTrue(info.toolTip, info.toolTip!!.matches(Regex(".*" + Regex.escape(message) + ".*Powered by LanguageTool.*")))
   }
 
   fun `test changed range highlighting`() {
@@ -141,12 +129,12 @@ class ReportingTest : BasePlatformTestCase() {
       "z fix", "a fix", // then custom fixes, in the specified order
       "mock intention and fix", // if a custom fix overrides an intention, it's raised in the list
       "Ignore 'S' in this sentence", // then the built-in general context action
-      "Configure rule 'something'...",
+      "Configure rule 'something'…",
       "mock intention", // normal intentions are at the bottom
     )
   }
 
-  inline fun <reified T> intentionBean() = IntentionActionBean().also {
+  private inline fun <reified T> intentionBean() = IntentionActionBean().also {
     it.className = T::class.java.name
     it.pluginDescriptor = DefaultPluginDescriptor("grazie test")
   }

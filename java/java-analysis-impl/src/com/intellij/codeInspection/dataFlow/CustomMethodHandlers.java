@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -43,9 +43,15 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 public final class CustomMethodHandlers {
   private static final CallMatcher CONSTANT_CALLS = anyOf(
     exactInstanceCall(JAVA_LANG_STRING, "contains", "indexOf", "startsWith", "endsWith", "lastIndexOf", "length", "trim",
-                 "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
+                      "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace", "strip",
+                      "stripLeading", "stripTrailing", "isBlank"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
-    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max"),
+    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max", "addExact", "absExact", "subtractExact", "multiplyExact",
+               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt",
+               "hypot", "exp", "pow", "log", "log10"),
+    staticCall(JAVA_LANG_STRICT_MATH, "abs", "sqrt", "min", "max", "addExact", "absExact", "subtractExact", "multiplyExact",
+               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt",
+               "hypot", "exp", "pow", "log", "log10"),
     staticCall(JAVA_LANG_INTEGER, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("int"),
     staticCall(JAVA_LANG_LONG, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("long"),
     staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
@@ -53,6 +59,12 @@ public final class CustomMethodHandlers {
     staticCall(JAVA_LANG_BYTE, "toString").parameterTypes("byte"),
     staticCall(JAVA_LANG_SHORT, "toString").parameterTypes("short"),
     staticCall(JAVA_LANG_BOOLEAN, "parseBoolean").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_INTEGER, "parseInt").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_LONG, "parseLong").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_DOUBLE, "parseDouble").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_FLOAT, "parseFloat").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_BYTE, "parseByte").parameterTypes("java.lang.String"),
+    staticCall(JAVA_LANG_SHORT, "parseShort").parameterTypes("java.lang.String"),
     staticCall(JAVA_LANG_INTEGER, "compare", "compareUnsigned").parameterTypes("int", "int"),
     staticCall(JAVA_LANG_LONG, "compare", "compareUnsigned").parameterTypes("long", "long"),
     staticCall(JAVA_LANG_DOUBLE, "compare").parameterTypes("double", "double"),
@@ -96,11 +108,10 @@ public final class CustomMethodHandlers {
                            PsiMethod method);
 
     @Override
-    @Nullable
-    default DfaValue getMethodResultValue(DfaCallArguments callArguments,
-                                  DfaMemoryState memState,
-                                  DfaValueFactory factory,
-                                  PsiMethod method) {
+    default @Nullable DfaValue getMethodResultValue(DfaCallArguments callArguments,
+                                                    DfaMemoryState memState,
+                                                    DfaValueFactory factory,
+                                                    PsiMethod method) {
       DfType dfType = getMethodResult(callArguments, memState, factory, method);
       return dfType == DfType.TOP ? null : factory.fromDfType(dfType);
     }
@@ -113,6 +124,8 @@ public final class CustomMethodHandlers {
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
               toValue((args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, STRING_LENGTH)))
+    .register(instanceCall(JAVA_LANG_STRING, "trim", "strip", "stripLeading", "stripTrailing"),
+              toValue((args, memState, factory, method) -> shorterOrEqualString(args.myQualifier, memState, factory)))
     .register(instanceCall(JAVA_UTIL_LIST, "indexOf", "lastIndexOf"),
               toValue((args, memState, factory, method) -> indexOf(args.myQualifier, memState, factory, COLLECTION_SIZE)))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
@@ -136,6 +149,12 @@ public final class CustomMethodHandlers {
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
               toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
+    .register(anyOf(
+      staticCall(JAVA_LANG_INTEGER, "toString").parameterCount(1),
+      staticCall(JAVA_LANG_LONG, "toString").parameterCount(1),
+      staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
+      staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("long")
+    ), toValue((args, memState, factory, method) -> numberAsDecimalString(args, memState)))
     .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
               toValue((args, memState, factory, method) -> numberAsString(args, memState, 4, Integer.SIZE)))
     .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
@@ -191,6 +210,12 @@ public final class CustomMethodHandlers {
                     instanceCall("java.util.Random", "nextDouble").parameterCount(0),
                     instanceCall("java.util.SplittableRandom", "nextDouble").parameterCount(0)), 
               toValue((arguments, state, factory, method) -> doubleRange(0.0, Math.nextDown(1.0))))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "sin", "cos").parameterCount(1),
+                    staticCall(JAVA_LANG_STRICT_MATH, "sin", "cos").parameterCount(1)), 
+              toValue((arguments, state, factory, method) -> doubleRange(-1.0, 1.0).join(DOUBLE_NAN)))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "hypot", "sqrt", "exp").parameterCount(1),
+                    staticCall(JAVA_LANG_STRICT_MATH, "hypot", "sqrt", "exp").parameterCount(1)), 
+              toValue((arguments, state, factory, method) -> doubleRange(0.0, Double.POSITIVE_INFINITY).join(DOUBLE_NAN)))
     .register(instanceCall("java.util.Random", "nextFloat").parameterCount(0), 
               toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
     .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
@@ -214,8 +239,12 @@ public final class CustomMethodHandlers {
     return handler == null ? handler2 : handler.compose(handler2);
   }
 
+  /**
+   * @param method method to check
+   * @return true if method will be evaluated to constant when all arguments are constant
+   */
   @Contract("null -> false")
-  private static boolean isConstantCall(PsiMethod method) {
+  public static boolean isConstantCall(PsiMethod method) {
     return CONSTANT_CALLS.methodMatches(method);
   }
 
@@ -245,7 +274,13 @@ public final class CustomMethodHandlers {
     try {
       result = jvmMethod.invoke(qualifierValue, args.toArray());
     }
-    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+    catch (InvocationTargetException e) {
+      if (e.getCause() instanceof NumberFormatException || e.getCause() instanceof ArithmeticException) {
+        return DfType.FAIL;
+      }
+      return DfType.TOP;
+    }
+    catch (IllegalAccessException | IllegalArgumentException e) {
       return DfType.TOP;
     }
     return constant(result, returnType);
@@ -259,7 +294,7 @@ public final class CustomMethodHandlers {
         return Result.create(reflection, method);
       }
 
-      private Class<?> toJvmType(PsiType type) {
+      private static Class<?> toJvmType(PsiType type) {
         if (TypeUtils.isJavaLangString(type)) {
           return String.class;
         }
@@ -274,6 +309,12 @@ public final class CustomMethodHandlers {
         }
         if (PsiTypes.booleanType().equals(type)) {
           return boolean.class;
+        }
+        if (PsiTypes.byteType().equals(type)) {
+          return byte.class;
+        }
+        if (PsiTypes.shortType().equals(type)) {
+          return short.class;
         }
         if (PsiTypes.charType().equals(type)) {
           return char.class;
@@ -321,6 +362,14 @@ public final class CustomMethodHandlers {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = DfIntType.extractRange(memState.getDfType(length));
     return intRange(LongRangeSet.range(-1, range.max() - 1));
+  }
+
+  private static @NotNull DfType shorterOrEqualString(DfaValue qualifier,
+                                                      DfaMemoryState memState,
+                                                      DfaValueFactory factory) {
+    DfaValue length = STRING_LENGTH.createValue(factory, qualifier);
+    LongRangeSet range = DfIntType.extractRange(memState.getDfType(length));
+    return STRING_LENGTH.asDfType(intRange(LongRangeSet.range(0, range.max())));
   }
 
   private static @Nullable DfaValue copyOfArray(DfaCallArguments arguments,
@@ -472,6 +521,30 @@ public final class CustomMethodHandlers {
     return longRange(LongRangeSet.range(0, Math.max(0, range.max())));
   }
 
+  private static @NotNull DfType numberAsDecimalString(DfaCallArguments args, DfaMemoryState state) {
+    DfaValue arg = args.myArguments[0];
+    if (arg == null) return DfType.TOP;
+    return numberAsDecimalString(state, arg);
+  }
+
+  public static @NotNull DfType numberAsDecimalString(@NotNull DfaMemoryState state, @NotNull DfaValue arg) {
+    LongRangeSet range = DfLongType.extractRange(state.getDfType(arg));
+    if (range.isEmpty()) return DfType.TOP;
+    long min = range.min();
+    long max = range.max();
+    DfType length;
+    if (min >= 0) {
+      length = intRange(LongRangeSet.range(String.valueOf(min).length(), String.valueOf(max).length()));
+    }
+    else if (max <= 0) {
+      length = intRange(LongRangeSet.range(String.valueOf(max).length(), String.valueOf(min).length()));
+    }
+    else {
+      length = intRange(LongRangeSet.range(1, Math.max(String.valueOf(max).length(), String.valueOf(min).length())));
+    }
+    return STRING_LENGTH.asDfType(length);
+  }
+
   private static @NotNull DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
     DfaValue arg = args.myArguments[0];
     if (arg == null) return DfType.TOP;
@@ -493,7 +566,7 @@ public final class CustomMethodHandlers {
   private static @NotNull DfType objectGetClass(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory, PsiMethod method) {
     DfaValue qualifier = arguments.myQualifier;
     TypeConstraint fact = TypeConstraint.fromDfType(state.getDfType(qualifier));
-    if (fact instanceof TypeConstraint.Exact) {
+    if (fact instanceof TypeConstraint.Exact && !(fact instanceof TypeConstraints.ExactSubclass)) {
       PsiType qualifierType = fact.getPsiType(factory.getProject());
       PsiType classType = method.getReturnType();
       if (classType != null && qualifierType != null) {
@@ -534,18 +607,12 @@ public final class CustomMethodHandlers {
     if (type != null) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {
-        String result;
-        switch (name) {
-          case "getSimpleName" -> result = psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
-          case "getName" -> {
-            if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
-              return DfType.TOP;
-            }
-            result = ClassUtil.getJVMClassName(psiClass);
-          }
-          default -> result = psiClass.getQualifiedName();
-        }
-        return constant(result, stringType);
+        String result = switch (name) {
+          case "getSimpleName" -> psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
+          case "getName" -> PsiUtil.isLocalOrAnonymousClass(psiClass) ? null : ClassUtil.getJVMClassName(psiClass);
+          default -> psiClass.getQualifiedName();
+        };
+        return result == null && !name.equals("getCanonicalName") ? DfType.TOP : constant(result, stringType);
       }
     }
     return DfType.TOP;

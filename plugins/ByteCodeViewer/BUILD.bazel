@@ -1,0 +1,63 @@
+### auto-generated section `build intellij.java.byteCodeViewer` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "java-byteCodeViewer_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "java-byteCodeViewer",
+  module_name = "intellij.java.byteCodeViewer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:asm",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/core-ui",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ],
+  runtime_deps = [":java-byteCodeViewer_resources"]
+)
+
+jvm_library(
+  name = "java-byteCodeViewer_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":java-byteCodeViewer"],
+  deps = [
+    "@lib//:asm",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/execution/openapi:java-execution",
+    "//java/openapi:java",
+    "//java/compiler/impl:java-compiler-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/core-ui",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+  ],
+  runtime_deps = [":java-byteCodeViewer_resources"]
+)
+
+jvm_test(
+  name = "java-byteCodeViewer_test",
+  runtime_deps = [":java-byteCodeViewer_test_lib"]
+)
+### auto-generated section `build intellij.java.byteCodeViewer` end

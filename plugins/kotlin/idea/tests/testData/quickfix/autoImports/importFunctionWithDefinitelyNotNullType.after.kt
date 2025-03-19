@@ -8,4 +8,3 @@ import pckg.dep.defNotNull
 fun test() {
     "x".<caret>defNotNull("x")
 }
-/* IGNORE_FIR */

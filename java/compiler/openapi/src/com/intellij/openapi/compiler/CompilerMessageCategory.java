@@ -23,6 +23,7 @@ package com.intellij.openapi.compiler;
  */
 public enum CompilerMessageCategory {
   ERROR {
+    @Override
     public String toString() {
       return JavaCompilerBundle.message("message.category.error");
     }
@@ -32,6 +33,7 @@ public enum CompilerMessageCategory {
     }
   },
   WARNING {
+    @Override
     public String toString() {
       return JavaCompilerBundle.message("message.category.warning");
     }
@@ -41,6 +43,7 @@ public enum CompilerMessageCategory {
     }
   },
   INFORMATION {
+    @Override
     public String toString() {
       return JavaCompilerBundle.message("message.category.information");
     }
@@ -50,6 +53,7 @@ public enum CompilerMessageCategory {
     }
   },
   STATISTICS {
+    @Override
     public String toString() {
       return JavaCompilerBundle.message("message.category.statistics");
     }

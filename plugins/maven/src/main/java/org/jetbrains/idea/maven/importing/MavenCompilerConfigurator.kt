@@ -1,66 +1,51 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.containers.ContainerUtil.addIfNotNull
+import com.intellij.util.PathUtil
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.MavenDisposable
-import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getCompileExecutionConfigurations
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getMavenModuleType
+import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestCompileExecutionConfigurations
+import org.jetbrains.idea.maven.importing.MavenImportUtil.unescapeCompileSourceRootModuleSuffix
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
+import java.nio.file.Path
 
-/**
- * @author Vladislav.Soroka
- */
+internal val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
+private const val JAVAC_ID = "javac"
+private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
+
+private const val propStartTag = "\${"
+private const val propEndTag = "}"
+
+private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
+
+private const val ARTIFACT_ID = "maven-compiler-plugin"
+private const val GROUP_ID = "org.apache.maven.plugins"
+
 @ApiStatus.Internal
-class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
+class MavenCompilerConfigurator : MavenApplicableConfigurator(GROUP_ID, ARTIFACT_ID),
                                   MavenWorkspaceConfigurator {
-  private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
-
-
-  override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return true
-  }
-
-  override fun processChangedModulesOnly(): Boolean {
-    return false
-  }
-
-  @Throws(MavenProcessCanceledException::class)
-  override fun resolve(project: Project,
-                       mavenProject: MavenProject,
-                       nativeMavenProject: NativeMavenProjectHolder,
-                       embedder: MavenEmbedderWrapper) {
-    if (!super.isApplicable(mavenProject)) return
-    if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
-
-    val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
-      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder)
-    }
-    if (project.getUserData(DEFAULT_COMPILER_EXTENSION) == null) {
-      project.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-    }
-  }
-
-  override fun isMigratedToConfigurator(): Boolean {
-    return true
-  }
-
   override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
     var defaultCompilerExtension = context.project.getUserData(DEFAULT_COMPILER_EXTENSION)
     context.putUserData(DEFAULT_COMPILER_EXTENSION, null)
@@ -86,30 +71,15 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     }
     configureModules(context.project, data, ideCompilerConfiguration, defaultCompilerExtension)
 
-    MavenProjectImporterBase.removeOutdatedCompilerConfigSettings(context.project)
+    removeOutdatedCompilerConfigSettings(context.project)
   }
 
-  override fun preProcess(module: Module,
-                          mavenProject: MavenProject,
-                          changes: MavenProjectChanges,
-                          modifiableModelsProvider: IdeModifiableModelsProvider) {
-
-    // #resolve() puts the extension in the project's user data
-    // we need to clean it (for the next import), so we transfer it to the current IdeModifiableModelsProvider
-    val defaultCompilerExtension = module.project.getUserData(DEFAULT_COMPILER_EXTENSION)
-    if (defaultCompilerExtension != null) {
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-      module.project.putUserData(DEFAULT_COMPILER_EXTENSION, null)
-    }
-
-    val config = getCompilerConfigurationWhenApplicable(module.project, mavenProject) ?: return
-
-    var compilers = modifiableModelsProvider.getUserData(ALL_PROJECTS_COMPILERS)
-    if (compilers == null) {
-      compilers = mutableSetOf()
-      modifiableModelsProvider.putUserData(ALL_PROJECTS_COMPILERS, compilers)
-    }
-    compilers.add(getCompilerId(config))
+  private fun removeOutdatedCompilerConfigSettings(project: Project) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val javacOptions = JavacConfiguration.getOptions(project, JavacConfiguration::class.java)
+    var options = javacOptions.ADDITIONAL_OPTIONS_STRING
+    options = options.replaceFirst("(-target (\\S+))".toRegex(), "") // Old IDEAs saved
+    javacOptions.ADDITIONAL_OPTIONS_STRING = options
   }
 
   private fun getCompilerConfigurationWhenApplicable(project: Project, mavenProject: MavenProject): Element? {
@@ -117,39 +87,6 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
         !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return null
     if (!super.isApplicable(mavenProject)) return null
     return getConfig(mavenProject)
-  }
-
-  override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-              module: Module,
-              rootModel: MavenRootModelAdapter,
-              mavenModel: MavenProjectsTree,
-              mavenProject: MavenProject,
-              changes: MavenProjectChanges,
-              mavenProjectToModuleName: Map<MavenProject, String>,
-              postTasks: List<MavenProjectsProcessorTask>) {
-    val project = module.project
-
-    // select (and cache) default compiler extension
-    var defaultCompilerExtension = modifiableModelsProvider.getUserData(DEFAULT_COMPILER_EXTENSION)
-    if (defaultCompilerExtension == null) {
-      defaultCompilerExtension = selectDefaultCompilerExtension(
-        modifiableModelsProvider.getUserData(ALL_PROJECTS_COMPILERS).orEmpty())
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_EXTENSION, defaultCompilerExtension)
-    }
-
-    val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-
-    // configure (once) project settings
-    if (modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null) {
-      setDefaultProjectCompiler(project, ideCompilerConfiguration, defaultCompilerExtension)
-      modifiableModelsProvider.putUserData(DEFAULT_COMPILER_IS_SET, true)
-    }
-
-    // configure module settings
-    configureModules(module.project,
-                     sequenceOf(MavenProjectWithModulesData(mavenProject, listOf(module))),
-                     ideCompilerConfiguration,
-                     defaultCompilerExtension)
   }
 
   private fun selectDefaultCompilerExtension(allCompilers: Set<String>): MavenCompilerExtension? {
@@ -182,9 +119,10 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
                                ideCompilerConfiguration: CompilerConfigurationImpl,
                                defaultCompilerExtension: MavenCompilerExtension?) {
     mavenProjectWithModule.forEach { (mavenProject, modules) ->
+      val compoundModule = modules.firstOrNull { it.getMavenModuleType() == StandardMavenModuleType.COMPOUND_MODULE }
       modules.forEach { module ->
         applyCompilerExtensionConfiguration(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
-        configureTargetLevel(mavenProject, module, ideCompilerConfiguration, defaultCompilerExtension)
+        configureTargetLevel(mavenProject, module, compoundModule, ideCompilerConfiguration, defaultCompilerExtension)
       }
 
       excludeArchetypeResources(project, mavenProject, ideCompilerConfiguration)
@@ -195,9 +133,15 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
                                                   module: Module,
                                                   ideCompilerConfiguration: CompilerConfigurationImpl,
                                                   defaultCompilerExtension: MavenCompilerExtension?) {
-    val mavenConfiguration = MavenCompilerConfiguration(mavenProject.properties[MAVEN_COMPILER_PARAMETERS]?.toString(),
-                                                        getConfig(mavenProject))
-    val projectCompilerId = if (mavenProject.packaging != "pom") mavenConfiguration.pluginConfiguration?.let { getCompilerId(it) } else null
+    val isTestModule = isTestModule(module)
+    val mavenConfiguration = collectRawMavenData(module, mavenProject, isTestModule)
+    val projectCompilerId = if (mavenProject.packaging == "pom") {
+      null
+    }
+    else {
+      mavenConfiguration.effectiveConfiguration?.let { getCompilerId(it) }
+    }
+
 
     for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
       val applyThisExtension =
@@ -206,7 +150,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
 
       val compilerOptions = compilerExtension.getCompiler(module.project)?.options
       if (applyThisExtension && !mavenConfiguration.isEmpty()) {
-        compilerExtension.configureOptions(compilerOptions, module, mavenProject, collectCompilerArgs(mavenConfiguration))
+        compilerExtension.configureOptions(compilerOptions, module, mavenProject, collectCompilerArgs(module, mavenProject, mavenConfiguration))
       }
       else {
         // cleanup obsolete options
@@ -217,17 +161,39 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     }
   }
 
+  private fun collectRawMavenData(module: Module, mavenProject: MavenProject, forTests: Boolean): MavenCompilerConfigurationRawData {
+    val pluginConfig = getConfig(mavenProject)
+    val propertyConfig = mavenProject.properties[MAVEN_COMPILER_PARAMETERS]
+
+    val executionConfig =
+      if (forTests) {
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.getTestCompileExecutionConfigurations()
+      }
+      else {
+        mavenProject.findPlugin(GROUP_ID, ARTIFACT_ID)?.getCompileExecutionConfigurations()
+      }.findApplicable(module, mavenProject)
+    return MavenCompilerConfigurationRawData(forTests, propertyConfig?.toString(), pluginConfig, executionConfig)
+  }
+
   private fun configureTargetLevel(mavenProject: MavenProject,
                                    module: Module,
+                                   compoundModule: Module?,
                                    ideCompilerConfiguration: CompilerConfiguration,
                                    defaultCompilerExtension: MavenCompilerExtension?) {
     var targetLevel = defaultCompilerExtension?.getDefaultCompilerTargetLevel(mavenProject, module)
+    val moduleName = module.name
+    MavenLog.LOG.debug("Bytecode target level $targetLevel in module $moduleName, compiler extension = ${defaultCompilerExtension?.mavenCompilerId}")
     if (targetLevel == null) {
-      var level: LanguageLevel?
-      if (MavenImportUtil.isTestModule(module.name)) {
-        level = MavenImportUtil.getTargetTestLanguageLevel(mavenProject)
-        if (level == null) {
-          level = MavenImportUtil.getTargetLanguageLevel(mavenProject)
+      var level: LanguageLevel? = null
+      val type = module.getMavenModuleType()
+      if (type == StandardMavenModuleType.TEST_ONLY) {
+        level = MavenImportUtil.getTestTargetLanguageLevel(mavenProject)
+      }
+      else if (type == StandardMavenModuleType.MAIN_ONLY_ADDITIONAL) {
+        if (null != compoundModule) {
+          val moduleSuffix = moduleName.substring(compoundModule.name.length + 1)
+          val executionId = unescapeCompileSourceRootModuleSuffix(moduleSuffix)
+          level = MavenImportUtil.getTargetLanguageLevel(mavenProject, executionId)
         }
       }
       else {
@@ -241,6 +207,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
       targetLevel = level.toJavaVersion().toString()
     }
 
+    MavenLog.LOG.debug("Setting bytecode target level $targetLevel in module $moduleName")
     ideCompilerConfiguration.setBytecodeTargetLevel(module, targetLevel)
   }
 
@@ -261,99 +228,180 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   private data class MavenProjectWithModulesData(val mavenProject: MavenProject,
                                                  val modules: List<Module>)
 
-  companion object {
-    private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
-    private val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
-    private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
-    private const val JAVAC_ID = "javac"
-    private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
+  private fun getCompilerId(config: Element): String {
+    val compilerId = config.getChildTextTrim("compilerId")
+    if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
+    else return compilerId
+  }
 
-    private fun getCompilerId(config: Element): String {
-      val compilerId = config.getChildTextTrim("compilerId")
-      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
-      else return compilerId
-    }
+  private fun hasUnresolvedProperty(txt: String): Boolean {
+    val i = txt.indexOf(propStartTag)
+    return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
+  }
 
-    private const val propStartTag = "\${"
-    private const val propEndTag = "}"
+  private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
+    if (index == -1) return -1
+    val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
+    if (pair.second == propEndTag) return pair.first
+    val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
+    return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
+  }
 
-    private fun hasUnresolvedProperty(txt: String): Boolean {
-      val i = txt.indexOf(propStartTag)
-      return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
-    }
+  private fun getResolvedText(txt: String?): String? {
+    val result = txt.nullize() ?: return null
+    if (hasUnresolvedProperty(result)) return null
+    return result
+  }
 
-    private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
-      if (index == -1) return -1
-      val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
-      if (pair.second == propEndTag) return pair.first
-      val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
-      return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
-    }
+  private fun getResolvedText(it: Element): String? {
+    return getResolvedText(it.textTrim)
+  }
 
-    private fun getResolvedText(txt: String?): String? {
-      val result = txt.nullize() ?: return null
-      if (hasUnresolvedProperty(result)) return null
-      return result
-    }
-
-    private fun getResolvedText(it: Element): String? {
-      return getResolvedText(it.textTrim)
-    }
-
-    private fun collectCompilerArgs(mavenCompilerConfiguration: MavenCompilerConfiguration): List<String> {
-      val options = mutableListOf<String>()
-
-      val pluginConfiguration = mavenCompilerConfiguration.pluginConfiguration
-      val parameters = pluginConfiguration?.getChild("parameters")
-
-      if (parameters?.textTrim?.toBoolean() == true) {
-        options += "-parameters"
+  private fun collectCompilerArgs(module: Module, mavenProject: MavenProject, configData: MavenCompilerConfigurationRawData): List<String> {
+    val result = LinkedHashSet<String>()
+    configData.propertyCompilerParameters?.let {
+      if (it.toBoolean()) {
+        result.add("-parameters")
       }
-      else if (parameters == null && mavenCompilerConfiguration.propertyCompilerParameters?.toBoolean() == true) {
-        options += "-parameters"
-      }
+    }
 
-      if (pluginConfiguration == null) return options
-
-      val compilerArguments = pluginConfiguration.getChild("compilerArguments")
-      if (compilerArguments != null) {
-        val unresolvedArgs = mutableSetOf<String>()
-        val effectiveArguments = compilerArguments.children.map {
-          val key = it.name.run { if (startsWith("-")) this else "-$this" }
-          val value = getResolvedText(it)
-          if (value == null && hasUnresolvedProperty(it.textTrim)) {
-            unresolvedArgs += key
-          }
-          key to value
-        }.toMap()
-
-        effectiveArguments.forEach { key, value ->
-          if (key.startsWith("-A") && value != null) {
-            options.add("$key=$value")
-          }
-          else if (key !in unresolvedArgs) {
-            options.add(key)
-            addIfNotNull(options, value)
-          }
+    configData.effectiveConfiguration?.let {
+      it.getChild("parameters")?.let {
+        if (it.textTrim.toBoolean()) {
+          result.add("-parameters")
+        }
+        else {
+          result.remove("-parameters")
         }
       }
 
-      addIfNotNull(options, getResolvedText(pluginConfiguration.getChildTextTrim("compilerArgument")))
-
-      val compilerArgs = pluginConfiguration.getChild("compilerArgs")
-      if (compilerArgs != null) {
-        for (arg in compilerArgs.getChildren("arg")) {
-          addIfNotNull(options, getResolvedText(arg))
-        }
-        for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-          addIfNotNull(options, getResolvedText(compilerArg))
+      if (configData.forTests) {
+        val testData = collectTestCompilerArgs(it)
+        if (testData.isNotEmpty()) {
+          result.addAll(testData)
+          return result.toList()
         }
       }
-      return options
+      result.addAll(collectCompilerArgs(it))
+    }
+
+    return result.toList()
+  }
+
+
+  private fun collectCompilerArgs(element: Element): List<String> {
+    val result = ArrayList<String>()
+    element.getChild("compilerArguments")?.let { arguments ->
+      val unresolvedArgs = mutableSetOf<String>()
+      val effectiveArguments = arguments.children.associate {
+        val key = it.name.run { if (startsWith("-")) this else "-$this" }
+        val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
+        key to value
+      }
+      effectiveArguments.forEach { key, value ->
+        if (key.startsWith("-A") && value != null) {
+          result.add("$key=$value")
+        }
+        else if (key !in unresolvedArgs) {
+          result.add(key)
+          value?.let { result.add(it) }
+        }
+      }
+    }
+    MavenJDOMUtil.findChildrenValuesByPath(element, "compilerArgs", "arg").forEach {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
+      }
+    }
+    element.getChild("compilerArgument")?.textTrim?.let {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
+      }
+    }
+    return result
+  }
+
+  private fun collectTestCompilerArgs(element: Element): List<String> {
+    val result = ArrayList<String>()
+    element.getChild("testCompilerArguments")?.let { arguments ->
+      val unresolvedArgs = mutableSetOf<String>()
+      val effectiveArguments = arguments.children.associate {
+        val key = it.name.run { if (startsWith("-")) this else "-$this" }
+        val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
+        key to value
+      }
+      effectiveArguments.forEach { key, value ->
+        if (key.startsWith("-A") && value != null) {
+          result.add("$key=$value")
+        }
+        else if (key !in unresolvedArgs) {
+          result.add(key)
+          value?.let { result.add(it) }
+        }
+      }
+    }
+    element.getChild("testCompilerArgument")?.textTrim?.let {
+      val text = getResolvedText(it)
+      if (text != null && !hasUnresolvedProperty(text)) {
+        result.add(text)
+      }
+    }
+    return result
+  }
+
+  private fun isTestModule(module: Module): Boolean {
+    val type = module.getMavenModuleType()
+    return type == StandardMavenModuleType.TEST_ONLY
+  }
+}
+
+private fun getSourceRoots(module: Module): List<Path> {
+  return ModuleRootManager.getInstance(module).sourceRoots
+    .map { it.toNioPath() }
+}
+
+private fun List<Element>?.findApplicable(module: Module, mavenProject: MavenProject): Element? {
+  if (this == null || isEmpty()) return null
+  if (size == 1) {
+    return firstOrNull()
+  }
+  else {
+    val type = module.getMavenModuleType()
+    return when (type) {
+      StandardMavenModuleType.AGGREGATOR -> firstOrNull()
+      StandardMavenModuleType.SINGLE_MODULE -> firstOrNull()
+      StandardMavenModuleType.COMPOUND_MODULE -> firstOrNull()
+      StandardMavenModuleType.MAIN_ONLY -> this.firstOrNull { it.getChild("compileSourceRoots") == null }
+      StandardMavenModuleType.MAIN_ONLY_ADDITIONAL -> firstOrNull { el ->
+        val sourceRoots = getSourceRoots(module)
+        MavenJDOMUtil.findChildrenValuesByPath(el, "compileSourceRoots", "compileSourceRoot")
+          .map { Path.of(it) }
+          .any { it in sourceRoots }
+      }
+      StandardMavenModuleType.TEST_ONLY -> firstOrNull()
     }
   }
 }
 
-private data class MavenCompilerConfiguration(val propertyCompilerParameters: String?, val pluginConfiguration: Element?) {
-  fun isEmpty(): Boolean = propertyCompilerParameters == null && pluginConfiguration == null
+
+private data class MavenCompilerConfigurationRawData(
+  val forTests: Boolean,
+  val propertyCompilerParameters: String?,
+  val pluginConfiguration: Element?,
+  val goalConfiguration: Element?,
+) {
+  fun isEmpty(): Boolean = propertyCompilerParameters == null
+                           && pluginConfiguration == null && goalConfiguration == null
+
+
+  val effectiveConfiguration
+    get() = goalConfiguration ?: pluginConfiguration
 }

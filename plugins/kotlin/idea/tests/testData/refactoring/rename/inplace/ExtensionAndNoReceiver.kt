@@ -1,3 +1,5 @@
+// NEW_NAME: b
+// RENAME: member
 class A
 
 fun A.b() {}

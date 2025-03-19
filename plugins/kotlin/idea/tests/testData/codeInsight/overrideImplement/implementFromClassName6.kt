@@ -26,3 +26,12 @@ class <caret>Test : A, B {
     override fun a6() {
     }
 }
+
+// MEMBER: "a1(): Unit"
+// MEMBER: "a2(): Unit"
+// MEMBER: "a4(): Unit"
+// MEMBER: "a5(): Unit"
+// MEMBER: "a7(): Unit"
+// MEMBER: "a8(): Unit"
+// MEMBER: "b3(): Unit"
+// MEMBER: "b1(): Unit"

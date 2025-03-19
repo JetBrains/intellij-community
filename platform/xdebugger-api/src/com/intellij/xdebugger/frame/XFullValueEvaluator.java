@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
@@ -50,14 +50,12 @@ public abstract class XFullValueEvaluator {
 
   public boolean isEnabled() { return myIsEnabled; }
 
-  @NotNull
-  public XFullValueEvaluator setShowValuePopup(boolean value) {
+  public @NotNull XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
     return this;
   }
 
-  @NotNull
-  public XFullValueEvaluator setIsEnabled(boolean value) {
+  public @NotNull XFullValueEvaluator setIsEnabled(boolean value) {
     myIsEnabled = value;
     return this;
   }
@@ -76,7 +74,9 @@ public abstract class XFullValueEvaluator {
   public @Nullable LinkAttributes getLinkAttributes() { return myLinkAttributes; }
 
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
-    void evaluated(@NotNull String fullValue);
+    default void evaluated(@NotNull String fullValue) {
+      evaluated(fullValue, null);
+    }
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
   }

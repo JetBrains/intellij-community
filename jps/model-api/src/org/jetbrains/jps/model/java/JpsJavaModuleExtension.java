@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.java;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -30,23 +31,28 @@ public interface JpsJavaModuleExtension extends JpsElement {
   @Nullable
   String getOutputUrl();
 
+  @ApiStatus.Internal
   void setOutputUrl(@Nullable String outputUrl);
 
   @Nullable
   String getTestOutputUrl();
 
+  @ApiStatus.Internal
   void setTestOutputUrl(@Nullable String testOutputUrl);
 
   @Nullable
   LanguageLevel getLanguageLevel();
 
+  @ApiStatus.Internal
   void setLanguageLevel(@Nullable LanguageLevel languageLevel);
 
   boolean isInheritOutput();
 
+  @ApiStatus.Internal
   void setInheritOutput(boolean inheritOutput);
 
   boolean isExcludeOutput();
 
+  @ApiStatus.Internal
   void setExcludeOutput(boolean excludeOutput);
 }

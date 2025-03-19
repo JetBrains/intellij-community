@@ -1,0 +1,10 @@
+### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "kotlin-compiler-plugins-android-extensions-stubs",
+  module_name = "kotlin.compiler-plugins.android-extensions-stubs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True)
+)
+### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` end

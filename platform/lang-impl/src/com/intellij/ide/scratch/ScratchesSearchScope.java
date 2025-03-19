@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.openapi.module.Module;
@@ -6,6 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,14 +15,12 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-public final class ScratchesSearchScope extends GlobalSearchScope {
-
+public final class ScratchesSearchScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
   private static final NotNullLazyKey<GlobalSearchScope, Project> SCRATCHES_SCOPE_KEY = NotNullLazyKey.createLazyKey(
     "SCRATCHES_SCOPE_KEY",
     project -> new ScratchesSearchScope(project));
 
-  @NotNull
-  public static GlobalSearchScope getScratchesScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope getScratchesScope(@NotNull Project project) {
     return SCRATCHES_SCOPE_KEY.getValue(project);
   }
 
@@ -28,9 +28,8 @@ public final class ScratchesSearchScope extends GlobalSearchScope {
     super(project);
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return ScratchesNamedScope.scratchesAndConsoles();
   }
 
@@ -52,5 +51,10 @@ public final class ScratchesSearchScope extends GlobalSearchScope {
   @Override
   public String toString() {
     return getDisplayName();
+  }
+
+  @Override
+  public VirtualFileEnumeration extractFileEnumeration() {
+    return ScratchFileService.getInstance().extractFileEnumeration();
   }
 }

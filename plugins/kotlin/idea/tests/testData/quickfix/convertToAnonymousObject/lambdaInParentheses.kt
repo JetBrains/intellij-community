@@ -6,3 +6,4 @@ interface I {
 fun test() {
     val i = <caret>I({ "" })
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -23,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UBinaryExpression;
-import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastBinaryOperator;
 import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
@@ -45,8 +43,7 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaI18nBundle.message("inspection.i18n.quickfix");
   }
 
@@ -136,11 +133,10 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
                                            .br().append(HtmlChunk.text(string).code()).toFragment());
   }
 
-  @Nullable
-  private static UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
-                                                      UastCodeGenerationPlugin generationPlugin,
-                                                      UastElementFactory elementFactory,
-                                                      int offset) throws IncorrectOperationException {
+  private static @Nullable UBinaryExpression breakStringLiteral(@NotNull UInjectionHost literalExpression,
+                                                                UastCodeGenerationPlugin generationPlugin,
+                                                                UastElementFactory elementFactory,
+                                                                int offset) throws IncorrectOperationException {
     PsiElement sourcePsi = literalExpression.getSourcePsi();
     if (sourcePsi == null) {
       return null;
@@ -153,8 +149,8 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
     int breakIndex = offset - literalRange.getStartOffset() - 1;
     String lsubstring = value.substring(0, breakIndex);
     String rsubstring = value.substring(breakIndex);
-    ULiteralExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
-    ULiteralExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
+    UExpression left = elementFactory.createStringLiteralExpression(lsubstring, sourcePsi);
+    UExpression right = elementFactory.createStringLiteralExpression(rsubstring, sourcePsi);
     if (left == null || right == null) {
       return null;
     }

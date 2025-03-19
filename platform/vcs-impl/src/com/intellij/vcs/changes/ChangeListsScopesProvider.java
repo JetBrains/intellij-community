@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -10,15 +10,16 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   public static ChangeListsScopesProvider getInstance(Project project) {
     return CUSTOM_SCOPES_PROVIDER.findExtension(ChangeListsScopesProvider.class, project);
@@ -28,13 +29,15 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public List<NamedScope> getCustomScopes() {
-    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return Collections.emptyList();
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+  public @NotNull List<NamedScope> getCustomScopes() {
+    if (myProject.isDefault() || !ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) {
+      return Collections.emptyList();
+    }
 
-    final List<NamedScope> result = new ArrayList<>();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+
+    List<NamedScope> result = new ArrayList<>();
     result.add(new ChangeListScope(changeListManager));
 
     if (ChangesUtil.hasMeaningfulChangelists(myProject)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.CommonBundle;
@@ -23,6 +23,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
@@ -74,9 +75,9 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
     myTable.setVisibleRowCount(5);
     myTable.setShowGrid(false);
     myTable.setIntercellSpacing(new Dimension(0, 0));
-    @NonNls final InputMap inputMap = myTable.getInputMap();
+    final @NonNls InputMap inputMap = myTable.getInputMap();
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
-    @NonNls final ActionMap actionMap = myTable.getActionMap();
+    final @NonNls ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -123,7 +124,7 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
 
   public void init(P[] parameterData) {
     myParameterData = parameterData;
-    myTableModel.setItems(Arrays.asList(parameterData));
+    myTableModel.setItems(new ArrayList<>(Arrays.asList(parameterData)));
     if (parameterData.length > 1) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
@@ -149,9 +150,8 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
       myNameValidator = (paramName) -> LanguageNamesValidation.isIdentifier(lang, paramName, project);
     }
 
-    @Nullable
     @Override
-    public String valueOf(AbstractVariableData data) {
+    public @Nullable String valueOf(AbstractVariableData data) {
       return data.getName();
     }
 
@@ -173,15 +173,13 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
       super("");
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(AbstractVariableData data) {
+    public @Nullable TableCellRenderer getRenderer(AbstractVariableData data) {
       return new BooleanTableCellRenderer();
     }
 
-    @Nullable
     @Override
-    public Boolean valueOf(AbstractVariableData data) {
+    public @Nullable Boolean valueOf(AbstractVariableData data) {
       return data.isPassAsParameter();
     }
 

@@ -1,13 +1,12 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 interface EntityWithUrls : WorkspaceEntity {
   val simpleUrl: VirtualFileUrl
@@ -16,24 +15,26 @@ interface EntityWithUrls : WorkspaceEntity {
   val dataClassWithUrl: DataClassWithUrl
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : EntityWithUrls, WorkspaceEntity.Builder<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<EntityWithUrls> {
     override var entitySource: EntitySource
-    override var simpleUrl: VirtualFileUrl
-    override var nullableUrl: VirtualFileUrl?
-    override var listOfUrls: MutableList<VirtualFileUrl>
-    override var dataClassWithUrl: DataClassWithUrl
+    var simpleUrl: VirtualFileUrl
+    var nullableUrl: VirtualFileUrl?
+    var listOfUrls: MutableList<VirtualFileUrl>
+    var dataClassWithUrl: DataClassWithUrl
   }
 
-  companion object : Type<EntityWithUrls, Builder>() {
+  companion object : EntityType<EntityWithUrls, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(simpleUrl: VirtualFileUrl,
-                        listOfUrls: List<VirtualFileUrl>,
-                        dataClassWithUrl: DataClassWithUrl,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): EntityWithUrls {
+    operator fun invoke(
+      simpleUrl: VirtualFileUrl,
+      listOfUrls: List<VirtualFileUrl>,
+      dataClassWithUrl: DataClassWithUrl,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.simpleUrl = simpleUrl
       builder.listOfUrls = listOfUrls.toMutableWorkspaceList()
@@ -47,8 +48,12 @@ interface EntityWithUrls : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: EntityWithUrls, modification: EntityWithUrls.Builder.() -> Unit) = modifyEntity(
-  EntityWithUrls.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyEntityWithUrls(
+  entity: EntityWithUrls,
+  modification: EntityWithUrls.Builder.() -> Unit,
+): EntityWithUrls {
+  return modifyEntity(EntityWithUrls.Builder::class.java, entity, modification)
+}
 //endregion
 
 data class DataClassWithUrl(val url: VirtualFileUrl)

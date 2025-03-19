@@ -19,4 +19,4 @@ fun f(b: B, c: C) {
 }
 
 
-// IGNORE_FIR_LOG
+

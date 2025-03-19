@@ -12,6 +12,8 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
@@ -25,6 +27,8 @@ private val myConfirmExit: CheckboxDescriptor
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), model::isConfirmExit)
 private val myChkSyncOnFrameActivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), model::isSyncOnFrameActivation)
+private val myChkSyncInBackground
+  get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.in.background"), model::isBackgroundSync)
 private val myChkSaveOnFrameDeactivation
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), model::isSaveOnFrameDeactivation)
 private val myChkAutoSaveIfInactive
@@ -33,38 +37,40 @@ private val myChkUseSafeWrite
   get() = CheckboxDescriptor(IdeBundle.message("checkbox.safe.write"), model::isUseSafeWrite)
 
 internal val allOptionDescriptors: List<BooleanOptionDescription>
-  get() {
-    return sequenceOf(
-      myChkReopenLastProject,
-      myConfirmExit,
+  get() =
+    listOfNotNull(
+      myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup },
+      myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
       myChkSyncOnFrameActivation,
+      myChkSyncInBackground,
       myChkSaveOnFrameDeactivation,
       myChkAutoSaveIfInactive,
       myChkUseSafeWrite
     )
-      .map { it.asUiOptionDescriptor() }
-      .toList()
-  }
+    .map(CheckboxDescriptor::asUiOptionDescriptor)
 
 /**
- * To provide additional options in General section register implementation of {@link SearchableConfigurable} in the plugin.xml:
- * <p/>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
- * &nbsp;&nbsp;&lt;generalOptionsProvider instance="class-name"/&gt;<br>
- * &lt;/extensions&gt;
- * <p>
- * A new instance of the specified class will be created each time then the Settings dialog is opened
+ * To provide additional options in General section register implementation of [SearchableConfigurable] in the 'plugin.xml':
+ * ```
+ * <extensions defaultExtensionNs="com.intellij">
+ *   <generalOptionsProvider instance="class-name"/>
+ * </extensions>
+ * ```
+ * A new instance of the specified class will be created each time then the Settings dialog is opened.
  */
-private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<SearchableConfigurable>(
-  IdeBundle.message("title.general"),
-  "preferences.general"
-), SearchableConfigurable {
+@Suppress("unused")
+private class GeneralSettingsConfigurable :
+  BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
+  SearchableConfigurable
+{
   private val model = GeneralSettings.getInstance().state
 
-  override fun createPanel(): DialogPanel {
-    return panel {
-      row {
-        checkBox(myConfirmExit)
+  override fun createPanel(): DialogPanel =
+    panel {
+      if (IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation) {
+        row {
+          checkBox(myConfirmExit)
+        }
       }
 
       buttonsGroup {
@@ -76,23 +82,27 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
       }.bind(model::processCloseConfirmation) { model.processCloseConfirmation = it }
 
       group(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
-        row {
-          checkBox(myChkReopenLastProject)
+        if (ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup) {
+          row {
+            checkBox(myChkReopenLastProject)
+          }
         }
-        buttonsGroup {
-          row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
-                        GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"),
-                        GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
-                        GeneralSettings.OPEN_PROJECT_ASK)
-            if (PlatformUtils.isDataSpell()) {
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
-                          GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
-            }
-          }.layout(RowLayout.INDEPENDENT)
-        }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
+        if (!ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow) {
+          buttonsGroup {
+            row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
+                          GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"),
+                          GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
+                          GeneralSettings.OPEN_PROJECT_ASK)
+              if (PlatformUtils.isDataSpell()) {
+                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
+                            GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
+              }
+            }.layout(RowLayout.INDEPENDENT)
+          }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
+        }
 
         row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
           textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -103,7 +113,7 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
         }
       }
 
-      group(IdeBundle.message("settings.general.synchronization")) {
+      group(IdeBundle.message("settings.general.autosave")) {
         row {
           val autoSaveCheckbox = checkBox(myChkAutoSaveIfInactive).gap(RightGap.SMALL)
           intTextField(GeneralSettings.SAVE_FILES_AFTER_IDLE_SEC.asRange())
@@ -119,9 +129,14 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
         }
         row {
           checkBox(myChkUseSafeWrite)
-        }
-        row {
-          checkBox(myChkSyncOnFrameActivation)
+        }.bottomGap(BottomGap.SMALL)
+        buttonsGroup(IdeBundle.message("settings.general.synchronization")) {
+          row {
+            checkBox(myChkSyncOnFrameActivation)
+          }
+          row {
+            checkBox(myChkSyncInBackground)
+          }
         }
         row {
           comment(IdeBundle.message("label.autosave.comment")) {
@@ -134,13 +149,10 @@ private class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<
         appendDslConfigurable(configurable)
       }
     }
-  }
 
   override fun getId(): String = helpTopic!!
 
-  override fun createConfigurables(): List<SearchableConfigurable> {
-    return ConfigurableWrapper.createConfigurables(EP_NAME)
-  }
+  override fun createConfigurables(): List<SearchableConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
 }
 
 private val EP_NAME = ExtensionPointName<GeneralSettingsConfigurableEP>("com.intellij.generalOptionsProvider")

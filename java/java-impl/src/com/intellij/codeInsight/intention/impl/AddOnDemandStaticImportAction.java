@@ -1,18 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -20,6 +24,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +32,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAction {
+public final class AddOnDemandStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddOnDemandStaticImportAction.class);
+  
+  public AddOnDemandStaticImportAction() {
+    super(PsiIdentifier.class);
+  }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.on.demand.static.import.family");
   }
 
@@ -42,9 +50,8 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
    * @param element     element to check
    * @return            target class that may be statically imported if any; {@code null} otherwise
    */
-  @Nullable
-  public static PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+  public static @Nullable PsiClass getClassToPerformStaticImport(@NotNull PsiElement element) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (!(element instanceof PsiIdentifier) || !(element.getParent() instanceof PsiJavaCodeReferenceElement refExpr)) {
       return null;
     }
@@ -106,16 +113,35 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
-    if (classToImport != null) {
-      String text = JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName());
-      setText(text);
+    if (classToImport == null) {
+      return null;
     }
-    return classToImport != null;
+    Project project = element.getProject();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    if (codeStyleManager.isStaticAutoImportName(classToImport.getQualifiedName())) {
+      return null;
+    }
+    return Presentation.of(JavaBundle.message("intention.add.on.demand.static.import.text", classToImport.getQualifiedName()));
   }
 
   public static boolean invoke(final Project project, PsiFile file, final Editor editor, @NotNull PsiElement element) {
+    List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
+    boolean conflicts = addStaticImports(file, element, dequalifiedElements);
+    if (editor != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (collectChangedPlaces(project, editor, dequalifiedElements)) {
+          WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+        }
+      }, project.getDisposed());
+    }
+    return conflicts;
+  }
+
+  private static boolean addStaticImports(@NotNull PsiFile file,
+                                          @NotNull PsiElement element,
+                                          @NotNull List<@NotNull PsiJavaCodeReferenceElement> dequalifiedElements) {
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {
@@ -123,17 +149,24 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     }
     final PsiClass containingClass = PsiUtil.getTopLevelClass(refExpr);
     if (aClass != containingClass || !ClassUtils.isInsideClassBody(element, aClass)) {
-      PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      PsiJavaFile psiJavaFile = (PsiJavaFile)file;
+      PsiImportList importList = psiJavaFile.getImportList();
       if (importList == null) {
         return false;
       }
       boolean alreadyImported = false;
-      for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
-        if (!statement.isOnDemand()) continue;
-        PsiClass staticResolve = statement.resolveTargetClass();
-        if (aClass == staticResolve) {
-          alreadyImported = true;
-          break;
+      String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName != null && ImportUtils.createImplicitImportChecker(psiJavaFile).isImplicitlyImported(qualifiedName + ".*", true)) {
+        alreadyImported = true;
+      }
+      if (!alreadyImported) {
+        for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+          if (!statement.isOnDemand()) continue;
+          PsiClass staticResolve = statement.resolveTargetClass();
+          if (aClass == staticResolve) {
+            alreadyImported = true;
+            break;
+          }
         }
       }
       if (!alreadyImported) {
@@ -198,13 +231,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       for (PsiJavaCodeReferenceElement expression : expressionsToDequalify) {
         new CommentTracker().deleteAndRestoreComments(Objects.requireNonNull(expression.getQualifier()));
       }
-      if (editor != null && !(editor instanceof ImaginaryEditor)) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (collectChangedPlaces(project, editor, expressionsToDequalify)) {
-            WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-          }
-        }, project.getDisposed());
-      }
+      dequalifiedElements.addAll(expressionsToDequalify);
     }
     return conflict.get();
   }
@@ -235,8 +262,12 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    invoke(project, element.getContainingFile(), editor, element);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
+    List<PsiJavaCodeReferenceElement> dequalifiedElements = new ArrayList<>();
+    addStaticImports(element.getContainingFile(), element, dequalifiedElements);
+    for (PsiJavaCodeReferenceElement ref : dequalifiedElements) {
+      updater.highlight(ref);
+    }
   }
 
   private static boolean isParameterizedReference(final PsiJavaCodeReferenceElement expression) {

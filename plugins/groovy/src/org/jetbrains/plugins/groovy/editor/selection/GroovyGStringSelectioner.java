@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor.selection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
+public final class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     PsiElement parent = e.getParent();
@@ -72,8 +72,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
     return ranges;
   }
 
-  @NotNull
-  private static TextRange getLineTextRange(PsiElement e, int cursorOffset) {
+  private static @NotNull TextRange getLineTextRange(PsiElement e, int cursorOffset) {
     assert e.getParent() instanceof GrString;
 
     PsiElement next = e;

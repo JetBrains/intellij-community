@@ -3,8 +3,8 @@ package com.intellij.formatting;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataContextWrapper;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
@@ -23,7 +23,6 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -31,7 +30,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 
 @ApiStatus.Internal
-public class LineWrappingUtil {
+public final class LineWrappingUtil {
   private static final String WRAP_LINE_COMMAND_NAME = "AutoWrapLongLine";
 
   /**
@@ -84,7 +83,7 @@ public class LineWrappingUtil {
     }
   }
 
-  public static void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
+  public static void doWrapLongLinesIfNecessary(final @NotNull Editor editor, final @NotNull Project project, @NotNull Document document,
                                                 int startOffset, int endOffset, List<? extends TextRange> enabledRanges, int rightMargin) {
     // Normalization.
     int startOffsetToUse = MathUtil.clamp(startOffset, 0, document.getTextLength());
@@ -127,7 +126,7 @@ public class LineWrappingUtil {
 
       // We know that current line exceeds right margin if control flow reaches this place, so, wrap it.
       int wrapOffset = strategy.calculateWrapPosition(
-        document, editor.getProject(), Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
+        document, project, Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
         preferredWrapPosition, false, false
       );
       if (wrapOffset < 0 // No appropriate wrap position is found.
@@ -173,7 +172,7 @@ public class LineWrappingUtil {
    *                       1. The first element holds added lines number;
    *                       2. The second element holds added symbols number;
    */
-  private static void emulateEnter(@NotNull final Editor editor, @NotNull Project project, int[] shifts) {
+  private static void emulateEnter(final @NotNull Editor editor, @NotNull Project project, int[] shifts) {
     DataContext dataContext = prepareContext(project, editor);
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
@@ -195,7 +194,7 @@ public class LineWrappingUtil {
       Runnable command = () -> EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
         .execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
       if (commandProcessor.getCurrentCommand() == null) {
-        commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
+        commandProcessor.executeCommand(project, command, WRAP_LINE_COMMAND_NAME, null);
       }
       else {
         command.run();
@@ -357,19 +356,12 @@ public class LineWrappingUtil {
     return wrapLine ? result : -1;
   }
 
-  @NotNull
-  private static DataContext prepareContext(@NotNull Project project, @NotNull Editor editor) {
+  private static @NotNull DataContext prepareContext(@NotNull Project project, @NotNull Editor editor) {
     // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
     // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
     Project editorProject = editor.getProject();
     DataContext context = EditorUtil.getEditorDataContext(editor);
     if (editorProject != null) return context;
-    return new DataContextWrapper(context) {
-      @Override
-      public @Nullable Object getRawCustomData(@NotNull String dataId) {
-        if (PROJECT.is(dataId)) return project;
-        return null;
-      }
-    };
+    return SimpleDataContext.getSimpleContext(PROJECT, project, context);
   }
 }

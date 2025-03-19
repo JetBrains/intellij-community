@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
@@ -23,9 +23,8 @@ public class RunAnythingGradleItem extends RunAnythingItemBase {
     super(command, icon);
   }
 
-  @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public @NotNull Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     String command = getCommand();
     JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 

@@ -30,5 +30,5 @@ abstract class CreateParameterFromUsageFactory<E : KtElement> :
         }
     }.let(::listOfNotNull)
 
-    override fun createFix(originalElement: E, data: CreateParameterData<E>) = throw UnsupportedOperationException("should not be invoked")
+    override fun createFix(originalElement: E, data: CreateParameterData<E>): Nothing = throw UnsupportedOperationException("should not be invoked")
 }

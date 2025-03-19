@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig
 
-import com.intellij.BundleBase
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -22,11 +21,9 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
-import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider
-import org.editorconfig.configmanagement.StandardEditorConfigProperties
+import org.editorconfig.configmanagement.*
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.plugincomponents.SettingsProviderComponent
+import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
 import org.jetbrains.annotations.TestOnly
 import java.io.File
@@ -52,8 +49,9 @@ object Utils {
   var isEnabledInTests = false
 
   fun ResourceProperties.configValueForKey(key: String): String {
-    val value = properties[key]
-    return if (value == null || value.sourceValue in UNSET_VALUES) "" else value.sourceValue
+    val prop = properties[key] ?: return ""
+    val value = prop.sourceValue.trim()
+    return if (value in UNSET_VALUES) "" else value
   }
 
   @JvmStatic
@@ -66,8 +64,7 @@ object Utils {
   fun isEnabled(project: Project): Boolean = isEnabled(CodeStyle.getSettings(project))
 
   fun isFullIntellijSettingsSupport(): Boolean =
-    ourIsFullSettingsSupportEnabledInTest ||
-    Registry.`is`(FULL_SETTINGS_SUPPORT_REG_KEY) && !EditorConfigRegistry.shouldSupportDotNet()
+    ourIsFullSettingsSupportEnabledInTest || Registry.`is`(FULL_SETTINGS_SUPPORT_REG_KEY)
 
   @JvmStatic
   @TestOnly
@@ -79,9 +76,13 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle, "invalid.config.value",
-                                  null,
-                                  configValue, configKey.ifEmpty { "?" }, filePath)
+      EditorConfigBundle.bundle.messageOrDefault(
+        key = "invalid.config.value",
+        defaultValue = null,
+        configValue,
+        configKey.ifEmpty { "?" },
+        filePath,
+      )
     }
     else {
       EditorConfigBundle.message("read.failure")
@@ -163,11 +164,11 @@ object Utils {
       ?.let { StringUtil.toLowerCase(it.name) }
 
   private fun getEncodingLine(project: Project): String =
-    getEncoding(project)?.let { "${ConfigEncodingManager.charsetKey}=$it\n" } ?: ""
+    getEncoding(project)?.let { "${ConfigEncodingCharsetUtil.charsetKey}=$it\n" } ?: ""
 
   fun getEncoding(project: Project): String? {
     val encodingManager = EncodingProjectManager.getInstance(project)
-    return ConfigEncodingManager.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
+    return ConfigEncodingCharsetUtil.toString(encodingManager.defaultCharset, encodingManager.shouldAddBOMForNewUtf8File())
   }
 
   fun buildPattern(fileType: FileType): String {
@@ -193,14 +194,14 @@ object Utils {
     result.apply {
       append("[").append(pattern).append("]").append("\n")
       append(additionalText)
-      append(EditorConfigIndentOptionsProvider.indentStyleKey).append("=")
+      append(indentStyleKey).append("=")
       if (options.USE_TAB_CHARACTER) {
         append("tab\n")
-        append(EditorConfigIndentOptionsProvider.tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
+        append(tabWidthKey).append("=").append(options.TAB_SIZE).append("\n")
       }
       else {
         append("space\n")
-        append(EditorConfigIndentOptionsProvider.indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
+        append(indentSizeKey).append("=").append(options.INDENT_SIZE).append("\n")
       }
       append("\n")
     }
@@ -208,7 +209,7 @@ object Utils {
 
   fun editorConfigExists(project: Project): Boolean {
     val projectDir = File(project.basePath ?: return false)
-    return SettingsProviderComponent.getInstance(project).getRootDirs().asSequence()
+    return EditorConfigPropertiesService.getInstance(project).getRootDirs().asSequence()
       .map { File(it.path) }
       .ifEmpty { sequenceOf(projectDir) }
       .flatMap { rootDir ->

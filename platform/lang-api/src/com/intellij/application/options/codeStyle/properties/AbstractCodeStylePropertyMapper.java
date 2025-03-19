@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,15 +13,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCodeStylePropertyMapper {
-  private @NotNull final CodeStyleSettings myRootSettings;
-  private final NotNullLazyValue<Map<String, CodeStylePropertyAccessor<?>>> myAccessorMap;
+  private final @NotNull CodeStyleSettings myRootSettings;
+  private final Supplier<Map<String, CodeStylePropertyAccessor<?>>> myAccessorMap;
 
   public AbstractCodeStylePropertyMapper(@NotNull CodeStyleSettings settings) {
     myRootSettings = settings;
-    myAccessorMap = NotNullLazyValue.atomicLazy(() -> createMap());
+    myAccessorMap = new SynchronizedClearableLazy<>(this::createMap);
   }
 
   public List<String> enumProperties() {
@@ -37,8 +38,7 @@ public abstract class AbstractCodeStylePropertyMapper {
     return accessorMap;
   }
 
-  @NotNull
-  protected abstract List<CodeStyleObjectDescriptor> getSupportedFields();
+  protected abstract @NotNull List<CodeStyleObjectDescriptor> getSupportedFields();
 
   protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
   }
@@ -66,8 +66,7 @@ public abstract class AbstractCodeStylePropertyMapper {
     return objectClass;
   }
 
-  @Nullable
-  protected CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  protected @Nullable CodeStylePropertyAccessor<?> getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     return new FieldAccessorFactory(field).createAccessor(codeStyleObject);
   }
 
@@ -90,14 +89,12 @@ public abstract class AbstractCodeStylePropertyMapper {
     return (field.getModifiers() & Modifier.FINAL) != 0;
   }
 
-  @NotNull
-  protected CodeStyleSettings getRootSettings() {
+  protected @NotNull CodeStyleSettings getRootSettings() {
     return myRootSettings;
   }
 
-  @NotNull
-  private Map<String,CodeStylePropertyAccessor<?>> getAccessorMap() {
-    return myAccessorMap.getValue();
+  private @NotNull Map<String,CodeStylePropertyAccessor<?>> getAccessorMap() {
+    return myAccessorMap.get();
   }
 
   protected static final class CodeStyleObjectDescriptor {
@@ -109,28 +106,24 @@ public abstract class AbstractCodeStylePropertyMapper {
       mySupportedFields = fields;
     }
 
-    @NotNull
-    private Object getCodeStyleObject() {
+    private @NotNull Object getCodeStyleObject() {
       return myObject;
     }
 
-    @Nullable
-    private Set<String> getSupportedFields() {
+    private @Nullable Set<String> getSupportedFields() {
       return mySupportedFields;
     }
   }
 
   public CodeStylePropertyAccessor<?> getAccessor(@NotNull String property) {
-    return myAccessorMap.getValue().get(property);
+    return myAccessorMap.get().get(property);
   }
 
   protected boolean useDeclaredFields() {
     return false;
   }
 
-  @NotNull
-  public abstract String getLanguageDomainId();
+  public abstract @NotNull String getLanguageDomainId();
 
-  @Nullable
-  public abstract String getPropertyDescription(@NotNull String externalName);
+  public abstract @Nullable String getPropertyDescription(@NotNull String externalName);
 }

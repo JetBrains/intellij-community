@@ -12,3 +12,4 @@ fun bar(n: Int) = n
 
 // TRACING_FILTERS_ENABLED: false
 // STEP_OVER: 5
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

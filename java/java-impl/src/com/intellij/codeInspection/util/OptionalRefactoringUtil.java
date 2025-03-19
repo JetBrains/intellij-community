@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -149,13 +149,11 @@ public final class OptionalRefactoringUtil {
     }
   }
 
-  @NotNull
-  public static String getMapTypeArgument(PsiExpression expression, PsiType type) {
+  public static @NotNull String getMapTypeArgument(PsiExpression expression, PsiType type) {
     return getMapTypeArgument(expression, type, null);
   }
 
-  @NotNull
-  private static String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
+  private static @NotNull String getMapTypeArgument(PsiExpression expression, PsiType type, PsiExpression falseExpression) {
     if (!(type instanceof PsiClassType)) return "";
     String text = expression.getText();
     // PsiEmptyExpressionImpl might be passed here

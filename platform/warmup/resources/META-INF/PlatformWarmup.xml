@@ -7,4 +7,5 @@
     <appStarter id="warmup" implementation="com.intellij.warmup.ProjectCachesWarmup"/>
     <projectBuildWarmupSupport implementation="com.intellij.warmup.PlatformBuildWarmupSupport"/>
   </extensions>
+
 </idea-plugin>

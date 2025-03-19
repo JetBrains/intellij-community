@@ -1,22 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.config.StatisticsStringUtil
 import java.io.File
 import java.nio.file.Path
-
-/**
- * @deprecated Use {@link EventLogInternalSendConfig} because it contains both information about recorder and device
- * Kept for compatibility with TBE.
- */
-@Deprecated(message="Use EventLogSendConfig")
-interface EventLogRecorderConfig {
-  fun getRecorderId(): String
-
-  fun isSendEnabled(): Boolean
-
-  fun getFilesToSendProvider(): FilesToSendProvider
-}
 
 interface EventLogSendConfig {
   fun getRecorderId(): String
@@ -39,8 +26,10 @@ interface EventLogFilesProvider {
   fun getLogFilesExceptActive(): List<File>
 }
 
-class DefaultEventLogFilesProvider(private val dir: Path,
-                                   private val activeFileProvider: () -> String?) : EventLogFilesProvider {
+class DefaultEventLogFilesProvider(
+  private val dir: Path,
+  private val activeFileProvider: () -> String?,
+) : EventLogFilesProvider {
   override fun getLogFiles(): List<File> {
     return dir.toFile().listFiles()?.toList().orEmpty()
   }
@@ -55,9 +44,11 @@ interface FilesToSendProvider {
   fun getFilesToSend(): List<EventLogFile>
 }
 
-class DefaultFilesToSendProvider(private val logFilesProvider: EventLogFilesProvider,
-                                 private val maxFilesToSend: Int,
-                                 private val filterActiveFile: Boolean) : FilesToSendProvider {
+internal class DefaultFilesToSendProvider(
+  private val logFilesProvider: EventLogFilesProvider,
+  private val maxFilesToSend: Int,
+  private val filterActiveFile: Boolean,
+) : FilesToSendProvider {
   override fun getFilesToSend(): List<EventLogFile> {
     val files = if (filterActiveFile) {
       logFilesProvider.getLogFilesExceptActive()

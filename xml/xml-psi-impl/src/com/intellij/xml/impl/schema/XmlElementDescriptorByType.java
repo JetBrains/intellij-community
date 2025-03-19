@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.psi.PsiElement;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.NonNls;
 
 public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   private ComplexTypeDescriptor myType;
-  @NonNls
-  public static final String QUALIFIED_ATTR_VALUE = "qualified";
+  public static final @NonNls String QUALIFIED_ATTR_VALUE = "qualified";
 
   public XmlElementDescriptorByType(XmlTag instanceTag, ComplexTypeDescriptor descriptor) {
     myDescriptorTag = instanceTag;
@@ -62,6 +61,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return false;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof XmlElementDescriptorByType that)) return false;
@@ -71,6 +71,7 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return (myType != null ? myType.hashCode() : 0);
   }

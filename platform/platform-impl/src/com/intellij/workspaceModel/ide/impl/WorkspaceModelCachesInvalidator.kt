@@ -2,13 +2,12 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.ide.caches.CachesInvalidator
-import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WorkspaceModelCachesInvalidator : CachesInvalidator() {
   override fun invalidateCaches() {
     WorkspaceModelCacheImpl.invalidateCaches()
-    if (GlobalLibraryTableBridge.isEnabled()) {
-      GlobalWorkspaceModelCacheImpl.invalidateCaches()
-    }
+    GlobalWorkspaceModelCacheImpl.invalidateCaches()
   }
 }

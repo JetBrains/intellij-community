@@ -1,95 +1,137 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.execution.ParametersListUtil;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
-  private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));
+  private static final @NotNull String USE_VERBOSE_GRADLE_API_KEY = "gradle.api.verbose";
+  private static final boolean USE_VERBOSE_GRADLE_API_DEFAULT = false;
 
-  private static final long serialVersionUID = 1L;
+  private final @NotNull GradleExecutionWorkspace myExecutionWorkspace;
 
-  @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
+  private @Nullable String myGradleHome = null;
 
-  @Nullable private final String myGradleHome;
+  private @Nullable String myServiceDirectory = null;
+  private boolean myIsOfflineWork = false;
 
-  @Nullable private final String myServiceDirectory;
-  private final boolean myIsOfflineWork;
+  private @NotNull DistributionType myDistributionType = DistributionType.BUNDLED;
+  private @Nullable String wrapperPropertyFile = null;
 
-  @NotNull private final DistributionType myDistributionType;
-  @Nullable private String wrapperPropertyFile;
-
-  @Nullable private String myJavaHome;
-  @Nullable
-  private String myIdeProjectPath;
+  private @Nullable String myJavaHome = null;
+  private @Nullable String myIdeProjectPath = null;
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
+  private boolean downloadSources = false;
+  private boolean isParallelModelFetch = false;
 
-  public GradleExecutionSettings(@Nullable String gradleHome,
-                                 @Nullable String serviceDirectory,
-                                 @NotNull DistributionType distributionType,
-                                 boolean isOfflineWork) {
-    myGradleHome = gradleHome;
-    myServiceDirectory = serviceDirectory;
-    myDistributionType = distributionType;
-    myIsOfflineWork = isOfflineWork;
-    setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
+  private boolean myBuiltInTestEventsUsed = false;
+
+  /**
+   * @deprecated use default constructor instead
+   */
+  @Deprecated
+  public GradleExecutionSettings(
+    @Nullable String gradleHome,
+    @Nullable String serviceDirectory,
+    @NotNull DistributionType distributionType,
+    boolean isOfflineWork
+  ) {
+    this();
+
+    setGradleHome(gradleHome);
+    setServiceDirectory(serviceDirectory);
+    setDistributionType(distributionType);
+    setOfflineWork(isOfflineWork);
   }
 
-  public GradleExecutionSettings(@Nullable String gradleHome,
-                                 @Nullable String serviceDirectory,
-                                 @NotNull DistributionType distributionType,
-                                 @Nullable String daemonVmOptions,
-                                 boolean isOfflineWork) {
-    myGradleHome = gradleHome;
-    myServiceDirectory = serviceDirectory;
-    myDistributionType = distributionType;
+  /**
+   * @deprecated use default constructor instead
+   */
+  @Deprecated
+  public GradleExecutionSettings(
+    @Nullable String gradleHome,
+    @Nullable String serviceDirectory,
+    @NotNull DistributionType distributionType,
+    @Nullable String daemonVmOptions,
+    boolean isOfflineWork
+  ) {
+    this(gradleHome, serviceDirectory, distributionType, isOfflineWork);
     if (daemonVmOptions != null) {
       withVmOptions(ParametersListUtil.parse(daemonVmOptions));
     }
-    myIsOfflineWork = isOfflineWork;
-    setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
+  }
+
+  public GradleExecutionSettings() {
+    myExecutionWorkspace = new GradleExecutionWorkspace();
+
+    setVerboseProcessing(SystemProperties.getBooleanProperty(USE_VERBOSE_GRADLE_API_KEY, USE_VERBOSE_GRADLE_API_DEFAULT));
+  }
+
+  public GradleExecutionSettings(@NotNull GradleExecutionSettings settings) {
+    super(settings);
+
+    myExecutionWorkspace = settings.myExecutionWorkspace;
+
+    myGradleHome = settings.myGradleHome;
+
+    myServiceDirectory = settings.myServiceDirectory;
+    myIsOfflineWork = settings.myIsOfflineWork;
+
+    myDistributionType = settings.myDistributionType;
+    wrapperPropertyFile = settings.wrapperPropertyFile;
+
+    myJavaHome = settings.myJavaHome;
+    myIdeProjectPath = settings.myIdeProjectPath;
+    resolveModulePerSourceSet = settings.resolveModulePerSourceSet;
+    useQualifiedModuleNames = settings.useQualifiedModuleNames;
+    delegatedBuild = settings.delegatedBuild;
+    downloadSources = settings.downloadSources;
+    isParallelModelFetch = settings.isParallelModelFetch;
+
+    myBuiltInTestEventsUsed = settings.myBuiltInTestEventsUsed;
   }
 
   public void setIdeProjectPath(@Nullable String ideProjectPath) {
     myIdeProjectPath = ideProjectPath;
   }
 
-  @Nullable
-  public String getIdeProjectPath() {
+  public @Nullable String getIdeProjectPath() {
     return myIdeProjectPath;
   }
 
-  @Nullable
-  public String getGradleHome() {
+  public @Nullable String getGradleHome() {
     return myGradleHome;
   }
 
-  public @Nullable GradleVersion getGradleVersion() {
-    var versionString = GradleInstallationManager.getGradleVersion(myGradleHome);
-    if (versionString == null) {
-      return null;
-    }
-    return GradleInstallationManager.getGradleVersionSafe(versionString);
+  public void setGradleHome(@Nullable String gradleHome) {
+    myGradleHome = gradleHome;
   }
 
-  @Nullable
-  public String getServiceDirectory() {
+  public @Nullable String getServiceDirectory() {
     return myServiceDirectory;
   }
 
-  @Nullable
-  public String getJavaHome() {
+  public void setServiceDirectory(@Nullable String serviceDirectory) {
+    myServiceDirectory = serviceDirectory;
+  }
+
+  public @Nullable String getJavaHome() {
     return myJavaHome;
   }
 
@@ -99,6 +141,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public boolean isOfflineWork() {
     return myIsOfflineWork;
+  }
+
+  public void setOfflineWork(boolean offlineWork) {
+    myIsOfflineWork = offlineWork;
   }
 
   public boolean isResolveModulePerSourceSet() {
@@ -125,8 +171,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.delegatedBuild = delegatedBuild;
   }
 
-  @Nullable
-  public String getWrapperPropertyFile() {
+  public @Nullable String getWrapperPropertyFile() {
     return wrapperPropertyFile;
   }
 
@@ -134,13 +179,15 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.wrapperPropertyFile = wrapperPropertyFile;
   }
 
-  @NotNull
-  public DistributionType getDistributionType() {
+  public @NotNull DistributionType getDistributionType() {
     return myDistributionType;
   }
 
-  @NotNull
-  public GradleExecutionWorkspace getExecutionWorkspace() {
+  public void setDistributionType(@NotNull DistributionType distributionType) {
+    myDistributionType = distributionType;
+  }
+
+  public @NotNull GradleExecutionWorkspace getExecutionWorkspace() {
     return myExecutionWorkspace;
   }
 
@@ -149,6 +196,9 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     return ObjectUtils.chooseNotNull(value, false);
   }
 
+  /**
+   * Flag that shows if tasks are treated as tests invocation by the IDE (e.g., test events are expected)
+   */
   public boolean isRunAsTest() {
     var value = getUserData(GradleRunConfiguration.RUN_AS_TEST_KEY);
     return ObjectUtils.chooseNotNull(value, false);
@@ -156,6 +206,54 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setRunAsTest(boolean isRunAsTest) {
     putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, isRunAsTest);
+  }
+
+  public boolean isTestTaskRerun() {
+    var value = getUserData(GradleRunConfiguration.IS_TEST_TASK_RERUN_KEY);
+    return ObjectUtils.chooseNotNull(value, false);
+  }
+
+  /**
+   * Test events will be produces by TAPI, and there is no need for console reporting.
+   */
+  public boolean isBuiltInTestEventsUsed() {
+    return myBuiltInTestEventsUsed;
+  }
+
+  public void setBuiltInTestEventsUsed(boolean isBuiltInTestEventsUsed) {
+    myBuiltInTestEventsUsed = isBuiltInTestEventsUsed;
+  }
+
+  public boolean isDownloadSources() {
+    return downloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    this.downloadSources = downloadSources;
+  }
+
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
+  }
+
+  @Override
+  public @NotNull List<String> getTasks() {
+    return super.getTasks().stream()
+      .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
+      .collect(Collectors.toList());
+  }
+
+  public @NotNull GradleCommandLine getCommandLine() {
+    return GradleCommandLineUtil.parseCommandLine(getTasks(), getArguments());
+  }
+
+  public void addInitScript(@NotNull String namePrefix, @NotNull String content) {
+    var initScriptPath = GradleInitScriptUtil.createInitScript(namePrefix, content);
+    withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptPath.toString());
   }
 
   @Override

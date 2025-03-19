@@ -1,12 +1,8 @@
 fun foo(x: Int): Int {
     if (x == 1) return 1
-    listOf(1, 2, 3).map {
-        if (it == 2) return@map 2
-        return@<caret>map 3
-    }
+    listOf(1, 2, 3).map <info descr="null">{</info>
+        if (it == 2) <info descr="null">return@map 2</info>
+        <info descr="null">return@~map 3</info>
+    <info descr="null">}</info>
     return 4
 }
-
-//HIGHLIGHTED: return@map 2
-//HIGHLIGHTED: map
-//HIGHLIGHTED: return@map 3

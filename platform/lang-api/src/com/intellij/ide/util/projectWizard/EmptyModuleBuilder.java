@@ -17,7 +17,7 @@ public class EmptyModuleBuilder extends ModuleBuilder {
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return ModuleType.EMPTY;
   }
 

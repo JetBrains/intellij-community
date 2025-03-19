@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import java.util.List;
  * <a href="https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders">excluded</a> from the project and its modules.
  */
 public interface DirectoryIndexExcludePolicy {
+  @ApiStatus.Internal
   ProjectExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.directoryIndexExcludePolicy");
 
@@ -34,9 +36,8 @@ public interface DirectoryIndexExcludePolicy {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
-  @Nullable
   @Contract(pure = true)
-  default Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
+  default @Nullable Function<Sdk, List<VirtualFile>> getExcludeSdkRootsStrategy() {
     return null;
   }
 

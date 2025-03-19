@@ -26,6 +26,7 @@ GUI_WX = 'wx'
 GUI_QT = 'qt'
 GUI_QT4 = 'qt4'
 GUI_QT5 = 'qt5'
+GUI_QT6 = 'qt6'
 GUI_GTK = 'gtk'
 GUI_TK = 'tk'
 GUI_OSX = 'osx'
@@ -143,7 +144,15 @@ class InputHookManager(object):
             app = wx.App(redirect=False, clearSigInt=False)
         """
         import wx
-        from distutils.version import LooseVersion as V
+        try:
+            from distutils.version import LooseVersion as V
+        except ImportError:
+            if sys.version_info[:2] >= (3, 12):
+                class V:
+                    def __init__(self, vstring):
+                        self.version = vstring.split('.')
+            else:
+                raise
         wx_version = V(wx.__version__).version  # @UndefinedVariable
 
         if wx_version < [2, 8]:
@@ -171,8 +180,10 @@ class InputHookManager(object):
         self.clear_inputhook()
 
     def enable_qt(self, app=None):
-        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5
-        if QT_API == QT_API_PYQT5:
+        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5, QT_API_PYQT6
+        if QT_API == QT_API_PYQT6:
+            self.enable_qt6(app)
+        elif QT_API == QT_API_PYQT5:
             self.enable_qt5(app)
         else:
             self.enable_qt4(app)
@@ -230,6 +241,21 @@ class InputHookManager(object):
     def disable_qt5(self):
         if GUI_QT5 in self._apps:
             self._apps[GUI_QT5]._in_event_loop = False
+        self.clear_inputhook()
+
+    def enable_qt6(self, app=None):
+        from pydev_ipython.inputhookqt6 import create_inputhook_qt6
+        app, inputhook_qt6 = create_inputhook_qt6(self, app)
+        self.set_inputhook(inputhook_qt6)
+
+        self._current_gui = GUI_QT6
+        app._in_event_loop = True
+        self._apps[GUI_QT6] = app
+        return app
+
+    def disable_qt6(self):
+        if GUI_QT6 in self._apps:
+            self._apps[GUI_QT6]._in_event_loop = False
         self.clear_inputhook()
 
     def enable_gtk(self, app=None):
@@ -460,6 +486,8 @@ enable_qt4 = inputhook_manager.enable_qt4
 disable_qt4 = inputhook_manager.disable_qt4
 enable_qt5 = inputhook_manager.enable_qt5
 disable_qt5 = inputhook_manager.disable_qt5
+enable_qt6 = inputhook_manager.enable_qt6
+disable_qt6 = inputhook_manager.disable_qt6
 enable_gtk = inputhook_manager.enable_gtk
 disable_gtk = inputhook_manager.disable_gtk
 enable_tk = inputhook_manager.enable_tk
@@ -521,6 +549,7 @@ def enable_gui(gui=None, app=None):
             GUI_QT: enable_qt,
             GUI_QT4: enable_qt4,
             GUI_QT5: enable_qt5,
+            GUI_QT6: enable_qt6,
             GUI_GLUT: enable_glut,
             GUI_PYGLET: enable_pyglet,
             GUI_GTK3: enable_gtk3,
@@ -540,6 +569,7 @@ __all__ = [
     "GUI_QT",
     "GUI_QT4",
     "GUI_QT5",
+    "GUI_QT6",
     "GUI_GTK",
     "GUI_TK",
     "GUI_OSX",
@@ -563,6 +593,8 @@ __all__ = [
     "disable_qt4",
     "enable_qt5",
     "disable_qt5",
+    "enable_qt6",
+    "disable_qt6",
     "enable_gtk",
     "disable_gtk",
     "enable_tk",

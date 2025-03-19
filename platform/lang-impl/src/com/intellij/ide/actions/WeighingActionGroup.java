@@ -1,31 +1,33 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-abstract class WeighingActionGroup extends ActionGroup {
+@ApiStatus.Internal
+public abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  public static final Key<Double> WEIGHT_KEY = Key.create("WeighingActionGroup.WEIGHT");
+  public static final Double DEFAULT_WEIGHT = Presentation.DEFAULT_WEIGHT;
+  public static final Double HIGHER_WEIGHT = Presentation.HIGHER_WEIGHT;
+
+  @Override
+  public abstract @NotNull ActionGroup getDelegate();
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return getDelegate().getActionUpdateThread();
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -33,32 +35,27 @@ abstract class WeighingActionGroup extends ActionGroup {
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return getDelegate().getActionUpdateThread();
-  }
-
-  protected abstract ActionGroup getDelegate();
-
-  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return getDelegate().getChildren(e);
   }
 
-  @NotNull
   @Override
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
+  public @Unmodifiable @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                   @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     LinkedHashSet<AnAction> heaviest = null;
-    double maxWeight = Presentation.DEFAULT_WEIGHT;
+    double maxWeight = DEFAULT_WEIGHT.doubleValue();
     for (AnAction action : visibleChildren) {
-      Presentation presentation = updateSession.presentation(action);
-      if (presentation.isEnabled() && presentation.isVisible()) {
-        if (presentation.getWeight() > maxWeight) {
-          maxWeight = presentation.getWeight();
-          heaviest = new LinkedHashSet<>();
-        }
-        if (presentation.getWeight() == maxWeight && heaviest != null) {
-          heaviest.add(action);
-        }
+      Presentation presentation = e.getUpdateSession().presentation(action);
+      if (!presentation.isEnabled() || !presentation.isVisible()) {
+        continue;
+      }
+      double weight = ObjectUtils.notNull(presentation.getClientProperty(WEIGHT_KEY), DEFAULT_WEIGHT).doubleValue();
+      if (weight > maxWeight) {
+        maxWeight = weight;
+        heaviest = new LinkedHashSet<>();
+      }
+      if (weight == maxWeight && heaviest != null) {
+        heaviest.add(action);
       }
     }
 
@@ -84,12 +81,12 @@ abstract class WeighingActionGroup extends ActionGroup {
       }
     }
     ActionGroup other = new ExcludingActionGroup(getDelegate(), heaviest);
-    other.setPopup(true);
-    updateSession.presentation(other).setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.WeighingActionGroup.text"));
+    other.getTemplatePresentation().setPopupGroup(true);
     return JBIterable.from(chosen).append(new Separator()).append(other).toList();
   }
 
-  protected boolean shouldBeChosenAnyway(AnAction action) {
+  protected boolean shouldBeChosenAnyway(@NotNull AnAction action) {
     return false;
   }
 

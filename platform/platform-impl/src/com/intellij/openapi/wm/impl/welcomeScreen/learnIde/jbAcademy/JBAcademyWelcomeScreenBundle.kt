@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.JetBrainsAcademyWelcomeScreen"
+private const val BUNDLE = "messages.JetBrainsAcademyWelcomeScreenBundle"
 object JBAcademyWelcomeScreenBundle : DynamicBundle(BUNDLE) {
   @Nls
   fun message(@PropertyKey(resourceBundle = BUNDLE) key: String, vararg params: Any): String = getMessage(key, *params)

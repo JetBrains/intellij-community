@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.platform.indexing.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "indexing-tests_test",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = ["//platform/indexing-impl"],
+  deps = [
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.indexing.tests` end

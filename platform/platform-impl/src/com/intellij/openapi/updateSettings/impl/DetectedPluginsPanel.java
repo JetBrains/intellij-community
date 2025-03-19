@@ -88,17 +88,19 @@ public final class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     removeAll();
 
     Splitter splitter = new OnePixelSplitter(false);
-    splitter.setFirstComponent(wrapWithPane(entryTable, 1, 0));
-    splitter.setSecondComponent(wrapWithPane(myDetailsComponent, 0, 1));
+    splitter.setFirstComponent(wrapWithPane(entryTable, 1, 1, 0, true));
+    splitter.setSecondComponent(wrapWithPane(myDetailsComponent, 0, 0, 1, false));
     splitter.setProportion(0.3f);
 
     add(splitter, BorderLayout.CENTER);
   }
 
-  private static @NotNull JScrollPane wrapWithPane(@NotNull JComponent c, int left, int right) {
-    JScrollPane pane = ScrollPaneFactory.createScrollPane(c);
-    pane.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, left, 1, right));
-    return pane;
+  private static @NotNull JComponent wrapWithPane(@NotNull JComponent c, int top, int left, int right, boolean scrollPane) {
+    if (scrollPane) {
+      c = ScrollPaneFactory.createScrollPane(c);
+    }
+    c.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, top, left, 1, right));
+    return c;
   }
 
   @Override

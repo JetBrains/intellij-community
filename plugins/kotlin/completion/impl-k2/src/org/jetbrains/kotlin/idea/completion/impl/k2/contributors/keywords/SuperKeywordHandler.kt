@@ -11,15 +11,15 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookup
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 
-internal object SuperKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.SUPER_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun KtAnalysisSession.createLookups(
+internal object SuperKeywordHandler : CompletionKeywordHandler<KaSession>(KtTokens.SUPER_KEYWORD) {
+    context(KaSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
@@ -41,7 +41,7 @@ internal object SuperKeywordHandler : CompletionKeywordHandler<KtAnalysisSession
             else -> buildList {
                 add(lookup)
                 superClasses.mapTo(this) { symbol ->
-                    createKeywordElement("super", "<${symbol.name}>", SuperKeywordLookupObject(symbol.name, symbol.classIdIfNonLocal))
+                    createKeywordElement("super", "<${symbol.name}>", SuperKeywordLookupObject(symbol.name, symbol.classId))
                         .withInsertHandler(SuperCallInsertionHandler)
                 }
             }

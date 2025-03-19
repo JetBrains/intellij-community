@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.actionSystem.*;
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.GroovyLanguage;
 
 public class ExcludeFromStubGenerationAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
 
     assert file != null && file.getLanguage() == GroovyLanguage.INSTANCE;

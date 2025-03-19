@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions.branch
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitBranch
-import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBrancher
@@ -17,11 +16,10 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
-import java.util.*
 
 class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     val description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",
@@ -47,7 +45,7 @@ class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePoint
   private fun checkoutAndRebaseRemote(project: Project, repositories: List<GitRepository>, branch: GitRemoteBranch) {
     val suggestedLocalName = branch.nameForRemoteOperations
 
-    var newBranchOptions: GitNewBranchOptions? = GitNewBranchOptions(suggestedLocalName, false, true)
+    var newBranchOptions: GitNewBranchOptions? = GitNewBranchOptions(suggestedLocalName, false, true, false, repositories)
     // can have remote conflict if git-svn is used  - suggested local name will be equal to selected remote
     if (GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(branch.name, suggestedLocalName)) {
       newBranchOptions = askBranchName(project, repositories, branch, suggestedLocalName)
@@ -55,16 +53,20 @@ class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePoint
     if (newBranchOptions == null) return
 
     val localName = newBranchOptions.name
-    val conflictingLocalBranches = ContainerUtil.map2MapNotNull(repositories) { r: GitRepository ->
+    var selectedRepositories = newBranchOptions.repositories.toList()
+
+    val conflictingLocalBranches = ContainerUtil.map2MapNotNull(selectedRepositories) { r: GitRepository ->
       val local = r.branches.findLocalBranch(localName)
       if (local != null) Pair.create(r, local) else null
     }
     if (hasTrackingConflicts(conflictingLocalBranches, branch.name)) {
-      newBranchOptions = askBranchName(project, repositories, branch, localName)
+      newBranchOptions = askBranchName(project, selectedRepositories, branch, localName)
     }
     if (newBranchOptions == null) return
 
-    val workflow = GitCheckoutAndRebaseRemoteBranchWorkflow(project, repositories)
+    selectedRepositories = newBranchOptions.repositories.toList()
+
+    val workflow = GitCheckoutAndRebaseRemoteBranchWorkflow(project, selectedRepositories)
     workflow.execute(branch.nameForLocalOperations, newBranchOptions)
   }
 

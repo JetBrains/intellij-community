@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.actions.QualifiedNameProviderUtil.qualifiedNameToElement;
@@ -14,6 +15,7 @@ import static com.intellij.ide.actions.QualifiedNameProviderUtil.qualifiedNameTo
  * Handles tooltip links in format {@code #element/qualified.name}.
  * On a click opens specified element in an editor and positions caret to the corresponding offset.
  */
+@ApiStatus.Internal
 public final class ElementLinkHandler extends TooltipLinkHandler {
   @Override
   public boolean handleLink(@NotNull String name, @NotNull Editor editor) {

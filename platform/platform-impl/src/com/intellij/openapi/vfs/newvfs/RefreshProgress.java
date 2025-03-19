@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.Application;
@@ -34,9 +34,7 @@ final class RefreshProgress extends ProgressIndicatorBase {
     Application app = ApplicationManager.getApplication();
     app.invokeLater(() -> {
       var windowManager = WindowManager.getInstance();
-      if (windowManager == null) {
-        return;
-      }
+      if (windowManager == null) return;
 
       for (var frame : windowManager.getAllProjectFrames()) {
         var statusBar = frame.getStatusBar();

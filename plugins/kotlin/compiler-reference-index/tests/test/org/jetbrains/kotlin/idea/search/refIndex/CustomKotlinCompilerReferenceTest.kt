@@ -13,6 +13,7 @@ import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
@@ -31,6 +32,10 @@ import kotlin.reflect.full.declaredMemberFunctions
 
 @SkipSlowTestLocally
 open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
+
     override fun getTestDataPath(): String = KotlinRoot.DIR
         .resolve("compiler-reference-index/tests/testData/")
         .resolve("customCompilerIndexData")

@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.java.analysis` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis",
+  module_name = "intellij.java.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//java/java-psi-api:psi",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "@lib//:kotlin-stdlib",
+    "//uast/uast-common:uast",
+    "//uast/uast-common-ide:ide",
+  ],
+  exports = [
+    "//uast/uast-common:uast",
+    "//uast/uast-common-ide:ide",
+  ],
+  runtime_deps = [":analysis_resources"]
+)
+### auto-generated section `build intellij.java.analysis` end

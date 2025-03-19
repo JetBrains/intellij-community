@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to record class" "true"
 
 /**
  * @param x head doc for x

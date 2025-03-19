@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.java.debugger.memory.agent` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-debugger-memory-agent",
+  module_name = "intellij.java.debugger.memory.agent",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "@lib//:java-debugger-memory-agent-debugger-memory-agent",
+    "@lib//:commons-io",
+    "@lib//:kotlin-stdlib",
+  ]
+)
+### auto-generated section `build intellij.java.debugger.memory.agent` end

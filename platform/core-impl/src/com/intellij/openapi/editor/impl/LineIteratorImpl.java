@@ -16,7 +16,9 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class LineIteratorImpl implements LineIterator {
   private int myLineIndex = 0;
   private final LineSet myLineSet;

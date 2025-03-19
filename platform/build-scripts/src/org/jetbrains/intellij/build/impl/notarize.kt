@@ -12,7 +12,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions.Companion.MAC_NOTARIZE_STEP
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.executeStep
 import java.nio.file.Files
 import java.nio.file.Path
@@ -28,7 +28,7 @@ private val keyId = System.getenv("APPLE_KEY_ID") ?: ""
 private val privateKey = System.getenv("APPLE_PRIVATE_KEY") ?: ""
 private val json = Json { prettyPrint = true }
 
-internal fun useNotaryRestApi() = keyId.isNotBlank() && privateKey.isNotBlank() && issuerId.isNotBlank()
+private fun useNotaryRestApi() = keyId.isNotBlank() && privateKey.isNotBlank() && issuerId.isNotBlank()
 
 internal suspend fun notarize(sitFile: Path, context: BuildContext) {
   context.executeStep(spanBuilder("Notarizing .sit via Notary REST API").setAttribute("sitFile", "$sitFile"), MAC_NOTARIZE_STEP) {

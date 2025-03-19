@@ -6,7 +6,9 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class InlayUnloadingListener : DynamicPluginListener {
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     for (editor in EditorFactory.getInstance().allEditors) {

@@ -52,7 +52,7 @@ public final class MacrosDialog extends DialogWrapper {
                       @NotNull Predicate<? super Macro> filter,
                       @Nullable Map<String, String> userMacros) {
     super(parent, true);
-    myDataContext = DataManager.getInstance().getDataContext(parent);
+    myDataContext = MacroManager.getCorrectContext(DataManager.getInstance().getDataContext(parent));
     init(filter, userMacros);
   }
 
@@ -255,8 +255,7 @@ public final class MacrosDialog extends DialogWrapper {
     return panel;
   }
 
-  @NotNull
-  public static HashMap<String, String> getPathMacros(boolean addModuleMacros) {
+  public static @NotNull HashMap<String, String> getPathMacros(boolean addModuleMacros) {
     final HashMap<String, String> macros = new HashMap<>(PathMacros.getInstance().getUserMacros());
     if (addModuleMacros) {
       macros.put(PathMacroUtil.MODULE_DIR_MACRO_NAME, PathMacros.getInstance().getValue(PathMacroUtil.MODULE_DIR_MACRO_NAME));
@@ -274,6 +273,7 @@ public final class MacrosDialog extends DialogWrapper {
 
     @NotNull String getPreview();
 
+    @Override
     @NotNull String toString();
   }
 
@@ -294,6 +294,7 @@ public final class MacrosDialog extends DialogWrapper {
       return StringUtil.notNullize(myMacro.preview(myDataContext));
     }
 
+    @Override
     public @NotNull String toString() {
       return myMacro.getName() + " - " + myMacro.getDescription();
     }
@@ -316,6 +317,7 @@ public final class MacrosDialog extends DialogWrapper {
       return StringUtil.notNullize(myEntry.getValue(), "$" + getName() + "$");
     }
 
+    @Override
     public @NotNull String toString() {
       return myEntry.getKey();
     }

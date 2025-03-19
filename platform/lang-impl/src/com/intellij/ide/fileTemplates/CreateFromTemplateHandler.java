@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.ide.IdeBundle;
@@ -73,9 +73,7 @@ public interface CreateFromTemplateHandler {
   /**
    * @return command name used in the Undo/Redo UI elements
    */
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  default String commandName(@NotNull FileTemplate template) {
+  default @NotNull @Nls(capitalization = Nls.Capitalization.Title) String commandName(@NotNull FileTemplate template) {
     return IdeBundle.message("command.create.file.from.template");
   }
 }

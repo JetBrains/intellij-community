@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
-import com.intellij.codeInsight.hints.codeVision.ReferencesCodeVisionProvider
+import com.intellij.codeInsight.hints.codeVision.CodeVisionProviderBase
+import com.intellij.codeInsight.hints.codeVision.RenameAwareReferencesCodeVisionProvider
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.java.JavaBundle
 import com.intellij.lang.java.JavaLanguage
@@ -11,21 +12,20 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiTypeParameter
 
-class JavaReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
-  companion object{
-    const val ID = "java.references"
+class JavaReferencesCodeVisionProvider : RenameAwareReferencesCodeVisionProvider() {
+  companion object {
+    const val ID: String = "java.references"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE
 
   override fun acceptsElement(element: PsiElement): Boolean = element is PsiMember && element !is PsiTypeParameter
 
-  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
+  private fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionProviderBase.CodeVisionInfo? {
     val inspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(element)
     if (inspection.isEntryPoint(element)) return null
-    return JavaTelescope.usagesHint(element as PsiMember, file)?.let {
-      CodeVisionInfo(it.hint, it.count)
-    }
+    val usagesHint = JavaTelescope.usagesHint(element as PsiMember, file) ?: return null
+    return CodeVisionProviderBase.CodeVisionInfo(usagesHint.hint, usagesHint.count)
   }
 
   override fun getHint(element: PsiElement, file: PsiFile): String? {

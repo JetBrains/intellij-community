@@ -1,0 +1,108 @@
+### auto-generated section `build intellij.settingsSync.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "settingsSync-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "settingsSync-core",
+  module_name = "intellij.settingsSync.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "@lib//:slf4j-api",
+    "//platform/service-container:serviceContainer",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util/progress",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/statistics",
+    "//platform/workspace/jps",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/observable:ide-observable",
+    "//plugins/git4idea:vcs-git",
+    "//platform/vcs-api:vcs",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
+  ],
+  exports = ["@lib//:jetbrains-intellij-deps-eclipse-jgit"],
+  runtime_deps = [":settingsSync-core_resources"]
+)
+
+jvm_library(
+  name = "settingsSync-core_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":settingsSync-core"],
+  deps = [
+    "//platform/platform-api:ide",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/projectModel-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    "@lib//:slf4j-api",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlin-reflect",
+    "//platform/util/progress",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-test",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/workspace/jps",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:mockito",
+    "//platform/observable:ide-observable",
+    "//plugins/git4idea:vcs-git",
+    "//plugins/git4idea:vcs-git_test_lib",
+    "//platform/vcs-api:vcs",
+    "//platform/dvcs-impl:vcs-dvcs-impl",
+    "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/diff-impl",
+  ],
+  runtime_deps = [":settingsSync-core_resources"]
+)
+
+jvm_test(
+  name = "settingsSync-core_test",
+  runtime_deps = [":settingsSync-core_test_lib"]
+)
+### auto-generated section `build intellij.settingsSync.core` end

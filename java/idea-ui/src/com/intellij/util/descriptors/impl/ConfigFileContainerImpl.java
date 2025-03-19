@@ -5,7 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -30,23 +31,10 @@ public final class ConfigFileContainerImpl extends SimpleModificationTracker imp
     metaDataProvider = descriptorMetaDataProvider;
     this.project = project;
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
-      @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        if (event.getPropertyName().equals(VirtualFile.PROP_NAME)) {
-          fileChanged(event.getFile());
-        }
-      }
-
-      @Override
-      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        fileChanged(event.getFile());
-      }
-    }, this);
     this.configuration.setContainer(this);
   }
 
-  private void fileChanged(VirtualFile file) {
+  void fileChanged(VirtualFile file) {
     for (ConfigFile descriptor : configFiles.values()) {
       VirtualFile virtualFile = descriptor.getVirtualFile();
       if (virtualFile != null && VfsUtilCore.isAncestor(file, virtualFile, false)) {

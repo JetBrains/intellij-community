@@ -4,6 +4,7 @@ package com.intellij.openapi.observable.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.EditorTextComponent
 import com.intellij.ui.hover.HoverListener
 import com.intellij.util.ui.TableViewModel
@@ -11,6 +12,7 @@ import java.awt.Component
 import java.awt.Container
 import java.awt.ItemSelectable
 import java.awt.event.*
+import java.beans.PropertyChangeListener
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.ListModel
@@ -122,5 +124,19 @@ fun Component.addComponentListener(parentDisposable: Disposable? = null, listene
   addComponentListener(listener)
   parentDisposable?.whenDisposed {
     removeComponentListener(listener)
+  }
+}
+
+fun Component.addPropertyChangeListener(propertyName: String, parentDisposable: Disposable? = null, listener: PropertyChangeListener) {
+  addPropertyChangeListener(propertyName, listener)
+  parentDisposable?.whenDisposed {
+    removePropertyChangeListener(listener)
+  }
+}
+
+fun ComponentWithBrowseButton<*>.addActionListener(parentDisposable: Disposable? = null, listener: ActionListener) {
+  addActionListener(listener)
+  parentDisposable?.whenDisposed {
+    removeActionListener(listener)
   }
 }

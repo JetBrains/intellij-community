@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.service.fus.collectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.ApiStatus
  *  3. Record all state collectors with "Record State Collectors to Event Log" action.<br></br>
  * [com.intellij.internal.statistic.devkit.actions.RecordStateStatisticsEventLogAction]
  *
- * For more information see *fus-collectors.md*
+ * For more information see *Fus-Collectors.md*
  *
  * @see ProjectUsagesCollector
  * @see CounterUsagesCollector
@@ -45,19 +45,8 @@ abstract class ApplicationUsagesCollector : FeatureUsagesCollector() {
   }
 
   open suspend fun getMetricsAsync(): Set<MetricEvent> {
-    return getMetrics()
-  }
-
-  companion object {
-    @ApiStatus.Internal
-    val EP_NAME = ExtensionPointName<ApplicationUsagesCollector>("com.intellij.statistics.applicationUsagesCollector")
-
-    internal fun getExtensions(invoker: UsagesCollectorConsumer): Set<ApplicationUsagesCollector> {
-      return getExtensions(invoker, EP_NAME)
-    }
-
-    internal fun getExtensions(invoker: UsagesCollectorConsumer, allowedOnStartupOnly: Boolean): Set<ApplicationUsagesCollector> {
-      return getExtensions(invoker, EP_NAME, allowedOnStartupOnly)
+    return blockingContext {
+      getMetrics()
     }
   }
 }

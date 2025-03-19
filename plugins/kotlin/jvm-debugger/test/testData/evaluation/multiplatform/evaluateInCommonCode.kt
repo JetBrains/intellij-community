@@ -10,8 +10,8 @@ fun bar() {
     foo()
 }
 
-// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1 / line / 1
-// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint2 / line / 1
+// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1
+// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint2
 
 // EXPRESSION: foo()
 // RESULT: 1: I

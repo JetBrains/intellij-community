@@ -1,4 +1,3 @@
-// PROBLEM: none
 fun foo(f: (String?) -> Int) {}
 
 fun test() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing
 
 import com.intellij.execution.*
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,23 +41,26 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.remote.PathMappingProvider
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
-import com.jetbrains.extensions.*
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.extensions.*
 import com.jetbrains.python.packaging.PyPackageManager
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.reflection.DelegationProperty
+import com.jetbrains.python.reflection.Properties
+import com.jetbrains.python.reflection.Property
+import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.reflection.DelegationProperty
-import com.jetbrains.reflection.Properties
-import com.jetbrains.reflection.Property
-import com.jetbrains.reflection.getProperties
+import com.jetbrains.python.sdk.baseDir
+import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
@@ -154,7 +158,7 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
 
 
-private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.let { data ->
+private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData)?.let { data ->
   PathMappingProvider.getSuitableMappingProviders(data).flatMap { it.getPathMappingSettings(project, data).pathMappings }
 } ?: emptyList()
 
@@ -749,12 +753,13 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration>(t
 
 
 internal sealed class PyTestTargetForConfig(val configurationTarget: ConfigurationTarget,
-                                            val workingDirectory: VirtualFile) {
-  class PyTestPathTarget(target: String, workingDirectory: VirtualFile) :
-    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PATH), workingDirectory)
+                                            val workingDirectory: VirtualFile,
+                                            val targetElement: PsiElement) {
+  class PyTestPathTarget(target: String, workingDirectory: VirtualFile, targetElement: PsiElement) :
+    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PATH), workingDirectory, targetElement)
 
-  class PyTestPythonTarget(target: String, workingDirectory: VirtualFile, val namePaths: QualifiedNameParts) :
-    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PYTHON), workingDirectory)
+  class PyTestPythonTarget(target: String, workingDirectory: VirtualFile, val namePaths: QualifiedNameParts, targetElement: PsiElement) :
+    PyTestTargetForConfig(ConfigurationTarget(target, PyRunTargetVariant.PYTHON), workingDirectory, targetElement)
 }
 
 /**
@@ -764,8 +769,8 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   companion object {
     /**
      * Creates [ConfigurationTarget] to make  configuration work with provided element.
-     * Also reports working dir what should be set to configuration to work correctly
-     * @return [target, workingDirectory]
+     * Also reports working dir what should be set to configuration to work correctly and target PsiElement
+     * @return [targetPath, workingDirectory, targetPsiElement]
      */
     internal fun getTargetForConfig(configuration: PyAbstractTestConfiguration,
                                     baseElement: PsiElement): PyTestTargetForConfig? {
@@ -774,32 +779,14 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       // asking configuration about each element if it is supported or not
       // If element is supported -- set it as configuration target
       do {
-        if (configuration.couldBeTestTarget(element)) {
-          when (element) {
-            is PyQualifiedNameOwner -> { // Function, class, method
-
-              val module = configuration.module ?: return null
-
-              val elementFile = element.containingFile as? PyFile ?: return null
-              val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
-              val context = QNameResolveContext(ModuleBasedContextAnchor(module),
-                                                evalContext = TypeEvalContext.userInitiated(configuration.project,
-                                                                                            null),
-                                                folderToStart = workingDirectory.virtualFile)
-              val parts = element.tryResolveAndSplit(context) ?: return null
-              val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-              return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts)
+        val isDoctestApplicable = isDoctestApplicable(element, configuration.module)
+        if (isDoctestApplicable || configuration.couldBeTestTarget(element)) {
+          val target = createPyTestPythonTarget(element, configuration)
+          if (target != null) {
+            if (isDoctestApplicable) {
+              configuration.additionalArguments += DOCTEST_MODULES_ARG
             }
-            is PsiFileSystemItem -> {
-              val virtualFile = element.virtualFile
-
-              val workingDirectory: VirtualFile = when (element) {
-                                                    is PyFile -> getDirectoryForFileToBeImportedFrom(element)?.virtualFile
-                                                    is PsiDirectory -> virtualFile
-                                                    else -> return null
-                                                  } ?: return null
-              return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory)
-            }
+            return target
           }
         }
         element = element.parent ?: break
@@ -808,13 +795,47 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       return null
     }
 
+    private fun createPyTestPythonTarget(element: PsiElement, configuration: PyAbstractTestConfiguration): PyTestTargetForConfig? {
+      when (element) {
+        is PyQualifiedNameOwner -> { // Function, class, method
+
+          val module = configuration.module ?: return null
+
+          val elementFile = element.containingFile as? PyFile ?: return null
+          val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile, module) ?: return null
+          val context = QNameResolveContext(ModuleBasedContextAnchor(module),
+                                            evalContext = TypeEvalContext.userInitiated(configuration.project,
+                                                                                        null),
+                                            folderToStart = workingDirectory.virtualFile)
+          val parts = element.tryResolveAndSplit(context) ?: return null
+          val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
+          return PyTestTargetForConfig.PyTestPythonTarget(qualifiedName.toString(), workingDirectory.virtualFile, parts, element)
+        }
+        is PsiFileSystemItem -> {
+          val virtualFile = element.virtualFile
+
+          val workingDirectory: VirtualFile = when (element) {
+                                                is PyFile -> getDirectoryForFileToBeImportedFrom(element, configuration.module)?.virtualFile
+                                                is PsiDirectory -> virtualFile
+                                                else -> return null
+                                              } ?: return null
+          return PyTestTargetForConfig.PyTestPathTarget(virtualFile.path, workingDirectory, element)
+        }
+        else -> return null
+      }
+    }
+
     /**
      * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
      * Inspect file relative imports, find farthest and return folder with imported file
      */
-    private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+    private fun getDirectoryForFileToBeImportedFrom(file: PyFile, module: Module?): PsiDirectory? {
       getExplicitlyConfiguredTestRoot(file)?.let {
         return PsiManager.getInstance(file.project).findDirectory(it)
+      }
+
+      module?.baseDir?.let {
+        return file.manager.findDirectory(it)
       }
 
       val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
@@ -824,6 +845,32 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       }
       return elementFolder
     }
+
+    private fun isDoctestApplicable(element: PsiElement, module: Module?): Boolean =
+      Registry.`is`("python.run.doctest.via.pytest.configuration") &&
+      TestRunnerService.getInstance(module).selectedFactory is PyTestFactory &&
+      hasDoctestExpression(element)
+
+    private fun hasDoctestExpression(element: PsiElement): Boolean =
+      when (element) {
+        is PyFunction -> {
+          PythonDocTestUtil.isDocTestFunction(element)
+        }
+        is PyClass -> {
+          PythonDocTestUtil.isDocTestClass(element)
+        }
+        is PyFile -> {
+          PythonDocTestUtil.getDocTestCasesFromFile(element).isNotEmpty()
+        }
+        else -> false
+      }
+
+    private fun isDoctestConfiguration(configuration: RunConfiguration): Boolean =
+      configuration.name.contains(DOCTEST_PREFIX) ||
+      (configuration as? PyAbstractTestConfiguration)?.additionalArguments?.contains(DOCTEST_MODULES_ARG) == true
+
+    private const val DOCTEST_MODULES_ARG = "--doctest-modules"
+    private const val DOCTEST_PREFIX = "Doctest via "
   }
 
   override fun getConfigurationFactory() = PythonTestConfigurationType.getInstance().configurationFactories[0]
@@ -841,7 +888,8 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   }
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
-    return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
+    val module = context.module ?: throw IllegalArgumentException("Module should not be null")
+    return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(module))
   }
 
   override fun createConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
@@ -852,10 +900,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
 
   // test configuration is always prefered over regular one
   override fun shouldReplace(self: ConfigurationFromContext,
-                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
+                             other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                         isDoctestConfiguration(self.configuration)
 
   override fun isPreferredConfiguration(self: ConfigurationFromContext?,
-                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration
+                                        other: ConfigurationFromContext): Boolean = other.configuration is PythonRunConfiguration ||
+                                                                                    self?.configuration?.let { isDoctestConfiguration(it) } == true
 
   override fun setupConfigurationFromContext(configuration: PyAbstractTestConfiguration,
                                              context: ConfigurationContext,
@@ -899,6 +949,10 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       }
     }
     configuration.setGeneratedName()
+    if (isDoctestConfiguration(configuration)) {
+      configuration.name = DOCTEST_PREFIX + configuration.name
+    }
+
     return true
   }
 

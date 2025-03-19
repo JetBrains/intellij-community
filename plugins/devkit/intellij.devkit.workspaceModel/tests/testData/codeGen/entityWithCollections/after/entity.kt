@@ -1,37 +1,42 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 
 interface CollectionFieldEntity : WorkspaceEntity {
   val versions: Set<Int>
   val names: List<String>
+  val manifestAttributes: Map<String, String>
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : CollectionFieldEntity, WorkspaceEntity.Builder<CollectionFieldEntity>, ObjBuilder<CollectionFieldEntity> {
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<CollectionFieldEntity> {
     override var entitySource: EntitySource
-    override var versions: MutableSet<Int>
-    override var names: MutableList<String>
+    var versions: MutableSet<Int>
+    var names: MutableList<String>
+    var manifestAttributes: Map<String, String>
   }
 
-  companion object : Type<CollectionFieldEntity, Builder>() {
+  companion object : EntityType<CollectionFieldEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
-    operator fun invoke(versions: Set<Int>,
-                        names: List<String>,
-                        entitySource: EntitySource,
-                        init: (Builder.() -> Unit)? = null): CollectionFieldEntity {
+    operator fun invoke(
+      versions: Set<Int>,
+      names: List<String>,
+      manifestAttributes: Map<String, String>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
       val builder = builder()
       builder.versions = versions.toMutableWorkspaceSet()
       builder.names = names.toMutableWorkspaceList()
+      builder.manifestAttributes = manifestAttributes
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
@@ -41,6 +46,10 @@ interface CollectionFieldEntity : WorkspaceEntity {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: CollectionFieldEntity, modification: CollectionFieldEntity.Builder.() -> Unit) = modifyEntity(
-  CollectionFieldEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyCollectionFieldEntity(
+  entity: CollectionFieldEntity,
+  modification: CollectionFieldEntity.Builder.() -> Unit,
+): CollectionFieldEntity {
+  return modifyEntity(CollectionFieldEntity.Builder::class.java, entity, modification)
+}
 //endregion

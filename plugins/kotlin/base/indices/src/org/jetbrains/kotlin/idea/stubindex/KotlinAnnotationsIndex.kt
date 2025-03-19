@@ -13,13 +13,6 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.HIDDEN)
         val INSTANCE: KotlinAnnotationsIndex = KotlinAnnotationsIndex()
 
-        @JvmStatic
-        @Suppress("DeprecatedCallableAddReplaceWith")
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        fun getInstance(): KotlinAnnotationsIndex {
-            return KotlinAnnotationsIndex()
-        }
-
         override val indexKey: StubIndexKey<String, KtAnnotationEntry> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex")
     }
@@ -28,6 +21,7 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinAnnotationsIndex[key, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
         return Helper[shortName, project, scope]
     }

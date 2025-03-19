@@ -3,7 +3,6 @@ package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -15,8 +14,8 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -36,6 +35,7 @@ class XDebuggerTooltipPopup {
     myPoint = point;
   }
 
+  @Nullable
   JBPopup show(JComponent component, @Nullable EditorMouseEvent editorMouseEvent) {
     BorderLayoutPanel content = JBUI.Panels.simplePanel();
     Color bgColor = HintUtil.getInformationColor();
@@ -76,12 +76,19 @@ class XDebuggerTooltipPopup {
       .createPopup();
 
     //Editor may be disposed before later invokator process this action
-    if (myEditor.getComponent().getRootPane() == null) {
+    if (myEditor.isDisposed()) {
       myPopup.cancel();
       return null;
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
+    hideAndDisableFloatingToolbar(myEditor, myPopup);
     return myPopup;
+  }
+
+  private static void hideAndDisableFloatingToolbar(@NotNull Editor editor, @NotNull JBPopup popup){
+    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (floatingToolbar == null) return;
+    floatingToolbar.hideOnPopupConflict(popup);
   }
 
   private class ShowErrorsAction extends AnAction {
@@ -90,7 +97,7 @@ class XDebuggerTooltipPopup {
     ShowErrorsAction(@Nullable EditorMouseEvent editorMouseEvent) {
       super(XDebuggerBundle.message("xdebugger.show.errors.action.title"));
       // TODO: icon does not switch automatically for some reason for old/new UI
-      getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? ExpUiIcons.Status.ErrorOutline : AllIcons.Ide.FatalErrorRead);
+      getTemplatePresentation().setIcon(AllIcons.Ide.FatalErrorRead);
       setShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION));
       myEditorMouseEvent = editorMouseEvent;
     }

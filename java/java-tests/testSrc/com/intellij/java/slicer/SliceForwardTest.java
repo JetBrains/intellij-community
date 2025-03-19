@@ -17,6 +17,7 @@ package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -26,14 +27,19 @@ import java.util.Collection;
 import java.util.Map;
 
 public class SliceForwardTest extends SliceTestCase {
-  private void dotest() throws Exception {
-    configureByFile("/codeInsight/slice/forward/"+getTestName(false)+".java");
+  @Override
+  protected String getBasePath() {
+    return "/java/java-tests/testData/codeInsight/slice/forward/";
+  }
+
+  private void dotest() {
+    myFixture.configureByFile(getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = SliceTestUtil.extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     PsiElement element = SliceHandler.create(false).getExpressionAtCaret(getEditor(), getFile());
     assertNotNull(element);
     SliceTestUtil.Node tree = SliceTestUtil.buildTree(element, sliceUsageName2Offset);
-    Collection<HighlightInfo> errors = highlightErrors();
+    Collection<HighlightInfo> errors = myFixture.doHighlighting(HighlightSeverity.ERROR);
     assertEmpty(errors);
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
@@ -42,14 +48,14 @@ public class SliceForwardTest extends SliceTestCase {
     SliceTestUtil.checkUsages(usage, tree);
   }
 
-  public void testSimple() throws Exception { dotest();}
-  public void testInterMethod() throws Exception { dotest();}
-  public void testParameters() throws Exception { dotest();}
-  public void testRequireNonNull() throws Exception { dotest();}
-  public void testAppend() throws Exception { dotest();}
-  public void testOverloadedMember() throws Exception { dotest();}
-  public void testOverloadedMember2() throws Exception { dotest();}
-  public void testOverloadedMember3() throws Exception { dotest();}
-  public void testOneInterfaceTwoImplementations() throws Exception { dotest();}
-  public void testOneInterfaceTwoImplementations2() throws Exception { dotest();}
+  public void testSimple() { dotest();}
+  public void testInterMethod() { dotest();}
+  public void testParameters() { dotest();}
+  public void testRequireNonNull() { dotest();}
+  public void testAppend() { dotest();}
+  public void testOverloadedMember() { dotest();}
+  public void testOverloadedMember2() { dotest();}
+  public void testOverloadedMember3() { dotest();}
+  public void testOneInterfaceTwoImplementations() { dotest();}
+  public void testOneInterfaceTwoImplementations2() { dotest();}
 }

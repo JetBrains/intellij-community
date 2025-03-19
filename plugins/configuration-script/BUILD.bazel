@@ -1,0 +1,105 @@
+### auto-generated section `build intellij.configurationScript` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "configurationScript_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "configurationScript",
+  module_name = "intellij.configurationScript",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/analysis-impl",
+    "//json",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/service-container:serviceContainer",
+    "@lib//:snakeyaml-engine",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":configurationScript_resources"]
+)
+
+jvm_library(
+  name = "configurationScript_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":configurationScript"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util-ex",
+    "//platform/analysis-impl",
+    "@lib//:assert_j",
+    "//json",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/workspace/jps",
+    "//platform/execution-impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/extensions:testExtensions",
+    "//plugins/yaml/backend",
+    "//plugins/yaml/backend:backend_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer:objectSerializer_test_lib",
+    "@lib//:jackson",
+    "//platform/service-container:serviceContainer",
+    "//platform/service-container:serviceContainer_test_lib",
+    "@lib//:snakeyaml-engine",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":configurationScript_resources"]
+)
+
+jvm_test(
+  name = "configurationScript_test",
+  runtime_deps = [":configurationScript_test_lib"]
+)
+### auto-generated section `build intellij.configurationScript` end
+
+### auto-generated section `build intellij.configurationScript.test.java` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "configurationScript-test-java",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "configurationScript-test-java_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testJava/**/*.kt", "testJava/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/configuration-script:configurationScript",
+    "//plugins/configuration-script:configurationScript_test_lib",
+    "//java/execution/impl:java-execution-impl",
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:assert_j",
+    "//platform/lang-impl",
+  ]
+)
+
+jvm_test(
+  name = "configurationScript-test-java_test",
+  runtime_deps = [":configurationScript-test-java_test_lib"]
+)
+### auto-generated section `build intellij.configurationScript.test.java` end

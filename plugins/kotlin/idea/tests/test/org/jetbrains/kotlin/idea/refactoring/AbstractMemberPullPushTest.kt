@@ -64,7 +64,7 @@ abstract class AbstractMemberPullPushTest : KotlinLightCodeInsightFixtureTestCas
 
 internal fun markMembersInfo(file: PsiFile) {
     for ((element, info) in file.findElementsByCommentPrefix("// INFO: ")) {
-        val parsedInfo = JsonParser().parse(info).asJsonObject
+        val parsedInfo = JsonParser.parseString(info).asJsonObject
         element.elementInfo = ElementInfo(
             parsedInfo["checked"]?.asBoolean ?: false,
             parsedInfo["toAbstract"]?.asBoolean ?: false

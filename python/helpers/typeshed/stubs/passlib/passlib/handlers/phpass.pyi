@@ -1,5 +1,5 @@
-from _typeshed import Self
 from typing import ClassVar
+from typing_extensions import Self
 
 import passlib.utils.handlers as uh
 
@@ -17,4 +17,4 @@ class phpass(uh.HasManyIdents, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # 
     ident_values: ClassVar[tuple[str, ...]]
     ident_aliases: ClassVar[dict[str, str]]
     @classmethod
-    def from_string(cls: type[Self], hash: str | bytes) -> Self: ...  # type: ignore[override]
+    def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]

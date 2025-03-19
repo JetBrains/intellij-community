@@ -1,19 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiStatement;
+import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class SuppressByJavaCommentFix extends SuppressByCommentFix {
+public class SuppressByJavaCommentFix extends SuppressByCommentModCommandFix {
   public SuppressByJavaCommentFix(@NotNull HighlightDisplayKey key) {
     super(key, PsiStatement.class);
   }
@@ -23,15 +24,9 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   }
 
   @Override
-  @Nullable
-  public PsiElement getContainer(PsiElement context) {
+  public @Nullable PsiElement getContainer(PsiElement context) {
     PsiStatement statement = PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
     return statement != null && JavaLanguage.INSTANCE.equals(statement.getLanguage()) ? statement : null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Override
@@ -40,7 +35,7 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
                                    @NotNull PsiElement container) throws IncorrectOperationException {
     PsiElement declaredElement = getElementToAnnotate(element, container);
     if (declaredElement == null) {
-      WriteCommandAction.runWriteCommandAction(project, null, null, () -> super.createSuppression(project, element, container), container.getContainingFile());
+      super.createSuppression(project, element, container);
     }
     else {
       JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiVariable)declaredElement, myID);
@@ -53,8 +48,12 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
     return super.replaceSuppressionComments(container);
   }
 
-  @Nullable
-  protected PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
+  protected @Nullable PsiElement getElementToAnnotate(@NotNull PsiElement element, @NotNull PsiElement container) {
     return JavaSuppressionUtil.getElementToAnnotate(element, container);
+  }
+
+  @Override
+  public int getPriority() {
+    return 10;
   }
 }

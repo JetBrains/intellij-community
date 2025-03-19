@@ -2,14 +2,12 @@
 package com.intellij.openapi.project
 
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface ProjectCloseListener {
   companion object {
     @Topic.AppLevel
     @JvmField
-    val TOPIC = Topic(ProjectCloseListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
+    val TOPIC: Topic<ProjectCloseListener> = Topic(ProjectCloseListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 
   /**

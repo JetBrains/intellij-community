@@ -22,16 +22,15 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspection {
+public final class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
     return GroovyBundle.message("inspection.message.method.ref.has.too.many.negations", args[0]);
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 

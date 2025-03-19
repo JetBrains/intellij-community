@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -23,10 +25,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -52,19 +53,8 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  static class NullCheckParameter {
-    int myIndex;
-    boolean myNull;
-    boolean myReturnsParameter;
-
-    NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
-      myIndex = index;
-      myNull = aNull;
-      myReturnsParameter = returnsParameter;
-    }
-
-    @Nullable
-    static NullCheckParameter fromCall(PsiMethodCallExpression call) {
+  record NullCheckParameter(int myIndex, boolean myNull, boolean myReturnsParameter) {
+    static @Nullable NullCheckParameter fromCall(PsiMethodCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null || method.isConstructor()) return null;
       if (!JavaMethodContractUtil.isPure(method)) return null;
@@ -75,9 +65,9 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
       if (condition == null) return null;
-      if (firstReturn instanceof ParameterReturnValue) {
+      if (firstReturn instanceof ParameterReturnValue parameterReturnValue) {
         // first contract is like "!null -> param1"; ignore other contracts
-        int index = ((ParameterReturnValue)firstReturn).getParameterNumber();
+        int index = parameterReturnValue.getParameterNumber();
         int nullIndex = condition.getNullCheckedArgument(false).orElse(-1);
         if (nullIndex != index) return null;
         return new NullCheckParameter(nullIndex, false, true);
@@ -96,27 +86,31 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       boolean returnsParameter = false;
       if (contracts.size() == 2) {
         ContractReturnValue returnValue = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
-        if (returnValue instanceof ParameterReturnValue && ((ParameterReturnValue)returnValue).getParameterNumber() == nullIndex) {
+        if (returnValue instanceof ParameterReturnValue result && result.getParameterNumber() == nullIndex) {
           returnsParameter = true;
         } else {
           return null;
         }
       }
+      if (!returnsParameter && !PsiTypes.voidType().equals(method.getReturnType())) {
+        // Method returns something that differs from the parameter: it's not a simple null-check method.
+        // If its result is nevertheless not used, then it's a job of IgnoreResultOfCallInspection to 
+        // report it.
+        return null;
+      }
       return new NullCheckParameter(nullIndex, isNull, returnsParameter);
     }
   }
 
-  public static class RemoveExcessiveNullComparisonFix implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+  public static class RemoveExcessiveNullComparisonFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.null.check.fix.notnull.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression arg = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpression arg = ObjectUtils.tryCast(element, PsiExpression.class);
       if (arg == null) return;
       PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(arg, false);
       if (comparedToNull == null) return;
@@ -124,17 +118,14 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
   }
 
-  public static class RemoveNullCheckFix implements LocalQuickFix {
-    @Nls
-    @NotNull
+  public static class RemoveNullCheckFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.redundant.null.check.fix.family.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement startElement = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiElement parent = call.getParent();

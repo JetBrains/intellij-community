@@ -1,0 +1,25 @@
+LineBreakpoint created at stepIntoInlineSamWithParameterDestructuring.kt:17
+Run Java
+Connected to the target VM
+stepIntoInlineSamWithParameterDestructuring.kt:17
+stepIntoInlineSamWithParameterDestructuring.kt:31
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+KotlinStackFrame (stepIntoInlineSamWithParameterDestructuring.kt:31)
+    JavaValue[local] c: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:22)
+    JavaValue[local] d: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:23)
+    JavaValue[local] i: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:26)
+    JavaValue[local] a: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:21)
+    JavaValue[local] b: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:21)
+    JavaValue[local] e: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:23)
+    JavaValue[local] f: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:24)
+    JavaValue[local] g: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:24)
+    JavaValue[local] h: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:25)
+    JavaValue[local] j: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:27)
+    JavaValue[local] k: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:27)
+    JavaValue[local] l: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:28)
+    JavaValue[local] m: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:29)
+    JavaValue[local] n: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:30)
+    JavaValue[local] o: int = 1 (stepIntoInlineSamWithParameterDestructuring.kt:30)
+Disconnected from the target VM
+
+Process finished with exit code 0

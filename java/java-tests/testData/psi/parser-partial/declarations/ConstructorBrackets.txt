@@ -11,7 +11,7 @@ PsiJavaFile:ConstructorBrackets.java
       PsiJavaToken:LPARENTH('(')
       PsiJavaToken:RPARENTH(')')
     PsiWhiteSpace(' ')
-    PsiErrorElement:';' expected
+    PsiErrorElement:'{' expected
       PsiJavaToken:LBRACKET('[')
       PsiJavaToken:RBRACKET(']')
     PsiReferenceList

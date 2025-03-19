@@ -3,12 +3,11 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
+import org.jetbrains.plugins.gradle.tooling.Message
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
-import java.lang.Exception
 
 interface KotlinMPPGradleModelBinary : Serializable {
     val data: ByteArray
@@ -37,9 +36,13 @@ class KotlinMPPGradleModelBinaryBuilder : AbstractModelBuilderService() {
         return KotlinMPPGradleModelBinaryImpl(serializedModel)
     }
 
-    override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
-        return ErrorMessageBuilder
-            .create(project, e, "Gradle import errors")
-            .withDescription("Unable to build Kotlin project configuration")
+    override fun reportErrorMessage(modelName: String, project: Project, context: ModelBuilderContext, exception: Exception) {
+        context.messageReporter.createMessage()
+            .withGroup(this)
+            .withKind(Message.Kind.WARNING)
+            .withTitle("Gradle import errors")
+            .withText("Unable to build Kotlin project configuration")
+            .withException(exception)
+            .reportMessage(project)
     }
 }

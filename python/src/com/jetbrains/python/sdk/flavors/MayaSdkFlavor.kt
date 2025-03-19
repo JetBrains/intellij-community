@@ -8,13 +8,8 @@ import java.io.File
 class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty>  = PyFlavorData.Empty::class.java
 
-  override fun isValidSdkHome(path: String): Boolean {
-    val file = File(path)
-    return file.isFile && isValidSdkPath(file) || isMayaFolder(file)
-  }
-
-  override fun isValidSdkPath(file: File): Boolean {
-    val name = FileUtil.getNameWithoutExtension(file).toLowerCase()
+  override fun isValidSdkPath(pathStr: String): Boolean {
+    val name = FileUtil.getNameWithoutExtension(pathStr).lowercase()
     return name.startsWith("mayapy")
   }
 

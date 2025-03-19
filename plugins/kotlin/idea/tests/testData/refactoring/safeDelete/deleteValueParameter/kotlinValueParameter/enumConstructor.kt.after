@@ -1,0 +1,7 @@
+enum class En() {
+    A(),
+    B(),
+    C();
+}
+
+// IGNORE_K1

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.ASTNode;
@@ -38,7 +38,7 @@ import java.util.List;
  * <b>myBundle.properties</b>:
  * {@code extract.name=Extract +method+ name to +interface+ +I.java+}</pre>
  */
-public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
+public final class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     if (!PropertiesFoldingSettings.getInstance().isFoldPlaceholdersToContext()) {
@@ -59,8 +59,7 @@ public class ResourceBundleContextFoldingBuilder extends FoldingBuilderEx {
     ReferencesSearch.search(property.getPsiElement()).forEach((PsiReference reference) -> !tryToFoldReference(reference, property, result)),
       getOrCreateIndicator());
   }
-  @NotNull
-  private static ProgressIndicator getOrCreateIndicator() {
+  private static @NotNull ProgressIndicator getOrCreateIndicator() {
     ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progress == null) {
       progress = new EmptyProgressIndicator();

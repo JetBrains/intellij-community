@@ -1,0 +1,39 @@
+### auto-generated section `build kotlin.completion.impl.shared` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_library(
+  name = "kotlin-completion-impl-shared",
+  module_name = "kotlin.completion.impl.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/completion/api:kotlin-completion-api",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/formatter",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//java/java-impl:impl",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+  ]
+)
+### auto-generated section `build kotlin.completion.impl.shared` end

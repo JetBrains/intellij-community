@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,8 +71,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     return null;
   }
 
-  @NotNull
-  private static String checkImports(@NotNull VirtualFile file, @NotNull Module module) {
+  private static @NotNull String checkImports(@NotNull VirtualFile file, @NotNull Module module) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     final PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(file);
     if (psiFile instanceof PyFile) {
@@ -88,8 +87,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     return "";
   }
 
-  @Nullable
-  private static @NonNls String findSdkByPackage(@NotNull String packageToFind) {
+  private static @Nullable @NonNls String findSdkByPackage(@NotNull String packageToFind) {
     for (var factory : PythonTestConfigurationType.getInstance().getTypedFactories()) {
       var packageRequired = factory.getPackageRequired();
       if (packageRequired != null && packageRequired.equals(packageToFind)) {
@@ -99,8 +97,7 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
     return null;
   }
 
-  @NotNull
-  private static String detectTestRunnerFromSetupPy(@NotNull Module module) {
+  private static @NotNull String detectTestRunnerFromSetupPy(@NotNull Module module) {
     final PyCallExpression setupCall = PyPackageUtil.findSetupCall(module);
     if (setupCall == null) return "";
     for (String argumentName : Arrays.asList("test_loader", "test_suite")) {

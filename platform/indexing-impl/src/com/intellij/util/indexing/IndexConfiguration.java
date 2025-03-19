@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -8,15 +8,14 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-final class IndexConfiguration {
+@ApiStatus.Internal
+public final class IndexConfiguration {
   private final Int2ObjectMap<Pair<UpdatableIndex<?, ?, FileContent, ?>, FileBasedIndex.InputFilter>> myIndices =
     new Int2ObjectOpenHashMap<>();
   private final Int2ObjectMap<Throwable> myInitializationProblems = new Int2ObjectOpenHashMap<>();
@@ -26,7 +25,8 @@ final class IndexConfiguration {
   private final Map<FileType, List<ID<?, ?>>> myFileType2IndicesWithFileTypeInfoMap = CollectionFactory.createSmallMemoryFootprintMap();
   private volatile boolean myFreezed;
 
-  @Nullable <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(@NotNull ID<K, V> indexId) {
+  @ApiStatus.Internal
+  public @Nullable <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(@NotNull ID<K, V> indexId) {
     assert myFreezed;
     final Pair<UpdatableIndex<?, ?, FileContent, ?>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId.getUniqueId());
 
@@ -35,12 +35,13 @@ final class IndexConfiguration {
   }
 
   @Nullable
-  Throwable getInitializationProblem(@NotNull ID<?, ?> indexId) {
+  @ApiStatus.Internal
+  public Throwable getInitializationProblem(@NotNull ID<?, ?> indexId) {
     return myInitializationProblems.get(indexId.getUniqueId());
   }
 
-  @NotNull
-  FileBasedIndex.InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
+  @ApiStatus.Internal
+  public @NotNull FileBasedIndex.InputFilter getInputFilter(@NotNull ID<?, ?> indexId) {
     assert myFreezed;
     final Pair<UpdatableIndex<?, ?, FileContent, ?>, FileBasedIndex.InputFilter> pair = myIndices.get(indexId.getUniqueId());
 
@@ -49,11 +50,13 @@ final class IndexConfiguration {
     return pair.getSecond();
   }
 
-  void freeze() {
+  @ApiStatus.Internal
+  public void freeze() {
     myFreezed = true;
   }
 
-  void registerIndexInitializationProblem(@NotNull ID<?, ?> indexId, @NotNull Throwable problemTrace) {
+  @ApiStatus.Internal
+  public void registerIndexInitializationProblem(@NotNull ID<?, ?> indexId, @NotNull Throwable problemTrace) {
     assert !myFreezed;
 
     synchronized (myInitializationProblems) {
@@ -61,17 +64,18 @@ final class IndexConfiguration {
     }
   }
 
-  <K, V> void registerIndex(@NotNull ID<K, V> indexId,
+  @ApiStatus.Internal
+  public <K, V> void registerIndex(@NotNull ID<K, V> indexId,
                             @NotNull UpdatableIndex<K, V, FileContent, ?> index,
                             @NotNull FileBasedIndex.InputFilter inputFilter,
-                            int version,
-                            @Nullable Collection<? extends FileType> associatedFileTypes) {
+                            int version) {
     assert !myFreezed;
 
     synchronized (myIndices) {
       myIndexIds.add(indexId);
       myIndexIdToVersionMap.put(indexId, version);
 
+      Collection<FileType> associatedFileTypes = getAssociatedFileTypes(inputFilter);
       if (associatedFileTypes != null) {
         for (FileType fileType : associatedFileTypes) {
           List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.computeIfAbsent(fileType, __ -> new ArrayList<>(5));
@@ -90,15 +94,30 @@ final class IndexConfiguration {
     }
   }
 
-  @NotNull
-  List<ID<?, ?>> getFileTypesForIndex(@NotNull FileType fileType) {
+  private static @Nullable Collection<FileType> getAssociatedFileTypes(@NotNull FileBasedIndex.InputFilter inputFilter) {
+    Set<FileType> addedTypes;
+    if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
+      addedTypes = new HashSet<>();
+      ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
+        if (type != null) addedTypes.add(type);
+      });
+    }
+    else {
+      addedTypes = null;
+    }
+    return addedTypes;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull List<ID<?, ?>> getFileTypesForIndex(@NotNull FileType fileType) {
     assert myFreezed;
     List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.get(fileType);
     if (ids == null) ids = myIndicesWithoutFileTypeInfo;
     return ids;
   }
 
-  void finalizeFileTypeMappingForIndices() {
+  @ApiStatus.Internal
+  public void finalizeFileTypeMappingForIndices() {
     assert !myFreezed;
     synchronized (myIndices) {
       for (List<ID<?, ?>> value : myFileType2IndicesWithFileTypeInfoMap.values()) {
@@ -107,13 +126,14 @@ final class IndexConfiguration {
     }
   }
 
-  @NotNull
-  Collection<ID<?, ?>> getIndexIDs() {
+  @ApiStatus.Internal
+  public @NotNull Collection<ID<?, ?>> getIndexIDs() {
     assert myFreezed;
     return myIndexIds;
   }
 
-  int getIndexVersion(@NotNull ID<?, ?> id) {
+  @ApiStatus.Internal
+  public int getIndexVersion(@NotNull ID<?, ?> id) {
     assert myFreezed;
     return myIndexIdToVersionMap.getInt(id);
   }

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.shortenRefs;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/constructor")
     public static class Constructor extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -110,6 +117,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/imports")
     public static class Imports extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -133,8 +146,24 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/java")
     public static class Java extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("filteredClassImport.kt")
+        public void testFilteredClassImport() throws Exception {
+            runTest("testData/shortenRefs/java/filteredClassImport.kt");
+        }
+
+        @TestMetadata("filteredClassNoImports.kt")
+        public void testFilteredClassNoImports() throws Exception {
+            runTest("testData/shortenRefs/java/filteredClassNoImports.kt");
         }
 
         @TestMetadata("innerClassImport.kt")
@@ -196,6 +225,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/kt21515")
     public static class Kt21515 extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -234,6 +269,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/this")
     public static class This extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -282,6 +323,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/type")
     public static class Type extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -385,6 +432,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/typealias")
     public static class Typealias extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -413,6 +466,12 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs")
     public static class Uncategorized extends AbstractShortenRefsTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
 /**
  * Enumerates formatting processing states.
  */
+@ApiStatus.Internal
 public enum FormattingStateId {
 
   /**
@@ -66,8 +68,7 @@ public enum FormattingStateId {
   /**
    * @return    collection of formatting states that are assumed to be executed prior to the current one
    */
-  @NotNull
-  public Set<FormattingStateId> getPreviousStates() {
+  public @NotNull Set<FormattingStateId> getPreviousStates() {
     Set<FormattingStateId> result = EnumSet.noneOf(FormattingStateId.class);
     for (FormattingStateId state : values()) {
       if (state == this) {

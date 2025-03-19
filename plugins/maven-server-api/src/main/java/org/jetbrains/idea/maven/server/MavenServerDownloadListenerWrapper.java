@@ -1,8 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
@@ -18,8 +18,7 @@ public class MavenServerDownloadListenerWrapper extends MavenRemoteObject
   }
 
   @Override
-  @Nullable
-  public List<DownloadArtifactEvent> pull() {
+  public @NotNull List<DownloadArtifactEvent> pull() {
     return MavenRemotePullUtil.pull(myPullingQueue);
   }
 }

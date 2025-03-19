@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.PlaceInGrid
-import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -17,16 +17,17 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.content.Content
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerManagerListener
-import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DebuggerConnection(
     val project: Project,
@@ -59,6 +60,7 @@ class DebuggerConnection(
     }
 
     override fun processStarted(debugProcess: XDebugProcess) {
+        if (XDebugSessionProxy.useFeProxy()) return // TODO IDEA-368739
         DebuggerInvocationUtil.swingInvokeLater(project) {
             val session = debugProcess.session
             if (debugProcess is JavaDebugProcess &&
@@ -74,10 +76,10 @@ class DebuggerConnection(
     }
 
     private fun coroutinePanelIsRegistered(session: XDebugSession): Boolean {
-        val ui = session.ui.safeAs<RunnerLayoutUiImpl>() ?: return false
-        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return false
+        val ui = session.ui as? RunnerLayoutUiImpl ?: return false
+        val contentUi = ui.contentUI
         val content = invokeAndWaitIfNeeded {
-            runnerContentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
+            contentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
         }
         return content != null
     }
@@ -95,6 +97,20 @@ class DebuggerConnection(
         val framesContent: Content = createContent(ui, coroutineThreadView)
         framesContent.isCloseable = false
         ui.addContent(framesContent, 0, PlaceInGrid.right, true)
+        ui.addListener(object : ContentManagerListener {
+            override fun selectionChanged(event: ContentManagerEvent) {
+                val content = event.content
+                if (content == framesContent && content.isSelected) {
+                    val suspendContext = session.suspendContext
+                    if (suspendContext is SuspendContextImpl) {
+                        coroutineThreadView.renewRoot(suspendContext)
+                    }
+                    else {
+                        coroutineThreadView.resetRoot()
+                    }
+                }
+            }
+        }, this)
         session.addSessionListener(coroutineThreadView.debugSessionListener(session))
         session.rebuildViews()
         return coroutineThreadView

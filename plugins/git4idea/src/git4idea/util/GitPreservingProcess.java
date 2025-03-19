@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
@@ -20,6 +19,7 @@ import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag;
 import static git4idea.GitNotificationIdsHolder.COULD_NOT_SAVE_UNCOMMITTED_CHANGES;
@@ -40,17 +39,17 @@ public class GitPreservingProcess {
 
   private static final Logger LOG = Logger.getInstance(GitPreservingProcess.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final Git myGit;
-  @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
-  @NotNull private final @Nls String myOperationTitle;
-  @NotNull private final @Nls String myDestinationName;
-  @NotNull private final ProgressIndicator myProgressIndicator;
-  @NotNull private final Runnable myOperation;
-  @NotNull private final @Nls String myStashMessage;
-  @NotNull private final GitChangesSaver mySaver;
+  private final @NotNull Project myProject;
+  private final @NotNull Git myGit;
+  private final @NotNull Collection<? extends VirtualFile> myRootsToSave;
+  private final @NotNull @Nls String myOperationTitle;
+  private final @NotNull @Nls String myDestinationName;
+  private final @NotNull ProgressIndicator myProgressIndicator;
+  private final @NotNull Runnable myOperation;
+  private final @NotNull @Nls String myStashMessage;
+  private final @NotNull GitChangesSaver mySaver;
 
-  @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
+  private final @NotNull AtomicBoolean myLoaded = new AtomicBoolean();
 
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
@@ -59,6 +58,19 @@ public class GitPreservingProcess {
                               @Nls @NotNull String destinationName,
                               @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
+                              @NotNull Runnable operation) {
+    this(project, git, rootsToSave, operationTitle, destinationName, saveMethod, indicator, true, operation);
+  }
+
+  @ApiStatus.Internal
+  public GitPreservingProcess(@NotNull Project project,
+                              @NotNull Git git,
+                              @NotNull Collection<? extends VirtualFile> rootsToSave,
+                              @Nls @NotNull String operationTitle,
+                              @Nls @NotNull String destinationName,
+                              @NotNull GitSaveChangesPolicy saveMethod,
+                              @NotNull ProgressIndicator indicator,
+                              boolean reportLocalHistoryActivity,
                               @NotNull Runnable operation) {
     myProject = project;
     myGit = git;
@@ -72,14 +84,14 @@ public class GitPreservingProcess {
       StringUtil.capitalize(myOperationTitle),
       DateFormatUtil.formatDateTime(Clock.getTime())
     );
-    mySaver = configureSaver(saveMethod);
+    mySaver = configureSaver(saveMethod, reportLocalHistoryActivity);
   }
 
   public void execute() {
     execute(null);
   }
 
-  public void execute(@Nullable final Computable<Boolean> autoLoadDecision) {
+  public void execute(final @Nullable Computable<Boolean> autoLoadDecision) {
     Runnable operation = () -> {
       boolean savedSuccessfully = ProgressManager.getInstance().computeInNonCancelableSection(() -> save());
       LOG.debug("save result: " + savedSuccessfully);
@@ -95,7 +107,7 @@ public class GitPreservingProcess {
             ProgressManager.getInstance().executeNonCancelableSection(() -> load());
           }
           else {
-            mySaver.notifyLocalChangesAreNotRestored();
+            mySaver.notifyLocalChangesAreNotRestored(myOperationTitle);
           }
         }
       }
@@ -108,13 +120,11 @@ public class GitPreservingProcess {
   /**
    * Configures the saver: i.e. notifications and texts for the GitConflictResolver used inside.
    */
-  @NotNull
-  private GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod) {
-    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
+  private @NotNull GitChangesSaver configureSaver(@NotNull GitSaveChangesPolicy saveMethod, boolean reportLocalHistoryActivity) {
+    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod, reportLocalHistoryActivity);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
-      @NotNull
       @Override
-      public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+      public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
         return wrapInHtml(
           GitBundle.message(
             "restore.conflict.dialog.description.label.text",
@@ -124,18 +134,16 @@ public class GitPreservingProcess {
         );
       }
 
-      @NotNull
       @Override
-      public String getLeftPanelTitle(@NotNull VirtualFile file) {
+      public @NotNull String getLeftPanelTitle(@NotNull VirtualFile file) {
         return saveMethod.selectBundleMessage(
           GitBundle.message("restore.conflict.diff.dialog.left.stash.title"),
           GitBundle.message("restore.conflict.diff.dialog.left.shelf.title")
         );
       }
 
-      @NotNull
       @Override
-      public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
+      public @NotNull String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
         return wrapInHtml(GitBundle.message("restore.conflict.diff.dialog.right.title", wrapInHtmlTag(myDestinationName, "b")));
       }
     };
@@ -153,20 +161,17 @@ public class GitPreservingProcess {
    * Saves local changes. In case of error shows a notification and returns false.
    */
   private boolean save() {
-    try {
-      mySaver.saveLocalChanges(myRootsToSave);
+    String errorMessage = mySaver.saveLocalChangesOrError(myRootsToSave);
+    if (errorMessage == null) {
       return true;
-    } catch (VcsException e) {
-      LOG.info("Couldn't save local changes", e);
-      VcsNotifier.getInstance(myProject).notifyError(
-        COULD_NOT_SAVE_UNCOMMITTED_CHANGES, GitBundle.message("save.notification.failed.title"),
-        mySaver.getSaveMethod().selectBundleMessage(
-          GitBundle.message("save.notification.failed.stash.text", myOperationTitle, join(e.getMessages())),
-          GitBundle.message("save.notification.failed.shelf.text", myOperationTitle, join(e.getMessages()))
-        )
-      );
-      return false;
     }
+
+    VcsNotifier.getInstance(myProject).notifyError(
+      COULD_NOT_SAVE_UNCOMMITTED_CHANGES,
+      GitBundle.message("save.notification.failed.title", myOperationTitle),
+      errorMessage
+    );
+    return false;
   }
 
   public void load() {

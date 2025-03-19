@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.IdeTooltipManager;
@@ -30,7 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 final class PsiBreadcrumbs extends Breadcrumbs {
-  private final static Logger LOG = Logger.getInstance(PsiBreadcrumbs.class);
+  private static final Logger LOG = Logger.getInstance(PsiBreadcrumbs.class);
   private final Map<Crumb, Promise<String>> scheduledTooltipTasks = new HashMap<>();
   boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
 
@@ -64,9 +64,8 @@ final class PsiBreadcrumbs extends Breadcrumbs {
     return super.getBackground();
   }
 
-  @Nullable
   @Override
-  public String getToolTipText(MouseEvent event) {
+  public @Nullable String getToolTipText(MouseEvent event) {
     if (hovered == null) {
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework.actions;
 
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
-  @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
+  public static final @NonNls String ACTION_ID = "openAssertEqualsDiff";
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -29,7 +29,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     if (!e.getPresentation().isVisible()) {
       return;
     }
@@ -58,9 +58,8 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     return true;
   }
 
-  @NotNull
-  public static ListSelection<DiffHyperlink> showDiff(@NotNull AbstractTestProxy testProxy,
-                                                      @Nullable TestFrameworkRunningModel model) {
+  public static @NotNull ListSelection<DiffHyperlink> showDiff(@NotNull AbstractTestProxy testProxy,
+                                                               @Nullable TestFrameworkRunningModel model) {
     final List<DiffHyperlink> providers = collectAvailableProviders(model);
 
     DiffHyperlink diffViewerProvider = testProxy.getLeafDiffViewerProvider();
@@ -82,7 +81,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (e.getProject() == null) {
       presentation.setEnabledAndVisible(false);

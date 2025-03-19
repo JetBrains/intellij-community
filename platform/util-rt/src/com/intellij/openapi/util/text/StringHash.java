@@ -128,7 +128,8 @@ public final class StringHash {
     if (arg == null) return 0;
     long h = initialHash;
     for (int i = 0; i < arg.length(); ++i) {
-      h = (h << 1) ^ (h >>> 63) ^ mixMaster[(arg.charAt(i) ^ (arg.charAt(i) >>> 8)) & 0xff];
+      char ch = arg.charAt(i);
+      h = (h << 1) ^ (h >>> 63) ^ mixMaster[(ch ^ (ch >>> 8)) & 0xff];
     }
     return h;
   }

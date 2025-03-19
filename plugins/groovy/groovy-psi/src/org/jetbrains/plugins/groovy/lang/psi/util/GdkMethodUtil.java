@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.*;
@@ -51,25 +51,25 @@ public final class GdkMethodUtil {
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
   );
-  @NlsSafe private static final String WITH = "with";
-  @NlsSafe private static final String IDENTITY = "identity";
-  @NlsSafe private static final String TAP = "tap";
+  private static final @NlsSafe String WITH = "with";
+  private static final @NlsSafe String IDENTITY = "identity";
+  private static final @NlsSafe String TAP = "tap";
 
-  @NlsSafe public static final String EACH_WITH_INDEX = "eachWithIndex";
-  @NlsSafe public static final String INJECT = "inject";
-  @NlsSafe public static final String EACH_PERMUTATION = "eachPermutation";
-  @NlsSafe public static final String WITH_DEFAULT = "withDefault";
-  @NlsSafe public static final String SORT = "sort";
-  @NlsSafe public static final String WITH_STREAM = "withStream";
-  @NlsSafe public static final String WITH_STREAMS = "withStreams";
-  @NlsSafe public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
+  public static final @NlsSafe String EACH_WITH_INDEX = "eachWithIndex";
+  public static final @NlsSafe String INJECT = "inject";
+  public static final @NlsSafe String EACH_PERMUTATION = "eachPermutation";
+  public static final @NlsSafe String WITH_DEFAULT = "withDefault";
+  public static final @NlsSafe String SORT = "sort";
+  public static final @NlsSafe String WITH_STREAM = "withStream";
+  public static final @NlsSafe String WITH_STREAMS = "withStreams";
+  public static final @NlsSafe String WITH_OBJECT_STREAMS = "withObjectStreams";
 
   private static final Map<String, String> AST_TO_EXPR_MAPPER =
-    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", "groovy.lang.Closure",
-           "org.codehaus.groovy.ast.expr.ListExpression", "java.util.List",
-           "org.codehaus.groovy.ast.expr.MapExpression", "java.util.Map",
-           "org.codehaus.groovy.ast.expr.TupleExpression", "groovy.lang.Tuple",
-           "org.codehaus.groovy.ast.expr.MethodCallExpression", "java.lang.Object");
+    Map.of("org.codehaus.groovy.ast.expr.ClosureExpression", GroovyCommonClassNames.GROOVY_LANG_CLOSURE,
+           "org.codehaus.groovy.ast.expr.ListExpression", CommonClassNames.JAVA_UTIL_LIST,
+           "org.codehaus.groovy.ast.expr.MapExpression", CommonClassNames.JAVA_UTIL_MAP,
+           "org.codehaus.groovy.ast.expr.TupleExpression", GroovyCommonClassNames.GROOVY_LANG_TUPLE,
+           "org.codehaus.groovy.ast.expr.MethodCallExpression", CommonClassNames.JAVA_LANG_OBJECT);
 
   private static final String MACRO_ORIGIN_INFO = "Macro method";
 
@@ -84,13 +84,13 @@ public final class GdkMethodUtil {
    */
   public static boolean processCategoryMethods(final PsiElement place,
                                                final PsiScopeProcessor processor,
-                                               @NotNull final ResolveState state,
-                                               @NotNull final PsiClass categoryClass) {
+                                               final @NotNull ResolveState state,
+                                               final @NotNull PsiClass categoryClass) {
     for (final PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
       final PsiScopeProcessor delegate = new DelegatingScopeProcessor(each) {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState delegateState) {
-          if (element instanceof PsiMethod method && isCategoryMethod((PsiMethod)element, null, null, null)) {
+          if (element instanceof PsiMethod method && isCategoryMethod(method, null, null, null)) {
             return each.execute(GrGdkMethodImpl.createGdkMethod(method, false, generateOriginInfo(method)), delegateState);
           }
           return true;
@@ -124,9 +124,7 @@ public final class GdkMethodUtil {
     return WITH.equals(name) || IDENTITY.equals(name) || TAP.equals(name);
   }
 
-  @Nullable
-  @NonNls
-  public static String generateOriginInfo(PsiMethod method) {
+  public static @Nullable @NonNls String generateOriginInfo(PsiMethod method) {
     PsiClass cc = method.getContainingClass();
     if (cc == null) return null;
     //'\u2191'
@@ -174,11 +172,10 @@ public final class GdkMethodUtil {
     return true;
   }
 
-  @NotNull
-  private static GrMethod createMethod(@NotNull CallSignature<?> signature,
-                                       @NotNull String name,
-                                       @NotNull GrAssignmentExpression statement,
-                                       @NotNull PsiClass closure) {
+  private static @NotNull GrMethod createMethod(@NotNull CallSignature<?> signature,
+                                                @NotNull String name,
+                                                @NotNull GrAssignmentExpression statement,
+                                                @NotNull PsiClass closure) {
     final GrLightMethodBuilder builder = new GrLightMethodBuilder(statement.getManager(), name);
 
     int i = 0;
@@ -203,8 +200,7 @@ public final class GdkMethodUtil {
     ));
   }
 
-  @Nullable
-  private static Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>> doGetClosureMixins(@NotNull GrAssignmentExpression assignment) {
+  private static @Nullable Trinity<PsiClassType, GrReferenceExpression, List<GrMethod>> doGetClosureMixins(@NotNull GrAssignmentExpression assignment) {
     // Integer.class.metaClass.foo = {}
     final GrExpression lValue = assignment.getLValue(); // Integer.class.metaClass.foo
     if (!(lValue instanceof GrReferenceExpression)) {
@@ -262,8 +258,7 @@ public final class GdkMethodUtil {
   record MixinInfo(PsiClassType subjectType, GrReferenceExpression ref, PsiClass mixin) {
   }
 
-  @Nullable
-  private static MixinInfo getMixinTypes(final GrStatement statement) {
+  private static @Nullable MixinInfo getMixinTypes(final GrStatement statement) {
     if (!(statement instanceof GrMethodCall)) return null;
 
     return CachedValuesManager.getCachedValue(statement, () -> {
@@ -280,8 +275,7 @@ public final class GdkMethodUtil {
     });
   }
 
-  @Nullable
-  private static PsiClass getTypeToMix(GrMethodCall call) {
+  private static @Nullable PsiClass getTypeToMix(GrMethodCall call) {
     if (!isSingleExpressionArg(call)) return null;
 
     GrExpression mixinRef = call.getExpressionArguments()[0];
@@ -305,8 +299,7 @@ public final class GdkMethodUtil {
            !call.hasClosureArguments();
   }
 
-  @Nullable
-  private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
+  private static @Nullable Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression referenceExpression)) return null;
     if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
@@ -373,8 +366,7 @@ public final class GdkMethodUtil {
    * Integer.mixin(Foo)
    * Integer.class.mixin(Foo)
    */
-  @Nullable
-  private static Pair<PsiClassType, GrReferenceExpression> getPsiClassFromReference(@Nullable GrExpression ref) {
+  private static @Nullable Pair<PsiClassType, GrReferenceExpression> getPsiClassFromReference(@Nullable GrExpression ref) {
     if (ref == null) return null;
 
     final PsiType type = unwrapClassType(ref.getType());
@@ -424,16 +416,14 @@ public final class GdkMethodUtil {
     return TypesUtil.isAssignableByMethodCallConversion(selfType, qualifierType, method);
   }
 
-  @Nullable
-  public static PsiClassType getCategoryType(@NotNull final PsiClass categoryAnnotationOwner) {
+  public static @Nullable PsiClassType getCategoryType(final @NotNull PsiClass categoryAnnotationOwner) {
     return CachedValuesManager.getCachedValue(categoryAnnotationOwner, new CachedValueProvider<>() {
       @Override
       public Result<PsiClassType> compute() {
         return Result.create(inferCategoryType(categoryAnnotationOwner), PsiModificationTracker.MODIFICATION_COUNT);
       }
 
-      @Nullable
-      private PsiClassType inferCategoryType(final PsiClass aClass) {
+      private static @Nullable PsiClassType inferCategoryType(final PsiClass aClass) {
         return RecursionManager.doPreventingRecursion(aClass, true, (NullableComputable<PsiClassType>)() -> {
           final PsiModifierList modifierList = aClass.getModifierList();
           if (modifierList == null) return null;

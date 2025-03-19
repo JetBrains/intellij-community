@@ -8,14 +8,18 @@ UFile (package = ) [public final class Cls : <ErrorType> {...]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UParameter (name = b) [@org.jetbrains.annotations.NotNull var b: long]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] = external <anonymous class>(a, a, a)(Undetermined, Undetermined, Undetermined)
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3)) [<anonymous class>(a, a, a)] = external <anonymous class>(a, a, a)(Undetermined, Undetermined, Undetermined)
+            UBlockExpression [{...}] = external UIdentifier (Identifier (this))(a, a, a)(Undetermined, Undetermined, Undetermined)
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [UIdentifier (Identifier (this))(a, a, a)] = external UIdentifier (Identifier (this))(a, a, a)(Undetermined, Undetermined, Undetermined)
                     UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
-                    USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>(a, a, a)(Undetermined, Undetermined, Undetermined)
                     USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
                     USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
         UMethod (name = component1) [public final fun component1() : long = UastEmptyExpression]
-        UMethod (name = copy) [public final fun copy(@org.jetbrains.annotations.NotNull a: long) : Cls = UastEmptyExpression]
-            UParameter (name = a) [@org.jetbrains.annotations.NotNull var a: long]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+        UMethod (name = copy) [public final fun copy(a: long) : Cls {...}]
+            UParameter (name = a) [var a: long]
+            UBlockExpression [{...}] = external UIdentifier (Identifier (this))(a, a, a)(Undetermined, Undetermined, Undetermined)
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3)) [UIdentifier (Identifier (this))(a, a, a)] = external UIdentifier (Identifier (this))(a, a, a)(Undetermined, Undetermined, Undetermined)
+                    UIdentifier (Identifier (this)) [UIdentifier (Identifier (this))]
+                    USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
+                    USimpleNameReferenceExpression (identifier = a) [a] = Undetermined
+                    USimpleNameReferenceExpression (identifier = a) [a] = Undetermined

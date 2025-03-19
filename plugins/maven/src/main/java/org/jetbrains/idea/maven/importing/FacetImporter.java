@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.facet.*;
@@ -21,6 +21,17 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Deprecated.
+ * Use {@link org.jetbrains.idea.maven.importing.MavenWorkspaceFacetConfigurator}
+ * or {@link org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator} instead.
+ * <p>
+ * Extension point for custom facet import.
+ * @deprecated FacetImporter is a part of the legacy import mechanism, which was deprecated and removed from the Maven plugin.
+ * MavenWorkspaceFacetConfigurator and MavenWorkspaceConfigurator are the new alternatives.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE extends FacetConfiguration, FACET_TYPE_TYPE extends FacetType<FACET_TYPE, FACET_CONFIG_TYPE>>
   extends MavenImporter {
   protected final FACET_TYPE_TYPE myFacetType;
@@ -150,7 +161,7 @@ public abstract class FacetImporter<FACET_TYPE extends Facet, FACET_CONFIG_TYPE 
   protected String makePath(MavenProject p, String... elements) {
     StringBuilder tailBuff = new StringBuilder();
     for (String e : elements) {
-      if (tailBuff.length() > 0) tailBuff.append("/");
+      if (!tailBuff.isEmpty()) tailBuff.append("/");
       tailBuff.append(e);
     }
     String tail = tailBuff.toString();

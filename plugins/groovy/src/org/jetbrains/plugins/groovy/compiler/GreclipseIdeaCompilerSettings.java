@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.GreclipseSettings;
 
+@SuppressWarnings("LightServiceMigrationCode")
 @State(name = GreclipseSettings.COMPONENT_NAME, storages = @Storage(GreclipseSettings.COMPONENT_FILE))
 public final class GreclipseIdeaCompilerSettings implements PersistentStateComponent<GreclipseSettings> {
   private final GreclipseSettings mySettings = new GreclipseSettings();
@@ -24,8 +25,7 @@ public final class GreclipseIdeaCompilerSettings implements PersistentStateCompo
     XmlSerializerUtil.copyBean(state, mySettings);
   }
 
-  @NotNull
-  public static GreclipseSettings getSettings(@NotNull Project project) {
+  public static @NotNull GreclipseSettings getSettings(@NotNull Project project) {
     return project.getService(GreclipseIdeaCompilerSettings.class).mySettings;
   }
 

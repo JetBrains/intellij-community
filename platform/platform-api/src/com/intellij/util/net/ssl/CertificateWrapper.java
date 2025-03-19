@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -21,7 +21,7 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 public final class CertificateWrapper {
-  @NonNls public static final String NOT_AVAILABLE = "N/A";
+  public static final @NonNls String NOT_AVAILABLE = "N/A";
 
   private final X509Certificate myCertificate;
   private final Map<String, String> myIssuerFields;
@@ -176,12 +176,12 @@ public final class CertificateWrapper {
    * See http://tools.ietf.org/html/rfc5280#section-4.1.2.2 for details.
    */
   public enum CommonField {
-    COMMON_NAME("CN", "Common Name"),
+    COMMON_NAME("CN", "Common name"),
     ORGANIZATION("O", "Organization"),
-    ORGANIZATION_UNIT("OU", "Organizational Unit"),
+    ORGANIZATION_UNIT("OU", "Organizational unit"),
     LOCATION("L", "Locality"),
     COUNTRY("C", "Country"),
-    STATE("ST", "State or Province");
+    STATE("ST", "State or province");
 
     private final String myShortName;
     private final String myLongName;

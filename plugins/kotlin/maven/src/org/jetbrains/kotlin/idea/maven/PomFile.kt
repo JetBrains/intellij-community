@@ -11,10 +11,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.XmlElementFactory
+import com.intellij.psi.*
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
@@ -57,7 +54,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     init {
         var projectElement: XmlTag? = null
 
-        xmlFile.document?.accept(object : PsiElementVisitor() {
+        xmlFile.document?.accept(object : PsiElementVisitor(), PsiRecursiveVisitor {
             override fun visitElement(element: PsiElement) {
                 super.visitElement(element)
 

@@ -37,7 +37,7 @@ import javax.swing.*;
  * as it is very common for applications to use panels as generic
  * containers without meaningful information for visually impaired users.
  */
-public final class JBBox extends Box {
+public class JBBox extends Box {
   public JBBox(int axis) {
     super(axis);
   }

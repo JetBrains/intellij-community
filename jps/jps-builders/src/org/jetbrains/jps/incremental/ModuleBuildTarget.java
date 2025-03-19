@@ -1,21 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
+import com.dynatrace.hash4j.hashing.HashSink;
+import com.dynatrace.hash4j.hashing.HashStream64;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetRegistry;
-import org.jetbrains.jps.builders.ModuleBasedTarget;
-import org.jetbrains.jps.builders.TargetOutputIndex;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -29,6 +25,7 @@ import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.JpsJavaDependenciesEnumeratorImpl;
+import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
@@ -37,76 +34,76 @@ import org.jetbrains.jps.service.JpsServiceManager;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Describes step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module. These
- * targets are built by {@link ModuleLevelBuilder} and they are the only targets which can have circular dependencies on each other.
+ * Describes a step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module.
+ * These targets are built by {@link ModuleLevelBuilder} and they are the only targets that can have circular dependencies on each other.
  */
-public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
+@ApiStatus.NonExtendable
+// open for Bazel - we cannot introduce an interface for ModuleBuildTarget to avoid using `instanceOf` for now,
+// as it would involve a relatively massive and potentially unsafe change.
+public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> implements BuildTargetHashSupplier {
   private static final Logger LOG = Logger.getInstance(ModuleBuildTarget.class);
 
   public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
     System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")
   );
-  private final JavaModuleBuildTargetType myTargetType;
+  private final JavaModuleBuildTargetType targetType;
 
   public ModuleBuildTarget(@NotNull JpsModule module, @NotNull JavaModuleBuildTargetType targetType) {
     super(targetType, module);
-    myTargetType = targetType;
+    this.targetType = targetType;
   }
 
-  @Nullable
-  public File getOutputDir() {
-    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, myTargetType.isTests());
+  public @Nullable File getOutputDir() {
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(myModule, targetType.isTests());
   }
 
-  @NotNull
   @Override
-  public Collection<File> getOutputRoots(@NotNull CompileContext context) {
-    Collection<File> result = new SmartList<>();
-    final File outputDir = getOutputDir();
-    if (outputDir != null) {
-      result.add(outputDir);
-    }
-    final JpsModule module = getModule();
-    final JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
-    final ProcessorConfigProfile profile = configuration.getAnnotationProcessingProfile(module);
+  public @NotNull @Unmodifiable Collection<File> getOutputRoots(@NotNull CompileContext context) {
+    File outputDir = getOutputDir();
+
+    JpsModule module = getModule();
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    ProcessorConfigProfile profile = configuration.getAnnotationProcessingProfile(module);
     if (profile.isEnabled()) {
-      final File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
+      File annotationOut = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, isTests(), profile);
       if (annotationOut != null) {
-        result.add(annotationOut);
+        return outputDir == null ? List.of(annotationOut) : List.of(outputDir, annotationOut);
       }
     }
-    return result;
+    return outputDir == null ? List.of() : List.of(outputDir);
   }
 
   @Override
   public boolean isTests() {
-    return myTargetType.isTests();
+    return targetType.isTests();
   }
 
   @Override
-  public @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
+  public @NotNull @Unmodifiable Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, @NotNull TargetOutputIndex outputIndex) {
     JpsJavaDependenciesEnumeratorImpl enumerator = (JpsJavaDependenciesEnumeratorImpl)JpsJavaExtensionService.dependencies(myModule).compileOnly();
     if (!isTests()) {
       enumerator.productionOnly();
     }
-    final ArrayList<BuildTarget<?>> dependencies = new ArrayList<>();
+    List<BuildTarget<?>> dependencies = new ArrayList<>();
     enumerator.processDependencies(dependencyElement -> {
       if (dependencyElement instanceof JpsModuleDependency) {
         JpsModule depModule = ((JpsModuleDependency)dependencyElement).getModule();
         if (depModule != null) {
           JavaModuleBuildTargetType targetType;
-          if (myTargetType.equals(JavaModuleBuildTargetType.PRODUCTION) && enumerator.isProductionOnTests(dependencyElement)) {
+          if (this.targetType.equals(JavaModuleBuildTargetType.PRODUCTION) && enumerator.isProductionOnTests(dependencyElement)) {
             targetType = JavaModuleBuildTargetType.TEST;
           }
           else {
-            targetType = myTargetType;
+            targetType = this.targetType;
           }
           dependencies.add(new ModuleBuildTarget(depModule, targetType));
         }
@@ -116,7 +113,7 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (isTests()) {
       dependencies.add(new ModuleBuildTarget(myModule, JavaModuleBuildTargetType.PRODUCTION));
     }
-    final Collection<ModuleBasedTarget<?>> moduleBased = targetRegistry.getModuleBasedTargets(
+    Collection<ModuleBasedTarget<?>> moduleBased = targetRegistry.getModuleBasedTargets(
       getModule(), isTests() ? BuildTargetRegistry.ModuleTargetSelector.TEST : BuildTargetRegistry.ModuleTargetSelector.PRODUCTION
     );
     for (ModuleBasedTarget<?> target : moduleBased) {
@@ -124,17 +121,20 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
         dependencies.add(target);
       }
     }
-    dependencies.trimToSize();
     return dependencies;
   }
 
-  @NotNull
   @Override
-  public List<JavaSourceRootDescriptor> computeRootDescriptors(@NotNull JpsModel model, @NotNull ModuleExcludeIndex index, @NotNull IgnoredFileIndex ignoredFileIndex, @NotNull BuildDataPaths dataPaths) {
+  public @NotNull @Unmodifiable List<JavaSourceRootDescriptor> computeRootDescriptors(
+    @NotNull JpsModel model,
+    @NotNull ModuleExcludeIndex index,
+    @NotNull IgnoredFileIndex ignoredFileIndex,
+    @NotNull BuildDataPaths dataPaths
+  ) {
     List<JavaSourceRootDescriptor> roots = new ArrayList<>();
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
-    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myModule.getProject());
+    JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myModule.getProject());
 
     roots_loop:
     for (JpsTypedModuleSourceRoot<JavaSourceRootProperties> sourceRoot : myModule.getSourceRoots(type)) {
@@ -146,109 +146,135 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
           continue roots_loop;
         }
       }
-      final String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
+
+      String packagePrefix = sourceRoot.getProperties().getPackagePrefix();
 
       // consider annotation processors output for generated sources, if contained under some source root
-      Set<File> excludes = computeRootExcludes(sourceRoot.getFile(), index);
-      final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(myModule);
+      Set<Path> excludes = computeRootExcludes(sourceRoot.getPath(), index);
+      ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(myModule);
       if (profile.isEnabled()) {
-        final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
-        if (outputDir != null && FileUtil.isAncestor(sourceRoot.getFile(), outputDir, true)) {
-          excludes = FileCollectionFactory.createCanonicalFileSet(excludes);
-          excludes.add(outputDir);
+        File outputIoDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
+        if (outputIoDir != null) {
+          Path outputDir = outputIoDir.toPath();
+          if (sourceRoot.getPath().startsWith(outputDir)) {
+            excludes = FileCollectionFactory.createCanonicalPathSet(excludes);
+            excludes.add(outputDir);
+          }
         }
       }
       FileFilter filterForExcludedPatterns = index.getModuleFileFilterHonorExclusionPatterns(myModule);
-      roots.add(new JavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes, filterForExcludedPatterns));
+      roots.add(JavaSourceRootDescriptor.createJavaSourceRootDescriptor(sourceRoot.getFile(), this, false, false, packagePrefix, excludes, filterForExcludedPatterns));
     }
     return roots;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
-    return "Module '" + getModule().getName() + "' " + (myTargetType.isTests() ? "tests" : "production");
+  public @NotNull String getPresentableName() {
+    return "Module '" + getModule().getName() + "' " + (targetType.isTests() ? "tests" : "production");
   }
 
   @Override
-  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
-    final JpsModule module = getModule();
-    final PathRelativizerService relativizer = pd.dataManager.getRelativizer();
+  @ApiStatus.Internal
+  public void computeConfigurationDigest(@NotNull ProjectDescriptor projectDescriptor, @NotNull HashSink hash) {
+    JpsModule module = getModule();
+    PathRelativizerService relativizer = projectDescriptor.dataManager.getRelativizer();
 
-    final StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
+    StringBuilder logBuilder = LOG.isDebugEnabled() ? new StringBuilder() : null;
 
-    int fingerprint = getDependenciesFingerprint(logBuilder, relativizer);
+    getDependenciesFingerprint(logBuilder, relativizer, hash);
 
-    for (JavaSourceRootDescriptor root : pd.getBuildRootIndex().getTargetRoots(this, null)) {
-      final File file = root.getRootFile();
-      String path = relativizer.toRelative(file.getPath());
+    List<JavaSourceRootDescriptor> roots = projectDescriptor.getBuildRootIndex().getTargetRoots(this, null);
+    for (JavaSourceRootDescriptor root : roots) {
+      String path = relativizer.toRelative(root.rootFile);
       if (logBuilder != null) {
-        logBuilder.append(path).append("\n");
+        logBuilder.append(path).append('\n');
       }
-      fingerprint += pathHashCode(path);
+      FileHashUtil.computePathHashCode(path, hash);
     }
+    hash.putInt(roots.size());
 
-    final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    if (level != null) {
+    LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
         logBuilder.append(level.name()).append("\n");
       }
-      fingerprint += level.name().hashCode();
+      hash.putString(level.name());
     }
 
-    final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
-    final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
-    if (bytecodeTarget != null) {
+    JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
+    if (bytecodeTarget == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
-        logBuilder.append(bytecodeTarget).append("\n");
+        logBuilder.append(bytecodeTarget).append('\n');
       }
-      fingerprint += bytecodeTarget.hashCode();
+      hash.putString(bytecodeTarget);
     }
 
-    final CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
-    final String encoding = encodingConfig.getPreferredModuleEncoding(module);
-    if (encoding != null) {
+    CompilerEncodingConfiguration encodingConfig = projectDescriptor.getEncodingConfiguration();
+    String encoding = encodingConfig.getPreferredModuleEncoding(module);
+    if (encoding == null) {
+      hash.putInt(0);
+    }
+    else {
       if (logBuilder != null) {
         logBuilder.append(encoding).append("\n");
       }
-      fingerprint += encoding.hashCode();
+      hash.putString(encoding);
     }
 
-    final String hash = Integer.toHexString(fingerprint);
-    out.write(hash);
-    if (logBuilder != null) {
-      File configurationTextFile = new File(pd.getTargetsState().getDataPaths().getTargetDataRoot(this), "config.dat.debug.txt");
-      @NonNls String oldText;
+    if (SystemProperties.getBooleanProperty("jps.rebuild.on.change.in.instrumenters", true)) {
+      for (JvmClassFileInstrumenter instrumenter : BuilderRegistry.getInstance().getClassFileInstrumenters()) {
+        if (instrumenter.isEnabled(projectDescriptor, module)) {
+          hash.putString(instrumenter.getId());
+          hash.putInt(instrumenter.getVersion());
+          if (logBuilder != null) {
+            logBuilder.append(instrumenter.getId()).append(":").append(instrumenter.getVersion()).append('\n');
+          }
+        }
+      }
+    }
+    
+    if (logBuilder == null) {
+      return;
+    }
+
+    Path configurationTextFile = projectDescriptor.dataManager.getDataPaths().getTargetDataRootDir(this).resolve("config.dat.debug.txt");
+    @NonNls String oldText;
+    try {
+      oldText = Files.readString(configurationTextFile);
+    }
+    catch (IOException e) {
+      oldText = null;
+    }
+    String newText = logBuilder.toString();
+    if (!newText.equals(oldText)) {
+      if (oldText != null && hash instanceof HashStream64) {
+        LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
+                  "\nCurrent configuration (hash=" + ((HashStream64)hash).getAsLong() + "):\n" + newText);
+      }
       try {
-        oldText = FileUtil.loadFile(configurationTextFile);
+        Files.createDirectories(configurationTextFile.getParent());
+        Files.writeString(configurationTextFile, newText);
       }
       catch (IOException e) {
-        oldText = null;
-      }
-      String newText = logBuilder.toString();
-      if (!newText.equals(oldText)) {
-        if (oldText != null) {
-          LOG.debug("Configuration differs from the last recorded one for " + getPresentableName() + ".\nRecorded configuration:\n" + oldText +
-                    "\nCurrent configuration (hash=" + hash + "):\n" + newText);
-        }
-        try {
-          FileUtil.writeToFile(configurationTextFile, newText);
-        }
-        catch (IOException e) {
-          LOG.debug(e);
-        }
+        LOG.debug(e);
       }
     }
   }
 
-  private int getDependenciesFingerprint(@Nullable StringBuilder logBuilder, @NotNull PathRelativizerService relativizer) {
-    int fingerprint = 0;
-
+  private void getDependenciesFingerprint(@Nullable StringBuilder logBuilder, @NotNull PathRelativizerService relativizer, @NotNull HashSink hash) {
     if (!REBUILD_ON_DEPENDENCY_CHANGE) {
-      return fingerprint;
+      hash.putInt(0);
+      return;
     }
 
-    final JpsModule module = getModule();
+    JpsModule module = getModule();
     JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursivelyExportedOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
@@ -256,23 +282,45 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     if (ProjectStamps.PORTABLE_CACHES) {
       enumerator = enumerator.withoutSdk();
     }
-
-    for (File file : enumerator.classes().getRoots()) {
-      String path = relativizer.toRelative(file.getAbsolutePath());
-
-      if (logBuilder != null) {
-        logBuilder.append(path).append("\n");
+    if (JavaBuilderUtil.isTrackLibraryDependenciesEnabled()) {
+      // when enabled, library roots will be tracked by DepGraph
+      for (JpsLibrary library : enumerator.getLibraries()) {
+        // include only library names in correct order
+        hash.putString(library.getName());
       }
-      fingerprint = 31 * fingerprint + pathHashCode(path);
+      enumerator = enumerator.withoutLibraries();
     }
-    return fingerprint;
+
+    Collection<Path> roots = enumerator.classes().getPaths();
+    for (Path file : roots) {
+      String path = relativizer.toRelative(file);
+      getContentHash(file, hash);
+      if (logBuilder != null) {
+        logBuilder.append(path);
+        // not a content hash, but the current hash value
+        if (hash instanceof HashStream64) {
+          logBuilder.append(": ").append((((HashStream64)hash).getAsLong()));
+        }
+        logBuilder.append("\n");
+      }
+      FileHashUtil.computePathHashCode(path, hash);
+    }
+    hash.putInt(roots.size());
   }
 
-  private static int pathHashCode(@NotNull String path) {
-    // On case-insensitive OS hash calculated from path converted to lower case
-    if (ProjectStamps.PORTABLE_CACHES) {
-      return StringUtil.isEmpty(path) ? 0 : FileUtil.toCanonicalPath(path).hashCode();
+  private static void getContentHash(Path file, HashSink hash) {
+    if (ProjectStamps.TRACK_LIBRARY_CONTENT) {
+      try {
+        if (Files.isRegularFile(file) && file.getFileName().endsWith(".jar")) {
+          FileHashUtil.getFileHash(file, hash);
+        }
+        else {
+          hash.putInt(0);
+        }
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
     }
-    return FileUtil.pathHashCode(path);
   }
 }

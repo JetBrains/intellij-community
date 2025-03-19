@@ -12,6 +12,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -19,6 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseFilterLexerUtil {
+
+  private BaseFilterLexerUtil() {
+  }
 
   public static @NotNull Map<IdIndexEntry, Integer> calcIdEntries(@NotNull FileContent content,
                                                                   @NotNull IdAndToDoScannerBasedOnFilterLexer indexer) {
@@ -48,7 +52,8 @@ public final class BaseFilterLexerUtil {
     return todoMap != null ? todoMap : Collections.emptyMap();
   }
 
-  private static void scanContentWithCheckCanceled(@NotNull FileContent content, @NotNull Lexer filterLexer) {
+  @ApiStatus.Internal
+  public static void scanContentWithCheckCanceled(@NotNull FileContent content, @NotNull Lexer filterLexer) {
     filterLexer.start(content.getContentAsText());
     int tokenIdx = 0;
     while (filterLexer.getTokenType() != null) {

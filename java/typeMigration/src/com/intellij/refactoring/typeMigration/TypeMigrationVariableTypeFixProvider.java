@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
+public final class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
   private static final Logger LOG = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @Override
@@ -32,12 +32,10 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
     return new IntentionAction[]{createTypeMigrationFix(variable, toReturn)};
   }
 
-  @NotNull
-  private static VariableTypeFix createTypeMigrationFix(@NotNull final PsiVariable variable, @NotNull final PsiType toReturn) {
+  private static @NotNull VariableTypeFix createTypeMigrationFix(final @NotNull PsiVariable variable, final @NotNull PsiType toReturn) {
     return new VariableTypeFix(variable, toReturn) {
-      @NotNull
       @Override
-      public String getText() {
+      public @NotNull String getText() {
         return TypeMigrationBundle.message("migrate.fix.text", myName, StringUtil.escapeXmlEntities(getReturnType().getPresentableText()));
       }
 
@@ -61,8 +59,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
 
   private static boolean typeMigrationMightBeUseful(@NotNull PsiVariable variable, @NotNull PsiType targetType) {
     if (!PsiUtil.isJvmLocalVariable(variable)) return true;
-    PsiElement block = PsiUtil.getVariableCodeBlock(variable, null);
-    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable, block);
+    List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(variable);
     if (refs.isEmpty()) return false;
     Project project = variable.getProject();
     TypeMigrationRules rules = new TypeMigrationRules(project);

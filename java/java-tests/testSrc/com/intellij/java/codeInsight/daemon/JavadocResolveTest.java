@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -6,7 +6,6 @@ import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,10 +52,8 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     Collection<? extends Symbol> symbols = ref.resolveReference();
     assertEquals(1, symbols.size());
     Symbol symbol = symbols.iterator().next();
-    assertTrue(symbol instanceof NavigatableSymbol);
-    Collection<? extends NavigationTarget> targets = ((NavigatableSymbol)symbol).getNavigationTargets(myProject);
-    assertEquals(1, targets.size());
-    NavigationTarget target = targets.iterator().next();
+    assertTrue(symbol instanceof NavigationTarget);
+    NavigationTarget target = ((NavigationTarget)symbol);
     TargetPresentation presentation = target.computePresentation();
     assertEquals("@start region=reg", presentation.getPresentableText());
     assertEquals("Test.java", presentation.getLocationText());
@@ -66,9 +63,9 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     assertTrue(request instanceof SourceNavigationRequest);
     SourceNavigationRequest snr = (SourceNavigationRequest)request;
     VirtualFile file = snr.getFile();
-    assertEquals(file.getName(), "Test.java");
+    assertEquals("Test.java", file.getName());
     PsiFile snippetFile = PsiManager.getInstance(myProject).findFile(file);
-    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffset()));
+    assertTrue(snippetFile.getText().startsWith("@start region=reg", snr.getOffsetMarker().getStartOffset()));
   }
 
   private void doTest() {

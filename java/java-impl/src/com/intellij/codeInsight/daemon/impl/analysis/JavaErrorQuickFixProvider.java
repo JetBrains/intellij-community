@@ -1,60 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
-import com.intellij.codeInspection.ConvertRecordToClassFix;
-import com.intellij.core.JavaPsiBundle;
-import com.intellij.psi.*;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.psi.PsiErrorElement;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
 
-public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-
+public final class JavaErrorQuickFixProvider implements ErrorQuickFixProvider, DumbAware {
   @Override
   public void registerErrorQuickFix(@NotNull PsiErrorElement errorElement, @NotNull HighlightInfo.Builder info) {
-    PsiElement parent = errorElement.getParent();
-    String description = errorElement.getErrorDescription();
-    List<IntentionAction> registrar = new ArrayList<>();
-    if (parent instanceof PsiStatement && description.equals(JavaPsiBundle.message("expected.semicolon"))) {
-      info.registerFix(new InsertMissingTokenFix(";"), null, null, null, null);
-      HighlightFixUtil.registerFixesForExpressionStatement((PsiStatement)parent, registrar);
-    }
-    if (parent instanceof PsiTryStatement && description.equals(JavaPsiBundle.message("expected.catch.or.finally"))) {
-      registrar.add(new AddExceptionToCatchFix(false).asIntention());
-      registrar.add(new AddFinallyFix((PsiTryStatement)parent).asIntention());
-    }
-    if (parent instanceof PsiSwitchLabeledRuleStatement && description.equals(JavaPsiBundle.message("expected.switch.rule"))) {
-      IntentionAction action =
-        QUICK_FIX_FACTORY.createWrapSwitchRuleStatementsIntoBlockFix((PsiSwitchLabeledRuleStatement)parent);
-      registrar.add(action);
-    }
-    if (parent instanceof PsiJavaFile && description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
-      PsiElement child = errorElement.getFirstChild();
-      if (child instanceof PsiIdentifier) {
-        switch (child.getText()) {
-          case PsiKeyword.RECORD -> {
-            HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.RECORDS, registrar);
-            if (ConvertRecordToClassFix.tryMakeRecord(errorElement) != null) {
-              IntentionAction action = PriorityIntentionActionWrapper.lowPriority(new ConvertRecordToClassFix(errorElement));
-              registrar.add(action);
-            }
-          }
-          case PsiKeyword.SEALED -> HighlightUtil.registerIncreaseLanguageLevelFixes(errorElement, HighlightingFeature.SEALED_CLASSES, registrar);
-          default -> {
-          }
-        }
-      }
-    }
-    QuickFixAction.registerQuickFixActions(info, null, registrar);
+    if (!(errorElement.getLanguage() instanceof JavaLanguage)) return;
+    Consumer<CommonIntentionAction> sink = action -> info.registerFix(action.asIntention(), null, null, null, null);
+    var error = JavaErrorKinds.SYNTAX_ERROR.create(errorElement);
+    JavaErrorFixProvider.EP_NAME.forEachExtensionSafe(provider -> provider.registerFixes(error, sink));
   }
 }

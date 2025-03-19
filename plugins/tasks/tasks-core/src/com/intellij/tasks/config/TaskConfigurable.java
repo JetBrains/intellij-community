@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.icons.AllIcons;
@@ -171,8 +171,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "tasks";
   }
 
@@ -213,7 +212,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(TaskBundle.message("settings.placeholders"),
                                                                                ArrayUtilRt.toStringArray(placeholders)) {
             @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+            public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
               WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()
                 .insertString(editor.getCaretModel().getOffset(), "${" + selectedValue + "}"));
               return FINAL_CHOICE;

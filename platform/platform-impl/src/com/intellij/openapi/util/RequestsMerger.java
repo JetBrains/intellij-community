@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -113,8 +113,7 @@ public final class RequestsMerger {
   private enum MyState {
     empty() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.request.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -124,8 +123,7 @@ public final class RequestsMerger {
     },
     inProgress() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return empty;
         }
@@ -138,8 +136,7 @@ public final class RequestsMerger {
     },
     inProgressRequestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.finish.equals(action)) {
           return MyState.requestSubmitted;
         }
@@ -151,8 +148,7 @@ public final class RequestsMerger {
     },
     requestSubmitted() {
       @Override
-      @NotNull
-      public MyState transition(MyAction action) {
+      public @NotNull MyState transition(MyAction action) {
         if (MyAction.start.equals(action)) {
           return inProgress;
         }
@@ -166,8 +162,7 @@ public final class RequestsMerger {
     };
 
     // under lock
-    @NotNull
-    public abstract MyState transition(final MyAction action);
+    public abstract @NotNull MyState transition(final MyAction action);
 
     private static void logWrongAction(final MyState state, final MyAction action) {
       LOG.info("Wrong action: state=" + state.name() + ", action=" + action.name());

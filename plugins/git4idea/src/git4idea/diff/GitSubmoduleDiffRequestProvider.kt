@@ -2,8 +2,7 @@
 package git4idea.diff
 
 import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffRequestFactoryImpl
-import com.intellij.diff.DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR
+import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.chains.DiffRequestProducerException
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
@@ -51,7 +50,7 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
     val factory = DiffContentFactory.getInstance()
     val beforeContent = beforeRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
     val afterContent = afterRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
-    val title = DiffRequestFactoryImpl.getTitle(beforeRevision?.file, afterRevision?.file, DIFF_TITLE_RENAME_SEPARATOR)
+    val title = DiffRequestFactory.getInstance().getTitleForModification(beforeRevision?.file, afterRevision?.file)
     return SimpleDiffRequest(GitBundle.message("label.diff.content.title.submodule.suffix", title),
                              beforeContent,
                              afterContent,

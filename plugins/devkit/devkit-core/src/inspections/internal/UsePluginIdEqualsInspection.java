@@ -2,8 +2,12 @@
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
+@VisibleForTesting
+@ApiStatus.Internal
 public final class UsePluginIdEqualsInspection extends UseEqualsInspectionBase {
 
   @Override

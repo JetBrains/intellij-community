@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -14,19 +17,24 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
 import java.util.StringJoiner;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
-
-  @NotNull
+public final class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.TEXT_BLOCKS);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
-        if (!expression.isTextBlock()|| PsiLiteralUtil.getTextBlockText(expression) == null) {
+        if (!expression.isTextBlock() || PsiLiteralUtil.getTextBlockText(expression) == null ||
+            expression.getParent() instanceof PsiTemplateExpression) {
           return;
         }
         holder.registerProblem(expression, JavaBundle.message("inspection.text.block.backward.migration.message"),
@@ -35,35 +43,32 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
     };
   }
 
-  private static class ReplaceWithRegularStringLiteralFix implements LocalQuickFix {
+  private static class ReplaceWithRegularStringLiteralFix extends PsiUpdateModCommandQuickFix {
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.replace.with.regular.string.literal.fix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLiteralExpression literalExpression = tryCast(descriptor.getPsiElement(), PsiLiteralExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLiteralExpression literalExpression = tryCast(element, PsiLiteralExpression.class);
       if (literalExpression == null || !literalExpression.isTextBlock()) return;
       String text = PsiLiteralUtil.getTextBlockText(literalExpression);
       if (text == null) return;
       String replacement = convertToConcatenation(text);
-      PsiFile file = descriptor.getPsiElement().getContainingFile();
+      PsiFile file = element.getContainingFile();
       if (file == null) return;
       CodeStyleSettings tempSettings = CodeStyle.getSettings(file);
       tempSettings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true;
       CodeStyleManager manager = CodeStyleManager.getInstance(literalExpression.getProject());
-      CodeStyle.doWithTemporarySettings(project, tempSettings, () -> {
+      CodeStyle.runWithLocalSettings(project, tempSettings, () -> {
         PsiElement result = new CommentTracker().replaceAndRestoreComments(literalExpression, replacement);
         manager.reformat(result);
       });
     }
 
-    @NotNull
-    private static String convertToConcatenation(@NotNull String text) {
+    private static @NotNull String convertToConcatenation(@NotNull String text) {
       if (text.isEmpty()) return "\"\"";
       StringJoiner joiner = new StringJoiner(" +\n");
       String[] lines = getTextBlockLines(text).split("\n", -1);
@@ -76,8 +81,7 @@ public class TextBlockBackwardMigrationInspection extends AbstractBaseJavaLocalI
       return joiner.toString();
     }
 
-    @NotNull
-    private static String getTextBlockLines(@NotNull String text) {
+    private static @NotNull String getTextBlockLines(@NotNull String text) {
       int length = text.length();
       StringBuilder result = new StringBuilder(length);
       int i = 0;

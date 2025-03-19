@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
@@ -17,7 +17,7 @@ import java.util.Map;
 import static org.editorconfig.configmanagement.extended.EditorConfigPropertyKind.*;
 
 public final class IntellijPropertyKindMap {
-  private final static Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
+  private static final Map<String, EditorConfigPropertyKind> PROPERTY_KIND_MAP = new HashMap<>();
 
   static {
     collectCommonLanguageProperties();
@@ -40,8 +40,7 @@ public final class IntellijPropertyKindMap {
     PROPERTY_KIND_MAP.put("continuation_indent_size", GENERIC);
   }
 
-  @NotNull
-  public static EditorConfigPropertyKind getPropertyKind(@NotNull String name) {
+  public static @NotNull EditorConfigPropertyKind getPropertyKind(@NotNull String name) {
     if (PROPERTY_KIND_MAP.containsKey(name)) {
       return PROPERTY_KIND_MAP.get(name);
     }
@@ -50,24 +49,21 @@ public final class IntellijPropertyKindMap {
 
   private static void collectCommonLanguageProperties() {
     AbstractCodeStylePropertyMapper mapper = new AbstractCodeStylePropertyMapper(CodeStyleSettings.getDefaults()) {
-      @NotNull
       @Override
-      protected List<CodeStyleObjectDescriptor> getSupportedFields() {
+      protected @NotNull List<CodeStyleObjectDescriptor> getSupportedFields() {
         List<CodeStyleObjectDescriptor> descriptors = new ArrayList<>();
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings(Language.ANY), null));
         descriptors.add(new CodeStyleObjectDescriptor(new CommonCodeStyleSettings.IndentOptions(), null));
         return descriptors;
       }
 
-      @NotNull
       @Override
-      public String getLanguageDomainId() {
+      public @NotNull String getLanguageDomainId() {
         return "any";
       }
 
-      @Nullable
       @Override
-      public String getPropertyDescription(@NotNull String externalName) {
+      public @Nullable String getPropertyDescription(@NotNull String externalName) {
         return null;
       }
     };

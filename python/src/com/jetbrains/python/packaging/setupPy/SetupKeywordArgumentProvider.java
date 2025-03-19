@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,10 +12,9 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
-  @NotNull
+public final class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
   @Override
-  public List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr) {
+  public @NotNull List<String> getKeywordArguments(PyFunction function, PyCallExpression callExpr) {
     if ("setup".equals(function.getName())) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getParentOfType(function, ScopeOwner.class, true);
       if (scopeOwner instanceof PyFile file) {
@@ -30,8 +29,7 @@ public class SetupKeywordArgumentProvider implements PyKeywordArgumentProvider {
     return Collections.emptyList();
   }
 
-  @Nullable
-  private static List<String> getSetupPyKeywordArguments(PyFile file) {
+  private static @Nullable List<String> getSetupPyKeywordArguments(PyFile file) {
     final PyTargetExpression keywords = file.findTopLevelAttribute("setup_keywords");
     if (keywords != null) {
       return PyUtil.strListValue(keywords.findAssignedValue());

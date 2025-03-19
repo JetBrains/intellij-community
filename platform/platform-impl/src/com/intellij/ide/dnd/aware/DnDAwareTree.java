@@ -1,14 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd.aware;
 
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.dnd.TransferableList;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +48,7 @@ public class DnDAwareTree extends Tree implements DnDAware {
 
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
-    if (SystemInfo.isMac && SwingUtilities.isRightMouseButton(e) && e.getID() == MouseEvent.MOUSE_DRAGGED) return;
+    if (ClientSystemInfo.isMac() && SwingUtilities.isRightMouseButton(e) && e.getID() == MouseEvent.MOUSE_DRAGGED) return;
     super.processMouseMotionEvent(e);
   }
 
@@ -57,34 +59,39 @@ public class DnDAwareTree extends Tree implements DnDAware {
     return isPathSelected(path);
   }
 
+  @ApiStatus.Internal
+  public final boolean isOverExpandControl(final @NotNull Point point) {
+    var ui = getUI();
+    if (ui instanceof DefaultTreeUI treeUI) {
+      return treeUI.isLocationInExpandControl(point);
+    }
+    return false;
+  }
+
   @Override
   public void dropSelectionButUnderPoint(final Point point) {
     TreeUtil.dropSelectionButUnderPoint(this, point);
   }
 
   @Override
-  @NotNull
-  public final JComponent getComponent() {
+  public final @NotNull JComponent getComponent() {
     return this;
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull TreePath path, @NotNull Point dragOrigin) {
     int row = dndAwareTree.getRowForPath(path);
     Component comp = dndAwareTree.getCellRenderer().getTreeCellRendererComponent(dndAwareTree, path.getLastPathComponent(), false, true, true, row, false);
     return createDragImage(dndAwareTree, comp, dragOrigin, true);
   }
 
-  @NotNull
-  public static Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull @Nls String text, @Nullable Point dragOrigin) {
+  public static @NotNull Pair<Image, Point> getDragImage(@NotNull Tree dndAwareTree, @NotNull @Nls String text, @Nullable Point dragOrigin) {
     return createDragImage(dndAwareTree, new JLabel(text), dragOrigin, false);
   }
 
-  @NotNull
-  private static Pair<Image, Point> createDragImage(@NotNull Tree tree,
-                                                    @NotNull Component c,
-                                                    @Nullable Point dragOrigin,
-                                                    boolean adjustToPathUnderDragOrigin) {
+  private static @NotNull Pair<Image, Point> createDragImage(@NotNull Tree tree,
+                                                             @NotNull Component c,
+                                                             @Nullable Point dragOrigin,
+                                                             boolean adjustToPathUnderDragOrigin) {
     if (c instanceof JComponent) {
       ((JComponent)c).setOpaque(true);
     }

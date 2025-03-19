@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -16,9 +16,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class CoAuthoredByCommitCompletionContributor extends CompletionContributor {
+@ApiStatus.Internal
+public final class CoAuthoredByCommitCompletionContributor extends CompletionContributor {
 
   private static final String[] PREFIXES = {"Co-authored-by: ", "Signed-off-by: ", "Reviewed-by: ", "Acked-by: ", "Tested-by: "};
 
@@ -28,7 +30,7 @@ public class CoAuthoredByCommitCompletionContributor extends CompletionContribut
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
-    if (document.getUserData(CommitMessage.DATA_KEY) == null) return;
+    if (!CommitMessage.isCommitMessage(document)) return;
 
     String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     CompletionResultSet prefixed = result.withPrefixMatcher(new PlainPrefixMatcher(prefix, true));

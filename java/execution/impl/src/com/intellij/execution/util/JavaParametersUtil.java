@@ -1,12 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.*;
+import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -64,14 +64,18 @@ public final class JavaParametersUtil {
   }
 
   @MagicConstant(valuesFromClass = JavaParameters.class)
-  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
-                                     final boolean classMustHaveSource) throws CantRunException {
+  @SuppressWarnings("unused")
+  public static int getClasspathType(@NotNull RunConfigurationModule configurationModule,
+                                     @NotNull String mainClassName,
+                                     boolean classMustHaveSource) throws CantRunException {
     return getClasspathType(configurationModule, mainClassName, classMustHaveSource, false);
   }
 
   @MagicConstant(valuesFromClass = JavaParameters.class)
-  public static int getClasspathType(final RunConfigurationModule configurationModule, final String mainClassName,
-                                     final boolean classMustHaveSource, final boolean includeProvidedDependencies) throws CantRunException {
+  public static int getClasspathType(@NotNull RunConfigurationModule configurationModule,
+                                     @NotNull String mainClassName,
+                                     boolean classMustHaveSource,
+                                     boolean includeProvidedDependencies) throws CantRunException {
     final Module module = configurationModule.getModule();
     if (module == null) throw CantRunException.noModuleConfigured(configurationModule.getModuleName());
     Boolean inProduction = isClassInProductionSources(mainClassName, module);
@@ -87,8 +91,7 @@ public final class JavaParametersUtil {
            : JavaParameters.JDK_AND_CLASSES_AND_TESTS;
   }
 
-  @Nullable("null if class not found")
-  public static Boolean isClassInProductionSources(@NotNull String mainClassName, @NotNull Module module) {
+  public static @Nullable("null if class not found") Boolean isClassInProductionSources(@NotNull String mainClassName, @NotNull Module module) {
     final PsiClass psiClass = JavaExecutionUtil.findMainClass(module, mainClassName);
     if (psiClass == null) {
       return null;
@@ -145,11 +148,11 @@ public final class JavaParametersUtil {
     return jreHome == null ? JavaParameters.getValidJdkToRunModule(module, productionOnly) : createAlternativeJdk(module.getProject(), jreHome);
   }
 
-  public static Sdk createProjectJdk(@NotNull final Project project, @Nullable String jreHome) throws CantRunException {
+  public static Sdk createProjectJdk(final @NotNull Project project, @Nullable String jreHome) throws CantRunException {
     return jreHome == null ? createProjectJdk(project) : createAlternativeJdk(project, jreHome);
   }
 
-  private static Sdk createProjectJdk(@NotNull final Project project) throws CantRunException {
+  private static Sdk createProjectJdk(final @NotNull Project project) throws CantRunException {
     final Sdk jdk = PathUtilEx.getAnyJdk(project);
     if (jdk == null) {
       throw CantRunException.noJdkConfigured();
@@ -199,8 +202,7 @@ public final class JavaParametersUtil {
     }
   }
 
-  @NotNull
-  public static Predicate<Field> getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
+  public static @NotNull Predicate<Field> getFilter(@NotNull CommonJavaRunConfigurationParameters parameters) {
     return field -> {
       String name = field.getName();
       if ((name.equals("ALTERNATIVE_JRE_PATH_ENABLED") && !parameters.isAlternativeJrePathEnabled()) ||
@@ -223,7 +225,7 @@ public final class JavaParametersUtil {
 
     Set<PsiJavaModule> forModulePath = new HashSet<>(explicitModules);
     for (PsiJavaModule explicitModule : explicitModules) {
-      forModulePath.addAll(JavaModuleGraphUtil.getAllDependencies(explicitModule));
+      forModulePath.addAll(JavaPsiModuleUtil.getAllDependencies(explicitModule));
     }
 
     if (!includeTests) {
@@ -288,13 +290,13 @@ public final class JavaParametersUtil {
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     for (String key : index.getAllKeys(project)) {
       nextModule: 
-      for (PsiJavaModule aModule : index.get(key, project, GlobalSearchScope.allScope(project))) {
+      for (PsiJavaModule aModule : index.getModules(key, project, GlobalSearchScope.allScope(project))) {
         if (forModulePath.contains(aModule)) continue;
         for (PsiProvidesStatement provide : aModule.getProvides()) {
           PsiClassType provideInterfaceType = provide.getInterfaceType();
           if (provideInterfaceType != null && interfaces.contains(provideInterfaceType.getCanonicalText())) {
             registerProviders.accept(aModule);
-            JavaModuleGraphUtil.getAllDependencies(aModule).forEach(registerProviders);
+            JavaPsiModuleUtil.getAllDependencies(aModule).forEach(registerProviders);
             continue nextModule;
           }
         }
@@ -313,22 +315,18 @@ public final class JavaParametersUtil {
     }
   }
 
-  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
-                                               ProjectFileIndex fileIndex,
-                                               JarFileSystem jarFileSystem) {
-    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
-
-    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
-    if (moduleDependency == null) {
-      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
+  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule, ProjectFileIndex fileIndex, JarFileSystem jarFileSystem) {
+    var moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
+    var moduleDependency = fileIndex.getModuleForFile(moduleFile);
+    if (moduleDependency != null) {
+      var moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
+      if (moduleExtension != null) {
+        var inTests = fileIndex.isInTestSourceContent(moduleFile);
+        return inTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      }
     }
 
-    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
-    if (moduleExtension != null) {
-      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests()
-                                                         : moduleExtension.getCompilerOutputPath();
-    }
-    return null;
+    return jarFileSystem.getLocalByEntry(moduleFile);
   }
 
   public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {

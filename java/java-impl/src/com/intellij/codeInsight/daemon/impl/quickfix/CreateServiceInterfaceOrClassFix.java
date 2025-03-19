@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.CommonBundle;
@@ -49,17 +49,13 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     }
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return QuickFixBundle.message("create.service.interface.fix.name", myInterfaceName);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.service.interface.fix.family.name");
   }
 
@@ -119,8 +115,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", "public interface " + myInterfaceName + " {}");
   }
 
-  @NotNull
-  private static Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
+  private static @NotNull Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(psiPackage.getProject());
     return StreamEx.of(psiPackage.getDirectories())
       .map(PsiDirectory::getVirtualFile)
@@ -182,9 +177,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return null;
     }
 
-    @Nullable
     @Override
-    protected JComponent createNorthPanel() {
+    protected @Nullable JComponent createNorthPanel() {
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
       PanelGridBuilder builder = UI.PanelFactory.grid();
@@ -199,8 +193,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return builder.createPanel();
     }
 
-    @Nullable
-    public PsiDirectory getRootDir() {
+    public @Nullable PsiDirectory getRootDir() {
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 

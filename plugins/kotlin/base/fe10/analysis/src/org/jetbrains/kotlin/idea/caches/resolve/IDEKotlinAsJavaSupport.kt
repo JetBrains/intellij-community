@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
@@ -11,11 +10,12 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideLibraryModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideSourceModificationTracker
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
-import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
@@ -28,10 +28,7 @@ import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
@@ -88,18 +85,12 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
 
     override fun facadeIsApplicable(module: IdeaModuleInfo, file: KtFile): Boolean = when (module) {
         is ModuleSourceInfo, is PlatformModuleInfo -> true
-        is LibrarySourceInfo -> file.isCompiled
+        is LibrarySourceInfo, is SdkInfo -> file.isCompiled
         else -> false
     }
 
-    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker =
-        KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
-
-    override fun outOfBlockModificationTracker(element: PsiElement): ModificationTracker =
-        KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
-
-    override fun librariesTracker(element: PsiElement): ModificationTracker =
-        JavaLibraryModificationTracker.getInstance(project)
+    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker = project.createProjectWideSourceModificationTracker()
+    override fun librariesTracker(element: PsiElement): ModificationTracker = project.createProjectWideLibraryModificationTracker()
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =
         KotlinPackageIndexUtils.getSubPackageFqNames(
@@ -163,12 +154,12 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         JavaPsiFacade.getInstance(project).findClass(it, scope)
     }
 
-    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> = runReadAction {
-        KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
+    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
+        return KotlinFileFacadeFqNameIndex[facadeFqName.asString(), project, searchScope].platformSourcesFirst()
     }
 
-    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> = runReadAction {
-        KotlinScriptFqnIndex[scriptFqName.asString(), project, searchScope]
+    override fun findFilesForScript(scriptFqName: FqName, searchScope: GlobalSearchScope): Collection<KtScript> {
+        return KotlinScriptFqnIndex[scriptFqName.asString(), project, searchScope]
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)

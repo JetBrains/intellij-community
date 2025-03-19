@@ -2,18 +2,16 @@
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.IdeaCommunityProperties
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
 internal object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
-      KotlinPluginBuilder.build(communityHome = communityHome,
-                                home = communityHome.communityRoot,
-                                properties = IdeaCommunityProperties(communityHome.communityRoot))
+      KotlinPluginBuilder.build(home = COMMUNITY_ROOT.communityRoot,
+                                properties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot))
     }
   }
 }

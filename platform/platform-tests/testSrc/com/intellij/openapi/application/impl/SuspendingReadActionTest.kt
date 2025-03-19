@@ -2,62 +2,87 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
 
+@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class SuspendingReadActionTest : CancellableReadActionTests() {
 
+
   @RepeatedTest(REPETITIONS)
-  fun context(): Unit = timeoutRunBlocking {
-    val application = ApplicationManager.getApplication()
+  fun context(): Unit = runWithImplicitBlockingContextEnabled {
+    timeoutRunBlocking {
+      val rootJob = coroutineContext.job
+      val application = ApplicationManager.getApplication()
 
-    fun assertEmptyContext() {
-      assertNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessNotAllowed()
-    }
-
-    fun assertReadActionWithCurrentJob() {
-      assertNotNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessAllowed()
-    }
-
-    fun assertReadActionWithoutCurrentJob() {
-      assertNull(Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-      application.assertReadAccessAllowed()
-    }
-
-    assertEmptyContext()
-
-    val result = cra {
-      assertReadActionWithCurrentJob()
-      runBlockingCancellable {
-        assertReadActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
-        withContext(Dispatchers.Default) {
-          assertEmptyContext()
-        }
-        assertReadActionWithoutCurrentJob()
+      fun assertEmptyContext(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessNotAllowed()
       }
-      assertReadActionWithCurrentJob()
-      42
-    }
-    assertEquals(42, result)
 
-    assertEmptyContext()
+      fun assertNestedContext(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
+      fun assertReadActionWithCurrentJob() {
+        assertNotNull(Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
+      fun assertReadActionWithoutCurrentJob(job: Job) {
+        assertEquals(job, Cancellation.currentJob())
+        assertNull(ProgressManager.getGlobalProgressIndicator())
+        application.assertReadAccessAllowed()
+      }
+
+      assertEmptyContext(rootJob)
+
+      val result = cra {
+        assertReadActionWithCurrentJob()
+        runBlockingCancellable {
+          val suspendingJob = Cancellation.currentJob()!!
+          assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
+          withContext(Dispatchers.Default) {
+            if (isLockStoredInContext) {
+              assertNestedContext(coroutineContext.job)
+            }
+            else {
+              assertEmptyContext(coroutineContext.job)
+            }
+          }
+          assertReadActionWithoutCurrentJob(suspendingJob)
+        }
+        assertReadActionWithCurrentJob()
+        42
+      }
+      assertEquals(42, result)
+
+      assertEmptyContext(rootJob)
+    }
   }
 
   @RepeatedTest(REPETITIONS)
@@ -86,14 +111,16 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   @RepeatedTest(REPETITIONS)
   fun `read action honors constraints`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
+    lateinit var constraintContinuation: Continuation<Unit>
     var satisfied = false
     val constraint = object : ReadConstraint {
       override fun toString(): String = "dummy constraint"
       override fun isSatisfied(): Boolean = satisfied
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        scheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine {
+          constraintContinuation = it
+          scheduled.release()
+        }
       }
     }
     launch {
@@ -104,19 +131,19 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
     }
     scheduled.acquire() // constraint was unsatisfied initially
     satisfied = true
-    constraintRunnable.run() // retry with satisfied constraint
+    constraintContinuation.resume(Unit) // retry with satisfied constraint
   }
 
   @RepeatedTest(REPETITIONS)
   fun `read action with unsatisfiable constraint is cancellable`(): Unit = timeoutRunBlocking {
     val scheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
     val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
       override fun isSatisfied(): Boolean = false
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        scheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine<Unit> {
+          scheduled.release()
+        }
       }
     }
     val job = launch {
@@ -126,7 +153,6 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
     }
     scheduled.acquire()
     job.cancelAndJoin()
-    LeakHunter.checkLeak(constraintRunnable, Continuation::class.java)
   }
 
   /**
@@ -135,8 +161,10 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   @RepeatedTest(REPETITIONS)
   fun `read action works if already obtained`(): Unit = timeoutRunBlocking {
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertEquals(42, cra {
+          assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
           42
         })
       }
@@ -146,7 +174,7 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
   protected abstract suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T
 }
 
-class NonBlocking : SuspendingReadActionTest() {
+class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadAction(*constraints, action = action)
@@ -168,7 +196,7 @@ class NonBlocking : SuspendingReadActionTest() {
       assertFalse(attempt)
       attempt = true
       waitForPendingWrite().up()
-      assertThrows<JobCanceledException> { // assert but not throw
+      assertThrows<CannotReadException> { // assert but not throw
         ProgressManager.checkCanceled()
       }
     }
@@ -181,7 +209,7 @@ class NonBlocking : SuspendingReadActionTest() {
       when (attempts++) {
         0 -> {
           waitForPendingWrite().up()
-          throw assertThrows<JobCanceledException> {
+          throw assertThrows<CannotReadException> {
             ProgressManager.checkCanceled()
           }
         }
@@ -198,16 +226,90 @@ class NonBlocking : SuspendingReadActionTest() {
   }
 
   @RepeatedTest(REPETITIONS)
+  fun `read action is cancelled by write and restarted with nested runBlockingCancellable`(): Unit = timeoutRunBlocking {
+    var attempts = 0
+    val result = readAction {
+      when (attempts++) {
+        0 -> {
+          throw assertThrows<CannotReadException> {
+            runBlockingCancellable {
+              throw assertThrows<CannotReadException> {
+                blockingContext {
+                  throw assertThrows<CannotReadException> {
+                    runBlockingCancellable {
+                      throw assertThrows<CannotReadException> {
+                        blockingContext {
+                          throw assertThrows<CannotReadException> {
+                            runBlockingCancellable {
+                              waitForPendingWrite().up()
+                              awaitCancellation()
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        1 -> {
+          assertDoesNotThrow {
+            ProgressManager.checkCanceled()
+          }
+          42
+        }
+        else -> {
+          fail()
+        }
+      }
+    }
+    assertEquals(42, result)
+  }
+
+  @RepeatedTest(REPETITIONS)
+  fun `read action is cancelled by write and restarted with blockingContextToIndicator`(): Unit = timeoutRunBlocking {
+    var attempts = 0
+    val result = readAction {
+      when (attempts++) {
+        0 -> {
+          throw assertThrows<CannotReadException> {
+            blockingContextToIndicator {
+              waitForPendingWrite().up()
+              throw assertThrows<CannotReadException> {
+                ProgressManager.checkCanceled()
+              }
+            }
+          }
+        }
+        1 -> {
+          assertDoesNotThrow {
+            ProgressManager.checkCanceled()
+          }
+          42
+        }
+        else -> {
+          fail()
+        }
+      }
+    }
+    assertEquals(42, result)
+  }
+
+  @RepeatedTest(REPETITIONS)
   fun `read action with constraints is cancelled by write and restarted`(): Unit = timeoutRunBlocking {
     val constraintScheduled = KSemaphore(1, 1)
-    lateinit var constraintRunnable: Runnable
+    lateinit var constraintContinuation: Continuation<Unit>
     val constraint = object : ReadConstraint {
       var satisfied: Boolean = true
       override fun toString(): String = "dummy constraint"
       override fun isSatisfied(): Boolean = satisfied
-      override fun schedule(runnable: Runnable) {
-        constraintRunnable = runnable
-        constraintScheduled.release()
+      override suspend fun awaitConstraint() {
+        suspendCancellableCoroutine {
+          constraintContinuation = it
+          constraintScheduled.release()
+        }
       }
     }
     val application = ApplicationManager.getApplication()
@@ -223,7 +325,7 @@ class NonBlocking : SuspendingReadActionTest() {
               }
             }
             pendingWrite.timeoutWaitUp()
-            throw assertThrows<JobCanceledException> {
+            throw assertThrows<CannotReadException> {
               ProgressManager.checkCanceled()
             }
           }
@@ -244,7 +346,7 @@ class NonBlocking : SuspendingReadActionTest() {
     application.invokeLater {
       application.runWriteAction {
         constraint.satisfied = true
-        constraintRunnable.run() // reschedule
+        constraintContinuation.resume(Unit) // reschedule
       }
     }
   }
@@ -275,7 +377,7 @@ class NonBlocking : SuspendingReadActionTest() {
   }
 }
 
-class NonBlockingUndispatched : SuspendingReadActionTest() {
+class NonBlockingUndispatchedSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionUndispatched(*constraints, action = action)
@@ -289,9 +391,10 @@ class NonBlockingUndispatched : SuspendingReadActionTest() {
     val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
       override fun isSatisfied(): Boolean = false
-      override fun schedule(runnable: Runnable): Unit = fail("must not be called")
+      override suspend fun awaitConstraint(): Unit = fail("must not be called")
     }
     cra {
+      assertTrue(ApplicationManager.getApplication().isReadAccessAllowed)
       runBlockingCancellable {
         assertThrows<IllegalStateException> {
           cra(unsatisfiableConstraint) {
@@ -303,18 +406,18 @@ class NonBlockingUndispatched : SuspendingReadActionTest() {
   }
 }
 
-class Blocking : SuspendingReadActionTest() {
+class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
 
   override suspend fun <T> cra(vararg constraints: ReadConstraint, action: () -> T): T {
     return constrainedReadActionBlocking(*constraints, action = action)
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @RepeatedTest(REPETITIONS)
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readActionBlocking {
-      val readLoopJob = coroutineJob.children.single()
-      assertSame(readLoopJob, Cancellation.currentJob())
+      assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
     }
   }
 
@@ -326,6 +429,36 @@ class Blocking : SuspendingReadActionTest() {
       attempt = true
       waitForPendingWrite().up()
       testNoExceptions()
+    }
+  }
+
+  @Test
+  fun `pending read action do not cause thread starvation for default dispatcher`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val existingTimeout = setCompensationTimeout(1.seconds)
+    kotlin.coroutines.coroutineContext.job.invokeOnCompletion {
+      setCompensationTimeout(existingTimeout)
+    }
+    val operationsCount = Runtime.getRuntime().availableProcessors() * 2
+    val writeActionMayFinish = Job(coroutineContext.job).asCompletableFuture()
+    val writeActionStarted = Job(coroutineContext.job)
+    launch {
+      writeAction {
+        writeActionStarted.complete()
+        writeActionMayFinish.join()
+      }
+    }
+    launch(Dispatchers.IO) {
+      delay(5.seconds)
+      withContext(Dispatchers.Default) {
+        writeActionMayFinish.complete(Unit)
+      }
+    }
+    repeat(operationsCount) { index ->
+      launch {
+        writeActionStarted.join()
+        ReadAction.run<Throwable> {
+        }
+      }
     }
   }
 }

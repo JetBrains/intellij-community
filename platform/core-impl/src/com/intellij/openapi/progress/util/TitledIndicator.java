@@ -8,4 +8,5 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public interface TitledIndicator {
   void setTitle(@NotNull @NlsContexts.ProgressTitle String title);
+  @NlsContexts.ProgressTitle String getTitle();
 }

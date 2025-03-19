@@ -14,6 +14,10 @@ public final class IconMapperBean {
   @ApiStatus.Internal
   public static final ExtensionPointName<IconMapperBean> EP_NAME = new ExtensionPointName<>("com.intellij.iconMapper");
 
+  @ApiStatus.Internal
+  public IconMapperBean() {
+  }
+
   @Attribute("mappingFile")
   @RequiredElement
   public @NonNls String mappingFile;

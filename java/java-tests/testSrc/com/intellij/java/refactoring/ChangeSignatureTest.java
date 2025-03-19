@@ -13,6 +13,8 @@ import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.ArrayUtil;
+import org.assertj.core.api.Assertions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 
@@ -30,43 +32,33 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testWarnAboutContract() {
-    try {
+    assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(1)}, false);
-      fail("Conflict expected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    }, "@Contract annotation cannot be updated automatically: Parameter 'i' was deleted, but contract clause 'null, _ -> fail' depends on it");
   }
 
   public void testWarnAboutAssigningWeakerAccessPrivileges() {
-    try {
-      doTest(PsiModifier.PRIVATE,null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
-      fail("Conflict expected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    assertConflict(() -> {
+      doTest(PsiModifier.PRIVATE, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+    }, "method <b><code>f()</code></b> will have incompatible access privileges with super method <b><code>X.f()</code></b>");
   }
 
   public void testDelegateWithoutChangesWarnAboutSameMethodInClass() {
-    try {
+    assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[0], true);
-      fail("Conflict expected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    }, "Method m() is already defined in the class <b><code>A</code></b>");
   }
 
   public void testDuplicatedSignatureInInheritor() {
-    try {
-      doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
-      fail("Conflict expected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    assertConflict(() -> {
+      doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())}, true);
+    }, "Method foo(int) is already defined in the class <b><code>B</code></b>");
   }
 
   public void testConflictForUsedParametersInMethodBody() {
-    try {
+    assertConflict(() -> {
       doTest(null, new ParameterInfoImpl[0], true);
-      fail("Conflict expected");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
+    }, "Parameter <b><code>i</code></b> is used in method body");
   }
 
   public void testNoConflictForSuperCallDelegation() {
@@ -75,8 +67,10 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testGenericTypes() {
     doTest(null, null, "T", method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("x").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue("null"),
-      ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("C<T>", method.getParameterList())).withDefaultValue("null")
+      ParameterInfoImpl.createNew().withName("x").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue(
+        "null"),
+      ParameterInfoImpl.createNew().withName("y")
+        .withType(myFactory.createTypeFromText("C<T>", method.getParameterList())).withDefaultValue("null")
     }, false);
   }
 
@@ -88,9 +82,12 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testTypeParametersInMethod() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("t").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue("null"),
-      ParameterInfoImpl.createNew().withName("u").withType(myFactory.createTypeFromText("U", method.getParameterList())).withDefaultValue("null"),
-      ParameterInfoImpl.createNew().withName("cu").withType(myFactory.createTypeFromText("C<U>", method.getParameterList())).withDefaultValue("null")
+      ParameterInfoImpl.createNew().withName("t").withType(myFactory.createTypeFromText("T", method.getParameterList())).withDefaultValue(
+        "null"),
+      ParameterInfoImpl.createNew().withName("u").withType(myFactory.createTypeFromText("U", method.getParameterList())).withDefaultValue(
+        "null"),
+      ParameterInfoImpl.createNew().withName("cu")
+        .withType(myFactory.createTypeFromText("C<U>", method.getParameterList())).withDefaultValue("null")
     }, false);
   }
 
@@ -227,11 +224,11 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
     }, false);
   }
-  
+
   public void testReturnJavadocAdded() {
     doTest("int", new ParameterInfoImpl[0], false);
   }
-  
+
   public void testReturnJavadocUnchanged() {
     doTest("int", new ParameterInfoImpl[0], false);
   }
@@ -250,25 +247,30 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testUseAnyVariable() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method)).withDefaultValue("null").useAnySingleVariable()
+      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method))
+        .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
   public void testUseThisAsAnyVariable() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method)).withDefaultValue("null").useAnySingleVariable()
+      ParameterInfoImpl.createNew().withName("l").withType(myFactory.createTypeFromText("List", method))
+        .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
   public void testUseAnyVariableAndDefault() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.createNew().withName("c").withType(myFactory.createTypeFromText("C", method)).withDefaultValue("null").useAnySingleVariable()
+      ParameterInfoImpl.createNew().withName("c").withType(myFactory.createTypeFromText("C", method))
+        .withDefaultValue("null").useAnySingleVariable()
     }, false);
   }
 
   public void testRemoveVarargParameter() {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->
-      doTest(null, null, null, new ParameterInfoImpl[]{ParameterInfoImpl.create(0)}, new ThrownExceptionInfo[0], false)
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() ->
+                                                                              doTest(null, null, null,
+                                                                                     new ParameterInfoImpl[]{ParameterInfoImpl.create(0)},
+                                                                                     new ThrownExceptionInfo[0], false)
     );
   }
 
@@ -367,7 +369,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testIntroduceParameterWithDefaultValueInHierarchy() {
-    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")}, false);
+    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType()).withDefaultValue("0")},
+           false);
   }
 
   public void testReorderMultilineMethodParameters() {
@@ -381,13 +384,15 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testReplaceVarargWithArray() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-      ParameterInfoImpl.create(1).withName("l").withType(myFactory.createTypeFromText("List<T>[]", method.getParameterList())).withDefaultValue("null"),
+      ParameterInfoImpl.create(1).withName("l")
+        .withType(myFactory.createTypeFromText("List<T>[]", method.getParameterList())).withDefaultValue("null"),
       ParameterInfoImpl.create(0).withName("s").withType(myFactory.createTypeFromText("String", method.getParameterList()))
     }, false);
   }
 
   public void testReplaceOldStyleArrayWithVarargs() {
-    doTest(null, new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiTypes.intType()))}, false);
+    doTest(null, new ParameterInfoImpl[]{ParameterInfoImpl.create(0).withName("a").withType(new PsiEllipsisType(PsiTypes.intType()))},
+           false);
   }
 
   public void testReorderParamsOfFunctionalInterface() {
@@ -424,7 +429,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testRenameMethodUsedInMethodReference() {
-    GenParams genParams = method -> new ParameterInfoImpl[] {ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())};
+    GenParams genParams = method -> new ParameterInfoImpl[]{ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())};
     doTest(PsiModifier.PRIVATE, "alwaysFalse", null, genParams, new SimpleExceptionsGen(), false, false);
   }
 
@@ -487,7 +492,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
-  
+
   public void testPropagateParameterWithOverrider() {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
@@ -505,7 +510,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     new ChangeSignatureProcessor(getProject(), method, false, null, method.getName(),
                                  CanonicalTypes.createTypeWrapper(PsiTypes.voidType()), new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName(parameters[0].getName()).withType(parameters[0].getType()),
-      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true")}, null, propagateParametersMethods, null
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()).withDefaultValue("true")}, null,
+                                 propagateParametersMethods, null
     ).run();
     checkResultByFile(basePath + "_after.java");
   }
@@ -530,7 +536,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     };
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);
   }
-  
+
   public void testRecordHeaderDeleteRename() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
@@ -570,7 +576,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
   public void testRecordCanonicalConstructorReorder() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
@@ -613,7 +619,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
   public void testRecordComponentWithImportToBeAdded() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
@@ -621,7 +627,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
   public void testRecordCanonicalConstructorMissingHeader() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
@@ -629,12 +635,11 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
   public void testRemoveAnnotation() {
     doTest(null, null, null, method -> new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
-      }, false);
-      
+      ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
+    }, false);
   }
 
   public void testAddReturnAnnotation() {
@@ -672,40 +677,380 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       ParameterInfoImpl.createNew().withType(PsiTypes.shortType()).withName("d"),
     }, false);
   }
-  
+
   public void testVarargToArray() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
-      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
+      ParameterInfoImpl.create(1).withName("args").withType(
+        method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
   public void testEnumVarargToArray() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
-      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
+      ParameterInfoImpl.create(1).withName("args").withType(
+        method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
   public void testDefCtorVarargToArray() {
-    doTest(null, null, null, method -> new ParameterInfoImpl[] {
-      ParameterInfoImpl.create(0).withName("args").withType(method.getParameterList().getParameter(0).getType().getDeepComponentType().createArrayType())
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("args").withType(
+        method.getParameterList().getParameter(0).getType().getDeepComponentType().createArrayType())
     }, false);
   }
 
   public void testArrayToVararg() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[] {
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("x"),
-      ParameterInfoImpl.create(1).withName("args").withType(new PsiEllipsisType(method.getParameterList().getParameter(1).getType().getDeepComponentType()))
+      ParameterInfoImpl.create(1).withName("args").withType(
+        new PsiEllipsisType(method.getParameterList().getParameter(1).getType().getDeepComponentType()))
     }, false);
   }
-  
+
   public void testVarargToArrayReorder() { // IDEA-318626
-    doTest(null, null, null, method -> new ParameterInfoImpl[] {
-      ParameterInfoImpl.create(1).withName("args").withType(method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType()),
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withName("args").withType(
+        method.getParameterList().getParameter(1).getType().getDeepComponentType().createArrayType()),
       ParameterInfoImpl.create(0).withName("x")
     }, false);
   }
 
-  /* workers */
+  /* Markdown javadoc variant */
+  public void testParamJavadocMarkdown2() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("z").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testRecordHeaderDeleteRenameMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("yyy").withType(PsiTypes.longType())
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorReorderMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownOfDeleted() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("role").withType(PsiTypes.intType()),
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameterMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(-1).withName("i").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownNoNewLineInserted() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("newArgs").withType(PsiTypes.doubleType()),
+    }, false);
+  }
+
+  public void testMultilineJavadocMarkdownWithoutFormatting() { // IDEA-281568
+    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown1() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("z").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown0() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
+    }, false);
+  }
+
+  public void testReturnJavadocMarkdownAdded() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+
+  public void testRecordCanonicalConstructorRenameMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withName("z").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType())
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameterMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(-1).withName("y").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdown4() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("a").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testSCRMarkdown40895() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("y").withType(PsiTypes.intType()),
+      ParameterInfoImpl.create(1).withName("b").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testReturnJavadocMarkdownUnchanged() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+
+  public void testRecordComponentWithImportToBeAddedMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
+      };
+    }, false);
+  }
+
+  public void testMethodParametersAlignmentAfterMethodReturnTypeChangeMarkdown() {
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
+    getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testParamJavadocMarkdown3() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("b").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testRecordHeaderDeleteRenameMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("p2").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testParamJavadocMarkdownRenamedReordered() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.createNew().withName("c").withType(PsiTypes.booleanType()),
+      ParameterInfoImpl.create(1).withName("b1").withType(PsiTypes.booleanType()),
+    }, false);
+  }
+
+  public void testJavadocMarkdownGenericsLink() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", null)),
+      ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.booleanType())
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorReorderMarkdown() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("y").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(2).withName("z").withType(PsiTypes.intType()),
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testMultilineJavadocMarkdown() { // IDEA-281568
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.intType()).withName("c"),
+    }, false);
+  }
+
+  public void testNoGapsInParameterTagsMarkdown() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("b"),
+      ParameterInfoImpl.create(1).withType(PsiTypes.longType()).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiTypes.booleanType()).withName("c"),
+      ParameterInfoImpl.createNew().withType(PsiTypes.shortType()).withName("d"),
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorRenameMarkdown2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(2).withName("i").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
+  public void testJavadocMarkdownNotBrokenAfterDelete() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiTypes.intType()).withName("i1")
+    }, false);
+  }
+
+  public void testConflictsForFieldRecord() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'a' is used");
+  }
+
+  public void testConflictsForGetRecord() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'a' is used");
+  }
+
+  public void testWithoutConflictsForGet() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("b").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testConflictsSwitchUsedDeconstruction() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(1).withName("b").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'a' is used");
+  }
+
+  public void testWithoutConflictsSwitchUsedDeconstruction() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("a").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testConflictsSwitchNarrowedDeconstruction() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'b' is used");
+  }
+
+  public void testWithoutConflictsSwitchExtendedDeconstruction() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("a").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testConflictsSwitchNestedDeconstruction() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'y' is used");
+  }
+
+  public void testWithoutConflictsSwitchNestedDeconstruction() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("x").withType(pointType)
+      };
+    }, false);
+  }
+
+  public void testConflictsSwitchNestedDeconstructionDifTypes() {
+    assertConflict(() -> {
+      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
+      doTest(null, null, null, method -> {
+        return new ParameterInfoImpl[]{
+          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+        };
+      }, false);
+    }, "Record component 'x' is used");
+  }
+
+  @SuppressWarnings("CatchMayIgnoreException")
+  private static void assertConflict(@NotNull Runnable runnable,
+                                     @NotNull String expectedMessage) {
+    try {
+      runnable.run();
+      fail("Conflict expected");
+    }
+    catch (RuntimeException e) {
+      Assertions.assertThat(e).isInstanceOf(BaseRefactoringProcessor.ConflictsInTestsException.class);
+      Assertions.assertThat(e.getMessage()).isEqualTo(expectedMessage);
+    }
+  }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.intellij.build.images.sync.findProjectHomePath
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -28,11 +29,19 @@ data class IntellijIconClassGeneratorModuleConfig(
    * The directory where icons are located relative to resource root.
    */
   val iconDirectory: String? = null,
+  /**
+   * Exclude specified packages from icon processing
+   */
+  val excludePackages: List<String> = emptyList(),
+  /**
+   * Enables generation of icon keys for Jewel.
+   */
+  val generateJewelIcons: Boolean = false
 )
 
 abstract class IconClasses {
   open val homePath: String
-    get() = System.getProperty("user.dir")
+    get() = findProjectHomePath()
 
   open val modules: List<JpsModule>
     get() = jpsProject(homePath).modules
@@ -46,6 +55,10 @@ internal fun generateIconClasses(config: IconClasses = IntellijIconClassGenerato
   val home = Path.of(config.homePath)
 
   val modules = config.modules
+    // Toolbox icons are not based on IJ Platform
+    .filter { !it.name.startsWith("toolbox.") }
+
+  // TODO: update copyright into svg icons
 
   if (System.getenv("OPTIMIZE_ICONS") != "false") {
     val optimizer = ImageSizeOptimizer(home)

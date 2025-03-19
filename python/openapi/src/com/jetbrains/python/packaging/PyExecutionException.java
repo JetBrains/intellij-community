@@ -1,89 +1,147 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
-import com.intellij.execution.ExecutionExceptionWithAttachments;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.jetbrains.python.execution.FailureReason;
+import com.jetbrains.python.execution.FailureReasonKt;
+import com.jetbrains.python.execution.PyExecutionFailure;
+import com.jetbrains.python.execution.PyExecutionFailureKt;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-public class PyExecutionException extends ExecutionExceptionWithAttachments {
-  @NotNull private final String myCommand;
-  @NotNull private final List<String> myArgs;
-  private final int myExitCode;
-  @NotNull private final List<? extends PyExecutionFix> myFixes;
+/**
+ * Process execution failed.
+ * There are two cases, see {@link FailureReason}.
+ * Each constructor represents one or another.
+ *
+ * @see FailureReason
+ */
+public final class PyExecutionException extends ExecutionException implements PyExecutionFailure {
+  private final @NotNull String myCommand;
+  private final @NotNull List<String> myArgs;
+  private final @NotNull List<? extends PyExecutionFix> myFixes;
+  private final @DialogMessage @Nullable String myAdditionalMessage;
+  private final @NotNull FailureReason myError;
 
-  public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args) {
-    this(message, command, args, "", "", 0, Collections.emptyList());
+  /**
+   * A process failed to start, {@link FailureReason.CantStart}
+   *
+   * @param additionalMessage a process start reason for a user
+   */
+  public PyExecutionException(@DialogMessage @Nullable String additionalMessage,
+                              @NotNull String command,
+                              @NotNull List<String> args) {
+    this(additionalMessage, command, args, Collections.emptyList());
   }
 
-  public PyExecutionException(@DialogMessage @NotNull String message,
+  /**
+   * A process failed to start, {@link FailureReason.CantStart}
+   *
+   * @param additionalMessage a process start reason for a user
+   */
+  public PyExecutionException(@DialogMessage @Nullable String additionalMessage,
+                              @NotNull String command,
+                              @NotNull List<String> args,
+                              @NotNull List<? extends PyExecutionFix> fixes) {
+    super(PyExecutionFailureKt.getUserMessage(command, args, additionalMessage, FailureReason.CantStart.INSTANCE));
+    myAdditionalMessage = additionalMessage;
+    myCommand = command;
+    myArgs = args;
+    myFixes = fixes;
+    myError = FailureReason.CantStart.INSTANCE;
+  }
+
+  /**
+   * A process started, but failed {@link FailureReason.ExecutionFailed}
+   *
+   * @param additionalMessage a process start reason for a user
+   * @param output            execution output
+   */
+  public PyExecutionException(@DialogMessage @Nullable String additionalMessage,
                               @NotNull String command,
                               @NotNull List<String> args,
                               @NotNull ProcessOutput output) {
-    this(message, command, args, output.getStdout(), output.getStderr(), output.getExitCode(), Collections.emptyList());
+    this(additionalMessage, command, args, output, Collections.emptyList());
   }
 
-  public PyExecutionException(@DialogMessage @NotNull String message, @NotNull String command, @NotNull List<String> args,
-                              @NotNull String stdout, @NotNull String stderr, int exitCode,
+  /**
+   * A process started, but failed {@link FailureReason.ExecutionFailed}
+   *
+   * @param additionalMessage a process start reason for a user
+   * @param output            execution output
+   */
+  public PyExecutionException(@DialogMessage @Nullable String additionalMessage,
+                              @NotNull String command,
+                              @NotNull List<String> args,
+                              @NotNull ProcessOutput output,
                               @NotNull List<? extends PyExecutionFix> fixes) {
-    super(message, stdout, stderr);
+    super(PyExecutionFailureKt.getUserMessage(command, args, additionalMessage, new FailureReason.ExecutionFailed(output)));
+    myAdditionalMessage = additionalMessage;
     myCommand = command;
     myArgs = args;
-    myExitCode = exitCode;
     myFixes = fixes;
+    myError = new FailureReason.ExecutionFailed(output);
+  }
+
+  /**
+   * A process started, but failed {@link FailureReason.ExecutionFailed}
+   *
+   * @param additionalMessage a process start reason for a user
+   */
+  public PyExecutionException(@DialogMessage @Nullable String additionalMessage,
+                              @NotNull String command,
+                              @NotNull List<String> args,
+                              @NotNull String stdout,
+                              @NotNull String stderr,
+                              int exitCode,
+                              @NotNull List<? extends PyExecutionFix> fixes) {
+    this(additionalMessage, command, args, new ProcessOutput(stdout, stderr, exitCode, false, false), fixes);
   }
 
   @Override
-  public String toString() {
-    final StringBuilder b = new StringBuilder();
-    b.append("The following command was executed:\n\n");
-    final String command = getCommand() + " " + StringUtil.join(getArgs(), " ");
-    b.append(command);
-    b.append("\n\n");
-    b.append("The exit code: ").append(myExitCode).append("\n");
-    b.append("The error output of the command:\n\n");
-    b.append(getStdout());
-    b.append("\n");
-    b.append(getStderr());
-    b.append("\n");
-    b.append(getMessage());
-    return b.toString();
-  }
-
-  @NotNull
-  public String getCommand() {
+  public @NotNull String getCommand() {
     return myCommand;
   }
 
-  @NotNull
-  public List<String> getArgs() {
+  @Override
+  public @NotNull List<String> getArgs() {
     return myArgs;
   }
 
-  @NotNull
-  public List<? extends PyExecutionFix> getFixes() {
+  public @NotNull List<? extends PyExecutionFix> getFixes() {
     return myFixes;
   }
 
+  @Override
+  public @Nullable String getAdditionalMessage() {
+    return myAdditionalMessage;
+  }
+
+  @Override
+  public @NotNull FailureReason getFailureReason() {
+    return myError;
+  }
+
+  /**
+   * @deprecated use {@link #getFailureReason()} and match it as when process failed to start there is no exit code
+   */
+  @Deprecated(forRemoval = true)
   public int getExitCode() {
-    return myExitCode;
+    if (getFailureReason() instanceof FailureReason.ExecutionFailed executionFailed) {
+      return executionFailed.getOutput().getExitCode();
+    }
+    return -1;
+  }
+
+  @ApiStatus.Internal
+  @NotNull
+  public PyExecutionException copyWith(@NotNull String newCommand, @NotNull List<@NotNull String> newArgs) {
+    return FailureReasonKt.copyWith(this, newCommand, newArgs);
   }
 }

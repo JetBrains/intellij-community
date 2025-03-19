@@ -25,4 +25,8 @@ enum class E {
     open fun <caret>foo(n: Int): Int = n
 }
 
-// FIR_IGNORE
+fun test(e: E) {
+    e.foo(4)
+    E.A.foo(4)
+    E.O.foo(3)
+}

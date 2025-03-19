@@ -1,7 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -19,6 +22,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.server.security.ChecksumUtil;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -37,40 +41,83 @@ public final class Maven3EffectivePomDumper {
    */
   private static final String SETTINGS_XSD_URL = "http://maven.apache.org/xsd/settings-1.0.0.xsd";
 
+  public static @Nullable String dependencyHash(@Nullable MavenProject project) {
+    if (null == project) return null;
+
+    Model model = project.getModel();
+    if (null == model) return null;
+
+    StringBuilder stringBuilder = new StringBuilder();
+    List<Dependency> dependencies = model.getDependencies();
+    stringBuilder.append(dependencyListHash(dependencies));
+
+    DependencyManagement dependencyManagement = model.getDependencyManagement();
+    if (null != dependencyManagement) {
+      stringBuilder.append(dependencyListHash(dependencyManagement.getDependencies()));
+    }
+
+    return ChecksumUtil.checksum(stringBuilder.toString());
+  }
+
+  private static @NotNull StringBuffer dependencyListHash(@Nullable List<Dependency> dependencies ) {
+    StringBuffer stringBuffer = new StringBuffer();
+    if (null == dependencies || dependencies.isEmpty()) return stringBuffer;
+
+    for (Dependency dependency : dependencies) {
+      append(stringBuffer, dependency.getGroupId());
+      append(stringBuffer, dependency.getArtifactId());
+      append(stringBuffer, dependency.getVersion());
+      append(stringBuffer, dependency.getType());
+      append(stringBuffer, dependency.getClassifier());
+      append(stringBuffer, dependency.getScope());
+      append(stringBuffer, dependency.getSystemPath());
+
+      List<Exclusion> exclusions = dependency.getExclusions();
+      if (null != exclusions) {
+        for (Exclusion exclusion : exclusions) {
+          append(stringBuffer, exclusion.getArtifactId());
+          append(stringBuffer, exclusion.getGroupId());
+        }
+      }
+
+      append(stringBuffer, dependency.getOptional());
+    }
+
+    return stringBuffer;
+  }
+
+  private static void append(StringBuffer buffer, String s) {
+    if (null != s) buffer.append(s);
+  }
+
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
-  @Nullable
-  public static String evaluateEffectivePom(final Maven3ServerEmbedder embedder,
-                                            @NotNull final File file,
+  public static @Nullable String evaluateEffectivePom(final Maven3ServerEmbedder embedder,
+                                            final @NotNull File file,
                                             @NotNull List<String> activeProfiles,
                                             @NotNull List<String> inactiveProfiles) {
     final StringWriter w = new StringWriter();
 
-    try {
-      MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-      embedder.executeWithMavenSession(request, () -> {
-        try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
+    embedder.executeWithMavenSession(request, () -> {
+      try {
+        // copied from DefaultMavenProjectBuilder.buildWithDependencies
+        ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
+        ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
 
-          MavenProject project = buildingResult.getProject();
+        MavenProject project = buildingResult.getProject();
 
-          XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
-                                                      "\n", null, null);
+        XMLWriter writer = new PrettyPrintXMLWriter(new PrintWriter(w), StringUtils.repeat(" ", XmlWriterUtil.DEFAULT_INDENTATION_SIZE),
+                                                    "\n", null, null);
 
-          writeHeader(writer);
+        writeHeader(writer);
 
-          writeEffectivePom(project, writer);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-      });
-    }
-    catch (Exception e) {
-      return null;
-    }
+        writeEffectivePom(project, writer);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
 
     return w.toString();
   }

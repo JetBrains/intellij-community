@@ -7,7 +7,7 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.psi.createSmartPointer
 
 internal class PsiElementNavigationTarget(private val myElement: PsiElement) : NavigationTarget {
 
@@ -25,9 +25,7 @@ internal class PsiElementNavigationTarget(private val myElement: PsiElement) : N
 
     other as PsiElementNavigationTarget
 
-    if (myElement != other.myElement) return false
-
-    return true
+    return myElement == other.myElement
   }
 
   override fun hashCode(): Int {

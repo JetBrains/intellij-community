@@ -5,13 +5,13 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.MathUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,14 +22,14 @@ import org.jetbrains.annotations.NotNull;
  * Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
  * So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
  */
-public class CaretPositionKeeper {
-  final static Key<CaretPositionKeeper> POSITION_KEEPER_KEY = Key.create("formatter.caret.position.keeper");
+@ApiStatus.Internal
+public final class CaretPositionKeeper {
 
-  Editor      myEditor;
-  Document    myDocument;
-  CaretModel  myCaretModel;
+  Editor myEditor;
+  Document myDocument;
+  CaretModel myCaretModel;
   RangeMarker myBeforeCaretRangeMarker;
-  String      myCaretIndentToRestore;
+  String myCaretIndentToRestore;
   int myVisualColumnToRestore = -1;
   boolean myBlankLineIndentPreserved;
 
@@ -39,10 +39,19 @@ public class CaretPositionKeeper {
     myDocument = editor.getDocument();
     myBlankLineIndentPreserved = isBlankLineIndentPreserved(settings, language);
 
+    Project project = myEditor.getProject();
+    if (project != null) {
+      PsiDocumentManager.getInstance(project).commitDocument(myDocument);
+    }
+
     int caretOffset = getCaretOffset();
-    int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
-    int lineEndOffset = getLineEndOffsetByTotalOffset(caretOffset);
-    boolean shouldFixCaretPosition = CharArrayUtil.isEmptyOrSpaces(myDocument.getCharsSequence(), lineStartOffset, lineEndOffset);
+    CaretRestorationDecider decider = CaretRestorationDecider.forLanguage(language);
+
+    if (decider == null) {
+      decider = DefaultCaretRestorationDecider.INSTANCE;
+    }
+
+    boolean shouldFixCaretPosition = decider.shouldRestoreCaret(myDocument, myEditor, caretOffset);
 
     if (shouldFixCaretPosition) {
       initRestoreInfo(caretOffset);
@@ -56,7 +65,7 @@ public class CaretPositionKeeper {
   }
 
   private void initRestoreInfo(int caretOffset) {
-    int lineStartOffset = getLineStartOffsetByTotalOffset(caretOffset);
+    int lineStartOffset = getLineStartOffsetByTotalOffset(myDocument, caretOffset);
 
     myVisualColumnToRestore = myCaretModel.getVisualPosition().column;
     myCaretIndentToRestore = myDocument.getText(TextRange.create(lineStartOffset, caretOffset));
@@ -104,8 +113,9 @@ public class CaretPositionKeeper {
 
   private void insertWhiteSpaceIndentIfNeeded(int caretLineOffset) {
     int lineToInsertIndent = myDocument.getLineNumber(caretLineOffset);
-    if (!lineContainsWhiteSpaceSymbolsOnly(lineToInsertIndent))
+    if (!lineContainsWhiteSpaceSymbolsOnly(lineToInsertIndent)) {
       return;
+    }
 
     int lineToInsertStartOffset = myDocument.getLineStartOffset(lineToInsertIndent);
 
@@ -118,16 +128,6 @@ public class CaretPositionKeeper {
 
   private boolean isVirtualSpaceEnabled() {
     return myEditor.getSettings().isVirtualSpace();
-  }
-
-  private int getLineStartOffsetByTotalOffset(int offset) {
-    int line = myDocument.getLineNumber(offset);
-    return myDocument.getLineStartOffset(line);
-  }
-
-  private int getLineEndOffsetByTotalOffset(int offset) {
-    int line = myDocument.getLineNumber(offset);
-    return myDocument.getLineEndOffset(line);
   }
 
   private int getCaretOffset() {
@@ -145,5 +145,15 @@ public class CaretPositionKeeper {
 
   private int getCurrentCaretLine() {
     return myDocument.getLineNumber(myCaretModel.getOffset());
+  }
+
+  static int getLineStartOffsetByTotalOffset(Document document, int offset) {
+    int line = document.getLineNumber(offset);
+    return document.getLineStartOffset(line);
+  }
+
+  static int getLineEndOffsetByTotalOffset(Document document, int offset) {
+    int line = document.getLineNumber(offset);
+    return document.getLineEndOffset(line);
   }
 }

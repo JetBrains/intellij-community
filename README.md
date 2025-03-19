@@ -1,4 +1,7 @@
-# IntelliJ IDEA Community Edition [![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md)
+[![official JetBrains project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains/.github/blob/main/profile/README.md) [![Build status](https://github.com/JetBrains/intellij-community/workflows/IntelliJ%20IDEA/badge.svg)](https://github.com/JetBrains/intellij-community/actions/workflows/IntelliJ_IDEA.yml)
+
+# IntelliJ IDEA Community Edition 
+
 These instructions will help you build IntelliJ IDEA Community Edition from source code, which is the basis for IntelliJ Platform development.
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
@@ -14,7 +17,7 @@ and build numbers for older releases of IntelliJ IDEA can be found on the page o
 
 These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
 
-_**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
+_**Speed Tip:**_ If the complete repository history isn't needed, then using a shallow clone (`git clone --depth 1`) will save significant time.
 
 _**On Windows:**_ Two git options are required to check out sources on Windows. Since it's a common source of Git issues on Windows anyway, those options could be set globally (execute those commands before cloning any of intellij-community/android repositories):
 
@@ -22,14 +25,15 @@ _**On Windows:**_ Two git options are required to check out sources on Windows. 
 * `git config --global core.autocrlf input`
 
 IntelliJ IDEA Community Edition requires additional Android modules from separate Git repositories. To clone these repositories,
-run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. These scripts clone their respective *master* branches. Make sure you are inside the `<IDEA_HOME>` directory when running those scripts, so the modules get cloned inside the `<IDEA_HOME>` directory.
+run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. Use the `--shallow` argument if the complete repository history isn't needed. 
+These scripts clone their respective *master* branches. Make sure you are inside the `<IDEA_HOME>` directory when running those scripts, so the modules get cloned inside the `<IDEA_HOME>` directory.
 * `getPlugins.sh` for Linux or macOS.
 * `getPlugins.bat` for Windows.
 
 _**Note:**_ Always `git checkout` the `intellij-community` and `android` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Version 2023.1.1 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
+Version 2023.2 or newer of IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate Edition is required to build and develop
 for the IntelliJ Platform.
 
 ### Opening the IntelliJ Source Code for Build
@@ -63,12 +67,18 @@ Examples (`./` should be added only for Linux/macOS):
  * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
  * Build source code _incrementally_ (do not build what was already built before): `./installers.cmd -Dintellij.build.incremental.compilation=true`
 
-`installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/scripts/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
+`installers.cmd` is used just to run [OpenSourceCommunityInstallersBuildTarget](build/src/OpenSourceCommunityInstallersBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `Build IDEA Community Installers (current OS)` for an example.
 
 #### Dockerized Build Environment
-To build installation packages inside a Docker container with preinstalled dependencies and tools, run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell):  
-`docker run --rm -it -v ${PWD}:/community $(docker build -q . --target build_env)`
+To build installation packages inside a Docker container with preinstalled dependencies and tools, run the following command in `<IDEA_HOME>` directory (on Windows, use PowerShell):
+`docker run --rm -it --user "$(id -u)" --volume "${PWD}:/community" "$(docker build --quiet . --target intellij_idea)"`
+
+> Please remember to specify the `--user "$(id -u)"` argument for the container's user to match the host's user. 
+> This is required not to affect the permissions of the checked-out repository, the build output and the mounted Maven cache, if any.
+
+To reuse the existing Maven cache from the host system, add the following option to `docker run` command:
+`--volume "$HOME/.m2:/home/ide_builder/.m2"`
 
 ## Running IntelliJ IDEA
 To run the IntelliJ IDEA built from source, choose **Run | Run** from the main menu. This will use the preconfigured run configuration "**IDEA**".
@@ -92,5 +102,5 @@ Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`
 * Run a specific test: `./tests.cmd -Dintellij.build.test.patterns=com.intellij.util.ArrayUtilTest`
 
-`tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/scripts/CommunityRunTestsBuildTarget.kt) from the command line.
+`tests.cmd` is used just to run [CommunityRunTestsBuildTarget](build/src/CommunityRunTestsBuildTarget.kt) from the command line.
 You may call it directly from IDEA, see run configuration `tests in community` for an example.

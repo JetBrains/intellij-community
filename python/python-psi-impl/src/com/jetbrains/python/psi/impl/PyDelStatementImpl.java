@@ -2,14 +2,19 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyDelStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
 
-public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement {
+
+public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement, PsiListLikeElement {
   public PyDelStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -22,5 +27,10 @@ public class PyDelStatementImpl extends PyElementImpl implements PyDelStatement 
   @Override
   public PyExpression @NotNull [] getTargets() {
     return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
+  }
+
+  @Override
+  public @NotNull List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getTargets());
   }
 }

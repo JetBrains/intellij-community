@@ -7,11 +7,12 @@ package org.jetbrains.kotlin.idea.search.ideaExtensions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 class FirKotlinTargetElementEvaluator : KotlinTargetElementEvaluator() {
     override fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
-        // TODO: implement
-        return null
+        return (ref.element as? KtNameReferenceExpression)?.getFunctionLiteralByImplicitLambdaParameter()?.lBrace?.nextSibling
     }
 
     override fun findReceiverForThisInExtensionFunction(ref: PsiReference): PsiElement? {

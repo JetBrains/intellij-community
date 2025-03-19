@@ -1,7 +1,8 @@
 package com.intellij.remoteDev.util
 
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.net.URI
 
 class UrlUtilTest {
@@ -20,12 +21,14 @@ class UrlUtilTest {
     )
   }
 
-  @Test(expected = IllegalStateException::class)
+  @Test
   fun addPathSuffix_no_path() {
-    URI("http://127.0.0.1").addPathSuffix("some")
+    assertThrows<IllegalStateException> {
+      URI("http://127.0.0.1").addPathSuffix("some")
+    }
   }
 
   private fun testAddPathSuffix(original: String, suffix: String, result: String) {
-    Assert.assertEquals(result, URI(original).addPathSuffix(suffix).toString())
+    assertEquals(result, URI(original).addPathSuffix(suffix).toString())
   }
 }

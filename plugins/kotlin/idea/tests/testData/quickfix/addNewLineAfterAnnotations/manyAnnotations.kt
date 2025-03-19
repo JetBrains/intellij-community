@@ -12,3 +12,5 @@ fun foo(y: Int) {
     var x = 1
     @Ann    @Ann2("") x<caret> += 2
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddNewLineAfterAnnotationsFix

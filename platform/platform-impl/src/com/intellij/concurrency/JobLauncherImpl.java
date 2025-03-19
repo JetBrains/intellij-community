@@ -1,18 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
-import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.StandardProgressIndicatorBase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +27,23 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class JobLauncherImpl extends JobLauncher {
-  static final int CORES_FORK_THRESHOLD = 1;
+  @ApiStatus.Internal
+  public static final int CORES_FORK_THRESHOLD = 1;
   private static final Logger LOG = Logger.getInstance(JobLauncher.class);
   private final boolean logAllExceptions = System.getProperty("idea.job.launcher.log.all.exceptions", "false").equals("true");
+  private final ForkJoinPool myForkJoinPool;
+
+  JobLauncherImpl(@NotNull ForkJoinPool pool) {
+    myForkJoinPool = pool;
+  }
+  JobLauncherImpl() {
+    this(ForkJoinPool.commonPool());
+  }
 
   @Override
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
@@ -37,46 +51,90 @@ public final class JobLauncherImpl extends JobLauncher {
                                                      boolean runInReadAction,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
+    return invokeConcurrentlyUnderProgressAsync(things, progress, runInReadAction, failFastOnAcquireReadAction, thingProcessor, ()->{});
+  }
+
+  private static <T> boolean invokeConcurrentlyUnderProgressAsync(@NotNull List<? extends T> things,
+                                                                  ProgressIndicator progress,
+                                                                  boolean runInReadAction,
+                                                                  boolean failFastOnAcquireReadAction,
+                                                                  @NotNull Processor<? super T> thingProcessor,
+                                                                  @NotNull Runnable runWhileForking) {
     // supply our own indicator even if we haven't given one - to support cancellation
     // use StandardProgressIndicator by default to avoid assertion in SensitiveProgressWrapper() ctr later
     ProgressIndicator wrapper = progress == null ? new StandardProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
     Boolean result = processImmediatelyIfTooFew(things, wrapper, runInReadAction, thingProcessor);
-    if (result != null) return result;
+    if (result != null) {
+      runWhileForking.run();
+      return result;
+    }
 
     ProgressManager pm = ProgressManager.getInstance();
     Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
     processor = FileBasedIndex.getInstance().inheritCurrentDumbAccessType(processor);
-    processor = ClientId.decorateProcessor(processor);
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
-    ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processor, 0, things.size(), failedSubTasks, null);
+
+    int availableParallelism = JobSchedulerImpl.getJobPoolParallelism();
+    // fork off several subtasks at once to reduce ramp-up
+    int chunk = Math.max(1, things.size() / availableParallelism);
+    //noinspection unchecked
+    ApplierCompleter<T>[] globalCompleters = new ApplierCompleter[things.size() / chunk];
+    int hi = things.size();
+    boolean[] processed = new boolean[things.size()];
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
+    for (int n=globalCompleters.length-1; n>=0; n--) {
+      int lo = n == 0 ? 0 : hi - chunk;
+      ApplierCompleter<T> completer =
+        new ApplierCompleter<>(globalCompleters, n, thrown, runInReadAction, failFastOnAcquireReadAction, wrapper, things, processed, lo, hi, failedSubTasks, processor);
+      globalCompleters[n] = completer;
+      hi -= chunk;
+    }
+
+    // start only after all are initialised, because each is passed the globalCompleters array which must be inited
+    for (ApplierCompleter<T> completer : globalCompleters) {
+      completer.fork();
+    }
     try {
-      if (progress != null && isAlreadyUnder(progress)) {
-        // there must be nested invokeConcurrentlies.
-        // In this case, try to avoid placing tasks to the FJP queue because extra applier.get() or pool.invoke() can cause pool over-compensation with too many workers
-        applier.compute();
+      runWhileForking.run();
+
+      // help all others
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+        safeIterate(globalCompleters, thrown, completer -> {
+          wrapper.checkCanceled();
+          // don't call .invoke() or other FJP-setting status functions
+          completer.wrapAndRun(() -> completer.execAll());
+        });
       }
-      else {
-        ForkJoinPool.commonPool().execute(applier);
-      }
-      // call checkCanceled a bit more often than .invoke()
-      while (!applier.isDone()) {
-        ProgressManager.checkCanceled();
-        // does automatic compensation against starvation (in ForkJoinPool.awaitJoin)
-        try {
-          applier.get(10, TimeUnit.MILLISECONDS);
+      // all work is done or distributed; wait for in-flight appliers and manifest exceptions
+      safeIterate(globalCompleters, thrown, completer -> {
+        while (true) {
+          try {
+            // while waiting for completion, check for cancellation, except when some applier returned false and the wrapper was canceled because of that
+            if (wrapper.isCanceled() && !(thrown.get() instanceof ApplierCompleter.ComputationAbortedException)) {
+              wrapper.checkCanceled();
+            }
+            // optimization
+            if (completer.isDone()) {
+              completer.get();
+            }
+            else {
+              try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+                completer.get(1, TimeUnit.MILLISECONDS);
+              }
+            }
+            break;
+          }
+          catch (TimeoutException ignored) {
+          }
         }
-        catch (TimeoutException ignored) {
-        }
-        catch (ExecutionException e) {
-          throw e.getCause();
-        }
-      }
-      if (applier.throwable != null) {
-        throw applier.throwable;
+      });
+
+      if (thrown.get() != null) {
+        throw thrown.get();
       }
     }
     catch (ApplierCompleter.ComputationAbortedException e) {
@@ -95,6 +153,10 @@ public final class JobLauncherImpl extends JobLauncher {
         progress.checkCanceled();
       }
       ProgressManager.checkCanceled();
+      Throwable savedException = thrown.get();
+      if (savedException != null/* && !(savedException instanceof ProcessCanceledException)*/) {
+        ExceptionUtil.rethrow(savedException);
+      }
       return false;
     }
     catch (RuntimeException | Error e) {
@@ -103,20 +165,45 @@ public final class JobLauncherImpl extends JobLauncher {
     catch (Throwable e) {
       throw new RuntimeException(e);
     }
-    return applier.completeTaskWhichFailToAcquireReadAction();
+    return ApplierCompleter.completeTaskWhichFailToAcquireReadAction(failedSubTasks);
   }
 
-  private static boolean isAlreadyUnder(@NotNull ProgressIndicator progress) {
-    progress = ProgressWrapper.unwrapAll(progress);
-    ProgressIndicator existing = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    while (existing != null) {
-      if (existing == progress) return true;
-      if (!(existing instanceof WrappedProgressIndicator)) return false;
-      existing = ProgressWrapper.unwrap(existing);
+  private static <T> void safeIterate(ApplierCompleter<T> @NotNull [] globalCompleters,
+                                      @NotNull AtomicReference<Throwable> thrown,
+                                      @NotNull ThrowableConsumer<? super ApplierCompleter<T>, Throwable> consumer)
+    throws ProcessCanceledException {
+    for (ApplierCompleter<T> completer : globalCompleters) {
+      try {
+        consumer.consume(completer);
+      }
+      catch (ProcessCanceledException e) {
+        // when some ApplierCompleter caught ComputationAbortedException, it cancels the current indicator, thus making other ApplierCompleter throw PCE
+        // we need to catch this induced PCE here and return false instead
+        if (!(thrown.get() instanceof ApplierCompleter.ComputationAbortedException)) {
+          throw e;
+        }
+      }
+      catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (cause instanceof ApplierCompleter.ComputationAbortedException) {
+          // contract: when some processor returned false (but not when PCE happened), wait until all other tasks are terminated before return from invokeConcurrentlyUnderProgress
+          thrown.set(cause);
+          continue;
+        }
+        cause = ApplierCompleter.accumulateException(thrown, cause);
+        ExceptionUtil.rethrow(cause);
+      }
+      catch (Throwable e) {
+        if (e instanceof ApplierCompleter.ComputationAbortedException) {
+          // contract: when some processor returned false (but not when PCE happened), wait until all other tasks are terminated before return from invokeConcurrentlyUnderProgress
+          thrown.set(e);
+          continue;
+        }
+        e = ApplierCompleter.accumulateException(thrown, e);
+        ExceptionUtil.rethrow(e);
+      }
     }
-    return false;
   }
-
   // if {@code things} are too few to be processed in the real pool, returns TRUE if processed successfully, FALSE if not
   // returns null if things need to be processed in the real pool
   private static <T> Boolean processImmediatelyIfTooFew(@NotNull List<? extends T> things,
@@ -131,7 +218,6 @@ public final class JobLauncherImpl extends JobLauncher {
       ) {
       AtomicBoolean result = new AtomicBoolean(true);
       Runnable runnable = () -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < things.size(); i++) {
           T thing = things.get(i);
           if (!thingProcessor.process(thing)) {
@@ -151,16 +237,16 @@ public final class JobLauncherImpl extends JobLauncher {
     return null;
   }
 
-  @NotNull
   @Override
-  public Job<Void> submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
-    VoidForkJoinTask task = new VoidForkJoinTask(action, onDoneCallback);
+  public @NotNull Job submitToJobThread(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+    VoidForkJoinTask task = new VoidForkJoinTask(action, myForkJoinPool, onDoneCallback);
     task.submit();
     return task;
   }
 
-  private static final class VoidForkJoinTask implements Job<Void> {
+  private static final class VoidForkJoinTask implements Job {
     private final Runnable myAction;
+    private final ForkJoinPool myForkJoinPool;
     private final Consumer<? super Future<?>> myOnDoneCallback;
     private enum Status { STARTED, EXECUTED } // null=not yet executed, STARTED=started execution, EXECUTED=finished
     private volatile Status myStatus;
@@ -195,13 +281,14 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     };
 
-    private VoidForkJoinTask(@NotNull Runnable action, @Nullable Consumer<? super Future<?>> onDoneCallback) {
+    private VoidForkJoinTask(@NotNull Runnable action, @NotNull ForkJoinPool forkJoinPool, @Nullable Consumer<? super Future<?>> onDoneCallback) {
       myAction = action;
+      myForkJoinPool = forkJoinPool;
       myOnDoneCallback = onDoneCallback;
     }
 
     private void submit() {
-      ForkJoinPool.commonPool().execute(myForkJoinTask);
+      myForkJoinPool.execute(myForkJoinTask);
     }
 
     // when canceled in the middle of the execution returns false until finished
@@ -234,16 +321,18 @@ public final class JobLauncherImpl extends JobLauncher {
         if (toWait < 0) {
           return false;
         }
-        // wait while helping other tasks in the meantime, but not for too long
-        // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
-        ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          // wait while helping other tasks in the meantime, but not for too long
+          // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
+          myForkJoinPool.awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        }
       }
       if (myForkJoinTask.isDone()) {
         try {
           myForkJoinTask.get();
         }
         catch (CancellationException e) {
-          // was canceled in the middle of execution
+          // was canceled in the middle of the execution
         }
         catch (ExecutionException e) {
           ExceptionUtil.rethrow(e.getCause());
@@ -273,6 +362,8 @@ public final class JobLauncherImpl extends JobLauncher {
       private final int mySeq;
       private final T myFirstTask;
 
+      private final CoroutineContext myContext = ThreadContext.currentThreadContext();
+
       private MyProcessQueueTask(int seq, @Nullable T firstTask) {
         mySeq = seq;
         myFirstTask = firstTask;
@@ -294,7 +385,7 @@ public final class JobLauncherImpl extends JobLauncher {
                 result[0] = true;
                 break;
               }
-              try {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, true)) {
                 ProgressManager.checkCanceled();
                 if (!thingProcessor.process(element)) {
                   break;
@@ -318,8 +409,7 @@ public final class JobLauncherImpl extends JobLauncher {
       }
 
       @Override
-      @NonNls
-      public String toString() {
+      public @NonNls String toString() {
         return super.toString() + " seq="+mySeq;
       }
     }
@@ -331,7 +421,7 @@ public final class JobLauncherImpl extends JobLauncher {
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>(n-1);
     List<T> firstElements = new ArrayList<>(n);
     things.drainTo(firstElements, n);
-    // if the tombstone was removed by this batch operation, return it back to the queue to give chance tasks to stop themselves
+    // if the tombstone was removed by this batch operation, return it to the queue to give a chance to other tasks to stop themselves
     if (ContainerUtil.getLastItem(firstElements) == tombStone) {
       firstElements.remove(firstElements.size() - 1);
       try {
@@ -342,7 +432,7 @@ public final class JobLauncherImpl extends JobLauncher {
       }
     }
     for (int i = 1; i < n; i++) {
-      tasks.add(ForkJoinPool.commonPool().submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));
+      tasks.add(myForkJoinPool.submit(new MyProcessQueueTask(i, i < firstElements.size() ? firstElements.get(i) : null)));
     }
     MyProcessQueueTask firstTask = new MyProcessQueueTask(0, ContainerUtil.getFirstItem(firstElements));
     // execute the first task directly in this thread to avoid thread starvation
@@ -368,4 +458,14 @@ public final class JobLauncherImpl extends JobLauncher {
     }
     return result;
   }
+
+  @Override
+  @ApiStatus.Internal
+  public <T> boolean processConcurrentlyAsync(@NotNull ProgressIndicator progress,
+                                              @NotNull List<? extends T> items,
+                                              @NotNull Processor<? super T> thingProcessor,
+                                              @NotNull Runnable runnable) throws ProcessCanceledException {
+    return invokeConcurrentlyUnderProgressAsync(items, progress, true, true, thingProcessor, runnable);
+  }
 }
+

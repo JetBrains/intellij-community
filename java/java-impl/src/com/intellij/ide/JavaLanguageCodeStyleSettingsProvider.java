@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.application.options.*;
@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.util.Collections;
@@ -27,10 +28,9 @@ import java.util.List;
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
-  @NotNull
+public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @Override
-  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
+  public @NotNull CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
       protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
@@ -43,15 +43,13 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     };
   }
 
-  @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
+  public @Nullable CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
-  @NotNull
   @Override
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return JavaLanguage.INSTANCE;
   }
 
@@ -82,6 +80,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_DECONSTRUCTION_LIST",
                                 JavaBundle.message("checkbox.spaces.within.deconstruction.list"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACES_INSIDE_BLOCK_BRACES_WHEN_BODY_IS_PRESENT",
+                                JavaBundle.message("checkbox.spaces.inside.block.braces.when.body.is.present"), getInstance().SPACES_WITHIN);
 
       String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
@@ -99,6 +99,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         "checkbox.spaces.before.colon.in.foreach"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
+
 
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaBundle.message(
         "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
@@ -185,6 +186,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WHILE_ON_NEW_LINE",
                                    "CATCH_ON_NEW_LINE",
                                    "FINALLY_ON_NEW_LINE",
+                                   "SWITCH_EXPRESSIONS_WRAP",
                                    "INDENT_CASE_FROM_SWITCH",
                                    "CASE_STATEMENT_ON_NEW_LINE",
                                    "SPECIAL_ELSE_IF_TREATMENT",
@@ -195,6 +197,14 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN",
                                    "BUILDER_METHODS",
                                    "KEEP_BUILDER_METHODS_INDENTS");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "WRAP_SEMICOLON_AFTER_CALL_CHAIN",
+                                JavaBundle.message("wrapping.semicolon.after.call.chain"),
+                                getInstance().WRAPPING_CALL_CHAIN);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "ENUM_FIELD_ANNOTATION_WRAP", JavaBundle.message("wrapping.annotation.enums"),
+                                null, getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
 
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "ANNOTATION_PARAMETER_WRAP",
@@ -230,6 +240,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER",
                                 JavaBundle.message("checkbox.do.not.wrap.after.single.annotation"), parameterAnnotationsWrapping);
 
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "NEW_LINE_WHEN_BODY_IS_PRESENTED",
+                                JavaBundle.message("new.line.when.body.is.presented"),
+                                ApplicationBundle.message("wrapping.method.parentheses"));
+
       // Record components
       String recordComponentsGroup = JavaBundle.message("wrapping.record.components");
       consumer.showCustomOption(JavaCodeStyleSettings.class,
@@ -248,6 +262,10 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "RPAREN_ON_NEW_LINE_IN_RECORD_HEADER",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                recordComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_NEW_LINE_IN_RECORD_COMPONENT",
+                                JavaBundle.message("annotations.new.line.record.component"),
                                 recordComponentsGroup);
 
       // Try statement
@@ -281,15 +299,46 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 deconstructionComponentsGroup);
+
+      consumer.renameStandardOption(
+        "SWITCH_EXPRESSIONS_WRAP",
+        JavaBundle.message("wrapping.switch.statement.or.expression")
+      );
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER",
                                 JavaBundle.message("editbox.blanklines.around.initializer"),
                                 getInstance().BLANK_LINES);
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+        JavaBundle.message("editbox.blank.lines.field.in.interface"));
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD",
+        JavaBundle.message("editbox.blank.lines.field.without.annotations"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS",
+                                JavaBundle.message("editbox.blank.lines.field.with.annotations"),
+                                getInstance().BLANK_LINES,
+                                OptionAnchor.AFTER,
+                                "BLANK_LINES_AROUND_FIELD");
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_BETWEEN_RECORD_COMPONENTS",
+                                JavaBundle.message("editbox.blank.lines.record.components"),
+                                getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
-      consumer.showAllStandardOptions();
+      consumer.showStandardOptions(
+        "LINE_COMMENT_ADD_SPACE",
+        "LINE_COMMENT_ADD_SPACE_ON_REFORMAT",
+        "LINE_COMMENT_AT_FIRST_COLUMN",
+        "BLOCK_COMMENT_AT_FIRST_COLUMN",
+        "BLOCK_COMMENT_ADD_SPACE"
+      );
     }
     else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
       consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
@@ -372,8 +421,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
 
   @Override
-  @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+  public @NotNull DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return new DocCommentSettings() {
       private final JavaCodeStyleSettings mySettings =
         rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -408,9 +456,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   }
 
-  @Nullable
   @Override
-  public CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
+  public @Nullable CodeStyleFieldAccessor getAccessor(@NotNull Object codeStyleObject, @NotNull Field field) {
     if (PackageEntryTable.class.isAssignableFrom(field.getType())) {
       return new JavaPackageEntryTableAccessor(codeStyleObject, field);
     }
@@ -440,19 +487,17 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
 
     @Override
-    @Nullable
-    public List<String> get() {
+    public @Nullable List<String> get() {
       return mySettings.getRepeatAnnotations();
     }
 
     @Override
-    protected List<String> parseString(@NotNull String string) {
+    protected @Unmodifiable List<String> parseString(@NotNull String string) {
       return CodeStylePropertiesUtil.getValueList(string);
     }
 
-    @Nullable
     @Override
-    protected String valueToString(@NotNull List<String> value) {
+    protected @Nullable String valueToString(@NotNull List<String> value) {
       return CodeStylePropertiesUtil.toCommaSeparatedString(value);
     }
 
@@ -532,6 +577,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
       import javax.swing.*;
       import java.util.Vector;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
 
       public class Foo {
         private int field1;
@@ -553,6 +600,20 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       }
       class AnotherClass {
       }
+      
+      public class ClassWithAnnotatedFields {
+          @NotNull
+          public Boolean publicAnnotatedField = true;
+          public Boolean publicNonAnnotatedField = true;
+          @NotNull Boolean typeAnnotatedField = false;
+          @NotNull
+          private Boolean firstPrivateAnnotatedField = true;
+          @NotNull
+          private Boolean secondPrivateAnnotatedField = true;
+      }
+      
+      public record RecordWithAnnotatedComponents(@NotNull Double s, @Nullable String t, @NotNull Double w) {}
+      
       interface TestInterface {
           int MAX = 10;
           int MIN = 1;
@@ -613,7 +674,26 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
           }
       }
       interface Abba {}
-      record Rec(String s, int i) {}""";
+      public record Rec(String s, int i) {}
+      
+      class SimpleClass {
+        class EmptyClass{}
+      
+        void emptyMethod() {}
+      
+        void complexMethodWithEmptyCodeBlocks() {
+            try {} catch (Exception e) {}
+            Runnable r = () -> {};
+        }
+      
+        void oneLineMethod() {int x = 10;}
+      
+        void complexMethodWithOneLineCodeBlocks() {
+            try {int x = 10;} catch (Exception e) {int y = 10;}
+      
+            Runnable r = () -> {int z = 30;};
+        }
+      }""";
 
   @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
   @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
@@ -626,6 +706,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         private int f1 = 1;
         private String field2 = "";
         public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}
+        public void fooNonEmptyBody() {int x = 1;}
         public static void longerMethod() throws Exception1, Exception2, Exception3 {
       // todo something
           int
@@ -678,6 +759,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       enum Breed {
           Dalmatian(), Labrador(), Dachshund()
       }
+      
+      public record RecordWithAnnotatedComponents(@Annotation1 @Annotation2 String s, @Annotation1 @Annotation3(param1="value1", param2="value2") Integer t, @Annotation3(param1="value1", param2="value2") @Annotation1 Double u, @Annotation3(param1="value1", param2="value2") @Annotation5(param1="value1", param2="value2") Float w) {}
 
       @Annotation1 @Annotation2 @Annotation3(param1="value1", param2="value2") @Annotation4 class Foo {
           @Annotation1 @Annotation3(param1="value1", param2="value2") public static void foo(){

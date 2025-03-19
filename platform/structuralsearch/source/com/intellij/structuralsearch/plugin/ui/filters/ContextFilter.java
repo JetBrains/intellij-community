@@ -1,4 +1,4 @@
- // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -21,7 +21,6 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class ContextFilter extends FilterAction {
 
   public ContextFilter() {

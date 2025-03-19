@@ -66,7 +66,7 @@ public final class CompoundRuntimeException extends RuntimeException {
       if (stringProcessor != null) {
         stringProcessor.accept(s);
       }
-      return s;
+      return s == null ? "" : s;
     }
 
     StringBuilder sb = new StringBuilder();

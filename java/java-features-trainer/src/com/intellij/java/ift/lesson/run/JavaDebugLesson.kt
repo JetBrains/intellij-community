@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
@@ -21,14 +21,13 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
 import training.util.isToStringContains
 
-class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
-
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
+internal class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
+  override val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   private val demoClassName = "Sample"
   override val configurationName: String = demoClassName
 
-  override val sample = parseLessonSample("""
+  override val sample: LessonSample = parseLessonSample("""
     public class $demoClassName {
         public static void main(String[] args) {
             double average = findAverage(prepareValues());
@@ -76,10 +75,10 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   private val debugLineNumber = StringUtil.offsetToLineNumber(sample.text, sample.getPosition (2).startOffset)
 
   override val confNameForWatches: String = "Application"
-  override val quickEvaluationArgument = "Integer.parseInt"
-  override val debuggingMethodName = "findAverage"
+  override val quickEvaluationArgument: String = "Integer.parseInt"
+  override val debuggingMethodName: String = "findAverage"
   override val methodForStepInto: String = "extractNumber"
-  override val stepIntoDirectionToRight = true
+  override val stepIntoDirectionToRight: Boolean = true
 
   override fun LessonContext.applyProgramChangeTasks() {
     if (isHotSwapDisabled()) {

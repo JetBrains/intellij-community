@@ -26,3 +26,4 @@ inline fun B.bar(a: B) {
 inline fun<T> B.exp(t: T) {
     asDynamic()(t)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix

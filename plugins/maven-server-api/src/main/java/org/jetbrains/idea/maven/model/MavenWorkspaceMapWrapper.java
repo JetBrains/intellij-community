@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,7 @@ public class MavenWorkspaceMapWrapper {
     return myWorkspaceMap.findFileAndOriginalId(mavenId);
   }
 
-  @NotNull
-  public Set<MavenId> getAvailableIdsForArtifactId(String artifactId) {
+  public @NotNull Set<MavenId> getAvailableIdsForArtifactId(String artifactId) {
     Set<MavenId> ids = myArtifactToIdToMavenIdMapping.get(artifactId);
     return null == ids ? Collections.emptySet() : ids;
   }

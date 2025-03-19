@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -46,7 +47,7 @@ abstract class IntentionActionGroup<T : IntentionAction>(private val actions: Li
     if (availableActions.isEmpty()) return
 
     fun invokeAction(action: IntentionAction) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.text)
+      ShowIntentionActionsHandler.chooseActionAndInvoke(file, editor, action, action.text, IntentionSource.CONTEXT_ACTIONS)
     }
 
     val singleAction = availableActions.singleOrNull()

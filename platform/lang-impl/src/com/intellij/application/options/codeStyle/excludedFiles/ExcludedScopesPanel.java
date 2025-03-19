@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.CodeStyleBundle;
@@ -15,7 +15,7 @@ import java.awt.*;
 /**
  * Legacy panel for excluded scopes. Shown only if a user has already defined scope-based exclusions.
  */
-public class ExcludedScopesPanel extends ExcludedFilesPanelBase {
+public final class ExcludedScopesPanel extends ExcludedFilesPanelBase {
 
   private final ExcludedFilesList myExcludedFilesList;
 

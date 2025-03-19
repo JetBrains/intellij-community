@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -37,6 +37,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,8 @@ import javax.swing.event.ListSelectionListener;
 import java.io.IOException;
 import java.util.List;
 
-public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
+@ApiStatus.Internal
+public final class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.Callback {
   private static final int CONTEXT_ONE_SIDE_LENGTH = 100;
   private static final long STATUS_TEXT_LIFE_TIME = 3000;
 
@@ -116,9 +118,8 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     mySearchReplaceComponent.getSearchTextComponent().selectAll();
   }
 
-  @NotNull
   @Override
-  public LargeFileEditor getLargeFileEditor() {
+  public @NotNull LargeFileEditor getLargeFileEditor() {
     return largeFileEditor;
   }
 
@@ -520,11 +521,6 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         setSelected(e, isSelected(e) && enabled && visible);
         super.update(e);
       }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return super.getActionUpdateThread();
-      }
     };
     myToggleRegularExpression = new LargeFileToggleAction(this, EditorBundle.message("large.file.editor.regex.action.mnemonic.text")) {
       @Override
@@ -533,10 +529,6 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
         if (state && myToggleWholeWordsAction != null) {
           myToggleWholeWordsAction.setSelected(false);
         }
-      }
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return super.getActionUpdateThread();
       }
     };
     myStatusTextAction = new LargeFileStatusTextAction(this);
@@ -570,14 +562,6 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
       @Override
       public void searchFieldDocumentChanged() {
         onSearchParametersChanged();
-      }
-
-      @Override
-      public void replaceFieldDocumentChanged() {
-      }
-
-      @Override
-      public void multilineStateChanged() {
       }
     });
   }
@@ -665,7 +649,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  private class CloseSearchResultsListSelectionListener implements ListSelectionListener {
+  private final class CloseSearchResultsListSelectionListener implements ListSelectionListener {
     private final JBList<SearchResult> list;
 
     CloseSearchResultsListSelectionListener(JBList<SearchResult> list) {

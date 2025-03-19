@@ -3,7 +3,7 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -52,7 +52,7 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     FileTypeManagerImpl.FileTypeWithDescriptor oldFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(oldFileType, oldDescriptor);
     FileTypeManagerImpl.FileTypeWithDescriptor newFtd = new FileTypeManagerImpl.FileTypeWithDescriptor(newFileType, newDescriptor);
     result = ConflictingFileTypeMappingTracker.resolveConflict(matcher, oldFtd, newFtd);
-    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved().fileType);
+    assertSame(expectedResolveToNew ? newFileType : oldFileType, result.resolved().fileType());
     assertEquals(expectedApprove, result.approved());
   }
 
@@ -73,6 +73,6 @@ public class ConflictFileTypeMappingTrackerTest extends TestCase {
     String input = "<idea-plugin>" +
                    "  <vendor>" + vendor + "</vendor>" +
                    "</idea-plugin>";
-    return PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
+    return PluginDescriptorLoadUtilsKt.readDescriptorForTest(Path.of(""), isBundled, input.getBytes(StandardCharsets.UTF_8), id);
   }
 }

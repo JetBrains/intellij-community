@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.java.remoteServers` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "java-remoteServers",
+  module_name = "intellij.java.remoteServers",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/remote-servers/api:remoteServers",
+    "//platform/core-api:core",
+    "//platform/lang-api:lang",
+    "//platform/xdebugger-api:debugger",
+    "//java/execution/openapi:java-execution",
+    "//java/compiler/openapi:java-compiler",
+  ]
+)
+### auto-generated section `build intellij.java.remoteServers` end

@@ -1,0 +1,51 @@
+### auto-generated section `build intellij.python.psi.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi-impl",
+  module_name = "intellij.python.psi.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//python/python-psi-api:psi",
+    "@lib//:guava",
+    "//platform/util",
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "//python/openapi:community",
+    "@lib//:jsoup",
+    "//platform/indexing-impl",
+    "@lib//:stream_ex",
+    "//platform/projectModel-impl",
+    "//platform/analysis-impl",
+    "//platform/service-container:serviceContainer",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/code-style-api:codeStyle",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "//platform/util:util-ui",
+    "//platform/refactoring",
+    "//platform/ide-core",
+    "//platform/usageView",
+    "//platform/lvcs-api:lvcs",
+    "//platform/ide-core-impl",
+    "//platform/util/jdom",
+    "@lib//:gson",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//python/python-parser:parser",
+    "//python/python-syntax-core:syntax-core",
+    "//platform/ml-api:ml",
+  ],
+  exports = ["//python/python-syntax-core:syntax-core"],
+  runtime_deps = [":psi-impl_resources"]
+)
+### auto-generated section `build intellij.python.psi.impl` end

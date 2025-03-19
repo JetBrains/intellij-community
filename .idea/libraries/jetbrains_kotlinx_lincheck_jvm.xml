@@ -1,0 +1,79 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlinx.lincheck.jvm" type="repository">
+    <properties maven-id="org.jetbrains.kotlinx:lincheck-jvm:2.33">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.33/lincheck-jvm-2.33.jar">
+          <sha256sum>2dd9c390e2de0acbdd2fce1aabadd378fa75a9cf73ee723dd8cecbe5c8480457</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.21/kotlin-reflect-1.9.21.jar">
+          <sha256sum>a133e049f0a4e249651582428e166de4dfac9546adf436b6172119255ede510f</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar">
+          <sha256sum>7aefd0d5c0901701c69f7513feda765fb6be33af2ce7aa17c5781fc87657c511</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar">
+          <sha256sum>3c6fac2424db3d4a853b669f4e3d1d9c3c552235e19a319673f887083c2303a1</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar">
+          <sha256sum>c43ecf17b539c777e15da7b5b86553b377e2d39a683de6285567d5283888e7ef</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.6/asm-util-9.6.jar">
+          <sha256sum>c635a7402f4aa9bf66b2f4230cea62025a0fe1cd63e8729adefc9b1994fac4c3</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6.jar">
+          <sha256sum>d92832d7c37edc07c60e2559ac6118b31d642e337a6671edcb7ba9fae68edbbb</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12.jar">
+          <sha256sum>970636134d61c183b19f8f58fa631e30d2f2abca344b37848a393cac7863dd70</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12.jar">
+          <sha256sum>2b309a9300092e0b696f7c471fd51d9969001df784c8ab9f07997437d757ad6d</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.20.2/atomicfu-jvm-0.20.2.jar">
+          <sha256sum>b3d9ec0298e84ed09e0448c52a643bfdad7f3d8096f1303592a3046e711551af</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.33/lincheck-jvm-2.33.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.21/kotlin-reflect-1.9.21.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.6/asm-util-9.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.20.2/atomicfu-jvm-0.20.2.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.33/lincheck-jvm-2.33-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.21/kotlin-reflect-1.9.21-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.6/asm-util-9.6-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.20.2/atomicfu-jvm-0.20.2-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/lincheck-jvm/2.33/lincheck-jvm-2.33-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/1.9.21/kotlin-reflect-1.9.21-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.6/asm-commons-9.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.6/asm-9.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.6/asm-tree-9.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-util/9.6/asm-util-9.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/atomicfu-jvm/0.20.2/atomicfu-jvm-0.20.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

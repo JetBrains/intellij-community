@@ -3,9 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbModeTask
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.startup.StartupActivity
@@ -14,17 +12,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.CountDownLatch
 
+@Internal
 class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   override fun runActivity(project: Project) {
-    // don't start DumbModeWhileScanning when scanning in smart mode is disabled. Otherwise, due to merged and cancelled tasks,
-    // scanning task may appear later in the queue than DumbModeWhileScanning, which effectively means a deadlock
-    // (DumbModeWhileScanning waits for a latch that will be counted down in scanning task via PerProjectIndexingQueue.flush)
-    val shouldScanInSmartMode = UnindexedFilesScannerExecutor.shouldScanInSmartMode()
-    if (shouldScanInSmartMode) {
-      project.service<DumbModeWhileScanningTrigger>().subscribe()
-    }
+    project.service<DumbModeWhileScanningTrigger>().subscribe()
   }
 }
 
@@ -41,11 +33,16 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
   fun isDumbModeForScanningActive(): StateFlow<Boolean> = dumbModeForScanningIsActive
 
   fun subscribe() {
+    if (DumbServiceImpl.isSynchronousTaskExecution) {
+      // in synchronous mode it will be a deadlock
+      return
+    }
+
     val manyFilesChanged = project.service<PerProjectIndexingQueue>()
       .estimatedFilesCount()
       .map { it >= DUMB_MODE_THRESHOLD }
 
-    subscribe(manyFilesChanged, project.service<UnindexedFilesScannerExecutor>().isRunning)
+    subscribe(manyFilesChanged, UnindexedFilesScannerExecutor.getInstance(project).isRunning)
   }
 
   private fun subscribe(manyFilesChanged: Flow<Boolean>, scanningInProgress: Flow<Boolean>) {
@@ -53,45 +50,22 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
       while (true) {
         manyFilesChanged.first { it }
         dumbModeForScanningIsActive.value = true
-        val latch = CountDownLatch(1)
         try {
-          val dumbTaskFinished = MutableStateFlow(false)
-          DumbModeWhileScanning(latch, dumbTaskFinished).queue(project)
-
-          // this is kind of trigger with memory: to start dumb mode it's enough to have many changed files, but to end dumb mode
-          // we also should wait for all the scanning tasks to finish.
-          manyFilesChanged
-            // also wait for all the other scanning tasks to complete before starting indexing tasks
-            .combine(scanningInProgress) { manyFiles, scanning ->
-              !manyFiles && !scanning
-            }
-            // quit waiting if task has already finished (e.g. canceled)
-            .combine(dumbTaskFinished) { shouldFinishDumbMode, taskFinished ->
-              shouldFinishDumbMode || taskFinished
-            }
-            .first { it }
+          DumbServiceImpl.getInstance(project).runInDumbMode("Waiting for scanning to complete") {
+            // this is kind of trigger with memory: to start dumb mode it's enough to have many changed files, but to end dumb mode
+            // we also should wait for all the scanning tasks to finish.
+            manyFilesChanged
+              // also wait for all the other scanning tasks to complete before starting indexing tasks
+              .combine(scanningInProgress) { manyFiles, scanning ->
+                !manyFiles && !scanning
+              }
+              .first { it }
+          }
         }
         finally {
-          latch.countDown()
           dumbModeForScanningIsActive.value = false
         }
       }
-    }
-  }
-
-  private open class DumbModeWhileScanning(private val latch: CountDownLatch,
-                                           private val dumbTaskFinished: MutableStateFlow<Boolean>) : DumbModeTask() {
-    override fun performInDumbMode(indicator: ProgressIndicator) {
-      indicator.isIndeterminate = true
-      indicator.text = IndexingBundle.message("progress.indexing.waiting.for.scanning.to.complete")
-
-      ProgressIndicatorUtils.awaitWithCheckCanceled(latch)
-    }
-
-    override fun dispose() {
-      // This task is not running anymore. For example, it can be cancelled (e.g. by DumbService.cancelAllTasksAndWait())
-      // Let the outer DumbModeWhileScanningTrigger know about that
-      dumbTaskFinished.compareAndSet(false, true)
     }
   }
 

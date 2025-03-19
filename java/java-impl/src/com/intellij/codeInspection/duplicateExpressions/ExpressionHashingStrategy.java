@@ -48,8 +48,7 @@ final class ExpressionHashingStrategy implements HashingStrategy<PsiExpression> 
       }
       return hashCode(name, qualifier, args);
     }
-    if (e instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+    if (e instanceof PsiReferenceExpression ref) {
       return hashCode(ref.getReferenceName(), ref.getQualifierExpression());
     }
     if (e instanceof PsiInstanceOfExpression instanceOf) {

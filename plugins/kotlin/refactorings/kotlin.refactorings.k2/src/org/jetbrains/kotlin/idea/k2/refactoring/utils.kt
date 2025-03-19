@@ -1,19 +1,50 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.showYesNoCancelDialog
 import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.scopes.KaScope
+import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
+
+/**
+ * Computes [block] and removes any possible redundant imports that would be added during this operation, not touching any existing
+ * redundant imports.
+ */
+fun <T> modifyPsiWithOptimizedImports(file: KtFile, block: () -> T): T {
+    fun unusedImports(): Set<KtImportDirective> =
+        KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)?.unusedImports?.toSet().orEmpty()
+
+    val unusedImportsBefore = unusedImports()
+    val result = block()
+    val afterUnusedImports = unusedImports()
+    val importsToRemove = afterUnusedImports - unusedImportsBefore
+    importsToRemove.forEach(PsiElement::delete)
+    return result
+}
 
 fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
@@ -41,9 +72,9 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
     )
 
     val analyzeResult = analyzeInModalWindow(declaration, KotlinK2RefactoringsBundle.message("resolving.super.methods.progress.title")) {
-        (declaration.getSymbol() as? KtCallableSymbol)?.let { callableSymbol ->
-            callableSymbol.originalContainingClassForOverride?.let { containingClass ->
-                val overriddenSymbols = callableSymbol.getAllOverriddenSymbols()
+        (declaration.symbol as? KaCallableSymbol)?.let { callableSymbol ->
+            (callableSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.let { containingClass ->
+                val overriddenSymbols = callableSymbol.allOverriddenSymbols
 
                 val renderToPsi = overriddenSymbols.mapNotNull {
                     it.psi?.let { psi ->
@@ -78,5 +109,87 @@ fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>
         Messages.YES -> analyzeResult.overriddenDeclarationsAndRenders.keys.toList()
         Messages.NO -> listOf(declaration)
         else -> emptyList()
+    }
+}
+
+fun KtLambdaExpression.moveFunctionLiteralOutsideParenthesesIfPossible() {
+    val valueArgument = parentOfType<KtValueArgument>()?.takeIf {
+        KtPsiUtil.deparenthesize(it.getArgumentExpression()) == this
+    } ?: return
+    val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+    val call = valueArgumentList.parent as? KtCallExpression ?: return
+    val canMoveLambdaOutsideParentheses = analyze(call) { call.canMoveLambdaOutsideParentheses() }
+    if (canMoveLambdaOutsideParentheses) {
+        call.moveFunctionLiteralOutsideParentheses()
+    }
+}
+
+context(KaSession)
+@OptIn(KaExperimentalApi::class)
+fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
+    val symbol = receiverValue.symbol
+    return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
+        //specify companion name to avoid clashes with enum entries
+        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+    }
+    else if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
+        symbol.name!!.asString()
+    }
+    else if (symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol) {
+        (symbol.psi as? PsiClass)?.name ?: ("this@" + symbol.name!!.asString())
+    } else if (symbol is KaReceiverParameterSymbol && symbol.owningCallableSymbol is KaNamedSymbol) {
+        // refer to this@contextReceiverType but use this@funName for everything else, because another syntax is prohibited
+        (receiverValue.type.expandedSymbol?.takeIf { symbol.owningCallableSymbol.contextReceivers.isNotEmpty() }?.name ?: symbol.owningCallableSymbol.name)?.let { "this@$it" } ?: "this"
+    } else {
+        "this"
+    }
+}
+
+/**
+ * Finds a callable member of the class by its signature.
+ * Only members declared in the class are checked.
+ *
+ * @param callableSignature The signature of the callable to be found, which includes
+ * the symbol name, return type, receiver type, and value parameters.
+ *
+ * @return The matching callable symbol if found, null otherwise.
+ */
+context(KaSession)
+fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
+    callableSignature: KaCallableSignature<KaCallableSymbol>
+): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature)
+
+/**
+ * Finds a callable member of the class by its signature in the scope.
+ *
+ * @param callableSignature The signature of the callable to be found, which includes
+ * the symbol name, return type, receiver type, and value parameters.
+ *
+ * @return The matching callable symbol if found, null otherwise.
+ */
+context(KaSession)
+fun KaScope.findCallableMemberBySignature(
+    callableSignature: KaCallableSignature<KaCallableSymbol>
+): KaCallableSymbol? {
+    fun KaType?.eq(anotherType: KaType?): Boolean {
+        if (this == null || anotherType == null) return this == anotherType
+        return this.semanticallyEquals(anotherType)
+    }
+
+    return callables(callableSignature.symbol.name ?: return null).firstOrNull { callable ->
+        fun parametersMatch(): Boolean {
+            if (callableSignature is KaFunctionSignature && callable is KaFunctionSymbol) {
+                if (callable.valueParameters.size != callableSignature.valueParameters.size) return false
+                val allMatch = callable.valueParameters.zip(callableSignature.valueParameters)
+                    .all { (it.first.returnType.eq(it.second.returnType)) }
+                return allMatch
+            } else {
+                return callableSignature !is KaFunctionSignature && callable !is KaFunctionSymbol
+            }
+        }
+
+        callable.receiverType.eq(callableSignature.receiverType) &&
+                parametersMatch() &&
+                callable.returnType.semanticallyEquals(callableSignature.returnType)
     }
 }

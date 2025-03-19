@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,31 @@ public class PyOverloadsResolutionTest extends PyTestCase {
              
              expr = func("foo")
              """);
+  }
+
+  // PY-34617
+  public void testFunctionOverloadNotMatchingVersionCheckIsIgnoredInPyFile() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      doTest("object",
+             """
+               from typing import overload
+               import sys
+
+               if sys.version_info < (3,):
+                   @overload
+                   def func(x: str) -> str:
+                       pass
+               else:
+                   @overload
+                   def func(x: object) -> object:
+                       pass
+                            
+               def func(x):
+                  ...
+                            
+               expr = func("foo")
+               """);
+    });
   }
 
   public void testFirstMatchingFunctionOverloadSelectedInSiblingPyiFile() {
@@ -60,12 +86,37 @@ public class PyOverloadsResolutionTest extends PyTestCase {
                  @overload
                  def method(self, x: object) -> object:
                      pass
-             
+
                  def method(self, x):
                      pass
              
              expr = C().method("foo")
              """);
+  }
+
+  // PY-34617
+  public void testMethodOverloadNotMatchingVersionCheckIsIgnoredInPyFile() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      doTest("object",
+             """
+               from typing import overload
+                            
+               class C:
+                   if sys.version_info < (3,):
+                       @overload
+                       def method(self, x: str) -> str:
+                           pass
+                   else:
+                       @overload
+                       def method(self, x: object) -> object:
+                           pass
+
+                   def method(self, x):
+                       pass
+                            
+               expr = C().method("foo")
+               """);
+    });
   }
 
   public void testFirstMatchingMethodOverloadSelectedInSiblingPyiFile() {
@@ -105,6 +156,28 @@ public class PyOverloadsResolutionTest extends PyTestCase {
              
              inst = A() or B()
              expr = inst.m()
+             """);
+  }
+
+  // PY-77167
+  public void testFirstMatchingFunctionOverloadWhenNotFollowedByImplementationInPyFile() {
+    doTest("str",
+           """
+             from typing import overload
+             
+             @overload
+             def func(x: int) -> int:
+                 pass
+             
+             @overload
+             def func(x: str) -> str:
+                 pass
+             
+             @overload
+             def func(x: object) -> object:
+                 pass
+             
+             expr = func("foo")
              """);
   }
 

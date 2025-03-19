@@ -1,0 +1,12 @@
+fun foo() {
+    "".apply {
+        fun String.tagText1(): Foo = TODO()
+        tagText1()()
+    }
+}
+
+class Foo {
+    operator fun invoke(): Unit = TODO()
+}
+
+// IGNORE_K1

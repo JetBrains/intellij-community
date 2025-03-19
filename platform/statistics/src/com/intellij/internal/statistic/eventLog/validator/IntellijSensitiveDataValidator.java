@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentMap;
  *     </li>
  *     <li>
  *       <b>Custom rule</b>: class which inherits {@link CustomValidationRule} and validates dynamic data like action id or file type, e.g.
- *       <i>"{util#class_name}"</i> checks that the value is a class name from platform, JB plugin or a plugin from JB plugin repository.<br/>
+ *       <i>"{util#class_name}"</i> checks that the value is a class name from platform, JetBrains plugin or a plugin from JetBrains Marketplace.<br/>
  *       See: {@link com.intellij.internal.statistic.collectors.fus.ClassNameRuleValidator}
  *     </li>
  * </ol>
@@ -101,6 +101,7 @@ public class IntellijSensitiveDataValidator extends SensitiveDataValidator<Intel
 
   static {
     CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
+    CustomValidationRuleFactory.EP_NAME.addChangeListener(ourInstances::clear, null);
   }
 
   public static @NotNull IntellijSensitiveDataValidator getInstance(@NotNull String recorderId) {

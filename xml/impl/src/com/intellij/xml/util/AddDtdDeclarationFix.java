@@ -1,28 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,9 +17,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public class AddDtdDeclarationFix implements LocalQuickFix {
-  @PropertyKey(resourceBundle = XmlBundle.BUNDLE)
-  private final String myMessageKey;
+public class AddDtdDeclarationFix extends PsiUpdateModCommandQuickFix {
+  private final @PropertyKey(resourceBundle = XmlBundle.BUNDLE) String myMessageKey;
   private final String myElementDeclarationName;
   private final String myReference;
 
@@ -51,14 +32,12 @@ public class AddDtdDeclarationFix implements LocalQuickFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message(myMessageKey, myReference);
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PsiElement element = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiFile containingFile = element.getContainingFile();
 
     @NonNls String prefixToInsert = "";
@@ -105,16 +84,22 @@ public class AddDtdDeclarationFix implements LocalQuickFix {
 
     if (anchorOffset == UNDEFINED_OFFSET) anchorOffset = element.getTextRange().getStartOffset();
 
-    OpenFileDescriptor openDescriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile(), anchorOffset);
-    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openDescriptor, true);
-    final TemplateManager templateManager = TemplateManager.getInstance(project);
-    final Template t = templateManager.createTemplate("", "");
-
-    if (!prefixToInsert.isEmpty()) t.addTextSegment(prefixToInsert);
-    t.addTextSegment("<!" + myElementDeclarationName + " " + myReference + " ");
-    t.addEndVariable();
-    t.addTextSegment(">\n");
-    if (!suffixToInsert.isEmpty()) t.addTextSegment(suffixToInsert);
-    templateManager.startTemplate(editor, t);
+    Document document = containingFile.getFileDocument();
+    StringBuilder declaration = new StringBuilder();
+    if (!prefixToInsert.isEmpty()) declaration.append(prefixToInsert);
+    CharSequence sequence = document.getImmutableCharSequence();
+    int pos = anchorOffset - 1;
+    while (pos > 0 && (sequence.charAt(pos) == ' ' || sequence.charAt(pos) == '\t')) {
+      pos--;
+    }
+    declaration.append("<!").append(myElementDeclarationName).append(" ").append(myReference).append(" ");
+    int finalOffset = declaration.length() + anchorOffset;
+    declaration.append(">\n");
+    if (pos > 0 && sequence.charAt(pos) == '\n') {
+      declaration.append(sequence.subSequence(pos + 1, anchorOffset));
+    }
+    if (!suffixToInsert.isEmpty()) declaration.append(suffixToInsert);
+    document.insertString(anchorOffset, declaration.toString());
+    updater.moveCaretTo(finalOffset);
   }
 }

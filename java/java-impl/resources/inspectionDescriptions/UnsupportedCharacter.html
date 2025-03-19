@@ -1,0 +1,19 @@
+<html>
+<body>
+Reports characters in property files that are unsupported by the ISO-8859-1 charset when Java 1.8 or earlier is used.
+The inspection checks if a property file contains characters that cannot be mapped to ISO-8859-1 and suggests converting them to Unicode escape sequences for compatibility.
+<p>Configure the inspection:</p>
+<p>
+  Use the <b>Convert to escape sequences</b> quick-fix to ensure compatibility with ISO-8859-1 encoding:
+</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+  key=Java + ☕ = 🍀
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  key=Java + \u2615 = \uD83C\uDF40
+</code></pre>
+</body>
+</html>

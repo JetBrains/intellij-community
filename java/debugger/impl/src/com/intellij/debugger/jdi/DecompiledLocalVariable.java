@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,8 +32,7 @@ public class DecompiledLocalVariable implements SlotLocalVariable {
   }
 
   @Override
-  @Nullable
-  public String signature() {
+  public @Nullable String signature() {
     return mySignature;
   }
 
@@ -41,8 +40,7 @@ public class DecompiledLocalVariable implements SlotLocalVariable {
     return myIsParam;
   }
 
-  @NotNull
-  public String getDefaultName() {
+  public @NotNull String getDefaultName() {
     return (myIsParam ? PARAM_PREFIX : SLOT_PREFIX) + mySlot;
   }
 
@@ -57,8 +55,7 @@ public class DecompiledLocalVariable implements SlotLocalVariable {
     return getDefaultName();
   }
 
-  @NotNull
-  public Collection<String> getMatchedNames() {
+  public @NotNull Collection<String> getMatchedNames() {
     return myMatchedNames;
   }
 

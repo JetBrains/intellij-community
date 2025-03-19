@@ -104,6 +104,14 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   public void testUsageInAnonymousClass() {
     doTest(true, 0);
   }
+  
+  public void testInterfaceMethodIntoClass() {
+    doTest(true, 0);
+  }
+  
+  public void testInterfaceMethodIntoClass2() {
+    doTest(true, 0);
+  }
 
   public void testConflictingLocalVariableAndTargetClassField() {
     doTest(true, 0);

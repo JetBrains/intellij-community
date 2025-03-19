@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -7,21 +7,24 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.ProxySimpleDiffRequest;
-import com.intellij.diff.util.*;
+import com.intellij.diff.util.DiffUserDataKeys;
+import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.List;
-import java.util.*;
 
+@ApiStatus.Internal
 public class TextMergeViewer implements MergeTool.MergeViewer {
-  @NotNull private final MergeContext myMergeContext;
-  @NotNull private final TextMergeRequest myMergeRequest;
+  private final @NotNull MergeContext myMergeContext;
+  private final @NotNull TextMergeRequest myMergeRequest;
 
-  @NotNull protected final MergeThreesideViewer myViewer;
+  protected final @NotNull MergeThreesideViewer myViewer;
 
   private final Action myCancelResolveAction;
   private final Action myLeftResolveAction;
@@ -47,8 +50,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     myAcceptResolveAction = myViewer.getLoadedResolveAction(MergeResult.RESOLVED);
   }
 
-  @NotNull
-  private static List<DiffContent> getDiffContents(@NotNull TextMergeRequest mergeRequest) {
+  private static @NotNull List<DiffContent> getDiffContents(@NotNull TextMergeRequest mergeRequest) {
     List<DocumentContent> contents = mergeRequest.getContents();
 
     final DocumentContent left = ThreeSide.LEFT.select(contents);
@@ -58,8 +60,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     return Arrays.asList(left, output, right);
   }
 
-  @NotNull
-  private static List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
+  private static @NotNull List<String> getDiffContentTitles(@NotNull TextMergeRequest mergeRequest) {
     List<String> titles = MergeUtil.notNullizeContentTitles(mergeRequest.getContentTitles());
     titles.set(ThreeSide.BASE.getIndex(), DiffBundle.message("merge.version.title.merged.result"));
     return titles;
@@ -69,36 +70,37 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   // Impl
   //
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myViewer.getComponent();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
   }
 
-  @NotNull
   @Override
-  public MergeTool.ToolbarComponents init() {
+  public @NotNull MergeTool.ToolbarComponents init() {
     MergeTool.ToolbarComponents components = new MergeTool.ToolbarComponents();
 
     FrameDiffTool.ToolbarComponents init = myViewer.init();
     components.statusPanel = init.statusPanel;
     components.toolbarActions = init.toolbarActions;
 
-    components.closeHandler =
-      () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
+    components.closeHandler = () -> {
+      boolean exit = MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext, myViewer.isContentModified());
+      if (exit) {
+        myViewer.logMergeCancelled();
+      }
+      return exit;
+    };
 
     return components;
   }
 
-  @Nullable
   @Override
-  public Action getResolveAction(@NotNull MergeResult result) {
+  public @Nullable Action getResolveAction(@NotNull MergeResult result) {
     return switch (result) {
       case CANCEL -> myCancelResolveAction;
       case LEFT -> myLeftResolveAction;
@@ -116,8 +118,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
   // Getters
   //
 
-  @NotNull
-  public MergeThreesideViewer getViewer() {
+  public @NotNull MergeThreesideViewer getViewer() {
     return myViewer;
   }
 
@@ -132,5 +133,4 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
                                                      @NotNull TextMergeViewer mergeViewer) {
     return new MergeThreesideViewer(context, request, mergeContext, mergeRequest, mergeViewer);
   }
-
 }

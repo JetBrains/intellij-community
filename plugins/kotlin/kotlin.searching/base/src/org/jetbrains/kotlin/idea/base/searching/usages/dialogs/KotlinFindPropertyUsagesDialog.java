@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
-import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesDialog;
 import com.intellij.ide.util.PropertiesComponent;
@@ -21,6 +20,9 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isAbstract;
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isOpen;
 
 public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinPropertyFindUsagesOptions> {
     public KotlinFindPropertyUsagesDialog(
@@ -42,9 +44,8 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     private StateRestoringCheckBox expectedUsages;
     private StateRestoringCheckBox searchInOverridingMethods;
 
-    @NotNull
     @Override
-    protected KotlinPropertyFindUsagesOptions getFindUsagesOptions() {
+    protected @NotNull KotlinPropertyFindUsagesOptions getFindUsagesOptions() {
         return (KotlinPropertyFindUsagesOptions) myFindUsagesOptions;
     }
 
@@ -96,9 +97,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     }
 
     @Override
-    protected void addUsagesOptions(JPanel optionsPanel) {
-        super.addUsagesOptions(optionsPanel);
-
+    protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
         if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
             property instanceof KtParameter && !((KtParameter) property).hasValOrVar()) {
@@ -115,16 +114,14 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                                                            getFindUsagesOptions().isSearchInOverridingMethods, optionsPanel, true);
         }
 
-        boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD);
-        boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD);
-        if (isOpen || isAbstract) {
+        if (isOpen(property)) {
             overrideUsages = addCheckboxToPanel(
-                    isAbstract
+                    isAbstract(property)
                     ? KotlinBundle.message("find.declaration.implementing.properties.checkbox")
                     : KotlinBundle.message("find.declaration.overriding.properties.checkbox"),
-                    FindSettings.getInstance().isSearchOverloadedMethods(),
+                    getFindUsagesOptions().getSearchOverrides(),
                     optionsPanel,
-                    false
+                    true
             );
         }
         boolean isActual = PsiUtilsKt.hasActualModifier(property);
@@ -150,11 +147,12 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                     ___ -> setDisableComponentAndDestructionSearch(project, dataClassComponentCheckBox.isSelected())
             );
         }
+        addDefaultOptions(optionsPanel);
     }
 
     @Override
     protected void update() {
-        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses));
+        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses) || isSelected(overrideUsages));
     }
 
     private static final boolean disableComponentAndDestructionSearchDefault = false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import io.netty.bootstrap.Bootstrap;
@@ -11,11 +11,13 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import io.netty.util.internal.logging.JdkLoggerFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
+import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -25,6 +27,7 @@ import java.util.concurrent.*;
 import java.util.logging.Formatter;
 import java.util.logging.*;
 
+@ApiStatus.Internal
 public final class ExternalJavacProcess {
   public static final String JPS_JAVA_COMPILING_TOOL_PROPERTY = "jps.java.compiling.tool";
   public static final int MINIMUM_REQUIRED_JAVA_VERSION = 7;
@@ -187,7 +190,7 @@ public final class ExternalJavacProcess {
     try {
       JavaCompilingTool tool = getCompilingTool();
       final boolean rc = JavacMain.compile(
-        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool
+        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool, null
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }

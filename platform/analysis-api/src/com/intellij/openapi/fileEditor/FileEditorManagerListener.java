@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
@@ -60,6 +60,7 @@ public interface FileEditorManagerListener extends EventListener {
     /**
      * file editor before events
      */
+    @Topic.ProjectLevel
     Topic<Before> FILE_EDITOR_MANAGER = new Topic<>(Before.class, Topic.BroadcastDirection.TO_PARENT);
 
     default void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {

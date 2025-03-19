@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.extract.closure;
 
 import com.intellij.psi.PsiElement;
@@ -24,9 +24,8 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     myHelper = helper;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -40,14 +39,12 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     };
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return GroovyBundle.message("extract.closure.command.name");
   }
 
-  @NotNull
-  public static GrClosableBlock generateClosure(@NotNull GrIntroduceParameterSettings helper) {
+  public static @NotNull GrClosableBlock generateClosure(@NotNull GrIntroduceParameterSettings helper) {
     StringBuilder buffer = new StringBuilder();
 
     buffer.append("{ ");

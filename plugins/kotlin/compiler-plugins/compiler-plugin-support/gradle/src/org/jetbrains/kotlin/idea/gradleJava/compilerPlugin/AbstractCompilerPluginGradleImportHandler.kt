@@ -3,18 +3,17 @@
 package org.jetbrains.kotlin.idea.gradleJava.compilerPlugin
 
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
-import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
-import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
+import org.jetbrains.kotlin.idea.gradleTooling.model.annotation.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
-import java.io.File
 
 abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : AnnotationBasedPluginModel> : AbstractCompilerPluginGradleImportHandler<T>() {
     abstract val annotationOptionName: String
@@ -57,7 +56,8 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
     protected open fun getOptions(model: T): List<PluginOption> = emptyList()
 
     private fun getPluginSetupByModule(moduleNode: DataNode<ModuleData>): CompilerPluginSetup? {
-        val model = moduleNode.getCopyableUserData(modelKey)?.takeIf { isEnabled(it) } ?: return null
+        val modelNode = ExternalSystemApiUtil.find(moduleNode, modelKey)?: return null
+        val model = modelNode.data.takeIf { isEnabled(it) } ?: return null
         val options = getOptions(model)
 
         // For now we can't use plugins from Gradle cause they're shaded and may have an incompatible version.

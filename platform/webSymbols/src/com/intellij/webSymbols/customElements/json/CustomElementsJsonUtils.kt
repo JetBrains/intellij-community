@@ -44,12 +44,12 @@ fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigi
       .mapNotNull { CustomElementsCustomElementExportSymbol.create(it, origin) }
   } + CustomElementsJavaScriptPackageSymbol(CustomElementsPackage(this), origin, rootScope)
 
-fun CustomElementsPackage.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase) =
+fun CustomElementsPackage.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase): Sequence<CustomElementsJavaScriptModuleSymbol> =
   manifest.modules.asSequence().mapNotNull { module ->
     CustomElementsJavaScriptModuleSymbol.create(module, origin, rootScope)
   }
 
-fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase) =
+fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase): Sequence<CustomElementsClassOrMixinDeclarationAdapter> =
   declarations.asSequence()
     .filterIsInstance<CustomElementClassOrMixinDeclaration>()
     .mapNotNull { CustomElementsClassOrMixinDeclarationAdapter.create(it, origin, rootScope) }
@@ -68,7 +68,7 @@ fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
   if (parameters.isEmpty() && `return` == null)
     emptyList()
   else
-    listOf(WebSymbolTypeSupport.TypeReference(
+    listOf(WebSymbolTypeSupport.TypeReference.create(
       null,
       "(" + parameters.asSequence()
         .mapIndexed { index, parameter ->
@@ -79,5 +79,5 @@ fun ClassMethod.buildFunctionType(): List<WebSymbolTypeSupport.TypeReference> =
 
 fun Type.mapToReferenceList(): List<WebSymbolTypeSupport.TypeReference> =
   this.text?.let {
-    listOf(WebSymbolTypeSupport.TypeReference(null, it))
+    listOf(WebSymbolTypeSupport.TypeReference.create(null, it))
   } ?: emptyList()

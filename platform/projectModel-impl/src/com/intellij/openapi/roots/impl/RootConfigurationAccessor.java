@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
@@ -16,13 +16,11 @@ import org.jetbrains.annotations.Nullable;
 public class RootConfigurationAccessor {
   public static final RootConfigurationAccessor DEFAULT_INSTANCE = new RootConfigurationAccessor();
 
-  @Nullable
-  public Library getLibrary(final Library library, final String libraryName, final String libraryLevel) {
+  public @Nullable Library getLibrary(final Library library, final String libraryName, final String libraryLevel) {
     return library;
   }
 
-  @Nullable
-  public Sdk getSdk(final Sdk sdk, final String sdkName) {
+  public @Nullable Sdk getSdk(final Sdk sdk, final String sdkName) {
     return sdk;
   }
 
@@ -30,13 +28,11 @@ public class RootConfigurationAccessor {
     return module;
   }
 
-  @Nullable
-  public Sdk getProjectSdk(@NotNull Project project) {
+  public @Nullable Sdk getProjectSdk(@NotNull Project project) {
     return ProjectRootManager.getInstance(project).getProjectSdk();
   }
 
-  @Nullable
-  public String getProjectSdkName(@NotNull final Project project) {
+  public @Nullable String getProjectSdkName(final @NotNull Project project) {
     return ProjectRootManager.getInstance(project).getProjectSdkName();
   }
 }

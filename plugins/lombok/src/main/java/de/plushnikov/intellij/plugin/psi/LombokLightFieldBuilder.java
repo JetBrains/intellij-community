@@ -1,8 +1,11 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
+import com.intellij.psi.impl.PsiVariableEx;
 import com.intellij.psi.impl.light.LightFieldBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
@@ -12,27 +15,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightFieldBuilder extends LightFieldBuilder implements SyntheticElement {
+public class LombokLightFieldBuilder extends LightFieldBuilder implements SyntheticElement, PsiVariableEx {
   private String myName;
   private final LombokLightIdentifier myNameIdentifier;
   private final LombokLightModifierList myModifierList;
+  private String myConstantValue;
 
   public LombokLightFieldBuilder(@NotNull PsiManager manager, @NotNull String name, @NotNull PsiType type) {
     super(manager, name, type);
     myName = name;
     myNameIdentifier = new LombokLightIdentifier(manager, name);
-    myModifierList = new LombokLightModifierList(manager);
+    myModifierList = new LombokLightModifierList(manager).withParent(this);
     setBaseIcon(LombokIcons.Nodes.LombokField);
   }
 
   @Override
-  @NotNull
-  public LombokLightModifierList getModifierList() {
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
+  @Override
+  public @NotNull LombokLightModifierList getModifierList() {
     return myModifierList;
   }
 
@@ -54,9 +63,8 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return myModifierList.hasModifierProperty(name);
   }
 
-  @Nullable
   @Override
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     PsiClass containingClass = getContainingClass();
     return containingClass != null ? containingClass.getContainingFile() : null;
   }
@@ -76,14 +84,18 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return this;
   }
 
+  public LombokLightFieldBuilder withAnnotation(@NotNull String annotation) {
+    myModifierList.addAnnotation(annotation);
+    return this;
+  }
+
   public LombokLightFieldBuilder withNavigationElement(PsiElement navigationElement) {
     setNavigationElement(navigationElement);
     return this;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -94,12 +106,23 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     return this;
   }
 
-  @NotNull
   @Override
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
 
+  public LombokLightFieldBuilder withConstantValue(String value) {
+    myConstantValue = value;
+    return this;
+  }
+
+  @Override
+  public @Nullable Object computeConstantValue(Set<PsiVariable> visitedVars) {
+    if (!hasModifierProperty(PsiModifier.FINAL)) return null;
+    return myConstantValue;
+  }
+
+  @Override
   public String toString() {
     return "LombokLightFieldBuilder: " + getName();
   }

@@ -1,21 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda;
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.readableFs.PathInfo;
-import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.icons.PythonIcons;
+import com.jetbrains.python.pathValidation.PathValidatorKt;
+import com.jetbrains.python.pathValidation.PlatformAndRoot;
+import com.jetbrains.python.pathValidation.ValidationRequest;
 import com.jetbrains.python.sdk.PythonSdkUtil;
-import com.jetbrains.python.sdk.add.target.PathValidatorKt;
-import com.jetbrains.python.sdk.add.target.ValidationRequest;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemDependent;
@@ -70,11 +69,7 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
                                @NotNull PyCondaFlavorData flavorData,
                                @Nullable TargetEnvironmentConfiguration targetConfig) {
     var condaPath = flavorData.getEnv().getFullCondaPathOnTarget();
-    boolean executable = isFileExecutable(condaPath, targetConfig);
-    if (! executable) {
-      Logger.getInstance(CondaEnvSdkFlavor.class).warn("file not executable on conda flavor: "  + condaPath);
-    }
-    return executable;
+    return isFileExecutable(condaPath, targetConfig);
   }
 
   @Override
@@ -83,13 +78,15 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
   }
 
   @Override
-  public boolean isValidSdkPath(@NotNull File file) {
-    if (!super.isValidSdkPath(file)) return false;
-    return PythonSdkUtil.isConda(file.getPath());
+  public boolean isValidSdkPath(@NotNull String pathStr) {
+    if (!super.isValidSdkPath(pathStr)) {
+      return false;
+    }
+
+    return PythonSdkUtil.isConda(pathStr);
   }
 
-  @Nullable
-  public static File getCondaEnvRoot(@NotNull final String binaryPath) {
+  public static @Nullable File getCondaEnvRoot(final @NotNull String binaryPath) {
     final File binary = new File(binaryPath);
     final File parent = binary.getParentFile();
     if (parent == null) return null;
@@ -112,22 +109,14 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor<PyCondaFlavorData>
     return PythonIcons.Python.Anaconda;
   }
 
-  /**
-   * @deprecated use {@link #validateCondaPath(String, TargetConfigurationReadableFs)}
-   */
-  @Deprecated
-  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
-    return validateCondaPath(condaExecutable, PathInfo.Companion.getLocalPathInfoProvider());
-  }
-
-  @Nullable
-  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable,
-                                                 @Nullable TargetConfigurationReadableFs pathInfoProvider) {
+  @RequiresBackgroundThread
+  public static @Nullable ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable,
+                                                           @NotNull PlatformAndRoot platformAndRoot) {
     return PathValidatorKt.validateExecutableFile(
       new ValidationRequest(
         condaExecutable,
         PyBundle.message("python.add.sdk.conda.executable.path.is.empty"),
-        pathInfoProvider,
+        platformAndRoot,
         null
       ));
   }

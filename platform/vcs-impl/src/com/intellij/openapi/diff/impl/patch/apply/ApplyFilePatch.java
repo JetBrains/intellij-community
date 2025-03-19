@@ -8,11 +8,13 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public interface ApplyFilePatch {
   Result SUCCESS = new Result(ApplyPatchStatus.SUCCESS);
   Result FAILURE = new Result(ApplyPatchStatus.FAILURE);

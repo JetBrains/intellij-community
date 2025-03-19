@@ -4,7 +4,7 @@ class C {
         String s = "";
         switch (n) {
             case 1:
-            <caret>case default:
+            <caret>default:
             case 2:
                 s = "x";
                 break;

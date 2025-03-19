@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -10,12 +10,12 @@ import org.jetbrains.annotations.Nullable;
  * for the most recent pages -- which are very likely to be accessed more than once.
  */
 @ApiStatus.Internal
-class PagedFileStorageCache {
+final class PagedFileStorageCache {
   private volatile CachedBuffer myLastBuffer;
   private volatile CachedBuffer myLastBuffer2;
   private volatile CachedBuffer myLastBuffer3;
 
-  private static class CachedBuffer {
+  private static final class CachedBuffer {
     private final DirectBufferWrapper myWrapper;
     private final long myLastPage;
 
@@ -45,8 +45,7 @@ class PagedFileStorageCache {
     return buffer;
   }
 
-  @Nullable
-  private static DirectBufferWrapper fromCache(CachedBuffer lastBuffer, long page) {
+  private static @Nullable DirectBufferWrapper fromCache(CachedBuffer lastBuffer, long page) {
     if (lastBuffer != null && !lastBuffer.myWrapper.isReleased() &&
         lastBuffer.myLastPage == page) {
       return lastBuffer.myWrapper;

@@ -6,6 +6,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibrary;
+import de.plushnikov.intellij.plugin.lombokconfig.LombokNullAnnotationLibraryDefned;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
@@ -16,9 +18,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 public class BuilderInfo {
   private static final String BUILDER_OBTAIN_VIA_FIELD = "field";
@@ -52,67 +52,41 @@ public class BuilderInfo {
   private String instanceVariableName = "this";
   private CapitalizationStrategy capitalizationStrategy;
 
-  public static BuilderInfo fromPsiParameter(@NotNull PsiParameter psiParameter) {
+  private LombokNullAnnotationLibrary nullAnnotationLibrary;
+
+  private static BuilderInfo fromPsiElement(@NotNull PsiVariable psiVariable) {
     final BuilderInfo result = new BuilderInfo();
-
-    result.variableInClass = psiParameter;
-    result.fieldInBuilderType = psiParameter.getType();
-    result.deprecated = hasDeprecatedAnnotation(psiParameter);
-    result.fieldInitializer = null;
-    result.hasBuilderDefaultAnnotation = false;
-
-    result.fieldInBuilderName = psiParameter.getName();
+    result.variableInClass = psiVariable;
+    result.fieldInBuilderName = psiVariable.getName();
+    result.fieldInBuilderType = psiVariable.getType();
+    result.fieldInitializer = psiVariable.getInitializer();
     result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
+    result.deprecated = PsiImplUtil.isDeprecated(psiVariable);
 
-    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, LombokClassNames.SINGULAR);
-    result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiParameter, null!=result.singularAnnotation);
+    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiVariable, BUILDER_DEFAULT_ANNOTATION);
+    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, LombokClassNames.SINGULAR);
+    result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiVariable, null != result.singularAnnotation);
 
+    result.nullAnnotationLibrary = LombokNullAnnotationLibraryDefned.NONE;
     return result;
   }
 
-  private static boolean hasDeprecatedAnnotation(@NotNull PsiModifierListOwner modifierListOwner) {
-    return PsiAnnotationSearchUtil.isAnnotatedWith(modifierListOwner, Deprecated.class.getName());
-  }
-
-  public static BuilderInfo fromPsiField(@NotNull PsiField psiField) {
-    final BuilderInfo result = new BuilderInfo();
-
-    result.variableInClass = psiField;
-    result.deprecated = isDeprecated(psiField);
-    result.fieldInBuilderType = psiField.getType();
-    result.fieldInitializer = psiField.getInitializer();
-    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiField, BUILDER_DEFAULT_ANNOTATION);
-
-    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
-    result.fieldInBuilderName = accessorsInfo.removePrefix(psiField.getName());
-    result.capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
-
-    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
-    result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiField, null!=result.singularAnnotation);
-
-    return result;
+  public static BuilderInfo fromPsiParameter(@NotNull PsiParameter psiParameter) {
+    return fromPsiElement(psiParameter);
   }
 
   public static BuilderInfo fromPsiRecordComponent(@NotNull PsiRecordComponent psiRecordComponent) {
-    final BuilderInfo result = new BuilderInfo();
-
-    result.variableInClass = psiRecordComponent;
-    result.deprecated = hasDeprecatedAnnotation(psiRecordComponent);
-    result.fieldInBuilderType = psiRecordComponent.getType();
-    result.fieldInitializer = psiRecordComponent.getInitializer();
-    result.hasBuilderDefaultAnnotation = PsiAnnotationSearchUtil.isAnnotatedWith(psiRecordComponent, BUILDER_DEFAULT_ANNOTATION);
-
-    result.fieldInBuilderName = psiRecordComponent.getName();
-    result.capitalizationStrategy = CapitalizationStrategy.defaultValue();
-
-    result.singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiRecordComponent, LombokClassNames.SINGULAR);
-    result.builderElementHandler = SingularHandlerFactory.getHandlerFor(psiRecordComponent, null!=result.singularAnnotation);
-
-    return result;
+    return fromPsiElement(psiRecordComponent);
   }
 
-  private static boolean isDeprecated(@NotNull PsiField psiField) {
-    return PsiImplUtil.isDeprecatedByDocTag(psiField) || hasDeprecatedAnnotation(psiField);
+  public static BuilderInfo fromPsiField(@NotNull PsiField psiField) {
+    final BuilderInfo result = fromPsiElement(psiField);
+
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
+    result.fieldInBuilderName = accessorsInfo.removePrefixWithDefault(psiField.getName());
+    result.capitalizationStrategy = accessorsInfo.getCapitalizationStrategy();
+
+    return result;
   }
 
   public BuilderInfo withSubstitutor(@NotNull PsiSubstitutor builderSubstitutor) {
@@ -156,6 +130,11 @@ public class BuilderInfo {
     return this;
   }
 
+  BuilderInfo withNullAnnotationLibrary(LombokNullAnnotationLibrary annotationLibrary) {
+    nullAnnotationLibrary = annotationLibrary;
+    return this;
+  }
+
   public boolean useForBuilder() {
     boolean result = true;
 
@@ -171,18 +150,16 @@ public class BuilderInfo {
       }
     }
 
-    //Skip fields that start with $
-    result &= !fieldInBuilderName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
-
+    result &= null != fieldInBuilderName;
+    if (result) {
+      //Skip fields that start with $
+      result = !fieldInBuilderName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+    }
     return result;
   }
 
   public boolean notAlreadyExistingField(Collection<String> alreadyExistingFieldNames) {
     return !alreadyExistingFieldNames.contains(fieldInBuilderName);
-  }
-
-  public boolean notAlreadyExistingMethod(Collection<String> alreadyExistedMethodNames) {
-    return !alreadyExistedMethodNames.contains(calcBuilderMethodName());
   }
 
   public Project getProject() {
@@ -199,6 +176,10 @@ public class BuilderInfo {
 
   public CapitalizationStrategy getCapitalizationStrategy() {
     return capitalizationStrategy;
+  }
+
+  public LombokNullAnnotationLibrary getNullAnnotationLibrary() {
+    return nullAnnotationLibrary;
   }
 
   public PsiType getFieldType() {
@@ -285,12 +266,8 @@ public class BuilderInfo {
     return builderElementHandler.renderBuilderFields(this);
   }
 
-  private String calcBuilderMethodName() {
-    return builderElementHandler.calcBuilderMethodName(this);
-  }
-
-  public Collection<PsiMethod> renderBuilderMethods() {
-    return builderElementHandler.renderBuilderMethod(this);
+  public Collection<PsiMethod> renderBuilderMethods(Map<String, List<List<PsiType>>> alreadyExistedMethods) {
+    return builderElementHandler.renderBuilderMethod(this, alreadyExistedMethods);
   }
 
   public String renderBuildPrepare() {
@@ -302,7 +279,7 @@ public class BuilderInfo {
   }
 
   public String renderSuperBuilderConstruction() {
-    return builderElementHandler.renderSuperBuilderConstruction(variableInClass, fieldInBuilderName);
+    return builderElementHandler.renderSuperBuilderConstruction(this);
   }
 
   public String renderFieldName() {
@@ -352,24 +329,29 @@ public class BuilderInfo {
       result.append('(');
       if (StringUtil.isNotEmpty(viaFieldName)) {
         result.append(instanceVariableName).append(".").append(viaFieldName);
-      } else if (StringUtil.isNotEmpty(viaMethodName)) {
-        if(usePrependLogic) {//call to 'viaMethodName' is rendered as prepend statement
+      }
+      else if (StringUtil.isNotEmpty(viaMethodName)) {
+        if (usePrependLogic) {//call to 'viaMethodName' is rendered as prepend statement
           result.append(fieldInBuilderName);
-        } else {
+        }
+        else {
           result.append(viaStaticCall ? getPsiClass().getQualifiedName() : instanceVariableName);
           result.append('.');
           result.append(viaMethodName);
           result.append(viaStaticCall ? "(" + instanceVariableName + ")" : "()");
         }
-      } else {
+      }
+      else {
         result.append(instanceVariableName).append(".").append(variableInClass.getName());
       }
       result.append(')');
       return result;
-    } else {
-      if(!usePrependLogic || !hasSingularAnnotation()) {
+    }
+    else {
+      if (!usePrependLogic || !hasSingularAnnotation()) {
         return builderElementHandler.renderToBuilderCall(this);
-      } else {
+      }
+      else {
         return "";
       }
     }
@@ -396,7 +378,7 @@ public class BuilderInfo {
     final PsiType psiVariableType = psiVariable.getType();
 
     if (psiVariableType instanceof PsiClassReferenceType) {
-      final PsiClass resolvedPsiVariableClass = ((PsiClassReferenceType) psiVariableType).resolve();
+      final PsiClass resolvedPsiVariableClass = ((PsiClassReferenceType)psiVariableType).resolve();
       if (resolvedPsiVariableClass instanceof PsiTypeParameter) {
         return Optional.of(psiVariableType);
       }

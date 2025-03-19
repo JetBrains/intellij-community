@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * To provide additional options in Editor | Code Completion section register implementation of
@@ -20,4 +21,8 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  */
 public final class CodeCompletionConfigurableEP extends ConfigurableEP<UnnamedConfigurable> {
   static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = new ExtensionPointName<>("com.intellij.codeCompletionConfigurable");
+
+  @ApiStatus.Internal
+  public CodeCompletionConfigurableEP() {
+  }
 }

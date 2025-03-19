@@ -13,29 +13,38 @@ import kotlin.Unit;
 )
 public final class TestSynchronizedUnprotected {
    public final void test() {
-      synchronized(this) {
+      synchronized(this) {// 5
          String var2 = "Boom";// 6
          System.out.println(var2);
-         Unit var3 = Unit.INSTANCE;// 5 7
+         Unit $i$a$1$synchronized = Unit.INSTANCE;// 7
       }
    }
 }
 
 class 'pkg/TestSynchronizedUnprotected' {
    method 'test ()V' {
+      0      15
       3      15
       5      16
+      6      16
       7      16
       8      17
+      9      17
+      a      17
+      b      17
       c      17
+      d      17
+      e      17
       f      18
+      10      18
+      11      18
       12      18
       15      20
    }
 }
 
 Lines mapping:
-5 <-> 19
+5 <-> 16
 6 <-> 17
 7 <-> 19
 Not mapped:

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.messages;
 
 import com.intellij.openapi.project.Project;
@@ -12,8 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class MoreInfoMessageDialog extends MessageDialog {
-  @Nullable private final @Nls String myInfoText;
+final class MoreInfoMessageDialog extends MessageDialog {
+  private final @Nullable @Nls String myInfoText;
 
   MoreInfoMessageDialog(Project project,
                         @NlsContexts.DialogMessage String message,

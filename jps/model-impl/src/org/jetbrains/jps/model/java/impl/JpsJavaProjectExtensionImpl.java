@@ -1,18 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
-import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
 
-public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtensionImpl> implements JpsJavaProjectExtension {
+import java.util.Objects;
+
+final class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectExtensionImpl> implements JpsJavaProjectExtension {
   private String myOutputUrl;
   private LanguageLevel myLanguageLevel;
 
-  public JpsJavaProjectExtensionImpl() {
+  JpsJavaProjectExtensionImpl() {
   }
 
   private JpsJavaProjectExtensionImpl(JpsJavaProjectExtensionImpl original) {
@@ -20,9 +21,8 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
     myLanguageLevel = original.myLanguageLevel;
   }
 
-  @NotNull
   @Override
-  public JpsJavaProjectExtensionImpl createCopy() {
+  public @NotNull JpsJavaProjectExtensionImpl createCopy() {
     return new JpsJavaProjectExtensionImpl(this);
   }
 
@@ -35,7 +35,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setOutputUrl(String outputUrl) {
     if (!Objects.equals(myOutputUrl, outputUrl)) {
       myOutputUrl = outputUrl;
-      fireElementChanged();
     }
   }
 
@@ -48,13 +47,6 @@ public class JpsJavaProjectExtensionImpl extends JpsElementBase<JpsJavaProjectEx
   public void setLanguageLevel(LanguageLevel languageLevel) {
     if (!Comparing.equal(myLanguageLevel, languageLevel)) {
       myLanguageLevel = languageLevel;
-      fireElementChanged();
     }
-  }
-
-  @Override
-  public void applyChanges(@NotNull JpsJavaProjectExtensionImpl modified) {
-    setLanguageLevel(modified.myLanguageLevel);
-    setOutputUrl(modified.myOutputUrl);
   }
 }

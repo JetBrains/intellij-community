@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.rules.impl;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -19,9 +19,8 @@ public abstract class LocalFileCustomValidationRule extends CustomValidationRule
     this.storage = storage;
   }
 
-  @NotNull
   @Override
-  public String getRuleId() {
+  public @NotNull String getRuleId() {
     return ruleId;
   }
 
@@ -29,9 +28,8 @@ public abstract class LocalFileCustomValidationRule extends CustomValidationRule
     return storage.getItems().contains(value);
   }
 
-  @NotNull
   @Override
-  final protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+  protected final @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (isThirdPartyValue(data) || isAllowed(data)) {
       return ValidationResultType.ACCEPTED;
     }

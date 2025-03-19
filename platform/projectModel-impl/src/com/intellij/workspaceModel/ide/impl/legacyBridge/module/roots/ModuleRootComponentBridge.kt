@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.Disposable
@@ -9,40 +9,39 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.ide.impl.DisposableCachedValue
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+
+@ApiStatus.Internal
 class ModuleRootComponentBridge(
   private val currentModule: Module
 ) : ModuleRootManagerEx(), Disposable, ModuleRootModelBridge {
 
-  override val moduleBridge = currentModule as ModuleBridge
+  override val moduleBridge: ModuleBridge
+    get() = currentModule as ModuleBridge
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
-  private val modelValue = DisposableCachedValue(
-    { moduleBridge.entityStorage },
-    CachedValue { storage ->
-      RootModelBridgeImpl(
-        moduleEntity = moduleBridge.findModuleEntity(storage),
-        storage = moduleBridge.entityStorage,
-        itemUpdater = null,
-        // TODO
-        rootModel = this,
-        updater = null
-      )
-    }, "Root Model Bridge (${currentModule.name})", currentModule.project).also { Disposer.register(this, it) }
+  private val modelValue = VersionedCache<RootModelBridgeImpl> {
+    RootModelBridgeImpl(
+      moduleEntity = moduleBridge.findModuleEntity(moduleBridge.entityStorage.current),
+      storage = moduleBridge.entityStorage,
+      itemUpdater = null,
+      // TODO
+      rootModel = this,
+      updater = null
+    )
+  }
 
   internal val moduleLibraryTable: ModuleLibraryTableBridgeImpl = ModuleLibraryTableBridgeImpl(moduleBridge)
 
@@ -51,6 +50,7 @@ class ModuleRootComponentBridge(
   }
 
   init {
+    @Suppress("DEPRECATION")
     MODULE_EXTENSION_NAME.getPoint(moduleBridge).addExtensionPointListener(object : ExtensionPointListener<ModuleExtension> {
       override fun extensionAdded(extension: ModuleExtension, pluginDescriptor: PluginDescriptor) {
         dropRootModelCache()
@@ -63,7 +63,7 @@ class ModuleRootComponentBridge(
   }
 
   private val model: RootModelBridgeImpl
-    get() = modelValue.value
+    get() = modelValue.getValue(moduleBridge.entityStorage.version)
 
   override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
@@ -86,7 +86,7 @@ class ModuleRootComponentBridge(
   }
 
   internal fun dropRootModelCache() {
-    modelValue.dropCache()
+    modelValue.clear()
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version
@@ -98,7 +98,7 @@ class ModuleRootComponentBridge(
 
   override fun getModifiableModel(): ModifiableRootModel = getModifiableModel(RootConfigurationAccessor.DEFAULT_INSTANCE)
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
-    MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor)
 
@@ -112,14 +112,14 @@ class ModuleRootComponentBridge(
   @ApiStatus.Internal
   fun getModifiableModelForMultiCommit(accessor: RootConfigurationAccessor, cacheStorageResult: Boolean): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     (moduleBridge.diff as? MutableEntityStorage) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
-    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current),
+    ?: MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()),
     moduleBridge,
     accessor,
     cacheStorageResult)
 
   @ApiStatus.Internal
   fun getModifiableModelWithoutCaching(): ModifiableRootModel {
-    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current), RootConfigurationAccessor.DEFAULT_INSTANCE)
+    return getModifiableModel(MutableEntityStorage.from(moduleBridge.entityStorage.current.toSnapshot()), RootConfigurationAccessor.DEFAULT_INSTANCE)
   }
 
   fun getModifiableModel(diff: MutableEntityStorage, accessor: RootConfigurationAccessor): ModifiableRootModel {
@@ -162,5 +162,34 @@ class ModuleRootComponentBridge(
   companion object {
     @JvmStatic
     fun getInstance(module: Module): ModuleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+  }
+}
+
+private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
+  return when (this) {
+    is ImmutableEntityStorage -> this
+    is MutableEntityStorage -> this.toSnapshot()
+    else -> error("Unexpected storage: $this")
+  }
+}
+
+private class VersionedCache<T>(val compute: () -> T) {
+  private var version: Long = -1
+  private var valueResult: T? = null
+
+  @Synchronized
+  fun getValue(currentVersion: Long): T {
+    var res = valueResult
+    if (res != null && version == currentVersion) return res
+
+    this.version = currentVersion
+    res = compute()
+    valueResult = res
+    return res
+  }
+
+  @Synchronized
+  fun clear() {
+    valueResult = null
   }
 }

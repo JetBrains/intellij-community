@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions.impl;
 
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -22,6 +9,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,8 +20,9 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class OpenInEditorWithMouseAction extends AnAction implements DumbAware {
-  @NotNull private List<? extends Editor> myEditors = Collections.emptyList();
+  private @NotNull List<? extends Editor> myEditors = Collections.emptyList();
 
   public OpenInEditorWithMouseAction() {
     AnAction navigateAction = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION); // null in MPS
@@ -67,7 +56,7 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
       return;
     }
 
-    if (e.getData(OpenInEditorAction.KEY) == null) {
+    if (e.getData(DiffDataKeys.DIFF_CONTEXT) == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -103,10 +92,11 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-
-    MouseEvent inputEvent = (MouseEvent)e.getInputEvent();
-    OpenInEditorAction openInEditorAction = e.getRequiredData(OpenInEditorAction.KEY);
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    if (!(e.getInputEvent() instanceof MouseEvent inputEvent) ||
+        inputEvent.getComponent() == null) return;
+    Runnable callback = e.getData(DiffDataKeys.NAVIGATION_CALLBACK);
 
     Component component = inputEvent.getComponent();
     Point point = inputEvent.getPoint();
@@ -121,11 +111,10 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     Navigatable navigatable = getNavigatable(editor, line);
     if (navigatable == null) return;
 
-    openInEditorAction.openEditor(project, navigatable);
+    OpenInEditorAction.openEditor(project, navigatable, callback);
   }
 
-  @Nullable
-  private Editor getEditor(@NotNull Component component) {
+  private @Nullable Editor getEditor(@NotNull Component component) {
     for (Editor editor : myEditors) {
       if (editor != null && editor.getGutter() == component) {
         return editor;
@@ -134,6 +123,5 @@ public abstract class OpenInEditorWithMouseAction extends AnAction implements Du
     return null;
   }
 
-  @Nullable
-  protected abstract Navigatable getNavigatable(@NotNull Editor editor, int line);
+  protected abstract @Nullable Navigatable getNavigatable(@NotNull Editor editor, int line);
 }

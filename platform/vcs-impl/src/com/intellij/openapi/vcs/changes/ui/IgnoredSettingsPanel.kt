@@ -7,7 +7,6 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.ASKED_MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ignore.IgnoreConfigurationProperty.MANAGE_IGNORE_FILES_PROPERTY
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel.ManageIgnoredOption.*
@@ -21,7 +20,6 @@ internal class IgnoredSettingsPanel(private val project: Project) :
 
   private var selectedManageIgnoreOption = getIgnoredOption()
   private val settings = VcsApplicationSettings.getInstance()
-  private val projectSettings = VcsConfiguration.getInstance(project)
 
   override fun apply() {
     val modified = isModified
@@ -48,10 +46,6 @@ internal class IgnoredSettingsPanel(private val project: Project) :
         row {
           checkBox(message("ignored.file.excluded.to.ignored.label"))
             .bindSelected(settings::MARK_EXCLUDED_AS_IGNORED)
-        }
-        row {
-          checkBox(message("ignored.file.ignored.to.excluded.label"))
-            .bindSelected(projectSettings::MARK_IGNORED_AS_EXCLUDED)
         }
       }
     }

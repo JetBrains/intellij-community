@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -10,26 +10,24 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
 
-public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {
+public final class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntentionAction implements Iconable {
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaRefactoringBundle.message("replace.constructor.with.builder.text");
   }
 
-  @NotNull
   @Override
-  public final String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
@@ -54,9 +52,8 @@ public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntention
     return ExperimentalUI.isNewUI() ? null : AllIcons.Actions.RefactoringBulb;
   }
 
-  @Nullable
-  private static PsiMethod getConstructor(@Nullable PsiElement element) {
-    PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(element);
+  private static @Nullable PsiMethod getConstructor(@Nullable PsiElement element) {
+    PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null && method.isConstructor()) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && 

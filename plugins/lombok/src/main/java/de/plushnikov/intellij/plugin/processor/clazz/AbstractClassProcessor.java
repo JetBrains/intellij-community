@@ -41,27 +41,30 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = Collections.emptyList();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation
       && supportAnnotationVariant(psiAnnotation)
-      && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
+      && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)
       && validate(psiAnnotation, psiClass, new ProblemProcessingSink())
     ) {
       result = new ArrayList<>();
-      generatePsiElements(psiClass, psiAnnotation, result);
+      generatePsiElements(psiClass, psiAnnotation, result, nameHint);
     }
     return result;
   }
 
-  protected boolean possibleToGenerateElementNamed(@Nullable String nameHint, @NotNull PsiClass psiClass,
-                                                 @NotNull PsiAnnotation psiAnnotation) {
-    if (null == nameHint) {
-      return true;
-    }
+  protected final boolean noHintOrPossibleToGenerateElementNamed(@Nullable String nameHint,
+                                                                 @NotNull PsiClass psiClass,
+                                                                 @NotNull PsiAnnotation psiAnnotation) {
+    return nameHint == null || possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation);
+  }
+
+  protected boolean possibleToGenerateElementNamed(@NotNull String nameHint,
+                                                   @NotNull PsiClass psiClass,
+                                                   @NotNull PsiAnnotation psiAnnotation) {
     final Collection<String> namesOfGeneratedElements = getNamesOfPossibleGeneratedElements(psiClass, psiAnnotation);
     return namesOfGeneratedElements.isEmpty() || namesOfGeneratedElements.contains(nameHint);
   }
@@ -70,9 +73,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+  public @NotNull Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     Collection<PsiAnnotation> result = new ArrayList<>();
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
@@ -97,12 +99,11 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
     // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
-    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
+    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiRecordComponent.class, PsiMethod.class, PsiClass.class);
     if (psiElement instanceof PsiClass) {
       ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, (PsiClass) psiElement, problemNewBuilder);
@@ -120,14 +121,16 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return Optional.empty();
   }
 
-  @Nullable
-  protected PsiAnnotation getSupportedAnnotation(@NotNull PsiClass psiParentClass) {
+  protected @Nullable PsiAnnotation getSupportedAnnotation(@NotNull PsiClass psiParentClass) {
     return PsiAnnotationSearchUtil.findAnnotation(psiParentClass, getSupportedAnnotationClasses());
   }
 
   protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder);
 
-  protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
+  protected abstract void generatePsiElements(@NotNull PsiClass psiClass,
+                                              @NotNull PsiAnnotation psiAnnotation,
+                                              @NotNull List<? super PsiElement> target,
+                                              @Nullable String nameHint);
 
   static void validateOfParam(PsiClass psiClass, ProblemSink builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {

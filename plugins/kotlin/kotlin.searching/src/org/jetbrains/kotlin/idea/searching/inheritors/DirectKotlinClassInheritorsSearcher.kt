@@ -11,10 +11,13 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIndex
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -47,7 +50,7 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
         val basePointer = runReadAction {
             analyze(baseClass) {
-                baseClass.getNamedClassOrObjectSymbol()?.createPointer()
+                baseClass.namedClassSymbol?.createPointer()
             }
         } ?: return null
 
@@ -80,14 +83,22 @@ internal class DirectKotlinClassInheritorsSearcher : Searcher<DirectKotlinClassI
 
             private fun isValidInheritor(ktClassOrObject: KtClassOrObject): Boolean {
                 ProgressManager.checkCanceled()
+
+                if (!parameters.includeLocal && ktClassOrObject.isLocal) {
+                    return false
+                }
+
                 analyze(ktClassOrObject) {
                     val baseSymbol = basePointer.restoreSymbol() ?: return false
-                    val ktSymbol = ktClassOrObject.getClassOrObjectSymbol() ?: return false
-                    if (!parameters.includeAnonymous && ktSymbol !is KtNamedSymbol) {
+                    val ktSymbol = ktClassOrObject.classSymbol ?: return false
+                    if (!parameters.includeAnonymous && ktSymbol !is KaNamedSymbol) {
                         return false
                     }
 
-                    return ktSymbol.isSubClassOf(baseSymbol)
+                    fun KaUsualClassType.classIdWithExpandedTypeAlias(): ClassId? =
+                        ((symbol as? KaTypeAliasSymbol)?.expandedType as? KaUsualClassType)?.classId ?: classId
+
+                    return ktSymbol.superTypes.any { it is KaUsualClassType && (it.symbol == baseSymbol || it.classIdWithExpandedTypeAlias() == baseSymbol.classId) }
                 }
             }
         }

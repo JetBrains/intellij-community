@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.projectView;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/projectView")
 public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -71,6 +78,16 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
     @TestMetadata("FacadeInternalWithNameClashAndSources2.test")
     public void testFacadeInternalWithNameClashAndSources2() throws Exception {
         runTest("testData/projectView/FacadeInternalWithNameClashAndSources2.test");
+    }
+
+    @TestMetadata("FileNestingWithMembers.test")
+    public void testFileNestingWithMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithMembers.test");
+    }
+
+    @TestMetadata("FileNestingWithoutMembers.test")
+    public void testFileNestingWithoutMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithoutMembers.test");
     }
 
     @TestMetadata("MultifileFacadeInternalClass.test")
@@ -136,6 +153,11 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
     @TestMetadata("ScriptMembers2.test")
     public void testScriptMembers2() throws Exception {
         runTest("testData/projectView/ScriptMembers2.test");
+    }
+
+    @TestMetadata("SimpleKotlinClass.test")
+    public void testSimpleKotlinClass() throws Exception {
+        runTest("testData/projectView/SimpleKotlinClass.test");
     }
 
     @TestMetadata("_Arrays.test")

@@ -1,10 +1,11 @@
+from _typeshed import Incomplete
 from collections.abc import Iterable, Iterator
 from typing import Any
 
 from pygments.lexer import Lexer
 from pygments.token import _TokenType
 
-def apply_filters(stream, filters, lexer: Any | None = ...): ...
+def apply_filters(stream, filters, lexer: Incomplete | None = None): ...
 def simplefilter(f): ...
 
 class Filter:

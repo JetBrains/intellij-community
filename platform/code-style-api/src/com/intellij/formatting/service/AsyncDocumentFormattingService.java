@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.service;
 
 import com.intellij.CodeStyleBundle;
@@ -51,7 +51,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   public static final Key<Boolean> FORMAT_DOCUMENT_SYNCHRONOUSLY =
     Key.create("com.intellij.formatting.service.AsyncDocumentFormattingService.FORMAT_DOCUMENT_SYNCHRONOUSLY");
 
-  private final static Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
+  private static final Logger LOG = Logger.getInstance(AsyncDocumentFormattingService.class);
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
 
@@ -124,6 +124,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected abstract @NotNull String getNotificationGroupId();
 
+
+  protected boolean needToUpdate() {
+    return true;
+  }
+
   /**
    * @return A name which can be used in UI, for example, in notification messages.
    */
@@ -146,7 +151,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   private class FormattingRequestImpl implements AsyncFormattingRequest {
-    private final static String TEMP_FILE_PREFIX = "ij-format-temp";
+    private static final String TEMP_FILE_PREFIX = "ij-format-temp";
 
     private final Document          myDocument;
     private final List<TextRange>   myRanges;
@@ -295,6 +300,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     private void updateDocument(@NotNull String newText) {
+      if (!needToUpdate()) return;
       if (myDocument.getModificationStamp() > myInitialModificationStamp) {
         for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
           if (merger.updateDocument(myDocument, newText)) break;
@@ -311,7 +317,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     @Override
-    public void onTextReady(@NotNull final String updatedText) {
+    public void onTextReady(final @Nullable String updatedText) {
       if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
         myResult = updatedText;
         myTaskSemaphore.release();

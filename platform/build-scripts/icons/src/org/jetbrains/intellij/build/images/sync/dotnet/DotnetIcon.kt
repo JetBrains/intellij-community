@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
+import com.intellij.util.io.createDirectories
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.exists
+import kotlin.io.path.name
 
-internal class DotnetIcon(private val file: Path) {
+internal class DotnetIcon(val file: Path) {
   class Braces(val start: String, val end: String)
   companion object {
     val BRACES = listOf(Braces("[", "]"), Braces("(", ")"))
@@ -42,6 +45,15 @@ internal class DotnetIcon(private val file: Path) {
     if (this.suffix == suffix) return this
     val name = "$name$suffix$extension"
     val target = file.parent?.resolve(name) ?: Paths.get(name)
+    Files.move(file, target, StandardCopyOption.REPLACE_EXISTING)
+    return DotnetIcon(target)
+  }
+
+  fun moveToDir(targetDir: Path) : DotnetIcon {
+    if (!Files.exists(file)) error("$file not exist")
+    if (file.parent == targetDir) return this
+    val target = targetDir.resolve(file.name)
+    if (!targetDir.exists()) targetDir.createDirectories()
     Files.move(file, target, StandardCopyOption.REPLACE_EXISTING)
     return DotnetIcon(target)
   }

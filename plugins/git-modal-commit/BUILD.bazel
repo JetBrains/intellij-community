@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.vcs.git.commit.modal` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-git-commit-modal_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-git-commit-modal",
+  module_name = "intellij.vcs.git.commit.modal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/git4idea:vcs-git",
+    "//platform/vcs-api:vcs",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//platform/vcs-impl",
+  ],
+  runtime_deps = [":vcs-git-commit-modal_resources"]
+)
+### auto-generated section `build intellij.vcs.git.commit.modal` end

@@ -4,9 +4,11 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.util.containers.forEachLoggingErrors
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<CheckinHandlersNotifier>()
 
+@ApiStatus.Internal
 class CheckinHandlersNotifier(private val committer: Committer,
                               private val handlers: List<CheckinHandler>) : CommitterResultHandler {
   override fun onSuccess() {

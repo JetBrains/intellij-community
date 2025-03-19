@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -23,8 +23,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
 
   private static final Logger LOG = Logger.getInstance(AppFontOptions.class);
 
-  @ApiStatus.Internal
-  public static final boolean NEW_FONT_SELECTOR = SystemProperties.getBooleanProperty("new.editor.font.selector", true);
   @ApiStatus.Internal
   public static final boolean APP_CONSOLE_FONT_ENABLED = SystemProperties.getBooleanProperty("app.console.font.enabled", false);
 
@@ -53,7 +51,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
     }
     return myTracker.getModificationCount();
   }
-
 
   @Override
   public @NotNull F getState() {
@@ -109,7 +106,4 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public @NotNull FontPreferences getFontPreferences() {
     return myFontPreferences;
   }
-
-
-
 }

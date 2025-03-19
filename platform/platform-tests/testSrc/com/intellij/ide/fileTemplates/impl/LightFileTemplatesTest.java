@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
@@ -15,18 +16,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.io.PathKt;
 import org.jdom.Element;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.TestLoggerKt.assertErrorLogged;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -222,14 +226,9 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";
     point.registerExtension(bean, new DefaultPluginDescriptor("testInternalTemplatePlugin"), getTestRootDisposable());
-    try {
-      myTemplateManager.getInternalTemplates();
-      fail();
-    }
-    catch (Throwable e) {
-      assertThat(e.getMessage()).isEqualTo("Can't find template Unknown");
-      assertThat(((PluginException)e.getCause()).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
-    }
+    Throwable e = assertErrorLogged(Throwable.class, () -> myTemplateManager.getInternalTemplates());
+    assertThat(e.getMessage()).isEqualTo("Template not found: Unknown [Plugin: testInternalTemplatePlugin]");
+    assertThat(((PluginException)e).getPluginId().getIdString()).isEqualTo("testInternalTemplatePlugin");
   }
 
   public void _testMultiFile() {
@@ -261,6 +260,31 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
                    <template name="testTemplate.txt" reformat="true" live-template-enabled="false" enabled="true">
                      <template name="child.txt" file-name="child" reformat="true" live-template-enabled="false" />
                    </template>""", JDOMUtil.writeElement(element));
+  }
+
+  @TestFor(issues = "IJPL-155675")
+  public void testLoadWithChildren() throws IOException {
+    Path tempDir = Files.createTempDirectory(getClass().getSimpleName() + '_' + getTestName(true) + '_');
+    final String templateName = "My Text Template";
+    try {
+      CustomFileTemplate template = new CustomFileTemplate(templateName, "txt");
+      template.setFileName(templateName + "." + template.getExtension());
+      FileUtil.writeToFile(tempDir.resolve(template.getFileName()).toFile(), "aaaaa");
+
+      CustomFileTemplate childTemplate = new CustomFileTemplate(template.getChildName(0), ".props");
+      childTemplate.setFileName(childTemplate.getName() + "." + childTemplate.getExtension());
+      FileUtil.writeToFile(tempDir.resolve(childTemplate.getFileName()).toFile(), "bbb=ccc");
+
+
+      FTManager ftManager = new FTManager("My tests", tempDir);
+      ftManager.loadCustomizedContent();
+      FileTemplateBase loadedTemplate = ftManager.getTemplate(template.getFileName());
+      assertNotNull(loadedTemplate);
+      assertEquals("Should have exactly one child", 1, loadedTemplate.getChildren().length);
+    }
+    finally {
+      NioFiles.deleteRecursively(tempDir);
+    }
   }
 
   private FileTemplateManagerImpl myTemplateManager;

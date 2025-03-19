@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
+import com.intellij.diff.DiffContext;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -59,6 +60,11 @@ public interface DiffUserDataKeys {
 
   Key<Boolean> DO_NOT_CHANGE_WINDOW_TITLE = Key.create("Diff.DoNotChangeWindowTitle");
 
+  /**
+   * Enable search in editor inside diff changes areas in additional to the editor selection for the current {@link DiffContext}
+   */
+  Key<Boolean> ENABLE_SEARCH_IN_CHANGES = Key.create("Diff.EnableSearchInChanges");
+
   //
   // DiffContext / DiffRequest
   //
@@ -110,6 +116,14 @@ public interface DiffUserDataKeys {
   Key<DataProvider> DATA_PROVIDER = Key.create("Diff.DataProvider");
   Key<Boolean> GO_TO_SOURCE_DISABLE = Key.create("Diff.GoToSourceDisable");
 
+  /**
+   * Force aligning changes in side-by-side viewer.<br/>
+   * This can be used in viewers, where aligning is critical (e.g. {@link com.intellij.diff.tools.combined.CombinedDiffViewer}).
+   *
+   * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
+   */
+  Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
+
   //
   // DiffContext / DiffRequest / DiffContent
   //
@@ -126,12 +140,4 @@ public interface DiffUserDataKeys {
    * @see com.intellij.openapi.editor.EditorKind#DIFF
    */
   Key<Boolean> MERGE_EDITOR_FLAG = Key.create("Diff.mergeEditor");
-
-  /**
-   * Force aligning changes in side-by-side viewer.<br/>
-   * This can be used in viewers, where aligning is critical (e.g. {@link com.intellij.diff.tools.combined.CombinedDiffViewer}).
-   *
-   * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
-   */
-  Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
 }

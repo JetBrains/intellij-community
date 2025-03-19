@@ -1,4 +1,4 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with 'switch' expression" "true-preview"
 import org.jetbrains.annotations.Nullable;
 
 class X {

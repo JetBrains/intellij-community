@@ -18,12 +18,13 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
@@ -63,6 +64,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected void checkResult() throws IOException {
     checkResult(getFileName(), false);
+  }
+
+  protected void checkResultWithGutterForNewUI() throws IOException {
+    checkResult((ExperimentalUI.isNewUI() ? "new.ui/" : "") + getFileName(), true);
   }
 
   protected void checkResultWithGutter() throws IOException {
@@ -261,8 +266,8 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     if (expectedResultsFile == null) {
       expectedResultsFile = saveTmpImage(expectedImage, "expected");
     }
-    throw new FileComparisonFailure(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
-                                    expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
+    throw new FileComparisonFailedError(message, expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath(),
+                                        expectedResultsFile.getAbsolutePath(), savedImage.getAbsolutePath());
   }
 
   private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {

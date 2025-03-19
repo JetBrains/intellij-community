@@ -13,7 +13,6 @@
     :hg up|co NAME: switch to bookmark
     :hg push -B .: push active bookmark
 """
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial import (
@@ -118,8 +117,8 @@ def cwd_at_bookmark(repo, mark):
 
 
 def uisetup(ui):
-    extensions.wrapfunction(bookmarks, b'update', bookmarks_update)
-    extensions.wrapfunction(bookmarks, b'addbookmarks', bookmarks_addbookmarks)
+    extensions.wrapfunction(bookmarks, 'update', bookmarks_update)
+    extensions.wrapfunction(bookmarks, 'addbookmarks', bookmarks_addbookmarks)
     extensions.wrapcommand(commands.table, b'commit', commands_commit)
     extensions.wrapcommand(commands.table, b'pull', commands_pull)
     if not ui.configbool(MY_NAME, b'enable-branches'):

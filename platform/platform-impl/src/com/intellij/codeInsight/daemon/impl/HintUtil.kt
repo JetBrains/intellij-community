@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
+@ApiStatus.Internal
 object HintUtil {
   fun getSize(editor: Editor): Float = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
 }

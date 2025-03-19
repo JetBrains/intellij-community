@@ -1,4 +1,4 @@
-// "Convert to a record" "false"
+// "Convert to record class" "GENERIC_ERROR_OR_WARNING"
 class <caret>R {
   final int first;
 

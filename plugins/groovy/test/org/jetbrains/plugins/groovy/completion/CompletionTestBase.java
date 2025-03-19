@@ -16,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -52,7 +51,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
             return !(o instanceof PsiMember) && !(o instanceof GrVariable) && !(o instanceof GroovyResolveResult) && !(o instanceof PsiPackage);
           });
         }
-        Collections.sort(items, Comparator.comparing(LookupElement::getLookupString));
+        items = ContainerUtil.sorted(items, Comparator.comparing(LookupElement::getLookupString));
         result = new StringBuilder();
         for (LookupElement item : items) {
           result.append("\n").append(item.getLookupString());

@@ -6,13 +6,19 @@ import com.intellij.ui.layout.migLayout.MigLayoutBuilder
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Container
-import javax.swing.ButtonGroup
 import javax.swing.JComponent
 
 @PublishedApi
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2")
+@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.ERROR)
 internal fun createLayoutBuilder(): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
+}
+
+@ApiStatus.ScheduledForRemoval
+@ApiStatus.Internal
+@Deprecated("Use Kotlin UI DSL Version 2")
+fun createLayoutBuilderInternal(): LayoutBuilder {
   return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
 }
 
@@ -21,12 +27,9 @@ internal fun createLayoutBuilder(): LayoutBuilder {
 interface LayoutBuilderImpl {
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
+  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val rootRow: Row
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -49,24 +52,21 @@ interface LayoutBuilderImpl {
   @Deprecated("Use Kotlin UI DSL Version 2")
   val componentValidateCallbacks: Map<JComponent, () -> ValidationInfo?>
 
-  // Validation applicants for custom validation events
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  val customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
-
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
-  @get:ApiStatus.ScheduledForRemoval
+  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val applyCallbacks: Map<JComponent?, List<() -> Unit>>
 
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
+  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val resetCallbacks: Map<JComponent?, List<() -> Unit>>
 
   @get:Deprecated("Use Kotlin UI DSL Version 2")
   @get:ApiStatus.ScheduledForRemoval
+  @get:ApiStatus.Internal
   @Deprecated("Use Kotlin UI DSL Version 2")
   val isModifiedCallbacks: Map<JComponent?, List<() -> Boolean>>
 }
@@ -81,7 +81,6 @@ private fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
     override val labelColumnHorizontalGap = JBUI.scale(6)
     override val largeHorizontalGap = JBUI.scale(16)
     override val largeVerticalGap = JBUI.scale(20)
-    override val radioGroupTitleVerticalGap = JBUI.scale(6 + 2)
 
     override val shortTextWidth = JBUI.scale(250)
     override val maxShortTextWidth = JBUI.scale(350)

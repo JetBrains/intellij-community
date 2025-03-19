@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.libraries;
 
 import com.intellij.ide.JavaUiBundle;
@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,12 +57,7 @@ public final class LibraryEditingUtil {
 
   public static String suggestNewLibraryName(LibraryTable.ModifiableModel table,
                                              final String baseName) {
-    String candidateName = baseName;
-    int idx = 1;
-    while (libraryAlreadyExists(table, candidateName)) {
-      candidateName = baseName + (idx++);
-    }
-    return candidateName;
+    return UniqueNameGenerator.generateUniqueNameOneBased(baseName, n -> !libraryAlreadyExists(table, n));
   }
 
   public static Predicate<Library> getNotAddedSuitableLibrariesCondition(final ModuleRootModel rootModel, final FacetsProvider facetsProvider) {
@@ -160,9 +156,8 @@ public final class LibraryEditingUtil {
   public static BaseListPopupStep<TypeForNewLibrary> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
     return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-      @NotNull
       @Override
-      public String getTextFor(TypeForNewLibrary value) {
+      public @NotNull String getTextFor(TypeForNewLibrary value) {
         //noinspection HardCodedStringLiteral
         return value.getCreateActionName();
       }
@@ -173,7 +168,7 @@ public final class LibraryEditingUtil {
       }
 
       @Override
-      public PopupStep onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
         return doFinalStep(() -> action.run(selectedValue.getType()));
       }
     };

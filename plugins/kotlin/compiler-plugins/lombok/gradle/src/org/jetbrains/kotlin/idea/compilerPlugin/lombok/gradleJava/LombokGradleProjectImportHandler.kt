@@ -1,12 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava
 
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.externalSystem.model.Key
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
-import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractCompilerPluginGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleTooling.model.lombok.LombokModel
+import org.jetbrains.kotlin.idea.jps.toJpsVersionAgnosticKotlinBundledPath
 import org.jetbrains.kotlin.lombok.LombokPluginNames
 
 class LombokGradleProjectImportHandler : AbstractCompilerPluginGradleImportHandler<LombokModel>() {

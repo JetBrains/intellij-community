@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -9,6 +8,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +16,15 @@ import javax.swing.*;
 
 public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
-  @Nullable private final RefEntity myRefEntity;
+  private final @Nullable RefEntity myRefEntity;
 
   public RefElementNode(@Nullable RefEntity refEntity,
                         @NotNull InspectionToolPresentation presentation,
                         @NotNull InspectionTreeNode parent) {
     super(presentation, parent);
     myRefEntity = refEntity;
-    myIcon = refEntity == null ? null : refEntity.getIcon(false);
+    Icon icon = refEntity == null ? null : refEntity.getIcon(false);
+    myIcon = icon == null ? null : IconUtil.deepRetrieveIconNow(icon);
   }
 
   @Override
@@ -32,14 +33,12 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  @Nullable
-  public RefEntity getElement() {
+  public @Nullable RefEntity getElement() {
     return myRefEntity;
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return myIcon;
   }
 
@@ -72,7 +71,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     RefEntity element = getElement();
     if (isLeaf() && element != null) {
       getPresentation().exclude(element);
-      return;
     }
     super.excludeElement();
   }
@@ -82,7 +80,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     RefEntity element = getElement();
     if (isLeaf() && element != null) {
       getPresentation().amnesty(element);
-      return;
     }
     super.amnestyElement();
   }
@@ -100,9 +97,8 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return isLeaf() && getPresentation().isProblemResolved(getElement());
   }
 
-  @Nullable
   @Override
-  public String getTailText() {
+  public @Nullable String getTailText() {
     if (getPresentation().isDummy()) {
       return "";
     }
@@ -113,9 +109,8 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
     return isLeaf() ? "" : null;
   }
 
-  @NotNull
   @Override
-  public Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
+  public @NotNull Pair<PsiElement, CommonProblemDescriptor> getSuppressContent() {
     RefEntity refElement = getElement();
     PsiElement element = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
     return Pair.create(element, null);

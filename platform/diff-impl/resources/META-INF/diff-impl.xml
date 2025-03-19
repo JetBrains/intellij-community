@@ -1,0 +1,56 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
+    <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+
+    <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
+
+    <registryKey key="diff.by.word.deprioritize.line.differences" defaultValue="false"
+                 description="When possible, let 'changed words' have influence on 'changed lines'"/>
+
+    <editorActionHandler action="EditorEscape"
+                         implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"
+                         id="LineStatusTrackerMarkerPopup"
+                         order="before hide-hints"/>
+
+    <mergeableGutterIconRendererProvider implementation="com.intellij.diff.util.DiffGutterRendererMergeableRendererProvider" />
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.diff.editor.EditorTabDiffPreviewAdvancedSettingsListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
+    <listener class="com.intellij.diff.editor.DiffInWindowDndListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener"/>
+  </applicationListeners>
+
+  <actions>
+    <action overrides="true"
+            id="Diff.PrevChange"
+            class="com.intellij.diff.actions.impl.DiffPreviousFileAction"
+            icon="AllIcons.Actions.Back"/>
+    <action overrides="true"
+            id="Diff.NextChange"
+            class="com.intellij.diff.actions.impl.DiffNextFileAction"
+            icon="AllIcons.Actions.Forward"/>
+    <action overrides="true"
+            id="PreviousDiff"
+            class="com.intellij.diff.actions.impl.DiffPreviousDifferenceAction"
+            icon="AllIcons.Actions.PreviousOccurence"/>
+    <action overrides="true"
+            id="NextDiff"
+            class="com.intellij.diff.actions.impl.DiffNextDifferenceAction"
+            icon="AllIcons.Actions.NextOccurence"/>
+    <action id="Diff.OpenInEditor"
+            class="com.intellij.diff.actions.impl.OpenInEditorAction"
+            use-shortcut-of="EditSource"/>
+
+    <group id="Diff.NavigationActions">
+      <reference ref="PreviousDiff"/>
+      <reference ref="NextDiff"/>
+      <reference ref="Diff.OpenInEditor"/>
+      <separator/>
+      <reference ref="Diff.PrevChange"/>
+      <reference ref="Diff.NextChange"/>
+    </group>
+  </actions>
+</idea-plugin>

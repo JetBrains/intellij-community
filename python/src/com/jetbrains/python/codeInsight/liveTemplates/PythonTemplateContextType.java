@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiComment;
@@ -16,6 +17,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +46,11 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     return false;
   }
 
+  @Override
+  public @NotNull SyntaxHighlighter createHighlighter() {
+    return new PyHighlighter(LanguageLevel.getLatest());
+  }
+
   protected abstract boolean isInContext(@NotNull PsiElement element);
 
   private static boolean isPythonLanguage(@NotNull PsiFile file, int offset) {
@@ -64,7 +71,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     return capture.accepts(element, new ProcessingContext());
   }
 
-  public static class General extends PythonTemplateContextType {
+  public static final class General extends PythonTemplateContextType {
 
     public General() {
       super("Python"); //NON-NLS
@@ -76,7 +83,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class Class extends PythonTemplateContextType {
+  public static final class Class extends PythonTemplateContextType {
     public Class() {
       super(PyBundle.message("live.template.context.class"));
     }
@@ -87,7 +94,7 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     }
   }
 
-  public static class TopLevel extends PythonTemplateContextType {
+  public static final class TopLevel extends PythonTemplateContextType {
     public TopLevel() {
       super(PyBundle.message("live.template.context.top.level"));
     }

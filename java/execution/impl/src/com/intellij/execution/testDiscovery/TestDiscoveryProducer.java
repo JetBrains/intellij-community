@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,9 +42,8 @@ public interface TestDiscoveryProducer {
                                      @NotNull List<String> filePaths,
                                      @NotNull TestProcessor processor) {
     MultiMap<String, String> visitedTests = new MultiMap<>() {
-      @NotNull
       @Override
-      protected Collection<String> createCollection() {
+      protected @NotNull Collection<String> createCollection() {
         return new HashSet<>();
       }
     };
@@ -90,8 +89,7 @@ public interface TestDiscoveryProducer {
     }
   }
 
-  @NotNull
-  static Couple<String> extractParameter(@NotNull String rawName) {
+  static @NotNull Couple<String> extractParameter(@NotNull String rawName) {
     int idx = rawName.indexOf('[');
     return idx == -1 ?
            Couple.of(rawName, null) :

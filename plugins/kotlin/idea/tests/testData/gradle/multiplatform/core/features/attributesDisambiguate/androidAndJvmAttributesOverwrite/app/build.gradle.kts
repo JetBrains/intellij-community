@@ -8,7 +8,7 @@ plugins {
 val attr = Attribute.of("disambiguity.attr", String::class.java)
 
 kotlin {
-    android() {
+    {{androidTargetPlaceholder}} {
         attributes.attribute(attr, "jvm")
     }
 }

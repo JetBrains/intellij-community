@@ -17,11 +17,12 @@ package org.intellij.lang.xpath.xslt.util;
 
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class ParamMatcher extends BaseMatcher {
@@ -38,7 +39,7 @@ public class ParamMatcher extends BaseMatcher {
     public ParamMatcher(XmlTag root, String[] excludedNames, String name) {
         myRoot = root;
         myName = name;
-        myExcludedNames = ContainerUtil.immutableSet(excludedNames);
+      myExcludedNames = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(excludedNames)));
     }
 
     @Override

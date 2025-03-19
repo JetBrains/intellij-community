@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.substring
 
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.evaluatesTo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isStableSimpleExpression
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.intentions.toResolvedCall
@@ -32,7 +32,7 @@ abstract class ReplaceSubstringInspection : AbstractApplicabilityBasedInspection
     protected fun isIndexOfCall(expression: KtExpression?, expectedReceiver: KtExpression): Boolean {
         return expression is KtDotQualifiedExpression
                 && expression.isMethodCall("kotlin.text.indexOf")
-                && expression.receiverExpression.evaluatesTo(expectedReceiver)
+                && expression.receiverExpression.isSimplifiableTo(expectedReceiver)
                 && expression.callExpression!!.valueArguments.size == 1
     }
 

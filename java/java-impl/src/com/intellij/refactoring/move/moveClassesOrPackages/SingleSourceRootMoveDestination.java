@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -22,10 +21,8 @@ import java.util.Collection;
 
 public class SingleSourceRootMoveDestination implements MoveDestination {
   private static final Logger LOG = Logger.getInstance(SingleSourceRootMoveDestination.class);
-  @NotNull
-  private final PackageWrapper myPackage;
-  @NotNull
-  private final PsiDirectory myTargetDirectory;
+  private final @NotNull PackageWrapper myPackage;
+  private final @NotNull PsiDirectory myTargetDirectory;
 
   public SingleSourceRootMoveDestination(@NotNull PackageWrapper aPackage, @NotNull PsiDirectory targetDirectory) {
     LOG.assertTrue(aPackage.equalToPackage(JavaDirectoryService.getInstance().getPackage(targetDirectory)));
@@ -33,9 +30,8 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
     myTargetDirectory = targetDirectory;
   }
 
-  @NotNull
   @Override
-  public PackageWrapper getTargetPackage() {
+  public @NotNull PackageWrapper getTargetPackage() {
     return myPackage;
   }
 
@@ -51,7 +47,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
 
   @Override
   public PsiDirectory getTargetDirectory(PsiDirectory source) {
-    return getDirectory(source);
+    return myTargetDirectory;
   }
 
   @Override
@@ -70,7 +66,7 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
   }
 
   @Override
-  public void analyzeModuleConflicts(@NotNull final Collection<? extends PsiElement> elements,
+  public void analyzeModuleConflicts(final @NotNull Collection<? extends PsiElement> elements,
                                      @NotNull MultiMap<PsiElement,String> conflicts, final UsageInfo[] usages) {
     final VirtualFile targetDirFile = PsiUtilCore.getVirtualFile(myTargetDirectory);
     if (targetDirFile == null) return;
@@ -92,11 +88,6 @@ public class SingleSourceRootMoveDestination implements MoveDestination {
 
   @Override
   public PsiDirectory getTargetDirectory(PsiFile source) {
-    return getDirectory(source);
-  }
-
-  private PsiDirectory getDirectory(PsiElement source) {
-    ModelBranch branch = ModelBranch.getPsiBranch(source);
-    return branch == null ? myTargetDirectory : branch.obtainPsiCopy(myTargetDirectory);
+    return myTargetDirectory;
   }
 }

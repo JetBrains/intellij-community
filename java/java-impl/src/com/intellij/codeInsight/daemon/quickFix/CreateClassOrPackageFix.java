@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
@@ -35,19 +35,18 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
   private final List<? extends PsiDirectory> myWritableDirectoryList;
   private final String myPresentation;
 
-  @Nullable private final ClassKind myClassKind;
-  @Nullable private final String mySuperClass;
+  private final @Nullable ClassKind myClassKind;
+  private final @Nullable String mySuperClass;
   private final String myRedPart;
-  @Nullable private final String myTemplateName;
+  private final @Nullable String myTemplateName;
 
-  @Nullable
-  public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
-                                                  @NotNull final GlobalSearchScope scope,
-                                                  @NotNull final PsiElement context,
-                                                  @Nullable final PsiPackage basePackage,
-                                                  @Nullable ClassKind kind,
-                                                  @Nullable String superClass,
-                                                  @Nullable String templateName) {
+  public static @Nullable CreateClassOrPackageFix createFix(final @NotNull String qualifiedName,
+                                                            final @NotNull GlobalSearchScope scope,
+                                                            final @NotNull PsiElement context,
+                                                            final @Nullable PsiPackage basePackage,
+                                                            @Nullable ClassKind kind,
+                                                            @Nullable String superClass,
+                                                            @Nullable String templateName) {
     final List<PsiDirectory> directories = getWritableDirectoryListDefault(basePackage, scope, context.getManager());
     if (directories.isEmpty()) {
       return null;
@@ -66,11 +65,10 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
                                        templateName);
   }
 
-  @Nullable
-  public static CreateClassOrPackageFix createFix(@NotNull final String qualifiedName,
-                                                  @NotNull final PsiElement context,
-                                                  @Nullable ClassKind kind,
-                                                  String superClass) {
+  public static @Nullable CreateClassOrPackageFix createFix(final @NotNull String qualifiedName,
+                                                            final @NotNull PsiElement context,
+                                                            @Nullable ClassKind kind,
+                                                            String superClass) {
     return createFix(qualifiedName, context.getResolveScope(), context, null, kind, superClass, null);
   }
 
@@ -80,7 +78,7 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
                                   @NotNull String redPart,
                                   @Nullable ClassKind kind,
                                   @Nullable String superClass,
-                                  @Nullable final String templateName) {
+                                  final @Nullable String templateName) {
     super(context);
     myRedPart = redPart;
     myTemplateName = templateName;
@@ -91,24 +89,22 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return CommonQuickFixBundle.message("fix.create.title.x",
                                         (myClassKind == null ? JavaElementKind.PACKAGE : myClassKind.getElementKind()).object(),
                                         myPresentation);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
-  public void invoke(@NotNull final Project project,
-                     @NotNull final PsiFile file,
+  public void invoke(final @NotNull Project project,
+                     final @NotNull PsiFile file,
                      @Nullable Editor editor,
-                     @NotNull final PsiElement startElement,
+                     final @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     if (isAvailable(project, null, file)) {
       PsiDirectory directory = chooseDirectory(project, file);
@@ -132,8 +128,7 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
     }
   }
 
-  @Nullable
-  private PsiDirectory chooseDirectory(final Project project, final PsiFile file) {
+  private @Nullable PsiDirectory chooseDirectory(final Project project, final PsiFile file) {
     PsiDirectory preferredDirectory = myWritableDirectoryList.isEmpty() ? null : myWritableDirectoryList.get(0);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile virtualFile = file.getVirtualFile();
@@ -206,7 +201,7 @@ public final class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActi
     return false;
   }
 
-  private static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
+  private static List<PsiDirectory> getWritableDirectoryListDefault(final @Nullable PsiPackage context,
                                                                     final GlobalSearchScope scope,
                                                                     final PsiManager psiManager) {
     if (LOG.isDebugEnabled()) {

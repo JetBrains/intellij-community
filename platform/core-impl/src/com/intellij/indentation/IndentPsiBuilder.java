@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.PsiBuilder;
@@ -63,15 +63,13 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
     }
   }
 
-  @NotNull
   @Override
-  public Marker mark() {
+  public @NotNull Marker mark() {
     Marker marker = super.mark();
     return createDelegateMarker(marker);
   }
 
-  @NotNull
-  public Marker markWithRollbackPossibility() {
+  public @NotNull Marker markWithRollbackPossibility() {
     Marker marker = super.mark();
     Marker result = createDelegateMarker(marker);
     myIndents.put(result, myCurrentIndent);
@@ -143,9 +141,8 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
       super.drop();
     }
 
-    @NotNull
     @Override
-    public Marker precede() {
+    public @NotNull Marker precede() {
       unregisterMarker(this);
       return super.precede();
     }

@@ -4,6 +4,8 @@ package com.intellij.application.options.editor
 import com.intellij.application.options.CodeStyleConfigurableWrapper
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings
+import com.intellij.codeInsight.JavaIdeCodeInsightSettings
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.icons.AllIcons
@@ -15,17 +17,61 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JComponent
 
 class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Simple(), AutoImportOptionsProvider {
-  private val excludeTable = ExcludeTable(project)
+  private val excludeTable = object : ImportTable(project,
+                                                  JavaBundle.message("exclude.from.imports.no.exclusions"),
+                                                  JavaBundle.message("exclude.table.mask"),
+                                                  JavaBundle.message("exclude.table.scope.column")) {
+    override fun getIdeRows(): Array<out String> {
+      return CodeInsightSettings.getInstance().EXCLUDED_PACKAGES
+    }
+
+    override fun getProjectRows(): Array<out String> {
+      return JavaProjectCodeInsightSettings.getSettings(project).excludedNames.toTypedArray()
+    }
+
+    override fun setIdeRows(rows: Array<out String>) {
+      CodeInsightSettings.getInstance().EXCLUDED_PACKAGES = rows
+    }
+
+    override fun setProjectRows(rows: Array<out String>) {
+      JavaProjectCodeInsightSettings.getSettings(project).excludedNames = rows.toList()
+    }
+  }
+
+  private val autoStaticImportTable = object : ImportTable(project,
+                                                           JavaBundle.message("auto.static.import.comment"),
+                                                           JavaBundle.message("auto.static.import.class"),
+                                                           JavaBundle.message("auto.static.import.scope")) {
+
+    override fun getIdeRows(): Array<out String> {
+      return JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.toTypedArray()
+    }
+
+    override fun getProjectRows(): Array<out String> {
+      return JavaProjectCodeInsightSettings.getSettings(project).includedAutoStaticNames.toTypedArray()
+    }
+
+    override fun setIdeRows(rows: Array<out String>) {
+      JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames = rows.toList()
+    }
+
+    override fun setProjectRows(rows: Array<out String>) {
+      JavaProjectCodeInsightSettings.getSettings(project).includedAutoStaticNames = rows.toList()
+    }
+  }
 
   override fun Panel.createContent() {
     excludeTable.tableView.setShowGrid(false)
+    autoStaticImportTable.tableView.setShowGrid(false)
+
     val dcaSettings = DaemonCodeAnalyzerSettings.getInstance()
     val ciSettings = CodeInsightSettings.getInstance()
     val ciWorkspaceSettings = CodeInsightWorkspaceSettings.getInstance(project)
@@ -40,9 +86,9 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
       }.layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("combobox.paste.insert.imports")) {
         comboBox(
-          CollectionComboBoxModel(listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK)),
-          listCellRenderer {
-            text = when (it) {
+          listOf(CodeInsightSettings.YES, CodeInsightSettings.NO, CodeInsightSettings.ASK),
+          textListCellRenderer {
+            when (it) {
               CodeInsightSettings.YES -> ApplicationBundle.message("combobox.insert.imports.all")
               CodeInsightSettings.NO -> ApplicationBundle.message("combobox.insert.imports.none")
               CodeInsightSettings.ASK -> ApplicationBundle.message("combobox.insert.imports.ask")
@@ -74,6 +120,15 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
           }
       }
       row {
+        cell(autoStaticImportTable.component)
+          .align(AlignX.FILL)
+          .label(JavaBundle.message("auto.static.import.completion.group"), LabelPosition.TOP)
+          .comment(JavaBundle.message("auto.static.import.example"))
+          .onApply { autoStaticImportTable.apply() }
+          .onReset { autoStaticImportTable.reset() }
+          .onIsModified { autoStaticImportTable.isModified }
+      }
+      row {
         cell(excludeTable.component)
           .align(AlignX.FILL)
           .label(JavaBundle.message("exclude.from.completion.group"), LabelPosition.TOP)
@@ -81,6 +136,9 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
           .onApply { excludeTable.apply() }
           .onReset { excludeTable.reset() }
           .onIsModified { excludeTable.isModified }
+          .applyToComponent {
+            disposable?.let { Disposer.register(it, excludeTable) }
+          }
       }
     }
     onApply {
@@ -101,6 +159,6 @@ class JavaAutoImportOptions(val project: Project) : UiDslUnnamedConfigurable.Sim
   }
 
   fun addExcludePackage(packageName: String) {
-    excludeTable.addExcludePackage(packageName)
+    excludeTable.addRow(packageName)
   }
 }

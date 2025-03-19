@@ -3,6 +3,7 @@ package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +21,8 @@ interface ConvertToRecordUsageInfo {
 class FieldUsageInfo extends UsageInfo implements ConvertToRecordUsageInfo {
   final PsiField myField;
 
-  FieldUsageInfo(@NotNull PsiField psiField) {
-    super(psiField);
+  FieldUsageInfo(@NotNull PsiField psiField, @NotNull PsiReference ref) {
+    super(ref);
     myField = psiField;
   }
 }

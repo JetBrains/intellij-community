@@ -45,4 +45,8 @@ public class PyMakeMethodStaticQuickFixTest extends PyQuickFixTestCase {
     doMultifilesTest(PyMethodMayBeStaticInspection.class, PyPsiBundle.message("QFIX.NAME.make.static"), new String[]{"test.py"});
   }
 
+  // PY-35627
+  public void testAsyncMethod() {
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyPsiBundle.message("QFIX.NAME.make.static"));
+  }
 }

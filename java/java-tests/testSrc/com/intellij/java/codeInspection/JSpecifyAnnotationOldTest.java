@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -14,12 +14,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -56,7 +55,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
     }
   }; 
   
-  private static final String PACKAGE_NAME = "org.jspecify.nullness";
+  private static final String PACKAGE_NAME = "org.jspecify.annotations";
   private static final Path PATH = Paths.get(JavaTestUtil.getJavaTestDataPath(), "/inspection/dataFlow/codeanalysis/");
   @Parameterized.Parameter
   public String myFileName;
@@ -75,7 +74,6 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
 
   @Before
   public void before() {
-    Registry.get("java.jspecify.annotations.available").setValue(true, getTestRootDisposable());
     mockAnnotations();
   }
 
@@ -102,7 +100,7 @@ public class JSpecifyAnnotationOldTest extends LightJavaCodeInsightFixtureTestCa
       });
       String actualText = inspection.getActualText(stripped);
       if (!fileText.equals(actualText)) {
-        throw new FileComparisonFailure("Messages don't match", fileText, actualText, path.toString());
+        throw new FileComparisonFailedError("Messages don't match", fileText, actualText, path.toString());
       }
     });
   }

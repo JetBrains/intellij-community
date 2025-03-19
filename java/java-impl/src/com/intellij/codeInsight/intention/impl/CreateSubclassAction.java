@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
@@ -20,7 +21,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -32,17 +32,20 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.siyeh.ig.psiutils.SealedUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,24 +53,21 @@ import java.util.Objects;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
-  private @IntentionName String myText = JavaBundle.message("intention.implement.abstract.class.default.text");
+  private @IntentionName String myText = decapitalize(JavaBundle.message("intention.implement.abstract.class.default.text"));
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myText;
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.implement.abstract.class.family");
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final CaretModel caretModel = editor.getCaretModel();
-    final int position = caretModel.getOffset();
+    final int position = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
@@ -107,7 +107,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       return false;
     }
 
-    myText = getTitle(psiClass);
+    myText = decapitalize(getTitle(psiClass));
     return true;
   }
 
@@ -124,7 +124,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
@@ -132,6 +132,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     if (shouldCreateInnerClass(psiClass)) {
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       createInnerClass(psiClass);
+      return;
+    }
+    if (PsiUtil.isLocalClass(psiClass)) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      createLocalClass(psiClass);
       return;
     }
     if (ScratchUtil.isScratch(PsiUtilCore.getVirtualFile(psiClass))) {
@@ -142,7 +147,12 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   private static boolean shouldCreateInnerClass(PsiClass psiClass) {
-    return psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null;
+    if (psiClass.getContainingClass() == null) {
+      return false;
+    }
+    return psiClass.hasModifierProperty(PsiModifier.PRIVATE) ||
+           !psiClass.hasModifierProperty(PsiModifier.STATIC) ||
+           PsiUtil.isLocalClass(psiClass);
   }
 
   public static void createSameFileClass(String newClassName, PsiClass psiClass) {
@@ -171,7 +181,20 @@ public class CreateSubclassAction extends BaseIntentionAction {
     });
   }
 
-  public static void createInnerClass(final PsiClass aClass) {
+  private static void createLocalClass(PsiClass aClass) {
+    WriteCommandAction.writeCommandAction(aClass.getProject()).withName(getTitle(aClass)).withGroupId(getTitle(aClass)).run(() -> {
+      final PsiDeclarationStatement statement = (PsiDeclarationStatement)aClass.getParent();
+      final PsiTypeParameterList oldTypeParameterList = aClass.getTypeParameterList();
+      PsiModifierList modifierList = aClass.getModifierList();
+      assert modifierList != null;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+      @NotNull PsiStatement newClassStatement = factory.createStatementFromText("class " + suggestTargetClassName(aClass) + " {}", aClass);
+      PsiClass newClass = (PsiClass)statement.getParent().addAfter(newClassStatement, statement).getFirstChild();
+      startTemplate(oldTypeParameterList, aClass.getProject(), aClass, newClass, true);
+    });
+  }
+
+  private static void createInnerClass(PsiClass aClass) {
     WriteCommandAction.writeCommandAction(aClass.getProject()).withName(getTitle(aClass)).withGroupId(getTitle(aClass)).run(() -> {
       final PsiClass containingClass = aClass.getContainingClass();
       LOG.assertTrue(containingClass != null);
@@ -211,13 +234,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return hasOnlySameFileInheritors && hasInheritors.get();
   }
 
-  @Nullable
-  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
+  public static @Nullable CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
     return chooseSubclassToCreate(psiClass, suggestTargetClassName(psiClass));
   }
 
-  @Nullable
-  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass, final String targetClassName) {
+  public static @Nullable CreateClassDialog chooseSubclassToCreate(PsiClass psiClass, final String targetClassName) {
     final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final PsiPackage aPackage = sourceDir != null ? JavaDirectoryService.getInstance().getPackage(sourceDir) : null;
@@ -318,9 +339,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
               templateBuilder.replaceElement(param, param.getText());
             }
           }
+          final PsiTypeParameterList typeParameterList = targetClass.getTypeParameterList();
+          assert typeParameterList != null;
+          typeParameterList.replace(oldTypeParameterList);
         }
 
-        replaceTypeParamsList(targetClass, oldTypeParameterList);
         if (templateBuilder != null) {
           templateBuilder.setEndVariableBefore(ref);
           final Template template = templateBuilder.buildTemplate();
@@ -367,12 +390,6 @@ public class CreateSubclassAction extends BaseIntentionAction {
     }
   }
 
-  private static PsiElement replaceTypeParamsList(PsiClass psiClass, PsiTypeParameterList oldTypeParameterList) {
-    final PsiTypeParameterList typeParameterList = psiClass.getTypeParameterList();
-    assert typeParameterList != null;
-    return typeParameterList.replace(oldTypeParameterList);
-  }
-
   protected static void chooseAndImplement(PsiClass psiClass, Project project, @NotNull PsiClass targetClass, Editor editor) {
     chooseAndImplement(psiClass, project, targetClass, editor, true);
   }
@@ -380,10 +397,17 @@ public class CreateSubclassAction extends BaseIntentionAction {
   protected static void chooseAndImplement(PsiClass psiClass, Project project, @NotNull PsiClass targetClass, Editor editor, boolean showChooser) {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
-    for (PsiMethod constructor : constructors) {
+    outer: for (PsiMethod constructor : constructors) {
       if (!constructor.getParameterList().isEmpty()) {
         hasNonTrivialConstructor = true;
         break;
+      }
+      PsiClassType[] types = constructor.getThrowsList().getReferencedTypes();
+      for (PsiClassType type : types) {
+        if (!ExceptionUtil.isUncheckedException(type)) {
+          hasNonTrivialConstructor = true;
+          break outer;
+        }
       }
     }
     if (hasNonTrivialConstructor) {
@@ -405,4 +429,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return false;
   }
 
+  private static @IntentionName String decapitalize(@Nls String s) {
+    return StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(s));
+  }
 }

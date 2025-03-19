@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
@@ -45,8 +45,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
   private static final int MAX_PATH_LENGTH = 50;
 
-  @Nullable
-  private Project myProject;
+  private @Nullable Project myProject;
   private @Nullable Sdk myProjectJdk;
   private boolean myHighlightInternalJdk = true;
 
@@ -87,8 +86,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     });
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -132,7 +130,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
         refreshData(jdkName, wizardContext != null ? wizardContext.getProjectJdk() : null);
       };
       jdksModel.reset(getProject());
-      jdksModel.createAddActions(group, this, selectedJdk, updateTree, creationFilter);
+      jdksModel.createAddActions(myProject, group, this, selectedJdk, updateTree, creationFilter);
 
       if (group.getChildrenCount() == 0) {
         SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();
@@ -152,15 +150,13 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
           .showUnderneathOf(setUpButton);
       }
       else if (group.getChildrenCount() == 1) {
-        final AnActionEvent event =
-          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
-        group.getChildren(event)[0].actionPerformed(event);
+        AnActionEvent event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.TOOLBAR, null);
+        group.getChildren(ActionManager.getInstance())[0].actionPerformed(event);
       }
     });
   }
 
-  @Nullable
-  public Sdk getSelectedJdk() {
+  public @Nullable Sdk getSelectedJdk() {
     String jdkName = getSelectedValue();
     Sdk jdk = null;
     try {
@@ -188,7 +184,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
       jdkMap.put(selectedValue, getInternalJdkItem());
     }
     else if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
-      assert selectedValue.length() > 0;
+      assert !selectedValue.isEmpty();
       jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false)); //NON-NLS
     }
 
@@ -232,8 +228,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     );
   }
 
-  @Nullable
-  public String getSelectedValue() {
+  public @Nullable String getSelectedValue() {
     final DefaultComboBoxModel model = (DefaultComboBoxModel)getModel();
     final Object item = model.getSelectedItem();
     return item != null ? ((JdkComboBoxItem)item).jdkName : null;
@@ -275,8 +270,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     return result;
   }
 
-  @NlsContexts.HintText
-  private static String buildComment(@NotNull Sdk sdk) {
+  private static @NlsContexts.HintText String buildComment(@NotNull Sdk sdk) {
     String versionString = sdk.getVersionString();
     String homePath = sdk.getHomePath();
     String path = homePath == null ? null : truncateLongPath(homePath);
@@ -292,8 +286,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     return ExternalSystemBundle.message("external.system.sdk.hint.path.and.version", versionString, path);
   }
 
-  @NotNull
-  private static String truncateLongPath(@NotNull String path) {
+  private static @NotNull String truncateLongPath(@NotNull String path) {
     if (path.length() > MAX_PATH_LENGTH) {
       return path.substring(0, MAX_PATH_LENGTH / 2) + "..." + path.substring(path.length() - MAX_PATH_LENGTH / 2 - 3);
     }

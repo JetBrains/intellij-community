@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_ATTRIBUTES
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.REGULAR_MATCHED_ATTRIBUTES
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
@@ -12,9 +12,9 @@ import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
-import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.languageData
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
-import com.intellij.ide.wizard.comment.NewProjectLinkNewProjectWizardStep
+import com.intellij.ide.wizard.comment.LinkNewProjectWizardStep
+import com.intellij.ide.wizard.language.BaseLanguageGeneratorNewProjectWizard
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionField
@@ -35,22 +35,19 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.update.UiNotifyConnector
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
-import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
+import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import org.jetbrains.idea.maven.wizards.archetype.MavenArchetypeNewProjectWizardBackend.ArchetypeItem
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 
-class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
+internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = "MavenArchetype"
 
   override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.name")
@@ -65,35 +62,38 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       .nextStep(::Step)
       .nextStep(::AssetsStep)
 
-  private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
-    override fun getComment(name: String): String {
-      return MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.comment", context.isCreatingNewProjectInt, name)
-    }
+  private class CommentStep(parent: NewProjectWizardStep) : LinkNewProjectWizardStep(parent) {
+
+    override val builderId: String =
+      BaseLanguageGeneratorNewProjectWizard.getLanguageModelBuilderId(context, JAVA)
+
+    override val comment: String =
+      MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.comment", context.isCreatingNewProjectInt, JAVA)
 
     override fun onStepSelected(step: NewProjectWizardStep) {
-      step.languageData!!.language = JAVA
       step.javaBuildSystemData!!.buildSystem = MAVEN
     }
   }
 
-  private class Step(parent: GitNewProjectWizardStep) : MavenNewProjectWizardStep<GitNewProjectWizardStep>(parent) {
-
+  private class Step(
+    parent: GitNewProjectWizardStep
+  ) : MavenNewProjectWizardStep<GitNewProjectWizardStep>(parent),
+      MavenArchetypeNewProjectWizardData {
     private var isAutoReloadArchetypeModel = true
 
     private val backend = MavenArchetypeNewProjectWizardBackend(context.projectOrDefault, context.disposable)
 
-    val catalogItemProperty = propertyGraph.property<MavenCatalog>(MavenCatalog.System.Internal)
-    val archetypeItemProperty = propertyGraph.property(ArchetypeItem.NONE)
-    val archetypeVersionProperty = propertyGraph.property("")
-    val archetypeDescriptorProperty = propertyGraph.property(emptyMap<String, String>())
-
-    var catalogItem by catalogItemProperty
-    var archetypeItem by archetypeItemProperty
-    var archetypeVersion by archetypeVersionProperty
-    var archetypeDescriptor by archetypeDescriptorProperty
+    override val catalogItemProperty = propertyGraph.property<MavenCatalog>(MavenCatalog.System.Internal)
+    override var catalogItem by catalogItemProperty
+    override val archetypeItemProperty = propertyGraph.property(MavenArchetypeItem.NONE)
+    override var archetypeItem by archetypeItemProperty
+    override val archetypeVersionProperty = propertyGraph.property("")
+    override var archetypeVersion by archetypeVersionProperty
+    override val archetypeDescriptorProperty = propertyGraph.property(emptyMap<String, String>())
+    override var archetypeDescriptor by archetypeDescriptorProperty
 
     private lateinit var catalogComboBox: ComboBox<MavenCatalog>
-    private lateinit var archetypeComboBox: TextCompletionComboBox<ArchetypeItem>
+    private lateinit var archetypeComboBox: TextCompletionComboBox<MavenArchetypeItem>
     private lateinit var archetypeVersionComboBox: TextCompletionComboBox<String>
     private lateinit var archetypeDescriptorTable: PropertiesTable
     private lateinit var archetypeDescriptorPanel: JComponent
@@ -102,6 +102,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       catalogItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypes() }
       archetypeItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeVersions() }
       archetypeVersionProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeDescriptor() }
+      data.putUserData(MavenArchetypeNewProjectWizardData.KEY, this)
     }
 
     fun setupCatalogUI(builder: Panel) {
@@ -235,11 +236,11 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private fun reloadArchetypes() {
       archetypeComboBox.setSpinning(true)
       archetypeComboBox.collectionModel.removeAll()
-      archetypeItem = ArchetypeItem.NONE
+      archetypeItem = MavenArchetypeItem.NONE
       backend.collectArchetypeIds(archetypeComboBox, catalogItem) { archetypes ->
         archetypeComboBox.setSpinning(false)
         archetypeComboBox.collectionModel.replaceAll(archetypes)
-        archetypeItem = ArchetypeItem.NONE
+        archetypeItem = MavenArchetypeItem.NONE
       }
     }
 
@@ -265,7 +266,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         archetypeComboBox.setSpinning(true)
 
         catalogItem = findOrAddCatalog(archetype.repository) ?: MavenCatalog.System.Internal
-        archetypeItem = ArchetypeItem(archetype.groupId, archetype.artifactId)
+        archetypeItem = MavenArchetypeItem(archetype.groupId, archetype.artifactId)
         archetypeVersion = archetype.version
 
         archetypeComboBox.collectionModel.removeAll()
@@ -317,38 +318,27 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      val builder = InternalMavenModuleBuilder().apply {
-        moduleJdk = sdk
-        name = parentStep.name
-        contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-        isCreatingNewProject = context.isCreatingNewProject
-
-        parentProject = parentData
-        aggregatorProject = parentData
-        projectId = MavenId(groupId, artifactId, version)
-        isInheritGroupId = parentData?.mavenId?.groupId == groupId
-        isInheritVersion = parentData?.mavenId?.version == version
-
-        archetype = MavenArchetype(
+      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
+        builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,
           archetypeVersion,
           catalogItem.location,
           null
         )
-        propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
+        builder.propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
           put("groupId", groupId)
           put("artifactId", artifactId)
           put("version", version)
-          put("archetypeGroupId", archetype.groupId)
-          put("archetypeArtifactId", archetype.artifactId)
-          put("archetypeVersion", archetype.version)
-          putIfNotNull("archetypeRepository", archetype.repository, this)
+          put("archetypeGroupId", builder.archetype.groupId)
+          put("archetypeArtifactId", builder.archetype.artifactId)
+          put("archetypeVersion", builder.archetype.version)
+          builder.archetype.repository?.let { repository ->
+            put("archetypeRepository", repository)
+          }
           putAll(archetypeDescriptor)
         }
       }
-      setupProjectFromBuilder(project, builder)
     }
   }
 
@@ -365,16 +355,16 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
   }
 
-  private class ArchetypeConverter : TextCompletionComboBoxConverter<ArchetypeItem> {
+  private class ArchetypeConverter : TextCompletionComboBoxConverter<MavenArchetypeItem> {
     override fun getItem(text: String) =
       text.nullize(true)?.let {
-        ArchetypeItem(
+        MavenArchetypeItem(
           groupId = text.substringBefore(':'),
           artifactId = text.substringAfter(':', "")
         )
-      } ?: ArchetypeItem.NONE
+      } ?: MavenArchetypeItem.NONE
 
-    override fun getText(item: ArchetypeItem) =
+    override fun getText(item: MavenArchetypeItem) =
       item.run {
         if (artifactId.isNotEmpty())
           "$groupId:$artifactId"
@@ -382,7 +372,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           groupId
       }
 
-    override fun customizeCellRenderer(editor: TextCompletionField<ArchetypeItem>, cell: Cell<ArchetypeItem>) {
+    override fun customizeCellRenderer(editor: TextCompletionField<MavenArchetypeItem>, cell: Cell<MavenArchetypeItem>) {
       val item = cell.item
       val text = editor.getTextToComplete()
       with(cell.component) {

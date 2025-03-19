@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.macro;
 
@@ -26,11 +26,11 @@ public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
   private final boolean myCheckCompletionChar;
 
-  protected BaseCompleteMacro(@NonNls final String name) {
+  protected BaseCompleteMacro(final @NonNls String name) {
     this(name, true);
   }
 
-  protected BaseCompleteMacro(@NonNls final String name, final boolean checkCompletionChar) {
+  protected BaseCompleteMacro(final @NonNls String name, final boolean checkCompletionChar) {
     myName = name;
     myCheckCompletionChar = checkCompletionChar;
   }
@@ -41,8 +41,7 @@ public abstract class BaseCompleteMacro extends Macro {
   }
 
   @Override
-  @NotNull
-  public String getDefaultValue() {
+  public @NotNull String getDefaultValue() {
     return "a";
   }
 
@@ -87,11 +86,11 @@ public abstract class BaseCompleteMacro extends Macro {
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  private static class MyLookupListener implements LookupListener {
+  private static final class MyLookupListener implements LookupListener {
     private final ExpressionContext myContext;
     private final boolean myCheckCompletionChar;
 
-    MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
+    MyLookupListener(final @NotNull ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
       myCheckCompletionChar = checkCompletionChar;
     }

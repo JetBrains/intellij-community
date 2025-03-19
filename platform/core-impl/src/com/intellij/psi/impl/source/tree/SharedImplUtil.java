@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -37,8 +37,7 @@ public final class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(element.getFirstChildNode());
   }
 
-  @Nullable
-  public static PsiElement getLastChild(@NotNull ASTNode element) {
+  public static @Nullable PsiElement getLastChild(@NotNull ASTNode element) {
     return SourceTreeToPsiMap.treeElementToPsi(element.getLastChildNode());
   }
 
@@ -85,8 +84,7 @@ public final class SharedImplUtil {
     return null;
   }
 
-  @NotNull
-  public static CharTable findCharTableByTree(ASTNode tree) {
+  public static @NotNull CharTable findCharTableByTree(ASTNode tree) {
     for (ASTNode o = tree; o != null; o = o.getTreeParent()) {
       CharTable charTable = o.getUserData(CharTable.CHAR_TABLE_KEY);
       if (charTable != null) {

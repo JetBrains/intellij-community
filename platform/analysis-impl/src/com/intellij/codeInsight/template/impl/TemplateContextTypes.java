@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.LiveTemplateContext;
@@ -7,11 +7,12 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 public final class TemplateContextTypes {
-  public static @NotNull List<TemplateContextType> getAllContextTypes() {
+  public static @Unmodifiable @NotNull List<TemplateContextType> getAllContextTypes() {
     return ContainerUtil.map(LiveTemplateContextService.getInstance().getLiveTemplateContexts(), LiveTemplateContext::getTemplateContextType);
   }
 

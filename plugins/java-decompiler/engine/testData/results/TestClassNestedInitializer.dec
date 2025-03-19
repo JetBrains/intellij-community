@@ -4,34 +4,45 @@ public class TestClassNestedInitializer {
    public String secret;
 
    public void test() {
-      TestClassNestedInitializer var1 = new TestClassNestedInitializer() {
+      TestClassNestedInitializer var1 = new TestClassNestedInitializer() {// 22
          {
             this.secret = "one";
          }
-      };// 22
+      };
       System.out.println(var1.secret);// 23
    }// 24
 }
 
 class 'pkg/TestClassNestedInitializer$1' {
    method '<init> (Lpkg/TestClassNestedInitializer;)V' {
+      9      8
       a      8
+      b      8
       c      8
+      d      8
+      e      8
       f      9
    }
 }
 
 class 'pkg/TestClassNestedInitializer' {
    method 'test ()V' {
-      8      10
+      8      6
       9      11
+      a      11
+      b      11
+      c      11
       d      11
+      e      11
+      f      11
       10      11
+      11      11
+      12      11
       13      12
    }
 }
 
 Lines mapping:
-22 <-> 11
+22 <-> 7
 23 <-> 12
 24 <-> 13

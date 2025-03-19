@@ -13,34 +13,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public final class ColorReference extends BasicAttributeValueReference {
-  @NonNls
-  static final Set<String> ourBgColorTagNames = Set.of("body", "td", "tr", "table", "th");
+  static final @NonNls Set<String> ourBgColorTagNames = Set.of("body", "td", "tr", "table", "th");
 
-  @NonNls
-  static final String BG_COLOR_ATTR_NAME = "bgcolor";
+  static final @NonNls String BG_COLOR_ATTR_NAME = "bgcolor";
 
-  @NonNls
-  static final String COLOR_ATTR_NAME = "color";
+  static final @NonNls String COLOR_ATTR_NAME = "color";
 
-  @NonNls
-  static final String ALINK_ATTR_NAME = "alink";
+  static final @NonNls String ALINK_ATTR_NAME = "alink";
 
-  @NonNls
-  static final String LINK_ATTR_NAME = "link";
+  static final @NonNls String LINK_ATTR_NAME = "link";
 
-  @NonNls
-  static final String VLINK_ATTR_NAME = "vlink";
+  static final @NonNls String VLINK_ATTR_NAME = "vlink";
 
-  @NonNls
-  static final String TEXT_ATTR_NAME = "text";
+  static final @NonNls String TEXT_ATTR_NAME = "text";
 
   public ColorReference(final PsiElement element,int offset) {
     super(element, offset);
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     return myElement; // important for color doc
   }
 

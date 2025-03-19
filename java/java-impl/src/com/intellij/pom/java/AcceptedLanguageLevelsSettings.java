@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.ide.IdeBundle;
@@ -16,11 +16,9 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.LegalNoticeDialog;
@@ -28,7 +26,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.event.HyperlinkEvent;
@@ -44,38 +41,45 @@ import java.util.TreeSet;
   category = SettingsCategory.CODE
 )
 public final class AcceptedLanguageLevelsSettings implements PersistentStateComponent<AcceptedLanguageLevelsSettings> {
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
+  private static NotificationGroup getAcceptedLanguageNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Accepted language levels");
+  }
 
-  private static final NotificationGroup PREVIEW_NOTIFICATION_GROUP =
-    NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+  private static NotificationGroup getNotificationGroup() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Java Preview Features");
+  }
 
   private static final String IGNORE_USED_PREVIEW_FEATURES = "ignore.preview.features.used";
 
   @XCollection(propertyElementName = "explicitly-accepted", elementName = "name", valueAttributeName = "")
   public List<String> acceptedNames = new ArrayList<>();
 
-  private static final class AcceptedLanguageLevelsSettingsStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      DumbService.getInstance(project).smartInvokeLater(() -> projectOpened(project));
-    }
+  static void applyUnacceptedLevels(@NotNull Project project,
+                                    MultiMap<LanguageLevel, Module> unacceptedLevels,
+                                    TreeSet<LanguageLevel> previewLevels) {
+    if (!unacceptedLevels.isEmpty()) {
+      decreaseLanguageLevel(project);
 
-    private static void projectOpened(@NotNull Project project) {
-      TreeSet<LanguageLevel> previewLevels = new TreeSet<>();
-      MultiMap<LanguageLevel, Module> unacceptedLevels =
-        getUnacceptedLevels(project, previewLevels);
-      if (!unacceptedLevels.isEmpty()) {
-        decreaseLanguageLevel(project);
-
-        for (LanguageLevel level : unacceptedLevels.keySet()) {
-          showNotificationToAccept(project, unacceptedLevels, level);
-        }
+      for (LanguageLevel level : unacceptedLevels.keySet()) {
+        showNotificationToAccept(project, unacceptedLevels, level);
       }
-      if (!previewLevels.isEmpty() && !PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
-        LanguageLevel languageLevel = previewLevels.first();
-        int previewFeature = languageLevel.toJavaVersion().feature;
-        PREVIEW_NOTIFICATION_GROUP.createNotification(
+    }
+    if (!previewLevels.isEmpty()) {
+      LanguageLevel languageLevel = previewLevels.first();
+      if (languageLevel == LanguageLevel.JDK_X) {
+        return;
+      }
+
+      int previewFeature = languageLevel.feature();
+      if (languageLevel.isUnsupported()) {
+        getNotificationGroup().createNotification(
+            JavaBundle.message("java.preview.features.unsupported.title"),
+            JavaBundle.message("java.preview.features.unsupported", previewFeature),
+            NotificationType.ERROR)
+          .notify(project);
+      }
+      else if (!PropertiesComponent.getInstance(project).getBoolean(IGNORE_USED_PREVIEW_FEATURES, false)) {
+        getNotificationGroup().createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
             NotificationType.WARNING)
@@ -91,8 +95,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  @NotNull
-  private static MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
+  static @NotNull MultiMap<LanguageLevel, Module> getUnacceptedLevels(@NotNull Project project, TreeSet<LanguageLevel> previewLevels) {
     MultiMap<LanguageLevel, Module> unacceptedLevels = new MultiMap<>();
     LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
     if (projectExtension != null) {
@@ -123,7 +126,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   }
 
   private static void showNotificationToAccept(@NotNull Project project, MultiMap<LanguageLevel, Module> unacceptedLevels, LanguageLevel level) {
-    NOTIFICATION_GROUP.createNotification(
+    getAcceptedLanguageNotificationGroup().createNotification(
         JavaBundle.message("java.preview.features.alert.title"),
         JavaBundle.message("java.preview.features.legal.notice", level.getPresentableText(), "<br/><br/><a href='accept'>" +
                                                                                              JavaBundle.message(
@@ -186,9 +189,8 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     return ApplicationManager.getApplication().getService(AcceptedLanguageLevelsSettings.class);
   }
 
-  @Nullable
   @Override
-  public AcceptedLanguageLevelsSettings getState() {
+  public @NotNull AcceptedLanguageLevelsSettings getState() {
     return this;
   }
 
@@ -219,8 +221,8 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  private static void decreaseLanguageLevel(Project project) {
-    WriteAction.run(() -> {
+  private static void decreaseLanguageLevel(@NotNull Project project) {
+    ApplicationManager.getApplication().runWriteAction(() -> {
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);

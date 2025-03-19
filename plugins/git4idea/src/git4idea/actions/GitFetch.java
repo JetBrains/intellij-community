@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,6 +13,9 @@ import git4idea.GitVcs;
 import git4idea.fetch.GitFetchResult;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
 
 import static git4idea.GitUtil.getRepositories;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -22,13 +25,7 @@ public class GitFetch extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
-    else {
-      e.getPresentation().setEnabled(hasRemotes(project));
-    }
+    performUpdate(e);
   }
 
   @Override
@@ -38,7 +35,38 @@ public class GitFetch extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    performFetch(project, result -> onFetchFinished(project, result));
+  }
+
+  @RequiresEdt
+  protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
+    result.showNotification();
+  }
+
+  private static void performUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+    if (!hasRemotes(project)) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    if (fetchSupport(project).isFetchRunning()) {
+      e.getPresentation().setEnabled(false);
+      e.getPresentation().setDescription(GitBundle.message("action.Git.Fetch.description.fetch.in.progress"));
+      return;
+    }
+
+    e.getPresentation().setDescription("");
+    e.getPresentation().setEnabledAndVisible(true);
+  }
+
+  @RequiresEdt
+  private static void performFetch(@NotNull Project project, @Nullable Consumer<@NotNull GitFetchResult> onFetchFinished) {
     GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.message("fetching"), true) {
       GitFetchResult result;
 
@@ -49,15 +77,10 @@ public class GitFetch extends DumbAwareAction {
 
       @Override
       public void onFinished() {
-        if (result != null) {
-          onFetchFinished(project, result);
+        if (onFetchFinished != null && result != null) {
+          onFetchFinished.accept(result);
         }
       }
     });
-  }
-
-  @RequiresEdt
-  protected void onFetchFinished(@NotNull Project project, @NotNull GitFetchResult result) {
-    result.showNotification();
   }
 }

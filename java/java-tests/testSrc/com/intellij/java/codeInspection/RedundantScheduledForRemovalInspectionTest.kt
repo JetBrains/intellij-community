@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInspection.deprecation.RedundantScheduledForRemovalAnnotationInspection
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -15,7 +15,7 @@ class RedundantScheduledForRemovalInspectionTest : LightJavaCodeInsightFixtureTe
 
   override fun setUp() {
     super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_9
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_9)
     myFixture.enableInspections(RedundantScheduledForRemovalAnnotationInspection())
     myFixture.addClass("""
       |package org.jetbrains.annotations; 
@@ -28,7 +28,7 @@ class RedundantScheduledForRemovalInspectionTest : LightJavaCodeInsightFixtureTe
 
   fun `test replace by attribute`() {
     myFixture.testHighlighting("ReplaceScheduledForRemovalByAttribute.java")
-    myFixture.launchAction(myFixture.findSingleIntention("Replace"))
+    myFixture.launchAction(myFixture.findSingleIntention("Replace @ScheduledForRemoval"))
     myFixture.checkResultByFile("ReplaceScheduledForRemovalByAttribute_after.java")
   }
 

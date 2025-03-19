@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.redmine;
 
 import com.intellij.tasks.Comment;
@@ -39,21 +40,18 @@ public class RedmineTask extends Task {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return String.valueOf(myIssue.getId());
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return myIssue.getSubject();
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return myIssue.getDescription();
   }
 
@@ -62,28 +60,24 @@ public class RedmineTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Redmine;
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     // TODO: precise mapping
     return TaskType.BUG;
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return myIssue.getUpdated();
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return myIssue.getCreated();
   }
 
@@ -98,27 +92,23 @@ public class RedmineTask extends Task {
     return true;
   }
 
-  @Nullable
   @Override
-  public String getIssueUrl() {
+  public @Nullable String getIssueUrl() {
     return myRepository.getRestApiUrl("issues", getId());
   }
 
-  @NotNull
   @Override
-  public String getNumber() {
+  public @NotNull String getNumber() {
     return getId();
   }
 
-  @Nullable
   @Override
-  public String getProject() {
+  public @Nullable String getProject() {
     return myProject == null ? null : myProject.getIdentifier();
   }
 
-  @Nullable
   @Override
-  public TaskRepository getRepository() {
+  public @Nullable TaskRepository getRepository() {
     return myRepository;
   }
 }

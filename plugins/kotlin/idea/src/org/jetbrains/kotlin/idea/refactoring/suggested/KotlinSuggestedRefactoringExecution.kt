@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class KotlinSuggestedRefactoringExecution(
-    refactoringSupport: KotlinSuggestedRefactoringSupport
+    refactoringSupport: KotlinSuggestedRefactoringSupportBase
 ) : SuggestedRefactoringExecution(refactoringSupport) {
 
     private data class PrepareChangeSignatureResult(
@@ -64,7 +64,7 @@ class KotlinSuggestedRefactoringExecution(
         val project = declaration.project
 
         val configuration = object : KotlinChangeSignatureConfiguration {
-            override fun performSilently(affectedFunctions: Collection<PsiElement>) = true
+            override fun isPerformSilently(affectedFunctions: Collection<PsiElement>) = true
         }
 
         val changeSignature = KotlinChangeSignature(project, null, descriptor, configuration, declaration, null)

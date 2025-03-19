@@ -20,3 +20,11 @@ interface I3 {
 abstract class B : I2, A(), I3 {
     <caret>
 }
+
+// MEMBER: "i2(): Unit"
+// MEMBER: "a(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "i1(): Unit"
+// MEMBER: "i(): Unit"

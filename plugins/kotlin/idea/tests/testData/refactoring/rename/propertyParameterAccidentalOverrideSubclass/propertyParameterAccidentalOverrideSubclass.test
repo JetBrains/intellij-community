@@ -3,5 +3,6 @@
   "mainFile": "test/test.kt",
   "newName": "bar",
   "withRuntime": "true",
-  "hint": "Parameter after rename will clash with existing property 'bar' in class 'B'"
+  "hint": "Parameter after rename will clash with existing property 'bar' in class 'B'",
+  "enabledInK2": "true"
 }

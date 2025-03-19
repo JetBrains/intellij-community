@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -76,8 +76,7 @@ class MoveClassToModuleFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myModules.size() == 1) {
       PsiClass aClass = myModules.keySet().iterator().next();
       return QuickFixBundle
@@ -87,8 +86,7 @@ class MoveClassToModuleFix implements IntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.move.it");
   }
 
@@ -113,9 +111,8 @@ class MoveClassToModuleFix implements IntentionAction {
             return psiClass.getQualifiedName();
           }
 
-          @Nullable
           @Override
-          protected String getContainerText(PsiClass element, String name) {
+          protected @Nullable String getContainerText(PsiClass element, String name) {
             return null;
           }
         })

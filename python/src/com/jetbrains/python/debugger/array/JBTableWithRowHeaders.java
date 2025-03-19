@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.components.JBScrollPane;
@@ -42,9 +42,8 @@ public class JBTableWithRowHeaders extends AbstractDataViewTable {
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, myRowHeaderTable.getTableHeader()); //NON-NLS
   }
 
-  @NotNull
   @Override
-  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+  public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component component = super.prepareRenderer(renderer, row, column);
     JTableHeader header = getTableHeader();
     TableColumn resizingColumn = header.getResizingColumn();
@@ -112,9 +111,8 @@ public class JBTableWithRowHeaders extends AbstractDataViewTable {
       setPreferredScrollableViewportSize(getPreferredSize());
     }
 
-    @NotNull
     @Override
-    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    public @NotNull Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
       Component component = super.prepareRenderer(renderer, row, column);
       if (myAutoResize) {
         getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);

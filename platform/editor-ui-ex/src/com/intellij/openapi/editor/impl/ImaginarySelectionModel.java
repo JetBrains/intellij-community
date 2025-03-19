@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class ImaginarySelectionModel implements SelectionModel {
   private final ImaginaryEditor myEditor;
   private static final Logger LOG = Logger.getInstance(ImaginarySelectionModel.class);
@@ -24,9 +26,8 @@ public class ImaginarySelectionModel implements SelectionModel {
     return myEditor;
   }
 
-  @Nullable
   @Override
-  public String getSelectedText(boolean allCarets) {
+  public @Nullable String getSelectedText(boolean allCarets) {
     return myEditor.getDocument().getText(TextRange.create(getSelectionStart(), getSelectionEnd()));
   }
 

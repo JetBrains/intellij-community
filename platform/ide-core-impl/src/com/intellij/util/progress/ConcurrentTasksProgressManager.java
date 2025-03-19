@@ -3,6 +3,7 @@ package com.intellij.util.progress;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.MathUtil;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -31,8 +32,7 @@ public final class ConcurrentTasksProgressManager {
     myRemainingTotalWeight = new AtomicInteger(totalWeight);
   }
 
-  @NotNull
-  public SubTaskProgressIndicator createSubTaskIndicator(int taskWeight) {
+  public @NotNull SubTaskProgressIndicator createSubTaskIndicator(int taskWeight) {
     if (taskWeight < 0) {
       throw new IllegalArgumentException("Task weight must not be negative: " + taskWeight);
     }
@@ -55,6 +55,7 @@ public final class ConcurrentTasksProgressManager {
       double nextVal = currentVal + delta;
       long next = Double.doubleToRawLongBits(nextVal);
       if (myTotalFraction.compareAndSet(current, next)) {
+        nextVal = MathUtil.clamp(nextVal, 0d, 1d);
         myParent.setFraction(nextVal);
         break;
       }

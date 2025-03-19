@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.toml.json` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "json_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "json",
+  module_name = "intellij.toml.json",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//plugins/toml/core",
+    "@lib//:kotlin-stdlib",
+    "//json",
+    "@lib//:stream_ex",
+  ],
+  exports = ["//json"],
+  runtime_deps = [":json_resources"]
+)
+### auto-generated section `build intellij.toml.json` end

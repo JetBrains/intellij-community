@@ -1,30 +1,30 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar, Literal
 
+from openpyxl.descriptors.base import String
+from openpyxl.descriptors.sequence import Sequence
 from openpyxl.descriptors.serialisable import Serialisable
 
 class Hyperlink(Serialisable):
-    tagname: str
-    ref: Any
-    location: Any
-    tooltip: Any
-    display: Any
-    id: Any
-    target: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    ref: String[Literal[False]]
+    location: String[Literal[True]]
+    tooltip: String[Literal[True]]
+    display: String[Literal[True]]
+    id: Incomplete
+    target: String[Literal[True]]
+    __attrs__: ClassVar[tuple[str, ...]]
     def __init__(
         self,
-        ref: Any | None = ...,
-        location: Any | None = ...,
-        tooltip: Any | None = ...,
-        display: Any | None = ...,
-        id: Any | None = ...,
-        target: Any | None = ...,
+        ref: str,
+        location: str | None = None,
+        tooltip: str | None = None,
+        display: str | None = None,
+        id: Incomplete | None = None,
+        target: str | None = None,
     ) -> None: ...
 
 class HyperlinkList(Serialisable):
-    tagname: str
-    hyperlink: Any
-    def __init__(self, hyperlink=...) -> None: ...
-    def __bool__(self): ...
-    def __len__(self): ...
-    def append(self, value) -> None: ...
+    tagname: ClassVar[str]
+    hyperlink: Sequence[list[Hyperlink]]
+    def __init__(self, hyperlink: list[Hyperlink] | tuple[Hyperlink, ...] = ()) -> None: ...

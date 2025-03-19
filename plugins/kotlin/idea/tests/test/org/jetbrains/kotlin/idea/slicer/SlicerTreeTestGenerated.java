@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.slicer;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -22,6 +23,12 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
     public static class Inflow extends AbstractSlicerTreeTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -76,6 +83,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/delegateToJavaGetter.kt");
         }
 
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("testData/slicer/inflow/delegation.kt");
+        }
+
         @TestMetadata("diamondHierarchyJKMiddleClassFun.kt")
         public void testDiamondHierarchyJKMiddleClassFun() throws Exception {
             runTest("testData/slicer/inflow/diamondHierarchyJKMiddleClassFun.kt");
@@ -109,6 +121,21 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
         @TestMetadata("doubleLambdaResult.kt")
         public void testDoubleLambdaResult() throws Exception {
             runTest("testData/slicer/inflow/doubleLambdaResult.kt");
+        }
+
+        @TestMetadata("elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("testData/slicer/inflow/elvis.kt");
+        }
+
+        @TestMetadata("emptyFun.kt")
+        public void testEmptyFun() throws Exception {
+            runTest("testData/slicer/inflow/emptyFun.kt");
+        }
+
+        @TestMetadata("enumConstants.kt")
+        public void testEnumConstants() throws Exception {
+            runTest("testData/slicer/inflow/enumConstants.kt");
         }
 
         @TestMetadata("extensionLambdaImplicitParameter.kt")
@@ -176,9 +203,19 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/getterReturnExpression.kt");
         }
 
+        @TestMetadata("getterUsingField.kt")
+        public void testGetterUsingField() throws Exception {
+            runTest("testData/slicer/inflow/getterUsingField.kt");
+        }
+
         @TestMetadata("ifExpression.kt")
         public void testIfExpression() throws Exception {
             runTest("testData/slicer/inflow/ifExpression.kt");
+        }
+
+        @TestMetadata("infiniteRecursion.kt")
+        public void testInfiniteRecursion() throws Exception {
+            runTest("testData/slicer/inflow/infiniteRecursion.kt");
         }
 
         @TestMetadata("inlineExtensionImplicitReceiver.kt")
@@ -189,6 +226,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
         @TestMetadata("inlineFunctionManyCalls.kt")
         public void testInlineFunctionManyCalls() throws Exception {
             runTest("testData/slicer/inflow/inlineFunctionManyCalls.kt");
+        }
+
+        @TestMetadata("javaSyntheticGetter.kt")
+        public void testJavaSyntheticGetter() throws Exception {
+            runTest("testData/slicer/inflow/javaSyntheticGetter.kt");
         }
 
         @TestMetadata("lambdaImplicitParameter.kt")
@@ -406,6 +448,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/topLevelVar.kt");
         }
 
+        @TestMetadata("tryExpr.kt")
+        public void testTryExpr() throws Exception {
+            runTest("testData/slicer/inflow/tryExpr.kt");
+        }
+
         @TestMetadata("valParameter.kt")
         public void testValParameter() throws Exception {
             runTest("testData/slicer/inflow/valParameter.kt");
@@ -425,6 +472,12 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/outflow")
     public static class Outflow extends AbstractSlicerTreeTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -672,6 +725,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
         @TestMetadata("namedArgumentForConstructorParameter.kt")
         public void testNamedArgumentForConstructorParameter() throws Exception {
             runTest("testData/slicer/outflow/namedArgumentForConstructorParameter.kt");
+        }
+
+        @TestMetadata("namedParameters.kt")
+        public void testNamedParameters() throws Exception {
+            runTest("testData/slicer/outflow/namedParameters.kt");
         }
 
         @TestMetadata("nonInlineLetResult.kt")

@@ -1,13 +1,18 @@
-### About Fernflower
+### About FernFlower
 
-Fernflower is the first actually working analytical decompiler for Java and 
+FernFlower is the first actually working analytical decompiler for Java and 
 probably for a high-level programming language in general. Naturally it is still 
 under development, please send your bug reports and improvement suggestions to the
-[issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Decompiler).
+[issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Java. Decompiler).
+
+### FernFlower and ForgeFlower
+
+FernFlower includes some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower).
+Sincere appreciation is extended to the maintainers of ForgeFlower for their valuable contributions and enhancements.
 
 ### Licence
 
-Fernflower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+FernFlower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 ### Running from command line
 
@@ -66,7 +71,15 @@ The rest of options can be left as they are: they are aimed at professional reve
 - lac (0): decompile lambda expressions to anonymous classes
 - nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent
 - ind: indentation string (default is 3 spaces)
+- crp (0): use record patterns where it is possible
+- cps (0): use switch with patterns where it is possible 
 - log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
+- iec (0): include entire class path into context when decompiling 
+- isl (1): inline simple lambda expressions
+- ucrc (1): hide unnecessary record constructor and getters
+- cci (1): check if resource in try-with-resources actually implements `AutoCloseable` interface
+- jvn (0): overwrite any local variable names with JAD style names
+- jpr (0): include parameter names in JAD naming
 
 ### Renaming identifiers
 
@@ -79,7 +92,7 @@ Option 'ren' (i.e. -ren=1) activates renaming functionality. Default renaming st
 - new names are built according to a simple pattern: (class|method|field)_\<consecutive unique number>  
 You can overwrite this rules by providing your own implementation of the 4 key methods invoked by the decompiler while renaming. Simply 
 pass a class that implements org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer in the option 'urc'
-(e.g. -urc=com.example.MyRenamer) to Fernflower. The class must be available on the application classpath.
+(e.g. -urc=com.example.MyRenamer) to FernFlower. The class must be available on the application classpath.
 
 The meaning of each method should be clear from naming: toBeRenamed determine whether the element will be renamed, while the other three
 provide new names for classes, methods and fields respectively.  

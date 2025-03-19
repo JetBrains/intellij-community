@@ -2,19 +2,14 @@
 package git4idea.actions.branch
 
 import com.intellij.dvcs.push.ui.VcsPushDialog
-import com.intellij.dvcs.ui.CustomIconProvider
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
-import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.push.GitPushSource
 import git4idea.repo.GitRepository
-import icons.DvcsImplIcons
-import javax.swing.Icon
 
-//TODO: incoming/outgoing
 class GitPushBranchAction
   : GitSingleBranchAction(ActionsBundle.messagePointer("action.Vcs.Push.text")) {
 

@@ -1,22 +1,22 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
-import com.intellij.cce.evaluation.step.FinishEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import kotlin.system.measureTimeMillis
 
-class EvaluationProcess private constructor(private val steps: List<EvaluationStep>) {
+class EvaluationProcess private constructor (
+  private val environment: EvaluationEnvironment,
+  private val steps: List<EvaluationStep>,
+  private val finalStep: FinishEvaluationStep?
+) {
   companion object {
-    fun build(init: Builder.() -> Unit, stepFactory: StepFactory): EvaluationProcess {
+    fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
       val builder = Builder()
       builder.init()
-      return builder.build(stepFactory)
+      return builder.build(environment, stepFactory)
     }
-  }
-
-  fun startAsync(workspace: EvaluationWorkspace) = ApplicationManager.getApplication().executeOnPooledThread {
-    start(workspace)
   }
 
   fun start(workspace: EvaluationWorkspace): EvaluationWorkspace {
@@ -24,17 +24,20 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
     var currentWorkspace = workspace
     var hasError = false
     for (step in steps) {
-      if (hasError && step !is UndoableEvaluationStep.UndoStep
-          && step !is FinishEvaluationStep) continue
+      if (hasError && step !is UndoableEvaluationStep.UndoStep) continue
       println("Starting step: ${step.name} (${step.description})")
       val duration = measureTimeMillis {
-        val result = step.start(currentWorkspace)
-        if (result == null) hasError = true
-        else currentWorkspace = result
+        val result = environment.execute(step, currentWorkspace)
+        if (result == null) {
+          hasError = true
+        } else {
+          currentWorkspace = result
+        }
       }
       stats[step.name] = duration
     }
     currentWorkspace.saveAdditionalStats("evaluation_process", stats)
+    finalStep?.start(currentWorkspace, hasError)
     return currentWorkspace
   }
 
@@ -43,9 +46,8 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
     var shouldInterpretActions: Boolean = false
     var shouldGenerateReports: Boolean = false
     var shouldReorderElements: Boolean = false
-    var shouldHighlightInIde: Boolean = false
 
-    fun build(factory: StepFactory): EvaluationProcess {
+    fun build(environment: EvaluationEnvironment, factory: StepFactory): EvaluationProcess {
       val steps = mutableListOf<EvaluationStep>()
       val isTestingEnvironment = ApplicationManager.getApplication().isUnitTestMode
 
@@ -53,14 +55,16 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
         factory.setupSdkStep()?.let { steps.add(it) }
 
         if (!Registry.`is`("evaluation.plugin.disable.sdk.check")) {
-          steps.add(factory.checkSdkConfiguredStep())
+          factory.checkSdkConfiguredStep()?.let {
+            steps.add(it)
+          }
         }
       }
 
       if (shouldInterpretActions) {
         factory.setupStatsCollectorStep()?.let { steps.add(it) }
-        steps.add(factory.setupCompletionStep())
-        steps.add(factory.setupFullLineStep())
+        steps.add(factory.setupRegistryStep())
+        steps.addAll(factory.featureSpecificSteps())
       }
 
       if (shouldGenerateActions) {
@@ -70,17 +74,14 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
       if (shouldInterpretActions) {
         if (shouldGenerateActions) {
           steps.add(factory.interpretActionsStep())
-        } else {
+        }
+        else {
           steps.add(factory.interpretActionsOnNewWorkspaceStep())
         }
       }
 
       if (shouldReorderElements) {
         steps.add(factory.reorderElements())
-      }
-
-      if (shouldHighlightInIde) {
-        steps.add(factory.highlightTokensInIdeStep())
       }
 
       if (shouldGenerateReports) {
@@ -92,11 +93,12 @@ class EvaluationProcess private constructor(private val steps: List<EvaluationSt
           steps.add(step.undoStep())
       }
 
-      if (!isTestingEnvironment) {
-        steps.add(factory.finishEvaluationStep())
+      for (step in factory.featureSpecificPreliminarySteps().reversed()) {
+        if (step is UndoableEvaluationStep)
+          steps.add(step.undoStep())
       }
 
-      return EvaluationProcess(steps)
+      return EvaluationProcess(environment, steps, factory.finishEvaluationStep().takeIf { !isTestingEnvironment })
     }
   }
 }

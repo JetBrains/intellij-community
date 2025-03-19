@@ -16,8 +16,10 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 
+@ApiStatus.Internal
 interface SuspendContextManager<CALL_FRAME : CallFrame> {
   /**
    * Tries to suspend VM. If successful, [DebugEventListener.suspended] will be called.
@@ -58,6 +60,7 @@ interface SuspendContextManager<CALL_FRAME : CallFrame> {
   fun canRestartFrame(callFrame: CallFrame): Boolean
 }
 
+@ApiStatus.Internal
 enum class StepAction {
   /**
    * Resume the JavaScript execution.

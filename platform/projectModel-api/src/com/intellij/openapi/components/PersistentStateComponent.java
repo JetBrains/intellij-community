@@ -1,27 +1,28 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Every component which would like to persist its state across IDE restarts should implement this interface.
+ * Every component that would like to persist its state across IDE restarts should implement this interface.
  * <p>
- * See <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_state_of_components.html">IntelliJ Platform SDK DevGuide</a>
+ * See <a href="https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html">Persisting State of Components (IntelliJ Platform Docs)</a>
  * for detailed description.
  * <p>
  * <strong>DO NOT</strong> use for sensitive data
- * (see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html">Persisting Sensitive Data</a>).
+ * (see <a href="https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html">Persisting Sensitive Data</a>).
  * <p>
- * In general, an implementation should be thread-safe, because "loadState" is called from the same thread where component is initialized.
- * If a component is used only from one thread (e.g. EDT), thread-safe implementation is not required.
+ * In general, an implementation should be thread-safe,
+ * because "loadState" is called from the same thread where the component is initialized.
+ * If a component is used only from one thread (e.g., EDT), thread-safe implementation is not required.
  *
  * @see SimplePersistentStateComponent
  */
 public interface PersistentStateComponent<T> {
   /**
    * @return a component state. All properties, public and annotated fields are serialized.
-   * Only values which differ from the default (i.e. the value of newly instantiated class) are serialized.
+   * Only values which differ from the default (i.e., the value of newly instantiated class) are serialized.
    * {@code null} value indicates that the returned state won't be stored, as a result previously stored state will be used.
    * @see com.intellij.util.xmlb.XmlSerializer
    */

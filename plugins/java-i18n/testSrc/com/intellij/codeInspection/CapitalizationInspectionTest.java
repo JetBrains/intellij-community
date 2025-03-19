@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention;
 import com.intellij.codeInspection.i18n.TitleCapitalizationInspection;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -94,6 +95,19 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
       property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}""";
     myFixture.addFileToProject("MyBundle.properties", props);
     doTest(false);
+    IntentionAction action = myFixture.findSingleIntention("Properly capitalize");
+    assertEquals("""
+       property.lowercase=Hello World
+       property.titlecase=Hello World
+       property.titlecase.html=<html><b>Hello</b> World</html>
+       property.parameterized=Hello {0}
+       property.choice.title=Hello {0,choice,0#World|1#Universe}
+       property.choice.mixed=Hello {0,choice,0#World|1#universe}
+       property.choice.lower=Hello {0,choice,0#world|1#universe}
+       property.choice.sentence.start={0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far
+       property.sentence.with.quote='return' is not allowed here
+       property.with.underscore.mnemonic=Subm_it
+       property.icu4j.title=Generate Code with {0, plural, one {Foo} other {Bar}}""", myFixture.getIntentionPreviewText(action));
   }
 
   public void testRecursiveMethod() {
@@ -106,6 +120,7 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
     AnnotateCapitalizationIntention intention = new AnnotateCapitalizationIntention();
     assertTrue(intention.isAvailable(getProject(), getEditor(), getFile()));
     intention.invoke(getProject(), getEditor(), getFile());
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile("Intention_after.java");
     assertFalse(intention.isAvailable(getProject(), getEditor(), getFile()));
   }
@@ -116,6 +131,7 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
 
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
     WriteCommandAction.writeCommandAction(getProject()).run(() -> action.invoke(getProject(), myFixture.getEditor(), getFile()));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 

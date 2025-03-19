@@ -21,7 +21,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -44,12 +44,11 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   public PyStarImportElementImpl(final PyStarImportElementStub stub) {
-    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
+    super(stub, PyStubElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override
-  @NotNull
-  public Iterable<PyElement> iterateNames() {
+  public @NotNull Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement fromImportStatement) {
       return StreamEx.of(fromImportStatement.resolveImportSourceCandidates())
         .distinct()
@@ -66,13 +65,11 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   @Override
-  @NotNull
-  public List<RatedResolveResult> multiResolveName(@NotNull String name) {
+  public @NotNull List<RatedResolveResult> multiResolveName(@NotNull String name) {
     return PyUtil.getParameterizedCachedValue(this, name, this::calculateMultiResolveName);
   }
 
-  @NotNull
-  private List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
+  private @NotNull List<RatedResolveResult> calculateMultiResolveName(@NotNull String name) {
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyFromImportStatement fromImportStatement) {
       final List<PsiElement> importedFiles = fromImportStatement.resolveImportSourceCandidates();

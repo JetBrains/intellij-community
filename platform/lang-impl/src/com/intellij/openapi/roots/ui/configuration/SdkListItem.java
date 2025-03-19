@@ -119,12 +119,21 @@ public abstract class SdkListItem {
   public static final class SuggestedItem extends SdkListItem {
     public final @NotNull SdkType sdkType;
     public final @NlsSafe String version;
-    public final @NotNull String homePath;
+    @NlsSafe public final @NotNull String homePath;
+    public final @NotNull Boolean isSymlink;
 
     SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
       this.sdkType = sdkType;
       this.version = version;
       this.homePath = homePath;
+      this.isSymlink = false;
+    }
+
+    SuggestedItem(@NotNull SdkType sdkType, @NotNull SdkType.SdkEntry entry) {
+      this.sdkType = sdkType;
+      this.version = entry.versionString();
+      this.homePath = entry.homePath();
+      this.isSymlink = Boolean.TRUE.equals(entry.isSymlink());
     }
   }
 

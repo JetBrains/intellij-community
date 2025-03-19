@@ -2,6 +2,7 @@
 package com.intellij.webSymbols
 
 import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
@@ -13,8 +14,10 @@ import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.refactoring.rename.api.RenameTarget
+import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.webSymbols.context.WebSymbolsContext
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationCustomizer
 import com.intellij.webSymbols.documentation.impl.WebSymbolDocumentationTargetImpl
@@ -26,6 +29,7 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.matchedNameOrName
+import com.intellij.webSymbols.utils.qualifiedName
 import org.jetbrains.annotations.Nls
 import java.util.*
 import javax.swing.Icon
@@ -46,7 +50,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
+interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol, WebSymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -129,9 +133,10 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
 
   /**
    * Documents API status of the symbol. It is one of the sub-interfaces of [WebSymbolApiStatus]:
-   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental] or [WebSymbolApiStatus.Deprecated].
+   * [WebSymbolApiStatus.Stable], [WebSymbolApiStatus.Experimental], [WebSymbolApiStatus.Deprecated]
+   * or [WebSymbolApiStatus.Obsolete].
    *
-   * Deprecated symbols are appropriately highlighted in the code editor, code completion and
+   * Deprecated and obsolete symbols are appropriately highlighted in the code editor, code completion and
    * quick documentation.
    */
   val apiStatus: WebSymbolApiStatus
@@ -194,7 +199,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * Symbols with higher priority will have precedence over those with lower priority,
    * when matching is performed. Symbols with higher priority will also show higher on the completion list.
    */
-  val priority: Priority?
+  override val priority: Priority?
     get() = null
 
   /**
@@ -246,6 +251,36 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
     }
 
   /**
+   * Implement to provide usage search for the symbol.
+   * In most cases the implementation would simply call
+   * [WebSymbolSearchTarget.create].
+   *
+   * Symbol can also implement [SearchTarget] interface directly
+   * and override its methods, in which case [WebSymbolSearchTarget]
+   * returned by [searchTarget] property is ignored.
+   *
+   * @see [SearchTargetSymbol]
+   * @see [SearchTarget]
+   */
+  val searchTarget: WebSymbolSearchTarget?
+    get() = null
+
+  /**
+   * Implement to provide rename refactoring for the symbol.
+   * In most cases the implementation would simply create
+   * [WebSymbolRenameTarget] object.
+   *
+   * Symbol can also implement [RenameTarget] interface directly
+   * and override its methods, in which case [WebSymbolRenameTarget]
+   * returned by [renameTarget] property is ignored.
+   *
+   * @see [RenameableSymbol]
+   * @see [RenameTarget]
+   */
+  val renameTarget: WebSymbolRenameTarget?
+    get() = null
+
+  /**
    * Used by Web Symbols framework to get a [DocumentationTarget], which handles documentation
    * rendering for the symbol. Default implementation will use [createDocumentation]
    * to render the documentation.
@@ -281,6 +316,13 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   override fun createPointer(): Pointer<out WebSymbol>
 
   /**
+   * Return `true` if the symbol should be present in the query results
+   * in the particular context. By default, the current symbol framework is checked.
+   */
+  fun matchContext(context: WebSymbolsContext): Boolean =
+    origin.framework == null || context.framework == null || origin.framework == context.framework
+
+  /**
    * Returns `true` if two symbols are the same or equivalent for resolve purposes.
    */
   fun isEquivalentTo(symbol: Symbol): Boolean =
@@ -291,7 +333,7 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
   fun adjustNameForRefactoring(queryExecutor: WebSymbolsQueryExecutor, newName: String, occurence: String): String =
-    queryExecutor.namesProvider.adjustRename(namespace, kind, name, newName, occurence)
+    queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 
 
   enum class Priority(val value: Double) {
@@ -303,61 +345,84 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
   }
 
   companion object {
-    const val NAMESPACE_HTML = "html"
-    const val NAMESPACE_CSS = "css"
-    const val NAMESPACE_JS = "js"
+    const val NAMESPACE_HTML: String = "html"
+    const val NAMESPACE_CSS: String = "css"
+    const val NAMESPACE_JS: String = "js"
 
-    const val KIND_HTML_ELEMENTS = "elements"
-    const val KIND_HTML_ATTRIBUTES = "attributes"
-    const val KIND_HTML_ATTRIBUTE_VALUES = "values"
-    const val KIND_HTML_SLOTS = "slots"
+    const val KIND_HTML_ELEMENTS: String = "elements"
+    const val KIND_HTML_ATTRIBUTES: String = "attributes"
+    const val KIND_HTML_ATTRIBUTE_VALUES: String = "values"
+    const val KIND_HTML_SLOTS: String = "slots"
 
-    const val KIND_CSS_PROPERTIES = "properties"
-    const val KIND_CSS_PSEUDO_ELEMENTS = "pseudo-elements"
-    const val KIND_CSS_PSEUDO_CLASSES = "pseudo-classes"
-    const val KIND_CSS_FUNCTIONS = "functions"
-    const val KIND_CSS_CLASSES = "classes"
-    const val KIND_CSS_PARTS = "parts"
+    const val KIND_CSS_PROPERTIES: String = "properties"
+    const val KIND_CSS_PSEUDO_ELEMENTS: String = "pseudo-elements"
+    const val KIND_CSS_PSEUDO_CLASSES: String = "pseudo-classes"
+    const val KIND_CSS_FUNCTIONS: String = "functions"
+    const val KIND_CSS_CLASSES: String = "classes"
+    const val KIND_CSS_PARTS: String = "parts"
 
-    const val KIND_JS_EVENTS = "events"
-    const val KIND_JS_PROPERTIES = "properties"
-    const val KIND_JS_SYMBOLS = "symbols"
-    const val KIND_JS_STRING_LITERALS = "string-literals"
+    const val KIND_JS_EVENTS: String = "events"
+    const val KIND_JS_PROPERTIES: String = "properties"
+    const val KIND_JS_SYMBOLS: String = "symbols"
+    const val KIND_JS_STRING_LITERALS: String = "string-literals"
+
+    val HTML_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
+    val HTML_ATTRIBUTES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
+    val HTML_ATTRIBUTE_VALUES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
+    val HTML_SLOTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
+
+    val CSS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
+    val CSS_PSEUDO_ELEMENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
+    val CSS_PSEUDO_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
+    val CSS_FUNCTIONS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
+    val CSS_CLASSES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
+    val CSS_PARTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
+
+    val JS_EVENTS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
+    val JS_PROPERTIES: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_SYMBOLS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
+    val JS_STRING_LITERALS: WebSymbolQualifiedKind = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,
      * allows to inject the specified language into HTML element text or HTML attribute value.
      */
-    const val PROP_INJECT_LANGUAGE = "inject-language"
+    const val PROP_INJECT_LANGUAGE: String = "inject-language"
 
     /**
      * If a symbol uses a RegEx pattern, usually it will be displayed in a documentation
      * popup section "pattern". Setting this property to `true` hides that section.
      */
-    const val PROP_DOC_HIDE_PATTERN = "doc-hide-pattern"
+    const val PROP_DOC_HIDE_PATTERN: String = "doc-hide-pattern"
 
     /**
      * By default, all symbols show up in code completion.
      * Setting this property to true prevents a symbol from showing up in the code completion.
      */
-    const val PROP_HIDE_FROM_COMPLETION = "hide-from-completion"
+    const val PROP_HIDE_FROM_COMPLETION: String = "hide-from-completion"
 
     /**
      * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols
      * to specify whether they require arguments. Defaults to false.
      **/
-    const val PROP_ARGUMENTS = "arguments"
+    const val PROP_ARGUMENTS: String = "arguments"
 
     /**
      * Name of boolean property used by `js/properties` symbols to specify whether
      * the property is read-only. Defaults to false.
      **/
-    const val PROP_READ_ONLY = "read-only"
+    const val PROP_READ_ONLY: String = "read-only"
 
     /**
      * Name of [WebSymbolJsKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
      * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
      **/
-    const val PROP_KIND = "kind"
+    const val PROP_KIND: String = "kind"
+
+    /**
+     * Name of [WebSymbolJsKind] property used by other symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [WebSymbolJsKind.Variable].
+     **/
+    const val PROP_JS_SYMBOL_KIND: String = "js-symbol-kind"
   }
 }

@@ -39,7 +39,7 @@ fun animation(): Animation = Animation {}
 /**
  * Very common animation.
  */
-fun animation(consumer: DoubleConsumer) = Animation(consumer)
+fun animation(consumer: DoubleConsumer): Animation = Animation(consumer)
 
 fun animation(from: Int, to: Int, consumer: IntConsumer): Animation {
   return Animation(DoubleConsumer { value ->
@@ -92,7 +92,7 @@ fun animation(from: Color, to: Color, consumer: Consumer<Color>): Animation {
   return Animation(DoubleColorFunction(from, to), consumer)
 }
 
-fun transparent(color: Color, consumer: Consumer<Color>) = animation(color, ColorUtil.withAlpha(color, 0.0), consumer)
+fun transparent(color: Color, consumer: Consumer<Color>): Animation = animation(color, ColorUtil.withAlpha(color, 0.0), consumer)
 
 fun <T> consumer(function: DoubleFunction<T>, consumer: Consumer<T>): DoubleConsumer {
   return DoubleConsumer { consumer.accept(function.apply(it)) }
@@ -146,7 +146,7 @@ class DoubleColorFunction(
   private val blue = range(from.blue, to.blue)
   private val alpha = range(from.alpha, to.alpha)
 
-  override fun apply(value: Double) = Color(
+  override fun apply(value: Double): Color = Color(
     red.apply(value),
     green.apply(value),
     blue.apply(value),
@@ -175,7 +175,7 @@ class DoubleDimensionFunction(
   private val width = range(from.width, to.width)
   private val height = range(from.height, to.height)
 
-  override fun apply(value: Double) = Dimension(
+  override fun apply(value: Double): Dimension = Dimension(
     width.apply(value),
     height.apply(value)
   )
@@ -191,7 +191,7 @@ class DoubleRectangleFunction(
   private val width = range(from.width, to.width)
   private val height = range(from.height, to.height)
 
-  override fun apply(value: Double) = Rectangle(
+  override fun apply(value: Double): Rectangle = Rectangle(
     x.apply(value),
     y.apply(value),
     width.apply(value),

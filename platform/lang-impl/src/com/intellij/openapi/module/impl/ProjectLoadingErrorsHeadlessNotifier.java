@@ -1,19 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public class ProjectLoadingErrorsHeadlessNotifier extends ProjectLoadingErrorsNotifier {
+@ApiStatus.Internal
+public final class ProjectLoadingErrorsHeadlessNotifier extends ProjectLoadingErrorsNotifier {
   private static Consumer<? super ConfigurationErrorDescription> ourErrorHandler;
 
   @TestOnly

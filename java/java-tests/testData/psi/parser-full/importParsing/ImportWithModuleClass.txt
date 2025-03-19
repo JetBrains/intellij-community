@@ -1,0 +1,15 @@
+PsiJavaFile:ImportWithModuleClass.java
+  PsiImportList
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:module.module
+        PsiJavaCodeReferenceElement:module
+          PsiIdentifier:module('module')
+          PsiReferenceParameterList
+            <empty list>
+        PsiJavaToken:DOT('.')
+        PsiIdentifier:module('module')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:SEMICOLON(';')

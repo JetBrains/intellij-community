@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.indexing
 
+import com.intellij.ide.scratch.RootType
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -14,11 +17,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.*
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
@@ -67,8 +67,23 @@ abstract class IndexableFilesBaseTest {
   @Before
   fun setUp() {
     runWriteAction {
-      (IndexableSetContributor.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
-      (AdditionalLibraryRootsProvider.EP_NAME.point as ExtensionPointImpl<*>).unregisterExtensions({ _, _ -> false }, false)
+      // we cannot use ExtensionTestUtil.maskExtensions as it's a single-use operation and some tests need to use it
+      temporarilyCleanupExtension(RootType.ROOT_EP)
+      temporarilyCleanupExtension(IndexableSetContributor.EP_NAME)
+      temporarilyCleanupExtension(AdditionalLibraryRootsProvider.EP_NAME)
+    }
+
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
+  }
+
+  private fun <T : Any> temporarilyCleanupExtension(point: ExtensionPointName<T>) {
+    val extensionPoint = point.point as ExtensionPointImpl<*>
+    val adapters = ArrayList<ExtensionComponentAdapter>()
+    extensionPoint.unregisterExtensions({ _, adapter -> adapters.add(adapter); false }, false)
+    disposableRule.register {
+      runWriteAction {
+        adapters.forEach { extensionPoint.addExtensionAdapter(it) }
+      }
     }
   }
 
@@ -114,7 +129,6 @@ abstract class IndexableFilesBaseTest {
     for (provider in providers) {
       provider.iterateFiles(project, processor, indexableFilesDeduplicateFilter)
     }
-    assertEquals(expectedNumberOfSkippedFiles, indexableFilesDeduplicateFilter.numberOfSkippedFiles)
   }
 
   protected fun maskIndexableSetContributors(vararg indexableSetContributor: IndexableSetContributor) {

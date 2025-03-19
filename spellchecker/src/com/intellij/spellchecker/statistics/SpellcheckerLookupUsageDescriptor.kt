@@ -10,14 +10,14 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 import com.intellij.openapi.util.Key
-import com.intellij.spellchecker.statistics.SpellcheckerLookupUsageDescriptor.SpellcheckerCompletionCollectorExtension.Companion.SPELLCHECKER
 import java.util.*
 
-class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
-  companion object {
-    internal const val SPELLCHECKER_KEY_NAME = "spellchecker"
-    val SPELLCHECKER_KEY = Key<Boolean>(SPELLCHECKER_KEY_NAME)
-  }
+private const val SPELLCHECKER_KEY_NAME = "spellchecker"
+private val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
+
+internal class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
+
+  private val SPELLCHECKER_KEY = Key<Boolean>(SPELLCHECKER_KEY_NAME)
 
   override fun getExtensionKey(): String = SPELLCHECKER_KEY_NAME
 
@@ -29,7 +29,7 @@ class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
     return Collections.emptyList()
   }
 
-  internal class SpellcheckerCompletionCollectorExtension: FeatureUsageCollectorExtension {
+  internal class SpellcheckerCompletionCollectorExtension : FeatureUsageCollectorExtension {
     override fun getGroupId(): String {
       return LookupUsageTracker.GROUP_ID
     }
@@ -42,8 +42,5 @@ class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
       return listOf(SPELLCHECKER)
     }
 
-    companion object {
-      val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
-    }
   }
 }

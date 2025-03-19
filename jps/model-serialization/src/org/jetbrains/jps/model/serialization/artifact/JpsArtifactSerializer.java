@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization.artifact;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
@@ -17,6 +18,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class JpsArtifactSerializer {
   private static final JpsPackagingElementSerializer<?>[] STANDARD_SERIALIZERS = {
     new ArtifactRootElementSerializer(),
@@ -69,8 +71,7 @@ public final class JpsArtifactSerializer {
     artifact.getContainer().setChild(serializer.getRole(), e);
   }
 
-  @Nullable
-  private static JpsPackagingElement loadPackagingElement(Element element) {
+  private static @Nullable JpsPackagingElement loadPackagingElement(Element element) {
     JpsPackagingElement packagingElement = createPackagingElement(element);
     if (packagingElement instanceof JpsCompositePackagingElement) {
       for (Element childElement : JDOMUtil.getChildren(element, ELEMENT_TAG)) {
@@ -83,8 +84,7 @@ public final class JpsArtifactSerializer {
     return packagingElement;
   }
 
-  @Nullable
-  private static JpsPackagingElement createPackagingElement(Element element) {
+  private static @Nullable JpsPackagingElement createPackagingElement(Element element) {
     String typeId = element.getAttributeValue(ID_ATTRIBUTE);
     if (typeId == null) return null;
     JpsPackagingElementSerializer<?> serializer = findElementSerializer(typeId);
@@ -94,8 +94,7 @@ public final class JpsArtifactSerializer {
     return null;
   }
 
-  @Nullable
-  private static JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
+  private static @Nullable JpsPackagingElementSerializer<?> findElementSerializer(@NotNull String typeId) {
     for (JpsPackagingElementSerializer<?> serializer : STANDARD_SERIALIZERS) {
       if (serializer.getTypeId().equals(typeId)) {
         return serializer;
@@ -111,8 +110,7 @@ public final class JpsArtifactSerializer {
     return null;
   }
 
-  @Nullable
-  private static JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
+  private static @Nullable JpsArtifactExtensionSerializer<?> getExtensionSerializer(String id) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsArtifactExtensionSerializer<?> serializer : extension.getArtifactExtensionSerializers()) {
         if (serializer.getId().equals(id)) {
@@ -139,7 +137,7 @@ public final class JpsArtifactSerializer {
     return STANDARD_TYPE_SERIALIZERS[0];
   }
 
-  private static class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
+  private static final class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
     ArtifactRootElementSerializer() {
       super("root", JpsArtifactRootElement.class);
     }
@@ -150,7 +148,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
+  private static final class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
     DirectoryElementSerializer() {
       super("directory", JpsDirectoryPackagingElement.class);
     }
@@ -161,7 +159,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
+  private static final class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
     ArchiveElementSerializer() {
       super("archive", JpsArchivePackagingElement.class);
     }
@@ -172,7 +170,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
+  private static final class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
     FileCopyElementSerializer() {
       super("file-copy", JpsFileCopyPackagingElement.class);
     }
@@ -184,7 +182,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
+  private static final class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
     DirectoryCopyElementSerializer() {
       super("dir-copy", JpsDirectoryCopyPackagingElement.class);
     }
@@ -195,7 +193,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ExtractedDirectoryElementSerializer
+  private static final class ExtractedDirectoryElementSerializer
     extends JpsPackagingElementSerializer<JpsExtractedDirectoryPackagingElement> {
     ExtractedDirectoryElementSerializer() {
       super("extracted-dir", JpsExtractedDirectoryPackagingElement.class);
@@ -208,7 +206,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
+  private static final class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
     LibraryFilesElementSerializer() {
       super("library", JpsLibraryFilesPackagingElement.class);
     }
@@ -230,7 +228,7 @@ public final class JpsArtifactSerializer {
     }
   }
 
-  private static class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
+  private static final class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
     ArtifactOutputElementSerializer() {
       super("artifact", JpsArtifactOutputPackagingElement.class);
     }

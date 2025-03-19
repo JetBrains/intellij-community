@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.util.Pair;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.dnd.DragSourceDropEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -24,21 +25,19 @@ public interface DnDSource extends DnDDropActionHandler {
    * @param bean a bean to create an image for
    * @return Pair of image and cursor offset at the image
    */
-  @Nullable
-  default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
-    return createDraggedImage(action, dragOrigin);
-  }
-
-  /**
-   * @deprecated override {@link DnDSource#createDraggedImage(DnDAction, Point, DnDDragStartBean)} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  default Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin) {
+  default @Nullable Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
     return null;
   }
 
+  /**
+   * @deprecated Use dragDropEnd(DragSourceDropEvent) method
+   */
+  @Deprecated(forRemoval = true, since = "2025.1")
   default void dragDropEnd() {
+  }
+
+  default void dragDropEnd(@Nullable DnDEvent dragEvent, @Nullable DragSourceDropEvent dropEvent) {
+    dragDropEnd();
   }
 
   @Override

@@ -9,7 +9,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.toml.lang.TomlLanguage
 
-class TomlCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
+internal class TomlCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
     TabbedLanguageCodeStylePanel(TomlLanguage, currentSettings, settings) {
 
     override fun initTabs(settings: CodeStyleSettings) {

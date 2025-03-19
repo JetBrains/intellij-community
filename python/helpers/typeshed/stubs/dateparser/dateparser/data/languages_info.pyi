@@ -1,4 +1,3 @@
-from typing import Any
-
-language_order: Any
-language_locale_dict: Any
+language_order: list[str]
+language_locale_dict: dict[str, str]
+language_map: dict[str, list[str]]

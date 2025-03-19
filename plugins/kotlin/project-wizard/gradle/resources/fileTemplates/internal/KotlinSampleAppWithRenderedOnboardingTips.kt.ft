@@ -1,0 +1,20 @@
+package ${PACKAGE_NAME}.app
+
+import ${PACKAGE_NAME}.utils.Printer
+
+//TIP ${RunComment1}
+// ${RunComment2}
+fun main() {
+    val name = "Kotlin"
+    //TIP ${ShowIntentionComment1}
+    // ${ShowIntentionComment2}
+    val message = "Hello, " + name + "!"
+    val printer = Printer(message)
+    printer.printMessage()
+
+    for (i in 1..5) {
+        //TIP ${DebugComment1}
+        // ${DebugComment2}
+        println("i = $i")
+    }
+}

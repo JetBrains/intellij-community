@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.toolWindow.InternalDecoratorImpl;
-import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +20,8 @@ import java.awt.event.KeyEvent;
 /**
  * Moves focus to editor on Escape key pressed, similarly to {@link InternalDecoratorImpl#processKeyBinding}.
  */
-public class TerminalEscapeKeyListener {
+@ApiStatus.Internal
+public final class TerminalEscapeKeyListener {
   private final JBTerminalPanel myTerminalPanel;
   private final AnAction myTerminalSwitchFocusToEditorAction;
 
@@ -41,8 +42,7 @@ public class TerminalEscapeKeyListener {
            stroke.getModifiers() == UIUtil.getAllModifiers(e);
   }
 
-  @Nullable
-  private KeyStroke getKeyStroke() {
+  private @Nullable KeyStroke getKeyStroke() {
     if (myTerminalSwitchFocusToEditorAction == null) {
       return null;
     }

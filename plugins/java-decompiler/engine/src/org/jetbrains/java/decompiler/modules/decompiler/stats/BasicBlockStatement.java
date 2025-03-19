@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -9,7 +9,9 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 public class BasicBlockStatement extends Statement {
   private final BasicBlock block;
@@ -57,5 +59,20 @@ public class BasicBlockStatement extends Statement {
 
   public BasicBlock getBlock() {
     return block;
+  }
+
+  @Override
+  public StartEndPair getStartEndRange() {
+    if (block.size() > 0) {
+      return new StartEndPair(block.getStartInstruction(), block.getEndInstruction());
+    } else {
+      return new StartEndPair(0, 0);
+    }
+  }
+
+  @Override
+  protected String toString(int indent) {
+    return TextUtil.getIndentString(indent) + type + ": " +
+           id + DecompilerContext.getNewLineSeparator() + block.getSeq().toString(indent + 1);
   }
 }

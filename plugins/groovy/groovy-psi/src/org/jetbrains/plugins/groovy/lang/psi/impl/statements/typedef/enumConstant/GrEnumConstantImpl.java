@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
 import com.intellij.lang.ASTNode;
@@ -21,8 +21,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrFieldImpl;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFieldStub;
-import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrEnumConstructorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.MODIFIER_LIST;
 
@@ -43,9 +43,8 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return "Enumeration constant";
   }
 
-  @Nullable
   @Override
-  public GrModifierList getModifierList() {
+  public @Nullable GrModifierList getModifierList() {
     return getStubOrPsiChild(MODIFIER_LIST);
   }
 
@@ -63,26 +62,22 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrTypeElement getTypeElementGroovy() {
+  public @Nullable GrTypeElement getTypeElementGroovy() {
     return null;
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass(), PsiSubstitutor.EMPTY);
   }
 
-  @Nullable
   @Override
-  public PsiType getDeclaredType() {
+  public @Nullable PsiType getDeclaredType() {
     return getType();
   }
 
   @Override
-  @Nullable
-  public PsiType getTypeGroovy() {
+  public @Nullable PsiType getTypeGroovy() {
     return getType();
   }
 
@@ -92,8 +87,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrExpression getInitializerGroovy() {
+  public @Nullable GrExpression getInitializerGroovy() {
     return null;
   }
 
@@ -109,8 +103,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  @Nullable
-  public GrArgumentList getArgumentList() {
+  public @Nullable GrArgumentList getArgumentList() {
     return findChildByClass(GrArgumentList.class);
   }
 
@@ -143,21 +136,18 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return multiResolve(true);
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
   @Override
-  @Nullable
-  public GrEnumConstantInitializer getInitializingClass() {
+  public @Nullable GrEnumConstantInitializer getInitializingClass() {
     return getStubOrPsiChild(GroovyStubElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
-  @NotNull
   @Override
-  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+  public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
     final GrEnumConstantInitializer initializingClass = getInitializingClass();
     if (initializingClass != null) return initializingClass;
 
@@ -188,23 +178,20 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
     return myReference.multiResolve(incompleteCode);
   }
 
-  @NotNull
   @Override
-  public PsiClass getContainingClass() {
+  public @NotNull PsiClass getContainingClass() {
     PsiClass aClass = super.getContainingClass();
     assert aClass != null;
     return aClass;
   }
 
-  @Nullable
   @Override
-  public Object computeConstantValue() {
+  public @Nullable Object computeConstantValue() {
     return this;
   }
 
-  @NotNull
   @Override
-  public GroovyConstructorReference getConstructorReference() {
+  public @NotNull GroovyConstructorReference getConstructorReference() {
     return myReference;
   }
 }

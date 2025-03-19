@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -32,6 +18,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,16 +27,17 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Set;
 
-public class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
+@ApiStatus.Internal
+public final class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
+  private final @NotNull JLabel mySortLabel = new JLabel(AllIcons.ObjectBrowser.Sorted);
 
-  @NotNull private final ArrangementRuleIndexControl     myRowIndexControl;
-  @NotNull private final ArrangementUiComponent          myDelegate;
-  @NotNull private final ArrangementMatchingRulesControl myControl;
-  @NotNull private final ActionButton                    myEditButton;
+  private final @NotNull ArrangementRuleIndexControl     myRowIndexControl;
+  private final @NotNull ArrangementUiComponent          myDelegate;
+  private final @NotNull ArrangementMatchingRulesControl myControl;
+  private final @NotNull ActionButton                    myEditButton;
 
-  @Nullable private Rectangle myScreenBounds;
+  private @Nullable Rectangle myScreenBounds;
 
   private boolean myBeingEdited;
   private boolean myUnderMouse;
@@ -142,21 +130,18 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     myBeingEdited = beingEdited;
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     return myDelegate.getMatchCondition();
   }
 
-  @NotNull
   @Override
-  public JComponent getUiComponent() {
+  public @NotNull JComponent getUiComponent() {
     return this;
   }
 
-  @Nullable
   @Override
-  public Rectangle getScreenBounds() {
+  public @Nullable Rectangle getScreenBounds() {
     return myScreenBounds;
   }
 
@@ -181,9 +166,8 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     return myDelegate.onMouseEntered(e);
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseMove(@NotNull MouseEvent event) {
+  public @Nullable Rectangle onMouseMove(@NotNull MouseEvent event) {
     myEditButton.setVisible(myControl.getSelectedModelRows().size() <= 1);
     Rectangle bounds = getButtonScreenBounds();
     if (!myBeingEdited && bounds != null) {
@@ -221,9 +205,8 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     myDelegate.onMouseRelease(event); 
   }
 
-  @Nullable
   @Override
-  public Rectangle onMouseExited() {
+  public @Nullable Rectangle onMouseExited() {
     setBackground(UIUtil.getListBackground());
     if (!myBeingEdited) {
       myEditButton.setVisible(false);
@@ -231,8 +214,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     return myDelegate.onMouseExited(); 
   }
   
-  @Nullable
-  private Rectangle getButtonScreenBounds() {
+  private @Nullable Rectangle getButtonScreenBounds() {
     if (myScreenBounds == null) {
       return null;
     }
@@ -240,15 +222,13 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     return new Rectangle(bounds.x + myScreenBounds.x, bounds.y + myScreenBounds.y, bounds.width, bounds.height); 
   }
 
-  @Nullable
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @Nullable ArrangementSettingsToken getToken() {
     return myDelegate.getToken();
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getAvailableTokens() {
+  public @NotNull Set<ArrangementSettingsToken> getAvailableTokens() {
     return myDelegate.getAvailableTokens();
   }
 

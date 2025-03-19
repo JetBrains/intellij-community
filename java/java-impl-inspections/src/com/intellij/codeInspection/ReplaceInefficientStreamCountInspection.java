@@ -1,12 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -23,13 +26,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "count").parameterCount(0);
   private static final CallMatcher COLLECTION_STREAM =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher CHAR_SEQUENCE_CHARS =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, "chars").parameterCount(0);
   private static final CallMatcher STREAM_FLAT_MAP =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "flatMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
@@ -45,13 +52,13 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
     .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
+    .register(CHAR_SEQUENCE_CHARS, call -> new CountFix(SimplificationMode.CHAR_SEQUENCE_LENGTH))
     .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
     .register(STREAM_FILTER, call -> extractComparison(call, true) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
     .register(STREAM_FILTER, call -> extractComparison(call, false) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
-  private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
 
   @Override
@@ -59,12 +66,13 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     return true;
   }
 
-  @NotNull
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
 
     return new JavaElementVisitor() {
       @Override
@@ -96,8 +104,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     };
   }
 
-  @Nullable
-  private static PsiBinaryExpression extractComparison(PsiMethodCallExpression call, boolean isPresent) {
+  private static @Nullable PsiBinaryExpression extractComparison(PsiMethodCallExpression call, boolean isPresent) {
     final PsiMethodCallExpression countCall;
     if (STREAM_FILTER.test(call)) {
       countCall = ExpressionUtils.getCallForQualifier(call);
@@ -123,8 +130,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     return !range.isEmpty() && range.max() == 0;
   }
 
-  @Nullable
-  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
+  private static @Nullable PsiBinaryExpression extractBinary(PsiMethodCallExpression call) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
     return ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
   }
@@ -148,8 +154,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     return false;
   }
 
-  @Nullable
-  private static PsiExpression extractLambdaReturnExpression(PsiLambdaExpression lambda) {
+  private static @Nullable PsiExpression extractLambdaReturnExpression(PsiLambdaExpression lambda) {
     PsiElement lambdaBody = lambda.getBody();
     PsiExpression expression = null;
     if (lambdaBody instanceof PsiExpression) {
@@ -176,6 +181,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
 
   private enum SimplificationMode {
     SUM("Stream.mapToLong().sum()"),
+    CHAR_SEQUENCE_LENGTH("CharSequence.length()"),
     COLLECTION_SIZE("Collection.size()"),
     ANY_MATCH("stream.anyMatch()"),
     NONE_MATCH("stream.noneMatch()"),
@@ -198,37 +204,33 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     }
   }
 
-  private static class CountFix implements LocalQuickFix {
+  private static class CountFix extends PsiUpdateModCommandQuickFix {
     private final SimplificationMode mySimplificationMode;
 
     CountFix(SimplificationMode simplificationMode) {
       mySimplificationMode = simplificationMode;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return mySimplificationMode.getName();
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.inefficient.stream.count");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiMethodCallExpression countCall)) return;
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       switch (mySimplificationMode) {
         case SUM -> replaceFlatMap(countName, qualifierCall);
-        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall);
+        case COLLECTION_SIZE -> replaceSimpleCount(countCall, qualifierCall, "size");
+        case CHAR_SEQUENCE_LENGTH -> replaceSimpleCount(countCall, qualifierCall, "length");
         case ANY_MATCH -> replaceFilterCountComparison(qualifierCall, true);
         case NONE_MATCH -> replaceFilterCountComparison(qualifierCall, false);
         case IS_PRESENT -> replaceSimpleCountComparison(countCall, true);
@@ -249,10 +251,10 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       ct.replaceAndRestoreComments(comparison, base + "." + (isAnyMatch? "anyMatch" : "noneMatch") + "(" + filterText + ")");
     }
 
-    private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
-      if (!COLLECTION_STREAM.test(qualifierCall)) return;
+    private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall, String replacementName) {
+      if (!COLLECTION_STREAM.test(qualifierCall) && !CHAR_SEQUENCE_CHARS.test(qualifierCall)) return;
       PsiReferenceExpression methodExpression = qualifierCall.getMethodExpression();
-      ExpressionUtils.bindCallTo(qualifierCall, SIZE_METHOD);
+      ExpressionUtils.bindCallTo(qualifierCall, replacementName);
       boolean addCast = true;
       PsiElement toReplace = countCall;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());

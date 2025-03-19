@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -9,10 +8,8 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
@@ -23,8 +20,9 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+@Service(Service.Level.PROJECT)
 @State(name = "AnalysisUIOptions", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
+public final class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOptions> {
   public static AnalysisUIOptions getInstance(Project project) {
     return project.getService(AnalysisUIOptions.class);
   }
@@ -145,8 +143,8 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
     XmlSerializerUtil.copyBean(state, this);
   }
 
-  private abstract static class InspectionResultsViewToggleAction extends ToggleAction {
-    @NotNull private final InspectionResultsView myView;
+  private abstract static class InspectionResultsViewToggleAction extends ToggleAction implements DumbAware {
+    private final @NotNull InspectionResultsView myView;
 
     InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
                                       @NotNull @NlsActions.ActionText String text,

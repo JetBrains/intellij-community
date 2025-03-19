@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public final class NotificationParentGroup {
   private static final ExtensionPointName<NotificationParentGroupBean> EP_NAME =
@@ -65,33 +67,28 @@ public final class NotificationParentGroup {
     }
   }
 
-  @Nullable
-  public static String getReplaceTitle(@NotNull String groupId) {
+  public static @Nullable String getReplaceTitle(@NotNull String groupId) {
     prepareInfo();
     return myReplaceTitles.get(groupId);
   }
 
-  @Nullable
-  public static String getShortTitle(@NotNull String groupId) {
+  public static @Nullable String getShortTitle(@NotNull String groupId) {
     prepareInfo();
     return myShortTitles.get(groupId);
   }
 
-  @NotNull
-  public static List<NotificationParentGroupBean> getChildren(@NotNull NotificationParentGroupBean parent) {
+  public static @NotNull List<NotificationParentGroupBean> getChildren(@NotNull NotificationParentGroupBean parent) {
     prepareInfo();
     List<NotificationParentGroupBean> children = myChildren.get(parent);
     return children == null ? Collections.emptyList() : children;
   }
 
-  @NotNull
-  public static Collection<NotificationParentGroupBean> getParents() {
+  public static @NotNull Collection<NotificationParentGroupBean> getParents() {
     prepareInfo();
     return Collections.unmodifiableCollection(myParents.values());
   }
 
-  @Nullable
-  public static NotificationParentGroupBean findParent(@NotNull NotificationSettings setting) {
+  public static @Nullable NotificationParentGroupBean findParent(@NotNull NotificationSettings setting) {
     prepareInfo();
 
     String groupId = setting.getGroupId();

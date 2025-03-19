@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
@@ -6,15 +6,17 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class LightEditFeatureUsagesUtil extends CounterUsagesCollector {
 
   private static final EventLogGroup GROUP = new EventLogGroup("light.edit", 3);
   private static final EventId1<OpenPlace> OPEN_FILE_EVENT_ID =
     GROUP.registerEvent("open.file", EventFields.Enum("open_place", OpenPlace.class));
-  private final static EventId1<Boolean> AUTO_SAVE_MODE_EVENT_ID = GROUP.registerEvent("autosave.mode", EventFields.Boolean("enabled"));
-  private final static EventId1<ProjectStatus> OPEN_IN_PROJECT_EVENT_ID =
+  private static final EventId1<Boolean> AUTO_SAVE_MODE_EVENT_ID = GROUP.registerEvent("autosave.mode", EventFields.Boolean("enabled"));
+  private static final EventId1<ProjectStatus> OPEN_IN_PROJECT_EVENT_ID =
     GROUP.registerEvent("open.in.project", EventFields.Enum("project_status", ProjectStatus.class));
 
   public enum OpenPlace {

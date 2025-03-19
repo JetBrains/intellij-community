@@ -1,5 +1,6 @@
 import argparse
 import ast
+from _typeshed import Incomplete
 from collections.abc import Generator, Iterable
 from typing import Any, ClassVar
 
@@ -17,4 +18,4 @@ class pep257Checker:
     def parse_options(cls, options: argparse.Namespace) -> None: ...
     def run(self) -> Generator[tuple[int, int, str, type[Any]], None, None]: ...
 
-def __getattr__(name: str) -> Any: ...  # incomplete
+def __getattr__(name: str) -> Incomplete: ...

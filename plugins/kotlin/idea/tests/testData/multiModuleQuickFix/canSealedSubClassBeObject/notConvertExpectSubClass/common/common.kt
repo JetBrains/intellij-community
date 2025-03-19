@@ -2,6 +2,6 @@
 // TOOL: org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection
 // ACTION: Make internal
 // ERROR: Expected class 'Child' has no actual declaration in module testModule_Common
-
+// IGNORE_K2
 sealed class SealedClass
 expect cla<caret>ss Child : SealedClass

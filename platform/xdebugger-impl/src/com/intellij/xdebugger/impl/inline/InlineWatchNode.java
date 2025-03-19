@@ -3,8 +3,10 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface InlineWatchNode extends WatchNode {
 
   @NotNull

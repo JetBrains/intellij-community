@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
@@ -11,14 +12,24 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
+import com.intellij.util.indexing.InitialScanningSkipReporter.SourceOfScanning
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.getQueueFile
+import com.intellij.util.indexing.PersistentDirtyFilesQueue.readProjectDirtyFilesQueue
+import com.intellij.util.indexing.diagnostic.ScanningType.FULL_ON_INDEX_RESTART
+import com.intellij.util.indexing.diagnostic.ScanningType.PARTIAL_ON_INDEX_RESTART
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
@@ -28,25 +39,30 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
   private var nestedLevelCount = 0
   private var snapshot: FbiSnapshot? = null
   private var fileTypeTracker: FileTypeTracker? = null
+  private var allowSkippingFullScanning: Boolean = false
+
+  @ApiStatus.Internal
+  @TestOnly
+  fun allowSkippingFullScanning() {
+    allowSkippingFullScanning = true
+  }
 
   fun turnOff() {
+    LOG.info("Turning off file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount + 1}")
     val app = ApplicationManager.getApplication()
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread()
     LOG.assertTrue(!app.isWriteAccessAllowed)
     try {
       if (nestedLevelCount == 0) {
-        val headless = app.isHeadlessEnvironment
-        if (!headless) {
           val wasUp = dumbModeSemaphore.isUp
           dumbModeSemaphore.down()
           if (wasUp) {
             for (project in ProjectUtil.getOpenProjects()) {
-              val scannerExecutor = project.getService(UnindexedFilesScannerExecutor::class.java)
+              val scannerExecutor = UnindexedFilesScannerExecutor.getInstance(project)
               scannerExecutor.suspendQueue()
               scannerExecutor.cancelAllTasksAndWait()
 
               val perProjectIndexingQueue = project.getService(PerProjectIndexingQueue::class.java)
-              perProjectIndexingQueue.cancelAllTasksAndWait()
               perProjectIndexingQueue.clear()
 
               val dumbService = DumbService.getInstance(project)
@@ -54,7 +70,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               MyDumbModeTask(dumbModeSemaphore).queue(project)
             }
           }
-        }
 
         LOG.assertTrue(fileTypeTracker == null)
         fileTypeTracker = FileTypeTracker()
@@ -80,36 +95,59 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   @JvmOverloads
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
+    LOG.info("Turning on file-based index. Reason: `$reason`. Nested level count: before=$nestedLevelCount, after=${nestedLevelCount - 1}")
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
     nestedLevelCount--
+    LOG.assertTrue(nestedLevelCount >= 0, "nestedLevelCount is less than 0: $nestedLevelCount. " +
+                                          "This probably means that DynamicPluginListener.plugin[Un]Loaded event was fired without corresponding 'before' event")
     if (nestedLevelCount == 0) {
       try {
         fileBasedIndex.loadIndexes()
-        val headless = ApplicationManager.getApplication().isHeadlessEnvironment
-        if (headless) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
           fileBasedIndex.waitUntilIndicesAreInitialized()
         }
-        if (!headless) {
-          for (project in ProjectUtil.getOpenProjects()) {
-            project.getService(UnindexedFilesScannerExecutor::class.java).resumeQueue()
-            project.getService(PerProjectIndexingQueue::class.java).resumeQueue()
-          }
-          dumbModeSemaphore.up()
+        for (project in ProjectUtil.getOpenProjects()) {
+          UnindexedFilesScannerExecutor.getInstance(project).resumeQueue()
+          FileBasedIndexInfrastructureExtension.attachAllExtensionsData(project)
         }
+        dumbModeSemaphore.up()
 
         val runRescanning = CorruptionMarker.requireInvalidation() || (Registry.`is`("run.index.rescanning.on.plugin.load.unload") ||
                             snapshot is FbiSnapshot.RebuildRequired ||
                             FbiSnapshot.Impl.isRescanningRequired(snapshot as FbiSnapshot.Impl, FbiSnapshot.Impl.capture()))
         if (runRescanning) {
+          val registeredIndexes = fileBasedIndex.registeredIndexes
           beforeIndexTasksStarted?.run()
-          cleanupProcessedFlag()
-          for (project in ProjectUtil.getOpenProjects()) {
-            UnindexedFilesUpdater(project, reason).queue()
+          if (!allowSkippingFullScanning) {
+            cleanupProcessedFlag(reason)
           }
-          LOG.info("Index rescanning has been started after `$reason`")
+          for (project in ProjectUtil.getOpenProjects()) {
+            val projectQueueFile = project.getQueueFile()
+            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
+            fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
+            fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
+            val indexesWereCorrupted = registeredIndexes.wasCorrupted
+            val indexesCleanupJob = scanAndIndexProjectAfterOpen(
+              project = project,
+              orphanQueue = registeredIndexes.orphanDirtyFilesQueue,
+              additionalOrphanDirtyFiles = emptySet(),
+              projectDirtyFilesQueue = projectDirtyFilesQueue,
+
+              allowSkippingFullScanning = allowSkippingFullScanning && !indexesWereCorrupted,
+              requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
+              coroutineScope = (project as ComponentManagerEx).getCoroutineScope(),
+              indexingReason = "On FileBasedIndexTumbler.turnOn (reason=$reason)",
+              fullScanningType = FULL_ON_INDEX_RESTART,
+              partialScanningType = PARTIAL_ON_INDEX_RESTART,
+              registeredIndexesWereCorrupted = indexesWereCorrupted,
+              sourceOfScanning = SourceOfScanning.IndexTumblerOn,
+            )
+            indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
+          }
+          LOG.info("Index rescanning has been started. Reason: `$reason`")
         }
         else {
-          LOG.info("Index rescanning has been skipped after `$reason`")
+          LOG.info("Index rescanning has been skipped. Reason `$reason`")
         }
       }
       finally {
@@ -125,6 +163,9 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
     private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
+        if (DumbServiceImpl.isSynchronousTaskExecution) {
+          return // TODO: this will be a deadlock otherwise (IJPL-578)
+        }
         indicator.text = IndexingBundle.message("indexes.reloading")
         semaphore.waitFor()
       }

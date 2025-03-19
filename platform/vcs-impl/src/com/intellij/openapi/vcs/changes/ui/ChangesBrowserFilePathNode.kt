@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.util.treeView.PathElementIdProvider
+import com.intellij.ide.util.treeView.SerializablePathElement
+import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -10,17 +13,21 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRelativePath
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 
-abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: FileStatus?) : ChangesBrowserNode<U>(userObject) {
+abstract class AbstractChangesBrowserFilePathNode<U>(
+  userObject: U,
+  val status: FileStatus?,
+) : ChangesBrowserNode<U>(userObject), PathElementIdProvider, ChangesBrowserNode.NodeWithCollapsedParents {
   private val filePath: FilePath get() = filePath(getUserObject())
+  private val flattenedParents = mutableListOf<SerializablePathElement>()
   private val originInfo: OriginInfo? by lazy(LazyThreadSafetyMode.NONE) { buildOriginInfo() }
 
   protected abstract fun filePath(userObject: U): FilePath
@@ -35,10 +42,12 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     return filePath.isDirectory && isLeaf
   }
 
-  override fun render(renderer: ChangesBrowserNodeRenderer,
-                      selected: Boolean,
-                      expanded: Boolean,
-                      hasFocus: Boolean) {
+  override fun render(
+    renderer: ChangesBrowserNodeRenderer,
+    selected: Boolean,
+    expanded: Boolean,
+    hasFocus: Boolean,
+  ) {
     val path = filePath
     if (renderer.isShowFlatten && isLeaf) {
       renderer.append(path.name, textAttributes)
@@ -57,6 +66,48 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
 
   override fun getBackgroundColor(project: Project): Color? = getBackgroundColorFor(project, filePath)
 
+  fun getOriginText(): String? = originInfo?.getText()
+
+  fun getRelativeFilePath(project: Project?, path: FilePath): @NlsSafe String {
+    val isLocal = !path.isNonLocal
+    val parentPath = safeCastToFilePath(getParent())
+    if (parentPath != null) {
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+    }
+    else if (isLocal) {
+      return VcsUtil.getPresentablePath(project, path, true, false)
+    }
+    else {
+      return path.path
+    }
+  }
+
+  @ApiStatus.Internal
+  override fun addCollapsedParent(parentNode: ChangesBrowserNode<*>) {
+    val parentUserObject = parentNode.userObject
+    if (parentUserObject !is FilePath) return
+    val parentsFromProvider = (parentNode as? PathElementIdProvider)?.flattenedElements
+    if (parentsFromProvider != null) {
+      flattenedParents.addAll(parentsFromProvider)
+    }
+    else {
+      flattenedParents.add(SerializablePathElement(
+        parentUserObject.name,
+        TreeState.defaultPathElementType(parentNode)
+      ))
+    }
+  }
+
+  override fun getPathElementId(): String = filePath.name
+
+  override fun getFlattenedElements(): List<SerializablePathElement?>? {
+    if (flattenedParents.isEmpty()) return null
+    return flattenedParents + SerializablePathElement(getPathElementId(), TreeState.defaultPathElementType(this))
+  }
+
   private fun appendOriginText(renderer: ChangesBrowserNodeRenderer) {
     originInfo?.let {
       renderer.append(FontUtil.spaceAndThinSpace() + it.getText(), SimpleTextAttributes.REGULAR_ATTRIBUTES)
@@ -66,7 +117,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
   private fun buildOriginInfo(): OriginInfo? {
     val originPath = originPath(getUserObject()) ?: return null
     val path = filePath
-    val areParentsEqual = CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(path.parentPath, originPath.parentPath)
+    val areParentsEqual = ChangesUtil.equalsCaseSensitive(path.parentPath, originPath.parentPath)
 
     return when {
       !areParentsEqual -> OriginInfo.Moved(getPresentableRelativePath(path, originPath))
@@ -80,18 +131,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   protected open fun getRelativePath(renderer: ChangesBrowserNodeRenderer?, path: FilePath): @NlsSafe String {
-    val parent = getParent()
-    val isLocal = !path.isNonLocal
-    if (parent is ChangesBrowserRootNode && isLocal) {
-      return VcsUtil.getPresentablePath(renderer?.project, path, true, false)
-    }
-    else {
-      val parentPath = safeCastToFilePath(parent)
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
-    }
+    return getRelativeFilePath(renderer?.project, path)
   }
 
   override fun getTextPresentation(): String {

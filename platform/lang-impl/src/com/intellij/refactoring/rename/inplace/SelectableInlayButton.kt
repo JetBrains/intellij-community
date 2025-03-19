@@ -5,10 +5,12 @@ import com.intellij.codeInsight.hints.presentation.DynamicDelegatePresentation
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.refactoring.rename.inplace.SelectableInlayPresentation.SelectionListener
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.Point
 import java.awt.event.MouseEvent
 
+@ApiStatus.Internal
 open class SelectableInlayButton(
   private val editor: EditorEx,
   private val default: InlayPresentation,
@@ -18,7 +20,7 @@ open class SelectableInlayButton(
 
   private val selectionListeners: MutableList<SelectionListener> = mutableListOf()
 
-  override var isSelected = false
+  override var isSelected: Boolean = false
     set(value) {
       field = value
       selectionListeners.forEach { it.selectionChanged(value) }

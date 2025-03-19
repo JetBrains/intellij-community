@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.JUnitPatcher;
@@ -6,9 +6,14 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.util.PropertiesUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -17,12 +22,15 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.MavenPropertyResolver;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenTestRunningSettings;
+import org.jetbrains.idea.maven.utils.MavenFilteredJarUtils;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.jps.maven.model.impl.MavenFilteredJarConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,14 +61,118 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
   public void patchJavaParameters(@Nullable Module module, JavaParameters javaParameters) {
     if (module == null) return;
 
-    MavenProject mavenProject = MavenProjectsManager.getInstance(module.getProject()).findProject(module);
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(module.getProject());
+    MavenProject mavenProject = projectsManager.findProject(module);
     if (mavenProject == null) return;
 
     UnaryOperator<String> runtimeProperties = getDynamicConfigurationProperties(module, mavenProject, javaParameters);
 
     configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-surefire-plugin", "surefire");
     configureFromPlugin(module, javaParameters, mavenProject, runtimeProperties, "maven-failsafe-plugin", "failsafe");
+    replaceFilteredJarDirectories(projectsManager, module, javaParameters, mavenProject);
   }
+
+  record DependenciesWithClassifiers(MavenId id, List<String> classifiers) {
+  }
+
+  record ReplaceInfo(List<MavenFilteredJarConfiguration> configurations, boolean append) {
+  }
+
+  private static List<DependenciesWithClassifiers> groupByClassifiers(@NotNull List<MavenArtifact> dependencies) {
+    var map = new LinkedHashMap<MavenId, List<String>>();
+    dependencies.forEach(d -> {
+      map.compute(d.getMavenId(), (i, l) -> {
+        if (l == null) {
+          return new SmartList<>(d.getClassifier());
+        }
+        else {
+          l.add(d.getClassifier());
+          return l;
+        }
+      });
+    });
+    return ContainerUtil.map(map.entrySet(), e -> new DependenciesWithClassifiers(e.getKey(), e.getValue()));
+  }
+
+
+  private static void replaceFilteredJarDirectories(MavenProjectsManager projectsManager,
+                                                    @NotNull Module module,
+                                                    JavaParameters parameters,
+                                                    MavenProject project) {
+    if (!Registry.is("maven.build.additional.jars")) return;
+    List<ReplaceInfo> fixClassPath = getClassPathReplaceInfos(projectsManager, project);
+
+    replaceClassPath(module, parameters, fixClassPath);
+  }
+
+  private static void replaceClassPath(@NotNull Module module, JavaParameters parameters, List<ReplaceInfo> fixClassPath) {
+    if (fixClassPath.isEmpty()) return;
+    String[] paths = ArrayUtil.toStringArray(parameters.getClassPath().getPathList());
+    ArrayList<String> resultingPath = new ArrayList<>(paths.length);
+    boolean pathFixed = false;
+    Map<String, ReplaceInfo> configurationMap = new HashMap<>();
+    fixClassPath.forEach(ri -> configurationMap.put(FileUtil.toCanonicalPath(ri.configurations.get(0).originalOutput), ri));
+
+    for (String path : paths) {
+      ReplaceInfo replaceInfo = configurationMap.get(FileUtil.toCanonicalPath(path));
+      if (replaceInfo != null) {
+        pathFixed = true;
+        if (replaceInfo.append) {
+          resultingPath.add(path);
+        }
+        resultingPath.addAll(ContainerUtil.map(replaceInfo.configurations, c -> c.jarOutput));
+      }
+      else {
+        resultingPath.add(path);
+      }
+    }
+    if (!pathFixed) {
+      LOG.warn(
+        "expected to replace " + fixClassPath.size() + " dependencies in running module " + module.getName() + ", but replaced 0");
+    }
+    else {
+      parameters.getClassPath().clear();
+      parameters.getClassPath().addAll(resultingPath);
+    }
+  }
+
+  private static @NotNull List<ReplaceInfo> getClassPathReplaceInfos(MavenProjectsManager projectsManager, MavenProject project) {
+    Set<MavenId> visited = new HashSet<>();
+
+
+    ArrayDeque<DependenciesWithClassifiers> queue = new ArrayDeque<>(groupByClassifiers(project.getDependencies()));
+
+    List<ReplaceInfo> fixClassPath = new ArrayList<>();
+    while (!queue.isEmpty()) {
+      var dependencies = queue.poll();
+      var depProject = projectsManager.findProject(dependencies.id);
+      if (depProject == null) continue;
+      if (!visited.add(dependencies.id)) continue;
+      List<MavenFilteredJarConfiguration> configurations =
+        ContainerUtil.mapNotNull(dependencies.classifiers, classifier -> findFilteredJarConfig(projectsManager, depProject, classifier));
+      if (!configurations.isEmpty()) {
+        fixClassPath.add(new ReplaceInfo(configurations, needAppendClasspath(dependencies.classifiers)));
+      }
+      queue.addAll(groupByClassifiers(project.getDependencies()));
+    }
+    return fixClassPath;
+  }
+
+  private static boolean needAppendClasspath(List<String> classifiers) {
+    for (String c : classifiers) {
+      if (c == null || c.isEmpty()) return true;
+    }
+    return false;
+  }
+
+
+  private static @Nullable MavenFilteredJarConfiguration findFilteredJarConfig(MavenProjectsManager projectsManager,
+                                                                               MavenProject mavenProject, String classifier) {
+    List<@NotNull MavenFilteredJarConfiguration> configurations =
+      MavenFilteredJarUtils.getAllFilteredConfigurations(projectsManager, mavenProject);
+    return ContainerUtil.find(configurations, c -> StringUtil.equals(c.classifier, classifier));
+  }
+
 
   private static void configureFromPlugin(@NotNull Module module,
                                           JavaParameters javaParameters,
@@ -140,7 +252,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
 
     List<String> paths = MavenJDOMUtil.findChildrenValuesByPath(config, "additionalClasspathElements", "additionalClasspathElement");
 
-    if (paths.size() > 0) {
+    if (!paths.isEmpty()) {
       for (String pathLine : paths) {
         for (String path : pathLine.split(",")) {
           javaParameters.getClassPath().add(resolvePluginProperties(plugin, path.trim(), domModel));
@@ -148,15 +260,22 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       }
     }
 
-    List<String> excludes = getExcludedArtifacts(config);
+    List<String> excludes = getExcludedCoordinates(config);
     String scopeExclude = MavenJDOMUtil.findChildValueByPath(config, "classpathDependencyScopeExclude");
 
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(module.getProject());
     if (scopeExclude != null || !excludes.isEmpty()) {
       for (MavenArtifact dependency : mavenProject.getDependencies()) {
-        if (scopeExclude!=null && SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
+        if (scopeExclude != null && SCOPE_FILTER.getOrDefault(scopeExclude, Collections.emptyList()).contains(dependency.getScope()) ||
             excludes.contains(dependency.getGroupId() + ":" + dependency.getArtifactId())) {
           File file = dependency.getFile();
           javaParameters.getClassPath().remove(file.getAbsolutePath());
+
+          Optional.ofNullable(mavenProjectsManager.findProject(dependency.getMavenId()))
+            .map(mavenProjectsManager::findModule)
+            .map(CompilerModuleExtension::getInstance)
+            .map(CompilerModuleExtension::getCompilerOutputPath)
+            .ifPresent(compilerOutputPath -> javaParameters.getClassPath().remove(compilerOutputPath));
         }
       }
     }
@@ -237,8 +356,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     return sb.toString();
   }
 
-  @NotNull
-  private static List<String> getExcludedArtifacts(@NotNull Element config) {
+  private static @NotNull List<String> getExcludedCoordinates(@NotNull Element config) {
     Element excludesElement = config.getChild("classpathDependencyExcludes");
     if (excludesElement == null) {
       return Collections.emptyList();
@@ -273,7 +391,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     while (matcher.find()) {
       String finding = matcher.group();
       final String propertyValue = vmParameters.getPropertyValue(finding.substring(2, finding.length() - 1));
-      if(propertyValue == null) continue;
+      if (propertyValue == null) continue;
       toReplace.put(finding, propertyValue);
     }
     for (Map.Entry<String, String> entry : toReplace.entrySet()) {

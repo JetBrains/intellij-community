@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
@@ -7,30 +7,37 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.toUiPathProperty
-import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
+import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.getCanonicalPath
+import com.intellij.openapi.ui.getPresentablePath
+import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.ui.validation.CHECK_DIRECTORY
 import com.intellij.openapi.ui.validation.CHECK_NON_EMPTY
 import com.intellij.openapi.ui.validation.WHEN_GRAPH_PROPAGATION_FINISHED
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.ui.util.minimumWidth
 import com.intellij.util.ui.JBUI
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager.getGradleVersionSafe
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager.Companion.getGradleVersionSafe
 import org.jetbrains.plugins.gradle.service.project.open.suggestGradleHome
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.LOCAL
 import org.jetbrains.plugins.gradle.service.settings.IdeaGradleDefaultProjectSettingsControl.DistributionTypeItem.WRAPPER
 import org.jetbrains.plugins.gradle.service.settings.PlaceholderGroup.Companion.placeholderGroup
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings
-import org.jetbrains.plugins.gradle.util.*
+import org.jetbrains.plugins.gradle.util.GradleBundle
+import org.jetbrains.plugins.gradle.util.GradleBundle.message
+import org.jetbrains.plugins.gradle.util.suggestGradleVersion
+import java.nio.file.Path
 
-class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
-
+internal class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
   private val propertyGraph = PropertyGraph()
 
   private val distributionTypeProperty = propertyGraph.lateinitProperty<DistributionTypeItem>()
@@ -58,7 +65,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
         row {
           label(GradleBundle.message("gradle.project.settings.distribution"))
             .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
-          comboBox(listOf(WRAPPER, LOCAL), listCellRenderer { text = it.text })
+          comboBox(listOf(WRAPPER, LOCAL), textListCellRenderer { it?.text })
             .columns(COLUMNS_SHORT)
             .bindItem(distributionTypeProperty)
         }
@@ -85,10 +92,10 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
                 label(GradleBundle.message("gradle.project.settings.distribution.local.location"))
                   .applyToComponent { minimumWidth = MINIMUM_LABEL_WIDTH }
                 val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                  .withTitle(message("gradle.project.settings.distribution.local.location.dialog"))
                   .withPathToTextConvertor(::getPresentablePath)
                   .withTextToPathConvertor(::getCanonicalPath)
-                val title = GradleBundle.message("gradle.project.settings.distribution.local.location.dialog")
-                textFieldWithBrowseButton(title, null, fileChooserDescriptor)
+                textFieldWithBrowseButton(fileChooserDescriptor)
                   .applyToComponent { setEmptyState(GradleBundle.message("gradle.project.settings.distribution.local.location.empty.state")) }
                   .bindText(gradleHomeProperty.toUiPathProperty())
                   .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
@@ -113,7 +120,7 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
 
   private fun setCurrentDefaultProjectSettings(settings: GradleDefaultProjectSettings) {
     distributionType = DistributionTypeItem.valueOf(settings.distributionType)
-    gradleVersions = getAllSupportedGradleVersions().map { it.version }
+    gradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea().map { it.version }
     autoSelectGradleVersion = settings.gradleVersion == null
     when (distributionType) {
       WRAPPER -> when (autoSelectGradleVersion) {
@@ -157,10 +164,11 @@ class IdeaGradleDefaultProjectSettingsControl : GradleSettingsControl() {
 
   private fun ValidationInfoBuilder.validateGradleHome(gradleHome: String): ValidationInfo? {
     val installationManager = GradleInstallationManager.getInstance()
-    if (!installationManager.isGradleSdkHome(null, gradleHome)) {
+    val gradleHomePath = Path.of(gradleHome)
+    if (!installationManager.isGradleSdkHome(null, gradleHomePath)) {
       return error(GradleBundle.message("gradle.project.settings.distribution.invalid"))
     }
-    val rawGradleVersion = GradleInstallationManager.getGradleVersion(gradleHome)
+    val rawGradleVersion = GradleInstallationManager.getGradleVersion(gradleHomePath)
     if (rawGradleVersion == null) {
       return error(GradleBundle.message("gradle.project.settings.distribution.version.invalid"))
     }

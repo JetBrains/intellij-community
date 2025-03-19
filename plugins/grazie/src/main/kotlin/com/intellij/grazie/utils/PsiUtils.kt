@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.utils
 
+import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
@@ -10,6 +11,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
+import java.util.regex.Pattern
 
 internal typealias PsiPointer<E> = SmartPsiElementPointer<E>
 
@@ -101,6 +103,9 @@ fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenS
     while (true) {
       sibling = (if (next) sibling.nextSibling else sibling.prevSibling) ?: break
       if (checkSibling(sibling)) {
+        if (isSuppressionComment(sibling)) {
+          break
+        }
         newLinesBetweenSiblingsCount = 0
         result.add(sibling)
       } else if (sibling is PsiWhiteSpace || sibling.elementType in whitespaceTokens) {
@@ -111,5 +116,21 @@ fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenS
     return result
   }
 
-  return element.process(false).reversed() + listOf(element) + element.process(true)
+  return buildList {
+    addAll(element.process(false).reversed())
+    if (!isSuppressionComment(element)) {
+      add(element)
+    }
+    addAll(element.process(true))
+  }
+}
+
+private val SUPPRESSION = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP)
+
+private fun isSuppressionComment(element: PsiElement): Boolean {
+  if (element !is PsiComment) return false
+  val manipulator = ElementManipulators.getManipulator(element) ?: return false
+  val valueRange = manipulator.getRangeInElement(element)
+  val commentText = element.text.substring(valueRange.startOffset, valueRange.endOffset)
+  return SUPPRESSION.matcher(commentText).matches()
 }

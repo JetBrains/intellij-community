@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.jetbrains.python.psi.PyStringLiteralExpression
@@ -20,9 +21,12 @@ import com.jetbrains.python.psi.stubs.PyModuleNameIndex
  * The completion contributor ensures that completion variants are resolvable with project source root configuration.
  * The list of completion variants does not include namespace packages (but includes their modules where appropriate).
  */
-class PyModulePackageCompletionContributor : PyExtendedCompletionContributor() {
+class PyModulePackageCompletionContributor : PyImportableNameCompletionContributor() {
 
   override fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (!parameters.isExtendedCompletion) {
+      return
+    }
 
     val targetFile = parameters.originalFile
     val inStringLiteral = parameters.position.parent is PyStringLiteralExpression
@@ -34,15 +38,13 @@ class PyModulePackageCompletionContributor : PyExtendedCompletionContributor() {
       .toList()
 
     val resolveContext = fromFoothold(targetFile)
-    val builders = modulesFromIndex.asSequence()
+    modulesFromIndex.asSequence()
       .flatMap { resolve(it, resolveContext) }
       .filter { PyUtil.isImportable(targetFile, it) }
       .mapNotNull { createLookupElementBuilder(targetFile, it) }
-      .map { it.withInsertHandler(
-            if (inStringLiteral) stringLiteralInsertHandler else importingInsertHandler)
-      }
-
-    builders.forEach { result.addElement(it) }
+      .map { it.withInsertHandler(if (inStringLiteral) stringLiteralInsertHandler else importingInsertHandler) }
+      .map { PrioritizedLookupElement.withPriority(it, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT.toDouble()) }
+      .forEach { result.addElement(it) }
   }
 
   private fun resolve(module: PsiFile, resolveContext: PyQualifiedNameResolveContext): Sequence<PsiFileSystemItem> {

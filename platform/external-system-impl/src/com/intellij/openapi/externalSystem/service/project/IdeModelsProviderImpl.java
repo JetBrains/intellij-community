@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -27,7 +14,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,13 +22,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
 import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 
 /**
  * @author Vladislav.Soroka
@@ -50,11 +35,9 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 public class IdeModelsProviderImpl implements IdeModelsProvider {
   private static final Logger LOG = Logger.getInstance(IdeModelsProviderImpl.class);
 
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
-  @NotNull
-  private final Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
+  private final @NotNull Map<ModuleData, Module> myIdeModulesCache = new WeakHashMap<>();
 
   private final Map<Module, Map<String, List<ModuleOrderEntry>>> myIdeModuleToModuleDepsCache = new WeakHashMap<>();
 
@@ -68,7 +51,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   @Override
-  public Module @NotNull [] getModules(@NotNull final ProjectData projectData) {
+  public Module @NotNull [] getModules(final @NotNull ProjectData projectData) {
     final List<Module> modules = ContainerUtil.filter(
       getModules(),
       module -> isExternalSystemAwareModule(projectData.getOwner(), module) &&
@@ -81,9 +64,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return ModuleRootManager.getInstance(module).getOrderEntries();
   }
 
-  @Nullable
   @Override
-  public Module findIdeModule(@NotNull ModuleData module) {
+  public @Nullable Module findIdeModule(@NotNull ModuleData module) {
     Module cachedIdeModule = myIdeModulesCache.get(module);
     if (cachedIdeModule == null) {
       for (String candidate : suggestModuleNameCandidates(module)) {
@@ -101,10 +83,10 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   protected Iterable<String> suggestModuleNameCandidates(@NotNull ModuleData module) {
-    ExternalProjectSettings settings = getSettings(myProject,
-                                                   module.getOwner()).getLinkedProjectSettings(module.getLinkedExternalProjectPath());
-    char delimiter = settings != null && settings.isUseQualifiedModuleNames() ? '.' : '-';
-    return new ModuleNameGenerator(module, delimiter).generate();
+    var settings = ExternalSystemApiUtil.getSettings(myProject, module.getOwner());
+    var projectSettings = settings.getLinkedProjectSettings(module.getLinkedExternalProjectPath());
+    var delimiter = projectSettings != null && !projectSettings.isUseQualifiedModuleNames() ? "-" : ".";
+    return ModuleNameGenerator.generate(module, delimiter);
   }
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
@@ -117,15 +99,13 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
            pathsEqual(getExternalProjectPath(ideModule), moduleData.getLinkedExternalProjectPath());
   }
 
-  @Nullable
   @Override
-  public Module findIdeModule(@NotNull String ideModuleName) {
+  public @Nullable Module findIdeModule(@NotNull String ideModuleName) {
     return ModuleManager.getInstance(myProject).findModuleByName(ideModuleName);
   }
 
-  @Nullable
   @Override
-  public UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
+  public @Nullable UnloadedModuleDescription getUnloadedModuleDescription(@NotNull ModuleData moduleData) {
     for (String moduleName : suggestModuleNameCandidates(moduleData)) {
       UnloadedModuleDescription unloadedModuleDescription = ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName);
 
@@ -137,9 +117,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public Library findIdeLibrary(@NotNull LibraryData libraryData) {
+  public @Nullable Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     for (Library ideLibrary : libraryTable.getLibraries()) {
       if (isRelated(ideLibrary, libraryData)) return ideLibrary;
@@ -147,9 +126,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
+  public @Nullable ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull Module module) {
     Map<String, List<ModuleOrderEntry>> namesToEntries = myIdeModuleToModuleDepsCache.computeIfAbsent(
       module, (m) -> Arrays.stream(getOrderEntries(m))
                            .filter(ModuleOrderEntry.class::isInstance)
@@ -172,9 +150,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @Nullable
   @Override
-  public OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data) {
+  public @Nullable OrderEntry findIdeModuleOrderEntry(@NotNull DependencyData data) {
     Module ownerIdeModule = findIdeModule(data.getOwnerModule());
     if (ownerIdeModule == null) return null;
 
@@ -212,10 +189,9 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return null;
   }
 
-  @NotNull
   @Override
-  public Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
-                                                                                        @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
+  public @NotNull Map<LibraryOrderEntry, LibraryDependencyData> findIdeModuleLibraryOrderEntries(@NotNull ModuleData moduleData,
+                                                                                                 @NotNull List<LibraryDependencyData> libraryDependencyDataList) {
     if (libraryDependencyDataList.isEmpty()) return Collections.emptyMap();
     Module ownerIdeModule = findIdeModule(moduleData);
     if (ownerIdeModule == null) return Collections.emptyMap();
@@ -237,7 +213,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     for (OrderEntry entry : getOrderEntries(ownerIdeModule)) {
       if (entry instanceof LibraryOrderEntry libraryOrderEntry) {
         if (!libraryOrderEntry.isModuleLevel()) continue;
-        final Set<String> entryPaths = ContainerUtil.map2Set(((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES),
+        final Set<String> entryPaths = ContainerUtil.map2Set(libraryOrderEntry.getRootUrls(OrderRootType.CLASSES),
                                                              s -> PathUtil.getLocalPath(VfsUtilCore.urlToPath(s)));
         LibraryDependencyData libraryDependencyData = libraryDependencyDataMap.get(entryPaths);
         if (libraryDependencyData != null && libraryOrderEntry.getScope() == libraryDependencyData.getScope()) {
@@ -268,9 +244,8 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraries();
   }
 
-  @Nullable
   @Override
-  public Library getLibraryByName(String name) {
+  public @Nullable Library getLibraryByName(String name) {
     return LibraryTablesRegistrar.getInstance().getLibraryTable(myProject).getLibraryByName(name);
   }
 
@@ -280,92 +255,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
   }
 
   @Override
-  @NotNull
-  public List<Module> getAllDependentModules(@NotNull Module module) {
+  public @NotNull List<Module> getAllDependentModules(@NotNull Module module) {
     return ModuleUtilCore.getAllDependentModules(module);
-  }
-
-  private static class ModuleNameGenerator {
-    private static final int MAX_FILE_DEPTH = 3;
-    private static final int MAX_NUMBER_SEQ = 2;
-    private final ModuleData myModule;
-    private final char myDelimiter;
-
-    ModuleNameGenerator(@NotNull ModuleData module, char delimiter) {
-      myModule = module;
-      myDelimiter = delimiter;
-    }
-
-    Iterable<String> generate() {
-      List<String> names = new ArrayList<>();
-      String prefix = myModule.getGroup();
-      File modulePath = new File(myModule.getLinkedExternalProjectPath());
-      if (modulePath.isFile()) {
-        modulePath = modulePath.getParentFile();
-      }
-
-      if (prefix == null || startsWith(myModule.getInternalName(), prefix)) {
-        names.add(myModule.getInternalName());
-      }
-      else {
-        names.add(myModule.getInternalName());
-        names.add(prefix + myDelimiter + myModule.getInternalName());
-      }
-
-      String name = names.get(0);
-      List<String> pathParts = FileUtil.splitPath(FileUtil.toSystemDependentName(modulePath.getPath()));
-      StringBuilder nameBuilder = new StringBuilder();
-      String duplicateCandidate = name;
-      for (int i = pathParts.size() - 1, j = 0; i >= 0 && j < MAX_FILE_DEPTH; i--, j++) {
-        String part = pathParts.get(i);
-
-        // do not add prefix which was already included into the name (e.g. as a result of deduplication on the external system side)
-        boolean isAlreadyIncluded = false;
-        if (!duplicateCandidate.isEmpty()) {
-          if (duplicateCandidate.equals(part) ||
-              duplicateCandidate.endsWith(myDelimiter + part) ||
-              duplicateCandidate.endsWith('_' + part)) {
-            j--;
-            duplicateCandidate = trimEnd(trimEnd(trimEnd(duplicateCandidate, part), myDelimiter), '_');
-            isAlreadyIncluded = true;
-          }
-          else {
-            if ((name.startsWith(part) || i > 1 && name.startsWith(pathParts.get(i - 1) + myDelimiter + part))) {
-              j--;
-              isAlreadyIncluded = true;
-            }
-            else {
-              duplicateCandidate = "";
-            }
-          }
-        }
-        if (isAlreadyIncluded) continue;
-
-        nameBuilder.insert(0, part + myDelimiter);
-        names.add(nameBuilder + name);
-      }
-
-      String namePrefix = ContainerUtil.getLastItem(names);
-      return new Iterable<>() {
-        @NotNull
-        @Override
-        public Iterator<String> iterator() {
-          return ContainerUtil.concatIterators(names.iterator(), new Iterator<>() {
-            int current = 0;
-
-            @Override
-            public boolean hasNext() {
-              return current < MAX_NUMBER_SEQ;
-            }
-
-            @Override
-            public String next() {
-              current++;
-              return namePrefix + '~' + current;
-            }
-          });
-        }
-      };
-    }
   }
 }

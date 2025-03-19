@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class PyUnusedLocalInspection extends PyInspection {
+public final class PyUnusedLocalInspection extends PyInspection {
   private static final Key<PyUnusedLocalInspectionVisitor> KEY = Key.create("PyUnusedLocal.Visitor");
 
   public boolean ignoreTupleUnpacking = true;
@@ -24,8 +24,7 @@ public class PyUnusedLocalInspection extends PyInspection {
   public boolean ignoreVariablesStartingWithUnderscore = true;
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     final PyUnusedLocalInspectionVisitor visitor = new PyUnusedLocalInspectionVisitor(holder,
                                                                                       ignoreTupleUnpacking,
                                                                                       ignoreLambdaParameters,

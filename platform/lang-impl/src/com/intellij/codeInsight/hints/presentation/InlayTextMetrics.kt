@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.getFontWithFallback
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.FontMetrics
@@ -21,79 +21,105 @@ import javax.swing.JComponent
 import kotlin.math.ceil
 import kotlin.math.max
 
+/** @see com.intellij.codeInsight.hints.InlayHintsUtils.getTextMetricStorage */
 @ApiStatus.Internal
 class InlayTextMetricsStorage(val editor: Editor) {
   private var smallTextMetrics : InlayTextMetrics? = null
   private var normalTextMetrics : InlayTextMetrics? = null
 
+  private var lastStamp : InlayTextMetricsStamp? = null
+
   private val smallTextSize: Float
     @RequiresEdt
-    get() = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
-
+    get() = max(1f, normalTextSize - 1f)
 
   private val normalTextSize: Float
     @RequiresEdt
     get() = editor.colorsScheme.editorFontSize2D
 
   @RequiresEdt
+  fun getCurrentStamp(): InlayTextMetricsStamp {
+    return InlayTextMetricsStamp(
+      // smallTextSize is derived from normalTextSize, so it can serve as a stamp for both metrics
+      normalTextSize,
+      getFontFamilyName(),
+      UISettings.getInstance().ideScale,
+      getFontRenderContext(editor.component)
+    )
+  }
+
+  @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
-    var metrics: InlayTextMetrics?
-
-    val familyName = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
-      EditorColorsManager.getInstance().globalScheme.editorFontName
-    } else {
-      StartupUiUtil.labelFont.family
+    val currentStamp = getCurrentStamp()
+    if (lastStamp != currentStamp) {
+      lastStamp = currentStamp
+      smallTextMetrics = null
+      normalTextMetrics = null
     }
-    val fontType = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).fontType
 
+    var metrics: InlayTextMetrics?
     if (small) {
       metrics = smallTextMetrics
-      val fontSize = smallTextSize
-      if (metrics == null || !metrics.isActual(smallTextSize, familyName)) {
-        metrics = InlayTextMetrics.create(editor, fontSize, fontType)
+      if (metrics == null) {
+        metrics = InlayTextMetrics.create(editor, smallTextSize, getFontType(), currentStamp.fontRenderContext)
         smallTextMetrics = metrics
       }
-    } else {
+    }
+    else {
       metrics = normalTextMetrics
-      val fontSize = normalTextSize
-      if (metrics == null || !metrics.isActual(normalTextSize, familyName)) {
-        metrics = InlayTextMetrics.create(editor, fontSize, fontType)
+      if (metrics == null) {
+        metrics = InlayTextMetrics.create(editor, normalTextSize, getFontType(), currentStamp.fontRenderContext)
         normalTextMetrics = metrics
       }
     }
     return metrics
   }
+
+  private fun getFontFamilyName() : String {
+    return if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+      EditorColorsManager.getInstance().globalScheme.editorFontName
+    } else {
+      StartupUiUtil.labelFont.family
+    }
+  }
+
+  private fun getFontType(): Int {
+    return editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).fontType
+  }
+
 }
+
+@ApiStatus.Internal
+@ConsistentCopyVisibility
+data class InlayTextMetricsStamp internal constructor(
+  val editorFontSize2D: Float,
+  val familyName: String,
+  val ideScale: Float,
+  val fontRenderContext: FontRenderContext
+)
 
 class InlayTextMetrics(
   editor: Editor,
   val fontHeight: Int,
   val fontBaseline: Int,
   private val fontMetrics: FontMetrics,
-  val fontType: Int
+  val fontType: Int,
+  private val ideScale: Float,
 ) {
   companion object {
-    internal fun create(editor: Editor, size: Float, fontType: Int) : InlayTextMetrics {
+    internal fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext) : InlayTextMetrics {
       val font = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
         val editorFont = EditorUtil.getEditorFont()
         editorFont.deriveFont(fontType, size)
       } else {
         val familyName = StartupUiUtil.labelFont.family
-        UIUtil.getFontWithFallback(familyName, fontType, size)
+        getFontWithFallback(familyName, fontType, size)
       }
-      val context = getCurrentContext(editor.component)
       val metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font
       val fontHeight = ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
       val fontBaseline = ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
-      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType)
-    }
-
-    private fun getCurrentContext(editorComponent: JComponent): FontRenderContext {
-      val editorContext = FontInfo.getFontRenderContext(editorComponent)
-      return FontRenderContext(editorContext.transform,
-                               AntialiasingType.getKeyForCurrentScope(false),
-                               UISettings.editorFractionalMetricsHint)
+      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType, UISettings.getInstance().ideScale)
     }
   }
 
@@ -103,13 +129,15 @@ class InlayTextMetrics(
   // Editor metrics:
   val ascent: Int = editor.ascent
   val descent: Int = (editor as? EditorImpl)?.descent ?: 0
-  val lineHeight = editor.lineHeight
+  val lineHeight: Int = editor.lineHeight
   private val editorComponent = editor.component
 
+  @Deprecated("Use InlayTextMetricsStorage.getCurrentStamp() to ensure actual metrics are used")
   fun isActual(size: Float, familyName: String) : Boolean {
     if (size != font.size2D) return false
     if (font.family != familyName) return false
-    return getCurrentContext(editorComponent).equals(fontMetrics.fontRenderContext)
+    if (ideScale != UISettings.getInstance().ideScale) return false
+    return getFontRenderContext(editorComponent).equals(fontMetrics.fontRenderContext)
   }
 
   /**
@@ -120,4 +148,11 @@ class InlayTextMetrics(
   fun getStringWidth(text: String): Int {
     return fontMetrics.stringWidth(text)
   }
+}
+
+private fun getFontRenderContext(editorComponent: JComponent): FontRenderContext {
+  val editorContext = FontInfo.getFontRenderContext(editorComponent)
+  return FontRenderContext(editorContext.transform,
+                           AntialiasingType.getKeyForCurrentScope(false),
+                           UISettings.editorFractionalMetricsHint)
 }

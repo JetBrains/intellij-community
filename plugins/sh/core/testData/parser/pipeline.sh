@@ -11,4 +11,14 @@ tpid=$!
 
 foo() {
   echo "test" |& tee $Log
+
+  echo "test2" |&
+   tee $Log
 }
+
+ls | cat | cat
+ls |
+cat |
+cat
+! ls | cat |
+cat

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -33,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxModuleUtil;
@@ -42,18 +42,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
+public final class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(JavaFxFieldToPropertyIntention.class);
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaFXBundle.message("intention.family.name.convert.to.javafx.property");
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return JavaFXBundle.message("intention.family.name.convert.to.javafx.property");
   }
 
@@ -84,10 +82,10 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     return IntentionPreviewInfo.EMPTY;
   }
 
-  private static class SearchUsagesTask extends Task.Modal {
+  private static final class SearchUsagesTask extends Task.Modal {
     private final PropertyInfo myProperty;
     private Collection<PsiReference> myReferences;
-    private Set<PsiFile> myFiles;
+    private @Unmodifiable Set<PsiFile> myFiles;
 
     SearchUsagesTask(@NotNull Project project,
                             @NotNull PropertyInfo property) {
@@ -147,8 +145,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  @Nullable
-  private static PsiField getField(@NotNull PsiElement element) {
+  private static @Nullable PsiField getField(@NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return null;
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     if (field == null) return null;
@@ -227,8 +224,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       this.myText = text;
     }
 
-    @Nullable
-    static ObservableType createObservableType(@NotNull PsiField field, @NotNull Project project) {
+    static @Nullable ObservableType createObservableType(@NotNull PsiField field, @NotNull Project project) {
       final PsiType type = field.getType();
       if (type instanceof PsiPrimitiveType) {
         final String text = JavaFxCommonNames.ourObservablePrimitiveWrappers.get(type);
@@ -267,8 +263,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       LOG.assertTrue(toTypeClass != null);
 
       final PsiElement parent = context.getParent();
-      if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression expression = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression expression) {
         final IElementType tokenType = expression.getOperationTokenType();
         if (tokenType == JavaTokenType.EQ) {
           return findSimpleAssignmentConversion(expression);
@@ -277,13 +272,11 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
         final String binarySign = sign.substring(0, sign.length() - 1);
         return findCompoundAssignmentConversion(from, expression, sign, binarySign);
       }
-      else if (parent instanceof PsiPostfixExpression) {
-        final PsiPostfixExpression expression = (PsiPostfixExpression)parent;
+      else if (parent instanceof PsiPostfixExpression expression) {
         final TypeConversionDescriptor conversion = getUpdateConversion(expression, expression.getOperationSign(), true);
         if (conversion != null) return conversion;
       }
-      else if (parent instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression expression = (PsiPrefixExpression)parent;
+      else if (parent instanceof PsiPrefixExpression expression) {
         final TypeConversionDescriptor conversion = getUpdateConversion(expression, expression.getOperationSign(), false);
         if (conversion != null) return conversion;
       }
@@ -323,7 +316,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservablePrimitive extends ObservableType {
+  static final class ObservablePrimitive extends ObservableType {
     final PsiPrimitiveType myType;
 
     ObservablePrimitive(@NotNull String text, @NotNull PsiPrimitiveType type) {
@@ -360,7 +353,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableString extends ObservableType {
+  static final class ObservableString extends ObservableType {
     ObservableString() {
       super(JavaFxCommonNames.JAVAFX_BEANS_PROPERTY_SIMPLE_STRING_PROPERTY);
     }
@@ -377,7 +370,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableList extends ObservableType {
+  static final class ObservableList extends ObservableType {
     final PsiType myOriginalType;
     final PsiType myItemType;
     final Project myProject;
@@ -389,8 +382,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       myProject = project;
     }
 
-    @Nullable
-    private static ObservableType createObservableList(@NotNull PsiType type, @NotNull Project project) {
+    private static @Nullable ObservableType createObservableList(@NotNull PsiType type, @NotNull Project project) {
       final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
       final PsiClass fieldClass = resolveResult.getElement();
       if (fieldClass != null) {
@@ -447,7 +439,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     }
   }
 
-  static class ObservableObject extends ObservableType {
+  static final class ObservableObject extends ObservableType {
     final PsiType myType;
 
     ObservableObject(@NotNull PsiType type) {

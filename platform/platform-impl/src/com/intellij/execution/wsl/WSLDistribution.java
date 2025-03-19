@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -8,25 +8,31 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Functions;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -34,6 +40,7 @@ import java.io.PrintWriter;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
@@ -41,7 +48,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
-import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+import static com.intellij.util.ObjectUtils.coalesce;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
@@ -65,8 +72,10 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
  */
 public class WSLDistribution implements AbstractWslDistribution {
   public static final String DEFAULT_WSL_MNT_ROOT = "/mnt/";
+  private static final String DEFAULT_WSL_IP = "127.0.0.1";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
+  static final String DEFAULT_SHELL = "/bin/sh";
   static final int DEFAULT_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 20_000);
   private static final String SHELL_PARAMETER = "$SHELL";
   public static final String WSL_EXE = "wsl.exe";
@@ -75,17 +84,18 @@ public class WSLDistribution implements AbstractWslDistribution {
   public static final String EXEC_PARAMETER = "--exec";
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
+  private static final Key<Boolean> NEVER_RUN_TTY_FIX = Key.create("Never run ttyfix");
 
   /**
    * @see <a href="https://www.gnu.org/software/bash/manual/html_node/Definitions.html#index-name">bash identifier definition</a>
    */
-  private static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+  static final Pattern ENV_VARIABLE_NAME_PATTERN = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
 
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
 
-  private final LazyInitializer.LazyValue<IpOrException> myHostIp = new LazyInitializer.LazyValue<>(() -> {
+  private final WslDistributionSafeNullableLazyValue<IpOrException> myLazyHostIp = WslDistributionSafeNullableLazyValue.create(() -> {
     try {
       return new IpOrException(readHostIp());
     }
@@ -93,18 +103,20 @@ public class WSLDistribution implements AbstractWslDistribution {
       return new IpOrException(e);
     }
   });
-  private final LazyInitializer.LazyValue<String> myWslIp = new LazyInitializer.LazyValue<>(() -> {
+  private final WslDistributionSafeNullableLazyValue<String> myLazyWslIp = WslDistributionSafeNullableLazyValue.create(() -> {
     try {
       return readWslIp();
     }
     catch (ExecutionException ex) {
       // See class doc, IP section
-      LOG.warn("Can't read WSL IP, will use default: 127.0.0.1", ex);
-      return "127.0.0.1";
+      LOG.warn("Can't read WSL IP, will use default: " + DEFAULT_WSL_IP, ex);
+      return DEFAULT_WSL_IP;
     }
   });
-  private final NullableLazyValue<String> myShellPath = lazyNullable(this::readShellPath);
-  private final NullableLazyValue<String> myUserHomeProvider = lazyNullable(this::readUserHome);
+  private final WslDistributionSafeNullableLazyValue<String> myLazyShellPath =
+    WslDistributionSafeNullableLazyValue.create(this::readShellPath);
+  private final WslDistributionSafeNullableLazyValue<String> myLazyUserHome =
+    WslDistributionSafeNullableLazyValue.create(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);
@@ -175,6 +187,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                              @NotNull WSLCommandLineOptions options,
                                              int timeout,
@@ -193,6 +206,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return output;
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }
@@ -200,6 +214,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
@@ -220,6 +235,35 @@ public class WSLDistribution implements AbstractWslDistribution {
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
+    if (mustRunCommandLineWithIjent(options)) {
+      LocalPtyOptions ptyOptions;
+      if (commandLine instanceof PtyCommandLine ptyCommandLine) {
+        ptyOptions = ptyCommandLine.getPtyOptions();
+      }
+      else {
+        ptyOptions = null;
+      }
+      commandLine.setProcessCreator((processBuilder) -> {
+        return ProgressManager.getInstance().runProcess(() -> {
+          return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
+        }, new EmptyProgressIndicator());
+      });
+    }
+    else {
+      doPatchCommandLine(commandLine, project, options);
+    }
+
+    return commandLine;
+  }
+
+  @VisibleForTesting
+  public static boolean mustRunCommandLineWithIjent(@NotNull WSLCommandLineOptions options) {
+    return WslIjentManager.getInstance().isIjentAvailable() && !options.isLaunchWithWslExe();
+  }
+
+  final @NotNull <T extends GeneralCommandLine> T doPatchCommandLine(@NotNull T commandLine,
+                                                                     @Nullable Project project,
+                                                                     @NotNull WSLCommandLineOptions options) throws ExecutionException {
     logCommandLineBefore(commandLine, options);
     Path executable = getExecutablePath();
     boolean launchWithWslExe = options.isLaunchWithWslExe() || executable == null;
@@ -247,7 +291,7 @@ public class WSLDistribution implements AbstractWslDistribution {
             project,
             IdeBundle.message("wsl.enter.root.password.dialog.title"),
             IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
-            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            new CredentialAttributes("WSL", "root"),
             true
           );
           if (password != null) {
@@ -267,7 +311,10 @@ public class WSLDistribution implements AbstractWslDistribution {
       prependCommand(linuxCommand, "cd", CommandLineUtil.posixQuote(options.getRemoteWorkingDirectory()), "&&");
     }
     if (executeCommandInShell && !options.isPassEnvVarsUsingInterop()) {
-      commandLine.getEnvironment().forEach((key, val) -> {
+      Comparator<Map.Entry<String, String>> comparator = Map.Entry.<String, String>comparingByKey().reversed();
+      commandLine.getEnvironment().entrySet().stream().sorted(comparator).forEach((entry) -> {
+        String key = entry.getKey();
+        String val = entry.getValue();
         if (ENV_VARIABLE_NAME_PATTERN.matcher(key).matches()) {
           prependCommand(linuxCommand, "export", key + "=" + CommandLineUtil.posixQuote(val), "&&");
         }
@@ -301,10 +348,13 @@ public class WSLDistribution implements AbstractWslDistribution {
         }
 
         if (options.isExecuteCommandInDefaultShell()) {
+          fixTTYSize(commandLine);
           commandLine.addParameters(SHELL_PARAMETER, "-c", linuxCommandStr);
         }
         else {
-          commandLine.addParameters(EXEC_PARAMETER, options.getShellPath());
+          commandLine.addParameter(EXEC_PARAMETER);
+          fixTTYSize(commandLine);
+          commandLine.addParameter(getShellPath());
           if (options.isExecuteCommandInInteractiveShell()) {
             commandLine.addParameters("-i");
           }
@@ -335,6 +385,30 @@ public class WSLDistribution implements AbstractWslDistribution {
     return commandLine;
   }
 
+
+  /***
+   * Never run {@link #fixTTYSize(GeneralCommandLine)}
+   */
+  public static @NotNull GeneralCommandLine neverRunTTYFix(@NotNull GeneralCommandLine commandLine) {
+    commandLine.putUserData(NEVER_RUN_TTY_FIX, true);
+    return commandLine;
+  }
+
+  /**
+   * Workaround for <a href="https://github.com/microsoft/WSL/issues/10701">wrong tty size WSL problem</a>
+   */
+  private void fixTTYSize(@NotNull GeneralCommandLine cmd) {
+    if (!WslDistributionDescriptor.isCalculatingMountRootCommand(cmd)
+        && cmd.getUserData(NEVER_RUN_TTY_FIX) == null // ttyfix not disabled explicitly
+        // Even though mount root is calculated with `options.isExecuteCommandInShell()=false`,
+        // let's protect from possible infinite recursion.
+        && !(cmd instanceof PtyCommandLine)  // PTY command line has correct tty size
+        && Registry.is("wsl.fix.initial.tty.size.when.running.without.tty", true)) {
+      var ttyfix = AbstractWslDistributionKt.getToolLinuxPath(this, "ttyfix");
+      cmd.addParameter(ttyfix);
+    }
+  }
+
   private void logCommandLineBefore(@NotNull GeneralCommandLine commandLine, @NotNull WSLCommandLineOptions options) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("[" + getId() + "] " +
@@ -353,7 +427,19 @@ public class WSLDistribution implements AbstractWslDistribution {
     }
   }
 
+  private static @Nullable Path testOverriddenWslExe;
+
+  @TestOnly
+  public static void testOverriddenWslExe(@NotNull Path path, @NotNull Disposable disposable) {
+    Disposer.register(disposable, () -> {
+      testOverriddenWslExe = null;
+    });
+    testOverriddenWslExe = path;
+  }
+
   public static @Nullable Path findWslExe() {
+    if (testOverriddenWslExe != null) return testOverriddenWslExe;
+
     File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
     return file != null ? file.toPath() : null;
   }
@@ -366,15 +452,15 @@ public class WSLDistribution implements AbstractWslDistribution {
   // https://blogs.msdn.microsoft.com/commandline/2017/12/22/share-environment-vars-between-wsl-and-windows/
   private static void passEnvironmentUsingInterop(@NotNull GeneralCommandLine commandLine) {
     StringBuilder builder = new StringBuilder();
-    for (String envName : commandLine.getEnvironment().keySet()) {
+    commandLine.getEnvironment().keySet().stream().sorted().forEach((envName) -> {
       if (StringUtil.isNotEmpty(envName)) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.append(":");
         }
         builder.append(envName).append("/u");
       }
-    }
-    if (builder.length() > 0) {
+    });
+    if (!builder.isEmpty()) {
       String prevValue = commandLine.getEnvironment().get(WslConstants.WSLENV);
       if (prevValue == null) {
         prevValue = commandLine.getParentEnvironment().get(WslConstants.WSLENV);
@@ -437,6 +523,9 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return environment map of the default user in wsl
    */
   public @Nullable Map<String, String> getEnvironment() {
+    if (WslIjentManager.getInstance().isIjentAvailable()) {
+      return WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
+    }
     try {
       ProcessOutput processOutput = WslExecution.executeInShellAndGetCommandOnlyStdout(
         this, new GeneralCommandLine("env"),
@@ -444,7 +533,7 @@ public class WSLDistribution implements AbstractWslDistribution {
           .setExecuteCommandInShell(true)
           .setExecuteCommandInLoginShell(true)
           .setExecuteCommandInInteractiveShell(true),
-        5000);
+        DEFAULT_TIMEOUT);
       if (processOutput.getExitCode() == 0) {
         Map<String, String> result = new HashMap<>();
         for (String string : processOutput.getStdoutLines()) {
@@ -495,9 +584,23 @@ public class WSLDistribution implements AbstractWslDistribution {
     return false;
   }
 
+  /**
+   * @deprecated Use {@link #getWslPath(Path)}
+   */
+  @Deprecated
+  public final @Nullable String getWslPath(@NotNull @NlsSafe String windowsPath) {
+    try {
+      return getWslPath(Path.of(windowsPath));
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Failed to convert '" + windowsPath + "' to wsl path", e);
+      return null;
+    }
+  }
+
   @Override
-  public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
-    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath);
+  public @Nullable @NlsSafe String getWslPath(@NotNull Path windowsPath) {
+    WslPath wslPath = WslPath.parseWindowsUncPath(windowsPath.toString());
     if (wslPath != null) {
       if (wslPath.getDistributionId().equalsIgnoreCase(myDescriptor.getMsId())) {
         return wslPath.getLinuxPath();
@@ -507,8 +610,8 @@ public class WSLDistribution implements AbstractWslDistribution {
                                          ", but context distribution is " + myDescriptor.getMsId());
     }
 
-    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
-      return getMntRoot() + convertWindowsPath(windowsPath);
+    if (OSAgnosticPathUtil.isAbsoluteDosPath(windowsPath.toString())) { // absolute windows path => /mnt/disk_letter/path
+      return getMntRoot() + convertWindowsPath(windowsPath.toString());
     }
     return null;
   }
@@ -521,7 +624,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public final @Nullable @NlsSafe String getUserHome() {
-    return myUserHomeProvider.getValue();
+    return getValueWithLogging(myLazyUserHome, "user's home path");
   }
 
   private @NlsSafe @Nullable String readUserHome() {
@@ -578,28 +681,32 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   private @NotNull String getUNCRootPathString() {
-    return WslConstants.UNC_PREFIX + myDescriptor.getMsId();
+    return WSLUtil.getUncPrefix() + myDescriptor.getMsId();
   }
 
   /**
    * Windows IP address. See class doc before using it, because this is probably not what you are looking for.
    *
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
+   * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
    */
-  @NotNull
-  public final InetAddress getHostIpAddress() throws ExecutionException {
-    return InetAddresses.forString(myHostIp.get().getIp());
+  @Deprecated(forRemoval = true)
+  public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
+    final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
+    if (hostIpOrException == null) {
+      throw new ExecutionException(IdeBundle.message("wsl.error.host.ip.not.obtained.message", getPresentableName()));
+    }
+    return InetAddresses.forString(hostIpOrException.getIp());
   }
 
   /**
    * Linux IP address. See class doc IP section for more info.
    */
-  @NotNull
-  public final InetAddress getWslIpAddress() {
+  public final @NotNull InetAddress getWslIpAddress() {
     if (Registry.is("wsl.proxy.connect.localhost")) {
-      return InetAddress.getLoopbackAddress();
+      return InetAddresses.forString(DEFAULT_WSL_IP);
     }
-    return InetAddresses.forString(myWslIp.get());
+    return InetAddresses.forString(coalesce(getValueWithLogging(myLazyWslIp, "WSL IP"), DEFAULT_WSL_IP));
   }
 
   // https://docs.microsoft.com/en-us/windows/wsl/compare-versions#accessing-windows-networking-apps-from-linux-host-ip
@@ -666,10 +773,9 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @return IP
    * @throws ExecutionException IP can't be parsed
    */
-  @NotNull
-  private String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
-                                       @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
-                                       @NotNull String @NotNull ... command)
+  private @NotNull String executeAndParseOutput(@NlsContexts.DialogMessage @NotNull String ipType,
+                                                @NotNull Function<List<@NlsSafe String>, @Nullable String> parser,
+                                                @NotNull String @NotNull ... command)
     throws ExecutionException {
     final ProcessOutput output;
     output = executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), 10_000, null);
@@ -692,21 +798,49 @@ public class WSLDistribution implements AbstractWslDistribution {
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {
+    if (WslIjentAvailabilityService.getInstance().runWslCommandsViaIjent()) {
+      Map<String, String> map = WslIjentUtil.fetchLoginShellEnv(WslIjentManager.getInstance(), this, null, false);
+      return map.get(name);
+    }
     WSLCommandLineOptions options = new WSLCommandLineOptions()
       .setExecuteCommandInInteractiveShell(true)
-      .setExecuteCommandInLoginShell(true)
-      .setShellPath(getShellPath());
-    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name), options, DEFAULT_TIMEOUT,
+      .setExecuteCommandInLoginShell(true);
+    return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", name),
+                                                              options.setLaunchWithWslExe(true), DEFAULT_TIMEOUT,
                                                               true);
   }
 
   public @NlsSafe @NotNull String getShellPath() {
-    return ObjectUtils.notNull(myShellPath.getValue(), WSLCommandLineOptions.DEFAULT_SHELL);
+    return coalesce(getValueWithLogging(myLazyShellPath, "user's shell path"), DEFAULT_SHELL);
   }
 
+  @VisibleForTesting
+  protected @Nullable String testOverriddenShellPath;
+
   private @NlsSafe @Nullable String readShellPath() {
-    WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true);
+    if (testOverriddenShellPath != null) return testOverriddenShellPath;
+
+    WSLCommandLineOptions options = new WSLCommandLineOptions().setExecuteCommandInDefaultShell(true).setLaunchWithWslExe(true);
     return WslExecution.executeInShellAndGetCommandOnlyStdout(this, new GeneralCommandLine("printenv", "SHELL"), options, DEFAULT_TIMEOUT,
                                                               true);
+  }
+
+  private <T> @Nullable T getValueWithLogging(final @NotNull WslDistributionSafeNullableLazyValue<T> lazyValue,
+                                              final @NotNull String fieldName) {
+    final T value = lazyValue.getValue();
+
+    if (value == null) {
+      final var app = ApplicationManager.getApplication();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Lazy value for %s returned null: MsId=%s, EDT=%s, RA=%s, stackTrace=%s"
+                    .formatted(fieldName, getMsId(), app.isDispatchThread(), app.isReadAccessAllowed(), ExceptionUtil.currentStackTrace()));
+      }
+      else {
+        LOG.warn("Lazy value for %s returned null: MsId=%s, EDT=%s, RA=%s"
+                   .formatted(fieldName, getMsId(), app.isDispatchThread(), app.isReadAccessAllowed()));
+      }
+    }
+
+    return value;
   }
 }

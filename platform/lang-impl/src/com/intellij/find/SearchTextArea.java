@@ -1,9 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -35,6 +35,8 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
@@ -43,9 +45,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -58,6 +58,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
   private static final JBColor BACKGROUND_COLOR = JBColor.namedColor("Editor.SearchField.background", UIUtil.getTextFieldBackground());
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
+
+  /**
+   * @deprecated Use {@link #getNewLineKeystroke()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
 
@@ -74,6 +79,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private boolean myMultilineEnabled = true;
+  private boolean myShowNewLineButton = true;
 
   /**
    * @deprecated infoMode is not used. Use the other constructor.
@@ -94,7 +100,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myTextArea);
     LightEditActionFactory.create(event -> myTextArea.transferFocusBackward())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK)), myTextArea);
-    KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEW_LINE_KEYSTROKE, WHEN_FOCUSED);
+    KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), getNewLineKeystroke(), WHEN_FOCUSED);
     myTextArea.setDocument(new PlainDocument() {
       @Override
       public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
@@ -220,7 +226,7 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
 
     boolean showClearIcon = !StringUtil.isEmpty(myTextArea.getText());
-    boolean showNewLine = myMultilineEnabled;
+    boolean showNewLine = myMultilineEnabled && myShowNewLineButton;
     boolean wrongVisibility =
       ((myClearButton.getParent() == null) == showClearIcon) || ((myNewLineButton.getParent() == null) == showNewLine);
 
@@ -229,10 +235,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       myIconsPanel.removeAll();
       myIconsPanel.setLayout(new BorderLayout());
       myIconsPanel.add(myClearButton, BorderLayout.CENTER);
-      myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
+      if (showNewLine) myIconsPanel.add(myNewLineButton, BorderLayout.EAST);
       resetPreferredSize(myIconsPanel);
       if (!showClearIcon) myIconsPanel.remove(myClearButton);
-      if (!showNewLine) myIconsPanel.remove(myNewLineButton);
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
     }
@@ -306,8 +311,12 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     updateIconsLayout();
   }
 
-  @NotNull
-  public JTextArea getTextArea() {
+  public void setShowNewLineButton(boolean show) {
+    myShowNewLineButton = show;
+    updateIconsLayout();
+  }
+
+  public @NotNull JTextArea getTextArea() {
     return myTextArea;
   }
 
@@ -332,7 +341,11 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   @Deprecated
   public void setInfoText(@SuppressWarnings("unused") String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
+  public static KeyStroke getNewLineKeystroke() {
+    return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (ClientSystemInfo.isMac() ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
+  }
+
+  private final class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     ShowHistoryAction() {
       super(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
             FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"),
@@ -351,15 +364,16 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       Dimension size = historyList.getPreferredSize();
       size.width = Math.min(size.width, getWidth() + 200);
       historyList.setPreferredSize(size);
+      historyList.getAccessibleContext()
+        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
       Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
     }
   }
 
-  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
+  private final class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
-      getTemplatePresentation().setHoveredIcon(
-        ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmallHovered : AllIcons.Actions.CloseHovered);
+      super(AllIcons.Actions.Close);
+      getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
     }
 
     @Override
@@ -369,10 +383,10 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
     }
   }
 
-  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
+  private final class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
-      setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
+      setShortcutSet(new CustomShortcutSet(getNewLineKeystroke()));
       getTemplatePresentation().setHoveredIcon(AllIcons.Actions.SearchNewLineHover);
     }
 
@@ -408,9 +422,27 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       }
       return super.getIcon();
     }
+
+    @Override
+    public @NotNull AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleActionButton() {
+          @Override
+          public AccessibleRole getAccessibleRole() {
+            if (MyActionButton.this.getButtonLook() == FIELD_INPLACE_LOOK) {
+              return AccessibleRole.CHECK_BOX;
+            }
+            else {
+              return super.getAccessibleRole();
+            }
+          }
+        };
+      }
+      return accessibleContext;
+    }
   }
 
-  private static class PseudoSeparatorBorder implements Border {
+  private static final class PseudoSeparatorBorder implements Border {
     @Override
     public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
       g.setColor(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground());

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.componentTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -26,8 +12,9 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,7 +23,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +40,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class ComponentTree extends Tree implements DataProvider {
+public final class ComponentTree extends Tree implements UiDataProvider {
   private final StartInplaceEditing myInplaceEditingAction;
   private QuickFixManager myQuickFixManager;
   private DesignerEditorPanel myDesigner;
@@ -125,21 +111,15 @@ public final class ComponentTree extends Tree implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (EditableArea.DATA_KEY.is(dataId)) {
-      return myArea;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(EditableArea.DATA_KEY, myArea);
     if (myDesigner != null) {
-      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-        return myDesigner.getEditor();
-      }
-      return myDesigner.getActionPanel().getData(dataId);
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
+      DataSink.uiDataSnapshot(sink, myDesigner.getActionPanel());
     }
-    return null;
   }
 
-  @Nullable
-  public RadComponent extractComponent(Object value) {
+  public @Nullable RadComponent extractComponent(Object value) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
     Object userObject = node.getUserObject();
 
@@ -172,8 +152,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     return super.getToolTipText(event);
   }
 
-  @Nullable
-  private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
+  private static @Nullable HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     for (ErrorInfo errorInfo : RadComponent.getError(component)) {

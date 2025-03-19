@@ -2,7 +2,7 @@ import org.jetbrains.annotations.NotNull;
 
 interface MakeNonNull {
   @NotNull
-  String getSnapshot(<warning descr="Overridden method parameters are not annotated">@NotN<caret>ull</warning> Integer arg);
+  String getSnapshot(<warning descr="Overriding method parameters are not annotated">@NotN<caret>ull</warning> Integer arg);
 }
 
 class MakeNonNullImpl implements MakeNonNull {

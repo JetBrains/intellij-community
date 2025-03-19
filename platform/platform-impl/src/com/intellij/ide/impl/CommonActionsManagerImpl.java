@@ -23,11 +23,6 @@ final class CommonActionsManagerImpl extends CommonActionsManager {
   }
 
   @Override
-  public AnAction createExpandAllAction(TreeExpander expander) {
-    return new ExpandAllAction(event -> expander);
-  }
-
-  @Override
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
     ExpandAllAction expandAllToolbarAction = new ExpandAllAction(event -> expander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
@@ -44,11 +39,6 @@ final class CommonActionsManagerImpl extends CommonActionsManager {
   @Override
   public AnAction createExpandAllHeaderAction(JTree tree) {
     return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
-  }
-
-  @Override
-  public AnAction createCollapseAllAction(TreeExpander expander) {
-    return new CollapseAllAction(event -> expander);
   }
 
   @Override

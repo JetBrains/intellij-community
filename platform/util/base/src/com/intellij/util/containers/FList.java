@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import kotlin.jvm.PurelyImplements;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
@@ -11,6 +12,7 @@ import java.util.NoSuchElementException;
 /**
  * Immutable list in functional style
  */
+@PurelyImplements("kotlin.collections.MutableList")
 public final class FList<E> extends AbstractList<E> {
   private static final FList<?> EMPTY_LIST = new FList<>(null, null, 0);
   private final E myHead;
@@ -65,9 +67,8 @@ public final class FList<E> extends AbstractList<E> {
     return this;
   }
 
-  @NotNull
   @Override
-  public Iterator<E> iterator() {
+  public @NotNull Iterator<E> iterator() {
     return new Iterator<E>() {
 
       private FList<E> list = FList.this;
@@ -136,6 +137,10 @@ public final class FList<E> extends AbstractList<E> {
   public static <E> FList<E> emptyList() {
     //noinspection unchecked
     return (FList<E>)EMPTY_LIST;
+  }
+
+  public static <E> FList<E> singleton(@NotNull E elem) {
+    return FList.<E>emptyList().prepend(elem);
   }
 
   /**

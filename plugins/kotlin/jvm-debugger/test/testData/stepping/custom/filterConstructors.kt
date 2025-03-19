@@ -94,5 +94,3 @@ fun main() {
     testExplicitConstructors()
     `test IDEA-317953`()
 }
-
-// IGNORE_K2

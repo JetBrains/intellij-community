@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
-import com.intellij.model.BranchableSyntheticPsiElement;
-import com.intellij.model.ModelBranch;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
-public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement, BranchableSyntheticPsiElement {
+public class LightRecordCanonicalConstructor extends LightMethod implements SyntheticElement {
   public LightRecordCanonicalConstructor(@NotNull PsiMethod method,
                                          @NotNull PsiClass containingClass) {
     super(method.getManager(), method, containingClass);
@@ -39,9 +38,8 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     return getNavigationElement().getTextOffset();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return getContainingClass();
   }
 
@@ -62,19 +60,6 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
   }
 
   @Override
-  public @NotNull LightRecordCanonicalConstructor obtainBranchCopy(@NotNull ModelBranch branch) {
-    PsiClass recordCopy = branch.obtainPsiCopy(myContainingClass);
-    PsiMethod accessorCopy = recordCopy.findMethodBySignature(this, false);
-    assert accessorCopy instanceof LightRecordCanonicalConstructor;
-    return (LightRecordCanonicalConstructor)accessorCopy;
-  }
-  
-  @Override
-  public @Nullable ModelBranch getModelBranch() {
-    return ModelBranch.getPsiBranch(myContainingClass);
-  }
-  
-  @Override
   public @NotNull PsiParameterList getParameterList() {
     PsiParameterList parameterList = super.getParameterList();
     return new LightParameterListWrapper(parameterList, this.mySubstitutor) {
@@ -94,6 +79,12 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
                                        p -> new LightRecordConstructorParameter(p, this, mySubstitutor));
       }
     };
+  }
+
+  @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    PsiClass copyClass = PsiTreeUtil.findSameElementInCopy(myContainingClass, copy);
+    return Objects.requireNonNull(JavaPsiRecordUtil.findCanonicalConstructor(copyClass));
   }
 
   public static class LightRecordConstructorParameter extends LightParameterWrapper {
@@ -151,6 +142,20 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     @Override
     public PsiFile getContainingFile() {
       return getParent().getContainingFile();
+    }
+
+    @Override
+    public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+      PsiParameterList parameterList = (PsiParameterList)getParent();
+      int index = parameterList.getParameterIndex(this);
+      PsiClass recordClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
+      PsiClass copyClass = PsiTreeUtil.findSameElementInCopy(recordClass, copy);
+      assert copyClass != null;
+      PsiMethod copyConstructor = JavaPsiRecordUtil.findCanonicalConstructor(copyClass);
+      assert copyConstructor != null;
+      PsiParameter copyParameter = copyConstructor.getParameterList().getParameter(index);
+      assert copyParameter != null;
+      return copyParameter;
     }
 
     @Override

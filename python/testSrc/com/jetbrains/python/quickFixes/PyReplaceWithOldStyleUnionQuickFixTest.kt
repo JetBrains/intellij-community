@@ -4,7 +4,6 @@ package com.jetbrains.python.quickFixes
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
 import com.jetbrains.python.inspections.PyCompatibilityInspection
-import com.jetbrains.python.psi.LanguageLevel
 
 class PyReplaceWithOldStyleUnionQuickFixTest: PyQuickFixTestCase() {
   // PY-44974

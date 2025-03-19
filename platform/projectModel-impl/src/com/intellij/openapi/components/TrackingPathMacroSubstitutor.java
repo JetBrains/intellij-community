@@ -15,12 +15,14 @@
  */
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
 
+@ApiStatus.Internal
 public interface TrackingPathMacroSubstitutor extends PathMacroSubstitutor {
   @NotNull
   Set<String> getUnknownMacros(@Nullable String componentName);

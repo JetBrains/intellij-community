@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,8 +24,7 @@ public final class CompilerCachesServerClient {
   private static final Logger LOG = Logger.getInstance(CompilerCachesServerClient.class);
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-  @NotNull
-  public static Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project, @NotNull String serverUrl) {
+  public static @NotNull Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project, @NotNull String serverUrl) {
     Map<String, List<String>> response = doGetRequest(project, serverUrl);
     if (response == null) return Collections.emptyMap();
     Map<String, Set<String>> result = new HashMap<>();

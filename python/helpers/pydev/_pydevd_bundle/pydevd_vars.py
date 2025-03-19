@@ -6,11 +6,11 @@ import pickle
 
 from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
-from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES, IS_ASYNCIO_DEBUGGER_ENV
+from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
-from _pydevd_asyncio_util.pydevd_asyncio_utils import eval_async_expression, eval_async_expression_in_context
+from _pydevd_bundle.pydevd_asyncio_provider import get_eval_async_expression
 
 try:
     from StringIO import StringIO
@@ -456,9 +456,9 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
-
-        if IS_ASYNCIO_DEBUGGER_ENV:
-            return eval_async_expression(expression, updated_globals, frame, doExec, get_eval_exception_msg)
+        eval_func = get_eval_async_expression()
+        if eval_func is not None:
+            return eval_func(expression, updated_globals, frame, doExec, get_eval_exception_msg)
 
         if doExec:
             try:
@@ -549,6 +549,9 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
+    if rows == 0 and cols == 0:
+        return xml
+
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
         array = array[0]
@@ -582,6 +585,21 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
     return xml
 
 
+def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
+
+
+def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
+    try:
+        import tensorflow as tf
+        return tensor_to_xml(tf.sparse.to_dense(tf.sparse.reorder(tensor)), name, roffset, coffset, rows, cols, format)
+    except ImportError:
+        pass
+
+
 class ExceedingArrayDimensionsException(Exception):
     pass
 
@@ -590,6 +608,19 @@ def array_to_meta_xml(array, name, format):
     type = array.dtype.kind
     slice = name
     l = len(array.shape)
+
+    if l == 0:
+        rows, cols = 0, 0
+        bounds = (0, 0)
+        return array, slice_to_xml(name, rows, cols, format, "", bounds), rows, cols, format
+
+    try:
+        import numpy as np
+        if isinstance(array, np.recarray) and l > 1:
+            slice = "{}['{}']".format(slice, array.dtype.names[0])
+            array = array[array.dtype.names[0]]
+    except ImportError:
+        pass
 
     # initial load, compute slice
     if format == '%':
@@ -615,20 +646,11 @@ def array_to_meta_xml(array, name, format):
         # http://stackoverflow.com/questions/16837946/numpy-a-2-rows-1-column-file-loadtxt-returns-1row-2-columns
         # explanation: http://stackoverflow.com/questions/15165170/how-do-i-maintain-row-column-orientation-of-vectors-in-numpy?rq=1
         # we use kind of a hack - get information about memory from C_CONTIGUOUS
-        is_row = array.flags['C_CONTIGUOUS']
-
-        if is_row:
-            rows = 1
-            cols = len(array)
-            if cols < len(array):
-                reslice = '[0:%s]' % (cols)
-            array = array[0:cols]
-        else:
-            cols = 1
-            rows = len(array)
-            if rows < len(array):
-                reslice = '[0:%s]' % (rows)
-            array = array[0:rows]
+        cols = 1
+        rows = len(array)
+        if rows < len(array):
+            reslice = '[0:%s]' % (rows)
+        array = array[0:rows]
     elif l == 2:
         rows = array.shape[-2]
         cols = array.shape[-1]
@@ -661,7 +683,10 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
         try:
-            yield ("%" + col_formatter) % (val,)
+            if val != val:
+                yield "nan"
+            else:
+                yield ("%" + col_formatter) % (val,)
         except TypeError:
             yield ("%" + DEFAULT_DF_FORMAT) % (val,)
 
@@ -681,6 +706,13 @@ def get_label(label):
 
 DATAFRAME_HEADER_LOAD_MAX_SIZE = 100
 
+class IAtPolarsAccessor:
+    def __init__(self, ps):
+        self.ps = ps
+
+    def __getitem__(self, row):
+        return self.ps[row]
+
 
 def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     """
@@ -695,7 +727,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     format = format.replace('%', '')
@@ -707,7 +739,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                except (IndexError, KeyError, AttributeError):
                     kind = 'O'
             format = array_default_format(kind)
         else:
@@ -740,27 +772,46 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df = df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(column_type):
         return get_column_formatter_by_type(format, column_type)
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
 
-    xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    xml += array_data_to_xml(rows, cols, formatted_row_elements, format='%s')
     return xml
+
+def dataset_to_xml(dataset, name, roffset, coffset, rows, cols, format):
+    return dataframe_to_xml(dataset.to_pandas(), name, roffset, coffset, rows, cols, format)
 
 
 def array_data_to_xml(rows, cols, get_row, format):
@@ -786,7 +837,7 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
                (str(col), col_label, dtypes[col], col_to_format(dtypes[col]), quote(str(col_format % bounds[1])), quote(str(col_format % bounds[0])))
     for row in range(rows):
-        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row])))
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), quote(get_label(df.axes[0][row] if dim != -1 else str(row))))
     xml += "</headerdata>\n"
     return xml
 
@@ -801,10 +852,16 @@ def is_able_to_format_number(format):
 
 TYPE_TO_XML_CONVERTERS = {
     "ndarray": array_to_xml,
+    "recarray": array_to_xml,
     "DataFrame": dataframe_to_xml,
     "Series": dataframe_to_xml,
     "GeoDataFrame": dataframe_to_xml,
-    "GeoSeries": dataframe_to_xml
+    "GeoSeries": dataframe_to_xml,
+    "EagerTensor": tensor_to_xml,
+    "ResourceVariable": tensor_to_xml,
+    "SparseTensor": sparse_tensor_to_xml,
+    "Tensor": tensor_to_xml,
+    "Dataset": dataset_to_xml
 }
 
 

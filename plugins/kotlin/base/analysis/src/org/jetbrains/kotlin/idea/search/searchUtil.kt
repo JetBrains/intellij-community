@@ -2,42 +2,24 @@
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
-import com.intellij.psi.impl.cache.impl.id.IdIndex
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.util.Processor
-import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.base.util.*
+import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.scriptDefinitionExists
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.base.util.useScope
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.util.minus' instead",
-    ReplaceWith("this.minus", imports = ["org.jetbrains.kotlin.idea.base.util.minus"]),
-    DeprecationLevel.ERROR
-)
-operator fun SearchScope.minus(otherScope: GlobalSearchScope): SearchScope = this and !otherScope
 
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.util.allScope' instead",
@@ -52,14 +34,6 @@ fun Project.allScope(): GlobalSearchScope = GlobalSearchScope.allScope(this)
     DeprecationLevel.ERROR
 )
 fun Project.projectScope(): GlobalSearchScope = GlobalSearchScope.projectScope(this)
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use 'org.jetbrains.kotlin.idea.base.util.moduleScope' instead",
-    ReplaceWith("this.moduleScope()", imports = ["org.jetbrains.kotlin.idea.base.util.moduleScope"]),
-    DeprecationLevel.ERROR
-)
-fun PsiFile.fileScope(): GlobalSearchScope = GlobalSearchScope.fileScope(this)
 
 /**
  * `( *\\( *)` and `( *\\) *)` – to find parenthesis
@@ -114,42 +88,15 @@ fun PsiElement.codeUsageScopeRestrictedToKotlinSources(): SearchScope = codeUsag
 fun PsiSearchHelper.isCheapEnoughToSearchConsideringOperators(
     name: String,
     scope: GlobalSearchScope,
-    fileToIgnoreOccurrencesIn: PsiFile?,
-    progress: ProgressIndicator?
+    fileToIgnoreOccurrencesIn: PsiFile? = null
 ): PsiSearchHelper.SearchCostResult {
     if (OperatorConventions.isConventionName(Name.identifier(name))) {
         return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
     }
 
-    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn, progress)
-}
-
-fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
-    val project = declaration.project
-    val scope = declaration.useScope() as? GlobalSearchScope ?: return true
-
-    val name = declaration.name.takeIf { it?.isNotBlank() == true } ?: return true
-    val collector = Processor<VirtualFile> { file ->
-        val ktFile =
-            (PsiManager.getInstance(project).findFile(file) as? KtFile)?.takeIf { it.scriptDefinitionExists() } ?: return@Processor true
-        processor(ktFile)
-    }
-    return FileBasedIndex.getInstance().getFilesWithKey(
-        IdIndex.NAME,
-        setOf(IdIndexEntry(name, true)),
-        collector,
-        scope
-    )
+    return isCheapEnoughToSearch(name, scope, fileToIgnoreOccurrencesIn)
 }
 
 fun PsiReference.isImportUsage(): Boolean =
     element.getNonStrictParentOfType<KtImportDirective>() != null
 
-// Used in the "mirai" plugin
-@ApiStatus.ScheduledForRemoval
-@Deprecated(
-    "Use org.jetbrains.kotlin.idea.base.psi.kotlinFqName",
-    level = DeprecationLevel.ERROR,
-    replaceWith = ReplaceWith("kotlinFqName", "org.jetbrains.kotlin.idea.base.psi.kotlinFqName")
-)
-fun PsiElement.getKotlinFqName(): FqName? = kotlinFqName

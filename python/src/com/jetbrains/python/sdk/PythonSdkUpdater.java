@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.google.common.collect.ImmutableList;
@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -25,7 +24,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -35,20 +33,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyPsiPackageUtil;
+import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
+import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +69,7 @@ import java.util.function.Function;
 /**
  * Refreshes all project's Python SDKs.
  */
-public final class PythonSdkUpdater implements StartupActivity, DumbAware {
+public final class PythonSdkUpdater {
   private static final Logger LOG = Logger.getInstance(PythonSdkUpdater.class);
 
   private static final Object ourLock = new Object();
@@ -82,18 +87,6 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
    */
-  @Override
-  public void runActivity(@NotNull Project project) {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) return;
-    if (application.isHeadlessEnvironment()) return; // see PythonHeadlessSdkUpdater
-    if (project.isDisposed()) return;
-
-    for (Sdk sdk : getPythonSdks(project)) {
-      scheduleUpdate(sdk, project);
-    }
-  }
-
   private static class PyUpdateSdkRequestData {
     final Instant myTimestamp;
     final Throwable myTraceback;
@@ -107,9 +100,8 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       myTraceback = traceback;
     }
 
-    @NotNull
-    private static PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
-                                                @NotNull PyUpdateSdkRequestData newRequest) {
+    private static @NotNull PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
+                                                         @NotNull PyUpdateSdkRequestData newRequest) {
       return new PyUpdateSdkRequestData(oldRequest.myTimestamp, newRequest.myTraceback);
     }
   }
@@ -143,36 +135,84 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       if (isSdkDisposed()) {
         return;
       }
+      // This explicit cancellation should become unnecessary on migrating PythonSdkUpdater to coroutines and withBackgroundProgress
+      Disposable indicatorDisposable = getIndicatorDisposable(indicator);
+      Disposer.register(PythonPluginDisposable.getInstance(myProject), indicatorDisposable);
       if (Trigger.LOG.isDebugEnabled()) {
         Trigger.LOG.debug(
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Registry.get("python.use.targets.api").asBoolean()) {
-          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
-          String version = targetsFacade.getInterpreterVersion(indicator);
-          commitSdkVersionIfChanged(mySdk, version);
-          if (targetsFacade.isLocalTarget()) {
-            List<String> paths = targetsFacade.getInterpreterPaths(indicator);
-            updateSdkPaths(mySdk, paths, myProject);
-          }
-          else {
-            targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
-          }
+        PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
+        String version = targetsFacade.getInterpreterVersion(indicator);
+        commitSdkVersionIfChanged(mySdk, version);
+        if (targetsFacade.isLocalTarget()) {
+          List<String> paths = targetsFacade.getInterpreterPaths(indicator);
+          updateSdkPaths(mySdk, paths, myProject);
         }
         else {
-          updateLocalSdkVersionAndPaths(mySdk, myProject);
+          targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
         }
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         refreshPackages(mySdk, indicator);
+        addBundledPyiStubsToInterpreterPaths(mySdk);
       }
-      catch (InvalidSdkException | ExecutionException e) {
+      catch (ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
+      finally {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          Disposer.dispose(indicatorDisposable);
+          // restart code analysis
+          DaemonCodeAnalyzer.getInstance(myProject).restart();
+        }, myProject.getDisposed());
+      }
+    }
 
-      // restart code analysis
-      ApplicationManager.getApplication().invokeLater(() -> DaemonCodeAnalyzer.getInstance(myProject).restart(), myProject.getDisposed());
+    private void addBundledPyiStubsToInterpreterPaths(@NotNull Sdk sdk) {
+      List<VirtualFile> allStubRoots = new ArrayList<>();
+      ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
+      ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(myProject, sdk);
+      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.getInstalledPackages(), PythonPackage::getName);
+      List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
+        .flatArray(root -> root.getChildren())
+        .filter(VirtualFile::isDirectory)
+        .filter(stubPkgRoot -> {
+          String stubPkgName = stubPkgRoot.getName();
+          String stubPkgAlias = PyPsiPackageUtil.INSTANCE.moduleToPackageName(stubPkgName, stubPkgName);
+          return installedPackageNames.contains(stubPkgName) || installedPackageNames.contains(stubPkgAlias);
+        })
+        .filter(stubPkgRoot -> {
+          String pypiStubPkgName = stubPkgRoot.getName().toLowerCase(Locale.ROOT) + "-stubs";
+          String typeshedStubPkgName = "types-" + stubPkgRoot.getName();
+          return !(installedPackageNames.contains(pypiStubPkgName) ||
+                   installedPackageNames.contains(typeshedStubPkgName));
+        })
+        .toList();
+
+      LOG.info("Bundled .pyi stub roots for SDK " + sdk + ":" + bundledStubRoots);
+      changeSdkModificator(sdk, effectiveModificator -> {
+        VirtualFile[] currentRoots = effectiveModificator.getRoots(OrderRootType.CLASSES);
+        effectiveModificator.removeAllRoots();
+        for (VirtualFile sdkPath : ContainerUtil.concat(List.of(currentRoots), bundledStubRoots)) {
+          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
+        }
+        return true;
+      });
+    }
+
+    private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
+      return indicator instanceof Disposable disposable ? disposable : new Disposable() {
+        @Override
+        public void dispose() {
+          LOG.info("Cancelling update for " + mySdk);
+          if (indicator.isRunning()) {
+            indicator.cancel();
+          }
+        }
+      };
     }
 
     private void refreshPackages(@NotNull Sdk sdk, @NotNull ProgressIndicator indicator) {
@@ -268,6 +308,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   /**
    * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
    */
+  @ApiStatus.Internal
   @Deprecated
   public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
@@ -302,7 +343,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
         }, PyBundle.message("sdk.gen.updating.interpreter"), false, project);
       }
       else {
-        LOG.assertTrue(!application.isReadAccessAllowed(), "Synchronous SDK update should not be run under read action");
+        LOG.assertTrue(!application.holdsReadLock(), "Synchronous SDK update should not be run under read action");
         updateLocalSdkVersionAndPaths(sdk, project);
       }
     }
@@ -354,7 +395,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData()));
   }
 
-  static boolean isUpdateScheduled(@NotNull Sdk sdk) {
+  public static boolean isUpdateScheduled(@NotNull Sdk sdk) {
     synchronized (ourLock) {
       return ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk);
     }
@@ -365,23 +406,25 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return;
     }
-    synchronized (ourLock) {
-      if (ourUnderRefresh.contains(sdk)) {
-        if (Trigger.LOG.isDebugEnabled()) {
-          PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
-          if (previousRequest != null) {
-            String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
-            Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
+    TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
+      synchronized (ourLock) {
+        if (ourUnderRefresh.contains(sdk)) {
+          if (Trigger.LOG.isDebugEnabled()) {
+            PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
+            if (previousRequest != null) {
+              String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
+              Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
+            }
           }
+          ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
+          return;
         }
-        ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
-        return;
+        else {
+          ourUnderRefresh.add(sdk);
+        }
       }
-      else {
-        ourUnderRefresh.add(sdk);
-      }
-    }
-    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
+      ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
+    });
   }
 
   /**
@@ -453,33 +496,39 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
     commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
 
-    final var pathsToTransfer = new HashSet<VirtualFile>();
-    pathsToTransfer.addAll(sdkRoots.second);
-    pathsToTransfer.addAll(userAddedRoots.second);
-    // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
-    HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
-    nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
-    pathsToTransfer.removeAll(nonTransferredModuleRoots);
-
-    /*
-    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
-
-    PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
-    that are not equal to module one (editable as well).
-
-    That's why roots changes were not applied but paths to transfer were successfully set.
-
-    When current method was executed for original sdk,
-    roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
-     */
-    if (ArrayUtil.contains(sdk, ProjectJdkTable.getInstance().getAllJdks()) &&
-        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    if (Registry.is("python.detect.cross.module.dependencies")) {
+      final var transferredPathCandidates = new HashSet<VirtualFile>();
+      transferredPathCandidates.addAll(sdkRoots.second);
+      transferredPathCandidates.addAll(userAddedRoots.second);
       if (project != null) {
-        PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+        PyTransferredSdkRootsKt.updateTransferredRoots(project, sdk, transferredPathCandidates);
       }
-      PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
-      if (project != null) {
-        PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+    }
+    else {
+      final var pathsToTransfer = new HashSet<VirtualFile>();
+      pathsToTransfer.addAll(sdkRoots.second);
+      pathsToTransfer.addAll(userAddedRoots.second);
+      // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
+      HashSet<VirtualFile> nonTransferredModuleRoots = new HashSet<>(moduleRoots);
+      nonTransferredModuleRoots.removeAll(PyTransferredSdkRootsKt.getPathsToTransfer(sdk));
+      pathsToTransfer.removeAll(nonTransferredModuleRoots);
+      /*
+      PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
+      that are not equal to module one (editable as well).
+  
+      That's why roots changes were not applied but paths to transfer were successfully set.
+  
+      When current method was executed for original sdk,
+      roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
+      */
+      if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+        if (project != null) {
+          PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
+        }
+        PyTransferredSdkRootsKt.setPathsToTransfer(sdk, pathsToTransfer);
+        if (project != null) {
+          PyTransferredSdkRootsKt.transferRootsToModulesWithSdk(project, sdk);
+        }
       }
     }
   }
@@ -494,23 +543,21 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     return false;
   }
 
-  @NotNull
-  private static List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
-                                                 @NotNull List<VirtualFile> sdkRoots,
-                                                 @NotNull List<VirtualFile> userAddedRoots) {
+  private static @NotNull List<VirtualFile> buildSdkPaths(@NotNull Sdk sdk,
+                                                          @NotNull List<VirtualFile> sdkRoots,
+                                                          @NotNull List<VirtualFile> userAddedRoots) {
     return ImmutableList.<VirtualFile>builder()
       .addAll(sdkRoots)
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
-      .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
+      .addAll(PyTypeShed.INSTANCE.findStdlibRootsForSdk(sdk))
       .build();
   }
 
   /**
    * Returns all the paths manually added to an SDK by the user.
    */
-  @NotNull
-  private static List<VirtualFile> getUserAddedPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<VirtualFile> getUserAddedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     final PythonSdkAdditionalData pythonAdditionalData = PyUtil.as(additionalData, PythonSdkAdditionalData.class);
     return pythonAdditionalData != null ? Lists.newArrayList(pythonAdditionalData.getAddedPathFiles()) :
@@ -522,8 +569,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
-  @NotNull
-  private static List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<String> getRemoteSdkMappedPaths(@NotNull Sdk sdk) {
     final SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
     if (additionalData instanceof RemoteSdkProperties remoteSdkData) {
       final List<String> paths = new ArrayList<>();
@@ -558,7 +604,8 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     return Pair.createNonNull(lib, source);
   }
 
-  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
     if (project != null) {
       final Set<VirtualFile> moduleRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -605,8 +652,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   /**
    * Returns the paths of the binary skeletons and user skeletons for an SDK.
    */
-  @NotNull
-  private static List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
+  private static @NotNull List<VirtualFile> getSkeletonsPaths(@NotNull Sdk sdk) {
     final List<VirtualFile> results = new ArrayList<>();
     final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(sdk);
     if (skeletonsPath != null) {
@@ -624,8 +670,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     return results;
   }
 
-  @NotNull
-  private static String getSdkPresentableName(@NotNull Sdk sdk) {
+  private static @NotNull String getSdkPresentableName(@NotNull Sdk sdk) {
     final String homePath = sdk.getHomePath();
     final String name = sdk.getName();
     return homePath != null ? name + " (" + homePath + ")" : name;
@@ -636,8 +681,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
    * <p>
    * Returns all the existing paths except those manually excluded by the user.
    */
-  @NotNull
-  private static List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
+  private static @NotNull List<String> evaluateSysPath(@NotNull Sdk sdk, @NotNull Project project) throws ExecutionException {
     final long startTime = System.currentTimeMillis();
     ProgressManager.progress(PyBundle.message("sdk.updating.interpreter.paths"));
     if (ApplicationManager.getApplication().isUnitTestMode() && PythonSdkType.isMock(sdk)) {
@@ -655,7 +699,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
    * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
-                                              @NotNull final List<VirtualFile> sdkPaths,
+                                              final @NotNull List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
     final List<VirtualFile> currentSdkPaths = Arrays.asList(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
@@ -679,7 +723,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
-        effectiveModificator.commitChanges();
+        ApplicationManager.getApplication().runWriteAction(() -> effectiveModificator.commitChanges());
       }
     });
   }
@@ -687,8 +731,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   /**
    * Returns unique Python SDKs for the open modules of the project.
    */
-  @NotNull
-  static Set<Sdk> getPythonSdks(@NotNull Project project) {
+  static @NotNull Set<Sdk> getPythonSdks(@NotNull Project project) {
     final Set<Sdk> pythonSdks = new LinkedHashSet<>();
 
     ReadAction.run(
@@ -707,7 +750,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
   }
 
   private enum Trigger {
-    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdater.runActivity"),
+    STARTUP_ACTIVITY("com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity.execute"),
     CHANGE_UNDER_INTERPRETER_ROOTS("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$subscribeToLocalChanges"),
     REFRESH_AFTER_PACKAGING_OPERATION("com.jetbrains.python.packaging.PyPackageManagerImpl.lambda$refresh"),
     NEW_SDK_GENERATION("com.jetbrains.python.sdk.PySdkExtKt.createSdkByGenerateTask"),
@@ -723,8 +766,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       myFrameMarker = frameMarker;
     }
 
-    @NotNull
-    public static String getCauseByTrace(@NotNull Throwable trace) {
+    public static @NotNull String getCauseByTrace(@NotNull Throwable trace) {
       final Trigger trigger = findTriggerByTrace(trace);
       if (trigger != null) {
         return trigger.name();
@@ -732,8 +774,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       return "Unknown trigger:\n" + ExceptionUtil.getThrowableText(trace);
     }
 
-    @Nullable
-    public static Trigger findTriggerByTrace(@NotNull Throwable trace) {
+    public static @Nullable Trigger findTriggerByTrace(@NotNull Throwable trace) {
       final String traceText = ExceptionUtil.getThrowableText(trace);
       for (Trigger value : values()) {
         if (traceText.contains(value.myFrameMarker)) {

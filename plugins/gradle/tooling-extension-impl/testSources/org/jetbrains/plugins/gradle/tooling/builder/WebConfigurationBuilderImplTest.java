@@ -1,36 +1,23 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.intellij.util.Function;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.junit.Test;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import static org.jetbrains.plugins.gradle.model.web.WebConfiguration.WarModel;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Vladislav.Soroka
@@ -43,35 +30,43 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
   @Test
   public void testDefaultWarModel() {
-    DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
+    createProjectFile("settings.gradle", GradleSettingScriptBuilder.create(gradleVersion, false)
+      .include("project")
+      .generate()
+    );
+    createProjectFile("project/build.gradle", "");
+    createProjectFile("build.gradle", GradleBuildScriptBuilder.create(gradleVersion, false)
+      .applyPlugin("war")
+      .addPostfix(
+        "configurations { moreLibs }\n" +
+        "war {\n" +
+        "  from('src/rootContent') { into 'bar' }\n" +
+        "  webInf { from 'src/additionalWebInf' } // adds a file-set to the WEB-INF dir.\n" +
+        "  exclude 'excl'\n" +
+        "  classpath fileTree('additionalLibs') // adds a file-set to the WEB-INF/lib dir.\n" +
+        "  classpath configurations.moreLibs // adds a configuration to the WEB-INF/lib dir.\n" +
+        "  webXml = file('src/someWeb.xml') // copies a file to WEB-INF/web.xml\n" +
+        "  classpath file('src/bbb')\n" +
+        "}"
+      )
+      .generate()
+    );
 
-    List<WebConfiguration> ideaModule = ContainerUtil.mapNotNull(
-      ideaModules, new Function<IdeaModule, WebConfiguration>() {
-        @Override
-        public WebConfiguration fun(IdeaModule module) {
-          return allModels.getModel(module, WebConfiguration.class);
-        }
-      });
+    GradleIdeaModelHolder models = runBuildAction(WebConfiguration.class);
 
-    assertEquals(1, ideaModule.size());
-    WebConfiguration webConfiguration = ideaModule.get(0);
+    DomainObjectSet<? extends IdeaModule> ideaModules = models.getRootModel(IdeaProject.class).getModules();
+    assertEquals(2, ideaModules.size());
+    IdeaModule ideaModule = ContainerUtil.find(ideaModules, it -> it.getName().equals("testDefaultWarModel"));
+    assertNotNull(ideaModule);
+
+    WebConfiguration webConfiguration = models.getProjectModel(ideaModule, WebConfiguration.class);
     assertEquals(1, webConfiguration.getWarModels().size());
+    WarModel warModel = webConfiguration.getWarModels().get(0);
 
-    final WarModel warModel = webConfiguration.getWarModels().iterator().next();
-    assertEquals("src/main/webapp", warModel.getWebAppDirName());
+    String webAppDirPath = FileUtil.toSystemIndependentName(warModel.getWebAppDir().getAbsolutePath());
+    assertTrue("Expect", webAppDirPath.endsWith("src/main/webapp"));
 
-    assertArrayEquals(
-      new String[]{"MANIFEST.MF", "additionalWebInf", "rootContent"},
-      ContainerUtil.map2Array(warModel.getWebResources(), new Function<WebConfiguration.WebResource, Object>() {
-        @Override
-        public Object fun(WebConfiguration.WebResource resource) {
-          return resource.getFile().getName();
-        }
-      }));
-  }
-
-  @Override
-  protected Set<Class<?>> getModels() {
-    return Collections.<Class<?>>singleton(WebConfiguration.class);
+    List<String> webResources = ContainerUtil.map(warModel.getWebResources(), it -> it.getFile().getName());
+    assertEquals(Arrays.asList("MANIFEST.MF", "additionalWebInf", "rootContent"), webResources);
   }
 }

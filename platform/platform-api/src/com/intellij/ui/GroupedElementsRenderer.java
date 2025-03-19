@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UpdateScaleHelper;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +22,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.util.ArrayList;
 
 public abstract class GroupedElementsRenderer implements Accessible {
   protected SeparatorWithText mySeparatorComponent = createSeparator();
@@ -61,8 +65,6 @@ public abstract class GroupedElementsRenderer implements Accessible {
 
     myTextLabel.setText(text);
     myRendererComponent.setToolTipText(tooltip);
-    AccessibleContextUtil.setName(myRendererComponent, myTextLabel);
-    AccessibleContextUtil.setDescription(myRendererComponent, myTextLabel);
 
     setComponentIcon(icon, disabledIcon);
     updateSelection(isSelected, myComponent, myTextLabel);
@@ -190,7 +192,7 @@ public abstract class GroupedElementsRenderer implements Accessible {
     }
   }
 
-  public class MyComponent extends OpaquePanel {
+  public class MyComponent extends OpaquePanel implements UiInspectorContextProvider {
 
     private int myPrefWidth = -1;
     private final @NotNull GroupedElementsRenderer renderer;
@@ -212,13 +214,54 @@ public abstract class GroupedElementsRenderer implements Accessible {
     }
 
     @ApiStatus.Internal
+    public @NotNull SeparatorWithText getSeparator() {
+      return mySeparatorComponent;
+    }
+
+    @ApiStatus.Internal
     public @NotNull GroupedElementsRenderer getRenderer() {
       return renderer;
+    }
+
+    @Override
+    public java.util.@NotNull List<PropertyBean> getUiInspectorContext() {
+      java.util.List<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Renderer Delegate", renderer));
+      result.add(new PropertyBean("Renderer Delegate Class", UiInspectorUtil.getClassPresentation(renderer)));
+      return result;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new MyAccessibleContext();
+      }
+      return accessibleContext;
+    }
+
+    private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
+      @Override
+      public String getAccessibleName() {
+        return GroupedElementsRenderer.this.getDelegateAccessibleName();
+      }
+
+      @Override
+      public String getAccessibleDescription() {
+        return GroupedElementsRenderer.this.getDelegateAccessibleDescription();
+      }
     }
   }
 
   @Override
   public AccessibleContext getAccessibleContext() {
     return myRendererComponent.getAccessibleContext();
+  }
+
+  protected @NlsSafe String getDelegateAccessibleName() {
+    return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleName() : null;
+  }
+
+  protected @NlsSafe String getDelegateAccessibleDescription() {
+    return myTextLabel != null ? myTextLabel.getAccessibleContext().getAccessibleDescription() : null;
   }
 }

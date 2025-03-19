@@ -2,11 +2,13 @@
 package org.jetbrains.kotlin.idea.debugger
 
 import com.sun.jdi.ReferenceType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 
 @Deprecated(
     "use org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil.isInKotlinSources instead",
     ReplaceWith("isInKotlinSources()", "org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources")
 )
+@ApiStatus.ScheduledForRemoval
 fun ReferenceType.isInKotlinSources(): Boolean =
     isInKotlinSources()

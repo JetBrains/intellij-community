@@ -54,6 +54,8 @@ public class ContextUnit {
   }
 
   public void addOtherEntry(String fullPath, String entry) {
+    if (DecompilerContext.getOption(IFernflowerPreferences.SKIP_EXTRA_FILES))
+        return;
     otherEntries.add(new String[]{fullPath, entry});
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.navigator.structure;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -9,9 +9,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import icons.MavenIcons;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -26,7 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.intellij.openapi.ui.UiUtils.getPresentablePath;
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
+@ApiStatus.Internal
+public final class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   private static final URL ERROR_ICON_URL = MavenProjectsStructure.class.getResource("/general/error.png");
 
   private final MavenProject myMavenProject;
@@ -34,6 +33,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   private final PluginsNode myPluginsNode;
   private final DependenciesNode myDependenciesNode;
   private final RunConfigurationsNode myRunConfigurationsNode;
+  private final RepositoriesNode myRepositoriesNode;
 
   private @NlsContexts.Tooltip String myTooltipCache;
 
@@ -43,6 +43,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
 
     myLifecycleNode = new LifecycleNode(structure, this);
     myPluginsNode = new PluginsNode(structure, this);
+    myRepositoriesNode = new RepositoriesNode(structure, this);
     myDependenciesNode = new DependenciesNode(structure, this, mavenProject);
     myRunConfigurationsNode = new RunConfigurationsNode(structure, this);
 
@@ -81,14 +82,22 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   protected List<? extends MavenSimpleNode> doGetChildren() {
     var children =
       new CopyOnWriteArrayList<MavenSimpleNode>(List.of(myLifecycleNode, myPluginsNode, myRunConfigurationsNode, myDependenciesNode));
+    if (isRoot()) {
+      children.add(myRepositoriesNode);
+    }
     children.addAll(super.doGetChildren());
     return children;
   }
 
   void updateProject() {
-    setErrorLevel(myMavenProject.getCacheProblems().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR);
+    var level = getErrors().isEmpty() ? MavenProjectsStructure.ErrorLevel.NONE : MavenProjectsStructure.ErrorLevel.ERROR;
+    setErrorLevel(level);
     myLifecycleNode.updateGoalsList();
     myPluginsNode.updatePlugins(myMavenProject);
+
+    if (isRoot()) {
+      myRepositoriesNode.updateRepositories(myProject);
+    }
 
     if (myMavenProjectsStructure.getDisplayMode() == MavenProjectsStructure.MavenStructureDisplayMode.SHOW_ALL) {
       myDependenciesNode.updateDependencies();
@@ -99,6 +108,10 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     myTooltipCache = makeDescription();
 
     myMavenProjectsStructure.updateFrom(getParent());
+  }
+
+  private List<MavenProjectProblem> getErrors() {
+    return myMavenProject.getProblems().stream().filter(MavenProjectProblem::isError).toList();
   }
 
   public void updateIgnored() {
@@ -130,12 +143,16 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     String hint = null;
 
     if (!getProjectsNavigator().getGroupModules()
-        && getProjectsManager().findAggregator(myMavenProject) == null
+        && isRoot()
         && getProjectsManager().getProjects().size() > getProjectsManager().getRootProjects().size()) {
       hint = "root";
     }
 
     setNameAndTooltip(presentation, getName(), myTooltipCache, hint);
+  }
+
+  private boolean isRoot() {
+    return getProjectsManager().findAggregator(myMavenProject) == null;
   }
 
   @Override
@@ -146,8 +163,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     return super.getPlainAttributes();
   }
 
-  @NlsContexts.DetailedDescription
-  private String makeDescription() {
+  private @NlsContexts.DetailedDescription String makeDescription() {
     StringBuilder desc = new StringBuilder();
 
     desc.append("<html>")
@@ -175,7 +191,7 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
   }
 
   private void appendProblems(StringBuilder desc) {
-    List<MavenProjectProblem> problems = myMavenProject.getCacheProblems();
+    List<MavenProjectProblem> problems = getErrors();
     if (problems.isEmpty()) return;
 
     desc.append("<tr>" +
@@ -201,7 +217,11 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
                 "</tr>");
   }
 
-  private String wrappedText(MavenProjectProblem each) {
+  RepositoriesNode getRepositoriesNode() {
+    return myRepositoriesNode;
+  }
+
+  private static String wrappedText(MavenProjectProblem each) {
     String description = ObjectUtils.chooseNotNull(each.getDescription(), each.getPath());
     if (description == null) return "";
 
@@ -239,10 +259,19 @@ class ProjectNode extends ProjectsGroupNode implements MavenProjectNode {
     }
   }
 
+  @TestOnly
+  public PluginsNode getPluginsNode() {
+    return myPluginsNode;
+  }
+
+  @TestOnly
+  @SuppressWarnings("unchecked")
+  public List<RepositoryNode> getListOfRepositoryNodes() {
+    return (List<RepositoryNode>)(List<?>)myRepositoriesNode.doGetChildren();
+  }
+
   @Override
-  @Nullable
-  @NonNls
-  protected String getMenuId() {
+  protected @Nullable @NonNls String getMenuId() {
     return "Maven.NavigatorProjectMenu";
   }
 }

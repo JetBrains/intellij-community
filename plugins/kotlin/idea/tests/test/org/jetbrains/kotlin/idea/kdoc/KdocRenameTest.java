@@ -27,12 +27,7 @@ public class KdocRenameTest extends KotlinLightCodeInsightFixtureTestCase {
         doTest("xyzzy");
     }
 
-    @Override
-    protected void setUp() {
-        super.setUp();
-    }
-
-    private void doTest(String newName) {
+  private void doTest(String newName) {
         myFixture.configureByFile(getTestName(false) + ".kt");
         PsiElement element = TargetElementUtil
                 .findTargetElement(getEditor(),

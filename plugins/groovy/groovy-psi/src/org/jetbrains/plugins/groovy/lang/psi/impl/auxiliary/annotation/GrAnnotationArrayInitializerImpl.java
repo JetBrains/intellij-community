@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
@@ -44,7 +44,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
   }
 
   @Override
-  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+  public ASTNode addInternal(@NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchor, Boolean before) {
     final GrAnnotationMemberValue[] initializers = getInitializers();
     if (initializers.length == 0) {
       return super.addInternal(first, last, getNode().getFirstChildNode(), false);
@@ -54,9 +54,8 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     return super.addInternal(first, last, lastChild.getTreePrev(), false);
   }
 
-  @NotNull
   @Override
-  public List<? extends PsiElement> getComponents() {
+  public @NotNull List<? extends PsiElement> getComponents() {
     return Arrays.asList(getInitializers());
   }
 }

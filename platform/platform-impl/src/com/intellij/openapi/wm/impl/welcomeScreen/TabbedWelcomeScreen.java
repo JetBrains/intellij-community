@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
@@ -16,6 +16,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UpdateScaleHelper;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,18 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private Disposable currentDisposable = null;
 
   TabbedWelcomeScreen() {
-    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(),
-         new TreeWelcomeScreenLeftPanel(), true, true);
+    this(true);
   }
 
-  public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories, WelcomeScreenLeftPanel leftSidebar, boolean addLogo, boolean addQuickAccessPanel) {
+  @ApiStatus.Internal
+  public TabbedWelcomeScreen(boolean addLogo) {
+    this(WelcomeTabFactory.WELCOME_TAB_FACTORY_EP.getExtensionList(), new TreeWelcomeScreenLeftPanel(), addLogo, true);
+  }
+
+  public TabbedWelcomeScreen(List<? extends WelcomeTabFactory> welcomeTabFactories,
+                             WelcomeScreenLeftPanel leftSidebar,
+                             boolean addLogo,
+                             boolean addQuickAccessPanel) {
     setBackground(WelcomeScreenUIManager.getMainTabListBackground());
 
     mainPanel = createCardPanel();
@@ -75,7 +83,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       centralPanel.add(mainPanelToolbar, BorderLayout.SOUTH);
     }
 
-    add(leftSidebarHolder, BorderLayout.WEST);
+    add(createLeftPanel(leftSidebarHolder), BorderLayout.WEST);
     add(centralPanel, BorderLayout.CENTER);
 
     if (ExperimentalUI.isNewUI()) {
@@ -84,6 +92,13 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     loadTabs(welcomeTabFactories);
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull BorderLayoutPanel createLeftPanel(JPanel content) {
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    panel.addToCenter(content);
+    return panel;
   }
 
   @Override
@@ -188,14 +203,14 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if (ExperimentalUI.isNewUI()) {
       // ActionButtons have own empty insets(1, 2)
       result.setBorder(JBUI.Borders.empty(15, 14));
-    } else {
+    }
+    else {
       result.setBorder(JBUI.Borders.empty(5, 10));
     }
     return result;
   }
 
-  @Nullable
-  private static JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
+  private static @Nullable JComponent createMainPanelToolbar(@NotNull Disposable parentDisposable) {
     return WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered().stream()
       .map(c -> c.createMainPanelToolbar(parentDisposable))
       .filter(Objects::nonNull)
@@ -245,15 +260,13 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     }
 
     @Override
-    @NotNull
-    public JComponent getKeyComponent(@NotNull JComponent parent) {
+    public @NotNull JComponent getKeyComponent(@NotNull JComponent parent) {
       keyUpdateScaleHelper.saveScaleAndUpdateUIIfChanged(myKeyComponent);
       return myKeyComponent;
     }
 
     @Override
-    @NotNull
-    public JComponent getAssociatedComponent() {
+    public @NotNull JComponent getAssociatedComponent() {
       if (myAssociatedComponent == null) {
         myAssociatedComponent = buildComponent();
       }

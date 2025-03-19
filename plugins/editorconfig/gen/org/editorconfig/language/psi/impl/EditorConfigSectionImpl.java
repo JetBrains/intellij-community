@@ -1,15 +1,19 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
-import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
+import org.editorconfig.language.psi.EditorConfigHeader;
+import org.editorconfig.language.psi.EditorConfigOption;
+import org.editorconfig.language.psi.EditorConfigSection;
+import org.editorconfig.language.psi.EditorConfigVisitor;
 import org.editorconfig.language.psi.base.EditorConfigSectionBase;
-import org.editorconfig.language.psi.*;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class EditorConfigSectionImpl extends EditorConfigSectionBase implements EditorConfigSection {
 
@@ -28,14 +32,12 @@ public class EditorConfigSectionImpl extends EditorConfigSectionBase implements 
   }
 
   @Override
-  @NotNull
-  public EditorConfigHeader getHeader() {
+  public @NotNull EditorConfigHeader getHeader() {
     return findNotNullChildByClass(EditorConfigHeader.class);
   }
 
   @Override
-  @NotNull
-  public List<EditorConfigOption> getOptionList() {
+  public @NotNull List<EditorConfigOption> getOptionList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigOption.class);
   }
 

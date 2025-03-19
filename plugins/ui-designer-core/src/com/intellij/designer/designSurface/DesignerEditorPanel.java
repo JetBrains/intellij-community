@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
@@ -39,8 +39,8 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
@@ -50,7 +50,6 @@ import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +69,7 @@ import java.util.Map;
  * @author Alexander Lobas
  */
 public abstract class DesignerEditorPanel extends JPanel
-  implements DesignerEditorPanelFacade, DataProvider, ModuleProvider, RadPropertyContext {
+  implements DesignerEditorPanelFacade, UiDataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance(DesignerEditorPanel.class);
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -80,13 +79,12 @@ public abstract class DesignerEditorPanel extends JPanel
   protected static final Integer LAYER_INPLACE_EDITING = LAYER_GLASS + 100;
   private static final Integer LAYER_PROGRESS = LAYER_INPLACE_EDITING + 100;
 
-  private final static String DESIGNER_CARD = "designer";
-  private final static String ERROR_CARD = "error";
-  private final static String ERROR_STACK_CARD = "stack";
-  private final static String ERROR_NO_STACK_CARD = "no_stack";
+  private static final String DESIGNER_CARD = "designer";
+  private static final String ERROR_CARD = "error";
+  private static final String ERROR_STACK_CARD = "stack";
+  private static final String ERROR_NO_STACK_CARD = "no_stack";
 
-  @NotNull
-  private final DesignerEditor myEditor;
+  private final @NotNull DesignerEditor myEditor;
   private final Project myProject;
   private Module myModule;
   protected final VirtualFile myFile;
@@ -145,7 +143,7 @@ public abstract class DesignerEditorPanel extends JPanel
     initUI();
 
     myToolProvider.loadDefaultTool();
-    myContentSplitter = new ThreeComponentsSplitter(myEditor);
+    myContentSplitter = new ThreeComponentsSplitter();
   }
 
   private void initUI() {
@@ -285,8 +283,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return new DesignerActionPanel(this, myGlassLayer);
   }
 
-  @Nullable
-  public final PaletteItem getActivePaletteItem() {
+  public final @Nullable PaletteItem getActivePaletteItem() {
     return myActivePaletteItem;
   }
 
@@ -395,7 +392,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   protected void addErrorMessage(final FixableMessageInfo message, Icon icon) {
-    if (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0) {
+    if (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty()) {
       HyperlinkLabel warnLabel = new HyperlinkLabel();
       warnLabel.setOpaque(false);
       warnLabel.setHyperlinkText(message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText);
@@ -420,7 +417,7 @@ public abstract class DesignerEditorPanel extends JPanel
       warnLabel.setIcon(icon);
       myErrorMessages.add(warnLabel);
     }
-    if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+    if (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty()) {
       JPanel fixesPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
       fixesPanel.setBorder(JBUI.Borders.empty(3, 0, 10, 0));
       fixesPanel.setOpaque(false);
@@ -494,9 +491,8 @@ public abstract class DesignerEditorPanel extends JPanel
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @NotNull
   @Override
-  public final Module getModule() {
+  public final @NotNull Module getModule() {
     if (myModule.isDisposed()) {
       myModule = findModule(myProject, myFile);
       if (myModule == null) {
@@ -506,14 +502,12 @@ public abstract class DesignerEditorPanel extends JPanel
     return myModule;
   }
 
-  @Nullable
-  protected Module findModule(Project project, VirtualFile file) {
+  protected @Nullable Module findModule(Project project, VirtualFile file) {
     return ModuleUtilCore.findModuleForFile(file, project);
   }
 
 
-  @NotNull
-  public final DesignerEditor getEditor() {
+  public final @NotNull DesignerEditor getEditor() {
     return myEditor;
   }
 
@@ -556,8 +550,7 @@ public abstract class DesignerEditorPanel extends JPanel
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  @Nullable
-  public List<?> getExpandedComponents() {
+  public @Nullable List<?> getExpandedComponents() {
     return myExpandedComponents;
   }
 
@@ -698,8 +691,7 @@ public abstract class DesignerEditorPanel extends JPanel
 
   protected abstract ComponentDecorator getRootSelectionDecorator();
 
-  @Nullable
-  protected EditOperation processRootOperation(OperationContext context) {
+  protected @Nullable EditOperation processRootOperation(OperationContext context) {
     return null;
   }
 
@@ -714,8 +706,7 @@ public abstract class DesignerEditorPanel extends JPanel
   /**
    * Returns a suitable version label from the version attribute from a {@link PaletteItem} version
    */
-  @NotNull
-  public @NlsSafe String getVersionLabel(@Nullable String version) {
+  public @NotNull @NlsSafe String getVersionLabel(@Nullable String version) {
     return StringUtil.notNullize(version);
   }
 
@@ -727,11 +718,9 @@ public abstract class DesignerEditorPanel extends JPanel
     return new SelectionTool();
   }
 
-  @NotNull
-  protected abstract ComponentCreationFactory createCreationFactory(PaletteItem paletteItem);
+  protected abstract @NotNull ComponentCreationFactory createCreationFactory(PaletteItem paletteItem);
 
-  @Nullable
-  public abstract ComponentPasteFactory createPasteFactory(String xmlComponents);
+  public abstract @Nullable ComponentPasteFactory createPasteFactory(String xmlComponents);
 
   public abstract String getEditorText();
 
@@ -741,8 +730,7 @@ public abstract class DesignerEditorPanel extends JPanel
   public void deactivate() {
   }
 
-  @NotNull
-  public DesignerEditorState createState() {
+  public @NotNull DesignerEditorState createState() {
     return new DesignerEditorState(myFile, getZoom());
   }
 
@@ -751,8 +739,8 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return myActionPanel.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, myActionPanel);
   }
 
   public void dispose() {
@@ -777,14 +765,12 @@ public abstract class DesignerEditorPanel extends JPanel
     return PaletteToolWindowManager.getInstance(this);
   }
 
-  @Nullable
-  public WrapInProvider getWrapInProvider() {
+  public @Nullable WrapInProvider getWrapInProvider() {
     return null;
   }
 
   @Override
-  @Nullable
-  public RadComponent getRootComponent() {
+  public @Nullable RadComponent getRootComponent() {
     return myRootComponent;
   }
 
@@ -797,8 +783,7 @@ public abstract class DesignerEditorPanel extends JPanel
   public void handleTreeArea(TreeEditableArea treeArea) {
   }
 
-  @NotNull
-  public TablePanelActionPolicy getTablePanelActionPolicy() {
+  public @NotNull TablePanelActionPolicy getTablePanelActionPolicy() {
     return TablePanelActionPolicy.ALL;
   }
 
@@ -853,8 +838,7 @@ public abstract class DesignerEditorPanel extends JPanel
   /**
    * Size of the scene, in scroll pane view port pixels.
    */
-  @NotNull
-  protected Dimension getSceneSize(Component target) {
+  protected @NotNull Dimension getSceneSize(Component target) {
     int width = 0;
     int height = 0;
 
@@ -920,8 +904,7 @@ public abstract class DesignerEditorPanel extends JPanel
     }
 
     @Override
-    @Nullable
-    public EditOperation processRootOperation(OperationContext context) {
+    public @Nullable EditOperation processRootOperation(OperationContext context) {
       return DesignerEditorPanel.this.processRootOperation(context);
     }
 
@@ -1101,14 +1084,13 @@ public abstract class DesignerEditorPanel extends JPanel
       }
     }
 
-    @NotNull
     @Override
-    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+    protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       for (final FixableMessageInfo message : myItems) {
         AnAction action;
-        if ((message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) ||
-            (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0)) {
+        if ((message.myQuickFix != null && (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty())) ||
+            (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty())) {
           final AnAction[] defaultAction = new AnAction[1];
           DefaultActionGroup popupGroup = new DefaultActionGroup() {
             @Override
@@ -1120,7 +1102,7 @@ public abstract class DesignerEditorPanel extends JPanel
           popupGroup.getTemplatePresentation().setPerformGroup(true);
           action = popupGroup;
 
-          if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
+          if (message.myQuickFix != null && (!message.myLinkText.isEmpty() || !message.myAfterLinkText.isEmpty())) {
             AnAction popupAction = new AnAction() {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e) {
@@ -1131,7 +1113,7 @@ public abstract class DesignerEditorPanel extends JPanel
             popupGroup.add(popupAction);
             defaultAction[0] = popupAction;
           }
-          if (message.myAdditionalFixes != null && message.myAdditionalFixes.size() > 0) {
+          if (message.myAdditionalFixes != null && !message.myAdditionalFixes.isEmpty()) {
             for (final Pair<@Nls String, Runnable> pair : message.myAdditionalFixes) {
               AnAction popupAction = new AnAction() {
                 @Override
@@ -1148,7 +1130,7 @@ public abstract class DesignerEditorPanel extends JPanel
           }
         }
         else {
-          action = new EmptyAction(true);
+          continue;
         }
         actionGroup.add(action);
         update(message, action.getTemplatePresentation(), true);
@@ -1166,7 +1148,7 @@ public abstract class DesignerEditorPanel extends JPanel
       }
     }
 
-    private @Nls String cleanText(@NlsSafe String text) {
+    private static @Nls String cleanText(@NlsSafe String text) {
       if (text != null) {
         text = text.trim();
         text = StringUtil.replace(text, "&nbsp;", " ");

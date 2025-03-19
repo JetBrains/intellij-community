@@ -18,8 +18,7 @@ class A {
         }
     }
 
-    @NotNull
-    private String newMethod(boolean b) throws ExceptionB {
+    private @NotNull String newMethod(boolean b) throws ExceptionB {
         String s;
         s = "b";
         if (b) throw new ExceptionB();

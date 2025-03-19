@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaInspectionTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -29,7 +30,7 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
 
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk9();
+      return IdeaTestUtil.getMockJdk11();
     }
   };
 
@@ -93,6 +94,14 @@ public class DeprecationInspectionTest extends JavaInspectionTestCase {
   public void testIgnoreInSameOutermostClass() {
     final DeprecationInspection tool = new DeprecationInspection();
     doTest("deprecation/" + getTestName(true), tool);
+  }
+  
+  public void testLanguageLevel8() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest());
+  }
+  
+  public void testLanguageLevel9() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_9, () -> doTest());
   }
 
   public void testDeprecatedUsageInJavadoc() {

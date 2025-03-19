@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.emojipicker` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "emojipicker_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "emojipicker",
+  module_name = "intellij.emojipicker",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/util-ex",
+    "//platform/util/xmlDom",
+  ],
+  runtime_deps = [":emojipicker_resources"]
+)
+### auto-generated section `build intellij.emojipicker` end

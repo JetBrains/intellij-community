@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -31,15 +31,15 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile psiFile, final @NotNull Editor editor) {
     LanguageChangeSignatureDetector<ChangeInfo> detector =
-      LanguageChangeSignatureDetectors.INSTANCE.forLanguage(file.getLanguage());
+      LanguageChangeSignatureDetectors.INSTANCE.forLanguage(psiFile.getLanguage());
     if (detector == null) return null;
 
-    return new ChangeSignaturePass(file.getProject(), file, editor);
+    return new ChangeSignaturePass(psiFile.getProject(), psiFile, editor);
   }
 
-  private static class ChangeSignaturePass extends TextEditorHighlightingPass {
+  private static final class ChangeSignaturePass extends TextEditorHighlightingPass {
     private final PsiFile myFile;
     private final Editor myEditor;
 
@@ -73,8 +73,8 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
         builder.registerFix(action, null, null, null, null);
         info = builder.createUnconditionally();
       }
-      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, 0, myFile.getTextLength(),
-                                                               ContainerUtil.createMaybeSingletonList(info), getColorsScheme(), getId());
+      BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, myFile, myDocument, 0, myFile.getTextLength(),
+                                                               ContainerUtil.createMaybeSingletonList(info), getId());
     }
 
     @Override

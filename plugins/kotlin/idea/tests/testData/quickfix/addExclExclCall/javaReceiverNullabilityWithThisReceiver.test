@@ -1,6 +1,7 @@
 // FILE: test.before.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (bar()!!) call" "true"
 // WITH_STDLIB
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type A?
 package p;
 
 fun test(x: Foo) {
@@ -39,8 +40,9 @@ public class Foo {
 }
 
 // FILE: test.after.kt
-// "Add non-null asserted (!!) call" "true"
+// "Add non-null asserted (bar()!!) call" "true"
 // WITH_STDLIB
+// ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type A?
 package p;
 
 fun test(x: Foo) {

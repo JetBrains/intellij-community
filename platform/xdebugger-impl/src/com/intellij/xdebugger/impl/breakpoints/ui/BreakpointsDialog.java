@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -14,7 +15,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.*;
+import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.JBSplitter;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -38,6 +42,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,18 +50,17 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
+@ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   private final Object myInitialBreakpoint;
-  private final List<BreakpointPanelProvider> myBreakpointsPanelProviders;
+  private final List<BreakpointPanelProvider<?>> myBreakpointsPanelProviders;
 
   private BreakpointItemsTreeController myTreeController;
-
-  final JLabel temp = new JLabel();
 
   private final MasterController myMasterController = new MasterController() {
     @Override
@@ -66,8 +70,8 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public JLabel getPathLabel() {
-      return temp;
+    public @Nullable JLabel getPathLabel() {
+      return null;
     }
   };
 
@@ -87,13 +91,13 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private final Set<XBreakpointGroupingRule> myRulesEnabled = new TreeSet<>(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
   private final Disposable myListenerDisposable = Disposer.newDisposable();
-  private final List<ToggleActionButton> myToggleRuleActions = new ArrayList<>();
+  private final List<ToggleAction> myToggleRuleActions = new ArrayList<>();
 
   private XBreakpointManagerImpl getBreakpointManager() {
     return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider> providers) {
+  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider<?>> providers) {
     super(project);
     myProject = project;
     myBreakpointsPanelProviders = providers;
@@ -113,9 +117,8 @@ public class BreakpointsDialog extends DialogWrapper {
     return getDimensionServiceKey() + ".splitter";
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new BorderLayout());
 
     JBSplitter splitPane = new JBSplitter(0.3f);
@@ -132,9 +135,24 @@ public class BreakpointsDialog extends DialogWrapper {
   private JComponent createDetailView() {
     DetailViewImpl detailView = new DetailViewImpl(myProject);
     detailView.setEmptyLabel(XDebuggerBundle.message("xbreakpoint.label.empty"));
+    detailView.addEditorChangedListener(newEditor -> {
+      if (newEditor != null) {
+        registerEditSourceAction(newEditor.getComponent());
+      }
+    });
     myDetailController.setDetailView(detailView);
 
     return detailView;
+  }
+
+  private void registerEditSourceAction(JComponent component) {
+    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        navigate(true);
+        close(OK_EXIT_CODE);
+      }
+    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), component, myDisposable);
   }
 
   void collectItems() {
@@ -173,9 +191,8 @@ public class BreakpointsDialog extends DialogWrapper {
     selectBreakpoint(myInitialBreakpoint, false);
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return getClass().getName();
   }
 
@@ -184,18 +201,18 @@ public class BreakpointsDialog extends DialogWrapper {
     return new Action[]{getOKAction(), getHelpAction()};
   }
 
-  private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
-    private final XBreakpointGroupingRule myRule;
+  private class ToggleBreakpointGroupingRuleEnabledAction extends DumbAwareToggleAction {
+    private final XBreakpointGroupingRule<?, ?> myRule;
 
-    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
-      super(rule.getPresentableName(), rule.getIcon());
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule<?, ?> rule) {
+      super(rule.getPresentableName(), null, rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
     }
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -299,13 +316,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CommonShortcuts.ENTER, tree, myDisposable);
 
-    new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.showsource")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        navigate(true);
-        close(OK_EXIT_CODE);
-      }
-    }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree, myDisposable);
+    registerEditSourceAction(tree);
 
     DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
       .filter(XBreakpointType::isAddBreakpointButtonVisible)
@@ -346,17 +357,13 @@ public class BreakpointsDialog extends DialogWrapper {
     myTreeController.getSelectedBreakpoints(false).stream().findFirst().ifPresent(b -> b.navigate(requestFocus));
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTreeController.getTreeView();
   }
 
   private void collectGroupingRules() {
     myRulesAvailable.addAll(XBreakpointGroupingRule.EP.getExtensionList());
-    for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      provider.createBreakpointsGroupingRules(myRulesAvailable);
-    }
     myRulesAvailable.sort(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();
@@ -402,9 +409,8 @@ public class BreakpointsDialog extends DialogWrapper {
     myBreakpointItems.forEach(BreakpointItem::dispose);
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return "reference.dialogs.breakpoints";
   }
 

@@ -66,7 +66,9 @@ interface ErrorNotifier {
   @RequiresBackgroundThread
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
-    GitExecutableManager.getInstance().dropExecutableCache()
+    val gitExecutableManager = GitExecutableManager.getInstance()
+    gitExecutableManager.dropExecutableCache()
+    gitExecutableManager.dropVersionCache()
   }
 
   sealed class FixOption(@Nls(capitalization = Sentence) val text: String, @RequiresEdt val fix: () -> Unit) {
@@ -80,8 +82,14 @@ interface ErrorNotifier {
 }
 
 internal fun showUnsupportedVersionError(project: Project, version: GitVersion, errorNotifier: ErrorNotifier) {
-  val description = if (version.type == GitVersion.Type.WSL1) unsupportedWslVersionDescription() else unsupportedVersionDescription()
-  errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))
+  if (GitVersion.isUnsupportedWslVersion(version.type)) {
+    errorNotifier.showError(GitBundle.message("git.executable.validation.error.wsl.start.title"),
+                            GitBundle.message("git.executable.validation.error.wsl1.unsupported.message"),
+                            getLinkToConfigure(project))
+  }
+  else {
+    errorNotifier.showError(unsupportedVersionMessage(version), unsupportedVersionDescription(), getLinkToConfigure(project))
+  }
 }
 
 internal fun unsupportedVersionMessage(version: GitVersion): @Nls String =
@@ -89,9 +97,6 @@ internal fun unsupportedVersionMessage(version: GitVersion): @Nls String =
 
 internal fun unsupportedVersionDescription(): @Nls String =
   GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.presentation)
-
-internal fun unsupportedWslVersionDescription(): @Nls String =
-  GitBundle.message("git.executable.validation.error.wsl1.unsupported.message")
 
 internal fun getLinkToConfigure(project: Project): ErrorNotifier.FixOption = ErrorNotifier.FixOption.Configure(project)
 

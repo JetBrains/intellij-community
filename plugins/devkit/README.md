@@ -3,18 +3,23 @@
 ## Inspections
 
 See `org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil` for common utility methods.
+By default, files located in _test sources_ are not checked, 
+use `DevKitInspectionUtil.isAllowedIncludingTestSources()` to include them.
 
-Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._(`com.intellij.codeInspection.CleanupLocalInspectionTool`).
+Consider marking inspections with _safe-only_ fixes ready for _Code | Code Cleanup..._
+(`com.intellij.codeInspection.CleanupLocalInspectionTool`).
 
 Inspections should avoid running whenever they are not applicable in the current context.
-This includes:
+Add `projectType="INTELLIJ_PLUGIN"` in `plugin.xml` registration to avoid loading inspection in non-plugin projects.
+
+Additional contexts include:
 
 - requires minimum platform version (`org.jetbrains.idea.devkit.util.PluginPlatformInfo`)
 - requires present platform API class (only available in newer platform versions).
   It is safe to assume most plugins do **not** target the latest platform.
 - requires present plugin API class (e.g., checks specific to Java PSI)
 - checked class is not a suitable candidate (e.g., a class without FQN cannot be registered in `plugin.xml`)
-- only applicable to IDEA project (`org.jetbrains.idea.devkit.util.PsiUtil.isIdeaProject()`)
+- only applicable to IDEA project (`com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject()`)
 
 ### Code: JVM Languages
 
@@ -45,7 +50,7 @@ See existing base classes like `org.jetbrains.idea.devkit.inspections.PluginModu
 or `org.jetbrains.idea.devkit.inspections.quickfix.LightDevKitInspectionFixTestBase`.
 
 Add required classes in the test as "mock" containing the minimum set of required signatures.
-Same for declaring platform extension points, declare them in testdata `plugin.xml`.
+Same for declaring platform extension points, declare them as "fake" directly in the testdata `plugin.xml`.
 
 ### Testing Code: JVM Languages
 
@@ -55,6 +60,8 @@ Tests and test data go to `intellij.devkit.java.tests` and `intellij.devkit.kotl
 Related `plugin.xml` can be put on same level as code test data files.
 
 Test data path constants: `org.jetbrains.idea.devkit.DevkitJavaTestsUtil` & `org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil`.
+
+Kotlin test data: add `@file:Suppress("MISSING_DEPENDENCY_SUPERCLASS")` to mute errors from missing Mock SDK classes.
 
 ### Testing: Plugin Descriptor
 

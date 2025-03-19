@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.highlighter.custom.impl;
 
@@ -15,7 +15,7 @@ import static com.intellij.psi.CustomHighlighterTokenType.*;
 /**
  * @author Maxim.Mossienko
  */
-public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
+public final class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
   private static final BracePair[] PAIRS = new BracePair[]{
     new BracePair(L_BRACKET, R_BRACKET, true),
     new BracePair(L_ANGLE, R_ANGLE, true),
@@ -29,7 +29,7 @@ public class CustomFileTypeBraceMatcher implements PairedBraceMatcher {
   }
 
   @Override
-  public boolean isPairedBracesAllowedBeforeType(@NotNull final IElementType lbraceType, @Nullable final IElementType contextType) {
+  public boolean isPairedBracesAllowedBeforeType(final @NotNull IElementType lbraceType, final @Nullable IElementType contextType) {
     return contextType == PUNCTUATION ||
            contextType == WHITESPACE ||
            isRBraceToken(contextType);

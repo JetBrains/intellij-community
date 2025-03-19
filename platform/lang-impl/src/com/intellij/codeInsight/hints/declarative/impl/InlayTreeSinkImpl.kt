@@ -1,11 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.InlayPayload
-import com.intellij.codeInsight.hints.declarative.InlayPosition
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -13,12 +12,16 @@ import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
  *
  * @param isInPreview whether the provider is collected in preview (in settings). In this mode, all the options are anyway collected.
  * @param enabledOptions an exhaustive set of options
+ * @param providerClass used for diagnostics only
  */
+@ApiStatus.Internal
 class InlayTreeSinkImpl(
   private val providerId: String,
   private val enabledOptions: Map<String, Boolean>,
   private val isInPreview: Boolean,
-  private val providerIsDisabled: Boolean
+  private val providerIsDisabled: Boolean,
+  private val providerClass: Class<*>,
+  private val sourceId: String,
 ) : InlayTreeSink {
   private val inlayDataToPresentation = ArrayList<InlayData>()
 
@@ -27,19 +30,23 @@ class InlayTreeSinkImpl(
 
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
-                               tooltip: String?,
-                               hasBackground: Boolean,
+                               @NlsContexts.HintText tooltip: String?,
+                               hintFormat: HintFormat,
                                builder: PresentationTreeBuilder.() -> Unit) {
-    val b = PresentationTreeBuilderImpl.createRoot()
+    val b = PresentationTreeBuilderImpl.createRoot(position)
     b.builder()
     val tree = b.complete()
+    if (tree.size == 0) {
+      throw PluginException.createByClass("Provider didn't provide any presentation. It is forbidden - do not try to create it in this case.", RuntimeException(
+        "${providerClass.canonicalName} id: $providerId"), providerClass)
+    }
     val disabled = providerIsDisabled || if (activeOptions.isNotEmpty()) {
       activeOptions.values.any { !it }
     }
     else {
       false
     }
-    inlayDataToPresentation.add(InlayData(position, tooltip, hasBackground, tree, providerId, disabled, payloads))
+    inlayDataToPresentation.add(InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId))
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {
@@ -65,13 +72,3 @@ class InlayTreeSinkImpl(
     return inlayDataToPresentation
   }
 }
-
-data class InlayData(
-  val position: InlayPosition,
-  val tooltip: String?,
-  val hasBackground: Boolean,
-  val tree: TinyTree<Any?>,
-  val providerId: String,
-  val disabled: Boolean,
-  val payloads: List<InlayPayload>?,
-)

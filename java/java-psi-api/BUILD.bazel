@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.java.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.java.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//java/java-frontback-psi-api:frontback-psi",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = [
+    "//platform/core-api:core",
+    "//java/java-frontback-psi-api:frontback-psi",
+  ]
+)
+### auto-generated section `build intellij.java.psi` end

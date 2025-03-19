@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.index;
 
 import com.intellij.psi.stubs.StringStubIndexExtension;
@@ -7,12 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 
-public class GrFieldNameIndex extends StringStubIndexExtension<GrField> {
+public final class GrFieldNameIndex extends StringStubIndexExtension<GrField> {
   public static final StubIndexKey<String, GrField> KEY = StubIndexKey.createIndexKey("gr.field.name");
 
   @Override
-  @NotNull
-  public StubIndexKey<String, GrField> getKey() {
+  public @NotNull StubIndexKey<String, GrField> getKey() {
     return KEY;
   }
 

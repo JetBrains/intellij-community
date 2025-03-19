@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.properties.codeInspection.unused.UnusedPropertyInspection;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -12,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -46,6 +49,21 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
     myFixture.enableInspections(inspection);
     myFixture.addClass("class C { String s = \"used.prop\"; }");
     doTest(true);
+  }
+
+  public void testInvalidEscapeSequenceFix() {
+    doQuickFixTest();
+  }
+
+  public void testInvalidEscapeSequenceFixDumbMode() {
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> { doQuickFixTest(); });
+  }
+
+  private void doQuickFixTest() {
+    myFixture.configureByFile("before" + getTestName(false) + ".properties");
+    myFixture.launchAction(myFixture.findSingleIntention(PropertiesBundle.message("unescape")));
+    myFixture.checkResultByFile("after" + getTestName(false) + ".properties");
   }
 
   public void testPropertyUsedInLibrary() throws IOException {

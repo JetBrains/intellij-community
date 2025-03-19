@@ -1,4 +1,4 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with 'switch' expression" "true-preview"
 
 public class EnhancedSwitchIntentionBug {
   int test(X a, X b) {

@@ -18,9 +18,11 @@ package com.intellij.execution.ui.layout.actions;
 
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAllUnpinnedViewsAction extends CloseViewsActionBase {
+@ApiStatus.Internal
+public final class CloseAllUnpinnedViewsAction extends CloseViewsActionBase {
   @Override
   public boolean isEnabled(ViewContext context, Content[] selectedContents, String place) {
     for (Content content : context.getContentManager().getContents()) {

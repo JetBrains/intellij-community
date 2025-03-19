@@ -2,7 +2,9 @@
 package com.intellij.openapi.vcs.update;
 
 
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class CommonUpdateFileOrDirectoryAction extends AbstractCommonUpdateAction {
   public CommonUpdateFileOrDirectoryAction() {
     super(ActionInfo.UPDATE, ScopeInfo.FILES, true);

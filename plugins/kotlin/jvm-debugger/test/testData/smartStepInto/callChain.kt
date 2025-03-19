@@ -10,5 +10,4 @@ class B {
     fun f1() {}
 }
 
-// EXISTS: getB(), f1()
-// IGNORE_K2
+// EXISTS: constructor A(), getB(), f1()

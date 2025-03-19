@@ -9,40 +9,34 @@ public class LombokEnumConstantBuilder extends LombokLightFieldBuilder implement
     super(manager, name, type);
   }
 
-  @Nullable
   @Override
-  public PsiExpressionList getArgumentList() {
+  public @Nullable PsiExpressionList getArgumentList() {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiEnumConstantInitializer getInitializingClass() {
+  public @Nullable PsiEnumConstantInitializer getInitializingClass() {
     return null;
   }
 
-  @NotNull
   @Override
-  public PsiEnumConstantInitializer getOrCreateInitializingClass() {
+  public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     return factory.createEnumConstantFromText("foo{}", null).getInitializingClass();
   }
 
-  @Nullable
   @Override
-  public PsiMethod resolveMethod() {
+  public @Nullable PsiMethod resolveMethod() {
     return null;
   }
 
-  @NotNull
   @Override
-  public JavaResolveResult resolveMethodGenerics() {
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
 
-  @Nullable
   @Override
-  public PsiMethod resolveConstructor() {
+  public @Nullable PsiMethod resolveConstructor() {
     return null;
   }
 }

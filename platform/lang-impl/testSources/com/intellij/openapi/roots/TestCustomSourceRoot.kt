@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.roots
 
+import com.intellij.jps.impl.JpsIdePluginManagerImpl
 import com.intellij.jps.impl.JpsPluginBean
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteActionAndWait
@@ -38,7 +39,7 @@ class TestCustomRootModelSerializerExtension : JpsModelSerializerExtension() {
         .files(listOf(tempPluginRoot.toPath()))
         .get()
       val pluginDescriptor = DefaultPluginDescriptor(PluginId.getId("com.intellij.custom.source.root.test"), pluginClassLoader)
-      JpsPluginBean.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
+      JpsIdePluginManagerImpl.EP_NAME.point.registerExtension(JpsPluginBean(), pluginDescriptor, jpsPluginDisposable)
     }
 
   }
@@ -60,16 +61,11 @@ class TestCustomSourceRootProperties(initialTestString: String?) : JpsElementBas
     set(value) {
       if (value != field) {
         field = value
-        fireElementChanged()
       }
     }
 
   override fun createCopy(): TestCustomSourceRootProperties {
     return TestCustomSourceRootProperties(testString)
-  }
-
-  override fun applyChanges(modified: TestCustomSourceRootProperties) {
-    testString = modified.testString
   }
 }
 

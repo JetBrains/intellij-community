@@ -21,6 +21,7 @@ internal fun <X : Any> processInjectionThenHost(file: PsiFile, offset: Int, func
 private fun <X : Any> fromHostFile(file: PsiFile, offset: Int, function: (file: PsiFile, offset: Int) -> X?): X? {
   val manager = InjectedLanguageManager.getInstance(file.project)
   val topLevelFile = manager.getTopLevelFile(file) ?: return null
+  if (file == topLevelFile) return null
   return function(topLevelFile, manager.injectedToHost(file, offset))
 }
 

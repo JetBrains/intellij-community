@@ -60,6 +60,14 @@ public abstract class HintManager {
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component);
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull JComponent component, @Nullable Runnable onHintHidden);
 
+  public void showSuccessHint(@NotNull Editor editor, @NotNull @HintText String text) {
+    showSuccessHint(editor, text, ABOVE);
+  }
+
+  public void showSuccessHint(@NotNull Editor editor, @NotNull @HintText String text, @PositionFlags short position) {}
+
+  public void showSuccessHint(@NotNull Editor editor, @NotNull @HintText String text, @Nullable HyperlinkListener listener) {}
+
   public abstract void showQuestionHint(@NotNull Editor editor, @NotNull @HintText String hintText, int offset1, int offset2, @NotNull QuestionAction action);
 
   public abstract boolean hideHints(@HideFlags int mask, boolean onlyOne, boolean editorChanged);

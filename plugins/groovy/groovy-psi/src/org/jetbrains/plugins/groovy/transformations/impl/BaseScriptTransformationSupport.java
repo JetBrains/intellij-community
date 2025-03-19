@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.psi.*;
@@ -31,7 +31,7 @@ import java.util.Set;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.findDeclaredDetachedValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT;
 
-public class BaseScriptTransformationSupport implements AstTransformationSupport {
+public final class BaseScriptTransformationSupport implements AstTransformationSupport {
 
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
@@ -52,8 +52,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     context.setSuperType(getBaseClassType(scriptClass));
   }
 
-  @NotNull
-  private static PsiClassType getBaseClassType(@NotNull GroovyScriptClass scriptClass) {
+  private static @NotNull PsiClassType getBaseClassType(@NotNull GroovyScriptClass scriptClass) {
     PsiClassType type = CachedValuesManager.getCachedValue(scriptClass, () -> CachedValueProvider.Result.create(
       getSuperClassTypeFromBaseScriptAnnotation(scriptClass), scriptClass.getContainingFile()
     ));
@@ -85,8 +84,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return false;
   }
 
-  @Nullable
-  private static PsiClassType getSuperClassTypeFromBaseScriptAnnotation(@NotNull GroovyScriptClass scriptClass) {
+  private static @Nullable PsiClassType getSuperClassTypeFromBaseScriptAnnotation(@NotNull GroovyScriptClass scriptClass) {
     //Groovy BaseScriptASTTransformation works exactly with this priorities
     PsiClassType fromVariable = getSuperClassTypeFromBaseScriptAnnotatedVariable(scriptClass);
     if (fromVariable != null) {
@@ -101,8 +99,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return getSuperClassTypeFromBaseScriptAnnotatedPackageDefinition(scriptClass);
   }
 
-  @Nullable
-  private static PsiClassType getSuperClassTypeFromBaseScriptAnnotatedImportDefinition(@NotNull GroovyScriptClass scriptClass) {
+  private static @Nullable PsiClassType getSuperClassTypeFromBaseScriptAnnotatedImportDefinition(@NotNull GroovyScriptClass scriptClass) {
     GrImportStatement[] importStatements = scriptClass.getContainingFile().getImportStatements();
     for (GrImportStatement importStatement : importStatements) {
       GrModifierList annotations = importStatement.getAnnotationList();
@@ -118,8 +115,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return null;
   }
 
-  @Nullable
-  private static PsiClassType getSuperClassTypeFromBaseScriptAnnotatedPackageDefinition(@NotNull GroovyScriptClass scriptClass) {
+  private static @Nullable PsiClassType getSuperClassTypeFromBaseScriptAnnotatedPackageDefinition(@NotNull GroovyScriptClass scriptClass) {
     GrPackageDefinition packageDefinition = scriptClass.getContainingFile().getPackageDefinition();
     if (packageDefinition == null) {
       return null;
@@ -135,8 +131,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return getSuperClassTypeFromAnnotationValue(scriptClass, baseScriptAnnotation);
   }
 
-  @Nullable
-  private static PsiClassType getSuperClassTypeFromAnnotationValue(GroovyScriptClass scriptClass, PsiAnnotation baseScriptAnnotation) {
+  private static @Nullable PsiClassType getSuperClassTypeFromAnnotationValue(GroovyScriptClass scriptClass, PsiAnnotation baseScriptAnnotation) {
     PsiClass clazz = GrAnnotationUtil.getPsiClass(findDeclaredDetachedValue(baseScriptAnnotation, "value"));
     if (clazz != null) {
       String className = clazz.getQualifiedName();
@@ -148,8 +143,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return null;
   }
 
-  @Nullable
-  private static PsiClassType getSuperClassTypeFromBaseScriptAnnotatedVariable(GroovyScriptClass scriptClass) {
+  private static @Nullable PsiClassType getSuperClassTypeFromBaseScriptAnnotatedVariable(GroovyScriptClass scriptClass) {
     GrVariableDeclaration declaration = findDeclaration(scriptClass.getContainingFile());
     if (declaration != null) {
       GrTypeElement typeElement = declaration.getTypeElementGroovy();
@@ -163,8 +157,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     return null;
   }
 
-  @Nullable
-  private static GrVariableDeclaration findDeclaration(GroovyFile file) {
+  private static @Nullable GrVariableDeclaration findDeclaration(GroovyFile file) {
     if (!PsiSearchHelper.getInstance(file.getProject()).hasIdentifierInFile(file, "BaseScript")) {
       return null;
     }

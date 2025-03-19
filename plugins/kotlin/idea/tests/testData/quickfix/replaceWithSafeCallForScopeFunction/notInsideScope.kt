@@ -1,5 +1,5 @@
 // "Replace scope function with safe (?.) call" "false"
-// ACTION: Add non-null asserted (!!) call
+// ACTION: Add non-null asserted (a!!) call
 // ACTION: Introduce local variable
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check

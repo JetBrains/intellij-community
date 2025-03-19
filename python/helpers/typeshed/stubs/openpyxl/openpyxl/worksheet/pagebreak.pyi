@@ -1,40 +1,48 @@
-from typing import Any
+from _typeshed import ConvertibleToInt, Incomplete, Unused
+from typing import ClassVar, Literal
 
+from openpyxl.descriptors.base import Bool, Integer, _ConvertibleToBool
 from openpyxl.descriptors.serialisable import Serialisable
 
 class Break(Serialisable):
-    tagname: str
-    id: Any
-    min: Any
-    max: Any
-    man: Any
-    pt: Any
-    def __init__(self, id: int = ..., min: int = ..., max: int = ..., man: bool = ..., pt: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    id: Integer[Literal[True]]
+    min: Integer[Literal[True]]
+    max: Integer[Literal[True]]
+    man: Bool[Literal[True]]
+    pt: Bool[Literal[True]]
+    def __init__(
+        self,
+        id: ConvertibleToInt | None = 0,
+        min: ConvertibleToInt | None = 0,
+        max: ConvertibleToInt | None = 16383,
+        man: _ConvertibleToBool | None = True,
+        pt: _ConvertibleToBool | None = None,
+    ) -> None: ...
 
 class RowBreak(Serialisable):
-    tagname: str
+    tagname: ClassVar[str]
     # Overwritten by properties below
     # count: Integer
     # manualBreakCount: Integer
-    brk: Any
-    __elements__: Any
-    __attrs__: Any
-    def __init__(self, count: Any | None = ..., manualBreakCount: Any | None = ..., brk=...) -> None: ...
-    def __bool__(self): ...
-    def __len__(self): ...
+    brk: Incomplete
+    __elements__: ClassVar[tuple[str, ...]]
+    __attrs__: ClassVar[tuple[str, ...]]
+    def __init__(self, count: Unused = None, manualBreakCount: Unused = None, brk=()) -> None: ...
+    def __bool__(self) -> bool: ...
+    def __len__(self) -> int: ...
     @property
-    def count(self): ...
+    def count(self) -> int: ...
     @property
-    def manualBreakCount(self): ...
-    def append(self, brk: Any | None = ...) -> None: ...
+    def manualBreakCount(self) -> int: ...
+    def append(self, brk: Incomplete | None = None) -> None: ...
 
 PageBreak = RowBreak
 
 class ColBreak(RowBreak):
-    tagname: str
-    @property
-    def count(self): ...
-    @property
-    def manualBreakCount(self): ...
-    brk: Any
-    __attrs__: Any
+    tagname: ClassVar[str]
+    # Same as parent
+    # count = RowBreak.count
+    # manualBreakCount = RowBreak.manualBreakCount
+    # brk = RowBreak.brk
+    __attrs__: ClassVar[tuple[str, ...]]

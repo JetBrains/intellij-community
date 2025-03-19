@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -10,16 +10,16 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.base.psi.expressionComparedToNull
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isComplexInitializer
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.elvisPattern
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.expressionComparedToNull
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.fromIfKeywordToRightParenthesisTextRangeInThis
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -52,21 +52,16 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
     override fun inspectionHighlightType(element: KtIfExpression): ProblemHighlightType =
         if (element.shouldBeTransformed()) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
 
-    override fun isApplicable(element: KtIfExpression): Boolean = Companion.isApplicable(element)
+    override fun isApplicable(element: KtIfExpression): Boolean = Util.isApplicable(element)
 
     override fun applyTo(element: KtIfExpression, project: Project, editor: Editor?) {
-        Companion.applyTo(element).right?.textOffset?.let { editor?.caretModel?.moveToOffset(it) }
+        Util.applyTo(element).right?.textOffset?.let { editor?.caretModel?.moveToOffset(it) }
     }
 
-    companion object {
+    object Util {
         private fun applicabilityRange(element: KtIfExpression): TextRange? {
             val data = calcData(element) ?: return null
-
-            if (data.initializer !is KtParenthesizedExpression
-                && data.initializer.isMultiLine()
-                && createElvisExpression(element, data, KtPsiFactory(element.project)).left is KtParenthesizedExpression
-            ) return null
-
+            if (data.initializer.isComplexInitializer()) return null
             val type = data.ifNullExpression.analyze().getType(data.ifNullExpression) ?: return null
             if (!type.isNothing()) return null
 
@@ -86,7 +81,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
                     if (element.condition is KtBinaryExpression) {
                         val ifEndOffset = element.endOffset
                         val context = element.analyze()
-                        val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).any {
+                        val isUsedAsNotNullable = ReferencesSearch.search(declaration, LocalSearchScope(declaration.parent)).asIterable().any {
                             if (it.element.startOffset <= ifEndOffset) return@any false
                             val type = it.element.safeAs<KtExpression>()?.getType(context) ?: return@any false
                             !type.isNullable()

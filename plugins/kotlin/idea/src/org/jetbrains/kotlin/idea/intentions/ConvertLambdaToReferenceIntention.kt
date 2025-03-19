@@ -16,6 +16,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getCallReferencedName
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.getSafeReferencedName
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.isArgument
+import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertLambdaToReferenceUtils.singleStatementOrNull
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.imports.importableFqName
@@ -33,7 +37,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi2ir.deparenthesize
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
@@ -137,6 +140,15 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         ) return false
 
         val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
+
+        if (explicitReceiverDescriptor is ValueParameterDescriptor &&
+            explicitReceiverDescriptor in lambdaValueParameterDescriptors &&
+            explicitReceiverDescriptor.isObject()
+        ) {
+            // Avoid the problem with object's callable references: KT-33885
+            return false
+        }
+
         val lambdaParameterAsExplicitReceiver = when (noBoundReferences) {
             true -> explicitReceiver != null
             false -> explicitReceiverDescriptor != null && explicitReceiverDescriptor == lambdaValueParameterDescriptors.firstOrNull()
@@ -419,53 +431,47 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         return memberScope?.getContributedFunctions(name, NoLookupLocation.FROM_IDE).orEmpty()
     }
 
-    companion object {
-        private fun KtLambdaExpression.lambdaParameterType(context: BindingContext? = null): KotlinType? {
-            val argument = parentValueArgument() ?: return null
-            val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
-            return callExpression
-                .getResolvedCall(context ?: safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL))
-                ?.getParameterForArgument(argument)?.type
-        }
+    private fun ValueParameterDescriptor.isObject(): Boolean {
+        val classDescriptor = type.constructor.declarationDescriptor as? ClassDescriptor
+        return classDescriptor?.kind == ClassKind.OBJECT
+    }
+}
 
-        private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
-            return if (parent is KtLabeledExpression) {
-                parent.parent
-            } else {
-                parent
-            } as? KtValueArgument
-        }
+private fun KtLambdaExpression.lambdaParameterType(context: BindingContext? = null): KotlinType? {
+    val argument = parentValueArgument() ?: return null
+    val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
+    return callExpression
+        .getResolvedCall(context ?: safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL))
+        ?.getParameterForArgument(argument)?.type
+}
 
-        private fun KtCallExpression.getCallReferencedName() = (calleeExpression as? KtNameReferenceExpression)?.getSafeReferencedName()
+private fun KtLambdaExpression.parentValueArgument(): KtValueArgument? {
+    return if (parent is KtLabeledExpression) {
+        parent.parent
+    } else {
+        parent
+    } as? KtValueArgument
+}
 
-        private fun KtNameReferenceExpression.getSafeReferencedName() = getReferencedNameAsName().render()
+private fun KtNameReferenceExpression.renderTargetReceiverType(
+    context: BindingContext,
+    resolvedCall: ResolvedCall<out CallableDescriptor>? = null
+): String {
+    val receiverType = (context[REFERENCE_TARGET, this] as? CallableDescriptor)?.receiverType() ?: return ""
+    if (receiverType !is AbbreviatedType) {
+        return IdeDescriptorRenderers.SOURCE_CODE.renderType(receiverType)
+    }
+    val fqName = receiverType.fqName?.asString() ?: return ""
+    val typeParameter = (resolvedCall ?: getResolvedCall(context))?.renderTypeParameters() ?: return ""
+    return "$fqName$typeParameter"
+}
 
-        private fun KtLambdaExpression.singleStatementOrNull() = bodyExpression?.statements?.singleOrNull()
-
-        fun KtLambdaExpression.isArgument() =
-            this === getStrictParentOfType<KtValueArgument>()?.getArgumentExpression()?.deparenthesize()
-
-        private fun KtNameReferenceExpression.renderTargetReceiverType(
-            context: BindingContext,
-            resolvedCall: ResolvedCall<out CallableDescriptor>? = null
-        ): String {
-            val receiverType = (context[REFERENCE_TARGET, this] as? CallableDescriptor)?.receiverType() ?: return ""
-            if (receiverType !is AbbreviatedType) {
-                return IdeDescriptorRenderers.SOURCE_CODE.renderType(receiverType)
-            }
-            val fqName = receiverType.fqName?.asString() ?: return ""
-            val typeParameter = (resolvedCall ?: getResolvedCall(context))?.renderTypeParameters() ?: return ""
-            return "$fqName$typeParameter"
-        }
-
-        private fun ResolvedCall<out CallableDescriptor>.renderTypeParameters(): String {
-            val typeArguments = this.typeArguments
-            val typeParameters = this.candidateDescriptor.typeParameters.mapNotNull { typeArguments[it] }
-            return if (typeParameters.isNotEmpty()) {
-                typeParameters.joinToString(prefix = "<", postfix = ">") { t -> IdeDescriptorRenderers.SOURCE_CODE.renderType(t) }
-            } else {
-                ""
-            }
-        }
+private fun ResolvedCall<out CallableDescriptor>.renderTypeParameters(): String {
+    val typeArguments = this.typeArguments
+    val typeParameters = this.candidateDescriptor.typeParameters.mapNotNull { typeArguments[it] }
+    return if (typeParameters.isNotEmpty()) {
+        typeParameters.joinToString(prefix = "<", postfix = ">") { t -> IdeDescriptorRenderers.SOURCE_CODE.renderType(t) }
+    } else {
+        ""
     }
 }

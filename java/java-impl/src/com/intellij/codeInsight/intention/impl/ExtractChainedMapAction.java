@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
@@ -14,11 +16,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.stream.IntStream;
-
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElement> {
+public final class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElement> {
   public ExtractChainedMapAction() {
     super(PsiElement.class);
   }
@@ -40,7 +40,7 @@ public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElemen
     ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, initializer, variable.getType());
     if (extractor == null) return null;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter, lambda), 
+    if (ContainerUtil.and(VariableAccessUtils.getVariableReferences(parameter), 
                           ref -> PsiTreeUtil.isAncestor(initializer, ref, false))) {
       return Presentation.of(JavaBundle.message("intention.extract.map.step.text", variable.getName(),
                                                 extractor.getMethodName(parameter, initializer, variable.getType())));
@@ -49,16 +49,14 @@ public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElemen
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiLocalVariable variable =
       PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class, false, PsiStatement.class, PsiLambdaExpression.class);
     ChainCallExtractor.extractMappingStep(context.project(), variable);
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return JavaBundle.message("intention.extract.map.step.family");
   }
 }

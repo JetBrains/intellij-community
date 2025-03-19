@@ -4,6 +4,7 @@ fun test(param: () -> Unit) {
     xfoo { s, i -> <caret> }
 }
 
+// IGNORE_K2
 // ELEMENT: xfoo
 // TAIL_TEXT: " { String, Int -> ... } (..., p: (String, Int) -> Unit) (<root>)"
 

@@ -80,7 +80,7 @@ public class MutabilityJdk {
   }
 
   static class IncompleteCode {
-    <error descr="Variable 'list' might not have been initialized">final List<String> list</error>;
+    final List<String> list;
 
     IncompleteCode() {
       list = (IncompleteCode)((<error descr="Expression expected">)</error><error descr="')' expected"><error descr="';' expected">b</error></error>ar()<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">.</error><error descr="Cannot resolve method 'baz' in 'IncompleteCode'">baz</error>();

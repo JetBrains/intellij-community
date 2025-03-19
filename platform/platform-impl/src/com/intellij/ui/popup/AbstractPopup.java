@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
+import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
@@ -13,11 +14,13 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -25,17 +28,25 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.openapi.wm.impl.ModalityHelper;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
@@ -44,35 +55,42 @@ import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
+import com.intellij.ui.speedSearch.SpeedSearchInputMethodRequests;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
+import java.awt.im.InputMethodRequests;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
 public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup {
-  @NonNls public static final String SHOW_HINTS = "ShowHints";
+  public static final @NonNls String SHOW_HINTS = "ShowHints";
 
-  // Popup size stored with DimensionService is null first time
-  // In this case you can put Dimension in content client properties to adjust size
-  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
-  @NonNls public static final String FIRST_TIME_SIZE = "FirstTimeSize";
+  // Popup size stored with DimensionService is null first time.
+  // In this case, you can put Dimension in content client properties to adjust size
+  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from the preferred size).
+  public static final @NonNls String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
@@ -92,6 +110,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private SpeedSearch mySpeedSearchFoundInRootComponent;
   private String myDimensionServiceKey;
   private Computable<Boolean> myCallBack;
+  private Object[] modalEntitiesWhenShown;
   private Project myProject;
   private boolean myCancelOnClickOutside;
   private final List<JBPopupListener> myListeners = new CopyOnWriteArrayList<>();
@@ -105,6 +124,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private boolean myCancelKeyEnabled;
   private boolean myLocateByContent;
   private Dimension myMinSize;
+  private boolean myStretchToOwnerWidth;
+  private boolean myStretchToOwnerHeight;
   private List<Object> myUserData;
   private boolean myShadowed;
 
@@ -165,6 +186,35 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     public void noHits() {
       updateSpeedSearchColors(true);
     }
+
+    @Override
+    public InputMethodRequests getInputMethodRequests() {
+      return new SpeedSearchInputMethodRequests() {
+        @Override
+        protected InputMethodRequests getDelegate() {
+          if (searchFieldShown || mySpeedSearchAlwaysShown) {
+            return mySpeedSearchPatternField.getTextEditor().getInputMethodRequests();
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        protected void ensurePopupIsShown() {
+          if (!searchFieldShown && !mySpeedSearchAlwaysShown) {
+            setHeaderComponent(mySpeedSearchPatternField);
+            searchFieldShown = true;
+          }
+        }
+      };
+    }
+
+    @Override
+    public void selectTextRange(int begin, int length) {
+      if (searchFieldShown || mySpeedSearchAlwaysShown) {
+        mySpeedSearchPatternField.getTextEditor().select(begin, begin + length);
+      }
+    }
   };
 
   protected void updateSpeedSearchColors(boolean error) {
@@ -177,6 +227,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
+  private @NlsContexts.StatusText String mySpeedSearchEmptyText;
   protected SearchTextField mySpeedSearchPatternField;
   private PopupComponentFactory.PopupType myPopupType;
   private boolean myNativePopup;
@@ -253,7 +304,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                         Color borderColor,
                                         boolean cancelOnWindowDeactivation,
                                         @Nullable BooleanFunction<? super KeyEvent> keyEventHandler) {
-    assert !requestFocus || focusable : "Incorrect argument combination: requestFocus=true focusable=false";
+    if (requestFocus && !focusable) {
+      requestFocus = false;
+      LOG.error("Incorrect argument combination: requestFocus=true focusable=false");
+    }
 
     all.add(this);
 
@@ -267,7 +321,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
                                  PopupBorder.Factory.createEmpty();
     myPopupBorder.setPopupUsed();
     myShadowed = showShadow;
-    if (showBorder && SystemInfo.isMac) {
+    if (showBorder) {
       myPopupBorderColor = borderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : borderColor;
     }
     myContent = createContentPanel(resizable, myPopupBorder, false);
@@ -281,7 +335,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myCancelKeyEnabled = cancelKeyEnabled;
     myLocateByContent = locateByContent;
-    myLocateWithinScreen = placeWithinScreenBounds;
+    myLocateWithinScreen = placeWithinScreenBounds && !StartupUiUtil.isWaylandToolkit();
     myAlpha = alpha;
     myMaskProvider = maskProvider;
     myInStack = inStack;
@@ -310,7 +364,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
       if (pinCallback != null) {
         Icon icon = ToolWindowManager.getInstance(myProject != null ? myProject : ProjectUtil.guessCurrentProject((JComponent)myOwner))
-          .getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
+          .getShowInFindToolWindowIcon();
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton(IdeBundle.message("show.in.find.window.button.name"), icon),
           e -> pinCallback.process(this)
@@ -348,7 +402,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
 
-    if (Registry.is("ide.popup.horizontal.scroll.bar.opaque")) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.popup.horizontal.scroll.bar.opaque")) {
       forHorizontalScrollBar(bar -> bar.setOpaque(true));
     }
 
@@ -368,6 +422,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (!(clickSource instanceof JList<?> || clickSource instanceof JTree)) {
       PopupUtil.setPopupToggleComponent(this, clickSource);
     }
+    ActionUtil.initActionContextForComponent(myContent);
     return this;
   }
 
@@ -455,9 +510,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myAdComponent = c;
   }
 
-  @NotNull
-  @Nls
-  private String wrapToSize(@NotNull @Nls String hint) {
+  private @NotNull @Nls String wrapToSize(@NotNull @Nls String hint) {
     if (StringUtil.isEmpty(hint)) return hint;
 
     Dimension size = myContent.getSize();
@@ -492,6 +545,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public void showCenteredInCurrentWindow(@NotNull Project project) {
     if (UiInterceptors.tryIntercept(this)) return;
+    Window window = getCurrentWindow(project);
+    if (window != null && window.isShowing()) {
+      showInCenterOf(window);
+    }
+  }
+
+  public static @Nullable Window getCurrentWindow(@NotNull Project project) {
     Window window = null;
 
     WindowManagerEx manager = getWndManager();
@@ -504,23 +564,24 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if ((window == null || !window.isShowing()) && manager != null) {
       window = manager.getFrame(project);
     }
-    if (window != null && window.isShowing()) {
-      showInCenterOf(window);
-    }
+
+    return window;
   }
 
   private static Window getTargetWindow(Component component) {
+    Window res = null;
     while (component != null) {
       if (component instanceof FloatingDecorator fd) {
         return fd;
       }
       Component parent = component.getParent();
-      if (parent == null && component instanceof Window w) {
-        return w;
+      if (component instanceof Window w) {
+        if (ModalityHelper.isModalBlocked(w)) break;
+        res = w;
       }
       component = parent;
     }
-    return null;
+    return res;
   }
 
   @Override
@@ -541,10 +602,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     boolean isAlignmentUsed = ExperimentalUI.isNewUI() && Registry.is("ide.popup.align.by.content") && useAlignment
                               && isComponentSupportsAlignment(aComponent);
     var point = isAlignmentUsed ? pointUnderneathOfAlignedHorizontally(aComponent) : defaultPointUnderneathOf(aComponent);
-    show(new RelativePoint(aComponent, point));
+    show(point);
   }
 
-  private boolean isComponentSupportsAlignment(Component c) {
+  private static boolean isComponentSupportsAlignment(Component c) {
     if (!(c instanceof JComponent)
         || (c instanceof ActionButton)
         || (c instanceof ComboBoxWithWidePopup<?>)) {
@@ -554,48 +615,62 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return true;
   }
 
-  @NotNull
-  private static Point defaultPointUnderneathOf(@NotNull Component aComponent) {
-    return new Point(JBUIScale.scale(2), aComponent.getHeight());
+  private static @NotNull RelativePoint defaultPointUnderneathOf(@NotNull Component aComponent) {
+    Point offset = new Point(JBUIScale.scale(2), 0);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, aComponent, offset);
   }
 
-  private static @NotNull Point pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
-    if (!(comp instanceof JComponent jcomp)) return defaultPointUnderneathOf(comp);
-    var result = new Point(calcHorizontalAlignment(jcomp), comp.getHeight());
-    fitXToComponentScreen(result, comp);
-    return result;
+  private static @NotNull RelativePoint pointUnderneathOfAlignedHorizontally(@NotNull Component comp) {
+    if (!(comp instanceof JComponent jComponent)) return defaultPointUnderneathOf(comp);
+    Point offset = new Point(calcHorizontalAlignment(jComponent), 0);
+    return new AnchoredPoint(AnchoredPoint.Anchor.BOTTOM_LEFT, comp, offset);
   }
 
-  private static int calcHorizontalAlignment(JComponent jcomp) {
-    int componentLeftInset = jcomp.getInsets().left;
-    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
-    int res = componentLeftInset - popupLeftInset;
-    if (jcomp instanceof AbstractButton button) {
-      Insets margin = button.getMargin();
-      if (margin != null) {
-        res += margin.left;
+  private static int calcHorizontalAlignment(JComponent jComponent) {
+    int componentLeftInset;
+    if (jComponent instanceof PopupAlignableComponent pac) {
+      componentLeftInset = pac.getLeftGap();
+    }
+    else {
+      componentLeftInset = jComponent.getInsets().left;
+      if (jComponent instanceof AbstractButton button) {
+        Insets margin = button.getMargin();
+        if (margin != null) {
+          componentLeftInset += margin.left;
+        }
       }
     }
+    int popupLeftInset = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left;
+    int res = componentLeftInset - popupLeftInset;
     return res;
   }
 
-  private static void fitXToComponentScreen(@NotNull Point point, @NotNull Component comp) {
+  private static void fitXToComponentScreen(@NotNull Point screenPoint, @NotNull Component comp) {
     var componentScreen = ScreenUtil.getScreenRectangle(comp);
-    SwingUtilities.convertPointToScreen(point, comp);
-    if (point.x < componentScreen.x) {
-      point.x = componentScreen.x;
+    if (screenPoint.x < componentScreen.x) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Moving the popup X coordinate from " + screenPoint.x + " to " + componentScreen.x + " to fit into the component screen " + componentScreen);
+      }
+      screenPoint.x = componentScreen.x;
     }
-    if (point.x > componentScreen.x + componentScreen.width) {
-      point.x = componentScreen.x + componentScreen.width;
+    if (screenPoint.x > componentScreen.x + componentScreen.width) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Moving the popup X coordinate from " + screenPoint.x + " to " + (componentScreen.x + componentScreen.width) + " to fit into the component screen " + componentScreen);
+      }
+      screenPoint.x = componentScreen.x + componentScreen.width;
     }
-    SwingUtilities.convertPointFromScreen(point, comp);
   }
 
   @Override
   public void show(@NotNull RelativePoint aPoint) {
     if (UiInterceptors.tryIntercept(this, aPoint)) return;
+
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
     Point screenPoint = aPoint.getScreenPoint();
+    fitXToComponentScreen(screenPoint, aPoint.getComponent());
+
+    stretchContentToOwnerIfNecessary(aPoint.getOriginalComponent());
+
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
 
@@ -701,7 +776,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
-    // inside the component (e.g. editor) it appears on top of.
+    // inside the component (e.g., editor) it appears on top of.
     AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
     show(getBestPositionFor(editor));
   }
@@ -838,6 +913,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myRequestFocus = requestFocus;
   }
 
+  public boolean shouldRequestFocus() {
+    return myRequestFocus;
+  }
+
   @Override
   public void cancel(InputEvent e) {
     if (myState == State.CANCEL || myState == State.DISPOSE) {
@@ -872,6 +951,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
 
       myPopup.hide(false);
+      modalEntitiesWhenShown = null;
 
       if (ApplicationManager.getApplication() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
@@ -899,7 +979,37 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public boolean canClose() {
-    return (myCallBack == null || myCallBack.compute().booleanValue()) && !preventImmediateClosingAfterOpening();
+    return
+      (!anyModalWindowsKeepPopupOpen() &&
+      (myCallBack == null || myCallBack.compute().booleanValue()) &&
+      !preventImmediateClosingAfterOpening()) ||
+      myDisposed; // check for myDisposed last to allow `myCallBack` to be executed
+  }
+
+  boolean anyModalWindowsKeepPopupOpen() {
+    return anyModalWindowsMatching(window -> ClientProperty.isTrue(window, DialogWrapper.KEEP_POPUPS_OPEN));
+  }
+
+  boolean anyModalWindowsAbovePopup() {
+    return anyModalWindowsMatching(window -> true);
+  }
+
+  private boolean anyModalWindowsMatching(Predicate<Window> predicate) {
+    var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
+    var i = 0;
+    if(modalEntitiesWhenShown != null) {
+      for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
+        if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
+          break;
+        }
+      }
+    }
+    for (; i < modalEntitiesNow.length; ++i) {
+      if (modalEntitiesNow[i] instanceof Window modalWindow && predicate.apply(modalWindow)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean preventImmediateClosingAfterOpening() {
@@ -922,17 +1032,40 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void show(final @NotNull Component owner) {
+    stretchContentToOwnerIfNecessary(owner);
     show(owner, -1, -1, true);
   }
 
   public void show(@NotNull Component owner, int aScreenX, int aScreenY, final boolean considerForcedXY) {
+    var builder = new PopupShowOptionsBuilder();
+    showImpl(
+      builder
+        .withOwner(owner)
+        .withScreenXY(aScreenX, aScreenY)
+        .withForcedXY(considerForcedXY)
+    );
+  }
+
+  @Override
+  public void show(@NotNull PopupShowOptions showOptions) {
+    showImpl((PopupShowOptionsBuilder)showOptions);
+  }
+
+  @ApiStatus.Internal
+  protected void showImpl(@NotNull PopupShowOptionsBuilder showOptions) {
     if (UiInterceptors.tryIntercept(this)) return;
+
+    var options = showOptions.build();
+    var owner = options.getOwner();
+    var aScreenX = options.getScreenX();
+    var aScreenY = options.getScreenY();
+    var considerForcedXY = options.getConsiderForcedXY();
     if (ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (isDisposed()) {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myState == State.INIT : "Popup was already shown. Recreate a new instance to show again.";
 
     debugState("show popup", State.INIT);
@@ -961,8 +1094,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (cornerType != PopupCornerType.None) {
         if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
           roundedCornerParams = new Object[]{cornerType,
-            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
-          // must set the border before calculating size below
+            myPopupBorderColor == null ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor};
+          // must set the border before calculating the size below
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
@@ -971,38 +1104,73 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("START calculating bounds for a popup with options = " + options);
+    }
     Dimension sizeToSet = getStoredSize();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The stored size for key " + myDimensionServiceKey + " is " + sizeToSet);
+    }
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Forced the size to " + sizeToSet);
+      }
     }
 
     Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The screen rectangle for (" + aScreenX + "," + aScreenY + ") is " + screen);
+    }
     if (myLocateWithinScreen) {
       Dimension preferredSize = myContent.getPreferredSize();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The preferred size is " + preferredSize);
+      }
       Object o = myContent.getClientProperty(FIRST_TIME_SIZE);
       if (sizeToSet == null && o instanceof Dimension) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The size from the FIRST_TIME_SIZE property is " + o);
+        }
         int w = ((Dimension)o).width;
         int h = ((Dimension)o).height;
         if (w > 0) preferredSize.width = w;
         if (h > 0) preferredSize.height = h;
         sizeToSet = preferredSize;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The size is set to " + sizeToSet);
+        }
       }
       Dimension size = sizeToSet != null ? sizeToSet : preferredSize;
       if (size.width > screen.width) {
         size.width = screen.width;
         sizeToSet = size;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resized to fit the screen width: " + sizeToSet);
+        }
       }
       if (size.height > screen.height) {
         size.height = screen.height;
         sizeToSet = size;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resized to fit the screen height: " + sizeToSet);
+        }
       }
     }
 
     if (sizeToSet != null) {
-      JBInsets.addTo(sizeToSet, myContent.getInsets());
+      Insets insets = myContent.getInsets();
+      JBInsets.addTo(sizeToSet, insets);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Added insets (" + insets + "), the size is now: " + sizeToSet);
+      }
 
-      sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
-      sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
+      Dimension minimumSize = myContent.getMinimumSize();
+      sizeToSet.width = Math.max(sizeToSet.width, minimumSize.width);
+      sizeToSet.height = Math.max(sizeToSet.height, minimumSize.height);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Coerced to the minimum size (" + minimumSize + "): " + sizeToSet);
+      }
 
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
@@ -1012,6 +1180,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     boolean adjustXY = true;
     if (myUseDimServiceForXYLocation) {
       Point storedLocation = getStoredLocation();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The stored location for key " + myDimensionServiceKey + " is " + storedLocation);
+      }
       if (storedLocation != null) {
         xy = storedLocation;
         adjustXY = false;
@@ -1023,16 +1194,32 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (insets != null) {
         xy.x -= insets.left;
         xy.y -= insets.top;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after adjusting by insets (" + insets + ") is " + xy);
+        }
       }
     }
 
     if (considerForcedXY && myForcedLocation != null) {
       xy = myForcedLocation;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location forced to " + myForcedLocation);
+      }
     }
 
     fixLocateByContent(xy, false);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Location after fixing by content is " + xy);
+    }
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Target bounds " + targetBounds);
+    }
+    @Nullable AppliedAdjustments adjustments = null;
+    if (options.getPopupAnchor() != AnchoredPoint.Anchor.TOP_LEFT) {
+      adjustments = adjustForAnchor(targetBounds, options, screen);
+    }
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
       StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
       sb.append(targetBounds.width).append("x").append(targetBounds.height);
@@ -1042,10 +1229,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
       ScreenUtil.moveToFit(targetBounds, screen, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
+      }
     }
     else {
       //even when LocateWithinScreen option is disabled, popup should not be shown in invisible area
       fitToVisibleArea(targetBounds);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the visible area: " + targetBounds);
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END calculating popup bounds, the result is " + targetBounds);
     }
 
 
@@ -1060,7 +1256,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       AutoPopupSupportingListener.installOn(this);
     }
 
-    myOwner = getFrameOrDialog(owner); // use correct popup owner for non-modal dialogs too
+    myOwner = getFrameOrDialog(owner); // use the correct popup owner for non-modal dialogs too
     if (myOwner == null) {
       myOwner = owner;
     }
@@ -1070,11 +1266,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myPopupType = getMostSuitablePopupType();
     myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
+    if (popupOwner instanceof RootPaneContainer root && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
-      RootPaneContainer root = (RootPaneContainer)popupOwner;
       popupOwner = root.getRootPane();
       LOG.debug("popup owner fixed for JDK cache");
+    }
+    if (StartupUiUtil.isWaylandToolkit()) {
+      // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
+      popupOwner = SwingUtilities.getRoot(popupOwner);
+      targetBounds.setLocation(getLocationRelativeToParent(targetBounds, (Window) popupOwner));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
@@ -1082,11 +1282,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
     myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
     if (LOG.isDebugEnabled()) {
+      LOG.debug("START adjusting popup bounds after creation");
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
     }
     if (targetBounds.width != myContent.getWidth() || targetBounds.height != myContent.getHeight()) {
       // JDK uses cached heavyweight popup that is not initialized properly
-      LOG.debug("the expected size is not equal to the actual size");
+      LOG.debug("the expected size (" + targetBounds.getSize() + ") is not equal to the actual size (" + myContent.getSize() + ")");
       Window popup = myPopup.getWindow();
       if (popup != null) {
         popup.setSize(targetBounds.width, targetBounds.height);
@@ -1095,8 +1296,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
       else {
-        LOG.debug("cannot fix size for non-heavy-weight popup");
+        LOG.debug("cannot fix size for non-heavy-weight popup because its window is null");
       }
+    }
+    if (adjustments != null && adjustments.adjustedHeight()) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Settings the size to " + targetBounds.getSize() + " because the height of the popup was adjusted");
+      }
+      setSize(targetBounds.getSize()); // Might need to make it smaller than its preferred size.
     }
 
     if (myResizable) {
@@ -1107,8 +1314,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
         glass,
         myComponent,
-        myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
-        null);
+        myMovable);
       resizeListener.install(this);
       resizeListener.addResizeListeners(() -> {
         myResizeListeners.forEach(Runnable::run);
@@ -1174,28 +1380,60 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
+    if (myNormalWindowLevel && !window.isDisplayable()) {
+      window.setType(Window.Type.NORMAL);
+    }
     myWindow = window;
-    if (myNormalWindowLevel) {
-      myWindow.setType(Window.Type.NORMAL);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Setting minimum size to " + myMinSize);
     }
     setMinimumSize(myMinSize);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Minimum size set to " + window.getMinimumSize());
+    }
 
     TouchbarSupport.showPopupItems(this, myContent);
 
+    modalEntitiesWhenShown = LaterInvocator.getCurrentModalEntities();
     myPopup.show();
     Rectangle bounds = window.getBounds();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END adjusting popup bounds after creation, the result is: " + bounds + ", starting final post-show adjustments");
+    }
 
     PopupLocationTracker.register(this);
 
-    if (bounds.width > screen.width || bounds.height > screen.height) {
-      ScreenUtil.fitToScreen(bounds);
-      window.setBounds(bounds);
+    if (myLocateWithinScreen) {
+      if (
+        bounds.x < screen.x ||
+        bounds.y < screen.y ||
+        bounds.x + bounds.width > screen.x + screen.width ||
+        bounds.y + bounds.height > screen.y + screen.height
+      ) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds won't fit into the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
+      }
+    }
+    else {
+      if (bounds.width > screen.width || bounds.height > screen.height) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds are larger than the screen, adjusting");
+        }
+        ScreenUtil.fitToScreen(bounds);
+        window.setBounds(bounds);
+      }
     }
 
     if (LOG.isDebugEnabled()) {
       GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
       StringBuilder sb = new StringBuilder("Popup is shown with bounds " + bounds);
-      if (device != null) sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"");
+      if (device != null) {
+        sb.append(" on screen with ID \"").append(device.getIDstring()).append("\"")
+          .append(" and bounds ").append(device.getDefaultConfiguration().getBounds());
+      }
       LOG.debug(sb.toString());
     }
 
@@ -1206,14 +1444,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     if (myWindow != null) {
       // dialog wrapper-based popups do this internally through peer,
-      // for other popups like jdialog-based we should exclude them manually, but
+      // for other popups like JDialog-based we should exclude them manually, but
       // we still have to be able to use IdeFrame as parent
       if (!myMayBeParent && !(myWindow instanceof Frame)) {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
 
-    final Runnable afterShow = () -> {
+    final Runnable afterShow = Context.current().wrap(() -> {
       if (isDisposed()) {
         LOG.debug("popup is disposed after showing");
         removeActivity();
@@ -1224,14 +1462,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
 
       removeActivity();
-
-      afterShow();
-
-    };
+      TraceKt.use(TelemetryManager.getInstance().getTracer(UI).spanBuilder("afterShow#" + getClass().getSimpleName()), __ -> {
+        afterShow();
+        return null;
+      });
+    });
 
     if (myRequestFocus) {
       if (myPreferredFocusedComponent != null) {
-        myPreferredFocusedComponent.requestFocus();
+        // `resetThreadContext` here is needed because `setVisible` runs event loop
+        // IJPL-161712
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myPreferredFocusedComponent.requestFocus();
+        }
       }
       else {
         _requestFocus();
@@ -1260,11 +1503,143 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     afterShowSync();
   }
 
+  private static Point getLocationRelativeToParent(Rectangle bounds, Window popupParent) {
+    // The "bounds" are "screen" coordinates, which in Wayland means that they
+    // are relative to the nearest toplevel (Window) in the hierarchy.
+    // But popups in Wayland are expected to be located relative to popup's "parent" (a toplevel or another popup).
+    // We need to adjust "bounds" to be relative to the parent.
+    Rectangle newBounds = new Rectangle(bounds);
+    Point parentLocation = popupParent.getLocationOnScreen();
+    newBounds.x -= parentLocation.x;
+    newBounds.y -= parentLocation.y;
+    // The Wayland server may refuse to show a popup whose top-left corner is located outside the parent toplevel's bounds.
+    // TODO: Need to fit into the nearest toplevel, not popupParent that may be another popup.
+    Rectangle okBounds = new Rectangle(0, 0,
+                                       popupParent.getWidth() + newBounds.width, popupParent.getHeight() + newBounds.height);
+    ScreenUtil.moveToFit(newBounds, okBounds, new Insets(0, 0, 1, 1));
+    return newBounds.getLocation();
+  }
+
+  private record AppliedAdjustments(
+    boolean adjustedHeight
+  ) { }
+
+  private AppliedAdjustments adjustForAnchor(
+    @NotNull Rectangle bounds,
+    @NotNull PopupShowOptionsImpl options,
+    @NotNull Rectangle screen
+  ) {
+    var adjustedHeight = false;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Adjusting the bounds " + bounds + " for the screen " + screen + " with the options = " + options);
+    }
+    var anchorPoint = options.getPopupAnchor().getPointOnRectangle(bounds);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Anchor point " + anchorPoint);
+    }
+    var originalY = bounds.y;
+    var offsetX = bounds.x - anchorPoint.x;
+    var offsetY = bounds.y - anchorPoint.y;
+    bounds.x += offsetX;
+    bounds.y += offsetY;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The bounds after moving the anchor point " + bounds);
+    }
+    if (options.getPopupComponentUnscaledGap() != 0 && options.getRelativePosition() != null) {
+      var gap = JBUI.scale(options.getPopupComponentUnscaledGap());
+      switch (options.getRelativePosition()) {
+        case LEFT -> {
+          bounds.x -= gap;
+        }
+        case RIGHT -> {
+          bounds.x += gap;
+        }
+        case TOP -> {
+          bounds.y -= gap;
+        }
+        case BOTTOM -> {
+          bounds.y += gap;
+        }
+      }
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The bounds after adjusting for the gap " + bounds);
+      }
+    }
+    if (myLocateWithinScreen && !screen.contains(bounds)) {
+      LOG.debug("The bounds won't fit into the screen");
+      // If the popup is to the left of the screen, move it to the left edge.
+      if (bounds.x < screen.x) {
+        var shift = screen.x - bounds.x;
+        bounds.x += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the left side " + bounds);
+        }
+      }
+      // If the popup is above the screen, move it to the top edge.
+      if (bounds.y < screen.y) {
+        var shift = screen.y - bounds.y;
+        bounds.y += shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the top side " + bounds);
+        }
+        // Now, if it's above the owner, try to decrease its height to compensate for the shift
+        // if this popup can reduce it height at all.
+        if (options.getRelativePosition() == PopupRelativePosition.TOP && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          if (reducedHeight >= options.getMinimumHeight()) {
+            bounds.height = reducedHeight;
+            adjustedHeight = true;
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("The bounds after adjusting height to fit above the owner " + bounds);
+            }
+          }
+          else {
+            // Can't fit even with the reduced height, revert to its original position,
+            // then let the code below do its job and try to fit it there.
+            bounds.y = originalY;
+          }
+        }
+      }
+      // If the popup is to the right of the screen, move it to the right edge.
+      if (bounds.x + bounds.width > screen.x + screen.width) {
+        var shift = (bounds.x + bounds.width) - (screen.x + screen.width);
+        bounds.x -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting horizontally to the right side " + bounds);
+        }
+      }
+      // If the popup is below the screen, try to decrease its height first: this is not symmetrical to the "above the screen" case,
+      // because if it's below the owner, then we'd like to keep its Y coordinate intact if possible.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        if (options.getRelativePosition() == PopupRelativePosition.BOTTOM && options.getMinimumHeight() != null) {
+          var reducedHeight = bounds.height - shift;
+          bounds.height = Math.max(options.getMinimumHeight(), reducedHeight);
+          adjustedHeight = true;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("The bounds after adjusting height to fit below the owner " + bounds);
+          }
+        }
+      }
+      // And only failing that, we shift it upwards.
+      if (bounds.y + bounds.height > screen.y + screen.height) {
+        var shift = (bounds.y + bounds.height) - (screen.y + screen.height);
+        bounds.height -= shift;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The bounds after shifting vertically to the bottom side " + bounds);
+        }
+      }
+    }
+    return new AppliedAdjustments(adjustedHeight);
+  }
+
   public void notifyListeners() {
     myListeners.forEach(listener -> listener.beforeShown(new LightweightWindowEvent(this)));
   }
 
   private static void fitToVisibleArea(Rectangle targetBounds) {
+    if (StartupUiUtil.isWaylandToolkit()) return; // Wrt screen edges, only the Wayland server can reliably position popups
+
     Point topLeft = new Point(targetBounds.x, targetBounds.y);
     Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
     Rectangle topLeftScreen = ScreenUtil.getScreenRectangle(topLeft);
@@ -1336,11 +1711,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myContent.addKeyListener(mySpeedSearch);
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
-      myMouseOutCanceller = new Canceller();
-      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
-                                                      WINDOW_EVENT_MASK | MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK);
+      installMouseOutCanceller();
     }
-
 
     ChildFocusWatcher focusWatcher = new ChildFocusWatcher(myContent) {
       @Override
@@ -1362,6 +1734,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    if (mySpeedSearchEmptyText != null) {
+      mySpeedSearchPatternField.getTextEditor().getEmptyText().setText(mySpeedSearchEmptyText);
+    }
     customizeSearchFieldLook(mySpeedSearchPatternField, mySpeedSearchAlwaysShown);
 
     if (mySpeedSearchAlwaysShown) {
@@ -1487,7 +1862,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   private PopupComponentFactory.PopupType getMostSuitablePopupType() {
     boolean forceDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
-    if (Registry.is("allow.dialog.based.popups")) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
       boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
@@ -1512,18 +1887,35 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     setLocation(p, myPopup);
   }
 
-  private static void setLocation(@NotNull RelativePoint p, @Nullable PopupComponent popup) {
+  private void setLocation(@NotNull RelativePoint p, @Nullable PopupComponent popup) {
     if (popup == null) return;
 
     final Window wnd = popup.getWindow();
     assert wnd != null;
 
-    wnd.setLocation(p.getScreenPoint());
+    if (StartupUiUtil.isWaylandToolkit() && wnd.getType() == Window.Type.POPUP && myOwner != null) {
+      Rectangle newBounds = wnd.getBounds();
+      newBounds.setLocation(p.getScreenPoint());
+      Component parent = SwingUtilities.getRoot(myOwner);
+      wnd.setLocation(getLocationRelativeToParent(newBounds, (Window) parent));
+    } else {
+      wnd.setLocation(p.getScreenPoint());
+    }
   }
 
   @Override
   public void pack(boolean width, boolean height) {
-    if (!isVisible() || !width && !height || isBusy()) return;
+    Dimension size = calculateSizeForPack(width, height);
+    if (size == null) return;
+
+    final Window window = getContentWindow(myContent);
+    if (window != null) {
+      window.setSize(size);
+    }
+  }
+
+  protected @Nullable Dimension calculateSizeForPack(boolean width, boolean height) {
+    if (!isVisible() || !width && !height || isBusy()) return null;
 
     Dimension size = getSize();
     Dimension prefSize = myContent.computePreferredSize();
@@ -1555,10 +1947,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
     }
-    final Window window = getContentWindow(myContent);
-    if (window != null) {
-      window.setSize(size);
-    }
+
+    return size;
   }
 
   public JComponent getComponent() {
@@ -1571,7 +1961,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
+
+    if (myDisposed) {
+      return;
+    }
+    myDisposed = true;
+
     if (myState == State.SHOWN) {
       LOG.debug("shown popup must be cancelled");
       cancel();
@@ -1582,11 +1978,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     debugState("dispose popup", State.INIT, State.CANCEL);
     myState = State.DISPOSE;
-
-    if (myDisposed) {
-      return;
-    }
-    myDisposed = true;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("start disposing " + myContent);
@@ -1611,15 +2002,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myCallBack = null;
     myListeners.clear();
 
-    if (myMouseOutCanceller != null) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      // it may happen, but have no idea how
-      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
-      if (toolkit != null) {
-        toolkit.removeAWTEventListener(myMouseOutCanceller);
-      }
-    }
-    myMouseOutCanceller = null;
+    removeMouseOutCanceller();
 
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
@@ -1683,7 +2066,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
   }
 
-  public static class MyContentPanel extends JPanel implements DataProvider {
+  public static class MyContentPanel extends JPanel implements UiCompatibleDataProvider {
     private @Nullable DataProvider myDataProvider;
 
     public MyContentPanel(@NotNull PopupBorder border) {
@@ -1705,8 +2088,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      return myDataProvider != null ? myDataProvider.getData(dataId) : null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 
     public void setDataProvider(@Nullable DataProvider dataProvider) {
@@ -1767,7 +2150,47 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return myCancelOnWindowDeactivation;
   }
 
-  private class Canceller implements AWTEventListener {
+  @ApiStatus.Internal
+  public void setCancelOnMouseOutCallback(@Nullable MouseChecker checker) {
+    myCancelOnMouseOutCallback = checker;
+    if (checker != null && myMouseOutCanceller == null) {
+      installMouseOutCanceller();
+    }
+    else if (checker == null && myMouseOutCanceller != null && !myCancelOnWindow) {
+      removeMouseOutCanceller();
+    }
+  }
+
+  @ApiStatus.Internal
+  public void setCancelOnOtherWindowOpen(boolean cancel) {
+    myCancelOnWindow = cancel;
+    if (cancel && myMouseOutCanceller == null) {
+      installMouseOutCanceller();
+    }
+    else if (!cancel && myMouseOutCanceller != null && myCancelOnMouseOutCallback == null) {
+      removeMouseOutCanceller();
+    }
+  }
+
+  private void installMouseOutCanceller() {
+    myMouseOutCanceller = new Canceller();
+    Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
+                                                    WINDOW_EVENT_MASK | MOUSE_EVENT_MASK | MOUSE_MOTION_EVENT_MASK);
+  }
+
+  private void removeMouseOutCanceller() {
+    if (myMouseOutCanceller != null) {
+      final Toolkit toolkit = Toolkit.getDefaultToolkit();
+      // it may happen, but have no idea how
+      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
+      if (toolkit != null) {
+        toolkit.removeAWTEventListener(myMouseOutCanceller);
+      }
+    }
+    myMouseOutCanceller = null;
+  }
+
+  private final class Canceller implements AWTEventListener {
     private boolean myEverEntered;
 
     @Override
@@ -1830,10 +2253,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   @Override
-  public void setSize(final @NotNull Dimension size) {
+  public void setSize(@NotNull Dimension size) {
+    setSize(null, size);
+  }
+
+  @Override
+  public void setSize(@Nullable Point location, @NotNull Dimension size) {
     // do not update the bounds programmatically if the user moves or resizes the popup
     if (!isBusy()) {
-      setBounds(null, new Dimension(size));
+      setBounds(location, new Dimension(size));
       if (myPopup != null) Optional.ofNullable(getContentWindow(myContent)).ifPresent(Container::validate); // to adjust content size
     }
   }
@@ -1871,24 +2299,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     // calling #setLocation or #setSize makes the window move for a bit because of tricky computations
     // our aim here is to just move the window as-is to make it fit the screen
     // no tricks are included here
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("MoveToFitScreen x = " + bounds.x + " y = " + bounds.y + " width = " + bounds.width + " height = " + bounds.height);
+    }
     popupWindow.setBounds(bounds);
     updateMaskAndAlpha(popupWindow);
-  }
-
-  @Deprecated(forRemoval = true)
-  public static Window setSize(@NotNull JComponent content, @NotNull Dimension size) {
-    final Window popupWindow = getContentWindow(content);
-    if (popupWindow == null) return null;
-    JBInsets.addTo(size, content.getInsets());
-    content.setPreferredSize(size);
-    popupWindow.pack();
-    return popupWindow;
   }
 
   @Override
   public void setBounds(@NotNull Rectangle bounds) {
     // do not update the bounds programmatically if the user moves or resizes the popup
     if (!isBusy()) setBounds(bounds.getLocation(), bounds.getSize());
+  }
+
+  private void stretchContentToOwnerIfNecessary(@NotNull Component owner) {
+    if (myForcedSize != null) return;
+    if (!myStretchToOwnerWidth && !myStretchToOwnerHeight) return;
+
+    Dimension filledSize = myContent.getPreferredSize();
+    if (myStretchToOwnerWidth) filledSize.width = owner.getWidth();
+    if (myStretchToOwnerHeight) filledSize.height = owner.getHeight();
+
+    myContent.setPreferredSize(filledSize);
   }
 
   /**
@@ -1911,7 +2343,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       Window window = getContentWindow(content);
       if (window == null) return;
       Insets insets = content.getInsets();
+      boolean useScreenLocation = true;
       if (location == null) {
+        useScreenLocation = false;
         location = window.getLocation(); // use current window location
       }
       else {
@@ -1926,8 +2360,24 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
       else {
         JBInsets.addTo(size, insets);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Update content preferred size: width = " + size.width + " height = " + size.height);
+        }
         content.setPreferredSize(size);
         size = window.getPreferredSize();
+      }
+
+      if (StartupUiUtil.isWaylandToolkit() && useScreenLocation
+          && myPopup.getWindow().getType() == Window.Type.POPUP
+          && myOwner != null) {
+        // The location is in the screen coordinates, but popups need to be positioned relative to their parent
+        Component parent = SwingUtilities.getRoot(myOwner);
+        Rectangle targetBounds = new Rectangle(location, size);
+        location.setLocation(getLocationRelativeToParent(targetBounds, (Window) parent));
+      }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("SetBounds x = " + location.x + " y = " + location.y + " width = " + size.width + " height = " + size.height);
       }
       window.setBounds(location.x, location.y, size.width, size.height);
       window.setCursor(Cursor.getDefaultCursor());
@@ -1937,17 +2387,36 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setCaption(@NotNull @NlsContexts.PopupTitle String title) {
-    if (myCaption instanceof TitlePanel) {
-      ((TitlePanel)myCaption).setText(title);
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setText(title);
     }
   }
 
-  protected void setSpeedSearchAlwaysShown() {
-    assert myState == State.INIT;
+  @Override
+  public void setCaptionIcon(@Nullable Icon icon) {
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setRegularIcon(icon);
+      titlePanel.setInactiveIcon(icon);
+    }
+  }
+
+  @Override
+  public void setCaptionIconPosition(boolean left) {
+    if (myCaption instanceof TitlePanel titlePanel) {
+      titlePanel.setHorizontalTextPosition(left ? SwingConstants.RIGHT : SwingConstants.LEFT);
+    }
+  }
+
+  public void setSpeedSearchAlwaysShown() {
+    assert myState.ordinal() <= State.INIT.ordinal();
     mySpeedSearchAlwaysShown = true;
   }
 
-  private class MyWindowListener extends WindowAdapter {
+  public void setSpeedSearchEmptyText(@Nullable @NlsContexts.StatusText String text) {
+    mySpeedSearchEmptyText = text;
+  }
+
+  private final class MyWindowListener extends WindowAdapter {
     @Override
     public void windowOpened(WindowEvent e) {
       updateMaskAndAlpha(myWindow);
@@ -2050,6 +2519,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return myCancelKeyEnabled;
   }
 
+  @ApiStatus.Internal
+  public void setCancelKeyEnabled(boolean enabled) {
+    myCancelKeyEnabled = enabled;
+  }
+
   public @NotNull CaptionPanel getTitle() {
     return myCaption;
   }
@@ -2095,7 +2569,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void addListener(@NotNull JBPopupListener listener) {
-    myListeners.add(0, listener); // last added first notified
+    myListeners.add(0, listener); // last added then first notified
   }
 
   @Override
@@ -2136,8 +2610,27 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return myMinSize != null ? myMinSize : calcHeaderSize();
   }
 
-  @NotNull
-  private Dimension calcHeaderSize() {
+  /**
+   * Use this method if you need the popup to have the same width as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getWidth() to popup beforehand won't work in the remote development scenario
+   */
+  public void setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
+    myStretchToOwnerWidth = stretchToOwnerWidth;
+  }
+
+  /**
+   * Use this method if you need the popup to have the same height as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getHeight() to popup beforehand won't work in the remote development scenario
+   */
+  public void setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
+    myStretchToOwnerHeight = stretchToOwnerHeight;
+  }
+
+  private @NotNull Dimension calcHeaderSize() {
     Dimension sizeFromHeader = myHeaderPanel.getPreferredSize();
 
     if (sizeFromHeader == null) {
@@ -2231,16 +2724,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    * Returns the first frame (or dialog) ancestor of the component.
    * Note that this method returns the component itself if it is a frame (or dialog).
    *
-   * @param component the component used to find corresponding frame (or dialog)
+   * @param component the component used to find the corresponding frame (or dialog)
    * @return the first frame (or dialog) ancestor of the component; or {@code null}
    *         if the component is not a frame (or dialog) and is not contained inside a frame (or dialog)
    *
-   * @see UIUtil#getWindow
+   * @see ComponentUtil#getWindow
    */
   private static Component getFrameOrDialog(Component component) {
     while (component != null) {
       if (component instanceof Window) return component;
-      component = component.getParent();
+      component = UIUtil.getParent(component);
     }
     return null;
   }
@@ -2254,7 +2747,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return point == null ? null : new Rectangle(point, component.getSize());
   }
 
-  public static @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
+  public static @Unmodifiable @NotNull List<JBPopup> getChildPopups(final @NotNull Component component) {
     return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {
@@ -2291,13 +2784,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   /**
-   * Tells whether popup should be closed when some window becomes activated/focused
+   * Tells whether the popup should be closed when some window becomes activated/focused
    */
   private boolean isCancelNeeded(@NotNull WindowEvent event, @Nullable Window popup) {
     Window window = event.getWindow(); // the activated or focused window
-    return window == null ||
-           popup == null ||
-           !SwingUtilities.isDescendingFrom(window, popup) && (myFocusable || !SwingUtilities.isDescendingFrom(popup, window));
+    if (window == null || popup == null) return true;
+
+    if (SwingUtilities.isDescendingFrom(window, popup) || (!myFocusable && SwingUtilities.isDescendingFrom(popup, window))) {
+      return false;
+    }
+
+    // On Wayland focus gets temporarily transferred to popup's owner while the popup is being
+    // interactively moved.
+    // This is not a reason for cancelling the popup.
+    if (StartupUiUtil.isWaylandToolkit()) {
+      Window popupOwner = popup.getOwner();
+      return !Objects.equals(window, popupOwner);
+    }
+
+    return true;
   }
 
   private @Nullable Point getStoredLocation() {
@@ -2339,5 +2844,42 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private void forHorizontalScrollBar(@NotNull Consumer<? super JScrollBar> consumer) {
     JScrollBar bar = findHorizontalScrollBar();
     if (bar != null) consumer.consume(bar);
+  }
+
+  @Override
+  public final boolean dispatchInputMethodEvent(@NotNull InputMethodEvent event) {
+    if (anyModalWindowsAbovePopup()) {
+      return false;
+    }
+
+    if (myComponent != null) {
+      var prop = myComponent.getClientProperty(UIUtil.ENABLE_IME_FORWARDING_IN_POPUP);
+      if (prop != null && (Boolean)prop) {
+        // Don't handle the event, so that it can be forwarded to the popup
+        return event.isConsumed();
+      }
+    }
+
+    // Try forwarding the input method event to various possible speed search handlers
+
+    JComponent comp = myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(comp, true);
+
+    if (!event.isConsumed() && supply instanceof SpeedSearchBase<?>) {
+      ((SpeedSearchBase<?>)supply).processInputMethodEvent(event);
+    }
+
+    if (!event.isConsumed() && comp instanceof ListWithFilter<?>) {
+      ((ListWithFilter<?>)comp).processInputMethodEvent(event);
+    }
+
+    // Don't try to attempt to pass IMEs to speed search if the popup is a text field
+    boolean isText = comp instanceof EditorTextField || comp instanceof JTextComponent;
+    if (!event.isConsumed() && !isText && mySpeedSearchPatternField != null) {
+      mySpeedSearchPatternField.getTextEditor().dispatchEvent(event);
+      mySpeedSearch.updatePattern(mySpeedSearchPatternField.getText());
+      mySpeedSearch.update();
+    }
+    return event.isConsumed();
   }
 }

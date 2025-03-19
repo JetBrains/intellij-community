@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests;
 import com.intellij.util.containers.JBIterable;
@@ -33,6 +34,14 @@ public final class InspectionTestUtil {
     List<Element> expectedProblems = new ArrayList<>(expectedDoc.getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<>(doc.getChildren("problem"));
 
+    for (Element problem1 : reportedProblems) {
+      for (Element problem2 : reportedProblems) {
+        if (problem1 != problem2 && compareProblemWithExpected(problem1, problem2, checkRange)) {
+          Assert.fail("Duplicated problems reported: " + JDOMUtil.writeDocument(new Document(problem1)));
+        }
+      }
+    }
+
     Element[] expectedArray = expectedProblems.toArray(new Element[0]);
 
     List<String> problems = new ArrayList<>();
@@ -49,16 +58,19 @@ public final class InspectionTestUtil {
       }
 
       Document missing = new Document(expectedProblem.clone());
-      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing, "\n"));
+      problems.add("The following haven't been reported as expected: " + JDOMUtil.writeDocument(missing));
     }
 
     for (Element reportedProblem : reportedProblems) {
       Document extra = new Document(reportedProblem.clone());
-      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra, "\n"));
+      problems.add("The following has been unexpectedly reported: " + JDOMUtil.writeDocument(extra));
     }
 
     if (!problems.isEmpty()) {
-      Assert.fail(String.join("\n", problems));
+      Assert.fail(String.join("\n", problems) +
+                  "\n where all reported are: " + JDOMUtil.writeElement(doc) +
+                  "\n all expected are: " + JDOMUtil.writeElement(expectedDoc)
+      );
     }
   }
 
@@ -150,12 +162,14 @@ public final class InspectionTestUtil {
 
   @TestOnly
   public static void runTool(@NotNull InspectionToolWrapper<?,?> toolWrapper,
-                             @NotNull final AnalysisScope scope,
-                             @NotNull final GlobalInspectionContextForTests globalContext) {
+                             final @NotNull AnalysisScope scope,
+                             final @NotNull GlobalInspectionContextForTests globalContext) {
+    IndexingTestUtil.waitUntilIndexesAreReady(scope.getProject());
     final String shortName = toolWrapper.getShortName();
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null){
-      HighlightDisplayKey.register(shortName, toolWrapper.getDisplayName(), toolWrapper.getID());
+      Computable.PredefinedValueComputable<String> displayName = new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName());
+      HighlightDisplayKey.register(shortName, displayName, toolWrapper.getID());
     }
 
     globalContext.doInspections(scope);
@@ -165,8 +179,7 @@ public final class InspectionTestUtil {
     while (!globalContext.isFinished());
   }
 
-  @NotNull
-  public static <T extends InspectionProfileEntry> List<InspectionProfileEntry> instantiateTools(@NotNull Collection<Class<? extends T>> inspections) {
+  public static @NotNull <T extends InspectionProfileEntry> List<InspectionProfileEntry> instantiateTools(@NotNull Collection<Class<? extends T>> inspections) {
     Set<String> classNames = JBIterable.from(inspections).transform(Class::getName).toSet();
     return instantiateTools(classNames);
   }
@@ -176,8 +189,7 @@ public final class InspectionTestUtil {
     return (T)instantiateTools(Collections.singleton(inspection)).get(0);
   }
 
-  @NotNull
-  public static List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
+  public static @NotNull List<InspectionProfileEntry> instantiateTools(Set<String> classNames) {
     List<InspectionProfileEntry> tools = JBIterable.of(LocalInspectionEP.LOCAL_INSPECTION, InspectionEP.GLOBAL_INSPECTION)
       .flatten(o -> o.getExtensionList())
       .filter(o -> classNames.contains(o.implementationClass))

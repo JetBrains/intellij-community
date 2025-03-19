@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.ClassNameConstants;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -11,8 +13,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
-import java.util.Set;
 
 public final class ConcatenationHelper {
 
@@ -22,6 +24,38 @@ public final class ConcatenationHelper {
   private static final VarType builderType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuilder");
   private static final VarType bufferType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuffer");
 
+  public static void simplifyStringConcat(Statement stat) {
+    for (Statement s : stat.getStats()) {
+      simplifyStringConcat(s);
+    }
+
+    if (stat.getExprents() != null) {
+      for (int i = 0; i < stat.getExprents().size(); ++i) {
+        Exprent ret = simplifyStringConcat(stat.getExprents().get(i));
+        if (ret != null) {
+          stat.getExprents().set(i, ret);
+        }
+      }
+    }
+  }
+
+  private static Exprent simplifyStringConcat(Exprent exprent) {
+    for (Exprent cexp : exprent.getAllExprents()) {
+      Exprent ret = simplifyStringConcat(cexp);
+      if (ret != null) {
+        exprent.replaceExprent(cexp, ret);
+      }
+    }
+
+    if (exprent.type == Exprent.EXPRENT_INVOCATION) {
+      Exprent ret = ConcatenationHelper.contractStringConcat(exprent);
+      if (!exprent.equals(ret)) {
+        return ret;
+      }
+    }
+
+    return null;
+  }
 
   public static Exprent contractStringConcat(Exprent expr) {
 
@@ -125,7 +159,7 @@ public final class ConcatenationHelper {
     return createConcatExprent(lstOperands, expr.bytecode);
   }
 
-  private static Exprent createConcatExprent(List<Exprent> lstOperands, Set<Integer> bytecode) {
+  private static Exprent createConcatExprent(List<Exprent> lstOperands, @Nullable BitSet bytecode) {
     // build exprent to return
     Exprent func = lstOperands.get(0);
 
@@ -151,13 +185,14 @@ public final class ConcatenationHelper {
         StringBuilder acc = new StringBuilder();
         int parameterId = 0;
         int bootstrapArgumentId = 1;
+        int nonString = 0;
         for (int i = 0; i < recipe.length(); i++) {
           char c = recipe.charAt(i);
 
           if (c == TAG_CONST || c == TAG_ARG) {
             // Detected a special tag, flush all accumulated characters
             // as a constant first:
-            if (acc.length() > 0) {
+            if (!acc.isEmpty()) {
               res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
               acc.setLength(0);
             }
@@ -173,12 +208,12 @@ public final class ConcatenationHelper {
             if (c == TAG_ARG) {
               Exprent exprent = parameters.get(parameterId++);
 
-              if ((exprent instanceof VarExprent varExprent) && res.isEmpty()) {
-
-                if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
-                  // First item of concatenation is a variable and variable's type is not a String.
+              if (!VarType.VARTYPE_STRING.equals(exprent.getExprType())) {
+                nonString++;
+                if (nonString == 2 && i == 1) {
+                  // First two items of concatenation are variables and their types are not String.
                   // Prepend it with empty string literal to force resulting expression type to be String.
-                  res.add(new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
+                  res.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
                 }
               }
 
@@ -193,7 +228,7 @@ public final class ConcatenationHelper {
         }
 
         // Flush the remaining characters as constant:
-        if (acc.length() > 0) {
+        if (!acc.isEmpty()) {
           res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
         }
 

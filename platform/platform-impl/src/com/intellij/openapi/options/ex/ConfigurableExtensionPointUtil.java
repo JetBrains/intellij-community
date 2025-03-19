@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
-import com.intellij.BundleBase;
+import com.intellij.IntelliJResourceBundle;
 import com.intellij.ide.actions.ConfigurablesPatcher;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
@@ -120,10 +120,6 @@ public final class ConfigurableExtensionPointUtil {
       targetProject,
       () -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
-        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
-        for (ConfigurablesPatcher modificator : modificators) {
-          modificator.modifyOriginalConfigurablesList(configurables, targetProject);
-        }
         return getConfigurableGroup(configurables, targetProject);
       }
     );
@@ -146,8 +142,10 @@ public final class ConfigurableExtensionPointUtil {
       LOG.warn("ignore groups: " + tree.keySet());
     }
 
-    if (root != null && root.myList != null && Registry.is("ide.settings.replace.group.with.single.configurable")) {
-      replaceGroupWithSingleConfigurable(root.myList);
+    if (root != null && root.myList != null) {
+      if (Registry.is("ide.settings.replace.group.with.single.configurable")) {
+        replaceGroupWithSingleConfigurable(root.myList);
+      }
     }
     return root;
   }
@@ -230,7 +228,7 @@ public final class ConfigurableExtensionPointUtil {
         LOG.warn("Use <groupConfigurable> to specify custom configurable group: " + groupId);
         int weight = getInt(bundle, id + ".settings.weight");
         String help = getString(bundle, id + ".settings.help.topic");
-        String name = getName(bundle, id + ".settings.display.name");
+        String name = getString(bundle, id + ".settings.display.name");
         String desc = getString(bundle, id + ".settings.description");
         if (name != null && project != null) {
           if (!project.isDefault() && !name.contains("{")) {
@@ -241,7 +239,7 @@ public final class ConfigurableExtensionPointUtil {
             name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
           }
         }
-        node.myValue = new SortedConfigurableGroup(id, name, desc, help, weight);
+        node.myValue = new SortedConfigurableGroup(id, Objects.requireNonNullElse(name, ""), desc, help, weight);
       }
     }
     if (configurables != null) {
@@ -387,6 +385,11 @@ public final class ConfigurableExtensionPointUtil {
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project, checkNonDefaultProject);
       }
     }
+
+    List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+    for (ConfigurablesPatcher modificator : modificators) {
+      modificator.modifyOriginalConfigurablesList(list, project);
+    }
     return list;
   }
 
@@ -432,20 +435,17 @@ public final class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static @Nls String getString(ResourceBundle bundle, @NonNls String resource) {
-    if (bundle == null) return null;
-    try {
-      return bundle.getString(resource);
-    }
-    catch (MissingResourceException ignored) {
+  private static @Nls @Nullable String getString(ResourceBundle bundle, @NonNls String resource) {
+    if (bundle == null) {
       return null;
     }
-  }
 
-  private static @Nls String getName(ResourceBundle bundle, @NonNls String resource) {
-    if (bundle == null) return null;
+    if (bundle instanceof IntelliJResourceBundle b) {
+      return b.getMessageOrNull(resource);
+    }
+
     try {
-      return BundleBase.messageOrDefault(bundle, resource, null);
+      return bundle.getString(resource);
     }
     catch (MissingResourceException ignored) {
       return null;
@@ -462,19 +462,16 @@ public final class ConfigurableExtensionPointUtil {
     }
   }
 
-  private static boolean isSuppressed(Configurable each, ConfigurableFilter filter) {
-    return filter != null && !filter.isIncluded(each);
-  }
-
   public static @Nullable Configurable createProjectConfigurableForProvider(@NotNull Project project, Class<? extends ConfigurableProvider> providerClass) {
-    return createConfigurableForProvider(Configurable.PROJECT_CONFIGURABLE.getIterable(project), providerClass);
+    return createConfigurableForProvider(() -> Configurable.PROJECT_CONFIGURABLE.asSequence(project).iterator(), providerClass);
   }
 
   public static @Nullable Configurable createApplicationConfigurableForProvider(Class<? extends ConfigurableProvider> providerClass) {
     return createConfigurableForProvider(Configurable.APPLICATION_CONFIGURABLE.getIterable(), providerClass);
   }
 
-  private static @Nullable Configurable createConfigurableForProvider(@NotNull Iterable<? extends ConfigurableEP<Configurable>> extensions, Class<? extends ConfigurableProvider> providerClass) {
+  private static @Nullable Configurable createConfigurableForProvider(@NotNull Iterable<? extends ConfigurableEP<Configurable>> extensions,
+                                                                      Class<? extends ConfigurableProvider> providerClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.providerClass != null) {
         Class<?> aClass = extension.findClassOrNull(extension.providerClass);
@@ -489,8 +486,7 @@ public final class ConfigurableExtensionPointUtil {
   /**
    * @return path from configurable to Settings/Preferences root as a string of display names separated by '|' e.g., Editor | Inspections
    */
-  @Nls
-  public static String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
+  public static @Nls String getConfigurablePath(Class<? extends Configurable> configurableClass, Project project) {
     List<String> path = new ArrayList<>();
     collectPath(configurableClass, path, getConfigurableGroup(project, true).getConfigurables());
     return StringUtil.join(path, SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR);

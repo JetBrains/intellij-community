@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+ReferencesToSyntheticJavaProperties
+// FIX: Use property access syntax
+fun main() {
+    suppressUnused(Foo::foo)
+}
+
+fun suppressUnused(foo: Foo.FunInterface): Any = foo

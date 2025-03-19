@@ -254,7 +254,7 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
   protected boolean checkIsValid() {
     if (!myInvalidated && !isValid()) {
       myInvalidated = true;
-      myPropertyChangeSupport.firePropertyChange(FileEditor.PROP_VALID, Boolean.TRUE, Boolean.FALSE);
+      myPropertyChangeSupport.firePropertyChange(FileEditor.getPropValid(), Boolean.TRUE, Boolean.FALSE);
     }
     return !myInvalidated;
   }

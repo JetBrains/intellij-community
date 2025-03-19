@@ -1,9 +1,9 @@
-object A {
-    fun foo() {
-        A.bar()
+object AX831 {
+    fun fooX831() {
+        AX831.barX831()
     }
 
-    fun bar() {
-        A.foo()
+    fun barX831() {
+        AX831.fooX831()
     }
 }

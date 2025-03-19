@@ -1,5 +1,8 @@
 <root>
-  <item name='net.miginfocom.swing.MigLayout MigLayout(java.lang.String) 0'>
+    <item name='net.miginfocom.swing.MigLayout'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+    <item name='net.miginfocom.swing.MigLayout MigLayout(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='net.miginfocom.swing.MigLayout MigLayout(java.lang.String, java.lang.String) 0'>

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.ChangeListener
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.Box
@@ -39,7 +40,7 @@ internal class CasesPanel(
     revalidate()
   }
 
-  fun updateFromSettings() {
+  private fun updateFromSettings() {
     val mainCheckBoxSelected = loadMainCheckBoxValue()
     val disabledExternally = disabledExternally()
     mainCheckBox.isEnabled = !disabledExternally
@@ -48,8 +49,9 @@ internal class CasesPanel(
     caseListPanel.updateCheckBoxes()
   }
 }
+@ApiStatus.Internal
 class CaseListPanel(val cases: List<ImmediateConfigurable.Case>, listener: ChangeListener) : JPanel() {
-  val checkBoxes = mutableListOf<JCheckBox>()
+  val checkBoxes: MutableList<JCheckBox> = mutableListOf()
 
   init {
     layout = BoxLayout(this, BoxLayout.Y_AXIS)

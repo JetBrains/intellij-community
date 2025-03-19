@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 /** Terminates the process with the given message, without a stack trace. */
-public class InspectionApplicationException extends RuntimeException {
+public final class InspectionApplicationException extends RuntimeException {
   /** Terminates the process with the given message, without a stack trace. */
   public InspectionApplicationException(String message) {
     super(message);

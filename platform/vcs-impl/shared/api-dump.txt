@@ -1,0 +1,11 @@
+com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+- a:clear():V
+- a:getComponent():javax.swing.JComponent
+- a:refresh(Z):V
+f:com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
+- com.intellij.ui.OnePixelSplitter
+- com.intellij.openapi.vcs.changes.DiffPreview
+- <init>(com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor,java.lang.String):V
+- closePreview():V
+- openPreview(Z):Z
+- f:updatePreview(Z):V

@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
+import com.intellij.util.SlowOperations
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.runInEdt
 import git4idea.GitVcs
@@ -95,7 +96,9 @@ open class GitStageTracker(val project: Project) : Disposable {
    */
   internal fun markDirty(file: VirtualFile) {
     if (!isStagingAreaAvailable()) return
-    val root = getRoot(project, file) ?: return
+    val root = SlowOperations.knownIssue("IJPL-162402").use {
+      getRoot(project, file) ?: return
+    }
     if (!gitRoots().contains(root)) return
     LOG.debug("Mark dirty ${file.filePath()}")
     dirtyScopeManager.fileDirty(file.filePath())
@@ -118,8 +121,21 @@ open class GitStageTracker(val project: Project) : Disposable {
   private fun doUpdateState(repository: GitRepository) {
     LOG.debug("Updating ${repository.root}")
 
-    val untracked = repository.untrackedFilesHolder.untrackedFilePaths.map { untrackedStatus(it) }
-    val status = repository.stagingAreaHolder.allRecords.union(untracked).associateBy { it.path }.toMutableMap()
+    val status = repository.stagingAreaHolder.allRecords.associateByTo(mutableMapOf()) { it.path }
+
+    for (filePath in repository.untrackedFilesHolder.untrackedFilePaths) {
+      val trackedStatus = status[filePath]
+      if (trackedStatus == null) {
+        status[filePath] = untrackedStatus(filePath)
+      }
+      else if (trackedStatus.workTree == ' ') {
+        // for example, file is deleted from the index, but not locally
+        status[filePath] = GitFileStatus(trackedStatus.index, '?', trackedStatus.path, trackedStatus.origPath)
+      }
+      else {
+        LOG.warn("Untracked file $filePath has a non-empty worktree status code: $trackedStatus.")
+      }
+    }
 
     for (document in FileDocumentManager.getInstance().unsavedDocuments) {
       val file = FileDocumentManager.getInstance().getFile(document) ?: continue
@@ -221,6 +237,10 @@ open class GitStageTracker(val project: Project) : Disposable {
       result.putAll(rootStates)
       result[root] = newState
       return State(result)
+    }
+
+    fun isEmpty(): Boolean {
+      return rootStates.values.all { it.isEmpty() }
     }
 
     @NonNls

@@ -1,12 +1,12 @@
 // FILE: first.before.kt
 // "Import" "false"
 // ERROR: Type 'String' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
-// ACTION: Convert to 'buildString' call
-// ACTION: Convert to raw string literal
 
 package b
 
-val x: String by "<caret>"  // <--- should not propose to auto-import a.getValue,
+fun foo(): String = "foo"
+
+val x: String by <caret>foo()  // <--- should not propose to auto-import a.getValue,
                             // because that would not fix the error
 
 // FILE: second.kt

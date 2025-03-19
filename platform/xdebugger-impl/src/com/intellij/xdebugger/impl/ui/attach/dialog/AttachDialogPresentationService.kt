@@ -1,11 +1,16 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
+@Service
 class AttachDialogPresentationService {
   private val itemPresentationProviders = XAttachDialogItemPresentationProvider.EP.extensions.sortedBy { it.getPriority() }
   private val dialogPresentationProviders = XAttachDialogPresentationProvider.EP.extensions.sortedBy { it.getPriority() }
@@ -30,6 +35,7 @@ class AttachDialogPresentationService {
   }
 }
 
+@ApiStatus.Internal
 data class AttachDialogItemPresentationInfo(
   @Nls val executableText: String,
   val executableTextAttributes: SimpleTextAttributes?,
@@ -38,12 +44,14 @@ data class AttachDialogItemPresentationInfo(
   val indexedString: String
 )
 
+@ApiStatus.Internal
 class AttachDialogDefaultItemPresentationProvider : XAttachDialogItemPresentationProvider {
   override fun isApplicableFor(item: AttachDialogProcessItem): Boolean = true
 
   override fun getPriority(): Int = Int.MAX_VALUE
 }
 
+@ApiStatus.Internal
 class AttachDialogDefaultPresentationProvider : XAttachDialogPresentationProvider {
   @Nls
   @NlsContexts.Button

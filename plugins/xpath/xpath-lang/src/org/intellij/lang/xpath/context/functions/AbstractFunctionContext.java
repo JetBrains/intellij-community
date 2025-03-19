@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.context.functions;
 
 import com.intellij.openapi.util.Factory;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.xpath.context.ContextType;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.xml.namespace.QName;
 import java.util.Collections;
@@ -17,15 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractFunctionContext implements FunctionContext {
   private static final Map<ContextType, FunctionContext> ourInstances = new ConcurrentHashMap<>();
 
-  private final Map<Pair<QName, Integer>, Function> myFunctions;
+  private final @Unmodifiable Map<Pair<QName, Integer>, Function> myFunctions;
   private final Map<QName, Function> myDefaultMap = new HashMap<>();
 
   protected AbstractFunctionContext(ContextType contextType) {
     assert !ourInstances.containsKey(contextType);
 
-    //noinspection AbstractMethodCallInConstructor
-    myFunctions = Collections.unmodifiableMap(new HashMap<>(
-      ContainerUtil.union(createFunctionMap(contextType), getProvidedFunctions(contextType))));
+    //noinspection AbstractMethodCallInConstructor,RedundantUnmodifiable
+    myFunctions = Collections.unmodifiableMap(ContainerUtil.union(createFunctionMap(contextType), getProvidedFunctions(contextType)));
 
     for (Map.Entry<Pair<QName, Integer>, Function> entry : myFunctions.entrySet()) {
       final Function function = entry.getValue();
@@ -41,7 +41,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
     }
   }
 
-  protected abstract Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
+  protected abstract @Unmodifiable Map<Pair<QName, Integer>, Function> createFunctionMap(ContextType contextType);
 
   private static Map<Pair<QName, Integer>, Function> getProvidedFunctions(ContextType contextType) {
     final Map<Pair<QName, Integer>, Function> map = new HashMap<>();

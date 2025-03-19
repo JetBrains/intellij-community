@@ -5,12 +5,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.BranchChangeListener
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -21,7 +21,6 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.SearchTextField
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsProjectLog
@@ -63,7 +62,7 @@ object GitLessonsUtil {
         else false
       }
       triggerUI().component { ui: VcsLogGraphTable ->
-        ui.jumpToRow(0, true)
+        ui.jumpToGraphRow(0, true)
         ui.selectionModel.clearSelection()
         true
       }
@@ -219,32 +218,6 @@ object GitLessonsUtil {
     }
   }
 
-  fun LessonContext.showWarningIfModalCommitEnabled() {
-    task {
-      val step = stateCheck {
-        VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
-      }
-      val callbackId = LearningUiManager.addCallback {
-        CommitModeManager.setCommitFromLocalChanges(project, true)
-        step.complete(true)
-      }
-      showWarning(GitLessonsBundle.message("git.use.non.modal.commit.ui.warning",
-                                           action("ShowSettings"),
-                                           strong(VcsBundle.message("version.control.main.configurable.name")),
-                                           strong(VcsBundle.message("commit.dialog.configurable")),
-                                           strong(VcsBundle.message("settings.commit.without.dialog")))
-                  + " " + GitLessonsBundle.message("git.click.to.change.settings", callbackId)) {
-        !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
-      }
-      test {
-        if (!VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES) {
-          Thread.sleep(1000)  // need to wait until LessonMessagePane become updated after restart and warning will be showed
-          clickLessonMessagePaneLink(" click ")
-        }
-      }
-    }
-  }
-
   fun LessonContext.showWarningIfStagingAreaEnabled() {
     task {
       val step = stateCheck {
@@ -266,12 +239,20 @@ object GitLessonsUtil {
   }
 
   fun LessonContext.restoreCommitWindowStateInformer() {
-    val enabledModalInterface = !VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES
     val enabledStagingArea = GitVcsApplicationSettings.getInstance().isStagingAreaEnabled
-    if (!enabledModalInterface && !enabledStagingArea) return
+    if (!enabledStagingArea) return
     restoreChangedSettingsInformer {
-      if (enabledModalInterface) CommitModeManager.setCommitFromLocalChanges(null, false)
-      if (enabledStagingArea) enableStagingArea(true)
+      enableStagingArea(true)
+    }
+  }
+
+  fun LessonContext.highlightToolWindowStripe(toolWindowId: String) {
+    task {
+      val titleProvider = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)?.stripeTitleProvider
+                          ?: error("No tool window with id: $toolWindowId")
+      triggerAndBorderHighlight().component { stripe: ActionButton ->
+        stripe.action.templateText == titleProvider.get()
+      }
     }
   }
 
@@ -296,6 +277,7 @@ object GitLessonsUtil {
     stateCheck {
       ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS)?.isVisible == true
     }
+
     test { actions("ActivateVersionControlToolWindow") }
   }
 

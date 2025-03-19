@@ -15,14 +15,16 @@
  */
 package com.intellij.util.xml;
 
+import org.jetbrains.annotations.NotNull;
+
 public class StringBufferConverter extends Converter<StringBuffer> {
   @Override
-  public StringBuffer fromString(final String s, final ConvertContext context) {
+  public StringBuffer fromString(final String s, final @NotNull ConvertContext context) {
     return s==null?null:new StringBuffer(s);
   }
 
   @Override
-  public String toString(final StringBuffer t, final ConvertContext context) {
+  public String toString(final StringBuffer t, final @NotNull ConvertContext context) {
     return t==null?null:t.toString();
   }
 

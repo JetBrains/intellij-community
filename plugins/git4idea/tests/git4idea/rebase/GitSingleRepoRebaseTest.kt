@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -7,11 +7,14 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.LineSeparator
 import com.intellij.vcsUtil.VcsUtil
+import git4idea.GitBranch
 import git4idea.branch.GitBranchUiHandler
 import git4idea.branch.GitBranchWorker
 import git4idea.branch.GitRebaseParams
@@ -21,9 +24,11 @@ import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
+import java.io.File
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
@@ -278,6 +283,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
   }
 
   fun `test local changelists are restored after successful abort`() {
+    TestLoggerFactory.enableDebugLogging(testRootDisposable,
+                                         com.intellij.openapi.vcs.impl.LineStatusTrackerManager::class.java,
+                                         com.intellij.openapi.vcs.changes.ChangeListWorker::class.java)
+
     touch("file.txt", "1\n2\n3\n4\n5\n")
     touch("file1.txt", "content")
     touch("file2.txt", "content")
@@ -307,7 +316,10 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     changeListManager.moveChangesTo(testChangelist2, changeListManager.getChange(VcsUtil.getFilePath(repo.root, "file3.txt"))!!)
 
     `do nothing on merge`()
-    dialogManager.onMessage { Messages.YES }
+    dialogManager.onMessage { message ->
+      TestCase.assertTrue(message.contains("Abort rebase in"))
+      Messages.YES
+    }
 
     ensureUpToDateAndRebaseOnMaster()
 
@@ -315,13 +327,18 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.abort(project, EmptyProgressIndicator())
 
+    updateChangeListManager()
+
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
+    assertSuccessfulNotification("Abort rebase succeeded")
 
     val changelists = changeListManager.changeLists
     assertEquals(3, changelists.size)
+
+    val errorMessage = changelists.joinToString(separator = "\n") { "${it.name} - ${it.changes}" }
     for (changeList in changelists) {
-      assertTrue("${changeList.name} - ${changeList.changes}", changeList.changes.size == 2)
+      assertTrue(errorMessage, changeList.changes.size == 2)
     }
   }
 
@@ -437,7 +454,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
   // git rebase --continue should be either called from a commit dialog, either from the GitRebaseProcess.
   // both should prepare the working tree themselves by adding all necessary changes to the index.
-  fun `test local changes in the conflicting file should lead to error on continue rebase`() {
+  fun `test local changes in the conflicting file should not prevent rebase`() {
     repo.`prepare simple conflict`()
     `do nothing on merge`()
 
@@ -446,14 +463,22 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     //manually resolve conflicts
     repo.resolveConflicts()
-    file("c.txt").append("more changes after resolving")
+    val appended = "more changes after resolving"
+    file("c.txt").append(appended)
     // forget to git add afterwards
 
+    refresh()
+    updateChangeListManager()
+
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor(null) { "message!" })
     GitRebaseUtils.continueRebase(project)
 
-    `assert error about unstaged file before continue rebase`("c.txt")
-    repo.`assert feature not rebased on master`()
-    repo.assertRebaseInProgress()
+    assertSuccessfulRebaseNotification("Rebased feature on master")
+    repo.`assert feature rebased on master`()
+    assertNoRebaseInProgress(repo)
+
+    repo.assertNoLocalChanges()
+    assertTrue(file("c.txt").read().endsWith(appended))
   }
 
   fun `test local changes in some other file should lead to error on continue rebase`() {
@@ -481,10 +506,47 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     GitRebaseUtils.continueRebase(project)
 
-    `assert error about unstaged file before continue rebase`("d.txt")
-
-    repo.`assert feature not rebased on master`()
+    `assert error about unstaged file before continue rebase`()
     repo.assertRebaseInProgress()
+  }
+
+  fun `test unstaged changes while stopped for editing stage and retry`() {
+    val fileA = file("a.txt")
+    val fileB = file("b.txt")
+    build {
+      master {
+        0()
+        1()
+      }
+      feature(1) {
+        fileA.write("hello").add()
+        fileB.write("hello").add()
+        repo.commit("feature")
+      }
+    }
+
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor({ it.lines().joinToString(LineSeparator.getSystemLineSeparator().separatorString) { s -> s.replace("pick", "edit") } }, { "message" }))
+
+    refresh()
+    updateChangeListManager()
+    rebaseInteractively()
+
+    assertSuccessfulNotification("Rebase stopped for editing", "")
+    val editedContent = "more changes after resolving"
+    fileA.append(editedContent)
+    fileB.delete()
+    refresh()
+    updateChangeListManager()
+
+    runBlocking {
+      GitRebaseStagingAreaHelper.tryStageChangesInTrackedFilesAndRetryInBackground(repo) { fail("Error shouln't be shown") }.join()
+    }
+
+    assertNoRebaseInProgress(repo)
+
+    repo.assertNoLocalChanges()
+    assertTrue(fileA.read().endsWith(editedContent))
+    assertFalse(fileB.exists())
   }
 
   fun `test unresolved conflict should lead to conflict resolver with continue rebase`() {
@@ -663,6 +725,26 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`assert feature not rebased on master`()
   }
 
+  fun `test rebase on branch with the same name as tag`() {
+    build {
+      master {
+        0("1.txt")
+        git("tag master")
+        1("2.txt")
+      }
+      feature(0) {}
+    }
+
+    val uiHandler = Mockito.mock(GitBranchUiHandler::class.java)
+    `when`(uiHandler.progressIndicator).thenReturn(EmptyProgressIndicator())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), "master")
+    assertFalse(File(repo.root.path, "2.txt").exists())
+
+    GitBranchWorker(project, git, uiHandler).rebase(listOf(repo), GitBranch.REFS_HEADS_PREFIX + "master")
+    assertTrue(File(repo.root.path, "2.txt").exists())
+  }
+
   private fun rebaseInteractively(revision: String = "master") {
     GitTestingRebaseProcess(project, GitRebaseParams(vcs.version, null, null, revision, true, false), repo).rebase()
   }
@@ -672,6 +754,29 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     checkCheckoutAndRebase {
       "Checked out feature and rebased it on master"
     }
+  }
+
+  // IJPL-156329
+  // We are not expecting "error: there was a problem with the editor ..." in "Rebase failed" pop-up
+  fun `test VcsException is handled without showing native git editor error`() {
+    build {
+      0()
+      1()
+      2()
+    }
+    refresh()
+    updateChangeListManager()
+
+    dialogManager.onDialog(GitInteractiveRebaseDialog::class.java) {
+      DialogWrapper.OK_EXIT_CODE
+    }
+
+    val errorMessage = "test exception message!!!"
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor({ throw VcsException(errorMessage) }, null))
+
+    rebaseInteractively()
+
+    assertErrorNotification("Rebase failed", errorMessage)
   }
 
   private fun checkCheckoutAndRebase(expectedNotification: () -> String) {

@@ -1,0 +1,28 @@
+{
+  "inspections": [
+    {
+      "id": "MavenDuplicateDependenciesInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenModelInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenRedundantGroupId",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenDuplicatePluginInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenParentMissedVersionInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MavenPropertyInParent",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

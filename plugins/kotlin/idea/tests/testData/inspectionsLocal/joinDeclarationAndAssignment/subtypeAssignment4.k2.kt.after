@@ -1,0 +1,11 @@
+// IGNORE_K1
+class Test {
+    private val foo = ""
+
+    init {
+        bar(foo)
+    }
+}
+
+fun bar(a: String) {
+}

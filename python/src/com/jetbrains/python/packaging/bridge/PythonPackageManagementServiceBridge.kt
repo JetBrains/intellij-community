@@ -15,11 +15,13 @@ import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackagingSettings
 import com.jetbrains.python.packaging.common.*
-import com.jetbrains.python.packaging.conda.*
+import com.jetbrains.python.packaging.conda.CondaPackage
+import com.jetbrains.python.packaging.conda.CondaPackageCache
+import com.jetbrains.python.packaging.conda.CondaPackageManager
+import com.jetbrains.python.packaging.conda.CondaPackageRepository
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.management.runPackagingTool
-import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
@@ -59,7 +61,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
               .filter { it.isNotBlank() }
               .map {
                 val line = it.split("\t")
-                PythonPackage(line[0], line[1])
+                PythonPackage(line[0], line[1], isEditableMode = false)
               }
               .sortedWith(compareBy(PythonPackage::name))
               .toList()
@@ -105,7 +107,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
 
   override fun reloadAllPackages(): List<RepoPackage> {
     return runBlocking {
-      manager.repositoryManager.refreshCashes()
+      manager.repositoryManager.refreshCaches()
       allPackages
     }
   }
@@ -124,7 +126,7 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
         val specification = specForPackage(repoPackage.name, version, repository)
         runningUnderOldUI = true
         listener.operationStarted(specification.name)
-        val result = manager.installPackage(specification)
+        val result = manager.installPackage(specification, emptyList<String>())
         val exception = if (result.isFailure) mutableListOf(result.exceptionOrNull() as ExecutionException) else null
         listener.operationFinished(specification.name,
                                    toErrorDescription(exception, mySdk, specification.name))
@@ -143,7 +145,11 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
         manager
           .installedPackages
           .filter { it.name.lowercase() in namesToDelete }
-          .forEach { manager.uninstallPackage(it) }
+          .forEach {
+            runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+              manager.uninstallPackage(it)
+            }
+          }
 
         listener.operationFinished(namesToDelete.first(), null)
       }
@@ -219,16 +225,8 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
     }
   }
 
-  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification {
-    return when(manager) {
-      is PipPythonPackageManager -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
-      is CondaPackageManager -> when {
-        useConda -> CondaPackageSpecification(packageName, version)
-        else -> PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
-      }
-      else -> error("Unknown package manager")
-    }
-  }
+  private fun specForPackage(packageName: String, version: String? = null, repository: PyPackageRepository? = null): PythonPackageSpecification =
+    PythonSimplePackageSpecification(packageName, version, repository ?: findRepositoryForPackage(packageName))
 
   override fun shouldFetchLatestVersionsForOnlyInstalledPackages(): Boolean = !(isConda && useConda)
 

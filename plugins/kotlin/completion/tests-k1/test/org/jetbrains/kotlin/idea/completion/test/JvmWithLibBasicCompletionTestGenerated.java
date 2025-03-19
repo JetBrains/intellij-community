@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,8 +20,34 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/basic/withLib")
 public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBasicCompletionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtFirstPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtFirstPosition() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtFirstPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithDefaultArgumentAtSecondPosition.kt")
+    public void testJavaAnnotationWithDefaultArgumentAtSecondPosition() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithDefaultArgumentAtSecondPosition.kt");
+    }
+
+    @TestMetadata("JavaAnnotationWithoutDefaultMethod.kt")
+    public void testJavaAnnotationWithoutDefaultMethod() throws Exception {
+        runTest("../testData/basic/withLib/JavaAnnotationWithoutDefaultMethod.kt");
+    }
+
+    @TestMetadata("JavaFinalStaticFieldAsAnnotationArgument.kt")
+    public void testJavaFinalStaticFieldAsAnnotationArgument() throws Exception {
+        runTest("../testData/basic/withLib/JavaFinalStaticFieldAsAnnotationArgument.kt");
     }
 
     @TestMetadata("NamedArgumentsJava.kt")

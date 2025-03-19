@@ -15,7 +15,6 @@ UFile (package = )
                     USimpleNameReferenceExpression (identifier = runnable)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (run))
-                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null)
                 UDeclarationsExpression
                     ULocalVariable (name = runnable2)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
@@ -23,14 +22,13 @@ UFile (package = )
                             USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable)
                             ULambdaExpression
                                 UBlockExpression
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                                        UIdentifier (Identifier (println))
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                                    UReturnExpression
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                            UIdentifier (Identifier (println))
                 UQualifiedReferenceExpression
                     USimpleNameReferenceExpression (identifier = runnable2)
                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                         UIdentifier (Identifier (run))
-                        USimpleNameReferenceExpression (identifier = run, resolvesTo = null)
                 UDeclarationsExpression
                     ULocalVariable (name = closeableRunnable)
                         UObjectLiteralExpression
@@ -54,7 +52,7 @@ UFile (package = )
                                     UBlockExpression
                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                                             UIdentifier (Identifier (InputStream))
-                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: InputStream)
+                                            USimpleNameReferenceExpression (identifier = InputStream, resolvesTo = PsiClass: InputStream)
         UMethod (name = withErr)
             UBlockExpression
                 UDeclarationsExpression

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -44,7 +45,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   @Override
-  protected void gotoActionPerformed(@NotNull final AnActionEvent e) {
+  protected void gotoActionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return;
     perform(project);
@@ -81,7 +82,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GoToTask", group, true);
     actionToolbar.setTargetComponent(actionToolbar.getComponent());
-    actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     actionToolbar.getComponent().setFocusable(false);
     actionToolbar.getComponent().setBorder(null);
     popup.setToolArea(actionToolbar.getComponent());
@@ -135,9 +136,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
-    @NotNull
     @Override
-    public ListCellRenderer getListCellRenderer() {
+    public @NotNull ListCellRenderer getListCellRenderer() {
       return myListCellRenderer;
     }
 

@@ -25,14 +25,16 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.asJBIterable
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val vcs = VcsUtil.getVcsFor(project, ignoreFile) ?: return
     val ignoreFileRoot = ignoreFile.parent ?: return
 
@@ -44,13 +46,14 @@ class IgnoreFileAction(private val ignoreFile: VirtualFile) : DumbAwareAction() 
 
 }
 
+@ApiStatus.Internal
 class CreateNewIgnoreFileAction(private val ignoreFileName: String, private val ignoreFileRoot: VirtualFile) : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val ignoreFileRootVcs = VcsUtil.getVcsFor(project, ignoreFileRoot) ?: return
 
     val ignored = getIgnoredFileBeans(e, ignoreFileRoot, ignoreFileRootVcs)

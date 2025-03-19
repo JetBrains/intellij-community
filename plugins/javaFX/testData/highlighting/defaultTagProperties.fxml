@@ -8,5 +8,5 @@
   <fx:script>
   </fx:script>
   <fx:<error descr="Cannot resolve symbol 'fx:id'">id</error>/>
-  <Label fx:id="label" GridPane.rowIndex="1" <error descr="Attribute fx:script is not allowed here">fx:script</error>=""/>
+  <Label fx:id="label" GridPane.rowIndex="1" <error descr="Property 'fx:script' is read-only"><error descr="Attribute fx:script is not allowed here">fx:script</error>=""</error>/>
 </GridPane>

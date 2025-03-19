@@ -12,6 +12,7 @@ public class PsiRecordHeaderStubImpl extends StubBase<PsiRecordHeader> implement
     super(parent, JavaStubElementTypes.RECORD_HEADER);
   }
 
+  @Override
   public String toString() {
     return "PsiRecordHeaderStub";
   }

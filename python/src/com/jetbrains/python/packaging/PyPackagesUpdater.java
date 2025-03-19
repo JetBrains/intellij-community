@@ -3,16 +3,11 @@ package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -29,9 +24,7 @@ final class PyPackagesUpdater implements StartupActivity, DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
-    if (!checkNeeded(project)) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || Registry.is("disable.python.cache.update") || !checkNeeded()) return;
 
     try {
       PyPIPackageUtil.INSTANCE.updatePyPICache();
@@ -41,18 +34,7 @@ final class PyPackagesUpdater implements StartupActivity, DumbAware {
     }
   }
 
-  private static boolean hasPython(Project project) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-      if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean checkNeeded(Project project) {
-    if (!hasPython(project)) return false;
+  private static boolean checkNeeded() {
     PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return false;
     try {

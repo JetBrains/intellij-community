@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.compiler-plugins.parcelize.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
+
+jvm_resources(
+  name = "kotlin-compiler-plugins-parcelize-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-compiler-plugins-parcelize-k2",
+  module_name = "kotlin.compiler-plugins.parcelize.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-parcelize-compiler-plugin",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/compiler-plugins/parcelize/common:kotlin-compiler-plugins-parcelize-common",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//java/java-psi-api:psi",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+  ],
+  runtime_deps = [":kotlin-compiler-plugins-parcelize-k2_resources"]
+)
+### auto-generated section `build kotlin.compiler-plugins.parcelize.k2` end

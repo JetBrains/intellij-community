@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class MessageCounter {
   private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>>>
     map = new HashMap<>();
@@ -46,10 +48,10 @@ public final class MessageCounter {
     }
   }
 
-  public synchronized int getCount(@Nullable final String groupName,
-                                   @NotNull final NotificationSource notificationSource,
-                                   @Nullable final NotificationCategory notificationCategory,
-                                   @NotNull final ProjectSystemId projectSystemId) {
+  public synchronized int getCount(final @Nullable String groupName,
+                                   final @NotNull NotificationSource notificationSource,
+                                   final @Nullable NotificationCategory notificationCategory,
+                                   final @NotNull ProjectSystemId projectSystemId) {
     int count = 0;
     Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> value = map.get(projectSystemId);
     Map<String, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>> groupMap = value == null ? Collections.emptyMap() : value;

@@ -27,6 +27,10 @@ public final class NamedColorUtil {
     return JBUI.CurrentTheme.List.Selection.foreground(focused);
   }
 
+  /**
+   * @deprecated use {@link Cursor#getPredefinedCursor(int)} with {@link Cursor#TEXT_CURSOR} argument instead.
+   */
+  @Deprecated(forRemoval = true)
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
     return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);

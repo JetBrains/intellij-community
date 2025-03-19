@@ -10,24 +10,22 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateRequiredSubElement extends LocalQuickFixAndIntentionActionOnPsiElement {
+public final class CreateRequiredSubElement extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private final String myName;
 
-  protected CreateRequiredSubElement(@Nullable PsiElement element, String name) {
+  CreateRequiredSubElement(@Nullable PsiElement element, String name) {
     super(element);
     myName = name;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return HtmlToolsBundle.message("html.intention.create.sub.element.text", myName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return HtmlToolsBundle.message("html.intention.create.sub.element.family", myName);
   }
 

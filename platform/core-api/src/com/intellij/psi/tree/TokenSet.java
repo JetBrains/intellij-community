@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.psi.TokenType;
@@ -49,7 +49,7 @@ public final class TokenSet {
    * @param t the element type to search for.
    * @return true if the element type is found in the set, false otherwise.
    */
-  @Contract("null -> false")
+  @Contract(value = "null -> false", pure = true)
   public boolean contains(@Nullable IElementType t) {
     if (t == null) return false;
     final short i = t.getIndex();
@@ -77,10 +77,7 @@ public final class TokenSet {
         List<IElementType> list = new ArrayList<>();
         for (short i = (short)Math.max(1, myShift << 6); i <= myMax; i++) {
           if (!get(i)) continue;
-          IElementType type = IElementType.find(i);
-          if (type != null) {
-            list.add(type);
-          }
+          list.add(IElementType.find(i));
         }
         types = list.toArray(IElementType.EMPTY_ARRAY);
       }
@@ -101,8 +98,7 @@ public final class TokenSet {
    * @param types the element types contained in the set.
    * @return the new token set.
    */
-  @NotNull
-  public static TokenSet create(IElementType @NotNull ... types) {
+  public static @NotNull TokenSet create(IElementType @NotNull ... types) {
     if (types.length == 0) return EMPTY;
     if (types.length == 1 && types[0] == TokenType.WHITE_SPACE) {
       return WHITE_SPACE;
@@ -110,8 +106,7 @@ public final class TokenSet {
     return doCreate(types);
   }
 
-  @NotNull
-  private static TokenSet doCreate(IElementType @NotNull ... types) {
+  private static @NotNull TokenSet doCreate(IElementType @NotNull ... types) {
     short min = Short.MAX_VALUE;
     short max = 0;
     for (IElementType type : types) {
@@ -148,8 +143,7 @@ public final class TokenSet {
    * @param sets the token sets to unite.
    * @return the new token set.
    */
-  @NotNull
-  public static TokenSet orSet(TokenSet @NotNull ... sets) {
+  public static @NotNull TokenSet orSet(TokenSet @NotNull ... sets) {
     if (sets.length == 0) return EMPTY;
 
     List<IElementType.Predicate> orConditions = new ArrayList<>();
@@ -184,8 +178,7 @@ public final class TokenSet {
    * @param b the second token set to intersect.
    * @return the new token set.
    */
-  @NotNull
-  public static TokenSet andSet(@NotNull TokenSet a, @NotNull TokenSet b) {
+  public static @NotNull TokenSet andSet(@NotNull TokenSet a, @NotNull TokenSet b) {
     List<IElementType.Predicate> orConditions = new ArrayList<>();
     ContainerUtil.addIfNotNull(orConditions, a.myOrCondition);
     ContainerUtil.addIfNotNull(orConditions, b.myOrCondition);
@@ -210,8 +203,7 @@ public final class TokenSet {
    * @param b the token set to subtract.
    * @return the new token set.
    */
-  @NotNull
-  public static TokenSet andNot(@NotNull TokenSet a, @NotNull TokenSet b) {
+  public static @NotNull TokenSet andNot(@NotNull TokenSet a, @NotNull TokenSet b) {
     IElementType.Predicate difference = a.myOrCondition == null ? null : e -> !b.contains(e) && a.myOrCondition.matches(e);
     TokenSet newSet = new TokenSet((short)Math.min(a.myShift, b.myShift), (short)Math.max(a.myMax, b.myMax), difference);
     for (int i = 0; i < newSet.myWords.length; i++) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.psi.PsiManager;
@@ -45,8 +45,7 @@ class TypeDfaState {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public static TypeDfaState merge(@NotNull TypeDfaState left, @NotNull TypeDfaState right, PsiManager manager) {
+  public static @NotNull TypeDfaState merge(@NotNull TypeDfaState left, @NotNull TypeDfaState right, PsiManager manager) {
     if (left == right) {
       return left;
     }
@@ -63,8 +62,7 @@ class TypeDfaState {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withNewType(int variableIndex, @NotNull DFAType type) {
+  public @NotNull TypeDfaState withNewType(int variableIndex, @NotNull DFAType type) {
     BitSet newSet;
     if (variableIndex == 0 || !myProhibitedCachingVars.get(variableIndex)) {
       newSet = myProhibitedCachingVars;
@@ -90,8 +88,7 @@ class TypeDfaState {
   }
 
   @Contract(pure = true)
-  @NotNull
-  public TypeDfaState withRemovedBinding(int variableIndex) {
+  public @NotNull TypeDfaState withRemovedBinding(int variableIndex) {
     if (variableIndex == 0 || myProhibitedCachingVars.get(variableIndex)) {
       return this;
     }
@@ -122,8 +119,7 @@ class TypeDfaState {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     String evicted = myProhibitedCachingVars.isEmpty() ? "" : ", (caching prohibited: " + myProhibitedCachingVars + ")";
     return myVarTypes.toString() + evicted;
   }
@@ -141,11 +137,10 @@ class TypeDfaState {
     return prohibited;
   }
 
-  @NotNull
-  private static Int2ObjectMap<DFAType> mergeTypeMaps(Int2ObjectMap<DFAType> leftMap,
-                                                      Int2ObjectMap<DFAType> rightMap,
-                                                      PsiManager manager,
-                                                      BitSet prohibited) {
+  private static @NotNull Int2ObjectMap<DFAType> mergeTypeMaps(Int2ObjectMap<DFAType> leftMap,
+                                                               Int2ObjectMap<DFAType> rightMap,
+                                                               PsiManager manager,
+                                                               BitSet prohibited) {
     Int2ObjectMap<DFAType> newFMap = new Int2ObjectOpenHashMap<>();
     Stream.concat(rightMap.int2ObjectEntrySet().stream(), leftMap.int2ObjectEntrySet().stream()).forEach(entry -> {
       int descriptorId = entry.getIntKey();

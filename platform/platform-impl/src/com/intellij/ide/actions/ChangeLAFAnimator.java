@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -37,22 +36,22 @@ final class ChangeLAFAnimator {
       }
       @Override
       protected void paintCycleEnd() {
-        if (!isDisposed()) {
-          Disposer.dispose(this);
-        }
+        dispose();
       }
 
       @Override
       public void dispose() {
         try {
           super.dispose();
+
           for (Map.Entry<JLayeredPane, JComponent> entry : myMap.entrySet()) {
             JLayeredPane layeredPane = entry.getKey();
             layeredPane.remove(entry.getValue());
             layeredPane.revalidate();
             layeredPane.repaint();
           }
-        } finally {
+        }
+        finally {
           myMap.clear();
         }
       }
@@ -68,14 +67,9 @@ final class ChangeLAFAnimator {
           ImageUtil.createImage(window.getGraphicsConfiguration(), bounds.width, bounds.height, BufferedImage.TYPE_INT_ARGB);
         Graphics imageGraphics = image.getGraphics();
         GraphicsUtil.setupAntialiasing(imageGraphics);
-        ((RootPaneContainer)window).getRootPane().paint(imageGraphics);
+        rootPaneContainer.getRootPane().paint(imageGraphics);
 
         JComponent imageLayer = new JComponent() {
-          @Override
-          public void updateUI() {
-            super.updateUI();
-          }
-
           @Override
           public void paint(Graphics g) {
             g = g.create();
@@ -99,7 +93,6 @@ final class ChangeLAFAnimator {
   void hideSnapshotWithAnimation() {
     myAnimator.resume();
   }
-
 
   private void doPaint() {
     for (Map.Entry<JLayeredPane, JComponent> entry : myMap.entrySet()) {

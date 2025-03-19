@@ -20,7 +20,7 @@ import java.util.Objects;
  * @author Tomasz Kalkosiński
  * @author Michail Plushnikov
  */
-public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
+public final class BuilderClassMethodProcessor extends AbstractMethodProcessor {
 
   public BuilderClassMethodProcessor() {
     super(PsiClass.class, LombokClassNames.BUILDER);

@@ -1,30 +1,33 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt uFile.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(UnsafeCastFunction::class)
+
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.platform.uast.testFramework.env.findElementByText
+import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
-import com.intellij.platform.uast.testFramework.env.findElementByText
-import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import org.junit.Assert
 import kotlin.test.fail as kfail
 
-interface UastApiTestBase : UastPluginSelection {
+interface UastApiTestBase : ExpectedPluginModeProvider {
+
     fun checkCallbackForAnnotationParameters(uFilePath: String, uFile: UFile) {
         val annotation = uFile.findElementByText<UAnnotation>("@IntRange(from = 10, to = 0)")
         TestCase.assertEquals(10L, annotation.findAttributeValue("from")?.evaluate())
@@ -260,7 +263,7 @@ interface UastApiTestBase : UastPluginSelection {
                     ?: throw AssertionError("haven't got annotation from $referenceExpression(${referenceExpression?.javaClass})")
 
                 // NB: descriptor is FE 1.0 thing, not FIR.
-                if (!isFirUastPlugin) {
+                if (pluginMode == KotlinPluginMode.K1) {
                     checkDescriptorsLeak(convertedUAnnotation)
                 }
                 TestCase.assertEquals("Annotation", convertedUAnnotation.qualifiedName)
@@ -312,7 +315,7 @@ interface UastApiTestBase : UastPluginSelection {
                 attributeValue.cast<PsiArrayInitializerMemberValue>().initializers[0]
             )
             assertEqualUast(
-                wrapULiteral(uastAnnotationParamValue.cast<UCallExpression>().valueArguments[0]),
+                uastAnnotationParamValue.cast<UCallExpression>().valueArguments[0],
                 attributeValue.cast<PsiArrayInitializerMemberValue>().initializers[0]
             ) { it.toUElementOfType<UInjectionHost>() }
         }
@@ -457,7 +460,7 @@ interface UastApiTestBase : UastPluginSelection {
         TestCase.assertNotNull(localFunctionResolved)
         val classReference = localFunction.classReference ?: kfail("classReference expected")
         TestCase.assertEquals(
-            "USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Local)",
+            "USimpleNameReferenceExpression (identifier = Local, resolvesTo = PsiClass: Local)",
             classReference.asLogString()
         )
         val localClass = classReference.resolve().toUElement() ?: kfail("UElement expected")
@@ -615,7 +618,7 @@ interface UastApiTestBase : UastPluginSelection {
         })
         TestCase.assertEquals(
             """
-                <init>() -> typeArguments: [PsiType:T]
+                TypeBase() -> typeArguments: [PsiType:T]
                 getGenericSuperclass() -> typeArguments: []
                 getActualTypeArguments() -> typeArguments: []
                 first() -> typeArguments: []
@@ -623,7 +626,7 @@ interface UastApiTestBase : UastPluginSelection {
         )
     }
 
-    fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
+    fun checkCallbackForSAM(uFilePath: String, uFile: UFile, t: String, v: String) {
         TestCase.assertNull(uFile.findElementByText<ULambdaExpression>("{ /* Not SAM */ }").functionalInterfaceType)
         TestCase.assertEquals(
             "java.lang.Runnable",
@@ -671,11 +674,11 @@ interface UastApiTestBase : UastPluginSelection {
             (call.classReference?.resolve() as? PsiClass)?.qualifiedName
         )
         TestCase.assertEquals(
-            "java.util.function.Supplier<T>",
+            "java.util.function.Supplier<$t>",
             uFile.findElementByText<ULambdaExpression>("{ \"Supplier\" }").functionalInterfaceType?.canonicalText
         )
         TestCase.assertEquals(
-            "java.util.concurrent.Callable<V>",
+            "java.util.concurrent.Callable<$v>",
             uFile.findElementByText<ULambdaExpression>("{ \"Callable\" }").functionalInterfaceType?.canonicalText
         )
     }

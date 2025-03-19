@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -181,21 +182,11 @@ public final class ReflectionUtil {
   }
 
   public static @NotNull List<Method> getClassPublicMethods(@NotNull Class<?> aClass) {
-    return getClassPublicMethods(aClass, false);
-  }
-
-  public static @NotNull List<Method> getClassPublicMethods(@NotNull Class<?> aClass, boolean includeSynthetic) {
-    Method[] methods = aClass.getMethods();
-    return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
+    return filterRealMethods(aClass.getMethods());
   }
 
   public static @NotNull List<Method> getClassDeclaredMethods(@NotNull Class<?> aClass) {
-    return getClassDeclaredMethods(aClass, false);
-  }
-
-  public static @NotNull List<Method> getClassDeclaredMethods(@NotNull Class<?> aClass, boolean includeSynthetic) {
-    Method[] methods = aClass.getDeclaredMethods();
-    return includeSynthetic ? Arrays.asList(methods) : filterRealMethods(methods);
+    return filterRealMethods(aClass.getDeclaredMethods());
   }
 
   private static @NotNull List<Method> filterRealMethods(Method @NotNull [] methods) {
@@ -343,8 +334,8 @@ public final class ReflectionUtil {
         continue;
       }
 
+      List<Exception> exceptions = null;
       Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-      Exception exception = null;
       List<Constructor<?>> defaultCtors = new SmartList<>();
       ctorLoop:
       for (Constructor<?> constructor : constructors) {
@@ -372,7 +363,10 @@ public final class ReflectionUtil {
           return (T)constructor.newInstance(new Object[parameterTypes.length]);
         }
         catch (Exception e) {
-          exception = e;
+          if (exceptions == null) {
+            exceptions = new SmartList<>();
+          }
+          exceptions.add(new Exception("Failed to call constructor: " + constructor.toString(), e));
         }
       }
 
@@ -388,12 +382,20 @@ public final class ReflectionUtil {
           return (T)constructor.newInstance();
         }
         catch (Exception e) {
-          exception = e;
+          if (exceptions == null) {
+            exceptions = new SmartList<>();
+          }
+          exceptions.add(new Exception("Failed to call constructor: " + constructor.toString(), e));
         }
       }
 
-      if (exception != null) {
-        ExceptionUtil.rethrow(exception);
+      if (exceptions != null) {
+        if (exceptions.size() == 1) {
+          ExceptionUtil.rethrow(exceptions.get(0));
+        }
+        else {
+          ExceptionUtil.rethrow(new CompoundRuntimeException(exceptions));
+        }
       }
     }
     return null;
@@ -448,21 +450,16 @@ public final class ReflectionUtil {
   }
 
   public static <T> boolean comparePublicNonFinalFields(@NotNull T first, @NotNull T second) {
-    return comparePublicNonFinalFields(first, second, null);
-  }
-
-  public static <T> boolean comparePublicNonFinalFields(
-    @NotNull T first,
-    @NotNull T second,
-    @Nullable Predicate<? super Field> acceptPredicate
-  ) {
     Class<?> defaultClass = first.getClass();
     Field[] fields = defaultClass.getDeclaredFields();
     if (defaultClass != second.getClass()) {
       fields = ArrayUtil.mergeArrays(fields, second.getClass().getDeclaredFields());
     }
     for (Field field : fields) {
-      if (!isPublic(field) || isFinal(field) || (acceptPredicate != null && !acceptPredicate.test(field))) continue;
+      if (!isPublic(field) || isFinal(field)) {
+        continue;
+      }
+
       field.setAccessible(true);
       try {
         if (!Comparing.equal(field.get(second), field.get(first))) {
@@ -558,7 +555,6 @@ public final class ReflectionUtil {
   /**
    * @deprecated Use {@link java.lang.invoke.VarHandle} or {@link java.util.concurrent.ConcurrentHashMap} or other standard JDK concurrent facilities
    */
-  @SuppressWarnings({"Since15", "DeprecatedIsStillUsed"})
   @ApiStatus.Internal
   @Deprecated
   @ApiStatus.ScheduledForRemoval

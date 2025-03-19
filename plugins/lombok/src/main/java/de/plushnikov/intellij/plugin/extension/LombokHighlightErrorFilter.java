@@ -1,247 +1,96 @@
 package de.plushnikov.intellij.plugin.extension;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
-import com.intellij.codeInspection.QuickFix;
-import com.intellij.java.JavaBundle;
-import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.java.codeserver.highlighting.JavaErrorFilter;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
-import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
-import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.regex.Pattern;
 
-public class LombokHighlightErrorFilter implements HighlightInfoFilter {
+public final class LombokHighlightErrorFilter implements JavaErrorFilter {
+  private static final Pattern UNDERSCORES = Pattern.compile("_+");
 
-  private static final class Holder {
-    static final Pattern LOMBOK_ANY_ANNOTATION_REQUIRED =
-      Pattern.compile(JavaErrorBundle.message("incompatible.types", "lombok.*AnyAnnotation\\[\\]", "__*"));
-
-    static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFilter>>> registeredFilters;
-    static final Map<HighlightSeverity, Map<TextAttributesKey, List<LombokHighlightFixHook>>> registeredHooks;
-
-    static {
-      registeredFilters = new HashMap<>();
-      registeredHooks = new HashMap<>();
-
-      for (LombokHighlightFilter highlightFilter : LombokHighlightFilter.values()) {
-        registeredFilters.computeIfAbsent(highlightFilter.severity, s -> new HashMap<>())
-          .computeIfAbsent(highlightFilter.key, k -> new ArrayList<>())
-          .add(highlightFilter);
-      }
-
-      for (LombokHighlightFixHook highlightFixHook : LombokHighlightFixHook.values()) {
-        registeredHooks.computeIfAbsent(highlightFixHook.severity, s -> new HashMap<>())
-          .computeIfAbsent(highlightFixHook.key, k -> new ArrayList<>())
-          .add(highlightFixHook);
-      }
-    }
-  }
+  private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
+    LombokClassNames.GETTER,
+    LombokClassNames.SETTER,
+    LombokClassNames.WITH,
+    LombokClassNames.WITHER,
+    LombokClassNames.NO_ARGS_CONSTRUCTOR,
+    LombokClassNames.REQUIRED_ARGS_CONSTRUCTOR,
+    LombokClassNames.ALL_ARGS_CONSTRUCTOR,
+    LombokClassNames.EQUALS_AND_HASHCODE
+  );
+  private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
+    "onConstructor",
+    "onMethod",
+    "onParam"
+  );
 
   public LombokHighlightErrorFilter() {
   }
 
   @Override
-  public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile file) {
-    if (null == file) {
-      return true;
-    }
-
+  public boolean shouldSuppressError(@NotNull PsiFile file, @NotNull JavaCompilationError<?, ?> error) {
     Project project = file.getProject();
-    if (!LombokLibraryUtil.hasLombokLibrary(project)) {
-      return true;
-    }
+    return LombokLibraryUtil.hasLombokLibrary(project) && isOnXParameterAnnotation(error);
+  }
 
-    PsiElement highlightedElement = file.findElementAt(highlightInfo.getStartOffset());
-    if (null == highlightedElement) {
-      return true;
-    }
+  private static boolean isOnXParameterAnnotation(@NotNull JavaCompilationError<?, ?> error) {
+    if (!isMyError(error)) return false;
 
-    // check exceptions for highlights
-    boolean acceptHighlight = Holder.registeredFilters
-      .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap())
-      .getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList())
-      .stream()
-      .filter(filter -> filter.descriptionCheck(highlightInfo.getDescription(), highlightedElement))
-      .allMatch(filter -> filter.accept(highlightedElement));
+    PsiElement highlightedElement = error.psi();
 
-    // check if highlight was filtered
-    if (!acceptHighlight) {
+    PsiNameValuePair nameValuePair = findContainingNameValuePair(highlightedElement);
+    if (nameValuePair == null || !(nameValuePair.getContext() instanceof PsiAnnotationParameterList)) {
       return false;
     }
 
-    // handle rest cases
-    String description = highlightInfo.getDescription();
-    if (HighlightSeverity.ERROR.equals(highlightInfo.getSeverity())) {
-      //Handling onX parameters
-      if (OnXAnnotationHandler.isOnXParameterAnnotation(highlightInfo, file)
-        || OnXAnnotationHandler.isOnXParameterValue(highlightInfo, file)
-        || (description != null && Holder.LOMBOK_ANY_ANNOTATION_REQUIRED.matcher(description).matches())) {
-        return false;
-      }
+    String parameterName = nameValuePair.getName();
+    if (null != parameterName && parameterName.contains("_")) {
+      parameterName = parameterName.substring(0, parameterName.indexOf('_'));
+    }
+    if (!ONX_PARAMETERS.contains(parameterName)) {
+      return false;
     }
 
-    // register different quick fix for highlight
-    Holder.registeredHooks
-      .getOrDefault(highlightInfo.getSeverity(), Collections.emptyMap())
-      .getOrDefault(highlightInfo.type.getAttributesKey(), Collections.emptyList())
-      .stream()
-      .filter(filter -> filter.descriptionCheck(highlightInfo.getDescription()))
-      .forEach(filter -> filter.processHook(highlightedElement, highlightInfo));
-
-    return true;
+    PsiElement containingAnnotation = nameValuePair.getContext().getContext();
+    return containingAnnotation instanceof PsiAnnotation annotation &&
+           ONXABLE_ANNOTATIONS.contains(annotation.getQualifiedName());
   }
 
-  private enum LombokHighlightFixHook {
-
-    UNHANDLED_EXCEPTION(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      private final Pattern pattern = preparePattern(1);
-      private final Pattern pattern2 = preparePattern(2);
-
-      @NotNull
-      private static Pattern preparePattern(int count) {
-        return Pattern.compile(JavaErrorBundle.message("unhandled.exceptions", ".*", count));
-      }
-
-      @Override
-      public boolean descriptionCheck(@Nullable String description) {
-        return description != null && (pattern.matcher(description).matches() || pattern2.matcher(description).matches());
-      }
-
-      @Override
-      public void processHook(@NotNull PsiElement highlightedElement, @NotNull HighlightInfo highlightInfo) {
-        PsiElement importantParent = PsiTreeUtil.getParentOfType(highlightedElement,
-          PsiMethod.class, PsiLambdaExpression.class, PsiMethodReferenceExpression.class, PsiClassInitializer.class
-        );
-
-        // applicable only for methods
-        if (importantParent instanceof PsiMethod) {
-          AddAnnotationFix fix = new AddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
-          highlightInfo.registerFix(fix, null, null, null, null);
-        }
-      }
-    };
-
-    private final HighlightSeverity severity;
-    private final TextAttributesKey key;
-
-    LombokHighlightFixHook(@NotNull HighlightSeverity severity, @Nullable TextAttributesKey key) {
-      this.severity = severity;
-      this.key = key;
-    }
-
-    abstract public boolean descriptionCheck(@Nullable String description);
-
-    abstract public void processHook(@NotNull PsiElement highlightedElement, @NotNull HighlightInfo highlightInfo);
+  private static boolean isMyError(@NotNull JavaCompilationError<?, ?> error) {
+    return error.kind() == JavaErrorKinds.ANNOTATION_TYPE_EXPECTED ||
+           error.forKind(JavaErrorKinds.REFERENCE_UNRESOLVED)
+             .filter(e -> isUnderscore(e.psi())).isPresent() ||
+           error.forKind(JavaErrorKinds.ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE)
+             .filter(e -> isAnyAnnotation(e.context().expectedType()) &&
+                          e.psi() instanceof PsiAnnotation anno && isUnderscore(anno.getNameReferenceElement())).isPresent();
   }
 
-  private enum LombokHighlightFilter {
-    // ERROR HANDLERS
+  private static boolean isUnderscore(@Nullable PsiJavaCodeReferenceElement e) {
+    return e != null && e.getReferenceName() != null && UNDERSCORES.matcher(e.getReferenceName()).matches();
+  }
 
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
-    VARIABLE_MIGHT_NOT_BEEN_INITIALIZED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return JavaErrorBundle.message("variable.not.initialized", highlightedElement.getText()).equals(description);
-      }
+  private static boolean isAnyAnnotation(@NotNull PsiType type) {
+    return type instanceof PsiArrayType arrayType &&
+           arrayType.getComponentType() instanceof PsiClassType classType &&
+           classType.getClassName().equals("AnyAnnotation") &&
+           classType.getCanonicalText().startsWith("lombok.");
+  }
 
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !LazyGetterHandler.isLazyGetterHandled(highlightedElement);
-      }
-    },
-
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testFieldNameConstantsExample
-    CONSTANT_EXPRESSION_REQUIRED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return JavaErrorBundle.message("constant.expression.required").equals(description);
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !FieldNameConstantsHandler.isFiledNameConstants(highlightedElement);
-      }
-    },
-
-    // WARNINGS HANDLERS
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
-    VARIABLE_INITIALIZER_IS_REDUNDANT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile(
-        JavaBundle.message("inspection.unused.assignment.problem.descriptor2", "(.+)", "(.+)"));
-
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return description != null && pattern.matcher(description).matches();
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !BuilderHandler.isDefaultBuilderValue(highlightedElement);
-      }
-    },
-
-    // field should have lazy getter and should be initialized in constructors
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyInvocationProduceNPE
-    METHOD_INVOCATION_WILL_PRODUCE_NPE(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES) {
-      private final CommonProblemDescriptor descriptor = new CommonProblemDescriptor() {
-          @Override
-          public @NotNull String getDescriptionTemplate() {
-            return JavaAnalysisBundle.message("dataflow.message.npe.method.invocation.sure");
-          }
-
-          @Override
-          public @NotNull QuickFix @Nullable [] getFixes() {
-            return null;
-          }
-        };
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, highlightedElement).equals(description);
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !LazyGetterHandler.isLazyGetterHandled(highlightedElement)
-          || !LazyGetterHandler.isInitializedInConstructors(highlightedElement);
-      }
-    };
-
-    private final HighlightSeverity severity;
-    private final TextAttributesKey key;
-
-    LombokHighlightFilter(@NotNull HighlightSeverity severity, @Nullable TextAttributesKey key) {
-      this.severity = severity;
-      this.key = key;
+  private static @Nullable PsiNameValuePair findContainingNameValuePair(PsiElement highlightedElement) {
+    PsiElement nameValuePair = highlightedElement;
+    while (!(nameValuePair == null || nameValuePair instanceof PsiNameValuePair)) {
+      nameValuePair = nameValuePair.getContext();
     }
 
-    /**
-     * @param description            of the current highlighted element
-     * @param highlightedElement     the current highlighted element
-     * @return true if the filter can handle current type of the highlight info with that kind of the description
-     */
-    abstract public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement);
-
-    /**
-     * @param highlightedElement the deepest element (it's the leaf element in PSI tree where the highlight was occurred)
-     * @return false if the highlight should be suppressed
-     */
-    abstract public boolean accept(@NotNull PsiElement highlightedElement);
+    return (PsiNameValuePair)nameValuePair;
   }
 }

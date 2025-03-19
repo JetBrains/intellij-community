@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -14,8 +14,12 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.TreeNodePresentationImpl;
+import com.intellij.ui.treeStructure.TreeNodeTextFragment;
+import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +39,26 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (value instanceof TreeNodeViewModel vm) {
+      customizeViewModelRenderer((TreeNodePresentationImpl)vm.stateSnapshot().getPresentation(), selected, hasFocus);
+    }
+    else {
+      customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+  }
+
+  private void customizeViewModelRenderer(@NotNull TreeNodePresentationImpl presentation, boolean selected, boolean hasFocus) {
+    setIcon(fixIconIfNeeded(presentation.getIcon(), selected, hasFocus));
+    boolean isMain = true;
+    for (@NotNull TreeNodeTextFragment fragment : presentation.getFullText()) {
+      var simpleTextAttributes = fragment.getAttributes();
+      isMain = isMain && !Comparing.equal(simpleTextAttributes.getFgColor(), SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor());
+      append(fragment.getText(), simpleTextAttributes, isMain);
+    }
+    setToolTipText(presentation.getToolTip());
+  }
+
+  private void customizeLegacyRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     @NlsSafe Object node = TreeUtil.getUserObject(value);
 
     if (node instanceof NodeDescriptor<?> descriptor) {
@@ -111,20 +135,17 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  @Nullable
-  protected ItemPresentation getPresentation(Object node) {
+  protected @Nullable ItemPresentation getPresentation(Object node) {
     return node instanceof PresentableNodeDescriptor ? ((PresentableNodeDescriptor<?>)node).getPresentation() :
            node instanceof NavigationItem ? ((NavigationItem)node).getPresentation() :
            null;
   }
 
-  @NotNull
-  private static EditorColorsScheme getScheme() {
+  private static @NotNull EditorColorsScheme getScheme() {
     return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
-  @NotNull
-  protected SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
+  protected @NotNull SimpleTextAttributes getSimpleTextAttributes(@NotNull PresentationData presentation, Color color, @NotNull Object node) {
     SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(presentation, getScheme());
 
     return addColorToSimpleTextAttributes(simpleTextAttributes, color);
@@ -133,17 +154,20 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   private static SimpleTextAttributes addColorToSimpleTextAttributes(SimpleTextAttributes simpleTextAttributes, Color color) {
     if (color != null) {
       final TextAttributes textAttributes = simpleTextAttributes.toTextAttributes();
+      if (simpleTextAttributes.useFaded()) {
+         color = ColorUtil.faded(color);
+      }
       textAttributes.setForegroundColor(color);
       simpleTextAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
     }
     return simpleTextAttributes;
   }
 
-  public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
+  public static SimpleTextAttributes getSimpleTextAttributes(final @Nullable ItemPresentation presentation) {
     return getSimpleTextAttributes(presentation, getScheme());
   }
 
-  private static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
+  private static SimpleTextAttributes getSimpleTextAttributes(final @Nullable ItemPresentation presentation,
                                                               @NotNull EditorColorsScheme colorsScheme)
   {
     if (presentation instanceof ColoredItemPresentation) {

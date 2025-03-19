@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javadoc;
 
 import com.intellij.CommonBundle;
@@ -8,10 +8,12 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(name = "JavadocGenerationManager")
 public final class JavadocGenerationManager implements PersistentStateComponent<JavadocConfiguration> {
   private JavadocConfiguration myConfiguration = new JavadocConfiguration();
@@ -35,8 +37,7 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
     myConfiguration = state;
   }
 
-  @NotNull
-  public JavadocConfiguration getConfiguration() {
+  public @NotNull JavadocConfiguration getConfiguration() {
     return myConfiguration;
   }
 

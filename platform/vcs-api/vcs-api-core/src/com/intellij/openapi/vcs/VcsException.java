@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -31,9 +31,7 @@ public class VcsException extends Exception {
     myMessages = singleton(prepareMessage(message));
   }
 
-  @Nls
-  @NotNull
-  private static String prepareMessage(@Nullable @Nls String message) {
+  private static @Nls @NotNull String prepareMessage(@Nullable @Nls String message) {
     return message != null ? message : message("exception.text.unknown.error");
   }
 
@@ -82,16 +80,12 @@ public class VcsException extends Exception {
     return isWarning;
   }
 
-  @Nls
   @Override
-  @NotNull
-  public String getMessage() {
+  public @Nls @NotNull String getMessage() {
     return join(myMessages, ", ");
   }
 
-  @NlsSafe
-  @Nullable
-  public static String getMessage(@Nullable Throwable throwable) {
+  public static @NlsSafe @Nullable String getMessage(@Nullable Throwable throwable) {
     if (throwable == null) return null;
     String message = throwable.getMessage();
     if (message != null) return message;

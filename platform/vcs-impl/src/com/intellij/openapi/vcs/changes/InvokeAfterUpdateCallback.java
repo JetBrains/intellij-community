@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class InvokeAfterUpdateCallback {
-  private final static Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
+  private static final Logger LOG = Logger.getInstance(InvokeAfterUpdateCallback.class);
 
   interface Callback {
     void startProgress();
@@ -25,11 +25,10 @@ final class InvokeAfterUpdateCallback {
     void handleStoppedQueue();
   }
 
-  @NotNull
-  public static Callback create(@NotNull Project project,
-                                @NotNull InvokeAfterUpdateMode mode,
-                                @NotNull Runnable afterUpdate,
-                                @Nullable @Nls String title) {
+  public static @NotNull Callback create(@NotNull Project project,
+                                         @NotNull InvokeAfterUpdateMode mode,
+                                         @NotNull Runnable afterUpdate,
+                                         @Nullable @Nls String title) {
     if (mode.isSilent()) {
       return new SilentCallback(project, afterUpdate, mode.isCallbackOnAwt());
     }
@@ -92,7 +91,7 @@ final class InvokeAfterUpdateCallback {
     private final boolean myCanBeCancelled;
     private final @Nls String myTitle;
 
-    @NotNull private final Semaphore mySemaphore = new Semaphore(1);
+    private final @NotNull Semaphore mySemaphore = new Semaphore(1);
 
     ProgressCallback(@NotNull Project project,
                      @NotNull Runnable afterUpdate,

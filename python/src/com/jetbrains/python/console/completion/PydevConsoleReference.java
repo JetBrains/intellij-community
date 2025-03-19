@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.completion;
 
 import com.google.common.base.Strings;
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPolyVariantReferenceBase;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.IToken;
@@ -29,7 +30,6 @@ import com.jetbrains.python.console.pydev.PyCodeCompletionImages;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -109,8 +109,8 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
 
   @Override
   public Object @NotNull [] getVariants() {
-    if (!PyConsoleOptions.getInstance(getElement().getProject()).isAutoCompletionEnabled()) {
-      return ArrayUtils.EMPTY_OBJECT_ARRAY;
+    if (!PyConsoleOptions.getInstance(getElement().getProject()).isRuntimeCodeCompletion()) {
+      return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
 
     Map<String, LookupElement> variants = Maps.newHashMap();

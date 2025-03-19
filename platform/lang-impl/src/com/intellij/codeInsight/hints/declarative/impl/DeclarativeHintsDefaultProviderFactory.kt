@@ -6,9 +6,12 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
 import com.intellij.codeInsight.hints.declarative.InlayOptionInfo
 import com.intellij.codeInsight.hints.declarative.InlayProviderInfo
 import com.intellij.lang.Language
+import com.intellij.lang.MetaLanguage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DeclarativeHintsDefaultProviderFactory : InlayHintsProviderFactory {
   companion object {
     private val logger: Logger = logger<DeclarativeHintsDefaultProviderFactory>()
@@ -16,7 +19,13 @@ class DeclarativeHintsDefaultProviderFactory : InlayHintsProviderFactory {
   override fun getProvidersForLanguage(language: Language): List<InlayProviderInfo> {
     val beans = InlayHintsProviderExtensionBean.EP.extensionList.filter {
       val beanLanguage = Language.findLanguageByID(it.language) ?: return@filter false
-      language.isKindOf(beanLanguage)
+      if (language.isKindOf(beanLanguage)) {
+        return@filter true
+      }
+      if (beanLanguage !is MetaLanguage) {
+        return@filter false
+      }
+      return@filter beanLanguage.matchesLanguage(language)
     }
     return beans.map {
       val options = it.options

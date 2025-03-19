@@ -17,13 +17,14 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.generation.surroundWith.JavaWithCastSurrounder;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.IS_NON_VOID;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
-public class CastExpressionPostfixTemplate extends PostfixTemplateWithExpressionSelector {
+public class CastExpressionPostfixTemplate extends PostfixTemplateWithExpressionSelector implements DumbAware {
   public CastExpressionPostfixTemplate() {
     super("cast", "((SomeType) expr)", selectorAllExpressionsWithCurrentOffset(IS_NON_VOID));
   }

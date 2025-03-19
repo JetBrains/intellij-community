@@ -1,49 +1,38 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.testFramework.junit5.SystemProperty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThreeState
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.io.path.div
 
+@TestApplication
+@SystemProperty("idea.trust.headless.disabled", "false")
 class TrustedProjectsTest {
-
-  @JvmField @Rule val memoryFs = InMemoryFsRule()
 
   @Test
   fun `prefer closest ancestor to determine the trusted state`() {
-    val projects = memoryFs.fs.getPath("~/projects/")
-    val outerDir = (projects / "outer")
-    val innerDir = (outerDir / "inner")
+    val projects = Path.of("projects/")
+    val outerDir = Path.of("projects/outer")
+    val innerDir = Path.of("projects/outer/inner")
 
-    TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
-    assertTrusted(innerDir)
-    TrustedPaths.getInstance().setProjectPathTrusted(outerDir, false)
-    assertNotTrusted(innerDir)
-    TrustedPaths.getInstance().setProjectPathTrusted(innerDir, true)
-    assertTrusted(innerDir)
+    TrustedProjects.setProjectTrusted(projects, true)
+    Assertions.assertTrue(TrustedProjects.isProjectTrusted(innerDir))
+    TrustedProjects.setProjectTrusted(outerDir, false)
+    Assertions.assertFalse(TrustedProjects.isProjectTrusted(innerDir))
+    TrustedProjects.setProjectTrusted(innerDir, true)
+    Assertions.assertTrue(TrustedProjects.isProjectTrusted(innerDir))
   }
 
   @Test
   fun `return unsure if there are no information about ancestors`() {
-    val projects = memoryFs.fs.getPath("~/projects/")
-    TrustedPaths.getInstance().setProjectPathTrusted(projects, true)
-
-    val path = memoryFs.fs.getPath("~/path/")
-    assertEquals(ThreeState.UNSURE, TrustedPaths.getInstance().getProjectPathTrustedState(path))
-  }
-
-  private fun assertTrusted(path: Path) = assertEquals(ThreeState.YES, TrustedPaths.getInstance().getProjectPathTrustedState(path))
-  private fun assertNotTrusted(path: Path) = assertEquals(ThreeState.NO, TrustedPaths.getInstance().getProjectPathTrustedState(path))
-
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
+    val projectRoot1 = Path.of("project/root1/")
+    val projectRoot2 = Path.of("project/root2/")
+    TrustedProjects.setProjectTrusted(projectRoot1, true)
+    Assertions.assertEquals(ThreeState.YES, TrustedProjects.getProjectTrustedState(projectRoot1))
+    Assertions.assertEquals(ThreeState.UNSURE, TrustedProjects.getProjectTrustedState(projectRoot2))
   }
 }

@@ -4,9 +4,11 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.importing.workspaceModel.StaticWorkspaceProjectImporter
 import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporter
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
@@ -20,27 +22,47 @@ interface MavenProjectImporter {
   fun createdModules(): List<Module>
 
   companion object {
-    @JvmStatic
-    fun createImporter(project: Project,
-                       projectsTree: MavenProjectsTree,
-                       projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                       importModuleGroupsRequired: Boolean,
-                       modelsProvider: IdeModifiableModelsProvider,
-                       importingSettings: MavenImportingSettings,
-                       previewModule: Module?,
-                       importingActivity: StructuredIdeActivity): MavenProjectImporter {
-      val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
-                                    importModuleGroupsRequired, modelsProvider, importingSettings, previewModule)
+    internal fun createStaticImporter(
+      project: Project,
+      projectsTree: MavenProjectsTree,
+      projectsToImport: List<MavenProject>,
+      modelsProvider: IdeModifiableModelsProvider,
+      importingSettings: MavenImportingSettings,
+      parentImportingActivity: StructuredIdeActivity,
+    ): MavenProjectImporter {
+
+      val importer = StaticWorkspaceProjectImporter(projectsTree, projectsToImport,
+                                                    importingSettings, modelsProvider, project)
+      return wrapWithFUS(project, parentImportingActivity, importer)
+    }
+
+    internal fun createImporter(
+      project: Project,
+      projectsTree: MavenProjectsTree,
+      projectsToImport: List<MavenProject>,
+      modelsProvider: IdeModifiableModelsProvider,
+      importingSettings: MavenImportingSettings,
+      previewModule: Module?,
+      parentImportingActivity: StructuredIdeActivity,
+    ): MavenProjectImporter {
+      val importer = createImporter(project, projectsTree, projectsToImport,
+                                    modelsProvider, importingSettings, previewModule)
+      return wrapWithFUS(project, parentImportingActivity, importer)
+    }
+
+    private fun wrapWithFUS(project: Project,
+                            parentImportingActivity: StructuredIdeActivity,
+                            importer: MavenProjectImporter): MavenProjectImporter {
       return object : MavenProjectImporter {
-        override fun importProject(): List<MavenProjectsProcessorTask>? {
-          val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)
+        override fun importProject(): List<MavenProjectsProcessorTask> {
+          val activity = MavenImportStats.startApplyingModelsActivity(project, parentImportingActivity)
           val startTime = System.currentTimeMillis()
           try {
             importingInProgress.incrementAndGet()
 
-            val postImportTasks = importer.importProject()
+            val postImportTasks = importer.importProject()!!
 
-            val statsMarker = PostImportingTaskMarker(importingActivity)
+            val statsMarker = PostImportingTaskMarker(parentImportingActivity)
             return ContainerUtil.concat(listOf(statsMarker.createStartedTask()),
                                         postImportTasks,
                                         listOf(statsMarker.createFinishedTask()))
@@ -60,70 +82,49 @@ interface MavenProjectImporter {
       }
     }
 
-    class PostImportingTaskMarker(private val importingActivity: StructuredIdeActivity) {
+    class PostImportingTaskMarker(importingActivity: StructuredIdeActivity) {
       private val activityId = MavenImportCollector.ACTIVITY_ID.with(importingActivity)
       private var startedNano = 0L
 
       fun createStartedTask(): MavenProjectsProcessorTask {
-        return MavenProjectsProcessorTask { _, _, _, _ -> startedNano = System.nanoTime() }
+        return object : MavenProjectsProcessorTask {
+          override fun perform(project: Project, embeddersManager: MavenEmbeddersManager, indicator: ProgressIndicator) {
+            startedNano = System.nanoTime()
+          }
+        }
       }
 
       fun createFinishedTask(): MavenProjectsProcessorTask {
-        return MavenProjectsProcessorTask { project, _, _, _ ->
-          if (startedNano == 0L) {
-            MavenLog.LOG.error("'Finished' post import task called before 'started' task")
-          }
-          else {
-            val totalNano = System.nanoTime() - startedNano
-            MavenImportCollector.POST_IMPORT_TASKS_RUN.log(project, activityId.data, TimeUnit.NANOSECONDS.toMillis(totalNano))
+        return object : MavenProjectsProcessorTask {
+          override fun perform(project: Project, embeddersManager: MavenEmbeddersManager, indicator: ProgressIndicator) {
+            if (startedNano == 0L) {
+              MavenLog.LOG.error("'Finished' post import task called before 'started' task")
+            }
+            else {
+              val totalNano = System.nanoTime() - startedNano
+              MavenImportCollector.POST_IMPORT_TASKS_RUN.log(project, activityId.data, TimeUnit.NANOSECONDS.toMillis(totalNano))
+            }
           }
         }
       }
     }
 
-    private fun createImporter(project: Project,
-                               projectsTree: MavenProjectsTree,
-                               projectsToImportWithChanges: Map<MavenProject, MavenProjectChanges>,
-                               importModuleGroupsRequired: Boolean,
-                               modelsProvider: IdeModifiableModelsProvider,
-                               importingSettings: MavenImportingSettings,
-                               previewModule: Module?): MavenProjectImporter {
-      if (isImportToWorkspaceModelEnabled(project)) {
-        return WorkspaceProjectImporter(projectsTree, projectsToImportWithChanges,
-                                        importingSettings, modelsProvider, project)
-      }
-
-      return MavenProjectLegacyImporter(project, projectsTree,
-                                        projectsToImportWithChanges,
-                                        importModuleGroupsRequired,
-                                        modelsProvider, importingSettings,
-                                        previewModule)
+    private fun createImporter(
+      project: Project,
+      projectsTree: MavenProjectsTree,
+      projectsToImport: List<MavenProject>,
+      modelsProvider: IdeModifiableModelsProvider,
+      importingSettings: MavenImportingSettings,
+      previewModule: Module?,
+    ): MavenProjectImporter {
+      return WorkspaceProjectImporter(projectsTree, projectsToImport, importingSettings, modelsProvider, project)
     }
 
     @JvmStatic
     fun tryUpdateTargetFolders(project: Project) {
-      if (isImportToWorkspaceModelEnabled(project)) {
-        WorkspaceProjectImporter.updateTargetFolders(project)
-      }
-      else {
-        MavenLegacyFoldersImporter.updateProjectFolders(/* project = */ project, /* updateTargetFoldersOnly = */ true)
-      }
+      WorkspaceProjectImporter.updateTargetFolders(project)
     }
 
     private val importingInProgress = AtomicInteger()
-
-    @JvmStatic
-    fun isImportingInProgress(): Boolean {
-      return importingInProgress.get() > 0
-    }
-
-    @JvmStatic
-    fun isImportToWorkspaceModelEnabled(project: Project?): Boolean {
-      val property = System.getProperty("maven.import.to.workspace.model")
-      if ("true" == property) return true
-      if ("false" == property) return false
-      if (project == null) return false
-      return MavenProjectsManager.getInstance(project).importingSettings.isWorkspaceImportEnabled
-    }
   }
 }

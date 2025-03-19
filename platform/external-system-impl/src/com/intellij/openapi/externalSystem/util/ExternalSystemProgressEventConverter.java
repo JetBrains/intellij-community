@@ -1,23 +1,21 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.impl.FailureImpl;
-import com.intellij.build.events.impl.FailureResultImpl;
-import com.intellij.build.events.impl.SkippedResultImpl;
-import com.intellij.build.events.impl.SuccessResultImpl;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class ExternalSystemProgressEventConverter {
+@ApiStatus.Internal
+public final class ExternalSystemProgressEventConverter {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
 

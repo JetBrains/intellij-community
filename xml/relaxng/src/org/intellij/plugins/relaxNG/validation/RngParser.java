@@ -186,13 +186,14 @@ public final class RngParser {
           final Schema schema = new MySchemaReader(descriptorFile).createSchema(inputSource, EMPTY_PROPS);
           final PsiElementProcessor.CollectElements<XmlFile> processor = new PsiElementProcessor.CollectElements<>();
           RelaxIncludeIndex.processForwardDependencies(descriptorFile, processor);
-          if (processor.getCollection().size() > 0) {
+          if (!processor.getCollection().isEmpty()) {
             return CachedValueProvider.Result.create(schema, processor.toArray(), descriptorFile);
           } else {
             return CachedValueProvider.Result.createSingleDependency(schema, descriptorFile);
           }
         } catch (Exception e) {
-          LOG.info(e);
+          VirtualFile vf = descriptorFile.getVirtualFile();
+          LOG.info("For descriptor file: " + (vf != null ? vf.getPath() : descriptorFile.getName()), e);
           return CachedValueProvider.Result.createSingleDependency(null, descriptorFile);
         }
       };

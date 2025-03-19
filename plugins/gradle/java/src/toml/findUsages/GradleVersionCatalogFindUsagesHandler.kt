@@ -16,7 +16,7 @@ class GradleVersionCatalogFindUsagesHandler(private val tomlElement: TomlKeySegm
 
   override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions {
     val superOptions = super.getFindUsagesOptions(dataContext)
-    superOptions.searchScope = VersionCatalogSearchScope(tomlElement)
+    superOptions.searchScope = superOptions.searchScope.union(VersionCatalogSearchScope(tomlElement))
     return superOptions
   }
 

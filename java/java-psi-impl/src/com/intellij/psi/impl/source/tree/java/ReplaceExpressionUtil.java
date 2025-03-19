@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.lang.java.parser.BasicExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -76,7 +76,8 @@ public final class ReplaceExpressionUtil {
              i == JavaElementType.SUPER_EXPRESSION ||
              i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
              i == JavaElementType.LAMBDA_EXPRESSION ||
-             i == JavaElementType.SWITCH_EXPRESSION) {
+             i == JavaElementType.SWITCH_EXPRESSION ||
+             i == JavaElementType.TEMPLATE_EXPRESSION) {
       return false;
     }
 
@@ -116,13 +117,13 @@ public final class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (ExpressionParser.SHIFT_OPS.contains(opType)) {
+      else if (BasicExpressionParser.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (ExpressionParser.ADDITIVE_OPS.contains(opType)) {
+      else if (BasicExpressionParser.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
+      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;
@@ -149,7 +150,8 @@ public final class ReplaceExpressionUtil {
              i == JavaElementType.JAVA_CODE_REFERENCE ||
              i == JavaElementType.METHOD_REF_EXPRESSION ||
              i == JavaElementType.LAMBDA_EXPRESSION ||
-             i == JavaElementType.EMPTY_EXPRESSION) {
+             i == JavaElementType.EMPTY_EXPRESSION ||
+             i == JavaElementType.TEMPLATE_EXPRESSION) {
       return 14;
     }
     else {

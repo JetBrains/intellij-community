@@ -7,6 +7,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -15,7 +16,7 @@ import javax.swing.JPanel
 class InlayHintsConfigurable(private val project: Project) : Configurable, Configurable.Composite, Configurable.WithEpDependencies {
   override fun getConfigurables(): Array<Configurable> = emptyArray()
 
-  override fun isModified() = false
+  override fun isModified(): Boolean = false
 
   override fun getDisplayName(): String {
     return CodeInsightBundle.message("settings.inlay.hints.panel.name")
@@ -42,16 +43,9 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
     InlaySettingsProvider.EP.getExtensions().flatMap { it.getDependencies() }
 
   companion object {
-    /**
-     * Updates settings UI when external change happens (e. g. when some provider is changed).
-     */
-    @JvmStatic
-    @Deprecated("New UI doesn't need it, just drop call")
-    fun updateInlayHintsUI() {
-
-    }
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
                 ReplaceWith("showInlaySettings(project, language, null)"))
     fun showSettingsDialogForLanguage(project: Project, language: Language) {
@@ -61,6 +55,7 @@ class InlayHintsConfigurable(private val project: Project) : Configurable, Confi
     @JvmStatic
     @Deprecated("Use com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableKt.showInlaySettings",
                 ReplaceWith("showInlaySettings(project, language, selector)"))
+    @ApiStatus.ScheduledForRemoval
     fun showSettingsDialogForLanguage(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?) {
       if (showInlaySettings(project, language, selector)) {
         return

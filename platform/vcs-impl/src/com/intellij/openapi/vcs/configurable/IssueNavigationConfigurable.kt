@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -14,13 +15,13 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.ui.AnActionButton.GroupPopupWrapper
-import com.intellij.ui.LayeredIcon
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.table.JBTable
+import com.intellij.util.io.URLUtil.HTTPS_PROTOCOL
+import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 
@@ -55,13 +56,14 @@ class IssueNavigationConfigurable(private val project: Project)
     val addGroup = DefaultActionGroup(AddYouTrackLinkAction(linkTable, model),
                                       AddJiraLinkAction(linkTable, model),
                                       AddIssueNavigationLinkAction(model))
-    addGroup.templatePresentation.icon = LayeredIcon.ADD_WITH_DROPDOWN
+    addGroup.templatePresentation.isPopupGroup = true
+    addGroup.templatePresentation.icon = AllIcons.General.Add
     addGroup.templatePresentation.setText(UIBundle.messagePointer("button.text.add.with.ellipsis"))
     addGroup.registerCustomShortcutSet(CommonShortcuts.getNewForDialogs(), null)
 
     val decorator = ToolbarDecorator.createDecorator(linkTable)
       .disableAddAction()
-      .addExtraAction(GroupPopupWrapper(addGroup))
+      .addExtraAction(addGroup)
       .setRemoveAction { removeLink(linkTable, model) }
       .setEditAction { editLink(linkTable, model) }
       .setButtonComparator(UIBundle.message("button.text.add.with.ellipsis"),
@@ -113,7 +115,7 @@ class IssueNavigationConfigurable(private val project: Project)
     if (dlg.showAndGet()) {
       val editedLink = dlg.link
       link.issueRegexp = editedLink.issueRegexp
-      link.linkRegexp = editedLink.linkRegexp
+      link.linkRegexp = editedLink.linkRegexp.addHttpsIfUrlPrefixMissing()
       model.fireTableDataChanged()
     }
   }
@@ -129,6 +131,7 @@ class IssueNavigationConfigurable(private val project: Project)
       if (!s.endsWith("/")) {
         s += "/"
       }
+      s = s.addHttpsIfUrlPrefixMissing()
       model.addRow(IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"))
       model.fireTableDataChanged()
     }
@@ -145,10 +148,14 @@ class IssueNavigationConfigurable(private val project: Project)
       if (!s.endsWith("/")) {
         s += "/"
       }
+      s = s.addHttpsIfUrlPrefixMissing()
       model.addRow(IssueNavigationLink("[A-Z]+\\-\\d+", s + "browse/$0"))
       model.fireTableDataChanged()
     }
   }
+
+  private fun String.addHttpsIfUrlPrefixMissing(): String =
+    if (this.contains(SCHEME_SEPARATOR)) this else "$HTTPS_PROTOCOL$SCHEME_SEPARATOR$this"
 
   private inner class AddIssueNavigationLinkAction(val model: ListTableModel<IssueNavigationLink>)
     : DumbAwareAction(VcsBundle.messagePointer("issue.link.add.title")) {

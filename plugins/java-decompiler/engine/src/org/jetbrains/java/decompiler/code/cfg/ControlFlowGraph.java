@@ -16,8 +16,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 import java.util.*;
 import java.util.Map.Entry;
 
-public class ControlFlowGraph implements CodeConstants {
-
+public class ControlFlowGraph {
   public int last_id = 0;
 
   // *****************************************************************************
@@ -55,6 +54,7 @@ public class ControlFlowGraph implements CodeConstants {
     }
   }
 
+  @Override
   public String toString() {
     if (blocks == null) return "Empty";
 
@@ -108,19 +108,19 @@ public class ControlFlowGraph implements CodeConstants {
 
   public void removeBlock(BasicBlock block) {
 
-    while (block.getSuccessors().size() > 0) {
+    while (!block.getSuccessors().isEmpty()) {
       block.removeSuccessor(block.getSuccessors().get(0));
     }
 
-    while (block.getSuccessorExceptions().size() > 0) {
+    while (!block.getSuccessorExceptions().isEmpty()) {
       block.removeSuccessorException(block.getSuccessorExceptions().get(0));
     }
 
-    while (block.getPredecessors().size() > 0) {
+    while (!block.getPredecessors().isEmpty()) {
       block.getPredecessors().get(0).removeSuccessor(block);
     }
 
-    while (block.getPredecessorExceptions().size() > 0) {
+    while (!block.getPredecessorExceptions().isEmpty()) {
       block.getPredecessorExceptions().get(0).removeSuccessorException(block);
     }
 
@@ -162,28 +162,6 @@ public class ControlFlowGraph implements CodeConstants {
     //return ranges.isEmpty() ? null : ranges;
   }
 
-  //	public String getExceptionsUniqueString(BasicBlock handler, BasicBlock block) {
-  //
-  //		List<ExceptionRangeCFG> ranges = getExceptionRange(handler, block);
-  //
-  //		if(ranges == null) {
-  //			return null;
-  //		} else {
-  //			Set<String> setExceptionStrings = new HashSet<String>();
-  //			for(ExceptionRangeCFG range : ranges) {
-  //				setExceptionStrings.add(range.getExceptionType());
-  //			}
-  //
-  //			String ret = "";
-  //			for(String exception : setExceptionStrings) {
-  //				ret += exception;
-  //			}
-  //
-  //			return ret;
-  //		}
-  //	}
-
-
   // *****************************************************************************
   // private methods
   // *****************************************************************************
@@ -196,6 +174,9 @@ public class ControlFlowGraph implements CodeConstants {
     VBStyleCollection<BasicBlock, Integer> colBlocks = createBasicBlocks(states, instrseq, mapInstrBlocks);
 
     blocks = colBlocks;
+    first = blocks.get(0);
+
+    last = new BasicBlock(++last_id);
 
     connectBlocks(colBlocks, mapInstrBlocks);
 
@@ -229,14 +210,14 @@ public class ControlFlowGraph implements CodeConstants {
 
       Instruction instr = seq.getInstr(i);
       switch (instr.group) {
-        case GROUP_JUMP:
+        case CodeConstants.GROUP_JUMP:
           inststates[((JumpInstruction)instr).destination] = 1;
-        case GROUP_RETURN:
+        case CodeConstants.GROUP_RETURN:
           if (i + 1 < len) {
             inststates[i + 1] = 1;
           }
           break;
-        case GROUP_SWITCH:
+        case CodeConstants.GROUP_SWITCH:
           SwitchInstruction swinstr = (SwitchInstruction)instr;
           int[] dests = swinstr.getDestinations();
           for (int j = dests.length - 1; j >= 0; j--) {
@@ -307,12 +288,12 @@ public class ControlFlowGraph implements CodeConstants {
       BasicBlock bTemp;
 
       switch (instr.group) {
-        case GROUP_JUMP -> {
+        case CodeConstants.GROUP_JUMP -> {
           int dest = ((JumpInstruction)instr).destination;
           bTemp = mapInstrBlocks.get(dest);
           block.addSuccessor(bTemp);
         }
-        case GROUP_SWITCH -> {
+        case CodeConstants.GROUP_SWITCH -> {
           SwitchInstruction sinstr = (SwitchInstruction)instr;
           int[] dests = sinstr.getDestinations();
 
@@ -370,7 +351,6 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
   private void setSubroutineEdges() {
-
     final Map<BasicBlock, BasicBlock> subroutines = new LinkedHashMap<>();
 
     for (BasicBlock block : blocks) {
@@ -646,7 +626,7 @@ public class ControlFlowGraph implements CodeConstants {
       HashSet<BasicBlock> setBoth = new HashSet<>(common_blocks);
       setBoth.retainAll(lstRange);
 
-      if (setBoth.size() > 0) {
+      if (!setBoth.isEmpty()) {
         List<BasicBlock> lstNewRange;
 
         if (setBoth.size() == lstRange.size()) {
@@ -719,10 +699,6 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
   private void setFirstAndLastBlocks() {
-
-    first = blocks.get(0);
-
-    last = new BasicBlock(++last_id);
 
     for (BasicBlock block : blocks) {
       if (block.getSuccessors().isEmpty()) {

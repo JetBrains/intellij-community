@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -36,13 +36,13 @@ import java.util.List;
 
 public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
-  @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
+  private final @NotNull JPanel myContent = new JPanel(new GridBagLayout());
 
-  @NotNull private final Language                         myLanguage;
-  @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
-  @NotNull private final ArrangementGroupingRulesPanel    myGroupingRulesPanel;
-  @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
-  @Nullable private final ForceArrangementPanel myForceArrangementPanel;
+  private final @NotNull Language                         myLanguage;
+  private final @NotNull ArrangementStandardSettingsAware mySettingsAware;
+  private final @NotNull ArrangementGroupingRulesPanel    myGroupingRulesPanel;
+  private final @NotNull ArrangementMatchingRulesPanel    myMatchingRulesPanel;
+  private final @Nullable ForceArrangementPanel myForceArrangementPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
@@ -73,7 +73,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
     if (settings.getCommonSettings(myLanguage).isForceArrangeMenuAvailable()) {
       myForceArrangementPanel = new ForceArrangementPanel();
-      myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
+      myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
       myContent.add(myForceArrangementPanel.getPanel(), new GridBag().anchor(GridBagConstraints.WEST).coverLine().fillCellHorizontally());
     }
     else {
@@ -84,20 +84,17 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myContent;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
-  @Nullable
-  private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
+  private @Nullable StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
     if (result == null) {
       result = mySettingsAware.getDefaultSettings();
@@ -110,7 +107,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(createSettings());
     if (myForceArrangementPanel != null) {
-      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getRearrangeMode();
+      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getForceRearrangeMode();
     }
   }
 
@@ -118,7 +115,7 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     final StdArrangementSettings s = createSettings();
     return !Comparing.equal(getSettings(settings), s)
-           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getRearrangeMode();
+           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getForceRearrangeMode();
   }
 
   private StdArrangementSettings createSettings() {
@@ -147,18 +144,14 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       }
 
       if (myForceArrangementPanel != null) {
-        myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
+        myForceArrangementPanel.setForceRearrangeMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
       }
     }
   }
 
-  @NotNull
-  private static List<ArrangementSectionRule> copy(@NotNull List<? extends ArrangementSectionRule> rules) {
-    List<ArrangementSectionRule> result = new ArrayList<>();
-    for (ArrangementSectionRule rule : rules) {
-      result.add(rule.clone());
-    }
-    return result;
+  @Override
+  protected @Nullable String getPreviewText() {
+    return null;
   }
 
   @Override
@@ -166,10 +159,10 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return ApplicationBundle.message("arrangement.title.settings.tab");
   }
 
-  @Nullable
   @Override
-  protected String getPreviewText() {
-    return null;
+  protected @NotNull FileType getFileType() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
   }
 
   @Override
@@ -178,10 +171,11 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  @NotNull
-  @Override
-  protected FileType getFileType() {
-    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
-    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
+  private static @NotNull List<ArrangementSectionRule> copy(@NotNull List<ArrangementSectionRule> rules) {
+    List<ArrangementSectionRule> result = new ArrayList<>();
+    for (ArrangementSectionRule rule : rules) {
+      result.add(rule.clone());
+    }
+    return result;
   }
 }

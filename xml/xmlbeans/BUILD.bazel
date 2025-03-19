@@ -1,0 +1,62 @@
+### auto-generated section `build intellij.xml.xmlbeans` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "xmlbeans_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "xmlbeans",
+  module_name = "intellij.xml.xmlbeans",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/impl",
+    "@lib//:xml-xmlbeans-_xml_beans",
+    "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/util:util-ui",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":xmlbeans_resources"]
+)
+
+jvm_library(
+  name = "xmlbeans_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":xmlbeans"],
+  deps = [
+    "//xml/impl",
+    "@lib//:xml-xmlbeans-_xml_beans",
+    "@lib//:xml-xmlbeans-apache-logging-log4j-to-slf4j",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "@lib//:assert_j",
+    "//java/testFramework",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/ide-core",
+    "//platform/core-ui",
+    "//xml/xml-parser:parser",
+    "//platform/util:util-ui",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":xmlbeans_resources"]
+)
+
+jvm_test(
+  name = "xmlbeans_test",
+  runtime_deps = [":xmlbeans_test_lib"]
+)
+### auto-generated section `build intellij.xml.xmlbeans` end

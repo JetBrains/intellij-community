@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.function.Function;
+import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 public final class XValueNodePresentationConfigurator {
   public interface ConfigurableXValueNode {
@@ -22,7 +23,7 @@ public final class XValueNodePresentationConfigurator {
                            boolean hasChildren);
   }
 
-  public static abstract class ConfigurableXValueNodeImpl implements ConfigurableXValueNode, XValueNode {
+  public abstract static class ConfigurableXValueNodeImpl implements ConfigurableXValueNode, XValueNode {
     @Override
     public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, type, value, hasChildren, this);
@@ -31,6 +32,10 @@ public final class XValueNodePresentationConfigurator {
     @Override
     public void setPresentation(@Nullable Icon icon, @NotNull XValuePresentation presentation, boolean hasChildren) {
       XValueNodePresentationConfigurator.setPresentation(icon, presentation, hasChildren, this);
+    }
+
+    @Override
+    public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
     }
   }
 
@@ -47,7 +52,7 @@ public final class XValueNodePresentationConfigurator {
     doSetPresentation(icon, new XRegularValuePresentation(value, type), hasChildren, node);
   }
 
-  public static void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull final String separator,
+  public static void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, final @NonNls @NotNull String separator,
                                      @NonNls @Nullable String value, boolean hasChildren, ConfigurableXValueNode node) {
     doSetPresentation(icon, new XRegularValuePresentation(StringUtil.notNullize(value), type, separator), hasChildren, node);
   }
@@ -62,8 +67,8 @@ public final class XValueNodePresentationConfigurator {
                       hasChildren, node);
   }
 
-  private static void doSetPresentation(@Nullable final Icon icon,
-                                        @NotNull final XValuePresentation presentation,
+  private static void doSetPresentation(final @Nullable Icon icon,
+                                        final @NotNull XValuePresentation presentation,
                                         final boolean hasChildren,
                                         final ConfigurableXValueNode node) {
     if (DebuggerUIUtil.isObsolete(node)) {
@@ -96,9 +101,8 @@ public final class XValueNodePresentationConfigurator {
       this.valuePresenter = valuePresenter;
     }
 
-    @Nullable
     @Override
-    public String getType() {
+    public @Nullable String getType() {
       return myType;
     }
 

@@ -1,6 +1,14 @@
 <component name="libraryTable">
   <library name="JUnit5Launcher" type="repository">
-    <properties maven-id="org.junit.platform:junit-platform-launcher:1.9.1">
+    <properties maven-id="org.junit.platform:junit-platform-launcher:1.11.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3.jar">
+          <sha256sum>b4727459201b0011beb0742bd807421a1fc8426b116193031ed87825bc2d4f04</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.jar">
+          <sha256sum>0043f72f611664735da8dc9a308bf12ecd2236b05339351c4741edb4d8fab0da</sha256sum>
+        </artifact>
+      </verification>
       <exclude>
         <dependency maven-id="org.apiguardian:apiguardian-api" />
         <dependency maven-id="org.opentest4j:opentest4j" />
@@ -8,13 +16,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.9.1/junit-platform-launcher-1.9.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.9.1/junit-platform-engine-1.9.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.9.1/junit-platform-launcher-1.9.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.9.1/junit-platform-engine-1.9.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-launcher/1.11.3/junit-platform-launcher-1.11.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-engine/1.11.3/junit-platform-engine-1.11.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

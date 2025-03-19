@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -29,7 +29,7 @@ public class IntroduceVariableErrorFixAction extends LocalQuickFixAndIntentionAc
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
+    RefactoringActionHandler handler = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
     assert handler != null;
     ((JavaIntroduceVariableHandlerBase)handler).invoke(project, editor, (PsiExpression)startElement);
   }
@@ -54,7 +54,7 @@ public class IntroduceVariableErrorFixAction extends LocalQuickFixAndIntentionAc
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiElement element = PsiTreeUtil.findSameElementInCopy(myStartElement.getElement(), file);
     if (element == null) return IntentionPreviewInfo.EMPTY;
-    RefactoringActionHandler handler = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
+    RefactoringActionHandler handler = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE).getIntroduceVariableHandler();
     assert handler != null;
     if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
       return previewableRefactoringActionHandler.generatePreview(project, element);

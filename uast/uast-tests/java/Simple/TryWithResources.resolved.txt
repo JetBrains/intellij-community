@@ -13,3 +13,8 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = ja
                 UReturnExpression -> UQualifiedReferenceExpression -> PsiMethod:readLine: readLine
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> UQualifiedReferenceExpression -> PsiMethod:readLine: readLine
                 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = br) -> PsiResourceVariable:br: br
+            UTypeReferenceExpression (name = java.io.BufferedReader) -> USimpleNameReferenceExpression (identifier = BufferedReader) -> PsiClass:BufferedReader: BufferedReader
+            UTryExpression (with resources) -> USimpleNameReferenceExpression (identifier = br) -> PsiParameter:br: br
+                UReturnExpression -> UQualifiedReferenceExpression -> PsiMethod:readLine: readLine
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) -> UQualifiedReferenceExpression -> PsiMethod:readLine: readLine
+                UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = br) -> PsiParameter:br: br

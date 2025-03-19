@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.task.ui;
 
 import com.intellij.icons.AllIcons;
@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +55,10 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ConfigureTasksActivationDialog extends DialogWrapper {
-  @NotNull private final Project myProject;
-  @NotNull private final ExternalSystemTaskActivator myTaskActivator;
+  private final @NotNull Project myProject;
+  private final @NotNull ExternalSystemTaskActivator myTaskActivator;
   @NotNull ProjectSystemId myProjectSystemId;
   private JPanel contentPane;
 
@@ -66,8 +68,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
   private SimpleTree myTree;
   private StructureTreeModel<SimpleTreeStructure.Impl> myTreeModel;
   private ComboBox projectCombobox;
-  @NotNull
-  private final ExternalSystemUiAware uiAware;
+  private final @NotNull ExternalSystemUiAware uiAware;
   private RootNode myRootNode;
 
   public ConfigureTasksActivationDialog(@NotNull Project project, @NotNull ProjectSystemId externalSystemId, @NotNull String projectPath) {
@@ -139,7 +140,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
 
         final ChooseProjectStep projectStep = new ChooseProjectStep(popupItems);
         final List<ProjectPopupItem> projectItems = projectStep.getValues();
-        ListPopupStep step = projectItems.size() == 1 ? (ListPopupStep)projectStep.onChosen(projectItems.get(0), false) : projectStep;
+        ListPopupStep<?> step = projectItems.size() == 1 ? (ListPopupStep<?>)projectStep.onChosen(projectItems.get(0), false) : projectStep;
         assert step != null;
         JBPopupFactory.getInstance().createListPopup(step).show(
           ObjectUtils.notNull(button.getPreferredPopupPoint(), RelativePoint.getSouthEastOf(projectCombobox)));
@@ -191,7 +192,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     moveSelectedRows(myTree, increment);
   }
 
-  private static void moveSelectedRows(@NotNull final SimpleTree tree, final int direction) {
+  private static void moveSelectedRows(final @NotNull SimpleTree tree, final int direction) {
     final TreePath[] selectionPaths = tree.getSelectionPaths();
     if (selectionPaths == null) return;
 
@@ -217,8 +218,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     tree.addSelectionPaths(selectionPaths);
   }
 
-  @NotNull
-  private List<TaskActivationEntry> findSelectedTasks() {
+  private @NotNull List<TaskActivationEntry> findSelectedTasks() {
     List<TaskActivationEntry> tasks = new SmartList<>();
     for (DefaultMutableTreeNode node : myTree.getSelectedNodes(DefaultMutableTreeNode.class, null)) {
       tasks.addAll(findTasksUnder(ContainerUtil.ar((MyNode)node.getUserObject())));
@@ -226,8 +226,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     return tasks;
   }
 
-  @NotNull
-  private List<TaskActivationEntry> findTasksUnder(SimpleNode @NotNull [] nodes) {
+  private @NotNull List<TaskActivationEntry> findTasksUnder(SimpleNode @NotNull [] nodes) {
     List<TaskActivationEntry> tasks = new SmartList<>();
     for (SimpleNode node : nodes) {
       if (node instanceof TaskNode taskNode) {
@@ -286,8 +285,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
       return projectName + " (" + truncate(myProjectSettings.getExternalProjectPath()) + ")";
     }
 
-    @NotNull
-    private static String truncate(@NotNull String s) {
+    private static @NotNull String truncate(@NotNull String s) {
       return s.length() < MAX_LENGTH ? s : s.substring(0, MAX_LENGTH / 2) + "..." + s.substring(s.length() - MAX_LENGTH / 2 - 3);
     }
 
@@ -368,10 +366,10 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    public PopupStep onChosen(final ProjectPopupItem projectPopupItem, final boolean finalChoice) {
+    public PopupStep<?> onChosen(final ProjectPopupItem projectPopupItem, final boolean finalChoice) {
       return new BaseListPopupStep<>(ExternalSystemBundle.message("popup.title.choose.activation.phase"), Phase.values()) {
         @Override
-        public PopupStep onChosen(final Phase selectedPhase, boolean finalChoice) {
+        public PopupStep<?> onChosen(final Phase selectedPhase, boolean finalChoice) {
           final Map<String, TaskActivationState> activationMap =
             ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getProjectsTasksActivationMap(myProjectSystemId);
           final String projectPath = projectPopupItem.myModuleData.getLinkedExternalProjectPath();
@@ -381,7 +379,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
           tasksToSuggest.removeAll(tasks);
           return new BaseListPopupStep<>(ExternalSystemBundle.message("popup.title.choose.task"), tasksToSuggest) {
             @Override
-            public PopupStep onChosen(final String taskName, boolean finalChoice) {
+            public PopupStep<?> onChosen(final String taskName, boolean finalChoice) {
               return doFinalStep(() -> {
                 myTaskActivator.addTask(new TaskActivationEntry(myProjectSystemId, selectedPhase, projectPath, taskName));
                 updateTree(myRootNode);

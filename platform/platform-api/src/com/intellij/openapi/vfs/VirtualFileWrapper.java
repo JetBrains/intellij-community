@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vfs;
 
@@ -49,8 +49,7 @@ public final class VirtualFileWrapper {
    *
    * @return VirtualFile or null if file is not exist
    */
-  @Nullable
-  public VirtualFile getVirtualFile() {
+  public @Nullable VirtualFile getVirtualFile() {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myFile);
   }
 
@@ -63,8 +62,7 @@ public final class VirtualFileWrapper {
    *
    * @return virtual file
    */
-  @Nullable
-  public VirtualFile getVirtualFile(boolean createIfNotExist) {
+  public @Nullable VirtualFile getVirtualFile(boolean createIfNotExist) {
     if (createIfNotExist && !myFile.exists()) {
       try {
         if (!myFile.createNewFile()) {
@@ -81,8 +79,7 @@ public final class VirtualFileWrapper {
    *
    * @return original java.io.File
    */
-  @NotNull
-  public File getFile() {
+  public @NotNull File getFile() {
     return myFile;
   }
 }

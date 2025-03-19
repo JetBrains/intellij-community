@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.util;
 
 import com.intellij.execution.console.CustomizableConsoleFoldingBean;
 import com.intellij.psi.PsiClass;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -30,10 +30,10 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     myFixture.configureByText("plugin.xml", generatePluginXmlText(randomMethodNames));
     PsiClass psiClass = myFixture.addClass(generateJavaClassText(randomMethodNames));
 
-    PlatformTestUtil.startPerformanceTest("Locating extension tag by PsiClass", 2000, () -> {
+    Benchmark.newBenchmark("Locating extension tag by PsiClass", () -> {
       List<ExtensionCandidate> result = locateExtensionsByPsiClass(psiClass);
       assertSize(1, result);
-    }).attempts(1).assertTiming();
+    }).attempts(1).start();
   }
 
 

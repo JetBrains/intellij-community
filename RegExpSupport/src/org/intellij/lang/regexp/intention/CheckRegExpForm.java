@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -73,7 +72,7 @@ public final class CheckRegExpForm {
   /**
    * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
 
   public static final class Keys {
@@ -107,12 +106,11 @@ public final class CheckRegExpForm {
       fileType = RegExpFileType.forLanguage(language);
     }
     myRegExp = new EditorTextField(document, project, fileType, false, false) {
-      private Disposable disposable;
+      private final Disposable disposable = Disposer.newDisposable();
 
       @Override
       protected void onEditorAdded(@NotNull Editor editor) {
         super.onEditorAdded(editor);
-        disposable = PluginManager.getInstance().createDisposable(CheckRegExpForm.class);
         editor.getCaretModel().addCaretListener(new CaretListener() {
 
           @Override
@@ -164,15 +162,13 @@ public final class CheckRegExpForm {
     });
     setupIcon(myRegExp, myRegExpIcon);
 
-    final String sampleText =
-      PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, RegExpBundle.message("checker.sample.text"));
+    String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, RegExpBundle.message("checker.sample.text"));
     mySampleText = new EditorTextField(sampleText, project, PlainTextFileType.INSTANCE) {
-      private Disposable disposable;
+      private final Disposable disposable = Disposer.newDisposable();
 
       @Override
       protected void onEditorAdded(@NotNull Editor editor) {
         super.onEditorAdded(editor);
-        disposable = PluginManager.getInstance().createDisposable(CheckRegExpForm.class);
         editor.getCaretModel().addCaretListener(new CaretListener() {
 
           @Override
@@ -229,14 +225,12 @@ public final class CheckRegExpForm {
     mySampleText.setPreferredWidth(preferredWidth);
 
     myRootPanel = new JPanel(new GridBagLayout()) {
-      Disposable disposable;
-      Alarm updater;
+      private final Disposable disposable = Disposer.newDisposable();
+      private Alarm updater;
 
       @Override
       public void addNotify() {
         super.addNotify();
-        disposable = Disposer.newDisposable();
-
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
         registerFocusShortcut(myRegExp, "shift TAB", mySampleText);
@@ -282,7 +276,8 @@ public final class CheckRegExpForm {
             if (result != RegExpMatchResult.MATCHES && result != RegExpMatchResult.FOUND) {
               setMatches(regExpFile, null);
             }
-            ApplicationManager.getApplication().invokeLater(() -> reportResult(result, regExpFile), ModalityState.any(), __ -> updater.isDisposed());
+            ApplicationManager.getApplication()
+              .invokeLater(() -> reportResult(result, regExpFile), ModalityState.any(), __ -> updater.isDisposed());
           }, 0);
         }
       }
@@ -493,13 +488,11 @@ public final class CheckRegExpForm {
     label.setToolTipText(tooltip);
   }
 
-  @NotNull
-  public JComponent getPreferredFocusedComponent() {
+  public @NotNull JComponent getPreferredFocusedComponent() {
     return mySampleText;
   }
 
-  @NotNull
-  public JPanel getRootPanel() {
+  public @NotNull JPanel getRootPanel() {
     return myRootPanel;
   }
 
@@ -522,7 +515,7 @@ public final class CheckRegExpForm {
     return isMatchingText(regExpFile, regExpFile.getText(), sampleText);
   }
 
-  private static RegExpMatchResult isMatchingText(@NotNull final PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
+  private static RegExpMatchResult isMatchingText(final @NotNull PsiFile regExpFile, String regExpText, @NotNull String sampleText) {
     final Language regExpFileLanguage = regExpFile.getLanguage();
     final RegExpMatcherProvider matcherProvider = RegExpMatcherProvider.EP.forLanguage(regExpFileLanguage);
     if (matcherProvider != null) {
@@ -576,8 +569,8 @@ public final class CheckRegExpForm {
     return RegExpMatchResult.BAD_REGEXP;
   }
 
-  private static SmartList<RegExpMatch> collectMatches(Matcher matcher) {
-    final SmartList<RegExpMatch> matches = new SmartList<>();
+  private static List<RegExpMatch> collectMatches(Matcher matcher) {
+    List<RegExpMatch> matches = new SmartList<>();
     do {
       final RegExpMatch match = new RegExpMatch();
       final int count = matcher.groupCount();
@@ -585,7 +578,8 @@ public final class CheckRegExpForm {
         match.add(matcher.start(i), matcher.end(i));
       }
       matches.add(match);
-    } while (matcher.find());
+    }
+    while (matcher.find());
     return matches;
   }
 }

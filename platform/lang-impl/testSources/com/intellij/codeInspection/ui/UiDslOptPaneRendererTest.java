@@ -7,8 +7,6 @@ import com.intellij.codeInspection.options.OptDropdown;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.PlainMessage;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.testFramework.junit5.TestApplication;
@@ -177,8 +175,8 @@ public class UiDslOptPaneRendererTest {
   }
 
   private @NotNull JComponent render(InspectionProfileEntry inspection) {
-    return new UiDslOptPaneRenderer().render(inspection, inspection.getOptionsPane(), myDisposable, 
-                                             ProjectManager.getInstance().getDefaultProject());
+    return new UiDslOptPaneRenderer().render(inspection.getOptionController(), inspection.getOptionsPane(),
+                                             myDisposable, ProjectManager.getInstance().getDefaultProject());
   }
 
   private static class MyTabsInspection extends LocalInspectionTool {

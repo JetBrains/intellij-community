@@ -7,3 +7,8 @@ public class Impl : ArrayFactory {
 }
 
 val array: Array<String> = emptyArray()
+
+// MEMBER: "create(): Array"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

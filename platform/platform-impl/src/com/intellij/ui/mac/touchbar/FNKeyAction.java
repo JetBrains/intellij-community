@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -15,7 +15,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-class FNKeyAction extends DumbAwareAction {
+final class FNKeyAction extends DumbAwareAction {
   private static final boolean SHOW_ACTION_TEMPLATE_TEXT = Boolean.getBoolean("touchbar.fn.mode.show.template");
 
   private final int myFN;

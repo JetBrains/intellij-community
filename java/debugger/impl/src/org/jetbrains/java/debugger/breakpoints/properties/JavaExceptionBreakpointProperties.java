@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -13,26 +15,34 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
   public boolean NOTIFY_UNCAUGHT = true;
 
   @Attribute("class")
-  public String myQualifiedName;
+  public @NlsSafe String myQualifiedName;
 
   @Attribute("package")
-  public String myPackageName;
+  public @NlsSafe String myPackageName;
 
   private boolean myCatchFiltersEnabled = false;
   private ClassFilter[] myCatchClassFilters;
   private ClassFilter[] myCatchClassExclusionFilters;
 
+  /**
+   * @deprecated use {@link #JavaExceptionBreakpointProperties(String)}
+   */
+  @Deprecated
   public JavaExceptionBreakpointProperties(String qualifiedName, String packageName) {
     myQualifiedName = qualifiedName;
     myPackageName = packageName;
   }
 
+  public JavaExceptionBreakpointProperties(String qualifiedName) {
+    myQualifiedName = qualifiedName;
+    myPackageName = StringUtil.getPackageName(qualifiedName);
+  }
+
   public JavaExceptionBreakpointProperties() {
   }
 
-  @Nullable
   @Override
-  public JavaExceptionBreakpointProperties getState() {
+  public @Nullable JavaExceptionBreakpointProperties getState() {
     return this;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
@@ -7,13 +7,16 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class CachingComparingClassifier extends ComparingClassifier<LookupElement> {
   private final Map<LookupElement, Comparable> myWeights = new IdentityHashMap<>();
   private final LookupElementWeigher myWeigher;
@@ -26,9 +29,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     myWeigher = weigher;
   }
 
-  @Nullable
   @Override
-  public final Comparable getWeight(LookupElement element, ProcessingContext context) {
+  public final @Nullable Comparable getWeight(LookupElement element, ProcessingContext context) {
     Comparable w = myWeights.get(element);
     if (w == null && myWeigher.isPrefixDependent()) {
       myWeights.put(element, w = myWeigher.weigh(element, context.get(CompletionLookupArranger.WEIGHING_CONTEXT)));
@@ -44,9 +46,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     super.removeElement(element, context);
   }
 
-  @NotNull
   @Override
-  public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
+  public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
     if (!myWeigher.isPrefixDependent() && myPrimitive) {
       return myNext.classify(source, context);
     }
@@ -63,9 +64,8 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     }
   }
 
-  @NotNull
   @Override
-  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
+  public @Unmodifiable @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     checkPrefixChanged(context);
     return super.getSortingWeights(items, context);
   }

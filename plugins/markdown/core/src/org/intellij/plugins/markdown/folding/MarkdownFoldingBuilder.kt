@@ -4,29 +4,36 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.folding.CustomFoldingBuilder
 import com.intellij.lang.folding.FoldingDescriptor
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveVisitor
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.MarkdownRecursiveElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.settings.MarkdownCodeFoldingSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil.WhiteSpaces.isNewLine
 
 internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
+  private val settings
+    get() = MarkdownCodeFoldingSettings.getInstance()
+
   override fun buildLanguageFoldRegions(descriptors: MutableList<FoldingDescriptor>, root: PsiElement, document: Document, quick: Boolean) {
     if (root.language !== root.containingFile.viewProvider.baseLanguage) {
       return
     }
-    root.accept(object: MarkdownElementVisitor() {
+    root.accept(object: MarkdownElementVisitor(), PsiRecursiveVisitor {
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
         if (element.hasType(MarkdownElementTypes.FRONT_MATTER_HEADER)) {
@@ -48,7 +55,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
           node.textRange,
           null,
           "...",
-          node.textLength > 10,
+          settings.state.collapseLinks && node.textLength > 10,
           emptySet()
         )
         descriptors.add(descriptor)
@@ -86,6 +93,26 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
     val headerVisitor = HeaderRegionsBuildingVisitor { header, range -> addDescriptors(header, range, descriptors, document) }
     root.accept(headerVisitor)
     headerVisitor.processLastHeaderIfNeeded()
+    if (root is MarkdownFile) {
+      processTableOfContents(root, document, descriptors)
+    }
+  }
+
+  private fun processTableOfContents(file: MarkdownFile, document: Document, descriptors: MutableList<FoldingDescriptor>) {
+    val ranges = GenerateTableOfContentsAction.Manager.findExistingTocs(file)
+    val group = FoldingGroup.newGroup("Table of contents")
+    val shouldCollapse = MarkdownCodeFoldingSettings.getInstance().state.collapseTableOfContents
+    for (range in ranges) {
+      val descriptor = FoldingDescriptor(
+        file.node,
+        range,
+        group,
+        MarkdownBundle.message("markdown.folding.table.of.contents.name"),
+        shouldCollapse,
+        emptySet()
+      )
+      descriptors.add(descriptor)
+    }
   }
 
   override fun getLanguagePlaceholderText(node: ASTNode, range: TextRange): String {
@@ -96,7 +123,13 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   override fun isRegionCollapsedByDefault(node: ASTNode): Boolean {
-    return node.hasType(MarkdownElementTypes.LINK_DESTINATION)
+    return when (node.elementType) {
+      MarkdownElementTypes.LINK_DESTINATION -> settings.state.collapseLinks
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> settings.state.collapseFrontMatter
+      MarkdownElementTypes.TABLE -> settings.state.collapseTables
+      MarkdownElementTypes.CODE_FENCE -> settings.state.collapseCodeFences
+      else -> false
+    }
   }
 
   private class HeaderRegionsBuildingVisitor(private val regionConsumer: (PsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
@@ -150,31 +183,29 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
     }
   }
+}
 
-  companion object {
-    private val foldedElementsPresentations = hashMapOf(
-      MarkdownElementTypes.ATX_1 to MarkdownBundle.message("markdown.folding.atx.1.name"),
-      MarkdownElementTypes.ATX_2 to MarkdownBundle.message("markdown.folding.atx.2.name"),
-      MarkdownElementTypes.ATX_3 to MarkdownBundle.message("markdown.folding.atx.3.name"),
-      MarkdownElementTypes.ATX_4 to MarkdownBundle.message("markdown.folding.atx.4.name"),
-      MarkdownElementTypes.ATX_5 to MarkdownBundle.message("markdown.folding.atx.5.name"),
-      MarkdownElementTypes.ATX_6 to MarkdownBundle.message("markdown.folding.atx.6.name"),
-      MarkdownElementTypes.ORDERED_LIST to MarkdownBundle.message("markdown.folding.ordered.list.name"),
-      MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
-      MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
-      MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
-      MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
-      MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
-    )
+private val foldedElementsPresentations = hashMapOf(
+  MarkdownElementTypes.ATX_1 to MarkdownBundle.message("markdown.folding.atx.1.name"),
+  MarkdownElementTypes.ATX_2 to MarkdownBundle.message("markdown.folding.atx.2.name"),
+  MarkdownElementTypes.ATX_3 to MarkdownBundle.message("markdown.folding.atx.3.name"),
+  MarkdownElementTypes.ATX_4 to MarkdownBundle.message("markdown.folding.atx.4.name"),
+  MarkdownElementTypes.ATX_5 to MarkdownBundle.message("markdown.folding.atx.5.name"),
+  MarkdownElementTypes.ATX_6 to MarkdownBundle.message("markdown.folding.atx.6.name"),
+  MarkdownElementTypes.ORDERED_LIST to MarkdownBundle.message("markdown.folding.ordered.list.name"),
+  MarkdownElementTypes.UNORDERED_LIST to MarkdownBundle.message("markdown.folding.unordered.list.name"),
+  MarkdownElementTypes.BLOCK_QUOTE to MarkdownBundle.message("markdown.folding.block.quote.name"),
+  MarkdownElementTypes.TABLE to MarkdownBundle.message("markdown.folding.table.name"),
+  MarkdownElementTypes.CODE_FENCE to MarkdownBundle.message("markdown.folding.code.fence.name"),
+  MarkdownElementTypes.FRONT_MATTER_HEADER to MarkdownBundle.message("markdown.folding.front.matter.name")
+)
 
-    private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
-      if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
-        descriptors.add(FoldingDescriptor(element, range))
-      }
-    }
-
-    private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
-      return element?.siblings(forward = false, withSelf = false)?.firstOrNull { !isNewLine(it) }
-    }
+private fun addDescriptors(element: PsiElement, range: TextRange, descriptors: MutableList<in FoldingDescriptor>, document: Document) {
+  if (document.getLineNumber(range.startOffset) != document.getLineNumber(range.endOffset - 1)) {
+    descriptors.add(FoldingDescriptor(element, range))
   }
+}
+
+private fun skipNewLinesBackward(element: PsiElement?): PsiElement? {
+  return element?.siblings(forward = false, withSelf = false)?.firstOrNull { !isNewLine(it) }
 }

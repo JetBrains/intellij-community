@@ -1,34 +1,40 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import com.intellij.xml.CommonXmlStrings;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
+public final class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
   public JavaFieldBreakpointType() {
     super("java-field", JavaDebuggerBundle.message("field.watchpoints.tab.title"));
   }
@@ -38,44 +44,38 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return true;
   }
 
-  @NotNull
   @Override
-  public Icon getEnabledIcon() {
+  public @NotNull Icon getEnabledIcon() {
     return AllIcons.Debugger.Db_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getDisabledIcon() {
+  public @NotNull Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getSuspendNoneIcon() {
+  public @NotNull Icon getSuspendNoneIcon() {
     return AllIcons.Debugger.Db_no_suspend_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getMutedEnabledIcon() {
+  public @NotNull Icon getMutedEnabledIcon() {
     return AllIcons.Debugger.Db_muted_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getMutedDisabledIcon() {
+  public @NotNull Icon getMutedDisabledIcon() {
     return AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
   }
 
-  @NotNull
   @Override
-  public Icon getInactiveDependentIcon() {
+  public @NotNull Icon getInactiveDependentIcon() {
     return AllIcons.Debugger.Db_dep_field_breakpoint;
   }
 
   //@Override
-  protected String getHelpID() {
+  private static String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;
   }
 
@@ -85,17 +85,42 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
   }
 
   @Override
+  protected @Nls @NotNull String getGeneralDescription(XLineBreakpointType<JavaFieldBreakpointProperties>.XLineBreakpointVariant variant) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
+  }
+
+  @Override
+  public @Nls String getGeneralDescription(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    return JavaDebuggerBundle.message("field.watchpoint.description");
+  }
+
+  @Override
+  public List<@Nls String> getPropertyXMLDescriptions(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+    var res = new SmartList<>(super.getPropertyXMLDescriptions(breakpoint));
+    var props = breakpoint.getProperties();
+    if (props != null) {
+      var defaults = createProperties();
+      if (props.WATCH_ACCESS != defaults.WATCH_ACCESS || props.WATCH_MODIFICATION != defaults.WATCH_MODIFICATION) {
+        // Add both if at least one property isn't default.
+        res.add(JavaDebuggerBundle.message("field.watchpoint.property.name.access") + CommonXmlStrings.NBSP
+                + props.WATCH_ACCESS);
+        res.add(JavaDebuggerBundle.message("field.watchpoint.property.name.modification") + CommonXmlStrings.NBSP
+                + props.WATCH_MODIFICATION);
+      }
+    }
+    return res;
+  }
+
+  @Override
   public String getShortText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     return getText(breakpoint, true);
   }
 
-  @Nls
-  public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
+  public @Nls String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     return getText(breakpoint, false);
   }
 
-  @Nls
-  private static String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
+  private static @Nls String getText(XBreakpoint<JavaFieldBreakpointProperties> breakpoint, boolean simple) {
     //if (!isValid()) {
     //  return JavaDebuggerBundle.message("status.breakpoint.invalid");
     //}
@@ -107,27 +132,23 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return displayedClassName + "." + properties.myFieldName;
   }
 
-  @Nullable
   @Override
-  public XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaFieldBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
+  public @Nullable XBreakpointCustomPropertiesPanel<XLineBreakpoint<JavaFieldBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
     return new FieldBreakpointPropertiesPanel();
   }
 
-  @Nullable
   @Override
-  public JavaFieldBreakpointProperties createProperties() {
+  public @Nullable JavaFieldBreakpointProperties createProperties() {
     return new JavaFieldBreakpointProperties();
   }
 
-  @Nullable
   @Override
-  public JavaFieldBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
-    return new JavaFieldBreakpointProperties();
+  public @Nullable JavaFieldBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
+    return createProperties();
   }
 
-  @Nullable
   @Override
-  public XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
+  public @Nullable XLineBreakpoint<JavaFieldBreakpointProperties> addBreakpoint(Project project, JComponent parentComponent) {
     Ref<XLineBreakpoint<JavaFieldBreakpointProperties>> result = Ref.create(null);
     AddFieldBreakpointDialog dialog = new AddFieldBreakpointDialog(project) {
       @Override
@@ -163,7 +184,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           return false;
         }
         PsiFile psiFile = psiClass.getContainingFile();
-        Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+        Document document = psiFile.getViewProvider().getDocument();
         if (document == null) {
           return false;
         }
@@ -177,17 +198,14 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
           );
           return false;
         }
-        int line = document.getLineNumber(field.getTextOffset());
-        WriteAction.run(() -> {
-          XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
-            XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
-              JavaFieldBreakpointType.this,
-              psiFile.getVirtualFile().getUrl(),
-              line,
-              new JavaFieldBreakpointProperties(fieldName, className)
-            );
-          result.set(fieldBreakpoint);
-        });
+        XLineBreakpoint<JavaFieldBreakpointProperties> fieldBreakpoint =
+          XDebuggerManager.getInstance(project).getBreakpointManager().addLineBreakpoint(
+            JavaFieldBreakpointType.this,
+            psiFile.getVirtualFile().getUrl(),
+            document.getLineNumber(field.getTextOffset()),
+            new JavaFieldBreakpointProperties(fieldName, className)
+          );
+        result.set(fieldBreakpoint);
         return true;
       }
     };
@@ -195,9 +213,8 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return result.get();
   }
 
-  @NotNull
   @Override
-  public Breakpoint<JavaFieldBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public @NotNull Breakpoint<JavaFieldBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
     return new FieldBreakpoint(project, breakpoint);
   }
 

@@ -2,7 +2,7 @@ import org.eclipse.jdt.annotation.NonNull;
 
 abstract class Foo {
 
-  abstract void foo(<warning descr="Overridden method parameters are not annotated">@<caret>NonNull</warning> String str);
+  abstract void foo(<warning descr="Overriding method parameters are not annotated">@<caret>NonNull</warning> String str);
 
 
   public static class Foo2 extends Foo {

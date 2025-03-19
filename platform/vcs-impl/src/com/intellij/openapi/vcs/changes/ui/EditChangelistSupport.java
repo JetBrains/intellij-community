@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -12,17 +12,16 @@ import javax.swing.*;
 
 /**
  * Allows customizing create / edit change list UI.
- * And also used for customizing commit message component.
+ * And also used for a customizing commit message component.
  */
 public interface EditChangelistSupport {
-
-  ExtensionPointName<EditChangelistSupport> EP_NAME = ExtensionPointName.create("com.intellij.editChangelistSupport");
+  ExtensionPointName<EditChangelistSupport> EP_NAME = new ExtensionPointName<>("com.intellij.editChangelistSupport");
 
   /**
    * Customizes change list name and comment components.
-   * E.g. could be used to install completion to these components.
+   * E.g., could be used to install completion to these components.
    * <p>
-   * Also customizes commit message component. In this case {@code name} and {@code comment} are equal.
+   * Also customizes commit a message component. In this case {@code name} and {@code comment} are equal.
    *
    * @param name    change list name component or commit message component
    * @param comment change list comment component or commit message component
@@ -34,8 +33,8 @@ public interface EditChangelistSupport {
    * And reacting to successful change list creation or edition.
    *
    * @param bottomPanel panel to add custom components
-   * @param initial     change list being edited or {@code null} if new change list is created
-   * @return callback to call after change list is successfully created or edited
+   * @param initial     change list being edited or {@code null} if a new change list is created
+   * @return callback to call after a change list is successfully created or edited
    */
   @Nullable Consumer<@NotNull LocalChangeList> addControls(@NotNull JPanel bottomPanel, @Nullable LocalChangeList initial);
 

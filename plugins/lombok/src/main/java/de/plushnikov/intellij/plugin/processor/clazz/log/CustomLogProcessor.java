@@ -17,20 +17,18 @@ import java.util.List;
 /**
  * @author Adam Juraszek
  */
-public class CustomLogProcessor extends AbstractLogProcessor {
+public final class CustomLogProcessor extends AbstractLogProcessor {
 
   public CustomLogProcessor() {
     super(LombokClassNames.CUSTOM_LOG);
   }
 
-  @NotNull
-  private static String getCustomDeclaration(@NotNull PsiClass psiClass) {
+  private static @NotNull String getCustomDeclaration(@NotNull PsiClass psiClass) {
     return ConfigDiscovery.getInstance().getStringLombokConfigProperty(ConfigKey.LOG_CUSTOM_DECLARATION, psiClass);
   }
 
-  @Nullable
   @Override
-  public String getLoggerType(@NotNull PsiClass psiClass) {
+  public @Nullable String getLoggerType(@NotNull PsiClass psiClass) {
     return CustomLogParser.parseLoggerType(getCustomDeclaration(psiClass));
   }
 

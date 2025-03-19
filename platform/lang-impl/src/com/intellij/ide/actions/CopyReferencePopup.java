@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
+import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.ui.scale.JBUIScale;
@@ -29,6 +30,10 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
   @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     e.getPresentation().setPerformGroup(true);
@@ -39,9 +44,10 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PresentationFactory factory = new PresentationFactory();
+    ActionPopupOptions options = ActionPopupOptions.create(true, true, false, true, -1, false, null);
     ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(
-      LangBundle.message("popup.title.copy"), this, e.getDataContext(), true, true, false, true,
-      null, -1, null, ActionPlaces.COPY_REFERENCE_POPUP, factory, false) {
+      null, LangBundle.message("popup.title.copy"), this, e.getDataContext(),
+      ActionPlaces.COPY_REFERENCE_POPUP, factory, options, null) {
       @Override
       protected ListCellRenderer<PopupFactoryImpl.ActionItem> getListElementRenderer() {
         return new PopupListElementRenderer<>(this) {
@@ -82,7 +88,7 @@ public class CopyReferencePopup extends NonTrivialActionGroup {
           protected void customizeComponent(@NotNull JList<? extends PopupFactoryImpl.ActionItem> list,
                                             @NotNull PopupFactoryImpl.ActionItem actionItem,
                                             boolean isSelected) {
-            myButtonsSeparator.setVisible(false);
+            myButtonSeparator.setVisible(false);
             AnAction action = actionItem.getAction();
             Presentation presentation = factory.getPresentation(action);
             String qualifiedName = presentation.getClientProperty(CopyPathProvider.QUALIFIED_NAME);

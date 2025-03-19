@@ -13,20 +13,20 @@ import com.intellij.build.issue.quickfix.OpenFileQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.util.PlatformUtils
-import com.intellij.util.io.isFile
 import com.intellij.util.text.nullize
-import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.file.Paths
 import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Consumer
+import kotlin.io.path.isRegularFile
 
 /**
  * This issue checker provides quick fixes to deal with known startup issues of the Gradle daemon.
@@ -46,15 +46,15 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     val quickFixDescription = StringBuilder()
     val quickFixes = ArrayList<BuildIssueQuickFix>()
     val projectGradleProperties = Paths.get(issueData.projectPath, "gradle.properties")
-    if (projectGradleProperties.isFile()) {
+    if (projectGradleProperties.isRegularFile()) {
       val openFileQuickFix = OpenFileQuickFix(projectGradleProperties, "org.gradle.jvmargs")
       quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in project root directory\n")
       quickFixes.add(openFileQuickFix)
     }
 
-    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: BuildLayoutParameters().gradleUserHomeDir
+    val gradleUserHomeDir = issueData.buildEnvironment?.gradle?.gradleUserHome ?: gradleUserHomeDir()
     val commonGradleProperties = Paths.get(gradleUserHomeDir.path, "gradle.properties")
-    if (commonGradleProperties.isFile()) {
+    if (commonGradleProperties.isRegularFile()) {
       val openFileQuickFix = OpenFileQuickFix(commonGradleProperties, "org.gradle.jvmargs")
       quickFixDescription.append(" - <a href=\"${openFileQuickFix.id}\">gradle.properties</a> in GRADLE_USER_HOME directory\n")
       quickFixes.add(openFileQuickFix)

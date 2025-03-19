@@ -18,17 +18,14 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   // last column accessed, for wasNull(). -1 if none
   private var lastColumn = 0
 
-  fun close() {
+  internal fun close(db: NativeDB) {
     row = 0
     pastLastRow = false
     lastColumn = -1
     if (isOpen && !statement.pointer.isClosed) {
       val pointer = statement.pointer
       if (!pointer.isClosed) {
-        val db = statement.db
-        synchronized(db) {
-          db.reset(pointer.pointer)
-        }
+        db.reset(pointer.pointer)
       }
       isOpen = false
     }
@@ -60,7 +57,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
     }
 
     // do the real work
-    return when (val statusCode = statement.pointer.safeRunInt(SqliteDb::step)) {
+    return when (val statusCode = statement.pointer.safeRunInt(NativeDB::step)) {
       SqliteCodes.SQLITE_DONE -> {
         pastLastRow = true
         false
@@ -69,7 +66,7 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
         row++
         true
       }
-      else -> throw statement.db.newException(statusCode)
+      else -> throw statement.connection.useDb { db -> db.newException(statusCode) }
     }
   }
 
@@ -138,10 +135,10 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   }
 
   fun getLong(zeroBasedColumnIndex: Int): Long {
-    val pointer = statement.pointer
-    synchronized(statement.db) {
+    statement.connection.useDb { db ->
+      val pointer = statement.pointer
       pointer.ensureOpen()
-      return statement.db.column_long(pointer.pointer, markColumn(zeroBasedColumnIndex))
+      return db.column_long(pointer.pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 
@@ -152,10 +149,10 @@ class SqliteResultSet(private val statement: SqlitePreparedStatement<*>) {
   }
 
   private fun safeGetDoubleCol(zeroBasedColumnIndex: Int): Double {
-    val pointer = statement.pointer
-    synchronized(statement.db) {
+    statement.connection.useDb { db ->
+      val pointer = statement.pointer
       pointer.ensureOpen()
-      return statement.db.column_double(pointer.pointer, markColumn(zeroBasedColumnIndex))
+      return db.column_double(pointer.pointer, markColumn(zeroBasedColumnIndex))
     }
   }
 

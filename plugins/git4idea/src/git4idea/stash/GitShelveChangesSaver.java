@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +22,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.Nls;
@@ -77,27 +78,32 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
   private void rollbackChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
                                @NotNull Collection<Change> shelvedChanges) {
     if (GitVersionSpecialty.RESTORE_SUPPORTED.existsIn(myProject)) {
-      Set<FilePath> filePaths = new HashSet<>();
-      for (Change change : shelvedChanges) {
-        ContainerUtil.addAllNotNull(filePaths, ChangesUtil.getBeforePath(change));
-        ContainerUtil.addAllNotNull(filePaths, ChangesUtil.getAfterPath(change));
-      }
+      List<FilePath> filePaths = ChangesUtil.getPaths(shelvedChanges);
+      Map<VirtualFile, List<FilePath>> filesByRoot = GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filePaths);
 
-      GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filePaths).forEach((root, paths) -> {
-        if (!rootsToSave.contains(root)) {
-          LOG.warn(String.format("Paths not under shelved root: root - %s, paths - %s, shelved roots - %s", root, paths, rootsToSave));
-          return;
-        }
+      for (VirtualFile root : rootsToSave) {
+        List<FilePath> rootPaths = ContainerUtil.notNullize(filesByRoot.get(root));
 
         GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
-        boolean isFreshRepository = repository != null && repository.getCurrentRevision() == null;
-        if (isFreshRepository) {
+        if (repository == null || repository.getCurrentRevision() == null) {
           resetHardLocal(myProject, root);
         }
         else {
-          restoreStagedWorktree(myProject, root, paths);
+          Set<FilePath> rootPathsSet = new HashSet<>(rootPaths);
+
+          // Workaround changes hidden by git4idea.status.GitChangesCollector.collectStagedUnstagedModifications,
+          // that will not be in 'shelvedChanges'
+          List<FilePath> pathsToUnstage = new ArrayList<>();
+          for (GitFileStatus record : repository.getStagingAreaHolder().getAllRecords()) {
+            if (record.isTracked() && record.getStagedStatus() != null && !rootPathsSet.contains(record.getPath())) {
+              pathsToUnstage.add(record.getPath());
+            }
+          }
+
+          restoreStagedAndWorktree(myProject, root, rootPaths);
+          restoreStaged(myProject, root, pathsToUnstage);
         }
-      });
+      }
     }
     else {
       for (VirtualFile root : rootsToSave) {
@@ -106,7 +112,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
 
     for (VirtualFile root : rootsToSave) {
-      VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
+      VcsDirtyScopeManager.getInstance(myProject).rootDirty(root);
     }
   }
 
@@ -120,7 +126,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
   }
 
-  private static void restoreStagedWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
+  private static void restoreStagedAndWorktree(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, filePaths)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
       handler.addParameters("--staged", "--worktree", "--source=HEAD");
@@ -133,9 +139,25 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
     }
   }
 
-  @NonNls
+  private static void restoreStaged(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<FilePath> filePaths) {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, filePaths)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESTORE);
+      handler.addParameters("--staged", "--source=HEAD");
+      handler.endOptions();
+      handler.addParameters(paths);
+      GitCommandResult result = Git.getInstance().runCommand(handler);
+      if (!result.success()) {
+        LOG.warn("Can't restore changes:" + result.getErrorOutputAsJoinedString());
+      }
+    }
+  }
+
+  void setReportLocalHistoryActivity(boolean reportLocalHistoryActivity) {
+    myVcsShelveChangesSaver.setReportLocalHistoryActivity(reportLocalHistoryActivity);
+  }
+
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "ShelveChangesSaver. Lists: " + myVcsShelveChangesSaver.getShelvedLists();
   }
 }

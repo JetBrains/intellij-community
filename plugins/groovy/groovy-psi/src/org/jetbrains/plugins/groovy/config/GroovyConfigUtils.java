@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -22,31 +22,31 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
   // please update it as well for further changes
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
-  @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
+  public static final @NonNls Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
+  public static final @NonNls Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(?<version>\\d+(\\.\\d+)*(-(?!indy)\\w+(-\\d+)?)?))?(-indy)?\\.jar");
 
-  @NlsSafe public static final String NO_VERSION = "<no version>";
-  @NlsSafe public static final String GROOVY1_7 = "1.7";
-  @NlsSafe public static final String GROOVY1_8 = "1.8";
-  @NlsSafe public static final String GROOVY2_0 = "2.0";
-  @NlsSafe public static final String GROOVY2_1 = "2.1";
-  @NlsSafe public static final String GROOVY2_2 = "2.2";
-  @NlsSafe public static final String GROOVY2_2_2 = "2.2.2";
-  @NlsSafe public static final String GROOVY2_5_2 = "2.5.2";
-  @NlsSafe public static final String GROOVY2_3 = "2.3";
-  @NlsSafe public static final String GROOVY2_4 = "2.4";
-  @NlsSafe public static final String GROOVY2_5 = "2.5";
-  @NlsSafe public static final String GROOVY3_0 = "3.0";
-  @NlsSafe public static final String GROOVY4_0 = "4.0";
+  public static final @NlsSafe String NO_VERSION = "<no version>";
+  public static final @NlsSafe String GROOVY1_7 = "1.7";
+  public static final @NlsSafe String GROOVY1_8 = "1.8";
+  public static final @NlsSafe String GROOVY2_0 = "2.0";
+  public static final @NlsSafe String GROOVY2_1 = "2.1";
+  public static final @NlsSafe String GROOVY2_2 = "2.2";
+  public static final @NlsSafe String GROOVY2_2_2 = "2.2.2";
+  public static final @NlsSafe String GROOVY2_5_2 = "2.5.2";
+  public static final @NlsSafe String GROOVY2_3 = "2.3";
+  public static final @NlsSafe String GROOVY2_4 = "2.4";
+  public static final @NlsSafe String GROOVY2_5 = "2.5";
+  public static final @NlsSafe String GROOVY3_0 = "3.0";
+  public static final @NlsSafe String GROOVY4_0 = "4.0";
 
   private static final GroovyConfigUtils ourGroovyConfigUtils = new GroovyConfigUtils();
-  @NonNls private static final String LIB = "/lib";
-  @NonNls private static final String EMBEDDABLE = "/embeddable";
+  private static final @NonNls String LIB = "/lib";
+  private static final @NonNls String EMBEDDABLE = "/embeddable";
 
-  @NlsSafe private static final String ALPHA = "alpha";
-  @NlsSafe private static final String BETA = "beta";
-  @NlsSafe private static final String RC = "rc";
-  @NlsSafe private static final String SNAPSHOT = "SNAPSHOT";
+  private static final @NlsSafe String ALPHA = "alpha";
+  private static final @NlsSafe String BETA = "beta";
+  private static final @NlsSafe String RC = "rc";
+  private static final @NlsSafe String SNAPSHOT = "SNAPSHOT";
 
 
   private GroovyConfigUtils() {}
@@ -81,8 +81,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Override
-  @NlsSafe
-  public @Nullable String getSDKVersionOrNull(@NlsSafe @NotNull String path) {
+  public @NlsSafe @Nullable String getSDKVersionOrNull(@NlsSafe @NotNull String path) {
     String groovyJarVersion = getSDKJarVersion(path + LIB, GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path + LIB, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
@@ -105,9 +104,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return LibrariesUtil.getGroovyLibraryHome(library.getFiles(OrderRootType.CLASSES)) != null;
   }
 
-  @Nullable
-  @NlsSafe
-  public String getSDKVersion(@NotNull final Module module) {
+  public @Nullable @NlsSafe String getSDKVersion(final @NotNull Module module) {
     return GroovyConfigUtilsKt.getSdkVersion(module);
   }
 
@@ -161,9 +158,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     };
   }
 
-  @NotNull
-  @NlsSafe
-  public String getSDKVersion(PsiElement psiElement) {
+  public @NotNull @NlsSafe String getSDKVersion(PsiElement psiElement) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module == null) {
       return NO_VERSION;

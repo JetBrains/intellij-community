@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.internal.inspector.PropertyBean
 import com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
@@ -19,13 +23,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.tree.TreeUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
@@ -38,7 +42,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 
-val CASE_KEY = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
+val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
 class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
@@ -48,8 +52,8 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   private var currentEditor: Editor? = null
 
   companion object {
-    @kotlin.jvm.JvmField
-    val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+    @JvmField
+    val PREVIEW_KEY: Key<Any> = Key.create("inlay.preview.key")
 
     fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
       return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
@@ -137,8 +141,8 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   @Nls
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
-      is InlayGroupSettingProvider -> return item.group.toString()
-      is InlayGroup -> return item.toString() //NON-NLS
+      is InlayGroupSettingProvider -> return item.group.title()
+      is InlayGroup -> return item.title()
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
       is ImmediateConfigurable.Case -> return item.name
@@ -214,7 +218,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
         if (item.description != null) {
           addDescription(item.description)
         }
-        if (!(item.component is JPanel) || item.component.componentCount > 0) {
+        if (item.component !is JPanel || item.component.componentCount > 0) {
           item.component.border = JBUI.Borders.empty()
           rightPanel.add(item.component)
         }
@@ -305,7 +309,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   }
 
   private fun addDescription(@Nls s: String?) {
-    val htmlLabel = SwingHelper.createHtmlLabel(StringUtil.notNullize(s), null, null)
+    val htmlLabel = SwingHelper.createHtmlLabel((s ?: ""), null, null)
     rightPanel.add(htmlLabel, "growy")
   }
 
@@ -351,9 +355,11 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
     }
   }
 
-  private fun isCaseEnabled(item: ImmediateConfigurable.Case,
-                            parent: TreeNode,
-                            settings: InlayHintsSettings) = item.value && ((parent as CheckedTreeNode).userObject as InlayProviderSettingsModel).isEnabled && settings.hintsEnabledGlobally()
+  private fun isCaseEnabled(item: ImmediateConfigurable.Case, parent: TreeNode, settings: InlayHintsSettings): Boolean {
+    return item.value &&
+           ((parent as CheckedTreeNode).userObject as InlayProviderSettingsModel).isEnabled &&
+           settings.hintsEnabledGlobally()
+  }
 
   private fun isModelEnabled(model: InlayProviderSettingsModel, settings: InlayHintsSettings): Boolean {
     return model.isEnabled && (!model.isMergedNode || settings.hintsEnabled(model.language)) && settings.hintsEnabledGlobally()
@@ -373,10 +379,16 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   fun apply() {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    DeclarativeInlayHintsPassFactory.resetModificationStamp()
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project, "InlaySettingsPanel.apply()")
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
+    if (!hintsEnabledGlobally(node, settings)) {
+      // skip settings applying if hints are disabled globally, and there is no enabled checkbox
+      // it is needed to avoid overriding the settings by global inlay toggle
+      return
+    }
     node.children().toList().forEach { apply(it as CheckedTreeNode, settings) }
     when (val item = node.userObject) {
       is InlayGroupSettingProvider -> {
@@ -399,6 +411,27 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
       is Language -> {
         enableHintsForLanguage(item, settings, node)
       }
+    }
+  }
+
+  private fun hintsEnabledGlobally(root: CheckedTreeNode, settings: InlayHintsSettings): Boolean {
+    return settings.hintsEnabledGlobally() || isAnyCheckboxEnabled(root)
+  }
+
+  private fun isAnyCheckboxEnabled(node: CheckedTreeNode): Boolean {
+    val children = node.children().toList()
+    if (children.isEmpty()) {
+      return when (node.userObject) {
+        is InlayGroupSettingProvider,
+        is InlayProviderSettingsModel,
+        is ImmediateConfigurable.Case -> {
+          node.isChecked
+        } else -> {
+          false
+        }
+      }
+    } else {
+      return children.any { isAnyCheckboxEnabled(it as CheckedTreeNode) }
     }
   }
 

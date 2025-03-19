@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.history.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -16,24 +16,31 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
+@ApiStatus.Internal
 public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    FilePath filePath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    VcsFileRevision[] revisions = e.getRequiredData(VcsDataKeys.VCS_FILE_REVISIONS);
+    FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
+    if (filePath == null) return;
+    VcsFileRevision[] revisions = e.getData(VcsDataKeys.VCS_FILE_REVISIONS);
+    if (revisions == null) return;
 
     if (filePath.isDirectory()) {
       if (revisions.length != 1) return;
 
-      AbstractVcs vcs = VcsUtil.findVcsByKey(e.getRequiredData(CommonDataKeys.PROJECT), e.getRequiredData(VcsDataKeys.VCS));
+      Project project = e.getData(CommonDataKeys.PROJECT);
+      if (project == null) return;
+      VcsKey vcsKey = e.getData(VcsDataKeys.VCS);
+      if (vcsKey == null) return;
+      AbstractVcs vcs = VcsUtil.findVcsByKey(project, vcsKey);
       if (vcs == null) return;
 
       ProgressManager.getInstance().run(new FolderPatchCreationTask(vcs, revisions[0]));
@@ -83,8 +90,8 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
   }
 
   private static final class FolderPatchCreationTask extends Task.Backgroundable {
-    @NotNull private final AbstractVcs myVcs;
-    @NotNull private final VcsFileRevision myRevision;
+    private final @NotNull AbstractVcs myVcs;
+    private final @NotNull VcsFileRevision myRevision;
     private CommittedChangeList myList;
     private VcsException myException;
 
@@ -102,7 +109,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
       RepositoryLocation changedRepositoryPath = myRevision.getChangedRepositoryPath();
       if (changedRepositoryPath == null) return;
 
-      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision, VcsFileSystem.getInstance());
+      VcsVirtualFile vf = new VcsVirtualFile(changedRepositoryPath.toPresentableString(), myRevision);
 
       try {
         myList = AbstractVcsHelperImpl.getRemoteList(provider, myRevision.getRevisionNumber(), vf);

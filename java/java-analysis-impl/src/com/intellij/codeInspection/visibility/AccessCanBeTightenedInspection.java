@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -10,7 +10,6 @@ import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +33,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
+public class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AccessCanBeTightenedInspection.class);
   private final VisibilityInspection myVisibilityInspection;
 
@@ -48,20 +47,17 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.visibility.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return VisibilityInspection.SHORT_NAME;
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new MyVisitor(holder);
   }
 
@@ -90,7 +86,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       checkMember(field);
     }
 
-    private void checkMember(@NotNull final PsiMember member) {
+    private void checkMember(final @NotNull PsiMember member) {
       if (!myVisibilityInspection.SUGGEST_FOR_CONSTANTS && isConstantField(member)) {
         return;
       }
@@ -101,6 +97,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       int currentLevel = PsiUtil.getAccessLevel(memberModifierList);
       int suggestedLevel = suggestLevel(member, memberClass, currentLevel);
       if (memberClass != null) {
+        if (memberClass instanceof PsiImplicitClass && currentLevel == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
+          // Do not suggest making the members of implicit classes private
+          return;
+        }
         synchronized (maxSuggestedLevelForChildMembers) {
           int prevMax = maxSuggestedLevelForChildMembers.getInt(memberClass);
           maxSuggestedLevelForChildMembers.put(memberClass, Math.max(prevMax, suggestedLevel));
@@ -178,7 +178,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
-        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
+        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensionList()) {
           if (!subclassProvider.isApplicableTo(memberClass)) continue;
           ImplicitSubclassProvider.SubclassingInfo info = subclassProvider.getSubclassingInfo(memberClass);
           if (info == null) continue;
@@ -210,7 +210,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
       AtomicBoolean foundUsage = new AtomicBoolean();
-      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, new EmptyProgressIndicator(), null, info -> {
+      boolean proceed = UnusedSymbolUtil.processUsages(project, memberFile, member, null, info -> {
         PsiElement element = info.getElement();
         if (element == null) return true;
         PsiFile psiFile = info.getFile();
@@ -346,8 +346,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     }
   }
 
-  @Nullable
-  private static PsiPackage getPackage(@NotNull PsiElement element) {
+  private static @Nullable PsiPackage getPackage(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     PsiDirectory directory = file == null ? null : file.getContainingDirectory();
     return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);

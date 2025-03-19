@@ -1,0 +1,32 @@
+LineBreakpoint created at equals.kt:17
+LineBreakpoint created at equals.kt:26
+LineBreakpoint created at equals.kt:48
+LineBreakpoint created at equals.kt:57
+LineBreakpoint created at equals.kt:65
+LineBreakpoint created at equals.kt:73
+LineBreakpoint created at equals.kt:80
+LineBreakpoint created at equals.kt:92
+Run Java
+Connected to the target VM
+equals.kt:17
+equals.kt:8
+equals.kt:1
+equals.kt:26
+equals.kt:8
+equals.kt:9
+equals.kt:48
+equals.kt:39
+equals.kt:1
+equals.kt:57
+equals.kt:39
+equals.kt:31
+equals.kt:65
+equals.kt:66
+equals.kt:73
+equals.kt:31
+equals.kt:80
+equals.kt:92
+equals.kt:84
+Disconnected from the target VM
+
+Process finished with exit code 0

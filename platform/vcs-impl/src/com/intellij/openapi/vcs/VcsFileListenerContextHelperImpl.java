@@ -1,14 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextHelper {
   private final Object LOCK = new Object();
   private final Set<FilePath> myIgnoredDeleted = new HashSet<>();

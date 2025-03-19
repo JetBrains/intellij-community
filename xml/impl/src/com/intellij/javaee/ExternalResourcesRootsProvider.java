@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.javaee;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexableSetContributor;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,13 +21,16 @@ final class ExternalResourcesRootsProvider extends IndexableSetContributor {
     ExternalResourceManagerExImpl manager = (ExternalResourceManagerExImpl)ExternalResourceManager.getInstance();
     Set<String> duplicateCheck = new HashSet<>();
     Set<VirtualFile> set = new HashSet<>();
-    for (Map<String, ExternalResourceManagerExImpl.Resource> map : manager.getStandardResources()) {
-      for (ExternalResourceManagerExImpl.Resource resource : map.values()) {
+    for (Map<String, ExternalResource> map : manager.getStandardResources$intellij_xml_psi_impl()) {
+      for (ExternalResource resource : map.values()) {
         String url = resource.getResourceUrl();
         if (url != null) {
           url = url.substring(0, url.lastIndexOf('/') + 1);
           if (duplicateCheck.add(url)) {
-            ContainerUtil.addIfNotNull(set, VfsUtilCore.findRelativeFile(url, null));
+            VirtualFile file = VfsUtilCore.findRelativeFile(url, null);
+            if (file != null) {
+              set.add(file);
+            }
           }
         }
       }

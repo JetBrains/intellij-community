@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi;
 
 import com.intellij.model.Symbol;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -13,6 +14,8 @@ import java.util.Collection;
  * Reference from a {@link PsiElement} to a {@link Symbol} or possibly several Symbols.
  *
  * @see PsiCompletableReference
+ * @see PsiSymbolReferenceProvider
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/declarations-and-references.html">Declarations and Reference (IntelliJ Platform Docs)</a>
  */
 public interface PsiSymbolReference {
 
@@ -24,7 +27,7 @@ public interface PsiSymbolReference {
 
   /**
    * @return range in {@link #getElement() element} which is considered a reference,
-   * e.g. range of `bar` in `foo.bar` qualified reference expression
+   * e.g., range of `bar` in `foo.bar` qualified reference expression
    */
   @NotNull
   TextRange getRangeInElement();
@@ -34,8 +37,7 @@ public interface PsiSymbolReference {
    * which is considered a reference
    * @see #getRangeInElement
    */
-  @NotNull
-  default TextRange getAbsoluteRange() {
+  default @NotNull TextRange getAbsoluteRange() {
     return getRangeInElement().shiftRight(getElement().getTextRange().getStartOffset());
   }
 
@@ -43,6 +45,7 @@ public interface PsiSymbolReference {
    * @return collection of referenced symbols with additional data, or empty collection if there are no targets
    */
   @NotNull
+  @Unmodifiable
   Collection<? extends Symbol> resolveReference();
 
   /**

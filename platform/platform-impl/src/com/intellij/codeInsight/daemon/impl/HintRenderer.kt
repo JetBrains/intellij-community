@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -20,11 +20,14 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.getFontWithFallback
 import org.intellij.lang.annotations.JdkConstants
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
+import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -33,7 +36,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   var widthAdjustment: HintWidthAdjustment? = null
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int {
-    return calcWidthInPixels(inlay.editor, text, widthAdjustment, useEditorFont())
+    return calcWidthInPixels(editor = inlay.editor, text = text, widthAdjustment = widthAdjustment, useEditorFont = useEditorFont())
   }
 
   protected open fun getTextAttributes(editor: Editor): TextAttributes? {
@@ -42,7 +45,9 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
   override fun paint(inlay: Inlay<*>, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
     val editor = inlay.editor
-    if (editor !is EditorImpl) return
+    if (editor !is EditorImpl) {
+      return
+    }
 
     val focusModeRange = editor.focusModeRange
     val attributes = if (focusModeRange != null && (inlay.offset <= focusModeRange.startOffset || focusModeRange.endOffset <= inlay.offset)) {
@@ -52,18 +57,19 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       getTextAttributes(editor)
     }
 
-    paintHint(g, editor, r, text, attributes, attributes ?: textAttributes, widthAdjustment, useEditorFont())
+    paintHint(
+      g = g,
+      editor = editor,
+      r = r,
+      text = text,
+      attributes = attributes,
+      textAttributes = attributes ?: textAttributes,
+      widthAdjustment = widthAdjustment,
+      useEditorFont = useEditorFont(),
+    )
   }
 
-  /**
-   * @deprecated
-   * @see calcHintTextWidth
-   */
-  protected fun doCalcWidth(text: String?, fontMetrics: FontMetrics): Int {
-    return calcHintTextWidth(text, fontMetrics)
-  }
-
-  protected open fun useEditorFont() = useEditorFontFromSettings()
+  protected open fun useEditorFont(): Boolean = useEditorFontFromSettings()
 
   companion object {
     @JvmStatic
@@ -149,7 +155,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val xStart = r.x
         val xEnd = r.x + r.width
         val y = r.y + ascent
-        val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+        val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
         when (effectType) {
           EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
@@ -166,15 +172,16 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       surroundingAttributes: TextAttributes
     ): Boolean {
       val backgroundUnderHint = surroundingAttributes.backgroundColor
-      if (backgroundUnderHint != null && attributes.foregroundColor != null) {
-        val backgroundBlended = srcOverBlend(attributes.backgroundColor, backgroundUnderHint, BACKGROUND_ALPHA)
-
-        val backgroundBlendedGrayed = backgroundBlended.toGray()
-        val textGrayed = attributes.foregroundColor.toGray()
-        val delta = Math.abs(backgroundBlendedGrayed - textGrayed)
-        return delta < 10
+      if (backgroundUnderHint == null || attributes.foregroundColor == null) {
+        return false
       }
-      return false
+
+      val backgroundBlended = srcOverBlend(attributes.backgroundColor, backgroundUnderHint, BACKGROUND_ALPHA)
+
+      val backgroundBlendedGrayed = backgroundBlended.toGray()
+      val textGrayed = attributes.foregroundColor.toGray()
+      val delta = abs(backgroundBlendedGrayed - textGrayed)
+      return delta < 10
     }
 
     private fun Color.toGray(): Double {
@@ -189,11 +196,14 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     private fun calcWidthAdjustment(text: String?, editor: Editor, fontMetrics: FontMetrics, widthAdjustment: HintWidthAdjustment?): Int {
-      if (widthAdjustment == null || editor !is EditorImpl) return 0
+      if (widthAdjustment == null || editor !is EditorImpl) {
+        return 0
+      }
+
       val editorTextWidth = editor.getFontMetrics(Font.PLAIN).stringWidth(widthAdjustment.editorTextToMatch)
       return max(0, editorTextWidth
-                         + calcHintTextWidth(widthAdjustment.hintTextToMatch, fontMetrics)
-                         - calcHintTextWidth(text, fontMetrics))
+                    + calcHintTextWidth(widthAdjustment.hintTextToMatch, fontMetrics)
+                    - calcHintTextWidth(text, fontMetrics))
     }
 
     class MyFontMetrics internal constructor(editor: Editor, size: Float, @JdkConstants.FontStyle fontType: Int, useEditorFont: Boolean) {
@@ -209,7 +219,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
           editorFont.deriveFont(fontType, size)
         } else {
           val familyName = UIManager.getFont("Label.font").family
-          StartupUiUtil.getFontWithFallback(familyName, fontType, size)
+          getFontWithFallback(familyName = familyName, style = fontType, size = size)
         }
         val context = getCurrentContext(editor)
         metrics = FontInfo.getFontMetrics(font, context)
@@ -254,8 +264,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       return metrics
     }
 
-    @JvmStatic
-    fun useEditorFontFromSettings() = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
+    fun useEditorFontFromSettings(): Boolean = EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays
 
     private fun getFont(editor: Editor, useEditorFont: Boolean): Font {
       return getFontMetrics(editor, useEditorFont).font
@@ -267,7 +276,8 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     }
 
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
-    private const val BACKGROUND_ALPHA = 0.55f
+
+    const val BACKGROUND_ALPHA: Float = JBUI.CurrentTheme.Popup.DEFAULT_HINT_OPACITY
   }
 
   // workaround for KT-12063 "IllegalAccessError when accessing @JvmStatic protected member of a companion object from a subclass"

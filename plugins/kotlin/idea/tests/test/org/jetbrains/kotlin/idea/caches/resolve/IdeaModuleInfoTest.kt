@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.JavaModuleTestCase
@@ -25,22 +26,29 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheServiceImpl
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.base.fe10.analysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.getDependentModules
 import org.jetbrains.kotlin.idea.caches.project.getIdeaModelInfosCache
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
+import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.createMultiplatformFacetM3
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -48,17 +56,17 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.projectModel.FullJdk
 import org.jetbrains.kotlin.projectModel.KotlinSdk
 import org.jetbrains.kotlin.projectModel.ResolveSdk
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.util.addDependency
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
-import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.closure
 import org.junit.Assert
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -1098,6 +1106,12 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         js --> common
         js --> STDLIB_JS
         js --> KOTLIN_SDK
+        wasmJs --> common
+        wasmJs --> STDLIB_WASM
+        wasmJs --> KOTLIN_SDK
+        wasmWasi --> common
+        wasmWasi --> STDLIB_WASM
+        wasmWasi --> KOTLIN_SDK
         jvmNoSdk --> common
         jvmNoSdk --> STDLIB_JVM
         jvmWithSdk --> common
@@ -1112,11 +1126,19 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         val common = module("common")
         val js = module("js")
+        val wasmJs = module("wasmJs").apply {
+            setUpPlatform(WasmPlatforms.wasmJs)
+        }
+        val wasmWasi = module("wasmWasi").apply {
+            setUpPlatform(WasmPlatforms.wasmWasi)
+        }
         val jvmNoSdk = module("jvmNoSdk")
         val jvmWithSdk = module("jvmWithSdk")
         val native = module("native")
 
         js.addDependency(common)
+        wasmJs.addDependency(common)
+        wasmWasi.addDependency(common)
         jvmNoSdk.addDependency(common)
         jvmWithSdk.addDependency(common)
         native.addDependency(common)
@@ -1135,6 +1157,18 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
         js.addDependency(stdlibJs)
         js.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibWasmJs = projectLibrary("stdlibWasmJs", classesRoot = TestKotlinArtifacts.kotlinStdlibWasmJs.jarRoot)
+        val stdlibWasmJsInfo = stdlibWasmJs.toLibraryInfo()
+
+        wasmJs.addDependency(stdlibWasmJs)
+        wasmJs.addDependency(KotlinSdk, testRootDisposable)
+
+        val stdlibWasmWasi = projectLibrary("stdlibWasmWasi", classesRoot = TestKotlinArtifacts.kotlinStdlibWasmWasi.jarRoot)
+        val stdlibWasmWasiInfo = stdlibWasmWasi.toLibraryInfo()
+
+        wasmWasi.addDependency(stdlibWasmWasi)
+        wasmWasi.addDependency(KotlinSdk, testRootDisposable)
 
         val stdlibJvm = projectLibrary("stdlibJvm", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
         val stdlibJvmLibInfo = stdlibJvm.toLibraryInfo()
@@ -1163,6 +1197,20 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             stdlibJsInfo
         )
 
+        wasmJs.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            wasmJs.production,
+            common.production,
+            stdlibWasmJsInfo
+        )
+
+        wasmWasi.production.assertDependenciesEqual(
+            kotlinSdkInfo,
+            wasmWasi.production,
+            common.production,
+            stdlibWasmWasiInfo
+        )
+
         jvmNoSdk.production.assertDependenciesEqual(
             jvmNoSdk.production,
             common.production,
@@ -1187,6 +1235,18 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             lib = stdlibJsInfo,
             expectedSdkInfos = listOf(kotlinSdkInfo),
             stdlibCommonLibInfo, stdlibJsInfo
+        )
+
+        assertDependencies(
+            lib = stdlibWasmJsInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibWasmJsInfo
+        )
+
+        assertDependencies(
+            lib = stdlibWasmWasiInfo,
+            expectedSdkInfos = listOf(kotlinSdkInfo),
+            stdlibCommonLibInfo, stdlibWasmWasiInfo
         )
 
         assertDependencies(
@@ -1378,6 +1438,144 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
     }
 
+    fun testDependencyResolutionAnchors() {
+        val module1 = module("M1")
+        val lib1 = projectLibrary("Lib1", classesRoot = TestKotlinArtifacts.kotlinCompiler.jarRoot)
+        val lib2 = projectLibrary("Lib2", classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        module1.addDependency(lib1)
+        module1.addDependency(lib2)
+
+        val module2 = module("M2")
+        val lib3 = projectLibrary("Lib3", classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot)
+        module2.addDependency(lib2)
+        module2.addDependency(lib3)
+        val anchorModule = module("anchor")
+        val anchorModuleInfo = anchorModule.production
+
+        val lib1Info = lib1.toLibraryInfo()
+        val lib2Info = lib2.toLibraryInfo()
+        val lib3Info = lib3.toLibraryInfo()
+
+        module1.production.assertDependenciesEqual(
+            module1.production,
+            lib1Info,
+            lib2Info,
+        )
+        module2.production.assertDependenciesEqual(
+            module2.production,
+            lib2Info,
+            lib3Info,
+        )
+
+        assertDependencies(
+            lib = lib1Info,
+            lib1Info, lib2Info
+        )
+        assertDependencies(
+            lib = lib2Info,
+            lib1Info, lib2Info, lib3Info
+        )
+
+        val resolutionAnchorCacheService = ResolutionAnchorCacheService.getInstance(project) as ResolutionAnchorCacheServiceImpl
+        val anchorMapping = mapOf(lib3.name!! to anchorModule.name)
+        resolutionAnchorCacheService.setAnchors(anchorMapping)
+
+        project.withLibraryToSourceAnalysis {
+            for (lib in listOf(lib1Info, lib2Info, lib3Info)) {
+                with(resolutionAnchorCacheService.getDependencyResolutionAnchors(lib)) {
+                    assertEquals(lib.toString(), 1, this.size)
+                    assertEquals(lib.toString(), anchorModuleInfo, this.first())
+                }
+            }
+        }
+    }
+
+    fun testDependencyResolutionAnchorsWithStdlib() {
+        val libraryWithAnchor = projectLibrary("LibraryWithAnchor", classesRoot = TestKotlinArtifacts.kotlinCompiler.jarRoot)
+        val regularLibrary = projectLibrary("RegularLibrary", classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot)
+        val stdlib = projectLibrary("stdlib", classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot)
+
+        val module = module("regular_module")
+        module.addDependency(libraryWithAnchor)
+        module.addDependency(regularLibrary)
+        module.addDependency(stdlib)
+
+        val anchorModule = module("anchor_module")
+        val anchorModuleDependency = projectLibrary("AnchorModuleDependency", classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot)
+        anchorModule.addDependency(anchorModuleDependency)
+
+        val anchorModuleForStdlib = module("anchor_module_for_stdlib")
+        val resolutionAnchorCacheService = ResolutionAnchorCacheService.getInstance(project) as ResolutionAnchorCacheServiceImpl
+        val anchorMapping = mapOf(
+            libraryWithAnchor.name!! to anchorModule.name,
+            stdlib.name!! to anchorModuleForStdlib.name,
+        )
+
+        resolutionAnchorCacheService.setAnchors(anchorMapping)
+
+        val libraryWithAnchorInfo = libraryWithAnchor.toLibraryInfo()
+        val regularLibraryInfo = regularLibrary.toLibraryInfo()
+        val stdlibInfo = stdlib.toLibraryInfo()
+        val anchorModuleDependencyInfo = anchorModuleDependency.toLibraryInfo()
+
+        module.production.assertDependenciesEqual(
+            module.production,
+            libraryWithAnchorInfo,
+            regularLibraryInfo,
+            stdlibInfo,
+        )
+
+        anchorModule.production.assertDependenciesEqual(
+            anchorModule.production,
+            anchorModuleDependencyInfo,
+        )
+
+        anchorModuleForStdlib.production.assertDependenciesEqual(
+            anchorModuleForStdlib.production,
+        )
+
+        assertDependencies(
+            lib = libraryWithAnchorInfo,
+            libraryWithAnchorInfo, regularLibraryInfo, stdlibInfo
+        )
+
+        assertDependencies(
+            lib = regularLibraryInfo,
+            libraryWithAnchorInfo, regularLibraryInfo, stdlibInfo
+        )
+
+        assertDependencies(
+            lib = stdlibInfo,
+            stdlibInfo,
+        )
+
+        fun assertAnchors(lib: LibraryInfo, expected: Collection<Module>) {
+            val anchors = resolutionAnchorCacheService.getDependencyResolutionAnchors(lib)
+            assertSortedEquals(
+                lib.name.asString(),
+                expected.map { it.production },
+                actual = anchors,
+                renderer = { it.name.asString() },
+            )
+        }
+
+        project.withLibraryToSourceAnalysis {
+            assertAnchors(
+                lib = libraryWithAnchorInfo,
+                expected = listOf(anchorModule, anchorModuleForStdlib),
+            )
+
+            assertAnchors(
+                lib = regularLibraryInfo,
+                expected = listOf(anchorModule, anchorModuleForStdlib),
+            )
+
+            assertAnchors(
+                lib = stdlibInfo,
+                expected = listOf(anchorModuleForStdlib),
+            )
+        }
+    }
 
     fun testExportedDependency() {
         val (a, b, c) = modules()
@@ -1630,6 +1828,8 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val stdlibCommon = stdlibCommon()
         val stdlibJvm = stdlibJvm()
         val stdlibJs = stdlibJs()
+        val stdlibWasmJs = stdlibWasmJs()
+        val stdlibWasmWasi = stdlibWasmWasi()
 
         val a = module("a")
         a.addDependency(stdlibCommon)
@@ -1640,9 +1840,21 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         b.addDependency(stdlibCommon)
         b.addDependency(stdlibJs)
 
+        val c = module("c")
+        c.setUpPlatform(WasmPlatforms.wasmJs)
+        c.addDependency(stdlibCommon)
+        c.addDependency(stdlibWasmJs)
+
+        val d = module("d")
+        d.setUpPlatform(WasmPlatforms.wasmWasi)
+        d.addDependency(stdlibCommon)
+        d.addDependency(stdlibWasmWasi)
+
         stdlibCommon.toLibraryInfo().assertAdditionalLibraryDependencies()
         stdlibJvm.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
         stdlibJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibWasmJs.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
+        stdlibWasmWasi.toLibraryInfo().assertAdditionalLibraryDependencies(stdlibCommon.toLibraryInfo())
     }
 
     fun testScriptDependenciesForModule() {
@@ -1679,7 +1891,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         val allJdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
         val firstJdk = allJdks.firstOrNull() ?: error("no jdks are present")
 
-        with(createFileInProject("script.kts").moduleInfo) {
+        with(createKtsFileInProject().moduleInfo) {
             UIUtil.dispatchAllInvocationEvents()
             NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
@@ -1700,7 +1912,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             ProjectRootManager.getInstance(project).projectSdk = mockJdk9
         }
 
-        with(createFileInProject("script.kts").moduleInfo) {
+        with(createKtsFileInProject().moduleInfo) {
             dependencies().filterIsInstance<SdkInfo>().single { it.sdk == mockJdk9 }
         }
     }
@@ -1722,7 +1934,7 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
             }
         }
 
-        with(createFileInModule(a, "script.kts").moduleInfo) {
+        with(createKtsFileInModule(a).moduleInfo) {
             dependencies().filterIsInstance<SdkInfo>().first { it.sdk == mockJdk9 }
         }
     }
@@ -1996,6 +2208,13 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
         )
     }
 
+    private fun createKtsFileInProject() = createFileInProject("script.kts").also { it.openAsScriptInEditor() }
+
+    private fun createKtsFileInModule(module: Module) = createFileInModule(module, "script.kts").also { it.openAsScriptInEditor() }
+
+    private fun VirtualFile.openAsScriptInEditor() = // fun name stresses that in the production code we really need to have a file opened
+        updateScriptDependenciesSynchronously(findPsiFile(project) ?: error("PSI file is missing for $this"))
+
     private fun assertPlatformModules(platform: TargetPlatform, leafSourceModule: Module) {
         val moduleInfos = getIdeaModelInfosCache(project)
         val moduleInfosForPlatform = moduleInfos.forPlatform(platform)
@@ -2032,10 +2251,27 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
 
     private fun assertDependencies(lib: LibraryInfo, vararg expectedLibraries: LibraryInfo) {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(lib)
-        assertEquals(
+        assertEqualsLibraries(
             "LibraryInfo '${lib.name}' dependencies",
-            expectedLibraries.joinToString(separator = "\n") { it.name.asString() },
-            dependencies.libraries.map { it.name.asString() }.sorted().joinToString(separator = "\n"),
+            expectedLibraries.toList(),
+            dependencies.libraries,
+        )
+    }
+
+    private fun assertEqualsLibraries(message: String, expected: Collection<LibraryInfo>, actual: Collection<LibraryInfo>) {
+        assertSortedEquals(
+            message = message,
+            expected = expected,
+            actual = actual,
+            renderer = { it.name.asString() },
+        )
+    }
+
+    private fun <T> assertSortedEquals(message: String, expected: Collection<T>, actual: Collection<T>, renderer: (T) -> String) {
+        assertEquals(
+            message,
+            expected.joinToString(separator = "\n", transform = renderer),
+            actual.map(renderer).sorted().joinToString(separator = "\n"),
         )
     }
 
@@ -2129,9 +2365,21 @@ class IdeaModuleInfoTest8 : JavaModuleTestCase() {
     private fun stdlibJvm(): LibraryEx = projectLibrary("kotlin-stdlib", TestKotlinArtifacts.kotlinStdlib.jarRoot)
 
     private fun stdlibJs(): LibraryEx = projectLibrary(
-      "kotlin-stdlib-js",
-      TestKotlinArtifacts.kotlinStdlibJs.jarRoot,
-      kind = KotlinJavaScriptLibraryKind
+        "kotlin-stdlib-js",
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(TestKotlinArtifacts.kotlinStdlibJs),
+        kind = KotlinJavaScriptLibraryKind
+    )
+
+    private fun stdlibWasmJs(): LibraryEx = projectLibrary(
+        "kotlin-stdlib-wasm-js",
+        TestKotlinArtifacts.kotlinStdlibWasmJs.jarRoot,
+        kind = KotlinWasmJsLibraryKind
+    )
+
+    private fun stdlibWasmWasi(): LibraryEx = projectLibrary(
+        "kotlin-stdlib-wasm-wasi",
+        TestKotlinArtifacts.kotlinStdlibWasmWasi.jarRoot,
+        kind = KotlinWasmWasiLibraryKind
     )
 
     private fun projectLibraryWithFakeRoot(name: String): LibraryEx {

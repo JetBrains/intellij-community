@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.openapi.editor.EditorGutterAction;
@@ -12,17 +12,9 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
-  @Nullable private final String myId;
-  @NlsContexts.ListItem @Nullable private final String myDisplayName;
+  private final @Nullable String myId;
+  private final @NlsContexts.ListItem @Nullable String myDisplayName;
   private final boolean myShowByDefault;
-
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  protected LineAnnotationAspectAdapter() {
-    this(null, null, false);
-  }
 
   protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
     this(id, displayName, false);
@@ -37,8 +29,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   @Override
-  @NlsContexts.Tooltip
-  public String getTooltipText(int lineNumber) {
+  public @NlsContexts.Tooltip String getTooltipText(int lineNumber) {
     return null;
   }
 
@@ -69,7 +60,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
 
   protected abstract void showAffectedPaths(int lineNum);
 
-  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter() {
+  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter(null, null, false) {
     @Override
     protected void showAffectedPaths(int lineNum) {
       throw new UnsupportedOperationException();

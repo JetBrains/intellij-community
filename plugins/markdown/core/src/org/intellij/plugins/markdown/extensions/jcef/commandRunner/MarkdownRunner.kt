@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nls
 
 interface MarkdownRunner {
   companion object {
-    val EP_NAME: ExtensionPointName<MarkdownRunner> = ExtensionPointName.create("org.intellij.markdown.markdownRunner")
+    internal val EP_NAME: ExtensionPointName<MarkdownRunner> = ExtensionPointName.create("org.intellij.markdown.markdownRunner")
   }
 
   /**

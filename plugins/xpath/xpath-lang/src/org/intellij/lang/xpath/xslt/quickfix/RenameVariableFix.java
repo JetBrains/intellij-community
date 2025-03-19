@@ -41,8 +41,7 @@ public class RenameVariableFix extends AbstractFix {
     }
 
     @Override
-    @NotNull
-    public String getText() {
+    public @NotNull String getText() {
         final String type = LanguageFindUsages.getType(myElement);
         return XPathBundle.message("intention.name.rename.variable", myPlace, StringUtil.capitalize(type));
     }
@@ -58,7 +57,7 @@ public class RenameVariableFix extends AbstractFix {
     }
 
   @Override
-  public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
                                                                                DataManager.getInstance().getDataContext());
   }

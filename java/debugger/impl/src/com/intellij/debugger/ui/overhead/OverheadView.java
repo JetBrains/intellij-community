@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.CommonBundle;
@@ -23,7 +23,6 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +38,8 @@ import java.util.function.Function;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
-public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
-  @NotNull private final DebugProcessImpl myProcess;
+public class OverheadView extends BorderLayoutPanel implements Disposable, UiDataProvider {
+  private final @NotNull DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
   static final NameColumnInfo NAME_COLUMN = new NameColumnInfo();
@@ -107,7 +106,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       }
 
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         myTable.getSelection().forEach(c -> c.setEnabled(!c.isEnabled()));
         myTable.repaint();
       }
@@ -119,7 +118,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
         ReadAction.nonBlocking(
             () -> getFirstItem(mapNotNull(getSelectedBreakpoints(), XBreakpoint::getNavigatable)))
           .expireWith(OverheadView.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+          .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
             if (navigatable != null) {
               navigatable.navigate(true);
             }
@@ -143,25 +142,13 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
     return myTable;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      var selectedBreakpoints = getSelectedBreakpoints(); // gather in EDT
-      return (DataProvider)realDataId -> getSlowData(selectedBreakpoints, realDataId);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Object getSlowData(@NotNull List<XBreakpoint> selected, @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<Navigatable> navigatables = mapNotNull(selected, XBreakpoint::getNavigatable);
-      if (!navigatables.isEmpty()) {
-        return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    var selection = getSelectedBreakpoints();
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      List<Navigatable> navigatables = mapNotNull(selection, XBreakpoint::getNavigatable);
+      return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+    });
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
@@ -174,9 +161,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return Boolean.class;
     }
 
-    @Nullable
     @Override
-    public Boolean valueOf(OverheadProducer item) {
+    public @Nullable Boolean valueOf(OverheadProducer item) {
       return item.isEnabled();
     }
 
@@ -196,9 +182,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       super(CommonBundle.message("title.name"));
     }
 
-    @Nullable
     @Override
-    public OverheadProducer valueOf(OverheadProducer aspects) {
+    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -207,9 +192,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return OverheadProducer.class;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(OverheadProducer producer) {
+    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
@@ -245,9 +229,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       myGetter = getter;
     }
 
-    @Nullable
     @Override
-    public OverheadProducer valueOf(OverheadProducer aspects) {
+    public @Nullable OverheadProducer valueOf(OverheadProducer aspects) {
       return aspects;
     }
 
@@ -256,9 +239,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       return OverheadProducer.class;
     }
 
-    @Nullable
     @Override
-    public TableCellRenderer getRenderer(OverheadProducer producer) {
+    public @Nullable TableCellRenderer getRenderer(OverheadProducer producer) {
       return new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(@NotNull JTable table,
@@ -276,9 +258,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
       };
     }
 
-    @Nullable
     @Override
-    public Comparator<OverheadProducer> getComparator() {
+    public @Nullable Comparator<OverheadProducer> getComparator() {
       return Comparator.comparing(c -> {
         Long value = myGetter.apply(c);
         return value != null ? value : Long.MAX_VALUE;

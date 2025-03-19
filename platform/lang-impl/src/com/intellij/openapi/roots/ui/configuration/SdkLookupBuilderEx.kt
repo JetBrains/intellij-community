@@ -5,21 +5,22 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class SdkLookupBuilderEx<T> {
   private val suggestedSdks = IdentityHashMap<Sdk, T>()
 
-  fun SdkLookupBuilder.testSuggestedSdkFirst(id: T, getSdk: () -> Sdk?) = testSuggestedSdkFirst {
+  fun SdkLookupBuilder.testSuggestedSdkFirst(id: T, getSdk: () -> Sdk?): SdkLookupBuilder = testSuggestedSdkFirst {
     getSdk()?.also {
       suggestedSdks[it] = id
     }
   }
 
-  fun SdkLookupBuilder.onSdkNameResolved(callback: (T?, Sdk?) -> Unit) = onSdkNameResolved {
+  fun SdkLookupBuilder.onSdkNameResolved(callback: (T?, Sdk?) -> Unit): SdkLookupBuilder = onSdkNameResolved {
     callback(suggestedSdks[it], it)
   }
 
-  fun SdkLookupBuilder.onSdkResolved(callback: (T?, Sdk?) -> Unit) = onSdkResolved {
+  fun SdkLookupBuilder.onSdkResolved(callback: (T?, Sdk?) -> Unit): SdkLookupBuilder = onSdkResolved {
     callback(suggestedSdks[it], it)
   }
 

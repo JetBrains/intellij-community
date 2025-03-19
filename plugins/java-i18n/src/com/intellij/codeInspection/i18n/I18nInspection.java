@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.i18n;
 
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -42,6 +43,8 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.intellij.lang.annotations.RegExp;
@@ -103,13 +106,13 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   private boolean reportUnannotatedReferences = false;
   public boolean ignoreAssignedToConstants;
   public boolean ignoreToString;
-  @NlsSafe private String nonNlsLiteralPattern;
-  @NlsSafe public String nonNlsCommentPattern;
+  private @NlsSafe String nonNlsLiteralPattern;
+  public @NlsSafe String nonNlsCommentPattern;
   private boolean ignoreForEnumConstants;
 
-  @Nullable private Pattern myCachedCommentPattern;
-  @Nullable private Pattern myCachedLiteralPattern;
-  @NonNls private static final String TO_STRING = "toString";
+  private @Nullable Pattern myCachedCommentPattern;
+  private @Nullable Pattern myCachedLiteralPattern;
+  private static final @NonNls String TO_STRING = "toString";
 
   public I18nInspection() {
     setNonNlsCommentPattern("NON-NLS");
@@ -191,14 +194,12 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
   }
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HardCodedStringLiteral";
   }
 
@@ -276,8 +277,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     );
   }
 
-  @NotNull
-  private static HtmlChunk exampleDescription(String exampleText) {
+  private static @NotNull HtmlChunk exampleDescription(@NlsSafe String exampleText) {
     return HtmlChunk.fragment(
       HtmlChunk.text(JavaI18nBundle.message("tooltip.example")),
       HtmlChunk.br(),
@@ -315,13 +315,11 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return "nls";
   }
 
-  @NotNull
-  private static LocalQuickFix createIntroduceConstantFix() {
+  private static @NotNull LocalQuickFix createIntroduceConstantFix() {
     return new IntroduceConstantFix();
   }
 
-  @Nullable
-  private static ULocalVariable getVariableToSearch(UExpression passThrough) {
+  private static @Nullable ULocalVariable getVariableToSearch(UExpression passThrough) {
     UElement uastParent = passThrough.getUastParent();
     ULocalVariable uVar = null;
     if (uastParent instanceof ULocalVariable) {
@@ -343,19 +341,15 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     return uVar;
   }
 
-  @Nullable
-  private static List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
+  private static @Nullable @Unmodifiable List<@NotNull UExpression> findUsages(UExpression passThrough, ULocalVariable uVar) {
     PsiElement psiVar = uVar.getSourcePsi();
     PsiElement psi = passThrough.getSourcePsi();
     if (psi != null && psiVar != null) {
       if (psiVar instanceof PsiLocalVariable local) {
         // Java
-        PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-        if (codeBlock instanceof PsiCodeBlock) {
-          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-          return ContainerUtil.mapNotNull(
-            refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-        }
+        List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local);
+        return ContainerUtil.mapNotNull(
+          refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
       }
       else {
         // Kotlin
@@ -408,6 +402,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
             if (uVar != null && NlsInfo.fromUVariable(uVar).canBeUsedInLocalizedContext()) return false;
           }
         }
+      }
+      if (MethodUtils.isToString(target) && PsiPrimitiveType.getUnboxedType(ref.getReceiverType()) != null) {
+        // toString() on primitive: consider safe
+        return true;
       }
       processReferenceToNonLocalized(sourcePsi, ref, target);
       return true;
@@ -506,7 +504,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
       List<LocalQuickFix> fixes = new ArrayList<>();
 
-      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isLanguageLevel5OrHigher(sourcePsi)) {
+      if (sourcePsi instanceof PsiLiteralExpression && PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, sourcePsi)) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(myHolder.getProject());
         for (PsiModifierListOwner element : nonNlsTargets) {
           if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
@@ -540,8 +538,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
 
     private static boolean isSwitchCase(@NotNull UInjectionHost expression) {
       if (expression.getUastParent() instanceof USwitchClauseExpression parent) {
-        return ContainerUtil.exists(parent.getCaseValues(),
-                                    value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+        return ContainerUtil.exists(parent.getCaseValues(), value -> expression.equals(value));
       }
       return false;
     }
@@ -600,10 +597,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     for (UExpression usage : usages) {
       NlsInfo info = NlsInfo.forExpression(usage);
       switch (info.getNlsStatus()) {
-        case YES: {
+        case YES -> {
           return info;
         }
-        case UNSURE: {
+        case UNSURE -> {
           if (ignoreForAllButNls) {
             break;
           }
@@ -616,8 +613,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.NlsUnspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
         }
-        case NO:
-          break;
+        case NO -> {}
       }
     }
     return NlsInfo.nonLocalized();
@@ -858,7 +854,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (parent == null || !UastExpressionUtils.isMethodCall(parent)) {
       return false;
     }
-    @NonNls final String methodName = ((UCallExpression)parent).getMethodName();
+    final @NonNls String methodName = ((UCallExpression)parent).getMethodName();
     if (methodName == null) {
       return false;
     }
@@ -874,9 +870,9 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
     if (containingClass == null) {
       return false;
     }
-    return InheritanceUtil.isInheritor(containingClass,"org.junit.Assert") ||
-           InheritanceUtil.isInheritor(containingClass,"org.junit.jupiter.api.Assertions") ||
-           InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert");
+    return InheritanceUtil.isInheritor(containingClass,JUnitCommonClassNames.ORG_JUNIT_ASSERT) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS) ||
+           InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(UExpression expression,

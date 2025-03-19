@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.ActionRunner
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.util.allScope
@@ -128,7 +129,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
-        runConfiguration.workingDirectory = runConfiguration.workingDirectory + "/customWorkingDirectory"
+        runConfiguration.workingDirectory += "/customWorkingDirectory"
         val scriptVirtualFileBefore = script.containingFile.virtualFile
         val originalPath = scriptVirtualFileBefore.canonicalPath
         val originalWorkingDirectory = scriptVirtualFileBefore.parent.canonicalPath + "/customWorkingDirectory"
@@ -156,6 +157,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
     fun moveScriptFile(scriptFile: PsiFile) {
         ActionRunner.runInsideWriteAction { VfsUtil.createDirectoryIfMissing(scriptFile.virtualFile.parent, "dest") }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         MoveFilesOrDirectoriesProcessor(
             project,

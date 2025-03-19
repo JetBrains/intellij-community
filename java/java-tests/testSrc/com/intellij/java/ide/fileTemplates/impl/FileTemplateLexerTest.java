@@ -18,6 +18,7 @@ package com.intellij.java.ide.fileTemplates.impl;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class FileTemplateLexerTest extends LexerTestCase {
 
@@ -36,12 +37,12 @@ public class FileTemplateLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return FileTemplateConfigurable.createDefaultLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return null;
   }
 }

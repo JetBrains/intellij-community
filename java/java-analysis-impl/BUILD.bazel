@@ -1,0 +1,50 @@
+### auto-generated section `build intellij.java.analysis.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "analysis-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "analysis-impl",
+  module_name = "intellij.java.analysis.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/analysis-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/projectModel-impl",
+    "//java/java-analysis-api:analysis",
+    "//resources-en:java-resources-en",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/platform-api:ide",
+    "@lib//:asm",
+    "@lib//:stream_ex",
+    "@lib//:kotlin-stdlib",
+    "//java/openapi:java",
+    "//platform/util:util-ui",
+    "@lib//:fastutil-min",
+    "//platform/workspace/storage",
+    "@lib//:icu4j",
+    "//platform/util/jdom",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//java/java-frontback-impl:frontback-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/core:java-codeserver-core",
+  ],
+  exports = [
+    "//platform/analysis-impl",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/java-psi-impl:psi-impl",
+    "//platform/projectModel-impl",
+    "//java/java-analysis-api:analysis",
+    "//java/java-frontback-impl:frontback-impl",
+  ],
+  runtime_deps = [":analysis-impl_resources"]
+)
+### auto-generated section `build intellij.java.analysis.impl` end

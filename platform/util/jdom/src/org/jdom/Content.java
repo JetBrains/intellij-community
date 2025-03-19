@@ -70,7 +70,6 @@ import java.io.Serializable;
  * @see Element
  * @see EntityRef
  * @see Parent
- * @see ProcessingInstruction
  * @see Text
  */
 public abstract class Content extends CloneBase implements Serializable {
@@ -79,14 +78,14 @@ public abstract class Content extends CloneBase implements Serializable {
    * having to do <code>instanceof</code> type conditionals.
    * <p>
    * <code>instanceof</code> is not a particularly safe way to test content
-   * in JDOM because CDATA extends Text ( a CDATA instance is an
+   * in JDOM because CDATA extends Text (a CDATA instance is an
    * <code>instanceof</code> Text).
    * <p>
    * This CType enumeration provides a direct and sure mechanism for
    * identifying JDOM content.
    * <p>
    * These can be used in switch-type statements too (which is much neater
-   * than chained if (instanceof) else if (instanceof) else .... expressions):
+   * than chained if (instanceof) else if (instanceof) else … expressions):
    * <p>
    * <pre>
    *    switch(content.getCType()) {
@@ -205,9 +204,9 @@ public abstract class Content extends CloneBase implements Serializable {
    *
    * @return the containing Element or null if unattached or a root element
    */
-  final public Element getParentElement() {
+  public final @Nullable Element getParentElement() {
     Parent parent = this.parent;
-    return (Element)((parent instanceof Element) ? parent : null);
+    return ((parent instanceof Element) ? (Element)parent : null);
   }
 
   /**

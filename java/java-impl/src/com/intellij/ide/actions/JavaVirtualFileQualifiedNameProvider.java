@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.module.JavaModuleType;
@@ -14,10 +14,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class JavaVirtualFileQualifiedNameProvider implements VirtualFileQualifiedNameProvider {
-  @Nullable
+public final class JavaVirtualFileQualifiedNameProvider implements VirtualFileQualifiedNameProvider {
   @Override
-  public String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public @Nullable String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
     if (module == null || !ModuleType.is(module, JavaModuleType.getModuleType())) {
       return null;

@@ -10,7 +10,7 @@ class KotlinReferenceUsageInfo(reference: PsiReference) : UsageInfo(reference) {
 
     override fun getReference(): PsiReference? {
         val element = element ?: return null
-        return element.references.singleOrNull { it::class.java == referenceType }
+        return element.references.firstOrNull { it::class.java == referenceType }
     }
 }
 

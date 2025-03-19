@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -23,7 +24,8 @@ import java.util.Collection;
 /**
  * @author Maxim.Mossienko
  */
-public class GroovyScriptMacro extends Macro {
+@ApiStatus.Internal
+public final class GroovyScriptMacro extends Macro {
   private static final Logger LOG = Logger.getInstance(GroovyScriptMacro.class);
 
   @Override

@@ -1,0 +1,18 @@
+### auto-generated section `build intellij.platform.collaborationTools.auth.base` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "collaborationTools-auth-base",
+  module_name = "intellij.platform.collaborationTools.auth.base",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-api:ide",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+  ]
+)
+### auto-generated section `build intellij.platform.collaborationTools.auth.base` end

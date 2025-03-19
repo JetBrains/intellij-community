@@ -5,7 +5,7 @@ public class ForEachPattern {
   record IntBox(int i) {}
   void bar1(Iterable<IntBox> i) {
     int a = 1;
-    for (IntBox(int d) : i) {
+    for (<error descr="Record patterns in for-each loops are not supported at language level '21'">IntBox(int d)</error> : i) {
       a = 2;
     }
     System.out.println(a == 1);
@@ -20,7 +20,7 @@ public class ForEachPattern {
 
   private static void use(List<Point> points) {
     int a = 0, b = 0;
-    for (Point(int x, int y) : points) {
+    for (<error descr="Record patterns in for-each loops are not supported at language level '21'">Point(int x, int y)</error> : points) {
       if (x == 1) {
         a = 1;
       }

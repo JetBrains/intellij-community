@@ -5,7 +5,6 @@ import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextProblem
-import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -25,9 +24,9 @@ private val actionInfo = listOf("accept.suggestion",
                                 "rule.settings:changes:domains",
                                 "rule.settings:changes:unclassified")
 
-private val GROUP = EventLogGroup("grazie.count", 7)
+private val GROUP = EventLogGroup("grazie.count", 8)
 
-private val RULE_FIELD = EventFields.StringValidatedByCustomRule("id", PluginInfoValidationRule::class.java)
+private val RULE_FIELD = EventFields.StringValidatedByEnum("id", "grazie_rule_long_ids")
 private val FIXES_FIELD = EventFields.Int("fixes")
 private val ACTION_INFO_FIELD = EventFields.String("info", actionInfo)
 
@@ -43,26 +42,23 @@ private val quickFixInvokedEvent = GROUP.registerEvent("quick.fix.invoked",
                                                        ACTION_INFO_FIELD,
                                                        EventFields.PluginInfo)
 
-class GrazieFUSCounter : CounterUsagesCollector() {
+object GrazieFUSCounter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-
-    fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
-      for (language in languages) {
-        languageSuggestedEvent.log(language.iso, isEnabled)
-      }
+  fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
+    for (language in languages) {
+      languageSuggestedEvent.log(language.iso, isEnabled)
     }
-
-    fun typoFound(problem: TextProblem) = typoFoundEvent.log(problem.text.containingFile.project,
-                                                             problem.rule.globalId,
-                                                             problem.suggestions.size,
-                                                             getPluginInfo(problem.rule.javaClass))
-
-    fun quickFixInvoked(rule: Rule, project: Project, actionInfo: String) = quickFixInvokedEvent.log(project,
-                                                                                                     rule.globalId,
-                                                                                                     actionInfo,
-                                                                                                     getPluginInfo(rule.javaClass))
-
   }
+
+  fun typoFound(problem: TextProblem) = typoFoundEvent.log(problem.text.containingFile.project,
+                                                           problem.rule.globalId,
+                                                           problem.suggestions.size,
+                                                           getPluginInfo(problem.rule.javaClass))
+
+  fun quickFixInvoked(rule: Rule, project: Project, actionInfo: String) = quickFixInvokedEvent.log(project,
+                                                                                                   rule.globalId,
+                                                                                                   actionInfo,
+                                                                                                   getPluginInfo(rule.javaClass))
+
 }

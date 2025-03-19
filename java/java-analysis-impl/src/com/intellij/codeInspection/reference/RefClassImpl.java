@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -6,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.jvm.JvmMetaLanguage;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.util.JvmInheritanceUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
@@ -14,12 +13,12 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.*;
 
 import java.util.*;
@@ -27,16 +26,17 @@ import java.util.*;
 public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
-  private static final int IS_ANONYMOUS_MASK = 0b1_00000000_00000000; // 17th bit
-  private static final int IS_INTERFACE_MASK = 0b10_00000000_00000000; // 18th bit
-  private static final int IS_UTILITY_MASK   = 0b100_00000000_00000000; // 19th bit
-  private static final int IS_ABSTRACT_MASK  = 0b1000_00000000_00000000; // 20th bit
-  private static final int IS_RECORD_MASK    = 0b10000_00000000_00000000; // 21st bit
-  private static final int IS_APPLET_MASK    = 0b100000_00000000_00000000; // 22nd bit
-  private static final int IS_SERVLET_MASK   = 0b1000000_00000000_00000000; // 23rd bit
-  private static final int IS_TESTCASE_MASK  = 0b10000000_00000000_00000000; // 24th bit
-  private static final int IS_LOCAL_MASK     = 0b1_00000000_00000000_00000000; // 25th bit
-  private static final int IS_ENUM_MASK      = 0b10_00000000_00000000_00000000; // 26th bit
+  private static final int IS_ANONYMOUS_MASK  = 0b1_00000000_00000000; // 17th bit
+  private static final int IS_INTERFACE_MASK  = 0b10_00000000_00000000; // 18th bit
+  private static final int IS_UTILITY_MASK    = 0b100_00000000_00000000; // 19th bit
+  private static final int IS_ABSTRACT_MASK   = 0b1000_00000000_00000000; // 20th bit
+  private static final int IS_RECORD_MASK     = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_APPLET_MASK     = 0b100000_00000000_00000000; // 22nd bit
+  private static final int IS_SERVLET_MASK    = 0b1000000_00000000_00000000; // 23rd bit
+  private static final int IS_TESTCASE_MASK   = 0b10000000_00000000_00000000; // 24th bit
+  private static final int IS_LOCAL_MASK      = 0b1_00000000_00000000_00000000; // 25th bit
+  private static final int IS_ENUM_MASK       = 0b10_00000000_00000000_00000000; // 26th bit
+  private static final int IS_ANNOTATION_MASK = 0b100_00000000_00000000_00000000; // 27th bit
 
   private Object myBases; // singleton (to conserve memory) or HashSet. guarded by this
   private Set<RefOverridable> myDerivedReferences; // singleton (to conserve memory) or HashSet. guarded by this
@@ -78,9 +78,14 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    RefElement refParent = parent != null ? manager.getReference(parent.getSourcePsi()) : null;
+    WritableRefEntity refParent = parent != null ? (WritableRefEntity)manager.getReference(parent.getSourcePsi()) : null;
     if (refParent != null) {
-      setOwner((WritableRefEntity)refParent);
+      if (!myManager.isDeclarationsFound()) {
+        refParent.add(this);
+      }
+      else {
+        setOwner(refParent);
+      }
     }
     else {
       PsiFile containingFile = getContainingFile();
@@ -107,22 +112,20 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (!myManager.isDeclarationsFound()) return;
 
     setInterface(uClass.isInterface());
+    setAnnotationType(uClass.isAnnotationType());
+    setAnonymous(uClass instanceof UAnonymousClass);
     final PsiClass psiClass = uClass.getJavaPsi();
-    setRecord(psiClass.isRecord());
-    setEnum(psiClass.isEnum());
-    setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
-    setAnonymous(uClass.getName() == null);
-    setLocal(!isAnonymous() && parent != null && !(parent instanceof UClass));
-
+    if (!isAnonymous()) {
+      setRecord(psiClass.isRecord());
+      setEnum(psiClass.isEnum());
+      setAbstract(psiClass.hasModifier(JvmModifier.ABSTRACT));
+      setLocal(parent != null && !(parent instanceof UClass));
+    }
     initializeSuperReferences(uClass);
 
-    UMethod[] uMethods = uClass.getMethods();
-    UField[] uFields = uClass.getFields();
-
     boolean memberSeen = false;
-    for (UField uField : uFields) {
-      final RefField field = ObjectUtils.tryCast(manager.getReference(uField.getSourcePsi()), RefField.class);
-      if (field != null) {
+    for (UField uField : uClass.getFields()) {
+      if (manager.getReference(uField.getSourcePsi()) instanceof RefField field) {
         memberSeen = true;
         addChild(field);
         if (!uField.isStatic() || uField instanceof UEnumConstant) utilityClass = false;
@@ -130,15 +133,13 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     RefMethodImpl varargConstructor = null;
     boolean constructorSeen = false;
-    for (UMethod uMethod : uMethods) {
-      RefMethodImpl refMethod = ObjectUtils.tryCast(manager.getReference(uMethod.getSourcePsi()), RefMethodImpl.class);
-
-      if (refMethod != null) {
+    for (UMethod uMethod : uClass.getMethods()) {
+      if (manager.getReference(uMethod.getSourcePsi()) instanceof RefMethodImpl refMethod) {
         addChild(refMethod);
         if (uMethod.isConstructor()) {
           constructorSeen = true;
           final List<UParameter> parameters = uMethod.getUastParameters();
-          if (!parameters.isEmpty()|| uMethod.getVisibility() != UastVisibility.PRIVATE) {
+          if (!parameters.isEmpty() || uMethod.getVisibility() != UastVisibility.PRIVATE) {
             utilityClass = false;
           }
 
@@ -159,7 +160,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       }
     }
 
-    if (!memberSeen || uClass.isInterface() || psiClass.isRecord() || psiClass instanceof PsiAnonymousClass) {
+    if (!memberSeen || isInterface() || isRecord() || isAnonymous()) {
       utilityClass = false;
     }
     if (!utilityClass && psiClass.getLanguage().isKindOf("kotlin")) {
@@ -167,13 +168,11 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
       utilityClass = ClassUtils.isSingleton(psiClass);
     }
 
-    synchronized (this) {
-      if (varargConstructor != null && myDefaultConstructor == null) {
-        setDefaultConstructor(varargConstructor);
-      }
+    if (myDefaultConstructor == null && varargConstructor != null) {
+      setDefaultConstructor(varargConstructor);
     }
-
-    if (!isInterface() && !isAnonymous() && !isEnum() && !constructorSeen) {
+    if (!constructorSeen && !isInterface() && !isAnonymous()) {
+      // implicit constructor is generated by javac when the class has no other constructor
       setDefaultConstructor(new RefImplicitConstructorImpl(this));
     }
 
@@ -200,19 +199,17 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   private void initializeSuperReferences(UClass uClass) {
-    if (!isSelfInheritor(uClass)) {
-        uClass.getUastSuperTypes().stream()
-        .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
-        .filter(Objects::nonNull)
-        .filter(c -> getRefJavaManager().belongsToScope(c))
-        .forEach(c -> {
-          RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
-          if (refClass != null) {
-            addBaseClass(refClass);
-            getRefManager().executeTask(() -> refClass.addDerivedReference(this));
-          }
-        });
-    }
+    uClass.getUastSuperTypes().stream()
+      .map(t -> PsiUtil.resolveClassInClassTypeOnly(t.getType()))
+      .filter(Objects::nonNull)
+      .filter(c -> getRefJavaManager().belongsToScope(c))
+      .forEach(c -> {
+        RefClassImpl refClass = (RefClassImpl)getRefManager().getReference(c);
+        if (refClass != null) {
+          addBaseClass(refClass);
+          getRefManager().executeTask(() -> refClass.addDerivedReference(this));
+        }
+      });
   }
 
   @Override
@@ -310,8 +307,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public void accept(final @NotNull RefVisitor visitor) {
-    if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitClass(this));
+    if (visitor instanceof RefJavaVisitor javaVisitor) {
+      ReadAction.run(() -> javaVisitor.visitClass(this));
     }
     else {
       super.accept(visitor);
@@ -350,7 +347,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Collection<? extends RefOverridable> getDerivedReferences() {
-    return ObjectUtils.notNull(myDerivedReferences, EMPTY_CLASS_SET);
+    return (myDerivedReferences == null) ? EMPTY_CLASS_SET : myDerivedReferences;
   }
 
   @Override
@@ -383,7 +380,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public List<RefField> getFields() {
+  public @Unmodifiable List<RefField> getFields() {
     LOG.assertTrue(isInitialized());
     return ContainerUtil.filterIsInstance(getChildren(), RefField.class);
   }
@@ -433,8 +430,8 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   }
 
   @Override
-  public boolean isSuspicious() {
-    return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
+  public boolean isAnnotationType() {
+    return checkFlag(IS_ANNOTATION_MASK);
   }
 
   @Override
@@ -520,10 +517,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.isReferenced()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;
@@ -534,10 +531,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
     if (super.hasSuspiciousCallers()) return true;
 
     if (isInterface()) {
-      if (!getDerivedReferences().isEmpty()) return true;
+      return !getDerivedReferences().isEmpty();
     }
     else if (isAbstract()) {
-      if (!getSubClasses().isEmpty()) return true;
+      return !getSubClasses().isEmpty();
     }
 
     return false;
@@ -563,7 +560,7 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   public synchronized @NotNull Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+    return (myOutTypeReferences == null) ? Collections.emptySet() : myOutTypeReferences;
   }
 
   private void setAnonymous(boolean anonymous) {
@@ -576,6 +573,10 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   private void setRecord(boolean record) {
     setFlag(record, IS_RECORD_MASK);
+  }
+
+  private void setAnnotationType(boolean annotationType) {
+    setFlag(annotationType, IS_ANNOTATION_MASK);
   }
 
   /**
@@ -613,11 +614,24 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
   @Override
   public @NotNull RefElement getContainingEntry() {
     RefElement defaultConstructor = getDefaultConstructor();
-    if (defaultConstructor != null) return defaultConstructor;
-    return super.getContainingEntry();
+    return defaultConstructor == null ? super.getContainingEntry() : defaultConstructor;
   }
 
   private static boolean isKindOfJvmLanguage(@NotNull Language language) {
-    return ContainerUtil.exists(Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages(), language::is);
+    for (Language t : Language.findInstance(JvmMetaLanguage.class).getMatchingLanguages()) {
+      if (language.is(t)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isSuppressed(String @NotNull ... toolIds) {
+    if (super.isSuppressed(toolIds)) {
+      return true;
+    }
+    RefElement fileRef = getRefManager().getReference(getContainingFile());
+    return fileRef instanceof RefJavaFileImpl file && file.isSuppressed(toolIds);
   }
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
@@ -10,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_INDEX_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_LOCATION_HASH_KEY
 import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PINNED_KEY
@@ -30,27 +30,25 @@ import com.intellij.ui.tabs.impl.TabLayout
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DisposableHandle
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
-import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
 
+@Internal
 class DockableEditorTabbedContainer internal constructor(
-  internal val splitters: EditorsSplitters,
+  @JvmField internal val splitters: EditorsSplitters,
   private val disposeWhenEmpty: Boolean,
   private val coroutineScope: CoroutineScope,
 ) : DockContainer.Persistent, Activatable, Disposable {
@@ -61,6 +59,7 @@ class DockableEditorTabbedContainer internal constructor(
   private var currentPainter: AbstractPainter? = null
   private var glassPaneListenerDisposable: DisposableHandle? = null
   private var wasEverShown = false
+  internal var focusOnShowing = true
 
   override fun dispose() {
     coroutineScope.cancel()
@@ -74,13 +73,13 @@ class DockableEditorTabbedContainer internal constructor(
     return editors
   }
 
-  fun fireContentClosed(file: VirtualFile) {
+  internal fun fireContentClosed(file: VirtualFile) {
     for (each in listeners) {
       each.contentRemoved(file)
     }
   }
 
-  fun fireContentOpen(file: VirtualFile) {
+  internal fun fireContentOpen(file: VirtualFile) {
     for (each in listeners) {
       each.contentAdded(file)
     }
@@ -97,23 +96,12 @@ class DockableEditorTabbedContainer internal constructor(
     if (content !is DockableEditor) {
       return null
     }
-    val targetTabs = splitters.getTabsAt(point)
-    if (targetTabs != null) {
-      return targetTabs
+
+    splitters.getTabsAt(point)?.let {
+      return it
     }
-    else {
-      val window = splitters.currentWindow
-      if (window != null) {
-        return window.tabbedPane.tabs
-      }
-      else {
-        for (each in splitters.getWindows()) {
-          each.tabbedPane.tabs
-          return each.tabbedPane.tabs
-        }
-      }
-    }
-    return null
+
+    return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
   }
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {
@@ -124,22 +112,24 @@ class DockableEditorTabbedContainer internal constructor(
     val sameWindow = currentOver != null && dragStartLocation != null && dragStartLocation == System.identityHashCode(currentOver)
     val dropSide = currentDropSide
     if (currentOver != null) {
-      val provider = currentOver!!.dataProvider
-      if (provider != null) {
-        window = EditorWindow.DATA_KEY.getData(provider)
-      }
+      window = EditorWindow.DATA_KEY.getData(DataManager.getInstance().getDataContext(currentOver!!.component))
       if (window != null && dropSide != -1 && dropSide != SwingConstants.CENTER) {
         window.split(
-          if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
-          true, file, true, dropSide != SwingConstants.LEFT && dropSide != SwingConstants.TOP)
-        recordDragStats(dropSide, false)
+          orientation = if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
+          forceSplit = true,
+          virtualFile = file,
+          focusNew = true,
+          fileIsSecondaryComponent = dropSide != SwingConstants.LEFT && dropSide != SwingConstants.TOP,
+        )
+        recordDragStats(dropSide = dropSide, sameWindow = false)
         return
       }
     }
     var dropIntoNewlyCreatedWindow = false
     if (window == null || window.isDisposed) {
       dropIntoNewlyCreatedWindow = true
-      window = splitters.getOrCreateCurrentWindow(file) //drag outside
+      // drag outside
+      window = splitters.getOrCreateCurrentWindow(file)
     }
     var dropInBetweenPinnedTabs: Boolean? = null
     var dropInPinnedRow = false
@@ -156,13 +146,16 @@ class DockableEditorTabbedContainer internal constructor(
           tabInfo?.isPinned
         }
         if (index > 0 && previousIsPinned) {
-          val previousLabel = currentOver!!.getTabLabel(previousInfo)
+          val previousLabel = currentOver!!.getTabLabel(previousInfo)!!
           val bounds = previousLabel.bounds
           val dropPoint = dropTarget!!.getPoint(previousLabel)
-          dropInPinnedRow = (currentOver is JBTabsImpl
-                             && TabLayout.showPinnedTabsSeparately() && (currentOver as JBTabsImpl).tabsPosition == JBTabsPosition.top) && bounds.y < dropPoint.y && bounds.maxY > dropPoint.y
+          dropInPinnedRow = (currentOver is JBTabsImpl &&
+                             TabLayout.showPinnedTabsSeparately() &&
+                             (currentOver as JBTabsImpl).tabsPosition == JBTabsPosition.top) &&
+                            bounds.y < dropPoint.y && bounds.maxY > dropPoint.y
         }
       }
+
       val dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY)
       val isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow
       if (!isDroppedToOriginalPlace) {
@@ -175,10 +168,10 @@ class DockableEditorTabbedContainer internal constructor(
       }
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
-    val openOptions = FileEditorOpenOptions(index = index,
-                                            requestFocus = true,
-                                            pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
-    splitters.manager.openFileImpl2(window, file, openOptions)
+    coroutineScope.launch {
+      val openOptions = FileEditorOpenOptions(index = index, requestFocus = true, pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
+      splitters.manager.checkForbidSplitAndOpenFile(window = window, file = file, options = openOptions)
+    }
   }
 
   private fun recordDragStats(dropSide: Int, sameWindow: Boolean) {
@@ -255,7 +248,6 @@ class DockableEditorTabbedContainer internal constructor(
       currentOver = null
       currentOverInfo = null
       currentOverImg = null
-      @Suppress("SSBasedInspection")
       glassPaneListenerDisposable?.dispose()
       currentPainter = null
     }
@@ -285,7 +277,7 @@ class DockableEditorTabbedContainer internal constructor(
   override fun showNotify() {
     if (!wasEverShown) {
       wasEverShown = true
-      splitters.openFilesAsync()
+      splitters.openFilesAsync(focusOnShowing)
     }
   }
 
@@ -318,5 +310,5 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.getWindows().joinToString()}"
+  override fun toString(): String = "DockableEditorTabbedContainer windows=${splitters.windows().joinToString()}"
 }

@@ -1,9 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move
 
+import com.google.gson.JsonObject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
@@ -17,8 +20,13 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
+    protected abstract fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project)
+
     fun doTest(path: String) {
         val config = loadTestConfiguration(File(path))
+
+        val isEnabled = config.get("enabledIn${pluginMode.name}").asBoolean
+        if (!isEnabled) return
 
         isMultiModule = true
 
@@ -51,7 +59,7 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
             }
 
             try {
-                runMoveRefactoring(path, config, rootDir, project)
+                runRefactoring(path, config, rootDir, project)
             } finally {
                 modulesWithJvmRuntime.forEach {
                     ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(it, IdeaTestUtil.getMockJdk18())

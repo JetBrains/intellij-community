@@ -1,0 +1,5 @@
+<node text="AbstractCollection (kotlin.collections)">
+  <node text="AbstractList (kotlin.collections)" base="true">
+    <node text="L ()"/>
+  </node>
+</node>

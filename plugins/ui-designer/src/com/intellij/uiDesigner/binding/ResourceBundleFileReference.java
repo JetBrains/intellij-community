@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.lang.properties.PropertiesFileType;
@@ -45,7 +45,7 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     if (!(element instanceof PropertiesFile)) return false;
     String baseName = ResourceBundleManager.getInstance(element.getProject()).getFullName((PropertiesFile)element);
     if (baseName == null) return false;
@@ -55,12 +55,12 @@ public final class ResourceBundleFileReference extends ReferenceInForm {
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) {
+  public PsiElement handleElementRename(final @NotNull String newElementName) {
     return handleFileRename(newElementName, PropertiesFileType.DOT_DEFAULT_EXTENSION, false);
   }
 
   @Override
-  public PsiElement bindToElement(@NotNull final PsiElement element) throws IncorrectOperationException {
+  public PsiElement bindToElement(final @NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PropertiesFile propertyFile)) {
       throw new IncorrectOperationException();
     }

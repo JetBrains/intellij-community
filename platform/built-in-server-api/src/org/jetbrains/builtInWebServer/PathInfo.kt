@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.fileTypes.FileType
@@ -7,18 +7,26 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isDirectory
 
-class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, moduleName: String? = null, val isLibrary: Boolean = false, val isRootNameOptionalInPath: Boolean = false) {
+class PathInfo(
+  val ioFile: Path?,
+  file: VirtualFile?,
+  val root: VirtualFile,
+  moduleName: String? = null,
+  val isLibrary: Boolean = false,
+  val isRootNameOptionalInPath: Boolean = false,
+) {
   var file: VirtualFile? = file
     private set
 
   var moduleName: String? = moduleName
-    set
+    @ApiStatus.Internal set
 
   /**
    * URL path.
@@ -53,7 +61,7 @@ class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, mod
 
   fun getOrResolveVirtualFile(): VirtualFile? {
     return if (file == null) {
-      val result = LocalFileSystem.getInstance().findFileByPath(ioFile!!.systemIndependentPath)
+      val result = LocalFileSystem.getInstance().findFileByPath(ioFile!!.invariantSeparatorsPathString)
       file = result
       result
     }

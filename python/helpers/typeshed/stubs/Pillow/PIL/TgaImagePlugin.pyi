@@ -1,12 +1,12 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal
+from _typeshed import Incomplete
+from typing import ClassVar, Literal
 
 from .ImageFile import ImageFile
 
-MODES: Any
+MODES: Incomplete
 
 class TgaImageFile(ImageFile):
     format: ClassVar[Literal["TGA"]]
     format_description: ClassVar[str]
 
-SAVE: Any
+SAVE: Incomplete

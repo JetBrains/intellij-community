@@ -10,12 +10,11 @@
   <category>UI</category>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-  <vendor email="support@yourcompany.com" url="https://www.yourcompany.com">YourCompany</vendor>
+  <vendor url="https://www.yourcompany.com">YourCompany</vendor>
 
-  <idea-version since-build="${context.getBomProperty("intellij.since.build")}" until-build="${context.getBomProperty("intellij.until.build")}"/>
+  <idea-version since-build="${context.getBomProperty("intellij.since.build")}"/>
 
   <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-       Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
     Enter short description for your theme here.<br>

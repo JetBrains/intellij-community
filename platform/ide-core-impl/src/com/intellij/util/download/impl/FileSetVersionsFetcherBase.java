@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import com.intellij.util.download.DownloadableFileSetVersions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetDescription, F extends DownloadableFileDescription> implements DownloadableFileSetVersions<FS> {
   private static final Comparator<DownloadableFileSetDescription> VERSIONS_COMPARATOR =
     (o1, o2) -> -StringUtil.compareVersionNumbers(o1.getVersionString(), o2.getVersionString());
@@ -29,13 +31,12 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
   }
 
   @Override
-  public void fetchVersions(@NotNull final FileSetVersionsCallback<FS> callback) {
+  public void fetchVersions(final @NotNull FileSetVersionsCallback<FS> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> callback.onSuccess(fetchVersions()));
   }
 
-  @NotNull
   @Override
-  public List<FS> fetchVersions() {
+  public @NotNull List<FS> fetchVersions() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     final Artifact[] versions;
     if (myGroupId != null) {
@@ -68,8 +69,7 @@ public abstract class FileSetVersionsFetcherBase<FS extends DownloadableFileSetD
     return result;
   }
 
-  @NotNull
-  protected static String prependPrefix(@NotNull String url, @Nullable String prefix) {
+  protected static @NotNull String prependPrefix(@NotNull String url, @Nullable String prefix) {
     if (!url.startsWith("http://") && prefix != null) {
       url = prefix + url;
     }

@@ -58,10 +58,18 @@ internal class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileO
 private class LazyDistDirLayoutProducer(version: String, private val unpackedDistDestination: File) :
     AbstractLazyFileOutputProducer<List<File>, Unit>("${LazyDistDirLayoutProducer::class.java.name}-$version") {
 
+    companion object {
+        /**
+         * Bump when you change the algorithm of how LazyDistDirLayoutProducer works.
+         * It helps to make sure that we rebuild dist when the algorithm changes.
+         */
+        private const val ALGORITHM_VERSION = 1
+    }
+
     private val kotlinVersion = IdeKotlinVersion.parse(version).getOrThrow()
 
     override fun produceOutput(input: List<File>, computationContext: Unit): List<File> { // inputs are jarsInMavenRepo
-        unpackedDistDestination.deleteRecursively()
+        check(unpackedDistDestination.deleteRecursively()) { "Can't delete $unpackedDistDestination" }
         val lib = unpackedDistDestination.resolve("lib")
         check(lib.mkdirs()) { "Can't create $lib directory" }
         for (jarInMavenRepo in input) {
@@ -73,6 +81,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
     }
 
     override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: List<File>, buffer: ByteArray) {
+        messageDigest.update(ALGORITHM_VERSION.toBigInteger().toByteArray())
         messageDigest.update(input, buffer)
     }
 
@@ -109,21 +118,34 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
                 return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
             }
         } else {
+            // These plugins are still present in dist pom for backward compatibility with older Kotlin Plugin releases
+            val compatMavenPlugins = listOf(
+                "kotlin-maven-allopen",
+                "kotlin-maven-lombok",
+                "kotlin-maven-noarg",
+                "kotlin-maven-sam-with-receiver",
+            )
+            if (compatMavenPlugins.any { nameWithoutExtension.startsWith(it) }) return null
+
+            // Keeping for compatibility until we will switch plugin to use new serialization compiler plugin jar
+            if (nameWithoutExtension.startsWith("kotlin-maven-serialization")) {
+                return "kotlinx-serialization-compiler-plugin.jar"
+            }
+
+            // 'kotlin-serialization-compiler-plugin' is not in the list by design
+            // as we want to migrate dist to have all compiler plugins with 'kotlin-' prefix
             val compilerPluginNames = listOf(
                 "kotlin-sam-with-receiver-compiler-plugin",
                 "kotlin-allopen-compiler-plugin",
                 "kotlin-lombok-compiler-plugin",
                 "kotlin-noarg-compiler-plugin",
-                "kotlin-assignment-compiler-plugin"
+                "kotlin-assignment-compiler-plugin",
             )
 
             if (compilerPluginNames.any { nameWithoutExtension.startsWith(it) }) {
                 return nameWithoutExtension.removePrefix("kotlin-").removeSuffix("-$version") + ".jar"
             }
 
-            if (nameWithoutExtension.startsWith("kotlinx-serialization-compiler-plugin")) {
-                return nameWithoutExtension.removeSuffix("-$version") + ".jar"
-            }
         }
 
         if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {

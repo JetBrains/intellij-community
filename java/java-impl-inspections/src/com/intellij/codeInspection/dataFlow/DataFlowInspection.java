@@ -1,20 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInsight.options.JavaInspectionButtons;
 import com.intellij.codeInsight.options.JavaInspectionControls;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.fix.BoxPrimitiveInTernaryFix;
-import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
-import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
+import com.intellij.codeInspection.AddAssertNonNullFromTestFrameworksFix.Variant;
+import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.pom.java.LanguageLevel;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -40,29 +36,32 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.java.JavaBundle.message;
 
-public class DataFlowInspection extends DataFlowInspectionBase {
+public final class DataFlowInspection extends DataFlowInspectionBase {
   private static final Logger LOG = Logger.getInstance(DataFlowInspection.class);
 
   @Override
-  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation, boolean onTheFly) {
-    return WrapWithMutableCollectionFix.createFix(violation, onTheFly);
+  protected LocalQuickFix createMutabilityViolationFix(PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
+  protected @Nullable LocalQuickFix createExplainFix(PsiExpression anchor, TrackingRunner.DfaProblemType problemType) {
     return new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, anchor, problemType);
   }
 
-  @Nullable
   @Override
-  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+  protected @Nullable LocalQuickFix createUnwrapSwitchLabelFix() {
     return new UnwrapSwitchLabelFix();
   }
 
   @Override
   protected LocalQuickFix createIntroduceVariableFix() {
     return new IntroduceVariableFix(true);
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
+    return LocalQuickFix.from(new DeleteSwitchLabelFix(label, true));
   }
 
   private static boolean isVolatileFieldReference(PsiExpression qualifier) {
@@ -85,7 +84,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true);
+    return new RemoveAssignmentFix();
   }
 
   @Override
@@ -140,9 +139,14 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix());
       }
-      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
+      else if (!alwaysNull && !SideEffectChecker.mayHaveSideEffects(qualifier)) {
         String suffix = " != null";
-        if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4) && CodeBlockSurrounder.canSurround(expression)) {
+
+        Variant testFrameworkFixVariant = AddAssertNonNullFromTestFrameworksFix.isAvailable(expression);
+        if (testFrameworkFixVariant != null) {
+          fixes.add(new AddAssertNonNullFromTestFrameworksFix(qualifier, testFrameworkFixVariant));
+        }
+        else if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, qualifier) && CodeBlockSurrounder.canSurround(expression)) {
           String replacement = ParenthesesUtils.getText(qualifier, ParenthesesUtils.EQUALITY_PRECEDENCE) + suffix;
           fixes.add(new AddAssertStatementFix(replacement));
         }
@@ -156,7 +160,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         }
       }
 
-      if (!alwaysNull && PsiUtil.isLanguageLevel7OrHigher(qualifier)) {
+      if (!alwaysNull && PsiUtil.isAvailable(JavaFeature.OBJECTS_CLASS, qualifier)) {
         fixes.add(new SurroundWithRequireNonNullFix(qualifier));
       }
 
@@ -176,7 +180,9 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
-  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier,
+                                                                              PsiElement anchor,
+                                                                              boolean onTheFly) {
     List<LocalQuickFix> result = new SmartList<>();
     if (TypeConversionUtil.isBooleanType(qualifier.getType())) {
       result.add(new ReplaceWithBooleanEqualsFix(qualifier));
@@ -187,10 +193,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   private static void addCreateNullBranchFix(@NotNull PsiExpression qualifier, @NotNull List<? super @NotNull LocalQuickFix> fixes) {
-    if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
-    if (parent instanceof PsiSwitchBlock && PsiUtil.skipParenthesizedExprDown(((PsiSwitchBlock)parent).getExpression()) == qualifier) {
-      fixes.add(new CreateNullBranchFix((PsiSwitchBlock)parent));
+    if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
+      fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));
     }
   }
 

@@ -16,12 +16,12 @@ class Formatter(EntitySubstitution):
     empty_attributes_are_booleans: bool
     def __init__(
         self,
-        language: str | None = ...,
-        entity_substitution: _EntitySubstitution | None = ...,
-        void_element_close_prefix: str = ...,
-        cdata_containing_tags: list[str] | None = ...,
-        empty_attributes_are_booleans: bool = ...,
-        indent: int = ...,
+        language: str | None = None,
+        entity_substitution: _EntitySubstitution | None = None,
+        void_element_close_prefix: str = "/",
+        cdata_containing_tags: list[str] | None = None,
+        empty_attributes_are_booleans: bool = False,
+        indent: int = 1,
     ) -> None: ...
     def substitute(self, ns: str) -> str: ...
     def attribute_value(self, value: str) -> str: ...
@@ -34,6 +34,8 @@ class HTMLFormatter(Formatter):
         entity_substitution: _EntitySubstitution | None = ...,
         void_element_close_prefix: str = ...,
         cdata_containing_tags: list[str] | None = ...,
+        empty_attributes_are_booleans: bool = False,
+        indent: int = 1,
     ) -> None: ...
 
 class XMLFormatter(Formatter):
@@ -43,4 +45,6 @@ class XMLFormatter(Formatter):
         entity_substitution: _EntitySubstitution | None = ...,
         void_element_close_prefix: str = ...,
         cdata_containing_tags: list[str] | None = ...,
+        empty_attributes_are_booleans: bool = False,
+        indent: int = 1,
     ) -> None: ...

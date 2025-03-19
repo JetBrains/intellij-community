@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.ClassId
@@ -20,7 +22,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "arrayOf",
         /* example = */ "arrayOf(expr)",
-        /* selector = */ allExpressions(ValuedFilter),
+        /* selector = */ allExpressions(ValuedFilter, NonPackageAndNonImportFilter),
         /* provider = */ provider
     )
 
@@ -29,7 +31,7 @@ internal class KotlinWrapIntoArrayPostfixTemplate : StringBasedPostfixTemplate {
         return "$functionName(\$expr$)\$END$"
     }
 
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
 private val ARRAY_CLASS_ID = ClassId.fromString("kotlin/Array")
@@ -55,21 +57,24 @@ private val PRIMITIVES_TO_ARRAYS: Map<ClassId, String> = buildMap {
 }
 
 @RequiresReadLock
-@OptIn(KtAllowAnalysisOnEdt::class)
+@OptIn(KaAllowAnalysisOnEdt::class)
 private fun getArrayFunctionName(element: PsiElement): String {
     if (element is KtExpression) {
         allowAnalysisOnEdt {
-            analyze(element) {
-                val expectedType = element.getExpectedType()
-                if (expectedType != null && expectedType.isClassTypeWithClassId(ARRAY_CLASS_ID)) {
-                    return "kotlin.arrayOf"
-                }
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    val expectedType = element.expectedType
+                    if (expectedType != null && expectedType.isClassType(ARRAY_CLASS_ID)) {
+                        return "kotlin.arrayOf"
+                    }
 
-                val elementType = element.getKtType()
-                if (elementType != null && elementType is KtNonErrorClassType && !elementType.isMarkedNullable) {
-                    val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
-                    if (functionName != null) {
-                        return functionName
+                    val elementType = element.expressionType
+                    if (elementType != null && elementType is KaClassType && !elementType.isMarkedNullable) {
+                        val functionName = PRIMITIVES_TO_ARRAYS[elementType.classId]
+                        if (functionName != null) {
+                            return functionName
+                        }
                     }
                 }
             }

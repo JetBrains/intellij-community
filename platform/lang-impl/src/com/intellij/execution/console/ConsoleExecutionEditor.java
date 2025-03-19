@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
@@ -30,7 +31,7 @@ import javax.swing.*;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
-public class ConsoleExecutionEditor implements Disposable {
+public final class ConsoleExecutionEditor implements Disposable {
   private final @NotNull EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;
   private final Document myEditorDocument;
@@ -48,6 +49,7 @@ public class ConsoleExecutionEditor implements Disposable {
     myConsoleEditor.getSettings().setVirtualSpace(false);
     myCurrentEditor = myConsoleEditor;
     myConsoleEditor.putUserData(SEARCH_DISABLED, true);
+    RemoteTransferUIManager.forbidBeControlizationInLux(myConsoleEditor, "language-console");
 
     myConsolePromptDecorator = new ConsolePromptDecorator(myConsoleEditor);
     myConsoleEditor.getGutter().registerTextAnnotation(myConsolePromptDecorator);
@@ -74,8 +76,7 @@ public class ConsoleExecutionEditor implements Disposable {
     myConsolePromptDecorator.update();
   }
 
-  @NotNull
-  public final VirtualFile getVirtualFile() {
+  public @NotNull VirtualFile getVirtualFile() {
     return myHelper.virtualFile;
   }
 
@@ -83,8 +84,7 @@ public class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor;
   }
 
-  @NotNull
-  public EditorEx getCurrentEditor() {
+  public @NotNull EditorEx getCurrentEditor() {
     return ObjectUtils.notNull(myCurrentEditor, myConsoleEditor);
   }
 
@@ -96,8 +96,7 @@ public class ConsoleExecutionEditor implements Disposable {
     return myConsoleEditor.getComponent();
   }
 
-  @NotNull
-  public ConsolePromptDecorator getConsolePromptDecorator() {
+  public @NotNull ConsolePromptDecorator getConsolePromptDecorator() {
     return myConsolePromptDecorator;
   }
 
@@ -116,17 +115,15 @@ public class ConsoleExecutionEditor implements Disposable {
     return myHelper.project;
   }
 
-  public final boolean isConsoleEditorEnabled() {
+  public boolean isConsoleEditorEnabled() {
     return myConsoleEditor.getComponent().isVisible();
   }
 
-  @Nullable
-  public String getPrompt() {
+  public @NotNull String getPrompt() {
     return myConsolePromptDecorator.getMainPrompt();
   }
 
-  @NotNull
-  public ConsoleViewContentType getPromptAttributes() {
+  public @NotNull ConsoleViewContentType getPromptAttributes() {
     return myConsolePromptDecorator.getPromptAttributes();
   }
 
@@ -138,7 +135,6 @@ public class ConsoleExecutionEditor implements Disposable {
     setPromptInner(prompt);
   }
 
-
   public void setEditable(boolean editable) {
     myConsoleEditor.setRendererMode(!editable);
     myConsolePromptDecorator.update();
@@ -149,7 +145,7 @@ public class ConsoleExecutionEditor implements Disposable {
   }
 
 
-  private void setPromptInner(@Nullable final String prompt) {
+  private void setPromptInner(final @Nullable String prompt) {
     if (!myConsoleEditor.isDisposed()) {
       myConsolePromptDecorator.setMainPrompt(prompt != null ? prompt : "");
     }
@@ -164,17 +160,19 @@ public class ConsoleExecutionEditor implements Disposable {
         }
 
         Editor selectedTextEditor = source.getSelectedTextEditor();
-        for (FileEditor fileEditor : source.getAllEditors(file)) {
+        for (FileEditor fileEditor : source.getAllEditorList(file)) {
           if (!(fileEditor instanceof TextEditor)) {
             continue;
           }
 
-          final EditorEx editor = (EditorEx)((TextEditor)fileEditor).getEditor();
-          editor.addFocusListener(myFocusListener);
-          if (selectedTextEditor == editor) { // already focused
-            myCurrentEditor = editor;
+          final Editor editor = ((TextEditor)fileEditor).getEditor();
+          if (editor instanceof EditorEx editorEx) {
+            editorEx.addFocusListener(myFocusListener, ConsoleExecutionEditor.this);
+            if (selectedTextEditor == editorEx) { // already focused
+              myCurrentEditor = editorEx;
+            }
           }
-          EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
+          ActionUtil.copyRegisteredShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
         }
       }
 
@@ -206,7 +204,7 @@ public class ConsoleExecutionEditor implements Disposable {
 
   }
 
-  public void setInputText(@NotNull final String query) {
+  public void setInputText(final @NotNull String query) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
 }

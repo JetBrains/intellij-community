@@ -1,5 +1,4 @@
-from typing import Any, ClassVar
-from typing_extensions import Literal
+from typing import Any, ClassVar, Literal
 
 LABELS_ADDED: str
 NODES_CREATED: str
@@ -37,7 +36,7 @@ class QueryResult:
     graph: Any
     header: Any
     result_set: Any
-    def __init__(self, graph, response, profile: bool = ...) -> None: ...
+    def __init__(self, graph, response, profile: bool = False) -> None: ...
     def parse_results(self, raw_result_set) -> None: ...
     statistics: Any
     def parse_statistics(self, raw_statistics) -> None: ...

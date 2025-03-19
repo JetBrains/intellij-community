@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build.output
 
 import com.intellij.build.FilePosition
@@ -11,7 +11,6 @@ import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.UnresolvedDependencyBuildIssue
@@ -46,7 +45,7 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
 
     val description = StringBuilder()
     if (location != null) {
-      description.appendln(location).appendln()
+      description.appendLine(location).appendLine()
     }
     @NlsSafe var reason = reader.readLine() ?: return false
     val parentId: Any
@@ -57,11 +56,11 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       parentId = reader.parentEventId
     }
 
-    description.appendln(reason)
+    description.appendLine(reason)
     loop@ while (true) {
       val nextLine = reader.readLine() ?: return false
       if (nextLine.isBlank()) break
-      description.appendln(nextLine)
+      description.appendLine(nextLine)
       val trimStart = nextLine.trimStart()
       if (trimStart.startsWith("> ")) {
         reason = trimStart.substringAfter("> ").trimEnd('.') //NON-NLS
@@ -79,7 +78,8 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
     var exception: StringBuilder? = null
     while (true) {
       val nextLine = reader.readLine() ?: break
-      if (nextLine == "BUILD FAILED" || nextLine == "* Get more help at https://help.gradle.org" || nextLine.startsWith("CONFIGURE FAILED")) break
+      if (nextLine == "BUILD FAILED" || nextLine == "* Get more help at https://help.gradle.org" || nextLine.startsWith(
+          "CONFIGURE FAILED")) break
       if (nextLine == "* Exception is:") {
         exception = StringBuilder()
       }
@@ -88,10 +88,10 @@ class GradleBuildScriptErrorParser : BuildOutputParser {
       }
       else {
         if (exception != null) {
-          exception.appendln(nextLine)
+          exception.appendLine(nextLine)
         }
         else if (trySuggestions != null && nextLine.isNotBlank()) {
-          trySuggestions.appendln(nextLine)
+          trySuggestions.appendLine(nextLine)
         }
       }
     }

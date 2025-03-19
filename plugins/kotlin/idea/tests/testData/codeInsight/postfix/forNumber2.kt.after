@@ -1,5 +1,0 @@
-fun foo(i: Int) {
-    for (i1 in 0..i) {
-        <caret>
-    }
-}

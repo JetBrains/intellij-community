@@ -1,14 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightCompactConstructorParameter;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -16,12 +19,17 @@ import java.util.stream.Stream;
  */
 public final class JavaPsiRecordUtil {
   /**
+   * List of names which are illegal as record component names
+   */
+  public static final Set<String> ILLEGAL_RECORD_COMPONENT_NAMES = ContainerUtil.immutableSet(
+    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
+
+  /**
    * @param accessor accessor method for record component
    * @return a corresponding record component, or null if the supplied method is not an accessor for the record component.
    * Note that if accessor is not well-formed (e.g. has wrong return type), the corresponding record component will still be returned.
    */
-  @Nullable
-  public static PsiRecordComponent getRecordComponentForAccessor(@NotNull PsiMethod accessor) {
+  public static @Nullable PsiRecordComponent getRecordComponentForAccessor(@NotNull PsiMethod accessor) {
     PsiClass aClass = accessor.getContainingClass();
     if (aClass == null) {
       PsiElement parent = accessor.getParent();
@@ -45,8 +53,7 @@ public final class JavaPsiRecordUtil {
    * @return an accessor method for corresponding record component, or null if not found.
    * Note that if accessor is not well-formed (e.g. has wrong return type), it will still be returned.
    */
-  @Nullable
-  public static PsiMethod getAccessorForRecordComponent(@NotNull PsiRecordComponent component) {
+  public static @Nullable PsiMethod getAccessorForRecordComponent(@NotNull PsiRecordComponent component) {
     PsiClass aClass = component.getContainingClass();
     if (aClass == null || !aClass.isRecord()) return null;
     for (PsiMethod method : aClass.findMethodsByName(component.getName(), false)) {
@@ -59,8 +66,7 @@ public final class JavaPsiRecordUtil {
    * @param component record component
    * @return synthetic field that corresponds to given component, or null if not found (e.g. if this component doesn't belong to a class)
    */
-  @Nullable
-  public static PsiField getFieldForComponent(@NotNull PsiRecordComponent component) {
+  public static @Nullable PsiField getFieldForComponent(@NotNull PsiRecordComponent component) {
     PsiClass aClass = component.getContainingClass();
     if (aClass == null) return null;
     String name = component.getName();
@@ -76,8 +82,10 @@ public final class JavaPsiRecordUtil {
    * @param parameter of canonical constructor of the record
    * @return record component that corresponds to the parameter
    */
-  @Nullable
-  public static PsiRecordComponent getComponentForCanonicalConstructorParameter(@NotNull PsiParameter parameter) {
+  public static @Nullable PsiRecordComponent getComponentForCanonicalConstructorParameter(@NotNull PsiParameter parameter) {
+    if (parameter instanceof LightCompactConstructorParameter) {
+      return ((LightCompactConstructorParameter)parameter).getRecordComponent();
+    }
     PsiClass aClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
     if (aClass == null) return null;
     String parameterName = parameter.getName();
@@ -91,8 +99,7 @@ public final class JavaPsiRecordUtil {
    * @param field synthetic field that corresponds to the record component
    * @return the corresponding record component; null if given field doesn't correspond to the record component.
    */
-  @Nullable
-  public static PsiRecordComponent getComponentForField(@NotNull PsiField field) {
+  public static @Nullable PsiRecordComponent getComponentForField(@NotNull PsiField field) {
     return field instanceof LightRecordField ? ((LightRecordField)field).getRecordComponent() : null;
   }
 
@@ -151,8 +158,7 @@ public final class JavaPsiRecordUtil {
    * @return first explicitly declared canonical or compact constructor;
    * null if the supplied class is not a record. Returns a synthetic constructor if it's not explicitly defined.
    */
-  @Nullable
-  public static PsiMethod findCanonicalConstructor(@NotNull PsiClass recordClass) {
+  public static @Nullable PsiMethod findCanonicalConstructor(@NotNull PsiClass recordClass) {
     if (!recordClass.isRecord()) return null;
     PsiMethod[] constructors = recordClass.getConstructors();
     if (constructors.length == 0) return null;

@@ -45,6 +45,7 @@ public class NullableNotNullManagerTest extends LightJavaCodeInsightFixtureTestC
         super.configureModule(module, model, contentEntry);
         VirtualFile file =
           LocalFileSystem.getInstance().refreshAndFindFileByPath(JavaTestUtil.getJavaTestDataPath() + "/nullableAnnotations/");
+        addJetBrainsAnnotations(model);
         MavenDependencyUtil.addFromMaven(model, "com.google.code.findbugs:jsr305:3.0.2");
         // Library order is important
         PsiTestUtil.newLibrary("lib_2.0").classesRoot(file.findChild("lib_2.0")).addTo(model);

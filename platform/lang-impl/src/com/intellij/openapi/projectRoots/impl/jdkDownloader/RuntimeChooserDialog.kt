@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.icons.AllIcons
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -23,7 +24,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.asSafely
-import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.datatransfer.DataFlavor
@@ -33,15 +33,16 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.isDirectory
 
-sealed class RuntimeChooserDialogResult {
+internal sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
   object UseDefault: RuntimeChooserDialogResult()
   data class DownloadAndUse(val item: JdkItem, val path: Path) : RuntimeChooserDialogResult()
   data class UseCustomJdk(val name: String, val path: Path) : RuntimeChooserDialogResult()
 }
 
-class RuntimeChooserDialog(
+internal class RuntimeChooserDialog(
   private val project: Project?,
   private val model: RuntimeChooserModel,
 ) : DialogWrapper(project), DataProvider {
@@ -151,7 +152,19 @@ class RuntimeChooserDialog(
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
         isSwingPopup = false
-        setRenderer(RuntimeChooserPresenter())
+        setRenderer(object: RuntimeChooserPresenter() {
+          override fun separatorFor(value: RuntimeChooserItem?): ListSeparator? {
+            val customJdks = this@RuntimeChooserDialog.model.customJdks
+            val advancedItems = this@RuntimeChooserDialog.model.advancedDownloadItems
+            val message = when {
+                            value is RuntimeChooserAddCustomItem && customJdks.isEmpty() -> LangBundle.message("dialog.separator.choose.ide.runtime.advanced")
+                            advancedItems.any() && value == advancedItems.first() -> LangBundle.message("dialog.separator.choose.ide.runtime.advancedJbrs")
+                            customJdks.any() && value == customJdks.first() -> LangBundle.message("dialog.separator.choose.ide.runtime.customSelected")
+                            else -> null
+                          } ?: return null
+            return ListSeparator(message)
+          }
+        })
       }
 
       override fun setSelectedItem(anObject: Any?) {
@@ -192,9 +205,8 @@ class RuntimeChooserDialog(
       //download row
       row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
-          project = project,
-          browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
-          fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk")),
+          project
         ).align(AlignX.FILL)
           .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
           .component
@@ -225,7 +237,7 @@ class RuntimeChooserDialog(
         jdkCombobox.addItemListener { updateLocation() }
       }
     }.apply {
-      border = IntelliJSpacingConfiguration().dialogGap.toJBEmptyBorder()
+      border = IntelliJSpacingConfiguration().dialogUnscaledGaps.toJBEmptyBorder()
       putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
     }
   }

@@ -13,15 +13,17 @@ public class MavenSpyEventsBuffer {
   private final StringBuilder myBuffer = new StringBuilder();
   private final BiConsumer<String, Key> myConsumer;
 
-  public MavenSpyEventsBuffer(BiConsumer<String, Key> consumer) {myConsumer = consumer;}
+  public MavenSpyEventsBuffer(BiConsumer<String, Key> consumer) { myConsumer = consumer; }
 
   public void addText(@NotNull String text, @NotNull Key outputType) {
-    if (text.charAt(text.length() - 1) == '\n') {
-      String textToSend = myBuffer.length() == 0 ? text : myBuffer + text;
-      myConsumer.accept(textToSend, outputType);
+    int index = text.indexOf('\n');
+    while (index != -1) {
+      myConsumer.accept(myBuffer.append(text, 0, index).append("\n").toString(), outputType);
       myBuffer.setLength(0);
+      text = text.substring(index + 1);
+      index = text.indexOf('\n');
     }
-    else {
+    if (!text.isEmpty()) {
       myBuffer.append(text);
     }
   }

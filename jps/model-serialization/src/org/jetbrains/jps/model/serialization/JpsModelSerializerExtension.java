@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
@@ -40,119 +27,91 @@ import java.util.List;
 
 /**
  * Override this class and register the implementation in META-INF/services/org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
- * to support loading and saving custom entities in the project configuration files (*.iml and .idea).
+ * to support loading custom entities in the project configuration files (*.iml and .idea).
  */
 public abstract class JpsModelSerializerExtension {
   public static Iterable<JpsModelSerializerExtension> getExtensions() {
     return JpsServiceManager.getInstance().getExtensions(JpsModelSerializerExtension.class);
   }
 
+  @ApiStatus.Internal
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
-  }
-
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
   }
 
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-  }
-
+  @ApiStatus.Internal
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
+  @ApiStatus.Internal
+  public @NotNull List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
     return Collections.emptyList();
   }
 
+  @ApiStatus.Internal
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
   }
 
-  /**
-   * @deprecated the build process doesn't save project configuration, so there is no need to implement this method, it isn't called by the platform
-   */
-  @Deprecated
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-  }
-
-  @Nullable
-  public JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String tableLevel) {
+  @ApiStatus.Internal
+  public @Nullable JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String tableLevel) {
     return null;
   }
 
-  @Nullable
-  public String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
+  @ApiStatus.Internal
+  public @Nullable String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
     return null;
   }
 
-  @NotNull
-  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+  public @NotNull List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
+  public @NotNull List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
+  public @NotNull List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
+  public @NotNull List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
+  public @NotNull List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
+  public @NotNull List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
+  public @NotNull List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
+  public @NotNull List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
+  public @NotNull List<? extends JpsArtifactPropertiesSerializer<?>> getArtifactTypePropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  @NotNull
-  public List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
+  @ApiStatus.Internal
+  public @NotNull List<? extends JpsArtifactExtensionSerializer<?>> getArtifactExtensionSerializers() {
     return Collections.emptyList();
   }
 
-  @Nullable
-  public JpsModuleClasspathSerializer getClasspathSerializer() {
+  @ApiStatus.Internal
+  public @Nullable JpsModuleClasspathSerializer getClasspathSerializer() {
     return null;
   }
 
-  @NotNull
-  public List<? extends JpsRunConfigurationPropertiesSerializer<?>> getRunConfigurationPropertiesSerializers() {
+  public @NotNull List<? extends JpsRunConfigurationPropertiesSerializer<?>> getRunConfigurationPropertiesSerializers() {
     return Collections.emptyList();
   }
 }

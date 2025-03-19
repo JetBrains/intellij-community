@@ -10,7 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.downloadAsBytes
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.createSkippableJob
@@ -21,11 +21,10 @@ import java.util.concurrent.CancellationException
  */
 internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
                                                                                 context: BuildContext): Job? {
-  val featureUsageStatisticsPropertiesList: List<FeatureUsageStatisticsProperties> =
-    context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
+  val featureUsageStatisticsPropertiesList = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
   return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
-    taskId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
+    stepId = BuildOptions.FUS_METADATA_BUNDLE_STEP,
     context = context
   ) {
     for (featureUsageStatisticsProperties in featureUsageStatisticsPropertiesList) {
@@ -49,7 +48,6 @@ internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(
     }
   }
 }
-
 
 private fun appendProductCode(uri: String, context: BuildContext): String {
   val name = context.applicationInfo.productCode + ".json"

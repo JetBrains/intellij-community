@@ -16,8 +16,8 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@ApiStatus.Experimental
-class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigurable<PyPackageRepository>(true, null) {
+@ApiStatus.Internal
+internal class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigurable<PyPackageRepository>(true, null) {
   @NlsSafe
   private var currentName = repository.name!!
   private var password = repository.getPassword()
@@ -87,7 +87,7 @@ class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigura
           .bindText(urlProperty)
       }
       row(message("python.packaging.repository.form.authorization")) {
-        segmentedButton(PyPackageRepositoryAuthenticationType.values().toList(), PyPackageRepositoryAuthenticationType::text)
+        segmentedButton(PyPackageRepositoryAuthenticationType.values().toList()) { text = it.text }
           .bind(authorizationTypeProperty)
       }
       val row1 = row(message("python.packaging.repository.form.login")) {

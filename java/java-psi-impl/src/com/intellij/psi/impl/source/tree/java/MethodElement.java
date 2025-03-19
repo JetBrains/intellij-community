@@ -78,9 +78,6 @@ public class MethodElement extends CompositeElement implements Constants {
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
     switch (role) {
-      default:
-        return null;
-
       case ChildRole.DOC_COMMENT:
         return PsiImplUtil.findDocComment(this);
 
@@ -110,6 +107,9 @@ public class MethodElement extends CompositeElement implements Constants {
 
       case ChildRole.DEFAULT_KEYWORD:
         return findChildByType(DEFAULT_KEYWORD);
+
+      default:
+        return null;
     }
   }
 

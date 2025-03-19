@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
@@ -7,21 +7,12 @@ import com.intellij.util.lang.CompoundRuntimeException
 import org.jetbrains.annotations.ApiStatus
 
 fun throwIfNotEmpty(errors: List<Throwable?>?) {
-  val exception = createException(errors)
-  if (exception != null) {
-    throw exception
-  }
-}
+  val exceptions = errors?.filterNotNull().nullize() ?: return
+  val throwable = CompoundRuntimeException(exceptions)
 
-fun createException(errors: List<Throwable?>?): Throwable? {
-  val exceptions = errors?.filterNotNull().nullize() ?: return null
-  return CompoundRuntimeException(exceptions).flatten()
-}
-
-private fun Throwable.flatten(): Throwable {
   val result = ArrayList<Throwable>()
   val queue = ArrayDeque<Throwable>()
-  queue.add(this)
+  queue.add(throwable)
   var iterations = 0
   while (queue.isNotEmpty() && (iterations++ < 100)) {
     when (val exception = queue.removeFirst()) {
@@ -31,9 +22,9 @@ private fun Throwable.flatten(): Throwable {
   }
   if (queue.isNotEmpty()) {
     logger<CompoundRuntimeException>().warn("Exception is too complex")
-    return this
+    throw throwable
   }
-  return result.singleOrNull() ?: CompoundRuntimeException(result)
+  throw result.singleOrNull() ?: CompoundRuntimeException(result)
 }
 
 @ApiStatus.Internal

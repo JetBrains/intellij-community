@@ -11,6 +11,7 @@ import com.intellij.ui.popup.ComponentPopupBuilderImpl
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.*
 import java.util.function.Supplier
@@ -18,6 +19,7 @@ import javax.swing.SwingUtilities
 import javax.swing.event.AncestorEvent
 import javax.swing.event.AncestorListener
 
+@ApiStatus.Internal
 class RunToolbarPopupController(val project: Project,
                                 val mainWidgetComponent: RunToolbarMainWidgetComponent) : PopupControllerComponentListener, Disposable {
   private var popup: JBPopup? = null
@@ -216,6 +218,7 @@ class RunToolbarPopupController(val project: Project,
   }
 }
 
+@ApiStatus.Internal
 interface PopupControllerComponent {
   fun addListener(listener: PopupControllerComponentListener)
   fun removeListener(listener: PopupControllerComponentListener)
@@ -226,6 +229,7 @@ interface PopupControllerComponent {
   }
 }
 
+@ApiStatus.Internal
 interface PopupControllerComponentListener {
   fun actionPerformedHandler()
 }

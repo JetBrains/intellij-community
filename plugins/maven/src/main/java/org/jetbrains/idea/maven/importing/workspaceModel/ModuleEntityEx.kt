@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension
-import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID
+import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 
 fun ModuleEntity.getSourceRootUrls(includingTests: Boolean): List<String> =
   this.contentRoots
@@ -16,5 +16,5 @@ private fun ContentRootEntity.getSourceRoots(includingTests: Boolean): List<Sour
   this.sourceRoots.filter { includingTests || !it.isTest() }
 
 private fun SourceRootEntity.isTest(): Boolean =
-  this.rootType == JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID
-  || this.rootType == JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID
+  this.rootTypeId == JAVA_TEST_ROOT_ENTITY_TYPE_ID
+  || this.rootTypeId == JAVA_TEST_RESOURCE_ROOT_ENTITY_TYPE_ID

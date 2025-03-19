@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java;
 
 import org.jetbrains.jps.ExtensionsSupport;
@@ -6,12 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-/**
- * @author Eugene Zhuravlev
- */
 public abstract class JavaSourceTransformer {
   
-  public static abstract class TransformError extends IOException {
+  public abstract static class TransformError extends IOException {
     protected TransformError(String message) {
       super(message);
     }

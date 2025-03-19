@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.runtime.product` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = 11,
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_library(
+  name = "product",
+  module_name = "intellij.platform.runtime.product",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/runtime/repository",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/base",
+  ]
+)
+### auto-generated section `build intellij.platform.runtime.product` end

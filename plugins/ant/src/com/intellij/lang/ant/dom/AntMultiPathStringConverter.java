@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Computable;
@@ -20,7 +6,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import org.apache.tools.ant.PathTokenizer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +20,7 @@ import java.util.List;
 public class AntMultiPathStringConverter extends Converter<List<File>> implements CustomReferenceConverter<List<File>> {
 
   @Override
-  public List<File> fromString(@Nullable @NonNls String s, ConvertContext context) {
+  public List<File> fromString(@Nullable @NonNls String s, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -85,7 +70,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
   }
 
   @Override
-  public String toString(@Nullable List<File> files, ConvertContext context) {
+  public String toString(@Nullable List<File> files, @NotNull ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
       return null;
@@ -98,7 +83,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
     final GenericAttributeValue attributeValue = (GenericAttributeValue)genericDomValue;
 
     final String cpString = genericDomValue.getRawText();
-    if (cpString == null || cpString.length() == 0) {
+    if (cpString == null || cpString.isEmpty()) {
       return PsiReference.EMPTY_ARRAY;
     }
 
@@ -107,7 +92,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
     int searchFromIndex = 0;
     while (pathTokenizer.hasMoreTokens()) {
       final String path = pathTokenizer.nextToken();
-      if (path.length() > 0) {
+      if (!path.isEmpty()) {
         final int pathBeginIndex = cpString.indexOf(path, searchFromIndex);
         final AntDomFileReferenceSet refSet = new AntDomFileReferenceSet(attributeValue, path, pathBeginIndex, false);
         ContainerUtil.addAll(result, refSet.getAllReferences());

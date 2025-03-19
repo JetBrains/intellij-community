@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionException;
@@ -10,11 +10,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Describes a process which is ready to be started. Normally, a RunProfileState contains an initialized command line, set of environment
- * variables, working directory etc.
+ * variables, working directory, etc.
  *
+ * @see RunProfile#getState(Executor, com.intellij.execution.runners.ExecutionEnvironment)
  * @see CommandLineState
- * @see RunConfiguration#getState(Executor, com.intellij.execution.runners.ExecutionEnvironment)
  * @see com.intellij.execution.configuration.EmptyRunProfileState
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public interface RunProfileState {
   /**

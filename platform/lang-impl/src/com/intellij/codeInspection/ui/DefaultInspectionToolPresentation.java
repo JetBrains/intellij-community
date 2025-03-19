@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.*;
@@ -16,7 +16,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   private DescriptorComposer myComposer;
   private volatile boolean isDisposed;
 
-  @NotNull protected GlobalInspectionContextImpl myContext;
+  protected @NotNull GlobalInspectionContextImpl myContext;
 
   public DefaultInspectionToolPresentation(@NotNull InspectionToolWrapper<?,?> toolWrapper, @NotNull GlobalInspectionContextImpl context) {
     super(toolWrapper, context);
@@ -25,7 +25,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @Override
   public boolean isSuppressed(RefEntity element) {
-    return mySuppressedElements.containsKey(element);
+    return mySuppressedElements.containsKey(element) && !myProblemElements.containsKey(element);
   }
 
   @Override
@@ -38,28 +38,22 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
     return mySuppressedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
-
-  @NotNull
   @Override
-  public GlobalInspectionContextImpl getContext() {
+  public @NotNull GlobalInspectionContextImpl getContext() {
     return myContext;
   }
-
 
   protected boolean isDisposed() {
     return isDisposed;
   }
-
 
   @Override
   public void cleanup() {
     isDisposed = true;
   }
 
-
-  @NotNull
   @Override
-  public HTMLComposerImpl getComposer() {
+  public @NotNull HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new DescriptorComposer(this);
     }
@@ -72,10 +66,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
   }
 
   @Override
-  @Nullable
-  public QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor,
-                                    RefEntity entity,
-                                    String hint) {
+  public @Nullable QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor, RefEntity entity, String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
     return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
@@ -92,7 +83,6 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
     return problems;
   }
-
 
   @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {

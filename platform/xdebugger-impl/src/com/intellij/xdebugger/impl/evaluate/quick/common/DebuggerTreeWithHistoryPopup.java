@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.openapi.editor.Editor;
@@ -28,11 +28,11 @@ import java.awt.*;
 import static com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup.setAutoResize;
 
 final class DebuggerTreeWithHistoryPopup<D> extends DebuggerTreeWithHistoryContainer<D> {
-  @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
+  private static final @NonNls String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private JBPopup myPopup;
   private final Editor myEditor;
   private final Point myPoint;
-  @Nullable private final Runnable myHideRunnable;
+  private final @Nullable Runnable myHideRunnable;
   private JComponent myToolbar;
 
   private DebuggerTreeWithHistoryPopup(@NotNull D initialItem,

@@ -55,25 +55,21 @@
 package org.jdom;
 
 import org.jdom.output.Format;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
- * An XML character sequence. Provides a modular, parentable method of
- * representing text. Text makes no guarantees about the underlying textual
- * representation of character data, but does expose that data as a Java String.
+ * An XML character sequence.
+ * Provides a modular, parentable method of representing text.
+ * Text makes no guarantees about the underlying textual representation of character data, but does expose that data as a Java String.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
  * @author Bradley S. Huffman
  */
 public class Text extends Content {
-  static final String EMPTY_STRING = "";
-
   /**
    * The actual character content
    */
-  // XXX See http://www.servlets.com/archive/servlet/ReadMsg?msgId=8612
-  // from elharo for a description of why Java characters may not suffice
-  // long term
   protected String value;
 
   /**
@@ -96,8 +92,7 @@ public class Text extends Content {
   }
 
   /**
-   * This constructor creates a new <code>Text</code> node, with the
-   * supplied string value as it's character content.
+   * This constructor creates a new <code>Text</code> node, with the supplied string value as it's character content.
    *
    * @param str the node's character content.
    * @throws IllegalDataException if <code>str</code> contains an
@@ -106,7 +101,15 @@ public class Text extends Content {
    */
   public Text(String str) {
     this(CType.Text);
+
     setText(str);
+  }
+
+  @ApiStatus.Internal
+  public Text(boolean ignored, String str) {
+    this(CType.Text);
+
+    value = str == null ? "" : str;
   }
 
   /**
@@ -131,9 +134,8 @@ public class Text extends Content {
   }
 
   /**
-   * This returns the textual content with all surrounding whitespace
-   * removed and internal whitespace normalized to a single space.  If
-   * only whitespace exists, the empty string is returned.
+   * This returns the textual content with all surrounding whitespace removed, and internal whitespace normalized to a single space.
+   * If only whitespace exists, the empty string is returned.
    *
    * @return normalized text content or empty string
    */
@@ -153,10 +155,7 @@ public class Text extends Content {
    * @return normalized string or empty string
    */
   public static String normalizeString(String str) {
-    if (str == null) {
-      return EMPTY_STRING;
-    }
-    return Format.compact(str);
+    return str == null ? "" : Format.compact(str);
   }
 
   /**
@@ -172,7 +171,7 @@ public class Text extends Content {
     String reason;
 
     if (str == null) {
-      value = EMPTY_STRING;
+      value = "";
       return this;
     }
 
@@ -202,7 +201,7 @@ public class Text extends Content {
       throw new IllegalDataException(str, "character content", reason);
     }
 
-    if (str.length() > 0) {
+    if (!str.isEmpty()) {
       value += str;
     }
   }

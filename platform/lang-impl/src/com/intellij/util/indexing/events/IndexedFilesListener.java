@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -8,35 +8,37 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.indexing.FileBasedIndexImpl;
-import com.intellij.util.indexing.IndexingFlag;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Internal
 public abstract class IndexedFilesListener implements AsyncFileListener {
-  @NotNull
-  private final VfsEventsMerger myEventMerger = new VfsEventsMerger();
+  private final @NotNull VfsEventsMerger myEventMerger = new VfsEventsMerger();
 
-  @NotNull
-  public VfsEventsMerger getEventMerger() {
+  public @NotNull VfsEventsMerger getEventMerger() {
     return myEventMerger;
   }
 
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
-    IndexingFlag.cleanProcessedFlagRecursively(file);
     if (file.isDirectory()) {
       final ContentIterator iterator = fileOrDir -> {
-        myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
+        recordFileEvent(fileOrDir, onlyContentDependent);
         return true;
       };
 
       iterateIndexableFiles(file, iterator);
     }
     else {
-      myEventMerger.recordFileEvent(file, onlyContentDependent);
+      recordFileEvent(file, onlyContentDependent);
     }
+  }
+
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
   }
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
@@ -60,8 +62,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
   }
 
   @Override
-  @NotNull
-  public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+  public @NotNull ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
     Int2ObjectMap<VirtualFile> deletedFiles = new Int2ObjectOpenHashMap<>();
     for (VFileEvent event : events) {
       if (event instanceof VFileDeleteEvent) {
@@ -73,7 +74,7 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
       @Override
       public void beforeVfsChange() {
         for (VirtualFile file : deletedFiles.values()) {
-          myEventMerger.recordFileRemovedEvent(file);
+          recordFileRemovedEvent(file);
         }
       }
 
@@ -82,6 +83,10 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         processAfterEvents(events);
       }
     };
+  }
+
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    myEventMerger.recordFileRemovedEvent(file);
   }
 
   private void processAfterEvents(@NotNull List<? extends VFileEvent> events) {

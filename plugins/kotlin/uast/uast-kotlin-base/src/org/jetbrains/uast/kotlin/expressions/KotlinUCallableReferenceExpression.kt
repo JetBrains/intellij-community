@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
@@ -15,16 +16,20 @@ class KotlinUCallableReferenceExpression(
     override val sourcePsi: KtCallableReferenceExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable, KotlinUElementWithType {
+
+    private val qualifierExpressionPart = UastLazyPart<UExpression?>()
+    private val qualifierTypePart = UastLazyPart<PsiType?>()
+
     override val qualifierExpression: UExpression?
-        get() {
-            if (qualifierType != null) return null
-            val receiverExpression = sourcePsi.receiverExpression ?: return null
-            return baseResolveProviderService.baseKotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
+        get() = qualifierExpressionPart.getOrBuild {
+            val receiverExpression = sourcePsi.receiverExpression ?: return@getOrBuild null
+            baseResolveProviderService.baseKotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
 
-    override val qualifierType by lz {
-        baseResolveProviderService.getDoubleColonReceiverType(sourcePsi, this)
-    }
+    override val qualifierType: PsiType?
+        get() = qualifierTypePart.getOrBuild {
+            baseResolveProviderService.getDoubleColonReceiverType(sourcePsi, this)
+        }
 
     override val callableName: String
         get() = sourcePsi.callableReference.getReferencedName()
@@ -36,5 +41,4 @@ class KotlinUCallableReferenceExpression(
 
     override fun multiResolve(): Iterable<ResolveResult> =
         getResolveResultVariants(baseResolveProviderService, sourcePsi.callableReference)
-
 }

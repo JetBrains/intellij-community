@@ -13,14 +13,13 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethodTreeGenerator implements TreeGenerator {
+public final class LombokLightMethodTreeGenerator implements TreeGenerator {
 
   public LombokLightMethodTreeGenerator() {
   }
 
   @Override
-  @Nullable
-  public TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
+  public @Nullable TreeElement generateTreeFor(PsiElement original, CharTable table, PsiManager manager) {
     TreeElement result = null;
     if (original instanceof LombokLightMethodBuilder) {
       result = ChangeUtil.copyElement((TreeElement) SourceTreeToPsiMap.psiElementToTree(original), table);

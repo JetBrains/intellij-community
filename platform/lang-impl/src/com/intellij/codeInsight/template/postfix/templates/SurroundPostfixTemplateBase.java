@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExpressionSelector {
 
-  @NotNull protected final PostfixTemplatePsiInfo myPsiInfo;
+  protected final @NotNull PostfixTemplatePsiInfo myPsiInfo;
 
   /**
    * @deprecated use {@link #SurroundPostfixTemplateBase(String, String, PostfixTemplatePsiInfo, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
@@ -40,7 +40,7 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
   }
 
   @Override
-  public final void expandForChooseExpression(@NotNull PsiElement expression, @NotNull final Editor editor) {
+  public final void expandForChooseExpression(@NotNull PsiElement expression, final @NotNull Editor editor) {
     PsiElement replace = getReplacedExpression(expression);
     TextRange range = PostfixTemplatesUtils.surround(getSurrounder(), editor, replace);
 
@@ -65,17 +65,14 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
     return myPsiInfo.createExpression(expression, getHead(), getTail());
   }
 
-  @NotNull
-  protected @NlsSafe String getHead() {
+  protected @NotNull @NlsSafe String getHead() {
     return "";
   }
 
-  @NotNull
-  protected @NlsSafe String getTail() {
+  protected @NotNull @NlsSafe String getTail() {
     return "";
   }
 
-  @NotNull
-  protected abstract Surrounder getSurrounder();
+  protected abstract @NotNull Surrounder getSurrounder();
 }
 

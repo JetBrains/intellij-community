@@ -24,4 +24,3 @@ fun test(array: Array<A>) {
 }
 
 
-// IGNORE_FIR_LOG

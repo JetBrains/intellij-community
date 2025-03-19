@@ -9,10 +9,10 @@ internal class KotlinWhilePostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "while",
         /* example = */ "while(expr) {}",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { it.isBoolean && !it.isMarkedNullable }),
+        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { it.isBooleanType && !it.isMarkedNullable }),
         /* provider = */ provider
     )
 
-    override fun getTemplateString(element: PsiElement) = "while(\$expr$) {\n\$END$\n}"
-    override fun getElementToRemove(expr: PsiElement) = expr
+    override fun getTemplateString(element: PsiElement): String = "while(\$expr$) {\n\$END$\n}"
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }

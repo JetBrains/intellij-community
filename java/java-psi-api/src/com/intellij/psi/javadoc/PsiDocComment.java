@@ -57,4 +57,9 @@ public interface PsiDocComment extends PsiDocCommentBase {
    * @param name The name of the tags to find (not including the leading @ character).
    */
   PsiDocTag @NotNull [] findTagsByName(@NonNls String name);
+
+  /** Finds whether the start of the comment uses markdown notation */
+  default boolean isMarkdownComment() {
+    return false;
+  }
 }

@@ -17,14 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_18;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_20;
 
 public class JavadocSnippetInjectionFileTest extends LightQuickFixParameterizedTestCase {
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-  }
 
   @Override
   protected void doAction(@NotNull ActionHint actionHint, @NotNull String testFullPath, @NotNull String testName) {
@@ -57,6 +52,6 @@ public class JavadocSnippetInjectionFileTest extends LightQuickFixParameterizedT
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_18;
+    return JAVA_20;
   }
 }

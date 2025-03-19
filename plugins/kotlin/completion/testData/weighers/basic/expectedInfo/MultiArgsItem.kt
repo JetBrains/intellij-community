@@ -7,6 +7,7 @@ fun bar(b: I2, a: I1, c: I1) {
     foo(<caret>)
 }
 
+// IGNORE_K2
 // ORDER: a
 // ORDER: "a, b, c"
 // ORDER: c

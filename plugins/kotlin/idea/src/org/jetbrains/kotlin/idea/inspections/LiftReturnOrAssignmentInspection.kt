@@ -5,13 +5,17 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
-import org.jetbrains.kotlin.idea.base.psi.getLineCount
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.BranchedFoldingUtils
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.psi.*
@@ -23,19 +27,33 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
     AbstractKotlinInspection() {
 
+    @JvmField
+    var reportOnlyIfSingleStatement = true
+
+    override fun getOptionsPane(): OptPane {
+        return pane(
+            checkbox("reportOnlyIfSingleStatement", KotlinBundle.message("inspection.lift.return.or.assignment.option.only.single.statement")),
+        )
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
         object : KtVisitorVoid() {
             override fun visitExpression(expression: KtExpression) {
-                val states = getState(expression, skipLongExpressions) ?: return
+                val states = Util.getState(expression, skipLongExpressions, reportOnlyIfSingleStatement) ?: return
                 if (expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA))) return
                 states.forEach { state ->
+                    if (expression is KtIfExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtIfExpression::class.java, true) != expression
+                        || expression is KtTryExpression && PsiTreeUtil.getParentOfType(state.highlightElement, KtTryExpression::class.java, true) != expression) {
+                        // already highlighted when visited nested if/try
+                        return@forEach
+                    }
                     registerProblem(
                         expression,
                         state.keyword,
                         state.isSerious,
                         when (state.liftType) {
-                            LiftType.LIFT_RETURN_OUT -> LiftReturnOutFix(state.keyword.text)
-                            LiftType.LIFT_ASSIGNMENT_OUT -> LiftAssignmentOutFix(state.keyword.text)
+                            Util.LiftType.LIFT_RETURN_OUT -> LiftReturnOutFix(state.keyword.text)
+                            Util.LiftType.LIFT_ASSIGNMENT_OUT -> LiftAssignmentOutFix(state.keyword.text)
                         },
                         state.highlightElement,
                         state.highlightType
@@ -85,22 +103,31 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
         }
     }
 
-    companion object {
+    object Util {
         private const val LINES_LIMIT = 15
 
-        fun getState(expression: KtExpression, skipLongExpressions: Boolean) = when (expression) {
-            is KtWhenExpression -> getStateForWhenOrTry(expression, expression.whenKeyword, skipLongExpressions)
-            is KtIfExpression -> getStateForWhenOrTry(expression, expression.ifKeyword, skipLongExpressions)
-            is KtTryExpression -> expression.tryKeyword?.let {
-                getStateForWhenOrTry(expression, it, skipLongExpressions)
-            }
+        fun getState(
+            expression: KtExpression,
+            skipLongExpressions: Boolean,
+            reportOnlyIfSingleStatement: Boolean = true
+        ): List<LiftState>? = when (expression) {
+            is KtWhenExpression ->
+                getStateForWhenOrTry(expression, expression.whenKeyword, skipLongExpressions, reportOnlyIfSingleStatement)
+
+            is KtIfExpression ->
+                getStateForWhenOrTry(expression, expression.ifKeyword, skipLongExpressions, reportOnlyIfSingleStatement)
+
+            is KtTryExpression ->
+                expression.tryKeyword?.let { getStateForWhenOrTry(expression, it, skipLongExpressions, reportOnlyIfSingleStatement) }
+
             else -> null
         }
 
         private fun getStateForWhenOrTry(
             expression: KtExpression,
             keyword: PsiElement,
-            skipLongExpressions: Boolean
+            skipLongExpressions: Boolean,
+            reportOnlyIfSingleStatement: Boolean,
         ): List<LiftState>? {
             if (skipLongExpressions && expression.getLineCount() > LINES_LIMIT) return null
             if (expression.isElseIf()) return null
@@ -108,19 +135,25 @@ class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val ski
             val foldableReturns = BranchedFoldingUtils.getFoldableReturns(expression)
             if (foldableReturns?.isNotEmpty() == true) {
                 val hasOtherReturns = expression.anyDescendantOfType<KtReturnExpression> { it !in foldableReturns }
-                val isSerious = !hasOtherReturns && foldableReturns.size > 1
-                return foldableReturns.map {
-                    LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION)
-                } + LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
+                val allBranchesAreSingleStatement = foldableReturns.none { it.hasSiblings() }
+                val isSerious = !hasOtherReturns &&
+                        foldableReturns.size > 1 &&
+                        (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
+                return foldableReturns.map { LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT, it, INFORMATION) } +
+                        LiftState(keyword, isSerious, LiftType.LIFT_RETURN_OUT)
             }
 
-            val assignmentNumber = BranchedFoldingUtils.getFoldableAssignmentNumber(expression)
-            if (assignmentNumber > 0) {
-                val isSerious = assignmentNumber > 1
+            val assignments = BranchedFoldingUtils.getFoldableAssignments(expression)
+            if (assignments.isNotEmpty()) {
+                val allBranchesAreSingleStatement = assignments.none { it.hasSiblings() }
+                val isSerious = assignments.size > 1 && (allBranchesAreSingleStatement || !reportOnlyIfSingleStatement)
                 return listOf(LiftState(keyword, isSerious, LiftType.LIFT_ASSIGNMENT_OUT))
             }
             return null
         }
+
+        private fun KtExpression.hasSiblings(): Boolean =
+            (parent as? KtBlockExpression)?.statements.orEmpty().size > 1
 
         enum class LiftType {
             LIFT_RETURN_OUT, LIFT_ASSIGNMENT_OUT

@@ -18,7 +18,7 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 
-public class JvmFieldNameReferenceInjector extends ReferenceInjector {
+public final class JvmFieldNameReferenceInjector extends ReferenceInjector {
   @Override
   public @NotNull String getId() {
     return "jvm-field-name";

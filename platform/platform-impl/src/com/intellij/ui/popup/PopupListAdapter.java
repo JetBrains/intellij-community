@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.GenericListComponentUpdater;
 import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -13,7 +14,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,9 +77,8 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     return true;
   }
 
-  @Nullable
   @Override
-  public Predicate<KeyEvent> getKeyEventHandler() {
+  public @Nullable Predicate<KeyEvent> getKeyEventHandler() {
     return InputEvent::isConsumed;
   }
 
@@ -138,7 +137,7 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     myList.setFixedCellHeight(dimension.height);
   }
 
-  private final class MyListWrapper extends JBScrollPane implements DataProvider {
+  private final class MyListWrapper extends JBScrollPane implements UiDataProvider {
     private final JList<T> myList;
 
     private MyListWrapper(final JList<T> list) {
@@ -158,9 +157,8 @@ final class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAda
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-      return PopupImplUtil.getDataImplForList(myList, dataId);
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      PopupImplUtil.uiSnapshotForList(myList, sink);
     }
 
     @Override

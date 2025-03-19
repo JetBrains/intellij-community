@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -6,15 +7,14 @@ import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
 import com.intellij.util.Base64;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author michael.golubev
- */
+@ApiStatus.Internal
 public class RemoteAgentManagerImpl extends RemoteAgentManager {
 
   private final RemoteAgentClassLoaderCache myClassLoaderCache = new RemoteAgentClassLoaderCache();
@@ -77,8 +77,7 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       return myAgentProxyFactory.createProxy(libraries, myAgentInterface, agentClassName);
     }
 
-    @NotNull
-    private List<File> listLibraryFiles() {
+    private @NotNull List<File> listLibraryFiles() {
       List<File> result = new ArrayList<>(myInstanceLibraries);
 
       List<Class<?>> allRtClasses = new ArrayList<>(myRtClasses);

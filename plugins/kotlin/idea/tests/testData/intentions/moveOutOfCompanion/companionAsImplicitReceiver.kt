@@ -2,6 +2,7 @@
 // SHOULD_FAIL_WITH: 'FOO' in property bar2 will require class instance, 'FOO' in property bar4 will require class instance, 'FOO' in property bar6 will require class instance, 'FOO' in variable bar7 will require class instance, 'FOO' in variable bar8 will require class instance
 // AFTER-WARNING: Variable 'bar7' is never used
 // AFTER-WARNING: Variable 'bar8' is never used
+// IGNORE_K2
 package test
 
 open class A {

@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.warmup.performanceTesting` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "performanceTesting_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "performanceTesting",
+  module_name = "intellij.platform.warmup.performanceTesting",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/warmup",
+    "//plugins/performanceTesting/core:performanceTesting",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-api:core",
+    "//platform/remote-driver/model:driver-model",
+    "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":performanceTesting_resources"]
+)
+### auto-generated section `build intellij.platform.warmup.performanceTesting` end

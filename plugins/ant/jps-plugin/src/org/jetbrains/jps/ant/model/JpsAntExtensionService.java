@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.ant.model;
 
 import com.intellij.openapi.application.PathManager;
@@ -17,20 +17,20 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
+
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public final class JpsAntExtensionService {
   public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
   private static final Logger LOG = Logger.getInstance(JpsAntExtensionService.class);
 
-  @Nullable
-  public static JpsAntArtifactExtension getPreprocessingExtension(@NotNull JpsArtifact artifact) {
+  public static @Nullable JpsAntArtifactExtension getPreprocessingExtension(@NotNull JpsArtifact artifact) {
     return artifact.getContainer().getChild(JpsAntArtifactExtensionImpl.PREPROCESSING_ROLE);
   }
 
-  @Nullable
-  public static JpsAntArtifactExtension getPostprocessingExtension(@NotNull JpsArtifact artifact) {
+  public static @Nullable JpsAntArtifactExtension getPostprocessingExtension(@NotNull JpsArtifact artifact) {
     return artifact.getContainer().getChild(JpsAntArtifactExtensionImpl.POSTPROCESSING_ROLE);
   }
 
@@ -38,8 +38,7 @@ public final class JpsAntExtensionService {
     global.getContainer().getOrSetChild(JpsAntInstallationImpl.COLLECTION_ROLE).addChild(antInstallation);
   }
 
-  @NotNull
-  public static JpsAntBuildFileOptions getOptions(@NotNull JpsProject project, @NotNull String buildFileUrl) {
+  public static @NotNull JpsAntBuildFileOptions getOptions(@NotNull JpsProject project, @NotNull String buildFileUrl) {
     JpsAntConfiguration configuration = getAntConfiguration(project);
     if (configuration != null) {
       return configuration.getOptions(buildFileUrl);
@@ -47,13 +46,11 @@ public final class JpsAntExtensionService {
     return new JpsAntBuildFileOptionsImpl();
   }
 
-  @Nullable
-  private static JpsAntConfiguration getAntConfiguration(JpsProject project) {
+  private static @Nullable JpsAntConfiguration getAntConfiguration(JpsProject project) {
     return project.getContainer().getChild(JpsAntConfigurationImpl.ROLE);
   }
 
-  @NotNull
-  public static JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
+  public static @NotNull JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
     JpsAntConfiguration configuration = getAntConfiguration(project);
     if (configuration != null) {
       return configuration;
@@ -62,15 +59,20 @@ public final class JpsAntExtensionService {
     return project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, antConfiguration);
   }
 
-  @Nullable
-  private static JpsAntInstallation getBundledAntInstallation() {
+  private static @Nullable JpsAntInstallation getBundledAntInstallation() {
     String antPath = System.getProperty(BUNDLED_ANT_PATH_PROPERTY);
     File antHome;
     if (antPath != null) {
+      LOG.info("Using bundled Ant " + antPath);
+
       antHome = new File(antPath);
+      if (new File(antHome, "ant.jar").exists()) {
+        // everything is packed to a single ./dist/ant.jar
+        return bundledAnt(antHome, antHome.getAbsolutePath());
+      }
     }
     else {
-      final String appHome = PathManager.getHomePath(false);
+      String appHome = PathManager.getHomePath(false);
       if (appHome == null) {
         LOG.debug("idea.home.path and " + BUNDLED_ANT_PATH_PROPERTY + " aren't specified, bundled Ant won't be configured");
         return null;
@@ -84,17 +86,20 @@ public final class JpsAntExtensionService {
         }
       }
     }
+
+    return bundledAnt(antHome, new File(antHome, "lib").getAbsolutePath());
+  }
+
+  private static @Nullable JpsAntInstallationImpl bundledAnt(File antHome, String antJarsHome) {
     if (!antHome.exists()) {
       LOG.debug("Bundled Ant not found at " + antHome.getAbsolutePath());
       return null;
     }
 
-    String antLib = new File(antHome, "lib").getAbsolutePath();
-    return new JpsAntInstallationImpl(antHome, "Bundled Ant", Collections.emptyList(), Collections.singletonList(antLib));
+    return new JpsAntInstallationImpl(antHome, "Bundled Ant", emptyList(), singletonList(antJarsHome));
   }
 
-  @Nullable
-  public static JpsAntInstallation getAntInstallationForBuildFile(@NotNull JpsModel model, @NotNull String buildFileUrl) {
+  public static @Nullable JpsAntInstallation getAntInstallationForBuildFile(@NotNull JpsModel model, @NotNull String buildFileUrl) {
     JpsAntBuildFileOptions options = getOptions(model.getProject(), buildFileUrl);
     String antInstallationName;
     if (options.isUseProjectDefaultAnt()) {
@@ -110,8 +115,7 @@ public final class JpsAntExtensionService {
     return findAntInstallation(model, antInstallationName);
   }
 
-  @Nullable
-  public static JpsAntInstallation findAntInstallation(@NotNull JpsModel model, @NotNull String antInstallationName) {
+  public static @Nullable JpsAntInstallation findAntInstallation(@NotNull JpsModel model, @NotNull String antInstallationName) {
     JpsElementCollection<JpsAntInstallation> antInstallations = model.getGlobal().getContainer().getChild(JpsAntInstallationImpl.COLLECTION_ROLE);
     if (antInstallations != null) {
       for (JpsAntInstallation installation : antInstallations.getElements()) {

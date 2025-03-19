@@ -31,7 +31,7 @@ public class ProjectTemplatesTest extends TestCase {
   public void testTemplate() throws Exception {
     ArchivedProjectTemplate template = new ArchivedProjectTemplate("Display Name", "category") {
       @Override
-      protected ModuleType getModuleType() {
+      protected ModuleType<?> getModuleType() {
         return null;
       }
 

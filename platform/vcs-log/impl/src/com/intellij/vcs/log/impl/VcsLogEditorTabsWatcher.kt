@@ -32,7 +32,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
   }
 
   override fun closeTabs(tabs: List<VcsLogWindow>) {
-    val editorTabs = tabs.filterIsInstance(VcsLogEditorTab::class.java).filter { it.isClosedOnDispose }.map { it.id }
+    val editorTabs = tabs.filterIsInstance<VcsLogEditorTab>().filter { it.isClosedOnDispose }.map { it.id }
     val closed = VcsLogEditorUtil.closeLogTabs(project, editorTabs)
     LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
   }

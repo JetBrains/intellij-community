@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +13,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SingleRowPassInfo extends LayoutPassInfo {
   private final JBTabsImpl tabs;
   final Dimension layoutSize;
@@ -24,6 +26,7 @@ public final class SingleRowPassInfo extends LayoutPassInfo {
   final int entryPointAxisSize;
   final int moreRectAxisSize;
 
+  public WeakReference<JComponent> hfToolbar;
   public WeakReference<JComponent> hToolbar;
   public WeakReference<JComponent> vToolbar;
 
@@ -35,7 +38,7 @@ public final class SingleRowPassInfo extends LayoutPassInfo {
 
   public SingleRowPassInfo(SingleRowLayout layout, List<TabInfo> visibleInfos) {
     super(visibleInfos);
-    tabs = layout.myTabs;
+    tabs = layout.tabs;
     layoutSize = tabs.getSize();
     contentCount = tabs.getTabCount();
     toLayout = new ArrayList<>();

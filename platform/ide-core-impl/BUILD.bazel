@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.ide.core.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-core-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-core-impl",
+  module_name = "intellij.platform.ide.core.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/ide-core",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util:util-ui",
+    "//platform/util",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+    "//platform/core-impl",
+    "//platform/analysis-impl",
+    "@lib//:icu4j",
+    "@lib//:fastutil-min",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/core-ui",
+    "//jps/model-impl",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+    "@lib//:hash4j",
+    "//platform/backend/observation",
+  ],
+  runtime_deps = [":ide-core-impl_resources"]
+)
+### auto-generated section `build intellij.platform.ide.core.impl` end

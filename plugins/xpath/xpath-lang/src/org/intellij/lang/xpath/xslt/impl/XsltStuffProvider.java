@@ -16,6 +16,7 @@
 
 package org.intellij.lang.xpath.xslt.impl;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -41,15 +42,16 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-public class XsltStuffProvider implements UsageGroupingRuleProvider {
+public final class XsltStuffProvider implements UsageGroupingRuleProvider {
 
-    @SuppressWarnings({"unchecked"})
-    public  static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
-            UnusedElementInspection.class,
-            TemplateInvocationInspection.class,
-            XsltDeclarationInspection.class,
-            VariableShadowingInspection.class
-    };
+  @SuppressWarnings({"unchecked"})
+  public static final Class<? extends LocalInspectionTool>[] INSPECTION_CLASSES = new Class[]{
+    UnusedElementInspection.class,
+    TemplateInvocationInspection.class,
+    XsltDeclarationInspection.class,
+    VariableShadowingInspection.class,
+    XmlUnresolvedReferenceInspection.class
+  };
 
     private final UsageGroupingRule[] myUsageGroupingRules;
 
@@ -75,8 +77,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        @NotNull
-        public String getPresentableGroupText() {
+        public @NotNull String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();
@@ -84,7 +85,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             final QName mode = myTemplate.getMode();
 
             if (mode != null) {
-                if (sb.length() > 0) sb.append(", ");
+                if (!sb.isEmpty()) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
             return XPathBundle.message("list.item.template", sb);
@@ -116,6 +117,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return canNavigate();
         }
 
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -128,15 +130,15 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return true;
         }
 
+        @Override
         public int hashCode() {
             return myTemplate.hashCode();
         }
     }
 
     private static class TemplateUsageGroupingRule extends SingleParentUsageGroupingRule {
-        @Nullable
         @Override
-        protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
+        protected @Nullable UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
             if (usage instanceof UsageInfo2UsageAdapter u) {
               final UsageInfo usageInfo = u.getUsageInfo();
                 if (usageInfo instanceof MoveRenameUsageInfo info) {
@@ -153,8 +155,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return null;
         }
 
-        @Nullable
-        private static UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
+        private static @Nullable UsageGroup buildGroup(PsiElement referencedElement, UsageInfo u, boolean mustBeForeign) {
             if (referencedElement instanceof XsltParameter parameter) {
               final PsiElement element = u.getElement();
                 if (element == null) return null;

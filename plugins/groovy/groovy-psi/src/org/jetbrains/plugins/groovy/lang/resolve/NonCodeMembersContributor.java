@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -32,6 +32,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributo
 import static org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor.processClassMixins;
 
 /**
+ * Allows to extend groovy programs with custom properties and methods.
+ * This is useful for implementing custom resolve algorithms and completion.
  * <p>
  * Contributor must check if the processor accepts the elements the contributor can offer.
  * Feeding processor with unnecessary elements which are then filtered away slows down the reference resolution.
@@ -111,13 +113,11 @@ public abstract class NonCodeMembersContributor {
     return true;
   }
 
-  @Nullable
-  protected String getParentClassName() {
+  protected @Nullable String getParentClassName() {
     return null;
   }
 
-  @NotNull
-  protected Collection<String> getClassNames() {
+  protected @NotNull Collection<String> getClassNames() {
     String className = getParentClassName();
     return ContainerUtil.createMaybeSingletonList(className);
   }
@@ -146,8 +146,7 @@ public abstract class NonCodeMembersContributor {
     cache = new Cache(contributorMap, allTypeContributors.toArray(new NonCodeMembersContributor[0]));
   }
 
-  @NotNull
-  private static Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
+  private static @NotNull Iterable<NonCodeMembersContributor> getApplicableContributors(@Nullable PsiClass clazz) {
     final List<NonCodeMembersContributor> result = new ArrayList<>();
     if (clazz != null) {
       for (String superClassName : ClassUtil.getSuperClassesWithCache(clazz).keySet()) {
@@ -215,9 +214,8 @@ public abstract class NonCodeMembersContributor {
       return wantMore;
     }
 
-    @NotNull
     @Override
-    public Iterable<? extends PsiScopeProcessor> getProcessors() {
+    public @NotNull Iterable<? extends PsiScopeProcessor> getProcessors() {
       return MultiProcessor.allProcessors(getDelegate());
     }
   }

@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -51,6 +52,9 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
         else {
           return JavaUiBundle.message("module.sdk.not.defined");
         }
+      }
+      else if (SdkDownloadTracker.getInstance().isDownloading(sdk)) {
+        return null;
       }
       else if (sdk.getSdkType().equals(JavaSdk.getInstance()) && sdk.getRootProvider().getFiles(OrderRootType.CLASSES).length == 0) {
         return JavaUiBundle.message("project.or.module.jdk.misconfigured", ModuleRootManager.getInstance(module).isSdkInherited() ? 0 : 1);

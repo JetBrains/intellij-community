@@ -1,0 +1,31 @@
+### auto-generated section `build kotlin.gradle.code-insight-toml` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-gradle-code-insight-toml_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-code-insight-toml",
+  module_name = "kotlin.gradle.code-insight-toml",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//uast/uast-common:uast",
+    "//platform/util",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//plugins/gradle/java",
+    "//plugins/toml",
+    "//plugins/toml/core",
+  ],
+  runtime_deps = [":kotlin-gradle-code-insight-toml_resources"]
+)
+### auto-generated section `build kotlin.gradle.code-insight-toml` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.psi.PsiAnonymousClass;
@@ -25,12 +25,13 @@ public final class PsiClassUtil {
     }
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (mustNotBeAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
+    return aClass.getContainingClass() == null ||
+           aClass.hasModifierProperty(PsiModifier.STATIC) ||
+           aClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
-  @NotNull
-  public static Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
-    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c), 
+  public static @NotNull Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
+    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c),
                                 Comparator.nullsFirst((file1, file2) -> scope.compare(file2, file1)));
   }
 }

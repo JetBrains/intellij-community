@@ -18,58 +18,103 @@ package org.jetbrains.idea.maven;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jetbrains.idea.maven.utils.MavenLog;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 
 public class MavenCustomRepositoryHelper {
-  private final File myTempDir;
-  private final File myWorkingData;
-  private final String[] mySubFolders;
 
-  public MavenCustomRepositoryHelper(File tempDir, String... subFolders) throws IOException {
-    myTempDir = tempDir;
-    mySubFolders = subFolders;
+  private final Path myWorkingData;
 
-    myWorkingData = new File(myTempDir, "testData");
-
-    for (String each : mySubFolders) {
+  public MavenCustomRepositoryHelper(Path tempDir, String... subFolders) throws IOException {
+    myWorkingData = tempDir.resolve("testData");
+    Files.createDirectories(myWorkingData);
+    for (String each : subFolders) {
       addTestData(each);
     }
   }
 
   public void addTestData(String relativePath) throws IOException {
-    File to = new File(myWorkingData, relativePath);
-    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePath), to);
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
+    addTestData(relativePath, relativePath);
   }
 
-  private static String getOriginalTestDataPath() {
+  public void addTestData(String relativePathFrom, String relativePathTo) throws IOException {
+    Path to = myWorkingData.resolve(relativePathTo);
+    Path from = Paths.get(getOriginalTestDataPath(), relativePathFrom);
+    Files.createDirectories(to.getParent());
+    Files.walkFileTree(from, new SimpleFileVisitor<>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path target = to.resolve(from.relativize(file));
+        Files.createDirectories(target.getParent());
+        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+        return FileVisitResult.CONTINUE;
+      }
+    });
+    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
+  }
+
+  public static String getOriginalTestDataPath() {
     String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
     return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }
 
-  public String getTestDataPath(String relativePath) {
-    String path = getTestData(relativePath).getPath();
-    return FileUtil.toSystemIndependentName(path);
-  }
-
-  public File getTestData(String relativePath) {
-    return new File(myWorkingData, relativePath);
+  public Path getTestData(String relativePath) {
+    return myWorkingData.resolve(relativePath);
   }
 
   public void delete(String relativePath) {
-    FileUtil.delete(new File(getTestDataPath(relativePath)));
+    try {
+      Path path = getTestData(relativePath);
+      MavenLog.LOG.warn("Deleting " + path);
+      if (Files.isDirectory(path)) {
+        // delete directory content recursively
+        Files.walkFileTree(path, new SimpleFileVisitor<>() {
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            Files.delete(file);
+            return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            Files.delete(dir);
+            return FileVisitResult.CONTINUE;
+          }
+        });
+      }
+      else {
+        Files.deleteIfExists(path);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void copy(String fromRelativePath, String toRelativePath) throws IOException {
-    File from = new File(getTestDataPath(fromRelativePath));
-    File to = new File(getTestDataPath(toRelativePath));
+    Path from = getTestData(fromRelativePath);
+    Path to = getTestData(toRelativePath);
 
-    if (from.isDirectory()) FileUtil.copyDir(from, to);
-    else FileUtil.copy(from, to);
+    if (Files.isDirectory(from)) {
+      Files.walkFileTree(from, new SimpleFileVisitor<>() {
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          Path target = to.resolve(from.relativize(file));
+          Files.createDirectories(target.getParent());
+          Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    }
+    else {
+      Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+    }
 
-    LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
+    LocalFileSystem.getInstance().refreshNioFiles(Collections.singleton(to));
   }
 }

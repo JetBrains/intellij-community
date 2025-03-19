@@ -1,7 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
@@ -32,7 +35,7 @@ public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean inPopup = ActionPlaces.isPopupPlace(e.getPlace());
+    boolean inPopup = e.isFromContextMenu();
     Navigatable target = findTargetForUpdate(e.getDataContext());
     boolean enabled = target != null;
     if (inPopup && !(this instanceof OpenModuleSettingsAction) && OpenModuleSettingsAction.isModuleInProjectViewPopup(e)) {
@@ -54,8 +57,7 @@ public abstract class BaseNavigateToSourceAction extends DumbAwareAction {
     }
   }
 
-  @Nullable
-  private Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
+  private @Nullable Navigatable findTargetForUpdate(@NotNull DataContext dataContext) {
     Navigatable[] navigatables = getNavigatables(dataContext);
     if (navigatables == null) return null;
 

@@ -6,6 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.KotlinEqualsBetweenInconvertibleTypesInspection.Util.isInconvertibleTypes
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.callExpressionVisitor
@@ -16,8 +18,6 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isEnum
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import org.jetbrains.kotlin.util.OperatorNameConventions
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(call) {
@@ -31,7 +31,7 @@ class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinInspection
         }
     })
 
-    companion object {
+    object Util {
         fun BindingContext.isInconvertibleTypes(expr1: KtExpression?, expr2: KtExpression?): Boolean {
             val type1 = expr1?.getTargetType(this) ?: return false
             val type2 = expr2?.getTargetType(this) ?: return false

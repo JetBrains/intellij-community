@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
@@ -24,13 +28,12 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyDocstringTypesInspection extends PyInspection {
+public final class PyDocstringTypesInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -82,8 +85,7 @@ public class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
+    private @Nullable String getShortestImportableName(@Nullable PsiElement anchor, @NotNull String type) {
       final PyType pyType = PyTypeParser.getTypeByName(anchor, type, myTypeEvalContext);
       if (pyType instanceof PyClassType) {
         return ((PyClassType)pyType).getPyClass().getQualifiedName();
@@ -97,8 +99,7 @@ public class PyDocstringTypesInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static String getPrintableName(@Nullable PyType type) {
+    private static @Nullable String getPrintableName(@Nullable PyType type) {
       if (type instanceof PyUnionType) {
         return StreamEx
           .of(((PyUnionType)type).getMembers())
@@ -121,9 +122,8 @@ public class PyDocstringTypesInspection extends PyInspection {
   }
 
 
-  private static final class ChangeTypeQuickFix implements LocalQuickFix {
+  private static final class ChangeTypeQuickFix extends PsiUpdateModCommandQuickFix {
     private final String myParamName;
-    @SafeFieldForPreview
     private final Substring myTypeSubstring;
     private final String myNewType;
 
@@ -133,25 +133,23 @@ public class PyDocstringTypesInspection extends PyInspection {
       myNewType = type;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return PyPsiBundle.message("INSP.docstring.types.change.type", myParamName, myTypeSubstring.getValue(), myNewType);
     }
 
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return PyPsiBundle.message("INSP.docstring.types.fix.docstring");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       String newValue = myTypeSubstring.getTextRange().replace(myTypeSubstring.getSuperString(), myNewType);
 
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-      final PyStringLiteralExpression stringLiteralExpression = as(descriptor.getPsiElement(), PyStringLiteralExpression.class);
+      final PyStringLiteralExpression stringLiteralExpression = as(element, PyStringLiteralExpression.class);
       if (stringLiteralExpression != null) {
         stringLiteralExpression.replace(elementGenerator.createDocstring(newValue).getExpression());
       }

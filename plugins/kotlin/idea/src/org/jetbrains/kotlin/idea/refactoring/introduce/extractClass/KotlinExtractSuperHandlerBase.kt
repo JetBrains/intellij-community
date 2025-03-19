@@ -19,8 +19,8 @@ import com.intellij.refactoring.lang.ElementsHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.refactoring.SeparateFileWrapper
-import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
+import org.jetbrains.kotlin.idea.refactoring.chooseContainer.SeparateFileWrapper
+import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui.KotlinExtractSuperDialogBase
 import org.jetbrains.kotlin.idea.refactoring.showWithTransaction

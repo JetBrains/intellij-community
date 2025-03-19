@@ -6,8 +6,8 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.createKeywordElementWithSpace
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.isInlineFunctionCall
@@ -27,9 +27,9 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 /**
  * Implementation in K1: [org.jetbrains.kotlin.idea.completion.returnExpressionItems]
  */
-internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSession>(KtTokens.RETURN_KEYWORD) {
-    @OptIn(ExperimentalStdlibApi::class)
-    override fun KtAnalysisSession.createLookups(
+internal object ReturnKeywordHandler : CompletionKeywordHandler<KaSession>(KtTokens.RETURN_KEYWORD) {
+    context(KaSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
@@ -39,7 +39,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         val result = mutableListOf<LookupElement>()
 
         for (parent in expression.parentsWithSelf.filterIsInstance<KtDeclarationWithBody>()) {
-            val returnType = parent.getReturnKtType()
+            val returnType = parent.returnType
             if (parent is KtFunctionLiteral) {
                 val (label, call) = parent.findLabelAndCall()
                 if (label != null) {
@@ -56,7 +56,7 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
                         result,
                         returnType,
                         label = null,
-                        isLikelyInPositionForReturn(expression, parent, returnType.isUnit)
+                        isLikelyInPositionForReturn(expression, parent, returnType.isUnitType)
                     )
                 }
                 break
@@ -66,13 +66,14 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         return result
     }
 
-    private fun KtAnalysisSession.addAllReturnVariants(
+    context(KaSession)
+    private fun addAllReturnVariants(
         result: MutableList<LookupElement>,
-        returnType: KtType,
+        returnType: KaType,
         label: Name?,
         isLikelyInPositionForReturn: Boolean = false
     ) {
-        val isUnit = returnType.isUnit
+        val isUnit = returnType.isUnitType
         result.add(createKeywordElementWithSpace("return", tail = label?.labelNameToTail().orEmpty(), addSpaceAfter = !isUnit).also {
             it.isReturnAtHighlyLikelyPosition = isLikelyInPositionForReturn
         })
@@ -87,26 +88,28 @@ internal object ReturnKeywordHandler : CompletionKeywordHandler<KtAnalysisSessio
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun KtAnalysisSession.getExpressionsToReturnByType(returnType: KtType): List<ExpressionTarget> = buildList {
+    context(KaSession)
+    private fun getExpressionsToReturnByType(returnType: KaType): List<ExpressionTarget> = buildList {
         if (returnType.canBeNull) {
             add(ExpressionTarget("null", addToLookupElementTail = false))
         }
 
         fun emptyListShouldBeSuggested(): Boolean =
-            returnType.isClassTypeWithClassId(StandardClassIds.Collection)
-                    || returnType.isClassTypeWithClassId(StandardClassIds.List)
-                    || returnType.isClassTypeWithClassId(StandardClassIds.Iterable)
+            returnType.isClassType(StandardClassIds.Collection)
+                    || returnType.isClassType(StandardClassIds.List)
+                    || returnType.isClassType(StandardClassIds.Iterable)
 
         when {
-            returnType.isClassTypeWithClassId(StandardClassIds.Boolean) -> {
+            returnType.isClassType(StandardClassIds.Boolean) -> {
                 add(ExpressionTarget("true", addToLookupElementTail = false))
                 add(ExpressionTarget("false", addToLookupElementTail = false))
             }
+
             emptyListShouldBeSuggested() -> {
                 add(ExpressionTarget("emptyList()", addToLookupElementTail = true))
             }
-            returnType.isClassTypeWithClassId(StandardClassIds.Set) -> {
+
+            returnType.isClassType(StandardClassIds.Set) -> {
                 add(ExpressionTarget("emptySet()", addToLookupElementTail = true))
             }
         }

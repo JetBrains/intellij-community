@@ -1,12 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntConfiguration;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -21,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Service(Service.Level.PROJECT)
 @State(name = "antWorkspaceConfiguration", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
   @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
@@ -29,8 +27,8 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
   private static final Logger LOG = Logger.getInstance(AntWorkspaceConfiguration.class);
 
   private final Project myProject;
-  @NonNls private static final String BUILD_FILE = "buildFile";
-  @NonNls private static final String URL = "url";
+  private static final @NonNls String BUILD_FILE = "buildFile";
+  private static final @NonNls String URL = "url";
   private final AtomicReference<Element> myProperties = new AtomicReference<>(null);
 
   public boolean IS_AUTOSCROLL_TO_SOURCE;
@@ -90,8 +88,7 @@ public final class AntWorkspaceConfiguration implements PersistentStateComponent
     }
   }
 
-  @Nullable
-  private static Element findChildByUrl(Element parentNode, String url) {
+  private static @Nullable Element findChildByUrl(Element parentNode, String url) {
     for (Element element : parentNode.getChildren(BUILD_FILE)) {
       if (Objects.equals(element.getAttributeValue(URL), url)) {
         return element;

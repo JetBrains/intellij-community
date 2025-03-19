@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -21,6 +20,7 @@ import com.intellij.sh.ShFileType;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.formatter.ShShfmtFormatterUtil;
 import com.intellij.sh.settings.ShSettings;
+import com.intellij.sh.utils.ProjectUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.ActionLink;
@@ -50,6 +50,8 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
   private JCheckBox myMinifyProgram;
   private JCheckBox myUnixLineSeparator;
 
+  private final Project myProject;
+
   @SuppressWarnings("unused")
   private ActionLink myShfmtDownloadLink;
   private TextFieldWithBrowseButton myShfmtPathSelector;
@@ -58,8 +60,8 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     super(ShLanguage.INSTANCE, currentSettings, settings);
     installPreviewPanel(myRightPanel);
 
-    Project project = ProjectUtil.guessCurrentProject(getPanel());
-    myShfmtPathSelector.addBrowseFolderListener(ShBundle.message("sh.code.style.choose.path"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myProject = ProjectUtil.getProject(getPanel());
+    myShfmtPathSelector.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle(ShBundle.message("sh.code.style.choose.path")));
     myShfmtPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {
@@ -84,8 +86,8 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentField = new IntegerField(null, CodeStyleConstraints.MIN_INDENT_SIZE, CodeStyleConstraints.MAX_INDENT_SIZE);
     myTabField = new IntegerField(null, CodeStyleConstraints.MIN_TAB_SIZE, CodeStyleConstraints.MAX_TAB_SIZE);
     myShfmtDownloadLink = new ActionLink(ShBundle.message("sh.code.style.download.link"), e -> {
-        ShShfmtFormatterUtil.download(ProjectUtil.guessCurrentProject(getPanel()),
-                                      () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath()),
+        ShShfmtFormatterUtil.download(myProject,
+                                      () -> myShfmtPathSelector.setText(ShSettings.getShfmtPath(myProject)),
                                       () -> myErrorLabel.setVisible(true));
     });
   }
@@ -95,22 +97,19 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     return 0;
   }
 
-  @Nullable
   @Override
-  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
+  protected @Nullable EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(ShLanguage.INSTANCE, null, null);
     return HighlighterFactory.createHighlighter(highlighter, scheme);
   }
 
-  @NotNull
   @Override
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return ShFileType.INSTANCE;
   }
 
-  @Nullable
   @Override
-  protected String getPreviewText() {
+  protected @Nullable String getPreviewText() {
     return GENERAL_CODE_SAMPLE;
   }
 
@@ -128,7 +127,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     shSettings.KEEP_COLUMN_ALIGNMENT_PADDING = myKeepColumnAlignmentPadding.isSelected();
     shSettings.MINIFY_PROGRAM = myMinifyProgram.isSelected();
     shSettings.USE_UNIX_LINE_SEPARATOR = myUnixLineSeparator.isSelected();
-    ShSettings.setShfmtPath(myShfmtPathSelector.getText());
+    ShSettings.setShfmtPath(myProject, myShfmtPathSelector.getText());
     myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(myShfmtPathSelector.getText()));
     myErrorLabel.setVisible(false);
   }
@@ -147,12 +146,11 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
         || isFieldModified(myTabCharacter, indentOptions.USE_TAB_CHARACTER)
         || isFieldModified(myIndentField, indentOptions.INDENT_SIZE)
         || isFieldModified(myTabField, indentOptions.TAB_SIZE)
-        || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath());
+        || isFieldModified(myShfmtPathSelector, ShSettings.getShfmtPath(myProject));
   }
 
-  @Nullable
   @Override
-  public JComponent getPanel() {
+  public @Nullable JComponent getPanel() {
     return myPanel;
   }
 
@@ -170,8 +168,8 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     myKeepColumnAlignmentPadding.setSelected(shSettings.KEEP_COLUMN_ALIGNMENT_PADDING);
     myMinifyProgram.setSelected(shSettings.MINIFY_PROGRAM);
     myUnixLineSeparator.setSelected(shSettings.USE_UNIX_LINE_SEPARATOR);
-    myShfmtPathSelector.setText(ShSettings.getShfmtPath());
-    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath()));
+    myShfmtPathSelector.setText(ShSettings.getShfmtPath(myProject));
+    myWarningPanel.setVisible(!ShShfmtFormatterUtil.isValidPath(ShSettings.getShfmtPath(myProject)));
     myErrorLabel.setVisible(false);
   }
 
@@ -187,7 +185,7 @@ public class ShCodeStylePanel extends CodeStyleAbstractPanel {
     return !browseButton.getText().equals(value);
   }
 
-  @NonNls private static final String GENERAL_CODE_SAMPLE = """
+  private static final @NonNls String GENERAL_CODE_SAMPLE = """
     #!/usr/bin/env sh
 
     function foo() {

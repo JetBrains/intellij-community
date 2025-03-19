@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.util;
 
@@ -209,11 +209,11 @@ public abstract class TestUtils {
 
             if (consumer.getResult().isEmpty()) {
               PsiElement nameElement = psiReference.getReferenceNameElement();
-              assert nameElement != null;
+              Assert.assertNotNull(nameElement);
 
               String name = nameElement.getText();
 
-              assert name.equals(psiReference.getReferenceName());
+              Assert.assertEquals(name, psiReference.getReferenceName());
 
               int last = lastUnresolvedRef.get();
               sb.append(text, last, nameElement.getTextOffset());

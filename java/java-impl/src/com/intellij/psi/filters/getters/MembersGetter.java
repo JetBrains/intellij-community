@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex;
@@ -42,7 +43,7 @@ public abstract class MembersGetter {
   private final List<PsiMethod> myPlaceMethods = new ArrayList<>();
   protected final PsiElement myPlace;
 
-  protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
+  protected MembersGetter(StaticMemberProcessor processor, final @NotNull PsiElement place) {
     myPlace = place;
     processor.processMembersOfRegisteredClasses(Conditions.alwaysTrue(), (member, psiClass) -> myImportedStatically.add(member));
 
@@ -75,7 +76,7 @@ public abstract class MembersGetter {
     return true;
   }
 
-  public void processMembers(final Consumer<? super LookupElement> results, @Nullable final PsiClass where,
+  public void processMembers(final Consumer<? super LookupElement> results, final @Nullable PsiClass where,
                              final boolean acceptMethods, final boolean searchInheritors) {
     if (where == null || isPrimitiveClass(where)) return;
 
@@ -140,7 +141,7 @@ public abstract class MembersGetter {
           }
           // For parameterized class constructors, we add a diamond. Do not suggest constructors for parameterized classes
           // in Java 6 or older when diamond was not supported
-          if (aClass.getTypeParameters().length > 0 && !PsiUtil.isLanguageLevel7OrHigher(myPlace)) continue;
+          if (aClass.getTypeParameters().length > 0 && !PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, myPlace)) continue;
           // Constructor type parameters aren't supported yet
           if (method.getTypeParameters().length > 0) continue;
         }
@@ -166,9 +167,7 @@ public abstract class MembersGetter {
     }
   }
 
-  @Nullable
-  protected abstract LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
+  protected abstract @Nullable LookupElement createFieldElement(@NotNull PsiField field, @NotNull PsiClass origClass);
 
-  @Nullable
-  protected abstract LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
+  protected abstract @Nullable LookupElement createMethodElement(@NotNull PsiMethod method, @NotNull PsiClass origClass);
 }

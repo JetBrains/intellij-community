@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -20,6 +20,7 @@ import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.util.CommonMoveClassesOrPackagesUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,8 +33,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class CreateTestUtils {
-  @Nullable
-  public static PsiDirectory selectTargetDirectory(String packageName, Project project, Module targetModule) throws
+
+  @RequiresEdt
+  public static @Nullable PsiDirectory selectTargetDirectory(String packageName, Project project, Module targetModule) throws
                                                                                                              IncorrectOperationException {
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(project), packageName);
 
@@ -75,8 +77,7 @@ public final class CreateTestUtils {
       .compute(() -> CommonJavaRefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
   }
 
-  @Nullable
-  public static PsiDirectory chooseDefaultDirectory(Project project, Module currentModule, PsiDirectory[] directories, List<VirtualFile> roots) {
+  public static @Nullable PsiDirectory chooseDefaultDirectory(Project project, Module currentModule, PsiDirectory[] directories, List<VirtualFile> roots) {
     List<PsiDirectory> dirs = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
     for (VirtualFile file : ModuleRootManager.getInstance(currentModule).getSourceRoots(JavaSourceRootType.TEST_SOURCE)) {

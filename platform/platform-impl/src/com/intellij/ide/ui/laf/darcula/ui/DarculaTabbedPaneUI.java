@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -50,7 +50,6 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   private int hoverTab = -1;
   private boolean tabsOverlapBorder;
   private boolean useSelectedRectBackup = false;
-  private boolean tabBackgroundOnlyForHover;
   private Color myTabHoverColor;
 
   private static final JBValue OFFSET = new JBValue.Float(1);
@@ -73,7 +72,6 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       tabPane.setLayout(new WrappingLayout((TabbedPaneLayout)tabPane.getLayout()));
       tabPane.add(myShowHiddenTabsButton = new ShowHiddenTabsButton());
     }
-    tabBackgroundOnlyForHover = Boolean.TRUE.equals(tabPane.getClientProperty("TabbedPane.tabBackgroundOnlyForHover"));
 
     if (tabPane.getClientProperty("TabbedPane.hoverColor") instanceof Color color) {
       myTabHoverColor = color;
@@ -322,10 +320,6 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
       g.setColor(c);
     }
 
-    if (tabBackgroundOnlyForHover && tabIndex != hoverTab) {
-      return;
-    }
-
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
         w -= getOffset();
@@ -401,6 +395,14 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   }
 
   @Override
+  protected View getTextViewForTab(int tabIndex) {
+    if (tabPane.isValid()) {
+      return super.getTextViewForTab(tabIndex);
+    }
+    return null;
+  }
+
+  @Override
   protected int getTabLabelShiftX(int tabPlacement, int tabIndex, boolean isSelected) {
     int delta = SELECTION_HEIGHT.get();
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT) {
@@ -472,8 +474,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
   }
 
-  @Nullable
-  private JViewport getScrollableTabViewport() {
+  private @Nullable JViewport getScrollableTabViewport() {
     Optional<JViewport> optional = UIUtil.findComponentsOfType(tabPane, JViewport.class).stream().filter(
       viewport -> "TabbedPane.scrollableViewport".equals(viewport.getName())).findFirst();
     return optional.orElse(null);
@@ -498,7 +499,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     return dest;
   }
 
-  private class ShowHiddenTabsButton extends JButton implements UIResource {
+  private final class ShowHiddenTabsButton extends JButton implements UIResource {
     private ShowHiddenTabsButton() {
       super(AllIcons.Actions.FindAndShowNextMatches);
       setToolTipText(IdeBundle.message("show.hidden.tabs"));
@@ -527,7 +528,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
     }
   }
 
-  private class WrappingLayout extends TabbedPaneLayout {
+  private final class WrappingLayout extends TabbedPaneLayout {
     private final TabbedPaneLayout myDelegate;
 
     private WrappingLayout(TabbedPaneLayout delegate) {

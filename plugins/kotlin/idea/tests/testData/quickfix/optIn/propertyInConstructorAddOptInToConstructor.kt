@@ -1,17 +1,6 @@
 // "Opt in for 'PropertyTypeMarker' on constructor" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
-// ACTION: Add '-opt-in=PropertyTypeMarker' to module light_idea_test_case compiler arguments
-// ACTION: Convert to secondary constructor
-// ACTION: Create test
-// ACTION: Enable a trailing comma by default in the formatter
-// ACTION: Introduce import alias
-// ACTION: Move to class body
-// ACTION: Opt in for 'PropertyTypeMarker' in containing file 'propertyInConstructorAddOptInToConstructor.kt'
-// ACTION: Opt in for 'PropertyTypeMarker' on constructor
-// ACTION: Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'
-// ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to constructor
-// ACTION: Propagate 'PropertyTypeMarker' opt-in requirement to containing class 'PropertyTypeContainer'
+// PRIORITY: HIGH
+
 
 @RequiresOptIn
 annotation class PropertyTypeMarker
@@ -20,3 +9,6 @@ annotation class PropertyTypeMarker
 class PropertyTypeMarked
 
 class PropertyTypeContainer(val subject: Property<caret>TypeMarked)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$UseOptInAnnotationFix

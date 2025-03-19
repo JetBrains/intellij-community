@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.bookmarks.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.platform.bookmarks.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/bookmarks",
+    "//platform/kernel/shared:kernel",
+    "//platform/project/shared:project",
+  ],
+  exports = ["//platform/bookmarks"],
+  runtime_deps = [":frontend_resources"]
+)
+### auto-generated section `build intellij.platform.bookmarks.frontend` end

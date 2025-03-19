@@ -13,19 +13,13 @@ class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
         val INSTANCE: KotlinFullClassNameIndex = KotlinFullClassNameIndex()
 
-        @JvmStatic
-        @Suppress("DeprecatedCallableAddReplaceWith")
-        @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
-        fun getInstance(): KotlinFullClassNameIndex {
-            return KotlinFullClassNameIndex()
-        }
-
         override val indexKey: StubIndexKey<String, KtClassOrObject> =
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex")
     }
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinFullClassNameIndex[fqName, project, scope]"))
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[fqName, project, scope]
     }

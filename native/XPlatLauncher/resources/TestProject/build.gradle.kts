@@ -19,6 +19,11 @@ dependencies {
   implementation("org.jetbrains.intellij.deps", "async-profiler", "2.9-15")
 }
 
+tasks.compileJava {
+  @Suppress("SpellCheckingInspection")
+  options.compilerArgs = listOf("-source", "17", "-target", "17", "--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
+}
+
 task("fatJar", type = Jar::class) {
   dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
 
@@ -37,7 +42,8 @@ val jbrSdkBuildNumber: String by project
 
 task("downloadJbr") {
   val (os, arch) = getOsAndArch()
-  val output = project.buildDir.toPath().resolve("jbr")
+  val buildDir = project.layout.buildDirectory.asFile.get().toPath()
+  val output = buildDir.resolve("jbr")
 
   onlyIf {
     val release = output.resolve("release")
@@ -47,7 +53,7 @@ task("downloadJbr") {
   }
 
   doLast {
-    val tmp = project.buildDir.toPath().resolve("tmp")
+    val tmp = buildDir.resolve("tmp")
     Files.createDirectories(tmp)
 
     val file = Files.createTempFile(tmp, "jbr_", ".tgz")
@@ -70,14 +76,14 @@ task("downloadJbr") {
 }
 
 fun getOsAndArch(): Pair<String, String> {
-  val osName = System.getProperty("os.name", "").toLowerCase()
+  val osName = System.getProperty("os.name", "").lowercase()
   val os = if (osName.startsWith("windows")) "windows"
     else if (osName.startsWith("mac")) "osx"
     else if (osName.startsWith("linux")) "linux"
     else throw UnsupportedOperationException("Unsupported OS: '${osName}'")
 
   @Suppress("SpellCheckingInspection")
-  val arch = when (val archName = System.getProperty("os.arch", "").toLowerCase()) {
+  val arch = when (val archName = System.getProperty("os.arch", "").lowercase()) {
     "x86_64", "amd64" -> "x64"
     "aarch64", "arm64" -> "aarch64"
     else -> throw UnsupportedOperationException("Unsupported architecture: '${archName}'")

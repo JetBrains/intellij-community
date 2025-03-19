@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.*
-import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -18,24 +18,24 @@ class DesktopLayout(
   val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
 ) {
   companion object {
-    @NonNls const val TAG = "layout"
+    @NonNls const val TAG: String = "layout"
   }
 
   /**
    * @param paneId the ID of the tool window pane that this anchor is attached to
    * @param anchor anchor of the stripe.
-   * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
+   * @return the next available ordinal number in the specified stripe. Returns `0` if there is no tool window with the specified anchor.
    */
-  internal fun getMaxOrder(paneId: String, anchor: ToolWindowAnchor): Int {
-    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
+  internal fun getNextOrder(paneId: String, anchor: ToolWindowAnchor): Int {
+    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order }?.plus(1) ?: 0
   }
 
-  fun copy() = DesktopLayout(
+  fun copy(): DesktopLayout = DesktopLayout(
     idToInfo.entries.associateTo(HashMap(idToInfo.size)) { e -> e.key to e.value.copy() },
     unifiedWeights.copy(),
   )
 
-  internal fun create(task: RegisterToolWindowTask): WindowInfoImpl {
+  internal fun create(task: RegisterToolWindowTaskData): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.id = task.id
     info.isFromPersistentSettings = false
@@ -50,8 +50,8 @@ class DesktopLayout(
     return info
   }
 
-  fun getInfo(id: String) = idToInfo.get(id)
-  fun getInfos() = idToInfo.toMap()
+  fun getInfo(id: String): WindowInfoImpl? = idToInfo.get(id)
+  fun getInfos(): Map<String, WindowInfoImpl> = idToInfo.toMap()
 
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)
@@ -66,7 +66,7 @@ class DesktopLayout(
 
   /**
    * Sets new `anchor` and `id` for the specified tool window.
-   * Also, the method properly updates order of all other tool windows.
+   * Also, the method properly updates the order of all other tool windows.
    */
   fun setAnchor(info: WindowInfoImpl,
                 newPaneId: String,
@@ -75,9 +75,9 @@ class DesktopLayout(
     var newOrder = suppliedNewOrder
     val affected = ArrayList<WindowInfoImpl>()
 
-    // if order isn't defined then the window will be the last in the stripe
+    // if order isn't defined, then the window will be the last in the stripe
     if (newOrder == -1) {
-      newOrder = getMaxOrder(newPaneId, newAnchor) + 1
+      newOrder = getNextOrder(newPaneId, newAnchor)
     }
     else {
       // shift order to the right in the target stripe
@@ -96,8 +96,8 @@ class DesktopLayout(
     return affected
   }
 
-  fun readExternal(layoutElement: Element, isNewUi: Boolean, isFromPersistentSettings: Boolean = true) {
-    val infoBinding = XmlSerializer.getBeanBinding(WindowInfoImpl::class.java)
+  fun readExternal(layoutElement: Element, isFromPersistentSettings: Boolean = true) {
+    val infoBinding = jdomSerializer.getBeanBinding(WindowInfoImpl::class.java)
 
     val list = mutableListOf<WindowInfoImpl>()
     for (element in layoutElement.getChildren(WindowInfoImpl.TAG)) {
@@ -117,8 +117,7 @@ class DesktopLayout(
 
     val unifiedWeightsElement = layoutElement.getChild(UnifiedToolWindowWeights.TAG)
     if (unifiedWeightsElement != null) {
-      val unifiedWeightsBinding = XmlSerializer.getBeanBinding(UnifiedToolWindowWeights::class.java)
-      unifiedWeightsBinding.deserializeInto(unifiedWeights, unifiedWeightsElement)
+      jdomSerializer.deserializeInto(unifiedWeights, unifiedWeightsElement)
     }
 
     normalizeOrder(list)
@@ -164,6 +163,12 @@ class DesktopLayout(
   }
 
   internal fun getSortedList(): List<WindowInfoImpl> = idToInfo.values.sortedWith(windowInfoComparator)
+
+  override fun toString(): String =
+    "DesktopLayout(\n" +
+      "unifiedWeights: $unifiedWeights,\n" +
+      idToInfo.entries.joinToString("\n") { "${it.key}: (${it.value})" } +
+    "\n)"
 }
 
 private val LOG = logger<DesktopLayout>()
@@ -184,9 +189,9 @@ internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 
 }
 
 /**
- * Normalizes order of windows in the array. Order of first window will be `0`.
+ * Normalizes the order of windows in the array. Order of a first window will be `0`.
  */
-private fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
+internal fun normalizeOrder(list: MutableList<WindowInfoImpl>) {
   list.sortWith(windowInfoComparator)
   var order = 0
   var lastAnchor = ToolWindowAnchor.TOP

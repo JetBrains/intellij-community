@@ -1,91 +1,70 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import com.intellij.testFramework.fixtures.SdkTestFixture
-import com.intellij.testFramework.fixtures.TempDirTestFixture
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.utils.vfs.createDirectory
-import kotlinx.coroutines.runBlocking
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
+import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.ESListenerLeakTracker
-import org.jetbrains.plugins.gradle.testFramework.fixtures.tracker.OperationLeakTracker
-import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
-import org.junit.jupiter.api.AfterEach
+import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
+import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleTestApplication
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleJvmFixture
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.TestInfo
+import java.nio.file.Path
 
-@TestApplication
+@GradleTestApplication
 abstract class GradleBaseTestCase {
 
-  private lateinit var listenerLeakTracker: ESListenerLeakTracker
-  private lateinit var reloadLeakTracker: OperationLeakTracker
+  val gradleVersion: GradleVersion = GradleVersion.current()
+  private val javaVersion = JavaVersionRestriction.NO
 
-  lateinit var testDisposable: Disposable
+  private val testDisposable by disposableFixture()
 
-  private lateinit var sdkFixture: SdkTestFixture
-  private lateinit var fileFixture: TempDirTestFixture
+  private val testPathFixture = tempPathFixture()
+  val testPath: Path by testPathFixture
+  val testRoot: VirtualFile get() = testPath.refreshAndGetVirtualDirectory()
 
-  lateinit var testRoot: VirtualFile
+  private val gradleJvmFixture by gradleJvmFixture(gradleVersion, javaVersion)
+  val gradleJvm: String get() = gradleJvmFixture.gradleJvm
+  val gradleJvmInfo: JdkVersionInfo get() = gradleJvmFixture.gradleJvmInfo
 
-  val gradleJvm: String
-    get() = sdkFixture.getSdk().name
-
-  val gradleVersion: GradleVersion
-    get() = GradleVersion.current()
+  private val gradleFixture by gradleFixture(testPathFixture)
 
   @BeforeEach
-  fun setUpGradleBaseTestCase(testInfo: TestInfo) {
-    listenerLeakTracker = ESListenerLeakTracker()
-    listenerLeakTracker.setUp()
-
-    reloadLeakTracker = OperationLeakTracker { getGradleProjectReloadOperation(it) }
-    reloadLeakTracker.setUp()
-
-    testDisposable = Disposer.newDisposable()
-
-    sdkFixture = GradleTestFixtureFactory.getFixtureFactory().createGradleJvmTestFixture(gradleVersion)
-    sdkFixture.setUp()
-
-    fileFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture()
-    fileFixture.setUp()
-    runBlocking {
-      writeAction {
-        testRoot = fileFixture.findOrCreateDir(testInfo.testClass.get().simpleName)
-          .createDirectory(testInfo.testMethod.get().name)
-      }
-    }
-
+  fun setUpGradleBaseTestCase() {
+    gradleJvmFixture.installProjectSettingsConfigurator(testDisposable)
     AutoImportProjectTracker.enableAutoReloadInTests(testDisposable)
     AutoImportProjectTracker.enableAsyncAutoReloadInTests(testDisposable)
+    ExternalSystemImportingTestCase.installExecutionOutputPrinter(testDisposable)
   }
 
-  @AfterEach
-  fun tearDownGradleBaseTestCase() {
-    runAll(
-      { fileFixture.tearDown() },
-      { sdkFixture.tearDown() },
-      { Disposer.dispose(testDisposable) },
-      { reloadLeakTracker.tearDown() },
-      { listenerLeakTracker.tearDown() }
-    )
+  suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {
+    return gradleFixture.openProject(relativePath, numProjectSyncs)
   }
 
-  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
-    if (!wait) {
-      return action()
-    }
-    return reloadLeakTracker.withAllowedOperationAsync(1) {
-      org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload {
-        action()
-      }
-    }
+  suspend fun linkProject(project: Project, relativePath: String) {
+    gradleFixture.linkProject(project, relativePath)
+  }
+
+  suspend fun reloadProject(project: Project, relativePath: String, configure: ImportSpecBuilder.() -> Unit = {}) {
+    gradleFixture.reloadProject(project, relativePath, configure)
+  }
+
+  suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project {
+    return gradleFixture.awaitOpenProjectConfiguration(numProjectSyncs, openProject)
+  }
+
+  suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int = 1, action: suspend () -> R): R {
+    return gradleFixture.awaitProjectConfiguration(project, numProjectSyncs, action)
+  }
+
+  fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {
+    gradleFixture.assertNotificationIsVisible(project, isNotificationVisible)
   }
 }

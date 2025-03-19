@@ -5,4 +5,3 @@ package non.root.name
 fun test() {
     RootClass<caret>()
 }
-/* IGNORE_FIR */

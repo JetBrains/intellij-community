@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -23,8 +23,8 @@ public interface BatchQuickFix {
    * @param psiElementsToIgnore elements to be excluded from view during post-refresh
    * @param refreshViews        post-refresh inspection results view; would remove collected elements from the view
    */
-  void applyFix(@NotNull final Project project,
+  void applyFix(final @NotNull Project project,
                 final CommonProblemDescriptor @NotNull [] descriptors,
-                @NotNull final List<PsiElement> psiElementsToIgnore,
-                @Nullable final Runnable refreshViews);
+                final @NotNull List<PsiElement> psiElementsToIgnore,
+                final @Nullable Runnable refreshViews);
 }

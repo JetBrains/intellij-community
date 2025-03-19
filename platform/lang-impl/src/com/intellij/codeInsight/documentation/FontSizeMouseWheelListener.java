@@ -4,7 +4,6 @@ package com.intellij.codeInsight.documentation;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.FontSize;
-import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.MouseWheelEvent;
@@ -15,12 +14,11 @@ import java.util.function.Consumer;
  * @deprecated Unused in v2 implementation.
  */
 @Deprecated(forRemoval = true)
-@Internal
-public final class FontSizeMouseWheelListener implements MouseWheelListener {
+final class FontSizeMouseWheelListener implements MouseWheelListener {
 
   private final @NotNull Consumer<? super @NotNull FontSize> mySizeConsumer;
 
-  public FontSizeMouseWheelListener(@NotNull Consumer<? super @NotNull FontSize> sizeConsumer) {
+  FontSizeMouseWheelListener(@NotNull Consumer<? super @NotNull FontSize> sizeConsumer) {
     mySizeConsumer = sizeConsumer;
   }
 

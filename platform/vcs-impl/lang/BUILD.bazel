@@ -1,0 +1,34 @@
+### auto-generated section `build intellij.platform.vcs.impl.lang` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-impl-lang_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-impl-lang",
+  module_name = "intellij.platform.vcs.impl.lang",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-ui",
+    "//platform/ide-core-impl",
+    "//platform/indexing-impl",
+    "//platform/lang-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/diff-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/util/progress",
+    "@lib//:stream_ex",
+    "//platform/diagnostic",
+    "//platform/statistics",
+    "@lib//:fastutil-min",
+    "//platform/todo",
+  ],
+  runtime_deps = [":vcs-impl-lang_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.impl.lang` end

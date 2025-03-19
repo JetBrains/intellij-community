@@ -20,7 +20,7 @@ class Y implements T<String> {
 
     @Override
     public String getFoo() {
-        return null;
+        return "";
     }
 }
 
@@ -40,7 +40,7 @@ class W implements T<Integer> {
 
     @Override
     public Integer getFoo() {
-        return null;
+        return 0;
     }
 
     @Override

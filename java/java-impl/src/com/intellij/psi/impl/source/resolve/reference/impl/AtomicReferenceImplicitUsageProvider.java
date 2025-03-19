@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -23,7 +23,7 @@ import static com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCUR
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 
-public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
+public final class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
   private static final Set<String> ourUpdateMethods = Set.of(
     "compareAndSet", "weakCompareAndSet", "set", "lazySet", "getAndSet", "getAndIncrement", "getAndDecrement", "getAndAdd",
     "incrementAndGet", "decrementAndGet", "addAndGet", "getAndUpdate", "updateAndGet", "getAndAccumulate", "accumulateAndGet");
@@ -114,8 +114,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     return true;
   }
 
-  @Nullable
-  private static SearchScope getCheapSearchScope(@NotNull PsiField field) {
+  private static @Nullable SearchScope getCheapSearchScope(@NotNull PsiField field) {
     SearchScope scope = field.getUseScope();
     if (scope instanceof LocalSearchScope) {
       return scope;
@@ -126,7 +125,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
 
     if (scope instanceof GlobalSearchScope &&
-        searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, null, null) == FEW_OCCURRENCES) {
+        searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, null) == FEW_OCCURRENCES) {
       return scope;
     }
     return null;

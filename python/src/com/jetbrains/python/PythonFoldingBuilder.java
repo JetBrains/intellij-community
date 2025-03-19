@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -34,6 +35,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                      PyElementTypes.LIST_COMP_EXPRESSION,
                                                      PyElementTypes.TUPLE_EXPRESSION);
 
+  public static final String PYTHON_TYPE_ANNOTATION_GROUP_NAME = "Python type annotation";
+
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
                                           @NotNull PsiElement root,
@@ -53,6 +56,9 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                                          lastImport.getTextRange().getEndOffset())));
       }
     }
+    else if (elementType == PyElementTypes.MATCH_STATEMENT) {
+      foldMatchStatement(node, descriptors);
+    }
     else if (elementType == PyElementTypes.STATEMENT_LIST) {
       foldStatementList(node, descriptors);
     }
@@ -64,6 +70,13 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
     else if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
       foldSequentialComments(node, descriptors);
+    }
+    else if (elementType == PyElementTypes.ANNOTATION) {
+      var annotation = node.getPsi();
+      if (annotation instanceof PyAnnotation pyAnnotation && pyAnnotation.getValue() != null) {
+        descriptors.add(new FoldingDescriptor(node, pyAnnotation.getValue().getTextRange(),
+                                              FoldingGroup.newGroup(PYTHON_TYPE_ANNOTATION_GROUP_NAME)));
+      }
     }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -119,6 +132,36 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
+  private static void foldMatchStatement(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors) {
+    TextRange nodeRange = node.getTextRange();
+    if (nodeRange.isEmpty()) {
+      return;
+    }
+
+    IElementType elType = node.getElementType();
+    if (elType == PyElementTypes.MATCH_STATEMENT) {
+      ASTNode colon = node.findChildByType(PyTokenTypes.COLON);
+      foldSegment(node, descriptors, nodeRange, colon);
+    }
+  }
+
+  private static void foldSegment(@NotNull ASTNode node, @NotNull List<FoldingDescriptor> descriptors, @NotNull TextRange nodeRange, @Nullable ASTNode colon) {
+    int nodeEnd = nodeRange.getEndOffset();
+    if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
+      CharSequence chars = node.getChars();
+      int nodeStart = nodeRange.getStartOffset();
+      int foldStart = colon.getStartOffset() + 1;
+      int foldEnd = nodeEnd;
+      while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
+        foldEnd--;
+      }
+      descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
+    }
+    else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
+      descriptors.add(new FoldingDescriptor(node, nodeRange));
+    }
+  }
+
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
     final TextRange nodeRange = node.getTextRange();
     if (nodeRange.isEmpty()) {
@@ -126,34 +169,19 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
 
     final IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || ifFoldBlocks(node, elType)) {
-      final ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-      final int nodeEnd = nodeRange.getEndOffset();
-      if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
-        final CharSequence chars = node.getChars();
-        final int nodeStart = nodeRange.getStartOffset();
-        final int foldStart = colon.getStartOffset() + 1;
-        int foldEnd = nodeEnd;
-        while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
-          foldEnd--;
-        }
-        descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
-      }
-      else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
-        descriptors.add(new FoldingDescriptor(node, nodeRange));
-      }
+    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || checkFoldBlocks(node, elType)) {
+      ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
+      foldSegment(node, descriptors, nodeRange, colon);
     }
   }
 
-  private static boolean ifFoldBlocks(ASTNode statementList, IElementType parentType) {
-    if (!PyElementTypes.PARTS.contains(parentType) && parentType != PyElementTypes.WITH_STATEMENT) {
-      return false;
-    }
+  private static boolean checkFoldBlocks(@NotNull ASTNode statementList, @NotNull IElementType parentType) {
     PsiElement element = statementList.getPsi();
-    if (element instanceof PyStatementList) {
-      return StringUtil.countNewLines(element.getText()) > 0;
-    }
-    return false;
+    assert element instanceof PyStatementList;
+
+    return PyElementTypes.PARTS.contains(parentType) ||
+           parentType == PyElementTypes.WITH_STATEMENT ||
+           parentType == PyElementTypes.CASE_CLAUSE;
   }
 
   private static void foldLongStrings(ASTNode node, List<FoldingDescriptor> descriptors) {
@@ -165,8 +193,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
   }
 
-  @Nullable
-  private static IElementType getDocStringOwnerType(ASTNode node) {
+  private static @Nullable IElementType getDocStringOwnerType(ASTNode node) {
     final ASTNode treeParent = node.getTreeParent();
     IElementType parentType = treeParent.getElementType();
     if (parentType == PyElementTypes.EXPRESSION_STATEMENT && treeParent.getTreeParent() != null) {
@@ -195,7 +222,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       if (stringLiteralExpression.isDocString()) {
         final String stringValue = stringLiteralExpression.getStringValue().trim();
         final String[] lines = LineTokenizer.tokenize(stringValue, true);
-        if (lines.length > 2 && lines[1].trim().length() == 0) {
+        if (lines.length > 2 && lines[1].trim().isEmpty()) {
           return prefix + "\"\"\"" + lines[0].trim() + "...\"\"\"";
         }
         return prefix + "\"\"\"...\"\"\"";
@@ -220,7 +247,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (isImport(node)) {
       return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
     }
-    if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+    var elementType = node.getElementType();
+    if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
         // method will be collapsed, no need to also collapse docstring
         return false;
@@ -230,13 +258,16 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
       return PythonFoldingSettings.getInstance().isCollapseLongStrings();
     }
-    if (node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
       return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
-    if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
+    if (elementType == PyElementTypes.ANNOTATION) {
+      return PythonFoldingSettings.getInstance().isCollapseTypeAnnotations();
+    }
+    if (elementType == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
       return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
     }
-    if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
+    if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
       return PythonFoldingSettings.getInstance().isCollapseLongCollections();
     }
     return false;

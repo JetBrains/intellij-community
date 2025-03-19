@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -24,9 +25,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import sun.font.CompositeFont;
 import sun.font.Font2D;
 import sun.font.FontSubstitution;
@@ -41,14 +40,15 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.IntUnaryOperator;
 
-public class ShowFontsUsedByEditorAction extends EditorAction {
+@ApiStatus.Internal
+public final class ShowFontsUsedByEditorAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private static final Logger LOG = Logger.getInstance(ShowFontsUsedByEditorAction.class);
 
   public ShowFontsUsedByEditorAction() {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static final class Handler extends EditorActionHandler {
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
       return editor instanceof EditorEx;
@@ -161,7 +161,7 @@ final class AccessingInternalJdkFontApi {
   private static final FontRenderContext DUMMY_CONTEXT = new FontRenderContext(null, false, false);
 
   @SuppressWarnings("InstanceofIncompatibleInterface")
-  static List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
+  static @Unmodifiable List<String> getRelevantComponents(@NotNull Font font, @NotNull CharSequence text, int startOffset, int endOffset)
     throws Exception {
     if (GET_FONT_2D_METHOD != null) {
       Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);

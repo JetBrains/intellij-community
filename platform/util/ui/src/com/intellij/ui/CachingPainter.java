@@ -38,7 +38,7 @@ public final class CachingPainter {
                            @NotNull Object key, Object @NotNull ... parameters) {
     GraphicsConfiguration config = g.getDeviceConfiguration();
     float scale = JBUIScale.sysScale(config);
-    if ((int) scale != scale) {
+    if ((int) scale != scale || config == null) {
       // fractional-scale setups are not supported currently
       paintAndDispose((Graphics2D)g.create(), _g -> {
         _g.setComposite(AlphaComposite.SrcOver);
@@ -96,7 +96,7 @@ public final class CachingPainter {
     private final VolatileImage image;
     private final AffineTransform deviceTransform;
 
-    private CachedPainting(GraphicsConfiguration config, float width, float height, int widthInt, int heightInt, Object[] parameters) {
+    private CachedPainting(@NotNull GraphicsConfiguration config, float width, float height, int widthInt, int heightInt, Object[] parameters) {
       this.width = width;
       this.height = height;
       this.parameters = parameters;
@@ -104,7 +104,7 @@ public final class CachingPainter {
       this.deviceTransform = config.getDefaultTransform();
     }
 
-    private boolean matches(GraphicsConfiguration config, float width, float height, Object[] parameters) {
+    private boolean matches(@NotNull GraphicsConfiguration config, float width, float height, Object[] parameters) {
       return this.width == width &&
              this.height == height &&
              Objects.equals(deviceTransform, config.getDefaultTransform()) &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -28,9 +28,8 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
     super(memberInfos, memberInfoModel, abstractColumnHeader);
   }
 
-  @Nullable
   @Override
-  protected Object getAbstractColumnValue(MemberInfo memberInfo) {
+  protected @Nullable Object getAbstractColumnValue(MemberInfo memberInfo) {
     if (!(memberInfo.getMember() instanceof PsiMethod method)) return null;
     if (memberInfo.isStatic()) return null;
 
@@ -82,7 +81,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
   @Override
   protected Icon getOverrideIcon(MemberInfo memberInfo) {
     PsiMember member = memberInfo.getMember();
-    Icon overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;
+    Icon overrideIcon = AbstractMemberSelectionTable.EMPTY_OVERRIDE_ICON;
     if (member instanceof PsiMethod) {
       if (Boolean.TRUE.equals(memberInfo.getOverrides())) {
         overrideIcon = AllIcons.General.OverridingMethod;
@@ -91,7 +90,7 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
         overrideIcon = AllIcons.General.ImplementingMethod;
       }
       else {
-        overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;
+        overrideIcon = AbstractMemberSelectionTable.EMPTY_OVERRIDE_ICON;
       }
     }
     return overrideIcon;

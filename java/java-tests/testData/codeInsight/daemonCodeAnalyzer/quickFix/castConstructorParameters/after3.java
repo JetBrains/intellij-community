@@ -1,4 +1,4 @@
-// "Cast 1st argument to 'double'" "true-preview"
+// "Convert 1st argument to 'double'" "true-preview"
 class x {}
 class a extends x {
     a(a a) {}

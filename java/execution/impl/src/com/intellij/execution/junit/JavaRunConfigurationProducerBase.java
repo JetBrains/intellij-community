@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
@@ -73,9 +73,8 @@ public abstract class JavaRunConfigurationProducerBase<T extends ModuleBasedConf
     return scope;
   }
 
-  @Nullable
   @Override
-  public ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
+  public @Nullable ConfigurationFromContext createConfigurationFromContext(@NotNull ConfigurationContext context) {
     ConfigurationFromContext fromContext = super.createConfigurationFromContext(context);
     if (fromContext != null) {
       JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration((RunConfigurationBase)fromContext.getConfiguration(),

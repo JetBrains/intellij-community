@@ -1,4 +1,4 @@
-// DISABLE-ERRORS
+// DISABLE_ERRORS
 fun (String.() -> String).foo(x : String) {
     x.<selection>this</selection>()
     x.this()

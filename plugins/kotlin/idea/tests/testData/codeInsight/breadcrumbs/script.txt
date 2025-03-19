@@ -1,0 +1,4 @@
+Crumbs:
+  plugins{…}
+Tooltips:
+  lambda <b><code>Script.&lt;anonymous&gt;()</code></b>

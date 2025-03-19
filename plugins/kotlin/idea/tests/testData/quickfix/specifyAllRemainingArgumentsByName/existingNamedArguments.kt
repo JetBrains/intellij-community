@@ -1,0 +1,10 @@
+// "Specify all remaining arguments by name" "true"
+// WITH_STDLIB
+fun foo(a: Int, b: Int, c: Int) {}
+
+fun test() {
+    foo(c = 5<caret>)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyAllRemainingArgumentsByNameFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyAllRemainingArgumentsByNameFix

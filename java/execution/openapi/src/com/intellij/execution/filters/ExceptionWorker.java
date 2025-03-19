@@ -1,14 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ExceptionWorker {
-  @NonNls private static final String AT = "at";
+  private static final @NonNls String AT = "at";
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
 
@@ -59,36 +61,48 @@ public class ExceptionWorker {
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
-  private static int findRParenAfterLocation(@NotNull String line) {
-    int afterDigit = -1;
-    int rParenCandidate = line.lastIndexOf(')');
-    boolean singleOccurrence = true;
-    while (rParenCandidate > 0) {
-      if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
-        afterDigit = rParenCandidate;
+  /**
+   * Returns the location of the leftmost closing bracket following a digit: '\d)'
+   * If there is no such pattern in the line, but there is a single closing bracket, then returns its location.
+   * If there are no closing brackets at all, or more than one closing bracket (but none of them following a digit), then returns -1.
+   */
+  private static int findRParenAfterLocation(@NotNull String line, int startIdx) {
+    int singleRParen = line.indexOf(')', startIdx);
+    int next = singleRParen;
+    while (next > -1) {
+      if (next >= 1 && Character.isDigit(line.charAt(next - 1))) {
+        return next;
       }
-      int prev = line.lastIndexOf(')', rParenCandidate - 1);
-      if (prev < 0 && singleOccurrence) {
-        return rParenCandidate;
+      next = line.indexOf(')', next + 1);
+      if (next != -1) { // found a second closing bracket
+        singleRParen = -1;
       }
-      rParenCandidate = prev;
-      singleOccurrence = false;
     }
-    return afterDigit;
+    return singleRParen;
   }
 
-  @Nullable
-  public static ParsedLine parseExceptionLine(@NotNull String line) {
+  public static @Nullable ParsedLine parseExceptionLine(@NotNull String line) {
     ParsedLine result = parseNormalStackTraceLine(line);
     if (result == null) result = parseYourKitLine(line);
     if (result == null) result = parseForcedLine(line);
+    if (result == null) result = parseLinchekLine(line);
     return result;
   }
 
-  @Nullable
-  private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseNormalStackTraceLine(@NotNull String line) {
+    return parseStackTraceLine(line, false);
+  }
+
+  private static @Nullable ParsedLine parseLinchekLine(@NotNull String line) {
+    if (line.startsWith("|")) {
+      return parseStackTraceLine(line, true);
+    }
+    return null;
+  }
+
+  private static @Nullable ParsedLine parseStackTraceLine(@NotNull String line, boolean searchForRParenOnlyAfterAt) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findRParenAfterLocation(line);
+    int rParenIdx = findRParenAfterLocation(line, searchForRParenOnlyAfterAt ? startIdx : 0);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
@@ -100,13 +114,19 @@ public class ExceptionWorker {
     int classNameIdx;
     if (moduleIdx > -1 && moduleIdx < dotIdx && !line.startsWith("0x", moduleIdx + 1)) {
       classNameIdx = moduleIdx + 1;
+      // `//` is used as a separator in an unnamed module with a class loader name
+      if (line.charAt(classNameIdx) == '/') {
+        classNameIdx++;
+      }
     }
     else {
       if (startIdx >= 0) {
         // consider STANDALONE_AT here
         classNameIdx = startIdx + 1 + AT.length() + (line.charAt(startIdx) == 'a' ? 0 : 1);
       } else {
-        classNameIdx = 0;
+        //sometimes stacktrace can start with some whitespaces (for example, for hprof -> \t), let's eat them
+        classNameIdx = StringUtil.findFirst(line, CharFilter.NOT_WHITESPACE_FILTER);
+        if (classNameIdx < 0) classNameIdx = 0; //let's keep it safe
       }
     }
 
@@ -115,8 +135,7 @@ public class ExceptionWorker {
                                             lParenIdx + 1, rParenIdx, line);
   }
 
-  @NotNull
-  private static TextRange trimRange(@NotNull String line, @NotNull TextRange range) {
+  private static @NotNull TextRange trimRange(@NotNull String line, @NotNull TextRange range) {
     int start = handleSpaces(line, range.getStartOffset(), 1);
     int end = handleSpaces(line, range.getEndOffset(), -1);
     if (start != range.getStartOffset() || end != range.getEndOffset()) {
@@ -125,8 +144,7 @@ public class ExceptionWorker {
     return range;
   }
 
-  @Nullable
-  private static ParsedLine parseYourKitLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseYourKitLine(@NotNull String line) {
     int lineEnd = line.length() - 1;
     if (lineEnd > 0 && line.charAt(lineEnd) == '\n') lineEnd--;
     if (lineEnd > 0 && Character.isDigit(line.charAt(lineEnd))) {
@@ -145,8 +163,7 @@ public class ExceptionWorker {
     return null;
   }
 
-  @Nullable
-  private static ParsedLine parseForcedLine(@NotNull String line) {
+  private static @Nullable ParsedLine parseForcedLine(@NotNull String line) {
     String dash = "- ";
     if (!line.trim().startsWith(dash)) return null;
 
@@ -189,10 +206,10 @@ public class ExceptionWorker {
   }
 
   public static class ParsedLine {
-    @NotNull public final TextRange classFqnRange;
-    @NotNull public final TextRange methodNameRange;
-    @NotNull public final TextRange fileLineRange;
-    @Nullable public final String fileName;
+    public final @NotNull TextRange classFqnRange;
+    public final @NotNull TextRange methodNameRange;
+    public final @NotNull TextRange fileLineRange;
+    public final @Nullable String fileName;
     public final int lineNumber;
 
     ParsedLine(@NotNull TextRange classFqnRange,
@@ -205,10 +222,9 @@ public class ExceptionWorker {
       this.lineNumber = lineNumber;
     }
 
-    @Nullable
-    private static ParsedLine createFromFileAndLine(@NotNull TextRange classFqnRange,
-                                                    @NotNull TextRange methodNameRange,
-                                                    int fileLineStart, int fileLineEnd, @NotNull String line) {
+    private static @Nullable ParsedLine createFromFileAndLine(@NotNull TextRange classFqnRange,
+                                                              @NotNull TextRange methodNameRange,
+                                                              int fileLineStart, int fileLineEnd, @NotNull String line) {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -68,8 +68,7 @@ public interface VcsLog {
   /**
    * {@link #jumpToReference(String, boolean)} with focusing VCS Log table
    */
-  @NotNull
-  default Future<Boolean> jumpToReference(@NotNull String reference) {
+  default @NotNull Future<Boolean> jumpToReference(@NotNull String reference) {
     return jumpToReference(reference, true);
   }
 
@@ -88,8 +87,7 @@ public interface VcsLog {
   /**
    * {@link #jumpToCommit(Hash, VirtualFile, boolean)} with focusing VCS Log table
    */
-  @NotNull
-  default Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
+  default @NotNull Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     return jumpToCommit(commitHash, root, true);
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
@@ -49,8 +49,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
   }
 
   @Override
-  @NotNull
-  public Module createModule(@NotNull ModifiableModuleModel moduleModel)
+  public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     LOG.assertTrue(getName() != null);
 
@@ -96,7 +95,7 @@ public final class ExistingModuleLoader extends ModuleBuilder {
       usedMacros.remove(PathMacroUtil.DEPRECATED_MODULE_DIR);
       usedMacros.removeAll(PathMacros.getInstance().getAllMacroNames());
 
-      if (usedMacros.size() > 0) {
+      if (!usedMacros.isEmpty()) {
         final boolean ok = ProjectMacrosUtil.showMacrosConfigurationDialog(currentProject, usedMacros);
         if (!ok) {
           return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,21 +14,19 @@ import java.util.Comparator;
 /**
  * @author Dennis.Ushakov
  */
-class MoveLineHandler extends BaseMoveHandler {
+final class MoveLineHandler extends BaseMoveHandler {
   MoveLineHandler(boolean down) {
     super(down);
   }
 
-  @Nullable
   @Override
-  protected PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
+  protected @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
     // "Move line" performs simple textual change, and doesn't use PsiFile at all, there's no need to commit the document.
     return null;
   }
 
   @Override
-  @Nullable
-  protected MoverWrapper getSuitableMover(@NotNull final Editor editor, @Nullable final PsiFile file) {
+  protected @Nullable MoverWrapper getSuitableMover(final @NotNull Editor editor, final @Nullable PsiFile file) {
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
     info.indentTarget = false;
     if (LineMover.checkLineMoverAvailable(editor, info, isDown)) {
@@ -44,7 +42,7 @@ class MoveLineHandler extends BaseMoveHandler {
     return super.isEnabledForCaret(editor, caret, dataContext) && isCurrentCaretFirstInItsLine(editor);
   }
 
-  private boolean isCurrentCaretFirstInItsLine(@NotNull Editor editor) {
+  private static boolean isCurrentCaretFirstInItsLine(@NotNull Editor editor) {
     final Caret currentCaret = editor.getCaretModel().getCurrentCaret();
     final int currentCaretLine = currentCaret.getLogicalPosition().line;
     final Caret firstCaretInLine = editor.getCaretModel().getAllCarets().stream()

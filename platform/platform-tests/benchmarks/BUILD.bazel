@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.platform.benchmarks` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "benchmarks_test",
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:jmh-core",
+    "@lib//:jmh-generator-annprocess",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:fastutil-min",
+    "//platform/diagnostic/telemetry",
+    "//platform/diagnostic/telemetry:telemetry_test_lib",
+    "//platform/util/storages:io-storages",
+    "//platform/indexing-impl",
+    "//platform/lang-impl",
+    "//platform/util:util-tests_test_lib",
+  ]
+)
+### auto-generated section `build intellij.platform.benchmarks` end

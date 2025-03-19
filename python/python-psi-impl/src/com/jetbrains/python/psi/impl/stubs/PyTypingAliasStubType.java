@@ -17,14 +17,24 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.ast.impl.PyUtilCore;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType;
 import com.jetbrains.python.psi.stubs.PyTypingAliasStub;
+import org.jetbrains.annotations.ApiStatus;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +47,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
-public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
+public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypingAliasStub> {
   private static final int STRING_LITERAL_LENGTH_THRESHOLD = 100;
 
   private static final Pattern TYPE_ANNOTATION_LIKE = Pattern.compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*" +
@@ -52,15 +62,13 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
                                                                                  PyElementTypes.STRING_LITERAL_EXPRESSION,
                                                                                  PyElementTypes.NONE_LITERAL_EXPRESSION);
 
-  @Nullable
   @Override
-  public PyTypingAliasStub createStub(PyTargetExpression psi) {
+  public @Nullable PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
     final PyExpression value = getAssignedValueIfTypeAliasLike(psi, true);
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
 
-  @Nullable
-  private static PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
+  private static @Nullable PyExpression getAssignedValueIfTypeAliasLike(@NotNull PyTargetExpression target, boolean forStubCreation) {
     if (!PyUtil.isTopLevel(target) || !looksLikeTypeAliasTarget(target)) {
       return null;
     }
@@ -84,7 +92,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
       return false;
     }
     final String name = target.getName();
-    if (name == null || PyUtil.isSpecialName(name)) {
+    if (name == null || PyUtilCore.isSpecialName(name)) {
       return false;
     }
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(target, PyAssignmentStatement.class);
@@ -96,31 +104,45 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
   }
 
   private static boolean isExplicitTypeAlias(@NotNull PyTargetExpression target) {
-    String typeHintText = "";
     PyAnnotation annotation = target.getAnnotation();
     if (annotation != null) {
       PyExpression value = annotation.getValue();
-      if (value != null) {
-        typeHintText = value.getText();
+      if (value instanceof PyReferenceExpression referenceExpression) {
+        return StreamEx.of(PyResolveUtil.resolveImportedElementQNameLocally(referenceExpression))
+          .map(QualifiedName::toString)
+          .anyMatch(name -> name.equals(PyTypingTypeProvider.TYPE_ALIAS) || name.equals(PyTypingTypeProvider.TYPE_ALIAS_EXT));
       }
     }
     else {
-      typeHintText = StringUtil.notNullize(target.getTypeCommentAnnotation());
+      String typeHintText = StringUtil.notNullize(target.getTypeCommentAnnotation());
+      return typeHintText.equals("TypeAlias") || typeHintText.endsWith(".TypeAlias");
     }
-    return typeHintText.equals("TypeAlias") || typeHintText.endsWith(".TypeAlias");
+    return false;
   }
 
-  private static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
+  @ApiStatus.Internal
+  public static boolean looksLikeTypeHint(@NotNull PyExpression expression) {
     final PyCallExpression call = as(expression, PyCallExpression.class);
     if (call != null) {
       final PyReferenceExpression callee = as(call.getCallee(), PyReferenceExpression.class);
-      return callee != null && ("TypeVar".equals(callee.getReferencedName()) || "ParamSpec".equals(callee.getReferencedName()));
+      return callee != null &&
+             ("TypeVar".equals(callee.getReferencedName()) || "TypeVarTuple".equals(callee.getReferencedName()) ||
+              "ParamSpec".equals(callee.getReferencedName()));
+
     }
 
     final PyStringLiteralExpression pyString = as(expression, PyStringLiteralExpression.class);
     if (pyString != null) {
+      if (pyString.isInterpolated()) { // f-strings are not allowed
+        return false;
+      }
       if (pyString.getStringNodes().size() != 1 || pyString.getTextLength() > STRING_LITERAL_LENGTH_THRESHOLD) {
         return false;
+      }
+      else {
+        if (!pyString.getStringElements().get(0).getPrefix().isEmpty()) { // prefixed strings are not allowed
+          return false;
+        }
       }
       final String content = pyString.getStringValue();
       return TYPE_ANNOTATION_LIKE.matcher(content).matches();
@@ -129,11 +151,22 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     if (expression instanceof PyReferenceExpression || expression instanceof PySubscriptionExpression) {
       return isSyntacticallyValidAnnotation(expression);
     }
+    if (expression instanceof PyBinaryExpression binaryExpression) {
+      if (binaryExpression.getOperator() == PyTokenTypes.OR) {
+        PyExpression leftOperand = binaryExpression.getLeftExpression();
+        PyExpression rightOperand = binaryExpression.getRightExpression();
+        return leftOperand != null && rightOperand != null &&
+               isSyntacticallyValidAnnotation(leftOperand) && isSyntacticallyValidAnnotation(rightOperand);
+      }
+    }
 
     return false;
   }
 
   private static boolean isSyntacticallyValidAnnotation(@NotNull PyExpression expression) {
+    if (expression instanceof PyBinaryExpression) {
+      return looksLikeTypeHint(expression);
+    }
     return PsiTreeUtil.processElements(expression, element -> {
       // Check only composite elements
       if (element instanceof ASTDelegatePsiElement) {
@@ -149,9 +182,8 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
     });
   }
 
-  @Nullable
   @Override
-  public PyTypingAliasStub deserializeStub(StubInputStream stream) throws IOException {
+  public @Nullable PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
     String ref = stream.readNameString();
     return ref != null ? new PyTypingTypeAliasStubImpl(ref) : null;
   }
@@ -165,8 +197,7 @@ public class PyTypingAliasStubType extends CustomTargetExpressionStubType<PyTypi
    *
    * @see PyTypingAliasStub
    */
-  @Nullable
-  public static PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
+  public static @Nullable PyExpression getAssignedValueStubLike(@NotNull PyTargetExpression target) {
     final PyTargetExpressionStub stub = target.getStub();
     PyExpression result = null;
     if (stub != null) {

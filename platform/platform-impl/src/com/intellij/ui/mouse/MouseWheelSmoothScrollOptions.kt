@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mouse
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
@@ -18,6 +19,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.not
+import com.intellij.util.Alarm
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.JBAnimatorHelper
 import com.intellij.util.animation.animation
@@ -31,7 +33,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Point2D
 import java.util.concurrent.TimeUnit
 
-internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
+internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val settings = UISettings.getInstance().state
     val points = settings.animatedScrollingCurvePoints
@@ -129,7 +131,7 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
 
   private class BezierPainterWithAnimation(x1: Double, y1: Double, x2: Double, y2: Double) : BezierPainter(x1, y1, x2, y2), Disposable {
 
-    val animator = JBAnimator(JBAnimator.Thread.POOLED_THREAD, this).apply {
+    val animator = JBAnimator(Alarm.ThreadToUse.POOLED_THREAD, this).apply {
       period = 1
       isCyclic = true
       name = "Bezier Painter Animation Test"
@@ -189,9 +191,8 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
       if (frames.isNotEmpty()) {
         GraphicsUtil.setupAntialiasing(g)
         g.color = UIUtil.getLabelDisabledForeground()
-        val b = bounds
         val text = IdeBundle.message("label.smooth.scrolling.bezier.panel.updates", frames.size)
-        g.drawString(text, width / 16, b.height - 5)
+        g.drawString(text, width / 16, bounds.height - 5)
       }
     }
 

@@ -39,15 +39,13 @@ public class CreateTemplateFix implements LocalQuickFix {
     myName = name;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return XPathBundle.message("intention.name.create.template", myName);
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XPathBundle.message("intention.family.name.create.template");
   }
 

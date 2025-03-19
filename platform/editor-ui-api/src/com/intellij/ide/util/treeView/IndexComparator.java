@@ -5,7 +5,16 @@ package com.intellij.ide.util.treeView;
 import java.util.Comparator;
 
 public final class IndexComparator implements Comparator<NodeDescriptor<?>> {
+
+  /**
+   * @deprecated use {@link #getInstance()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static final IndexComparator INSTANCE = new IndexComparator();
+
+  public static IndexComparator getInstance() {
+    return INSTANCE;
+  }
 
   private IndexComparator() {}
 

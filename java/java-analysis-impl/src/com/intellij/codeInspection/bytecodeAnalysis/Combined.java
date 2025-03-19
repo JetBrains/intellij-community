@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -316,8 +316,7 @@ final class CombinedAnalysis {
       .toList();
   }
 
-  @Nullable
-  private static Equation outEquation(boolean exception, Member member, BasicValue returnValue, boolean stable) {
+  private static @Nullable Equation outEquation(boolean exception, Member member, BasicValue returnValue, boolean stable) {
     final EKey key = new EKey(member, Out, stable);
     final Result result;
     if (exception) {
@@ -583,8 +582,7 @@ final class CombinedInterpreter extends BasicInterpreter {
     return track(origin, super.naryOperation(insn, values));
   }
 
-  @NotNull
-  private TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
+  private @NotNull TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
     Type retType = Type.getReturnType(method.methodDesc);
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;

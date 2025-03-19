@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.xml.actions.generate;
 
@@ -33,17 +33,14 @@ public abstract class DefaultGenerateElementProvider<T extends DomElement> exten
   }
 
   @Override
-  @Nullable
-  public T generate(final Project project, final Editor editor, final PsiFile file) {
+  public @Nullable T generate(final Project project, final Editor editor, final PsiFile file) {
     return generate(getParentDomElement(project, editor, file), editor);
   }
 
-  @Nullable
-  protected abstract DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
+  protected abstract @Nullable DomElement getParentDomElement(final Project project, final Editor editor, final PsiFile file);
 
   @SuppressWarnings({"unchecked"})
-  @Nullable
-  public T generate(@Nullable final DomElement parent, final Editor editor) {
+  public @Nullable T generate(final @Nullable DomElement parent, final Editor editor) {
     if (parent == null) {
       return null;
     }

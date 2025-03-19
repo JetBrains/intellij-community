@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -84,10 +84,12 @@ public class SwitchEvaluator implements Evaluator {
 
   static class SwitchCaseEvaluator implements Evaluator {
     final List<? extends Evaluator> myEvaluators;
+    final @Nullable Evaluator myGuardEvaluator;
     final boolean myDefaultCase;
 
-    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase) {
+    SwitchCaseEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase) {
       myEvaluators = evaluators;
+      myGuardEvaluator = guardEvaluator;
       myDefaultCase = defaultCase;
     }
 
@@ -99,7 +101,11 @@ public class SwitchEvaluator implements Evaluator {
       }
       for (Evaluator evaluator : myEvaluators) {
         if (evaluator instanceof PatternLabelEvaluator) {
-          return ((BooleanValue)evaluator.evaluate(context)).booleanValue();
+          if (((BooleanValue)evaluator.evaluate(context)).booleanValue() &&
+              (myGuardEvaluator == null || myGuardEvaluator.evaluate(context) instanceof BooleanValue bool && bool.booleanValue())) {
+            return true;
+          }
+          continue;
         }
         Object labelValue = evaluator.evaluate(context);
         Object unboxedLabelValue = labelValue != null ? UnBoxingEvaluator.unbox(labelValue, context) : null;
@@ -129,8 +135,8 @@ public class SwitchEvaluator implements Evaluator {
   static class SwitchCaseRuleEvaluator extends SwitchCaseEvaluator {
     final Evaluator myBodyEvaluator;
 
-    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, boolean defaultCase, Evaluator bodyEvaluator) {
-      super(evaluators, defaultCase);
+    SwitchCaseRuleEvaluator(List<? extends Evaluator> evaluators, @Nullable Evaluator guardEvaluator, boolean defaultCase, Evaluator bodyEvaluator) {
+      super(evaluators, guardEvaluator, defaultCase);
       myBodyEvaluator = bodyEvaluator;
     }
 
@@ -145,7 +151,7 @@ public class SwitchEvaluator implements Evaluator {
   }
 
   static class YieldEvaluator implements Evaluator {
-    @Nullable final Evaluator myValueEvaluator;
+    final @Nullable Evaluator myValueEvaluator;
 
     YieldEvaluator(@Nullable Evaluator valueEvaluator) {
       myValueEvaluator = valueEvaluator;
@@ -154,7 +160,7 @@ public class SwitchEvaluator implements Evaluator {
     @Override
     public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
       Object value = myValueEvaluator == null ?
-                     context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid() :
+                     context.getVirtualMachineProxy().mirrorOfVoid() :
                      myValueEvaluator.evaluate(context);
       throw new YieldException(value);
     }

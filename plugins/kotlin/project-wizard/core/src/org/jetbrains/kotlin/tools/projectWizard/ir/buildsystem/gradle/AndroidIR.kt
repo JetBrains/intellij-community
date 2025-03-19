@@ -13,7 +13,7 @@ data class AndroidConfigIR(
     val javaPackage: JavaPackage?,
     val isApplication: Boolean,
     val useCompose: Boolean,
-    var androidSdkVersion: String = "32",
+    var androidSdkVersion: String = "33",
 ) : AndroidIR, FreeIR {
     override fun GradlePrinter.renderGradle() {
         sectionCall("android", needIndent = true) {

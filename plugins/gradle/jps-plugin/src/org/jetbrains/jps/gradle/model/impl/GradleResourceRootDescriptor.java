@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 
@@ -13,7 +13,7 @@ import java.io.FileFilter;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleResourceRootDescriptor extends BuildRootDescriptor {
+public final class GradleResourceRootDescriptor extends BuildRootDescriptor {
   private static final Logger LOG = Logger.getInstance(GradleResourceRootDescriptor.class);
   private final GradleResourcesTarget myTarget;
   private final ResourceRootConfiguration myConfig;
@@ -29,7 +29,7 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
                                       boolean overwrite) {
     myTarget = target;
     myConfig = config;
-    final String path = FileUtil.toCanonicalPath(config.directory);
+    final String path = FileUtilRt.toCanonicalPath(config.directory, File.separatorChar, true);
     myFile = new File(path);
     myId = path;
     myIndexInPom = indexInPom;
@@ -55,9 +55,8 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
     return myTarget;
   }
 
-  @NotNull
   @Override
-  public FileFilter createFileFilter() {
+  public @NotNull FileFilter createFileFilter() {
     try {
       return new GradleResourceFileFilter(myFile, myConfig);
     }
@@ -65,11 +64,6 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
       LOG.warn("Can not create resource file filter", e);
     }
     return FileFilters.EVERYTHING;
-  }
-
-  @Override
-  public boolean canUseFileCache() {
-    return true;
   }
 
   public int getIndexInPom() {

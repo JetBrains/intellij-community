@@ -18,8 +18,10 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import com.intellij.util.containers.ContainerUtil;
+import kotlin.text.StringsKt;
 import one.util.streamex.IntStreamEx;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
@@ -58,6 +60,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
     Assertions.assertArrayEquals(new int[]{0, extracted.length()}, extracted.markupOffsets());
   }
 
+  public void testMarkdownShortRefLink() {
+    TextContent extracted = extractText("a.md", "go to [link] and validate\n[link] : http://localhost", 3);
+    assertEquals("go to link and validate\nlink : http://localhost", unknownOffsets(extracted));
+    Assertions.assertArrayEquals(new int[]{6, 10, 24, 28}, extracted.markupOffsets());
+  }
+
   public void testMarkdownIndent() {
     TextContent extracted = extractText("a.md", "* first line \n  second line", 3);
     assertEquals("first line\nsecond line", unknownOffsets(extracted));
@@ -70,8 +78,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testHtmlNbsp() {
-    assertEquals("hello world", unknownOffsets(extractText("a.md", "hello&nbsp;world", 3)));
-    assertEquals("hello world", unknownOffsets(extractText("a.html", "hello&nbsp;world", 3)));
+    assertEquals("hello world", unknownOffsets(extractText("a.md", "hello&nbsp;world", 3)));
+    assertEquals("hello world", unknownOffsets(extractText("a.html", "hello&nbsp;world", 3)));
   }
   public void testMarkdownInlineCode() {
     TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
@@ -107,11 +115,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testBrokenPropertyMessageFormat() {
-    assertEquals("a |", unknownOffsets(extractText("a.properties", "a=a {0, choice, 1#1 code fragment|2#{0,number} code fragments", 4)));
+    assertEquals("a|", unknownOffsets(extractText("a.properties", "a=a {0, choice, 1#1 code fragment|2#{0,number} code fragments", 4)));
   }
 
   public void testExcludePropertyHtml() {
-    assertEquals("Hello |World", unknownOffsets(extractText("a.properties", "a=<html>Hello <p/>World</html>", 8)));
+    List<TextContent> texts = extractTexts("a.properties", "a=<html>Hello <p/><i>World</i></html>", 8, PsiElement.class);
+    assertEquals(List.of("Hello", "World"), ContainerUtil.map(texts, TextContentTest::unknownOffsets));
   }
 
   public void testMultiLineCommentInProperties() {
@@ -135,10 +144,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
       * @return the offset of {@link #bar} in something
       * @throws Exception when something happens
        */""";
-    TextContent text = extractText("a.java", docText, 6);
-    assertEquals("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |\n|is unknown.", unknownOffsets(text));
+    assertEquals(
+      List.of("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |one| two", "three| four|\n|is unknown."),
+      ContainerUtil.map(extractTexts("a.java", docText, 6, PsiDocComment.class), TextContentTest::unknownOffsets));
 
-    text = extractText("a.java", docText, docText.indexOf("the offset"));
+    TextContent text = extractText("a.java", docText, docText.indexOf("the offset"));
     assertEquals("the offset of  in something", text.toString());
 
     text = extractText("a.java", docText, docText.indexOf("without"));
@@ -146,6 +156,21 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     text = extractText("a.java", docText, docText.indexOf("when something"));
     assertEquals("when something happens", text.toString());
+  }
+
+  public void testSnippet() {
+    String docText = """
+      /**
+      * Before snippet
+      * {@snippet id="snippetId" lang="java" :
+      *   int foo = 1; // comment 1
+      *   // comment 2
+      *   class Foo {} // @highlight substring="Foo"
+      * }
+      * After snippet
+       */""";
+    TextContent text = extractText("a.java", docText, 6);
+    assertEquals("Before snippet\n\nAfter snippet", text.toString());
   }
 
   public void testJavaLiteral() {
@@ -213,8 +238,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
     int offset2 = text.indexOf("\n<!ENTITY");
     PsiFile file = myFixture.configureByText("a.xml", text);
 
-    PlatformTestUtil
-      .startPerformanceTest("text extraction", 1_000, () -> {
+    Benchmark
+      .newBenchmark("text extraction", () -> {
         assertEquals("content", TextExtractor.findTextAt(file, offset1, TextContent.TextDomain.ALL).toString());
         assertNull(TextExtractor.findTextAt(file, offset2, TextContent.TextDomain.ALL));
       })
@@ -222,7 +247,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
         myFixture.type(' ');
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
       })
-      .assertTiming();
+      .start();
   }
 
   public void testLargeXmlWithUnclosedDoctypePerformance() {
@@ -231,8 +256,8 @@ public class TextExtractionTest extends BasePlatformTestCase {
                   " </rules>";
     PsiFile file = myFixture.configureByText("a.xml", text);
 
-    PlatformTestUtil
-      .startPerformanceTest("text extraction", 1_500, () -> {
+    Benchmark
+      .newBenchmark("text extraction", () -> {
         for (PsiElement element : SyntaxTraverser.psiTraverser(file)) {
           TextExtractor.findTextsAt(element, TextContent.TextDomain.ALL);
         }
@@ -241,7 +266,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
         myFixture.type(' ');
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
       })
-      .assertTiming();
+      .start();
   }
 
   private void checkHtmlXml(boolean inlineTagsSupported) {
@@ -252,8 +277,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
     }
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<b>abc</b>", 4)));
 
-    assertEquals("|characters with markup\nand without it|",
-                 unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]>and without it</b>", 22)));
+    {
+      String text = "<b><![CDATA[\n   characters with markup\n]]>and without it</b>";
+      assertEquals("characters with markup", unknownOffsets(extractText("a.xml", text, 22)));
+      assertEquals("and without it|", unknownOffsets(extractText("a.xml", text, 45)));
+    }
 
     assertEquals("abcd efg", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd efg\"/>", 14)));
     assertEquals("comment", extractText("a.xml", "<!-- comment -->", 10).toString());
@@ -264,6 +292,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertNull(extractText("a.html", "<code>abc</code>def", 7));
     assertEquals("|def", unknownOffsets(extractText("a.html", "<code>abc</code>def", 18)));
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<code>abc</code>", 6)));
+
+    // exclude entities
+    assertEquals(inlineTagsSupported ? "A | B\tC" : "|A | B|\t|C|",
+                 unknownOffsets(extractText("a.html", "<b>A &amp; B &#9; C</b>", 4)));
 
     if (inlineTagsSupported) {
       String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
@@ -290,9 +322,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     String expected = "b".repeat(10_000);
     PsiFile file = myFixture.configureByText("a.xml", text);
     TextContentBuilder builder = TextContentBuilder.FromPsi.excluding(e -> e instanceof XmlTag);
-    PlatformTestUtil.startPerformanceTest("TextContent building with concatenation", 200, () -> {
+    Benchmark.newBenchmark("TextContent building with concatenation", () -> {
       assertEquals(expected, builder.build(file, TextContent.TextDomain.PLAIN_TEXT).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_removingIndents() {
@@ -301,9 +333,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "/*\n" + text + "*/");
     PsiComment comment = assertInstanceOf(file.findElementAt(10), PsiComment.class);
     TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" ");
-    PlatformTestUtil.startPerformanceTest("TextContent building with indent removing", 200, () -> {
+    Benchmark.newBenchmark("TextContent building with indent removing", () -> {
       assertEquals(expected, builder.build(comment, TextContent.TextDomain.COMMENTS).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_removingHtml() {
@@ -312,20 +344,20 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "/**\n" + text + "*/");
     PsiDocComment comment = PsiTreeUtil.findElementOfClassAtOffset(file, 10, PsiDocComment.class, false);
     TextExtractor extractor = new JavaTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building with HTML removal", 200, () -> {
-      assertEquals(expected, extractor.buildTextContent(comment, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    Benchmark.newBenchmark("TextContent building with HTML removal", () -> {
+      assertEquals(expected, assertOneElement(extractor.buildTextContents(comment, TextContent.TextDomain.ALL)).toString());
+    }).start();
   }
 
   public void testBuildingPerformance_removingNbsp() {
     String text = "b&nbsp;".repeat(10_000);
-    String expected = "b ".repeat(10_000).trim();
+    String expected = StringsKt.trim("b ".repeat(10_000)).toString();
     PsiFile file = myFixture.configureByText("a.md", text);
     var psi = PsiTreeUtil.findElementOfClassAtOffset(file, 10, MarkdownParagraph.class, false);
     TextExtractor extractor = new MarkdownTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building with nbsp removal", 200, () -> {
+    Benchmark.newBenchmark("TextContent building with nbsp removal", () -> {
       assertEquals(expected, extractor.buildTextContent(psi, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    }).start();
   }
 
   public void testBuildingPerformance_longTextFragment() {
@@ -335,9 +367,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", "class C { String s = \"\"\"\n" + text + "\"\"\"; }");
     var literal = PsiTreeUtil.findElementOfClassAtOffset(file, 100, PsiLiteralExpression.class, false);
     var extractor = new JavaTextExtractor();
-    PlatformTestUtil.startPerformanceTest("TextContent building from a long text fragment", 200, () -> {
-      assertEquals(expected, extractor.buildTextContent(literal, TextContent.TextDomain.ALL).toString());
-    }).assertTiming();
+    Benchmark.newBenchmark("TextContent building from a long text fragment", () -> {
+      assertEquals(expected, assertOneElement(extractor.buildTextContents(literal, TextContent.TextDomain.ALL)).toString());
+    }).start();
   }
 
   public void testBuildingPerformance_complexPsi() {
@@ -346,12 +378,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
     PsiFile file = myFixture.configureByText("a.java", text);
     TextExtractor extractor = new JavaTextExtractor();
     PsiElement tag = PsiTreeUtil.findElementOfClassAtOffset(file, text.indexOf("something"), PsiDocTag.class, false);
-    PlatformTestUtil.startPerformanceTest("TextContent building from complex PSI", 400, () -> {
+    Benchmark.newBenchmark("TextContent building from complex PSI", () -> {
       for (int i = 0; i < 10; i++) {
-        TextContent content = extractor.buildTextContent(tag, TextContent.TextDomain.ALL);
+        TextContent content = assertOneElement(extractor.buildTextContents(tag, TextContent.TextDomain.ALL));
         assertEquals("something if  is not too expensive", content.toString());
       }
-    }).assertTiming();
+    }).start();
   }
 
 
@@ -386,9 +418,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
     return extractText(fileName, fileText, offset, getProject());
   }
 
-  public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
+  private List<TextContent> extractTexts(String fileName, String text, int offset, Class<? extends PsiElement> psi) {
+    PsiFile file = createFile(fileName, text, getProject());
+    return TextExtractor.findTextsAt(PsiTreeUtil.findElementOfClassAtOffset(file, offset, psi, false), TextContent.TextDomain.ALL);
+  }
+
+  private static PsiFile createFile(String fileName, String fileText, Project project) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, fileText);
-    return TextExtractor.findTextAt(file, offset, TextContent.TextDomain.ALL);
+    return PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, fileText);
+  }
+
+  public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
+    return TextExtractor.findTextAt(createFile(fileName, fileText, project), offset, TextContent.TextDomain.ALL);
   }
 }

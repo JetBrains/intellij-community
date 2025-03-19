@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.actions.JvmDropFrameActionHandler;
 import com.intellij.debugger.actions.JvmSmartStepIntoActionHandler;
+import com.intellij.debugger.actions.ResumeAllJavaThreadsActionHandler;
 import com.intellij.debugger.engine.dfaassist.DfaAssist;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -31,7 +33,6 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
@@ -51,8 +52,10 @@ import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.impl.ThreadsActionsProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
 import com.intellij.xdebugger.memory.component.MemoryViewManager;
@@ -83,13 +86,13 @@ public class JavaDebugProcess extends XDebugProcess {
     process -> new JavaBreakpointHandler.JavaCollectionBreakpointHandler(process)
   };
 
-  public static JavaDebugProcess create(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
-    JavaDebugProcess res = new JavaDebugProcess(session, javaSession);
+  public static JavaDebugProcess create(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
+    JavaDebugProcess res = new JavaDebugProcessWithThreadsActions(session, javaSession);
     javaSession.getProcess().setXDebugProcess(res);
     return res;
   }
 
-  protected JavaDebugProcess(@NotNull final XDebugSession session, @NotNull final DebuggerSession javaSession) {
+  protected JavaDebugProcess(final @NotNull XDebugSession session, final @NotNull DebuggerSession javaSession) {
     super(session);
     myJavaSession = javaSession;
     myEditorsProvider = new JavaDebuggerEditorsProvider();
@@ -106,11 +109,27 @@ public class JavaDebugProcess extends XDebugProcess {
         //noinspection NonAtomicOperationOnVolatileField
         myBreakpointHandlers = ArrayUtil.append(myBreakpointHandlers, extension.createHandler(myJavaSession.getProcess()));
       }
-    }, process.myDisposable);
+    }, process.disposable);
 
     myJavaSession.getContextManager().addListener(new DebuggerContextListener() {
       @Override
-      public void changeEvent(@NotNull final DebuggerContextImpl newContext, DebuggerSession.Event event) {
+      public void changeEvent(final @NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
+        if (event == DebuggerSession.Event.CONTEXT) {
+          DebuggerSession debuggerSession = newContext.getDebuggerSession();
+          ThreadReferenceProxyImpl steppingThreadProxy = newContext.getThreadProxy();
+          if (debuggerSession != null && steppingThreadProxy != null && debuggerSession.getState() == DebuggerSession.State.IN_STEPPING) {
+            DebugProcessImpl debugProcess = debuggerSession.getProcess();
+            debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+              @Override
+              protected void action() {
+                JavaExecutionStack stack = new JavaExecutionStack(steppingThreadProxy, debugProcess, true);
+                getSession().positionReached(new JavaSteppingSuspendContext(debugProcess, stack));
+              }
+            });
+            return;
+          }
+        }
+
         if (event == DebuggerSession.Event.PAUSE
             || event == DebuggerSession.Event.CONTEXT
             || event == DebuggerSession.Event.REFRESH
@@ -119,7 +138,7 @@ public class JavaDebugProcess extends XDebugProcess {
           final SuspendContextImpl newSuspendContext = newContext.getSuspendContext();
           if (newSuspendContext != null &&
               (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
-            process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
+            newSuspendContext.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
               public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
@@ -132,13 +151,11 @@ public class JavaDebugProcess extends XDebugProcess {
                   if (xBreakpoint != null && second instanceof LocatableEvent &&
                       threadProxy != null && ((LocatableEvent)second).thread() == threadProxy.getThreadReference()) {
                     ((XDebugSessionImpl)getSession()).breakpointReachedNoProcessing(xBreakpoint, newSuspendContext);
-                    unsetPausedIfNeeded(newContext);
                     SourceCodeChecker.checkSource(newContext);
                     return;
                   }
                 }
                 getSession().positionReached(newSuspendContext);
-                unsetPausedIfNeeded(newContext);
                 SourceCodeChecker.checkSource(newContext);
               }
             });
@@ -151,9 +168,8 @@ public class JavaDebugProcess extends XDebugProcess {
     });
 
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
-      @NotNull
       @Override
-      public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
+      public @NotNull DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
@@ -162,9 +178,8 @@ public class JavaDebugProcess extends XDebugProcess {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
-      @NotNull
       @Override
-      public DebuggerTreeNodeImpl createMessageNode(String message) {
+      public @NotNull DebuggerTreeNodeImpl createMessageNode(String message) {
         return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
       }
     };
@@ -199,26 +214,22 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     });
     if (!DebuggerUtilsImpl.isRemote(process)) {
-      DfaAssist.installDfaAssist(myJavaSession, session);
+      DfaAssist.installDfaAssist(myJavaSession, session, process.disposable);
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);
     myDropFrameActionActionHandler = new JvmDropFrameActionHandler(javaSession);
   }
 
-  private void unsetPausedIfNeeded(DebuggerContextImpl context) {
-    SuspendContextImpl suspendContext = context.getSuspendContext();
-    if (suspendContext != null && !suspendContext.suspends(context.getThreadProxy())) {
-      ((XDebugSessionImpl)getSession()).unsetPaused();
-    }
-  }
-
   private boolean shouldApplyContext(DebuggerContextImpl context) {
     SuspendContextImpl suspendContext = context.getSuspendContext();
-    SuspendContextImpl currentContext = (SuspendContextImpl)getSession().getSuspendContext();
-    if (suspendContext != null && !suspendContext.equals(currentContext)) return true;
-    JavaExecutionStack currentExecutionStack = currentContext != null ? currentContext.getActiveExecutionStack() : null;
-    return currentExecutionStack == null || !Comparing.equal(context.getThreadProxy(), currentExecutionStack.getThreadProxy());
+    if (getSession().getSuspendContext() instanceof SuspendContextImpl currentContext) {
+      if (suspendContext == null || suspendContext.equals(currentContext)) {
+        JavaExecutionStack currentExecutionStack = currentContext.getActiveExecutionStack();
+        return currentExecutionStack == null || !Comparing.equal(context.getThreadProxy(), currentExecutionStack.getThreadProxy());
+      }
+    }
+    return true;
   }
 
   public void saveNodeHistory() {
@@ -226,8 +237,8 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
-    myJavaSession.getProcess().getManagerThread().invoke(PrioritizedTask.Priority.NORMAL,
-                                                         () -> myNodeManager.setHistoryByContext(frameProxy));
+    myJavaSession.getProcess().getManagerThread().schedule(PrioritizedTask.Priority.NORMAL,
+                                                           () -> myNodeManager.setHistoryByContext(frameProxy));
   }
 
   private DebuggerStateManager getDebuggerStateManager() {
@@ -238,9 +249,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return myJavaSession;
   }
 
-  @NotNull
   @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }
 
@@ -295,23 +305,20 @@ public class JavaDebugProcess extends XDebugProcess {
     return false;
   }
 
-  @Nullable
   @Override
-  protected ProcessHandler doGetProcessHandler() {
+  protected @Nullable ProcessHandler doGetProcessHandler() {
     return myJavaSession.getProcess().getProcessHandler();
   }
 
-  @NotNull
   @Override
-  public ExecutionConsole createConsole() {
+  public @NotNull ExecutionConsole createConsole() {
     ExecutionConsole console = myJavaSession.getProcess().getExecutionResult().getExecutionConsole();
     if (console != null) return console;
     return super.createConsole();
   }
 
-  @NotNull
   @Override
-  public XDebugTabLayouter createTabLayouter() {
+  public @NotNull XDebugTabLayouter createTabLayouter() {
     return new XDebugTabLayouter() {
       @Override
       public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
@@ -320,9 +327,8 @@ public class JavaDebugProcess extends XDebugProcess {
         registerOverheadMonitor(ui);
       }
 
-      @NotNull
       @Override
-      public Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+      public @NotNull Content registerConsoleContent(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
         Content content = null;
         if (console instanceof ExecutionConsoleEx) {
           ((ExecutionConsoleEx)console).buildUi(ui);
@@ -467,7 +473,7 @@ public class JavaDebugProcess extends XDebugProcess {
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       DebugProcessImpl process = getCurrentDebugProcess(e);
@@ -501,31 +507,12 @@ public class JavaDebugProcess extends XDebugProcess {
     }
   }
 
-  @Nullable
-  public static DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
+  public static @Nullable DebugProcessImpl getCurrentDebugProcess(@NotNull AnActionEvent e) {
     XDebugSession session = DebuggerUIUtil.getSession(e);
     if (session != null) {
       XDebugProcess process = session.getDebugProcess();
       if (process instanceof JavaDebugProcess) {
         return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-      }
-    }
-    return null;
-  }
-
-  /**
-   * @deprecated use {@link #getCurrentDebugProcess(AnActionEvent)}
-   */
-  @Nullable
-  @Deprecated(forRemoval = true)
-  public static DebugProcessImpl getCurrentDebugProcess(@Nullable Project project) {
-    if (project != null) {
-      XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-      if (session != null) {
-        XDebugProcess process = session.getDebugProcess();
-        if (process instanceof JavaDebugProcess) {
-          return ((JavaDebugProcess)process).getDebuggerSession().getProcess();
-        }
       }
     }
     return null;
@@ -541,9 +528,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return description != null ? description : super.getCurrentStateMessage();
   }
 
-  @Nullable
   @Override
-  public XValueMarkerProvider<?, ?> createValueMarkerProvider() {
+  public @Nullable XValueMarkerProvider<?, ?> createValueMarkerProvider() {
     return new JavaValueMarker();
   }
 
@@ -552,9 +538,8 @@ public class JavaDebugProcess extends XDebugProcess {
     return true;
   }
 
-  @Nullable
   @Override
-  public XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
+  public @Nullable XSmartStepIntoHandler<?> getSmartStepIntoHandler() {
     return mySmartStepIntoActionHandler;
   }
 
@@ -562,5 +547,19 @@ public class JavaDebugProcess extends XDebugProcess {
   @Override
   public @Nullable XDropFrameHandler getDropFrameHandler() {
     return myDropFrameActionActionHandler;
+  }
+
+  private static final class JavaDebugProcessWithThreadsActions extends JavaDebugProcess implements ThreadsActionsProvider {
+    private JavaDebugProcessWithThreadsActions(@NotNull XDebugSession session, @NotNull DebuggerSession javaSession) {
+      super(session, javaSession);
+      myResumeAllJavaThreadsActionHandler = new ResumeAllJavaThreadsActionHandler(getDebuggerSession().getProcess());
+    }
+
+    private final ResumeAllJavaThreadsActionHandler myResumeAllJavaThreadsActionHandler;
+
+    @Override
+    public @Nullable DebuggerActionHandler getThawAllThreadsHandler() {
+      return myResumeAllJavaThreadsActionHandler;
+    }
   }
 }

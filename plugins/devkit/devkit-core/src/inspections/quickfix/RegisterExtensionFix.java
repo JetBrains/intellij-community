@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
@@ -45,9 +45,8 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     myEPCandidates = epCandidates;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     return DevKitBundle.message("register.extension.fix.name");
   }
 
@@ -56,15 +55,14 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     return getText();
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !DumbService.isDumb(project);
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+    return editor != null && !DumbService.isDumb(project);
   }
 
   @Override
@@ -83,7 +81,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
       final BaseListPopupStep<ExtensionPointCandidate> popupStep =
         new BaseListPopupStep<>(DevKitBundle.message("register.extension.fix.popup.title"), new ArrayList<>(myEPCandidates)) {
           @Override
-          public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
             registerExtension(element, selectedValue, extensionClass);
             return FINAL_CHOICE;
           }
@@ -119,8 +117,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
     PsiNavigateUtil.navigate(navTarget);
   }
 
-  @NonNls
-  private static final Map<String, String> KEY_MAP = Map.of(
+  private static final @NonNls Map<String, String> KEY_MAP = Map.of(
     KeyedFactoryEPBean.class.getName(), "key",
     KeyedLazyInstanceEP.class.getName(), "key",
     FileTypeExtensionPoint.class.getName(), "filetype",

@@ -1,3 +1,4 @@
+// FIX: Remove explicit type arguments
 // WITH_STDLIB
 
 class ListWrapper<T>(val x: List<T>)

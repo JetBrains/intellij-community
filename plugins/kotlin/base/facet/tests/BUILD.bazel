@@ -1,0 +1,55 @@
+### auto-generated section `build kotlin.base.facet.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "kotlin-base-facet-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "kotlin-base-facet-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/util:kotlin-base-util_test_lib",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/tests-common:tests-common_test_lib",
+    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//java/idea-ui:ui",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/util/jdom",
+    "//platform/core-impl",
+    "//platform/lang-core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/plugin/common:kotlin-plugin-common",
+    "//java/idea-ui:ui-tests_test_lib",
+    "//plugins/kotlin/test-framework:test-framework_test_lib",
+    "//plugins/kotlin/project-configuration",
+  ],
+  runtime_deps = ["//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common"]
+)
+
+jvm_test(
+  name = "kotlin-base-facet-tests_test",
+  runtime_deps = [":kotlin-base-facet-tests_test_lib"]
+)
+### auto-generated section `build kotlin.base.facet.tests` end

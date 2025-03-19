@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiElement
-import javaslang.Tuple2
+import io.vavr.Tuple2
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
@@ -29,7 +29,7 @@ private operator fun <T> Tuple2<*, T>.component2(): T = _2()
 class SmartCastCalculator(
   val bindingContext: BindingContext,
   private val containingDeclarationOrModule: DeclarationDescriptor,
-  contextElement: PsiElement,
+  val contextElement: PsiElement,
   receiver: KtExpression?,
   resolutionFacade: ResolutionFacade
 ) {

@@ -1,4 +1,4 @@
-# $Id: misc.py 7487 2012-07-22 21:20:28Z milde $
+# $Id: misc.py 9492 2023-11-29 16:58:13Z milde $
 # Authors: David Goodger <goodger@python.org>; Dethe Elza
 # Copyright: This module has been placed in the public domain.
 
@@ -6,18 +6,31 @@
 
 __docformat__ = 'reStructuredText'
 
-import os.path
+from pathlib import Path
 import re
-import sys
 import time
+from urllib.request import urlopen
+from urllib.error import URLError
 
 from docutils import io, nodes, statemachine, utils
 from docutils.parsers.rst import Directive, convert_directive_function
 from docutils.parsers.rst import directives, roles, states
 from docutils.parsers.rst.directives.body import CodeBlock, NumberLines
 from docutils.transforms import misc
-from docutils.utils.error_reporting import SafeString, ErrorString
-from docutils.utils.error_reporting import locale_encoding
+
+
+def adapt_path(path, source='', root_prefix='/'):
+    # Adapt path to files to include or embed.
+    # `root_prefix` is prepended to absolute paths (cf. root_prefix setting),
+    # `source` is the `current_source` of the including directive (which may
+    # be a file included by the main document).
+    if path.startswith('/'):
+        base = Path(root_prefix)
+        path = path[1:]
+    else:
+        base = Path(source).parent
+    # pepend "base" and convert to relative path for shorter system messages
+    return utils.relative_path(None, base/path)
 
 
 class Include(Directive):
@@ -30,6 +43,8 @@ class Include(Directive):
     a part of the given file argument may be included by specifying
     start and end line or text to match before and/or after the text
     to be used.
+
+    https://docutils.sourceforge.io/docs/ref/rst/directives.html#including-an-external-document-fragment
     """
 
     required_arguments = 1
@@ -38,50 +53,54 @@ class Include(Directive):
     option_spec = {'literal': directives.flag,
                    'code': directives.unchanged,
                    'encoding': directives.encoding,
+                   'parser': directives.parser_name,
                    'tab-width': int,
                    'start-line': int,
                    'end-line': int,
                    'start-after': directives.unchanged_required,
                    'end-before': directives.unchanged_required,
                    # ignored except for 'literal' or 'code':
-                   'number-lines': directives.unchanged, # integer or None
+                   'number-lines': directives.unchanged,  # integer or None
                    'class': directives.class_option,
                    'name': directives.unchanged}
 
-    standard_include_path = os.path.join(os.path.dirname(states.__file__),
-                                         'include')
+    standard_include_path = Path(states.__file__).parent / 'include'
 
     def run(self):
-        """Include a file as part of the content of this reST file."""
-        if not self.state.document.settings.file_insertion_enabled:
+        """Include a file as part of the content of this reST file.
+
+        Depending on the options, the file (or a clipping) is
+        converted to nodes and returned or inserted into the input stream.
+        """
+        settings = self.state.document.settings
+        if not settings.file_insertion_enabled:
             raise self.warning('"%s" directive disabled.' % self.name)
-        source = self.state_machine.input_lines.source(
-            self.lineno - self.state_machine.input_offset - 1)
-        source_dir = os.path.dirname(os.path.abspath(source))
+        tab_width = self.options.get('tab-width', settings.tab_width)
+        current_source = self.state.document.current_source
         path = directives.path(self.arguments[0])
         if path.startswith('<') and path.endswith('>'):
-            path = os.path.join(self.standard_include_path, path[1:-1])
-        path = os.path.normpath(os.path.join(source_dir, path))
-        path = utils.relative_path(None, path)
-        path = nodes.reprunicode(path)
-        encoding = self.options.get(
-            'encoding', self.state.document.settings.input_encoding)
-        e_handler=self.state.document.settings.input_encoding_error_handler
-        tab_width = self.options.get(
-            'tab-width', self.state.document.settings.tab_width)
+            path = '/' + path[1:-1]
+            root_prefix = self.standard_include_path
+        else:
+            root_prefix = settings.root_prefix
+        path = adapt_path(path, current_source, root_prefix)
+        encoding = self.options.get('encoding', settings.input_encoding)
+        error_handler = settings.input_encoding_error_handler
         try:
-            self.state.document.settings.record_dependencies.add(path)
             include_file = io.FileInput(source_path=path,
                                         encoding=encoding,
-                                        error_handler=e_handler)
-        except UnicodeEncodeError as error:
-            raise self.severe('Problems with "%s" directive path:\n'
-                              'Cannot encode input file path "%s" '
-                              '(wrong locale?).' %
-                              (self.name, SafeString(path)))
-        except IOError as error:
-            raise self.severe('Problems with "%s" directive path:\n%s.' %
-                      (self.name, ErrorString(error)))
+                                        error_handler=error_handler)
+        except UnicodeEncodeError:
+            raise self.severe(f'Problems with "{self.name}" directive path:\n'
+                              f'Cannot encode input file path "{path}" '
+                              '(wrong locale?).')
+        except OSError as error:
+            raise self.severe(f'Problems with "{self.name}" directive '
+                              f'path:\n{io.error_string(error)}.')
+        else:
+            settings.record_dependencies.add(path)
+
+        # Get to-be-included content
         startline = self.options.get('start-line', None)
         endline = self.options.get('end-line', None)
         try:
@@ -91,8 +110,8 @@ class Include(Directive):
             else:
                 rawtext = include_file.read()
         except UnicodeError as error:
-            raise self.severe('Problem with "%s" directive:\n%s' %
-                              (self.name, ErrorString(error)))
+            raise self.severe(f'Problem with "{self.name}" directive:\n'
+                              + io.error_string(error))
         # start-after/end-before: no restrictions on newlines in match-text,
         # and no restrictions on matching inside lines vs. line boundaries
         after_text = self.options.get('start-after', None)
@@ -114,14 +133,20 @@ class Include(Directive):
 
         include_lines = statemachine.string2lines(rawtext, tab_width,
                                                   convert_whitespace=True)
+        for i, line in enumerate(include_lines):
+            if len(line) > settings.line_length_limit:
+                raise self.warning('"%s": line %d exceeds the'
+                                   ' line-length-limit.' % (path, i+1))
+
         if 'literal' in self.options:
-            # Convert tabs to spaces, if `tab_width` is positive.
+            # Don't convert tabs to spaces, if `tab_width` is negative.
             if tab_width >= 0:
                 text = rawtext.expandtabs(tab_width)
             else:
                 text = rawtext
-            literal_block = nodes.literal_block(rawtext, source=path,
-                                    classes=self.options.get('class', []))
+            literal_block = nodes.literal_block(
+                                rawtext, source=path,
+                                classes=self.options.get('class', []))
             literal_block.line = 1
             self.add_name(literal_block)
             if 'number-lines' in self.options:
@@ -139,23 +164,58 @@ class Include(Directive):
                         literal_block += nodes.inline(value, value,
                                                       classes=classes)
                     else:
-                        literal_block += nodes.Text(value, value)
+                        literal_block += nodes.Text(value)
             else:
-                literal_block += nodes.Text(text, text)
+                literal_block += nodes.Text(text)
             return [literal_block]
+
         if 'code' in self.options:
             self.options['source'] = path
+            # Don't convert tabs to spaces, if `tab_width` is negative:
+            if tab_width < 0:
+                include_lines = rawtext.splitlines()
             codeblock = CodeBlock(self.name,
-                                  [self.options.pop('code')], # arguments
+                                  [self.options.pop('code')],  # arguments
                                   self.options,
-                                  include_lines, # content
+                                  include_lines,  # content
                                   self.lineno,
                                   self.content_offset,
                                   self.block_text,
                                   self.state,
                                   self.state_machine)
             return codeblock.run()
+
+        # Prevent circular inclusion:
+        clip_options = (startline, endline, before_text, after_text)
+        include_log = self.state.document.include_log
+        # log entries are tuples (<source>, <clip-options>)
+        if not include_log:  # new document, initialize with document source
+            include_log.append((utils.relative_path(None, current_source),
+                                (None, None, None, None)))
+        if (path, clip_options) in include_log:
+            master_paths = (pth for (pth, opt) in reversed(include_log))
+            inclusion_chain = '\n> '.join((path, *master_paths))
+            raise self.warning('circular inclusion in "%s" directive:\n%s'
+                               % (self.name, inclusion_chain))
+
+        if 'parser' in self.options:
+            # parse into a dummy document and return created nodes
+            document = utils.new_document(path, settings)
+            document.include_log = include_log + [(path, clip_options)]
+            parser = self.options['parser']()
+            parser.parse('\n'.join(include_lines), document)
+            # clean up doctree and complete parsing
+            document.transformer.populate_from_components((parser,))
+            document.transformer.apply_transforms()
+            return document.children
+
+        # Include as rST source:
+        #
+        # mark end (cf. parsers.rst.states.Body.comment())
+        include_lines += ['', '.. end of inclusion from "%s"' % path]
         self.state_machine.insert_input(include_lines, path)
+        # update include-log
+        include_log.append((path, clip_options))
         return []
 
 
@@ -175,19 +235,19 @@ class Raw(Directive):
     final_argument_whitespace = True
     option_spec = {'file': directives.path,
                    'url': directives.uri,
-                   'encoding': directives.encoding}
+                   'encoding': directives.encoding,
+                   'class': directives.class_option}
     has_content = True
 
     def run(self):
-        if (not self.state.document.settings.raw_enabled
-            or (not self.state.document.settings.file_insertion_enabled
-                and ('file' in self.options
-                     or 'url' in self.options))):
+        settings = self.state.document.settings
+        if (not settings.raw_enabled
+            or (not settings.file_insertion_enabled
+                and ('file' in self.options or 'url' in self.options))):
             raise self.warning('"%s" directive disabled.' % self.name)
         attributes = {'format': ' '.join(self.arguments[0].lower().split())}
-        encoding = self.options.get(
-            'encoding', self.state.document.settings.input_encoding)
-        e_handler=self.state.document.settings.input_encoding_error_handler
+        encoding = self.options.get('encoding', settings.input_encoding)
+        error_handler = settings.input_encoding_error_handler
         if self.content:
             if 'file' in self.options or 'url' in self.options:
                 raise self.error(
@@ -199,53 +259,50 @@ class Raw(Directive):
                 raise self.error(
                     'The "file" and "url" options may not be simultaneously '
                     'specified for the "%s" directive.' % self.name)
-            source_dir = os.path.dirname(
-                os.path.abspath(self.state.document.current_source))
-            path = os.path.normpath(os.path.join(source_dir,
-                                                 self.options['file']))
-            path = utils.relative_path(None, path)
+            path = adapt_path(self.options['file'],
+                              self.state.document.current_source,
+                              settings.root_prefix)
             try:
                 raw_file = io.FileInput(source_path=path,
                                         encoding=encoding,
-                                        error_handler=e_handler)
+                                        error_handler=error_handler)
+            except OSError as error:
+                raise self.severe(f'Problems with "{self.name}" directive '
+                                  f'path:\n{io.error_string(error)}.')
+            else:
                 # TODO: currently, raw input files are recorded as
                 # dependencies even if not used for the chosen output format.
-                self.state.document.settings.record_dependencies.add(path)
-            except IOError as error:
-                raise self.severe('Problems with "%s" directive path:\n%s.'
-                                  % (self.name, ErrorString(error)))
+                settings.record_dependencies.add(path)
             try:
                 text = raw_file.read()
             except UnicodeError as error:
-                raise self.severe('Problem with "%s" directive:\n%s'
-                    % (self.name, ErrorString(error)))
+                raise self.severe(f'Problem with "{self.name}" directive:\n'
+                                  + io.error_string(error))
             attributes['source'] = path
         elif 'url' in self.options:
             source = self.options['url']
-            # Do not import urllib2 at the top of the module because
-            # it may fail due to broken SSL dependencies, and it takes
-            # about 0.15 seconds to load.
-            import urllib.request, urllib.error, urllib.parse
             try:
-                raw_text = urllib.request.urlopen(source).read()
-            except (urllib.error.URLError, IOError, OSError) as error:
-                raise self.severe('Problems with "%s" directive URL "%s":\n%s.'
-                    % (self.name, self.options['url'], ErrorString(error)))
+                raw_text = urlopen(source).read()
+            except (URLError, OSError) as error:
+                raise self.severe(f'Problems with "{self.name}" directive URL '
+                                  f'"{self.options["url"]}":\n'
+                                  f'{io.error_string(error)}.')
             raw_file = io.StringInput(source=raw_text, source_path=source,
-                                      encoding=encoding, 
-                                      error_handler=e_handler)
+                                      encoding=encoding,
+                                      error_handler=error_handler)
             try:
                 text = raw_file.read()
             except UnicodeError as error:
-                raise self.severe('Problem with "%s" directive:\n%s'
-                                  % (self.name, ErrorString(error)))
+                raise self.severe(f'Problem with "{self.name}" directive:\n'
+                                  + io.error_string(error))
             attributes['source'] = source
         else:
             # This will always fail because there is no content.
             self.assert_has_content()
-        raw_node = nodes.raw('', text, **attributes)
+        raw_node = nodes.raw('', text, classes=self.options.get('class', []),
+                             **attributes)
         (raw_node.source,
-        raw_node.line) = self.state_machine.get_source_and_line(self.lineno)
+         raw_node.line) = self.state_machine.get_source_and_line(self.lineno)
         return [raw_node]
 
 
@@ -274,12 +331,13 @@ class Replace(Directive):
                 messages.append(elem)
             else:
                 return [
-                    self.state_machine.reporter.error(
-                        'Error in "%s" directive: may contain a single paragraph '
-                        'only.' % (self.name), line=self.lineno) ]
+                    self.reporter.error(
+                        f'Error in "{self.name}" directive: may contain '
+                        'a single paragraph only.', line=self.lineno)]
         if node:
             return messages + node.children
         return messages
+
 
 class Unicode(Directive):
 
@@ -320,7 +378,7 @@ class Unicode(Directive):
                 decoded = directives.unicode_code(code)
             except ValueError as error:
                 raise self.error('Invalid character code: %s\n%s'
-                    % (code, ErrorString(error)))
+                                 % (code, io.error_string(error)))
             element += nodes.Text(decoded)
         return element.children
 
@@ -400,12 +458,12 @@ class Role(Directive):
             'supported (specified by "%r" role).' % (self.name, base_role))
         try:
             converted_role = convert_directive_function(base_role)
-            (arguments, options, content, content_offset) = (
-                self.state.parse_directive_block(
-                self.content[1:], self.content_offset, converted_role,
-                option_presets={}))
+            (arguments, options, content, content_offset
+             ) = self.state.parse_directive_block(
+                    self.content[1:], self.content_offset,
+                    converted_role, option_presets={})
         except states.MarkupError as detail:
-            error = self.state_machine.reporter.error(
+            error = self.reporter.error(
                 'Error in "%s" directive:\n%s.' % (self.name, detail),
                 nodes.literal_block(self.block_text, self.block_text),
                 line=self.lineno)
@@ -414,10 +472,11 @@ class Role(Directive):
             try:
                 options['class'] = directives.class_option(new_role_name)
             except ValueError as detail:
-                error = self.state_machine.reporter.error(
+                error = self.reporter.error(
                     'Invalid argument for "%s" directive:\n%s.'
-                    % (self.name, SafeString(detail)), nodes.literal_block(
-                    self.block_text, self.block_text), line=self.lineno)
+                    % (self.name, detail),
+                    nodes.literal_block(self.block_text, self.block_text),
+                    line=self.lineno)
                 return messages + [error]
         role = roles.CustomRole(new_role_name, base_role, options, content)
         roles.register_local_role(new_role_name, role)
@@ -447,7 +506,6 @@ class DefaultRole(Directive):
                 line=self.lineno)
             return messages + [error]
         roles._roles[''] = role
-        # @@@ should this be local to the document, not the parser?
         return messages
 
 
@@ -462,6 +520,74 @@ class Title(Directive):
         return []
 
 
+class MetaBody(states.SpecializedBody):
+
+    def field_marker(self, match, context, next_state):
+        """Meta element."""
+        node, blank_finish = self.parsemeta(match)
+        self.parent += node
+        return [], next_state, []
+
+    def parsemeta(self, match):
+        name = self.parse_field_marker(match)
+        name = nodes.unescape(utils.escape2null(name))
+        (indented, indent, line_offset, blank_finish
+         ) = self.state_machine.get_first_known_indented(match.end())
+        node = nodes.meta()
+        node['content'] = nodes.unescape(utils.escape2null(
+                                            ' '.join(indented)))
+        if not indented:
+            line = self.state_machine.line
+            msg = self.reporter.info(
+                  'No content for meta tag "%s".' % name,
+                  nodes.literal_block(line, line))
+            return msg, blank_finish
+        tokens = name.split()
+        try:
+            attname, val = utils.extract_name_value(tokens[0])[0]
+            node[attname.lower()] = val
+        except utils.NameValueError:
+            node['name'] = tokens[0]
+        for token in tokens[1:]:
+            try:
+                attname, val = utils.extract_name_value(token)[0]
+                node[attname.lower()] = val
+            except utils.NameValueError as detail:
+                line = self.state_machine.line
+                msg = self.reporter.error(
+                      'Error parsing meta tag attribute "%s": %s.'
+                      % (token, detail), nodes.literal_block(line, line))
+                return msg, blank_finish
+        return node, blank_finish
+
+
+class Meta(Directive):
+
+    has_content = True
+
+    SMkwargs = {'state_classes': (MetaBody,)}
+
+    def run(self):
+        self.assert_has_content()
+        node = nodes.Element()
+        new_line_offset, blank_finish = self.state.nested_list_parse(
+            self.content, self.content_offset, node,
+            initial_state='MetaBody', blank_finish=True,
+            state_machine_kwargs=self.SMkwargs)
+        if (new_line_offset - self.content_offset) != len(self.content):
+            # incomplete parse of block?
+            error = self.reporter.error(
+                'Invalid meta directive.',
+                nodes.literal_block(self.block_text, self.block_text),
+                line=self.lineno)
+            node += error
+        # insert at begin of document
+        index = self.state.document.first_child_not_matching_class(
+                                        (nodes.Titular, nodes.meta)) or 0
+        self.state.document[index:index] = node.children
+        return []
+
+
 class Date(Directive):
 
     has_content = True
@@ -472,21 +598,23 @@ class Date(Directive):
                 'Invalid context: the "%s" directive can only be used within '
                 'a substitution definition.' % self.name)
         format_str = '\n'.join(self.content) or '%Y-%m-%d'
-        if sys.version_info< (3, 0):
-            try:
-                format_str = format_str.encode(locale_encoding or 'utf-8')
-            except UnicodeEncodeError:
-                raise self.warning('Cannot encode date format string '
-                    'with locale encoding "%s".' % locale_encoding)
+        # @@@
+        # Use timestamp from the `SOURCE_DATE_EPOCH`_ environment variable?
+        # Pro: Docutils-generated documentation
+        #      can easily be part of `reproducible software builds`__
+        #
+        #      __ https://reproducible-builds.org/
+        #
+        # Con: Changes the specs, hard to predict behaviour,
+        #
+        # See also the discussion about \date \time \year in TeX
+        # http://tug.org/pipermail/tex-k/2016-May/002704.html
+        # source_date_epoch = os.environ.get('SOURCE_DATE_EPOCH')
+        # if (source_date_epoch):
+        #     text = time.strftime(format_str,
+        #                          time.gmtime(int(source_date_epoch)))
+        # else:
         text = time.strftime(format_str)
-        if sys.version_info< (3, 0):
-            # `text` is a byte string that may contain non-ASCII characters:
-            try:
-                text = text.decode(locale_encoding or 'utf-8')
-            except UnicodeDecodeError:
-                text = text.decode(locale_encoding or 'utf-8', 'replace')
-                raise self.warning('Error decoding "%s"'
-                    'with locale encoding "%s".' % (text, locale_encoding))
         return [nodes.Text(text)]
 
 
@@ -502,34 +630,13 @@ class TestDirective(Directive):
     def run(self):
         if self.content:
             text = '\n'.join(self.content)
-            info = self.state_machine.reporter.info(
+            info = self.reporter.info(
                 'Directive processed. Type="%s", arguments=%r, options=%r, '
                 'content:' % (self.name, self.arguments, self.options),
                 nodes.literal_block(text, text), line=self.lineno)
         else:
-            info = self.state_machine.reporter.info(
+            info = self.reporter.info(
                 'Directive processed. Type="%s", arguments=%r, options=%r, '
                 'content: None' % (self.name, self.arguments, self.options),
                 line=self.lineno)
         return [info]
-
-# Old-style, functional definition:
-#
-# def directive_test_function(name, arguments, options, content, lineno,
-#                             content_offset, block_text, state, state_machine):
-#     """This directive is useful only for testing purposes."""
-#     if content:
-#         text = '\n'.join(content)
-#         info = state_machine.reporter.info(
-#             'Directive processed. Type="%s", arguments=%r, options=%r, '
-#             'content:' % (name, arguments, options),
-#             nodes.literal_block(text, text), line=lineno)
-#     else:
-#         info = state_machine.reporter.info(
-#             'Directive processed. Type="%s", arguments=%r, options=%r, '
-#             'content: None' % (name, arguments, options), line=lineno)
-#     return [info]
-#
-# directive_test_function.arguments = (0, 1, 1)
-# directive_test_function.options = {'option': directives.unchanged_required}
-# directive_test_function.content = 1

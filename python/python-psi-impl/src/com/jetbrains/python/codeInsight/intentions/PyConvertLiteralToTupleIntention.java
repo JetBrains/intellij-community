@@ -28,14 +28,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
-public class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLiteralIntention {
+public final class PyConvertLiteralToTupleIntention extends PyBaseConvertCollectionLiteralIntention {
   public PyConvertLiteralToTupleIntention() {
     super(PyTupleExpression.class, "tuple", "(", ")");
   }
 
-  @NotNull
   @Override
-  protected PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
+  protected @NotNull PsiElement prepareOriginalElementCopy(@NotNull PsiElement copy) {
     final PySequenceExpression sequenceExpression = unwrapCollection(copy);
     final PyExpression[] elements = sequenceExpression.getElements();
     if (elements.length == 1) {

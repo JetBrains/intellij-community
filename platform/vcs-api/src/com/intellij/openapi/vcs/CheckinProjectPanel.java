@@ -57,7 +57,7 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    *
    * @return the files selected for checkin.
    */
-  Collection<VirtualFile> getVirtualFiles();
+  Collection<@NotNull VirtualFile> getVirtualFiles();
 
   Collection<Change> getSelectedChanges();
 

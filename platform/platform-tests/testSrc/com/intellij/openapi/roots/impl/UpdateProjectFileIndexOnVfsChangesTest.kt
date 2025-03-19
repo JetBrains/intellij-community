@@ -3,7 +3,6 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -15,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -89,9 +89,7 @@ class UpdateProjectFileIndexOnVfsChangesTest {
       assertTrue(finished)
     }
     else {
-      runWriteActionAndWait {
-        VirtualFileManager.getInstance().syncRefresh()
-      }
+      VfsTestUtil.syncRefresh()
     }
     listener.assertNoErrors()
   }

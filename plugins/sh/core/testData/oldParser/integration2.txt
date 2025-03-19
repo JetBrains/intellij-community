@@ -29,45 +29,47 @@ SHELL_SCRIPT
         COMPOUND_LIST
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          TEST_COMMAND
-            PsiElement(test)('test')
+          PIPELINE_COMMAND_LIST
+            TEST_COMMAND
+              PsiElement(test)('test')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-s')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('/etc/init.d/.depend.boot')
+            PsiWhiteSpace('  ')
+            PsiElement(||)('||')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-s')
-            PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('/etc/init.d/.depend.boot')
-          PsiWhiteSpace('  ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('CONCURRENCY')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('none')
-              PsiElement(CLOSE_QUOTE)('"')
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('CONCURRENCY')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('none')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
           PsiWhiteSpace('    ')
-          TEST_COMMAND
-            PsiElement(test)('test')
+          PIPELINE_COMMAND_LIST
+            TEST_COMMAND
+              PsiElement(test)('test')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('-s')
+              PsiWhiteSpace(' ')
+              LITERAL
+                PsiElement(word)('/etc/init.d/.depend.start')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('-s')
+            PsiElement(||)('||')
             PsiWhiteSpace(' ')
-            LITERAL
-              PsiElement(word)('/etc/init.d/.depend.start')
-          PsiWhiteSpace(' ')
-          PsiElement(||)('||')
-          PsiWhiteSpace(' ')
-          ASSIGNMENT_COMMAND
-            LITERAL
-              PsiElement(word)('CONCURRENCY')
-            PsiElement(=)('=')
-            STRING
-              PsiElement(OPEN_QUOTE)('"')
-              PsiElement(STRING_CONTENT)('none')
-              PsiElement(CLOSE_QUOTE)('"')
+            ASSIGNMENT_COMMAND
+              LITERAL
+                PsiElement(word)('CONCURRENCY')
+              PsiElement(=)('=')
+              STRING
+                PsiElement(OPEN_QUOTE)('"')
+                PsiElement(STRING_CONTENT)('none')
+                PsiElement(CLOSE_QUOTE)('"')
           PsiElement(\n)('\n')
       PsiElement(fi)('fi')

@@ -29,7 +29,7 @@ class ThingUser <V> {
 
 class SuperWildcardTest {
     static void method(List<?> list) {
-        <error descr="Incompatible types. Found: 'java.util.List<capture<?>>', required: 'java.util.List<? super java.lang.String>'">List<? super String>  l = list;</error>
+        List<? super String>  l = <error descr="Incompatible types. Found: 'java.util.List<capture<?>>', required: 'java.util.List<? super java.lang.String>'">list</error>;
         l.size();
     }
 }

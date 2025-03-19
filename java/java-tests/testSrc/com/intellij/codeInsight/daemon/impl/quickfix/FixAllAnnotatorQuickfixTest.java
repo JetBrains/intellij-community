@@ -30,7 +30,8 @@ public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
     LanguageAnnotators.INSTANCE.addExplicitExtension(javaLanguage, annotator);
     enableInspectionTool(new HighlightVisitorBasedInspection().setRunAnnotators(true));
     try {
-      doAllTests();
+      //todo: use LightQuickFixParameterizedTestCase to get separate tests for all data files in testData directory.
+      doAllTests(createWrapper());
     }
     finally {
       LanguageAnnotators.INSTANCE.removeExplicitExtension(javaLanguage, annotator);

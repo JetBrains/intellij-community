@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.internal;
 
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.datatransfer.StringSelection;
 import java.util.List;
@@ -24,7 +25,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
   private static final Logger LOG = Logger.getInstance(DumpLookupElementWeights.class);
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     dumpLookupElementWeights((LookupImpl)LookupManager.getActiveLookup(editor));
   }
@@ -35,7 +36,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     presentation.setEnabled(editor != null && LookupManager.getActiveLookup(editor) != null);
@@ -55,7 +56,7 @@ public final class DumpLookupElementWeights extends AnAction implements DumbAwar
     } catch (Exception ignore){}
   }
 
-  public static List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
+  public static @Unmodifiable List<String> getLookupElementWeights(LookupImpl lookup, boolean hideSingleValued) {
     final Map<LookupElement, List<Pair<String, Object>>> weights = lookup.getRelevanceObjects(lookup.getItems(), hideSingleValued);
     return ContainerUtil.map(weights.entrySet(), entry -> entry.getKey().getLookupString() + "\t" + StringUtil.join(entry.getValue(), pair -> pair.first + "=" + pair.second, ", "));
   }

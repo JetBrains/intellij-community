@@ -9,16 +9,15 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinBuildSystemSourceSet
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmJsLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmWasiLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM1
-import org.jetbrains.kotlin.idea.stubs.createMultiplatformFacetM3
-import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -30,9 +29,13 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
+import org.jetbrains.kotlin.platform.wasm.isWasmJs
+import org.jetbrains.kotlin.platform.wasm.isWasmWasi
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.types.typeUtil.closure
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.kotlin.utils.closure
 import java.io.File
 
 // allows to configure a test mpp project
@@ -49,6 +52,7 @@ fun AbstractMultiModuleTest.setupMppProjectFromDirStructure(testRoot: File) {
     val dirs = testRoot.listFiles().filter { it.isDirectory }
     val rootInfos = dirs.map { parseDirName(it) }
     doSetupProject(rootInfos)
+    setupKotlinBuildSystemFacade()
 }
 
 fun AbstractMultiModuleTest.setupMppProjectFromTextFile(testRoot: File) {
@@ -78,10 +82,10 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
             transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
         )
 
-        if (resolveModule.testRoot != null) {
+        resolveModule.testRoot?.let { testRoot ->
             addRoot(
                 ideaModule,
-                resolveModule.testRoot,
+                testRoot,
                 isTestRoot = true,
                 transformContainedFiles = { if (it.extension == "kt") clearFileFromDiagnosticMarkup(it) }
             )
@@ -103,7 +107,12 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
                         setUpSdkForModule(ideaModule, dependency)
                 }
 
-                is ResolveLibrary -> ideaModule.addLibrary(dependency.root, dependency.name, dependency.kind)
+                is ResolveLibrary -> ideaModule.addLibrary(
+                    jar = dependency.root,
+                    name = dependency.name,
+                    kind = dependency.kind,
+                    sourceJar = dependency.sourceRoot
+                )
 
                 else -> ideaModule.addDependency(resolveModulesToIdeaModules[dependency]!!)
             }
@@ -116,10 +125,14 @@ fun AbstractMultiModuleTest.doSetup(projectModel: ProjectResolveModel) {
         ideaModule.createMultiplatformFacetM3(
             platform,
             dependsOnModuleNames = resolveModule.dependencies.filter { it.kind == ResolveDependency.Kind.DEPENDS_ON }.map { it.to.name },
-            pureKotlinSourceFolders = pureKotlinSourceFolders
+            pureKotlinSourceFolders = pureKotlinSourceFolders,
+            isHmppEnabled = projectModel.mode == ProjectResolveMode.MultiPlatform
         )
-        // New inference is enabled here as these tests are using type refinement feature that is working only along with NI
-        ideaModule.enableMultiPlatform(additionalCompilerArguments = "-Xnew-inference " + (resolveModule.additionalCompilerArgs ?: ""))
+
+        if (projectModel.mode == ProjectResolveMode.MultiPlatform) {
+            // New inference is enabled here as these tests are using type refinement feature that is working only along with NI
+            ideaModule.enableMultiPlatform(additionalCompilerArguments = "-Xnew-inference " + (resolveModule.additionalCompilerArgs ?: ""))
+        }
     }
 }
 
@@ -172,14 +185,22 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
+                        platform.isWasmJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmJsLibraryKind)
+                        platform.isWasmWasi() -> module.addLibrary(
+                            TestKotlinArtifacts.kotlinStdlibWasmWasi,
+                            kind = KotlinWasmWasiLibraryKind
+                        )
+
                         else -> error("Unknown platform $this")
                     }
                 }
+
                 is FullJdkDependency -> {
                     ConfigLibraryUtil.configureSdk(module, PluginTestCaseBase.addJdk(testRootDisposable) {
                         PluginTestCaseBase.jdk(TestJdkKind.FULL_JDK)
                     })
                 }
+
                 is CoroutinesDependency -> module.enableCoroutines()
                 is KotlinTestDependency -> when {
                     platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinTestJunit)
@@ -219,14 +240,32 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
+}
+
+/**
+ * See [KotlinBuildSystemFacade]:
+ * - Will use the Module's name as Source Set Name
+ * - Will use the module source roots as source directories
+ */
+private fun AbstractMultiModuleTest.setupKotlinBuildSystemFacade() {
+    KotlinBuildSystemFacade.EP_NAME.point.registerExtension(object : KotlinBuildSystemFacade {
+        override fun findSourceSet(module: Module) = KotlinBuildSystemSourceSet(
+            name = module.name,
+            sourceDirectories = module.sourceRoots.map { it.toNioPath() }
+        )
+
+        override fun getKotlinToolingVersion(module: Module): KotlinToolingVersion? {
+            return null
+        }
+    }, testRootDisposable)
 }
 
 private fun AbstractMultiModuleTest.createModuleWithRoots(
@@ -260,6 +299,7 @@ private val platformNames = mapOf(
     listOf("java8", "jvm8") to JvmPlatforms.jvm8,
     listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
+    listOf("wasm") to WasmPlatforms.unspecifiedWasmPlatform,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )
 
@@ -308,7 +348,7 @@ private fun parseIsTestRoot(parts: List<String>) =
     testSuffixes.any { suffix -> parts.any { it.equals(suffix, ignoreCase = true) } }
 
 private fun parseIndex(parts: List<String>): Int? {
-    return parts.singleOrNull() { it.startsWith("id") }?.substringAfter("id")?.toInt()
+    return parts.singleOrNull { it.startsWith("id") }?.substringAfter("id")?.toInt()
 }
 
 private data class ModuleId(

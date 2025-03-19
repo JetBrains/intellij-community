@@ -152,6 +152,11 @@ public class PyClassMROTest extends PyTestCase {
     });
   }
 
+  public void testTypingGenericAsFirstBaseClass() {
+    PyClass pyClass = getClass("MyClass");
+    assertMRO(pyClass, "Base", "Generic", "object");
+  }
+
   // PY-21837
   public void testClassImportedFromUnstubbedFileAndSuperImportedWithAs() {
     myFixture.copyDirectoryToProject("codeInsight/classMRO/" + getTestName(false), "");

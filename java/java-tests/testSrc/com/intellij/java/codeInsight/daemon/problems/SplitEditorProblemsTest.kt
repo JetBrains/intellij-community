@@ -1,24 +1,29 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.childScope
 import javax.swing.SwingConstants
 
 internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
@@ -27,12 +32,13 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   override fun setUp() {
     super.setUp()
     val project = project
-    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
+    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
-    @Suppress("DEPRECATION")
-    manager = FileEditorManagerImpl(project, project.coroutineScope.childScope()).also { it.initDockableContentFactory() }
+    manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()
+
+    Registry.get("ide.open.in.split.with.chooser.enabled").setValue(true, testRootDisposable)
   }
 
   override fun tearDown() {
@@ -66,7 +72,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
 
       val editorManager = manager!!
       editorManager.openFileInNewWindow(childClass.containingFile.virtualFile).first[0]
-      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditorImpl).editor
+      val parentEditor = (editorManager.openFileInNewWindow(parentClass.containingFile.virtualFile).first[0] as TextEditor).editor
       rehighlight(parentEditor)
 
       WriteCommandAction.runWriteCommandAction(project) {
@@ -99,12 +105,12 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
 
     // open parent class and rehighlight
     val editorManager = manager!!
-    val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditorImpl
+    val parentTextEditor = editorManager.openFile(parentClass.containingFile.virtualFile, true)[0] as TextEditor
     val parentEditor = parentTextEditor.editor
     rehighlight(parentEditor)
     assertEmpty(getProblems(parentEditor))
 
-    // open child class in horizontal split, focus stays in parent editor
+    // open child class in horizontal split, focus stays in the parent editor
     val currentWindow = editorManager.currentWindow!!
     editorManager.createSplitter(SwingConstants.HORIZONTAL, currentWindow)
     val nextWindow = editorManager.getNextWindow(currentWindow)!!
@@ -146,5 +152,14 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   private fun rehighlight(editor: Editor) {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     CodeInsightTestFixtureImpl.instantiateAndRun(psiFile!!, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
+  }
+
+  fun testSplitChooserSameSideTwice() {
+    val classA = myFixture.addClass("public class A {}")
+    val editors = manager!!.openFile(classA.containingFile.virtualFile, true)
+    val editor = (UsefulTestCase.assertOneElement(editors) as TextEditor).editor
+    EditorTestUtil.executeAction(editor, "SplitChooser", true)
+    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
+    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
   }
 }

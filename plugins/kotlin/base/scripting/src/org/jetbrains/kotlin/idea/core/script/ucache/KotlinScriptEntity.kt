@@ -1,24 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.ucache
 
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.SymbolicEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import kotlin.jvm.JvmName
-import kotlin.jvm.JvmOverloads
-import kotlin.jvm.JvmStatic
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 
 // Use "Generate Workspace Model Implementation" action once interface is updated.
-interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
+interface KotlinScriptEntity : WorkspaceEntityWithSymbolicId {
 
     val path: String
 
@@ -28,21 +22,23 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
         get() = KotlinScriptId(path)
 
     //region generated code
-    @GeneratedCodeApiVersion(1)
-    interface Builder : KotlinScriptEntity, WorkspaceEntity.Builder<KotlinScriptEntity>, ObjBuilder<KotlinScriptEntity> {
+    @GeneratedCodeApiVersion(3)
+    interface Builder : WorkspaceEntity.Builder<KotlinScriptEntity> {
         override var entitySource: EntitySource
-        override var path: String
-        override var dependencies: MutableSet<KotlinScriptLibraryId>
+        var path: String
+        var dependencies: MutableSet<KotlinScriptLibraryId>
     }
 
-    companion object : Type<KotlinScriptEntity, Builder>() {
+    companion object : EntityType<KotlinScriptEntity, Builder>() {
         @JvmOverloads
         @JvmStatic
         @JvmName("create")
-        operator fun invoke(path: String,
-                            dependencies: Set<KotlinScriptLibraryId>,
-                            entitySource: EntitySource,
-                            init: (Builder.() -> Unit)? = null): KotlinScriptEntity {
+        operator fun invoke(
+            path: String,
+            dependencies: Set<KotlinScriptLibraryId>,
+            entitySource: EntitySource,
+            init: (Builder.() -> Unit)? = null,
+        ): Builder {
             val builder = builder()
             builder.path = path
             builder.dependencies = dependencies.toMutableWorkspaceSet()
@@ -56,11 +52,15 @@ interface KotlinScriptEntity: WorkspaceEntityWithSymbolicId {
 }
 
 //region generated code
-fun MutableEntityStorage.modifyEntity(entity: KotlinScriptEntity, modification: KotlinScriptEntity.Builder.() -> Unit) = modifyEntity(
-    KotlinScriptEntity.Builder::class.java, entity, modification)
+fun MutableEntityStorage.modifyKotlinScriptEntity(
+    entity: KotlinScriptEntity,
+    modification: KotlinScriptEntity.Builder.() -> Unit,
+): KotlinScriptEntity {
+    return modifyEntity(KotlinScriptEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
-data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?): EntitySource
+data class KotlinScriptEntitySource(override val virtualFileUrl: VirtualFileUrl?) : EntitySource
 
 data class KotlinScriptId(val path: String) : SymbolicEntityId<KotlinScriptEntity> {
     override val presentableName: String

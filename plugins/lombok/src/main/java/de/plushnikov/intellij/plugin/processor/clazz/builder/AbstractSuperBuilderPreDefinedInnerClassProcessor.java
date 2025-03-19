@@ -24,9 +24,8 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
     return new SuperBuilderHandler();
   }
 
-  @NotNull
   @Override
-  public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
+  public @NotNull List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     final Optional<PsiClass> parentClass = getSupportedParentClass(psiClass);
     final Optional<PsiAnnotation> psiAnnotation = parentClass.map(this::getSupportedAnnotation);
     if (psiAnnotation.isPresent()) {
@@ -49,12 +48,12 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
     final String psiClassName = psiClass.getName();
-    if (builderBaseClassName.equals(psiClassName) && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
+    if (builderBaseClassName.equals(psiClassName) && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
       result.addAll(generatePsiElementsOfBaseBuilderClass(psiParentClass, psiAnnotation, psiClass));
     } else {
       // use parent class as source!
       final String builderImplClassName = builderHandler.getBuilderImplClassName(psiParentClass);
-      if (builderImplClassName.equals(psiClassName) && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
+      if (builderImplClassName.equals(psiClassName) && noHintOrPossibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation)) {
         result.addAll(generatePsiElementsOfImplBuilderClass(psiParentClass, psiAnnotation, psiClass));
       }
     }
@@ -65,9 +64,8 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
 
   protected abstract Collection<? extends PsiElement> generatePsiElementsOfImplBuilderClass(@NotNull PsiClass psiParentClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 
-  @NotNull
   @Override
-  public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
+  public @NotNull Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     //do nothing
     return Collections.emptySet();
   }
@@ -78,7 +76,8 @@ public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends 
   }
 
   @Override
-  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+  protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target,
+                                     @Nullable String nameHint) {
     //do nothing
   }
 }

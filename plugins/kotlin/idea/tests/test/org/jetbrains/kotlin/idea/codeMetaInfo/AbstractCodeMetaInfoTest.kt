@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeMetaInfo
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +11,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
@@ -21,9 +23,11 @@ import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.UsageSearchContext
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.checkers.diagnostics.DebugInfoDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.factories.DebugInfoDiagnosticFactory0
@@ -37,6 +41,7 @@ import org.jetbrains.kotlin.daemon.common.OSKind
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.AbstractDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.caches.resolve.AbstractMultiModuleIdeResolveTest
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeMetaInfo.models.HighlightingCodeMetaInfo
@@ -47,8 +52,10 @@ import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
-import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Ignore
@@ -57,10 +64,14 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
+/**
+ * @property focusMode should be cleared explicitly by caller
+ */
 @Ignore
 class CodeMetaInfoTestCase(
     val codeMetaInfoTypes: Collection<AbstractCodeMetaInfoRenderConfiguration>,
     val checkNoDiagnosticError: Boolean = false,
+    val dumbMode: Boolean = false,
     private val filterMetaInfo: (CodeMetaInfo) -> Boolean = { true },
 ) : DaemonAnalyzerTestCase() {
 
@@ -103,8 +114,8 @@ class CodeMetaInfoTestCase(
         if ("!CHECK_HIGHLIGHTING" in file.text)
             return emptyList()
 
-        val highlightingInfos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
-            .filterNot { it.severity < configuration.severityLevel }
+        val infos = CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, intArrayOf(), false)
+        val highlightingInfos = infos.filterNot { it.severity < configuration.severityLevel }
 
         if (configuration.checkNoError) {
             val errorHighlights = highlightingInfos.filter { it.severity >= HighlightSeverity.ERROR }
@@ -126,14 +137,16 @@ class CodeMetaInfoTestCase(
         }
     }
 
-    fun checkFile(file: VirtualFile, expectedFile: File, project: Project, postprocessActualTestData: (String) -> String = { it }) {
+    fun checkFile(
+        file: VirtualFile, expectedFile: File, project: Project,
+        postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }) {
         myProject = project
         myPsiManager = PsiManager.getInstance(myProject) as PsiManagerImpl
         configureByExistingFile(file)
         check(expectedFile, postprocessActualTestData)
     }
 
-    fun check(expectedFile: File, postprocessActualTestData: (String) -> String = { it }) {
+    fun check(expectedFile: File, postprocessActualTestData: (String, Editor) -> String = { s, _ -> s }) {
         val codeMetaInfoForCheck = mutableListOf<CodeMetaInfo>()
         PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
@@ -141,7 +154,7 @@ class CodeMetaInfoTestCase(
         ApplicationManager.getApplication().runWriteAction { TreeUtil.clearCaches(myFile.node as TreeElement) }
 
         //to initialize caches
-        if (!DumbService.isDumb(myProject)) {
+        if (!dumbMode && !DumbService.isDumb(myProject)) {
             CacheManager.getInstance(myProject).getFilesWithWord(
                 "XXX",
                 UsageSearchContext.IN_COMMENTS,
@@ -150,20 +163,38 @@ class CodeMetaInfoTestCase(
             )
         }
 
-        for (configuration in codeMetaInfoTypes) {
-            when (configuration) {
-                is DiagnosticCodeMetaInfoRenderConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
+        fun task() {
+            for (configuration in codeMetaInfoTypes) {
+                when (configuration) {
+                    is DiagnosticCodeMetaInfoRenderConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getDiagnosticCodeMetaInfos(configuration))
+                    }
+
+                    is HighlightingConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
+                    }
+
+                    is LineMarkerConfiguration -> {
+                        codeMetaInfoForCheck.addAll(getLineMarkerCodeMetaInfos(configuration))
+                    }
+
+                    else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
                 }
-                is HighlightingConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getHighlightingCodeMetaInfos(configuration))
-                }
-                is LineMarkerConfiguration -> {
-                    codeMetaInfoForCheck.addAll(getLineMarkerCodeMetaInfos(configuration))
-                }
-                else -> throw IllegalArgumentException("Unexpected code meta info configuration: $configuration")
             }
         }
+
+        if (dumbMode) {
+            val disposable = Disposer.newCheckedDisposable("mustWaitForSmartMode")
+            try {
+                (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, disposable)
+                DumbModeTestUtils.runInDumbModeSynchronously(project) { task() }
+            } finally {
+                Disposer.dispose(disposable)
+            }
+        } else {
+            task()
+        }
+
         if (codeMetaInfoTypes.any { it is DiagnosticCodeMetaInfoRenderConfiguration } &&
             !codeMetaInfoTypes.any { it is HighlightingConfiguration }
         ) {
@@ -194,7 +225,7 @@ class CodeMetaInfoTestCase(
                 codeMetaInfoForCheck.add(it)
         }
         val textWithCodeMetaInfo = CodeMetaInfoRenderer.renderTagsToText(codeMetaInfoForCheck, myEditor.document.text)
-        val postprocessedText = postprocessActualTestData(textWithCodeMetaInfo.toString())
+        val postprocessedText = postprocessActualTestData(textWithCodeMetaInfo.toString(), myEditor)
         KotlinTestUtils.assertEqualsToFile(
             expectedFile,
             postprocessedText
@@ -243,16 +274,34 @@ class CodeMetaInfoTestCase(
 }
 
 abstract class AbstractDiagnosticCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
-    override fun getConfigurations() = listOf(
+    override fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
         DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration()
     )
 }
 
 abstract class AbstractLineMarkerCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
-    override fun getConfigurations() = listOf(
-        LineMarkerConfiguration()
+    override fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
+        LineMarkerConfiguration(renderTargetIcons = true)
     )
+}
+
+abstract class AbstractMultiModuleLineMarkerCodeMetaInfoTest: AbstractLineMarkerCodeMetaInfoTest() {
+    override fun getTestDataDirectory(): File = IDEA_TEST_DATA_DIR.resolve("multiplatform")
+
+    override fun setUp() {
+        super.setUp()
+        KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.COMPOSITE)
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable {
+                KotlinMultiplatformAnalysisModeComponent.setMode(project, KotlinMultiplatformAnalysisModeComponent.Mode.SEPARATE)
+            },
+            ThrowableRunnable { super.tearDown() }
+        )
+    }
 }
 
 abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest() {
@@ -262,8 +311,10 @@ abstract class AbstractHighlightingCodeMetaInfoTest : AbstractCodeMetaInfoTest()
 }
 
 abstract class AbstractCodeMetaInfoTest : AbstractMultiModuleTest() {
-    open val checkNoDiagnosticError get() = false
-    open fun getConfigurations() = listOf(
+
+    open val checkNoDiagnosticError: Boolean get() = false
+
+    open fun getConfigurations(): List<AbstractCodeMetaInfoRenderConfiguration> = listOf(
         DiagnosticCodeMetaInfoRenderConfiguration(),
         LineMarkerConfiguration(),
         HighlightingConfiguration()

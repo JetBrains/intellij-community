@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.icons.AllIcons;
@@ -47,9 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 
-public class ProjectPatternProvider extends PatternDialectProvider {
-
-  @NonNls public static final String FILE = "file";
+public final class ProjectPatternProvider extends PatternDialectProvider {
+  public static final @NonNls String FILE = "file";
 
   private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
@@ -71,8 +55,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return FILE;
   }
 
@@ -85,8 +68,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   @Override
-  @Nullable
-  public PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
+  public @Nullable PackageSet createPackageSet(final PackageDependenciesNode node, final boolean recursively) {
     if (node instanceof ModuleGroupNode) {
       if (!recursively) return null;
       return new FilePatternPackageSet(getGroupModulePattern((ModuleGroupNode)node), "*//*");
@@ -100,7 +82,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     else if (node instanceof DirectoryNode) {
       String pattern = ((DirectoryNode)node).getFQName();
       if (pattern != null) {
-        if (pattern.length() > 0) {
+        if (!pattern.isEmpty()) {
           pattern += recursively ? "//*" : "/*";
         }
         else {
@@ -155,9 +137,8 @@ public class ProjectPatternProvider extends PatternDialectProvider {
     return AllIcons.General.ProjectTab;
   }
 
-  @Nls
   @Override
-  public @NotNull String getHintMessage() {
+  public @Nls @NotNull String getHintMessage() {
     return LangBundle.message("package.pattern.provider.hint.label");
   }
 

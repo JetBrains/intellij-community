@@ -23,8 +23,7 @@ class CodeVisionPopupWrapper(
   val editor: Editor,
   val popupFactory: (Lifetime) -> AbstractPopup,
   private val popupLayouter: DockingLayouter,
-  private val lensPopupActive: IProperty<Boolean>
-) {
+  private val lensPopupActive: IProperty<Boolean>) {
   private val logger = getLogger<CodeVisionPopupWrapper>()
 
   var popup: AbstractPopup? = null

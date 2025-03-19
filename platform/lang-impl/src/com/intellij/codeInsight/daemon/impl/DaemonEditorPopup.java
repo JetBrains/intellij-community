@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -21,13 +22,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
-public class DaemonEditorPopup extends PopupHandler {
+@ApiStatus.Internal
+public final class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;
 
@@ -63,6 +66,13 @@ public class DaemonEditorPopup extends PopupHandler {
         }
 
         @Override
+        public void update(@NotNull AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setVisible(e.getPresentation().isVisible() &&
+                                         !Boolean.TRUE.equals(myEditor.getUserData(EditorMarkupModelImpl.DISABLE_CODE_LENS)));
+        }
+
+        @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.BGT;
         }
@@ -81,8 +91,7 @@ public class DaemonEditorPopup extends PopupHandler {
     }
   }
 
-  @NotNull
-  static DefaultActionGroup createGotoGroup() {
+  static @NotNull DefaultActionGroup createGotoGroup() {
     Shortcut shortcut = KeymapUtil.getPrimaryShortcut("GotoNextError");
     String shortcutText = shortcut != null ? " (" + KeymapUtil.getShortcutText(shortcut) + ")" : "";
     DefaultActionGroup gotoGroup = DefaultActionGroup.createPopupGroup(() -> CodeInsightBundle.message("popup.title.next.error.action.0.goes.through", shortcutText));

@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
@@ -13,21 +15,24 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention actions are context-specific actions related to the caret position in the editor.
- * Upon pressing Alt+Enter, a list of possible intention actions is shown, see IntentionPopup.
+ * Upon pressing <kbd>Alt+Enter</kbd>, a list of possible intention actions is shown in a popup.
  * <p>
- * Individual intention actions can be enabled or disabled in the "Intentions" settings dialog.
+ * Individual intention actions can be enabled or disabled in the <em>Settings | Editor | Intentions</em> dialog.
  * <p>
  * To change the icon in the intention popup menu, implement {@link Iconable}.
  * <p>
  * To change the ordering, implement {@link HighPriorityAction},
  * {@link LowPriorityAction} or {@link PriorityAction}.
  * <p>
- * Can be {@link com.intellij.openapi.project.DumbAware}.
+ * Can be marked {@link com.intellij.openapi.project.DumbAware}.
+ * <p>
+ * See {@link CustomizableIntentionAction} for further customization options.
  */
-public interface IntentionAction extends FileModifier, CommonIntentionAction {
+public interface IntentionAction extends FileModifier, CommonIntentionAction, PossiblyDumbAware {
 
   IntentionAction[] EMPTY_ARRAY = new IntentionAction[0];
 
@@ -97,18 +102,31 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction {
    * In this case, overriding {@code getFileModifierForPreview} or {@code generatePreview} is desired.
    *
    * @param project the current project
-   * @param editor the editor where a file copy is opened.
-   *               Could be a simplified headless Editor implementation that lacks some features.
-   * @param file a non-physical file to apply, which is a copy of the file that contains the element returned from
-   *             {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
+   * @param editor  the editor where a file copy is opened.
+   *                Could be a simplified headless Editor implementation that lacks some features.
+   * @param file    a non-physical file to apply, which is a copy of the file that contains the element returned from
+   *                {@link #getElementToMakeWritable(PsiFile)}, or a copy of the current file if that method returns null
    * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    var copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
+    IntentionAction copy = ObjectUtils.tryCast(getFileModifierForPreview(file), IntentionAction.class);
     if (copy == null) return IntentionPreviewInfo.FALLBACK_DIFF;
     PsiElement writable = copy.getElementToMakeWritable(file);
     if (writable == null || writable.getContainingFile() != file) return IntentionPreviewInfo.FALLBACK_DIFF;
     copy.invoke(project, editor, file);
     return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
+  default @NotNull IntentionAction asIntention() {
+    return this;
+  }
+
+  @Override
+  default @Nullable ModCommandAction asModCommandAction() {
+    if (this instanceof IntentionActionDelegate delegate) {
+      return delegate.getDelegate().asModCommandAction();
+    }
+    return null;
   }
 }

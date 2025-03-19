@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.utils.LocalHistoryLog;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -17,6 +15,7 @@ import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.storage.AbstractStorage;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +27,12 @@ import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 
+import static com.intellij.history.core.LocalHistoryNotificationIdsHolder.STORAGE_CORRUPTED;
+import static com.intellij.history.core.LocalHistoryNotificationIdsHolderKt.getLocalHistoryNotificationGroup;
+
+@ApiStatus.Internal
 public final class ChangeListStorageImpl implements ChangeListStorage {
-  private static final int VERSION = 6;
+  private static final int VERSION = 7;
   private static final @NonNls String STORAGE_FILE = "changes";
 
   private final Path myStorageDir;
@@ -98,12 +101,12 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
 
     String fullMsg = "Local history is broken" +
-                      "(version:" + VERSION +
-                      ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
-                      ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
-                      ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
-                      ", path: " + myStorageDir +
-                      ")\n" + message;
+                     "(version:" + VERSION +
+                     ", current timestamp: " + DateFormat.getDateTimeInstance().format(timestamp) +
+                     ", storage timestamp: " + DateFormat.getDateTimeInstance().format(storageTimestamp) +
+                     ", vfs timestamp: " + DateFormat.getDateTimeInstance().format(vfsTimestamp) +
+                     ", path: " + myStorageDir +
+                     ")\n" + message;
     if (myUnitTestMode) {
       LocalHistoryLog.LOG.warn(fullMsg, e);
     }
@@ -121,45 +124,25 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
       isCompletelyBroken = true;
     }
 
-    notifyUser();
-  }
-
-
-  private static void notifyUser() {
-    /*
-    final String logFile = PathManager.getLogPath();
-    String createIssuePart = "<br>" +
-                             "<br>" +
-                             "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
-                             "to the <a href=\"url\">YouTrack issue</a>";
-    NotificationListener createIssueListener = (notification, event) -> {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        if ("url".equals(event.getDescription())) {
-          BrowserUtil.browse("http://youtrack.jetbrains.net/issue/IDEA-71270");
-        }
-        else {
-          File file = new File(logFile);
-          RevealFileAction.openFile(file);
-        }
-      }
-    };
-    */
-    new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                     LocalHistoryBundle.message("notification.title.local.history.broken"),
-                     LocalHistoryBundle.message("notification.content.local.history.broken") /*+ createIssuePart*/,
-                     NotificationType.ERROR /*, createIssueListener*/).notify(null);
+    getLocalHistoryNotificationGroup()
+      .createNotification(LocalHistoryBundle.message("notification.title.local.history.broken"),
+                          LocalHistoryBundle.message("notification.content.local.history.broken"),
+                          NotificationType.ERROR)
+      .setDisplayId(STORAGE_CORRUPTED)
+      .notify(null);
   }
 
   @Override
-  public synchronized void close() {
+  public void close() {
     Disposer.dispose(myStorage);
   }
 
   @Override
-  public synchronized void force() {
+  public void force() {
     try {
       myStorage.force();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       handleError(e, null);
     }
   }
@@ -170,8 +153,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   @Override
-  @Nullable
-  public synchronized ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
+  public synchronized @Nullable ChangeSetHolder readPrevious(int id, IntSet recursionGuard) {
     if (isCompletelyBroken) return null;
 
     int prevId = 0;
@@ -206,8 +188,7 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
     }
   }
 
-  @NotNull
-  private ChangeSetHolder doReadBlock(int id) throws IOException {
+  private @NotNull ChangeSetHolder doReadBlock(int id) throws IOException {
     try (DataInputStream in = myStorage.readStream(id)) {
       return new ChangeSetHolder(id, new ChangeSet(in));
     }
@@ -245,7 +226,6 @@ public final class ChangeListStorageImpl implements ChangeListStorage {
         eachBlockId = doReadPrevSafely(eachBlockId, recursionGuard);
       }
       myStorage.deleteRecordsUpTo(firstObsoleteId);
-      force();
     }
     catch (IOException e) {
       handleError(e, null);

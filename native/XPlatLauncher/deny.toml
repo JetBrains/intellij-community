@@ -1,46 +1,36 @@
-targets = [ ]
-exclude = ["cargo-deny", "cargo-about"]
+[graph]
+targets = []
 
 [advisories]
-vulnerability = "deny"
-unmaintained = "deny"
-yanked = "deny"
-notice = "deny"
-ignore = [ ]
+version = 2
+ignore = []
 
 [licenses]
-unlicensed = "deny"
-copyleft = "deny"
-allow-osi-fsf-free = "neither"
-default = "deny"
+version = 2
 confidence-threshold = 0.95
-allow = [
-    "MIT",
-    "Apache-2.0",
-    "BSD-3-Clause", # tempfile -> [..] -> instant, BSD-2-like, test-only dependency
-    "ISC", # libloading, MIT / Apache 2.0 alike
-    "Unicode-DFS-2016" # serde -> [..] -> unicode-ident
+allow = ["MIT", "Apache-2.0"]
+exceptions = [
+    { allow = ["Unicode-DFS-2016"], crate = "unicode-ident" }, # 'serde' dependency
+    { allow = ["ISC"], crate = "libloading" },
 ]
-deny = [ ]
-exceptions = [ ]
 unused-allowed-license = "deny"
 
-# allows to use our own unpublished packages
+# allows using our own unpublished packages
 [licenses.private]
 ignore = true
-registries = [ ]
+registries = []
 
 [bans]
 multiple-versions = "deny"
 wildcards = "deny"
 highlight = "all"
-allow = [ ]
-deny = [ ]
-skip = [ ]
+allow = []
+deny = []
+skip = []
 skip-tree = [
-    { name = "redox_users" },
-    { name = "redox_syscall" },
-    { name = "windows-sys", version = "0.45.0" }
+    { name = "windows-sys", version = "0.45.0" }, # 'jni' seems to stuck
+    { name = "curl" }, # build-time dependency
+    { name = "native-dialog" }, # false positives in macOS-specific subtree
 ]
 
 [sources]

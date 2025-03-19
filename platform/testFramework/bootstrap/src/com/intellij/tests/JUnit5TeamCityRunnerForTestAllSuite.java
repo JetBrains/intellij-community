@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
 import jetbrains.buildServer.messages.serviceMessages.MapSerializerUtil;
@@ -8,16 +8,14 @@ import junit.framework.JUnit4TestAdapter;
 import junit.framework.JUnit4TestAdapterCache;
 import junit.framework.TestResult;
 import junit.framework.TestSuite;
-import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.*;
+import org.junit.platform.engine.discovery.ClassNameFilter;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 import org.junit.platform.engine.support.descriptor.MethodSource;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.TestExecutionListener;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -31,33 +29,102 @@ import org.opentest4j.MultipleFailuresError;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 
+// Used to run JUnit 3/4 tests via JUnit 5 runtime
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5TeamCityRunnerForTestAllSuite {
   public static void main(String[] args) throws ClassNotFoundException {
+    if (args.length != 1 && args.length != 2) {
+      System.err.printf("Expected one or two arguments, got %d: %s%n", args.length, Arrays.toString(args));
+      System.exit(1);
+    }
     try {
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());
-      DiscoverySelector selector;
+      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+      List<? extends DiscoverySelector> selectors;
+      List<Filter<?>> filters = new ArrayList<>(0);
       if (args.length == 1) {
-        selector = DiscoverySelectors.selectClass(args[0]);
+        selectors = Collections.singletonList(DiscoverySelectors.selectClass(args[0]));
+      }
+      else if (args[0].equals("__package__")) {
+        selectors = Collections.singletonList(DiscoverySelectors.selectPackage(args[1]));
+        // exclude subpackages
+        filters.add(ClassNameFilter.excludeClassNamePatterns("\\Q" + args[1] + "\\E\\.[^.]+\\..*"));
+      }
+      else if (args[0].equals("__classes__")) {
+        String[] classes = args[1].split(";");
+        selectors = Arrays.stream(classes).map(DiscoverySelectors::selectClass).toList();
       }
       else {
-        selector = DiscoverySelectors.selectMethod(args[0], args[1]);
+        selectors = Collections.singletonList(DiscoverySelectors.selectMethod(args[0], args[1]));
       }
+      if (Boolean.getBoolean("idea.performance.tests.discovery.filter")) {
+        // Add filter
+        filters.add(createPerformancePostDiscoveryFilter(classLoader));
+      }
+      LauncherDiscoveryRequest discoveryRequest = LauncherDiscoveryRequestBuilder.request()
+        .selectors(selectors)
+        .filters(filters.toArray(new Filter[0]))
+        .build();
       TCExecutionListener listener = new TCExecutionListener();
-      launcher.execute(LauncherDiscoveryRequestBuilder.request().selectors(selector).build(), listener);
+      TestPlan testPlan = launcher.discover(discoveryRequest);
+      launcher.execute(testPlan, listener);
       if (!listener.smthExecuted()) {
         //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
         System.exit(42);
       }
     }
     catch (Throwable x) {
+      //noinspection CallToPrintStackTrace
       x.printStackTrace();
     }
     finally {
       System.exit(0);
     }
   }
+
+  private static PostDiscoveryFilter createPerformancePostDiscoveryFilter(ClassLoader classLoader)
+    throws NoSuchMethodException, ClassNotFoundException, IllegalAccessException {
+    final MethodHandle method = MethodHandles.publicLookup()
+      .findStatic(Class.forName("com.intellij.testFramework.TestFrameworkUtil", true, classLoader),
+                  "isPerformanceTest", MethodType.methodType(boolean.class, String.class, String.class));
+    return new PostDiscoveryFilter() {
+      private FilterResult isIncluded(String className, String methodName) {
+        try {
+          if ((boolean)method.invokeExact(methodName, className)) {
+            return FilterResult.included(null);
+          }
+          return FilterResult.excluded(null);
+        }
+        catch (Throwable e) {
+          return FilterResult.excluded(e.getMessage());
+        }
+      }
+
+      @Override
+      public FilterResult apply(TestDescriptor descriptor) {
+        if (descriptor instanceof EngineDescriptor) {
+          return FilterResult.included(null);
+        }
+        TestSource source = descriptor.getSource().orElse(null);
+        if (source == null) {
+          return FilterResult.included("No source for descriptor");
+        }
+        if (source instanceof MethodSource methodSource) {
+          return isIncluded(methodSource.getClassName(), methodSource.getMethodName());
+        }
+        if (source instanceof ClassSource classSource) {
+          return isIncluded(classSource.getClassName(), null);
+        }
+        return FilterResult.included("Unknown source type " + source.getClass());
+      }
+    };
+  }
+
 
   public static JUnit4TestAdapterCache createJUnit4TestAdapterCache() {
     return new JUnit4TestAdapterCache() {
@@ -95,12 +162,33 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     };
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static class TCExecutionListener implements TestExecutionListener {
+    /**
+     * The same constant as com.intellij.rt.execution.TestListenerProtocol.CLASS_CONFIGURATION
+     */
+    private static final String CLASS_CONFIGURATION = "Class Configuration";
     private final PrintStream myPrintStream;
     private TestPlan myTestPlan;
     private long myCurrentTestStart = 0;
     private int myFinishCount = 0;
+    private static final int MAX_STACKTRACE_MESSAGE_LENGTH =
+      Integer.getInteger("intellij.build.test.stacktrace.max.length", 100 * 1024);
+
+    /**
+     * If true, then all the standard output and standard error messages
+     * received between testStarted and testFinished messages will be considered test output.
+     * @see <a href="https://www.jetbrains.com/help/teamcity/service-messages.html#Nested+Test+Reporting">TeamCity test reporting</a>
+     */
+    private static final boolean CAPTURE_STANDARD_OUTPUT;
+
+    static {
+      if ("false".equalsIgnoreCase(System.getProperty("intellij.build.test.captureStandardOutput"))) {
+        CAPTURE_STANDARD_OUTPUT = false;
+      }
+      else {
+        CAPTURE_STANDARD_OUTPUT = true;
+      }
+    }
 
     public TCExecutionListener() {
       myPrintStream = System.out;
@@ -108,7 +196,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     public boolean smthExecuted() {
-      return myCurrentTestStart > 0;
+      return myCurrentTestStart != 0;
     }
 
     @Override
@@ -126,10 +214,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     @Override
-    public void testPlanExecutionFinished(TestPlan testPlan) {
-    }
-
-    @Override
     public void executionSkipped(TestIdentifier testIdentifier, String reason) {
       executionStarted(testIdentifier);
       executionFinished(testIdentifier, TestExecutionResult.Status.ABORTED, null, reason);
@@ -139,7 +223,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     public void executionStarted(TestIdentifier testIdentifier) {
       if (testIdentifier.isTest()) {
         testStarted(testIdentifier);
-        myCurrentTestStart = System.currentTimeMillis();
+        myCurrentTestStart = System.nanoTime();
       }
       else if (hasNonTrivialParent(testIdentifier)) {
         myFinishCount = 0;
@@ -166,7 +250,6 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                                    TestExecutionResult.Status status,
                                    Throwable throwableOptional,
                                    String reason) {
-      final String displayName = getName(testIdentifier);
       if (testIdentifier.isTest()) {
         final long duration = getDuration();
         if (status == TestExecutionResult.Status.FAILED) {
@@ -189,9 +272,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
         if (messageName != null) {
           if (status == TestExecutionResult.Status.FAILED) {
             String parentId = getParentId(testIdentifier);
-            String nameAndId = " name='CLASS_CONFIGURATION' nodeId='" + escapeName(getId(testIdentifier)) +
-                               "' parentNodeId='" + escapeName(parentId) + "' ";
-            testFailure("CLASS_CONFIGURATION", getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason);
+            String nameAndId = " name='" + CLASS_CONFIGURATION +
+                               "' nodeId='" + escapeName(getId(testIdentifier)) +
+                               "' parentNodeId='" + escapeName(parentId) + "'";
+            myPrintStream.println("##teamcity[testStarted" + nameAndId + "]");
+            testFailure(CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason);
             myPrintStream.println("##teamcity[testFinished" + nameAndId + "]");
           }
 
@@ -206,7 +291,7 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
             myFinishCount = 0;
           }
         }
-        myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
+        myPrintStream.println("##teamcity[testSuiteFinished" + idAndName(testIdentifier) + "]");
       }
     }
 
@@ -215,11 +300,11 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     protected long getDuration() {
-      return System.currentTimeMillis() - myCurrentTestStart;
+      return (System.nanoTime() - myCurrentTestStart) / 1_000_000;
     }
 
     private void testStarted(TestIdentifier testIdentifier) {
-      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='true']");
+      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='" + CAPTURE_STANDARD_OUTPUT + "']");
     }
 
     private void testFinished(TestIdentifier testIdentifier, long duration) {
@@ -270,10 +355,10 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           attrs.put("duration", Long.toString(duration));
         }
         if (reason != null) {
-          attrs.put("message", reason);
+          attrs.put("message", limit(reason));
         }
         if (ex != null) {
-          attrs.put("details", getTrace(ex));
+          attrs.put("details", getTrace(ex, MAX_STACKTRACE_MESSAGE_LENGTH));
         }
         if (ex != null) {
           if (ex instanceof MultipleFailuresError && ((MultipleFailuresError)ex).hasFailures()) {
@@ -284,8 +369,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
           else if (ex instanceof AssertionFailedError &&
                    ((AssertionFailedError)ex).isActualDefined() &&
                    ((AssertionFailedError)ex).isExpectedDefined()) {
-            attrs.put("expected", ((AssertionFailedError)ex).getExpected().getStringRepresentation());
-            attrs.put("actual", ((AssertionFailedError)ex).getActual().getStringRepresentation());
+            attrs.put("expected", limit(((AssertionFailedError)ex).getExpected().getStringRepresentation()));
+            attrs.put("actual", limit(((AssertionFailedError)ex).getActual().getStringRepresentation()));
             attrs.put("type", "comparisonFailure");
           }
           else {
@@ -295,8 +380,8 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
                 String expected = (String)aClass.getMethod("getExpected").invoke(ex);
                 String actual = (String)aClass.getMethod("getActual").invoke(ex);
 
-                attrs.put("expected", expected);
-                attrs.put("actual", actual);
+                attrs.put("expected", limit(expected));
+                attrs.put("actual", limit(actual));
                 attrs.put("type", "comparisonFailure");
               }
               catch (Throwable e) {
@@ -321,10 +406,19 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
       return isComparisonFailure(aClass.getSuperclass());
     }
 
-    protected String getTrace(Throwable ex) {
+    private static String limit(String string) {
+      if (string == null) return null;
+      if (string.length() > MAX_STACKTRACE_MESSAGE_LENGTH) {
+        return string.substring(0, MAX_STACKTRACE_MESSAGE_LENGTH);
+      }
+      return string;
+    }
+
+    protected static String getTrace(Throwable ex, int limit) {
       final StringWriter stringWriter = new StringWriter();
-      final PrintWriter writer = new PrintWriter(stringWriter);
+      final LimitedStackTracePrintWriter writer = new LimitedStackTracePrintWriter(stringWriter, limit);
       ex.printStackTrace(writer);
+      writer.close();
       return stringWriter.toString();
     }
 
@@ -333,14 +427,13 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
     }
 
     private String idAndName(TestIdentifier testIdentifier) {
-      return idAndName(testIdentifier, getName(testIdentifier));
-    }
-
-    private String idAndName(TestIdentifier testIdentifier, String displayName) {
-      return " id='" + escapeName(getId(testIdentifier)) +
-             "' name='" + escapeName(displayName) +
-             "' nodeId='" + escapeName(getId(testIdentifier)) +
-             "' parentNodeId='" + escapeName(getParentId(testIdentifier)) + "'";
+      String id = getId(testIdentifier);
+      String name = getName(testIdentifier);
+      String parentId = getParentId(testIdentifier);
+      return " id='" + escapeName(id) +
+             "' name='" + escapeName(name) +
+             "' nodeId='" + escapeName(id) +
+             "' parentNodeId='" + escapeName(parentId) + "'";
     }
 
     private String getParentId(TestIdentifier testIdentifier) {
@@ -353,6 +446,87 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
 
     private static String escapeName(String str) {
       return MapSerializerUtil.escapeStr(str, MapSerializerUtil.STD_ESCAPER2);
+    }
+
+    static class LimitedStackTracePrintWriter extends PrintWriter {
+      public static final String CAUSED_BY = "Caused by: ";
+      private final int headLimit;
+      private final int tailLimit;
+      private final List<String> tailLines = new ArrayList<>(0);
+      private boolean newLine = false;
+      private boolean inCausedBy = false;
+      private int headLength = 0;
+      private int tailLength = 0;
+
+      LimitedStackTracePrintWriter(StringWriter out, int limit) {
+        super(out);
+        // Leave 10% for final 'caused by'
+        tailLimit = limit / 10;
+        headLimit = limit - tailLimit;
+      }
+
+      @Override
+      public void print(String x) {
+        if (x == null) return;
+        int headLeft = headLimit - headLength;
+        if (headLeft > 0) {
+          // write while within head limit
+          if (x.length() >= headLeft) {
+            x = x.substring(0, headLeft - 1);
+          }
+          super.print(x);
+          headLength += x.length();
+          newLine = true;
+          return;
+        }
+        if (x.contains(CAUSED_BY)) {
+          tailLines.clear();
+          tailLength = 0;
+          inCausedBy = true;
+        }
+        if (inCausedBy) {
+          // add to last lines if they are within their tail limit
+          int tailLeft = tailLimit - tailLength;
+          if (tailLeft > 0) {
+            if (x.length() >= tailLeft) {
+              x = x.substring(0, tailLeft + 1);
+            }
+            tailLines.add(x);
+            tailLength += x.length() + 1;
+          }
+        }
+        else {
+          // just skip, it's not 'caused by' section (yet?)
+        }
+      }
+
+      @Override
+      public void println() {
+        if (newLine) {
+          newLine = false;
+          super.println();
+          headLength++;
+        }
+      }
+
+      private void finish() {
+        if (!tailLines.isEmpty()) {
+          super.print("...");
+          super.println();
+          for (String line : tailLines) {
+            super.print(line);
+            super.println();
+          }
+          tailLines.clear();
+        }
+        super.flush();
+      }
+
+      @Override
+      public void close() {
+        finish();
+        super.close();
+      }
     }
   }
 }

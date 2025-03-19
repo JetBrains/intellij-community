@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -25,11 +26,12 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Service(Service.Level.PROJECT)
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class LogConsolePreferences extends LogFilterRegistrar {
+public final class LogConsolePreferences extends LogFilterRegistrar {
   private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<>((o1, o2) -> -1);
-  @NonNls private static final String FILTER = "filter";
-  @NonNls private static final String IS_ACTIVE = "is_active";
+  private static final @NonNls String FILTER = "filter";
+  private static final @NonNls String IS_ACTIVE = "is_active";
 
   public boolean FILTER_ERRORS = false;
   public boolean FILTER_WARNINGS = false;
@@ -37,12 +39,12 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   public boolean FILTER_DEBUG = true;
 
   public String CUSTOM_FILTER = null;
-  @NonNls public static final String ERROR = "ERROR";
-  @NonNls public static final String WARNING = "WARNING";
-  @NonNls private static final String WARN = "WARN";
-  @NonNls public static final String INFO = "INFO";
-  @NonNls public static final String DEBUG = "DEBUG";
-  @NonNls public static final String CUSTOM = "CUSTOM";
+  public static final @NonNls String ERROR = "ERROR";
+  public static final @NonNls String WARNING = "WARNING";
+  private static final @NonNls String WARN = "WARN";
+  public static final @NonNls String INFO = "INFO";
+  public static final @NonNls String DEBUG = "DEBUG";
+  public static final @NonNls String CUSTOM = "CUSTOM";
 
   /**
    * Set of patterns to assign severity to given message.
@@ -62,23 +64,19 @@ public class LogConsolePreferences extends LogFilterRegistrar {
       myType = type;
     }
 
-    @NotNull
-    public Pattern getPattern() {
+    public @NotNull Pattern getPattern() {
       return myPattern;
     }
 
-    @NotNull @NonNls
-    public String getType() {
+    public @NotNull @NonNls String getType() {
       return myType;
     }
 
-    @Nullable
-    public static LevelPattern findBestMatchingPattern(@NotNull String text) {
+    public static @Nullable LevelPattern findBestMatchingPattern(@NotNull String text) {
       return findBestMatchingPattern(text, LevelPattern.values());
     }
 
-    @Nullable
-    public static LevelPattern findBestMatchingPattern(@NotNull String text, LevelPattern @NotNull [] patterns) {
+    public static @Nullable LevelPattern findBestMatchingPattern(@NotNull String text, LevelPattern @NotNull [] patterns) {
       int bestStart = Integer.MAX_VALUE;
       LevelPattern bestMatch = null;
       for (LevelPattern next : patterns) {
@@ -144,8 +142,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return ConsoleViewContentType.NORMAL_OUTPUT;
   }
 
-  @Nullable
-  public static String getType(@NotNull String text) {
+  public static @Nullable String getType(@NotNull String text) {
     LevelPattern bestMatch = LevelPattern.findBestMatchingPattern(text);
     return bestMatch == null ? null : bestMatch.getType();
   }
@@ -175,7 +172,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
   }
 
   @Override
-  public void loadState(@NotNull final Element object) {
+  public void loadState(final @NotNull Element object) {
     try {
       final List children = object.getChildren(FILTER);
       for (Object child : children) {

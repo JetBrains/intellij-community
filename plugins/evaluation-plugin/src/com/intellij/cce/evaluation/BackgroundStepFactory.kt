@@ -1,64 +1,53 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
-import com.intellij.cce.core.Language
+import com.intellij.cce.actions.DatasetContext
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.step.*
-import com.intellij.cce.interpreter.CompletionInvoker
-import com.intellij.cce.interpreter.CompletionInvokerImpl
-import com.intellij.cce.interpreter.DelegationCompletionInvoker
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 
 class BackgroundStepFactory(
+  private val feature: EvaluableFeature<EvaluationStrategy>,
   private val config: Config,
-  private val project: Project,
-  private val isHeadless: Boolean,
+  private val environment: EvaluationEnvironment,
   private val inputWorkspacePaths: List<String>?,
-  private val evaluationRootInfo: EvaluationRootInfo
+  private val datasetContext: DatasetContext
 ) : StepFactory {
 
-  private var completionInvoker: CompletionInvoker = DelegationCompletionInvoker(
-    CompletionInvokerImpl(project, Language.resolve(config.language),
-                          config.interpret.completionType, config.interpret.emulationSettings, config.interpret.completionGolfSettings),
-    project)
-
-  override fun generateActionsStep(): EvaluationStep =
-    ActionsGenerationStep(config.actions, config.language, evaluationRootInfo, project, isHeadless)
+  override fun generateActionsStep(): EvaluationStep = DatasetPreparationStep(environment, datasetContext)
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, completionInvoker, project, isHeadless)
+    ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = false)
 
   override fun generateReportStep(): EvaluationStep =
-    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
-                         config.reports.sessionsFilters, config.reports.comparisonFilters, project, isHeadless)
+    ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) },
+                         config.reports.sessionsFilters, config.reports.comparisonFilters, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationOnNewWorkspaceStep(config, completionInvoker, project, isHeadless)
+    ActionsInterpretationStep(config, environment, datasetContext, newWorkspace = true)
 
   override fun reorderElements(): EvaluationStep =
-    ReorderElementsStep(config, project, isHeadless)
-
-  override fun highlightTokensInIdeStep(): EvaluationStep = HighlightingTokensInIdeStep(
-    SuggestionsComparator.create(Language.resolve(config.language), config.interpret.completionType), project, isHeadless)
+    ReorderElementsStep(config)
 
   override fun setupStatsCollectorStep(): EvaluationStep? =
     if ((config.interpret.saveLogs || config.interpret.saveFeatures || config.interpret.experimentGroup != null)
         && !ApplicationManager.getApplication().isUnitTestMode
         && SetupStatsCollectorStep.isStatsCollectorEnabled())
-      SetupStatsCollectorStep(project, config.interpret.experimentGroup,
-                              config.interpret.logLocationAndItemText, isHeadless)
+      SetupStatsCollectorStep(config.interpret.experimentGroup, config.interpret.logLocationAndItemText)
     else null
 
-  override fun setupFullLineStep(): EvaluationStep = SetupFullLineStep()
+  override fun setupRegistryStep(): EvaluationStep = SetupRegistryStep(config.interpret.registry)
 
-  override fun setupCompletionStep(): EvaluationStep = SetupCompletionStep(config.language, config.interpret.completionType)
+  override fun setupSdkStep(): EvaluationStep? = environment.setupSdk
 
-  override fun setupSdkStep(): EvaluationStep? = SetupSdkStep.forLanguage(project, Language.resolve(config.language))
+  override fun checkSdkConfiguredStep(): EvaluationStep? = environment.checkSdk
 
-  override fun checkSdkConfiguredStep(): EvaluationStep = CheckProjectSdkStep(project, config.language)
+  override fun finishEvaluationStep(): FinishEvaluationStep = HeadlessFinishEvaluationStep()
 
-  override fun finishEvaluationStep(): EvaluationStep =
-    if (isHeadless) HeadlessFinishEvaluationStep() else UIFinishEvaluationStep(project)
+  override fun featureSpecificSteps(): List<EvaluationStep> = feature.getEvaluationSteps(config)
+
+  override fun featureSpecificPreliminarySteps(): List<EvaluationStep> = feature.getPreliminaryEvaluationSteps()
 }

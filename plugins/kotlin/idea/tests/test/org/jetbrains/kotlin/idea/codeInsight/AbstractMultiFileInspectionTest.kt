@@ -6,8 +6,8 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.IdeaTestUtil
+import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.inspections.runInspection
-import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
@@ -17,13 +17,14 @@ import org.jetbrains.kotlin.idea.util.projectStructure.allModules
 import java.io.File
 
 abstract class AbstractMultiFileInspectionTest : KotlinMultiFileTestCase() {
+
     init {
         myDoCompare = false
     }
 
     protected fun doTest(path: String) {
         val configFile = File(path)
-        val config = JsonParser().parse(FileUtil.loadFile(configFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(configFile, true)) as JsonObject
 
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         val withFullJdk = config["withFullJdk"]?.asBoolean ?: false

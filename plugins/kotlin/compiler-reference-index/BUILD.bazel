@@ -1,0 +1,34 @@
+### auto-generated section `build kotlin.compiler-reference-index` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "compiler-reference-index_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "compiler-reference-index",
+  module_name = "kotlin.compiler-reference-index",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//jps/jps-builders:build",
+    "//java/java-indexing-impl:indexing-impl",
+    "//java/compiler/impl:java-compiler-impl",
+  ],
+  runtime_deps = [":compiler-reference-index_resources"]
+)
+### auto-generated section `build kotlin.compiler-reference-index` end

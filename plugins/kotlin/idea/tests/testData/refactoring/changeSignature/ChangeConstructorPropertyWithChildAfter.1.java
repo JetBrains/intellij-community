@@ -5,7 +5,6 @@ class JA extends A {
         super(a);
     }
 
-    @NotNull
     @Override
     public int getB() {
         return super.getB();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -10,14 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogUi
-import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import com.intellij.vcs.log.ui.VcsLogUiHolder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object VcsLogEditorUtil {
   internal fun getLogIds(editor: FileEditor): Set<String> {
-    return VcsLogPanel.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
+    return VcsLogUiHolder.getLogUis(editor.component).mapTo(mutableSetOf(), VcsLogUiEx::getId)
   }
 
   internal fun findSelectedLogIds(project: Project): Set<String> {
@@ -26,7 +26,7 @@ object VcsLogEditorUtil {
 
   @JvmStatic
   fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
-    return editors.asSequence().flatMap { VcsLogPanel.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
+    return editors.asSequence().flatMap { VcsLogUiHolder.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
   }
 
   internal fun selectLogUi(project: Project, ui: VcsLogUi): Boolean {
@@ -56,7 +56,7 @@ object VcsLogEditorUtil {
 
     for (logEditor in editorsToIdsMap) {
       val ids = logEditor.disposeLogUis()
-      ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.NON_MODAL,
+      ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.nonModal(),
                                                       { project.isDisposed })
       tabsToClose.removeAll(ids.toHashSet())
     }
@@ -64,7 +64,7 @@ object VcsLogEditorUtil {
   }
 
   internal fun FileEditor.disposeLogUis(): List<String> {
-    val logUis = VcsLogPanel.getLogUis(component)
+    val logUis = VcsLogUiHolder.getLogUis(component)
     val disposedIds = logUis.map { it.id }
     if (logUis.isNotEmpty()) {
       component.removeAll()

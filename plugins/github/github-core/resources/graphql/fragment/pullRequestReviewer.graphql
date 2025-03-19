@@ -1,0 +1,13 @@
+fragment pullRequestReviewer on RequestedReviewer {
+  ... on Actor {
+    ...actorInfo
+  }
+  ... on User {
+    ...userInfo
+  }
+  ... on Team {
+    ...teamInfo
+  }
+
+  # For future enthusiasts: be careful with adding ... on Bot, as it's been added only in GHE 3.11
+}

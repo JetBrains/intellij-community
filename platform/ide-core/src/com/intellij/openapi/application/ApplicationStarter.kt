@@ -1,22 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.ide.CliResult
-import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-@Experimental
 abstract class ModernApplicationStarter : ApplicationStarter {
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
-  final override fun main(args: List<String>): Unit =
+  final override fun main(args: List<String>) {
     throw UnsupportedOperationException("Use start(args)")
+  }
 
   abstract suspend fun start(args: List<String>)
 }
@@ -30,11 +28,9 @@ abstract class ModernApplicationStarter : ApplicationStarter {
  */
 interface ApplicationStarter {
   companion object {
-    val EP_NAME = ExtensionPointName<ApplicationStarter>("com.intellij.appStarter")
-
-    const val NON_MODAL = 1
-    const val ANY_MODALITY = 2
-    const val NOT_IN_EDT = 3
+    const val NON_MODAL: Int = 1
+    const val ANY_MODALITY: Int = 2
+    const val NOT_IN_EDT: Int = 3
   }
 
   /**
@@ -55,13 +51,14 @@ interface ApplicationStarter {
    */
   @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   val commandName: String?
+    get() = null
 
   /**
    * Called before application initialization.
    *
    * @param args program arguments (including the command)
    */
-  fun premain(args: List<String>) = Unit
+  fun premain(args: List<String>) {}
 
   /**
    *
@@ -71,7 +68,7 @@ interface ApplicationStarter {
    *
    * @param args program arguments (including the selector)
    */
-  fun main(args: List<String>) = Unit
+  fun main(args: List<String>) {}
 
   /**
    * Applications that are incapable of working in a headless mode should override the method and return `false`.
@@ -86,6 +83,7 @@ interface ApplicationStarter {
   fun canProcessExternalCommandLine(): Boolean = false
 
   /** @see [canProcessExternalCommandLine] */
-  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult =
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
     throw UnsupportedOperationException("Class ${javaClass.name} must implement `processExternalCommandLineAsync()`")
+  }
 }

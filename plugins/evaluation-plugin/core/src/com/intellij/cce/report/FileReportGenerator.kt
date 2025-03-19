@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.workspace.SessionSerializer
@@ -5,12 +6,13 @@ import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
-import org.apache.commons.codec.binary.Base64OutputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileWriter
 import java.io.OutputStreamWriter
 import java.nio.file.Path
+import java.text.DecimalFormat
+import java.util.*
 import java.util.zip.GZIPOutputStream
 
 abstract class FileReportGenerator(
@@ -23,17 +25,23 @@ abstract class FileReportGenerator(
 
   val reportReferences: MutableMap<String, ReferenceInfo> = mutableMapOf()
 
-  abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String
+  abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String
+
+  abstract val scripts: List<Resource>
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
     val fileInfo = sessions.first()
     val fileName = File(fileInfo.sessionsInfo.filePath).name
-    val (resourcePath, reportPath) = dirs.getPaths(fileName)
+    val fileNameAlreadyHasProject = fileName.startsWith(fileInfo.sessionsInfo.projectName)
+    val internalFileName =
+      if (sessions.size > 1 && !fileNameAlreadyHasProject) "${fileInfo.sessionsInfo.projectName} - $fileName" else fileName
+    val (resourcePath, reportPath) = dirs.getPaths(internalFileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
     resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
-    val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
+    val titleProject = if (fileNameAlreadyHasProject) "" else " (project: ${fileInfo.sessionsInfo.projectName})"
+    val reportTitle = "Evaluation Report for $fileName$titleProject"
     createHTML().html {
       head {
         createHead(this, reportTitle, resourcePath)
@@ -43,14 +51,15 @@ abstract class FileReportGenerator(
         unsafe {
           +getHtml(
             sessions.sortedBy { it.evaluationType },
-            fileName,
             dirs.filesDir.relativize(resourcePath).toString(),
             fileInfo.sessionsInfo.text
           )
         }
       }
     }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
-    reportReferences[fileInfo.sessionsInfo.filePath] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
+    val fullPathDetails = if (fileInfo.sessionsInfo.filePath != fileName) " (${fileInfo.sessionsInfo.filePath})" else ""
+    val tableReference = "$fileName$fullPathDetails"
+    reportReferences[tableReference] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
   open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {
@@ -77,15 +86,17 @@ abstract class FileReportGenerator(
     return "JSON.parse(pako.ungzip(atob(`${zipJson(json)}`), { to: 'string' }))"
   }
 
-  protected fun zipJson(json: String): String {
-    val resultStream = ByteArrayOutputStream()
-    OutputStreamWriter(GZIPOutputStream(Base64OutputStream(resultStream))).use {
-      it.write(json)
-    }
-    return resultStream.toString()
-  }
+  protected fun zipJson(json: String): String = zipString(json)
 
-  companion object {
-    private val sessionSerializer = SessionSerializer()
-  }
+  protected fun formatDouble(d: Double): String = DecimalFormat("0.##").format(d)
 }
+
+internal fun zipString(string: String): String {
+  val resultStream = ByteArrayOutputStream()
+  OutputStreamWriter(GZIPOutputStream(Base64.getEncoder().wrap(resultStream))).use {
+    it.write(string)
+  }
+  return resultStream.toString()
+}
+
+private val sessionSerializer = SessionSerializer()

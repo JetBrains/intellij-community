@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment
 
 import com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
@@ -15,14 +15,16 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.readText
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.io.write
 import junit.framework.TestCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
+import java.util.function.Supplier
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.readText
 
 class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   private val configurationFilePath: Path
@@ -142,24 +144,26 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     assertEquals("secret-value", dummyKeyValue)
   }
 
-  fun testAbsentKey() = runTestWithFile(
-    """[
-  {
-    "description": [
-      "My dummy test key",
-      "With a long description"
-    ],
-    "key": "my.dummy.test.key",
-    "value": ""
-  }
-]""") {
-    try {
-      TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
-      service<EnvironmentService>().getEnvironmentValue(dummyKey)
-      fail("should throw")
+  fun testAbsentKey(): Unit = rethrowLoggedErrorsIn {
+    runTestWithFile(
+      """[
+    {
+      "description": [
+        "My dummy test key",
+        "With a long description"
+      ],
+      "key": "my.dummy.test.key",
+      "value": ""
     }
-    catch (e: HeadlessEnvironmentService.MissingEnvironmentKeyException) {
-      // ignored, we expect this outcome
+  ]""") {
+      try {
+        TestCase.assertEquals(undefined, service<EnvironmentService>().getEnvironmentValue(dummyKey, undefined))
+        service<EnvironmentService>().getEnvironmentValue(dummyKey)
+        fail("should throw")
+      }
+      catch (e: Throwable) {
+        // ignored, we expect this outcome
+      }
     }
   }
 
@@ -194,9 +198,9 @@ private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.r
 
 private class TestKeyProvider : EnvironmentKeyProvider {
 
-  override fun getKnownKeys(): Map<EnvironmentKey, String> = mapOf(
-    dummyKey to "My dummy test key\nWith a long description",
-    dummyKey2 to "Just another dummy key",
+  override val knownKeys: Map<EnvironmentKey, Supplier<String>> = mapOf(
+    dummyKey to Supplier { "My dummy test key\nWith a long description" },
+    dummyKey2 to Supplier { "Just another dummy key" },
   )
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> =

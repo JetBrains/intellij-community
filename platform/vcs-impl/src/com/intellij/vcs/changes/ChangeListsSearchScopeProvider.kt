@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.displayUrlRelativeToProject
 import com.intellij.openapi.vcs.VcsBundle
@@ -14,7 +16,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.psi.util.PsiUtilCore
 
-class ChangeListsSearchScopeProvider : SearchScopeProvider {
+internal class ChangeListsSearchScopeProvider : SearchScopeProvider {
   override fun getDisplayName(): String {
     return VcsBundle.message("change.list.scope.provider.local.changes")
   }
@@ -33,9 +35,12 @@ class ChangeListsSearchScopeProvider : SearchScopeProvider {
 
     val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
                   ?: (
-                    if (ApplicationManager.getApplication().isDispatchThread)
+                    if (ApplicationManager.getApplication().isDispatchThread) {
                       FileEditorManager.getInstance(project).selectedTextEditor
-                    else null)
+                    }
+                    else {
+                      (dataContext.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR) as? TextEditor?)?.editor
+                    })
                     ?.let { PsiDocumentManager.getInstance(project).getPsiFile(it.document) }
 
     if (psiFile != null) {

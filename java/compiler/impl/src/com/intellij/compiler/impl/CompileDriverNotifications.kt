@@ -1,14 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl
 
-import com.intellij.build.BuildContentManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -16,11 +14,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.wm.ToolWindowManager
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-@Service //project
+@Service(Service.Level.PROJECT)
 class CompileDriverNotifications(
   private val project: Project
 ) : Disposable {
@@ -28,7 +25,7 @@ class CompileDriverNotifications(
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<CompileDriverNotifications>()
+    fun getInstance(project: Project): CompileDriverNotifications = project.service<CompileDriverNotifications>()
   }
 
   override fun dispose() {
@@ -48,13 +45,15 @@ class CompileDriverNotifications(
       .setImportant(true)
 
     fun withExpiringAction(@NotificationContent title : String,
-                           handler: () -> Unit) = apply {
-      baseNotification.addAction(NotificationAction.createSimpleExpiring(title, handler))
+                           handler: () -> Unit): LightNotification {
+      return apply {
+        baseNotification.addAction(NotificationAction.createSimpleExpiring(title, handler))
+      }
     }
 
     @JvmOverloads
-    fun withOpenSettingsAction(moduleNameToSelect: String? = null, tabNameToSelect: String? = null) =
-      withExpiringAction(JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog")) {
+    fun withOpenSettingsAction(moduleNameToSelect: String? = null, tabNameToSelect: String? = null): LightNotification {
+      return withExpiringAction(JavaCompilerBundle.message("notification.action.jps.open.configuration.dialog")) {
         val service = ProjectSettingsService.getInstance(project)
         if (moduleNameToSelect != null) {
           service.showModuleConfigurationDialog(moduleNameToSelect, tabNameToSelect)
@@ -63,6 +62,7 @@ class CompileDriverNotifications(
           service.openProjectSettings()
         }
       }
+    }
 
     fun withContent(@NotificationContent content: String): LightNotification = apply {
       baseNotification.setContent(content)

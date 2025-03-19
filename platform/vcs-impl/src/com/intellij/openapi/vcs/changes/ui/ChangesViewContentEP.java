@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,11 +6,11 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 public final class ChangesViewContentEP implements PluginAware {
   private static final Logger LOG = Logger.getInstance(ChangesViewContentEP.class);
 
+  @ApiStatus.Internal
   public static final ProjectExtensionPointName<ChangesViewContentEP> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.changesViewContent");
 
@@ -84,68 +85,86 @@ public final class ChangesViewContentEP implements PluginAware {
   private PluginDescriptor myPluginDescriptor;
   private ChangesViewContentProvider myInstance;
 
+  @ApiStatus.Internal
+  public ChangesViewContentEP() {
+  }
+
+  @ApiStatus.Internal
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     myPluginDescriptor = pluginDescriptor;
   }
 
+  @ApiStatus.Internal
   public String getTabName() {
     return tabName;
   }
 
+  @ApiStatus.Internal
   public void setTabName(final String tabName) {
     this.tabName = tabName;
   }
 
+  @ApiStatus.Internal
   public String getClassName() {
     return className;
   }
 
+  @ApiStatus.Internal
   public void setClassName(final String className) {
     this.className = className;
   }
 
+  @ApiStatus.Internal
   public String getPreloaderClassName() {
     return preloaderClassName;
   }
 
+  @ApiStatus.Internal
   public void setPreloaderClassName(final String preloaderClassName) {
     this.preloaderClassName = preloaderClassName;
   }
 
+  @ApiStatus.Internal
   public String getDisplayNameSupplierClassName() {
     return displayNameSupplierClassName;
   }
 
+  @ApiStatus.Internal
   public void setDisplayNameSupplierClassName(String displayNameSupplierClassName) {
     this.displayNameSupplierClassName = displayNameSupplierClassName;
   }
 
+  @ApiStatus.Internal
   public @TabTitle @Nullable String getDisplayName(@NotNull Project project) {
     Supplier<String> supplier = newDisplayNameSupplierInstance(project);
     return supplier != null ? supplier.get() : null; //NON-NLS
   }
 
+  @ApiStatus.Internal
   public boolean isInCommitToolWindow() {
     return isInCommitToolWindow;
   }
 
+  @ApiStatus.Internal
   public void setInCommitToolWindow(boolean isInCommitToolWindow) {
     this.isInCommitToolWindow = isInCommitToolWindow;
   }
 
-  public ChangesViewContentProvider getInstance(@NotNull Project project) {
+  @ApiStatus.Internal
+  public @Nullable ChangesViewContentProvider getInstance(@NotNull Project project) {
     if (myInstance == null) {
       myInstance = (ChangesViewContentProvider)newClassInstance(project, className);
     }
     return myInstance;
   }
 
-  @Nullable
-  public ChangesViewContentProvider getCachedInstance() {
+  @ApiStatus.Internal
+  public @Nullable ChangesViewContentProvider getCachedInstance() {
     return myInstance;
   }
 
+  @ApiStatus.Internal
   public @Nullable Predicate<Project> newPredicateInstance(@NotNull Project project) {
     if (predicateClassName == null) {
       return null;
@@ -166,8 +185,8 @@ public final class ChangesViewContentEP implements PluginAware {
     }
   }
 
-  @Nullable
-  public ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
+  @ApiStatus.Internal
+  public @Nullable ChangesViewContentProvider.Preloader newPreloaderInstance(@NotNull Project project) {
     if (preloaderClassName == null) {
       return null;
     }

@@ -10,11 +10,9 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
@@ -28,7 +26,6 @@ import training.util.enableLessonsAndPromoters
 import training.util.getActionById
 import java.awt.Color
 import java.util.concurrent.TimeUnit
-import javax.swing.Box
 import javax.swing.BoxLayout
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -126,10 +123,6 @@ private fun adjustModulesPanel(contentPanel: JPanel): JPanel {
         add(JBLabel().apply {
           icon = AllIcons.General.Warning
           text = LearnBundle.message("modules.panel.new.ui.warning")
-        })
-        add(Box.createHorizontalGlue())
-        add(LinkLabel<Any>(LearnBundle.message("modules.panel.switch.ui"), null) { _, _ ->
-          ExperimentalUI.setNewUI(true)
         })
       })
     })

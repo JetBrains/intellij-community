@@ -2,12 +2,13 @@
 package git4idea.rebase.interactive.dialog
 
 import com.intellij.util.ui.EditableModel
-import git4idea.rebase.GitRebaseEntryWithDetails
+import git4idea.rebase.GitRebaseEntry
+import git4idea.rebase.getFullCommitMessage
 import git4idea.rebase.interactive.GitRebaseTodoModel
 import git4idea.rebase.interactive.convertToModel
 import javax.swing.table.AbstractTableModel
 
-internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private val initialEntries: List<T>) : AbstractTableModel(), EditableModel {
+internal class GitRebaseCommitsTableModel<T : GitRebaseEntry>(private val initialEntries: List<T>) : AbstractTableModel(), EditableModel {
   companion object {
     const val COMMIT_ICON_COLUMN = 0
     const val SUBJECT_COLUMN = 1
@@ -56,7 +57,8 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
 
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
     if (aValue is String) {
-      if (aValue == getEntry(rowIndex).commitDetails.fullMessage) {
+      val commitMessage = getEntry(rowIndex).getFullCommitMessage() ?: throw IllegalStateException()
+      if (aValue == commitMessage) {
         rebaseTodoModel.pick(listOf(rowIndex))
       }
       else {
@@ -81,7 +83,18 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
       elementType.newMessage
     }
     else {
-      getEntry(row).commitDetails.fullMessage
+      getEntry(row).getFullCommitMessage() ?: throw IllegalStateException()
+    }
+  }
+
+  fun getPresentation(row: Int): String {
+    val elementType = getElement(row).type
+    return if (elementType is GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
+      elementType.newMessage
+    }
+    else {
+      val entry = getEntry(row)
+      entry.getFullCommitMessage() ?: "${entry.action.command} ${entry.commit}"
     }
   }
 
@@ -99,7 +112,7 @@ internal class GitRebaseCommitsTableModel<T : GitRebaseEntryWithDetails>(private
     fireTableRowsUpdated(0, rowCount)
   }
 
-  private class SavedStates<T : GitRebaseEntryWithDetails>(initialState: List<GitRebaseTodoModel.Element<T>>) {
+  private class SavedStates<T : GitRebaseEntry>(initialState: List<GitRebaseTodoModel.Element<T>>) {
     companion object {
       private const val MAX_SIZE = 10
     }

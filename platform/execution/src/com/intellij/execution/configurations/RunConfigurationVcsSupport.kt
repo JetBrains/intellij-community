@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class RunConfigurationVcsSupport {
-    open fun hasActiveVcss(project: Project) = false
-    open fun isDirectoryVcsIgnored(project: Project, path: String) = false
+    open fun hasActiveVcss(project: Project): Boolean = false
+    open fun isDirectoryVcsIgnored(project: Project, path: String): Boolean = false
 }

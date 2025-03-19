@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -12,11 +14,12 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
+private val LOG = Logger.getInstance(AbstractApplicabilityBasedInspection::class.java.name)
 abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     val elementType: Class<TElement>
 ) : AbstractKotlinInspection() {
 
-    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
+    final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): KtVisitorVoid =
         object : KtVisitorVoid() {
             override fun visitKtElement(element: KtElement) {
                 super.visitKtElement(element)
@@ -30,13 +33,25 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     // This function should be called from visitor built by a derived inspection
     protected fun visitTargetElement(element: TElement, holder: ProblemsHolder, isOnTheFly: Boolean) {
         if (!isApplicable(element)) return
+        val description = inspectionText(element)
+        val range = inspectionHighlightRangeInElement(element)
+        if (LOG.isDebugEnabled) {
+            val existingDescriptor = holder.results.find {
+                it.psiElement == element && it.descriptionTemplate == description && it.textRangeInElement == range
+            }
+
+            if (existingDescriptor != null) {
+                LOG.debug("Duplicated problem registered for $element in $range with text $description")
+                return
+            }
+        }
 
         holder.registerProblemWithoutOfflineInformation(
             element,
-            inspectionText(element),
+            description,
             isOnTheFly,
             inspectionHighlightType(element),
-            inspectionHighlightRangeInElement(element),
+            range,
             LocalFix(this, fixText(element))
         )
     }
@@ -51,18 +66,18 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
     abstract val defaultFixText: String
 
     @IntentionName
-    open fun fixText(element: TElement) = defaultFixText
+    open fun fixText(element: TElement): String = defaultFixText
 
     abstract fun isApplicable(element: TElement): Boolean
 
     abstract fun applyTo(element: TElement, project: Project = element.project, editor: Editor? = null)
 
-    open val startFixInWriteAction = true
+    open val startFixInWriteAction: Boolean = true
 
     private class LocalFix<TElement : KtElement>(
       @FileModifier.SafeFieldForPreview val inspection: AbstractApplicabilityBasedInspection<TElement>,
       @IntentionName val text: String
-    ) : LocalQuickFix {
+    ) : LocalQuickFix, ReportingClassSubstitutor {
         override fun startInWriteAction() = inspection.startFixInWriteAction
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
@@ -74,5 +89,7 @@ abstract class AbstractApplicabilityBasedInspection<TElement : KtElement>(
         override fun getFamilyName() = inspection.defaultFixText
 
         override fun getName() = text
+
+        override fun getSubstitutedClass(): Class<*> = inspection.javaClass
     }
 }

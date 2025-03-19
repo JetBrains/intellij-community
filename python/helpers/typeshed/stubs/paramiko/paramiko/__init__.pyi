@@ -1,5 +1,5 @@
 from paramiko.agent import Agent as Agent, AgentKey as AgentKey
-from paramiko.channel import Channel as Channel
+from paramiko.channel import Channel as Channel, ChannelFile as ChannelFile
 from paramiko.client import (
     AutoAddPolicy as AutoAddPolicy,
     MissingHostKeyPolicy as MissingHostKeyPolicy,

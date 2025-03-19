@@ -71,7 +71,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       } else {
         label.setIcon(getEmptyIcon());
       }
-      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAAHintForSwingComponent());
+      GraphicsUtil.setAntialiasingType(label, AntialiasingType.getAATextInfoForSwingComponent());
       return label;
     }
 

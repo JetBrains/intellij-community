@@ -23,7 +23,7 @@ class EditorActionsListener : AnActionListener {
     FeatureSuggesterSettings.instance().updateWorkingDays()
     if (!action.isSupportedAction()) return
     val (project, editor, psiFile) = getCachedEventData(event)
-    if (project == null || editor == null || psiFile == null) return
+    if (project == null || editor == null) return
     if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {
@@ -125,7 +125,7 @@ class EditorActionsListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (!action.isSupportedAction()) return
     val (project, editor, psiFile) = getCachedEventData(event)
-    if (project == null || editor == null || psiFile == null) return
+    if (project == null || editor == null) return
     if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {
@@ -224,11 +224,10 @@ class EditorActionsListener : AnActionListener {
   }
 
   private fun getCachedEventData(event: AnActionEvent): Triple<Project?, Editor?, PsiFile?> {
-    val originalContext = event.dataContext
-    val context = if (!ApplicationManager.getApplication().isUnitTestMode) {
-      DataContext { dataId -> Utils.getRawDataIfCached(originalContext, dataId) }
+    val context = when {
+      ApplicationManager.getApplication().isUnitTestMode -> event.dataContext
+      else -> Utils.getCachedOnlyDataContext(event.dataContext)
     }
-    else originalContext
     return context.let {
       Triple(
         CommonDataKeys.PROJECT.getData(it),

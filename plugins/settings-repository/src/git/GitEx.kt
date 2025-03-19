@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.errors.TransportException
 import org.eclipse.jgit.internal.JGitText
+import org.eclipse.jgit.internal.transport.sshd.agent.ConnectorFactoryProvider
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevSort
@@ -23,6 +24,9 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.FetchResult
 import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
+import org.eclipse.jgit.transport.SshSessionFactory
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory
+import org.eclipse.jgit.transport.sshd.agent.ConnectorFactory
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jetbrains.annotations.NonNls
@@ -55,9 +59,23 @@ private fun isAuthFailedMessage(message: String): Boolean {
          message.contains(": reject HostKey:") /* JSch */
 }
 
+private fun ensureSshSessionFactory() {
+  var connectorFactoryInstance: ConnectorFactory? = ConnectorFactoryProvider.getDefaultFactory()
+  if (connectorFactoryInstance == null) {
+    connectorFactoryInstance = org.eclipse.jgit.internal.transport.sshd.agent.connector.Factory()
+    ConnectorFactoryProvider.setDefaultFactory(connectorFactoryInstance)
+  }
+  var sessionFactoryInstance = SshSessionFactory.getInstance()
+  if (sessionFactoryInstance == null) {
+    sessionFactoryInstance = SshdSessionFactory()
+    SshSessionFactory.setInstance(sessionFactoryInstance)
+  }
+}
+
 fun Repository.fetch(remoteConfig: RemoteConfig,
                      credentialsProvider: CredentialsProvider? = null,
                      progressMonitor: ProgressMonitor? = null): FetchResult? {
+  ensureSshSessionFactory()
   try {
     Transport.open(this, remoteConfig).use { transport ->
       transport.credentialsProvider = credentialsProvider
@@ -388,7 +406,7 @@ internal inline fun <T : AutoCloseable, R> T.use(block: (T) -> R): R {
 // FileRepositoryBuilder must be not used directly - using of system config must be disabled
 // (no need, to avoid git exe discovering - it can cause https://youtrack.jetbrains.com/issue/IDEA-170795)
 fun buildRepository(workTree: Path? = null, bare: Boolean = false, gitDir: Path? = null, mustExists: Boolean = false): Repository {
-  val repositoryBuilder = FileRepositoryBuilder().setUseSystemConfig(false).setUseUserConfig(false)
+  val repositoryBuilder = FileRepositoryBuilder().setAutonomous(true)
   if (bare) {
     repositoryBuilder.setBare()
   }

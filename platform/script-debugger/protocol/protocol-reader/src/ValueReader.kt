@@ -24,7 +24,7 @@ internal abstract class ValueReader {
 
   abstract fun writeReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput)
 
-  open fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, out: TextOutput) {
+  open fun writeArrayReadCode(scope: ClassScope, subtyping: Boolean, allowSingleValue: Boolean, out: TextOutput) {
     throw UnsupportedOperationException()
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.lang.LanguageNamesValidation;
@@ -9,10 +9,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-public class InvertBooleanDialog extends RefactoringDialog {
+@ApiStatus.Internal
+public final class InvertBooleanDialog extends RefactoringDialog {
   private JTextField myNameField;
   private JPanel myPanel;
   private JLabel myLabel;

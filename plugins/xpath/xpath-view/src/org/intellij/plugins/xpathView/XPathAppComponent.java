@@ -21,8 +21,8 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.Caret;
@@ -55,9 +55,8 @@ import java.util.List;
 public final class XPathAppComponent implements PersistentStateComponent<Config> {
   private Config configuration = new Config();
 
-  @Nullable
   @Override
-  public Config getState() {
+  public @Nullable Config getState() {
     return configuration;
   }
 
@@ -72,8 +71,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
    * @return the configuration object
    * @see Config
    */
-  @NotNull
-  public Config getConfig() {
+  public @NotNull Config getConfig() {
     return configuration;
   }
 

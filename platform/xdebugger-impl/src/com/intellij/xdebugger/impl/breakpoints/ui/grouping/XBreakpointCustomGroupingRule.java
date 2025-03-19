@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
 import com.intellij.icons.AllIcons;
@@ -15,7 +15,7 @@ import java.util.Collection;
 /**
  * @author Egor
  */
-public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
+public final class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B, XBreakpointCustomGroup> {
   public XBreakpointCustomGroupingRule() {
     super("by-group", XDebuggerBundle.message("breakpoints.show.user.groups"));
   }
@@ -31,7 +31,7 @@ public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B,
   }
 
   @Override
-  public XBreakpointCustomGroup getGroup(@NotNull final B breakpoint, @NotNull final Collection<? extends XBreakpointCustomGroup> groups) {
+  public XBreakpointCustomGroup getGroup(final @NotNull B breakpoint, final @NotNull Collection<? extends XBreakpointCustomGroup> groups) {
     if (!(breakpoint instanceof XBreakpointBase)) {
       return null;
     }
@@ -42,9 +42,8 @@ public class XBreakpointCustomGroupingRule<B> extends XBreakpointGroupingRule<B,
     return new XBreakpointCustomGroup(name, ((XBreakpointBase<?, ?, ?>)breakpoint).getProject());
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return AllIcons.Nodes.Folder;
   }
 }

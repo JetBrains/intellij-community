@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.JavaTailTypes;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
@@ -100,7 +101,7 @@ public final class GroovyCompletionData {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           if (context.getCompletionChar() != ' ') {
-            TailTypes.IF_LPARENTH.processTail(context.getEditor(), context.getTailOffset());
+            JavaTailTypes.IF_LPARENTH.processTail(context.getEditor(), context.getTailOffset());
           }
           if (context.getCompletionChar() == '(') {
             context.setAddCompletionChar(false);
@@ -111,7 +112,7 @@ public final class GroovyCompletionData {
 
     final String[] extendsImplements = addExtendsImplements(position);
     for (String keyword : extendsImplements) {
-      consumer.consume(keyword(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      consumer.consume(keyword(keyword, TailTypes.humbleSpaceBeforeWordType()));
     }
     if (extendsImplements.length > 0) {
       return;
@@ -124,26 +125,26 @@ public final class GroovyCompletionData {
     }
 
     if (afterAtInType(position)) {
-      consumer.consume(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      consumer.consume(keyword(PsiKeyword.INTERFACE, TailTypes.humbleSpaceBeforeWordType()));
     }
 
     if (!psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
       if (afterAbstractMethod(position, false, true)) {
-        consumer.consume(keyword(PsiKeyword.THROWS, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.THROWS, TailTypes.humbleSpaceBeforeWordType()));
         if (afterAbstractMethod(position, false, false)) return;
       }
 
       if (suggestPackage(position)) {
-        consumer.consume(keyword(PsiKeyword.PACKAGE, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.PACKAGE, TailTypes.humbleSpaceBeforeWordType()));
       }
       if (suggestImport(position)) {
-        consumer.consume(keyword(PsiKeyword.IMPORT, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.IMPORT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addTypeDefinitionKeywords(consumer, position);
 
       if (isAfterAnnotationMethodIdentifier(position)) {
-        consumer.consume(keyword(PsiKeyword.DEFAULT, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.DEFAULT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addExtendsForTypeParams(position, consumer);
@@ -152,15 +153,15 @@ public final class GroovyCompletionData {
 
       if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
         addKeywords(consumer, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
-        consumer.consume(keyword(PsiKeyword.NEW, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword(PsiKeyword.NEW, TailTypes.humbleSpaceBeforeWordType()));
         if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
-          consumer.consume(keyword(PsiKeyword.SWITCH, TailTypes.SWITCH_LPARENTH));
+          consumer.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
         }
       }
 
 
       if (isAfterForParameter(position)) {
-        consumer.consume(keyword("in", TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(keyword("in", TailTypes.humbleSpaceBeforeWordType()));
       }
       if (isInfixOperatorPosition(position)) {
         addKeywords(consumer, true, "as", "in", PsiKeyword.INSTANCEOF);
@@ -223,7 +224,7 @@ public final class GroovyCompletionData {
   }
 
   /**
-   * checks whether promitive type used in expression
+   * checks whether a primitive type used in expression
    */
   private static boolean isInExpression(PsiElement position) {
     final PsiElement actual = position.getParent();
@@ -319,47 +320,47 @@ public final class GroovyCompletionData {
 
   public static void addKeywords(GroovyCompletionConsumer consumer, boolean space, String... keywords) {
     for (String s : keywords) {
-      consumer.consume(keyword(s, space ? TailType.HUMBLE_SPACE_BEFORE_WORD : TailType.NONE));
+      consumer.consume(keyword(s, space ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
     }
   }
 
   private static LookupElement keyword(final String keyword, @NotNull TailType tail) {
     LookupElementBuilder element = LookupElementBuilder.create(keyword).bold();
-    return tail != TailType.NONE ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
+    return tail != TailTypes.noneType() ? new JavaKeywordCompletion.OverridableSpace(element, tail) : element;
   }
 
   private static void registerControlCompletion(PsiElement context, GroovyCompletionConsumer result) {
     if (isControlStructure(context)) {
-      result.consume(keyword(PsiKeyword.TRY, TailTypes.TRY_LBRACE));
-      result.consume(keyword(PsiKeyword.WHILE, TailTypes.WHILE_LPARENTH));
-      result.consume(keyword(PsiKeyword.SWITCH, TailTypes.SWITCH_LPARENTH));
-      result.consume(keyword(PsiKeyword.FOR, TailTypes.FOR_LPARENTH));
-      result.consume(keyword(PsiKeyword.THROW, TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(keyword(PsiKeyword.ASSERT, TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(keyword(PsiKeyword.SYNCHRONIZED, TailTypes.SYNCHRONIZED_LPARENTH));
-      result.consume(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailType.HUMBLE_SPACE_BEFORE_WORD : TailType.NONE));
+      result.consume(keyword(PsiKeyword.TRY, JavaTailTypes.TRY_LBRACE));
+      result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
+      result.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
+      result.consume(keyword(PsiKeyword.FOR, JavaTailTypes.FOR_LPARENTH));
+      result.consume(keyword(PsiKeyword.THROW, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(PsiKeyword.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
+      result.consume(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
     }
     if (inCaseSection(context)) {
       boolean isArrowAllowed = GroovyConfigUtils.isAtLeastGroovy40(context);
-      TailType defaultType = isArrowAllowed ? TailTypes.CASE_ARROW : TailType.CASE_COLON;
-      result.consume(keyword("case", TailType.HUMBLE_SPACE_BEFORE_WORD));
+      TailType defaultType = isArrowAllowed ? JavaTailTypes.CASE_ARROW : TailTypes.caseColonType();
+      result.consume(keyword("case", TailTypes.humbleSpaceBeforeWordType()));
       result.consume(keyword("default", defaultType));
     }
     if (afterTry(context)) {
-      result.consume(keyword(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH));
-      result.consume(keyword(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE));
+      result.consume(keyword(PsiKeyword.CATCH, JavaTailTypes.CATCH_LPARENTH));
+      result.consume(keyword(PsiKeyword.FINALLY, JavaTailTypes.FINALLY_LBRACE));
     }
     if (afterIfOrElse(context)) {
-      result.consume(keyword(PsiKeyword.ELSE, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(keyword(PsiKeyword.ELSE, TailTypes.humbleSpaceBeforeWordType()));
     }
     if (WHILE_KEYWORD_POSITION.accepts(context)) {
-      result.consume(keyword(PsiKeyword.WHILE, TailTypes.WHILE_LPARENTH));
+      result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
     }
 
     if (isCommandCallWithOneArg(context)) {
-      result.consume(keyword(PsiKeyword.ASSERT, TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
       if (hasReturnValue(context)) {
-        result.consume(keyword(PsiKeyword.RETURN, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        result.consume(keyword(PsiKeyword.RETURN, TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }
@@ -394,7 +395,7 @@ public final class GroovyCompletionData {
       position)) {
       String[] tags = position.getParent() instanceof GrDocInlinedTag ? INLINED_DOC_TAGS : DOC_TAGS;
       for (String docTag : tags) {
-        consumer.consume(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        consumer.consume(TailTypeDecorator.withTail(LookupElementBuilder.create(docTag), TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }
@@ -566,43 +567,31 @@ public final class GroovyCompletionData {
     return condition == null || !PsiTreeUtil.isAncestor(condition, context, false);
   }
 
-  private static boolean inSwitchExpression(PsiElement context) {
-    return context.getParent() instanceof GrCodeBlock && context.getParent().getParent() instanceof GrSwitchElement;
-  }
-
   private static boolean afterTry(PsiElement context) {
     if (context != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context);
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context) instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
     if (context != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
-      if (tryStatement == null) return false;
-      if (tryStatement.getFinallyClause() == null) {
-        return true;
-      }
-    }
-    if (context != null &&
-        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent());
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement errorElement &&
+        errorElement.getPrevSibling() instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
     }
     if (context != null &&
         (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling() instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling();
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof GrTryCatchStatement tryStatement) {
+      if (tryStatement.getFinallyClause() == null) {
+        return true;
+      }
+    }
+    if (context != null &&
+        (context.getParent() instanceof GrReferenceExpression || context.getParent() instanceof PsiErrorElement) &&
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement errorElement &&
+        errorElement.getPrevSibling() instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
@@ -611,9 +600,7 @@ public final class GroovyCompletionData {
     if (context != null &&
         (context.getParent() instanceof GrReferenceExpression) &&
         (context.getParent().getParent() instanceof GrMethodCall) &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement) {
-      GrTryCatchStatement tryStatement = (GrTryCatchStatement) GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent());
-      if (tryStatement == null) return false;
+        GroovyCompletionUtil.nearestLeftSibling(context.getParent().getParent()) instanceof GrTryCatchStatement tryStatement) {
       if (tryStatement.getFinallyClause() == null) {
         return true;
       }
@@ -636,16 +623,14 @@ public final class GroovyCompletionData {
 
     if (context.getParent() != null &&
         GroovyCompletionUtil.nearestLeftSibling(context) != null &&
-        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling();
+        GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling() instanceof GrIfStatement statement) {
       if (statement.getElseBranch() == null) {
         return true;
       }
     }
     if (context.getParent() != null &&
         context.getParent().getParent() instanceof GrCommandArgumentList &&
-        context.getParent().getParent().getParent().getParent() instanceof GrIfStatement) {
-      GrIfStatement statement = (GrIfStatement) context.getParent().getParent().getParent().getParent();
+        context.getParent().getParent().getParent().getParent() instanceof GrIfStatement statement) {
       if (statement.getElseBranch() == null) {
         return true;
       }
@@ -764,13 +749,13 @@ public final class GroovyCompletionData {
         context.getParent().getParent() instanceof GrCommandArgumentList) {
       return true;
     }
-    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context).getPrevSibling())) {
+    if (GroovyCompletionUtil.nearestLeftSibling(context) instanceof PsiErrorElement errorElement &&
+        GroovyCompletionUtil.endsWithExpression(errorElement.getPrevSibling())) {
       return true;
     }
     if (context.getParent() instanceof GrReferenceExpression &&
-        GroovyCompletionUtil.nearestLeftLeaf(context) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftLeaf(context).getPrevSibling())) {
+        GroovyCompletionUtil.nearestLeftLeaf(context) instanceof PsiErrorElement errorElement &&
+        GroovyCompletionUtil.endsWithExpression(errorElement.getPrevSibling())) {
       return true;
     }
     if (context.getParent() instanceof PsiErrorElement &&
@@ -804,8 +789,7 @@ public final class GroovyCompletionData {
         return true;
       }
     }
-    if (contextParent instanceof GrField) {
-      final GrVariable variable = (GrVariable)contextParent;
+    if (contextParent instanceof GrField variable) {
       if (variable.getTypeElementGroovy() == null) {
         return true;
       }

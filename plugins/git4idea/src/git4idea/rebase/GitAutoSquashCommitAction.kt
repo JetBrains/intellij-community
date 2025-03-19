@@ -1,15 +1,24 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
+import git4idea.branch.GitRebaseParams
 import git4idea.i18n.GitBundle
+import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction() {
+  override fun update(e: AnActionEvent, commitEditingData: SingleCommitEditingData) {
+    if (ChangeListManager.getInstance(commitEditingData.project).defaultChangeList.changes.isEmpty()) {
+      e.presentation.description = GitBundle.message("action.Git.Fixup.To.Commit.description.nothing.to.commit")
+      e.presentation.isEnabled = false
+    }
+  }
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
     val commit = commitEditingData.selectedCommit
@@ -33,7 +42,8 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
     val executors = gitVcs.commitExecutors +
                     if (getProhibitedStateMessage(commitEditingData,
                                                   GitBundle.message("rebase.log.action.operation.rebase.name")) == null) {
-                      listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
+                      val upstream = getRebaseUpstreamFor(commit)
+                      listOf(GitRebaseAfterCommitExecutor(project, repository, upstream))
                     }
                     else {
                       listOf()
@@ -46,7 +56,10 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
 
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String
 
-  class GitRebaseAfterCommitExecutor(val project: Project, val repository: GitRepository, val hash: String) : CommitExecutor {
+  class GitRebaseAfterCommitExecutor(
+    val project: Project, val repository: GitRepository,
+    val upstream: GitRebaseParams.RebaseUpstream,
+  ) : CommitExecutor {
     override fun getActionText(): String = GitBundle.message("commit.action.commit.and.rebase.text")
     override fun createCommitSession(commitContext: CommitContext): CommitSession = CommitSession.VCS_COMMIT
     override fun supportsPartialCommit() = true

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleNotificationJavaExtension extends GradleNotificationExtension {
+public final class GradleNotificationJavaExtension extends GradleNotificationExtension {
   @Override
   public boolean isInternalError(@NotNull Throwable error) {
     return false;

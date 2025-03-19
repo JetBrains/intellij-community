@@ -41,12 +41,13 @@ fun tryInLambda(x : Any) {
         }
     }
 }
+@Suppress("LABEL_NAME_CLASH")
 fun nestedLambdas(x : Int): Int {
     return x.let { y ->
         y.let {
-            if (y > 0) return<warning descr="[LABEL_NAME_CLASH] There is more than one label with such a name in this scope">@let</warning> 10
+            if (y > 0) return@let 10
             if (y < 0) return 15
-            return<warning descr="[LABEL_NAME_CLASH] There is more than one label with such a name in this scope">@let</warning> 20
+            return@let 20
         }
     }
 }
@@ -81,8 +82,9 @@ fun atMostOnce(result : Result<String>) {
     if (<warning descr="Condition 'x == 1 || x == 2' is always true">x == 1 || <warning descr="Condition 'x == 2' is always true when reached">x == 2</warning></warning>) {}
 }
 
+@Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
 fun atLeastOnce() {
-    var x = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'x' initializer is redundant">1</warning>
+    var x = 1
     var y = 1
     runAtLeastOnce {
         x = 2

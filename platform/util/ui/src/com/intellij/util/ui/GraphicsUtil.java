@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,9 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public final class GraphicsUtil {
-  @SuppressWarnings("SpellCheckingInspection") private static final String DESKTOP_HINTS = "awt.font.desktophints";
+  @SuppressWarnings("SpellCheckingInspection")
+  @ApiStatus.Internal
+  public static final String DESKTOP_HINTS = "awt.font.desktophints";
 
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 
@@ -38,6 +41,9 @@ public final class GraphicsUtil {
     ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   */
   public static void setupAntialiasing(@NotNull Graphics g2) {
     setupAntialiasing(g2, true, false);
   }
@@ -55,6 +61,9 @@ public final class GraphicsUtil {
     return ourGraphics.getFontMetrics(font).charWidth(ch);
   }
 
+  /**
+   * Prefer using {@link #setAntialiasingType(JComponent, Object)} instead
+   */
   public static void setupAntialiasing(Graphics g2, boolean enableAA, boolean ignoreSystemSettings) {
     if (g2 instanceof Graphics2D g) {
       Toolkit tk = Toolkit.getDefaultToolkit();
@@ -86,9 +95,11 @@ public final class GraphicsUtil {
   }
 
   public static void paintWithAlpha(Graphics g, float alpha, @NotNull Runnable paint) {
-    GraphicsConfig config = paintWithAlpha(g, alpha);
+    Graphics2D g2 = (Graphics2D)g;
+    Composite oldComposite = g2.getComposite();
+    g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
     paint.run();
-    config.restore();
+    g2.setComposite(oldComposite);
   }
 
   /**
@@ -120,18 +131,18 @@ public final class GraphicsUtil {
   }
 
   /**
-   * Put context hint that instructs using specified aliasing for a given component.
+   * Put a context hint that instructs using specified aliasing for a given component.
    * It's preferred over using {@link #setupAntialiasing(Graphics)}, as it will allow to compute {@link JComponent#getPreferredSize()}
    * without using {@link JComponent#getGraphics()} (see {@link #safelyGetGraphics(Component)} on why it shall be avoided).
    * <p>
    * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
    */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
-    AATextInfo.putClientProperty(type, component);
+    AATextInfo.putClientProperty((AATextInfo) type, component);
   }
 
-  public static Object createAATextInfo(@NotNull Object hint) {
-    return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
+  public static @NotNull AATextInfo createAATextInfo(@NotNull Object hint) {
+    return new AATextInfo(hint, StartupUiUtil.getLcdContrastValue());
   }
 
   public static boolean isRemoteEnvironment() {

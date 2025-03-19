@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config;
 
 import com.intellij.lang.ant.config.impl.AntInstallation;
@@ -44,8 +30,7 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   public abstract List<ExecutionEvent> getEventsForTarget(final AntBuildTarget target);
 
-  @Nullable
-  public abstract AntBuildTarget getTargetForEvent(final ExecutionEvent event);
+  public abstract @Nullable AntBuildTarget getTargetForEvent(final ExecutionEvent event);
 
   public abstract void setTargetForEvent(final AntBuildFile buildFile, final String targetName, final ExecutionEvent event);
 
@@ -66,14 +51,11 @@ public abstract class AntConfigurationBase extends AntConfiguration {
 
   public abstract void setContextFile(@NotNull XmlFile file, @Nullable XmlFile context);
 
-  @Nullable
-  public abstract XmlFile getContextFile(@Nullable XmlFile file);
+  public abstract @Nullable XmlFile getContextFile(@Nullable XmlFile file);
 
-  @Nullable
-  public abstract XmlFile getEffectiveContextFile(@Nullable XmlFile file);
+  public abstract @Nullable XmlFile getEffectiveContextFile(@Nullable XmlFile file);
 
-  @Nullable
-  public abstract AntBuildFileBase getAntBuildFile(@NotNull PsiFile file);
+  public abstract @Nullable AntBuildFileBase getAntBuildFile(@NotNull PsiFile file);
 
   @Override
   public abstract AntBuildFile[] getBuildFiles();

@@ -1,34 +1,38 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.variables
 
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.AdditionalContextProvider
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.LocalVariableProxyImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.sun.jdi.*
-import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
-import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.AsmUtil.getCapturedFieldName
 import org.jetbrains.kotlin.codegen.AsmUtil.getLabeledThisName
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
-import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
-import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
+import org.jetbrains.kotlin.codegen.inline.getInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
-import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
+import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
+private const val OLD_CONTEXT_RECEIVER_PREFIX = "_context_receiver"
 
 class VariableFinder(val context: ExecutionContext) {
     private val frameProxy = context.frameProxy
@@ -91,7 +95,10 @@ class VariableFinder(val context: ExecutionContext) {
 
         class ContextReceiver(asmType: AsmType) : VariableKind(asmType) {
             override fun capturedNameMatches(name: String) =
-                name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
+                name.startsWith(CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(OLD_CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(AsmUtil.CAPTURED_PREFIX + OLD_CONTEXT_RECEIVER_PREFIX)
         }
     }
 
@@ -125,7 +132,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
     }
 
-    fun find(parameter: CodeFragmentParameter, asmType: AsmType): Result? {
+    fun find(parameter: CodeFragmentParameter, asmType: AsmType, codeFragment: KtCodeFragment): Result? {
         return when (parameter.kind) {
             Kind.ORDINARY -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = false))
             Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
@@ -136,7 +143,7 @@ class VariableFinder(val context: ExecutionContext) {
             Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
             Kind.FIELD_VAR -> findFieldVariable(VariableKind.FieldVar(parameter.name, asmType))
-            Kind.DEBUG_LABEL -> findDebugLabel(parameter.name)
+            Kind.FOREIGN_VALUE -> findForeignValue(parameter.name, codeFragment)
         }
     }
 
@@ -147,7 +154,9 @@ class VariableFinder(val context: ExecutionContext) {
         findLocalVariable(variables, kind, kind.name)?.let { return it }
 
         // Local variables - synthetic captured local variable (IR Backend)
-        findLocalVariable(variables, kind, kind.name.synthesizedString)?.let { return it }
+        // Local variable name with $ prefix,
+        // see org.jetbrains.kotlin.backend.common.descriptors.DescriptorUtilsKt.getSynthesizedString
+        findLocalVariable(variables, kind, "$${kind.name}")?.let { return it }
 
         // Recursive search in local receiver variables
         findCapturedVariableInReceiver(variables, kind)?.let { return it }
@@ -159,11 +168,11 @@ class VariableFinder(val context: ExecutionContext) {
     private fun findFieldVariable(kind: VariableKind.FieldVar): Result? {
         val thisObject = thisObject()
         if (thisObject != null) {
-            val field = thisObject.referenceType().fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(thisObject.referenceType(), kind.fieldName) ?: return null
             return Result(thisObject.getValue(field))
         } else {
             val containingType = frameProxy.safeLocation()?.declaringType() ?: return null
-            val field = containingType.fieldByName(kind.fieldName) ?: return null
+            val field = DebuggerUtils.findField(containingType, kind.fieldName) ?: return null
             return Result(containingType.getValue(field))
         }
     }
@@ -227,14 +236,30 @@ class VariableFinder(val context: ExecutionContext) {
     private fun findDispatchThis(kind: VariableKind.OuterClassThis): Result? {
         findCapturedVariableInContainingThis(kind)?.let { return it }
 
+        val variables = frameProxy.safeVisibleVariables()
         if (isInsideDefaultImpls()) {
-            val variables = frameProxy.safeVisibleVariables()
             findLocalVariable(variables, kind, AsmUtil.THIS_IN_DEFAULT_IMPLS)?.let { return it }
         }
 
-        val variables = frameProxy.safeVisibleVariables()
-        val inlineDepth = getInlineDepth(variables)
+        if (frameProxy is InlineStackFrameProxyImpl) {
+            val scopeNumber = frameProxy.inlineScopeNumber
+            if (scopeNumber >= 0) {
+                val parentScopeNumbers = collectParentScopeNumbers(variables, scopeNumber)
+                variables.namedEntitySequence()
+                    .filter {
+                        val name = it.name
+                        val variableScopeNumber = name.getInlineScopeInfo()?.scopeNumber ?: return@filter false
+                        variableScopeNumber in parentScopeNumbers &&
+                                name.dropInlineScopeInfo().matches(INLINED_THIS_REGEX) &&
+                                kind.typeMatches(it.type)
+                    }
+                    .mapNotNull { it.unwrapAndCheck(kind) }
+                    .firstOrNull()
+                    ?.let { return it }
+            }
+        }
 
+        val inlineDepth = getInlineDepth(variables)
         if (inlineDepth > 0) {
             variables.namedEntitySequence()
                 .filter { it.name.matches(INLINED_THIS_REGEX) && getInlineDepth(it.name) == inlineDepth && kind.typeMatches(it.type) }
@@ -248,26 +273,21 @@ class VariableFinder(val context: ExecutionContext) {
             // Find an unlabeled this with the compatible type
             findUnlabeledThis(unlabeledThisKind)?.let { return it }
 
-            // In lambdas local variable for outer this (e.g. with name "this$0") is not in visibleVariables,
-            // so try to find it in argumentVariables by type
-            frameProxy.safeArgumentValues()
-                .firstNotNullOfOrNull { findCapturedVariable(unlabeledThisKind, it) }
+            // In lambdas local variable for outer this (e.g. with name "this$0") is not in visibleVariables from vanilla JVM.
+            // So the code here relays on JDI for IntelliJ Platform.
+            frameProxy.safeVisibleVariables()
+                .firstNotNullOfOrNull { findCapturedVariable(unlabeledThisKind, frameProxy.getValue(it)) }
                 ?.let { return it }
         }
 
         return null
     }
 
-    private fun findDebugLabel(name: String): Result? {
-        val markupMap = DebugLabelPropertyDescriptorProvider.getMarkupMap(context.debugProcess)
-
-        for ((value, markup) in markupMap) {
-            if (markup.text == name) {
-                return Result(value)
-            }
-        }
-
-        return null
+    private fun findForeignValue(foreignValueName: String, codeFragment: KtCodeFragment): Result? {
+        val contextElements = AdditionalContextProvider
+            .getAllAdditionalContextElements(codeFragment.project, codeFragment.context)
+        val element = contextElements.firstOrNull { it.name == foreignValueName } ?: return null
+        return Result(element.value(context.evaluationContext))
     }
 
     private fun findUnlabeledThis(kind: VariableKind.UnlabeledThis): Result? {
@@ -288,10 +308,15 @@ class VariableFinder(val context: ExecutionContext) {
         kind: VariableKind,
         namePredicate: (String) -> Boolean
     ): Result? {
-        val inlineDepth =
-            frameProxy.safeAs<InlineStackFrameProxyImpl>()?.inlineDepth
-                ?: getInlineDepth(variables)
+        if (frameProxy is InlineStackFrameProxyImpl) {
+            val scopeNumber = frameProxy.inlineScopeNumber
+            if (scopeNumber >= 0) {
+                val parentScopeNumbers = collectParentScopeNumbers(variables, scopeNumber)
+                findLocalVariableByScopeNumber(variables, kind, parentScopeNumbers, namePredicate)?.let { return it }
+            }
+        }
 
+        val inlineDepth = (frameProxy as? InlineStackFrameProxyImpl)?.inlineDepth ?: getInlineDepth(variables)
         findLocalVariable(variables, kind, inlineDepth, namePredicate)?.let { return it }
 
         // Try to find variables outside of inline functions as well
@@ -300,6 +325,50 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         return null
+    }
+
+    private fun collectParentScopeNumbers(variables: List<LocalVariableProxyImpl>, scopeNumber: Int): Set<Int> {
+        val scopeNumberToSurroundingScopeNumber = mutableMapOf<Int, Int>()
+        for (variable in variables) {
+            val name = variable.name()
+            if (JvmAbi.isFakeLocalVariableForInline(name)) {
+                val (scope, _, surroundingScope) = name.getInlineScopeInfo() ?: continue
+                if (surroundingScope != null && scope >= 0 && surroundingScope >= 0) {
+                    scopeNumberToSurroundingScopeNumber[scope] = surroundingScope
+                }
+            }
+        }
+
+        val result = mutableSetOf<Int>()
+        var currentScopeNumber: Int? = scopeNumber
+        while (currentScopeNumber != null) {
+            result += currentScopeNumber
+            currentScopeNumber = scopeNumberToSurroundingScopeNumber[currentScopeNumber]
+        }
+        return result
+    }
+
+    private fun findLocalVariableByScopeNumber(
+        variables: List<LocalVariableProxyImpl>,
+        kind: VariableKind,
+        scopeNumbers: Set<Int>,
+        namePredicate: (String) -> Boolean
+    ): Result? {
+        val namedEntities = variables.namedEntitySequence() + getCoroutineStackFrameNamedEntities()
+        // When searching for variables, we are always interested in variables with a larger scope number first,
+        // This way we are prioritising variables that come from the scope we are currently in, and then its parent
+        // scopes accordingly.
+        val sortedEntities = namedEntities.sortedByDescending { it.name.getInlineScopeInfo()?.scopeNumber ?: 0 }
+        return findLocalVariable(sortedEntities, kind) { name ->
+            val scope = name.getInlineScopeInfo()?.scopeNumber
+            when (scope) {
+                // If the scope number is null, then the variable belongs to the top frame.
+                // Top frame variables are always captured by inline lambdas.
+                null -> namePredicate(name)
+                in scopeNumbers -> namePredicate(name.dropInlineScopeInfo())
+                else -> false
+            }
+        }
     }
 
     private fun findLocalVariable(
@@ -332,8 +401,16 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         val namedEntities = variables.namedEntitySequence() + getCoroutineStackFrameNamedEntities()
+        return findLocalVariable(namedEntities, kind, actualPredicate)
+    }
+
+    private fun findLocalVariable(
+        namedEntities: Sequence<NamedEntity>,
+        kind: VariableKind,
+        namePredicate: (String) -> Boolean
+    ): Result? {
         for (item in namedEntities) {
-            if (!actualPredicate(item.name) || !kind.typeMatches(item.type)) {
+            if (!namePredicate(item.name) || !kind.typeMatches(item.type)) {
                 continue
             }
 
@@ -404,8 +481,7 @@ class VariableFinder(val context: ExecutionContext) {
             ?.allInterfaces()?.firstOrNull { it.name() == Continuation::class.java.name }
             ?: return null
 
-        val getContextMethod = continuationType
-            .methodsByName("getContext", "()Lkotlin/coroutines/CoroutineContext;").firstOrNull()
+        val getContextMethod = DebuggerUtils.findMethod(continuationType, "getContext", "()Lkotlin/coroutines/CoroutineContext;")
             ?: return null
 
         return context.invokeMethod(continuation, getContextMethod, emptyList()) as? ObjectReference
@@ -417,6 +493,7 @@ class VariableFinder(val context: ExecutionContext) {
                     || name == AsmUtil.RECEIVER_PARAMETER_NAME
                     || name == AsmUtil.THIS_IN_DEFAULT_IMPLS
                     || INLINED_THIS_REGEX.matches(name)
+                    || name == SpecialNames.THIS.asString()
 
         if (kind is VariableKind.ExtensionThis) {
             variables.namedEntitySequence()
@@ -477,8 +554,7 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         val delegateValue = rawValue as? ObjectReference ?: return rawValue
-        val getValueMethod = delegateValue.referenceType()
-            .methodsByName("getValue", "()Ljava/lang/Object;").firstOrNull()
+        val getValueMethod = DebuggerUtils.findMethod(delegateValue.referenceType(), "getValue", "()Ljava/lang/Object;")
             ?: return rawValue
 
         return context.invokeMethod(delegateValue, getValueMethod, emptyList())
@@ -493,6 +569,12 @@ class VariableFinder(val context: ExecutionContext) {
         if (this is VariableKind.Ordinary && isDelegated) {
             // We can't figure out the actual type of the value yet.
             // No worries: it will be checked again (and more carefully) in `unwrapAndCheck()`.
+            return true
+        }
+        if (this is VariableKind.Ordinary) {
+            // It's a workaround for the problem with the JVM backend emitting an incorrect type for local variable, KT-70527, IDEA-353808.
+            // However, it seems pretty safe to check ordinary variables only by name because we were unable to craft any counter-example
+            // that would somehow break the evaluator.
             return true
         }
         return evaluatorValueConverter.typeMatches(asmType, actualType)

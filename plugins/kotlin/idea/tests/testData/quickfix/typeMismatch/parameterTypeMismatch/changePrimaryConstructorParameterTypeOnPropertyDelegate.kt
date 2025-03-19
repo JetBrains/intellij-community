@@ -17,3 +17,6 @@ class TestDelegate(val code: () -> LoggerConfig) {
 
 data class LoggerConfig(val name: String)
 data class Logger(val loggerConfig: LoggerConfig)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForEnclosing
+// IGNORE_K2
+// For K2, see KTIJ-33125

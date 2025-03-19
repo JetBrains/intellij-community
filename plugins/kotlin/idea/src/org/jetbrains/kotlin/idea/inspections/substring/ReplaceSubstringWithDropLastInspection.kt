@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.substring
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.evaluatesTo
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -39,5 +39,5 @@ class ReplaceSubstringWithDropLastInspection : ReplaceSubstringInspection() {
     private fun isLengthAccess(expression: KtExpression?, expectedReceiver: KtExpression): Boolean =
         expression is KtDotQualifiedExpression
                 && expression.selectorExpression.let { it is KtNameReferenceExpression && it.getReferencedName() == "length" }
-                && expression.receiverExpression.evaluatesTo(expectedReceiver)
+                && expression.receiverExpression.isSimplifiableTo(expectedReceiver)
 }

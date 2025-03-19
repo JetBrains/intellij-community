@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -10,12 +10,14 @@ import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 import java.util.List;
 
-public class ElementStatusTrackerImpl implements ElementStatusTracker {
+@ApiStatus.Internal
+public final class ElementStatusTrackerImpl implements ElementStatusTracker {
   private final Project myProject;
 
   public ElementStatusTrackerImpl(@NotNull Project project) {

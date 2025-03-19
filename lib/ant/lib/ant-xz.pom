@@ -26,26 +26,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/m
     <groupId>org.apache.ant</groupId>
     <artifactId>ant-parent</artifactId>
     <relativePath>../pom.xml</relativePath>
-    <version>1.10.12</version>
+    <version>1.10.14</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <url>https://ant.apache.org/</url>
   <groupId>org.apache.ant</groupId>
   <artifactId>ant-xz</artifactId>
-  <version>1.10.12</version>
+  <version>1.10.14</version>
   <name>Apache Ant + XZ for Java</name>
   <description>contains the xz compression support</description>
   <dependencies>
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>1.10.12</version>
+      <version>1.10.14</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.tukaani</groupId>
       <artifactId>xz</artifactId>
-      <version>1.8</version>
+      <version>1.9</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>

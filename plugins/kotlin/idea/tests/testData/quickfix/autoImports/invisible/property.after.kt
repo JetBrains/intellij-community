@@ -9,4 +9,3 @@ fun main() {
     <caret>f
 }
 
-/* IGNORE_FIR */

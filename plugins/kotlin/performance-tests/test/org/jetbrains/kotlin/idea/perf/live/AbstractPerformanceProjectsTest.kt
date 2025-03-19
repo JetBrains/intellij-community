@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.performance.tests.utils.project.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
-import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
@@ -216,7 +215,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
 
         logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
 
-        project.waitIndexingComplete("index project")
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
 
         Fixture.enableAnnotatorsAndLoadDefinitions(project)
 
@@ -307,7 +306,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         note: String = ""
     ) {
         var fileText: String? = null
-        perfTypeAndDo<Unit>(
+        perfTypeAndDo(
             project,
             fileName,
             "typeAndUndo",

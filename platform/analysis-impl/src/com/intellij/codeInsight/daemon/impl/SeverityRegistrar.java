@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -18,14 +18,15 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -33,17 +34,21 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
-  static final int SHOWN_SEVERITIES_OFFSET = 2;
+  @ApiStatus.Internal
+  public static final int SHOWN_SEVERITIES_OFFSET = 2;
 
-  private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
-
+  @Topic.AppLevel
+  @Topic.ProjectLevel
   private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = new Topic<>("standard severities changed", Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
-  @NonNls private static final String INFO_TAG = "info";
-  @NonNls private static final String COLOR_ATTRIBUTE = "color";
+  private static final @NonNls String INFO_TAG = "info";
+  private static final @NonNls String COLOR_ATTRIBUTE = "color";
   private final Map<String, SeverityBasedTextAttributes> myMap = new ConcurrentHashMap<>();
   private final Map<String, Color> myRendererColors = new ConcurrentHashMap<>();
-  static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = new Topic<>("severities changed", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
+
+  @Topic.ProjectLevel
+  @ApiStatus.Internal
+  public static final Topic<Runnable> SEVERITIES_CHANGED_TOPIC = new Topic<>("severities changed", Runnable.class, Topic.BroadcastDirection.TO_PARENT);
   private final @NotNull MessageBus myMessageBus;
 
   private final AtomicReference<Object2IntMap<HighlightSeverity>> orderMap = new AtomicReference<>();
@@ -140,7 +145,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   public @Nullable TextAttributes getCustomSeverityTextAttributes(@NotNull TextAttributesKey key) {
-    final SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
+    SeverityBasedTextAttributes attributes = myMap.get(key.getExternalName());
     return attributes != null ? attributes.getAttributes() : null;
   }
 
@@ -168,7 +173,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     severitiesChanged();
   }
 
-  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<? extends HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
+  private @NotNull Object2IntMap<HighlightSeverity> ensureAllStandardIncluded(@NotNull List<HighlightSeverity> read, @NotNull List<HighlightSeverity> knownSeverities) {
     Object2IntMap<HighlightSeverity> orderMap = fromList(read);
     if (orderMap.isEmpty()) {
       return fromList(knownSeverities);
@@ -234,7 +239,8 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return list;
   }
 
-  int getSeveritiesCount() {
+  @ApiStatus.Internal
+  public int getSeveritiesCount() {
     return STANDARD_SEVERITIES.size() + myMap.size();
   }
 
@@ -256,7 +262,8 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   @NotNull
-  Icon getRendererIconBySeverity(@NotNull HighlightSeverity severity, boolean defaultIcon) {
+  @ApiStatus.Internal
+  public Icon getRendererIconBySeverity(@NotNull HighlightSeverity severity, boolean defaultIcon) {
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
     if (level != null) {
       return defaultIcon ? level.getIcon() : level.getOutlineIcon();
@@ -286,7 +293,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return orderMap.updateAndGet(oldMap -> oldMap == null ? fromList(getDefaultOrder()) : oldMap);
   }
 
-  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<? extends HighlightSeverity> orderList) {
+  private static @NotNull Object2IntMap<HighlightSeverity> fromList(@NotNull List<HighlightSeverity> orderList) {
     if (orderList.isEmpty()) {
       return Object2IntMaps.emptyMap();
     }
@@ -298,7 +305,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
       map.put(severity, index);
     }
     if (map.size() != orderList.size()) {
-      LOG.error("Severities order list must contain unique severities but got: " + orderList);
+      Logger.getInstance(SeverityRegistrar.class).error("Severities order list must contain unique severities but got: " + orderList);
     }
     return Object2IntMaps.unmodifiable(map);
   }
@@ -315,13 +322,14 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return order;
   }
 
-  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
     orderMap.set(ensureAllStandardIncluded(orderList, getDefaultOrder()));
     myReadOrder = null;
     severitiesChanged();
   }
 
-  int getSeverityIdx(@NotNull HighlightSeverity severity) {
+  @ApiStatus.Internal
+  public int getSeverityIdx(@NotNull HighlightSeverity severity) {
     return getOrderMap().getInt(severity);
   }
 
@@ -329,7 +337,8 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return STANDARD_SEVERITIES.containsKey(severity.myName);
   }
 
-  static boolean isGotoBySeverityEnabled(@NotNull HighlightSeverity minSeverity) {
+  @ApiStatus.Internal
+  public static boolean isGotoBySeverityEnabled(@NotNull HighlightSeverity minSeverity) {
     for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getIterable()) {
       if (provider.isGotoBySeverityEnabled(minSeverity)) {
         return true;
@@ -385,11 +394,12 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   }
 
   @NotNull
-  Collection<@NotNull SeverityBasedTextAttributes> allRegisteredAttributes() {
+  @ApiStatus.Internal
+  public Collection<@NotNull SeverityBasedTextAttributes> allRegisteredAttributes() {
     return Collections.unmodifiableCollection(myMap.values());
   }
-  @NotNull
-  public static Collection<HighlightInfoType> standardSeverities() {
+
+  public static @NotNull Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

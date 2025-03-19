@@ -1,0 +1,20 @@
+### auto-generated section `build fleet.util.logging.api` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "fleet-util-logging-api",
+  module_name = "fleet.util.logging.api",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:slf4j-api",
+    "@lib//:kotlinx-coroutines-slf4j",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  exports = [
+    "@lib//:slf4j-api",
+    "@lib//:kotlinx-coroutines-slf4j",
+  ]
+)
+### auto-generated section `build fleet.util.logging.api` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -23,8 +23,7 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return (NodeDescriptor) element;
   }
 
@@ -61,9 +60,8 @@ public abstract class SimpleTreeStructure extends AbstractTreeStructure {
       myRoot = root;
     }
 
-    @NotNull
     @Override
-    public Object getRootElement() {
+    public @NotNull Object getRootElement() {
       return myRoot;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.branch.DvcsCompareSettings;
@@ -17,26 +17,22 @@ public class GitCompareBranchesHelper implements CompareBranchesHelper {
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   @Override
-  @NotNull
-  public RepositoryManager getRepositoryManager() {
+  public @NotNull RepositoryManager getRepositoryManager() {
     return GitUtil.getRepositoryManager(myProject);
   }
 
   @Override
-  @NotNull
-  public DvcsCompareSettings getDvcsCompareSettings() {
+  public @NotNull DvcsCompareSettings getDvcsCompareSettings() {
     return GitVcsSettings.getInstance(myProject);
   }
 
   @Override
-  @NotNull
-  public String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {
+  public @NotNull String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {
     return String.format("git log %s..%s", firstBranch, secondBranch); // NON-NLS
   }
 }

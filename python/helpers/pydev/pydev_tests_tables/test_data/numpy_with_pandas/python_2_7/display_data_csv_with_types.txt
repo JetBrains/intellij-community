@@ -1,0 +1,1 @@
+'~id~name~age~score\n0~1~Alice~23~85\n1~2~Bob~25~92\n2~3~Charlie~22~67\n'

@@ -11,7 +11,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RenameUnsupportedExpressionProcessor extends RenamePyElementProcessor {
+public final class RenameUnsupportedExpressionProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     return PsiTreeUtil.instanceOf(element, 

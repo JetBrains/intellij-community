@@ -1,37 +1,39 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.interpreter.ReachabilityCountingInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
-import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
-import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Field;
+import com.sun.jdi.Value;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +64,7 @@ public class DebuggerDfaRunner {
     myModificationStamp = larva.myStamp;
   }
 
-  @NotNull
-  public DfaResult computeHints() {
+  public @NotNull DfaResult computeHints() {
     if (PsiModificationTracker.getInstance(myProject).getModificationCount() != myModificationStamp) {
       return DfaResult.EMPTY;
     }
@@ -73,21 +74,18 @@ public class DebuggerDfaRunner {
     DfaMemoryState memoryState = myStartingState.getMemoryState().createCopy();
     int startingIndex = myStartingState.getInstruction().getIndex();
     DfaInstructionState startingState = new DfaInstructionState(myStartingState.getInstruction(), memoryState);
-    BitSet reached = new BitSet();
-    reached.set(0, startingIndex);
-    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true) {
+    ReachabilityCountingInterpreter interpreter = new ReachabilityCountingInterpreter(myFlow, interceptor, true, false, startingIndex) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
-        reached.set(instructionState.getInstruction().getIndex());
         DfaInstructionState[] states = super.acceptInstruction(instructionState);
         return StreamEx.of(states).filter(state -> state.getInstruction().getIndex() > startingIndex)
           .toArray(DfaInstructionState.EMPTY_ARRAY);
       }
     };
     if (interpreter.interpret(List.of(startingState)) != RunnerResult.OK) return DfaResult.EMPTY;
-    Set<PsiElement> unreachable = myFlow.computeUnreachable(reached);
-    return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(),
-                         interceptor.unreachableSegments(myAnchor, unreachable));
+    Set<PsiElement> unreachable = interpreter.getUnreachable();
+    Collection<TextRange> segments = DataFlowIRProvider.computeUnreachableSegments(myAnchor, unreachable);
+    return new DfaResult(myBody.getContainingFile(), interceptor.computeHints(), segments);
   }
 
   /**
@@ -106,15 +104,15 @@ public class DebuggerDfaRunner {
     private final @NotNull StackFrameProxyEx myProxy;
     private final int myOffset;
 
-    private Larva(@NotNull Project project,
-                  @NotNull PsiElement anchor,
-                  @NotNull PsiElement body,
-                  @NotNull ControlFlow flow,
-                  @NotNull DfaValueFactory factory,
-                  long stamp,
-                  @NotNull DfaAssistProvider provider,
-                  @NotNull Map<Value, List<DfaVariableValue>> jdiToDfa,
-                  @NotNull StackFrameProxyEx proxy, int offset) {
+    Larva(@NotNull Project project,
+          @NotNull PsiElement anchor,
+          @NotNull PsiElement body,
+          @NotNull ControlFlow flow,
+          @NotNull DfaValueFactory factory,
+          long stamp,
+          @NotNull DfaAssistProvider provider,
+          @NotNull Map<Value, List<DfaVariableValue>> jdiToDfa,
+          @NotNull StackFrameProxyEx proxy, int offset) {
       myProject = project;
       myAnchor = anchor;
       myBody = body;
@@ -125,66 +123,6 @@ public class DebuggerDfaRunner {
       myJdiToDfa = jdiToDfa;
       myProxy = proxy;
       myOffset = offset;
-    }
-
-    @RequiresReadLock
-    static @Nullable Larva hatch(@NotNull StackFrameProxyEx proxy, @Nullable PsiElement element) throws EvaluateException {
-      if (element == null || !element.isValid()) return null;
-      Project project = element.getProject();
-      if (DumbService.isDumb(project)) return null;
-
-      DfaAssistProvider provider = DfaAssistProvider.EP_NAME.forLanguage(element.getLanguage());
-      if (provider == null) return null;
-      try {
-        if (!provider.locationMatches(element, proxy.location())) return null;
-      }
-      catch (IllegalArgumentException iea) {
-        throw new EvaluateException(iea.getMessage(), iea);
-      }
-      PsiElement anchor = provider.getAnchor(element);
-      if (anchor == null) return null;
-      PsiElement body = provider.getCodeBlock(anchor);
-      if (body == null) return null;
-      DfaValueFactory factory = new DfaValueFactory(project);
-      ControlFlow flow = DataFlowIRProvider.forElement(body, factory);
-      if (flow == null) return null;
-      long modificationStamp = PsiModificationTracker.getInstance(project).getModificationCount();
-      int offset = flow.getStartOffset(anchor).getInstructionOffset();
-      if (offset < 0) return null;
-      Map<Value, List<DfaVariableValue>> jdiToDfa = createPreliminaryJdiMap(provider, anchor, factory, proxy);
-      if (jdiToDfa.isEmpty()) return null;
-      return new Larva(project, anchor, body, flow, factory, modificationStamp, provider, jdiToDfa, proxy, offset);
-    }
-
-    @NotNull
-    private static Map<Value, List<DfaVariableValue>> createPreliminaryJdiMap(@NotNull DfaAssistProvider provider,
-                                                                              @NotNull PsiElement anchor,
-                                                                              @NotNull DfaValueFactory factory,
-                                                                              @NotNull StackFrameProxyEx proxy) throws EvaluateException {
-      Map<Value, List<DfaVariableValue>> myMap = new HashMap<>();
-      for (DfaValue dfaValue : factory.getValues().toArray(DfaValue.EMPTY_ARRAY)) {
-        if (dfaValue instanceof DfaVariableValue dfaVar) {
-          Value jdiValue = resolveJdiValue(provider, anchor, proxy, dfaVar);
-          if (jdiValue != null) {
-            myMap.computeIfAbsent(jdiValue, v -> new ArrayList<>()).add(dfaVar);
-          }
-        }
-      }
-      return myMap;
-    }
-
-    @Nullable
-    private static Value resolveJdiValue(@NotNull DfaAssistProvider provider,
-                                         @NotNull PsiElement anchor,
-                                         @NotNull StackFrameProxyEx proxy,
-                                         @NotNull DfaVariableValue var) throws EvaluateException {
-      if (var.getDescriptor() instanceof AssertionDisabledDescriptor) {
-        Location location = proxy.location();
-        ThreeState status = DebuggerUtilsEx.getEffectiveAssertionStatus(location);
-        // Assume that assertions are enabled if we cannot fetch the status
-        return location.virtualMachine().mirrorOf(status == ThreeState.NO);
-      }
-      return provider.getJdiValueForDfaVariable(proxy, var, anchor);
     }
 
     /**
@@ -216,8 +154,7 @@ public class DebuggerDfaRunner {
       return new DebuggerDfaRunner(myLarva, myInfoMap);
     }
 
-    @NotNull
-    private static Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
+    private static @NotNull Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
       throws EvaluateException {
       ClassLoaderReference classLoader = proxy.getClassLoader();
       Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<>() {
@@ -229,8 +166,7 @@ public class DebuggerDfaRunner {
           return getParentLoaders().contains(loader);
         }
 
-        @NotNull
-        private List<ClassLoaderReference> getParentLoaders() {
+        private @NotNull List<ClassLoaderReference> getParentLoaders() {
           if (myParentLoaders == null) {
             List<ClassLoaderReference> loaders = Collections.emptyList();
             if (classLoader != null) {
@@ -239,7 +175,7 @@ public class DebuggerDfaRunner {
                 classLoaderClass = classLoaderClass.superclass();
               }
               if (classLoaderClass != null) {
-                Field parent = classLoaderClass.fieldByName("parent");
+                Field parent = DebuggerUtils.findField(classLoaderClass, "parent");
                 if (parent != null) {
                   loaders = StreamEx.iterate(
                       classLoader, Objects::nonNull, loader -> ObjectUtils.tryCast(loader.getValue(parent), ClassLoaderReference.class))
@@ -260,10 +196,9 @@ public class DebuggerDfaRunner {
     }
   }
 
-  @NotNull
-  private DfaMemoryState createMemoryState(@NotNull DfaValueFactory factory,
-                                           @NotNull Map<Value, List<DfaVariableValue>> valueMap,
-                                           @NotNull Map<Value, JdiValueInfo> infoMap) {
+  private @NotNull DfaMemoryState createMemoryState(@NotNull DfaValueFactory factory,
+                                                    @NotNull Map<Value, List<DfaVariableValue>> valueMap,
+                                                    @NotNull Map<Value, JdiValueInfo> infoMap) {
     DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
     List<DfaVariableValue> distinctValues = new ArrayList<>();
     valueMap.forEach((jdiValue, vars) -> {
@@ -284,19 +219,25 @@ public class DebuggerDfaRunner {
   }
 
   private void addConditions(@NotNull DfaVariableValue var, @Nullable JdiValueInfo valueInfo, @NotNull DfaMemoryState state) {
-    if (valueInfo instanceof JdiValueInfo.PrimitiveConstant) {
-      state.applyCondition(var.eq(((JdiValueInfo.PrimitiveConstant)valueInfo).getDfType()));
+    if (valueInfo instanceof JdiValueInfo.PrimitiveConstant primitiveConstant) {
+      DfConstantType<?> type = primitiveConstant.getDfType();
+      if (type.meet(var.getDfType()) != DfType.BOTTOM) {
+        ((DfaMemoryStateImpl)state).recordVariableType(var, type);
+      }
     }
-    else if (valueInfo instanceof JdiValueInfo.StringConstant) {
+    else if (valueInfo instanceof JdiValueInfo.StringConstant stringConstant) {
       TypeConstraint stringType = myProvider.constraintFromJvmClassName(myBody, "java/lang/String");
-      state.applyCondition(var.eq(DfTypes.referenceConstant(((JdiValueInfo.StringConstant)valueInfo).getValue(), stringType)));
+      state.applyCondition(var.eq(DfTypes.referenceConstant(stringConstant.getValue(), stringType)));
     }
-    else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
-      TypeConstraint exactType = getType(myBody, ((JdiValueInfo.ObjectRef)valueInfo).getSignature());
-      if (exactType == TypeConstraints.TOP) return;
+    else if (valueInfo instanceof JdiValueInfo.ObjectRef objectRef) {
+      TypeConstraint exactType = getType(myBody, objectRef.getSignature());
+      if (exactType == TypeConstraints.TOP) {
+        state.meetDfType(var, DfTypes.NOT_NULL_OBJECT);
+        return;
+      }
       state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
-      if (valueInfo instanceof JdiValueInfo.EnumConstant) {
-        String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();
+      if (valueInfo instanceof JdiValueInfo.EnumConstant enumConstant) {
+        String name = enumConstant.getName();
         if (exactType.isEnum()) {
           PsiClass enumClass = PsiUtil.resolveClassInClassTypeOnly(exactType.getPsiType(myProject));
           if (enumClass != null) {

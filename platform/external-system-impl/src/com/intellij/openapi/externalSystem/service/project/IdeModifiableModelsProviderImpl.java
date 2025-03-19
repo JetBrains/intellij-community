@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.facet.FacetManager;
@@ -35,16 +21,17 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ClassMap;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal;
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.VersionedEntityStorage;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.VersionedEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,9 +48,8 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     super(project);
   }
 
-  @NotNull
   @Override
-  public LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
+  public @NotNull LibraryTable.ModifiableModel getModifiableProjectLibrariesModel() {
     if (myLibrariesModel != null) return myLibrariesModel;
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject);
     return myLibrariesModel = ((ProjectLibraryTableBridge)libraryTable).getModifiableModel(getActualStorageBuilder());
@@ -83,12 +69,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   }
 
   @Override
-  @NotNull
-  protected ModifiableRootModel doGetModifiableRootModel(@NotNull final Module module) {
+  protected @NotNull ModifiableRootModel doGetModifiableRootModel(final @NotNull Module module) {
     RootConfigurationAccessor rootConfigurationAccessor = new RootConfigurationAccessor() {
-      @Nullable
       @Override
-      public Library getLibrary(Library library, String libraryName, String libraryLevel) {
+      public @Nullable Library getLibrary(Library library, String libraryName, String libraryLevel) {
         if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(libraryLevel)) {
           return getModifiableProjectLibrariesModel().getLibraryByName(libraryName);
         }
@@ -135,9 +119,11 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private void workspaceModelCommit() {
     ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
-      if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-        updateSubstitutions();
-      }
+
+      var workspaceModel = getModifiableWorkspaceModel();
+      workspaceModel.updateLibrarySubstitutions();
+      workspaceModel.commit();
+
       LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
@@ -145,10 +131,14 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         Library.ModifiableModel modifiableModel = entry.getValue();
 
         // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        if (fromLibrary instanceof LibraryEx fromLibraryEx && fromLibraryEx.isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
         // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
-        if ((fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed())
-            || (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null)
-            || (getModifiableWorkspace() != null && getModifiableWorkspace().isSubstituted(fromLibrary.getName()))) {
+        else if (fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null) {
+          Disposer.dispose(modifiableModel);
+        }
+        else if (workspaceModel.isLibrarySubstituted(fromLibrary)) {
           Disposer.dispose(modifiableModel);
         }
         else {
@@ -181,9 +171,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
       for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
         TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(entry.getKey());
-        if (testModuleProperties instanceof TestModulePropertiesBridge) {
-          ((TestModulePropertiesBridge)testModuleProperties).setProductionModuleNameToBuilder(entry.getValue(),
-                                                                                              getActualStorageBuilder());
+        if (testModuleProperties instanceof TestModulePropertiesBridge bridge) {
+          bridge.setProductionModuleNameToBuilder(entry.getValue(),
+                                                  myModifiableModuleModel.getActualName(entry.getKey()),
+                                                  getActualStorageBuilder());
         } else {
           testModuleProperties.setProductionModuleName(entry.getValue());
         }
@@ -200,7 +191,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         if (LOG.isTraceEnabled()) {
           LOG.trace("Apply builder in ModifiableModels commit. builder: " + storageBuilder);
         }
-        builder.addDiff(storageBuilder);
+        builder.applyChangesFrom(storageBuilder);
         return null;
       });
 
@@ -224,30 +215,13 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   public MutableEntityStorage getActualStorageBuilder() {
     if (diff != null) return diff;
-    VersionedEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage();
+    VersionedEntityStorage storage = ((WorkspaceModelInternal)WorkspaceModel.getInstance(myProject)).getEntityStorage();
     LOG.info("Ide modifiable models provider, create builder from version " + storage.getVersion());
-    var initialStorage = storage.getCurrent();
+    var initialStorage = (ImmutableEntityStorage)storage.getCurrent();
     return diff = MutableEntityStorage.from(initialStorage);
   }
 
   private void setIdeModelsProviderForModule(@NotNull Module module) {
     module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, this);
-  }
-
-  // temporarily open access to state for the proxy
-  public ClassMap<ModifiableModel> getModifiableModels() {
-    return myModifiableModels;
-  }
-
-  public Map<Library, Library.ModifiableModel> getModifiableLibraryModels() {
-    return myModifiableLibraryModels;
-  }
-
-  public Map<Module, ModifiableFacetModel> getModifiableFacetModels() {
-    return myModifiableFacetModels;
-  }
-
-  public void forceUpdateSubstitutions() {
-    updateSubstitutions();
   }
 }

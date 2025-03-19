@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.load.java.lazy.types.JavaTypeResolver
 import org.jetbrains.kotlin.load.java.structure.JavaTypeParameter
 import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeImpl
 import org.jetbrains.kotlin.load.java.structure.impl.JavaTypeParameterImpl
+import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -285,7 +286,11 @@ fun PsiType.resolveToKotlinType(resolutionFacade: ResolutionFacade): KotlinType 
     }
     val typeResolver = JavaTypeResolver(rootContext, typeParameterResolver)
     val attributes = JavaTypeAttributes(TypeUsage.COMMON)
-    return typeResolver.transformJavaType(JavaTypeImpl.create(this), attributes).approximateFlexibleTypes(preferNotNull = true)
+
+    val sourceFactory = JavaElementSourceFactory.getInstance(resolutionFacade.project)
+    val psiJavaSource = sourceFactory.createTypeSource(this)
+
+    return typeResolver.transformJavaType(JavaTypeImpl.create(psiJavaSource), attributes).approximateFlexibleTypes(preferNotNull = true)
 }
 
 

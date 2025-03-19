@@ -3,9 +3,18 @@ package com.intellij.execution.impl;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
+import com.intellij.openapi.editor.Inlay;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface InlayProvider {
-  EditorCustomElementRenderer createInlayRenderer(Editor editor);
+  default EditorCustomElementRenderer createInlayRenderer(Editor editor) {
+    throw new UnsupportedOperationException();
+  }
+
+  default @Nullable Inlay<?> createInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addInlineElement(offset, createInlayRenderer(editor));
+  }
 }

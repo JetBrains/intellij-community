@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -13,19 +13,17 @@ import java.util.EventListener;
 @ApiStatus.Experimental
 @ApiStatus.Internal
 public interface EditorCompositeListener extends EventListener {
-  default void isPinnedChanged(@NotNull EditorComposite composite, boolean value) { }
-
-  default void isPreviewChanged(@NotNull EditorComposite composite, boolean value) { }
-
   default void editorAdded(@NotNull FileEditorWithProvider editorWithProvider) { }
+
+  default void editorRemoved(@NotNull String editorTypeId) { }
 
   default void displayNameChanged(@NotNull FileEditor editor, @NotNull @NlsContexts.TabTitle String name) { }
 
-  default void topComponentAdded(@NotNull FileEditor editor, int index, @NotNull JComponent component) { }
+  default void topComponentAdded(@NotNull FileEditor editor, int index, @NotNull JComponent component, @NotNull JComponent container) { }
 
-  default void topComponentRemoved(@NotNull FileEditor editor, @NotNull JComponent component) { }
+  default void topComponentRemoved(@NotNull FileEditor editor, @NotNull JComponent component, @NotNull JComponent container) { }
 
-  default void bottomComponentAdded(@NotNull FileEditor editor, int index, @NotNull JComponent component) { }
+  default void bottomComponentAdded(@NotNull FileEditor editor, int index, @NotNull JComponent component, @NotNull JComponent container) { }
 
-  default void bottomComponentRemoved(@NotNull FileEditor editor, @NotNull JComponent component) { }
+  default void bottomComponentRemoved(@NotNull FileEditor editor, @NotNull JComponent component, @NotNull JComponent container) { }
 }

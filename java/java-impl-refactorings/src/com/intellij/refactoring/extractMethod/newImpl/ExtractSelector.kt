@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.IntroduceVariableUtil
-import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.util.CommonJavaRefactoringUtil
 
 class ExtractSelector {

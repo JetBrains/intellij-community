@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
@@ -54,8 +54,7 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.family.name.move.class.to.test.root");
   }
 
@@ -68,11 +67,11 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     ModuleFileIndex fileIndex = rootManager.getFileIndex();
     if (!fileIndex.isInSourceContent(virtualFile)) return false;
+    if (JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory()) == null) return false;
     return getTestRoots(rootManager).findFirst().isPresent();
   }
 
-  @NotNull
-  private static Stream<SourceFolder> getTestRoots(ModuleRootManager rootManager) {
+  private static @NotNull Stream<SourceFolder> getTestRoots(ModuleRootManager rootManager) {
     return Arrays.stream(rootManager.getContentEntries())
       .flatMap(entry -> Arrays.stream(entry.getSourceFolders()))
       .filter(SourceFolder::isTestSource);
@@ -107,6 +106,7 @@ public class MoveToTestRootFix extends LocalQuickFixAndIntentionActionOnPsiEleme
     if (sourceRoot == null) return;
     
     PsiPackage targetPackage = JavaDirectoryService.getInstance().getPackage(myFile.getContainingDirectory());
+    if (targetPackage == null) return;
     
     PackageWrapper wrapper = PackageWrapper.create(targetPackage);
 

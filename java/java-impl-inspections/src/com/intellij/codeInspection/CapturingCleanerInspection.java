@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,15 +19,14 @@ import java.util.Optional;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static final CallMatcher CLEANER_REGISTER = CallMatcher.instanceCall(
     "java.lang.ref.Cleaner", "register"
   ).parameterCount(2);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel9OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
@@ -72,9 +72,8 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
       }
 
 
-      @Nullable
-      private static PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
-                                                        @NotNull PsiClass trackedClass) {
+      private static @Nullable PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
+                                                                  @NotNull PsiClass trackedClass) {
         if (runnableExpr instanceof PsiMethodReferenceExpression methodReference) {
           if (PsiMethodReferenceUtil.isStaticallyReferenced(methodReference)) return null;
 
@@ -94,7 +93,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         }
         if (runnableExpr instanceof PsiNewExpression newExpression) {
           if (newExpression.getAnonymousClass() != null) {
-            if (PsiUtil.isLanguageLevel18OrHigher(trackedClass)) {
+            if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass)) {
               PsiElement elementCapturingThis = getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass);
               if (elementCapturingThis != null) {
                 return elementCapturingThis;
@@ -109,7 +108,8 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
           if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
-          if (PsiUtil.isLanguageLevel18OrHigher(trackedClass) && getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
+          if (PsiUtil.isAvailable(JavaFeature.INNER_NOT_CAPTURE_THIS, trackedClass) && 
+              getLambdaOrInnerClassElementCapturingThis(newExpression, trackedClass) == null) return null;
           return classReference;
         }
         return null;

@@ -27,10 +27,10 @@ class Limit {
          next(next(next(next(next(next(next(clear))))))) +
          next(next(next(next(next(next(next(dirty)))))))</weak_warning>); //warn
     sink(fromAnotherFile);
-    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile2</warning>); //warn
-    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile3</warning>); //warn
+    sink(fromAnotherFile2); //not warn, because static final files are considered as safe
+    sink(fromAnotherFile3); //not warn, because static final are considered as safe
     sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile4</warning>); //warn
-    sink(fromAnotherFile5);
+    sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile5</warning>); //warn because ide doesn't process other files
     sink(<warning descr="Unknown string is used as safe parameter">fromAnotherFile6</warning>); //warn
     String cleanLongString = "sdafjhasdfkhaskjdfh" +
                              "sdafjhasdfkhaskjdfh" +

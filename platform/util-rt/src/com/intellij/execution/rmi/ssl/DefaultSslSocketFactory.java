@@ -29,7 +29,7 @@ public final class DefaultSslSocketFactory extends DelegateSslSocketFactory {
   @NotNull
   private static SSLSocketFactory createTrustEveryoneDelegate() throws GeneralSecurityException {
     KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    KeyStore ks = KeyStore.getInstance(SslKeyStore.NAME);
+    KeyStore ks = SslKeyStore.getInstance();
     try {
       ks.load(null, null);
     }

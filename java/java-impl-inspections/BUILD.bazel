@@ -1,0 +1,29 @@
+### auto-generated section `build intellij.java.impl.inspections` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "impl-inspections",
+  module_name = "intellij.java.impl.inspections",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/openapi:java",
+    "//java/java-analysis-impl:analysis-impl",
+    "@lib//:stream_ex",
+    "//java/java-impl:impl",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//java/compiler/openapi:java-compiler",
+    "@lib//:asm",
+    "//java/java-impl-refactorings:impl-refactorings",
+    "//platform/util/jdom",
+    "//platform/usageView",
+    "//platform/backend/workspace",
+    "//platform/core-ui",
+    "//platform/util/text-matching",
+    "//java/codeserver/highlighting:java-codeserver-highlighting",
+    "//java/codeserver/core:java-codeserver-core",
+  ]
+)
+### auto-generated section `build intellij.java.impl.inspections` end

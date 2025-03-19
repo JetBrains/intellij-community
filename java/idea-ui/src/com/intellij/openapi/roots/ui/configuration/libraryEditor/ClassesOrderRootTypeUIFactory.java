@@ -18,7 +18,7 @@ import javax.swing.*;
 /**
  * @author anna
  */
-public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
+public final class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new MySdkPathEditor(new FileChooserDescriptor(true, true, true, false, true, true));

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jmock.Expectations
@@ -20,9 +21,9 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
 
   private var myMockery: Mockery? = null
 
-  private val contributor1 = createDumbContributor("Test1")
-  private val contributor2 = createDumbContributor("Test2")
-  private val contributor3 = createDumbContributor("Test3(slow)", slow = true)
+  private val contributor1 = createDumbContributor("Test1", essential = true)
+  private val contributor2 = createDumbContributor("Test2", essential = true)
+  private val contributor3 = createDumbContributor("Test3(slow)")
 
   private val c1_e1 = SearchEverywhereFoundElementInfoTest("c1_e1", contributor1)
   private val c1_e2 = SearchEverywhereFoundElementInfoTest("c1_e2", contributor1)
@@ -103,10 +104,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     myMockery!!.checking(object : Expectations() {
       init {
         oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2))
-        oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e3, c1_e5, c1_e6, c2_e1, c2_e2, c2_e3, c2_e4))
-        oneOf(mockListener).contributorWaits(contributor1)
-        oneOf(mockListener).contributorWaits(contributor2)
-        oneOf(mockListener).elementsAdded(listOf(c1_e7, c1_e8))
+        oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e3, c1_e5, c1_e6, c2_e1, c2_e2, c2_e3, c2_e4, c1_e7, c1_e8))
         oneOf(mockListener).elementsRemoved(listOf(c2_e5, c2_e6))
         oneOf(mockListener).contributorFinished(contributor1, false)
         oneOf(mockListener).contributorFinished(contributor2, true)
@@ -218,17 +216,40 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
       }
     })
 
-    with(wfcWrapper) {
-      searchStarted("test", listOf(contributor1, contributor2, contributor3))
-      elementsAdded(listOf(c1_e1, c1_e2, c1_e3))
-      contributorFinished(contributor1, false)
-      elementsAdded(listOf(c2_e1, c2_e2, c2_e3))
-      contributorWaits(contributor2)
-      elementsAdded(listOf(c3_e1, c3_e2, c3_e3))
-      contributorFinished(contributor3, false)
-      contributorFinished(contributor2, true)
-      searchFinished(mapOf(Pair(contributor1, false), Pair(contributor2, false), Pair(contributor3, false)))
+    val request1 = Runnable {
+      SwingUtilities.invokeAndWait {
+        with(wfcWrapper) {
+          searchStarted("test", listOf(contributor1, contributor2, contributor3))
+          elementsAdded(listOf(c1_e1, c1_e2, c1_e3))
+          contributorFinished(contributor1, false)
+        }
+      }
     }
+    val request2 = Runnable {
+      SwingUtilities.invokeAndWait {
+        with(wfcWrapper) {
+          elementsAdded(listOf(c2_e1, c2_e2, c2_e3))
+          contributorWaits(contributor2)
+        }
+      }
+    }
+    val request3 = Runnable {
+      SwingUtilities.invokeAndWait {
+        with(wfcWrapper) {
+          elementsAdded(listOf(c3_e1, c3_e2, c3_e3))
+          contributorFinished(contributor3, false)
+          contributorFinished(contributor2, true)
+          searchFinished(mapOf(Pair(contributor1, false), Pair(contributor2, false), Pair(contributor3, false)))
+        }
+      }
+    }
+
+    val executorService = Executors.newSingleThreadScheduledExecutor()
+    executorService.schedule(request1, 0, TimeUnit.MILLISECONDS)
+    executorService.schedule(request2, 200, TimeUnit.MILLISECONDS)
+    executorService.schedule(request3, 400, TimeUnit.MILLISECONDS)
+    executorService.shutdown()
+    awaitShutdownNonBlocking(executorService)
 
     myMockery!!.assertIsSatisfied()
   }
@@ -289,10 +310,9 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     myMockery!!.checking(object : Expectations() {
       init {
         oneOf(mockListener).searchStarted("test", listOf(contributor1, contributor2, contributor3))
-        oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3))
+        oneOf(mockListener).elementsAdded(listOf(c1_e1, c1_e2, c1_e3, c2_e1, c2_e2, c2_e3, c3_e1, c3_e2, c3_e3, c3_e4, c3_e5, c3_e6))
         oneOf(mockListener).contributorFinished(contributor1, false)
         oneOf(mockListener).contributorFinished(contributor2, false)
-        oneOf(mockListener).elementsAdded(listOf(c3_e1, c3_e2, c3_e3, c3_e4, c3_e5, c3_e6))
         oneOf(mockListener).elementsAdded(listOf(c3_e7, c3_e8))
         oneOf(mockListener).contributorFinished(contributor3, false)
         oneOf(mockListener).searchFinished(mapOf(Pair(contributor1, false), Pair(contributor2, false), Pair(contributor3, false)))
@@ -342,7 +362,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     myMockery!!.assertIsSatisfied()
   }
 
-  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) {
+  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) = resetThreadContext().use {
     val eventQueue = Toolkit.getDefaultToolkit().systemEventQueue as IdeEventQueue
     while (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
       val event = eventQueue.nextEvent

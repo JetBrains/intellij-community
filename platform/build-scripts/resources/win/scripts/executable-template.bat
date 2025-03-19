@@ -8,6 +8,9 @@
 :: Ensure IDE_HOME points to the directory where the IDE is installed.
 :: ---------------------------------------------------------------------
 SET "IDE_BIN_DIR=%~dp0"
+PUSHD %IDE_BIN_DIR%
+SET "IDE_BIN_DIR=%CD%"
+POPD
 FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET "IDE_HOME=%%~fi"
 
 :: ---------------------------------------------------------------------
@@ -52,20 +55,22 @@ IF NOT EXIST "%JAVA_EXE%" (
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
+SET IDE_CACHE_DIR=%LOCALAPPDATA%\@@product_vendor@@\@@system_selector@@
+
+:: <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
 SET VM_OPTIONS_FILE=
+IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
+  SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions"
+) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
+  SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions"
+)
+
+:: ... [+ %<IDE_NAME>_VM_OPTIONS% || <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
 SET USER_VM_OPTIONS_FILE=
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (
-  :: 1. %<IDE_NAME>_VM_OPTIONS%
-  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET "VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%"
+  IF EXIST "%@@product_uc@@_VM_OPTIONS%" SET "USER_VM_OPTIONS_FILE=%@@product_uc@@_VM_OPTIONS%"
 )
-IF "%VM_OPTIONS_FILE%" == "" (
-  :: 2. <IDE_HOME>\bin\[win\]<exe_name>.vmoptions ...
-  IF EXIST "%IDE_BIN_DIR%\@@vm_options@@.vmoptions" (
-    SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\@@vm_options@@.vmoptions"
-  ) ELSE IF EXIST "%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions" (
-    SET "VM_OPTIONS_FILE=%IDE_BIN_DIR%\win\@@vm_options@@.vmoptions"
-  )
-  :: ... [+ <IDE_HOME>.vmoptions (Toolbox) || <config_directory>\<exe_name>.vmoptions]
+IF "%USER_VM_OPTIONS_FILE%" == "" (
   IF EXIST "%IDE_HOME%.vmoptions" (
     SET "USER_VM_OPTIONS_FILE=%IDE_HOME%.vmoptions"
   ) ELSE IF EXIST "%APPDATA%\@@product_vendor@@\@@system_selector@@\@@vm_options@@.vmoptions" (
@@ -75,22 +80,33 @@ IF "%VM_OPTIONS_FILE%" == "" (
 
 SET ACC=
 SET USER_GC=
+SET USER_PCT_INI=
+SET USER_PCT_MAX=
+SET FILTERS=%TMP%\ij-launcher-filters-%RANDOM%.txt
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
   SET ACC="-Djb.vmOptionsFile=%USER_VM_OPTIONS_FILE%"
   FINDSTR /R /C:"-XX:\+.*GC" "%USER_VM_OPTIONS_FILE%" > NUL
   IF NOT ERRORLEVEL 1 SET USER_GC=yes
+  FINDSTR /R /C:"-XX:InitialRAMPercentage=" "%USER_VM_OPTIONS_FILE%" > NUL
+  IF NOT ERRORLEVEL 1 SET USER_PCT_INI=yes
+  FINDSTR /R /C:"-XX:M[ia][nx]RAMPercentage=" "%USER_VM_OPTIONS_FILE%" > NUL
+  IF NOT ERRORLEVEL 1 SET USER_PCT_MAX=yes
 ) ELSE IF NOT "%VM_OPTIONS_FILE%" == "" (
   SET ACC="-Djb.vmOptionsFile=%VM_OPTIONS_FILE%"
 )
 IF NOT "%VM_OPTIONS_FILE%" == "" (
-  IF "%USER_GC%" == "" (
-    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET "ACC=%%ACC%% %%i"
+  IF "%USER_GC%%USER_PCT_INI%%USER_PCT_MAX%" == "" (
+    FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
   ) ELSE (
-    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL SET "ACC=%%ACC%% %%i"
+    IF NOT "%USER_GC%" == "" ECHO -XX:\+.*GC>> "%FILTERS%"
+    IF NOT "%USER_PCT_INI%" == "" ECHO -Xms>> "%FILTERS%"
+    IF NOT "%USER_PCT_MAX%" == "" ECHO -Xmx>> "%FILTERS%"
+    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /G:"%FILTERS%" "%VM_OPTIONS_FILE%"`) DO CALL SET ACC=%%ACC%% "%%i"
+    DEL "%FILTERS%"
   )
 )
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
-  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL SET "ACC=%%ACC%% %%i"
+  FOR /F "eol=# usebackq delims=" %%i IN ("%USER_VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
 )
 IF "%VM_OPTIONS_FILE%%USER_VM_OPTIONS_FILE%" == "" (
   ECHO ERROR: cannot find a VM options file

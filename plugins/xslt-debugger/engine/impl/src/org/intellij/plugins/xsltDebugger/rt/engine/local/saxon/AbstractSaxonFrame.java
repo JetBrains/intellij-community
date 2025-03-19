@@ -28,10 +28,12 @@ class AbstractSaxonFrame<F extends Debugger.Frame, N extends NodeInfo> extends A
     myElement = element;
   }
 
+  @Override
   public int getLineNumber() {
     return myElement.getLineNumber();
   }
 
+  @Override
   public String getURI() {
     final String uri = myElement.getSystemId();
     return uri != null ? uri.replaceAll(" ", "%20") : null;

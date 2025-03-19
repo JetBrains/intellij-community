@@ -6,6 +6,10 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
 
+/**
+ * @see com.intellij.collaboration.ui.EditableComponentFactory
+ */
+@Deprecated("Migrated to coroutines")
 object ToggleableContainer {
   fun create(
     model: SingleValueModel<Boolean>,

@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeInsight.slicer.HackedSliceNullnessAnalyzerBase
+import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -23,13 +25,11 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isNullabilityFlexible
 
-class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
-    companion object {
-        val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
-            override fun substituteElement(element: PsiElement) = (element as? KtReference)?.resolve() ?: element
-        }
-    }
+private val LEAF_ELEMENT_EQUALITY = object : SliceLeafEquality() {
+    override fun substituteElement(element: PsiElement) = (element as? KtReference)?.resolve() ?: element
+}
 
+class KotlinSliceProvider : SliceLanguageSupportProvider, SliceUsageTransformer {
     class KotlinGroupByNullnessAction(treeBuilder: SliceTreeBuilder) : GroupByNullnessActionBase(treeBuilder) {
         override fun isAvailable() = true
     }

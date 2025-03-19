@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -77,9 +77,8 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     }
   }
 
-  @NotNull
   @Override
-  protected List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull GitFileRevision rev1, @Nullable GitFileRevision rev2)
+  protected @NotNull List<Change> getChangesBetweenRevisions(@NotNull FilePath path, @NotNull GitFileRevision rev1, @Nullable GitFileRevision rev2)
     throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, path);
     String hash1 = rev1.getHash();
@@ -94,23 +93,21 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
                                                   Collections.singletonList(path)));
   }
 
-  @NotNull
   @Override
-  protected List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull GitFileRevision rev) throws VcsException {
+  protected @NotNull List<Change> getAffectedChanges(@NotNull FilePath path, @NotNull GitFileRevision rev) throws VcsException {
     VirtualFile root = GitUtil.getRootForFile(myProject, path);
 
     return new ArrayList<>(
       GitChangeUtils.getRevisionChanges(myProject, root, rev.getHash(), false, true, true).getChanges());
   }
 
-  @NotNull
   @Override
-  protected String getPresentableName(@NotNull GitFileRevision revision) {
+  protected @NotNull String getPresentableName(@NotNull GitFileRevision revision) {
     return DvcsUtil.getShortHash(revision.getHash());
   }
 
-  private void showDiffForMergeCommit(@NotNull final AnActionEvent event, @NotNull final FilePath filePath,
-                                      @NotNull final GitFileRevision rev, @NotNull final Collection<String> parents) {
+  private void showDiffForMergeCommit(final @NotNull AnActionEvent event, final @NotNull FilePath filePath,
+                                      final @NotNull GitFileRevision rev, final @NotNull Collection<String> parents) {
     VcsHistorySession session = event.getData(VcsDataKeys.HISTORY_SESSION);
     List<VcsFileRevision> revisions = session != null ? session.getRevisionList() : null;
     checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, info -> {
@@ -140,11 +137,11 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     }
   }
 
-  private void checkIfFileWasTouchedAndFindParentsInBackground(@NotNull final FilePath filePath,
-                                                               @NotNull final GitFileRevision rev,
-                                                               @NotNull final Collection<String> parentHashes,
-                                                               @Nullable final List<? extends VcsFileRevision> revisions,
-                                                               @NotNull final Consumer<? super MergeCommitPreCheckInfo> resultHandler) {
+  private void checkIfFileWasTouchedAndFindParentsInBackground(final @NotNull FilePath filePath,
+                                                               final @NotNull GitFileRevision rev,
+                                                               final @NotNull Collection<String> parentHashes,
+                                                               final @Nullable List<? extends VcsFileRevision> revisions,
+                                                               final @NotNull Consumer<? super MergeCommitPreCheckInfo> resultHandler) {
     Project project = myProject;
     new Task.Backgroundable(project, GitBundle.message("git.history.diff.handler.load.changes.process"), true) {
       private MergeCommitPreCheckInfo myInfo;
@@ -171,11 +168,10 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     }.queue();
   }
 
-  @NotNull
-  private Collection<GitFileRevision> findParentRevisions(@NotNull VirtualFile root,
-                                                          @NotNull GitFileRevision currentRevision,
-                                                          @NotNull Collection<String> parentHashes,
-                                                          @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
+  private @NotNull Collection<GitFileRevision> findParentRevisions(@NotNull VirtualFile root,
+                                                                   @NotNull GitFileRevision currentRevision,
+                                                                   @NotNull Collection<String> parentHashes,
+                                                                   @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
     // currentRevision is a merge revision.
     // the file could be renamed in one of the branches, i.e. the name in one of the parent revisions may be different from the name
     // in currentRevision. It can be different even in both parents, but it would a rename-rename conflict, and we don't handle such anyway.
@@ -187,11 +183,10 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     return parents;
   }
 
-  @NotNull
-  private GitFileRevision createParentRevision(@NotNull VirtualFile root,
-                                               @NotNull GitFileRevision currentRevision,
-                                               @NotNull String parentHash,
-                                               @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
+  private @NotNull GitFileRevision createParentRevision(@NotNull VirtualFile root,
+                                                        @NotNull GitFileRevision currentRevision,
+                                                        @NotNull String parentHash,
+                                                        @Nullable List<? extends VcsFileRevision> revisions) throws VcsException {
     if (revisions != null) {
       for (VcsFileRevision revision : revisions) {
         if (((GitFileRevision)revision).getHash().equals(parentHash)) {
@@ -246,10 +241,9 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     }
   }
 
-  @NotNull
-  private ActionGroup createActionGroup(@NotNull GitFileRevision rev,
-                                        @NotNull FilePath filePath,
-                                        @NotNull Collection<? extends GitFileRevision> parents) {
+  private @NotNull ActionGroup createActionGroup(@NotNull GitFileRevision rev,
+                                                 @NotNull FilePath filePath,
+                                                 @NotNull Collection<? extends GitFileRevision> parents) {
     Collection<AnAction> actions = new ArrayList<>(2);
     for (GitFileRevision parent : parents) {
       actions.add(createParentAction(rev, filePath, parent));
@@ -257,13 +251,11 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     return new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
   }
 
-  @NotNull
-  private AnAction createParentAction(@NotNull GitFileRevision rev, @NotNull FilePath filePath, @NotNull GitFileRevision parent) {
+  private @NotNull AnAction createParentAction(@NotNull GitFileRevision rev, @NotNull FilePath filePath, @NotNull GitFileRevision parent) {
     return new ShowDiffWithParentAction(filePath, rev, parent);
   }
 
-  @NotNull
-  private GitFileRevision makeRevisionFromHash(@NotNull FilePath filePath, @NotNull String hash) {
+  private @NotNull GitFileRevision makeRevisionFromHash(@NotNull FilePath filePath, @NotNull String hash) {
     return new GitFileRevision(myProject, filePath, new GitRevisionNumber(hash));
   }
 
@@ -273,10 +265,9 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     final GitLineHandler handler = new GitLineHandler(project, root, GitCommand.SHOW);
     handler.addParameters(rev.getHash());
     GitCommandResult result = Git.getInstance().runCommand(handler);
-    if (result.success()) {
-      return isFilePresentInOutput(root, rev.getPath(), result.getOutput());
-    }
-    throw new VcsException(result.getErrorOutputAsJoinedString());
+    result.throwOnError();
+
+    return isFilePresentInOutput(root, rev.getPath(), result.getOutput());
   }
 
   private static boolean isFilePresentInOutput(@NotNull VirtualFile root, @NotNull FilePath path, @NotNull List<String> output) {
@@ -292,14 +283,11 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     return false;
   }
 
-  @Nullable
-  private static String getRelativePath(@NotNull VirtualFile root, @NotNull FilePath path) {
+  private static @Nullable String getRelativePath(@NotNull VirtualFile root, @NotNull FilePath path) {
     return FileUtil.getRelativePath(root.getPath(), path.getPath(), '/');
   }
 
-  @NotNull
-  @NlsSafe
-  private static String getRevisionDescription(@NotNull GitFileRevision parent) {
+  private static @NotNull @NlsSafe String getRevisionDescription(@NotNull GitFileRevision parent) {
     String hash = DvcsUtil.getShortHash(parent.getHash());
     String message = parent.getCommitMessage();
     if (message != null) {
@@ -313,9 +301,9 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
 
   private class ShowDiffWithParentAction extends DumbAwareAction {
 
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final GitFileRevision myRevision;
-    @NotNull private final GitFileRevision myParentRevision;
+    private final @NotNull FilePath myFilePath;
+    private final @NotNull GitFileRevision myRevision;
+    private final @NotNull GitFileRevision myParentRevision;
 
     ShowDiffWithParentAction(@NotNull FilePath filePath, @NotNull GitFileRevision rev, @NotNull GitFileRevision parent) {
       super(getRevisionDescription(parent), parent.getCommitMessage(), null);

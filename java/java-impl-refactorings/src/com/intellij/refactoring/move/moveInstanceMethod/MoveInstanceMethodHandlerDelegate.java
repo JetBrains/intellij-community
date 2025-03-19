@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -14,9 +14,9 @@ import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPack
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
+public final class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
   @Override
-  public boolean canMove(final PsiElement[] elements, @Nullable final PsiElement targetContainer, @Nullable PsiReference reference) {
+  public boolean canMove(final PsiElement[] elements, final @Nullable PsiElement targetContainer, @Nullable PsiReference reference) {
     if (elements.length != 1) return false;
     PsiElement element = elements [0];
     if (!(element instanceof PsiMethod method)) return false;
@@ -49,9 +49,8 @@ public class MoveInstanceMethodHandlerDelegate extends MoveHandlerDelegate {
     new MoveInstanceMethodHandler().invoke(project, elements, null);
   }
 
-  @Nullable
   @Override
-  public String getActionName(PsiElement @NotNull [] elements) {
+  public @Nullable String getActionName(PsiElement @NotNull [] elements) {
     return JavaRefactoringBundle.message("move.instance.method.delegate.title");
   }
 

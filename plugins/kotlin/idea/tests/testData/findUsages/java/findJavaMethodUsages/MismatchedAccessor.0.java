@@ -11,4 +11,3 @@ public class Bar {
 }
 
 
-// IGNORE_FIR_LOG

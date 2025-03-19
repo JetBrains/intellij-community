@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -81,13 +81,13 @@ public class CompileAction extends CompileActionBase {
     }
     else {
       files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace())) {
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !e.isFromContextMenu()) {
         module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
       }
     }
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
+      presentation.setVisible(!e.isFromContextMenu());
       return;
     }
 
@@ -112,7 +112,7 @@ public class CompileAction extends CompileActionBase {
 
       if (aPackage != null) {
         String name = aPackage.getQualifiedName();
-        if (name.length() == 0) {
+        if (name.isEmpty()) {
           name = "<default>";
         }
         elementDescription = "'" + name + "'";

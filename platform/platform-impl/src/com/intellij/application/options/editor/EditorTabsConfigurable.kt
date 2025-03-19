@@ -46,7 +46,6 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         }.bottomGap(BottomGap.SMALL)
 
         if (ExperimentalUI.isNewUI()) {
-          @Suppress("DialogTitleCapitalization")
           buttonsGroup(message("button.group.title.show.tabs.in")) {
             lateinit var singleRowButton: JBRadioButton
             row {
@@ -82,7 +81,7 @@ internal class EditorTabsConfigurable : BoundCompositeSearchableConfigurable<Sea
         row { checkBox(showDirectoryForNonUniqueFilenames).enableIfTabsVisible() }
         row { checkBox(markModifiedTabsWithAsterisk).enableIfTabsVisible() }
         row { checkBox(showTabsTooltips).enableIfTabsVisible() }
-        row(CLOSE_BUTTON_POSITION + ":") {
+        row("$CLOSE_BUTTON_POSITION:") {
           closeButtonPositionComboBox()
         }.enabledIf((myEditorTabPlacement.selectedValueMatches { it != TABS_NONE }))
           .topGap(TopGap.SMALL)

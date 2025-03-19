@@ -9,11 +9,12 @@
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.maven.MavenFailedToDownloadSuggestedSolutionsContributorImpl"/>
+    <buildSystemDependencyManager implementation="org.jetbrains.kotlin.idea.maven.MavenKotlinBuildSystemDependencyManager"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporter" />
-    <importer implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter" />
+    <importing.workspaceConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenImporterEx"/>
+    <importing.afterImportConfigurator implementation="org.jetbrains.kotlin.idea.maven.KotlinCodeStyleMavenImporter"/>
 
     <archetypesProvider implementation="org.jetbrains.kotlin.idea.maven.KotlinMavenArchetypesProvider" />
 
@@ -81,10 +82,11 @@
                      level="WARNING" key="inspection.deprecated.maven.dependency.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.maven.inspections.MavenCoroutinesDeprecationInspection"
-                     groupPath="Kotlin,Migration"
+                     groupPathKey="group.path.kotlin.migration"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.maven"
                      enabledByDefault="false"
                      language="XML"
+                     cleanupTool="true"
                      hasStaticDescription="true"
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
@@ -93,12 +95,14 @@
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToBuild</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
+      <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToExecutionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
+      <skipBeforeAfter>true</skipBeforeAfter>
     </intentionAction>
     <codeInsight.unresolvedReferenceQuickFixProvider
             implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />

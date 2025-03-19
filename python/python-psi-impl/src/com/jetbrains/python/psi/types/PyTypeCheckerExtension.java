@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -17,14 +18,29 @@ public interface PyTypeCheckerExtension {
 
   ExtensionPointName<PyTypeCheckerExtension> EP_NAME = ExtensionPointName.create("Pythonid.typeCheckerExtension");
 
+  default @NotNull Optional<Boolean> match(@Nullable PyType expected,
+                                           @Nullable PyType actual,
+                                           @NotNull TypeEvalContext context,
+                                           @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
+    Map<PyGenericType, PyType> legacyTypeVarSubs = new HashMap<>();
+    for (Map.Entry<PyTypeVarType, PyType> entry : substitutions.getTypeVars().entrySet()) {
+      if (entry.getKey() instanceof PyGenericType legacyTypeVar) {
+        legacyTypeVarSubs.put(legacyTypeVar, entry.getValue());
+      }
+    }
+    return match(expected, actual, context, legacyTypeVarSubs);
+  }
+
   /**
    * Behaviour the same as {@link PyTypeChecker#match(PyType, PyType, TypeEvalContext, Map)}
    *
-   * @see PyTypeChecker#match(PyType, PyType, TypeEvalContext, Map)
+   * @deprecated use {@link #match(PyType, PyType, TypeEvalContext, PyTypeChecker.GenericSubstitutions)}
    */
-  @NotNull
-  Optional<Boolean> match(@Nullable PyType expected,
-                          @Nullable PyType actual,
-                          @NotNull TypeEvalContext context,
-                          @NotNull Map<PyGenericType, PyType> substitutions);
+  @Deprecated(forRemoval = true)
+  default @NotNull Optional<Boolean> match(@Nullable PyType expected,
+                                  @Nullable PyType actual,
+                                  @NotNull TypeEvalContext context,
+                                  @NotNull Map<PyGenericType, PyType> substitutions) {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -41,7 +41,7 @@ public class BaseLabel extends JLabel {
         repaint();
       }
     });
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
+    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAATextInfoForSwingComponent());
 
     if (ExperimentalUI.isNewUI()) {
       setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.ToolWindow.headerLabelLeftRightInsets()));
@@ -118,7 +118,7 @@ public class BaseLabel extends JLabel {
       myTabColor = null;
     }
     else {
-      setText(content.getDisplayName());
+      setText(showLabelText(content) ? content.getDisplayName() : null);
       setActiveFg(getActiveFg(isSelected));
       setPassiveFg(getPassiveFg(isSelected));
       myTabColor = content.getTabColor();
@@ -136,7 +136,11 @@ public class BaseLabel extends JLabel {
           setIcon(icon);
         }
         else {
-          setIcon(icon != null ? new WatermarkIcon(icon, .5f) : null);
+          var userValueIsTransparent = content.getUserData(ToolWindowContentUi.NOT_SELECTED_TAB_ICON_TRANSPARENT);
+          var isTransparent = userValueIsTransparent != null ? userValueIsTransparent : true;
+
+          var labelIcon = icon != null ? (isTransparent ? new WatermarkIcon(icon, .5f) : icon) : null;
+          setIcon(labelIcon);
         }
       }
       else {
@@ -147,12 +151,15 @@ public class BaseLabel extends JLabel {
     }
   }
 
+  boolean showLabelText(@NotNull Content content) {
+    return true;
+  }
+
   public @Nullable Color getTabColor() {
     return myTabColor;
   }
 
-  @Nullable
-  public Content getContent() {
+  public @Nullable Content getContent() {
     return null;
   }
 

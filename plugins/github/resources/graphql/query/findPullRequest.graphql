@@ -1,7 +1,0 @@
-query($repoOwner: String!, $repoName: String!, $number: Int!) {
-  repository(owner: $repoOwner, name: $repoName) {
-    pullRequest(number: $number) {
-      ...pullRequestInfo
-    }
-  }
-}

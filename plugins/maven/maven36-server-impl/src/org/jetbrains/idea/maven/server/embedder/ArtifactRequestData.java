@@ -5,7 +5,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 
 import java.util.Objects;
 
-class ArtifactRequestData {
+class  ArtifactRequestData {
   private final ArtifactData artifactData;
   private final RepositoryDataList repositories;
 

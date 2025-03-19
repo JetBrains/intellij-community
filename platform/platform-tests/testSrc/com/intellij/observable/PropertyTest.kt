@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.observable
 
-import com.intellij.openapi.observable.properties.transform as deprecatedTransform
 import com.intellij.openapi.observable.util.transform
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -189,38 +188,6 @@ class PropertyTest : PropertyTestCase() {
     assertEquals(numProperties * numCounts, producers.sumOf { it.get() })
     assertEquals(numProperties * numCounts, consumers.sumOf { it.get() })
     assertEquals(numProperties * numCounts, accumulator.get())
-  }
-
-  @Test
-  @Suppress("DEPRECATION")
-  fun `test property deprecated view`() {
-    val property0 = property { 0 }
-    val property1 = property { 1 }.deprecatedTransform({ it * 2 }, { it })
-    val property2 = property { 2 }.deprecatedTransform({ it }, { it / 2 })
-    val property3 = property { 3 }.deprecatedTransform({ it * 3 }, { it / 3 })
-    val property4 = property { 4 to 5 }.deprecatedTransform({ it.first * it.second }, { (it / 5) to (it / 4) })
-
-    val properties = listOf(property0, property1, property2, property3, property4)
-
-    /**
-     * (0) -> (1) -> (2) ⟷ (3) <- (4)
-     */
-    property1.dependsOn(property0) { property0.get() }
-    property2.dependsOn(property1) { property1.get() }
-    property3.dependsOn(property2) { property2.get() }
-    property2.dependsOn(property3) { property3.get() }
-    property3.dependsOn(property4) { property4.get() }
-
-    assertProperties(properties, 0, 2, 2, 9, 20)
-
-    property0.set(3)
-    assertProperties(properties, 3, 6, 3, 3, 20)
-
-    property4.set(100)
-    assertProperties(properties, 3, 6, 249, 498, 500)
-
-    property2.set(100)
-    assertProperties(properties, 3, 6, 50, 48, 500)
   }
 
   @Test

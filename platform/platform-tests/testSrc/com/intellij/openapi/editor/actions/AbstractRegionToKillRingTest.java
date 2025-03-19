@@ -53,9 +53,8 @@ public abstract class AbstractRegionToKillRingTest extends LightPlatformCodeInsi
     
     CharSequence text = getEditor().getDocument().getCharsSequence();
     String selectedText = text.subSequence(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).toString();
-    StringBuilder nonSelectedText = new StringBuilder();
-    nonSelectedText.append(text.subSequence(0, selectionModel.getSelectionStart()))
-      .append(text.subSequence(selectionModel.getSelectionEnd(), text.length()));
-    return new Pair<>(selectedText, nonSelectedText.toString());
+    String nonSelectedText = String.valueOf(text.subSequence(0, selectionModel.getSelectionStart())) +
+                             text.subSequence(selectionModel.getSelectionEnd(), text.length());
+    return new Pair<>(selectedText, nonSelectedText);
   }
 }

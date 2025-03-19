@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.hint.EditorCodePreview;
@@ -10,9 +10,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -78,18 +76,16 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
                                  final IntList parametersToRemove,
                                  final boolean mustBeFinal,
                                  final IntroduceVariableBase.@NotNull JavaReplaceChoice replaceChoice) {
-    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName()
-    );
+    super(project, editor, expr, localVar, occurrences, typeSelectorManager, IntroduceParameterHandler.getRefactoringName());
     myMethod = method;
     myOriginalMethod = (PsiMethod) method.copy();
     myMethodToSearchFor = methodToSearchFor;
     myMustBeFinal = mustBeFinal;
     myReplaceChoice = replaceChoice;
 
-    myEditorState = new EditorState(editor);
+    myEditorState = new EditorState(project, editor);
 
-    myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
-                                              myOccurrences) {
+    myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager, myOccurrences) {
       @Override
       protected PsiParameter getParameter() {
         return InplaceIntroduceParameterPopup.this.getParameter();
@@ -174,8 +170,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
       .getSuggestedNameInfo(defaultType);
   }
 
-  @Nullable
-  private PsiParameter getParameter() {
+  private @Nullable PsiParameter getParameter() {
     if (!myMethod.isValid()) return null;
     final PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     return parameters.length > myParameterIndex && myParameterIndex >= 0 ? parameters[myParameterIndex] : null;
@@ -188,7 +183,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void afterTemplateStart() {
-     super.afterTemplateStart();
+    super.afterTemplateStart();
     TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
     if (templateState == null) return;
 
@@ -208,10 +203,19 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     updatePreview(templateState);
   }
 
-  private void createDelegate(){
+  @Override
+  protected @Nullable String getExpressionText(PsiExpression expr) {
+    if (expr == null && myLocalVariable != null) {
+      PsiExpression initializer = myLocalVariable.getInitializer();
+      return initializer != null ? initializer.getText() : myLocalVariable.getName();
+    }
+    return super.getExpressionText(expr);
+  }
+
+  private void createDelegate() {
     PsiMethod createdDelegate = IntroduceParameterProcessor.createDelegate(myOriginalMethod, myExprText, myPanel.getParametersToRemove());
-    myCreatedDelegate = WriteCommandAction.writeCommandAction(myProject)
-      .compute(() -> (PsiMethod) myMethod.getParent().addBefore(createdDelegate, myMethod));
+      myCreatedDelegate = WriteCommandAction.writeCommandAction(myProject).compute(
+        () -> (PsiMethod) myMethod.getParent().addBefore(createdDelegate, myMethod));
   }
 
   private void removeDelegate(){
@@ -277,7 +281,6 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
     return handler instanceof IntroduceParameterHandler && super.startsOnTheSameElement(handler, element);
   }
 
-
   @Override
   protected void saveSettings(@NotNull PsiVariable psiVariable) {
     myPanel.saveSettings(JavaRefactoringSettings.getInstance());
@@ -299,7 +302,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
 
   @Override
   protected void performCleanup() {
-    ApplicationManager.getApplication().invokeLater(() -> myEditorState.revert());
+    myEditorState.revert();
   }
 
   @Override
@@ -314,42 +317,32 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
       isDeleteLocalVariable = myPanel.isDeleteLocalVariable();
     }
 
-    final IntList parametersToRemove = myPanel.getParametersToRemove();
-
     IntroduceParameterUsagesCollector.settingsOnPerform.log(myProject, IntroduceParameterUsagesCollector.delegate.with(isGenerateDelegate()));
 
+    final IntList parametersToRemove = myPanel.getParametersToRemove();
     final IntroduceParameterProcessor processor =
       new IntroduceParameterProcessor(myProject, myMethod,
                                       myMethodToSearchFor, parameterInitializer, myExpr,
                                       (PsiLocalVariable)getLocalVariable(), isDeleteLocalVariable, getInputName(),
                                       myReplaceChoice,
                                       myPanel.getReplaceFieldsWithGetters(), myMustBeFinal || myPanel.isGenerateFinal(),
-                                      isGenerateDelegate(),
+                                      false /* delegate is already generated when needed */,
                                       false,
                                       getType(),
                                       parametersToRemove);
-    final Runnable runnable = () -> {
-      final Runnable performRefactoring = () -> {
-        processor.setPrepareSuccessfulSwingThreadCallback(() -> {
-        });
-        processor.run();
-        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-        final PsiParameter parameter = getParameter();
-        if (parameter != null) {
-          super.saveSettings(parameter);
-        }
-      };
-      ApplicationManager.getApplication().invokeLater(performRefactoring, myProject.getDisposed());
-    };
-    CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);
+    processor.run();
+    normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+    final PsiParameter parameter = getParameter();
+    if (parameter != null) {
+      super.saveSettings(parameter);
+    }
   }
 
   public boolean isGenerateDelegate() {
     return myPanel.isGenerateDelegate();
   }
 
-  @NotNull
-  public IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
+  public @NotNull IntroduceVariableBase.JavaReplaceChoice getReplaceChoice() {
     return myReplaceChoice;
   }
 
@@ -380,7 +373,7 @@ public final class InplaceIntroduceParameterPopup extends AbstractJavaInplaceInt
   }
 
   @Override
-  public void setReplaceAllOccurrences(boolean replaceAll) { 
+  public void setReplaceAllOccurrences(boolean replaceAll) {
     myReplaceChoice = replaceAll ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO;
   }
 

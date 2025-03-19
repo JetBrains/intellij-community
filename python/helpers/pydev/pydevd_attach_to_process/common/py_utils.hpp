@@ -30,8 +30,15 @@ typedef PyObject * (_PyObject_FastCallDict)(
     PyObject *callable, PyObject *const *args, Py_ssize_t nargs, PyObject *kwargs);
 typedef int (PyTraceBack_Here)(PyFrameObject *frame);
 
+typedef PyObject* PyTuple_New(Py_ssize_t len);
+typedef PyObject* PyEval_CallObjectWithKeywords(PyObject *callable, PyObject *args, PyObject *kwargs);
+
 typedef void (PyEval_SetTrace)(Py_tracefunc, PyObject *);
 typedef int (*Py_tracefunc)(PyObject *, PyFrameObject *frame, int, PyObject *);
+typedef int (_PyEval_SetTrace)(PyThreadState *tstate, Py_tracefunc func, PyObject *arg);
+
+typedef PyObject* PyObject_Repr(PyObject *);
+typedef const char* PyUnicode_AsUTF8(PyObject *unicode);
 
 // holder to ensure we release the GIL even in error conditions
 class GilHolder {
@@ -67,7 +74,7 @@ public:
 
 #define DEFINE_PROC_NO_CHECK(func, funcType, funcNameStr, errorCode) \
                     funcType func; *(void**)(&func) = dlsym(module, funcNameStr);
-                    
+
 #define DEFINE_PROC(func, funcType, funcNameStr, errorCode) \
                     DEFINE_PROC_NO_CHECK(func, funcType, funcNameStr, errorCode); \
                     if(func == nullptr){printf(funcNameStr); printf(" not found.\n"); return errorCode;};

@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.function.Supplier;
 
 /**
- * Deprecated. Please use {@link java.util.function.Supplier} instead
+ * Obsolete, use {@link java.util.function.Supplier} instead.
  */
+@ApiStatus.Obsolete
 @FunctionalInterface
 public interface Factory<T> extends Supplier<T> {
   T create();

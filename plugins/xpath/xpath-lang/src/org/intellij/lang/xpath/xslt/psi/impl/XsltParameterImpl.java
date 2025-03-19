@@ -58,8 +58,7 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
     }
 
     @Override
-    @Nullable
-    public XsltTemplate getTemplate() {
+    public @Nullable XsltTemplate getTemplate() {
         return XsltCodeInsightUtil.getTemplate(getTag(), false);
     }
 
@@ -68,9 +67,8 @@ public class XsltParameterImpl extends XsltVariableImpl implements XsltParameter
         return "XsltParam: " + getName();
     }
 
-    @NotNull
     @Override
-    public SearchScope getLocalUseScope() {
+    public @NotNull SearchScope getLocalUseScope() {
         final XmlTag tag = getTag();
         if (!tag.isValid()) {
             return getDefaultUseScope();

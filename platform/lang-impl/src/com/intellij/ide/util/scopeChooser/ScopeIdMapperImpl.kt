@@ -5,9 +5,11 @@ import com.intellij.ide.scratch.ScratchesNamedScope
 
 import com.intellij.openapi.fileEditor.impl.OpenFilesScope
 import com.intellij.psi.search.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 class ScopeIdMapperImpl : ScopeIdMapper() {
   @Suppress("HardCodedStringLiteral")
   override fun getPresentableScopeName(scopeId: String): String =

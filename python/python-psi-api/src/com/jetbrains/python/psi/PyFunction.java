@@ -1,84 +1,71 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiNameIdentifierOwner;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.util.ArrayFactory;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+
 /**
  * Function declaration in source (the {@code def} and everything within).
  */
-public interface PyFunction extends StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
+public interface PyFunction extends PyAstFunction, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyCompoundStatement,
                                     PyDecoratable, PyCallable, PyStatementListContainer, PyPossibleClassMember,
-                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner {
+                                    ScopeOwner, PyDocStringOwner, PyTypeCommentOwner, PyAnnotationOwner, PyTypeParameterListOwner,
+                                    PyDeprecatable {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PyFunction[count];
 
   /**
-   * Returns the AST node for the function name identifier.
+   * Infers function's return type by analyzing <b>only return statements</b> (including implicit returns) in its control flow.
+   * Does not consider yield statements or return type annotations.
    *
-   * @return the node, or null if the function is incomplete (only the "def"
-   *         keyword was typed)
+   * @see PyFunction#getInferredReturnType(TypeEvalContext)
    */
-  @Nullable
-  ASTNode getNameNode();
-
   @Nullable
   PyType getReturnStatementType(@NotNull TypeEvalContext context);
 
   /**
-   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
-   *
-   * @return the deprecation message or null if the function is not deprecated.
+   * Infers function's return type by analyzing <b>return statements</b> (including implicit returns) and <b>yield expression</b>.
+   * In contrast with {@link TypeEvalContext#getReturnType(PyCallable)} does not consider 
+   * return type annotations or any other {@link PyTypeProvider}.
+   * 
+   * @apiNote Does not cache the result.
    */
+  @ApiStatus.Internal
   @Nullable
-  String getDeprecationMessage();
+  PyType getInferredReturnType(@NotNull TypeEvalContext context);
 
   /**
-   * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
+   * Returns a list of all function exit points that can return a value.
+   * This includes explicit 'return' statements and statements that can complete
+   * normally with an implicit 'return None', excluding statements that raise exceptions.
    *
-   * @return a flag describing what was detected.
+   * @see PyFunction#getReturnStatementType(TypeEvalContext) 
+   * @return List of exit point statements, in control flow order
    */
-  @Nullable
-  Modifier getModifier();
+  @ApiStatus.Internal
+  @NotNull
+  List<PyStatement> getReturnPoints(@NotNull TypeEvalContext context);
 
   /**
    * Checks whether the function contains a yield expression in its body.
    */
   boolean isGenerator();
-
-  boolean isAsync();
-
-  boolean isAsyncAllowed();
-
-  default boolean onlyRaisesNotImplementedError() {
-    return false;
-  }
-
-  /**
-   * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().
-   */
-  enum Modifier {
-    /**
-     * Function is decorated with @classmethod, its first param is the class.
-     */
-    CLASSMETHOD,
-    /**
-     * Function is decorated with {@code @staticmethod}, its first param is as in a regular function.
-     */
-    STATICMETHOD,
-  }
 
   /**
    * Returns a property for which this function is a getter, setter or deleter.
@@ -96,36 +83,40 @@ public interface PyFunction extends StubBasedPsiElement<PyFunctionStub>, PsiName
   @NotNull
   List<PyAssignmentStatement> findAttributes();
 
-  /**
-   * @return function protection level (underscore based)
-   */
-  @NotNull
-  ProtectionLevel getProtectionLevel();
+  @Override
+  default @NotNull PyStatementList getStatementList() {
+    return (PyStatementList)PyAstFunction.super.getStatementList();
+  }
 
-  enum ProtectionLevel {
-    /**
-     * public members
-     */
-    PUBLIC(0),
-    /**
-     * _protected_memebers
-     */
-    PROTECTED(1),
-    /**
-     * __private_memebrs
-     */
-    PRIVATE(2);
-    private final int myUnderscoreLevel;
+  @Override
+  default @Nullable PyFunction asMethod() {
+    return (PyFunction)PyAstFunction.super.asMethod();
+  }
 
-    ProtectionLevel(final int underscoreLevel) {
-      myUnderscoreLevel = underscoreLevel;
+  @Override
+  default @Nullable PyStringLiteralExpression getDocStringExpression() {
+    return (PyStringLiteralExpression)PyAstFunction.super.getDocStringExpression();
+  }
+
+  static @Nullable String extractDeprecationMessage(List<? extends PyAstStatement> statements) {
+    for (PyAstStatement statement : statements) {
+      if (statement instanceof PyAstExpressionStatement expressionStatement) {
+        if (expressionStatement.getExpression() instanceof PyAstCallExpression callExpression) {
+          if (callExpression.isCalleeText(PyNames.WARN)) {
+            PyAstReferenceExpression warningClass = callExpression.getArgument(1, PyAstReferenceExpression.class);
+            if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
+                                         PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
+              return PyPsiUtilsCore.strValue(callExpression.getArguments()[0]);
+            }
+          }
+        }
+      }
     }
+    return null;
+  }
 
-    /**
-     * @return number of underscores
-     */
-    public int getUnderscoreLevel() {
-      return myUnderscoreLevel;
-    }
+  @Override
+  default @Nullable PyClass getContainingClass() {
+    return (PyClass)PyAstFunction.super.getContainingClass();
   }
 }

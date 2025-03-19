@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -131,8 +131,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InheritanceToDelegationViewDescriptor(myClass);
   }
 
@@ -592,15 +591,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     }
 
     if (myGenerateGetter) {
-      final String getterVisibility = PsiModifier.PUBLIC;
-      StringBuilder getterBuffer = new StringBuilder();
-      getterBuffer.append(getterVisibility);
-      getterBuffer.append(" Object ");
-      getterBuffer.append(myGetterName);
-      getterBuffer.append("() {\n return ");
-      getterBuffer.append(myFieldName);
-      getterBuffer.append(";\n}");
-      PsiMethod getter = myFactory.createMethodFromText(getterBuffer.toString(), myClass);
+      String getterText = PsiModifier.PUBLIC + " Object " + myGetterName + "() {\n" +
+                          " return " + myFieldName + ";\n" +
+                          "}";
+      PsiMethod getter = myFactory.createMethodFromText(getterText, myClass);
       getter.getReturnTypeElement().replace(myFactory.createTypeElement(myBaseClassType));
       getter = (PsiMethod) CodeStyleManager.getInstance(myProject).reformat(getter);
       myClass.add(getter);
@@ -868,8 +862,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
-  @Nullable
-  private PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
+  private @Nullable PsiMethod findSuperMethodInBaseClass (PsiMethod method) {
     final PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       PsiClass containingClass = superMethod.getContainingClass();
@@ -885,8 +878,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
 
   @Override
-  @NotNull
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 

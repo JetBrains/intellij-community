@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,7 +20,7 @@ import java.util.Set;
 public final class InheritanceImplUtil {
   private static final Logger LOG = Logger.getInstance(InheritanceImplUtil.class);
 
-  public static boolean isInheritor(@NotNull final PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
+  public static boolean isInheritor(final @NotNull PsiClass candidateClass, @NotNull PsiClass baseClass, final boolean checkDeep) {
     if (baseClass instanceof PsiAnonymousClass || baseClass.getManager().areElementsEquivalent(baseClass, candidateClass)) return false;
     if (!checkDeep) {
       return isInheritor(candidateClass.getManager(), candidateClass, baseClass, false, null);
@@ -105,8 +105,8 @@ public final class InheritanceImplUtil {
     return isInheritorWithoutCaching(manager, candidateClass, baseClass, checkedClasses);
   }
 
-  private static boolean checkReferenceListWithQualifiedNamesInClsClass(@NotNull final String baseQName,
-                                                                        @Nullable final PsiReferenceList extList,
+  private static boolean checkReferenceListWithQualifiedNamesInClsClass(final @NotNull String baseQName,
+                                                                        final @Nullable PsiReferenceList extList,
                                                                         @NotNull JavaPsiFacade facade) {
     if (extList != null) {
       // in Cls class it's fast
@@ -171,7 +171,7 @@ public final class InheritanceImplUtil {
 
   public static boolean isInheritorDeep(@NotNull PsiClass candidateClass,
                                         @NotNull PsiClass baseClass,
-                                        @Nullable final PsiClass classToByPass) {
+                                        final @Nullable PsiClass classToByPass) {
     if (baseClass instanceof PsiAnonymousClass) {
       return false;
     }

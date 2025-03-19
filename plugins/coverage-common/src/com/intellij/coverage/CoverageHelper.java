@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class CoverageHelper {
@@ -34,15 +35,17 @@ public final class CoverageHelper {
     // register new coverage suite
     Project project = configuration.getProject();
     ApplicationManager.getApplication().invokeAndWait(() -> covConfig.setCurrentCoverageSuite(CoverageDataManager.getInstance(project).addCoverageSuite(covConfig)), 
-                                                      ModalityState.NON_MODAL);
+                                                      ModalityState.nonModal());
   }
 
+  @ApiStatus.Internal
   public static void doReadExternal(RunConfigurationBase runConfiguration, Element element) throws InvalidDataException {
     final CoverageEnabledConfiguration covConf = CoverageEnabledConfiguration.getOrCreate(runConfiguration);
 
     covConf.readExternal(element);
   }
 
+  @ApiStatus.Internal
   public static void doWriteExternal(RunConfigurationBase runConfiguration, Element element) {
     CoverageEnabledConfiguration.getOrCreate(runConfiguration).writeExternal(element);
   }

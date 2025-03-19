@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/navigation/gotoTestOrCode")
 public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeActionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -38,14 +45,29 @@ public class GotoTestOrCodeActionTestGenerated extends AbstractGotoTestOrCodeAct
         runTest("testData/navigation/gotoTestOrCode/fromJavaTestToKotlinFile.main.java");
     }
 
+    @TestMetadata("fromKotlinClassToCommonTest.main.kt")
+    public void testFromKotlinClassToCommonTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToCommonTest.main.kt");
+    }
+
     @TestMetadata("fromKotlinClassToTest.main.kt")
     public void testFromKotlinClassToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinClassToTest.main.kt");
     }
 
+    @TestMetadata("fromKotlinFileToJavaFacade.main.kt")
+    public void testFromKotlinFileToJavaFacade() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToJavaFacade.main.kt");
+    }
+
     @TestMetadata("fromKotlinFileToTest.main.kt")
     public void testFromKotlinFileToTest() throws Exception {
         runTest("testData/navigation/gotoTestOrCode/fromKotlinFileToTest.main.kt");
+    }
+
+    @TestMetadata("fromKotlinJvmFileToJavaFacadeTest.main.kt")
+    public void testFromKotlinJvmFileToJavaFacadeTest() throws Exception {
+        runTest("testData/navigation/gotoTestOrCode/fromKotlinJvmFileToJavaFacadeTest.main.kt");
     }
 
     @TestMetadata("fromKotlinTestToJavaClass.main.kt")

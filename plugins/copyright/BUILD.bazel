@@ -1,0 +1,65 @@
+### auto-generated section `build intellij.copyright` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "copyright_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "copyright",
+  module_name = "intellij.copyright",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//xml/openapi:xml",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:velocity",
+    "//xml/impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/external-system-api:externalSystem",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":copyright_resources"]
+)
+
+jvm_library(
+  name = "copyright_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":copyright"],
+  deps = [
+    "//xml/openapi:xml",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "@lib//:velocity",
+    "//xml/impl",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/testFramework/extensions:testExtensions",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/configuration-store-impl:configurationStore-impl",
+    "//platform/external-system-api:externalSystem",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:junit5",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":copyright_resources"]
+)
+
+jvm_test(
+  name = "copyright_test",
+  runtime_deps = [":copyright_test_lib"]
+)
+### auto-generated section `build intellij.copyright` end

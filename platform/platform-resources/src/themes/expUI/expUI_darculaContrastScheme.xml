@@ -5,6 +5,8 @@
     <property name="ideVersion">2022.1.0.0</property>
     <property name="modified">2021-10-28T20:09:48</property>
     <property name="originalScheme">_@user_Darcula</property>
+    <property name="lcNameBundle">messages.EditorBundle</property>
+    <property name="lcNameKey">intellij.darcula.contrast.scheme.name</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="549159" />

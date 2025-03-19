@@ -1,0 +1,12 @@
+load("@rules_java//java:defs.bzl", "java_import")
+
+java_import(
+    name = "kotlin-compiler",
+    jars = ["kotlin-compiler.jar"],
+    srcjar = "@kotlin-compiler-sources//file",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlinx-coroutines-core"
+    ],
+)

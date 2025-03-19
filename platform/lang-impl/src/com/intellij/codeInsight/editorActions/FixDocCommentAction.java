@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -38,9 +38,9 @@ import org.jetbrains.annotations.Nullable;
  * Updates existing documentation comment if necessary if the one exists. E.g. we've changed method signature and want to remove all
  * outdated parameters and create stubs for the new ones.
  */
-public class FixDocCommentAction extends EditorAction {
+public final class FixDocCommentAction extends EditorAction {
 
-  @NotNull @NonNls public static final String ACTION_ID = "FixDocComment";
+  public static final @NotNull @NonNls String ACTION_ID = "FixDocComment";
 
   public FixDocCommentAction() {
     super(new MyHandler());
@@ -64,7 +64,7 @@ public class FixDocCommentAction extends EditorAction {
     }
   }
 
-  private static void process(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Project project, int offset) {
+  private static void process(final @NotNull PsiFile file, final @NotNull Editor editor, final @NotNull Project project, int offset) {
     PsiElement elementAtOffset = file.findElementAt(offset);
     if (elementAtOffset == null || !FileModificationService.getInstance().preparePsiElementForWrite(elementAtOffset)) {
       return;
@@ -79,7 +79,7 @@ public class FixDocCommentAction extends EditorAction {
    * @param project     current project
    * @param editor      target editor
    */
-  public static void generateOrFixComment(@NotNull final PsiElement element, @NotNull final Project project, @NotNull final Editor editor) {
+  public static void generateOrFixComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull Editor editor) {
     Language language = element.getLanguage();
     final CodeDocumentationProvider docProvider;
     final DocumentationProvider langDocumentationProvider = LanguageDocumentation.INSTANCE.forLanguage(language);
@@ -229,7 +229,7 @@ public class FixDocCommentAction extends EditorAction {
   }
 
   private static void reformatCommentKeepingEmptyTags(@NotNull PsiFile file, @NotNull Project project, int start, int end) {
-    CodeStyle.doWithTemporarySettings(
+    CodeStyle.runWithLocalSettings(
       project,
       CodeStyle.getSettings(file),
       tempSettings -> {

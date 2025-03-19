@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.xpathView.search;
 
 import com.intellij.openapi.module.Module;
@@ -75,8 +75,7 @@ public final class SearchScope {
     myCustomScope = customScope;
   }
 
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return switch (getScopeType()) {
       case PROJECT -> "Project";
       case MODULE -> "Module '" + getModuleName() + "'";
@@ -85,9 +84,8 @@ public final class SearchScope {
     };
   }
 
-  @NotNull
   @Attribute("type")
-  public ScopeType getScopeType() {
+  public @NotNull ScopeType getScopeType() {
     return myScopeType;
   }
 
@@ -106,9 +104,8 @@ public final class SearchScope {
     myModuleName = moduleName;
   }
 
-  @Nullable
   @Attribute("scope-name")
-  public String getScopeName() {
+  public @Nullable String getScopeName() {
     return myScopeName;
   }
 
@@ -117,9 +114,8 @@ public final class SearchScope {
     myScopeName = scopeName;
   }
 
-  @Nullable
   @Tag
-  public String getPath() {
+  public @Nullable String getPath() {
     return myPath;
   }
 
@@ -149,7 +145,7 @@ public final class SearchScope {
     };
   }
 
-  void iterateContent(@NotNull final Project project, @NotNull Processor<? super VirtualFile> processor) {
+  void iterateContent(final @NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
       case PROJECT ->
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
@@ -226,8 +222,7 @@ public final class SearchScope {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile findFile(String dirName) {
+  private static @Nullable VirtualFile findFile(String dirName) {
     return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
   }
 

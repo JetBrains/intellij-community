@@ -1,0 +1,216 @@
+_collections_abc.AsyncIterable.__class_getitem__
+_collections_abc.Awaitable.__class_getitem__
+_collections_abc.Container.__class_getitem__
+_collections_abc.Iterable.__class_getitem__
+_collections_abc.MappingView.__class_getitem__
+_csv.Reader
+_csv.Writer
+bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
+configparser.LegacyInterpolation.__init__
+configparser.ParsingError.filename
+collections\.UserList\.index  # ignoring pos-or-keyword parameter
+enum.Enum.__init__
+enum.Enum._generate_next_value_
+# Not strictly speaking a staticmethod on 3.11, but it acts like one:
+enum.StrEnum._generate_next_value_
+importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+importlib.abc.Finder.find_module
+lib2to3.pygram.pattern_symbols
+lib2to3.pygram.python_symbols
+lib2to3.pytree.Base.__new__
+lib2to3.pytree.Base.children
+lib2to3.pytree.Base.type
+lib2to3.pytree.BasePattern.__new__
+lib2to3.pytree.BasePattern.type
+lib2to3.pytree.NegatedPattern.match
+lib2to3.pytree.NegatedPattern.match_seq
+lib2to3.btm_utils
+lib2to3.fixer_util
+lib2to3.patcomp
+lib2to3.pgen2.grammar.Grammar.loads
+tkinter._VersionInfoType.__doc__
+tkinter.tix.[A-Z_]+
+tkinter.tix.TclVersion
+tkinter.tix.TkVersion
+tkinter.tix.CObjView
+tkinter.tix.DialogShell
+tkinter.tix.ExFileSelectDialog
+tkinter.tix.FileSelectDialog
+tkinter.tix.FileTypeList
+tkinter.tix.Grid
+tkinter.tix.NoteBookFrame
+tkinter.tix.OptionName
+tkinter.tix.ResizeHandle
+tkinter.tix.ScrolledGrid
+tkinter.tix.ScrolledHList
+tkinter.tix.ScrolledListBox
+tkinter.tix.ScrolledTList
+tkinter.tix.ScrolledText
+tkinter.tix.ScrolledWindow
+tkinter.tix.Shell
+typing.NewType.__mro_entries__
+builtins.ellipsis  # type is not exposed anywhere
+
+xml.etree.ElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
+xml.etree.cElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
+
+# Runtime definition of protocol is incorrect
+importlib.metadata._meta.SimplePath.__truediv__
+importlib.metadata._meta.SimplePath.joinpath
+
+# Modules that exist at runtime, but shouldn't be added to typeshed
+ctypes.test
+ctypes\.test\..+
+lib2to3.tests
+lib2to3\.tests\..+
+tkinter.test
+tkinter\.test\..+
+unittest.test
+unittest\.test\..+
+
+# ==========
+# Related to positional-only arguments
+# ==========
+
+# These are not positional-only at runtime, but we treat them
+# as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# typing.SupportsRound.__round__  # pos-or-kw at runtime, but we pretend it's pos-only in the stub so that e.g. float.__round__ satisfies the interface
+types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
+
+# ==========
+# Allowlist entries that cannot or should not be fixed
+# ==========
+
+# Factory function at runtime
+# but that wouldn't let us use it in type hints
+threading.Lock
+multiprocessing.dummy.Lock
+
+# more precise signature in the stubs than at runtime
+multiprocessing.managers.DictProxy.clear
+multiprocessing.managers.DictProxy.popitem
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.pattern.__init__
+
+_ast.ImportFrom.level  # None on the class, but never None on instances
+_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+_weakref.ProxyType.__reversed__  # Doesn't really exist
+ast.ImportFrom.level  # None on the class, but never None on instances
+argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
+builtins.property.__set_name__  # Doesn't actually exist
+dataclasses.KW_ONLY  # white lies around defaults
+enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
+enum.auto.value  # The stub for enum.auto is nothing like the implementation
+functools._lru_cache_wrapper.cache_parameters  # Cannot be detected statically
+http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
+inspect._ParameterKind.description  # Still exists, but stubtest can't see it
+os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
+poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
+types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
+types.SimpleNamespace.__init__ # class doesn't accept positional arguments but has default C signature
+types.GenericAlias.__getattr__
+types.GenericAlias.__mro_entries__
+weakref.ProxyType.__reversed__  # Doesn't really exist
+
+# C signature is broader than what is actually accepted
+ast.ExtSlice.__new__
+ast.Index.__new__
+contextvars.Context.__init__
+
+# Undocumented implementation details
+cgi.FieldStorage.bufsize
+cgi.FieldStorage.read_binary
+cgi.FieldStorage.read_lines
+cgi.FieldStorage.read_lines_to_eof
+cgi.FieldStorage.read_lines_to_outerboundary
+cgi.FieldStorage.read_multi
+cgi.FieldStorage.read_single
+cgi.FieldStorage.read_urlencoded
+cgi.FieldStorage.skip_lines
+pipes.Template.makepipeline
+pipes.Template.open_r
+pipes.Template.open_w
+sunau.Au_read.initfp
+sunau.Au_write.initfp
+typing_extensions\.Annotated
+
+# Treated an alias of a typing class in the stubs,
+# they are generic to type checkers anyway.
+contextlib.AbstractAsyncContextManager.__class_getitem__
+contextlib.AbstractContextManager.__class_getitem__
+
+# platform.uname_result's processor field is now dynamically made to exist
+platform.uname_result.__match_args__
+platform.uname_result.__new__
+platform.uname_result.processor
+
+# Runtime has *args, **kwargs, but will error if any are supplied
+unittest.TestCase.__init_subclass__
+unittest.case.TestCase.__init_subclass__
+
+# Problematic protocol signature at runtime, see source code comments.
+importlib.abc.Traversable.open
+importlib.resources.abc.Traversable.open
+
+# Deprecation wrapper classes; their methods are just pass-through, so we can ignore them.
+importlib.metadata.DeprecatedList.reverse
+importlib.metadata.DeprecatedList.sort
+
+# Super-special typing primitives
+typing\._SpecialForm.*
+typing\.NamedTuple
+typing\.LiteralString
+typing\.Annotated
+
+# We pretend it's a read-only property for forward compatibility with 3.12
+typing.ParamSpec(Args|Kwargs).__origin__
+typing\.TypeVar\.__.*__
+typing\.ParamSpec\.__.*__
+
+# Exist at runtime for internal reasons, no need to put them in the stub
+typing_extensions\.TypeAliasType\.__call__
+typing_extensions\.TypeAliasType\.__init_subclass__
+# We call them read-only properties, runtime implementation is slightly different
+typing_extensions\.TypeAliasType\.__(parameters|type_params|name|module|value)__
+
+# We lie about the existence of these methods
+.*.__buffer__
+.*.__release_buffer__
+
+# Removed in 3.12
+distutils\..*
+asyncore.dispatcher.addr
+asyncore.dispatcher.handle_accepted
+asynchat.async_chat.encoding
+asynchat.async_chat.use_encoding
+asynchat.find_prefix_at_end
+pkgutil.ImpImporter\..*
+pkgutil.ImpLoader\..*

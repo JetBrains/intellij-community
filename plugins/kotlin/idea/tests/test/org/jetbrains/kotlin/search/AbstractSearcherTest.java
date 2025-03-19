@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.search;
 
@@ -10,7 +10,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.Query;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixtureTestCase {
     @Override
-    public void setUp() {
+    protected void setUp() {
         super.setUp();
         TestUtilsKt.invalidateLibraryCache(getProject());
     }
@@ -48,7 +48,7 @@ public abstract class AbstractSearcherTest extends KotlinLightCodeInsightFixture
         List<String> classFqnFilters = InTextDirectivesUtils.findListWithPrefixes(text, "// IGNORE_CLASSES: ");
 
         List<String> actualModified = new ArrayList<>();
-        for (Object member : actual) {
+        for (Object member : actual.asIterable()) {
             if (member instanceof PsiClass) {
                 String qualifiedName = ((PsiClass) member).getQualifiedName();
                 if (qualifiedName == null) {

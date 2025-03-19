@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -15,13 +15,22 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
 public class EnvReader extends EnvironmentUtil.ShellEnvReader {
+
+  private static final String READ_ENV_CLASS_NAME = ReadEnv.class.getCanonicalName();
+
+  private static @Nullable String readEnvClasspath() {
+    return PathManager.getJarPathForClass(ReadEnv.class);
+  }
+
+  private static @NotNull String javaExePath() {
+    return (System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar);
+  }
+
   public EnvReader() {
   }
 
@@ -82,13 +91,12 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
       callArgs.add("&&");
     }
 
-    callArgs.add((System.getProperty("java.home") + "/bin/java").replace('/', File.separatorChar)); // NON-NLS
+    callArgs.add(javaExePath()); // NON-NLS
     callArgs.add("-cp"); // NON-NLS
     callArgs.add(PathManager.getJarPathForClass(ReadEnv.class));
     callArgs.add(ReadEnv.class.getCanonicalName());
-
-    callArgs.add(">");
     callArgs.add(envDataFile.toString());
+
     callArgs.add("||");
     callArgs.add("exit"); // NON-NLS
     callArgs.add("/B"); // NON-NLS
@@ -103,8 +111,43 @@ public class EnvReader extends EnvironmentUtil.ShellEnvReader {
     return new Pair<>(entry.getKey(), entry.getValue());
   }
 
-  @NotNull
-  private static String prepareCallArgs(@NotNull List<String> callArgs) {
+  @SuppressWarnings("SpellCheckingInspection")
+  public @NotNull Pair<String, Map<String, String>> readPs1OutputAndEnv(
+    @Nullable Path ps1Path,
+    @Nullable List<@NotNull String> args,
+    @NotNull Consumer<? super @NotNull Map<String, String>> scriptEnvironmentProcessor
+  ) throws IOException {
+    if (ps1Path != null && !Files.exists(ps1Path)) {
+      throw new NoSuchFileException(ps1Path.toString());
+    }
+    var envDataFile = Files.createTempFile("intellij-cmd-env-data.", ".tmp");
+    final String innerScriptlet;
+
+    if (ps1Path == null) {
+      innerScriptlet = "";
+    }
+    else {
+      var argsStr = args == null ? "" : String.join(" ", args);
+      innerScriptlet = String.format(Locale.ROOT, "& '%s' %s ; if (-not $?) { exit $LASTEXITCODE }; ", ps1Path, argsStr);
+    }
+
+    final var scriptlet = String.format(Locale.ROOT, "& { %s & '%s' -cp '%s' %s '%s' ; exit $LASTEXITCODE }",
+                                        innerScriptlet, javaExePath(), readEnvClasspath(), READ_ENV_CLASS_NAME, envDataFile.toString());
+    // Powershell 7+ with a falback
+    String shellName = PathEnvironmentVariableUtil.findExecutableInWindowsPath("pwsh", "powershell.exe");
+    var command = List.of(shellName, "-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", scriptlet);
+    Path workingDir = ps1Path != null ? ps1Path.getParent() : null;
+    var output =
+      runProcessAndReadOutputAndEnvs(command, workingDir, scriptEnvironmentProcessor, envDataFile);
+    return new Pair<>(output.getKey(), output.getValue());
+
+  }
+
+  @NotNull Map<String, String> readPs1Env(Path ps1Path, List<String> args) throws IOException {
+    return readPs1OutputAndEnv(ps1Path, args, (it) -> {}).second;
+  }
+
+  private static @NotNull String prepareCallArgs(@NotNull List<String> callArgs) {
     List<String> preparedCallArgs = CommandLineUtil.toCommandLine(callArgs);
     String firstArg = preparedCallArgs.remove(0);
     preparedCallArgs.add(0, CommandLineUtil.escapeParameterOnWindows(firstArg, false));

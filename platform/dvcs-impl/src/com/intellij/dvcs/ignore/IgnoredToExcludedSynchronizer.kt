@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ignore
 
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.projectView.actions.MarkExcludeRootAction
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runModalTask
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
@@ -39,29 +40,35 @@ import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.Alarm
+import com.intellij.util.application
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
 
-private val excludeAction = object : MarkExcludeRootAction() {
-  fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
+private fun exclude(module: Module, dirs: Collection<VirtualFile>) {
+  runInEdt {
+    MarkRootsManager.modifyRoots(module, dirs.toTypedArray()) { vFile, entry ->
+      entry.addExcludeFolder(vFile)
+    }
+  }
 }
 
 /**
- * Shows [EditorNotifications] in .ignore files with suggestion to exclude ignored directories.
+ * Shows [EditorNotifications] in .ignore files with a suggestion to exclude ignored directories.
  * Silently excludes them if [VcsConfiguration.MARK_IGNORED_AS_EXCLUDED] is enabled.
  *
  * Not internal service. Can be used directly in related modules.
@@ -72,7 +79,7 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   init {
     cs.launch {
-      WorkspaceModel.getInstance(project).changesEventFlow.collect { event ->
+      WorkspaceModel.getInstance(project).eventLog.collect { event ->
         // listen content roots, source roots, excluded roots
         if (event.getChanges(ContentRootEntity::class.java).isNotEmpty() ||
             event.getChanges(SourceRootEntity::class.java).isNotEmpty()) {
@@ -133,7 +140,14 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
-  fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
+  fun onIgnoredFilesUpdate(ignoredFilePaths: Set<FilePath>, previouslyIgnoredFilePaths: Set<FilePath>) {
+    val addedIgnored = ignoredFilePaths.filter { it !in previouslyIgnoredFilePaths }
+    if (!addedIgnored.isEmpty()) {
+      ignoredUpdateFinished(addedIgnored)
+    }
+  }
+
+  private fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
     if (synchronizationTurnOff()) return
     if (mutedForCurrentProject()) return
@@ -162,7 +176,7 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 }
 
 private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFile>) {
-  val ignoredDirsByModule = runReadAction {  
+  val ignoredDirsByModule = runReadAction {
     files
       .groupBy { ModuleUtil.findModuleForFile(it, project) }
       //if the directory already excluded then ModuleUtil.findModuleForFile return null and this will filter out such directories from processing.
@@ -170,7 +184,7 @@ private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFil
   }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
-    excludeAction.exclude(module!!, ignoredDirs)
+    exclude(module!!, ignoredDirs)
   }
 }
 
@@ -209,7 +223,8 @@ private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
 
-class IgnoredToExcludeNotificationProvider : EditorNotificationProvider {
+@ApiStatus.Internal
+class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAware {
   private fun canCreateNotification(project: Project, file: VirtualFile): Boolean {
     return file.fileType is IgnoreFileType &&
            with(project.service<IgnoredToExcludedSynchronizer>()) {
@@ -235,7 +250,7 @@ class IgnoredToExcludeNotificationProvider : EditorNotificationProvider {
 
   private fun muteAction(project: Project) = Runnable {
     project.service<IgnoredToExcludedSynchronizer>().muteForCurrentProject()
-    EditorNotifications.getInstance(project).updateNotifications(this@IgnoredToExcludeNotificationProvider)
+    EditorNotifications.getInstance(project).removeNotificationsForProvider(this@IgnoredToExcludeNotificationProvider)
   }
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
@@ -276,9 +291,11 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
           .notifyMinorInfo(IGNORED_TO_EXCLUDE_NOT_FOUND, "", message("ignore.to.exclude.no.directories.found"))
       }
       else {
-        val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
-        if (userSelectedFiles.isNotEmpty()) {
-          markIgnoredAsExcluded(project, userSelectedFiles)
+        application.invokeAndWait {
+          val userSelectedFiles = selectFilesToExclude(project, dirsToExclude)
+          if (userSelectedFiles.isNotEmpty()) {
+            markIgnoredAsExcluded(project, userSelectedFiles)
+          }
         }
       }
     }
@@ -288,7 +305,7 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
 // do not use SelectFilesDialog.init because it doesn't provide clear statistic: what exactly dialog shown/closed, action clicked
 private class IgnoredToExcludeSelectDirectoriesDialog(
   project: Project?,
-  files: List<VirtualFile>
+  files: List<VirtualFile>,
 ) : SelectFilesDialog(project, files, message("ignore.to.exclude.notification.notice"), null, true, true) {
   init {
     title = message("ignore.to.exclude.view.dialog.title")

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityStateListener;
@@ -12,8 +11,10 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.util.Alarm;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,8 +28,15 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
   public MavenMergingUpdateQueue(String name,
                                  int mergingTimeSpan,
                                  boolean isActive,
-                                 Disposable parent) {
-    this(name, mergingTimeSpan, isActive, ANY_COMPONENT, parent);
+                                 @NotNull CoroutineScope coroutineScope) {
+    super(name, mergingTimeSpan, isActive, ANY_COMPONENT, null, null, Alarm.ThreadToUse.POOLED_THREAD, coroutineScope);
+  }
+
+  public MavenMergingUpdateQueue(String name,
+                                 int mergingTimeSpan,
+                                 boolean isActive,
+                                 @NotNull Disposable disposable) {
+    super(name, mergingTimeSpan, isActive, ANY_COMPONENT, disposable, null, Alarm.ThreadToUse.POOLED_THREAD, null);
   }
 
   public MavenMergingUpdateQueue(String name,
@@ -44,9 +52,6 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
     boolean passThrough = false;
     if (MavenUtil.isMavenUnitTestModeEnabled()) {
       passThrough = isPassThrough();
-    }
-    else if (MavenUtil.isNoBackgroundMode()) {
-      passThrough = true;
     }
 
     if (passThrough) {
@@ -73,7 +78,7 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
       }
     }, this);
 
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    project.getMessageBus().connect(this).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       int beforeCalled;
 
       @Override

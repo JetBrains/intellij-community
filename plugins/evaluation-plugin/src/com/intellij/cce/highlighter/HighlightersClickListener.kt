@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.highlighter
 
 import com.intellij.cce.core.Session
@@ -27,8 +28,8 @@ class HighlightersClickListener(private val editor: Editor, private val project:
       if (editor.caretModel.offset in session.key.startOffset + 1..session.key.endOffset) {
         val lookup = LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
                                                                      LookupArranger.DefaultArranger()) as LookupImpl
-        for (completion in session.value.lookups.last().suggestions) {
-          val item = if (completion.text == session.value.expectedText)
+        for ((index, completion) in session.value.lookups.last().suggestions.withIndex()) {
+          val item = if (index == session.value.lookups.last().selectedPosition)
             LookupElementBuilder.create(completion.presentationText).bold()
           else LookupElementBuilder.create(completion.presentationText)
           lookup.addItem(item, PrefixMatcher.ALWAYS_TRUE)

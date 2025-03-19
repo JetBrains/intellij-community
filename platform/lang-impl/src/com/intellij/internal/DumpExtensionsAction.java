@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -21,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 
 final class DumpExtensionsAction extends DumbAwareAction {
-
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -47,11 +45,11 @@ final class DumpExtensionsAction extends DumbAwareAction {
 
     List<ExtensionPoint<?>> points = new ArrayList<>();
     for (ExtensionsArea area : areas) {
-      points.addAll(((ExtensionsAreaImpl)area).extensionPoints.values());
+      points.addAll(area.getNameToPointMap().values());
     }
     System.out.println(points.size() + " extension points: ");
     for (ExtensionPoint<?> point : points) {
-      System.out.println(" " + ((ExtensionPointImpl<?>)point).getName());
+      System.out.println(" " + ((ExtensionPointImpl<?>)point).name);
     }
 
     List<Object> extensions = new ArrayList<>();

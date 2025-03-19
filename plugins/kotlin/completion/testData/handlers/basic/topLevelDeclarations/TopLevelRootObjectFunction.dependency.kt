@@ -1,0 +1,3 @@
+object ObjectFromRoot {
+    fun functionFromRootObject() {}
+}

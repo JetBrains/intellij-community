@@ -1,15 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.util.containers.MultiMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
 import kotlin.streams.asSequence
+
+typealias LayoutPatcher = suspend (ModuleOutputPatcher, PlatformLayout, BuildContext) -> Unit
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
@@ -30,41 +31,48 @@ sealed class BaseLayout {
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
 
   /** module name to entries which should be excluded from its output */
-  var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
+  internal var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
     private set
 
-  @Suppress("SSBasedInspection")
   @JvmField
-  @PublishedApi
-  internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
-  val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
+  internal val includedProjectLibraries: ObjectLinkedOpenHashSet<ProjectLibraryData> = ObjectLinkedOpenHashSet()
 
-  /** module name to name of the module library */
-  val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
-
-  val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
-
-  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
+  internal var includedModuleLibraries = persistentSetOf<ModuleLibraryData>()
     private set
+
+  fun withModuleLibraries(list: Sequence<ModuleLibraryData>) {
+    includedModuleLibraries += list
+  }
+
+  internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
+    private set
+
+  fun withPatch(patcher: LayoutPatcher) {
+    patchers += patcher
+  }
 
   fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
-    patchers = patchers.add(patcher)
+    patchers += { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 
+  fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
+
   @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
 
-  fun filteredIncludedModuleNames(excludedRelativeJarPath: String): Sequence<String> {
-    return _includedModules.asSequence().filter { it.relativeOutputFile != excludedRelativeJarPath }.map { it.moduleName }
+  fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
+    return _includedModules.asSequence().filter {
+      it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
+    }.map { it.moduleName }
   }
 
-  fun withModules(items: Collection<ModuleItem>) {
+  fun withModules(items: Sequence<ModuleItem>) {
     for (item in items) {
       checkNotExists(item)
+      _includedModules.add(item)
     }
-    _includedModules.addAll(items)
   }
 
   private fun checkNotExists(item: ModuleItem) {
@@ -88,17 +96,34 @@ sealed class BaseLayout {
     )
   }
 
-  abstract fun withModule(moduleName: String)
+  fun withModule(moduleName: String) {
+    withModule(moduleName = moduleName, relativeJarPath = getRelativeJarPath(moduleName), reason = "withModule at \n    ${getStacktrace()}")
+  }
+
+  protected abstract fun getRelativeJarPath(moduleName: String): String
 
   fun withModules(names: Iterable<String>) {
-    names.forEach(::withModule)
+    val reason = "withModules at \n    ${getStacktrace()}"
+    for (name in names) {
+      withModule(moduleName = name, relativeJarPath = getRelativeJarPath(name), reason = reason)
+    }
   }
 
   fun withModule(moduleName: String, relativeJarPath: String) {
+    withModule(moduleName = moduleName, relativeJarPath = relativeJarPath, reason = "withModule at \n    ${getStacktrace()}")
+  }
+
+  private fun withModule(moduleName: String, relativeJarPath: String, reason: String) {
     require(!moduleName.isEmpty()) {
       "Module name must be not empty"
     }
 
+    val item = ModuleItem(moduleName = moduleName, relativeOutputFile = relativeJarPath, reason = "withModule at \n    $reason")
+    checkNotExists(item)
+    _includedModules.add(item)
+  }
+
+  private fun getStacktrace(): String? {
     val stackTrace = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).walk { stream ->
       stream.use {
         stream.asSequence()
@@ -113,26 +138,16 @@ sealed class BaseLayout {
           .joinToString(separator = "\n    ")
       }
     }
-
-    val item = ModuleItem(moduleName = moduleName, relativeOutputFile = relativeJarPath, reason = "withModule at \n    $stackTrace")
-    checkNotExists(item)
-    _includedModules.add(item)
+    return stackTrace
   }
 
   fun withProjectLibrary(libraryName: String, jarName: String, reason: String? = null) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                    packMode = LibraryPackMode.STANDALONE_MERGED,
-                                                    outPath = jarName,
-                                                    reason = reason))
-  }
-
-  fun withProjectLibraries(libraryNames: Collection<String>, jarName: String, reason: String? = null) {
-    for (libraryName in libraryNames) {
-      includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                      packMode = LibraryPackMode.STANDALONE_MERGED,
-                                                      outPath = jarName,
-                                                      reason = reason))
-    }
+    includedProjectLibraries.add(ProjectLibraryData(
+      libraryName = libraryName,
+      packMode = LibraryPackMode.STANDALONE_MERGED,
+      outPath = jarName,
+      reason = reason,
+    ))
   }
 
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
@@ -148,30 +163,41 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
+    includedProjectLibraries.add(
+      ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED, reason = "withProjectLibrary")
+    )
   }
 
-  fun withProjectLibraries(libraryNames: Iterable<String>) {
-    libraryNames.forEach(::withProjectLibrary)
+  internal fun withProjectLibraries(libraryNames: Sequence<String>, outPath: String? = null) {
+    for (libraryName in libraryNames) {
+      includedProjectLibraries.add(
+        ProjectLibraryData(
+          libraryName = libraryName,
+          packMode = LibraryPackMode.MERGED,
+          reason = "withProjectLibrary",
+          outPath = outPath,
+        )
+      )
+    }
   }
 
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
   }
 
   /**
    * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
-   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules
+   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules,
    * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
-  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
-    includedModuleLibraries.add(ModuleLibraryData(
+  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String = "", extraCopy: Boolean = false) {
+    includedModuleLibraries += ModuleLibraryData(
       moduleName = moduleName,
       libraryName = libraryName,
       relativeOutputPath = relativeOutputPath,
-      extraCopy = extraCopy
-    ))
+      extraCopy = extraCopy,
+    )
   }
 
   /**
@@ -179,10 +205,12 @@ sealed class BaseLayout {
    * @param relativeOutputPath target path relative to the plugin root directory
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-    resourcePaths = resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                         resourcePath = resourcePath,
-                                                         relativeOutputPath = relativeOutputPath,
-                                                         packToZip = false))
+    resourcePaths += ModuleResourceData(
+      moduleName = moduleName,
+      resourcePath = resourcePath,
+      relativeOutputPath = relativeOutputPath,
+      packToZip = false
+    )
   }
 }
 
@@ -190,12 +218,13 @@ data class ModuleLibraryData(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   @JvmField val relativeOutputPath: String = "",
-  @JvmField val extraCopy: Boolean = false // set to true to have library both packed to plugin and copied to plugin as additional JAR
+  // set to true to have a library both packed to a plugin and copied to the plugin as additional JAR
+  @JvmField val extraCopy: Boolean = false
 )
 
 class ModuleItem(
   @JvmField val moduleName: String,
-  // for one module, maybe several JARs - that's why `relativeOutputPath` is included into hash code
+  // for one module, maybe several JARs - that's why `relativeOutputPath` is included in hash code
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
 ) {
@@ -206,24 +235,10 @@ class ModuleItem(
   }
 
   override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    if (other !is ModuleItem) {
-      return false
-    }
-
-    if (moduleName != other.moduleName) {
-      return false
-    }
-    return relativeOutputFile == other.relativeOutputFile
+    return this === other || other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
-  override fun hashCode(): Int {
-    var result = moduleName.hashCode()
-    result = 31 * result + relativeOutputFile.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
   override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
 }

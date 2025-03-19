@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindInProjectSearchEngine;
@@ -17,11 +17,12 @@ import com.intellij.psi.search.*;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
-import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProjectSearchEngine {
   @Override
   public @NotNull FindInProjectSearcher createSearcher(@NotNull FindModel findModel, @NotNull Project project) {
@@ -29,10 +30,10 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
   }
 
   private static final class MyFindInProjectSearcher implements FindInProjectSearcher {
-    private @NotNull final ProjectFileIndex myFileIndex;
-    private @NotNull final Project myProject;
-    private @NotNull final FindModel myFindModel;
-    private @NotNull final TextSearchService myTextSearchService;
+    private final @NotNull ProjectFileIndex myFileIndex;
+    private final @NotNull Project myProject;
+    private final @NotNull FindModel myFindModel;
+    private final @NotNull TextSearchService myTextSearchService;
 
     private final boolean myHasTrigrams;
     private final String myStringToFindInIndices;
@@ -64,7 +65,7 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     public Collection<VirtualFile> doSearchForOccurrences() {
       String stringToFind = getStringToFindInIndexes(myFindModel, myProject);
 
-      if (stringToFind.isEmpty() || (DumbService.getInstance(myProject).isDumb() && !FileBasedIndex.isIndexAccessDuringDumbModeEnabled())) {
+      if (stringToFind.isEmpty()) {
         return Collections.emptySet();
       }
 
@@ -123,15 +124,14 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
     }
 
     private boolean isCoveredByIndex(@NotNull VirtualFile file) {
-      return myTextSearchService.isInSearchableScope(file);
+      return myTextSearchService.isInSearchableScope(file, myProject);
     }
 
     private static boolean hasTrigrams(@NotNull String text) {
       return !TrigramBuilder.getTrigrams(text).isEmpty();
     }
 
-    @NotNull
-    private static String getStringToFindInIndexes(@NotNull FindModel findModel, @NotNull Project project) {
+    private static @NotNull String getStringToFindInIndexes(@NotNull FindModel findModel, @NotNull Project project) {
       String stringToFind = findModel.getStringToFind();
 
       if (findModel.isRegularExpressions()) {

@@ -6,4 +6,3 @@ import importInterface.data.TestInterface
 fun test() {
     val a: TestInterface<String, Int>? = null
 }
-/* IGNORE_FIR */

@@ -8,7 +8,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public final class LongPairDataExternalizer implements DataExternalizer<long[]> {
+final class LongPairDataExternalizer implements DataExternalizer<long[]> {
   @Override
   public void save(@NotNull DataOutput out, long[] value) throws IOException {
     out.writeLong(value[0]);

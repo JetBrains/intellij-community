@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties;
@@ -45,12 +45,10 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     this(groupId, artifactId, version, true, ContainerUtil.emptyList());
   }
 
-  public RepositoryLibraryProperties(@NotNull String groupId,
-                                     @NotNull String artifactId,
-                                     @NotNull String version,
-                                     boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
-    this(new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
-                                                           excludedDependencies));
+  public RepositoryLibraryProperties(
+    @NotNull String groupId, @NotNull String artifactId, @NotNull String version, boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies
+  ) {
+    this(new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies, excludedDependencies));
   }
 
   @Override
@@ -95,15 +93,11 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void setMavenId(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), getArtifactsVerification(),
-                                                           getJarRepositoryId());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, getPackaging(), isIncludeTransitiveDependencies(), getExcludedDependencies(), getArtifactsVerification(), getJarRepositoryId());
   }
 
   public void setPackaging(String packaging) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), packaging, isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), getArtifactsVerification(),
-                                                           getJarRepositoryId());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), packaging, isIncludeTransitiveDependencies(), getExcludedDependencies(), getArtifactsVerification(), getJarRepositoryId());
   }
 
 
@@ -112,10 +106,8 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     return call(JpsMavenRepositoryLibraryDescriptor::isIncludeTransitiveDependencies, Boolean.TRUE);
   }
 
-  public void setIncludeTransitiveDependencies(boolean value) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), value,
-                                                           getExcludedDependencies(), getArtifactsVerification(),
-                                                           getJarRepositoryId());
+  public void setIncludeTransitiveDependencies(boolean includeTransitiveDeps) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), includeTransitiveDeps, getExcludedDependencies(), getArtifactsVerification(), getJarRepositoryId());
   }
 
 
@@ -125,8 +117,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void setJarRepositoryId(String jarRepositoryId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), getArtifactsVerification(), jarRepositoryId);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(), getExcludedDependencies(), getArtifactsVerification(), jarRepositoryId);
   }
 
   @Transient
@@ -167,10 +158,8 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     return call(JpsMavenRepositoryLibraryDescriptor::getExcludedDependencies, Collections.emptyList());
   }
 
-  public void setExcludedDependencies(List<String> dependencyMavenIds) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           dependencyMavenIds, getArtifactsVerification(),
-                                                           getJarRepositoryId());
+  public void setExcludedDependencies(List<String> excludedDeps) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(), excludedDeps != null? excludedDeps : Collections.emptyList(), getArtifactsVerification(), getJarRepositoryId());
   }
 
 
@@ -180,10 +169,14 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void setArtifactsVerification(@Nullable List<ArtifactVerification> artifactsVerification) {
-    List<ArtifactVerification> effectiveValue = artifactsVerification == null ? Collections.emptyList() : artifactsVerification;
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), getPackaging(), isIncludeTransitiveDependencies(),
-                                                           getExcludedDependencies(), effectiveValue,
-                                                           getJarRepositoryId());
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(
+      getMavenId(),
+      getPackaging(),
+      isIncludeTransitiveDependencies(),
+      getExcludedDependencies(),
+      artifactsVerification != null? artifactsVerification : Collections.emptyList(),
+      getJarRepositoryId()
+    );
   }
 
   @SuppressWarnings("unused") //we need to have a separate method here because XmlSerializer fails if the returned list is unmodifiable
@@ -197,8 +190,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
     setExcludedDependencies(dependencyMavenIds);
   }
 
-  @NotNull
-  public JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
+  public @NotNull JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
     return myDescriptor != null ? myDescriptor : new JpsMavenRepositoryLibraryDescriptor(null, true, Collections.emptyList());
   }
 
@@ -230,8 +222,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
 
   @Tag("artifact")
   public static class ArtifactVerificationProperties {
-    @NotNull
-    private ArtifactVerification myDescriptor;
+    private @NotNull ArtifactVerification myDescriptor;
 
     @SuppressWarnings("unused") //used by XmlSerializer
     private ArtifactVerificationProperties() {
@@ -261,8 +252,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
       myDescriptor = new ArtifactVerification(getUrl(), sha256sum);
     }
 
-    @NotNull
-    private ArtifactVerification getDescriptor() {
+    private @NotNull ArtifactVerification getDescriptor() {
       assert !myDescriptor.getUrl().isEmpty(); // Ensure we have read url value
       return myDescriptor;
     }

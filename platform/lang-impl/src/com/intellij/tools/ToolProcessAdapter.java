@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
-public class ToolProcessAdapter extends ProcessAdapter {
+public final class ToolProcessAdapter extends ProcessAdapter {
   private final Project myProject;
   private final boolean mySynchronizeAfterExecution;
   private final String myName;

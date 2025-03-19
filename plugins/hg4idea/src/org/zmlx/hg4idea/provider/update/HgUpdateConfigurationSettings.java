@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider.update;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -19,7 +19,7 @@ public class HgUpdateConfigurationSettings implements PersistentStateComponent<H
 
   public static class State {
     public boolean shouldPull = true;
-    @NotNull public HgUpdateType updateType = HgUpdateType.ONLY_UPDATE;
+    public @NotNull HgUpdateType updateType = HgUpdateType.ONLY_UPDATE;
     public boolean shouldCommitAfterMerge = false;
   }
 
@@ -47,9 +47,8 @@ public class HgUpdateConfigurationSettings implements PersistentStateComponent<H
     return myState.updateType == HgUpdateType.MERGE && myState.shouldCommitAfterMerge;
   }
 
-  @Nullable
   @Override
-  public HgUpdateConfigurationSettings.State getState() {
+  public @Nullable HgUpdateConfigurationSettings.State getState() {
     return myState;
   }
 

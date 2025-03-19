@@ -5,7 +5,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentBitSet;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <br/>
  * This filter is intended to be used in a concurrent environment, where two {@link IndexableFilesIterator iterators} iterate files in different threads.
  */
-@ApiStatus.Experimental
+@Internal
 public final class IndexableFilesDeduplicateFilter implements VirtualFileFilter {
 
   private final @Nullable IndexableFilesDeduplicateFilter myDelegate;

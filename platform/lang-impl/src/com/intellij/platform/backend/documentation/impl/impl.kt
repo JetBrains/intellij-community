@@ -3,10 +3,13 @@
 
 package com.intellij.platform.backend.documentation.impl
 
+import com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector
+import com.intellij.lang.documentation.ide.impl.getClassRefForStatistics
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.backend.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
@@ -25,8 +28,11 @@ fun CoroutineScope.computeDocumentationAsync(targetPointer: Pointer<out Document
 
 internal suspend fun computeDocumentation(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
   return withContext(Dispatchers.Default) {
+    var statisticsID: Class<*>? = null
     val documentationResult: DocumentationResult? = readAction {
-      targetPointer.dereference()?.computeDocumentation()
+      val dereference = targetPointer.dereference()
+      statisticsID = getClassRefForStatistics(dereference)
+      dereference?.computeDocumentation()
     }
     @Suppress("REDUNDANT_ELSE_IN_WHEN")
     when (documentationResult) {
@@ -34,6 +40,8 @@ internal suspend fun computeDocumentation(targetPointer: Pointer<out Documentati
       is AsyncDocumentation -> documentationResult.supplier.invoke() as DocumentationData?
       null -> null
       else -> error("Unexpected result: $documentationResult") // this fixes Kotlin incremental compilation
+    }.also { r ->
+      DocumentationUsageCollector.DOC_COMPUTED.log(statisticsID, r?.html?.length ?: -1)
     }
   }
 }
@@ -173,8 +181,7 @@ private fun contentUpdater(target: DocumentationTarget, url: String): ContentUpd
 
 @TestOnly
 fun computeDocumentationBlocking(targetPointer: Pointer<out DocumentationTarget>): DocumentationData? {
-  @Suppress("RAW_RUN_BLOCKING")
-  return runBlocking {
+  return runBlockingMaybeCancellable {
     withTimeout(1000 * 60) {
       computeDocumentation(targetPointer)
     }

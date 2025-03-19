@@ -24,7 +24,7 @@ public abstract class TestSourceBasedTestCase extends JavaProjectTestCase {
     VirtualFile tempDir = getTempDir().createVirtualDir();
     myTempDirectory = tempDir.toNioPath();
     String testPath = getTestPath();
-    if (testPath != null) {
+    if (testPath != null && myModule != null) {
       File testRoot = new File(getTestDataPath(), testPath);
       assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 

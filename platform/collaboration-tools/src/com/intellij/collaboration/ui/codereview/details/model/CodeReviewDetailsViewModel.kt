@@ -2,13 +2,14 @@
 package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
+import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.flow.Flow
 
 interface CodeReviewDetailsViewModel {
   val number: String
   val url: String
 
-  val title: Flow<String>
-  val description: Flow<String>
+  val title: Flow<@NlsSafe String>
+  val description: Flow<@NlsSafe String>?
   val reviewRequestState: Flow<ReviewRequestState>
 }

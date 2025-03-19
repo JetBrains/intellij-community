@@ -14,6 +14,7 @@ public class ShParserTest extends ParsingTestCase {
     return PluginPathManager.getPluginHomePath("sh") + "/core/testData";
   }
 
+  public void testArithmeticExpansion() { doTest(true); }
   public void testTrickyStrings() { doTest(true); }
   public void testStrings()       { doTest(true); }
   public void testStrings2()      { doTest(true); }

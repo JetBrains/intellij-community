@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.execution.impl.RunManagerImpl;
@@ -12,14 +12,12 @@ import org.jetbrains.annotations.NotNull;
  */
 final class RunConfigurationsContextProvider extends WorkingContextProvider {
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return "runConfigurations";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return TaskBundle.message("run.configurations");
   }
 

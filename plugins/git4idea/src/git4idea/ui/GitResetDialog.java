@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui;
 
 import com.intellij.openapi.project.Project;
@@ -76,9 +76,8 @@ public class GitResetDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myCommitTextField;
   }
 
@@ -110,7 +109,7 @@ public class GitResetDialog extends DialogWrapper {
       handler.addParameters("--mixed");
     }
     final String commit = myCommitTextField.getText().trim();
-    if (commit.length() != 0) {
+    if (!commit.isEmpty()) {
       handler.addParameters(commit);
     }
     handler.endOptions();

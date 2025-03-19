@@ -2,6 +2,7 @@
 package com.intellij.platform.util
 
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -86,11 +87,12 @@ private class ArgsReader(
   }
 }
 
+@ApiStatus.Internal
 class ArgsParser(args: List<String>) {
   private val args = Args(args)
   private val arguments = mutableListOf<TypedArg<*>>()
 
-  fun arg(name: String, description: String) = ArgInfo(name, description)
+  fun arg(name: String, description: String): ArgInfo = ArgInfo(name, description)
 
   init {
     arg(
@@ -104,7 +106,7 @@ class ArgsParser(args: List<String>) {
     arguments.forEach { it.parseValue() }
   }
 
-  fun usage(includeHidden: Boolean = false, commandPadding: Int = 4) = buildString {
+  fun usage(includeHidden: Boolean = false, commandPadding: Int = 4): String = buildString {
     val commandPad = " ".repeat(commandPadding)
 
     val argsToShow = arguments.sortedWith(
@@ -151,17 +153,17 @@ class ArgsParser(args: List<String>) {
     var optional: Boolean = false
     var deprecated: String? = null
 
-    fun hidden() = optional().apply { hidden = true }
-    fun optional() = apply { optional = true }
-    fun deprecated(message: String) = apply { deprecated = message }
+    fun hidden(): ArgInfo = optional().apply { hidden = true }
+    fun optional(): ArgInfo = apply { optional = true }
+    fun deprecated(message: String): ArgInfo = apply { deprecated = message }
 
-    fun string(default: (() -> String)? = null) = parse { arg({ it }, default) }
-    fun strings() = parse { args { it } }
-    fun notEmptyStrings() = parse { nonEmptyArgs { it } }
-    fun stringOrNull() = optional().parse { argOrNull { it } }
+    fun string(default: (() -> String)? = null): TypedArg<String> = parse { arg({ it }, default) }
+    fun strings(): TypedArg<List<String>> = parse { args { it } }
+    fun notEmptyStrings(): TypedArg<List<String>> = parse { nonEmptyArgs { it } }
+    fun stringOrNull(): TypedArg<String?> = optional().parse { argOrNull { it } }
 
-    fun boolean(default: () -> Boolean = { false }) = parse { arg(toBoolean, default) }
-    fun booleanOrNull() = optional().parse { argOrNull(toBoolean) }
+    fun boolean(default: () -> Boolean = { false }): TypedArg<Boolean> = parse { arg(toBoolean, default) }
+    fun booleanOrNull(): TypedArg<Boolean?> = optional().parse { argOrNull(toBoolean) }
 
     /**
      * Allows to parse boolean flags.
@@ -170,17 +172,17 @@ class ArgsParser(args: List<String>) {
      * If the command line arguments contain a string '--foo=false' or do not contain an argument which key is '--foo', then it
      * sets the argument 'foo' to `false`.
      */
-    fun flag() = optional().parse { argWithoutValue(toBoolean, { true }, { false }) }
+    fun flag(): TypedArg<Boolean> = optional().parse { argWithoutValue(toBoolean, { true }, { false }) }
 
-    fun int(default: () -> Int) = parse { arg(toInt, default) }
-    fun toIntOrNull() = optional().parse { argOrNull(toInt) }
+    fun int(default: () -> Int): TypedArg<Int> = parse { arg(toInt, default) }
+    fun toIntOrNull(): TypedArg<Int?> = optional().parse { argOrNull(toInt) }
 
-    fun file(default: (() -> Path)? = null) = parse { arg(toFile, default) }
-    fun fileOrNull() = optional().parse { argOrNull(toFile) }
+    fun file(default: (() -> Path)? = null): TypedArg<Path> = parse { arg(toFile, default) }
+    fun fileOrNull(): TypedArg<Path?> = optional().parse { argOrNull(toFile) }
 
-    fun files() = parse { args(toFile) }
+    fun files(): TypedArg<List<Path>> = parse { args(toFile) }
 
-    fun notEmptyFiles() = parse { nonEmptyArgs(toFile) }
+    fun notEmptyFiles(): TypedArg<List<Path>> = parse { nonEmptyArgs(toFile) }
 
 
     private val toBoolean: (String) -> Boolean = { string ->
@@ -210,7 +212,7 @@ class ArgsParser(args: List<String>) {
     private var delegate : TypedArg<*>? = null
     private val paramValue = lazy { computeValue() }
 
-    fun andApply(action: T.() -> Unit) = andMap { it.apply(action) }
+    fun andApply(action: T.() -> Unit): TypedArg<T> = andMap { it.apply(action) }
 
     fun <Y> andMap(action: (T) -> Y) : TypedArg<Y> {
       require(!paramValue.isInitialized() && delegate == null) { "cannot apply transformations to the computed value: $this" }
@@ -224,7 +226,7 @@ class ArgsParser(args: List<String>) {
       (delegate ?: this).getValue()
     }
 
-    fun getValue() = paramValue.value
+    fun getValue(): T = paramValue.value
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>?): T = getValue()
   }

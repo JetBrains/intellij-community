@@ -12,6 +12,7 @@ class Test: Abstract(), Inter {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     val x: Inter = Test()
     x.something()
 }

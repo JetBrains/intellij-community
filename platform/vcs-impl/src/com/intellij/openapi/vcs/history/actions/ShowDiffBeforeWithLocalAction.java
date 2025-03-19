@@ -19,7 +19,9 @@ import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.ExtendableAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class ShowDiffBeforeWithLocalAction extends ExtendableAction implements DumbAware {
   private static final ExtensionPointName<AnActionExtensionProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider");

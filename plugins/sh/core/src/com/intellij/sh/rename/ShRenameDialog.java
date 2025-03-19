@@ -44,15 +44,13 @@ class ShRenameDialog extends RefactoringDialog {
     myRenamer.renameTo(getNewName());
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
-  @Nullable
   @Override
-  protected JComponent createNorthPanel() {
+  protected @Nullable JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(myNameLabel, new GridBagConstraints(
       0, 0,
@@ -75,9 +73,8 @@ class ShRenameDialog extends RefactoringDialog {
     return panel;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return null;
   }
 
@@ -91,8 +88,7 @@ class ShRenameDialog extends RefactoringDialog {
     return false;
   }
 
-  @NotNull
-  private String getNewName() {
+  private @NotNull String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }
 

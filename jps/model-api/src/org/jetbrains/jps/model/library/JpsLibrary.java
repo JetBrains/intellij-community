@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.library;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -16,14 +17,19 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
   @NotNull
   List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType);
 
+  @ApiStatus.Internal
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
+  @ApiStatus.Internal
   void addRoot(@NotNull File file, @NotNull JpsOrderRootType rootType);
 
+  @ApiStatus.Internal
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull JpsLibraryRoot.InclusionOptions options);
 
+  @ApiStatus.Internal
   void removeUrl(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
+  @ApiStatus.Internal
   void delete();
 
   @Override
@@ -44,5 +50,5 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   @NotNull List<Path> getPaths(@NotNull JpsOrderRootType rootType);
 
-  List<String> getRootUrls(final JpsOrderRootType rootType);
+  List<String> getRootUrls(@NotNull JpsOrderRootType rootType);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -14,7 +14,6 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -67,7 +66,7 @@ final class Calls extends BasicValue {
 }
 
 final class Constraint {
-  final static Constraint EMPTY = new Constraint(0, 0);
+  static final Constraint EMPTY = new Constraint(0, 0);
 
   final int calls;
   final int nulls;
@@ -132,7 +131,7 @@ final class NullableMethodAnalysis {
           int mappedOrigin = originsMapping[origin];
           EKey createdKey = createdKeys[origin];
           if (createdKey != null && (mergedMappedLabels & (1 << mappedOrigin)) != 0) {
-            sum.add(new Component(Value.Null, Collections.singleton(createdKey)));
+            sum.add(new Component(Value.Null, createdKey));
           }
         }
         if (!sum.isEmpty()) {
@@ -171,8 +170,7 @@ final class NullableMethodAnalysis {
         return v1;
       }
     }
-    else if (v2 instanceof Calls) {
-      Calls calls2 = (Calls)v2;
+    else if (v2 instanceof Calls calls2) {
       int labels2 = calls2.mergedLabels;
       int aliveLabels2 = labels2 - (labels2 & constraint.calls);
       return new Calls(aliveLabels2);

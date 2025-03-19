@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Set;
@@ -78,6 +65,13 @@ public abstract class TaskRepository {
     myUrl = trimTrailingSlashes(url);
   }
 
+  /**
+   * Check if this repository is ready to be used for retrieving issues in "Open Task...".
+   * <p>
+   * Note that if you rely on the presence of some secret exposed through {@link com.intellij.tasks.impl.BaseRepository#getPassword()}
+   * you should access the corresponding field through {@code getPassword()}, not directly via the underlying field.
+   * Otherwise, it might not be loaded from the system password-safe by the moment of the check.
+   */
   public boolean isConfigured() {
     return StringUtil.isNotEmpty(getUrl());
   }
@@ -118,8 +112,7 @@ public abstract class TaskRepository {
    *
    * @return {@code null} if not supported
    */
-  @Nullable
-  public CancellableConnection createCancellableConnection() {
+  public @Nullable CancellableConnection createCancellableConnection() {
     return null;
   }
 
@@ -163,8 +156,7 @@ public abstract class TaskRepository {
    * Retrieve states available for task from server. One of these states will be passed later to {@link #setTaskState(Task, TaskState)}.
    * @param task task to update
    */
-  @NotNull
-  public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
+  public @NotNull @Unmodifiable Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
     return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(),
                                  (Function<TaskState, CustomTaskState>)state -> CustomTaskState.fromPredefined(state));
@@ -178,8 +170,7 @@ public abstract class TaskRepository {
   /**
    * Task state that was used last time when opening task.
    */
-  @Nullable
-  public abstract CustomTaskState getPreferredOpenTaskState();
+  public abstract @Nullable CustomTaskState getPreferredOpenTaskState();
 
   /**
    * Remember state used when closing task most recently.
@@ -189,20 +180,17 @@ public abstract class TaskRepository {
   /**
    * Task state that was used last time when closing task.
    */
-  @Nullable
-  public abstract CustomTaskState getPreferredCloseTaskState();
+  public abstract @Nullable CustomTaskState getPreferredCloseTaskState();
 
   /**
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
    * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
    * information about failure in other cases.
    */
-  @Nullable
-  public abstract Task findTask(@NotNull String id) throws Exception;
+  public abstract @Nullable Task findTask(@NotNull String id) throws Exception;
 
   @Override
-  @NotNull
-  public abstract TaskRepository clone();
+  public abstract @NotNull TaskRepository clone();
 
   /**
    * Attempts to extract server ID of the issue from the ID of local task (probably restored from project settings).
@@ -217,8 +205,7 @@ public abstract class TaskRepository {
    * @param taskName ID of the task to check
    * @return extracted ID of the issue or {@code null} if it doesn't look like issue ID of this tracker
    */
-  @Nullable
-  public abstract String extractId(@NotNull String taskName);
+  public abstract @Nullable String extractId(@NotNull String taskName);
 
 
   /**
@@ -333,8 +320,7 @@ public abstract class TaskRepository {
     return "";
   }
 
-  @Nullable
-  public String getTaskComment(@NotNull Task task) {
+  public @Nullable String getTaskComment(@NotNull Task task) {
     return isShouldFormatCommitMessage()
            ? myCommitMessageFormat.replace("{id}", task.getPresentableId()).replace("{summary}", task.getSummary())
            : null;
@@ -353,9 +339,8 @@ public abstract class TaskRepository {
 
   public abstract static class CancellableConnection implements Callable<Exception> {
 
-    @Nullable
     @Override
-    public final Exception call() {
+    public final @Nullable Exception call() {
       try {
         doTest();
         return null;

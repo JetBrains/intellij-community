@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,10 +10,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
@@ -21,10 +18,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Objects;
 
 /**
- * A helper class to perform the parameter substitution during the Inline method refactoring. 
+ * A helper class to perform the parameter substitution during the Inline method refactoring.
  * It helps to declare parameters as locals, passing arguments from the call site and then tries to inline the parameters when possible.
  */
 class InlineMethodHelper {
@@ -57,32 +55,50 @@ class InlineMethodHelper {
     return mySubstitutor;
   }
 
-  @NotNull
-  private PsiSubstitutor createSubstitutor() {
+  private @NotNull PsiSubstitutor createSubstitutor() {
     JavaResolveResult resolveResult = myCall.resolveMethodGenerics();
-    if (myMethod.isPhysical()) {
-      // Could be specialized
-      LOG.assertTrue(myManager.areElementsEquivalent(resolveResult.getElement(), myMethod));
-    }
-    if (resolveResult.getSubstitutor() != PsiSubstitutor.EMPTY) {
+    PsiSubstitutor origSubstitutor = resolveResult.getSubstitutor();
+    PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    if (substitutor != PsiSubstitutor.EMPTY) {
+      if (myMethod.isPhysical()) { // Could be specialized, thus non-physical, see InlineMethodSpecialization
+        PsiMethod calledMethod = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
+        if (calledMethod != null && !myManager.areElementsEquivalent(calledMethod, myMethod)) {
+          // Could be an implementation method
+          PsiSubstitutor superSubstitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(Objects.requireNonNull(calledMethod.getContainingClass()),
+                                                        Objects.requireNonNull(myMethod.getContainingClass()),
+                                                        PsiSubstitutor.EMPTY);
+          PsiSubstitutor superMethodSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(
+            myMethod.getHierarchicalMethodSignature(), calledMethod.getHierarchicalMethodSignature());
+          if (superMethodSubstitutor != null) {
+            superSubstitutor = superSubstitutor.putAll(superMethodSubstitutor);
+          }
+          for (Map.Entry<PsiTypeParameter, PsiType> entry : superSubstitutor.getSubstitutionMap().entrySet()) {
+            PsiTypeParameter parameter = entry.getKey();
+            PsiType type = entry.getValue();
+            if (type instanceof PsiClassType classType && classType.resolve() instanceof PsiTypeParameter typeParameter) {
+              substitutor = substitutor.put(typeParameter, origSubstitutor.substitute(parameter));
+            }
+          }
+          origSubstitutor = substitutor;
+        }
+      }
       Iterator<PsiTypeParameter> oldTypeParameters = PsiUtil.typeParametersIterator(myMethod);
       Iterator<PsiTypeParameter> newTypeParameters = PsiUtil.typeParametersIterator(myMethodCopy);
-      PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       while (newTypeParameters.hasNext()) {
         final PsiTypeParameter newTypeParameter = newTypeParameters.next();
         final PsiTypeParameter oldTypeParameter = oldTypeParameters.next();
-        substitutor = substitutor.put(newTypeParameter, resolveResult.getSubstitutor().substitute(oldTypeParameter));
+        substitutor = substitutor.put(newTypeParameter, origSubstitutor.substitute(oldTypeParameter));
       }
-      return substitutor;
     }
-
-    return PsiSubstitutor.EMPTY;
+    return substitutor;
   }
 
   PsiLocalVariable @NotNull [] declareParameters() {
     PsiCodeBlock block = Objects.requireNonNull(myMethodCopy.getBody());
+    boolean compactConstructor = JavaPsiRecordUtil.isCompactConstructor(myMethodCopy);
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(myMethod, mySubstitutor, myCallArguments);
-    PsiParameter[] parameters = myMethodCopy.getParameterList().getParameters();
+    PsiParameter[] parameters = myMethod.getParameterList().getParameters();
     PsiLocalVariable[] parameterVars = new PsiLocalVariable[parameters.length];
     for (int i = parameters.length - 1; i >= 0; i--) {
       PsiParameter parameter = parameters[i];
@@ -115,6 +131,9 @@ class InlineMethodHelper {
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parameterVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(parameterVars[i], PsiModifier.FINAL, parameter.hasModifierProperty(PsiModifier.FINAL));
+      if (compactConstructor) {
+        block.add(myFactory.createStatementFromText("this." + name + '=' + name + ';', myMethod));
+      }
     }
     return parameterVars;
   }
@@ -126,8 +145,8 @@ class InlineMethodHelper {
         int j = Math.min(i, vars.length - 1);
         final PsiExpression initializer = vars[j].getInitializer();
         LOG.assertTrue(initializer != null);
-        if (initializer instanceof PsiNewExpression) {
-          PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+        if (initializer instanceof PsiNewExpression newExpression) {
+          PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
           if (arrayInitializer != null) { //varargs initializer
             arrayInitializer.add(args[i]);
             continue;
@@ -140,7 +159,7 @@ class InlineMethodHelper {
   }
 
   void inlineParameters(PsiLocalVariable[] parmVars) {
-    final PsiParameter[] parameters = myMethodCopy.getParameterList().getParameters();
+    final PsiParameter[] parameters = (myMethod.isValid() ? myMethod : myMethodCopy).getParameterList().getParameters();
     for (int i = 0; i < parmVars.length; i++) {
       final PsiParameter parameter = parameters[i];
       final boolean strictlyFinal = parameter.hasModifierProperty(PsiModifier.FINAL) && isStrictlyFinal(parameter);
@@ -149,7 +168,7 @@ class InlineMethodHelper {
   }
 
   private boolean isStrictlyFinal(PsiParameter parameter) {
-    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false)) {
+    for (PsiReference reference : ReferencesSearch.search(parameter, GlobalSearchScope.projectScope(myProject), false).asIterable()) {
       final PsiElement refElement = reference.getElement();
       final PsiElement anonymousClass = PsiTreeUtil.getParentOfType(refElement, PsiAnonymousClass.class);
       if (anonymousClass != null && PsiTreeUtil.isAncestor(myMethod, anonymousClass, true)) {

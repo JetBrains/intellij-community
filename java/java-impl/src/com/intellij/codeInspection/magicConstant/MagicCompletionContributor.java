@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.magicConstant;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -32,6 +32,9 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
     PlatformPatterns.psiElement().withParent(
       PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiAssignmentExpression.class)));
+  private static final ElementPattern<PsiElement> IN_VARIABLE =
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).withParent(PlatformPatterns.psiElement(PsiVariable.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
     PlatformPatterns.psiElement().withParent(
       PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiReturnStatement.class)));
@@ -41,7 +44,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   private static final int PRIORITY = 100;
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     //if (parameters.getCompletionType() != CompletionType.SMART) return;
     PsiElement pos = parameters.getPosition();
     if (JavaKeywordCompletion.AFTER_DOT.accepts(pos)) {
@@ -54,8 +57,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     addCompletionVariants(parameters, result, pos, allowedValues);
   }
 
-  @Nullable
-  public static MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
+  public static @Nullable MagicConstantUtils.AllowedValues getAllowedValues(@NotNull PsiElement pos) {
     MagicConstantUtils.AllowedValues allowedValues = null;
     for (Pair<PsiModifierListOwner, PsiType> pair : getMembersWithAllowedValues(pos)) {
       MagicConstantUtils.AllowedValues values = MagicConstantUtils.getAllowedValues(pair.first, pair.second, pos);
@@ -69,8 +71,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     return allowedValues;
   }
 
-  @Nullable
-  private static PsiModifierListOwner resolveExpression(@Nullable PsiExpression expression) {
+  private static @Nullable PsiModifierListOwner resolveExpression(@Nullable PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiMethodCallExpression) {
       return ((PsiMethodCallExpression)expression).resolveMethod();
@@ -84,8 +85,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     return null;
   }
 
-  @NotNull
-  public static List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
+  public static @NotNull List<Pair<PsiModifierListOwner, PsiType>> getMembersWithAllowedValues(@NotNull PsiElement pos) {
     Set<Pair<PsiModifierListOwner, PsiType>> result = new HashSet<>();
     if (IN_METHOD_CALL_ARGUMENT.accepts(pos)) {
       PsiCall call = PsiTreeUtil.getParentOfType(pos, PsiCall.class);
@@ -126,7 +126,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
           if (resolved != null) {
             result.add(Pair.create(resolved, operand.getType()));
             // if something interesting assigned to this variable, e.g. magic method, suggest its magic too
-            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), expression -> {
+            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), true, expression -> {
               PsiModifierListOwner assigned = resolveExpression(expression);
               if (assigned != null) {
                 result.add(Pair.create(assigned, operand.getType()));
@@ -144,6 +144,10 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       if (resolved != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false)) {
         result.add(Pair.create(resolved, l.getType()));
       }
+    }
+    else if (IN_VARIABLE.accepts(pos)) {
+      PsiVariable variable = PsiTreeUtil.getParentOfType(pos, PsiVariable.class);
+      result.add(Pair.create(variable, variable.getType()));
     }
     else if (IN_RETURN.accepts(pos)) {
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);
@@ -193,8 +197,8 @@ public final class MagicCompletionContributor extends CompletionContributor impl
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
-  private static void addCompletionVariants(@NotNull final CompletionParameters parameters,
-                                            @NotNull final CompletionResultSet result,
+  private static void addCompletionVariants(final @NotNull CompletionParameters parameters,
+                                            final @NotNull CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantUtils.AllowedValues allowedValues) {
     final Set<PsiElement> allowed = CollectionFactory.createCustomHashingStrategySet(new HashingStrategy<>() {

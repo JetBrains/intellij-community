@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.structureView;
 
 import com.intellij.ide.structureView.StructureViewBundle;
@@ -25,9 +25,8 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
 
   private static final ItemPresentation DUMMY_PRESENTATION = new MarkdownBasePresentation() {
 
-    @Nullable
     @Override
-    public String getPresentableText() {
+    public @Nullable String getPresentableText() {
       return null;
     }
   };
@@ -54,9 +53,8 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
     }
   }
 
-  @NotNull
   @Override
-  public String getAlphaSortKey() {
+  public @NotNull String getAlphaSortKey() {
     return StringUtil.notNullize(getElement() instanceof NavigationItem ?
                                  ((NavigationItem)getElement()).getName() : null);
   }
@@ -66,9 +64,8 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
     return true;
   }
 
-  @Nullable
   @Override
-  public String getPresentableText() {
+  public @Nullable String getPresentableText() {
     final PsiElement tag = getElement();
     if (tag == null) {
       return StructureViewBundle.message("node.structureview.invalid");
@@ -81,9 +78,8 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
     return getPresentation().getLocationString();
   }
 
-  @NotNull
   @Override
-  public ItemPresentation getPresentation() {
+  public @NotNull ItemPresentation getPresentation() {
     if (getElement() instanceof PsiFileImpl) {
       ItemPresentation filePresent = ((PsiFileImpl)getElement()).getPresentation();
       return filePresent != null ? filePresent : DUMMY_PRESENTATION;
@@ -100,23 +96,20 @@ public class MarkdownStructureElement extends PsiTreeElementBase<PsiElement> imp
   }
 
 
-  @NotNull
   @Override
-  public Collection<StructureViewTreeElement> getChildrenBase() {
+  public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     final ArrayList<StructureViewTreeElement> elements = new ArrayList<>();
     MarkdownPsiStructureUtil.processContainer(getElement(), element -> elements.add(new MarkdownStructureElement(element)));
     return elements;
   }
 
-  @NotNull
   @Override
-  public String getLocationPrefix() {
+  public @NotNull String getLocationPrefix() {
     return " ";
   }
 
-  @NotNull
   @Override
-  public String getLocationSuffix() {
+  public @NotNull String getLocationSuffix() {
     return "";
   }
 

@@ -5,7 +5,9 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serialization.ClassUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.OBJECT
@@ -61,6 +63,7 @@ internal open class ObjectStoredProperty<T>(private val defaultValue: T) : Objec
   }
 }
 
+@ApiStatus.Internal
 class EnumStoredProperty<T : Enum<*>>(private val defaultValue: T?, val clazz: Class<T>) : ObjectStateStoredPropertyBase<T?>(defaultValue), ScalarProperty {
   override val jsonType: JsonSchemaType
     get() = JsonSchemaType.STRING

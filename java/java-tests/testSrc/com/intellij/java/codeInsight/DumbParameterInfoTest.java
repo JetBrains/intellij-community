@@ -9,9 +9,7 @@ import junit.framework.TestSuite;
 public class DumbParameterInfoTest {
   public static Test suite() {
     TestSuite suite = new TestSuite();
-    TestIndexingModeSupporter.addTest(ParameterInfoTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
-    TestIndexingModeSupporter.addTest(ParameterInfoTest.class, new TestIndexingModeSupporter.RuntimeOnlyIndexSuite(), suite);
-    TestIndexingModeSupporter.addTest(ParameterInfoTest.class, new TestIndexingModeSupporter.EmptyIndexSuite(), suite);
+    TestIndexingModeSupporter.addAllTests(ParameterInfoTest.class, suite);
     return suite;
   }
 

@@ -19,16 +19,15 @@ internal class FixCellAlignmentIntention: BaseElementAtCaretIntentionAction() {
     return MarkdownBundle.message("markdown.fix.cell.alignment.intention.text")
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
+  override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
     val cell = TableUtils.findCell(element)
-    if (editor == null || cell == null || cell.parentTable == null) {
+    if (cell == null || cell.parentTable == null) {
       return false
     }
     return !cell.hasCorrectPadding() || !cell.hasValidAlignment()
   }
 
-  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-    requireNotNull(editor)
+  override fun invoke(project: Project, editor: Editor, element: PsiElement) {
     val cell = TableUtils.findCell(element) ?: return
     val expectedAlignment = cell.parentTable?.getColumnAlignment(cell.columnIndex) ?: return
     cell.updateAlignment(editor.document, expectedAlignment)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -31,13 +31,13 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public final class TemplateManagerImpl extends TemplateManager implements Disposable {
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private static final Key<Boolean> ourTemplateTesting = Key.create("TemplateTesting");
 
   public TemplateManagerImpl(@NotNull Project project) {
@@ -66,7 +66,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   }
 
   @TestOnly
-  public static void setTemplateTesting(Disposable parentDisposable) {
+  public static void setTemplateTesting(@NotNull Disposable parentDisposable) {
     TestModeFlags.set(ourTemplateTesting, true, parentDisposable);
   }
 
@@ -80,18 +80,15 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return new TemplateImpl(key, text, group);
   }
 
-  @Nullable
-  public static TemplateState getTemplateState(@NotNull Editor editor) {
+  public static @Nullable TemplateState getTemplateState(@NotNull Editor editor) {
     return (TemplateState) TemplateManagerUtilBase.getTemplateState(editor);
   }
 
-  @Nullable
-  static TemplateState clearTemplateState(@NotNull Editor editor) {
+  static @Nullable TemplateState clearTemplateState(@NotNull Editor editor) {
     return (TemplateState) TemplateManagerUtilBase.clearTemplateState(editor);
   }
 
-  @NotNull
-  private TemplateState initTemplateState(@NotNull Editor editor) {
+  private @NotNull TemplateState initTemplateState(@NotNull Editor editor) {
     Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
@@ -119,31 +116,31 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   }
 
   @Override
-  public void startTemplate(@NotNull final Editor editor, @NotNull Template template) {
+  public void startTemplate(@NotNull Editor editor, @NotNull Template template) {
     startTemplate(editor, template, null);
   }
 
   @Override
-  public void startTemplate(@NotNull Editor editor, String selectionString, @NotNull Template template) {
+  public void startTemplate(@NotNull Editor editor, @Nullable String selectionString, @NotNull Template template) {
     startTemplate(editor, selectionString, template, true, null, null, null);
   }
 
   @Override
   public void startTemplate(@NotNull Editor editor,
                             @NotNull Template template,
-                            TemplateEditingListener listener,
-                            final PairProcessor<? super String, ? super String> processor) {
+                            @Nullable TemplateEditingListener listener,
+                            @Nullable PairProcessor<? super String, ? super String> processor) {
     startTemplate(editor, null, template, true, listener, processor, null);
   }
 
-  private @NotNull TemplateState startTemplate(final Editor editor,
-                             final String selectionString,
-                             final Template template,
-                             boolean inSeparateCommand,
-                             TemplateEditingListener listener,
-                             final PairProcessor<? super String, ? super String> processor,
-                             final Map<String, String> predefinedVarValues) {
-    final TemplateState templateState = initTemplateState(editor);
+  private @NotNull TemplateState startTemplate(@NotNull Editor editor,
+                                               @Nullable String selectionString,
+                                               @NotNull Template template,
+                                               boolean inSeparateCommand,
+                                               @Nullable TemplateEditingListener listener,
+                                               @Nullable PairProcessor<? super String, ? super String> processor,
+                                               @Nullable Map<String, String> predefinedVarValues) {
+    TemplateState templateState = initTemplateState(editor);
 
     //noinspection unchecked
     templateState.getProperties().put(ExpressionContext.SELECTION, selectionString);
@@ -180,20 +177,20 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   }
 
   @Override
-  public void startTemplate(@NotNull final Editor editor, @NotNull final Template template, TemplateEditingListener listener) {
+  public void startTemplate(@NotNull Editor editor, @NotNull Template template, @Nullable TemplateEditingListener listener) {
     startTemplate(editor, null, template, true, listener, null, null);
   }
 
   @Override
-  public void startTemplate(@NotNull final Editor editor,
-                            @NotNull final Template template,
+  public void startTemplate(@NotNull Editor editor,
+                            @NotNull Template template,
                             boolean inSeparateCommand,
-                            Map<String, String> predefinedVarValues,
-                            TemplateEditingListener listener) {
+                            @Nullable Map<String, String> predefinedVarValues,
+                            @Nullable TemplateEditingListener listener) {
     startTemplate(editor, null, template, inSeparateCommand, listener, null, predefinedVarValues);
   }
 
-  private static int passArgumentBack(CharSequence text, int caretOffset) {
+  private static int passArgumentBack(@NotNull CharSequence text, int caretOffset) {
     int i = caretOffset - 1;
     for (; i >= 0; i--) {
       char c = text.charAt(i);
@@ -208,16 +205,16 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return !Character.isJavaIdentifierPart(c);
   }
 
-  private static <T, U> void addToMap(@NotNull Map<T, U> map, @NotNull Collection<? extends T> keys, U value) {
+  private static <T, U> void addToMap(@NotNull Map<? super T, ? super U> map, @NotNull Collection<? extends T> keys, U value) {
     for (T key : keys) {
       map.put(key, value);
     }
   }
 
-  private static boolean containsTemplateStartingBefore(Map<TemplateImpl, String> template2argument,
+  private static boolean containsTemplateStartingBefore(@NotNull Map<TemplateImpl, String> template2argument,
                                                         int offset,
                                                         int caretOffset,
-                                                        CharSequence text) {
+                                                        @NotNull CharSequence text) {
     for (TemplateImpl template : template2argument.keySet()) {
       String argument = template2argument.get(template);
       int templateStart = getTemplateStart(template, argument, caretOffset, text);
@@ -228,8 +225,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return false;
   }
 
-  @Nullable
-  public Runnable prepareTemplate(final Editor editor, char shortcutChar, @Nullable final PairProcessor<? super String, ? super String> processor) {
+  public @Nullable Runnable prepareTemplate(@NotNull Editor editor, char shortcutChar, @Nullable PairProcessor<? super String, ? super String> processor) {
     if (editor.getSelectionModel().hasSelection()) {
       return null;
     }
@@ -267,7 +263,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return startNonCustomTemplates(template2argument, editor, processor);
   }
 
-  private static boolean supportsMultiCaretMode(CustomLiveTemplate customLiveTemplate) {
+  private static boolean supportsMultiCaretMode(@NotNull CustomLiveTemplate customLiveTemplate) {
     return !(customLiveTemplate instanceof CustomLiveTemplateBase) || ((CustomLiveTemplateBase)customLiveTemplate).supportsMultiCaret();
   }
 
@@ -282,7 +278,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return customLiveTemplate.isApplicable(callback, callback.getOffset(), templateActionContext.isSurrounding());
   }
 
-  private static int getArgumentOffset(int caretOffset, String argument, CharSequence text) {
+  private static int getArgumentOffset(int caretOffset, @NotNull String argument, @NotNull CharSequence text) {
     int argumentOffset = caretOffset - argument.length();
     if (argumentOffset > 0 && text.charAt(argumentOffset - 1) == ' ') {
       if (argumentOffset - 2 >= 0 && Character.isJavaIdentifierPart(text.charAt(argumentOffset - 2))) {
@@ -292,7 +288,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return argumentOffset;
   }
 
-  private static int getTemplateStart(TemplateImpl template, String argument, int caretOffset, CharSequence text) {
+  private static int getTemplateStart(@NotNull TemplateImpl template, @Nullable String argument, int caretOffset, @NotNull CharSequence text) {
     int templateStart;
     if (argument == null) {
       templateStart = caretOffset - template.getKey().length();
@@ -304,13 +300,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return templateStart;
   }
 
-  public Map<TemplateImpl, String> findMatchingTemplates(final PsiFile file,
-                                                         Editor editor,
+  public Map<TemplateImpl, String> findMatchingTemplates(@NotNull PsiFile psiFile,
+                                                         @NotNull Editor editor,
                                                          @Nullable Character shortcutChar,
-                                                         TemplateSettings templateSettings) {
-    final Document document = editor.getDocument();
+                                                         @NotNull TemplateSettings templateSettings) {
+    Document document = editor.getDocument();
     CharSequence text = document.getCharsSequence();
-    final int caretOffset = editor.getCaretModel().getOffset();
+    int caretOffset = editor.getCaretModel().getOffset();
 
     List<TemplateImpl> candidatesWithoutArgument = findMatchingTemplates(text, caretOffset, shortcutChar, templateSettings, false);
 
@@ -331,22 +327,21 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
 
     candidatesWithoutArgument = filterApplicableCandidates(
-      TemplateActionContext.expanding(file, caretOffset), candidatesWithoutArgument);
+      TemplateActionContext.expanding(psiFile, caretOffset), candidatesWithoutArgument);
     candidatesWithArgument = filterApplicableCandidates(
-      TemplateActionContext.expanding(file, argumentOffset), candidatesWithArgument);
+      TemplateActionContext.expanding(psiFile, argumentOffset), candidatesWithArgument);
     Map<TemplateImpl, String> candidate2Argument = new HashMap<>();
     addToMap(candidate2Argument, candidatesWithoutArgument, null);
     addToMap(candidate2Argument, candidatesWithArgument, argument);
     return candidate2Argument;
   }
 
-  @Nullable
-  public Runnable startNonCustomTemplates(final Map<TemplateImpl, String> template2argument,
-                                          final Editor editor,
-                                          @Nullable final PairProcessor<? super String, ? super String> processor) {
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final Document document = editor.getDocument();
-    final CharSequence text = document.getCharsSequence();
+  public @Nullable Runnable startNonCustomTemplates(@Nullable Map<TemplateImpl, String> template2argument,
+                                                    @NotNull Editor editor,
+                                                    @Nullable PairProcessor<? super String, ? super String> processor) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    CharSequence text = document.getCharsSequence();
 
     if (template2argument == null || template2argument.isEmpty()) {
       return null;
@@ -365,10 +360,11 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     };
   }
 
-  private static List<TemplateImpl> findMatchingTemplates(CharSequence text,
+  @NotNull
+  private static List<TemplateImpl> findMatchingTemplates(@NotNull CharSequence text,
                                                           int caretOffset,
                                                           @Nullable Character shortcutChar,
-                                                          TemplateSettings settings,
+                                                          @NotNull TemplateSettings settings,
                                                           boolean hasArgument) {
     List<TemplateImpl> candidates = Collections.emptyList();
     for (int i = settings.getMaxKeyLength(); i >= 1; i--) {
@@ -389,11 +385,11 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return candidates;
   }
 
-  public void startTemplateWithPrefix(final Editor editor,
-                                      final TemplateImpl template,
-                                      @Nullable final PairProcessor<? super String, ? super String> processor,
+  public void startTemplateWithPrefix(@NotNull Editor editor,
+                                      @NotNull TemplateImpl template,
+                                      @Nullable PairProcessor<? super String, ? super String> processor,
                                       @Nullable String argument) {
-    final int caretOffset = editor.getCaretModel().getOffset();
+    int caretOffset = editor.getCaretModel().getOffset();
     String key = template.getKey();
     int startOffset = caretOffset - key.length();
     if (argument != null) {
@@ -406,14 +402,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     startTemplateWithPrefix(editor, template, startOffset, processor, argument);
   }
 
-  @NotNull
-  private TemplateImpl substituteTemplate(@NotNull TemplateImpl template, @NotNull Editor editor) {
+  private @NotNull TemplateImpl substituteTemplate(@NotNull TemplateImpl template, @NotNull Editor editor) {
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
     if (psiFile == null) {
       return template;
     }
     for (TemplateSubstitutor substitutor : TemplateSubstitutor.EP_NAME.getExtensionList()) {
-      final TemplateImpl substituted = substitutor.substituteTemplate(new TemplateSubstitutionContext(myProject, editor), template);
+      TemplateImpl substituted = substitutor.substituteTemplate(new TemplateSubstitutionContext(myProject, editor), template);
       if (substituted != null) {
         template = substituted;
       }
@@ -421,13 +416,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return template;
   }
 
-  public void startTemplateWithPrefix(final Editor editor,
-                                      final TemplateImpl template,
-                                      final int templateStart,
-                                      @Nullable final PairProcessor<? super String, ? super String> processor,
-                                      @Nullable final String argument) {
-    final int caretOffset = editor.getCaretModel().getOffset();
-    final TemplateState templateState = initTemplateState(editor);
+  public void startTemplateWithPrefix(@NotNull Editor editor,
+                                      @NotNull TemplateImpl template,
+                                      int templateStart,
+                                      @Nullable PairProcessor<? super String, ? super String> processor,
+                                      @Nullable String argument) {
+    int caretOffset = editor.getCaretModel().getOffset();
+    TemplateState templateState = initTemplateState(editor);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       editor.getDocument().deleteString(templateStart, caretOffset);
@@ -443,8 +438,8 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }, AnalysisBundle.message("insert.code.template.command"), null);
   }
 
-  private static List<TemplateImpl> filterApplicableCandidates(@NotNull TemplateActionContext templateActionContext,
-                                                               @NotNull List<TemplateImpl> candidates) {
+  private static @NotNull List<TemplateImpl> filterApplicableCandidates(@NotNull TemplateActionContext templateActionContext,
+                                                                        @NotNull List<TemplateImpl> candidates) {
     if (candidates.isEmpty()) {
       return candidates;
     }
@@ -461,8 +456,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return result;
   }
 
-  private static List<TemplateContextType> getBases(TemplateContextType type) {
-    ArrayList<TemplateContextType> list = new ArrayList<>();
+  @NotNull
+  private static List<TemplateContextType> getBases(@NotNull TemplateContextType type) {
+    List<TemplateContextType> list = new ArrayList<>();
     while (true) {
       type = type.getBaseContextType();
       if (type == null) return list;
@@ -470,8 +466,9 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
   }
 
+  @NotNull
   private static Set<TemplateContextType> getDirectlyApplicableContextTypes(@NotNull TemplateActionContext templateActionContext) {
-    LinkedHashSet<TemplateContextType> set = new LinkedHashSet<>();
+    Set<TemplateContextType> set = new LinkedHashSet<>();
     for (TemplateContextType contextType : getAllContextTypes()) {
       if (contextType.isInContext(templateActionContext)) {
         set.add(contextType);
@@ -490,15 +487,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     }
   }
 
-  @NotNull
-  public static List<TemplateContextType> getAllContextTypes() {
+  public static @Unmodifiable @NotNull List<TemplateContextType> getAllContextTypes() {
     return TemplateContextTypes.getAllContextTypes();
   }
 
   @Override
-  @Nullable
-  public Template getActiveTemplate(@NotNull Editor editor) {
-    final TemplateState templateState = getTemplateState(editor);
+  public @Nullable Template getActiveTemplate(@NotNull Editor editor) {
+    TemplateState templateState = getTemplateState(editor);
     return templateState != null ? templateState.getTemplate() : null;
   }
 
@@ -516,15 +511,15 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
    * @deprecated use {@link #isApplicable(TemplateImpl, TemplateActionContext)}
    */
   @Deprecated(forRemoval = true)
-  public static boolean isApplicable(PsiFile file, int offset, TemplateImpl template) {
+  public static boolean isApplicable(@NotNull PsiFile file, int offset, TemplateImpl template) {
     return isApplicable(template, TemplateActionContext.expanding(file, offset));
   }
 
-  public static boolean isApplicable(TemplateImpl template, @NotNull TemplateActionContext templateActionContext) {
+  public static boolean isApplicable(@NotNull TemplateImpl template, @NotNull TemplateActionContext templateActionContext) {
     return isApplicable(template, getApplicableContextTypes(templateActionContext));
   }
 
-  public static boolean isApplicable(TemplateImpl template, Set<? extends TemplateContextType> contextTypes) {
+  public static boolean isApplicable(@NotNull TemplateImpl template, @NotNull Set<? extends TemplateContextType> contextTypes) {
     for (TemplateContextType type : contextTypes) {
       if (template.getTemplateContext().isEnabled(type)) {
         return true;
@@ -533,11 +528,11 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return false;
   }
 
-  public static List<TemplateImpl> listApplicableTemplates(@NotNull TemplateActionContext templateActionContext) {
+  public static @NotNull List<TemplateImpl> listApplicableTemplates(@NotNull TemplateActionContext templateActionContext) {
     Set<TemplateContextType> contextTypes = getApplicableContextTypes(templateActionContext);
 
-    final ArrayList<TemplateImpl> result = new ArrayList<>();
-    for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
+    ArrayList<TemplateImpl> result = new ArrayList<>();
+    for (TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
       if (!template.isDeactivated() &&
           (!templateActionContext.isSurrounding() || template.isSelectionTemplate()) &&
           isApplicable(template, contextTypes)) {
@@ -547,13 +542,13 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return result;
   }
 
-  public static List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(@NotNull TemplateActionContext templateActionContext) {
+  public static @NotNull List<TemplateImpl> listApplicableTemplateWithInsertingDummyIdentifier(@NotNull TemplateActionContext templateActionContext) {
     OffsetsInFile offsets = insertDummyIdentifierWithCache(templateActionContext);
     return listApplicableTemplates(TemplateActionContext.create(
       offsets.getFile(), null, getStartOffset(offsets), getEndOffset(offsets), templateActionContext.isSurrounding()));
   }
 
-  public static List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull TemplateActionContext templateActionContext) {
+  public static @NotNull List<CustomLiveTemplate> listApplicableCustomTemplates(@NotNull TemplateActionContext templateActionContext) {
     List<CustomLiveTemplate> result = new ArrayList<>();
     for (CustomLiveTemplate template : CustomLiveTemplate.EP_NAME.getExtensions()) {
       if ((!templateActionContext.isSurrounding() || template.supportsWrapping()) && isApplicable(template, templateActionContext)) {
@@ -563,6 +558,7 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
     return result;
   }
 
+  @NotNull
   public static Set<TemplateContextType> getApplicableContextTypes(@NotNull TemplateActionContext templateActionContext) {
     Set<TemplateContextType> result = getDirectlyApplicableContextTypes(templateActionContext);
 
@@ -575,8 +571,8 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
       }
     }
 
-    // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
-    // language will be ERb, so we won't match HTML templates for it. but they're actually valid
+    // if we have, for example, a Ruby fragment in ERB selected with its exact bounds, the file language and the base
+    // language will be ERB, so we won't match HTML templates for it. but they're actually valid
     Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, templateActionContext.getStartOffset());
     if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
       PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);
@@ -591,38 +587,37 @@ public final class TemplateManagerImpl extends TemplateManager implements Dispos
   private static final OffsetKey START_OFFSET = OffsetKey.create("start", false);
   private static final OffsetKey END_OFFSET = OffsetKey.create("end", true);
 
-  private static int getStartOffset(OffsetsInFile offsets) {
+  private static int getStartOffset(@NotNull OffsetsInFile offsets) {
     return offsets.getOffsets().getOffset(START_OFFSET);
   }
 
-  private static int getEndOffset(OffsetsInFile offsets) {
+  private static int getEndOffset(@NotNull OffsetsInFile offsets) {
     return offsets.getOffsets().getOffset(END_OFFSET);
   }
 
   private static OffsetsInFile insertDummyIdentifierWithCache(@NotNull TemplateActionContext templateActionContext) {
     ProperTextRange editRange = ProperTextRange.create(templateActionContext.getStartOffset(), templateActionContext.getEndOffset());
     PsiFile file = templateActionContext.getFile();
-    assertRangeWithinDocument(editRange, Objects.requireNonNull(file.getViewProvider().getDocument()));
+    assertRangeWithinDocument(editRange, file.getFileDocument());
 
     ConcurrentMap<Pair<ProperTextRange, String>, OffsetsInFile> map = CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         ConcurrentFactoryMap.createMap(
           key -> copyWithDummyIdentifier(new OffsetsInFile(file), key.first.getStartOffset(), key.first.getEndOffset(), key.second)),
-        file, file.getViewProvider().getDocument()));
+        file, file.getFileDocument()));
     return map.get(Pair.create(editRange, CompletionUtil.DUMMY_IDENTIFIER_TRIMMED));
   }
 
-  private static void assertRangeWithinDocument(ProperTextRange editRange, Document document) {
+  private static void assertRangeWithinDocument(@NotNull ProperTextRange editRange, @NotNull Document document) {
     TextRange docRange = TextRange.from(0, document.getTextLength());
     assert docRange.contains(editRange) : docRange + " doesn't contain " + editRange;
   }
 
-  @NotNull
-  public static OffsetsInFile copyWithDummyIdentifier(OffsetsInFile offsetMap, int startOffset, int endOffset, String replacement) {
+  public static @NotNull OffsetsInFile copyWithDummyIdentifier(@NotNull OffsetsInFile offsetMap, int startOffset, int endOffset, @NotNull String replacement) {
     offsetMap.getOffsets().addOffset(START_OFFSET, startOffset);
     offsetMap.getOffsets().addOffset(END_OFFSET, endOffset);
 
-    Document document = offsetMap.getFile().getViewProvider().getDocument();
+    Document document = offsetMap.getFile().getFileDocument();
     assert document != null;
     if (replacement.isEmpty() &&
         startOffset == endOffset &&

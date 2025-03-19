@@ -1,13 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.ide.ApplicationActivity
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -17,9 +21,9 @@ import io.netty.bootstrap.ServerBootstrap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
+import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
 import org.jetbrains.builtInWebServer.TOKEN_PARAM_NAME
-import org.jetbrains.builtInWebServer.acquireToken
 import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import org.jetbrains.io.SubServer
@@ -36,12 +40,13 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 private val LOG = logger<BuiltInServerManager>()
 
 class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
+  private val authService = service<BuiltInWebServerAuth>()
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
 
   override val port: Int
-    get() = portOverride ?: server?.port ?: defaultPort
+    get() = portOverride ?: server?.port ?: getDefaultPort()
 
   override val serverDisposable: Disposable?
     get() = server
@@ -50,7 +55,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     val app = ApplicationManager.getApplication()
     serverStartFuture = when {
       app.isUnitTestMode -> null
-      else -> coroutineScope.launch(Dispatchers.IO) { startServerInPooledThread() }
+      else -> coroutineScope.launch(Dispatchers.IO) {
+        startServerInPooledThread()
+      }
     }
   }
 
@@ -84,7 +91,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
                inetAddress.isAnyLocalAddress ||
                options.builtInServerAvailableExternally && idePort != port && NetworkInterface.getByInetAddress(inetAddress) != null
       }
-      catch (e: IOException) {
+      catch (_: IOException) {
         return false
       }
     }
@@ -94,10 +101,10 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 
   override fun waitForStart(): BuiltInServerManager {
     val app = ApplicationManager.getApplication()
-    LOG.assertTrue(app.isUnitTestMode ||
-                   app.isHeadlessEnvironment ||
-                   !app.isDispatchThread,
-                   "Should not wait for built-in server on EDT")
+    LOG.assertTrue(
+      app.isUnitTestMode || app.isHeadlessEnvironment || !app.isDispatchThread,
+      "Should not wait for built-in server on EDT"
+    )
 
     var future: Job?
     synchronized(this) {
@@ -114,12 +121,18 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 
   private suspend fun startServerInPooledThread() {
     if (SystemProperties.getBooleanProperty(PROPERTY_DISABLED, false)) {
-      throw RuntimeException("Built-in server is disabled by `$PROPERTY_DISABLED` VM option")
+      return
     }
 
+    // extensions may use registry to enable/disable URL handlers
+    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+
     try {
-      server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
+      server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
+    }
+    catch (_: CancellationException) {
+      return
     }
     catch (e: Throwable) {
       LOG.info(e)
@@ -133,16 +146,12 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
-  override fun isOnBuiltInWebServer(url: Url?): Boolean {
-    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
-  }
+  override fun isOnBuiltInWebServer(url: Url?): Boolean =
+    url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
 
-  override fun addAuthToken(url: Url): Url {
-    return when {
-      // the built-in server URL contains a query only if a token is specified
-      url.parameters != null -> url
-      else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, acquireToken()))
-    }
+  override fun addAuthToken(url: Url): Url = when {
+    url.parameters != null -> url  // the built-in server URL contains a query only if a token is specified
+    else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, authService.acquireToken()))
   }
 
   override fun overridePort(port: Int?) {
@@ -152,20 +161,30 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {
-    connection.setRequestProperty(TOKEN_HEADER_NAME, acquireToken())
+    connection.setRequestProperty(TOKEN_HEADER_NAME, authService.acquireToken())
+  }
+
+  // the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
+  private fun getDefaultPort(): Int =
+    System.getProperty(PROPERTY_RPC_PORT)?.toIntOrNull()
+    ?: if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
+
+  private fun bindCustomPorts(server: BuiltInServer) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+
+    CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
+      SubServer(customPortServerManager, server).bind(customPortServerManager.port)
+    }
   }
 }
 
-// the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
-private val defaultPort: Int
-  get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
-
-private fun bindCustomPorts(server: BuiltInServer) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
-    return
-  }
-
-  CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
-    SubServer(customPortServerManager, server).bind(customPortServerManager.port)
+/**
+ * Instead of preloading too early, we explicitly start the server at the end of the application boot sequence.
+ */
+internal class BuiltInServerManagerLauncher : ApplicationActivity {
+  override suspend fun execute() {
+    serviceAsync<BuiltInServerManager>()
   }
 }

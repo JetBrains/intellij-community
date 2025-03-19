@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +22,7 @@ public final class PyCellUtil {
     return false;
   }
 
-  @Nullable
-  public static PsiElement getCellStart(@NotNull PsiElement element) {
+  public static @Nullable PsiElement getCellStart(@NotNull PsiElement element) {
     PsiElement el = element;
     while (el != null && !isBlockCell(el)) {
       el = PsiTreeUtil.prevLeaf(el);
@@ -34,14 +33,15 @@ public final class PyCellUtil {
     return PsiTreeUtil.nextLeaf(el);
   }
 
-  public static boolean isBlockCell(PsiElement element) {
-    return (element instanceof PsiComment) &&
-           (element.getText().startsWith("# %%") || element.getText().startsWith("#%%") || element.getText().startsWith("# <codecell>")) ||
-      element.getText().startsWith("# In[");
+  public static boolean isBlockDefinition(String text) {
+    return text.startsWith("# %%") || text.startsWith("#%%") || text.startsWith("# <codecell>") || text.startsWith("# In[");
   }
 
-  @NotNull
-  public static String getCodeInCell(@Nullable PsiElement element) {
+  public static boolean isBlockCell(PsiElement element) {
+    return (element instanceof PsiComment) && isBlockDefinition(element.getText());
+  }
+
+  public static @NotNull String getCodeInCell(@Nullable PsiElement element) {
     StringBuilder text = new StringBuilder();
     while (element != null && !isBlockCell(element)) {
       text.append(element.getText());

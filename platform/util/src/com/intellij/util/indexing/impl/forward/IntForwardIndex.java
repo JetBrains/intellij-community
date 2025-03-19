@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,9 +14,8 @@ public interface IntForwardIndex extends ForwardIndex {
 
   void putInt(int  key, int value) throws IOException;
 
-  @Nullable
   @Override
-  default ByteArraySequence get(@NotNull Integer key) throws IOException {
+  default @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     int intValue = getInt(key);
     return AbstractForwardIndexAccessor.serializeValueToByteSeq(intValue, EnumeratorIntegerDescriptor.INSTANCE, 4);
   }

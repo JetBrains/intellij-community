@@ -13,11 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 
 class GrUnnecessaryAliasInspection : LocalInspectionTool(), CleanupLocalInspectionTool {
 
-  companion object {
-    @JvmStatic
-    private val fix = RemoveElementQuickFix(GroovyBundle.message("unnecessary.alias.fix"))
-  }
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
 
     override fun visitElement(element: PsiElement) {
@@ -30,7 +25,7 @@ class GrUnnecessaryAliasInspection : LocalInspectionTool(), CleanupLocalInspecti
         holder.registerProblem(
           alias,
           GroovyBundle.message("unnecessary.alias.description"),
-          fix
+          RemoveElementQuickFix(GroovyBundle.message("unnecessary.alias.fix"))
         )
       }
     }

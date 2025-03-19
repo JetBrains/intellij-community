@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
@@ -11,17 +10,16 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
-import org.jetbrains.kotlin.idea.codeinsight.utils.ENUM_STATIC_METHODS
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
-import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
@@ -67,11 +65,6 @@ val KtQualifiedExpression.calleeName: String?
 
 fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? =
     callExpression?.resolveToCall(bodyResolveMode)
-
-fun KtExpression.isExitStatement(): Boolean = when (this) {
-    is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
-    else -> false
-}
 
 // returns false for call of super, static method or method from package
 fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
@@ -150,14 +143,6 @@ fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }
     return callExpression.isCalling(COUNT_FUNCTIONS)
 }
 
-fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
-    when (val receiver = receiverExpression) {
-        is KtDotQualifiedExpression -> receiver.deleteFirstReceiver()
-        else -> selectorExpression?.let { return this.replace(it) as KtExpression }
-    }
-    return this
-}
-
 private val ARRAY_OF_FUNCTION_NAMES = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
         Name.identifier("emptyArray")
@@ -167,16 +152,6 @@ fun KtCallExpression.isArrayOfFunction(): Boolean {
     val descriptor = resolvedCall.candidateDescriptor
     return (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
             ARRAY_OF_FUNCTION_NAMES.contains(descriptor.name)
-}
-
-fun KtBlockExpression.getParentLambdaLabelName(): String? {
-    val lambdaExpression = getStrictParentOfType<KtLambdaExpression>() ?: return null
-    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
-    val valueArgument = callExpression.valueArguments.find {
-        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
-    } ?: return null
-    val lambdaLabelName = (valueArgument.getArgumentExpression() as? KtLabeledExpression)?.getLabelName()
-    return lambdaLabelName ?: callExpression.getCallNameExpression()?.text
 }
 
 internal fun KtExpression.getCallableDescriptor() = resolveToCall()?.resultingDescriptor
@@ -206,18 +181,6 @@ val FunctionDescriptor.isOperatorOrCompatible: Boolean
         return isOperator
     }
 
-internal fun Sequence<PsiElement>.lastWithPersistedElementOrNull(elementShouldPersist: KtExpression): PsiElement? {
-    var lastElement: PsiElement? = null
-    var checked = false
-
-    for (element in this) {
-        checked = checked || (element === elementShouldPersist)
-        lastElement = element
-    }
-
-    return if (checked) lastElement else null
-}
-
 fun KotlinType.reflectToRegularFunctionType(): KotlinType {
     val isTypeAnnotatedWithExtensionFunctionType = annotations.findAnnotation(StandardNames.FqNames.extensionFunctionType) != null
     val parameterCount = if (isTypeAnnotatedWithExtensionFunctionType) arguments.size - 2 else arguments.size - 1
@@ -240,24 +203,7 @@ fun ResolvedCall<out CallableDescriptor>.canBeReplacedWithInvokeCall(): Boolean 
 
 fun CallableDescriptor.receiverType(): KotlinType? = (dispatchReceiverParameter ?: extensionReceiverParameter)?.type
 
-fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
-    call: KtCallExpression,
-    newFunctionName: String
-) {
-    val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
-    if (callOrQualified is KtQualifiedExpression) {
-        appendExpression(callOrQualified.receiverExpression)
-        if (callOrQualified is KtSafeQualifiedExpression) appendFixedText("?")
-        appendFixedText(".")
-    }
-    appendNonFormattedText(newFunctionName)
-    call.valueArgumentList?.let { appendNonFormattedText(it.text) }
-    call.lambdaArguments.firstOrNull()?.let {
-        if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
-        appendNonFormattedText(it.text)
-    }
-}
-
+@Deprecated("Use org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt.singleLambdaArgumentExpression")
 fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
     return lambdaArguments.singleOrNull()?.getArgumentExpression()?.unpackFunctionLiteral() ?: getLastLambdaExpression()
 }
@@ -272,8 +218,4 @@ private val rangeTypes = setOf(
 
 fun ClassDescriptor.isRange(): Boolean {
     return rangeTypes.any { this.fqNameUnsafe.asString() == it }
-}
-
-fun KtTypeReference?.typeArguments(): List<KtTypeProjection> {
-    return (this?.typeElement as? KtUserType)?.typeArguments.orEmpty()
 }

@@ -1,14 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -24,13 +26,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntentionAction {
+public final class AddSingleMemberStaticImportAction extends PsiUpdateModCommandAction<PsiIdentifier> {
   private static final Logger LOG = Logger.getInstance(AddSingleMemberStaticImportAction.class);
   private static final Key<PsiElement> TEMP_REFERENT_USER_DATA = new Key<>("TEMP_REFERENT_USER_DATA");
 
+  public AddSingleMemberStaticImportAction() {
+    super(PsiIdentifier.class);
+  }
+  
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("intention.add.single.member.static.import.family");
   }
 
@@ -50,9 +55,8 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
    * @param element     target element that is static import candidate
    * @return            not-null qualified name of the class which method may be statically imported if any; {@code null} otherwise
    */
-  @Nullable
-  public static ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
+  public static @Nullable ImportAvailability getStaticImportClass(@NotNull PsiElement element) {
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, element)) return null;
     if (element instanceof PsiIdentifier) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodReferenceExpression) return null;
@@ -147,8 +151,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     return parameterList != null && parameterList.getFirstChild() != null;
   }
 
-  @Nullable
-  private static PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
+  private static @Nullable PsiClass getResolvedClass(PsiElement element, PsiMember resolved) {
     PsiClass aClass = resolved.getContainingClass();
     if (aClass != null && !PsiUtil.isAccessible(aClass.getProject(), aClass, element, null)) {
       final PsiElement qualifier = ((PsiJavaCodeReferenceElement)element.getParent()).getQualifier();
@@ -166,25 +169,20 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
     ImportAvailability availability = getStaticImportClass(element);
-    if (availability != null) {
-      if (availability.resolved instanceof PsiClass) {
-        setText(JavaBundle.message("intention.add.single.member.import.text", availability.qName));
-      } else {
-        PsiFile file = element.getContainingFile();
-        if (!(file instanceof PsiJavaFile)) return false;
-        PsiImportStatementBase existingImport =
-          findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
-        if (existingImport != null && !existingImport.isOnDemand()) {
-          setText(JavaBundle.message("intention.use.single.member.static.import.text" , availability.qName));
-        }
-        else {
-          setText(JavaBundle.message("intention.add.single.member.static.import.text", availability.qName));
-        }
-      }
+    if (availability == null) return null;
+    if (availability.resolved instanceof PsiClass) {
+      return Presentation.of(JavaBundle.message("intention.add.single.member.import.text", availability.qName));
     }
-    return availability != null;
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof PsiJavaFile)) return null;
+    PsiImportStatementBase existingImport =
+      findExistingImport(file, availability.resolved.getContainingClass(), StringUtil.getShortName(availability.qName));
+    if (existingImport != null && !existingImport.isOnDemand()) {
+      return Presentation.of(JavaBundle.message("intention.use.single.member.static.import.text" , availability.qName));
+    }
+    return Presentation.of(JavaBundle.message("intention.add.single.member.static.import.text", availability.qName));
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
@@ -202,7 +200,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   public static void bindAllClassRefs(final PsiFile file,
-                                      @NotNull final PsiElement resolved,
+                                      final @NotNull PsiElement resolved,
                                       final String referenceName,
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -223,7 +221,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
     if (existingImport == null && resolved instanceof PsiClass) {
       ((PsiImportHolder) file).importClass((PsiClass) resolved);
     }
-    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
+    else if (existingImport == null || existingImport.isOnDemand() && resolvedClass != null && ImportHelper.hasConflictingOnStaticDemandImport((PsiJavaFile)file, resolvedClass, referenceName)) {
       PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
     }
 
@@ -295,7 +293,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier element, @NotNull ModPsiUpdater updater) {
     invoke(element.getContainingFile(), element);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.dom;
 
 import com.intellij.lang.properties.IProperty;
@@ -64,8 +64,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   public abstract GenericAttributeValue<String> getbasedir();
 
   @Override
-  @NotNull
-  public final Iterator<String> getNamesIterator() {
+  public final @NotNull Iterator<String> getNamesIterator() {
     final String prefix = getPropertyPrefixValue();
     final Iterator<String> delegate = buildProperties().keySet().iterator();
     if (prefix == null) {
@@ -129,8 +128,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
   }
 
   @Override
-  @Nullable
-  public final String getPropertyValue(String propertyName) {
+  public final @Nullable String getPropertyValue(String propertyName) {
     final String prefix = getPropertyPrefixValue();
     if (prefix != null) {
       if (!propertyName.startsWith(prefix)) {
@@ -219,8 +217,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return (myCachedProperties = result);
   }
 
-  @Nullable
-  public String getPropertyPrefixValue() {
+  public @Nullable String getPropertyPrefixValue() {
     final GenericAttributeValue<String> prefixValue = getPrefix();
     if (prefixValue == null) {
       return null;
@@ -245,13 +242,11 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     return loader;
   }
 
-  @Nullable
-  public PropertiesFile getPropertiesFile() {
+  public @Nullable PropertiesFile getPropertiesFile() {
     return toPropertiesFile(getFile().getValue());
   }
 
-  @Nullable
-  private static PropertiesFile toPropertiesFile(@Nullable final PsiFileSystemItem item) {
+  private static @Nullable PropertiesFile toPropertiesFile(final @Nullable PsiFileSystemItem item) {
     if (item instanceof PropertiesFile) {
       return (PropertiesFile)item;
     }

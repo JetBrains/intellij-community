@@ -1,5 +1,6 @@
 // PROBLEM: none
 // LANGUAGE_VERSION: 1.2
+// ERROR: 'operator' modifier is inapplicable on this function: illegal function name
 
 fun test() {
     class Test {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.chrome;
 
 import com.intellij.ide.IdeBundle;
@@ -32,9 +32,9 @@ public class ChromeSettingsConfigurable implements Configurable {
 
   public ChromeSettingsConfigurable(@NotNull ChromeSettings settings) {
     mySettings = settings;
-    myUserDataDirField.addBrowseFolderListener(IdeBundle.message("chooser.title.select.user.data.directory"), IdeBundle
-                                                 .message("chooser.description.specifies.user.data.directory"), null,
-                                               FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myUserDataDirField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(IdeBundle.message("chooser.title.select.user.data.directory"))
+      .withDescription(IdeBundle.message("chooser.description.specifies.user.data.directory")));
     myUseCustomProfileCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -106,9 +106,8 @@ public class ChromeSettingsConfigurable implements Configurable {
     }
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return IdeBundle.message("configurable.ChromeSettingsConfigurable.display.name");
   }
 

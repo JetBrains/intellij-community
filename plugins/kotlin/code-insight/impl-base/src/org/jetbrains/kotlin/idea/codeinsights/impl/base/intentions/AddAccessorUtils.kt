@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -17,7 +17,7 @@ object AddAccessorUtils {
         else -> throw AssertionError("At least one from (addGetter, addSetter) should be true")
     }
 
-    fun addAccessors(element: KtProperty, addGetter: Boolean, addSetter: Boolean, editor: Editor?) {
+    fun addAccessors(element: KtProperty, addGetter: Boolean, addSetter: Boolean, caretMover: ((Int) -> Unit)?) {
         val hasInitializer = element.hasInitializer()
         val psiFactory = KtPsiFactory(element)
         if (addGetter) {
@@ -27,20 +27,20 @@ object AddAccessorUtils {
                 element.addBefore(getter, element.setter)
             } else {
                 element.add(getter)
-            }
+            }.reformatted(canChangeWhiteSpacesOnly = true)
             if (!hasInitializer) {
                 (added as? KtPropertyAccessor)?.bodyBlockExpression?.statements?.firstOrNull()?.let {
-                    editor?.caretModel?.moveToOffset(it.startOffset)
+                    caretMover?.invoke(it.startOffset)
                 }
             }
         }
         if (addSetter) {
             val expression = if (hasInitializer) psiFactory.createBlock("field = value") else psiFactory.createEmptyBody()
             val setter = psiFactory.createPropertySetter(expression)
-            val added = element.add(setter)
+            val added = element.add(setter).reformatted(canChangeWhiteSpacesOnly = true)
             if (!hasInitializer && !addGetter) {
                 (added as? KtPropertyAccessor)?.bodyBlockExpression?.lBrace?.let {
-                    editor?.caretModel?.moveToOffset(it.startOffset + 1)
+                    caretMover?.invoke(it.startOffset + 1)
                 }
             }
         }

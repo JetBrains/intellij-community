@@ -1,5 +1,5 @@
 enum class MyEnum {
-    A, B
+    AZ806, BZ806
 }
 
 fun main(args: Array<String>) {

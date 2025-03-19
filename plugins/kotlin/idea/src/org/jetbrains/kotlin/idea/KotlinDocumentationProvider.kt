@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -28,6 +28,7 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
@@ -104,11 +105,9 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
         val name =
             base.renderClassifier(classifier, renderer) + (type?.takeIf { it.isDefinitelyNotNullType }?.let { " & Any" } ?: "")
 
-        if (classifier.isBoringBuiltinClass())
-            return name
         return buildString {
             val ref = classifier.fqNameUnsafe.toString()
-            DocumentationManagerUtil.createHyperlink(this, ref, name, true, false)
+            DocumentationManagerUtil.createHyperlink(this, ref, name, true)
         }
     }
 }
@@ -281,7 +280,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
     companion object {
         private val LOG = Logger.getInstance(KotlinDocumentationProvider::class.java)
 
-        private fun renderEnumSpecialFunction(element: KtClass, functionDescriptor: FunctionDescriptor, quickNavigation: Boolean): String {
+        private fun renderEnumSpecialFunction(element: KtClass, descriptor: DeclarationDescriptor, quickNavigation: Boolean): String {
             val kdoc = run {
                 val declarationDescriptor = element.resolveToDescriptorIfAny()
                 val enumDescriptor = declarationDescriptor?.getSuperClassNotAny() ?: return@run null
@@ -290,7 +289,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                     DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, enumDescriptor) as? KtDeclaration ?: return@run null
 
                 val enumSource = SourceNavigationHelper.getNavigationElement(enumDeclaration)
-                val functionName = functionDescriptor.fqNameSafe.shortName().asString()
+                val functionName = descriptor.fqNameSafe.shortName().asString()
                 return@run enumSource.findDescendantOfType<KDoc> { doc ->
                     doc.getChildrenOfType<KDocSection>().any { it.findTagByName(functionName) != null }
                 }
@@ -299,7 +298,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             return buildString {
                 insert(KDocTemplate()) {
                     definition {
-                        renderDefinition(functionDescriptor, Lazy.DESCRIPTOR_RENDERER
+                        renderDefinition(descriptor, Lazy.DESCRIPTOR_RENDERER
                             .withIdeOptions { highlightingManager = createHighlightingManager(element.project) }
                         )
                     }
@@ -323,7 +322,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 (context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     ?: context[BindingContext.REFERENCE_TARGET, referenceExpression.getChildOfType<KtReferenceExpression>()])?.let {
-                    if (it is FunctionDescriptor) // To protect from Some<caret>Enum.values()
+                    if (it is FunctionDescriptor || it is PropertyDescriptor) // To protect from Some<caret>Enum.values()
                         return renderEnumSpecialFunction(element, it, quickNavigation)
                 }
             }
@@ -336,8 +335,12 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
 
         @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
+            (element as? KtElement)?.navigationElement.takeIf { it != element }?.let {
+                return getTextImpl(it, originalElement, quickNavigation)
+            }
+
             if (element is PsiWhiteSpace) {
-                val itElement = findElementWithText(originalElement, "it")
+                val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
                 val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)
                 if (itReference != null) {
                     return getTextImpl(itReference, originalElement, quickNavigation)
@@ -377,7 +380,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 }
             } else if (element is KtDeclaration) {
                 return renderKotlinDeclaration(element, quickNavigation)
-            } else if (element is KtNameReferenceExpression && element.getReferencedName() == "it") {
+            } else if (element is KtNameReferenceExpression && element.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                 return renderKotlinImplicitLambdaParameter(element, quickNavigation)
             } else if (element is KtLightDeclaration<*, *>) {
                 val origin = element.kotlinOrigin ?: return null
@@ -555,7 +558,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         }
 
         private fun getContainerInfo(element: PsiElement?): HtmlChunk? {
-            if (element !is KtExpression) return null
+            val ktExpression = element as? KtExpression ?: return null
 
             val resolutionFacade = element.getResolutionFacade()
             val context = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
@@ -571,10 +574,17 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                         val highlighted =
                             if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString(), element.project) { asClassName }
                             else it.asString()
-                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
+                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false)
                     }
                     HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+                        HtmlChunk.tag("icon").attr(
+                            "src",
+                            if (ktExpression.isTopLevelKtOrJavaMember()) {
+                                "AllIcons.Nodes.Package"
+                            } else {
+                                "KotlinBaseResourcesIcons.ClassKotlin"
+                            }
+                        ),
                         HtmlChunk.nbsp(),
                         HtmlChunk.raw(link.toString()),
                         HtmlChunk.br()
@@ -590,7 +600,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
                 ?.let {  fileName: @NlsSafe String ->
                     HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                        HtmlChunk.tag("icon").attr("src", "KotlinBaseResourcesIcons.Kotlin_file"),
                         HtmlChunk.nbsp(),
                         HtmlChunk.text(fileName),
                         HtmlChunk.br()

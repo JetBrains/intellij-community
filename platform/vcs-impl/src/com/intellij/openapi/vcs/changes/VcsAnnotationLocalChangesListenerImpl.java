@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
@@ -16,10 +17,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -31,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents;
 
+@ApiStatus.Internal
 public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnnotationLocalChangesListener {
   private static final Logger LOG = Logger.getInstance(VcsAnnotationLocalChangesListenerImpl.class);
 
@@ -192,7 +196,9 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
       for (FileAnnotation annotation : annotations) {
         try {
           if (reload) {
-            annotation.reload(null);
+            try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162976")) {
+              annotation.reload(null);
+            }
           }
           else {
             annotation.close();

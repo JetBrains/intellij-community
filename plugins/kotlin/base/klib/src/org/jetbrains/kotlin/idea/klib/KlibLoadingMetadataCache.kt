@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
 import org.jetbrains.kotlin.library.KLIB_METADATA_FILE_EXTENSION
 import org.jetbrains.kotlin.library.KLIB_MODULE_METADATA_FILE_NAME
 import org.jetbrains.kotlin.library.metadata.KlibMetadataProtoBuf
-import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.library.metadata.parseModuleHeader
 import org.jetbrains.kotlin.library.metadata.parsePackageFragment
 import org.jetbrains.kotlin.library.readKonanLibraryVersioning
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import java.io.IOException
 import java.util.*
 
+@Service
 class KlibLoadingMetadataCache {
     // Use special CacheKey class instead of VirtualFile for cache keys. Certain types of VirtualFiles (for example, obtained from JarFileSystem)
     // do not compare path (url) and modification stamp in equals() method.
@@ -31,9 +32,9 @@ class KlibLoadingMetadataCache {
     // ConcurrentWeakValueHashMap does not allow null values.
     private class CacheValue<T : Any>(val value: T?)
 
-    private val packageFragmentCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<ProtoBuf.PackageFragment>>()
-    private val moduleHeaderCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataProtoBuf.Header>>()
-    private val libraryMetadataVersionCache = ContainerUtil.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataVersion>>()
+    private val packageFragmentCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<ProtoBuf.PackageFragment>>()
+    private val moduleHeaderCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<KlibMetadataProtoBuf.Header>>()
+    private val libraryMetadataVersionCache = CollectionFactory.createConcurrentWeakValueMap<CacheKey, CacheValue<MetadataVersion>>()
 
     fun getCachedPackageFragment(packageFragmentFile: VirtualFile): ProtoBuf.PackageFragment? {
         check(packageFragmentFile.extension == KLIB_METADATA_FILE_EXTENSION) {
@@ -59,20 +60,36 @@ class KlibLoadingMetadataCache {
         }.value
     }
 
-    private fun isMetadataCompatible(libraryRoot: VirtualFile): Boolean {
-        val manifestFile = libraryRoot.findChild(KLIB_MANIFEST_FILE_NAME) ?: return false
+    fun getCachedPackageFragmentWithVersion(packageFragmentFile: VirtualFile): Pair<ProtoBuf.PackageFragment?, MetadataVersion?> {
+        val packageFragment = getCachedPackageFragment(packageFragmentFile) ?: return null to null
+        val version = getCachedMetadataVersion(getKlibLibraryRootForPackageFragment(packageFragmentFile))
+        return packageFragment to version
+    }
+
+    private fun getCachedMetadataVersion(libraryRoot: VirtualFile): MetadataVersion? {
+        val manifestFile = libraryRoot.findChild(KLIB_MANIFEST_FILE_NAME) ?: return null
 
         val metadataVersion = libraryMetadataVersionCache.computeIfAbsent(
             CacheKey(manifestFile)
         ) {
             CacheValue(computeLibraryMetadataVersion(manifestFile))
-        }.value ?: return false
+        }.value
+
+        return metadataVersion
+    }
+
+    private fun getKlibLibraryRootForPackageFragment(packageFragmentFile: VirtualFile): VirtualFile {
+        return packageFragmentFile.parent.parent.parent
+    }
+
+    private fun isMetadataCompatible(libraryRoot: VirtualFile): Boolean {
+        val metadataVersion = getCachedMetadataVersion(libraryRoot) ?: return false
 
         return metadataVersion.isCompatible()
     }
 
     private fun computePackageFragment(packageFragmentFile: VirtualFile): ProtoBuf.PackageFragment? {
-        if (!isMetadataCompatible(packageFragmentFile.parent.parent.parent))
+        if (!isMetadataCompatible(getKlibLibraryRootForPackageFragment(packageFragmentFile)))
             return null
 
         return try {
@@ -93,9 +110,9 @@ class KlibLoadingMetadataCache {
         }
     }
 
-    private fun computeLibraryMetadataVersion(manifestFile: VirtualFile): KlibMetadataVersion? = try {
+    private fun computeLibraryMetadataVersion(manifestFile: VirtualFile): MetadataVersion? = try {
         val versioning = Properties().apply { manifestFile.inputStream.use { load(it) } }.readKonanLibraryVersioning()
-        versioning.metadataVersion?.let(BinaryVersion.Companion::parseVersionArray)?.let(::KlibMetadataVersion)
+        versioning.metadataVersion?.let(BinaryVersion.Companion::parseVersionArray)?.let(::MetadataVersion)
     } catch (_: IOException) {
         // ignore and cache null value
         null

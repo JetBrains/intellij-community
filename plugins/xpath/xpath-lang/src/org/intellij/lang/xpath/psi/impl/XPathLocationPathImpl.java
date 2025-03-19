@@ -27,8 +27,7 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
     }
 
     @Override
-    @NotNull
-    public XPathType getType() {
+    public @NotNull XPathType getType() {
       final XPathStep step = getFirstStep();
       if (step != null) {
         final XPathExpression expr = step.getStep();
@@ -41,8 +40,7 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
     }
 
     @Override
-    @Nullable
-    public XPathStep getFirstStep() {
+    public @Nullable XPathStep getFirstStep() {
       return findChildByClass(XPathStep.class);
     }
 

@@ -1,0 +1,49 @@
+### auto-generated section `build kotlin.maven` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "maven_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "maven",
+  module_name = "kotlin.maven",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:gson",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//platform/observable:ide-observable",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/compiler-configuration:kotlin-base-compiler-configuration",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/platforms:kotlin-base-platforms",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/statistics:kotlin-base-statistics",
+    "//plugins/kotlin/code-insight/descriptions:kotlin-code-insight-descriptions",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/formatter",
+    "//plugins/kotlin/migration",
+    "//plugins/kotlin/inspections",
+    "//jps/model-api:model",
+    "//platform/projectModel-impl",
+    "//java/java-impl:impl",
+    "//plugins/maven",
+    "//platform/util/jdom",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//platform/core-api:core",
+    "//platform/workspace/jps",
+    "//platform/backend/observation",
+  ],
+  runtime_deps = [":maven_resources"]
+)
+### auto-generated section `build kotlin.maven` end

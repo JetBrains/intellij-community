@@ -5,7 +5,14 @@ from _prof_imports import IS_PY3K
 from _prof_imports import ProfilerResponse
 from _prof_imports import TBinaryProtocolFactory
 from _prof_imports import serialize
-from prof_util import stats_to_response
+from prof_util import ystats_to_response, stats_to_response
+
+try:
+    import yappi
+    yappi_installed = True
+except ImportError:
+    yappi_installed = False
+
 
 if __name__ == '__main__':
 
@@ -17,8 +24,12 @@ if __name__ == '__main__':
         import vmprof_profiler
         vmprof_profiler.tree_stats_to_response(filename, m)
     else:
-        stats = pstats.Stats(filename)
-        stats_to_response(stats.stats, m)
+        if yappi_installed:
+            ystats = yappi.YFuncStats(filename)
+            ystats_to_response(ystats, m)
+        else:
+            stats = pstats.Stats(filename)
+            stats_to_response(stats.stats, m)
 
     data = serialize(m, TBinaryProtocolFactory())
 

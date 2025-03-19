@@ -15,7 +15,8 @@ enum class GitRebaseOption(@NonNls private val option: String,
   REBASE_MERGES("--rebase-merges", GitBundle.message("rebase.option.rebase.merges")),
   KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty")),
   ROOT("--root", GitBundle.message("rebase.option.root")),
-  INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive"));
+  INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
+  UPDATE_REFS("--update-refs", GitBundle.message("rebase.option.update.refs"));
 
   fun getOption(gitVersion: GitVersion): String {
     if (this != REBASE_MERGES) return option
@@ -33,4 +34,5 @@ enum class GitRebaseOption(@NonNls private val option: String,
 val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
                          GitRebaseOption.REBASE_MERGES,
                          GitRebaseOption.KEEP_EMPTY,
-                         GitRebaseOption.ROOT)
+                         GitRebaseOption.ROOT,
+                         GitRebaseOption.UPDATE_REFS)

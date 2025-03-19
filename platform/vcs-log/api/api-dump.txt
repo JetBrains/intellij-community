@@ -1,0 +1,273 @@
+f:com.intellij.vcs.log.CommitId
+- <init>(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):V
+- equals(java.lang.Object):Z
+- getHash():com.intellij.vcs.log.Hash
+- getRoot():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
+com.intellij.vcs.log.Hash
+- a:asString():java.lang.String
+- a:toShortString():java.lang.String
+com.intellij.vcs.log.RefGroup
+- a:getColors():java.util.List
+- a:getName():java.lang.String
+- a:getRefs():java.util.List
+- a:isExpanded():Z
+com.intellij.vcs.log.TimedVcsCommit
+- com.intellij.vcs.log.graph.GraphCommit
+com.intellij.vcs.log.VcsCommitMetadata
+- com.intellij.vcs.log.VcsShortCommitDetails
+- a:getFullMessage():java.lang.String
+f:com.intellij.vcs.log.VcsCommitStyleFactory
+- <init>():V
+- s:background(java.awt.Color):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- s:bold():com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- s:combine(java.util.Collection):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- s:createStyle(java.awt.Color,java.awt.Color,com.intellij.vcs.log.VcsLogHighlighter$TextStyle):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- s:foreground(java.awt.Color):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+com.intellij.vcs.log.VcsFullCommitDetails
+- com.intellij.vcs.log.VcsCommitMetadata
+- a:getChanges():java.util.Collection
+- a:getChanges(I):java.util.Collection
+com.intellij.vcs.log.VcsLog
+- a:getContainingBranches(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- a:getLogProviders():java.util.Map
+- a:getSelectedCommits():java.util.List
+- a:getSelectedDetails():java.util.List
+- a:getSelectedShortDetails():java.util.List
+- jumpToCommit(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):java.util.concurrent.Future
+- a:jumpToCommit(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,Z):java.util.concurrent.Future
+- jumpToReference(java.lang.String):java.util.concurrent.Future
+- a:jumpToReference(java.lang.String,Z):java.util.concurrent.Future
+- a:requestSelectedDetails(com.intellij.util.Consumer):V
+com.intellij.vcs.log.VcsLogBranchFilter
+- com.intellij.vcs.log.VcsLogBranchLikeFilter
+- getDisplayText():java.lang.String
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getTextPresentation():java.util.Collection
+- a:isEmpty():Z
+- a:matches(java.lang.String):Z
+com.intellij.vcs.log.VcsLogBranchLikeFilter
+- com.intellij.vcs.log.VcsLogFilter
+com.intellij.vcs.log.VcsLogCommitSelection
+- a:getCachedFullDetails():java.util.List
+- a:getCachedMetadata():java.util.List
+- a:getCommits():java.util.List
+- a:getIds():java.util.List
+- a:getRows():I[]
+- a:requestFullDetails(java.util.function.Consumer):V
+f:com.intellij.vcs.log.VcsLogDataKeys
+- sf:VCS_LOG:com.intellij.openapi.actionSystem.DataKey
+- sf:VCS_LOG_BRANCHES:com.intellij.openapi.actionSystem.DataKey
+- sf:VCS_LOG_COMMIT_SELECTION:com.intellij.openapi.actionSystem.DataKey
+- sf:VCS_LOG_DATA_PROVIDER:com.intellij.openapi.actionSystem.DataKey
+- sf:VCS_LOG_REFS:com.intellij.openapi.actionSystem.DataKey
+- sf:VCS_LOG_UI:com.intellij.openapi.actionSystem.DataKey
+- <init>():V
+com.intellij.vcs.log.VcsLogDataPack
+- a:getFilters():com.intellij.vcs.log.VcsLogFilterCollection
+- a:getLogProviders():java.util.Map
+- a:getRefs():com.intellij.vcs.log.VcsLogRefs
+- a:isEmpty():Z
+com.intellij.vcs.log.VcsLogDataProvider
+- a:getCommitId(I):com.intellij.vcs.log.CommitId
+- a:getCommitIndex(com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile):I
+- a:getCommitMetadataCache():com.intellij.vcs.log.VcsLogCommitDataCache
+- a:getFullCommitDetailsCache():com.intellij.vcs.log.VcsLogCommitDataCache
+com.intellij.vcs.log.VcsLogDateFilter
+- com.intellij.vcs.log.VcsLogDetailsFilter
+- a:getAfter():java.util.Date
+- a:getBefore():java.util.Date
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+com.intellij.vcs.log.VcsLogDetailsFilter
+- com.intellij.vcs.log.VcsLogFilter
+- a:matches(com.intellij.vcs.log.VcsCommitMetadata):Z
+com.intellij.vcs.log.VcsLogDiffHandler
+- a:createContentRevision(com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash):com.intellij.openapi.vcs.changes.ContentRevision
+- a:showDiff(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash):V
+- a:showDiffForPaths(com.intellij.openapi.vfs.VirtualFile,java.util.Collection,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash):V
+- a:showDiffWithLocal(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.openapi.vcs.FilePath):V
+com.intellij.vcs.log.VcsLogFilter
+- a:getDisplayText():java.lang.String
+- a:getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+com.intellij.vcs.log.VcsLogFilterCollection
+- sf:BRANCH_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:DATE_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:HASH_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:PARENT_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:RANGE_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:REVISION_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:ROOT_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:STANDARD_KEYS:java.util.Collection
+- sf:STRUCTURE_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:TEXT_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- sf:USER_FILTER:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:get(com.intellij.vcs.log.VcsLogFilterCollection$FilterKey):com.intellij.vcs.log.VcsLogFilter
+- getDetailsFilters():java.util.List
+- a:getFilters():java.util.Collection
+- isEmpty():Z
+c:com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- <init>(java.lang.String):V
+- s:create(java.lang.String):com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- equals(java.lang.Object):Z
+- getName():java.lang.String
+- hashCode():I
+com.intellij.vcs.log.VcsLogHashFilter
+- com.intellij.vcs.log.VcsLogFilter
+- a:getHashes():java.util.Collection
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+com.intellij.vcs.log.VcsLogHighlighter
+- a:getStyle(I,com.intellij.vcs.log.VcsShortCommitDetails,I,Z):com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- a:update(com.intellij.vcs.log.VcsLogDataPack,Z):V
+e:com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+- java.lang.Enum
+- sf:BOLD:com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+- sf:ITALIC:com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+- sf:NORMAL:com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+- s:valueOf(java.lang.String):com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+- s:values():com.intellij.vcs.log.VcsLogHighlighter$TextStyle[]
+com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- sf:DEFAULT:com.intellij.vcs.log.VcsLogHighlighter$VcsCommitStyle
+- a:getBackground():java.awt.Color
+- a:getForeground():java.awt.Color
+- a:getTextStyle():com.intellij.vcs.log.VcsLogHighlighter$TextStyle
+com.intellij.vcs.log.VcsLogListener
+- a:onChange(com.intellij.vcs.log.VcsLogDataPack,Z):V
+com.intellij.vcs.log.VcsLogObjectsFactory
+- a:createCommitMetadata(com.intellij.vcs.log.Hash,java.util.List,J,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,J):com.intellij.vcs.log.VcsCommitMetadata
+- a:createHash(java.lang.String):com.intellij.vcs.log.Hash
+- a:createRef(com.intellij.vcs.log.Hash,java.lang.String,com.intellij.vcs.log.VcsRefType,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsRef
+- a:createShortDetails(com.intellij.vcs.log.Hash,java.util.List,J,com.intellij.openapi.vfs.VirtualFile,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,J):com.intellij.vcs.log.VcsShortCommitDetails
+- a:createTimedCommit(com.intellij.vcs.log.Hash,java.util.List,J):com.intellij.vcs.log.TimedVcsCommit
+- a:createUser(java.lang.String,java.lang.String):com.intellij.vcs.log.VcsUser
+com.intellij.vcs.log.VcsLogParentFilter
+- com.intellij.vcs.log.VcsLogFilter
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getMaxParents():I
+- a:getMinParents():I
+f:com.intellij.vcs.log.VcsLogProperties
+- sf:CASE_INSENSITIVE_REGEX:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:HAS_COMMITTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:LIGHTWEIGHT_BRANCHES:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:SUPPORTS_INCREMENTAL_REFRESH:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:SUPPORTS_INDEXING:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:SUPPORTS_LOG_DIRECTORY_HISTORY:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- sf:SUPPORTS_PARENTS_FILTER:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- <init>():V
+f:com.intellij.vcs.log.VcsLogProperties$VcsLogProperty
+- getOrDefault(com.intellij.vcs.log.VcsLogProvider):java.lang.Object
+com.intellij.vcs.log.VcsLogProvider
+- sf:LOG_PROVIDER_EP:com.intellij.openapi.extensions.ExtensionPointName
+- getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,I):java.util.List
+- getCommitsMatchingFilter(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.graph.PermanentGraph$Options,I):java.util.List
+- a:getContainingBranches(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash):java.util.Collection
+- a:getCurrentBranch(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- a:getCurrentUser(com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.VcsUser
+- getDiffHandler():com.intellij.vcs.log.VcsLogDiffHandler
+- getFileHistoryHandler(com.intellij.openapi.project.Project):com.intellij.vcs.log.VcsLogFileHistoryHandler
+- a:getPropertyValue(com.intellij.vcs.log.VcsLogProperties$VcsLogProperty):java.lang.Object
+- a:getReferenceManager():com.intellij.vcs.log.VcsLogRefManager
+- a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
+- getVcsRoot(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vfs.VirtualFile
+- a:readAllHashes(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Consumer):com.intellij.vcs.log.VcsLogProvider$LogData
+- a:readFirstBlock(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.VcsLogProvider$Requirements):com.intellij.vcs.log.VcsLogProvider$DetailedLogData
+- a:readFullDetails(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
+- a:readMetadata(com.intellij.openapi.vfs.VirtualFile,java.util.List,com.intellij.util.Consumer):V
+- resolveReference(java.lang.String,com.intellij.openapi.vfs.VirtualFile):com.intellij.vcs.log.Hash
+- a:subscribeToRootRefreshEvents(java.util.Collection,com.intellij.vcs.log.VcsLogRefresher):com.intellij.openapi.Disposable
+com.intellij.vcs.log.VcsLogProvider$DetailedLogData
+- a:getCommits():java.util.List
+- a:getRefs():java.util.Set
+com.intellij.vcs.log.VcsLogProvider$LogData
+- a:getRefs():java.util.Set
+- a:getUsers():java.util.Set
+com.intellij.vcs.log.VcsLogProvider$Requirements
+- a:getCommitCount():I
+com.intellij.vcs.log.VcsLogProviderRequirementsEx
+- com.intellij.vcs.log.VcsLogProvider$Requirements
+- a:getPreviousRefs():java.util.Collection
+- a:isRefresh():Z
+- a:isRefreshRefs():Z
+com.intellij.vcs.log.VcsLogRangeFilter
+- com.intellij.vcs.log.VcsLogBranchLikeFilter
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getRanges():java.util.List
+- a:getTextPresentation():java.util.Collection
+f:com.intellij.vcs.log.VcsLogRangeFilter$RefRange
+- <init>(java.lang.String,java.lang.String):V
+- f:component1():java.lang.String
+- f:component2():java.lang.String
+- f:copy(java.lang.String,java.lang.String):com.intellij.vcs.log.VcsLogRangeFilter$RefRange
+- bs:copy$default(com.intellij.vcs.log.VcsLogRangeFilter$RefRange,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.vcs.log.VcsLogRangeFilter$RefRange
+- equals(java.lang.Object):Z
+- f:getExclusiveRef():java.lang.String
+- f:getInclusiveRef():java.lang.String
+- hashCode():I
+com.intellij.vcs.log.VcsLogRefManager
+- a:deserialize(java.io.DataInput):com.intellij.vcs.log.VcsRefType
+- a:getBranchLayoutComparator():java.util.Comparator
+- a:getLabelsOrderComparator():java.util.Comparator
+- a:groupForBranchFilter(java.util.Collection):java.util.List
+- a:groupForTable(java.util.Collection,Z,Z):java.util.List
+- a:isFavorite(com.intellij.vcs.log.VcsRef):Z
+- a:serialize(java.io.DataOutput,com.intellij.vcs.log.VcsRefType):V
+- a:setFavorite(com.intellij.vcs.log.VcsRef,Z):V
+com.intellij.vcs.log.VcsLogRefresher
+- a:refresh(com.intellij.openapi.vfs.VirtualFile):V
+com.intellij.vcs.log.VcsLogRefs
+- a:getBranches():java.util.Collection
+- a:stream():java.util.stream.Stream
+com.intellij.vcs.log.VcsLogRevisionFilter
+- com.intellij.vcs.log.VcsLogBranchLikeFilter
+- getDisplayText():java.lang.String
+- a:getHeads():java.util.Collection
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+com.intellij.vcs.log.VcsLogRootFilter
+- com.intellij.vcs.log.VcsLogFilter
+- getDisplayText():java.lang.String
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getRoots():java.util.Collection
+com.intellij.vcs.log.VcsLogStructureFilter
+- com.intellij.vcs.log.VcsLogDetailsFilter
+- getDisplayText():java.lang.String
+- a:getFiles():java.util.Collection
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+com.intellij.vcs.log.VcsLogTextFilter
+- com.intellij.vcs.log.VcsLogDetailsFilter
+- getDisplayText():java.lang.String
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getText():java.lang.String
+- a:isRegex():Z
+- matches(com.intellij.vcs.log.VcsCommitMetadata):Z
+- a:matches(java.lang.String):Z
+- a:matchesCase():Z
+com.intellij.vcs.log.VcsLogUi
+- a:addLogListener(com.intellij.vcs.log.VcsLogListener):V
+- a:getDataPack():com.intellij.vcs.log.VcsLogDataPack
+- a:getFilterUi():com.intellij.vcs.log.VcsLogFilterUi
+- a:getId():java.lang.String
+- a:removeLogListener(com.intellij.vcs.log.VcsLogListener):V
+com.intellij.vcs.log.VcsLogUserFilter
+- com.intellij.vcs.log.VcsLogDetailsFilter
+- getDisplayText():java.lang.String
+- getKey():com.intellij.vcs.log.VcsLogFilterCollection$FilterKey
+- a:getUsers(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- a:getValuesAsText():java.util.Collection
+com.intellij.vcs.log.VcsRef
+- a:getCommitHash():com.intellij.vcs.log.Hash
+- a:getName():java.lang.String
+- a:getRoot():com.intellij.openapi.vfs.VirtualFile
+- a:getType():com.intellij.vcs.log.VcsRefType
+com.intellij.vcs.log.VcsRefType
+- a:getBackgroundColor():java.awt.Color
+- a:isBranch():Z
+com.intellij.vcs.log.VcsShortCommitDetails
+- com.intellij.vcs.log.TimedVcsCommit
+- a:getAuthor():com.intellij.vcs.log.VcsUser
+- a:getAuthorTime():J
+- a:getCommitTime():J
+- a:getCommitter():com.intellij.vcs.log.VcsUser
+- a:getRoot():com.intellij.openapi.vfs.VirtualFile
+- a:getSubject():java.lang.String
+com.intellij.vcs.log.VcsUserRegistry
+- a:createUser(java.lang.String,java.lang.String):com.intellij.vcs.log.VcsUser
+- a:getUsers():java.util.Set

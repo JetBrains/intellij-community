@@ -1,0 +1,43 @@
+<idea-plugin>
+  <content>
+    <module name="intellij.platform.settings.local"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.client.cio"/>
+
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.project.backend"/>
+    <module name="intellij.platform.progress.backend"/>
+
+    <!-- todo navbar is not essential-->
+    <module name="intellij.platform.navbar"/>
+    <module name="intellij.platform.navbar.backend"/>
+    <module name="intellij.platform.navbar.frontend"/>
+    <module name="intellij.platform.navbar.monolith"/>
+    <module name="intellij.platform.clouds"/>
+    <module name="intellij.platform.execution.dashboard"/>
+    <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.searchEverywhere"/>
+    <module name="intellij.platform.searchEverywhere.backend"/>
+    <module name="intellij.platform.searchEverywhere.frontend"/>
+    <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.editor.backend"/>
+    <module name="intellij.platform.editor.frontend"/>
+
+    <module name="intellij.platform.debugger.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.backend"/>
+
+    <module name="intellij.platform.bookmarks.backend"/>
+    <module name="intellij.platform.bookmarks.frontend"/>
+
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.monolith"/>
+
+    <module name="intellij.platform.inline.completion"/>
+
+    <module name="intellij.platform.recentFiles"/>
+    <module name="intellij.platform.recentFiles.frontend"/>
+    <module name="intellij.platform.recentFiles.backend"/>
+  </content>
+</idea-plugin>

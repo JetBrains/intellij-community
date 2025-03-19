@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 class SearchEventsBuffer {
 
   private val addedElements = mutableListOf<SearchEverywhereFoundElementInfo>()
@@ -13,6 +16,12 @@ class SearchEventsBuffer {
 
     val toAdd = removeElementsFormList(list, removedElements)
     addedElements.addAll(toAdd)
+
+    SearchEverywhereMlService.getInstance()?.let { mlService ->
+      list.forEach { item ->
+        mlService.addBufferedTimestamp(item, System.currentTimeMillis())
+      }
+    }
   }
 
   fun removeElements(list: List<SearchEverywhereFoundElementInfo>) {

@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.SearchScope
@@ -45,9 +44,7 @@ interface KotlinSearchUsagesSupport {
 
                 if (!Name.isValidIdentifier(name)) return false
                 val nameIdentifier = Name.identifier(name)
-                if (!DataClassResolver.isComponentLike(nameIdentifier)) return false
-
-                return true
+                return DataClassResolver.isComponentLike(nameIdentifier)
             }
 
             return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }
@@ -65,6 +62,9 @@ interface KotlinSearchUsagesSupport {
         fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isUsageInContainingDeclaration(this, declaration)
 
+        fun PsiReference.isUsageOfActual(declaration: KtNamedDeclaration): Boolean =
+            getInstance(declaration.project).isUsageOfActual(this, declaration)
+
         fun PsiReference.isExtensionOfDeclarationClassUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isExtensionOfDeclarationClassUsage(this, declaration)
 
@@ -77,9 +77,6 @@ interface KotlinSearchUsagesSupport {
         fun PsiFile.scriptDefinitionExists(): Boolean =
             getInstance(project).scriptDefinitionExists(this)
 
-        fun KtFile.getDefaultImports(): List<ImportPath> =
-            getInstance(project).getDefaultImports(this)
-
         fun forEachKotlinOverride(
             ktClass: KtClass,
             members: List<KtNamedDeclaration>,
@@ -89,7 +86,10 @@ interface KotlinSearchUsagesSupport {
         ): Boolean = getInstance(ktClass.project).forEachKotlinOverride(ktClass, members, scope, searchDeeply, processor)
 
         fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-            getInstance(method.project).findDeepestSuperMethodsNoWrapping(method)
+            getInstance(method.project).findSuperMethodsNoWrapping(method, true)
+
+        fun findSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
+            getInstance(method.project).findSuperMethodsNoWrapping(method, false)
 
         fun KtDeclaration.isOverridable(): Boolean =
             getInstance(project).isOverridable(this)
@@ -97,15 +97,6 @@ interface KotlinSearchUsagesSupport {
         @JvmStatic
         fun KtClass.isInheritable(): Boolean =
             getInstance(project).isInheritable(this)
-
-        fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
-            getInstance(project).expectedDeclarationIfAny(this)
-
-        fun KtDeclaration.isExpectDeclaration(): Boolean =
-            getInstance(project).isExpectDeclaration(this)
-
-        fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
-            getInstance(project).actualsForExpected(this, module)
 
         fun PsiElement.canBeResolvedWithFrontEnd(): Boolean =
             getInstance(project).canBeResolvedWithFrontEnd(this)
@@ -117,9 +108,9 @@ interface KotlinSearchUsagesSupport {
             getInstance(psiMethod.project).createConstructorHandle(psiMethod)
     }
 
-    fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
+    fun isUsageOfActual(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
-    fun actualsForExpected(declaration: KtDeclaration, module: Module? = null): Set<KtDeclaration>
+    fun isInvokeOfCompanionObject(psiReference: PsiReference, searchTarget: KtNamedDeclaration): Boolean
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 
@@ -143,6 +134,7 @@ interface KotlinSearchUsagesSupport {
     fun forceResolveReferences(file: KtFile, elements: List<KtElement>)
 
     fun scriptDefinitionExists(file: PsiFile): Boolean
+    fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean
 
     fun getDefaultImports(file: KtFile): List<ImportPath>
 
@@ -154,15 +146,11 @@ interface KotlinSearchUsagesSupport {
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean
 
-    fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement>
+    fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement>
 
     fun isOverridable(declaration: KtDeclaration): Boolean
 
     fun isInheritable(ktClass: KtClass): Boolean
-
-    fun expectedDeclarationIfAny(declaration: KtDeclaration): KtDeclaration?
-
-    fun isExpectDeclaration(declaration: KtDeclaration): Boolean
 
     fun canBeResolvedWithFrontEnd(element: PsiElement): Boolean
 

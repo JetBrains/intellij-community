@@ -5,7 +5,6 @@ package com.intellij.grazie.grammar.strategy
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GraziePlugin
-import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.ElementBehavior.*
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain.*
 import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
@@ -191,15 +190,6 @@ interface GrammarCheckingStrategy {
    * @return true if typo should be accepted
    */
   fun isTypoAccepted(parent: PsiElement, roots: List<PsiElement>, typoRange: IntRange, ruleRange: IntRange) = true
-
-  /**
-   * Get ignored typo categories for [child] element @see [Typo.Category].
-   *
-   * @param root root element previously selected in [isMyContextRoot]
-   * @param child current checking element for which ignored categories are specified
-   * @return set of the ignored categories for [child]
-   */
-  fun getIgnoredTypoCategories(root: PsiElement, child: PsiElement): Set<Typo.Category>? = null
 
 
   /**

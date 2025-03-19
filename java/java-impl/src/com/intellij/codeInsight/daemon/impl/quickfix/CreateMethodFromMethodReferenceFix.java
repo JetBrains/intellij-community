@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,8 +70,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  protected List<PsiClass> getTargetClasses(PsiElement element) {
+  protected @NotNull List<PsiClass> getTargetClasses(PsiElement element) {
     List<PsiClass> targets = super.getTargetClasses(element);
     PsiMethodReferenceExpression call = getMethodReference();
     if (call == null) return Collections.emptyList();
@@ -168,8 +167,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   private record ExpectedSignature(ExpectedTypeInfo[] expectedReturn, List<Pair<PsiExpression, PsiType>> arguments) {
-    @NotNull
-    private static ExpectedSignature from(PsiMethodReferenceExpression expression) {
+    private static @NotNull ExpectedSignature from(PsiMethodReferenceExpression expression) {
       final PsiType functionalInterfaceType = getFunctionalExpressionType(expression);
       final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
@@ -179,7 +177,9 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
       LOG.assertTrue(interfaceReturnType != null);
   
       final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
-      final ExpectedTypeInfo[] expectedTypes = {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL)};
+      final ExpectedTypeInfo[] expectedTypes =
+        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailTypes.noneType(), null,
+                                  ExpectedTypeInfoImpl.NULL)};
       PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
       List<Pair<PsiExpression, PsiType>> origArgs = ContainerUtil.map(parameters, parameter -> Pair.create(null, substitutor.substitute(parameter.getType())));
       return new ExpectedSignature(expectedTypes, origArgs);
@@ -193,13 +193,11 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.method.from.usage.family");
   }
 
-  @Nullable
-  protected PsiMethodReferenceExpression getMethodReference() {
+  protected @Nullable PsiMethodReferenceExpression getMethodReference() {
     return (PsiMethodReferenceExpression)myMethodReferenceExpression.getElement();
   }
 }

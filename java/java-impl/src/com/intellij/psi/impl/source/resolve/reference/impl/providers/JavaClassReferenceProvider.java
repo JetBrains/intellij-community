@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -40,8 +41,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
   @Deprecated(forRemoval = true)
   public static final CustomizationKey<String> DEFAULT_PACKAGE = new CustomizationKey<>("DEFAULT_PACKAGE");
 
-  @Nullable
-  private Map<CustomizationKey, Object> myOptions;
+  private @Nullable Map<CustomizationKey, Object> myOptions;
 
   private boolean myAllowEmpty;
 
@@ -51,7 +51,7 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     List<PsiPackage> psiPackages = root == null ? Collections.emptyList() :
                                    ContainerUtil.filter(root.getSubPackages(),
                                                         p -> nameHelper.isIdentifier(p.getName(), PsiUtil.getLanguageLevel(p)));
-    return CachedValueProvider.Result.createSingleDependency(psiPackages, PsiModificationTracker.MODIFICATION_COUNT);
+    return CachedValueProvider.Result.createSingleDependency(psiPackages, VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS);
   };
 
   private static final Key<ParameterizedCachedValue<List<PsiPackage>, Project>> ourPackagesKey = Key.create("default packages");
@@ -71,23 +71,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @Nullable
-  public <T> T getOption(@NotNull CustomizationKey<T> option) {
+  public @Nullable <T> T getOption(@NotNull CustomizationKey<T> option) {
     return myOptions == null ? null : option.getValue(myOptions);
   }
 
-  @Nullable
-  public GlobalSearchScope getScope(@NotNull Project project) {
+  public @Nullable GlobalSearchScope getScope(@NotNull Project project) {
     return null;
   }
 
-  @NotNull
-  public PsiFile getContextFile(@NotNull PsiElement element) {
+  public @NotNull PsiFile getContextFile(@NotNull PsiElement element) {
     return element.getContainingFile();
   }
 
-  @Nullable
-  public PsiClass getContextClass(@NotNull PsiElement element) {
+  public @Nullable PsiClass getContextClass(@NotNull PsiElement element) {
     return null;
   }
 
@@ -124,22 +120,19 @@ public class JavaClassReferenceProvider extends GenericReferenceProvider impleme
     }
   }
 
-  @NotNull
-  static List<PsiPackage> getDefaultPackages(@NotNull Project project) {
+  static @NotNull List<PsiPackage> getDefaultPackages(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, ourPackagesKey, ourPackagesProvider, false, project);
   }
 
-  @NotNull
-  static Set<String> getDefaultPackagesNames(@NotNull Project project) {
+  static @NotNull Set<String> getDefaultPackagesNames(@NotNull Project project) {
     return CachedValuesManager.getManager(project)
       .getCachedValue(project, 
                       () -> CachedValueProvider.Result.create(ContainerUtil.map2Set(getDefaultPackages(project), PsiPackage::getName), 
-                                                              PsiModificationTracker.MODIFICATION_COUNT));
+                                                              VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
   }
 
   @Override
-  @Nullable
-  public Map<CustomizationKey, Object> getOptions() {
+  public @Nullable Map<CustomizationKey, Object> getOptions() {
     return myOptions;
   }
 

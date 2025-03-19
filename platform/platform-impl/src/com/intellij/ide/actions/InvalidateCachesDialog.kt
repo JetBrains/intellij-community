@@ -4,15 +4,14 @@ package com.intellij.ide.actions
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.Link
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Action
 import javax.swing.JPanel
 
@@ -20,6 +19,7 @@ private var Action.text
   get() = getValue(Action.NAME)
   set(value) = putValue(Action.NAME, value)
 
+@ApiStatus.Internal
 class InvalidateCachesDialog(
   project: Project?,
   private val canRestart: Boolean,
@@ -38,7 +38,7 @@ class InvalidateCachesDialog(
     }
   }
 
-  override fun getHelpId() = "invalidate-cache-restart"
+  override fun getHelpId(): String = "invalidate-cache-restart"
 
   init {
     title = IdeBundle.message("dialog.title.invalidate.caches")
@@ -53,22 +53,23 @@ class InvalidateCachesDialog(
     cancelAction.text = IdeBundle.message("button.cancel.without.mnemonic")
   }
 
-  fun isRestartOnly() = canRestart && exitCode == JUST_RESTART_CODE
+  fun isRestartOnly(): Boolean = canRestart && exitCode == JUST_RESTART_CODE
 
   override fun createSouthAdditionalPanel(): JPanel? {
     if (!canRestart) return null
 
-    val link = Link(IdeBundle.message("link.just.restart")) {
-      close(JUST_RESTART_CODE)
+    return panel {
+      row {
+        link(IdeBundle.message("link.just.restart")) {
+          close(JUST_RESTART_CODE)
+        }
+      }.resizableRow()
+    }.apply {
+      border = JBUI.Borders.emptyLeft(10)
     }
-
-    val panel = NonOpaquePanel(BorderLayout())
-    panel.border = JBUI.Borders.emptyLeft(10)
-    panel.add(link)
-    return panel
   }
 
-  override fun createCenterPanel() = panel {
+  override fun createCenterPanel(): DialogPanel = panel {
     row {
       text(IdeBundle.message("dialog.message.caches.will.be.invalidated"), maxLineLength = DEFAULT_COMMENT_WIDTH)
     }
@@ -82,6 +83,7 @@ class InvalidateCachesDialog(
           row {
             val defaultValue = descr.optionalCheckboxDefaultValue()
             val checkbox = checkBox(text)
+              .comment(descr.comment)
               .enabled(defaultValue != null)
               .selected(defaultValue ?: true)
               .component

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
-import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -21,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaModuleTestCase;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
   public void testAddTwoModules() {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
     final Module moduleA;
@@ -62,6 +62,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
       //noinspection SSBasedInspection
       moduleListener.assertCorrectEvents(new String[0][]);
       ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(2, moduleManager.getModules().length);
@@ -76,6 +77,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
       assertEquals("Changes are not applied until commit", 2, moduleManager.getModules().length);
       moduleListener.assertCorrectEvents(new String[][]{{"+a", "+b"}});
       ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(0, moduleManager.getModules().length);
@@ -87,7 +89,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
     final MessageBusConnection connection = myProject.getMessageBus().connect();
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     final MyModuleListener moduleListener = new MyModuleListener();
-    connection.subscribe(ProjectTopics.MODULES, moduleListener);
+    connection.subscribe(ModuleListener.TOPIC, moduleListener);
 
     Path dir = ProjectKt.getStateStore(myProject).getProjectBasePath();
 
@@ -107,6 +109,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
       contentEntryB.addSourceFolder(getVirtualFileInTestData("b/src"), false);
 
       ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel));
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     final JavaPsiFacade psiManager = getJavaFacade();
@@ -141,6 +144,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);
       ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel));
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     final ModuleRootManager rootManagerB = ModuleRootManager.getInstance(moduleB);
@@ -159,6 +163,7 @@ public class MultiModuleEditingTest extends JavaModuleTestCase {
       assertEquals("c", moduleModel.getActualName(moduleA));
       assertSame(moduleA, moduleModel.getModuleToBeRenamed("c"));
       ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
+      IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     }
 
     assertEquals(1, rootManagerB.getDependencies().length);

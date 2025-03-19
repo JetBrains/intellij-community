@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.stream.Collector;
@@ -30,7 +32,7 @@ import static com.intellij.psi.CommonClassNames.*;
 
 final class StreamConversion {
 
-  static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
+  static @Unmodifiable List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier == null) return Collections.emptyList();
 
@@ -63,11 +65,10 @@ final class StreamConversion {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private static List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
-                                                               PsiExpression qualifier,
-                                                               String changedQualifier,
-                                                               Consumer<InsertionContext> beforeInsertion) {
+  private static @Unmodifiable @NotNull List<LookupElement> generateStreamSuggestions(CompletionParameters parameters,
+                                                                                      PsiExpression qualifier,
+                                                                                      String changedQualifier,
+                                                                                      Consumer<InsertionContext> beforeInsertion) {
     String refText = changedQualifier + ".x";
     PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
     if (!(expr instanceof PsiReferenceExpression)) {
@@ -192,7 +193,9 @@ final class StreamConversion {
     }
 
     List<Pair<String, PsiType>> result = new ArrayList<>();
-    result.add(Pair.create("toList", listType));
+    if (PsiUtil.getLanguageLevel(qualifier).isLessThan(LanguageLevel.JDK_16)) {
+      result.add(Pair.create("toList", listType));
+    }
     result.add(Pair.create("toUnmodifiableList", listType));
     result.add(Pair.create("toSet", setType));
     result.add(Pair.create("toUnmodifiableSet", setType));
@@ -207,7 +210,7 @@ final class StreamConversion {
     private final String myLookupString;
     private final String myTypeText;
     private final String myMethodName;
-    @NotNull private final PsiType myExpectedType;
+    private final @NotNull PsiType myExpectedType;
     private final boolean myHasImport;
 
     CollectLookupElement(String methodName, @NotNull PsiType expectedType, @NotNull PsiElement context) {
@@ -226,14 +229,13 @@ final class StreamConversion {
       myLookupString = "collect(" + (myHasImport ? "" : "Collectors.") + myMethodName + "())";
     }
 
-    @NotNull
     @Override
-    public String getLookupString() {
+    public @NotNull String getLookupString() {
       return myLookupString;
     }
 
     @Override
-    public Set<String> getAllLookupStrings() {
+    public @Unmodifiable Set<String> getAllLookupStrings() {
       return ContainerUtil.newHashSet(myLookupString, myMethodName);
     }
 
@@ -264,8 +266,7 @@ final class StreamConversion {
       JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(innerCall);
     }
 
-    @NotNull
-    private String getInsertString() {
+    private @NotNull String getInsertString() {
       return "collect(" + (myHasImport ? "" : JAVA_UTIL_STREAM_COLLECTORS + ".") + myMethodName + "())";
     }
 

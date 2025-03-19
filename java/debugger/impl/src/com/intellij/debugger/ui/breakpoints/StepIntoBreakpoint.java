@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.SourcePosition;
@@ -14,6 +14,7 @@ import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,8 +23,8 @@ import java.util.List;
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private static final Logger LOG = Logger.getInstance(StepIntoBreakpoint.class);
-  @NotNull private final BreakpointStepMethodFilter myFilter;
-  @Nullable private RequestHint myHint;
+  private final @NotNull BreakpointStepMethodFilter myFilter;
+  private @Nullable RequestHint myHint;
 
   protected StepIntoBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, @NotNull BreakpointStepMethodFilter filter) {
     super(project, pos, false);
@@ -55,26 +56,21 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
             methods.putValue(loc.method(), loc);
           }
         }
-        Location location = null;
+        List<Location> acceptedLocations = new ArrayList<>();
         final int methodsFound = methods.size();
-        if (methodsFound == 1) {
-          location = methods.values().iterator().next();
+        if (methodsFound > 1 && myFilter instanceof LambdaMethodFilter lambdaFilter) {
+          if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
+            Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
+            Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+            acceptedLocations.addAll(methods.get(candidates[lambdaFilter.getLambdaOrdinal()]));
+          }
         }
         else {
-          if (myFilter instanceof LambdaMethodFilter lambdaFilter) {
-            if (lambdaFilter.getLambdaOrdinal() < methodsFound) {
-              Method[] candidates = methods.keySet().toArray(new Method[methodsFound]);
-              Arrays.sort(candidates, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
-              location = methods.get(candidates[lambdaFilter.getLambdaOrdinal()]).iterator().next();
-            }
-          }
-          else {
-            if (methodsFound > 0) {
-              location = methods.values().iterator().next();
-            }
-          }
+          acceptedLocations.addAll(methods.values());
         }
-        createLocationBreakpointRequest(this, location, debugProcess);
+        for (Location location : acceptedLocations) {
+          createLocationBreakpointRequest(this, location, debugProcess);
+        }
       }
     }
     catch (ClassNotPreparedException ex) {
@@ -103,8 +99,7 @@ public class StepIntoBreakpoint extends RunToCursorBreakpoint {
     return true;
   }
 
-  @Nullable
-  protected static StepIntoBreakpoint create(@NotNull Project project, @NotNull BreakpointStepMethodFilter filter) {
+  protected static @Nullable StepIntoBreakpoint create(@NotNull Project project, @NotNull BreakpointStepMethodFilter filter) {
     final SourcePosition pos = filter.getBreakpointPosition();
     if (pos != null) {
       final StepIntoBreakpoint breakpoint = new StepIntoBreakpoint(project, pos, filter);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.openapi.util.TextRange;
@@ -81,9 +81,8 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       super(element, range, soft);
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 
@@ -102,9 +101,8 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       myGroupId = groupId;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 
@@ -127,9 +125,8 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
       myArtifactId = artifactId;
     }
 
-    @Nullable
     @Override
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return null;
     }
 

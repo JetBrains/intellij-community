@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.regexp` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "regexp_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "regexp",
+  module_name = "intellij.regexp",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":regexp_resources"]
+)
+
+jvm_library(
+  name = "regexp_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":regexp"],
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/analysis-impl",
+    "//platform/util:util-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:junit4",
+    "//platform/lang-impl",
+    "//platform/refactoring",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//xml/xml-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/ide-core-impl",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+  ],
+  runtime_deps = [":regexp_resources"]
+)
+
+jvm_test(
+  name = "regexp_test",
+  runtime_deps = [":regexp_test_lib"]
+)
+### auto-generated section `build intellij.regexp` end

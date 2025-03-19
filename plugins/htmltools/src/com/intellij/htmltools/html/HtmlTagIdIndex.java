@@ -10,10 +10,9 @@ import com.intellij.psi.XmlRecursiveElementWalkingVisitor;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.ThreeState;
+import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BaseFileTypeInputFilter;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.xml.index.XmlIndex;
@@ -25,37 +24,42 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HtmlTagIdIndex extends XmlIndex<Integer> {
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
+
+public final class HtmlTagIdIndex extends XmlIndex<Integer> {
   public static final ID<String, Integer> INDEX = ID.create("HtmlTagIdIndex");
 
-  @NotNull
   @Override
-  public ID<String, Integer> getName() {
+  public @NotNull ID<String, Integer> getName() {
     return INDEX;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> {
-      if (!file.isInLocalFileSystem()) {
-        return false;
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
+    return new BaseFileTypeInputFilter(BEFORE_SUBSTITUTION) {
+      @Override
+      public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
+        return file.getFile().isInLocalFileSystem();
       }
-      FileType fileType = file.getFileType();
 
-      if (fileType == HtmlFileType.INSTANCE) return true;
-
-      return fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() instanceof TemplateLanguage;
+      @Override
+      public @NotNull ThreeState acceptFileType(@NotNull FileType fileType) {
+        if (fileType == HtmlFileType.INSTANCE) {
+          return ThreeState.UNSURE; // check if a file is in local filesystem.
+        }
+        if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage() instanceof TemplateLanguage) {
+          return ThreeState.UNSURE; // check if a file is in local filesystem.
+        }
+        return ThreeState.NO;
+      }
     };
   }
 
-  @NotNull
   @Override
-  public DataIndexer<String, Integer, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, Integer, FileContent> getIndexer() {
     return new DataIndexer<>() {
-      @NotNull
       @Override
-      public Map<String, Integer> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, Integer> map(@NotNull FileContent inputData) {
         Map<String, Integer> result = new HashMap<>();
         inputData
           .getPsiFile()
@@ -90,9 +94,8 @@ public class HtmlTagIdIndex extends XmlIndex<Integer> {
     return 3;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<Integer> getValueExternalizer() {
+  public @NotNull DataExternalizer<Integer> getValueExternalizer() {
     return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, Integer value) throws IOException {

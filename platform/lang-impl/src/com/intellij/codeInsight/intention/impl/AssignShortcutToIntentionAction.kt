@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -7,8 +7,10 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 
+@ApiStatus.Internal
 abstract class AbstractEditIntentionShortcutAction(protected val intention: IntentionAction,
                                                    @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) private val textKey: String)
   : IntentionAction, LowPriorityAction {
@@ -21,6 +23,7 @@ abstract class AbstractEditIntentionShortcutAction(protected val intention: Inte
 }
 
 /** Action shown in each intention's submenu to allow assigning a keyboard shortcut for it */
+@ApiStatus.Internal
 class AssignShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "assign.intention.shortcut") {
 
@@ -30,7 +33,7 @@ class AssignShortcutToIntentionAction(intention: IntentionAction)
 }
 
 /** Action shown in each intention's submenu to allow modifying its shortcut */
-class EditShortcutToIntentionAction(intention: IntentionAction)
+internal class EditShortcutToIntentionAction(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "edit.intention.shortcut") {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
@@ -42,7 +45,7 @@ class EditShortcutToIntentionAction(intention: IntentionAction)
 }
 
 /** Action shown in each intention's submenu to remove its shortcut */
-class RemoveIntentionActionShortcut(intention: IntentionAction)
+internal class RemoveIntentionActionShortcut(intention: IntentionAction)
   : AbstractEditIntentionShortcutAction(intention, "remove.intention.shortcut") {
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {

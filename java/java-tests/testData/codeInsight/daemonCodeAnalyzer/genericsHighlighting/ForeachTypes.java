@@ -8,7 +8,7 @@ class a {
     for (double i:db) {}
     for (<error descr="Incompatible types. Found: 'int', required: 'double'">int i</error>:db) {
       // highlight header event if body has problems
-      <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int di = "";</error>
+      int di = <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">"";</error>
     }
 
     java.util.List list = null;

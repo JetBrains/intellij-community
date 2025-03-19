@@ -1,22 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.util
 
+import com.intellij.util.io.DataExternalizer
+import com.intellij.util.io.DataInputOutputUtil.readINT
+import com.intellij.util.io.DataInputOutputUtil.writeINT
 import it.unimi.dsi.fastutil.bytes.ByteArrayList
+import java.io.DataInput
+import java.io.DataOutput
 
 /**
  * Stores up to 127 elements with a single byte payload and reference data
  */
-class TinyTree<T>(rootPayload: Byte, rootData: T) {
+class TinyTree<T> private constructor(
+  private val firstChild: ByteArrayList,
+  private val nextChild: ByteArrayList,
+  private val payload: ByteArrayList,
+  private val data: ArrayList<T>,
+) {
   companion object {
     private const val NO_ELEMENT: Byte = -1
   }
 
-  private val firstChild: ByteArrayList = ByteArrayList()
-  private val nextChild: ByteArrayList = ByteArrayList()
-  private val payload: ByteArrayList = ByteArrayList()
-  private val data: ArrayList<T> = ArrayList()
-
-  init {
+  constructor(rootPayload: Byte, rootData: T) : this(ByteArrayList(), ByteArrayList(), ByteArrayList(), ArrayList()) {
     payload.add(rootPayload)
     data.add(rootData)
     firstChild.add(NO_ELEMENT)
@@ -72,6 +77,10 @@ class TinyTree<T>(rootPayload: Byte, rootData: T) {
     payload.set(index.toInt(), nodePayload)
   }
 
+  fun setDataPayload(data: T, index: Byte) {
+    this.data[index.toInt()] = data
+  }
+
   fun processChildren(index: Byte, f: (index: Byte) -> Boolean) {
     var currentChildIndex = firstChild.getByte(index.toInt())
     while (currentChildIndex != NO_ELEMENT) {
@@ -97,5 +106,66 @@ class TinyTree<T>(rootPayload: Byte, rootData: T) {
     }
   }
 
+  fun isSameAs(
+    other: TinyTree<T>,
+    isPayloadSame: (Byte, Byte) -> Boolean = { a, b -> a == b },
+    isDataSame: (T, T) -> Boolean = { a, b -> a == b },
+  ): Boolean {
+    if (size != other.size) return false
+    if (firstChild != other.firstChild) return false
+    if (nextChild != other.nextChild) return false
+    if (!payload.indices.all { isPayloadSame(payload.getByte(it), other.payload.getByte(it)) }) return false
+    if (!data.indices.all { isDataSame(data[it], other.data[it]) }) return false
+    return true
+  }
+
+  val size: Int
+    get() = payload.size
+
   class TooManyElementsException : Exception()
+
+  abstract class Externalizer<T> : DataExternalizer<TinyTree<T>> {
+
+    companion object {
+      // increment on format changed
+      private const val SERDE_VERSION = 0
+    }
+
+    open fun serdeVersion(): Int = SERDE_VERSION
+
+    abstract fun writeDataPayload(output: DataOutput, payload: T)
+
+    abstract fun readDataPayload(input: DataInput): T
+
+    override fun save(output: DataOutput, tree: TinyTree<T>) {
+      writeINT(output, tree.size)
+      writeByteArray(output, tree.firstChild)
+      writeByteArray(output, tree.nextChild)
+      writeByteArray(output, tree.payload)
+      for (dataPayload in tree.data) {
+        writeDataPayload(output, dataPayload)
+      }
+    }
+
+    override fun read(input: DataInput): TinyTree<T> {
+      val size = readINT(input)
+      val firstChild = readByteArray(input, size)
+      val nextChild = readByteArray(input, size)
+      val payload = readByteArray(input, size)
+      val data = ArrayList<T>(size)
+      repeat(size) {
+        data.add(readDataPayload(input))
+      }
+      return TinyTree(firstChild, nextChild, payload, data)
+    }
+
+    private fun writeByteArray(output: DataOutput, byteArray: ByteArrayList) {
+      output.write(byteArray.elements(), 0, byteArray.size)
+    }
+
+    private fun readByteArray(input: DataInput, size: Int): ByteArrayList {
+      val bytes = ByteArray(size).also { input.readFully(it) }
+      return ByteArrayList(bytes)
+    }
+  }
 }

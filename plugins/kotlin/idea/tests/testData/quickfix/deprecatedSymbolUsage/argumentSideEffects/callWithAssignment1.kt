@@ -1,0 +1,14 @@
+// "Replace with 'value = input'" "true"
+class Foo {
+    var value: String = ""
+
+    @Deprecated("", replaceWith = ReplaceWith("value = input"))
+    fun set(input: String) {}
+}
+
+fun m() {
+    Foo().se<caret>t("")
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

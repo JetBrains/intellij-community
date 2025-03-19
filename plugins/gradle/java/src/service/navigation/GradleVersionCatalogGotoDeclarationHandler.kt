@@ -15,6 +15,7 @@ import com.intellij.util.asSafely
 import org.jetbrains.plugins.gradle.service.project.CommonGradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
+import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor.Companion.StaticVersionCatalogProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getCapitalizedAccessorName
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
@@ -60,7 +61,10 @@ private class GroovySettingsFileResolveVisitor(val element : PsiElement) : Groov
 
   override fun visitMethodCallExpression(methodCallExpression: GrMethodCallExpression) {
     val method = methodCallExpression.resolveMethod()
-    if (element is GradleExtensionProperty && element.name == method?.name && method.returnType?.equalsToText(GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) == true) {
+    if ((element is GradleExtensionProperty || element is StaticVersionCatalogProperty)
+        && element.name == method?.name
+        && method.returnType?.equalsToText(GradleCommonClassNames.GRADLE_API_VERSION_CATALOG_BUILDER) == true
+    ) {
       resolveTarget = methodCallExpression
       return
     }

@@ -2,16 +2,11 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiLiteral
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.psi.*
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Deprecated("The function is ad-hoc, has arbitrary naming and does not support extension receivers")
-fun KtCallableDeclaration.numberOfArguments(countReceiver: Boolean = false): Int =
-    valueParameters.size + (1.takeIf { countReceiver && receiverTypeReference != null } ?: 0)
 
 fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
     is KtWhenExpression -> listOf(this) + entries.map { it.expression?.resultingWhens() ?: listOf() }.flatten()
@@ -20,12 +15,6 @@ fun KtExpression.resultingWhens(): List<KtWhenExpression> = when (this) {
     is KtUnaryExpression -> this.baseExpression?.resultingWhens() ?: listOf()
     is KtBlockExpression -> statements.lastOrNull()?.resultingWhens() ?: listOf()
     else -> listOf()
-}
-
-@Deprecated("Use org.jetbrains.kotlin.idea.base.util.reformatted() instead.")
-fun PsiElement.reformatted(canChangeWhiteSpacesOnly: Boolean = false): PsiElement {
-    CodeStyleManager.getInstance(project).reformat(this, canChangeWhiteSpacesOnly)
-    return this
 }
 
 fun PsiClass.isSyntheticKotlinClass(): Boolean {

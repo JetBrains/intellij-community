@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -6,8 +6,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase5;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -68,7 +66,7 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
     getFixture().doHighlighting()
       .stream()
       .filter(info -> info.type == HighlightInfoType.ERROR)
-      .forEach(info -> assertEquals("<html>Reference to 'm' is ambiguous, both 'm(Test, String)' and 'm(String)' match</html>",
+      .forEach(info -> assertEquals("<html>Reference to 'm' is ambiguous, both 'm(String)' and 'm(Test, String)' match</html>",
                                                info.getToolTip()));
   }
   @Test void testStaticWithVarargsNonStaticReferenceTypeAmbiguity() { doTest(); }
@@ -151,6 +149,9 @@ class NewMethodRefHighlightingTest extends LightJavaCodeInsightFixtureTestCase5 
   @Test void testGetClassReturnTypeInMethodReference() { doTest(); }
   @Test void testCaptureTypeOfNewArrayExpression() { doTest(); }
   @Test void testIDEA152659() { doTest(); }
+  @Test void testIDEA173183() { doTest(); }
+  @Test void testIDEA208532() { doTest(); }
+  @Test void testIDEA337371() { doTest(); }
   //removing one unsound capture conversion is not enough to leave the system consistent
   void _testRegistryOptionToSkipUnsoundCaptureConversionInMethodReferenceReturnType() { doTest(); }
   @Test void testFreshVariableLowerBoundsDuringSuperTypeChecks() { doTest(); }

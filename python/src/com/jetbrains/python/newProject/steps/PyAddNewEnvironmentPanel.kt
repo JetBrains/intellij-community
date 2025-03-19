@@ -8,18 +8,27 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
 
-class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?, preferredType: String?) : PyAddSdkPanel() {
+internal class PyAddNewEnvironmentPanel internal constructor(existingSdks: List<Sdk>, newProjectPath: String?, preferredInterpreterType: PythonInterpreterSelectionMode? = null) : PyAddSdkPanel() {
+
+  @Deprecated(message = "Use constructor without ignored")
+  constructor(existingSdks: List<Sdk>, newProjectPath: String?, @Suppress("UNUSED_PARAMETER") ignored: String?) : this(existingSdks, newProjectPath, preferredInterpreterType = null)
+
+  @Suppress("unused") // Will be used by third party plugins
+  constructor(existingSdks: List<Sdk>, newProjectPath: String) : this(existingSdks, newProjectPath, preferredInterpreterType = null)
+
   override val panelName: String get() = com.jetbrains.python.PyBundle.message("python.add.sdk.panel.name.new.environment.using")
   override val nameExtensionComponent: JComboBox<PyAddNewEnvPanel>
 
@@ -34,13 +43,14 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
 
   // TODO: Introduce a method in PyAddSdkProvider or in a Python SDK Provider
   private val panels = createPanels(existingSdks, newProjectPath)
-  var selectedPanel: PyAddNewEnvPanel = panels.find { it.envName == (preferredType ?: PySdkSettings.instance.preferredEnvironmentType) } ?: panels[0]
+  var selectedPanel: PyAddNewEnvPanel = panels.find { it.preferredType == (preferredInterpreterType ?: PySdkSettings.instance.preferredEnvironmentType) }
+                                        ?: panels[0]
 
   private val listeners = mutableListOf<Runnable>()
 
   init {
     nameExtensionComponent = ComboBox(panels.toTypedArray()).apply {
-      renderer = SimpleListCellRenderer.create {label, value, _ ->
+      renderer = SimpleListCellRenderer.create { label, value, _ ->
         label.text = value?.envName ?: return@create
         label.icon = value.icon
       }
@@ -76,6 +86,10 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     val createdSdk = selectedPanel.getOrCreateSdk()
     PySdkSettings.instance.preferredEnvironmentType = selectedPanel.envName
     return createdSdk
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+    return selectedPanel.getStatisticInfo();
   }
 
   override fun validateAll(): List<ValidationInfo> = selectedPanel.validateAll()

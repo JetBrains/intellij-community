@@ -73,7 +73,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
       return isYamlDashedDelimiterLine(line) || isTomlDelimiterLine(line)
     }
 
-    internal fun isYamlDashedDelimiterLine(line: String): Boolean {
+    private fun isYamlDashedDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '-' }
     }
 
@@ -81,7 +81,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
       return isYamlDashedDelimiterLine(opening)
     }
 
-    internal fun isYamlDottedDelimiterLine(line: String): Boolean {
+    private fun isYamlDottedDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '.' }
     }
 
@@ -89,7 +89,7 @@ class FrontMatterHeaderMarkerProvider: MarkerBlockProvider<MarkerProcessor.State
       return isYamlDashedDelimiterLine(opening) && (isYamlDashedDelimiterLine(closing) || isYamlDottedDelimiterLine(closing))
     }
 
-    internal fun isTomlDelimiterLine(line: String): Boolean {
+    private fun isTomlDelimiterLine(line: String): Boolean {
       return line.length >= 3 && line.all { it == '+' }
     }
 

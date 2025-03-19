@@ -93,11 +93,12 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
             val settings = configuration.settings
 
             val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
-            if (!settings.applyTestConfiguration(context.module, tasks, classes, createFilter)) {
+            val module = context.module ?: throw IllegalStateException("Module should not be null")
+            if (!settings.applyTestConfiguration(module, tasks, classes, createFilter)) {
                 LOG.warn("Cannot apply class test configuration, uses raw run configuration")
                 performRunnable.run()
             }
-            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(context.module)
+            settings.externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
             configuration.name = classes.joinToString("|") { it.name ?: "<error>" }
             performRunnable.run()
         }
@@ -145,7 +146,8 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
     }
 
     private fun ConfigurationContext.check(): Boolean {
-        return hasTestFramework && module != null && isApplicable(module)
+        val myModule = module
+        return hasTestFramework && myModule != null && isApplicable(myModule)
     }
 
     override fun getPsiClassForLocation(contextLocation: Location<*>) = getTestClassForKotlinTest(contextLocation)
@@ -158,11 +160,6 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         return checkShouldReplace(self, other) || super.shouldReplace(self, other)
     }
 
-    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        if (self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)) {
-            return true
-        }
-
-        return false
-    }
+    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean =
+        self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)
 }

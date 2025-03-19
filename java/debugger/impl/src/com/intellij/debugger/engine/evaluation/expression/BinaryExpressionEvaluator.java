@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BinaryExpressionEvaluator
@@ -48,7 +48,7 @@ class BinaryExpressionEvaluator implements Evaluator {
                                   final Evaluator rightOperand,
                                   final String expectedType,
                                   final EvaluationContextImpl context) throws EvaluateException {
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
     if (leftResult instanceof BooleanValue) {
       boolean v1 = ((PrimitiveValue)leftResult).booleanValue();
       if (opType == JavaTokenType.OROR && v1) {
@@ -78,7 +78,7 @@ class BinaryExpressionEvaluator implements Evaluator {
       if (leftResult instanceof StringReference || rightResult instanceof StringReference) {
         String v1 = DebuggerUtils.getValueAsString(context, leftResult);
         String v2 = DebuggerUtils.getValueAsString(context, rightResult);
-        return DebuggerUtilsEx.mirrorOfString(v1 + v2, vm, context);
+        return DebuggerUtilsEx.mirrorOfString(v1 + v2, context);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "+"));
     }
@@ -289,9 +289,7 @@ class BinaryExpressionEvaluator implements Evaluator {
         char v2 = ((CharValue)rightResult).charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 == v2);
       }
-      if (leftResult instanceof ObjectReference && rightResult instanceof ObjectReference) {
-        ObjectReference v1 = (ObjectReference)leftResult;
-        ObjectReference v2 = (ObjectReference)rightResult;
+      if (leftResult instanceof ObjectReference v1 && rightResult instanceof ObjectReference v2) {
         return DebuggerUtilsEx.createValue(vm, expectedType, v1.uniqueID() == v2.uniqueID());
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "=="));
@@ -329,14 +327,12 @@ class BinaryExpressionEvaluator implements Evaluator {
         boolean v2 = ((PrimitiveValue)rightResult).booleanValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 != v2);
       }
-      if (leftResult instanceof CharValue && rightResult instanceof CharValue) {
-        char v1 = ((CharValue)leftResult).charValue();
-        char v2 = ((CharValue)rightResult).charValue();
+      if (leftResult instanceof CharValue c1 && rightResult instanceof CharValue c2) {
+        char v1 = c1.charValue();
+        char v2 = c2.charValue();
         return DebuggerUtilsEx.createValue(vm, expectedType, v1 != v2);
       }
-      if (leftResult instanceof ObjectReference && rightResult instanceof ObjectReference) {
-        ObjectReference v1 = (ObjectReference)leftResult;
-        ObjectReference v2 = (ObjectReference)rightResult;
+      if (leftResult instanceof ObjectReference v1 && rightResult instanceof ObjectReference v2) {
         return DebuggerUtilsEx.createValue(vm, expectedType, v1.uniqueID() != v2.uniqueID());
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.incompatible.types", "!="));

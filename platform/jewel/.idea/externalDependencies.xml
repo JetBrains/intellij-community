@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ExternalDependencies">
+    <plugin id="com.facebook.ktfmt_idea_plugin" min-version="1.2.0.52" />
+    <plugin id="com.nbadal.ktlint" />
+    <plugin id="detekt" />
+    <plugin id="org.jetbrains.compose.desktop.ide" />
+    <plugin id="org.jetbrains.kotlin" />
+    <plugin id="org.norbye.tor.kdocformatter" />
+  </component>
+</project>

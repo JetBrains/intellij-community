@@ -15,8 +15,7 @@ public interface NullableFunction<Param, Result> extends Function<Param, @Nullab
   Result fun(final Param param);
 
   @Override
-  @Nullable
-  default Result apply(Param param) {
+  default @Nullable Result apply(Param param) {
     return fun(param);
   }
 }

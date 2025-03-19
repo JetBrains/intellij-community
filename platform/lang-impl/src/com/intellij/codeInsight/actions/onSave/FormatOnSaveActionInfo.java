@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.application.options.GeneralCodeStylePanel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.ide.actionsOnSave.ActionOnSaveComment;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -17,13 +18,16 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
-class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
+final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOptions> {
 
   private static final Key<FormatOnSaveOptions> CURRENT_UI_STATE_KEY = Key.create("format.on.save.options");
 
@@ -45,10 +49,23 @@ class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOpti
   }
 
   @Override
+  public @Nullable ActionOnSaveComment getComment() {
+    if (isActionOnSaveEnabled()) {
+      ActionOnSaveComment customComment = FormatOnSavePresentationService.getInstance().getCustomFormatComment(getContext());
+      if (customComment != null) {
+        return customComment;
+      }
+    }
+    return super.getComment();
+  }
+
+  @Override
   public @NotNull List<? extends ActionLink> getActionLinks() {
-    return List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), __ -> {
+    var result = new ArrayList<>(List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), __ -> {
       GeneralCodeStylePanel.selectFormatterTab(getSettings());
-    }));
+    })));
+    result.addAll(FormatOnSavePresentationService.getInstance().getCustomFormatActionLinks(getContext()));
+    return result;
   }
 
   @Override
@@ -60,13 +77,39 @@ class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOpti
 
   @Override
   protected void addApplicableFileTypes(@NotNull Collection<? super FileType> result) {
-    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
+    // The formatting capability of a file is generally determined by its programming language rather than its file type.
+    // The UI task involves displaying all file types that
+    //  - have the defined file name pattern (fileTypeManager.getAssociations())
+    //  - can be formatted
+    // We perform various language-based checks to assess the code's formattability.
+    // Upon successful verification, we add all associated file types for that language to the UI list.
+
+    // Another proposed solution involves displaying only the file types associated
+    // with each language aka `language.getAssociatedFileType()`.
+    // However, this approach was rejected (lost significant JS dialects),
+    // and the details can be found in the file history (CPP-37117).
+
+    // prepare the language to "file types with patterns" map
+    MultiMap<Language, LanguageFileType> languageFileTypes = new MultiMap<>();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType &&
-          !fileTypeManager.getAssociations(fileType).isEmpty() &&
-          LanguageFormatting.INSTANCE.forLanguage(((LanguageFileType)fileType).getLanguage()) != null) {
-        result.add(fileType);
+      if (fileType instanceof LanguageFileType lft && !fileTypeManager.getAssociations(fileType).isEmpty()) {
+        languageFileTypes.putValue(lft.getLanguage(), lft);
+      }
+    }
+
+    // if the language is formattable, add all file types from the created map
+    Consumer<Language> addLanguageFileTypes = (@Nullable Language language) -> {
+      if (language != null) {
+        result.addAll(languageFileTypes.get(language));
+        ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
+      }
+    };
+
+    // add all file types that can be handled by the IDE internal formatter (== have FormattingModelBuilder)
+    for (Language language : languageFileTypes.keySet()) {
+      if (LanguageFormatting.INSTANCE.forLanguage(language) != null) {
+        addLanguageFileTypes.accept(language);
       }
     }
 
@@ -78,13 +121,12 @@ class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSaveOpti
     //
     // The logic of iterating Code Style pages is similar to what's done in CodeStyleSchemesConfigurable.buildConfigurables()
     for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
-      Language language = provider.getLanguage();
-      if (provider.hasSettingsPage() && language != null) {
-        ContainerUtil.addIfNotNull(result, language.getAssociatedFileType());
+      if (provider.hasSettingsPage()) {
+        addLanguageFileTypes.accept(provider.getLanguage());
       }
     }
     for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
-      ContainerUtil.addIfNotNull(result, provider.getLanguage().getAssociatedFileType());
+      addLanguageFileTypes.accept(provider.getLanguage());
     }
   }
 

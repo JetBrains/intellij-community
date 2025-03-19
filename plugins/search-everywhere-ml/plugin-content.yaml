@@ -1,0 +1,35 @@
+- name: lib/modules/intellij.searchEverywhereMl.ranking.core.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.ranking.core
+    libraries:
+      find-action-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/231/find-action-model-231.jar
+      find-action-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-action-model/243/find-action-model-243.jar
+      find-file-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/232/find-file-model-232.jar
+      find-file-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/243/find-file-model-243.jar
+      find-classes-model:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/231/find-classes-model-231.jar
+      find-classes-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-classes-model/243/find-classes-model-243.jar
+      find-all-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-all-model/232/find-all-model-232.jar
+      find-ec-model-experimental:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-ec-model/251/find-ec-model-251.jar
+- name: lib/searchEverywhereMl.jar
+  modules:
+  - name: intellij.searchEverywhereMl
+    libraries:
+      ai.grazie.emb:
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0/model-emb-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-text-jvm/0/model-text-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/model/model-common-jvm/0/model-common-jvm-0.jar
+      - name: $MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0/utils-common-jvm-0.jar
+  contentModules:
+  - name: intellij.searchEverywhereMl.typos
+  - name: intellij.searchEverywhereMl.ranking.ext
+  - name: intellij.searchEverywhereMl.ranking.java
+  - name: intellij.searchEverywhereMl.ranking.yaml
+  - name: intellij.searchEverywhereMl.ranking.vcs

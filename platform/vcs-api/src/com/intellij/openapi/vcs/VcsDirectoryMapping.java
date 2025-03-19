@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -17,7 +17,7 @@ public final class VcsDirectoryMapping {
   public static final Supplier<@Nls String> PROJECT_CONSTANT = VcsBundle.messagePointer("label.project.vcs.root.mapping");
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
-  @NotNull private final String myDirectory;
+  private final @NotNull String myDirectory;
   private final String myVcs;
   private final VcsRootSettings myRootSettings;
 
@@ -36,19 +36,15 @@ public final class VcsDirectoryMapping {
     myRootSettings = rootSettings;
   }
 
-  @NotNull
-  public static VcsDirectoryMapping createDefault(@NotNull String vcs) {
+  public static @NotNull VcsDirectoryMapping createDefault(@NotNull String vcs) {
     return new VcsDirectoryMapping(DEFAULT_MAPPING_DIR, vcs);
   }
 
-  @NotNull
-  @SystemIndependent
-  public String getDirectory() {
+  public @NotNull @SystemIndependent String getDirectory() {
     return myDirectory;
   }
 
-  @NotNull
-  public String getVcs() {
+  public @NotNull String getVcs() {
     return myVcs;
   }
 
@@ -58,8 +54,7 @@ public final class VcsDirectoryMapping {
    * @return VCS-specific settings, or null if none have been defined.
    * @see AbstractVcs#getRootConfigurable(VcsDirectoryMapping)
    */
-  @Nullable
-  public VcsRootSettings getRootSettings() {
+  public @Nullable VcsRootSettings getRootSettings() {
     return myRootSettings;
   }
 
@@ -67,7 +62,7 @@ public final class VcsDirectoryMapping {
    * @return if this mapping denotes "default mapping" aka "&lt;Project&gt;".
    */
   public boolean isDefaultMapping() {
-    return myDirectory.length() == 0;
+    return myDirectory.isEmpty();
   }
 
   /**
@@ -77,6 +72,7 @@ public final class VcsDirectoryMapping {
     return myVcs.isEmpty();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -90,6 +86,7 @@ public final class VcsDirectoryMapping {
     return true;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = myDirectory.hashCode();

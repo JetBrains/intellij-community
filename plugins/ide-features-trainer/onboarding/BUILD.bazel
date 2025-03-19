@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.featuresTrainer.onboarding` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "featuresTrainer-onboarding_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "featuresTrainer-onboarding",
+  module_name = "intellij.featuresTrainer.onboarding",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/platform-impl:ide-impl",
+    "//platform/new-ui-onboarding:ide-newUiOnboarding",
+    "//plugins/ide-features-trainer:featuresTrainer",
+    "//platform/core-ui",
+    "//platform/new-users-onboarding:ide-newUsersOnboarding",
+  ],
+  runtime_deps = [":featuresTrainer-onboarding_resources"]
+)
+### auto-generated section `build intellij.featuresTrainer.onboarding` end

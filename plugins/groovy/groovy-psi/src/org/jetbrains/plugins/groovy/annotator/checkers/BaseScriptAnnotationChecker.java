@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 import java.util.Objects;
 
-public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
+public final class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {
     if (GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT.equals(annotation.getQualifiedName())) {
@@ -62,9 +62,7 @@ public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
     return false;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getTypeText(@Nullable PsiClass clazz) {
+  public @NotNull @NlsSafe String getTypeText(@Nullable PsiClass clazz) {
     if (clazz == null) {
       return CommonClassNames.JAVA_LANG_OBJECT;
     }

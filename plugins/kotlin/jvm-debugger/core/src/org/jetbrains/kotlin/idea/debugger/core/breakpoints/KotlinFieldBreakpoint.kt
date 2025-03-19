@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.requests.Requestor
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Method
@@ -25,10 +27,10 @@ import com.sun.jdi.event.*
 import com.sun.jdi.request.EventRequest
 import com.sun.jdi.request.MethodEntryRequest
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.debugger.base.util.runSmartAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
@@ -54,6 +56,7 @@ class KotlinFieldBreakpoint(
         return super.isValid() && evaluationElement != null
     }
 
+    @RequiresBackgroundThread
     override fun reload() {
         super.reload()
 
@@ -80,7 +83,6 @@ class KotlinFieldBreakpoint(
 
         breakpointType = evaluationElement?.let(::computeBreakpointType) ?: return
 
-        val vm = debugProcess.virtualMachineProxy
         try {
             if (properties.watchInitialization) {
                 val sourcePosition = sourcePosition
@@ -100,17 +102,17 @@ class KotlinFieldBreakpoint(
 
             when (breakpointType) {
                 BreakpointType.FIELD -> {
-                    val field = refType.fieldByName(getFieldName())
+                    val field = DebuggerUtils.findField(refType, getFieldName())
                     if (field != null) {
                         val manager = debugProcess.requestsManager
-                        if (properties.watchModification && vm.canWatchFieldModification()) {
+                        if (properties.watchModification && refType.virtualMachine().canWatchFieldModification()) {
                             val request = manager.createModificationWatchpointRequest(this, field)
                             debugProcess.requestsManager.enableRequest(request)
                             if (LOG.isDebugEnabled) {
                                 LOG.debug("Modification request added")
                             }
                         }
-                        if (properties.watchAccess && vm.canWatchFieldAccess()) {
+                        if (properties.watchAccess && refType.virtualMachine().canWatchFieldAccess()) {
                             val request = manager.createAccessWatchpointRequest(this, field)
                             debugProcess.requestsManager.enableRequest(request)
                             if (LOG.isDebugEnabled) {
@@ -123,17 +125,13 @@ class KotlinFieldBreakpoint(
                     val fieldName = getFieldName()
 
                     if (properties.watchAccess) {
-                        val getter = refType.methodsByName(JvmAbi.getterName(fieldName)).firstOrNull()
-                        if (getter != null) {
-                            createMethodBreakpoint(debugProcess, refType, getter)
-                        }
+                        DebuggerUtils.findMethod(refType, JvmAbi.getterName(fieldName), null)
+                            ?.let { createMethodBreakpoint(debugProcess, refType, it) }
                     }
 
                     if (properties.watchModification) {
-                        val setter = refType.methodsByName(JvmAbi.setterName(fieldName)).firstOrNull()
-                        if (setter != null) {
-                            createMethodBreakpoint(debugProcess, refType, setter)
-                        }
+                        DebuggerUtils.findMethod(refType, JvmAbi.setterName(fieldName), null)
+                            ?.let { createMethodBreakpoint(debugProcess, refType, it) }
                     }
                 }
             }
@@ -143,16 +141,14 @@ class KotlinFieldBreakpoint(
     }
 
     private fun computeBreakpointType(property: KtCallableDeclaration): BreakpointType {
-        return runReadAction {
-            analyze(property) {
-                val hasBackingField = when (val symbol = property.getSymbol()) {
-                    is KtValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
-                    is KtKotlinPropertySymbol -> symbol.hasBackingField
-                    else -> false
-                }
-
-                if (hasBackingField) BreakpointType.FIELD else BreakpointType.METHOD
+        return runSmartAnalyze(property) {
+            val hasBackingField = when (val symbol = property.symbol) {
+                is KaValueParameterSymbol -> symbol.generatedPrimaryConstructorProperty?.hasBackingField ?: false
+                is KaKotlinPropertySymbol -> symbol.hasBackingField
+                else -> false
             }
+
+            if (hasBackingField) BreakpointType.FIELD else BreakpointType.METHOD
         }
     }
 

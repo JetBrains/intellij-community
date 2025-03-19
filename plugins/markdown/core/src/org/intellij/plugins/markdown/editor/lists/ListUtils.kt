@@ -11,18 +11,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.CharArrayUtil
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 internal object ListUtils {
   /** [offset] may be located inside the indent of the returned item, but not on a blank line */
-  fun MarkdownFile.getListItemAt(offset: Int, document: Document): MarkdownListItem? {
+  fun PsiFile.getListItemAt(offset: Int, document: Document): MarkdownListItem? {
     return getListItemAtLine(document.getLineNumber(offset), document)
   }
 
   /** [lineNumber] should belong to a list item and not represent a blank line, otherwise returns `null` */
-  fun MarkdownFile.getListItemAtLine(lineNumber: Int, document: Document): MarkdownListItem? {
+  fun PsiFile.getListItemAtLine(lineNumber: Int, document: Document): MarkdownListItem? {
     val lineStart = document.getLineStartOffset(lineNumber)
     val lineEnd = document.getLineEndOffset(lineNumber)
     val searchingOffset = CharArrayUtil.shiftBackward(document.charsSequence, lineStart, lineEnd - 1, " \t\n")
@@ -37,7 +36,7 @@ internal object ListUtils {
 
   /** If 0 <= [lineNumber] < [Document.getLineCount], equivalent to [getListItemAtLine].
    * Otherwise, returns null. */
-  fun MarkdownFile.getListItemAtLineSafely(lineNumber: Int, document: Document) =
+  fun PsiFile.getListItemAtLineSafely(lineNumber: Int, document: Document) =
     if (lineNumber in 0 until document.lineCount)
       getListItemAtLine(lineNumber, document)
     else null

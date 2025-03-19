@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.graph.api.printer
 
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 
 /**
  * Generates color ids for graph nodes.
@@ -15,7 +16,7 @@ interface GraphColorGetter {
    * @see com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo.getNodeId
    * @see com.intellij.vcs.log.graph.api.GraphLayout.getLayoutIndex
    */
-  fun getNodeColor(nodeId: Int, layoutIndex: Int): Int
+  fun getNodeColor(nodeId: VcsLogGraphNodeId, layoutIndex: Int): Int
 }
 
 /**

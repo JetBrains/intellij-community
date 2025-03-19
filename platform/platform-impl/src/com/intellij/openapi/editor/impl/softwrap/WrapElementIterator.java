@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Iterator over editor's 'atomic' (in terms of soft wrapping) elements. These are folded regions and individual Unicode characters
  * (including the ones represented by surrogate pairs). Line breaks are treated separately as they represent a special interest, they can
  * be represented as one or two (Windows line-ending style) characters.
  */
+@ApiStatus.Internal
 public class WrapElementIterator {
   protected final Document myDocument;
   protected final CharSequence myText;

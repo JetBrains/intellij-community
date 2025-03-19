@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public final class ProjectViewCollector extends ProjectUsagesCollector {
+final class ProjectViewCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("project.view.pane", 2);
   public static final ClassEventField CLASS_NAME = EventFields.Class("class_name");
   public static final ClassEventField SCOPE_CLASS_NAME = EventFields.Class("scope_class_name");
@@ -33,7 +33,7 @@ public final class ProjectViewCollector extends ProjectUsagesCollector {
 
   @Override
   protected @NotNull Set<MetricEvent> getMetrics(final @NotNull Project project) {
-    final ProjectView projectView = ProjectView.getInstance(project);
+    final ProjectView projectView = project.getServiceIfCreated(ProjectView.class);
     if (projectView == null) {
       return Collections.emptySet();
     }

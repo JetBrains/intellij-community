@@ -4,12 +4,11 @@ public final class Foo {
     @org.jetbrains.annotations.NotNull private var int1: int
     @org.jetbrains.annotations.NotNull private var int2: int
     public final fun getInternalVarPrivateSet$light_idea_test_case() : java.lang.String = UastEmptyExpression
-    public final fun setInternalVarPrivateSet$light_idea_test_case(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
     protected final fun getProtectedLateinitVar() : java.lang.String = UastEmptyExpression
     protected final fun setProtectedLateinitVar(@org.jetbrains.annotations.NotNull <set-?>: java.lang.String) : void = UastEmptyExpression
     protected final fun getInt1() : int = UastEmptyExpression
     public final fun getInt2() : int = UastEmptyExpression
-    public final fun setInt2(<set-?>: int) : void = UastEmptyExpression
+    public final fun setInt2$light_idea_test_case(<set-?>: int) : void = UastEmptyExpression
     public fun bar1(@org.jetbrains.annotations.NotNull a: int, @org.jetbrains.annotations.NotNull b: java.lang.Object, @org.jetbrains.annotations.NotNull c: Foo) : void {
     }
     public final fun bar2$light_idea_test_case(@null a: error.NonExistentClass, @null b: Unresolved) : void {

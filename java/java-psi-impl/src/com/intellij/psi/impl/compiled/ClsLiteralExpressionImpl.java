@@ -39,7 +39,7 @@ class ClsLiteralExpressionImpl extends ClsElementImpl implements PsiLiteralExpre
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
   }
 

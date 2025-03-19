@@ -4,7 +4,7 @@ package com.intellij.util.io;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
@@ -15,21 +15,19 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static org.junit.Assert.*;
 
-/**
- *
- */
 public class IntToIntBtreeTest {
 
   private static final int ENOUGH_KEYS = 1 << 22;
 
-  private static final int PAGE_SIZE = 1 << 15;
+  private static final int PAGE_SIZE = 32_768;
+
   private static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private IntToIntBtree bTree;
-  private Int2IntOpenHashMap generatedKeyValues;
+  private Int2IntMap generatedKeyValues;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
@@ -43,6 +41,10 @@ public class IntToIntBtreeTest {
 
     bTree = new IntToIntBtree(PAGE_SIZE, file.toPath(), LOCK_CONTEXT, /*createAnew: */ true);
     generatedKeyValues = generateKeyValues(ENOUGH_KEYS);
+
+    for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
+      bTree.put(e.getKey(), e.getValue());
+    }
   }
 
   @After
@@ -51,7 +53,8 @@ public class IntToIntBtreeTest {
       if (bTree != null) {
         bTree.doClose();
       }
-    }finally {
+    }
+    finally {
       LOCK_CONTEXT.writeLock().unlock();
     }
   }
@@ -59,17 +62,12 @@ public class IntToIntBtreeTest {
 
   @Test
   public void allKeysPutIntoBTreeCouldBeFoundBackWithAssociatedValues() throws IOException {
-    for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
-      bTree.put(e.getKey(), e.getValue());
-    }
 
     final int[] valueHolder = new int[1];
-    final Int2IntMap.FastEntrySet entries = generatedKeyValues.int2IntEntrySet();
-    final ObjectIterator<Int2IntMap.Entry> iterator = entries.fastIterator();
-    while (iterator.hasNext()) {
-      final Int2IntMap.Entry e = iterator.next();
-      final int key = e.getIntKey();
-      final int expectedValue = e.getIntValue();
+    final ObjectSet<Int2IntMap.Entry> entries = generatedKeyValues.int2IntEntrySet();
+    for (final Int2IntMap.Entry entry : entries) {
+      final int key = entry.getIntKey();
+      final int expectedValue = entry.getIntValue();
 
       final boolean found = bTree.get(key, valueHolder);
 
@@ -82,11 +80,8 @@ public class IntToIntBtreeTest {
 
   @Test
   public void allKeysValuesPutIntoBTreeCouldBeReadBackWithProcessMappings() throws IOException {
-    for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
-      bTree.put(e.getKey(), e.getValue());
-    }
 
-    final Int2IntOpenHashMap bTreeContent = new Int2IntOpenHashMap(generatedKeyValues.size());
+    final Int2IntMap bTreeContent = new Int2IntOpenHashMap(generatedKeyValues.size());
     bTree.processMappings(new IntToIntBtree.KeyValueProcessor() {
       @Override
       public boolean process(final int key,
@@ -105,9 +100,6 @@ public class IntToIntBtreeTest {
 
   @Test
   public void keys_Not_PutIntoBTreeCould_Not_BeFoundBack() throws IOException {
-    for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
-      bTree.put(e.getKey(), e.getValue());
-    }
 
     final int[] valueHolder = new int[1];
     final ThreadLocalRandom current = ThreadLocalRandom.current();
@@ -122,9 +114,6 @@ public class IntToIntBtreeTest {
 
   @Test
   public void overwrittenValuesAreReadBackAsWritten() throws IOException {
-    for (Map.Entry<Integer, Integer> e : generatedKeyValues.int2IntEntrySet()) {
-      bTree.put(e.getKey(), e.getValue());
-    }
 
     final int[] allKeys = generatedKeyValues.keySet().intStream().toArray();
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
@@ -148,12 +137,10 @@ public class IntToIntBtreeTest {
     }
 
     //check final state: bTree content is same as generatedKeyValues content:
-    final Int2IntMap.FastEntrySet entries = generatedKeyValues.int2IntEntrySet();
-    final ObjectIterator<Int2IntMap.Entry> iterator = entries.fastIterator();
-    while (iterator.hasNext()) {
-      final Int2IntMap.Entry e = iterator.next();
-      final int key = e.getIntKey();
-      final int expectedValue = e.getIntValue();
+    final ObjectSet<Int2IntMap.Entry> entries = generatedKeyValues.int2IntEntrySet();
+    for (final Int2IntMap.Entry entry : entries) {
+      final int key = entry.getIntKey();
+      final int expectedValue = entry.getIntValue();
 
       final boolean found = bTree.get(key, valueHolder);
 
@@ -181,8 +168,8 @@ public class IntToIntBtreeTest {
   }
 
 
-  private Int2IntOpenHashMap generateKeyValues(final int keysCount) {
-    final Int2IntOpenHashMap keyValues = new Int2IntOpenHashMap(keysCount);
+  private static Int2IntMap generateKeyValues(final int keysCount) {
+    final Int2IntMap keyValues = new Int2IntOpenHashMap(keysCount);
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < keysCount; i++) {
       final int key = rnd.nextInt();

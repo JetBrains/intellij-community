@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -85,7 +85,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   boolean addClassPathToStarter) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
-      params.getClassPath().add(getBundledGroovyFile());
+      params.getClassPath().add(getBundledGroovyFile().get());
     }
     else if (groovyJar != null) {
       params.getClassPath().add(groovyJar);
@@ -97,7 +97,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
     setToolsJar(params);
 
-    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
+    String groovyHome = useBundled ? FileUtil.toCanonicalPath(getBundledGroovyFile().get().getParentFile().getParent()) : LibrariesUtil.getGroovyHomePath(module);
     String groovyHomeDependentName = groovyHome != null ? FileUtil.toSystemDependentName(groovyHome) : null;
 
     if (groovyHomeDependentName != null) {

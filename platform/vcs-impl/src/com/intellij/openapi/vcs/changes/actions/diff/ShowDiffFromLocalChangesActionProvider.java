@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffDialogHints;
@@ -18,16 +18,19 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcsUtil.VcsImplUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import static com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT;
 
+@ApiStatus.Internal
 public class ShowDiffFromLocalChangesActionProvider implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -77,9 +80,11 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
+  public void actionPerformed(final @NotNull AnActionEvent e) {
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    ChangesListView view = e.getData(ChangesListView.DATA_KEY);
+    if (view == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     List<Change> changes = view.getSelectedChanges().toList();
@@ -95,7 +100,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       ChangeListManager.getInstance(project).invokeAfterUpdate(true, () -> {
         ChangesViewManager.getInstanceEx(project).promiseRefresh().onProcessed(__ -> {
           try {
-            List<Change> actualChanges = loadFakeRevisions(project, changes);
+            List<? extends Change> actualChanges = loadFakeRevisions(project, changes);
             resultRef.complete(collectRequestProducers(project, actualChanges, unversioned, view));
           }
           catch (Throwable err) {
@@ -144,20 +149,15 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
     return needsConversion;
   }
 
-  @NotNull
-  private static List<Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
-    List<Change> actualChanges = new ArrayList<>();
-    for (Change change : changes) {
-      actualChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return actualChanges;
+  private static @NotNull List<? extends Change> loadFakeRevisions(@NotNull Project project, @NotNull List<? extends Change> changes) {
+    Collection<Change> allChanges = ChangeListManager.getInstance(project).getAllChanges();
+    return VcsImplUtil.filterChangesUnder(allChanges, ChangesUtil.getPaths(changes)).toList();
   }
 
-  @NotNull
-  public static ListSelection<Producer> collectRequestProducers(@NotNull Project project,
-                                                                @NotNull List<? extends Change> changes,
-                                                                @NotNull List<? extends FilePath> unversioned,
-                                                                @NotNull ChangesListView changesView) {
+  public static @NotNull ListSelection<Producer> collectRequestProducers(@NotNull Project project,
+                                                                         @NotNull List<? extends Change> changes,
+                                                                         @NotNull List<? extends FilePath> unversioned,
+                                                                         @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
       List<Change> selectedChanges = changesView.getAllChangesFromSameChangelist(selectedChange);

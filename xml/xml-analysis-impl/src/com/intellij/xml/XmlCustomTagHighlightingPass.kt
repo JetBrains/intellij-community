@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
@@ -12,6 +12,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy
 import com.intellij.openapi.editor.XmlHighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsUtil
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -26,18 +27,17 @@ import com.intellij.psi.impl.source.html.dtd.HtmlElementDescriptorImpl
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.xml.XmlElementType
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlTokenType
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 
-val attributeKeyMapping = mapOf<TextAttributesKey, TextAttributesKey>(
+private val attributeKeyMapping: Map<TextAttributesKey, TextAttributesKey> = mapOf<TextAttributesKey, TextAttributesKey>(
   XmlHighlighterColors.HTML_TAG_NAME to XmlHighlighterColors.HTML_CUSTOM_TAG_NAME,
   XmlHighlighterColors.XML_TAG_NAME to XmlHighlighterColors.XML_CUSTOM_TAG_NAME
 )
 
-class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
-
+internal class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEditorHighlightingPass(file.project, editor.document, true) {
   private val myHolder: HighlightInfoHolder = HighlightInfoHolder(file)
   private val myHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.language, file.project, file.virtualFile)
 
@@ -55,7 +55,7 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
         if (isCustomTag(file, tag)) {
           tag.node?.let {
             for (child in it.getChildren(null)) {
-              applyHighlighting(child, child.elementType)
+              applyHighlighting(tag, child, child.elementType)
             }
           }
         }
@@ -63,27 +63,29 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     })
   }
 
-  private fun getCustomNames() = (HtmlUtil.getEntitiesString(file, XmlEntitiesInspection.TAG_SHORT_NAME)
-                             ?.let { StringUtil.split(it, ",").toSet() }
-                           ?: emptySet())
+  private fun getCustomNames() =
+    HtmlUtil.getEntitiesString(file, XmlEntitiesInspection.TAG_SHORT_NAME)
+      ?.splitToSequence(',')
+      ?.mapTo(HashSet()) { StringUtil.toLowerCase(it) }
+    ?: emptySet()
 
-  private fun applyHighlighting(node: ASTNode, elementType: IElementType) {
+  private fun applyHighlighting(originalXmlTag: XmlTag, node: ASTNode, elementType: IElementType) {
     if (node !is LeafElement) return
-    val effectiveElementType = if (elementType == XmlElementType.XML_NAME) XmlElementType.XML_TAG_NAME else elementType
+    val effectiveElementType = if (elementType == XmlTokenType.XML_NAME) XmlTokenType.XML_TAG_NAME else elementType
 
     val attributesKeys = myHighlighter.getTokenHighlights(effectiveElementType)
-    val newAttributesKeys = replaceTextAttributeKeys(attributesKeys)
+    val newAttributesKeys = replaceTextAttributeKeys(originalXmlTag, attributesKeys)
     if (!newAttributesKeys.contentEquals(attributesKeys)) {
-      myHolder.add(highlight(node, newAttributesKeys))
+      myHolder.add(highlight(originalXmlTag, node, newAttributesKeys))
     }
   }
 
-  private fun replaceTextAttributeKeys(newAttributesKeys: Array<TextAttributesKey>): Array<TextAttributesKey> {
+  private fun replaceTextAttributeKeys(originalXmlTag: XmlTag, attributesKeys: Array<TextAttributesKey>): Array<TextAttributesKey> {
     when {
-      hasKey(newAttributesKeys) -> {
-        return newAttributesKeys.map { attributeKeyMapping[it] ?: it }.toTypedArray()
+      hasKey(attributesKeys) -> {
+        return attributesKeys.map { getCustomAttributeKey(originalXmlTag) ?: attributeKeyMapping[it] ?: it }.toTypedArray()
       }
-      else -> return newAttributesKeys
+      else -> return attributesKeys
     }
   }
 
@@ -91,9 +93,12 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     return keys.firstOrNull { attributeKeyMapping.containsKey(it) } != null
   }
 
-  private fun highlight(node: ASTNode, key: Array<TextAttributesKey>): HighlightInfo? {
+  private fun highlight(originalXmlTag: XmlTag, node: ASTNode, key: Array<TextAttributesKey>): HighlightInfo? {
     //debug only
-    @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) "Custom tag name" else null
+    @NlsSafe val description = if (ApplicationManager.getApplication().isUnitTestMode) {
+      getCustomAttributeKey(originalXmlTag)?.externalName ?: "Custom tag name"
+    }
+    else null
     var textAttributes = HighlightInfo.newHighlightInfo(INFORMATION)
       .severity(SYMBOL_TYPE_SEVERITY)
       .range(node)
@@ -103,6 +108,11 @@ class XmlCustomTagHighlightingPass(val file: PsiFile, editor: Editor) : TextEdit
     }
     return textAttributes.create()
   }
+
+  private fun getCustomAttributeKey(originalXmlTag: XmlTag) =
+    XmlCustomTagHighlightingStrategy.EP_NAME.extensionList
+      .filter { it.isAvailable(file, originalXmlTag) }
+      .firstNotNullOfOrNull { it.highlightCustomTag(file, originalXmlTag) }
 
   override fun doApplyInformationToEditor() {
     val highlights: MutableList<HighlightInfo> = mutableListOf()
@@ -119,7 +129,8 @@ fun isCustomTag(file: PsiFile, tag: XmlTag): Boolean {
   return isHtmlLikeFile(file) && !isHtmlTagName(descriptor, tag)
 }
 
-private fun isHtmlLikeFile(file: PsiFile) = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(file)
+private fun isHtmlLikeFile(file: PsiFile) = file.viewProvider.allFiles.any { it is HtmlCompatibleFile } || HtmlUtil.supportsXmlTypedHandlers(
+  file)
 
 private fun isHtmlTagName(descriptor: XmlElementDescriptor, tag: XmlTag): Boolean {
   if (descriptor is HtmlElementDescriptorImpl) return true

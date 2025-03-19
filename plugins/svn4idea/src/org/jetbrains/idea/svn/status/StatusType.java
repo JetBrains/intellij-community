@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.status;
 
 import org.jetbrains.annotations.NonNls;
@@ -36,7 +36,7 @@ public enum StatusType {
 
   private static final @NonNls String STATUS_PREFIX = "STATUS_";
 
-  @NotNull private static final Map<String, StatusType> ourStatusTypesForStatusOperation = new HashMap<>();
+  private static final @NotNull Map<String, StatusType> ourStatusTypesForStatusOperation = new HashMap<>();
 
   static {
     for (StatusType action : values()) {
@@ -60,6 +60,7 @@ public enum StatusType {
     return myCode;
   }
 
+  @Override
   public String toString() {
     return myName;
   }
@@ -70,8 +71,7 @@ public enum StatusType {
     }
   }
 
-  @Nullable
-  public static StatusType forStatusOperation(@NotNull String statusName) {
+  public static @Nullable StatusType forStatusOperation(@NotNull String statusName) {
     return ourStatusTypesForStatusOperation.get(statusName);
   }
 }

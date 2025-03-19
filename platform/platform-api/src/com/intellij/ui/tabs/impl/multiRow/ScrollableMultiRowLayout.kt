@@ -1,24 +1,26 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.multiRow
 
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.LayoutPassInfo
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class ScrollableMultiRowLayout(tabs: JBTabsImpl,
                                showPinnedTabsSeparately: Boolean,
                                private val isWithScrollBar: Boolean = false) : MultiRowLayout(tabs, showPinnedTabsSeparately) {
   private var scrollOffset: Int = 0
 
   override fun layoutTable(visibleInfos: List<TabInfo>): LayoutPassInfo {
-    if (!tabs.isMouseInsideTabsArea && !tabs.isHideTabs) {
+    if (!tabs.isMouseInsideTabsArea && !tabs.isHideTabs && !tabs.isScrollBarAdjusting() && !tabs.isRecentlyActive) {
       scrollToSelectedTab()
     }
     return super.layoutTable(visibleInfos)
   }
 
   override fun splitToRows(data: MultiRowPassInfo): List<TabsRow> {
-    val (pinned, unpinned) = splitToPinnedUnpinned(data.myVisibleInfos)
+    val (pinned, unpinned) = splitToPinnedUnpinned(data.visibleInfos)
     val withTitle = tabs.titleWrapper.preferredSize.width > 0
     val withEntryPoint = tabs.entryPointPreferredSize.width > 0
     return if (pinned.isNotEmpty() && unpinned.isNotEmpty()) {
@@ -51,8 +53,8 @@ class ScrollableMultiRowLayout(tabs: JBTabsImpl,
     for (info in scrollableRow.infos) {
       val length = data.lengths[info]!!
       if (info == selectedInfo) {
-        if (offset < minX) {
-          scroll(offset)
+        if (offset <= minX) {
+          scroll(offset - minX)
         }
         else if (offset + length > maxX) {
           scroll(offset + length - maxX)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
@@ -152,12 +152,12 @@ public class AutomaticGetterSetterRenamer extends AutomaticRenamer {
     return shouldRenameSetterParameter;
   }
 
-  public static void addOverriddenAndImplemented(@NotNull final PsiMethod methodPrototype,
-                                                   @NotNull final String newName,
-                                                   @Nullable final String newPropertyName,
-                                                   @NotNull final String oldParameterName,
-                                                   @NotNull final JavaCodeStyleManager manager,
-                                                   @NotNull final Map<PsiElement, String> allRenames) {
+  public static void addOverriddenAndImplemented(final @NotNull PsiMethod methodPrototype,
+                                                 final @NotNull String newName,
+                                                 final @Nullable String newPropertyName,
+                                                 final @NotNull String oldParameterName,
+                                                 final @NotNull JavaCodeStyleManager manager,
+                                                 final @NotNull Map<PsiElement, String> allRenames) {
     PsiMethod[] methods = methodPrototype.findDeepestSuperMethods();
     if (methods.length == 0) {
       methods = new PsiMethod[] {methodPrototype};

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
@@ -10,20 +10,22 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +38,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   private volatile PsiFile myPsiFile;
   private static final AtomicReferenceFieldUpdater<SingleRootFileViewProvider, PsiFile>
     myPsiFileUpdater = AtomicReferenceFieldUpdater.newUpdater(SingleRootFileViewProvider.class, PsiFile.class, "myPsiFile");
-  @NotNull private final Language myBaseLanguage;
+  private final @NotNull Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
     this(manager, file, true);
@@ -68,8 +70,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public Language getBaseLanguage() {
+  public @NotNull Language getBaseLanguage() {
     return myBaseLanguage;
   }
 
@@ -83,20 +84,17 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   @Override
-  @NotNull
-  public Set<Language> getLanguages() {
+  public @NotNull Set<Language> getLanguages() {
     return Collections.singleton(getBaseLanguage());
   }
 
   @Override
-  @NotNull
-  public List<PsiFile> getAllFiles() {
+  public @Unmodifiable @NotNull List<@NotNull PsiFile> getAllFiles() {
     return ContainerUtil.createMaybeSingletonList(getPsi(getBaseLanguage()));
   }
 
   @Override
-  @Nullable
-  protected PsiFile getPsiInner(@NotNull Language target) {
+  protected @Nullable PsiFile getPsiInner(@NotNull Language target) {
     if (target != getBaseLanguage()) {
       return null;
     }
@@ -121,23 +119,23 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
         file = alreadyCreated;
       }
     }
-    return ObjectUtils.nullizeIfDefaultValue(file, PsiUtilCore.NULL_PSI_FILE);
+    return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
   @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
-    return ObjectUtils.nullizeIfDefaultValue(myPsiFile, PsiUtilCore.NULL_PSI_FILE);
+    PsiFile obj = myPsiFile;
+    return obj == PsiUtilCore.NULL_PSI_FILE ? null : obj;
   }
 
-  @NotNull
   @Override
-  public final List<PsiFile> getCachedPsiFiles() {
+  public final @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
   }
 
   @Override
-  public final @NotNull List<FileASTNode> getKnownTreeRoots() {
+  public final @Unmodifiable @NotNull List<FileASTNode> getKnownTreeRoots() {
     PsiFile psiFile = getCachedPsi(getBaseLanguage());
     if (!(psiFile instanceof PsiFileImpl)) return Collections.emptyList();
     FileASTNode element = ((PsiFileImpl)psiFile).getNodeIfLoaded();
@@ -169,19 +167,20 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (file instanceof LightVirtualFile && ((LightVirtualFile)file).isTooLargeForIntelligence() == ThreeState.YES) {
       return false;
     }
-    int maxSize = PersistentFSConstants.getMaxIntellisenseFileSize();
+    int maxSize = FileSizeLimit.getIntellisenseLimit(file.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(file, maxSize)
            : contentSize > maxSize;
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
-    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
+    int contentLoadLimit = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
+    return fileSizeIsGreaterThan(vFile, contentLoadLimit);
   }
 
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile,
                                                     @Nullable("if content size should be retrieved from a file") Long contentSize) {
-    long maxLength = PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    long maxLength = FileSizeLimit.getContentLoadLimit(vFile.getExtension());
     return contentSize == null
            ? fileSizeIsGreaterThan(vFile, maxLength)
            : contentSize > maxLength;
@@ -190,10 +189,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
       return false;
     }
-    if (vFile instanceof LightVirtualFile) {
-      VirtualFile original = ((LightVirtualFile)vFile).getOriginalFile();
-      if (original != null) return checkFileSizeLimit(original);
-    }
+    VirtualFile original = VirtualFileUtil.originalFile(vFile);
+    if (original != null) return checkFileSizeLimit(original);
     return true;
   }
 
@@ -201,9 +198,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
+  @ApiStatus.Internal
+  public static void clearFileSizeLimitCheck(@NotNull VirtualFile vFile) {
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, null);
+  }
+
   public static boolean fileSizeIsGreaterThan(@NotNull VirtualFile vFile, long maxBytes) {
     if (vFile instanceof LightVirtualFile && !vFile.getFileType().isBinary()) {
-      // This is optimization in order to avoid conversion of [large] file contents to bytes
+      // this is an optimization to avoid conversion of [large] file contents to bytes
       int lengthInChars = ((LightVirtualFile)vFile).getContent().length();
       if (lengthInChars < maxBytes / 2) {
         return false;
@@ -216,9 +218,8 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return vFile.getLength() > maxBytes;
   }
 
-  @NotNull
   @Override
-  public SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
+  public @NotNull SingleRootFileViewProvider createCopy(@NotNull VirtualFile copy) {
     return new SingleRootFileViewProvider(getManager(), copy, false, getBaseLanguage());
   }
 
@@ -241,15 +242,9 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public final void forceCachedPsi(@NotNull PsiFile psiFile) {
-    while (true) {
-      PsiFile prev = myPsiFile;
-      // jdk 6 doesn't have getAndSet()
-      if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
-        if (prev != psiFile && prev instanceof PsiFileEx) {
-          DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
-        }
-        break;
-      }
+    PsiFile prev = myPsiFileUpdater.getAndSet(this, psiFile);
+    if (prev != psiFile && prev instanceof PsiFileEx) {
+      DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }

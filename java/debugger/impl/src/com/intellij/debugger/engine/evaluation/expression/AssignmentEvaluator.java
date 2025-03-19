@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -8,7 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class AssignmentEvaluator implements Evaluator {
+public class AssignmentEvaluator implements ModifiableEvaluator {
   private final Evaluator myLeftEvaluator;
   private final Evaluator myRightEvaluator;
 
@@ -18,9 +18,8 @@ public class AssignmentEvaluator implements Evaluator {
   }
 
   @Override
-  public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    myLeftEvaluator.evaluate(context);
-    final Modifier modifier = myLeftEvaluator.getModifier();
+  public @NotNull ModifiableValue evaluateModifiable(@NotNull EvaluationContextImpl context) throws EvaluateException {
+    Modifier modifier = myLeftEvaluator.evaluateModifiable(context).getModifier();
 
     final Object right = myRightEvaluator.evaluate(context);
     if (right != null && !(right instanceof Value)) {
@@ -29,7 +28,7 @@ public class AssignmentEvaluator implements Evaluator {
 
     assign(modifier, right, context);
 
-    return right;
+    return new ModifiableValue(right, modifier);
   }
 
   static void assign(Modifier modifier, Object right, EvaluationContextImpl context) throws EvaluateException {
@@ -44,7 +43,7 @@ public class AssignmentEvaluator implements Evaluator {
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       try {
-        ReferenceType referenceType = context.getDebugProcess().loadClass(context, e.className(), context.getClassLoader());
+        ReferenceType referenceType = context.getDebugProcess().loadClass(context, e, context.getClassLoader());
         if (referenceType != null) {
           assign(modifier, right, context);
         }

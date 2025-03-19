@@ -1,16 +1,24 @@
-aiohttp==3.8.1
-black==22.8.0           # must match .pre-commit-config.yaml
-flake8==5.0.4           # must match .pre-commit-config.yaml
-flake8-bugbear==22.7.1  # must match .pre-commit-config.yaml
-flake8-noqa==1.2.9      # must match .pre-commit-config.yaml
-flake8-pyi==22.8.2      # must match .pre-commit-config.yaml
-isort==5.10.1           # must match .pre-commit-config.yaml
-mypy==0.971
-packaging==21.3
-pycln==2.1.1            # must match .pre-commit-config.yaml
-pyyaml==6.0
-pytype==2022.08.30; platform_system != "Windows"
-termcolor>=2
-tomli==1.2.2
-tomlkit==0.11.4
-types-pyyaml
+# Type checkers and other linters that we test our stubs against. These should always
+# be pinned to a specific version to make failure reproducible. See also the
+# "tool.typeshed" section in pyproject.toml for additional type checkers.
+black==24.4.2            # must match .pre-commit-config.yaml
+flake8==7.1.0            # must match .pre-commit-config.yaml
+flake8-noqa==1.4.0       # must match .pre-commit-config.yaml
+flake8-pyi==24.6.0       # must match .pre-commit-config.yaml
+mypy==1.10.1
+pre-commit-hooks==4.6.0  # must match .pre-commit-config.yaml
+pyright==1.1.373
+pytype==2024.4.11; platform_system != "Windows" and python_version < "3.12"
+ruff==0.5.4              # must match .pre-commit-config.yaml
+
+# Libraries used by our various scripts.
+aiohttp==3.9.5
+packaging==24.1
+pathspec>=0.11.1
+pre-commit
+stubdefaulter==0.1.0
+termcolor>=2.3
+tomli==2.0.1
+tomlkit==0.13.0
+typing_extensions>=4.12.0rc1
+uv==0.2.27

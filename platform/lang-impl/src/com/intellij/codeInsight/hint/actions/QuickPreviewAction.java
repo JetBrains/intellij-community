@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.ImplementationViewSession;
@@ -18,7 +18,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class QuickPreviewAction extends ShowImplementationsAction {
+public final class QuickPreviewAction extends ShowImplementationsAction {
   @Override
   protected boolean couldPinPopup() {
     return false;
@@ -33,7 +33,7 @@ public class QuickPreviewAction extends ShowImplementationsAction {
     }
   }
 
-  protected boolean isQuickPreviewAvailableFor(AnActionEvent e) {
+  private boolean isQuickPreviewAvailableFor(AnActionEvent e) {
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
     if (!(component instanceof JTree) && !(component instanceof JList)) {
       return false;

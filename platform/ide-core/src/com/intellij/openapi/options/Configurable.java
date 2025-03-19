@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -138,15 +138,18 @@ public interface Configurable extends UnnamedConfigurable {
   @Contract(pure = true)
   String getDisplayName();
 
+  @ApiStatus.Internal
+  default @Nullable String getDisplayNameFast() {
+    return getDisplayName();
+  }
+
   /**
    * Returns the topic in the help file which is shown when help for the configurable is requested.
    *
    * @return the help topic, or {@code null} if no help is available
    */
-  @Nullable
-  @NonNls
   @Contract(pure = true)
-  default String getHelpTopic() {
+  default @Nullable @NonNls String getHelpTopic() {
     return null;
   }
 
@@ -158,7 +161,7 @@ public interface Configurable extends UnnamedConfigurable {
    */
   @FunctionalInterface
   interface Composite {
-    Configurable @NotNull [] getConfigurables();
+    @NotNull Configurable @NotNull [] getConfigurables();
   }
 
   /**
@@ -174,6 +177,13 @@ public interface Configurable extends UnnamedConfigurable {
    */
   interface Beta {
 
+  }
+
+  /**
+   * This marker interface tells the Settings dialog to show a lock icon for the configurable.
+   */
+  interface Promo {
+    @NotNull Icon getPromoIcon();
   }
 
   /**
@@ -211,6 +221,27 @@ public interface Configurable extends UnnamedConfigurable {
      * @return EPName-s that affect the configurable or configurable provider
      */
     @NotNull Collection<BaseExtensionPointName<?>> getDependencies();
+  }
+
+  /**
+   * The interface is used to retrieve the parent configurables and enable `Reset` action if any of the parents is modified,
+   * even if the inner configurable wasn't modified.
+   */
+  @ApiStatus.Experimental
+  interface InnerWithModifiableParent {
+    @NotNull java.util.List<Configurable> getModifiableParents();
+  }
+
+  /**
+   * The interface is used when configuration opens as single configuration in dialog.
+   */
+  interface SingleEditorConfiguration {
+    /**
+     * Override to set default initial size of the window.
+     *
+     * @return initial window size
+     */
+    @NotNull Dimension getDialogInitialSize();
   }
 
   /**

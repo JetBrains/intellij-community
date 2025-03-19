@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.Platform
 import com.intellij.execution.target.*
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.project.ProjectManager
@@ -31,7 +30,9 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.target.createDetectedSdk
+import com.jetbrains.python.sdk.add.v1.PySdkListCellRendererExt
+import com.jetbrains.python.sdk.add.v1.asComboBoxItem
+import com.jetbrains.python.sdk.add.v1.createDetectedSdk
 import com.jetbrains.python.ui.targetPathEditor.ManualPathEntryDialog
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -45,10 +46,12 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
  * To fill this box in async mode use [addInterpretersAsync]
  *
  */
-class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = emptyList(),
-                                                          suggestedFile: VirtualFile? = null,
-                                                          private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null,
-                                                          private val targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null) :
+class PySdkPathChoosingComboBox @JvmOverloads constructor(
+  sdks: List<Sdk> = emptyList(),
+  suggestedFile: VirtualFile? = null,
+  private val newPySdkComboBoxItem: NewPySdkComboBoxItem? = null,
+  targetEnvironmentConfiguration: TargetEnvironmentConfiguration? = null,
+) :
   ComponentWithBrowseButton<ComboBoxWithWidePopup<PySdkComboBoxItem>>(ComboBoxWithWidePopup(buildSdkArray(sdks, newPySdkComboBoxItem)),
                                                                       null) {
 
@@ -64,53 +67,56 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
       renderer = PySdkListCellRendererExt()
       ComboboxSpeedSearch.installOn(this)
     }
-    // prepare action listener
-    val actionListener: ActionListener =
-      if (targetEnvironmentConfiguration == null) {
-        // Local FS chooser
-        ActionListener {
-          val pythonSdkType = PythonSdkType.getInstance()
-          val descriptor = pythonSdkType.homeChooserDescriptor
-          FileChooser.chooseFiles(descriptor, null, suggestedFile) {
-            val virtualFile = it.firstOrNull() ?: return@chooseFiles
-            val path = PathUtil.toSystemDependentName(virtualFile.path)
-            selectedSdk =
-              items.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true).apply {
-                addSdkItemOnTop(this)
-              }
-          }
+    addActionListener(createBrowseActionListener(suggestedFile, targetEnvironmentConfiguration))
+  }
+
+  private fun createBrowseActionListener(suggestedFile: VirtualFile?, targetEnvironmentConfiguration: TargetEnvironmentConfiguration?) =
+    if (targetEnvironmentConfiguration == null) {
+      // Local FS chooser
+      ActionListener {
+        val pythonSdkType = PythonSdkType.getInstance()
+        val descriptor = pythonSdkType.homeChooserDescriptor
+        FileChooser.chooseFiles(descriptor, null, suggestedFile) { chosenFiles ->
+          val virtualFile = chosenFiles.firstOrNull() ?: return@chooseFiles
+          val path = PathUtil.toSystemDependentName(virtualFile.path)
+          selectedSdk =
+            items.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true).apply {
+              addSdkItemOnTop(this)
+            }
         }
+      }
+    }
+    else {
+      val targetType: TargetEnvironmentType<*> = targetEnvironmentConfiguration.getTargetType()
+      if (targetType is BrowsableTargetEnvironmentType) {
+        val project = ProjectManager.getInstance().defaultProject
+        val title = PyBundle.message("python.sdk.interpreter.executable.path.title")
+        targetType.createBrowser(project,
+                                 title,
+                                 PySdkComboBoxTextAccessor(targetEnvironmentConfiguration),
+                                 childComponent,
+                                 Supplier { targetEnvironmentConfiguration },
+                                 TargetBrowserHints(false))
       }
       else {
-        val targetType: TargetEnvironmentType<*> = targetEnvironmentConfiguration.getTargetType()
-        if (targetType is BrowsableTargetEnvironmentType) {
-          val project = ProjectManager.getInstance().defaultProject
-          val title = PyBundle.message("python.sdk.interpreter.executable.path.title")
-          targetType.createBrowser(project,
-                                   title,
-                                   PySdkComboBoxTextAccessor(targetEnvironmentConfiguration),
-                                   childComponent,
-                                   Supplier { targetEnvironmentConfiguration },
-                                   TargetBrowserHints(false))
-        }
-        else {
-          // The fallback where the path is entered manually
-          ActionListener {
-            val dialog = ManualPathEntryDialog(project = null, platform = Platform.UNIX)
-            if (dialog.showAndGet()) {
-              childComponent.selectedItem = createDetectedSdk(dialog.path, targetEnvironmentConfiguration).apply { addSdkItemOnTop(this) }
-            }
+        // The fallback where the path is entered manually
+        ActionListener {
+          val dialog = ManualPathEntryDialog(project = null, targetEnvironmentConfiguration)
+          if (dialog.showAndGet()) {
+            childComponent.selectedItem = createDetectedSdk(dialog.path, targetEnvironmentConfiguration).apply { addSdkItemOnTop(this) }
           }
         }
       }
-    addActionListener(actionListener)
-  }
+    }
 
   val selectedItem: PySdkComboBoxItem?
     get() = childComponent.selectedItem as? PySdkComboBoxItem
 
-  var selectedSdk: Sdk?
-    get() = (childComponent.selectedItem as? ExistingPySdkComboBoxItem)?.sdk
+  internal val selectedSdkIfExists: Sdk?
+    get() = childComponent.selectedItem?.let { it as ExistingPySdkComboBoxItem }?.sdk
+
+  var selectedSdk: Sdk
+    get() = selectedSdkIfExists!!
     /**
      * Does nothing if [selectedSdk] is absent in the items in the combobox.
      */

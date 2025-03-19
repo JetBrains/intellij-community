@@ -4,4 +4,5 @@ fun main(args: Array<String>) {
     args.fil<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: filter

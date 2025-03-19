@@ -25,17 +25,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
-public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
+public final class GroovyPublicFieldAccessedInSynchronizedContextInspection extends BaseInspection {
 
   @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
+  protected @NotNull String buildErrorString(Object... infos) {
     return GroovyBundle.message("inspection.message.non.private.field.accessed.in.synchronized.context");
   }
 
-  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
+  public @NotNull BaseInspectionVisitor buildVisitor() {
     return new PublicFieldAccessedInSynchronizedContextVisitor();
   }
 

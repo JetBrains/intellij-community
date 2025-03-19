@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
 
-public class GantMemberContributor extends NonCodeMembersContributor {
+public final class GantMemberContributor extends NonCodeMembersContributor {
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
                                      @Nullable PsiClass aClass,

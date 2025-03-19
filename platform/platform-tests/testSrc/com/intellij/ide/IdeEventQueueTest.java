@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,10 +10,12 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.Alarm;
+import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
     int N = 100000;
-    PlatformTestUtil.startPerformanceTest("Event queue dispatch", 10000, () -> {
+    Benchmark.newBenchmark("Event queue dispatch", () -> {
       UIUtil.dispatchAllInvocationEvents();
       AtomicInteger count = new AtomicInteger();
       for (int i = 0; i < N; i++) {
@@ -42,7 +44,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       }
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(N, count.get());
-    }).assertTiming();
+    }).start();
   }
 
   public void testKeyboardEventsAreDetected() throws InterruptedException {
@@ -67,7 +69,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
 
     int posted = ideEventQueue.keyboardEventPosted.get();
     int dispatched = ideEventQueue.keyboardEventDispatched.get();
-    KeyEvent pressX = new KeyEvent(new JLabel("mykeypress"), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
+    KeyEvent pressX = new KeyEvent(new JLabel("myKeyPress"), KeyEvent.KEY_PRESSED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(pressX);
     assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
     assertEquals(dispatched, ideEventQueue.keyboardEventDispatched.get());
@@ -91,7 +93,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     assertEquals(posted+1, ideEventQueue.keyboardEventPosted.get());
     assertEquals(dispatched+1, ideEventQueue.keyboardEventDispatched.get());
 
-    KeyEvent keyRelease = new KeyEvent(new JLabel("mykeyrelease"), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
+    KeyEvent keyRelease = new KeyEvent(new JLabel("myKeyRelease"), KeyEvent.KEY_RELEASED, 1, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK, 11, 'x');
     postCarefully(keyRelease);
 
     assertEquals(posted+2, ideEventQueue.keyboardEventPosted.get());
@@ -147,12 +149,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     }
   }
 
-  public void testExceptionInAlarmMustThrowImmediatelyInTests() {
-    Alarm alarm = new Alarm();
-    alarm.addRequest(()-> throwMyException(), 1);
-    checkMyExceptionThrownImmediately();
-  }
-
   public void testExceptionInInvokeLateredRunnableMustThrowImmediatelyInTests() {
     SwingUtilities.invokeLater(() -> throwMyException());
     checkMyExceptionThrownImmediately();
@@ -164,17 +160,19 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testEdtExecutorRunnableMustThrowImmediatelyInTests() {
-    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(() -> throwMyException(), ModalityState.nonModal());
     checkMyExceptionThrownImmediately();
   }
 
-  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getScheduledExecutorInstance().schedule(()->throwMyException(), 1, TimeUnit.MILLISECONDS);
-    checkMyExceptionThrownImmediately();
+  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> throwMyException(), 1, TimeUnit.MILLISECONDS);
+      checkMyExceptionThrownImmediately();
+    });
   }
 
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {
-    assert SwingUtilities.isEventDispatchThread();
+    assertTrue(SwingUtilities.isEventDispatchThread());
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
     throwInIdeEventQueueDispatch(ExtensionNotApplicableException.create(), null); // ControlFlowException silently ignored
     throwInIdeEventQueueDispatch(new ProcessCanceledException(), null);  // ControlFlowException silently ignored
@@ -206,12 +204,13 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
   }
 
   public void testPumpEventsForHierarchyMustExitOnIsFutureDoneCondition() {
-    assert SwingUtilities.isEventDispatchThread();
-    IdeEventQueue ideEventQueue = IdeEventQueue.getInstance();
-    CompletableFuture<Object> future = new CompletableFuture<>();
-    TestTimeOut cancelEventTime = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
-    JLabel component = new JLabel();
-    long start = System.currentTimeMillis();
+    assertTrue(SwingUtilities.isEventDispatchThread());
+    var ideEventQueue = IdeEventQueue.getInstance();
+    var future = new CompletableFuture<>();
+    var cancelEventTime = TestTimeOut.setTimeout(2, TimeUnit.SECONDS);
+    var component = new JLabel();
+    AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> SwingUtilities.invokeLater(EmptyRunnable.getInstance()), 100, TimeUnit.MILLISECONDS);
+    var start = System.nanoTime();
     ideEventQueue.pumpEventsForHierarchy(component, future, __ -> {
       if (cancelEventTime.isTimedOut()) {
         future.complete(null);
@@ -219,7 +218,7 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       // post InvocationEvent to give getNextEvent work to do
       SwingUtilities.invokeLater(EmptyRunnable.getInstance());
     });
-    long elapsedMs = System.currentTimeMillis() - start;
+    var elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
     // check that first, we did exit the pumpEventsForHierarchy and second, at the right moment
     assertTrue(String.valueOf(elapsedMs), cancelEventTime.isTimedOut());
   }

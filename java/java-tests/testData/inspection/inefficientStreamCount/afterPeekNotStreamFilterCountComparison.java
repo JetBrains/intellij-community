@@ -1,4 +1,4 @@
-// "Replace with 'stream.anyMatch()'" "true"
+// "Replace with 'stream.anyMatch()'" "true-preview"
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

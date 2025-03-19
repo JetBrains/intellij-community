@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,21 +24,18 @@ public class BugzillaTask extends Task {
     myRepository = repository;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return String.valueOf(myResponse.get("id"));
   }
 
-  @NotNull
   @Override
-  public String getSummary() {
+  public @NotNull String getSummary() {
     return (String)myResponse.get("summary");
   }
 
-  @Nullable
   @Override
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return null;
   }
 
@@ -47,22 +44,19 @@ public class BugzillaTask extends Task {
     return Comment.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Bugzilla;
   }
 
-  @NotNull
   @Override
-  public TaskType getType() {
+  public @NotNull TaskType getType() {
     String severity = (String)myResponse.get("severity");
     return severity.equalsIgnoreCase("enhancement")? TaskType.FEATURE : TaskType.BUG;
   }
 
-  @Nullable
   @Override
-  public TaskState getState() {
+  public @Nullable TaskState getState() {
     final String status = (String)myResponse.get("status");
     return switch (status) {
       case "IN_PROGRESS" -> TaskState.IN_PROGRESS;
@@ -73,15 +67,13 @@ public class BugzillaTask extends Task {
     };
   }
 
-  @Nullable
   @Override
-  public Date getUpdated() {
+  public @Nullable Date getUpdated() {
     return (Date)myResponse.get("last_change_time");
   }
 
-  @Nullable
   @Override
-  public Date getCreated() {
+  public @Nullable Date getCreated() {
     return (Date)myResponse.get("creation_time");
   }
 
@@ -95,17 +87,15 @@ public class BugzillaTask extends Task {
     return true;
   }
 
-  @Nullable
   @Override
-  public String getIssueUrl() {
+  public @Nullable String getIssueUrl() {
     String repositoryUrl = myRepository.getUrl();
     repositoryUrl = StringUtil.trimEnd(repositoryUrl, "xmlrpc.cgi");
     return repositoryUrl + "/show_bug.cgi?id=" + getId();
   }
 
-  @Nullable
   @Override
-  public TaskRepository getRepository() {
+  public @Nullable TaskRepository getRepository() {
     return myRepository;
   }
 }

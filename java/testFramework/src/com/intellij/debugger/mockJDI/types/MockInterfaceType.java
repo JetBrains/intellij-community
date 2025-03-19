@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MockInterfaceType extends MockReferenceType implements InterfaceType {
-  public MockInterfaceType(final MockVirtualMachine virtualMachine, Class type) {
+  public MockInterfaceType(final MockVirtualMachine virtualMachine, Class<?> type) {
     super(type, virtualMachine);
   }
 
@@ -26,7 +26,7 @@ public class MockInterfaceType extends MockReferenceType implements InterfaceTyp
   @Override
   public List<InterfaceType> superinterfaces() {
     ArrayList<InterfaceType> interfaceTypes = new ArrayList<>();
-    for (Class aClass : myType.getInterfaces()) {
+    for (Class<?> aClass : myType.getInterfaces()) {
       interfaceTypes.add(myVirtualMachine.createInterfaceType(aClass));
     }
     return interfaceTypes;

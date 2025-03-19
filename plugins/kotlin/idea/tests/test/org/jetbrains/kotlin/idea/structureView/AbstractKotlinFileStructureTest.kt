@@ -6,7 +6,7 @@ import com.intellij.ide.util.FileStructurePopup
 import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 

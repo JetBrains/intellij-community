@@ -2,62 +2,81 @@
 package com.intellij.collaboration.api.graphql
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentMap
 
-abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String = "graphql/fragment",
-                                         private val fragmentsFileExtension: String = "graphql") {
+/**
+ * Built on the assumption that fragments are named the same as the file they're located in.
+ * Ex:
+ *
+ * /graphql/fragment/actor.graphql
+ * only publicly exposes the `actor` fragment
+ */
+@ApiStatus.Internal
+class CachingGraphQLQueryLoader(
+  private val getFileStream: (relativePath: String) -> InputStream?,
+  private val fragmentsCache: ConcurrentMap<String, Block> = createFragmentCache(),
+  private val queriesCache: ConcurrentMap<String, String> = createQueryCache(),
+  private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
+  private val fragmentsFileExtension: String = "graphql"
+) : GraphQLQueryLoader {
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
 
-  private val fragmentsCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
-    .build<String, Fragment>()
-
-  private val queriesCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
-    .build<String, String>()
-
-  // Use path to allow going to the file quickly
   @Throws(IOException::class)
-  fun loadQuery(queryPath: String): String {
-    return queriesCache.get(queryPath) { path ->
-      val (body, fragmentNames) = readCollectingFragmentNames(path)
+  override fun loadQuery(queryPath: String): String = getFileStream(queryPath)?.use {
+    loadQuery(it, queryPath)
+  } ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
 
-      val builder = StringBuilder()
-      val fragments = LinkedHashMap<String, Fragment>()
-      readFragmentsWithDependencies(fragmentNames, fragments)
-      for (fragment in fragments.values.reversed()) {
-        builder.append(fragment.body).append("\n")
-      }
-
-      builder.append(body)
-      builder.toString()
+  @Throws(IOException::class)
+  private fun loadQuery(stream: InputStream, key: String): String {
+    return queriesCache.computeIfAbsent(key) {
+      loadQuery(stream)
     }
   }
 
-  private fun readFragmentsWithDependencies(names: Set<String>, into: MutableMap<String, Fragment>) {
+  /**
+   * Doesn't cache the resulting query.
+   */
+  @Throws(IOException::class)
+  fun loadQuery(stream: InputStream): String {
+    val (body, fragmentNames) = readBlock(stream)
+
+    val builder = StringBuilder()
+    val fragments = LinkedHashMap<String, Block>()
+    readFragmentsInto(fragmentNames, fragments)
+    for (fragment in fragments.values.reversed()) {
+      builder.append(fragment.body).append("\n")
+    }
+
+    builder.append(body)
+    return builder.toString()
+  }
+
+  private fun readFragmentsInto(names: Set<String>, into: MutableMap<String, Block>) {
     for (fragmentName in names) {
-      val fragment = fragmentsCache.get(fragmentName) { name ->
-        Fragment(name)
-      }
-      into[fragment.name] = fragment
+      val fragment = fragmentsDirectories.firstNotNullOfOrNull {
+        val path = "$it/${fragmentName}.$fragmentsFileExtension"
+        fragmentsCache.computeIfAbsent(path) {
+          getFileStream(path)?.use { stream -> readBlock(stream) }
+        }
+      } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $fragmentName")
+      into[fragmentName] = fragment
 
       val nonProcessedDependencies = fragment.dependencies.filter { !into.contains(it) }.toSet()
-      readFragmentsWithDependencies(nonProcessedDependencies, into)
+      readFragmentsInto(nonProcessedDependencies, into)
     }
   }
 
-  private fun readCollectingFragmentNames(filePath: String): Pair<String, Set<String>> {
+  private fun readBlock(stream: InputStream): Block {
     val bodyBuilder = StringBuilder()
     val fragments = mutableSetOf<String>()
     val innerFragments = mutableSetOf<String>()
 
-    val stream = getFileStream(filePath)
-                 ?: throw GraphQLFileNotFoundException("Couldn't find file $filePath")
     stream.reader().forEachLine {
       val line = it.trim()
       bodyBuilder.append(line).append("\n")
@@ -74,36 +93,26 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String 
       }
     }
     fragments.removeAll(innerFragments)
-    return bodyBuilder.toString().removeSuffix("\n") to fragments
+    return Block(bodyBuilder.toString().removeSuffix("\n"), fragments)
   }
 
-  // visible to avoid storing test queries with the code
-  @VisibleForTesting
-  protected open fun getFileStream(relativePath: String): InputStream? = this::class.java.classLoader.getResourceAsStream(relativePath)
+  companion object {
+    /**
+     * @param body The body of the query to be sent to the server.
+     * @param dependencies The set of fragments that the query depends on listed by name.
+     */
+    data class Block(val body: String, val dependencies: Set<String>)
 
-  private inner class Fragment(val name: String) {
+    fun createFragmentCache(): ConcurrentMap<String, Block> =
+      Caffeine.newBuilder()
+        .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
+        .build<String, Block>()
+        .asMap()
 
-    val body: String
-    val dependencies: Set<String>
-
-    init {
-      val (body, dependencies) = readCollectingFragmentNames("$fragmentsDirectory/${name}.$fragmentsFileExtension")
-      this.body = body
-      this.dependencies = dependencies
-    }
-
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (other !is Fragment) return false
-
-      if (name != other.name) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      return name.hashCode()
-    }
+    fun createQueryCache(): ConcurrentMap<String, String> =
+      Caffeine.newBuilder()
+        .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
+        .build<String, String>()
+        .asMap()
   }
 }

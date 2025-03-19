@@ -7,11 +7,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -20,15 +22,17 @@ import java.nio.charset.StandardCharsets;
 public class HtmlEmmetPerformanceTest extends BasePlatformTestCase {
   public void testPerformance() throws Exception {
     final String fileContent = FileUtil.loadFile(new File(getTestDataPath() + "/performance.html"), StandardCharsets.UTF_8);
-    PlatformTestUtil.startPerformanceTest(getTestName(true), 3000, () -> {
+    Benchmark.newBenchmark(getTestName(true), () -> {
       for (int i = 0; i < 50; i++) {
         myFixture.configureByText(HtmlFileType.INSTANCE, fileContent);
         PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(myFixture.getDocument(myFixture.getFile()));
         EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB);
         //noinspection deprecation
         action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+        UIUtil.dispatchAllInvocationEvents();
       }
-    }).useLegacyScaling().assertTiming();
+    }).start();
     myFixture.checkResultByFile("performance_after.html");
   }
 

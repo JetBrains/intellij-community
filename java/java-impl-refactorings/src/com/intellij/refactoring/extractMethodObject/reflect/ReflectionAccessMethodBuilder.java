@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,17 +126,14 @@ public class ReflectionAccessMethodBuilder {
 
       String name = parameter.getName();
 
-      PsiType accessedType = erasedType != null
-                             ? PsiReflectionAccessUtil.nearestAccessibleType(erasedType)
-                             : PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
+      PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
       myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
     }
 
     return this;
   }
 
-  @NotNull
-  private static String typeName(@NotNull PsiType type, @Nullable PsiType erasedType) {
+  private static @NotNull String typeName(@NotNull PsiType type, @Nullable PsiType erasedType) {
     if (erasedType == null) {
       String typeName = type.getCanonicalText();
       int typeParameterIndex = typeName.indexOf('<');
@@ -151,8 +148,7 @@ public class ReflectionAccessMethodBuilder {
     return erasedType.getCanonicalText();
   }
 
-  @NotNull
-  private static String extractJvmType(@NotNull PsiType type) {
+  private static @NotNull String extractJvmType(@NotNull PsiType type) {
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     String canonicalText = type.getCanonicalText();
     String jvmName = psiClass == null ? canonicalText : ClassUtil.getJVMClassName(psiClass);

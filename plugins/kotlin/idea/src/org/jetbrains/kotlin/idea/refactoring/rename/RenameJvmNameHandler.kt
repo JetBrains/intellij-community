@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.rename
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -53,9 +54,8 @@ class RenameJvmNameHandler : PsiElementRenameHandler() {
 
                 else -> return null
             }
-        return DataContext { id ->
-            if (CommonDataKeys.PSI_ELEMENT.`is`(id)) return@DataContext newElement
-            dataContext.getData(id)
+        return CustomizedDataContext.withSnapshot(dataContext) { sink ->
+            sink.lazy(CommonDataKeys.PSI_ELEMENT) { newElement }
         }
     }
 

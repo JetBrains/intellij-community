@@ -1,12 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.makeStatic;
 
-import com.intellij.model.ModelBranch;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,14 +95,6 @@ public final class Settings {
     myDelegate = delegate;
   }
 
-  @NotNull Settings obtainBranchCopy(@NotNull ModelBranch branch) {
-    if (myFieldToNameList.isEmpty()) return this; 
-    return new Settings(myReplaceUsages, myClassParameterName,
-                        ContainerUtil.map2Array(myFieldToNameList, PsiField.class, fp -> branch.obtainPsiCopy(fp.field)),
-                        ContainerUtil.map2Array(myFieldToNameList, String.class, fp -> fp.name),
-                        myDelegate);
-  }
-
   public boolean isReplaceUsages() {
     return myReplaceUsages;
   }
@@ -125,8 +115,7 @@ public final class Settings {
     return myDelegate;
   }
 
-  @Nullable
-  public String getNameForField(PsiField field) {
+  public @Nullable String getNameForField(PsiField field) {
     if (myFieldToNameMapping != null) {
       return myFieldToNameMapping.get(field);
     }

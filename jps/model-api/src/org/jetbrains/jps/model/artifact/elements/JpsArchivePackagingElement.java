@@ -15,8 +15,11 @@
  */
 package org.jetbrains.jps.model.artifact.elements;
 
+import org.jetbrains.annotations.ApiStatus;
+
 public interface JpsArchivePackagingElement extends JpsCompositePackagingElement {
   String getArchiveName();
 
+  @ApiStatus.Internal
   void setArchiveName(String directoryName);
 }

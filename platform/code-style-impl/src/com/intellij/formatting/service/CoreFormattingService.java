@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingRangesInfo;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.LanguageImportStatements;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,6 +55,14 @@ public final class CoreFormattingService implements FormattingService {
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
     final PsiElement formatted = codeFormatter.processRange(treeElement, range.getStartOffset(), range.getEndOffset()).getPsi();
     return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
+  }
+
+  public void asyncFormatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhitespaceOnly) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      formatElement(element, range, canChangeWhitespaceOnly);
+      return;
+    }
+    AsyncFormattingService.getInstance().asyncFormatElement(this, element, range, canChangeWhitespaceOnly);
   }
 
   @Override

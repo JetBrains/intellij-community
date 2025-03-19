@@ -21,7 +21,7 @@ import java.awt.*;
 public class WrappedFlowLayout extends FlowLayout {
 
   public WrappedFlowLayout(int hGap, int vGap) {
-    super(FlowLayout.LEADING, hGap, vGap);
+    super(LEADING, hGap, vGap);
   }
 
   @Override

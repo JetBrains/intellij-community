@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.model.ModelBranch;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,34 +15,22 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private static final Key<?> PSI_MOD_COUNT_OPTIMIZATION = Key.create("PSI_MOD_COUNT_OPTIMIZATION");
   private final PsiManager myManager;
 
-  PsiCachedValue(@NotNull PsiManager manager, boolean trackValue) {
-    super(trackValue);
+  PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
   @Override
   protected Object @NotNull [] normalizeDependencies(@Nullable T value, Object @NotNull [] dependencyItems) {
     Object[] dependencies = super.normalizeDependencies(value, dependencyItems);
-    if (ContainerUtil.exists(dependencies, PsiCachedValue::isPsiModificationCount)) {
-      for (Object dependency : dependencies) {
-        if (dependency instanceof PsiElement) {
-          ModelBranch branch = ModelBranch.getPsiBranch((PsiElement)dependency);
-          if (branch != null) {
-            return ArrayUtil.prepend((ModificationTracker)() -> branch.getBranchedPsiModificationCount(), dependencies);
-          }
-        }
-      }
-    }
     if (dependencies.length == 1 && isPsiModificationCount(dependencies[0])) {
       return dependencies;
     }
@@ -86,7 +59,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       return false;
     }
     // injected files are physical but can sometimes (look at you, completion)
-    // be inexplicably injected into non-physical element, in which case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
+    // be inexplicably injected into a non-physical element,
+    // in this case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myManager.getProject());
     PsiFile topLevelFile = manager.getTopLevelFile(dependency);
     return topLevelFile != null && topLevelFile.isPhysical();
@@ -130,6 +104,14 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     }
 
     return super.getTimeStamp(dependency);
+  }
+
+  @Override
+  protected @NotNull String getIdempotenceFailureContext() {
+    Project project = myManager.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean dumb = dumbService.isDumb();
+    return "Dumb mode: " + dumb + "\nAlternative resolve: " + dumbService.isAlternativeResolveEnabled();
   }
 
   @Override

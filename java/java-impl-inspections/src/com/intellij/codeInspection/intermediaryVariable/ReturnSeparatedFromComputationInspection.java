@@ -1,12 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.intermediaryVariable;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -17,8 +16,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,16 +30,15 @@ import java.util.*;
 public final class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {
-          registerProblem(holder, returnStatement, context.returnedVariable, isOnTheFly);
+          registerProblem(holder, returnStatement, context.returnedVariable);
         }
       }
     };
@@ -72,8 +72,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return null;
   }
 
-  @Nullable
-  private static PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
+  private static @Nullable PsiCodeBlock getVariableScopeBlock(@Nullable PsiVariable variable) {
     if (variable instanceof PsiLocalVariable localVar) {
       if (CommonJavaRefactoringUtil.getVariableScope(localVar) instanceof PsiCodeBlock block) {
         return block;
@@ -132,8 +131,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return flow != null && isApplicable(flow, context);
   }
 
-  @Nullable
-  private static ControlFlow createControlFlow(@NotNull ReturnContext context) {
+  private static @Nullable ControlFlow createControlFlow(@NotNull ReturnContext context) {
     try {
       final ControlFlowPolicy policy = new LocalsControlFlowPolicy(context.variableScope);
       return ControlFlowFactory.getInstance(context.variableScope.getProject()).getControlFlow(context.variableScope, policy);
@@ -165,7 +163,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return !mover.isEmpty();
   }
 
-  private static void doApply(PsiReturnStatement returnStatement, boolean isOnTheFly) {
+  private static void doApply(PsiReturnStatement returnStatement, @NotNull ModPsiUpdater updater) {
     ReturnContext context = createReturnContext(returnStatement);
     if (context != null) {
       ControlFlow flow = createControlFlow(context);
@@ -173,20 +171,14 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
-          Highlighter highlighter = new Highlighter();
-
-          applyChanges(mover, context, removeReturn, highlighter);
-          deleteRedundantVariable(context, highlighter);
-
-          if (isOnTheFly) {
-            highlighter.highlight();
-          }
+          applyChanges(mover, context, removeReturn, updater);
+          deleteRedundantVariable(context, updater);
         }
       }
     }
   }
 
-  private static void deleteRedundantVariable(@NotNull ReturnContext context, Highlighter highlighter) {
+  private static void deleteRedundantVariable(@NotNull ReturnContext context, @NotNull ModPsiUpdater updater) {
     PsiExpression value = PsiUtil.skipParenthesizedExprDown(context.returnedVariable.getInitializer());
 
     boolean isConstant = value instanceof PsiLiteralExpression || value instanceof PsiThisExpression || PsiUtil.isConstantExpression(value);
@@ -209,7 +201,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       for (PsiJavaCodeReferenceElement usage : usages) {
         PsiExpression inlined = CommonJavaInlineUtil.getInstance().inlineVariable(context.returnedVariable, value, usage, null);
         if (firstInlined == null) firstInlined = inlined;
-        highlighter.add(inlined);
+        updater.highlight(inlined);
       }
     }
     if (isSimple || isSingleUsage || usages.isEmpty()) {
@@ -229,7 +221,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     if (expression instanceof PsiReferenceExpression) {
       PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
       return variable != null && (variable.hasModifierProperty(PsiModifier.FINAL) ||
-                                  HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null));
+                                  ControlFlowUtil.isEffectivelyFinal(variable, scope));
     }
     if (expression instanceof PsiUnaryExpression) {
       return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"
@@ -239,17 +231,20 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
            expression instanceof PsiClassObjectAccessExpression;
   }
 
-  private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn, Highlighter highlighter) {
+  private static void applyChanges(@NotNull Mover mover,
+                                   @NotNull ReturnContext context,
+                                   boolean removeReturn,
+                                   @NotNull ModPsiUpdater updater) {
     for (PsiElement anchor : mover.insertBefore) {
       PsiElement added = anchor.getParent().addBefore(context.returnStatement, anchor);
-      highlighter.add(added);
+      updater.highlight(added);
     }
     mover.replaceInline.forEach(e -> {
-      if (e instanceof PsiBreakStatement) {
-        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement, highlighter);
+      if (e instanceof PsiBreakStatement breakStatement) {
+        replaceStatementKeepComments(breakStatement, context.returnStatement, updater);
       }
-      else if (e instanceof PsiAssignmentExpression) {
-        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement, highlighter);
+      else if (e instanceof PsiAssignmentExpression assignment) {
+        inlineAssignment(assignment, context.returnStatement, updater);
       }
     });
     mover.removeCompletely.forEach(e -> removeElementKeepComments(e));
@@ -267,7 +262,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
 
   private static void inlineAssignment(PsiAssignmentExpression assignmentExpression,
                                        PsiReturnStatement returnStatement,
-                                       Highlighter highlighter) {
+                                       @NotNull ModPsiUpdater updater) {
     PsiElement assignmentParent = assignmentExpression.getParent();
     LOG.assertTrue(assignmentParent instanceof PsiExpressionStatement, "PsiExpressionStatement");
     PsiReturnStatement returnStatementCopy = (PsiReturnStatement)returnStatement.copy();
@@ -275,14 +270,14 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     PsiExpression returnValue = returnStatementCopy.getReturnValue();
     if (rExpression != null && returnValue != null) {
       returnValue.replace(rExpression);
-      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy, highlighter);
+      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy, updater);
     }
   }
 
   private static void replaceStatementKeepComments(PsiStatement replacedStatement,
                                                    PsiReturnStatement returnStatement,
-                                                   Highlighter highlighter) {
-    highlighter.add(new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement));
+                                                   @NotNull ModPsiUpdater updater) {
+    updater.highlight(new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement));
   }
 
   private static void removeElementKeepComments(PsiElement removedElement) {
@@ -324,29 +319,29 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       if (checkingApplicability && !isEmpty()) {
         return false; // optimization
       }
-      if (targetStatement instanceof PsiBlockStatement) {
-        return moveToBlock((PsiBlockStatement)targetStatement, returnAtTheEnd);
+      if (targetStatement instanceof PsiBlockStatement blockStatement) {
+        return moveToBlock(blockStatement, returnAtTheEnd);
       }
-      if (targetStatement instanceof PsiIfStatement) {
-        return moveToIf((PsiIfStatement)targetStatement);
+      if (targetStatement instanceof PsiIfStatement ifStatement) {
+        return moveToIf(ifStatement);
       }
-      if (targetStatement instanceof PsiConditionalLoopStatement) {
-        return moveToConditionalLoop((PsiConditionalLoopStatement)targetStatement);
+      if (targetStatement instanceof PsiConditionalLoopStatement loop) {
+        return moveToConditionalLoop(loop);
       }
-      if (targetStatement instanceof PsiForeachStatement) {
-        return moveToForeach((PsiForeachStatement)targetStatement);
+      if (targetStatement instanceof PsiForeachStatement foreachStatement) {
+        return moveToForeach(foreachStatement);
       }
-      if (targetStatement instanceof PsiSwitchStatement) {
-        return moveToSwitch((PsiSwitchStatement)targetStatement);
+      if (targetStatement instanceof PsiSwitchStatement switchStatement) {
+        return moveToSwitch(switchStatement);
       }
-      if (targetStatement instanceof PsiTryStatement) {
-        return moveToTry((PsiTryStatement)targetStatement, returnAtTheEnd);
+      if (targetStatement instanceof PsiTryStatement tryStatement) {
+        return moveToTry(tryStatement, returnAtTheEnd);
       }
-      if (targetStatement instanceof PsiLabeledStatement) {
-        return moveToLabeled((PsiLabeledStatement)targetStatement, returnAtTheEnd);
+      if (targetStatement instanceof PsiLabeledStatement labeledStatement) {
+        return moveToLabeled(labeledStatement, returnAtTheEnd);
       }
-      if (targetStatement instanceof PsiExpressionStatement) {
-        return inlineExpression((PsiExpressionStatement)targetStatement);
+      if (targetStatement instanceof PsiExpressionStatement expressionStatement) {
+        return inlineExpression(expressionStatement);
       }
       if (targetStatement instanceof PsiThrowStatement ||
           targetStatement instanceof PsiReturnStatement ||
@@ -389,17 +384,17 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     }
 
     private boolean moveToConditionalLoop(@NotNull PsiConditionalLoopStatement loop) {
-      moveToBreaks(loop, false);
+      moveToBreaks(loop);
       return isAlwaysTrue(loop.getCondition(), loop instanceof PsiForStatement);
     }
 
     private boolean moveToForeach(@NotNull PsiForeachStatement targetStatement) {
-      moveToBreaks(targetStatement, false);
+      moveToBreaks(targetStatement);
       return false;
     }
 
     private boolean moveToSwitch(@NotNull PsiSwitchStatement targetStatement) {
-      moveToBreaks(targetStatement, false);
+      moveToBreaks(targetStatement);
       PsiCodeBlock body = targetStatement.getBody();
       return body != null && moveToBlockBody(body, false) && hasTotalSwitchLabel(body);
     }
@@ -429,7 +424,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       if (statement == null) {
         return false;
       }
-      moveToBreaks(statement, false);
+      moveToBreaks(statement);
       return moveTo(statement, returnAtTheEnd);
     }
 
@@ -451,11 +446,11 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       return false;
     }
 
-    private void moveToBreaks(@NotNull PsiStatement targetStatement, boolean returnAtTheEnd) {
+    private void moveToBreaks(@NotNull PsiStatement targetStatement) {
       Set<PsiBreakStatement> breaks = getBreaks(targetStatement);
       for (PsiBreakStatement breakStatement : breaks) {
         PsiStatement prevNonEmptyStatement = getPrevNonEmptyStatement(breakStatement, removeCompletely);
-        if (prevNonEmptyStatement == null || !moveTo(prevNonEmptyStatement, returnAtTheEnd)) {
+        if (prevNonEmptyStatement == null || !moveTo(prevNonEmptyStatement, false)) {
           replaceInline.add(breakStatement);
         }
         else {
@@ -503,8 +498,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     }
   }
 
-  @Nullable
-  private static PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<? super PsiElement> skippedEmptyStatements) {
+  private static @Nullable PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<? super PsiElement> skippedEmptyStatements) {
     if (psiElement == null || !(psiElement.getParent() instanceof PsiCodeBlock)) {
       return null;
     }
@@ -520,48 +514,40 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     return prevStatement;
   }
 
-  @Nullable
-  private static PsiStatement getNearestEnclosingStatement(@Nullable PsiElement element) {
+  private static @Nullable PsiStatement getNearestEnclosingStatement(@Nullable PsiElement element) {
     return element instanceof PsiStatement ? (PsiStatement)element : PsiTreeUtil.getParentOfType(element, PsiStatement.class);
   }
 
   private static void registerProblem(@NotNull ProblemsHolder holder,
                                       @NotNull PsiReturnStatement returnStatement,
-                                      @NotNull PsiVariable variable, boolean isOnTheFly) {
+                                      @NotNull PsiVariable variable) {
     String name = variable.getName();
     holder.registerProblem(returnStatement,
                            JavaBundle.message("inspection.return.separated.from.computation.descriptor", name),
-                           new VariableFix(name, isOnTheFly));
+                           new VariableFix(name));
   }
 
-  private static class VariableFix implements LocalQuickFix {
+  private static class VariableFix extends PsiUpdateModCommandQuickFix {
     private final String myName;
-    private final boolean myIsOnTheFly;
 
-    VariableFix(String name, boolean isOnTheFly) {
+    VariableFix(String name) {
       myName = name;
-      myIsOnTheFly = isOnTheFly;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return JavaBundle.message("inspection.return.separated.from.computation.quickfix", myName);
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.return.separated.from.computation.family.quickfix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiReturnStatement) {
-        doApply((PsiReturnStatement)element, myIsOnTheFly);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiReturnStatement returnStatement) {
+        doApply(returnStatement, updater);
       }
     }
   }
@@ -573,24 +559,4 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
                               @NotNull PsiVariable returnedVariable,
                               @NotNull PsiCodeBlock variableScope) {
     }
-
-  private static class Highlighter {
-    private final List<PsiElement> myElements = new ArrayList<>();
-
-    public void add(@NotNull PsiElement element) {
-      if (element instanceof PsiReturnStatement) {
-        PsiExpression value = ((PsiReturnStatement)element).getReturnValue();
-        if (value != null) {
-          myElements.add(value);
-          return;
-        }
-      }
-      myElements.add(element);
-    }
-
-    public void highlight() {
-      List<PsiElement> validElements = ContainerUtil.filter(myElements, PsiElement::isValid);
-      HighlightUtils.highlightElements(validElements);
-    }
-  }
 }

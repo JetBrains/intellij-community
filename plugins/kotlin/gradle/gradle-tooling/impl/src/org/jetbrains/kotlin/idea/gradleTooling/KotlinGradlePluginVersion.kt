@@ -7,6 +7,10 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersionOrNull
 import java.io.Serializable
 
+/**
+ * Wrapper around the [KotlinToolingVersion].
+ * Comparisons (e.g. [compareTo] are expected to work fine granular and will respect maturity classifiers (e.g. "beta01, "RC", ...)
+ */
 sealed interface KotlinGradlePluginVersion : Serializable {
     val versionString: String
     val major: Int

@@ -1,33 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteDev.tracing
 
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import com.intellij.ide.ApplicationInitializedListener
-import kotlinx.coroutines.CoroutineScope
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
 
-class CustomExportersListener : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    val spanExporters = mutableListOf<AsyncSpanExporter>()
+private class CustomExportersListener : ApplicationInitializedListener {
+  override suspend fun execute() {
+    val ep = ExtensionPointName<OpenTelemetryExporterProvider>("com.intellij.openTelemetryExporterProvider")
+    if (!ep.hasAnyExtensions()) {
+      return
+    }
+
     val metricsExporters = mutableListOf<MetricsExporterEntry>()
-
-    val providers = OTelExportersProvider.EP.extensionList
-    if (providers.isEmpty()) return
-    for (provider in providers) {
-      if (provider.isTracingAvailable()) {
-        spanExporters.addAll(provider.getSpanExporters())
-      }
-      if (provider.areMetricsAvailable()) {
-        val metrics = provider.getMetricsExporters()
-        val duration = provider.getReadsInterval()
-        metricsExporters.add(MetricsExporterEntry(metrics, duration))
+    for (provider in ep.lazySequence()) {
+      val metrics = provider.getMetricsExporters()
+      if (metrics.isNotEmpty()) {
+        metricsExporters.add(MetricsExporterEntry(metrics = metrics, duration = provider.getReadInterval()))
       }
     }
-    TelemetryTracer.getInstance().apply {
-      addSpansExporters(*spanExporters.toTypedArray())
-      addMetricsExporters(*metricsExporters.toTypedArray())
+
+    if (metricsExporters.isNotEmpty()) {
+      TelemetryManager.getInstance().addMetricsExporters(metricsExporters)
     }
   }
 }

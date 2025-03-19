@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -13,12 +13,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.include.FileIncludeManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class FileIncludeContextHectorPanel extends HectorComponentPanel {
+@ApiStatus.Internal
+public final class FileIncludeContextHectorPanel extends HectorComponentPanel {
   private ComboboxWithBrowseButton myContextFile;
   private JPanel myPanel;
   private final PsiFile myFile;
@@ -58,7 +60,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     myContextFile.setTextFieldPreferredWidth(30);
   }
 
-  private class MyListCellRenderer extends DefaultListCellRenderer {
+  private final class MyListCellRenderer extends DefaultListCellRenderer {
     private final JComboBox myComboBox;
     private int myMaxWidth;
 
@@ -85,8 +87,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
       return rendererComponent;
     }
 
-    @Nullable
-    protected @NlsSafe String getPath(Object value) {
+    private @Nullable @NlsSafe String getPath(Object value) {
       VirtualFile file = (VirtualFile)value;
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myFile.getProject()).getFileIndex();
       if (file != null) {

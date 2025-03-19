@@ -2,17 +2,20 @@
 package com.jetbrains.python.codeInsight.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.ml.MLRankingIgnorable
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyPsiUtils
-import com.jetbrains.python.psi.types.*
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypedDictType
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Provides completion variants for keys of dict literals marked as TypedDict
@@ -45,20 +48,10 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
   private fun addCompletionToCallExpression(originalElement: PsiElement,
                                             possibleSequenceExpr: PySequenceExpression,
                                             result: CompletionResultSet) {
-    val callExpression = PsiTreeUtil.getParentOfType(originalElement, PyCallExpression::class.java)
-    if (callExpression != null) {
-      val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
-      val callType = typeEvalContext.getType(callExpression.callee ?: return)
-      if (callType !is PyCallableType) return
-
-      val argumentIndex = PyPsiUtils.findArgumentIndex(callExpression, possibleSequenceExpr)
-      if (argumentIndex < 0) return
-      val params = callType.getParameters(typeEvalContext) ?: return
-      if (params.size < argumentIndex) return
-      val expectedType = params[argumentIndex].getType(typeEvalContext)
-      val actualType = typeEvalContext.getType(possibleSequenceExpr)
-
-      addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
+    val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
+    val quote = getForcedQuote(possibleSequenceExpr, originalElement)
+    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
+      addCompletionForTypedDictKeys(it.getType(typeEvalContext), possibleSequenceExpr, result, quote)
     }
   }
 
@@ -84,9 +77,8 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       else assignment.targetsToValuesMapping.firstOrNull { it.second == possibleSequenceExpr }?.let { it.first to it.second }
 
       if (targetToValue?.first != null && targetToValue.second != null) {
-        val expectedType = typeEvalContext.getType(targetToValue.first as PyTypedElement)
-        val actualType = typeEvalContext.getType(targetToValue.second as PyTypedElement)
-        addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
+        val expectedType = typeEvalContext.getType(targetToValue.first!!)
+        addCompletionForTypedDictKeys(expectedType, targetToValue.second!!, result, getForcedQuote(possibleSequenceExpr, originalElement))
       }
       else { //multiple target expressions and there is a PsiErrorElement
         val targetExpr = assignment.assignedValue
@@ -98,8 +90,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
           val index = targetExpr.elements.indexOf(element)
           if (index < assignment.targets.size) {
             val expectedType = typeEvalContext.getType(assignment.targets[index])
-            val actualType = typeEvalContext.getType(element)
-            addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
+            addCompletionForTypedDictKeys(expectedType, element, result, getForcedQuote(possibleSequenceExpr, originalElement))
           }
         }
       }
@@ -118,31 +109,33 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
         val typeCommentAnnotation = owner.typeCommentAnnotation
         if (annotation != null || typeCommentAnnotation != null) { // to ensure that we have return type specified, not inferred
           val expectedType = typeEvalContext.getReturnType(owner)
-          val actualType = typeEvalContext.getType(possibleSequenceExpr)
-          addCompletionForTypedDictKeys(expectedType, actualType, result, getForcedQuote(possibleSequenceExpr, originalElement))
+          addCompletionForTypedDictKeys(expectedType, possibleSequenceExpr, result, getForcedQuote(possibleSequenceExpr, originalElement))
         }
       }
     }
   }
 
   private fun addCompletionForTypedDictKeys(expectedType: PyType?,
-                                            actualType: PyType?,
+                                            expression: PyExpression,
                                             dictCompletion: CompletionResultSet,
                                             quote: String) {
     if (expectedType is PyTypedDictType) {
-      val keys =
-        when {
-          actualType is PyTypedDictType -> expectedType.fields.keys.filterNot { it in actualType.fields }
-          actualType is PyClassType && PyNames.SET == actualType.name -> expectedType.fields.keys
-          else -> return
-        }
-
-      for (key in keys) {
+      val keys = when (expression) {
+        is PyDictLiteralExpression -> expression.elements
+          .map { it.key }
+          .filterIsInstance<PyStringLiteralExpression>()
+          .map { it.stringValue }
+        is PySetLiteralExpression -> emptyList()
+        else -> return
+      }
+      for (key in expectedType.fields.keys.filterNot { it in keys }) {
         dictCompletion.addElement(
-          LookupElementBuilder
-            .create("$quote$key$quote")
-            .withTypeText("dict key")
-            .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
+          MLRankingIgnorable.wrap(
+            LookupElementBuilder
+              .create("$quote$key$quote")
+              .withTypeText("dict key")
+              .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter))
+          )
         )
       }
     }

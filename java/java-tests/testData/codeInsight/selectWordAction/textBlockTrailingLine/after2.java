@@ -1,6 +1,6 @@
 class Test {
   String textBlock = """
-                     <selection>fo<caret>o
+<selection>                     fo<caret>o
                      bar
                      baz</selection>""";
 }

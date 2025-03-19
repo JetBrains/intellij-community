@@ -1,5 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
+
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
@@ -12,9 +14,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class Launcher {
   public static void main(String[] args) throws MalformedURLException, ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
     final String jpsClasspath = args[0];
@@ -35,6 +35,7 @@ public final class Launcher {
       System.setProperty("io.netty.machineId", "28:f0:76:ff:fe:16:65:0e");
       System.setProperty("io.netty.processId", Integer.toString(new Random().nextInt(65535)));
       System.setProperty("io.netty.serviceThreadPrefix", "Netty");
+      System.setProperty("io.netty.allocator.type", "pooled");
     //}
 
     final Class<?> mainClass = jpsLoader.loadClass(mainClassName);

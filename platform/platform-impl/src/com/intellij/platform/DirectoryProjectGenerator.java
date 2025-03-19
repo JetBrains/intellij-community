@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,17 +23,17 @@ import javax.swing.*;
  * 
  */
 public interface DirectoryProjectGenerator<T> {
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  default String getDescription() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  @Nullable
-  default String getHelpId() {
+  default @Nullable String getHelpId() {
     return null;
   }
 
+  /**
+   * @deprecated unused
+   */
   // to be removed in 2017.3
   @Deprecated(forRemoval = true)
   default boolean isPrimaryGenerator() {
@@ -43,16 +44,14 @@ public interface DirectoryProjectGenerator<T> {
   @NlsContexts.Label
   String getName();
 
-  @NotNull
-  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  default @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**
    * Creates new peer - new project settings and UI for them
    */
-  @NotNull
-  default ProjectGeneratorPeer<T> createPeer() {
+  default @NotNull ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 
@@ -62,6 +61,7 @@ public interface DirectoryProjectGenerator<T> {
   @Nullable
   Icon getLogo();
 
+  @RequiresEdt
   void generateProject(@NotNull Project project,
                        @NotNull VirtualFile baseDir,
                        @NotNull T settings,

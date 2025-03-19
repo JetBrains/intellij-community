@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,7 +28,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myCallExpression, resolveMethodReturnType(expression, method));
     if (returnType == null) {
       LOG.warn("Could not resolve method return type. java.lang.Object will be used instead");
-      returnType = "java.lang.Object";
+      returnType = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myAccessibleReturnType = returnType;
   }
@@ -59,7 +59,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(newMethodName);
     PsiMethod newMethod = methodBuilder.accessedMethod(containingClassName, myMethod.getName())
       .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-      .addParameter("java.lang.Object", "object")
+      .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
       .addParameters(myMethod.getParameterList())
       .setReturnType(myAccessibleReturnType)
       .build(elementFactory, outerClass);
@@ -83,8 +83,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     return !PsiReflectionAccessUtil.isAccessibleMember(method, outerClass, qualifier);
   }
 
-  @Nullable
-  private static PsiType resolveMethodReturnType(@NotNull PsiMethodCallExpression callExpression, @NotNull PsiMethod method) {
+  private static @Nullable PsiType resolveMethodReturnType(@NotNull PsiMethodCallExpression callExpression, @NotNull PsiMethod method) {
     PsiSubstitutor substitutor = callExpression.resolveMethodGenerics().getSubstitutor();
     return substitutor.substitute(method.getReturnType());
   }

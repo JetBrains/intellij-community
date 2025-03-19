@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.highlighter.custom.tokens;
 
@@ -21,7 +21,7 @@ public final class HexNumberParser extends PrefixedTokenParser {
   public static HexNumberParser create(String prefix) {
     if (prefix == null) return null;
     final String trimmedPrefix = prefix.trim();
-    if (trimmedPrefix.length() > 0) {
+    if (!trimmedPrefix.isEmpty()) {
       return new HexNumberParser(prefix);
     } else {
       return null;

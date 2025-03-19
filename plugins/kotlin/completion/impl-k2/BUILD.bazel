@@ -1,0 +1,62 @@
+### auto-generated section `build kotlin.completion.impl.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-completion-impl-k2_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-completion-impl-k2",
+  module_name = "kotlin.completion.impl.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "@lib//:kotlinc-analysis-api-k2",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/fir/code-insight:kotlin-base-fir-code-insight",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+    "//plugins/kotlin/code-insight/override-implement-k2:kotlin-code-insight-override-implement-k2",
+    "//plugins/kotlin/completion/api:kotlin-completion-api",
+    "//plugins/kotlin/completion/impl-shared:kotlin-completion-impl-shared",
+    "//platform/analysis-impl",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//java/java-psi-api:psi",
+    "@lib//:fastutil-min",
+    "//platform/util/text-matching",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//java/java-psi-impl:psi-impl",
+    "//java/java-impl:impl",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+  ],
+  runtime_deps = [":kotlin-completion-impl-k2_resources"]
+)
+### auto-generated section `build kotlin.completion.impl.k2` end

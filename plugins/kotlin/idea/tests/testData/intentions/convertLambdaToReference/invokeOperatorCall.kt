@@ -7,3 +7,5 @@ class InvokeContainer {
 fun test(k: InvokeContainer) {
     myInvoke { <caret>k() }
 }
+
+// IGNORE_K2

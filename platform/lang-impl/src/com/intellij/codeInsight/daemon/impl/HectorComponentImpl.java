@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -46,7 +46,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.*;
 
-class HectorComponentImpl extends JPanel implements HectorComponent {
+final class HectorComponentImpl extends JPanel implements HectorComponent {
   private static final Logger LOG = Logger.getInstance(HectorComponent.class);
 
   private WeakReference<JBPopup> myHectorRef;
@@ -118,7 +118,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     gc.gridy = GridBagConstraints.RELATIVE;
     gc.weighty = 0;
 
-    HyperlinkLabel configurator = new HyperlinkLabel(DaemonBundle.message("popup.action.configure.inspections"));
+    HyperlinkLabel configurator = new HyperlinkLabel(ActionsBundle.message("action.ConfigureInspectionsAction.text"));
     gc.insets.right = 5;
     gc.insets.bottom = 10;
     gc.weightx = 0;
@@ -220,8 +220,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
     }
   }
 
-  @Nullable
-  private JBPopup getOldHector(){
+  private @Nullable JBPopup getOldHector(){
     if (myHectorRef == null) return null;
     JBPopup hector = myHectorRef.get();
     if (hector == null || !hector.isVisible()){
@@ -263,8 +262,7 @@ class HectorComponentImpl extends JPanel implements HectorComponent {
       }
     }
     InjectedLanguageManager.getInstance(myFile.getProject()).dropFileCaches(myFile);
-    DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());
-    analyzer.restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(myFile.getProject()).restart("HectorComponentImpl.forceDaemonRestart");
   }
 
   private boolean isModified() {

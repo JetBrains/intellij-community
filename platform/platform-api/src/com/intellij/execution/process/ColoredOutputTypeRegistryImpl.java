@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -11,18 +11,21 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegistry {
   private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = new ConcurrentHashMap<>();
   private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = new ConcurrentHashMap<>();
@@ -131,7 +134,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
   }
 
   private static Color getColorByKey(TextAttributesKey colorKey) {
-    return JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor());
+    return JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor(), UIUtil.getListForeground()));
   }
 
   private static @NotNull Color getDefaultForegroundColor() {
@@ -307,7 +310,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
     return new ConsoleViewContentType(attribute, attrs);
   }
 
-  private static Color getColor(int colorIndex, Color enforcedColor, Supplier<? extends Color> getDefaultColor) {
+  private static Color getColor(int colorIndex, Color enforcedColor, @NotNull Supplier<? extends @NotNull Color> getDefaultColor) {
     if (enforcedColor != null) {
       return enforcedColor;
     }

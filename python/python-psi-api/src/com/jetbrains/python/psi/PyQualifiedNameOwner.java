@@ -2,12 +2,13 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.jetbrains.python.ast.PyAstQualifiedNameOwner;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Base class for elements that have a qualified name (classes and functions).
  */
-public interface PyQualifiedNameOwner extends PyElement {
+public interface PyQualifiedNameOwner extends PyAstQualifiedNameOwner, PyElement {
   /**
    * Returns the qualified name of the element.
    *

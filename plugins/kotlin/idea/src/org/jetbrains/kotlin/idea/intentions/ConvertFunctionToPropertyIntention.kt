@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -16,14 +16,15 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFunInterface
+import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -106,7 +107,7 @@ class ConvertFunctionToPropertyIntention :
                 if (callable is PsiMethod) callable.checkDeclarationConflict(getterName, conflicts, callables)
 
                 val usages = ReferencesSearch.search(callable)
-                for (usage in usages) {
+                for (usage in usages.asIterable()) {
                     if (usage is KtSimpleNameReference) {
                         val expression = usage.expression
                         val callElement = expression.getParentOfTypeAndBranch<KtCallElement> { calleeExpression }
@@ -176,7 +177,7 @@ class ConvertFunctionToPropertyIntention :
         val funKeyword = element.funKeyword ?: return false
         val identifier = element.nameIdentifier ?: return false
         if (!TextRange(funKeyword.startOffset, identifier.endOffset).containsOffset(caretOffset)) return false
-
+        if (element.containingClass()?.isFunInterface() == true && !element.hasBody()) return false
         if (element.valueParameters.isNotEmpty() || element.isLocal) return false
 
         val name = element.name!!

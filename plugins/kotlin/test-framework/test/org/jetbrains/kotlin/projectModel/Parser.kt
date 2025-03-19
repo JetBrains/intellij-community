@@ -12,6 +12,7 @@ import java.io.InputStreamReader
 import java.io.Reader
 
 open class ProjectStructureParser(private val projectRoot: File) {
+    private var mode: ProjectResolveMode = ProjectResolveMode.MultiPlatform
     private val builderByName: MutableMap<String, ResolveModule.Builder> = hashMapOf()
     private val predefinedBuilders: Map<String, ResolveLibrary.Builder> = hashMapOf(
         "STDLIB_JS" to ResolveLibrary.Builder(Stdlib.JsStdlib),
@@ -34,6 +35,7 @@ open class ProjectStructureParser(private val projectRoot: File) {
 
         val projectBuilder = ProjectResolveModel.Builder()
         projectBuilder.modules.addAll(builderByName.values)
+        projectBuilder.mode = mode
 
         return projectBuilder.build()
     }
@@ -41,12 +43,20 @@ open class ProjectStructureParser(private val projectRoot: File) {
     private fun Reader.parseNextDeclaration(): Boolean {
         val firstWord = nextWord() ?: return false
         when (firstWord) {
+            DEFINE_MODE_KEYWORD -> parseModeDefinition()
             DEFINE_MODULE_KEYWORD -> parseModuleDefinition()
             LINE_COMMENT_TOKEN -> consumeUntilFirst { it == '\n' }
             else -> parseDependenciesDefinition(firstWord)
         }
         return true
     }
+
+    private fun Reader.parseModeDefinition() {
+        val modeDeclaration = nextWord()!!
+        mode = ProjectResolveMode.entries.find { it.name == modeDeclaration }
+            ?: error("Unknown Mode: $modeDeclaration. Possible values: ${ProjectResolveMode.entries.joinToString()}")
+    }
+
 
     private fun Reader.parseModuleDefinition() {
         val name = nextWord()!!
@@ -154,6 +164,7 @@ open class ProjectStructureParser(private val projectRoot: File) {
 
 
     companion object {
+        const val DEFINE_MODE_KEYWORD = "MODE"
         const val DEFINE_MODULE_KEYWORD = "MODULE"
         const val DEPENDENCIES_ARROW = "->"
 

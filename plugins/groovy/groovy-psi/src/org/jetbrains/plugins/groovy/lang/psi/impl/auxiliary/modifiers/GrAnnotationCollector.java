@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
@@ -56,8 +57,7 @@ public final class GrAnnotationCollector {
    * @param annotationCollector @AnnotationCollector annotation used in alias declaration
    * @return set of used arguments of alias annotation
    */
-  @NotNull
-  public static Set<String> collectAnnotations(@NotNull List<? super GrAnnotation> list,
+  public static @NotNull Set<String> collectAnnotations(@NotNull List<? super GrAnnotation> list,
                                                @NotNull GrAnnotation alias,
                                                @NotNull PsiAnnotation annotationCollector) {
 
@@ -147,8 +147,7 @@ public final class GrAnnotationCollector {
     }
   }
 
-  @Nullable
-  public static PsiAnnotation findAnnotationCollector(@Nullable PsiClass clazz) {
+  public static @Nullable PsiAnnotation findAnnotationCollector(@Nullable PsiClass clazz) {
     if (clazz != null) {
       final PsiModifierList modifierList = clazz.getModifierList();
       if (modifierList != null) {
@@ -164,8 +163,7 @@ public final class GrAnnotationCollector {
     return null;
   }
 
-  @Nullable
-  public static PsiAnnotation findAnnotationCollector(@NotNull GrAnnotation annotation) {
+  public static @Nullable PsiAnnotation findAnnotationCollector(@NotNull GrAnnotation annotation) {
     if (!mayHaveAnnotationCollector(annotation)) {
       return null;
     }
@@ -201,11 +199,13 @@ public final class GrAnnotationCollector {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       Set<String> result = new HashSet<>();
       GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      for (PsiClass collector : JavaPsiFacade.getInstance(project).findClasses(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR, scope)) {
-        AnnotatedElementsSearch.searchPsiClasses(collector, scope).forEach(aClass -> {
-          ContainerUtil.addIfNotNull(result, aClass.getName());
-          return true;
-        });
+      if (!DumbService.isDumb(project)) {
+        for (PsiClass collector : JavaPsiFacade.getInstance(project).findClasses(GROOVY_TRANSFORM_ANNOTATION_COLLECTOR, scope)) {
+          AnnotatedElementsSearch.searchPsiClasses(collector, scope).forEach(aClass -> {
+            ContainerUtil.addIfNotNull(result, aClass.getName());
+            return true;
+          });
+        }
       }
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });

@@ -8,3 +8,5 @@ expect class Owner {
 
 // REF: companion object of [testModule_JVM] (test).Owner
 // REF: companion object of [testModule_JS] (test).Owner
+
+// K2_REF:

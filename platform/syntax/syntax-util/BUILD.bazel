@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.platform.syntax.util` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "util",
+  module_name = "intellij.platform.syntax.util",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/syntax/syntax-api:syntax",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base/kmp:util-base-kmp",
+  ]
+)
+### auto-generated section `build intellij.platform.syntax.util` end

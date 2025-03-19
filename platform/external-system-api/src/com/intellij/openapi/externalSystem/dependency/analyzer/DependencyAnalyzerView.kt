@@ -1,15 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 /**
  * Represents dependency analyzer view model.
  */
-interface DependencyAnalyzerView : DataProvider {
+interface DependencyAnalyzerView : UiCompatibleDataProvider {
 
   /**
    * Sets selected external project in analyzer project combobox.
@@ -42,10 +43,13 @@ interface DependencyAnalyzerView : DataProvider {
    */
   fun setSelectedDependency(module: Module, path: List<Dependency.Data>, scope: String)
 
+  override fun uiDataSnapshot(sink: DataSink) {
+  }
+
   companion object {
-    const val ACTION_PLACE = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
-    val VIEW = DataKey.create<DependencyAnalyzerView>("ExternalSystem.DependencyAnalyzerView.View")
-    val DEPENDENCY = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependency")
-    val DEPENDENCIES = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependencies")
+    const val ACTION_PLACE: String = "ExternalSystem.DependencyAnalyzerView.ActionPlace"
+    val VIEW: DataKey<DependencyAnalyzerView> = DataKey.create("ExternalSystem.DependencyAnalyzerView.View")
+    val DEPENDENCY: DataKey<Dependency> = DataKey.create("ExternalSystem.DependencyAnalyzerView.Dependency")
+    val DEPENDENCIES: DataKey<List<Dependency>> = DataKey.create("ExternalSystem.DependencyAnalyzerView.Dependencies")
   }
 }

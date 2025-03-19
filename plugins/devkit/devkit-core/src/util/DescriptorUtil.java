@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.application.WriteAction;
@@ -15,14 +15,18 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Dependency;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement;
+import org.jetbrains.idea.devkit.dom.templates.TemplateSet;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 import java.util.ArrayList;
@@ -87,19 +91,29 @@ public final class DescriptorUtil {
     return getIdeaPluginFileElement((XmlFile)file) != null;
   }
 
-  @Nullable
-  public static DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
+  public static @Nullable DomFileElement<IdeaPlugin> getIdeaPluginFileElement(@NotNull XmlFile file) {
     return DomManager.getDomManager(file.getProject()).getFileElement(file, IdeaPlugin.class);
   }
 
-  @Nullable
-  public static IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
+  public static @Nullable IdeaPlugin getIdeaPlugin(@NotNull XmlFile file) {
     final DomFileElement<IdeaPlugin> plugin = getIdeaPluginFileElement(file);
     return plugin != null ? plugin.getRootElement() : null;
   }
 
-  @NotNull
-  public static Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
+  public static boolean isProductModulesXml(@Nullable PsiFile file) {
+    return isDomXml(file, ProductModulesElement.class);
+  }
+
+  public static boolean isTemplatesXml(@Nullable PsiFile file) {
+    return isDomXml(file, TemplateSet.class);
+  }
+
+  private static boolean isDomXml(PsiFile file, Class<? extends DomElement> domElementClass) {
+    if (!(file instanceof XmlFile xmlFile)) return false;
+    return DomManager.getDomManager(xmlFile.getProject()).getFileElement(xmlFile, domElementClass) != null;
+  }
+
+  public static @NotNull @Unmodifiable Collection<IdeaPlugin> getPlugins(Project project, GlobalSearchScope scope) {
     if (DumbService.isDumb(project)) return Collections.emptyList();
 
     List<DomFileElement<IdeaPlugin>> files = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);

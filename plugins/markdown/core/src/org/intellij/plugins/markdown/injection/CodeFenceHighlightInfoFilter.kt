@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.injection
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.MarkdownFileType
@@ -31,7 +32,8 @@ internal class CodeFenceHighlightInfoFilter: HighlightInfoFilter {
       HighlightInfoType.INJECTED_FRAGMENT_SYNTAX_SEVERITY,
       HighlightInfoType.INJECTED_FRAGMENT_SEVERITY,
       HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY,
-      HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY
+      HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY,
+      HighlightSeverity.TEXT_ATTRIBUTES
     )
   }
 }

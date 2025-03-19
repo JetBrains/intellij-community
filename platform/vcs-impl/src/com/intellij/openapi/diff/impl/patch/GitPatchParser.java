@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,10 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.ListIterator;
 import java.util.regex.Matcher;
@@ -20,19 +17,20 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.HASH_PATTERN;
 import static com.intellij.openapi.diff.impl.patch.PatchReader.PatchContentParser.stripPatchNameIfNeeded;
 
+@ApiStatus.Internal
 public final class GitPatchParser {
-  @NonNls private static final String DIFF_GIT_HEADER_LINE = "diff --git";
-  @NonNls private static final Pattern SIMPLE_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*"); // NB: can't handle whitespaces in file names
-  @NonNls private static final Pattern AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " a/(.+) b/(.+)");
-  @NonNls private static final Pattern QUOTED_AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " \"a/(.+)\" \"b/(.+)\"\\s*");
-  @NonNls private static final Pattern ourIndexHeaderLinePattern =
+  private static final @NonNls String DIFF_GIT_HEADER_LINE = "diff --git";
+  private static final @NonNls Pattern SIMPLE_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + "\\s+(\\S+)\\s+(\\S+).*"); // NB: can't handle whitespaces in file names
+  private static final @NonNls Pattern AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " a/(.+) b/(.+)");
+  private static final @NonNls Pattern QUOTED_AB_PREFIX_HEADER_PATTERN = Pattern.compile(DIFF_GIT_HEADER_LINE + " \"a/(.+)\" \"b/(.+)\"\\s*");
+  private static final @NonNls Pattern ourIndexHeaderLinePattern =
     Pattern.compile("index\\s+(" + HASH_PATTERN + ")..(" + HASH_PATTERN + ").*");
-  @NonNls private static final Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s(.*)");
-  @NonNls private static final Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s(.*)");
-  @NonNls private static final Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
-  @NonNls private static final Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
+  private static final @NonNls Pattern ourRenameFromPattern = Pattern.compile("\\s*rename from\\s(.*)");
+  private static final @NonNls Pattern ourRenameToPattern = Pattern.compile("\\s*rename to\\s(.*)");
+  private static final @NonNls Pattern ourFileStatusPattern = Pattern.compile("\\s*(new|deleted)\\s+file\\s+mode\\s*(\\d*)\\s*");
+  private static final @NonNls Pattern ourNewFileModePattern = Pattern.compile("\\s*new\\s+mode\\s*(\\d+)\\s*");
 
-  @NonNls private static final String ourGitBinaryContentStart = "GIT binary patch";
+  private static final @NonNls String ourGitBinaryContentStart = "GIT binary patch";
   private static final Logger LOG = Logger.getInstance(GitPatchParser.class);
 
 
@@ -125,16 +123,17 @@ public final class GitPatchParser {
     // 'patch.getBeforeName() | getAfterName()' values pre-filled from '--- a/1.txt | +++ b/1.txt' lines
     if (patch.getBeforeName() == null || patchInfo.myPreferPatchInfoPaths) patch.setBeforeName(patchInfo.myBeforeName);
     if (patch.getAfterName() == null || patchInfo.myPreferPatchInfoPaths) patch.setAfterName(patchInfo.myAfterName);
-    //remember sha-1 as version ids or set null if no info
-    patch.setBeforeVersionId(patchInfo.myBeforeIndex);
-    patch.setAfterVersionId(patchInfo.myAfterIndex);
+    //remember sha-1 as version ids, but keep '(revision <hash>)' suffixes from TextPatchBuilder.REVISION_NAME_TEMPLATE
+    if (patchInfo.myBeforeIndex != null || patchInfo.myAfterIndex != null) {
+      patch.setBeforeVersionId(patchInfo.myBeforeIndex);
+      patch.setAfterVersionId(patchInfo.myAfterIndex);
+    }
     //set new file mode
     patch.setNewFileMode(patchInfo.myNewFileMode);
   }
 
 
-  @Nullable
-  private static Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
+  private static @Nullable Couple<String> parseNamesFromGitHeaderLine(@NotNull String start) {
     Matcher m = AB_PREFIX_HEADER_PATTERN.matcher(start);
     if (m.matches()) {
       return getFileNamesFromGitHeaderLine(m.group(1), m.group(2));
@@ -153,19 +152,16 @@ public final class GitPatchParser {
     return null;
   }
 
-  @NotNull
-  private static Couple<String> getFileNamesFromGitHeaderLine(@NotNull String path1, @NotNull String path2) {
+  private static @NotNull Couple<String> getFileNamesFromGitHeaderLine(@NotNull String path1, @NotNull String path2) {
     return Couple.of(getFileNameFromGitHeaderLine(path1, true),
                      getFileNameFromGitHeaderLine(path2, false));
   }
 
-  @Nullable
-  private static String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
+  private static @Nullable String getFileNameFromGitHeaderLine(@NotNull String line, boolean before) {
     return stripPatchNameIfNeeded(VcsFileUtil.unescapeGitPath(line), before);
   }
 
-  @NotNull
-  private static FileStatus parseFileStatus(@NotNull String status) {
+  private static @NotNull FileStatus parseFileStatus(@NotNull String status) {
     if (status.startsWith("new")) { //NON-NLS
       return FileStatus.ADDED;
     }
@@ -174,16 +170,16 @@ public final class GitPatchParser {
   }
 
   private static final class PatchInfo {
-    @Nullable private final String myBeforeName;
-    @Nullable private final String myAfterName;
+    private final @Nullable String myBeforeName;
+    private final @Nullable String myAfterName;
     private final boolean myPreferPatchInfoPaths;
 
-    @Nullable private final @Nls String myBeforeIndex;
-    @Nullable private final @Nls String myAfterIndex;
+    private final @Nullable @Nls String myBeforeIndex;
+    private final @Nullable @Nls String myAfterIndex;
 
     private final int myNewFileMode;
 
-    @NotNull private final FileStatus myFileStatus;
+    private final @NotNull FileStatus myFileStatus;
 
     private PatchInfo(@NotNull Couple<String> beforeAfterName,
                       boolean preferPatchInfoPaths,

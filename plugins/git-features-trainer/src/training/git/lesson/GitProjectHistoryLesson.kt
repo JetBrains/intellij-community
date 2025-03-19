@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.components.SearchFieldWithExtension
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsLogBundle
@@ -17,7 +16,6 @@ import com.intellij.vcs.log.ui.details.CommitDetailsListPanel
 import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 import com.intellij.vcs.log.ui.frame.MainFrame
-import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import git4idea.i18n.GitBundle
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
@@ -29,6 +27,7 @@ import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.clickTreeRow
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.highlightToolWindowStripe
 import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
@@ -36,7 +35,7 @@ import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import java.util.regex.Pattern
 
-class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
+internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
   override val sampleFilePath = "git/sphinx_cat.yml"
   override val branchName = "feature"
   private val textToFind = "sphinx"
@@ -46,11 +45,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
   override val testScriptProperties = TaskTestContext.TestScriptProperties(40)
 
   override val lessonContent: LessonContext.() -> Unit = {
-    task {
-      triggerAndBorderHighlight().component { stripe: ActionButton ->
-        stripe.action.templateText == IdeBundle.message("toolwindow.stripe.Version_Control")
-      }
-    }
+    highlightToolWindowStripe(ToolWindowId.VCS)
 
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),
@@ -82,7 +77,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       var selectionCleared = false
       triggerAndBorderHighlight().treeItem { tree, path ->
-        (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE").also {
+        (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD").also {
           if (!selectionCleared) {
             tree.clearSelection()
             selectionCleared = true
@@ -150,8 +145,8 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
         }
       }
       triggerUI().component l@{ ui: VcsLogGraphTable ->
-        val model = ui.model as? GraphTableModel ?: return@l false
-        model.rowCount > 0 && model.getCommitMetadata(0).fullMessage.contains(textToFind)
+        val model = ui.model
+        model.rowCount > 0 && model.getCommitMetadata(0)?.fullMessage?.contains(textToFind) ?: false
       }
       showWarningIfGitWindowClosed()
       test {
@@ -169,7 +164,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       }
       restoreState {
         val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi ?: return@restoreState false
-        vcsLogUi.filterUi.textFilterComponent.textField.text == ""
+        vcsLogUi.filterUi.textFilterComponent.text == ""
       }
       showWarningIfGitWindowClosed()
       test {
@@ -209,7 +204,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
       }
     }
 
-    if (VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) {
+    if (DiffEditorTabFilesManager.isDiffInWindow) {
       task("EditorEscape") {
         text(GitLessonsBundle.message("git.project.history.close.diff", action(it)))
         stateCheck { previous.ui?.isShowing != true }

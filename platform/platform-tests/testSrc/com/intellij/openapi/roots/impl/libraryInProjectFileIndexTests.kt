@@ -12,6 +12,8 @@ import com.intellij.testFramework.junit5.TestDisposable
 import org.junit.jupiter.api.BeforeEach
 
 class ProjectLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = true
   override val libraryTable: LibraryTable
     get() = projectModel.projectLibraryTable
 
@@ -21,6 +23,8 @@ class ProjectLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase()
 }
 
 class ApplicationLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = false
   override val libraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().libraryTable
 
@@ -32,7 +36,9 @@ class ApplicationLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCa
 class CustomLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
   @TestDisposable
   lateinit var disposable: Disposable
-  
+  override val worksViaWorkspaceModel: Boolean
+    get() = false
+
   override val libraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getCustomLibraryTableByLevel("mock")!!
 
@@ -44,5 +50,20 @@ class CustomLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() 
 
   override fun createLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit): LibraryEx {
     return projectModel.addLibrary(name, libraryTable, setup)
+  }
+}
+
+class ModuleLibraryInProjectFileIndexTest : LibraryInProjectFileIndexTestCase() {
+  override val worksViaWorkspaceModel: Boolean
+    get() = true
+  
+  override val libraryTable: LibraryTable?
+    get() = null
+
+  override fun createLibrary(name: String, setup: (LibraryEx.ModifiableModelEx) -> Unit): LibraryEx {
+    return projectModel.addModuleLevelLibrary(module, name, setup)
+  }
+
+  override fun addDependency(library: LibraryEx) {
   }
 }

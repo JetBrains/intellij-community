@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.htmlInspections;
 
@@ -19,7 +19,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
-import com.intellij.xml.psi.XmlPsiBundle;
+import com.intellij.xml.parsing.XmlParserBundle;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
           PsiFile psiFile = holder.getCurrentAnnotationSession().getFile();
 
           if (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == psiElement.getLanguage()) {
-            String message = XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing");
+            String message = XmlParserBundle.message("xml.parsing.closing.tag.matches.nothing");
 
             if (message.equals(((PsiErrorElement)psiElement).getErrorDescription()) && psiFile.getContext() == null) {
               holder.newAnnotation(HighlightSeverity.WARNING, message).range(psiElement).withFix(new RemoveExtraClosingTagIntentionAction()).create();
@@ -126,8 +126,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
       .create();
   }
 
-  @Nullable
-  static XmlToken findEndTagName(@Nullable PsiErrorElement element) {
+  static @Nullable XmlToken findEndTagName(@Nullable PsiErrorElement element) {
     if (element == null) return null;
 
     ASTNode astNode = element.getNode();

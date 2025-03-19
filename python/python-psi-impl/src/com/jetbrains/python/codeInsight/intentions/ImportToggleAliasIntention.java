@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,7 +36,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Adds an alias to "import foo" or "from foo import bar" import elements, or removes it if it's already present.
  */
-public class ImportToggleAliasIntention extends PyBaseIntentionAction {
+public final class ImportToggleAliasIntention extends PyBaseIntentionAction {
   private static class IntentionState {
     private PyImportElement myImportElement;
     private PyFromImportStatement myFromImportStatement;
@@ -79,8 +78,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       return true;
     }
 
-    @NotNull
-    public @IntentionName String getText() {
+    public @NotNull @IntentionName String getText() {
       String add_name = PyPsiBundle.message("INTN.add.import.alias");
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
@@ -93,8 +91,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.toggle.import.alias");
   }
 
@@ -115,13 +112,12 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  @Nullable
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return currentFile;
   }
 
   @Override
-  public void doInvoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     // sanity check: isAvailable must have set it.
     final IntentionState state = IntentionState.fromContext(editor, file);
     //
@@ -165,8 +161,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             getReferences(element);
-            if (element instanceof PyStringLiteralExpression) {
-              final PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)element;
+            if (element instanceof PyStringLiteralExpression host) {
               final List<Pair<PsiElement, TextRange>> files =
                 InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(host);
               if (files != null) {

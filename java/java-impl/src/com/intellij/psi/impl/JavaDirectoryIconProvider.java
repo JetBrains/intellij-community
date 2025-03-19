@@ -61,7 +61,7 @@ final class JavaDirectoryIconProvider extends IconProvider implements DumbAware 
       symbolIcon = AllIcons.Modules.ExcludeRoot;
     }
     else {
-      symbolIcon = PlatformIcons.FOLDER_ICON;
+      return null;
     }
     return IconManager.getInstance().createLayeredIcon(element, symbolIcon, 0);
   }

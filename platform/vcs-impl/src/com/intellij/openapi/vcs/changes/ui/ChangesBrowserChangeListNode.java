@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -12,6 +12,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,9 +71,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
-  @NlsContexts.Tooltip
-  @Nullable
-  private String getTooltipText() {
+  private @NlsContexts.Tooltip @Nullable String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
     ChangeListData data = getChangeListData((LocalChangeList)userObject);
     if (data == null) return null;
@@ -83,7 +82,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     @Nls StringBuilder sb = new StringBuilder();
     if (!StringUtil.isEmpty(dataInfo)) sb.append(dataInfo);
     if (!StringUtil.isEmpty(message)) {
-      if (sb.length() > 0) sb.append(UIUtil.BR).append(UIUtil.BR);
+      if (!sb.isEmpty()) sb.append(UIUtil.BR).append(UIUtil.BR);
       sb.append(message);
     }
     return nullize(sb.toString());
@@ -92,8 +91,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   /**
    * Get first 5 lines from the comment and add ellipsis if are smth else
    */
-  @Nullable
-  private static String cropMessageIfNeeded(@Nullable String comment) {
+  private static @Nullable String cropMessageIfNeeded(@Nullable String comment) {
     if (comment == null) return null;
     String[] lines = StringUtil.splitByLines(XmlStringUtil.escapeString(comment), false);
     String croppedMessage = of(lines).limit(5).joining(UIUtil.BR);
@@ -105,6 +103,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     return getUserObject().getName().trim();
   }
 
+  @ApiStatus.Internal
   @Override
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     final List<Change> changes = dragBean.getChanges();
@@ -117,6 +116,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     return true;
   }
 
+  @ApiStatus.Internal
   @Override
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
     if (!(userObject instanceof LocalChangeList)) {

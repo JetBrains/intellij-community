@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.newProject.steps;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,10 +19,12 @@ import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,35 +32,15 @@ import java.util.List;
 public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   private final List<ActionListener> myChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private static final Logger LOG = Logger.getInstance(PythonSdkChooserCombo.class);
-  /**
-   * @deprecated the value of the field is not used anywhere internally
-   */
-  @Deprecated
-  @Nullable private String myNewProjectPath;
 
-  public PythonSdkChooserCombo(@Nullable final Project project,
-                               @Nullable final Module module,
-                               @NotNull List<? extends Sdk> sdks,
-                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
-    this(project, module, sdks, null, acceptableSdkCondition);
-  }
-
-  /**
-   * @deprecated the value of the field corresponding to {@code newProjectPath} is not used anywhere internally; use
-   * {@link #PythonSdkChooserCombo(Project, Module, List, Condition)} instead.
-   */
-  @SuppressWarnings("unchecked")
-  @Deprecated
-  public PythonSdkChooserCombo(@Nullable final Project project,
-                               @Nullable final Module module,
-                               @NotNull List<? extends Sdk> sdks,
-                               @Nullable String newProjectPath,
-                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
+  public PythonSdkChooserCombo(final @Nullable Project project,
+                               final @Nullable Module module,
+                               @NotNull @Unmodifiable List<? extends Sdk> sdks,
+                               final @NotNull Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
-    myNewProjectPath = newProjectPath;
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);
     final JComboBox comboBox = getComboBox();
-    comboBox.setModel(new CollectionComboBoxModel(sdks, initialSelection));
+    comboBox.setModel(new CollectionComboBoxModel(new ArrayList<>(sdks), initialSelection));
     comboBox.setRenderer(new PySdkListCellRenderer());
     addActionListener(new ActionListener() {
       @Override
@@ -84,7 +66,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
     getComboBox().setToolTipText(sdkHomePath != null ? FileUtil.toSystemDependentName(sdkHomePath) : null);
   }
 
-  private void showOptions(@Nullable final Project project, @Nullable Module module) {
+  private void showOptions(final @Nullable Project project, @Nullable Module module) {
     final PyConfigurableInterpreterList interpreterList = PyConfigurableInterpreterList.getInstance(project);
     final Sdk[] sdks = interpreterList.getModel().getSdks();
     //noinspection unchecked
@@ -119,13 +101,5 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   @SuppressWarnings("UnusedDeclaration")
   public void addChangedListener(ActionListener listener) {
     myChangedListeners.add(listener);
-  }
-
-  /**
-   * @deprecated the value of the corresponding field is not used anywhere internally
-   */
-  @Deprecated(forRemoval = true)
-  public void setNewProjectPath(@Nullable String newProjectPath) {
-    myNewProjectPath = newProjectPath;
   }
 }

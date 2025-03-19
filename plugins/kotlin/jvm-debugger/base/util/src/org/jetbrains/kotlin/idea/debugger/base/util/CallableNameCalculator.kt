@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.base.util
 
-import org.jetbrains.kotlin.codegen.JvmCodegenUtil
+import org.jetbrains.kotlin.codegen.sanitizeNameIfNeeded
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -31,7 +31,7 @@ object CallableNameCalculator {
         }
 
         val name = function.name ?: return null
-        val prefix = JvmCodegenUtil.sanitizeNameIfNeeded(name, function.languageVersionSettings)
+        val prefix = sanitizeNameIfNeeded(name, function.languageVersionSettings)
 
         if (function.hasModifier(KtTokens.INTERNAL_KEYWORD) && !function.isTopLevel && !isPublishedApi(function)) {
             return CallableName.Mangled(prefix, getInternalPostfix(function))

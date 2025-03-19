@@ -1,19 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.configurations.PtyCommandLine;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.io.IdeUtilIoBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +46,8 @@ public final class ScriptRunnerUtil {
                             timeout);
   }
 
-  public static String getProcessOutput(@NotNull final ProcessHandler processHandler,
-                                        @NotNull final Condition<? super Key> outputTypeFilter,
+  public static String getProcessOutput(final @NotNull ProcessHandler processHandler,
+                                        final @NotNull Condition<? super Key> outputTypeFilter,
                                         final long timeout)
     throws ExecutionException {
     LOG.assertTrue(!processHandler.isStartNotified());
@@ -69,32 +69,42 @@ public final class ScriptRunnerUtil {
     return outputBuilder.toString();
   }
 
-  @NotNull
-  public static OSProcessHandler execute(@NotNull String exePath,
-                                         @Nullable String workingDirectory,
-                                         @Nullable VirtualFile scriptFile,
-                                         String[] parameters) throws ExecutionException {
+  public static @NotNull OSProcessHandler execute(@NotNull String exePath,
+                                                  @Nullable String workingDirectory,
+                                                  @Nullable VirtualFile scriptFile,
+                                                  String[] parameters) throws ExecutionException {
     return execute(exePath, workingDirectory, scriptFile, parameters, null, commandLine -> new ColoredProcessHandler(commandLine), null);
   }
 
-  @NotNull
-  public static OSProcessHandler execute(@NotNull String exePath,
-                                         @Nullable String workingDirectory,
-                                         @Nullable VirtualFile scriptFile,
-                                         String[] parameters,
-                                         @Nullable Charset charset,
-                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator)
+  public static @NotNull OSProcessHandler execute(@NotNull String exePath,
+                                                  @Nullable String workingDirectory,
+                                                  @Nullable VirtualFile scriptFile,
+                                                  String[] parameters,
+                                                  @Nullable Charset charset,
+                                                  @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator)
     throws ExecutionException {
     return execute(exePath, workingDirectory, scriptFile, parameters, charset, creator, null);
   }
 
-  @NotNull
-  public static OSProcessHandler execute(@NotNull String exePath,
-                                         @Nullable String workingDirectory,
-                                         @Nullable VirtualFile scriptFile,
-                                         String[] parameters,
-                                         @Nullable Charset charset,
-                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,  String[] options)
+  public static @NotNull OSProcessHandler execute(@NotNull String exePath,
+                                                  @Nullable String workingDirectory,
+                                                  @Nullable VirtualFile scriptFile,
+                                                  String[] parameters,
+                                                  @Nullable Charset charset,
+                                                  @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,
+                                                  String[] options)
+    throws ExecutionException {
+    return execute(exePath, workingDirectory, scriptFile, parameters, charset, creator, options, false);
+  }
+
+  public static @NotNull OSProcessHandler execute(@NotNull String exePath,
+                                                  @Nullable String workingDirectory,
+                                                  @Nullable VirtualFile scriptFile,
+                                                  String[] parameters,
+                                                  @Nullable Charset charset,
+                                                  @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,
+                                                  String[] options,
+                                                  boolean withPty)
     throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath));
@@ -117,6 +127,14 @@ public final class ScriptRunnerUtil {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
     commandLine.setCharset(charset);
+    if (withPty && !ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (!SystemInfo.isWindows) {
+        commandLine = new PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS).withConsoleMode(false);
+      }
+      else {
+        commandLine.getEnvironment().putIfAbsent("TERM", "xterm");
+      }
+    }
     final OSProcessHandler processHandler = creator.fun(commandLine);
     if (LOG.isDebugEnabled()) {
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -130,6 +148,7 @@ public final class ScriptRunnerUtil {
     return processHandler;
   }
 
+  @ApiStatus.Internal
   public static boolean isExecutableInPath(@NotNull String exeName) {
     assert exeName.indexOf(File.pathSeparatorChar) == -1 : exeName;
 
@@ -142,6 +161,7 @@ public final class ScriptRunnerUtil {
     return !pathWithExt.equals(exeName);
   }
 
+  @ApiStatus.Internal
   public static ScriptOutput executeScriptInConsoleWithFullOutput(String exePathString,
                                                                   @Nullable VirtualFile scriptFile,
                                                                   @Nullable String workingDirectory,
@@ -162,6 +182,7 @@ public final class ScriptRunnerUtil {
     return output;
   }
 
+  @ApiStatus.Internal
   public static class ScriptOutput extends ProcessAdapter {
     private final Condition<? super Key> myScriptOutputType;
     public final StringBuilder myFilteredOutput;
@@ -215,7 +236,7 @@ public final class ScriptRunnerUtil {
                                              @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
       if (commandLine == null && processHandler instanceof BaseProcessHandler) {
-        commandLine = ((BaseProcessHandler<?>)processHandler).getCommandLine();
+        commandLine = ((BaseProcessHandler<?>)processHandler).getCommandLineForLog();
       }
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;

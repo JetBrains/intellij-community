@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.MessageLite;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
+import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileManager;
@@ -17,9 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class ExternalJavacMessageHandler {
   private final DiagnosticOutputConsumer myDiagnosticSink;
   private final OutputFileConsumer myOutputSink;

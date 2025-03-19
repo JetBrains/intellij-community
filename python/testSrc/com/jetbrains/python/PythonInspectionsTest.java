@@ -100,7 +100,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
+    runWithDocStringFormat(DocStringFormat.REST, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
@@ -177,6 +177,11 @@ public class PythonInspectionsTest extends PyTestCase {
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
+  }
+
+  // PY-40180
+  public void testEmptyProtocolProperty() {
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.getLatest());
   }
 
   public void testInconsistentIndentation() {
@@ -263,9 +268,9 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testInspectionsDisabledInFunctionTypeComments() {
     myFixture.enableInspections(PyIncorrectDocstringInspection.class);
     myFixture.enableInspections(PyMissingOrEmptyDocstringInspection.class);
-    myFixture.enableInspections(PySingleQuotedDocstringInspection.class); 
-    myFixture.enableInspections(PyByteLiteralInspection.class); 
-    myFixture.enableInspections(PyMandatoryEncodingInspection.class); 
+    myFixture.enableInspections(PySingleQuotedDocstringInspection.class);
+    myFixture.enableInspections(PyByteLiteralInspection.class);
+    myFixture.enableInspections(PyMandatoryEncodingInspection.class);
     myFixture.enableInspections(PyNonAsciiCharInspection.class);
 
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");

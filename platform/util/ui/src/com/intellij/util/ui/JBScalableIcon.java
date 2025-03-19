@@ -17,13 +17,16 @@ import static com.intellij.ui.scale.ScaleType.*;
  * @author tav
  */
 public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScaleContext> implements ScalableIcon {
-  private final Scaler myScaler = new Scaler() {
+  private final Scaler scaler = new Scaler() {
     @Override
     protected double currentScale() {
-      if (autoUpdateScaleContext) getScaleContext().update();
+      if (autoUpdateScaleContext) {
+        getScaleContext().update();
+      }
       return getScale(USR_SCALE);
     }
   };
+
   private boolean autoUpdateScaleContext = true;
 
   public JBScalableIcon() {
@@ -37,16 +40,16 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
 
   protected final void updateContextFrom(@NotNull JBScalableIcon icon) {
     updateScaleContext(icon.getScaleContext());
-    myScaler.update(icon.myScaler);
+    scaler.update(icon.scaler);
     autoUpdateScaleContext = icon.autoUpdateScaleContext;
   }
 
   protected boolean isIconPreScaled() {
-    return myScaler.isPreScaled();
+    return scaler.isPreScaled();
   }
 
   protected void setIconPreScaled(boolean preScaled) {
-    myScaler.setPreScaled(preScaled);
+    scaler.setPreScaled(preScaled);
   }
 
   /**
@@ -75,8 +78,7 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    * @return the icon in the provided pre-scaled state
    * @see JBUIScale#scaleIcon(JBScalableIcon) (JBScalableIcon)
    */
-  @NotNull
-  public JBScalableIcon withIconPreScaled(boolean preScaled) {
+  public @NotNull JBScalableIcon withIconPreScaled(boolean preScaled) {
     setIconPreScaled(preScaled);
     return this;
   }
@@ -89,7 +91,7 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    * and/or it doesn't listen for updates. Otherwise, the value should be set to
    * false and the scale context should be updated manually.
    * <p>
-   * By default the value is true.
+   * By default, the value is true.
    */
   protected void setAutoUpdateScaleContext(boolean autoUpdate) {
     autoUpdateScaleContext = autoUpdate;
@@ -97,12 +99,12 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
 
   @Override
   public float getScale() {
-    return (float)getScale(OBJ_SCALE); // todo: float -> double
+    // todo: float -> double
+    return (float)getScale(OBJ_SCALE);
   }
 
   @Override
-  @NotNull
-  public Icon scale(float scale) {
+  public @NotNull Icon scale(float scale) {
     setScale(OBJ_SCALE.of(scale));
     return this;
   }
@@ -119,7 +121,7 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
    */
   protected double scaleVal(double value, @NotNull ScaleType type) {
     return switch (type) {
-      case USR_SCALE -> myScaler.scaleVal(value);
+      case USR_SCALE -> scaler.scaleVal(value);
       case SYS_SCALE -> value * getScale(SYS_SCALE);
       case OBJ_SCALE -> value * getScale(OBJ_SCALE);
     };
@@ -131,7 +133,7 @@ public abstract class JBScalableIcon extends AbstractScaleContextAware<UserScale
   protected double scaleVal(double value, @NotNull DerivedScaleType type) {
     return switch (type) {
       case DEV_SCALE -> value * getScale(DEV_SCALE);
-      case EFF_USR_SCALE, PIX_SCALE -> myScaler.scaleVal(value) * getScale(OBJ_SCALE);
+      case EFF_USR_SCALE, PIX_SCALE -> scaler.scaleVal(value) * getScale(OBJ_SCALE);
     };
   }
 

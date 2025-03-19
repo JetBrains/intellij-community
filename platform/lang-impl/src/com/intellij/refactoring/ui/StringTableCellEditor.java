@@ -18,6 +18,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
@@ -32,10 +33,17 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
   private Document myDocument;
   private final Project myProject;
   private final List<DocumentListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private boolean myUseEditorFont = false;
 
   public StringTableCellEditor(final Project project) {
     myProject = project;
   }
+
+  public StringTableCellEditor(final Project project, boolean useEditorFont) {
+    myProject = project;
+    myUseEditorFont = useEditorFont;
+  }
+
 
   @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
@@ -49,6 +57,10 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
     for (DocumentListener listener : myListeners) {
       editorTextField.addDocumentListener(listener);
     }
+    if (myUseEditorFont) {
+      editorTextField.setFont(EditorUtil.getEditorFont());
+    }
+    editorTextField.setBorder(BorderFactory.createLineBorder(table.getSelectionBackground()));
     return editorTextField;
   }
 
@@ -63,5 +75,9 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
 
   public void clearListeners() {
     myListeners.clear();
+  }
+
+  public void setUseEditorFont(boolean useEditorFont) {
+    this.myUseEditorFont = useEditorFont;
   }
 }

@@ -12,7 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
  */
 class GenerateXmlFromXsdTest: LightJavaCodeInsightFixtureTestCase() {
   fun testErrorMessage() {
-    val file = LocalFileSystem.getInstance().findFileByPath(testDataPath + "/vast4.xsd")
+    val file = LocalFileSystem.getInstance().findFileByPath("$testDataPath/vast4.xsd")
     val dialog = GenerateInstanceDocumentFromSchemaDialog(project, file)
     try {
       GenerateInstanceDocumentFromSchemaAction.doAction(project, dialog)

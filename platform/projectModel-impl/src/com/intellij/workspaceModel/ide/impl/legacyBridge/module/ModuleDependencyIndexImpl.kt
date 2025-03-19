@@ -1,37 +1,64 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointPriorityListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.libraries.CustomLibraryTableDescription
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.workspaceModel.ide.impl.jpsMetrics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.orderToRemoveReplaceAdd
+import io.opentelemetry.api.metrics.Meter
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
-    private const val LIBRARY_NAME_DELIMITER = ":"
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
+
+    private val changedListenerTimeMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val changedListenerTimeCounter = meter.counterBuilder("jps.module.dependency.index.workspace.model.listener.on.changed.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          changedListenerTimeCounter.record(changedListenerTimeMs.asMilliseconds())
+        }, changedListenerTimeCounter
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(jpsMetrics.meter)
+    }
   }
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
@@ -45,17 +72,38 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       val messageBusConnection = project.messageBus.connect(this)
       messageBusConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
     }
+
+    CustomLibraryTableDescription.CUSTOM_TABLES_EP.point.addExtensionPointListener(
+      // We need a priority listener here because it's important to unsubscribe before the custom table will be removed at
+      // [LibraryTablesRegistrarImpl.getCustomLibrariesMap]
+      object : ExtensionPointListener<CustomLibraryTableDescription>, ExtensionPointPriorityListener {
+        override fun extensionRemoved(extension: CustomLibraryTableDescription, pluginDescriptor: PluginDescriptor) {
+          LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(extension.tableLevel, project)?.let { table ->
+            libraryTablesListener.unsubscribeFromCustomTableOnDispose(table)
+          }
+        }
+      }, true, project)
   }
 
   override fun addListener(listener: ModuleDependencyListener) {
     eventDispatcher.addListener(listener)
   }
 
+  override fun removeListener(listener: ModuleDependencyListener) {
+    eventDispatcher.removeListener(listener)
+  }
+
   override fun setupTrackedLibrariesAndJdks() {
+    ThreadingAssertions.assertWriteAccess()
+    LOG.debug { "Add tracked global libraries and SDK for all modules" }
     val currentStorage = WorkspaceModel.getInstance(project).currentSnapshot
+    val addedLibsCollector = mutableSetOf<LibraryId>()
+    val addedLibraryLevelsCollector = MultiSet<String>()
     for (moduleEntity in currentStorage.entities(ModuleEntity::class.java)) {
-      addTrackedLibraryAndJdkFromEntity(moduleEntity)
+      collectAddedLibrariesAndAddSdks(moduleEntity.dependencies, moduleEntity, addedLibsCollector, addedLibraryLevelsCollector)
     }
+    addedLibsCollector.forEach { addTrackedLibrary(it, null) }
+    trackLibraryLevel(addedLibraryLevelsCollector)
   }
 
   override fun hasProjectSdkDependency(): Boolean {
@@ -74,50 +122,74 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  fun workspaceModelChanged(event: VersionedStorageChange) {
-    if (project.isDisposed) return
-
-    // Roots changed event should be fired for the global libraries linked with module
-    val moduleChanges = event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()
-    for (change in moduleChanges) {
-      change.oldEntity?.let { removeTrackedLibrariesAndJdkFromEntity(it) }
-      change.newEntity?.let { addTrackedLibraryAndJdkFromEntity(it) }
-    }
+  override fun hasDependencyOn(sdk: SdkId): Boolean {
+    return jdkChangeListener.hasDependencyOn(sdk)
   }
 
-  private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-    LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
-    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-    moduleEntity.dependencies.forEach {
-      when {
-        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
-          val libraryName = it.library.name
-          val libraryLevel = it.library.tableId.level
-          val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.addListener(libraryTablesListener)
-          libraryTablesListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName)
+  fun workspaceModelChanged(event: VersionedStorageChange) = changedListenerTimeMs.addMeasuredTime {
+    if (project.isDisposed) return
+
+    // By using set we make sure that we won't add the same library multiple times
+    val newLibrariesCollector = mutableSetOf<LibraryId>()
+    val newLibraryLevels = MultiSet<String>()
+    val removedLibrariesCollector = mutableSetOf<LibraryId>()
+    val removeLibraryLevels = MultiSet<String>()
+    // Roots changed event should be fired for the global libraries linked with module
+    val moduleChanges = event.getChanges(ModuleEntity::class.java)
+    for (change in moduleChanges) {
+      when (change) {
+        is EntityChange.Added -> {
+          LOG.debug { "Add tracked global libraries and SDK from ${change.newEntity.name}" }
+          collectAddedLibrariesAndAddSdks(change.newEntity.dependencies, change.newEntity, newLibrariesCollector, newLibraryLevels)
         }
-        it is ModuleDependencyItem.SdkDependency || it is ModuleDependencyItem.InheritedSdkDependency -> {
+        is EntityChange.Removed -> {
+          LOG.debug { "Removed tracked global libraries and SDK from ${change.oldEntity.name}" }
+          collectRemovedLibrariesAndRemoveSdks(change.oldEntity.dependencies, change.oldEntity, removedLibrariesCollector, removeLibraryLevels)
+        }
+        is EntityChange.Replaced -> {
+          val removedDependencies = change.oldEntity.dependencies - change.newEntity.dependencies.toSet()
+          val addedDependencies = change.newEntity.dependencies - change.oldEntity.dependencies.toSet()
+          LOG.debug { "Update tracked global libraries and SDK for ${change.newEntity.name}: ${removedDependencies.size} removed, ${addedDependencies.size} added" }
+          collectRemovedLibrariesAndRemoveSdks(removedDependencies, change.oldEntity, removedLibrariesCollector, removeLibraryLevels)
+          collectAddedLibrariesAndAddSdks(addedDependencies, change.newEntity, newLibrariesCollector, newLibraryLevels)
+        }
+      }
+    }
+
+    removedLibrariesCollector.forEach { unTrackLibrary(it, event.storageAfter) }
+    newLibrariesCollector.forEach { addTrackedLibrary(it, event.storageBefore) }
+    untrackLibraryLevel(removeLibraryLevels)
+    trackLibraryLevel(newLibraryLevels)
+  }
+
+  private fun collectAddedLibrariesAndAddSdks(dependencies: List<ModuleDependencyItem>,
+                                              moduleEntity: ModuleEntity,
+                                              libraryIdsCollector: MutableSet<LibraryId>,
+                                              libraryLevelsCollector: MultiSet<String>) {
+    dependencies.forEach {
+      when {
+        it is LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
+          libraryIdsCollector.add(it.library)
+          libraryLevelsCollector.add(it.library.tableId.level)
+        }
+        it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.addTrackedJdk(it, moduleEntity)
         }
       }
     }
   }
 
-  private fun removeTrackedLibrariesAndJdkFromEntity(moduleEntity: ModuleEntity) {
-    LOG.debug { "Removed tracked global libraries and JDK from ${moduleEntity.name}" }
-    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-    moduleEntity.dependencies.forEach {
+  private fun collectRemovedLibrariesAndRemoveSdks(dependencies: List<ModuleDependencyItem>,
+                                                   moduleEntity: ModuleEntity,
+                                                   removeLibrariesCollector: MutableSet<LibraryId>,
+                                                   removeLibraryLevelsCollector: MultiSet<String>) {
+    dependencies.forEach {
       when {
-        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
-          val libraryName = it.library.name
-          val libraryLevel = it.library.tableId.level
-          val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          libraryTablesListener.unTrackLibrary(moduleEntity, libraryTable, libraryName)
-          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
+        it is LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
+          removeLibrariesCollector.add(it.library)
+          removeLibraryLevelsCollector.add(it.library.tableId.level)
         }
-        it is ModuleDependencyItem.SdkDependency || it is ModuleDependencyItem.InheritedSdkDependency -> {
+        it is SdkDependency || it is InheritedSdkDependency -> {
           jdkChangeListener.removeTrackedJdk(it, moduleEntity)
         }
       }
@@ -126,7 +198,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   override fun dispose() {
     if (project.isDefault) return
-    
+
     //there is no need to send events since the project will be disposed anyway
     libraryTablesListener.unsubscribe(false)
     jdkChangeListener.unsubscribe(false)
@@ -138,41 +210,61 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         eventDispatcher.multicaster.referencedLibraryChanged(wrapper)
       }
       else {
-        require(wrapper is Supplier<*>) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
-        val value = wrapper.get()
+        val value = if (wrapper is Sdk) {
+          wrapper
+        } else {
+          require(wrapper is Supplier<*>) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
+          wrapper.get()
+        }
         require(value is Sdk) { "Unexpected root provider $wrapper does not implement Supplier<Sdk>" }
         eventDispatcher.multicaster.referencedSdkChanged(value)
       }
     }
   }
-  
-  private inner class LibraryTablesListener : LibraryTable.Listener {
-    private val librariesPerModuleMap = BidirectionalMultiMap<ModuleId, String>()
 
-    fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
-      val library = libraryTable.getLibraryByName(libraryName)
-      val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      if (!librariesPerModuleMap.containsValue(libraryIdentifier) && library != null) {
+  private fun addTrackedLibrary(libraryId: LibraryId, storageBefore: ImmutableEntityStorage?) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val libraryLevel = libraryId.tableId.level
+    val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return
+    if (storageBefore == null || storageBefore.referrers(libraryId, ModuleEntity::class.java).none()) {
+      val library = libraryTable.getLibraryByName(libraryId.name)
+      if (library != null) {
         library.rootProvider.addRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.addedDependencyOn(library)
       }
-      librariesPerModuleMap.put(moduleEntity.symbolicId, libraryIdentifier)
     }
+  }
 
-    fun unTrackLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
-      val library = libraryTable.getLibraryByName(libraryName)
-      val libraryIdentifier = getLibraryIdentifier(libraryTable, libraryName)
-      librariesPerModuleMap.remove(moduleEntity.symbolicId, libraryIdentifier)
-      if (!librariesPerModuleMap.containsValue(libraryIdentifier) && library != null) {
-        eventDispatcher.multicaster.removedDependencyOn(library)
-        library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
-      }
+  private fun trackLibraryLevel(newLibraryLevels: MultiSet<String>) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    newLibraryLevels.forEachWithOccurrences { libraryLevel, occ ->
+      val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEachWithOccurrences
+      if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.addListener(libraryTablesListener)
+      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelAdded(libraryTable.tableLevel, occ)
     }
+  }
 
-    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
+  private fun unTrackLibrary(libraryId: LibraryId, currentStorage: ImmutableEntityStorage) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    val libraryLevel = libraryId.tableId.level
+    val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return
+    val library = libraryTable.getLibraryByName(libraryId.name)
+    if (currentStorage.referrers(libraryId, ModuleEntity::class.java).none() && library != null) {
+      eventDispatcher.multicaster.removedDependencyOn(library)
+      library.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+    }
+  }
 
-    fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
+  private fun untrackLibraryLevel(removedLibraryLevels: MultiSet<String>) {
+    val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
+    removedLibraryLevels.forEachWithOccurrences { libraryLevel, occ ->
+      val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEachWithOccurrences
+      LibraryLevelsTracker.getInstance(project).dependencyWithLibraryLevelRemoved(libraryLevel, occ)
+      if (LibraryLevelsTracker.getInstance(project).isNotUsed(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
+    }
+  }
 
+  private inner class LibraryTablesListener : LibraryTable.Listener {
     override fun afterLibraryAdded(newLibrary: Library) {
       if (hasDependencyOn(newLibrary)) {
         eventDispatcher.multicaster.referencedLibraryAdded(newLibrary)
@@ -189,33 +281,41 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    fun hasDependencyOn(library: Library) = librariesPerModuleMap.containsValue(getLibraryIdentifier(library))
-    fun hasDependencyOn(libraryId: LibraryId) = librariesPerModuleMap.containsValue(getLibraryIdentifier(libraryId))
+    fun hasDependencyOn(library: Library): Boolean {
+      return when (library) {
+        is LibraryBridge -> hasDependencyOn(library.libraryId)
+        is LibraryModifiableModelBridge -> hasDependencyOn(library.libraryId)
+        else -> error("Unexpected type of library ${library::class.java}: $library")
+      }
+    }
+
+    fun hasDependencyOn(libraryId: LibraryId) = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
+      ThreadingAssertions.assertWriteAccess()
+
       val libraryTable = library.table
       val newName = library.name
       if (libraryTable != null && oldName != null && newName != null) {
-        val oldLibraryIdentifier = getLibraryIdentifier(libraryTable, oldName)
-        val affectedModules = librariesPerModuleMap.getKeys(oldLibraryIdentifier)
-        if (affectedModules.isNotEmpty()) {
-          // Update collection in advance to avoid redundant handling on `addTrackedLibrary`
-          val newLibraryIdentifier = getLibraryIdentifier(libraryTable, newName)
-          affectedModules.forEach { affectedModule -> librariesPerModuleMap.put(affectedModule, newLibraryIdentifier) }
-          librariesPerModuleMap.removeValue(oldLibraryIdentifier)
+        val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
+        val libraryId = LibraryId(oldName, libraryTableId)
 
-          val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
+        // We are allowed to get all modules and then update the project model because we are in a write action
+        //   However, if the write action has to be removed from here, this all has to be done in `WorkspaceModel.update` for consistency
+        val affectedModules = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
+
+        if (affectedModules.any()) {
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
-            affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->
+            affectedModules.forEach { module ->
               val updated = module.dependencies.map {
                 when {
-                  it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId == libraryTableId && it.library.name == oldName ->
+                  it is LibraryDependency && it.library.tableId == libraryTableId && it.library.name == oldName ->
                     it.copy(library = LibraryId(newName, libraryTableId))
                   else -> it
                 }
               } as MutableList<ModuleDependencyItem>
-              builder.modifyEntity(module) {
+              builder.modifyModuleEntity(module) {
                 dependencies = updated
               }
             }
@@ -224,14 +324,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    private fun getLibraryIdentifier(library: Library) = "${library.table.tableLevel}$LIBRARY_NAME_DELIMITER${library.name}"
-    private fun getLibraryIdentifier(libraryId: LibraryId) = "${libraryId.tableId.level}$LIBRARY_NAME_DELIMITER${libraryId.name}"
-    private fun getLibraryIdentifier(libraryTable: LibraryTable,
-                                     libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
-
     fun unsubscribe(fireEvents: Boolean) {
       val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-      libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+
+      // getInstanceIfInitialized is used here as there is nothing to unsubscribe from if the tracker was not used.
+      // Also, this `unsubscribe` function is called from dispose and this is not allowed to initialize services during dispose
+      val libraryTracker = LibraryLevelsTracker.getInstanceIfInitialized(project)
+      libraryTracker?.getLibraryLevels()?.forEach { libraryLevel ->
         val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
         libraryTable?.libraryIterator?.forEach {
           if (fireEvents && hasDependencyOn(it)) {
@@ -248,13 +347,23 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           }
         }
       }
-      librariesPerModuleMap.clear()
+      libraryTracker?.clear()
+    }
+
+    fun unsubscribeFromCustomTableOnDispose(libraryTable: LibraryTable) {
+      LibraryLevelsTracker.getInstance(project).getLibraryLevels().forEach { libraryLevel ->
+        if (libraryTable.tableLevel != libraryLevel) return@forEach
+        libraryTable.libraryIterator.forEach {
+          it.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
+        }
+        libraryTable.removeListener(libraryTablesListener)
+      }
     }
   }
 
   private inner class JdkChangeListener : ProjectJdkTable.Listener, ProjectRootManagerEx.ProjectJdkListener {
     private val sdkDependencies = MultiMap.createSet<ModuleDependencyItem, ModuleId>()
-    private val watchedSdks = HashSet<RootProvider>()
+    private val watchedSdks = HashSet<Sdk>()
     private var watchedProjectSdk: Sdk? = null
     private var projectJdkListenerAdded = false
 
@@ -267,7 +376,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
         if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
           watchedProjectSdk = jdk
         }
-        if (watchedSdks.add(jdk.rootProvider)) {
+        if (watchedSdks.add(jdk)) {
           eventDispatcher.multicaster.addedDependencyOn(jdk)
           jdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
         }
@@ -275,7 +384,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-      val sdkDependency = ModuleDependencyItem.SdkDependency(previousName, jdk.sdkType.name)
+      val sdkDependency = SdkDependency(SdkId(previousName, jdk.sdkType.name))
       val affectedModules = sdkDependencies.get(sdkDependency)
       if (affectedModules.isNotEmpty()) {
         WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: jdk name changed") { builder ->
@@ -283,11 +392,11 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
             val module = moduleId.resolve(builder) ?: continue
             val updated = module.dependencies.map {
               when (it) {
-                is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
+                is SdkDependency -> SdkDependency(SdkId(jdk.name, jdk.sdkType.name))
                 else -> it
               }
             } as MutableList<ModuleDependencyItem>
-            builder.modifyEntity(module) {
+            builder.modifyModuleEntity(module) {
               dependencies = updated
             }
           }
@@ -299,7 +408,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (hasProjectSdkDependency() && isProjectSdk(jdk)) {
         watchedProjectSdk = null
       }
-      if (watchedSdks.remove(jdk.rootProvider)) {
+      if (watchedSdks.remove(jdk)) {
         jdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(jdk)
       }
@@ -312,13 +421,13 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun addTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
-      if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency && !projectJdkListenerAdded) {
+      if (sdkDependency == InheritedSdkDependency && !projectJdkListenerAdded) {
         (projectRootManager as ProjectRootManagerEx).addProjectJdkListener(this)
         projectJdkListenerAdded = true
       }
       val sdk = findSdk(sdkDependency)
       if (sdk != null) {
-        if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency) {
+        if (sdkDependency == InheritedSdkDependency) {
           watchedProjectSdk = sdk
         }
         addTrackedJdk(sdk)
@@ -330,7 +439,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       if (watchedSdks.isEmpty()) {
         eventDispatcher.multicaster.firstDependencyOnSdkAdded()
       }
-      if (watchedSdks.add(sdk.rootProvider)) {
+      if (watchedSdks.add(sdk)) {
         eventDispatcher.multicaster.addedDependencyOn(sdk)
         sdk.rootProvider.addRootSetChangedListener(rootSetChangeListener)
       }
@@ -339,7 +448,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     fun removeTrackedJdk(sdkDependency: ModuleDependencyItem, moduleEntity: ModuleEntity) {
       sdkDependencies.remove(sdkDependency, moduleEntity.symbolicId)
       val sdk = findSdk(sdkDependency)
-      if (sdkDependency == ModuleDependencyItem.InheritedSdkDependency && !hasProjectSdkDependency()) {
+      if (sdkDependency == InheritedSdkDependency && !hasProjectSdkDependency()) {
         watchedProjectSdk = null
       }
       if (sdk != null) {
@@ -348,7 +457,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     private fun removeTrackedJdk(sdk: Sdk) {
-      if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk.rootProvider)) {
+      if (!hasDependencyOn(sdk) && watchedSdks.remove(sdk)) {
         sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
         eventDispatcher.multicaster.removedDependencyOn(sdk)
         if (watchedSdks.isEmpty()) {
@@ -366,34 +475,41 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     fun hasProjectSdkDependency(): Boolean {
-      return sdkDependencies.get(ModuleDependencyItem.InheritedSdkDependency).isNotEmpty()
+      return sdkDependencies.get(InheritedSdkDependency).isNotEmpty()
     }
 
     private val projectRootManager by lazy { ProjectRootManager.getInstance(project) }
 
     private fun findSdk(sdkDependency: ModuleDependencyItem): Sdk? = when (sdkDependency) {
-      is ModuleDependencyItem.InheritedSdkDependency -> projectRootManager.projectSdk
-      is ModuleDependencyItem.SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdkName, sdkDependency.sdkType)
+      is InheritedSdkDependency -> projectRootManager.projectSdk
+      is SdkDependency -> ModifiableRootModelBridge.findSdk(sdkDependency.sdk.name, sdkDependency.sdk.type)
       else -> null
     }
 
     fun hasDependencyOn(jdk: Sdk): Boolean {
-      return sdkDependencies.get(ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)).isNotEmpty()
-             || isProjectSdk(jdk) && hasProjectSdkDependency()
+      return hasDependencyOn(SdkId(jdk.name, jdk.sdkType.name))
     }
 
-    private fun isProjectSdk(jdk: Sdk) =
-      jdk.name == projectRootManager.projectSdkName && jdk.sdkType.name == projectRootManager.projectSdkTypeName
+    fun hasDependencyOn(sdk: SdkId): Boolean {
+      return sdkDependencies.get(SdkDependency(sdk)).isNotEmpty()
+             || isProjectSdk(sdk) && (hasProjectSdkDependency() || watchedSdks.isEmpty())
+    }
+
+    private fun isProjectSdk(jdk: Sdk) = isProjectSdk(jdk.name, jdk.sdkType.name)
+
+    private fun isProjectSdk(sdkId: SdkId) = isProjectSdk(sdkId.name, sdkId.type)
+
+    private fun isProjectSdk(sdkName: String, sdkType: String) =
+      sdkName == projectRootManager.projectSdkName && sdkType == projectRootManager.projectSdkTypeName
 
     fun unsubscribe(fireEvents: Boolean) {
-      watchedSdks.forEach {
+      watchedSdks.forEach { sdk ->
         if (fireEvents) {
-          @Suppress("UNCHECKED_CAST") val sdk = (it as Supplier<Sdk>).get()
           if (hasDependencyOn(sdk)) {
             eventDispatcher.multicaster.removedDependencyOn(sdk)
           }
         }
-        it.removeRootSetChangedListener(rootSetChangeListener)
+        sdk.rootProvider.removeRootSetChangedListener(rootSetChangeListener)
       }
       watchedSdks.clear()
     }

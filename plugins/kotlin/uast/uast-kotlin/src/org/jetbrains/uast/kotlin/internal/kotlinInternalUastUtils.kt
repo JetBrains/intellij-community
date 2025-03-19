@@ -7,14 +7,14 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.psi.*
-import com.intellij.psi.impl.cache.TypeInfo
 import com.intellij.psi.impl.compiled.ClsTypeElementImpl
 import com.intellij.psi.impl.compiled.SignatureParsing
 import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
@@ -70,9 +70,8 @@ import org.jetbrains.uast.kotlin.internal.KotlinUastTypeMapper
 import org.jetbrains.uast.kotlin.psi.UastFakeDescriptorLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
-import java.text.StringCharacterIterator
 
-val kotlinUastPlugin: UastLanguagePlugin by lz {
+val kotlinUastPlugin: UastLanguagePlugin by lazyPub {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
@@ -153,27 +152,26 @@ internal fun KotlinType.toPsiType(
         TypeApproximator(this.builtIns, languageVersionSettings).approximateDeclarationType(this, true)
     val typeMappingMode =
         when (config.typeMappingMode) {
-            KtTypeMappingMode.VALUE_PARAMETER -> {
+            KaTypeMappingMode.VALUE_PARAMETER -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForValueParameter(
                     approximatedType,
                 ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
-            KtTypeMappingMode.RETURN_TYPE -> {
+            KaTypeMappingMode.RETURN_TYPE -> {
                 KotlinUastTypeMapper.typeSystem.getOptimalModeForReturnType(
                     approximatedType,
                     isAnnotationMethod = context.containingClass()?.isAnnotation() == true,
                 ).mapTypeAliases(TypeMappingMode.GENERIC_ARGUMENT_UAST)
             }
-            KtTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
+            KaTypeMappingMode.GENERIC_ARGUMENT -> TypeMappingMode.GENERIC_ARGUMENT_UAST
             else -> TypeMappingMode.DEFAULT_UAST
         }
     KotlinUastTypeMapper.mapType(approximatedType, signatureWriter, typeMappingMode)
 
-    val signature = StringCharacterIterator(signatureWriter.toString())
+    val signature = SignatureParsing.CharIterator(signatureWriter.toString())
 
-    val javaType = SignatureParsing.parseTypeString(signature, StubBuildingVisitor.GUESSING_MAPPER)
-    val typeInfo = TypeInfo.fromString(javaType, false)
-    val typeText = TypeInfo.createTypeText(typeInfo) ?: return UastErrorType
+    val typeInfo = SignatureParsing.parseTypeStringToTypeInfo(signature, StubBuildingVisitor.GUESSING_PROVIDER)
+    val typeText = typeInfo.text() ?: return UastErrorType
 
     val psiTypeParent: PsiElement = containingLightDeclaration ?: context
     if (psiTypeParent.containingFile == null) {
@@ -499,7 +497,7 @@ private fun resolveContainingDeserializedClass(context: KtElement, memberDescrip
             val declaredPsiType = containingDeclaration.defaultType.toPsiType(
                 null as PsiModifierListOwner?,
                 context,
-                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION)
+                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, isBoxed = false)
             )
             (declaredPsiType as? PsiClassType)?.resolve() ?: return null
         }
@@ -563,7 +561,17 @@ private fun resolveDeserialized(
         }
         is ProtoBuf.Property -> {
             JvmProtoBufUtil.getJvmFieldSignature(proto, nameResolver, typeTable, false)
-                ?.let { signature -> psiClass.fields.firstOrNull { it.name == signature.name } }
+                ?.let { signature ->
+                    // property in companion object is actually materialized at the containing class.
+                    val containingClassIsCompanionObject =
+                        (descriptor.containingDeclaration as? DeserializedClassDescriptor)?.isCompanionObject == true
+                    val psiClassToLookup = if (containingClassIsCompanionObject) {
+                        psiClass.containingClass ?: psiClass
+                    } else {
+                        psiClass
+                    }
+                    psiClassToLookup.fields.firstOrNull { it.name == signature.name }
+                }
                 ?.let { return it }
 
             val propertySignature = proto.getExtensionOrNull(JvmProtoBuf.propertySignature)

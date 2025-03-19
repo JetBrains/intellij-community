@@ -4,5 +4,7 @@
   "targetFile": "B/src/packJs/testJs.kt",
   "withRuntime": "true",
   "modulesWithRuntime": ["A"],
-  "modulesWithJsRuntime": ["B"]
+  "modulesWithJsRuntime": ["B"],
+  "enabledInK1": "true",
+  "enabledInK2": "false"
 }

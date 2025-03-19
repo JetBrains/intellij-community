@@ -19,7 +19,6 @@ public interface ChooseByNameContributor {
   ExtensionPointName<ChooseByNameContributor> CLASS_EP_NAME = ExtensionPointName.create("com.intellij.gotoClassContributor");
   ExtensionPointName<ChooseByNameContributor> SYMBOL_EP_NAME = ExtensionPointName.create("com.intellij.gotoSymbolContributor");
   ExtensionPointName<ChooseByNameContributor> FILE_EP_NAME = ExtensionPointName.create("com.intellij.gotoFileContributor");
-  ExtensionPointName<ChooseByNameContributor> PRIME_SYMBOL_EP_NAME = ExtensionPointName.create("com.intellij.gotoPrimeSymbolContributor");
 
   /**
    * Returns the list of names for the specified project to which it is possible to navigate

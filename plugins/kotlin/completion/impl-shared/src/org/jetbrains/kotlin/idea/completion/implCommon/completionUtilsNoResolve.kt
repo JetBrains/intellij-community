@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -8,22 +8,22 @@ import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.javaToKotlinNameMap
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
 
 @ApiStatus.Internal
-val KOTLIN_CAST_REQUIRED_COLOR = JBColor(0x4E4040, 0x969696)
+val KOTLIN_CAST_REQUIRED_COLOR: JBColor = JBColor(0x4E4040, 0x969696)
 
 tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
     if (this is LookupElementDecorator<*>) {
@@ -35,14 +35,11 @@ tailrec fun <T : Any> LookupElement.putUserDataDeep(key: Key<T>, value: T?) {
 
 tailrec fun <T : Any> LookupElement.getUserDataDeep(key: Key<T>): T? {
     return if (this is LookupElementDecorator<*>) {
-        getDelegate().getUserDataDeep(key)
+        delegate.getUserDataDeep(key)
     } else {
         getUserData(key)
     }
 }
-
-val PsiElement.isInsideKtTypeReference: Boolean
-    get() = getNonStrictParentOfType<KtTypeReference>() != null
 
 fun createKeywordElement(
     keyword: String,
@@ -170,9 +167,6 @@ fun referenceScope(declaration: KtNamedDeclaration): KtElement? = when (val pare
     else -> null
 }
 
-fun FqName.isJavaClassNotToBeUsedInKotlin(): Boolean =
-    JavaToKotlinClassMap.isJavaPlatformClass(this) || javaToKotlinNameMap[this] != null
-
 fun findValueArgument(expression: KtExpression): KtValueArgument? {
     // Search for value argument among parent and grandparent to avoid parsing errors like KTIJ-18231
     return expression.parent as? KtValueArgument
@@ -206,3 +200,36 @@ fun PrefixMatcher.asNameFilter(): NameFilter {
 }
 
 infix fun <T> ((T) -> Boolean).exclude(otherFilter: (T) -> Boolean): (T) -> Boolean = { this(it) && !otherFilter(it) }
+
+/**
+ * Returns true when [position] is an identifier of a function argument or a part of a binary expression (left- or right- hand side).
+ *
+ * Here only the positions in which expected type is likely to be unresolved are taken into consideration, in other positions suitability
+ * depends on the calculated expected type.
+ */
+fun isPositionSuitableForNull(position: PsiElement): Boolean = when {
+    position.elementType != KtTokens.IDENTIFIER -> false
+    position.context?.parent is KtValueArgument -> true
+    else -> position.context?.getPrevSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+            || position.context?.getNextSiblingIgnoringWhitespaceAndComments() is KtOperationReferenceExpression
+}
+
+fun isPositionInsideImportOrPackageDirective(position: PsiElement): Boolean =
+   position.parentOfTypes(KtImportDirective::class, KtPackageDirective::class) != null
+
+fun KtElement.reference() = when (this) {
+    is KtCallExpression -> calleeExpression?.mainReference
+    is KtDotQualifiedExpression -> selectorExpression?.mainReference
+    else -> mainReference
+}
+
+val KDocLink.qualifier: List<String> get() = getLinkText().split('.').dropLast(1)
+
+fun isAtFunctionLiteralStart(position: PsiElement): Boolean {
+    val lBrace = PsiTreeUtil.prevCodeLeaf(position)
+        ?.let { if (it.node.elementType == KtTokens.LPAR) PsiTreeUtil.prevCodeLeaf(it) else it }
+        ?.takeIf { it.node.elementType == KtTokens.LBRACE }
+
+    val functionLiteral = lBrace?.parent as? KtFunctionLiteral ?: return false
+    return functionLiteral.lBrace == lBrace
+}

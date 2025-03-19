@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeClassSignature;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ChangeClassSignatureFromUsageFix;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
@@ -16,7 +16,10 @@ import com.intellij.refactoring.ui.JavaCodeFragmentTableCellEditor;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.TableColumnAnimator;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,8 +65,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     );
   }
 
-  @NotNull
-  private static List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
+  private static @NotNull List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> initTypeParameterInfos(int length) {
     final List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> result =
       new ArrayList<>();
     for (int i = 0; i < length; i++) {
@@ -96,11 +98,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   @Override
-  protected JComponent createNorthPanel() {
-    return new JLabel(JavaRefactoringBundle.message("changeClassSignature.class.label.text", DescriptiveNameUtil.getDescriptiveName(myClass)));
-  }
-
-  @Override
   protected String getHelpId() {
     return HelpID.CHANGE_CLASS_SIGNATURE;
   }
@@ -119,13 +116,13 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);
     Project project = myClass.getProject();
     nameColumn.setCellRenderer(new MyCellRenderer());
-    nameColumn.setCellEditor(new StringTableCellEditor(project));
+    nameColumn.setCellEditor(new StringTableCellEditor(project, true));
     boundColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     boundColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
     valueColumn.setCellRenderer(new CodeFragmentTableCellRenderer(project));
     valueColumn.setCellEditor(new JavaCodeFragmentTableCellEditor(project));
 
-    myTable.setPreferredScrollableViewportSize(JBUI.size(210, -1));
+    myTable.setPreferredScrollableViewportSize(JBUI.size(440, -1));
     myTable.setVisibleRowCount(4);
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().setSelectionInterval(0, 0);
@@ -142,6 +139,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
           if (e.getType() == TableModelEvent.INSERT) {
             myTable.getModel().removeTableModelListener(this);
             final TableColumnAnimator animator = new TableColumnAnimator(myTable);
+            animator.setDelay(0);
             animator.setStep(20);
             animator.addColumn(defaultValue, myTable.getWidth() / 2);
             animator.startAndDoWhenDone(() -> myTable.editCellAt(myTable.getRowCount() - 1, 0));
@@ -151,10 +149,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       });
     }
 
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator(JavaRefactoringBundle.message("changeClassSignature.parameters.panel.border.title"), myTable), BorderLayout.NORTH);
-    panel.add(ToolbarDecorator.createDecorator(myTable).createPanel(), BorderLayout.CENTER);
-    return panel;
+    return new ChangeClassSignatureDialogUI(myClass, ToolbarDecorator.createDecorator(myTable).createPanel()).getPanel();
   }
 
   @Override
@@ -169,8 +164,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
       .createChangeClassSignatureProcessor(myClass.getProject(), myClass, myTypeParameterInfos.toArray(new TypeParameterInfo[0])));
   }
 
-  @NlsContexts.DialogMessage
-  private String validateAndCommitData() {
+  private @NlsContexts.DialogMessage String validateAndCommitData() {
     final PsiTypeParameter[] parameters = myClass.getTypeParameters();
     final Map<String, TypeParameterInfo> infos = new HashMap<>();
     for (final TypeParameterInfo info : myTypeParameterInfos) {
@@ -198,8 +192,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     return null;
   }
 
-  @NlsContexts.DialogMessage
-  private static String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
+  private static @NlsContexts.DialogMessage String updateInfo(PsiTypeCodeFragment source, New info, InfoUpdater updater) {
     PsiType valueType;
     try {
       valueType = source.getType();
@@ -232,8 +225,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
     }
 
     @Override
-    @Nullable
-    public Class getColumnClass(int columnIndex) {
+    public @Nullable Class getColumnClass(int columnIndex) {
       return columnIndex == NAME_COLUMN ? String.class : null;
     }
 
@@ -313,6 +305,10 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   private static class MyCellRenderer extends ColoredTableCellRenderer {
+    @Override
+    protected @NotNull Font getBaseFont() {
+      return EditorUtil.getEditorFont();
+    }
 
     @Override
     public void customizeCellRenderer(@NotNull JTable table, Object value,

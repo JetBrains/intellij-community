@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.log;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,9 +17,9 @@ import java.util.*;
 
 public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
   private static final Logger LOG = Logger.getInstance(HgFileRevisionLogParser.class);
-  @NotNull private final HgFile myHgFile;
-  @NotNull private final Project myProject;
-  @NotNull private final HgVersion myVersion;
+  private final @NotNull HgFile myHgFile;
+  private final @NotNull Project myProject;
+  private final @NotNull HgVersion myVersion;
 
   public HgFileRevisionLogParser(@NotNull Project project, @NotNull HgFile hgFile, @NotNull HgVersion currentVersion) {
     myProject = project;
@@ -42,14 +28,13 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
   }
 
   @Override
-  @Nullable
-  protected HgFileRevision convertDetails(@NotNull String rev,
-                                          @NotNull String changeset,
-                                          @NotNull SmartList<? extends HgRevisionNumber> parents,
-                                          @NotNull Date revisionDate,
-                                          @NotNull String author,
-                                          @NotNull String email,
-                                          @NotNull List<String> attributes) {
+  protected @Nullable HgFileRevision convertDetails(@NotNull String rev,
+                                                    @NotNull String changeset,
+                                                    @NotNull SmartList<? extends HgRevisionNumber> parents,
+                                                    @NotNull Date revisionDate,
+                                                    @NotNull String author,
+                                                    @NotNull String email,
+                                                    @NotNull List<String> attributes) {
     int numAttributes = attributes.size();
     String commitMessage = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
     String branchName = parseAdditionalStringAttribute(attributes, BRANCH_INDEX);
@@ -102,8 +87,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
            : new HashSet<>(StringUtil.split(fileListString, separator));
   }
 
-  @NotNull
-  static Map<String, String> parseCopiesFileList(@Nullable String fileListString) {
+  static @NotNull Map<String, String> parseCopiesFileList(@Nullable String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     }
@@ -121,8 +105,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
     return copies;
   }
 
-  @NotNull
-  static Map<String, String> parseCopiesFileListAsOldVersion(@Nullable String fileListString) {
+  static @NotNull Map<String, String> parseCopiesFileListAsOldVersion(@Nullable String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     }

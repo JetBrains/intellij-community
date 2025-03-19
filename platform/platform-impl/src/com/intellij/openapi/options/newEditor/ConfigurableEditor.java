@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -21,17 +21,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.RelativeFont;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -43,14 +41,13 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
-import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
-import static java.awt.Toolkit.getDefaultToolkit;
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.SwingUtilities.isDescendingFrom;
+import static com.intellij.openapi.options.newEditor.ConfigurablesListPanelKt.createConfigurablesListPanel;
 
-class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this);
+@ApiStatus.Internal
+public class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWTEventListener {
+  private final MergingUpdateQueue queue = new MergingUpdateQueue("SettingsModification", 1000, false, this, this, this, Alarm.ThreadToUse.SWING_THREAD, coroutineScope);
   private final ConfigurableCardPanel myCardPanel = new ConfigurableCardPanel() {
     @Override
     protected JComponent create(Configurable configurable) {
@@ -68,14 +65,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   private final AbstractAction myResetAction = new AbstractAction(UIBundle.message("configurable.reset.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
-      if (myConfigurable != null) {
-        ConfigurableCardPanel.reset(myConfigurable);
-        updateCurrent(myConfigurable, true);
-        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(myConfigurable);
-      }
+      reset();
     }
   };
-  private Configurable myConfigurable;
+  private Configurable configurable;
 
   ConfigurableEditor(Disposable parent) {
     super(parent);
@@ -102,45 +95,53 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     MessageBusConnection messageBus = ApplicationManager.getApplication().getMessageBus().connect(this);
     messageBus.subscribe(AnActionListener.TOPIC, this);
     messageBus.subscribe(ExternalUpdateRequest.TOPIC, conf -> updateCurrent(conf, false));
-    getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
-      myConfigurable = configurable;
+      this.configurable = configurable;
       myCardPanel.select(configurable, true).doWhenDone(() -> postUpdateCurrent(configurable));
     }
     updateCurrent(configurable, false);
   }
 
   @Override
-  void disposeOnce() {
-    getDefaultToolkit().removeAWTEventListener(this);
+  protected void disposeOnce() {
+    Toolkit.getDefaultToolkit().removeAWTEventListener(this);
     myCardPanel.removeAll();
   }
 
   @Override
-  String getHelpTopic() {
-    return myConfigurable == null ? null : myConfigurable.getHelpTopic();
+  protected String getHelpTopic() {
+    return configurable == null ? null : configurable.getHelpTopic();
   }
 
   @Override
-  Action getApplyAction() {
+  protected Action getApplyAction() {
     return myApplyAction;
   }
 
   @Override
-  Action getResetAction() {
+  protected Action getResetAction() {
     return myResetAction;
   }
 
   @Override
-  boolean apply() {
+  protected boolean apply() {
     // do not apply changes of a single configurable if it is not modified
-    updateIfCurrent(myConfigurable);
-    return setError(apply(myApplyAction.isEnabled() ? myConfigurable : null));
+    updateIfCurrent(configurable);
+    return setError(apply(myApplyAction.isEnabled() ? configurable : null));
+  }
+
+  protected void reset() {
+    if (configurable != null) {
+      ConfigurableCardPanel.reset(configurable);
+      updateCurrent(configurable, true);
+      FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(configurable);
+    }
   }
 
   @Override
-  boolean cancel(AWTEvent source) {
-    myConfigurable.cancel();
+  protected boolean cancel(AWTEvent source) {
+    configurable.cancel();
     return super.cancel(source);
   }
 
@@ -163,9 +164,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (myConfigurable == null) return null; // settings editor is not configured yet
-    JComponent preferred = myConfigurable.getPreferredFocusedComponent();
-    return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(myConfigurable)) : preferred;
+    if (configurable == null) return null; // settings editor is not configured yet
+    JComponent preferred = configurable.getPreferredFocusedComponent();
+    return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(configurable)) : preferred;
   }
 
   @Override
@@ -173,13 +174,13 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     switch (event.getID()) {
       case MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_DRAGGED -> {
         MouseEvent me = (MouseEvent)event;
-        if (isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
+        if (SwingUtilities.isDescendingFrom(me.getComponent(), this) || isPopupOverEditor(me.getComponent())) {
           requestUpdate();
         }
       }
       case KeyEvent.KEY_PRESSED, KeyEvent.KEY_RELEASED -> {
         KeyEvent ke = (KeyEvent)event;
-        if (isDescendingFrom(ke.getComponent(), this)) {
+        if (SwingUtilities.isDescendingFrom(ke.getComponent(), this)) {
           requestUpdate();
         }
       }
@@ -187,8 +188,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   void requestUpdate() {
-    final Configurable configurable = myConfigurable;
-    myQueue.queue(new Update(this) {
+    Configurable configurable = this.configurable;
+    queue.queue(new Update(this) {
       @Override
       public void run() {
         updateIfCurrent(configurable);
@@ -196,7 +197,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
       @Override
       public boolean isExpired() {
-        return myConfigurable != configurable;
+        return ConfigurableEditor.this.configurable != configurable;
       }
     });
   }
@@ -233,22 +234,26 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   final void updateIfCurrent(Configurable configurable) {
-    if (myConfigurable == configurable) {
+    if (this.configurable == configurable) {
       updateCurrent(configurable, false);
     }
   }
 
-  @NotNull
-  final Promise<? super Object> select(final Configurable configurable) {
-    assert !myDisposed : "Already disposed";
+  final @NotNull Promise<? super Object> select(final Configurable configurable) {
+    assert !isDisposed : "Already disposed";
+    long startTime = System.currentTimeMillis();
+    final boolean loadedFromCache = myCardPanel.getValue(configurable, false) != null;
     ActionCallback callback = myCardPanel.select(configurable, false);
     callback
       .doWhenDone(() -> {
-        myConfigurable = configurable;
+        if (this.configurable != configurable) {
+          SpotlightPainter.Companion.allowScrolling(this);
+        }
+        this.configurable = configurable;
         updateCurrent(configurable, false);
         postUpdateCurrent(configurable);
         if (configurable != null) {
-          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable);
+          FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(configurable, loadedFromCache, System.currentTimeMillis() - startTime);
         }
       });
     return Promises.toPromise(callback);
@@ -264,7 +269,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         HtmlChunk.text(exception.getTitle()).wrapWith("strong"),
         HtmlChunk.text(":"),
         HtmlChunk.br(),
-        exception.isHtmlMessage() ? HtmlChunk.raw(exception.getMessage()) : HtmlChunk.text(exception.getMessage())
+        exception.getMessageHtml()
       ).wrapWith("html").toString());
       myErrorLabel.setVisible(true);
     }
@@ -295,22 +300,11 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     else {
       ConfigurableGroup configurableGroup = ConfigurableWrapper.cast(ConfigurableGroup.class, configurable);
       String description = configurableGroup != null ? configurableGroup.getDescription() : null;
-
-      content.add(BorderLayout.NORTH, new JLabel(description));
-
-      JPanel panel = new JPanel();
-      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-      content.add(BorderLayout.CENTER, panel);
-      panel.add(Box.createVerticalStrut(10));
-      for (Configurable current : compositeGroup.getConfigurables()) {
-        //noinspection DialogTitleCapitalization (title case is OK here)
-        ActionLink label = new ActionLink(current.getDisplayName(), e -> { openLink(current); });
-        label.setBorder(JBUI.Borders.empty(1, 17, 3, 1));
-        panel.add(label);
-      }
+      content.add(BorderLayout.CENTER, createConfigurablesListPanel(description, Arrays.asList(compositeGroup.getConfigurables()), this));
     }
-    JScrollPane pane = createScrollPane(content, true);
-    pane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_NEVER);
+
+    JScrollPane pane = ScrollPaneFactory.createScrollPane(content, true);
+    pane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     return pane;
   }
 
@@ -328,12 +322,12 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   }
 
   @Nullable
-  Configurable getConfigurable() {
-    return myConfigurable;
+  public Configurable getConfigurable() {
+    return configurable;
   }
 
   void reload() {
     myCardPanel.removeAll();
-    myConfigurable = null;
+    configurable = null;
   }
 }

@@ -5,5 +5,6 @@ open class Klass {
 class Subklass: Klass()
 
 fun main(args: Array<String>) {
+    println(args)
     Subklass().used
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
@@ -98,8 +98,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  private EditorEx initEditor(@Nullable Editor selectedEditor, @NotNull String fileName, @NotNull String templateText) {
+  private @NotNull EditorEx initEditor(@Nullable Editor selectedEditor, @NotNull String fileName, @NotNull String templateText) {
     if (selectedEditor != null) {
       return (EditorEx)EditorFactory.getInstance().createEditor(selectedEditor.getDocument(), myProject);
     }
@@ -113,13 +112,13 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       document = EditorFactory.getInstance().createDocument(templateText);
     }
 
-    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), false);
-    editor.setFile(file.getVirtualFile());
+    VirtualFile virtualFile = file.getVirtualFile();
+    final EditorEx editor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, virtualFile, false);
+    editor.setFile(virtualFile);
     return editor;
   }
 
-  @Nullable
-  public static PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
+  public static @Nullable PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
     final String fileName = PathUtil.makeFileName(filename, "json");
     try {
       final ThrowableComputable<PsiFile, Exception> computable = () -> {
@@ -179,8 +178,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected String getDimensionServiceKey() {
+  protected @NotNull String getDimensionServiceKey() {
     return TestParseEventsSchemeDialog.class.getCanonicalName();
   }
 
@@ -212,8 +210,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     });
   }
 
-  @NotNull
-  private static String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
+  private static @NotNull String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
     throws IOException, ParseEventLogMetadataException {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
@@ -234,9 +231,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myMainPanel;
   }
 

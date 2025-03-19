@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -42,6 +43,9 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_PREFIX;
+import static com.intellij.lang.documentation.QuickDocHighlightingHelper.CODE_BLOCK_SUFFIX;
 
 public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   protected enum LineMarkerType { External, InferredNullability, InferredContract }
@@ -80,9 +84,30 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
   }
 
   @Override
-  public LineMarkerInfo<?> getLineMarkerInfo(final @NotNull PsiElement element) {
+  public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
+    return null;
+  }
+
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
+      LineMarkerInfo<?> info = buildLineMarkerInfo(element);
+      if (info != null) {
+        List<NonCodeAnnotationsMarkerSuppressor> suppressors = NonCodeAnnotationsMarkerSuppressor.EP_NAME.getExtensionList();
+        if (ContainerUtil.exists(suppressors, suppressor -> suppressor.isLineMarkerSuppressed(element))) {
+          continue;
+        }
+
+        result.add(info);
+      }
+    }
+  }
+
+  private LineMarkerInfo<?> buildLineMarkerInfo(@NotNull PsiElement element) {
     PsiModifierListOwner owner = getAnnotationOwner(element);
     if (owner == null) return null;
+
+    ProgressManager.checkCanceled();
 
     Collection<AnnotationDocGenerator> nonCodeAnnotations = NonCodeAnnotationGenerator.getSignatureNonCodeAnnotations(owner).values();
     if (getAnnotationLineMarkerType(nonCodeAnnotations) != myLineMarkerType) {
@@ -90,8 +115,8 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
     }
 
     String tooltip = XmlStringUtil.wrapInHtml(
-      NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "<p>\n" +
-      JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner));
+      "<p>" + NonCodeAnnotationGenerator.getNonCodeHeaderAvailable(nonCodeAnnotations) + CommonXmlStrings.NBSP + JavaBundle.message("non.code.annotations.explanation.full.signature") + "\n" +
+      CODE_BLOCK_PREFIX + JavaDocInfoGeneratorFactory.create(owner.getProject(), owner).generateSignature(owner).replaceAll("</?code>", "") + CODE_BLOCK_SUFFIX);
     return new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Gutter.ExtAnnotation, __ -> tooltip, MyIconGutterHandler.INSTANCE,
                                 GutterIconRenderer.Alignment.RIGHT);
   }
@@ -198,7 +223,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
              action instanceof DeannotateIntentionAction ||
              action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
-             action instanceof MakeExternalAnnotationExplicit;
+             action.asModCommandAction() instanceof MakeExternalAnnotationExplicit;
     }
   }
 }

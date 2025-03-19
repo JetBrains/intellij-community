@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -36,12 +36,11 @@ public interface PsiInferenceHelper {
                                     @NotNull LanguageLevel languageLevel);
 
 
-  @NotNull
-  default PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
-                                            PsiType @NotNull [] leftTypes,
-                                            PsiType @NotNull [] rightTypes,
-                                            @NotNull PsiSubstitutor partialSubstitutor,
-                                            @NotNull LanguageLevel languageLevel){
+  default @NotNull PsiSubstitutor inferTypeArguments(PsiTypeParameter @NotNull [] typeParameters,
+                                                     PsiType @NotNull [] leftTypes,
+                                                     PsiType @NotNull [] rightTypes,
+                                                     @NotNull PsiSubstitutor partialSubstitutor,
+                                                     @NotNull LanguageLevel languageLevel){
     return inferTypeArguments(typeParameters, leftTypes, rightTypes, languageLevel);
   }
 

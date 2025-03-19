@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -24,13 +24,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class EditVariableDialog extends DialogWrapper {
+final class EditVariableDialog extends DialogWrapper {
   private final ArrayList<Variable> myVariables;
   private JBTable myTable;
   private final Editor myEditor;
@@ -89,7 +89,7 @@ class EditVariableDialog extends DialogWrapper {
     myTable.getColumn(names[1]).setPreferredWidth(300);
     myTable.getColumn(names[2]).setPreferredWidth(100);
     myTable.getColumn(names[3]).setPreferredWidth(100);
-    if (myVariables.size() > 0) {
+    if (!myVariables.isEmpty()) {
       myTable.getSelectionModel().setSelectionInterval(0, 0);
     }
 
@@ -149,7 +149,7 @@ class EditVariableDialog extends DialogWrapper {
     }, null, null));
   }
 
-  private class VariablesModel extends AbstractTableModel implements EditableModel {
+  private final class VariablesModel extends AbstractTableModel implements EditableModel {
     private final String[] myNames;
 
     VariablesModel(String[] names) {
@@ -183,15 +183,13 @@ class EditVariableDialog extends DialogWrapper {
       }
     }
 
-    @NotNull
     @Override
-    public String getColumnName(int column) {
+    public @NotNull String getColumnName(int column) {
       return myNames[column];
     }
 
-    @NotNull
     @Override
-    public Class<?> getColumnClass(int c) {
+    public @NotNull Class<?> getColumnClass(int c) {
       if (c <= 2) {
         return String.class;
       }

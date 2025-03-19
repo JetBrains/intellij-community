@@ -1,4 +1,4 @@
-// "Replace with 'switch' expression" "true"
+// "Replace with 'switch' expression" "true-preview"
 import org.jetbrains.annotations.Nullable;
 
 class X {
@@ -8,7 +8,7 @@ class X {
             case Integer i:
                 r = "int = " + i;
                 break;
-            case String s && s.length() > 3:
+            case String s when s.length() > 3:
                 r = s.substring(0, 3);
                 break;
             case null:

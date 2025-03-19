@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -19,14 +19,13 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
+public final class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   private static final Logger LOG = Logger.getInstance(JavaEncapsulateFieldHelper.class);
 
   @Override
-  @Nullable
-  public EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
-                                               @NotNull FieldDescriptor fieldDescriptor,
-                                               @NotNull PsiReference reference) {
+  public @Nullable EncapsulateFieldUsageInfo createUsage(@NotNull EncapsulateFieldsDescriptor descriptor,
+                                                         @NotNull FieldDescriptor fieldDescriptor,
+                                                         @NotNull PsiReference reference) {
     if (!(reference instanceof PsiReferenceExpression ref)) return null;
 
     boolean findSet = descriptor.isToEncapsulateSet();
@@ -92,16 +91,15 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
 
     final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
     PsiField field = fieldDescriptor.getField();
-    boolean processGet = descriptor.isToEncapsulateGet();
-    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL);
+    boolean processGet = descriptor.isToEncapsulateGet() && getter != null;
+    boolean processSet = descriptor.isToEncapsulateSet() && !field.hasModifierProperty(PsiModifier.FINAL) && setter != null;
     if (!processGet && !processSet) return true;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(descriptor.getTargetClass().getProject());
 
     try{
       final PsiReferenceExpression expr = (PsiReferenceExpression)element;
       final PsiElement parent = expr.getParent();
-      if (parent instanceof PsiAssignmentExpression && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
-        PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (parent instanceof PsiAssignmentExpression assignment && expr.equals(((PsiAssignmentExpression)parent).getLExpression())){
         if (assignment.getRExpression() == null) return true;
         PsiJavaToken opSign = assignment.getOperationSign();
         IElementType opType = opSign.getTokenType();
@@ -229,11 +227,10 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return methodCall;
   }
 
-  @Nullable
-  private static PsiMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor,
-                                                          PsiReferenceExpression expr,
-                                                          PsiClass aClass,
-                                                          PsiMethod getter) throws IncorrectOperationException {
+  private static @Nullable PsiMethodCallExpression createGetterCall(FieldDescriptor fieldDescriptor,
+                                                                    PsiReferenceExpression expr,
+                                                                    PsiClass aClass,
+                                                                    @NotNull PsiMethod getter) throws IncorrectOperationException {
     final String getterName = fieldDescriptor.getGetterName();
     @NonNls String text = getterName + "()";
     PsiMethodCallExpression methodCall = prepareMethodCall(expr, text);
@@ -256,14 +253,13 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
     return (PsiMethodCallExpression)factory.createExpressionFromText(text, expr);
   }
 
-  @Nullable
-  private static PsiMethodCallExpression checkMethodResolvable(PsiMethodCallExpression methodCall,
-                                                               PsiMethod targetMethod,
-                                                               PsiReferenceExpression context,
-                                                               PsiClass aClass) throws IncorrectOperationException {
+  private static @Nullable PsiMethodCallExpression checkMethodResolvable(@NotNull PsiMethodCallExpression methodCall,
+                                                                         @NotNull PsiMethod targetMethod,
+                                                                         PsiReferenceExpression context,
+                                                                         PsiClass aClass) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(targetMethod.getProject());
     final PsiElement resolved = methodCall.getMethodExpression().resolve();
-    if (resolved != targetMethod) {
+    if (!targetMethod.equals(resolved)) {
       PsiClass containingClass;
       if (resolved instanceof PsiMethod) {
         containingClass = ((PsiMethod)resolved).getContainingClass();
@@ -293,20 +289,17 @@ public class JavaEncapsulateFieldHelper extends EncapsulateFieldHelper {
   }
 
   @Override
-  @NotNull
-  public String suggestSetterName(@NotNull PsiField field) {
+  public @NotNull String suggestSetterName(@NotNull PsiField field) {
     return GenerateMembersUtil.suggestSetterName(field);
   }
 
   @Override
-  @NotNull
-  public String suggestGetterName(@NotNull PsiField field) {
+  public @NotNull String suggestGetterName(@NotNull PsiField field) {
     return GenerateMembersUtil.suggestGetterName(field);
   }
 
   @Override
-  @Nullable
-  public PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter) {
+  public @Nullable PsiMethod generateMethodPrototype(@NotNull PsiField field, @NotNull String methodName, boolean isGetter) {
     PsiMethod prototype = isGetter
                           ? GenerateMembersUtil.generateGetterPrototype(field)
                           : GenerateMembersUtil.generateSetterPrototype(field);

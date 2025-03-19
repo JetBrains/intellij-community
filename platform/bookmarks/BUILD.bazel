@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.bookmarks` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "bookmarks_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "bookmarks",
+  module_name = "intellij.platform.bookmarks",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/kernel/shared:kernel",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "//platform/project/shared:project",
+    "//platform/platform-impl:ide-impl",
+    "//platform/lang-api:lang",
+    "//platform/favoritesTreeView:ide-favoritesTreeView",
+    "//platform/core-ui",
+    "//platform/lang-impl",
+    "//platform/util/jdom",
+    "//platform/editor-ui-ex:editor-ex",
+  ],
+  exports = ["//platform/favoritesTreeView:ide-favoritesTreeView"],
+  runtime_deps = [":bookmarks_resources"]
+)
+### auto-generated section `build intellij.platform.bookmarks` end

@@ -1,3 +1,4 @@
+<!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
   <actions>
     <group id="ToolsXmlGroup" popup="true" class="com.intellij.xml.actions.XmlActionsGroup">
@@ -12,11 +13,11 @@
     </group>
 
     <group id="NewXml">
-      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction"/>
+      <action id="NewHtmlFile" class="com.intellij.ide.actions.CreateHtmlFileAction" icon="AllIcons.FileTypes.Html"/>
       <add-to-group group-id="NewWebDevelopment" anchor="first"/>
     </group>
 
-    <group id="NewXmlDescriptor" class="com.intellij.ide.actions.NonTrivialActionGroup" popup="true" icon="AllIcons.FileTypes.Xml">
+    <group id="NewXmlDescriptor" class="com.intellij.xml.actions.CreateXmlDescriptorGroup" popup="true" icon="AllIcons.FileTypes.Xml">
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -36,10 +37,7 @@
     <group id="OpenInBrowserGroup" class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserGroupAction">
       <add-to-group group-id="ViewMenu" anchor="after" relative-to-action="ViewSource"/>
       <add-to-group group-id="RevealGroup" anchor="last"/>
-      <override-text place="EditorTabPopup"/>
-      <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="EditorPopup" use-text-of-place="EditorTabPopup"/>
-      <override-text place="FavoritesPopup" use-text-of-place="EditorTabPopup"/>
+      <override-text place="RevealInPopup"/>
     </group>
     <group id="OpenInBrowserEditorContextBarGroupAction"
            class="com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction">
@@ -75,5 +73,7 @@
     <action id="ToggleMinimap" class="com.intellij.ide.minimap.actions.ToggleMinimapAction"/>
     <action id="OpenMinimapSettings" class="com.intellij.ide.minimap.actions.OpenMinimapSettingsAction"/>
     <action id="MoveMinimap" class="com.intellij.ide.minimap.actions.MoveMinimapAction"/>
+
+    <action id="SurroundWithTagTemplate" class="com.intellij.xml.actions.XmlSurroundWithTagTemplateAction" icon="AllIcons.Nodes.Tag"/>
   </actions>
 </idea-plugin>

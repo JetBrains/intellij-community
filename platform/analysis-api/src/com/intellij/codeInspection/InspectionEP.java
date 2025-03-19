@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -59,8 +59,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("projectType")
   public String projectType;
 
-  @NonNls
-  public @NotNull String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }
@@ -211,7 +210,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
                       descriptor.getResourceBundleBaseName();
     if (baseName == null || key == null) {
       if (bundleName != null) {
-        LOG.warn(implementationClass);
+        LOG.warn("Cannot resolve message key '" + key + "' for " + implementationClass);
       }
       return null;
     }
@@ -222,7 +221,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public @NotNull InspectionProfileEntry instantiateTool() {
     // must create a new instance for each invocation
     InspectionProfileEntry entry = createInstance(ApplicationManager.getApplication());
-    entry.myNameProvider = this;
+    entry.setNameProvider(this);
     return entry;
   }
 
@@ -255,7 +254,8 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public boolean isInternal;
 
   /**
-   * TextAttributesKey's external name
+   * TextAttributesKey's external name.<br/>
+   * You can find some core predefined attributes in {@link com.intellij.openapi.editor.colors.CodeInsightColors}
    */
   @Attribute("editorAttributes")
   public String editorAttributes;
@@ -275,11 +275,13 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
            ", applyToDialects=" + applyToDialects +
            ", cleanupTool=" + cleanupTool +
            ", level='" + level + '\'' +
+           ", editorAttributes='" + editorAttributes + '\'' +
            ", hasStaticDescription=" + hasStaticDescription +
            ", presentation='" + presentation + '\'' +
            ", isInternal=" + isInternal +
            ", getImplementationClassName()='"+getImplementationClassName()+"'" +
            ", language="+language+
+           ", pluginDescriptor="+getPluginDescriptor()+
            '}';
   }
 }

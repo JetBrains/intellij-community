@@ -9,12 +9,22 @@ sealed class GeneratorAsset {
   abstract val relativePath: String
 
   abstract val permissions: Set<PosixFilePermission>
+}
 
-  @Deprecated(
-    message = "Renamed. Use relativePath instead",
-    replaceWith = ReplaceWith("relativePath")
-  )
-  val targetFileName: String get() = relativePath
+class GeneratorFile(
+  override val relativePath: String,
+  override val permissions: Set<PosixFilePermission>,
+  val content: ByteArray,
+) : GeneratorAsset() {
+
+  constructor(relativePath: String, content: ByteArray)
+    : this(relativePath, emptySet(), content)
+
+  constructor(relativePath: String, content: String)
+    : this(relativePath, emptySet(), content)
+
+  constructor(relativePath: String, permissions: Set<PosixFilePermission>, content: String)
+    : this(relativePath, permissions, content.toByteArray())
 }
 
 data class GeneratorTemplateFile(

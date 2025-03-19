@@ -1,19 +1,23 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class ModuleChunk {
-  private static final NotNullFunction<JpsModule,String> GET_NAME = dom -> dom.getName();
+/**
+ * Represents a single {@link ModuleBuildTarget} or a set of {@link ModuleBuildTarget} which circularly depend on each other.
+ * Since it isn't possible to compile modules which form a circular dependency one by one, the whole {@link ModuleChunk} is passed to
+ * {@link org.jetbrains.jps.incremental.ModuleLevelBuilder#build} method.
+ */
+public final class ModuleChunk {
   private final Set<JpsModule> myModules;
   private final boolean myContainsTests;
   private final Set<ModuleBuildTarget> myTargets;
@@ -49,8 +53,10 @@ public class ModuleChunk {
   }
 
   public @NotNull String getName() {
-    if (myModules.size() == 1) return myModules.iterator().next().getName();
-    return StringUtil.join(myModules, GET_NAME, ",");
+    if (myModules.size() == 1) {
+      return myModules.iterator().next().getName();
+    }
+    return myModules.stream().map(JpsNamedElement::getName).collect(Collectors.joining(","));
   }
 
   public @NotNull Set<JpsModule> getModules() {
@@ -65,11 +71,15 @@ public class ModuleChunk {
     return myTargets;
   }
 
+  @Override
   public String toString() {
     return getName();
   }
 
-  public ModuleBuildTarget representativeTarget() {
+  /**
+   * Returns an arbitrary target included in the chunk.
+   */
+  public @NotNull ModuleBuildTarget representativeTarget() {
     return myTargets.iterator().next();
   }
 }

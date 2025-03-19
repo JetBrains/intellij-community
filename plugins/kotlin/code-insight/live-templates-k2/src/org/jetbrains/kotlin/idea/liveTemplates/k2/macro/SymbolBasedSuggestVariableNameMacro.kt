@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
-import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import com.intellij.util.containers.sequenceOfNotNull
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -14,22 +16,24 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 
 class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = null) : AbstractSuggestVariableNameMacro() {
-    @OptIn(KtAllowAnalysisOnEdt::class)
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun suggestNames(declaration: KtCallableDeclaration): Collection<String> {
         if (declaration is KtDeclarationWithInitializer) {
             val initializer = declaration.initializer
             if (initializer != null) {
                 allowAnalysisOnEdt {
-                    analyze(initializer) {
-                        val nameValidator = KotlinDeclarationNameValidator(
-                            declaration,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this
-                        )
+                    @OptIn(KaAllowAnalysisFromWriteAction::class)
+                    allowAnalysisFromWriteAction {
+                        analyze(initializer) {
+                            val nameValidator = KotlinDeclarationNameValidator(
+                              declaration,
+                              false,
+                              KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                              listOf(declaration)
+                            )
 
-                        with(NAME_SUGGESTER) {
-                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestExpressionNames(initializer))
-                                .filter(nameValidator)
+                            return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestExpressionNames(initializer))
+                                .filter { nameValidator.validate(it) }
                                 .toList()
                         }
                     }
@@ -38,17 +42,19 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
         }
 
         allowAnalysisOnEdt {
-            analyze(declaration) {
-                val symbol = declaration.getSymbolOfTypeSafe<KtVariableLikeSymbol>()
-                if (symbol != null) {
-                    val nameValidator = KotlinDeclarationNameValidator(
-                        declaration,
-                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                        this
-                    )
-                    with(NAME_SUGGESTER) {
-                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestTypeNames(symbol.returnType))
-                            .filter(nameValidator)
+            @OptIn(KaAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(declaration) {
+                    val symbol = declaration.symbol as? KaVariableSymbol
+                    if (symbol != null) {
+                        val nameValidator = KotlinDeclarationNameValidator(
+                          declaration,
+                          false,
+                          KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                          listOf(declaration)
+                        )
+                        return (sequenceOfNotNull (defaultName) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
+                            .filter { nameValidator.validate(it) }
                             .toList()
                     }
                 }
@@ -57,8 +63,6 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
 
         return emptyList()
     }
-
-    private companion object {
-        val NAME_SUGGESTER = KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)
-    }
 }
+
+private val NAME_SUGGESTER = KotlinNameSuggester()

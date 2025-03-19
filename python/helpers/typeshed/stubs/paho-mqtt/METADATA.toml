@@ -1,0 +1,3 @@
+version = "1.6.*"
+upstream_repository = "https://github.com/eclipse/paho.mqtt.python"
+obsolete_since = "2.0.0" # Released on 2024-02-10

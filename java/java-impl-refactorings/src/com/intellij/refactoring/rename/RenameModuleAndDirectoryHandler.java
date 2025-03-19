@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -23,7 +22,7 @@ import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 
-public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHandler {
+public final class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHandler {
 
   private static final Logger LOG = Logger.getInstance(RenameModuleAndDirectoryHandler.class);
 
@@ -91,12 +90,11 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
       myModule = module;
     }
 
-    @NotNull
     @Override
-    public RenameDialog createRenameDialog(@NotNull Project project,
-                                           @NotNull PsiElement element,
-                                           PsiElement nameSuggestionContext,
-                                           Editor editor) {
+    public @NotNull RenameDialog createRenameDialog(@NotNull Project project,
+                                                    @NotNull PsiElement element,
+                                                    PsiElement nameSuggestionContext,
+                                                    Editor editor) {
       return new RenameWithOptionalReferencesDialog(project, element, nameSuggestionContext, editor) {
 
         @Override
@@ -122,20 +120,13 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
             isSearchInComments(), isSearchInNonJavaFiles()
           ) {
             @Override
-            protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, @NotNull ModelBranch branch) {
-              branch.runAfterMerge(() -> renameModule(myModule, newName));
-              super.performRefactoringInBranch(usages, branch);
-            }
-
-            @Override
             public void performRefactoring(UsageInfo @NotNull [] usages) {
               renameModule(myModule, newName);
               super.performRefactoring(usages);
             }
 
-            @NotNull
             @Override
-            protected String getCommandName() {
+            protected @NotNull String getCommandName() {
               return JavaRefactoringBundle.message("rename.module.directory.command", newName);
             }
           };

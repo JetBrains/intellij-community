@@ -70,7 +70,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
             rbCredentials = radioButton(GitBundle.message("login.dialog.select.login.way.credentials"), false)
               .component
           }
-          indent{
+          indent {
             buildCredentialsPanel()
           }.enabledIf(rbCredentials.selected)
           row {
@@ -87,8 +87,20 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun Panel.buildCredentialsPanel() {
-    row(GitBundle.message("login.dialog.username.label")) { cell(usernameField).align(AlignX.FILL) }
-    row(GitBundle.message("login.dialog.password.label")) { cell(passwordField).align(AlignX.FILL) }
+    row(GitBundle.message("login.dialog.username.label")) {
+      cell(usernameField)
+        .align(AlignX.FILL)
+        .errorOnApply(GitBundle.message("login.dialog.error.username.cant.be.empty")) {
+          !useCredentialHelper && username.isBlank()
+        }
+    }
+    row(GitBundle.message("login.dialog.password.label")) {
+      cell(passwordField)
+        .align(AlignX.FILL)
+        .errorOnApply(GitBundle.message("login.dialog.error.password.cant.be.empty")) {
+          !useCredentialHelper && password.isBlank()
+        }
+    }
     row("") { cell(rememberCheckbox) }
   }
 
@@ -103,17 +115,7 @@ class GitHttpLoginDialog @JvmOverloads constructor(project: Project,
 
   override fun doValidateAll(): List<ValidationInfo> {
     dialogPanel.apply()
-    if (useCredentialHelper) {
-      return emptyList()
-    }
-    return listOfNotNull(
-      if (username.isBlank())
-        ValidationInfo(GitBundle.message("login.dialog.error.username.cant.be.empty"), usernameField)
-      else null,
-      if (passwordField.password.isEmpty())
-        ValidationInfo(GitBundle.message("login.dialog.error.password.cant.be.empty"), passwordField)
-      else null
-    )
+    return super.doValidateAll()
   }
 
   override fun createSouthAdditionalPanel(): Wrapper = Wrapper(additionalProvidersButton)
@@ -176,7 +178,7 @@ class TestGitHttpLoginDialogAction : AnAction() {
       val gitHttpLoginDialog = GitHttpLoginDialog(it, "http://google.com", showActionForCredHelper = true)
       gitHttpLoginDialog.show()
       if (gitHttpLoginDialog.exitCode == GitHttpLoginDialog.USE_CREDENTIAL_HELPER_CODE) {
-        Messages.showMessageDialog(e.project,"Credential selected", "Git login test", null)
+        Messages.showMessageDialog(e.project, "Credential selected", "Git login test", null)
       }
       else {
         Messages.showMessageDialog(e.project, "Regular login", "Git login test", null)

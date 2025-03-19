@@ -6,3 +6,5 @@ fun test() {
     val property = System.getProperty("some")
     val n = <selection>property.length</selection>
 }
+
+// IGNORE_K2

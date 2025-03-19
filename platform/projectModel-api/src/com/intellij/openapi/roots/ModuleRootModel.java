@@ -107,7 +107,8 @@ public interface ModuleRootModel {
   String @NotNull [] getExcludeRootUrls();
 
   /**
-   * Returns an array of source roots from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries. 
+   * If you're interested in a specific type of source root, use {@link #getSourceRoots(JpsModuleSourceRootType)} instead.  
    *
    * @return the array of source roots.
    * @see #getContentEntries()
@@ -117,6 +118,9 @@ public interface ModuleRootModel {
 
   /**
    * Returns an array of source roots from all content entries.
+   * If {@code includingTests} is {@code true}, this is equivalent to {@link #getSourceRoots()}. 
+   * Otherwise, the returned array doesn't contain roots of types designated for tests (e.g., Java test source roots and Java test resource
+   * roots).
    *
    * @param includingTests determines whether test source roots should be included in the result
    * @return the array of source roots.
@@ -143,7 +147,8 @@ public interface ModuleRootModel {
   List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array consisting of source roots of all types from all content entries.
+   * The result includes URLs of all files returned by {@link #getSourceRoots()}, and also includes URLs of non-existing source roots.
    *
    * @return the array of source root URLs.
    * @see #getContentEntries()
@@ -152,7 +157,9 @@ public interface ModuleRootModel {
   String @NotNull [] getSourceRootUrls();
 
   /**
-   * Returns an array of source root urls from all content entries.
+   * Returns an array of source root urls from all content entries, with optionally excluded test roots.
+   * The result includes URLs of all files returned by {@link #getSourceRoots(boolean)}, and also includes URLs of non-existing source 
+   * roots.
    *
    * @param includingTests determines whether test source root urls should be included in the result
    * @return the array of source root URLs.

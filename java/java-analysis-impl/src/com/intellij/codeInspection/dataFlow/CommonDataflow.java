@@ -1,13 +1,18 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.interpreter.ReachabilityCountingInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.*;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
@@ -16,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -80,10 +86,11 @@ public final class CommonDataflow {
    */
   public static final class DataflowResult {
     private final @NotNull Map<JavaDfaAnchor, DataflowPoint> myData = new HashMap<>();
+    private final @NotNull List<TextRange> myUnreachable = new ArrayList<>();
     private @NotNull Map<JavaDfaAnchor, DataflowPoint> myDataAssertionsDisabled = myData;
-    private final RunnerResult myResult;
+    private final @NotNull RunnerResult myResult;
 
-    public DataflowResult(RunnerResult result) {
+    public DataflowResult(@NotNull RunnerResult result) {
       myResult = result;
     }
 
@@ -91,6 +98,7 @@ public final class CommonDataflow {
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult(myResult);
       myData.forEach((anchor, point) -> copy.myData.put(anchor, new DataflowPoint(point)));
+      copy.myUnreachable.addAll(myUnreachable);
       return copy;
     }
 
@@ -137,23 +145,9 @@ public final class CommonDataflow {
     }
 
     /**
-     * Returns true if given expression was visited by dataflow. Note that dataflow usually tracks deparenthesized expressions only,
-     * so you should deparenthesize it in advance if necessary.
-     *
-     * @param expression expression to check, not parenthesized
-     * @return true if given expression was visited by dataflow.
-     * If false is returned, it's possible that the expression exists in unreachable branch or this expression is not tracked due to
-     * the dataflow implementation details.
+     * @param anchor anchor to check
+     * @return true if a given anchor appeared during the analysis
      */
-    @Contract("null -> false")
-    public boolean expressionWasAnalyzed(@Nullable PsiExpression expression) {
-      if (expression == null) return false;
-      if (expression instanceof PsiParenthesizedExpression) {
-        throw new IllegalArgumentException("Should not pass parenthesized expression");
-      }
-      return myData.containsKey(new JavaExpressionAnchor(expression));
-    }
-
     public boolean anchorWasAnalyzed(@NotNull JavaDfaAnchor anchor) {
       return myData.containsKey(anchor);
     }
@@ -171,6 +165,10 @@ public final class CommonDataflow {
       DataflowPoint point = myData.get(new JavaExpressionAnchor(call));
       return point != null && !point.myMayFailByContract;
     }
+    
+    public @NotNull Collection<TextRange> getUnreachableRanges() {
+      return myResult != RunnerResult.OK ? Collections.emptyList() : myUnreachable;
+    }
 
     /**
      * Returns a set of expression values if known. If non-empty set is returned, then given expression
@@ -179,8 +177,7 @@ public final class CommonDataflow {
      * @param expression an expression to get its value
      * @return a set of possible values or empty set if not known
      */
-    @NotNull
-    public Set<Object> getExpressionValues(@Nullable PsiExpression expression) {
+    public @NotNull Set<Object> getExpressionValues(@Nullable PsiExpression expression) {
       if (expression == null) return Collections.emptySet();
       DataflowPoint point = myData.get(new JavaExpressionAnchor(expression));
       if (point == null) return Collections.emptySet();
@@ -194,21 +191,18 @@ public final class CommonDataflow {
      * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfTypeNoAssertions(PsiExpression)
      */
-    @NotNull
-    public DfType getDfType(PsiExpression expression) {
+    public @NotNull DfType getDfType(PsiExpression expression) {
       if (expression == null) return DfType.TOP;
       DataflowPoint point = myData.get(new JavaExpressionAnchor(expression));
       return point == null ? DfType.TOP : point.myDfType;
     }
 
-    @NotNull
-    public DfType getDfType(@NotNull JavaDfaAnchor anchor) {
+    public @NotNull DfType getDfType(@NotNull JavaDfaAnchor anchor) {
       DataflowPoint point = myData.get(anchor);
       return point == null ? DfType.TOP : point.myDfType;
     }
 
-    @NotNull
-    public DfType getDfTypeNoAssertions(@NotNull JavaDfaAnchor anchor) {
+    public @NotNull DfType getDfTypeNoAssertions(@NotNull JavaDfaAnchor anchor) {
       DataflowPoint point = myDataAssertionsDisabled.get(anchor);
       return point == null ? DfType.TOP : point.myDfType;
     }
@@ -219,38 +213,52 @@ public final class CommonDataflow {
      * May return {@link DfType#TOP} if no information from dataflow is known about this expression
      * @see #getDfType(PsiExpression)
      */
-    @NotNull
-    public DfType getDfTypeNoAssertions(PsiExpression expression) {
+    public @NotNull DfType getDfTypeNoAssertions(PsiExpression expression) {
       if (expression == null) return DfType.TOP;
       DataflowPoint point = myDataAssertionsDisabled.get(new JavaExpressionAnchor(expression));
       return point == null ? DfType.TOP : point.myDfType;
     }
   }
 
-  @NotNull
-  private static DataflowResult runDFA(@Nullable PsiElement block) {
+  private static @NotNull DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), ThreeState.UNSURE);
-    var interceptor = new CommonDataflowListener();
-    RunnerResult result = runner.analyzeMethodRecursively(block, interceptor);
+    var listener = new CommonDataflowListener();
+    var runner = new StandardDataFlowRunner(block.getProject(), ThreeState.UNSURE) {
+      @Override
+      protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+        return new ReachabilityCountingInterpreter(flow, listener, false, true, 0);
+      }
+
+      @Override
+      protected void afterInterpretation(@NotNull ControlFlow flow,
+                                         @NotNull StandardDataFlowInterpreter interpreter,
+                                         @NotNull RunnerResult result) {
+        if (result == RunnerResult.OK) {
+          Set<PsiElement> unreachable = ((ReachabilityCountingInterpreter)interpreter).getUnreachable();
+          listener.myResult.myUnreachable.addAll(DataFlowIRProvider.computeUnreachableSegments(block, unreachable));
+        }
+        super.afterInterpretation(flow, interpreter, result);
+      }
+    };
+    RunnerResult result = runner.analyzeMethodRecursively(block, listener);
     if (result != RunnerResult.OK) return new DataflowResult(result);
-    if (!(block instanceof PsiClass)) return interceptor.myResult;
-    DataflowResult dfr = interceptor.myResult.copy();
-    List<DfaMemoryState> states = interceptor.myEndOfInitializerStates;
-    for (PsiMethod method : ((PsiClass)block).getConstructors()) {
+    if (!(block instanceof PsiClass psiClass)) return listener.myResult;
+    DataflowResult dfr = listener.myResult.copy();
+    List<DfaMemoryState> states = listener.myEndOfInitializerStates;
+    for (PsiMethod method : psiClass.getConstructors()) {
       List<DfaMemoryState> initialStates;
       PsiCodeBlock body = method.getBody();
       if (body == null) continue;
       PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
-      if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall((PsiClass)block, method))) {
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall(psiClass, method))) {
         initialStates = Collections.singletonList(runner.createMemoryState());
       } else {
         initialStates = ContainerUtil.map(states, DfaMemoryState::createCopy);
       }
-      if(runner.analyzeBlockRecursively(body, initialStates, interceptor) == RunnerResult.OK) {
-        dfr = interceptor.myResult.copy();
+      if (runner.analyzeBlockRecursively(body, initialStates, listener) == RunnerResult.OK) {
+        dfr = listener.myResult.copy();
       } else {
-        interceptor.myResult = dfr;
+        listener.myResult = dfr;
       }
     }
     return dfr;
@@ -261,8 +269,7 @@ public final class CommonDataflow {
    * @param context a context to get the dataflow result
    * @return the dataflow result or null if dataflow cannot be launched for this context (e.g. we are inside too complex method)
    */
-  @Nullable
-  public static DataflowResult getDataflowResult(PsiExpression context) {
+  public static @Nullable DataflowResult getDataflowResult(@NotNull PsiElement context) {
     PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
     ConcurrentHashMap<PsiElement, DataflowResult> fileMap =
@@ -306,8 +313,7 @@ public final class CommonDataflow {
    * @param expression an expression to infer the DfType
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
-  @NotNull
-  public static DfType getDfType(PsiExpression expression) {
+  public static @NotNull DfType getDfType(@NotNull PsiExpression expression) {
     return getDfType(expression, false);
   }
 
@@ -316,8 +322,7 @@ public final class CommonDataflow {
    * @param ignoreAssertions whether to ignore assertion statement during the analysis
    * @return DfType for that expression. May return {@link DfType#TOP} if no information from dataflow is known about this expression
    */
-  @NotNull
-  public static DfType getDfType(PsiExpression expression, boolean ignoreAssertions) {
+  public static @NotNull DfType getDfType(@NotNull PsiExpression expression, boolean ignoreAssertions) {
     DataflowResult result = getDataflowResult(expression);
     if (result == null) return DfType.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
@@ -333,8 +338,7 @@ public final class CommonDataflow {
    * @return long range set
    */
   @Contract("null -> null")
-  @Nullable
-  public static LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
+  public static @Nullable LongRangeSet getExpressionRange(@Nullable PsiExpression expression) {
     if (expression == null) return null;
     Object value = ExpressionUtils.computeConstantExpression(expression);
     LongRangeSet rangeSet = LongRangeSet.fromConstant(value);

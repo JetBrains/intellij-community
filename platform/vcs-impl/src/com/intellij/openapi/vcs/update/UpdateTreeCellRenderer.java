@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,6 +13,7 @@ import javax.swing.*;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class UpdateTreeCellRenderer extends ColoredTreeCellRenderer{
 
   @Override

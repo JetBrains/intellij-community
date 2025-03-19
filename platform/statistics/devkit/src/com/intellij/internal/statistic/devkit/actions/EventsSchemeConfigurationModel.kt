@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.devkit.actions
 
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil.getLogProvidersInTestMode
@@ -48,8 +48,7 @@ class EventsSchemeConfigurationModel {
       }.layout(RowLayout.LABEL_ALIGNED)
     }
 
-    pathField.addBrowseFolderListener("Select Events Scheme Location ", null, null,
-                                      FileChooserDescriptorFactory.createSingleFileDescriptor())
+    pathField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Events Scheme Location"))
 
     updatePanel()
   }

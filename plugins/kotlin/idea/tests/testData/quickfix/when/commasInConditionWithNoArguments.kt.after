@@ -1,6 +1,9 @@
 // "Replace ',' with '||' in when" "true"
 // ERROR: Expected condition of type Boolean
 // ERROR: Expected condition of type Boolean
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
+// K2_AFTER_ERROR: Condition of type 'Boolean' expected.
+// K2_AFTER_ERROR: Type inference failed. The value of the type parameter 'T' must be mentioned in input types (argument types, receiver type, or expected type). Try to specify it explicitly.
 fun test(i: Int, j: Int) {
     var b = false
     when {
@@ -13,4 +16,5 @@ fun test(i: Int, j: Int) {
         else -> { /* other code */ }
     }
 }
-/* IGNORE_FIR */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

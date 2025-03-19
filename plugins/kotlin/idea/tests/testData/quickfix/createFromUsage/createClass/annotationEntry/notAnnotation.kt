@@ -1,6 +1,4 @@
 // "Create annotation 'foo'" "false"
-// ACTION: Create function 'foo'
-// ACTION: Rename reference
 // ERROR: Unresolved reference: foo
-
+// IGNORE_K2
 fun test() = <caret>foo(1, "2")

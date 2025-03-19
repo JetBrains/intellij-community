@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -15,9 +15,8 @@ import javax.swing.*;
 import java.util.List;
 
 final class ModuleImportBuilder extends ProjectImportBuilder {
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaUiBundle.message("add.idea.module.label");
   }
 
@@ -35,12 +34,11 @@ final class ModuleImportBuilder extends ProjectImportBuilder {
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 
-  @Nullable
   @Override
-  public List<Module> commit(Project project,
-                             ModifiableModuleModel model,
-                             ModulesProvider modulesProvider,
-                             ModifiableArtifactModel artifactModel) {
+  public @Nullable List<Module> commit(Project project,
+                                       ModifiableModuleModel model,
+                                       ModulesProvider modulesProvider,
+                                       ModifiableArtifactModel artifactModel) {
 
     return ExistingModuleLoader.setUpLoader(getFileToImport()).commit(project, model, modulesProvider);
   }

@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.LowMemoryWatcher
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TriggerLowMemoryNotificationAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

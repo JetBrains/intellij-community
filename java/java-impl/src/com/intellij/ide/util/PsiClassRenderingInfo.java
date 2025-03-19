@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.psi.PsiClass;
@@ -27,8 +27,7 @@ public final class PsiClassRenderingInfo implements PsiElementRenderingInfo<PsiC
     return getContainerTextStatic(element);
   }
 
-  @Nullable
-  public static String getContainerTextStatic(@NotNull PsiElement element) {
+  public static @Nullable String getContainerTextStatic(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)file).getPackageName();

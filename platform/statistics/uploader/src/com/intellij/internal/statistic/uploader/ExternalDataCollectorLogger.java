@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
@@ -13,7 +13,7 @@ import java.io.StringWriter;
 import java.util.logging.*;
 
 public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
-  @SuppressWarnings("NonConstantLogger") @NonNls private final Logger myLogger;
+  @SuppressWarnings("NonConstantLogger") private final @NonNls Logger myLogger;
 
   public ExternalDataCollectorLogger() {
     myLogger = Logger.getLogger("com.intellij.internal.statistic.uploader");
@@ -26,8 +26,7 @@ public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
     }
   }
 
-  @Nullable
-  public static String findDirectory(long requiredFreeSpace) {
+  public static @Nullable String findDirectory(long requiredFreeSpace) {
     String dir = System.getProperty("java.io.tmpdir");
     if (dir != null && isValidDir(dir, requiredFreeSpace)) {
       return dir;
@@ -40,8 +39,7 @@ public class ExternalDataCollectorLogger implements DataCollectorDebugLogger {
     return dir.isDirectory() && dir.canWrite() && dir.getUsableSpace() >= space;
   }
 
-  @NotNull
-  private static Handler newAppender(@NotNull String logPath) {
+  private static @NotNull Handler newAppender(@NotNull String logPath) {
     try {
       @NonNls FileHandler appender = new FileHandler(logPath, false);
       appender.setLevel(Level.ALL);

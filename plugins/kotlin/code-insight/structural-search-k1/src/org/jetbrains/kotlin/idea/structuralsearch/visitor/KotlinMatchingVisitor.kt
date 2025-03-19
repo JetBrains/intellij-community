@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
 import com.intellij.psi.PsiComment
@@ -306,6 +306,10 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
     override fun visitTypeReference(typeReference: KtTypeReference) {
         val other = getTreeElementDepar<KtTypeReference>() ?: return
         myMatchingVisitor.result = myMatchingVisitor.matchSons(typeReference, other)
+        val handler = getHandler(typeReference)
+        if (myMatchingVisitor.result && handler is SubstitutionHandler) {
+            handler.reset()
+        }
     }
 
     override fun visitQualifiedExpression(expression: KtQualifiedExpression) {
@@ -524,6 +528,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             && parameter.nameIdentifier != null
             && other.nameIdentifier == null
         ) other else other.nameIdentifier
+        myMatchingVisitor.getMatchContext().pushResult()
         myMatchingVisitor.result = myMatchingVisitor.match(parameter.typeReference, other.typeReference)
                 && myMatchingVisitor.match(parameter.defaultValue, other.defaultValue)
                 && (parameter.isVarArg == other.isVarArg || getHandler(parameter) is SubstitutionHandler)
@@ -534,7 +539,8 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         parameter.nameIdentifier?.let { nameIdentifier ->
             val handler = getHandler(nameIdentifier)
             if (myMatchingVisitor.result && handler is SubstitutionHandler) {
-                handler.handle(other.nameIdentifier, myMatchingVisitor.matchContext)
+                myMatchingVisitor.scopeMatch(parameter.nameIdentifier,
+                                             myMatchingVisitor.matchContext.pattern.isTypedVar(parameter.nameIdentifier), otherNameIdentifier)
             }
         }
     }
@@ -659,7 +665,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                     other,
                     GlobalSearchScope.allScope(other.project),
                     true
-                ).searchInheritors().any { psiClass ->
+                ).searchInheritors().asIterable().any { psiClass ->
                     arrayOf(psiClass.name, psiClass.qualifiedName).filterNotNull().any { renderedType ->
                         matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
                     }

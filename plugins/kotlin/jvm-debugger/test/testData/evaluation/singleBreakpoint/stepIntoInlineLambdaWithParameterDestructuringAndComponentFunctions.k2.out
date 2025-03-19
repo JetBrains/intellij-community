@@ -1,0 +1,48 @@
+LineBreakpoint created at stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+Run Java
+Connected to the target VM
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:7
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:8
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:9
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:10
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:7
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:8
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:9
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+destructurableClasses.kt:10
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18
+stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:32
+Compile bytecode for a + b + c + d + e + f + g + h + i + j + k + l + m + n + o
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:32)
+    JavaValue[local] c: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:23)
+    JavaValue[local] d: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24)
+    JavaValue[local] i: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:27)
+    JavaValue[local] a: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+    JavaValue[local] b: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+    JavaValue[local] e: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:24)
+    JavaValue[local] f: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25)
+    JavaValue[local] g: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:25)
+    JavaValue[local] h: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:26)
+    JavaValue[local] j: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:28)
+    JavaValue[local] k: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:28)
+    JavaValue[local] l: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:29)
+    JavaValue[local] m: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:30)
+    JavaValue[local] n: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:31)
+    JavaValue[local] o: int = 1 (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:31)
+InlineStackFrame inlineFoo (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:18)
+    JavaValue[local] a: destructurableClasses.A = A(x=1, y=1) (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
+    JavaValue[local] b: destructurableClasses.B = destructurableClasses.B@hashCode (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+        DummyMessageValueNode = Class has no properties
+KotlinStackFrame (stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt:22)
+Disconnected from the target VM
+
+Process finished with exit code 0

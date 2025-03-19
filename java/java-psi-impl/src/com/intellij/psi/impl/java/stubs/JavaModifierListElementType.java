@@ -7,6 +7,7 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.java.stubs.impl.PsiModifierListStubImpl;
+import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.tree.java.ModifierListElement;
 import com.intellij.psi.stubs.*;
@@ -17,7 +18,7 @@ import java.io.IOException;
 
 class JavaModifierListElementType extends JavaStubElementType<PsiModifierListStub, PsiModifierList> {
   JavaModifierListElementType() {
-    super("MODIFIER_LIST");
+    super("MODIFIER_LIST", BasicJavaElementType.BASIC_MODIFIER_LIST);
   }
 
   @Override

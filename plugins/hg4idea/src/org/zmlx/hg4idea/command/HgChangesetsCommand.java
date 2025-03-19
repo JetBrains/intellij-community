@@ -83,8 +83,7 @@ public abstract class HgChangesetsCommand {
     return revisions;
   }
 
-  @Nullable
-  protected HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
+  protected @Nullable HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(isSilentCommand());
     return executor.executeInCurrentThread(repo, command, args);

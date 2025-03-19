@@ -1,0 +1,24 @@
+### auto-generated section `build intellij.sh.markdown` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "markdown_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "markdown",
+  module_name = "intellij.sh.markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//plugins/markdown/core:markdown",
+    "//plugins/sh/core",
+    "//platform/execution-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [":markdown_resources"]
+)
+### auto-generated section `build intellij.sh.markdown` end

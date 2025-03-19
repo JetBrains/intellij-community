@@ -3,18 +3,20 @@ package com.intellij.dupLocator;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 @State(
   name = "MultiLanguageDuplocatorSettings",
   storages = @Storage("duplocatorSettings.xml"),
@@ -49,7 +51,7 @@ public final class MultilanguageDuplocatorSettings implements PersistentStateCom
 
       SkipDefaultValuesSerializationFilters filter = new SkipDefaultValuesSerializationFilters();
       for (String name : mySettingsMap.keySet()) {
-        Element child = XmlSerializer.serializeIfNotDefault(mySettingsMap.get(name), filter);
+        Element child = com.intellij.configurationStore.XmlSerializer.serialize(mySettingsMap.get(name), filter);
         if (child != null) {
           child.setName("object");
           child.setAttribute("language", name);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -10,18 +10,20 @@ import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SetValueInplaceEditor extends XDebuggerTreeValueNodeInplaceEditor {
   private final XValueModifier myModifier;
 
-  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final @NlsSafe String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, final @NotNull @NlsSafe String nodeName) {
     super("setValue", node, nodeName);
     myModifier = myValueNode.getValueContainer().getModifier();
   }
 
-  public static void show(final XValueNodeImpl node, @NotNull final String nodeName) {
+  public static void show(final XValueNodeImpl node, final @NotNull String nodeName) {
     final SetValueInplaceEditor editor = new SetValueInplaceEditor(node, nodeName);
 
     if (editor.myModifier != null) {

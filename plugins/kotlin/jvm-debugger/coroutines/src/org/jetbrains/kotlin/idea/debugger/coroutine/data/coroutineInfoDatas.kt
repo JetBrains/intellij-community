@@ -3,93 +3,170 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.SuspendContext
+import com.sun.jdi.ObjectReference
 import com.sun.jdi.ThreadReference
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_NAME
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData.Companion.DEFAULT_COROUTINE_STATE
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineInfo
 
-abstract class CoroutineInfoData(val descriptor: CoroutineDescriptor) {
-    abstract val stackTrace: List<CoroutineStackFrameItem>
-    abstract val creationStackTrace: List<CreationCoroutineStackFrameItem>
-    abstract val activeThread: ThreadReference?
-
+@ApiStatus.Internal
+data class CoroutineStacksInfoData(
+    val continuationStackFrames: List<CoroutineStackFrameItem>,
+    val creationStackFrames: List<CreationCoroutineStackFrameItem>,
+) {
     val topFrameVariables: List<JavaValue> by lazy {
-        stackTrace.firstOrNull()?.spilledVariables ?: emptyList()
+        continuationStackFrames.firstOrNull()?.spilledVariables ?: emptyList()
+    }
+}
+
+open class CoroutineInfoData(
+    name: String?,
+    val id: Long?,
+    state: String?,
+    val dispatcher: String?,
+    val lastObservedFrame: ObjectReference?,
+    val lastObservedThread: ThreadReference?,
+    val debugCoroutineInfoRef: ObjectReference?,
+    private val stackFrameProvider: CoroutineStackFramesProvider?
+) {
+    val name: String = name ?: DEFAULT_COROUTINE_NAME
+
+    val state: State = State.fromString(state)
+
+    var job: String? = null
+
+    var parentJob: String? = null
+
+    private val contextSummary by lazy {
+        "[$dispatcher${if (job == null) "" else ", $job"}]"
     }
 
-    fun isSuspended() = descriptor.state == State.SUSPENDED
+    val coroutineDescriptor: String by lazy {
+        "\"${this.name}:$id\" $state ${if (isRunning) "on thread ${lastObservedThread?.name() ?: UNKNOWN_THREAD }" else "" } $contextSummary"
+    }
 
-    fun isCreated() = descriptor.state == State.CREATED
+    private val coroutineStackFrames: CoroutineStacksInfoData? by lazy {
+        stackFrameProvider?.fetchCoroutineStackFrames(lastObservedFrame)
+    }
 
-    fun isRunning() = descriptor.state == State.RUNNING
+    open val continuationStackFrames: List<CoroutineStackFrameItem> by lazy {
+        coroutineStackFrames?.continuationStackFrames ?: emptyList()
+    }
+
+    open val creationStackFrames: List<CreationCoroutineStackFrameItem> by lazy {
+        coroutineStackFrames?.creationStackFrames ?: emptyList()
+    }
+
+    val isSuspended: Boolean = this.state == State.SUSPENDED
+
+    val isRunning: Boolean = this.state == State.RUNNING
+
+    val isCreated: Boolean = this.state == State.CREATED
+    
+    fun isRunningOnCurrentThread(suspendContext: SuspendContext): Boolean =
+        lastObservedThread == suspendContext.thread?.threadReference
 
     companion object {
-        const val DEFAULT_COROUTINE_NAME = "coroutine"
-        const val DEFAULT_COROUTINE_STATE = "UNKNOWN"
+        @Deprecated("This API will not be exposed in the future versions.")
+        const val DEFAULT_COROUTINE_NAME: String = "coroutine"
+        @Deprecated("This API will not be exposed in the future versions.")
+        const val DEFAULT_COROUTINE_STATE: String = "UNKNOWN"
+        internal const val UNKNOWN_JOB: String = "UNKNOWN_JOB"
+        private const val UNKNOWN_THREAD: String = "UNKNOWN_THREAD"
+    }
+
+    @Deprecated("Please use API of CoroutineInfoData instead.")
+    val descriptor: CoroutineDescriptor by lazy {
+        CoroutineDescriptor(
+            name = this.name,
+            id = id.toString(),
+            state = this.state,
+            dispatcher = dispatcher,
+            contextSummary = contextSummary
+        )
+    }
+
+    @Deprecated("Please use lastObservedThread instead.", ReplaceWith("lastObservedThread"))
+    val activeThread: ThreadReference? by lazy { lastObservedThread }
+
+    @Deprecated("The hierarchy of parent jobs for a current coroutine is not computed anymore.")
+    val jobHierarchy: List<String> by lazy { emptyList() }
+}
+
+@ApiStatus.Internal
+fun createCoroutineInfoDataFromMirror(
+    mirror: MirrorOfCoroutineInfo,
+    stackFrameProvider: CoroutineStackFramesProvider
+): CoroutineInfoData =
+    CoroutineInfoData(
+        name = mirror.context?.name,
+        id = mirror.sequenceNumber,
+        state = mirror.state,
+        dispatcher = mirror.context?.dispatcher,
+        lastObservedFrame = mirror.lastObservedFrame,
+        lastObservedThread = mirror.lastObservedThread,
+        debugCoroutineInfoRef = null,
+        stackFrameProvider = stackFrameProvider
+    )
+
+@ApiStatus.Internal
+enum class State(val state: String) {
+    RUNNING("RUNNING"),
+    SUSPENDED("SUSPENDED"),
+    CREATED("CREATED"),
+    UNKNOWN("UNKNOWN");
+
+    companion object {
+        fun fromString(state: String?): State {
+            return entries.find { it.state.equals(state, ignoreCase = true) } ?: UNKNOWN
+        }
     }
 }
 
-class LazyCoroutineInfoData(
-    private val mirror: MirrorOfCoroutineInfo,
-    private val stackTraceProvider: CoroutineStackTraceProvider
-) : CoroutineInfoData(CoroutineDescriptor.instance(mirror)) {
-    private val stackFrames: CoroutineStackTraceProvider.CoroutineStackFrames? by lazy {
-        stackTraceProvider.findStackFrames(mirror)
-    }
-
-    override val stackTrace by lazy {
-        stackFrames?.restoredStackFrames ?: emptyList()
-    }
-
-    override val creationStackTrace by lazy {
-        stackFrames?.creationStackFrames ?: emptyList()
-    }
-
-    override val activeThread = mirror.lastObservedThread
-}
-
+@Deprecated("Please use CoroutineInfoData API instead.")
 class CompleteCoroutineInfoData(
     descriptor: CoroutineDescriptor,
-    override val stackTrace: List<CoroutineStackFrameItem>,
-    override val creationStackTrace: List<CreationCoroutineStackFrameItem>,
-    override val activeThread: ThreadReference? = null, // for suspended coroutines should be null
-) : CoroutineInfoData(descriptor)
+    continuationStackFrames: List<CoroutineStackFrameItem>,
+    creationStackFrames: List<CreationCoroutineStackFrameItem>,
+    activeThread: ThreadReference? = null, // for suspended coroutines should be null
+    jobHierarchy: List<String> = emptyList()
+) : CoroutineInfoData(
+    name = descriptor.name,
+    id = descriptor.id.toLong(),
+    state = descriptor.state.state,
+    dispatcher = descriptor.dispatcher,
+    lastObservedFrame = null,
+    lastObservedThread = activeThread,
+    debugCoroutineInfoRef = null,
+    stackFrameProvider = null
+)
 
+@Deprecated("Please use CoroutineInfoData API instead.")
 fun CoroutineInfoData.toCompleteCoroutineInfoData() =
     when (this) {
         is CompleteCoroutineInfoData -> this
         else ->
             CompleteCoroutineInfoData(
                 descriptor,
-                stackTrace,
-                creationStackTrace,
-                activeThread
+                continuationStackFrames,
+                creationStackFrames,
+                activeThread,
+                jobHierarchy
             )
     }
 
-data class CoroutineDescriptor(val name: String, val id: String, val state: State, val dispatcher: String?) {
-    fun formatName() =
-        "$name:$id"
+@Deprecated("Please use CoroutineInfoData API instead.")
+data class CoroutineDescriptor(val name: String, val id: String, val state: State, val dispatcher: String?, val contextSummary: String?) {
+    fun formatName() = "$name:$id"
 
     companion object {
         fun instance(mirror: MirrorOfCoroutineInfo): CoroutineDescriptor =
             CoroutineDescriptor(
-                mirror.context?.name ?: DEFAULT_COROUTINE_NAME,
+                mirror.context?.name ?: CoroutineInfoData.DEFAULT_COROUTINE_NAME,
                 "${mirror.sequenceNumber}",
-                State.valueOf(mirror.state ?: DEFAULT_COROUTINE_STATE),
-                mirror.context?.dispatcher
+                State.valueOf(mirror.state ?: CoroutineInfoData.DEFAULT_COROUTINE_STATE),
+                mirror.context?.dispatcher,
+                mirror.context?.summary
             )
     }
-}
-
-enum class State {
-    RUNNING,
-    SUSPENDED,
-    CREATED,
-    UNKNOWN,
-    SUSPENDED_COMPLETING,
-    SUSPENDED_CANCELLING,
-    CANCELLED,
-    COMPLETED,
-    NEW
 }

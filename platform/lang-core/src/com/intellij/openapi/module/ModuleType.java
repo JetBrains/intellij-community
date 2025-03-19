@@ -72,6 +72,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId;
   }
 
+  @Override
   public final boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleType moduleType)) return false;
@@ -79,10 +80,12 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return myId.equals(moduleType.myId);
   }
 
+  @Override
   public final int hashCode() {
     return myId.hashCode();
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -108,6 +111,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return moduleType.getId().equals(module.getModuleTypeName());
   }
 
+  /**
+   * A module of type InternalModuleType. An internal module is a synthetic module,
+   * not a genuine part of the user's project model. It should not be displayed in the UI, and its content model
+   * might not accurately represent the state of the project model.
+   */
   public static boolean isInternal(@NotNull Module module) {
     return get(module) instanceof InternalModuleType;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -147,11 +147,6 @@ public class TasksExecutionSettingsBuilder {
         rootProjectPath = gradleModuleData.getDirectoryToRunTask();
       }
 
-      // all buildSrc runtime projects will be built by gradle implicitly
-      if (gradleModuleData.isBuildSrcModule()) {
-        continue;
-      }
-
       String gradlePath = gradleModuleData.getGradlePath();
       List<TaskData> taskDataList =
         ContainerUtil.mapNotNull(gradleModuleData.findAll(ProjectKeys.TASK), taskData -> taskData.isInherited() ? null : taskData);
@@ -207,8 +202,7 @@ public class TasksExecutionSettingsBuilder {
     return affectedModules;
   }
 
-  @NotNull
-  private static String getTaskName(@NotNull String taskPrefix, @NotNull String taskSuffix, @Nullable String sourceSetName) {
+  private static @NotNull String getTaskName(@NotNull String taskPrefix, @NotNull String taskSuffix, @Nullable String sourceSetName) {
     if (Strings.isEmpty(sourceSetName)) sourceSetName = "main";
     return new ClassDirectoryBinaryNamingScheme(sourceSetName).getTaskName(taskPrefix, taskSuffix);
   }

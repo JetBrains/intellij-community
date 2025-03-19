@@ -1,7 +1,7 @@
-from typing import Any
+from openpyxl.worksheet.worksheet import Worksheet
 
 class WorksheetCopy:
-    source: Any
-    target: Any
-    def __init__(self, source_worksheet, target_worksheet) -> None: ...
+    source: Worksheet
+    target: Worksheet
+    def __init__(self, source_worksheet: Worksheet, target_worksheet: Worksheet) -> None: ...
     def copy_worksheet(self) -> None: ...

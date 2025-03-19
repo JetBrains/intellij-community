@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.openapi.util.Ref;
@@ -34,9 +34,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     return IntroduceFieldHandler.getRefactoringNameText();
   }
 
-  @NotNull
   @Override
-  protected String getHelpID() {
+  protected @NotNull String getHelpID() {
     return HelpID.INTRODUCE_FIELD;
   }
 
@@ -71,9 +70,8 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     //nothing to do
   }
 
-  @NotNull
   @Override
-  protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
+  protected @NotNull GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
     return new GrIntroduceFieldDialog(context);
   }
 
@@ -110,8 +108,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     return filtered.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  @Nullable
-  static GrMember getContainer(@Nullable PsiElement place, @Nullable PsiElement scope) {
+  static @Nullable GrMember getContainer(@Nullable PsiElement place, @Nullable PsiElement scope) {
     while (place != null && place != scope) {
       place = place.getParent();
       if (place instanceof GrMember) return (GrMember)place;

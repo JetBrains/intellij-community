@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
+public final class PyMetaClassCompletionContributor extends CompletionContributor implements DumbAware {
   public PyMetaClassCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns
@@ -61,7 +61,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor impl
            });
   }
 
-  public static FilterPattern hasLanguageLevel(@NotNull final Processor<? super LanguageLevel> processor) {
+  public static FilterPattern hasLanguageLevel(final @NotNull Processor<? super LanguageLevel> processor) {
     return new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -42,16 +42,15 @@ import java.util.function.IntConsumer;
 public final class UnusedDefInspection extends GroovyLocalInspectionBase {
   private static final Logger LOG = Logger.getInstance(UnusedDefInspection.class);
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     // used to enable inspection in tests
     // remove when inspection class will match its short name
     return "GroovyUnusedAssignment";
   }
 
   @Override
-  protected void check(@NotNull final GrControlFlowOwner owner, @NotNull final ProblemsHolder problemsHolder) {
+  protected void check(final @NotNull GrControlFlowOwner owner, final @NotNull ProblemsHolder problemsHolder) {
     final Instruction[] flow = owner.getControlFlow();
     final ReachingDefinitionsDfaInstance dfaInstance = new ReachingDefinitionsDfaInstance();
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();

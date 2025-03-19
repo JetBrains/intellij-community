@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -30,14 +31,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  */
-public class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
-
+public final class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
   private JPanel myArchetypesPanel;
@@ -51,7 +51,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
   private boolean skipUpdateUI;
   private final AbstractMavenModuleBuilder myBuilder;
-  @Nullable private final StepAdapter myStep;
+  private final @Nullable StepAdapter myStep;
 
   public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
@@ -127,8 +127,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
   }
 
-  @Nullable
-  public MavenArchetype getSelectedArchetype() {
+  public @Nullable MavenArchetype getSelectedArchetype() {
     if (!myUseArchetypeCheckBox.isSelected() || myArchetypesTree.isSelectionEmpty()) return null;
     return getArchetypeInfoFromPathComponent(myArchetypesTree.getLastSelectedPathComponent());
   }
@@ -149,8 +148,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     }
   }
 
-  @Nullable
-  private static TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
+  private static @Nullable TreePath findNodePath(MavenArchetype object, TreeModel model, Object parent) {
     for (int i = 0; i < model.getChildCount(parent); i++) {
       DefaultMutableTreeNode each = (DefaultMutableTreeNode)model.getChild(parent, i);
       if (each.getUserObject().equals(object)) return new TreePath(each.getPath());
@@ -212,7 +210,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   public void updateArchetypesList(final MavenArchetype selected) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myLoadingIcon.setBackground(RenderingUtil.getBackground(myArchetypesTree));
 
@@ -224,9 +222,8 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       final Set<MavenArchetype> archetypes = MavenArchetypeManager.getInstance(findProject()).getArchetypes();
 
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
-        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Other updater has been run.
+        if (currentUpdaterMarker != myCurrentUpdaterMarker) return; // Another updater has been run.
 
         ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
@@ -248,8 +245,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
   }
 
   // todo DefaultProject usage may lead to plugin classloader leak on the plugin unload
-  @NotNull
-  private static Project findProject() {
+  private static @NotNull Project findProject() {
     ProjectManager projectManager = ProjectManager.getInstance();
     Project[] openProjects = projectManager.getOpenProjects();
     return openProjects.length != 0 ? openProjects[0] : projectManager.getDefaultProject();
@@ -284,7 +280,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
 
     MavenArchetype archetype = dialog.getArchetype();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      MavenIndicesManager.getInstance(findProject()).addArchetype(archetype);
+      MavenIndicesManager.addArchetype(archetype);
       ApplicationManager.getApplication().invokeLater(() -> updateArchetypesList(archetype));
     });
   }

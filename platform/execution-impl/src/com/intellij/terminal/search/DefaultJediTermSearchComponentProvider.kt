@@ -5,11 +5,13 @@ import com.intellij.ui.SearchTextField
 import com.jediterm.terminal.SubstringFinder
 import com.jediterm.terminal.ui.JediTermSearchComponent
 import com.jediterm.terminal.ui.JediTermSearchComponentListener
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyListener
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
+@ApiStatus.Internal
 class DefaultJediTermSearchComponent : JediTermSearchComponent {
   private val myTextField = SearchTextField(false)
 

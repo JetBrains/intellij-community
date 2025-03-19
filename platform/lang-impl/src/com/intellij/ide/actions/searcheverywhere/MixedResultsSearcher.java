@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -7,13 +7,14 @@ import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqu
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -24,16 +25,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * @author msokolov
- */
-class MixedResultsSearcher implements SESearcher {
+@ApiStatus.Internal
+public final class MixedResultsSearcher implements SESearcher {
 
   private static final Logger LOG = Logger.getInstance(MixedResultsSearcher.class);
 
-  @NotNull private final SearchListener myListener;
-  @NotNull private final Executor myNotificationExecutor;
-  @NotNull private final SEResultsEqualityProvider myEqualityProvider;
+  private final @NotNull SearchListener myListener;
+  private final @NotNull Executor myNotificationExecutor;
+  private final @NotNull SEResultsEqualityProvider myEqualityProvider;
 
   /**
    * Creates MultiThreadSearcher with search results {@link SearchListener} and specifies executor which going to be used to call listener methods.
@@ -42,7 +41,7 @@ class MixedResultsSearcher implements SESearcher {
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    * @param equalityProviders collection of equality providers that checks if found elements are already in the search results
    */
-  MixedResultsSearcher(@NotNull SearchListener listener,
+  public MixedResultsSearcher(@NotNull SearchListener listener,
                        @NotNull Executor notificationExecutor,
                        @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
@@ -81,10 +80,9 @@ class MixedResultsSearcher implements SESearcher {
     return performSearch(contributorsAndLimits.keySet(), pattern, accumulatorSupplier);
   }
 
-  @NotNull
-  private static ProgressIndicator performSearch(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors,
-                                                 @NotNull String pattern,
-                                                 @NotNull Function<? super ProgressIndicator, ? extends ResultsAccumulator> accumulatorSupplier) {
+  private static @NotNull ProgressIndicator performSearch(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors,
+                                                          @NotNull String pattern,
+                                                          @NotNull Function<? super ProgressIndicator, ? extends ResultsAccumulator> accumulatorSupplier) {
     ProgressIndicator indicator;
     ResultsAccumulator accumulator;
     if (!contributors.isEmpty()) {
@@ -121,12 +119,11 @@ class MixedResultsSearcher implements SESearcher {
     return indicator;
   }
 
-  @NotNull
-  private static Runnable createSearchTask(String pattern,
-                                           ResultsAccumulator accumulator,
-                                           ProgressIndicator indicator,
-                                           SearchEverywhereContributor<?> contributor,
-                                           Runnable finalCallback) {
+  private static @NotNull Runnable createSearchTask(String pattern,
+                                                    ResultsAccumulator accumulator,
+                                                    ProgressIndicator indicator,
+                                                    SearchEverywhereContributor<?> contributor,
+                                                    Runnable finalCallback) {
     //noinspection unchecked
     ContributorSearchTask<?> task = new ContributorSearchTask<>(
       (SearchEverywhereContributor<Object>)contributor, pattern,
@@ -173,7 +170,10 @@ class MixedResultsSearcher implements SESearcher {
 
     @Override
     public void run() {
-      LOG.debug("Search task started for contributor ", myContributor);
+      LOG.debug("Search task started for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
       SearchingProcessStatisticsCollector.searchStarted(myContributor);
       try {
         boolean repeat;
@@ -197,6 +197,10 @@ class MixedResultsSearcher implements SESearcher {
             }
           }
           catch (ProcessCanceledException ignore) {}
+          catch (Throwable e) {
+            LOG.warn("Contributor " + myContributor.getSearchProviderId() +" threw an exception during search:", e);
+            break;
+          }
           repeat = !myIndicator.isCanceled() && wrapperIndicator.isCanceled();
         }
         while (repeat);
@@ -209,7 +213,10 @@ class MixedResultsSearcher implements SESearcher {
       finally {
         finishCallback.run();
       }
-      LOG.debug("Search task finished for contributor ", myContributor);
+      LOG.debug("Search task finished for contributor ",
+                myContributor instanceof PSIPresentationBgRendererWrapper wrapper
+                ? "PSIPresentationBgRendererWrapper(" + wrapper.getEffectiveContributor().getClass().getSimpleName() + ")"
+                : myContributor.getClass().getSimpleName());
     }
 
     private boolean processFoundItem(Item element, int priority, ProgressIndicator wrapperIndicator) {
@@ -241,7 +248,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ResultsAccumulator {
+  private static final class ResultsAccumulator {
 
     private final Map<? extends SearchEverywhereContributor<?>, Collection<SearchEverywhereFoundElementInfo>> mySections;
     private final SearchListener myListener;
@@ -286,7 +293,8 @@ class MixedResultsSearcher implements SESearcher {
       hasMoreMap.put(contributor, hasMore);
     }
 
-    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator) throws InterruptedException {
+    public boolean addElement(Object element, SearchEverywhereContributor<?> contributor, int priority, ProgressIndicator indicator)
+      throws InterruptedException {
       final var mlService = SearchEverywhereMlService.getInstance();
       final SearchEverywhereFoundElementInfo newElementInfo;
       if (mlService == null) {
@@ -321,7 +329,7 @@ class MixedResultsSearcher implements SESearcher {
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
         SEEqualElementsActionType action = myEqualityProvider.compareItems(newElementInfo, alreadyFoundItems);
-        if (Registry.is("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
+        if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top") && action instanceof SEEqualElementsActionType.Replace replaceAction) {
           action = fixReplaceAction(replaceAction);
         }
         if (action == SEEqualElementsActionType.Skip.INSTANCE) {
@@ -335,15 +343,16 @@ class MixedResultsSearcher implements SESearcher {
         List<SearchEverywhereFoundElementInfo> toRemove = action instanceof SEEqualElementsActionType.Replace
                                                           ? ((SEEqualElementsActionType.Replace)action).getToBeReplaced()
                                                           : Collections.emptyList();
+
         toRemove.forEach(info -> {
           Collection<SearchEverywhereFoundElementInfo> list = mySections.get(info.getContributor());
           Condition listCondition = conditionsMap.get(info.getContributor());
           list.remove(info);
-          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(),
+                                  info.getContributor().getSearchProviderId()));
           listCondition.signal();
         });
         runInNotificationExecutor(() -> myListener.elementsRemoved(toRemove));
-
         if (section.size() >= limit) {
           stopSearchIfNeeded();
         }
@@ -419,7 +428,7 @@ class MixedResultsSearcher implements SESearcher {
     }
   }
 
-  private static class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
+  private static final class ProgressIndicatorWithCancelListener extends ProgressIndicatorBase {
 
     private volatile Runnable cancelCallback = () -> {};
 

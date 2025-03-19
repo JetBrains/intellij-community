@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
@@ -11,7 +12,7 @@ import org.jetbrains.kotlin.idea.core.util.runSynchronouslyWithProgress
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.move.*
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsProcessor
-import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -41,11 +42,14 @@ class KotlinChangePackageRefactoring(val file: KtFile) {
         val changeInfo = MoveContainerChangeInfo(MoveContainerInfo.Package(currentFqName), MoveContainerInfo.Package(newFqName))
         val internalUsages = file.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
 
-        project.executeWriteCommand(KotlinBundle.message("text.change.file.package.to.0", newFqName)) {
-            packageDirective.fqName = newFqName.quoteIfNeeded()
-            postProcessMoveUsages(internalUsages)
-            performDelayedRefactoringRequests(project)
+        project.executeCommand(KotlinBundle.message("text.change.file.package.to.0", newFqName)) {
+            runWriteAction {
+                packageDirective.fqName = newFqName.quoteIfNeeded()
+                postProcessMoveUsages(internalUsages)
+                performDelayedRefactoringRequests(project)
+            }
             declarationProcessor.execute(declarationUsages)
         }
+
     }
 }

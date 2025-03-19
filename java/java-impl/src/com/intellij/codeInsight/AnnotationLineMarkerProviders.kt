@@ -11,5 +11,5 @@ class InferredNullabilityAnnotationsLineMarkerProvider : NonCodeAnnotationsLineM
 
 class InferredContractAnnotationsLineMarkerProvider : NonCodeAnnotationsLineMarkerProvider(
   JavaBundle.message("line.marker.type.inferred.contract.annotations"), LineMarkerType.InferredContract) {
-  override fun isEnabledByDefault() = false
+  override fun isEnabledByDefault(): Boolean = false
 }

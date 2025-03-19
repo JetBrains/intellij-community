@@ -38,6 +38,15 @@ class ExceptionBreakpoint(object):
     def __str__(self):
         return self.qname
 
+    def __repr__(self):
+        return ("<ExceptionBreakpoint(qname=%r, condition=%r, expression=%r, "
+                "notify_on_handled_exceptions=%s, notify_on_unhandled_exceptions=%s, "
+                "notify_on_first_raise_only=%s, ignore_libraries=%s)>") % (
+            self.qname, self.condition, self.expression,
+            self.notify_on_handled_exceptions, self.notify_on_unhandled_exceptions,
+            self.notify_on_first_raise_only, self.ignore_libraries
+        )
+
     @property
     def has_condition(self):
         return self.condition is not None

@@ -2,6 +2,7 @@
 package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.wsl.*
@@ -13,7 +14,6 @@ import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.writeText
 
 private val LOGGER = Logger.getInstance(LinuxFileStorage::class.java)
@@ -77,18 +77,24 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
   }
 
   override fun isEmpty(): Boolean {
+    // echo nonce >&2 && [ -e dir ] && ls dir
+    // if exit code is 0 and stdout is empty, the folder is empty
+    // if exit code != 0, folder doesn't exist or some error happened
+    // we cut everything before nonce because shell profile might print junk there, and then check the rest
+    val prefixCutter = PrefixCutter()
     val options = WSLCommandLineOptions().apply {
       addInitCommand("[ -e ${escapePath(dir)} ]")
+      addInitCommand("echo ${prefixCutter.token} >&2")
     }
-    val process = distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options).createProcess()
-    if (!process.waitFor(5, TimeUnit.SECONDS)) throw Exception("Process didn't finish: WSL frozen?")
-    if (process.exitValue() == 0) {
-      // Folder exists, lets check if empty
-      return process.inputStream.read() == -1
+    val process = CapturingProcessHandler(distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options)).runProcess(5000, true)
+    if (process.isTimeout) throw Exception("Process didn't finish: WSL frozen?")
+    if (process.exitCode == 0) {
+      // Folder exists, let's check if empty
+      return process.stdout.isEmpty() //process.inputStream.read() == -1
     }
     else {
       // Folder doesn't exist
-      val error = process.errorStream.readAllBytes().decodeToString()
+      val error = prefixCutter.getAfterToken(process.stderr).trim()
       if (error.isEmpty()) return true // Doesn't exist, but still empty
       throw Exception("Error checking folder: $error")
     }
@@ -114,7 +120,7 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution)
     listFile.first.delete()
 
     LOGGER.info("Copying tar")
-    distro.runCommand("cp", linuxTarFile, distro.getWslPath(destTar))
+    distro.runCommand("cp", linuxTarFile, distro.getWslPathSafe(destTar))
     distro.runCommand("rm", linuxTarFile)
   }
 

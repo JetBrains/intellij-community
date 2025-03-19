@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,7 +14,6 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +22,6 @@ public final class PyDebugSupportUtils {
 
   private PyDebugSupportUtils() {
   }
-
-  public static final @NonNls String ASYNCIO_ENV = "ASYNCIO_DEBUGGER_ENV";
 
   // can expression be evaluated, or should be executed
   public static boolean isExpression(final Project project, final String expression) {
@@ -35,8 +32,7 @@ public final class PyDebugSupportUtils {
     });
   }
 
-  @Nullable
-  public static TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
+  public static @Nullable TextRange getExpressionRangeAtOffset(final Project project, final Document document, final int offset) {
     return ReadAction.compute(() -> {
 
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -85,8 +81,7 @@ public final class PyDebugSupportUtils {
            root.getFirstChild().getFirstChild().getFirstChild() == null;
   }
 
-  @Nullable
-  private static String getLineText(@NotNull Document document, int line) {
+  private static @Nullable String getLineText(@NotNull Document document, int line) {
     if (line > 0 && line < document.getLineCount()) {
       return document.getText(TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line)));
     }

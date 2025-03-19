@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.jdi
 
@@ -7,6 +7,7 @@ import com.sun.jdi.VirtualMachine
 import org.jetbrains.eval4j.*
 import org.jetbrains.org.objectweb.asm.Opcodes.ACC_STATIC
 import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter.OBJECT_TYPE
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
 import com.sun.jdi.BooleanValue as jdi_BooleanValue
@@ -17,6 +18,7 @@ import com.sun.jdi.FloatValue as jdi_FloatValue
 import com.sun.jdi.IntegerValue as jdi_IntegerValue
 import com.sun.jdi.LongValue as jdi_LongValue
 import com.sun.jdi.ObjectReference as jdi_ObjectReference
+import com.sun.jdi.StringReference as jdi_StringReference
 import com.sun.jdi.ShortValue as jdi_ShortValue
 import com.sun.jdi.Type as jdi_Type
 import com.sun.jdi.Value as jdi_Value
@@ -53,7 +55,11 @@ class JDIFailureException(message: String?, cause: Throwable? = null) : RuntimeE
 fun jdi_ObjectReference?.asValue(): ObjectValue {
     return when (this) {
         null -> NULL_VALUE
-        else -> ObjectValue(this, type().asType())
+        is jdi_StringReference -> ObjectValue(this, STRING_TYPE)
+        else -> object: ObjectValue(this, OBJECT_TYPE) {
+            override val asmType: Type
+                get() = (value as jdi_ObjectReference).type().asType()
+        }
     }
 }
 
@@ -82,11 +88,11 @@ val Value.jdiObj: jdi_ObjectReference?
 val Value.jdiClass: ClassObjectReference?
     get() = this.jdiObj as ClassObjectReference?
 
-fun Value.asJdiValue(vm: VirtualMachine, expectedType: Type): jdi_Value? {
+fun Value.asJdiValue(vm: VirtualMachine, expectedType: () -> Type): jdi_Value? {
     return when (this) {
         NULL_VALUE -> null
         VOID_VALUE -> vm.mirrorOfVoid()
-        is IntValue -> when (expectedType) {
+        is IntValue -> when (expectedType.invoke()) {
             Type.BOOLEAN_TYPE -> vm.mirrorOf(boolean)
             Type.BYTE_TYPE -> vm.mirrorOf(int.toByte())
             Type.SHORT_TYPE -> vm.mirrorOf(int.toShort())
@@ -98,7 +104,6 @@ fun Value.asJdiValue(vm: VirtualMachine, expectedType: Type): jdi_Value? {
         is FloatValue -> vm.mirrorOf(value)
         is DoubleValue -> vm.mirrorOf(value)
         is ObjectValue -> value as jdi_ObjectReference
-        is NewObjectValue -> this.obj() as jdi_ObjectReference
         else -> throw JDIFailureException("Unknown value: $this")
     }
 }

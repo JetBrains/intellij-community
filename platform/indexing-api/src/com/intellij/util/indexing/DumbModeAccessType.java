@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.util.ThrowableComputable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * {@link DumbModeAccessType#ignoreDumbMode(Runnable)}.
  * {@link DumbModeAccessType} controls which kind of data will be returned from the index.
  */
-@ApiStatus.Experimental
 public enum DumbModeAccessType {
   /**
    * If the index is accessed with {@code RELIABLE_DATA_ONLY}, then only up-to-date indexed data will be returned as a

@@ -5,15 +5,15 @@ import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 
 class PyCodeVisionProviderTest : CodeVisionTestCase() {
   fun testDynamicUsages() = doTest("""
-    <# block [1 usage] #>
+    /*<# block [1 usage] #>*/
     class MyClass:
-    <# block [2 usages (1 dynamic)] #>
+    /*<# block [2 usages (1 dynamic)] #>*/
         def method(self):
             ...
 
 
     class UnrelatedClass:
-    <# block [1 usage (1 dynamic)] #>
+    /*<# block [1 usage (1 dynamic)] #>*/
         def method(self):
             ...
 
@@ -27,9 +27,9 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testTwoDynamicUsages() = doTest("""
-    <# block [1 usage] #>
+    /*<# block [1 usage] #>*/
     class MyClass:
-    <# block [3 usages (2 dynamic)] #>
+    /*<# block [3 usages (2 dynamic)] #>*/
         def method(self):
             ...
 
@@ -44,7 +44,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testLocalDefinitionsNotAnalysed() = doTest("""
-    <# block [1 usage] #>
+    /*<# block [1 usage] #>*/
     def foo():
         class MyClass:
             ...
@@ -60,7 +60,7 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testMagicMethodUsagesNotAnalysed() = doTest("""
-    <# block [2 usages] #>
+    /*<# block [2 usages] #>*/
     class MyClass:
         def __add__(self, other):
             return other
@@ -73,13 +73,13 @@ class PyCodeVisionProviderTest : CodeVisionTestCase() {
   """.trimIndent(), PyReferencesCodeVisionProvider().groupId)
 
   fun testInnerClassNotAnalysed() = doTest("""
-    <# block [2 usages] #>
+    /*<# block [2 usages] #>*/
     class MyClass:
         class MyInnerClass:
             def inner_foo(self):
                 ...
 
-    <# block [1 usage] #>
+    /*<# block [1 usage] #>*/
         def foo():
             ...
 

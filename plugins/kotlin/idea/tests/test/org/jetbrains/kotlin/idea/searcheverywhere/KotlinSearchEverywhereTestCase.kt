@@ -39,7 +39,7 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
             ui.switchToTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)
             val future = ui.findElementsForPattern(pattern)
             action(
-                PlatformTestUtil.waitForFuture(future, SearchEverywhereTest.getSEARCH_TIMEOUT().toLong())
+                PlatformTestUtil.waitForFuture(future, SearchEverywhereTest.SEARCH_TIMEOUT)
             )
         } finally {
             Disposer.dispose(disposable)

@@ -1,0 +1,27 @@
+### auto-generated section `build intellij.python.community.plugin.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "python-community-plugin-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "python-community-plugin-impl",
+  module_name = "intellij.python.community.plugin.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/execution-impl",
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//python/python-sdk:sdk",
+    "@lib//:guava",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":python-community-plugin-impl_resources"]
+)
+### auto-generated section `build intellij.python.community.plugin.impl` end

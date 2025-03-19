@@ -1,4 +1,2 @@
-version = "1.7"
-
-[tool.stubtest]
-ignore_missing_stub = false
+version = "1.10"
+upstream_repository = "https://gitlab.com/ericvsmith/toposort"

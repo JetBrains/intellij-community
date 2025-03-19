@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.transport.URIish
 import org.jetbrains.settingsRepository.git.createBareRepository
@@ -13,6 +12,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 interface RepositoryService {
   fun checkUrl(uriString: String, project: Project? = null): @NlsContexts.DialogMessage String? {

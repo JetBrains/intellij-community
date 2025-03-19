@@ -18,3 +18,6 @@ inline fun foo(crossinline func: () -> Int) {
         func()
     }
 }
+
+// STEP_OVER: 99
+// REGISTRY: debugger.kotlin.step.through.inline.lambdas=false

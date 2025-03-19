@@ -1,0 +1,89 @@
+### auto-generated section `build intellij.platform.vcs.dvcs.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "vcs-dvcs-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-dvcs-impl",
+  module_name = "intellij.platform.vcs.dvcs.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-impl",
+    "//platform/project/shared:project",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/backend:vcs-impl-backend",
+    "//platform/kernel/shared:kernel",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/analysis-impl",
+    "//platform/util/coroutines",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+  ],
+  runtime_deps = [":vcs-dvcs-impl_resources"]
+)
+
+jvm_library(
+  name = "vcs-dvcs-impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [":vcs-dvcs-impl"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/project/shared:project",
+    "//platform/vcs-impl/shared:vcs-impl-shared",
+    "//platform/vcs-impl/backend:vcs-impl-backend",
+    "//platform/kernel/shared:kernel",
+    "//platform/core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/vcs-log/api:vcs-log",
+    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//platform/lang-impl",
+    "//platform/vcs-api:vcs",
+    "//platform/ide-core-impl",
+    "//platform/dvcs-api:vcs-dvcs",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "@lib//:mockito",
+    "//platform/vcs-tests:vcs-testFramework",
+    "@lib//:miglayout-swing",
+    "@lib//:stream_ex",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "//platform/diff-impl",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/analysis-impl",
+    "//platform/util/coroutines",
+    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+  ],
+  runtime_deps = [":vcs-dvcs-impl_resources"]
+)
+
+jvm_test(
+  name = "vcs-dvcs-impl_test",
+  runtime_deps = [":vcs-dvcs-impl_test_lib"]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs.impl` end

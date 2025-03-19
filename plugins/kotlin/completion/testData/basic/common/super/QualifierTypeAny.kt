@@ -6,6 +6,7 @@ class B : I {
     }
 }
 
+// IGNORE_K2
 // EXIST: Any
 // EXIST: I
 // NOTHING_ELSE

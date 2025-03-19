@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -148,7 +148,7 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
     final String[] errorString = new String[1];
     final PsiManager manager = PsiManager.getInstance(myProject);
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(manager.getProject());
-    if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) {
+    if (!packageName.isEmpty() && !nameHelper.isQualifiedName(packageName)) {
       errorString[0] = JavaRefactoringBundle.message("invalid.target.package.name.specified");
     } else if (className != null && className.isEmpty()) {
       errorString[0] = JavaRefactoringBundle.message("no.class.name.specified");
@@ -170,7 +170,7 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
     }
 
     if (errorString[0] != null) {
-      if (errorString[0].length() > 0) {
+      if (!errorString[0].isEmpty()) {
         Messages.showMessageDialog(myProject, errorString[0], RefactoringBundle.message("error.title"), Messages.getErrorIcon());
       }
       myNameField.requestFocusInWindow();

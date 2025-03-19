@@ -1,12 +1,12 @@
 // "Remove 'unchecked' suppression" "true-preview"
 import java.util.ArrayList;
 
-public class Test {
+class Test {
   @SafeVarargs
-  static <T> void foo(T... t){
+  private static <T> void foo(T... t){
   }
 
-  void foo() {
+  public void foo() {
     //noinspection unc<caret>hecked
     foo(new ArrayList<String>());
   }

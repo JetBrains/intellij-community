@@ -1,18 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ClientProperty;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.function.Supplier;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public final class HelpTooltipManager extends HelpTooltip {
   public static final Key<Supplier<@NlsSafe String>> SHORTCUT_PROPERTY = Key.create("help-tooltip-shortcut");
 

@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.lang.ant.config.AntConfiguration
 import com.intellij.openapi.project.Project
 
-class AntSettingsCollector : ProjectUsagesCollector() {
+internal class AntSettingsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup {
     return GROUP
   }
@@ -20,7 +20,7 @@ class AntSettingsCollector : ProjectUsagesCollector() {
 
     val usages = mutableSetOf<MetricEvent>()
 
-    // to have a total users base line to calculate pertentages of settings
+    // to have a total users baseline to calculate percentages of settings
     usages.add(HAS_ANT_PROJECTS.metric(true))
 
     for (each in buildFiles) {
@@ -33,23 +33,19 @@ class AntSettingsCollector : ProjectUsagesCollector() {
     return usages
   }
 
-  companion object {
-    private val GROUP = EventLogGroup("build.ant.state", 2)
-    private val HAS_ANT_PROJECTS = GROUP.registerEvent("hasAntProjects", EventFields.Enabled)
-    private val IS_RUN_IN_BACKGROUND = GROUP.registerEvent("isRunInBackground", EventFields.Enabled)
-    private val IS_COLORED_OUTPUT_MESSAGES = GROUP.registerEvent("isColoredOutputMessages", EventFields.Enabled)
-    private val IS_VIEW_CLOSED_WHEN_NO_ERRORS = GROUP.registerEvent("isViewClosedWhenNoErrors", EventFields.Enabled)
-    private val IS_COLLAPSE_FINISHED_TARGETS = GROUP.registerEvent("isCollapseFinishedTargets", EventFields.Enabled)
-  }
+  private val GROUP = EventLogGroup("build.ant.state", 2)
+  private val HAS_ANT_PROJECTS = GROUP.registerEvent("hasAntProjects", EventFields.Enabled)
+  private val IS_RUN_IN_BACKGROUND = GROUP.registerEvent("isRunInBackground", EventFields.Enabled)
+  private val IS_COLORED_OUTPUT_MESSAGES = GROUP.registerEvent("isColoredOutputMessages", EventFields.Enabled)
+  private val IS_VIEW_CLOSED_WHEN_NO_ERRORS = GROUP.registerEvent("isViewClosedWhenNoErrors", EventFields.Enabled)
+  private val IS_COLLAPSE_FINISHED_TARGETS = GROUP.registerEvent("isCollapseFinishedTargets", EventFields.Enabled)
 }
 
-class AntActionsUsagesCollector : CounterUsagesCollector() {
+internal object AntActionsUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("build.ant.actions", 1)
+  private val GROUP = EventLogGroup("build.ant.actions", 1)
 
-    @JvmField
-    val runSelectedBuildAction = GROUP.registerEvent("RunSelectedBuild")
-  }
+  @JvmField
+  val runSelectedBuildAction = GROUP.registerEvent("RunSelectedBuild")
 }

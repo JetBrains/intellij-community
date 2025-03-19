@@ -29,8 +29,9 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
-public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, DataProvider {
+public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, UiDataProvider {
   private final Map<String, T> myViewMap = new ConcurrentHashMap<>();
   private final @NonNls String mySelectionStateKey;
   private final AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
@@ -53,18 +54,13 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     Disposer.register(this, view);
   }
 
-  public void addViewAndShowIfNeeded(@NotNull T view, @NotNull String viewName, boolean showByDefault) {
+  public void addViewAndShowIfNeeded(@NotNull T view, @NotNull String viewName, boolean showByDefault, boolean requestFocus) {
     addView(view, viewName);
     String storedState = getStoredState();
     if (storedState != null && (storedState.equals(viewName)) ||
         storedState == null && showByDefault) {
-      showView(viewName);
+      showView(viewName, requestFocus);
     }
-  }
-
-  public void showView(@NotNull String viewName) {
-    showView(viewName, true);
-    setStoredState(viewName);
   }
 
   public void showView(@NotNull String viewName, boolean requestFocus) {
@@ -82,6 +78,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
         }
       });
     }
+    setStoredState(viewName);
   }
 
   public boolean isViewVisible(String viewName) {
@@ -123,16 +120,10 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     String visibleViewName = myVisibleViewRef.get();
-    if (visibleViewName != null) {
-      T visibleView = getView(visibleViewName);
-      if (visibleView instanceof DataProvider) {
-        Object data = ((DataProvider)visibleView).getData(dataId);
-        if (data != null) return data;
-      }
-    }
-    return null;
+    T visibleView = visibleViewName != null ? getView(visibleViewName) : null;
+    DataSink.uiDataSnapshot(sink, visibleView);
   }
 
   private void setStoredState(String viewName) {
@@ -180,7 +171,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
       if (myViewMap.size() > 1) {
         List<String> names = new ArrayList<>(myViewMap.keySet());
         String viewName = flag ? names.get(0) : names.get(1);
-        showView(viewName);
+        showView(viewName, true);
         ApplicationManager.getApplication().invokeLater(() -> update(event));
       }
     }

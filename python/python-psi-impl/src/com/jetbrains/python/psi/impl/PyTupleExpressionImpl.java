@@ -9,9 +9,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Iterator;
-
 
 public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements PyTupleExpression {
   public PyTupleExpressionImpl(ASTNode astNode) {
@@ -26,11 +23,6 @@ public class PyTupleExpressionImpl extends PySequenceExpressionImpl implements P
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyTupleType.create(this, ContainerUtil.map(getElements(), context::getType));
-  }
-
-  @Override
-  public Iterator<PyExpression> iterator() {
-    return Arrays.asList(getElements()).iterator();
   }
 
   @Override

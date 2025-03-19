@@ -55,8 +55,8 @@ class GitRevertAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project!!
-    val selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION)
+    val project = e.project ?: return
+    val selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
     val repositoryManager = getRepositoryManager(project)
 
     selection.requestFullDetails rsd@{ commits ->
@@ -65,7 +65,7 @@ class GitRevertAction : DumbAwareAction() {
 
       object : Task.Backgroundable(project, GitBundle.message("progress.title.reverting.n.commits", commits.size)) {
         override fun run(indicator: ProgressIndicator) {
-          GitRevertOperation(project, commits, true).execute()
+          GitRevertProcess(project, commits).execute()
         }
       }.queue()
     }

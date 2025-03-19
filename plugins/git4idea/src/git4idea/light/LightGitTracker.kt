@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.light
 
 import com.intellij.ide.lightEdit.LightEditService
@@ -7,6 +7,7 @@ import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
@@ -33,6 +34,7 @@ import java.util.*
 
 private val LOG = Logger.getInstance("#git4idea.light.LightGitTracker")
 
+@Service
 class LightGitTracker : Disposable {
   private val disposableFlag = Disposer.newCheckedDisposable()
   private val lightEditService = LightEditService.getInstance()
@@ -184,7 +186,7 @@ class LightGitTracker : Disposable {
       if (!hasGit) return StateUpdater.Clear
 
       val locationFile = requests.lastInstance(Request.Location::class.java)?.file
-      val files = requests.filterIsInstance(Request.Status::class.java).flatMapTo(mutableSetOf()) { it.files }
+      val files = requests.filterIsInstance<Request.Status>().flatMapTo(mutableSetOf()) { it.files }
 
       val location: String? = if (locationFile != null) {
         try {
@@ -227,9 +229,7 @@ class LightGitTracker : Disposable {
   }
 
   private sealed class StateUpdater(val state: State) {
-    object Clear : StateUpdater(State.Blank) {
-      override fun toString(): @NonNls String = "Clear"
-    }
+    data object Clear : StateUpdater(State.Blank)
 
     class Update(s: State, val updateLocation: Boolean) : StateUpdater(s) {
       override fun toString(): @NonNls String {
@@ -252,9 +252,7 @@ class LightGitTracker : Disposable {
       }
     }
 
-    object CheckGit : Request() {
-      override fun toString(): @NonNls String = "CheckGit"
-    }
+    data object CheckGit : Request()
   }
 
   companion object {

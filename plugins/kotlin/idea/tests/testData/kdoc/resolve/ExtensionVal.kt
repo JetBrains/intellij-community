@@ -11,4 +11,4 @@ class B {
 val B.extVal: String
     get() = ""
 
-// REF: (for B in a).extVal
+// REF: (a).B.extVal

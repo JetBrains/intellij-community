@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.find.FindModel;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
 
-public class SearchTaskOptions implements Cloneable {
+@ApiStatus.Internal
+public final class SearchTaskOptions implements Cloneable {
 
   public static final int DEFAULT_CRITICAL_AMOUNT_OF_SEARCH_RESULTS = 1000;
   public static final int NO_LIMIT = -1;

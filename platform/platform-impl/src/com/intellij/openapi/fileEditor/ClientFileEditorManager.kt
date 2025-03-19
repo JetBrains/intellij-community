@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
 import com.intellij.codeWithMe.ClientId
@@ -6,10 +6,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorComposite
+import com.intellij.openapi.fileEditor.impl.EditorCompositeModel
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
@@ -17,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * Per-client version of file editor manager
  */
 @ApiStatus.Internal
-@ApiStatus.Experimental
+@Experimental
 interface ClientFileEditorManager {
   companion object {
     @JvmStatic
@@ -28,7 +31,7 @@ interface ClientFileEditorManager {
 
     @JvmStatic
     @ApiStatus.Internal
-    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?) = CLIENT_ID.set(fileEditor, clientId)
+    fun assignClientId(fileEditor: FileEditor, clientId: ClientId?): Unit = CLIENT_ID.set(fileEditor, clientId)
 
     private val CLIENT_ID = Key.create<ClientId>("CLIENT_ID")
   }
@@ -36,6 +39,7 @@ interface ClientFileEditorManager {
   fun getSelectedEditorWithProvider(file: VirtualFile): FileEditorWithProvider?
   fun getSelectedEditor(): FileEditor?
   fun getSelectedEditorWithProvider(): FileEditorWithProvider?
+  fun getSelectedEditorWithProviderFlow(): Flow<FileEditorWithProvider?>
   fun getSelectedEditors(): List<FileEditor>
   fun getSelectedTextEditor(): Editor?
   fun getSelectedFile(): VirtualFile?
@@ -46,16 +50,19 @@ interface ClientFileEditorManager {
   fun getEditorsWithProviders(file: VirtualFile): List<FileEditorWithProvider>
   fun getEditors(file: VirtualFile): List<FileEditor>
 
-  @RequiresBlockingContext
-  fun openFile(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
+  fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite
 
   @Experimental
-  suspend fun openFileAsync(file: VirtualFile, forceCreate: Boolean, requestFocus: Boolean): List<FileEditorWithProvider>
+  suspend fun openFileAsync(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite
 
   fun closeFile(file: VirtualFile, closeAllCopies: Boolean)
   fun isFileOpen(file: VirtualFile): Boolean
 
-  fun createComposite(file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>): EditorComposite?
+  fun createComposite(
+    file: VirtualFile,
+    coroutineScope: CoroutineScope,
+    model: Flow<EditorCompositeModel>,
+  ): EditorComposite?
 
   fun getComposite(file: VirtualFile): EditorComposite?
   fun getComposite(editor: FileEditor): EditorComposite?

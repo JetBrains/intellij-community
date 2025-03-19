@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,7 +6,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +42,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private Sdk myIdeaJdk;
 
   private boolean myModified;
-  @NonNls private static final String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
+  private static final @NonNls String SANDBOX_HISTORY = "DEVKIT_SANDBOX_HISTORY";
 
   private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
@@ -76,7 +75,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       }
 
       @Override
-      public void sdkHomeSelected(@NotNull final Sdk sdk, @NotNull final String newSdkHome) {
+      public void sdkHomeSelected(final @NotNull Sdk sdk, final @NotNull String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
           internalJdkUpdate(sdk);
         }
@@ -183,7 +182,6 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
     ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
-    ((ProjectJdkImpl) myIdeaJdk).resetVersionString();
     myModified = false;
   }
 

@@ -34,12 +34,14 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
   private JBRadioButton myScriptTextRadioButton;
 
   ShRunConfigurationEditor(Project project) {
-    myScriptSelector.addBrowseFolderListener(ShBundle.message("sh.label.choose.shell.script"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
-    myScriptFileWorkingDirectory.addBrowseFolderListener(ShBundle.message("sh.label.choose.script.working.directory"), "", project,
-                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myScriptWorkingDirectory.addBrowseFolderListener(ShBundle.message("sh.label.choose.script.working.directory"), "", project,
-                                                     FileChooserDescriptorFactory.createSingleFolderDescriptor());
-    myInterpreterSelector.addBrowseFolderListener(ShBundle.message("sh.label.choose.interpreter"), "", project, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myScriptSelector.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor()
+      .withTitle(ShBundle.message("sh.label.choose.shell.script")));
+    myScriptFileWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ShBundle.message("sh.label.choose.script.working.directory")));
+    myScriptWorkingDirectory.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(ShBundle.message("sh.label.choose.script.working.directory")));
+    myInterpreterSelector.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor()
+      .withTitle(ShBundle.message("sh.label.choose.interpreter")));
 
     myScriptGroup = new ButtonGroup();
     myScriptGroup.add(myScriptTextRadioButton);
@@ -94,9 +96,8 @@ public class ShRunConfigurationEditor extends SettingsEditor<ShRunConfiguration>
     configuration.setInterpreterOptions(myInterpreterOptions.getText());
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return myPanel;
   }
 

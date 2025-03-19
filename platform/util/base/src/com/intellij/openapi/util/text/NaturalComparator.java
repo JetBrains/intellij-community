@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -8,7 +9,7 @@ import java.util.Comparator;
 
 /**
  * Implementation of
- * <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">"Sorting for Humans: Natural Sort Order"</a>.
+ * <a href="https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/">"Sorting for Humans: Natural Sort Order"</a>.
  *
  * @author Bas Leijdekkers
  */
@@ -17,15 +18,30 @@ public final class NaturalComparator implements Comparator<String> {
 
   @Override
   public int compare(String s1, String s2) {
-    //noinspection StringEquality
-    if (s1 == s2) return 0;
+    if (Strings.areSameInstance(s1, s2)) {
+      return 0;
+    }
     if (s1 == null) return -1;
     if (s2 == null) return +1;
-    return naturalCompare(s1, s2, s1.length(), s2.length(), true);
+    return naturalCompare(s1, s2, s1.length(), s2.length(), true, false);
   }
 
   @Contract(pure = true)
-  private static int naturalCompare(@NotNull String s1, @NotNull String s2, int length1, int length2, boolean ignoreCase) {
+  public static int naturalCompare(@NotNull String s1,
+                                   @NotNull String s2,
+                                   boolean ignoreCase,
+                                   boolean likeFileNames) {
+    return naturalCompare(s1, s2, s1.length(), s2.length(), ignoreCase, likeFileNames);
+  }
+
+  @Contract(pure = true)
+  @ApiStatus.Internal
+  public static int naturalCompare(@NotNull String s1,
+                                   @NotNull String s2,
+                                   int length1,
+                                   int length2,
+                                   boolean ignoreCase,
+                                   boolean likeFileNames) {
     int i = 0;
     int j = 0;
     for (; i < length1 && j < length2; i++, j++) {
@@ -57,6 +73,22 @@ public final class NaturalComparator implements Comparator<String> {
         i = end1 - 1;
         j = end2 - 1;
       }
+      else if (likeFileNames) {
+        //for super natural comparison (IDEA-80435)
+        if (ch1 != ch2) {
+          final int diff;
+          if (ch1 == '-' && ch2 != '_') {
+            diff = compareChars('_', ch2, ignoreCase);
+          }
+          else if (ch2 == '-' && ch1 != '_') {
+            diff = compareChars(ch1, '_', ignoreCase);
+          }
+          else {
+            diff = compareChars(ch1, ch2, ignoreCase);
+          }
+          if (diff != 0) return diff;
+        }
+      }
       else {
         final int diff = compareChars(ch1, ch2, ignoreCase);
         if (diff != 0) return diff;
@@ -70,7 +102,7 @@ public final class NaturalComparator implements Comparator<String> {
     if (length1 != length2) return length1 - length2;
 
     // do case-sensitive compare if case-insensitive strings are equal
-    return ignoreCase ? naturalCompare(s1, s2, length1, length2, false) : 0;
+    return ignoreCase ? naturalCompare(s1, s2, length1, length2, false, likeFileNames) : 0;
   }
 
   private static int compareCharRange(@NotNull String s1, @NotNull String s2, int offset1, int offset2, int end1) {

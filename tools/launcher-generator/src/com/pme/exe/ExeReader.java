@@ -73,7 +73,7 @@ public class ExeReader extends Bin.Structure {
     long result = 0;
     long lastVA = 0;
     for (ImageSectionHeader header : mySectionHeaders) {
-      long va = ((Value)header.getVirtualAddress()).getValue();
+      long va = header.getVirtualAddress().getValue();
       if (lastVA < va) {
         result = header.getVirtualSize().getValue() + va;
       }

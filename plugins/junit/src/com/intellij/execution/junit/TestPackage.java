@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.*;
@@ -16,6 +16,7 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -32,7 +33,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.util.Function;
-import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -61,9 +62,8 @@ public class TestPackage extends TestObject {
     super(configuration, environment);
   }
 
-  @Nullable
   @Override
-  public SourceScope getSourceScope() {
+  public @Nullable SourceScope getSourceScope() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getScope().getSourceScope(getConfiguration());
   }
@@ -137,8 +137,7 @@ public class TestPackage extends TestObject {
     return module;
   }
 
-  @Nullable
-  private TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
+  private @Nullable TestClassFilter computeFilter(JUnitConfiguration.Data data) throws CantRunException {
     try {
       return DumbService.getInstance(getConfiguration().getProject()).computeWithAlternativeResolveEnabled(() -> {
         try {
@@ -164,13 +163,13 @@ public class TestPackage extends TestObject {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected @NlsSafe String getFilters(Set<Location<?>> foundClasses, @NlsSafe String packageName) {
+  protected @NlsSafe String getFilters(Set<? extends Location<?>> foundClasses, @NlsSafe String packageName) {
     return "";
   }
 
-  protected void searchTests5(Module module, Set<Location<?>> classes) throws CantRunException { }
+  protected void searchTests5(Module module, Set<? super Location<?>> classes) throws CantRunException { }
 
-  protected void searchTests(Module module, TestClassFilter classFilter, Set<Location<?>> classes) throws CantRunException {
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<? super Location<?>> classes) throws CantRunException {
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
       collectClassesRecursively(classFilter, acceptClassCondition, classes);
@@ -186,42 +185,19 @@ public class TestPackage extends TestObject {
     return false;
   }
 
-  @NotNull
-  protected @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+  protected @NotNull @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     return data.getPackageName();
   }
 
   protected void collectClassesRecursively(TestClassFilter classFilter,
                                            Condition<? super PsiClass> acceptClassCondition,
-                                           Set<Location<?>> classes) throws CantRunException {
-    PsiPackage aPackage = getPackage();
+                                           Set<? super Location<?>> classes) throws CantRunException {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(getConfiguration().getProject()).intersectWith(classFilter.getScope());
-    collectClassesRecursively(aPackage, scope, acceptClassCondition, classes);
-  }
-
-  private static void collectClassesRecursively(PsiPackage aPackage,
-                                                GlobalSearchScope scope,
-                                                Condition<? super PsiClass> acceptAsTest,
-                                                Set<Location<?>> classes) {
-    PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
-    for (PsiPackage psiPackage : psiPackages) {
-      collectClassesRecursively(psiPackage, scope, acceptAsTest, classes);
-    }
-    PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
-    for (PsiClass aClass : psiClasses) {
-      collectInnerClasses(aClass, acceptAsTest, classes);
-    }
-  }
-
-  protected static void collectInnerClasses(PsiClass aClass, Condition<? super PsiClass> acceptAsTest, Set<Location<?>> classes) {
-    if (Registry.is("junit4.accept.inner.classes", true)) {
-      classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses)
-        .withRoot(aClass).filter(acceptAsTest).map(psiClass -> PsiLocation.fromPsiElement(psiClass))
-        .toList()));
-    }
-    else if (acceptAsTest.value(aClass)) {
-      classes.add(PsiLocation.fromPsiElement(aClass));
-    }
+    List<PsiClass> allClasses = ContainerUtil.filter(
+      PackageUtil.getClasses(getPackage(), Registry.is("junit4.accept.inner.classes", true), scope),
+      classFilter::isAccepted
+    );
+    classes.addAll(ContainerUtil.map(allClasses, PsiLocation::fromPsiElement));
   }
 
   @Override
@@ -271,8 +247,7 @@ public class TestPackage extends TestObject {
     return ReadAction.compute(() -> PackageScope.packageScope(getPackage(), true));
   }
 
-  @NotNull
-  protected PsiPackage getPackage() throws CantRunException {
+  protected @NotNull PsiPackage getPackage() throws CantRunException {
     final String packageName = getConfiguration().getPersistentData().getPackageName();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
     if (aPackage == null) throw CantRunException.packageNotFound(packageName);
@@ -282,7 +257,7 @@ public class TestPackage extends TestObject {
   @Override
   public String suggestActionName() {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    return data.getPackageName().trim().length() > 0
+    return !data.getPackageName().trim().isEmpty()
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
            : TestRunnerBundle.message("all.tests.scope.presentable.text");
   }

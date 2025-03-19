@@ -10,6 +10,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,18 +19,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
 /**
- * Extension point for customization maven module import process.
+ * Deprecated.
+ * Use {@link org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator} instead.
+ * <p>
+ * Extension point for customizing maven module import process.
+ * @deprecated MavenImporter is a part of the legacy import mechanism, which was deprecated and removed from the Maven plugin.
+ * MavenWorkspaceConfigurator is the new alternative.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
 
@@ -109,22 +113,15 @@ public abstract class MavenImporter {
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
-  }
-
-  public void resolve(Project project,
-                      MavenProject mavenProject,
-                      NativeMavenProjectHolder nativeMavenProject,
-                      MavenEmbedderWrapper embedder)
-    throws MavenProcessCanceledException {
   }
 
   /**
@@ -137,6 +134,7 @@ public abstract class MavenImporter {
   /**
    * Import pre process callback.
    */
+  @RequiresWriteLock
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
@@ -147,6 +145,7 @@ public abstract class MavenImporter {
    *
    * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
+  @RequiresWriteLock
   public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
                       @NotNull Module module,
                       @NotNull MavenRootModelAdapter rootModel,
@@ -160,6 +159,7 @@ public abstract class MavenImporter {
   /**
    * Import post process callback.
    */
+  @RequiresWriteLock
   public void postProcess(Module module,
                           MavenProject mavenProject,
                           MavenProjectChanges changes,
@@ -199,5 +199,10 @@ public abstract class MavenImporter {
   protected @Nullable String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
+
+  /**
+   * Override this method if you'd like control over properties used by Maven, e.g. for pom interpolation.
+   */
+  public void customizeUserProperties(@NotNull Project project, @NotNull MavenProject mavenProject, @NotNull Properties properties) { }
 
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions;
 
 import com.intellij.diff.contents.DiffContentBase;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +26,12 @@ import java.util.function.IntUnaryOperator;
 /**
  * Represents sub text of other content.
  */
+@ApiStatus.Internal
 public final class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
-  @NotNull private final DocumentContent myOriginal;
-  @NotNull private final RangeMarker myRangeMarker;
+  private final @NotNull DocumentContent myOriginal;
+  private final @NotNull RangeMarker myRangeMarker;
 
-  @NotNull private final MyDocumentsSynchronizer mySynchronizer;
+  private final @NotNull MyDocumentsSynchronizer mySynchronizer;
 
   private int myAssignments = 0;
 
@@ -54,29 +56,25 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     });
   }
 
-  @NotNull
-  private static RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
+  private static @NotNull RangeMarker createRangeMarker(@NotNull Document document, @NotNull TextRange range) {
     RangeMarker rangeMarker = document.createRangeMarker(range.getStartOffset(), range.getEndOffset(), true);
     rangeMarker.setGreedyToLeft(true);
     rangeMarker.setGreedyToRight(true);
     return rangeMarker;
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return mySynchronizer.getDocument2();
   }
 
-  @Nullable
   @Override
-  public VirtualFile getHighlightFile() {
+  public @Nullable VirtualFile getHighlightFile() {
     return myOriginal.getHighlightFile();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable(@NotNull LineCol position) {
+  public @Nullable Navigatable getNavigatable(@NotNull LineCol position) {
     if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
     int originalOffset = offset + myRangeMarker.getStartOffset();
@@ -84,15 +82,13 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     return myOriginal.getNavigatable(originalPosition);
   }
 
-  @Nullable
   @Override
-  public FileType getContentType() {
+  public @Nullable FileType getContentType() {
     return myOriginal.getContentType();
   }
 
-  @Nullable
   @Override
-  public Navigatable getNavigatable() {
+  public @Nullable Navigatable getNavigatable() {
     return getNavigatable(new LineCol(0));
   }
 
@@ -110,7 +106,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {
-    @NotNull private final RangeMarker myRangeMarker;
+    private final @NotNull RangeMarker myRangeMarker;
 
     MyDocumentsSynchronizer(@Nullable Project project,
                             @NotNull RangeMarker range,
@@ -124,8 +120,13 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     protected void onDocumentChanged1(@NotNull DocumentEvent event) {
       if (!myRangeMarker.isValid()) {
         myDocument2.setReadOnly(false);
-        replaceString(myDocument2, 0, myDocument2.getTextLength(), DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-        myDocument2.setReadOnly(true);
+        try {
+          replaceString(myDocument2, 0, myDocument2.getTextLength(),
+                        DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+        }
+        finally {
+          myDocument2.setReadOnly(true);
+        }
         return;
       }
       CharSequence newText = myDocument1.getCharsSequence().subSequence(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset());
@@ -156,8 +157,11 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
           }
           else {
             myDocument2.setReadOnly(false);
-            myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
-            myDocument2.setReadOnly(true);
+            try {
+              myDocument2.setText(DiffBundle.message("synchronize.document.and.its.fragment.range.error"));
+            } finally {
+              myDocument2.setReadOnly(true);
+            }
           }
         });
       });

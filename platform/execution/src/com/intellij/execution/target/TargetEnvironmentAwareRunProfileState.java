@@ -7,7 +7,6 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -56,7 +55,7 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            promise.setResult(ExecutionUtil.computeWithDataContext(env, afterPreparation));
+            promise.setResult(afterPreparation.compute());
           }
           catch (ProcessCanceledException e) {
             promise.setError(ExecutionBundle.message("canceled.starting.run.configuration"));

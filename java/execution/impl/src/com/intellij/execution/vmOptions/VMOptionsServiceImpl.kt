@@ -16,6 +16,28 @@ import java.util.concurrent.ConcurrentMap
 class VMOptionsServiceImpl : VMOptionsService {
   companion object {
     private val ourData: ConcurrentMap<String, CompletableFuture<JdkOptionsData>> = CollectionFactory.createConcurrentSoftValueMap()
+
+    @JvmStatic
+    @get:JvmName("getStandardOptionList")
+    val STANDARD_OPTION_LIST : List<VMOption> = listOf(
+      opt("ea", VMOptionsBundle.message("vm.option.enable.assertions.description")),
+      opt("enableassertions", VMOptionsBundle.message("vm.option.enable.assertions.description")),
+      opt("da", VMOptionsBundle.message("vm.option.disable.assertions.description")),
+      opt("disableassertions", VMOptionsBundle.message("vm.option.disable.assertions.description")),
+      opt("esa", VMOptionsBundle.message("vm.option.enable.system.assertions.description")),
+      opt("enablesystemassertions", VMOptionsBundle.message("vm.option.enable.system.assertions.description")),
+      opt("dsa", VMOptionsBundle.message("vm.option.disable.system.assertions.description")),
+      opt("disablesystemassertions", VMOptionsBundle.message("vm.option.disable.system.assertions.description")),
+      opt("agentpath:",VMOptionsBundle.message("vm.option.agentpath.description")),
+      opt("agentlib:", VMOptionsBundle.message("vm.option.agentlib.description")),
+      opt("javaagent:", VMOptionsBundle.message("vm.option.javaagent.description")),
+      opt("D", VMOptionsBundle.message("vm.option.system.property.description")),
+      opt("XX:", VMOptionsBundle.message("vm.option.advanced.option.description")),
+    )
+
+    private fun opt(name: String, doc: String): VMOption {
+      return VMOption(name, null, null, VMOptionKind.Standard, doc, VMOptionVariant.DASH, null)
+    }
   }
 
   override fun getOrComputeOptionsForJdk(javaHome: String): CompletableFuture<JdkOptionsData> {
@@ -30,12 +52,14 @@ class VMOptionsServiceImpl : VMOptionsService {
     return future
   }
 
+  override fun getStandardOptions(): JdkOptionsData = JdkOptionsData(STANDARD_OPTION_LIST)
+
   // when null is returned, it was a timeout
-  private fun computeOptionsData(javaHome: String): JdkOptionsData? {
-    return JdkOptionsData(getOptionsForJdk(javaHome) ?: return null)
+  private fun computeOptionsData(javaHome: String): JdkOptionsData {
+    return JdkOptionsData(getOptionsForJdk(javaHome))
   }
 
-  private fun getOptionsForJdk(javaHome: String): List<VMOption>? {
+  private fun getOptionsForJdk(javaHome: String): List<VMOption> {
     val vmPath = getVmPath(javaHome)
     val generalCommandLine = GeneralCommandLine(vmPath)
     generalCommandLine.addParameters("-XX:+PrintFlagsFinal", "-XX:+UnlockDiagnosticVMOptions", "-XX:+UnlockExperimentalVMOptions", "-X")
@@ -43,19 +67,19 @@ class VMOptionsServiceImpl : VMOptionsService {
       OSProcessHandler(generalCommandLine)
     }
     catch (e: ProcessNotCreatedException) {
-      return null
+      return STANDARD_OPTION_LIST
     }
     val runner = CapturingProcessRunner(handler)
     val output = runner.runProcess(1000)
     if (output.isTimeout) {
-      return null
+      return STANDARD_OPTION_LIST
     }
     val xxOptions = VMOptionsParser.parseXXOptions(output.stdout)
     val xOptions = VMOptionsParser.parseXOptions(output.stderr)
     if (xOptions != null) {
-      return xOptions + xxOptions
+      return xOptions + xxOptions + STANDARD_OPTION_LIST
     }
-    return xxOptions
+    return xxOptions + STANDARD_OPTION_LIST
   }
 
   private fun getVmPath(javaHome: String): String {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -15,17 +15,13 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public final class MethodChainLookupRangingHelper {
-  @NotNull
-  public static LookupElement toLookupElement(OperationChain chain,
-                                              ChainCompletionContext context) {
+  public static @NotNull LookupElement toLookupElement(OperationChain chain,
+                                                       ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     LookupElement chainLookupElement = null;
@@ -64,8 +60,7 @@ public final class MethodChainLookupRangingHelper {
                                               new ChainRelevance(chain.length(), unreachableParametersCount, matchedParametersInContext));
   }
 
-  @NotNull
-  private static LookupElementDecorator<LookupElement> decorateWithIteratorAccess(PsiMethod method, LookupElement chainLookupElement) {
+  private static @NotNull LookupElementDecorator<LookupElement> decorateWithIteratorAccess(PsiMethod method, LookupElement chainLookupElement) {
     return new LookupElementDecorator<>(chainLookupElement) {
       @Override
       public void handleInsert(@NotNull InsertionContext context) {
@@ -98,33 +93,31 @@ public final class MethodChainLookupRangingHelper {
     };
   }
 
-  @NotNull
-  private static LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
-                                                            @NotNull ChainCompletionContext context) {
-    PsiNamedElement element = context.getQualifiers(qualifierClass).findFirst().orElse(null);
+  private static @NotNull LookupElement createQualifierLookupElement(@NotNull PsiClass qualifierClass,
+                                                                     @NotNull ChainCompletionContext context) {
+    PsiClassType type = JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createType(qualifierClass);
+    PsiNamedElement element = context.getQualifierIfPresent(type);
     if (element == null) {
       return new ChainCompletionNewVariableLookupElement(qualifierClass, context);
     } else {
-      if (element instanceof PsiVariable) {
-        return new VariableLookupItem((PsiVariable)element);
+      if (element instanceof PsiVariable var) {
+        return new VariableLookupItem(var);
       }
-      else if (element instanceof PsiMethod) {
-        return createMethodLookupElement((PsiMethod)element);
+      else if (element instanceof PsiMethod method) {
+        return createMethodLookupElement(method);
       }
       throw new AssertionError("unexpected element: " + element);
     }
   }
 
-  @NotNull
-  private static Couple<Integer> calculateParameterInfo(@NotNull PsiMethod method,
-                                                        @NotNull ChainCompletionContext context) {
+  private static @NotNull Couple<Integer> calculateParameterInfo(@NotNull PsiMethod method,
+                                                                 @NotNull ChainCompletionContext context) {
     int unreachableParametersCount = 0;
     int matchedParametersInContext = 0;
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       PsiType type = parameter.getType();
       if (!ChainCompletionContext.isWidelyUsed(type)) {
-        Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
-        PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
+        PsiNamedElement contextVariable = context.getQualifierIfPresent(type);
         if (contextVariable != null) {
           matchedParametersInContext++;
           continue;
@@ -138,8 +131,7 @@ public final class MethodChainLookupRangingHelper {
     return Couple.of(unreachableParametersCount, matchedParametersInContext);
   }
 
-  @NotNull
-  private static LookupElement createMethodLookupElement(@NotNull PsiMethod method) {
+  private static @NotNull LookupElement createMethodLookupElement(@NotNull PsiMethod method) {
     LookupElement result;
     if (method.isConstructor()) {
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());

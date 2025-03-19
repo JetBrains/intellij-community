@@ -8,12 +8,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.resume
 
 fun <T : Any> ExtensionPointName<T>.lazyDumbAwareExtensions(project: Project): Sequence<T> {
-  return if (DumbService.getInstance(project).isDumb) lazySequence().filter { DumbService.isDumbAware(it) } else lazySequence()
+  return lazySequence().filter { DumbService.getInstance(project).isUsableInCurrentContext(it) }
 }
 
 /**
- * Suspends until project becomes smart.
- * NB: One should not rely upon "smartness" after this function resumes, because project may become dumb again.
+ * Suspends until a project becomes smart.
+ * NB: One should not rely upon "smartness" after this function resumes, because the project may become dumb again.
  *
  * @see DumbService.waitForSmartMode
  */

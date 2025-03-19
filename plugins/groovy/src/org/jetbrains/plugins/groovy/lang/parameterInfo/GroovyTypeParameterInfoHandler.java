@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.parameterInfo;
 
 import com.intellij.lang.parameterInfo.*;
@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrTypeArgumentList, PsiTypeParameter, GrTypeElement> {
+public final class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GrTypeArgumentList, PsiTypeParameter, GrTypeElement> {
 
   private static final Set<Class<?>> ALLOWED_PARENT_CLASSES = ContainerUtil.newHashSet(GrCodeReferenceElement.class);
   private static final Set<Class<?>> STOP_SEARCHING_CLASSES = ContainerUtil.newHashSet(GroovyFile.class);
@@ -32,39 +32,33 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     return o.getTypeArgumentElements();
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParameterDelimiterType() {
+  public @NotNull IElementType getActualParameterDelimiterType() {
     return GroovyTokenTypes.mCOMMA;
   }
 
-  @NotNull
   @Override
-  public IElementType getActualParametersRBraceType() {
+  public @NotNull IElementType getActualParametersRBraceType() {
     return GroovyTokenTypes.mGT;
   }
 
-  @NotNull
   @Override
-  public Set<Class<?>> getArgumentListAllowedParentClasses() {
+  public @NotNull Set<Class<?>> getArgumentListAllowedParentClasses() {
     return ALLOWED_PARENT_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Set<? extends Class<?>> getArgListStopSearchClasses() {
+  public @NotNull Set<? extends Class<?>> getArgListStopSearchClasses() {
     return STOP_SEARCHING_CLASSES;
   }
 
-  @NotNull
   @Override
-  public Class<GrTypeArgumentList> getArgumentListClass() {
+  public @NotNull Class<GrTypeArgumentList> getArgumentListClass() {
     return GrTypeArgumentList.class;
   }
 
-  @Nullable
   @Override
-  public GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
+  public @Nullable GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     final GrTypeArgumentList parameterList = ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
 
     if (parameterList != null) {
@@ -88,9 +82,8 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     context.showHint(element, element.getTextRange().getStartOffset() + 1, this);
   }
 
-  @Nullable
   @Override
-  public GrTypeArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
+  public @Nullable GrTypeArgumentList findElementForUpdatingParameterInfo(@NotNull UpdateParameterInfoContext context) {
     return ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), GrTypeArgumentList.class);
   }
 

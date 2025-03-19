@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -19,17 +20,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 /**
  * @author MYakovlev
  */
-public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
+@ApiStatus.Internal
+public final class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;
   private RangeHighlighter mySegmentHighlighter;
   private Editor myEditor;
@@ -58,14 +60,14 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     openEditor(file, endOffset);
     final Editor editor = openEditor(file, textRange.getStartOffset());
 
-    SwingUtilities.invokeLater(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (editor != null && !editor.isDisposed()) {
         doSelect(toUseNormalSelection, editor, toSelectLine, textRange);
       }
     });
   }
 
-  private void doSelect(final boolean toUseNormalSelection, @NotNull final Editor editor,
+  private void doSelect(final boolean toUseNormalSelection, final @NotNull Editor editor,
                         final boolean toSelectLine,
                         final TextRange textRange) {
     int startOffset = textRange.getStartOffset();
@@ -133,8 +135,7 @@ public class SelectInEditorManagerImpl extends SelectInEditorManager implements 
     }
   }
 
-  @Nullable
-  private Editor openEditor(VirtualFile file, int textOffset){
+  private @Nullable Editor openEditor(VirtualFile file, int textOffset){
     if (file == null || !file.isValid()){
       return null;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -18,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -25,14 +27,15 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +44,10 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class AddImportAction implements QuestionAction {
   private static final Logger LOG = Logger.getInstance(AddImportAction.class);
@@ -60,6 +65,22 @@ public class AddImportAction implements QuestionAction {
     myReference = ref;
     myTargetClasses = targetClasses;
     myEditor = editor;
+  }
+
+  @RequiresReadLock
+  public static @Nullable AddImportAction create(
+    @NotNull Editor editor,
+    @NotNull Module module,
+    @NotNull PsiReference reference,
+    @NotNull String className
+  ) {
+    Project project = module.getProject();
+    return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
+      GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(module);
+      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+      if (aClass == null) return null;
+      return new AddImportAction(project, reference, editor, aClass);
+    });
   }
 
   @Override
@@ -88,8 +109,30 @@ public class AddImportAction implements QuestionAction {
   private void chooseClassAndImport() {
     CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
+    class Maps {
+      final Map<PsiClass, String> names;
+      final Map<PsiClass, Icon> icons;
+
+      Maps(Map<PsiClass, String> names, Map<PsiClass, Icon> icons) {
+        this.names = names;
+        this.icons = icons;
+      }
+    }
+
+    Maps maps = ReadAction.compute(() -> {
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-346760, EA-1028089")) {
+        return new Maps(
+          Arrays.stream(myTargetClasses)
+            .collect(Collectors.toMap(o -> o, t -> StringUtil.notNullize(t.getQualifiedName()))),
+          Arrays.stream(myTargetClasses)
+            .collect(Collectors.toMap(o -> o, t -> t.getIcon(0)))
+        );
+      }
+    });
+
     final BaseListPopupStep<PsiClass> step =
       new BaseListPopupStep<>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
+
         @Override
         public boolean isAutoSelectionEnabled() {
           return false;
@@ -121,15 +164,14 @@ public class AddImportAction implements QuestionAction {
           return true;
         }
 
-        @NotNull
         @Override
-        public String getTextFor(PsiClass value) {
-          return Objects.requireNonNull(value.getQualifiedName());
+        public @NotNull String getTextFor(PsiClass value) {
+          return maps.names.getOrDefault(value, "");
         }
 
         @Override
-        public Icon getIconFor(PsiClass aValue) {
-          return ReadAction.compute(() -> aValue.getIcon(0));
+        public Icon getIconFor(PsiClass value) {
+          return maps.icons.get(value);
         }
       };
     JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, superRenderer -> {
@@ -158,16 +200,14 @@ public class AddImportAction implements QuestionAction {
     popup.showInBestPositionFor(myEditor);
   }
 
-  @Nullable
-  public static PopupStep<?> getExcludesStep(@NotNull Project project, @Nullable String qname) {
+  public static @Nullable PopupStep<?> getExcludesStep(@NotNull Project project, @Nullable String qname) {
     if (qname == null) return PopupStep.FINAL_CHOICE;
 
     List<String> toExclude = getAllExcludableStrings(qname);
 
     return new BaseListPopupStep<>(null, toExclude) {
-      @NotNull
       @Override
-      public String getTextFor(String value) {
+      public @NotNull String getTextFor(String value) {
         return JavaBundle.message("exclude.0.from.auto.import", value);
       }
 
@@ -194,8 +234,7 @@ public class AddImportAction implements QuestionAction {
     });
   }
 
-  @NotNull
-  public static List<String> getAllExcludableStrings(@NotNull String qname) {
+  public static @NotNull List<String> getAllExcludableStrings(@NotNull String qname) {
     List<String> toExclude = new ArrayList<>();
     while (true) {
       toExclude.add(qname);

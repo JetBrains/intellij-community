@@ -1,15 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.impl.use
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.intellij.build.dependencies.LinuxLibcImpl
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,51 +21,65 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 import java.util.zip.GZIPInputStream
 
 class BundledRuntimeImpl(
   private val options: BuildOptions,
   private val paths: BuildPaths,
   private val dependenciesProperties: DependenciesProperties,
-  private val error: (String) -> Unit,
-  private val info: (String) -> Unit) : BundledRuntime {
-  companion object {
-    fun getProductPrefix(context: BuildContext): String {
-      return context.options.bundledRuntimePrefix ?: context.productProperties.runtimeDistribution.artifactPrefix
-    }
-  }
+  private val productProperties: ProductProperties?,
+  private val info: (String) -> Unit,
+) : BundledRuntime {
+  constructor(context: CompilationContext) : this(
+    options = context.options,
+    paths = context.paths,
+    dependenciesProperties = context.dependenciesProperties,
+    productProperties = (context as? BuildContext)?.productProperties,
+    info = context.messages::info,
+  )
 
-  private val build by lazy {
-    dependenciesProperties.property("runtimeBuild")
-  }
-
-  override suspend fun getHomeForCurrentOsAndArch(): Path {
-    var prefix = "jbr_jcef-"
-    val os = OsFamily.currentOs
-    val arch = JvmArchitecture.currentJvmArch
-    if (System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean()) {
-      // required as a runtime for debugger tests
-      prefix = "jbrsdk-"
-    }
-    else {
-      options.bundledRuntimePrefix?.let {
-        prefix = it
+  override val prefix: String
+    get() {
+      val bundledRuntimePrefix = options.bundledRuntimePrefix
+      return when {
+        LinuxLibcImpl.isLinuxMusl -> "jbrsdk-"
+        // required as a runtime for debugger tests
+        System.getProperty("intellij.build.jbr.setupSdk", "false").toBoolean() -> "jbrsdk-"
+        bundledRuntimePrefix != null -> bundledRuntimePrefix
+        productProperties != null -> productProperties.runtimeDistribution.artifactPrefix
+        else -> JetBrainsRuntimeDistribution.JCEF.artifactPrefix
       }
     }
-    val path = extract(prefix, os, arch)
 
-    val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
-    val releaseFile = home.resolve("release")
-    check(Files.exists(releaseFile)) {
-      "Unable to find release file $releaseFile after extracting JBR at $path"
+  override val build: String
+    get() = System.getenv("JBR_DEV_SERVER_VERSION") ?: dependenciesProperties.property("runtimeBuild")
+
+  private val homeForCurrentOsAndArchMutex = Mutex()
+  private val homeForCurrentOsAndArchValue = AtomicReference<Path>(null)
+
+  override suspend fun getHomeForCurrentOsAndArch(): Path {
+    val result = homeForCurrentOsAndArchValue.get()
+    if (result != null) return result
+    homeForCurrentOsAndArchMutex.withLock {
+      val result = homeForCurrentOsAndArchValue.get()
+      if (result != null) return result
+      val os = OsFamily.currentOs
+      val arch = JvmArchitecture.currentJvmArch
+      val path = extract(os = os, arch = arch)
+      val home = if (os == OsFamily.MACOS) path.resolve("jbr/Contents/Home") else path.resolve("jbr")
+      val releaseFile = home.resolve("release")
+      check(Files.exists(releaseFile)) {
+        "Unable to find release file $releaseFile after extracting JBR at $path"
+      }
+      homeForCurrentOsAndArchValue.set(home)
+      return home
     }
-
-    return home
   }
 
-  // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
   override suspend fun extract(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
-    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
+    val isMusl = os == OsFamily.LINUX && LinuxLibcImpl.isLinuxMusl
+    val targetDir = paths.communityHomeDir.resolve("build/download/${prefix}${build}-${os.jbrArchiveSuffix}-${if (isMusl) "musl-" else ""}$arch")
     val jbrDir = targetDir.resolve("jbr")
 
     val archive = findArchive(prefix, os, arch)
@@ -82,14 +99,17 @@ class BundledRuntimeImpl(
     return targetDir
   }
 
-  override suspend fun extractTo(prefix: String, os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
+  override suspend fun extractTo(os: OsFamily, destinationDir: Path, arch: JvmArchitecture) {
     doExtract(findArchive(prefix, os, arch), destinationDir, os)
   }
 
-  private suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+  override fun downloadUrlFor(prefix: String, os: OsFamily, arch: JvmArchitecture): String {
     val archiveName = archiveName(prefix = prefix, arch = arch, os = os)
-    val url = "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
-    return downloadFileToCacheLocation(url = url, communityRoot = paths.communityHomeDirRoot)
+    return "https://cache-redirector.jetbrains.com/intellij-jbr/$archiveName"
+  }
+
+  override suspend fun findArchive(prefix: String, os: OsFamily, arch: JvmArchitecture): Path {
+    return downloadFileToCacheLocation(url = downloadUrlFor(prefix, os, arch), communityRoot = paths.communityHomeDirRoot)
   }
 
   /**
@@ -106,15 +126,16 @@ class BundledRuntimeImpl(
     val version = if (forceVersionWithUnderscores) split[0].replace(".", "_") else split[0]
     val buildNumber = "b${split[1]}"
     val archSuffix = getArchSuffix(arch)
-    return "${prefix}${version}-${os.jbrArchiveSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
+    val muslSuffix = if (LinuxLibcImpl.isLinuxMusl) "-musl" else ""
+    return "${prefix}${version}-${os.jbrArchiveSuffix}${muslSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
   }
 
   private fun runtimeBuildPrefix(): String {
     if (!options.runtimeDebug) {
       return ""
     }
-    if (!options.isTestBuild && !options.isInDevelopmentMode) {
-      error("Either test or development mode is required to use fastdebug runtime build")
+    check(options.isTestBuild || options.isInDevelopmentMode) {
+      "Either test or development mode is required to use fastdebug runtime build"
     }
     info("Fastdebug runtime build is requested")
     return "fastdebug-"
@@ -123,17 +144,17 @@ class BundledRuntimeImpl(
   /**
    * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
    */
-  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String> {
+  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): Sequence<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
     @Suppress("SpellCheckingInspection")
-    return buildList {
-      add("$pathPrefix/bin/*")
+    return sequence {
+      yield("$pathPrefix/bin/*")
       if (os == OsFamily.LINUX) {
-        add("$pathPrefix/lib/jexec")
-        add("$pathPrefix/lib/jspawnhelper")
+        yield("$pathPrefix/lib/jexec")
+        yield("$pathPrefix/lib/jspawnhelper")
         if (distribution == JetBrainsRuntimeDistribution.JCEF) {
-          add("$pathPrefix/lib/chrome-sandbox")
-          add("$pathPrefix/lib/jcef_helper")
+          yield("$pathPrefix/lib/chrome-sandbox")
+          yield("$pathPrefix/lib/jcef_helper")
         }
       }
     }
@@ -147,7 +168,7 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
   }
 }
 
-private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
+private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
   spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)
@@ -162,7 +183,7 @@ private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
 private fun unTar(archive: Path, destination: Path) {
   // CompressorStreamFactory requires stream with mark support
   val rootDir = createTarGzInputStream(archive).use {
-    it.nextTarEntry?.name
+    it.nextEntry?.name
   }
   if (rootDir == null) {
     throw IllegalStateException("Unable to detect root dir of $archive")

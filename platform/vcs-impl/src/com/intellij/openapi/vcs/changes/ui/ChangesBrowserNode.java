@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.util.treeView.FileNameComparator;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -20,13 +21,14 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -34,7 +36,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
@@ -49,6 +50,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   public static final Tag LOCALLY_DELETED_NODE_TAG = new VcsBundleTag("changes.nodetitle.locally.deleted.files");
 
   protected static final int CONFLICTS_SORT_WEIGHT = 0;
+  protected static final int RESOLVED_CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
@@ -60,6 +62,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   protected static final int UNVERSIONED_SORT_WEIGHT = 9;
   protected static final int DEFAULT_SORT_WEIGHT = 10;
   protected static final int IGNORED_SORT_WEIGHT = 11;
+  protected static final int DELETED_SORT_WEIGHT = 12;
 
   private static final Color UNKNOWN_COLOR = JBColor.marker("ChangesBrowserNode::UNKNOWN_COLOR");
 
@@ -69,75 +72,70 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
-  private Color myBackgroundColor = UNKNOWN_COLOR;
-  @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private @Nullable Color myBackgroundColor = UNKNOWN_COLOR;
+  private UserDataHolderBase myUserDataHolder;
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
   }
 
-  @RequiresBackgroundThread
-  protected void preparePresentationDataCaches(@NotNull Project project) {
-    getBackgroundColorCached(project);
-  }
-
-  /**
-   * see {@link TreeModelBuilder#precalculateFileColors(Project, ChangesBrowserNode)}
-   */
   @ApiStatus.Internal
-  final Color getBackgroundColorCached(@NotNull Project project) {
+  final @Nullable Color getBackgroundColorCached() {
     Color backgroundColor = myBackgroundColor;
-    if (backgroundColor == UNKNOWN_COLOR) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
-        backgroundColor = getBackgroundColor(project);
-      }
-      myBackgroundColor = backgroundColor;
-    }
-
-    return backgroundColor;
+    return backgroundColor == UNKNOWN_COLOR ? null : backgroundColor;
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createRoot() {
+  @ApiStatus.Internal
+  final boolean hasBackgroundColorCached() {
+    Color backgroundColor = myBackgroundColor;
+    return backgroundColor != UNKNOWN_COLOR;
+  }
+
+  @ApiStatus.Internal
+  final boolean cacheBackgroundColor(@NotNull Project project) {
+    Color backgroundColor = myBackgroundColor;
+    if (backgroundColor != UNKNOWN_COLOR) return false;
+
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
+      backgroundColor = getBackgroundColor(project);
+    }
+    myBackgroundColor = backgroundColor;
+    return backgroundColor != null;
+  }
+
+  public static @NotNull ChangesBrowserNode<?> createRoot() {
     ChangesBrowserNode<?> root = new ChangesBrowserRootNode();
     root.markAsHelperNode();
     return root;
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createChange(@Nullable Project project, @NotNull Change userObject) {
+  public static @NotNull ChangesBrowserNode<?> createChange(@Nullable Project project, @NotNull Change userObject) {
     return new ChangesBrowserChangeNode(project, userObject, null);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
+  public static @NotNull ChangesBrowserNode<?> createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
     return new ChangesBrowserFileNode(project, userObject);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
+  public static @NotNull ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject, @Nullable FileStatus status) {
     return new ChangesBrowserFilePathNode(userObject, status);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject) {
+  public static @NotNull ChangesBrowserNode<?> createFilePath(@NotNull FilePath userObject) {
     return createFilePath(userObject, null);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createLogicallyLocked(@Nullable Project project,
-                                                            @NotNull VirtualFile file,
-                                                            @NotNull LogicalLock lock) {
+  public static @NotNull ChangesBrowserNode<?> createLogicallyLocked(@Nullable Project project,
+                                                                     @NotNull VirtualFile file,
+                                                                     @NotNull LogicalLock lock) {
     return new ChangesBrowserLogicallyLockedFile(project, file, lock);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createLockedFolders(@NotNull Project project) {
+  public static @NotNull ChangesBrowserNode<?> createLockedFolders(@NotNull Project project) {
     return new ChangesBrowserLockedFoldersNode(project);
   }
 
-  @NotNull
-  public static ChangesBrowserNode<?> createLocallyDeleted(@NotNull LocallyDeletedChange change) {
+  public static @NotNull ChangesBrowserNode<?> createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
@@ -146,26 +144,37 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (ChangesBrowserNode<?>)super.getParent();
   }
 
-  @Nullable
   @Override
-  public <V> V getUserData(@NotNull Key<V> key) {
-    return myUserDataHolder.getUserData(key);
+  public @Nullable <V> V getUserData(@NotNull Key<V> key) {
+    UserDataHolderBase holder = myUserDataHolder;
+    return holder == null ? null : holder.getUserData(key);
   }
 
   @Override
   public <V> void putUserData(@NotNull Key<V> key, @Nullable V value) {
-    myUserDataHolder.putUserData(key, value);
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    holder.putUserData(key, value);
   }
 
-  @NotNull
   @Override
-  public <V> V putUserDataIfAbsent(@NotNull Key<V> key, @NotNull V value) {
-    return myUserDataHolder.putUserDataIfAbsent(key, value);
+  public @NotNull <V> V putUserDataIfAbsent(@NotNull Key<V> key, @NotNull V value) {
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    return holder.putUserDataIfAbsent(key, value);
   }
 
   @Override
   public <V> boolean replace(@NotNull Key<V> key, @Nullable V oldValue, @Nullable V newValue) {
-    return myUserDataHolder.replace(key, oldValue, newValue);
+    UserDataHolderBase holder = myUserDataHolder;
+    if (holder == null) {
+      myUserDataHolder = holder = new UserDataHolderBase();
+    }
+    return holder.replace(key, oldValue, newValue);
   }
 
   @Override
@@ -224,13 +233,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return sum;
   }
 
-  @NotNull
-  public List<Change> getAllChangesUnder() {
+  public @NotNull List<Change> getAllChangesUnder() {
     return getAllObjectsUnder(Change.class);
   }
 
-  @NotNull
-  public <U> List<U> getAllObjectsUnder(@NotNull Class<U> clazz) {
+  public @NotNull <U> List<U> getAllObjectsUnder(@NotNull Class<U> clazz) {
     return traverseObjectsUnder().filter(clazz).toList();
   }
 
@@ -261,14 +268,16 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       .filter(FilePath.class);
   }
 
+  public void render(@NotNull JTree tree, @NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    render(renderer, selected, expanded, hasFocus);
+  }
+
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     renderer.append(getTextPresentation());
     appendCount(renderer);
   }
 
-  @Nls
-  @NotNull
-  protected String getCountText() {
+  protected @Nls @NotNull String getCountText() {
     int count = getFileCount();
     int dirCount = getDirectoryCount();
     String result = "";
@@ -289,8 +298,17 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     renderer.append(getCountText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
+  @Override
   public String toString() {
     return getTextPresentation();
+  }
+
+  @Override
+  public void setUserObject(Object userObject) {
+    if (userObject != getUserObject()) {
+      Logger.getInstance(ChangesBrowserNode.class).error("Should not replace UserObject for ChangesBrowserNode");
+    }
+    super.setUserObject(userObject);
   }
 
   /**
@@ -307,10 +325,12 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (T)userObject;
   }
 
+  @ApiStatus.Internal
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     return false;
   }
 
+  @ApiStatus.Internal
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 
@@ -326,7 +346,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   }
 
   protected static int compareFileNames(@NotNull String name1, @NotNull String name2) {
-    return FileNameComparator.INSTANCE.compare(name1, name2);
+    return FileNameComparator.getInstance().compare(name1, name2);
   }
 
   public static int compareFilePaths(@NotNull FilePath path1, @NotNull FilePath path2) {
@@ -354,14 +374,12 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
-  @Nullable
-  public Color getBackgroundColor(@NotNull Project project) {
+  public @Nullable Color getBackgroundColor(@NotNull Project project) {
     return getBackgroundColorFor(project, getUserObject());
   }
 
   @DirtyUI
-  @Nullable
-  protected static Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
+  protected static @Nullable Color getBackgroundColorFor(@NotNull Project project, @Nullable Object object) {
     VirtualFile file;
     if (object instanceof FilePath) {
       file = getScopeVirtualFileFor((FilePath)object);
@@ -379,10 +397,9 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return null;
   }
 
-  @Nullable
-  private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
+  private static @Nullable VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
-    return ChangesUtil.findValidParentAccurately(filePath);
+    return VcsImplUtil.findValidParentAccurately(filePath);
   }
 
   public boolean shouldExpandByDefault() {
@@ -402,9 +419,8 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       myValue = value;
     }
 
-    @Nls
     @Override
-    public String toString() {
+    public @Nls String toString() {
       return myValue;
     }
   }
@@ -420,38 +436,33 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       super(value);
     }
 
-    @Nls
     @Override
-    public String toString() {
+    public @Nls String toString() {
       return value.toString(); //NON-NLS
     }
   }
 
   public static class VcsBundleTag implements Tag {
-    @PropertyKey(resourceBundle = VcsBundle.BUNDLE)
-    @NotNull
-    private final String myKey;
+    private final @PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String myKey;
 
     public VcsBundleTag(@PropertyKey(resourceBundle = VcsBundle.BUNDLE) @NotNull String key) {
       myKey = key;
     }
 
-    @Nls
     @Override
-    public String toString() {
+    public @Nls String toString() {
       return VcsBundle.message(myKey);
     }
   }
 
-  public static abstract class ValueTag<T> implements ChangesBrowserNode.Tag {
+  public abstract static class ValueTag<T> implements ChangesBrowserNode.Tag {
     public final T value;
 
     public ValueTag(@NotNull T value) {
       this.value = value;
     }
 
-    @NotNull
-    protected T getValue() {
+    protected @NotNull T getValue() {
       return value;
     }
 
@@ -469,54 +480,14 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     }
   }
 
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public List<VirtualFile> getAllFilesUnder() {
-    return iterateFilesUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilesUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<VirtualFile> getFilesUnderStream() {
-    return iterateFilesUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public List<FilePath> getAllFilePathsUnder() {
-    return iterateFilePathsUnder().toList();
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFilePathsUnder()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<FilePath> getFilePathsUnderStream() {
-    return iterateFilePathsUnder().toStream();
-  }
-
-  /**
-   * @deprecated Use {@link #traverse()}
-   */
-  @NotNull
-  @Deprecated
-  public Stream<ChangesBrowserNode<?>> getNodesUnderStream() {
-    return traverse().toStream();
-  }
-
-  interface NodeWithFilePath {
+  public interface NodeWithFilePath {
     @NotNull
     FilePath getNodeFilePath();
+  }
+
+  @ApiStatus.Internal
+  public interface NodeWithCollapsedParents {
+    @ApiStatus.Internal
+    void addCollapsedParent(@NotNull ChangesBrowserNode<?> parentNode);
   }
 }

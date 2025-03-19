@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.createSmartPointer
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
-import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 
 class SafeDeleteValueArgumentListUsageInfo(
     parameter: PsiElement,

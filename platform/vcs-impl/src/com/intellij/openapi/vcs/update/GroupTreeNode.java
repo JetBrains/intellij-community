@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.icons.AllIcons;
@@ -10,10 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
@@ -23,6 +20,7 @@ import java.util.*;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private final @Nls String myName;
   private final boolean mySupportsDeletion;
@@ -50,9 +48,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return myFileGroupId;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return myName;
   }
 
@@ -61,9 +58,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return AllIcons.Nodes.Folder;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getVirtualFiles() {
+  public @NotNull Collection<VirtualFile> getVirtualFiles() {
     ArrayList<VirtualFile> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getVirtualFiles());
@@ -71,9 +67,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return result;
   }
 
-  @NotNull
   @Override
-  public Collection<File> getFiles() {
+  public @NotNull Collection<File> getFiles() {
     ArrayList<File> result = new ArrayList<>();
     for (int i = 0; i < getChildCount(); i++) {
       result.addAll(((AbstractTreeNode)getChildAt(i)).getFiles());
@@ -97,9 +92,8 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     return true;
   }
 
-  @NotNull
   @Override
-  public SimpleTextAttributes getAttributes() {
+  public @NotNull SimpleTextAttributes getAttributes() {
     return myFilterAttributes == null ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : myFilterAttributes;
   }
 
@@ -172,9 +166,10 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   }
 
+  @Contract(mutates = "this,param2")
   private void addFiles(@NotNull AbstractTreeNode parentNode,
                         @NotNull List<? extends File> roots,
-                        @NotNull final Collection<? extends File> files,
+                        final @NotNull Collection<? extends File> files,
                         @NotNull GroupByPackages groupByPackages,
                         String parentPath) {
     roots.sort((file1, file2) -> {
@@ -192,7 +187,7 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
                                       : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
       Disposer.register((Disposable)parentNode, child);
       parentNode.add(child);
-      addFiles(child, groupByPackages.getChildren(root), files, groupByPackages, child.getFilePath());
+      addFiles(child, new ArrayList<>(groupByPackages.getChildren(root)), files, groupByPackages, child.getFilePath());
     }
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.psi.base
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
@@ -24,7 +23,7 @@ abstract class EditorConfigOptionBase(node: ASTNode) : EditorConfigDescribableEl
 
   final override fun getDescriptor(smart: Boolean): EditorConfigOptionDescriptor? =
     CachedValuesManager.getCachedValue(this, if (smart) SMART_VALUE_KEY else DUMB_VALUE_KEY) {
-      val descriptorManager = EditorConfigOptionDescriptorManager.instance
+      val descriptorManager = EditorConfigOptionDescriptorManager.getInstance(project)
       val descriptor = descriptorManager.getOptionDescriptor(key, keyParts, smart)
       CachedValueProvider.Result.create(descriptor, this)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
@@ -19,12 +19,11 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspectionTool {
   CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close").parameterCount(0);
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitTryStatement(@NotNull PsiTryStatement statement) {
@@ -50,14 +49,15 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
                        EquivalenceChecker.getCanonicalPsiEquivalence()
                          .expressionsAreEquivalent(reference, ((PsiResourceExpression)element).getExpression()));
           if(!isReferenceToResourceVariable) return;
-          holder.registerProblem(last, JavaBundle.message("inspection.redundant.explicit.close"), new DeleteElementFix(last, CommonQuickFixBundle.message("fix.remove.redundant", "close()")));
+          holder.problem(last, JavaBundle.message("inspection.redundant.explicit.close"))
+            .fix(new DeleteElementFix(last, CommonQuickFixBundle.message("fix.remove.redundant", "close()")))
+            .register();
         }
       }
     };
   }
 
-  @NotNull
-  private static List<PsiStatement> getTerminatingStatements(@Nullable PsiStatement last) {
+  private static @NotNull List<PsiStatement> getTerminatingStatements(@Nullable PsiStatement last) {
     if (last == null) return Collections.emptyList();
     List<PsiStatement> terminatingStatements = new ArrayList<>();
     PsiIfStatement ifStatement = tryCast(last, PsiIfStatement.class);

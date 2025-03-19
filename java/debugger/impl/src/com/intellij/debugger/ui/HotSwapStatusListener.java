@@ -15,6 +15,9 @@ public interface HotSwapStatusListener {
   default void onSuccess(List<DebuggerSession> sessions) {
   }
 
+  default void onNothingToReload(List<DebuggerSession> sessions) {
+  }
+
   default void onFailure(List<DebuggerSession> sessions) {
   }
 }

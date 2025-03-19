@@ -1,80 +1,109 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import java.awt.Dimension
+import java.awt.GridBagConstraints
 import java.beans.PropertyChangeListener
 import javax.swing.JFrame
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-class SimpleCustomDecorationPath(val frame: JFrame, private val isGrey: Boolean = false): JPanel(), UISettingsListener {
-  private val frameTitleListener = PropertyChangeListener { updateTitle() }
-  private val label = JBLabel().apply {
-    horizontalAlignment = SwingConstants.CENTER
-  }
+internal class SimpleCustomDecorationPath(@JvmField val frame: JFrame, private val isGrey: () -> Boolean = { false }) {
+  internal class SimpleCustomDecorationPathComponent(frame: JFrame, isGrey: () -> Boolean = { false }) : JPanel() {
+    private val manager = SimpleCustomDecorationPath(frame, isGrey)
 
-  val expectedHeight: Int
-    get() = JBUIScale.scale(30)
+    init {
+      layout = GridLayout()
+      RowsGridBuilder(this).row(resizable = true).cell(component = manager.label,
+                                                       verticalAlign = VerticalAlign.CENTER,
+                                                       horizontalAlign = HorizontalAlign.FILL,
+                                                       resizableColumn = true)
 
-  init {
-    layout = GridLayout()
-    RowsGridBuilder(this).row(resizable = true).cell(component = label,
-                                                     verticalAlign = VerticalAlign.CENTER,
-                                                     horizontalAlign = HorizontalAlign.FILL,
-                                                     resizableColumn = true)
+      manager.updateLabelForeground()
+    }
 
-    updateMinimumSize()
-    updateLabelForeground()
-  }
+    override fun addNotify() {
+      super.addNotify()
+      manager.frame.addPropertyChangeListener("title", manager.frameTitleListener)
+      updateTitle()
+    }
 
-  override fun addNotify() {
-    super.addNotify()
-    frame.addPropertyChangeListener("title", frameTitleListener)
-    updateTitle()
-  }
+    override fun updateUI() {
+      super.updateUI()
+      if (parent != null) {
+        manager.updateLabelForeground()
+      }
+    }
 
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateMinimumSize()
-  }
+    override fun removeNotify() {
+      manager.onRemove()
+      super.removeNotify()
+    }
 
-  override fun updateUI() {
-    super.updateUI()
-    if (parent != null) {
-      updateMinimumSize()
-      updateLabelForeground()
+    private fun updateTitle() {
+      manager.updateTitle()
+    }
+
+    fun updateBorders(rightGap: Int) {
+      border = JBUI.Borders.empty(2, 0, 0, rightGap)
+    }
+
+    fun updateLabelForeground() {
+      manager.updateLabelForeground()
     }
   }
 
-  override fun removeNotify() {
+  private val frameTitleListener = PropertyChangeListener { updateTitle() }
+  private val label = JBLabel().apply {
+    horizontalAlignment = SwingConstants.CENTER
+    font = JBFont.create(font, false)
+  }
+
+  private val insets = JBUI.insetsTop(2)
+
+  init {
+    updateLabelForeground()
+  }
+
+  fun add(panel: JPanel, rightGap: Int) {
+    frame.addPropertyChangeListener("title", frameTitleListener)
+    updateTitle()
+    insets.right = rightGap
+    panel.add(label, GridBagConstraints().also {
+      it.gridx = 0
+      it.gridy = 0
+      it.fill = GridBagConstraints.CENTER
+      it.insets = insets
+    })
+  }
+
+  fun onRemove() {
     frame.removePropertyChangeListener("title", frameTitleListener)
-    super.removeNotify()
   }
 
   private fun updateTitle() {
     label.text = frame.title
   }
 
-  fun updateBorders(rightGap: Int) {
-    border = JBUI.Borders.empty(2, 0, 0, rightGap)
+  fun updateBorders(left: Int, right: Int) {
+    insets.left = left
+    insets.right = right
   }
 
-  private fun updateMinimumSize() {
-    minimumSize = Dimension(0, expectedHeight)
-  }
-
-  private fun updateLabelForeground() {
-    label.foreground =
-      if (isGrey) JBUI.CurrentTheme.Popup.headerForeground(false)
-      else JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+  fun updateLabelForeground() {
+    label.foreground = if (isGrey.invoke()) {
+      JBUI.CurrentTheme.Popup.headerForeground(false)
+    }
+    else {
+      @Suppress("UnregisteredNamedColor")
+      JBColor.namedColor("MainToolbar.Dropdown.foreground", JBColor.foreground())
+    }
   }
 }

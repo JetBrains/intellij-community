@@ -32,6 +32,9 @@ class DialogPanel : JBPanel<DialogPanel> {
   constructor() : super()
   constructor(layout: LayoutManager?) : super(layout)
 
+  /**
+   * [componentValidityChangedCallback] called on each [validationsOnInput]
+   */
   fun registerValidators(
     parentDisposable: Disposable,
     componentValidityChangedCallback: ((Map<JComponent, ValidationInfo>) -> Unit)? = null
@@ -51,10 +54,18 @@ class DialogPanel : JBPanel<DialogPanel> {
     validator = DialogPanelValidator(this, parentDisposable)
   }
 
+  /**
+   * Calls [validationsOnApply] only (for [validationsOnInput] use [registerValidators] callback).
+   * This function might be heavy and must be called before [apply] when user submits dialog
+   */
   fun validateAll(): List<ValidationInfo> {
     return validator?.validateAll() ?: emptyList()
   }
 
+  /**
+   * To be called when user submits dialog
+   * It is usually recommended to call [validateAll] and only call [apply] if no error
+   */
   fun apply() {
     integratedPanels.forEach { it.apply() }
 
@@ -150,18 +161,6 @@ class DialogPanel : JBPanel<DialogPanel> {
     get() = validationsOnInput.mapValues { validateCallback(it.value.first()) }
     set(value) {
       validationsOnInput = value.mapValues { listOf(validation(it.value)) }
-    }
-
-  @Deprecated("Use validationRequestors instead")
-  @get:Deprecated("Use validationRequestors instead")
-  @set:Deprecated("Use validationRequestors instead")
-  @get:ScheduledForRemoval
-  @set:ScheduledForRemoval
-  @Suppress("DEPRECATION")
-  var customValidationRequestors: Map<JComponent, List<(() -> Unit) -> Unit>>
-    get() = validationRequestors.mapValues { it.value.map(::customValidationRequestor) }
-    set(value) {
-      validationRequestors = value.mapValues { it.value.map(::validationRequestor) }
     }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

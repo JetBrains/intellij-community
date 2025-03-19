@@ -11,11 +11,12 @@ import org.jetbrains.kotlin.psi.KtCallableDeclaration
 class KotlinOverridableInternalMembersShortNameIndex internal constructor() : StringStubIndexExtension<KtCallableDeclaration>() {
     companion object Helper : KotlinStringStubIndexHelper<KtCallableDeclaration>(KtCallableDeclaration::class.java) {
         override val indexKey: StubIndexKey<String, KtCallableDeclaration> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinOverridableInternalMembersShortNameIndex")
+            StubIndexKey.createIndexKey(KotlinOverridableInternalMembersShortNameIndex::class.java.simpleName)
     }
 
     override fun getKey() = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinOverridableInternalMembersShortNameIndex[name, project, scope]"))
     override fun get(name: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[name, project, scope]
     }

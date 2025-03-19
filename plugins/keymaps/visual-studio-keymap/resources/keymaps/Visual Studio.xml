@@ -504,7 +504,10 @@
   <action id="ShelvedChanges.Rename">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>
-  <action id="ToggleRenderedDocPresentation"/>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="V"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control V"/>
+  </action>
   <action id="ForceRefresh"/>
   <action id="IncrementalSearch">
     <keyboard-shortcut first-keystroke="control I"/>
@@ -581,11 +584,33 @@
     <keyboard-shortcut first-keystroke="control M" second-keystroke="M"/>
     <keyboard-shortcut first-keystroke="control M" second-keystroke="control M"/>
   </action>
+  <action id="NextOccurence">
+    <keyboard-shortcut first-keystroke="control alt DOWN" />
+    <keyboard-shortcut first-keystroke="F8" />
+  </action>
+  <action id="PreviousOccurence">
+    <keyboard-shortcut first-keystroke="control alt UP" />
+    <keyboard-shortcut first-keystroke="shift F8" />
+  </action>
+  <action id="NextDiff">
+    <keyboard-shortcut first-keystroke="F7" />
+    <keyboard-shortcut first-keystroke="F8" />
+  </action>
+  <action id="PreviousDiff">
+    <keyboard-shortcut first-keystroke="shift F7" />
+    <keyboard-shortcut first-keystroke="shift F8" />
+  </action>
+  <action id="OptimizeImports">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="G"/>
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="control G"/>
+    <keyboard-shortcut first-keystroke="control alt O"/>
+  </action>
 
   <action id="EditorDecreaseFontSizeGlobal"/>
   <action id="EditorIncreaseFontSizeGlobal"/>
   <action id="ZoomInIdeAction"/>
   <action id="ZoomOutIdeAction"/>
+  <action id="Console.Open"/>
 
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->

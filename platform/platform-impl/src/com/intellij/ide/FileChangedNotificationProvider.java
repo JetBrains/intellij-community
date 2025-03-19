@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.application.ApplicationActivationListener;
@@ -22,6 +22,7 @@ import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class FileChangedNotificationProvider implements EditorNotificationProvider, DumbAware {
   private static final Logger LOG = Logger.getInstance(FileChangedNotificationProvider.class);
 
@@ -100,8 +102,7 @@ public final class FileChangedNotificationProvider implements EditorNotification
     };
   }
 
-  @NotNull
-  private static EditorNotificationPanel createPanel(@NotNull final VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  private static @NotNull EditorNotificationPanel createPanel(final @NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
     panel.setText(IdeBundle.message("file.changed.externally.message"));
     panel.createActionLabel(IdeBundle.message("file.changed.externally.reload"), () -> {

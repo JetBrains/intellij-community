@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -57,15 +57,13 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     myNextMethod = nextMethod;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new InlineViewDescriptor(myMethod);
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Collections.singletonList(myReference.getElement());
   }
 
@@ -101,7 +99,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     InlineTransformer ctorTransformer = InlineTransformer.getSuitableTransformer(myMethod).apply(myReference);
     ctorTransformer.transformBody(ctorCopy, myReference, PsiTypes.voidType());
     PsiCodeBlock ctorBody = Objects.requireNonNull(ctorCopy.getBody());
-    InlineUtil.solveVariableNameConflicts(ctorBody, target, ctorBody);
+    InlineUtil.solveLocalNameConflicts(ctorBody, target, ctorBody);
     updateFieldRefs(ctorCopy, aClass);
     ctorParameters = addRange(target, ctorBody, ctorParameters);
 
@@ -110,7 +108,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     InlineTransformer nextTransformer = InlineTransformer.getSuitableTransformer(myNextMethod).apply(myNextCall.getMethodExpression());
     PsiLocalVariable result = nextTransformer.transformBody(nextCopy, myNextCall.getMethodExpression(), myNextCall.getType());
     PsiCodeBlock nextBody = Objects.requireNonNull(nextCopy.getBody());
-    InlineUtil.solveVariableNameConflicts(nextBody, target, nextBody);
+    InlineUtil.solveLocalNameConflicts(nextBody, target, nextBody);
     updateFieldRefs(nextCopy, aClass);
     if (result != null) {
       PsiLocalVariable[] resultAndParameters = ArrayUtil.prepend(result, nextParameters);
@@ -122,7 +120,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       nextParameters = addRange(target, nextBody, nextParameters);
     }
 
-    InlineUtil.solveVariableNameConflicts(target, myReference.getElement(), target);
+    InlineUtil.solveLocalNameConflicts(target, myReference.getElement(), target);
     ctorHelper.initializeParameters(ctorParameters);
     nextHelper.initializeParameters(nextParameters);
 
@@ -269,14 +267,12 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usagesIn);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return JavaRefactoringBundle.message("inline.object.command.name");
   }
 
-  @Nullable
-  public static InlineObjectProcessor create(PsiReference reference, PsiMethod method) {
+  public static @Nullable InlineObjectProcessor create(PsiReference reference, PsiMethod method) {
     if (!canInlineConstructorAndChainCall(reference, method)) {
       return null;
     }
@@ -321,7 +317,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private static boolean isStatelessSuperClass(PsiClassType psiType, Set<PsiClass> checked) {
-    if (TypeUtils.isJavaLangObject(psiType)) return true;
+    if (TypeUtils.isJavaLangObject(psiType) || TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_RECORD, psiType)) return true;
     PsiClass psiClass = psiType.resolve();
     if (psiClass == null || !checked.add(psiClass)) return false;
     PsiMethod[] constructors = psiClass.getConstructors();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -10,6 +10,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu;
@@ -27,6 +30,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
+import java.awt.im.InputMethodRequests;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,11 +40,16 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
+  public static final String IGNORE_LIST_ROW_HEIGHT = "IgnoreListRowHeight";
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   private @Nullable AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
+
+  private int myDropTargetIndex = -1;
+  private @NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD = dropTargetIndex -> 0;
+
 
   public JBList() {
     init();
@@ -169,10 +178,40 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
   }
 
+  public void setDropTargetIndex(int index) {
+    if (index != myDropTargetIndex) {
+      myDropTargetIndex = index;
+      repaint();
+    }
+  }
+
+  public void setOffsetFromElementTopForDnD(@NotNull Function<? super Integer, Integer> offsetFromElementTopForDnD) {
+    this.offsetFromElementTopForDnD = offsetFromElementTopForDnD;
+  }
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
     myEmptyText.paint(this, g);
+    if (myDropTargetIndex < 0) {
+      return;
+    }
+    int dropLineY;
+    Rectangle rc;
+    if (myDropTargetIndex == getModel().getSize()) {
+      rc = getCellBounds(myDropTargetIndex-1, myDropTargetIndex-1);
+      dropLineY = (int)rc.getMaxY()-1;
+    }
+    else {
+      rc = getCellBounds(myDropTargetIndex, myDropTargetIndex);
+      dropLineY = rc.y + offsetFromElementTopForDnD.fun(myDropTargetIndex);
+    }
+    Graphics2D g2d = (Graphics2D) g;
+    g2d.setColor(PlatformColors.BLUE);
+    g2d.setStroke(new BasicStroke(2.0f));
+    g2d.drawLine(rc.x, dropLineY, rc.x+rc.width, dropLineY);
+    g2d.drawLine(rc.x, dropLineY-2, rc.x, dropLineY+2);
+    g2d.drawLine(rc.x+rc.width, dropLineY-2, rc.x+rc.width, dropLineY+2);
   }
 
   @Override
@@ -231,7 +270,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       if (text != null) selected.add(text);
     }
 
-    if (selected.size() > 0) {
+    if (!selected.isEmpty()) {
       String text = StringUtil.join(selected, "\n");
       CopyPasteManager.getInstance().setContents(new StringSelection(text));
     }
@@ -242,6 +281,10 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
     if (c != null) {
       c = ExpandedItemRendererComponentWrapper.unwrap(c);
+    }
+
+    if (c instanceof KotlinUIDslRendererComponent uiDslRendererComponent) {
+      return uiDslRendererComponent.getCopyText();
     }
 
     SimpleColoredComponent coloredComponent = null;
@@ -329,6 +372,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 
+  /** @deprecated Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} instead */
+  @Deprecated(forRemoval = true)
   public void setDataProvider(@NotNull DataProvider provider) {
     DataManager.registerDataProvider(this, provider);
   }
@@ -403,6 +448,16 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
         // See https://code.google.com/p/android/issues/detail?id=193072
         return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
+    }
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
     }
   }
 }

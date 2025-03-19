@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -17,8 +17,7 @@ class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;
   public final int signature;
   public final int name;
-  @NotNull
-  public final Set<TypeRepr.ClassType> annotations;
+  public final @NotNull Set<TypeRepr.ClassType> annotations;
 
   protected Proto(final int access, final int signature, final int name, Set<TypeRepr.ClassType> annotations) {
     this.access = access;
@@ -32,7 +31,7 @@ class Proto implements RW.Savable, Streamable, ProtoEntity {
       access = DataInputOutputUtil.readINT(in);
       signature = DataInputOutputUtil.readINT(in);
       name = DataInputOutputUtil.readINT(in);
-      annotations = RW.read(TypeRepr.classTypeExternalizer(context), new HashSet<>(), in);
+      annotations = RW.read(TypeRepr.externalizer(context), new HashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);

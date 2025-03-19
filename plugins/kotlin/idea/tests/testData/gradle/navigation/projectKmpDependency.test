@@ -1,0 +1,34 @@
+// FILE: build.gradle.kts
+// "EXPECTED-NAVIGATION-SUBSTRING": "this is module1/build.gradle.kts"
+plugins {
+    `kotlin-dsl`
+}
+
+repositories {
+    mavenCentral()
+}
+
+kotlin {
+    sourceSets {
+        commonMain {
+            dependencies {
+                api(project(":<caret>module1"))
+            }
+        }
+    }
+}
+
+// FILE: settings.gradle.kts
+include("module1")
+
+// FILE: module1/build.gradle.kts
+
+// this is module1/build.gradle.kts
+
+plugins {
+    java
+}
+
+repositories {
+    mavenCentral()
+}

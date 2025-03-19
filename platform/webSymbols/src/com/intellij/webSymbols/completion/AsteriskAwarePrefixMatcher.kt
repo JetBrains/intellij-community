@@ -7,14 +7,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 
 class AsteriskAwarePrefixMatcher private constructor(prefix: String, delegate: PrefixMatcher) : PrefixMatcher(prefix) {
+  private val myDelegate: PrefixMatcher = delegate.cloneWithPrefix(convert(prefix, true))
 
-  private val myDelegate: PrefixMatcher
-
-  constructor(delegate: PrefixMatcher) : this(delegate.prefix, delegate) {}
-
-  init {
-    myDelegate = delegate.cloneWithPrefix(convert(prefix, true))
-  }
+  constructor(delegate: PrefixMatcher) : this(delegate.prefix, delegate)
 
   override fun prefixMatches(name: String): Boolean = myDelegate.prefixMatches(convert(name))
   override fun prefixMatches(element: LookupElement): Boolean = myDelegate.prefixMatches(convert(element))
@@ -27,7 +22,6 @@ class AsteriskAwarePrefixMatcher private constructor(prefix: String, delegate: P
     else AsteriskAwarePrefixMatcher(prefix, myDelegate)
 
   companion object {
-
     private const val ASTERISK = '*'
     private const val ASTERISK_REPLACEMENT = '⭐'
 

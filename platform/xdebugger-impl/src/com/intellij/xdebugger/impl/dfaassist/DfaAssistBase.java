@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -97,7 +99,7 @@ public abstract class DfaAssistBase implements Disposable {
 
   protected void cleanUp() {
     UIUtil.invokeLaterIfNeeded(() -> {
-      Disposer.dispose(myMarkup);
+      ReadAction.run(() -> Disposer.dispose(myMarkup));
     });
   }
 
@@ -120,7 +122,7 @@ public abstract class DfaAssistBase implements Disposable {
 
     @Override
     public void dispose() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myInlays.forEach(Disposer::dispose);
       myInlays.clear();
       myRanges.forEach(RangeHighlighter::dispose);

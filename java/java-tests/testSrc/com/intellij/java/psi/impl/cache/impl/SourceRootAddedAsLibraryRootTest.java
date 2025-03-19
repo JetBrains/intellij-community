@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -29,12 +30,13 @@ public class SourceRootAddedAsLibraryRootTest extends JavaPsiTestCase {
 
   private void changeRoots() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, myDir.getUrl());
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   public void testBug() {
     touchFileSync();
     PsiFile psiFile = myPsiManager.findFile(myVFile);
-    psiFile.getText();
+    assertNotNull(psiFile.getText());
     changeRoots();
   }
 

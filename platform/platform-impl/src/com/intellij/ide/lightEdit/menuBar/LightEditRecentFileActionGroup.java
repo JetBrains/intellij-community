@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.actions.RecentProjectsGroup;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
@@ -18,6 +19,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,9 +31,10 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Re
 /**
  * @see RecentProjectsGroup
  */
-class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware {
   LightEditRecentFileActionGroup() {
     super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
+    getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
   }
 
   @Override
@@ -53,8 +56,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
+  private static @Unmodifiable @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);

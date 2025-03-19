@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.ibm.icu.text.ListFormatter;
@@ -17,7 +17,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
 import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
@@ -35,10 +34,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
@@ -134,16 +130,14 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     };
   }
 
-  @NotNull
   @Override
-  protected DfaMemoryState createMemoryState() {
+  protected @NotNull DfaMemoryState createMemoryState() {
     return new TrackingDfaMemoryState(getFactory());
   }
 
-  @Nullable
-  public static CauseItem findProblemCause(boolean ignoreAssertions,
-                                           PsiExpression expression,
-                                           DfaProblemType type) {
+  public static @Nullable CauseItem findProblemCause(boolean ignoreAssertions,
+                                                     PsiExpression expression,
+                                                     DfaProblemType type) {
     PsiElement body = DfaUtil.getDataflowContext(expression);
     if (body == null) return null;
     TrackingRunner runner = new TrackingRunner(body, expression, ignoreAssertions);
@@ -199,8 +193,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   TODO: 3. Check how it works with:
             Boxed numbers
    */
-  @Nullable
-  private CauseItem findProblemCause(PsiExpression expression, DfaProblemType type) {
+  private @Nullable CauseItem findProblemCause(PsiExpression expression, DfaProblemType type) {
     if (myHistoryForContext == null) return null;
     CauseItem cause = null;
     do {
@@ -222,6 +215,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   public abstract static class DfaProblemType {
+    @Override
     public abstract @Nls String toString();
 
     CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
@@ -235,7 +229,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   public static class CauseItem {
-    private static final String PLACE_POINTER = "___PLACE___";
+    private static final @NlsSafe String PLACE_POINTER = "___PLACE___";
     final @NotNull List<CauseItem> myChildren;
     final @NotNull DfaProblemType myProblem;
     final @Nullable SmartPsiFileRange myTarget;
@@ -314,8 +308,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return StreamEx.of(myChildren);
     }
 
-    @Nullable
-    public PsiFile getFile() {
+    public @Nullable PsiFile getFile() {
       return myTarget != null ? myTarget.getContainingFile() : null;
     }
 
@@ -323,7 +316,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return myTarget == null ? null : myTarget.getRange();
     }
 
-    public String render(Document doc, CauseItem parent) {
+    public @Nls String render(Document doc, CauseItem parent) {
       String title = null;
       Segment range = getTargetSegment();
       if (range != null) {
@@ -339,7 +332,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
       int childIndex = parent == null ? 0 : parent.myChildren.indexOf(this);
       if (childIndex > 0) {
-        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType ? "or " : "and ") + title;
+        title = (parent.myProblem instanceof PossibleExecutionDfaProblemType
+                 ? JavaAnalysisBundle.message("dfa.find.cause.or.another", title)
+                 : JavaAnalysisBundle.message("dfa.find.cause.and.another", title));
       } else {
         title = StringUtil.capitalize(title);
       }
@@ -348,7 +343,6 @@ public final class TrackingRunner extends StandardDataFlowRunner {
 
     @Override
     public @Nls String toString() {
-      //noinspection HardCodedStringLiteral
       return getProblemName().replaceFirst(PLACE_POINTER, JavaAnalysisBundle.message("dfa.find.cause.place.here"));
     }
 
@@ -435,6 +429,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.cast.may.fail");
     }
@@ -450,6 +445,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return new CauseItem[0];
     }
 
+    @Override
     public String toString() {
       return JavaAnalysisBundle.message("dfa.find.cause.may.be.null");
     }
@@ -509,7 +505,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType rangeProblem &&
           myTemplate.equals(rangeProblem.myTemplate) &&
           Objects.equals(myType, rangeProblem.myType)) {
-        return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
+        return new RangeDfaProblemType(myTemplate, myRangeSet.join(rangeProblem.myRangeSet), myType);
       }
       return super.tryMerge(other);
     }
@@ -550,7 +546,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     public CauseItem[] findCauses(TrackingRunner runner, PsiExpression expression, MemoryStateChange history) {
       DfaValue topOfStack = history.myTopOfStack;
       DfaValue value = myField.createValue(runner.getFactory(), topOfStack);
-      MemoryStateChange change = MemoryStateChange.create(history, new JvmPushInstruction(value, null), Map.of(), value);
+      MemoryStateChange change = MemoryStateChange.create(history, new PushInstruction(value, null), Map.of(), value);
       return runner.findConstantValueCause(expression, change, 0);
     }
 
@@ -610,9 +606,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return new CauseItem[0];
   }
 
-  @NotNull
   @Contract("_, _ -> new")
-  private static CauseItem createAssignmentCause(AssignInstruction instruction, DfaValue target) {
+  private static @NotNull CauseItem createAssignmentCause(AssignInstruction instruction, DfaValue target) {
     PsiExpression rExpression = instruction.getRExpression();
     PsiElement anchor = null;
     String targetName = target.toString();
@@ -817,8 +812,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return null;
   }
 
-  @Nullable
-  private static CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
+  private static @Nullable CauseItem findTypeCause(MemoryStateChange operandHistory, PsiType type, boolean isInstance) {
     PsiExpression operand = Objects.requireNonNull(operandHistory.getExpression());
     TypeConstraint wanted = TypeConstraints.instanceOf(type);
     PsiType operandType = operand.getType();
@@ -1014,7 +1008,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         CauseItem[] result = new CauseItem[0];
         for (DfaRelation deduced : chain) {
           CauseItem[] cause =
-            findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
+            findRelationCause(deduced.relationType(), change, deduced.leftOperand(), change, deduced.rightOperand());
           result = ArrayUtil.mergeArrays(result, cause);
         }
         if (result.length > 1) {
@@ -1087,13 +1081,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private static boolean isSameRelation(DfaRelation dfaRel, DfaVariableValue var, Relation relation) {
     DfaValue counterpart;
     RelationType type;
-    if (dfaRel.getLeftOperand() == var) {
-      type = dfaRel.getRelation();
-      counterpart = dfaRel.getRightOperand();
+    if (dfaRel.leftOperand() == var) {
+      type = dfaRel.relationType();
+      counterpart = dfaRel.rightOperand();
     }
-    else if (dfaRel.getRightOperand() == var) {
-      type = dfaRel.getRelation().getFlipped();
-      counterpart = dfaRel.getLeftOperand();
+    else if (dfaRel.rightOperand() == var) {
+      type = dfaRel.relationType().getFlipped();
+      counterpart = dfaRel.leftOperand();
     }
     else {
       return false;
@@ -1101,8 +1095,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return counterpart == relation.myCounterpart && type != null;
   }
 
-  @Nullable
-  private static DfaRelation getBinaryExpressionRelation(MemoryStateChange change, PsiBinaryExpression binOp) {
+  private static @Nullable DfaRelation getBinaryExpressionRelation(MemoryStateChange change, PsiBinaryExpression binOp) {
     PsiExpression lOperand = binOp.getLOperand();
     PsiExpression rOperand = binOp.getROperand();
     MemoryStateChange leftPos = change.findExpressionPush(lOperand);
@@ -1357,16 +1350,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     for (MethodContract c : contracts) {
       ThreeState applies = contractApplies(call, c);
       switch (applies) {
-        case NO:
-          break;
-        case UNSURE:
-          unsureContracts.add(c);
-          break;
-        case YES:
+        case NO -> { }
+        case UNSURE -> unsureContracts.add(c);
+        case YES -> {
           if (unsureContracts.isEmpty() && contractReturnValue.isSuperValueOf(c.getReturnValue())) {
             return fromSingleContract(history, call, method, c);
           }
-          break;
+        }
       }
     }
     if (unsureContracts.size() == 1) {
@@ -1378,8 +1368,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return null;
   }
 
-  @Nullable
-  private static PsiElement getCallAnchor(PsiCallExpression call) {
+  private static @Nullable PsiElement getCallAnchor(PsiCallExpression call) {
     if (call instanceof PsiMethodCallExpression) {
       return ((PsiMethodCallExpression)call).getMethodExpression().getReferenceNameElement();
     }
@@ -1404,8 +1393,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return JavaAnalysisBundle.message("dfa.find.cause.contract.kind.hard.coded");
   }
 
-  @NotNull
-  private ThreeState contractApplies(@NotNull PsiCallExpression call, @NotNull MethodContract contract) {
+  private @NotNull ThreeState contractApplies(@NotNull PsiCallExpression call, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     for (ContractValue condition : conditions) {
       DfaCondition cond = condition.fromCall(getFactory(), call);
@@ -1415,9 +1403,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return ThreeState.UNSURE;
   }
 
-  @NotNull
-  private CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiCallExpression call,
-                                       @NotNull PsiMethod method, @NotNull MethodContract contract) {
+  private @NotNull CauseItem fromSingleContract(@NotNull MemoryStateChange history, @NotNull PsiCallExpression call,
+                                                @NotNull PsiMethod method, @NotNull MethodContract contract) {
     List<ContractValue> conditions = contract.getConditions();
     Collector<String, ?, @Nls String> collector = Collectors.collectingAndThen(Collectors.toList(), list -> ListFormatter.getInstance(
       DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list));
@@ -1452,12 +1439,12 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         right = rightVal.makeDfaValue(getFactory(), arguments);
       }
       if (leftPush == null && left != top) {
-        leftPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(left, null), Collections.emptyMap(), left);
+        leftPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(left, null), Collections.emptyMap(), left);
       }
       PsiExpression rightPlace = rightVal.findPlace(call);
       MemoryStateChange rightPush = history.findSubExpressionPush(rightPlace);
       if (rightPush == null && right != top) {
-        rightPush = MemoryStateChange.create(history.getPrevious(), new JvmPushInstruction(right, null), Collections.emptyMap(), right);
+        rightPush = MemoryStateChange.create(history.getPrevious(), new PushInstruction(right, null), Collections.emptyMap(), right);
       }
       if (leftPush != null && rightPush != null) {
         causeItem.addChildren(findRelationCause(type,
@@ -1602,8 +1589,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     return item;
   }
 
-  @Nullable
-  public static @Nls String getObviouslyNonNullExplanation(PsiExpression arg) {
+  public static @Nullable @Nls String getObviouslyNonNullExplanation(PsiExpression arg) {
     if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
     if (arg instanceof PsiNewExpression) return JavaAnalysisBundle.message("dfa.find.cause.nonnull.expression.kind.newly.created.object");
     if (arg instanceof PsiLiteralExpression) return JavaAnalysisBundle.message("dfa.find.cause.nonnull.expression.kind.literal");

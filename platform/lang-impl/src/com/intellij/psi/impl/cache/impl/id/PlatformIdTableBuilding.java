@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -44,8 +44,7 @@ public final class PlatformIdTableBuilding {
 
   private PlatformIdTableBuilding() {}
 
-  @Nullable
-  public static DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType) {
+  public static @Nullable DataIndexer<TodoIndexEntry, Integer, FileContent> getTodoIndexer(FileType fileType) {
     final DataIndexer<TodoIndexEntry, Integer, FileContent> extIndexer = TodoIndexers.INSTANCE.forFileType(fileType);
     if (extIndexer != null) {
       return extIndexer;
@@ -63,16 +62,15 @@ public final class PlatformIdTableBuilding {
     return fileType instanceof CustomSyntaxTableFileType ? GENERAL_TODO_LISTENER : null;
   }
 
-  private static class TokenSetTodoIndexer extends VersionedTodoIndexer {
+  private static final class TokenSetTodoIndexer extends VersionedTodoIndexer {
     final TokenSet myCommentTokens;
 
-    TokenSetTodoIndexer(@NotNull final TokenSet commentTokens) {
+    TokenSetTodoIndexer(final @NotNull TokenSet commentTokens) {
       myCommentTokens = commentTokens;
     }
 
     @Override
-    @NotNull
-    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
+    public @NotNull Map<TodoIndexEntry, Integer> map(final @NotNull FileContent inputData) {
       IndexPattern[] patterns = IndexPatternUtil.getIndexPatterns();
       BaseFilterLexer.TodoScanningState todoScanningState = createTodoScanningState(patterns);
       if (patterns.length == 0) return Collections.emptyMap();

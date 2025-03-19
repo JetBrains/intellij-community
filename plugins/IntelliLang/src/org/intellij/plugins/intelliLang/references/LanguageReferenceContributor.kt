@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.intelliLang.references
 
 import com.intellij.codeInsight.completion.*
@@ -27,7 +27,7 @@ import com.intellij.util.text.findTextRange
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 
-class LanguageReferenceContributor : PsiSymbolReferenceProvider {
+internal class LanguageReferenceContributor : PsiSymbolReferenceProvider {
   override fun getReferences(element: PsiExternalReferenceHost, hints: PsiSymbolReferenceHints): Collection<PsiSymbolReference> {
     val psiComment = element.asSafely<PsiComment>() ?: return emptyList()
     val languageRange = getLanguageRange(psiComment) ?: return emptyList()
@@ -65,7 +65,7 @@ private data class LanguageSymbol(val name: String) : Symbol, Pointer<LanguageSy
   override fun dereference(): LanguageSymbol = this
 }
 
-class LanguageWordInCommentCompletionContributor : CompletionContributor() {
+internal class LanguageWordInCommentCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiComment(), object : CompletionProvider<CompletionParameters?>() {
       override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -82,7 +82,7 @@ class LanguageWordInCommentCompletionContributor : CompletionContributor() {
   }
 }
 
-class LanguageCommentFolding : FoldingBuilderEx() {
+internal class LanguageCommentFolding : FoldingBuilderEx() {
   override fun buildFoldRegions(root: PsiElement, document: Document, quick: Boolean): Array<FoldingDescriptor> {
     return SmartList<FoldingDescriptor>().also { result ->
       root.accept(object : PsiRecursiveElementWalkingVisitor() {

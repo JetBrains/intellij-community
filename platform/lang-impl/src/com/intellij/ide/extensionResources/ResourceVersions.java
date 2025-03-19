@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -25,8 +24,7 @@ import java.util.Objects;
 
 @State(name = "ExtensionsRootType", storages = @Storage(StoragePathMacros.CACHE_FILE))
 final class ResourceVersions implements PersistentStateComponent<ResourceVersions.State> {
-  @NotNull
-  public static ResourceVersions getInstance() {
+  public static @NotNull ResourceVersions getInstance() {
     return ApplicationManager.getApplication().getService(ResourceVersions.class);
   }
 
@@ -40,9 +38,8 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
     myState.rememberPlugin(plugin);
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     return myState.clone();
   }
 
@@ -65,23 +62,29 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
     }
 
     public boolean isNewOrUpgraded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-      return !StringUtil.equals(pluginIdToVersion.get(getId(pluginDescriptor)), getVersion(pluginDescriptor));
+      synchronized (pluginIdToVersion) {
+        return !StringUtil.equals(pluginIdToVersion.get(getId(pluginDescriptor)), getVersion(pluginDescriptor));
+      }
     }
 
     public void rememberPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-      pluginIdToVersion.put(getId(pluginDescriptor), getVersion(pluginDescriptor));
+      synchronized (pluginIdToVersion) {
+        pluginIdToVersion.put(getId(pluginDescriptor), getVersion(pluginDescriptor));
+      }
     }
 
     public static @NotNull State forgetDisabledPlugins(@NotNull State storedState) {
-      Map<String, String> pluginIdToVersion = new HashMap<>(storedState.pluginIdToVersion.size());
-      for (String pluginIdString : storedState.pluginIdToVersion.keySet()) {
-        PluginId pluginId = PluginId.findId(pluginIdString);
-        IdeaPluginDescriptor plugin = pluginId == null ? null : PluginManager.getInstance().findEnabledPlugin(pluginId);
-        if (plugin != null) {
-          pluginIdToVersion.put(pluginIdString, storedState.pluginIdToVersion.get(pluginIdString));
+      synchronized (storedState.pluginIdToVersion) {
+        Map<String, String> pluginIdToVersion = new HashMap<>(storedState.pluginIdToVersion.size());
+        for (String pluginIdString : storedState.pluginIdToVersion.keySet()) {
+          PluginId pluginId = PluginId.findId(pluginIdString);
+          IdeaPluginDescriptor plugin = pluginId == null ? null : PluginManager.getInstance().findEnabledPlugin(pluginId);
+          if (plugin != null) {
+            pluginIdToVersion.put(pluginIdString, storedState.pluginIdToVersion.get(pluginIdString));
+          }
         }
+        return new State(pluginIdToVersion);
       }
-      return new State(pluginIdToVersion);
     }
 
     @Override
@@ -99,8 +102,7 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
       return plugin.getPluginId().getIdString();
     }
 
-    @NotNull
-    private static String getVersion(@NotNull IdeaPluginDescriptor plugin) {
+    private static @NotNull String getVersion(@NotNull IdeaPluginDescriptor plugin) {
       if (!plugin.isBundled()) {
         return Objects.requireNonNull(plugin.getVersion());
       }

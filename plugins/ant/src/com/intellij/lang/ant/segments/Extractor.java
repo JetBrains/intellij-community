@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.segments;
 
 import com.intellij.execution.testframework.Printable;
@@ -47,7 +47,7 @@ public class Extractor implements Disposable {
     }
   }
 
-  public void setPacketDispatcher(@NotNull final PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
+  public void setPacketDispatcher(final @NotNull PacketProcessor packetProcessor, final DeferredActionsQueue queue) {
     myFulfilledWorkGate = new DeferredActionsQueue() { //todo make it all later
       @Override
       public void addLast(final Runnable runnable) {

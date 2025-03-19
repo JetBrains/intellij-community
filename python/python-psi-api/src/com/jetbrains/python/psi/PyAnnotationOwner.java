@@ -16,23 +16,14 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.ast.PyAstAnnotationOwner;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
  */
-public interface PyAnnotationOwner extends PsiElement {
+public interface PyAnnotationOwner extends PyAstAnnotationOwner, PsiElement {
+  @Override
   @Nullable
   PyAnnotation getAnnotation();
-
-  /**
-   * Returns the text of the annotation with the leading colon and arrow stripped.
-   * <p>
-   * It's supposed to be the same value as one can get by calling {@code elem.getAnnotation().getValue().getText()},
-   * but taken from the corresponding stub instead of AST.
-   */
-  @Nullable
-  default String getAnnotationValue() {
-    return null;
-  }
 }

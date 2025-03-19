@@ -1,0 +1,15 @@
+### auto-generated section `build intellij.platform.bootstrap.dev` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "dev",
+  module_name = "intellij.platform.bootstrap.dev",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/build-scripts/dev-server:buildScripts-devBuildServer",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+  ]
+)
+### auto-generated section `build intellij.platform.bootstrap.dev` end

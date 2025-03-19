@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.actions;
 
 import com.intellij.diff.DiffDialogHints;
@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -30,6 +31,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.CompareWithLocalDialog;
@@ -38,29 +40,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * Compares selected file/folder with itself in another revision.
  */
 public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAwareAction {
-  @NotNull
-  protected abstract AbstractRepositoryManager<T> getRepositoryManager(@NotNull Project project);
+  protected abstract @NotNull AbstractRepositoryManager<T> getRepositoryManager(@NotNull Project project);
 
   protected abstract boolean nothingToCompare(@NotNull T repository);
 
-  @Nullable
-  protected abstract JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file);
+  protected abstract @Nullable JBPopup createPopup(@NotNull Project project, @NotNull T repository, @NotNull VirtualFile file);
 
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = Objects.requireNonNull(JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single());
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    if (project == null) return;
+    VirtualFile file = JBIterable.from(e.getData(VcsDataKeys.VIRTUAL_FILES)).single();
+    if (file == null) return;
 
-    T repository = Objects.requireNonNull(getRepositoryManager(project).getRepositoryForFileQuick(file));
+    T repository = getRepositoryManager(project).getRepositoryForFileQuick(file);
+    if (repository == null) return;
     assert !repository.isFresh();
 
     JBPopup popup = createPopup(project, repository, file);
@@ -90,16 +93,17 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     return repository != null && !repository.isFresh() && !nothingToCompare(repository);
   }
 
-  @NotNull
-  protected static JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
-                                       @NotNull List<String> options,
-                                       @NotNull Consumer<? super String> onChosen) {
+  protected static @NotNull JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
+                                                @NotNull List<String> options,
+                                                @NotNull Consumer<? super String> onChosen) {
     return JBPopupFactory.getInstance()
       .createPopupChooserBuilder(options)
       .setTitle(title)
+      .setMovable(true)
       .setItemChosenCallback(onChosen::accept)
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
+      .setRenderer(BuilderKt.textListCellRenderer((@NlsSafe var name) -> name))
       .withFixedRendererSize(new Dimension(JBUI.scale(350), JBUI.CurrentTheme.List.rowHeight())) // do not freeze on huge lists
       .createPopup();
   }
@@ -137,8 +141,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
     }
   }
 
-  @NotNull
-  protected static String getPresentableCurrentBranchName(Repository repository) {
+  protected static @NotNull String getPresentableCurrentBranchName(Repository repository) {
     String branchName = repository.getCurrentBranchName();
     if (branchName != null) return branchName;
 

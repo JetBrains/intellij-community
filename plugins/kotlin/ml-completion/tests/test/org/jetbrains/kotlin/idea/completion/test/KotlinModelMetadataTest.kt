@@ -7,5 +7,7 @@ import org.junit.Test
 
 class KotlinModelMetadataTest {
     @Test
-    fun testMetadataConsistent() = KotlinMLRankingProvider().assertModelMetadataConsistent()
+    fun testMetadataConsistent() {
+        KotlinMLRankingProvider().assertModelMetadataConsistent()
+    }
 }

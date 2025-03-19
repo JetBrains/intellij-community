@@ -7,8 +7,7 @@ class Test {
         return 42l;
     }
 
-    @Nullable
-    private Double newMethod(boolean b, Integer notNullInt) {
+    private @Nullable Double newMethod(boolean b, Integer notNullInt) {
         if (b) {
             return (double) notNullInt;
         }

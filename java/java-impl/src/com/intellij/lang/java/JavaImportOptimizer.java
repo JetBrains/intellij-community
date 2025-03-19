@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -14,18 +14,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaImportOptimizer implements ImportOptimizer {
+public final class JavaImportOptimizer implements ImportOptimizer {
   private static final Logger LOG = Logger.getInstance(JavaImportOptimizer.class);
 
   @Override
-  @NotNull
-  public Runnable processFile(@NotNull PsiFile file) {
+  public @NotNull Runnable processFile(@NotNull PsiFile file) {
     if (!(file instanceof PsiJavaFile)) {
       return EmptyRunnable.getInstance();
     }
@@ -85,6 +85,7 @@ public class JavaImportOptimizer implements ImportOptimizer {
     if (file instanceof PsiJavaFile && !TemplateLanguageUtil.isTemplateDataFile(file)) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(file);
       return virtualFile != null && (ProjectRootManager.getInstance(file.getProject()).getFileIndex().isInSource(virtualFile) ||
+                                     virtualFile instanceof LightVirtualFile ||
                                      ScratchUtil.isScratch(virtualFile));
     }
     return false;

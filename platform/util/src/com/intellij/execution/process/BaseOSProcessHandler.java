@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,16 +33,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   }
 
   @Override
-  @NotNull
-  public Future<?> executeTask(@NotNull Runnable task) {
+  public @NotNull Future<?> executeTask(@NotNull Runnable task) {
     return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   /**
    * Override this method to fine-tune {@link BaseOutputReader} behavior.
    */
-  @NotNull
-  protected Options readerOptions() {
+  protected @NotNull Options readerOptions() {
     if (Boolean.getBoolean("output.reader.blocking.mode")) {
       return Options.BLOCKING;
     }
@@ -57,13 +55,13 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   @Override
   public void startNotify() {
-    if (myCommandLine != null) {
-      notifyTextAvailable(myCommandLine + '\n', ProcessOutputTypes.SYSTEM);
+    if (getCommandLineForLog() != null) {
+      notifyTextAvailable(getCommandLineForLog() + '\n', ProcessOutputTypes.SYSTEM);
     }
 
     addProcessListener(new ProcessAdapter() {
       @Override
-      public void startNotified(@NotNull final ProcessEvent event) {
+      public void startNotified(final @NotNull ProcessEvent event) {
         try {
           BaseDataReader stdOutReader = createOutputDataReader();
           BaseDataReader stdErrReader = processHasSeparateErrorStream() ? createErrorDataReader() : null;
@@ -94,34 +92,29 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     super.startNotify();
   }
 
-  @NotNull
-  protected BaseDataReader createErrorDataReader() {
+  protected @NotNull BaseDataReader createErrorDataReader() {
     return new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, readerOptions(), "error stream of " + myPresentableName);
   }
 
-  @NotNull
-  protected BaseDataReader createOutputDataReader() {
+  protected @NotNull BaseDataReader createOutputDataReader() {
     return new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, readerOptions(), "output stream of " + myPresentableName);
   }
 
-  @NotNull
-  protected Reader createProcessOutReader() {
+  protected @NotNull Reader createProcessOutReader() {
     return createInputStreamReader(myProcess.getInputStream());
   }
 
-  @NotNull
-  protected Reader createProcessErrReader() {
+  protected @NotNull Reader createProcessErrReader() {
     return createInputStreamReader(myProcess.getErrorStream());
   }
 
-  @NotNull
-  private Reader createInputStreamReader(@NotNull InputStream streamToRead) {
+  private @NotNull Reader createInputStreamReader(@NotNull InputStream streamToRead) {
     Charset charset = getCharset();
     if (charset == null) charset = Charset.defaultCharset();
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
-  protected class SimpleOutputReader extends BaseOutputReader {
+  protected final class SimpleOutputReader extends BaseOutputReader {
     private final Key<?> myProcessOutputType;
 
     public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull @NonNls String presentableName) {
@@ -130,9 +123,8 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       start(presentableName);
     }
 
-    @NotNull
     @Override
-    protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
+    protected @NotNull Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
       return BaseOSProcessHandler.this.executeTask(runnable);
     }
 
@@ -155,7 +147,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
         LOG.warn("Process hasn't generated any output for a long time.\n" +
                  "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with" +
                  " 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
-                 "Command line: " + StringUtil.trimLog(StringUtil.notNullize(myCommandLine), 1000),
+                 "Command line: " + StringUtil.trimLog(StringUtil.notNullize(getCommandLineForLog()), 1000),
                  myProcessStart);
       }
     }
@@ -163,7 +155,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   @Override
   public String toString() {
-    return myCommandLine;
+    return getCommandLineForLog();
   }
 
   @Override

@@ -1,0 +1,4 @@
+Searched references to DataClass
+Searched references to parameter other of DataClass.compareTo(other: DataClass) in non-Java files
+Used plain search of parameter width of DataClass(val width: Int) in LocalSearchScope:
+    CLASS:DataClass

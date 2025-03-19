@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.openapi.Disposable
@@ -10,15 +10,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.TitleInfoProvider
 import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
-import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.*
 import javax.swing.SwingUtilities
 
-private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
-  companion object {
-    private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
-  }
+internal class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", null)) {
+
+  private fun getHelper(project: Project) = project.service<DebuggerTitleInfoProviderService>()
 
   init {
     option.listener = {
@@ -59,14 +58,14 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
     }
   }
 
-  @Service
+  @Service(Service.Level.PROJECT)
   private class DebuggerTitleInfoProviderService(private val project: Project) {
     var debuggerSessionStarted = false
     var subscriptionDisposable: Disposable? = null
 
     fun checkState(provider: DebuggerTitleInfoProvider) {
       fun action() {
-        application.assertIsDispatchThread()
+        ThreadingAssertions.assertEventDispatchThread()
         debuggerSessionStarted = XDebuggerManager.getInstance(project)?.let {
           provider.isEnabled() && it.debugSessions.isNotEmpty()
         } ?: false
@@ -75,7 +74,8 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
       if (EDT.isCurrentThreadEdt()) {
         action()
-      } else {
+      }
+      else {
         // Some debuggers are known to terminate their debug sessions outside the EDT (RIDER-66994). Reschedule title update for this case.
         SwingUtilities.invokeLater(::action)
       }
@@ -89,7 +89,7 @@ private class DebuggerTitleInfoProvider : SimpleTitleInfoProvider(RegistryOption
 
       project.messageBus.connect(disposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
         override fun processStarted(debugProcess: XDebugProcess) {
-          application.assertIsDispatchThread()
+          ThreadingAssertions.assertEventDispatchThread()
           debuggerSessionStarted = true
 
           debugProcess.session.addSessionListener(object : XDebugSessionListener {

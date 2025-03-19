@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -32,6 +33,7 @@ import com.intellij.uiDesigner.palette.ComponentItemDialog;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.*;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +70,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     myComponentClassMap.put(JTable.class.getName(), new RadTable.Factory());
   }
 
-  public InsertComponentProcessor(@NotNull final GuiEditor editor) {
+  public InsertComponentProcessor(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myGridInsertProcessor = new GridInsertProcessor(editor);
   }
@@ -128,16 +130,15 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
   }
 
-  @NotNull
-  public static String suggestBinding(final RadRootContainer rootContainer, @NotNull final String componentClassName) {
+  public static @NotNull String suggestBinding(final RadRootContainer rootContainer, final @NotNull String componentClassName) {
     String shortClassName = getShortClassName(componentClassName);
 
-    LOG.assertTrue(shortClassName.length() > 0);
+    LOG.assertTrue(!shortClassName.isEmpty());
 
     return getUniqueBinding(rootContainer, shortClassName);
   }
 
-  public static String getShortClassName(@NonNls final String componentClassName) {
+  public static String getShortClassName(final @NonNls String componentClassName) {
     final int lastDotIndex = componentClassName.lastIndexOf('.');
     String shortClassName = componentClassName.substring(lastDotIndex + 1);
 
@@ -234,14 +235,13 @@ public final class InsertComponentProcessor extends EventProcessor {
     }
   }
 
-  @Nullable
-  private ComponentItem getComponentToInsert() {
+  private @Nullable ComponentItem getComponentToInsert() {
     return (myComponentToInsert != null)
            ? myComponentToInsert
            : PaletteToolWindowManager.getInstance(myEditor).getActiveItem(ComponentItem.class);
   }
 
-  public void processComponentInsert(@NotNull final Point point, final ComponentItem item) {
+  public void processComponentInsert(final @NotNull Point point, final ComponentItem item) {
     final ComponentDropLocation location = GridInsertProcessor.getDropLocation(myEditor.getRootContainer(), point);
     processComponentInsert(item, location);
   }
@@ -318,19 +318,21 @@ public final class InsertComponentProcessor extends EventProcessor {
       // this is mostly required for IDEA developers, so that developers don't receive prompt to offer ui-designer-impl dependency
       return true;
     }
-    PsiManager manager = PsiManager.getInstance(myEditor.getProject());
-    final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
-    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
-    final PsiClass componentClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), projectScope);
-    if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
-      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
-      List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
-      if (entries.size() > 0) {
-        if (entries.get(0) instanceof ModuleSourceOrderEntry) {
-          if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
-        }
-        else if (entries.get(0) instanceof LibraryOrderEntry) {
-          if (!checkAddLibraryDependency(item, (LibraryOrderEntry)entries.get(0))) return false;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307701, EA-681545")) {
+      PsiManager manager = PsiManager.getInstance(myEditor.getProject());
+      final GlobalSearchScope projectScope = GlobalSearchScope.allScope(myEditor.getProject());
+      final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myEditor.getModule());
+      final PsiClass componentClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), projectScope);
+      if (componentClass != null && JavaPsiFacade.getInstance(manager.getProject()).findClass(item.getClassName(), moduleScope) == null) {
+        final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myEditor.getProject()).getFileIndex();
+        List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(componentClass.getContainingFile().getVirtualFile());
+        if (!entries.isEmpty()) {
+          if (entries.get(0) instanceof ModuleSourceOrderEntry) {
+            if (!checkAddModuleDependency(item, (ModuleSourceOrderEntry)entries.get(0))) return false;
+          }
+          else if (entries.get(0) instanceof LibraryOrderEntry) {
+            if (!checkAddLibraryDependency(item, (LibraryOrderEntry)entries.get(0))) return false;
+          }
         }
       }
     }
@@ -409,8 +411,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return (RadContainer)c;
   }
 
-  @Nullable
-  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item, final @Nls String title) {
+  public static @Nullable ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item, final @Nls String title) {
     if (item.isAnyComponent()) {
       ComponentItem newItem = item.clone();
       ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
@@ -424,8 +425,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return item;
   }
 
-  @Nullable
-  public static RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
+  public static @Nullable RadComponent createInsertedComponent(GuiEditor editor, ComponentItem item) {
     RadComponent result;
     final String id = FormEditingUtil.generateId(editor.getRootContainer());
 
@@ -498,15 +498,13 @@ public final class InsertComponentProcessor extends EventProcessor {
     return result;
   }
 
-  @Nullable
-  public static RadComponentFactory getRadComponentFactory(final Project project, final String className) {
+  public static @Nullable RadComponentFactory getRadComponentFactory(final Project project, final String className) {
     ClassLoader loader =
       ReadAction.compute(() -> LoaderFactory.getInstance(project).getProjectClassLoader());
     return getRadComponentFactory(className, loader);
   }
 
-  @Nullable
-  private static RadComponentFactory getRadComponentFactory(final String className, final ClassLoader loader) {
+  private static @Nullable RadComponentFactory getRadComponentFactory(final String className, final ClassLoader loader) {
     Class componentClass;
     try {
       componentClass = Class.forName(className, false, loader);
@@ -517,8 +515,7 @@ public final class InsertComponentProcessor extends EventProcessor {
     return getRadComponentFactory(componentClass);
   }
 
-  @Nullable
-  public static RadComponentFactory getRadComponentFactory(Class componentClass) {
+  public static @Nullable RadComponentFactory getRadComponentFactory(Class componentClass) {
     while (componentClass != null) {
       RadComponentFactory c = myComponentClassMap.get(componentClass.getName());
       if (c != null) return c;

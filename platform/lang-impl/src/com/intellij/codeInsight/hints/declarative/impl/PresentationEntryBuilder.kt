@@ -2,9 +2,14 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
+import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.diagnostic.PluginException
+import org.jetbrains.annotations.ApiStatus
 
-class PresentationEntryBuilder(val state: TinyTree<Any?>) {
+@ApiStatus.Internal
+class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerClass: Class<*>) {
   private val entries = ArrayList<InlayPresentationEntry>()
   private var currentClickArea: InlayMouseArea? = null
   private var parentIndexToSwitch: Byte = -1
@@ -14,8 +19,9 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>) {
   fun buildPresentationEntries(): Array<InlayPresentationEntry> {
     buildSubtreeForIdOnly(0)
     if (entries.isEmpty()) {
-      throw NoPresentableEntriesException()
+      throw PluginException.createByClass("No entries in the tree", RuntimeException(providerClass.canonicalName), providerClass)
     }
+    require(!entries.isEmpty())
     return entries.toTypedArray()
   }
 
@@ -51,10 +57,10 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>) {
             area?.entries?.add(entry)
           }
           is ActionWithContent -> {
-            val area = this.currentClickArea ?: InlayMouseArea(dataPayload.actionData)
+            val area = this.currentClickArea ?: mouseAreaIfNotZombie(dataPayload.actionData)
             val entry = TextInlayPresentationEntry(dataPayload.content as String, clickArea = area, parentIndexToSwitch = parentIndexToSwitch)
             addEntry(entry)
-            area.entries.add(entry)
+            area?.entries?.add(entry)
           }
           else -> throw IllegalStateException("Illegal payload for text tag: $dataPayload")
         }
@@ -81,6 +87,19 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>) {
       //}
       else -> throw IllegalStateException("Unknown tag: $tag")
     }
+  }
+
+  private fun mouseAreaIfNotZombie(actionData: InlayActionData): InlayMouseArea? {
+    val inlayActionPayload = actionData.payload
+    if (inlayActionPayload is PsiPointerInlayActionPayload && inlayActionPayload.pointer is ZombieSmartPointer) {
+      // zombie pointer is not hoverable/clickable
+      return null
+    }
+    if ((inlayActionPayload as? SymbolPointerInlayActionPayload)?.pointer is ZombieSymbolPointer) {
+      // zombie pointer is not hoverable/clickable
+      return null
+    }
+    return InlayMouseArea(actionData)
   }
 
   private fun selectFromList(index: Byte, collapsed: Boolean) {

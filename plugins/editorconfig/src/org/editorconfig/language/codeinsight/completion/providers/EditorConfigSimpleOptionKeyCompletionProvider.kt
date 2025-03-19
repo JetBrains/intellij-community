@@ -39,7 +39,7 @@ object EditorConfigSimpleOptionKeyCompletionProvider : EditorConfigCompletionPro
     val section = position.getParentOfType<EditorConfigSection>() ?: return
     val optionKeys = section.optionList.mapNotNull(EditorConfigOption::getFlatOptionKey)
     val rawCompletionItems = EditorConfigOptionDescriptorManager
-      .instance
+      .getInstance(parameters.originalFile.project)
       .getSimpleKeyDescriptors(false)
       .asSequence()
       .filter { optionKeys.none(it::matches) }

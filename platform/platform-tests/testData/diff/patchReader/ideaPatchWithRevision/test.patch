@@ -1,0 +1,18 @@
+Subject: Subject line
+---
+Index: community/platform/vcs-impl/src/com/intellij/openapi/diff/impl/patch/PatchReader.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/community/platform/vcs-impl/src/com/intellij/openapi/diff/impl/patch/PatchReader.java b/community/platform/vcs-impl/src/com/intellij/openapi/diff/impl/patch/PatchReader.java
+--- a/community/platform/vcs-impl/src/com/intellij/openapi/diff/impl/patch/PatchReader.java	(revision d48bebc211cc216aaa78bdf25d7f0b0143d6333b)
++++ b/community/platform/vcs-impl/src/com/intellij/openapi/diff/impl/patch/PatchReader.java	(date 1718781070896)
+@@ -1,7 +1,6 @@
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package com.intellij.openapi.diff.impl.patch;
+
+-import com.google.common.collect.Iterables;
+ import com.intellij.openapi.util.NlsSafe;
+ import com.intellij.openapi.util.ThrowableComputable;
+ import com.intellij.openapi.util.text.LineTokenizer;

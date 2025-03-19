@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 normal: str
 comma: str
@@ -50,4 +50,4 @@ accent_6_20: str
 accent_6_40: str
 accent_6_60: str
 pandas_highlight: str
-styles: Any
+styles: Incomplete

@@ -4,10 +4,10 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware.Companion.isNotificationVisibleProperty
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
@@ -15,11 +15,11 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyGroup.Companion.hasWarnings
-import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationInProgressProperty
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
@@ -36,12 +36,15 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
+@ApiStatus.Internal
 class DependencyAnalyzerViewImpl(
   private val project: Project,
   private val systemId: ProjectSystemId,
@@ -134,14 +137,18 @@ class DependencyAnalyzerViewImpl(
     return externalProjects.find(predicate)
   }
 
-  override fun getData(dataId: String): Any? {
-    return when (dataId) {
-      DependencyAnalyzerView.VIEW.name -> this
-      CommonDataKeys.PROJECT.name -> project
-      ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.name -> systemId
-      PlatformCoreDataKeys.MODULE.name -> externalProject?.module
-      else -> null
-    }
+  /**
+   * Returns all resolved dependencies for the selected external project.
+   */
+  fun getDependencies(): List<Dependency> {
+    return dependencyModel.flatMap { it.variances }
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[DependencyAnalyzerView.VIEW] = this
+    sink[CommonDataKeys.PROJECT] = project
+    sink[ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID] = systemId
+    sink[PlatformCoreDataKeys.MODULE] = externalProject?.module
   }
 
   private fun updateViewModel() {
@@ -156,7 +163,7 @@ class DependencyAnalyzerViewImpl(
       .filter { it.isSelected }
       .map { it.scope }
     val showDependencyWarnings = showDependencyWarnings
-    return filter { dependency -> dependencyDataFilter in dependency.data.getDisplayText(showDependencyGroupId) }
+    return filter { dependency -> dependencyDataFilter.lowercase(Locale.ENGLISH) in dependency.data.getDisplayText(showDependencyGroupId).lowercase(Locale.ENGLISH) }
       .filter { dependency -> dependency.scope in dependencyScopeFilter }
       .filter { dependency -> if (showDependencyWarnings) dependency.hasWarnings else true }
   }
@@ -353,17 +360,27 @@ class DependencyAnalyzerViewImpl(
     val reloadNotificationProperty = isNotificationVisibleProperty(project, systemId)
     val projectReloadSeparator = separator()
       .bindVisible(reloadNotificationProperty)
-    val projectReloadAction = action { ProjectRefreshAction.refreshProject(project) }
+    val projectReloadAction = action { ProjectRefreshAction.Manager.refreshProject(project) }
       .apply { templatePresentation.icon = AllIcons.Actions.BuildLoadChanges }
       .asActionButton(ACTION_PLACE)
       .bindVisible(reloadNotificationProperty)
 
     val dependencyTitle = label(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title"))
-    val dependencyList = DependencyList(dependencyListModel, showDependencyGroupIdProperty, this)
+    val dependencyList = object : DependencyList(dependencyListModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(!dependencyLoadingProperty)
-    val dependencyTree = DependencyTree(dependencyTreeModel, showDependencyGroupIdProperty, this)
+    val dependencyTree = object : DependencyTree(dependencyTreeModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(!dependencyLoadingProperty)
@@ -386,7 +403,12 @@ class DependencyAnalyzerViewImpl(
       .bindEnabled(showDependencyTreeProperty and !dependencyLoadingProperty)
 
     val usagesTitle = label(usagesTitleProperty)
-    val usagesTree = UsagesTree(usagesTreeModel, showDependencyGroupIdProperty, this)
+    val usagesTree = object : UsagesTree(usagesTreeModel, showDependencyGroupIdProperty) {
+      override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+        DataSink.uiDataSnapshot(sink, this@DependencyAnalyzerViewImpl)
+      }
+    }
       .apply { emptyText.text = "" }
       .bindEnabled(!dependencyLoadingProperty)
     val expandUsagesTreeButton = expandTreeAction(usagesTree)

@@ -4,6 +4,7 @@ fun bar(pp: Int, a: Int) {
     foo(<caret>)
 }
 
+// IGNORE_K2
 // COMPLETION_TYPE: SMART
 // ELEMENT: pp
 // CHAR: ','

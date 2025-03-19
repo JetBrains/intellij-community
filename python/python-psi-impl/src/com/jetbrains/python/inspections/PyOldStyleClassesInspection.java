@@ -41,13 +41,12 @@ import java.util.List;
  *
  * Inspection to detect occurrences of new-style class features in old-style classes
  */
-public class PyOldStyleClassesInspection extends PyInspection {
+public final class PyOldStyleClassesInspection extends PyInspection {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 

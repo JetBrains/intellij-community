@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.provider;
 
 import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolderBase;
@@ -22,9 +22,8 @@ public class HgLocalIgnoredHolder extends VcsRepositoryIgnoredFilesHolderBase<Hg
     super(repository, repositoryManager);
   }
 
-  @NotNull
   @Override
-  protected Set<FilePath> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
+  protected @NotNull Set<FilePath> requestIgnored(@Nullable Collection<? extends FilePath> paths) throws VcsException {
     Set<FilePath> ignored = new HashSet<>();
     ignored.addAll(new HgStatusCommand.Builder(false).ignored(true).build(repository.getProject())
                      .getFilePaths(repository.getRoot(), paths != null ? new ArrayList<>(paths) : null));

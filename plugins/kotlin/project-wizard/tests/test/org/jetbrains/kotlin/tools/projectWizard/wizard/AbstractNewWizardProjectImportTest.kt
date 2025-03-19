@@ -17,10 +17,10 @@ import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.gradle.scripting.shared.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
-import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
@@ -55,7 +55,14 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
         runWriteAction {
             listOf(SDK_NAME, "1.8", "11").forEach { name ->
                 PluginTestCaseBase.addJdk(testRootDisposable) {
-                    JavaSdk.getInstance().createJdk(name, IdeaTestUtil.requireRealJdkHome(), false)
+                    val jdk = JavaSdk.getInstance().createJdk(name, IdeaTestUtil.requireRealJdkHome(), false)
+                    val homePath = jdk.homePath ?: return@addJdk jdk
+                    if (homePath.isNotEmpty()) {
+                        val sdkModificator = jdk.sdkModificator
+                        sdkModificator.versionString = jdk.sdkType.getVersionString(jdk)
+                        sdkModificator.commitChanges()
+                    }
+                    jdk
                 }
             }
         }
@@ -175,7 +182,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     companion object {
         private const val SDK_NAME = "defaultSdk"
 
-        val IDE_WIZARD_TEST_SERVICES_MANAGER = ServicesManager(
+        fun createWizardTestServiceManager() = ServicesManager(
             IdeaServices.PROJECT_INDEPENDENT + Services.IDEA_INDEPENDENT_SERVICES
         ) { services ->
             services.firstIsInstanceOrNull<TestWizardService>()

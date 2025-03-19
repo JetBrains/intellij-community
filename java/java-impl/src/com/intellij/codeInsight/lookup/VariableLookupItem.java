@@ -1,22 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.JavaColorProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.BringVariableIntoScopeFix;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFieldImpl;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -36,7 +38,7 @@ import java.util.Objects;
 
 public class VariableLookupItem extends LookupItem<PsiVariable> implements TypedLookupItem, StaticallyImportable {
   private static final String EQ = " = ";
-  @Nullable private final MemberLookupHelper myHelper;
+  private final @Nullable MemberLookupHelper myHelper;
   private final Color myColor;
   private final String myTailText;
   private final boolean myNegatable;
@@ -97,8 +99,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return this;
   }
 
-  @Nullable
-  private String getInitializerText(PsiVariable var) {
+  private @Nullable String getInitializerText(PsiVariable var) {
     if (myColor != null || !var.hasModifierProperty(PsiModifier.FINAL) || !var.hasModifierProperty(PsiModifier.STATIC)) return null;
     if (PlainDescriptor.hasInitializationHacks(var)) return null;
 
@@ -119,8 +120,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
     return PsiFieldImpl.getDetachedInitializer(var);
   }
 
-  @Nullable
-  private static Color getInitializerColor(@NotNull PsiVariable var) {
+  private static @Nullable Color getInitializerColor(@NotNull PsiVariable var) {
     if (!JavaColorProvider.isColorType(var.getType())) return null;
 
     PsiExpression expression = getInitializer(var);
@@ -134,13 +134,11 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
   }
 
   @Override
-  @NotNull
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     return getSubstitutor().substitute(getObject().getType());
   }
 
-  @NotNull
-  public PsiSubstitutor getSubstitutor() {
+  public @NotNull PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
 
@@ -244,9 +242,9 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
         JavaPsiFacade.getInstance(context.getProject()).getResolveHelper().resolveReferencedVariable(variable.getName(), ref) == null) {
       BringVariableIntoScopeFix fix = BringVariableIntoScopeFix.fromReference(ref);
       if (fix != null) {
-        ModCommandAction.ActionContext actionContext = ModCommandAction.ActionContext.from(context.getEditor(), context.getFile());
+        ActionContext actionContext = ActionContext.from(context.getEditor(), context.getFile());
         if (fix.getPresentation(actionContext) != null) {
-          fix.perform(actionContext).execute(context.getProject());
+          ModCommandExecutor.getInstance().executeInteractively(actionContext, fix.perform(actionContext), context.getEditor());
         }
       }
     }
@@ -256,14 +254,14 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
       context.setAddCompletionChar(false);
       EqTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
     }
-    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    else if (completionChar == ',' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
       context.setAddCompletionChar(false);
       CommaTailType.INSTANCE.processTail(context.getEditor(), context.getTailOffset());
       AutoPopupController.getInstance(context.getProject()).autoPopupParameterInfo(context.getEditor(), null);
     }
-    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN && isTernaryCondition(ref)) {
+    else if (completionChar == ':' && getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType() && isTernaryCondition(ref)) {
       context.setAddCompletionChar(false);
-      TailType.COND_EXPR_COLON.processTail(context.getEditor(), context.getTailOffset());
+      TailTypes.conditionalExpressionColonType().processTail(context.getEditor(), context.getTailOffset());
     }
     else if (completionChar == '.') {
       AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
@@ -302,12 +300,12 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
 
   public static void makeFinalIfNeeded(@NotNull InsertionContext context, @NotNull PsiVariable variable) {
     PsiElement place = context.getFile().findElementAt(context.getTailOffset() - 1);
-    if (place == null || PsiUtil.isLanguageLevel8OrHigher(place) || JspPsiUtil.isInJspFile(place)) {
+    if (place == null || PsiUtil.isAvailable(JavaFeature.EFFECTIVELY_FINAL, place) || JspPsiUtil.isInJspFile(place)) {
       return;
     }
 
-    if (HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, place) != null &&
-        !HighlightControlFlowUtil.isReassigned(variable, new HashMap<>())) {
+    if (ControlFlowUtil.getScopeEnforcingEffectiveFinality(variable, place) != null &&
+        !ControlFlowUtil.isReassigned(variable, new HashMap<>())) {
       PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, true);
     }
   }

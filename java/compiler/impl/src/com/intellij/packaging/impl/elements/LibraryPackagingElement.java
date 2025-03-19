@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.LibraryFilesPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -11,19 +13,17 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.ComplexPackagingElement;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementOutputKind;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.ui.LibraryElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.jps.entities.LibraryTableId;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPackagingElement> {
-  @NonNls public static final String LIBRARY_NAME_ATTRIBUTE = "name";
-  @NonNls public static final String MODULE_NAME_ATTRIBUTE = "module-name";
-  @NonNls public static final String LIBRARY_LEVEL_ATTRIBUTE = "level";
+  public static final @NonNls String LIBRARY_NAME_ATTRIBUTE = "name";
+  public static final @NonNls String MODULE_NAME_ATTRIBUTE = "module-name";
+  public static final @NonNls String LIBRARY_LEVEL_ATTRIBUTE = "level";
   private String myLevel;
   private String myLibraryName;
   private String myModuleName;
@@ -73,16 +73,14 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return null;
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
+  public @NotNull PackagingElementOutputKind getFilesKind(PackagingElementResolvingContext context) {
     final Library library = findLibrary(context);
     return library != null ? getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
   @Override
-  @NotNull
-  public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     if (myStorage == null) {
       return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
     }
@@ -224,15 +222,15 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
-                                        @NotNull EntitySource source,
-                                        @NotNull Project project) {
-    WorkspaceEntity existingEntity = getExistingEntity(diff);
-    if (existingEntity != null) return existingEntity;
+  public PackagingElementEntity.Builder<? extends PackagingElementEntity> getOrAddEntityBuilder(@NotNull MutableEntityStorage diff,
+                                                                                                @NotNull EntitySource source,
+                                                                                                @NotNull Project project) {
+    PackagingElementEntity existingEntity = (PackagingElementEntity)this.getExistingEntity(diff);
+    if (existingEntity != null) return getBuilder(diff, existingEntity);
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source));
     }
     else {
       LibraryId id;
@@ -245,18 +243,28 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       else {
         id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
       }
-      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+      entity = diff.addEntity(LibraryFilesPackagingElementEntity.create(source, o -> {
+        o.setLibrary(id);
+        return Unit.INSTANCE;
+      }));
     }
-    diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
-    return entity;
+    diff.getMutableExternalMapping(PackagingExternalMapping.key).addMapping(entity, this);
+    return getBuilder(diff, entity);
   }
 
-  @Nullable
-  public Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+  public @Nullable Library findLibrary(@NotNull PackagingElementResolvingContext context) {
+    return findLibrary(
+      context.getModulesProvider(),
+      (level, libraryName) -> {
+        return context.findLibrary(level, libraryName);
+      });
+  }
+
+  public @Nullable Library findLibrary(@NotNull ModulesProvider modulesProvider,
+                                       @NotNull PackagingElementResolvingContext.LibraryFinder libraryFinder) {
     String level = myLevel;
     String myLibraryName1 = myLibraryName;
     String moduleName = myModuleName;
-
 
     if (myStorage != null) {
       LibraryFilesPackagingElementEntity entity = (LibraryFilesPackagingElementEntity)getThisEntity();
@@ -266,9 +274,8 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     }
 
     if (moduleName == null && level != null && myLibraryName1 != null) {
-      return context.findLibrary(level, myLibraryName1);
+      return libraryFinder.find(level, myLibraryName1);
     }
-    final ModulesProvider modulesProvider = context.getModulesProvider();
     final Module module;
     if (moduleName != null) {
       module = modulesProvider.getModule(moduleName);

@@ -7,17 +7,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErrors
-import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationBundle
 
 internal class JsonRedundantDefaultQuickFix(expression: KtCallExpression) : KotlinQuickFixAction<KtCallExpression>(expression) {
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val call = element as? KtCallExpression ?: return
-        val callee = call.calleeExpression ?: return
-        call.replace(callee)
+        val callee = element.calleeExpression ?: return
+        element.replace(callee)
     }
 
     override fun getFamilyName(): String = text

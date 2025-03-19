@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -29,7 +29,7 @@ public class IntroduceVariableHandler extends IntroduceVariableBase implements J
                                                                                PreviewableRefactoringActionHandler {
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiExpression expression) {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiExpression expression) {
     invokeImpl(project, expression, editor);
   }
 

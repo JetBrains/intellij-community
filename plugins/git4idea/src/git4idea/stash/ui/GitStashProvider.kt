@@ -1,12 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
+import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -27,6 +28,7 @@ import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.allUnder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.ui.render.LabelIconCache
@@ -38,12 +40,13 @@ import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
 import git4idea.ui.StashInfo
+import git4idea.ui.StashInfo.Companion.branchName
 import git4idea.ui.StashInfo.Companion.subject
-import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.stream.Stream
+import javax.swing.JComponent
 
 class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesProvider<StashInfo>, Disposable {
   private val iconCache = LabelIconCache()
@@ -52,6 +55,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
   private val stashCache: GitStashCache get() = project.service()
 
   override val dataClass: Class<StashInfo> get() = StashInfo::class.java
+  override val tag: ChangesBrowserNode.Tag = GitBundleTag("stash.root.node.title")
   override val applyAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_APPLY_ACTION)
   override val popAction: AnAction get() = ActionManager.getInstance().getAction(GIT_STASH_POP_ACTION)
 
@@ -75,10 +79,14 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
   override fun isEmpty() = !stashTracker.isNotEmpty()
 
-  override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
+  override fun buildPatchesTree(modelBuilder: TreeModelBuilder, showRootNode: Boolean) {
     val stashesMap = stashTracker.stashes
-    val stashesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(GitBundle.message("stash.root.node.title"))
-    modelBuilder.insertSubtreeRoot(stashesRoot)
+    val stashesRoot = if (showRootNode) {
+      SavedPatchesTree.TagWithCounterChangesBrowserNode(tag).also { modelBuilder.insertSubtreeRoot(it) }
+    }
+    else {
+      modelBuilder.myRoot
+    }
     for ((root, stashesList) in stashesMap) {
       val rootNode = if (stashesMap.size > 1 &&
                          !(stashesList is GitStashTracker.Stashes.Loaded && stashesList.stashes.isEmpty())) {
@@ -111,15 +119,19 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     insertSubtreeRoot(errorNode, parent)
   }
 
-  override fun getData(dataId: String, selectedObjects: Stream<SavedPatchesProvider.PatchObject<*>>): Any? {
-    if (STASH_INFO.`is`(dataId)) {
-      return StreamEx.of(selectedObjects.map(SavedPatchesProvider.PatchObject<*>::data)).filterIsInstance(dataClass).toList()
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink, selectedObjects: Iterable<SavedPatchesProvider.PatchObject<*>>) {
+    sink[STASH_INFO] = JBIterable.from(selectedObjects)
+      .map(SavedPatchesProvider.PatchObject<*>::data)
+      .filter(dataClass)
+      .toList()
   }
 
   override fun dispose() {
     stashCache.clear()
+  }
+
+  class GitBundleTag(@field:PropertyKey(resourceBundle = GitBundle.BUNDLE) private val key: String) : ChangesBrowserNode.Tag {
+    override fun toString(): @Nls String = GitBundle.message(key)
   }
 
   private data class MyTag(@Nls private val text: String, private val hash: Hash) : ChangesBrowserNode.Tag {
@@ -170,10 +182,10 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     }
 
     private fun GitStashCache.StashData.Changes.toChangeObjects(): List<GitStashChange> {
-      val stashChanges = changes.map { GitStashChange(it, null) }
+      val stashChanges = changes.map { GitStashChange(it, null, data.stash) }
       val otherChanges = parentCommits.flatMap { parent ->
         val tag: ChangesBrowserNode.Tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-        parent.changes.map { GitStashChange(it, tag) }
+        parent.changes.map { GitStashChange(it, tag, data.stash) }
       }
       return stashChanges + otherChanges
     }
@@ -184,23 +196,22 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
       } ?: GitBundle.message("stash.editor.diff.preview.empty.title")
     }
 
-    override fun createPainter(tree: ChangesTree,
-                               renderer: ChangesTreeCellRenderer,
-                               row: Int,
-                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter {
-      val painter = GitStashPainter(tree, renderer, iconCache)
-      painter.customise(data, row, selected)
+    override fun getLabelComponent(tree: ChangesTree, row: Int, selected: Boolean): JComponent? {
+      val branchName = data.branchName ?: return null
+
+      val painter = GitStashBranchComponent(tree, iconCache)
+      painter.customise(branchName, data.root, row, selected)
       return painter
     }
   }
 
-  class GitStashChange(private val change: Change, private val changeTag: ChangesBrowserNode.Tag?) : SavedPatchesProvider.ChangeObject {
+  class GitStashChange(private val change: Change, private val changeTag: ChangesBrowserNode.Tag?, private val stashName: String) : SavedPatchesProvider.ChangeObject {
     override fun createDiffRequestProducer(project: Project?): ChangeDiffRequestChain.Producer? {
       return ChangeDiffRequestProducer.create(project, change, prepareChangeContext())
     }
 
     override fun createDiffWithLocalRequestProducer(project: Project?, useBeforeVersion: Boolean): ChangeDiffRequestChain.Producer? {
-      val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(change, useBeforeVersion) ?: return null
+      val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(change, useBeforeVersion, useBeforeVersion) ?: return null
       return ChangeDiffRequestProducer.create(project, changeWithLocal, prepareChangeContext())
     }
 
@@ -218,6 +229,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     private fun prepareChangeContext(): Map<Key<*>, Any> {
       val context = mutableMapOf<Key<*>, Any>()
       changeTag?.let { context[ChangeDiffRequestProducer.TAG_KEY] = it }
+      context[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] = StringUtil.capitalize(stashName)
       return context
     }
   }
@@ -228,9 +240,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
     fun CompletableFuture<*>.propagateCancellationTo(future: CompletableFuture<*>) {
       whenComplete { _, t ->
-        if (t is CancellationException || t is ProcessCanceledException) {
-          future.cancel(false)
-        }
+        if (t is CancellationException) future.cancel(false)
       }
     }
   }

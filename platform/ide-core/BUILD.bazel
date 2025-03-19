@@ -1,0 +1,37 @@
+### auto-generated section `build intellij.platform.ide.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "ide-core_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "ide-core",
+  module_name = "intellij.platform.ide.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/util/concurrency",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic",
+    "//platform/util",
+    "//platform/settings",
+    "//platform/util/coroutines",
+  ],
+  runtime_deps = [":ide-core_resources"]
+)
+### auto-generated section `build intellij.platform.ide.core` end

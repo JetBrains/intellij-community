@@ -6,6 +6,8 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 /**
  * A service determining available refactoring for a given [SuggestedRefactoringState].
@@ -41,6 +43,11 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
    * @return lazy iterator over sequence of amended states
    */
   open fun amendStateInBackground(state: SuggestedRefactoringState): Iterator<SuggestedRefactoringState> = iterator { }
+
+  /**
+   * Slow way to determine whether the action is available. Intended to be executed in background thread. 
+   */  
+  open fun isAvailable(state: SuggestedRefactoringState): Boolean = true 
 
   /**
    * Determines refactoring availability for a given state and returns instance of [SuggestedRefactoringData],
@@ -113,11 +120,14 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   }
 
   companion object {
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.usages\") explicitly")
-    @JvmField val USAGES = RefactoringBundle.message("suggested.refactoring.usages")
+    @JvmField val USAGES: @Nls String = RefactoringBundle.message("suggested.refactoring.usages")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.overrides\") explicitly")
-    @JvmField val OVERRIDES = RefactoringBundle.message("suggested.refactoring.overrides")
+    @JvmField val OVERRIDES: @Nls String = RefactoringBundle.message("suggested.refactoring.overrides")
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.implementations\") explicitly")
-    @JvmField val IMPLEMENTATIONS = RefactoringBundle.message("suggested.refactoring.implementations")
+    @JvmField val IMPLEMENTATIONS: @Nls String = RefactoringBundle.message("suggested.refactoring.implementations")
   }
 }

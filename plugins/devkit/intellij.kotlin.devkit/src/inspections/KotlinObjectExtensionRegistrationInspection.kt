@@ -1,14 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
@@ -23,10 +26,12 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import java.util.function.Predicate
 
-class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBase() {
+internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBase() {
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
     val extension = element as? Extension ?: return
+    if (!isAllowed(holder)) return
+
     if (extension.isAllowed()) return
     for (classNameDomValue in extension.getClassNameDomValues()) {
       if (classNameDomValue.isKotlinObjectReference()) {
@@ -40,12 +45,23 @@ class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInspectionBas
     val className = stringValue
     if (className.isNullOrBlank()) return false
     val normalizedClassName = ExtensionUtil.getNormalizedClassName(className) ?: return false
+    val fqName = FqName(normalizedClassName).takeIf { it.isValidIdentifier() } ?: return false
     val kotlinAsJavaSupport = project.getService(KotlinAsJavaSupport::class.java) ?: return false
-    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(FqName(normalizedClassName), this.resolveScope)
+    val classOrObjectDeclarations = kotlinAsJavaSupport.findClassOrObjectDeclarations(fqName, this.resolveScope)
     return classOrObjectDeclarations.size == 1 && classOrObjectDeclarations.firstOrNull() is KtObjectDeclaration
+  }
+
+  private fun FqName.isValidIdentifier(): Boolean {
+    return this.shortName()
+      .takeIf { !it.isSpecial } // IDEA-349976
+      ?.identifier
+      ?.isNotEmpty() == true
   }
 }
 
+@VisibleForTesting
+@IntellijInternalApi
+@ApiStatus.Internal
 class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -64,6 +80,7 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
 private fun Extension.isAllowed(): Boolean {
   return allowedObjectRules.any { it.test(this) }
+         || this.extensionPoint?.effectiveQualifiedName == "com.intellij.statistics.counterUsagesCollector"
 }
 
 private val allowedObjectRules = listOf(

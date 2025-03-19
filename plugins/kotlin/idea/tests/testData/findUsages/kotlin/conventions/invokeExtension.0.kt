@@ -13,4 +13,3 @@ fun f(p: P) {
 }
 
 
-// IGNORE_FIR_LOG

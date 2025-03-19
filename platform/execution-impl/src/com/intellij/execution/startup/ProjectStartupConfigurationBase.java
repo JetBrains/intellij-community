@@ -9,11 +9,14 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
   @SuppressWarnings("FieldMayBeFinal")
   @XCollection(propertyElementName = "configurations")
@@ -23,9 +26,8 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     myList = new ArrayList<>();
   }
 
-  @Nullable
   @Override
-  public ProjectStartupConfigurationBase getState() {
+  public @Nullable ProjectStartupConfigurationBase getState() {
     return this;
   }
 
@@ -43,10 +45,9 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     return myList;
   }
 
-  public void setList(@NotNull final List<? extends ConfigurationDescriptor> list) {
+  public void setList(final @NotNull @Unmodifiable List<? extends ConfigurationDescriptor> list) {
     myList.clear();
-    list.sort(new ConfigurationDescriptorComparator());
-    myList.addAll(list);
+    myList.addAll(ContainerUtil.sorted(list, new ConfigurationDescriptorComparator()));
   }
 
   public boolean isEmpty() {
@@ -139,7 +140,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
     }
   }
 
-  private static class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
+  private static final class ConfigurationDescriptorComparator implements Comparator<ConfigurationDescriptor> {
     @Override
     public int compare(ConfigurationDescriptor o1,
                        ConfigurationDescriptor o2) {

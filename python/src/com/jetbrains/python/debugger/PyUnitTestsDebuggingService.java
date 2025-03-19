@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -24,6 +25,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -42,7 +44,7 @@ import java.awt.event.ComponentListener;
 import java.util.List;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 final class PyUnitTestsDebuggingService {
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();
@@ -120,7 +122,7 @@ final class PyUnitTestsDebuggingService {
     if (inlays != null) {
       inlays.forEach((inlay) -> {
         inlay.getEditor().getComponent().removeComponentListener(ourEditorListeners.get(inlay));
-        Disposer.dispose(inlay);
+        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(inlay));
       });
       ourActiveInlays.remove(session);
     }
@@ -133,7 +135,7 @@ final class PyUnitTestsDebuggingService {
    */
   public static boolean isErrorInTestSetUpOrTearDown(@NotNull List<PyStackFrameInfo> frames) {
     for (PyStackFrameInfo frameInfo : frames) {
-      if (SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values().stream().anyMatch(names -> names.contains(frameInfo.getName())))
+      if (ContainerUtil.exists(SET_UP_AND_TEAR_DOWN_FUNCTIONS_BY_FRAMEWORK.values(), names -> names.contains(frameInfo.getName())))
         return true;
     }
     return false;
@@ -209,7 +211,7 @@ final class PyUnitTestsDebuggingService {
       return UIUtil.getFontWithFallback(fontName, Font.PLAIN, fontSize);
     }
 
-    private void drawStringToInlayBox(@NotNull String str, @NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion) {
+    private void drawStringToInlayBox(@NotNull String str, @NotNull Inlay<?> inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion) {
       g.drawString(str, targetRegion.x + INLAY_TEXT_INDENT, targetRegion.y + inlay.getEditor().getLineHeight() * myCurrentLineNumber);
       myCurrentLineNumber++;
     }
@@ -239,7 +241,7 @@ final class PyUnitTestsDebuggingService {
   }
 
   private static @NotNull Color getInlayBackgroundColor() {
-    return UIUtil.isUnderDarcula() ? JBColor.WHITE : new JBColor(Gray._240, Gray._192);
+    return JBColor.isBright() ? new JBColor(Gray._240, Gray._192) : JBColor.WHITE;
   }
 
   private static @Nls String getFailedTestCaption() {
@@ -276,7 +278,7 @@ final class PyUnitTestsDebuggingService {
 
     @Override
     public int hashCode() {
-      return ((Object)this).hashCode();
+      return System.identityHashCode(this);
     }
   }
 }

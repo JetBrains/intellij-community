@@ -6,4 +6,5 @@ fun foo() {
     Bar.FOO
 }
 
+// IGNORE_K2
 // ELEMENT: FOO

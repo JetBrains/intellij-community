@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -27,10 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -71,7 +68,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     }
   }
 
-  protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
+  protected @Unmodifiable List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
@@ -84,8 +81,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     ApplicationManager.getApplication().runWriteAction(() -> invokeImpl.accept(targetClass));
   }
 
-  @Nullable
-  protected abstract PsiElement getElement();
+  protected abstract @Nullable PsiElement getElement();
 
   private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<? super PsiClass> invokeImpl) {
     final PsiClass firstClass = classes.get(0);
@@ -173,8 +169,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PsiExpression getQualifier (PsiElement element) {
+  private static @Nullable PsiExpression getQualifier (PsiElement element) {
     if (element instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement ref = ((PsiNewExpression) element).getClassReference();
       if (ref instanceof PsiReferenceExpression) {
@@ -189,8 +184,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return null;
   }
 
-  @NotNull
-  public static PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
+  public static @NotNull PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
     if (element instanceof PsiNewExpression) {
       PsiJavaCodeReferenceElement reference = ((PsiNewExpression)element).getClassOrAnonymousClassReference();
       JavaResolveResult result = reference == null ? JavaResolveResult.EMPTY : reference.advancedResolve(false);
@@ -213,8 +207,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   //Should return only valid project classes
-  @NotNull
-  protected List<PsiClass> getTargetClasses(PsiElement element) {
+  protected @NotNull List<PsiClass> getTargetClasses(PsiElement element) {
     PsiClass psiClass = null;
     PsiExpression qualifier = null;
 
@@ -274,7 +267,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     else if (element instanceof PsiMethodCallExpression) {
       final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
       qualifier = methodExpression.getQualifierExpression();
-      @NonNls final String referenceName = methodExpression.getReferenceName();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
       if (referenceName == null) return Collections.emptyList();
     }
     boolean allowOuterClasses = false;
@@ -342,22 +335,22 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return canModify(psiClass);
   }
 
-  public static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {
+  public static void startTemplate (@NotNull Editor editor, final Template template, final @NotNull Project project) {
     startTemplate(editor, template, project, null);
   }
 
-  protected static void startTemplate(@NotNull final Editor editor,
+  protected static void startTemplate(final @NotNull Editor editor,
                                       final Template template,
-                                      @NotNull final Project project,
+                                      final @NotNull Project project,
                                       final TemplateEditingListener listener) {
     startTemplate(editor, template, project, listener, null);
   }
 
-  public static void startTemplate(@NotNull final Editor editor,
-                                      final Template template,
-                                      @NotNull final Project project,
-                                      final TemplateEditingListener listener,
-                                      final @NlsContexts.Command String commandName) {
+  public static void startTemplate(final @NotNull Editor editor,
+                                   final Template template,
+                                   final @NotNull Project project,
+                                   final TemplateEditingListener listener,
+                                   final @NlsContexts.Command String commandName) {
     Runnable runnable = () -> TemplateManager.getInstance(project).startTemplate(editor, template, listener);
     if (!ApplicationManager.getApplication().isWriteIntentLockAcquired() || IntentionPreviewUtils.isIntentionPreviewActive()) {
       runnable.run();

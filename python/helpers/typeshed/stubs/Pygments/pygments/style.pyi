@@ -1,5 +1,5 @@
 from collections.abc import Iterator, Mapping, Set as AbstractSet
-from typing_extensions import TypedDict
+from typing import TypedDict
 
 from pygments.token import _TokenType
 
@@ -36,5 +36,8 @@ class StyleMeta(type):
     line_number_special_color: str
     line_number_special_background_color: str
     styles: Mapping[_TokenType, str]  # not intended to be mutable
+    name: str
+    aliases: list[str]
+    web_style_gallery_exclude: bool
 
 class Style(metaclass=StyleMeta): ...

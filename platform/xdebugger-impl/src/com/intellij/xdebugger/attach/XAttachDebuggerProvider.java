@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.attach;
 
 import com.intellij.execution.process.ProcessInfo;
@@ -21,8 +21,7 @@ public interface XAttachDebuggerProvider {
   /**
    * @return a group in which the supported processes should be visually organized.
    */
-  @NotNull
-  default XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
+  default @NotNull XAttachPresentationGroup<ProcessInfo> getPresentationGroup() {
     return DEFAULT_PRESENTATION_GROUP;
   }
 
@@ -32,9 +31,8 @@ public interface XAttachDebuggerProvider {
       return 0;
     }
 
-    @Nls
     @Override
-    public @NotNull String getGroupName() {
+    public @Nls @NotNull String getGroupName() {
       return "";
     }
 
@@ -43,9 +41,8 @@ public interface XAttachDebuggerProvider {
       return EmptyIcon.ICON_16;
     }
 
-    @Nls
     @Override
-    public @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    public @Nls @NotNull String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       return info.getExecutableDisplayName();
     }
   };

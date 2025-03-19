@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -22,6 +22,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   private Modifier myModifier;
   protected TextWithImports myText;
+
+  public static final Key<ExpressionEvaluator> EXPRESSION_EVALUATOR_KEY = Key.create("EXPRESSION_EVALUATOR");
 
   protected EvaluationDescriptor(TextWithImports text, Project project, Value value) {
     super(project, value);
@@ -51,7 +54,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
   public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
-    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, myProject);
   }
 
   @ApiStatus.Experimental
@@ -81,6 +84,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       EvaluationContextImpl thisEvaluationContext = getEvaluationContext(evaluationContext);
 
       ExpressionEvaluator evaluator = getEvaluator(thisEvaluationContext);
+      putUserData(EXPRESSION_EVALUATOR_KEY, evaluator);
 
       if (!thisEvaluationContext.getDebugProcess().isAttached()) {
         throw EvaluateExceptionUtil.PROCESS_EXITED;
@@ -125,8 +129,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
     return false;
   }
 
-  @Nullable
-  public Modifier getModifier() {
+  public @Nullable Modifier getModifier() {
     return myModifier;
   }
 
@@ -156,9 +159,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
               update(debuggerContext);
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+            public @NotNull Type getLType() throws EvaluateException, ClassNotLoadedException {
               //noinspection ConstantConditions
               return evaluationDescriptor.getModifier().getExpectedType();
             }

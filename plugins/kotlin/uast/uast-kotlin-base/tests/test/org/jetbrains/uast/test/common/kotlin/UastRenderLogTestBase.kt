@@ -2,13 +2,16 @@
 
 package org.jetbrains.uast.test.common.kotlin
 
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.asRecursiveLogString
 import org.jetbrains.uast.test.common.kotlin.UastTestSuffix.TXT
 import java.io.File
 
-interface UastRenderLogTestBase : UastPluginSelection, UastFileComparisonTestBase {
+interface UastRenderLogTestBase : UastFileComparisonTestBase,
+                                  ExpectedPluginModeProvider {
+
     private fun getRenderFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "render$suffix")
     private fun getLogFile(filePath: String, suffix: String): File = getTestMetadataFileFromPath(filePath, "log$suffix")
 

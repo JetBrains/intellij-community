@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.copied
@@ -15,7 +16,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isAnnotatedDeep
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.psi.KtTypeProjection
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -65,14 +69,12 @@ class ReplaceTypeArgumentWithUnderscoreIntention : SelfTargetingRangeIntention<K
         val newTypeProjection = KtPsiFactory(element.project).createTypeArgument("_")
         element.replace(newTypeProjection)
     }
-
-    private companion object {
-        private val POSSIBLE_DIAGNOSTIC_ERRORS =
-            setOf(
-                Errors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER,
-                Errors.INFERRED_INTO_DECLARED_UPPER_BOUNDS,
-                Errors.UNRESOLVED_REFERENCE,
-                Errors.BUILDER_INFERENCE_STUB_RECEIVER
-            )
-    }
 }
+
+private val POSSIBLE_DIAGNOSTIC_ERRORS: Set<DiagnosticFactoryWithPsiElement<*, *>> =
+    setOf(
+        Errors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER,
+        Errors.INFERRED_INTO_DECLARED_UPPER_BOUNDS,
+        Errors.UNRESOLVED_REFERENCE,
+        Errors.BUILDER_INFERENCE_STUB_RECEIVER
+    )

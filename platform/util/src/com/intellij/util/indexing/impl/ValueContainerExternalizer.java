@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -12,25 +11,33 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 @ApiStatus.Internal
-@VisibleForTesting
 public final class ValueContainerExternalizer<T> implements DataExternalizer<UpdatableValueContainer<T>> {
   private final @NotNull DataExternalizer<T> myValueExternalizer;
   private final @NotNull ValueContainerInputRemapping myInputRemapping;
 
-  public ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer, @NotNull ValueContainerInputRemapping inputRemapping) {
+  public ValueContainerExternalizer(@NotNull DataExternalizer<T> valueExternalizer,
+                                    @NotNull ValueContainerInputRemapping inputRemapping) {
     myValueExternalizer = valueExternalizer;
     myInputRemapping = inputRemapping;
   }
 
+  //RC: binary format (code is scattered across ValueContainerImpl and ChangeTrackingValueContainer)
+  //    [invalidatedIds: varint, <0 ]* [valuesCount: varint, >=0 ]  [(value, sourceId+)]{valuesCount}
+  //    'value' binary format is given by apt valueExternalizer
+  //
+  //    (sourceId+) list format: [singleIdOrIdsCount: varint] [inputId: varint]{idsCount}
+  //                             if singleIdOrIdsCount is positive: it is a singleId
+  //                                                          else: it is -idsCount
+
   @Override
-  public void save(@NotNull final DataOutput out, @NotNull final UpdatableValueContainer<T> container) throws IOException {
+  public void save(@NotNull DataOutput out,
+                   @NotNull UpdatableValueContainer<T> container) throws IOException {
     container.saveTo(out, myValueExternalizer);
   }
 
-  @NotNull
   @Override
-  public UpdatableValueContainer<T> read(@NotNull final DataInput in) throws IOException {
-    final ValueContainerImpl<T> valueContainer = new ValueContainerImpl<>();
+  public @NotNull UpdatableValueContainer<T> read(@NotNull DataInput in) throws IOException {
+    final ValueContainerImpl<T> valueContainer = ValueContainerImpl.createNewValueContainer();
     valueContainer.readFrom((DataInputStream)in, myValueExternalizer, myInputRemapping);
     return valueContainer;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.search.declarationsSearch
 
@@ -17,13 +17,11 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
-import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.base.util.useScope
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.findDeepestSuperMethodsNoWrapping
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.forEachKotlinOverride
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.psi.KtClass
@@ -66,7 +64,7 @@ object KotlinPsiMethodOverridersSearch : HierarchySearch<PsiMethod>(PsiMethodOve
                     current,
                     current.project.allScope(),
                     /* includeAnonymous = */ true
-                )
+                ).asIterable()
 
             override fun shouldDescend(element: PsiClass): Boolean =
                 element.isInheritable() && !classToMethod.containsKey(element)
@@ -115,7 +113,7 @@ fun KtNamedDeclaration.forEachOverridingElement(
 ): Boolean {
     val ktClass = runReadAction { containingClassOrObject as? KtClass } ?: return true
     toLightMethods().forEach { baseMethod ->
-        if (!OverridingMethodsSearch.search(baseMethod, scope.excludeKotlinSources(project), searchDeeply).all { processor(baseMethod, it) }) {
+        if (!OverridingMethodsSearch.search(baseMethod, scope.excludeKotlinSources(project), searchDeeply).asIterable().all { processor(baseMethod, it) }) {
             return false
         }
     }
@@ -139,7 +137,7 @@ fun PsiClass.forEachDeclaredMemberOverride(processor: (superMember: PsiElement, 
     val scope = runReadAction { useScope() }
 
     if (this !is KtFakeLightClass) {
-        AllOverridingMethodsSearch.search(this, scope.excludeKotlinSources(project)).all { processor(it.first, it.second) }
+        AllOverridingMethodsSearch.search(this, scope.excludeKotlinSources(project)).asIterable().all { processor(it.first, it.second) }
     }
 
     val ktClass = unwrapped as? KtClass ?: return
@@ -147,6 +145,3 @@ fun PsiClass.forEachDeclaredMemberOverride(processor: (superMember: PsiElement, 
             ktClass.primaryConstructorParameters.filter { it.hasValOrVar() }
     forEachKotlinOverride(ktClass, members, scope, searchDeeply = true, processor)
 }
-
-fun findDeepestSuperMethodsKotlinAware(method: PsiElement) =
-    findDeepestSuperMethodsNoWrapping(method).mapNotNull { it.getRepresentativeLightMethod() }

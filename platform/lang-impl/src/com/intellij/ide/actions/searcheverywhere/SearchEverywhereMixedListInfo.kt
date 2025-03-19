@@ -2,11 +2,6 @@
 package com.intellij.ide.actions.searcheverywhere
 
 class SearchEverywhereMixedListInfo internal constructor(listFactory: SEResultsListFactory) {
-  val isMixedList: Boolean
-  val contributorPriorities: Map<String, Int>
-
-  init {
-    isMixedList = listFactory is MixedListFactory
-    contributorPriorities = if (listFactory is MixedListFactory) listFactory.contributorsPriorities else emptyMap()
-  }
+  val isMixedList: Boolean = listFactory is MixedListFactory
+  val contributorPriorities: Map<String, Int> = if (listFactory is MixedListFactory) listFactory.contributorsPriorities else emptyMap()
 }

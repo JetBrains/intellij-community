@@ -7,10 +7,10 @@ package org.jetbrains.kotlin.idea.completion.weighers
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.psi.UserDataProperty
 
 object VariableOrFunctionWeigher {
@@ -22,12 +22,13 @@ object VariableOrFunctionWeigher {
     const val WEIGHER_ID = "kotlin.variableOrFunction"
     private var LookupElement.variableOrFunction by UserDataProperty(Key<Weight>("KOTLIN_VARIABLE_OR_FUNCTION_WEIGHT"))
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol) {
+    context(KaSession)
+fun addWeight(lookupElement: LookupElement, symbol: KaSymbol) {
         when (symbol) {
-            is KtVariableLikeSymbol -> {
+            is KaVariableSymbol -> {
                 lookupElement.variableOrFunction = Weight.VARIABLE
             }
-            is KtFunctionLikeSymbol -> {
+            is KaFunctionSymbol -> {
                 lookupElement.variableOrFunction = Weight.FUNCTION
             }
             else -> {

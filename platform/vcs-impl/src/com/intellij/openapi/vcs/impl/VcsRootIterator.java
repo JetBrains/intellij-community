@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.VcsDirtyScope;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -27,7 +29,7 @@ public class VcsRootIterator {
     myProject = project;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myOtherVcsFolders = new HashMap<>();
-    myExcludedFileIndex = project.getService(FileIndexFacade.class);
+    myExcludedFileIndex = FileIndexFacade.getInstance(project);
 
     final VcsRoot[] allRoots = myVcsManager.getAllVcsRoots();
     final VirtualFile[] roots = myVcsManager.getRootsUnderVcs(vcs);
@@ -116,15 +118,15 @@ public class VcsRootIterator {
     private final Project myProject;
     private final Processor<? super FilePath> myPathProcessor;
     private final Processor<? super VirtualFile> myFileProcessor;
-    @Nullable private final VirtualFileFilter myDirectoryFilter;
+    private final @Nullable VirtualFileFilter myDirectoryFilter;
     private final VirtualFile myRoot;
     private final MyRootFilter myRootPresentFilter;
     private final ProjectLevelVcsManager myVcsManager;
 
     private MyRootIterator(final Project project,
                            final VirtualFile root,
-                           @Nullable final Processor<? super FilePath> pathProcessor,
-                           @Nullable final Processor<? super VirtualFile> fileProcessor,
+                           final @Nullable Processor<? super FilePath> pathProcessor,
+                           final @Nullable Processor<? super VirtualFile> fileProcessor,
                            @Nullable VirtualFileFilter directoryFilter) {
       myProject = project;
       myPathProcessor = pathProcessor;
@@ -149,9 +151,8 @@ public class VcsRootIterator {
           }
         }
 
-        @NotNull
         @Override
-        public Result visitFileEx(@NotNull VirtualFile file) {
+        public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
           if (isIgnoredByVcs(myVcsManager, myProject, file)) return SKIP_CHILDREN;
           if (myRootPresentFilter != null && !myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
           if (myProject.isDisposed() || !process(file)) return skipTo(myRoot);
@@ -170,5 +171,60 @@ public class VcsRootIterator {
       }
       return false;
     }
+  }
+
+  /**
+   * Invoke the {@code iterator} for all files in the dirty scope.
+   * For recursively dirty directories all children are processed.
+   */
+  public static void iterate(@NotNull VcsDirtyScope scope, @NotNull Processor<? super FilePath> iterator) {
+    Project project = scope.getProject();
+    if (project.isDisposed()) return;
+
+    for (FilePath dir : scope.getRecursivelyDirtyDirectories()) {
+      final VirtualFile vFile = dir.getVirtualFile();
+      if (vFile != null && vFile.isValid()) {
+        iterateVcsRoot(project, vFile, iterator);
+      }
+    }
+
+    for (FilePath file : scope.getDirtyFilesNoExpand()) {
+      iterator.process(file);
+      final VirtualFile vFile = file.getVirtualFile();
+      if (vFile != null && vFile.isValid() && vFile.isDirectory()) {
+        for (VirtualFile child : vFile.getChildren()) {
+          iterator.process(VcsUtil.getFilePath(child));
+        }
+      }
+    }
+  }
+
+  public static void iterateExistingInsideScope(@NotNull VcsDirtyScope scope, @NotNull Processor<? super VirtualFile> iterator) {
+    Project project = scope.getProject();
+    if (project.isDisposed()) return;
+
+    for (FilePath dir : scope.getRecursivelyDirtyDirectories()) {
+      final VirtualFile vFile = obtainVirtualFile(dir);
+      if (vFile != null && vFile.isValid()) {
+        iterateVfUnderVcsRoot(project, vFile, iterator);
+      }
+    }
+
+    for (FilePath file : scope.getDirtyFilesNoExpand()) {
+      VirtualFile vFile = obtainVirtualFile(file);
+      if (vFile != null && vFile.isValid()) {
+        iterator.process(vFile);
+        if (vFile.isDirectory()) {
+          for (VirtualFile child : vFile.getChildren()) {
+            iterator.process(child);
+          }
+        }
+      }
+    }
+  }
+
+  private static @Nullable VirtualFile obtainVirtualFile(FilePath file) {
+    VirtualFile vFile = file.getVirtualFile();
+    return vFile == null ? VfsUtil.findFileByIoFile(file.getIOFile(), false) : vFile;
   }
 }

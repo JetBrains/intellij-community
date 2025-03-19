@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
+public final class JavaInjectedFileChangesHandlerProvider implements InjectedFileChangesHandlerProvider {
 
   @Override
   public InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
@@ -54,8 +54,8 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
   private static boolean hasBlockLiterals(List<? extends PsiLanguageInjectionHost.Shred> shreds) {
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       PsiLanguageInjectionHost host = shred.getHost();
-      if (!(host instanceof PsiLiteralExpression)) continue;
-      if (((PsiLiteralExpression)host).isTextBlock()) return true;
+      if (host instanceof PsiLiteralExpression && ((PsiLiteralExpression)host).isTextBlock()) return true;
+      if (host instanceof PsiFragment && ((PsiFragment)host).isTextBlock()) return true;
     }
     return false;
   }
@@ -63,8 +63,7 @@ public class JavaInjectedFileChangesHandlerProvider implements InjectedFileChang
 
 class OldJavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
 
-  @NotNull
-  private final RangeMarker myAltFullRange;
+  private final @NotNull RangeMarker myAltFullRange;
 
   OldJavaInjectedFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds, Editor editor,
                                     Document newDocument,

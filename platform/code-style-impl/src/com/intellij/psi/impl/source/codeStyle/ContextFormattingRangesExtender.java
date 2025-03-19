@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.ASTNode;
@@ -13,14 +13,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
+final
 class ContextFormattingRangesExtender {
-  private final static Logger LOG = Logger.getInstance(ContextFormattingRangesExtender.class);
+  private static final Logger LOG = Logger.getInstance(ContextFormattingRangesExtender.class);
 
-  private final static int MAX_EXTENSION_LINES = 10;
+  private static final int MAX_EXTENSION_LINES = 10;
 
   private final Document myDocument;
   private final PsiFile  myFile;
@@ -30,7 +32,7 @@ class ContextFormattingRangesExtender {
     myFile = file;
   }
 
-  public List<TextRange> getExtendedRanges(@NotNull List<? extends TextRange> ranges) {
+  public @Unmodifiable List<TextRange> getExtendedRanges(@NotNull List<? extends TextRange> ranges) {
     return ContainerUtil.map(ranges, range -> processRange(range));
   }
 
@@ -64,8 +66,7 @@ class ContextFormattingRangesExtender {
     return range;
   }
 
-  @Nullable
-  private TextRange trimSpaces(@NotNull TextRange range) {
+  private @Nullable TextRange trimSpaces(@NotNull TextRange range) {
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     startOffset = CharArrayUtil.shiftForward(myDocument.getCharsSequence(), startOffset, endOffset, " \t");
@@ -87,8 +88,7 @@ class ContextFormattingRangesExtender {
     return range;
   }
 
-  @NotNull
-  private TextRange getRangeWithSiblings(@NotNull ASTNode astNode) {
+  private @NotNull TextRange getRangeWithSiblings(@NotNull ASTNode astNode) {
     Ref<TextRange> result = Ref.create(astNode.getTextRange());
     IElementType elementType = astNode.getElementType();
     ASTNode sibling = astNode.getTreePrev();

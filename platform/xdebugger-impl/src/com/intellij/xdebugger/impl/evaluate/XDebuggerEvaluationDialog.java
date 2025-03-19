@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +46,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   //can not use new SHIFT_DOWN_MASK etc because in this case ActionEvent modifiers do not match
   private static final int ADD_WATCH_MODIFIERS = (SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
+  /**
+   * @deprecated Use {@link #getAddWatchKeystroke()} instead
+   */
+  @Deprecated(forRemoval = true)
   public static final KeyStroke ADD_WATCH_KEYSTROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ADD_WATCH_MODIFIERS);
 
   private final JPanel myMainPanel;
@@ -126,7 +130,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         //doOKAction(); // do not evaluate on add to watches
         addToWatches();
       }
-    }.registerCustomShortcutSet(new CustomShortcutSet(ADD_WATCH_KEYSTROKE), getRootPane(), myDisposable);
+    }.registerCustomShortcutSet(new CustomShortcutSet(getAddWatchKeystroke()), getRootPane(), myDisposable);
 
     new AnAction() {
       @Override
@@ -172,6 +176,11 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.medium();
+  }
+
+  @Override
   protected void dispose() {
     super.dispose();
     myMainPanel.removeAll();
@@ -199,11 +208,21 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
-        if (mySession != null && (e.getModifiers() & ADD_WATCH_MODIFIERS) == ADD_WATCH_MODIFIERS) {
+        int addWatchModifiers = getAddWatchModifiers();
+        if (mySession != null && (e.getModifiers() & addWatchModifiers) == addWatchModifiers) {
           addToWatches();
         }
       }
     };
+  }
+
+  private static int getAddWatchModifiers() {
+    //can not use new SHIFT_DOWN_MASK etc because in this case ActionEvent modifiers do not match
+    return (ClientSystemInfo.isMac() ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK;
+  }
+
+  public static KeyStroke getAddWatchKeystroke() {
+    return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, getAddWatchModifiers());
   }
 
   private void addToWatches() {
@@ -344,7 +363,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       evaluationCallback.errorOccurred(XDebuggerBundle.message("xdebugger.evaluate.stack.frame.has.not.evaluator"));
     }
     else {
-      evaluator.evaluate(expression, evaluationCallback, null);
+      evaluator.evaluate(expression, evaluationCallback, mySourcePosition);
     }
   }
 
@@ -369,14 +388,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  private class EvaluationMainPanel extends BorderLayoutPanel implements DataProvider {
-    @Nullable
+  private class EvaluationMainPanel extends BorderLayoutPanel implements UiDataProvider {
     @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (KEY.is(dataId)) {
-        return XDebuggerEvaluationDialog.this;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(KEY, XDebuggerEvaluationDialog.this);
     }
 
     @Override

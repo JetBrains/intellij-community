@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.project.Project;
@@ -43,8 +43,7 @@ public abstract class PackageIndex {
    * @param includeLibrarySources if true, directories under library sources are included in the returned list.
    * @return the query returning the list of directories.
    */
-  @NotNull
-  public abstract Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
+  public abstract @NotNull Query<VirtualFile> getDirsByPackageName(@NotNull String packageName, boolean includeLibrarySources);
 
   /**
    * Returns the name of the package corresponding to the specified directory.

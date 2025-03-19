@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.core.CoreBundle;
@@ -11,14 +11,13 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -56,27 +55,33 @@ public final class NamePathComponent extends JPanel {
   private boolean myIsNamePathSyncEnabled = true;
   private boolean myShouldBeAbsolute;
 
-  public NamePathComponent(@NlsContexts.Label String nameLabelText,
-                           @NlsContexts.Label String pathLabelText,
-                           @NlsContexts.DialogTitle String pathChooserTitle,
-                           @NlsContexts.Label String pathChooserDescription) {
+  public NamePathComponent(
+    @NlsContexts.Label String nameLabelText,
+    @NlsContexts.Label String pathLabelText,
+    @NlsContexts.DialogTitle String pathChooserTitle,
+    @NlsContexts.Label String pathChooserDescription
+  ) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
   }
 
-  public NamePathComponent(@NlsContexts.Label String nameLabelText,
-                           @NlsContexts.Label String pathLabelText,
-                           @NlsContexts.DialogTitle String pathChooserTitle,
-                           @NlsContexts.Label String pathChooserDescription,
-                           boolean hideIgnored) {
+  public NamePathComponent(
+    @NlsContexts.Label String nameLabelText,
+    @NlsContexts.Label String pathLabelText,
+    @NlsContexts.DialogTitle String pathChooserTitle,
+    @NlsContexts.Label String pathChooserDescription,
+    boolean hideIgnored
+  ) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, hideIgnored, true);
   }
 
-  public NamePathComponent(@NlsContexts.Label String nameLabelText,
-                           @NlsContexts.Label String pathLabelText,
-                           @NlsContexts.DialogTitle String pathChooserTitle,
-                           @NlsContexts.Label String pathChooserDescription,
-                           boolean hideIgnored,
-                           boolean bold) {
+  public NamePathComponent(
+    @NlsContexts.Label String nameLabelText,
+    @NlsContexts.Label String pathLabelText,
+    @NlsContexts.DialogTitle String pathChooserTitle,
+    @NlsContexts.Label String pathChooserDescription,
+    boolean hideIgnored,
+    boolean bold
+  ) {
     super(new GridBagLayout());
 
     myTfName = new JTextField();
@@ -91,9 +96,11 @@ public final class NamePathComponent extends JPanel {
     if (bold) myNameLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myNameLabel.setLabelFor(myTfName);
 
-    FileChooserDescriptor chooserDescriptor = (FileChooserDescriptor)BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR.clone();
-    chooserDescriptor.setHideIgnored(hideIgnored);
-    BrowseFilesListener browseButtonActionListener = new BrowseFilesListener(myTfPath, pathChooserTitle, pathChooserDescription, chooserDescriptor) {
+    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(pathChooserTitle)
+      .withDescription(pathChooserDescription)
+      .withHideIgnored(hideIgnored);
+    BrowseFilesListener browseButtonActionListener = new BrowseFilesListener(myTfPath, chooserDescriptor) {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
@@ -207,8 +214,7 @@ public final class NamePathComponent extends JPanel {
     }
   }
 
-  @NotNull
-  public JTextField getNameComponent() {
+  public @NotNull JTextField getNameComponent() {
     return myTfName;
   }
 
@@ -217,13 +223,11 @@ public final class NamePathComponent extends JPanel {
     myNameLabel.setVisible(visible);
   }
 
-  @NotNull
-  public JTextField getPathComponent() {
+  public @NotNull JTextField getPathComponent() {
     return myTfPath;
   }
 
-  @NotNull
-  public FieldPanel getPathPanel() {
+  public @NotNull FieldPanel getPathPanel() {
     return myPathPanel;
   }
 

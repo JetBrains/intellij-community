@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.PathKt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.util.PersistentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 
 import static com.intellij.vcs.log.data.index.SqliteVcsLogStorageBackendKt.SQLITE_VCS_LOG_DB_FILENAME_PREFIX;
 
+@ApiStatus.Internal
 public final class VcsLogCachesInvalidator extends CachesInvalidator {
   private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
 
@@ -34,7 +36,7 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
         // if we could not delete caches, ensure that corruption marker is still there
         Path corruptionMarkerFile = PersistentUtil.getCorruptionMarkerFile();
         try {
-          PathKt.createFile(corruptionMarkerFile);
+          Files.createFile(NioFiles.createParentDirectories(corruptionMarkerFile));
         }
         catch (Exception e) {
           LOG.warn(e);
@@ -53,11 +55,9 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
     boolean isEmpty = true;
 
     if (Files.exists(PersistentUtil.LOG_CACHE)) {
-      try {
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
-          if (stream.iterator().hasNext()) {
-            isEmpty = false;
-          }
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(PersistentUtil.LOG_CACHE)) {
+        if (stream.iterator().hasNext()) {
+          isEmpty = false;
         }
       }
       catch (IOException ignored) {
@@ -66,7 +66,7 @@ public final class VcsLogCachesInvalidator extends CachesInvalidator {
 
     if (!isEmpty) {
       try {
-        PathKt.createFile(PersistentUtil.getCorruptionMarkerFile());
+        Files.createFile(NioFiles.createParentDirectories(PersistentUtil.getCorruptionMarkerFile()));
       }
       catch (Exception e) {
         LOG.error(e);

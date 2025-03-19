@@ -1,0 +1,42 @@
+### auto-generated section `build kotlin.base.fe10.analysis-api-platform` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+    "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+  ]
+)
+
+jvm_resources(
+  name = "kotlin-base-fe10-analysis-api-platform_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-base-fe10-analysis-api-platform",
+  module_name = "kotlin.base.fe10.analysis-api-platform",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/analysis-api-platform:kotlin-base-analysis-api-platform",
+    "//java/openapi:java",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+  ],
+  runtime_deps = [":kotlin-base-fe10-analysis-api-platform_resources"]
+)
+### auto-generated section `build kotlin.base.fe10.analysis-api-platform` end

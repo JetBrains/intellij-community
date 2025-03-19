@@ -40,16 +40,16 @@ public final class SAMKt {
     public static final fun getSamImplicitLabel() : java.lang.Runnable = UastEmptyExpression
     public static final fun getSamExplicitLabel() : java.lang.Runnable = UastEmptyExpression
     public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {
-        return <anonymous class>()
+        return UIdentifier (Identifier (r))()
     }
     public static final fun test1() : void {
-        var thread1: java.lang.Thread = <init>({
-            println("hello1")
+        var thread1: java.lang.Thread = Thread({
+            return println("hello1")
         })
     }
     public static final fun test2() : void {
-        var thread2: java.lang.Thread = <init>(Runnable({
-            println("hello2")
+        var thread2: java.lang.Thread = Thread(Runnable({
+            return println("hello2")
         }))
     }
     public static final fun test3() : void {

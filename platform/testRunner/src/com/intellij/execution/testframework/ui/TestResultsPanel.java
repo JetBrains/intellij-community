@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -17,7 +17,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +26,8 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 
-public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
-  protected JScrollPane myLeftPane;
+public abstract class TestResultsPanel extends JPanel implements Disposable, UiCompatibleDataProvider  {
+  private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
   private final String mySplitterProportionProperty;
@@ -57,9 +57,12 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
   }
 
-  @NotNull
-  public TestStatusLine getStatusLine() {
+  public @NotNull TestStatusLine getStatusLine() {
     return myStatusLine;
+  }
+
+  protected void hideToolbar() {
+    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   public void initUI() {
@@ -126,6 +129,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return splitVertically;
   }
 
+  @ApiStatus.Internal
   protected ToolbarPanel createToolbarPanel() {
     return new ToolbarPanel(myProperties, this);
   }
@@ -136,27 +140,20 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
 
   protected abstract JComponent createTestTreeView();
 
-  @Nullable
-  protected TestTreeView getTreeView() {
+  protected @Nullable TestTreeView getTreeView() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    final TestTreeView view = getTreeView();
-    if (view != null) {
-      return view.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, getTreeView());
   }
 
   @Override
   public void dispose() {
   }
 
-  @NotNull
-  protected static JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
+  protected static @NotNull JBSplitter createSplitter(@NotNull String proportionProperty, float defaultProportion, boolean splitVertically) {
     JBSplitter splitter = new OnePixelSplitter(splitVertically, proportionProperty, defaultProportion);
     splitter.setHonorComponentsMinimumSize(true);
     return splitter;

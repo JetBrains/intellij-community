@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -19,9 +19,8 @@ import org.jetbrains.annotations.Nullable;
 @Experimental
 public abstract class JvmLocalInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -75,6 +74,5 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
     public abstract @NotNull ProblemsHolder getHolder();
   }
 
-  @Nullable
-  protected abstract JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly);
+  protected abstract @Nullable JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly);
 }

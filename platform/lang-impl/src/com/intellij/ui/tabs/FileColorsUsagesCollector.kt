@@ -9,14 +9,14 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.ui.FileColorManager
 
-class FileColorsUsagesCollector : ProjectUsagesCollector() {
+internal class FileColorsUsagesCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("appearance.file.colors", 2)
 
   private val FILE_COLORS: EventId1<Boolean> = GROUP.registerEvent("file.colors", EventFields.Enabled)
   private val EDITOR_TABS: EventId1<Boolean> = GROUP.registerEvent("editor.tabs", EventFields.Enabled)
   private val PROJECT_VIEW: EventId1<Boolean> = GROUP.registerEvent("project.view", EventFields.Enabled)
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = mutableSetOf<MetricEvent>()

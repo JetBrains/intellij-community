@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,14 +12,17 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.Assert;
 
 import java.io.File;
@@ -28,11 +31,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public final class VfsTestUtil {
   public static final Key<String> TEST_DATA_FILE_PATH = Key.create("TEST_DATA_FILE_PATH");
 
   private VfsTestUtil() { }
+
+  /**
+   * Invokes VirtualFileManager.syncRefresh() and waits until indexes are ready after VFS refresh
+   */
+  public static void syncRefresh() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      VirtualFileManager.getInstance().syncRefresh();
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+    else if (ApplicationManager.getApplication().isDispatchThread()) {
+      WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        WriteAction.compute(VirtualFileManager.getInstance()::syncRefresh);
+      });
+      IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    }
+  }
 
   public static @NotNull VirtualFile createFile(@NotNull VirtualFile root, @NotNull String relativePath) {
     return createFile(root, relativePath, (byte[])null);
@@ -67,7 +91,7 @@ public final class VfsTestUtil {
           parent = child;
         }
 
-        parent.getChildren();  // to ensure that fileCreated event is fired
+        parent.getChildren();  // to ensure that the "file created" event is fired
 
         String name = PathUtil.getFileName(relativePath);
         VirtualFile file;
@@ -87,7 +111,7 @@ public final class VfsTestUtil {
           if (data != null) {
             file.setBinaryContent(data);
           }
-          manager.reloadFiles(file);  // update the document now, to prevent MemoryDiskConflictResolver from kicking in later
+          manager.reloadFiles(file);  // update the document now to prevent `MemoryDiskConflictResolver` from kicking in later
         }
         return file;
       });
@@ -207,7 +231,7 @@ public final class VfsTestUtil {
     return allEvents;
   }
 
-  public static @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
+  public static @Unmodifiable @NotNull List<String> print(@NotNull List<? extends VFileEvent> events) {
     return ContainerUtil.map(events, VfsTestUtil::print);
   }
 
@@ -218,5 +242,15 @@ public final class VfsTestUtil {
     else if (e instanceof VFileContentChangeEvent) type = 'U';
     else if (e instanceof VFilePropertyChangeEvent) type = 'P';
     return type + " : " + e.getPath();
+  }
+
+  public static void waitForFileWatcher() {
+    if (LocalFileSystem.getInstance() instanceof LocalFileSystemImpl impl) {
+      var watcher = impl.getFileWatcher();
+      var stopAt = System.nanoTime() + TimeUnit.MINUTES.toNanos(1);
+      while (watcher.isSettingRoots() && System.nanoTime() < stopAt) {
+        TimeoutUtil.sleep(10);
+      }
+    }
   }
 }

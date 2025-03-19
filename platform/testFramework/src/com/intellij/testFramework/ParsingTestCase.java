@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -24,7 +23,6 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,14 +32,12 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTracker;
-import com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -49,9 +45,9 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,8 +85,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     myLowercaseFirstLetter = lowercaseFirstLetter;
   }
 
-  @NotNull
-  protected MockApplication getApplication() {
+  protected @NotNull MockApplication getApplication() {
     return app;
   }
 
@@ -98,9 +93,12 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
+    // This makes sure that tasks launched in the shared project are properly cancelled,
+    // so they don't leak into the mock app of ParsingTestCase.
+    LightPlatformTestCase.closeAndDeleteProject();
     MockApplication app = MockApplication.setUp(getTestRootDisposable());
     this.app = app;
-    MutablePicoContainer appContainer = app.getPicoContainer();
+    DefaultPicoContainer appContainer = app.getPicoContainer();
     ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
     if (component == null) {
       appContainer.registerComponentInstance(ProgressManager.class.getName(), new ProgressManagerImpl());
@@ -141,20 +139,20 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     // That's for reparse routines
     project.registerService(PomModel.class, new PomModelImpl(project));
-    Registry.markAsLoaded();
+    Registry.Companion.markAsLoaded();
+    LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
     Language language = definition.getFileNodeType().getLanguage();
     myLangParserDefinition.registerExtension(new KeyedLazyInstance<>() {
       @Override
-      public String getKey() {
+      public @NotNull String getKey() {
         return language.getID();
       }
 
-      @NotNull
       @Override
-      public ParserDefinition getInstance() {
+      public @NotNull ParserDefinition getInstance() {
         return definition;
       }
     });
@@ -216,9 +214,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
-  @NotNull
   // easy debug of not disposed extension
-  private PluginDescriptor getPluginDescriptor() {
+  protected @NotNull PluginDescriptor getPluginDescriptor() {
     PluginDescriptor pluginDescriptor = this.pluginDescriptor;
     if (pluginDescriptor == null) {
       pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId(getClass().getName() + "." + getName()), ParsingTestCase.class.getClassLoader());
@@ -227,8 +224,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return pluginDescriptor;
   }
 
-  @NotNull
-  public MockProjectEx getProject() {
+  public @NotNull MockProjectEx getProject() {
     return project;
   }
 
@@ -249,8 +245,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return PathManagerEx.getTestDataPath();
   }
 
-  @NotNull
-  public final String getTestName() {
+  public final @NotNull String getTestName() {
     return getTestName(myLowercaseFirstLetter);
   }
 
@@ -268,7 +263,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
   protected void ensureNoErrorElements() {
-    ParsingTestUtil.ensureNoErrorElements(myFile);
+    ParsingTestUtil.assertNoPsiErrorElements(myFile);
   }
 
   protected void doTest(boolean checkResult) {
@@ -309,11 +304,23 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return myFile;
   }
 
-  private static void doSanityChecks(PsiFile root) {
+  private void doSanityChecks(PsiFile root) {
     assertEquals("psi text mismatch", root.getViewProvider().getContents().toString(), root.getText());
     ensureParsed(root);
-    ensureCorrectReparse(root);
+    ensureCorrectReparse(root, isCheckNoPsiEventsOnReparse());
     checkRangeConsistency(root);
+  }
+
+  /**
+   * @deprecated Don't use this method in new code.
+   * <p>
+   * This method is a hack for old code to avoid failures in parsing tests when PSI machinery detects psi changes on file reparse.
+   * This should not happen because the parser must produce a stable result each time it's called.
+   * Please fix your parser instead of overriding this method. In case of doubts, consult with IntelliJ/Code Platform team.
+   */
+  @Deprecated
+  protected boolean isCheckNoPsiEventsOnReparse() {
+    return true;
   }
 
   private static void checkRangeConsistency(PsiFile file) {
@@ -345,7 +352,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         }
       }
 
-      private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
+      private static int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
         assertEquals(child.getStartOffsetInParent(), childOffset);
         assertEquals(child.getStartOffset(), childOffset + parentOffset);
         int childLength = child.getTextLength();
@@ -375,6 +382,29 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     checkResult(myFilePrefix + name, myFile);
   }
 
+  protected void doReparseTest(String textBefore, String textAfter) {
+    var file = createFile("test." + myFileExt, textBefore);
+    var fileAfter = createFile("test." + myFileExt, textAfter);
+
+    var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
+    var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
+
+    var range = new TextRange(Math.min(rangeStart, rangeEnd), Math.max(rangeStart, rangeEnd));
+
+    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false, true, null);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      new BlockSupportImpl().reparseRange(
+        file,
+        file.getNode(),
+        range,
+        fileAfter.getText(),
+        new EmptyProgressIndicator(),
+        file.getText()
+      ).performActualPsiChange(file);
+    });
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false, true, null));
+  }
+
   protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
     return createFile(name + "." + myFileExt, text);
   }
@@ -390,7 +420,11 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   }
 
   protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
-    doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
+    checkResult(myFullDataPath, targetDataName, file);
+  }
+
+  protected void checkResult(String fullDataPath, @NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
+    doCheckResult(fullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
     if (SystemProperties.getBooleanProperty("dumpAstTypeNames", false)) {
       printAstTypeNamesTree(targetDataName, file);
     }
@@ -505,25 +539,26 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     });
   }
 
-  public static void ensureCorrectReparse(@NotNull final PsiFile file) {
-    final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
-
-    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-                                       final String fileText = file.getText();
-                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
-                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-                                       diffLog.performActualPsiChange(file);
-                                     });
-
-    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
+  public static void ensureCorrectReparse(@NotNull PsiFile file) {
+    ensureCorrectReparse(file, true);
   }
 
-  public void registerMockInjectedLanguageManager() {
-    registerExtensionPoint(project.getExtensionArea(), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+  private static void ensureCorrectReparse(@NotNull PsiFile file, boolean isCheckNoPsiEventsOnReparse) {
+    final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
-    registerExtensionPoint(app.getExtensionArea(), LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
-    project.registerService(DumbService.class, new MockDumbService(project));
-    getApplication().registerService(EditorWindowTracker.class, new EditorWindowTrackerImpl());
-    project.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(project));
+    TreeChangeEventImpl event = DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      String fileText = file.getText();
+      DiffLog diffLog = new BlockSupportImpl().reparseRange(
+        file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText
+      );
+      return diffLog.performActualPsiChange(file);
+    });
+
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
+
+    // this if-check is only for compatibility reasons! Please fix your parser instead of employing the flag!
+    if (isCheckNoPsiEventsOnReparse) {
+      assertEmpty(event.getChangedElements());
+    }
   }
 }

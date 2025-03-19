@@ -1,0 +1,26 @@
+### auto-generated section `build intellij.evaluationPlugin.languages.python` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "evaluationPlugin-languages-python_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "evaluationPlugin-languages-python",
+  module_name = "intellij.evaluationPlugin.languages.python",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/lang-impl",
+    "//platform/platform-impl:ide-impl",
+    "//python:python-community-impl",
+    "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
+    "//plugins/evaluation-plugin/core:evaluationPlugin-core",
+  ],
+  runtime_deps = [":evaluationPlugin-languages-python_resources"]
+)
+### auto-generated section `build intellij.evaluationPlugin.languages.python` end

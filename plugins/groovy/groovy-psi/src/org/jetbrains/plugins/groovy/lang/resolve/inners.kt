@@ -119,5 +119,5 @@ private fun useCaches(place: PsiElement): Boolean {
   if (ApplicationManager.getApplication().isDispatchThread) return false
   val containingFile = place.containingFile
   if (containingFile.originalFile !== containingFile) return false
-  return containingFile.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == true
+  return PsiFileEx.isBatchReferenceProcessingEnabled(containingFile)
 }

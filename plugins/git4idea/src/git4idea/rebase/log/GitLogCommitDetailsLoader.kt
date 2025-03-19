@@ -13,6 +13,7 @@ import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.AbstractDataGetter.Companion.getCommitDetails
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.ui.table.size
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 
@@ -41,7 +42,7 @@ private fun loadDetails(project: Project, data: VcsLogData, selection: VcsLogCom
   catch (e: VcsException) {
     val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", selection.size)
     LOG.warn(error, e)
-    val notification = VcsNotifier.STANDARD_NOTIFICATION
+    val notification = VcsNotifier.standardNotification()
       .createNotification(error, NotificationType.ERROR)
       .setDisplayId(GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT_LOG)
     VcsNotifier.getInstance(project).notify(notification)

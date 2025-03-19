@@ -11,17 +11,17 @@ import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
 import org.jetbrains.kotlin.psi.KtFile
-import java.util.*
 
 class BreakpointChecker {
-    private companion object {
-        private val BREAKPOINT_TYPES = mapOf(
+    companion object {
+        val BREAKPOINT_TYPES = mapOf(
             KotlinLineBreakpointType::class.java to BreakpointType.Line,
             KotlinFieldBreakpointType::class.java to BreakpointType.Field,
             KotlinFunctionBreakpointType::class.java to BreakpointType.Function,
             JavaLineBreakpointType.LambdaJavaBreakpointVariant::class.java to BreakpointType.Lambda,
             KotlinLineBreakpointType.LineKotlinBreakpointVariant::class.java to BreakpointType.Line,
-            KotlinLineBreakpointType.KotlinBreakpointVariant::class.java to BreakpointType.All
+            KotlinLineBreakpointType.KotlinBreakpointVariant::class.java to BreakpointType.All,
+            JavaLineBreakpointType.ConditionalReturnJavaBreakpointVariant::class.java to BreakpointType.Return,
         )
     }
 
@@ -30,6 +30,7 @@ class BreakpointChecker {
         Field("F"),
         Function("M"), // method
         Lambda("λ"),
+        Return("R"),
         All("*") // line & lambda
     }
 
@@ -42,8 +43,8 @@ class BreakpointChecker {
             .filter { it is KotlinBreakpointType }
     }
 
-    fun check(file: KtFile, line: Int): EnumSet<BreakpointType> {
-        val actualBreakpointTypes = EnumSet.noneOf(BreakpointType::class.java)
+    fun check(file: KtFile, line: Int): List<BreakpointType> {
+        val actualBreakpointTypes = mutableListOf<BreakpointType>()
 
         for (breakpointType in breakpointTypes) {
             val sign = BREAKPOINT_TYPES[breakpointType.javaClass] ?: continue

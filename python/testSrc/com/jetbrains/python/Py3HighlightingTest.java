@@ -121,7 +121,32 @@ public class Py3HighlightingTest extends PyTestCase {
 
   // PY-32067
   public void testAwaitInNonAsyncFunction() {
-    doTest(false, false);
+    doHighlightingQuickfixTest("Convert to async function");
+  }
+
+  // PY-79522
+  public void testAsyncWithInNonAsyncFunction() {
+    doHighlightingQuickfixTest("Convert to async function");
+  }
+
+  // PY-79522
+  public void testAsyncForInNonAsyncFunction() {
+    doHighlightingQuickfixTest("Convert to async function");
+  }
+
+  // PY-79522
+  public void testAsyncListComprehensionInNonAsyncFunction() {
+    doHighlightingQuickfixTest("Convert to async function");
+  }
+
+  // PY-79522
+  public void testAsyncDictComprehensionInNonAsyncFunction() {
+    doHighlightingQuickfixTest("Convert to async function");
+  }
+
+  // PY-79522
+  public void testAsyncSetComprehensionInNonAsyncFunction() {
+    doHighlightingQuickfixTest("Convert to async function");
   }
 
   // PY-32067
@@ -177,6 +202,15 @@ public class Py3HighlightingTest extends PyTestCase {
 
   private void doTestWithLanguageLevel(LanguageLevel languageLevel, boolean checkWarnings, boolean checkInfos) {
     runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
+  }
+
+  private void doHighlightingQuickfixTest(String hint) {
+    var testPath = TEST_PATH + getTestName(true) + PyNames.DOT_PY;
+    var testPathAfter = TEST_PATH + getTestName(true) + ".after.py";
+    myFixture.testHighlighting(true, false, false, testPath);
+    var quickFix = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(quickFix);
+    myFixture.testHighlighting(true, false, false, testPathAfter);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {

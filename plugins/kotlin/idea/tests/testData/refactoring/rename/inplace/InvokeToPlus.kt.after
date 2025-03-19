@@ -1,3 +1,5 @@
+// NEW_NAME: plus
+// RENAME: member
 class A {
     fun plus(n: Int, s: String) = 1
 }

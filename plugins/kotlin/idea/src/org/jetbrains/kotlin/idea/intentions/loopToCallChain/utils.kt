@@ -5,19 +5,17 @@ package org.jetbrains.kotlin.idea.intentions.loopToCallChain
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
-import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
+import org.jetbrains.kotlin.idea.caches.resolve.*
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
@@ -40,14 +38,14 @@ fun generateLambda(inputVariable: KtCallableDeclaration, expression: KtExpressio
     ) as KtLambdaExpression
 
     val isItUsedInside = expression.anyDescendantOfType<KtNameReferenceExpression> {
-        it.getQualifiedExpressionForSelector() == null && it.getReferencedName() == "it"
+        it.getQualifiedExpressionForSelector() == null && it.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
     }
 
     if (isItUsedInside) return lambdaExpression
 
     val usages = lambdaExpression.findParameterUsages(lambdaExpression.valueParameters.single(), inputVariable)
 
-    val itExpr = psiFactory.createSimpleName("it")
+    val itExpr = psiFactory.createSimpleName(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
     for (usage in usages) {
         val replaced = usage.replaced(itExpr)
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.pratt;
 
-import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.tree.IElementType;
@@ -16,22 +15,12 @@ public class MutableMarker {
   private IElementType myResultType;
   private final int myInitialPathLength;
   private final LinkedList<IElementType> myPath;
-  private Mode myMode;
+  private Mode myMode = Mode.READY;
 
   public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder.Marker startMarker, final int initialPathLength) {
     myPath = path;
     myStartMarker = startMarker;
     myInitialPathLength = initialPathLength;
-    myMode = startMarker instanceof LighterASTNode && ((LighterASTNode)startMarker).getTokenType() != null? Mode.COMMITTED : Mode.READY;
-  }
-
-  // for easier transition only
-  public MutableMarker(final LinkedList<IElementType> path, final PsiBuilder builder) {
-    myPath = path;
-    myStartMarker = (PsiBuilder.Marker)builder.getLatestDoneMarker();
-    myInitialPathLength = path.size();
-    myResultType = myStartMarker != null ? ((LighterASTNode)myStartMarker).getTokenType() : null;
-    myMode = myResultType != null ? Mode.COMMITTED : Mode.READY;
   }
 
   public boolean isCommitted() {

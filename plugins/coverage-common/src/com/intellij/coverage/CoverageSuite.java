@@ -9,6 +9,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.coverage.data.ProjectData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import java.io.File;
 
 /**
  * Represents coverage data collected by {@link CoverageRunner}.
- * 
+ *
  * @see BaseCoverageSuite
  */
 public interface CoverageSuite extends JDOMExternalizable {
@@ -28,30 +29,33 @@ public interface CoverageSuite extends JDOMExternalizable {
   @NotNull
   String getCoverageDataFileName();
 
-  @NlsSafe String getPresentableName();
+  @NlsSafe
+  String getPresentableName();
 
-  long getLastCoverageTimeStamp();
-
-  @NotNull
-  CoverageFileProvider getCoverageDataFileProvider();
-
-  boolean isCoverageByTestApplicable();
-
-  boolean isCoverageByTestEnabled();
-
-  @Nullable
-  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
-
-  boolean isTrackTestFolders();
-
-  boolean isTracingEnabled();
-
-  CoverageRunner getRunner();
+  Project getProject();
 
   @NotNull
   CoverageEngine getCoverageEngine();
 
-  Project getProject();
+  CoverageRunner getRunner();
+
+  @NotNull
+  CoverageFileProvider getCoverageDataFileProvider();
+
+  long getLastCoverageTimeStamp();
+
+  boolean isTrackTestFolders();
+
+  boolean isBranchCoverage();
+
+  @ApiStatus.Internal
+  boolean isCoverageByTestEnabled();
+
+  /**
+   * Get coverage data, of load it if it has not been loaded
+   */
+  @Nullable
+  ProjectData getCoverageData(CoverageDataManager coverageDataManager);
 
   /**
    * Caches loaded coverage data on soft reference.
@@ -61,19 +65,21 @@ public interface CoverageSuite extends JDOMExternalizable {
   /**
    * Reinit coverage data cache with {@link CoverageRunner#loadCoverageData(File, CoverageSuite)}.
    */
-  void restoreCoverageData();
-
-  /**
-   * @return true if engine can provide means to remove coverage data.
-   */
-  default boolean canRemove() {
-    CoverageFileProvider provider = getCoverageDataFileProvider();
-    return provider instanceof DefaultCoverageFileProvider && Comparing.strEqual(((DefaultCoverageFileProvider)provider).getSourceProvider(),
-                                                                                 DefaultCoverageFileProvider.class.getName());
+  @ApiStatus.Internal
+  default void restoreCoverageData() {
   }
 
   /**
-   * Called to cleanup gathered coverage on explicit user's action in settings dialog or e.g. during rerun of the same configuration.
+   * @return true if engine can provide the means to remove coverage data.
+   */
+  default boolean canRemove() {
+    CoverageFileProvider provider = getCoverageDataFileProvider();
+    return provider instanceof DefaultCoverageFileProvider defaultProvider
+           && Comparing.strEqual(defaultProvider.getSourceProvider(), DefaultCoverageFileProvider.DEFAULT_LOCAL_PROVIDER_KEY);
+  }
+
+  /**
+   * Cleans gathered coverage on explicit user's action in the settings dialog or e.g., during rerun of the same configuration.
    */
   default void deleteCachedCoverageData() {
     final String fileName = getCoverageDataFileName();
@@ -88,5 +94,12 @@ public interface CoverageSuite extends JDOMExternalizable {
       FileUtil.delete(file);
     }
     getCoverageEngine().deleteAssociatedTraces(this);
+  }
+
+  @ApiStatus.Internal
+  default boolean isCoverageByTestApplicable() {
+    CoverageRunner runner = getRunner();
+    if (runner == null) return false;
+    return runner.isCoverageByTestApplicable();
   }
 }

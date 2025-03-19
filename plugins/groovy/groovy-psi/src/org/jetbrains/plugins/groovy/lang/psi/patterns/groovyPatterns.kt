@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder.checkKind
 
-val closureCallKey: Key<GrCall> = Key.create<GrCall>("groovy.pattern.closure.call")
+val closureCallKey: Key<GrCall> = Key.create("groovy.pattern.closure.call")
 
 inline fun <reified T : GroovyPsiElement> groovyElement(): GroovyElementPattern.Capture<T> {
   return GroovyElementPattern.Capture(T::class.java)

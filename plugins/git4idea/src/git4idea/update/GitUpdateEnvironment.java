@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.update;
 
 import com.intellij.openapi.components.Service;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.update.SequentialUpdatesContext;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.update.UpdateSession;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.PostponableLogRefresher;
 import git4idea.branch.GitBranchPair;
@@ -29,7 +28,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import static git4idea.GitUtil.isUnderGit;
 import static java.util.Arrays.asList;
 
 @Service(Service.Level.PROJECT)
@@ -46,11 +44,10 @@ public final class GitUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @NotNull
-  public UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
-                                         UpdatedFiles updatedFiles,
-                                         ProgressIndicator progressIndicator,
-                                         @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
+  public @NotNull UpdateSession updateDirectories(FilePath @NotNull [] filePaths,
+                                                  UpdatedFiles updatedFiles,
+                                                  ProgressIndicator progressIndicator,
+                                                  @NotNull Ref<SequentialUpdatesContext> sequentialUpdatesContextRef)
     throws ProcessCanceledException {
     return performUpdate(myProject, filePaths, updatedFiles, progressIndicator, GitVcsSettings.getInstance(myProject).getUpdateMethod(),
                          null);
@@ -58,17 +55,11 @@ public final class GitUpdateEnvironment implements UpdateEnvironment {
 
   @Override
   public boolean validateOptions(Collection<FilePath> filePaths) {
-    for (FilePath p : filePaths) {
-      if (!isUnderGit(p)) {
-        return false;
-      }
-    }
     return true;
   }
 
   @Override
-  @Nullable
-  public Configurable createConfigurable(Collection<FilePath> files) {
+  public @Nullable Configurable createConfigurable(Collection<FilePath> files) {
     return new GitUpdateConfigurable(GitVcsSettings.getInstance(myProject));
   }
 

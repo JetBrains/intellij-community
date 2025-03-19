@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -15,12 +15,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -92,8 +96,11 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       Collection<X509Certificate> additionalTrustedCertificates =
         OsCertificatesService.getInstance().getCustomOsSpecificTrustedCertificates();
       if (additionalTrustedCertificates.isEmpty()) {
-        LOG.warn(
-          "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        // don't nag developers, on jetbrains developer's machine this list is usually empty on MacOs and Windows
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.warn(
+            "Received an empty list of custom trusted root certificates from the system. Check log above for possible errors, enable debug logging in category 'org.jetbrains.nativecerts' for more information");
+        }
         return null;
       }
 
@@ -170,10 +177,37 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
 
   @Override
   public void checkServerTrusted(final X509Certificate[] chain, String authType) throws CertificateException {
+    checkServerTrusted(chain, authType, (String)null);
+  }
+
+  @Override
+  public void checkServerTrusted(X509Certificate[] chain, String authType, Socket socket) throws CertificateException {
+    String remoteHost;
+    SocketAddress sa = socket.getRemoteSocketAddress();
+    if (sa instanceof InetSocketAddress isa) {
+      remoteHost = isa.getHostString() + ":" + isa.getPort();
+    }
+    else {
+      remoteHost = sa.toString();
+    }
+    checkServerTrusted(chain, authType, remoteHost);
+  }
+
+  @Override
+  public void checkServerTrusted(X509Certificate[] chain, String authType, SSLEngine engine) throws CertificateException {
+    String remoteHost = engine.getPeerHost();
+    int peerPort = engine.getPeerPort();
+    if (peerPort > 0) {
+      remoteHost = remoteHost + ":" + peerPort;
+    }
+    checkServerTrusted(chain, authType, remoteHost);
+  }
+
+  private void checkServerTrusted(X509Certificate[] chain, String authType, String remoteHost) throws CertificateException {
     withCalculatedCertificateStrategy(strategyWithReason -> {
       boolean askUser = strategyWithReason.getStrategy() == UntrustedCertificateStrategy.ASK_USER;
       String askUserReason = strategyWithReason.getReason();
-      checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, true, null, null, askUserReason));
+      checkServerTrusted(chain, authType, remoteHost, new CertificateConfirmationParameters(askUser, true, null, null, askUserReason));
     });
   }
 
@@ -194,10 +228,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   @Deprecated
   public void checkServerTrusted(final X509Certificate[] chain, String authType, boolean addToKeyStore, boolean askUser)
     throws CertificateException {
-    checkServerTrusted(chain, authType, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null, null));
+    checkServerTrusted(chain, authType, null, new CertificateConfirmationParameters(askUser, addToKeyStore, null, null, null));
   }
 
-  public void checkServerTrusted(final X509Certificate[] chain, String authType, @NotNull CertificateConfirmationParameters parameters)
+  public void checkServerTrusted(final X509Certificate[] chain, String authType, @NotNull CertificateConfirmationParameters parameters) throws CertificateException {
+    checkServerTrusted(chain, authType, null, parameters);
+  }
+
+  private void checkServerTrusted(final X509Certificate[] chain, String authType, String remoteHost, @NotNull CertificateConfirmationParameters parameters)
     throws CertificateException {
 
     CertificateException lastCertificateException = null;
@@ -218,14 +256,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         myCustomManager.checkServerTrusted(chain, authType);
       }
       catch (CertificateException e) {
-        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, parameters)) {
+        if (myCustomManager.isBroken() || !confirmAndUpdate(chain, remoteHost, parameters, authType)) {
           throw lastCertificateException != null ? lastCertificateException : e;
         }
       }
     }
   }
 
-  private boolean confirmAndUpdate(final X509Certificate[] chain, @NotNull CertificateConfirmationParameters parameters) {
+  private boolean confirmAndUpdate(final X509Certificate[] chain, String remoteHost, @NotNull CertificateConfirmationParameters parameters, String authType) {
     Application app = ApplicationManager.getApplication();
     final X509Certificate endPoint = chain[0];
     // IDEA-123467 and IDEA-123335 workaround
@@ -248,18 +286,23 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     boolean accepted = false;
+    CertificateProvider certificateProvider = new CertificateProvider();
     if (parameters.myAskUser) {
-
       String acceptLogMessage = "Going to ask user about certificate for: " + endPoint.getSubjectX500Principal().toString() +
                        ", issuer: " + endPoint.getIssuerX500Principal().toString();
       if (parameters.myAskOrRejectReason != null) {
         acceptLogMessage += ". Reason: " + parameters.myAskOrRejectReason;
       }
       LOG.info(acceptLogMessage);
-      accepted = CertificateManager.Companion.showAcceptDialog(() -> {
-        // TODO may be another kind of warning, if default trust store is missing
-        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint, parameters.myCertificateDetails);
-      });
+      CertificateWarningDialogProvider dialogProvider = CertificateWarningDialogProvider.Companion.getInstance();
+      if (dialogProvider == null) {
+        LOG.warn("Accepting dialog wasn't shown, because DialogProvider in unavailable now");
+      } else {
+        accepted = CertificateManager.Companion.showAcceptDialog(() -> {
+          // TODO may be another kind of warning, if default trust store is missing
+          return dialogProvider.createCertificateWarningDialog(Arrays.stream(chain).toList(), myCustomManager, remoteHost, authType, certificateProvider);
+        });
+      }
     }
     else {
       String rejectLogMessage = "Didn't show certificate dialog for: " + endPoint.getSubjectX500Principal().toString() +
@@ -272,7 +315,16 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     if (accepted) {
       LOG.info("Certificate was accepted by user");
       if (parameters.myAddToKeyStore) {
-        myCustomManager.addCertificate(endPoint);
+        if (certificateProvider.getSelectedCertificate() == null) {
+          LOG.warn("Certificate wasn't selected, but accepted");
+          accepted = false;
+        } else {
+          myCustomManager.addCertificate(certificateProvider.getSelectedCertificate());
+        }
+      }
+      if (certificateProvider.isChainRemainUnsafe()) {
+        LOG.info("The certificate chain remains untrusted. The request execution will not proceed");
+        accepted = false;
       }
       if (parameters.myOnUserAcceptCallback != null) {
         parameters.myOnUserAcceptCallback.run();
@@ -478,6 +530,19 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       catch (KeyStoreException e) {
         return null;
+      }
+      finally {
+        myReadLock.unlock();
+      }
+    }
+    
+    public List<String> getAliases() {
+      myReadLock.lock();
+      try {
+        return Collections.list(myKeyStore.aliases());
+      }
+      catch (KeyStoreException e) {
+        return Collections.emptyList();
       }
       finally {
         myReadLock.unlock();

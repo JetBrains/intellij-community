@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -21,12 +21,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.ide.dnd.FileCopyPasteUtil.getVirtualFileListFromAttachedObject;
 
@@ -37,23 +38,20 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     super(project);
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return IdeBundle.message("attachable.project.pane.name");
   }
 
-  @NotNull
   @Override
-  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     ProjectViewTree tree = super.createTree(treeModel);
     tree.getEmptyText().setText(IdeBundle.message("label.empty.text.attach.directories.with.right.click"));
     return tree;
   }
 
-  @NotNull
   @Override
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return myDecorator.wrap(super.createComponent());
   }
 
@@ -67,16 +65,14 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     myDecorator.processDnD(null);
   }
 
-  @NotNull
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectViewPaneTreeStructure() {
       @Override
-      protected AbstractTreeNode<?> createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
+      protected AbstractTreeNode<?> createRoot(final @NotNull Project project, @NotNull ViewSettings settings) {
         return new ProjectViewProjectNode(project, settings) {
-          @NotNull
           @Override
-          public Collection<AbstractTreeNode<?>> getChildren() {
+          public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
             Project project = Objects.requireNonNull(getProject());
             Set<AbstractTreeNode<?>> result = new LinkedHashSet<>();
             PsiManager psiManager = PsiManager.getInstance(project);
@@ -109,7 +105,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     });
   }
 
-  private class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
+  private final class DropAreaDecorator extends JPanel implements DnDTargetChecker, DnDDropHandler {
     private JComponent myWrappee;
     private final JPanel myDropArea = new JPanel(new BorderLayout());
     private final JLabel myLabel = new JLabel(
@@ -124,14 +120,12 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       myDropArea.add(myLabel, BorderLayout.CENTER);
     }
 
-    @NotNull
-    private List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
+    private static @Unmodifiable @NotNull List<VirtualFile> getDirectories(@NotNull DnDEvent event) {
       return ContainerUtil.filter(getVirtualFileListFromAttachedObject(event.getAttachedObject()),
                                   file -> file.isDirectory());
     }
 
-    @NotNull
-    private JComponent wrap(@NotNull JComponent wrappee) {
+    private @NotNull JComponent wrap(@NotNull JComponent wrappee) {
       if (wrappee != myWrappee) {
         myWrappee = wrappee;
         init(wrappee);
@@ -164,7 +158,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     }
 
     @Override
-    public void drop(@NotNull final DnDEvent event) {
+    public void drop(final @NotNull DnDEvent event) {
       hideDropArea();
       processDroppedDirectories(getDirectories(event));
     }
@@ -181,11 +175,11 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
       return false;
     }
 
-    private boolean isDroppable(@NotNull DnDEvent event) {
+    private static boolean isDroppable(@NotNull DnDEvent event) {
       return FileCopyPasteUtil.isFileListFlavorAvailable(event);
     }
 
-    private boolean isOverComponent(@Nullable JComponent component) {
+    private static boolean isOverComponent(@Nullable JComponent component) {
       if (component == null) return false;
       Point location = MouseInfo.getPointerInfo().getLocation();
       Point p = new Point(location);

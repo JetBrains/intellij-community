@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.JavaElementVisitor
@@ -22,23 +22,24 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 internal class EnumValuesSoftDeprecateInJavaInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val module = ModuleUtilCore.findModuleForFile(holder.file)
-        // do not try to load Kotlin settings in Java-only modules
-        if (module == null || !hasKotlinFiles(module)) {
-            return PsiElementVisitor.EMPTY_VISITOR
-        }
-
-        if (!holder.file.isEnumValuesSoftDeprecateEnabled()) {
-            return PsiElementVisitor.EMPTY_VISITOR
-        }
         return object : JavaElementVisitor() {
             override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
                 super.visitMethodCallExpression(expression)
-                if ("values" != expression.methodExpression.referenceName ||
-                    !expression.argumentList.isEmpty
+
+                if ("values" != expression.methodExpression.referenceName
+                    || !expression.argumentList.isEmpty
                 ) {
                     return
                 }
+
+                val module = ModuleUtilCore.findModuleForFile(holder.file)
+                if (module == null
+                    || !hasKotlinFiles(module)
+                    || !holder.file.isEnumValuesSoftDeprecateEnabled()
+                ) {
+                    return
+                }
+
                 val resolvedMethod = expression.resolveMethod()
                 val containingClass = (resolvedMethod as? KtLightMethod)?.containingClass
                 if (containingClass?.isEnum == true &&
@@ -56,8 +57,10 @@ internal class EnumValuesSoftDeprecateInJavaInspection : LocalInspectionTool() {
 
 internal fun hasKotlinFiles(module: Module): Boolean {
     return CachedValuesManager.getManager(module.project).getCachedValue(module, CachedValueProvider {
-        val hasKotlinFiles = FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE,
-                                                              moduleWithDependenciesAndLibrariesScope(module))
-        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getInstance(module.project).tracker)
+        val hasKotlinFiles = FileTypeIndex.containsFileOfType(
+            KotlinFileType.INSTANCE,
+            moduleWithDependenciesAndLibrariesScope(module)
+        )
+        Result.create(hasKotlinFiles, OuterModelsModificationTrackerManager.getTracker(module.project))
     })
 }

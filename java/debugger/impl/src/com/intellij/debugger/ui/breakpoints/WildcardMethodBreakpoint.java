@@ -52,6 +52,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 import javax.swing.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
 public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
   private static final Logger LOG = Logger.getInstance(ExceptionBreakpoint.class);
@@ -130,9 +131,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     if (isEmulated()) {
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
-      Pattern pattern = PatternUtil.fromMask(getClassPattern());
-      debugProcess.getVirtualMachineProxy().allClasses().stream()
-        .filter(c -> pattern.matcher(c.name()).matches())
+      matchingClasses(debugProcess)
         .filter(ReferenceType::isPrepared)
         .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
@@ -168,10 +167,14 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
+  protected boolean stopOnlyInBaseClass() {
+    return false;
+  }
+
   @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     if (isEmulated()) {
-      MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, true);
+      MethodBreakpoint.createRequestForPreparedClassEmulated(this, (DebugProcessImpl)debugProcess, refType, !stopOnlyInBaseClass());
     }
     else {
       // should be empty - does not make sense for this breakpoint
@@ -230,6 +233,12 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
     }
   }
 
+  protected @NotNull Stream<ReferenceType> matchingClasses(DebugProcessImpl debugProcess) {
+    Pattern pattern = PatternUtil.fromMask(getClassPattern());
+    return debugProcess.getVirtualMachineProxy().allClasses().stream()
+      .filter(c -> pattern.matcher(c.name()).matches());
+  }
+
   @Override
   public StreamEx<Method> matchingMethods(StreamEx<Method> methods, DebugProcessImpl debugProcess) {
     return methods.filter(this::matchesMethod);
@@ -238,7 +247,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
   private boolean matchesMethod(Method method) {
     StringBuilder sb = new StringBuilder();
     for (String mask : StringUtil.split(getMethodName(), ",")) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append('|');
       }
       sb.append('(').append(PatternUtil.convertToRegex(mask)).append(')');

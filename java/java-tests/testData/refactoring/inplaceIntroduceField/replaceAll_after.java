@@ -15,11 +15,11 @@
  */
 class Test {
 
-    private String s;
+    private String x;
 
     void simpleMethod() {
-        s = "";
-        System.out.println(s);
-        System.out.println(s);
+        x = "";
+        System.out.println(x);
+        System.out.println(x);
     }
 }

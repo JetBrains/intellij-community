@@ -1,0 +1,4 @@
+# All modules ending with *_pb2 fail to import
+# The error message is "TypeError: Descriptors cannot be created directly.
+# If this call came from a _pb2.py file, your generated code is out of date and must be regenerated with protoc >= 3.19.0."
+s2clientprotocol\..+_pb2

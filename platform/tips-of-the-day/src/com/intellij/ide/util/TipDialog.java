@@ -1,14 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +27,7 @@ import java.util.Map;
 
 import static javax.swing.JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT;
 
-public final class TipDialog extends DialogWrapper {
+final class TipDialog extends DialogWrapper {
   private final TipPanel myTipPanel;
   private final boolean myShowingOnStartup;
   private final boolean myShowActions;
@@ -49,7 +49,7 @@ public final class TipDialog extends DialogWrapper {
         adjustSizeToContent();
       }
     });
-    myShowActions = sortingResult.tips.size() > 1;
+    myShowActions = sortingResult.getTips().size() > 1;
     if (myShowActions) {
       setDoNotAskOption(myTipPanel);
     }
@@ -110,14 +110,14 @@ public final class TipDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    if (myShowActions) {
-      if (Registry.is("ide.show.open.button.in.tip.dialog")) {
-        return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
-      }
-      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
+    if (!myShowActions) {
+      return new Action[]{getCancelAction()};
+    }
+    else if (Registry.is("ide.show.open.button.in.tip.dialog")) {
+      return new Action[]{new OpenTipsAction(), myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
     }
     else {
-      return new Action[]{getCancelAction()};
+      return new Action[]{myTipPanel.myPreviousTipAction, myTipPanel.myNextTipAction, getCancelAction()};
     }
   }
 
@@ -136,8 +136,8 @@ public final class TipDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e) {
       PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, true)
-        .withFileFilter(file -> Comparing.equal(file.getExtension(), "html", file.isCaseSensitive()));
+      var descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor()
+        .withExtensionFilter(FileTypeManager.getInstance().getStdFileType("HTML"));
       String value = propertiesComponent.getValue(LAST_OPENED_TIP_PATH);
       VirtualFile lastOpenedTip = value != null ? LocalFileSystem.getInstance().findFileByPath(value) : null;
       VirtualFile[] pathToSelect = lastOpenedTip != null ? new VirtualFile[]{lastOpenedTip} : VirtualFile.EMPTY_ARRAY;
@@ -151,7 +151,7 @@ public final class TipDialog extends DialogWrapper {
           tips.add(tip);
           propertiesComponent.setValue(LAST_OPENED_TIP_PATH, file.getPath());
         }
-        myTipPanel.setTips(new TipsSortingResult(tips));
+        myTipPanel.setTips(TipsSortingResult.create(tips));
       }
     }
   }

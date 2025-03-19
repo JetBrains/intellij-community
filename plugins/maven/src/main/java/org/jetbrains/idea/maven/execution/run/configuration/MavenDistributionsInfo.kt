@@ -1,21 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run.configuration
 
-import com.intellij.ide.util.BrowseFilesListener
-import com.intellij.openapi.externalSystem.service.ui.util.DistributionsInfo
+import com.intellij.openapi.externalSystem.service.ui.util.AsyncDistributionsInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.AbstractDistributionInfo
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
-import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
-import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.maven3.Bundled3DistributionInfo
+import org.jetbrains.idea.maven.maven4.Bundled4DistributionInfo
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-class MavenDistributionsInfo : DistributionsInfo {
+class MavenDistributionsInfo(private val project: Project) : AsyncDistributionsInfo {
   override val editorLabel: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.label")
 
   override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.distribution.name")
@@ -23,19 +22,25 @@ class MavenDistributionsInfo : DistributionsInfo {
 
   override val comboBoxActionName: String = MavenConfigurableBundle.message("maven.run.configuration.specify.distribution.action.name")
 
-  override val fileChooserTitle: String = MavenProjectBundle.message("maven.select.maven.home.directory")
-  override val fileChooserDescription: String? = null
-  override val fileChooserDescriptor: FileChooserDescriptor = BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR
+  override val fileChooserDescriptor: FileChooserDescriptor
+    get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenProjectBundle.message("maven.select.maven.home.directory"))
 
-  override val distributions: List<DistributionInfo> by lazy {
-    ArrayList<DistributionInfo>().apply {
-      addIfNotNull(asDistributionInfo(MavenServerManager.BUNDLED_MAVEN_3))
-      addIfNotNull(asDistributionInfo(MavenServerManager.WRAPPED_MAVEN))
-      val mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null)
-      val bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3)
-      if (mavenHomeDirectory != null && !FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
-        addIfNotNull(asDistributionInfo(mavenHomeDirectory.path))
-      }
+
+  override val distributions: List<DistributionInfo>
+    get() =
+      if (!isReady()) emptyList() else distributionsLateInit
+
+  private lateinit var distributionsLateInit: ArrayList<DistributionInfo>
+
+
+  override fun isReady(): Boolean {
+    return this::distributionsLateInit.isInitialized
+  }
+
+  override fun prepare() {
+    distributionsLateInit = ArrayList<DistributionInfo>().apply {
+      addIfNotNull(asDistributionInfo(MavenWrapper))
+      addAll(MavenUtil.getSystemMavenHomeVariants(project).map(::asDistributionInfo))
     }
   }
 
@@ -45,28 +50,25 @@ class MavenDistributionsInfo : DistributionsInfo {
   }
 
   companion object {
-    fun asDistributionInfo(mavenHome: String): DistributionInfo {
-      val info = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
-        it.asDistributionInfo(mavenHome)
-      }.firstOrNull();
+    fun asDistributionInfo(mavenHomeType: MavenHomeType): DistributionInfo {
+      val version = (mavenHomeType as? StaticResolvedMavenHomeType)
+        ?.let { MavenUtil.getMavenVersion(MavenUtil.getMavenHomePath(it)) }
 
-      if (info != null) return info;
-      val version = MavenUtil.getMavenVersionByMavenHome(mavenHome)
-      return when (mavenHome) {
-        MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
-        else -> LocalDistributionInfo(mavenHome)
+      return when (mavenHomeType) {
+        is BundledMaven3 -> Bundled3DistributionInfo(version)
+        is BundledMaven4 -> Bundled4DistributionInfo(version)
+        is MavenWrapper -> WrappedDistributionInfo()
+        is MavenInSpecificPath -> LocalDistributionInfo(mavenHomeType.mavenHome)
+        else -> throw NoWhenBranchMatchedException(mavenHomeType.javaClass.toString())
       }
     }
 
-    fun asMavenHome(distribution: DistributionInfo): String {
-
-      val home = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
-        it.asMavenHome(distribution)
-      }.firstOrNull();
-      if (home != null) return home
+    fun asMavenHome(distribution: DistributionInfo): MavenHomeType {
       return when (distribution) {
-        is WrappedDistributionInfo -> MavenServerManager.WRAPPED_MAVEN
-        is LocalDistributionInfo -> distribution.path
+        is Bundled3DistributionInfo -> BundledMaven3
+        is Bundled4DistributionInfo -> BundledMaven4
+        is WrappedDistributionInfo -> MavenWrapper
+        is LocalDistributionInfo -> MavenInSpecificPath(distribution.path)
         else -> throw NoWhenBranchMatchedException(distribution.javaClass.toString())
       }
     }

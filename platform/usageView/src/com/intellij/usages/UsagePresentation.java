@@ -2,6 +2,7 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +27,14 @@ public interface UsagePresentation {
    * If the implementation caches or lazy-loads the text chunks internally, this method gives it a chance to avoid
    * re-calculating it synchronously on EDT and return the possibly obsolete data.
    * <p>
-   * The component using this presentation might call {@link UsagePresentation#updateCachedPresentation()} in a background
+   * The component using this presentation should call {@link UsagePresentation#updateCachedPresentation()} in a background
    * thread and then use {@code getCachedPresentation()} to draw the text.
    */
+  @ApiStatus.Internal
   default @Nullable UsageNodePresentation getCachedPresentation() {
     return new UsageNodePresentation(getIcon(), getText(), getBackgroundColor());
   }
 
+  @ApiStatus.Internal
   default void updateCachedPresentation() { }
 }

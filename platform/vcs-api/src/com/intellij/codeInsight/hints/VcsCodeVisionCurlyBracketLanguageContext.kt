@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.refactoring.suggested.endOffset
+import com.intellij.psi.util.endOffset
 
 /**
  * This class is needed to compute effective range without trailing right braces and whitespaces.

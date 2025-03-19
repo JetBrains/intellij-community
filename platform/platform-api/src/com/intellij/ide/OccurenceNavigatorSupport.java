@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.pom.Navigatable;
@@ -33,8 +19,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     myTree = tree;
   }
 
-  @Nullable
-  protected abstract Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node);
+  protected abstract @Nullable Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node);
 
   /**
    * @return true if this node is an actual occurrence, i.e. the "next/prev occurrence" actions should show this node (as opposed to groups or other nodes which should be skipped)
@@ -68,8 +53,7 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
     return new OccurenceInfo(editSourceDescriptor, counters.myFoundOccurenceNumber, counters.myOccurencesCount);
   }
 
-  @NotNull
-  private Counters calculatePosition(@NotNull DefaultMutableTreeNode foundNode) {
+  private @NotNull Counters calculatePosition(@NotNull DefaultMutableTreeNode foundNode) {
     Counters counters = new Counters();
     @SuppressWarnings("unchecked")
     Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)foundNode.getRoot()).preorderEnumeration();
@@ -120,6 +104,9 @@ public abstract class OccurenceNavigatorSupport implements OccurenceNavigator {
   public DefaultMutableTreeNode findNextNodeAfter(@NotNull JTree tree, TreeNode selectedNode, boolean forward) {
     if (selectedNode == null) {
       selectedNode = (TreeNode)tree.getModel().getRoot();
+    }
+    if (selectedNode == null) {
+      return null;
     }
     if (forward) {
       for (DefaultMutableTreeNode node=((DefaultMutableTreeNode)selectedNode).getNextNode(); node != null; node = node.getNextNode()) {

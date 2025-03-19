@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.AppTopics;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -31,8 +31,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,21 +46,23 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   public PsiDocumentManagerImpl(@NotNull Project project) {
     super(project);
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(this, this);
-    ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    editorFactory.getEventMulticaster().addDocumentListener(this, this);
+    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
+    project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
-      public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
+      public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
+        PsiFile psiFile = ReadAction.compute(() -> {
+          // todo ijpl-339 figure out which psi file to pass here or get rid of psi file at all
+          return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile, CodeInsightContexts.anyContext());
+        });
         fireDocumentCreated(document, psiFile);
       }
     });
   }
 
-  @Nullable
   @Override
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
     if (myUnitTestMode) {
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -80,10 +82,14 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                             // and use DefaultProjectFactory.getDefaultProject() because why bother
                             || myProject.isDefault();
       if (!isMyProject) {
-        LOG.error("Trying to get PSI for an alien project. VirtualFile=" +
-                  virtualFile + ";" +
-                  " project=" + myProject + " (" + myProject.getBasePath() + ")"
-                  + "; but the file actually belongs to " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", ","));
+        LOG.error("Trying to get PSI for a file that is not included in the project model of this project.\n" +
+                  "virtualFile=" + virtualFile + ";\n" +
+                  "project=" + myProject + " (" + myProject.getBasePath() + ");\n" +
+                  "The file actually belongs to\n  " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", "\n  ") + "\n" +
+                  "Note:\n" +
+                  "This error happens if ProjectLocatorImpl#isUnder(project, file) returns false, which means that the file is not included\n" +
+                  "in the project model of the project. And usually, projects should not touch such files.\n" +
+                  "Feel free to reach out to IntelliJ Code Platform team if you have questions or concerns.");
       }
     }
   }
@@ -122,7 +128,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
+  protected void beforeDocumentChangeOnUnlockedDocument(final @NotNull FileViewProvider viewProvider) {
     PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
@@ -146,30 +152,54 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
-    final FileViewProvider viewProvider = getCachedViewProvider(doc);
-    return viewProvider != null && PostprocessReformattingAspect.getInstance(myProject).isViewProviderLocked(viewProvider);
+    final List<FileViewProvider> viewProviders = getCachedViewProviders(doc);
+    if (viewProviders.isEmpty()) return false;
+
+    PostprocessReformattingAspect aspect = PostprocessReformattingAspect.getInstance(myProject);
+    for (FileViewProvider viewProvider : viewProviders) {
+      if (aspect.isViewProviderLocked(viewProvider)) {
+        return true;
+      }
+    }
+    return false;
+    // todo ijpl-339 is it correct?
   }
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
-    if (doc instanceof DocumentWindow) {
-      doc = ((DocumentWindow)doc).getDelegate();
-    }
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider = getCachedViewProvider(doc);
-    if (viewProvider != null && component != null) {
+    if (component == null) return;
+
+    List<FileViewProvider> viewProviders;
+    if (doc instanceof DocumentWindow) {
+      // todo ijpl-339 implement it
+      Document topDoc = ((DocumentWindow)doc).getDelegate();
+      List<FileViewProvider> topViewProviders = getCachedViewProviders(topDoc);
+      if (ContainerUtil.exists(topViewProviders, topViewProvider -> InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider))) { // todo is it correct?
+        viewProviders = getCachedViewProviders(doc);
+      }
+      else {
+        viewProviders = topViewProviders;
+      }
+    }
+    else {
+      viewProviders = getCachedViewProviders(doc);
+    }
+
+    // todo ijpl-339 is it correct?
+    for (FileViewProvider viewProvider : viewProviders) {
       component.doPostponedFormatting(viewProvider);
     }
   }
 
   @NotNull
   @Override
-  List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                        @NotNull PsiFile hostPsiFile,
-                                                        @NotNull TextRange hostChangedRange,
-                                                        @NotNull ProgressIndicator indicator,
-                                                        @NotNull ASTNode oldRoot,
-                                                        @NotNull ASTNode newRoot) {
+  protected List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                                  @NotNull PsiFile hostPsiFile,
+                                                                  @NotNull TextRange hostChangedRange,
+                                                                  @NotNull ProgressIndicator indicator,
+                                                                  @NotNull ASTNode oldRoot,
+                                                                  @NotNull ASTNode newRoot) {
     List<DocumentWindow> changedInjected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostPsiFile, hostChangedRange);
     if (changedInjected.isEmpty()) return Collections.emptyList();
     FileViewProvider hostViewProvider = hostPsiFile.getViewProvider();
@@ -192,9 +222,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return super.toString() + " for the project " + myProject + ".";
   }
 
@@ -203,9 +232,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 
-  @NotNull
   @Override
-  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+  protected @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
 

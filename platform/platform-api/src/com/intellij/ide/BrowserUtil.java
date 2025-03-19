@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.diagnostic.LoadingState;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.browsers.BrowserLauncher;
@@ -12,10 +13,10 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -23,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class BrowserUtil {
@@ -41,7 +41,7 @@ public final class BrowserUtil {
   }
 
   public static String getDocURL(String url) {
-    Matcher anchorMatcher = ourAnchorSuffix.matcher(url);
+    var anchorMatcher = ourAnchorSuffix.matcher(url);
     return anchorMatcher.find() ? anchorMatcher.reset().replaceAll("") : url;
   }
 
@@ -57,7 +57,10 @@ public final class BrowserUtil {
     browse(file.getUrl(), null);
   }
 
-  public static void browse(@NotNull File file) {
+  /** Prefer {@link #browse(Path)} */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "IO_FILE_USAGE", "UsagesOfObsoleteApi"})
+  public static void browse(@NotNull java.io.File file) {
     getBrowserLauncher().browse(file);
   }
 
@@ -85,10 +88,12 @@ public final class BrowserUtil {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? BrowserLauncher.getInstance() : new BrowserLauncherAppless();
   }
 
-  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName,
-                                                            @Nullable String url,
-                                                            @NotNull List<String> parameters,
-                                                            boolean newWindowIfPossible) {
+  public static @NotNull List<String> getOpenBrowserCommand(
+    @NotNull String browserPathOrName,
+    @Nullable String url,
+    @NotNull List<String> parameters,
+    boolean newWindowIfPossible
+  ) {
     var command = new ArrayList<String>();
 
     var path = NioFiles.toPath(browserPathOrName);
@@ -107,7 +112,7 @@ public final class BrowserUtil {
         }
       }
       else if (SystemInfo.isWindows) {
-        command.addAll(List.of(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
+        command.addAll(List.of(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""), browserPathOrName));
         command.addAll(parameters);
         if (url != null) {
           command.add(url);
@@ -127,12 +132,6 @@ public final class BrowserUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated the result is a pain to deal with; please use {@link #getOpenBrowserCommand(String, String, List, boolean)} instead */
-  @Deprecated(forRemoval = true)
-  public static @NotNull List<String> getOpenBrowserCommand(@NotNull String browserPathOrName, boolean newWindowIfPossible) {
-    return getOpenBrowserCommand(browserPathOrName, null, List.of(), newWindowIfPossible);
-  }
-
   /** @deprecated Use {@link #browse(String)} */
   @Deprecated(forRemoval = true)
   public static void launchBrowser(@NotNull String url) {

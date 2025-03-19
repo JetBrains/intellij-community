@@ -1,0 +1,50 @@
+### auto-generated section `build kotlin.fir.frontend-independent` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "fir-frontend-independent_resources",
+  files = glob(["resources-en/**/*"]),
+  strip_prefix = "resources-en"
+)
+
+jvm_library(
+  name = "fir-frontend-independent",
+  module_name = "kotlin.fir.frontend-independent",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/ide-core-impl",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-jps-common",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:guava",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//platform/lang-api:lang",
+    "//platform/platform-impl:ide-impl",
+    "//java/java-analysis-impl:analysis-impl",
+    "//java/openapi:java",
+    "//java/java-impl:impl",
+    "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-ui",
+    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+    "//plugins/kotlin/code-insight/utils:kotlin-code-insight-utils",
+    "//platform/util",
+    "//plugins/maven",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/project-configuration",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+  ],
+  runtime_deps = [":fir-frontend-independent_resources"]
+)
+### auto-generated section `build kotlin.fir.frontend-independent` end

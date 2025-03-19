@@ -1,11 +1,11 @@
 <idea-plugin>
 
-  <error descr="Could not locate main plugin.xml file to determine required <idea-version> 'since-build'"><applicationListeners>
+  <error descr="Could not locate the main plugin.xml file to determine required <idea-version> 'since-build'"><applicationListeners>
     <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </applicationListeners></error>
 
-  <error descr="Could not locate main plugin.xml file to determine required <idea-version> 'since-build'"><projectListeners>
+  <error descr="Could not locate the main plugin.xml file to determine required <idea-version> 'since-build'"><projectListeners>
     <listener class="java.util.ArrayList" topic="java.util.Collection"
               activeInHeadlessMode="true" activeInTestMode="true"/>
   </projectListeners></error>

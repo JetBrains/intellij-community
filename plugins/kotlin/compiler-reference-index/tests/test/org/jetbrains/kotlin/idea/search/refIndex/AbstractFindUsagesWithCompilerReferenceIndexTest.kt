@@ -6,14 +6,16 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
-import com.intellij.util.io.readText
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest.Companion.FindUsageTestType
 import org.jetbrains.kotlin.findUsages.KotlinFindUsageConfigurator
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
+import org.jetbrains.kotlin.idea.test.kmp.KMPTestPlatform
 import java.io.File
 import kotlin.io.path.Path
+import kotlin.io.path.readText
 
 abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompilerReferenceTestBase() {
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
@@ -28,6 +30,7 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
     override fun getTestDataPath(): String = File(TestMetadataUtil.getTestDataPath(javaClass)).path
 
     protected fun doTest(path: String) {
+        val isFir = pluginMode == KotlinPluginMode.K2
         val criType = if (isFir) FindUsageTestType.FIR_CRI else FindUsageTestType.CRI
         runCatching {
             AbstractFindUsagesTest.doFindUsageTest<PsiElement>(
@@ -41,6 +44,7 @@ abstract class AbstractFindUsagesWithCompilerReferenceIndexTest : KotlinCompiler
                     findUsageTest(criType)
                 },
                 ignoreLog = ignoreLog,
+                testPlatform = KMPTestPlatform.Unspecified,
                 testType = criType,
             )
         }.fold(

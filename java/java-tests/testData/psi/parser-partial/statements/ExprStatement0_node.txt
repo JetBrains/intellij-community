@@ -1,0 +1,5 @@
+test.java.file
+  DECLARATION_STATEMENT
+    VAR
+    ERROR_ELEMENT
+      <empty list>

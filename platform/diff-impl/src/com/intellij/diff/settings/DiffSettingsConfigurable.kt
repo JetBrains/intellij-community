@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings
+import com.intellij.diff.impl.DiffSettingsHolder.IncludeInNavigationHistory
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindValue
-import com.intellij.ui.dsl.builder.labelTable
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import javax.swing.JLabel
 
-class DiffSettingsConfigurable : BoundSearchableConfigurable(
+internal class DiffSettingsConfigurable : BoundSearchableConfigurable(
   message("configurable.DiffSettingsConfigurable.display.name"),
   "diff.base"
 ) {
@@ -52,11 +37,25 @@ class DiffSettingsConfigurable : BoundSearchableConfigurable(
           checkBox(message("settings.go.to.the.next.file.after.reaching.last.change"))
             .bindSelected(diffSettings::isGoToNextFileOnNextDifference)
         }
+        row {
+          label(message("settings.diffIncludedInHistory"))
+          comboBox(IncludeInNavigationHistory.entries, textListCellRenderer("") { option ->
+            when (option) {
+              IncludeInNavigationHistory.Always -> message("settings.diffIncludedInHistory.always")
+              IncludeInNavigationHistory.OnlyIfOpen -> message("settings.diffIncludedInHistory.onlyIfOpen")
+              IncludeInNavigationHistory.Never -> message("settings.diffIncludedInHistory.never")
+            }
+          }).bindItem(diffSettings::isIncludedInNavigationHistory.toNullableProperty())
+        }
       }
       group(message("settings.merge.text")) {
         row {
           checkBox(message("settings.automatically.apply.non.conflicting.changes"))
             .bindSelected(textSettings::isAutoApplyNonConflictedChanges)
+        }
+        row {
+          checkBox(message("settings.automatically.resolve.imports.conflicts"))
+            .bindSelected(textSettings::isAutoResolveImportConflicts)
         }
         row {
           checkBox(message("settings.highlight.modified.lines.in.gutter"))

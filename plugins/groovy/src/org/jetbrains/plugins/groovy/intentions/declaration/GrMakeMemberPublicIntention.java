@@ -20,7 +20,7 @@ import com.intellij.psi.PsiModifier;
 /**
  * @author Max Medvedev
  */
-public class GrMakeMemberPublicIntention extends GrChangeMemberVisibilityModifierBase {
+public final class GrMakeMemberPublicIntention extends GrChangeMemberVisibilityModifierBase {
   public GrMakeMemberPublicIntention() {
     super(PsiModifier.PUBLIC);
   }

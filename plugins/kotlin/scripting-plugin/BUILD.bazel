@@ -1,0 +1,25 @@
+### auto-generated section `build kotlin.scripting-plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "scripting-plugin_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "scripting-plugin",
+  module_name = "kotlin.scripting-plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/jsr223",
+    "//platform/util",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-impl",
+  ],
+  runtime_deps = [":scripting-plugin_resources"]
+)
+### auto-generated section `build kotlin.scripting-plugin` end

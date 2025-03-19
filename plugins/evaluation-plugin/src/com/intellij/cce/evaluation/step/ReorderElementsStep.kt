@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.core.Features
@@ -9,24 +10,29 @@ import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.FeaturesSerializer
-import com.intellij.cce.workspace.info.FileSessionsInfo
-import com.intellij.openapi.project.Project
 
-class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean) :
+class ReorderElementsStep(private val config: Config) :
   CreateWorkspaceStep(
     Config.buildFromConfig(config) { evaluationTitle = config.reorder.title },
-    ReorderElementsHandler(config.reorder.features),
-    project,
-    isHeadless) {
+    ReorderElementsHandler(config.reorder.features, config.actions != null)
+  ) {
 
   override val name: String = "Reorder elements"
 
   override val description: String = "Reorder elements by features values"
 
-  private class ReorderElementsHandler(private val featuresForReordering: List<String>) : TwoWorkspaceHandler {
+  private class ReorderElementsHandler(
+    private val featuresForReordering: List<String>,
+    private val isActionProjectDataset: Boolean
+  ) : TwoWorkspaceHandler {
 
     override fun invoke(workspace1: EvaluationWorkspace, workspace2: EvaluationWorkspace, indicator: Progress) {
       if (featuresForReordering.isEmpty()) return
+
+      check(isActionProjectDataset) {
+        "Reorder is available only for action-based dataset"
+      }
+
       val files = workspace1.sessionsStorage.getSessionFiles()
       for ((counter, file) in files.withIndex()) {
         indicator.setProgress(file.first, file.first, counter.toDouble() / files.size)
@@ -35,19 +41,18 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
         for (session in fileSessionsInfo.sessions) {
           val json = workspace1.featuresStorage.getFeatures(session.id, fileSessionsInfo.filePath)
           val features = FeaturesSerializer.deserialize(json)
-          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.content, session.properties)
+          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.properties)
           for ((i, lookup) in session.lookups.withIndex()) {
             val elements2features = lookup.suggestions.zip(features[i].element)
             val sortedElements2features = elements2features.sortedWith(compareByMultipleFeatures())
             newSession.addLookup(
               Lookup(
-                lookup.prefix,
-                lookup.offset,
-                sortedElements2features.map { it.first },
-                lookup.latency,
-                Features(features[i].common, sortedElements2features.map { it.second }),
-                lookup.selectedPosition,
-                lookup.isNew
+                prefix = lookup.prefix,
+                offset = lookup.offset,
+                suggestions = sortedElements2features.map { it.first },
+                latency = lookup.latency,
+                features = Features(features[i].common, sortedElements2features.map { it.second }),
+                isNew = lookup.isNew
               )
             )
           }
@@ -55,7 +60,7 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
           workspace2.featuresStorage.saveSession(newSession, fileSessionsInfo.filePath)
         }
         workspace2.sessionsStorage.saveSessions(
-          FileSessionsInfo(fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
+          fileSessionsInfo.copy(sessions = resultSessions)
         )
       }
       workspace2.sessionsStorage.saveMetadata()

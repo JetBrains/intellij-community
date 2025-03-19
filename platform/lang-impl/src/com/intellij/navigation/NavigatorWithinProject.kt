@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.navigation
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
@@ -18,10 +19,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectRootManager
@@ -31,20 +30,24 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.containers.ComparatorUtil.max
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.util.regex.Pattern
 
-const val NAVIGATE_COMMAND = "navigate"
-const val REFERENCE_TARGET = "reference"
-const val PROJECT_NAME_KEY = "project"
-const val ORIGIN_URL_KEY = "origin"
-const val SELECTION = "selection"
+const val NAVIGATE_COMMAND: String = "navigate"
+const val REFERENCE_TARGET: String = "reference"
+const val PROJECT_NAME_KEY: String = "project"
+const val ORIGIN_URL_KEY: String = "origin"
+const val SELECTION: String = "selection"
 
 suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectResult {
   val projectName = parameters.get(PROJECT_NAME_KEY)?.nullize(nullizeSpaces = true)
@@ -55,10 +58,14 @@ suspend fun openProject(parameters: Map<String, String?>): ProtocolOpenProjectRe
 
   val noProjectResultError = ProtocolOpenProjectResult.Error(IdeBundle.message("jb.protocol.navigate.no.project"))
 
-  ProjectUtil.getOpenProjects().find {
+  val alreadyOpenProject = ProjectUtil.getOpenProjects().find {
     projectName != null && it.name == projectName ||
     originUrl != null && areOriginsEqual(originUrl, getProjectOriginUrl(it.guessProjectDir()?.toNioPath()))
-  }?.let { return ProtocolOpenProjectResult.Success(it) }
+  }
+  if (alreadyOpenProject != null) {
+    return ProtocolOpenProjectResult.Success(alreadyOpenProject)
+  }
+
   val recentProjectAction = RecentProjectListActionProvider.getInstance().getActions().asSequence()
                               .filterIsInstance(ReopenProjectAction::class.java)
                               .find {
@@ -89,80 +96,90 @@ sealed interface ProtocolOpenProjectResult {
   class Error(val message: String) : ProtocolOpenProjectResult
 }
 
+@ApiStatus.Internal
 data class LocationInFile(val line: Int, val column: Int)
 typealias LocationToOffsetConverter = (LocationInFile, Editor) -> Int
 
-class NavigatorWithinProject(val project: Project, val parameters: Map<String, String>, locationToOffset_: LocationToOffsetConverter) {
-  companion object {
-    private const val FILE_PROTOCOL = "file://"
-    private const val PATH_GROUP = "path"
-    private const val LINE_GROUP = "line"
-    private const val COLUMN_GROUP = "column"
-    private const val REVISION = "revision"
-    private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
+private const val FILE_PROTOCOL = "file://"
+private const val PATH_GROUP = "path"
+private const val LINE_GROUP = "line"
+private const val COLUMN_GROUP = "column"
+private const val REVISION = "revision"
+private val PATH_WITH_LOCATION by lazy {
+  Pattern.compile("(?<${PATH_GROUP}>[^:]+)(:(?<${LINE_GROUP}>\\d+))?(:(?<${COLUMN_GROUP}>\\d+))?")
+}
 
+private fun parseLocationInFile(range: String): LocationInFile? {
+  val position = range.split(':')
+  return if (position.size != 2) null
+  else try {
+    LocationInFile(position[0].toInt(), position[1].toInt())
+  }
+  catch (e: Exception) {
+    null
+  }
+}
+
+class NavigatorWithinProject(
+  val project: Project,
+  val parameters: Map<String, String>,
+  private val locationToOffset: LocationToOffsetConverter
+) {
+  companion object {
     fun parseNavigationPath(pathText: String): Triple<String?, String?, String?> {
       val matcher = PATH_WITH_LOCATION.matcher(pathText)
       return if (!matcher.matches()) Triple(null, null, null)
       else Triple(matcher.group(PATH_GROUP), matcher.group(LINE_GROUP), matcher.group(COLUMN_GROUP))
     }
-
-    private fun parseLocationInFile(range: String): LocationInFile? {
-      val position = range.split(':')
-      return if (position.size != 2) null
-      else try {
-        LocationInFile(position[0].toInt(), position[1].toInt())
-      }
-      catch (e: Exception) {
-        null
-      }
-    }
-  }
-
-  val locationToOffset: LocationToOffsetConverter = { locationInFile, editor ->
-    max(locationToOffset_(locationInFile, editor), 0)
   }
 
   enum class NavigationKeyPrefix(val prefix: String) {
     FQN("fqn"),
     PATH("path");
 
-    override fun toString() = prefix
+    override fun toString(): String = prefix
   }
 
-  private val navigatorByKeyPrefix = mapOf(
-    (NavigationKeyPrefix.FQN to this::navigateByFqn),
-    (NavigationKeyPrefix.PATH to this::navigateByPath)
-  )
+  private val selections: List<Pair<LocationInFile, LocationInFile>> by lazy {
+    parseSelections()
+  }
 
-  private val selections by lazy { parseSelections() }
+  private fun convertLocationToOffset(locationInFile: LocationInFile, editor: Editor): Int {
+    return max(locationToOffset.invoke(locationInFile, editor), 0)
+  }
 
-  fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
-    keysPrefixesToNavigate.forEach { keyPrefix ->
-      parameters.filterKeys { it.startsWith(keyPrefix.prefix) }.values.forEach { navigatorByKeyPrefix.get(keyPrefix)?.invoke(it) }
+  suspend fun navigate(keysPrefixesToNavigate: List<NavigationKeyPrefix>) {
+    for (keyPrefix in keysPrefixesToNavigate) {
+      val path = parameters.get(keyPrefix.prefix) ?: continue
+      when (keyPrefix) {
+        NavigationKeyPrefix.FQN -> navigateByFqn(path)
+        NavigationKeyPrefix.PATH -> navigateByPath(path)
+      }
     }
   }
 
-  private fun navigateByFqn(reference: String) {
-    // handle single reference to method: com.intellij.navigation.JBProtocolNavigateCommand#perform
-    // multiple references are encoded and decoded properly
+  private suspend fun navigateByFqn(reference: String) {
     val fqn = parameters[JBProtocolCommand.FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
-    runNavigateTask(reference) {
+    withBackgroundProgress(project, IdeBundle.message("navigate.command.search.reference.progress.title", reference)) {
       val dataContext = SimpleDataContext.getProjectContext(project)
-      val searcher = invokeAndWaitIfNeeded {
+      val searcher = withContext(Dispatchers.EDT) {
         SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
       }
       Disposer.register(project, searcher)
-
       try {
-        searcher.search(fqn, EmptyProgressIndicator())
-          .filterIsInstance<PsiElement>()
-          .forEach {
-            invokeLater {
-              PsiNavigateUtil.navigate(it)
-              makeSelectionsVisible()
-            }
+        val element = withContext(Dispatchers.Default) {
+          coroutineToIndicator {
+            val wrapperIndicator = SensitiveProgressWrapper(ProgressManager.getGlobalProgressIndicator())
+            searcher.search(fqn, wrapperIndicator)
+              .asSequence()
+              .filterIsInstance<PsiElement>()
+              .firstOrNull()
           }
+        } ?: return@withBackgroundProgress
+        withContext(Dispatchers.EDT) {
+          PsiNavigateUtil.navigate(element)
+        }
+        makeSelectionsVisible()
       }
       finally {
         Disposer.dispose(searcher)
@@ -170,7 +187,7 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     }
   }
 
-  private fun navigateByPath(pathText: String) {
+  private suspend fun navigateByPath(pathText: String) {
     var (path, line, column) = parseNavigationPath(pathText)
     if (path == null) {
       return
@@ -178,69 +195,69 @@ class NavigatorWithinProject(val project: Project, val parameters: Map<String, S
     val locationInFile = LocationInFile(line?.toInt() ?: 0, column?.toInt() ?: 0)
 
     path = FileUtil.expandUserHome(path)
-
-    runNavigateTask(pathText) {
-      val virtualFile: VirtualFile
-      if (FileUtil.isAbsolute(path))
-        virtualFile = findFile(path, parameters[REVISION]) ?: return@runNavigateTask
-      else
-        virtualFile = (sequenceOf(project.guessProjectDir()?.path, project.basePath) +
-                       ProjectRootManager.getInstance(project).contentRoots.map { it.path })
-                        .filterNotNull()
-                        .mapNotNull { projectPath -> findFile(File(projectPath, path).absolutePath, parameters[REVISION]) }
-                        .firstOrNull() ?: return@runNavigateTask
-
-      ApplicationManager.getApplication().invokeLater {
-        FileEditorManager.getInstance(project).openFile(virtualFile, true)
-          .filterIsInstance<TextEditor>().first().let { textEditor ->
-            performEditorAction(textEditor, locationInFile)
-          }
-      }
+    withBackgroundProgress(project, IdeBundle.message("navigate.command.search.reference.progress.title", pathText)) {
+      val virtualFile = findFileByStringPath(path) ?: return@withBackgroundProgress
+      val textEditor = withContext(Dispatchers.EDT) {
+        writeIntentReadAction {
+          FileEditorManager.getInstance(project).openFile(virtualFile, true).filterIsInstance<TextEditor>().firstOrNull()
+        }
+      } ?: return@withBackgroundProgress
+      performEditorAction(textEditor, locationInFile)
     }
   }
 
-  private fun runNavigateTask(reference: String, task: (indicator: ProgressIndicator) -> Unit) {
-    ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, IdeBundle.message("navigate.command.search.reference.progress.title", reference), true) {
-        override fun run(indicator: ProgressIndicator) {
-          task.invoke(indicator)
-        }
-
-        override fun shouldStartInBackground(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-        override fun isConditionalModal(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-      }
-    )
+  private suspend fun findFileByStringPath(path: String): VirtualFile? {
+    val revision = parameters[REVISION]
+    if (FileUtil.isAbsolute(path)) {
+      return findFile(path, revision)
+    }
+    val projectPaths = listOfNotNull(project.guessProjectDir()?.path, project.basePath)
+    val fileFromProjectPath = projectPaths.firstNotNullOfOrNull { findFile(File(it, path).absolutePath, revision) }
+    if (fileFromProjectPath != null) {
+      return fileFromProjectPath
+    }
+    val contentRoots = readAction {
+      ProjectRootManager.getInstance(project).contentRoots
+    }
+    return contentRoots.firstNotNullOfOrNull { contentRootPath -> findFile(File(contentRootPath.path, path).absolutePath, revision) }
   }
 
-  private fun performEditorAction(textEditor: TextEditor, locationInFile: LocationInFile) {
-    val editor = textEditor.editor
-    editor.caretModel.removeSecondaryCarets()
-    editor.caretModel.moveToOffset(locationToOffset(locationInFile, editor))
-    editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
-    editor.selectionModel.removeSelection()
-    IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
-
+  private suspend fun performEditorAction(textEditor: TextEditor, locationInFile: LocationInFile) {
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        val editor = textEditor.editor
+        editor.caretModel.removeSecondaryCarets()
+        editor.caretModel.moveToOffset(convertLocationToOffset(locationInFile, editor))
+        editor.scrollingModel.scrollToCaret(ScrollType.CENTER)
+        editor.selectionModel.removeSelection()
+        IdeFocusManager.getGlobalInstance().requestFocus(editor.contentComponent, true)
+      }
+    }
     makeSelectionsVisible()
   }
 
-  private fun makeSelectionsVisible() {
-    val editor = FileEditorManager.getInstance(project).selectedTextEditor
-    selections.forEach {
-      editor?.selectionModel?.setSelection(
-        locationToOffset(it.first, editor),
-        locationToOffset(it.second, editor)
-      )
+  private suspend fun makeSelectionsVisible() {
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
+        selections.forEach {
+          editor?.selectionModel?.setSelection(
+            convertLocationToOffset(it.first, editor),
+            convertLocationToOffset(it.second, editor)
+          )
+        }
+      }
     }
   }
 
-  private fun findFile(absolutePath: String?, revision: String?): VirtualFile? {
-    absolutePath ?: return null
-
-    if (revision != null) {
-      val virtualFile = JBProtocolRevisionResolver.processResolvers(project, absolutePath, revision)
-      if (virtualFile != null) return virtualFile
+  private suspend fun findFile(absolutePath: String, revision: String?): VirtualFile? {
+    return withContext(Dispatchers.IO) {
+      if (revision != null) {
+        val virtualFile = JBProtocolRevisionResolver.processResolvers(project, absolutePath, revision)
+        if (virtualFile != null) return@withContext virtualFile
+      }
+      return@withContext VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + absolutePath)
     }
-    return VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + absolutePath)
   }
 
   private fun parseSelections(): List<Pair<LocationInFile, LocationInFile>> =

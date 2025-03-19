@@ -2,7 +2,7 @@
 class Main {
     void foo(Object obj) {
         switch (obj) {
-            case String s && isEmpt<caret>y(s) -> {}
+            case String s when isEmpt<caret>y(s) -> {}
             default -> {}
         }
     }

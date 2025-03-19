@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -17,9 +18,9 @@ import com.intellij.refactoring.introduceParameter.Util;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.occurrences.ExpressionOccurrenceManager;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -357,6 +358,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
       getEditor().getSettings().setVariableInplaceRenameEnabled(false);
       new IntroduceParameterHandler().invoke(getProject(), getEditor(), getFile(), DataContext.EMPTY_CONTEXT);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // let all the invokeLater to pass through
       checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
     }
     finally {
@@ -373,14 +375,14 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   public void testCodeDuplicates() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "anObject", false, true, true, false, 0, true);
-    UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
   public void testCodeDuplicatesFromConstructor() {
     configureByFile("/refactoring/introduceParameter/before" + getTestName(false) + ".java");
     perform(IntroduceVariableBase.JavaReplaceChoice.ALL, 0, "anObject", false, true, true, false, 0, true);
-    UIUtil.dispatchAllInvocationEvents();
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/introduceParameter/after" + getTestName(false) + ".java");
   }
 
@@ -544,5 +546,6 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
       localVariable.getName(), replaceAllOccurrences ? IntroduceVariableBase.JavaReplaceChoice.ALL : IntroduceVariableBase.JavaReplaceChoice.NO, IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE,
       declareFinal, false, false, null, parametersToRemove
     ).run();
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue(); // let all the invokeLater to pass through
   }
 }

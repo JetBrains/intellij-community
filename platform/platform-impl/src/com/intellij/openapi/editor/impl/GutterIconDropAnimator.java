@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -14,10 +14,10 @@ import java.awt.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class GutterIconDropAnimator extends AbstractPainter {
+final class GutterIconDropAnimator extends AbstractPainter {
   private final Point myExplosionLocation;
   private final Image myImage;
-  @NotNull private final Disposable myPainterListenersDisposable;
+  private final @NotNull Disposable myPainterListenersDisposable;
 
   private static final long TIME_PER_FRAME = 30;
   private final int myWidth;

@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
-import com.intellij.idea.Bombed;
+import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
-import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
@@ -22,6 +22,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runner.manipulation.Filter;
@@ -83,27 +84,10 @@ public class TestAll implements Test {
     }
   };
 
-  private static final Filter NOT_BOMBED = new Filter() {
-    @Override
-    public boolean shouldRun(Description description) {
-      return !isBombed(description);
-    }
-
-    @Override
-    public String describe() {
-      return "Not @Bombed";
-    }
-
-    private boolean isBombed(Description description) {
-      Bombed bombed = description.getAnnotation(Bombed.class);
-      return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
-    }
-  };
-
   private static final Filter NOT_IGNORED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
-      return description.getAnnotation(IgnoreJUnit3.class) == null;
+      return description.getAnnotation(IgnoreJUnit3.class) == null && description.getAnnotation(IJIgnore.class) == null;
     }
 
     @Override
@@ -115,18 +99,17 @@ public class TestAll implements Test {
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
   private int myIgnoredTests;
-  private TestRecorder myTestRecorder;
 
   private static final List<Throwable> ourClassLoadingProblems = new ArrayList<>();
   private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
+  private static final String ourCollectTestsFile = System.getProperty("intellij.build.test.list.classes", null);
 
   public TestAll(String rootPackage) throws Throwable {
     this(rootPackage, getClassRoots());
   }
 
   public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
-    String classFilterName = "tests/testGroups.properties";
-    myTestCaseLoader = new TestCaseLoader(classFilterName);
+    myTestCaseLoader = Builder.fromDefaults().build();
     if (shouldAddFirstAndLastTests()) {
       myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
       myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
@@ -140,20 +123,20 @@ public class TestAll implements Test {
     return ourClassLoadingProblems;
   }
 
-  public static List<Path> getClassRoots() {
+  public static @Unmodifiable List<Path> getClassRoots() {
     return TeamCityLogger.block("Collecting tests from ...", () -> {
       return doGetClassRoots();
     });
   }
 
-  private static List<Path> doGetClassRoots() {
+  private static @Unmodifiable List<Path> doGetClassRoots() {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
       List<Path> classpath = Objects.requireNonNull(ExternalClasspathClassLoader.getRoots());
       List<Path> testPaths = Arrays.stream(jars)
         .map(jarName -> {
-               List<Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
+               List<? extends Path> resultJars = ContainerUtil.filter(classpath, path -> path.getFileName().toString().startsWith(jarName));
                if (resultJars.size() != 1) {
                  String classpathPretty = classpath.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));
                  throw new IllegalStateException(
@@ -234,6 +217,9 @@ public class TestAll implements Test {
   public int countTestCases() {
     // counting test cases involves parallel directory scan now
     IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    if (!hasRealTests()) {
+      return 0;
+    }
     int count = 0;
     for (Class<?> aClass : myTestCaseLoader.getClasses()) {
       Test test = getTest(aClass);
@@ -256,11 +242,16 @@ public class TestAll implements Test {
 
   @Override
   public void run(TestResult testResult) {
-    loadTestRecorder();
-
+    if (!hasRealTests()) {
+      return;
+    }
     final TestListener testListener = loadDiscoveryListener();
     if (testListener != null) {
       testResult.addListener(testListener);
+    }
+    final OutOfProcessRetries.OutOfProcessRetryListener outOfProcessRetryListener = OutOfProcessRetries.getListenerForOutOfProcessRetry();
+    if (outOfProcessRetryListener != null) {
+      testResult.addListener(outOfProcessRetryListener);
     }
 
     testResult = RetriesImpl.maybeEnable(testResult);
@@ -268,28 +259,26 @@ public class TestAll implements Test {
     List<Class<?>> classes = myTestCaseLoader.getClasses();
 
     // to make it easier to reproduce order-dependent failures locally
-    System.out.println("------");
-    System.out.println("Running tests classes:");
+    final List<Class<?>> testsToRun = new ArrayList<>(classes.size());
     for (Class<?> aClass : classes) {
+      // Eagerly tests initialization may create problems, so we use a simplified version of `getTest`.
+      if (isPotentiallyATest(aClass)) {
+        testsToRun.add(aClass);
+      }
+    }
+    System.out.println("------");
+    System.out.println("Running tests classes (list may contain classes which will not be actually run):");
+    for (Class<?> aClass : testsToRun) {
       System.out.println(aClass.getName());
     }
     System.out.println("------");
+    dumpSuite(testsToRun);
+    System.out.println("------");
 
     int totalTests = classes.size();
-    for (Class<?> aClass : classes) {
-      boolean recording = false;
-      if (myTestRecorder != null && shouldRecord(aClass)) {
-        myTestRecorder.beginRecording(aClass, aClass.getAnnotation(RecordExecution.class));
-        recording = true;
-      }
-      try {
-        runNextTest(testResult, totalTests, aClass);
-      }
-      finally {
-        if (recording) {
-          myTestRecorder.endRecording();
-        }
-      }
+    final List<String> collectedTests = ourCollectTestsFile != null ? new ArrayList<>(totalTests) : null;
+    for (Class<?> aClass : testsToRun) {
+      runOrCollectNextTest(testResult, totalTests, aClass, collectedTests);
       if (testResult.shouldStop()) break;
     }
 
@@ -301,8 +290,64 @@ public class TestAll implements Test {
         e.printStackTrace();
       }
     }
+    if (outOfProcessRetryListener != null) {
+      try {
+        outOfProcessRetryListener.save();
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    if (collectedTests != null) {
+      Path path = Path.of(ourCollectTestsFile);
+      try {
+        collectedTests.remove("_FirstInSuiteTest");
+        collectedTests.remove("_LastInSuiteTest");
+        Files.createDirectories(path.getParent());
+        Files.write(path, collectedTests);
+      }
+      catch (IOException e) {
+        System.err.printf("Cannot save list of test classes to '%s': %s%n", path.toAbsolutePath(), e);
+        e.printStackTrace();
+      }
+    }
 
     TestCaseLoader.sendTestRunResultsToNastradamus();
+  }
+
+  private static void dumpSuite(List<Class<?>> testsToRun) {
+    try {
+      File suite = FileUtil.createTempFile("TestAllSuite", ".java");
+      String suiteName = FileUtil.getNameWithoutExtension(suite);
+      StringBuilder sb = new StringBuilder();
+      sb.append("import org.junit.runner.RunWith;\n");
+      sb.append("import org.junit.runners.Suite;\n");
+      sb.append("@RunWith(Suite.class)\n");
+      sb.append("@Suite.SuiteClasses({\n");
+      for (Class<?> aClass : testsToRun) {
+        String name = aClass.getName();
+        sb.append("  ").append(name.replace('$', '.')).append(".class,\n");
+      }
+      sb.append("})\n");
+      sb.append("public class ").append(suiteName).append(" {}\n");
+      FileUtil.writeToFile(suite, sb.toString());
+      if (TeamCityLogger.isUnderTC) {
+        System.out.println("Generated suite file: '" + suite.getName() + "'. Could be found in 'suites' artifacts directory");
+        System.out.println("##teamcity[publishArtifacts '" + suite.getAbsolutePath() + "=>suites/']");
+      }
+      else {
+        System.out.println("Generated suite file: " + suite.getAbsolutePath());
+      }
+      System.out.println("Place it in `tests/integration/testSrc/` or similar directory");
+    }
+    catch (IOException e) {
+      throw new RuntimeException("Cannot dump test suite for reproducibility", e);
+    }
+  }
+
+  private boolean hasRealTests() {
+    return ContainerUtil.exists(myTestCaseLoader.getClasses(false), aClass -> getTest(aClass) != null);
   }
 
   private static TestListener loadDiscoveryListener() {
@@ -319,28 +364,14 @@ public class TestAll implements Test {
     return null;
   }
 
-  private static boolean shouldRecord(@NotNull Class<?> aClass) {
-    return aClass.getAnnotation(RecordExecution.class) != null;
-  }
-
   private static boolean shouldAddFirstAndLastTests() {
     return !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
   }
 
-  private void loadTestRecorder() {
-    String recorderClassName = System.getProperty("test.recorder.class");
-    if (recorderClassName != null) {
-      try {
-        Class<?> recorderClass = Class.forName(recorderClassName);
-        myTestRecorder = (TestRecorder)recorderClass.newInstance();
-      }
-      catch (Exception e) {
-        System.out.println("Error loading test recorder class '" + recorderClassName + "': " + e);
-      }
-    }
-  }
-
-  private void runNextTest(final TestResult testResult, int totalTests, Class<?> testCaseClass) {
+  private void runOrCollectNextTest(final @NotNull TestResult testResult,
+                                    int totalTests,
+                                    @NotNull Class<?> testCaseClass,
+                                    @Nullable List<String> collectedTests) {
     myRunTests++;
 
     int errorCount = testResult.errorCount();
@@ -352,9 +383,18 @@ public class TestAll implements Test {
       return;
     }
 
-    log("\nRunning " + testCaseClass.getName());
+    String caseClassName = testCaseClass.getName();
     Test test = getTest(testCaseClass);
-    if (test == null) return;
+    if (test == null) {
+      log("\nSkipping " + caseClassName + ": no Test detected");
+      return;
+    }
+    log("\nRunning " + caseClassName);
+
+    if (collectedTests != null) {
+      collectedTests.add(caseClassName);
+      return;
+    }
 
     try {
       test.run(testResult);
@@ -375,15 +415,10 @@ public class TestAll implements Test {
     }
   }
 
-  @Nullable
-  private Test getTest(@NotNull final Class<?> testCaseClass) {
+  private @Nullable Test getTest(final @NotNull Class<?> testCaseClass) {
     try {
-      if ((testCaseClass.getModifiers() & Modifier.PUBLIC) == 0) {
+      if (!Modifier.isPublic(testCaseClass.getModifiers())) {
         return null;
-      }
-      Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
-      if (classBomb != null && TestFrameworkUtil.bombExplodes(classBomb)) {
-        return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
@@ -409,7 +444,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(NOT_BOMBED.intersect(NOT_IGNORED).intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
+          adapter.filter(NOT_IGNORED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
@@ -432,16 +467,10 @@ public class TestAll implements Test {
 
             Method method = findTestMethod((TestCase)test);
 
-            if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
+            if (method != null && (method.getAnnotation(IgnoreJUnit3.class) != null || method.getAnnotation(IJIgnore.class) != null)) {
               return;
             }
-            Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
-            if (methodBomb == null) {
-              doAddTest(test);
-            }
-            else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
-              doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
-            }
+            doAddTest(test);
           }
         }
 
@@ -450,8 +479,7 @@ public class TestAll implements Test {
           super.addTest(test);
         }
 
-        @Nullable
-        private static Method findTestMethod(final TestCase testCase) {
+        private static @Nullable Method findTestMethod(final TestCase testCase) {
           return safeFindMethod(testCase.getClass(), testCase.getName());
         }
       };
@@ -465,8 +493,50 @@ public class TestAll implements Test {
     }
   }
 
-  @NotNull
-  protected JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+  private static boolean isPotentiallyATest(final @NotNull Class<?> testCaseClass) {
+    try {
+      if (!Modifier.isPublic(testCaseClass.getModifiers())) {
+        return false;
+      }
+
+      if (safeFindMethod(testCaseClass, "suite") != null && !isPerformanceTestsRun()) {
+        return true;
+      }
+
+      // Maybe JUnit 4 test?
+      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass, false)) {
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass.getSimpleName());
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
+        if (runEverything) return true;
+
+        final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
+        if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
+          if (isPerformanceTestsRun() != isPerformanceTest) {
+            // do not create JUnit4TestAdapter for @Parameterized tests to avoid @Parameters computation - just skip the test
+            return false;
+          }
+        }
+        return true;
+      }
+
+      // Maybe JUnit 3 test?
+      // Simplified version of `junit.framework.TestSuite.addTestsFromTestCase`
+      try {
+        if (TestSuite.getTestConstructor(testCaseClass) == null) return false;
+      }
+      catch (NoSuchMethodException e) {
+        return false;
+      }
+      return Test.class.isAssignableFrom(testCaseClass);
+    }
+    catch (Throwable t) {
+      System.err.println("Failed to load test: " + testCaseClass.getName());
+      t.printStackTrace(System.err);
+      return false;
+    }
+  }
+
+  protected @NotNull JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
     return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
   }
 
@@ -502,30 +572,12 @@ public class TestAll implements Test {
     return ourUnit4TestAdapterCache;
   }
 
-  @Nullable
-  private static Method safeFindMethod(Class<?> klass, String name) {
+  private static @Nullable Method safeFindMethod(Class<?> klass, String name) {
     return ReflectionUtil.getMethod(klass, name);
   }
 
-  private static void log(String message) {
+  private static void log(@NotNull String message) {
     TeamCityLogger.info(message);
-  }
-
-  @SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention", "JUnitTestCaseWithNonTrivialConstructors",
-    "UnconstructableJUnitTestCase"})
-  private static class ExplodedBomb extends TestCase {
-    private final Bombed myBombed;
-
-    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
-      super(testName);
-      myBombed = bombed;
-    }
-
-    @Override
-    protected void runTest() throws Throwable {
-      String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
-      fail("Bomb created by " + myBombed.user() + description + " now explodes!");
-    }
   }
 
   @Override

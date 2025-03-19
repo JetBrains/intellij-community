@@ -21,6 +21,7 @@ class KotlinFilePartClassIndex internal constructor() : StringStubIndexExtension
 
     override fun getKey(): StubIndexKey<String, KtFile> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinFilePartClassIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
         return Helper[key, project, scope]
     }

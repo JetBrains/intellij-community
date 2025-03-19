@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.jvm.util;
 
 import com.intellij.lang.jvm.*;
@@ -36,8 +36,7 @@ public final class JvmMainMethodUtil {
     return clazz.getContainingClass() == null || clazz.hasModifier(JvmModifier.STATIC);
   }
 
-  @Nullable
-  private static JvmMethod findMainMethodInHierarchy(@NotNull JvmClass clazz) {
+  private static @Nullable JvmMethod findMainMethodInHierarchy(@NotNull JvmClass clazz) {
     return JvmHierarchyUtil.traverseSupers(clazz, superClazz -> {
       if (superClazz.getClassKind() == JvmClassKind.INTERFACE) {
         return null;
@@ -46,8 +45,7 @@ public final class JvmMainMethodUtil {
     });
   }
 
-  @Nullable
-  private static JvmMethod findMainMethodInClass(@NotNull JvmClass clazz) {
+  private static @Nullable JvmMethod findMainMethodInClass(@NotNull JvmClass clazz) {
     JvmMethod[] candidates = clazz.findMethodsByName(MAIN);
     return find(candidates, JvmMainMethodUtil::hasMainMethodSignature);
   }

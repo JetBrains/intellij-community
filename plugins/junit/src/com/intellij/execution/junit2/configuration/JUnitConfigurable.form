@@ -57,7 +57,7 @@
             </constraints>
             <properties/>
           </component>
-          <component id="350c9" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
+          <component id="350c9" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myModule">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -68,7 +68,7 @@
               <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
             </properties>
           </component>
-          <component id="a287c" class="com.intellij.openapi.ui.LabeledComponent" binding="myUseModulePath">
+          <component id="a287c" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myUseModulePath">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -79,7 +79,7 @@
               <text value=""/>
             </properties>
           </component>
-          <component id="2fbb3" class="com.intellij.openapi.ui.LabeledComponent" binding="myShortenClasspathModeCombo" custom-create="true">
+          <component id="2fbb3" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myShortenClasspathModeCombo" custom-create="true">
             <constraints>
               <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -177,7 +177,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="b109" class="com.intellij.openapi.ui.LabeledComponent" binding="myMethod" custom-create="true">
+          <component id="b109" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myMethod" custom-create="true">
             <constraints>
               <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -195,7 +195,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="e6070" class="com.intellij.openapi.ui.LabeledComponent" binding="myPackage" custom-create="true">
+              <component id="e6070" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myPackage" custom-create="true">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -208,7 +208,7 @@
               </component>
             </children>
           </grid>
-          <component id="45b8" class="com.intellij.openapi.ui.LabeledComponent" binding="myPattern">
+          <component id="45b8" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myPattern">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -219,7 +219,7 @@
               <visible value="true"/>
             </properties>
           </component>
-          <component id="89ba4" class="com.intellij.openapi.ui.LabeledComponent" binding="myClass">
+          <component id="89ba4" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myClass">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -228,7 +228,7 @@
               <text resource-bundle="messages/JUnitBundle" key="junit.configuration.class.label"/>
             </properties>
           </component>
-          <component id="1e1f8" class="com.intellij.openapi.ui.LabeledComponent" binding="myCategory" custom-create="true">
+          <component id="1e1f8" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myCategory" custom-create="true">
             <constraints>
               <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -237,7 +237,7 @@
               <text resource-bundle="messages/JUnitBundle" key="category.label"/>
             </properties>
           </component>
-          <component id="7d2af" class="com.intellij.openapi.ui.LabeledComponent" binding="myUniqueIdField">
+          <component id="7d2af" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myUniqueIdField">
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -247,7 +247,7 @@
               <text resource-bundle="messages/JUnitBundle" key="uniqueid.label"/>
             </properties>
           </component>
-          <component id="ac0a6" class="com.intellij.openapi.ui.LabeledComponent" binding="myDir">
+          <component id="ac0a6" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myDir">
             <constraints>
               <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -257,7 +257,7 @@
               <text resource-bundle="messages/JUnitBundle" key="directory.label"/>
             </properties>
           </component>
-          <component id="9b01f" class="com.intellij.openapi.ui.LabeledComponent" binding="myChangeListLabeledComponent" default-binding="true">
+          <component id="9b01f" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myChangeListLabeledComponent" default-binding="true">
             <constraints>
               <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
@@ -314,7 +314,7 @@
               </component>
             </children>
           </grid>
-          <component id="ac292" class="com.intellij.openapi.ui.LabeledComponent" binding="myTagsField">
+          <component id="ac292" class="com.intellij.openapi.ui.LabeledComponentNoThrow" binding="myTagsField">
             <constraints>
               <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>

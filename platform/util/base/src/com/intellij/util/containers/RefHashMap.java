@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ObjectUtilsRt;
 import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * Base class for (soft/weak) keys -> hard values map
@@ -18,13 +20,17 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private final MyMap myMap;
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
-  @NotNull
-  private final HashingStrategy<? super K> myStrategy;
+  private final @NotNull HashingStrategy<? super K> myStrategy;
   private Set<Entry<K, V>> entrySet;
+  private final BiConsumer<? super @NotNull Map<K, V>, ? super V> myEvictionListener;
 
   RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
+    this(initialCapacity, loadFactor, strategy, null);
+  }
+  RefHashMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy, @Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
     myStrategy = strategy;
     myMap = new MyMap(initialCapacity, loadFactor);
+    myEvictionListener = evictionListener;
   }
 
   private RefHashMap(int initialCapacity, float loadFactor) {
@@ -94,12 +100,13 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @FunctionalInterface
   interface Key<T> {
     T get();
+    @Override
     int hashCode();
+    @Override
     boolean equals(Object o);
   }
 
-  @NotNull
-  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
+  protected abstract @NotNull <T> Key<T> createKey(@NotNull T k, @NotNull HashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
 
   private class HardKey implements Key<K> {
     private K myObject;
@@ -141,7 +148,10 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     Key<K> wk;
     //noinspection unchecked
     while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
-      removeKey(wk);
+      V v = removeKey(wk);
+      if (myEvictionListener != null) {
+        myEvictionListener.accept(this, v);
+      }
       processed = true;
     }
     return processed;
@@ -232,7 +242,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private final Entry<?, V> ent;
     private final K key; // Strong reference to key, so that the GC will leave it alone as long as this Entry exists
     private final int myKeyHashCode;
-    @NotNull private final HashingStrategy<? super K> myStrategy;
+    private final @NotNull HashingStrategy<? super K> myStrategy;
 
     private MyEntry(@NotNull Entry<?, V> ent, @NotNull K key, int keyHashCode, @NotNull HashingStrategy<? super K> strategy) {
       this.ent = ent;
@@ -275,9 +285,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   private class EntrySet extends AbstractSet<Entry<K, V>> {
     private final Set<Entry<Key<K>, V>> hashEntrySet = myMap.entrySet();
 
-    @NotNull
     @Override
-    public Iterator<Entry<K, V>> iterator() {
+    public @NotNull Iterator<Entry<K, V>> iterator() {
       return new Iterator<Entry<K, V>>() {
         private final Iterator<Entry<Key<K>, V>> hashIterator = hashEntrySet.iterator();
         private MyEntry<K, V> next;
@@ -366,9 +375,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     }
   }
 
-  @NotNull
   @Override
-  public Set<Entry<K, V>> entrySet() {
+  public @NotNull Set<Entry<K, V>> entrySet() {
     Set<Entry<K, V>> es = entrySet;
     if (es == null) {
       entrySet = es = new EntrySet();

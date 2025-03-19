@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.vcs.dvcs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-dvcs_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-dvcs",
+  module_name = "intellij.platform.vcs.dvcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util-rt",
+    "//platform/vcs-log/graph-api:vcs-log-graph",
+    "//platform/core-api:core",
+    "//platform/vcs-api:vcs",
+    "//platform/extensions",
+    "//platform/platform-api:ide",
+    "//platform/vcs-log/api:vcs-log",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
+  runtime_deps = [":vcs-dvcs_resources"]
+)
+### auto-generated section `build intellij.platform.vcs.dvcs` end

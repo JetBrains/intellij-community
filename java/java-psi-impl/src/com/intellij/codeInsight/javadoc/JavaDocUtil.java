@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,18 +6,19 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +30,13 @@ import java.util.regex.Pattern;
 public final class JavaDocUtil {
   private static final Logger LOG = Logger.getInstance(JavaDocUtil.class);
 
-  @NonNls private static final Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
+  private static final @NonNls Pattern ourTypePattern = Pattern.compile("[ ]+[^ ^\\[^\\]]");
   private static final String JAVA_LANG = "java.lang.";
 
   private JavaDocUtil() {
   }
 
-  @Nullable
-  public static PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
+  public static @Nullable PsiClass resolveClassInTagValue(@Nullable PsiDocTagValue value) {
     if (value == null) return null;
     PsiElement refHolder = value.getFirstChild();
     if (refHolder != null) {
@@ -78,13 +78,11 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context) {
     return findReferenceTarget(manager, refText, context, true);
   }
 
-  @Nullable
-  public static PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
+  public static @Nullable PsiElement findReferenceTarget(@NotNull PsiManager manager, @NotNull String refText, PsiElement context, boolean useNavigationElement) {
     LOG.assertTrue(context == null || context.isValid());
     if (context != null) {
       context = context.getNavigationElement();
@@ -145,8 +143,7 @@ public final class JavaDocUtil {
     return aClass;
   }
 
-  @Nullable
-  private static PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
+  private static @Nullable PsiElement findReferencedMember(@NotNull PsiClass aClass, @NotNull String memberRefText, PsiElement context) {
     int parenthIndex = memberRefText.indexOf('(');
     if (parenthIndex < 0) {
       String name = memberRefText;
@@ -215,8 +212,7 @@ public final class JavaDocUtil {
     }
   }
 
-  @Nullable
-  public static String getReferenceText(Project project, PsiElement element) {
+  public static @Nullable String getReferenceText(Project project, PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }
@@ -425,5 +421,40 @@ public final class JavaDocUtil {
 
   public static boolean isInsidePackageInfo(@Nullable PsiDocComment containingComment) {
     return containingComment != null && containingComment.getOwner() == null && containingComment.getParent() instanceof PsiJavaFile;
+  }
+
+  public static boolean isDanglingDocComment(@NotNull PsiDocComment comment, boolean ignoreCopyright) {
+    if (comment.getOwner() != null || TemplateLanguageUtil.isInsideTemplateFile(comment)) {
+      return false;
+    }
+    if (isInsidePackageInfo(comment) &&
+        PsiTreeUtil.skipWhitespacesAndCommentsForward(comment) instanceof PsiPackageStatement &&
+        "package-info.java".equals(comment.getContainingFile().getName())) {
+      return false;
+    }
+    if (ignoreCopyright && comment.getPrevSibling() == null && comment.getParent() instanceof PsiFile) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * @return Whether the inspections should be run for the given comment
+   * Markdown format is allowed for java < 23. However, due to old (sometimes generated) code starting with 3 slashes,
+   * we should not run the inspections on dangling comments.
+   */
+  @Contract("null -> false")
+  public static boolean shouldRunInspectionOnOldMarkdownComment(@Nullable PsiDocComment comment) {
+    if (comment == null) return false;
+    if (!comment.isMarkdownComment()) return true;
+    PsiJavaFile file = ObjectUtils.tryCast(comment.getContainingFile(), PsiJavaFile.class);
+    if (file == null) return false;
+
+    if (file.getLanguageLevel().isAtLeast(LanguageLevel.JDK_23)) return true;
+    return !isDanglingDocComment(comment, true);
+  }
+
+  public static boolean shouldRunInspectionOnOldMarkdownComment(@NotNull PsiElement element) {
+    return shouldRunInspectionOnOldMarkdownComment(PsiTreeUtil.getParentOfType(element, PsiDocComment.class, false, PsiMember.class));
   }
 }

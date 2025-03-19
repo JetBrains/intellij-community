@@ -28,12 +28,12 @@ public interface JpsModel {
   JpsGlobal getGlobal();
 
   /**
-   * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+   * @deprecated external references aren't supported anymore. If you need to refer to a {@link JpsElement} outside the model,
+   * use its name instead.
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated(forRemoval = true)
-  @NotNull JpsModel createModifiableModel(@NotNull JpsEventDispatcher eventDispatcher);
-
-  void registerExternalReference(@NotNull JpsElementReference<?> reference);
-
-  void commit();
+  default void registerExternalReference(@NotNull JpsElementReference<?> reference) {
+    throw new UnsupportedOperationException();
+  }
 }

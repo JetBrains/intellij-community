@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.intellij.execution.Location;
@@ -8,6 +8,7 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,10 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 
-public final class PythonRunConfigurationProducer extends LazyRunConfigurationProducer<PythonRunConfiguration> {
-  @NotNull
+public final class PythonRunConfigurationProducer extends LazyRunConfigurationProducer<PythonRunConfiguration> implements DumbAware {
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return PythonConfigurationType.getInstance().getFactory();
   }
 
@@ -71,7 +71,7 @@ public final class PythonRunConfigurationProducer extends LazyRunConfigurationPr
     return scriptName.equals(path) || path.equals(new File(workingDirectory, scriptName).getAbsolutePath());
   }
 
-  private static boolean isAvailable(@NotNull final Location location, @Nullable final PsiFile script) {
+  private static boolean isAvailable(final @NotNull Location location, final @Nullable PsiFile script) {
     if (script == null || script.getFileType() != PythonFileType.INSTANCE ||
         !script.getViewProvider().getBaseLanguage().isKindOf(PythonLanguage.INSTANCE)) {
       return false;

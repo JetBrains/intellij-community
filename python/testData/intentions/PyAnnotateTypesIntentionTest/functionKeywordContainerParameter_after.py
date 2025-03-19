@@ -1,2 +1,2 @@
-def foo(**x: object<caret>) -> object:
+def foo(**x: object<caret>) -> None:
     pass

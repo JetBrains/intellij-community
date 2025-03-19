@@ -20,18 +20,6 @@ internal val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?
   }
 }
 
-internal fun gitPull(repo: Path) {
-  try {
-    execute(repo, GIT, "pull", "--rebase")
-  }
-  catch (e: Exception) {
-    callSafely(printStackTrace = false) {
-      execute(repo, GIT, "rebase", "--abort")
-    }
-    log("Unable to pull changes for $repo: ${e.message}")
-  }
-}
-
 /**
  * @param dirToList optional dir in [repo] from which to list files
  * @return map of file paths (relative to [dirToList]) to [GitObject]
@@ -43,7 +31,6 @@ internal fun listGitObjects(repo: Path, dirToList: Path?, fileFilter: (Path) -> 
 private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.toFile()?.relativeTo(repo.toFile())?.path ?: ""
   log("Inspecting $repo/$relativeDirToList")
-  if (!isUnderTeamCity()) gitPull(repo)
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
     .filter(String::isNotBlank).map { line ->
@@ -198,7 +185,7 @@ internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
   if (!latestChangeCommits.containsKey(file)) {
     synchronized(file) {
       if (!latestChangeCommits.containsKey(file)) {
-        val commitInfo = monoRepoMergeAwareCommitInfo(repo, path)
+        val commitInfo = pathInfo(repo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
             latestChangeCommits = latestChangeCommits + (file to commitInfo)
@@ -209,26 +196,6 @@ internal fun latestChangeCommit(path: String, repo: Path): CommitInfo? {
     }
   }
   return latestChangeCommits.getValue(file)
-}
-
-private fun monoRepoMergeAwareCommitInfo(repo: Path, path: String) =
-  pathInfo(repo, "--", path)?.let { commitInfo ->
-    if (commitInfo.parents.size == 6 && commitInfo.subject.contains("Merge all repositories")) {
-      val strippedPath = path.stripMergedRepoPrefix()
-      commitInfo.parents.asSequence().mapNotNull {
-        pathInfo(repo, it, "--", strippedPath)
-      }.firstOrNull()
-    }
-    else commitInfo
-  }
-
-private fun String.stripMergedRepoPrefix(): String = when {
-  startsWith("community/android/tools-base/") -> removePrefix("community/android/tools-base/")
-  startsWith("community/android/") -> removePrefix("community/android/")
-  startsWith("community/") -> removePrefix("community/")
-  startsWith("contrib/") -> removePrefix("contrib/")
-  startsWith("CIDR/") -> removePrefix("CIDR/")
-  else -> this
 }
 
 /**
@@ -263,8 +230,6 @@ private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "H
       it.parents.first() != commit
     }?.let {
       when {
-        // if it's a merge of master into master then all parents belong to master but the first one doesn't lead to [commit]
-        isMergeOfMasterIntoMaster(repo, it) -> findMergeCommit(repo, commit, it.parents[1])
         it.parents.size > 2 -> {
           log("WARNING: Merge commit ${it.hash} for $commit in $repo is found but it has more than two parents (one of them could be master), skipping")
           null
@@ -274,23 +239,6 @@ private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "H
       }
     }
 }
-
-/**
- * Inspecting commit subject which isn't reliable criteria, may need to be adjusted
- *
- * @param merge merge commit
- */
-private fun isMergeOfMasterIntoMaster(repo: Path, merge: CommitInfo) =
-  merge.parents.size == 2 && with(merge.subject) {
-    val head = head(repo)
-    (contains("Merge branch $head") ||
-     contains("Merge branch '$head'") ||
-     contains("origin/$head")) &&
-    (!contains(" into ") ||
-     endsWith("into $head") ||
-     endsWith("into '$head'"))
-  }
-
 
 @Volatile
 private var heads = emptyMap<Path, String>()

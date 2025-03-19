@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -11,15 +12,15 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class ClassFileDependenciesAnalyzer {
+@ApiStatus.Internal
+public final class ClassFileDependenciesAnalyzer {
   private final DependencyContext myContext;
 
   public ClassFileDependenciesAnalyzer(File dependenciesDataDir, PathRelativizerService relativizer) throws IOException {
     myContext = new DependencyContext(dependenciesDataDir, relativizer);
   }
 
-  @NotNull
-  public Set<String> collectDependencies(String className, ClassReader classReader) {
+  public @NotNull Set<String> collectDependencies(String className, ClassReader classReader) {
     ClassFileRepr classFileRepr = new ClassfileAnalyzer(myContext).analyze(myContext.get(className), classReader, false);
     if (classFileRepr == null) return Collections.emptySet();
     final int classNameId = classFileRepr.name;

@@ -19,11 +19,11 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.ui.AnActionButton
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.ActionHandler
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ComboBoxPopup
+import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.Component
 import java.awt.Point
 import java.awt.Window
@@ -98,7 +98,7 @@ private interface SdkPopupListener {
 internal class PlatformSdkPopupFactory : SdkPopupFactory {
   override fun createBuilder(): SdkPopupBuilder = SdkPopupBuilderImpl()
 
-  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder) = object : ActionHandler {
+  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder): ActionHandler = object : ActionHandler {
     override fun handlePanelActionClick(panel: EditorNotificationPanel,
                                         event: HyperlinkEvent) {
       //FileEditorManager#addTopComponent wraps the panel to implement borders, unwrapping
@@ -287,6 +287,13 @@ private class SdkPopupImpl(
   context: SdkListItemContext,
   onItemSelected: Consumer<SdkListItem>
 ) : ComboBoxPopup<SdkListItem>(context, null, onItemSelected), SdkPopup {
+
+  init {
+    if (ScreenReader.isActive()) {
+      setRequestFocus(true)
+    }
+  }
+
   val popupOwner: JComponent
     get() {
       val owner = myOwner
@@ -306,12 +313,7 @@ private class SdkPopupImpl(
     }
 
   override fun showPopup(e: AnActionEvent) {
-    if (e is AnActionButton.AnActionEventWrapper) {
-      e.showPopup(this)
-    }
-    else {
-      showInBestPositionFor(e.dataContext)
-    }
+    showInBestPositionFor(e.dataContext)
   }
 
   override fun showUnderneathToTheRightOf(component: Component) {

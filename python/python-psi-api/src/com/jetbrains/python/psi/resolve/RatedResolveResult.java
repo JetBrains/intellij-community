@@ -62,9 +62,6 @@ public class RatedResolveResult implements ResolveResult {
   public static final int RATE_NORMAL = 0;
 
   @ApiStatus.Experimental
-  public static final int RATE_LIFTED_PY_FILE_OVERLOAD = -100;
-
-  @ApiStatus.Experimental
   public static final int RATE_PY_FILE_OVERLOAD = -200;
 
   /**

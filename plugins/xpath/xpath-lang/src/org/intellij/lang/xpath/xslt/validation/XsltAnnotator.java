@@ -52,10 +52,9 @@ public class XsltAnnotator implements Annotator {
     if (context != null) {
       if (XsltSupport.isPatternAttribute(context)) {
         XsltPatternValidator.validate(holder, file);
-      } else {
-        if (file.getText().trim().length() == 0 && file.getExpression() == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).create();
-        }
+      }
+      else if (file.getText().trim().isEmpty() && file.getExpression() == null && !file.getText().isEmpty()) {
+        holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).create();
       }
       if (XsltSupport.isXsltAttribute(context) && !XsltSupport.mayBeAVT(context)) {
         final ASTNode node = file.getNode();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +38,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class SettingsEditorFragment<Settings, C extends JComponent> extends SettingsEditor<Settings> {
-
   private final String myId;
   private final @Nls String myName;
   private final @Nls String myGroup;
@@ -165,13 +163,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myId;
   }
 
-  @Nls
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 
-  @Nls
-  public String getGroup() {
+  public @Nls String getGroup() {
     return myGroup;
   }
 
@@ -207,8 +203,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myPriority;
   }
 
-  @Nullable
-  public ActionGroup getCustomActionGroup() {
+  public @Nullable ActionGroup getCustomActionGroup() {
     return null;
   }
 
@@ -249,7 +244,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
         return new ValidationInfo("", getEditorComponent());
       }
       catch (ConfigurationException exception) {
-        return new ValidationInfo(exception.getMessage(), getEditorComponent());
+        return new ValidationInfo(exception.getMessageHtml(), getEditorComponent());
       }
     });
   }
@@ -356,14 +351,6 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return component;
   }
 
-  /**
-   * @deprecated use <code>getPriority</code> instead
-   */
-  @Deprecated
-  public int getCommandLinePosition() {
-    return myPriority;
-  }
-
   public int getMenuPosition() { return 0; }
 
   @Override
@@ -403,8 +390,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void setActionHint(@Nullable @Nls String hint) {
-    //noinspection HardCodedStringLiteral
-    myActionHint = ObjectUtils.doIfNotNull(hint, it -> StringUtil.removeHtmlTags(it, true));
+    myActionHint = hint == null ? null : StringUtil.removeHtmlTags(hint, true);
   }
 
   public @Nullable String getHint(@Nullable JComponent component) {

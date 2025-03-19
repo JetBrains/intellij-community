@@ -2,12 +2,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
-import com.intellij.openapi.util.JDOMExternalizerUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class DataFlowInspectionMerger extends InspectionElementsMergerBase {
+public final class DataFlowInspectionMerger extends InspectionElementsMergerBase {
   @Override
   public @NotNull String getMergedToolName() {
     return "DataFlowIssue";

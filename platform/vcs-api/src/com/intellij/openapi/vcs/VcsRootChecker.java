@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides methods to check if the given directory is a root of the given VCS. This is used e.g. by the {@link VcsRootDetector}
+ * Provides methods to check if the given directory is a root of the given VCS. This is used e.g., by the {@link VcsRootDetector}
  * to detect invalid roots (registered in the settings, but not related to real VCS roots on disk)
  * and unregistered roots (real roots on disk not registered in the settings).
  */
@@ -83,8 +83,7 @@ public abstract class VcsRootChecker {
   /**
    * Check if a given VCS root has dependent directories, that should be checked even if not a part of the Project.
    */
-  @NotNull
-  public List<VirtualFile> suggestDependentRoots(@NotNull VirtualFile vcsRoot) {
+  public @NotNull List<VirtualFile> suggestDependentRoots(@NotNull VirtualFile vcsRoot) {
     return Collections.emptyList();
   }
 
@@ -100,11 +99,11 @@ public abstract class VcsRootChecker {
    * @param mappedDirs   - roots that have an explicit mappings, and should not be included into detection
    * @return Detected vcs root mappings for the project
    * or null if default logic should be used instead (relying on {@link #isRoot} calls).
+   * @throws VcsException - when detection of project mappings failed (e.g., no internet connection for VCSs that require it).
    */
-  @Nullable
-  public Collection<VirtualFile> detectProjectMappings(@NotNull Project project,
-                                                       @NotNull Collection<VirtualFile> projectRoots,
-                                                       @NotNull Set<VirtualFile> mappedDirs) {
+  public @Nullable Collection<VirtualFile> detectProjectMappings(@NotNull Project project,
+                                                                 @NotNull Collection<VirtualFile> projectRoots,
+                                                                 @NotNull Set<VirtualFile> mappedDirs) throws VcsException {
     return null;
   }
 }

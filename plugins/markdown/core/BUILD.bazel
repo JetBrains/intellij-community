@@ -1,0 +1,55 @@
+### auto-generated section `build intellij.markdown` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "markdown_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "markdown",
+  module_name = "intellij.markdown",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/lang-impl",
+    "//platform/markdown-utils",
+    "//platform/built-in-server-api:builtInServer",
+    "@lib//:guava",
+    "//platform/indexing-impl",
+    "//platform/analysis-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/observable:ide-observable",
+    "@lib//:netty-codec-http",
+    "//platform/ide-core-impl",
+    "//platform/refactoring",
+    "//platform/built-in-server:builtInServer-impl",
+    "//platform/editor-ui-ex:editor-ex",
+    "@lib//:jcef",
+    "@lib//:jsoup",
+    "@lib//:netty-buffer",
+    "//platform/core-ui",
+    "//platform/code-style-impl:codeStyle-impl",
+    "@lib//:jetbrains-markdown",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "//platform/execution-impl",
+    "@lib//:miglayout-swing",
+    "//platform/platform-api:ide",
+    "//platform/statistics",
+    "//platform/util/jdom",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/diagnostic",
+    "//platform/util/coroutines",
+    "@lib//:caffeine",
+    "//platform/ui.jcef:ui-jcef",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = ["//platform/ui.jcef:ui-jcef"],
+  runtime_deps = [":markdown_resources"]
+)
+### auto-generated section `build intellij.markdown` end

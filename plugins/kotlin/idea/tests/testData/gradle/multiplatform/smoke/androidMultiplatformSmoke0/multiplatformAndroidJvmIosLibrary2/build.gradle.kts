@@ -5,11 +5,12 @@ plugins {
 
 android {
     compileSdk = {{compile_sdk_version}}
+    namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidJvmIosLibrary"
     sourceSets.getByName("main").manifest.srcFile("src/androidMain/AndroidManifest.xml")
 }
 
 kotlin {
-    android()
+    androidTarget()
     jvm()
     linuxX64()
 

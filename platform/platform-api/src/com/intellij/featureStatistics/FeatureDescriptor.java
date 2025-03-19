@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,12 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 @SuppressWarnings("NotNullFieldNotInitialized")
-public class FeatureDescriptor {
-  @NotNull private String myId;
-  @Nullable private String myDisplayName;
-  @Nullable private final String myGroupId;
-  @Nullable private String myTipId;
-  @Nullable private Set<String> myDependencies;
+public final class FeatureDescriptor {
+  private @NotNull String myId;
+  private @Nullable String myDisplayName;
+  private final @Nullable String myGroupId;
+  private @Nullable String myTipId;
+  private @Nullable Set<String> myDependencies;
   private int myDaysBeforeFirstShowUp = 1;
   private int myDaysBetweenSuccessiveShowUps = 3;
   private int myMinUsageCount = 1;
@@ -29,25 +30,26 @@ public class FeatureDescriptor {
   private long myLastTimeShown;
   private long myLastTimeUsed;
   private int myShownCount;
-  @Nullable private final ProductivityFeaturesProvider myProvider;
+  private final @Nullable ProductivityFeaturesProvider myProvider;
 
-  @NonNls private static final String ATTRIBUTE_COUNT = "count";
-  @NonNls private static final String ATTRIBUTE_LAST_SHOWN = "last-shown";
-  @NonNls private static final String ATTRIBUTE_LAST_USED = "last-used";
-  @NonNls private static final String ATTRIBUTE_SHOWN_COUNT = "shown-count";
-  @NonNls private static final String ATTRIBUTE_ID = "id";
-  @NonNls private static final String ATTRIBUTE_TIP_ID = "tip-id";
-  @NonNls private static final String ATTRIBUTE_FIRST_SHOW = "first-show";
-  @NonNls private static final String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
-  @NonNls private static final String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
-  @NonNls private static final String ATTRIBUTE_UTILITY_SCORE = "utility-score";
-  @NonNls private static final String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
-  @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
-  @NonNls private static final String ELEMENT_DEPENDENCY = "dependency";
-  @NonNls private static final String ELEMENT_TRACK_ACTION = "track-action";
-  @NonNls private static final String ELEMENT_TRACK_INTENTION = "track-intention";
+  private static final @NonNls String ATTRIBUTE_COUNT = "count";
+  private static final @NonNls String ATTRIBUTE_LAST_SHOWN = "last-shown";
+  private static final @NonNls String ATTRIBUTE_LAST_USED = "last-used";
+  private static final @NonNls String ATTRIBUTE_SHOWN_COUNT = "shown-count";
+  private static final @NonNls String ATTRIBUTE_ID = "id";
+  private static final @NonNls String ATTRIBUTE_TIP_ID = "tip-id";
+  private static final @NonNls String ATTRIBUTE_FIRST_SHOW = "first-show";
+  private static final @NonNls String ATTRIBUTE_SUCCESSIVE_SHOW = "successive-show";
+  private static final @NonNls String ATTRIBUTE_MIN_USAGE_COUNT = "min-usage-count";
+  private static final @NonNls String ATTRIBUTE_UTILITY_SCORE = "utility-score";
+  private static final @NonNls String ATTRIBUTE_SHOW_IN_GUIDE = "show-in-guide";
+  private static final @NonNls String ATTRIBUTE_CLASS_NAME = "class-name";
+  private static final @NonNls String ELEMENT_DEPENDENCY = "dependency";
+  private static final @NonNls String ELEMENT_TRACK_ACTION = "track-action";
+  private static final @NonNls String ELEMENT_TRACK_INTENTION = "track-intention";
 
-  FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
+  @ApiStatus.Internal
+  public FeatureDescriptor(@NotNull GroupDescriptor group, @Nullable ProductivityFeaturesProvider provider, @NotNull Element featureElement) {
     myGroupId = group.getId();
     myProvider = provider;
     readExternal(featureElement);
@@ -121,21 +123,12 @@ public class FeatureDescriptor {
     }
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return myId;
   }
 
   public @Nullable String getGroupId() {
     return myGroupId;
-  }
-
-  /**
-   * @deprecated Use {@code getTipId()} instead
-   */
-  @Deprecated
-  public @Nullable String getTipFileName() {
-    return myTipId;
   }
 
   public @Nullable String getTipId() {
@@ -150,8 +143,7 @@ public class FeatureDescriptor {
     return myIntentionEvents;
   }
 
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     if (myDisplayName == null) {
       myDisplayName = FeatureStatisticsBundle.message(myId);
     }
@@ -173,7 +165,8 @@ public class FeatureDescriptor {
     return myProvider.getClass();
   }
 
-  void triggerUsed() {
+  @ApiStatus.Internal
+  public void triggerUsed() {
     myLastTimeUsed = System.currentTimeMillis();
     myUsageCount++;
   }
@@ -187,6 +180,7 @@ public class FeatureDescriptor {
     myLastTimeUsed = Math.max(myLastTimeUsed, newLastTimeUsed);
   }
 
+  @Override
   public String toString() {
 
     return "id = [" +
@@ -221,7 +215,8 @@ public class FeatureDescriptor {
     return ArrayUtilRt.toStringArray(myDependencies);
   }
 
-  void triggerShown() {
+  @ApiStatus.Internal
+  public void triggerShown() {
     myLastTimeShown = System.currentTimeMillis();
     myShownCount++;
   }
@@ -234,14 +229,16 @@ public class FeatureDescriptor {
     return myShownCount;
   }
 
-  void copyStatistics(FeatureDescriptor statistics) {
+  @ApiStatus.Internal
+  public void copyStatistics(FeatureDescriptor statistics) {
     myUsageCount = statistics.getUsageCount();
     myLastTimeShown = statistics.getLastTimeShown();
     myLastTimeUsed = statistics.getLastTimeUsed();
     myShownCount = statistics.getShownCount();
   }
 
-  void readStatistics(Element element) {
+  @ApiStatus.Internal
+  public void readStatistics(Element element) {
     String count = element.getAttributeValue(ATTRIBUTE_COUNT);
     String lastShown = element.getAttributeValue(ATTRIBUTE_LAST_SHOWN);
     String lastUsed = element.getAttributeValue(ATTRIBUTE_LAST_USED);
@@ -253,7 +250,8 @@ public class FeatureDescriptor {
     myShownCount = shownCount == null ? 0 : Integer.parseInt(shownCount);
   }
 
-  void writeStatistics(Element element) {
+  @ApiStatus.Internal
+  public void writeStatistics(Element element) {
     element.setAttribute(ATTRIBUTE_COUNT, String.valueOf(getUsageCount()));
     element.setAttribute(ATTRIBUTE_LAST_SHOWN, String.valueOf(getLastTimeShown()));
     element.setAttribute(ATTRIBUTE_LAST_USED, String.valueOf(getLastTimeUsed()));

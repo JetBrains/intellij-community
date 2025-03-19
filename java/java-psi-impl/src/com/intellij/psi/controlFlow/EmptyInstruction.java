@@ -9,6 +9,7 @@ public final class EmptyInstruction extends SimpleInstruction {
   private EmptyInstruction() {
   }
 
+  @Override
   public String toString() {
     return "EMPTY";
   }

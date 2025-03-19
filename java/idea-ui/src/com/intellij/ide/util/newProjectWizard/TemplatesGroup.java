@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.projectWizard.ProjectCategory;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.PromoModuleBuilder;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.Comparing;
@@ -49,8 +50,7 @@ public final class TemplatesGroup implements Comparable<TemplatesGroup> {
     this(builder.getPresentableName(), builder.getDescription(), builder.getNodeIcon(), builder.getWeight(), builder.getParentGroup(), builder.getBuilderId(), builder);
   }
 
-  @Nullable
-  public ModuleBuilder getModuleBuilder() {
+  public @Nullable ModuleBuilder getModuleBuilder() {
     return myModuleBuilder;
   }
 
@@ -120,5 +120,9 @@ public final class TemplatesGroup implements Comparable<TemplatesGroup> {
 
   public void setPluginInfo(PluginInfo pluginInfo) {
     myPluginInfo = pluginInfo;
+  }
+
+  public boolean isPromo() {
+    return myModuleBuilder instanceof PromoModuleBuilder;
   }
 }

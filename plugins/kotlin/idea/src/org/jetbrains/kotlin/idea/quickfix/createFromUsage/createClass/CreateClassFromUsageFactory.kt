@@ -6,6 +6,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class CreateClassFromUsageFactory<E : KtElement> : KotlinIntentionActionFactoryWithDelegate<E, ClassInfo>() {

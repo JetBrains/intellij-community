@@ -1,26 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.envTest.upload
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.internal.statistic.config.EventLogOptions
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
-import com.intellij.internal.statistic.eventLog.LogEventJsonDeserializer
-import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
-import com.intellij.internal.statistic.eventLog.MachineId
+import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.connection.EventLogResultDecorator
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode
-import com.intellij.util.io.readText
-import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.TestCase
 import java.io.File
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest() {
-  private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
-
   fun testSend() {
     val logText = Paths.get(getTestDataPath()).resolve("log1.txt").readText()
     val machineId = MachineId("test.machine.id", 0)
@@ -34,7 +28,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
-    val expected = gson.fromJson(logText, LogEvent::class.java)
+    val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
@@ -132,7 +126,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
-    val expected = gson.fromJson(logText, LogEvent::class.java)
+    val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = EventLogOptions.MACHINE_ID_DISABLED
     TestCase.assertEquals(expected, events.first())
   }
@@ -148,7 +142,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
-    val expected = gson.fromJson(logText, LogEvent::class.java)
+    val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
@@ -164,7 +158,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
-    val expected = gson.fromJson(logText, LogEvent::class.java)
+    val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
     TestCase.assertEquals(expected, events.first())
   }
@@ -180,7 +174,7 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
 
     val events = logEventRecordRequest.records.first().events
     TestCase.assertEquals(1, events.size)
-    val expected = gson.fromJson(logText, LogEvent::class.java)
+    val expected = SerializationHelper.deserializeLogEvent(logText)
     expected.event.data["system_machine_id"] = machineId.id
     expected.event.data["system_id_revision"] = machineId.revision.toLong()
     TestCase.assertEquals(expected, events.first())
@@ -222,9 +216,9 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     }
 
     return resultHolder.successContents.map {
-      val jsonObject = gson.fromJson(it, JsonObject::class.java)
-      TestCase.assertEquals(jsonObject["method"].asString, "POST")
-      gson.fromJson(jsonObject["body"].asString, LogEventRecordRequest::class.java)
+      val jsonObject = ObjectMapper().readTree(it)
+      TestCase.assertEquals(jsonObject["method"].asText(), "POST")
+      SerializationHelper.deserializeLogEventRecordRequest(jsonObject["body"].asText())
     }
   }
 

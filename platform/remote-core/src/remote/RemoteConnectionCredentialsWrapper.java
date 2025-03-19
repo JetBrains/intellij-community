@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.Key;
@@ -7,14 +7,11 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.remote.ext.CredentialsCase;
 import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.remote.ext.RemoteCredentialsHandler;
-import com.intellij.remote.ext.UnknownCredentialsHolder;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// TODO: (next) rename to 'RemoteSdkDataDelegate' ?
 public class RemoteConnectionCredentialsWrapper {
-
   private UserDataHolderBase myCredentialsTypeHolder = new UserDataHolderBase();
 
   public <C> void setCredentials(Key<C> key, C credentials) {
@@ -26,65 +23,64 @@ public class RemoteConnectionCredentialsWrapper {
     return getCredentials();
   }
 
-  public void save(final Element rootElement) {
+  public void save(Element rootElement) {
     getTypeHandler().save(rootElement);
   }
 
-  public static IllegalStateException unknownConnectionType() {
-    return new IllegalStateException("Unknown connection type"); //TODO
-  }
-
-  public void copyTo(final RemoteConnectionCredentialsWrapper copy) {
+  @SuppressWarnings("unchecked")
+  public void copyTo(RemoteConnectionCredentialsWrapper copy) {
     copy.myCredentialsTypeHolder = new UserDataHolderBase();
-
-    Pair<Object, CredentialsType> credentialsAndProvider = getCredentialsAndType();
-
-    credentialsAndProvider.getSecond().putCredentials(copy.myCredentialsTypeHolder, credentialsAndProvider.getFirst());
+    var credentialsAndProvider = getCredentialsAndType();
+    credentialsAndProvider.second.putCredentials(copy.myCredentialsTypeHolder, credentialsAndProvider.first);
   }
 
   public @NotNull String getId() {
     return getTypeHandler().getId();
   }
 
+  @SuppressWarnings("unchecked")
   public RemoteCredentialsHandler getTypeHandler() {
-    Pair<Object, CredentialsType> credentialsAndType = getCredentialsAndType();
-    return credentialsAndType.getSecond().getHandler(credentialsAndType.getFirst());
+    var credentialsAndType = getCredentialsAndType();
+    return credentialsAndType.second.getHandler(credentialsAndType.first);
   }
 
+  @SuppressWarnings("rawtypes")
   public CredentialsType getRemoteConnectionType() {
-    return getCredentialsAndType().getSecond();
+    return getCredentialsAndType().second;
   }
 
   public Object getCredentials() {
-    return getCredentialsAndType().getFirst();
+    return getCredentialsAndType().first;
   }
 
+  @SuppressWarnings("rawtypes")
   private Pair<Object, CredentialsType> getCredentialsAndType() {
-    for (CredentialsType<?> type : CredentialsManager.getInstance().getAllTypes()) {
-      Object credentials = getCredentials(type);
+    for (var type : CredentialsManager.getInstance().getAllTypes()) {
+      var credentials = getCredentials(type);
       if (credentials != null) {
-        return Pair.create(credentials, type);
+        return new Pair<>(credentials, type);
       }
     }
-    final UnknownCredentialsHolder credentials = CredentialsType.UNKNOWN.getCredentials(myCredentialsTypeHolder);
-    if (credentials != null) return Pair.create(credentials, CredentialsType.UNKNOWN);
-    throw unknownConnectionType();
+    var credentials = CredentialsType.UNKNOWN.getCredentials(myCredentialsTypeHolder);
+    if (credentials != null) return new Pair<>(credentials, CredentialsType.UNKNOWN);
+    throw new IllegalStateException("Unknown connection type");
   }
 
   /**
-   * Returns the credentials object stored in this wrapper if the given type matches it or null otherwise.<p/>
-   * This method allows to move away from using {@link #switchType(CredentialsCase[])} method.
+   * Returns credentials stored in this wrapper if the given type matches it, or {@code null} otherwise.<p/>
+   * This method allows moving away from using {@link #switchType(CredentialsCase[])}.
    */
   public <T> @Nullable T getCredentials(@NotNull CredentialsType<T> credentialsType) {
     return credentialsType.getCredentials(myCredentialsTypeHolder);
   }
 
+  @SuppressWarnings({"rawtypes", "unchecked"})
   public void switchType(CredentialsCase... cases) {
-    Pair<Object, CredentialsType> credentialsAndType = getCredentialsAndType();
-    CredentialsType type = credentialsAndType.getSecond();
-    for (CredentialsCase credentialsCase : cases) {
+    var credentialsAndType = getCredentialsAndType();
+    var type = credentialsAndType.second;
+    for (var credentialsCase : cases) {
       if (credentialsCase.getType() == type) {
-        credentialsCase.process(credentialsAndType.getFirst());
+        credentialsCase.process(credentialsAndType.first);
         return;
       }
     }
@@ -94,8 +90,8 @@ public class RemoteConnectionCredentialsWrapper {
   public boolean equals(Object obj) {
     if (obj instanceof RemoteConnectionCredentialsWrapper w) {
       try {
-        Object credentials = getCredentials();
-        Object counterCredentials = w.getCredentials();
+        var credentials = getCredentials();
+        var counterCredentials = w.getCredentials();
         return credentials.equals(counterCredentials);
       }
       catch (IllegalStateException e) {
@@ -105,7 +101,7 @@ public class RemoteConnectionCredentialsWrapper {
     return false;
   }
 
-  public String getPresentableDetails(final String interpreterPath) {
+  public String getPresentableDetails(String interpreterPath) {
     return getTypeHandler().getPresentableDetails(interpreterPath);
   }
 }

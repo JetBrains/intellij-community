@@ -11,6 +11,7 @@ import com.intellij.util.io.*
 import com.intellij.util.io.keyStorage.AppendableObjectStorage
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
@@ -19,6 +20,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.abs
 
+@ApiStatus.Internal
 interface AbstractIntLog : Closeable, Flushable {
   @FunctionalInterface
   fun interface IntLogEntryProcessor {
@@ -36,6 +38,7 @@ interface AbstractIntLog : Closeable, Flushable {
   fun clear()
 }
 
+@ApiStatus.Internal
 class IntLog @Throws(IOException::class) constructor(private val baseStorageFile: Path,
                                                      compact: Boolean,
                                                      private val storageLockContext: StorageLockContext? = null) : AbstractIntLog {
@@ -66,33 +69,29 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       if (isReadAction) {
         ProgressManager.checkCanceled()
       }
-      withLock(true) {
-        if (!myKeyHashToVirtualFileMapping.processAll { _, key ->
-            if (isReadAction) {
-              ProgressManager.checkCanceled()
-            }
-            val inputId = key[1]
-            val data = key[0]
-
-            if (!processor.process(data, inputId)) {
-              return@processAll false
-            }
-
-            val isPresent = uniqueInputs.get(inputId)
-            if (isPresent) {
-              uselessRecords++
-            }
-            else {
-              uniqueInputs.set(inputId)
-              usefulRecords++
-            }
-
-            true
-          }) {
-          return@withLock false
+      val notAllProcessed = !myKeyHashToVirtualFileMapping.processAll { _, key ->
+        if (isReadAction) {
+          ProgressManager.checkCanceled()
         }
+        val inputId = key[1]
+        val data = key[0]
+
+        if (!processor.process(data, inputId)) {
+          return@processAll false
+        }
+
+        val isPresent = uniqueInputs.get(inputId)
+        if (isPresent) {
+          uselessRecords++
+        }
+        else {
+          uniqueInputs.set(inputId)
+          usefulRecords++
+        }
+
         true
       }
+
       if (uselessRecords >= usefulRecords) {
         setRequiresCompaction()
       }
@@ -154,7 +153,7 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
     withLock(false) { myKeyHashToVirtualFileMapping.force() }
   }
 
-  override val modificationStamp = myKeyHashToVirtualFileMapping.currentLength.toLong()
+  override val modificationStamp: Long = myKeyHashToVirtualFileMapping.currentLength.toLong()
 
   private fun <T> withLock(read: Boolean, operation: () -> T): T {
     if (read) {
@@ -217,8 +216,8 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                     storageLockContext,
                                                                     IOUtil.MiB,
                                                                     true,
-                                                                    IntPairInArrayKeyDescriptor)
-      oldMapping.lockRead()
+                                                                    IntPairInArrayKeyDescriptor
+      )
       try {
         oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
@@ -242,11 +241,17 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
           }
           true
         }
-        oldMapping.close()
       }
       finally {
-        oldMapping.unlockRead()
+        oldMapping.lockRead()
+        try {
+          oldMapping.close()
+        }
+        finally {
+          oldMapping.unlockRead()
+        }
       }
+
       val dataFileName = oldDataFile.fileName.toString()
       val newDataFileName = "new.$dataFileName"
       val newDataFile = oldDataFile.resolveSibling(newDataFileName)
@@ -255,22 +260,26 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                     storageLockContext,
                                                                     IOUtil.MiB,
                                                                     true,
-                                                                    IntPairInArrayKeyDescriptor)
+                                                                    IntPairInArrayKeyDescriptor
+      )
       newMapping.lockWrite()
       try {
-        for (entry in data.int2ObjectEntrySet()) {
-          val keyHash = entry.intKey
-          val inputIdIterator = entry.value.iterator()
-          while (inputIdIterator.hasNext()) {
-            val inputId = inputIdIterator.nextInt()
-            newMapping.append(intArrayOf(keyHash, inputId))
+        newMapping.use { newMapping ->
+          for (entry in data.int2ObjectEntrySet()) {
+            val keyHash = entry.intKey
+            val inputIdIterator = entry.value.iterator()
+            while (inputIdIterator.hasNext()) {
+              val inputId = inputIdIterator.nextInt()
+              newMapping.append(intArrayOf(keyHash, inputId))
+            }
           }
         }
-        newMapping.close()
       }
       finally {
         newMapping.unlockWrite()
       }
+
+
       IOUtil.deleteAllFilesStartingWith(oldDataFile)
       Files.newDirectoryStream(newDataFile.parent).use { paths ->
         for (path in paths) {

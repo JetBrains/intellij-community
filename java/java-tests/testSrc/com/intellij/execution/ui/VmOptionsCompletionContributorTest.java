@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,8 +26,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
-                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-disablesystemassertions","-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-enablesystemassertions", "-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -37,8 +38,8 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     configure("-<caret>");
     myFixture.completeBasic();
     assertEquals(List.of("--add-exports", "--add-opens",
-                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-Djava.awt.headless",
-                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-esa",
+                         "-agentlib:", "-agentpath:", "-D", "-da", "-disableassertions", "-disablesystemassertions", "-Djava.awt.headless",
+                         "-dsa", "-Duser.dir", "-Duser.home", "-Duser.name", "-ea", "-enableassertions", "-enablesystemassertions","-esa",
                          "-javaagent:", "-Xmx", "-XX:"), myFixture.getLookupElementStrings());
     checkPresentation(myFixture.getLookupElements()[0], "--add-exports|null/null");
     checkPresentation(myFixture.getLookupElements()[2], "-agentlib:|null/null");
@@ -189,16 +190,19 @@ public class VmOptionsCompletionContributorTest extends LightPlatformCodeInsight
     @Override
     public CompletableFuture<JdkOptionsData> getOrComputeOptionsForJdk(@NotNull String javaHome) {
       assertEquals("/my/jre", javaHome);
-      return CompletableFuture.completedFuture(new JdkOptionsData(List.of(
-        new VMOption("Flag", "bool", "true", VMOptionKind.Product, null, VMOptionVariant.XX, null),
-        new VMOption("MinusFlag", "bool", "false", VMOptionKind.Product, null, VMOptionVariant.XX, null),
-        new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX, null),
-        new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX, null),
-        new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX, null),
-        new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X, null),
-        new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null),
-        new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null)
-      )));
+      List<VMOption> vmOptionList = new ArrayList<>(VMOptionsServiceImpl.getStandardOptionList());
+      vmOptionList.addAll(List.of(
+          new VMOption("Flag", "bool", "true", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+          new VMOption("MinusFlag", "bool", "false", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+          new VMOption("Value", "uint", "10", VMOptionKind.Product, null, VMOptionVariant.XX, null),
+          new VMOption("Experimental", "uint", "10", VMOptionKind.Experimental, null, VMOptionVariant.XX, null),
+          new VMOption("Diagnostic", "uint", "20", VMOptionKind.Diagnostic, null, VMOptionVariant.XX, null),
+          new VMOption("mx", null, null, VMOptionKind.Product, null, VMOptionVariant.X, null),
+          new VMOption("add-exports", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null),
+          new VMOption("add-opens", null, null, VMOptionKind.Product, null, VMOptionVariant.DASH_DASH, null)
+        )
+      );
+      return CompletableFuture.completedFuture(new JdkOptionsData(vmOptionList));
     }
   }
 }

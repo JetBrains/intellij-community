@@ -24,6 +24,25 @@ import java.util.function.Consumer
 import java.util.function.Function
 
 fun executeCodeInConsole(project: Project,
+                         commandText: List<String>,
+                         editor: Editor?,
+                         canUseExistingConsole: Boolean,
+                         canUseDebugConsole: Boolean,
+                         requestFocusToConsole: Boolean,
+                         config: PythonRunConfiguration?) {
+  val executeCodeInConsole = commandText.foldRight(null) { commandText: String, acc: Consumer<ExecutionConsole>? ->
+    var consumer = Consumer<ExecutionConsole> { (it as PyCodeExecutor).executeCode(commandText, editor) }
+    if (acc != null) {
+      consumer = consumer.andThen(acc)
+    }
+    consumer
+  }
+  val executeInStartingConsole = Function<VirtualFile?, Boolean> { PyExecuteConsoleCustomizer.instance.isConsoleStarting(it, null) }
+  executeCodeInConsole(project, executeCodeInConsole, executeInStartingConsole, editor, canUseExistingConsole, canUseDebugConsole,
+                       requestFocusToConsole, config)
+}
+
+fun executeCodeInConsole(project: Project,
                          commandText: String?,
                          editor: Editor?,
                          canUseExistingConsole: Boolean,
@@ -64,7 +83,7 @@ private fun executeCodeInConsole(project: Project,
   if (!checkIfAvailableAndShowHint(editor)) return
   if (canUseExistingConsole) {
     if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
-      val (descriptor, listener) = getCustomDescriptor(project, editor)
+      val (descriptor, listener) = getCustomDescriptor(project, virtualFile)
       existingConsole = descriptor
       newConsoleListener = listener
     }
@@ -105,8 +124,7 @@ fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
   return true
 }
 
-fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
-  val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return Pair(null, null)
+fun getCustomDescriptor(project: Project, virtualFile: VirtualFile): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
   val executeCustomizer = PyExecuteConsoleCustomizer.instance
   when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
     DescriptorType.NEW -> {

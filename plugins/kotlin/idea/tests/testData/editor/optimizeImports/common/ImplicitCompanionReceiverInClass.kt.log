@@ -1,0 +1,9 @@
+Additional checking of reference Getter: FromCompanionFirst
+Additional checking of reference KtSimpleNameReference: FromCompanionFirst
+Additional checking of reference Getter: companionFunFirst
+Additional checking of reference KtSimpleNameReference: companionFunFirst
+Additional checking of reference Getter: companionFunSecond
+Additional checking of reference KtSimpleNameReference: companionFunSecond
+Additional checking of reference KtInvokeFunctionReference: FromCompanionFirst()
+Additional checking of reference KtInvokeFunctionReference: companionFunFirst()
+Additional checking of reference KtInvokeFunctionReference: companionFunSecond()

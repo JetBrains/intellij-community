@@ -2,10 +2,7 @@
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
-import org.jetbrains.jsonProtocol.JsonField
-import org.jetbrains.jsonProtocol.JsonSubtype
-import org.jetbrains.jsonProtocol.Optional
-import org.jetbrains.jsonProtocol.StringIntPair
+import org.jetbrains.jsonProtocol.*
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -148,7 +145,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }
@@ -157,11 +154,11 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
         type == Any::class.java -> RAW_STRING_OR_MAP_PARSER
         type == JsonReaderEx::class.java -> JSON_PARSER
         type == StringIntPair::class.java -> STRING_INT_PAIR_PARSER
-        type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false)
+        type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false, member?.annotation<JsonArray>()?.allowSingleObject == true)
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
           val ref = getTypeRef(type)
-          ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
+          ObjectValueReader(ref, isSubtyping, method?.getAnnotation(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
     }
@@ -176,7 +173,7 @@ internal class InterfaceReader(private val typeToTypeHandler: LinkedHashMap<Clas
           }
         }
         val componentParser = getFieldTypeParser(null, argumentType, false, method)
-        return if (isList) ArrayReader(componentParser, true) else MapReader(componentParser)
+        return if (isList) ArrayReader(componentParser, true, member?.annotation<JsonArray>()?.allowSingleObject == true) else MapReader(componentParser)
       }
       else {
         throw UnsupportedOperationException("Method return type $type (generic) not supported")

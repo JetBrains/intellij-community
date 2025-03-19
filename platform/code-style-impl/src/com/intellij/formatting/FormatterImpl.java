@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -6,7 +6,9 @@ import com.intellij.formatting.engine.ExpandableIndent;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -24,6 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +35,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.formatting.FormatProcessor.FormatOptions;
 
-public class FormatterImpl extends FormatterEx
+@ApiStatus.Internal
+public final class FormatterImpl extends FormatterEx
   implements IndentFactory,
              WrapFactory,
              AlignmentFactory,
@@ -123,8 +127,7 @@ public class FormatterImpl extends FormatterEx
     return null;
   }
 
-  @Nullable
-  private static Couple<Block> getBlockAtOffset(@Nullable Block parent, @NotNull Block block, int offset) {
+  private static @Nullable Couple<Block> getBlockAtOffset(@Nullable Block parent, @NotNull Block block, int offset) {
     TextRange textRange = block.getTextRange();
     int startOffset = textRange.getStartOffset();
     int endOffset = textRange.getEndOffset();
@@ -143,8 +146,7 @@ public class FormatterImpl extends FormatterEx
     return null;
   }
 
-  @Nullable
-  private static Block findPreviousSibling(@NotNull Block parent, Block block) {
+  private static @Nullable Block findPreviousSibling(@NotNull Block parent, Block block) {
     Block result = null;
     for (Block subBlock : parent.getSubBlocks()) {
       if (subBlock == block) {
@@ -168,47 +170,42 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  @NotNull
-  public Spacing createSpacing(int minOffset,
-                               int maxOffset,
-                               int minLineFeeds,
-                               final boolean keepLineBreaks,
-                               final int keepBlankLines) {
+  public @NotNull Spacing createSpacing(int minOffset,
+                                        int maxOffset,
+                                        int minLineFeeds,
+                                        final boolean keepLineBreaks,
+                                        final int keepBlankLines) {
     return getSpacingImpl(minOffset, maxOffset, minLineFeeds, false, false, keepLineBreaks, keepBlankLines,false, 0);
   }
 
   @Override
-  @NotNull
-  public Spacing getReadOnlySpacing() {
+  public @NotNull Spacing getReadOnlySpacing() {
     return myReadOnlySpacing;
   }
 
-  @NotNull
   @Override
-  public Spacing createDependentLFSpacing(int minSpaces,
-                                          int maxSpaces,
-                                          @NotNull TextRange dependencyRange,
-                                          boolean keepLineBreaks,
-                                          int keepBlankLines,
-                                          @NotNull DependentSpacingRule rule)
+  public @NotNull Spacing createDependentLFSpacing(int minSpaces,
+                                                   int maxSpaces,
+                                                   @NotNull TextRange dependencyRange,
+                                                   boolean keepLineBreaks,
+                                                   int keepBlankLines,
+                                                   @NotNull DependentSpacingRule rule)
   {
     return new DependantSpacingImpl(minSpaces, maxSpaces, dependencyRange, keepLineBreaks, keepBlankLines, rule);
   }
 
-  @NotNull
   @Override
-  public Spacing createDependentLFSpacing(int minSpaces,
-                                          int maxSpaces,
-                                          @NotNull List<TextRange> dependentRegion,
-                                          boolean keepLineBreaks,
-                                          int keepBlankLines,
-                                          @NotNull DependentSpacingRule rule)
+  public @NotNull Spacing createDependentLFSpacing(int minSpaces,
+                                                   int maxSpaces,
+                                                   @NotNull List<TextRange> dependentRegion,
+                                                   boolean keepLineBreaks,
+                                                   int keepBlankLines,
+                                                   @NotNull DependentSpacingRule rule)
   {
     return new DependantSpacingImpl(minSpaces, maxSpaces, dependentRegion, keepLineBreaks, keepBlankLines, rule);
   }
 
-  @NotNull
-  private FormattingProgressCallback getProgressCallback() {
+  private @NotNull FormattingProgressCallback getProgressCallback() {
     FormattingProgressCallback result = myProgressTask.get();
     return result == null ? FormattingProgressCallback.EMPTY : result;
   }
@@ -221,9 +218,8 @@ public class FormatterImpl extends FormatterEx
       try {
       validateModel(model);
       SequentialTask task = new MyFormattingTask() {
-        @NotNull
         @Override
-        protected FormatProcessor buildProcessor() {
+        protected @NotNull FormatProcessor buildProcessor() {
           FormatOptions options = new FormatOptions(settings, indentOptions, affectedRanges);
           FormatProcessor processor = new FormatProcessor(
             model.getDocumentModel(), model.getRootBlock(), options, getProgressCallback()
@@ -246,9 +242,8 @@ public class FormatterImpl extends FormatterEx
                                          final TextRange affectedRange) throws IncorrectOperationException
   {
     SequentialTask task = new MyFormattingTask() {
-      @NotNull
       @Override
-      protected FormatProcessor buildProcessor() {
+      protected @NotNull FormatProcessor buildProcessor() {
         FormatProcessor result = new FormatProcessor(
           model, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true), FormattingProgressCallback.EMPTY
         );
@@ -370,12 +365,11 @@ public class FormatterImpl extends FormatterEx
     return offset;
   }
 
-  @NotNull
-  private static FormatProcessor buildProcessorAndWrapBlocks(final FormattingModel model,
-                                                             CodeStyleSettings settings,
-                                                             CommonCodeStyleSettings.IndentOptions indentOptions,
-                                                             @Nullable TextRange affectedRange,
-                                                             int offset) {
+  private static @NotNull FormatProcessor buildProcessorAndWrapBlocks(final FormattingModel model,
+                                                                      CodeStyleSettings settings,
+                                                                      CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                                      @Nullable TextRange affectedRange,
+                                                                      int offset) {
     FormattingDocumentModel docModel = model.getDocumentModel();
     Block rootBlock = model.getRootBlock();
     return buildProcessorAndWrapBlocks(docModel, rootBlock, settings, indentOptions, new FormatTextRanges(affectedRange, true), offset);
@@ -465,10 +459,9 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  @Nullable
-  public List<String> getLineIndents(final FormattingModel model,
-                                     final CodeStyleSettings settings,
-                                     final CommonCodeStyleSettings.IndentOptions indentOptions) {
+  public @NotNull List<String> getLineIndents(final FormattingModel model,
+                                              final CodeStyleSettings settings,
+                                              final CommonCodeStyleSettings.IndentOptions indentOptions) {
     final FormattingDocumentModel documentModel = model.getDocumentModel();
     final Block block = model.getRootBlock();
     if (block.getTextRange().isEmpty()) return Collections.emptyList(); // handing empty document case
@@ -487,11 +480,10 @@ public class FormatterImpl extends FormatterEx
     return indents;
   }
 
-  @Nullable
-  private String generateIndentWhitespace(FormatProcessor processor,
-                                          CommonCodeStyleSettings.IndentOptions indentOptions,
-                                          FormattingDocumentModel documentModel,
-                                          int offset) {
+  private static @Nullable String generateIndentWhitespace(FormatProcessor processor,
+                                                           CommonCodeStyleSettings.IndentOptions indentOptions,
+                                                           FormattingDocumentModel documentModel,
+                                                           int offset) {
     WhiteSpace whiteSpace = getWhiteSpaceAtOffset(offset, processor);
     if (whiteSpace != null) {
       final IndentInfo indent = calcIndent(offset, documentModel, processor, whiteSpace);
@@ -500,9 +492,8 @@ public class FormatterImpl extends FormatterEx
     return null;
   }
 
-  @Nullable
-  private static WhiteSpace getWhiteSpaceAtOffset(int offset,
-                                                  @NotNull FormatProcessor formatProcessor) {
+  private static @Nullable WhiteSpace getWhiteSpaceAtOffset(int offset,
+                                                            @NotNull FormatProcessor formatProcessor) {
     final LeafBlockWrapper blockAfterOffset = formatProcessor.getBlockRangesMap().getBlockAtOrAfter(offset);
     if (blockAfterOffset != null) {
       if (!blockAfterOffset.contains(offset)) return blockAfterOffset.getWhiteSpace();
@@ -552,7 +543,8 @@ public class FormatterImpl extends FormatterEx
 
       if (text.charAt(lineStartOffset) == '\n'
           && wsStart <= (prevEnd = documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) &&
-          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim().length() == 0 // ws consists of space only, it is not true for <![CDATA[
+          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim()
+            .isEmpty() // ws consists of space only, it is not true for <![CDATA[
          ) {
         lineStartOffset--;
       }
@@ -567,8 +559,8 @@ public class FormatterImpl extends FormatterEx
 
 
   @Override
-  public FormattingModel createFormattingModelForPsiFile(@NotNull final PsiFile file,
-                                                         @NotNull final Block rootBlock,
+  public FormattingModel createFormattingModelForPsiFile(final @NotNull PsiFile file,
+                                                         final @NotNull Block rootBlock,
                                                          final CodeStyleSettings settings) {
     return new PsiBasedFormattingModel(file, rootBlock, FormattingDocumentModelImpl.createOn(file));
   }
@@ -598,30 +590,33 @@ public class FormatterImpl extends FormatterEx
     return new IndentImpl(type, false, spaces, relativeToDirectParent, enforceIndentToChildren);
   }
 
+  @ApiStatus.Experimental
+  @Override
+  public Indent getIndentEnforcedToChildrenToBeRelativeToMe(Indent.@NotNull Type type, int spaces) {
+    return new IndentImpl(type, false, spaces, false, true, true);
+  }
+
   @Override
   public Indent getAbsoluteLabelIndent() {
     return myAbsoluteLabelIndent;
   }
 
   @Override
-  @NotNull
-  public Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
+  public @NotNull Spacing createSafeSpacing(final boolean shouldKeepLineBreaks, final int keepBlankLines) {
     return getSpacingImpl(0, 0, 0, false, true, shouldKeepLineBreaks, keepBlankLines, false, 0);
   }
 
   @Override
-  @NotNull
-  public Spacing createKeepingFirstColumnSpacing(final int minSpace,
-                                                 final int maxSpace,
-                                                 final boolean keepLineBreaks,
-                                                 final int keepBlankLines) {
+  public @NotNull Spacing createKeepingFirstColumnSpacing(final int minSpace,
+                                                          final int maxSpace,
+                                                          final boolean keepLineBreaks,
+                                                          final int keepBlankLines) {
     return getSpacingImpl(minSpace, maxSpace, -1, false, false, keepLineBreaks, keepBlankLines, true, 0);
   }
 
   @Override
-  @NotNull
-  public Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
-                               final int prefLineFeeds) {
+  public @NotNull Spacing createSpacing(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean keepLineBreaks, final int keepBlankLines,
+                                        final int prefLineFeeds) {
     return getSpacingImpl(minSpaces, maxSpaces, minLineFeeds, false, false, keepLineBreaks, keepBlankLines, false, prefLineFeeds);
   }
 
@@ -696,8 +691,7 @@ public class FormatterImpl extends FormatterEx
       myDone = true;
     }
 
-    @NotNull
-    protected abstract FormatProcessor buildProcessor();
+    protected abstract @NotNull FormatProcessor buildProcessor();
   }
 
   private static void validateModel(FormattingModel model) throws FormattingModelInconsistencyException {
@@ -716,30 +710,36 @@ public class FormatterImpl extends FormatterEx
         throw new FormattingModelInconsistencyException("Uncommitted document");
       }
       if (document.getTextLength() != file.getTextLength()) {
+        Attachment documentAttachment = new Attachment("document.txt", document.getText());
+        Attachment fileAttachment = new Attachment("file.txt", file.getText());
+
         throw new FormattingModelInconsistencyException(
           "Document length " + document.getTextLength() +
-          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage()
+          " doesn't match PSI file length " + file.getTextLength() + ", language: " + file.getLanguage(),
+          new Attachment[]{documentAttachment, fileAttachment}
         );
       }
     }
   }
 
-  private static class FormattingModelInconsistencyException extends Exception {
+  private static final class FormattingModelInconsistencyException extends RuntimeExceptionWithAttachments {
     FormattingModelInconsistencyException(String message) {
       super(message);
     }
+
+    FormattingModelInconsistencyException(String message, Attachment[] attachments) {
+      super(message, attachments);
+    }
   }
 
-  @Nullable
   @Override
-  public FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
-                                                                     @Nullable FormattingModelBuilder langBuilder) {
+  public @NotNull FormattingModelBuilder createExternalFormattingModelBuilder(@NotNull PsiFile psiFile,
+                                                                              @Nullable FormattingModelBuilder langBuilder) {
     return new ExternalFormattingModelBuilderImpl(langBuilder);
   }
 
   @Override
-  @NotNull
-  public FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
+  public @NotNull FormattingModel createDummyFormattingModel(@NotNull PsiElement element) {
     return new DummyFormattingModel(element);
   }
 
@@ -749,9 +749,8 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  @Nullable
-  public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
-                                                         @Nullable FormattingModelBuilder originalModel) {
+  public @Nullable FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
+                                                                   @Nullable FormattingModelBuilder originalModel) {
     return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

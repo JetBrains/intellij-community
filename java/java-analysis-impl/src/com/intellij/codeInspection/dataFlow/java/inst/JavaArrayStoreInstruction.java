@@ -12,7 +12,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -36,7 +36,7 @@ public class JavaArrayStoreInstruction extends ArrayStoreInstruction {
   public JavaArrayStoreInstruction(@NotNull PsiArrayAccessExpression expression,
                                    @Nullable PsiExpression valueExpression,
                                    @Nullable DfaControlTransferValue outOfBoundsTransfer,
-                                   @Nullable DfaVariableValue staticVariable) {
+                                   @Nullable VariableDescriptor staticVariable) {
     super(createAnchor(expression), new ArrayIndexProblem(expression), outOfBoundsTransfer, staticVariable);
     myExpression = expression;
     myValueExpression = valueExpression;
@@ -50,8 +50,7 @@ public class JavaArrayStoreInstruction extends ArrayStoreInstruction {
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     DfaControlTransferValue transfer = myOutOfBoundsTransfer == null ? null : myOutOfBoundsTransfer.bindToFactory(factory);
-    DfaVariableValue staticVariable = myStaticVariable == null ? null : myStaticVariable.bindToFactory(factory);
-    return new JavaArrayStoreInstruction(myExpression, myValueExpression, transfer, staticVariable);
+    return new JavaArrayStoreInstruction(myExpression, myValueExpression, transfer, myStaticVariable);
   }
 
   @Override

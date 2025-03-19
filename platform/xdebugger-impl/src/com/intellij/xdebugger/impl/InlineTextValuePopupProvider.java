@@ -12,6 +12,7 @@ import com.intellij.xdebugger.impl.inline.InlineValuePopupProvider;
 import com.intellij.xdebugger.impl.inline.XDebuggerTextInlayPopup;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,8 @@ import java.awt.*;
 
 import static com.intellij.xdebugger.impl.inline.InlineDebugRenderer.getXValueDescriptor;
 
-public class InlineTextValuePopupProvider implements InlineValuePopupProvider {
+@ApiStatus.Internal
+public final class InlineTextValuePopupProvider implements InlineValuePopupProvider {
   @Override
   public boolean accepts(@NotNull XValueNodeImpl xValueNode) {
     XValue value = xValueNode.getValueContainer();

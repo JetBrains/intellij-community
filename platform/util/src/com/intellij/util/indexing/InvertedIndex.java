@@ -1,47 +1,69 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.indexing.impl.InputData;
-import com.intellij.util.io.MeasurableIndexStore;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
+import com.intellij.util.indexing.impl.ValueContainerProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Base interface for the <a href="https://en.wikipedia.org/wiki/Search_engine_indexing#Inverted_indices">inverted indexes</a>.
+ * Thread-safety is up to implementation
  */
 public interface InvertedIndex<Key, Value, Input> {
-  @NotNull
-  ValueContainer<Value> getData(@NotNull Key key) throws StorageException;
+  /**
+   * This method is deprecated, because returned value container is hard to make thread-safe.
+   * So {@link #withData(Object, ValueContainerProcessor)} is a new method, and this method now returns a copy, which is
+   * thread-safe, but not very effective
+   */
+  @Deprecated
+  default @NotNull ValueContainer<Value> getData(@NotNull Key key) throws StorageException {
+    ValueContainerImpl<Value> defensiveCopy = ValueContainerImpl.createNewValueContainer();
+    withData(
+      key,
+      container -> container.forEach((id, value) -> {
+        defensiveCopy.addValue(id, value);
+        return true;
+      })
+    );
+    return defensiveCopy;
+  }
+
+
+  /**
+   * The processor will be invoked on a {@link ValueContainer} corresponding to the given key.
+   * <b>NOTE</b>: processor could be invoked <b>more than once</b> e.g. if an actual storage is sharded -- so the processor
+   * code must be ready to aggregate results of >1 container passed in.
+   *
+   * @return true if all data was processed, false if stopped prematurely (because processor returns false at some
+   * point)
+   */
+  <E extends Exception> boolean withData(@NotNull Key key,
+                                         @NotNull ValueContainerProcessor<Value, E> processor) throws StorageException, E;
+
 
   /**
    * Maps input as the first stage and returns a computation that does actual index data structure update.
    * It may be used to separate long-running input mapping from writing data to disk.
    * Computable returns `true` if data has been saved without errors, otherwise - `false`.
    */
-  @NotNull
-  Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
+  @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable Input content);
 
-  @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data);
+  /**
+   * Second part of {@link #mapInputAndPrepareUpdate(int, Object)}): input already parsed and mapped to InputData[Key,Value]
+   * and this method creates an object to apply parsed input to index storages.
+   */
+  @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data);
 
   void flush() throws StorageException;
 
   void clear() throws StorageException;
 
+  /**
+   * TODO RC: the interface doesn't extend {@link com.intellij.openapi.Disposable}, so the name is misleading -- the method is
+   * better renamed to .close() with interface extending (Auto){@link java.io.Closeable}
+   */
   void dispose();
 }

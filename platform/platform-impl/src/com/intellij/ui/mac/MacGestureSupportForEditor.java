@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.apple.eawt.event.GestureUtilities;
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class MacGestureSupportForEditor {
 
   public MacGestureSupportForEditor(JComponent component, AWTEventListener listener) {
@@ -26,14 +28,17 @@ public final class MacGestureSupportForEditor {
         InputEvent inputEvent = new ForceTouchEvent(component, e);
         ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(()-> {
           if (listener != null) listener.eventDispatched(inputEvent);
-          IdeEventQueue.getInstance().getMouseEventDispatcher().processEvent(
-            inputEvent, 0, ActionPlaces.FORCE_TOUCH, new PressureShortcut(e.getStage()), component, false);
+          IdeEventQueue.getInstance().getThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+            IdeEventQueue.getInstance().getMouseEventDispatcher().processEvent(
+              inputEvent, 0, ActionPlaces.FORCE_TOUCH, new PressureShortcut(e.getStage()), component, false);
+            return null;
+          });
         });
       }
     });
   }
 
-  private final static class ForceTouchEvent extends MouseEvent {
+  private static final class ForceTouchEvent extends MouseEvent {
     final PressureEvent pressureEvent;
 
     ForceTouchEvent(Component source, PressureEvent pressureEvent) {

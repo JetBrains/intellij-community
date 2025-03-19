@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,6 +20,12 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../testData/basic/multifile")
 public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJvmBasicCompletionTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
@@ -48,6 +55,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ClassInExcludedPackage/");
     }
 
+    @TestMetadata("ClassInRootPackage")
+    public void testClassInRootPackage() throws Exception {
+        runTest("../testData/basic/multifile/ClassInRootPackage/");
+    }
+
     @TestMetadata("CompleteFunctionWithNoSpecifiedType")
     public void testCompleteFunctionWithNoSpecifiedType() throws Exception {
         runTest("../testData/basic/multifile/CompleteFunctionWithNoSpecifiedType/");
@@ -61,6 +73,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("CompletionOnImportedFunction")
     public void testCompletionOnImportedFunction() throws Exception {
         runTest("../testData/basic/multifile/CompletionOnImportedFunction/");
+    }
+
+    @TestMetadata("ConstructorReferenceNotImported")
+    public void testConstructorReferenceNotImported() throws Exception {
+        runTest("../testData/basic/multifile/ConstructorReferenceNotImported/");
     }
 
     @TestMetadata("DoNotCompleteWithConstraints")
@@ -113,6 +130,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ExcludedJavaClass/");
     }
 
+    @TestMetadata("ExpectedJavaEnumEntryCompletion")
+    public void testExpectedJavaEnumEntryCompletion() throws Exception {
+        runTest("../testData/basic/multifile/ExpectedJavaEnumEntryCompletion/");
+    }
+
     @TestMetadata("ExtensionFunction")
     public void testExtensionFunction() throws Exception {
         runTest("../testData/basic/multifile/ExtensionFunction/");
@@ -123,9 +145,24 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/ExtensionFunctionOnImportedFunction/");
     }
 
+    @TestMetadata("ExtensionOnIntersectionTypeReceiver")
+    public void testExtensionOnIntersectionTypeReceiver() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnIntersectionTypeReceiver/");
+    }
+
     @TestMetadata("ExtensionOnNullable")
     public void testExtensionOnNullable() throws Exception {
         runTest("../testData/basic/multifile/ExtensionOnNullable/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverType")
+    public void testExtensionOnTypeParameterReceiverType() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnTypeParameterReceiverType/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverTypeWithBounds")
+    public void testExtensionOnTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../testData/basic/multifile/ExtensionOnTypeParameterReceiverTypeWithBounds/");
     }
 
     @TestMetadata("ExtensionsAndGetPrefix")
@@ -163,9 +200,64 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/HiddenDeclarations/");
     }
 
-    @TestMetadata("InImport")
-    public void testInImport() throws Exception {
-        runTest("../testData/basic/multifile/InImport/");
+    @TestMetadata("HiddenDeclarationsInWhenCondition")
+    public void testHiddenDeclarationsInWhenCondition() throws Exception {
+        runTest("../testData/basic/multifile/HiddenDeclarationsInWhenCondition/");
+    }
+
+    @TestMetadata("InImportClassifiers")
+    public void testInImportClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportClassifiers/");
+    }
+
+    @TestMetadata("InImportCompanionObjectMembers")
+    public void testInImportCompanionObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
+    @TestMetadata("InImportEscaped")
+    public void testInImportEscaped() throws Exception {
+        runTest("../testData/basic/multifile/InImportEscaped/");
+    }
+
+    @TestMetadata("InImportExtension")
+    public void testInImportExtension() throws Exception {
+        runTest("../testData/basic/multifile/InImportExtension/");
+    }
+
+    @TestMetadata("InImportHighOrderTopLevelFun")
+    public void testInImportHighOrderTopLevelFun() throws Exception {
+        runTest("../testData/basic/multifile/InImportHighOrderTopLevelFun/");
+    }
+
+    @TestMetadata("InImportJavaClass")
+    public void testInImportJavaClass() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaClass/");
+    }
+
+    @TestMetadata("InImportJavaStatic")
+    public void testInImportJavaStatic() throws Exception {
+        runTest("../testData/basic/multifile/InImportJavaStatic/");
+    }
+
+    @TestMetadata("InImportNestedClassifiers")
+    public void testInImportNestedClassifiers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNestedClassifiers/");
+    }
+
+    @TestMetadata("InImportNoClassMembers")
+    public void testInImportNoClassMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportNoClassMembers/");
+    }
+
+    @TestMetadata("InImportObjectMembers")
+    public void testInImportObjectMembers() throws Exception {
+        runTest("../testData/basic/multifile/InImportObjectMembers/");
+    }
+
+    @TestMetadata("InImportTopLevelVal")
+    public void testInImportTopLevelVal() throws Exception {
+        runTest("../testData/basic/multifile/InImportTopLevelVal/");
     }
 
     @TestMetadata("InImportedFunctionLiteralParameter")
@@ -178,9 +270,24 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/IncorrectGetters/");
     }
 
+    @TestMetadata("InvisibleEnumEntryCompletion")
+    public void testInvisibleEnumEntryCompletion() throws Exception {
+        runTest("../testData/basic/multifile/InvisibleEnumEntryCompletion/");
+    }
+
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../testData/basic/multifile/JavaCallableReference/");
+    }
+
+    @TestMetadata("JavaClassQualifierWithTypeArguments")
+    public void testJavaClassQualifierWithTypeArguments() throws Exception {
+        runTest("../testData/basic/multifile/JavaClassQualifierWithTypeArguments/");
+    }
+
+    @TestMetadata("JavaEnum")
+    public void testJavaEnum() throws Exception {
+        runTest("../testData/basic/multifile/JavaEnum/");
     }
 
     @TestMetadata("JavaInnerClasses")
@@ -196,6 +303,26 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("KT9835")
     public void testKT9835() throws Exception {
         runTest("../testData/basic/multifile/KT9835/");
+    }
+
+    @TestMetadata("KTIJ_27276")
+    public void testKTIJ_27276() throws Exception {
+        runTest("../testData/basic/multifile/KTIJ_27276/");
+    }
+
+    @TestMetadata("KTIJ_32378")
+    public void testKTIJ_32378() throws Exception {
+        runTest("../testData/basic/multifile/KTIJ_32378/");
+    }
+
+    @TestMetadata("KTIJ_32792")
+    public void testKTIJ_32792() throws Exception {
+        runTest("../testData/basic/multifile/KTIJ_32792/");
+    }
+
+    @TestMetadata("KTIJ_32930")
+    public void testKTIJ_32930() throws Exception {
+        runTest("../testData/basic/multifile/KTIJ_32930/");
     }
 
     @TestMetadata("MoreSpecificExtensionGeneric")
@@ -218,6 +345,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
         runTest("../testData/basic/multifile/NoAutoInsertionOfNotImported/");
     }
 
+    @TestMetadata("NoExpectedEnumEntryCompletion")
+    public void testNoExpectedEnumEntryCompletion() throws Exception {
+        runTest("../testData/basic/multifile/NoExpectedEnumEntryCompletion/");
+    }
+
     @TestMetadata("NoExtForOuterFromNested")
     public void testNoExtForOuterFromNested() throws Exception {
         runTest("../testData/basic/multifile/NoExtForOuterFromNested/");
@@ -236,6 +368,11 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("NotImportedClass")
     public void testNotImportedClass() throws Exception {
         runTest("../testData/basic/multifile/NotImportedClass/");
+    }
+
+    @TestMetadata("NotImportedExtensionForFlexibleType")
+    public void testNotImportedExtensionForFlexibleType() throws Exception {
+        runTest("../testData/basic/multifile/NotImportedExtensionForFlexibleType/");
     }
 
     @TestMetadata("NotImportedExtensionForImplicitReceiver")
@@ -316,6 +453,21 @@ public class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJ
     @TestMetadata("ParameterNameAndTypeNestedClasses")
     public void testParameterNameAndTypeNestedClasses() throws Exception {
         runTest("../testData/basic/multifile/ParameterNameAndTypeNestedClasses/");
+    }
+
+    @TestMetadata("PreferKotlinClasses")
+    public void testPreferKotlinClasses() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinClasses/");
+    }
+
+    @TestMetadata("PreferKotlinx")
+    public void testPreferKotlinx() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinx/");
+    }
+
+    @TestMetadata("PreferKotlinxFlow")
+    public void testPreferKotlinxFlow() throws Exception {
+        runTest("../testData/basic/multifile/PreferKotlinxFlow/");
     }
 
     @TestMetadata("PreferMemberToExtension")

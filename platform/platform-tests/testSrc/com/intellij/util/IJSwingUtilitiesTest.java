@@ -64,6 +64,7 @@ public class IJSwingUtilitiesTest extends TestCase {
       myName = name;
     }
 
+    @Override
     public String toString() {
       return myName;
     }

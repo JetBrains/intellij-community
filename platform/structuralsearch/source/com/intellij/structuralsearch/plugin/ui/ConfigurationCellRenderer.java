@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.icons.AllIcons;
@@ -30,7 +30,7 @@ public class ConfigurationCellRenderer extends SimpleListCellRenderer<Configurat
     final LanguageFileType fileType = matchOptions.getFileType();
     setIcon((fileType == null) ? AllIcons.FileTypes.Unknown : fileType.getIcon());
     final String text;
-    @NlsSafe final String searchPattern = collapseWhiteSpace(matchOptions.getSearchPattern());
+    final @NlsSafe String searchPattern = collapseWhiteSpace(matchOptions.getSearchPattern());
     if (value instanceof ReplaceConfiguration) {
       text = SSRBundle.message("replace.configuration.display.text",
                                shortenTextWithEllipsis(searchPattern, 49, 0, true),

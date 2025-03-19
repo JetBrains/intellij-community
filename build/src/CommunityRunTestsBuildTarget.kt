@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.createCompilationContext
-import org.jetbrains.intellij.build.impl.createCompilationContextBlocking
 
 /**
  * Compiles the sources and runs tests from 'community' project. Look at [org.jetbrains.intellij.build.TestingOptions] to see which
@@ -16,12 +17,12 @@ import org.jetbrains.intellij.build.impl.createCompilationContextBlocking
 object CommunityRunTestsBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    val context = createCompilationContextBlocking(
-      communityHome = communityHome,
-      projectHome = communityHome.communityRoot,
-      defaultOutputRoot = communityHome.communityRoot.resolve("out/tests")
-    )
-    TestingTasks.create(context).runTests(defaultMainModule = "intellij.idea.community.main")
+    runBlocking(Dispatchers.Default) {
+      val context = createCompilationContext(
+        projectHome = COMMUNITY_ROOT.communityRoot,
+        defaultOutputRoot = COMMUNITY_ROOT.communityRoot.resolve("out/tests")
+      )
+      TestingTasks.create(context).runTests(defaultMainModule = "intellij.idea.community.main")
+    }
   }
 }

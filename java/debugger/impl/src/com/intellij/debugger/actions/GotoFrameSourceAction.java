@@ -46,7 +46,7 @@ public abstract class GotoFrameSourceAction extends DebuggerAction {
           ThreadReferenceProxyImpl threadProxy = frameProxy.threadProxy();
           SuspendContextImpl threadSuspendContext = SuspendManagerUtil.findContextByThread(process.getSuspendManager(), threadProxy);
           JavaExecutionStack executionStack =
-            new JavaExecutionStack(threadProxy, process, Objects.equals(threadSuspendContext.getThread(), threadProxy));
+            new JavaExecutionStack(threadProxy, process, Objects.equals(threadSuspendContext.getEventThread(), threadProxy));
           executionStack.initTopFrame();
           boolean threadChanged = false;
           if (session instanceof XDebugSessionImpl) {

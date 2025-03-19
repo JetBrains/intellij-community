@@ -15,5 +15,4 @@ val d: Int
         return 1
     }
 
-// EXISTS: getter for c: Int, getter for d: Int
-// IGNORE_K2
+// EXISTS: c.get(), d.get()

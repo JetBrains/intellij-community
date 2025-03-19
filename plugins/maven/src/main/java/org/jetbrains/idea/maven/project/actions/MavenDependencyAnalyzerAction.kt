@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -89,4 +90,9 @@ class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Mod
   }
 
   override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
+
+  override fun isEnabledAndVisible(e: AnActionEvent): Boolean {
+    return super.isEnabledAndVisible(e)
+           && !(e.isFromContextMenu && e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) == null)
+  }
 }

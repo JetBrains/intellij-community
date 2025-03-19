@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.CharFilter;
@@ -13,13 +13,11 @@ public final class LiteralFormatUtil {
 
   private LiteralFormatUtil() { }
 
-  @NotNull
-  public static String removeUnderscores(@NotNull final String text) {
+  public static @NotNull String removeUnderscores(final @NotNull String text) {
     return StringUtil.strip(text, UNDERSCORES_FILTER);
   }
 
-  @NotNull
-  public static String format(@NotNull final String original, @Nullable final PsiType type) {
+  public static @NotNull String format(final @NotNull String original, final @Nullable PsiType type) {
     final boolean isFP = PsiTypes.floatType().equals(type) || PsiTypes.doubleType().equals(type);
 
     String text = original;
@@ -34,7 +32,7 @@ public final class LiteralFormatUtil {
       groupSize = 4;  // hex, bin
     }
 
-    if (text.length() == 0) return original;
+    if (text.isEmpty()) return original;
 
     final char last = text.charAt(text.length() - 1);
     if (StringUtil.containsChar("Ll", last) ||
@@ -44,7 +42,7 @@ public final class LiteralFormatUtil {
       text = text.substring(0, pos);
     }
 
-    if (text.length() == 0) return original;
+    if (text.isEmpty()) return original;
 
     boolean hasPoint = false;
     String fractional = "";

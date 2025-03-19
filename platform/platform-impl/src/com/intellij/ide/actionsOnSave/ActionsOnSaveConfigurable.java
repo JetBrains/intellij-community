@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.DataManager;
@@ -28,11 +28,10 @@ import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.List;
+import java.util.ArrayList;
 
-public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
+public final class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  public static final class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
     private final @NotNull Project myProject;
 
     public ActionsOnSaveConfigurableProvider(@NotNull Project project) {
@@ -159,7 +158,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
   private void updateTable() {
     Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTable));
     if (settings == null) {
-      myTable.getListTableModel().setItems(Collections.emptyList());
+      myTable.getListTableModel().setItems(new ArrayList<>());
       LOG.error("Settings not found");
       return;
     }
@@ -168,7 +167,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       myActionOnSaveContext = new ActionOnSaveContext(myProject, settings, myDisposable);
     }
 
-    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
+    ArrayList<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
     myTable.getListTableModel().setItems(infos);
   }
 

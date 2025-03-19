@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.openapi.util.Ref;
@@ -23,24 +9,23 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 
-public final class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
+final class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
   public static final JpsElementChildRole<JpsLibraryReference>
     LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
 
   private volatile Ref<JpsLibrary> myCachedLibrary = null;
   
-  public JpsLibraryDependencyImpl(final JpsLibraryReference reference) {
+  JpsLibraryDependencyImpl(final JpsLibraryReference reference) {
     super();
     myContainer.setChild(LIBRARY_REFERENCE_CHILD_ROLE, reference);
   }
 
-  public JpsLibraryDependencyImpl(JpsLibraryDependencyImpl original) {
+  JpsLibraryDependencyImpl(JpsLibraryDependencyImpl original) {
     super(original);
   }
 
-  @NotNull
   @Override
-  public JpsLibraryReference getLibraryReference() {
+  public @NotNull JpsLibraryReference getLibraryReference() {
     return myContainer.getChild(LIBRARY_REFERENCE_CHILD_ROLE);
   }
 
@@ -54,9 +39,8 @@ public final class JpsLibraryDependencyImpl extends JpsDependencyElementBase<Jps
     return libRef.get();
   }
 
-  @NotNull
   @Override
-  public JpsLibraryDependencyImpl createCopy() {
+  public @NotNull JpsLibraryDependencyImpl createCopy() {
     return new JpsLibraryDependencyImpl(this);
   }
 

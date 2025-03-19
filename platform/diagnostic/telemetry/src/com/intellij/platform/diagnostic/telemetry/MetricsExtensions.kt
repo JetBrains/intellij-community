@@ -2,5 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry
 
 import io.opentelemetry.sdk.metrics.data.MetricData
+import org.jetbrains.annotations.ApiStatus.Internal
 
-fun MetricData.belongsToScope(scope: Scope) = this.instrumentationScopeInfo.name.startsWith(scope.toString())
+@Internal
+fun MetricData.belongsToScope(scope: Scope): Boolean = this.instrumentationScopeInfo.name.startsWith(scope.toString())

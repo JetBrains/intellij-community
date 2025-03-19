@@ -3,10 +3,18 @@
 
 package org.jetbrains.sqlite
 
+import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.assertj.core.api.Condition
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.function.Predicate
+import kotlin.time.Duration.Companion.milliseconds
 
 class SqliteTest {
   private lateinit var connection: SqliteConnection
@@ -24,6 +32,34 @@ class SqliteTest {
   @Test
   fun insert() {
     testInsert(connection)
+  }
+
+  @Test
+  @Timeout(value = 2, unit = TimeUnit.MINUTES)
+  fun interrupt(): Unit = runBlocking(Dispatchers.Default) {
+    val started = CompletableDeferred<Boolean>()
+    val sqlJob = async(Dispatchers.IO) {
+      started.complete(true)
+      assertThatThrownBy {
+        connection.execute("""
+      WITH RECURSIVE r(i) AS (
+        VALUES(0)
+        UNION ALL
+        SELECT i FROM r
+        LIMIT 1000000000
+      )
+      SELECT i FROM r WHERE i = 1
+    """.trimIndent())
+      }.`is`(Condition(Predicate { it is SqliteException && it.resultCode == SqliteErrorCode.SQLITE_INTERRUPT }, ""))
+    }
+
+    started.await()
+    delay(100.milliseconds)
+    connection.interruptAndClose()
+    if (sqlJob.isActive) {
+      delay(100.milliseconds)
+    }
+    assertThat(sqlJob.isCancelled)
   }
 
   @Test
@@ -55,6 +91,84 @@ class SqliteTest {
   }
 
   @Test
+  fun intPreparedStatement() {
+    connection.execute("""
+      create table log (
+        a integer not null,
+        b integer not null,
+        c integer not null
+      ) strict
+    """)
+
+    val rowCount = 100
+    val columnCount = 3
+
+    val statementCollection = StatementCollection(connection)
+    try {
+      val statement = statementCollection.prepareIntStatement("insert into log(a, b, c) values(?, ?, ?)")
+      val random = Random(42)
+      repeat(rowCount) {
+        statement.binder.bind(random.nextInt(), random.nextInt(), random.nextInt())
+        statement.addBatch()
+      }
+      statement.executeBatch()
+    }
+    finally {
+      statementCollection.close(true)
+    }
+
+    connection.prepareStatement("select a, b, c from log order by rowid", EmptyBinder).use { statement ->
+      val random = Random(42)
+      val resultSet = statement.executeQuery()
+      var count = 0
+      while (resultSet.next()) {
+        count++
+        repeat(columnCount) {
+          assertThat(resultSet.getInt(it)).isEqualTo(random.nextInt())
+        }
+      }
+      assertThat(count == rowCount)
+    }
+  }
+
+  @Test
+  fun intBinder() {
+    connection.execute("""
+      create table log (
+        a integer not null,
+        b integer not null,
+        c integer not null
+      ) strict
+    """)
+
+    val rowCount = 100
+    val columnCount = 3
+
+    val binder = IntBinder(3)
+    connection.prepareStatement("insert into log(a, b, c) values(?, ?, ?)", binder).use { statement ->
+      val random = Random(42)
+      repeat(rowCount) {
+        binder.bind(random.nextInt(), random.nextInt(), random.nextInt())
+        binder.addBatch()
+      }
+      statement.executeBatch()
+    }
+
+    connection.prepareStatement("select a, b, c from log order by rowid", EmptyBinder).use { statement ->
+      val random = Random(42)
+      val resultSet = statement.executeQuery()
+      var count = 0
+      while (resultSet.next()) {
+        count++
+        repeat(columnCount) {
+          assertThat(resultSet.getInt(it)).isEqualTo(random.nextInt())
+        }
+      }
+      assertThat(count == rowCount)
+    }
+  }
+
+  @Test
   fun longBinder() {
     connection.execute("""
       create table log (
@@ -63,10 +177,7 @@ class SqliteTest {
       ) strict
     """)
 
-    connection.prepareStatement("""
-      insert into log(commitId, authorTime) 
-      values(?, ?)
-    """, LongBinder(2)).use { statement ->
+    connection.prepareStatement("insert into log(commitId, authorTime) values(?, ?)", LongBinder(2)).use { statement ->
       statement.binder.bind(12, 42)
       statement.binder.addBatch()
 
@@ -81,8 +192,7 @@ class SqliteTest {
       assertThat(resultSet.getInt(0)).isEqualTo(2)
     }
 
-    val binder = LongBinder(1, 1)
-    connection.prepareStatement("select authorTime from log where commitId = ?", binder).use { statement ->
+    connection.statementPool("select authorTime from log where commitId = ?") { LongBinder(1, 1) }.use { statement, binder ->
       // test empty
       for (key in longArrayOf(12, 13)) {
         binder.bind(key + 12)

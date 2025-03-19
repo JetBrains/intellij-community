@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -23,8 +23,10 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
+import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -47,7 +49,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
    * It specifies the thread performing suspend-all stepping.
    * All events in other threads are ignored.
    */
-  private @Nullable ThreadReference myFilterThread;
+  private @Nullable LightOrRealThreadInfo myFilterThread;
 
   public RequestManagerImpl(DebugProcessImpl debugProcess) {
     myDebugProcess = debugProcess;
@@ -58,13 +60,29 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return myEventRequestManager;
   }
 
-  @Nullable
-  public ThreadReference getFilterThread() {
+  public @Nullable LightOrRealThreadInfo getFilterThread() {
     return myFilterThread;
   }
 
-  public void setFilterThread(@Nullable final ThreadReference filterThread) {
-    myFilterThread = filterThread;
+  public @Nullable ThreadReference getFilterRealThread() {
+    return myFilterThread != null ? myFilterThread.getRealThread() : null;
+  }
+
+  /** @deprecated Use setThreadFilter instead */
+  @Deprecated
+  public void setFilterThread(final @Nullable ThreadReference filterThread) {
+    if (filterThread != null) {
+      setThreadFilter(new RealThreadInfo(filterThread));
+    }
+    else {
+      setThreadFilter(null);
+    }
+  }
+  public void setThreadFilter(final @Nullable LightOrRealThreadInfo filter) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Thread filter is set to " + filter);
+    }
+    myFilterThread = filter;
   }
 
   public Set<EventRequest> findRequests(Requestor requestor) {
@@ -76,10 +94,16 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return Collections.unmodifiableSet(requestSet);
   }
 
-  @Nullable
-  public static Requestor findRequestor(EventRequest request) {
+  public static @Nullable Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null ? (Requestor)request.getProperty(REQUESTOR) : null;
+  }
+
+  public static boolean hasSuspendAllRequestor(@NotNull EventSet eventSet) {
+    return ContainerUtil.exists(eventSet, e -> {
+      Requestor requestor = findRequestor(e.request());
+      return requestor instanceof SuspendingRequestor sr && DebuggerSettings.SUSPEND_ALL.equals(sr.getSuspendPolicy());
+    });
   }
 
   private static void addClassFilter(EventRequest request, String pattern) {
@@ -114,7 +138,11 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
     if (DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
-      request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+      if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
+        request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD);
+      } else {
+        request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+      }
     }
     else {
       //when requestor.SUSPEND_POLICY == SUSPEND_NONE
@@ -179,8 +207,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   // requests creation
   @Override
-  @Nullable
-  public ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
+  public @Nullable ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern) {
     if (myEventRequestManager == null) { // detached already
       return null;
     }
@@ -352,7 +379,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
     try {
-      final ThreadReference filterThread = myFilterThread;
+      final ThreadReference filterThread = myFilterThread == null ? null : myFilterThread.getRealThread();
       if (filterThread != null && DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
         if (request instanceof BreakpointRequest) {
           ((BreakpointRequest)request).addThreadFilter(filterThread);
@@ -368,13 +395,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
     catch (InternalException e) {
       switch (e.errorCode()) {
-        case JvmtiError.DUPLICATE : LOG.info(e); break;
+        case JvmtiError.DUPLICATE -> LOG.info(e);
+        case JvmtiError.NOT_FOUND -> {
+          //event request not found
+          //there could be no requests after hotswap
+        }
 
-        case JvmtiError.NOT_FOUND : break;
-        //event request not found
-        //there could be no requests after hotswap
-
-        default: LOG.error(e);
+        default -> LOG.error(e);
       }
     }
     return CompletableFuture.completedFuture(null);

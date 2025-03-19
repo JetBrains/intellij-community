@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -59,7 +45,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-public class FileTreeModelBuilder {
+public final class FileTreeModelBuilder {
   private static final Logger LOG = Logger.getInstance(FileTreeModelBuilder.class);
 
   public static final Key<Integer> FILE_COUNT = Key.create("FILE_COUNT");
@@ -86,8 +72,8 @@ public class FileTreeModelBuilder {
   private int myMarkedFileCount = 0;
 
   private JTree myTree;
-  protected final VirtualFile myBaseDir;
-  protected VirtualFile[] myContentRoots;
+  private final VirtualFile myBaseDir;
+  private VirtualFile[] myContentRoots;
 
   public FileTreeModelBuilder(@NotNull Project project, Marker marker, DependenciesPanel.DependencyPanelSettings settings) {
     myProject = project;
@@ -165,7 +151,7 @@ public class FileTreeModelBuilder {
     return build(project, showProgress, null);
   }
 
-  public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
+  public TreeModel build(final Project project, final boolean showProgress, final @Nullable Runnable successRunnable) {
     final Runnable buildingRunnable = () -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
@@ -317,8 +303,7 @@ public class FileTreeModelBuilder {
     return myModuleDirNodes.containsKey(file);
   }
 
-  @Nullable
-  public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
+  public @Nullable DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
     LOG.assertTrue(parent != null, element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null ? ((PsiFile)element).getVirtualFile().getPath() : element);
     final VirtualFile parentVirtualFile = parent.getVirtualFile();
     Module module = myFileIndex.getModuleForFile(parentVirtualFile);
@@ -382,8 +367,7 @@ public class FileTreeModelBuilder {
     return parentNode != null ? parentNode : myRoot;
   }
 
-  @Nullable
-  public PackageDependenciesNode addFileNode(final PsiFile file){
+  public @Nullable PackageDependenciesNode addFileNode(final PsiFile file){
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
@@ -413,8 +397,7 @@ public class FileTreeModelBuilder {
     return rootToReload;
   }
 
-  @Nullable
-  public PackageDependenciesNode addDirNode(PsiDirectory dir) {
+  public @Nullable PackageDependenciesNode addDirNode(PsiDirectory dir) {
     final VirtualFile vFile = dir.getVirtualFile();
     if (myMarker == null) return null;
     final boolean[] isMarked = new boolean[]{myMarker.isMarked(vFile)};
@@ -448,8 +431,7 @@ public class FileTreeModelBuilder {
   }
 
 
-  @Nullable
-  public PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
+  public @Nullable PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
     if (file instanceof PsiDirectory) {
       return getModuleDirNode(file.getVirtualFile(), myFileIndex.getModuleForFile(file.getVirtualFile()), null);
     }
@@ -633,8 +615,7 @@ public class FileTreeModelBuilder {
   }
 
 
-  @Nullable
-  private PackageDependenciesNode getModuleNode(Module module) {
+  private @Nullable PackageDependenciesNode getModuleNode(Module module) {
     if (module == null || !myShowModules) {
       return myRoot;
     }

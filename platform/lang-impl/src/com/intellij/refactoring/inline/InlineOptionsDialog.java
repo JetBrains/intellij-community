@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.BorderTitle;
 import com.intellij.openapi.util.NlsContexts.Label;
@@ -14,13 +13,13 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Query;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Function;
@@ -28,7 +27,7 @@ import java.util.function.Predicate;
 
 public abstract class InlineOptionsDialog extends RefactoringDialog implements InlineOptions {
   protected JRadioButton myRbInlineAll;
-  @Nullable protected JRadioButton myKeepTheDeclaration;
+  protected @Nullable JRadioButton myKeepTheDeclaration;
   protected JRadioButton myRbInlineThisOnly;
   protected boolean myInvokedOnReference;
   protected final PsiElement myElement;
@@ -58,11 +57,10 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return false;
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
-    optionsPanel.setBorder(new EmptyBorder(JBUIScale.scale(10), 0, 0, 0));
+    optionsPanel.setBorder(JBUI.Borders.empty(10, UIUtil.DEFAULT_HGAP, 0, 0));
     optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
 
     myRbInlineAll = new JRadioButton();
@@ -91,7 +89,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     myRbInlineAll.setEnabled(writable);
-    if(myInvokedOnReference) {
+    if (myInvokedOnReference) {
       if (canInlineThisOnly()) {
         myRbInlineAll.setSelected(false);
         myRbInlineAll.setEnabled(false);
@@ -127,12 +125,11 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
       myRbInlineThisOnly.setSelected(false);
     }
 
-    getPreviewAction().setEnabled(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+    getPreviewAction().setEnabled(!isInlineThisOnly());
     final ActionListener previewListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        boolean enabled = myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected();
-        getPreviewAction().setEnabled(enabled);
+        getPreviewAction().setEnabled(!isInlineThisOnly());
       }
     };
     for (JRadioButton button : buttons) {
@@ -147,19 +144,16 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return myElement.isWritable();
   }
 
-  @Label
-  protected abstract String getNameLabelText();
-  @BorderTitle
-  protected abstract String getBorderTitle();
-  @RadioButton
-  protected abstract String getInlineAllText();
-  @RadioButton
-  protected String getKeepTheDeclarationText() {return null;}
+  protected abstract @Label String getNameLabelText();
+  
+  /** @deprecated Unused since 2011 */
+  @Deprecated protected @BorderTitle String getBorderTitle() { return null; }
+  protected abstract @RadioButton String getInlineAllText();
+  protected @RadioButton String getKeepTheDeclarationText() {return null;}
   protected boolean isKeepTheDeclarationByDefault() {
     return false;
   }
-  @RadioButton
-  protected abstract String getInlineThisText();
+  protected abstract @RadioButton String getInlineThisText();
   protected abstract boolean isInlineThis();
   protected boolean canInlineThisOnly() {
     return false;
@@ -191,12 +185,11 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
   protected static int getNumberOfOccurrences(PsiNameIdentifierOwner nameIdentifierOwner,
                                               Predicate<? super PsiReference> ignoreOccurrence,
                                               Function<? super GlobalSearchScope, ? extends Query<PsiReference>> searcher) {
-    final ProgressManager progressManager = ProgressManager.getInstance();
     final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(nameIdentifierOwner.getProject());
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(nameIdentifierOwner.getProject());
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
-     name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
+     name != null && searchHelper.isCheapEnoughToSearch(name, scope, null) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
     return isCheapToSearch ? (int)searcher.apply(scope).findAll().stream().filter(ignoreOccurrence).count() : - 1;
   }
 

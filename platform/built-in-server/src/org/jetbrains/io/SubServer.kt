@@ -3,6 +3,7 @@ package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.net.loopbackSocketAddress
 import org.jetbrains.ide.CustomPortServerManager
@@ -35,6 +36,7 @@ internal class SubServer(private val user: CustomPortServerManager,
     try {
       bootstrap.localAddress(if (user.isAvailableExternally) InetSocketAddress(port) else loopbackSocketAddress(port))
       channelRegistrar!!.setServerChannel(bootstrap.bind().syncUninterruptibly().channel(), false)
+      logger<SubServer>().info("Built-in sub-server '${user.javaClass.name.substringAfterLast('.')}' started on port $port")
       return true
     }
     catch (e: Exception) {

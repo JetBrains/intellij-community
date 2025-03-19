@@ -13,11 +13,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-final class PsiCommentInlineDocumentation implements InlineDocumentation {
+public final class PsiCommentInlineDocumentation implements InlineDocumentation {
 
   private final @NotNull PsiDocCommentBase myComment; // might be fake
 
-  PsiCommentInlineDocumentation(@NotNull PsiDocCommentBase comment) {
+  public PsiCommentInlineDocumentation(@NotNull PsiDocCommentBase comment) {
     myComment = comment;
   }
 

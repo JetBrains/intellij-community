@@ -13,7 +13,9 @@ class InlineStackFrameProxyImpl(
     val inlineDepth: Int, // This variable is a helper for evaluator
     threadProxy: ThreadReferenceProxyImpl,
     stackFrame: StackFrame,
-    indexFromBottom: Int
+    indexFromBottom: Int,
+    val inlineScopeNumber: Int,
+    val surroundingScopeNumber: Int
 ) : StackFrameProxyImpl(threadProxy, stackFrame, indexFromBottom) {
     override fun location(): Location? = location
 }
@@ -21,7 +23,9 @@ class InlineStackFrameProxyImpl(
 fun safeInlineStackFrameProxy(
     location: Location?,
     inlineDepth: Int,
-    frameProxy: StackFrameProxyImpl
+    frameProxy: StackFrameProxyImpl,
+    inlineScopeNumber: Int,
+    surroundingScopeNumber: Int
 ): StackFrameProxyImpl {
     val threadProxy = frameProxy.safeThreadProxy() ?: return frameProxy
     val stackFrame = frameProxy.safeStackFrame() ?: return frameProxy
@@ -30,6 +34,8 @@ fun safeInlineStackFrameProxy(
         inlineDepth,
         threadProxy,
         stackFrame,
-        frameProxy.indexFromBottom
+        frameProxy.indexFromBottom,
+        inlineScopeNumber,
+        surroundingScopeNumber
     )
 }

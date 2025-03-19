@@ -6,7 +6,6 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -278,8 +277,6 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     final AbstractProjectViewPane pane = myStructure.createPane();
     final JTree tree = pane.getTree();
-    AbstractTreeBuilder builder = pane.getTreeBuilder();
-    if (builder != null) builder.setPassthroughMode(false);
 
     myStructure.setShowMembers(true);
 
@@ -394,16 +391,10 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     wr12.setName("01.2");
     wr122.setName("01.2.2");
 
-    AbstractTreeBuilder builder = pane.getTreeBuilder();
-    if (builder == null) {
-      // TODO:SAM new model loses selection of moved node for now
-      TreeVisitor visitor = new TreeVisitor.ByTreePath<>(tree.getSelectionPath(), o -> o);
-      PlatformTestUtil.waitForCallback(pane.updateFromRoot(false));
-      tree.setSelectionPath(PlatformTestUtil.waitForPromise(TreeUtil.promiseMakeVisible(tree, visitor)));
-    }
-    else {
-      builder.updateFromRoot();
-    }
+    // TODO:SAM new model loses selection of moved node for now
+    TreeVisitor visitor = new TreeVisitor.ByTreePath<>(tree.getSelectionPath(), o -> o);
+    PlatformTestUtil.waitForCallback(pane.updateFromRoot(false));
+    tree.setSelectionPath(PlatformTestUtil.waitForPromise(TreeUtil.promiseMakeVisible(tree, visitor)));
 
     PlatformTestUtil.assertTreeEqual(tree, """
       -Project
@@ -458,8 +449,6 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     directory = createSubdirectory(directory, "a");
     // PSI listener is notified synchronously and starts modifying new tree model
     // unfortunately this approach does not work for old tree builders
-    AbstractTreeBuilder builder = pane.getTreeBuilder();
-    if (builder != null) builder.queueUpdateFrom(directory, true);
     PlatformTestUtil.waitWhileBusy(tree);
     TreeUtil.promiseExpandAll(tree);
 
@@ -472,7 +461,6 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "      m():void\n");
 
     directory = createSubdirectory(directory, "b");
-    if (builder != null) builder.queueUpdateFrom(directory, true);
 
     assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
                           "  -PsiDirectory: src\n" +
@@ -483,7 +471,6 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "      m():void\n");
 
     directory = createSubdirectory(directory, "z");
-    if (builder != null) builder.queueUpdateFrom(directory, true);
 
     assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
                           "  -PsiDirectory: src\n" +

@@ -5,7 +5,6 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.CertificateUtil;
-import org.cef.CefClient;
 import org.cef.callback.CefCallback;
 import org.cef.handler.CefLoadHandler;
 import org.cef.security.CefSSLInfo;
@@ -22,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.await;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -54,7 +54,6 @@ public class JBCefSSLCertificateTest {
 
   @Before
   public void before() throws CertificateException {
-    myBrowser = new JBCefBrowser("");
     mySSLInfo = makeSSLInfo();
   }
 
@@ -91,7 +90,7 @@ public class JBCefSSLCertificateTest {
     }
 
     public void waitCall() {
-      await(myLatch);
+      await(myLatch, "waiting CertificateErrorCallback");
     }
 
     public boolean continueCalled() {
@@ -105,15 +104,23 @@ public class JBCefSSLCertificateTest {
 
   @Test
   public void test() {
-    CefClient client = myBrowser.getJBCefClient().getCefClient();
+    // start the browser
+    JBCefClient client = JBCefApp.getInstance().createClient();
+    myBrowser = JBCefBrowser.createBuilder()
+      .setClient(client)
+      .setCreateImmediately(true)
+      .build();
+
+    invokeAndWaitForLoad(myBrowser, () -> myBrowser.loadHTML("chrome://version/"));
+
     // Call CertificateErrorCallback with an unknown(for the custom trust manager) certificate
     {
       var callback = new CertificateErrorCallback();
-      boolean exit_code = client.onCertificateError(myBrowser.getCefBrowser(),
-                                                    CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
-                                                    "some_url",
-                                                    mySSLInfo,
-                                                    callback
+      boolean exit_code = client.getCefClient().onCertificateError(myBrowser.getCefBrowser(),
+                                                                   CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
+                                                                   "some_url",
+                                                                   mySSLInfo,
+                                                                   callback
       );
       callback.waitCall();
       assertTrue(exit_code);
@@ -128,11 +135,11 @@ public class JBCefSSLCertificateTest {
     // Call CertificateErrorCallback with a known(for the custom trust manager) certificate
     {
       var callback = new CertificateErrorCallback();
-      boolean exit_code = client.onCertificateError(myBrowser.getCefBrowser(),
-                                                    CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
-                                                    "some_url",
-                                                    mySSLInfo,
-                                                    callback
+      boolean exit_code = client.getCefClient().onCertificateError(myBrowser.getCefBrowser(),
+                                                                   CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
+                                                                   "some_url",
+                                                                   mySSLInfo,
+                                                                   callback
       );
       callback.waitCall();
       assertTrue(exit_code);
@@ -147,11 +154,11 @@ public class JBCefSSLCertificateTest {
     // Remove the certificate from the custom trust manger
     {
       var callback = new CertificateErrorCallback();
-      boolean exit_code = client.onCertificateError(myBrowser.getCefBrowser(),
-                                                    CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
-                                                    "some_url",
-                                                    mySSLInfo,
-                                                    callback
+      boolean exit_code = client.getCefClient().onCertificateError(myBrowser.getCefBrowser(),
+                                                                   CefLoadHandler.ErrorCode.ERR_CERT_AUTHORITY_INVALID,
+                                                                   "some_url",
+                                                                   mySSLInfo,
+                                                                   callback
       );
       callback.waitCall();
       assertTrue(exit_code);

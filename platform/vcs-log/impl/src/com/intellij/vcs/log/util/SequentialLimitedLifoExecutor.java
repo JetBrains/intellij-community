@@ -8,11 +8,13 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.QueueProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Queue with a limited number of tasks, and with higher priority for new tasks, than for older ones.
  */
+@ApiStatus.Internal
 public class SequentialLimitedLifoExecutor<Task> implements Disposable {
   private static final Logger LOG = Logger.getInstance(SequentialLimitedLifoExecutor.class);
 

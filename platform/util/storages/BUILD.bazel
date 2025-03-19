@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.util.io.storages` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "io-storages",
+  module_name = "intellij.platform.util.io.storages",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/util/base",
+    "//platform/util",
+    "@lib//:fastutil-min",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:opentelemetry",
+    "//platform/diagnostic/telemetry",
+  ],
+  exports = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util-rt",
+    "//platform/util/base",
+    "//platform/util",
+  ]
+)
+### auto-generated section `build intellij.platform.util.io.storages` end

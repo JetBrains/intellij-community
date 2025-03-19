@@ -15,23 +15,35 @@ import java.util.List;
  */
 public final class SameParameterValueQuickFixTest extends LightJavaCodeInsightFixtureTestCase {
 
-  public void testSimple() {
-    doTest();
-  }
+  public void testSimple() { doTest(); }
+  public void testCastedValue() { doTest(); }
+  public void testStringThatNeedsEscaping() { doTest(false, false); }
+  public void testLongValue() { doTest(); }
+  public void testVararg() { doTest(true, true); }
 
   private void doTest() {
-    doNamedTest(getTestName(false));
+    doTest(true, false);
   }
 
-  private void doNamedTest(String name) {
-    LocalInspectionTool inspection = new SameParameterValueInspection().getSharedLocalInspectionTool();
+  private void doTest(boolean testHighlighting, boolean quickFixNotAvailable) {
+    String name = getTestName(false);
+    SameParameterValueInspection globalInspection = new SameParameterValueInspection();
+    globalInspection.ignoreWhenRefactoringIsComplicated = false;
+    LocalInspectionTool inspection = globalInspection.getSharedLocalInspectionTool();
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(name + ".java");
-    myFixture.testHighlighting(true, false, false);
+    if (testHighlighting) myFixture.testHighlighting(true, false, false);
+    int caretOffset = myFixture.getCaretOffset();
+    assertTrue("No <caret> found in '" + name + ".java'", caretOffset != 0);
     final @NotNull List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Inline value");
-    assertEquals("intention not found", 1, intentions.size());
-    myFixture.checkPreviewAndLaunchAction(intentions.get(0));
-    myFixture.checkResultByFile(name + ".after.java");
+    if (quickFixNotAvailable) {
+      assertEmpty("intention found when it should not be available", intentions);
+    }
+    else {
+      assertEquals("intention not found", 1, intentions.size());
+      myFixture.checkPreviewAndLaunchAction(intentions.get(0));
+      myFixture.checkResultByFile(name + ".after.java");
+    }
   }
 
   @Override

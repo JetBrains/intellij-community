@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.RefactoringUsageCollector;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +51,7 @@ public abstract class BaseRefactoringAction extends AnAction {
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context,
                                                         @NotNull String place) {
-    if (ActionPlaces.isPopupPlace(place)) {
+    if (ActionPlaces.isPopupPlace(place) || place.contains(ActionPlaces.EDITOR_FLOATING_TOOLBAR)) {
       final RefactoringActionHandler handler = getHandler(context);
       if (handler == null) return false;
       if (handler instanceof ContextAwareActionHandler contextAwareActionHandler) {
@@ -85,8 +86,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  @Nullable
-  protected abstract RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
+  protected abstract @Nullable RefactoringActionHandler getHandler(@NotNull DataContext dataContext);
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
@@ -255,9 +255,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  @NlsActions.ActionText
-  @Nullable
-  protected String getActionName(@NotNull DataContext dataContext) {
+  protected @NlsActions.ActionText @Nullable String getActionName(@NotNull DataContext dataContext) {
     return null;
   }
 
@@ -274,7 +272,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return false;
   }
 
-  public static PsiElement getElementAtCaret(@NotNull final Editor editor, final PsiFile file) {
+  public static PsiElement getElementAtCaret(final @NotNull Editor editor, final PsiFile file) {
     return CommonRefactoringUtil.getElementAtCaret(editor, file);
   }
 

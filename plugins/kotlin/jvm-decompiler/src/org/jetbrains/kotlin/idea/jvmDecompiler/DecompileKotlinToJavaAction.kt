@@ -12,10 +12,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
-import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
+import org.jetbrains.kotlin.idea.jvm.shared.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 
-class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("action.decompile.java.name")) {
+class DecompileKotlinToJavaAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val binaryFile = getBinaryKotlinFile(e) ?: return
 
@@ -51,8 +51,8 @@ internal class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
     ): Collection<AttachSourcesProvider.AttachSourcesAction> {
         if (psiFile !is KtFile || !psiFile.canBeDecompiledToJava()) return emptyList()
 
-        return listOf(object : AttachSourcesProvider.AttachSourcesAction {
-            override fun getName() = KotlinJvmDecompilerBundle.message("action.decompile.java.name")
+        return listOf(object : AttachSourcesProvider.LightAttachSourcesAction {
+            override fun getName() = KotlinJvmDecompilerBundle.message("action.DecompileKotlinToJava.text")
 
             override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
                 KotlinJvmDecompilerFacade.getInstance()?.showDecompiledCode(psiFile)

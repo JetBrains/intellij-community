@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -35,9 +21,10 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final HgMqUnAppliedPatchesPanel patchInfo = e.getRequiredData(HgMqUnAppliedPatchesPanel.MQ_PATCHES);
-    final List<String> names = patchInfo.getSelectedPatchNames();
-    final HgRepository repository = patchInfo.getRepository();
+    HgMqUnAppliedPatchesPanel patchInfo = e.getData(HgMqUnAppliedPatchesPanel.MQ_PATCHES);
+    if (patchInfo == null) return;
+    List<String> names = patchInfo.getSelectedPatchNames();
+    HgRepository repository = patchInfo.getRepository();
     Runnable task = () -> {
       ProgressManager.getInstance().getProgressIndicator().setText(getTitle());
       executeInCurrentThread(repository, names);
@@ -57,7 +44,5 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
 
   protected abstract void executeInCurrentThread(@NotNull HgRepository repository, @NotNull List<String> patchNames);
 
-  @NlsContexts.ProgressTitle
-  @NotNull
-  protected abstract String getTitle();
+  protected abstract @NlsContexts.ProgressTitle @NotNull String getTitle();
 }

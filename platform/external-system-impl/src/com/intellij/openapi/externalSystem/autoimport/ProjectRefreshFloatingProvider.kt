@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -10,7 +10,10 @@ import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 import com.intellij.openapi.editor.toolbar.floating.isInsideMainEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.ApiStatus
+import org.intellij.lang.annotations.Language
 
+@ApiStatus.Internal
 internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
   override val autoHideable = false
 
@@ -56,6 +59,6 @@ internal class ProjectRefreshFloatingProvider : AbstractFloatingToolbarProvider(
   }
 
   companion object {
-    private const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
+    @Language("devkit-action-id") private const val ACTION_GROUP = "ExternalSystem.ProjectRefreshActionGroup"
   }
 }

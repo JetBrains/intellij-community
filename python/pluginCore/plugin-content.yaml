@@ -1,0 +1,71 @@
+- name: lib/python-ce.jar
+  projectLibraries:
+  - name: XmlRPC
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+    reason: withProjectLibrary
+  - name: io.github.z4kn4fein.semver.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/github/z4kn4fein/semver-jvm/2/semver-jvm-2.jar
+    reason: <- intellij.python.community.impl
+  - name: jetbrains.ml.models.python.imports.ranking.model
+    files:
+    - name: $MAVEN_REPOSITORY$/com/jetbrains/ml/models/python-imports-ranking-model/nebulous-albatross/python-imports-ranking-model-nebulous-albatross.jar
+    reason: <- intellij.python.ml.features
+  - name: jsr305
+    files:
+    - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
+    reason: <- intellij.python.community.impl
+  - name: libthrift
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
+    reason: withProjectLibrary
+  - name: tuweni-toml
+    files:
+    - name: $MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2/tuweni-toml-2.jar
+    - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
+    reason: <- intellij.python.community.impl
+  modules:
+  - name: intellij.python.community
+  - name: intellij.python.community.core.impl
+  - name: intellij.python.community.impl
+    libraries:
+      ml-completion-prev-exprs-models:
+      - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
+      completion-ranking-python-with-full-line:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
+  - name: intellij.python.community.impl.poetry
+  - name: intellij.python.community.impl.installer
+  - name: intellij.python.community.impl.venv
+  - name: intellij.python.community.services.systemPython
+  - name: intellij.python.community.services.shared
+  - name: intellij.python.community.services.internal.impl
+  - name: intellij.python.community.execService
+  - name: intellij.python.psi
+  - name: intellij.python.psi.impl
+  - name: intellij.python.pydev
+  - name: intellij.python.sdk
+  - name: intellij.python.pyproject
+  - name: intellij.python.hatch
+  - name: intellij.python.community.plugin
+  contentModules:
+  - name: intellij.python.community.plugin.minor
+  - name: intellij.python.community.plugin.minorRider
+  - name: intellij.python.community.communityOnly
+  - name: intellij.commandInterface
+  - name: intellij.python.community.impl.huggingFace
+  - name: intellij.python.community.plugin.impl
+  - name: intellij.python.community.plugin.java
+  - name: intellij.python.copyright
+  - name: intellij.python.featuresTrainer
+  - name: intellij.python.grazie
+  - name: intellij.python.langInjection
+  - name: intellij.python.markdown
+  - name: intellij.python.ml.features
+  - name: intellij.python.terminal
+- name: lib/python-common.jar
+  modules:
+  - name: intellij.python.parser
+  - name: intellij.python.ast
+  - name: intellij.python.syntax
+  - name: intellij.python.syntax.core

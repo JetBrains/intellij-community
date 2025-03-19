@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.*
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -30,8 +30,8 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   @Test
-  fun `current job`() {
-    currentJobTest {
+  fun `blocking context`() {
+    blockingContextTest {
       testBlocking {
         testCoroutine {
           testBlocking {}
@@ -79,7 +79,7 @@ class ContextSwitchTest : CancellationTest() {
 
   private fun testRunBlockingCancellable(coroutineTest: suspend () -> Unit) {
     runBlockingCancellable {
-      assertNull(Cancellation.currentJob())
+      assertEquals(coroutineContext.job, Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
       coroutineTest()
     }
@@ -102,7 +102,7 @@ class ContextSwitchTest : CancellationTest() {
 
   private suspend fun testRunUnderIndicator(blockingTest: () -> Unit) {
     coroutineToIndicator {
-      assertNull(Cancellation.currentJob())
+      assertNotNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
       blockingTest()
     }
@@ -135,21 +135,21 @@ class ContextSwitchTest : CancellationTest() {
     }
 
     withContext(testElement) {
-      assertNull(currentThreadContextOrNull())
+      assertNull(currentThreadOverriddenContextOrNull())
       blockingContext {
         assertThreadContext()
         runBlockingCancellable {
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
           withContext(Dispatchers.Default) {
             blockingContext {
               assertThreadContext()
             }
           }
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
         }
         assertThreadContext()
       }
-      assertNull(currentThreadContextOrNull())
+      assertNull(currentThreadOverriddenContextOrNull())
     }
   }
 }

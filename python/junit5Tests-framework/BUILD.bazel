@@ -1,0 +1,52 @@
+### auto-generated section `build intellij.python.community.junit5Tests.framework` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "community-junit5Tests-framework",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "community-junit5Tests-framework_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5Jupiter",
+    "//platform/util",
+    "@lib//:junit5Pioneer",
+    "@lib//:junit5",
+    "@lib//:junit5Params",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:testcontainers",
+    "//platform/execution",
+    "//platform/ide-core",
+    "//python/python-sdk:sdk",
+    "//python/python-sdk:sdk_test_lib",
+    "//platform/execution-impl",
+    "@lib//:apache-sshd-osgi",
+    "@lib//:testcontainers-junit-jupiter",
+    "@lib//:junit4",
+    "@lib//:jna",
+    "@lib//:hamcrest",
+    "//wintools",
+    "//wintools:wintools_test_lib",
+    "//python/poetry:community-impl-poetry",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//python/setup-test-environment:community-testFramework-testEnv",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/eel-provider",
+  ],
+  runtime_deps = ["//python/pluginCore:community-plugin"]
+)
+
+jvm_test(
+  name = "community-junit5Tests-framework_test",
+  runtime_deps = [":community-junit5Tests-framework_test_lib"]
+)
+### auto-generated section `build intellij.python.community.junit5Tests.framework` end

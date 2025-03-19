@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
@@ -34,22 +34,19 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return "Labeled statement";
   }
 
-  @NotNull
-  public String getLabelName() {
+  public @NotNull String getLabelName() {
     return getName();
   }
 
   @Override
-  @NotNull
-  public PsiElement getLabel() {
+  public @NotNull PsiElement getLabel() {
     final PsiElement label = findChildByType(GroovyTokenTypes.mIDENT);
     assert label != null;
     return label;
   }
 
   @Override
-  @Nullable
-  public GrStatement getStatement() {
+  public @Nullable GrStatement getStatement() {
     return findChildByClass(GrStatement.class);
   }
 
@@ -62,9 +59,8 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return statement == null || statement == lastParent || statement.processDeclarations(processor, state, lastParent, place);
   }
 
-  @NotNull
   @Override
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return new LocalSearchScope(this);
   }
 
@@ -76,22 +72,19 @@ public class GrLabeledStatementImpl extends GroovyPsiElementImpl implements GrLa
     return this;
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     final PsiElement label = getLabel();
     return label.getText();
   }
 
-  @NotNull
   @Override
-  public PsiElement getNameIdentifierGroovy() {
+  public @NotNull PsiElement getNameIdentifierGroovy() {
     return getLabel();
   }
 
-  @Nullable
   @Override
-  public PsiElement getNameIdentifier() {
+  public @Nullable PsiElement getNameIdentifier() {
     return getNameIdentifierGroovy();
   }
 

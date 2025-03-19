@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui.actions.suppress;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -13,6 +14,7 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
 import com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,14 +29,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
-public class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
-  private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
+public final class SuppressActionWrapper extends ActionGroup {
+  private static final Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
   public SuppressActionWrapper() {
     super(InspectionsBundle.messagePointer("suppress.inspection.problem"), false);
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DISABLED_CHILDREN, true);
   }
 
   @Override
@@ -43,28 +47,42 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
   }
 
   @Override
-  public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
-    if (view == null) return AnAction.EMPTY_ARRAY;
-    final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
-    if (wrapper == null) return AnAction.EMPTY_ARRAY;
-    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
-
-    if (suppressActions.isEmpty()) return AnAction.EMPTY_ARRAY;
-    final AnAction[] actions = new AnAction[suppressActions.size() + 1];
-
-    int i = 0;
-    for (SuppressIntentionAction action : suppressActions) {
-      actions[i++] = new SuppressTreeAction(action);
-    }
-    actions[suppressActions.size()] = Separator.getInstance();
-    Arrays.sort(actions, Comparator.comparingInt(a -> a instanceof Separator ? 0 : ((SuppressTreeAction)a).isSuppressAll() ? 1 : -1));
-    return actions;
+  public AnAction @NotNull [] getChildren(final @Nullable AnActionEvent e) {
+    return getSuppressionActions(getView(e));
   }
 
-  public static class SuppressTreeAction extends KeyAwareInspectionViewAction {
-    @NotNull
-    private final SuppressIntentionAction mySuppressAction;
+  public static AnAction @NotNull [] getSuppressionActions(InspectionResultsView view) {
+    if (view == null) return EMPTY_ARRAY;
+    final InspectionToolWrapper<?, ?> wrapper = view.getTree().getSelectedToolWrapper(true);
+    if (wrapper == null) return EMPTY_ARRAY;
+    final Set<SuppressIntentionAction> suppressActions = view.getSuppressActionHolder().getSuppressActions(wrapper);
+
+    if (suppressActions.isEmpty()) return EMPTY_ARRAY;
+
+    final ArrayList<SuppressIntentionAction> actionsList = new ArrayList<>();
+    final ArrayList<SuppressIntentionAction> suppressAllList = new ArrayList<>();
+
+    for (SuppressIntentionAction action : suppressActions) {
+      if (!action.isSuppressAll()) { actionsList.add(action); }
+      else { suppressAllList.add(action); }
+    }
+
+    actionsList.sort((a1, a2) -> {
+      if (a1 instanceof SuppressIntentionActionFromFix s1) return s1.compareTo(a2);
+      return Comparator.comparing(SuppressIntentionAction::getFamilyName).compare(a1, a2);
+    });
+
+    return Stream.of(
+        actionsList.stream().map(a -> new SuppressTreeAction(a)),
+        Stream.of(Separator.getInstance()),
+        suppressAllList.stream().map(a -> new SuppressTreeAction(a))
+      )
+      .flatMap(e -> e)
+      .toArray(AnAction[]::new);
+  }
+
+  public static final class SuppressTreeAction extends KeyAwareInspectionViewAction {
+    private final @NotNull SuppressIntentionAction mySuppressAction;
 
     public SuppressTreeAction(final @NotNull SuppressIntentionAction suppressAction) {
       super(suppressAction.getText());

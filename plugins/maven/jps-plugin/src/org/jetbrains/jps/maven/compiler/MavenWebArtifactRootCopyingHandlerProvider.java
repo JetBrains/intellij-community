@@ -1,16 +1,19 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.compiler;
 
+import com.dynatrace.hash4j.hashing.HashFunnel;
+import com.dynatrace.hash4j.hashing.HashSink;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FileHashUtil;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootCopyingHandlerProvider;
 import org.jetbrains.jps.incremental.artifacts.instructions.FileCopyingHandler;
 import org.jetbrains.jps.incremental.artifacts.instructions.FilterCopyHandler;
@@ -24,7 +27,6 @@ import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,17 +37,16 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.trimEnd;
 import static com.intellij.openapi.util.text.StringUtil.trimStart;
 
-public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
+public final class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopyingHandlerProvider {
   private static final Logger LOG = Logger.getInstance(MavenWebArtifactRootCopyingHandlerProvider.class);
 
-  @Nullable
   @Override
-  public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
-                                                @NotNull File root,
-                                                @NotNull File targetDirectory,
-                                                @NotNull JpsPackagingElement contextElement,
-                                                @NotNull JpsModel model,
-                                                @NotNull BuildDataPaths buildDataPaths) {
+  public @Nullable FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
+                                                          @NotNull File root,
+                                                          @NotNull File targetDirectory,
+                                                          @NotNull JpsPackagingElement contextElement,
+                                                          @NotNull JpsModel model,
+                                                          @NotNull BuildDataPaths buildDataPaths) {
     MavenProjectConfiguration projectConfiguration = JpsMavenExtensionService.getInstance().getMavenProjectConfiguration(buildDataPaths);
     if (projectConfiguration == null) return null;
 
@@ -89,7 +90,6 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
   }
 
   private static class MavenWebArtifactCopyingHandler extends FilterCopyHandler {
-
     private final ResourceRootConfiguration myWarRootConfig;
     private final MavenModuleResourceConfiguration myModuleResourceConfig;
 
@@ -115,18 +115,16 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     @Override
-    public void writeConfiguration(@NotNull PrintWriter out) {
-      out.print("maven hash:");
-      out.println(configurationHash());
+    public void writeConfiguration(@NotNull HashSink hash) {
+      hash.putString("maven hash:");
+      configurationHash(hash);
     }
 
-    protected int configurationHash() {
-      int hash = 1;
-      hash = 31 * hash + myWarRootConfig.includes.hashCode();
-      hash = 31 * hash + myWarRootConfig.excludes.hashCode();
-      hash = 31 * hash + myWarRootConfig.computeConfigurationHash();
-      hash = 31 * hash + myModuleResourceConfig.computeModuleConfigurationHash();
-      return hash;
+    protected void configurationHash(@NotNull HashSink hash) {
+      hash.putUnorderedIterable(myWarRootConfig.includes, HashFunnel.forString(), Hashing.komihash5_0());
+      hash.putUnorderedIterable(myWarRootConfig.excludes, HashFunnel.forString(), Hashing.komihash5_0());
+      myWarRootConfig.computeConfigurationHash(hash);
+      myModuleResourceConfig.computeModuleConfigurationHash(hash);
     }
   }
 
@@ -164,8 +162,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     /**
      * Returns list of resource root configurations that are targeted on {@code targetDir}/WEB-INF/classes and have filtering enabled
      */
-    @NotNull
-    private static List<ResourceRootConfiguration> getWebResources(@NotNull File targetDir,
+    private static @NotNull List<ResourceRootConfiguration> getWebResources(@NotNull File targetDir,
                                                                    @NotNull MavenWebArtifactConfiguration artifactConfig) {
       String webInfClassesPath = toSystemIndependentName(new File(targetDir, "WEB-INF" + File.separator + "classes").getPath());
       List<ResourceRootConfiguration> result = new SmartList<>();
@@ -183,15 +180,15 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     @Override
-    protected int configurationHash() {
-      int hash = super.configurationHash();
-      hash = 31 * hash + FileUtil.fileHashCode(myTargetDir);
+    protected void configurationHash(@NotNull HashSink hash) {
+      super.configurationHash(hash);
+
+      FileHashUtil.computePathHashCode(myTargetDir.toPath().toAbsolutePath().normalize().toString(), hash);
       for (ResourceRootConfiguration webResource : myWebResources) {
-        hash = 31 * hash + webResource.includes.hashCode();
-        hash = 31 * hash + webResource.excludes.hashCode();
-        hash = 31 * hash + webResource.computeConfigurationHash();
+        hash.putUnorderedIterable(webResource.includes, HashFunnel.forString(), Hashing.komihash5_0());
+        hash.putUnorderedIterable(webResource.excludes, HashFunnel.forString(), Hashing.komihash5_0());
+        webResource.computeConfigurationHash(hash);
       }
-      return hash;
     }
 
     private static class ClassesFilter extends MavenResourceFileFilter {
@@ -231,7 +228,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
 
   private static final class MavenWebRootCopyingHandler extends MavenWebArtifactCopyingHandler {
     private final MavenResourceFileProcessor myFileProcessor;
-    @NotNull private final ResourceRootConfiguration myRootConfiguration;
+    private final @NotNull ResourceRootConfiguration myRootConfiguration;
     private final FileFilter myFilteringFilter;
     private final FileFilter myCopyingFilter;
 
@@ -247,7 +244,8 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       FileFilter superFileFilter = super.createFileFilter();
       FileFilter rootFileFilter = new MavenResourceFileFilter(root, myRootConfiguration).acceptingWebXml();
 
-      //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
+      // for additional resource directory 'exclude' means 'exclude from copying'
+      // but for the default webapp resource it means 'exclude from filtering'
       boolean isMainWebAppRoot = FileUtil.pathsEqual(artifactConfiguration.warSourceDirectory, rootConfiguration.directory);
 
       if (isMainWebAppRoot) {
@@ -273,13 +271,13 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     @Override
-    protected int configurationHash() {
-      return myRootConfiguration.computeConfigurationHash() + super.configurationHash() * 31;
+    protected void configurationHash(@NotNull HashSink hash) {
+      myRootConfiguration.computeConfigurationHash(hash);
+      super.configurationHash(hash);
     }
 
-    @NotNull
     @Override
-    public FileFilter createFileFilter() {
+    public @NotNull FileFilter createFileFilter() {
       return myCopyingFilter;
     }
   }

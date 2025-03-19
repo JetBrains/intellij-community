@@ -2,7 +2,6 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
@@ -18,6 +17,9 @@ import java.util.Map;
  * <p>
  *   If you want your custom project-wide path macro to be available in the JPS then consider implementing separate Path Macro
  *   contributor for the JPS too {@link org.jetbrains.jps.model.serialization.JpsPathMacroContributor}
+ * </p>
+ * <p>
+ *   The implementation must be thread-safe
  * </p>
  */
 @ApiStatus.Internal

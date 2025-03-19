@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
@@ -16,6 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.EDT
 import com.intellij.xdebugger.impl.ExecutionPointVm
 import com.intellij.xdebugger.impl.ExecutionPositionVm
 import com.intellij.xdebugger.ui.DebuggerColors
@@ -34,7 +37,7 @@ internal fun showExecutionPointUi(project: Project, coroutineScope: CoroutineSco
 }
 
 internal fun showExecutionPositionUi(project: Project, coroutineScope: CoroutineScope, vmFlow: Flow<ExecutionPositionVm?>) {
-  coroutineScope.launch {
+  coroutineScope.launch(Dispatchers.EDT) {
     vmFlow
       .distinctUntilChanged()
       .mapLatest { vm ->
@@ -89,22 +92,24 @@ internal class ExecutionPositionUi private constructor(
       error("not reached")
     }
 
-    @RequiresEdt
-    private fun create(coroutineScope: CoroutineScope, project: Project, vm: ExecutionPositionVm): ExecutionPositionUi? {
+    private suspend fun create(coroutineScope: CoroutineScope, project: Project, vm: ExecutionPositionVm): ExecutionPositionUi? {
+      EDT.assertIsEdt()
       val rangeHighlighter = createRangeHighlighter(project, vm) ?: return null
       rangeHighlighter.editorFilter = MarkupEditorFilter { it.editorKind == EditorKind.MAIN_EDITOR }
 
       return ExecutionPositionUi(coroutineScope, vm, rangeHighlighter)
     }
 
-    private fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
-      val document = FileDocumentManager.getInstance().getDocument(vm.file) ?: return null
+    private suspend fun createRangeHighlighter(project: Project, vm: ExecutionPositionVm): RangeHighlighter? {
+      EDT.assertIsEdt()
 
-      val line = vm.line
-      if (!DocumentUtil.isValidLine(line, document)) return null
+      val (range, line, document) = readAction {
+        val document = FileDocumentManager.getInstance().getDocument(vm.file) ?: return@readAction null
+        val line = vm.line.takeIf { DocumentUtil.isValidLine(it, document) } ?: return@readAction null
+        Triple(vm.exactRange, line, document)
+      } ?: return null
 
       val markupModel = DocumentMarkupModel.forDocument(document, project, true)
-      val range = vm.exactRange
       if (range != null) {
         return markupModel.addRangeHighlighter(null, range.startOffset, range.endOffset,
                                                DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,

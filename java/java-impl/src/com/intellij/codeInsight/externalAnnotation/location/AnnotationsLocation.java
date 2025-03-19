@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.externalAnnotation.location;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,11 +17,11 @@ import java.util.List;
  */
 public class AnnotationsLocation {
 
-  @NotNull private final String myGroupId;
-  @NotNull private final String myArtifactId;
-  @NotNull private final String myVersion;
+  private final @NotNull String myGroupId;
+  private final @NotNull String myArtifactId;
+  private final @NotNull String myVersion;
 
-  @NotNull private final List<String> myRepositoryUrls;
+  private final @NotNull List<String> myRepositoryUrls;
 
 
   public AnnotationsLocation(@NotNull String groupId,
@@ -35,23 +35,19 @@ public class AnnotationsLocation {
   }
 
 
-  @NotNull
-  public String getGroupId() {
+  public @NotNull String getGroupId() {
     return myGroupId;
   }
 
-  @NotNull
-  public String getArtifactId() {
+  public @NotNull String getArtifactId() {
     return myArtifactId;
   }
 
-  @NotNull
-  public String getVersion() {
+  public @NotNull String getVersion() {
     return myVersion;
   }
 
-  @NotNull
-  public Collection<String> getRepositoryUrls() {
+  public @NotNull Collection<String> getRepositoryUrls() {
     return Collections.unmodifiableList(myRepositoryUrls);
   }
 

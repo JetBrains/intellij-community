@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.platform.projectModel` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "projectModel_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "projectModel",
+  module_name = "intellij.platform.projectModel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util",
+    "//jps/model-api:model",
+    "@lib//:kotlin-stdlib",
+    "//platform/util/jdom",
+    "//platform/util/concurrency",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/util/xmlDom",
+  ],
+  exports = [
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+  ],
+  runtime_deps = [":projectModel_resources"]
+)
+### auto-generated section `build intellij.platform.projectModel` end

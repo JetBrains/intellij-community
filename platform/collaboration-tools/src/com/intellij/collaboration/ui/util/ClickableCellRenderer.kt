@@ -3,14 +3,17 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.ui.components.JBList
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.ListCellRenderer
 
+@ApiStatus.Internal
 interface ClickableCellRenderer<T> : ListCellRenderer<T> {
   fun getTagAt(point: Point): Any?
 }
 
+@ApiStatus.Internal
 class LinkMouseListener<T>(private val renderer: ClickableCellRenderer<T>) : LinkMouseListenerBase<Any?>() {
   override fun getTagAt(e: MouseEvent): Any? {
     @Suppress("UNCHECKED_CAST")

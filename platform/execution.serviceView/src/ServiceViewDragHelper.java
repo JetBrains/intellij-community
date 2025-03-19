@@ -1,0 +1,346 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.execution.serviceView;
+
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.services.ServiceViewContributor;
+import com.intellij.execution.services.ServiceViewDescriptor;
+import com.intellij.execution.services.ServiceViewDnDDescriptor;
+import com.intellij.execution.services.ServiceViewDnDDescriptor.Position;
+import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.ide.dnd.*;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.impl.InternalDecorator;
+import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.tree.TreePath;
+import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.List;
+
+import static com.intellij.execution.services.ServiceViewDnDDescriptor.Position.*;
+
+final class ServiceViewDragHelper {
+  static DnDSource createSource(@NotNull ServiceView serviceView) {
+    return new ServiceViewDnDSource(serviceView);
+  }
+
+  static DnDTarget createTarget(@NotNull JTree tree) {
+    return new ServiceViewDnDTarget(tree);
+  }
+
+  static void installDnDSupport(@NotNull Project project, @NotNull InternalDecorator decorator, @NotNull ContentManager contentManager) {
+    Content dropTargetContent = createDropTargetContent();
+    DnDSupport.createBuilder(decorator)
+      .setTargetChecker(new DnDTargetChecker() {
+        @Override
+        public boolean update(DnDEvent event) {
+          Object o = event.getAttachedObject();
+          boolean dropPossible = o instanceof ServiceViewDragBean && event.getPointOn(decorator).y < decorator.getHeaderHeight();
+          event.setDropPossible(dropPossible, "");
+          if (dropPossible) {
+            if (contentManager.getIndexOfContent(dropTargetContent) < 0) {
+              contentManager.addContent(dropTargetContent);
+            }
+
+            ServiceViewDragBean dragBean = (ServiceViewDragBean)o;
+            ItemPresentation presentation;
+            if (dragBean.getItems().size() > 1 && dragBean.getContributor() != null) {
+              presentation = dragBean.getContributor().getViewDescriptor(project).getPresentation();
+            }
+            else {
+              ServiceViewItem item = dragBean.getItems().get(0);
+              presentation = item.getViewDescriptor().getPresentation();
+              dropTargetContent.setTabColor(item.getColor());
+            }
+            dropTargetContent.setDisplayName(getDisplayName(presentation));
+            dropTargetContent.setIcon(presentation.getIcon(false));
+          }
+          else if (contentManager.getIndexOfContent(dropTargetContent) >= 0) {
+            contentManager.removeContent(dropTargetContent, false);
+          }
+          return true;
+        }
+      })
+      .setCleanUpOnLeaveCallback(() -> {
+        if (!contentManager.isDisposed() && contentManager.getIndexOfContent(dropTargetContent) >= 0) {
+          contentManager.removeContent(dropTargetContent, false);
+        }
+      })
+      .setDropHandler(new DnDDropHandler() {
+        @Override
+        public void drop(DnDEvent event) {
+          Object o = event.getAttachedObject();
+          if (o instanceof ServiceViewDragBean) {
+            ((ServiceViewManagerImpl)ServiceViewManager.getInstance(project)).extract((ServiceViewDragBean)o);
+          }
+        }
+      })
+      .install();
+    decorator.addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseExited(MouseEvent e) {
+        if (contentManager.getIndexOfContent(dropTargetContent) >= 0) {
+          contentManager.removeContent(dropTargetContent, false);
+        }
+      }
+    });
+  }
+
+  static @NlsContexts.TabTitle String getDisplayName(ItemPresentation presentation) {
+    @NlsSafe StringBuilder result = new StringBuilder();
+    if (presentation instanceof PresentationData) {
+      List<PresentableNodeDescriptor.ColoredFragment> fragments = ((PresentationData)presentation).getColoredText();
+      if (fragments.isEmpty() && presentation.getPresentableText() != null) {
+        result.append(presentation.getPresentableText());
+      }
+      else {
+        for (PresentableNodeDescriptor.ColoredFragment fragment : fragments) {
+          result.append(fragment.getText());
+        }
+      }
+    }
+    else if (presentation.getPresentableText() != null) {
+      result.append(presentation.getPresentableText());
+    }
+    return result.toString();
+  }
+
+  static @Nullable ServiceViewContributor getTheOnlyRootContributor(List<? extends ServiceViewItem> items) {
+    ServiceViewContributor result = null;
+    for (ServiceViewItem node : items) {
+      if (result == null) {
+        result = node.getRootContributor();
+      }
+      else if (result != node.getRootContributor()) {
+        return null;
+      }
+    }
+    return result;
+  }
+
+  private static Content createDropTargetContent() {
+    Content content = ContentFactory.getInstance().createContent(new JPanel(), null, false);
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    content.setCloseable(true);
+    return content;
+  }
+
+  static final class ServiceViewDragBean implements Transferable {
+    private final ServiceView myServiceView;
+    private final List<ServiceViewItem> myItems;
+    private final ServiceViewContributor myContributor;
+
+    ServiceViewDragBean(@NotNull ServiceView serviceView, @NotNull List<ServiceViewItem> items) {
+      myServiceView = serviceView;
+      myItems = ContainerUtil.filter(items, item -> {
+        ServiceViewItem parent = item.getParent();
+        while (parent != null) {
+          if (items.contains(parent)) {
+            return false;
+          }
+          parent = parent.getParent();
+        }
+        return true;
+      });
+      myContributor = getTheOnlyRootContributor(myItems);
+    }
+
+    @NotNull
+    ServiceView getServiceView() {
+      return myServiceView;
+    }
+
+    @NotNull
+    List<ServiceViewItem> getItems() {
+      return myItems;
+    }
+
+    @Nullable
+    ServiceViewContributor getContributor() {
+      return myContributor;
+    }
+
+    private List<Object> getSelectedItems() {
+      return ContainerUtil.map(myItems, ServiceViewItem::getValue);
+    }
+
+    @Override
+    public DataFlavor[] getTransferDataFlavors() {
+      return new DataFlavor[] {ServiceViewDnDDescriptor.LIST_DATA_FLAVOR};
+    }
+
+    @Override
+    public boolean isDataFlavorSupported(DataFlavor flavor) {
+      return ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor);
+    }
+
+    @Override
+    public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+      if (ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor)) {
+        return getSelectedItems();
+      }
+      throw new UnsupportedFlavorException(flavor);
+    }
+  }
+
+  private static final class ServiceViewDnDSource implements DnDSource {
+    private final ServiceView myServiceView;
+
+    ServiceViewDnDSource(@NotNull ServiceView serviceView) {
+      myServiceView = serviceView;
+    }
+
+    @Override
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
+      return !myServiceView.getSelectedItems().isEmpty();
+    }
+
+    @Override
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
+      return new DnDDragStartBean(new ServiceViewDragBean(myServiceView, myServiceView.getSelectedItems()));
+    }
+
+    @Override
+    public Pair<Image, Point> createDraggedImage(DnDAction action,
+                                                 Point dragOrigin,
+                                                 @NotNull DnDDragStartBean bean) {
+      ServiceViewDragBean dragBean = (ServiceViewDragBean)bean.getAttachedObject();
+      int size = dragBean.getItems().size();
+      ItemPresentation presentation = null;
+      if (size == 1) {
+        presentation = dragBean.getItems().get(0).getViewDescriptor().getPresentation();
+      }
+      else {
+        ServiceViewContributor contributor = dragBean.getContributor();
+        if (contributor != null) {
+          presentation = contributor.getViewDescriptor(myServiceView.getProject()).getPresentation();
+        }
+      }
+
+      SimpleColoredComponent c = new SimpleColoredComponent();
+      c.setForeground(myServiceView.getForeground());
+      c.setBackground(myServiceView.getBackground());
+      if (presentation != null) {
+        c.setIcon(presentation.getIcon(false));
+        c.append(getDisplayName(presentation));
+      }
+      else {
+        String text = ExecutionBundle.message("service.view.items", size);
+        c.append(text);
+      }
+
+      Dimension preferredSize = c.getPreferredSize();
+      c.setSize(preferredSize);
+      BufferedImage image = UIUtil.createImage(c, preferredSize.width, preferredSize.height, BufferedImage.TYPE_INT_ARGB);
+      c.setOpaque(false);
+      Graphics2D g = image.createGraphics();
+      c.paint(g);
+      g.dispose();
+      return Pair.create(image, new Point(0, 0));
+    }
+  }
+
+  private static final class ServiceViewDnDTarget implements DnDTarget {
+    private final JTree myTree;
+
+    ServiceViewDnDTarget(@NotNull JTree tree) {
+      myTree = tree;
+    }
+
+    @Override
+    public void drop(DnDEvent event) {
+      EventContext eventContext = getEventContext(event.getPoint());
+      if (eventContext == null) return;
+
+      if (eventContext.descriptor.canDrop(event, INTO)) {
+        eventContext.descriptor.drop(event, INTO);
+      }
+      else {
+        eventContext.descriptor.drop(event, eventContext.getPosition());
+      }
+      event.hideHighlighter();
+    }
+
+    @Override
+    public boolean update(DnDEvent event) {
+      event.setDropPossible(false);
+      EventContext eventContext = getEventContext(event.getPoint());
+      if (eventContext == null) return true;
+
+      if (eventContext.descriptor.canDrop(event, INTO)) {
+        event.setDropPossible(true);
+        RelativeRectangle rectangle = new RelativeRectangle(myTree, eventContext.cellBounds);
+        event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.RECTANGLE);
+        return false;
+      }
+
+      Position position = eventContext.getPosition();
+      if (eventContext.descriptor.canDrop(event, position)) {
+        event.setDropPossible(true);
+        Rectangle bounds = eventContext.cellBounds;
+        bounds.y -= -1;
+        if (position != ABOVE) {
+          bounds.y += bounds.height;
+        }
+        bounds.height = 2;
+        RelativeRectangle rectangle = new RelativeRectangle(myTree, bounds);
+        event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
+        return false;
+      }
+
+      event.hideHighlighter();
+      return false;
+    }
+
+    private EventContext getEventContext(Point point) {
+      TreePath path = myTree.getPathForLocation(point.x, point.y);
+      if (path == null || !(path.getLastPathComponent() instanceof ServiceViewItem item)) return null;
+
+      Rectangle cellBounds = myTree.getPathBounds(path);
+      if (cellBounds == null) return null;
+
+      ServiceViewDescriptor viewDescriptor = item.getViewDescriptor();
+      if (!(viewDescriptor instanceof ServiceViewDnDDescriptor)) return null;
+
+      return new EventContext(point, cellBounds, (ServiceViewDnDDescriptor)viewDescriptor);
+    }
+
+    private static final class EventContext {
+      final Point point;
+      final Rectangle cellBounds;
+      final ServiceViewDnDDescriptor descriptor;
+
+      private EventContext(Point point, Rectangle cellBounds, ServiceViewDnDDescriptor descriptor) {
+        this.point = point;
+        this.cellBounds = cellBounds;
+        this.descriptor = descriptor;
+      }
+
+      Position getPosition() {
+        return point.y < cellBounds.y + cellBounds.height / 2 ? ABOVE : BELOW;
+      }
+    }
+  }
+}

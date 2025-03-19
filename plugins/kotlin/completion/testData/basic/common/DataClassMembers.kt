@@ -4,6 +4,7 @@ fun foo(d: Data) {
     d.<caret>
 }
 
+// IGNORE_K2
 // EXIST: val1
 // EXIST: val2
 // ABSENT: component1

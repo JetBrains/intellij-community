@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -24,11 +24,11 @@ import java.awt.*;
 
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
-  @NotNull private final BooleanGetter myShowFlatten;
-  @Nullable private final Project myProject;
-  @Nullable private final IssueLinkRenderer myIssueLinkRenderer;
+  private final @NotNull BooleanGetter myShowFlatten;
+  private final @Nullable Project myProject;
+  private final @Nullable IssueLinkRenderer myIssueLinkRenderer;
   private final boolean myHighlightProblems;
-  @Nullable private JBInsets myBackgroundInsets;
+  private @Nullable JBInsets myBackgroundInsets;
 
   public ChangesBrowserNodeRenderer(@Nullable Project project, @NotNull BooleanGetter showFlattenGetter, boolean highlightProblems) {
     myShowFlatten = showFlattenGetter;
@@ -37,8 +37,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     myIssueLinkRenderer = project != null ? new IssueLinkRenderer(project, this) : null;
   }
 
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -56,7 +55,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
                                     int row,
                                     boolean hasFocus) {
     ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)value;
-    node.render(this, selected, expanded, hasFocus);
+    node.render(tree, this, selected, expanded, hasFocus);
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 
@@ -100,14 +99,18 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
+  /**
+   * @param isDirectory directory flag is specified explicitly, as {@link FilePath#isDirectory()} can be unreliable
+   */
   public void setIcon(@NotNull FilePath filePath, boolean isDirectory) {
-    if (isDirectory) {
-      setIcon(PlatformIcons.FOLDER_ICON);
-      return;
-    }
     Icon icon = FilePathIconProvider.EP_NAME.computeSafeIfAny(provider -> provider.getIcon(filePath, myProject));
     if (icon != null) {
       setIcon(icon);
+      return;
+    }
+
+    if (isDirectory) {
+      setIcon(PlatformIcons.FOLDER_ICON);
       return;
     }
     setIcon(VcsUtil.getIcon(myProject, filePath));

@@ -5,3 +5,6 @@ interface A {
 fun foo(x: A) {
     if (x <<caret> 0) {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
+// IGNORE_K2
+// For K2, needs KT-75197

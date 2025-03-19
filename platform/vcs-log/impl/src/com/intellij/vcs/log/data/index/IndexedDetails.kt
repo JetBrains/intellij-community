@@ -2,10 +2,7 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogObjectsFactory
-import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.LoadingDetailsImpl
 import com.intellij.vcs.log.data.VcsLogStorage
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
@@ -17,7 +14,7 @@ import java.util.*
 @ApiStatus.Internal
 class IndexedDetails(private val dataGetter: IndexDataGetter,
                      storage: VcsLogStorage,
-                     private val commitIndex: Int,
+                     private val commitIndex: VcsLogCommitStorageIndex,
                      loadingTaskIndex: Long = 0) : LoadingDetailsImpl(storage, commitIndex, loadingTaskIndex) {
   private val _parents by lazy { dataGetter.getParents(commitIndex) }
   private val _author by lazy { dataGetter.getAuthor(commitIndex) }
@@ -63,12 +60,12 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
     }
 
     @JvmStatic
-    fun createMetadata(commitIndexes: Set<Int>,
+    fun createMetadata(commitIndexes: Set<VcsLogCommitStorageIndex>,
                        dataGetter: IndexDataGetter,
                        storage: VcsLogStorage,
                        factory: VcsLogObjectsFactory): Int2ObjectMap<VcsCommitMetadata> {
 
-      val commitIds = storage.getCommitIds(commitIndexes) ?: return Int2ObjectMaps.emptyMap()
+      val commitIds = storage.getCommitIds(commitIndexes)
       if (commitIds.isEmpty()) return Int2ObjectMaps.emptyMap()
 
       val authors = dataGetter.getAuthor(commitIndexes) ?: return Int2ObjectMaps.emptyMap()
@@ -86,13 +83,13 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
         val author = authors[commitIndex]
         val committer = committers[commitIndex] ?: author
         val authorTime = authorTimes[commitIndex]
-        val commitTime =  commitTimes[commitIndex]
+        val commitTime = commitTimes[commitIndex]
         val fullMessage = messages[commitIndex]
 
         if (commitId != null && parent != null && author != null && committer != null && commitTime != null && authorTime != null && fullMessage != null) {
           result.put(commitIndex, factory.createCommitMetadata(commitId.hash, parent, commitTime, commitId.root, getSubject(fullMessage),
-                                                               author.name,
-                                                               author.email, fullMessage, committer.name, committer.email, authorTime))
+                                                               author.name, author.email, fullMessage, committer.name, committer.email,
+                                                               authorTime))
         }
       }
 
@@ -100,7 +97,7 @@ class IndexedDetails(private val dataGetter: IndexDataGetter,
     }
 
     @JvmStatic
-    fun createMetadata(commitIndex: Int,
+    fun createMetadata(commitIndex: VcsLogCommitStorageIndex,
                        dataGetter: IndexDataGetter,
                        storage: VcsLogStorage,
                        factory: VcsLogObjectsFactory): VcsCommitMetadata? {

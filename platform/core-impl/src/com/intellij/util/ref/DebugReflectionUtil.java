@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -10,6 +10,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.RefValueHashMapUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -157,6 +158,9 @@ public final class DebugReflectionUtil {
                                                     @NotNull BackLink<?> backLink,
                                                     @NotNull Predicate<Object> shouldExamineValue) {
     Class<?> rootClass = root.getClass();
+    if (root instanceof Map) {
+      RefValueHashMapUtil.expungeStaleEntries((Map<?, ?>)root);
+    }
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
       // do not follow weak/soft refs
@@ -218,7 +222,7 @@ public final class DebugReflectionUtil {
   }
 
   public static class BackLink<V> {
-    @NotNull private final V value;
+    private final @NotNull V value;
     private final Field field;
     /**
      * human-readable field name (sometimes the Field is not available, e.g., when it's synthetic).
@@ -243,9 +247,17 @@ public final class DebugReflectionUtil {
       BackLink<?> backLink = this;
       while (backLink != null) {
         backLink.print(result);
-        backLink = backLink.backLink;
+        backLink = backLink.prev();
       }
       return result.toString();
+    }
+
+    BackLink<?> prev() {
+      return backLink;
+    }
+
+    String getFieldName() {
+      return this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
     }
 
     void print(@NotNull StringBuilder result) {
@@ -266,9 +278,8 @@ public final class DebugReflectionUtil {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
 
-      Field field = this.field;
-      String fieldName = this.fieldName != null ? this.fieldName : field.getDeclaringClass().getName() + "." + field.getName();
-      result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
+      result.append("via '").append(getFieldName()).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass())
+        .append("\n");
     }
   }
 }

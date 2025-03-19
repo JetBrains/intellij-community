@@ -55,7 +55,7 @@ public final class WinIntelliJSliderUI extends BasicSliderUI {
         setProperty(e, HOVER_PROPERTY, Boolean.FALSE);
       }
 
-      private void setProperty(MouseEvent e, String property, Boolean value) {
+      private static void setProperty(MouseEvent e, String property, Boolean value) {
         JComponent c = (JComponent)e.getComponent();
         c.putClientProperty(property, value);
         c.repaint();

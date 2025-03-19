@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -312,7 +312,7 @@ public final class FileTemplateConfigurable implements Configurable, Configurabl
       String name = myNameField.getText();
       String extension = myExtensionField.getText();
       String filename = name + "." + extension;
-      if (name.length() == 0 || !isValidFilename(filename)) {
+      if (name.isEmpty() || !isValidFilename(filename)) {
         throw new ConfigurationException(IdeBundle.message("error.invalid.template.file.name.or.extension"));
       }
       FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filename);

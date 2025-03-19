@@ -2,28 +2,19 @@
 package com.intellij.ide
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler
-import com.intellij.ide.plugins.isOnDemandPluginEnabled
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
 internal class JavaDependencyCollector : DependencyCollector {
 
-  override fun collectDependencies(project: Project): Set<String> {
-    return runReadAction {
+  override suspend fun collectDependencies(project: Project): Set<String> {
+    return readAction {
       val projectLibraries = LibraryTablesRegistrar.getInstance()
         .getLibraryTable(project)
         .libraries.asSequence()
@@ -38,32 +29,10 @@ internal class JavaDependencyCollector : DependencyCollector {
       (projectLibraries + moduleLibraries)
         .mapNotNull { it as? LibraryEx }
         .mapNotNull { it.properties as? RepositoryLibraryProperties }
-        .map { "${it.groupId}:${it.artifactId}" }
+        .map { it.groupId to it.artifactId }
+        .distinct()
+        .map { (g, a) -> "$g:$a" }
         .toSet()
-    }
-  }
-}
-
-@ApiStatus.Experimental
-private class ProjectLoadedListener(private val project: Project) : JpsProjectLoadedListener {
-  override fun loaded() {
-    if (!isOnDemandPluginEnabled) {
-      return
-    }
-
-    PluginFeatureEnabler.getInstance(project).scheduleEnableSuggested()
-  }
-}
-
-@ApiStatus.Experimental
-private class LibraryAddedListener(private val project: Project) : WorkspaceModelChangeListener {
-  override fun changed(event: VersionedStorageChange) {
-    if (!isOnDemandPluginEnabled || event.getChanges(LibraryEntity::class.java).none { it is EntityChange.Added }) {
-      return
-    }
-
-    PluginAdvertiserService.getInstance(project).rescanDependencies {
-      PluginFeatureEnabler.getInstance(project).enableSuggested()
     }
   }
 }

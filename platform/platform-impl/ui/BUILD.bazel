@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.platform.ide.ui` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "ide-ui",
+  module_name = "intellij.platform.ide.ui",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/util:util-ui",
+    "//platform/core-ui",
+    "@lib//:jetbrains-annotations",
+    "//platform/ide-core",
+    "@lib//:jna",
+    "//platform/core-api:core",
+    "//platform/util",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+  ]
+)
+### auto-generated section `build intellij.platform.ide.ui` end

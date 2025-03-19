@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.lang.Language;
@@ -8,12 +8,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointPriorityListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<SyntaxHighlighterFactory> {
+
+  @ApiStatus.Internal
   public static final ExtensionPointName<KeyedLazyInstance<SyntaxHighlighterFactory>> EP_NAME = new ExtensionPointName<>("com.intellij.lang.syntaxHighlighterFactory");
 
   private boolean myEpListenerAdded = false;
@@ -29,10 +31,10 @@ public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<Sy
       return fromEp;
     }
 
-    SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.INSTANCE.forLanguage(key);
+    SyntaxHighlighter highlighter = LanguageSyntaxHighlighters.getInstance().forLanguage(key);
     if (highlighter != null) {
       checkAddEPListener();
-      return Collections.singletonList(new SingleLazyInstanceSyntaxHighlighterFactory() {
+      return List.of(new SingleLazyInstanceSyntaxHighlighterFactory() {
         @Override
         protected @NotNull SyntaxHighlighter createHighlighter() {
           return highlighter;
@@ -52,7 +54,7 @@ public final class SyntaxHighlighterLanguageFactory extends LanguageExtension<Sy
     LanguageSyntaxHighlighters.EP_NAME.addExtensionPointListener(new MyEPListener(), null);
   }
 
-  private class MyEPListener implements ExtensionPointListener<KeyedLazyInstance<SyntaxHighlighter>>, ExtensionPointPriorityListener {
+  private final class MyEPListener implements ExtensionPointListener<KeyedLazyInstance<SyntaxHighlighter>>, ExtensionPointPriorityListener {
     @Override
     public void extensionAdded(@NotNull KeyedLazyInstance<SyntaxHighlighter> extension, @NotNull PluginDescriptor pluginDescriptor) {
       invalidateCacheForExtension(extension.getKey());

@@ -4,6 +4,6 @@ class RawTest<A> {
   }
     
   void bar(RawTest x){
-    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">String a = x.<String>foo();</error>
+    String a = x.<String><error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.String'">foo</error>();
   }
 }

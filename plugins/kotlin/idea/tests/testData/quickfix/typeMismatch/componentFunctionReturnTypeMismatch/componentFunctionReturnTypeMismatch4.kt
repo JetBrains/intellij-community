@@ -1,5 +1,6 @@
 // "Change return type of called function 'A.component2' to 'Unit'" "true"
 // ERROR: The integer literal does not conform to the expected type Unit
+// K2_AFTER_ERROR: Return type mismatch: expected 'Unit', actual 'Int'.
 abstract class A {
     abstract operator fun component1(): Int
     operator fun component2() = 42
@@ -8,3 +9,5 @@ abstract class A {
 fun foo(a: A) {
     val (w: Int, x: Unit) = a<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeCallableReturnTypeFix$ForCalled
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.jetbrains.python.testing.doctest;
 
@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.PythonTestLegacyConfigurationProducer;
@@ -25,22 +26,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public final class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigurationProducer<PythonDocTestRunConfiguration> {
-  @NotNull
   @Override
-  public ConfigurationFactory getConfigurationFactory() {
+  public @NotNull ConfigurationFactory getConfigurationFactory() {
     return PythonTestConfigurationType.getInstance().getDocTestFactory();
   }
 
   @Override
-  protected boolean isTestFunction(@NotNull final PyFunction pyFunction,
-                                   @Nullable final AbstractPythonLegacyTestRunConfiguration configuration) {
+  protected boolean isTestFunction(final @NotNull PyFunction pyFunction,
+                                   final @Nullable AbstractPythonLegacyTestRunConfiguration configuration) {
     return PythonDocTestUtil.isDocTestFunction(pyFunction);
   }
 
   @Override
   protected boolean isTestClass(@NotNull PyClass pyClass,
-                                @Nullable final AbstractPythonLegacyTestRunConfiguration configuration,
-                                @Nullable final TypeEvalContext context) {
+                                final @Nullable AbstractPythonLegacyTestRunConfiguration configuration,
+                                final @Nullable TypeEvalContext context) {
     return PythonDocTestUtil.isDocTestClass(pyClass);
   }
 
@@ -51,7 +51,7 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
   }
 
   @Override
-  protected boolean isAvailable(@NotNull final Location location) {
+  protected boolean isAvailable(final @NotNull Location location) {
     final Module module = location.getModule();
     if (!isPythonModule(module)) return false;
     final PsiElement element = location.getPsiElement();
@@ -66,7 +66,12 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
   // test configuration is always prefered over regular one
   @Override
   public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
-    return self.isProducedBy(getClass());
+    return other.getConfiguration() instanceof PythonRunConfiguration;
+  }
+
+  @Override
+  public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
+    return other.getConfiguration() instanceof PythonRunConfiguration;
   }
 
   private static class PyDocTestVisitor extends PsiRecursiveElementVisitor {

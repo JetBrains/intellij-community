@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.CommonBundle;
@@ -43,8 +43,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -54,8 +54,8 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   private static final Logger LOG = Logger.getInstance(SourcePathsStep.class);
 
   private String myCurrentMode;
-  @NonNls private static final String CREATE_SOURCE_PANEL = "create_source";
-  @NonNls private static final String CHOOSE_SOURCE_PANEL = "choose_source";
+  private static final @NonNls String CREATE_SOURCE_PANEL = "create_source";
+  private static final @NonNls String CHOOSE_SOURCE_PANEL = "choose_source";
 
   private final SourcePathsBuilder myBuilder;
   private final Icon myIcon;
@@ -100,8 +100,9 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final JLabel srcPathLabel = new JLabel(JavaUiBundle.message("prompt.enter.relative.path.to.module.content.root", File.separator));
     panel.add(srcPathLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                    JBUI.insets(8, 30, 0, 0), 0, 0));
-    final FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    chooserDescriptor.withTreeRootVisible(true);
+    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(JavaUiBundle.message("prompt.select.source.directory"))
+      .withTreeRootVisible(true);
     final FieldPanel fieldPanel = createFieldPanel(myTfSourceDirectoryName, null, new BrowsePathListener(myTfSourceDirectoryName, chooserDescriptor));
     panel.add(fieldPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  JBUI.insets(8, 30, 0, 10), 0, 0));
@@ -271,8 +272,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return true;
   }
 
-  @Nullable
-  private String getSourceDirectoryPath() {
+  private @Nullable String getSourceDirectoryPath() {
     final String contentEntryPath = getContentRootPath();
     if (contentEntryPath != null) {
       final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
@@ -322,16 +322,14 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return new ArrayList<>(calculateSourceRoots(getContentRootPath()));
   }
 
-  @NotNull
-  public static Collection<JavaModuleSourceRoot> calculateSourceRoots(final String contentRootPath) {
+  public static @NotNull Collection<JavaModuleSourceRoot> calculateSourceRoots(final String contentRootPath) {
     if (contentRootPath == null) {
       return Collections.emptyList();
     }
     return JavaSourceRootDetectionUtil.suggestRoots(new File(contentRootPath));
   }
 
-  @Nullable
-  private String getContentRootPath() {
+  private @Nullable String getContentRootPath() {
     return myBuilder.getContentEntryPath();
   }
 
@@ -351,12 +349,11 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     private final JTextField myField;
 
     BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
-      super(textField, JavaUiBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
+      super(textField, chooserDescriptor);
       myField = textField;
     }
 
-    @Nullable
-    private VirtualFile getContentEntryDir() {
+    private @Nullable VirtualFile getContentEntryDir() {
       final String contentEntryPath = getContentRootPath();
       if (contentEntryPath != null) {
         return WriteAction

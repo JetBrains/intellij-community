@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -117,10 +117,8 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
 
   private void initBrowseActions() {
     InsertPathAction.addTo(myPathToCertificatesField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    myClientCertificatePathField.addBrowseFolderListener(
-      message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-      null, null, new FileChooserDescriptor(true, false, false, false, false, false)
-    );
+    myClientCertificatePathField.addBrowseFolderListener(null, new FileChooserDescriptor(true, false, false, false, false, false)
+      .withTitle(message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title")));
   }
 
   private void initNumericValidation() {

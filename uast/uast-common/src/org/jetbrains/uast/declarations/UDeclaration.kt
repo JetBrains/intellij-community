@@ -49,6 +49,10 @@ interface UDeclaration : UElement, PsiJvmModifiersOwner, UAnnotated {
     get() = UastVisibility[this]
 
   override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
+
+  override fun hasAnnotation(fqName: String): Boolean {
+    return findAnnotation(fqName) != null
+  }
 }
 
 interface UDeclarationEx : UDeclaration {

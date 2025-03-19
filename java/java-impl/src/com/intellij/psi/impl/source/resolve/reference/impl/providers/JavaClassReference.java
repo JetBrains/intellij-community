@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
@@ -140,11 +140,6 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   public @NotNull PsiElement getElement() {
     return myJavaClassReferenceSet.getElement();
-  }
-
-  @Override
-  public boolean isReferenceTo(@NotNull PsiElement element) {
-    return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
   }
 
   @Override
@@ -520,7 +515,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
             result.consume(createSubclassLookupValue(extendClass));
           }
         }
-        for (PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true)) {
+        for (PsiClass clazz : ClassInheritorsSearch.search(extendClass, packageScope, true).asIterable()) {
           String qname = clazz.getQualifiedName();
           if (qname != null && isClassAccepted(clazz, classKind, instantiatable, concrete, notInterface, notEnum)) {
             result.consume(createSubclassLookupValue(clazz));

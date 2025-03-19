@@ -1,3 +1,5 @@
+// IGNORE_K2
+// IDEA-358365
 // MODULE: common
 // FILE: common.kt
 // PLATFORM: common
@@ -7,7 +9,7 @@ fun commonContext(){
     val str = "Stop here"
 }
 
-// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1 / line / 1
+// ADDITIONAL_BREAKPOINT: common.kt / Breakpoint1
 
 // EXPRESSION: debugMe(42)
 // RESULT: "JVM 42": Ljava/lang/String;

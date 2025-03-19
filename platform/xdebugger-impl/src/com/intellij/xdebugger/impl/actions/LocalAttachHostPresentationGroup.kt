@@ -7,8 +7,10 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.attach.XAttachHost
 import com.intellij.xdebugger.attach.XAttachPresentationGroup
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 object LocalAttachHostPresentationGroup: XAttachPresentationGroup<XAttachHost> {
   // Should be at the bottom of the list
   override fun getOrder(): Int {

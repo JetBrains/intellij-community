@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts.propertybased
 
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.packaging.artifacts.Artifact
@@ -9,11 +11,9 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.impl.artifacts.workspacemodel.toElement
 import com.intellij.packaging.impl.elements.ArtifactRootElementImpl
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder
 import org.junit.Assert
 
 internal fun artifact(project: Project, name: String): Artifact {

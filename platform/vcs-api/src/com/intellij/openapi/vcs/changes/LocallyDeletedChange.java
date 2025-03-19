@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,21 +10,19 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class LocallyDeletedChange {
-  @NotNull private final String myPresentableUrl;
-  @NotNull private final FilePath myPath;
+  private final @NotNull String myPresentableUrl;
+  private final @NotNull FilePath myPath;
 
   public LocallyDeletedChange(@NotNull FilePath path) {
     myPath = path;
     myPresentableUrl = myPath.getPresentableUrl();
   }
 
-  @NotNull
-  public FilePath getPath() {
+  public @NotNull FilePath getPath() {
     return myPath;
   }
 
-  @Nullable
-  public Icon getAddIcon() {
+  public @Nullable Icon getAddIcon() {
     return null;
   }
 
@@ -43,20 +41,16 @@ public class LocallyDeletedChange {
     return myPresentableUrl.hashCode();
   }
 
-  @NotNull
-  @NlsSafe
-  public String getPresentableUrl() {
+  public @NotNull @NlsSafe String getPresentableUrl() {
     return myPresentableUrl;
   }
 
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getDescription() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  @Nls
-  public String toString() {
+  @Override
+  public @Nls String toString() {
     return myPath.getPath();
   }
 }

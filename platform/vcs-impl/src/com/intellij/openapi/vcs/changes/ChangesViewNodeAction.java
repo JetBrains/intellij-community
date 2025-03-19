@@ -18,4 +18,11 @@ public interface ChangesViewNodeAction {
 
   @Nullable
   HoverIcon createNodeHoverIcon(@NotNull ChangesBrowserNode<?> node);
+
+  /**
+   * Optionally, allows overriding DoubleClick and Enter events for a single selected node.
+   */
+  default boolean handleDoubleClick(@NotNull ChangesBrowserNode<?> node) {
+    return false;
+  }
 }

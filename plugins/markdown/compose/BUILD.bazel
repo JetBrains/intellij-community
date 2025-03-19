@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.markdown.compose.preview` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "compose-preview_resources",
+  files = glob(["src/main/resources/**/*"]),
+  strip_prefix = "src/main/resources"
+)
+
+jvm_library(
+  name = "compose-preview",
+  module_name = "intellij.markdown.compose.preview",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/jewel/foundation",
+    "//plugins/markdown/core:markdown",
+    "//platform/compose",
+    "//libraries/compose-foundation-desktop",
+    "//platform/core-api:core",
+    "//platform/util:util-ui",
+    "//platform/platform-api:ide",
+    "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
+    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
+  ],
+  runtime_deps = [":compose-preview_resources"],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.markdown.compose.preview` end

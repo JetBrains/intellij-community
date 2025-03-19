@@ -2,36 +2,35 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils.addRemainingWhenBranches
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
-internal class AddWhenRemainingBranchesIntention
-    : AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+internal class AddWhenRemainingBranchesIntention :
+    KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.ElementContext>(KtWhenExpression::class) {
 
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
-    override fun getActionName(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context): String = familyName
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtWhenExpression> = ApplicabilityRanges.SELF
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
-        val whenMissingCases = element.getMissingCases().takeIf {
+    override fun KaSession.prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.ElementContext? {
+        val whenMissingCases = element.computeMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
         } ?: return null
-        return AddRemainingWhenBranchesUtils.Context(whenMissingCases, enumToStarImport = null)
+        return AddRemainingWhenBranchesUtils.ElementContext(whenMissingCases, enumToStarImport = null)
     }
 
-    override fun apply(element: KtWhenExpression, context: AddRemainingWhenBranchesUtils.Context, project: Project, editor: Editor?) {
-        addRemainingWhenBranches(element, context)
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtWhenExpression,
+        elementContext: AddRemainingWhenBranchesUtils.ElementContext,
+        updater: ModPsiUpdater,
+    ) {
+        addRemainingWhenBranches(element, elementContext)
     }
 }

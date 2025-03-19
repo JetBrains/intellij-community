@@ -1,3 +1,5 @@
+// NEW_NAME: foo
+// RENAME: variable
 fun xyzzy(x: Pair<Int, String>) {
     val (bar, foo) = x
     println(foo)

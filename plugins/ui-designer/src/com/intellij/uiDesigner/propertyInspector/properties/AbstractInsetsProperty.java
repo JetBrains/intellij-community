@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.uiDesigner.propertyInspector.Property;
@@ -17,11 +17,11 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   private final InsetsPropertyRenderer myRenderer;
   private IntRegexEditor<Insets> myEditor;
 
-  public AbstractInsetsProperty(@NonNls final String name) {
+  public AbstractInsetsProperty(final @NonNls String name) {
     this(null, name);
   }
 
-  public AbstractInsetsProperty(Property parent, @NonNls final String name){
+  public AbstractInsetsProperty(Property parent, final @NonNls String name){
     super(parent, name);
     myChildren=new Property[]{
       new IntFieldProperty(this, "top", 0, new Insets(0, 0, 0, 0)),
@@ -38,8 +38,7 @@ public abstract class AbstractInsetsProperty<T extends RadComponent> extends Pro
   }
 
   @Override
-  @NotNull
-  public final PropertyRenderer<Insets> getRenderer() {
+  public final @NotNull PropertyRenderer<Insets> getRenderer() {
     return myRenderer;
   }
 

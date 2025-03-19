@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -56,19 +57,18 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, @Nullable final DataContext dataContext) {
+  public void invoke(final @NotNull Project project, final PsiElement @NotNull [] elements, final @Nullable DataContext dataContext) {
     if (elements.length != 1) return;
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
   }
 
-  @Nullable
   @Override
-  public String getTargetNotFoundMessage() {
+  public @Nullable String getTargetNotFoundMessage() {
     return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
   }
 
-  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable final Editor editor) {
+  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, final @Nullable Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
@@ -81,8 +81,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
     final PsiClass containingClass = method.getContainingClass();
     final PsiReferenceExpression refExpr = editor != null ? JavaTargetElementEvaluator.findReferenceExpression(editor) : null;
-    final boolean allowDelegation = containingClass != null && 
-                                    (!containingClass.isInterface() || PsiUtil.isLanguageLevel8OrHigher(containingClass)) &&
+    final boolean allowDelegation = containingClass != null &&
+                                    (!containingClass.isInterface() || PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, containingClass)) &&
                                     !JavaPsiRecordUtil.isCanonicalConstructor(method);
     InplaceChangeSignature inplaceChangeSignature = editor != null ? InplaceChangeSignature.getCurrentRefactoring(editor) : null;
     ChangeInfo initialChange = inplaceChangeSignature != null ? inplaceChangeSignature.getStableChange() : null;
@@ -124,9 +124,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
               return currentInfo.getNewParameters().length;
             }
 
-            @Nullable
             @Override
-            public String getReturnTypeText() {
+            public @Nullable String getReturnTypeText() {
               return currentInfo.getNewReturnType().getTypeText();
             }
           };

@@ -7,8 +7,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
@@ -21,12 +22,12 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.*
 
-abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase() {
-    protected abstract val pluginKind: KotlinPluginKind
+abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFixtureTestCase(),
+                                                          ExpectedPluginModeProvider {
 
     private val testRoot: String by lazy {
         val testClassPath = javaClass.getAnnotation(TestMetadata::class.java)?.value
-        ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
+            ?: error("@${TestMetadata::class.java} annotation not found on class '${javaClass.name}'")
         val pathString = KotlinTestHelpers.getTestRootPath(javaClass).resolve(testClassPath).absolutePathString()
         if (pathString.endsWith(File.separatorChar)) pathString else pathString + File.separatorChar
     }
@@ -46,7 +47,10 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         directiveParser.build()
     }
 
-    private val testMethodPath: Path by lazy {
+    protected val testRootPath: Path
+        get() = Paths.get(testRoot)
+
+    protected val testMethodPath: Path by lazy {
         val testName = this.name
         val testClass = javaClass
         val testMethod = testClass.methods
@@ -64,10 +68,7 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
     }
 
     override fun setUp() {
-        val isK2Plugin = pluginKind == KotlinPluginKind.FIR_PLUGIN
-        System.setProperty("idea.kotlin.plugin.use.k2", isK2Plugin.toString())
-        super.setUp()
-        checkKotlinPluginKind(pluginKind)
+        setUpWithKotlinPlugin { super.setUp() }
     }
 
     override fun tearDown() {
@@ -102,13 +103,38 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String) {
-        val expectedPath = getExpectedPath(expectedSuffix)
+    fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false) {
+        val expectedPathString = getExpectedPath(expectedSuffix, addSuffixAfterExtension)
+
+        if (pluginMode == KotlinPluginMode.K2) {
+            val expectedPath = Paths.get(testDataPath, expectedPathString)
+
+            for (extension in listOf(K2_TEST_FILE_EXTENSION, FIR_TEST_FILE_EXTENSION)) {
+                val k2ExpectedPathString = getExpectedPath(".$extension$expectedSuffix", addSuffixAfterExtension)
+                val k2ExpectedPath = Paths.get(testDataPath, k2ExpectedPathString)
+
+                if (k2ExpectedPath.exists()) {
+                    checkContentByExpectedPath(k2ExpectedPathString)
+                    IgnoreTests.cleanUpIdenticalK2TestFile(
+                        originalTestFile = expectedPath.toFile(),
+                        k2Extension = FIR_TEST_FILE_EXTENSION,
+                        k2TestFile = k2ExpectedPath.toFile()
+                    )
+
+                    return
+                }
+            }
+        }
+
+        checkContentByExpectedPath(expectedPathString)
+    }
+
+    private fun JavaCodeInsightTestFixture.checkContentByExpectedPath(expectedPathString: String) {
         try {
-            checkResultByFile(expectedPath, /* ignoreTrailingWhitespaces = */ true)
+            checkResultByFile(expectedPathString, /* ignoreTrailingWhitespaces = */ true)
         } catch (e: RuntimeException) {
             if (e.cause is FileNotFoundException) {
-                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPath)
+                val absoluteExpectedPath = Paths.get(testDataPath).resolve(expectedPathString)
                 if (!absoluteExpectedPath.exists()) {
                     val mainFile = file
                     val originalVirtualFile = when (val virtualFile = mainFile.virtualFile) {
@@ -129,10 +155,16 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         }
     }
 
-    private fun getExpectedPath(expectedSuffix: String): String = buildString {
+    private fun getExpectedPath(expectedSuffix: String, addSuffixAfterExtension: Boolean = false): String = buildString {
         append(testMethodPath.nameWithoutExtension)
-        append(expectedSuffix)
+        if (!addSuffixAfterExtension) append(expectedSuffix)
         append(".")
         append(testMethodPath.extension)
+        if (addSuffixAfterExtension) append(expectedSuffix)
+    }
+
+    companion object {
+        private val K2_TEST_FILE_EXTENSION: IgnoreTests.FileExtension = IgnoreTests.FileExtension.K2
+        private val FIR_TEST_FILE_EXTENSION: IgnoreTests.FileExtension = IgnoreTests.FileExtension.FIR
     }
 }

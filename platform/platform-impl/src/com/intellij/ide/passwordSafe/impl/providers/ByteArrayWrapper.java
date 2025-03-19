@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.passwordSafe.impl.providers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -8,7 +9,8 @@ import java.util.Arrays;
 /**
  * The wrapper for byte arrays that allows to use it as a key in maps
  */
-public class ByteArrayWrapper implements Comparable<ByteArrayWrapper> {
+@ApiStatus.Internal
+public final class ByteArrayWrapper implements Comparable<ByteArrayWrapper> {
   /**
    * The data
    */

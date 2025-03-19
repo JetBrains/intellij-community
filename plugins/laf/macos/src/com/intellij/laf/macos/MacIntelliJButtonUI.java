@@ -127,11 +127,6 @@ public final class MacIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
-  protected int getMinimumHeight() {
-    return MINIMUM_HEIGHT.get();
-  }
-
-  @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
     int x = textRect.x + getTextShiftOffset();
     int y = textRect.y + metrics.getAscent() + getTextShiftOffset();

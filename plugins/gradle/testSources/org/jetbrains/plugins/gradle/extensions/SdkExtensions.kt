@@ -23,6 +23,7 @@ fun Sdk.cloneWithCorruptedRoots(tempDir: File): Sdk {
   val sdkClone = clone() as Sdk
   val corruptedRoots = generateCorruptedJdkRoots(sdkClone, tempDir)
   sdkClone.sdkModificator.run {
+    name = "${name}_clone"
     removeAllRoots()
     corruptedRoots.forEach { (type, file) ->
       addRoot(type, file)

@@ -1,0 +1,6 @@
+enum E {
+  A, B;
+  boolean x() {
+    return true;
+  }
+}

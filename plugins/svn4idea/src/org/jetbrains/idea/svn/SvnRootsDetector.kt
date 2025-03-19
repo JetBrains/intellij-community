@@ -1,18 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.svn.SvnUtil.*
 import org.jetbrains.idea.svn.api.Url
 import java.io.File
 
-class SvnRootsDetector(private val parent: Disposable, private val myVcs: SvnVcs, private val myNestedCopiesHolder: NestedCopiesHolder) {
+internal class SvnRootsDetector(private val parent: CoroutineScope, private val myVcs: SvnVcs, private val myNestedCopiesHolder: NestedCopiesHolder) {
   private val myResult = Result()
   private val myRepositoryRoots = RepositoryRoots(myVcs)
 

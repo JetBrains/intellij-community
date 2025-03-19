@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,21 +14,27 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
 import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
+
+import static org.jetbrains.java.decompiler.ClassNameConstants.JAVA_LANG_CHARACTER;
+import static org.jetbrains.java.decompiler.code.CodeConstants.TYPE_OBJECT;
+import static org.jetbrains.java.decompiler.struct.gen.VarType.VARTYPE_CHAR;
 
 public final class SwitchStatement extends Statement {
   private List<Statement> caseStatements = new ArrayList<>();
   private List<List<StatEdge>> caseEdges = new ArrayList<>();
   private List<List<@Nullable Exprent>> caseValues = new ArrayList<>();
+  private final Map<Statement, Exprent> guards = new HashMap<>();
   private StatEdge defaultEdge;
   private Exprent headExprent;
+  private boolean canBeRule = false;
+  private boolean useCustomDefault = false;
 
   private SwitchStatement() {
     super(StatementType.SWITCH);
@@ -46,13 +52,97 @@ public final class SwitchStatement extends Statement {
       regularSuccessors.remove(post);
     }
     defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
-    for (Statement successor : regularSuccessors) {
+
+    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
+    List<Statement> sorted = new ArrayList<>(regularSuccessors);
+    Collections.sort(sorted, Comparator.comparingInt(o -> o.id));
+    for (Statement successor : sorted) {
       stats.addWithKey(successor, successor.id);
     }
   }
 
-  @Nullable
-  public static Statement isHead(@NotNull Statement head) {
+  public void setCanBeRule(boolean canBeRule) {
+    this.canBeRule = canBeRule;
+  }
+
+  public void addGuard(@NotNull Statement statement, @NotNull Exprent guard) {
+    guards.put(statement, guard);
+  }
+
+
+  /**
+   * Removes the specified case statement from the switch statement.
+   *
+   * @param statement the statement to be removed
+   */
+  public void removeCaseStatement(@NotNull Statement statement) {
+    stats.removeWithKey(statement.id);
+    int caseIndex = caseStatements.indexOf(statement);
+    if (caseIndex < 0) {
+      return;
+    }
+    caseStatements.remove(caseIndex);
+    caseEdges.remove(caseIndex);
+    caseValues.remove(caseIndex);
+    for (StatEdge edge : statement.getAllSuccessorEdges()) {
+      edge.getDestination().removePredecessor(edge);
+    }
+    for (StatEdge edge : statement.getAllPredecessorEdges()) {
+      edge.getSource().removeSuccessor(edge);
+    }
+  }
+
+
+  /**
+   * Duplicates a case statement within a switch statement.
+   * Labels are not copied
+   *
+   * @param currentStatement The current case statement to duplicate.
+   * @return The index of the duplicated case statement.
+   *
+   */
+  public int duplicateCaseStatement(@NotNull Statement currentStatement) {
+    Statement dummy = currentStatement.getSimpleCopy();
+    int statIndex = stats.indexOf(currentStatement);
+    if (statIndex < 0) {
+      return statIndex;
+    }
+    stats.addWithKeyAndIndex(statIndex + 1, dummy, dummy.id);
+
+    int caseIndex = caseStatements.indexOf(currentStatement);
+    caseStatements.add(caseIndex + 1, dummy);
+    List<@Nullable Exprent> toCopyValues = caseValues.get(caseIndex);
+    caseValues.add(caseIndex + 1, toCopyValues);
+    List<StatEdge> previousEdges = caseEdges.get(caseIndex);
+    List<StatEdge> toCopyEdges = new ArrayList<>();
+    for (StatEdge previousEdge : previousEdges) {
+      StatEdge edge = previousEdge.copy();
+      edge.setDestination(dummy);
+      toCopyEdges.add(edge);
+    }
+    caseEdges.add(caseIndex + 1, toCopyEdges);
+
+    for (StatEdge edge : currentStatement.getAllPredecessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setDestination(dummy);
+      copy.getSource().addSuccessor(copy);
+    }
+
+    for (StatEdge edge : currentStatement.getAllSuccessorEdges()) {
+      StatEdge copy = edge.copy();
+      copy.setSource(dummy);
+      dummy.addSuccessor(copy);
+    }
+
+    dummy.setParent(this);
+    return caseIndex + 1;
+  }
+
+  public void setUseCustomDefault() {
+    useCustomDefault = true;
+  }
+
+  public static @Nullable Statement isHead(@NotNull Statement head) {
     if (head.type == StatementType.BASIC_BLOCK && head.getLastBasicType() == StatementType.SWITCH) {
       List<Statement> statements = new ArrayList<>();
       if (DecHelper.isChoiceStatement(head, statements)) {
@@ -71,8 +161,7 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public TextBuffer toJava(int indent, @NotNull BytecodeMappingTracer tracer) {
+  public @NotNull TextBuffer toJava(int indent, @NotNull BytecodeMappingTracer tracer) {
     SwitchHelper.simplifySwitchOnEnum(this);
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -89,15 +178,25 @@ public final class SwitchStatement extends Statement {
       List<StatEdge> edges = caseEdges.get(i);
       List<Exprent> values = caseValues.get(i);
       for (int j = 0; j < edges.size(); j++) {
-        if (edges.get(j) == defaultEdge) {
-          buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
+        if (edges.get(j) == defaultEdge && !useCustomDefault) {
+          if (!canBeRule) {
+            buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
+          }
+          else {
+            buf.appendIndent(indent + 1).append("default -> ");
+          }
         }
         else {
           buf.appendIndent(indent + 1).append("case ");
           Exprent value = values.get(j);
-          if (value instanceof ConstExprent) {
+          if (value instanceof ConstExprent constExprent && !constExprent.isNull()) {
             value = value.copy();
-            ((ConstExprent)value).setConstType(switchType);
+            if (switchType.getType() != TYPE_OBJECT) {
+              ((ConstExprent)value).setConstType(switchType);
+            }
+            else if (((JAVA_LANG_CHARACTER).equals(switchType.getValue()))) {
+              ((ConstExprent)value).setConstType(VARTYPE_CHAR);
+            }
           }
           if (value instanceof FieldExprent && ((FieldExprent)value).isStatic()) { // enum values
             buf.append(((FieldExprent)value).getName());
@@ -105,11 +204,47 @@ public final class SwitchStatement extends Statement {
           else {
             buf.append(value.toJava(indent, tracer));
           }
-          buf.append(":").appendLineSeparator();
+
+          Exprent guard = guards.get(stat);
+          if (guard != null) {
+            buf.append(" when ").append(guard.toJava(0, tracer));
+          }
+
+          if (!canBeRule) {
+            buf.append(":").appendLineSeparator();
+          }
+          else {
+            buf.append(" -> ");
+          }
         }
+        if (!canBeRule) {
+          tracer.incrementCurrentSourceLine();
+        }
+      }
+      //example:
+      //case 0: break
+      if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getBlock().getSeq().isEmpty() &&
+          (stat.getExprents() == null || stat.getExprents().isEmpty())) {
+        buf.append("{ }").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
-      buf.append(ExprProcessor.jmpWrapper(stat, indent + 2, false, tracer));
+      else {
+        if (canBeRule && stat instanceof BasicBlockStatement blockStatement && blockStatement.getExprents() != null &&
+            (blockStatement.getExprents().size() > 1 ||
+             (blockStatement.getExprents().size() == 1 &&
+              blockStatement.getExprents().get(0) instanceof ExitExprent exitExprent &&
+              exitExprent.getExitType() == ExitExprent.EXIT_RETURN))) {
+          TextBuffer buffer = ExprProcessor.jmpWrapper(stat, indent + 2, false, tracer);
+          buf.append("{").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+          buf.append(buffer).appendIndent(indent + 1).append("}").appendLineSeparator();
+          tracer.incrementCurrentSourceLine();
+        }
+        else {
+          TextBuffer buffer = ExprProcessor.jmpWrapper(stat, canBeRule ? 0 : indent + 2, false, tracer);
+          buf.append(buffer);
+        }
+      }
     }
     buf.appendIndent(indent).append("}").appendLineSeparator();
     tracer.incrementCurrentSourceLine();
@@ -124,9 +259,8 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public List<Object> getSequentialObjects() {
-    List<Object> result = new ArrayList<>(stats);
+  public @NotNull List<IMatchable> getSequentialObjects() {
+    List<IMatchable> result = new ArrayList<>(stats);
     result.add(1, headExprent);
     return result;
   }
@@ -149,8 +283,7 @@ public final class SwitchStatement extends Statement {
   }
 
   @Override
-  @NotNull
-  public Statement getSimpleCopy() {
+  public @NotNull Statement getSimpleCopy() {
     return new SwitchStatement();
   }
 
@@ -159,6 +292,17 @@ public final class SwitchStatement extends Statement {
     first = stats.get(0);
     defaultEdge = first.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
     sortEdgesAndNodes();
+  }
+
+  @Override
+  public StartEndPair getStartEndRange() {
+    StartEndPair[] sepairs = new StartEndPair[caseStatements.size() + 1];
+    int i = 0;
+    sepairs[i++] = super.getStartEndRange();
+    for (Statement st : caseStatements) {
+      sepairs[i++] = st.getStartEndRange();
+    }
+    return StartEndPair.join(sepairs);
   }
 
   public void sortEdgesAndNodes() {
@@ -299,33 +443,27 @@ public final class SwitchStatement extends Statement {
     }
   }
 
-  @NotNull
-  public List<Exprent> getHeadExprentList() {
+  public @NotNull List<Exprent> getHeadExprentList() {
     return Collections.singletonList(headExprent);
   }
 
-  @Nullable
-  public Exprent getHeadExprent() {
+  public @Nullable Exprent getHeadExprent() {
     return headExprent;
   }
 
-  @NotNull
-  public List<List<StatEdge>> getCaseEdges() {
+  public @NotNull List<List<StatEdge>> getCaseEdges() {
     return caseEdges;
   }
 
-  @NotNull
-  public List<Statement> getCaseStatements() {
+  public @NotNull List<Statement> getCaseStatements() {
     return caseStatements;
   }
 
-  @NotNull
-  public StatEdge getDefaultEdge() {
+  public @NotNull StatEdge getDefaultEdge() {
     return defaultEdge;
   }
 
-  @NotNull
-  public List<List<@Nullable Exprent>> getCaseValues() {
+  public @NotNull List<List<@Nullable Exprent>> getCaseValues() {
     return caseValues;
   }
 }

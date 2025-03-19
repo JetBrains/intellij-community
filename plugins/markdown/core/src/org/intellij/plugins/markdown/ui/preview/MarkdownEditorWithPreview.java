@@ -1,68 +1,60 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.project.Project;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
+import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
-  public static final Key<MarkdownEditorWithPreview> PARENT_SPLIT_EDITOR_KEY = Key.create("parentSplit");
-  private boolean myAutoScrollPreview;
+  private boolean autoScrollPreview;
 
-  public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview) {
+  public MarkdownEditorWithPreview(@NotNull TextEditor editor, @NotNull MarkdownPreviewFileEditor preview, @NotNull Project project) {
     super(
       editor,
       preview,
       MarkdownBundle.message("markdown.editor.name"),
       Layout.SHOW_EDITOR_AND_PREVIEW,
-      !MarkdownSettings.getInstance(ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject())).isVerticalSplit()
+      !MarkdownSettings.getInstance(project).isVerticalSplit()
     );
 
-    editor.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
-    preview.putUserData(PARENT_SPLIT_EDITOR_KEY, this);
-
+    // allow launching actions while in preview mode;
+    // FIXME: better solution IDEA-354102
+    editor.getEditor().getContentComponent().putClientProperty(ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN, true);
     preview.setMainEditor(editor.getEditor());
 
-    final var project = ProjectUtil.currentOrDefaultProject(editor.getEditor().getProject());
-    final var settings = MarkdownSettings.getInstance(project);
-    myAutoScrollPreview = settings.isAutoScrollEnabled();
+    MarkdownSettings settings = MarkdownSettings.getInstance(project);
+    autoScrollPreview = settings.isAutoScrollEnabled();
 
-    final var settingsChangedListener = new MarkdownSettings.ChangeListener() {
+    project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, new MarkdownSettings.ChangeListener() {
       private boolean wasVerticalSplitBefore = settings.isVerticalSplit();
 
       @Override
-      public void beforeSettingsChanged(@NotNull MarkdownSettings settings) {
-        wasVerticalSplitBefore = settings.isVerticalSplit();
+      public void beforeSettingsChanged(@NotNull MarkdownSettings settings1) {
+        wasVerticalSplitBefore = settings1.isVerticalSplit();
       }
 
       @Override
-      public void settingsChanged(@NotNull MarkdownSettings settings) {
-        setAutoScrollPreview(settings.isAutoScrollEnabled());
-        if (wasVerticalSplitBefore != settings.isVerticalSplit()) {
-          handleLayoutChange(!settings.isVerticalSplit());
+      public void settingsChanged(@NotNull MarkdownSettings settings1) {
+        setAutoScrollPreview(settings1.isAutoScrollEnabled());
+        if (wasVerticalSplitBefore != settings1.isVerticalSplit()) {
+          handleLayoutChange(!settings1.isVerticalSplit());
         }
       }
-    };
-    project.getMessageBus().connect(this).subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
-    getTextEditor().getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
+    });
+    editor.getEditor().getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(), this);
   }
 
   @Override
@@ -85,48 +77,14 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
   }
 
   public boolean isAutoScrollPreview() {
-    return myAutoScrollPreview;
+    return autoScrollPreview;
   }
 
   public void setAutoScrollPreview(boolean autoScrollPreview) {
-    myAutoScrollPreview = autoScrollPreview;
+    this.autoScrollPreview = autoScrollPreview;
   }
 
-  @Override
-  public void setLayout(@NotNull Layout layout) {
-    super.setLayout(layout);
-  }
-
-  @Override
-  public void setState(@NotNull FileEditorState state) {
-    if (state instanceof MarkdownEditorWithPreviewState actualState) {
-      super.setState(actualState.getUnderlyingState());
-      setVerticalSplit(actualState.isVerticalSplit());
-    }
-  }
-
-  @Override
-  public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    final var underlyingState = super.getState(level);
-    return new MarkdownEditorWithPreviewState(underlyingState, isVerticalSplit());
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowEditorAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorOnly"));
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorAndPreview"));
-  }
-
-  @Override
-  protected @NotNull ToggleAction getShowPreviewAction() {
-    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
-  }
-
-  private class MyVisibleAreaListener implements VisibleAreaListener {
+  private final class MyVisibleAreaListener implements VisibleAreaListener {
     private int previousLine = 0;
 
     @Override
@@ -134,14 +92,16 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview {
       if (!isAutoScrollPreview()) {
         return;
       }
+
       final Editor editor = event.getEditor();
       int y = editor.getScrollingModel().getVerticalScrollOffset();
-      int currentLine = editor instanceof EditorImpl ? editor.yToVisualLine(y) : y / editor.getLineHeight();
+      int currentLine = editor instanceof EditorImpl ? editor.xyToLogicalPosition(new Point(0, y)).getLine() : y / editor.getLineHeight();
       if (currentLine == previousLine) {
         return;
       }
+
       previousLine = currentLine;
-      ((MarkdownPreviewFileEditor)getPreviewEditor()).scrollToSrcOffset(EditorUtil.getVisualLineEndOffset(editor, currentLine));
+      ((MarkdownPreviewFileEditor)myPreview).scrollToLine(editor, currentLine);
     }
   }
 }

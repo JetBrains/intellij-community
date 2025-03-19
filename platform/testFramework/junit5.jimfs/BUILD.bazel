@@ -1,0 +1,40 @@
+### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "junit5-jimfs",
+  module_name = "intellij.platform.testFramework.junit5.jimfs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:jimfs",
+    "//platform/testFramework/junit5",
+  ]
+)
+
+jvm_library(
+  name = "junit5-jimfs_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":junit5-jimfs"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:jimfs",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util-ex",
+  ]
+)
+
+jvm_test(
+  name = "junit5-jimfs_test",
+  runtime_deps = [":junit5-jimfs_test_lib"]
+)
+### auto-generated section `build intellij.platform.testFramework.junit5.jimfs` end

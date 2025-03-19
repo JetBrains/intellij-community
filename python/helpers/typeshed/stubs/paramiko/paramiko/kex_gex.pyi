@@ -16,7 +16,7 @@ class KexGex:
     min_bits: int
     max_bits: int
     preferred_bits: int
-    hash_algo: Callable[[ReadableBuffer], _Hash] = ...
+    hash_algo: Callable[[ReadableBuffer], _Hash]
     transport: Transport
     p: int | None
     q: int | None
@@ -26,9 +26,9 @@ class KexGex:
     f: int | None
     old_style: bool
     def __init__(self, transport: Transport) -> None: ...
-    def start_kex(self, _test_old_style: bool = ...) -> None: ...
+    def start_kex(self, _test_old_style: bool = False) -> None: ...
     def parse_next(self, ptype: int, m: Message) -> None: ...
 
 class KexGexSHA256(KexGex):
     name: str
-    hash_algo: Callable[[ReadableBuffer], _Hash] = ...
+    hash_algo: Callable[[ReadableBuffer], _Hash]

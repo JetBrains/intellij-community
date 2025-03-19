@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -142,8 +142,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Nullable
-  private InstructionImpl handlePossibleReturn(@NotNull GrStatement possibleReturn) {
+  private @Nullable InstructionImpl handlePossibleReturn(@NotNull GrStatement possibleReturn) {
     if (possibleReturn instanceof GrExpression && ControlFlowBuilderUtil.isCertainlyReturnStatement(possibleReturn)) {
       return addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
     }
@@ -454,8 +453,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Nullable
-  private static PsiType getNominalTypeNoRecursion(@NotNull final GrExpression expression) {
+  private static @Nullable PsiType getNominalTypeNoRecursion(final @NotNull GrExpression expression) {
     if (expression instanceof GrNewExpression) {
       return expression.getType();
     }
@@ -465,8 +463,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     return null;
   }
 
-  @Nullable
-  private static PsiType getTypeByRef(@NotNull GrReferenceExpression invoked) {
+  private static @Nullable PsiType getTypeByRef(@NotNull GrReferenceExpression invoked) {
     PsiElement resolved = invoked.getStaticReference().resolve();
     return resolved instanceof PsiVariable ? ((PsiVariable)resolved).getType() : null;
   }
@@ -475,8 +472,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myHead = null;
   }
 
-  @Nullable
-  private ExceptionInfo findCatch(PsiType thrownType) {
+  private @Nullable ExceptionInfo findCatch(PsiType thrownType) {
     final Iterator<ExceptionInfo> iterator = myCaughtExceptionInfos.descendingIterator();
     while (iterator.hasNext()) {
       final ExceptionInfo info = iterator.next();
@@ -566,8 +562,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Nullable
-  private InstructionImpl reduceAllNegationsIntoInstruction(GroovyPsiElement currentScope, List<? extends GotoInstruction> negations) {
+  private @Nullable InstructionImpl reduceAllNegationsIntoInstruction(GroovyPsiElement currentScope, List<? extends GotoInstruction> negations) {
     if (negations.size() > 1) {
       InstructionImpl instruction = addNode(new InstructionImpl(currentScope));
       for (GotoInstruction negation : negations) {
@@ -824,8 +819,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     finishNode(ifInstruction);
   }
 
-  @NotNull
-  private ConditionInstruction registerCondition(@NotNull PsiElement element, boolean negated) {
+  private @NotNull ConditionInstruction registerCondition(@NotNull PsiElement element, boolean negated) {
     ConditionInstruction condition = new ConditionInstruction(element, negated, myConditions);
     myConditions = myConditions.prepend(condition);
     return condition;
@@ -909,8 +903,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
 
-  @NotNull
-  private List<Pair<InstructionImpl, GroovyPsiElement>> collectCorrespondingPendingEdges(@Nullable PsiElement currentScope) {
+  private @NotNull List<Pair<InstructionImpl, GroovyPsiElement>> collectCorrespondingPendingEdges(@Nullable PsiElement currentScope) {
     if (currentScope == null) {
       List<Pair<InstructionImpl, GroovyPsiElement>> result = myPending;
       myPending = new ArrayList<>();
@@ -1359,7 +1352,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitTypeDefinition(@NotNull final GrTypeDefinition typeDefinition) {
+  public void visitTypeDefinition(final @NotNull GrTypeDefinition typeDefinition) {
     if (!(typeDefinition instanceof GrAnonymousClassDefinition)) return;
 
     var argumentList = ((GrAnonymousClassDefinition)typeDefinition).getArgumentListGroovy();
@@ -1416,8 +1409,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  @Nullable
-  private InstructionImpl findInstruction(PsiElement element) {
+  private @Nullable InstructionImpl findInstruction(PsiElement element) {
     for (final InstructionImpl instruction : myInstructions) {
       if (element.equals(instruction.getElement())) return instruction;
     }

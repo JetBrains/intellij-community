@@ -1,9 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
 
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.PsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.editorconfig.language.psi.impl.*;
 
 public interface EditorConfigElementTypes {
@@ -49,7 +51,7 @@ public interface EditorConfigElementTypes {
   IElementType R_CURLY = new EditorConfigTokenType("R_CURLY");
   IElementType SEPARATOR = new EditorConfigTokenType("SEPARATOR");
 
-  class Factory {
+  final class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
       if (type == ASTERISK_PATTERN) {

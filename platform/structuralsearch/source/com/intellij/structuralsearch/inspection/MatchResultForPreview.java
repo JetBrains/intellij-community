@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.psi.PsiElement;
@@ -86,8 +86,7 @@ class MatchResultForPreview extends MatchResult {
   }
 
   @Override
-  @NotNull
-  public MatchResult getRoot() {
+  public @NotNull MatchResult getRoot() {
     return new MatchResultForPreview(myDelegate.getRoot(), myTarget);
   }
 

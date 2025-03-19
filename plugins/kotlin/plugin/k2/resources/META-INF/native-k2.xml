@@ -1,0 +1,18 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.konan.K2KotlinNativeMetadataDecompiler"/>
+
+    <postStartupActivity
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsStartupActivity"/>
+
+    <workspaceModel.fileIndexContributor
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceFileIndexContributor"/>
+    <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
+                       key="fwd" physical="false"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <idea.base.projectStructure.moduleInfoProviderExtension
+            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsModuleInfoProviderExtension"/>
+  </extensions>
+</idea-plugin>

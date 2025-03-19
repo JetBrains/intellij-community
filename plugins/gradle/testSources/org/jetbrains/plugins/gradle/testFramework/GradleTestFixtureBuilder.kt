@@ -4,7 +4,8 @@ package org.jetbrains.plugins.gradle.testFramework
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
-import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
+import org.jetbrains.plugins.gradle.testFramework.fixtures.impl.GradleProjectTestFixtureImpl
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 interface GradleTestFixtureBuilder {
 
@@ -14,12 +15,15 @@ interface GradleTestFixtureBuilder {
 
   companion object {
 
-    fun create(projectName: String, configure: FileTestFixture.Builder.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
+    fun create(
+      projectName: String,
+      javaVersionRestriction: JavaVersionRestriction = JavaVersionRestriction.NO,
+      configure: FileTestFixture.Builder.(GradleVersion) -> Unit
+    ): GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
         override val projectName: String = projectName
         override fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture {
-          val fixtureFactory = GradleTestFixtureFactory.getFixtureFactory()
-          return fixtureFactory.createGradleProjectTestFixture(projectName, gradleVersion) {
+          return GradleProjectTestFixtureImpl(projectName, gradleVersion, javaVersionRestriction) {
             configure(gradleVersion)
           }
         }

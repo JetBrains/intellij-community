@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -31,7 +31,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
 
   private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
-  private AbstractTreeNode<?> myParent;
+  private AbstractTreeNode<?> parent;
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
@@ -42,8 +42,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     myNodeWrapper = setInternalValue(value);
   }
 
-  @NotNull
-  public abstract Collection<? extends AbstractTreeNode<?>> getChildren();
+  public abstract @Unmodifiable @NotNull Collection<? extends AbstractTreeNode<?>> getChildren();
 
   protected boolean hasProblemFileBeneath() {
     return false;
@@ -98,7 +97,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     fgColor = fgColor == null ? status.getColor() : fgColor;
 
     if (valueIsCut()) {
-      fgColor = CopyPasteManager.CUT_COLOR;
+      fgColor = CopyPasteManager.getCutColor();
     }
 
     if (presentation.getForcedTextForeground() == null) {
@@ -111,9 +110,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return !myProject.isDisposed() && getEqualityObject() != null;
   }
 
-  @NotNull
   @Override
-  public LeafState getLeafState() {
+  public @NotNull LeafState getLeafState() {
     if (isAlwaysShowPlus()) return LeafState.NEVER;
     if (isAlwaysLeaf()) return LeafState.ALWAYS;
     return LeafState.DEFAULT;
@@ -131,9 +129,24 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return false;
   }
 
+  public boolean isIncludedInExpandAll() {
+    return true;
+  }
+
+  /**
+   * Determines whether the node should be auto-expanded.
+   * <p>
+   *   When the parent is expanded, if this node is the only child, it'll also be automatically expanded
+   *   unless this function returns {@code false} or this behavior is overridden on the tree/UI level.
+   * </p>
+   * @return whether this node should auto expand if it's the only child of a newly expanded parent.
+   */
+  public boolean isAutoExpandAllowed() {
+    return true;
+  }
+
   @Override
-  @Nullable
-  public final AbstractTreeNode<T> getElement() {
+  public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;
   }
 
@@ -153,16 +166,16 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   public final AbstractTreeNode getParent() {
-    return myParent;
+    return parent;
   }
 
   public final void setParent(AbstractTreeNode parent) {
-    myParent = parent;
+    this.parent = parent;
   }
 
   @Override
-  public final NodeDescriptor getParentDescriptor() {
-    return myParent;
+  public final NodeDescriptor<?> getParentDescriptor() {
+    return parent;
   }
 
   public final T getValue() {
@@ -181,7 +194,6 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   protected void recordValueSetTrace(boolean nullValue) {
-
   }
 
   /**
@@ -200,9 +212,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myNullValueSet ? null : myValue;
   }
 
-  @Nullable
   @TestOnly
-  public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
+  public @Nullable String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
       return Queryable.Util.print((Queryable)getValue(), printInfo, this);
     }
@@ -218,10 +229,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use {@link #toTestString(Queryable.PrintInfo)} instead
    */
   @Deprecated
-  @Nullable
-  @NonNls
   @TestOnly
-  public String getTestPresentation() {
+  public @Nullable @NonNls String getTestPresentation() {
     if (myName != null) {
       return myName;
     }
@@ -231,8 +240,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return null;
   }
 
-  @Nullable
-  public Color getFileStatusColor(final FileStatus status) {
+  public @Nullable Color getFileStatusColor(final FileStatus status) {
     if (FileStatus.NOT_CHANGED.equals(status) && myProject != null && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
       if (vf != null && vf.isDirectory()) {
@@ -255,8 +263,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myName;
   }
 
-  @Nullable
-  protected final Object getParentValue() {
+  protected final @Nullable Object getParentValue() {
     AbstractTreeNode<?> parent = getParent();
     return parent == null ? null : parent.getValue();
   }
@@ -331,5 +338,4 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     }
 
   }
-
 }

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.PlatformUtils
-import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.library.PythonLibraryType
 import com.jetbrains.python.remote.PyRemotePathMapper
@@ -31,8 +30,6 @@ import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
 import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.io.File
 import java.nio.file.Path
 
@@ -69,19 +66,20 @@ fun collectPythonPath(project: Project,
                       shouldAddSourceRoots: Boolean,
                       isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
   val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-  return collectPythonPath(
-    Context(project, sdk, pathMapper),
-    module,
-    sdkHome,
-    shouldAddContentRoots,
-    shouldAddSourceRoots,
-    isDebug
-  )
+  return collectPythonPath(project, module, sdk, pathMapper, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
 }
+
+fun collectPythonPath(project: Project,
+                      module: Module?,
+                      sdk: Sdk?,
+                      pathMapper: PyRemotePathMapper?,
+                      shouldAddContentRoots: Boolean,
+                      shouldAddSourceRoots: Boolean,
+                      isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> =
+  collectPythonPath(Context(project, sdk, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
 
 private fun collectPythonPath(context: Context,
                               module: Module?,
-                              sdkHome: String?,
                               shouldAddContentRoots: Boolean,
                               shouldAddSourceRoots: Boolean,
                               isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
@@ -91,14 +89,6 @@ private fun collectPythonPath(context: Context,
                       shouldAddContentRoots,
                       shouldAddSourceRoots)
   )
-  if (isDebug && PythonSdkFlavor.getFlavor(sdkHome) is JythonSdkFlavor) {
-    //that fixes Jython problem changing sys.argv on execfile, see PY-8164
-    for (helpersResource in listOf("pycharm", "pydev")) {
-      val helperPath = PythonHelpersLocator.getHelperPath(helpersResource)
-      val targetHelperPath = targetPath(Path.of(helperPath))
-      pythonPath.add(targetHelperPath)
-    }
-  }
   return pythonPath
 }
 
@@ -160,7 +150,7 @@ private fun addToPythonPath(context: Context,
       addIfNeeded(context, realFile, pathList)
     }
   }
-  else {
+  else if (file.isDirectory()) {
     addIfNeeded(context, file, pathList)
   }
 }

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.tools.projectWizard.Dependencies
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.AndroidCon
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.BuildScriptDependencyIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.BuildScriptRepositoryIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
-import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.GradlePlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
@@ -86,17 +86,17 @@ abstract class AndroidSinglePlatformModuleConfiguratorBase :
     ): List<BuildSystemIR> = buildList {
         +super<AndroidModuleConfigurator>.createModuleIRs(reader, configurationData, module)
         if (useCompose) {
-            +DEPENDENCIES.COMPOSE_UI
-            +DEPENDENCIES.COMPOSE_UI_TOOLING
-            +DEPENDENCIES.COMPOSE_UI_TOOLING_PREVIEW
-            +DEPENDENCIES.COMPOSE_FOUNDATION
-            +DEPENDENCIES.COMPOSE_MATERIAL
-            +DEPENDENCIES.ACTIVITY
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.COMPOSE_UI, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.COMPOSE_UI_TOOLING, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.COMPOSE_UI_TOOLING_PREVIEW, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.COMPOSE_FOUNDATION, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.COMPOSE_MATERIAL, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.ACTIVITY, DependencyType.MAIN)
         }
         else {
-            +DEPENDENCIES.MATERIAL
-            +DEPENDENCIES.APP_COMPAT
-            +DEPENDENCIES.CONSTRAINT_LAYOUT
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.MATERIAL, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.APP_COMPAT, DependencyType.MAIN)
+            +ArtifactBasedLibraryDependencyIR(Dependencies.ANDROID.CONSTRAINT_LAYOUT, DependencyType.MAIN)
         }
     }
 
@@ -142,63 +142,6 @@ abstract class AndroidSinglePlatformModuleConfiguratorBase :
 
     override fun Reader.createAndroidPlugin(module: Module): AndroidGradlePlugin =
         AndroidGradlePlugin.APPLICATION
-
-
-    object DEPENDENCIES {
-        val COMPOSE_UI = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui"),
-            version = Versions.ANDROID.ANDROIDX_COMPOSE,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val COMPOSE_UI_TOOLING = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling"),
-            version = Versions.ANDROID.ANDROIDX_COMPOSE,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val COMPOSE_UI_TOOLING_PREVIEW = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.ui", "ui-tooling-preview"),
-            version = Versions.ANDROID.ANDROIDX_COMPOSE,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val COMPOSE_FOUNDATION = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.foundation", "foundation"),
-            version = Versions.ANDROID.ANDROIDX_COMPOSE,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val COMPOSE_MATERIAL = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.compose.material", "material"),
-            version = Versions.ANDROID.ANDROIDX_COMPOSE,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val ACTIVITY = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.activity", "activity-compose"),
-            version = Versions.ANDROID.ANDROIDX_ACTIVITY,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val MATERIAL = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "com.google.android.material", "material"),
-            version = Versions.ANDROID.ANDROID_MATERIAL,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val CONSTRAINT_LAYOUT = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.constraintlayout", "constraintlayout"),
-            version = Versions.ANDROID.ANDROIDX_CONSTRAINTLAYOUT,
-            dependencyType = DependencyType.MAIN
-        )
-
-        val APP_COMPAT = ArtifactBasedLibraryDependencyIR(
-            MavenArtifact(DefaultRepository.GOOGLE, "androidx.appcompat", "appcompat"),
-            version = Versions.ANDROID.ANDROIDX_APPCOMPAT,
-            dependencyType = DependencyType.MAIN
-        )
-    }
 }
 
 object AndroidWithoutComposeSinglePlatformModuleConfigurator : AndroidSinglePlatformModuleConfiguratorBase() {

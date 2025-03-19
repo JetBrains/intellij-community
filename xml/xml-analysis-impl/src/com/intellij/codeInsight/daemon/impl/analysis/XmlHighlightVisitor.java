@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.BundleBase;
@@ -9,11 +9,14 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -27,8 +30,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
@@ -40,7 +43,9 @@ import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.AnchorReference;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -48,6 +53,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private static final Logger LOG = Logger.getInstance(XmlHighlightVisitor.class);
 
   private static boolean ourDoJaxpTesting;
+  private boolean myHasError;
 
   private static class Holder {
     private static final TextAttributes NONEMPTY_TEXT_ATTRIBUTES = new UnmodifiableTextAttributes() {
@@ -59,7 +65,39 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
   private HighlightInfoHolder myHolder;
 
-  public XmlHighlightVisitor() {
+  @Override
+  public void visit(final @NotNull PsiElement element) {
+    myHasError = false;
+    element.accept(this);
+  }
+
+  @Override
+  public boolean analyze(final @NotNull PsiFile file,
+                         final boolean updateWholeFile,
+                         @NotNull HighlightInfoHolder holder,
+                         @NotNull Runnable action) {
+    myHolder = holder;
+    try {
+      action.run();
+    }
+    finally {
+      myHolder = null;
+    }
+    return true;
+  }
+
+  private boolean add(@Nullable HighlightInfo info) {
+    if (info != null) {
+      if (info.getSeverity().compareTo(HighlightSeverity.ERROR) >= 0) {
+        myHasError = true;
+      }
+      return myHolder.add(info);
+    }
+    return false;
+  }
+  @Contract(pure = true)
+  private boolean hasErrorResults() {
+    return myHasError;
   }
 
   private void addElementsForTagWithManyQuickFixes(XmlTag tag,
@@ -112,8 +150,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             HighlightInfoType type = HighlightInfoType.ERROR;
             String description = XmlAnalysisBundle.message(
               "xml.inspections.cdata.end.should.not.appear.in.content");
-            HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(start, start + marker.length()).descriptionAndTooltip(description).create();
-            myHolder.add(info);
+            add(HighlightInfo.newHighlightInfo(type).range(start, start + marker.length()).descriptionAndTooltip(description).create());
           }
         }
       }
@@ -123,11 +160,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   private void checkTag(@NotNull XmlTag tag) {
     if (ourDoJaxpTesting) return;
 
-    if (!myHolder.hasErrorResults()) {
+    if (!hasErrorResults()) {
       checkTagByDescriptor(tag);
     }
 
-    if (!myHolder.hasErrorResults()) {
+    if (!hasErrorResults()) {
       if (!skipValidation(tag)) {
         final XmlElementDescriptor descriptor = tag.getDescriptor();
 
@@ -161,9 +198,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (eParent instanceof XmlProcessingInstruction) break;
 
         String description = XmlAnalysisBundle.message("xml.inspections.xml.declaration.should.precede.all.document.content");
-        final HighlightInfo info =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(e).descriptionAndTooltip(description).create();
-        myHolder.add(info);
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(e).descriptionAndTooltip(description).create());
       }
     }
     checkReferences(processingInstruction);
@@ -193,7 +228,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         highlightInfo = builder.descriptionAndTooltip(localizedMessage).create();
       }
 
-      myHolder.add(highlightInfo);
+      add(highlightInfo);
     }
   }
 
@@ -218,6 +253,11 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         }
 
         HighlightInfoType type = getTagProblemInfoType(tag);
+        if (InjectedLanguageManager.getInstance(tag.getProject()).getInjectionHost(tag) != null) {
+          // disabled in injected fragments
+          return;
+        }
+
         addElementsForTagWithManyQuickFixes(tag, XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name), type);
         return;
       }
@@ -283,7 +323,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
       String description = XmlAnalysisBundle.message("xml.inspections.attribute.should.be.preceded.with.space");
       HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
-      myHolder.add(info);
+      add(info);
     }
 
     if (attribute.isNamespaceDeclaration() || XmlUtil.XML_SCHEMA_INSTANCE_URI.equals(attribute.getNamespace())) {
@@ -348,7 +388,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
     final HighlightInfo highlightInfo = builder.create();
-    myHolder.add(highlightInfo);
+    add(highlightInfo);
   }
 
   private void checkDuplicateAttribute(XmlTag tag, final XmlAttribute attribute) {
@@ -377,7 +417,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           .range(attributeNameNode)
           .registerFix(intentionAction, List.of(), null, null, null)
           .descriptionAndTooltip(XmlAnalysisBundle.message("xml.inspections.duplicate.attribute", localName)).create();
-        myHolder.add(highlightInfo);
+        add(highlightInfo);
       }
     }
   }
@@ -418,8 +458,14 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
       if (error != null) {
         HighlightInfoType type = getTagProblemInfoType(tag);
-        final HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(value).descriptionAndTooltip(error).create();
-        myHolder.add(info);
+        if (error.startsWith("<html>")) {
+          add(HighlightInfo.newHighlightInfo(type).range(value)
+                         .description(StringUtil.removeHtmlTags(error).replace("\n", " "))
+                         .escapedToolTip(error).create());
+        }
+        else {
+          add(HighlightInfo.newHighlightInfo(type).range(value).descriptionAndTooltip(error).create());
+        }
       }
     }
   }
@@ -434,7 +480,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     for (int i = start; i < references.length; ++i) {
       PsiReference reference = references[i];
       ProgressManager.checkCanceled();
-      if (isUrlReference(reference)) continue;
+      if (!shouldCheckResolve(reference)) continue;
       if (!hasBadResolve(reference, false)) {
         continue;
       }
@@ -469,21 +515,28 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           for (LocalQuickFix fix : fixes) {
             ProblemDescriptor descriptor = manager.createProblemDescriptor(value, description, fix,
                                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true);
-            builder.registerFix(new LocalQuickFixAsIntentionAdapter(fix, descriptor), null, null, null, null);
+            builder.registerFix(QuickFixWrapper.wrap(descriptor, fix), null, null, null, null);
           }
         }
       }
-      UnresolvedReferenceQuickFixUpdater.getInstance(value.getProject()).registerQuickFixesLater(reference, builder);
-      myHolder.add(builder.create());
+      UnresolvedReferenceQuickFixProvider.registerUnresolvedReferenceLazyQuickFixes(reference, builder);
+      add(builder.create());
     }
+  }
+
+  static boolean shouldCheckResolve(PsiReference reference) {
+    return reference instanceof TypeOrElementOrAttributeReference ||
+           reference instanceof DependentNSReference ||
+           reference instanceof URLReference ||
+           reference instanceof TagNameReference ||
+           reference instanceof PsiReferenceWithUnresolvedQuickFixes;
   }
 
   static boolean isUrlReference(PsiReference reference) {
     return reference instanceof FileReferenceOwner || reference instanceof AnchorReference || reference instanceof PsiFileReference;
   }
 
-  @NotNull
-  public static @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
+  public static @NotNull @InspectionMessage String getErrorDescription(@NotNull PsiReference reference) {
     @InspectionMessage String message;
     if (reference instanceof EmptyResolveMessageProvider) {
       message = ((EmptyResolveMessageProvider)reference).getUnresolvedMessagePattern();
@@ -528,7 +581,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction @NotNull ... fixes) {
+  public void addMessageWithFixes(final PsiElement context, final String message, final @NotNull ErrorType type, final IntentionAction @NotNull ... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
@@ -552,46 +605,18 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           if (quickFixAction == null) continue;
           builder.registerFix(quickFixAction, null, null, null, null);
         }
-        myHolder.add(builder.create());
+        add(builder.create());
       }
     }
   }
 
   @Override
-  public boolean suitableForFile(@NotNull final PsiFile file) {
-    if (file instanceof XmlFile) return true;
-
-    for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
-      if (psiFile instanceof XmlFile) {
-        return true;
-      }
-    }
-    return false;
+  public boolean suitableForFile(final @NotNull PsiFile file) {
+    return file instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(file);
   }
 
   @Override
-  public void visit(@NotNull final PsiElement element) {
-    element.accept(this);
-  }
-
-  @Override
-  public boolean analyze(@NotNull final PsiFile file,
-                         final boolean updateWholeFile,
-                         @NotNull HighlightInfoHolder holder,
-                         @NotNull Runnable action) {
-    myHolder = holder;
-    try {
-      action.run();
-    }
-    finally {
-      myHolder = null;
-    }
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public HighlightVisitor clone() {
+  public @NotNull HighlightVisitor clone() {
     return new XmlHighlightVisitor();
   }
 

@@ -1,19 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSetNodePropertyEvent;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Roman Chernyatchik
- *
- * Handles Test Runner events
+ * Handles Test Runner events.
 */
+@ApiStatus.OverrideOnly
 public interface SMTRunnerEventsListener {
+
+  @Topic.ProjectLevel
   Topic<SMTRunnerEventsListener> TEST_STATUS = new Topic<>("test status", SMTRunnerEventsListener.class);
 
   /**
@@ -70,7 +72,7 @@ public interface SMTRunnerEventsListener {
    * If name is empty string statistics will be switched to normal mode
    * @param testCount - 0 will be considered as unknown tests number
    */
-  void onCustomProgressTestsCategory(@Nullable final String categoryName, final int testCount);
+  void onCustomProgressTestsCategory(final @Nullable String categoryName, final int testCount);
   void onCustomProgressTestStarted();
   void onCustomProgressTestFailed();
   void onCustomProgressTestFinished();

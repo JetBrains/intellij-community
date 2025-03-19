@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.ui.CommonProgramParametersPanel;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
@@ -19,7 +18,6 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.Nls;
@@ -48,14 +46,12 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myProject = configuration.getProject();
 
-    final FileChooserDescriptor chooserDescriptor =
-      FileChooserDescriptorExtKt
-        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle(PyBundle.message("python.run.select.script")), true);
-
-    final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
-
+    var chooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor()
+      .withExtensionFilter(PyBundle.message("python.scripts"), "py", "")
+      .withTitle(PyBundle.message("python.run.select.script"));
+    var listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
       @Override
-      protected void onFileChosen(@NotNull final VirtualFile chosenFile) {
+      protected void onFileChosen(final @NotNull VirtualFile chosenFile) {
         super.onFileChosen(chosenFile);
         myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
       }
@@ -162,21 +158,20 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
-  @Nls public static String getScriptPathText() {
+  public static @Nls String getScriptPathText() {
     return PyBundle.message("runcfg.labels.script.path");
   }
 
-  @Nls public static String getModuleNameText() {
+  public static @Nls String getModuleNameText() {
     return PyBundle.message("runcfg.labels.module.name");
   }
 
-  @Nls public static String getCustomNameText() {
+  public static @Nls String getCustomNameText() {
     return PyBundle.message("runcfg.labels.custom.name");
   }
 
   @Override
-  @NotNull
-  public String getInputFile() {
+  public @NotNull String getInputFile() {
     return content.inputFileTextFieldWithBrowseButton.getText();
   }
 
@@ -226,7 +221,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
           JBPopupFactory.getInstance().createListPopup(
             new BaseListPopupStep<@Nls String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
-              public PopupStep onChosen(@Nls String selectedValue, boolean finalChoice) {
+              public PopupStep<?> onChosen(@Nls String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
                 updateRunModuleMode();
                 return FINAL_CHOICE;

@@ -1,12 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints;
 
 import com.intellij.testFramework.TestDataPath;
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -19,8 +20,24 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/codeInsight/hints/arguments")
 public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArgumentsHintsProviderTest {
+    @java.lang.Override
+    @org.jetbrains.annotations.NotNull
+    public final KotlinPluginMode getPluginMode() {
+        return KotlinPluginMode.K1;
+    }
+
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("blacklisted.kt")
+    public void testBlacklisted() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/blacklisted.kt");
+    }
+
+    @TestMetadata("functionalTypes.kt")
+    public void testFunctionalTypes() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/functionalTypes.kt");
     }
 
     @TestMetadata("javaParameters.kt")
@@ -28,8 +45,28 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");
     }
 
+    @TestMetadata("lambdaLastParameter.kt")
+    public void testLambdaLastParameter() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/lambdaLastParameter.kt");
+    }
+
+    @TestMetadata("libraryElement.kt")
+    public void testLibraryElement() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/libraryElement.kt");
+    }
+
+    @TestMetadata("namedParameters.kt")
+    public void testNamedParameters() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/namedParameters.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("testData/codeInsight/hints/arguments/simple.kt");
+    }
+
+    @TestMetadata("varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/varargs.kt");
     }
 }

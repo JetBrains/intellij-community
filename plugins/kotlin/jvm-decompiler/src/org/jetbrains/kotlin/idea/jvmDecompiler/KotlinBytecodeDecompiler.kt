@@ -4,23 +4,28 @@ package org.jetbrains.kotlin.idea.jvmDecompiler
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.java.decompiler.IdeaLogger
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.internal.DecompileFailedException
-import org.jetbrains.kotlin.idea.internal.KotlinBytecodeToolWindow
+import org.jetbrains.kotlin.idea.jvm.shared.bytecode.KotlinBytecodeToolWindow
+import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.util.jar.Manifest
 
-internal object KotlinBytecodeDecompiler {
+@ApiStatus.Internal
+object KotlinBytecodeDecompiler {
     fun decompile(file: KtFile): String? {
         try {
             val bytecodeMap: Map<File, () -> ByteArray> = runReadAction {
@@ -65,17 +70,29 @@ internal object KotlinBytecodeDecompiler {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
         val configuration = CompilerConfiguration().apply {
             languageVersionSettings = file.languageVersionSettings
         }
-        val generationState = KotlinBytecodeToolWindow.compileSingleFile(file, configuration)?.first ?: return emptyMap()
 
-        val bytecodeMap = hashMapOf<File, () -> ByteArray>()
-        generationState.factory.asList().filter { FileUtilRt.extensionEquals(it.relativePath, "class") }.forEach {
-            bytecodeMap[File("/${it.relativePath}").absoluteFile] = { it.asByteArray() }
+        analyze(file) {
+            with(KotlinBytecodeToolWindow.Companion) {
+                val result = compileSingleFile(file, configuration)?.first ?: return emptyMap()
+
+                return when (result) {
+                    is KaCompilationResult.Success -> buildMap {
+                        for (outputFile in result.output) {
+                            if (outputFile.isClassFile) {
+                                put(File("/" + outputFile.path).absoluteFile) { outputFile.content }
+                            }
+                        }
+                    }
+
+                    is KaCompilationResult.Failure -> emptyMap()
+                }
+            }
         }
-        return bytecodeMap
     }
 
     private class KotlinResultSaver : IResultSaver {

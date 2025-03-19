@@ -21,10 +21,12 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.startOffset
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntUnaryOperator
 
+@ApiStatus.Internal
 class TestDiffContent(
   private val project: Project,
   private val original: DocumentContent,
@@ -52,7 +54,7 @@ class TestDiffContent(
       try {
         myDuringModification = true
         val element = elemPtr.element ?: return
-        TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(element.language).updateExpected(element, event.document.text)
+        TestDiffProvider.getProviderByLanguage(element.language).updateExpected(element, event.document.text)
       }
       finally {
         myDuringModification = false

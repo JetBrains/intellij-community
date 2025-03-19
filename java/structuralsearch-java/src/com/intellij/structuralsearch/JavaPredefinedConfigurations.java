@@ -1,18 +1,20 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.structuralsearch.PredefinedConfigurationUtil.*;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createConfiguration;
+import static com.intellij.structuralsearch.PredefinedConfigurationUtil.createLegacyConfiguration;
 
 /**
  * @author Bas Leijdekkers
  */
-final class JavaPredefinedConfigurations {
-  @NotNull
-  public static Configuration @NotNull [] createPredefinedTemplates() {
+@ApiStatus.Internal
+public final class JavaPredefinedConfigurations {
+  public static @NotNull Configuration @NotNull [] createPredefinedTemplates() {
     return new Configuration[]{
       // Expression patterns
       createLegacyConfiguration(SSRBundle.message("predefined.configuration.method.calls"), "method calls",

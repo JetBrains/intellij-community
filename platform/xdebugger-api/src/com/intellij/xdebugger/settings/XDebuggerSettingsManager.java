@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.settings;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +22,5 @@ public abstract class XDebuggerSettingsManager implements Disposable {
     boolean isShowValuesInline();
   }
 
-  @NotNull
-  public abstract DataViewSettings getDataViewSettings();
+  public abstract @NotNull DataViewSettings getDataViewSettings();
 }

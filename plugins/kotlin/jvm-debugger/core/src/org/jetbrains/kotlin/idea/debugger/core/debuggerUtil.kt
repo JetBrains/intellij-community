@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("DebuggerUtil")
 
@@ -6,31 +6,35 @@ package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
-import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
-import org.jetbrains.kotlin.codegen.topLevelClassAsmType
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.org.objectweb.asm.Label
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -66,20 +70,38 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean {
-    val visibleVariables = location.visibleVariables(debugProcess)
-    val markerLocalVariables = visibleVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+internal suspend fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location): Boolean =
+    isInlinedArgument(location.visibleVariables(location.virtualMachine()), inlineArgument)
 
-    return runReadAction {
-        val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)
+/**
+ * Check whether [inlineArgument] is a lambda that is inlined in bytecode
+ * by looking for a marker inline variable corresponding to this lambda.
+ *
+ * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
+ */
+internal suspend fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
+    isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
+
+private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
+    if (inlineArgument !is KtFunction && inlineArgument !is KtCallableReferenceExpression) return false
+    val markerLocalVariables = localVariables
+        .map { it.name() }
+        .filter { it.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+    if (markerLocalVariables.isEmpty()) return false
+
+    return readAction {
+        val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
         val functionName = functionNameByArgument(inlineArgument) ?: "unknown"
 
         markerLocalVariables
-            .map { it.name().drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
+            .map { it.drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
-                    dropInlineSuffix(variableName) == "-$functionName-$lambdaClassName"
+                    val cleanedVarName = dropInlineSuffix(variableName).dropInlineScopeInfo().removePrefix("-")
+                    if (!cleanedVarName.endsWith("-$lambdaClassName")) return@any false
+                    val candidateMethodName = cleanedVarName.removeSuffix("-$lambdaClassName")
+                    candidateMethodName == functionName || nameMatchesUpToDollar(candidateMethodName, functionName)
                 } else {
                     // For Kotlin up to 1.3.10
                     lambdaOrdinalByLocalVariable(variableName) == lambdaOrdinal
@@ -89,39 +111,40 @@ fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debug
     }
 }
 
+// Internal functions have a '$<MODULE_NAME>' suffix
+// Local functions can be '$1' suffixed
+internal fun nameMatchesUpToDollar(methodName: String, targetMethodName: String): Boolean {
+    return methodName.startsWith("$targetMethodName\$")
+}
+
 fun <T : Any> DebugProcessImpl.invokeInManagerThread(f: (DebuggerContextImpl) -> T?): T? {
+    if (DebuggerManagerThreadImpl.isManagerThread()) {
+        return f(debuggerContext)
+    }
     var result: T? = null
-    val command: DebuggerCommandImpl = object : DebuggerCommandImpl() {
-        override fun action() {
+    @Suppress("UsagesOfObsoleteApi")
+    val managerThread = debuggerContext.managerThread ?: managerThread
+    managerThread.invokeAndWait(object : DebuggerContextCommandImpl(debuggerContext) {
+        override fun threadAction(suspendContext: SuspendContextImpl) {
             result = f(debuggerContext)
         }
-    }
-
-    when {
-        DebuggerManagerThreadImpl.isManagerThread() ->
-            managerThread.invoke(command)
-        else ->
-            managerThread.invokeAndWait(command)
-    }
-
+    })
     return result
 }
 
 private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     val className = ClassNameCalculator.getClassName(elementAt) ?: return 0
-    return className.substringAfterLast("$").toInt()
+    return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
-private fun functionNameByArgument(elementAt: KtFunction): String? =
-    analyze(elementAt) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(elementAt) as? KtCallExpression ?: return null
-        val call = parentCall.resolveCall().successfulFunctionCallOrNull() ?: return null
-        val function = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
-        return function.name.asString()
+private fun functionNameByArgument(argument: KtExpression): String? =
+    runDumbAnalyze(argument, fallback = null) f@{
+        val function = getFunctionSymbol(argument) as? KaNamedFunctionSymbol ?: return@f null
+        function.name.asString()
     }
 
-private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<LocalVariable> {
-    val stackFrame = MockStackFrame(this, debugProcess.virtualMachineProxy.virtualMachine)
+private fun Location.visibleVariables(virtualMachine: VirtualMachine): List<LocalVariable> {
+    val stackFrame = MockStackFrame(this, virtualMachine)
     return stackFrame.visibleVariables()
 }
 
@@ -182,13 +205,15 @@ private class MockStackFrame(private val location: Location, private val vm: Vir
 }
 
 private const val INVOKE_SUSPEND_SIGNATURE = "(Ljava/lang/Object;)Ljava/lang/Object;"
+private const val CONTINUATION_VARIABLE_NAME = "\$continuation"
 
 fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
     val location = this.safeLocation() ?: return false
 
     if (isInSuspendMethod(location)) {
         val firstLocation = getFirstMethodLocation(location) ?: return false
-        return firstLocation.safeLineNumber() == location.safeLineNumber() && firstLocation.codeIndex() != location.codeIndex()
+        return firstLocation.codeIndex() != location.codeIndex()
+                && isOnSuspendReturnOrReenter(location)
     }
 
     return false
@@ -197,13 +222,12 @@ fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
 fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
-    val continuationAsmType = continuationAsmType()
-    return signature.contains(continuationAsmType.toString()) ||
-          (method.name() == INVOKE_SUSPEND_METHOD_NAME && signature == INVOKE_SUSPEND_SIGNATURE)
+    return signature.contains(CONTINUATION_TYPE.toString()) || isInvokeSuspendMethod(method)
 }
 
-private fun continuationAsmType() =
-    StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("Continuation")).topLevelClassAsmType()
+fun isInvokeSuspendMethod(method: Method): Boolean {
+    return method.name() == INVOKE_SUSPEND_METHOD_NAME && method.signature() == INVOKE_SUSPEND_SIGNATURE
+}
 
 private fun getFirstMethodLocation(location: Location): Location? {
     val firstLocation = location.safeMethod()?.location() ?: return null
@@ -216,7 +240,285 @@ private fun getFirstMethodLocation(location: Location): Location? {
 
 fun isOnSuspendReturnOrReenter(location: Location): Boolean {
     val firstLocation = getFirstMethodLocation(location) ?: return false
-    return firstLocation.safeLineNumber() == location.safeLineNumber()
+    val isAtFirstLine = firstLocation.safeLineNumber() == location.safeLineNumber()
+    if (isAtFirstLine) {
+        return doesMethodHaveSwitcher(location)
+    }
+    return false
+}
+
+private fun doesMethodHaveSwitcher(location: Location): Boolean {
+    if (DexDebugFacility.isDex(location.virtualMachine())) {
+        // For JVM `checkContinuationLabelField` tries to find an instruction like `getfield MainKt$foo$1.label:I`,
+        // thus defining if a state machine was generated for a suspend function.
+        // This approach doesn't work for Android, so this is a simpler approach (see https://github.com/JetBrains/intellij-community/pull/2842):
+        val method = location.safeMethod() ?: return false
+        // State machine is always generated for suspend lambdas
+        if (isInvokeSuspendMethod(method)) {
+            return true
+        }
+        // Otherwise, if state machine is generated, the $continuation
+        // variable will be present in LVT.
+        val variables = method.safeVariables() ?: return false
+        return variables.any { it.name() == CONTINUATION_VARIABLE_NAME }
+    }
+    var result = false
+    MethodBytecodeUtil.visit(location.method(), object : MethodVisitor(Opcodes.API_VERSION) {
+        override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
+            if (!result && checkContinuationLabelField(location, name, descriptor, owner)) {
+                result = true
+            }
+        }
+    }, false)
+    return result
+}
+
+private fun checkContinuationLabelField(location: Location, name: String?, descriptor: String?, owner: String?): Boolean {
+    if (name == null || descriptor == null || owner == null) return false
+    if (name == "label" && descriptor == "I") {
+        val className = Type.getObjectType(owner).className
+
+        val methodClassName = location.method().declaringType().name()
+
+        if (isInSuspendMethod(location) && className.startsWith(methodClassName))
+            return true
+    }
+    return false
+}
+
+private class CoroutineStateMachineVisitor(method: Method, private val resumeLocation: Location)
+    : MethodNode(Opcodes.ASM9, Opcodes.ACC_PUBLIC, method.name(), "", "(Ljava/lang/Object;)Ljava/lang/Object;", emptyArray()),
+      MethodBytecodeUtil.InstructionOffsetReader {
+    /*
+        This visitor visits the state machine of the suspend function and looks for the ARETURN instruction that follows
+      the current suspending call (firstReturnAfterSuspensionOffset), and for the next instruction that will be executed after
+      the current suspending call (nextCallOffset).
+        The visitor relies on the following pattern:
+
+      #resumeLocationOffset
+      ... function arguments ...
+      PUTFIELD MyClass$main$1$1.label : I
+      INVOKESTATIC MyClass$foo (IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+      DUP
+      ALOAD 3
+      IF_ACMPNE L8 // this is the label
+      L9
+      LINENUMBER 8 L9
+      ALOAD 3
+      ARETURN
+
+      Note: This is a WA for Kotlin compiler versions that do not provide the resumeLocaiton API with coroutines DebugMetadata (KT-67555)
+     */
+    private var myState: CurrentInsn = CurrentInsn.NONE
+    private enum class CurrentInsn {
+        NONE,
+        SUSPEND_METHOD_ARGS, // corresponds to all instructions that put function arguments on stack
+        PUTFIELD_CONTINUATION_LABEL,
+        INVOKE_SUSPEND_METHOD,
+        DUP,
+        ALOAD_SUSPEND_RESULT_BEFORE_COMPARE,
+        IF_ACMPNE,
+        ALOAD_SUSPEND_RESULT_FOR_SUSPEND_RETURN
+    }
+    private var coroutineSuspendedState = CoroutineSuspendedState.NONE
+    private enum class CoroutineSuspendedState {
+        NONE,
+        INVOKE_GET_COROUTINE_SUSPENDED
+    }
+
+    private var coroutineSuspendedLocalVarIndex = -1
+    private var currentByteCodeOffSet = -1
+    private var nextCallLabel: Label? = null
+    var firstReturnAfterSuspensionOffset = -1
+    var nextCallOffset = -1
+
+    override fun readBytecodeInstructionOffset(offset: Int) {
+        currentByteCodeOffSet = offset
+    }
+
+    override fun visitMethodInsn(opcodeAndSource: Int, owner: String?, name: String?, descriptor: String?, isInterface: Boolean) {
+        super.visitMethodInsn(opcodeAndSource, owner, name, descriptor, isInterface)
+        when {
+            coroutineSuspendedState == CoroutineSuspendedState.NONE && isGetCoroutineSuspended(name, owner) -> coroutineSuspendedState = CoroutineSuspendedState.INVOKE_GET_COROUTINE_SUSPENDED
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS && !isSuspendFunction(name, descriptor) -> {} // skip function arguments
+            myState == CurrentInsn.PUTFIELD_CONTINUATION_LABEL && isSuspendFunction(name, descriptor) -> myState = CurrentInsn.INVOKE_SUSPEND_METHOD
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitInsn(opcode: Int) {
+        super.visitInsn(opcode)
+        when {
+            // reached resumed location or skipping arguments
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            myState == CurrentInsn.INVOKE_SUSPEND_METHOD && opcode == Opcodes.DUP -> myState = CurrentInsn.DUP
+            myState == CurrentInsn.ALOAD_SUSPEND_RESULT_FOR_SUSPEND_RETURN && opcode == Opcodes.ARETURN -> firstReturnAfterSuspensionOffset = currentByteCodeOffSet
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitLdcInsn(value: Any?) {
+        super.visitLdcInsn(value)
+        when {
+            // reached resumed location or skipping arguments
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+
+    override fun visitJumpInsn(opcode: Int, label: Label?) {
+        super.visitJumpInsn(opcode, label)
+        when {
+            myState == CurrentInsn.ALOAD_SUSPEND_RESULT_BEFORE_COMPARE && opcode == Opcodes.IF_ACMPNE -> {
+                myState = CurrentInsn.IF_ACMPNE
+                nextCallLabel = label
+            }
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitIntInsn(opcode: Int, operand: Int) {
+        super.visitIntInsn(opcode, operand)
+        when {
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitIincInsn(varIndex: Int, increment: Int) {
+        super.visitIincInsn(varIndex, increment)
+        when {
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitVarInsn(opcode: Int, `var`: Int) {
+        super.visitVarInsn(opcode, `var`)
+        when {
+            coroutineSuspendedState == CoroutineSuspendedState.INVOKE_GET_COROUTINE_SUSPENDED && opcode == Opcodes.ASTORE -> coroutineSuspendedLocalVarIndex = `var`
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            myState == CurrentInsn.DUP && opcode == Opcodes.ALOAD && `var` == coroutineSuspendedLocalVarIndex -> myState = CurrentInsn.ALOAD_SUSPEND_RESULT_BEFORE_COMPARE
+            myState == CurrentInsn.IF_ACMPNE && opcode == Opcodes.ALOAD && `var` == coroutineSuspendedLocalVarIndex -> myState = CurrentInsn.ALOAD_SUSPEND_RESULT_FOR_SUSPEND_RETURN
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitFieldInsn(opcode: Int, owner: String?, name: String?, descriptor: String?) {
+        super.visitFieldInsn(opcode, owner, name, descriptor)
+        when {
+            myState == CurrentInsn.NONE && reachedResumedLocation() -> myState = CurrentInsn.SUSPEND_METHOD_ARGS
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS && opcode == Opcodes.PUTFIELD && checkContinuationLabelField(resumeLocation, name, descriptor, owner) -> myState = CurrentInsn.PUTFIELD_CONTINUATION_LABEL
+            myState == CurrentInsn.SUSPEND_METHOD_ARGS -> {} // skip function arguments
+            else -> {
+                myState = CurrentInsn.NONE
+                coroutineSuspendedState = CoroutineSuspendedState.NONE
+            }
+        }
+    }
+
+    override fun visitLabel(label: Label?) {
+        super.visitLabel(label)
+        if (myState == CurrentInsn.NONE && reachedResumedLocation()) myState = CurrentInsn.SUSPEND_METHOD_ARGS
+        if (label == nextCallLabel) {
+            nextCallOffset = currentByteCodeOffSet
+        }
+    }
+
+    private fun reachedResumedLocation() = currentByteCodeOffSet.toLong() == resumeLocation.codeIndex()
+
+    private fun isGetCoroutineSuspended(name: String?, owner: String?): Boolean {
+        if (name == null || owner == null) return false
+        return name == "getCOROUTINE_SUSPENDED" && owner == "kotlin/coroutines/intrinsics/IntrinsicsKt"
+    }
+
+    private fun isSuspendFunction(name: String?, descriptor: String?): Boolean {
+        if (name == null || descriptor == null) return false
+        return descriptor.contains(CONTINUATION_TYPE.toString()) && name != "<init>"
+    }
+}
+
+fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Location? {
+    val resumedMethod = resumedLocation?.safeMethod() ?: return null;
+    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+        return null
+    }
+    val visitor = CoroutineStateMachineVisitor(resumedMethod, resumedLocation)
+    MethodBytecodeUtil.visit(resumedMethod, visitor, true)
+    return resumedMethod.locationOfCodeIndex(visitor.firstReturnAfterSuspensionOffset.toLong())
+}
+
+fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location? {
+    val resumedMethod = resumeLocation?.safeMethod() ?: return null
+    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+        return null
+    }
+    val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)
+    MethodBytecodeUtil.visit(resumedMethod, visitor, true)
+    val nextCallLocation = resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
+    if (visitor.nextCallOffset == -1) {
+        LOG.debug("[coroutine-debug] Failed to find nextCallOffset in resumeMethod $resumedMethod")
+        return null
+    }
+    if (nextCallLocation.safeLineNumber() == resumedMethod.allLineLocations().first().lineNumber()) {
+        // If the nextCallOffset corresponds to the first line of the method,
+        // this may happen because the "LINENUMBER" does not follow the resume Label instruction.
+        val nextOffset = resumedMethod.allLineLocations().map { it.codeIndex() }.first { it > visitor.nextCallOffset }
+        LOG.debug("[coroutine-debug] nextCallOffset = ${visitor.nextCallOffset} points to the first line of resumeMethod $resumedMethod.")
+        if (nextOffset != -1L) {
+            val nextLocation = resumedMethod.locationOfCodeIndex(nextOffset)
+            LOG.debug("[coroutine-debug] Trying to stop at the next location at line ${nextLocation}.")
+            return nextLocation
+        }
+    }
+    return resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
+}
+
+internal fun hasUserCodeOnFirstLine(method: Method?): Boolean {
+    if (method == null) return false
+    val allLineLocations = method.safeAllLineLocations()
+    if (allLineLocations.isEmpty()) return false
+    val nonFakeLocations = allLineLocations.filter { !isKotlinFakeLineNumber(it) }
+    val firstLine = nonFakeLocations.firstOrNull()?.lineNumber() ?: return false
+    if (firstLine < 0) return false
+    // This is a single line function
+    if (nonFakeLocations.all { it.lineNumber() == firstLine }) return true
+    val firstLineLocations = nonFakeLocations.takeWhile { it.lineNumber() == firstLine }
+    if (firstLineLocations.isEmpty()) return false
+
+    val inlineFunctionBorders = method.getInlineFunctionAndArgumentVariablesToBordersMap().values
+    val validLocations = firstLineLocations
+        .count { loc -> !inlineFunctionBorders.any { loc in it } }
+    // Coroutine label switch has its own location
+    return validLocations > 1
 }
 
 fun findElementAtLine(file: KtFile, line: Int): PsiElement? {
@@ -250,9 +552,9 @@ fun isKotlinFakeLineNumber(location: Location): Boolean {
     // the lambda is on the same line. When stepping, we do not want to stop at such fake line
     // numbers. They cause us to step to line 1 of the current file.
     try {
-        if (location.lineNumber("Kotlin") == 1 &&
-            location.sourceName("Kotlin") == "fake.kt" &&
-            Path.of(location.sourcePath("Kotlin")) == Path.of("kotlin/jvm/internal/FakeKt")
+        if (location.lineNumber(KOTLIN_STRATA_NAME) == 1 &&
+            location.sourceName(KOTLIN_STRATA_NAME) == "fake.kt" &&
+            Path.of(location.sourcePath(KOTLIN_STRATA_NAME)) == Path.of("kotlin/jvm/internal/FakeKt")
         ) {
             return true
         }
@@ -277,8 +579,14 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
     val localVariables = safeVariables() ?: return emptySequence()
     return localVariables
         .asSequence()
-        .filter { isFakeLocalVariableForInline(it.name()) }
+        .filter { JvmAbi.isFakeLocalVariableForInline(it.name()) }
 }
 
 val DebugProcessImpl.canRunEvaluation: Boolean
     get() = suspendManager.pausedContext != null
+
+val String.isInlineFunctionMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+
+val String.isInlineLambdaMarkerVariableName: Boolean
+    get() = startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT)

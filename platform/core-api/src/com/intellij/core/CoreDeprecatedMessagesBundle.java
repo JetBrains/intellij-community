@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
-import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
@@ -11,22 +11,20 @@ import java.util.function.Supplier;
  * some external plugins. It isn't supposed to be used by plugins directly.
  */
 @ApiStatus.Internal
-public class CoreDeprecatedMessagesBundle extends AbstractBundle {
-  @NonNls private static final String BUNDLE = "messages.CoreDeprecatedMessagesBundle";
+public class CoreDeprecatedMessagesBundle extends DynamicBundle {
+  private static final @NonNls String BUNDLE = "messages.CoreDeprecatedMessagesBundle";
   private static final CoreDeprecatedMessagesBundle INSTANCE = new CoreDeprecatedMessagesBundle();
 
   private CoreDeprecatedMessagesBundle() {
     super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -46,30 +32,26 @@ import java.util.List;
 public abstract class LibraryType<P extends LibraryProperties> extends LibraryPresentationProvider<P> {
   public static final ExtensionPointName<LibraryType<?>> EP_NAME = ExtensionPointName.create("com.intellij.library.type");
   
-  public final static OrderRootType[] DEFAULT_EXTERNAL_ROOT_TYPES = {OrderRootType.CLASSES};
+  public static final OrderRootType[] DEFAULT_EXTERNAL_ROOT_TYPES = {OrderRootType.CLASSES};
 
   protected LibraryType(@NotNull PersistentLibraryKind<P> libraryKind) {
     super(libraryKind);
   }
 
-  @NotNull
   @Override
-  public PersistentLibraryKind<P> getKind() {
+  public @NotNull PersistentLibraryKind<P> getKind() {
     return (PersistentLibraryKind<P>) super.getKind();
   }
 
   /**
    * @return text to show in 'New Library' popup. Return {@code null} if the type should not be shown in the 'New Library' popup
    */
-  @Label
-  @Nullable
-  public abstract String getCreateActionName();
+  public abstract @Label @Nullable String getCreateActionName();
 
   /**
    * Called when a new library of this type is created in Project Structure dialog
    */
-  @Nullable
-  public abstract NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory,
+  public abstract @Nullable NewLibraryConfiguration createNewLibrary(@NotNull JComponent parentComponent, @Nullable VirtualFile contextDirectory,
                                                            @NotNull Project project);
 
   /**
@@ -83,13 +65,11 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
    * Override this method to customize the library roots editor
    * @return {@link LibraryRootsComponentDescriptor} instance
    */
-  @Nullable
-  public LibraryRootsComponentDescriptor createLibraryRootsComponentDescriptor() {
+  public @Nullable LibraryRootsComponentDescriptor createLibraryRootsComponentDescriptor() {
     return null;
   }
 
-  @Nullable
-  public abstract LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<P> editorComponent);
+  public abstract @Nullable LibraryPropertiesEditor createPropertiesEditor(@NotNull LibraryEditorComponent<P> editorComponent);
 
   @Override
   public P detect(@NotNull List<VirtualFile> classesRoots) {
@@ -104,8 +84,7 @@ public abstract class LibraryType<P extends LibraryProperties> extends LibraryPr
     return DEFAULT_EXTERNAL_ROOT_TYPES;
   }
 
-  @NotNull
-  public static LibraryType findByKind(@NotNull LibraryKind kind) {
+  public static @NotNull LibraryType findByKind(@NotNull LibraryKind kind) {
     for (LibraryType<?> type : EP_NAME.getExtensions()) {
       if (type.getKind() == kind) {
         return type;

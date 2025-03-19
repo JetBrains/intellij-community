@@ -1,0 +1,58 @@
+### auto-generated section `build intellij.restructuredtext.python` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
+
+jvm_resources(
+  name = "restructuredtext-python_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "lang-impl_provided",
+  lib = "//platform/lang-impl"
+)
+
+jvm_provided_library(
+  name = "execution-impl_provided",
+  lib = "//platform/execution-impl"
+)
+
+jvm_provided_library(
+  name = "python-community-impl_provided",
+  lib = "//python:python-community-impl"
+)
+
+jvm_provided_library(
+  name = "core-ui_provided",
+  lib = "//platform/core-ui"
+)
+
+jvm_provided_library(
+  name = "spellchecker_provided",
+  lib = "//spellchecker"
+)
+
+jvm_library(
+  name = "restructuredtext-python",
+  module_name = "intellij.restructuredtext.python",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:guava",
+    "@lib//:jsoup",
+    "//python/python-sdk:sdk",
+    "//platform/util/jdom",
+    "//platform/platform-impl:ide-impl",
+    "@lib//:jcef",
+    "//plugins/restructuredtext",
+    "//platform/ui.jcef:ui-jcef",
+    ":lang-impl_provided",
+    ":execution-impl_provided",
+    ":python-community-impl_provided",
+    ":core-ui_provided",
+    ":spellchecker_provided",
+  ],
+  runtime_deps = [":restructuredtext-python_resources"]
+)
+### auto-generated section `build intellij.restructuredtext.python` end

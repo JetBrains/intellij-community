@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.classes.ui;
 
 import com.intellij.openapi.util.Iconable;
@@ -51,8 +51,7 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
     return this;
   }
 
-  @Nullable
-  public static @NlsSafe String getClassText(PyClass aClass) {
+  public static @Nullable @NlsSafe String getClassText(PyClass aClass) {
     return aClass.getName();
   }
 }

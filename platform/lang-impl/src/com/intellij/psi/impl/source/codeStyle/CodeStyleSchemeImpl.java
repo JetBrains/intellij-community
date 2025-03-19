@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.configurationStore.SchemeDataHolder;
@@ -19,31 +19,30 @@ import org.jetbrains.annotations.Nullable;
 public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
-  private String myParentSchemeName;
+  private volatile SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
   private final boolean myIsDefault;
-  private volatile CodeStyleSettings myCodeStyleSettings;
+  private volatile @NotNull CodeStyleSettings myCodeStyleSettings;
   private long myLastModificationCount;
   private final Object lock = new Object();
 
-  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
+  CodeStyleSchemeImpl(@NotNull String name, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
     setName(name);
     myDataHolder = dataHolder;
     myIsDefault = DEFAULT_SCHEME_NAME.equals(name);
-    myParentSchemeName = parentSchemeName;
+    myCodeStyleSettings = init(null);
   }
 
   public CodeStyleSchemeImpl(@NotNull String name, boolean isDefault, @Nullable CodeStyleScheme parentScheme) {
     setName(name);
     myIsDefault = isDefault;
-    init(parentScheme, null);
+    myCodeStyleSettings = init(parentScheme);
   }
 
-  @NotNull
-  private CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
+  private static @NotNull CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme) {
     final CodeStyleSettings settings;
     if (parentScheme == null) {
       settings = CodeStyleSettingsManager.getInstance().createSettings();
+      LOG.debug("Initialized using empty settings");
     }
     else {
       CodeStyleSettings parentSettings = parentScheme.getCodeStyleSettings();
@@ -52,52 +51,53 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
         parentSettings = parentSettings.getParentSettings();
       }
       settings.setParentSettings(parentSettings);
+      LOG.debug("Initialized using parent scheme '" + parentScheme.getName() + "'");
     }
 
-    if (root != null) {
-      try {
-        settings.readExternal(root);
-      }
-      catch (InvalidDataException e) {
-        LOG.error(e);
-      }
-    }
-
-    myCodeStyleSettings = settings;
     return settings;
   }
 
+  private static void readFromDataHolder(@NotNull CodeStyleSettings settings,
+                                         @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
+    Element root = dataHolder.read();
+    try {
+      settings.readExternal(root);
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+  }
+
   @Override
-  @NotNull
-  public CodeStyleSettings getCodeStyleSettings() {
-    CodeStyleSettings settings = myCodeStyleSettings;
-    if (settings != null) {
-      return settings;
+  public @NotNull CodeStyleSettings getCodeStyleSettings() {
+    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
+    if (dataHolder == null) {
+      return myCodeStyleSettings;
     }
 
     synchronized (lock) {
-      SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
-      Element element= null;
-      if (dataHolder != null) {
-        element = dataHolder.read();
-        // nullize only after element is successfully read, otherwise our state will be undefined - both myDataHolder and myCodeStyleSettings are null
-        myDataHolder = null;
+      dataHolder = myDataHolder;
+      if (dataHolder == null) {
+        return myCodeStyleSettings;
       }
-      settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), element);
-      if (dataHolder != null) {
-        dataHolder.updateDigest(this);
-      }
-      myParentSchemeName = null;
+      logDebug("Reinit settings from dataHolder");
+
+      CodeStyleSettings settings = init(null);
+      readFromDataHolder(settings, dataHolder);
+      // nullize only after element is successfully read, otherwise our state will be undefined - both myDataHolder and myCodeStyleSettings are null
+      myDataHolder = null;
+      dataHolder.updateDigest(this);
+      myCodeStyleSettings = settings;
+      return settings;
     }
-    return settings;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings) {
     myCodeStyleSettings = codeStyleSettings;
     synchronized (lock) {
-      myParentSchemeName = null;
       myDataHolder = null;
     }
+    logDebug("Replaced code style settings");
   }
 
   @Override
@@ -105,15 +105,14 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
-  @Nullable
   @Override
-  public SchemeState getSchemeState() {
+  public @Nullable SchemeState getSchemeState() {
     synchronized (lock) {
       if (myDataHolder == null) {
-        CodeStyleSettings settings = myCodeStyleSettings;
-        long currModificationCount = settings == null ? 0L : settings.getModificationTracker().getModificationCount();
+        final long currModificationCount = myCodeStyleSettings.getModificationTracker().getModificationCount();
         if (myLastModificationCount != currModificationCount) {
           myLastModificationCount = currModificationCount;
+          logDebug("Possibly changed");
           return SchemeState.POSSIBLY_CHANGED;
         }
       }
@@ -122,8 +121,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  @NotNull
-  public Element writeScheme() {
+  public @NotNull Element writeScheme() {
     SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder;
     synchronized (lock) {
       dataHolder = myDataHolder;
@@ -133,9 +131,11 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
       Element newElement = new Element(CODE_STYLE_TAG_NAME);
       newElement.setAttribute(CODE_STYLE_NAME_ATTR, getName());
       myCodeStyleSettings.writeExternal(newElement);
+      logDebug("Saved from CodeStyleSettings");
       return newElement;
     }
     else {
+      logDebug("Saved from dataHolder");
       return dataHolder.read();
     }
   }
@@ -146,5 +146,9 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
       return ApplicationBundle.message("code.style.scheme.default");
     }
     return super.getDisplayName();
+  }
+
+  private void logDebug(@NotNull String message) {
+    LOG.debug("Scheme '"+ getName() + "': "+ message);
   }
 }

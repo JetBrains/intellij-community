@@ -17,8 +17,8 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
@@ -76,14 +76,12 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
   public void testNotAvailableOnLiteral() { doTestNotAvailable(); }
 
   private void withJava7(Runnable runnable) {
-    final LanguageLevelProjectExtension languageLevelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
-    final LanguageLevel oldLanguageLevel = languageLevelProjectExtension.getLanguageLevel();
-    languageLevelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_7);
+    final LanguageLevel oldLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
     try {
       runnable.run();
     }
     finally {
-      languageLevelProjectExtension.setLanguageLevel(oldLanguageLevel);
+      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLanguageLevel);
     }
   }
 

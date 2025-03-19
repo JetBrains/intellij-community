@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.scopes;
 
 import com.intellij.ide.scopeView.NamedScopeFilter;
@@ -7,13 +7,12 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
+import com.intellij.psi.search.scope.packageSet.ParsingException;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +25,15 @@ public class PackageSetTest extends TestSourceBasedTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myHolder = DependencyValidationManager.getInstance(getProject());
-    myPackageSetFactory = PackageSetFactory.getInstance();
+    PackageSetFactory factory = PackageSetFactory.getInstance();
+    myPackageSetFactory = new PackageSetFactory() {
+      @Override
+      public PackageSet compile(String text) throws ParsingException {
+        PackageSet compiled = factory.compile(text);
+        // This way we also test that createCopy works well in each test
+        return compiled.createCopy();
+      }
+    };
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
       moduleModel.setModuleGroupPath(getModule(), new String[]{"GRP"});
@@ -90,6 +97,22 @@ public class PackageSetTest extends TestSourceBasedTestCase {
     final PsiDirectory withSpaceDirectory = getPackageDirectory("with-dash");
     final PsiFile [] psiFiles = assertAllFilesIncluded(withSpaceDirectory, packageSet, myHolder);
     assertEquals(1, psiFiles.length);
+  }
+
+  public void testIncludeExternalLib() throws Exception {
+    NamedScopeFilter filter = createFilter("ext[java 1.7]:java/lang//*");
+
+    PsiFile libraryPsiFile =
+      JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(getProject()))
+        .getContainingFile();
+    VirtualFile libraryVirtualFile = libraryPsiFile.getVirtualFile();
+    assertTrue(filter.accept(libraryVirtualFile));
+
+    VirtualFile dir = getPackageDirectory("pack").getVirtualFile();
+    for (VirtualFile file : dir.getChildren()) {
+      assertFalse(filter.accept(file));
+    }
+    assertFalse(filter.accept(dir));
   }
 
   public void testIncludeDirectoryItself() throws Exception {

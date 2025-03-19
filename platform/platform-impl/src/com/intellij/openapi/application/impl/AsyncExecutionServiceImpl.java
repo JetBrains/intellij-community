@@ -7,17 +7,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class AsyncExecutionServiceImpl extends AsyncExecutionService {
-  private static long ourWriteActionCounter;
+public final class AsyncExecutionServiceImpl extends AsyncExecutionService {
+  private static final AtomicLong ourWriteActionCounter = new AtomicLong();
 
   public AsyncExecutionServiceImpl() {
     Application app = ApplicationManager.getApplication();
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionStarted(@NotNull Object action) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourWriteActionCounter++;
+        ourWriteActionCounter.incrementAndGet();
       }
     }, app);
   }
@@ -26,33 +26,29 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
    * @deprecated use coroutines and their cancellation mechanism instead
    */
   @Deprecated(forRemoval = true)
-  @NotNull
   @Override
-  protected ExpirableExecutor createExecutor(@NotNull Executor executor) {
+  protected @NotNull ExpirableExecutor createExecutor(@NotNull Executor executor) {
     return new ExpirableExecutorImpl(executor);
   }
 
-  @NotNull
   @Override
-  protected AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
+  protected @NotNull AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
     return new AppUIExecutorImpl(modalityState, ExecutionThread.EDT);
   }
 
-  @NotNull
   @Override
-  protected AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState) {
+  protected @NotNull AppUIExecutor createWriteThreadExecutor(@NotNull ModalityState modalityState) {
     return new AppUIExecutorImpl(modalityState, ExecutionThread.WT);
   }
 
-  @NotNull
   @Override
-  public <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation) {
+  public @NotNull <T> NonBlockingReadAction<T> buildNonBlockingReadAction(@NotNull Callable<? extends T> computation) {
     return new NonBlockingReadActionImpl<>(computation);
   }
 
   @ApiStatus.Internal
   public static long getWriteActionCounter() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return ourWriteActionCounter;
+    return ourWriteActionCounter.get();
   }
 }

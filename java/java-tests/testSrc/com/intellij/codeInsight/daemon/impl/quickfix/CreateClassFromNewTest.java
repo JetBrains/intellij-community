@@ -4,6 +4,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21;
 
 public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -15,5 +19,10 @@ public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/createClassFromNew";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_21;
   }
 }

@@ -1,0 +1,4 @@
+// WITH_STDLIB
+// FIX: Specify type explicitly
+
+val foo: String = java.lang.String.valueOf(1)

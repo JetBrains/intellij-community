@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -20,25 +22,47 @@ import org.jetbrains.jps.model.module.JpsModuleReference
  * project libraries which are explicitly included into layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
 class PlatformLayout: BaseLayout() {
-  @Internal
-  @JvmField
-  val excludedProjectLibraries: MutableSet<String> = HashSet()
+  private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
 
-  fun withProjectLibrary(data: ProjectLibraryData) {
-    includedProjectLibraries.add(data)
+  @get:TestOnly
+  val excludedProjectLibraries: Sequence<String>
+    get() = projectLibraryToPolicy.asSequence().filter { it.value == ProjectLibraryPackagingPolicy.EXCLUDE }.map { it.key }
+
+  internal enum class ProjectLibraryPackagingPolicy {
+    EXCLUDE,
+    ALWAYS_PACK_TO_PLUGIN,
   }
 
-  override fun withModule(moduleName: String) {
-    withModule(moduleName, APP_JAR)
+  fun isProjectLibraryExcluded(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.EXCLUDE
+
+  internal fun alwaysPackToPlugin(names: List<String>) {
+    for (name in names) {
+      projectLibraryToPolicy.put(name, ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN)
+    }
   }
+
+  fun isLibraryAlwaysPackedIntoPlugin(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
+
+  override fun getRelativeJarPath(moduleName: String) = APP_JAR
 
   fun withoutProjectLibrary(libraryName: String) {
-    excludedProjectLibraries.add(libraryName)
+    projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
   }
 
-  inline fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
-    val libsToUnpack = includedProjectLibraries.mapTo(HashSet()) { it.libraryName }
-    for (moduleName in includedModules.asSequence().map { it.moduleName }.distinct()) {
+  fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
+    val libsToUnpack = includedProjectLibraries.mapTo(LinkedHashSet(includedProjectLibraries.size)) { it.libraryName }
+    val uniqueGuard = HashSet<String>()
+    for (item in includedModules) {
+      // libraries are packed into product module
+      if (item.reason == ModuleIncludeReasons.PRODUCT_MODULES) {
+        continue
+      }
+
+      val moduleName = item.moduleName
+      if (!uniqueGuard.add(moduleName)) {
+        continue
+      }
+
       val module = context.findRequiredModule(moduleName)
       for (library in JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries) {
         if (!isSkippedLibrary(library, libsToUnpack)) {
@@ -48,9 +72,7 @@ class PlatformLayout: BaseLayout() {
     }
   }
 
-  fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
-    return library.createReference().parentReference is JpsModuleReference ||
-           libsToUnpack.contains(library.name) ||
-           excludedProjectLibraries.contains(library.name)
+  private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
+    return library.createReference().parentReference is JpsModuleReference || libsToUnpack.contains(library.name) || isProjectLibraryExcluded(library.name)
   }
 }

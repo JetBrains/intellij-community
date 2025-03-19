@@ -1,0 +1,24 @@
+// FILE: first.before.kt
+// "Import operator 'Int.getValue'" "true"
+// ERROR: Type 'Int' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
+
+package b
+
+val x: String by <caret>10 + 20
+
+// FILE: second.kt
+package a
+
+import kotlin.reflect.KProperty
+
+operator fun Int.getValue(x: Any?, y: KProperty<*>) = ""
+
+// FILE: first.after.kt
+// "Import operator 'Int.getValue'" "true"
+// ERROR: Type 'Int' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
+
+package b
+
+import a.getValue
+
+val x: String by <caret>10 + 20

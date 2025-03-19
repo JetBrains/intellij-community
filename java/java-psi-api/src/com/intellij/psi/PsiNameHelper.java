@@ -326,7 +326,17 @@ public abstract class PsiNameHelper {
       else {
         PsiJavaCodeReferenceElement refElement = annotation.getNameReferenceElement();
         if (refElement != null) {
-          sb.append('@').append(refElement.getText()).append(' ');
+          String referenceName = refElement.getReferenceName();
+          if (referenceName != null) {
+            sb.append('@').append(referenceName);
+          } else {
+            String refElementText = refElement.getText();
+            if (!refElementText.startsWith("@")) {
+              sb.append('@');
+            }
+            sb.append(refElementText);
+          }
+          sb.append(' ');
           updated = true;
         }
       }

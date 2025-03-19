@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -99,8 +99,7 @@ public final class VirtualFilePointerTracker {
     }
   }
 
-  @NotNull
-  private static Collection<VirtualFilePointer> dumpAllPointers() {
+  private static @NotNull Collection<VirtualFilePointer> dumpAllPointers() {
     return ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).dumpAllPointers();
   }
 }

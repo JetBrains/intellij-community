@@ -1,0 +1,41 @@
+### auto-generated section `build kotlin.navigation` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+jvm_resources(
+  name = "navigation_resources",
+  files = glob(["resouces/**/*"]),
+  strip_prefix = "resouces"
+)
+
+jvm_library(
+  name = "navigation",
+  module_name = "kotlin.navigation",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
+    "//plugins/kotlin/base/indices:kotlin-base-indices",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//platform/util",
+    "//platform/indexing-api:indexing",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/analysis-api:analysis",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+  ],
+  runtime_deps = [":navigation_resources"]
+)
+### auto-generated section `build kotlin.navigation` end

@@ -1,29 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class ArgumentFixerActionFactory {
   private static final Logger LOG = Logger.getInstance(ArgumentFixerActionFactory.class);
 
-  @Nullable
-  protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
+  protected abstract @Nullable PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull HighlightInfo.Builder highlightInfo, final TextRange fixRange) {
+  public void registerCastActions(CandidateInfo @NotNull [] candidates, @NotNull PsiCall call, @NotNull Consumer<? super CommonIntentionAction> info) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -65,11 +63,12 @@ public abstract class ArgumentFixerActionFactory {
       for (CandidateInfo candidate : methodCandidates) {
         PsiMethod method = (PsiMethod)candidate.getElement();
         PsiSubstitutor substitutor = candidate.getSubstitutor();
+        PsiParameter[] parameters = method.getParameterList().getParameters();
         Map<Integer, PsiType> potentialCasts = new HashMap<>();
         for (int i = 0; i < expressions.length; i++) {
           PsiExpression expression = expressions[i];
           PsiType exprType = expression.getType();
-          PsiType originalParameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), i, true);
+          PsiType originalParameterType = PsiTypesUtil.getParameterType(parameters, i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
           if (!PsiTypesUtil.isDenotableType(parameterType, call)) continue;
           if (suggestedCasts.computeIfAbsent(i, __ -> new HashSet<>()).contains(parameterType.getCanonicalText())) continue;
@@ -85,22 +84,26 @@ public abstract class ArgumentFixerActionFactory {
         }
 
         if (!potentialCasts.isEmpty()) {
-          PsiCall newCall = LambdaUtil.copyTopLevelCall(call);
-          if (newCall == null) continue;
-          if (!ContainerUtil.exists(potentialCasts.entrySet(), entry -> replaceWithCast(expressions, newCall, entry))) {
+          PsiCall newCall = call;
+          for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
+            newCall = replaceWithCast(expressions, newCall, entry, newCall == call);
+            if (newCall == null) {
+              break;
+            }
+          }
+          if (newCall != null) {
             doCheckNewCall(expectedTypeByParent, newCall, () -> {
-              for (Iterator<Map.Entry<Integer, PsiType>> iterator = potentialCasts.entrySet().iterator(); iterator.hasNext(); ) {
-                Map.Entry<Integer, PsiType> entry = iterator.next();
-                registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry);
-                iterator.remove();
+              for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
+                registerCastIntention(info, list, suggestedCasts, entry);
               }
+              potentialCasts.clear();
             });
           }
           
           for (Map.Entry<Integer, PsiType> entry : potentialCasts.entrySet()) {
-            PsiCall callWithSingleCast = LambdaUtil.copyTopLevelCall(call);
-            if (callWithSingleCast == null || replaceWithCast(expressions, callWithSingleCast, entry)) continue;
-            doCheckNewCall(expectedTypeByParent, callWithSingleCast, () -> registerCastIntention(highlightInfo, fixRange, list, suggestedCasts, entry));
+            PsiCall callWithSingleCast = replaceWithCast(expressions, call, entry, true);
+            if (callWithSingleCast == null) continue;
+            doCheckNewCall(expectedTypeByParent, callWithSingleCast, () -> registerCastIntention(info, list, suggestedCasts, entry));
           }
         }
       }
@@ -121,27 +124,29 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  private void registerCastIntention(@NotNull HighlightInfo.Builder builder,
-                                     TextRange fixRange,
+  private void registerCastIntention(@NotNull Consumer<? super CommonIntentionAction> info,
                                      PsiExpressionList list,
                                      Map<Integer, Set<String>> suggestedCasts,
                                      Map.Entry<Integer, PsiType> entry) {
     suggestedCasts.get(entry.getKey()).add(entry.getValue().getCanonicalText());
     IntentionAction action = createFix(list, entry.getKey(), entry.getValue());
     if (action != null) {
-      builder.registerFix(action, null, null, fixRange, null);
+      info.accept(action);
     }
   }
 
-  private boolean replaceWithCast(PsiExpression[] expressions, PsiCall newCall, Map.Entry<Integer, PsiType> entry) {
+  private @Nullable PsiCall replaceWithCast(PsiExpression[] expressions, @NotNull PsiCall origCall, Map.Entry<Integer, PsiType> entry,
+                                            boolean shouldCopy) {
     Integer i = entry.getKey();
     PsiType parameterType = entry.getValue();
     PsiExpression modifiedExpression = getModifiedArgument(expressions[i], parameterType);
-    if (modifiedExpression == null) return true;
-    PsiExpressionList argumentList = newCall.getArgumentList();
-    if (argumentList == null) return true;
-    argumentList.getExpressions()[i].replace(modifiedExpression);
-    return false;
+    if (modifiedExpression == null) return null;
+    PsiExpressionList argumentList = origCall.getArgumentList();
+    if (argumentList == null) return null;
+    PsiCall newCall = shouldCopy ? LambdaUtil.copyTopLevelCall(origCall) : origCall;
+    if (newCall == null) return null;
+    Objects.requireNonNull(newCall.getArgumentList()).getExpressions()[i].replace(modifiedExpression);
+    return newCall;
   }
 
   public abstract boolean areTypesConvertible(@NotNull PsiType exprType, @NotNull PsiType parameterType, @NotNull PsiElement context);

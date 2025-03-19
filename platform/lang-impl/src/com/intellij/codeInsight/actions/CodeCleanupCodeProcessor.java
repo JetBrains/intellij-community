@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -16,9 +17,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
-public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
+public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private SelectionModel mySelectionModel = null;
+  private InspectionProfileImpl myProfile = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
@@ -37,15 +39,18 @@ public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
   }
 
 
-  @NotNull
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
       if (!file.isValid()) return false;
       Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
-      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), file);
+      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, file);
       return true;
     });
+  }
+
+  public void setProfile(InspectionProfileImpl profile) {
+    myProfile = profile;
   }
 
   private Collection<TextRange> getRanges(@NotNull PsiFile file, boolean processChangedTextOnly) {

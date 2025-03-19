@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -20,12 +21,10 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-public class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
+@ApiStatus.Internal
+public final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
 
   public static final int MAX_EXPRESSIONS_TO_PROCESS = 16;
-
-  public MissingAccessibleContextInspection() {
-  }
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -77,7 +76,8 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       return true;
     }
 
-    private void processBody(UExpression body, UElement context) {
+    private void processBody(@Nullable UExpression body, UElement context) {
+      if (body == null) return;
       List<PsiElement> anchors = new ArrayList<>();
       for (UExpression expression : findReturnedExpressions(body, context)) {
         PsiClass panelClass = findReturnedClass(expression);
@@ -95,7 +95,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       var visitor = new AbstractUastVisitor() {
         boolean myHasAccessibilityMethodCall = false;
         
-        private boolean isAccessibilityMethod(@NotNull UCallExpression call) {
+        private static boolean isAccessibilityMethod(@NotNull UCallExpression call) {
           if (call.isMethodNameOneOf(List.of("setAccessibleName", "setAccessibleDescription"))) {
             return true;
           }
@@ -144,7 +144,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
             ContainerUtil.addIfNotNull(workList, uVar.getUastInitializer());
             PsiElement bodyPsi = body.getSourcePsi();
             if (bodyPsi != null) {
-              for (PsiReference ref : ReferencesSearch.search(psiVar, new LocalSearchScope(bodyPsi))) {
+              for (PsiReference ref : ReferencesSearch.search(psiVar, new LocalSearchScope(bodyPsi)).asIterable()) {
                 UExpression lValue = UastContextKt.toUElement(ref.getElement(), UExpression.class);
                 if (lValue != null) {
                   UBinaryExpression parent = ObjectUtils.tryCast(lValue.getUastParent(), UBinaryExpression.class);
@@ -164,8 +164,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       return leafs;
     }
 
-    @NotNull
-    private static Queue<UExpression> findDirectExpressions(@NotNull UExpression body, @NotNull UElement context) {
+    private static @NotNull Queue<UExpression> findDirectExpressions(@NotNull UExpression body, @NotNull UElement context) {
       Queue<UExpression> direct = new ArrayDeque<>();
       if (body instanceof UBlockExpression) {
         body.accept(new AbstractUastVisitor() {
@@ -197,8 +196,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       return false;
     }
 
-    @Nullable
-    private static PsiClass findReturnedClass(UExpression result) {
+    private static @Nullable PsiClass findReturnedClass(UExpression result) {
       PsiClass panelClass = null;
       if (result instanceof UObjectLiteralExpression) {
         panelClass = ((UObjectLiteralExpression)result).getDeclaration().getJavaPsi();

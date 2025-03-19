@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -36,7 +36,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(final @NotNull VirtualFile file) {
     if (!isUnderContent(file) || getValue() == null) {
       return false;
     }
@@ -62,19 +62,19 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     final PackageElement value = getValue();
     if (value == null) return Collections.emptyList();
     final List<AbstractTreeNode<?>> children = new ArrayList<>();
     final Module module = value.getModule();
     final PsiPackage aPackage = value.getPackage();
+    var nodeBuilder = new PackageNodeBuilder(module, isLibraryElement());
 
     if (!getSettings().isFlattenPackages()) {
 
-      final PsiPackage[] subpackages = PackageUtil.getSubpackages(aPackage, module, isLibraryElement());
+      final PsiPackage[] subpackages = nodeBuilder.getSubpackages(aPackage);
       for (PsiPackage subpackage : subpackages) {
-        PackageUtil.addPackageAsChild(children, subpackage, module, getSettings(), isLibraryElement());
+        nodeBuilder.addPackageAsChild(children, subpackage, getSettings());
       }
     }
     // process only files in package's directories
@@ -105,7 +105,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   }
 
   @Override
-  protected void update(@NotNull final PresentationData presentation) {
+  protected void update(final @NotNull PresentationData presentation) {
     try {
       if (isValid()) {
         updateValidData(presentation, getValue());
@@ -217,8 +217,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> implemen
   }
 
   @Override
-  @Nullable
-  public String getQualifiedNameSortKey() {
+  public @Nullable String getQualifiedNameSortKey() {
     final PackageElement packageElement = getValue();
     if (packageElement != null) {
       return packageElement.getPackage().getQualifiedName();

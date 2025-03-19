@@ -1,20 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -24,51 +21,33 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
-public final class PermuteArgumentsFix implements IntentionAction, HighPriorityAction {
+public final class PermuteArgumentsFix extends PsiUpdateModCommandAction<PsiCall> {
   private static final Logger LOG = Logger.getInstance(PermuteArgumentsFix.class);
-  private final PsiCall myCall;
   private final PsiCall myPermutation;
 
   private PermuteArgumentsFix(@NotNull PsiCall call, @NotNull PsiCall permutation) {
-    myCall = call;
+    super(call);
     myPermutation = permutation;
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-
-  @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getFamilyName() {
     return QuickFixBundle.message("permute.arguments");
   }
 
   @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new PermuteArgumentsFix(PsiTreeUtil.findSameElementInCopy(myCall, target), myPermutation);
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiCall element) {
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiCall call, @NotNull ModPsiUpdater updater) {
+    Objects.requireNonNull(call.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
   }
 
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && myCall.isValid() && BaseIntentionAction.canModify(myCall);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Objects.requireNonNull(myCall.getArgumentList()).replace(Objects.requireNonNull(myPermutation.getArgumentList()));
-  }
-
-  public static boolean registerFix(@NotNull HighlightInfo.Builder info, PsiCall callExpression, final CandidateInfo[] candidates, final TextRange fixRange) {
+  public static boolean registerFix(@NotNull Consumer<? super CommonIntentionAction> info, PsiCall callExpression, final CandidateInfo[] candidates) {
     PsiExpression[] expressions = Objects.requireNonNull(callExpression.getArgumentList()).getExpressions();
     if (expressions.length < 2) return false;
     List<PsiCall> permutations = new ArrayList<>();
@@ -104,7 +83,7 @@ public final class PermuteArgumentsFix implements IntentionAction, HighPriorityA
     }
     if (permutations.size() == 1) {
       PermuteArgumentsFix fix = new PermuteArgumentsFix(callExpression, permutations.get(0));
-      info.registerFix(fix, null, null, fixRange, null);
+      info.accept(fix);
       return true;
     }
 

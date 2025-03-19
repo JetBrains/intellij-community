@@ -8,6 +8,8 @@ public final data class Modifiers public constructor(x: kotlin.Int) {
 
     public final operator fun component1(): kotlin.Int { /* compiled code */ }
 
+    public final fun copy(x: kotlin.Int = COMPILED_CODE): test.Modifiers { /* compiled code */ }
+
     public open operator fun equals(other: kotlin.Any?): kotlin.Boolean { /* compiled code */ }
 
     public open fun hashCode(): kotlin.Int { /* compiled code */ }

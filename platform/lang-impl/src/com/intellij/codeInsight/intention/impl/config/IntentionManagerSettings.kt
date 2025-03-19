@@ -3,16 +3,20 @@
 
 package com.intellij.codeInsight.intention.impl.config
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import kotlinx.coroutines.ensureActive
 import org.jdom.Element
 import java.io.IOException
 import java.util.*
 import java.util.regex.Pattern
+import kotlin.coroutines.coroutineContext
 
 private const val IGNORE_ACTION_TAG = "ignoreAction"
 private const val NAME_ATT = "name"
@@ -21,13 +25,20 @@ private const val NAME_ATT = "name"
 class IntentionManagerSettings : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance() = service<IntentionManagerSettings>()
+    fun getInstance(): IntentionManagerSettings = service<IntentionManagerSettings>()
   }
 
   @Volatile
-  private var ignoredActions = emptySet<String>()
+  private var ignoredActions: Set<String> = emptySet<String>()
 
-  fun isShowLightBulb(action: IntentionAction) = !ignoredActions.contains(action.familyName)
+  fun isShowLightBulb(action: IntentionAction): Boolean {
+    val showLightBulb = (IntentionActionDelegate.unwrap(action) as? CustomizableIntentionAction)
+      ?.isShowLightBulb != false
+
+    if (!showLightBulb) return false
+
+    return !ignoredActions.contains(action.familyName)
+  }
 
   override fun loadState(element: Element) {
     val children = element.getChildren(IGNORE_ACTION_TAG)
@@ -50,7 +61,7 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
     return IntentionsMetadataService.getInstance().getUniqueMetadata()
   }
 
-  fun isEnabled(metaData: IntentionActionMetaData) = !ignoredActions.contains(getFamilyName(metaData))
+  fun isEnabled(metaData: IntentionActionMetaData): Boolean = !ignoredActions.contains(getFamilyName(metaData))
 
   fun setEnabled(metaData: IntentionActionMetaData, enabled: Boolean) {
     ignoredActions = if (enabled) ignoredActions - getFamilyName(metaData) else ignoredActions + getFamilyName(metaData)
@@ -73,25 +84,25 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
   fun unregisterMetaData(intentionAction: IntentionAction) {
     IntentionsMetadataService.getInstance().unregisterMetaData(intentionAction)
   }
+}
 
-  private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
-    companion object {
-      private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
-    }
+private class IntentionSearchableOptionContributor : SearchableOptionContributor() {
+  private val HTML_PATTERN = Pattern.compile("<[^<>]*>")
 
-    override fun processOptions(processor: SearchableOptionProcessor) {
-      for (metaData in getInstance().getMetaData()) {
-        try {
-          val descriptionText = HTML_PATTERN.matcher(metaData.description.text.lowercase(Locale.ENGLISH)).replaceAll(" ")
-          val displayName = IntentionSettingsConfigurable.getDisplayNameText()
-          val configurableId = IntentionSettingsConfigurable.HELP_ID
-          val family = metaData.family
-          processor.addOptions(descriptionText, family, family, configurableId, displayName, false)
-          processor.addOptions(family, family, family, configurableId, displayName, true)
-        }
-        catch (e: IOException) {
-          logger<IntentionManagerSettings>().error(e)
-        }
+  override suspend fun contribute(processor: SearchableOptionProcessor) {
+    for (metaData in serviceAsync<IntentionsMetadataService>().getUniqueMetadata()) {
+      coroutineContext.ensureActive()
+
+      try {
+        val descriptionText = HTML_PATTERN.matcher(metaData.description.getText().lowercase(Locale.ENGLISH)).replaceAll(" ")
+        val displayName = IntentionSettingsConfigurable.getDisplayNameText()
+        val configurableId = IntentionSettingsConfigurable.HELP_ID
+        val family = metaData.family
+        processor.addOptions(descriptionText, family, family, configurableId, displayName, false)
+        processor.addOptions(family, family, family, configurableId, displayName, true)
+      }
+      catch (e: IOException) {
+        logger<IntentionManagerSettings>().error(e)
       }
     }
   }

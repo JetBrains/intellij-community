@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,16 +11,15 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,13 +37,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +62,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(myProject, file, 0), false);
     ((EditorImpl)editor).setCaretActive();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    DaemonCodeAnalyzer.getInstance(getProject()).restart();
+    DaemonCodeAnalyzerEx.getInstanceEx(getProject()).restart("JavaCodeInsightTestCase.createEditor " + file);
 
     return editor;
   }
@@ -71,10 +71,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   protected void tearDown() throws Exception {
     try {
       if (myProject != null) {
-        FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
-        for (VirtualFile openFile : editorManager.getOpenFiles()) {
-          editorManager.closeFile(openFile);
-        }
+        FileEditorManagerEx.getInstanceEx(myProject).closeAllFiles();
       }
     }
     catch (Throwable e) {
@@ -84,11 +81,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
       myEditor = null;
       super.tearDown();
     }
-  }
-
-  @Override
-  protected @NotNull PsiTestData createData() {
-    return new CodeInsightTestData();
   }
 
   protected void configureByFile(String filePath) throws Exception {
@@ -187,14 +179,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-  }
-
-  /**
-   * @deprecated use {@link #configureByFiles(File, VirtualFile...)} instead
-   */
-  @Deprecated
-  public VirtualFile doConfigureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
-    return configureByFiles(rawProjectRoot, vFiles);
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected VirtualFile configureByFiles(@Nullable File rawProjectRoot, VirtualFile @NotNull ... vFiles) throws IOException {
@@ -253,6 +238,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
         return null;
       }
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
 
     if (editorInfos != null) {
       List<Editor> list = openEditors(editorInfos);
@@ -272,6 +258,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
   protected void doCommitModel(@NotNull ModifiableRootModel rootModel) {
     rootModel.commit();
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }
 
   protected void sourceRootAdded(final VirtualFile dir) {
@@ -327,17 +314,7 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     myFile = getPsiFile(editor.getDocument());
   }
 
-  /**
-   * @deprecated usages must be inlined
-   */
-  @Deprecated
-  protected @NotNull List<Editor> openEditorsAndActivateLast(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
-    final List<Editor> list = openEditors(editorInfos);
-    setActiveEditor(list.get(list.size() - 1));
-    return list;
-  }
-
-  protected final @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
+  protected final @Unmodifiable @NotNull List<Editor> openEditors(@NotNull Map<VirtualFile, EditorInfo> editorInfos) {
     return ContainerUtil.map(editorInfos.keySet(), newVFile -> {
       PsiFile file = myPsiManager.findFile(newVFile);
       if (myFile == null) myFile = file;
@@ -383,43 +360,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
     return false;
   }
 
-  /**
-   * @deprecated cursor and selection is automatically configured in {@code configureByFile*} methods 
-   */
-  @Deprecated
-  protected void setupCursorAndSelection(final @NotNull Editor editor) {
-    Document document = editor.getDocument();
-    EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
-    EditorTestUtil.setCaretsAndSelection(editor, caretState);
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-  }
-
-  /**
-   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers} 
-   */
-  @Deprecated
-  @Override
-  protected void configure(@NotNull String path, String dataName) throws Exception {
-    super.configure(path, dataName);
-
-    myEditor = createEditor(myFile.getVirtualFile());
-
-    CodeInsightTestData data = (CodeInsightTestData) myTestDataBefore;
-
-    LogicalPosition pos = new LogicalPosition(data.getLineNumber() - 1, data.getColumnNumber() - 1);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
-
-    int selectionEnd;
-    int selectionStart = selectionEnd = myEditor.getCaretModel().getOffset();
-
-    if (data.getSelectionStartColumnNumber() >= 0) {
-      selectionStart = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionStartLineNumber() - 1, data.getSelectionStartColumnNumber() - 1));
-      selectionEnd = myEditor.logicalPositionToOffset(new LogicalPosition(data.getSelectionEndLineNumber() - 1, data.getSelectionEndColumnNumber() - 1));
-    }
-
-    myEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
-  }
-
   protected void checkResultByFile(@NotNull String filePath) throws Exception {
     checkResultByFile(filePath, false);
   }
@@ -463,48 +403,11 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
 
       String actualText = StringUtil.convertLineSeparators(myFile.getText());
       if (!Objects.equals(expectedText, actualText)) {
-        throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+        throw new FileComparisonFailedError("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
       }
 
       EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
     });
-  }
-
-  /**
-   * @deprecated caret and selection are now configured directly in files, see {@link EditorTestUtil#extractCaretAndSelectionMarkers}
-   */
-  @Override
-  @Deprecated
-  protected void checkResult(String dataName) throws Exception {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    super.checkResult(dataName);
-
-    CodeInsightTestData data = (CodeInsightTestData) myTestDataAfter;
-
-    if (data.getColumnNumber() >= 0) {
-      assertEquals(dataName + ":caretColumn", data.getColumnNumber(), myEditor.getCaretModel().getLogicalPosition().column + 1);
-    }
-    if (data.getLineNumber() >= 0) {
-      assertEquals(dataName + ":caretLine", data.getLineNumber(), myEditor.getCaretModel().getLogicalPosition().line + 1);
-    }
-
-    int selectionStart = myEditor.getSelectionModel().getSelectionStart();
-    int selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
-    LogicalPosition startPosition = myEditor.offsetToLogicalPosition(selectionStart);
-    LogicalPosition endPosition = myEditor.offsetToLogicalPosition(selectionEnd);
-
-    if (data.getSelectionStartColumnNumber() >= 0) {
-      assertEquals(dataName + ":selectionStartColumn", data.getSelectionStartColumnNumber(), startPosition.column + 1);
-    }
-    if (data.getSelectionStartLineNumber() >= 0) {
-      assertEquals(dataName + ":selectionStartLine", data.getSelectionStartLineNumber(), startPosition.line + 1);
-    }
-    if (data.getSelectionEndColumnNumber() >= 0) {
-      assertEquals(dataName + ":selectionEndColumn", data.getSelectionEndColumnNumber(), endPosition.column + 1);
-    }
-    if (data.getSelectionEndLineNumber() >= 0) {
-      assertEquals(dataName + ":selectionEndLine", data.getSelectionEndLineNumber(), endPosition.line + 1);
-    }
   }
 
   protected @NotNull VirtualFile findVirtualFile(@NotNull String filePath) {
@@ -590,6 +493,6 @@ public abstract class JavaCodeInsightTestCase extends JavaPsiTestCase {
   }
 
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), level);
   }
 }

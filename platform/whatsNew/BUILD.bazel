@@ -1,0 +1,79 @@
+### auto-generated section `build intellij.platform.whatsNew` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_resources(
+  name = "whatsNew_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "whatsNew",
+  module_name = "intellij.platform.whatsNew",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/core-impl",
+    "//platform/platform-api:ide",
+    "//platform/statistics",
+    "//platform/platform-impl:ide-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ui.jcef:ui-jcef",
+    "//platform/analysis-api:analysis",
+  ],
+  runtime_deps = [":whatsNew_resources"]
+)
+
+jvm_library(
+  name = "whatsNew_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  associates = [":whatsNew"],
+  deps = [
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-impl",
+    "//platform/platform-api:ide",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/ide-core-impl",
+    "@lib//:miglayout-swing",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-serialization-core",
+    "//platform/ui.jcef:ui-jcef",
+    "//platform/analysis-api:analysis",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+  ],
+  runtime_deps = [":whatsNew_resources"]
+)
+
+jvm_test(
+  name = "whatsNew_test",
+  runtime_deps = [":whatsNew_test_lib"]
+)
+### auto-generated section `build intellij.platform.whatsNew` end

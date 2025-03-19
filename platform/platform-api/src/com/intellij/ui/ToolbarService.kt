@@ -4,30 +4,21 @@ package com.intellij.ui
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import java.awt.Window
-import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.swing.JRootPane
 
 interface ToolbarService {
   companion object {
-    @JvmStatic
-    val instance: ToolbarService
-      get() = ApplicationManager.getApplication().service()
+    fun getInstance(): ToolbarService = ApplicationManager.getApplication().service()
+  }
+
+  fun setTransparentTitleBar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit) {
+    setTransparentTitleBar(window = window, rootPane = rootPane, handlerProvider = null, onDispose = onDispose)
   }
 
   fun setTransparentTitleBar(window: Window,
                              rootPane: JRootPane,
-                             onDispose: Consumer<in Runnable?>) {
-    setTransparentTitleBar(window, rootPane, null, onDispose)
-  }
+                             handlerProvider: (() -> FullScreenSupport)?,
+                             onDispose: (Runnable) -> Unit)
 
-  fun setTransparentTitleBar(window: Window,
-                             rootPane: JRootPane,
-                             handlerProvider: Supplier<out FullScreenSupport>?,
-                             onDispose: Consumer<in Runnable>)
-
-  fun setCustomTitleBar(window: Window,
-                        rootPane: JRootPane,
-                        onDispose: Consumer<in Runnable?>)
-
+  fun setCustomTitleBar(window: Window, rootPane: JRootPane, onDispose: (Runnable) -> Unit)
 }

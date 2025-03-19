@@ -20,7 +20,7 @@ public record OptTable(@NotNull LocMessage label, @NotNull List<@NotNull OptTabl
                        @Nullable HtmlChunk description) implements OptRegularComponent,
                                                                    OptDescribedComponent {
   @Override
-  public @NotNull OptRegularComponent prefix(@NotNull String bindPrefix) {
+  public @NotNull OptTable prefix(@NotNull String bindPrefix) {
     return new OptTable(label, ContainerUtil.map(children, child -> child.prefix(bindPrefix)), description);
   }
 
@@ -30,7 +30,7 @@ public record OptTable(@NotNull LocMessage label, @NotNull List<@NotNull OptTabl
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptTable description(@NotNull @NlsContexts.Tooltip String description) {
+  public @NotNull OptTable description(@NotNull @NlsContexts.Tooltip String description) {
     return description(HtmlChunk.text(description));
   }
 
@@ -40,7 +40,7 @@ public record OptTable(@NotNull LocMessage label, @NotNull List<@NotNull OptTabl
    * @throws IllegalStateException if description was already set
    */
   @Override
-  public OptTable description(@NotNull HtmlChunk description) {
+  public @NotNull OptTable description(@NotNull HtmlChunk description) {
     if (this.description != null) {
       throw new IllegalStateException("Description is already set");
     }

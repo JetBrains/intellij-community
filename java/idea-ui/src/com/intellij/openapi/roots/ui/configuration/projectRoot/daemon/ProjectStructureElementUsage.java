@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -12,8 +13,7 @@ public abstract class ProjectStructureElementUsage {
 
   public abstract @NlsContexts.Label String getPresentableName();
 
-  @Nullable
-  public @NlsContexts.Label String getPresentableLocationInElement() {
+  public @Nullable @NlsContexts.Label String getPresentableLocationInElement() {
     return null;
   }
 

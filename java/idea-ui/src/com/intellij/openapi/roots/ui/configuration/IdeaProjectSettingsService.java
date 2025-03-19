@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.compiler.actions.ArtifactAwareProjectSettingsService;
-import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -19,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
+public final class IdeaProjectSettingsService extends ProjectSettingsService implements ArtifactAwareProjectSettingsService {
   private final Project myProject;
 
   public IdeaProjectSettingsService(final Project project) {
@@ -39,7 +38,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openLibrary(@NotNull final Library library) {
+  public void openLibrary(final @NotNull Library library) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> config.selectProjectOrGlobalLibrary(library, true));
   }
@@ -80,7 +79,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openModuleDependenciesSettings(@NotNull final Module module, @Nullable final OrderEntry orderEntry) {
+  public void openModuleDependenciesSettings(final @NotNull Module module, final @Nullable OrderEntry orderEntry) {
     ShowSettingsUtil.getInstance().editConfigurable(myProject, ProjectStructureConfigurable.getInstance(myProject), () -> ProjectStructureConfigurable.getInstance(myProject).selectOrderEntry(module, orderEntry));
   }
 
@@ -90,7 +89,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public void openLibraryOrSdkSettings(@NotNull final OrderEntry orderEntry) {
+  public void openLibraryOrSdkSettings(final @NotNull OrderEntry orderEntry) {
     final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
     ShowSettingsUtil.getInstance().editConfigurable(myProject, config, () -> {
       if (orderEntry instanceof JdkOrderEntry) {
@@ -102,11 +101,11 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
   }
 
   @Override
-  public boolean processModulesMoved(final Module[] modules, @Nullable final ModuleGroup targetGroup) {
+  public boolean processModulesMoved(final Module[] modules, final @Nullable String targetGroupName) {
     final ModuleStructureConfigurable rootConfigurable = ProjectStructureConfigurable.getInstance(myProject).getModulesConfig();
     if (rootConfigurable.updateProjectTree(modules)) { //inside project root editor
-      if (targetGroup != null) {
-        rootConfigurable.selectNodeInTree(targetGroup.toString());
+      if (targetGroupName != null) {
+        rootConfigurable.selectNodeInTree(targetGroupName);
       }
       else {
         rootConfigurable.selectNodeInTree(modules[0].getName());
@@ -134,7 +133,7 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
    * avoid breaking the older code scenarios.
    */
   @Override
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public Sdk chooseAndSetSdk() {
     Logger
       .getInstance(getClass())

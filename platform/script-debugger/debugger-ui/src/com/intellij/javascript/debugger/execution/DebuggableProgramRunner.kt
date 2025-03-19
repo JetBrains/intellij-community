@@ -10,18 +10,22 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.DebuggableRunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebuggableRunConfiguration
-import org.jetbrains.rpc.LOG
+
+private val LOG = logger<DebuggableProgramRunner>()
 
 @InternalIgnoreDependencyViolation
+@Deprecated("Please consider implementing AsyncProgramRunner directly")
 open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
   override fun execute(environment: ExecutionEnvironment,
                        state: RunProfileState): Promise<RunContentDescriptor?> = doExecuteDebuggableProgram(environment, state)
@@ -33,15 +37,17 @@ open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
   }
 }
 
+@ApiStatus.Internal
 inline fun startSession(environment: ExecutionEnvironment, crossinline starter: (session: XDebugSession) -> XDebugProcess): XDebugSession {
   return XDebuggerManager.getInstance(environment.project).startSession(environment, xDebugProcessStarter(starter))
 }
 
+@ApiStatus.Internal
 inline fun xDebugProcessStarter(crossinline starter: (session: XDebugSession) -> XDebugProcess): XDebugProcessStarter = object : XDebugProcessStarter() {
   override fun start(session: XDebugSession) = starter(session)
 }
 
-fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
+private fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
   FileDocumentManager.getInstance().saveAllDocuments()
   val configuration = environment.runProfile as DebuggableRunConfiguration
 

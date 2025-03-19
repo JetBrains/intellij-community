@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -11,9 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public final class PlatformDataValidators extends DataValidators {
+final class PlatformDataValidators extends DataValidators {
   @Override
-  public void collectValidators(@NotNull Registry registry) {
+  protected void collectValidators(@NotNull ValidatorRegistry registry) {
+    Validator<Object> uiOnlyValidator = uiOnlyDataKeyValidator();
+    registry.register(PlatformCoreDataKeys.SELECTED_ITEM, uiOnlyValidator);
+    registry.register(PlatformCoreDataKeys.SELECTED_ITEMS, uiOnlyValidator);
+
     Validator<VirtualFile> fileValidator = (data, dataId, source) -> data.isValid();
     registry.register(CommonDataKeys.VIRTUAL_FILE, fileValidator);
     registry.register(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayValidator(fileValidator));

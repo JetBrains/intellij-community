@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.Language;
@@ -10,7 +10,10 @@ import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -39,8 +42,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
    * @param language    target language
    * @return            white space strategy to use for the given language
    */
-  @NotNull
-  public static WhiteSpaceFormattingStrategy getStrategy(@NotNull Language language) {
+  public static @NotNull WhiteSpaceFormattingStrategy getStrategy(@NotNull Language language) {
     WhiteSpaceFormattingStrategy strategy = LanguageWhiteSpaceFormattingStrategy.INSTANCE.forLanguage(language);
     if (strategy != null) {
       if (strategy.replaceDefaultStrategy()) {
@@ -58,8 +60,7 @@ public final class WhiteSpaceFormattingStrategyFactory {
   /**
    * @return    collection of all registered white space strategies
    */
-  @NotNull
-  public static Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
+  public static @NotNull Collection<WhiteSpaceFormattingStrategy> getAllStrategies() {
     final WeakReference<Collection<WhiteSpaceFormattingStrategy>> reference = myCachedStrategies.get();
     final Collection<WhiteSpaceFormattingStrategy> strategies = SoftReference.dereference(reference);
     if (strategies != null) {

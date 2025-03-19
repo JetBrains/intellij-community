@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.context;
 
 import com.intellij.ide.bookmark.BookmarksManager;
@@ -8,22 +8,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public class BookmarkContextProvider extends WorkingContextProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "bookmarks";
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getDescription() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDescription() {
     return TaskBundle.message("bookmarks");
   }
 

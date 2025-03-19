@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
@@ -17,10 +17,13 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.git.RenameTrackingKt;
 
 import java.util.Set;
 
@@ -37,9 +40,8 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     myFiles = files;
   }
 
-  @NotNull
   @Override
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new UsageViewDescriptorAdapter() {
       @Override
       public PsiElement @NotNull [] getElements() {
@@ -71,6 +73,18 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       StringBuilder builder = new StringBuilder();
       boolean first = true;
       for (PsiClass aClass : classes) {
+        if (first) {
+          int offset = aClass.getTextOffset();
+          for (PsiElement child : file.getChildren()) {
+            if (child.getTextOffset() >= offset) break;
+            if (child instanceof PsiComment) {
+              if (child instanceof GrDocComment docComment) {
+                if (docComment.getOwner() != null) break;
+              }
+              builder.append(child.getText()).append('\n'); // keep copyright comments
+            }
+          }
+        }
         classGenerator.writeTypeDefinition(builder, aClass, true, first);
         first = false;
         builder.append('\n');
@@ -83,6 +97,9 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       String fileName = getNewFileName(file);
       PsiElement newFile;
       try {
+        String filePathBeforeConvert = file.getVirtualFile().getPath();
+        file.getVirtualFile().putUserData(RenameTrackingKt.getPathBeforeGroovyToJavaConversion(), filePathBeforeConvert);
+
         newFile = file.setName(fileName);
       }
       catch (final IncorrectOperationException e) {
@@ -106,9 +123,10 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
     newFile = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(newFile);
     newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(newFile.getContainingFile().getFileDocument());
     PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
     for (PsiClass psiClass : inner) {
-      MoveClassToSeparateFileFix fix = new MoveClassToSeparateFileFix(psiClass);
+      var fix = new MoveClassToSeparateFileFix(psiClass).asIntention();
       if (fix.isAvailable(myProject, null, (PsiFile)newFile)) {
         fix.invoke(myProject, null, (PsiFile)newFile);
       }
@@ -121,22 +139,13 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
 
 
     final PsiFile[] files = dir.getFiles();
-    Set<String> fileNames = new HashSet<>();
-    for (PsiFile psiFile : files) {
-      fileNames.add(psiFile.getName());
-    }
+    Set<String> fileNames = ContainerUtil.map2Set(files, PsiFileSystemItem::getName);
     String prefix = FileUtilRt.getNameWithoutExtension(file.getName());
-    String fileName = prefix + ".java";
-    int index = 1;
-    while (fileNames.contains(fileName)) {
-      fileName = prefix + (index++) + ".java";
-    }
-    return fileName;
+    return UniqueNameGenerator.generateUniqueName(prefix, "", ".java", fileNames);
   }
 
-  @NotNull
   @Override
-  protected String getCommandName() {
+  protected @NotNull String getCommandName() {
     return GroovyRefactoringBundle.message("converting.files.to.java");
   }
 }

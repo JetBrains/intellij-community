@@ -81,3 +81,28 @@ private class PrivateLibraryClass
 private fun usageOfPrivateClass() {
     PrivateLibraryClass()
 }
+
+class ReceiverClass
+fun ReceiverClass.extFun() {}
+
+@JvmOverloads
+fun fooWithOverloads(
+    x: Int = 0,
+    y: Double = 0.0,
+    z: String = "0"
+) {}
+
+enum class EnumWithEnumEntries {
+    AnEntry {
+        init {
+            fooEnum(42)
+        }
+
+        override fun fooEnum(n: Int): Int = n + 1
+    };
+
+    init {
+      fooEnum(1)
+    }
+    open fun fooEnum(n: Int): Int = n
+}

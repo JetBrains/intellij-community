@@ -5,7 +5,7 @@ class A {
             1 + 1 // A
             val a = 1 // A
             fun foo() {
-                1 // A\$Companion\$1
+                1 // A
             }
         }
 

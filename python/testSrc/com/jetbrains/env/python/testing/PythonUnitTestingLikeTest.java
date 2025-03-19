@@ -24,7 +24,6 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyScriptTestProcessRunner;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
@@ -71,15 +70,9 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    * Ensure that sys.path[0] is script folder, not helpers folder
    */
   @Test
-  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {IronPythonSdkFlavor.class})
+  @EnvTestTagsRequired(tags = {}, skipOnFlavors = {})
   public void testSysPath() throws Exception {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner) {
-
-      @NotNull
-      @Override
-      protected T createProcessRunner() throws Exception {
-        return getProcessRunnerCreator().apply(new TestRunnerConfig(toFullPath(getMyScriptName()), 0));
-      }
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/sysPath", "test_sample.py", this::createTestRunner, true) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -99,8 +92,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testUTRunner() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test1.py", this::createTestRunner) {
-
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test1.py", this::createTestRunner, true) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -121,13 +113,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   public void testWithDocString() throws Exception {
 
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/withDocString", "test_test.py", this::createTestRunner) {
-
-        @NotNull
-        @Override
-        protected T createProcessRunner() throws Exception {
-          return getProcessRunnerCreator().apply(new TestRunnerConfig(toFullPath(getMyScriptName()), 1));
-        }
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("testRunner/env/unit/withDocString", "test_test.py", this::createTestRunner, true, 1) {
 
         @Override
         protected void checkTestResults(@NotNull final T runner,
@@ -176,7 +162,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
 
   @Test
   public void testUTRunner2() {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test2.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test2.py", this::createTestRunner, true) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -197,7 +183,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testUnitTestFileReferences() {
     final String fileName = "reference_tests.py";
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", fileName, this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", fileName, this::createTestRunner, true) {
 
       @Override
       protected void checkTestResults(@NotNull final T runner,
@@ -221,7 +207,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testUTSkippedAndIgnored() {
     runPythonTest(
-      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_with_skips_and_errors.py", this::createTestRunner) {
+      new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "test_with_skips_and_errors.py", this::createTestRunner, true) {
 
         @Override
         public boolean isLanguageLevelSupported(@NotNull final LanguageLevel level) {
@@ -279,7 +265,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
    */
   @Test
   public void testRerunDerivedClass() throws Exception {
-    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "rerun_derived.py", this::createTestRunner) {
+    runPythonTest(new PyUnitTestLikeProcessWithConsoleTestTask<>("/testRunner/env/unit", "rerun_derived.py", this::createTestRunner, true, 2) {
       @Override
       protected void checkTestResults(@NotNull final T runner,
                                       @NotNull final String stdout,
@@ -299,12 +285,6 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
                                 ...test_a(-)
                                 """, runner.getFormattedTestTree());
         }
-      }
-
-      @NotNull
-      @Override
-      protected T createProcessRunner() throws Exception {
-        return getProcessRunnerCreator().apply(new TestRunnerConfig(getMyScriptName(), 2));
       }
     });
   }

@@ -6,3 +6,5 @@ fun ListInt.boo() = firstOrNull()
 fun main() {
     listOf(1, 2, 3).apply {<caret> boo() }
 }
+
+// IGNORE_K2

@@ -1,0 +1,59 @@
+### auto-generated section `build kotlin.repl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = [
+    "org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi",
+    "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
+  ]
+)
+
+jvm_resources(
+  name = "repl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "repl",
+  module_name = "kotlin.repl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//platform/platform-impl:ide-impl",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//plugins/kotlin/base/facet:kotlin-base-facet",
+    "//platform/editor-ui-ex:editor-ex",
+    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//plugins/kotlin/base/analysis:kotlin-base-analysis",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/idea",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//java/compiler/openapi:java-compiler",
+    "//java/execution/openapi:java-execution",
+    "//platform/core-ui",
+    "//java/execution/impl:java-execution-impl",
+    "//platform/execution-impl",
+    "//plugins/kotlin/jsr223",
+  ],
+  runtime_deps = [":repl_resources"]
+)
+### auto-generated section `build kotlin.repl` end

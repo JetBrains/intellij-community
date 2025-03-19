@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.components.BaseComponent;
@@ -25,8 +25,7 @@ public enum ComponentType {
   APPLICATION(BaseComponent.class, "application-components", "new.menu.application.component.text");
 
   public final String myClassName;
-  @PropertyKey(resourceBundle = DevKitBundle.BUNDLE)
-  public final String myPropertyKey;
+  public final @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String myPropertyKey;
   private final String myName;
 
   public interface Processor {

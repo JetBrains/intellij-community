@@ -1,0 +1,19 @@
+### auto-generated section `build intellij.javaFX.sceneBuilder` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "sceneBuilder",
+  module_name = "intellij.javaFX.sceneBuilder",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//java/java-psi-api:psi",
+    "//java/java-indexing-api:indexing",
+    "//java/openapi:java",
+    "//plugins/javaFX",
+    "//platform/util/nanoxml",
+    "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
+    "//platform/indexing-impl",
+  ]
+)
+### auto-generated section `build intellij.javaFX.sceneBuilder` end

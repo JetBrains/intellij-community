@@ -12,7 +12,9 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import com.intellij.xdebugger.XDebuggerBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DEBUG, AllIcons.Toolwindows.ToolWindowDebugger) {
   override fun ensureToolWindowCreated(project: Project) {
     val runContentManager = RunContentManager.getInstance(project) as RunContentManagerImpl
@@ -24,7 +26,7 @@ class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DE
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.0"))
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.1"))
     text.appendLine(XDebuggerBundle.message("debug.toolwindow.empty.text.2"))
-    ActivateRunToolWindowAction.appendLaunchConfigurationText(text, project, "ChooseDebugConfiguration")
+    ActivateRunToolWindowAction.Manager.appendLaunchConfigurationText(text, project, "ChooseDebugConfiguration")
     text.appendLine("")
     text.appendLine(AllIcons.General.ContextHelp, XDebuggerBundle.message("debug.toolwindow.empty.text.help"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
       HelpManager.getInstance().invokeHelp("procedures.debugging")

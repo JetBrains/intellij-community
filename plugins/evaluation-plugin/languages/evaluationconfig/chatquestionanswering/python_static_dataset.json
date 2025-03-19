@@ -1,0 +1,33 @@
+{
+  "language": "Python",
+  "projectPath": "../ml-eval/spyder",
+  "repository": "https://github.com/spyder-ide/spyder",
+  "revision": "0f689585cb580a9e9f039048fcfdc1c79de673a4",
+  "outputDir": "bin/ml-eval-chat-question-answering-python-output",
+  "strategy": {
+    "collectContextOnly": false,
+    "enableRAG": true
+  },
+  "actions": {
+    "evaluationRoots": [
+      "README.MD"
+    ],
+    "sourceFile": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/chat-question-answering/python/spyder-ide_spyder/actions.json"
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 500,
+    "filesLimit": 1,
+    "order": "LINEAR",
+    "trainTestSplit": 70,
+    "registry": ""
+  },
+  "reports": {
+    "evaluationTitle": "Chat Question Answering Evaluation Report",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

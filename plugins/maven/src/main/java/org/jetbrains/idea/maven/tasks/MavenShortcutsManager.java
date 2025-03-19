@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -17,6 +17,7 @@ import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -24,15 +25,11 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenShortcutsManager implements Disposable {
@@ -44,13 +41,11 @@ public final class MavenShortcutsManager implements Disposable {
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
-  @NotNull
-  public static MavenShortcutsManager getInstance(Project project) {
+  public static @NotNull MavenShortcutsManager getInstance(Project project) {
     return project.getService(MavenShortcutsManager.class);
   }
 
-  @Nullable
-  public static MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+  public static @Nullable MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenShortcutsManager.class);
   }
 
@@ -81,7 +76,7 @@ public final class MavenShortcutsManager implements Disposable {
       }
 
       @Override
-      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+      public void shortcutsChanged(@NotNull Keymap keymap, @NonNls @NotNull Collection<String> actionIds, boolean fromSettings) {
         fireShortcutsUpdated();
       }
     });
@@ -97,15 +92,14 @@ public final class MavenShortcutsManager implements Disposable {
     myListeners.clear();
   }
 
-  @NotNull
-  public String getActionId(@Nullable String projectPath, @Nullable String goal) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 
     if (projectPath != null) {
       String portablePath = FileUtil.toSystemIndependentName(projectPath);
 
-      result.append(new File(portablePath).getParentFile().getName());
+      result.append(Path.of(portablePath).getParent().getFileName());
       result.append(Integer.toHexString(portablePath.hashCode()));
 
       if (goal != null) result.append(goal);
@@ -150,7 +144,7 @@ public final class MavenShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
+  private final class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new HashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
                                                                                  500, true, MavenShortcutsManager.this).usePassThroughInUnitTestMode();
@@ -167,14 +161,13 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     @Override
-    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+    public void projectsUpdated(@NotNull List<? extends Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 
@@ -183,7 +176,7 @@ public final class MavenShortcutsManager implements Disposable {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(List<? extends MavenProject> mavenProjects, boolean forUpdate) {
+    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
       synchronized (mySheduledProjects) {
         for (MavenProject each : mavenProjects) {
           mySheduledProjects.put(each, forUpdate);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,6 +15,8 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -29,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -44,13 +47,13 @@ import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDef
 /**
  * @author Rustam Vishnyakov
  */
+@ApiStatus.Internal
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private boolean myIsEnabledInTest;
   private final Map<VirtualFile, IndentOptions> myDiscardedOptions = new WeakHashMap<>();
 
-  @Nullable
   @Override
-  public IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
+  public @Nullable IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
     if (!isEnabled(settings, file)) {
       return null;
     }
@@ -120,8 +123,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   @TestOnly
-  @Nullable
-  public static DetectableIndentOptionsProvider getInstance() {
+  public static @Nullable DetectableIndentOptionsProvider getInstance() {
     return FileIndentOptionsProvider.EP_NAME.findExtension(DetectableIndentOptionsProvider.class);
   }
 
@@ -180,7 +182,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       CodeStyle.getSettings(myProject).AUTODETECT_INDENTS = true;
-      notifyIndentOptionsChanged(myProject);
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged();
       myNotification.expire();
     }
   }
@@ -189,9 +191,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected();
   }
 
-  @Nullable
   @Override
-  public IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
+  public @Nullable IndentStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return new MyUIContributor(indentOptions);
   }
 
@@ -216,16 +217,41 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               ApplicationBundle.message("code.style.indent.detector.reject", projectOptionsTip),
               e -> {
                 disableForFile(virtualFile, indentOptions);
-                notifyIndentOptionsChanged(project, virtualFile);
+                CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
               }));
+          final var reindentActionText = ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip);
           actions.add(
-            DumbAwareAction.create(ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip),
+            DumbAwareAction.create(reindentActionText,
                                    e -> {
                                      disableForFile(virtualFile, indentOptions);
-                                     notifyIndentOptionsChanged(project, virtualFile);
-                                     CommandProcessor.getInstance().runUndoTransparentAction(
+                                     final var document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+                                     if (document != null) {
+                                       // IDEA-332405 -- make sure that detected indent options are not used for the "reindent file" action
+                                       final var indentOptsWithoutDetected = CodeStyle
+                                         .getSettings(project, virtualFile)
+                                         .getIndentOptionsByFile(project, virtualFile, null, true, null);
+                                       indentOptsWithoutDetected.associateWithDocument(document);
+                                     }
+                                     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
+                                     CommandProcessor.getInstance().executeCommand(
+                                       project,
                                        () -> ApplicationManager.getApplication().runWriteAction(
-                                         () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange()))
+                                         () -> {
+                                           CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange());
+                                           UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+                                             @Override
+                                             public void undo() {
+                                               CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
+                                             }
+
+                                             @Override
+                                             public void redo() {
+                                               CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
+                                             }
+                                           });
+                                         }),
+                                       reindentActionText,
+                                       null
                                      );
                                      myDiscardedOptions.remove(virtualFile);
                                    }));
@@ -244,7 +270,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               e -> {
                 myDiscardedOptions.remove(virtualFile);
                 discardedOptions.associateWithDocument(document);
-                notifyIndentOptionsChanged(project, virtualFile);
+                CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
               }));
           actions.add(Separator.getInstance());
         }
@@ -259,7 +285,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
         e -> {
           CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
           myDiscardedOptions.clear();
-          notifyIndentOptionsChanged(project);
+          CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
           showDisabledDetectionNotification(project);
         });
     }

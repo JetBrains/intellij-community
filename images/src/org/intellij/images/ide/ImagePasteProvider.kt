@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.ide
 
 import com.intellij.ide.PasteProvider
@@ -6,17 +6,19 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.images.ImagesBundle
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor.imageFlavor
 import java.awt.image.BufferedImage
 import java.awt.image.MultiResolutionImage
 import java.io.IOException
 import javax.imageio.ImageIO
-
 
 /**
  * Represents a basic paste provider that allows to paste screenshots (from clipboard) as PNG files.
@@ -63,41 +65,44 @@ open class ImagePasteProvider : PasteProvider {
       return
     }
 
-    runWriteAction {
-      val nextAvailableName = VfsUtil.getNextAvailableName(newFileParent, "img", "png")
+    val fileName = VfsUtil.getNextAvailableName(newFileParent, "img", "png")
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
+    CommandProcessor.getInstance().executeCommand(project, {
+      runWriteAction {
 
-      // Step 2: Create file
-      val imageFile = try {
-        newFileParent.createChildData(this, nextAvailableName)
-      }
-                      catch (ioException: IOException) {
-                        logger.error("Failed to create a pasted image file due to I/O error. Aborting operation.", ioException)
-                        null
-                      } ?: return@runWriteAction
+        // Step 2: Create file
+        val imageFile = try {
+          newFileParent.createChildData(this, fileName)
+        }
+                        catch (ioException: IOException) {
+                          logger.error("Failed to create a pasted image file due to I/O error. Aborting operation.", ioException)
+                          null
+                        } ?: return@runWriteAction
 
-      // Step 3: Save image data to the created file
-      try {
-        imageFile.getOutputStream(this)
-          .use {
-            ImageIO.write(imageToPaste, "png", it)
-          }
-      }
-      catch (ioException: IOException) {
-        logger.error("Failed to save a pasted image to a file due to I/O error. Aborting operation", ioException)
-
-        // cleaning empty file
+        // Step 3: Save image data to the created file
         try {
-          imageFile.delete(this)
+          imageFile.getOutputStream(this)
+            .use {
+              ImageIO.write(imageToPaste, "png", it)
+            }
         }
         catch (ioException: IOException) {
-          // just skip it
+          logger.error("Failed to save a pasted image to a file due to I/O error. Aborting operation", ioException)
+
+          // cleaning empty file
+          try {
+            imageFile.delete(this)
+          }
+          catch (_: IOException) {
+            // just skip it
+          }
+
+          return@runWriteAction
         }
 
-        return@runWriteAction
+        imageFilePasted(dataContext, imageFile)
       }
-
-      imageFilePasted(dataContext, imageFile)
-    }
+    }, ImagesBundle.message("paste.image.command.name", fileName), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION)
   }
 
   open fun imageFilePasted(dataContext: DataContext, imageFile: VirtualFile) = Unit

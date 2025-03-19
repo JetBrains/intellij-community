@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.core.CoreBundle;
@@ -26,18 +26,18 @@ import java.util.Objects;
 import java.util.UUID;
 
 public abstract class Configuration implements JDOMExternalizable {
-  @NonNls public static final String CONTEXT_VAR_NAME = "__context__";
+  public static final @NonNls String CONTEXT_VAR_NAME = "__context__";
 
   public static final Configuration[] EMPTY_ARRAY = {};
 
-  @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
-  @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
-  @NonNls private static final String UUID_ATTRIBUTE_NAME = "uuid";
-  @NonNls private static final String DESCRIPTION_ATTRIBUTE_NAME = "description";
-  @NonNls private static final String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
-  @NonNls private static final String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
-  @NonNls private static final String CLEANUP_ATTRIBUTE_NAME = "cleanup";
-  @NonNls private static final String ORDER_ATTRIBUTE_NAME = "order";
+  protected static final @NonNls String NAME_ATTRIBUTE_NAME = "name";
+  private static final @NonNls String CREATED_ATTRIBUTE_NAME = "created";
+  private static final @NonNls String UUID_ATTRIBUTE_NAME = "uuid";
+  private static final @NonNls String DESCRIPTION_ATTRIBUTE_NAME = "description";
+  private static final @NonNls String SUPPRESS_ID_ATTRIBUTE_NAME = "suppressId";
+  private static final @NonNls String PROBLEM_DESCRIPTOR_ATTRIBUTE_NAME = "problemDescriptor";
+  private static final @NonNls String CLEANUP_ATTRIBUTE_NAME = "cleanup";
+  private static final @NonNls String ORDER_ATTRIBUTE_NAME = "order";
 
   private @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name;
   private String category;
@@ -83,11 +83,9 @@ public abstract class Configuration implements JDOMExternalizable {
     refName = null; // copy never has a refName
   }
 
-  @NotNull
-  public abstract Configuration copy();
+  public abstract @NotNull Configuration copy();
 
-  @NotNull @Nls
-  public String getName() {
+  public @NotNull @Nls String getName() {
     return name;
   }
 
@@ -98,16 +96,14 @@ public abstract class Configuration implements JDOMExternalizable {
     name = value;
   }
 
-  @NotNull @Nls
-  public String getTypeText() {
+  public @NotNull @Nls String getTypeText() {
     final LanguageFileType type = getFileType();
     final String name = type == null ? CoreBundle.message("filetype.unknown.display.name") : type.getLanguage().getDisplayName();
     return isPredefined() ? SSRBundle.message("predefined.configuration.type.text", name)
                           : SSRBundle.message("predefined.configuration.type.text.user.defined", name);
   }
 
-  @NotNull
-  public String getCategory() {
+  public @NotNull String getCategory() {
     return category;
   }
 
@@ -126,8 +122,7 @@ public abstract class Configuration implements JDOMExternalizable {
     this.created = created;
   }
 
-  @NotNull
-  public String getUuid() {
+  public @NotNull String getUuid() {
     if (uuid == null) {
       uuid = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8)).toString();
     }
@@ -261,16 +256,15 @@ public abstract class Configuration implements JDOMExternalizable {
     this.predefined = predefined;
   }
 
-  @NotNull
-  public abstract MatchOptions getMatchOptions();
+  public abstract @NotNull MatchOptions getMatchOptions();
 
-  @NotNull
-  public abstract ReplaceOptions getReplaceOptions();
+  public abstract @NotNull ReplaceOptions getReplaceOptions();
 
   public abstract NamedScriptableDefinition findVariable(@NotNull String name);
 
   public abstract void removeUnusedVariables();
 
+  @Override
   public boolean equals(Object configuration) {
     if (!(configuration instanceof Configuration other)) return false;
     return Objects.equals(category, other.category) && name.equals(other.name);
@@ -281,19 +275,16 @@ public abstract class Configuration implements JDOMExternalizable {
     return 31 * name.hashCode() + (category != null ? category.hashCode() : 0);
   }
 
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     final LanguageFileType type = getFileType();
     return (type == null || type.getIcon() == null) ? AllIcons.FileTypes.Unknown : type.getIcon();
   }
 
-  @Nullable
-  public LanguageFileType getFileType() {
+  public @Nullable LanguageFileType getFileType() {
     return getMatchOptions().getFileType();
   }
 
-  @NotNull @NonNls
-  public String getRefName() {
+  public @NotNull @NonNls String getRefName() {
     return refName == null || !predefined ? name : refName;
   }
 

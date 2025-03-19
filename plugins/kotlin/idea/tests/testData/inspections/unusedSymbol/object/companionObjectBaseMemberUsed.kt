@@ -6,7 +6,7 @@ abstract class WithLogging {
     val logger = Logger()
 }
 
-class C {
+class CX827 {
     companion object: WithLogging()
 
     fun foo() {
@@ -15,5 +15,6 @@ class C {
 }
 
 fun main(args: Array<String>) {
-    C()
+    println(args)
+    CX827()
 }

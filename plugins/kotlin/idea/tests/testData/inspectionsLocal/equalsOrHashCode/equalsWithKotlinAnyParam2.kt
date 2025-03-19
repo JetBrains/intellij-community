@@ -1,5 +1,4 @@
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
+// WITH_STDLIB
 
 class Any
 
@@ -10,4 +9,4 @@ class With<caret>Constructor(x: Int, s: String) {
     override fun hashCode(): Int = 1
 }
 
-// IGNORE_FIR
+// IGNORE_K2

@@ -11,11 +11,13 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public class HeadlessValueEvaluationCallbackBase implements XFullValueEvaluator.XFullValueEvaluationCallback {
   private volatile boolean myEvaluated;
   private volatile boolean myCanceled;
@@ -34,13 +36,8 @@ public class HeadlessValueEvaluationCallbackBase implements XFullValueEvaluator.
   }
 
   @Override
-  public void evaluated(@NotNull String fullValue) {
-    evaluationComplete(fullValue);
-  }
-
-  @Override
   public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-    evaluated(fullValue);
+    evaluationComplete(fullValue);
   }
 
   @Override

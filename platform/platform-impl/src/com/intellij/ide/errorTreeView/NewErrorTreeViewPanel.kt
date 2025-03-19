@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView
 
 import com.intellij.icons.AllIcons
@@ -11,6 +11,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ide.CopyPasteManager
@@ -20,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.IdeBorderFactory
@@ -31,7 +34,6 @@ import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.EditSourceOnEnterKeyHandler
-import com.intellij.util.childScope
 import com.intellij.util.ui.ErrorTreeView
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.MutableErrorTreeView
@@ -42,6 +44,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.GridLayout
@@ -56,14 +59,14 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 open class NewErrorTreeViewPanel @JvmOverloads constructor(
-  @JvmField protected var myProject: Project,
+  @JvmField protected var project: Project,
   private val helpId: String?,
   @Suppress("UNUSED_PARAMETER") createExitAction: Boolean = true,
   createToolbar: Boolean = true,
   rerunAction: Runnable? = null,
   private val state: MessageViewState = MessageViewState(),
   errorViewStructure: ErrorViewStructure? = null,
-) : JPanel(), DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
+) : JPanel(), UiCompatibleDataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   class MessageViewState {
@@ -73,7 +76,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
     @JvmField
     @Volatile
-    var fraction = 0f
+    var fraction: Float = 0f
 
     fun clearProgress() {
       progressText = null
@@ -88,7 +91,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   @Volatile
   private var isDisposed = false
-  private val configuration = ErrorTreeViewConfiguration.getInstance(myProject)
+  private val configuration = ErrorTreeViewConfiguration.getInstance(project)
 
   private var leftToolbar: ActionToolbar? = null
 
@@ -122,7 +125,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     val isProcessStopped: Boolean
   }
 
-  private val scope = myProject.coroutineScope.childScope()
+  private val scope = (project as ComponentManagerEx).getCoroutineScope().childScope()
 
   init {
     layout = BorderLayout()
@@ -135,7 +138,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     }
     messagePanel = JPanel(BorderLayout())
     @Suppress("LeakingThis")
-    this.errorViewStructure = errorViewStructure ?: createErrorViewStructure(project = myProject, canHideWarnings = canHideWarnings())
+    this.errorViewStructure = errorViewStructure ?: createErrorViewStructure(project = project, canHideWarnings = canHideWarnings())
     @Suppress("LeakingThis")
     structureModel = StructureTreeModel(this.errorViewStructure, this)
     @Suppress("LeakingThis")
@@ -187,7 +190,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   companion object {
     @JvmField
-    protected val LOG = logger<NewErrorTreeViewPanel>()
+    protected val LOG: Logger = logger<NewErrorTreeViewPanel>()
 
     @Suppress("SpellCheckingInspection")
     @JvmStatic
@@ -229,31 +232,22 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isCopyEnabled(dataContext: DataContext) = !selectedNodeDescriptors.isEmpty()
+  override fun isCopyEnabled(dataContext: DataContext): Boolean = !selectedNodeDescriptors.isEmpty()
 
-  override fun isCopyVisible(dataContext: DataContext) = true
+  override fun isCopyVisible(dataContext: DataContext): Boolean = true
 
   val emptyText: StatusText
     get() = myTree.emptyText
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      PlatformDataKeys.COPY_PROVIDER.`is`(dataId) -> this
-      CommonDataKeys.NAVIGATABLE.`is`(dataId) -> {
-        val selectedMessageElement = selectedNavigatableElement
-        selectedMessageElement?.navigatable
-      }
-      PlatformCoreDataKeys.HELP_ID.`is`(dataId) -> helpId
-      PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
-      PlatformDataKeys.EXPORTER_TO_TEXT_FILE.`is`(dataId) -> exporterToTextFile
-      ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.`is`(dataId) -> {
-        val selectedMessageElement = selectedErrorTreeElement
-        selectedMessageElement?.data
-      }
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.COPY_PROVIDER] = this
+    sink[CommonDataKeys.NAVIGATABLE] = selectedNavigatableElement?.navigatable
+    sink[PlatformCoreDataKeys.HELP_ID] = helpId
+    sink[PlatformDataKeys.TREE_EXPANDER] = treeExpander
+    sink[PlatformDataKeys.EXPORTER_TO_TEXT_FILE] = exporterToTextFile
+    sink[ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY] = selectedErrorTreeElement?.data
   }
 
   open fun selectFirstMessage() {
@@ -261,7 +255,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     if (firstError != null) {
       selectElement(firstError) {
         if (shouldShowFirstErrorInEditor()) {
-          ApplicationManager.getApplication().invokeLater(::navigateToSource, myProject.disposed)
+          ApplicationManager.getApplication().invokeLater(::navigateToSource, project.disposed)
         }
       }
     }
@@ -471,7 +465,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     get() = processController!!.isProcessStopped
 
   open fun close() {
-    val messageView = MessageView.getInstance(myProject)
+    val messageView = MessageView.getInstance(project)
     messageView.contentManager.getContent(this)?.let {
       messageView.contentManager.removeContent(it, true)
       Disposer.dispose(this)
@@ -579,13 +573,13 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
 
   override fun goPreviousOccurence(): OccurenceNavigator.OccurenceInfo = occurrenceNavigatorSupport.goPreviousOccurence()
 
-  override fun hasNextOccurence() = occurrenceNavigatorSupport.hasNextOccurence()
+  override fun hasNextOccurence(): Boolean = occurrenceNavigatorSupport.hasNextOccurence()
 
-  override fun hasPreviousOccurence() = occurrenceNavigatorSupport.hasPreviousOccurence()
+  override fun hasPreviousOccurence(): Boolean = occurrenceNavigatorSupport.hasPreviousOccurence()
 
-  override fun getNextOccurenceActionName() = occurrenceNavigatorSupport.nextOccurenceActionName
+  override fun getNextOccurenceActionName(): @Nls String = occurrenceNavigatorSupport.nextOccurenceActionName
 
-  override fun getPreviousOccurenceActionName() = occurrenceNavigatorSupport.previousOccurenceActionName
+  override fun getPreviousOccurenceActionName(): @Nls String = occurrenceNavigatorSupport.previousOccurenceActionName
 
   private inner class RerunAction(private val rerunAction: Runnable, private val closeAction: AnAction)
     : DumbAwareAction(IdeBundle.message("action.refresh"), null, AllIcons.Actions.Rerun) {

@@ -4,8 +4,8 @@ package com.intellij.java.psi.formatter.java
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.IdeaTestUtil
 
 class JavadocFormatterTest : AbstractJavaFormatterTest() {
   fun testRIGHT_MARGIN() {
@@ -272,7 +272,7 @@ class A {
 
   fun testPreserveExistingSelfClosingTagsAndGenerateOnlyPTag() {
     javaSettings.ENABLE_JAVADOC_FORMATTING = true
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -300,7 +300,7 @@ class T {
       ENABLE_JAVADOC_FORMATTING = true
       JD_P_AT_EMPTY_LINES = true
     }
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doTextTest(
       """/**
@@ -915,7 +915,7 @@ public void voo() {
       JD_P_AT_EMPTY_LINES = true
       ENABLE_JAVADOC_FORMATTING = true
     }
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
+    IdeaTestUtil.setProjectLanguageLevel(project, LanguageLevel.JDK_1_7)
 
     doClassTest(
       """/**
@@ -1837,5 +1837,232 @@ public class Test {
         }
         """.trimIndent()
     )
+  }
+
+  fun testMarkdownAlignment(){
+    doTextTest("""
+      /// Oh hello there
+        /// I'm misaligned on purpose
+          /// Think you can fix me ?
+      public class Main {}
+    """.trimIndent(), """
+      /// Oh hello there
+      /// I'm misaligned on purpose
+      /// Think you can fix me ?
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing(){
+    doTextTest("""
+      ///I'm stuck to the leading slashes !
+      public class Main {}
+    """.trimIndent(), """
+      /// I'm stuck to the leading slashes !
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownSpacing2() {
+    doTextTest("""
+      ///
+      ///     Purposefully misaaligned stuff
+      public class Main {}
+    """.trimIndent(), """
+      ///     Purposefully misaaligned stuff
+      public class Main {
+      }
+    """.trimIndent())
+  }
+
+  fun testMarkdownNoTagInsert() {
+    doTextTest("""
+    /// Method blabla bla
+    /// 
+    /// @param toto imagine
+    /// 
+    /// @param titi      imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent(),
+               """
+    /// Method blabla bla
+    ///
+    /// @param toto imagine
+    /// @param titi imagine 2
+    /// @return The processed value.
+    /// @throws RuntimeException yeah catch this
+    /// @see RuntimeException
+    public class Main {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownRemoveSpaces() {
+    doTextTest("""
+    public class Main {
+      /// Method blabla bla 
+      ///  
+      /// @param toto  imagine
+      /// @param titi      imagine 2
+      /// @return The processed value.
+      /// @throws RuntimeException     yeah catch this
+      /// @see RuntimeException
+      boolean toto(int toto, int titi) {
+        return true;
+      }
+    }
+    """.trimIndent(), """
+      public class Main {
+          /// Method blabla bla
+          ///
+          /// @param toto imagine
+          /// @param titi imagine 2
+          /// @return The processed value.
+          /// @throws RuntimeException yeah catch this
+          /// @see RuntimeException
+          boolean toto(int toto, int titi) {
+              return true;
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun testBracketsInReferenceLink(){
+    doTextTest("""
+      /// [String#copyValueOf(char \[ \], int, int)]
+      public class Main {
+        void test(char[] foo) {}
+      }
+    """.trimIndent(), """
+      /// [String#copyValueOf(char\[\], int, int)]
+      public class Main {
+          void test(char[] foo) {
+          }
+      }
+    """.trimIndent())
+  }
+
+  fun testListItemIndentBeingPreserved() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /// This method is
+    /// supported for the benefit of hash tables such as those provided by
+    /// [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during
+    ///     an execution of a Java application, the `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the situation
+    ///     This integer need not remain consistent from one execution of an
+    ///     application to another execution of the same application.
+    ///   + If two objects are equal according to the
+    ///     [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal
+    ///     according to the [equals][#equals(Object)] method
+    ///
+    ///      @param toto As a tag, it should be brought back to the left
+    class C {}
+    """.trimIndent(), """
+    /// This method is supported for the benefit of hash tables such as those provided by [java.util.HashMap].
+    ///
+    /// The general contract of `hashCode` is:
+    ///
+    ///   - Whenever it is invoked on the same object more than once during an execution of a Java application, the
+    /// `hashCode` method abusively long line that will force the line feed to be cut nonetheless, what will you do in the
+    /// situation This integer need not remain consistent from one execution of an application to another execution of the
+    /// same application.
+    ///   + If two objects are equal according to the [equals][#equals(Object)] method
+    ///   * It is _not_ required that if two objects are unequal according to the [equals][#equals(Object)] method
+    ///
+    /// @param toto As a tag, it should be brought back to the left
+    class C {
+    }
+    """.trimIndent())
+  }
+
+  fun testMarkdownConstructsImmuneToWrapping() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    /// 
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    /// 
+    """.trimIndent(), """
+    ///         | Latin | Greek |
+    ///         |-------|-------|
+    ///         | a     | alpha |
+    ///         | b     | beta  |
+    ///         | c     | gamma |
+    ///
+    /// > Nice blockquote
+    /// - Single list item
+    ///    + Sub element
+    ///    * Another sub element
+    /// ---
+    ///  # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+    """.trimIndent())
+  }
+
+  fun testMarkdownConstructsNoAffectedInLegacy() {
+    settings.apply {
+      WRAP_COMMENTS = true
+      RIGHT_MARGIN = 120
+    }
+    javaSettings.apply {
+      JD_PRESERVE_LINE_FEEDS = false
+    }
+
+    doTextTest("""
+    /**         | Latin | Greek |
+     *          |-------|-------|
+     *          | a     | alpha |
+     *          | b     | beta  |
+     *          | c     | gamma |
+     *  
+     *  > Nice blockquote
+     *  - Single list item
+     *     + Sub element
+     *     * Another sub element
+     *  ---
+     *   # Title, but I have a long text, so loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down for a game of Minecraft ?
+     */  
+    """.trimIndent(), """
+      /**
+       * | Latin | Greek | |-------|-------| | a     | alpha | | b     | beta  | | c     | gamma |
+       * <p>
+       * > Nice blockquote - Single list item + Sub element * Another sub element --- # Title, but I have a long text, so
+       * loong in fact that it will probably get wrapped. Depends on whether I wrote my code properly. Anyhow, is someone down
+       * for a game of Minecraft ?
+       */  
+    """.trimIndent())
   }
 }

@@ -1,28 +1,27 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.JavaElementKind;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
-  @NotNull
-  private final PsiArrayType myTargetType;
+import java.util.Objects;
+
+public final class VariableArrayTypeFix extends PsiUpdateModCommandAction<PsiArrayInitializerExpression> {
+  private final @NotNull PsiArrayType myTargetType;
   private final @IntentionName String myName;
   private final @IntentionFamilyName String myFamilyName;
 
@@ -39,18 +38,7 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
                                                                                                              : "fix.variable.type.family");
   }
 
-  private VariableArrayTypeFix(@NotNull PsiArrayInitializerExpression initializer,
-                               @NotNull PsiArrayType targetType,
-                               @IntentionName String name,
-                               @IntentionFamilyName String familyName) {
-    super(initializer);
-    myTargetType = targetType;
-    myName = name;
-    myFamilyName = familyName;
-  }
-
-  @Nullable
-  public static VariableArrayTypeFix createFix(PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
+  public static @Nullable VariableArrayTypeFix createFix(PsiArrayInitializerExpression initializer, @NotNull PsiType componentType) {
     PsiArrayType arrayType = new PsiArrayType(componentType);
     PsiArrayInitializerExpression arrayInitializer = initializer;
     while (arrayInitializer.getParent() instanceof PsiArrayInitializerExpression) {
@@ -92,8 +80,7 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     return ObjectUtils.tryCast(initializer.getParent(), PsiNewExpression.class);
   }
 
-  @Nullable
-  private static PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
+  private static @Nullable PsiVariable getFromAssignment(final PsiAssignmentExpression assignment) {
     final PsiExpression reference = assignment.getLExpression();
     final PsiElement referencedElement = reference instanceof PsiReferenceExpression ? ((PsiReferenceExpression)reference).resolve() : null;
     return referencedElement instanceof PsiVariable ? (PsiVariable)referencedElement : null;
@@ -108,87 +95,41 @@ public final class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     return newText;
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return myName;
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFamilyName;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    final PsiArrayInitializerExpression myInitializer = (PsiArrayInitializerExpression)startElement;
-    final PsiVariable myVariable = getVariableLocal(myInitializer);
-
-    return myVariable != null
-           && myVariable.isValid()
-           && BaseIntentionAction.canModify(myVariable)
-           && myTargetType.isValid();
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiArrayInitializerExpression element) {
+    final PsiVariable variable = getVariableLocal(element);
+    if (variable == null || !BaseIntentionAction.canModify(variable) || !myTargetType.isValid()) return null;
+    return Presentation.of(myName);
   }
 
   @Override
-  public boolean startInWriteAction() {
-    PsiFile file = myStartElement.getContainingFile();
-    return file != null && !file.isPhysical(); // for preview
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    PsiArrayInitializerExpression initializer = ObjectUtils.tryCast(getStartElement(), PsiArrayInitializerExpression.class);
-    if (initializer == null) return null;
-    return new VariableArrayTypeFix(PsiTreeUtil.findSameElementInCopy(initializer, target), myTargetType, myName, myFamilyName);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final PsiArrayInitializerExpression myInitializer = (PsiArrayInitializerExpression)startElement;
-    final PsiVariable myVariable = getVariableLocal(myInitializer);
-    if (myVariable == null) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiArrayInitializerExpression initializer, @NotNull ModPsiUpdater updater) {
+    PsiVariable variable = getVariableLocal(initializer);
+    if (variable == null) return;
+    variable = updater.getWritable(variable);
     /*
       only for the case when in same statement with initialization
      */
-    final PsiNewExpression myNewExpression = getNewExpressionLocal(myInitializer);
+    final PsiNewExpression myNewExpression = getNewExpressionLocal(initializer);
 
-    if (!file.isPhysical()) {
-      if (!myTargetType.equals(myVariable.getType()) && myVariable.getContainingFile().equals(file)) {
-        fixVariableType(project, file, myVariable);
-      }
-
-      if (myNewExpression != null) {
-        fixArrayInitializer(myInitializer, myNewExpression);
-      }
-      return;
-    }
-
-    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
-
-    if (! myTargetType.equals(myVariable.getType())) {
-      WriteAction.run(() -> fixVariableType(project, file, myVariable));
+    if (!myTargetType.equals(variable.getType())) {
+      fixVariableType(context.project(), variable);
     }
 
     if (myNewExpression != null) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-
-      WriteAction.run(() -> fixArrayInitializer(myInitializer, myNewExpression));
+      fixArrayInitializer(initializer, myNewExpression);
     }
   }
 
-  private void fixVariableType(@NotNull Project project, @NotNull PsiFile file, PsiVariable myVariable) {
+  private void fixVariableType(@NotNull Project project, PsiVariable myVariable) {
     myVariable.normalizeDeclaration();
-    myVariable.getTypeElement().replace(JavaPsiFacade.getElementFactory(project).createTypeElement(myTargetType));
+    Objects.requireNonNull(myVariable.getTypeElement()).replace(JavaPsiFacade.getElementFactory(project).createTypeElement(myTargetType));
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-
-    if (! myVariable.getContainingFile().equals(file)) {
-      UndoUtil.markPsiFileForUndo(myVariable.getContainingFile());
-    }
   }
 
   private void fixArrayInitializer(PsiArrayInitializerExpression myInitializer, PsiNewExpression myNewExpression) {

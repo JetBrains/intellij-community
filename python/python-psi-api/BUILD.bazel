@@ -1,0 +1,33 @@
+### auto-generated section `build intellij.python.psi` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "psi_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "psi",
+  module_name = "intellij.python.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util",
+    "//platform/util:util-ui",
+    "@lib//:guava",
+    "//platform/analysis-api:analysis",
+    "//python/python-parser:parser",
+    "//python/python-ast:ast",
+    "//python/python-syntax-core:syntax-core",
+    "@lib//:kotlin-stdlib",
+  ],
+  exports = [
+    "//python/python-parser:parser",
+    "//python/python-ast:ast",
+  ],
+  runtime_deps = [":psi_resources"]
+)
+### auto-generated section `build intellij.python.psi` end

@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -18,6 +21,8 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Consumer;
 
 @ApiStatus.NonExtendable
 public interface AnnotationBuilder {
@@ -155,6 +160,16 @@ public interface AnnotationBuilder {
   @NotNull AnnotationBuilder withFix(@NotNull IntentionAction fix);
 
   /**
+   * Registers quick fix for this annotation.
+   * This method is used to provide compatibility with {@link ModCommandAction}.
+   * @param fix the fix to add to this annotation
+   * @return this builder for chaining convenience
+   * @see AnnotationBuilder#withFix(IntentionAction) 
+   */
+  @Contract(pure = true)
+  @NotNull AnnotationBuilder withFix(@NotNull CommonIntentionAction fix);
+
+  /**
    * Begin registration of the new quickfix associated with the annotation.
    * A typical code looks like this: <p>{@code holder.newFix(action).range(fixRange).registerFix()}</p>
    *
@@ -166,6 +181,16 @@ public interface AnnotationBuilder {
 
   /**
    * Begin registration of the new quickfix associated with the annotation.
+   * This method is used to provide compatibility with {@link ModCommandAction}.
+   * @param fix an intention action to be shown for the annotation as a quick fix
+   * @return the builder for registering quick fixes
+   * @see AnnotationBuilder#newFix(IntentionAction) 
+   */
+  @Contract(pure = true)
+  @NotNull FixBuilder newFix(@NotNull CommonIntentionAction fix);
+
+  /**
+   * Begin registration of the new quickfix associated with the annotation.
    * A typical code looks like this: <p>{@code holder.newLocalQuickFix(fix).range(fixRange).registerFix()}</p>
    *
    * @param fix               to be shown for the annotation as a quick fix
@@ -174,6 +199,19 @@ public interface AnnotationBuilder {
    */
   @Contract(pure = true)
   @NotNull FixBuilder newLocalQuickFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor);
+
+  /**
+   * Specifies the function ({@code quickFixComputer}) which could produce
+   * quick fixes for this Annotation by calling {@link QuickFixActionRegistrar#register} methods, once or several times.
+   * Use this method for quick fixes that are too expensive to be registered via regular {@link #newFix} method.
+   * These lazy quick fixes registered here have different life cycle from the regular quick fixes:<br>
+   * <li>They are computed only by request, for example when the user presses Alt-Enter to show all available quick fixes at the caret position</li>
+   * <li>They could be computed in a different thread/time than the inspection/annotator which registered them</li>
+   * Use this method for quick fixes that do noticeable work before being shown,
+   * for example, a fix which tries to find a suitable binding for the unresolved reference under the caret.
+   */
+  @ApiStatus.Experimental
+  @NotNull AnnotationBuilder withLazyQuickFix(@NotNull Consumer<? super QuickFixActionRegistrar> quickFixComputer);
 
   interface FixBuilder {
     /**

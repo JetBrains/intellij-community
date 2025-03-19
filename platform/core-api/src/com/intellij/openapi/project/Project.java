@@ -1,11 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 /**
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.*;
  *
  * <p>To get the list of all open projects, use {@code ProjectManager.getInstance().getOpenProjects()}.
  */
+@ApiStatus.NonExtendable
 public interface Project extends ComponentManager, AreaInstance {
   String DIRECTORY_STORE_FOLDER = ".idea";
 
@@ -85,9 +85,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns {@code null} for default project.
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    */
-  @Nullable
-  @SystemDependent @NonNls
-  default String getPresentableUrl() {
+  default @Nullable @SystemDependent @NonNls String getPresentableUrl() {
     return null;
   }
 
@@ -120,16 +118,6 @@ public interface Project extends ComponentManager, AreaInstance {
   default boolean isDefault() {
     return false;
   }
-
-  /**
-   * @deprecated this scope will die only with the project => plugin coroutines which use it will leak on unloading.
-   * Instead, use <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#service-scopes">service constructor injection</a>.
-   * <a href="https://youtrack.jetbrains.com/articles/IJPL-A-44/Coroutine-Scopes#why-application.getcoroutinescope-are-project.getcoroutinescope-are-bad">Why? See here.</a>
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @ApiStatus.Internal
-  CoroutineScope getCoroutineScope();
 
   @ApiStatus.Internal
   default ComponentManager getActualComponentManager() {

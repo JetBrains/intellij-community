@@ -1,29 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.DependantSpacingImpl;
-import com.intellij.formatting.SpacingImpl;
+import com.intellij.formatting.LeafBlockWrapper;
 import com.intellij.formatting.WhiteSpace;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Formatter provides a notion of {@link DependantSpacingImpl dependent spacing}, i.e. spacing that insist on line feed if target
@@ -48,13 +32,22 @@ import java.util.TreeMap;
  * region' and value is dependent spacing object.
  * <p/>
  * Every time we detect that formatter changes 'has line feeds' status of such dependent region, we
- * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged() mark} the dependent spacing as changed and schedule one more
+ * {@link DependantSpacingImpl#setDependentRegionLinefeedStatusChanged(int)} () mark} the dependent spacing as changed and schedule one more
  * formatting iteration.
  */
-class DependentSpacingEngine {
+@ApiStatus.Internal
+final class DependentSpacingEngine {
+  /**
+   * {@link AdjustWhiteSpacesState} can iterate tree of {@link LeafBlockWrapper} multiple times, because of dependent spacings.
+   * This field represents current iteration number
+   */
+  private int myIteration = 1;
+
   private final BlockRangesMap myBlockRangesMap;
-  
-  private final SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
+
+  private final Set<LeafBlockWrapper> myLeafBlocksToReformat = new HashSet<>();
+
+  private final SortedMap<TextRange, LeafBlockWrapper> myPreviousDependencies =
     new TreeMap<>((o1, o2) -> {
       int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 
@@ -68,16 +61,23 @@ class DependentSpacingEngine {
     myBlockRangesMap = helper;
   }
 
+  /**
+   * Reformat all dependent spaces, which have a dependency on a {@link TextRange} corresponding to the 'space'.
+   * {@link AdjustWhiteSpacesState} iterates through all leafs again in case if there was a first change.
+   * @param space - candidate who could potentially be located in one of the dependent regions
+   * @return true if it was the first change, and false otherwise
+   */
   boolean shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace space) {
     final TextRange changed = space.getTextRange();
-    final SortedMap<TextRange, DependantSpacingImpl> sortedHeadMap = myPreviousDependencies.tailMap(changed);
+    final SortedMap<TextRange, LeafBlockWrapper> sortedHeadMap = myPreviousDependencies.tailMap(changed);
 
-    for (final Map.Entry<TextRange, DependantSpacingImpl> entry : sortedHeadMap.entrySet()) {
+    for (final Map.Entry<TextRange, LeafBlockWrapper> entry : sortedHeadMap.entrySet()) {
       final TextRange textRange = entry.getKey();
 
       if (textRange.contains(changed)) {
-        final DependantSpacingImpl spacing = entry.getValue();
-        if (spacing.isDependentRegionLinefeedStatusChanged()) {
+        final LeafBlockWrapper currentBlock = entry.getValue();
+        if (!(currentBlock.getSpaceProperty() instanceof DependantSpacingImpl spacing) ||
+            spacing.isDependentRegionLinefeedStatusChanged(myIteration)) {
           continue;
         }
 
@@ -85,24 +85,47 @@ class DependentSpacingEngine {
         final boolean containsLineFeeds = myBlockRangesMap.containsLineFeedsOrTooLong(textRange);
 
         if (containedLineFeeds != containsLineFeeds) {
-          spacing.setDependentRegionLinefeedStatusChanged();
-          return true;
+          if (!spacing.isDependantSpacingChangedAtLeastOnce()) {
+            spacing.setDependentRegionLinefeedStatusChanged(myIteration);
+            return true;
+          }
+          else if (containsLineFeeds) {
+            spacing.setDependentRegionLinefeedStatusChanged(myIteration);
+            myLeafBlocksToReformat.add(currentBlock);
+            return false;
+          }
         }
       }
     }
 
     return false;
   }
-  
-  void registerUnresolvedDependentSpacingRanges(final SpacingImpl spaceProperty, List<? extends TextRange> unprocessedRanges) {
-    final DependantSpacingImpl dependantSpaceProperty = (DependantSpacingImpl)spaceProperty;
-    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged()) return;
+
+  void incrementIteration() {
+    myIteration++;
+  }
+
+  /**
+   * Registers all dependant ranges for the current 'leafBlockWrapper'. It happens only once per iteration
+   * @param leafBlockWrapper - block, from which dependent spacing is extracted
+   * @param unprocessedRanges - list of dependent ranges
+   * @see DependantSpacingImpl#isDependantSpacingChangedAtLeastOnce()
+   */
+  void registerUnresolvedDependentSpacingRanges(final LeafBlockWrapper leafBlockWrapper, List<? extends TextRange> unprocessedRanges) {
+    if (!(leafBlockWrapper.getSpaceProperty() instanceof DependantSpacingImpl dependantSpaceProperty)) return;
+
+    if (dependantSpaceProperty.isDependentRegionLinefeedStatusChanged(myIteration)) return;
 
     for (TextRange range: unprocessedRanges) {
-      myPreviousDependencies.put(range, dependantSpaceProperty);
+      myPreviousDependencies.put(range, leafBlockWrapper);
     }
   }
-  
+
+  /**
+   * Returns a list of blocks with dependant spaces which should be reformatted after {@link AdjustWhiteSpacesState} is finished.
+   */
+  Set<LeafBlockWrapper> getLeafBlocksToReformat() { return myLeafBlocksToReformat; }
+
   void clear() {
     myPreviousDependencies.clear();
   }

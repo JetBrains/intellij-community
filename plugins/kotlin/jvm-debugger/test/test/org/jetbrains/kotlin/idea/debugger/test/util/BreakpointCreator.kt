@@ -2,15 +2,13 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,6 +24,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isKotlinSourceFile
@@ -34,9 +33,7 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpo
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import java.util.*
-import javax.swing.SwingUtilities
 
 internal class BreakpointCreator(
     private val project: Project,
@@ -49,7 +46,7 @@ internal class BreakpointCreator(
         val kotlinFieldBreakpointType = findBreakpointType(KotlinFieldBreakpointType::class.java)
         val virtualFile = file.virtualFile
 
-        val runnable = {
+        runReadAction {
             var offset = -1
             while (true) {
                 val fileText = document.text
@@ -85,9 +82,10 @@ internal class BreakpointCreator(
                         }
                     }
                     comment.startsWith("//Breakpoint!") -> {
-                        val ordinal = getPropertyFromComment(comment, "lambdaOrdinal")?.toInt()
+                        val lambdaOrdinal = getPropertyFromComment(comment, "lambdaOrdinal")?.toInt()
+                        val conditionalReturn = getPropertyFromComment(comment, "conditionalReturn").toBoolean()
                         val condition = getPropertyFromComment(comment, "condition")
-                        createLineBreakpoint(breakpointManager, file, lineIndex, ordinal, condition)
+                        createLineBreakpoint(breakpointManager, file, lineIndex, lambdaOrdinal, conditionalReturn, condition)
                     }
                     comment.startsWith("//FunctionBreakpoint!") -> {
                         createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
@@ -95,12 +93,6 @@ internal class BreakpointCreator(
                     else -> throw AssertionError("Cannot create breakpoint at line ${lineIndex + 1}")
                 }
             }
-        }
-
-        if (!SwingUtilities.isEventDispatchThread()) {
-            DebuggerInvocationUtil.invokeAndWait(project, runnable, ModalityState.defaultModalityState())
-        } else {
-            runnable.invoke()
         }
     }
 
@@ -117,7 +109,7 @@ internal class BreakpointCreator(
 
             when (kind) {
                 "line" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
-                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, null)
+                    createLineBreakpoint(breakpointManager, psiFile, lineNumber + 1, ordinal, false, null)
                 }
                 "fun" -> createBreakpoint(fileName, lineMarker) { psiFile, lineNumber ->
                     createFunctionBreakpoint(breakpointManager, psiFile, lineNumber, true)
@@ -154,7 +146,7 @@ internal class BreakpointCreator(
         val sourceFile = sourceFiles.singleOrNull()
             ?: error("Single source file should be found: name = $fileName, sourceFiles = $sourceFiles")
 
-        val runnable = Runnable {
+        runReadAction {
             val psiSourceFile = PsiManager.getInstance(project).findFile(sourceFile)
                 ?: error("Psi file not found for $sourceFile")
 
@@ -164,8 +156,6 @@ internal class BreakpointCreator(
             val lineNumber = document.getLineNumber(index)
             action(psiSourceFile, lineNumber)
         }
-
-        DebuggerInvocationUtil.invokeAndWait(project, runnable, ModalityState.defaultModalityState())
     }
 
     private fun createFunctionBreakpoint(breakpointManager: XBreakpointManager, file: PsiFile, lineIndex: Int, fromLibrary: Boolean) {
@@ -182,17 +172,26 @@ internal class BreakpointCreator(
         file: PsiFile,
         lineIndex: Int,
         lambdaOrdinal: Int?,
+        conditionalReturn: Boolean,
         condition: String?
     ) {
         val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
-        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != -1) it - 1 else it }
+        val updatedLambdaOrdinal = lambdaOrdinal?.let { if (it != JavaLineBreakpointProperties.NO_LAMBDA) it - 1 else it }
+
+        if (updatedLambdaOrdinal != null && updatedLambdaOrdinal != JavaLineBreakpointProperties.NO_LAMBDA) {
+            val sourcePosition = org.jetbrains.debugger.SourceInfo(file.virtualFile, lineIndex)
+            val types = KotlinLineBreakpointType().computeVariants(file.project, sourcePosition)
+            val lambdasCount = types.count { it is JavaLineBreakpointType.LambdaJavaBreakpointVariant }
+            check(updatedLambdaOrdinal < lambdasCount) { "Line ${lineIndex + 1}: Lambda ordinal ${lambdaOrdinal} is incorrect, as there are $lambdasCount lambdas suitable" }
+        }
 
         val javaBreakpoint = createBreakpointOfType(
             breakpointManager,
             kotlinLineBreakpointType,
             lineIndex,
             file.virtualFile,
-            updatedLambdaOrdinal
+            updatedLambdaOrdinal,
+            conditionalReturn,
         )
 
         if (javaBreakpoint is LineBreakpoint<*>) {
@@ -217,22 +216,26 @@ internal class BreakpointCreator(
         lineIndex: Int,
         virtualFile: VirtualFile,
         lambdaOrdinal: Int? = null,
-    ): Breakpoint<out JavaBreakpointProperties<*>>? {
-        if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return null
-        val xBreakpoint = runWriteAction {
-            val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
-            if (properties is JavaLineBreakpointProperties) {
-                properties.lambdaOrdinal = lambdaOrdinal
-            }
+        conditionalReturn: Boolean = false,
+    ): Breakpoint<out JavaBreakpointProperties<*>>? = runReadAction {
+        if (!breakpointType.canPutAt(virtualFile, lineIndex, project)) return@runReadAction null
 
+        val properties = breakpointType.createBreakpointProperties(virtualFile, lineIndex)
+        if (properties is JavaLineBreakpointProperties) {
+            properties.encodedInlinePosition =
+              if (lambdaOrdinal == null && !conditionalReturn) null
+              else JavaLineBreakpointProperties.encodeInlinePosition(lambdaOrdinal ?: -1, conditionalReturn)
+        }
+
+        val xBreakpoint =
             breakpointManager.addLineBreakpoint(
                 breakpointType,
                 virtualFile.url,
                 lineIndex,
                 properties
             )
-        }
-        return BreakpointManager.getJavaBreakpoint(xBreakpoint)
+
+        BreakpointManager.getJavaBreakpoint(xBreakpoint)
     }
 
     @Suppress("UNCHECKED_CAST")

@@ -12,6 +12,7 @@ import com.intellij.execution.target.value.getRelativeTargetPath
 import com.intellij.execution.target.value.getTargetDownloadPath
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -33,9 +34,12 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
+import java.nio.file.attribute.PosixFilePermissions
 import java.time.Instant
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
+import kotlin.io.path.setPosixFilePermissions
+
 
 private const val STATE_FILE = ".state.json"
 
@@ -55,6 +59,11 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     val localRemoteSourcesRoot = Files.createDirectories(sdk.remoteSourcesLocalPath)
 
     val localUploadDir = Files.createTempDirectory("remote_sync")
+    if (Files.getFileStore(localUploadDir).supportsFileAttributeView("posix")) {
+      // The directory needs to be readable to all users in case the helpers are run as another user
+      localUploadDir.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+    }
+
     val uploadVolume = TargetEnvironment.UploadRoot(localRootPath = localUploadDir, targetRootPath = TargetPath.Temporary())
     targetEnvRequest.uploadVolumes += uploadVolume
 
@@ -154,7 +163,15 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
         pathMappings.add(PathMappingSettings.PathMapping(localPath, remoteRoot))
       }
     }
-    (sdk.sdkAdditionalData as? RemoteSdkProperties)?.setPathMappings(pathMappings)
+    sdk.sdkModificator.apply {
+      (sdkAdditionalData as? RemoteSdkProperties)?.setPathMappings(pathMappings)
+      ApplicationManager.getApplication().let {
+        it.invokeAndWait {
+          it.runWriteAction { commitChanges() }
+        }
+      }
+    }
+
     val fs = LocalFileSystem.getInstance()
     // "remote_sources" folder may now contain new packages
     // since we copied them there not via VFS, we must refresh it, so Intellij knows about them

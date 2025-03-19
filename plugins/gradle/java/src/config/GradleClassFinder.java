@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.externalSystem.psi.search.ExternalModuleBuildGlobalSearchScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageDirectoryCache;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -34,13 +33,12 @@ public final class GradleClassFinder extends NonClasspathClassFinder {
     return GradleBuildClasspathManager.getInstance(myProject).getAllClasspathEntries();
   }
 
-  @NotNull
   @Override
-  protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
-    if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
+  protected @NotNull PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
+    if (scope instanceof GradleModuleBuildGlobalSearchScope) {
       GradleBuildClasspathManager buildClasspathManager = GradleBuildClasspathManager.getInstance(myProject);
       Map<String, PackageDirectoryCache> classFinderCache = buildClasspathManager.getClassFinderCache();
-      return classFinderCache.get(((ExternalModuleBuildGlobalSearchScope)scope).getExternalModulePath());
+      return classFinderCache.get(((GradleModuleBuildGlobalSearchScope)scope).getExternalModulePath());
     }
     return super.getCache(scope);
   }
@@ -56,7 +54,7 @@ public final class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
     PsiClass aClass = super.findClass(qualifiedName, scope);
-    if (aClass == null || scope instanceof ExternalModuleBuildGlobalSearchScope || scope instanceof EverythingGlobalScope) {
+    if (aClass == null || scope instanceof GradleModuleBuildGlobalSearchScope || scope instanceof EverythingGlobalScope) {
       return aClass;
     }
 
@@ -69,6 +67,6 @@ public final class GradleClassFinder extends NonClasspathClassFinder {
 
   @Override
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    return scope instanceof ExternalModuleBuildGlobalSearchScope ? super.getSubPackages(psiPackage, scope) : PsiPackage.EMPTY_ARRAY;
+    return scope instanceof GradleModuleBuildGlobalSearchScope ? super.getSubPackages(psiPackage, scope) : PsiPackage.EMPTY_ARRAY;
   }
 }

@@ -1,0 +1,16 @@
+### auto-generated section `build intellij.color.scheme.warmNeon` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "color-scheme-warmNeon_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "color-scheme-warmNeon",
+  visibility = ["//visibility:public"],
+  runtime_deps = [":color-scheme-warmNeon_resources"]
+)
+### auto-generated section `build intellij.color.scheme.warmNeon` end

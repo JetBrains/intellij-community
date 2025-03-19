@@ -1,0 +1,28 @@
+### auto-generated section `build intellij.platform.durability` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+jvm_test(
+  name = "durability_test",
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "//platform/util-ex",
+    "@lib//:ktor-network-tls",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
+    "@lib//:kotlin-reflect",
+    "//platform/util",
+    "//platform/util/storages:io-storages",
+  ]
+)
+### auto-generated section `build intellij.platform.durability` end

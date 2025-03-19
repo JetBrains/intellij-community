@@ -70,15 +70,20 @@ public class XmlTokenizerBase<T extends PsiElement> extends Tokenizer<T> {
   }
 
   protected @Nullable TextRange adjustInjectionRangeForExclusion(@NotNull String text, @NotNull TextRange range) {
+    if (range.getStartOffset() >= text.length())
+      return null;
     int startOffset = range.getStartOffset();
-    int endOffset = range.getEndOffset();
+    int endOffset = Math.min(range.getEndOffset(), text.length() - 1);
     while (startOffset > 0 && !isLetterDigitOrWhitespace(text.charAt(startOffset - 1))) {
       startOffset--;
     }
     while (endOffset < text.length() && !isLetterDigitOrWhitespace(text.charAt(endOffset))) {
       endOffset++;
     }
-    return TextRange.create(startOffset, endOffset);
+    if (startOffset < endOffset)
+      return TextRange.create(startOffset, endOffset);
+    else
+      return null;
   }
 
   private @NotNull Splitter createExclusionAwareSplitter(List<TextRange> excludeRanges, int offset) {

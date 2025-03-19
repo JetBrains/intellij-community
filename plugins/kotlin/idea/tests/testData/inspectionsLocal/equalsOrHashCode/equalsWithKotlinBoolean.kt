@@ -1,6 +1,4 @@
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
-
+// WITH_STDLIB
 class With<caret>Constructor(x: Int, s: String) {
     val x: Int = 0
     val s: String = ""
@@ -10,4 +8,4 @@ class With<caret>Constructor(x: Int, s: String) {
     override fun hashCode(): Int = 1
 }
 
-// IGNORE_FIR
+// IGNORE_K2

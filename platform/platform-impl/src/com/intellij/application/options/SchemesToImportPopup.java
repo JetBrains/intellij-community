@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.ide.IdeBundle;
@@ -8,12 +8,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class SchemesToImportPopup<T> {
   private final Component myParent;
 
@@ -45,7 +47,7 @@ public abstract class SchemesToImportPopup<T> {
       showInCenterOf(myParent);
   }
 
-  private static class SchemesToImportListCellRenderer implements ListCellRenderer {
+  private static final class SchemesToImportListCellRenderer implements ListCellRenderer {
     private final JPanel myPanel = new JPanel(new BorderLayout());
     private final JLabel myNameLabel = new JLabel("", SwingConstants.LEFT);
 
@@ -77,5 +79,5 @@ public abstract class SchemesToImportPopup<T> {
     }
   }
 
-  abstract protected void onSchemeSelected(T scheme);
+  protected abstract void onSchemeSelected(T scheme);
 }

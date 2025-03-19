@@ -9,3 +9,9 @@ class C(t :T) : T by t {
 }
 
 // KT-5103
+
+// MEMBER: "foo(): Unit"
+// MEMBER: "bar(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

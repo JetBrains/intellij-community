@@ -5,6 +5,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.testng.KotlinTestNgConfigurationProducer"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.testng.KotlinTestNGFramework" order="before testNG"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <testFrameworkProvider implementation="org.jetbrains.kotlin.idea.testng.TestNgKotlinTestFrameworkProvider"/>

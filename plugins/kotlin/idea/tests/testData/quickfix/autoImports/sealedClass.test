@@ -1,7 +1,6 @@
 // FILE: first.before.kt
 // "Import class 'ClassToImport'" "true"
 // ERROR: Unresolved reference: ClassToImport
-/* IGNORE_FIR */
 
 package testing
 
@@ -24,7 +23,6 @@ sealed class ClassToImport
 // FILE: first.after.kt
 // "Import class 'ClassToImport'" "true"
 // ERROR: Unresolved reference: ClassToImport
-/* IGNORE_FIR */
 
 package testing
 

@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="Gradle" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.0" />
-    <ANNOTATIONS>
-      <root url="file://$PROJECT_DIR$/plugins/gradle/anno" />
-    </ANNOTATIONS>
+    <properties maven-id="org.jetbrains.intellij.deps:gradle-api:8.13">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.13/gradle-api-8.13.jar">
+          <sha256sum>63047597f2f6724abc9b39508b1da58a793edd93990e1c23f7ef5634e25adda9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.0/gradle-api-8.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api-impldep/8.0/gradle-api-impldep-8.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-wrapper/8.0/gradle-wrapper-8.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-launcher/8.0/gradle-launcher-8.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/gradle-api/8.13/gradle-api-8.13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

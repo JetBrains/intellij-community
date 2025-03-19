@@ -1,0 +1,86 @@
+### auto-generated section `build intellij.platform.statistics` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "statistics_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "statistics",
+  module_name = "intellij.platform.statistics",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/jdom",
+    "//platform/statistics/uploader",
+    "@lib//:fastutil-min",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "@lib//:jna",
+    "//platform/util",
+    "@lib//:ap-validation",
+    "//platform/runtime/product",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:caffeine",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  exports = ["@lib//:ap-validation"],
+  runtime_deps = [":statistics_resources"]
+)
+
+jvm_library(
+  name = "statistics_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":statistics"],
+  deps = [
+    "//platform/core-impl",
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/util/jdom",
+    "//platform/statistics/uploader",
+    "@lib//:fastutil-min",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui",
+    "@lib//:jna",
+    "//platform/util",
+    "@lib//:ap-validation",
+    "//platform/runtime/product",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/util-ex",
+    "@lib//:caffeine",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/ide-core",
+    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/projectModel-api:projectModel",
+    "@lib//:jackson",
+    "@lib//:jackson-databind",
+    "@lib//:jackson-module-kotlin",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:junit5",
+    "@lib//:assert_j",
+  ],
+  runtime_deps = [":statistics_resources"]
+)
+
+jvm_test(
+  name = "statistics_test",
+  runtime_deps = [":statistics_test_lib"]
+)
+### auto-generated section `build intellij.platform.statistics` end

@@ -7,6 +7,8 @@ import com.jetbrains.jsonSchema.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public interface JsonValidationHost {
   void error(final String error, final PsiElement holder, JsonErrorPriority priority);
   void error(final PsiElement newHolder, JsonValidationError error);
@@ -17,7 +19,7 @@ public interface JsonValidationHost {
 
   void typeError(final @NotNull PsiElement value, @Nullable JsonSchemaType currentType, final JsonSchemaType @NotNull ... allowedTypes);
 
-  MatchResult resolve(JsonSchemaObject schemaObject);
+  MatchResult resolve(JsonSchemaObject schemaObject, @Nullable JsonValueAdapter inspectedElementAdapter);
 
   @Nullable
   JsonValidationHost checkByMatchResult(JsonValueAdapter adapter, MatchResult result, JsonComplianceCheckerOptions options);
@@ -27,4 +29,8 @@ public interface JsonValidationHost {
   void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object);
 
   void addErrorsFrom(JsonValidationHost otherHost);
+
+  boolean hasRecordedErrorsFor(@NotNull JsonValueAdapter inspectedValueAdapter);
+
+  @NotNull Map<PsiElement, JsonValidationError> getErrors();
 }

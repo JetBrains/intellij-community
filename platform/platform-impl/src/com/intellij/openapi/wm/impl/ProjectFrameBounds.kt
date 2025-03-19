@@ -7,18 +7,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Frame
 import java.awt.Rectangle
 import javax.swing.JFrame
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class ProjectFrameBounds {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<ProjectFrameBounds>()
+    fun getInstance(project: Project): ProjectFrameBounds = project.service<ProjectFrameBounds>()
   }
 
-  internal val frameInfoHelper = FrameInfoHelper()
+  internal val frameInfoHelper: FrameInfoHelper = FrameInfoHelper()
   private var pendingBounds: Rectangle? = null
 
   fun getActualFrameInfoInDeviceSpace(frameHelper: ProjectFrameHelper, frame: JFrame, windowManager: WindowManagerImpl): FrameInfo {
@@ -26,6 +27,7 @@ internal class ProjectFrameBounds {
   }
 
   fun markDirty(bounds: Rectangle?) {
+    checkForNonsenseBounds("ProjectFrameBounds.markDirty.bounds", bounds)
     if (bounds != null) {
       pendingBounds = Rectangle(bounds)
     }
@@ -33,12 +35,13 @@ internal class ProjectFrameBounds {
   }
 }
 
+@ApiStatus.Internal
 @Tag("frame")
 @Property(style = Property.Style.ATTRIBUTE)
-internal class FrameInfo : BaseState() {
+class FrameInfo : BaseState() {
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  var bounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
+  var bounds: Rectangle? by property(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
-  var extendedState by property(Frame.NORMAL)
-  var fullScreen by property(false)
+  var extendedState: Int by property(Frame.NORMAL)
+  var fullScreen: Boolean by property(false)
 }

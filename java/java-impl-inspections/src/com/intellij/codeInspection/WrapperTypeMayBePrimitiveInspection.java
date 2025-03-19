@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -29,23 +31,21 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher TO_STRING = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "toString");
   private static final CallMatcher HASH_CODE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "hashCode");
   private static final CallMatcher VALUE_OF = getValueOfMatcher();
 
-  private static final Set<String> ourAllowedInstanceCalls = new HashSet<>();
-
-  static {
-    ourAllowedInstanceCalls.add("isInfinite");
-    ourAllowedInstanceCalls.add("isNaN");
-    ourAllowedInstanceCalls.add("byteValue");
-    ourAllowedInstanceCalls.add("shortValue");
-    ourAllowedInstanceCalls.add("intValue");
-    ourAllowedInstanceCalls.add("longValue");
-    ourAllowedInstanceCalls.add("floatValue");
-    ourAllowedInstanceCalls.add("doubleValue");
-  }
+  private static final Set<String> ourAllowedInstanceCalls = Set.of(
+    "isInfinite",
+    "isNaN",
+    "byteValue",
+    "shortValue",
+    "intValue",
+    "longValue",
+    "floatValue",
+    "doubleValue"
+  );
 
   private static CallMatcher getValueOfMatcher() {
     CallMatcher[] matchers = JvmPrimitiveTypeKind.getBoxedFqns()
@@ -57,9 +57,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     return CallMatcher.anyOf(matchers);
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
@@ -183,9 +182,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return ourAllowedInstanceCalls.contains(call.getMethodExpression().getReferenceName());
     }
 
-    @Nullable("When use not allows unboxing")
-    private static Integer afterBoxingRemovalReferenceBoostedImpact(@NotNull PsiReferenceExpression expression,
-                                                             @NotNull BoxingInfo boxingInfo) {
+    private static @Nullable("When use not allows unboxing") Integer afterBoxingRemovalReferenceBoostedImpact(@NotNull PsiReferenceExpression expression,
+                                                                                                              @NotNull BoxingInfo boxingInfo) {
       Integer impact = afterBoxingRemovalReferenceImpact(expression, boxingInfo);
       if (impact == null) return null;
       final LocalSearchScope scope = tryCast(boxingInfo.myVariable.getUseScope(), LocalSearchScope.class);
@@ -201,9 +199,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return impact;
     }
 
-    @Nullable("When use does not allow unboxing")
-    private static Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
-                                                             @NotNull BoxingInfo boxingInfo) {
+    private static @Nullable("When use does not allow unboxing") Integer afterBoxingRemovalReferenceImpact(@NotNull PsiReferenceExpression expression,
+                                                                                                           @NotNull BoxingInfo boxingInfo) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
       PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
       if (call != null) {
@@ -238,9 +235,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return 0;
     }
 
-    @Nullable("When use not allows unboxing")
-    private static Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
-                                                                  @NotNull PsiReferenceExpression reference) {
+    private static @Nullable("When use not allows unboxing") Integer expressionListImpactAfterBoxingRemoval(@NotNull PsiExpressionList expressionList,
+                                                                                                            @NotNull PsiReferenceExpression reference) {
       PsiElement grandParent = expressionList.getParent();
       if (!(grandParent instanceof PsiCallExpression callExpression)) return null;
       PsiExpression[] arguments = expressionList.getExpressions();
@@ -283,9 +279,8 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       return isRelational ? 0 : 1;
     }
 
-    @Nullable("When use does not allow unboxing")
-    private static Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
-                                                                      PsiReferenceExpression reference) {
+    private static @Nullable("When use does not allow unboxing") Integer polyadicExpressionImpactAfterBoxingRemoval(@NotNull PsiPolyadicExpression polyadic,
+                                                                                                                    PsiReferenceExpression reference) {
       final PsiExpression[] operands = polyadic.getOperands();
       final IElementType tokenType = polyadic.getOperationTokenType();
 
@@ -326,24 +321,19 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
   }
 
-  private static class ConvertWrapperTypeToPrimitive implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+  private static class ConvertWrapperTypeToPrimitive extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getName() {
       return getFamilyName();
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return JavaBundle.message("inspection.wrapper.type.may.be.primitive.fix.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiTypeElement typeElement = tryCast(element, PsiTypeElement.class);
       if (typeElement == null) return;
       PsiLocalVariable variable = tryCast(typeElement.getParent(), PsiLocalVariable.class);

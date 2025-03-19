@@ -1,91 +1,67 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
+public final class MoveInitializerToConstructorAction extends BaseMoveInitializerToMethodAction {
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return JavaBundle.message("intention.move.initializer.to.constructor");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (super.isAvailable(project, editor, element)) {
-      final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
-      assert field != null;
-      PsiClass containingClass = field.getContainingClass();
-      assert containingClass != null;
-      PsiMethod[] constructors = containingClass.getConstructors();
-      if (constructors.length > 0 && ContainerUtil.all(constructors, c -> c instanceof SyntheticElement)) return false;
-      if (field.hasModifierProperty(PsiModifier.FINAL)) {
-        PsiClassInitializer[] initializers = containingClass.getInitializers();
-        PsiElement[] elements =
-          Arrays.stream(containingClass.getFields())
-          .map(f -> f.getInitializer())
-          .filter(Objects::nonNull)
-          .toArray(PsiElement[]::new);
-        return ReferencesSearch.search(field, new LocalSearchScope(ArrayUtil.mergeArrays(elements, initializers))).findFirst() == null;
-      }
-      return true;
+  protected boolean isAvailable(@NotNull PsiField field) {
+    if (!super.isAvailable(field)) return false;
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass instanceof PsiImplicitClass) return false;
+    assert containingClass != null;
+    PsiMethod[] constructors = containingClass.getConstructors();
+    if (constructors.length > 0 && ContainerUtil.all(constructors, c -> c instanceof SyntheticElement)) return false;
+    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      PsiClassInitializer[] initializers = containingClass.getInitializers();
+      PsiElement[] elements =
+        Arrays.stream(containingClass.getFields())
+        .map(f -> f.getInitializer())
+        .filter(Objects::nonNull)
+        .toArray(PsiElement[]::new);
+      return ReferencesSearch.search(field, new LocalSearchScope(ArrayUtil.mergeArrays(elements, initializers))).findFirst() == null;
     }
-    return false;
+    return true;
   }
 
-  @NotNull
   @Override
-  protected Collection<String> getUnsuitableModifiers() {
+  protected @NotNull Collection<String> getUnsuitableModifiers() {
     return Collections.singletonList(PsiModifier.STATIC);
   }
 
-  @NotNull
   @Override
-  protected Collection<PsiMethod> getOrCreateMethods(@NotNull Project project, @NotNull Editor editor, PsiFile file, @NotNull PsiClass aClass) {
+  protected @NotNull Collection<PsiMethod> getOrCreateMethods(@NotNull PsiClass aClass) {
     final Collection<PsiMethod> constructors = Arrays.asList(aClass.getConstructors());
     if (constructors.isEmpty()) {
-      return createConstructor(project, editor, file, aClass);
+      return createConstructor(aClass);
     }
 
     return removeChainedConstructors(constructors);
   }
 
-  @NotNull
-  private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<? extends PsiMethod> constructors) {
+  private static @NotNull Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<? extends PsiMethod> constructors) {
     final List<PsiMethod> result = new ArrayList<>(constructors);
-    result.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
+    result.removeIf(constructor -> !JavaPsiConstructorUtil.getChainedConstructors(constructor).isEmpty());
     return result;
   }
 
-  @NotNull
-  private static Collection<PsiMethod> createConstructor(@NotNull Project project,
-                                                         @NotNull Editor editor,
-                                                         PsiFile file,
-                                                         @NotNull PsiClass aClass) {
-    final IntentionAction addDefaultConstructorFix = QuickFixFactory.getInstance().createAddDefaultConstructorFix(aClass);
-    final int offset = editor.getCaretModel().getOffset();
-    addDefaultConstructorFix.invoke(project, editor, file);
-    editor.getCaretModel().moveToOffset(offset); //restore caret
+  private static @NotNull Collection<PsiMethod> createConstructor(@NotNull PsiClass aClass) {
+    AddDefaultConstructorFix.addDefaultConstructor(aClass);
     return Arrays.asList(aClass.getConstructors());
   }
 }

@@ -5,7 +5,7 @@ buildscript {
     }
 }
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.0.6'
+    id 'org.jetbrains.kotlin.jvm'
 }
 repositories {
     mavenCentral()

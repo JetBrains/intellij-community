@@ -13,8 +13,9 @@ intellij.grazie
 intellij.markdown
 intellij.platform.langInjection
 intellij.properties
-intellij.reStructuredText
+intellij.restructuredtext
 intellij.searchEverywhereMl
+intellij.marketplaceMl
 intellij.settingsSync
 intellij.sh
 intellij.statsCollector
@@ -23,9 +24,8 @@ intellij.terminal
 intellij.textmate
 intellij.toml
 intellij.vcs.git
-intellij.vcs.github
-intellij.vcs.gitlab
 intellij.vcs.hg
 intellij.vcs.svn
+intellij.json
 intellij.yaml
 intellij.performanceTesting

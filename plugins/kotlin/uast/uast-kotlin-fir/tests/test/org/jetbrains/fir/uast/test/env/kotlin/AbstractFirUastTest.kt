@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.fir.uast.test.env.kotlin
 
@@ -9,10 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
 import org.jetbrains.fir.uast.test.invalidateAllCachesForUastTests
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -26,18 +26,17 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.FirKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension
 import org.jetbrains.uast.kotlin.internal.FirCliKotlinUastResolveProviderService
-import org.jetbrains.uast.test.common.kotlin.UastPluginSelection
+import org.jetbrains.uast.kotlin.internal.FirKotlinUastLibraryPsiProviderService
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), UastPluginSelection {
+abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase() {
     companion object {
-        private const val IGNORE_FIR_DIRECTIVE = "IGNORE_FIR"
 
         val String.withIgnoreFirDirective: Boolean
             get() {
-                return IGNORE_FIR_DIRECTIVE in KotlinTestUtils.parseDirectives(this)
+                return IgnoreTests.DIRECTIVES.IGNORE_K2.replace("// ", "") in KotlinTestUtils.parseDirectives(this)
             }
     }
 
@@ -46,19 +45,26 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     private fun registerExtensionPointAndServiceIfNeeded() {
         val area = Extensions.getRootArea()
         CoreApplicationEnvironment.registerExtensionPoint(
-            area,
-            UastLanguagePlugin.extensionPointName,
-            UastLanguagePlugin::class.java
+          area,
+          UastLanguagePlugin.EP,
+          UastLanguagePlugin::class.java
         )
         area.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).registerExtension(KotlinEvaluatorExtension(), project)
         val service = FirCliKotlinUastResolveProviderService()
-        ApplicationManager.getApplication().registerServiceInstance(
+        val application = ApplicationManager.getApplication()
+        application.registerServiceInstance(
             BaseKotlinUastResolveProviderService::class.java,
             service
         )
-        project.registerServiceInstance(
+
+        application.registerServiceInstance(
             FirKotlinUastResolveProviderService::class.java,
             service
+        )
+
+        application.registerServiceInstance(
+            FirKotlinUastLibraryPsiProviderService::class.java,
+            FirKotlinUastLibraryPsiProviderService.Default(),
         )
     }
 
@@ -69,14 +75,10 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     override fun tearDown() {
         runAll(
-            ThrowableRunnable {
-                project.invalidateAllCachesForUastTests()
-            },
-            ThrowableRunnable { super.tearDown() },
+            { project.invalidateAllCachesForUastTests() },
+            { super.tearDown() },
         )
     }
-
-    override fun isFirPlugin(): Boolean = true
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -74,7 +74,7 @@ public abstract class IntroduceFieldCentralPanel {
     myTypeSelectorManager = typeSelectorManager;
   }
 
-  protected boolean setEnabledInitializationPlaces(@NotNull final PsiExpression initializer) {
+  protected boolean setEnabledInitializationPlaces(final @NotNull PsiExpression initializer) {
     final Set<PsiField> fields = new HashSet<>();
     final Ref<Boolean> refsLocal = new Ref<>(false);
     initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -125,7 +125,7 @@ public abstract class IntroduceFieldCentralPanel {
         if (field.hasModifierProperty(PsiModifier.FINAL)) continue;
         final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
         if (setUpMethod != null) {
-          for (PsiReference reference: ReferencesSearch.search(field, new LocalSearchScope(setUpMethod))) {
+          for (PsiReference reference: ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).asIterable()) {
             PsiElement element = reference.getElement();
             if (element instanceof PsiExpression && !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
               continue nextField;

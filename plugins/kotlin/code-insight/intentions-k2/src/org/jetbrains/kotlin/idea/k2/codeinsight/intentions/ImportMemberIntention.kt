@@ -2,94 +2,108 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.HighPriorityAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
+@OptIn(KaIdeApi::class)
 internal class ImportMemberIntention :
-    AbstractKotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
-    HighPriorityAction {
+    KotlinApplicableModCommandAction<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class) {
 
-    class Context(
+    data class Context(
         val fqName: FqName,
         val shortenCommand: ShortenCommand,
     )
 
-    override fun getFamilyName(): String = KotlinBundle.message("add.import.for.member")
+    override fun getFamilyName(): String =
+        KotlinBundle.message("add.import.for.member")
 
-    override fun getActionName(element: KtNameReferenceExpression, context: Context): String =
-        KotlinBundle.message("add.import.for.0", context.fqName.asString())
-
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
+    override fun getPresentation(
+        context: ActionContext,
+        element: KtNameReferenceExpression,
+    ): Presentation? {
+        val (fqName) = getElementContext(context, element)
+            ?: return null
+        return Presentation.of(KotlinBundle.message("add.import.for.0", fqName.asString()))
+            .withPriority(PriorityAction.Priority.HIGH)
+    }
 
     override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
         // Ignore simple name expressions or already imported names.
         element.getQualifiedElement() != element && !element.isInImportDirective()
 
-    context(KtAnalysisSession)
-    override fun prepareContext(element: KtNameReferenceExpression): Context? {
+    override fun KaSession.prepareContext(element: KtNameReferenceExpression): Context? {
         val symbol = element.mainReference.resolveToSymbol() ?: return null
         return computeContext(element, symbol)
     }
 
-    override fun apply(element: KtNameReferenceExpression, context: Context, project: Project, editor: Editor?) {
-        context.shortenCommand.invokeShortening()
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtNameReferenceExpression,
+        elementContext: Context,
+        updater: ModPsiUpdater,
+    ) {
+        elementContext.shortenCommand.invokeShortening()
     }
 }
 
-private fun KtAnalysisSession.computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
+context(KaSession)
+@OptIn(KaIdeApi::class)
+private fun computeContext(psi: KtNameReferenceExpression, symbol: KaSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
-        is KtConstructorSymbol,
-        is KtClassOrObjectSymbol -> {
-            val classId = if (symbol is KtClassOrObjectSymbol) {
-                symbol.classIdIfNonLocal
+        is KaConstructorSymbol,
+        is KaClassSymbol -> {
+            val classId = if (symbol is KaClassSymbol) {
+                symbol.classId
             } else {
-                (symbol as KtConstructorSymbol).containingClassIdIfNonLocal
+                (symbol as KaConstructorSymbol).containingClassId
             } ?: return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = {
-                    if (it.classIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                classShortenStrategy = {
+                    if (it.classId == classId)
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
-                }, callableShortenOption = {
-                    if (it is KtConstructorSymbol && it.containingClassIdIfNonLocal == classId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                        ShortenStrategy.DO_NOT_SHORTEN
+                }, callableShortenStrategy = {
+                    if (it is KaConstructorSymbol && it.containingClassId == classId)
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 })
             if (shortenCommand.isEmpty) return null
             ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
         }
 
-        is KtCallableSymbol -> {
-            val callableId = symbol.callableIdIfNonLocal ?: return null
+        is KaCallableSymbol -> {
+            val callableId = symbol.callableId ?: return null
             if (callableId.callableName.isSpecial) return null
-            if (!canBeImported(symbol)) return null
+            if (symbol.importableFqName == null) return null
             val shortenCommand = collectPossibleReferenceShortenings(
                 psi.containingKtFile,
-                classShortenOption = { ShortenOption.DO_NOT_SHORTEN },
-                callableShortenOption = {
-                    if (it.callableIdIfNonLocal == callableId)
-                        ShortenOption.SHORTEN_AND_IMPORT
+                classShortenStrategy = { ShortenStrategy.DO_NOT_SHORTEN },
+                callableShortenStrategy = {
+                    if (it.callableId == callableId)
+                        ShortenStrategy.SHORTEN_AND_IMPORT
                     else
-                        ShortenOption.DO_NOT_SHORTEN
+                        ShortenStrategy.DO_NOT_SHORTEN
                 }
             )
             if (shortenCommand.isEmpty) return null
@@ -97,21 +111,5 @@ private fun KtAnalysisSession.computeContext(psi: KtNameReferenceExpression, sym
         }
 
         else -> return null
-    }
-}
-
-private fun KtAnalysisSession.canBeImported(symbol: KtCallableSymbol): Boolean {
-    if (symbol is KtEnumEntrySymbol) return true
-    if (symbol.origin == KtSymbolOrigin.JAVA) {
-        return when (symbol) {
-            is KtFunctionSymbol -> symbol.isStatic
-            is KtPropertySymbol -> symbol.isStatic
-            is KtJavaFieldSymbol -> symbol.isStatic
-            else -> false
-        }
-    } else {
-        if ((symbol as? KtSymbolWithKind)?.symbolKind == KtSymbolKind.TOP_LEVEL) return true
-        val containingClass = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return true
-        return containingClass.classKind == KtClassKind.OBJECT || containingClass.classKind == KtClassKind.COMPANION_OBJECT
     }
 }

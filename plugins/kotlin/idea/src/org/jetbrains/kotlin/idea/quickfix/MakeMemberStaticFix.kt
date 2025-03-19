@@ -1,20 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.AddJvmStaticIntention
 import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
-import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -24,61 +18,23 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 class MakeMemberStaticFix(declaration: KtNamedDeclaration) : KotlinQuickFixAction<KtNamedDeclaration>(declaration) {
-    override fun startInWriteAction(): Boolean = false
-
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-        val declaration = element ?: return IntentionPreviewInfo.EMPTY
-        if (declaration is KtClass) {
-            if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifier(KtTokens.INNER_KEYWORD)
-            return IntentionPreviewInfo.DIFF
-        }
-        val copyDeclaration = PsiTreeUtil.findSameElementInCopy(declaration, file)
-        val containingClass = copyDeclaration.containingClassOrObject ?: return IntentionPreviewInfo.EMPTY
-        val copyDeclarationInCompanion = if (containingClass is KtClass) {
-            val companionObject = containingClass.getOrCreateCompanionObject()
-            MoveMemberToCompanionObjectIntention.removeModifiers(copyDeclaration)
-            val newDeclaration = companionObject.addDeclaration(copyDeclaration)
-            copyDeclaration.delete()
-            newDeclaration
-        } else copyDeclaration
-        if (AddJvmStaticIntention().applicabilityRange(copyDeclarationInCompanion) != null) {
-            copyDeclarationInCompanion.addAnnotation(JVM_STATIC_FQ_NAME)
-            CodeStyleManager.getInstance(declaration.project).reformat(copyDeclarationInCompanion, true)
-        }
-        return IntentionPreviewInfo.DIFF
-    }
-
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        fun makeStaticAndReformat(declaration: KtNamedDeclaration, editor: Editor?) {
-            val intention = AddJvmStaticIntention()
-            if (intention.applicabilityRange(declaration) != null) {
-                intention.applyTo(declaration, editor)
-                runWriteAction { CodeStyleManager.getInstance(declaration.project).reformat(declaration, true) }
-            }
-        }
-        val declaration = element ?: return
+        var declaration = element ?: return
         if (declaration is KtClass) {
             if (declaration.hasModifier(KtTokens.INNER_KEYWORD)) declaration.removeModifier(KtTokens.INNER_KEYWORD)
-            return
-        }
-        val containingClass = declaration.containingClassOrObject ?: return
-        if (containingClass is KtClass) {
-            val moveMemberToCompanionObjectIntention = MoveMemberToCompanionObjectIntention()
-            val (conflicts, externalUsages, outerInstanceUsages) =
-                moveMemberToCompanionObjectIntention.retrieveConflictsAndUsages(project, editor, declaration, containingClass)
-                    ?: return
-
-            project.checkConflictsInteractively(conflicts) {
-                ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
-                    KotlinBundle.message("making.member.static"), project, null
-                ) {
-                    val movedDeclaration = moveMemberToCompanionObjectIntention.doMove(
-                        it, declaration, externalUsages, outerInstanceUsages, editor
-                    )
-                    makeStaticAndReformat(movedDeclaration, editor)
-                }
+        } else {
+            val containingClass = declaration.containingClassOrObject ?: return
+            if (containingClass is KtClass) {
+                val moveMemberToCompanionObjectIntention = MoveMemberToCompanionObjectIntention()
+                declaration = moveMemberToCompanionObjectIntention.doMove(
+                    EmptyProgressIndicator(), declaration, listOf(), listOf(), editor
+                )
             }
-        } else makeStaticAndReformat(declaration, editor)
+        }
+        if (AddJvmStaticIntention().applicabilityRange(declaration) != null) {
+            declaration.addAnnotation(JVM_STATIC_FQ_NAME)
+            CodeStyleManager.getInstance(project).reformat(declaration, true)
+        }
     }
 
     override fun getText(): String = KotlinBundle.message("make.member.static.quickfix", element?.name ?: "")

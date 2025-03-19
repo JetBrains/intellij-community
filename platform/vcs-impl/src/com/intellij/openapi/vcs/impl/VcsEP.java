@@ -8,9 +8,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class VcsEP implements PluginAware {
+  @ApiStatus.Internal
   public static final ExtensionPointName<VcsEP> EP_NAME = new ExtensionPointName<>("com.intellij.vcs");
 
   // these must be public for scrambling compatibility
@@ -27,14 +29,21 @@ public final class VcsEP implements PluginAware {
 
   private PluginDescriptor pluginDescriptor;
 
+  @ApiStatus.Internal
+  public VcsEP() {
+  }
+
+  @ApiStatus.Internal
   public @NotNull AbstractVcs createVcs(@NotNull Project project) {
     return project.instantiateClass(vcsClass, pluginDescriptor);
   }
 
+  @ApiStatus.Internal
   public @NotNull VcsDescriptor createDescriptor() {
     return new VcsDescriptor(administrativeAreaName, displayName, name, areChildrenValidMappings);
   }
 
+  @ApiStatus.Internal
   @Override
   @Transient
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {

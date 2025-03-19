@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -112,8 +112,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return mapOrArgumentList instanceof GrListOrMap && ((GrListOrMap)mapOrArgumentList).getNamedArguments().length > 0;
   }
 
-  @Nullable
-  private static PsiElement findMapOrArgumentList(CompletionParameters parameters) {
+  private static @Nullable PsiElement findMapOrArgumentList(CompletionParameters parameters) {
     PsiElement parent = parameters.getPosition().getParent();
     if (parent instanceof GrReferenceExpression) {
       if (((GrReferenceExpression)parent).getQualifier() != null) return null;
@@ -125,8 +124,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return parent.getParent().getParent();
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> findOtherNamedArgumentsInFile(PsiElement mapOrArgumentList) {
     final Map<String, NamedArgumentDescriptor> map = new HashMap<>();
     mapOrArgumentList.getContainingFile().accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
@@ -158,8 +156,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return GrNamedArgument.EMPTY_ARRAY;
   }
 
-  @NotNull
-  private static Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
+  private static @NotNull Map<String, NamedArgumentDescriptor> calculateNamedArguments(@NotNull PsiElement mapOrArgumentList) {
     Map<String, NamedArgumentDescriptor> map = calcNamedArgumentsForCall(mapOrArgumentList);
 
     if ((map == null || map.isEmpty()) && mapOrArgumentList instanceof GrListOrMap) {
@@ -173,8 +170,7 @@ final class MapArgumentCompletionProvider extends CompletionProvider<CompletionP
     return map;
   }
 
-  @Nullable
-  private static Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
+  private static @Nullable Map<String, NamedArgumentDescriptor> calcNamedArgumentsForCall(@NotNull PsiElement mapOrArgumentList) {
     PsiElement argumentList = mapOrArgumentList instanceof GrArgumentList ? mapOrArgumentList : mapOrArgumentList.getParent();
     if (argumentList instanceof GrArgumentList) {
       if (mapOrArgumentList instanceof GrListOrMap) {

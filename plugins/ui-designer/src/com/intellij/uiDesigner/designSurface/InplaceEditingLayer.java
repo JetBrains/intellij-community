@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,7 +62,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private boolean myInsideChange;
 
-  public InplaceEditingLayer(@NotNull final GuiEditor editor) {
+  public InplaceEditingLayer(final @NotNull GuiEditor editor) {
     myEditor = editor;
     myEditor.addComponentSelectionListener(new MyComponentSelectionListener());
     myFocusWatcher = new MyFocusWatcher();
@@ -126,9 +126,9 @@ public final class InplaceEditingLayer extends JComponent{
     }
   }
 
-  public void startInplaceEditing(@NotNull final RadComponent inplaceComponent,
-                                  @Nullable final Property property,
-                                  @Nullable final Rectangle bounds,
+  public void startInplaceEditing(final @NotNull RadComponent inplaceComponent,
+                                  final @Nullable Property property,
+                                  final @Nullable Rectangle bounds,
                                   final InplaceContext context) {
     myInplaceProperty = property;
     if(myInplaceProperty == null){
@@ -204,7 +204,7 @@ public final class InplaceEditingLayer extends JComponent{
     }
 
     // 5. Block any mouse event to finish editing by any of them
-    enableEvents(MouseEvent.MOUSE_EVENT_MASK);
+    enableEvents(AWTEvent.MOUSE_EVENT_MASK);
 
     repaint();
   }
@@ -257,7 +257,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 3. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }
@@ -288,7 +288,7 @@ public final class InplaceEditingLayer extends JComponent{
       myInplaceComponent = null;
 
       // 2. Let AWT work
-      disableEvents(MouseEvent.MOUSE_EVENT_MASK);
+      disableEvents(AWTEvent.MOUSE_EVENT_MASK);
     }finally{
       myInsideChange = false;
     }
@@ -305,7 +305,7 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private final class MyComponentSelectionListener implements ComponentSelectionListener{
     @Override
-    public void selectedComponentChanged(@NotNull final GuiEditor source) {
+    public void selectedComponentChanged(final @NotNull GuiEditor source) {
       finishInplaceEditing();
     }
   }
@@ -325,7 +325,7 @@ public final class InplaceEditingLayer extends JComponent{
         return;
       }
       // [vova] we need LaterInvocator here to prevent write-access assertions
-      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> finishInplaceEditing(), ModalityState.nonModal());
     }
   }
 
@@ -334,17 +334,17 @@ public final class InplaceEditingLayer extends JComponent{
    */
   private final class MyPropertyEditorListener implements PropertyEditorListener {
     @Override
-    public void valueCommitted(@NotNull final PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
+    public void valueCommitted(final @NotNull PropertyEditor source, final boolean continueEditing, final boolean closeEditorOnError) {
       finishInplaceEditing();
     }
 
     @Override
-    public void editingCanceled(@NotNull final PropertyEditor source) {
+    public void editingCanceled(final @NotNull PropertyEditor source) {
       cancelInplaceEditing();
     }
 
     @Override
-    public void preferredSizeChanged(@NotNull final PropertyEditor source) {
+    public void preferredSizeChanged(final @NotNull PropertyEditor source) {
       adjustEditorComponentSize();
     }
   }

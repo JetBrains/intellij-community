@@ -19,6 +19,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -32,11 +33,10 @@ import java.util.Optional;
 /**
  * User : ktisha
  */
-public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
+public final class PythonBuiltinReferenceResolveProvider implements PyReferenceResolveProvider {
 
-  @NotNull
   @Override
-  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+  public @NotNull List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
     if (referencedName == null) {
       return Collections.emptyList();
@@ -57,7 +57,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
 
     // ...as a builtin symbol
     final PyFile builtinsFile = builtinCache.getBuiltinsFile();
-    if (builtinsFile != null) {
+    if (builtinsFile != null && !PyUtil.isClassPrivateName(referencedName) && PyUtil.getInitialUnderscores(referencedName) != 1) {
       for (RatedResolveResult resolveResult : builtinsFile.multiResolveName(referencedName)) {
         result.add(new ImportedResolveResult(resolveResult.getElement(), resolveResult.getRate(), null));
       }

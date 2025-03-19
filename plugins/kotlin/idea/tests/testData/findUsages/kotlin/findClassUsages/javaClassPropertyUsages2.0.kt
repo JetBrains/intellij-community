@@ -2,6 +2,9 @@
 // OPTIONS: propertyUsages
 // PSI_ELEMENT_AS_TITLE: "class A : X"
 
+// IGNORE_PLATFORM_JS: Java-specific code
+// IGNORE_PLATFORM_NATIVE: Java-specific code
+
 interface X {
     val a: String
         get() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -8,10 +8,13 @@ import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.xml.XmlElementContentGroup;
 import com.intellij.psi.xml.XmlElementContentSpec;
-import com.intellij.psi.xml.XmlElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec, XmlElementType {
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_GROUP;
+import static com.intellij.psi.xml.XmlElementType.XML_ELEMENT_CONTENT_SPEC;
+import static com.intellij.psi.xml.XmlTokenType.*;
+
+public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElementContentSpec {
   private static final Logger LOG = Logger.getInstance(XmlElementContentSpecImpl.class);
 
   public XmlElementContentSpecImpl() {
@@ -50,7 +53,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   }
 
   @Override
-  public void accept(@NotNull final PsiElementVisitor visitor) {
+  public void accept(final @NotNull PsiElementVisitor visitor) {
     if (visitor instanceof XmlElementVisitor) {
       ((XmlElementVisitor)visitor).visitXmlElement(this);
     }

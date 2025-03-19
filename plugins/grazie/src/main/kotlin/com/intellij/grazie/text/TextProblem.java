@@ -62,28 +62,9 @@ public abstract class TextProblem {
     return text;
   }
 
-  /**
-   * @return the range in {@link #getText()} to be highlighted
-   * @deprecated use {@link #getHighlightRanges()}
-   */
-  @Deprecated(forRemoval = true)
-  public final @NotNull TextRange getHighlightRange() {
-    return new TextRange(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset());
-  }
-
   /** @return the ranges in {@link #getText()} to be highlighted, non-intersecting, sorted by the start offset ascending */
   public final @NotNull List<TextRange> getHighlightRanges() {
     return highlightRanges;
-  }
-
-  /**
-   * @return the range in {@link #getText()} to be replaced with {@link #getCorrections()}
-   * @deprecated use {@link #getSuggestions()} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public @NotNull TextRange getReplacementRange() {
-    return getHighlightRanges().get(0);
   }
 
   /**
@@ -93,16 +74,6 @@ public abstract class TextProblem {
    */
   public @Nullable TextRange getPatternRange() {
     return null;
-  }
-
-  /**
-   * @return a list of suggested corrections for this problem, all applied to {@link #getReplacementRange()}.
-   * @deprecated use {@link #getSuggestions()} instead
-   */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public @NotNull List<String> getCorrections() {
-    return List.of();
   }
 
   /**
@@ -116,14 +87,10 @@ public abstract class TextProblem {
 
   /** @return a list of correction suggestions for this problem */
   public @NotNull List<Suggestion> getSuggestions() {
-    List<String> corrections = getCorrections();
-    if (corrections.isEmpty()) return List.of();
-
-    TextRange range = getReplacementRange();
-    return ContainerUtil.map(corrections, replacement -> Suggestion.replace(range, replacement));
+    return List.of();
   }
 
-  /** Return a list of quick fixes to display under {@link #getCorrections} suggestions */
+  /** Return a list of quick fixes to display under {@link #getSuggestions()} suggestions */
   public @NotNull List<LocalQuickFix> getCustomFixes() {
     return Collections.emptyList();
   }
@@ -143,7 +110,7 @@ public abstract class TextProblem {
 
   @Override
   public String toString() {
-    return getHighlightRange().subSequence(text) + " (" + getShortMessage() + ")";
+    return text.subSequence(highlightRanges.get(0).getStartOffset(), ContainerUtil.getLastItem(highlightRanges).getEndOffset()) + " (" + getShortMessage() + ")";
   }
 
   public interface Suggestion {

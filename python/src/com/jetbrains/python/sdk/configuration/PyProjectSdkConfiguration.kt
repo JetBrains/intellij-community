@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.configuration
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.GeneralSettings
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -15,7 +16,6 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,11 +23,10 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.inspections.PyInspectionExtension
-import com.jetbrains.python.inspections.PyPackageRequirementsInspection
+import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
-import com.jetbrains.python.sdk.excludeInnerVirtualEnv
-import com.jetbrains.python.ui.PyUiUtil
+import com.jetbrains.python.sdk.configurePythonSdk
 
 object PyProjectSdkConfiguration {
 
@@ -56,9 +55,11 @@ object PyProjectSdkConfiguration {
 
   fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
     runInEdt {
-      if (module.isDisposed) return@runInEdt
-      SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
-      module.excludeInnerVirtualEnv(sdk)
+      if (module.isDisposed) {
+        return@runInEdt
+      }
+
+      configurePythonSdk(project, module, sdk)
       notifyAboutConfiguredSdk(project, module, sdk)
     }
   }
@@ -85,7 +86,7 @@ object PyProjectSdkConfiguration {
       NotificationType.INFORMATION
     ).apply {
       val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
-        PySdkPopupFactory.createAndShow(project, module)
+        PySdkPopupFactory.createAndShow(module)
       }
 
       addAction(configureSdkAction)
@@ -134,7 +135,7 @@ private class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
     private var suppress = false
 
     fun suppress(project: Project): Disposable? {
-      PyUiUtil.clearFileLevelInspectionResults(project)
+      DaemonCodeAnalyzer.getInstance(project).restart()
       return if (suppress) null else Suppressor()
     }
   }
@@ -157,7 +158,7 @@ private class PyInterpreterInspectionSuppressor : PyInspectionExtension() {
 
 private class PyPackageRequirementsInspectionSuppressor(module: Module): Disposable {
 
-  private val listener = PyPackageRequirementsInspection.RunningPackagingTasksListener(module)
+  private val listener = RunningPackagingTasksListener(module)
 
   init {
     listener.started()

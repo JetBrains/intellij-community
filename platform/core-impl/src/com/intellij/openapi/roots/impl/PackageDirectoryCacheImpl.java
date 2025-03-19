@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 
+@ApiStatus.Internal
 public final class PackageDirectoryCacheImpl implements PackageDirectoryCache {
   private final @NotNull BiConsumer<? super @NotNull String, ? super @NotNull List<? super VirtualFile>> myFillDirectoriesByPackage;
   private final @NotNull BiPredicate<? super @NotNull VirtualFile, ? super @NotNull String> myPackageDirectoryFilter;

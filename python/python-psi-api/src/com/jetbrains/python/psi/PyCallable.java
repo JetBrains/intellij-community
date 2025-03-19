@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
+import com.jetbrains.python.ast.PyAstCallable;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -27,11 +14,12 @@ import java.util.Map;
 /**
  * Something that can be called, passed parameters to, and return something back.
  */
-public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
+public interface PyCallable extends PyAstCallable, PyTypedElement, PyQualifiedNameOwner {
 
   /**
    * @return a list of parameters passed to this callable, possibly empty.
    */
+  @Override
   @NotNull
   PyParameterList getParameterList();
 
@@ -58,16 +46,31 @@ public interface PyCallable extends PyTypedElement, PyQualifiedNameOwner {
   PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite);
 
   /**
+   * Please use getCallType with four arguments instead
+   */
+  @Deprecated(forRemoval = true)
+  default @Nullable PyType getCallType(@Nullable PyExpression receiver,
+                             @NotNull Map<PyExpression, PyCallableParameter> parameters,
+                             @NotNull TypeEvalContext context) {
+    return getCallType(receiver, null, parameters, context);
+  }
+
+
+
+  /**
    * Returns the type of the call to the callable where the call site is specified by the optional receiver and the arguments to parameters
    * mapping.
    */
   @Nullable
-  PyType getCallType(@Nullable PyExpression receiver, @NotNull Map<PyExpression, PyCallableParameter> parameters,
+  PyType getCallType(@Nullable PyExpression receiver,
+                     @Nullable PyCallSiteExpression pyCallSiteExpression,
+                     @NotNull Map<PyExpression, PyCallableParameter> parameters,
                      @NotNull TypeEvalContext context);
 
   /**
    * @return a methods returns itself, non-method callables return null.
    */
+  @Override
   @Nullable
   PyFunction asMethod();
 }

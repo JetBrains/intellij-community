@@ -26,11 +26,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
+public final class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
@@ -72,8 +71,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+  private static @Nullable PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
     return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 
@@ -114,7 +112,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
     replacementTextBuilder.append(") -> ");
 
-    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function);
+    String returnType = SpecifyTypeInPy3AnnotationsIntention.returnType(function).getAnnotationText();
     templates.add(Pair.create(replacementTextBuilder.length(), returnType));
 
     replacementTextBuilder.append(returnType);

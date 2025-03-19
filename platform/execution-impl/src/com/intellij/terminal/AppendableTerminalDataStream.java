@@ -6,7 +6,7 @@ import com.jediterm.terminal.TerminalDataStream;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingDeque;
 
-public class AppendableTerminalDataStream implements TerminalDataStream, Appendable {
+public final class AppendableTerminalDataStream implements TerminalDataStream, Appendable {
   private final LinkedBlockingDeque<Character> myQueue = new LinkedBlockingDeque<>(10000000);
   private final LinkedBlockingDeque<Character> myPushBackQueue = new LinkedBlockingDeque<>();
 

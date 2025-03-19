@@ -10,11 +10,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
+public final class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
 
   @Override
   public PsiElement getGotoDeclarationTarget(@Nullable PsiElement element, Editor editor) {
@@ -36,7 +37,7 @@ public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBas
     //case: MyBundle.message("literalAnnotatedWithPropertyKey", param1, param2)
     if (uElement instanceof UCallExpression call) {
       for (UExpression expression : call.getValueArguments()) {
-        if (expression instanceof ULiteralExpression && PropertyFoldingBuilder.isI18nProperty((ULiteralExpression)expression)) {
+        if (expression instanceof UInjectionHost injectionHost && PropertyFoldingBuilder.isI18nProperty(injectionHost)) {
           Property property = JavaI18nUtil.resolveProperty(expression);
           if (property != null) {
             return property;

@@ -1,10 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.api.util
 
-class LinkHttpHeaderValue constructor(val firstLink: String? = null,
-                                      val prevLink: String? = null,
-                                      val nextLink: String? = null,
-                                      val lastLink: String? = null) {
+class LinkHttpHeaderValue(val firstLink: String? = null,
+                          val prevLink: String? = null,
+                          val nextLink: String? = null,
+                          val lastLink: String? = null) {
   companion object {
     const val HEADER_NAME = "Link"
 

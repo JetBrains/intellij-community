@@ -17,7 +17,7 @@ class Main {
         System.out.println(i);
         break;
       case String s:
-      case default:
+      default:
         System.out.println(<error descr="Cannot resolve symbol 's'">s</error>);
     }
   }

@@ -1,0 +1,38 @@
+### auto-generated section `build intellij.platform.structureView.impl` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "structureView-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "structureView-impl",
+  module_name = "intellij.platform.structureView.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util",
+    "//platform/extensions",
+    "//platform/core-api:core",
+    "//platform/icons",
+    "@lib//:automaton",
+    "//platform/projectModel-api:projectModel",
+    "//platform/platform-api:ide",
+    "//platform/core-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/util:util-ui",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/statistics",
+  ],
+  exports = [
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/util",
+    "//platform/extensions",
+  ],
+  runtime_deps = [":structureView-impl_resources"]
+)
+### auto-generated section `build intellij.platform.structureView.impl` end

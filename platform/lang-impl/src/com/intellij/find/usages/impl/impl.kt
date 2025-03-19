@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.usages.impl
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
@@ -11,13 +11,15 @@ import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.model.search.impl.buildTextUsageQuery
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
+import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
+import org.jetbrains.annotations.TestOnly
 import com.intellij.usages.Usage as UVUsage
 
 @ApiStatus.Internal
@@ -36,6 +38,13 @@ internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Sym
 }
 
 private val SYMBOL_SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
+
+@TestOnly
+fun registerSymbolSearchTargetFactoryForTesting(key: Class<*>, factory: SymbolSearchTargetFactory<*>, disposable: Disposable) {
+  if (!application.isUnitTestMode) throw IllegalStateException()
+
+  SYMBOL_SEARCH_TARGET_EXTENSION.addExplicitExtension(key, factory, disposable)
+}
 
 @ApiStatus.Internal
 fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
@@ -118,9 +127,9 @@ private class DefaultUsageSearchParameters(
   override val target: SearchTarget get() = requireNotNull(pointer.dereference())
 }
 
-private val textSearchContexts: Set<SearchContext> = EnumSet.of(
-  SearchContext.IN_COMMENTS, SearchContext.IN_STRINGS,
-  SearchContext.IN_PLAIN_TEXT
+private val textSearchContexts: Set<SearchContext> = setOf(
+  SearchContext.inComments(), SearchContext.inStrings(),
+  SearchContext.inPlainText()
 )
 
 internal fun SearchTarget.hasTextSearchStrings(): Boolean = textSearchRequests.isNotEmpty()

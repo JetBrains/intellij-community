@@ -1,10 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
+
+import org.jetbrains.annotations.ApiStatus.Internal;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Internal
 // must be accessible via "ClassLoader.getSystemClassLoader().loadClass(fp).newInstance()" from java.util.concurrent.ForkJoinPool.makeCommonPool()
 public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
   // must be called in the earliest possible moment on startup, but after Main.setFlags()
@@ -38,7 +41,7 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
       }
     };
     thread.setName("JobScheduler FJ pool " + n + "/" + pool.getParallelism());
-    thread.setPriority(Thread.NORM_PRIORITY - 1);
+    FJP_THREAD_NUM.set(n);
     return thread;
   }
 
@@ -49,5 +52,11 @@ public final class IdeaForkJoinWorkerThreadFactory implements ForkJoinPool.ForkJ
 
   private static void clearBit(int n) {
     bits.updateAndGet(value -> value & ~(1L << n));
+  }
+  private static final ThreadLocal<Integer> FJP_THREAD_NUM = new ThreadLocal<>();
+  // for logging with the nice indent only
+  public static int getThreadNum() {
+    Integer i = FJP_THREAD_NUM.get();
+    return i == null ? 0 : i;
   }
 }

@@ -1,0 +1,47 @@
+### auto-generated section `build intellij.textmate.core` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+jvm_library(
+  name = "core",
+  module_name = "intellij.textmate.core",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:kotlinx-collections-immutable",
+  ]
+)
+
+jvm_library(
+  name = "core_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
+  associates = [":core"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/xmlDom",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-coroutines-core",
+    "@lib//:slf4j-api",
+    "@lib//:kotlinx-collections-immutable",
+    "@lib//:kotlin-test",
+    "//platform/util",
+    "@lib//:junit5",
+  ]
+)
+
+jvm_test(
+  name = "core_test",
+  runtime_deps = [":core_test_lib"]
+)
+### auto-generated section `build intellij.textmate.core` end

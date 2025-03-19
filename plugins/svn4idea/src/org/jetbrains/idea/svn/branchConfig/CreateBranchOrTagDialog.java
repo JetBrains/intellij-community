@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.ide.ui.ProductIcons;
@@ -47,10 +47,10 @@ import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 import static org.jetbrains.idea.svn.branchConfig.BranchConfigurationDialog.DECODED_URL_RENDERER;
 
 public class CreateBranchOrTagDialog extends DialogWrapper {
-  @NotNull private final File mySrcFile;
-  @NotNull private final Url mySrcURL;
-  @NotNull private final SvnVcs myVcs;
-  @NotNull private final Project myProject;
+  private final @NotNull File mySrcFile;
+  private final @NotNull Url mySrcURL;
+  private final @NotNull SvnVcs myVcs;
+  private final @NotNull Project myProject;
 
   private TextFieldWithBrowseButton myToURLText;
 
@@ -62,7 +62,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myRepositoryField;
   private SvnRevisionPanel myRevisionPanel;
   private ComboboxWithBrowseButton myBranchTagBaseComboBox;
-  @NotNull private final CollectionComboBoxModel<Url> myBranchTagBaseModel = new CollectionComboBoxModel<>();
+  private final @NotNull CollectionComboBoxModel<Url> myBranchTagBaseModel = new CollectionComboBoxModel<>();
   private JTextField myBranchTextField;
   private JRadioButton myBranchOrTagRadioButton;
   private JRadioButton myAnyLocationRadioButton;
@@ -70,7 +70,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   private JLabel myUseThisVariantToLabel;
   private JBCheckBox mySwitchOnCreate;
 
-  @NonNls private static final String HELP_ID = "vcs.subversion.branch";
+  private static final @NonNls String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
   private final Url myWcRootUrl;
@@ -96,15 +96,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     mySrcURL = info.getUrl();
 
-    myWorkingCopyField.addBrowseFolderListener(
-      message("dialog.title.select.working.copy.location"),
-      message("label.select.location.to.copy.from"),
-      myProject,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    );
+    myWorkingCopyField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(message("dialog.title.select.working.copy.location"))
+      .withDescription(message("label.select.location.to.copy.from")));
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateSwitchOnCreate();
         updateControls();
       }
@@ -117,7 +114,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     });
     myRepositoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateToURL();
       }
     });
@@ -161,7 +158,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     updateControls();
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(@NotNull final DocumentEvent e) {
+      protected void textChanged(final @NotNull DocumentEvent e) {
         updateToURL();
       }
     });
@@ -223,9 +220,8 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : NamedColorUtil.getInactiveTextColor());
   }
 
-  @Nullable
   @Override
-  protected String getHelpId() {
+  protected @Nullable String getHelpId() {
     return HELP_ID;
   }
 
@@ -259,8 +255,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private Url getRepositoryFieldUrl() {
+  private @Nullable Url getRepositoryFieldUrl() {
     try {
       return createUrl(myRepositoryField.getText(), false);
     }
@@ -289,15 +284,13 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return false;
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     ValidationInfo info = validateSource();
     return info != null ? info : validateDestination();
   }
 
-  @Nullable
-  private ValidationInfo validateSource() {
+  private @Nullable ValidationInfo validateSource() {
     if (myRepositoryRadioButton.isSelected()) {
       Url url = getRepositoryFieldUrl();
       if (url == null) {
@@ -318,8 +311,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return null;
   }
 
-  @Nullable
-  private ValidationInfo validateDestination() {
+  private @Nullable ValidationInfo validateDestination() {
     if (myBranchOrTagRadioButton.isSelected()) {
       Url branchLocation = myBranchTagBaseModel.getSelected();
       if (branchLocation == null) {
@@ -353,18 +345,15 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     return mySwitchOnCreate.isSelected();
   }
 
-  @Nullable
-  public Target getSource() {
+  public @Nullable Target getSource() {
     return mySource;
   }
 
-  @NotNull
-  public File getSourceFile() {
+  public @NotNull File getSourceFile() {
     return myRepositoryRadioButton.isSelected() ? mySrcFile : new File(myWorkingCopyField.getText());
   }
 
-  @Nullable
-  public Url getDestination() {
+  public @Nullable Url getDestination() {
     return myDestination;
   }
 }

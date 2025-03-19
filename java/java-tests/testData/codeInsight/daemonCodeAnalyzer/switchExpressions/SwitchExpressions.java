@@ -12,11 +12,11 @@ class SwitchExpressions {
 
     System.out.println(switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">case 1:</error> yield "lone";
+      <error descr="Different 'case' kinds used in 'switch'">case 1:</error> yield "lone";
     });
 
     System.out.println(
-      switch (<error descr="Incompatible types. Found: 'java.lang.Object', required: 'char, byte, short, int, Character, Byte, Short, Integer, String, or an enum'">new Object()</error>) {
+      switch (<error descr="Selector type of 'java.lang.Object' is not supported at language level '15'">new Object()</error>) {
         default -> "whatever";
       }
     );
@@ -66,8 +66,8 @@ class SwitchExpressions {
       }
       System.out.println(switch (new Random().nextInt()) {
         case -1: <error descr="Return outside of enclosing switch expression">return;</error>
-        case -2: <error descr="Continue outside of enclosing switch expression">continue lab;</error>
-        case -3: <error descr="Continue outside of enclosing switch expression">continue;</error>
+        case -2: <error descr="Continue out of switch expression is not allowed">continue lab;</error>
+        case -3: <error descr="Continue out of switch expression is not allowed">continue;</error>
         default: <error descr="Break out of switch expression is not allowed">break lab;</error>
       });
     }

@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.platform.runtime.loader` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "loader",
+  module_name = "intellij.platform.runtime.loader",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = "@community//:k11",
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/runtime/repository",
+    "//platform/boot",
+    "//platform/util-class-loader:util-classLoader",
+  ]
+)
+### auto-generated section `build intellij.platform.runtime.loader` end

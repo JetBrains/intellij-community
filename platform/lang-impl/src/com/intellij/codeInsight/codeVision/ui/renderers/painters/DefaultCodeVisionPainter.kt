@@ -1,14 +1,17 @@
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 import javax.swing.Icon
 
+@ApiStatus.Internal
 open class DefaultCodeVisionPainter<T>(
   private val iconProvider: (Project, T, RangeCodeVisionModel.InlayState) -> Icon?,
   private val textPainter: ICodeVisionEntryBasePainter<T>,
@@ -25,7 +28,8 @@ open class DefaultCodeVisionPainter<T>(
     value: T,
     point: Point,
     state: RangeCodeVisionModel.InlayState,
-    hovered: Boolean
+    hovered: Boolean,
+    hoveredEntry: CodeVisionEntry?
   ) {
     val pureSize = pureSize(editor, state, value)
 
@@ -44,7 +48,7 @@ open class DefaultCodeVisionPainter<T>(
       }
     }
 
-    textPainter.paint(editor, textAttributes, g, value, Point(x, y), state, hovered)
+    textPainter.paint(editor, textAttributes, g, value, Point(x, y), state, hovered, hoveredEntry)
   }
 
   private fun pureSize(editor: Editor, state: RangeCodeVisionModel.InlayState, value: T): Dimension {

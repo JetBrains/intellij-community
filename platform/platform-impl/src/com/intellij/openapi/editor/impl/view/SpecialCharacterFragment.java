@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -13,8 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.function.Consumer;
 
-class SpecialCharacterFragment implements LineFragment {
-  @NonNls private static final Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
+final class SpecialCharacterFragment implements LineFragment {
+  private static final @NonNls Int2ObjectMap<String> SPECIAL_CHAR_CODES = new Int2ObjectOpenHashMap<>(
   // @formatter:off
     new int[] {
         0x00,   0x01,   0x02,   0x03,   0x04,   0x05,   0x06,   0x07,   0x08,                   0x0B,   0x0C,           0x0E,   0x0F,

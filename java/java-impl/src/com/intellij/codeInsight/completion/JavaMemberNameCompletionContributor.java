@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiClass;
@@ -119,11 +120,16 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     String[] suggestedNames = suggestedNameInfo.names;
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
     if (!hasStartMatches(set, matcher)) {
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
-        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("object")));
+      Set<String> setOfNames = Arrays.stream(suggestedNames).collect(Collectors.toSet());
+      String objectName = "object";
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches(objectName) &&
+          (!setOfNames.contains(objectName) || !ContainerUtil.exists(set, t -> t.getLookupString().equals(objectName)))) {
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create(objectName)));
       }
-      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches("string")) {
-        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create("string")));
+      String stringName = "string";
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING) && matcher.prefixMatches(stringName) &&
+          (!setOfNames.contains(stringName) || !ContainerUtil.exists(set, t -> t.getLookupString().equals(stringName)))) {
+        set.add(withInsertHandler(suggestedNameInfo, LookupElementBuilder.create(stringName)));
       }
     }
 
@@ -148,8 +154,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
     }
   }
 
-  @NotNull
-  private static List<String> getUnresolvedMethodParamNamesFromJavadoc(@NotNull PsiDocComment docComment) {
+  private static @NotNull List<String> getUnresolvedMethodParamNamesFromJavadoc(@NotNull PsiDocComment docComment) {
     List<String> result = new ArrayList<>();
     for (PsiDocTag tag : docComment.getTags()) {
       if ("param".equals(tag.getName())) {
@@ -373,7 +378,7 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
   private static void completeMethodName(Set<LookupElement> set, PsiElement element, PrefixMatcher matcher){
     if (element instanceof PsiMethod method && method.isConstructor()) {
       PsiClass containingClass = method.getContainingClass();
-      if (containingClass != null) {
+      if (containingClass != null && !(containingClass instanceof PsiImplicitClass)) {
         String name = containingClass.getName();
         if (StringUtil.isNotEmpty(name)) {
           addLookupItems(set, null, matcher, element.getProject(), name);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.lang.ASTNode;
@@ -72,8 +72,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     };
   }
 
-  @NotNull
-  public static List<PsiNamedElement> getAllParameters(@NotNull PsiDocComment comment) {
+  public static @NotNull List<PsiNamedElement> getAllParameters(@NotNull PsiDocComment comment) {
     List<PsiNamedElement> allParams = new ArrayList<>();
     PsiJavaDocumentedElement owner = comment.getOwner();
     if (owner instanceof PsiMethod) {
@@ -95,8 +94,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
     return PsiUtilCore.getElementType(getFirstChild()) == JavaDocTokenType.DOC_TAG_VALUE_LT;
   }
 
-  @Nullable
-  public ASTNode getValueToken() {
+  public @Nullable ASTNode getValueToken() {
     return findChildByType(JavaDocTokenType.DOC_TAG_VALUE_TOKEN);
   }
 

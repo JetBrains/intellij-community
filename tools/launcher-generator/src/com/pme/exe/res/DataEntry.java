@@ -18,7 +18,6 @@
 package com.pme.exe.res;
 
 import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.IOException;
 
 /**
@@ -59,11 +58,6 @@ public class DataEntry extends LevelEntry {
   public void read(DataInput stream) throws IOException {
     super.read(stream);
     initRawData();
-  }
-
-  @Override
-  public void write(DataOutput stream) throws IOException {
-    super.write(stream);
   }
 
   @Override

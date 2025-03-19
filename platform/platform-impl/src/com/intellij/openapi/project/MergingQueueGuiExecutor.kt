@@ -2,24 +2,21 @@
 package com.intellij.openapi.project
 
 import com.intellij.internal.statistic.StructuredIdeActivity
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
+import com.intellij.openapi.project.DumbModeStatisticsCollector.IndexingFinishType
 import com.intellij.openapi.project.MergingTaskQueue.QueuedTask
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -31,6 +28,7 @@ import java.util.function.Supplier
 /**
  * Single-threaded executor for [MergingTaskQueue].
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected constructor(val project: Project,
                                                                                     val taskQueue: MergingTaskQueue<T>,
@@ -91,16 +89,13 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   private val mySingleTaskExecutor: SingleTaskExecutor
   private val mySuspended = AtomicBoolean()
-  private val myListener: ExecutorStateListener
-  protected val guiSuspender = MergingQueueGuiSuspender()
-  private val myProgressTitle: @ProgressTitle String
-  private val mySuspendedText: @ProgressText String
+  private val myListener: ExecutorStateListener = SafeExecutorStateListenerWrapper(listener)
+  protected val guiSuspender: MergingQueueGuiSuspender = MergingQueueGuiSuspender()
+  private val myProgressTitle: @ProgressTitle String = progressTitle
+  private val mySuspendedText: @ProgressText String = suspendedText
   private val backgroundTasksSubmitted = AtomicInteger(0)
 
   init {
-    myListener = SafeExecutorStateListenerWrapper(listener)
-    myProgressTitle = progressTitle
-    mySuspendedText = suspendedText
     mySingleTaskExecutor = SingleTaskExecutor { visibleIndicator: ProgressIndicator ->
       runWithCallbacks {
         runBackgroundProcessWithSuspender(visibleIndicator)
@@ -111,7 +106,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   open fun processTasksWithProgress(suspender: ProgressSuspender?,
                                     visibleIndicator: ProgressIndicator,
                                     activity: StructuredIdeActivity?): SubmissionReceipt? {
-    return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, Supplier<SubmissionReceipt> {
+    return guiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, Supplier<SubmissionReceipt?> {
       while (true) {
         if (project.isDisposed) return@Supplier null
         if (mySuspended.get()) return@Supplier null
@@ -140,18 +135,24 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
 
   /**
    * Start task queue processing in background in SINGLE thread. If background process is already running, this method does nothing.
+   *
+   * It is guaranteed that this method invokes onFinish, even if the method itself threw an exception
    */
-  fun startBackgroundProcess() {
-    if (mySuspended.get()) return
-    if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
-    // this means that if myTaskQueue empty, then recently added task is already handled
-    mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
-      try {
-        backgroundTasksSubmitted.incrementAndGet()
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, myProgressTitle, false) {
-          override fun run(visibleIndicator: ProgressIndicator) {
+  fun startBackgroundProcess(onFinish: () -> Unit) {
+    var startedInBackground = false
+    try {
+      if (mySuspended.get()) return
+      if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
+      // this means that if myTaskQueue empty, then recently added task is already handled
+
+      startedInBackground = mySingleTaskExecutor.tryStartProcess { task: AutoclosableProgressive ->
+        try {
+          // TODO: there seems to be a race between mySingleTaskExecutor.tryStartProcess and FileBasedIndexTumbler. Return now
+          if (mySuspended.get()) return@tryStartProcess
+          backgroundTasksSubmitted.incrementAndGet()
+          startInBackgroundWithVisibleOrInvisibleProgress { visibleOrInvisibleIndicator ->
             try {
-              task.use { it.run(visibleIndicator) }
+              task.use { it.run(visibleOrInvisibleIndicator) }
             }
             catch (pce: ProcessCanceledException) {
               throw pce
@@ -159,19 +160,52 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
             catch (t: Throwable) {
               LOG.error("Failed to execute background index update task", t)
             }
+            finally {
+              onFinish()
+            }
           }
-        })
+        }
+        catch (pce: ProcessCanceledException) {
+          task.close()
+          onFinish()
+          throw pce
+        }
+        catch (t: Throwable) {
+          task.close()
+          mySingleTaskExecutor.clearScheduledFlag()
+          onFinish()
+          LOG.error("Failed to start background index update task", t)
+          throw t
+        }
       }
-      catch (pce: ProcessCanceledException) {
-        task.close()
-        throw pce
+    }
+    finally {
+      if (!startedInBackground) {
+        onFinish()
+      } // else - will be invoked from a background process
+    }
+  }
+
+  open fun shouldShowProgressIndicator(): Boolean = true
+
+  protected open val taskId: Any? = null
+
+  private fun startInBackgroundWithVisibleOrInvisibleProgress(task: (ProgressIndicator) -> Unit) {
+    val backgroundableTask = object : Task.Backgroundable(project, myProgressTitle, false) {
+      override fun run(visibleIndicator: ProgressIndicator) {
+        task(visibleIndicator)
       }
-      catch (t: Throwable) {
-        task.close()
-        mySingleTaskExecutor.clearScheduledFlag()
-        LOG.error("Failed to start background index update task")
-        throw t
-      }
+
+      override fun getId() = taskId
+
+      override fun isHeadless(): Boolean = false
+    }
+
+    if (shouldShowProgressIndicator()) {
+      ProgressManager.getInstance().run(backgroundableTask)
+    }
+    else {
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(backgroundableTask, EmptyProgressIndicator())
     }
   }
 
@@ -204,33 +238,51 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
 
     ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText).use { suspender ->
-      return ShutDownTracker.getInstance().computeWithStopperThread<SubmissionReceipt?, RuntimeException>(
-        Thread.currentThread()) { processTasksWithProgress(suspender, visibleIndicator, null) }
+      return processTasksWithProgress(suspender, visibleIndicator, null)
     }
   }
 
   open fun runSingleTask(task: QueuedTask<T>, activity: StructuredIdeActivity?) {
-    if (ApplicationManager.getApplication().isInternal) LOG.info("Running task: " + task.infoString)
-    if (activity != null) task.registerStageStarted(activity)
+    LOG.info("Running task: " + task.infoString)
+    val stageActivity = if (activity != null) task.registerStageStarted(activity, project) else null
 
     // nested runProcess is needed for taskIndicator to be honored in ProgressManager.checkCanceled calls deep inside tasks
     ProgressManager.getInstance().runProcess(
       {
+        var taskFinishType = IndexingFinishType.TERMINATED
         try {
           task.executeTask()
+          taskFinishType = IndexingFinishType.FINISHED
         }
-        catch (ignored: ProcessCanceledException) {
+        catch (_: ProcessCanceledException) {
+          LOG.info("Task canceled (PCE): ${task.infoString}")
         }
         catch (unexpected: Throwable) {
           LOG.error("Failed to execute task " + task.infoString + ". " + unexpected.message, unexpected)
         }
+        finally {
+          if (activity != null) {
+            task.registerStageFinished(activity, stageActivity, taskFinishType)
+          }
+        }
       }, task.indicator)
+    LOG.info("Task finished: " + task.infoString)
   }
 
   /**
    * @return state containing `true` if some task is currently executed in background thread.
    */
   val isRunning: StateFlow<Boolean> = mySingleTaskExecutor.isRunning
+
+  /**
+   * Modification tracker that increases each time the executor starts or stops
+   *
+   * This is not the same as [isRunning], because [isRunning] is a state flow, meaning that it is conflated and deduplicated, i.e. short
+   * transitions true-false-true can be missed in [isRunning]. [startedOrStoppedEvent] is still conflated, but never miss the latest event.
+   *
+   * TODO: [isRunning] should be a shared flow without deduplication, then we wont need [startedOrStoppedEvent]
+   */
+  val startedOrStoppedEvent: Flow<*> = mySingleTaskExecutor.modificationTrackerAsFlow
 
   /**
    * Suspends queue in this executor: new tasks will be added to the queue, but they will not be executed until [resumeQueue]
@@ -246,10 +298,10 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
    * Resumes queue in this executor after [suspendQueue]. All the queued tasks will be scheduled for execution immediately.
    * Does nothing if the queue was not suspended.
    */
-  fun resumeQueue() {
+  fun resumeQueue(onFinish: () -> Unit) {
     if (mySuspended.compareAndSet(true, false)) {
       if (!taskQueue.isEmpty) {
-        startBackgroundProcess()
+        startBackgroundProcess(onFinish)
       }
     }
   }

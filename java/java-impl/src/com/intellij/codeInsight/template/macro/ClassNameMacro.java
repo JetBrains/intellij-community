@@ -19,7 +19,7 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class ClassNameMacro extends Macro {
+public final class ClassNameMacro extends Macro {
 
   @Override
   public String getName() {
@@ -30,6 +30,7 @@ public class ClassNameMacro extends Macro {
   public Result calculateResult(Expression @NotNull [] params, final ExpressionContext context) {
     int templateStartOffset = context.getTemplateStartOffset();
     int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
+    boolean skipCheckInFile = params.length > 0 && params[0].calculateResult(context).toString().equals("true");
     PsiElement place = context.getPsiElementAtStartOffset();
     PsiClass aClass = null;
 
@@ -43,6 +44,9 @@ public class ClassNameMacro extends Macro {
         }
         break;
       }
+      if (place instanceof PsiFile && skipCheckInFile){
+        return null;
+      }
       if (place instanceof PsiJavaFile){
         PsiClass[] classes = ((PsiJavaFile)place).getClasses();
         aClass = classes.length != 0 ? classes[0] : null;
@@ -52,6 +56,7 @@ public class ClassNameMacro extends Macro {
     }
 
     if (aClass == null) return null;
+    if (aClass instanceof PsiImplicitClass && skipCheckInFile) return null;
     String qname = aClass.getName();
     return qname == null ? null : new TextResult(qname);
   }

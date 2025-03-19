@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,11 +32,11 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   }
 
   @Override
-  public void insertNamespaceDeclaration(@NotNull final XmlFile file,
-                                         @Nullable final Editor editor,
-                                         @NotNull final Set<String> possibleNamespaces,
+  public void insertNamespaceDeclaration(final @NotNull XmlFile file,
+                                         final @Nullable Editor editor,
+                                         final @NotNull Set<String> possibleNamespaces,
                                          @Nullable String nsPrefix,
-                                         @Nullable final Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException {
+                                         final @Nullable Runner<String, IncorrectOperationException> runAfter) throws IncorrectOperationException {
 
     final String namespace = possibleNamespaces.iterator().next();
 
@@ -45,7 +45,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     assert rootTag != null;
     XmlAttribute anchor = getAnchor(rootTag);
 
-    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
+    List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     String prefix = getPrefix(file, nsPrefix, namespace, providers);
 
     final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
@@ -59,7 +59,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
       }
     }
 
-    @NonNls final String qname = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
+    final @NonNls String qname = "xmlns" + (!prefix.isEmpty() ? ":" + prefix : "");
     final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);
     if (anchor == null) {
       rootTag.add(attribute);
@@ -88,7 +88,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     }
     XmlUtil.reformatTagStart(rootTag);
 
-    if (editor != null && namespace.length() == 0) {
+    if (editor != null && namespace.isEmpty()) {
       final XmlAttribute xmlAttribute = rootTag.getAttribute(qname);
       if (xmlAttribute != null) {
         final XmlAttributeValue value = xmlAttribute.getValueElement();
@@ -135,7 +135,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
 
   private static String getLocation(XmlFile file, String namespace, List<XmlSchemaProvider> providers) {
     String location = null;
-    if (namespace.length() > 0) {
+    if (!namespace.isEmpty()) {
       for (XmlSchemaProvider provider : providers) {
         Set<String> locations = provider.getLocations(namespace, file);
         if (locations != null && !locations.isEmpty()) {
@@ -147,8 +147,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
   }
 
   @Override
-  @NotNull
-  public Set<String> guessUnboundNamespaces(@NotNull final PsiElement element, @NotNull XmlFile file) {
+  public @NotNull Set<String> guessUnboundNamespaces(final @NotNull PsiElement element, @NotNull XmlFile file) {
     if (!(element instanceof XmlTag tag)) {
       return Collections.emptySet();
     }

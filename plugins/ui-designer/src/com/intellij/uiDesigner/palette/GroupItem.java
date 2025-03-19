@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.palette.PaletteGroup;
@@ -6,6 +6,7 @@ import com.intellij.ide.palette.PaletteItem;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.UIDesignerBundle;
@@ -19,12 +20,12 @@ public final class GroupItem implements Cloneable, PaletteGroup {
 
   public static final DataKey<GroupItem> DATA_KEY = DataKey.create(GroupItem.class.getName());
 
-  @NotNull private String myName;
-  @NotNull private final ArrayList<ComponentItem> myItems = new ArrayList<>();
+  private @NotNull String myName;
+  private final @NotNull ArrayList<ComponentItem> myItems = new ArrayList<>();
   private boolean myReadOnly = false;
   private boolean mySpecialGroup = false;
 
-  public GroupItem(@NotNull final String name) {
+  public GroupItem(final @NotNull String name) {
     setName(name);
   }
 
@@ -55,7 +56,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @Override
-  @NotNull public String getName() {
+  public @NotNull String getName() {
     if (mySpecialGroup) {
       return UIDesignerBundle.message("palette.special.group");
     }
@@ -67,7 +68,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     return "Swing";
   }
 
-  public void setName(@NotNull final String name){
+  public void setName(final @NotNull String name){
     myName = name;
   }
 
@@ -80,14 +81,14 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   /** Adds specified {@link ComponentItem} to the group.*/
-  public void addItem(@NotNull final ComponentItem item){
+  public void addItem(final @NotNull ComponentItem item){
     LOG.assertTrue(!myItems.contains(item));
 
     myItems.add(item);
   }
 
   /** Replaces specified item with the new one. */
-  public void replaceItem(@NotNull final ComponentItem itemToBeReplaced, @NotNull final ComponentItem replacement) {
+  public void replaceItem(final @NotNull ComponentItem itemToBeReplaced, final @NotNull ComponentItem replacement) {
     LOG.assertTrue(myItems.contains(itemToBeReplaced));
 
     final int index = myItems.indexOf(itemToBeReplaced);
@@ -95,7 +96,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   /** Removed specified {@link ComponentItem} from the group.*/
-  public void removeItem(@NotNull final ComponentItem item){
+  public void removeItem(final @NotNull ComponentItem item){
     LOG.assertTrue(myItems.contains(item));
 
     myItems.remove(item);
@@ -105,7 +106,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     return myItems.contains(item);
   }
 
-  public boolean containsItemClass(@NotNull final String className){
+  public boolean containsItemClass(final @NotNull String className){
     for(int i = myItems.size() - 1; i >= 0; i--){
       if(className.equals(myItems.get(i).getClassName())){
         return true;
@@ -115,7 +116,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
     return false;
   }
 
-  public boolean containsItemCopy(@NotNull final ComponentItem originalItem, final String className) {
+  public boolean containsItemCopy(final @NotNull ComponentItem originalItem, final String className) {
     for(int i = myItems.size() - 1; i >= 0; i--){
       if(className.equals(myItems.get(i).getClassName()) && originalItem != myItems.get(i)) {
         return true;
@@ -126,16 +127,13 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @Override
-  @Nullable public ActionGroup getPopupActionGroup() {
+  public @Nullable ActionGroup getPopupActionGroup() {
     return (ActionGroup) ActionManager.getInstance().getAction("GuiDesigner.PaletteGroupPopupMenu");
   }
 
   @Override
-  public @Nullable Object getData(Project project, @NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink, @NotNull Project project) {
+    sink.set(DATA_KEY, this);
   }
 
   @Override

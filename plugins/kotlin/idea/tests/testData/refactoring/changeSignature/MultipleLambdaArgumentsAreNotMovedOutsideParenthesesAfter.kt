@@ -1,0 +1,6 @@
+fun foo(p11: Int, p2: () -> Unit, p3: () -> Unit) {
+}
+
+fun bar() {
+    foo(1, { }, { })
+}

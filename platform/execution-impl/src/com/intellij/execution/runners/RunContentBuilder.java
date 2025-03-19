@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
@@ -13,6 +13,7 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -32,18 +33,22 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
-import static com.intellij.util.containers.ContainerUtil.filter;
 
+/**
+ * Responsible for building the content of the Run or Debug tool window.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
+ */
 public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP = "RunTab.TopToolbar.Old";
@@ -67,8 +72,7 @@ public final class RunContentBuilder extends RunTab {
 
   private @Nullable SingleContentSupplier mySupplier;
 
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
+  public static @NotNull ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
     if (runner == null || runner.equals(environment.getRunner())) {
       return environment;
     }
@@ -77,12 +81,11 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  public void addAction(@NotNull final AnAction action) {
+  public void addAction(final @NotNull AnAction action) {
     myRunnerActions.add(action);
   }
 
-  @NotNull
-  private RunContentDescriptor createDescriptor() {
+  private @NotNull RunContentDescriptor createDescriptor() {
     RunProfile profile = myEnvironment.getRunProfile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new RunContentDescriptor(profile, myExecutionResult, myUi);
@@ -128,7 +131,7 @@ public final class RunContentBuilder extends RunTab {
     CustomActionsListener.subscribe(this, () -> {
       DefaultActionGroup updatedToolbar = createActionToolbar(restartActions, consoleActionsToMerge, additionalActionsToMerge);
       toolbar.removeAll();
-      toolbar.addAll(updatedToolbar.getChildren(null));
+      toolbar.addAll(updatedToolbar.getChildren(ActionManager.getInstance()));
     });
 
     if (profile instanceof RunConfigurationBase) {
@@ -165,21 +168,22 @@ public final class RunContentBuilder extends RunTab {
             return List.of(myUi.getOptions().getLayoutActions());
           }
 
-          @NotNull
           @Override
-          public String getMainToolbarPlace() {
+          public @NotNull String getMainToolbarPlace() {
             return ActionPlaces.RUNNER_TOOLBAR;
           }
 
-          @NotNull
           @Override
-          public String getContentToolbarPlace() {
+          public @NotNull String getContentToolbarPlace() {
             return ActionPlaces.RUNNER_TOOLBAR;
           }
         };
       }
-      if (myUi instanceof RunnerLayoutUiImpl) {
-        ((RunnerLayoutUiImpl)myUi).setLeftToolbarVisible(isVerticalToolbar);
+      if (myUi instanceof RunnerLayoutUiImpl uiImpl) {
+        uiImpl.setLeftToolbarVisible(isVerticalToolbar);
+        if (Registry.is("debugger.toolbar.before.tabs", true)) {
+          uiImpl.setTopLeftActionsBefore(true);
+        }
       }
       if (isVerticalToolbar) {
         myUi.getOptions().setLeftToolbar(toolbar, ActionPlaces.RUNNER_TOOLBAR);
@@ -199,8 +203,7 @@ public final class RunContentBuilder extends RunTab {
     return mySupplier;
   }
 
-  @NotNull
-  private static String getRunnerType(@Nullable ExecutionConsole console) {
+  private static @NotNull String getRunnerType(@Nullable ExecutionConsole console) {
     if (console instanceof ExecutionConsoleEx) {
       String id = ((ExecutionConsoleEx)console).getExecutionConsoleId();
       if (id != null) {
@@ -210,8 +213,7 @@ public final class RunContentBuilder extends RunTab {
     return JAVA_RUNNER;
   }
 
-  @NotNull
-  public static Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+  public static @NotNull Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(),
                                               CommonBundle.message("title.console"),
                                               null,
@@ -234,15 +236,14 @@ public final class RunContentBuilder extends RunTab {
     consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
   }
 
-  @NotNull
-  private DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
+  private @NotNull DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
+    ActionManager actionManager = ActionManager.getInstance();
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
-    AnAction[] mainChildren = toolbarGroup.getChildren(null);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    actionGroup.addAll(mainChildren);
+    addAvoidingDuplicates(actionGroup, ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs());
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -252,13 +253,13 @@ public final class RunContentBuilder extends RunTab {
 
     MoreActionGroup moreGroup = null;
     if (isNewLayout) {
-      moreGroup = new MoreActionGroup();
+      moreGroup = createToolbarMoreActionGroup(actionGroup);
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      moreGroup.addAll(removeDuplicatesExceptSeparators(moreActionGroup.getChildren(null), Arrays.asList(mainChildren)));
+      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs());
     }
 
-    addActionsWithConstraints(afterRunActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
+    addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
 
     DefaultActionGroup afterStopActions = new DefaultActionGroup(myExecutionResult.getActions());
     if (consoleActions.length > 0) {
@@ -276,7 +277,7 @@ public final class RunContentBuilder extends RunTab {
         }
       }
 
-      addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
+      addActionsWithConstraints(afterStopActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, null);
 
       actionGroup.addSeparator();
@@ -287,10 +288,9 @@ public final class RunContentBuilder extends RunTab {
     else {
       afterStopActions.addSeparator();
       afterStopActions.addAll(myRunnerActions);
-      addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
+      addActionsWithConstraints(afterStopActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, moreGroup);
       moreGroup.addSeparator();
-      moreGroup.add(new CreateAction());
 
       if (additionalActions.length > 0) {
         moreGroup.addSeparator();
@@ -298,6 +298,7 @@ public final class RunContentBuilder extends RunTab {
       }
 
       actionGroup.add(moreGroup);
+      moreGroup.add(new CreateAction());
     }
     return actionGroup;
   }
@@ -315,10 +316,10 @@ public final class RunContentBuilder extends RunTab {
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
-    @NotNull private final Project myProject;
-    @NotNull private final Executor myExecutor;
-    @NotNull private final RunContentDescriptor myRunContentDescriptor;
-    @NotNull private final RunnerLayoutUi myUi;
+    private final @NotNull Project myProject;
+    private final @NotNull Executor myExecutor;
+    private final @NotNull RunContentDescriptor myRunContentDescriptor;
+    private final @NotNull RunnerLayoutUi myUi;
     private final boolean myShowConsoleOnStdOut;
     private final boolean myShowConsoleOnStdErr;
     private final AtomicBoolean myFocused = new AtomicBoolean();
@@ -349,26 +350,27 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  private static class EmptyWhenDuplicate extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  private static final class EmptyWhenDuplicate extends ActionGroupWrapper {
 
-    private final @NotNull ActionGroup myDelegate;
     private final @NotNull Predicate<? super ActionGroup> myDuplicatePredicate;
 
     private EmptyWhenDuplicate(@NotNull ActionGroup delegate, @NotNull Predicate<? super ActionGroup> isDuplicate) {
-      myDelegate = delegate;
+      super(delegate);
       myDuplicatePredicate = isDuplicate;
     }
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      if (isToolbarDuplicatedAnywhere(getEventComponent(e))) {
+      if (e == null) return AnAction.EMPTY_ARRAY;
+      if (e.getUpdateSession().compute(
+        this, "isToolbarDuplicatedAnywhere", ActionUpdateThread.EDT,
+        () -> isToolbarDuplicatedAnywhere(getEventComponent(e)))) {
         return AnAction.EMPTY_ARRAY;
       }
-      return myDelegate.getChildren(e);
+      return super.getChildren(e);
     }
 
-    @Nullable
-    protected Component getEventComponent(@Nullable AnActionEvent e) {
+    private static @Nullable Component getEventComponent(@Nullable AnActionEvent e) {
       if (e == null) return null;
       SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
       return supplier != null ? supplier.getTabs().getComponent() : null;
@@ -384,11 +386,6 @@ public final class RunContentBuilder extends RunTab {
         }
       }
       return false;
-    }
-
-    @Override
-    public @NotNull ActionGroup getDelegate() {
-      return myDelegate;
     }
   }
 
@@ -410,15 +407,45 @@ public final class RunContentBuilder extends RunTab {
                                                @Nullable DefaultActionGroup moreGroup) {
     for (AnAction action : ContainerUtil.reverse(actions)) {
       if (moreGroup != null && action.getTemplatePresentation().getClientProperty(PREFERRED_PLACE) == PreferredPlace.MORE_GROUP) {
-        moreGroup.add(action);
-      } else {
-        actionGroup.add(action, constraints);
+        addAvoidingDuplicates(moreGroup, new AnAction[]{action}, Constraints.LAST, AnAction.EMPTY_ARRAY);
+      }
+      else {
+        addAvoidingDuplicates(actionGroup, new AnAction[]{action}, constraints, AnAction.EMPTY_ARRAY);
       }
     }
   }
 
-  public static List<AnAction> removeDuplicatesExceptSeparators(AnAction[] actionsToFilter, Collection<AnAction> mainActions) {
-    HashSet<AnAction> visited = new HashSet<>(mainActions);
-    return filter(actionsToFilter, action -> action instanceof Separator || !visited.contains(action));
+  private static void addAvoidingDuplicates(DefaultActionGroup group,
+                                            AnAction[] actions,
+                                            Constraints constraints,
+                                            AnAction[] existingActions) {
+    HashSet<AnAction> visited = ContainerUtil.newHashSet(existingActions);
+    for (AnAction action : actions) {
+      if (action instanceof Separator || (!visited.contains(action) && !group.containsAction(action))) {
+        group.add(action, constraints);
+      }
+    }
+  }
+
+  /**
+   * Creates a {@link MoreActionGroup} for the specified toolbar action group.
+   * The returned group excludes actions from the toolbar in its post-processed
+   * visible children.
+   */
+  @ApiStatus.Internal
+  public static MoreActionGroup createToolbarMoreActionGroup(ActionGroup toolbarGroup) {
+    return new MoreActionGroup() {
+      @Override
+      public @Unmodifiable @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                                                 @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+        List<? extends AnAction> toolbarChildren = e.getUpdateSession().children(toolbarGroup);
+        return ContainerUtil.filter(visibleChildren, action -> action instanceof Separator || !toolbarChildren.contains(action));
+      }
+    };
+  }
+
+  @ApiStatus.Internal
+  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
+    addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
   }
 }

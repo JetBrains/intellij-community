@@ -11,4 +11,3 @@ fun foo(a: Any) {
 }
 
 inline fun bar(): Any = Any()
-// IGNORE_K2

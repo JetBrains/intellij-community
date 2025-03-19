@@ -8,3 +8,8 @@ class C : A<C> {
         <selection><caret>super.foo(value)</selection>
     }
 }
+
+// MEMBER: "foo(value: C): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

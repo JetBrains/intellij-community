@@ -20,6 +20,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor<CompoundRunConfiguration> {
   private final Project myProject;
   private final JBList<Pair<RunConfiguration, ExecutionTarget>> myList;
@@ -48,7 +50,7 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
   }
 
 
-  private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
+  private boolean canBeAdded(@NotNull RunConfiguration candidate, final @NotNull CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
     List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask<?> task : tasks) {
@@ -94,9 +96,8 @@ public final class CompoundRunConfigurationSettingsEditor extends SettingsEditor
     compoundConfiguration.setConfigurationsWithTargets(checked);
   }
 
-  @NotNull
   @Override
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
       .setToolbarPosition(ActionToolbarPosition.TOP)
       .setPanelBorder(JBUI.Borders.empty())

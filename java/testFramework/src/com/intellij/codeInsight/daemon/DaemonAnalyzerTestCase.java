@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -21,6 +21,8 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -50,6 +52,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,11 +98,23 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+      // return default value to avoid unnecessary save
+      DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings = ApplicationManager.getApplication().getServiceIfCreated(DaemonCodeAnalyzerSettings.class);
+      if (daemonCodeAnalyzerSettings != null) {
+        daemonCodeAnalyzerSettings.setImportHintEnabled(true);
+      }
       Project project = getProject();
       if (project != null) {
-        ((StartupManagerImpl)StartupManager.getInstance(project)).checkCleared();
-        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).cleanupAfterTest();
+        StartupManager startupManager = project.getServiceIfCreated(StartupManager.class);
+        if (startupManager != null) {
+          StartupActivityTestUtil.waitForProjectActivitiesToComplete(project);
+
+          ((StartupManagerImpl)startupManager).checkCleared();
+        }
+        DaemonCodeAnalyzer daemonCodeAnalyzer = project.getServiceIfCreated(DaemonCodeAnalyzer.class);
+        if (daemonCodeAnalyzer != null) {
+          ((DaemonCodeAnalyzerImpl)daemonCodeAnalyzer).cleanupAfterTest();
+        }
       }
     }
     catch (Throwable e) {
@@ -126,17 +141,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   protected void enableInspectionTools(InspectionProfileEntry @NotNull ... tools) {
     InspectionsKt.enableInspectionTools(getProject(), getTestRootDisposable(), tools);
-  }
-
-  protected void enableInspectionToolsFromProvider(InspectionToolProvider toolProvider){
-    try {
-      for (Class<? extends LocalInspectionTool> c : toolProvider.getInspectionClasses()) {
-        enableInspectionTool(InspectionTestUtil.instantiateTool(c));
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   protected void disableInspectionTool(@NotNull String shortName){
@@ -180,8 +184,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  @NotNull
-  protected HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
+  protected @NotNull HighlightTestInfo testFile(@NonNls String @NotNull ... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override
       public HighlightTestInfo doTest() {
@@ -209,12 +212,11 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  @NotNull
-  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
+  protected @NotNull @Unmodifiable Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos) {
     return doDoTest(checkWarnings, checkInfos, false);
   }
 
-  protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
+  protected @Unmodifiable Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
     return ContainerUtil.filter(
       checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos)),
       info -> info.getSeverity() == HighlightSeverity.INFORMATION && checkInfos ||
@@ -223,8 +225,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
               info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0);
   }
 
-  @NotNull
-  protected Collection<HighlightInfo> checkHighlighting(@NotNull final ExpectedHighlightingData data) {
+  protected @NotNull Collection<HighlightInfo> checkHighlighting(final @NotNull ExpectedHighlightingData data) {
     data.init();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
@@ -243,10 +244,14 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
   }
 
   protected void doCheckResult(@NotNull ExpectedHighlightingData data,
-                             Collection<HighlightInfo> infos,
-                             String text) {
+                               @NotNull Collection<? extends HighlightInfo> infos,
+                               @NotNull String text) {
     PsiFile file = getFile();
-    data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
+    ActionUtil.underModalProgress(myProject, "", () -> {
+      //line marker tooltips are called in BGT in production
+      data.checkLineMarkers(file, DaemonCodeAnalyzerImpl.getLineMarkers(getDocument(file), getProject()), text);
+      return null;
+    });
     data.checkResult(file, infos, text);
   }
 
@@ -272,18 +277,15 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     ((FileTreeAccessFilter)myVirtualFileFilter).allowTreeAccessForAllFiles();
   }
 
-  @NotNull
-  protected List<HighlightInfo> highlightErrors() {
+  protected final @NotNull @Unmodifiable List<HighlightInfo> highlightErrors() {
     return doHighlighting(HighlightSeverity.ERROR);
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
+  protected final @NotNull @Unmodifiable List<HighlightInfo> doHighlighting(@NotNull HighlightSeverity minSeverity) {
     return filter(doHighlighting(), minSeverity);
   }
 
-  @NotNull
-  protected List<HighlightInfo> doHighlighting() {
+  protected final @NotNull @Unmodifiable List<HighlightInfo> doHighlighting() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     IntList toIgnore = new IntArrayList();
@@ -299,7 +301,6 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       toIgnore.add(Pass.LINE_MARKERS);
       toIgnore.add(Pass.SLOW_LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
-      toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.UPDATE_ALL);
     }
@@ -324,8 +325,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     return annotatedWith(CanChangeDocumentDuringHighlighting.class);
   }
 
-  @NotNull
-  public static List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
+  public static @NotNull @Unmodifiable List<HighlightInfo> filter(@NotNull List<? extends HighlightInfo> infos, @NotNull HighlightSeverity minSeverity) {
     return ContainerUtil.filter(infos, info -> info.getSeverity().compareTo(minSeverity) >= 0);
   }
 
@@ -356,19 +356,17 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     CodeInsightTestFixtureImpl.invokeIntention(intentionAction, file, editor);
   }
 
-  @Nullable
-  protected static IntentionAction findIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
-                                                       @NotNull String intentionActionName,
-                                                       @NotNull Editor editor,
-                                                       @NotNull PsiFile file) {
+  protected static @Nullable IntentionAction findIntentionAction(@NotNull Collection<? extends HighlightInfo> infos,
+                                                                 @NotNull String intentionActionName,
+                                                                 @NotNull Editor editor,
+                                                                 @NotNull PsiFile file) {
     List<IntentionAction> actions = getIntentionActions(infos, editor, file);
     return LightQuickFixTestCase.findActionWithText(actions, intentionActionName);
   }
 
-  @NotNull
-  protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
-                                                             @NotNull Editor editor,
-                                                             @NotNull PsiFile file) {
+  protected static @NotNull @Unmodifiable List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
+                                                                                    @NotNull Editor editor,
+                                                                                    @NotNull PsiFile file) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
 
     final List<IntentionAction> quickFixActions = new ArrayList<>();
@@ -389,9 +387,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     doDoTest(checkWarnings, checkInfos);
   }
 
-  @NotNull
-  public PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
-    return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+  public @NotNull PsiClass createClass(@NotNull @Language("JAVA") String text) throws IOException {
+    VirtualFile classVFile = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
       final PsiFileFactory factory = PsiFileFactory.getInstance(getProject());
       final PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText("a.java", JavaFileType.INSTANCE, text);
       final String qname = javaFile.getClasses()[0].getQualifiedName();
@@ -412,9 +409,13 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.getCanonicalPath().replace(File.separatorChar, '/'));
       assertNotNull(vFile);
       VfsUtil.saveText(vFile, text);
-      PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(vFile);
-      assertNotNull(psiFile);
-      return psiFile.getClasses()[0];
+      return vFile;
     });
+
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
+    PsiJavaFile psiFile = (PsiJavaFile)myPsiManager.findFile(classVFile);
+    assertNotNull(psiFile);
+
+    return psiFile.getClasses()[0];
   }
 }

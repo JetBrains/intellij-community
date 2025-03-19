@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -10,9 +10,11 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.Strings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandler {
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
@@ -46,7 +48,24 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
       }
     }
     permute(lines);
-    String newContent = String.join("\n", lines);
+    int nulls = 0;
+    for (String line : lines) {
+      if (line == null) nulls ++;
+    }
+    String newContent;
+    if (nulls != 0) {
+      String[] newLines = new String[lines.length - nulls];
+      for (int index = 0, i = 0; i < lines.length; i++) {
+        if (lines[i] != null) {
+          //noinspection AssignmentToForLoopParameter
+          newLines[index++] = lines[i];
+        }
+      }
+      newContent = String.join("\n", newLines);
+    }
+    else {
+      newContent = String.join("\n", lines);
+    }
     int toReplaceStart = document.getLineStartOffset(startLine);
     int toReplaceEnd = document.getLineEndOffset(endLine);
     document.replaceString(toReplaceStart, toReplaceEnd, newContent);
@@ -66,8 +85,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  @Nullable
-  private static Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
+  private static @Nullable Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
     Document document = caret.getEditor().getDocument();
     int startOffset = caret.hasSelection() ? caret.getSelectionStart() : 0;
     int endOffset = caret.hasSelection() ? caret.getSelectionEnd() : document.getTextLength();

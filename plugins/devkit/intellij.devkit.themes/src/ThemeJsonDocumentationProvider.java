@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -20,11 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
+import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
+import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
 
-  @Nullable
+final class ThemeJsonDocumentationProvider extends AbstractDocumentationProvider {
+
   @Override
-  public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+  public @Nullable @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve = resolve(element);
     if (resolve == null) return null;
 
@@ -51,7 +53,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     definitionBuilder.append(HtmlChunk.text(uiKeyMetadata.getKey()).bold());
     definitionBuilder.br().append("[").append(uiThemeMetadata.getName()).append("] - ");
     definitionBuilder.append("[").append(uiThemeMetadata.getPluginId()).append("]");
-    HtmlChunk.Element definition = definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
+    HtmlChunk.Element definition = definitionBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
     builder.append(definition);
 
 
@@ -103,8 +105,7 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     builder.append(HtmlChunk.tag("tr").children(headerCell, contentCell));
   }
 
-  @Nullable
-  private static Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve(PsiElement element) {
+  private static @Nullable Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve(PsiElement element) {
     if (!(element instanceof JsonProperty)) return null;
     if (!ThemeJsonUtil.isThemeFilename(element.getContainingFile().getName())) return null;
 

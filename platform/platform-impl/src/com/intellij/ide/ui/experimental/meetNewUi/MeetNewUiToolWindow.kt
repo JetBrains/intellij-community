@@ -1,21 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.LafManager.LafReference
-import com.intellij.ide.ui.LafManagerListener
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
+import com.intellij.ide.ui.*
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.IconLoader
@@ -24,6 +19,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -45,13 +41,12 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   : SimpleToolWindowPanel(true, true), DataProvider {
 
   companion object {
-    internal val LOG = logger<MeetNewUiToolWindow>()
+    internal val LOG: Logger = logger<MeetNewUiToolWindow>()
 
     private const val CUSTOM_THEME_INDEX = 0
 
-    private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.png", MeetNewUiToolWindow::class.java.classLoader)
+    private val BANNER = IconLoader.getIcon("expui/meetNewUi/newUIOnboardingToolWindow.png", MeetNewUiToolWindow::class.java.classLoader)
 
-    private val BANNER_BACKGROUND = Gray.x01
     private const val BANNER_HEIGHT = 231
   }
 
@@ -64,10 +59,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       row {
         val scale = JBUI.scale(BANNER_HEIGHT).toFloat() / BANNER.iconHeight
         cell(object : JLabel(IconUtil.scale(BANNER, WindowManager.getInstance().getFrame(project), scale)) {
-          override fun setBackground(bg: Color?) {
-            // Deny changing background by the tool window framework
-            super.setBackground(BANNER_BACKGROUND)
-          }
+          override fun getBackground(): Color = JBColor(JBUI.CurrentTheme.ToolWindow.background(), Gray.x01)
         })
           .align(AlignX.FILL)
           .applyToComponent {
@@ -90,17 +82,19 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           themes += Theme(null, false, null, null)
           val appInfo = ApplicationInfoEx.getInstanceEx()
           findLafReference(appInfo.defaultLightLaf ?: "Light")?.let { lafReference ->
-            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.LightTheme, ExpUiIcons.MeetNewUi.LightThemeSelected)
+            themes += Theme(lafReference, false, AllIcons.MeetNewUi.LightTheme, AllIcons.MeetNewUi.LightThemeSelected)
           }
           findLafReference(appInfo.defaultDarkLaf ?: "Dark")?.let { lafReference ->
-            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
+            themes += Theme(lafReference, false, AllIcons.MeetNewUi.DarkTheme, AllIcons.MeetNewUi.DarkThemeSelected)
           }
-          themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
+          if (LafManager.getInstance().autodetectSupported) {
+            themes += Theme(null, true, AllIcons.MeetNewUi.SystemTheme, AllIcons.MeetNewUi.SystemThemeSelected)
+          }
 
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
           // Remove gaps around of the panel
-          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap, gap, gap, gap))
+          themesPanel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(gap))
           for (theme in themes) {
             themesPanel.add(theme.button)
           }
@@ -112,32 +106,20 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           label(IdeBundle.message("meetnewui.toolwindow.density"))
         }.customize(UnscaledGapsY(bottom = 8))
         row {
-          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
+          cleanDensity = density(AllIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
                                  false)
 
-          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
+          compactDensity = density(AllIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
 
           cell() // Deny right component to shrink
         }.customize(UnscaledGapsY(bottom = 20))
         row {
-          comment(IdeBundle.message("meetnewui.toolwindow.description"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
-            ExperimentalUiCollector.logMeetNewUiAction(ExperimentalUiCollector.MeetNewUiAction.NEW_UI_LINK)
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.new.ui.name"))
-          }
-        }.customize(UnscaledGapsY(bottom = 20))
-        row {
-          /*
-          button(IdeBundle.message("meetnewui.toolwindow.button.startTour")) {
-            Not implemented yet
-          }.applyToComponent {
-            putClientProperty(DEFAULT_STYLE_KEY, true)
-          }.customize(JBGaps(right = 8))
-          */
-
           button(IdeBundle.message("meetnewui.toolwindow.button.finishSetup")) {
             val toolWindowManager = (ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl)
             toolWindowManager.hideToolWindow(toolWindow.id, hideSide = true, removeFromStripe = true)
           }
+
+          MeetNewUiCustomization.firstOrNull()?.addButtons(project, this)
 
           cell() // Deny right component to shrink
         }
@@ -181,7 +163,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
   private fun findLafReference(name: String): LafReference? {
     val lafManager = LafManager.getInstance()
-    return lafManager.lafComboBoxModel.items.find { it.toString() == name }
+    return lafManager.lafComboBoxModel.items.find { it.name == name }
   }
 
   private fun Row.density(icon: Icon, @Nls name: String, gaps: UnscaledGaps, compactMode: Boolean): Density {
@@ -239,7 +221,7 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
     set(value) {
       field = value
       button.isVisible = system || value != null
-      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.toString()
+      button.text = if (system) IdeBundle.message("meetnewui.toolwindow.system") else value?.name
     }
 
   init {
@@ -268,8 +250,8 @@ private class Theme(lafReference: LafReference?, val system: Boolean, icon: Icon
       if (lafManager.autodetect) {
         lafManager.autodetect = false
       }
-      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.toString())
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference), true)
+      ExperimentalUiCollector.logMeetNewUiTheme(lafReference.name)
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(lafReference.themeId), true)
     }
   }
 }

@@ -1,10 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.util.ui.EditableModel;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
@@ -12,16 +10,17 @@ import java.util.*;
 public class CollectionListModel<T> extends AbstractListModel<T> implements EditableModel {
   private final List<T> myItems;
 
-  public CollectionListModel(@NotNull final Collection<? extends T> items) {
+  public CollectionListModel(final @NotNull Collection<? extends T> items) {
     myItems = new ArrayList<>(items);
   }
 
   @SuppressWarnings("UnusedParameters")
+  @Contract(mutates = "param1")
   public CollectionListModel(@NotNull List<T> items, boolean useListAsIs) {
     myItems = items;
   }
 
-  public CollectionListModel(@NotNull List<? extends T> items) {
+  public CollectionListModel(@NotNull @Unmodifiable List<? extends T> items) {
     myItems = new ArrayList<>(items);
   }
 
@@ -30,8 +29,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     myItems = new ArrayList<>(Arrays.asList(items));
   }
 
-  @NotNull
-  protected final List<T> getInternalList() {
+  protected final @NotNull List<T> getInternalList() {
     return myItems;
   }
 
@@ -56,11 +54,11 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     fireIntervalAdded(this, i, i);
   }
 
-  public void add(@NotNull final List<? extends T> elements) {
+  public void add(final @NotNull List<? extends T> elements) {
     addAll(myItems.size(), elements);
   }
 
-  public void addAll(int index, @NotNull final List<? extends T> elements) {
+  public void addAll(int index, final @NotNull List<? extends T> elements) {
     if (elements.isEmpty()) return;
 
     myItems.addAll(index, elements);
@@ -74,7 +72,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     }
   }
 
-  public void setElementAt(@NotNull final T item, final int index) {
+  public void setElementAt(final @NotNull T item, final int index) {
     itemReplaced(myItems.set(index, item), item);
     fireContentsChanged(this, index, index);
   }
@@ -99,7 +97,7 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     }
   }
 
-  public void contentsChanged(@NotNull final T element) {
+  public void contentsChanged(final @NotNull T element) {
     int i = myItems.indexOf(element);
     fireContentsChanged(this, i, i);
   }
@@ -112,12 +110,11 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     myItems.sort(comparator);
   }
 
-  @NotNull
-  public List<T> getItems() {
+  public @NotNull List<T> getItems() {
     return Collections.unmodifiableList(myItems);
   }
 
-  public void replaceAll(@NotNull final List<? extends T> elements) {
+  public void replaceAll(final @NotNull List<? extends T> elements) {
     removeAll();
     add(elements);
   }
@@ -143,9 +140,8 @@ public class CollectionListModel<T> extends AbstractListModel<T> implements Edit
     return true;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return getClass().getName() + " (" + getSize() + " elements)";
   }
 

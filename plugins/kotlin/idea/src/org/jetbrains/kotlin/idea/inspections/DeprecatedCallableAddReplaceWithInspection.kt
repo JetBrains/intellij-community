@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiRecursiveVisitor
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -138,7 +140,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         } ?: return null
 
         var isGood = true
-        replacementExpression.accept(object : KtVisitorVoid() {
+        replacementExpression.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitReturnExpression(expression: KtReturnExpression) {
                 isGood = false
             }
@@ -204,7 +206,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         val importHelper = ImportInsertHelper.getInstance(expression.project)
 
         val result = ArrayList<String>()
-        expression.accept(object : KtVisitorVoid() {
+        expression.accept(object : KtVisitorVoid(),PsiRecursiveVisitor {
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val bindingContext = expression.analyze()
                 val target = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, expression]
@@ -226,8 +228,6 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         })
         return result
     }
-
-    companion object {
-        val DEPRECATED_NAME = StandardNames.FqNames.deprecated.shortName()
-    }
 }
+
+private val DEPRECATED_NAME: Name = StandardNames.FqNames.deprecated.shortName()

@@ -159,7 +159,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}, \"b\": {}}, \"required\": [\"a\"]}";
     doTest(schema, "{\"a\": 11}");
     doTest(schema, "{\"a\": 1, \"b\": true}");
-    doTest(schema, "<warning descr=\"Missing required property 'a'\">{\"b\": \"alarm\"}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'a'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"b\": \"alarm\"</warning>}");
   }
 
   public void testInnerRequired() {
@@ -191,7 +191,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testAdditionalPropertiesDisabled() {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"prop\": {}}, \"additionalProperties\": false}";
     // not sure abt inner object
-    doTest(schema, "{\"prop\": {}, <warning descr=\"Property 'someStuff' is not allowed\">\"someStuff\": 20</warning>}");
+    doTest(schema, "{\"prop\": {}, <warning descr=\"Property 'someStuff' is not allowed\">\"someStuff\"</warning>: 20}");
   }
 
   public void testAdditionalPropertiesSchema() {
@@ -204,7 +204,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"minProperties\": 1, \"maxProperties\": 2}";
     doTest(schema, "<warning descr=\"Number of properties is less than 1\">{}</warning>");
     doTest(schema, "{\"a\": 1}");
-    doTest(schema, "<warning descr=\"Number of properties is greater than 2\">{\"a\": 1, \"b\": 22, \"c\": 33}</warning>");
+    doTest(schema, "{<warning descr=\"Number of properties is greater than 2\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": 1</warning>, \"b\": 22, \"c\": 33}");
   }
 
   public void testOneOf() {
@@ -268,7 +268,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                                    "\"innerType\":{}, \"innerValue\":{}" +
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
-    doTest(schema, "{\"prop\": [{\"innerType\":{}, <warning descr=\"Property 'alien' is not allowed\">\"alien\":{}</warning>}]}");
+    doTest(schema, "{\"prop\": [{\"innerType\":{}, <warning descr=\"Property 'alien' is not allowed\">\"alien\"</warning>:{}}]}");
   }
 
   public void testObjectDeeperInArray() {
@@ -279,7 +279,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
     doTest(schema,
-           "{\"prop\": [{\"innerType\":{\"only\": true, <warning descr=\"Property 'hidden' is not allowed\">\"hidden\": false</warning>}}]}");
+           "{\"prop\": [{\"innerType\":{\"only\": true, <warning descr=\"Property 'hidden' is not allowed\">\"hidden\"</warning>: false}}]}");
   }
 
   public void testInnerObjectPropValueInArray() {
@@ -292,7 +292,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                                                                 " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
     doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">null</warning>}");
-    doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\": 15</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\"</warning>: 15}");
     doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">12</warning>}");
   }
 
@@ -302,7 +302,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"oneOf\": [" + subSchema1 + ", " + subSchema2 + "]}}}";
     //doTest(schema, "{\"prop\": [{\"kilo\": 20}]}");
     //doTest(schema, "{\"prop\": 5}");
-    doTest(schema, "{\"prop\": [{<warning descr=\"Property 'foxtrot' is not allowed\">\"foxtrot\": 15</warning>, \"kilo\": 20}]}");
+    doTest(schema, "{\"prop\": [{<warning descr=\"Property 'foxtrot' is not allowed\">\"foxtrot\"</warning>: 15, \"kilo\": 20}]}");
   }
 
   public void testIntegerTypeWithMinMax() throws Exception {
@@ -454,7 +454,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   }
 
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() {
-    doTest(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
+    doTest(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\"</warning>: true," +
                                         "\"r1\": \"allowed!\"}");
   }
 
@@ -755,12 +755,12 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
         }
       }""";
     doTest(schema, "<warning>{}</warning>");
-    doTest(schema, "{\"c\": <warning>5</warning>}");
+    doTest(schema, "{\"c\": <warning descr=\"Incompatible types.\n Required: boolean. Actual: integer.\">5</warning>}");
     doTest(schema, "{\"c\": true}");
-    doTest(schema, "<warning>{\"a\": 5, \"b\": 5}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'c'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": 5</warning>, \"b\": 5}");
     doTest(schema, "{\"a\": 5, \"c\": <warning>5</warning>}");
     doTest(schema, "{\"a\": 5, \"c\": true}");
-    doTest(schema, "<warning>{\"a\": \"a\", \"c\": true}</warning>");
+    doTest(schema, "{<warning descr=\"Missing required property 'b'\" textAttributesKey=\"WARNING_ATTRIBUTES\">\"a\": \"a\"</warning>, \"c\": true}");
     doTest(schema, "{\"a\": \"a\", \"b\": <warning>true</warning>}");
     doTest(schema, "{\"a\": \"a\", \"b\": 5}");
   }
@@ -983,12 +983,12 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testIntersectingHighlightingRanges() throws Exception {
     @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/avroSchema.json"));
     doTest(schemaText, """
-      <warning descr="Missing required property 'items'">{
-        "type": "array"
-      }</warning>""");
+      {
+        <warning descr="Missing required property 'items'" textAttributesKey="WARNING_ATTRIBUTES">"type": "array"</warning>
+      }""");
     doTest(schemaText, """
       {
-        "type": <warning descr="Value should be one of: \\"record\\", \\"enum\\", \\"array\\", \\"map\\", \\"fixed\\"">"array2"</warning>
+        "type": <warning descr="Value should be one of: \\"array\\", \\"enum\\", \\"fixed\\", \\"map\\", \\"record\\"">"array2"</warning>
       }""");
   }
 
@@ -1080,6 +1080,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testReferenceById() {
     doTest("""
              {
+               "$schema": "https://json-schema.org/draft-07/schema",
                "type": "object",
 
                "properties": {
@@ -1203,14 +1204,14 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
         "subject": {
           "discriminator": "first",
           "first": false,
-          <warning descr="Property 'second' is not allowed">"second": false</warning>
+          <warning descr="Property 'second' is not allowed">"second"</warning>: false
         }
       }""");
     doTest(schemaText, """
       {
         "subject": {
           "discriminator": "second",
-          <warning descr="Property 'first' is not allowed">"first": false</warning>,
+          <warning descr="Property 'first' is not allowed">"first"</warning>: false,
           "second": false
         }
       }""");
@@ -1284,5 +1285,15 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                "sampled": 15123456789\s
              }
              """);
+  }
+
+  public void testReducedTopLevelRangeHighlighting() {
+    doTest("{ \"required\": [\"test3\"]}",
+           "{ <warning descr=\"Missing required property 'test3'\">\"test1\": 123</warning>, \"test2\": 456}");
+  }
+
+  public void testTopLevelRangeHighlighting() {
+    doTest("{ \"required\": [\"test3\"]}",
+           "<warning descr=\"Missing required property 'test3'\">{}</warning>");
   }
 }

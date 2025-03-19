@@ -24,16 +24,6 @@ public class ZipOutputWrapper implements AutoCloseable {
     myCompressed = compressionLevel > 0;
   }
 
-  public OutputStream zipStream(String entryPath) {
-    return new OptByteArrayOutputStream() {
-      @Override
-      public void close() throws IOException {
-        super.close();
-        zipBytes(entryPath, this);
-      }
-    };
-  }
-
   public void zipEntry(ZipEntry entry, InputStream from) throws IOException {
     if (entry.isDirectory()) {
       addDirs(entry.getName(), true);

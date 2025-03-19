@@ -1,11 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.resolve.graphInference.PatternInference;
@@ -14,11 +16,17 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class JavaResolveUtil {
   public static PsiClass getContextClass(@NotNull PsiElement element) {
@@ -35,9 +43,9 @@ public final class JavaResolveUtil {
     return null;
   }
 
-  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict){
+  public static PsiElement findParentContextOfClass(PsiElement element, Class<?> aClass, boolean strict) {
     PsiElement scope = strict ? element.getContext() : element;
-    while(scope != null && !aClass.isInstance(scope)){
+    while (scope != null && !aClass.isInstance(scope)) {
       scope = scope.getContext();
     }
     return scope;
@@ -49,8 +57,8 @@ public final class JavaResolveUtil {
                                      @NotNull PsiElement place,
                                      @Nullable PsiClass accessObjectClass,
                                      @Nullable PsiElement fileResolveScope) {
-    if (place instanceof PsiDirectory && 
-        modifierList != null && 
+    if (place instanceof PsiDirectory &&
+        modifierList != null &&
         accessObjectClass == null &&
         PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)place);
@@ -104,7 +112,7 @@ public final class JavaResolveUtil {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
 
     if (effectiveAccessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
-      if (facade.arePackagesTheSame(member, place)) {
+      if (facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) {
         return true;
       }
       if (memberClass == null) {
@@ -118,7 +126,7 @@ public final class JavaResolveUtil {
       else {
         contextClass = PsiTreeUtil.getContextOfType(place, PsiClass.class, false);
         if (isInClassAnnotationParameterList(place, contextClass)) return false;
-        if (contextClass instanceof PsiAnonymousClass && 
+        if (contextClass instanceof PsiAnonymousClass &&
             PsiTreeUtil.isAncestor(((PsiAnonymousClass)contextClass).getArgumentList(), place, true)) {
           contextClass = PsiTreeUtil.getContextOfType(contextClass, PsiClass.class, true);
         }
@@ -154,17 +162,14 @@ public final class JavaResolveUtil {
       }
     }
 
-    if (!facade.arePackagesTheSame(member, place)) return false;
-    //if (modifierList.hasModifierProperty(PsiModifier.STATIC)) return true;
+    if (!facade.arePackagesTheSame((memberClass == null) ? member : memberClass, place)) return false;
     // maybe inheritance lead through package-private class in other package ?
     final PsiClass placeClass = getContextClass(place);
     if (memberClass == null || placeClass == null) return true;
     // check only classes since interface members are public,  and if placeClass is interface,
     // then its members are static, and cannot refer to non-static members of memberClass
     if (memberClass.isInterface() || placeClass.isInterface()) return true;
-    PsiClass clazz = accessObjectClass != null ?
-                     accessObjectClass :
-                     placeClass.getSuperClass(); //may start from super class
+    PsiClass clazz = accessObjectClass != null ? accessObjectClass : placeClass.getSuperClass(); //may start from super class
     if (clazz != null && clazz.isInheritor(memberClass, true)) {
       PsiClass superClass = clazz;
       while (!manager.areElementsEquivalent(superClass, memberClass)) {
@@ -177,8 +182,8 @@ public final class JavaResolveUtil {
   }
 
   public static boolean canAccessProtectedMember(@NotNull PsiMember member,
-                                                  @NotNull PsiClass memberClass,
-                                                  @Nullable PsiClass accessObjectClass, @Nullable PsiClass contextClass, boolean isStatic) {
+                                                 @NotNull PsiClass memberClass,
+                                                 @Nullable PsiClass accessObjectClass, @Nullable PsiClass contextClass, boolean isStatic) {
     while (contextClass != null) {
       if (InheritanceUtil.isInheritorOrSelf(contextClass, memberClass, true)) {
         if (member instanceof PsiClass || isStatic || accessObjectClass == null
@@ -204,13 +209,13 @@ public final class JavaResolveUtil {
 
   private static boolean ignoreReferencedElementAccessibility(PsiFile placeFile) {
     return placeFile instanceof FileResolveScopeProvider &&
-           ((FileResolveScopeProvider) placeFile).ignoreReferencedElementAccessibility() &&
+           ((FileResolveScopeProvider)placeFile).ignoreReferencedElementAccessibility() &&
            !PsiImplUtil.isInServerPage(placeFile);
   }
 
   public static boolean isInJavaDoc(@NotNull PsiElement place) {
     PsiElement scope = place;
-    while(scope != null){
+    while (scope != null) {
       if (scope instanceof PsiDocComment) return true;
       if (scope instanceof PsiMember || scope instanceof PsiMethodCallExpression || scope instanceof PsiFile) return false;
       scope = scope.getContext();
@@ -257,7 +262,7 @@ public final class JavaResolveUtil {
     return true;
   }
 
-  public static void substituteResults(@NotNull final PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
+  public static void substituteResults(final @NotNull PsiJavaCodeReferenceElement ref, JavaResolveResult @NotNull [] result) {
     if (result.length > 0 && result[0].getElement() instanceof PsiClass) {
       PsiDeconstructionPattern pattern = ObjectUtils.tryCast(ref.getParent().getParent(), PsiDeconstructionPattern.class);
       for (int i = 0; i < result.length; i++) {
@@ -267,12 +272,12 @@ public final class JavaResolveUtil {
           PsiClass resultClass = (PsiClass)resultElement;
           if (resultClass.hasTypeParameters()) {
             PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-            result[i] = pattern != null && ref.getTypeParameterCount() == 0 
-                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass, JavaPsiPatternUtil.getContextType(pattern))
+            result[i] = pattern != null && ref.getTypeParameterCount() == 0
+                        ? PatternInference.inferPatternGenerics(resolveResult, pattern, resultClass,
+                                                                JavaPsiPatternUtil.getContextType(pattern))
                         : new CandidateInfo(resolveResult, substitutor) {
-                          @NotNull
                           @Override
-                          public PsiSubstitutor getSubstitutor() {
+                          public @NotNull PsiSubstitutor getSubstitutor() {
                             PsiType[] parameters = ref.getTypeParameters();
                             return super.getSubstitutor().putAll(resultClass, parameters);
                           }
@@ -311,8 +316,7 @@ public final class JavaResolveUtil {
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
 
-  @Nullable
-  public static PsiPackage getContainingPackage(@NotNull final PsiElement element) {
+  public static @Nullable PsiPackage getContainingPackage(final @NotNull PsiElement element) {
     final PsiFile file = element.getContainingFile();
     if (file == null) return null;
 
@@ -320,5 +324,103 @@ public final class JavaResolveUtil {
     if (directory == null) return null;
 
     return JavaDirectoryService.getInstance().getPackage(directory);
+  }
+
+  /**
+   * Processes exported packages of a Java module, replacing "import module..." semantics
+   * for all on-demand imports from these packages.
+   *
+   * @param module     the Java module whose exported packages should be processed
+   * @param processor  the processor used to handle scope declarations
+   * @param state      the current resolution state of the resolver
+   * @param lastParent the parent element from which processing originated
+   * @param place      the code location where this method is called
+   * @return {@code true} if processing should continue, {@code false} if it should stop immediately
+   */
+  public static boolean processJavaModuleExports(@NotNull PsiJavaModule module,
+                                                 @NotNull PsiScopeProcessor processor,
+                                                 @NotNull ResolveState state,
+                                                 @Nullable PsiElement lastParent,
+                                                 @NotNull PsiElement place) {
+    // Skip processing if inside the module - otherwise, imports within the module won't work because the system would rely only on exports
+    if (PsiTreeUtil.isAncestor(module, place, false)) return true;
+
+    processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, module);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    if (classHint != null && !classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) return true;
+
+    List<PsiPackageAccessibilityStatement> exports = getExportedPackages(place, module);
+    for (PsiPackageAccessibilityStatement export : exports) {
+      PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
+      if (aPackage == null) continue;
+      PsiElement resolvedPackage = aPackage.resolve();
+      if (!(resolvedPackage instanceof PsiPackage)) continue;
+      if (!resolvedPackage.processDeclarations(processor, state, lastParent, place)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Retrieves a list of package accessibility statements for a given Java module that
+   * are accessible to the specified place.
+   *
+   * @param place the place from which accessibility is being checked.
+   * @param module the module whose exported packages are to be retrieved.
+   * @return a list of `PsiPackageAccessibilityStatement` elements that represent the exported packages accessible
+   *         to the specified place.
+   */
+  public static List<PsiPackageAccessibilityStatement> getExportedPackages(@NotNull PsiElement place, @NotNull PsiJavaModule module) {
+    List<PsiPackageAccessibilityStatement> results = new ArrayList<>();
+    PsiJavaModule currentModule = JavaModuleGraphHelper.getInstance().findDescriptorByElement(place);
+    List<PsiPackageAccessibilityStatement> exports = getAllDeclaredExports(module);
+    for (PsiPackageAccessibilityStatement export : exports) {
+      PsiJavaCodeReferenceElement aPackage = export.getPackageReference();
+      if (aPackage == null) continue;
+      List<String> accessibleModules = export.getModuleNames();
+      if (!accessibleModules.isEmpty()) {
+        if (currentModule == null || !accessibleModules.contains(currentModule.getName())) continue;
+      }
+      results.add(export);
+    }
+    return results;
+  }
+
+  /**
+   * Retrieves all transitive modules required by the given module, including the module itself.
+   *
+   * @param module the module for which transitive dependencies are being collected; must not be null
+   * @return a set of transitive modules required by the given module, including the module itself
+   */
+  public static Set<PsiJavaModule> getAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module){
+    return CachedValuesManager.getCachedValue(module, ()->{
+      Project project = module.getProject();
+      Set<PsiJavaModule> collected = new HashSet<>();
+      collectAllTransitiveModulesIncludeCurrent(module, collected);
+      return CachedValueProvider.Result.create(collected,
+                                               PsiJavaModuleModificationTracker.getInstance(project),
+                                               ProjectRootModificationTracker.getInstance(project));
+    });
+  }
+
+  private static void collectAllTransitiveModulesIncludeCurrent(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> collected) {
+    JavaModuleGraphHelper helper = JavaModuleGraphHelper.getInstance();
+    Set<PsiJavaModule> dependencies = helper.getAllTransitiveDependencies(module);
+    collected.addAll(dependencies);
+    collected.add(module);
+  }
+
+  private static List<PsiPackageAccessibilityStatement> getAllDeclaredExports(@NotNull PsiJavaModule module) {
+    Project project = module.getProject();
+    return CachedValuesManager.getCachedValue(module, () -> {
+      List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
+      for (PsiJavaModule javaModule : getAllTransitiveModulesIncludeCurrent(module)) {
+        for (PsiPackageAccessibilityStatement export : javaModule.getExports()) {
+          exports.add(export);
+        }
+      }
+      return CachedValueProvider.Result.create(exports,
+                                        PsiJavaModuleModificationTracker.getInstance(project),
+                                        ProjectRootModificationTracker.getInstance(project));
+    });
   }
 }

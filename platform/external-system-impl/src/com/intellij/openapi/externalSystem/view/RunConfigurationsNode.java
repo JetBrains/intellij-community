@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.RunManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
 public final class RunConfigurationsNode extends ExternalSystemNode<Void> {
   private final ModuleData myModuleData;
@@ -43,9 +45,8 @@ public final class RunConfigurationsNode extends ExternalSystemNode<Void> {
     return super.isVisible() && hasChildren();
   }
 
-  @NotNull
   @Override
-  protected List<? extends ExternalSystemNode<?>> doBuildChildren() {
+  protected @NotNull List<? extends ExternalSystemNode<?>> doBuildChildren() {
     List<ExternalSystemNode<?>> runConfigurationNodes = new ArrayList<>();
     final AbstractExternalSystemTaskConfigurationType configurationType = ExternalSystemUtil.findConfigurationType(myModuleData.getOwner());
     if (configurationType == null) return Collections.emptyList();

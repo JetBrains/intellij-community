@@ -17,7 +17,7 @@ public class a {
     <error descr="Static declarations in inner classes are not supported at language level '1.4'">static</error>
       class a_ic_c {}
 
-    <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface a_ic_i</error> {}
+    <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface</error> a_ic_i {}
     <error descr="Static declarations in inner classes are not supported at language level '1.4'">static</error>  interface a_ic_i2 {}
 
     <error descr="Static declarations in inner classes are not supported at language level '1.4'">static</error>
@@ -93,12 +93,12 @@ public class a {
     }
     void ff() {
       class inn {
-        <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface i</error> {}
+        <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface</error> i {}
       }
     }
 
     Object o = new Runnable() {
-      <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface i</error> {}
+      <error descr="Static declarations in inner classes are not supported at language level '1.4'">interface</error> i {}
       public void run() {}
     };
   }

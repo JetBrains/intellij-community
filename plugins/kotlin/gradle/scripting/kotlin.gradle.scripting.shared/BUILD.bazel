@@ -1,0 +1,54 @@
+### auto-generated section `build kotlin.gradle.scripting.shared` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-gradle-scripting-shared_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-gradle-scripting-shared",
+  module_name = "kotlin.gradle.scripting.shared",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//plugins/gradle",
+    "//platform/core-impl",
+    "//plugins/kotlin/base/scripting:kotlin-base-scripting",
+    "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//plugins/kotlin/gradle/gradle:kotlin-gradle-gradle",
+    "//platform/analysis-api:analysis",
+    "//platform/backend/observation",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/ide-core-impl",
+    "//platform/platform-api:ide",
+    "@lib//:kotlinc-kotlin-scripting-jvm",
+    "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/kotlin/gradle/gradle-tooling/impl:kotlin-gradle-gradle-tooling-impl",
+    "@lib//:kotlin-tooling-core",
+    "//platform/workspace/storage",
+    "//platform/lang-core",
+    "//platform/lang-impl",
+    "//platform/util:util-ui",
+    "//plugins/kotlin/preferences",
+    "//platform/backend/workspace",
+    "//platform/workspace/jps",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+    "//java/idea-ui:ui",
+    "@lib//:kotlinc-kotlin-script-runtime",
+    "//platform/core-ui",
+    "//platform/platform-impl:ide-impl",
+  ],
+  runtime_deps = [":kotlin-gradle-scripting-shared_resources"]
+)
+### auto-generated section `build kotlin.gradle.scripting.shared` end

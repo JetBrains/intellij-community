@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -6,42 +6,44 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
 
 public final class ResourceBundleImpl extends ResourceBundle {
-  @NotNull
-  private final SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
+  private final @NotNull SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
   private boolean myValid = true;
 
-  public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
+  public ResourceBundleImpl(final @NotNull PropertiesFile defaultPropertiesFile) {
     myDefaultPropertiesFile = SmartPointerManager.getInstance(defaultPropertiesFile.getProject())
       .createSmartPsiElementPointer(defaultPropertiesFile.getContainingFile());
   }
 
-  @NotNull
   @Override
-  public List<PropertiesFile> getPropertiesFiles() {
+  public @NotNull List<PropertiesFile> getPropertiesFiles() {
     return PropertiesImplUtil.getResourceBundleFiles(getDefaultPropertiesFile());
   }
 
-  @NotNull
   @Override
-  public PropertiesFile getDefaultPropertiesFile() {
+  public @NotNull PropertiesFile getDefaultPropertiesFile() {
     return Objects.requireNonNull(PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()));
   }
 
-  @NotNull
+  @ApiStatus.Internal
+  public @Nullable VirtualFile getDefaultVirtualFile() {
+    return myDefaultPropertiesFile.getVirtualFile(); // Don't resolve the pointer to avoid slow ops.
+  }
+
   @Override
-  public String getBaseName() {
+  public @NotNull String getBaseName() {
     return ResourceBundleManager.getInstance(getProject()).getBaseName(Objects.requireNonNull(myDefaultPropertiesFile.getElement()));
   }
 
   @Override
-  @NotNull
-  public VirtualFile getBaseDirectory() {
+  public @NotNull VirtualFile getBaseDirectory() {
     return getDefaultPropertiesFile().getVirtualFile().getParent();
   }
 
@@ -54,6 +56,7 @@ public final class ResourceBundleImpl extends ResourceBundle {
     myValid = false;
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -63,6 +66,7 @@ public final class ResourceBundleImpl extends ResourceBundle {
     return true;
   }
 
+  @Override
   public int hashCode() {
     return myDefaultPropertiesFile.hashCode();
   }

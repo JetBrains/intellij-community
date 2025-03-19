@@ -8,15 +8,17 @@ description: |-
   $DESCRIPTION$
 grade: $GRADE$
 confinement: classic
-base: core18
+base: core22
 compression: lzo
 architectures:
   - build-on: [amd64, arm64]
-    run-on: amd64
+    build-for: amd64
+  - build-on: [amd64, arm64]
+    build-for: arm64
 
 apps:
   $NAME$:
-    command: $SCRIPT$
+    command: $LAUNCHER$
 
 parts:
   common:
@@ -26,6 +28,10 @@ parts:
   bins:
     plugin: dump
     source: dist.unix
+    build-attributes: [no-patchelf]
+  product-json:
+    plugin: dump
+    source: dist.product-json
     build-attributes: [no-patchelf]
   jre:
     plugin: dump

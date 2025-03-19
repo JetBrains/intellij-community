@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
@@ -26,22 +27,20 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class TestNGFramework extends JavaTestFramework {
-  private final static List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
+public class TestNGFramework extends JavaTestFramework implements DumbAware {
+  private static final List<String> SECONDARY_BEFORE_ANNOTATIONS = Arrays.asList("org.testng.annotations.BeforeTest",
                                                                                  "org.testng.annotations.BeforeClass",
                                                                                  "org.testng.annotations.BeforeSuite",
                                                                                  "org.testng.annotations.BeforeGroups"
-                                                                                 );
+  );
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "TestNG";
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TestngIcons.TestNG;
   }
 
@@ -56,51 +55,57 @@ public class TestNGFramework extends JavaTestFramework {
   }
 
   @Override
-  @Nullable
-  public String getDefaultSuperClass() {
+  public @Nullable String getDefaultSuperClass() {
     return null;
   }
 
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
-    if (canBePotential) return isUnderTestSources(clazz);
-    return TestNGUtil.isTestNGClass(clazz);
+    if (clazz == null) return false;
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      if (canBePotential) return isUnderTestSources(clazz);
+      return TestNGUtil.isTestNGClass(clazz);
+    }, false);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeMethod", 0)) return each;
-    }
-    return null;
+  protected @Nullable PsiMethod findSetUpMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeMethod", 0)) return each;
+      }
+      return null;
+    }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeClass", 0)) return each;
-    }
-    return null;
-  }
-  
-  @Nullable
-  @Override
-  protected PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterMethod", 0)) return each;
-    }
-    return null;
+  protected @Nullable PsiMethod findBeforeClassMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.BeforeClass", 0)) return each;
+      }
+      return null;
+    }, null);
   }
 
-  @Nullable
   @Override
-  protected PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
-    for (PsiMethod each : clazz.getMethods()) {
-      if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterClass", 0)) return each;
-    }
-    return null;
+  protected @Nullable PsiMethod findTearDownMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterMethod", 0)) return each;
+      }
+      return null;
+    }, null);
+  }
+
+  @Override
+  protected @Nullable PsiMethod findAfterClassMethod(@NotNull PsiClass clazz) {
+    return callWithAlternateResolver(clazz.getProject(), () -> {
+      for (PsiMethod each : clazz.getMethods()) {
+        if (AnnotationUtil.isAnnotated(each, "org.testng.annotations.AfterClass", 0)) return each;
+      }
+      return null;
+    }, null);
   }
 
 
@@ -122,13 +127,14 @@ public class TestNGFramework extends JavaTestFramework {
                  Messages.YES :
                  Messages.showYesNoDialog(manager.getProject(), TestngBundle.message("testng.create.setup.dialog.message", setUpName),
                                           TestngBundle.message("testng.create.setup.dialog.title"),
-                                          TestngBundle.message("testng.annotate.dialog.title" ),
+                                          TestngBundle.message("testng.annotate.dialog.title"),
                                           TestngBundle.message("testng.create.new.method.dialog.title"),
                                           Messages.getWarningIcon());
       if (exit == Messages.YES) {
         new AddAnnotationFix(BeforeMethod.class.getName(), inClass).invoke(inClass.getProject(), null, inClass.getContainingFile());
         return inClass;
-      } else if (exit == Messages.NO) {
+      }
+      else if (exit == Messages.NO) {
         inClass = null;
         int i = 0;
         while (clazz.findMethodBySignature(patternMethod, false) != null) {
@@ -151,7 +157,8 @@ public class TestNGFramework extends JavaTestFramework {
           else if (modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
             pattern += "public ";
           }
-          patternMethod = factory.createMethodFromText(pattern + "void " + setUpName + "() throws Exception {\nsuper." + setUpName + "();\n}", null);
+          patternMethod =
+            factory.createMethodFromText(pattern + "void " + setUpName + "() throws Exception {\nsuper." + setUpName + "();\n}", null);
         }
       }
     }
@@ -163,7 +170,9 @@ public class TestNGFramework extends JavaTestFramework {
       if (inClass == null && AnnotationUtil.isAnnotated(psiMethod, BeforeMethod.class.getName(), 0)) {
         inClass = psiMethod;
       }
-      if (testMethod == null && AnnotationUtil.isAnnotated(psiMethod, Test.class.getName(), 0) && !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
+      if (testMethod == null &&
+          AnnotationUtil.isAnnotated(psiMethod, Test.class.getName(), 0) &&
+          !psiMethod.hasModifierProperty(PsiModifier.PRIVATE)) {
         testMethod = psiMethod;
       }
     }
@@ -171,7 +180,8 @@ public class TestNGFramework extends JavaTestFramework {
       final PsiMethod psiMethod;
       if (testMethod != null) {
         psiMethod = (PsiMethod)clazz.addBefore(patternMethod, testMethod);
-      } else {
+      }
+      else {
         psiMethod = (PsiMethod)clazz.add(patternMethod);
       }
       JavaCodeStyleManager.getInstance(clazz.getProject()).shortenClassReferences(clazz);
@@ -192,7 +202,7 @@ public class TestNGFramework extends JavaTestFramework {
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG SetUp Method.java");
   }
-  
+
   @Override
   public FileTemplateDescriptor getBeforeClassMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG BeforeClass Method.java");
@@ -202,27 +212,28 @@ public class TestNGFramework extends JavaTestFramework {
   public FileTemplateDescriptor getTearDownMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG TearDown Method.java");
   }
-  
+
   @Override
   public FileTemplateDescriptor getAfterClassMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG AfterClass Method.java");
   }
 
   @Override
-  @NotNull
-  public FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
+  public @NotNull FileTemplateDescriptor getTestMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Test Method.java");
   }
 
-  @Nullable
   @Override
-  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+  public @Nullable FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("TestNG Parameters Method.java");
   }
 
   @Override
   public boolean isTestMethod(PsiElement element, boolean checkAbstract) {
-    return element instanceof PsiMethod && TestNGUtil.hasTest((PsiModifierListOwner)element);
+    if (element == null) return false;
+    return callWithAlternateResolver(element.getProject(), () -> {
+      return element instanceof PsiMethod && isFrameworkAvailable(element) && TestNGUtil.hasTest((PsiModifierListOwner)element);
+    }, false);
   }
 
   @Override

@@ -8,6 +8,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PsiTestUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.MoveKotlinDeclarationsHandler
@@ -23,9 +24,13 @@ import java.nio.file.Path
 
 @RunWith(JUnit38ClassRunner::class)
 class MoveKotlinDeclarationsHandlerTest : KotlinMultiFileTestCase() {
+
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR
 
     override fun getTestRoot() = "/refactoring/moveHandler/declarations"
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K1
 
     private fun doTest(action: (rootDir: VirtualFile, handler: MoveKotlinDeclarationsHandler) -> Unit) {
         val filesToDelete = mutableListOf<Path>()

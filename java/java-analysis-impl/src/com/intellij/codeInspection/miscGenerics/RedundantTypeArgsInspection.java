@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.compiler.JavacQuirksInspectionVisitor;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -17,26 +19,24 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
+public final class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static final Logger LOG = Logger.getInstance(RedundantTypeArgsInspection.class);
 
   private static final LocalQuickFix ourQuickFixAction = new MyQuickFixAction();
   public static final String SHORT_NAME = "RedundantTypeArguments";
 
   @Override
-  @NotNull
-  public String getGroupDisplayName() {
+  public @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.verbose.or.redundant.code.constructs");
   }
 
   @Override
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return SHORT_NAME;
   }
 
   @Override
-  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, @NotNull final InspectionManager inspectionManager, boolean isOnTheFly) {
+  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, final @NotNull InspectionManager inspectionManager, boolean isOnTheFly) {
     final List<ProblemDescriptor> problems = new ArrayList<>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
@@ -161,16 +161,14 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     }
   }
 
-  private static class MyQuickFixAction implements LocalQuickFix {
+  private static class MyQuickFixAction extends PsiUpdateModCommandQuickFix {
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return JavaAnalysisBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiReferenceParameterList typeArgumentList)) return;
       try {
         PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

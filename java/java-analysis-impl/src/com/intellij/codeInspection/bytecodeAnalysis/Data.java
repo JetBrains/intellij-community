@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -16,13 +18,13 @@ final class Component {
   @NotNull Value value;
   final EKey @NotNull [] ids;
 
-  Component(@NotNull Value value, @NotNull Set<EKey> ids) {
-    this(value, ids.toArray(new EKey[0]));
+  Component(@NotNull Value value, @NotNull Collection<EKey> ids) {
+    this(value, ids.toArray(EKey.EMPTY_ARRAY));
   }
 
-  Component(@NotNull Value value, EKey @NotNull [] ids) {
+  Component(@NotNull Value value, EKey @NotNull ... ids) {
     this.value = value;
-    this.ids = ids;
+    this.ids = ids.length == 0 ? EKey.EMPTY_ARRAY : ids;
   }
 
   @Override
@@ -58,8 +60,7 @@ final class Component {
     return true;
   }
 
-  @NotNull
-  public Component copy() {
+  public @NotNull Component copy() {
     return new Component(value, ids.clone());
   }
 
@@ -69,8 +70,8 @@ final class Component {
 }
 
 final class Equation {
-  @NotNull final EKey key;
-  @NotNull final Result result;
+  final @NotNull EKey key;
+  final @NotNull Result result;
 
   Equation(@NotNull EKey key, @NotNull Result result) {
     this.key = key;
@@ -96,48 +97,9 @@ final class Equation {
   }
 }
 
-class Equations {
-  @NotNull final List<? extends DirectionResultPair> results;
-  final boolean stable;
-
-  Equations(@NotNull List<? extends DirectionResultPair> results, boolean stable) {
-    this.results = results;
-    this.stable = stable;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    Equations that = (Equations)o;
-    return stable == that.stable && results.equals(that.results);
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * results.hashCode() + (stable ? 1 : 0);
-  }
-
-  @NotNull
-  Equations update(@SuppressWarnings("SameParameterValue") Direction direction, Effects newResult) {
-    List<DirectionResultPair> newPairs = StreamEx.of(this.results)
-      .map(drp -> drp.updateForDirection(direction, newResult))
-      .nonNull()
-      .toList();
-    return new Equations(newPairs, this.stable);
-  }
-
-  Optional<Result> find(Direction direction) {
-    int key = direction.asInt();
-    return StreamEx.of(results).findFirst(pair -> pair.directionKey == key).map(pair -> pair.result);
-  }
-}
-
-class DirectionResultPair {
+final class DirectionResultPair {
   final int directionKey;
-  @NotNull
-  final Result result;
+  final @NotNull Result result;
 
   DirectionResultPair(int directionKey, @NotNull Result result) {
     this.directionKey = directionKey;
@@ -162,26 +124,26 @@ class DirectionResultPair {
   public String toString() {
     return Direction.fromInt(directionKey) + "->" + result;
   }
-
-  @Nullable
-  DirectionResultPair updateForDirection(Direction direction, Result newResult) {
-    if (this.directionKey == direction.asInt()) {
-      return newResult == null ? null : new DirectionResultPair(direction.asInt(), newResult);
-    }
-    else {
-      return this;
-    }
-  }
 }
 
-interface Result {
+sealed interface Result permits Effects, FieldAccess, Pending, Value {
   /**
    * @return a stream of keys which should be solved to make this result final
    */
   default Stream<EKey> dependencies() {
     return Stream.empty();
   }
+  
+  default void processDependencies(Consumer<EKey> processor) {
+  }
 }
+
+/**
+ * A result for setter/constructor parameter: unconditional field set;
+ * for method: unconditional field return
+ * @param name name of the field
+ */
+record FieldAccess(String name) implements Result {}
 
 final class Pending implements Result {
   final Component @NotNull [] delta; // sum
@@ -221,6 +183,15 @@ final class Pending implements Result {
   }
 
   @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    for (Component component : delta) {
+      for (EKey id : component.ids) {
+        processor.accept(id);
+      }
+    }
+  }
+
+  @Override
   public String toString() {
     return "Pending["+delta.length+"]";
   }
@@ -230,8 +201,8 @@ final class Effects implements Result {
   static final Set<EffectQuantum> TOP_EFFECTS = Set.of(EffectQuantum.TopEffectQuantum);
   static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, TOP_EFFECTS);
 
-  @NotNull final DataValue returnValue;
-  @NotNull final Set<EffectQuantum> effects;
+  final @NotNull DataValue returnValue;
+  final @NotNull Set<EffectQuantum> effects;
 
   Effects(@NotNull DataValue returnValue, @NotNull Set<EffectQuantum> effects) {
     this.returnValue = returnValue;
@@ -262,6 +233,14 @@ final class Effects implements Result {
   @Override
   public Stream<EKey> dependencies() {
     return Stream.concat(returnValue.dependencies(), effects.stream().flatMap(EffectQuantum::dependencies));
+  }
+
+  @Override
+  public void processDependencies(Consumer<EKey> processor) {
+    returnValue.processDependencies(processor);
+    for (EffectQuantum effect : effects) {
+      effect.processDependencies(processor);
+    }
   }
 
   public boolean isTop() {

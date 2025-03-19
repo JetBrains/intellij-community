@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.application.options.CodeStyle;
@@ -59,7 +59,7 @@ class ReturnValueBeanBuilder {
   public String buildBeanClass() throws IOException {
     final @NonNls StringBuilder out = new StringBuilder(1024);
 
-    if (myPackageName.length() > 0) {
+    if (!myPackageName.isEmpty()) {
       out.append("package ").append(myPackageName).append(";\n\n");
     }
 

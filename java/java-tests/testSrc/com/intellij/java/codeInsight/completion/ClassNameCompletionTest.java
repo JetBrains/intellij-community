@@ -11,10 +11,10 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.TestDataPath;
 import org.intellij.lang.annotations.Language;
@@ -28,7 +28,7 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
   }
 
   @Override

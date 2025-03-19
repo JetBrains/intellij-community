@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -15,9 +15,11 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.RecentsManager;
+import com.intellij.ui.components.JBBox;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -31,7 +33,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   private final @NlsContexts.DialogTitle String myRefactoringName;
   protected final ClassType mySourceClass;
   protected PsiDirectory myTargetDirectory;
-  protected final List<MemberInfoType> myMemberInfos;
+  protected final @Unmodifiable List<MemberInfoType> myMemberInfos;
 
   private JRadioButton myRbExtractSuperclass;
   private JRadioButton myRbExtractSubclass;
@@ -62,11 +64,9 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract void setDocCommentPolicySetting(int policy);
 
-  @Nullable
-  protected abstract String validateName(String name);
+  protected abstract @Nullable String validateName(String name);
   
-  @Nullable
-  protected @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+  protected @Nullable @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
@@ -76,14 +76,13 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract @NlsContexts.Label String getPackageNameLabelText();
 
-  @NotNull
-  protected abstract String getEntityName();
+  protected abstract @NotNull String getEntityName();
 
   protected abstract void preparePackage() throws OperationFailedException;
 
   protected abstract String getDestinationPackageRecentKey();
 
-  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
+  public ExtractSuperBaseDialog(Project project, ClassType sourceClass, @Unmodifiable List<MemberInfoType> members, @NlsContexts.DialogTitle String refactoringName) {
     super(project, true);
     myRefactoringName = refactoringName;
 
@@ -113,7 +112,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   }
 
   protected JComponent createActionComponent() {
-    Box box = Box.createHorizontalBox();
+    JBBox box = JBBox.createHorizontalBox();
     final String s = StringUtil.decapitalize(getEntityName());
     myRbExtractSuperclass = new JRadioButton();
     myRbExtractSuperclass.setText(RefactoringBundle.message("extractSuper.extract", s));
@@ -149,7 +148,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   @Override
   protected JComponent createNorthPanel() {
-      Box box = Box.createVerticalBox();
+    JBBox box = JBBox.createVerticalBox();
 
       JPanel _panel = new JPanel(new BorderLayout());
       _panel.add(new JLabel(getTopLabelText()), BorderLayout.NORTH);
@@ -197,8 +196,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     getPreviewAction().setEnabled(!isExtractSuperclass());
   }
 
-  @NotNull
-  public String getExtractedSuperName() {
+  public @NotNull String getExtractedSuperName() {
     return myExtractedSuperNameField.getText().trim();
   }
 
@@ -250,7 +248,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
       }
     }
     if (errorString[0] != null) {
-      if (errorString[0].length() > 0) {
+      if (!errorString[0].isEmpty()) {
         CommonRefactoringUtil.showErrorMessage(myRefactoringName, errorString[0], getHelpId(), myProject);
       }
       return;
@@ -273,7 +271,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     return true;
   }
 
-  protected static class OperationFailedException extends Exception {
+  protected static final class OperationFailedException extends Exception {
     public OperationFailedException(@NlsContexts.DialogMessage String message) {
       super(message);
     }

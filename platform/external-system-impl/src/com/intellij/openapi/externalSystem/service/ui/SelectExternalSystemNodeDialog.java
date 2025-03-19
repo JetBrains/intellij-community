@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.view.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ScrollPaneFactory;
@@ -18,9 +19,9 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,15 +35,13 @@ import java.util.function.Predicate;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
-  @NotNull
-  private final SimpleTree myTree;
+  private final @NotNull SimpleTree myTree;
   private final @Nullable Predicate<? super SimpleNode> mySelector;
-  @Nullable
-  protected Boolean groupTasks;
-  @Nullable
-  protected Boolean useTasksNode;
+  protected @Nullable Boolean groupTasks;
+  protected @Nullable Boolean useTasksNode;
 
   public SelectExternalSystemNodeDialog(@NotNull ProjectSystemId systemId,
                                         @NotNull Project project,
@@ -80,9 +79,8 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
           return nodeClasses;
         }
 
-        @NotNull
         @Override
-        public Object getRootElement() {
+        public @NotNull Object getRootElement() {
           Object rootElement = super.getRootElement();
           return customizeProjectsTreeRoot(rootElement);
         }
@@ -138,9 +136,8 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     return rootElement;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 
@@ -152,8 +149,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);
     pane.setPreferredSize(JBUI.size(320, 400));
     return pane;

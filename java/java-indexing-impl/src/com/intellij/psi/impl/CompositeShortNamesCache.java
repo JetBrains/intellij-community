@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -13,6 +14,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IdFilter;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,16 +24,39 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CompositeShortNamesCache extends PsiShortNamesCache {
+public final class CompositeShortNamesCache extends PsiShortNamesCache {
   private final Project myProject;
+  private final Set<Language> myExcludeLanguages;
 
   public CompositeShortNamesCache(Project project) {
-    myProject = project;
+    this(project, /*withoutLanguages*/Collections.emptySet());
   }
 
-  @NotNull
-  private List<PsiShortNamesCache> getCaches() {
-    return myProject.isDefault() ? Collections.emptyList() : PsiShortNamesCache.EP_NAME.getExtensionList(myProject);
+  private CompositeShortNamesCache(Project project, Set<Language> excludeLanguages) {
+    myProject = project;
+    myExcludeLanguages = excludeLanguages;
+  }
+
+  @Override
+  public @NotNull PsiShortNamesCache withoutLanguages(Set<Language> excludeLanguages) {
+    if (excludeLanguages.isEmpty()) return this;
+
+    Set<Language> newExcludeLanguages = CollectionsKt.union(myExcludeLanguages, excludeLanguages);
+    return new CompositeShortNamesCache(myProject, newExcludeLanguages);
+  }
+
+  private @NotNull List<PsiShortNamesCache> getCaches() {
+    if (myProject.isDefault()) return Collections.emptyList();
+
+    List<@NotNull PsiShortNamesCache> extensionList = EP_NAME.getExtensionList(myProject);
+    if (!myExcludeLanguages.isEmpty()) {
+      return extensionList
+        .stream()
+        .filter(cache -> !myExcludeLanguages.contains(cache.getLanguage()))
+        .toList();
+    } else {
+      return extensionList;
+    }
   }
 
   @Override
@@ -139,7 +164,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
-  public @NotNull PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(@NonNls @NotNull final String name, @NotNull final GlobalSearchScope scope, final int maxCount) {
+  public @NotNull PsiMethod @NotNull [] getMethodsByNameIfNotMoreThan(final @NonNls @NotNull String name, final @NotNull GlobalSearchScope scope, final int maxCount) {
     Merger<PsiMethod> merger = null;
     for (PsiShortNamesCache cache : getCaches()) {
       PsiMethod[] methods = cache.getMethodsByNameIfNotMoreThan(name, scope, maxCount);

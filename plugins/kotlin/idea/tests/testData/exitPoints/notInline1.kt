@@ -2,8 +2,8 @@ import javax.swing.SwingUtilities
 
 fun f(a: Int): Int {
     if (a < 5) {
-        SwingUtilities.invokeLater(fun (): Unit {
-            <caret>return
+        SwingUtilities.invokeLater(<info descr="null">fun</info> (): Unit {
+            <info descr="null">~return</info>
         })
         return 1
     }
@@ -11,6 +11,3 @@ fun f(a: Int): Int {
         return 2
     }
 }
-
-//HIGHLIGHTED: fun
-//HIGHLIGHTED: return

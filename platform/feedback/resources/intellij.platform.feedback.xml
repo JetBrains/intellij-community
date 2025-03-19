@@ -1,54 +1,69 @@
-<idea-plugin package="com.intellij.feedback">
+<idea-plugin package="com.intellij.platform.feedback">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl"
+                        overrides="true"/>
 
-    <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
+    <applicationService serviceImplementation="com.intellij.platform.feedback.eap.EAPFeedbackUrlProvider"/>
 
-    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
+    <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
                        key="notification.group.feedback"/>
 
-    <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
-    <typedHandler implementation="com.intellij.feedback.aqua.track.AquaEditorTypingChecker"/>
-    <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.track.AquaFirstUsageLogger"/>
-    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
-    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
+    <typedHandler implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <editorFactoryMouseListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.feedback.productivityMetric.statistics.ProductivityMetricCountCollector"/>
-  </extensions>
+    <registryKey key="platform.feedback.ignore.common.conditions.for.all.surveys" defaultValue="false"
+                 description="Allows to ignore all isSuitableToShow conditions and test pure conditions of the concrete survey"/>
 
-  <applicationListeners>
-    <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackSendActionCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.csat.CsatFeedbackSurvey"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.csat.CsatNewUserTracker"/>
+
+    <registryKey key="csat.survey.enabled" defaultValue="true" description="Enables periodic CSAT survey"/>
+    <registryKey key="csat.survey.today" defaultValue="" description="ISO Formatted today date such as 2011-12-03"/>
+    <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
+    <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
+  </extensions>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
-      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
-              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
-      <action id="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction"
-              class="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
-      <action id="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction"
-              class="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
-      <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
-              class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
-              internal="true"/>
-      <action id="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction"
-              class="com.intellij.feedback.productivityMetric.TestShowProductivityFeedbackAction" internal="true"/>
-      <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
-              class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
-              internal="true"/>
-      <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
-              class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction"
+              class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
+              class="com.intellij.platform.feedback.demo.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.platform.feedback.localization.ShowLocalizationFeedbackDialog"
               internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
+
+    <action class="com.intellij.platform.feedback.demo.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.demo.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackAction" internal="true"
+            text="Show CSAT Feedback Dialog"/>
+    <action class="com.intellij.platform.feedback.csat.CsatFeedbackNextDayAction" internal="true"
+            text="Show Next Date for CSAT Feedback Dialog"/>
   </actions>
 </idea-plugin>

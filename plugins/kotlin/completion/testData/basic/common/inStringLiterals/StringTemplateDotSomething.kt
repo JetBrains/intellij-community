@@ -1,5 +1,6 @@
 // FIR_IDENTICAL
 // FIR_COMPARISON
+
 fun foo(param: String) {
     val s = "$param.l<caret>bla-bla-bla"
 }

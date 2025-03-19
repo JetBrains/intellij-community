@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.ui.breakpoints;
 
@@ -7,8 +7,8 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.settings.DebuggerSettingsUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -44,10 +44,10 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   public boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters = InstanceFilter.EMPTY_ARRAY;
 
-  @NonNls private static final String FILTER_OPTION_NAME = "filter";
-  @NonNls private static final String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
-  @NonNls private static final String INSTANCE_ID_OPTION_NAME = "instance_id";
-  @NonNls private static final String CONDITION_OPTION_NAME = "CONDITION";
+  private static final @NonNls String FILTER_OPTION_NAME = "filter";
+  private static final @NonNls String EXCLUSION_FILTER_OPTION_NAME = "exclusion_filter";
+  private static final @NonNls String INSTANCE_ID_OPTION_NAME = "instance_id";
+  private static final @NonNls String CONDITION_OPTION_NAME = "CONDITION";
   protected final Project myProject;
 
   public FilteredRequestorImpl(@NotNull Project project) {
@@ -125,10 +125,10 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
       setCondition(new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, condition));
     }
 
-    myClassFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
-    myClassExclusionFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
+    myClassFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(FILTER_OPTION_NAME));
+    myClassExclusionFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(EXCLUSION_FILTER_OPTION_NAME));
 
-    final ClassFilter[] instanceFilters = DebuggerUtilsEx.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
+    final ClassFilter[] instanceFilters = DebuggerSettingsUtils.readFilters(parentNode.getChildren(INSTANCE_ID_OPTION_NAME));
     final List<InstanceFilter> iFilters = new ArrayList<>(instanceFilters.length);
 
     for (ClassFilter instanceFilter : instanceFilters) {
@@ -145,9 +145,9 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
   public void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
     JDOMExternalizerUtil.writeField(parentNode, CONDITION_OPTION_NAME, getCondition().toExternalForm());
-    DebuggerUtilsEx.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
-    DebuggerUtilsEx.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
+    DebuggerSettingsUtils.writeFilters(parentNode, FILTER_OPTION_NAME, myClassFilters);
+    DebuggerSettingsUtils.writeFilters(parentNode, EXCLUSION_FILTER_OPTION_NAME, myClassExclusionFilters);
+    DebuggerSettingsUtils.writeFilters(parentNode, INSTANCE_ID_OPTION_NAME, InstanceFilter.createClassFilters(myInstanceFilters));
   }
 
   public TextWithImports getCondition() {

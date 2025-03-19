@@ -1,0 +1,4 @@
+com/google/gson/Gson
+it/unimi/dsi/fastutil/Hash$Strategy
+kotlin/jvm/internal/DefaultConstructorMarker
+kotlin/reflect/KMutableProperty0

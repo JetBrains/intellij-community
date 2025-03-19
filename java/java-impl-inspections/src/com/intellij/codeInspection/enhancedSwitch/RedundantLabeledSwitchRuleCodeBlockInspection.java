@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -14,15 +14,18 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 import static com.intellij.java.JavaBundle.message;
 
-public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspectionTool {
-  @NotNull
+public final class RedundantLabeledSwitchRuleCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.ENHANCED_SWITCH.isAvailable(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.ENHANCED_SWITCH);
+  }
+
+  @Override
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
@@ -56,8 +59,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     };
   }
 
-  @Nullable
-  private static PsiStatement getSingleStatement(@NotNull PsiCodeBlock block) {
+  private static @Nullable PsiStatement getSingleStatement(@NotNull PsiCodeBlock block) {
     PsiStatement firstStatement = PsiTreeUtil.getNextSiblingOfType(block.getLBrace(), PsiStatement.class);
     if (firstStatement != null && PsiTreeUtil.getNextSiblingOfType(firstStatement, PsiStatement.class) == null) {
       return firstStatement;
@@ -65,17 +67,15 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     return null;
   }
 
-  private static class UnwrapCodeBlockFix implements LocalQuickFix {
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
+  private static class UnwrapCodeBlockFix extends PsiUpdateModCommandQuickFix {
     @Override
-    public String getFamilyName() {
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
       return message("inspection.labeled.switch.rule.redundant.code.fix.name");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiBlockStatement body = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiBlockStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiBlockStatement body = PsiTreeUtil.getParentOfType(element, PsiBlockStatement.class);
       if (body != null && body.getParent() instanceof PsiSwitchLabeledRuleStatement) {
         PsiStatement bodyStatement = getSingleStatement(body.getCodeBlock());
         if (bodyStatement instanceof PsiYieldStatement) {

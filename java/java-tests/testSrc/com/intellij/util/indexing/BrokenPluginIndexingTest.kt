@@ -55,15 +55,15 @@ internal class BrokenPluginException : RuntimeException()
 
 @InternalIgnoreDependencyViolation
 internal class BrokenFileBasedIndexExtension : ScalarIndexExtension<Int>() {
-  override fun getIndexer() = DataIndexer<Int, Void, FileContent> { throw BrokenPluginException() }
-  override fun getName() = INDEX_ID
-  override fun getKeyDescriptor() = EnumeratorIntegerDescriptor.INSTANCE!!
-  override fun getVersion() = 0
-  override fun getInputFilter() = FileBasedIndex.InputFilter { it.name.contains("Some") }
-  override fun dependsOnFileContent() = true
+  override fun getIndexer(): DataIndexer<Int, Void, FileContent> = DataIndexer<Int, Void, FileContent> { throw BrokenPluginException() }
+  override fun getName(): ID<Int, Void> = INDEX_ID
+  override fun getKeyDescriptor(): EnumeratorIntegerDescriptor = EnumeratorIntegerDescriptor.INSTANCE!!
+  override fun getVersion(): Int = 0
+  override fun getInputFilter(): FileBasedIndex.InputFilter = FileBasedIndex.InputFilter { it.name.contains("Some") }
+  override fun dependsOnFileContent(): Boolean = true
 
   companion object {
     @JvmStatic
-    val INDEX_ID = ID.create<Int, Void>("broken.file.based.index")
+    val INDEX_ID: ID<Int, Void> = ID.create("broken.file.based.index")
   }
 }

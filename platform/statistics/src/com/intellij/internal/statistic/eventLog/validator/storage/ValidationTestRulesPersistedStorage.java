@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -76,9 +76,8 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     return EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
   }
 
-  @NotNull
-  private Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
-                                                        @Nullable EventGroupRemoteDescriptors.GroupRemoteRule productionRules) {
+  private @NotNull Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
+                                                                 @Nullable EventGroupRemoteDescriptors.GroupRemoteRule productionRules) {
     final GroupRemoteRule rules = merge(groups.rules, productionRules);
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(rules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.getInstance().getBuild());
@@ -97,11 +96,10 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
     }
   }
 
-  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() {
+  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() throws JsonProcessingException {
     ArrayList<EventGroupRemoteDescriptor> testGroupsSchemes =
       EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
     ArrayList<GroupValidationTestRule> groups = new ArrayList<>();
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
     for (EventGroupRemoteDescriptor group : testGroupsSchemes) {
       if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
       Set<String> eventIds = group.rules.event_id;
@@ -109,7 +107,8 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
         groups.add(new GroupValidationTestRule(group.id, false));
       }
       else {
-        groups.add(new GroupValidationTestRule(group.id, true, gson.toJson(group.rules)));
+        groups.add(new GroupValidationTestRule(group.id, true,
+                                               SerializationHelper.INSTANCE.serialize(group.rules)));
       }
     }
     return groups;

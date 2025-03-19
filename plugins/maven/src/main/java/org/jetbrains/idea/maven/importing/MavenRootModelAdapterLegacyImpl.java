@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.externalSystem.ImportedLibraryProperties;
@@ -15,11 +15,11 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -27,8 +27,8 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
+import org.jetbrains.idea.maven.utils.MavenPathWrapper;
 import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -52,7 +52,9 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
   private volatile Map<String, Library> myLibrariesTable;
 
-  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
+  public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p,
+                                         @NotNull Module module,
+                                         final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
     myModuleModel = rootModelsProvider.getModifiableModuleModel();
     myRootModel = rootModelsProvider.getModifiableRootModel(module);
@@ -142,18 +144,8 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  public String @NotNull [] getSourceRootUrls(boolean includingTests) {
-    return myRootModelModuleExtension.getSourceRootUrls(includingTests);
-  }
-
-  @Override
   public Module getModule() {
     return myRootModel.getModule();
-  }
-
-  @Override
-  public void clearSourceFolders() {
-    myRootModelModuleExtension.clearSourceFolders();
   }
 
   @Override
@@ -162,17 +154,14 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType, boolean ifNotEmpty) {
-    addSourceFolder(path, rootType, ifNotEmpty, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
-  }
-
-  @Override
   public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
-    addGeneratedJavaSourceFolder(path, rootType, true);
+    addSourceFolder(path, rootType, true, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
   }
 
-  private  <P extends JpsElement> void addSourceFolder(@NotNull String path, final @NotNull JpsModuleSourceRootType<P> rootType, boolean ifNotEmpty,
-                                                       final @NotNull P properties) {
+  private <P extends JpsElement> void addSourceFolder(@NotNull String path,
+                                                      final @NotNull JpsModuleSourceRootType<P> rootType,
+                                                      boolean ifNotEmpty,
+                                                      final @NotNull P properties) {
     if (ifNotEmpty) {
       String[] childs = new File(toPath(path).getPath()).list();
       if (childs == null || childs.length == 0) return;
@@ -183,19 +172,6 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
     Url url = toUrl(path);
     myRootModelModuleExtension.addSourceFolder(url, rootType, properties);
-  }
-
-  @Override
-  public boolean hasRegisteredSourceSubfolder(@NotNull File f) {
-    String url = toUrl(f.getPath()).getUrl();
-    return myRootModelModuleExtension.hasRegisteredSourceSubfolder(url);
-  }
-
-  @Override
-  @Nullable
-  public SourceFolder getSourceFolder(File folder) {
-    String url = toUrl(folder.getPath()).getUrl();
-    return myRootModelModuleExtension.getSourceFolder(url);
   }
 
   @Override
@@ -272,14 +248,14 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   @Override
   public void useModuleOutput(String production, String test) {
     getCompilerExtension().inheritCompilerOutputPath(false);
-    if (StringUtils.isEmpty(production) && StringUtils.isEmpty(test)) {
+    if (Strings.isEmpty(production) && Strings.isEmpty(test)) {
       getCompilerExtension().inheritCompilerOutputPath(true);
     }
-    else if (StringUtils.isEmpty(test)) {
+    else if (Strings.isEmpty(test)) {
       getCompilerExtension().setCompilerOutputPath(toUrl(production).getUrl());
       getCompilerExtension().setExcludeOutput(true);
     }
-    else if (StringUtils.isEmpty(production)) {
+    else if (Strings.isEmpty(production)) {
       getCompilerExtension().setCompilerOutputPathForTests(toUrl(test).getUrl());
       getCompilerExtension().setExcludeOutput(true);
     }
@@ -298,7 +274,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  public Path toPath(String path) {
+  public MavenPathWrapper toPath(String path) {
     return MavenUtil.toPath(myMavenProject, path);
   }
 
@@ -328,8 +304,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
   }
 
   @Override
-  @Nullable
-  public Module findModuleByName(String moduleName) {
+  public @Nullable Module findModuleByName(String moduleName) {
     return myModuleModel.findModuleByName(moduleName);
   }
 
@@ -362,13 +337,15 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
                                                 DependencyScope scope,
                                                 IdeModifiableModelsProvider provider,
                                                 MavenProject project) {
-    assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
+    assert !MavenConstants.SCOPE_SYSTEM.equals(
+      artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
 
     myLibrariesTable = null;
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
-    if (library == null) {     library = provider.createLibrary(libraryName, getMavenExternalSource());
+    if (library == null) {
+      library = provider.createLibrary(libraryName, getMavenExternalSource());
     }
     Library.ModifiableModel libraryModel = provider.getModifiableLibraryModel(library);
 
@@ -387,6 +364,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
         model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
                                                                                artifact.getArtifactId(),
                                                                                artifact.getVersion(),
+                                                                               artifact.getBaseVersion(),
                                                                                artifact.getPackaging(),
                                                                                artifact.getClassifier())));
       }
@@ -468,7 +446,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
 
   @Override
-  public Library findLibrary(@NotNull final MavenArtifact artifact) {
+  public Library findLibrary(final @NotNull MavenArtifact artifact) {
     return getOrCreateLibrariesTable().get(artifact.getLibraryName());
   }
 
@@ -496,31 +474,6 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   public static ProjectModelExternalSource getMavenExternalSource() {
     return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
-  }
-
-  @Nullable
-  public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
-    String name = artifact.getLibraryName();
-    for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
-      if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
-        return each;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
-    if (library == null) return null;
-
-    String name = library.getName();
-
-    if (!MavenArtifact.isMavenLibrary(name)) return null;
-
-    for (MavenArtifact each : project.getDependencies()) {
-      if (each.getLibraryName().equals(name)) return each;
-    }
-    return null;
   }
 
   @Override

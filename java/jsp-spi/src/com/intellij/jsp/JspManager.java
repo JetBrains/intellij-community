@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsp;
 
 import com.intellij.lang.jsp.IBaseJspManager;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -24,44 +25,33 @@ public abstract class JspManager implements IBaseJspManager {
     return project.getService(JspManager.class);
   }
 
-  @NotNull
-  public abstract Set<String> getNamespacesByTagName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
-  @NotNull
-  public abstract Set<String> getNamespacesByFunctionName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
+  public abstract @NotNull Set<String> getNamespacesByTagName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
+  public abstract @NotNull Set<String> getNamespacesByFunctionName(@NotNull String tagName, @NotNull JspFile context, final boolean showProgress);
 
   /**
    * Returns possible tag names for given context JSP file.
    * @param context context JSP file.
    * @return set of tag names
    */
-  @NotNull
-  public abstract MultiMap<String,String> getAvailableTagNames(@NotNull final JspFile context);
+  public abstract @NotNull MultiMap<String,String> getAvailableTagNames(final @NotNull JspFile context);
 
-  @NotNull
-  public abstract List<Pair<String,String>> getAvailableFunctions(@NotNull final JspFile context);
+  public abstract @NotNull List<Pair<String,String>> getAvailableFunctions(final @NotNull JspFile context);
 
-  @Nullable
-  public abstract String getPrefixForNamespace(@NotNull String namespaceUri, @NotNull final JspFile context);
+  public abstract @Nullable String getPrefixForNamespace(@NotNull String namespaceUri, final @NotNull JspFile context);
 
-  @Nullable
-  public abstract String getDefaultPrefix(@NotNull XmlFile taglibFile);
+  public abstract @Nullable String getDefaultPrefix(@NotNull XmlFile taglibFile);
 
   public abstract String[] getPossibleTldUris(JspFile file);
 
   public abstract String[] getPossibleTldUris(@NotNull Module module);
 
-  @NotNull
-  public abstract Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
+  public abstract @NotNull @Unmodifiable Collection<XmlFile> getPossibleTldFiles(@NotNull Module module);
 
-  @Nullable
-  public abstract String getTaglibUri(@NotNull XmlFile taglibFile);
+  public abstract @Nullable String getTaglibUri(@NotNull XmlFile taglibFile);
 
-  @Nullable
-  public abstract XmlFile getTldFileByUri(@NonNls String uri, @NotNull JspFile jspFile);
+  public abstract @Nullable XmlFile getTldFileByUri(@NonNls String uri, @NotNull JspFile jspFile);
 
-  @Nullable
-  public abstract XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
+  public abstract @Nullable XmlFile getTldFileByUri(@NonNls String uri, @Nullable Module module, @Nullable JspFile jspFile);
 
-  @NotNull
-  public abstract JspVersion getJspVersion(@NotNull PsiFileSystemItem context);
+  public abstract @NotNull JspVersion getJspVersion(@NotNull PsiFileSystemItem context);
 }

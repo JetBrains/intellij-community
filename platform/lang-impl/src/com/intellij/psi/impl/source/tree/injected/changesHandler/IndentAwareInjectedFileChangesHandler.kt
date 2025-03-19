@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor
@@ -18,17 +18,16 @@ import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost.Shred
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.source.resolve.FileContextUtil
-import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.tail
 import com.intellij.util.text.splitLineRanges
 import kotlin.math.max
 
-
-class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
+internal class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor, newDocument: Document, injectedFile: PsiFile) :
   CommonInjectedFileChangesHandler(shreds, editor, newDocument, injectedFile) {
 
   init {
@@ -52,7 +51,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
     val affectedRange = TextRange.from(e.offset, max(e.newLength, e.oldLength))
     val affectedMarkers = markers.filter { affectedRange.intersects(it.fragmentMarker) }
 
-    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.range }
+    val guardedRanges = guardedBlocks.mapTo(HashSet()) { it.textRange }
     if (affectedMarkers.isEmpty() && guardedRanges.any { it.intersects(affectedRange) }) {
       // changed guarded blocks are on fragment document editor conscience, we just ignore them silently
       return
@@ -72,7 +71,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       "distributeTextToMarkers:\n  ${distributeTextToMarkers.joinToString("\n  ") { (m, t) -> "${markerString(m)} <<< '${t.esclbr()}'" }}"
     }
     for ((affectedMarker, markerText) in distributeTextToMarkers.reversed()) {
-      var rangeInHost = affectedMarker.hostMarker.range
+      var rangeInHost = affectedMarker.hostMarker.textRange
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
       val newText0 =
@@ -88,7 +87,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
           else firstLineWhiteSpaces + preprocessed
         }
 
-      val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)
+      val indent = affectedMarker.host?.getUserData(InjectionMeta.getInjectionIndent())
       val newText = indentHeuristically(indent, newText0, newText0 != markerText)
       LOG.debug { "newTextIndentAware:'${newText.esclbr()}' markerText:'${markerText.esclbr()}'" }
 
@@ -116,7 +115,7 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
 
     if (distributeTextToMarkers.none { (marker, text) -> marker.isValid() && text.isNotEmpty() }) {
       affectedMarkers.asSequence().mapNotNull { it.host }.firstOrNull()?.let { host ->
-        val indent = host.getUserData(InjectionMeta.INJECTION_INDENT)
+        val indent = host.getUserData(InjectionMeta.getInjectionIndent())
         val indented = indentHeuristically(indent, myFragmentDocument.text, false)
         workingRange = workingRange union ElementManipulators.handleContentChange(host, indented)?.textRange
       }

@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any, ClassVar
 
 import passlib.utils.handlers as uh
@@ -45,10 +46,10 @@ class bcrypt_sha256(_wrapped_bcrypt):
     default_ident: ClassVar[str]
     version: ClassVar[int]
     @classmethod
-    def using(cls, version: Any | None = ..., **kwds): ...  # type: ignore[override]
+    def using(cls, version: Incomplete | None = None, **kwds): ...  # type: ignore[override]
     prefix: Any
     @classmethod
     def identify(cls, hash): ...
     @classmethod
     def from_string(cls, hash): ...
-    def __init__(self, version: Any | None = ..., **kwds) -> None: ...
+    def __init__(self, version: Incomplete | None = None, **kwds) -> None: ...

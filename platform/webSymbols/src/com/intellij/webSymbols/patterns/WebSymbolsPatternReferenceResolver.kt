@@ -7,11 +7,14 @@ import com.intellij.webSymbols.WebSymbolQualifiedKind
 import com.intellij.webSymbols.WebSymbolQualifiedName
 import com.intellij.webSymbols.WebSymbolsScope
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
+import com.intellij.webSymbols.impl.canUnwrapSymbols
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNameConversionRules
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
 import com.intellij.webSymbols.webTypes.filters.WebSymbolsFilter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : WebSymbolsPatternSymbolsResolver {
   override fun getSymbolKinds(context: WebSymbol?): Set<WebSymbolQualifiedKind> =
     items.asSequence().map { it.qualifiedKind }.toSet()
@@ -37,6 +40,11 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
       }
       .toList()
 
+  override fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
+                           queryExecutor: WebSymbolsQueryExecutor,
+                           expandPatterns: Boolean): List<WebSymbol> =
+    items.flatMap { it.listSymbols(scopeStack, queryExecutor, expandPatterns) }
+
   data class Reference(
     val location: List<WebSymbolQualifiedName> = emptyList(),
     val qualifiedKind: WebSymbolQualifiedKind,
@@ -54,6 +62,16 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
                            includeVirtual, includeAbstract, false, scope)
       if (filter == null) return matches
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
+    }
+
+    fun listSymbols(scope: Stack<WebSymbolsScope>,
+                    queryExecutor: WebSymbolsQueryExecutor,
+                    expandPatterns: Boolean): List<WebSymbol> {
+      val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
+        .runListSymbolsQuery(location, qualifiedKind,
+                             expandPatterns, includeVirtual, includeAbstract, false, scope)
+      if (filter == null) return symbols
+      return filter.filterNameMatches(symbols, queryExecutor, scope, emptyMap())
     }
 
     fun codeCompletion(name: String,

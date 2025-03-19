@@ -17,19 +17,17 @@ package com.intellij.util.ui.accessibility;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import java.awt.*;
 
 public final class AccessibleContextUtil {
-  //@VisibleForTesting
-  static final String PUNCTUATION_CHARACTER = ".";
-  //@VisibleForTesting
-  static final String PUNCTUATION_SEPARATOR = "  ";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_CHARACTER = ".";
+  @ApiStatus.Internal
+  public static final String PUNCTUATION_SEPARATOR = "  ";
 
   public static void setName(@NotNull Component component, @Nls String name) {
     setAccessibleName(component, name);
@@ -40,7 +38,7 @@ public final class AccessibleContextUtil {
   }
 
   public static void setCombinedName(@NotNull Component component,
-                                     @NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+                                     @Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     setAccessibleName(component,
       combineAccessibleStrings(
         getAccessibleName(j1),
@@ -49,8 +47,8 @@ public final class AccessibleContextUtil {
   }
 
   public static void setCombinedName(@NotNull Component component,
-                                     @NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                     @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+                                     @Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                     @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     setAccessibleName(component,
       combineAccessibleStrings(
         getAccessibleName(j1),
@@ -60,22 +58,16 @@ public final class AccessibleContextUtil {
         getAccessibleName(j3)));
   }
 
-  @Nls
-  @Nullable
-  public static String getCombinedName(@NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     return combineAccessibleStrings(getAccessibleName(j1), separator, getAccessibleName(j2));
   }
 
-  @Nls
-  @Nullable
-  public static String getCombinedName(@NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                       @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static @Nls @Nullable String getCombinedName(@Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                                      @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3));
   }
 
-  @Nls
-  @Nullable
-  public static String getCombinedName(@NotNull @NlsSafe String separator, Component... components) {
+  public static @Nls @Nullable String getCombinedName(@NotNull @NlsSafe String separator, Component... components) {
     String result = "";
     for (Component c : components) {
       result = combineAccessibleStrings(result, separator, getAccessibleName(c));
@@ -91,8 +83,8 @@ public final class AccessibleContextUtil {
     setAccessibleDescription(component, description);
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1,
-                                            @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1,
+                                            @NotNull @NlsSafe String separator, @Nullable Component j2) {
     setAccessibleDescription(component,
       combineAccessibleStrings(
         getAccessibleDescription(j1),
@@ -100,8 +92,8 @@ public final class AccessibleContextUtil {
         getAccessibleDescription(j2)));
   }
 
-  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                            @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static void setCombinedDescription(@NotNull Component component, @Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                            @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     setAccessibleDescription(component,
       combineAccessibleStrings(
         getAccessibleDescription(j1),
@@ -111,12 +103,12 @@ public final class AccessibleContextUtil {
         getAccessibleDescription(j3)));
   }
 
-  public static String getCombinedDescription(@NotNull Component j1, @NotNull @NlsSafe String separator, @NotNull Component j2) {
+  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator, @Nullable Component j2) {
     return combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2));
   }
 
-  public static String getCombinedDescription(@NotNull Component j1, @NotNull @NlsSafe String separator1,
-                                              @NotNull Component j2, @NotNull @NlsSafe String separator2, @NotNull Component j3) {
+  public static String getCombinedDescription(@Nullable Component j1, @NotNull @NlsSafe String separator1,
+                                              @Nullable Component j2, @NotNull @NlsSafe String separator2, @Nullable Component j3) {
     return combineAccessibleStrings(getAccessibleDescription(j1), separator1,
                                     getAccessibleDescription(j2), separator2, getAccessibleDescription(j3));
   }
@@ -130,9 +122,7 @@ public final class AccessibleContextUtil {
    * readers don't announce the same text twice (name and description) when
    * a component receives the focus.
    */
-  @Nullable
-  @Nls
-  public static String getUniqueDescription(@NotNull AccessibleContext context, @Nullable @Nls String description) {
+  public static @Nullable @Nls String getUniqueDescription(@NotNull AccessibleContext context, @Nullable @Nls String description) {
     String name = context.getAccessibleName();
     if (StringUtil.equals(description, name)) {
       return null;
@@ -148,15 +138,11 @@ public final class AccessibleContextUtil {
     component.getAccessibleContext().setAccessibleParent(null);
   }
 
-  @Nullable
-  @Nls
-  public static String combineAccessibleStrings(@Nullable @Nls String s1, @Nullable @Nls String s2) {
+  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @Nullable @Nls String s2) {
     return combineAccessibleStrings(s1, " ", s2);
   }
 
-  @Nullable
-  @Nls
-  public static String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @NlsSafe String separator, @Nullable @Nls String s2) {
+  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @NlsSafe String separator, @Nullable @Nls String s2) {
     if (StringUtil.isEmpty(s1))
       return s2;
     if (StringUtil.isEmpty(s2))
@@ -164,10 +150,8 @@ public final class AccessibleContextUtil {
     return s1 + separator + s2;
   }
 
-  @Nullable
-  @Nls
-  public static String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @Nls String separator1, @Nullable @Nls String s2,
-                                                @NotNull @Nls String separator2, @Nullable @Nls String s3) {
+  public static @Nullable @Nls String combineAccessibleStrings(@Nullable @Nls String s1, @NotNull @Nls String separator1, @Nullable @Nls String s2,
+                                                               @NotNull @Nls String separator2, @Nullable @Nls String s3) {
     return combineAccessibleStrings(combineAccessibleStrings(s1, separator1, s2), separator2, s3);
   }
 
@@ -177,8 +161,7 @@ public final class AccessibleContextUtil {
    * screen readers, as they tend to ignore new line separators during speech, but
    * they do pause at punctuation characters.
    */
-  @NotNull
-  public static String replaceLineSeparatorsWithPunctuation(@Nullable String text) {
+  public static @NotNull String replaceLineSeparatorsWithPunctuation(@Nullable String text) {
     if (StringUtil.isEmpty(text))
       return "";
 
@@ -204,9 +187,7 @@ public final class AccessibleContextUtil {
     return result.toString();
   }
 
-  @Nls
-  @Nullable
-  private static String getAccessibleName(@NotNull Component component) {
+  private static @Nls @Nullable String getAccessibleName(@Nullable Component component) {
     if (component instanceof Accessible) {
       return component.getAccessibleContext().getAccessibleName();
     }
@@ -219,9 +200,7 @@ public final class AccessibleContextUtil {
     }
   }
 
-  @Nullable
-  @Nls
-  private static String getAccessibleDescription(@NotNull Component component) {
+  private static @Nullable @Nls String getAccessibleDescription(@Nullable Component component) {
     if (component instanceof Accessible) {
       return component.getAccessibleContext().getAccessibleDescription();
     }

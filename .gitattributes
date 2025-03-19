@@ -1,5 +1,5 @@
 # keep this the first line in the file
-*	text=auto
+*	text=auto eol=lf
 
 # Do not touch line endings, but show diff
 .idea/libraries/rd* -text

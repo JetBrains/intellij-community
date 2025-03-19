@@ -2,13 +2,15 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.ModuleExtension
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Register implementation of this interface as `com.intellij.workspaceModel.moduleExtensionBridgeFactory` extension to provide implementations
  * of [ModuleExtension] based on data from workspace model.
  */
+@ApiStatus.Internal
 interface ModuleExtensionBridgeFactory<T> where T : ModuleExtension, T : ModuleExtensionBridge {
   fun createExtension(module: ModuleBridge, entityStorage: VersionedEntityStorage, diff: MutableEntityStorage?): T
 }

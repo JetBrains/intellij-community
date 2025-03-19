@@ -7,17 +7,18 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_PROJECT_DATA_SERVICE_ORDER)
 public final class ProjectDataServiceImpl extends AbstractProjectDataService<ProjectData, Project> {
   @Override
@@ -57,13 +58,10 @@ public final class ProjectDataServiceImpl extends AbstractProjectDataService<Pro
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
-      @Override
-      public void execute() {
-        String oldName = project.getName();
-        ((ProjectEx)project).setProjectName(newName);
-        ExternalSystemApiUtil.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);
-      }
+    ExternalSystemApiUtil.executeProjectChangeAction(true, project, () -> {
+      String oldName = project.getName();
+      ((ProjectEx)project).setProjectName(newName);
+      ExternalSystemApiUtil.getSettings(project, externalSystemId).getPublisher().onProjectRenamed(oldName, newName);
     });
   }
 }

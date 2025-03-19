@@ -3,7 +3,7 @@ plugins {
 #if ($context.hasLanguage("kotlin"))
   id("org.jetbrains.kotlin.jvm") version "${context.getBomProperty("kotlin.version")}"
 #end
-  id("org.jetbrains.intellij") version "${context.getBomProperty("gradle.intellij.version")}"
+  id("org.jetbrains.intellij.platform") version "${context.getBomProperty("gradle.intellij.version")}"
 }
 
 group = "${context.group}"
@@ -11,15 +11,33 @@ version = "${context.version}"
 
 repositories {
   mavenCentral()
+  intellijPlatform {
+    defaultRepositories()
+  }
 }
 
 // Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-  version.set("${context.getBomProperty("intellij.version")}")
-  type.set("IC") // Target IDE Platform
+// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+dependencies {
+  intellijPlatform {
+    create("IC", "${context.getBomProperty("intellij.version")}")
+    testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
-  plugins.set(listOf(/* Plugin Dependencies */))
+    // Add necessary plugin dependencies for compilation here, example:
+    // bundledPlugin("com.intellij.java")
+  }
+}
+
+intellijPlatform {
+  pluginConfiguration {
+    ideaVersion {
+      sinceBuild = "${context.getBomProperty("intellij.since.build")}"
+    }
+
+    changeNotes = """
+      Initial version
+    """.trimIndent()
+  }
 }
 
 tasks {
@@ -33,19 +51,4 @@ tasks {
     kotlinOptions.jvmTarget = "${context.getBomProperty("kotlin.target")}"
   }
 #end
-
-  patchPluginXml {
-    sinceBuild.set("${context.getBomProperty("intellij.since.build")}")
-    untilBuild.set("${context.getBomProperty("intellij.until.build")}")
-  }
-
-  signPlugin {
-    certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-    privateKey.set(System.getenv("PRIVATE_KEY"))
-    password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-  }
-
-  publishPlugin {
-    token.set(System.getenv("PUBLISH_TOKEN"))
-  }
 }

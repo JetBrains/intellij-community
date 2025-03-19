@@ -1,0 +1,88 @@
+### auto-generated section `build intellij.vcs.svn` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "vcs-svn_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "vcs-svn",
+  module_name = "intellij.vcs.svn",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/vcs-api:vcs",
+    "//platform/platform-api:ide",
+    "//platform/vcs-impl",
+    "//platform/platform-impl:ide-impl",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "@lib//:http-client",
+    "//platform/diff-impl",
+    "//platform/util/concurrency",
+    "//platform/util-ex",
+    "@lib//:guava",
+    "@lib//:ini4j",
+    "@lib//:oro_matcher",
+    "@lib//:jaxb-api",
+    "@lib//:javax-activation",
+    "@lib//:stream_ex",
+    "//platform/statistics",
+    "//platform/lvcs-api:lvcs",
+    "@lib//:fastutil-min",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/external-process-auth-helper:externalProcessAuthHelper",
+  ],
+  runtime_deps = [
+    ":vcs-svn_resources",
+    "@lib//:jaxb-runtime",
+    "@lib//:sqlite",
+  ]
+)
+### auto-generated section `build intellij.vcs.svn` end
+
+### auto-generated section `build intellij.vcs.svn.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "vcs-svn-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "vcs-svn-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSource/**/*.kt", "testSource/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:junit4",
+    "//plugins/svn4idea:vcs-svn",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/ide-core-impl",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//xml/dom-impl",
+    "//platform/vcs-tests:vcs-testFramework",
+    "@lib//:hamcrest",
+    "@lib//:kotlin-test",
+    "@lib//:stream_ex",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+
+jvm_test(
+  name = "vcs-svn-tests_test",
+  runtime_deps = [":vcs-svn-tests_test_lib"]
+)
+### auto-generated section `build intellij.vcs.svn.tests` end

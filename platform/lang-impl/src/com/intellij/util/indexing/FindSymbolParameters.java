@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class FindSymbolParameters {
+public final class FindSymbolParameters {
   private final String myCompletePattern;
   private final String myLocalPatternName;
   private final GlobalSearchScope mySearchScope;
@@ -48,28 +48,23 @@ public class FindSymbolParameters {
     return new FindSymbolParameters(myCompletePattern, myLocalPatternName, scope, myIdFilter);
   }
 
-  @NotNull
-  public String getCompletePattern() {
+  public @NotNull String getCompletePattern() {
     return myCompletePattern;
   }
 
-  @NotNull
-  public String getLocalPatternName() {
+  public @NotNull String getLocalPatternName() {
     return myLocalPatternName;
   }
 
-  @NotNull
-  public GlobalSearchScope getSearchScope() {
+  public @NotNull GlobalSearchScope getSearchScope() {
     return mySearchScope;
   }
 
-  @Nullable
-  public IdFilter getIdFilter() {
+  public @Nullable IdFilter getIdFilter() {
     return myIdFilter;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return Objects.requireNonNull(mySearchScope.getProject());
   }
 
@@ -91,8 +86,7 @@ public class FindSymbolParameters {
                                     ((FileBasedIndexImpl) FileBasedIndex.getInstance()).projectIndexableFiles(project));
   }
 
-  @NotNull
-  public static GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
+  public static @NotNull GlobalSearchScope searchScopeFor(@NotNull Project project, boolean searchInLibraries) {
     return searchInLibraries ? ProjectScope.getAllScope(project) : ProjectScope.getProjectScope(project);
   }
 }

@@ -29,9 +29,11 @@ public class RecursionSaveWalker extends DPatternWalker {
   @Override
   public Void onGrammar(DGrammarPattern p) {
     if (myVisited.add(p)) {
-      try {
-        return super.onGrammar(p);
-      } catch (NullPointerException e) {
+      var start = p.getStart();
+      if (start != null) {
+        return start.accept(this);
+      }
+      else {
         return null; // missing start pattern
       }
     }
@@ -41,9 +43,11 @@ public class RecursionSaveWalker extends DPatternWalker {
   @Override
   public Void onRef(DRefPattern p) {
     if (myVisited.add(p)) {
-      try {
-        return super.onRef(p);
-      } catch (NullPointerException e) {
+      var target = p.getTarget();
+      var pattern = target != null ? target.getPattern() : null;
+      if (pattern != null) {
+        return pattern.accept(this);
+      } else {
         return null; // unresolved ref
       }
     }
@@ -53,9 +57,11 @@ public class RecursionSaveWalker extends DPatternWalker {
   @Override
   protected Void onUnary(DUnaryPattern p) {
     if (myVisited.add(p)) {
-      try {
-        return super.onUnary(p);
-      } catch (NullPointerException e) {
+      var child = p.getChild();
+      if (child != null) {
+        child.accept(this);
+      }
+      else {
         return null; // empty element
       }
     }

@@ -1,30 +1,33 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoteFile {
-
-  private final boolean myWin;
+public final class RemoteFile {
   private final String myPath;
+  private final boolean myWin;
 
-  public RemoteFile(@NotNull String path, boolean isWin) {
-    myPath = toSystemDependent(path, isWin);
-    myWin = isWin;
+  private RemoteFile(String path, boolean isWindows) {
+    myPath = FileUtil.toSystemIndependentName(path).replace('/', getSeparator(isWindows));
+    myWin = isWindows;
   }
 
-  public RemoteFile(@NotNull String parent, String child) {
-    this(resolveChild(parent, child, isWindowsPath(parent)), isWindowsPath(parent));
+  private RemoteFile(String parent, String child, boolean isWindows) {
+    this(resolveChild(parent, child, isWindows), isWindows);
   }
 
-  public RemoteFile(@NotNull String parent, String child, boolean isWin) {
-    this(resolveChild(parent, child, isWin), isWin);
+  private static char getSeparator(boolean isWindows) {
+    return isWindows ? '\\' : '/';
   }
 
-  @NotNull
-  public String getName() {
+  private static String resolveChild(String parent, String child, boolean win) {
+    var separator = getSeparator(win);
+    return parent.endsWith(String.valueOf(separator)) ? parent + child : parent + separator + child;
+  }
+
+  public @NotNull String getName() {
     int ind = myPath.lastIndexOf(getSeparator(myWin));
     if (ind != -1 && ind < myPath.length() - 1) { //not last char
       return myPath.substring(ind + 1);
@@ -33,31 +36,6 @@ public class RemoteFile {
       return myPath;
     }
   }
-
-  private static String resolveChild(@NotNull String parent, @NotNull String child, boolean win) {
-    String separator = getSeparator(win);
-
-    String path;
-    if (parent.endsWith(separator)) {
-      path = parent + child;
-    }
-    else {
-      path = parent + separator + child;
-    }
-    return path;
-  }
-
-  private static String getSeparator(boolean win) {
-    String separator;
-    if (win) {
-      separator = "\\";
-    }
-    else {
-      separator = "/";
-    }
-    return separator;
-  }
-
 
   public String getPath() {
     return myPath;
@@ -68,45 +46,23 @@ public class RemoteFile {
   }
 
   public static boolean isWindowsPath(@NotNull String path) {
-    path = RemoteSdkCredentialsHolder.getInterpreterPathFromFullPath(path);
-
+    path = RemoteSdkProperties.getInterpreterPathFromFullPath(path);
     return OSAgnosticPathUtil.startsWithWindowsDrive(path);
   }
 
-  private static String toSystemDependent(@NotNull String path, boolean isWin) {
-    char separator = isWin ? '\\' : '/';
-    return FileUtil.toSystemIndependentName(path).replace('/', separator);
+  public static @NotNull RemoteFile createRemoteFile(@NotNull String path) {
+    return new RemoteFile(path, isWindowsPath(path));
   }
 
-  public static RemoteFileBuilder detectSystemByPath(@NotNull String path) {
-    return new RemoteFileBuilder(isWindowsPath(path));
+  public static @NotNull RemoteFile createRemoteFile(@NotNull String path, boolean isWindows) {
+    return new RemoteFile(path, isWindows);
   }
 
-  public static RemoteFile createRemoteFile(String path, String script) {
-    return detectSystemByPath(path).createRemoteFile(path, script);
+  public static @NotNull RemoteFile createRemoteFile(@NotNull String parent, @NotNull String child) {
+    return new RemoteFile(parent, child, isWindowsPath(parent));
   }
 
-  public static RemoteFile createRemoteFile(String path) {
-    return detectSystemByPath(path).createRemoteFile(path);
-  }
-
-  public static RemoteFile createRemoteFile(final String path, final String script, final boolean isWindows) {
-    return new RemoteFileBuilder(isWindows).createRemoteFile(path, script);
-  }
-
-  public static final class RemoteFileBuilder {
-    private final boolean isWin;
-
-    private RemoteFileBuilder(boolean win) {
-      isWin = win;
-    }
-
-    public RemoteFile createRemoteFile(String path) {
-      return new RemoteFile(path, isWin);
-    }
-
-    public RemoteFile createRemoteFile(String path, String child) {
-      return new RemoteFile(path, child, isWin);
-    }
+  public static @NotNull RemoteFile createRemoteFile(@NotNull String parent, @NotNull String child, boolean isWindows) {
+    return new RemoteFile(parent, child, isWindows);
   }
 }

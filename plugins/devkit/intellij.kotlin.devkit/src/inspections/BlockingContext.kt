@@ -2,15 +2,15 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import org.jetbrains.idea.devkit.util.REQUIRES_BLOCKING_CONTEXT_ANNOTATION
-import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
+import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 
-internal val requiresBlockingContextAnnotation = FqName(REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
-internal val requiresBlockingContextAnnotationId = ClassId.topLevel(requiresBlockingContextAnnotation)
+internal val RequiresBlockingContextAnnotation: FqName = FqName(REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
+internal val RequiresBlockingContextAnnotationId: ClassId = ClassId.topLevel(RequiresBlockingContextAnnotation)
 
 internal abstract class BlockingContextFunctionBodyVisitor : KtTreeVisitorVoid() {
   override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression): Unit = Unit
@@ -21,10 +21,10 @@ internal abstract class BlockingContextFunctionBodyVisitor : KtTreeVisitorVoid()
     }
   }
 
-  protected fun checkInlineLambdaArguments(call: KtFunctionCall<*>) {
+  protected fun checkInlineLambdaArguments(call: KaFunctionCall<*>) {
     for ((psi, descriptor) in call.argumentMapping) {
       if (
-        descriptor.returnType is KtFunctionalType &&
+        descriptor.returnType is KaFunctionType &&
         !descriptor.symbol.isCrossinline &&
         !descriptor.symbol.isNoinline &&
         psi is KtLambdaExpression

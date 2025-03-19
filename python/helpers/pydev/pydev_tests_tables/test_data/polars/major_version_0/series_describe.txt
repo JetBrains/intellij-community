@@ -1,0 +1,7 @@
+{'statistic': ['count', 'null_count', 'mean', 'std', 'min', '5%', '25%', '50%', '75%', '95%', 'max'], 'value': [3.0, 0.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 3.0, 3.0]}
+{'statistic': ['count', 'null_count', 'mean', 'std', 'min', '5%', '25%', '50%', '75%', '95%', 'max'], 'value': [3.0, 0.0, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0, 3.0, 3.0]}
+{'statistic': ['count', 'null_count', 'sum'], 'value': [3, 0, 2]}
+{'statistic': ['count', 'null_count', 'unique'], 'value': [3, 0, 3]}
+{'statistic': ['count', 'null_count', 'min', '50%', 'max'], 'value': ['3', '0', '2022-01-01', '2022-01-02', '2022-01-03']}
+{'statistic': ['count', 'null_count', 'min', '50%', 'max'], 'value': ['3', '0', '2022-01-01 12:00:00', '2022-01-02 12:00:00', '2022-01-03 12:00:00']}
+{'statistic': ['count', 'null_count', 'unique'], 'value': [3, 0, 2]}

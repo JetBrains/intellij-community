@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -25,13 +25,12 @@ public final class CodeDocumentationUtil {
     return createLine(lineData, commenter, settings);
   }
 
-  @NotNull
-  private static String createLine(String lineData, CodeDocumentationAwareCommenter commenter, DocCommentSettings settings) {
+  private static @NotNull String createLine(String lineData, CodeDocumentationAwareCommenter commenter, DocCommentSettings settings) {
     if (!settings.isLeadingAsteriskEnabled()) {
       return " " + lineData + " ";
     }
     else {
-      if (lineData.length() == 0) {
+      if (lineData.isEmpty()) {
         return commenter.getDocumentationCommentLinePrefix() + " ";
       }
       else {
@@ -53,8 +52,7 @@ public final class CodeDocumentationUtil {
    * @param document    target document
    * @param offset      target offset that identifies line to check and max offset to use during scanning
    */
-  @Nullable
-  public static String getIndentInsideJavadoc(@NotNull Document document, int offset) {
+  public static @Nullable String getIndentInsideJavadoc(@NotNull Document document, int offset) {
     CharSequence text = document.getCharsSequence();
     if (offset >= text.length()) {
       return null;
@@ -83,8 +81,7 @@ public final class CodeDocumentationUtil {
    * @param lineStartOffset   start offset of the line that contains given offset
    * @return                  object that encapsulates information about comments at the given offset at the given text
    */
-  @NotNull
-  public static CommentContext tryParseCommentContext(@NotNull PsiFile file, @NotNull CharSequence chars, int offset, int lineStartOffset) {
+  public static @NotNull CommentContext tryParseCommentContext(@NotNull PsiFile file, @NotNull CharSequence chars, int offset, int lineStartOffset) {
     Commenter langCommenter = LanguageCommenters.INSTANCE.forLanguage(PsiUtilCore.getLanguageAtOffset(file, offset));
     return tryParseCommentContext(langCommenter, chars, lineStartOffset);
   }
@@ -109,7 +106,7 @@ public final class CodeDocumentationUtil {
   /**
    * Utility class that contains information about current comment context.
    */
-  public static class CommentContext {
+  public static final class CommentContext {
 
     public final CodeDocumentationAwareCommenter commenter;
     public final int                             lineStart;

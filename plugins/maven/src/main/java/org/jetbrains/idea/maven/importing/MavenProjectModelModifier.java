@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -48,9 +48,8 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     myProjectsManager = MavenProjectsManager.getInstance(project);
   }
 
-  @Nullable
   @Override
-  public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
+  public @Nullable Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
     final MavenProject toProject = myProjectsManager.findProject(to);
     if (toProject == null) return null;
     MavenId mavenId = toProject.getMavenId();
@@ -58,16 +57,16 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
-                                      @NotNull final MavenId mavenId,
-                                      @NotNull final DependencyScope scope) {
+                                      final @NotNull MavenId mavenId,
+                                      final @NotNull DependencyScope scope) {
     return addDependency(fromModules, mavenId, null, null, null, scope);
   }
 
   private Promise<Void> addDependency(@NotNull Collection<? extends Module> fromModules,
-                                      @NotNull final MavenId mavenId,
+                                      final @NotNull MavenId mavenId,
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
-                                      @Nullable String preferredVersion, @NotNull final DependencyScope scope) {
+                                      @Nullable String preferredVersion, final @NotNull DependencyScope scope) {
     final List<Trinity<MavenDomProjectModel, MavenId, String>> models = new ArrayList<>(fromModules.size());
     List<XmlFile> files = new ArrayList<>(fromModules.size());
     List<MavenProject> projectToUpdate = new ArrayList<>(fromModules.size());
@@ -122,11 +121,10 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     return myProjectsManager.forceUpdateProjects(projectToUpdate);
   }
 
-  @Nullable
   @Override
-  public Promise<Void> addExternalLibraryDependency(@NotNull Collection<? extends Module> modules,
-                                                    @NotNull ExternalLibraryDescriptor descriptor,
-                                                    @NotNull DependencyScope scope) {
+  public @Nullable Promise<Void> addExternalLibraryDependency(@NotNull Collection<? extends Module> modules,
+                                                              @NotNull ExternalLibraryDescriptor descriptor,
+                                                              @NotNull DependencyScope scope) {
     for (Module module : modules) {
       if (!myProjectsManager.isMavenizedModule(module)) {
         return null;
@@ -137,11 +135,10 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), descriptor.getPreferredVersion(), scope);
   }
 
-  @NotNull
-  private String selectVersion(@NotNull MavenId mavenId,
-                               @Nullable String minVersion,
-                               @Nullable String maxVersion,
-                               @Nullable String preferredVersion) {
+  private @NotNull String selectVersion(@NotNull MavenId mavenId,
+                                        @Nullable String minVersion,
+                                        @Nullable String maxVersion,
+                                        @Nullable String preferredVersion) {
     Set<String> versions = (mavenId.getGroupId() == null || mavenId.getArtifactId() == null)
                            ? Collections.emptySet()
                            : DependencySearchService.getInstance(myProject).getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
@@ -161,9 +158,8 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     return Collections.max(suitableVersions, VersionComparatorUtil.COMPARATOR);
   }
 
-  @Nullable
   @Override
-  public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+  public @Nullable Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
     String name = library.getName();
     if (name != null && name.startsWith(MavenArtifact.MAVEN_LIB_PREFIX)) {
       //it would be better to use RepositoryLibraryType for libraries imported from Maven and fetch mavenId from the library properties instead
@@ -174,7 +170,7 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @Override
-  public Promise<Void> changeLanguageLevel(@NotNull Module module, @NotNull final LanguageLevel level) {
+  public Promise<Void> changeLanguageLevel(@NotNull Module module, final @NotNull LanguageLevel level) {
     if (!myProjectsManager.isMavenizedModule(module)) return null;
 
     MavenProject mavenProject = myProjectsManager.findProject(module);
@@ -213,8 +209,7 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
   }
 
-  @NotNull
-  public static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
+  public static @NotNull MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
     MavenDomPlugin plugin = findCompilerPlugin(model);
     if (plugin != null) return plugin;
     plugin = model.getBuild().getPlugins().addPlugin();
@@ -223,8 +218,7 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     return plugin;
   }
 
-  @Nullable
-  public static MavenDomPlugin findCompilerPlugin(MavenDomProjectModel model) {
+  public static @Nullable MavenDomPlugin findCompilerPlugin(MavenDomProjectModel model) {
     MavenDomPlugins plugins = model.getBuild().getPlugins();
     for (MavenDomPlugin plugin : plugins.getPlugins()) {
       if ("org.apache.maven.plugins".equals(plugin.getGroupId().getStringValue()) &&

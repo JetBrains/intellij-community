@@ -24,13 +24,11 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependencies()
 internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWithDependenciesContainer(
     dependencies: IdeaKotlinDependenciesContainer
 ) {
-    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(projectDataNode)
-
     val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
 
     mppModel.sourceSetsByName.values.forEach { sourceSet ->
         val sourceSetModuleId = KotlinSourceSetModuleId(resolverCtx, gradleModule, sourceSet)
-        val sourceSetDataNode = moduleDataNode.findSourceSetNode(sourceSetModuleId) ?: return@forEach
+        val sourceSetDataNode = projectDataNode.findSourceSetDataNode(sourceSetModuleId) ?: return@forEach
         val sourceSetDependencies = dependencies[sourceSet.name]
 
         /* Call into extension points, skipping dependency population of source set if instructed */

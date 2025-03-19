@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
@@ -40,9 +40,11 @@ class InstancesWithStackFrameView {
   private final JBSplitter mySplitter = new JBSplitter(false, DEFAULT_SPLITTER_PROPORTION);
   private boolean myIsHided = false;
 
-  InstancesWithStackFrameView(@NotNull XDebugSession debugSession, @NotNull InstancesTree tree,
+  InstancesWithStackFrameView(@NotNull XDebugSession debugSession,
+                              @NotNull JComponent component,
+                              @NotNull InstancesTree tree,
                               @NotNull StackFrameList list, @NotNull String className) {
-    mySplitter.setFirstComponent(new JBScrollPane(tree));
+    mySplitter.setFirstComponent(component);
 
     final Project project = debugSession.getProject();
     list.setEmptyText(JavaDebuggerBundle.message("status.text.select.instance.to.see.stack.frame"));
@@ -120,8 +122,7 @@ class InstancesWithStackFrameView {
     });
   }
 
-  @Nullable
-  private static ObjectReference getSelectedReference(InstancesTree tree) {
+  private static @Nullable ObjectReference getSelectedReference(InstancesTree tree) {
     TreePath selectionPath = tree.getSelectionPath();
     Object selectedItem = selectionPath != null ? selectionPath.getLastPathComponent() : null;
     if (selectedItem instanceof XValueNodeImpl xValueNode &&

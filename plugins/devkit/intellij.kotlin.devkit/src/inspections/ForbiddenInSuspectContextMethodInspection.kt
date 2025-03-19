@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.*
@@ -8,22 +8,19 @@ import com.intellij.psi.*
 import com.intellij.util.containers.toArray
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.idea.devkit.util.isInspectionForBlockingContextAvailable
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
-import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
-import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.base.psi.imports.addImport
+import org.jetbrains.kotlin.idea.base.util.isImported
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -39,7 +36,8 @@ private const val INVOKE_LATER_KT = "com.intellij.openapi.application.invokeLate
 private const val MODALITY_STATE_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.ModalityState.defaultModalityState"
 private const val APPLICATION_GET_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.Application.getDefaultModalityState"
 private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
-private const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
+internal const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
+internal const val INTELLIJ_UI_DISPATCHER = "com.intellij.openapi.application.UI"
 private const val LAUNCH = "kotlinx.coroutines.launch"
 
 private val progressManagerCheckedCanceledName = FqName(PROGRESS_MANAGER_CHECKED_CANCELED)
@@ -58,7 +56,7 @@ private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
-class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
+internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return if (isInspectionForBlockingContextAvailable(holder)) {
       createFileVisitor(holder)
@@ -69,60 +67,38 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   }
 
   private fun createFileVisitor(holder: ProblemsHolder): PsiElementVisitor {
-    val blockingContextCallsVisitor by lazy(mode = LazyThreadSafetyMode.NONE) {
+    val blockingContextCallsVisitor = lazy(mode = LazyThreadSafetyMode.NONE) {
       BlockingContextMethodsCallsVisitor(holder)
     }
 
-    return object : KtTreeVisitorVoid() {
-      override fun visitElement(element: PsiElement): Unit = Unit
-
-      override fun visitNamedFunction(function: KtNamedFunction) {
-        if (function.hasModifier(KtTokens.SUSPEND_KEYWORD) && !isSuspensionRestricted(function)) {
-          function.bodyExpression?.accept(blockingContextCallsVisitor)
-          return
-        }
-        super.visitNamedFunction(function)
-      }
-
-      override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        analyze(lambdaExpression) {
-          val type = lambdaExpression.getKtType()
-          if (type?.isSuspendFunctionType == true && !isSuspensionRestricted(type)) {
-            lambdaExpression.bodyExpression?.accept(blockingContextCallsVisitor)
-            return
-          }
-        }
-
-        super.visitLambdaExpression(lambdaExpression)
-      }
-    }
+    return TopLevelFunctionVisitor(blockingContextCallsVisitor)
   }
 
   private class BlockingContextMethodsCallsVisitor(
     private val holder: ProblemsHolder,
   ) : BlockingContextFunctionBodyVisitor() {
-    private val visitedSymbols = mutableSetOf<KtSymbol>()
+    private val visitedSymbols = mutableSetOf<KaSymbol>()
     private var callingElement: KtCallExpression? = null
 
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val functionCall = expression.resolveCall().singleFunctionCallOrNull()
+        val functionCall = expression.resolveToCall()?.singleFunctionCallOrNull()
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
-        if (calledSymbol !is KtNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(requiresBlockingContextAnnotationId)
+        if (calledSymbol !is KaNamedSymbol) return
+        val hasAnnotation = RequiresBlockingContextAnnotationId in calledSymbol.annotations
 
         if (!hasAnnotation) {
-          if (calledSymbol is KtFunctionSymbol) {
+          if (calledSymbol is KaNamedFunctionSymbol) {
             checkCalledFunction(expression, calledSymbol)
           }
-          if (calledSymbol is KtFunctionSymbol && calledSymbol.isInline) {
+          if (calledSymbol is KaNamedFunctionSymbol && calledSymbol.isInline) {
             checkInlineLambdaArguments(functionCall)
           }
           return super.visitCallExpression(expression)
         }
 
-        when (calledSymbol.callableIdIfNonLocal?.asSingleFqName()) {
+        when (calledSymbol.callableId?.asSingleFqName()) {
           progressManagerCheckedCanceledName -> {
             holder.registerProblem(
               extractElementToHighlight(expression),
@@ -166,7 +142,7 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       }
     }
 
-    private fun checkCalledFunction(call: KtCallExpression, calledSymbol: KtFunctionSymbol) {
+    private fun checkCalledFunction(call: KtCallExpression, calledSymbol: KaNamedFunctionSymbol) {
       // Visiting functions in current file. We don't visit it with our visitor in other cases, so it will be visited once
       if (
         calledSymbol.psi?.containingFile == holder.file &&
@@ -193,21 +169,15 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       return callingElement?.let { arrayOf(NavigateToCallInSuspendFunction(it)) } ?: LocalQuickFix.EMPTY_ARRAY
     }
 
-    private fun KtAnalysisSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
+    private fun KaSession.provideFixesForInvokeLater(callExpression: KtCallExpression): Array<LocalQuickFix> {
       callingElement?.let { return arrayOf(NavigateToCallInSuspendFunction(it)) }
 
       return buildList<LocalQuickFix> {
         add(ReplaceInvokeLaterWithWithContextQuickFix(callExpression))
 
-        val implicitReceiverTypesAtPosition = getImplicitReceiverTypesAtPosition(callExpression)
-        val coroutineScopeClass = ClassId.topLevel(FqName(COROUTINE_SCOPE))
-        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { type ->
-          type is KtUsualClassType &&
-          (
-            type.classId == coroutineScopeClass ||
-            type.getAllSuperTypes().any { superType -> superType is KtUsualClassType && superType.classId == coroutineScopeClass }
-          )
-        }
+        val implicitReceiverTypesAtPosition = collectImplicitReceiverTypes(callExpression)
+        val coroutineScopeClassId = ClassId.topLevel(FqName(COROUTINE_SCOPE))
+        val hasCoroutineScope = implicitReceiverTypesAtPosition.any { it.isSubtypeOf(coroutineScopeClassId) }
         if (hasCoroutineScope) {
           add(ReplaceInvokeLaterWithLaunchQuickFix(callExpression))
         }
@@ -249,8 +219,9 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         val callExpression = getCallExpression(startElement)!!
 
-        if (!isImported(intelliJEdtDispatcher, callExpression.containingKtFile)) {
-          ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, intelliJEdtDispatcher)
+        val ktFile = callExpression.containingKtFile
+        if (!isImported(intelliJEdtDispatcher, ktFile)) {
+          ktFile.addImport(intelliJEdtDispatcher)
         }
 
         replaceMethodInCallWithLambda(callExpression, "$WITH_CONTEXT($DISPATCHERS.${intelliJEdtDispatcher.shortName().asString()}) {}")
@@ -276,11 +247,12 @@ class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
       override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         val callExpression = getCallExpression(startElement)!!
 
-        if (!isImported(intelliJEdtDispatcher, callExpression.containingKtFile)) {
-          ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, intelliJEdtDispatcher)
+        val ktFile = callExpression.containingKtFile
+        if (!isImported(intelliJEdtDispatcher, ktFile)) {
+          ktFile.addImport(intelliJEdtDispatcher)
         }
         if (!isImported(coroutinesLaunch, callExpression.containingKtFile)) {
-          ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, coroutinesLaunch)
+          ktFile.addImport(coroutinesLaunch)
         }
 
         replaceMethodInCallWithLambda(callExpression,
@@ -345,26 +317,26 @@ private fun isImported(name: FqName, file: KtFile): Boolean {
   return file.importDirectives.mapNotNull { it.importPath }.any { name.isImported(it) }
 }
 
-private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
+internal fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   analyze(function) {
     val declaringClass = function.containingClass()
-    val declaringClassSymbol = declaringClass?.getClassOrObjectSymbol()
+    val declaringClassSymbol = declaringClass?.classSymbol
     if (declaringClassSymbol != null && restrictsSuspension(declaringClassSymbol)) {
       return true
     }
 
     val receiverType = function.receiverTypeReference
-    val receiverTypeSymbol = receiverType?.getKtType()?.expandedClassSymbol
+    val receiverTypeSymbol = receiverType?.type?.expandedSymbol
     return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
   }
 }
 
-private fun KtAnalysisSession.isSuspensionRestricted(lambdaType: KtType): Boolean {
+internal fun KaSession.isSuspensionRestricted(lambdaType: KaType): Boolean {
   assert(lambdaType.isSuspendFunctionType)
 
-  val receiverTypeSymbol = (lambdaType as? KtFunctionalType)?.receiverType?.expandedClassSymbol
+  val receiverTypeSymbol = (lambdaType as? KaFunctionType)?.receiverType?.expandedSymbol
   return receiverTypeSymbol != null && restrictsSuspension(receiverTypeSymbol)
 }
 
-private fun restrictsSuspension(symbol: KtClassOrObjectSymbol): Boolean =
-  symbol.hasAnnotation(ClassId.topLevel(restrictsSuspensionName))
+private fun restrictsSuspension(symbol: KaClassSymbol): Boolean =
+  ClassId.topLevel(restrictsSuspensionName) in symbol.annotations

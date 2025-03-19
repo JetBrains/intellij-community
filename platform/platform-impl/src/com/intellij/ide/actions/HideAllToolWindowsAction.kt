@@ -48,11 +48,11 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 private fun getIdsToHide(toolWindowManager: ToolWindowManagerEx): Sequence<String> {
   return toolWindowManager.toolWindows.asSequence()
-    .filter { HideToolWindowAction.shouldBeHiddenByShortCut(it) }
+    .filter { HideToolWindowAction.Manager.shouldBeHiddenByShortCut(it) }
     .map { it.id }
 }

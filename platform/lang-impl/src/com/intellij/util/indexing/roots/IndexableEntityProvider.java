@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,30 +16,13 @@ import java.util.function.BiFunction;
 
 /**
  * This extension point together with  {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler} allows to control
- * indexing of Workspace Model entities and might be needed for custom entities.
- * <p>
- * <ol>Basic scenario is as following:
- *  <li>either whole project is reindexed, or some change events were created by WorkspaceModel.
- *  <ul>
- *    <li>In the first case all entities in EntityStorage are fed into {@link Existing} extension points to get {@link IndexableIteratorBuilder}s.</li>
- *    <li>In the second case all events are fed into {@link IndexableEntityProvider} extension points to get {@link IndexableIteratorBuilder}s
- * again.
- *    <ul><li>
- *     For entities with bidirectional reference between, like {@link ModuleEntity} and
- *     {@link com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity}, Workspace model allows changing that reference
- *     on any of the sides, but issues Replace event only for that side. To enforce handling both cases, consider using
- *     {@link IndexableEntityProvider::getDependencies} for such entities.
- *    </li></ul>
- *    </li>
- *   </ul></il>
- *   <li>After all {@link IndexableIteratorBuilder}s are collected, they are merged to avoid double indexing and transformed
- *   into {@link IndexableFilesIterator}s. Merging and transformation is made
- *   by {@link com.intellij.util.indexing.roots.builders.IndexableIteratorBuilderHandler}s. Refer to its javadoc for more info.
- *   </li>
- *   <li>As the last step iterators are iterated by indexing system, indexes values are computed for the files they provide and
- *   saved for future usage.</li>
- * </ol>
+ * indexing of Workspace Model entities and might be needed for custom entities in exotic corner cases.
+ * {@link Enforced} interface allows enforcing reindexing of additional paths on entity change. Those paths are not directly associated
+ * with the entity by its {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor}.
+ * <p/>
+ * {@link IndexableEntityProvider} which is not {@link Enforced} is effectively ignored.
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   ExtensionPointName<IndexableEntityProvider<? extends WorkspaceEntity>> EP_NAME =
@@ -48,8 +31,7 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   @NotNull
   Class<E> getEntityClass();
 
-  @NotNull
-  default Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+  default @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
     return Collections.emptyList();
   }
 
@@ -71,15 +53,14 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   /**
    * Provides builders of iterators to index files after {@code entity} was removed
    */
-  @NotNull
-  default Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull E entity,
+  default @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull E entity,
                                                                                           @NotNull Project project) {
     return Collections.emptyList();
   }
 
   /**
    * Currently for entities with bidirectional reference between (for example, {@link ModuleEntity} and
-   * {@link com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity}) Workspace Model allows
+   * {@link ContentRootEntity}) Workspace Model allows
    * editing this reference on any side, and Replaced event would happen for that side only.
    * To support both ways of changing, consider using this interface.
    *
@@ -95,7 +76,7 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
 
     static <E extends WorkspaceEntity> DependencyOnParent<E> create(@NotNull Class<E> parentClass,
                                                                     @NotNull BiFunction<? super E, ? super E, @NotNull Collection<? extends IndexableIteratorBuilder>> replacedIteratorsCreator) {
-      class MyDependency implements DependencyOnParent<E> {
+      final class MyDependency implements DependencyOnParent<E> {
         @Override
         public @NotNull Class<E> getParentClass() {
           return parentClass;
@@ -111,26 +92,6 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
     }
   }
 
-  interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
-
-    /**
-     * Provides builders for iterators to index files when just project is indexed, no events given
-     */
-    @NotNull
-    default Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull E entity,
-                                                                                            @NotNull Project project) {
-      return getAddedEntityIteratorBuilders(entity, project);
-    }
-
-    /**
-     * Provides builders for iterators to index files belonging to a module when just module content is indexed, no events given
-     */
-    @NotNull
-    Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                        @NotNull EntityStorage entityStorage,
-                                                                                        @NotNull Project project);
-  }
-
   /**
    * Idea behind this marker interface is to mark that something should be reindexed as cheap as possible,
    * with expensive checks and merges made in batch in corresponding
@@ -140,8 +101,8 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   }
 
   /**
-   * Marks providers that should be used to determine scope of reindexing on Workspace model changes even after switching to
-   * {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor} ({@link IndexableFilesIndex#isEnabled()})
+   * Marks providers that should be used to determine the scope of reindexing on Workspace model changes even after switching to
+   * {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor}
    */
   interface Enforced<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
   }

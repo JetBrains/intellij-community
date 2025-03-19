@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.junit5` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "junit5_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "junit5",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:junit5"],
+  runtime_deps = [
+    ":junit5_resources",
+    "@lib//:junit5",
+  ]
+)
+### auto-generated section `build intellij.libraries.junit5` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.EventDispatcher;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +25,7 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
@@ -40,7 +36,7 @@ public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance(SvnChangeProvider.class);
   public static final @NonNls String PROPERTY_LAYER = "Property";
 
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull SvnVcs myVcs;
 
   public SvnChangeProvider(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -52,11 +48,9 @@ public class SvnChangeProvider implements ChangeProvider {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs);
-      final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
-      statusReceiver.addListener(context);
-      statusReceiver.addListener(nestedCopiesBuilder);
+      final StatusReceiver statusReceiver = new CombinedStatusReceiver(Arrays.asList(context, nestedCopiesBuilder));
 
-      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
+      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver, progress);
 
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
         walker.go(path, Depth.INFINITY);
@@ -66,7 +60,7 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(path, Depth.IMMEDIATES);
       }
 
-      statusReceiver.getMulticaster().finish();
+      statusReceiver.finish();
 
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
@@ -184,7 +178,7 @@ public class SvnChangeProvider implements ChangeProvider {
 
   private void applyMovedChange(@NotNull SvnChangeProviderContext context,
                                 @NotNull FilePath oldPath,
-                                @Nullable final VcsDirtyScope dirtyScope,
+                                final @Nullable VcsDirtyScope dirtyScope,
                                 @NotNull Set<SvnChangedFile> movedFiles,
                                 @NotNull SvnChangedFile deletedFile,
                                 @Nullable Status copiedStatus,

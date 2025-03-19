@@ -2,9 +2,12 @@
 package org.jetbrains.kotlin.idea.fir.search.refIndex
 
 import com.intellij.testFramework.SkipSlowTestLocally
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceMultiModuleTest
 
 @SkipSlowTestLocally
 class KotlinCompilerReferenceMultiModuleFirTest : KotlinCompilerReferenceMultiModuleTest() {
-    override val isFir: Boolean get() = true
+
+    override val pluginMode: KotlinPluginMode
+        get() = KotlinPluginMode.K2
 }

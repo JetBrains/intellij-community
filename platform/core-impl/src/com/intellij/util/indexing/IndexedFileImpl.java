@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -30,9 +30,8 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
     myType = type;
   }
 
-  @NotNull
   @Override
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     if (mySubstituteFileType == null) {
       mySubstituteFileType = SubstitutedFileType.substituteFileType(myFile, myType != null ? myType : myFile.getFileType(), getProject());
     }
@@ -43,15 +42,13 @@ public class IndexedFileImpl extends UserDataHolderBase implements IndexedFile {
     mySubstituteFileType = substituteFileType;
   }
 
-  @NotNull
   @Override
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public String getFileName() {
+  public @NotNull String getFileName() {
     if (myFileName == null) {
       myFileName = myFile.getName();
     }

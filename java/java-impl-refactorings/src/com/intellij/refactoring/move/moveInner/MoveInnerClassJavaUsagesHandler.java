@@ -21,7 +21,7 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHandler {
+public final class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHandler {
   @Override
   public void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass, @Nullable String parameterNameOuterClass) {
     PsiElement refElement = usage.getElement();

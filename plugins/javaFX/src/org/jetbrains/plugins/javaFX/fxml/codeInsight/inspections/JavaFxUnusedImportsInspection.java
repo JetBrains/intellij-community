@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -20,7 +20,7 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.JavaFxImportsOptimizer;
 
 import java.util.*;
 
-public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
+public final class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool {
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, final boolean isOnTheFly) {
     if (!JavaFxFileTypeFactory.isFxml(file)) return null;
@@ -71,11 +71,10 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
     return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static class JavaFxOptimizeImportsFix implements LocalQuickFix {
+  private static final class JavaFxOptimizeImportsFix implements LocalQuickFix {
 
     @Override
-    @NotNull
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
       return QuickFixBundle.message("optimize.imports.fix");
     }
 

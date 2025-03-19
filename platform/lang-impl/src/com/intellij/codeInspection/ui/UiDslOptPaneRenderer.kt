@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintUtil
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.options.*
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
@@ -28,25 +27,26 @@ import com.intellij.util.applyIf
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory
 import com.intellij.util.ui.UIUtil.setEnabledRecursively
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 import javax.swing.*
 import kotlin.math.max
 
 
-class UiDslOptPaneRenderer : InspectionOptionPaneRenderer {
+@ApiStatus.Internal
+class UiDslOptPaneRenderer : OptionPaneRenderer {
 
   private data class RendererContext(val controller: OptionController, val parent: Disposable, val project: Project)
 
-  override fun render(tool: InspectionProfileEntry,
+  override fun render(controller: OptionController,
                       pane: OptPane,
                       parent: Disposable,
-                      project: Project): JComponent {
+                      project: Project ): JComponent {
     return panel {
       pane.components.forEachIndexed { i, component ->
-        render(component, RendererContext(tool.optionController, parent, project), i == 0, component.hasBottomGap)
+        render(component, RendererContext(controller, parent, project), i == 0, component.hasBottomGap)
       }
-    }
-      .apply { registerValidators(parent) }
+    }.apply { registerValidators(parent) }
   }
 
   /**

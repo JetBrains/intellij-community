@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -11,7 +11,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.model.Pointer;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.navigation.NavigatableSymbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -31,10 +30,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
-import com.intellij.platform.backend.documentation.DocumentationSymbol;
 import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.platform.backend.navigation.NavigationRequest;
-import com.intellij.platform.backend.navigation.NavigationRequests;
 import com.intellij.platform.backend.navigation.NavigationTarget;
 import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
@@ -46,10 +43,11 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
-import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -63,7 +61,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 
-public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
+public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper {
   private static final Logger LOG = Logger.getInstance(JavaPsiImplementationHelperImpl.class);
 
   private final Project myProject;
@@ -72,18 +70,16 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
+  public @NotNull PsiClass getOriginalClass(@NotNull PsiClass psiClass) {
     return findCompiledElement(myProject, psiClass, scope -> {
       String fqn = psiClass.getQualifiedName();
       return fqn != null ? Arrays.asList(JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope)) : Collections.emptyList();
     });
   }
 
-  @NotNull
   @Override
-  public PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
+  public @NotNull PsiJavaModule getOriginalModule(@NotNull PsiJavaModule module) {
     return findCompiledElement(myProject, module, scope -> JavaPsiFacade.getInstance(myProject).findModules(module.getName(), scope));
   }
 
@@ -117,18 +113,33 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return original;
   }
 
-  @NotNull
   @Override
-  public PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
+  public @NotNull PsiElement getClsFileNavigationElement(@NotNull PsiJavaFile clsFile) {
     Function<VirtualFile, VirtualFile> finder = null;
     Predicate<PsiFile> filter = null;
 
     PsiClass[] classes = clsFile.getClasses();
-    if (classes.length > 0) {
-      String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+    if (classes.length > 0 && classes[0] instanceof ClsClassImpl cls) {
+      String sourceFileName = cls.getSourceFileName();
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
-      finder = root -> root.findFileByRelativePath(relativePath);
+      LanguageLevel level = JavaMultiReleaseUtil.getVersion(clsFile);
+      if (level == null) {
+        finder = root -> root.findFileByRelativePath(relativePath);
+      }
+      else {
+        // Multi-release jar: assume that source file is placed in META-INF/versions/<ver>
+        // fallback to default location only if there's no the same file in the root
+        String versionPath = "META-INF/versions/" + level.feature() + "/" + relativePath;
+        if (JavaMultiReleaseUtil.findBaseFile(clsFile.getVirtualFile()) != null) {
+          finder = root -> root.findFileByRelativePath(versionPath);
+        } else {
+          finder = root -> {
+            VirtualFile target = root.findFileByRelativePath(versionPath);
+            return target == null ? root.findFileByRelativePath(relativePath) : target;
+          };
+        }
+      }
       filter = PsiClassOwner.class::isInstance;
     }
     else {
@@ -167,9 +178,8 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return Stream.concat(modelRoots, synthRoots);
   }
 
-  @NotNull
   @Override
-  public LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
+  public @NotNull LanguageLevel getEffectiveLanguageLevel(@Nullable VirtualFile virtualFile) {
     // For default project, do not look into virtual file system.
     // It is important for Upsource, where operations are done in default project to
     // prevent expensive look-up into VFS
@@ -200,8 +210,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
    * @param virtualFile virtual file for which language level is requested.
    * @return language level for classes root or null if file is not under a library source root or no matching classes root is found.
    */
-  @Nullable
-  private LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
+  private @Nullable LanguageLevel getClassesLanguageLevel(VirtualFile virtualFile) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     VirtualFile folder = virtualFile.isDirectory() ? virtualFile : virtualFile.getParent();
@@ -214,7 +223,8 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
       String className = virtualFile.getNameWithoutExtension();
       Set<VirtualFile> visitedRoots = new HashSet<>();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
-        for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
+        if (!(entry instanceof LibraryOrSdkOrderEntry libraryOrSdkEntry)) continue;
+        for (VirtualFile rootFile : libraryOrSdkEntry.getRootFiles(OrderRootType.CLASSES)) {
           if (visitedRoots.add(rootFile)) {
             VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
             PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
@@ -229,8 +239,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return null;
   }
 
-  @Nullable
-  private PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
+  private @Nullable PsiJavaFile getPsiFileInRoot(final VirtualFile dirFile, @Nullable String className) {
     if (className != null) {
       final VirtualFile classFile = dirFile.findChild(StringUtil.getQualifiedName(className, StdFileTypes.CLASS.getDefaultExtension()));
       if (classFile != null) {
@@ -259,12 +268,14 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     return importHelper.getDefaultAnchor(list, statement);
   }
 
-  @Nullable
   @Override
-  public PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
+  public @Nullable PsiElement getDefaultMemberAnchor(@NotNull PsiClass aClass, @NotNull PsiMember member) {
     CodeStyleSettings settings = CodeStyle.getSettings(aClass.getContainingFile());
     MemberOrderService service = ApplicationManager.getApplication().getService(MemberOrderService.class);
-    PsiElement anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    PsiElement anchor = null;
+    if (!(aClass instanceof PsiImplicitClass)) {
+      anchor = service.getAnchor(member, settings.getCommonSettings(JavaLanguage.INSTANCE), aClass);
+    }
 
     PsiElement newAnchor = skipWhitespaces(aClass, anchor);
     if (newAnchor != null) {
@@ -386,66 +397,152 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     };
   }
 
-  public static final class SnippetRegionSymbol implements NavigatableSymbol, DocumentationSymbol {
+  @Override
+  public @NotNull PsiSymbolReference getInheritDocSymbol(@NotNull PsiDocToken token) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return token;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return token.getTextRangeInParent().shiftLeft(1);
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        final PsiDocComment docComment = PsiTreeUtil.getParentOfType(token, PsiDocComment.class);
+        if (docComment == null) return List.of();
+        if (docComment.getOwner() instanceof PsiMethod method) {
+          final PsiDocTagImpl docTag = PsiTreeUtil.getParentOfType(token, PsiDocTagImpl.class);
+          var containingClass = method.getContainingClass();
+          if (containingClass == null) return List.of();
+
+          final var valueElement = token.getParent() instanceof PsiDocTag tag ? tag.getValueElement() : null;
+          final var target = findTargetRecursively(containingClass, method, docTag, valueElement != null ? valueElement.getText() : null, false, new HashSet<>());
+          if (target != null) {
+            return List.of(new SnippetRegionSymbol(target.getContainingFile(), getSnippetRange(target)));
+          }
+        }
+
+        return List.of();
+      }
+
+      private static TextRange getSnippetRange(PsiElement target) {
+        if (target instanceof PsiDocTag) {
+          final var lines = target.getText().split("\n");
+          if (lines.length > 1 && lines[lines.length - 1].matches("\\s*\\*\\s*")) {
+            return target.getTextRange().grown(-lines[lines.length - 1].length());
+          }
+        }
+        return target.getTextRange();
+      }
+
+      /**
+       * Performs Automatic Supertype Search as described in the JavaDoc Documentation Comment Specification.
+       */
+      private static @Nullable PsiElement findTargetRecursively(@NotNull PsiClass psiClass,
+                                                                @NotNull PsiMethod method,
+                                                                @Nullable PsiDocTag docTag,
+                                                                @Nullable String explicitSuper,
+                                                                boolean checkClass,
+                                                                @NotNull HashSet<PsiClass> visitedSet) {
+        if ("java.lang.Object".equals(psiClass.getQualifiedName())) return null;
+        if (visitedSet.contains(psiClass)) return null;
+
+        visitedSet.add(psiClass);
+
+        // Check class
+        PsiElement target = null;
+        if (checkClass) target = findTarget(psiClass, method, docTag, explicitSuper);
+        if (target != null) return target;
+
+        // Check super class
+        final PsiClass superClass = psiClass.getSuperClass();
+        if (superClass != null) {
+          target = findTargetRecursively(superClass, method, docTag, explicitSuper, true, visitedSet);
+          if (target != null) return target;
+        }
+
+        // Check interfaces
+        var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
+          .map(type -> type.resolve())
+          .filter(Objects::nonNull)
+          .map(resolvedType -> findTargetRecursively(resolvedType, method, docTag, explicitSuper, true, visitedSet))
+          .filter(Objects::nonNull)
+          .findFirst();
+
+        return targetInInterface.orElse(null);
+      }
+
+      private static @Nullable PsiElement findTarget(@NotNull PsiClass psiClass,
+                                                     @NotNull PsiMethod method,
+                                                     @Nullable PsiDocTag docTag,
+                                                     @Nullable String explicitSuper) {
+        if (explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
+          return null;
+        }
+
+        final var matchedMethod = psiClass.findMethodBySignature(method, false);
+        if (matchedMethod == null) return null;
+
+        PsiDocComment docComment = matchedMethod.getDocComment();
+        if (docComment == null) return null;
+
+        // inheritDoc is not in a tag -> the target is the PsiDocComment
+        if (docTag == null) return docComment;
+
+        // Searching for a matching tag
+        final PsiDocTagValue tagValue = docTag.getValueElement();
+        for (PsiDocTag tag : docComment.findTagsByName(docTag.getName())) {
+          final var matchedTagValueElement = tag.getValueElement();
+          if (tagValue != null && matchedTagValueElement == null) continue;
+          if (tagValue == null || tagValue.getText().equals(matchedTagValueElement.getText())) {
+            return tag;
+          }
+        }
+
+        return null;
+      }
+    };
+  }
+
+  public static final class SnippetRegionSymbol implements Symbol, DocumentationTarget, NavigationTarget {
+
+    private final @NotNull PsiFile myFile;
     private final @NotNull TextRange myRangeInFile;
-    private final @NlsSafe @NotNull String myText;
-    private final @NotNull VirtualFile myVirtualFile;
 
     private SnippetRegionSymbol(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
-      myText = rangeInFile.substring(file.getText());
+      myFile = file;
       myRangeInFile = rangeInFile;
-      myVirtualFile = file.getVirtualFile();
     }
 
     @Override
-    public @NotNull Pointer<? extends DocumentationSymbol> createPointer() {
-      return Pointer.hardPointer(this);
+    public @NotNull Pointer<SnippetRegionSymbol> createPointer() {
+      return Pointer.fileRangePointer(myFile, myRangeInFile, SnippetRegionSymbol::new);
+    }
+
+    private @NlsSafe @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
     }
 
     @Override
-    public @NotNull DocumentationTarget getDocumentationTarget() {
-      return new DocumentationTarget() {
-        @NotNull
-        @Override
-        public Pointer<? extends DocumentationTarget> createPointer() {
-          return Pointer.hardPointer(this);
-        }
-
-        @Override
-        public @NlsContexts.HintText @NotNull String computeDocumentationHint() {
-          return myText;
-        }
-
-        @NotNull
-        @Override
-        public TargetPresentation computePresentation() {
-          return TargetPresentation.builder(myText)
-            .locationText(myVirtualFile.getName(), myVirtualFile.getFileType().getIcon())
-            .presentation();
-        }
-      };
+    public @NotNull TargetPresentation computePresentation() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      return TargetPresentation.builder(getText())
+        .locationText(virtualFile.getName(), virtualFile.getFileType().getIcon())
+        .presentation();
     }
 
     @Override
-    public @NotNull Collection<? extends NavigationTarget> getNavigationTargets(@NotNull Project project) {
-      return List.of(
-        new NavigationTarget() {
-          @Override
-          public @NotNull Pointer<? extends NavigationTarget> createPointer() {
-            return Pointer.hardPointer(this);
-          }
+    public @NotNull @NlsContexts.HintText String computeDocumentationHint() {
+      return getText();
+    }
 
-          @Override
-          public @NotNull TargetPresentation computePresentation() {
-            return getDocumentationTarget().computePresentation();
-          }
-
-          @Override
-          public @Nullable NavigationRequest navigationRequest() {
-            return NavigationRequests.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
-          }
-        }
-      );
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationRequest.sourceNavigationRequest(myFile, myRangeInFile);
     }
   }
 }

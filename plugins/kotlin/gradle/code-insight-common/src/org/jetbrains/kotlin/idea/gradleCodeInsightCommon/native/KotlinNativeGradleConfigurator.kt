@@ -2,7 +2,9 @@
 
 package org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native
 
+import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
+import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.hasKotlinNativeRuntimeInScope
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
@@ -19,6 +21,10 @@ open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
             return ConfigureKotlinStatus.CONFIGURED
 
         return ConfigureKotlinStatus.NON_APPLICABLE
+    }
+    override fun isApplicable(module: Module): Boolean {
+        if (!super.isApplicable(module)) return false
+        return module.toModuleGroup().sourceRootModules.any(::hasKotlinNativeRuntimeInScope)
     }
 
     override val kotlinPluginName: String get() = ""

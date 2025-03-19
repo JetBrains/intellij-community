@@ -35,30 +35,10 @@ function buildDmg() {
   )
 }
 
-# clean up failure-marker files from previous runs if any
-for failure in *.failure; do
-  if [ -e "$failure" ]; then
-    rm "$failure"
-  fi
-done
-
 for sit in *.sit; do
   if [ ! -e "$sit" ]; then
     echo "No .sit found"
     exit 0
   fi
-  # building all .dmg in parallel
-  if ! buildDmg "$sit"; then
-    # saving failure-marker file
-    touch "$sit.failure"
-  fi &
-done
-
-wait
-
-for failure in *.failure; do
-  if [ -e "$failure" ]; then
-    # failing if any failure is detected
-    exit 1
-  fi
+  buildDmg "$sit"
 done

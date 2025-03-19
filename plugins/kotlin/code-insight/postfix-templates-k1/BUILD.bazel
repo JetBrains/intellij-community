@@ -1,0 +1,33 @@
+### auto-generated section `build kotlin.code-insight.postfix-templates.k1` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "kotlin-code-insight-postfix-templates-k1_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "kotlin-code-insight-postfix-templates-k1",
+  module_name = "kotlin.code-insight.postfix-templates.k1",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//plugins/kotlin/base/util:kotlin-base-util",
+    "//plugins/kotlin/base/psi:kotlin-base-psi",
+    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
+    "//plugins/kotlin/code-insight/live-templates-shared:kotlin-code-insight-live-templates-shared",
+    "//plugins/kotlin/code-insight/live-templates-k1:kotlin-code-insight-live-templates-k1",
+    "//plugins/kotlin/core",
+    "//plugins/kotlin/idea",
+    "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/lang-impl",
+    "//java/java-psi-api:psi",
+    "//plugins/kotlin/code-insight/impl-base:kotlin-code-insight-impl-base",
+  ],
+  runtime_deps = [":kotlin-code-insight-postfix-templates-k1_resources"]
+)
+### auto-generated section `build kotlin.code-insight.postfix-templates.k1` end

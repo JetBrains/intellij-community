@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.List;
  */
 public abstract class SearchPopupController {
   protected final PluginSearchTextField myTextField;
+  @ApiStatus.Internal
   protected SearchPopup myPopup;
   private final JBPopupListener mySearchPopupListener = new JBPopupListener() {
     @Override
@@ -64,8 +66,7 @@ public abstract class SearchPopupController {
     return myTextField.getTextEditor().getCaretPosition();
   }
 
-  @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
+  private static @NotNull Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<? super Integer> startPosition) {
     int index = end - 1;
     String value = null;
 
@@ -162,6 +163,7 @@ public abstract class SearchPopupController {
     return false;
   }
 
+  @ApiStatus.Internal
   protected void createPopup(@NotNull SearchPopup.Type type, @NotNull CollectionListModel<Object> model, int caretPosition) {
     hidePopup();
     myPopup = new SearchPopup(myTextField, mySearchPopupListener, type, model, caretPosition);
@@ -206,8 +208,7 @@ public abstract class SearchPopupController {
     return false;
   }
 
-  @NotNull
-  protected abstract List<String> getAttributes();
+  protected abstract @NotNull List<String> getAttributes();
 
   protected abstract @Nullable Collection<String> getValues(@NotNull String attribute); // TODO to be replaced with SortedSet
 

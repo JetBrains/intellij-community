@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
 import com.intellij.openapi.application.ReadAction
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 
-class KotlinTestGeneratedSourcesFilter: GeneratedSourcesFilter() {
+internal class KotlinTestGeneratedSourcesFilter: GeneratedSourcesFilter() {
   override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
     val name = file.name
     return if (name.endsWith("TestGenerated.java")) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -54,7 +55,8 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   private final @NotNull Project myProject;
   private final GlobalSearchScope myScope;
-  private final @NotNull Filter<T> myClassFilter;
+  private final @NotNull Filter<? super T> myClassFilter;
+  private final @NotNull Comparator<? super NodeDescriptor<?>> myComparator;
   private final Class<T> myElementClass;
   private final @Nullable T myBaseClass;
   private final boolean myIsShowMembers;
@@ -78,16 +80,29 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<? super T> classFilter,
                                         @Nullable T initialClass) {
-    this(title, project, scope, elementClass, classFilter, null, initialClass, false, true);
+    this(title, project, scope, elementClass, classFilter, null, null, initialClass, false, true);
   }
 
   public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
                                         @NotNull Project project,
                                         GlobalSearchScope scope,
                                         @NotNull Class<T> elementClass,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<? super T> classFilter,
+                                        @Nullable T baseClass,
+                                        @Nullable T initialClass,
+                                        boolean isShowMembers,
+                                        boolean isShowLibraryContents) {
+    this(title, project, scope, elementClass, classFilter, null, baseClass, initialClass, isShowMembers, isShowLibraryContents);
+  }
+
+  public AbstractTreeClassChooserDialog(@NlsContexts.DialogTitle String title,
+                                        @NotNull Project project,
+                                        GlobalSearchScope scope,
+                                        @NotNull Class<T> elementClass,
+                                        @Nullable Filter<? super T> classFilter,
+                                        @Nullable Comparator<? super NodeDescriptor<?>> comparator,
                                         @Nullable T baseClass,
                                         @Nullable T initialClass,
                                         boolean isShowMembers,
@@ -96,6 +111,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myScope = scope;
     myElementClass = elementClass;
     myClassFilter = classFilter == null ? allFilter() : classFilter;
+    myComparator = comparator == null ? AlphaComparator.getInstance() : comparator;
     myBaseClass = baseClass;
     myInitialClass = initialClass;
     myIsShowMembers = isShowMembers;
@@ -110,7 +126,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     handleSelectionChanged();
   }
 
-  private Filter<T> allFilter() {
+  private Filter<? super T> allFilter() {
     return __ -> true;
   }
 
@@ -139,7 +155,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     };
 
     myModel = new StructureTreeModel<>(treeStructure, getDisposable());
-    myModel.setComparator(AlphaComparator.INSTANCE);
+    myModel.setComparator(myComparator);
     myTree = new Tree(new AsyncTreeModel(myModel, getDisposable()));
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -245,6 +261,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private Set<Object> doFilter(Set<Object> elements) {
     Set<Object> result = new LinkedHashSet<>();
     for (Object o : elements) {
+      //noinspection unchecked
       if (myElementClass.isInstance(o) && getFilter().isAccepted((T)o)) {
         result.add(o);
       }
@@ -288,7 +305,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   @Override
-  public T getSelected() {
+  public @Nullable T getSelected() {
     return getExitCode() == OK_EXIT_CODE ? mySelectedClass : null;
   }
 
@@ -314,6 +331,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       @Override
       public void elementChosen(Object element) {
+        //noinspection unchecked
         mySelectedClass = (T)element;
         ((Navigatable)element).navigate(true);
       }
@@ -340,6 +358,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
   protected @Nullable T calcSelectedClass() {
     if (getTabbedPane().getSelectedIndex() == 0) {
+      //noinspection unchecked
       return (T)getGotoByNamePanel().getChosenElement();
     }
     else {
@@ -370,16 +389,12 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     return myScope;
   }
 
-  protected @NotNull Filter<T> getFilter() {
+  protected @NotNull Filter<? super T> getFilter() {
     return myClassFilter;
   }
 
   T getBaseClass() {
     return myBaseClass;
-  }
-
-  T getInitialClass() {
-    return myInitialClass;
   }
 
   protected TabbedPaneWrapper getTabbedPane() {
@@ -483,7 +498,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
-  private static class SubclassGotoClassModel<T extends PsiNamedElement> extends MyGotoClassModel<T> {
+  private static final class SubclassGotoClassModel<T extends PsiNamedElement> extends MyGotoClassModel<T> {
     private final BaseClassInheritorsProvider<T> myInheritorsProvider;
 
     private boolean myFastMode = true;
@@ -532,9 +547,10 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
-  private class MyCallback extends ChooseByNamePopupComponent.Callback {
+  private final class MyCallback extends ChooseByNamePopupComponent.Callback {
     @Override
     public void elementChosen(Object element) {
+      //noinspection unchecked
       mySelectedClass = (T)element;
       close(OK_EXIT_CODE);
     }

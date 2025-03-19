@@ -1,10 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.project.PossiblyDumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -15,8 +19,7 @@ import java.util.Collection;
  *
  * @see ProjectViewNodeDecorator
  */
-public interface TreeStructureProvider {
-  ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
+public interface TreeStructureProvider extends PossiblyDumbAware {
 
   /**
    * Allows modifying the list of children displayed for the specified node in the
@@ -30,9 +33,21 @@ public interface TreeStructureProvider {
    * are required.
    */
   @NotNull
+  @Unmodifiable
   Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                          ViewSettings settings);
+
+  /**
+   * Override to populate UI data snapshot for the selection.
+   * Or implement a {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
+   *
+   * @see com.intellij.openapi.actionSystem.UiDataProvider
+   */
+  default void uiDataSnapshot(@NotNull DataSink sink,
+                              @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+    DataSink.uiDataSnapshot(sink, dataId -> getData(selection, dataId));
+  }
 
   /**
    * Returns a user data object of the specified type for the specified selection in the
@@ -43,9 +58,14 @@ public interface TreeStructureProvider {
    *                 {@link com.intellij.openapi.actionSystem.PlatformDataKeys})
    * @return the data object, or null if no data object can be returned by this provider.
    * @see com.intellij.openapi.actionSystem.DataProvider
+   *
+   * @deprecated Use {@link #uiDataSnapshot(DataSink, Collection)} instead.
    */
-  @Nullable
-  default Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  @Deprecated(forRemoval = true)
+  default @Nullable Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     return null;
   }
+
+  @ApiStatus.Internal
+  ProjectExtensionPointName<TreeStructureProvider> EP = new ProjectExtensionPointName<>("com.intellij.treeStructureProvider");
 }

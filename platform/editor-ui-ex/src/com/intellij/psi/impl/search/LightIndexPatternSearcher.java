@@ -4,8 +4,10 @@ package com.intellij.psi.impl.search;
 import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
+@Internal
 public class LightIndexPatternSearcher extends IndexPatternSearcher {
 
   @Override

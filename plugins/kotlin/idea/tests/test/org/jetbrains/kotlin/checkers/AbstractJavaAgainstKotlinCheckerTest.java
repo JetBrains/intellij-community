@@ -3,21 +3,24 @@
 package org.jetbrains.kotlin.checkers;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
 import com.siyeh.ig.bugs.StaticFieldReferenceOnSubclassInspection;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinDaemonAnalyzerTestCase;
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
@@ -43,6 +46,9 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
             return new NullableStuffInspection();
         if ("DataFlowInspection".equals(toolString))
             return new DataFlowInspection();
+        if ("ConstantValueInspection".equals(toolString)) {
+            return new ConstantValueInspection();
+        }
 
         throw new IllegalArgumentException("Can't find inspection tool with identifier: " + toolString);
     }
@@ -93,6 +99,8 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
     @NotNull
     protected Module createMainModule() throws IOException {
         Module module = super.createMainModule();
+
+        ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
 
         String configFileText = getConfigFileText();
         if (configFileText == null) {

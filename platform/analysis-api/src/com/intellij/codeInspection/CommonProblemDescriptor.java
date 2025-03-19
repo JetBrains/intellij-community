@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
@@ -17,18 +19,23 @@ import java.util.Comparator;
  */
 public interface CommonProblemDescriptor {
   Comparator<CommonProblemDescriptor> DESCRIPTOR_COMPARATOR = (c1, c2) -> {
-    if (c1 instanceof ProblemDescriptor && c2 instanceof ProblemDescriptor) {
-      int diff = ((ProblemDescriptor)c2).getLineNumber() - ((ProblemDescriptor)c1).getLineNumber();
+    if (c1 instanceof ProblemDescriptor pd1 && c2 instanceof ProblemDescriptor pd2) {
+      int diff = Integer.compare(pd2.getLineNumber(), pd1.getLineNumber());
       if (diff != 0) {
         return diff;
       }
-
-      diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)c2).getPsiElement(), ((ProblemDescriptor)c1).getPsiElement());
+      diff = PsiUtilCore.compareElementsByPosition(pd2.getPsiElement(), pd1.getPsiElement());
+      if (diff != 0) {
+        return diff;
+      }
+      TextRange range1 = pd1.getTextRangeInElement();
+      TextRange range2 = pd2.getTextRangeInElement();
+      diff = Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(range2 == null ? TextRange.EMPTY_RANGE : range2, range1 == null ? TextRange.EMPTY_RANGE : range1);
       if (diff != 0) {
         return diff;
       }
     }
-    return c1.getDescriptionTemplate().compareTo(c2.getDescriptionTemplate());
+    return c2.getDescriptionTemplate().compareTo(c1.getDescriptionTemplate());
   };
 
   CommonProblemDescriptor[] EMPTY_ARRAY = new CommonProblemDescriptor[0];

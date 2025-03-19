@@ -37,6 +37,7 @@ public class PatternFilter implements ElementFilter {
     //throw new UnsupportedOperationException("Method isClassAcceptable is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public String toString() {
     return myPattern.toString();
   }

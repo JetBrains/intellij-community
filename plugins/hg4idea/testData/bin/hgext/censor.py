@@ -22,13 +22,14 @@ data needs to be materialized. Some commands, like ``hg cat``/``hg revert``,
 simply fail when asked to produce censored data. Others, like ``hg verify`` and
 ``hg update``, must be capable of tolerating censored data to continue to
 function in a meaningful way. Such commands only tolerate censored file
-revisions if they are allowed by the "censor.policy=ignore" config option.
+As having a censored version in a checkout is impractical. The current head
+revisions of the repository are checked. If the revision to be censored is in
+any of them the command will abort.
 
 A few informative commands such as ``hg grep`` will unconditionally
 ignore censored data and merely report that it was encountered.
 """
 
-from __future__ import absolute_import
 
 from mercurial.i18n import _
 from mercurial.node import short
@@ -54,25 +55,39 @@ testedwith = b'ships-with-hg-core'
         (
             b'r',
             b'rev',
-            b'',
+            [],
             _(b'censor file from specified revision'),
             _(b'REV'),
+        ),
+        (
+            b'',
+            b'check-heads',
+            True,
+            _(b'check that repository heads are not affected'),
         ),
         (b't', b'tombstone', b'', _(b'replacement tombstone data'), _(b'TEXT')),
     ],
     _(b'-r REV [-t TEXT] [FILE]'),
     helpcategory=command.CATEGORY_MAINTENANCE,
 )
-def censor(ui, repo, path, rev=b'', tombstone=b'', **opts):
+def censor(ui, repo, path, rev=(), tombstone=b'', check_heads=True, **opts):
     with repo.wlock(), repo.lock():
-        return _docensor(ui, repo, path, rev, tombstone, **opts)
+        return _docensor(
+            ui,
+            repo,
+            path,
+            rev,
+            tombstone,
+            check_heads=check_heads,
+            **opts,
+        )
 
 
-def _docensor(ui, repo, path, rev=b'', tombstone=b'', **opts):
+def _docensor(ui, repo, path, revs=(), tombstone=b'', check_heads=True, **opts):
     if not path:
         raise error.Abort(_(b'must specify file path to censor'))
-    if not rev:
-        raise error.Abort(_(b'must specify revision to censor'))
+    if not revs:
+        raise error.Abort(_(b'must specify revisions to censor'))
 
     wctx = repo[None]
 
@@ -84,30 +99,36 @@ def _docensor(ui, repo, path, rev=b'', tombstone=b'', **opts):
     if not len(flog):
         raise error.Abort(_(b'cannot censor file with no history'))
 
-    rev = scmutil.revsingle(repo, rev, rev).rev()
-    try:
-        ctx = repo[rev]
-    except KeyError:
-        raise error.Abort(_(b'invalid revision identifier %s') % rev)
+    revs = scmutil.revrange(repo, revs)
+    if not revs:
+        raise error.Abort(_(b'no matching revisions'))
+    file_nodes = set()
+    for r in revs:
+        try:
+            ctx = repo[r]
+            file_nodes.add(ctx.filectx(path).filenode())
+        except error.LookupError:
+            raise error.Abort(_(b'file does not exist at revision %s') % ctx)
 
-    try:
-        fctx = ctx.filectx(path)
-    except error.LookupError:
-        raise error.Abort(_(b'file does not exist at revision %s') % rev)
+    if check_heads:
+        heads = []
+        repo_heads = repo.heads()
+        msg = b'checking for the censored content in %d heads\n'
+        msg %= len(repo_heads)
+        ui.status(msg)
+        for headnode in repo_heads:
+            hc = repo[headnode]
+            if path in hc and hc.filenode(path) in file_nodes:
+                heads.append(hc)
+        if heads:
+            headlist = b', '.join([short(c.node()) for c in heads])
+            raise error.Abort(
+                _(b'cannot censor file in heads (%s)') % headlist,
+                hint=_(b'clean/delete and commit first'),
+            )
 
-    fnode = fctx.filenode()
-    heads = []
-    for headnode in repo.heads():
-        hc = repo[headnode]
-        if path in hc and hc.filenode(path) == fnode:
-            heads.append(hc)
-    if heads:
-        headlist = b', '.join([short(c.node()) for c in heads])
-        raise error.Abort(
-            _(b'cannot censor file in heads (%s)') % headlist,
-            hint=_(b'clean/delete and commit first'),
-        )
-
+    msg = b'checking for the censored content in the working directory\n'
+    ui.status(msg)
     wp = wctx.parents()
     if ctx.node() in [p.node() for p in wp]:
         raise error.Abort(
@@ -115,5 +136,8 @@ def _docensor(ui, repo, path, rev=b'', tombstone=b'', **opts):
             hint=_(b'clean/delete/update first'),
         )
 
+    msg = b'censoring %d file revisions\n'
+    msg %= len(file_nodes)
+    ui.status(msg)
     with repo.transaction(b'censor') as tr:
-        flog.censorrevision(tr, fnode, tombstone=tombstone)
+        flog.censorrevision(tr, file_nodes, tombstone=tombstone)

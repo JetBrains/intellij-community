@@ -18,6 +18,6 @@ open class DirectoryPathMatcherService {
     fun getInstance(project: Project): DirectoryPathMatcherService = project.getService(DirectoryPathMatcherService::class.java)
   }
 
-  open fun shouldProcess(file: VirtualFile) = false
+  open fun shouldProcess(file: VirtualFile): Boolean = false
 
 }

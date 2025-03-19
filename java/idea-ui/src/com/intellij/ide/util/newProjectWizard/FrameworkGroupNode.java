@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FrameworkGroupNode extends FrameworkSupportNodeBase<FrameworkGroup> {
 
-  public FrameworkGroupNode(@NotNull FrameworkGroup<?> group, FrameworkSupportNodeBase parent) {
+  public FrameworkGroupNode(@NotNull FrameworkGroup<?> group, FrameworkSupportNodeBase<?> parent) {
     super(group, parent);
   }
 }

@@ -34,15 +34,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PyTargetElementEvaluator implements TargetElementEvaluator {
+public final class PyTargetElementEvaluator implements TargetElementEvaluator {
   @Override
   public boolean includeSelfInGotoImplementation(@NotNull PsiElement element) {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
+  public @Nullable PsiElement getElementByReference(@NotNull PsiReference ref, int flags) {
     if ((flags & TargetElementUtilBase.ELEMENT_NAME_ACCEPTED) == 0) {
       return null;
     }

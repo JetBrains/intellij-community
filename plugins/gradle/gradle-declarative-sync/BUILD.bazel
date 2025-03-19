@@ -1,0 +1,60 @@
+### auto-generated section `build intellij.gradle.declarativeSync` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "declarativeSync_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "declarativeSync",
+  module_name = "intellij.gradle.declarativeSync",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//plugins/gradle",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//android/gradle-dsl",
+    "//android/gradle-dsl-flags",
+    "//platform/backend/workspace",
+    "@lib//:jackson-databind",
+    "@lib//:jackson",
+  ],
+  runtime_deps = [":declarativeSync_resources"]
+)
+### auto-generated section `build intellij.gradle.declarativeSync` end
+
+### auto-generated section `build intellij.gradle.declarativeSync.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_test")
+
+jvm_test(
+  name = "declarativeSync-tests_test",
+  srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//plugins/gradle/gradle-declarative-sync:declarativeSync",
+    "//android/android-test-framework:testFramework_test_lib",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    "//platform/util",
+    "//android/app-inspection/inspectors/database:android-app-inspection-inspectors-database-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/util-ex",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "//platform/backend/workspace",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//plugins/gradle",
+    "//android/gradle-dsl-flags",
+    "//android/gradle-dsl",
+    "//android/gradle-dsl-declarative",
+  ]
+)
+### auto-generated section `build intellij.gradle.declarativeSync.tests` end

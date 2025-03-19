@@ -70,7 +70,7 @@ class ExpressionEditorWithHistory extends XDebuggerExpressionEditor {
     if (!expressions.isEmpty()) {
       ListPopupImpl historyPopup = new ListPopupImpl(getProject(), new BaseListPopupStep<>(null, expressions) {
         @Override
-        public PopupStep onChosen(XExpression selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(XExpression selectedValue, boolean finalChoice) {
           setExpression(selectedValue);
           requestFocusInEditor();
           return FINAL_CHOICE;

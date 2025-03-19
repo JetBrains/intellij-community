@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -37,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +69,7 @@ public class DirectoryChooser extends DialogWrapper {
     this(project, new DirectoryChooserModuleTreeView(project));
   }
 
+  @ApiStatus.Internal
   public DirectoryChooser(@NotNull Project project, @NotNull DirectoryChooserView view){
     super(project, true);
     myView = view;
@@ -256,8 +259,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private static String concat(String[] strings, int headLimit, int tailLimit) {
+  private static @Nullable String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
     StringBuilder buffer = new StringBuilder();
     String separator = "";
@@ -283,7 +285,7 @@ public class DirectoryChooser extends DialogWrapper {
     return list.toArray(new PathFragment[0]);
   }
 
-  private static abstract class FragmentBuilder {
+  private abstract static class FragmentBuilder {
     private final ArrayList<String[]> myPaths;
     private final StringBuffer myBuffer = new StringBuffer();
     private int myIndex;
@@ -296,8 +298,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     public int getIndex() { return myIndex; }
 
-    @Nullable
-    public String execute() {
+    public @Nullable String execute() {
       while (true) {
         String commonHead = getCommonFragment(myIndex);
         if (commonHead == null) break;
@@ -310,8 +311,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     protected abstract void append(String fragment, StringBuffer buffer);
 
-    @Nullable
-    private String getCommonFragment(int count) {
+    private @Nullable String getCommonFragment(int count) {
       String commonFragment = null;
       for (String[] path : myPaths) {
         int index = getFragmentIndex(path, count);
@@ -328,13 +328,13 @@ public class DirectoryChooser extends DialogWrapper {
     protected abstract int getFragmentIndex(String[] path, int index);
   }
 
-  public static class ItemWrapper {
-    private final PsiDirectory myDirectory;
-    private PathFragment[] myFragments;
-    private final String myPostfix;
-    private final Icon myIcon;
-
-    private String myRelativeToProjectPath = null;
+  public static final class ItemWrapper {
+    private final @Nullable PsiDirectory myDirectory;
+    private final @Nullable Module myModule;
+    private final @Nullable String myPostfix;
+    private final @NotNull Icon myIcon;
+    private final @NotNull String myRelativeToProjectPath;
+    private PathFragment @Nullable [] myFragments;
 
     /**
      * Can be created outside BG thread.
@@ -342,19 +342,21 @@ public class DirectoryChooser extends DialogWrapper {
     public static final ItemWrapper NULL = new ItemWrapper(null, null);
 
     @RequiresBackgroundThread(generateAssertion = false)
-    public ItemWrapper(PsiDirectory directory, String postfix) {
+    public ItemWrapper(@Nullable PsiDirectory directory, @Nullable String postfix) {
       myDirectory = directory;
-      myPostfix = postfix != null && postfix.length() > 0 ? postfix : null;
+      myPostfix = postfix != null && !postfix.isEmpty() ? postfix : null;
       myIcon = directory != null ? getIconInternal(directory) : PlatformIcons.FOLDER_ICON;
-      final VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+      VirtualFile virtualFile = directory != null ? directory.getVirtualFile() : null;
+      Project project = directory != null ? directory.getProject() : null;
       myRelativeToProjectPath =
         virtualFile != null ? ProjectUtil.calcRelativeToProjectPath(virtualFile, directory.getProject(), true, false, true) +
                               ObjectUtils.notNull(myPostfix, "") : getPresentableUrl();
+      myModule = virtualFile != null ? ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile) : null;
     }
 
     public PathFragment[] getFragments() { return myFragments; }
 
-    public void setFragments(PathFragment[] fragments) {
+    public void setFragments(PathFragment @Nullable [] fragments) {
       myFragments = fragments;
     }
 
@@ -366,13 +368,13 @@ public class DirectoryChooser extends DialogWrapper {
       return getIcon();
     }
 
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 
-    private Icon getIconInternal(@NotNull PsiDirectory directory) {
+    private static Icon getIconInternal(@NotNull PsiDirectory directory) {
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
-      VirtualFile virtualFile = myDirectory.getVirtualFile();
+      VirtualFile virtualFile = directory.getVirtualFile();
       if (fileIndex.isInTestSourceContent(virtualFile)) {
         return PlatformIcons.MODULES_TEST_SOURCE_FOLDER;
       }
@@ -388,7 +390,7 @@ public class DirectoryChooser extends DialogWrapper {
       String directoryUrl;
       if (myDirectory != null) {
         directoryUrl = myDirectory.getVirtualFile().getPresentableUrl();
-        final VirtualFile baseDir = myDirectory.getProject().getBaseDir();
+        final VirtualFile baseDir = ProjectUtil.guessProjectDir(myDirectory.getProject());
         if (baseDir != null) {
           final String projectHomeUrl = baseDir.getPresentableUrl();
           if (directoryUrl.startsWith(projectHomeUrl)) {
@@ -402,12 +404,20 @@ public class DirectoryChooser extends DialogWrapper {
       return myPostfix != null ? directoryUrl + myPostfix : directoryUrl;
     }
 
-    public PsiDirectory getDirectory() {
+    public @Nullable PsiDirectory getDirectory() {
       return myDirectory;
     }
 
-    public @NlsSafe String getRelativeToProjectPath() {
+    public @Nullable String getPostfix() {
+      return myPostfix;
+    }
+
+    public @NlsSafe @NotNull String getRelativeToProjectPath() {
       return myRelativeToProjectPath;
+    }
+
+    public @Nullable Module getModule() {
+      return myModule;
     }
   }
 
@@ -416,19 +426,35 @@ public class DirectoryChooser extends DialogWrapper {
     return myView.getComponent();
   }
 
-  public void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, String postfixToShow) {
+  public void fillList(
+    PsiDirectory @NotNull [] directories,
+    @Nullable PsiDirectory defaultSelection,
+    @NotNull Project project,
+    String postfixToShow
+  ) {
     fillList(directories, defaultSelection, project, postfixToShow, null);
   }
 
-  public void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, Map<PsiDirectory,String> postfixes) {
+  public void fillList(
+    PsiDirectory @NotNull [] directories,
+    @Nullable PsiDirectory defaultSelection,
+    @NotNull Project project,
+    @Nullable Map<PsiDirectory,String> postfixes
+  ) {
     fillList(directories, defaultSelection, project, null, postfixes);
   }
 
-  private void fillList(PsiDirectory[] directories, @Nullable PsiDirectory defaultSelection, Project project, String postfixToShow, Map<PsiDirectory,String> postfixes) {
-    ProgressManager.getInstance()
-      .runProcessWithProgressSynchronously(() -> ReadAction.run(() -> fillItems(directories, postfixToShow, postfixes)),
-                                           LangBundle.message("progress.title.validating"), true, project);
-
+  private void fillList(
+    PsiDirectory @NotNull [] directories,
+    @Nullable PsiDirectory defaultSelection,
+    @NotNull Project project,
+    @Nullable String postfixToShow,
+    @Nullable Map<PsiDirectory,String> postfixes
+  ) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.run(() -> fillItems(directories, postfixToShow, postfixes)),
+      LangBundle.message("progress.title.validating"), true, project
+    );
     if (defaultSelection == null) {
       defaultSelection = getDefaultSelection(directories, project);
       if (defaultSelection == null && directories.length > 0) {
@@ -469,7 +495,10 @@ public class DirectoryChooser extends DialogWrapper {
       String postfixForDirectory = itemWrapper.myPostfix;
       if (myShowExisting) {
         if (selectionIndex == i) selectionIndex = -1;
-        if (postfixForDirectory != null && directory.getVirtualFile().findFileByRelativePath(StringUtil.trimStart(postfixForDirectory, File.separator)) == null) {
+        if (postfixForDirectory != null
+            && directory != null
+            && directory.getVirtualFile().findFileByRelativePath(StringUtil.trimStart(postfixForDirectory, File.separator)) == null
+        ) {
           if (isParent(directory, defaultSelection)) {
             myDefaultSelection = directory;
           }
@@ -499,9 +528,9 @@ public class DirectoryChooser extends DialogWrapper {
     myView.getComponent().repaint();
   }
 
-  private void fillItems(PsiDirectory[] directories,
-                         String postfixToShow,
-                         Map<PsiDirectory, String> postfixes) {
+  private void fillItems(PsiDirectory @NotNull [] directories,
+                         @Nullable String postfixToShow,
+                         @Nullable Map<PsiDirectory, String> postfixes) {
     for (PsiDirectory directory : directories) {
       ProgressManager.checkCanceled();
       final String postfixForDirectory;
@@ -515,8 +544,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private static PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
+  private static @Nullable PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
     final String defaultSelectionPath = PropertiesComponent.getInstance(project).getValue(DEFAULT_SELECTION);
     if (defaultSelectionPath != null) {
       final VirtualFile directoryByDefault = LocalFileSystem.getInstance().findFileByPath(defaultSelectionPath);
@@ -542,8 +570,7 @@ public class DirectoryChooser extends DialogWrapper {
                        (selectedTab == myByFilePanel.getPanel() || myByClassPanel != null && selectedTab == myByClassPanel.getPanel() || myView.getSelectedItem() != null));
   }
 
-  @Nullable
-  public PsiDirectory getSelectedDirectory() {
+  public @Nullable PsiDirectory getSelectedDirectory() {
     if (mySelection != null) {
       final PsiFile file = mySelection.getContainingFile();
       if (file != null){
@@ -556,7 +583,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
-  public static class PathFragment {
+  public static final class PathFragment {
     private final String myText;
     private final boolean myCommon;
 
@@ -575,7 +602,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
-  private class FilterExistentAction extends CheckboxAction {
+  private final class FilterExistentAction extends CheckboxAction {
     FilterExistentAction() {
       super(RefactoringBundle.messagePointer("directory.chooser.hide.non.existing.checkBox.text"),
             () -> UIUtil.removeMnemonic(RefactoringBundle.message("directory.chooser.hide.non.existing.checkBox.text")),

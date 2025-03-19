@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html;
 
-import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.lang.HtmlScriptContentProvider;
-import com.intellij.lexer.HtmlHighlightingLexer;
+import com.intellij.lexer.HtmlLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
@@ -18,9 +17,8 @@ public class TemplateHtmlScriptContentProvider implements HtmlScriptContentProvi
     return XmlElementType.HTML_EMBEDDED_CONTENT;
   }
 
-  @Nullable
   @Override
-  public Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer(HtmlFileType.INSTANCE);
+  public @Nullable Lexer getHighlightingLexer() {
+    return new HtmlLexer(true);
   }
 }

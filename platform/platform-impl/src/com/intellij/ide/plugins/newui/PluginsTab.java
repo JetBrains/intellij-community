@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Divider;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -17,9 +16,10 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +30,16 @@ import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public abstract class PluginsTab {
-  private final Alarm mySearchUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler searchUpdateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
-  private PluginDetailsPageComponent myDetailsPage;
-  private MultiPanel myCardPanel;
-  protected PluginSearchTextField mySearchTextField;
-  private SearchResultPanel mySearchPanel;
+  private PluginDetailsPageComponent detailsPage;
+  private MultiPanel cardPanel;
+  protected PluginSearchTextField searchTextField;
+  private SearchResultPanel searchPanel;
 
-  public final LinkListener<Object> mySearchListener = (__, data) -> {
+  public final LinkListener<Object> searchListener = (__, data) -> {
     String query;
     if (data instanceof String) {
       query = (String)data;
@@ -53,31 +51,30 @@ public abstract class PluginsTab {
       return;
     }
 
-    mySearchTextField.setTextIgnoreEvents(query);
+    searchTextField.setTextIgnoreEvents(query);
     IdeFocusManager.getGlobalInstance()
-      .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
-    mySearchPanel.setEmpty();
+      .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(searchTextField, true));
+    searchPanel.setEmpty();
     showSearchPanel(query);
   };
 
   private final Consumer<PluginsGroupComponent> mySelectionListener = panel -> {
-    int key = mySearchPanel.getPanel() == panel ? 1 : 0;
-    if (myCardPanel.getKey() == key) {
-      myDetailsPage.showPlugins(panel.getSelection());
+    int key = searchPanel.getPanel() == panel ? 1 : 0;
+    if (cardPanel.getKey() == key) {
+      detailsPage.showPlugins(panel.getSelection());
     }
   };
 
-  @NotNull
-  public JComponent createPanel() {
+  public @NotNull JComponent createPanel() {
     createSearchTextField(100);
 
-    myCardPanel = new MultiPanel() {
+    cardPanel = new MultiPanel() {
       @Override
       public void addNotify() {
         super.addNotify();
-        EventHandler.addGlobalAction(mySearchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")),
+        EventHandler.addGlobalAction(searchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")),
                                      () -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
-                                       () -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true)));
+                                       () -> IdeFocusManager.getGlobalInstance().requestFocus(searchTextField, true)));
       }
 
       @Override
@@ -86,15 +83,15 @@ public abstract class PluginsTab {
           return createPluginsPanel(mySelectionListener);
         }
         if (key == 1) {
-          return mySearchPanel.createVScrollPane();
+          return searchPanel.createVScrollPane();
         }
         return super.create(key);
       }
     };
 
     JPanel listPanel = new JPanel(new BorderLayout());
-    listPanel.add(mySearchTextField, BorderLayout.NORTH);
-    listPanel.add(myCardPanel);
+    listPanel.add(searchTextField, BorderLayout.NORTH);
+    listPanel.add(cardPanel);
 
     OnePixelSplitter splitter = new OnePixelSplitter(false, 0.45f) {
       @Override
@@ -105,17 +102,17 @@ public abstract class PluginsTab {
       }
     };
     splitter.setFirstComponent(listPanel);
-    splitter.setSecondComponent(myDetailsPage = createDetailsPanel(mySearchListener));
+    splitter.setSecondComponent(detailsPage = createDetailsPanel(searchListener));
 
-    mySearchPanel = createSearchPanel(mySelectionListener);
+    searchPanel = createSearchPanel(mySelectionListener);
 
-    myCardPanel.select(0, true);
+    cardPanel.select(0, true);
 
     return splitter;
   }
 
   protected void createSearchTextField(int flyDelay) {
-    mySearchTextField = new PluginSearchTextField() {
+    searchTextField = new PluginSearchTextField() {
       @Override
       protected boolean preprocessEventForTextField(KeyEvent event) {
         int keyCode = event.getKeyCode();
@@ -123,11 +120,11 @@ public abstract class PluginsTab {
 
         if (keyCode == KeyEvent.VK_ENTER || event.getKeyChar() == '\n') {
           if (id == KeyEvent.KEY_PRESSED &&
-              (mySearchPanel.controller == null || !mySearchPanel.controller.handleEnter(event))) {
+              (searchPanel.controller == null || !searchPanel.controller.handleEnter(event))) {
             String text = getText();
             if (!text.isEmpty()) {
-              if (mySearchPanel.controller != null) {
-                mySearchPanel.controller.hidePopup();
+              if (searchPanel.controller != null) {
+                searchPanel.controller.hidePopup();
               }
               showSearchPanel(text);
             }
@@ -135,7 +132,7 @@ public abstract class PluginsTab {
           return true;
         }
         if ((keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP) && id == KeyEvent.KEY_PRESSED &&
-            mySearchPanel.controller != null && mySearchPanel.controller.handleUpDown(event)) {
+            searchPanel.controller != null && searchPanel.controller.handleUpDown(event)) {
           return true;
         }
         return super.preprocessEventForTextField(event);
@@ -160,8 +157,8 @@ public abstract class PluginsTab {
 
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            if (mySearchPanel.controller != null && mySearchPanel.controller.isPopupShow()) {
-              mySearchPanel.controller.hidePopup();
+            if (searchPanel.controller != null && searchPanel.controller.isPopupShow()) {
+              searchPanel.controller.hidePopup();
             }
             else {
               setText("");
@@ -178,73 +175,69 @@ public abstract class PluginsTab {
 
       @Override
       protected void showCompletionPopup() {
-        if (mySearchPanel.controller != null && !mySearchPanel.controller.isPopupShow()) {
+        if (searchPanel.controller != null && !searchPanel.controller.isPopupShow()) {
           showSearchPopup();
         }
       }
     };
 
-    mySearchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
+    searchTextField.getTextEditor().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!mySearchTextField.isSkipDocumentEvents() && !mySearchUpdateAlarm.isDisposed()) {
-          mySearchUpdateAlarm.cancelAllRequests();
-          mySearchUpdateAlarm.addRequest(this::searchOnTheFly, flyDelay, ModalityState.stateForComponent(mySearchTextField));
+        if (!searchTextField.isSkipDocumentEvents()) {
+          searchUpdateAlarm.cancelAndRequest(flyDelay, ModalityState.stateForComponent(searchTextField), this::searchOnTheFly);
         }
       }
 
       private void searchOnTheFly() {
-        String text = mySearchTextField.getText();
+        String text = searchTextField.getText();
         if (StringUtil.isEmptyOrSpaces(text)) {
           hideSearchPanel();
         }
-        else if (mySearchPanel.controller == null) {
+        else if (searchPanel.controller == null) {
           showSearchPanel(text);
         }
         else {
-          mySearchPanel.controller.handleShowPopup();
+          searchPanel.controller.handleShowPopup();
         }
       }
     });
 
-    mySearchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
+    searchTextField.setBorder(JBUI.Borders.customLine(PluginManagerConfigurable.SEARCH_FIELD_BORDER_COLOR));
 
-    JBTextField editor = mySearchTextField.getTextEditor();
+    JBTextField editor = searchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
     editor.putClientProperty("JTextField.Search.GapEmptyText", JBUIScale.scale(-1));
     editor.putClientProperty(TextComponentEmptyText.STATUS_VISIBLE_FUNCTION, (Predicate<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 6));
     editor.setOpaque(true);
     editor.setBackground(PluginManagerConfigurable.SEARCH_BG_COLOR);
+    editor.getAccessibleContext().setAccessibleName(IdeBundle.message("plugin.manager.search.accessible.name"));
 
     String text = IdeBundle.message("plugin.manager.options.command");
 
-    StatusText emptyText = mySearchTextField.getTextEditor().getEmptyText();
+    StatusText emptyText = searchTextField.getTextEditor().getEmptyText();
     emptyText.appendText(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.GRAY_COLOR));
   }
 
-  @NotNull
-  protected abstract PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
+  protected abstract @NotNull PluginDetailsPageComponent createDetailsPanel(@NotNull LinkListener<Object> searchListener);
 
-  @NotNull
-  protected abstract JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
   protected abstract void updateMainSelection(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
-  @NotNull
-  protected abstract SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
+  protected abstract @NotNull SearchResultPanel createSearchPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener);
 
-  @Nullable
-  public String getSearchQuery() {
-    if (mySearchPanel == null || mySearchPanel.isEmpty()) {
+  public @Nullable String getSearchQuery() {
+    if (searchPanel == null || searchPanel.isEmpty()) {
       return null;
     }
-    String query = mySearchPanel.getQuery();
+    String query = searchPanel.getQuery();
     return query.isEmpty() ? null : query;
   }
 
   public void setSearchQuery(@Nullable String query) {
-    mySearchTextField.setTextIgnoreEvents(query);
+    searchTextField.setTextIgnoreEvents(query);
     if (query == null) {
       hideSearchPanel();
     }
@@ -254,45 +247,48 @@ public abstract class PluginsTab {
   }
 
   public void showSearchPanel(@NotNull String query) {
-    if (mySearchPanel.isEmpty()) {
-      myCardPanel.select(1, true);
-      myDetailsPage.showPlugin(null);
+    if (searchPanel.isEmpty()) {
+      cardPanel.select(1, true);
+      detailsPage.showPlugin(null);
     }
-    mySearchPanel.setQuery(query);
-    mySearchTextField.addCurrentTextToHistory();
+    searchPanel.setQuery(query);
+    searchTextField.addCurrentTextToHistory();
   }
 
   public void hideSearchPanel() {
-    if (!mySearchPanel.isEmpty()) {
-      myCardPanel.select(0, true);
-      mySearchPanel.setQuery("");
+    if (!searchPanel.isEmpty()) {
+      onSearchReset();
+      cardPanel.select(0, true);
+      searchPanel.setQuery("");
       updateMainSelection(mySelectionListener);
     }
-    if (mySearchPanel.controller != null) {
-      mySearchPanel.controller.hidePopup();
+    if (searchPanel.controller != null) {
+      searchPanel.controller.hidePopup();
     }
   }
 
+  protected abstract void onSearchReset();
+
   private void showSearchPopup() {
-    if (mySearchPanel.controller != null) {
-      if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
-        mySearchPanel.controller.showAttributesPopup(null, 0);
+    if (searchPanel.controller != null) {
+      if (StringUtil.isEmptyOrSpaces(searchTextField.getText())) {
+        searchPanel.controller.showAttributesPopup(null, 0);
       }
       else {
-        mySearchPanel.controller.handleShowPopup();
+        searchPanel.controller.handleShowPopup();
       }
     }
   }
 
   public void clearSearchPanel(@NotNull String query) {
     hideSearchPanel();
-    mySearchTextField.setTextIgnoreEvents(query);
+    searchTextField.setTextIgnoreEvents(query);
   }
 
   public void dispose() {
-    Disposer.dispose(mySearchUpdateAlarm);
-    if (mySearchTextField != null) {
-      mySearchTextField.disposeUIResources();
+    searchUpdateAlarm.dispose();
+    if (searchTextField != null) {
+      searchTextField.disposeUIResources();
     }
   }
 }

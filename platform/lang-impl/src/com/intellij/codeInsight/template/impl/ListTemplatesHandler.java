@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -28,16 +28,17 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class ListTemplatesHandler implements CodeInsightActionHandler {
+public final class ListTemplatesHandler implements CodeInsightActionHandler {
 
   private static final Logger LOG = Logger.getInstance(ListTemplatesHandler.class);
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     EditorUtil.fillVirtualSpaceUntilCaret(editor);
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -162,7 +163,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
   private static LiveTemplateLookupElement createTemplateElement(final TemplateImpl template) {
     return new LiveTemplateLookupElementImpl(template, false) {
       @Override
-      public Set<String> getAllLookupStrings() {
+      public @Unmodifiable Set<String> getAllLookupStrings() {
         String description = template.getDescription();
         if (description == null) {
           return super.getAllLookupStrings();
@@ -177,7 +178,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     if (argument == null) {
       return key;
     }
-    if (key.length() > 0 && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
+    if (!key.isEmpty() && Character.isJavaIdentifierPart(key.charAt(key.length() - 1))) {
       return key + ' ' + argument;
     }
     return key + argument;
@@ -219,7 +220,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return chars.subSequence(start, offset).toString();
   }
 
-  private static class MyLookupAdapter implements LookupListener {
+  private static final class MyLookupAdapter implements LookupListener {
     private final Map<TemplateImpl, String> myTemplate2Argument;
     private final PsiFile myFile;
 
@@ -234,7 +235,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void itemSelected(@NotNull final LookupEvent event) {
+    public void itemSelected(final @NotNull LookupEvent event) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.liveTemplates");
       final LookupElement item = event.getItem();
       final Lookup lookup = event.getLookup();
@@ -267,7 +268,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static class TemplatesArranger extends LookupArranger {
+  private static final class TemplatesArranger extends LookupArranger {
 
     @Override
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {

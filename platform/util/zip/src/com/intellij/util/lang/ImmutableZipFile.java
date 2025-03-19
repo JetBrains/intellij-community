@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ikv.Ikv;
-import org.jetbrains.xxh3.Xxh3;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +22,7 @@ import java.util.zip.ZipException;
 @ApiStatus.Internal
 public final class ImmutableZipFile implements ZipFile {
   public static final int MIN_EOCD_SIZE = 22;
+  public static final int CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = 0x02014b50;
   public static final int EOCD = 0x6054B50;
 
   private static final int INDEX_FORMAT_VERSION = 4;
@@ -125,23 +124,23 @@ public final class ImmutableZipFile implements ZipFile {
 
   @Override
   public @Nullable InputStream getInputStream(@NotNull String path) throws IOException {
-    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path));
+    ByteBuffer byteBuffer = ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return byteBuffer == null ? null : new DirectByteBufferBackedInputStream(byteBuffer, false);
   }
 
   @Override
   public byte @Nullable [] getData(@NotNull String path) throws IOException {
-    return ikv.getByteArray(Xxh3.hash(path));
+    return ikv.getByteArray(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
-    return ikv.getValue(Xxh3.hash(path));
+    return ikv.getValue(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
   }
 
   @Override
   public @Nullable ZipResource getResource(String path) {
-    long pair = ikv.getOffsetAndSize(Xxh3.hash(path));
+    long pair = ikv.getOffsetAndSize(Xxh3.hash(path.getBytes(StandardCharsets.UTF_8)));
     return pair == -1 ? null : new MyZipResource(pair, ikv, path);
   }
 
@@ -202,6 +201,11 @@ public final class ImmutableZipFile implements ZipFile {
     }
     if (!finished) {
       throw new ZipException("Archive is not a ZIP archive");
+    }
+
+    if (offset == 0) {
+      // empty file
+      return new EmptyZipFile();
     }
 
     boolean isZip64 = true;

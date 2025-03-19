@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
-import com.google.common.collect.Sets;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -14,6 +13,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import java.util.*;
 
 import static java.util.stream.Collectors.groupingBy;
 
+@Service(Service.Level.PROJECT)
 @State(name = "MavenCompilerTasksManager")
 public final class MavenTasksManager extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenTasksManagerState>,
                                                                                     Disposable {
@@ -50,8 +52,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
     AFTER_COMPILE("maven.tasks.goal.after.compile"),
     BEFORE_REBUILD("maven.tasks.goal.before.rebuild"),
     AFTER_REBUILD("maven.tasks.goal.after.rebuild");
-    @PropertyKey(resourceBundle = TasksBundle.BUNDLE)
-    public final String myMessageKey;
+    public final @PropertyKey(resourceBundle = TasksBundle.BUNDLE) String myMessageKey;
 
     Phase(@PropertyKey(resourceBundle = TasksBundle.BUNDLE) String messageKey) {
       myMessageKey = messageKey;
@@ -95,25 +96,24 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
 
     @Override
     public boolean execute(@NotNull CompileContext context) {
-      MavenTasksManager mavenTasksManager = context.getProject().getService(MavenTasksManager.class);
+      MavenTasksManager mavenTasksManager = getInstance(context.getProject());
       return mavenTasksManager.doExecute(myBefore, context);
     }
   }
 
   @ApiStatus.Internal
-  static class MavenBeforeCompileTask extends MyCompileTask {
+  static final class MavenBeforeCompileTask extends MyCompileTask {
     MavenBeforeCompileTask() {
       super(true);
     }
   }
 
   @ApiStatus.Internal
-  static class MavenAfterCompileTask extends MyCompileTask {
+  static final class MavenAfterCompileTask extends MyCompileTask {
     MavenAfterCompileTask() {
       super(false);
     }
   }
-
 
   @Override
   public void dispose() {
@@ -126,7 +126,7 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
       var tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
       if (context.isRebuild()) {
-        tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
+        tasks = ContainerUtil.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
       var projectsManager = MavenProjectsManager.getInstance(myProject);

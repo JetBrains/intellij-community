@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.scopeView;
 
@@ -16,14 +16,17 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.project.ProjectFileNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
+@ApiStatus.Internal
+public final class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   public ScopePaneSelectInTarget(final Project project) {
     super(project);
   }
 
+  @Override
   public String toString() {
     return IdeBundle.message("select.in.scope");
   }
@@ -51,8 +54,12 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public void select(PsiElement element, boolean requestFocus) {
     if (getSubId() == null) {
+      LOG.debug("getSubId() == null, looking for a fallback");
       PsiFile file = element.getContainingFile();
       NamedScopeFilter filter = getContainingFilter(file == null ? null : file.getVirtualFile());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The fallback is " + filter);
+      }
       if (filter == null) return;
       setSubId(filter.toString());
     }
@@ -71,11 +78,29 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   @Override
   public boolean isSubIdSelectable(@NotNull String subId, @NotNull SelectInContext context) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("ScopePaneSelectInTarget.isSubIdSelectable: subId=" + subId + ", context is " + context);
+    }
     PsiFileSystemItem file = getContextPsiFile(context);
-    if (!(file instanceof PsiFile)) return false;
+    if (!(file instanceof PsiFile)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Can NOT select " + file + " because it's not a PsiFile");
+      }
+      return false;
+    }
     ScopeViewPane pane = getScopeViewPane();
     NamedScopeFilter filter = pane == null ? null : pane.getFilter(subId);
-    return filter != null && filter.accept(file.getVirtualFile());
+    if (filter == null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Can NOT select " + file + " because filter is null");
+      }
+      return false;
+    }
+    boolean accept = filter.accept(file.getVirtualFile());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The filter " + filter + (accept ? "accepts" : "does NOT accept") + " file " + file);
+    }
+    return accept;
   }
 
   private ScopeViewPane getScopeViewPane() {

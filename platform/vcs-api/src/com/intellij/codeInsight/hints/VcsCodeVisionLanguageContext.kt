@@ -7,8 +7,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.refactoring.suggested.endOffset
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 
@@ -18,8 +18,8 @@ import java.awt.event.MouseEvent
 @ApiStatus.Experimental
 interface VcsCodeVisionLanguageContext {
   companion object {
-    const val EXTENSION = "com.intellij.vcs.codeVisionLanguageContext"
-    val providersExtensionPoint = LanguageExtension<VcsCodeVisionLanguageContext>(EXTENSION)
+    const val EXTENSION: String = "com.intellij.vcs.codeVisionLanguageContext"
+    val providersExtensionPoint: LanguageExtension<VcsCodeVisionLanguageContext> = LanguageExtension<VcsCodeVisionLanguageContext>(EXTENSION)
   }
 
   /**

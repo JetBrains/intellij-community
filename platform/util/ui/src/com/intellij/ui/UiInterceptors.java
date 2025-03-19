@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,10 +20,10 @@ public final class UiInterceptors {
   private static final Queue<UiInterceptor<?>> ourInterceptors = new ConcurrentLinkedQueue<>();
 
   // persistent interceptors used for redirecting real component display to different place.
-  private static final Set<PersistentUiInterceptor<?>> ourPersistentInterceptors = ConcurrentHashMap.newKeySet();
+  private static final Set<PersistentUiInterceptor<?>> persistentInterceptors = ConcurrentHashMap.newKeySet();
 
   /**
-   * Called from UI component
+   * Called from a UI component
    *
    * @param uiComponent UI component which is about to be displayed
    * @return true if interception was successful, in this case no UI should be actually shown
@@ -33,7 +33,7 @@ public final class UiInterceptors {
   }
 
   /**
-   * Called from UI component
+   * Called from a UI component
    *
    * @param uiComponent UI component which is about to be displayed
    * @param relativePoint point where this ui component should be shown
@@ -46,12 +46,11 @@ public final class UiInterceptors {
       return true;
     }
 
-    PersistentUiInterceptor<?> persistentUiInterceptor = ContainerUtil.find(ourPersistentInterceptors, s -> {
-      return s.isApplicable(uiComponent, relativePoint);
-    });
-    if (persistentUiInterceptor != null) {
-      persistentUiInterceptor.intercept(uiComponent, relativePoint);
-      return true;
+    for (PersistentUiInterceptor<?> persistentUiInterceptor : persistentInterceptors) {
+      if (persistentUiInterceptor.isApplicable(uiComponent, relativePoint)) {
+        persistentUiInterceptor.intercept(uiComponent, relativePoint);
+        return true;
+      }
     }
     return false;
   }
@@ -66,9 +65,23 @@ public final class UiInterceptors {
     ourInterceptors.offer(interceptor);
   }
 
+  /**
+   * Register interceptor to intercept the next shown UI component, if the component isn't caught,
+   * the interceptor will be removed on parent disposable termination, and no error will be produced
+   *
+   * @param parent on disposing, the interceptor will be removed from a collection
+   * @param interceptor interceptor to register
+   */
+  @TestOnly
+  public static void registerPossible(@NotNull Disposable parent, @NotNull UiInterceptor<?> interceptor) {
+    ourInterceptors.offer(interceptor);
+    Disposer.register(parent, () -> ourInterceptors.remove(interceptor));
+  }
 
   public static void registerPersistent(@NotNull Disposable parent, @NotNull PersistentUiInterceptor<?> interceptor) {
-    ContainerUtil.add(interceptor, ourPersistentInterceptors, parent);
+    if (persistentInterceptors.add(interceptor)) {
+      Disposer.register(parent, () -> persistentInterceptors.remove(interceptor));
+    }
   }
 
   /**
@@ -116,13 +129,18 @@ public final class UiInterceptors {
     }
 
     public final boolean isApplicable(@NotNull Object component, @Nullable RelativePoint relativePoint) {
-      if (!myClass.isInstance(component)) return false;
+      if (!myClass.isInstance(component)) {
+        return false;
+      }
       //noinspection unchecked
       return shouldIntercept((T)component, relativePoint);
     }
 
     public final void intercept(@NotNull Object component, @Nullable RelativePoint relativePoint) {
-      if (!isApplicable(component)) return;
+      if (!myClass.isInstance(component)) {
+        throw new IllegalStateException("Unexpected UI component appears: wanted " + myClass.getName() + "; got: "
+                                        + component.getClass().getName() + " (" + component + ")");
+      }
       doIntercept(myClass.cast(component), relativePoint);
     }
 

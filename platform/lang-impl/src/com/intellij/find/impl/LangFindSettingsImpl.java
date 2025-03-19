@@ -37,6 +37,13 @@ final class LangFindSettingsImpl extends FindSettingsImpl {
       extensions.add("html");
       extensions.add("css");
     }
+    if (extensions.contains("py")) {
+      extensions.add("ipynb");
+      extensions.add("pyi");
+      extensions.add("pyx");
+      extensions.add("pxd");
+      extensions.add("pxi");
+    }
 
     String[] extensionsArray = ArrayUtil.toStringArray(extensions);
     for (int i = extensionsArray.length - 1; i >= 0; i--) {

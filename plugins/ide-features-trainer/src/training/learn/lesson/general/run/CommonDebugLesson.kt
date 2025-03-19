@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RunConfigurationStartHistory
-import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
@@ -17,15 +16,19 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.*
+import com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 import org.assertj.swing.fixture.JComboBoxFixture
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -40,6 +43,7 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.WeakReferenceDelegator
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 
 abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
@@ -66,15 +70,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     highlightButtonById("Run", highlightInside = false, usePulsation = false)
 
-    task {
-      text(LessonsBundle.message("debug.workflow.run.current"), LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
-      checkToolWindowState("Run", true)
-      test {
-        ideFrame {
-          highlightedArea.click()
-        }
-      }
-    }
+    runSample("Run", LessonsBundle.message("debug.workflow.run.current"))
 
     toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = breakpointXRange) {
       text(LessonsBundle.message("debug.workflow.exception.description"))
@@ -110,7 +106,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     waitBeforeContinue(500)
 
-    runToCursorTask()
+    runToCursorTask(sample, afterFixText, debuggingMethodName)
 
     waitBeforeContinue(500)
 
@@ -150,7 +146,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
             invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
             if (!watchesRemoved) {
-              (debugSession as XDebugSessionImpl).sessionData.watchExpressions = emptyList()
+              val sessionData = (debugSession as XDebugSessionImpl).sessionData
+              val watchesManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager
+              watchesManager.setWatchEntries(sessionData.configurationName, emptyList())
               watchesRemoved = true
             }
             debugSession.addSessionListener(object : XDebugSessionListener {
@@ -218,7 +216,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
       text(LessonsBundle.message("debug.workflow.use.watches",
                                  strong(TaskBundle.message("debugger.watches")),
-                                 LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE),
+                                 LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.getAddWatchKeystroke()),
                                  icon(AllIcons.Debugger.AddToWatch)))
       text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
                                  strong(TaskBundle.message("debugger.watches")), shortcut))
@@ -227,8 +225,8 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
         ui.action.templatePresentation.text == addToWatchActionText
       }
       stateCheck {
-        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatches(confNameForWatches)
-        watches.any { watch -> watch.expression == needAddToWatch }
+        val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatchEntries(confNameForWatches)
+        watches.any { watch -> watch.expression.expression == needAddToWatch }
       }
       proposeSelectionChangeRestore(position)
       test { invokeActionViaShortcut("CTRL SHIFT ENTER") }
@@ -327,23 +325,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
-  private fun LessonContext.runToCursorTask() {
-    val position = sample.getPosition(3)
-    caret(position)
-
-    actionTask("RunToCursor") {
-      proposeRestore {
-        checkPositionOfEditor(LessonSample(afterFixText, position))
-      }
-      val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
-      val actionPart = if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
-      }
-      else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      "$intro $actionPart"
-    }
-  }
-
   private fun LessonContext.evaluateResultTask() {
     quickEvaluateTask(positionId = 4) { position ->
       text(LessonsBundle.message("debug.workflow.check.result", action("QuickEvaluateExpression")))
@@ -353,31 +334,17 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
-  private fun LessonContext.stopTask() {
-    highlightButtonById("Stop")
-
-    task("Stop") {
-      text(LessonsBundle.message("debug.workflow.stop.debug",
-                                 action(it), icon(AllIcons.Actions.Suspend)))
-      stateCheck {
-        XDebuggerManager.getInstance(project).currentSession == null
-      }
-      test { actions(it) }
-    }
-  }
-
   private fun TaskRuntimeContext.checkForBreakpoints(): TaskContext.RestoreNotification? {
     return if (lineWithBreakpoints() != setOf(logicalPosition.line)) {
       TaskContext.RestoreNotification(incorrectBreakPointsMessage) {
         runWriteAction {
           LessonManager.instance.clearRestoreMessage()
-          val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-          breakpointManager.allBreakpoints.forEach { breakpointManager.removeBreakpoint(it) }
+          XDebuggerUtilImpl.removeAllBreakpoints(project)
           FileDocumentManager.getInstance().getFile(editor.document)
           val line = logicalPosition.line
           val createPosition = XDebuggerUtil.getInstance().createPosition(virtualFile, line)
                                ?: error("Can't create source position: $line at $virtualFile")
-          XBreakpointUtil.toggleLineBreakpoint(project, createPosition, editor, false, false, true)
+          XBreakpointUtil.toggleLineBreakpoint(project, createPosition, false, editor, false, false, true)
           //breakpointManager.addLineBreakpoint()
         }
       }
@@ -432,6 +399,52 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     Pair(LessonsBundle.message("debug.workflow.help.link"),
          LessonUtil.getHelpLink("debugging-code.html")),
   )
+
+  companion object {
+    fun LessonContext.runToCursorTask(sample: LessonSample, afterFixText: String, debuggingMethodName: String) {
+      val position = sample.getPosition(3)
+      caret(position)
+
+      task {
+        if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled) triggerAndBorderHighlight {
+          limitByVisibleRect = false
+        }.componentPart l@{ ui: EditorComponentImpl ->
+          if (ui.editor != editor) return@l null
+          val line = editor.offsetToVisualLine(position.startOffset, true)
+          val actionButtonSize = InlayRunToCursorEditorListener.ACTION_BUTTON_SIZE
+          val y = editor.visualLineToY(line)
+          return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.negativeInlayPanelShift(false) - 1), y - JBUI.scale(1),
+                             JBUI.scale(actionButtonSize + 2), JBUI.scale(actionButtonSize + 2))
+        }
+      }
+
+      actionTask("RunToCursor") {
+        proposeRestore {
+          checkPositionOfEditor(LessonSample(afterFixText, position))
+        }
+        val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
+        val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
+        val alternative = if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled)
+          " " + LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
+        else ""
+        val notePart = LessonsBundle.message("debug.workflow.run.to.cursor.note", LessonUtil.actionName(it))
+        "$intro $actionPart$alternative $notePart"
+      }
+    }
+
+    fun LessonContext.stopTask() {
+      highlightButtonById("Stop")
+
+      task("Stop") {
+        text(LessonsBundle.message("debug.workflow.stop.debug",
+                                   action(it), icon(AllIcons.Actions.Suspend)))
+        stateCheck {
+          XDebuggerManager.getInstance(project).currentSession == null
+        }
+        test { actions(it) }
+      }
+    }
+  }
 }
 
 
@@ -440,9 +453,18 @@ private val incorrectBreakPointsMessage = LessonsBundle.message("debug.workflow.
 
 fun LessonContext.clearBreakpoints() {
   prepareRuntimeTask {
-    runWriteAction {
-      val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
-      breakpointManager.allBreakpoints.forEach { breakpointManager.removeBreakpoint(it) }
+    XDebuggerUtilImpl.removeAllBreakpoints(project)
+  }
+}
+
+fun LessonContext.runSample(@Language("devkit-action-id") actionId: String, @Nls message: String) {
+  task {
+    text(message, LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
+    checkToolWindowState(actionId, true)
+    test {
+      ideFrame {
+        highlightedArea.click()
+      }
     }
   }
 }
@@ -451,15 +473,24 @@ fun LessonContext.toggleBreakpointTask(sample: LessonSample?,
                                        logicalPosition: () -> LogicalPosition,
                                        checkLine: Boolean = true,
                                        breakpointXRange: (width: Int) -> IntRange = LessonUtil.breakpointXRange,
+                                       useCheckByTimerInsteadOfStateCheck: Boolean = false,
                                        textContent: TaskContext.() -> Unit) {
   highlightBreakpointGutter(breakpointXRange, logicalPosition)
 
   task {
     transparentRestore = true
     textContent()
-    stateCheck {
+
+    val checkLambda: TaskRuntimeContext.() -> Boolean = {
       lineWithBreakpoints() == setOf(logicalPosition().line)
     }
+    if (useCheckByTimerInsteadOfStateCheck) {
+      timerCheck(checkState = checkLambda)
+    }
+    else {
+      stateCheck(checkLambda)
+    }
+
     proposeRestore {
       val breakpoints = lineWithBreakpoints()
       checkExpectedStateOfEditor(sample ?: previous.sample, checkPosition = checkLine)

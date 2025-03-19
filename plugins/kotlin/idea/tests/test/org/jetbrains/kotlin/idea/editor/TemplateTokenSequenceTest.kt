@@ -3,12 +3,13 @@
 package org.jetbrains.kotlin.idea.editor
 
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.createTemplateSequenceTokenString
 import org.junit.Assert
 
 
 class TemplateTokenSequenceTest : TestCase() {
     fun doTest(input: String, expected: String) {
-        val output = createTemplateSequenceTokenString(input)
+        val output = createTemplateSequenceTokenString(input, 0)
         Assert.assertEquals("Unexpected template sequence output for $input: ", expected, output)
     }
 

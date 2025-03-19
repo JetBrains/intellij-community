@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide.plugins.cl
@@ -24,19 +24,29 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.Writer
 import java.net.URL
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
+/**
+ * Implements filtering for a plugin class loader.
+ * This is necessary to distinguish classes from different modules when they are packed to a single JAR file.
+ */
 @ApiStatus.Internal
 interface ResolveScopeManager {
+  /**
+   * Returns
+   * * `null` if the class loader should try loading the class from its own classpath first;
+   * * `""` if the class loader should skip searching for `name` in its own classpath and try loading it from the parent classloaders;
+   * * non-empty string describing an error if the class must not be requested from this class loader; an error will be thrown.
+   */
   fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String?
 }
 
@@ -48,17 +58,18 @@ private val EMPTY_CLASS_LOADER_ARRAY = arrayOfNulls<ClassLoader>(0)
 private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClassesUsedInSignatures()
 
 private var logStream: Writer? = null
-private val instanceIdProducer = AtomicInteger()
 private val parentListCacheIdCounter = AtomicInteger()
 
 @ApiStatus.Internal
-class PluginClassLoader(classPath: ClassPath,
-                        private val parents: Array<IdeaPluginDescriptorImpl>,
-                        private val pluginDescriptor: PluginDescriptor,
-                        private val coreLoader: ClassLoader,
-                        resolveScopeManager: ResolveScopeManager?,
-                        packagePrefix: String?,
-                        private val libDirectories: MutableList<String>) : UrlClassLoader(classPath), PluginAwareClassLoader {
+class PluginClassLoader(
+  classPath: ClassPath,
+  private val parents: Array<IdeaPluginDescriptorImpl>,
+  private val pluginDescriptor: PluginDescriptor,
+  private val coreLoader: ClassLoader,
+  resolveScopeManager: ResolveScopeManager?,
+  packagePrefix: String?,
+  private val libDirectories: List<Path>,
+) : UrlClassLoader(classPath), PluginAwareClassLoader {
   // cache of a computed list of all parents (not only direct)
   @Volatile
   private var allParents: Array<ClassLoader>? = null
@@ -72,8 +83,8 @@ class PluginClassLoader(classPath: ClassPath,
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
-  private val instanceId = instanceIdProducer.incrementAndGet()
-  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName("${pluginId.idString}@$instanceId"))
+  @Suppress("SSBasedInspection")
+  private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
 
   companion object {
@@ -108,9 +119,7 @@ class PluginClassLoader(classPath: ClassPath,
     }
   }
 
-  fun getLibDirectories(): MutableList<String> {
-    return libDirectories
-  }
+  fun getLibDirectories(): List<Path> = libDirectories
 
   override fun getPackagePrefix(): String? = packagePrefix
 
@@ -132,8 +141,6 @@ class PluginClassLoader(classPath: ClassPath,
 
     throw IllegalStateException("Unexpected state: $state")
   }
-
-  override fun getInstanceId(): Int = instanceId
 
   override fun getEdtTime(): Long = edtTime.get()
 
@@ -161,7 +168,7 @@ class PluginClassLoader(classPath: ClassPath,
     val fileNameWithoutExtension = name.replace('.', '/')
     val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
     val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
-    val startTime = if (StartUpMeasurer.measuringPluginStartupCosts) StartUpMeasurer.getCurrentTime() else -1
+    val startTime = if (StartUpMeasurer.measuringPluginStartupCosts) System.nanoTime() else -1
     var c: Class<*>?
     var error: PluginException? = null
     try {
@@ -169,7 +176,7 @@ class PluginClassLoader(classPath: ClassPath,
         _resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
       }
       if (consistencyError == null) {
-        c = loadClassInsideSelf(name, fileName, packageNameHash, forceLoadFromSubPluginClassloader)
+        c = loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = forceLoadFromSubPluginClassloader)
       }
       else {
         if (!consistencyError.isEmpty()) {
@@ -183,13 +190,12 @@ class PluginClassLoader(classPath: ClassPath,
     }
 
     if (c == null) {
-      for (classloader in getAllParents()) {
+      @Suppress("TestOnlyProblems")
+      for (classloader in getAllParentsClassLoaders()) {
         if (classloader is PluginClassLoader) {
           try {
             val consistencyError = classloader.packagePrefix?.let {
-              classloader._resolveScopeManager.isDefinitelyAlienClass(name = name,
-                                                                      packagePrefix = it,
-                                                                      force = forceLoadFromSubPluginClassloader)
+              classloader._resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
             }
             if (consistencyError != null) {
               if (!consistencyError.isEmpty() && error == null) {
@@ -198,10 +204,7 @@ class PluginClassLoader(classPath: ClassPath,
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name = name,
-                                                fileName = fileName,
-                                                packageNameHash = packageNameHash,
-                                                forceLoadFromSubPluginClassloader = false)
+            c = classloader.loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash, forceLoadFromSubPluginClassloader = false)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -221,7 +224,7 @@ class PluginClassLoader(classPath: ClassPath,
               }
               continue
             }
-            c = classloader.loadClassInsideSelf(name, fileName, packageNameHash, false)
+            c = classloader.loadClassWithPrecomputedMeta(name, fileName, fileNameWithoutExtension, packageNameHash)
           }
           catch (e: IOException) {
             throw ClassNotFoundException(name, e)
@@ -237,7 +240,7 @@ class PluginClassLoader(classPath: ClassPath,
               break
             }
           }
-          catch (ignoreAndContinue: ClassNotFoundException) {
+          catch (_: ClassNotFoundException) {
             // ignore and continue
           }
         }
@@ -249,12 +252,14 @@ class PluginClassLoader(classPath: ClassPath,
 
     if (startTime != -1L) {
       // EventQueue.isDispatchThread() is expensive
-      (if (EDT.isCurrentThreadEdt()) edtTime else backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime)
+      (if (EDT.isCurrentThreadEdt()) edtTime else backgroundTime).addAndGet(System.nanoTime() - startTime)
     }
     return c
   }
 
-  private fun getAllParents(): Array<ClassLoader> {
+  @TestOnly
+  @ApiStatus.Internal
+  fun getAllParentsClassLoaders(): Array<ClassLoader> {
     var result = allParents
     if (result != null && allParentsLastCacheId == parentListCacheIdCounter.get()) {
       return result
@@ -305,36 +310,34 @@ class PluginClassLoader(classPath: ClassPath,
     return consistencyError == null && super.hasLoadedClass(name)
   }
 
-  override fun loadClassInsideSelf(name: String,
-                                   fileName: String,
-                                   packageNameHash: Long,
-                                   forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
+  override fun loadClassInsideSelf(name: String): Class<*>? {
+    val fileNameWithoutExtension = name.replace('.', '/')
+    val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
+    val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
+    return loadClassInsideSelf(name, fileName, packageNameHash, false)
+  }
+
+  private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long, forceLoadFromSubPluginClassloader: Boolean): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
-      if (c != null && c.classLoader === this) {
+      if (c?.classLoader === this) {
         return c
       }
 
-      val logStream = logStream
       c = try {
         classPath.findClass(name, fileName, packageNameHash, classDataConsumer)
       }
       catch (e: LinkageError) {
         logStream?.let { logClass(name = name, logStream = it, exception = e) }
         flushDebugLog()
-        throw PluginException("""Cannot load class $name (
-  error: ${e.message},
-  classLoader=$this
-)""", e, pluginId)
+        throw PluginException("Cannot load class $name (\n  error: ${e.message},\n  classLoader=$this\n)", e, pluginId)
       }
       if (c == null) {
         return null
       }
 
       loadedClassCounter.incrementAndGet()
-      if (logStream != null) {
-        logClass(name = name, logStream = logStream, exception = null)
-      }
+      logStream?.let { logClass(name = name, logStream = it, exception = null) }
       return c
     }
   }
@@ -347,7 +350,7 @@ class PluginClassLoader(classPath: ClassPath,
       logStream.write("""$name [$specifier] ${pluginId.idString}${if (packagePrefix == null) "" else ":$packagePrefix"}
 ${if (exception == null) "" else exception.message}""")
     }
-    catch (ignored: IOException) {
+    catch (_: IOException) {
     }
   }
 
@@ -364,7 +367,8 @@ ${if (exception == null) "" else exception.message}""")
       return null
     }
 
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is UrlClassLoader) {
         classloader.classPath.findResource(name)?.let {
           return it.bytes
@@ -409,7 +413,8 @@ ${if (exception == null) "" else exception.message}""")
       return f1(it)
     }
 
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is PluginClassLoader) {
         classloader.classPath.findResource(canonicalPath)?.let {
           return f1(it)
@@ -432,7 +437,8 @@ ${if (exception == null) "" else exception.message}""")
   override fun findResources(name: String): Enumeration<URL> {
     val resources = ArrayList<Enumeration<URL>>()
     resources.add(classPath.getResources(name))
-    for (classloader in getAllParents()) {
+    @Suppress("TestOnlyProblems")
+    for (classloader in getAllParentsClassLoaders()) {
       if (classloader is PluginClassLoader) {
         resources.add(classloader.classPath.getResources(name))
       }
@@ -440,7 +446,7 @@ ${if (exception == null) "" else exception.message}""")
         try {
           resources.add(classloader.getResources(name))
         }
-        catch (ignore: IOException) {
+        catch (_: IOException) {
         }
       }
     }
@@ -452,9 +458,9 @@ ${if (exception == null) "" else exception.message}""")
       val libFileName = System.mapLibraryName(libName)
       val iterator = libDirectories.listIterator(libDirectories.size)
       while (iterator.hasPrevious()) {
-        val libFile = File(iterator.previous(), libFileName)
-        if (libFile.exists()) {
-          return libFile.absolutePath
+        val libFile = iterator.previous().resolve(libFileName)
+        if (Files.exists(libFile)) {
+          return libFile.toString()
         }
       }
     }
@@ -463,14 +469,16 @@ ${if (exception == null) "" else exception.message}""")
 
   override fun getPluginId(): PluginId = pluginId
 
+  override fun getModuleId(): String? = (pluginDescriptor as IdeaPluginDescriptorImpl).moduleName
+
   override fun getPluginDescriptor(): PluginDescriptor = pluginDescriptor
 
   override fun toString(): String {
     return "${javaClass.simpleName}(" +
            "plugin=$pluginDescriptor, " +
            "packagePrefix=$packagePrefix, " +
-           "instanceId=$instanceId, " +
-           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}" +
+           "state=${if (state == PluginAwareClassLoader.ACTIVE) "active" else "unload in progress"}, " +
+           "parents=${parents.joinToString()}, " +
            ")"
   }
 
@@ -501,8 +509,9 @@ private class DeepEnumeration(private val list: List<Enumeration<URL>>) : Enumer
   }
 }
 
+// only `kotlin.` and not `kotlinx.` classes here (see mustBeLoadedByPlatform - name.startsWith("kotlin."))
 private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
-  val result = HashSet(mutableListOf(
+  val result = mutableListOf(
     "kotlin.Function",
     "kotlin.sequences.Sequence",
     "kotlin.ranges.IntRange",
@@ -520,11 +529,13 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty",
     "kotlin.coroutines.ContinuationInterceptor",
-    "kotlinx.coroutines.CoroutineDispatcher",
     "kotlin.coroutines.Continuation",
+
     "kotlin.coroutines.CoroutineContext",
     "kotlin.coroutines.CoroutineContext\$Element",
     "kotlin.coroutines.CoroutineContext\$Key",
+    "kotlin.coroutines.EmptyCoroutineContext",
+
     "kotlin.Result",
     "kotlin.Result\$Failure",
     "kotlin.Result\$Companion",  // even though it's an internal class, it can leak (and it does) into API surface because it's exposed by public
@@ -540,9 +551,7 @@ private fun computeKotlinStdlibClassesUsedInSignatures(): Set<String> {
     "kotlin.jvm.internal.ReflectionFactory",
     "kotlin.jvm.internal.Reflection",
     "kotlin.jvm.internal.Lambda",
-    // coroutine dump is supported by core class loader
-    "kotlin.coroutines.jvm.internal.DebugProbesKt",
-  ))
+  )
   System.getProperty("idea.kotlin.classes.used.in.signatures")?.let {
     result.addAll(it.splitToSequence(',').map(String::trim))
   }
@@ -556,8 +565,8 @@ private fun mustBeLoadedByPlatform(name: @NonNls String): Boolean {
 
   // Some commonly used classes from kotlin-runtime must be loaded by the platform classloader.
   // Otherwise, if a plugin bundles its own version
-  // of kotlin-runtime.jar, it won't be possible to call platform's methods with these types in a signatures from such a plugin.
-  // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
+  // of kotlin-runtime.jar, it won't be possible to call the platform's methods with these types in a signatures from such a plugin.
+  // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from the platform's kotlin-runtime.
   return name.startsWith("kotlin.") &&
          (name.startsWith("kotlin.jvm.functions.") ||
           // Those are kotlin-reflect related classes, but unfortunately, they are placed in kotlin-stdlib.
@@ -580,6 +589,6 @@ private fun flushDebugLog() {
   try {
     logStream.flush()
   }
-  catch (ignore: IOException) {
+  catch (_: IOException) {
   }
 }

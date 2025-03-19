@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
@@ -28,7 +28,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import java.io.File
 import java.nio.file.Path
-import java.util.*
+import java.time.Duration
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty0
@@ -117,6 +117,10 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     )
   }
 
+  override fun getIndexingTimeout(): Duration {
+    return Duration.ofMinutes(1)
+  }
+
   override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
     return testNioRoot.resolve("project")
   }
@@ -168,7 +172,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     val files = testRoot.listFiles()
     if (!files.isNullOrEmpty()) {
       LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
-          ", files: " + Arrays.toString(files))
+               ", files: " + files.contentToString())
       for (file in files) {
         LOG.assertTrue(FileUtil.delete(file))
       }
@@ -187,20 +191,20 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
 
-  protected fun assertSuccessfulNotification(title: String, message: String): Notification {
-    return assertHasNotification(NotificationType.INFORMATION, title, message, vcsNotifier.notifications)
+  protected fun assertSuccessfulNotification(title: String = "", message: String, actions: List<String>? = null): Notification {
+    return assertHasNotification(NotificationType.INFORMATION, title, message, actions, vcsNotifier.notifications)
   }
 
-  protected fun assertSuccessfulNotification(message: String): Notification {
-    return assertSuccessfulNotification("", message)
+  protected fun assertSuccessfulNotification(message: String, actions: List<String>? = null): Notification {
+    return assertSuccessfulNotification("", message, actions)
   }
 
   protected fun assertWarningNotification(title: String, message: String): Notification {
     return assertHasNotification(NotificationType.WARNING, title, message, vcsNotifier.notifications)
   }
 
-  protected fun assertErrorNotification(title: String, message: String): Notification {
-    return assertHasNotification(NotificationType.ERROR, title, message, vcsNotifier.notifications)
+  protected fun assertErrorNotification(title: String, message: String, actions: List<String>? = null): Notification {
+    return assertHasNotification(NotificationType.ERROR, title, message, actions, vcsNotifier.notifications)
   }
 
   protected fun assertNoNotification() {

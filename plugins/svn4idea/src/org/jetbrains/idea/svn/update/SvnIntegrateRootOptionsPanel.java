@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -25,8 +25,8 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   private SvnRevisionPanel myRevision2;
   private SvnRevisionPanel myRevision1;
 
-  @NotNull private final FilePath myRoot;
-  @NotNull private final SvnVcs myVcs;
+  private final @NotNull FilePath myRoot;
+  private final @NotNull SvnVcs myVcs;
 
   public SvnIntegrateRootOptionsPanel(@NotNull SvnVcs vcs, @NotNull FilePath root) {
     myRoot = root;
@@ -90,8 +90,7 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
   }
 
   @Override
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     return myPanel;
   }
 

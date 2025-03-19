@@ -1,0 +1,21 @@
+Original text:
+---------------
+def foo():
+    """
+    This is a docstring
+    :return: nothing
+    """
+    pass
+---------------
+Subtree: Language: Python
+---------------
+def foo():
+    <reparse>"""
+    This is a docstring
+    """
+    print("now there is something in between")
+    """
+    :return: nothing
+    """
+    pass</reparse>
+---------------

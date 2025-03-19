@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -12,7 +13,8 @@ import org.jetbrains.concurrency.Promises;
 import java.awt.*;
 import java.util.*;
 
-public class AssertFocused extends AbstractCommand {
+@ApiStatus.Internal
+public final class AssertFocused extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "assert focused";
 
@@ -25,7 +27,7 @@ public class AssertFocused extends AbstractCommand {
     String text = getText().substring(PREFIX.length()).trim();
     final Map<String, String> expected = new LinkedHashMap<>();
 
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       final String[] keyValue = text.split(",");
       for (String each : keyValue) {
         final String[] eachPair = each.split("=");
@@ -91,7 +93,7 @@ public class AssertFocused extends AbstractCommand {
 
     StringBuilder untestedText = new StringBuilder();
     for (String each : untested.keySet()) {
-      if (untestedText.length() > 0) {
+      if (!untestedText.isEmpty()) {
         untestedText.append(",");
       }
       untestedText.append(each).append("=").append(untested.get(each));

@@ -1,25 +1,27 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class RestoreFoldArrangementCallback implements ArrangementCallback {
+@ApiStatus.Internal
+public final class RestoreFoldArrangementCallback implements ArrangementCallback {
 
-  @NotNull private final  Editor           myEditor;
+  private final @NotNull Editor           myEditor;
 
   public RestoreFoldArrangementCallback(@NotNull Editor editor) {
     myEditor = editor;
   }
 
   @Override
-  public void afterArrangement(@NotNull final List<ArrangementMoveInfo> moveInfos) {
+  public void afterArrangement(final @NotNull List<ArrangementMoveInfo> moveInfos) {
     // Restore state for the PSI elements not affected by arrangement.
     Project project = myEditor.getProject();
     if (project != null) {

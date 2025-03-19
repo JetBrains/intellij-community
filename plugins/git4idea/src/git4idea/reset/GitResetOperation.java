@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -8,14 +8,17 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitActivity;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
 import git4idea.commands.Git;
@@ -28,6 +31,7 @@ import git4idea.repo.GitRepository;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -37,25 +41,25 @@ import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operat
 
 public class GitResetOperation {
 
-
-  @NotNull private final Project myProject;
-  @NotNull private final Map<GitRepository, Hash> myCommits;
-  @NotNull private final GitResetMode myMode;
-  @NotNull private final ProgressIndicator myIndicator;
-  @NotNull private final Git myGit;
-  @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final GitBranchUiHandlerImpl myUiHandler;
-  @NotNull private final OperationPresentation myPresentation;
+  private final @NotNull Project myProject;
+  private final @Unmodifiable @NotNull Map<GitRepository, @NotNull String> myCommits;
+  private final @NotNull GitResetMode myMode;
+  private final @NotNull ProgressIndicator myIndicator;
+  private final @NotNull Git myGit;
+  private final @NotNull VcsNotifier myNotifier;
+  private final @NotNull GitBranchUiHandlerImpl myUiHandler;
+  private final @NotNull OperationPresentation myPresentation;
 
   public GitResetOperation(@NotNull Project project,
                            @NotNull Map<GitRepository, Hash> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator) {
-    this(project, targetCommits, mode, indicator, new OperationPresentation());
+    this(project, ContainerUtil.map2Map(targetCommits.entrySet(), e -> Pair.create(e.getKey(), e.getValue().asString())),
+         mode, indicator, new OperationPresentation());
   }
 
   public GitResetOperation(@NotNull Project project,
-                           @NotNull Map<GitRepository, Hash> targetCommits,
+                           @NotNull @Unmodifiable Map<GitRepository, @NotNull String> targetCommits,
                            @NotNull GitResetMode mode,
                            @NotNull ProgressIndicator indicator,
                            @NotNull OperationPresentation operationPresentation) {
@@ -69,20 +73,20 @@ public class GitResetOperation {
     myUiHandler = new GitBranchUiHandlerImpl(myProject, indicator);
   }
 
-  public void execute() {
+  public boolean execute() {
     saveAllDocuments();
     Map<GitRepository, GitCommandResult> results = new HashMap<>();
-    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName))) {
-      for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message(myPresentation.activityName), GitActivity.Reset)) {
+      for (Map.Entry<GitRepository, String> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
-        String target = entry.getValue().asString();
+        String target = entry.getValue();
         GitLocalChangesWouldBeOverwrittenDetector detector = new GitLocalChangesWouldBeOverwrittenDetector(root, RESET);
 
         Hash startHash = getHead(repository);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
-        if (!result.success() && detector.wasMessageDetected()) {
+        if (!result.success() && detector.isDetected()) {
           GitCommandResult smartResult = proposeSmartReset(detector, repository, target);
           if (smartResult != null) {
             result = smartResult;
@@ -91,14 +95,18 @@ public class GitResetOperation {
         results.put(repository, result);
 
         updateAndRefreshChangedVfs(repository, startHash);
-        VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
+        VcsDirtyScopeManager.getInstance(myProject).rootDirty(root);
+        repository.getUntrackedFilesHolder().invalidate(); // 'git reset --mixed' may make a file untracked without changing anything else
+        repository.getResolvedConflictsFilesHolder().invalidate();
       }
     }
     notifyResult(results);
+
+    return ContainerUtil.all(results.values(), GitCommandResult::success);
   }
 
   private GitCommandResult proposeSmartReset(@NotNull GitLocalChangesWouldBeOverwrittenDetector detector,
-                                             @NotNull final GitRepository repository, @NotNull @NlsSafe String target) {
+                                             final @NotNull GitRepository repository, @NotNull @NlsSafe String target) {
     Collection<String> absolutePaths = toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
     List<Change> affectedChanges = findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
     GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,
@@ -149,9 +157,7 @@ public class GitResetOperation {
     }
   }
 
-  @NlsSafe
-  @NotNull
-  private static String formErrorReport(@NotNull Map<GitRepository, GitCommandResult> errorResults) {
+  private static @NlsSafe @NotNull String formErrorReport(@NotNull Map<GitRepository, GitCommandResult> errorResults) {
     MultiMap<String, GitRepository> grouped = groupByResult(errorResults);
     if (grouped.size() == 1) {
       return "<code>" + grouped.keySet().iterator().next() + "</code>";
@@ -160,8 +166,7 @@ public class GitResetOperation {
   }
 
   // to avoid duplicate error reports if they are the same for different repositories
-  @NotNull
-  private static MultiMap<String, GitRepository> groupByResult(@NotNull Map<GitRepository, GitCommandResult> results) {
+  private static @NotNull MultiMap<String, GitRepository> groupByResult(@NotNull Map<GitRepository, GitCommandResult> results) {
     MultiMap<String, GitRepository> grouped = MultiMap.create();
     for (Map.Entry<GitRepository, GitCommandResult> entry : results.entrySet()) {
       grouped.putValue(entry.getValue().getErrorOutputAsHtmlString(), entry.getKey());
@@ -169,9 +174,7 @@ public class GitResetOperation {
     return grouped;
   }
 
-  @NlsSafe
-  @NotNull
-  private static String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
+  private static @NlsSafe @NotNull String joinRepos(@NotNull Collection<? extends GitRepository> repositories) {
     return StringUtil.join(DvcsUtil.sortRepositories(repositories), ", ");
   }
 
@@ -179,9 +182,8 @@ public class GitResetOperation {
     ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
-  @PropertyKey(resourceBundle = GitBundle.BUNDLE)
-  public static class OperationPresentation {
-    public String activityName = "git.reset.process";
+  public static @PropertyKey(resourceBundle = GitBundle.BUNDLE) class OperationPresentation {
+    public String activityName = "activity.name.reset";
     public String operationTitle = "git.reset.operation";
     public String forceButtonTitle = "git.reset.hard.button";
     public String notificationSuccess = "git.reset.successful.notification.message";

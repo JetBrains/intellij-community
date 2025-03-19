@@ -1,44 +1,38 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.application.rw
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.prepareForInstallation
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { ctx ->
-  try {
-    cancellableReadActionInternal(ctx, action)
-  }
-  catch (readCe: ReadCancellationException) {
-    throw CannotReadException(readCe)
-  }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    throw currentJobCe.cause
-  }
-  catch (pceCe: PceCancellationException) {
-    throw pceCe.cause
-  }
+  cancellableReadActionInternal(ctx, action)
 }
 
 internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: () -> X): X {
   // A child Job is started to be externally cancellable by a write action without cancelling the current Job.
   val readJob = Job(parent = ctx[Job])
   return try {
-    blockingContext(ctx + readJob) {
+    installThreadContext(ctx.prepareForInstallation() + readJob).use {
       var resultRef: Value<X>? = null
       val application = ApplicationManagerEx.getApplicationEx()
-      runActionAndCancelBeforeWrite(application, readJob::cancelReadJob) {
+      val cancellation = CannotReadException.jobCancellation(readJob)
+      runActionAndCancelBeforeWrite(application, cancellation) {
         readJob.ensureActive()
-        application.tryRunReadAction {
+        val tryResult = application.tryRunReadAction {
           readJob.ensureActive()
           resultRef = Value(action())
+        }
+        if (!tryResult) {
+          cancellation.run()
         }
       }
       val result = resultRef
@@ -50,14 +44,7 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
       result.value
     }
   }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    val jce: JobCanceledException = currentJobCe.cause
-    if (jce.cause is ReadCancellationException) {
-      throw ReadCancellationException(jce)
-    }
-    throw currentJobCe
-  }
-  catch (ce: CancellationException) {
+  catch (ce: CancellationException) { // may be thrown by ProgressManager.checkCanceled() inside [action] and wrapped by `blockingContext`
     readJob.cancel(ce)
     throw ce
   }
@@ -79,17 +66,4 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
   }
 }
 
-private fun Job.cancelReadJob() {
-  cancel(cause = ReadCancellationException(cause = null))
-}
-
 private class Value<T>(val value: T)
-
-@Internal
-internal class ReadCancellationException(cause: Throwable?) : CancellationException() {
-  init {
-    if (cause != null) {
-      initCause(cause)
-    }
-  }
-}

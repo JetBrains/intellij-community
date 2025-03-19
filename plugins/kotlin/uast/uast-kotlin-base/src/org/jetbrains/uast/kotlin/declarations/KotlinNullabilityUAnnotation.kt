@@ -9,16 +9,19 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
 class KotlinNullabilityUAnnotation(
-  private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
-  private val annotatedElement: PsiElement,
-  override val uastParent: UElement?
+    private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
+    private val annotatedElement: PsiElement,
+    override val uastParent: UElement?
 ) : UAnnotationEx, UAnchorOwner, DelegatedMultiResolve {
+
+    private val resolvedPart = UastLazyPart<PsiClass?>()
+    private val nullabilityPart = UastLazyPart<KaTypeNullability?>()
 
     override val uastAnchor: UIdentifier? = null
 
@@ -31,15 +34,16 @@ class KotlinNullabilityUAnnotation(
     override val sourcePsi: PsiElement?
         get() = null
 
-    private val nullability : KtTypeNullability? by lz {
-        baseKotlinUastResolveProviderService.nullability(annotatedElement)
-    }
+    private val nullability: KaTypeNullability?
+        get() = nullabilityPart.getOrBuild {
+            baseKotlinUastResolveProviderService.nullability(annotatedElement)
+        }
 
     override val qualifiedName: String?
         get() = when (nullability) {
-            KtTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
-            KtTypeNullability.NULLABLE -> Nullable::class.qualifiedName
-            KtTypeNullability.UNKNOWN -> null
+            KaTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
+            KaTypeNullability.NULLABLE -> Nullable::class.qualifiedName
+            KaTypeNullability.UNKNOWN -> null
             null -> null
         }
 
@@ -47,12 +51,13 @@ class KotlinNullabilityUAnnotation(
 
     override fun findDeclaredAttributeValue(name: String?): UExpression? = null
 
-    private val _resolved: PsiClass? by lz {
-        qualifiedName?.let {
-            val project = annotatedElement.project
-            JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+    private val _resolved: PsiClass?
+        get() = resolvedPart.getOrBuild {
+            qualifiedName?.let {
+                val project = annotatedElement.project
+                JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+            }
         }
-    }
 
     override fun resolve(): PsiClass? = _resolved
 }

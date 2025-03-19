@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
@@ -57,33 +57,27 @@ public final class FUStatisticsPersistence {
     }
   }
 
-  @NotNull
-  public static File getStatisticsCacheDirectory() {
+  public static @NotNull File getStatisticsCacheDirectory() {
     return PathManager.getConfigDir().resolve(FUS_CACHE_PATH + "/").toFile();
   }
 
-  @NotNull
-  public static File getStatisticsLegacyCacheDirectory() {
+  public static @NotNull File getStatisticsLegacyCacheDirectory() {
     return Paths.get(PathManager.getSystemPath()).resolve(FUS_CACHE_PATH).toFile();
   }
 
-  @NotNull
-  public static File getPersistenceStateFile() {
+  public static @NotNull File getPersistenceStateFile() {
     return getFileInStatisticsCacheDirectory(PERSISTENCE_STATE_FILE);
   }
 
-  @NotNull
-  private static File getLegacyStateFile() {
+  private static @NotNull File getLegacyStateFile() {
     return getFileInStatisticsCacheDirectory(LEGACY_PERSISTENCE_STATE_FILE);
   }
 
-  @NotNull
-  private static File getFileInStatisticsCacheDirectory(@NotNull String fileName) {
+  private static @NotNull File getFileInStatisticsCacheDirectory(@NotNull String fileName) {
     return new File(getStatisticsCacheDirectory(), "/" + fileName);
   }
 
-  @NotNull
-  public static File getSentDataFile() {
+  public static @NotNull File getSentDataFile() {
     return getFileInStatisticsCacheDirectory(SENT_DATA_FILE);
   }
 

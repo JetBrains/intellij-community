@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -291,12 +293,12 @@ public final class EditorImpl implements EditorEx {
   }
 
   public EditorSettings getSettings() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return mySettings;
   }
 
   public void reinitSettings() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myCharHeight = -1;
     myLineHeight = -1;
     myDescent = -1;
@@ -505,7 +507,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setHighlighter(EditorHighlighter highlighter) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myHighlighter != null) {
       getDocument().removeDocumentListener(myHighlighter);
     }
@@ -520,7 +522,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public EditorHighlighter getHighlighter() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myHighlighter;
   }
 
@@ -541,7 +543,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setInsertMode(boolean mode) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     boolean oldValue = myIsInsertMode;
     myIsInsertMode = mode;
     myPropertyChangeSupport.firePropertyChange(EditorEx.PROP_INSERT_MODE, oldValue, mode);
@@ -555,7 +557,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setColumnMode(boolean mode) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     boolean oldValue = myIsColumnMode;
     myIsColumnMode = mode;
     myPropertyChangeSupport.firePropertyChange(PROP_COLUMN_MODE, oldValue, mode);
@@ -812,7 +814,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void repaint(int startOffset, int endOffset) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myScrollPane == null) {
       return;
     }
@@ -1692,7 +1694,7 @@ public final class EditorImpl implements EditorEx {
   public int getLineHeight() {
     if (myLineHeight != -1) return myLineHeight;
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
     myLineHeight = (int)(fontMetrics.getHeight() * (isOneLineMode() ? 1 : myScheme.getLineSpacing()));
@@ -1717,7 +1719,7 @@ public final class EditorImpl implements EditorEx {
 
   public FontMetrics getFontMetrics(int fontType) {
     if (myPlainFontMetrics == null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       myPlainFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
       myBoldFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.BOLD));
       myItalicFontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.ITALIC));
@@ -1736,7 +1738,7 @@ public final class EditorImpl implements EditorEx {
 
   private int getCharHeight() {
     if (myCharHeight == -1) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       FontMetrics fontMetrics = myEditorComponent.getFontMetrics(myScheme.getFont(EditorFontType.PLAIN));
       myCharHeight = fontMetrics.charWidth('a');
     }
@@ -1773,7 +1775,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public int logicalPositionToOffset(LogicalPosition pos) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myDocument.getLineCount() == 0) return 0;
 
     if (pos.line < 0) throw new IndexOutOfBoundsException("Wrong line: " + pos.line);
@@ -1793,12 +1795,12 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setLastColumnNumber(int val) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myLastColumnNumber = val;
   }
 
   public int getLastColumnNumber() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myLastColumnNumber;
   }
 
@@ -1809,7 +1811,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public VisualPosition logicalToVisualPosition(LogicalPosition logicalPos) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new VisualPosition(logicalPos.line, logicalPos.column);
 
     int offset = logicalPositionToOffset(logicalPos);
@@ -1917,7 +1919,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public LogicalPosition visualToLogicalPosition(VisualPosition visiblePos) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myFoldingModel.isFoldingEnabled()) return new LogicalPosition(visiblePos.line, visiblePos.column);
 
     int line = visiblePos.line;
@@ -2571,7 +2573,7 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setEmbeddedIntoDialogWrapper(boolean b) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myEmbeddedIntoDialogWrapper = b;
     myScrollPane.setFocusable(!b);
@@ -2941,18 +2943,18 @@ public final class EditorImpl implements EditorEx {
   }
 
   public void setColorsScheme(EditorColorsScheme scheme) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myScheme = scheme;
     reinitSettings();
   }
 
   public EditorColorsScheme getColorsScheme() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myScheme;
   }
 
   public void setVerticalScrollbarOrientation(int type) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
     myScrollbarOrientation = type;
     if (type == EditorEx.VERTICAL_SCROLLBAR_LEFT) {

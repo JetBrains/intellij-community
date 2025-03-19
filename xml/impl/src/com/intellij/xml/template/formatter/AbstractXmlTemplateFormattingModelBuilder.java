@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.*;
@@ -74,8 +74,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return super.createModel(formattingContext);
   }
 
-  @NotNull
-  protected DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+  protected @NotNull DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
     return new DocumentBasedFormattingModel(rootBlock, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
   }
 
@@ -85,8 +84,15 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                        @NotNull OuterLanguageElement outerTemplateElement,
                                                        @NotNull CodeStyleSettings settings,
                                                        @Nullable Indent indent) throws FragmentedTemplateException {
-    List<PsiElement> templateElements = TemplateFormatUtil.findAllTemplateLanguageElementsInside(outerTemplateElement, viewProvider);
+    List<PsiElement> templateElements = getTreeElementsInsideOuterFragment(viewProvider, outerTemplateElement);
     return createTemplateFormattingModelInternal(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
+  }
+
+  protected @NotNull List<PsiElement> getTreeElementsInsideOuterFragment(
+    @NotNull TemplateLanguageFileViewProvider viewProvider,
+    @NotNull OuterLanguageElement outerTemplateElement
+  ) {
+    return TemplateFormatUtil.findAllTemplateLanguageElementsInside(outerTemplateElement, viewProvider);
   }
 
   public FormattingModel createTemplateFormattingModel(PsiFile file,
@@ -98,7 +104,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       return createTemplateFormattingModelInternal(file, settings, xmlFormattingPolicy, elements, indent);
     }
     catch (FragmentedTemplateException fte) {
-      assert elements.size() > 0;
+      assert !elements.isEmpty();
       int start = Integer.MAX_VALUE;
       int end = -1;
       for (PsiElement element : elements) {
@@ -110,13 +116,12 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     }
   }
 
-  @Nullable
-  private FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
-                                                                CodeStyleSettings settings,
-                                                                XmlFormattingPolicy xmlFormattingPolicy,
-                                                                List<? extends PsiElement> elements,
-                                                                Indent indent) throws FragmentedTemplateException {
-    if (elements.size() == 0) return null;
+  private @Nullable FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
+                                                                          CodeStyleSettings settings,
+                                                                          XmlFormattingPolicy xmlFormattingPolicy,
+                                                                          List<? extends PsiElement> elements,
+                                                                          Indent indent) throws FragmentedTemplateException {
+    if (elements.isEmpty()) return null;
     List<Block> templateBlocks = new ArrayList<>();
     for (PsiElement element : elements) {
       if (element instanceof PsiErrorElement) throw new FragmentedTemplateException((PsiErrorElement)element);
@@ -124,9 +129,14 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
         templateBlocks.add(createTemplateLanguageBlock(element.getNode(), settings, xmlFormattingPolicy, indent, null, null));
       }
     }
-    if (templateBlocks.size() == 0) return null;
-    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : new CompositeTemplateBlock(templateBlocks);
+    if (templateBlocks.isEmpty()) return null;
+    Block topBlock = templateBlocks.size() == 1 ? templateBlocks.get(0) : createCompositeTemplateBlock(templateBlocks, xmlFormattingPolicy);
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
+  }
+
+  protected @NotNull Block createCompositeTemplateBlock(@NotNull List<Block> templateBlocks,
+                                                        XmlFormattingPolicy xmlFormattingPolicy) {
+    return new CompositeTemplateBlock(templateBlocks);
   }
 
   /**
@@ -310,9 +320,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                         Indent childrenIndent) throws FragmentedTemplateException {
     List<Block> templateBlocks = new ArrayList<>();
     TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)templateFile.getViewProvider();
-    List<PsiElement> templateElements = TemplateFormatUtil.findAllElementsInside(range,
-                                                                                 viewProvider,
-                                                                                 true);
+    List<PsiElement> templateElements = getTemplateElements(range, viewProvider);
     FormattingModel localModel = createTemplateFormattingModelInternal(templateFile, settings, xmlFormattingPolicy, templateElements, childrenIndent);
     if (localModel != null) {
       Block rootBlock = localModel.getRootBlock();
@@ -324,6 +332,12 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
       }
     }
     return templateBlocks;
+  }
+
+  protected @NotNull List<PsiElement> getTemplateElements(@NotNull TextRange range, @NotNull TemplateLanguageFileViewProvider viewProvider) {
+    return TemplateFormatUtil.findAllElementsInside(range,
+                                                    viewProvider,
+                                                    true);
   }
 
   /**

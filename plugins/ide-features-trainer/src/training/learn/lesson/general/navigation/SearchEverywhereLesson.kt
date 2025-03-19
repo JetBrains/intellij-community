@@ -43,6 +43,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   open val showQuickDock: Boolean = true
 
   override val lessonContent: LessonContext.() -> Unit = {
+    configurationTasks()
     sdkConfigurationTasks()
 
     task("SearchEverywhere") {
@@ -54,28 +55,29 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       test { actions(it) }
     }
 
-    task("que") {
+    task {
       before {
         if (backupPopupLocation == null) {
           backupPopupLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
         }
       }
-      text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
-      stateCheck { checkWordInSearch(it) }
+      val prefix = "que"
+      text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(prefix)))
+      stateCheck { checkWordInSearch(prefix) }
       restoreByUi()
       test {
         Thread.sleep(500)
-        type(it)
+        type(prefix)
       }
     }
 
     task {
       triggerAndBorderHighlight().listItem { item ->
-        if (item is PsiNameIdentifierOwner)
-          item.name == requiredClassName
-        else if(item is NavigationItem)
-          item.name.isToStringContains(requiredClassName)
-        else item.isToStringContains(requiredClassName)
+        when (item) {
+          is PsiNameIdentifierOwner -> item.name == requiredClassName
+          is NavigationItem -> item.name.isToStringContains(requiredClassName)
+          else -> item.isToStringContains(requiredClassName)
+        }
       }
       restoreByUi()
     }
@@ -90,11 +92,11 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
         Thread.sleep(500) // wait items loading
         val jList = previous.ui as? JList<*> ?: error("No list")
         val itemIndex = LessonUtil.findItem(jList) { item ->
-          if (item is PsiNameIdentifierOwner)
-            item.name == requiredClassName
-          else if(item is NavigationItem)
-            item.name.isToStringContains(requiredClassName)
-          else item.isToStringContains(requiredClassName)
+          when (item) {
+            is PsiNameIdentifierOwner -> item.name == requiredClassName
+            is NavigationItem -> item.name.isToStringContains(requiredClassName)
+            else -> item.isToStringContains(requiredClassName)
+          }
         } ?: error("No item")
 
         ideFrame {
@@ -103,42 +105,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       }
     }
 
-    actionTask("GotoClass") {
-      LessonsBundle.message("search.everywhere.goto.class", action(it))
-    }
-
-    task(goToClassSearchQuery) {
-      text(LessonsBundle.message("search.everywhere.type.class.name", code(it)))
-      stateCheck { checkWordInSearch(it) }
-      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
-      test { type(it) }
-    }
-
-    task(EverythingGlobalScope.getNameText()) {
-      text(LessonsBundle.message("search.everywhere.use.all.places",
-                                 strong(projectFilesScopeName), strong(it)))
-      triggerAndFullHighlight().component { button: ActionButtonWithText ->
-        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
-      }
-      triggerUI().component { button: ActionButtonWithText ->
-        button.accessibleContext.accessibleName == it
-      }
-      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
-        !checkInsideSearchEverywhere() && focusOwner !is JList<*>
-      }
-      test {
-        invokeActionViaShortcut("ALT P")
-      }
-    }
-
-    if (showQuickDock) {
-      task("QuickJavaDoc") {
-        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
-        triggerOnQuickDocumentationPopup()
-        restoreByUi()
-        test { actions(it) }
-      }
-    }
+    replaceClassWithTypes()
 
     task {
       text(LessonsBundle.message("search.everywhere.close.documentation.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
@@ -164,6 +131,48 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
   override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
     backupPopupLocation = null
+  }
+
+  protected open fun LessonContext.configurationTasks() {}
+
+  protected open fun LessonContext.replaceClassWithTypes() {
+    actionTask("GotoClass") {
+      LessonsBundle.message("search.everywhere.goto.class", action(it))
+    }
+
+    task {
+      text(LessonsBundle.message("search.everywhere.type.class.name", code(goToClassSearchQuery)))
+      stateCheck { checkWordInSearch(goToClassSearchQuery) }
+      restoreAfterStateBecomeFalse { !checkInsideSearchEverywhere() }
+      test { type(goToClassSearchQuery) }
+    }
+
+    task {
+      val globalScopeName = EverythingGlobalScope.getNameText()
+      text(LessonsBundle.message("search.everywhere.use.all.places",
+                                 strong(projectFilesScopeName), strong(globalScopeName)))
+      triggerAndFullHighlight().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName.isToStringContains(projectFilesScopeName)
+      }
+      triggerUI().component { button: ActionButtonWithText ->
+        button.accessibleContext.accessibleName == globalScopeName
+      }
+      showWarning(LessonsBundle.message("search.everywhere.class.popup.closed.warning.message", action("GotoClass"))) {
+        !checkInsideSearchEverywhere() && focusOwner !is JList<*>
+      }
+      test {
+        invokeActionViaShortcut("ALT P")
+      }
+    }
+
+    if (showQuickDock) {
+      task("QuickJavaDoc") {
+        text(LessonsBundle.message("search.everywhere.quick.documentation", action(it)))
+        triggerOnQuickDocumentationPopup()
+        restoreByUi()
+        test { actions(it) }
+      }
+    }
   }
 
   open fun LessonContext.epilogue() = Unit

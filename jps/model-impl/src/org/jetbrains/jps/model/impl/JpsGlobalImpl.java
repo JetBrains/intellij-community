@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
@@ -26,28 +15,19 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
-import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
-public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements JpsGlobal {
+final class JpsGlobalImpl extends JpsGlobalBase {
   private final JpsLibraryCollectionImpl myLibraryCollection;
-  private JpsPathMapper myPathMapper = JpsPathMapper.IDENTITY;
 
-  public JpsGlobalImpl(@NotNull JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(model, eventDispatcher);
+  JpsGlobalImpl(@NotNull JpsModel model) {
+    super(model);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
-    myContainer.setChild(JpsFileTypesConfigurationImpl.ROLE, new JpsFileTypesConfigurationImpl());
   }
 
-  public JpsGlobalImpl(JpsGlobalImpl original, JpsModel model, JpsEventDispatcher eventDispatcher) {
-    super(original, model, eventDispatcher);
-    myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
-  }
-
-  @NotNull
   @Override
-  public
+  public @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsLibrary addLibrary(@NotNull LibraryType libraryType, @NotNull final String name) {
+  JpsLibrary addLibrary(@NotNull LibraryType libraryType, final @NotNull String name) {
     return myLibraryCollection.addLibrary(name, libraryType);
   }
 
@@ -66,31 +46,8 @@ public final class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> imple
     return addSdk(name, homePath, versionString, type, type.createDefaultProperties());
   }
 
-  @NotNull
   @Override
-  public JpsLibraryCollection getLibraryCollection() {
+  public @NotNull JpsLibraryCollection getLibraryCollection() {
     return myLibraryCollection;
-  }
-
-  @NotNull
-  @Override
-  public JpsFileTypesConfiguration getFileTypesConfiguration() {
-    return myContainer.getChild(JpsFileTypesConfigurationImpl.ROLE);
-  }
-
-  @Override
-  public @NotNull JpsPathMapper getPathMapper() {
-    return myPathMapper;
-  }
-
-  @Override
-  public void setPathMapper(@NotNull JpsPathMapper pathMapper) {
-    myPathMapper = pathMapper;
-  }
-
-  @NotNull
-  @Override
-  public JpsElementReference<JpsGlobal> createReference() {
-    return new JpsGlobalElementReference();
   }
 }

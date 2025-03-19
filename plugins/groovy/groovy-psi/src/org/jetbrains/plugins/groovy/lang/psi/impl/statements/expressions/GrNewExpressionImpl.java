@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -23,8 +23,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrNewExpressionReference;
 
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
@@ -58,8 +58,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return super.addNamedArgument(namedArgument);
   }
 
-  @NotNull
-  private static PsiElement findAnchor(@NotNull PsiElement element) {
+  private static @NotNull PsiElement findAnchor(@NotNull PsiElement element) {
     PsiElement last = element.getLastChild();
     assert last != null;
     while (true) {
@@ -74,9 +73,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return last;
   }
 
-  @Nullable
   @Override
-  public GrArgumentList getArgumentList() {
+  public @Nullable GrArgumentList getArgumentList() {
     final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
     if (anonymous != null) return anonymous.getArgumentListGroovy();
     return super.getArgumentList();
@@ -110,21 +108,18 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return findChildByClass(GrAnonymousClassDefinition.class);
   }
 
-  @Nullable
   @Override
-  public GrArrayDeclaration getArrayDeclaration() {
+  public @Nullable GrArrayDeclaration getArrayDeclaration() {
     return findChildByClass(GrArrayDeclaration.class);
   }
 
-  @Nullable
   @Override
-  public GrArrayInitializer getArrayInitializer() {
+  public @Nullable GrArrayInitializer getArrayInitializer() {
     return findChildByClass(GrArrayInitializer.class);
   }
 
-  @Nullable
   @Override
-  public GrTypeArgumentList getConstructorTypeArguments() {
+  public @Nullable GrTypeArgumentList getConstructorTypeArguments() {
     return findChildByClass(GrTypeArgumentList.class);
   }
 
@@ -144,9 +139,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return reference == null ? GroovyResolveResult.EMPTY_ARRAY : reference.multiResolve(incompleteCode);
   }
 
-  @Nullable
   @Override
-  public GroovyConstructorReference getConstructorReference() {
+  public @Nullable GroovyConstructorReference getConstructorReference() {
     return getArrayCount() > 0 || getReferenceElement() == null ? null : myConstructorReference;
   }
 }

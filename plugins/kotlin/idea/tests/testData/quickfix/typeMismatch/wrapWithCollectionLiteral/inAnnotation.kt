@@ -8,6 +8,7 @@
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Wrap with []
+// IGNORE_K2
 
 annotation class Foo(val value: Array<String>)
 

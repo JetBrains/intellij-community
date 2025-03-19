@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -8,12 +8,14 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
@@ -23,16 +25,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
-  @NotNull
+public final class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalInspectionTool {
+    @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.STREAM_OPTIONAL);
+  }
+
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitConditionalExpression(@NotNull PsiConditionalExpression ternary) {
@@ -63,7 +67,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
       }
 
-      private boolean areTypesCompatible(PsiExpression nullBranch, PsiExpression notNullBranch) {
+      private static boolean areTypesCompatible(PsiExpression nullBranch, PsiExpression notNullBranch) {
         PsiType notNullType = ((PsiExpression)notNullBranch.copy()).getType();
         PsiType nullType = ((PsiExpression)nullBranch.copy()).getType();
         if (nullType == null || notNullType == null) return false;
@@ -75,30 +79,26 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     };
   }
 
-  private static class ReplaceConditionWithOptionalFix implements LocalQuickFix {
+  private static class ReplaceConditionWithOptionalFix extends PsiUpdateModCommandQuickFix {
     private final boolean myChangesSemantics;
 
     ReplaceConditionWithOptionalFix(boolean changesSemantics) {
       myChangesSemantics = changesSemantics;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return getFamilyName() + (myChangesSemantics ? JavaBundle.message("quickfix.text.suffix.may.change.semantics") : "");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return JavaBundle.message("quickfix.family.replace.with.optional.of.nullable.chain");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiConditionalExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(element, PsiConditionalExpression.class);
       TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
       if (ternaryNullCheck == null) return;
       PsiVariable variable = ternaryNullCheck.myVariable;
@@ -157,8 +157,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     }
 
     @Contract("null -> null")
-    @Nullable
-    public static TernaryNullCheck from(@Nullable PsiConditionalExpression ternary) {
+    public static @Nullable TernaryNullCheck from(@Nullable PsiConditionalExpression ternary) {
       if (ternary == null) return null;
       PsiExpression condition = ternary.getCondition();
       boolean isNull = true;

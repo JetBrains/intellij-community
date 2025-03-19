@@ -1,0 +1,14 @@
+### auto-generated section `build intellij.platform.util.commonsLangV2Shim` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "commonsLangV2Shim",
+  module_name = "intellij.platform.util.commonsLangV2Shim",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:commons-lang3",
+    "@lib//:platform-util-commons_lang_v2_shim-commons-collections",
+  ]
+)
+### auto-generated section `build intellij.platform.util.commonsLangV2Shim` end

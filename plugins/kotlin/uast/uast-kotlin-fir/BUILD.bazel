@@ -1,0 +1,39 @@
+### auto-generated section `build kotlin.uast.uast-kotlin.k2` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = 11,
+  context_receivers = True,
+  opt_in = [
+    "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
+jvm_library(
+  name = "kotlin-uast-uast-kotlin-k2",
+  module_name = "kotlin.uast.uast-kotlin.k2",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinc-kotlin-compiler-common",
+    "@lib//:asm",
+    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "@lib//:kotlinc-analysis-api",
+    "@lib//:kotlinc-analysis-api-k2",
+    "@lib//:kotlinc-analysis-api-impl-base",
+    "//uast/uast-common:uast",
+    "//platform/core-api:core",
+    "//platform/util",
+    "//java/java-psi-impl:psi-impl",
+    "//uast/uast-java:java-uast",
+    "@lib//:kotlinc-low-level-api-fir",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-symbol-light-classes",
+  ]
+)
+### auto-generated section `build kotlin.uast.uast-kotlin.k2` end

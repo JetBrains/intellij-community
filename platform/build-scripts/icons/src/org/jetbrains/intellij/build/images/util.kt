@@ -63,26 +63,25 @@ private fun loadPng(file: Path): BufferedImage {
 internal fun isImage(file: Path): Boolean = ImageExtension.fromName(file.fileName.toString()) != null
 
 internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimension? {
-  if (file.toString().endsWith(".svg")) {
-    val data = Files.readAllBytes(file)
-    val size = getSvgDocumentSize(data = data)
-    return Dimension(size.width.toInt(), size.height.toInt())
-  }
-
-  val image = try {
-    loadPng(file)
+  return try {
+    if (file.toString().endsWith(".svg")) {
+      val data = Files.readAllBytes(file)
+      val size = getSvgDocumentSize(data = data)
+      Dimension(size.width.toInt(), size.height.toInt())
+    } else {
+      val image = loadPng(file)
+      val width = image.width
+      val height = image.height
+      Dimension(width, height)
+    }
   }
   catch (e: Exception) {
     if (failOnMalformedImage) {
       throw e
     }
     println("WARNING: can't load $file")
-    return null
+    null
   }
-
-  val width = image.width
-  val height = image.height
-  return Dimension(width, height)
 }
 
 internal enum class ImageType(private val suffix: String) {

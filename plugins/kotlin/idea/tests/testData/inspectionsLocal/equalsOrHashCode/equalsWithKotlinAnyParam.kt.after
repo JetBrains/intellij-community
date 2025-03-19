@@ -1,5 +1,4 @@
-// ERROR: Unresolved reference: javaClass
-// ERROR: Unresolved reference: javaClass
+// WITH_STDLIB
 
 class WithConstructor(x: Int, s: String) {
     val x: Int = 0
@@ -21,4 +20,4 @@ class WithConstructor(x: Int, s: String) {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

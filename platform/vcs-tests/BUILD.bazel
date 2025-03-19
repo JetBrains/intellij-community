@@ -1,0 +1,75 @@
+### auto-generated section `build intellij.platform.vcs.testFramework` start
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jvm_library(
+  name = "vcs-testFramework",
+  module_name = "intellij.platform.vcs.testFramework",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/testFramework",
+    "//platform/vcs-api:vcs",
+    "//platform/vcs-impl",
+    "//platform/projectModel-impl",
+    "//platform/ide-core-impl",
+    "//platform/diff-api:diff",
+    "//platform/analysis-api:analysis",
+    "@lib//:junit4",
+    "//platform/indexing-impl",
+    "//platform/core-ui",
+    "//platform/platform-util-io:ide-util-io",
+  ]
+)
+### auto-generated section `build intellij.platform.vcs.testFramework` end
+
+### auto-generated section `build intellij.platform.vcs.tests` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+java_library(
+  name = "vcs-tests",
+  visibility = ["//visibility:public"]
+)
+
+jvm_library(
+  name = "vcs-tests_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  associates = [
+    "//platform/vcs-impl",
+    "//platform/vcs-impl:vcs-impl_test_lib",
+  ],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/vcs-tests:vcs-testFramework",
+    "//platform/lang-impl",
+    "//platform/vcs-impl/lang:vcs-impl-lang",
+    "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api:vcs",
+    "//platform/core-api:core",
+    "//platform/ide-core-impl",
+    "@lib//:junit4",
+    "//platform/indexing-impl",
+    "//platform/platform-api:ide",
+    "//platform/diff-impl/tests:diff-tests_test_lib",
+    "@lib//:mockito",
+    "//platform/util:util-tests_test_lib",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//platform/diff-impl",
+    "@lib//:assert_j",
+    "//platform/core-ui",
+    "@lib//:fastutil-min",
+    "//platform/util/jdom",
+    "//xml/xml-psi-api:psi",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ]
+)
+
+jvm_test(
+  name = "vcs-tests_test",
+  runtime_deps = [":vcs-tests_test_lib"]
+)
+### auto-generated section `build intellij.platform.vcs.tests` end

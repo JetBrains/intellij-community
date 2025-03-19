@@ -10,10 +10,10 @@ public class GetterSetterClassTest {
     test.setIntProperty(1);
     test.getDoubleProperty();
     test.setDoubleProperty(0.0);
-    test.isBooleanProperty();
-    test.setBooleanProperty(true);
-    test.getAStringProperty();
-    test.setAStringProperty("");
+    //test.isBooleanProperty();
+    //test.setBooleanProperty(true);
+    //test.getAStringProperty();
+    //test.setAStringProperty("");
 
     System.out.println(test);
   }
@@ -26,12 +26,8 @@ public class GetterSetterClassTest {
     return this.pDoubleProperty;
   }
 
-  public boolean isBooleanProperty() {
+  public boolean is_BooleanProperty() {
     return this.m_BooleanProperty;
-  }
-
-  public String getAStringProperty() {
-    return this.aStringProperty;
   }
 
   public void setIntProperty(int mIntProperty) {
@@ -42,11 +38,7 @@ public class GetterSetterClassTest {
     this.pDoubleProperty = pDoubleProperty;
   }
 
-  public void setBooleanProperty(boolean m_BooleanProperty) {
+  public void set_BooleanProperty(boolean m_BooleanProperty) {
     this.m_BooleanProperty = m_BooleanProperty;
-  }
-
-  public void setAStringProperty(String aStringProperty) {
-    this.aStringProperty = aStringProperty;
   }
 }

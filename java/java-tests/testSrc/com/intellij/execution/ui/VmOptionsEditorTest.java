@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -29,7 +29,8 @@ public class VmOptionsEditorTest extends LightPlatform4TestCase {
     assertFalse(expanded.getEditor().isOneLineMode());
     checkExpectedText(expanded, """
       -XX:Abc="hello world"
-      -XX<caret>:Def=123""");
+      -XX:Def<caret>=123""");
+    editor.collapse();
     
     expanded.removeNotify();
     origField.removeNotify();

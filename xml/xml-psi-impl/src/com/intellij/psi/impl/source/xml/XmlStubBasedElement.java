@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -23,10 +23,11 @@ import java.util.List;
 /**
  * Simplified stub-based version of {@link XmlElementImpl}
  *
- * @apiNote if you introduce a new inheritor please check that this implementation is aligned with XmlElementImpl
+ * @apiNote if you introduce a new inheritor, please check that this implementation is aligned with XmlElementImpl
  */
 @ApiStatus.Experimental
-abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPsiElementBase<T> implements XmlElement {
+@ApiStatus.Internal
+public abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPsiElementBase<T> implements XmlElement {
 
   XmlStubBasedElement(@NotNull T stub,
                       @NotNull IStubElementType nodeType) {
@@ -50,8 +51,7 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     if (!isPhysical()) {
       final XmlElement including = getUserData(INCLUDING_ELEMENT);
       if (including != null) {
@@ -73,14 +73,12 @@ abstract class XmlStubBasedElement<T extends StubElement<?>> extends StubBasedPs
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getContainingFile().getLanguage();
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return GlobalSearchScope.allScope(getProject());
   }
 

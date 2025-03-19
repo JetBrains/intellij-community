@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.impl.FillPermitsListFix;
 import com.intellij.java.JavaBundle;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiUtil;
@@ -14,11 +14,15 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTool {
+
+  @Override
+  public @NotNull Set<@NotNull JavaFeature> requiredFeatures() {
+    return Set.of(JavaFeature.SEALED_CLASSES);
+  }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!HighlightingFeature.SEALED_CLASSES.isAvailable(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass psiClass) {
@@ -29,13 +33,13 @@ public class FillPermitsListInspection extends AbstractBaseJavaLocalInspectionTo
         PsiModifierList modifiers = psiClass.getModifierList();
         if (modifiers == null || !modifiers.hasExplicitModifier(PsiModifier.SEALED)) return;
         Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
-        for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
+        for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass).asIterable()) {
           if (PsiUtil.isLocalOrAnonymousClass(inheritor)) return;
           // handled in highlighter
           if (inheritor.getContainingFile() != containingFile) return;
           if (!permittedClasses.contains(inheritor)) {
-            holder.registerProblem(identifier, JavaBundle.message("inspection.fill.permits.list.display.name"),
-                                   new FillPermitsListFix(identifier));
+            holder.problem(identifier, JavaBundle.message("inspection.fill.permits.list.display.name"))
+              .fix(new FillPermitsListFix(identifier)).register();
             break;
           }
         }

@@ -1,15 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.ide.ProjectWindowCustomizerService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ShowMode;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.hover.HoverListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
@@ -22,6 +24,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
+
+import static com.intellij.ui.plaf.beg.BegMenuItemUI.isSelected;
 
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
@@ -36,6 +40,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourCheckIconRect = new Rectangle();
   private static final Rectangle ourIconRect = new Rectangle();
   private static final Rectangle ourViewRect = new Rectangle(32767, 32767);
+  private final MyHoverListener hoverListener = new MyHoverListener();
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -51,8 +56,14 @@ public class IdeaMenuUI extends BasicMenuUI {
       outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
     }
     else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
-      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
-      radius = 0;
+      if (ShowMode.Companion.isMergedMainMenu()) {
+        outerInsets = JBUI.insets(height / JBUIScale.scale(8), 0);
+        radius = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().get();
+      }
+      else {
+        outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
+        radius = 0;
+      }
     }
     else {
       radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
@@ -80,29 +91,82 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    if (c instanceof JMenuItem && ShowMode.Companion.isMergedMainMenu()) {
+      hoverListener.addTo(c);
+    }
+  }
+
+  @Override
+  public void uninstallUI(JComponent c) {
+    super.uninstallUI(c);
+    hoverListener.removeFrom(c);
+  }
+
+  private static class MyHoverListener extends HoverListener {
+    @Override
+    public void mouseEntered(@NotNull Component component, int x, int y) {
+      if (component.getParent() instanceof JMenuBar) {
+        ((JMenuItem)component).getModel().setArmed(true);
+      }
+    }
+
+    @Override
+    public void mouseExited(@NotNull Component component) {
+      if (component.getParent() instanceof JMenuBar) {
+        ((JMenuItem)component).getModel().setArmed(false);
+      }
+    }
+
+    @Override
+    public void mouseMoved(@NotNull Component component, int x, int y) { }
+  }
+
+  @Override
   protected void installDefaults() {
     super.installDefaults();
     Integer integer = UIUtil.getPropertyMaxGutterIconWidth(getPropertyPrefix());
-    if (integer != null){
+    if (integer != null) {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+    selectionBackground = getDefaultSelectionBackground();
     if (isHeaderMenu()) {
       menuItem.setBackground(getMenuBackgroundColor());
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
       selectionForeground = JBColor.namedColor("MainMenu.selectionForeground", selectionForeground);
       selectionBackground = JBColor.namedColor("MainMenu.selectionBackground", selectionBackground);
+      if (ShowMode.Companion.isMergedMainMenu()) {
+        JBColor hoverBG = JBColor.namedColor("MainToolbar.Dropdown.hoverBackground", JBColor.background());
+        if (ProjectWindowCustomizerService.Companion.getInstance().isActive()) {
+          selectionBackground = JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground",
+                                        getDefaultSelectionBackground());
+        }
+        else {
+          selectionBackground = hoverBG;
+        }
+      }
     }
   }
 
   @ApiStatus.Internal
-  static public @NotNull Color getMenuBackgroundColor() {
+  public static Color getDefaultSelectionBackground() {
+    return JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+  }
+
+  @ApiStatus.Internal
+  public void setSelectionBackground(Color selectionBackground) {
+    this.selectionBackground = selectionBackground;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
   private boolean isHeaderMenu() {
-    return menuItem instanceof ActionMenu && ((ActionMenu)menuItem).isHeaderMenuItem();
+    return menuItem instanceof ActionMenu actionMenu && actionMenu.isHeaderMenuItem;
   }
 
   private void checkEmptyIcon(JComponent comp) {
@@ -148,11 +212,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       defaultTextIconGap
     );
     Color mainColor = g.getColor();
-    if (comp.isOpaque()){
-      fillOpaque(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
-    } else {
-      fillOpaqueFalse(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
-    }
+    fillBackground(g, comp, jMenu, buttonmodel, allowedIcon);
     if (allowedIcon != null){
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         g.setColor(selectionForeground);
@@ -183,7 +243,7 @@ public class IdeaMenuUI extends BasicMenuUI {
         icon.paintIcon(comp, g, ourIconRect.x, ourIconRect.y);
       }
     }
-    if (s1 != null && s1.length() > 0){
+    if (s1 != null && !s1.isEmpty()){
       if (buttonmodel.isEnabled()){
         if (buttonmodel.isArmed() || buttonmodel.isSelected()){
           g.setColor(selectionForeground);
@@ -224,21 +284,13 @@ public class IdeaMenuUI extends BasicMenuUI {
     g.setFont(font);
   }
 
-  protected void fillOpaque(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
-    g.setColor(jMenu.getBackground());
-    g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+  private void fillBackground(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon) {
+    if (comp.isOpaque()) {
+      g.setColor(jMenu.getBackground());
+      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+    }
     if (buttonmodel.isArmed() || buttonmodel.isSelected()){
       paintHover(g, comp, jMenu, allowedIcon);
-    }
-    g.setColor(mainColor);
-  }
-
-  protected void fillOpaqueFalse(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
-    if(IdeFrameDecorator.isCustomDecorationActive()) {
-      if (buttonmodel.isArmed() || buttonmodel.isSelected()) {
-        paintHover(g, comp, jMenu, allowedIcon);
-      }
-      g.setColor(mainColor);
     }
   }
 
@@ -439,7 +491,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
-  private void resetRects() {
+  private static void resetRects() {
     ourIconRect.setBounds(ourZeroRect);
     ourTextRect.setBounds(ourZeroRect);
     ourAcceleratorRect.setBounds(ourZeroRect);
@@ -450,6 +502,9 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   private Icon getAllowedIcon() {
     Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+    if (menuItem.isEnabled() && isSelected(menuItem) && menuItem.getSelectedIcon() != null) {
+      icon = menuItem.getSelectedIcon();
+    }
     if (icon != null && icon.getIconWidth() > myMaxGutterIconWidth){
       icon = null;
     }

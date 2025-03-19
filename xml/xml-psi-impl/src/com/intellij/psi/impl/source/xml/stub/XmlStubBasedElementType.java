@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml.stub;
 
 import com.intellij.lang.ASTNode;
@@ -24,9 +24,8 @@ public abstract class XmlStubBasedElementType<StubT extends StubElement<?>, PsiT
     super(debugName, language);
   }
 
-  @NotNull
   @Override
-  public String getExternalId() {
+  public @NotNull String getExternalId() {
     if (externalId == null) {
       externalId = (getLanguage() == XMLLanguage.INSTANCE ? "" : getLanguage().getID().toUpperCase(Locale.ENGLISH) + ":") + getDebugName();
     }
@@ -42,12 +41,10 @@ public abstract class XmlStubBasedElementType<StubT extends StubElement<?>, PsiT
   public void indexStub(@NotNull StubT stub, @NotNull IndexSink sink) {
   }
 
-  @NotNull
-  public abstract PsiT createPsi(@NotNull ASTNode node);
+  public abstract @NotNull PsiT createPsi(@NotNull ASTNode node);
 
-  @NotNull
   @Override
-  public ASTNode createCompositeNode() {
+  public @NotNull ASTNode createCompositeNode() {
     return new CompositeElement(this);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.ide.ui.OptionsTopHitProvider;
@@ -12,15 +12,13 @@ import java.util.Collection;
 import java.util.Collections;
 
 final class LiveTemplatesOptionsTopHitProvider implements OptionsTopHitProvider.ApplicationLevelProvider {
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "templates";
   }
 
-  @NotNull
   @Override
-  public Collection<OptionDescription> getOptions() {
+  public @NotNull Collection<OptionDescription> getOptions() {
     TemplateSettings settings = TemplateSettings.getInstance();
     if (settings == null) {
       return Collections.emptyList();

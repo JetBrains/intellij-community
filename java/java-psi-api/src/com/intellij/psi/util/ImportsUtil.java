@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,11 +13,12 @@ import java.util.List;
 import java.util.Objects;
 
 public final class ImportsUtil {
+
   private ImportsUtil() {
   }
 
   public static List<PsiJavaCodeReferenceElement> collectReferencesThrough(PsiFile file,
-                                                                           @Nullable final PsiJavaCodeReferenceElement refExpr,
+                                                                           final @Nullable PsiJavaCodeReferenceElement refExpr,
                                                                            final PsiImportStaticStatement staticImport) {
     final List<PsiJavaCodeReferenceElement> expressionToExpand = new ArrayList<>();
     file.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -63,11 +66,13 @@ public final class ImportsUtil {
   }
 
   public static boolean hasStaticImportOn(final PsiElement expr, final PsiMember member, boolean acceptOnDemand) {
-    if (expr.getContainingFile() instanceof PsiJavaFile) {
-      final PsiImportList importList = ((PsiJavaFile)expr.getContainingFile()).getImportList();
+    if (expr.getContainingFile() instanceof PsiJavaFile ) {
+      PsiJavaFile file = (PsiJavaFile)expr.getContainingFile();
+      final PsiImportList importList = file.getImportList();
       if (importList != null) {
+        List<PsiImportStaticStatement> additionalOnDemandImports = ContainerUtil.filterIsInstance(getAllImplicitImports(file), PsiImportStaticStatement.class);
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-        for (PsiImportStaticStatement stmt : importStaticStatements) {
+        for (PsiImportStaticStatement stmt : ContainerUtil.append(additionalOnDemandImports, importStaticStatements)) {
           final PsiClass containingClass = member.getContainingClass();
           final String referenceName = stmt.getReferenceName();
           if (containingClass != null && stmt.resolveTargetClass() == containingClass) {
@@ -85,5 +90,27 @@ public final class ImportsUtil {
       }
     }
     return false;
+  }
+
+  /**
+   * Retrieves all implicit import statements associated with the given Java file.
+   *
+   * @param file the Java file for which to retrieve implicit import statements.
+   * @return a list of implicit import statements associated with the given Java file.
+   */
+  public static List<PsiImportStatementBase> getAllImplicitImports(@NotNull PsiJavaFile file) {
+    return CachedValuesManager.getProjectPsiDependentCache(file, javaFile -> {
+      List<PsiImportStatementBase> results = new ArrayList<>();
+      Project project = javaFile.getProject();
+      PsiElementFactory factory = PsiElementFactory.getInstance(project);
+      ImplicitlyImportedElement[] elements = javaFile.getImplicitlyImportedElements();
+      for (@NotNull ImplicitlyImportedElement element : elements) {
+        results.add(element.createImportStatement());
+      }
+      for (String aPackage : javaFile.getImplicitlyImportedPackages()) {
+        results.add(factory.createImportStatementOnDemand(aPackage));
+      }
+      return results;
+    });
   }
 }

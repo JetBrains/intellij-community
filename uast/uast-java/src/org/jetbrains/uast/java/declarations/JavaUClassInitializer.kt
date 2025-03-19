@@ -14,19 +14,24 @@ class JavaUClassInitializer(
   uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by sourcePsi {
 
+  private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
+  private val uastBodyPart = UastLazyPart<UExpression>()
+
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiClassInitializer get() = sourcePsi
 
   override val javaPsi: PsiClassInitializer = sourcePsi
 
   override val uastAnchor: UIdentifier?
     get() = null
 
-  override val uastBody: UExpression by lazyPub {
-    UastFacade.findPlugin(sourcePsi.body)?.convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
-  }
+  override val uastBody: UExpression
+    get() = uastBodyPart.getOrBuild {
+      UastFacade.findPlugin(sourcePsi.body)?.convertElement(sourcePsi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
+    }
 
-  override val uAnnotations: List<UAnnotation> by lazyPub { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uAnnotations: List<UAnnotation>
+    get() = uAnnotationsPart.getOrBuild { sourcePsi.annotations.map { JavaUAnnotation(it, this) } }
 
   override fun equals(other: Any?): Boolean = this === other
   override fun hashCode(): Int = sourcePsi.hashCode()

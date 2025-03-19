@@ -22,7 +22,7 @@ class ConvertExtensionPropertyInitializerToGetterFix(element: KtExpression) : Ko
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val property = element.getParentOfType<KtProperty>(true) ?: return
-        ConvertPropertyInitializerToGetterIntention.convertPropertyInitializerToGetter(property, editor)
+        ConvertPropertyInitializerToGetterIntention.Factory.convertPropertyInitializerToGetter(property, editor)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

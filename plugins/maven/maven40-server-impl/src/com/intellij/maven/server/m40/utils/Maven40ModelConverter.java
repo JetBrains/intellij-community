@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.util.ReflectionUtilRt;
@@ -20,9 +20,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class Maven40ModelConverter {
-  @NotNull
-  public static MavenModel convertModel(Model model) {
-    if(model.getBuild() == null) {
+  public static @NotNull MavenModel convertModel(Model model) {
+    if (model.getBuild() == null) {
       model.setBuild(new Build());
     }
     Build build = model.getBuild();
@@ -31,10 +30,9 @@ public class Maven40ModelConverter {
                         asSourcesList(build.getTestSourceDirectory()));
   }
 
-  @NotNull
-  public static MavenModel convertModel(Model model,
-                                        List<String> sources,
-                                        List<String> testSources) {
+  public static @NotNull MavenModel convertModel(Model model,
+                                                 List<String> sources,
+                                                 List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -46,9 +44,10 @@ public class Maven40ModelConverter {
     result.setPackaging(model.getPackaging());
     result.setName(model.getName());
     result.setProperties(model.getProperties() == null ? new Properties() : model.getProperties());
-    result.setPlugins(convertPlugins(model));
+    result.setPlugins(convertPlugins(model, Collections.emptyList()));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
+    result.setRemotePluginRepositories(convertRepositories(model.getPluginRepositories()));
     result.setProfiles(convertProfiles(model.getProfiles()));
     result.setModules(model.getModules());
 
@@ -56,7 +55,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
+  protected static List<MavenPlugin> convertPlugins(Model mavenModel, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin> result = new ArrayList<>();
     Build build = mavenModel.getBuild();
 
@@ -64,7 +63,7 @@ public class Maven40ModelConverter {
       List<Plugin> plugins = build.getPlugins();
       if (plugins != null) {
         for (Plugin each : plugins) {
-          result.add(convertPlugin(each));
+          result.add(convertPlugin(each, pluginArtifacts));
         }
       }
     }
@@ -72,7 +71,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  private static MavenPlugin convertPlugin(Plugin plugin) {
+  private static MavenPlugin convertPlugin(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
     List<MavenPlugin.Execution> executions = new ArrayList<>(plugin.getExecutions().size());
     for (PluginExecution each : plugin.getExecutions()) {
       executions.add(convertExecution(each));
@@ -83,17 +82,31 @@ public class Maven40ModelConverter {
       deps.add(new MavenId(each.getGroupId(), each.getArtifactId(), each.getVersion()));
     }
 
+    String pluginVersion = getPluginVersion(plugin, pluginArtifacts);
     return new MavenPlugin(plugin.getGroupId(),
                            plugin.getArtifactId(),
-                           plugin.getVersion(),
+                           pluginVersion,
                            false,
                            "true".equals(plugin.getExtensions()),
                            convertConfiguration(plugin.getConfiguration()),
                            executions, deps);
   }
 
+  private static String getPluginVersion(Plugin plugin, Collection<? extends Artifact> pluginArtifacts) {
+    String pluginVersion = plugin.getVersion();
+    if (null != pluginVersion) return pluginVersion;
+    if (null == plugin.getGroupId() || null == plugin.getArtifactId()) return null;
+    for (Artifact each : pluginArtifacts) {
+      if (plugin.getGroupId().equals(each.getGroupId()) && plugin.getArtifactId().equals(each.getArtifactId())) {
+        return each.getVersion();
+      }
+    }
+    return null;
+  }
+
   public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
-    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
+    return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(),
+                                     convertConfiguration(execution.getConfiguration()));
   }
 
   private static Element convertConfiguration(Object config) {
@@ -201,7 +214,7 @@ public class Maven40ModelConverter {
   }
 
 
-  private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
+  public static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
     return policy != null
            ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
            : null;
@@ -313,8 +326,7 @@ public class Maven40ModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
-  @NotNull
-  public static Model toNativeModel(MavenModel model) {
+  public static @NotNull Model toNativeModel(MavenModel model) {
     Model result = new Model();
     result.setArtifactId(model.getMavenId().getArtifactId());
     result.setGroupId(model.getMavenId().getGroupId());
@@ -433,7 +445,7 @@ public class Maven40ModelConverter {
     return result;
   }
 
-  public static Repository toNativeRepository(MavenRemoteRepository r) {
+  public static Repository toNativeRepository(MavenRemoteRepository r, boolean forceResolveSnapshots) {
     Repository result = new Repository();
     result.setId(r.getId());
     result.setName(r.getName());
@@ -441,7 +453,16 @@ public class Maven40ModelConverter {
     result.setLayout(r.getLayout() == null ? "default" : r.getLayout());
 
     if (r.getReleasesPolicy() != null) result.setReleases(toNativePolicy(r.getReleasesPolicy()));
-    if (r.getSnapshotsPolicy() != null) result.setSnapshots(toNativePolicy(r.getSnapshotsPolicy()));
+
+    if (forceResolveSnapshots) {
+      RepositoryPolicy policy = new RepositoryPolicy();
+      policy.setEnabled(true);
+      policy.setUpdatePolicy("allways");
+      result.setSnapshots(policy);
+    }
+    else {
+      if (r.getSnapshotsPolicy() != null) result.setSnapshots(toNativePolicy(r.getSnapshotsPolicy()));
+    }
 
     return result;
   }
@@ -494,6 +515,5 @@ public class Maven40ModelConverter {
                              artifact.isResolved(),
                              false /*artifact instanceof CustomMaven3Artifact && ((CustomMaven3Artifact)artifact).isStub()*/);
   }
-
 }
 

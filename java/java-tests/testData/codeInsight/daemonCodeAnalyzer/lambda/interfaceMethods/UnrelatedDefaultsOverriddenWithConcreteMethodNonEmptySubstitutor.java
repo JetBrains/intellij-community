@@ -13,4 +13,4 @@ class C<K> extends AC<K> implements B<K> {
   public void replace(K k) {}
 }
 
-<error descr="Class 'D' must either be declared abstract or implement abstract method 'replace(K)' in 'B'">class <error descr="Class 'D' must either be declared abstract or implement abstract method 'replace(K)' in 'B'">D</error><K> extends AC<K> implements B<K></error> {}
+<error descr="Class 'D' must either be declared abstract or implement abstract method 'replace(K)' in 'B'">class D<K> extends AC<K> implements B<K></error> {}

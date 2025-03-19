@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.cache;
 
 import com.intellij.compiler.CompilerConfigurationSettings;
@@ -25,7 +25,11 @@ public final class CompilerCacheConfigurator {
   public static @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings(@NotNull Project project) {
     if (!Registry.is("compiler.process.use.portable.caches")) return null;
     String serverUrl = getServerUrl(project);
-    if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) return null;
+    if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
+      LOG.warn("Can't evaluate cache settings server URL: " + serverUrl + "; line ending is correct: "
+               + CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly());
+      return null;
+    }
 
     Map<String, String> authHeaders = CompilerCacheServerAuthService.getInstance(project).getRequestHeaders(true);
     if (authHeaders.isEmpty()) return null;
@@ -51,8 +55,7 @@ public final class CompilerCacheConfigurator {
     return getServerUrl(project) != null;
   }
 
-  @Nullable
-  private static Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl, boolean forceUpdate) {
+  private static @Nullable Pair<String, Integer> getCommitToDownload(@NotNull Project project, @NotNull String serverUrl, boolean forceUpdate) {
     Map<String, Set<String>> availableCommitsPerRemote = CompilerCachesServerClient.getCacheKeysPerRemote(project, serverUrl);
     GitCommitsIterator commitsIterator = new GitCommitsIterator(project, INTELLIJ_REPO_NAME);
     String latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();

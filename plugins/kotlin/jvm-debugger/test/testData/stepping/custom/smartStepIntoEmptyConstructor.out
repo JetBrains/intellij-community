@@ -1,0 +1,14 @@
+LineBreakpoint created at smartStepIntoEmptyConstructor.kt:15
+LineBreakpoint created at smartStepIntoEmptyConstructor.kt:23
+Run Java
+Connected to the target VM
+smartStepIntoEmptyConstructor.kt:15
+smartStepIntoEmptyConstructor.kt:9
+smartStepIntoEmptyConstructor.kt:23
+smartStepIntoEmptyConstructor.kt:5
+smartStepIntoEmptyConstructor.kt:6
+smartStepIntoEmptyConstructor.kt:5
+smartStepIntoEmptyConstructor.kt:23
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -36,6 +36,6 @@ interface ExternalSystemOutputDispatcherFactory {
 
   companion object {
 
-    val EP_NAME = ExtensionPointName.create<ExternalSystemOutputDispatcherFactory>("com.intellij.externalSystemOutputDispatcher")
+    val EP_NAME: ExtensionPointName<ExternalSystemOutputDispatcherFactory> = ExtensionPointName.create<ExternalSystemOutputDispatcherFactory>("com.intellij.externalSystemOutputDispatcher")
   }
 }

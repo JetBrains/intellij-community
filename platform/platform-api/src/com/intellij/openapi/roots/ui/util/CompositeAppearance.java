@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,15 +46,14 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   @Override
-  public void setIcon(@Nullable final Icon icon) {
+  public void setIcon(final @Nullable Icon icon) {
     synchronized (mySections) {
       myIcon = icon;
     }
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     synchronized (mySections) {
       @Nls StringBuilder buffer = new StringBuilder();
       for (TextSection section : mySections) {
@@ -64,6 +63,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public boolean equals(Object obj) {
     synchronized (mySections) {
       if (!(obj instanceof CompositeAppearance appearance)) return false;
@@ -76,6 +76,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     }
   }
 
+  @Override
   public int hashCode() {
     return getText().hashCode();
   }
@@ -153,11 +154,13 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       return ATTRIBUTES;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof TextSection section)) return false;
       return section.ATTRIBUTES.equals(ATTRIBUTES) && section.TEXT.equals(TEXT);
     }
 
+    @Override
     public int hashCode() {
       return TEXT.hashCode();
     }

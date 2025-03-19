@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.lookup.CharFilter;
@@ -12,10 +12,9 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-public class GroovyReferenceCharFilter extends CharFilter {
+public final class GroovyReferenceCharFilter extends CharFilter {
   @Override
-  @Nullable
-  public Result acceptChar(char c, int prefixLength, Lookup lookup) {
+  public @Nullable Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final PsiFile psiFile = lookup.getPsiFile();
     if (psiFile != null && !psiFile.getViewProvider().getLanguages().contains(GroovyLanguage.INSTANCE)) return null;
 

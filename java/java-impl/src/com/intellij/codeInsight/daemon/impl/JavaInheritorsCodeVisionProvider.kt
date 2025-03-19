@@ -4,11 +4,11 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.InheritorsCodeVisionProvider
 import com.intellij.java.JavaBundle
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -17,7 +17,7 @@ import java.awt.event.MouseEvent
 
 class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   companion object {
-    const val ID = "java.inheritors"
+    const val ID: String = "java.inheritors"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE
@@ -52,14 +52,14 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectOverridingMethods(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
   private fun computeClassInheritors(element: PsiClass, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectInheritingClasses(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
@@ -69,8 +69,6 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   }
 
   override fun handleClick(editor: Editor, element: PsiElement, event: MouseEvent?) {
-    val containingFile = element.containingFile ?: return
-    if (PsiDocumentManager.getInstance(containingFile.project).getDocument(containingFile) == null) return
     val markerType = if (element is PsiClass) MarkerType.SUBCLASSED_CLASS else MarkerType.OVERRIDDEN_METHOD
     val navigationHandler = markerType.navigationHandler
     if (element is PsiNameIdentifierOwner) {
@@ -93,6 +91,6 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
   private fun isDefaultMethod(aClass: PsiClass, method: PsiMethod): Boolean {
     return method.hasModifierProperty(PsiModifier.DEFAULT) &&
-           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)
+           PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, aClass)
   }
 }

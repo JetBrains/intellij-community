@@ -1,10 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -29,11 +26,10 @@ import java.util.Map;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ParseException;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.parseContract;
 
-public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
+public final class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
       @Override
@@ -51,7 +47,12 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
       @Override
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
-        if (!JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
+        String qualifiedName = annotation.getQualifiedName();
+        if (qualifiedName == null) return;
+        if (!ContainerUtil.exists(
+          StaticAnalysisAnnotationManager.getInstance().getKnownContractAnnotations(),
+          fqn -> fqn.equals(qualifiedName))
+        ) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
         if (method == null) return;
@@ -93,8 +94,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  @Nullable
-  public static ParseException checkContract(PsiMethod method, String text) {
+  public static @Nullable ParseException checkContract(PsiMethod method, String text) {
     List<StandardMethodContract> contracts;
     try {
       contracts = parseContract(text);
@@ -144,10 +144,9 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     return null;
   }
 
-  @Nullable
-  private static @InspectionMessage String getConstraintProblem(PsiMethod method,
-                                                                StandardMethodContract contract,
-                                                                ValueConstraint constraint, PsiParameter parameter) {
+  private static @Nullable @InspectionMessage String getConstraintProblem(PsiMethod method,
+                                                                          StandardMethodContract contract,
+                                                                          ValueConstraint constraint, PsiParameter parameter) {
     PsiType type = parameter.getType();
     switch (constraint) {
       case NULL_VALUE -> {

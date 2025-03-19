@@ -14,8 +14,11 @@ public interface FreezeProfiler {
   /** @param reportDir directory to collect some intermediate profiling info */
   void start(@NotNull Path reportDir);
 
-  void stop();
+  /** @param reportDir directory for intermediate results -- same as passed in {@link #start(File)} before */
+  void stop(@NotNull Path reportDir);
 
   /** @param reportDir directory for intermediate results -- same as passed in {@link #start(File)} before */
   @NotNull List<Attachment> getAttachments(@NotNull Path reportDir);
+
+  default void checkCrash(@NotNull String crashContent) {}
 }

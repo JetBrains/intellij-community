@@ -1,63 +1,94 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation
 
+import com.intellij.cce.actions.DatasetContext
 import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
-import com.intellij.cce.interpreter.CompletionInvoker
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
-import com.intellij.cce.interpreter.Interpreter
 import com.intellij.cce.util.ExceptionsUtil
-import com.intellij.cce.util.FilesHelper
 import com.intellij.cce.util.Progress
-import com.intellij.cce.util.text
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.info.FileErrorInfo
 import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
+import com.intellij.cce.workspace.storages.LogsSaver
+import com.intellij.cce.workspace.storages.asCompositeLogsSaver
+import com.intellij.cce.workspace.storages.logsSaverIf
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import kotlin.math.roundToInt
 import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
-  private val config: Config.ActionsInterpretation,
-  private val language: String,
-  private val completionInvoker: CompletionInvoker,
-  private val project: Project) : TwoWorkspaceHandler {
+  private val config: Config,
+  private val datasetContext: DatasetContext
+) {
+
   companion object {
     val LOG = Logger.getInstance(ActionsInterpretationHandler::class.java)
   }
 
-  override fun invoke(workspace1: EvaluationWorkspace, workspace2: EvaluationWorkspace, indicator: Progress) {
+  private fun createLogsSaver(workspace: EvaluationWorkspace): LogsSaver = listOf(
+    logsSaverIf(config.interpret.saveLogs) { workspace.statLogsSaver },
+    logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
+  ).asCompositeLogsSaver()
+
+  fun invoke(environment: EvaluationEnvironment, workspace: EvaluationWorkspace, indicator: Progress) {
     var sessionsCount: Int
     val computingTime = measureTimeMillis {
-      sessionsCount = workspace1.actionsStorage.computeSessionsCount()
+      sessionsCount = environment.sessionCount(datasetContext)
     }
     LOG.info("Computing of sessions count took $computingTime ms")
-    val handler = InterpretationHandlerImpl(indicator, sessionsCount, config.sessionsLimit)
+    val interpretationConfig = config.interpret
+    val logsSaver = createLogsSaver(workspace)
+    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
     val filter =
-      if (config.completeTokenProbability < 1) RandomInterpretFilter(config.completeTokenProbability, config.completeTokenSeed)
+      if (interpretationConfig.sessionProbability < 1)
+        RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
       else InterpretFilter.default()
-    val interpreter = Interpreter(completionInvoker, handler, filter, config.saveContent, project.basePath)
-    val featuresStorage = if (config.saveFeatures) workspace2.featuresStorage else FeaturesStorage.EMPTY
+    val featuresStorage = if (interpretationConfig.saveFeatures) workspace.featuresStorage else FeaturesStorage.EMPTY
     LOG.info("Start interpreting actions")
-    if (config.completeTokenProbability < 1) {
-      val skippedSessions = (sessionsCount * (1.0 - config.completeTokenProbability)).roundToInt()
+    if (interpretationConfig.sessionProbability < 1) {
+      val skippedSessions = (sessionsCount * (1.0 - interpretationConfig.sessionProbability)).roundToInt()
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
-    val files = workspace1.actionsStorage.getActionFiles()
-    for (file in files) {
-      val fileActions = workspace1.actionsStorage.getActions(file)
-      workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
+    var fileCount = 0
+    for (chunk in environment.chunks(datasetContext)) {
+      if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
+        break
+      }
+
+      workspace.fullLineLogsStorage.enableLogging(chunk.name)
       try {
-        val sessions = interpreter.interpret(fileActions) { session -> featuresStorage.saveSession(session, fileActions.path) }
-        val fileText = FilesHelper.getFile(project, fileActions.path).text()
-        workspace2.sessionsStorage.saveSessions(FileSessionsInfo(fileActions.path, fileText, sessions))
+        val result = logsSaver.invokeRememberingLogs {
+          chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
+            featuresStorage.saveSession(session, chunk.name)
+          }
+        }
+
+        if (result.sessions.isNotEmpty()) {
+          val sessionsInfo = FileSessionsInfo(
+            projectName = chunk.datasetName,
+            filePath = chunk.name,
+            text = result.presentationText ?: "",
+            sessions = result.sessions
+          )
+          workspace.sessionsStorage.saveSessions(sessionsInfo)
+          fileCount += 1
+        }
+        else {
+          if (chunk.sessionsExist) {
+            LOG.warn("No sessions collected from file: ${chunk.name}")
+          }
+        }
+      }
+      catch (e: StopEvaluationException) {
+        throw e
       }
       catch (e: Throwable) {
         try {
-          workspace2.errorsStorage.saveError(
-            FileErrorInfo(fileActions.path, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
+          workspace.errorsStorage.saveError(
+            FileErrorInfo(chunk.name, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
           )
         }
         catch (e2: Throwable) {
@@ -67,9 +98,9 @@ class ActionsInterpretationHandler(
       }
       if (handler.isCancelled() || handler.isLimitExceeded()) break
     }
-    if (config.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, config.trainTestSplit)
+    logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()
-    workspace2.saveMetadata()
+    workspace.saveMetadata()
     LOG.info("Interpreting actions completed")
   }
 }

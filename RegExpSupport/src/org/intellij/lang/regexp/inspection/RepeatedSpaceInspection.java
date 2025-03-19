@@ -1,8 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -19,9 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RepeatedSpaceInspection extends LocalInspectionTool {
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new RepeatedSpaceVisitor(holder);
   }
 
@@ -86,32 +90,28 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RepeatedSpaceFix implements LocalQuickFix {
+  private static class RepeatedSpaceFix extends ModCommandQuickFix {
     private final int myCount;
 
     RepeatedSpaceFix(int count) {
       myCount = count;
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getName() {
+    public @Nls @NotNull String getName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", " {" + myCount + "}");
     }
 
-    @Nls
-    @NotNull
     @Override
-    public String getFamilyName() {
+    public @Nls @NotNull String getFamilyName() {
       return RegExpBundle.message("inspection.quick.fix.replace.with.space.and.repeated.quantifier");
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof RegExpBranch)) {
-        return;
+        return ModCommand.nop();
       }
       final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
       final TextRange range = descriptor.getTextRangeInElement();
@@ -128,7 +128,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         }
         child = child.getNextSibling();
       }
-      RegExpReplacementUtil.replaceInContext(element, text.toString());
+      return ModCommand.psiUpdate(element, e -> RegExpReplacementUtil.replaceInContext(e, text.toString()));
     }
   }
 }

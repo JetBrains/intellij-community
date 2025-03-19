@@ -1,0 +1,61 @@
+### auto-generated section `build intellij.java.manifest` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "manifest_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "manifest",
+  module_name = "intellij.java.manifest",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//spellchecker",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":manifest_resources"]
+)
+
+jvm_library(
+  name = "manifest_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":manifest"],
+  deps = [
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/analysis-api:analysis",
+    "//platform/platform-api:ide",
+    "//platform/lang-api:lang",
+    "//platform/core-impl",
+    "//java/java-psi-api:psi",
+    "//java/java-impl:impl",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+    "//java/testFramework",
+    "//spellchecker",
+    "//spellchecker:spellchecker_test_lib",
+    "//platform/core-ui",
+  ],
+  runtime_deps = [":manifest_resources"]
+)
+
+jvm_test(
+  name = "manifest_test",
+  runtime_deps = [":manifest_test_lib"]
+)
+### auto-generated section `build intellij.java.manifest` end

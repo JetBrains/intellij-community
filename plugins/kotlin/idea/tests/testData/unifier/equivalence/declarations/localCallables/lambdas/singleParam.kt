@@ -18,4 +18,9 @@ fun foo(f: (Int) -> Unit) {
         val m = a + 1
         f(m)
     }
+
+    val r: (Int) -> Unit = { a ->
+        val m = a + 1
+        f(a)
+    }
 }

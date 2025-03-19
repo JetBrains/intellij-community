@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
@@ -154,9 +154,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return PsiUtil.isProperty(this);
   }
 
-  @Nullable
   @Override
-  public GrAccessorMethod getSetter() {
+  public @Nullable GrAccessorMethod getSetter() {
     return GrClassImplUtil.findSetter(this);
   }
 
@@ -166,8 +165,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     if (isProperty()) {
       return ResolveScopeManager.getElementUseScope(this); //maximal scope
     }
@@ -188,9 +186,8 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
     return originalField != null ? originalField : this;
   }
 
-  @Nullable
   @Override
-  protected Icon getElementIcon(@IconFlags int flags) {
+  protected @Nullable Icon getElementIcon(@IconFlags int flags) {
     boolean isAbstract = hasModifierProperty(PsiModifier.ABSTRACT);
     Icon fieldIcon = isProperty()
                      ? isAbstract ? JetgroovyIcons.Groovy.AbstractProperty : JetgroovyIcons.Groovy.Property
@@ -199,8 +196,7 @@ public class GrFieldImpl extends GrVariableBaseImpl<GrFieldStub> implements GrFi
   }
 
   @Override
-  @NotNull
-  public Map<String, NamedArgumentDescriptor> getNamedParameters() {
+  public @NotNull Map<String, NamedArgumentDescriptor> getNamedParameters() {
     final GrFieldStub stub = getStub();
     if (stub != null) {
       String[] namedParameters = stub.getNamedParameters();

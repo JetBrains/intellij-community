@@ -10,7 +10,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class ExternalProcessAuthHelperBundle {
-  public static final @NonNls String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
+  private static final @NonNls String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(ExternalProcessAuthHelperBundle.class, BUNDLE);
 
   private ExternalProcessAuthHelperBundle() {}
@@ -21,13 +21,5 @@ public final class ExternalProcessAuthHelperBundle {
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
-  }
-
-  /**
-   * @deprecated prefer {@link #message(String, Object...)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return message(key);
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.SyntheticConfigurationTypeProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -17,6 +18,7 @@ import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+@Service
 public final class DeployToServerConfigurationTypesRegistrar implements Disposable {
 
   private static final @NotNull Logger LOG = Logger.getInstance(DeployToServerConfigurationTypesRegistrar.class);
@@ -28,7 +30,7 @@ public final class DeployToServerConfigurationTypesRegistrar implements Disposab
   /**
    * @deprecated Please use {@link #getConfigurationType(ServerType)} directly.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull DeployToServerConfigurationType<?> getDeployConfigurationType(@NotNull ServerType<?> serverType) {
     return getInstance().getConfigurationType(serverType);
   }

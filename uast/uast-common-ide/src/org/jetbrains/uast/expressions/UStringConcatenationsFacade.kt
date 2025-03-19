@@ -23,7 +23,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
   @ApiStatus.Experimental
   constructor(uContext: UExpression) : this(uContext, buildLazyUastOperands(uContext, false) ?: emptySequence())
 
-  @get:ApiStatus.Experimental
   val rootUExpression: UExpression
     get() = uContext
 
@@ -82,7 +81,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
     }
   }
 
-  @ApiStatus.Experimental
   fun asPartiallyKnownString() : PartiallyKnownString = PartiallyKnownString(segments.map { segment ->
     segment.value?.let { value ->
       StringEntry.Known(value, segment.uExpression.sourcePsi, getSegmentInnerTextRange(segment))
@@ -99,7 +97,6 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
   }
 
   companion object {
-
     private fun buildLazyUastOperands(uContext: UExpression?, flatten: Boolean): Sequence<UExpression>? = when {
       uContext is UPolyadicExpression && isConcatenation(uContext) -> {
         val concatenationOperands = uContext.operands.asSequence()
@@ -108,10 +105,9 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
         else
           concatenationOperands
       }
-
-      uContext is ULiteralExpression && !isConcatenation(uContext.uastParent) -> {
-        val host = uContext.sourceInjectionHost
-        if (host == null || !host.isValidHost) emptySequence() else sequenceOf(uContext)
+      uContext is UInjectionHost && !isConcatenation(uContext.uastParent) -> {
+        val host = uContext.psiLanguageInjectionHost
+        if (!host.isValidHost) emptySequence() else sequenceOf(uContext)
       }
       else -> null
     }
@@ -141,6 +137,14 @@ class UStringConcatenationsFacade private constructor(private val uContext: UExp
       }
       val uElement = context.toUElementOfType<UExpression>() ?: return null
       return createFromUExpression(uElement)
+    }
+
+    @JvmStatic
+    fun getConcatenationsFacade(context: PsiElement): UStringConcatenationsFacade? {
+      val uElement = context.toUElementOfExpectedTypes(UInjectionHost::class.java, UPolyadicExpression::class.java) ?: return null
+      if (uElement.sourcePsi !== context) return null
+      if (isConcatenation(uElement.uastParent)) return null
+      return if (uElement is UInjectionHost) createFromUExpression(uElement, false) else createFromUExpression(uElement, true)
     }
   }
 }

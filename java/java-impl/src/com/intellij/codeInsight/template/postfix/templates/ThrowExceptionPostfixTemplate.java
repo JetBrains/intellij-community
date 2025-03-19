@@ -3,13 +3,14 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
-public class ThrowExceptionPostfixTemplate extends JavaEditablePostfixTemplate {
+public class ThrowExceptionPostfixTemplate extends JavaEditablePostfixTemplate implements DumbAware {
   public ThrowExceptionPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("throw",
           "throw $EXPR$;$END$",

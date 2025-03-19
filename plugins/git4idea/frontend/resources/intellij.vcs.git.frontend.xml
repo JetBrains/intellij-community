@@ -1,0 +1,19 @@
+<idea-plugin package="com.intellij.vcs.git.frontend">
+  <resource-bundle>messages.GitFrontendBundle</resource-bundle>
+
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.vcs.git.shared"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+  </dependencies>
+
+  <actions resource-bundle="messages.GitFrontendBundle">
+    <action id="GitRdToolbarWidgetAction" class="com.intellij.vcs.git.frontend.widget.GitRdToolbarWidgetAction">
+      <add-to-group group-id="MainToolbarVCSGroup" anchor="first"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.vcs.git.frontend.widget.GitWidgetStateHolder$Activator"/>
+  </extensions>
+</idea-plugin>

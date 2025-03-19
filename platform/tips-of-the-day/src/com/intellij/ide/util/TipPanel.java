@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -54,13 +54,13 @@ import java.util.function.Supplier;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public final class TipPanel extends JPanel implements DoNotAskOption {
+final class TipPanel extends JPanel implements DoNotAskOption {
   public static final Key<String> CURRENT_TIP_KEY = Key.create("CURRENT_TIP");
 
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
-  private @Nullable final Project myProject;
-  private @NotNull final JLabel mySubSystemLabel;
+  private final @Nullable Project myProject;
+  private final @NotNull JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
@@ -70,10 +70,11 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
 
+  private ActionToolbarImpl myFeedbackToolbar = null;
   private final Map<String, Boolean> myTipIdToLikenessState = new LinkedHashMap<>();
   private Boolean myCurrentLikenessState = null;
 
-  public TipPanel(@Nullable final Project project, @NotNull final TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
+  TipPanel(final @Nullable Project project, final @NotNull TipsSortingResult sortingResult, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     myProject = project;
 
@@ -90,14 +91,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     };
     mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
     mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
-    mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    mySubSystemLabel.setAlignmentX(LEFT_ALIGNMENT);
     contentPanel.add(mySubSystemLabel);
 
     myTextPane = new MyTextPane();
     myTextPane.putClientProperty("caretWidth", 0);
     myTextPane.setBackground(TipUiSettings.getPanelBackground());
     myTextPane.setMargin(JBInsets.emptyInsets());
-    myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+    myTextPane.setAlignmentX(LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
     contentPanel.add(myTextPane);
 
@@ -136,8 +137,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     panel.add(label);
     panel.add(Box.createRigidArea(new JBDimension(8, 0)));
 
-    ActionToolbarImpl toolbar = createFeedbackActionsToolbar();
-    panel.add(toolbar);
+    myFeedbackToolbar = createFeedbackActionsToolbar();
+    panel.add(myFeedbackToolbar);
     return panel;
   }
 
@@ -146,15 +147,15 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
                                                AllIcons.Ide.LikeDimmed, AllIcons.Ide.Like, AllIcons.Ide.LikeSelected, true);
     AnAction dislikeAction = createFeedbackAction(IdeBundle.message("tip.of.the.day.feedback.dislike"),
                                                   AllIcons.Ide.DislikeDimmed, AllIcons.Ide.Dislike, AllIcons.Ide.DislikeSelected, false);
-    ActionGroup group = new DefaultActionGroup(likeAction, dislikeAction);
+    AnAction[] actions = {likeAction, dislikeAction};
 
-    ActionToolbarImpl toolbar = new ActionToolbarImpl("TipsAndTricksDialog", group, true) {
+    ActionToolbarImpl toolbar = new ActionToolbarImpl("TipsAndTricksDialog", new DefaultActionGroup(actions), true) {
       @Override
       protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
                                                           ActionButtonLook look,
                                                           @NotNull String place,
                                                           @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
+                                                          @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
         ActionButton button = new ActionButton(action, presentation, place, getFeedbackButtonSize()) {
           @Override
           protected void paintButtonLook(Graphics g) {
@@ -181,7 +182,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       @Override
       public @NotNull Dimension getPreferredSize() {
         Dimension size = getFeedbackButtonSize();
-        int buttonsCount = getActionGroup().getChildren(null).length;
+        int buttonsCount = actions.length;
         return new Dimension(size.width * buttonsCount, size.height);
       }
 
@@ -237,9 +238,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull TipsSortingResult sortingResult) {
-    myTips = sortingResult.tips;
-    myAlgorithm = sortingResult.algorithm;
-    myAlgorithmVersion = sortingResult.version;
+    myTips = sortingResult.getTips();
+    myAlgorithm = sortingResult.getAlgorithm();
+    myAlgorithmVersion = sortingResult.getVersion();
     showNext(true);
   }
 
@@ -278,6 +279,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private void doSetTip(@NotNull TipAndTrickBean tip, @NotNull List<? extends TextParagraph> tipContent) {
     saveCurrentTipLikenessState();
     myCurrentLikenessState = getLikenessState(tip);
+    myFeedbackToolbar.updateActionsAsync();
     myCurrentTip = tip;
 
     if (Registry.is("tips.of.the.day.show.group.label", false)) {
@@ -369,15 +371,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void saveCurrentTipLikenessState() {
-    if (myCurrentTip != null) {
-      String curTipId = myCurrentTip.getId();
-      if (myCurrentLikenessState != TipsFeedback.getInstance().getLikenessState(curTipId)) {
-        myTipIdToLikenessState.put(curTipId, myCurrentLikenessState);
-      }
+    if (myCurrentTip != null && myCurrentLikenessState != getLikenessState(myCurrentTip)) {
+      myTipIdToLikenessState.put(myCurrentTip.getId(), myCurrentLikenessState);
     }
   }
 
-  private Boolean getLikenessState(TipAndTrickBean tip) {
+  private Boolean getLikenessState(@NotNull TipAndTrickBean tip) {
     String tipId = tip.getId();
     if (myTipIdToLikenessState.containsKey(tipId)) {
       return myTipIdToLikenessState.get(tipId);
@@ -405,9 +404,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     GeneralSettings.getInstance().setShowTipsOnStartup(toBeShown);
   }
 
-  @NotNull
   @Override
-  public String getDoNotShowMessage() {
+  public @NotNull String getDoNotShowMessage() {
     return IdeBundle.message("checkbox.show.tips.on.startup");
   }
 

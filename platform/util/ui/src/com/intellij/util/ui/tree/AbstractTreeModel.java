@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.tree;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.CheckedDisposable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
@@ -9,7 +9,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-public abstract class AbstractTreeModel implements Disposable, TreeModel {
+public abstract class AbstractTreeModel implements CheckedDisposable, TreeModel {
   protected final TreeModelListenerList listeners = new TreeModelListenerList();
   protected volatile boolean disposed;
 
@@ -17,6 +17,11 @@ public abstract class AbstractTreeModel implements Disposable, TreeModel {
   public void dispose() {
     disposed = true;
     listeners.clear();
+  }
+
+  @Override
+  public boolean isDisposed() {
+    return disposed;
   }
 
   /**

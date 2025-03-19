@@ -22,16 +22,24 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
- * Represents a source or test source root under the content root of a module.
+ * Represents a root containing source or resource files.
+ * Each root has {@link #getRootType() a type} associated with it, which determines how files under that root are processed by the IDE.
+ * For example, in Java projects, source roots can be of four different types:
+ * <ul>
+ *   <li>Java source: contains *.java files compiled by javac to the production output directory;</li>
+ *   <li>Java resource: contains arbitrary files which are copied to the production output directory;</li>
+ *   <li>Java test source: contains *.java files compiled by javac to the test output directory;</li>
+ *   <li>Java test resource: contains arbitrary files which are copied to the test output directory.</li>
+ * </ul>
  *
  * @see ContentEntry#getSourceFolders()
  */
 @ApiStatus.NonExtendable
 public interface SourceFolder extends ContentFolder {
   /**
-   * Checks if this root is a production or test source root.
+   * Checks if this root is a production or test source (resource) root.
    *
-   * @return true if this source root is a test source root, false otherwise.
+   * @return true if this source root is a test source (resource) root, false otherwise.
    */
   boolean isTestSource();
 

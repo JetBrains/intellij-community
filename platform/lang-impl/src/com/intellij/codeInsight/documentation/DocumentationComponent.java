@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -55,14 +54,12 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,19 +77,15 @@ import java.util.List;
  * @deprecated Unused in v2 implementation. Unsupported: use at own risk.
  */
 @Deprecated(forRemoval = true)
-public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
+public class DocumentationComponent extends JPanel implements Disposable, UiCompatibleDataProvider, WidthBasedLayout {
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
-  static final DataProvider HELP_DATA_PROVIDER =
-    dataId -> PlatformCoreDataKeys.HELP_ID.is(dataId)
-              ? "reference.toolWindows.Documentation"
-              : null;
 
   public static final ColorKey COLOR_KEY = EditorColors.DOCUMENTATION_COLOR;
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
-  static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
-  static final JBDimension MAX_DEFAULT = new JBDimension(950, 500);
+  private static final JBDimension MIN_DEFAULT = new JBDimension(300, 36);
+  private static final JBDimension MAX_DEFAULT = new JBDimension(950, 500);
 
   private final ExternalDocAction myExternalDocAction;
 
@@ -135,10 +128,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @NotNull PsiElement element,
     @NotNull Disposable disposable
   ) {
-    DocumentationRequest request;
-    try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
-      request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
-    }
+    DocumentationRequest request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
     return DocumentationUtil.documentationComponent(project, request, disposable);
   }
 
@@ -272,10 +262,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(navigationAndAdditionalActions);
-    Presentation presentation = new Presentation();
-    presentation.setIcon(AllIcons.Actions.More);
-    presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
-    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
+    myCorner = new ActionButton(gearActions, null, ActionPlaces.UNKNOWN, new Dimension(20, 20)) {
       @Override
       protected DataContext getDataContext() {
         return DataManager.getInstance().getDataContext(myCorner);
@@ -298,9 +285,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
-    DataManager.registerDataProvider(myEditorPane, HELP_DATA_PROVIDER);
-    DataManager.registerDataProvider(myScrollPane, HELP_DATA_PROVIDER);
-
     updateControlState();
   }
 
@@ -359,19 +343,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DocumentationManager.SELECTED_QUICK_DOC_TEXT.is(dataId)) {
-      // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
-      // with raw white spaces. See IDEA-86633 for more details.
-      String selectedText = myEditorPane.getSelectedText();
-      return selectedText == null ? null : selectedText.replace((char)160, ' ');
-    }
-
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "reference.toolWindows.Documentation");
+    // Javadocs often contain &nbsp; symbols (non-breakable white space). We don't want to copy them as is and replace
+    // with raw white spaces. See IDEA-86633 for more details.
+    String selectedText = myEditorPane.getSelectedText();
+    sink.set(DocumentationManager.SELECTED_QUICK_DOC_TEXT,
+             selectedText == null ? null : selectedText.replace((char)160, ' '));
   }
 
-  @NotNull
-  public static FontSize getQuickDocFontSize() {
+  public static @NotNull FontSize getQuickDocFontSize() {
     return DocumentationFontSize.getDocumentationFontSize();
   }
 
@@ -407,8 +388,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myEditorPane;
   }
 
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElement != null ? myElement.getElement() : null;
   }
 
@@ -477,10 +457,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     showHint(viewRect, ref);
-
-    if (myManager != null) {
-      myManager.getProject().getMessageBus().syncPublisher(DocumentationComponentListener.TOPIC).onComponentDataChanged();
-    }
   }
 
   protected void showHint(@NotNull Rectangle viewRect, @Nullable String ref) {
@@ -685,14 +661,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return element == null ? null : DocumentationManager.getElementImage(element, imageSpec);
   }
 
-  private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+  private static final class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MyGearActionGroup(AnAction @NotNull ... actions) {
       super(actions);
-      setPopup(true);
+      getTemplatePresentation().setPopupGroup(true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.More);
+      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
     }
   }
 
-  protected class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
     }
@@ -717,7 +695,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
     }
@@ -844,7 +822,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
 
     MyShowSettingsAction() {
       super(CodeInsightBundle.message("javadoc.adjust.font.size"));
@@ -860,7 +838,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
     }
@@ -883,7 +861,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected static class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  protected static final class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowPopupAutomaticallyAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
     }
@@ -911,7 +889,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
     }
@@ -939,7 +917,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  protected class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  protected final class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));
     }

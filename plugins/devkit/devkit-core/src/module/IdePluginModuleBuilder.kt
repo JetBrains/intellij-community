@@ -1,17 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -36,19 +34,22 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class IdePluginModuleBuilder : StarterModuleBuilder() {
+@JvmField
+internal val DEVKIT_NEWLY_GENERATED_PROJECT: Key<Boolean> = Key.create("devkit.newly.generated.project")
+
+internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   private val PLUGIN_TYPE_KEY: Key<PluginType> = Key.create("ide.plugin.type")
 
   override fun getBuilderId(): String = "idea-plugin"
   override fun getPresentableName(): String = DevKitBundle.message("module.builder.title")
-  override fun getWeight(): Int = IJ_PLUGIN_WEIGHT
+  override fun getWeight(): Int = JVM_WEIGHT + 1000
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Plugin
   override fun getDescription(): String = DevKitBundle.message("module.description")
 
   override fun getProjectTypes(): List<StarterProjectType> = emptyList()
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
-  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_17.toJavaVersion()
+  override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_21.toJavaVersion()
 
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
@@ -60,15 +61,13 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
     ))
   }
 
-  override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> {
-    return emptyArray()
-  }
+  override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider) = emptyArray<ModuleWizardStep>()
 
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
     return IdePluginInitialStep(contextProvider)
   }
 
-  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+  override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
     if (getPluginType() == PluginType.PLUGIN) {
       return super.isSuitableSdkType(sdkType)
     }
@@ -80,6 +79,9 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
     // manually set, we do not show the second page with libraries
     starterContext.starter = starterContext.starterPack.starters.first()
     starterContext.starterDependencyConfig = loadDependencyConfig()[starterContext.starter?.id]
+
+    // disable aggressive error highlighting in plugin.xml
+    module.project.putUserData(DEVKIT_NEWLY_GENERATED_PROJECT, true)
 
     super.setupModule(module)
   }
@@ -148,7 +150,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
       val resourceRootPath = "$contentEntryPath/resources" //NON-NLS
       val contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath) ?: return
 
-      val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, contentRoot)
+      val contentEntry = MarkRootsManager.findContentEntry(modifiableRootModel, contentRoot)
       contentEntry?.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE)
     }
   }
@@ -193,7 +195,7 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
 
     override fun addFieldsBefore(layout: Panel) {
       layout.row(DevKitBundle.message("module.builder.type")) {
-        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { it.messagePointer.get() }
+        segmentedButton(listOf(PluginType.PLUGIN, PluginType.THEME)) { text = it.messagePointer.get() }
           .bind(typeProperty)
       }.bottomGap(BottomGap.SMALL)
 
@@ -220,14 +222,6 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
       layout.row {
         hyperLink(DevKitBundle.message("module.builder.github.template.link"),
                   "https://jb.gg/plugin-template")
-      }
-
-      val scalaPluginId = PluginId.findId("org.intellij.scala")
-      if (scalaPluginId != null && PluginManager.isPluginInstalled(scalaPluginId)) {
-        layout.row {
-          hyperLink(DevKitBundle.message("module.builder.scala.github.template.link"),
-                    "https://github.com/JetBrains/sbt-idea-plugin")
-        }
       }
     }
   }

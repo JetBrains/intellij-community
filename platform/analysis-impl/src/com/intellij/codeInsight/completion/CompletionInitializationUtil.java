@@ -1,6 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
@@ -96,9 +100,8 @@ public final class CompletionInitializationUtil {
     return context;
   }
 
-  @NotNull
-  public static CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
-                                                                CompletionProcess indicator, OffsetsInFile finalOffsets) {
+  public static @NotNull CompletionParameters createCompletionParameters(CompletionInitializationContext initContext,
+                                                                         CompletionProcess indicator, OffsetsInFile finalOffsets) {
     int offset = finalOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = finalOffsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
@@ -238,8 +241,7 @@ public final class CompletionInitializationUtil {
     }
   }
 
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+  public static @NotNull PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
     PsiElement insertedElement = offsets.getFile().findElementAt(offset);
     if (insertedElement == null && offsets.getFile().getTextLength() == offset) {
       insertedElement = PsiTreeUtil.getDeepestLast(offsets.getFile());
@@ -272,6 +274,13 @@ public final class CompletionInitializationUtil {
                 file.getClass());
     }
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
+
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
+      CodeInsightContextManagerImpl codeInsightContextManager =
+        (CodeInsightContextManagerImpl)CodeInsightContextManager.getInstance(file.getProject());
+      CodeInsightContext context = codeInsightContextManager.getCodeInsightContext(file.getViewProvider());
+      codeInsightContextManager.setCodeInsightContext(copy.getViewProvider(), context);
+    }
 
     if (mayCacheCopy) {
       final Document document = copy.getViewProvider().getDocument();

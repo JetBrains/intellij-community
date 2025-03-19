@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -33,11 +33,7 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
 
     override fun getContainingElement(element: PsiElement): PsiElement? {
         val unwrapped = element.unwrapped
-        if (unwrapped is PsiMethod) {
-            return PsiTreeUtil.getStubOrPsiParentOfType(unwrapped, PsiMember::class.java)
-        }
-
-        if (unwrapped is PsiClass) {
+        if (unwrapped is PsiMember) {
             return PsiTreeUtil.getStubOrPsiParentOfType(unwrapped, PsiMember::class.java) ?: unwrapped.containingFile
         }
 
@@ -71,6 +67,10 @@ object KotlinGutterTooltipHelper : GutterTooltipBuilder() {
         if (file is PsiClassOwner) {
             appendPackageName(sb, file.packageName)
         }
+    }
+
+    override fun isDeprecated(element: PsiElement): Boolean {
+        return element is PsiDocCommentOwner && element.isDeprecated
     }
 
 }

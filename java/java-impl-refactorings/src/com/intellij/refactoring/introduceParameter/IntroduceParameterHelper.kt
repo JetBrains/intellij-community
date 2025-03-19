@@ -7,7 +7,6 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_DEFAULT
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiParameter
 import com.intellij.refactoring.rename.inplace.VirtualTemplateElement
@@ -28,7 +27,7 @@ fun createDelegatePresentation(
   selectionListener: Consumer<Boolean>,
 ): InlayPresentation {
   val editor = templateState.editor
-  val factory = PresentationFactory(editor as EditorImpl)
+  val factory = PresentationFactory(editor)
 
   val textPresentation = WithAttributesPresentation(factory.inset(factory.text(title), 4, 0, 6, 3), INLINE_PARAMETER_HINT_CURRENT, editor,
                                                     WithAttributesPresentation.AttributesFlags().withIsDefault(true))

@@ -6,13 +6,15 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("unified_weights")
 @Property(style = Property.Style.ATTRIBUTE)
 class UnifiedToolWindowWeights : BaseState() {
 
   companion object {
-    const val TAG = "unified_weights"
+    const val TAG: String = "unified_weights"
   }
 
   @get:Attribute("top") var top: Float by property(WindowInfoImpl.DEFAULT_WEIGHT)
@@ -38,7 +40,7 @@ class UnifiedToolWindowWeights : BaseState() {
     }
   }
 
-  fun copy() = UnifiedToolWindowWeights().also { that ->
+  fun copy(): UnifiedToolWindowWeights = UnifiedToolWindowWeights().also { that ->
     that.top = this.top
     that.left = this.left
     that.bottom = this.bottom

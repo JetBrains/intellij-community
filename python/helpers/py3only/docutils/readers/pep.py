@@ -1,4 +1,4 @@
-# $Id: pep.py 7320 2012-01-19 22:33:02Z milde $
+# $Id: pep.py 9258 2022-11-21 14:51:43Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,9 +8,10 @@ Python Enhancement Proposal (PEP) Reader.
 
 __docformat__ = 'reStructuredText'
 
-from docutils.parsers import rst
+
 from docutils.readers import standalone
 from docutils.transforms import peps, frontmatter
+from docutils.parsers import rst
 
 
 class Reader(standalone.Reader):
@@ -28,7 +29,7 @@ class Reader(standalone.Reader):
     config_section_dependencies = ('readers', 'standalone reader')
 
     def get_transforms(self):
-        transforms = standalone.Reader.get_transforms(self)
+        transforms = super().get_transforms()
         # We have PEP-specific frontmatter handling.
         transforms.remove(frontmatter.DocTitle)
         transforms.remove(frontmatter.SectionSubTitle)

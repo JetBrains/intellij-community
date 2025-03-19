@@ -1,0 +1,5 @@
+# private attributes / methods, not present in docs
+flask_socketio.SocketIOTestClient.clients
+flask_socketio.test_client.SocketIOTestClient.clients
+flask_socketio.gevent_socketio_found
+flask_socketio.call

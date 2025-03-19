@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
 import java.io.File
 
 abstract class AbstractMultiModuleCopyTest : KotlinMultiFileTestCase() {
+
     override fun getTestRoot(): String = "/refactoring/copyMultiModule/"
 
     override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR

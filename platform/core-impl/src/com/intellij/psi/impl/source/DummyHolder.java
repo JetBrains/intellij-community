@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source;
 
@@ -33,7 +19,7 @@ public class DummyHolder extends PsiFileImpl {
   protected final PsiElement myContext;
   private final CharTable myTable;
   private final Boolean myExplicitlyValid;
-  private final Language myLanguage;
+  private final @NotNull Language myLanguage;
   @SuppressWarnings("EmptyClass") private static class DummyHolderTreeLock {}
   private final DummyHolderTreeLock myTreeElementLock = new DummyHolderTreeLock();
 
@@ -53,7 +39,7 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, contentElement, context, table, null, language(context, PlainTextLanguage.INSTANCE));
   }
 
-  protected static Language language(PsiElement context, Language defaultLanguage) {
+  protected static @NotNull Language language(PsiElement context, @NotNull Language defaultLanguage) {
     if (context == null) return defaultLanguage;
     PsiFile file = context.getContainingFile();
     if (file == null) return defaultLanguage;
@@ -63,7 +49,7 @@ public class DummyHolder extends PsiFileImpl {
     return contextLanguage;
   }
 
-  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table, @Nullable Boolean validity, Language language) {
+  public DummyHolder(@NotNull PsiManager manager, @Nullable TreeElement contentElement, @Nullable PsiElement context, @Nullable CharTable table, @Nullable Boolean validity, @NotNull Language language) {
     super(TokenType.DUMMY_HOLDER, TokenType.DUMMY_HOLDER, new DummyHolderViewProvider(manager));
     myLanguage = language;
     ((DummyHolderViewProvider)getViewProvider()).setDummyHolder(this);
@@ -85,11 +71,11 @@ public class DummyHolder extends PsiFileImpl {
     this(manager, null, context, table);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, CharTable table, Language language) {
+  public DummyHolder(@NotNull PsiManager manager, CharTable table, @NotNull Language language) {
     this(manager, null, null, table, null, language);
   }
 
-  public DummyHolder(@NotNull PsiManager manager, Language language, PsiElement context) {
+  public DummyHolder(@NotNull PsiManager manager, @NotNull Language language, PsiElement context) {
     this(manager, null, context, null, null, language);
   }
 
@@ -115,8 +101,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     PsiElement context = getContext();
     if (context != null) {
       PsiFile containingFile = context.getContainingFile();
@@ -127,8 +112,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public FileElement getTreeElement() {
+  public @NotNull FileElement getTreeElement() {
     FileElement fileElement = super.derefTreeElement();
     if (fileElement != null) return fileElement;
 
@@ -146,8 +130,7 @@ public class DummyHolder extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -165,8 +148,7 @@ public class DummyHolder extends PsiFileImpl {
   private FileViewProvider myViewProvider;
 
   @Override
-  @NotNull
-  public FileViewProvider getViewProvider() {
+  public @NotNull FileViewProvider getViewProvider() {
     if(myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }

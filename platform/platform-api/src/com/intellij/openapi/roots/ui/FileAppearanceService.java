@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,15 +13,11 @@ public abstract class FileAppearanceService {
     return ApplicationManager.getApplication().getService(FileAppearanceService.class);
   }
 
-  @NotNull
-  public abstract CellAppearanceEx empty();
+  public abstract @NotNull CellAppearanceEx empty();
 
-  @NotNull
-  public abstract CellAppearanceEx forVirtualFile(@NotNull VirtualFile file);
+  public abstract @NotNull CellAppearanceEx forVirtualFile(@NotNull VirtualFile file);
 
-  @NotNull
-  public abstract CellAppearanceEx forIoFile(@NotNull File file);
+  public abstract @NotNull CellAppearanceEx forIoFile(@NotNull File file);
 
-  @NotNull
-  public abstract CellAppearanceEx forInvalidUrl(@NlsSafe @NotNull String url);
+  public abstract @NotNull CellAppearanceEx forInvalidUrl(@NlsSafe @NotNull String url);
 }

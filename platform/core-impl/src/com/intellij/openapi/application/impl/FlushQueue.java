@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
-import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,8 +12,8 @@ import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -23,27 +24,29 @@ final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, MINUTES.toMillis(1));
 
-  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
+  private ObjectArrayList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //guarded by getQueueLock()
   private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //guarded by getQueueLock()
 
   private void flushNow() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    synchronized (getQueueLock()) {
-      FLUSHER_SCHEDULED = false;
-    }
-
-    long startTime = System.currentTimeMillis();
-    while (true) {
-      RunnableInfo info = pollNextEvent();
-      if (info == null) {
-        break;
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      ThreadingAssertions.assertEventDispatchThread();
+      synchronized (getQueueLock()) {
+        FLUSHER_SCHEDULED = false;
       }
-      runNextEvent(info);
-      if (System.currentTimeMillis() - startTime > 5) {
-        synchronized (getQueueLock()) {
-          requestFlush();
+
+      long startTime = System.currentTimeMillis();
+      while (true) {
+        RunnableInfo info = pollNextEvent();
+        if (info == null) {
+          break;
         }
-        break;
+        runNextEvent(info);
+        if (InvocationUtil.priorityEventPending() || System.currentTimeMillis() - startTime > 5) {
+          synchronized (getQueueLock()) {
+            requestFlush();
+          }
+          break;
+        }
       }
     }
   }
@@ -73,13 +76,6 @@ final class FlushQueue {
     }
   }
 
-  // Extracted to have a capture point
-  private static void doRun(@Async.Execute @NotNull RunnableInfo info) {
-    try (AccessToken ignored = ClientId.withClientId(info.clientId)) {
-      info.runnable.run();
-    }
-  }
-
   @Override
   public String toString() {
     synchronized (getQueueLock()) {
@@ -87,8 +83,7 @@ final class FlushQueue {
     }
   }
 
-  @Nullable
-  private RunnableInfo pollNextEvent() {
+  private @Nullable RunnableInfo pollNextEvent() {
     synchronized (getQueueLock()) {
       ModalityState currentModality = LaterInvocator.getCurrentModalityState();
 
@@ -100,7 +95,7 @@ final class FlushQueue {
         if (info.expired.value(null)) {
           continue;
         }
-        if (!currentModality.dominates(info.modalityState)) {
+        if (currentModality.accepts(info.modalityState)) {
           requestFlush(); // in case someone wrote "invokeLater { UIUtil.dispatchAllInvocationEvents(); }"
           return info;
         }
@@ -108,7 +103,7 @@ final class FlushQueue {
         //          (in .reincludeSkippedItems()) and also reset queueSize/queuedTimeNs fields.
         //          This way we got queue loading info 'cleared' (kind of) from bypassing influence,
         //          i.e. re-appended tasks will look as-if they were just added -- which is not strictly true,
-        //          but it will disturb waiting times much less then current approach there skipped/not skipped
+        //          but it will disturb waiting times much less than the current approach there skipped/not skipped
         //          tasks waiting times stats are merged together.
         mySkippedItems.add(info.wasSkipped());
       }
@@ -119,7 +114,7 @@ final class FlushQueue {
     final EventWatcher watcher = EventWatcher.getInstanceOrNull();
     final long waitingFinishedNs = System.nanoTime();
     try {
-      doRun(info);
+      info.runnable.run();
     }
     catch (ProcessCanceledException ignored) {
 
@@ -163,7 +158,7 @@ final class FlushQueue {
   }
 
   void reincludeSkippedItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       int size = mySkippedItems.size();
       if (size != 0) {
@@ -181,7 +176,7 @@ final class FlushQueue {
   }
 
   void purgeExpiredItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     synchronized (getQueueLock()) {
       reincludeSkippedItems();
       myQueue.removeAll(info -> info.expired.value(null));
@@ -200,17 +195,16 @@ final class FlushQueue {
     }
   }
 
-  private final Runnable FLUSH_NOW = this::flushNow;
+  private final Runnable FLUSH_NOW = (ContextAwareRunnable)this::flushNow;
 
   boolean isFlushNow(@NotNull Runnable runnable) {
     return runnable == FLUSH_NOW;
   }
 
   private static class RunnableInfo {
-    @NotNull private final Runnable runnable;
-    @NotNull private final ModalityState modalityState;
-    @NotNull private final Condition<?> expired;
-    @NotNull private final String clientId;
+    private final @NotNull Runnable runnable;
+    private final @NotNull ModalityState modalityState;
+    private final @NotNull Condition<?> expired;
     private final long queuedTimeNs;
     /** How many items were in queue at the moment this item was enqueued */
     private final int queueSize;
@@ -221,7 +215,7 @@ final class FlushQueue {
                  final @NotNull ModalityState modalityState,
                  final @NotNull Condition<?> expired,
                  final int queueSize) {
-      this(runnable, modalityState, expired, ClientId.getCurrentValue(),
+      this(runnable, modalityState, expired,
            queueSize, System.nanoTime(), /* wasInSkippedItems: */ false);
     }
 
@@ -229,14 +223,12 @@ final class FlushQueue {
     private RunnableInfo(final @NotNull Runnable runnable,
                          final @NotNull ModalityState modalityState,
                          final @NotNull Condition<?> expired,
-                         final @NotNull String clientId,
                          final int queueSize,
                          final long queuedTimeNs,
                          final boolean wasInSkippedItems) {
       this.runnable = runnable;
       this.modalityState = modalityState;
       this.expired = expired;
-      this.clientId = clientId;
       this.queuedTimeNs = queuedTimeNs;
       this.queueSize = queueSize;
       this.wasInSkippedItems = wasInSkippedItems;
@@ -245,14 +237,13 @@ final class FlushQueue {
     public RunnableInfo wasSkipped() {
       return new RunnableInfo(
         runnable, modalityState, expired,
-        clientId, queueSize, queuedTimeNs,
+        queueSize, queuedTimeNs,
         /*wasInSkippedItems: */ true
       );
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "") + "]{queued at: " +
              queuedTimeNs + " ns, " + queueSize + " items were in front of}{wasSkipped: "+wasInSkippedItems+"}";
     }

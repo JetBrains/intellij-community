@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.core.script.configuration
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsCache
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 
@@ -25,6 +25,10 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  *
  * [isConfigurationLoadingInProgress] is used to pause analyzing.
  *
+ * [onTrivialUpdate] is used to state that cache updated, but no source roots have chained.
+ *
+ * [onUpdateException] indicates that update ended with an exceptional result (except PCE).
+ *
  * [getConfigurationImmediately] is used to get scripting configuration for a supported file
  * (for which [isApplicable] returns true) immediately. It may be useful for intensively created files
  * if it is expensive to run full update for each file creation and/or update
@@ -38,6 +42,8 @@ interface ScriptingSupport {
     fun isConfigurationLoadingInProgress(file: KtFile): Boolean
     fun collectConfigurations(builder: ScriptClassRootsBuilder)
     fun afterUpdate()
+    fun onTrivialUpdate() = Unit
+    fun onUpdateException(exception: Exception) = Unit
     fun getConfigurationImmediately(file: VirtualFile): ScriptCompilationConfigurationWrapper? = null
 
     companion object {

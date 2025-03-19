@@ -1122,9 +1122,7 @@ open class KotlinIdeDescriptorRenderer(
                 appendAnnotations(it, target = AnnotationUseSiteTarget.PROPERTY_GETTER)
             }
             property.setter?.let { setter ->
-                setter.let {
-                    appendAnnotations(it, target = AnnotationUseSiteTarget.PROPERTY_SETTER)
-                }
+                appendAnnotations(setter, target = AnnotationUseSiteTarget.PROPERTY_SETTER)
                 setter.valueParameters.single().let {
                     appendAnnotations(it, target = AnnotationUseSiteTarget.SETTER_PARAMETER)
                 }

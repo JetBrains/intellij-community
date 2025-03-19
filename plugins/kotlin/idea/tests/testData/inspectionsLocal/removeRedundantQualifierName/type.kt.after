@@ -8,4 +8,4 @@ fun foo(a: Foo) {
     val c: Foo
 }
 
-// IGNORE_FIR
+// IGNORE_K2

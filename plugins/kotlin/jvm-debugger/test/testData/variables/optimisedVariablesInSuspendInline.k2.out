@@ -1,0 +1,27 @@
+LineBreakpoint created at optimisedVariablesInSuspendInline.kt:11
+LineBreakpoint created at optimisedVariablesInSuspendInline.kt:14
+LineBreakpoint created at optimisedVariablesInSuspendInline.kt:17
+LineBreakpoint created at optimisedVariablesInSuspendInline.kt:19
+Run Java
+Connected to the target VM
+optimisedVariablesInSuspendInline.kt:11
+CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:11)
+    JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
+optimisedVariablesInSuspendInline.kt:14
+CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:14)
+    JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
+    JavaValue[local] b: java.lang.String = b (optimisedVariablesInSuspendInline.kt:12)
+optimisedVariablesInSuspendInline.kt:17
+CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:17)
+    JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
+    JavaValue[continuation] b = b
+    JavaValue[continuation] $i$f$foo = 0
+    JavaValue[continuation] $i$f$inlineBlock = 0
+    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesInSuspendInlineKt$foo$2 = 0
+optimisedVariablesInSuspendInline.kt:19
+CoroutinePreflightFrame invokeSuspend (optimisedVariablesInSuspendInline.kt:19)
+    JavaValue[local] a: java.lang.String = a (optimisedVariablesInSuspendInline.kt:9)
+    JavaValue[continuation] $i$f$foo = 0
+Disconnected from the target VM
+
+Process finished with exit code 0

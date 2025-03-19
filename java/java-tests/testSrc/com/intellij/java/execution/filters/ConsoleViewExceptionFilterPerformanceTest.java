@@ -13,7 +13,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
                                  }
                              }
                          }""");
-    PlatformTestUtil.startPerformanceTest("Many exceptions", 10_000, () -> {
+    Benchmark.newBenchmark("Many exceptions", () -> {
       // instantiate console with exception filters only to avoid failures due to Node/Ruby/etc dog-slow sloppy regex-based filters
       TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(getProject());
       consoleBuilder.filters(ExceptionFilters.getFilters(GlobalSearchScope.allScope(getProject())));
@@ -59,6 +59,7 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
         console.print("start\n", ConsoleViewContentType.NORMAL_OUTPUT);
         console.flushDeferredText();
         console.getEditor().getCaretModel().moveToOffset(0); // avoid stick-to-end
+        console.getEditor().getScrollingModel().scroll(0, 0); // avoid stick-to-end
         DocumentUtil.executeInBulk(console.getEditor().getDocument(), ()-> { // avoid editor size validation
           for (int i = 0; i < 25; i++) {
             for (int j = 0; j < 1_000; j++) {
@@ -74,6 +75,6 @@ public class ConsoleViewExceptionFilterPerformanceTest extends LightJavaCodeInsi
       finally {
         Disposer.dispose(console);
       }
-    }).assertTiming();
+    }).start();
   }
 }

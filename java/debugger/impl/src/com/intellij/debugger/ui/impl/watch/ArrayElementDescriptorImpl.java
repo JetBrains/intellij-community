@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -113,9 +113,8 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
               return arrType.classLoader();
             }
 
-            @NotNull
             @Override
-            public Type getLType() throws ClassNotLoadedException {
+            public @NotNull Type getLType() throws ClassNotLoadedException {
               return arrType.componentType();
             }
           });

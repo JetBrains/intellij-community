@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,6 +21,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -36,6 +38,8 @@ import static com.intellij.execution.wsl.WSLUtil.LOG;
 @Tag("descriptor")
 final class WslDistributionDescriptor {
   private static final int PROBE_TIMEOUT = SystemProperties.getIntProperty("ide.wsl.probe.timeout", 60_000);
+
+  private static final Key<Boolean> CALCULATING_MOUNT_ROOT_COMMAND = new Key<>("CalculatingMountRootCommand");
 
   @Tag("id")
   private @NlsSafe String myId;
@@ -145,6 +149,8 @@ final class WslDistributionDescriptor {
 
     WSLCommandLineOptions options = new WSLCommandLineOptions().setLaunchWithWslExe(true).setExecuteCommandInShell(false);
     GeneralCommandLine commandLine = new GeneralCommandLine("pwd");
+    // Required to prevent recursion
+    commandLine.putUserData(CALCULATING_MOUNT_ROOT_COMMAND, true);
     // Use interoperability between Windows and Linux - the Linux process inherits the Windows working directory.
     commandLine.setWorkDirectory(windowsWorkingDirectory);
     String linuxWorkingDirectory = readWslOutputLine(options, commandLine, pi);
@@ -181,14 +187,14 @@ final class WslDistributionDescriptor {
     return pwdOutputLines.get(0).trim();
   }
 
-  private @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
-                                               @NotNull GeneralCommandLine commandLine,
-                                               @Nullable ProgressIndicator pi) {
+  private @Unmodifiable @Nullable List<String> readWslOutput(@NotNull WSLCommandLineOptions options,
+                                                             @NotNull GeneralCommandLine commandLine,
+                                                             @Nullable ProgressIndicator pi) {
     WSLDistribution distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(getId());
 
     final ProcessOutput output;
     try {
-      distribution.patchCommandLine(commandLine, null, options);
+      distribution.doPatchCommandLine(commandLine, null, options);
       var processHandler = new CapturingProcessHandler(commandLine);
       output = pi == null ? processHandler.runProcess(PROBE_TIMEOUT) : processHandler.runProcessWithProgressIndicator(pi, PROBE_TIMEOUT);
     }
@@ -206,6 +212,14 @@ final class WslDistributionDescriptor {
     }
 
     return output.getStdoutLines();
+  }
+
+  /**
+   * Command line is used to calculate mount root
+   */
+  static boolean isCalculatingMountRootCommand(@NotNull GeneralCommandLine commandLine) {
+    Boolean data = commandLine.getUserData(CALCULATING_MOUNT_ROOT_COMMAND);
+    return data != null && data;
   }
 
   private static <T> T executeOrRunTask(@NotNull Function<? super @Nullable ProgressIndicator, ? extends T> commandRunner) {
@@ -239,7 +253,7 @@ final class WslDistributionDescriptor {
         return super.getValue();
       }
 
-      private long getCurrentExternalChangesCount() {
+      private static long getCurrentExternalChangesCount() {
         return SaveAndSyncHandler.getInstance().getExternalChangesTracker().getModificationCount();
       }
     };

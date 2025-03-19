@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -9,6 +10,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.popup.util.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +22,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
+@ApiStatus.Internal
 public class BreakpointChooser {
+  private static final Logger LOG = Logger.getInstance(BreakpointChooser.class);
 
   private DetailView myDetailViewDelegate;
 
@@ -60,6 +65,7 @@ public class BreakpointChooser {
     void breakpointChosen(Project project, BreakpointItem breakpointItem);
   }
 
+  @Contract(mutates = "param4")
   public BreakpointChooser(final Project project, Delegate delegate, Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
     myDelegate = delegate;
     myBreakpointItems = breakpointItems;
@@ -68,7 +74,6 @@ public class BreakpointChooser {
     final Ref<Object> hackedSelection = Ref.create();
 
     myDetailController = new DetailController(new MasterController() {
-      final JLabel fake = new JLabel();
       @Override
       public ItemWrapper[] getSelectedItems() {
         if (hackedSelection.get() == null) {
@@ -78,8 +83,8 @@ public class BreakpointChooser {
       }
 
       @Override
-      public JLabel getPathLabel() {
-        return fake;
+      public @Nullable JLabel getPathLabel() {
+        return null;
       }
     });
 
@@ -109,12 +114,19 @@ public class BreakpointChooser {
     myComboBox.setRenderer(new ItemWrapperListRenderer(project, null) {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        super.customizeCellRenderer(list, value, index, selected, hasFocus);
-        if (selected) {
-          if (hackedSelection.get() != value) {
-            hackedSelection.set(value);
-            myDetailController.updateDetailView();
+        try {
+          super.customizeCellRenderer(list, value, index, selected, hasFocus);
+          if (selected) {
+            if (hackedSelection.get() != value) {
+              hackedSelection.set(value);
+              myDetailController.updateDetailView();
+            }
           }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          clear();
+          append(e.getMessage());
         }
       }
     });
@@ -127,8 +139,7 @@ public class BreakpointChooser {
     });
   }
 
-  @Nullable
-  private static BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
+  private static @Nullable BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
       if (item.getBreakpoint() == baseBreakpoint) {

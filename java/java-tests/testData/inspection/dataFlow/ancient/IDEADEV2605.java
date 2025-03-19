@@ -1,4 +1,4 @@
-public class AndAssign {
+class AndAssign {
   public void foo(boolean result, Object acc) {
     result &= verify(result ? acc : null);
   }

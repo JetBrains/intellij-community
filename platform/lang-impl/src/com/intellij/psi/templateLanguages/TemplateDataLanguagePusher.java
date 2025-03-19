@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.FilePropertyPusherBase;
@@ -15,21 +15,22 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin.Ulitin
  */
-public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
+@ApiStatus.Internal
+public final class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
   private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 4, true);
   public static final FilePropertyKey<Language> KEY =
     FilePropertyKeyImpl.createPersistentStringKey("TEMPLATE_DATA_LANGUAGE", PERSISTENCE,
                                                   TemplateDataLanguagePusher::asString, TemplateDataLanguagePusher::fromString);
 
-  @NotNull
   @Override
-  public FilePropertyKey<Language> getFilePropertyKey() {
+  public @NotNull FilePropertyKey<Language> getFilePropertyKey() {
     return KEY;
   }
 
@@ -38,21 +39,18 @@ public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language>
     return false;
   }
 
-  @NotNull
   @Override
-  public Language getDefaultValue() {
+  public @NotNull Language getDefaultValue() {
     return Language.ANY;
   }
 
-  @Nullable
   @Override
-  public Language getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
+  public @Nullable Language getImmediateValue(@NotNull Project project, @Nullable VirtualFile file) {
     return TemplateDataLanguageMappings.getInstance(project).getImmediateMapping(file);
   }
 
-  @Nullable
   @Override
-  public Language getImmediateValue(@NotNull Module module) {
+  public @Nullable Language getImmediateValue(@NotNull Module module) {
     return null;
   }
 
@@ -75,8 +73,7 @@ public class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language>
     return property.getID();
   }
 
-  @NotNull
-  private static Language fromString(@NotNull String id) {
+  private static @NotNull Language fromString(@NotNull String id) {
     Language lang = Language.findLanguageByID(id);
     return ObjectUtils.notNull(lang, Language.ANY);
   }

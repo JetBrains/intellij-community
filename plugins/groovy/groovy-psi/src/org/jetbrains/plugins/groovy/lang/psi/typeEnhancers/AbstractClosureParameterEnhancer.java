@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.PsiElement;
@@ -48,8 +48,7 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
     return res != null ? unwrapBound(res) : null;
   }
 
-  @Nullable
-  private static PsiType unwrapBound(@NotNull PsiType type) {
+  private static @Nullable PsiType unwrapBound(@NotNull PsiType type) {
     if (type instanceof PsiWildcardType wildcard) {
       return wildcard.isSuper() ? wildcard.getBound() : type;
     }
@@ -58,6 +57,5 @@ public abstract class AbstractClosureParameterEnhancer extends GrVariableEnhance
     }
   }
 
-  @Nullable
-  protected abstract PsiType getClosureParameterType(@NotNull GrFunctionalExpression closure, int index);
+  protected abstract @Nullable PsiType getClosureParameterType(@NotNull GrFunctionalExpression closure, int index);
 }

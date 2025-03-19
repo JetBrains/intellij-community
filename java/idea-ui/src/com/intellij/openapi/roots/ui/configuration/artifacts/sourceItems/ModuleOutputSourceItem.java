@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.openapi.module.Module;
@@ -23,7 +9,10 @@ import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
-import com.intellij.packaging.ui.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingSourceItem;
+import com.intellij.packaging.ui.SourceItemPresentation;
+import com.intellij.packaging.ui.SourceItemWeights;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -40,17 +29,18 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     return myModule;
   }
 
+  @Override
   public boolean equals(Object obj) {
     return obj instanceof ModuleOutputSourceItem && myModule.equals(((ModuleOutputSourceItem)obj).myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }
 
-  @NotNull
   @Override
-  public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
+  public @NotNull SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);
     return new DelegatedSourceItemPresentation(new ModuleElementPresentation(modulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE)) {
       @Override
@@ -61,15 +51,13 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
   }
 
   @Override
-  @NotNull
-  public List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
+  public @NotNull List<? extends PackagingElement<?>> createElements(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);
     return Collections.singletonList(new ProductionModuleOutputPackagingElement(context.getProject(), modulePointer));
   }
 
-  @NotNull
   @Override
-  public PackagingElementOutputKind getKindOfProducedElements() {
+  public @NotNull PackagingElementOutputKind getKindOfProducedElements() {
     return PackagingElementOutputKind.DIRECTORIES_WITH_CLASSES;
   }
 }

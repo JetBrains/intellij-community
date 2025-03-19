@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -24,6 +24,8 @@ import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.util.PluginRelatedLocatorsUtils;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.uast.UastPatterns.*;
 import static com.intellij.psi.UastReferenceRegistrar.registerUastReferenceProvider;
 
-public class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
+final class ExtensionPointDeclarationReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
@@ -89,7 +91,11 @@ public class ExtensionPointDeclarationReferencesContributor extends PsiReference
       GlobalSearchScope searchScope = PsiManager.getInstance(project).isInProject(getElement()) ?
                                       GlobalSearchScopesCore.projectProductionScope(project) :
                                       PluginRelatedLocatorsUtils.getCandidatesScope(project);
-      ExtensionPoint resolved = ExtensionPointIndex.findExtensionPoint(project, searchScope, getValue());
+
+      UInjectionHost injectionHost = UastContextKt.toUElement(getElement(), UInjectionHost.class);
+      if (injectionHost == null) return null;
+
+      ExtensionPoint resolved = ExtensionPointIndex.findExtensionPoint(project, searchScope, injectionHost.evaluateToString());
       return resolved != null ? resolved.getXmlTag() : null;
     }
 

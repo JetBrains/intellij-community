@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
+import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.AnyModalityState;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -22,10 +25,11 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
-public class MockApplication extends MockComponentManager implements ApplicationEx {
+public class MockApplication extends MockComponentManager implements ApplicationEx, ComponentManagerEx {
   public static int INSTANCES_CREATED;
 
   public MockApplication(@NotNull Disposable parentDisposable) {
@@ -55,7 +59,10 @@ public class MockApplication extends MockComponentManager implements Application
 
   private <T> T doGetService(@NotNull Class<T> serviceClass, boolean createIfNeeded) {
     T service = super.getService(serviceClass);
-    if (service == null && createIfNeeded && Modifier.isFinal(serviceClass.getModifiers()) && serviceClass.isAnnotationPresent(Service.class)) {
+    if (service == null &&
+        createIfNeeded &&
+        Modifier.isFinal(serviceClass.getModifiers()) &&
+        serviceClass.isAnnotationPresent(Service.class)) {
       //noinspection SynchronizeOnThis,SynchronizationOnLocalVariableOrMethodParameter
       synchronized (serviceClass) {
         service = super.getService(serviceClass);
@@ -68,6 +75,10 @@ public class MockApplication extends MockComponentManager implements Application
       }
     }
     return service;
+  }
+
+  private static @NotNull Logger getLogger() {
+    return Logger.getInstance(MockApplication.class);
   }
 
   @Override
@@ -248,29 +259,31 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public @NotNull ModalityState getNoneModalityState() {
-    return ModalityState.NON_MODAL;
+    return ModalityState.nonModal();
   }
 
   @Override
   public void invokeLater(final @NotNull Runnable runnable, final @NotNull Condition<?> expired) {
+    logInsufficientIsolation("invokeLater", runnable, expired);
+    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(final @NotNull Runnable runnable, final @NotNull ModalityState state, final @NotNull Condition<?> expired) {
+    logInsufficientIsolation("invokeLater", runnable, state, expired);
+    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(@NotNull Runnable runnable) {
+    logInsufficientIsolation("invokeLater", runnable);
+    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
-  }
-
-  @Deprecated
-  @Override
-  public @NotNull ModalityInvokator getInvokator() {
-    throw new UnsupportedOperationException();
+    logInsufficientIsolation("invokeLater", runnable, state);
+    SwingUtilities.invokeLater(runnable);
   }
 
   @Override
@@ -350,18 +363,9 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertTimeConsuming() {
-  }
-
-  @Override
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;
-  }
-
-  @Override
-  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -381,5 +385,21 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void setSaveAllowed(boolean value) {
+  }
+
+  @Override
+  public void dispose() {
+    // A mock application may cause incorrect caching during tests. It does not fire extension point removed events.
+    // Ensure that we have cached against correct application.
+    MetaLanguage.clearAllMatchingMetaLanguagesCache();
+    super.dispose();
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static void logInsufficientIsolation(String methodName, Object... args) {
+    getLogger().warn("Attempt to execute method \"" + methodName + "\" with arguments `" +
+                     Arrays.toString(args) + "` within a MockApplication.\n" +
+                     "This is likely caused by an improper test isolation. Please consider writing tests with JUnit 5 fixtures.",
+                     new Throwable());
   }
 }

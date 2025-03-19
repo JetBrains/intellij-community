@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
@@ -39,11 +39,7 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
-class ModuleStructureValidator(private val context: BuildContext, modules: Collection<ModuleItem>) {
-  // filter out jars with relative paths in name
-  private val modules: Collection<ModuleItem> = modules.filter {
-    !it.relativeOutputFile.contains("\\") || !it.relativeOutputFile.contains('/')
-  }
+class ModuleStructureValidator(private val context: BuildContext, private val allProductModules: Collection<ModuleItem>) {
 
   private val errors = ArrayList<AssertionError>()
   private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
@@ -73,7 +69,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
 
     messages.info("Validating modules...")
     val visitedModules = HashSet<JpsModule>()
-    for (moduleName in modules.map { it.moduleName }.distinct()) {
+    for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
       if (ignoreModules.contains(moduleName)) {
         continue
       }
@@ -92,7 +88,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
 
   private fun validateJarModules() {
     val modulesInJars = MultiMap<String, String>()
-    for (item in modules) {
+    for (item in allProductModules) {
       modulesInJars.putValue(item.moduleName, item.relativeOutputFile)
     }
 
@@ -120,6 +116,9 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
         if (role != null && role.scope.name == "RUNTIME") {
           continue
         }
+        if (role != null && role.scope.name == "PROVIDED") { // https://jetbrains.slack.com/archives/C0XLQPQGP/p1733558147426029?thread_ts=1733392446.551349&cid=C0XLQPQGP
+          continue
+        }
 
         // skip localization modules
         val dependantModule = dependency.module!!
@@ -127,7 +126,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
           continue
         }
 
-        if (modules.none { it.moduleName == dependantModule.name }) {
+        if (allProductModules.none { it.moduleName == dependantModule.name }) {
           errors.add(AssertionError("Missing dependency found: ${module.name} -> ${dependantModule.name} [${role.scope.name}]", null))
           continue
         }
@@ -140,7 +139,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
   private fun validateXmlDescriptors() {
     val roots = ArrayList<Path>()
     val libraries = HashSet<JpsLibrary>()
-    for (moduleName in modules.map { it.moduleName }.distinct()) {
+    for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
       val module = context.findRequiredModule(moduleName)
       for (root in module.sourceRoots) {
         roots.add(root.path)
@@ -154,8 +153,12 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
     }
 
     // start validating from product xml descriptor
-    val productDescriptorName = "META-INF/${context.productProperties.platformPrefix}Plugin.xml"
-    val productDescriptorFile = findDescriptorFile(productDescriptorName, roots)
+    var productDescriptorName = ""
+    var productDescriptorFile: Path? = null
+    for (c in listOf("META-INF/plugin.xml", "META-INF/${context.productProperties.platformPrefix}Plugin.xml")) {
+      productDescriptorName = c
+      productDescriptorFile = findDescriptorFile(productDescriptorName, roots) ?: continue
+    }
     if (productDescriptorFile == null) {
       errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
       return
@@ -207,7 +210,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
   private fun validateXmlRegistrations(descriptors: HashSet<Path>) {
     val classes = HashSet<String>(predefinedTypes)
     val visitedLibraries = HashSet<String>()
-    for (moduleName in modules.map { it.moduleName }.distinct()) {
+    for (moduleName in allProductModules.map { it.moduleName }.distinct()) {
       val jpsModule = context.findRequiredModule(moduleName)
 
       val outputDirectory = JpsJavaExtensionService.getInstance().getOutputDirectory(jpsModule, false)!!.toPath()
@@ -257,7 +260,7 @@ class ModuleStructureValidator(private val context: BuildContext, modules: Colle
       }
     }
 
-    context.messages.info("Found ${classes.size} classes in ${modules.map { it.moduleName }.distinct().size} modules and ${visitedLibraries.size} libraries")
+    context.messages.info("Found ${classes.size} classes in ${allProductModules.map { it.moduleName }.distinct().size} modules and ${visitedLibraries.size} libraries")
 
     for (descriptor in descriptors) {
       val xml = Files.newInputStream(descriptor).use(::readXmlAsModel)

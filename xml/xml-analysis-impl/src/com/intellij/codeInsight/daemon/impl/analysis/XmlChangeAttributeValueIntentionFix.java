@@ -1,15 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -18,7 +17,7 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlChangeAttributeValueIntentionFix implements LocalQuickFix, IntentionAction, PriorityAction {
+public class XmlChangeAttributeValueIntentionFix extends PsiElementBaseIntentionAction implements LocalQuickFix, PriorityAction {
   private final String myNewAttributeValue;
   private Priority myPriority;
 
@@ -28,41 +27,32 @@ public class XmlChangeAttributeValueIntentionFix implements LocalQuickFix, Inten
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return XmlAnalysisBundle.message("xml.quickfix.change.attribute.value", myNewAttributeValue);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getText() {
     return myNewAttributeValue != null ? getName() : getFamilyName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlAnalysisBundle.message("xml.quickfix.change.attribute.value.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return getAttribute(editor, file) != null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    return getAttribute(element, editor) != null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    changeAttributeValue(getAttribute(editor, file), editor);
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    changeAttributeValue(getAttribute(element, editor), editor);
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     PsiElement e = descriptor.getPsiElement();
     changeAttributeValue(e, null);
   }
@@ -88,12 +78,12 @@ public class XmlChangeAttributeValueIntentionFix implements LocalQuickFix, Inten
     return myPriority;
   }
 
-  private static XmlAttribute getAttribute(Editor editor, PsiFile file) {
-    int offset = editor.getCaretModel().getOffset();
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlAttribute.class);
-    if (attribute == null) {
-      attribute = PsiTreeUtil.getParentOfType(file.findElementAt(offset - 1), XmlAttribute.class);
+  private static XmlAttribute getAttribute(@NotNull PsiElement element, Editor editor) {
+    var result = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
+    if (result != null) return result;
+    if (element.getTextRange().getStartOffset() == editor.getCaretModel().getOffset()) {
+      return PsiTreeUtil.getParentOfType(PsiTreeUtil.prevLeaf(element), XmlAttribute.class);
     }
-    return attribute;
+    return null;
   }
 }
